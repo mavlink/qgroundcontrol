@@ -7,6 +7,7 @@ import QGroundControl.Controls
 RowLayout {
     property alias label:                   _labelLabel.text
     property alias labelText:              _label.text
+    property alias labelTextFormat:        _label.textFormat
     property real  labelPreferredWidth:    -1
 
     spacing: ScreenTools.defaultFontPixelWidth * 2

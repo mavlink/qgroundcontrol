@@ -6,6 +6,8 @@
 #include <functional>
 
 /// One-thread monotonic clock and deferred callbacks, shared by production controllers and deterministic replay.
+/// Classes that accept an injected scheduler create their own when none is supplied; an injected scheduler
+/// must share the owner's thread and outlive it.
 class RuntimeScheduler : public QObject
 {
     Q_OBJECT

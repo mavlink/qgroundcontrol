@@ -29,19 +29,11 @@ VehicleGPSAggregateFactGroup::VehicleGPSAggregateFactGroup(QObject* parent, Runt
     _jammingStateFact.setRawValue(255);
     _authenticationStateFact.setRawValue(255);
     _isStaleFact.setRawValue(true);
-
-    connect(_scheduler, &QObject::destroyed, this, [this]() {
-        _scheduler = nullptr;
-        _updateAggregates();
-    });
 }
 
 VehicleGPSAggregateFactGroup::~VehicleGPSAggregateFactGroup()
 {
     _clearConnections();
-    if (_scheduler) {
-        _scheduler->disconnect(this);
-    }
 }
 
 void VehicleGPSAggregateFactGroup::bindToGps(VehicleGPSFactGroup* gps1, VehicleGPSFactGroup* gps2)
@@ -124,7 +116,7 @@ void VehicleGPSAggregateFactGroup::_updateAggregates()
     const QPointer<VehicleGPSAggregateFactGroup> guard(this);
     const quint64 revision = ++_updateRevision;
     _expiryTask.cancel();
-    const quint64 nowUs = _scheduler ? _scheduler->nowUs() : 0;
+    const quint64 nowUs = _scheduler->nowUs();
     const auto remaining1 =
         MonotonicClock::remaining(_gps1 ? _gps1->gnssIntegrityTimestampUs() : 0, nowUs, GNSS_INTEGRITY_STALE_TIMEOUT);
     const auto remaining2 =

@@ -33,6 +33,20 @@
     "decimalPlaces":    1
 },
 {
+    "name":             "horizontalAccuracy",
+    "shortDesc": "Horizontal Accuracy",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "m"
+},
+{
+    "name":             "verticalAccuracy",
+    "shortDesc": "Vertical Accuracy",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "m"
+},
+{
     "name":             "courseOverGround",
     "shortDesc": "Course Over Ground",
     "type":             "double",
@@ -63,6 +77,28 @@
     "name":             "systemErrors",
     "shortDesc": "General System Errors",
     "type":             "uint32"
+},
+{
+    "name":             "rtkBaseline",
+    "shortDesc": "RTK Baseline",
+    "longDesc": "Distance from the RTK base to the vehicle receiver reported in GPS_RTK. Unavailable when the vehicle does not report RTK baseline data.",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "m"
+},
+{
+    "name":             "rtkRate",
+    "shortDesc": "RTK Correction Rate",
+    "longDesc": "Rate at which the vehicle receiver is receiving correction (baseline) messages.",
+    "type":             "double",
+    "decimalPlaces":    0,
+    "units":            "Hz"
+},
+{
+    "name":             "rtkSatellites",
+    "shortDesc": "RTK Satellites",
+    "longDesc": "Satellites used in the vehicle receiver's RTK solution, or -1 when unavailable.",
+    "type":             "int32"
 },
 {
     "name":             "spoofingState",

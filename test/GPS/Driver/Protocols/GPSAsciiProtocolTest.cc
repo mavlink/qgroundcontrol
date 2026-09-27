@@ -8,42 +8,25 @@
 
 #include <QtCore/QByteArray>
 #include <QtCore/QStringList>
+#include <QtTest/QSignalSpy>
 
 #include "GPSAsciiProtocol.h"
-#include "GPSProtocolFeatures.h"
-#if QGC_GPS_ENABLE_QUECTEL
+#include "GPSObservation.h"
+#include "GPSProtocolTestIO.h"
+#include "NMEAUtils.h"
+#include "ProtocolTestPackets.h"
 #include "Quectel/QuectelCodec_p.h"
-#endif
-#if QGC_GPS_ENABLE_UNICORE
+#include "Support/AsciiProtocolTestReceiver.h"
 #include "Support/UnicoreReceiverModel.h"
-#include "Unicore/GPSDriverUnicore.h"
-#endif
+#include "Unicore/UnicoreProtocol.h"
 
 namespace {
-class AsciiReceiver final : public GPSAsciiProtocol
-{
-public:
-    using GPSAsciiProtocol::GPSAsciiProtocol;
-
-    int configure(unsigned&, const GPSConfig&) override
-    {
-        resetStream();
-        return 0;
-    }
-};
-
-QByteArray sentence(const QByteArray& body)
-{
-    unsigned char checksum = 0;
-    for (const char byte : body) {
-        checksum ^= static_cast<unsigned char>(byte);
-    }
-    return '$' + body + '*' + QByteArray::number(checksum, 16).rightJustified(2, '0').toUpper() + "\r\n";
-}
+using AsciiReceiver = GPSTest::AsciiProtocolTestReceiver;
 
 void feed(GPSProtocol& receiver, const QByteArray& body)
 {
-    const auto bytes = sentence(body);
+    const QByteArray bytes =
+        QByteArray::fromStdString(nmeaSentence({body.constData(), static_cast<size_t>(body.size())}));
     receiver.consume({reinterpret_cast<const uint8_t*>(bytes.constData()), static_cast<size_t>(bytes.size())});
 }
 
@@ -76,61 +59,59 @@ void GPSAsciiProtocolTest::_vdopEpoch()
     QFETCH(quint64, elapsedUs);
     QFETCH(bool, retained);
     uint64_t now = 1000000;
-    GPSNativePositionReport position;
-    std::optional<GPSNativePositionReport> published;
+    GPSDecodedPosition position;
+    std::optional<GPSDecodedPosition> published;
     GPSProtocolIO io;
     io.nowUs = [&now] { return now; };
     io.decoded = [&published](const GPSDecodedBatch& batch) {
         for (const auto& event : batch.events) {
-            if (const auto* report = std::get_if<GPSNativePositionReport>(&event)) {
+            if (const auto* report = std::get_if<GPSDecodedPosition>(&event)) {
                 published = *report;
             }
         }
     };
-    AsciiReceiver receiver(std::move(io), &position);
+    AsciiReceiver receiver(captureGPSReports(std::move(io), position), false);
     const auto gst = "GPGST," + firstUtc + ",0,0,0,0,0.3,0.4,0.6";
     feed(receiver, gst);
     QVERIFY(!published);
     feed(receiver, gga(firstUtc));
     QVERIFY(published);
-    QCOMPARE(published->eph, 0.5f);
-    const auto positionReceipt = published->timestamp;
+    QCOMPARE(published->navigation.horizontalAccuracyMeters, 0.5f);
+    const auto positionReceipt = published->navigation.timestampUs;
     feed(receiver, GSA);
-    QCOMPARE(position.vdop, 0.6f);
     ++now;
     feed(receiver, gst);
-    QCOMPARE(published->timestamp, positionReceipt);
-    QCOMPARE(published->vdop, 0.6f);
+    QCOMPARE(published->navigation.timestampUs, positionReceipt);
+    QCOMPARE(published->navigation.verticalDop, 0.6f);
     now = positionReceipt + elapsedUs;
     feed(receiver, gga(nextUtc));
-    QCOMPARE(published->timestamp, now);
-    QCOMPARE(published->dop_timestamp, now);
-    QCOMPARE(published->hdop, 0.9f);
+    QCOMPARE(published->navigation.timestampUs, now);
+    QCOMPARE(published->navigation.horizontalDop, 0.9f);
     if (retained) {
-        QCOMPARE(published->vdop, 0.6f);
+        QCOMPARE(published->navigation.verticalDop, 0.6f);
     } else {
-        QVERIFY(std::isnan(published->vdop));
-        QVERIFY(std::isnan(published->eph));
+        QVERIFY(std::isnan(published->navigation.verticalDop));
+        QVERIFY(std::isnan(published->navigation.horizontalAccuracyMeters));
     }
 }
 
 void GPSAsciiProtocolTest::_vdopReceiptIsNotRenewed()
 {
     uint64_t now = 1000000;
-    GPSNativePositionReport position;
+    GPSDecodedPosition position;
     GPSProtocolIO io;
     io.nowUs = [&now] { return now; };
-    AsciiReceiver receiver(std::move(io), &position);
+    AsciiReceiver receiver(captureGPSReports(std::move(io), position), false);
     feed(receiver, gga("123519"));
     feed(receiver, GSA);
     for (unsigned second = 1; second <= 7; ++second) {
         now += 1000000;
         feed(receiver, gga("123519"));
-        QCOMPARE(position.timestamp, now);
+        QCOMPARE(position.navigation.timestampUs, now);
         if (second <= 2) {
-            QCOMPARE(position.vdop, 0.6f);
+            QCOMPARE(position.navigation.verticalDop, 0.6f);
         } else {
-            QVERIFY(std::isnan(position.vdop));
+            QVERIFY(std::isnan(position.navigation.verticalDop));
         }
     }
 }
@@ -147,19 +128,19 @@ void GPSAsciiProtocolTest::_unassociatedGsa()
 {
     QFETCH(qint64, ageUs);
     uint64_t now = 1000000;
-    GPSNativePositionReport position;
+    GPSDecodedPosition position;
     GPSProtocolIO io;
     io.nowUs = [&now] { return now; };
-    AsciiReceiver receiver(std::move(io), &position);
+    AsciiReceiver receiver(captureGPSReports(std::move(io), position), false);
     if (ageUs) {
         feed(receiver, gga("123519"));
         now = static_cast<uint64_t>(static_cast<qint64>(now) + ageUs);
     }
     feed(receiver, GSA);
-    QVERIFY(std::isnan(position.vdop));
+    QVERIFY(std::isnan(position.navigation.verticalDop));
     now = 4000000;
     feed(receiver, gga("123520"));
-    QVERIFY(std::isnan(position.vdop));
+    QVERIFY(std::isnan(position.navigation.verticalDop));
 }
 
 void GPSAsciiProtocolTest::_boundedFields_data()
@@ -186,11 +167,49 @@ void GPSAsciiProtocolTest::_boundedFields()
     QCOMPARE(NMEA::splitFields("a", {}), size_t(0));
 }
 
+void GPSAsciiProtocolTest::_positionSourceEquivalence()
+{
+    const QList<QByteArray> bodies{
+        "$GPRMC,092750.000,A,5321.6802,N,00630.3372,W,2.0,31.66,280511,,,A",
+        "$GPGSA,A,3,02,,,,,,,,,,,,1.0,1.03,0.6",
+        "$GPGGA,092750.000,5321.6802,N,00630.3372,W,1,8,1.03,61.7,M,55.2,M,,",
+        "$GPGST,092750.000,1,1,1,0,3,4,6",
+        "$GPVTG,31.66,T,,M,1.08,N,2.0,K",
+    };
+    uint64_t now = 1000000;
+    GPSDecodedPosition nativePosition;
+    GPSProtocolIO io;
+    io.nowUs = [&now] { return now; };
+    AsciiReceiver receiver(captureGPSReports(std::move(io), nativePosition), false);
+    for (const auto& body : bodies) {
+        const auto sentence = NMEAUtils::repairChecksum(body);
+        receiver.consume(
+            {reinterpret_cast<const uint8_t*>(sentence.constData()), static_cast<size_t>(sentence.size())});
+    }
+
+    // Passive receivers are the only NMEA position input, so their epoch carries every navigation field.
+    const auto observation = GPSObservation::fromNavigation(nativePosition.navigation, now);
+    QCOMPARE(nativePosition.navigation.fixType, GPSPositionReport::FixType::Fix3D);
+    QCOMPARE(observation.fixQuality, GPSObservation::FixQuality::Fix3D);
+    QVERIFY(qAbs(nativePosition.navigation.latitudeDegrees - 53.36133667) < 1e-6);
+    QVERIFY(qAbs(nativePosition.navigation.longitudeDegrees + 6.50562) < 1e-6);
+    QVERIFY(qAbs(nativePosition.navigation.altitudeMslMeters - 61.7) < 1e-9);
+    QCOMPARE(observation.altitudeDatum, GPSAltitudeDatum::MeanSeaLevel);
+    QCOMPARE(nativePosition.navigation.satellitesUsed, std::optional<uint8_t>(8));
+    QCOMPARE(observation.satellitesUsed, std::optional<int>(8));
+    QCOMPARE(nativePosition.navigation.horizontalDop, 1.03f);
+    QCOMPARE(nativePosition.navigation.verticalDop, 0.6f);
+    QCOMPARE(nativePosition.navigation.horizontalAccuracyMeters, 5.0f);
+    QCOMPARE(nativePosition.navigation.verticalAccuracyMeters, 6.0f);
+    QCOMPARE(observation.position.attribute(QGeoPositionInfo::HorizontalAccuracy), 5.0);
+    QCOMPARE(observation.position.attribute(QGeoPositionInfo::VerticalAccuracy), 6.0);
+}
+
 void GPSAsciiProtocolTest::_quectelCodec()
 {
-#if QGC_GPS_ENABLE_QUECTEL
     const QByteArray body("PQTMCFGMSGRATE,OK,GGA,1,");
-    const auto wire = sentence(body);
+    const QByteArray wire =
+        QByteArray::fromStdString(nmeaSentence({body.constData(), static_cast<size_t>(body.size())}));
     const std::string_view bodyView(body.constData(), body.size());
     QCOMPARE(QuectelCodec::frame(bodyView), wire.toStdString());
     const std::string_view line(wire.constData(), wire.size() - 2);
@@ -217,46 +236,39 @@ void GPSAsciiProtocolTest::_quectelCodec()
         QVERIFY(!QuectelCodec::number(invalid, value));
         QCOMPARE(value, 0.125);
     }
-#else
-    QSKIP("Quectel is disabled");
-#endif
 }
 
 void GPSAsciiProtocolTest::_unicoreFailureDetails_data()
 {
     QTest::addColumn<int>("fault");
     QTest::addColumn<QString>("expected");
-#if QGC_GPS_ENABLE_UNICORE
     using Fault = GPSTest::UnicoreReceiver::Fault;
     QTest::newRow("rejected") << int(Fault::Reject) << QStringLiteral("Unicore command 'UNLOG' was rejected");
     QTest::newRow("timeout") << int(Fault::Silence) << QStringLiteral("Unicore command 'UNLOG' timed out");
     QTest::newRow("transport") << int(Fault::WriteError) << QStringLiteral("Unicore test write failure");
     QTest::newRow("cancelled") << int(Fault::Cancel) << QString();
-#else
-    QTest::newRow("disabled") << 0 << QString();
-#endif
 }
 
 void GPSAsciiProtocolTest::_unicoreFailureDetails()
 {
-#if QGC_GPS_ENABLE_UNICORE
     QFETCH(int, fault);
     QFETCH(QString, expected);
-    gps_test_time = 0;
-    gps_test_warnings.clear();
-    GPSTest::UnicoreReceiver peer;
+    GPSTestClock clock;
+    GPSTest::UnicoreReceiver peer(clock);
     peer.fault = static_cast<GPSTest::UnicoreReceiver::Fault>(fault);
     peer.faultCommand = "UNLOG";
-    GPSNativeUnicore receiver(peer.io(), nullptr);
+    UnicoreProtocol receiver(peer.io(), false);
     unsigned baud = 115200;
-    QVERIFY(receiver.configure(baud, {}) < 0);
+    GPSProtocol::GPSConfig config;
+    config.base.mode = GPSBaseStationConfig::ReceiverAveraging{1};
+    QVERIFY(!receiver.configure(baud, config));
     QVERIFY(!receiver.receiverReady());
     QVERIFY(!peer.results.empty());
     QCOMPARE(peer.results.back().evidence.command, std::string("UNLOG"));
     if (peer.fault == GPSTest::UnicoreReceiver::Fault::Cancel) {
-        QCOMPARE(receiver.ioError(), GPSProtocol::ReadCancelled);
+        QCOMPARE(receiver.ioError(), GPSProtocolError::Cancelled);
         QVERIFY(receiver.ioErrorDetail().isEmpty());
-        QVERIFY(gps_test_warnings.empty());
+        QVERIFY(peer.warnings.empty());
         QCOMPARE(peer.results.back().evidence.outcome, GPSCommandOutcome::Cancelled);
     } else {
         QVERIFY2(receiver.ioErrorDetail().contains(expected), qPrintable(receiver.ioErrorDetail()));
@@ -264,39 +276,27 @@ void GPSAsciiProtocolTest::_unicoreFailureDetails()
             QCOMPARE(receiver.ioErrorDetail(), expected);
         }
     }
-#else
-    QSKIP("Unicore is disabled");
-#endif
 }
 
 void GPSAsciiProtocolTest::_unicoreUnsupportedDetails()
 {
-#if QGC_GPS_ENABLE_UNICORE
-    gps_test_time = 0;
-    gps_test_warnings.clear();
-    GPSTest::UnicoreReceiver peer;
+    GPSTestClock clock;
+    GPSTest::UnicoreReceiver peer(clock);
     peer.version = GPSTest::unicoreNative("VERSIONA",
                                           "\"UM982\",\"R5.00Build20000\",\"auth\",\"serial\",\"efuse\",\"2024/08/08\"");
-    GPSNativeUnicore receiver(peer.io(), nullptr);
+    UnicoreProtocol receiver(peer.io(), false);
     unsigned baud = 115200;
-    QVERIFY(receiver.configure(baud, {}) < 0);
+    GPSProtocol::GPSConfig config;
+    config.base.mode = GPSBaseStationConfig::ReceiverAveraging{1};
+    QVERIFY(!receiver.configure(baud, config));
     QVERIFY(receiver.ioErrorDetail().contains("Unsupported Unicore receiver"));
     QVERIFY(receiver.ioErrorDetail().contains("R5.00Build20000"));
     QVERIFY(receiver.ioErrorDetail().contains("R4.10Build7650"));
     QCOMPARE(peer.commands.size(), size_t(1));
-    peer.commands.clear();
-    GPSProtocol::GPSConfig config;
-    config.dynamicModel = 1;
-    QVERIFY(receiver.configure(baud, config) < 0);
-    QVERIFY(receiver.ioErrorDetail().contains("dynamic model"));
-    QVERIFY(peer.commands.empty());
     peer.version = GPSTest::UNICORE_VERSION;
-    QCOMPARE(receiver.configure(baud, {}), 0);
+    QVERIFY(receiver.configure(baud, config));
     QVERIFY(receiver.ioErrorDetail().isEmpty());
     QVERIFY(receiver.receiverReady());
-#else
-    QSKIP("Unicore is disabled");
-#endif
 }
 
 UT_REGISTER_TEST(GPSAsciiProtocolTest, TestLabel::Unit)

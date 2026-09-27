@@ -14,4 +14,9 @@ private slots:
     void _testDistanceCalculation();
     void _testUpdateDistancesAll();
     void _testEmptyTable();
+    void _testRolesAreReadOnlyProperties();
+    void _testCoordinateValidity_data();
+    void _testCoordinateValidity();
+    void _testTableTerminator_data();
+    void _testTableTerminator();
 };

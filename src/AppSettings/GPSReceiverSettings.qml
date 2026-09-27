@@ -1,0 +1,461 @@
+pragma ComponentBehavior: Bound
+
+import QtQuick
+import QtQuick.Layouts
+
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.FactControls
+import QGroundControl.GPS
+
+SettingsGroupLayout {
+    id: root
+
+    property var receiver: QGroundControl.gpsManager.gpsRtk
+    property var settings: QGroundControl.settingsManager.rtkSettings
+    property var baseFacts: QGroundControl.gpsManager.gpsRtkFacts
+    property var autoConnectFact: settings.autoConnect
+    property var serialPorts: _serialPortManager ? _serialPortManager.serialPorts : []
+    property var serialBaudRates: _serialPortManager ? _serialPortManager.serialBaudRates : []
+    property var consent: QtObject { property bool allowed: false }
+    /// Hosts that already show receiver errors elsewhere can hide the inline message.
+    property bool showErrorMessage: true
+
+    readonly property var _serialPortManager: QGroundControl.serialPortManager
+
+    readonly property int role: settings.receiverRole.rawValue
+    readonly property bool configuredBase: role === GPSRtk.ConfiguredBase
+    readonly property int manufacturer: settings.baseReceiverManufacturers.rawValue
+    readonly property int baseMode: settings.useFixedBasePosition.rawValue
+    readonly property gpsReceiverPresentation presentation: receiver.capabilitiesFor(role, manufacturer)
+    readonly property bool modeCompatible: presentation.passive
+        || (baseMode === BaseModeDefinition.BaseFixed && presentation.rtkBase)
+        || (baseMode === BaseModeDefinition.BaseSurveyIn && presentation.surveyIn)
+        || (baseMode === BaseModeDefinition.BaseReceiverAveraging && presentation.receiverAveraging)
+    // A pending automatic reconnect keeps the saved connection; stop it before editing.
+    readonly property bool _active: receiver.hasReceiver || receiver.reconnecting === true
+    readonly property bool _editable: !_active
+    readonly property int _connection: settings.connectionType.rawValue
+    readonly property bool _udp: _connection === GPSRtk.Udp
+    // Platforms without serial links connect a saved serial selection over TCP.
+    readonly property bool _tcp: !_udp && (!receiver.serialSupported || _connection === GPSRtk.Tcp)
+    readonly property bool _serial: !_udp && !_tcp
+    // UDP only receives, so a receiver QGroundControl configures needs serial or TCP.
+    readonly property bool _connectionSupported: !(configuredBase && _udp)
+
+    // Consent covers exactly one receiver configuration; changing any part of it revokes consent.
+    readonly property string _consentScope: JSON.stringify([
+        role, manufacturer, baseMode, settings.connectionType.rawValue, settings.serialDevice.rawValue,
+        settings.serialBaudRate.rawValue, settings.tcpHost.rawValue, settings.tcpPort.rawValue,
+        settings.udpPort.rawValue
+    ])
+
+    implicitWidth: ScreenTools.defaultFontPixelWidth * 56
+    heading: qsTr("GNSS Receiver")
+
+    on_ConsentScopeChanged: clearConsent()
+    onReceiverChanged: clearConsent()
+    onSettingsChanged: clearConsent()
+    Component.onDestruction: clearConsent()
+
+    function clearConsent() {
+        if (consent) {
+            consent.allowed = false
+        }
+    }
+
+    function connectSelectedReceiver() {
+        const allowPersistentChanges = presentation.persistentConfiguration && consent.allowed
+        clearConsent()
+        return receiver.connectConfiguredGPS(allowPersistentChanges)
+    }
+
+    function saveCurrentBasePosition() {
+        if (!baseFacts.canSaveCurrentBasePosition) {
+            return false
+        }
+        const latitude = baseFacts.currentLatitude.rawValue
+        const longitude = baseFacts.currentLongitude.rawValue
+        const altitude = baseFacts.currentAltitude.rawValue
+        const accuracy = baseFacts.currentAccuracy.rawValue
+        settings.fixedBasePositionLatitude.rawValue = latitude
+        settings.fixedBasePositionLongitude.rawValue = longitude
+        settings.fixedBasePositionAltitude.rawValue = altitude
+        settings.fixedBasePositionAccuracy.rawValue = accuracy
+        return true
+    }
+
+    component Explanation: QGCLabel {
+        Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        Layout.preferredWidth: 0
+        wrapMode: Text.Wrap
+        textFormat: Text.PlainText
+    }
+
+    component SettingField: ColumnLayout {
+        id: field
+        required property Fact fact
+        property string label: fact.shortDescription
+
+        Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        spacing: ScreenTools.defaultFontPixelHeight / 4
+
+        Explanation { text: field.label }
+        FactTextField {
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            fact: field.fact
+        }
+    }
+
+    component ModeButton: QGCRadioButton {
+        id: button
+        Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        focusPolicy: Qt.StrongFocus
+        contentItem: QGCLabel {
+            text: button.text
+            color: button.textColor
+            leftPadding: button.indicator.width + ScreenTools.defaultFontPixelWidth / 2
+            wrapMode: Text.Wrap
+        }
+    }
+
+    ColumnLayout {
+        Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        visible: root.settings.receiverRole.userVisible
+        Explanation { text: root.settings.receiverRole.shortDescription }
+        FactComboBox {
+            objectName: "receiverRole"
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            fact: root.settings.receiverRole
+            indexModel: false
+            enabled: root._editable
+        }
+    }
+
+    Explanation {
+        objectName: "receiverRoleExplanation"
+        text: root.role === GPSRtk.PositionOnly
+              ? qsTr("QGroundControl never configures this receiver. Its NMEA output provides the ground station position; RTCM output is ignored.")
+              : root.role === GPSRtk.Passive
+                ? qsTr("QGroundControl never configures this receiver. Its NMEA output provides the ground station position and its RTCM output is forwarded to vehicles. Configure the receiver's output externally and select its existing baud rate. No survey-in status is inferred.")
+                : qsTr("QGroundControl configures a supported receiver as an RTK base station and forwards its RTCM corrections to vehicles.")
+    }
+
+    RowLayout {
+        Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        // Auto-connect discovers known serial base receivers only.
+        visible: root.configuredBase && root.receiver.serialSupported && root._serial && root.autoConnectFact.userVisible
+        Explanation { text: qsTr("Auto-connect known serial receivers") }
+        FactCheckBoxSlider {
+            text: ""
+            Accessible.name: qsTr("Auto-connect known serial receivers")
+            fact: root.autoConnectFact
+        }
+    }
+
+    ColumnLayout {
+        Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        visible: root.configuredBase && root.settings.baseReceiverManufacturers.userVisible
+        Explanation { text: qsTr("Receiver / settings") }
+        FactComboBox {
+            objectName: "rtkManufacturer"
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            fact: root.settings.baseReceiverManufacturers
+            enabled: root._editable
+        }
+    }
+
+    ColumnLayout {
+        Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        visible: root.settings.connectionType.userVisible
+        Explanation { text: root.settings.connectionType.shortDescription }
+        FactComboBox {
+            objectName: "rtkConnectionType"
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            fact: root.settings.connectionType
+            indexModel: false
+            enabled: root._editable
+        }
+        Explanation {
+            objectName: "rtkTcpOnly"
+            visible: !root.receiver.serialSupported && root._connection === GPSRtk.Serial
+            text: qsTr("Serial receivers are not supported on this platform, so the receiver connects over TCP.")
+        }
+    }
+
+    SettingField {
+        objectName: "rtkTcpHost"
+        fact: root.settings.tcpHost
+        enabled: root._editable
+        visible: root._tcp
+    }
+
+    SettingField {
+        objectName: "rtkTcpPort"
+        fact: root.settings.tcpPort
+        enabled: root._editable
+        visible: root._tcp
+    }
+
+    Explanation {
+        visible: root._tcp
+        text: qsTr("Connect to a receiver's TCP port or a serial-to-TCP bridge. A bridge must already run the receiver link at 115200 baud; QGroundControl cannot change a bridge's rate.")
+    }
+
+    SettingField {
+        objectName: "rtkUdpPort"
+        fact: root.settings.udpPort
+        enabled: root._editable
+        visible: root._udp
+    }
+
+    Explanation {
+        objectName: "rtkUdpExplanation"
+        visible: root._udp
+        text: root._connectionSupported
+              ? qsTr("Listens for NMEA/RTCM datagrams on this local port. The first sender is used until it stops sending.")
+              : qsTr("A configured base needs a serial or TCP connection. UDP only receives data.")
+        color: root._connectionSupported ? QGroundControl.globalPalette.text : QGroundControl.globalPalette.warningText
+    }
+
+    GPSReceiverSerialPort {
+        Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        visible: root.receiver.serialSupported && root._serial
+        deviceFact: root.settings.serialDevice
+        baudFact: root.settings.serialBaudRate
+        serialPorts: root.serialPorts
+        serialBaudRates: root.serialBaudRates
+        minimumBaud: 1200
+        allowAutoBaud: !root.presentation.passive
+        editable: root._editable
+    }
+
+    Explanation {
+        visible: root._editable && root.configuredBase
+        text: !root.presentation.specificReceiver
+              ? qsTr("Select a specific receiver type and its connection to connect manually. Auto baud detects the rate of configurable receivers.")
+              : qsTr("Connect only the selected receiver. USB adapter identity does not identify its GNSS manufacturer. Manual connections disable auto-connect.")
+    }
+
+    Explanation {
+        objectName: "rtkPersistentConfigurationWarning"
+        visible: root.presentation.restartOnConnect
+        text: qsTr("Without permission to save, Quectel role and base settings must already match settings saved externally. The receiver restarts on connection. Survey-in counts accepted 1 Hz observations; its accuracy limit filters each observation and does not guarantee final position accuracy.")
+    }
+
+    Explanation {
+        visible: root.presentation.surveyMaySavePosition && root.baseMode === BaseModeDefinition.BaseSurveyIn
+        text: qsTr("The Quectel receiver may automatically store the completed survey position in its own memory.")
+    }
+
+    ColumnLayout {
+        Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        visible: root.presentation.rtkBase
+        enabled: root._editable
+
+        ModeButton {
+            objectName: "rtkSurveyMode"
+            text: qsTr("Survey-In")
+            checked: root.baseMode === BaseModeDefinition.BaseSurveyIn
+            onClicked: root.settings.useFixedBasePosition.rawValue = BaseModeDefinition.BaseSurveyIn
+            visible: root.presentation.surveyIn
+        }
+        ModeButton {
+            objectName: "rtkFixedMode"
+            text: qsTr("Specify position")
+            checked: root.baseMode === BaseModeDefinition.BaseFixed
+            onClicked: root.settings.useFixedBasePosition.rawValue = BaseModeDefinition.BaseFixed
+        }
+        ModeButton {
+            text: qsTr("Receiver-managed averaging")
+            checked: root.baseMode === BaseModeDefinition.BaseReceiverAveraging
+            onClicked: root.settings.useFixedBasePosition.rawValue = BaseModeDefinition.BaseReceiverAveraging
+            visible: root.presentation.receiverAveraging
+        }
+    }
+
+    Explanation {
+        visible: !root.modeCompatible
+        text: qsTr("The selected base mode is not supported by this receiver. Choose a supported mode explicitly.")
+    }
+
+    Explanation {
+        visible: root.presentation.receiverAveraging && root.baseMode === BaseModeDefinition.BaseReceiverAveraging
+        text: qsTr("The receiver averages its position for up to the maximum time. This is not accuracy-controlled survey-in and does not guarantee a position accuracy.")
+    }
+
+    SettingField {
+        label: qsTr("Maximum averaging time")
+        fact: root.settings.receiverAveragingDuration
+        visible: root.presentation.receiverAveraging && root.baseMode === BaseModeDefinition.BaseReceiverAveraging
+        enabled: root._editable
+    }
+
+    FactSlider {
+        Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        label: root.presentation.observationAccuracyFilter ? qsTr("Observation accuracy limit") : qsTr("Accuracy")
+        fact: root.settings.surveyInAccuracyLimit
+        majorTickStepSize: 0.1
+        enabled: root._editable
+        visible: root.baseMode === BaseModeDefinition.BaseSurveyIn
+                 && root.settings.surveyInAccuracyLimit.userVisible && root.presentation.surveyAccuracy
+    }
+
+    FactSlider {
+        Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        label: root.presentation.acceptedObservationTime ? qsTr("Accepted observation time") : qsTr("Min Duration")
+        fact: root.settings.surveyInMinObservationDuration
+        majorTickStepSize: 10
+        enabled: root._editable
+        visible: root.baseMode === BaseModeDefinition.BaseSurveyIn
+                 && root.settings.surveyInMinObservationDuration.userVisible && root.presentation.surveyDuration
+    }
+
+    SettingField {
+        fact: root.settings.fixedBasePositionLatitude
+        enabled: root._editable
+        visible: root.baseMode === BaseModeDefinition.BaseFixed && root.presentation.rtkBase
+    }
+    SettingField {
+        fact: root.settings.fixedBasePositionLongitude
+        enabled: root._editable
+        visible: root.baseMode === BaseModeDefinition.BaseFixed && root.presentation.rtkBase
+    }
+    SettingField {
+        fact: root.settings.fixedBasePositionAltitude
+        enabled: root._editable
+        visible: root.baseMode === BaseModeDefinition.BaseFixed && root.presentation.rtkBase
+    }
+    SettingField {
+        fact: root.settings.fixedBasePositionAccuracy
+        enabled: root._editable
+        visible: root.baseMode === BaseModeDefinition.BaseFixed && root.presentation.fixedBaseAccuracy
+    }
+
+    RowLayout {
+        Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        visible: root.configuredBase && root.presentation.compactObservations
+                 && root.settings.compactRtcmCorrections.userVisible
+        Explanation { text: root.settings.compactRtcmCorrections.shortDescription }
+        FactCheckBoxSlider {
+            objectName: "rtkCompactRtcm"
+            text: ""
+            Accessible.name: root.settings.compactRtcmCorrections.shortDescription
+            enabled: root._editable
+            fact: root.settings.compactRtcmCorrections
+        }
+    }
+
+    Explanation {
+        visible: root.configuredBase && root.presentation.compactObservations
+                 && root.settings.compactRtcmCorrections.userVisible
+        text: qsTr("Uses about a third less correction bandwidth, for example on slow telemetry radios. Doppler is omitted and measurements use lower resolution.")
+    }
+
+    ColumnLayout {
+        Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        visible: root.presentation.rtkBase
+        Explanation {
+            text: qsTr("Save the current base position for a later fixed-position connection. This does not change the running receiver's mode.")
+        }
+        QGCButton {
+            objectName: "rtkSaveBasePosition"
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            wrapMode: Text.Wrap
+            focusPolicy: Qt.StrongFocus
+            text: root.baseFacts.canSaveCurrentBasePosition ? qsTr("Save Current Base Position")
+                  : !root.baseFacts.valid.rawValue ? qsTr("Not Yet Valid")
+                  : !Number.isFinite(root.baseFacts.currentAccuracy.rawValue)
+                    || root.baseFacts.currentAccuracy.rawValue < 0 ? qsTr("Accuracy Unavailable")
+                  : qsTr("Invalid Base Position")
+            enabled: root.baseFacts.canSaveCurrentBasePosition
+            onClicked: root.saveCurrentBasePosition()
+        }
+    }
+
+    QGCCheckBox {
+        id: persistenceCheckbox
+        objectName: "rtkPersistentChangesCheckBox"
+        Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        text: qsTr("Allow flash save and restart")
+        focusPolicy: Qt.StrongFocus
+        visible: root.presentation.persistentConfiguration
+        enabled: root._editable
+        checked: root.consent.allowed
+        onClicked: root.consent.allowed = checked
+        contentItem: QGCLabel {
+            text: persistenceCheckbox.text
+            color: persistenceCheckbox.textColor
+            leftPadding: persistenceCheckbox.indicator.width + persistenceCheckbox.spacing
+            wrapMode: Text.Wrap
+        }
+    }
+
+    Explanation {
+        objectName: "rtkPersistentConsentWarning"
+        visible: root.presentation.persistentConfiguration
+        text: qsTr("For this connection only, allow QGroundControl to write requested base role or base-setting changes to receiver flash and restart it. Changes may remain saved even if reconnecting fails. No factory reset is performed. Permission is cleared after each attempt and is never used by auto-connect. To use the receiver as a rover again, restore its role with Quectel QGNSS or $PQTMCFGRCVRMODE,W,1 followed by $PQTMSAVEPAR.")
+    }
+
+    RowLayout {
+        Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        visible: root.settings.connectOnStartup.userVisible
+        Explanation { text: root.settings.connectOnStartup.shortDescription }
+        FactCheckBoxSlider {
+            objectName: "rtkConnectOnStartup"
+            text: ""
+            Accessible.name: root.settings.connectOnStartup.shortDescription
+            fact: root.settings.connectOnStartup
+        }
+    }
+
+    QGCButton {
+        objectName: "rtkConnectButton"
+        Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        wrapMode: Text.Wrap
+        focusPolicy: Qt.StrongFocus
+        text: root._active ? qsTr("Disconnect") : qsTr("Connect")
+        enabled: root._active
+                 || (root.presentation.specificReceiver && root.modeCompatible && root._connectionSupported)
+        onClicked: {
+            if (root._active) {
+                root.clearConsent()
+                root.receiver.disconnectConfiguredGPS()
+            } else {
+                root.connectSelectedReceiver()
+            }
+        }
+    }
+
+    Explanation {
+        objectName: "rtkErrorMessage"
+        visible: root.showErrorMessage && text.length > 0
+        text: root.receiver.errorMessage || ""
+    }
+
+    Connections {
+        target: root.receiver
+        function onReceiverChanged() { root.clearConsent() }
+    }
+}

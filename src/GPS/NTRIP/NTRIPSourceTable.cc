@@ -7,7 +7,20 @@
 
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(NTRIPSourceTableLog, "GPS.NTRIPSourceTable")
+QGC_LOGGING_CATEGORY(NTRIPSourceTableLog, "GPS.NTRIP.NTRIPSourceTable")
+
+bool ntripSourceTableComplete(QByteArrayView body)
+{
+    static constexpr QByteArrayView terminator("ENDSOURCETABLE");
+    for (qsizetype offset = body.indexOf(terminator); offset >= 0; offset = body.indexOf(terminator, offset + 1)) {
+        const qsizetype end = offset + terminator.size();
+        if ((offset == 0 || body.at(offset - 1) == '\n') &&
+            (end == body.size() || body.at(end) == '\r' || body.at(end) == '\n')) {
+            return true;
+        }
+    }
+    return false;
+}
 
 bool NTRIPMountpoint::fromSourceTableLine(const QString& line, NTRIPMountpoint& out)
 {
@@ -27,12 +40,10 @@ bool NTRIPMountpoint::fromSourceTableLine(const QString& line, NTRIPMountpoint& 
     mp.navSystem = fields.at(6).trimmed();
     mp.network = fields.at(7).trimmed();
     mp.country = fields.at(8).trimmed();
-    // Caster-supplied coordinates are untrusted; out-of-range/non-finite values
-    // collapse to 0.0, which updateDistance() treats as "unknown" and skips.
     const auto parseCoord = [](const QString& s, double limit) -> double {
         bool ok = false;
         const double v = s.trimmed().toDouble(&ok);
-        return (ok && qIsFinite(v) && qAbs(v) <= limit) ? v : 0.0;
+        return (ok && qIsFinite(v) && qAbs(v) <= limit) ? v : qQNaN();
     };
     mp.latitude = parseCoord(fields.at(9), 90.0);
     mp.longitude = parseCoord(fields.at(10), 180.0);
@@ -50,11 +61,11 @@ bool NTRIPMountpoint::fromSourceTableLine(const QString& line, NTRIPMountpoint& 
 
 void NTRIPMountpoint::updateDistance(const QGeoCoordinate& from)
 {
-    if (!from.isValid() || (latitude == 0.0 && longitude == 0.0)) {
+    const QGeoCoordinate mountCoord(latitude, longitude);
+    if (!from.isValid() || !mountCoord.isValid() || (latitude == 0.0 && longitude == 0.0)) {
         distanceKm = -1.0;
         return;
     }
-    const QGeoCoordinate mountCoord(latitude, longitude);
     distanceKm = from.distanceTo(mountCoord) / 1000.0;
 }
 
@@ -62,97 +73,25 @@ void NTRIPMountpoint::updateDistance(const QGeoCoordinate& from)
 // NTRIPSourceTableModel
 // ---------------------------------------------------------------------------
 
-NTRIPSourceTableModel::NTRIPSourceTableModel(QObject* parent) : QAbstractListModel(parent) {}
+// The base only records the address of the rows; it reads them after construction.
+NTRIPSourceTableModel::NTRIPSourceTableModel(QObject* parent)
+    : QRangeModel(&_mountpoints, parent)
+{}
 
-int NTRIPSourceTableModel::rowCount(const QModelIndex& parent) const
+void NTRIPSourceTableModel::parseSourceTable(const QString& raw, const QGeoCoordinate& from)
 {
-    return parent.isValid() ? 0 : count();
-}
-
-QVariant NTRIPSourceTableModel::data(const QModelIndex& index, int role) const
-{
-    if (index.row() < 0 || index.row() >= _mountpoints.size()) {
-        return {};
-    }
-    const NTRIPMountpoint& mp = _mountpoints.at(index.row());
-    switch (role) {
-        case MountpointRole:
-            return mp.mountpoint;
-        case IdentifierRole:
-            return mp.identifier;
-        case FormatRole:
-            return mp.format;
-        case FormatDetailsRole:
-            return mp.formatDetails;
-        case CarrierRole:
-            return mp.carrier;
-        case NavSystemRole:
-            return mp.navSystem;
-        case NetworkRole:
-            return mp.network;
-        case CountryRole:
-            return mp.country;
-        case LatitudeRole:
-            return mp.latitude;
-        case LongitudeRole:
-            return mp.longitude;
-        case NmeaRole:
-            return mp.nmea;
-        case SolutionRole:
-            return mp.solution;
-        case GeneratorRole:
-            return mp.generator;
-        case CompressionRole:
-            return mp.compression;
-        case AuthenticationRole:
-            return mp.authentication;
-        case FeeRole:
-            return mp.fee;
-        case BitrateRole:
-            return mp.bitrate;
-        case DistanceKmRole:
-            return mp.distanceKm;
-        default:
-            return {};
-    }
-}
-
-QHash<int, QByteArray> NTRIPSourceTableModel::roleNames() const
-{
-    return {
-        {MountpointRole, "mountpoint"},
-        {IdentifierRole, "identifier"},
-        {FormatRole, "format"},
-        {FormatDetailsRole, "formatDetails"},
-        {CarrierRole, "carrier"},
-        {NavSystemRole, "navSystem"},
-        {NetworkRole, "network"},
-        {CountryRole, "country"},
-        {LatitudeRole, "latitude"},
-        {LongitudeRole, "longitude"},
-        {NmeaRole, "nmea"},
-        {SolutionRole, "solution"},
-        {GeneratorRole, "generator"},
-        {CompressionRole, "compression"},
-        {AuthenticationRole, "authentication"},
-        {FeeRole, "fee"},
-        {BitrateRole, "bitrate"},
-        {DistanceKmRole, "distanceKm"},
-    };
-}
-
-void NTRIPSourceTableModel::parseSourceTable(const QString& raw)
-{
-    _mutate([this, raw]() {
+    _mutate([this, raw, from]() {
         QList<NTRIPMountpoint> mountpoints;
         const QStringList lines = raw.split('\n');
         for (const QString& line : lines) {
             const QString trimmed = line.trimmed();
             NTRIPMountpoint mp;
             if (NTRIPMountpoint::fromSourceTableLine(trimmed, mp)) {
+                mp.updateDistance(from);
                 mountpoints.append(mp);
             }
         }
+        _sortByDistance(mountpoints);
 
         const QPointer<NTRIPSourceTableModel> guard(this);
         beginResetModel();
@@ -177,7 +116,7 @@ void NTRIPSourceTableModel::updateDistances(const QGeoCoordinate& from)
             const double previous = _mountpoints.first().distanceKm;
             _mountpoints.first().updateDistance(from);
             if (previous != _mountpoints.first().distanceKm) {
-                emit dataChanged(index(0), index(0), {DistanceKmRole});
+                emit dataChanged(index(0, 0), index(0, 0), {DistanceKmRole});
             }
             return;
         }
@@ -189,28 +128,12 @@ void NTRIPSourceTableModel::updateDistances(const QGeoCoordinate& from)
         for (NTRIPMountpoint& mp : _mountpoints) {
             mp.updateDistance(from);
         }
-        _sortByDistance();
+        _sortByDistance(_mountpoints);
         endResetModel();
     });
 }
 
-void NTRIPSourceTableModel::sortByDistance()
-{
-    _mutate([this]() {
-        if (_mountpoints.size() < 2) {
-            return;
-        }
-        const QPointer<NTRIPSourceTableModel> guard(this);
-        beginResetModel();
-        if (!guard) {
-            return;
-        }
-        _sortByDistance();
-        endResetModel();
-    });
-}
-
-void NTRIPSourceTableModel::_sortByDistance()
+void NTRIPSourceTableModel::_sortByDistance(QList<NTRIPMountpoint>& mountpoints)
 {
     // Distance ordering: known distances ascending, unknown (negative) last.
     const auto less = [](const NTRIPMountpoint& a, const NTRIPMountpoint& b) {
@@ -226,7 +149,7 @@ void NTRIPSourceTableModel::_sortByDistance()
         return a.distanceKm < b.distanceKm;
     };
 
-    std::stable_sort(_mountpoints.begin(), _mountpoints.end(), less);
+    std::stable_sort(mountpoints.begin(), mountpoints.end(), less);
 }
 
 void NTRIPSourceTableModel::clear()

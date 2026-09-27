@@ -11,14 +11,12 @@
 #include "QGCMapEngineManager.h"
 #include "ADSBVehicleManager.h"
 #include "AudioOutput.h"
-#include "NTRIPManager.h"
 #include "MAVLinkSigningKeys.h"
 #include "MissionCommandTree.h"
 #include "VideoManager.h"
 #include "MultiVehicleManager.h"
 #include "LoggingCategoryModel.h"
 #include "GPSManager.h"
-#include "GPSRtk.h"
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialPortManager.h"
 #endif
@@ -40,12 +38,10 @@ QGC_LOGGING_CATEGORY(GuidedActionsControllerLog, "QMLControls.GuidedActionsContr
 QGeoCoordinate QGroundControlQmlGlobal::_coord = QGeoCoordinate(0.0,0.0);
 double QGroundControlQmlGlobal::_zoom = 2;
 
-QGroundControlQmlGlobal::QGroundControlQmlGlobal(QObject *parent)
+QGroundControlQmlGlobal::QGroundControlQmlGlobal(QObject* parent)
     : QObject(parent)
     , _mapEngineManager(QGCMapEngineManager::instance())
     , _adsbVehicleManager(ADSBVehicleManager::instance())
-    , _ntripManager(NTRIPManager::instance())
-    , _qgcPositionManager(QGCPositionManager::instance())
     , _missionCommandTree(MissionCommandTree::instance())
     , _mavlinkSigningKeys(MAVLinkSigningKeys::instance())
     , _videoManager(VideoManager::instance())
@@ -54,7 +50,6 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QObject *parent)
     , _settingsManager(SettingsManager::instance())
     , _corePlugin(QGCCorePlugin::instance())
     , _globalPalette(new QGCPalette(this))
-    , _gpsRtkFactGroup(GPSManager::instance()->gpsRtk()->gpsRtkFactGroup())
 {
     // We clear the parent on this object since we run into shutdown problems caused by hybrid qml app. Instead we let it leak on shutdown.
     // setParent(nullptr);
@@ -94,6 +89,11 @@ QGroundControlQmlGlobal::~QGroundControlQmlGlobal()
 GPSManager* QGroundControlQmlGlobal::gpsManager() const
 {
     return GPSManager::instance();
+}
+
+QGCPositionManager* QGroundControlQmlGlobal::positionManager() const
+{
+    return GPSManager::instance()->positionManager();
 }
 
 void QGroundControlQmlGlobal::saveGlobalSetting (const QString& key, const QString& value)

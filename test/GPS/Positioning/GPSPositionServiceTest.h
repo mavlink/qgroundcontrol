@@ -9,9 +9,8 @@ private slots:
     void _sourcesShareAcceptance_data();
     void _sourcesShareAcceptance();
     void _registrationReplacementAndSessions();
-    void _sharedProducerRoles();
-    void _sharedHealthLoss_data();
-    void _sharedHealthLoss();
+    void _producerLoss_data();
+    void _producerLoss();
     void _rawSourceSharingRejected_data();
     void _rawSourceSharingRejected();
     void _selectionStatusMatchesPublication_data();
@@ -24,7 +23,6 @@ private slots:
     void _consumerPolicies();
     void _consumerMaximumAge();
     void _policySelectionGates();
-    void _schedulerDestruction();
     void _sourceAndHealthLifetime();
     void _notificationsCanSwitchOrDelete_data();
     void _notificationsCanSwitchOrDelete();
@@ -41,5 +39,5 @@ private slots:
     void _accuracyNotifiesOnlyChanges();
     void _rawRegistrationCarriesSession();
     void _registrationRetiresFromWorker();
-    void _foreignSchedulerRejected();
+    void _destructionDisconnectsBindings();
 };

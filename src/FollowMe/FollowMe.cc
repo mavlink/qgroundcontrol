@@ -1,14 +1,16 @@
-#include "QmlObjectListModel.h"
 #include "FollowMe.h"
-#include "MultiVehicleManager.h"
-#include "FirmwarePlugin.h"
-#include "Vehicle.h"
-#include "PositionManager.h"
-#include "SettingsManager.h"
-#include "AppSettings.h"
-#include "QGCLoggingCategory.h"
 
 #include <QtPositioning/QGeoPositionInfo>
+
+#include "AppSettings.h"
+#include "FirmwarePlugin.h"
+#include "GPSManager.h"
+#include "MultiVehicleManager.h"
+#include "PositionManager.h"
+#include "QGCLoggingCategory.h"
+#include "QmlObjectListModel.h"
+#include "SettingsManager.h"
+#include "Vehicle.h"
 
 QGC_LOGGING_CATEGORY(FollowMeLog, "API.FollowMe")
 
@@ -88,7 +90,8 @@ void FollowMe::_disableFollowSend()
 
 void FollowMe::_sendGCSMotionReport()
 {
-    const auto observation = QGCPositionManager::instance()->acceptedObservation(GPSObservation::PositionUse::Motion);
+    const auto observation =
+        GPSManager::instance()->positionManager()->acceptedObservation(GPSObservation::PositionUse::Motion);
     if (!observation) {
         return;
     }

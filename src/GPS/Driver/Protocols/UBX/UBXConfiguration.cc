@@ -1,128 +1,98 @@
-/****************************************************************************
- *
- *   Copyright (c) 2012-2023 PX4 Development Team. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- * 3. Neither the name PX4 nor the names of its contributors may be
- *    used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
- * OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
- * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
- * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- *
- ****************************************************************************/
+#include <cmath>
+#include <string.h>
 
 #include <QtCore/QScopeGuard>
 
 #include "LittleEndian.h"
+#include "NMEASentence.h"
+#include "RTCMFramer.h"
+#include "UBX/UBXProtocol.h"
+#include "UBXConfiguration_p.h"
+#include "UBXMessageCodec.h"
 #include "UBXMessageSchema.h"
-#include "UBXPrivate.h"
-#include "UBXWire.h"
 
 namespace {
-uint32_t fixedAccuracyWireUnits(float accuracyMeters)
-{
-    // Match shared validation: multiplying directly by 10000 can round an accepted value past UINT32_MAX.
-    const float accuracyMillimeters = accuracyMeters * 1000.0f;
-    return static_cast<uint32_t>(accuracyMillimeters * 10.0f);
-}
+// RTCM3 message sets for a base: the station/bias messages plus GPS, GLONASS, Galileo and BeiDou
+// observations as MSM7 (1077/1087/1097/1127) or compact MSM4 (1074/1084/1094/1124).
+constexpr uint32_t RTCM_BASE_MSM7_MSGOUT_I2C[] = {
+    UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1005_I2C, UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1077_I2C,
+    UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1087_I2C, UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1230_I2C,
+    UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1097_I2C, UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1127_I2C};
+constexpr uint32_t RTCM_BASE_MSM4_MSGOUT_I2C[] = {
+    UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1005_I2C, UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1074_I2C,
+    UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1084_I2C, UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1230_I2C,
+    UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1094_I2C, UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1124_I2C};
+constexpr uint32_t RTCM_MSM7_OBSERVATIONS_MSGOUT_I2C[] = {
+    UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1077_I2C, UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1087_I2C,
+    UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1097_I2C, UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1127_I2C};
+constexpr uint32_t RTCM_MSM4_OBSERVATIONS_MSGOUT_I2C[] = {
+    UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1074_I2C, UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1084_I2C,
+    UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1094_I2C, UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1124_I2C};
 }  // namespace
 
-GPSNativeUBX::BaseStationCapability GPSNativeUBX::baseStationCapability() const
+UBXProtocol::BaseStationCapability UBXProtocol::baseStationCapability() const
 {
-    if (_board == Board::u_blox8) {
-        return _is_m8p ? BaseStationCapability::Supported
-                       : (_model_name[0] ? BaseStationCapability::Unsupported : BaseStationCapability::Unknown);
+    if (_identity.board == Board::u_blox8) {
+        return _identity.isM8p
+                   ? BaseStationCapability::Supported
+                   : (_identity.modelName[0] ? BaseStationCapability::Unsupported : BaseStationCapability::Unknown);
     }
-    const auto profile = UBX::receiverProfile(_board);
+    const auto profile = UBX::receiverProfile(_identity.board);
     return profile.rtcmOutput            ? BaseStationCapability::Supported
            : profile.baseCapabilityKnown ? BaseStationCapability::Unsupported
                                          : BaseStationCapability::Unknown;
 }
 
-int GPSNativeUBX::configure(unsigned& baudrate, const GPSConfig& config)
+bool UBXProtocol::configure(unsigned& baudrate, const GPSConfig& config)
 {
     _baseConfig = config.base;
-    _dyn_model = config.dynamicModel;
-    _survey_duration = 0;
     resetIOError();
-    _timeModeUnsupported = false;
+    _identity.timeModeUnsupported = false;
     _valsetAckAmbiguous = false;
     _configured = false;
-    _decodeNavigation = false;
-    _assembleEpochs = false;
+    _decodeContext = {};
     _navigationEpochs = {};
     _controller = {};
     _pendingDisableMessage = 0;
-    _comms_request_pending = false;
+    _comms.pending = false;
     _rtcmActivationPending = false;
     _rtcm_parsing.reset();
-    if (!validateConfiguration(config)) {
-        return -1;
+    if (!validateConfiguration(config, {.compactObservations = true})) {
+        return false;
     }
-    _output_mode = config.output_mode;
 
     const bool auto_baudrate = baudrate == 0;
     const auto identify = [this] {
         // Slow factory NMEA output can delay a MON-VER response by over a second.
         const Operation operation(*this, 2000);
-        _board = Board::unknown;
-        return sendMessage(UBX_MSG_MON_VER, nullptr, 0) && waitForAck(UBX_MSG_MON_VER, 2000, true) == 0;
+        _identity.board = Board::unknown;
+        return sendMessage(UBX_MSG_MON_VER, nullptr, 0, {{}, std::chrono::milliseconds(2000)}) &&
+               waitForAck(UBX_MSG_MON_VER).succeeded();
     };
     constexpr unsigned BAUD_RATES[] = {38400, 57600, 9600, 115200, 230400, 460800, 921600};
-    unsigned detectedBaud = 0;
-    for (const unsigned candidate : BAUD_RATES) {
-        const unsigned selected = auto_baudrate ? candidate : baudrate;
-        if (setBaudrate(selected) < 0) {
-            return -1;
-        }
+    const auto detection = detectBaud(BAUD_RATES, baudrate, [this, &identify](unsigned) {
         decodeInit();
-        bool readError = false;
-        receiveInternal(20, readError);
+        receiveInternal(20);
         decodeInit();
-        if (readError) {
-            return -1;
+        if (hasIOError()) {
+            return BaudProbe::Stop;
         }
-        if (identify()) {
-            detectedBaud = selected;
-            break;
-        }
-        if (ioError() || !auto_baudrate) {
-            return -1;
-        }
-    }
+        return identify() ? BaudProbe::Found : BaudProbe::TryNext;
+    });
     // Discovery only polls identity: silence or an unsupported identity must not change receiver settings.
-    if (!detectedBaud || _board == Board::unknown) {
-        return -1;
+    if (!detection.found || _identity.board == Board::unknown) {
+        return false;
     }
-    if (_output_mode == OutputMode::RTCM && baseStationCapability() == BaseStationCapability::Unsupported) {
-        return -1;
+    const unsigned detectedBaud = detection.baud;
+    if (baseStationCapability() == BaseStationCapability::Unsupported) {
+        return false;
     }
 
-    const unsigned desiredBaud = !auto_baudrate                                        ? baudrate
-                                 : _proto_ver_27_or_higher || _board == Board::u_blox8 ? UBX_BAUDRATE_M8_AND_NEWER
-                                                                                       : UBX_TX_CFG_PRT_BAUDRATE;
+    const unsigned desiredBaud = !auto_baudrate                                              ? baudrate
+                                 : _identity.protocol27 || _identity.board == Board::u_blox8 ? UBX_BAUDRATE_M8_AND_NEWER
+                                                                                             : UBX_TX_CFG_PRT_BAUDRATE;
     ubx_payload_tx_cfg_prt_t ports[2]{};
-    if (_proto_ver_27_or_higher) {
+    if (_identity.protocol27) {
         static constexpr CfgValsetItem UART1_UBX[] = {
             {UBX_CFG_KEY_CFG_UART1_STOPBITS, 1},    {UBX_CFG_KEY_CFG_UART1_DATABITS, 0},
             {UBX_CFG_KEY_CFG_UART1_PARITY, 0},      {UBX_CFG_KEY_CFG_UART1INPROT_UBX, 1},
@@ -131,298 +101,91 @@ int GPSNativeUBX::configure(unsigned& baudrate, const GPSConfig& config)
         };
         initCfgValset();
         cfgValset(UART1_UBX);
-        if (!sendCfgValset() || waitForAck(UBX_MSG_CFG_VALSET, 2000, true) < 0) {
-            return -1;
+        if (!sendCfgValset(true, 2000) || !waitForAck(UBX_MSG_CFG_VALSET).succeeded()) {
+            return false;
         }
     } else {
         for (auto& port : ports) {
             port.mode = UBX_TX_CFG_PRT_MODE;
             port.baudRate = detectedBaud;
-            port.inProtoMask = _output_mode == OutputMode::GPS ? UBX_TX_CFG_PRT_PROTO_UBX | UBX_TX_CFG_PRT_PROTO_RTCM
-                                                               : UBX_TX_CFG_PRT_PROTO_UBX;
-            port.outProtoMask = _output_mode == OutputMode::GPS ? UBX_TX_CFG_PRT_PROTO_UBX
-                                                                : UBX_TX_CFG_PRT_PROTO_UBX | UBX_TX_CFG_PRT_PROTO_RTCM;
+            port.inProtoMask = UBX_TX_CFG_PRT_PROTO_UBX;
+            port.outProtoMask = UBX_TX_CFG_PRT_PROTO_UBX | UBX_TX_CFG_PRT_PROTO_RTCM;
         }
         ports[0].portID = UBX_TX_CFG_PRT_PORTID;
         ports[1].portID = UBX_TX_CFG_PRT_PORTID_USB;
-        if (!sendMessage(UBX_MSG_CFG_PRT, UBX::encode(ports)) ||
-            waitForAck(UBX_MSG_CFG_PRT, UBX_CONFIG_TIMEOUT, true) < 0) {
-            return -1;
+        if (!sendMessage(UBX_MSG_CFG_PRT, UBX::encode(ports)) || !waitForAck(UBX_MSG_CFG_PRT).succeeded()) {
+            return false;
         }
     }
     if (desiredBaud != detectedBaud) {
-        const bool modern = _proto_ver_27_or_higher;
-        const Board identifiedBoard = _board;
+        const bool modern = _identity.protocol27;
+        const Board identifiedBoard = _identity.board;
         if (modern) {
             initCfgValset();
             cfgValset<uint32_t>(UBX_CFG_KEY_CFG_UART1_BAUDRATE, desiredBaud);
-            if (!sendCfgValset()) {
-                return -1;
+            if (!sendCfgValset(false)) {
+                return false;
             }
         } else {
             for (auto& port : ports) {
                 port.baudRate = desiredBaud;
             }
-            if (!sendMessage(UBX_MSG_CFG_PRT, UBX::encode(ports))) {
-                return -1;
+            if (!sendMessage(UBX_MSG_CFG_PRT, UBX::encode(ports),
+                             {{}, std::chrono::milliseconds(UBX_CONFIG_TIMEOUT), {}, false})) {
+                return false;
             }
         }
         const uint16_t command = modern ? UBX_MSG_CFG_VALSET : UBX_MSG_CFG_PRT;
-        const bool acknowledged = waitForAck(command, UBX_CONFIG_TIMEOUT, false) == 0;
-        if (ioError() || _last_ack_rejected || setBaudrate(desiredBaud) < 0) {
-            return -1;
+        const auto result = waitForAck(command);
+        const bool acknowledged = result.succeeded();
+        if (hasIOError() || result.evidence.outcome == GPSCommandOutcome::Rejected || !setBaudrate(desiredBaud)) {
+            return false;
         }
         if (modern && !acknowledged) {
             // Do not clear ACK ambiguity after UART handoff: every later VALSET needs matching readback.
             _controller.requireConfigurationReadback(command);
         }
         decodeInit();
-        if (!identify() || _board != identifiedBoard || _proto_ver_27_or_higher != modern ||
+        if (!identify() || _identity.board != identifiedBoard || _identity.protocol27 != modern ||
             _controller.lateRejection()) {
-            return -1;
+            return false;
         }
-        if (modern && !acknowledged && waitForAck(command, UBX_CONFIG_TIMEOUT, true) < 0) {
-            return -1;
+        if (modern && !acknowledged &&
+            !verifyCfgValset(
+                 {"UBX-CFG-VALSET readback", std::chrono::milliseconds(UBX_CONFIG_TIMEOUT), _valset.settings})
+                 .succeeded()) {
+            return false;
         }
     }
     baudrate = desiredBaud;
 
-    if (_output_mode == OutputMode::RTCM) {
-        if (!_rtcm_parsing) {
-            _rtcm_parsing.emplace();
-        }
-
-        _rtcm_parsing->reset();
+    if (!_rtcm_parsing) {
+        _rtcm_parsing.emplace();
     }
+    _rtcm_parsing->reset();
 
-    if (_output_mode == OutputMode::RTCM) {
-        // RTCM mode force stationary dynamic model
-        _dyn_model = 2;
-    }
-
-    int ret;
-
-    /* Configure the device, use config commands depending on protocol version */
-    if (_proto_ver_27_or_higher) {
-        ret = configureDevice(config);
-
-    } else {
-        ret = configureDevicePreV27(config.gnss_systems);
-    }
-
-    if (ret != 0) {
-        return ret;
-    }
-
-    // A position source must leave any previous base-station time mode.
-    if (_output_mode != OutputMode::RTCM) {
-        if (disableTimeMode() < 0) {
-            return -1;
-        }
-        if (!_timeModeUnsupported) {
-            if (_proto_ver_27_or_higher) {
-                initCfgValset();
-                cfgValsetPort(UBX_CFG_KEY_MSGOUT_UBX_NAV_SVIN_I2C, 0);
-                if (sendCfgValsetAcked() < 0) {
-                    return -1;
-                }
-            } else if (!configureMessageRateAndAck(UBX_MSG_NAV_SVIN, 0, true)) {
-                return -1;
-            }
-        }
-    }
-
-    if (_output_mode == OutputMode::RTCM) {
-        if (restartSurveyIn() < 0) {
-            return -1;
-        }
+    // Configure the device with the command set of its protocol version.
+    if (!(_identity.protocol27 ? configureDevice() : configureDevicePreV27()) || !restartSurveyIn()) {
+        return false;
     }
 
     _configured = true;
-    _decodeNavigation = true;
-    _assembleEpochs = true;
-    return 0;
+    _decodeContext.navigation = true;
+    _decodeContext.assembleEpochs = true;
+    return true;
 }
 
-int GPSNativeUBX::configureDevicePreV27(const GNSSSystemsMask& gnssSystems)
-{
-    ubx_payload_tx_cfg_gnss_t payload_tx_cfg_gnss{};
-    ubx_payload_tx_cfg_nav5_t payload_tx_cfg_nav5{};
-    ubx_payload_tx_cfg_rate_t payload_tx_cfg_rate{};
-
-    /* Send a CFG-RATE message to define update rate */
-    payload_tx_cfg_rate = {};
-    payload_tx_cfg_rate.measRate = UBX_TX_CFG_RATE_MEASINTERVAL;
-    payload_tx_cfg_rate.navRate = UBX_TX_CFG_RATE_NAVRATE;
-    payload_tx_cfg_rate.timeRef = UBX_TX_CFG_RATE_TIMEREF;
-
-    if (!sendMessage(UBX_MSG_CFG_RATE, UBX::encode(payload_tx_cfg_rate))) {
-        return -1;
-    }
-
-    if (waitForAck(UBX_MSG_CFG_RATE, UBX_CONFIG_TIMEOUT, true) < 0) {
-        return -1;
-    }
-
-    /* send a NAV5 message to set the options for the internal filter */
-    payload_tx_cfg_nav5 = {};
-    payload_tx_cfg_nav5.mask = UBX_TX_CFG_NAV5_MASK;
-    payload_tx_cfg_nav5.dynModel = _dyn_model;
-    payload_tx_cfg_nav5.fixMode = UBX_TX_CFG_NAV5_FIXMODE;
-
-    if (!sendMessage(UBX_MSG_CFG_NAV5, UBX::encode(payload_tx_cfg_nav5))) {
-        return -1;
-    }
-
-    if (waitForAck(UBX_MSG_CFG_NAV5, UBX_CONFIG_TIMEOUT, true) < 0) {
-        return -1;
-    }
-
-    /* configure active GNSS systems (number of channels and used signals taken from U-Center default) */
-    if (static_cast<int32_t>(gnssSystems) != 0) {
-        payload_tx_cfg_gnss = {};
-        payload_tx_cfg_gnss.msgVer = 0x00;
-        payload_tx_cfg_gnss.numTrkChHw = 0x00;    // read only
-        payload_tx_cfg_gnss.numTrkChUse = 0xFF;   // use max number of HW channels
-        payload_tx_cfg_gnss.numConfigBlocks = 7;  // always configure all systems
-
-        // GPS and QZSS should always be enabled and disabled together, according to uBlox
-        payload_tx_cfg_gnss.block[0].gnssId = UBX_TX_CFG_GNSS_GNSSID_GPS;
-        payload_tx_cfg_gnss.block[1].gnssId = UBX_TX_CFG_GNSS_GNSSID_QZSS;
-
-        if (gnssSystems & GNSSSystemsMask::ENABLE_GPS) {
-            payload_tx_cfg_gnss.block[0].resTrkCh = 8;
-            payload_tx_cfg_gnss.block[0].maxTrkCh = 16;
-            payload_tx_cfg_gnss.block[0].flags = UBX_TX_CFG_GNSS_FLAGS_GPS_L1CA | UBX_TX_CFG_GNSS_FLAGS_ENABLE;
-            payload_tx_cfg_gnss.block[1].resTrkCh = 0;
-            payload_tx_cfg_gnss.block[1].maxTrkCh = 3;
-            payload_tx_cfg_gnss.block[1].flags = UBX_TX_CFG_GNSS_FLAGS_QZSS_L1CA | UBX_TX_CFG_GNSS_FLAGS_ENABLE;
-        }
-
-        payload_tx_cfg_gnss.block[2].gnssId = UBX_TX_CFG_GNSS_GNSSID_SBAS;
-
-        if (gnssSystems & GNSSSystemsMask::ENABLE_SBAS) {
-            payload_tx_cfg_gnss.block[2].resTrkCh = 1;
-            payload_tx_cfg_gnss.block[2].maxTrkCh = 3;
-            payload_tx_cfg_gnss.block[2].flags = UBX_TX_CFG_GNSS_FLAGS_SBAS_L1CA | UBX_TX_CFG_GNSS_FLAGS_ENABLE;
-        }
-
-        payload_tx_cfg_gnss.block[3].gnssId = UBX_TX_CFG_GNSS_GNSSID_GALILEO;
-
-        if (gnssSystems & GNSSSystemsMask::ENABLE_GALILEO) {
-            payload_tx_cfg_gnss.block[3].resTrkCh = 4;
-            payload_tx_cfg_gnss.block[3].maxTrkCh = 8;
-            payload_tx_cfg_gnss.block[3].flags = UBX_TX_CFG_GNSS_FLAGS_GALILEO_E1 | UBX_TX_CFG_GNSS_FLAGS_ENABLE;
-        }
-
-        payload_tx_cfg_gnss.block[4].gnssId = UBX_TX_CFG_GNSS_GNSSID_BEIDOU;
-
-        if (gnssSystems & GNSSSystemsMask::ENABLE_BEIDOU) {
-            payload_tx_cfg_gnss.block[4].resTrkCh = 8;
-            payload_tx_cfg_gnss.block[4].maxTrkCh = 16;
-            payload_tx_cfg_gnss.block[4].flags = UBX_TX_CFG_GNSS_FLAGS_BEIDOU_B1I | UBX_TX_CFG_GNSS_FLAGS_ENABLE;
-        }
-
-        payload_tx_cfg_gnss.block[5].gnssId = UBX_TX_CFG_GNSS_GNSSID_GLONASS;
-
-        if (gnssSystems & GNSSSystemsMask::ENABLE_GLONASS) {
-            payload_tx_cfg_gnss.block[5].resTrkCh = 8;
-            payload_tx_cfg_gnss.block[5].maxTrkCh = 14;
-            payload_tx_cfg_gnss.block[5].flags = UBX_TX_CFG_GNSS_FLAGS_GLONASS_L1 | UBX_TX_CFG_GNSS_FLAGS_ENABLE;
-        }
-
-        // IMES always disabled
-        payload_tx_cfg_gnss.block[6].gnssId = UBX_TX_CFG_GNSS_GNSSID_IMES;
-        payload_tx_cfg_gnss.block[6].flags = 0;
-
-        // send message
-        if (!sendMessage(UBX_MSG_CFG_GNSS, UBX::encode(payload_tx_cfg_gnss))) {
-            return -1;
-        }
-
-        if (waitForAck(UBX_MSG_CFG_GNSS, UBX_CONFIG_TIMEOUT, true) < 0 && !ioError()) {
-            // The receiver rejects the configuration as a whole if it names a constellation it
-            // cannot receive, e.g. BeiDou on a SAM-M8Q, or more of them than it can track at
-            // once. Keep the receiver's own selection rather than losing the fix over it.
-            log(GPSProtocolLogLevel::Warning, "GNSS constellation config rejected, keeping receiver config");
-        }
-
-        // On u-blox 8 the Galileo change only takes effect once the configuration has been
-        // saved and the receiver hardware reset, which we cannot do without dropping the
-        // rest of this session's configuration
-        if ((gnssSystems & GNSSSystemsMask::ENABLE_GALILEO) && !ioError()) {
-            log(GPSProtocolLogLevel::Warning, "Galileo needs a receiver power cycle to take effect");
-        }
-
-        waitForGnssReset();
-    }
-
-    /* configure message rates */
-    /* the last argument is divisor for measurement rate (set by CFG RATE), i.e. 1 means 5Hz */
-
-    /* try to set rate for NAV-PVT */
-    /* (implemented for ubx7+ modules only, use NAV-SOL, NAV-POSLLH, NAV-VELNED and NAV-TIMEUTC for ubx6) */
-    if (!configureMessageRate(UBX_MSG_NAV_PVT, 1)) {
-        return -1;
-    }
-
-    if (waitForAck(UBX_MSG_CFG_MSG, UBX_CONFIG_TIMEOUT, true) < 0) {
-        _use_nav_pvt = false;
-
-    } else {
-        _use_nav_pvt = true;
-    }
-
-    if (!_use_nav_pvt) {
-        if (!configureMessageRateAndAck(UBX_MSG_NAV_TIMEUTC, 5, true)) {
-            return -1;
-        }
-
-        if (!configureMessageRateAndAck(UBX_MSG_NAV_POSLLH, 1, true)) {
-            return -1;
-        }
-
-        if (!configureMessageRateAndAck(UBX_MSG_NAV_SOL, 1, true)) {
-            return -1;
-        }
-
-        if (!configureMessageRateAndAck(UBX_MSG_NAV_VELNED, 1, true)) {
-            return -1;
-        }
-    }
-
-    if (!configureMessageRateAndAck(UBX_MSG_NAV_STATUS, 1, true)) {
-        return -1;
-    }
-
-    if (!configureMessageRateAndAck(UBX_MSG_NAV_DOP, 1, true)) {
-        return -1;
-    }
-
-    if (!configureMessageRateAndAck(UBX_MSG_NAV_SVINFO, (_satellite_info != nullptr) ? 5 : 0, true)) {
-        return -1;
-    }
-
-    if (!configureMessageRateAndAck(UBX_MSG_MON_HW, 1, true)) {
-        return -1;
-    }
-
-    return 0;
-}
-
-int GPSNativeUBX::configureDevice(const GPSConfig& config)
+bool UBXProtocol::configureDevice()
 {
     // There is no RTCM or USB interface on M10
-    if (UBX::receiverProfile(_board).usb) {
+    if (UBX::receiverProfile(_identity.board).usb) {
         initCfgValset();
 
-        const uint8_t enable_corrections_in = (_output_mode == OutputMode::RTCM) ? 0 : 1;
-
-        cfgValset<uint8_t>(UBX_CFG_KEY_CFG_UART1INPROT_RTCM3X, enable_corrections_in);
+        cfgValset<uint8_t>(UBX_CFG_KEY_CFG_UART1INPROT_RTCM3X, 0);
 
         // USB
         cfgValset<uint8_t>(UBX_CFG_KEY_CFG_USBINPROT_UBX, 1);
-        cfgValset<uint8_t>(UBX_CFG_KEY_CFG_USBINPROT_RTCM3X, enable_corrections_in);
+        cfgValset<uint8_t>(UBX_CFG_KEY_CFG_USBINPROT_RTCM3X, 0);
         cfgValset<uint8_t>(UBX_CFG_KEY_CFG_USBINPROT_NMEA, 0);
         cfgValset<uint8_t>(UBX_CFG_KEY_CFG_USBOUTPROT_UBX, 1);
 
@@ -430,20 +193,20 @@ int GPSNativeUBX::configureDevice(const GPSConfig& config)
 
         // Only RTCM-output-capable receivers expose these keys. M9 SPG rejects
         // the entire VALSET if they are included, even with a value of zero.
-        if (UBX::receiverProfile(_board).rtcmOutput) {
-            cfgValset<uint8_t>(UBX_CFG_KEY_CFG_UART1OUTPROT_RTCM3X, _output_mode != OutputMode::GPS);
-            cfgValset<uint8_t>(UBX_CFG_KEY_CFG_USBOUTPROT_RTCM3X, _output_mode != OutputMode::GPS);
+        if (UBX::receiverProfile(_identity.board).rtcmOutput) {
+            cfgValset<uint8_t>(UBX_CFG_KEY_CFG_UART1OUTPROT_RTCM3X, 1);
+            cfgValset<uint8_t>(UBX_CFG_KEY_CFG_USBOUTPROT_RTCM3X, 1);
         }
 
-        if (sendCfgValsetAcked() < 0) {
-            return -1;
+        if (!sendCfgValsetAcked().succeeded()) {
+            return false;
         }
 
         // Optional SPARTN input (PointPerfect). Sent separately so modules without
         // SPARTN support can NACK without failing the rest of configuration.
         initCfgValset();
-        cfgValset<uint8_t>(UBX_CFG_KEY_CFG_UART1INPROT_SPARTN, enable_corrections_in);
-        cfgValset<uint8_t>(UBX_CFG_KEY_CFG_USBINPROT_SPARTN, enable_corrections_in);
+        cfgValset<uint8_t>(UBX_CFG_KEY_CFG_UART1INPROT_SPARTN, 0);
+        cfgValset<uint8_t>(UBX_CFG_KEY_CFG_USBINPROT_SPARTN, 0);
 
         sendCfgValsetAcked(false);
     }
@@ -452,7 +215,7 @@ int GPSNativeUBX::configureDevice(const GPSConfig& config)
     initCfgValset();
     cfgValset<uint8_t>(UBX_CFG_KEY_NAVSPG_FIXMODE, 3 /* Auto 2d/3d */);
     cfgValset<uint8_t>(UBX_CFG_KEY_NAVSPG_UTCSTANDARD, 3 /* USNO (U.S. Naval Observatory derived from GPS) */);
-    cfgValset<uint8_t>(UBX_CFG_KEY_NAVSPG_DYNMODEL, _dyn_model);
+    cfgValset<uint8_t>(UBX_CFG_KEY_NAVSPG_DYNMODEL, UBX::STATIONARY_DYNAMIC_MODEL);
 
     // measurement rate
     // M9N max rate is 8Hz for all satellites, above 8Hz the number of used satellites is restricted to 16.
@@ -465,7 +228,7 @@ int GPSNativeUBX::configureDevice(const GPSConfig& config)
     // be restricted to 16. (Not mentioned in datasheet)
     int rate_meas = 100;  // 10Hz
 
-    switch (_board) {
+    switch (_identity.board) {
         case Board::u_blox9:
             rate_meas = 125;  // 8Hz
             break;
@@ -483,8 +246,8 @@ int GPSNativeUBX::configureDevice(const GPSConfig& config)
     cfgValset<uint16_t>(UBX_CFG_KEY_RATE_NAV, 1);
     cfgValset<uint8_t>(UBX_CFG_KEY_RATE_TIMEREF, 0);
 
-    if (sendCfgValsetAcked() < 0) {
-        return -1;
+    if (!sendCfgValsetAcked().succeeded()) {
+        return false;
     }
 
     // Disable odometer. Separate, non-fatal VALSET: CFG-ODO-* was removed on the
@@ -493,7 +256,7 @@ int GPSNativeUBX::configureDevice(const GPSConfig& config)
     cfgValset<uint8_t>(UBX_CFG_KEY_ODO_USE_ODO, 0);
 
     // M9 (SPG) only has USE_ODO and PROFILE in CFG-ODO
-    if (_board != Board::u_blox9) {
+    if (_identity.board != Board::u_blox9) {
         static constexpr uint32_t odo_keys[] = {UBX_CFG_KEY_ODO_USE_COG, UBX_CFG_KEY_ODO_OUTLPVEL,
                                                 UBX_CFG_KEY_ODO_OUTLPCOG};
         cfgValset(odo_keys, 0);
@@ -505,11 +268,11 @@ int GPSNativeUBX::configureDevice(const GPSConfig& config)
     initCfgValset();
     cfgValset<uint8_t>(UBX_CFG_KEY_NAVHPG_DGNSSMODE, 3 /* RTK Fixed */);
 
-    if (!sendCfgValset()) {
-        return -1;
+    if (!sendCfgValset(false)) {
+        return false;
     }
 
-    waitForAck(UBX_MSG_CFG_VALSET, UBX_CONFIG_TIMEOUT, false);
+    waitForAck(UBX_MSG_CFG_VALSET);
 
     // Jamming detection. Firmware with CFG-SEC-JAMDET (F9 HPG 1.50+, F9 L1L5, F20/X20) has
     // detection always on and no CFG-ITFM; everything older has CFG-ITFM and no JAMDET key.
@@ -517,246 +280,31 @@ int GPSNativeUBX::configureDevice(const GPSConfig& config)
     initCfgValset();
     cfgValset<uint8_t>(UBX_CFG_KEY_SEC_JAMDET_SENSITIVITY_HI, 0);
 
-    if (sendCfgValsetAcked(false) < 0) {
+    if (!sendCfgValsetAcked(false).succeeded()) {
         if (_valsetAckAmbiguous) {
-            if (!ioError()) {
+            if (!hasIOError()) {
                 log(GPSProtocolLogLevel::Warning, "CFG-SEC-JAMDET_SENSITIVITY_HI not supported");
             }
-            return -1;
+            return false;
         }
         initCfgValset();
         cfgValset<uint8_t>(UBX_CFG_KEY_ITFM_ENABLE, 1);
 
-        if (sendCfgValsetAcked(false) < 0 && !ioError()) {
+        if (!sendCfgValsetAcked(false).succeeded() && !hasIOError()) {
             log(GPSProtocolLogLevel::Warning, "Jamming monitor not supported by this receiver");
         }
-    }
-
-    // configure active GNSS systems (leave signal bands as is)
-    // Note: For M10 configuration if changing from default. As per the
-    //       MAX-M10S integration guide UBX-20053088 - R03, see section
-    //       2.1.1.3 GNSS signal configuration for details on some restrictions.
-    //       Implementing these restrictions are a TODO item for M10.
-    if (static_cast<int32_t>(config.gnss_systems) != 0) {
-        initCfgValset();
-
-        // GPS and QZSS should always be enabled and disabled together, according to uBlox
-        if (config.gnss_systems & GNSSSystemsMask::ENABLE_GPS) {
-            cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GPS_ENA, 1);
-            cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_QZSS_ENA, 1);
-
-            cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_QZSS_L1CA_ENA, 1);
-
-            // M9 (SPG) has no CFG-SIGNAL key for QZSS L1S
-            if (_board != Board::u_blox9) {
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_QZSS_L1S_ENA, 1);
-            }
-
-            if (_board == Board::u_blox_X20) {
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GPS_L2C_ENA, 1);
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GPS_L5_ENA, 1);
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_QZSS_L2C_ENA, 1);
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_QZSS_L5_ENA, 1);
-
-            } else if (_board == Board::u_blox9_F9P_L1L2) {
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GPS_L2C_ENA, 1);
-
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_QZSS_L2C_ENA, 1);
-
-            } else if (_board == Board::u_blox9_F9P_L1L5 || _board == Board::u_blox10_L1L5) {
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GPS_L5_ENA, 1);
-
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_QZSS_L5_ENA, 1);
-            }
-
-        } else {
-            cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GPS_ENA, 0);
-            cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_QZSS_ENA, 0);
-
-            if (_board == Board::u_blox_X20) {
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GPS_L2C_ENA, 0);
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GPS_L5_ENA, 0);
-
-            } else if (_board == Board::u_blox9_F9P_L1L2) {
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GPS_L2C_ENA, 0);
-
-            } else if (_board == Board::u_blox9_F9P_L1L5 || _board == Board::u_blox10_L1L5) {
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GPS_L5_ENA, 0);
-            }
-        }
-
-        if (config.gnss_systems & GNSSSystemsMask::ENABLE_GALILEO) {
-            cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GAL_ENA, 1);
-
-            if (_board == Board::u_blox_X20) {
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GAL_E5A_ENA, 1);
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GAL_E6_ENA, 1);
-
-            } else if (_board == Board::u_blox9_F9P_L1L2) {
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GAL_E5B_ENA, 1);
-
-            } else if (_board == Board::u_blox9_F9P_L1L5 || _board == Board::u_blox10_L1L5) {
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GAL_E5A_ENA, 1);
-            }
-
-        } else {
-            cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GAL_ENA, 0);
-
-            if (_board == Board::u_blox_X20) {
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GAL_E5A_ENA, 0);
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GAL_E6_ENA, 0);
-
-            } else if (_board == Board::u_blox9_F9P_L1L2) {
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GAL_E5B_ENA, 0);
-
-            } else if (_board == Board::u_blox9_F9P_L1L5 || _board == Board::u_blox10_L1L5) {
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GAL_E5A_ENA, 0);
-            }
-        }
-
-        if (config.gnss_systems & GNSSSystemsMask::ENABLE_BEIDOU) {
-            cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_BDS_ENA, 1);
-
-            if (_board == Board::u_blox_X20) {
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_BDS_B1C_ENA, 1);
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_BDS_B2A_ENA, 1);
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_BDS_B3_ENA, 1);
-
-            } else if (_board == Board::u_blox9_F9P_L1L2) {
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_BDS_B2_ENA, 1);
-
-            } else if (_board == Board::u_blox9_F9P_L1L5 || _board == Board::u_blox10_L1L5) {
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_BDS_B2A_ENA, 1);
-            }
-
-        } else {
-            cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_BDS_ENA, 0);
-
-            if (_board == Board::u_blox_X20) {
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_BDS_B1C_ENA, 0);
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_BDS_B2A_ENA, 0);
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_BDS_B3_ENA, 0);
-
-            } else if (_board == Board::u_blox9_F9P_L1L2) {
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_BDS_B2_ENA, 0);
-
-            } else if (_board == Board::u_blox9_F9P_L1L5 || _board == Board::u_blox10_L1L5) {
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_BDS_B2A_ENA, 0);
-            }
-        }
-
-        // GLONASS is not supported on DAN-F10N and X20
-        if (_board != Board::u_blox10_L1L5 && _board != Board::u_blox_X20) {
-            if (config.gnss_systems & GNSSSystemsMask::ENABLE_GLONASS) {
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GLO_ENA, 1);
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GLO_L1_ENA, 1);
-
-                if (_board == Board::u_blox9_F9P_L1L2) {
-                    cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GLO_L2_ENA, 1);
-                }
-
-            } else {
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GLO_ENA, 0);
-                // cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GLO_L1_ENA, 0);
-
-                if (_board == Board::u_blox9_F9P_L1L2) {
-                    cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GLO_L2_ENA, 0);
-                }
-            }
-        }
-
-        if (_board == Board::u_blox9_F9P_L1L5 || _board == Board::u_blox10_L1L5 || _board == Board::u_blox_X20) {
-            if (config.gnss_systems & GNSSSystemsMask::ENABLE_NAVIC) {
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_NAVIC_ENA, 1);
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_NAVIC_L5_ENA, 1);
-
-            } else {
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_NAVIC_ENA, 0);
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_NAVIC_L5_ENA, 0);
-            }
-        }
-
-        if (!sendCfgValset()) {
-            return -1;
-        }
-
-        if (waitForAck(UBX_MSG_CFG_VALSET, UBX_CONFIG_TIMEOUT, true) < 0) {
-            if (_valsetAckAmbiguous || ioError()) {
-                return -1;
-            }
-            // The receiver NAKs the whole message and applies nothing if it does not know a
-            // single key, so a signal key missing on this generation would leave the receiver
-            // unconfigured. Retry with the constellation enables, those exist everywhere.
-            log(GPSProtocolLogLevel::Warning, "GNSS signal config rejected, retrying without signal bands");
-
-            initCfgValset();
-
-            const uint8_t use_gps = (config.gnss_systems & GNSSSystemsMask::ENABLE_GPS) ? 1 : 0;
-            cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GPS_ENA, use_gps);
-            cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_QZSS_ENA, use_gps);
-            cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GAL_ENA,
-                               (config.gnss_systems & GNSSSystemsMask::ENABLE_GALILEO) ? 1 : 0);
-            cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_BDS_ENA,
-                               (config.gnss_systems & GNSSSystemsMask::ENABLE_BEIDOU) ? 1 : 0);
-
-            if (_board != Board::u_blox10_L1L5 && _board != Board::u_blox_X20) {
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GLO_ENA,
-                                   (config.gnss_systems & GNSSSystemsMask::ENABLE_GLONASS) ? 1 : 0);
-            }
-
-            if (!sendCfgValset()) {
-                return -1;
-            }
-
-            if (waitForAck(UBX_MSG_CFG_VALSET, UBX_CONFIG_TIMEOUT, true) < 0) {
-                if (_valsetAckAmbiguous || ioError()) {
-                    return -1;
-                }
-                // Keep going with whatever the receiver already has, a refused constellation
-                // selection must not cost us the fix
-                log(GPSProtocolLogLevel::Warning, "GNSS constellation config rejected, keeping receiver config");
-            }
-        }
-
-        waitForGnssReset();
-
-        // send SBAS config separately, because it seems to be buggy (with u-center, too)
-        initCfgValset();
-
-        if (config.gnss_systems & GNSSSystemsMask::ENABLE_SBAS) {
-            cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_SBAS_ENA, 1);
-            cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_SBAS_L1CA_ENA, 1);
-
-        } else {
-            cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_SBAS_ENA, 0);
-        }
-
-        if (!sendCfgValset()) {
-            return -1;
-        }
-
-        const uint8_t enabled = (config.gnss_systems & GNSSSystemsMask::ENABLE_SBAS) ? 1 : 0;
-        if (waitForAck(UBX_MSG_CFG_VALSET, UBX_CONFIG_TIMEOUT, true) < 0 ||
-            verifyConfigValue(UBX_CFG_KEY_SIGNAL_SBAS_ENA, enabled) < 0 ||
-            (enabled && verifyConfigValue(UBX_CFG_KEY_SIGNAL_SBAS_L1CA_ENA, 1) < 0)) {
-            return -1;
-        }
-
-        waitForGnssReset();
     }
 
     // GPS L5 is broadcast unhealthy while it is pre-operational, so tell the receiver to take
     // the L1 health flag instead. The key is not in any interface description, only in app note
     // UBX-21038688, so it gets a message of its own rather than putting the constellation
     // config at the mercy of a firmware that has never heard of it.
-    if (_board == Board::u_blox9_F9P_L1L5 || _board == Board::u_blox10_L1L5 || _board == Board::u_blox_X20) {
-        const bool use_gps =
-            (static_cast<int32_t>(config.gnss_systems) == 0) || (config.gnss_systems & GNSSSystemsMask::ENABLE_GPS);
-
+    if (_identity.board == Board::u_blox9_F9P_L1L5 || _identity.board == Board::u_blox10_L1L5 ||
+        _identity.board == Board::u_blox_X20) {
         initCfgValset();
-        cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_L5_HEALTH_OVERRIDE, use_gps ? 1 : 0);
+        cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_L5_HEALTH_OVERRIDE, 1);
 
-        if (sendCfgValsetAcked(false) < 0 && !ioError()) {
+        if (!sendCfgValsetAcked(false).succeeded() && !hasIOError()) {
             log(GPSProtocolLogLevel::Warning, "GPS L5 health override not supported by this receiver");
         }
     }
@@ -767,28 +315,29 @@ int GPSNativeUBX::configureDevice(const GPSConfig& config)
     cfgValsetPort(UBX_CFG_KEY_MSGOUT_UBX_NAV_PVT_I2C, 1);
 
     // There is no RTCM on M10 and M9* (except F9P)
-    if (_board != Board::u_blox10 && _board != Board::u_blox9 && _board != Board::u_blox10_L1L5) {
+    if (_identity.board != Board::u_blox10 && _identity.board != Board::u_blox9 &&
+        _identity.board != Board::u_blox10_L1L5) {
         cfgValsetPort(UBX_CFG_KEY_MSGOUT_UBX_NAV_HPPOSLLH_I2C, 1);
         cfgValsetPort(UBX_CFG_KEY_MSGOUT_UBX_NAV_RELPOSNED_I2C, 0);
     }
 
-    _use_nav_pvt = true;
+    _decodeContext.useNavPvt = true;
     cfgValsetPort(UBX_CFG_KEY_MSGOUT_UBX_NAV_DOP_I2C, 1);
-    cfgValsetPort(UBX_CFG_KEY_MSGOUT_UBX_NAV_SAT_I2C, (_satellite_info != nullptr) ? 10 : 0);
+    cfgValsetPort(UBX_CFG_KEY_MSGOUT_UBX_NAV_SAT_I2C, (_satellites != nullptr) ? 10 : 0);
     cfgValsetPort(UBX_CFG_KEY_MSGOUT_UBX_NAV_STATUS_I2C, 1);
     cfgValsetPort(UBX_CFG_KEY_MSGOUT_UBX_MON_RF_I2C, 1);
     _got_sec_sig = false;
 
-    if (sendCfgValsetAcked() < 0) {
-        return -1;
+    if (!sendCfgValsetAcked().succeeded()) {
+        return false;
     }
 
     // Optional on older firmware. A rejected EOE key leaves the bounded epoch deadline in use.
     initCfgValset();
     cfgValsetPort(UBX::NAV_EOE_MSGOUT_I2C, 1);
     (void) sendCfgValsetAcked(false);
-    if (ioError()) {
-        return -1;
+    if (hasIOError()) {
+        return false;
     }
 
     // Correction input status. RXM-COR reports every protocol (RTCM3, SPARTN, HAS) and is
@@ -796,8 +345,9 @@ int GPSNativeUBX::configureDevice(const GPSConfig& config)
     initCfgValset();
     cfgValsetPort(UBX_CFG_KEY_MSGOUT_UBX_RXM_COR_I2C, 1);
 
-    if (sendCfgValsetAcked(false) < 0 &&
-        ((_board == Board::u_blox9) || (_board == Board::u_blox9_F9P_L1L2) || (_board == Board::u_blox9_F9P_L1L5))) {
+    if (!sendCfgValsetAcked(false).succeeded() &&
+        ((_identity.board == Board::u_blox9) || (_identity.board == Board::u_blox9_F9P_L1L2) ||
+         (_identity.board == Board::u_blox9_F9P_L1L5))) {
         initCfgValset();
         cfgValsetPort(UBX_CFG_KEY_MSGOUT_UBX_RXM_RTCM_I2C, 1);
         sendCfgValsetAcked(false);
@@ -809,8 +359,7 @@ int GPSNativeUBX::configureDevice(const GPSConfig& config)
     initCfgValset();
     cfgValsetPort(UBX_CFG_KEY_MSGOUT_UBX_SEC_SIG_I2C, 1);
 
-    if (sendCfgValsetAcked(false) < 0) {
-    }
+    (void) sendCfgValsetAcked(false);
 
     // Explicitly disable the messages this driver never consumes. We do not enable them,
     // but they can be left on in the receiver's non-volatile config by other software
@@ -824,26 +373,23 @@ int GPSNativeUBX::configureDevice(const GPSConfig& config)
     cfgValsetPort(UBX_CFG_KEY_MSGOUT_UBX_RXM_SFRBX_I2C, 0);
 
     // M10 and F10 have no raw measurement output
-    if (UBX::receiverProfile(_board).usb) {
+    if (UBX::receiverProfile(_identity.board).usb) {
         cfgValsetPort(UBX_CFG_KEY_MSGOUT_UBX_RXM_RAWX_I2C, 0);
     }
 
-    if (sendCfgValsetAcked(false) < 0 && !ioError()) {
+    if (!sendCfgValsetAcked(false).succeeded() && !hasIOError()) {
         log(GPSProtocolLogLevel::Warning, "Could not disable unused messages");
     }
 
     // Dual antenna heading, not used in a moving base setup where NAV-RELPOSNED provides it. The rate is
     // always written so a mode change is idempotent; a NAK from a position-only X20P must not abort config.
     // The receiver side heading offset is zeroed, leaving GPS_YAW_OFFSET as the only offset applied.
-    if (_board == Board::u_blox_X20) {
+    if (_identity.board == Board::u_blox_X20) {
         initCfgValset();
         cfgValsetPort(UBX_CFG_KEY_MSGOUT_UBX_NAV_DAHEADING_I2C, 1);
         cfgValset<int32_t>(UBX_CFG_KEY_NAVSPG_DAHEADING_OFFSET, 0);
 
-        if (sendCfgValset()) {
-            if (waitForAck(UBX_MSG_CFG_VALSET, UBX_CONFIG_TIMEOUT, false) < 0) {
-            }
-        }
+        (void) sendCfgValsetAcked(false);
 
         // Galileo HAS (HPG 2.10+) is only processed while host corrections are off, so the pair is
         // written together and every other mode restores host input: a HOST=0 left behind by
@@ -854,81 +400,57 @@ int GPSNativeUBX::configureDevice(const GPSConfig& config)
         sendCfgValsetAcked(false);
     }
 
-    return 0;
-}
-
-void GPSNativeUBX::initCfgValset()
-{
-    _valsetSettings = {};
-    memset(_tx_cfg_valset_buf, 0, sizeof(_tx_cfg_valset_buf));
-    _tx_cfg_valset_buf[1] = UBX_CFG_LAYER_RAM;
-    _tx_cfg_valset_size = 4;
-}
-
-bool GPSNativeUBX::sendCfgValset()
-{
-    if (_valsetAckAmbiguous && !_controller.configurationReadbackRequired()) {
-        return false;
-    }
-    return sendMessage(UBX_MSG_CFG_VALSET, _tx_cfg_valset_buf, _tx_cfg_valset_size);
-}
-
-int GPSNativeUBX::sendCfgValsetAcked(bool report_ack_error)
-{
-    if (!sendCfgValset()) {
-        return -1;
-    }
-
-    return waitForAck(UBX_MSG_CFG_VALSET, UBX_CONFIG_TIMEOUT, report_ack_error);
-}
-
-bool GPSNativeUBX::cfgValsetRaw(uint32_t key_id, uint32_t value)
-{
-    if (key_id == UBX_CFG_KEY_NAVSPG_DYNMODEL) {
-        _valsetSettings.add(GPSReceiverSetting::DynamicModel);
-    }
-    if (key_id == UBX_CFG_KEY_RATE_MEAS || key_id == UBX_CFG_KEY_RATE_NAV) {
-        _valsetSettings.add(GPSReceiverSetting::OutputRateHz);
-    }
-    if ((key_id & 0xffff0000u) == 0x10310000u) {
-        _valsetSettings.add(GPSReceiverSetting::ConstellationMask);
-    }
-
-    const unsigned value_size = UBX::configurationValueBytes(key_id);
-    if (!value_size || (value_size < 4 && value >= (1u << (value_size * 8))) || ((key_id >> 28) == 1 && value > 1)) {
-        return false;
-    }
-    if ((key_id == UBX_CFG_KEY_CFG_UART1OUTPROT_RTCM3X || key_id == UBX_CFG_KEY_CFG_USBOUTPROT_RTCM3X) &&
-        !UBX::receiverProfile(_board).rtcmOutput) {
-        return false;
-    }
-
-    if (_tx_cfg_valset_size + sizeof(key_id) + value_size > sizeof(_tx_cfg_valset_buf)) {
-        // If this ever fires, either bump UBX_CFG_VALSET_BUF_SIZE or split the
-        // batch into multiple CFG-VALSET messages at the call site.
-        log(GPSProtocolLogLevel::Warning, "buf for CFG_VALSET too small");
-        return false;
-    }
-
-    const std::span<uint8_t> output(_tx_cfg_valset_buf);
-    if (!LittleEndian::write(output, _tx_cfg_valset_size, key_id)) {
-        return false;
-    }
-    const auto valueOffset = _tx_cfg_valset_size + sizeof(key_id);
-    const bool written = value_size == 1   ? LittleEndian::write(output, valueOffset, static_cast<uint8_t>(value))
-                         : value_size == 2 ? LittleEndian::write(output, valueOffset, static_cast<uint16_t>(value))
-                                           : LittleEndian::write(output, valueOffset, value);
-    if (!written) {
-        return false;
-    }
-    _tx_cfg_valset_size = valueOffset + value_size;
     return true;
 }
 
-bool GPSNativeUBX::cfgValsetPort(uint32_t key_id, uint8_t value)
+void UBXProtocol::initCfgValset()
+{
+    _valset = {};
+}
+
+bool UBXProtocol::sendCfgValset(bool required, unsigned timeout)
+{
+    const auto payload = _valset.payload();
+    if (payload.empty() || (_valsetAckAmbiguous && !_controller.configurationReadbackRequired())) {
+        beginCommandWrite(
+            {std::to_string(UBX_MSG_CFG_VALSET), std::chrono::milliseconds(timeout), _valset.settings, required});
+        failCommandWrite(GPSCommandOutcome::Rejected);
+        return false;
+    }
+    return sendMessage(UBX_MSG_CFG_VALSET, payload,
+                       {{}, std::chrono::milliseconds(timeout), _valset.settings, required});
+}
+
+GPSCommandResult UBXProtocol::sendCfgValsetAcked(bool required)
+{
+    if (!sendCfgValset(required)) {
+        return completeCommand(ioError() == GPSProtocolError::Cancelled ? GPSCommandOutcome::Cancelled
+                                                                        : GPSCommandOutcome::TransportError);
+    }
+
+    return waitForAck(UBX_MSG_CFG_VALSET);
+}
+
+bool UBXProtocol::cfgValsetRaw(uint32_t key_id, uint32_t value)
+{
+    if ((key_id == UBX_CFG_KEY_CFG_UART1OUTPROT_RTCM3X || key_id == UBX_CFG_KEY_CFG_USBOUTPROT_RTCM3X) &&
+        !UBX::receiverProfile(_identity.board).rtcmOutput) {
+        return _valset.invalidate();
+    }
+    if (!_valset.append(key_id, value)) {
+        return false;
+    }
+    if (key_id == UBX_CFG_KEY_RATE_MEAS || key_id == UBX_CFG_KEY_RATE_NAV) {
+        _valset.settings.add(GPSReceiverSetting::OutputRateHz);
+    }
+
+    return true;
+}
+
+bool UBXProtocol::cfgValsetPort(uint32_t key_id, uint8_t value)
 {
     for (const auto port : UBX::OUTPUT_PORTS) {
-        if ((!port.requiresUsb || UBX::receiverProfile(_board).usb) &&
+        if ((!port.requiresUsb || UBX::receiverProfile(_identity.board).usb) &&
             !cfgValset<uint8_t>(key_id + port.messageKeyOffset, value)) {
             return false;
         }
@@ -937,10 +459,10 @@ bool GPSNativeUBX::cfgValsetPort(uint32_t key_id, uint8_t value)
     return true;
 }
 
-bool GPSNativeUBX::cfgValsetItems(const CfgValsetItem* items, size_t count)
+bool UBXProtocol::cfgValset(std::span<const CfgValsetItem> items)
 {
-    for (size_t i = 0; i < count; i++) {
-        if (!cfgValsetRaw(items[i].key, items[i].value)) {
+    for (const auto& item : items) {
+        if (!cfgValsetRaw(item.key, item.value)) {
             return false;
         }
     }
@@ -948,10 +470,10 @@ bool GPSNativeUBX::cfgValsetItems(const CfgValsetItem* items, size_t count)
     return true;
 }
 
-bool GPSNativeUBX::cfgValsetKeys(const uint32_t* keys, size_t count, uint8_t value)
+bool UBXProtocol::cfgValset(std::span<const uint32_t> keys, uint8_t value)
 {
-    for (size_t i = 0; i < count; i++) {
-        if (!cfgValsetRaw(keys[i], value)) {
+    for (const auto key : keys) {
+        if (!cfgValsetRaw(key, value)) {
             return false;
         }
     }
@@ -959,10 +481,10 @@ bool GPSNativeUBX::cfgValsetKeys(const uint32_t* keys, size_t count, uint8_t val
     return true;
 }
 
-bool GPSNativeUBX::cfgValsetPortKeys(const uint32_t* keys, size_t count, uint8_t value)
+bool UBXProtocol::cfgValsetPort(std::span<const uint32_t> keys, uint8_t value)
 {
-    for (size_t i = 0; i < count; i++) {
-        if (!cfgValsetPort(keys[i], value)) {
+    for (const auto key : keys) {
+        if (!cfgValsetPort(key, value)) {
             return false;
         }
     }
@@ -970,83 +492,81 @@ bool GPSNativeUBX::cfgValsetPortKeys(const uint32_t* keys, size_t count, uint8_t
     return true;
 }
 
-int GPSNativeUBX::disableTimeMode()
+bool UBXProtocol::disableTimeMode()
 {
-    if (_timeModeUnsupported) {
-        return 0;
+    if (_identity.timeModeUnsupported) {
+        return true;
     }
-    if (_proto_ver_27_or_higher) {
+    if (_identity.protocol27) {
         initCfgValset();
         cfgValset<uint8_t>(UBX_CFG_KEY_TMODE_MODE, 0);
-        if (sendCfgValsetAcked() < 0) {
-            return -1;
+        if (!sendCfgValsetAcked().succeeded()) {
+            return false;
         }
         return verifyConfigValue(UBX_CFG_KEY_TMODE_MODE, 0);
     }
 
     const ubx_payload_tx_cfg_tmode3_t disabled{};
-    if (!sendMessage(UBX_MSG_CFG_TMODE3, UBX::encode(disabled)) ||
-        waitForAck(UBX_MSG_CFG_TMODE3, UBX_CONFIG_TIMEOUT, true) < 0) {
-        return -1;
+    if (!sendMessage(UBX_MSG_CFG_TMODE3, UBX::encode(disabled)) || !waitForAck(UBX_MSG_CFG_TMODE3).succeeded()) {
+        return false;
     }
-    _timeModeReadbackPending = true;
-    _timeModeReadbackReady = false;
-    const auto clearReadback = qScopeGuard([this] { _timeModeReadbackPending = false; });
-    if (!sendMessage(UBX_MSG_CFG_TMODE3, nullptr, 0)) {
-        return -1;
+    _timeModeReadback = {.pending = true};
+    const auto clearReadback = qScopeGuard([this] { _timeModeReadback.pending = false; });
+    if (!sendMessage(UBX_MSG_CFG_TMODE3, nullptr, 0,
+                     {"UBX-CFG-TMODE3 disabled readback", std::chrono::milliseconds(UBX_CONFIG_TIMEOUT)})) {
+        return false;
     }
-    const auto result =
-        awaitCommand({"UBX-CFG-TMODE3 disabled readback", std::chrono::milliseconds(UBX_CONFIG_TIMEOUT)}, [this] {
-            if (_controller.lateRejection()) {
-                return GPSCommandOutcome::Rejected;
-            }
-            return !_timeModeReadbackReady  ? GPSCommandOutcome::Pending
-                   : _timeModeReadback == 0 ? GPSCommandOutcome::ReadbackVerified
-                                            : GPSCommandOutcome::Rejected;
-        });
-    return result.evidence.outcome == GPSCommandOutcome::ReadbackVerified ? 0 : -1;
+    const auto result = awaitCommand([this] {
+        if (_controller.lateRejection()) {
+            return GPSCommandOutcome::Rejected;
+        }
+        return !_timeModeReadback.response.has_value() ? GPSCommandOutcome::Pending
+               : _timeModeReadback.response == 0       ? GPSCommandOutcome::ReadbackVerified
+                                                       : GPSCommandOutcome::Rejected;
+    });
+    return result.evidence.outcome == GPSCommandOutcome::ReadbackVerified;
 }
 
-int GPSNativeUBX::verifyConfigValue(uint32_t key, uint8_t value)
+bool UBXProtocol::verifyConfigValue(uint32_t key, uint8_t value)
 {
     const std::array keys{key};
     _controller.beginReadback(keys);
     const auto clearReadback = qScopeGuard([this] { _controller.finishReadback(); });
     std::array<uint8_t, 8> request{};
     (void) LittleEndian::write(request, 4, key);
-    if (!sendMessage(UBX_MSG_CFG_VALGET, request)) {
-        return -1;
+    if (!sendMessage(UBX_MSG_CFG_VALGET, request,
+                     {"UBX-CFG-VALGET " + std::to_string(key), std::chrono::milliseconds(UBX_CONFIG_TIMEOUT)})) {
+        return false;
     }
-    const auto result = awaitCommand(
-        {"UBX-CFG-VALGET " + std::to_string(key), std::chrono::milliseconds(UBX_CONFIG_TIMEOUT)}, [this, value] {
-            if (_controller.lateRejection()) {
-                return GPSCommandOutcome::Rejected;
-            }
-            return !_controller.readbackReady()                ? GPSCommandOutcome::Pending
-                   : _controller.readback().values[0] == value ? GPSCommandOutcome::ReadbackVerified
-                                                               : GPSCommandOutcome::Rejected;
-        });
-    return result.evidence.outcome == GPSCommandOutcome::ReadbackVerified ? 0 : -1;
+    const auto result = awaitCommand([this, value] {
+        if (_controller.lateRejection()) {
+            return GPSCommandOutcome::Rejected;
+        }
+        return !_controller.readbackReady()                      ? GPSCommandOutcome::Pending
+               : _controller.readback().values[0].value == value ? GPSCommandOutcome::ReadbackVerified
+                                                                 : GPSCommandOutcome::Rejected;
+    });
+    return result.evidence.outcome == GPSCommandOutcome::ReadbackVerified;
 }
 
-int GPSNativeUBX::waitForSurveyStop()
+bool UBXProtocol::waitForSurveyStop()
 {
     _survey_in_stopped = false;
     const uint64_t stop_deadline = nowUs() + 3000000;
 
     while (!_survey_in_stopped && nowUs() < stop_deadline) {
-        if (!sendMessage(UBX_MSG_NAV_SVIN, nullptr, 0)) {
-            return -1;
+        if (!sendMessage(UBX_MSG_NAV_SVIN, nullptr, 0,
+                         {"UBX-NAV-SVIN stopped", std::chrono::milliseconds(UBX_CONFIG_TIMEOUT)})) {
+            return false;
         }
 
         const uint64_t poll_deadline = nowUs() + 100000;
 
         while (!_survey_in_stopped && nowUs() < poll_deadline) {
-            bool read_error;
-            receiveInternal(100, read_error);
+            receiveInternal(100);
 
-            if (read_error) {
-                return -1;
+            if (hasIOError()) {
+                return false;
             }
         }
     }
@@ -1054,343 +574,176 @@ int GPSNativeUBX::waitForSurveyStop()
     if (!_survey_in_stopped) {
         log(GPSProtocolLogLevel::Warning, "Time mode did not stop");
         failCommandWrite(GPSCommandOutcome::TimedOut);
-        return -1;
+        return false;
     }
 
-    _commandWrite.evidence.command = "UBX-NAV-SVIN stopped";
     failCommandWrite(GPSCommandOutcome::ReadbackVerified);
-    return 0;
+    return true;
 }
 
-int GPSNativeUBX::restartSurveyInPreV27()
+bool UBXProtocol::restartSurveyIn()
 {
-    ubx_payload_tx_cfg_tmode3_t payload_tx_cfg_tmode3{};
-
-    // disable RTCM (MSM7) output
-    configureMessageRate(UBX_MSG_RTCM3_1005, 0);
-    configureMessageRate(UBX_MSG_RTCM3_1077, 0);
-    configureMessageRate(UBX_MSG_RTCM3_1087, 0);
-    configureMessageRate(UBX_MSG_RTCM3_1230, 0);
-    configureMessageRate(UBX_MSG_RTCM3_1097, 0);
-    configureMessageRate(UBX_MSG_RTCM3_1127, 0);
-
-    if (disableTimeMode() < 0 || (!_baseConfig.useFixedBase && waitForSurveyStop() < 0)) {
-        return -1;
-    }
-
-    if (!_baseConfig.useFixedBase) {
-        payload_tx_cfg_tmode3 = {};
-        payload_tx_cfg_tmode3.flags = 1; /* start survey-in */
-        payload_tx_cfg_tmode3.svinMinDur = _baseConfig.surveyInDurationSecs;
-        payload_tx_cfg_tmode3.svinAccLimit = static_cast<uint32_t>(_baseConfig.surveyInAccMeters * 10000.0);
-
-        if (!sendMessage(UBX_MSG_CFG_TMODE3, UBX::encode(payload_tx_cfg_tmode3))) {
-            return -1;
-        }
-
-        if (waitForAck(UBX_MSG_CFG_TMODE3, UBX_CONFIG_TIMEOUT, true) < 0) {
-            return -1;
-        }
-
-        /* enable status output of survey-in */
-        if (!configureMessageRateAndAck(UBX_MSG_NAV_SVIN, 5, true)) {
-            return -1;
-        }
-
-    } else {
-        const GPSBaseStationConfig& settings = _baseConfig;
-
-        payload_tx_cfg_tmode3 = {};
-        payload_tx_cfg_tmode3.flags = 2 /* fixed mode */ | (1 << 8) /* lat/lon mode */;
-        int64_t lat64 = (int64_t) (settings.fixedPosition.latitudeDegrees * 1e9);
-        payload_tx_cfg_tmode3.ecefXOrLat = (int32_t) (lat64 / 100);
-        payload_tx_cfg_tmode3.ecefXOrLatHP = lat64 % 100;  // range [-99, 99]
-        int64_t lon64 = (int64_t) (settings.fixedPosition.longitudeDegrees * 1e9);
-        payload_tx_cfg_tmode3.ecefYOrLon = (int32_t) (lon64 / 100);
-        payload_tx_cfg_tmode3.ecefYOrLonHP = lon64 % 100;
-        int64_t alt64 = (int64_t) ((double) settings.fixedPosition.altitudeMeters * 1e4);
-        payload_tx_cfg_tmode3.ecefZOrAlt = (int32_t) (alt64 / 100);  // cm
-        payload_tx_cfg_tmode3.ecefZOrAltHP = alt64 % 100;            // 0.1mm
-
-        payload_tx_cfg_tmode3.fixedPosAcc = fixedAccuracyWireUnits(settings.fixedBaseAccuracyMeters);
-
-        if (!sendMessage(UBX_MSG_CFG_TMODE3, UBX::encode(payload_tx_cfg_tmode3))) {
-            return -1;
-        }
-
-        if (waitForAck(UBX_MSG_CFG_TMODE3, UBX_CONFIG_TIMEOUT, true) < 0) {
-            return -1;
-        }
-
-        // directly enable RTCM3 output
-        return activateRTCMOutput();
-    }
-
-    return 0;
-}
-
-int GPSNativeUBX::restartSurveyIn()
-{
-    if (_output_mode != OutputMode::RTCM) {
-        return -1;
-    }
-
-    if (!_proto_ver_27_or_higher) {
+    if (!_identity.protocol27) {
         return restartSurveyInPreV27();
     }
 
-    // disable RTCM output
+    // Disable RTCM output, including observations from a previous session in the other MSM format.
     initCfgValset();
-    cfgValsetPort(RTCM_BASE_MSGOUT_I2C, 0);
+    cfgValsetPort(RTCM_BASE_MSM7_MSGOUT_I2C, 0);
+    cfgValsetPort(RTCM_MSM4_OBSERVATIONS_MSGOUT_I2C, 0);
     sendCfgValsetAcked(false);
 
-    if (!_baseConfig.useFixedBase) {
+    if (!std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode)) {
         // Reapplying survey-in mode does not restart an existing survey.
-        if (disableTimeMode() < 0 || waitForSurveyStop() < 0) {
-            return -1;
+        if (!disableTimeMode() || !waitForSurveyStop()) {
+            return false;
         }
 
         initCfgValset();
         cfgValset<uint8_t>(UBX_CFG_KEY_TMODE_MODE, 1 /* Survey-in */);
-        cfgValset<uint32_t>(UBX_CFG_KEY_TMODE_SVIN_MIN_DUR, _baseConfig.surveyInDurationSecs);
-        cfgValset<uint32_t>(UBX_CFG_KEY_TMODE_SVIN_ACC_LIMIT,
-                            static_cast<uint32_t>(_baseConfig.surveyInAccMeters * 10000.0));
+        cfgValset<uint32_t>(UBX_CFG_KEY_TMODE_SVIN_MIN_DUR,
+                            std::get<GPSBaseStationConfig::SurveyIn>(_baseConfig.mode).durationSecs);
+        cfgValset<uint32_t>(
+            UBX_CFG_KEY_TMODE_SVIN_ACC_LIMIT,
+            UBX::surveyAccuracyWireUnits(std::get<GPSBaseStationConfig::SurveyIn>(_baseConfig.mode).accuracyMeters));
         cfgValsetPort(UBX_CFG_KEY_MSGOUT_UBX_NAV_SVIN_I2C, 5);
 
-        if (sendCfgValsetAcked() < 0) {
-            return -1;
+        if (!sendCfgValsetAcked().succeeded()) {
+            return false;
         }
 
     } else {
-        const GPSBaseStationConfig& settings = _baseConfig;
+        const auto& settings = std::get<GPSBaseStationConfig::Fixed>(_baseConfig.mode);
         initCfgValset();
         cfgValset<uint8_t>(UBX_CFG_KEY_TMODE_MODE, 2 /* Fixed Mode */);
         cfgValset<uint8_t>(UBX_CFG_KEY_TMODE_POS_TYPE, 1 /* Lat/Lon/Height */);
-        int64_t lat64 = (int64_t) (settings.fixedPosition.latitudeDegrees * 1e9);
-        cfgValset<int32_t>(UBX_CFG_KEY_TMODE_LAT, (int32_t) (lat64 / 100));
-        cfgValset<int8_t>(UBX_CFG_KEY_TMODE_LAT_HP, lat64 % 100 /* range [-99, 99] */);
-        int64_t lon64 = (int64_t) (settings.fixedPosition.longitudeDegrees * 1e9);
-        cfgValset<int32_t>(UBX_CFG_KEY_TMODE_LON, (int32_t) (lon64 / 100));
-        cfgValset<int8_t>(UBX_CFG_KEY_TMODE_LON_HP, lon64 % 100 /* range [-99, 99] */);
-        int64_t alt64 = (int64_t) ((double) settings.fixedPosition.altitudeMeters * 1e4);
-        cfgValset<int32_t>(UBX_CFG_KEY_TMODE_HEIGHT, (int32_t) (alt64 / 100) /* cm */);
-        cfgValset<int8_t>(UBX_CFG_KEY_TMODE_HEIGHT_HP, alt64 % 100 /* 0.1mm */);
-        cfgValset<uint32_t>(UBX_CFG_KEY_TMODE_FIXED_POS_ACC, fixedAccuracyWireUnits(settings.fixedBaseAccuracyMeters));
+        const auto position = UBX::fixedPositionWire(settings.position);
+        cfgValset<int32_t>(UBX_CFG_KEY_TMODE_LAT, position.latitude);
+        cfgValset<int8_t>(UBX_CFG_KEY_TMODE_LAT_HP, position.latitudeHp);
+        cfgValset<int32_t>(UBX_CFG_KEY_TMODE_LON, position.longitude);
+        cfgValset<int8_t>(UBX_CFG_KEY_TMODE_LON_HP, position.longitudeHp);
+        cfgValset<int32_t>(UBX_CFG_KEY_TMODE_HEIGHT, position.height);
+        cfgValset<int8_t>(UBX_CFG_KEY_TMODE_HEIGHT_HP, position.heightHp);
+        cfgValset<uint32_t>(UBX_CFG_KEY_TMODE_FIXED_POS_ACC, UBX::fixedAccuracyWireUnits(settings.accuracyMeters));
 
-        if (sendCfgValsetAcked() < 0) {
-            return -1;
+        if (!sendCfgValsetAcked().succeeded()) {
+            return false;
         }
 
         // directly enable RTCM3 output
         return activateRTCMOutput();
     }
 
-    return 0;
+    return true;
 }
 
-int  // -1 = NAK, error or timeout, 0 = ACK
-GPSNativeUBX::waitForAck(const uint16_t msg, const unsigned timeout, const bool report)
+GPSCommandResult UBXProtocol::waitForAck(uint16_t msg)
 {
-    const Operation operation(*this, timeout);
-    _last_ack_rejected = false;
+    const Operation operation(*this, remainingMilliseconds(_commandDeadline.untilUs));
+    _operationDeadline.untilUs = std::min(_operationDeadline.untilUs, _commandDeadline.untilUs);
     _controller.beginAcknowledgement(msg);
     if (msg == UBX_MSG_CFG_VALSET && _controller.configurationReadbackRequired()) {
         _controller.finishAcknowledgement();
-        const auto settings = _pendingCommandSettings;
-        const std::span<const uint8_t> bytes(_tx_cfg_valset_buf, static_cast<size_t>(_tx_cfg_valset_size));
-        for (size_t offset = 4; offset < bytes.size();) {
-            UBX::ConfigurationValues expected;
-            std::array<uint8_t, 40> request{};
-            while (offset < bytes.size() && expected.count < expected.keys.size()) {
-                const auto key = LittleEndian::read<uint32_t>(bytes, offset);
-                if (!key) {
-                    return -1;
-                }
-                offset += 4;
-                const unsigned width = UBX::configurationValueBytes(*key);
-                if (!width || width > bytes.size() - offset) {
-                    return -1;
-                }
-                uint32_t value = 0;
-                for (unsigned index = 0; index < width; ++index) {
-                    value |= uint32_t(bytes[offset++]) << (8 * index);
-                }
-                (void) LittleEndian::write(request, 4 + expected.count * 4, *key);
-                expected.keys[expected.count] = *key;
-                expected.values[expected.count++] = value;
-            }
-            _controller.beginReadback(std::span(expected.keys).first(expected.count));
-            const auto clearReadback = qScopeGuard([this] { _controller.finishReadback(); });
-            if (!sendMessage(UBX_MSG_CFG_VALGET, std::span(request).first(4 + expected.count * 4))) {
-                return -1;
-            }
-            const auto result = awaitCommand(
-                {"UBX-CFG-VALSET readback", std::chrono::milliseconds(timeout), settings, report}, [this, &expected] {
-                    if (_controller.lateRejection()) {
-                        return GPSCommandOutcome::Rejected;
-                    }
-                    if (!_controller.readbackReady()) {
-                        return GPSCommandOutcome::Pending;
-                    }
-                    return _controller.readback().values == expected.values ? GPSCommandOutcome::ReadbackVerified
-                                                                            : GPSCommandOutcome::Rejected;
-                });
-            _last_ack_rejected = result.evidence.outcome == GPSCommandOutcome::Rejected;
-            if (result.evidence.outcome != GPSCommandOutcome::ReadbackVerified) {
-                return -1;
-            }
-        }
-        _pendingCommandSettings = {};
-        return 0;
+        return verifyCfgValset({"UBX-CFG-VALSET readback",
+                                std::chrono::milliseconds(remainingMilliseconds(_commandDeadline.untilUs)),
+                                _commandWrite.affectedSettings, _commandWrite.evidence.required});
     }
     const auto clearAcknowledgement = qScopeGuard([this] { _controller.finishAcknowledgement(); });
-    const auto result =
-        awaitCommand({std::to_string(msg), std::chrono::milliseconds(timeout), _pendingCommandSettings, report},
-                     [this] { return _controller.acknowledgement(); });
-    _pendingCommandSettings = {};
-    _last_ack_rejected = result.evidence.outcome == GPSCommandOutcome::Rejected;
+    const auto result = awaitCommand([this] { return _controller.acknowledgement(); });
     if (msg == UBX_MSG_CFG_VALSET && result.evidence.outcome == GPSCommandOutcome::TimedOut) {
         _valsetAckAmbiguous = true;
     }
-    return result.evidence.outcome == GPSCommandOutcome::Acknowledged ? 0 : -1;
+    return result;
 }
 
-void GPSNativeUBX::waitForGnssReset()
+GPSCommandResult UBXProtocol::verifyCfgValset(GPSConfigurationStep step)
 {
-    // Changing the enabled constellations resets the GNSS subsystem, and every u-blox
-    // interface description asks for 0.5 s after the acknowledgement before the next
-    // command. Keep reading while we wait, the receiver is still streaming.
-    const uint64_t time_started = nowUs();
-
-    while (nowUs() < time_started + UBX_GNSS_RESET_TIME) {
-        receive(UBX_CONFIG_TIMEOUT);
-        if (ioError()) {
-            return;
+    const Operation operation(*this, static_cast<unsigned>(step.timeout.count()));
+    UBX::ConfigurationValueCursor cursor(std::span<const uint8_t>(_valset.bytes).subspan(4, _valset.size - 4));
+    GPSCommandResult result;
+    while (!cursor.empty()) {
+        UBX::ConfigurationValues expected;
+        std::array<uint8_t, 40> request{};
+        while (!cursor.empty() && expected.count < expected.values.size()) {
+            const auto entry = cursor.next();
+            if (!entry) {
+                beginCommandWrite(step);
+                return completeCommand(GPSCommandOutcome::Rejected);
+            }
+            (void) LittleEndian::write(request, 4 + expected.count * 4, entry->key);
+            expected.values[expected.count++] = *entry;
+        }
+        std::array<uint32_t, 9> keys{};
+        for (size_t index = 0; index < expected.count; ++index) {
+            keys[index] = expected.values[index].key;
+        }
+        _controller.beginReadback(std::span(keys).first(expected.count));
+        const auto clearReadback = qScopeGuard([this] { _controller.finishReadback(); });
+        if (!sendMessage(UBX_MSG_CFG_VALGET, std::span(request).first(4 + expected.count * 4), step)) {
+            return completeCommand(GPSCommandOutcome::TransportError);
+        }
+        result = awaitCommand([this, &expected] {
+            if (_controller.lateRejection()) {
+                return GPSCommandOutcome::Rejected;
+            }
+            if (!_controller.readbackReady()) {
+                return GPSCommandOutcome::Pending;
+            }
+            return _controller.readback().values == expected.values ? GPSCommandOutcome::ReadbackVerified
+                                                                    : GPSCommandOutcome::Rejected;
+        });
+        if (result.evidence.outcome != GPSCommandOutcome::ReadbackVerified) {
+            return result;
         }
     }
+    return result;
 }
 
-void GPSNativeUBX::requestCommsDiagnostics()
+void UBXProtocol::requestCommsDiagnostics()
 {
     const uint64_t now = nowUs();
 
-    if (now < _next_comms_poll) {
+    if (now < _comms.nextUs) {
         return;
     }
 
     // A congested receiver must not be flooded with diagnostic requests.
-    _next_comms_poll = now + 5000000;
-    _comms_poll_deadline = sendMessage(UBX_MSG_MON_COMMS, nullptr, 0) ? now + 2000000 : 0;
+    _comms.nextUs = now + 5000000;
+    _comms.deadlineUs = sendMessage(UBX_MSG_MON_COMMS, nullptr, 0) ? now + 2000000 : 0;
 }
 
-int GPSNativeUBX::activateRTCMOutput()
+bool UBXProtocol::activateRTCMOutput()
 {
-    ubx_payload_tx_cfg_rate_t payload_tx_cfg_rate{};
+    if (!_identity.protocol27) {
+        return activateRTCMOutputPreV27();
+    }
 
     /* For base stations we switch to 1 Hz update rate, which is enough for RTCM output.
      * For the survey-in, we still want 5/10 Hz, because this speeds up the process */
-
-    if (_proto_ver_27_or_higher) {
-        initCfgValset();
-
-        cfgValset<uint16_t>(UBX_CFG_KEY_RATE_MEAS, 1000);
-
-        cfgValsetPort(RTCM_BASE_MSGOUT_I2C, 1);
-        cfgValsetPort(UBX_CFG_KEY_MSGOUT_UBX_NAV_SVIN_I2C, 0);
-
-        if (!sendCfgValset()) {
-            return -1;
-        }
-
-        if (waitForAck(UBX_MSG_CFG_VALSET, UBX_CONFIG_TIMEOUT, false) < 0) {
-            return -1;
-        }
-
-    } else {
-        payload_tx_cfg_rate = {};
-        payload_tx_cfg_rate.measRate = 1000;
-        payload_tx_cfg_rate.navRate = UBX_TX_CFG_RATE_NAVRATE;
-        payload_tx_cfg_rate.timeRef = UBX_TX_CFG_RATE_TIMEREF;
-
-        if (!sendMessage(UBX_MSG_CFG_RATE, UBX::encode(payload_tx_cfg_rate))) {
-            return -1;
-        }
-
-        configureMessageRate(UBX_MSG_NAV_SVIN, 0);
-
-        // stationary RTK reference station ARP (can be sent at lower rate)
-        if (!configureMessageRate(UBX_MSG_RTCM3_1005, 5)) {
-            return -1;
-        }
-
-        // GPS
-        if (!configureMessageRate(UBX_MSG_RTCM3_1077, 1)) {
-            return -1;
-        }
-
-        // GLONASS
-        if (!configureMessageRate(UBX_MSG_RTCM3_1087, 1)) {
-            return -1;
-        }
-
-        // GLONASS code-phase biases
-        if (!configureMessageRate(UBX_MSG_RTCM3_1230, 1)) {
-            return -1;
-        }
-
-        // Galileo
-        if (!configureMessageRate(UBX_MSG_RTCM3_1097, 1)) {
-            return -1;
-        }
-
-        // BeiDou
-        if (!configureMessageRate(UBX_MSG_RTCM3_1127, 1)) {
-            return -1;
-        }
-    }
-
-    return 0;
+    initCfgValset();
+    cfgValset<uint16_t>(UBX_CFG_KEY_RATE_MEAS, 1000);
+    const bool compact = _baseConfig.compactObservations;
+    cfgValsetPort(compact ? RTCM_BASE_MSM4_MSGOUT_I2C : RTCM_BASE_MSM7_MSGOUT_I2C, 1);
+    cfgValsetPort(compact ? RTCM_MSM7_OBSERVATIONS_MSGOUT_I2C : RTCM_MSM4_OBSERVATIONS_MSGOUT_I2C, 0);
+    cfgValsetPort(UBX_CFG_KEY_MSGOUT_UBX_NAV_SVIN_I2C, 0);
+    // The rover-rate satellite divisors would space satellite reports beyond their 5 s freshness at 1 Hz.
+    cfgValsetPort(UBX_CFG_KEY_MSGOUT_UBX_NAV_SAT_I2C, _satellites != nullptr ? UBX::BASE_SATELLITE_INFO_RATE : 0);
+    return sendCfgValset(false) && waitForAck(UBX_MSG_CFG_VALSET).succeeded();
 }
 
-bool GPSNativeUBX::configureMessageRate(const uint16_t msg, const uint8_t rate)
+bool UBXProtocol::sendMessage(uint16_t msg, const uint8_t* payload, uint16_t length, GPSConfigurationStep step)
 {
-    if (_proto_ver_27_or_higher) {
-        // configureMessageRate() should not be called if _proto_ver_27_or_higher is true.
-        // If you see this message the calling code needs to be fixed.
-        log(GPSProtocolLogLevel::Warning, "FIXME: use of deprecated msg CFG_MSG (%i %i)", msg, rate);
+    if (msg == UBX_MSG_CFG_RATE) {
+        step.affectedSettings.add(GPSReceiverSetting::OutputRateHz);
     }
-
-    ubx_payload_tx_cfg_msg_t cfg_msg{};
-
-    cfg_msg.msg = msg;
-    cfg_msg.rate = rate;
-
-    return sendMessage(UBX_MSG_CFG_MSG, UBX::encode(cfg_msg));
-}
-
-bool GPSNativeUBX::configureMessageRateAndAck(uint16_t msg, uint8_t rate, bool report_ack_error)
-{
-    if (!configureMessageRate(msg, rate)) {
-        return false;
+    if (step.command.empty()) {
+        step.command = std::to_string(msg);
     }
-
-    return waitForAck(UBX_MSG_CFG_MSG, UBX_CONFIG_TIMEOUT, report_ack_error) >= 0;
-}
-
-bool GPSNativeUBX::sendMessage(const uint16_t msg, const uint8_t* payload, const uint16_t length)
-{
+    beginCommandWrite(std::move(step));
+    // Identity replies can need two seconds, but multipart writes retain their shorter shared cap.
     const Operation operation(*this, UBX_CONFIG_TIMEOUT);
-    _pendingCommandSettings = {};
-    if (msg == UBX_MSG_CFG_NAV5) {
-        _pendingCommandSettings.add(GPSReceiverSetting::DynamicModel);
-    } else if (msg == UBX_MSG_CFG_RATE) {
-        _pendingCommandSettings.add(GPSReceiverSetting::OutputRateHz);
-    } else if (msg == UBX_MSG_CFG_GNSS) {
-        _pendingCommandSettings.add(GPSReceiverSetting::ConstellationMask);
-    } else if (msg == UBX_MSG_CFG_VALSET) {
-        _pendingCommandSettings = _valsetSettings;
-    }
-    beginCommandWrite(std::to_string(msg), _pendingCommandSettings);
+    _operationDeadline.untilUs =
+        std::min(_operationDeadline.untilUs, _commandWrite.evidence.startedAtUs + uint64_t(UBX_CONFIG_TIMEOUT) * 1000);
     std::array<uint8_t, 6> header{UBX_SYNC1, UBX_SYNC2};
     (void) LittleEndian::write(header, 2, msg);
     (void) LittleEndian::write(header, 4, length);
@@ -1402,16 +755,16 @@ bool GPSNativeUBX::sendMessage(const uint16_t msg, const uint8_t* payload, const
     }
 
     // Send message
-    if (write(header.data(), header.size()) != static_cast<int>(header.size())) {
+    if (!write(header.data(), static_cast<int>(header.size()))) {
         return false;
     }
 
-    if (payload && write((void*) payload, length) != length) {
+    if (payload && !write(payload, length)) {
         return false;
     }
 
     const std::array<uint8_t, 2> checksumBytes{checksum.ck_a, checksum.ck_b};
-    if (write(checksumBytes.data(), checksumBytes.size()) != int(checksumBytes.size())) {
+    if (!write(checksumBytes.data(), static_cast<int>(checksumBytes.size()))) {
         return false;
     }
 

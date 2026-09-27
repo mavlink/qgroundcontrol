@@ -1,0 +1,98 @@
+pragma ComponentBehavior: Bound
+
+import QtQuick
+import QtQuick.Layouts
+
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.FactControls
+
+/// Serial device and baud rate of the GNSS receiver.
+ColumnLayout {
+    id: root
+
+    required property Fact deviceFact
+    required property Fact baudFact
+    property var serialPorts: []
+    property var serialBaudRates: []
+    property int minimumBaud: 1
+    property int maximumBaud: 4000000
+    /// Offers rate 0 as "Auto" for consumers that can detect the baud rate.
+    property bool allowAutoBaud: false
+    property bool editable: true
+
+    readonly property string _device: String(deviceFact.rawValue)
+    readonly property var _devices: {
+        const devices = root.serialPorts.map(port => ({ value: port, label: port }))
+        if (root._device !== "" && !root.serialPorts.includes(root._device))
+            devices.push({ value: root._device, label: qsTr("%1 (unavailable)").arg(root._device) })
+        if (devices.length === 0)
+            devices.push({ value: "", label: qsTr("<none available>") })
+        return devices
+    }
+    readonly property var _rates: (root.allowAutoBaud ? [0] : []).concat(root.serialBaudRates.map(Number).filter(
+        (rate, index, rates) => Number.isInteger(rate) && rate >= root.minimumBaud && rate <= root.maximumBaud
+        && rates.indexOf(rate) === index))
+    readonly property int _baudIndex: _rates.indexOf(Number(baudFact.rawValue))
+    readonly property bool customBaud: _customRequested || _baudIndex < 0
+    property bool _customRequested: false
+
+    spacing: ScreenTools.defaultFontPixelHeight / 4
+
+    QGCLabel {
+        Layout.fillWidth: true
+        text: qsTr("Serial device")
+    }
+    QGCComboBox {
+        objectName: "rtkSerialDevice"
+        Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        enabled: root.editable && root.serialPorts.length > 0
+        model: root._devices
+        textRole: "label"
+        currentIndex: root._devices.findIndex(device => device.value === root._device)
+        onActivated: index => {
+            if (index >= 0 && index < root._devices.length
+                && root.serialPorts.includes(root._devices[index].value))
+                root.deviceFact.rawValue = root._devices[index].value
+        }
+    }
+
+    QGCLabel {
+        Layout.fillWidth: true
+        text: qsTr("Baud rate")
+    }
+    QGCComboBox {
+        objectName: "rtkSerialBaudRate"
+        Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        enabled: root.editable
+        readonly property bool isCustomBaud: root.customBaud
+        model: root._rates.map(rate => rate === 0 ? qsTr("Auto") : String(rate)).concat([qsTr("Custom")])
+        currentIndex: root.customBaud ? root._rates.length : root._baudIndex
+        onActivated: index => {
+            root._customRequested = index === root._rates.length
+            if (index >= 0 && index < root._rates.length)
+                root.baudFact.rawValue = root._rates[index]
+        }
+    }
+
+    QGCLabel {
+        Layout.fillWidth: true
+        visible: root.customBaud
+        text: qsTr("Custom baud rate")
+    }
+    FactTextField {
+        objectName: "rtkCustomBaudRate"
+        Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        visible: root.customBaud
+        enabled: root.editable
+        fact: root.baudFact
+    }
+
+    Connections {
+        target: root.baudFact
+        function onRawValueChanged() { root._customRequested = false }
+    }
+}

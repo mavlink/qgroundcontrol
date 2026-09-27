@@ -3,7 +3,6 @@
 #include <memory>
 
 #include <QtCore/QScopeGuard>
-#include <QtCore/QThread>
 #include <QtTest/QSignalSpy>
 
 #include "GPSSourceHealth.h"
@@ -31,6 +30,7 @@ GPSObservation observation(const QGeoPositionInfo& position, const RuntimeSchedu
     result.monotonicTimestampUs = ageMs < 0 ? now + 1000000 : now - static_cast<quint64>(ageMs) * 1000;
     return result;
 }
+
 }  // namespace
 
 void GPSSourceHealthTest::_normalizesObservation_data()
@@ -84,7 +84,7 @@ void GPSSourceHealthTest::_ageAndRecovery()
 {
     ManualScheduler scheduler;
     GPSSourceHealth health(nullptr, &scheduler);
-    health._freshnessTimeoutMs = 100;
+    health.setFreshnessTimeoutMs(100);
     QCOMPARE(health.state(), GPSSourceHealth::State::NoData);
     QCOMPARE(scheduler.pendingCount(), 0);
     const auto before = QDateTime::currentDateTimeUtc();
@@ -267,40 +267,4 @@ void GPSSourceHealthTest::_invalidatedPositionTimeout()
     QVERIFY(scheduler.advanceBy(std::chrono::seconds(2)));
     health.setFreshnessTimeoutMs(1000);
     QCOMPARE(health.state(), GPSSourceHealth::State::Stale);
-}
-
-void GPSSourceHealthTest::_schedulerDestructionClearsAcceptedState()
-{
-    auto scheduler = std::make_unique<ManualScheduler>();
-    GPSSourceHealth health(nullptr, scheduler.get());
-    auto fix = observation(position(), *scheduler);
-    health.updateObservation(fix);
-    QVERIFY(health.usable());
-    scheduler.reset();
-    QCOMPARE(health.state(), GPSSourceHealth::State::NoData);
-    QVERIFY(!health.acceptedObservation());
-    health.updateObservation(fix);
-    QVERIFY(!health.usable());
-}
-
-void GPSSourceHealthTest::_foreignSchedulerRejected()
-{
-    QThread worker;
-    ManualScheduler scheduler;
-    const auto owner = QThread::currentThread();
-    const auto fix = observation(position(), scheduler);
-    QVERIFY(scheduler.moveToThread(&worker));
-    worker.start();
-    const auto cleanup = qScopeGuard([&]() {
-        QMetaObject::invokeMethod(&scheduler, [&]() { scheduler.moveToThread(owner); }, Qt::BlockingQueuedConnection);
-        worker.quit();
-        worker.wait();
-    });
-    expectLogMessage("GPS.Core.GPSSourceHealth", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("Scheduler must share the store thread")));
-    GPSSourceHealth health(nullptr, &scheduler);
-    verifyExpectedLogMessage();
-    health.updateObservation(fix);
-    QVERIFY(!health.usable());
-    QVERIFY(!health.acceptedObservation());
 }

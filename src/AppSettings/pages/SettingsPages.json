@@ -53,11 +53,17 @@
             "pageDefinition": "Maps.SettingsUI.json"
         },
         {
-            "name": "NTRIP/RTK",
-            "qml": "NTRIPSettings.qml",
+            "name": "GNSS Receiver",
+            "qml": "GNSSReceiverSettings.qml",
+            "icon": "qrc:/qmlimages/Gps.svg",
+            "pageDefinition": "GNSSReceiver.SettingsUI.json"
+        },
+        {
+            "name": "RTK Corrections",
+            "qml": "RTKCorrectionsSettings.qml",
             "icon": "qrc:/InstrumentValueIcons/globe.svg",
             "visible": "QGroundControl.settingsManager && QGroundControl.settingsManager.ntripSettings !== undefined",
-            "pageDefinition": "NTRIP.SettingsUI.json"
+            "pageDefinition": "RTKCorrections.SettingsUI.json"
         },
         {
             "name": "PX4 Log Transfer",

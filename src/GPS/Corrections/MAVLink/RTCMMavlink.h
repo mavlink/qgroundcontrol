@@ -4,7 +4,6 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QString>
-#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "DataRateTracker.h"
 #include "RTCMMavlinkPacket.h"
@@ -12,7 +11,6 @@
 class RTCMMavlink : public QObject
 {
     Q_OBJECT
-    QML_ANONYMOUS
     Q_PROPERTY(quint64 totalBytesSent READ totalBytesSent NOTIFY bandwidthChanged)
     Q_PROPERTY(double bandwidthKBps READ bandwidthKBps NOTIFY bandwidthChanged)
     Q_PROPERTY(quint64 totalBytesSubmitted READ totalBytesSubmitted NOTIFY deliveryStatsChanged)

@@ -1,48 +1,56 @@
 #pragma once
-#include <thread>
 
 #include <QtCore/QStringList>
 
 #include "GPSProtocol.h"
-#ifdef QGC_GPS_TEST_CLOCK
-inline uint64_t gps_test_time = 0;
-inline QStringList gps_test_warnings;
-#else
-#include <QtCore/QLoggingCategory>
-Q_DECLARE_LOGGING_CATEGORY(GPSNativeDriversLog)
-#endif
-using SurveyInStatus = GPSNativeSurveyReport;
+#include "GPSTestClock.h"
 
-inline GPSProtocolIO makeGPSProtocolTestIO()
+using SurveyInStatus = GPSDecodedSurvey;
+
+template <typename Driver>
+class GPSProtocolTestProbe : public Driver
+{
+public:
+    using Driver::Driver;
+
+    const GPSDecodedPosition& workingPosition() const { return this->_position; }
+
+    const GPSDecodedSatellites& workingSatellites() const { return this->_satelliteStorage; }
+};
+
+inline GPSProtocolIO captureGPSReports(GPSProtocolIO io, GPSDecodedPosition& position,
+                                       GPSDecodedSatellites* satellites = nullptr)
+{
+    io.decoded = [&position, satellites, sink = std::move(io.decoded)](const GPSDecodedBatch& batch) {
+        for (const auto& event : batch.events) {
+            if (const auto* report = std::get_if<GPSDecodedPosition>(&event)) {
+                position = *report;
+            } else if (const auto* satellite = std::get_if<GPSDecodedSatellites>(&event); satellite && satellites) {
+                *satellites = *satellite;
+            }
+        }
+        if (sink) {
+            sink(batch);
+        }
+    };
+    return io;
+}
+
+/// Protocol services on @p clock: waits advance it instead of sleeping, and warnings are collected in
+/// @p warnings, when given, instead of being logged.
+inline GPSProtocolIO makeGPSProtocolTestIO(GPSTestClock& clock, QStringList* warnings = nullptr)
 {
     GPSProtocolIO io;
-#ifdef QGC_GPS_TEST_CLOCK
-    io.nowUs = [] { return gps_test_time; };
-    io.wait = [](std::chrono::microseconds delay) {
-        gps_test_time += delay.count();
+    io.nowUs = [&clock] { return clock.nowUs(); };
+    io.wait = [&clock](std::chrono::microseconds delay) {
+        clock.advanceBy(delay.count());
         return true;
     };
-    io.log = [](GPSProtocolLogLevel level, QStringView message) {
-        if (level == GPSProtocolLogLevel::Warning) {
-            gps_test_warnings.push_back(message.toString());
+    io.log = [warnings](const QLoggingCategory&, GPSProtocolLogLevel level, QStringView message) {
+        if (warnings && level == GPSProtocolLogLevel::Warning) {
+            warnings->push_back(message.toString());
         }
     };
-#else
-    io.nowUs = [] {
-        return std::chrono::duration_cast<std::chrono::microseconds>(
-                   std::chrono::steady_clock::now().time_since_epoch())
-            .count();
-    };
-    io.wait = [](std::chrono::microseconds delay) {
-        std::this_thread::sleep_for(delay);
-        return true;
-    };
-    io.log = [](GPSProtocolLogLevel level, QStringView message) {
-        if (level == GPSProtocolLogLevel::Warning) {
-            qCWarning(GPSNativeDriversLog) << message;
-        }
-    };
-#endif
     io.setBaudrate = [](unsigned) { return GPSBaudStatus::Configured; };
     return io;
 }

@@ -9,6 +9,7 @@
 
 #include "GPSCorrectionDiagnostics.h"
 #include "GPSCorrectionFrame.h"
+#include "GPSRevision.h"
 #include "RTCMFrameDecoder.h"
 
 Q_DECLARE_LOGGING_CATEGORY(RTCMUdpInputLog)
@@ -39,7 +40,6 @@ public:
     /// Change the listen port. If already running, restarts automatically.
     void setPort(quint16 port);
 
-    void setValidation(bool validate);
     /// Changes start a fresh stream, restarting the listener if running.
     void configure(quint16 port, bool validate);
 
@@ -54,7 +54,9 @@ private slots:
     void _readDatagrams();
 
 private:
-    quint64 _resetStream();
+    /// Starts a fresh stream; the token detects a newer start, stop or reconfiguration.
+    GPSRevision::Token _resetStream();
+    GPSRevision::Token _stop();
     void _scheduleRead();
 
     QUdpSocket* _socket = nullptr;
@@ -76,5 +78,5 @@ private:
     quint64 _invalidFrames = 0;
     bool _drainScheduled = false;
     bool _readingDatagrams = false;
-    quint64 _lifecycleRevision = 0;
+    GPSRevision _lifecycle;
 };

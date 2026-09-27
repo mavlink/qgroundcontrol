@@ -133,6 +133,7 @@ A collapsible group with an optional heading.
 | `sectionName` | string | no | Tree-nav display name; falls back to `heading` |
 | `keywords` | array of strings | no | Extra search terms |
 | `component` | string | no | Name of a hand-written QML component to embed instead of generating controls |
+| `properties` | object | no | QML property bindings set on the `component` (same value rules as control `properties`) |
 | `missing` | array of strings | no | Descriptions of complex UI not yet generated (documentation only) |
 | `controls` | array of [Control](#control) | yes* | Controls in this group |
 

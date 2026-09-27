@@ -29,14 +29,11 @@ public:
     bool fatalError() const override;
 
     GPSReadResult read(uint8_t* buffer, int length, int timeoutMs) override;
-#ifdef Q_OS_ANDROID
-    /// Synchronous configuration writes use the backend timeout; bounded writes are unsupported.
-    GPSWriteResult writeConfiguration(const uint8_t* buffer, int length, QDeadlineTimer deadline) override;
-#endif
     std::chrono::milliseconds configurationWriteTimeout() const override;
-    GPSWriteResult writeBounded(const uint8_t* buffer, int length, QDeadlineTimer deadline) override;
-    std::chrono::milliseconds correctionWriteTimeout(int length) const override;
     bool setBaudrate(unsigned baudrate) override;
+
+protected:
+    GPSWriteResult writeData(const uint8_t* buffer, int length, QDeadlineTimer deadline) override;
 
 private:
     static constexpr int kOpenTimeoutMs = 30000;
@@ -49,8 +46,6 @@ private:
     QString _device;
     std::unique_ptr<QSerialPort> _serial;
     bool _inputOverflow = false;
-#ifndef Q_OS_ANDROID
     qint64 _acceptedTotal = 0;
     qint64 _writtenTotal = 0;
-#endif
 };

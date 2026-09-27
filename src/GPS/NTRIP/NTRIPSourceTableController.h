@@ -1,29 +1,36 @@
 #pragma once
 
 #include <functional>
+#include <memory>
+#include <optional>
 
-#include <QtCore/QAbstractListModel>
-#include <QtCore/QElapsedTimer>
+#include <QtCore/QAbstractItemModel>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
 #include <QtPositioning/QGeoCoordinate>
 
+#include "GPSNotificationQueue.h"
+#include "GPSRevision.h"
 #include "NTRIPConfiguration.h"
+#include "ScheduledTask.h"
 
 Q_DECLARE_LOGGING_CATEGORY(NTRIPSourceTableControllerLog)
 
+class NTRIPHttpSession;
 class NTRIPSourceTableModel;
 class NTRIPSourceTableControllerTest;
-class QNetworkAccessManager;
-class QNetworkReply;
+class RuntimeScheduler;
 
+/// Fetches caster source tables over the same HTTP request builder and decoder as the correction
+/// stream, so HTTP/1.x and NTRIP v1 "SOURCETABLE 200 OK" responses share one path.
 class NTRIPSourceTableController : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(FetchStatus fetchStatus READ fetchStatus NOTIFY fetchStatusChanged)
     Q_PROPERTY(QString fetchError READ fetchError NOTIFY fetchErrorChanged)
-    Q_PROPERTY(QAbstractListModel* mountpointModel READ mountpointModel NOTIFY mountpointModelChanged)
+    Q_PROPERTY(QString securityWarning READ securityWarning NOTIFY securityWarningChanged)
+    Q_PROPERTY(QAbstractItemModel* mountpointModel READ mountpointModel NOTIFY mountpointModelChanged)
 
 public:
     enum class FetchStatus
@@ -39,21 +46,26 @@ public:
     static constexpr int kFetchTimeoutMs = 10000;
     static constexpr qint64 kMaxSourceTableBytes = 8 * 1024 * 1024;
 
-    explicit NTRIPSourceTableController(QObject* parent = nullptr);
+    explicit NTRIPSourceTableController(QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr);
     ~NTRIPSourceTableController() override;
 
     FetchStatus fetchStatus() const { return _fetchStatus; }
 
     QString fetchError() const { return _fetchError; }
 
-    QAbstractListModel* mountpointModel() const;
+    /// Set while the latest fetch sends caster credentials without TLS.
+    QString securityWarning() const { return _securityWarning; }
+
+    QAbstractItemModel* mountpointModel() const;
 
     void fetch(const NTRIPConnectionConfig& config, const QGeoCoordinate& sortCoord = {});
+    void cancel();
     Q_INVOKABLE void selectMountpoint(const QString& mountpoint);
 
 signals:
     void fetchStatusChanged();
     void fetchErrorChanged();
+    void securityWarningChanged();
     void mountpointModelChanged();
     /// Emitted when the user picks a mountpoint. The manager/QML layer persists
     /// it to NTRIPSettings — this controller does not write settings directly.
@@ -61,27 +73,34 @@ signals:
 
 private:
     friend class NTRIPSourceTableControllerTest;
-    friend class NTRIPReentrancyTest;
 
     /// Test seam: drive the reply-processing paths without a live network reply.
     void injectSourceTableForTest(const QString& table);
     void injectFetchErrorForTest(const QString& error);
 
-    void _onReplyFinished(QNetworkReply* reply, quint64 revision);
     void _onSourceTableReceived(const QString& table);
     void _onFetchError(const QString& error);
-    void _abortReply();
+    void _completeFetch(const GPSRevision::Token& fetch, QString table, std::optional<QString> error = std::nullopt);
+    void _abortFetch();
+    QPointer<NTRIPHttpSession> _activeSession() const;
+    QByteArray _activeRequest() const;
+    void _startFetch(const GPSRevision::Token& fetch, const QByteArray& request);
+    void _readReply(const QByteArray& bytes);
+    void _finishFetch(const QString& error = {});
+    void _setSecurityWarning(const QString& warning);
     bool _deferModelMutation(std::function<void()> action);
 
     NTRIPSourceTableModel* _model = nullptr;
-    QNetworkAccessManager* _networkManager = nullptr;
-    QPointer<QNetworkReply> _reply;
-    bool _replyTooLarge = false;
+    struct FetchAttempt;
+    std::unique_ptr<FetchAttempt> _attempt;
+    RuntimeScheduler* const _scheduler;
     QGeoCoordinate _sortCoord;
     FetchStatus _fetchStatus = FetchStatus::Idle;
     QString _fetchError;
-    QElapsedTimer _cacheAge;
-    quint64 _fetchRevision = 0;
+    QString _securityWarning;
+    std::optional<quint64> _cacheStoredAtUs;
+    GPSRevision _fetchRevision;
 
     NTRIPConnectionConfig _lastFetchConfig;  ///< Mountpoint is excluded from source-table identity.
+    GPSNotificationQueue _notifications{this};
 };

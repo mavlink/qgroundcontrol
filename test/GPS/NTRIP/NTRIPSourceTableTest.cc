@@ -89,7 +89,7 @@ void NTRIPSourceTableTest::_testUpdateDistancesAll()
     QCOMPARE(model.count(), 2);
 
     const auto distanceAt = [&model](int row) {
-        return model.data(model.index(row), NTRIPSourceTableModel::DistanceKmRole).toDouble();
+        return model.data(model.index(row, 0), NTRIPSourceTableModel::DistanceKmRole).toDouble();
     };
 
     QVERIFY(distanceAt(0) < 0.0);
@@ -114,4 +114,80 @@ void NTRIPSourceTableTest::_testEmptyTable()
     QCOMPARE(model.count(), 0);
 }
 
+void NTRIPSourceTableTest::_testTableTerminator_data()
+{
+    QTest::addColumn<QByteArray>("body");
+    QTest::addColumn<bool>("complete");
+    const QByteArray row = "STR;MP;Id;RTCM 3.2;;2;GPS;NET;USA;40;-74;0;1;gen;none;B;N;4800";
+    QTest::newRow("crlf") << row + "\r\nENDSOURCETABLE\r\n" << true;
+    QTest::newRow("lf") << row + "\nENDSOURCETABLE\n" << true;
+    QTest::newRow("no-final-newline") << row + "\r\nENDSOURCETABLE" << true;
+    QTest::newRow("empty-table") << QByteArray("ENDSOURCETABLE\r\n") << true;
+    QTest::newRow("partial") << row + "\r\nENDSOURCE" << false;
+    QTest::newRow("inside-row") << QByteArray("STR;ENDSOURCETABLE;Id\r\n") << false;
+    QTest::newRow("prefix-of-line") << row + "\r\nENDSOURCETABLES\r\n" << false;
+}
+
+void NTRIPSourceTableTest::_testTableTerminator()
+{
+    QFETCH(QByteArray, body);
+    QFETCH(bool, complete);
+    QCOMPARE(ntripSourceTableComplete(body), complete);
+}
+
+void NTRIPSourceTableTest::_testRolesAreReadOnlyProperties()
+{
+    NTRIPSourceTableModel model;
+    const auto roles = model.roleNames();
+
+    const struct
+    {
+        int role;
+        const char* name;
+    } expected[] = {
+        {NTRIPSourceTableModel::MountpointRole, "mountpoint"}, {NTRIPSourceTableModel::FormatRole, "format"},
+        {NTRIPSourceTableModel::LatitudeRole, "latitude"},     {NTRIPSourceTableModel::FeeRole, "fee"},
+        {NTRIPSourceTableModel::BitrateRole, "bitrate"},       {NTRIPSourceTableModel::DistanceKmRole, "distanceKm"},
+    };
+
+    for (const auto& [role, name] : expected) {
+        QCOMPARE(roles.value(role), QByteArray(name));
+    }
+    model.parseSourceTable(QStringLiteral("STR;MP1;Id;RTCM 3.2;;2;GPS;Net;DEU;52.00;13.00;1;0;Gen;none;B;N;9600;"));
+    QCOMPARE(model.rowCount(), 1);
+    const auto index = model.index(0, 0);
+    QCOMPARE(model.data(index, NTRIPSourceTableModel::MountpointRole).toString(), QStringLiteral("MP1"));
+    QVERIFY(!(model.flags(index) & Qt::ItemIsEditable));
+    QVERIFY(!model.setData(index, QStringLiteral("changed"), NTRIPSourceTableModel::MountpointRole));
+    QCOMPARE(model.data(index, NTRIPSourceTableModel::MountpointRole).toString(), QStringLiteral("MP1"));
+}
+
 UT_REGISTER_TEST(NTRIPSourceTableTest, TestLabel::Unit)
+
+void NTRIPSourceTableTest::_testCoordinateValidity_data()
+{
+    QTest::addColumn<QString>("latitude");
+    QTest::addColumn<QString>("longitude");
+    QTest::addColumn<bool>("known");
+    QTest::newRow("empty-latitude") << QString() << QStringLiteral("-74") << false;
+    QTest::newRow("invalid-latitude") << QStringLiteral("bad") << QStringLiteral("-74") << false;
+    QTest::newRow("out-of-range-latitude") << QStringLiteral("91") << QStringLiteral("-74") << false;
+    QTest::newRow("nonfinite-longitude") << QStringLiteral("40") << QStringLiteral("nan") << false;
+    QTest::newRow("out-of-range-longitude") << QStringLiteral("40") << QStringLiteral("181") << false;
+    QTest::newRow("equator") << QStringLiteral("0") << QStringLiteral("-74") << true;
+    QTest::newRow("prime-meridian") << QStringLiteral("40") << QStringLiteral("0") << true;
+    QTest::newRow("unspecified-origin") << QStringLiteral("0") << QStringLiteral("0") << false;
+}
+
+void NTRIPSourceTableTest::_testCoordinateValidity()
+{
+    QFETCH(QString, latitude);
+    QFETCH(QString, longitude);
+    QFETCH(bool, known);
+    NTRIPMountpoint mountpoint;
+    QVERIFY(NTRIPMountpoint::fromSourceTableLine(
+        QStringLiteral("STR;TEST;Id;RTCM 3.2;;2;GPS;NET;USA;%1;%2;0;1;gen;none;B;N;4800").arg(latitude, longitude),
+        mountpoint));
+    mountpoint.updateDistance(QGeoCoordinate(40, -74));
+    QCOMPARE(mountpoint.distanceKm >= 0, known);
+}

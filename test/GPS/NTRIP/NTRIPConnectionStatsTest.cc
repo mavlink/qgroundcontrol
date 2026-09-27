@@ -32,6 +32,18 @@ void NTRIPConnectionStatsTest::testRecordMessage()
     QCOMPARE(stats.messagesReceived(), quint32(2));
 }
 
+void NTRIPConnectionStatsTest::testNoFirstCorrectionBecomesStale()
+{
+    NTRIPConnectionStats stats;
+    stats.start();
+    QCOMPARE(stats.correctionAgeSec(), -1.0);
+    QTRY_VERIFY_WITH_TIMEOUT(stats.dataStale(), TestTimeout::longMs());
+    QCOMPARE(stats.messagesReceived(), quint32(0));
+    QCOMPARE(stats.correctionAgeSec(), -1.0);
+    stats.recordMessage(100);
+    QVERIFY(!stats.dataStale());
+}
+
 void NTRIPConnectionStatsTest::testReset()
 {
     NTRIPConnectionStats stats;
@@ -72,10 +84,14 @@ void NTRIPConnectionStatsTest::testDataRate()
     QVERIFY(stats.dataRateBytesPerSec() > 0.0);
 
     const auto messageCount = stats.messagesReceived();
+    const auto byteCount = stats.bytesReceived();
     const double ageBeforeStop = stats.correctionAgeSec();
     stats.stop();
     QCOMPARE(stats.dataRateBytesPerSec(), 0.0);
     QCOMPARE(stats.messagesReceived(), messageCount);
+    QCOMPARE(stats.bytesReceived(), byteCount);
+    stats.stop();
+    QCOMPARE(stats.bytesReceived(), byteCount);
     QVERIFY(stats.correctionAgeSec() >= ageBeforeStop);
 }
 
@@ -114,7 +130,7 @@ void NTRIPConnectionStatsTest::testCorrectionAgeAfterMessage()
 
     QCOMPARE(stats.bytesReceived(), quint64(100 * agesMs.size()));
     QCOMPARE(stats.messagesReceived(), quint32(agesMs.size()));
-    QCOMPARE(stats.messageCountsById().first().toList().at(1).toUInt(), quint32(agesMs.size()));
+    QCOMPARE(stats.messageCountsById().first().count, quint64(agesMs.size()));
     QVERIFY(stats.correctionAgeSec() >= expectedAgeMs / 1000.0);
     QVERIFY(stats.correctionAgeSec() < expectedAgeMs / 1000.0 + 1.0);
     QCOMPARE(stats.dataStale(), stale);
@@ -137,7 +153,7 @@ void NTRIPConnectionStatsTest::testInvalidReceiptTimestamp()
 {
     QFETCH(qint64, receivedAtMs);
     NTRIPConnectionStats stats;
-    expectLogMessage("GPS.NTRIPConnectionStats", QtWarningMsg,
+    expectLogMessage("GPS.NTRIP.NTRIPConnectionStats", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Invalid RTCM receipt timestamp")));
     stats.recordMessage(100, 1005, receivedAtMs);
     verifyExpectedLogMessage();
@@ -146,7 +162,7 @@ void NTRIPConnectionStatsTest::testInvalidReceiptTimestamp()
 
     stats.recordMessage(100, 1005, static_cast<qint64>(MonotonicClock::nowUs() / 1000) - 6000);
     QVERIFY(stats.dataStale());
-    expectLogMessage("GPS.NTRIPConnectionStats", QtWarningMsg,
+    expectLogMessage("GPS.NTRIP.NTRIPConnectionStats", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Invalid RTCM receipt timestamp")));
     stats.recordMessage(100, 1005, receivedAtMs);
     verifyExpectedLogMessage();
@@ -165,20 +181,9 @@ void NTRIPConnectionStatsTest::testMessageCountsByIdSortedAndReset()
     stats.recordMessage(10, 1077);
     stats.recordMessage(10, 0);
 
-    const QVariantList counts = stats.messageCountsById();
-    QCOMPARE(counts.size(), 3);
-
-    const QVariantList unknown = counts.at(0).toList();
-    QCOMPARE(unknown.at(0).toInt(), 0);
-    QCOMPARE(unknown.at(1).toUInt(), quint32(1));
-
-    const QVariantList base = counts.at(1).toList();
-    QCOMPARE(base.at(0).toInt(), 1005);
-    QCOMPARE(base.at(1).toUInt(), quint32(1));
-
-    const QVariantList msm = counts.at(2).toList();
-    QCOMPARE(msm.at(0).toInt(), 1077);
-    QCOMPARE(msm.at(1).toUInt(), quint32(2));
+    // Ascending ID order, with ID 0 counting unidentified frames.
+    const QList<RTCMMessageCount> expected{{0, 1}, {1005, 1}, {1077, 2}};
+    QCOMPARE(stats.messageCountsById(), expected);
 
     stats.reset();
     QVERIFY(stats.messageCountsById().isEmpty());

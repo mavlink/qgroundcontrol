@@ -23,49 +23,29 @@ RTCMMavlinkPacket::PackResult RTCMMavlinkPacket::pack(QByteArrayView data, uint8
     }
 
     // Oversized frames require stream reconstruction, not wrapped fragment IDs.
-    if (data.size() > kMaxAssembledLen) {
-        qsizetype start = 0;
-        while (start < data.size()) {
-            const qsizetype length = std::min(data.size() - start, kFragmentLen);
-            GpsRtcmPacket packet;
-            packet.flags = _makeFlags(false, 0, result.nextSequenceId);
-            packet.data = data.mid(start, length).toByteArray();
-            result.packets.append(std::move(packet));
-            ++result.nextSequenceId;
-            start += length;
-        }
-        return result;
-    }
-
-    if (data.size() <= kFragmentLen) {
-        GpsRtcmPacket packet;
-        packet.flags = _makeFlags(false, 0, sequenceId);
-        packet.data = data.toByteArray();
-        result.packets.append(std::move(packet));
-        ++result.nextSequenceId;
-        return result;
-    }
-
+    const bool fragmented = data.size() > kFragmentLen && data.size() <= kMaxAssembledLen;
     uint8_t fragmentId = 0;
     qsizetype start = 0;
     while (start < data.size()) {
-        const qsizetype length = std::min(data.size() - start, kFragmentLen);
+        const qsizetype length = (std::min) (data.size() - start, kFragmentLen);
         GpsRtcmPacket packet;
-        packet.flags = _makeFlags(true, fragmentId, sequenceId);
+        packet.flags = _makeFlags(fragmented, fragmentId, result.nextSequenceId);
         packet.data = data.mid(start, length).toByteArray();
         result.packets.append(std::move(packet));
-        ++fragmentId;
+        if (fragmented) {
+            ++fragmentId;
+        } else {
+            ++result.nextSequenceId;
+        }
         start += length;
     }
 
     // Full fragments need a terminator unless all four are present.
-    if ((data.size() % kFragmentLen) == 0 && fragmentId < kMaxFragments) {
-        GpsRtcmPacket terminator;
-        terminator.flags = _makeFlags(true, fragmentId, sequenceId);
-        terminator.data.clear();
-        result.packets.append(std::move(terminator));
+    if (fragmented) {
+        if ((data.size() % kFragmentLen) == 0 && fragmentId < kMaxFragments) {
+            result.packets.append(GpsRtcmPacket{_makeFlags(true, fragmentId, sequenceId), {}});
+        }
+        ++result.nextSequenceId;
     }
-
-    ++result.nextSequenceId;
     return result;
 }

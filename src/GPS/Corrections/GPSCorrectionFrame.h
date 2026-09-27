@@ -9,6 +9,9 @@
 #include "MonotonicClock.h"
 
 // Unknown identifies legacy unclassified input; routing policy is selected separately.
+namespace GPSCorrectionSources {
+Q_NAMESPACE
+
 enum class GPSCorrectionSource
 {
     Unknown,
@@ -16,6 +19,11 @@ enum class GPSCorrectionSource
     Ntrip,
     Udp
 };
+Q_ENUM_NS(GPSCorrectionSource)
+
+}  // namespace GPSCorrectionSources
+
+using GPSCorrectionSource = GPSCorrectionSources::GPSCorrectionSource;
 Q_DECLARE_METATYPE(GPSCorrectionSource)
 
 struct GPSCorrectionFrame
@@ -28,7 +36,6 @@ struct GPSCorrectionFrame
     bool validated = false;
     bool filtered = false;
     QString sourceInstance = {};
-    quint64 deliveryId = 0;
 
     static qint64 monotonicNowMs() { return static_cast<qint64>(MonotonicClock::nowUs() / 1000); }
 

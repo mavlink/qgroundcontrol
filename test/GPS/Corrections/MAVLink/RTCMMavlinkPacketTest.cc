@@ -23,10 +23,15 @@ void RTCMMavlinkPacketTest::_packetization_data()
 
     QTest::newRow("empty") << 0 << 31 << 0 << false << 31;
     QTest::newRow("single-byte") << 1 << 31 << 1 << false << 32;
+    QTest::newRow("below-single-fragment") << 179 << 31 << 1 << false << 32;
     QTest::newRow("exact-single-fragment") << 180 << 31 << 1 << false << 32;
     QTest::newRow("split-tail") << 181 << 31 << 2 << true << 32;
+    QTest::newRow("below-two-full") << 359 << 31 << 2 << true << 32;
     QTest::newRow("two-full-and-terminator") << 360 << 31 << 3 << true << 32;
+    QTest::newRow("above-two-full") << 361 << 31 << 3 << true << 32;
+    QTest::newRow("below-three-full") << 539 << 31 << 3 << true << 32;
     QTest::newRow("three-full-and-terminator") << 540 << 31 << 4 << true << 32;
+    QTest::newRow("above-three-full") << 541 << 31 << 4 << true << 32;
     QTest::newRow("four-with-tail") << 719 << 31 << 4 << true << 32;
     QTest::newRow("four-full-no-terminator") << 720 << 31 << 4 << true << 32;
     QTest::newRow("oversized-unfragmented-stream") << 721 << 31 << 5 << false << 36;

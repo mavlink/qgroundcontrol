@@ -2,17 +2,21 @@ if(TARGET QGCGPSReceiver)
     return()
 endif()
 
-qt_add_library(QGCGPSReceiver STATIC GPSReceiverConfig.cc GPSReceiverDescriptor.cc)
+if(NOT TARGET QGCClock)
+    add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../../Utilities/Timing/Clock" "${CMAKE_CURRENT_BINARY_DIR}/Clock")
+endif()
+
+qt_add_library(QGCGPSReceiver STATIC GPSReceiverConfig.cc GPSReceiverDescriptor.cc GPSSatelliteObservation.cc)
 add_library(QGC::GPSReceiver ALIAS QGCGPSReceiver)
 set_target_properties(
     QGCGPSReceiver
-    PROPERTIES AUTOMOC OFF
+    PROPERTIES AUTOMOC ON
                AUTOUIC OFF
                AUTORCC OFF
                POSITION_INDEPENDENT_CODE ON
 )
 target_compile_features(QGCGPSReceiver PUBLIC cxx_std_20)
-target_link_libraries(QGCGPSReceiver PUBLIC Qt6::Core)
+target_link_libraries(QGCGPSReceiver PUBLIC Qt6::Core QGCClock)
 target_sources(
     QGCGPSReceiver
     PUBLIC FILE_SET
@@ -26,7 +30,8 @@ target_sources(
            GPSType.h
            GPSDriverReports.h
            GPSConfigurationEvidence.h
-           GPSSatelliteUsageReport.h
+           GPSSatelliteObservation.h
+           GPSSatelliteState.h
 )
 target_sources(
     QGCGPSReceiver
@@ -38,4 +43,5 @@ target_sources(
            ..
            FILES
            ../GPSConstellation.h
+           ../GPSFixQuality.h
 )

@@ -38,6 +38,8 @@ _QML_PROPERTY_NAME_RE = re.compile(r"[a-z_][A-Za-z0-9_]*")
 # Names the control template already emits (or that QML treats specially); a JSON
 # 'properties' entry using one would generate a duplicate binding.
 _RESERVED_PROPERTY_NAMES = frozenset({"id", "objectName", "label", "fact", "enabled"})
+# The group component template emits only Layout.fillWidth on the component itself.
+_RESERVED_GROUP_PROPERTY_NAMES = frozenset({"id"})
 
 
 def _coerce_property_value(value: object) -> str:
@@ -57,6 +59,30 @@ def _coerce_property_value(value: object) -> str:
         f"'properties' value must be a string, boolean, or number, "
         f"got {type(value).__name__}: {clamped_repr(value)}"
     )
+
+
+def _parse_properties(
+    raw: object, reserved: frozenset[str], kind: str, json_path: Path, source: object
+) -> dict[str, str]:
+    """Validate a JSON 'properties' object and convert its values to QML expressions."""
+    properties = require_dict(raw, f"{kind} 'properties'", json_path)
+    result: dict[str, str] = {}
+    for prop_name, prop_value in properties.items():
+        if not _QML_PROPERTY_NAME_RE.fullmatch(prop_name):
+            raise ValueError(
+                f"{json_path}: 'properties' key must be a valid QML property name, "
+                f"got: {prop_name!r} ({kind}: {clamped_repr(source)})"
+            )
+        if prop_name in reserved:
+            raise ValueError(
+                f"{json_path}: 'properties' key {prop_name!r} is reserved (already emitted "
+                f"by the generator) ({kind}: {clamped_repr(source)})"
+            )
+        try:
+            result[prop_name] = _coerce_property_value(prop_value)
+        except ValueError as exc:
+            raise ValueError(f"{json_path}: {exc} ({kind}: {clamped_repr(source)})") from None
+    return result
 
 
 @dataclass
@@ -85,6 +111,7 @@ class GroupDef:
     enableWhen: str = ""
     headingDescription: str = ""
     component: str = ""
+    properties: dict[str, str] = field(default_factory=dict)
     sectionName: str = ""
     keywords: list[str] = field(default_factory=list)
     controls: list[ControlDef] = field(default_factory=list)
@@ -136,6 +163,7 @@ _ALLOWED_GROUP_KEYS = frozenset(
         "enableWhen",
         "headingDescription",
         "component",
+        "properties",
         "sectionName",
         "keywords",
         "missing",
@@ -182,6 +210,13 @@ def load_page_def(json_path: Path) -> PageDef:
             # headingDescription is a QML expression (e.g. qsTr(...)), emitted raw
             headingDescription=grp_data.get("headingDescription", ""),
             component=grp_data.get("component", ""),
+            properties=_parse_properties(
+                grp_data.get("properties", {}),
+                _RESERVED_GROUP_PROPERTY_NAMES,
+                "group",
+                json_path,
+                grp_data,
+            ),
             sectionName=require_qml_safe_string(
                 grp_data.get("sectionName", ""), "group sectionName", json_path
             ),
@@ -191,6 +226,11 @@ def load_page_def(json_path: Path) -> PageDef:
             ],
             missing=require_list(grp_data.get("missing", []), "group 'missing'", json_path),
         )
+        if grp.properties and not grp.component:
+            raise ValueError(
+                f"{json_path}: 'properties' is only supported on component groups "
+                f"(group: {clamped_repr(grp_data)})"
+            )
         for ctrl_data in require_list(grp_data.get("controls", []), "group 'controls'", json_path):
             reject_unknown_keys(ctrl_data, _ALLOWED_CONTROL_KEYS, "control", json_path)
             ctrl = ControlDef(
@@ -206,8 +246,12 @@ def load_page_def(json_path: Path) -> PageDef:
                 ),
                 value=ctrl_data.get("value", ""),
                 component=ctrl_data.get("component", ""),
-                properties=require_dict(
-                    ctrl_data.get("properties", {}), "control 'properties'", json_path
+                properties=_parse_properties(
+                    ctrl_data.get("properties", {}),
+                    _RESERVED_PROPERTY_NAMES,
+                    "control",
+                    json_path,
+                    ctrl_data,
                 ),
                 enableCheckbox=parse_enable_checkbox(ctrl_data.get("enableCheckbox")),
                 button=parse_button(ctrl_data.get("button")),
@@ -217,23 +261,6 @@ def load_page_def(json_path: Path) -> PageDef:
                     f"{json_path}: 'properties' is only supported on 'browse'/'scaler' controls, "
                     f"got control {ctrl.control!r} (control: {clamped_repr(ctrl_data)})"
                 )
-            for prop_name, prop_value in ctrl.properties.items():
-                if not _QML_PROPERTY_NAME_RE.fullmatch(prop_name):
-                    raise ValueError(
-                        f"{json_path}: 'properties' key must be a valid QML property name, "
-                        f"got: {prop_name!r} (control: {clamped_repr(ctrl_data)})"
-                    )
-                if prop_name in _RESERVED_PROPERTY_NAMES:
-                    raise ValueError(
-                        f"{json_path}: 'properties' key {prop_name!r} is reserved (already emitted "
-                        f"by the generator) (control: {clamped_repr(ctrl_data)})"
-                    )
-                try:
-                    ctrl.properties[prop_name] = _coerce_property_value(prop_value)
-                except ValueError as exc:
-                    raise ValueError(
-                        f"{json_path}: {exc} (control: {clamped_repr(ctrl_data)})"
-                    ) from None
             # component/info controls have no fact; every other kind derives its fact
             # reference and objectName from setting, so a bad one must fail here with
             # context, not deep inside the emitter with an IndexError

@@ -41,6 +41,8 @@ public:
 
     /// Reset all counters and restart the rate window.
     void reset();
+    /// Stop the rolling rate without discarding cumulative byte accounting.
+    void resetRate();
 
 private:
     Clock _clock;

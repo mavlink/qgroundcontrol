@@ -22,7 +22,4 @@ public:
     DEFINE_SETTINGFACT(ntripAllowSelfSignedCerts)
     DEFINE_SETTINGFACT(ntripGgaPositionSource)
     DEFINE_SETTINGFACT(ntripGgaIntervalSec)
-    DEFINE_SETTINGFACT(ntripUdpForwardEnabled)
-    DEFINE_SETTINGFACT(ntripUdpTargetAddress)
-    DEFINE_SETTINGFACT(ntripUdpTargetPort)
 };

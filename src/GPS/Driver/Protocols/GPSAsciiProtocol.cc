@@ -2,16 +2,30 @@
 
 #include <algorithm>
 #include <cmath>
+#include <optional>
 #include <utility>
 
-#include "NMEA/GPSNMEAReport.h"
-#include "NMEA/GPSNMEASatelliteReport.h"
+#include "GPSNMEAReport.h"
+#include "QGCLoggingCategory.h"
 
-GPSAsciiProtocol::GPSAsciiProtocol(GPSProtocolIO io, GPSNativePositionReport* position,
-                                   GPSNativeSatelliteReport* satellites)
-    : GPSBaseProtocol(std::move(io))
-    , _position(position ? position : &_fallbackPosition)
-    , _satellites(satellites)
+QGC_LOGGING_CATEGORY(PassiveProtocolLog, "GPS.Driver.Protocols.Passive")
+
+GPSAsciiProtocol::GPSAsciiProtocol(GPSProtocolIO io, bool satelliteInfoEnabled)
+    : GPSAsciiProtocol(std::move(io), satelliteInfoEnabled, Navigation::StandardNMEA)
+{}
+
+GPSAsciiProtocol::GPSAsciiProtocol(GPSProtocolIO io, bool satelliteInfoEnabled, Navigation navigation)
+    : GPSProtocol(std::move(io), satelliteInfoEnabled)
+    , _lineFramer(_line, {.requireStart = false, .hashStartsLine = true})
+    , _navigationAssembler({.metadataMaxAgeUs = METADATA_MAX_AGE_US,
+                            .untimedMetadataMaxAgeUs = METADATA_MAX_AGE_US,
+                            .autonomousFixQuality = GPSFixQuality::Fix3D,
+                            .useGsaDimensionForAutonomousFix = false,
+                            .requirePositionTime = false,
+                            .reconstructDate = false,
+                            .enforceNavigationOrder = false,
+                            .untimedMetadataUsesPositionReceipt = true})
+    , _navigation(navigation)
 {}
 
 void GPSAsciiProtocol::resetStream()
@@ -19,16 +33,9 @@ void GPSAsciiProtocol::resetStream()
     _rtcm.reset();
     _satelliteAssembler.clear();
     _pendingSatellites.clear();
-    _lineSize = 0;
-    _discardLine = false;
-    _lineEnded = false;
-    _pendingRTCM = false;
-    _accuracyTime.reset();
-    _positionTime.reset();
-    _vdopReceivedAtUs.reset();
-    _accuracyReceivedAtUs = 0;
-    _accuracy = {};
-    *_position = {};
+    _lineFramer.reset();
+    _navigationAssembler.reset();
+    _position = {};
     if (_satellites) {
         *_satellites = {};
     }
@@ -41,48 +48,27 @@ int GPSAsciiProtocol::receive(unsigned timeout)
     }
     const int result = receiveDecoded(timeout);
     serviceControls();
-    return ioError() ? ioError() : result;
+    return result;
 }
 
 int GPSAsciiProtocol::decodeByte(uint8_t byte)
 {
-    if (_rtcm.hasPartialFrame() || byte == RTCMFramer::PREAMBLE) {
-        _lineSize = 0;
-        _discardLine = false;
-        _lineEnded = false;
-        _pendingRTCM = _rtcm.addByte(byte);
+    if (_rtcm.ownsByte(byte)) {
+        _lineFramer.reset();
+        _rtcm.addByte(byte);
         _drainRTCM();
         return 0;
     }
-    if (byte == '\r') {
-        _lineEnded = true;
-        return 0;
-    }
-    if (byte == '\n') {
-        const std::string_view line{_line.data(), _lineSize};
+    const auto framed = _lineFramer.addByte(byte);
+    if (framed.line) {
         int updates = 0;
-        if (!_discardLine && !line.empty()) {
-            updates = _handleNmea(line);
-            updates |= handleReceiverLine(line);
-        }
-        _lineSize = 0;
-        _discardLine = false;
-        _lineEnded = false;
+        updates = _handleNmea(*framed.line);
+        updates |= handleReceiverLine(*framed.line);
         _drainSatellites();
+        if (updates & GPSDecodedBatch::POSITION_UPDATE) {
+            publishPosition(_position);
+        }
         return updates;
-    }
-    if (byte == '$' || byte == '#') {
-        _lineSize = 0;
-        _discardLine = false;
-        _lineEnded = false;
-    }
-    if (_lineEnded || byte < ' ' || byte > '~' || _lineSize == _line.size()) {
-        _lineSize = 0;
-        _discardLine = true;
-        return 0;
-    }
-    if (!_discardLine) {
-        _line[_lineSize++] = static_cast<char>(byte);
     }
     return 0;
 }
@@ -97,53 +83,35 @@ int GPSAsciiProtocol::_handleNmea(std::string_view line)
     int updates = GPSDecodedBatch::PROTOCOL_ACTIVITY;
     auto satelliteUpdate = _satelliteAssembler.ingest(*sentence, now);
     _publishSatellites(satelliteUpdate.completed);
-    if (const auto fix = NMEA::gga(*sentence)) {
-        const auto positionTime = NMEA::utcMilliseconds(sentence->fields[NMEA::Field::UTC_TIME]);
-        if (!positionTime || positionTime != _positionTime) {
-            _vdopReceivedAtUs.reset();
+    if (_navigation == Navigation::ReceiverSpecific) {
+        return updates;
+    }
+    const auto navigation = NMEA::navigationStatus(*sentence);
+    const auto update = sentence->type() == "GSA" && navigation && navigation->valid && !satelliteUpdate.accepted
+                            ? std::optional<NMEA::NavigationUpdate>()
+                            : _navigationAssembler.ingest(*sentence, now);
+    if (update && update->type == NMEA::NavigationUpdate::Type::FixLoss) {
+        _position = {};
+        _position.navigation.timestampUs = now;
+        _position.navigation.fixType = GPSPositionReport::FixType::NoFix;
+        const auto used = gpsSatellitesUsed(update->epoch.satellitesUsed);
+        if (used) {
+            _position.navigation.satellitesUsed = used;
         }
-        _expireVdop(now);
-        applyNMEAGGA(*_position, *fix, now);
-        _positionTime = positionTime;
-        const bool matchingAccuracy = _positionTime && _positionTime == _accuracyTime && now >= _accuracyReceivedAtUs &&
-                                      now - _accuracyReceivedAtUs <= METADATA_MAX_AGE_US;
-        _position->eph = matchingAccuracy ? _accuracy.horizontalAccuracy : NAN;
-        _position->epv = matchingAccuracy ? _accuracy.verticalAccuracy : NAN;
-        _position->accuracy_timestamp = matchingAccuracy ? _accuracyReceivedAtUs : 0;
-        publishSatelliteUsage(fix->satellitesUsed ? std::optional<int>(*fix->satellitesUsed) : std::nullopt);
-        updates |= 1;
-    } else if (const auto accuracy = NMEA::gst(*sentence)) {
-        _accuracyTime = NMEA::utcMilliseconds(sentence->fields[NMEA::Field::UTC_TIME]);
-        _accuracyReceivedAtUs = now;
-        _accuracy = *accuracy;
-        if (_positionTime && _positionTime == _accuracyTime && now >= _position->timestamp &&
-            now - _position->timestamp <= METADATA_MAX_AGE_US) {
-            _expireVdop(now);
-            _position->eph = _accuracy.horizontalAccuracy;
-            _position->epv = _accuracy.verticalAccuracy;
-            _position->accuracy_timestamp = now;
-            updates |= 1;
-        }
-    } else if (sentence->type() == "GSA" && satelliteUpdate.accepted && _positionTime && now >= _position->timestamp &&
-               now - _position->timestamp <= METADATA_MAX_AGE_US) {
-        // GSA has no UTC field, so it can only supplement the preceding fresh GGA.
-        const auto hdop = NMEA::number<float>(sentence->fields[NMEA::Field::GSA_HDOP]);
-        const auto vdop = NMEA::number<float>(sentence->fields[NMEA::Field::GSA_VDOP]);
-        _position->hdop = hdop && *hdop >= 0 ? *hdop : NAN;
-        _position->vdop = vdop && *vdop >= 0 ? *vdop : NAN;
-        _vdopReceivedAtUs = now;
-        _position->dop_timestamp = now;
+        publishSatelliteUsage(used);
+        updates |= GPSDecodedBatch::POSITION_UPDATE;
+    } else if (update && update->type == NMEA::NavigationUpdate::Type::Epoch &&
+               update->trigger == NMEA::NavigationUpdate::Trigger::Position && sentence->type() == "GGA") {
+        applyNMEANavigationEpoch(_position, update->epoch);
+        publishSatelliteUsage(update->epoch.satellitesUsed ? std::optional<int>(*update->epoch.satellitesUsed)
+                                                           : std::nullopt);
+        updates |= GPSDecodedBatch::POSITION_UPDATE;
+    } else if (update && update->type == NMEA::NavigationUpdate::Type::Epoch &&
+               update->trigger == NMEA::NavigationUpdate::Trigger::TimedMetadata) {
+        applyNMEANavigationEpoch(_position, update->epoch);
+        updates |= GPSDecodedBatch::POSITION_UPDATE;
     }
     return updates;
-}
-
-void GPSAsciiProtocol::_expireVdop(uint64_t now)
-{
-    // GGA refreshes HDOP only; it must not renew an older GSA's VDOP.
-    if (!_vdopReceivedAtUs || now < *_vdopReceivedAtUs || now - *_vdopReceivedAtUs > METADATA_MAX_AGE_US) {
-        _vdopReceivedAtUs.reset();
-        _position->vdop = NAN;
-    }
 }
 
 void GPSAsciiProtocol::_publishSatellites(const NMEA::SatelliteEpoch& epoch)
@@ -172,7 +140,9 @@ void GPSAsciiProtocol::_drainSatellites()
 
 void GPSAsciiProtocol::flushDecoded()
 {
-    _expireVdop(nowUs());
+    if (const auto expired = _navigationAssembler.expireUntimedMetadata(nowUs())) {
+        applyNMEANavigationEpoch(_position, *expired);
+    }
     _publishSatellites(_satelliteAssembler.flushDue(nowUs()));
     _drainRTCM();
     _drainSatellites();
@@ -180,12 +150,30 @@ void GPSAsciiProtocol::flushDecoded()
 
 void GPSAsciiProtocol::_drainRTCM()
 {
-    while (_pendingRTCM && _decoded.events.size() + 2 < GPSDecodedBatch::MAX_EVENTS) {
-        if (_rtcm.valid() && _rtcmEnabled) {
-            const auto frame = _rtcm.frame();
-            gotRTCMMessage(frame.data(), static_cast<int>(frame.size()));
-            _decoded.updates |= GPSDecodedBatch::PROTOCOL_ACTIVITY;
-        }
-        _pendingRTCM = _rtcm.nextFrame();
+    drainRTCM(_rtcm, _rtcmEnabled);
+}
+
+const QLoggingCategory& PassiveProtocol::logCategory() const
+{
+    return PassiveProtocolLog();
+}
+
+bool PassiveProtocol::configure(unsigned& baud, const GPSConfig& config)
+{
+    _configured = false;
+    resetIOError();
+    resetStream();
+    if (config.allowPersistentChanges || config.base != GPSBaseStationConfig{} || baud < 1200 || baud > 4000000) {
+        log(GPSProtocolLogLevel::Warning, "Passive input requires an explicit baud rate and no receiver configuration");
+        return false;
     }
+    if (!setBaudrate(baud)) {
+        if (ioError() != GPSProtocolError::Cancelled) {
+            log(GPSProtocolLogLevel::Warning, "Could not set the passive input baud rate");
+        }
+        return false;
+    }
+    setRTCMEnabled(true);
+    _configured = true;
+    return true;
 }

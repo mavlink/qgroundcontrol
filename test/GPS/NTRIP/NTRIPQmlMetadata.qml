@@ -1,6 +1,7 @@
 import QtQml
 
 import QGroundControl
+import QGroundControl.GPS
 
 QtObject {
     id: root
@@ -11,16 +12,16 @@ QtObject {
 
     readonly property QtObject forwarder: root.corrections.rtcmMavlink
     readonly property real totalBytesSubmitted: root.corrections.rtcmMavlink.totalBytesSubmitted
-    readonly property bool canSaveBasePosition: QGroundControl.gpsRtk.canSaveCurrentBasePosition
-    readonly property int satellitesInView: QGroundControl.gpsRtk.numSatellites.rawValue
-    readonly property int satellitesUsed: QGroundControl.gpsRtk.numSatellitesUsed.rawValue
+    readonly property bool canSaveBasePosition: QGroundControl.gpsManager.gpsRtkFacts.canSaveCurrentBasePosition
+    readonly property int satellitesInView: QGroundControl.gpsManager.gpsRtkFacts.numSatellites.rawValue
+    readonly property int satellitesUsed: QGroundControl.gpsManager.gpsRtkFacts.numSatellitesUsed.rawValue
 
     readonly property real bytesReceived: root.stats.bytesReceived
     readonly property real messagesReceived: root.stats.messagesReceived
     readonly property real dataRateBytesPerSec: root.stats.dataRateBytesPerSec
     readonly property real correctionAgeSec: root.stats.correctionAgeSec
     readonly property bool dataStale: root.stats.dataStale
-    readonly property list<var> messageCountsById: root.stats.messageCountsById
+    readonly property list<rtcmMessageCount> messageCountsById: root.stats.messageCountsById
 
     readonly property int fetchStatus: root.controller.fetchStatus
     readonly property string fetchError: root.controller.fetchError

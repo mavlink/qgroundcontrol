@@ -6,18 +6,11 @@ target_link_libraries(
     PUBLIC Qt6::Core
     PRIVATE QGCLoggingCategory
 )
-target_sources(QGCGPSTransport PUBLIC FILE_SET HEADERS FILES GPSTransport.h GPSTransportResult.h GPSIOStatus.h)
+target_sources(QGCGPSTransport PUBLIC FILE_SET HEADERS FILES GPSTransport.h GPSTransportResult.h)
 
 if(NOT DEFINED QGC_GPS_COMPONENTS_ENABLED OR "ReceiverTransports" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
-    qt_add_library(
-        QGCGPSReceiverTransports
-        STATIC
-        TCPGPSTransport.cc
-        UDPGPSTransport.cc
-        GPSSocketWait.cc
-        GPSSocketWait_p.h
-        GPSStreamWrite_p.h
-    )
+    find_package(Qt6 6.8 REQUIRED COMPONENTS Network)
+    qt_add_library(QGCGPSReceiverTransports STATIC TCPGPSTransport.cc UDPGPSTransport.cc GPSStreamWrite_p.h)
     add_library(QGC::GPSReceiverTransports ALIAS QGCGPSReceiverTransports)
     target_compile_features(QGCGPSReceiverTransports PUBLIC cxx_std_20)
     target_link_libraries(

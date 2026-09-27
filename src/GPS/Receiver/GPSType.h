@@ -1,5 +1,10 @@
 #pragma once
 
+#include <QtCore/QMetaType>
+
+namespace GPSTypes {
+Q_NAMESPACE
+
 /// Values are persisted; do not renumber.
 enum class GPSType
 {
@@ -11,3 +16,8 @@ enum class GPSType
     quectel = 5,
     passive = 6,
 };
+Q_ENUM_NS(GPSType)
+
+}  // namespace GPSTypes
+
+using GPSType = GPSTypes::GPSType;

@@ -36,8 +36,6 @@ QVariant GPSCorrectionEventModel::data(const QModelIndex& index, int role) const
             return QVariant::fromValue(event.sequence);
         case TimestampMsRole:
             return event.timestampMs;
-        case DeliveryIdRole:
-            return QVariant::fromValue(event.deliveryId);
         case SourceRole:
             return static_cast<int>(event.source);
         case SourceInstanceRole:
@@ -63,7 +61,6 @@ QHash<int, QByteArray> GPSCorrectionEventModel::roleNames() const
     static const QHash<int, QByteArray> roles = {
         {EventSequenceRole, "eventSequence"},
         {TimestampMsRole, "timestampMs"},
-        {DeliveryIdRole, "deliveryId"},
         {SourceRole, "source"},
         {SourceInstanceRole, "sourceInstance"},
         {SourceSessionRole, "sourceSession"},

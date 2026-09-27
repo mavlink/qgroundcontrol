@@ -16,31 +16,19 @@ public:
         Validated = static_cast<int>(GPSCorrectionStage::Validated),
         Selected = static_cast<int>(GPSCorrectionStage::Selected),
         Queued = static_cast<int>(GPSCorrectionStage::Queued),
-        Written = static_cast<int>(GPSCorrectionStage::Written),
         Dropped = static_cast<int>(GPSCorrectionStage::Dropped),
-        Unconfirmed = static_cast<int>(GPSCorrectionStage::Unconfirmed),
     };
     Q_ENUM(Stage)
 
     enum Reason
     {
         None = static_cast<int>(GPSCorrectionReason::None),
-        InactiveSource = static_cast<int>(GPSCorrectionReason::InactiveSource),
-        SessionMismatch = static_cast<int>(GPSCorrectionReason::SessionMismatch),
         InvalidTimestamp = static_cast<int>(GPSCorrectionReason::InvalidTimestamp),
         Expired = static_cast<int>(GPSCorrectionReason::Expired),
         MessageFiltered = static_cast<int>(GPSCorrectionReason::MessageFiltered),
         NotSelected = static_cast<int>(GPSCorrectionReason::NotSelected),
         DestinationUnavailable = static_cast<int>(GPSCorrectionReason::DestinationUnavailable),
-        QueueFull = static_cast<int>(GPSCorrectionReason::QueueFull),
         InvalidFrame = static_cast<int>(GPSCorrectionReason::InvalidFrame),
-        Cancelled = static_cast<int>(GPSCorrectionReason::Cancelled),
-        SourceChanged = static_cast<int>(GPSCorrectionReason::SourceChanged),
-        WriteFailed = static_cast<int>(GPSCorrectionReason::WriteFailed),
-        PartialWrite = static_cast<int>(GPSCorrectionReason::PartialWrite),
-        InvalidDelivery = static_cast<int>(GPSCorrectionReason::InvalidDelivery),
-        DiagnosticsBackpressure = static_cast<int>(GPSCorrectionReason::DiagnosticsBackpressure),
-        DeliveryUnconfirmed = static_cast<int>(GPSCorrectionReason::DeliveryUnconfirmed),
     };
     Q_ENUM(Reason)
 
@@ -48,7 +36,6 @@ public:
     {
         EventSequenceRole = Qt::UserRole + 1,
         TimestampMsRole,
-        DeliveryIdRole,
         SourceRole,
         SourceInstanceRole,
         SourceSessionRole,

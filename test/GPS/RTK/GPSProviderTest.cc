@@ -1,40 +1,41 @@
 #include "GPSProviderTest.h"
 
-#include <cerrno>
 #include <cmath>
-#include <cstring>
+#include <memory>
+#include <optional>
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QEvent>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QSemaphore>
+#include <QtCore/QThread>
+#include <QtPositioning/QGeoCoordinate>
 #include <QtTest/QSignalSpy>
 
+#include "Driver/Support/FemtoReceiverModel.h"
+#include "Driver/Support/SBFReceiverModel.h"
+#include "Driver/Support/ScriptedReceiver.h"
 #include "GPSDriver.h"
 #include "GPSProvider.h"
-#include "GPSReceiverConfigValidation.h"
-#include "GPSTransport.h"
+#include "GPSReceiverConfig.h"
 #include "NMEAUtils.h"
-#include "ScriptedSBFReceiver.h"
 #include "UnitTest.h"
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialPortManager.h"
 #endif
 
 Q_DECLARE_METATYPE(GPSBaseStationConfig)
-Q_DECLARE_METATYPE(GPSSurveyReport)
 
 void GPSProviderTest::_queuedPayloadsOwnSnapshots()
 {
     GPSProvider provider({}, GPSType::ublox, {});
-    for (const auto name : {"GPSSatelliteReport", "GPSSatelliteUsageReport", "GPSPositionReport::FixType",
-                            "GPSConnectionError", "GPSSurveyInStatus"}) {
+    for (const auto name : {"GPSSatelliteReport", "GPSPositionReport", "GPSConnectionError", "GPSSurveyReport"}) {
         QVERIFY2(QMetaType::fromName(name).isValid(), name);
     }
     GPSSatelliteReport satellites;
-    GPSSatelliteUsageReport usage;
     auto fixType = GPSPositionReport::FixType::Unknown;
-    GPSSurveyInStatus survey;
+    GPSSurveyReport survey;
     GPSConnectionError error = GPSConnectionError::None;
     QString configurationDetail;
     QObject receiver;
@@ -42,39 +43,35 @@ void GPSProviderTest::_queuedPayloadsOwnSnapshots()
         &provider, &GPSProvider::satelliteInfoUpdate, &receiver,
         [&](const GPSSatelliteReport& value) { satellites = value; }, Qt::QueuedConnection);
     connect(
-        &provider, &GPSProvider::satelliteUsageUpdate, &receiver,
-        [&](const GPSSatelliteUsageReport& value) { usage = value; }, Qt::QueuedConnection);
+        &provider, &GPSProvider::positionUpdate, &receiver,
+        [&](const GPSPositionReport& value) { fixType = value.navigation.fixType; }, Qt::QueuedConnection);
     connect(
-        &provider, &GPSProvider::fixTypeChanged, &receiver, [&](GPSPositionReport::FixType value) { fixType = value; },
+        &provider, &GPSProvider::surveyInStatus, &receiver, [&](const GPSSurveyReport& value) { survey = value; },
         Qt::QueuedConnection);
     connect(
-        &provider, &GPSProvider::surveyInStatus, &receiver, [&](const GPSSurveyInStatus& value) { survey = value; },
+        &provider, &GPSProvider::connectionError, &receiver,
+        [&](GPSConnectionError value, const QString& detail) {
+            error = value;
+            configurationDetail = detail;
+        },
         Qt::QueuedConnection);
-    connect(
-        &provider, &GPSProvider::connectionError, &receiver, [&](GPSConnectionError value) { error = value; },
-        Qt::QueuedConnection);
-    connect(
-        &provider, &GPSProvider::configurationError, &receiver,
-        [&](const QString& value) { configurationDetail = value; }, Qt::QueuedConnection);
     auto worker = std::unique_ptr<QThread>(QThread::create([&]() {
         GPSSatelliteReport snapshot;
-        snapshot.count = 1;
-        snapshot.satellites[0].used = true;
+        snapshot.inView = 1;
+        snapshot.used = 7;
         emit provider.satelliteInfoUpdate(snapshot);
-        snapshot.satellites[0].used = false;
-        GPSSatelliteUsageReport count{.timestampUs = 123, .usedCount = 7};
-        emit provider.satelliteUsageUpdate(count);
-        count.usedCount.reset();
-        emit provider.fixTypeChanged(GPSPositionReport::FixType::Fix3D);
+        GPSPositionReport position;
+        position.navigation.fixType = GPSPositionReport::FixType::Fix3D;
+        emit provider.positionUpdate(position);
+        position.navigation.fixType = GPSPositionReport::FixType::NoFix;
         GPSSurveyReport progress;
         progress.duration = std::chrono::seconds(4294967295LL);
         progress.meanAccuracyMeters = 1.234;
-        provider._handleSurveyIn(progress);
+        provider.surveyInStatus(progress);
         progress.meanAccuracyMeters = 0;
         QString detail = QStringLiteral("Settings may be saved; reconnect failed");
-        emit provider.configurationError(detail);
+        emit provider.connectionError(GPSConnectionError::ConfigFailed, detail);
         detail.clear();
-        emit provider.connectionError(GPSConnectionError::DeviceError);
     }));
     worker->start();
     const bool timely = worker->wait(TestTimeout::shortMs());
@@ -82,17 +79,15 @@ void GPSProviderTest::_queuedPayloadsOwnSnapshots()
         worker->wait();
     }
     QVERIFY(timely);
-    QCOMPARE(satellites.count, 0);
+    QVERIFY(!satellites.inView);
     QCOMPARE(survey.duration.count(), 0);
     QCoreApplication::sendPostedEvents(&receiver, QEvent::MetaCall);
-    QCOMPARE(satellites.count, 1);
-    QCOMPARE(satellites.satellites[0].used, std::optional<bool>{true});
-    QCOMPARE(usage.timestampUs, uint64_t{123});
-    QCOMPARE(usage.usedCount, std::optional<int>{7});
+    QCOMPARE(satellites.inView, std::optional<int>{1});
+    QCOMPARE(satellites.used, std::optional<int>{7});
     QCOMPARE(fixType, GPSPositionReport::FixType::Fix3D);
     QCOMPARE(survey.duration.count(), 4294967295LL);
     QCOMPARE(survey.meanAccuracyMeters.value(), 1.234);
-    QCOMPARE(error, GPSConnectionError::DeviceError);
+    QCOMPARE(error, GPSConnectionError::ConfigFailed);
     QCOMPARE(configurationDetail, QStringLiteral("Settings may be saved; reconnect failed"));
 }
 
@@ -133,23 +128,21 @@ void GPSProviderTest::_surveyReportProjection()
     GPSProvider provider({}, GPSType::ublox, {});
     QSignalSpy reports(&provider, &GPSProvider::surveyInStatus);
 
-    provider._handleSurveyIn(report);
+    provider.surveyInStatus(report);
 
     QCOMPARE(reports.size(), 1);
-    const auto status = qvariant_cast<GPSSurveyInStatus>(reports.first().first());
-    QCOMPARE(status.coordinate.isValid(), coordinateValid);
+    const auto status = qvariant_cast<GPSSurveyReport>(reports.first().first());
+    const QGeoCoordinate coordinate(status.position.latitudeDegrees, status.position.longitudeDegrees);
+    QCOMPARE(coordinate.isValid(), coordinateValid);
     if (coordinateValid) {
-        QCOMPARE(status.coordinate.latitude(), report.position.latitudeDegrees);
-        QCOMPARE(status.coordinate.longitude(), report.position.longitudeDegrees);
-        QCOMPARE(status.coordinate.type(), QGeoCoordinate::Coordinate2D);
+        QCOMPARE(status.position.latitudeDegrees, report.position.latitudeDegrees);
+        QCOMPARE(status.position.longitudeDegrees, report.position.longitudeDegrees);
     }
-    QVERIFY(std::isnan(status.coordinate.altitude()));
     if (std::isnan(report.position.altitudeMeters)) {
-        QVERIFY(std::isnan(status.altitudeEllipsoidMeters));
+        QVERIFY(std::isnan(status.position.altitudeMeters));
     } else {
-        QCOMPARE(status.altitudeEllipsoidMeters, report.position.altitudeMeters);
+        QCOMPARE(status.position.altitudeMeters, report.position.altitudeMeters);
     }
-    QCOMPARE(status.altitudeDatum, GPSAltitudeDatum::Ellipsoid);
     QCOMPARE(status.meanAccuracyMeters, report.meanAccuracyMeters);
     QCOMPARE(status.duration, report.duration);
     QCOMPARE(status.valid, report.valid);
@@ -166,18 +159,30 @@ struct TransportTrace
     bool factoryAliveDuringDestruction = false;
 };
 
-class TestTransport : public GPSTransport
+class TestTransport : public ScriptedReceiver
 {
 public:
     TestTransport(const std::atomic_bool& requestStop, TransportTrace& trace, std::function<void()> stop,
                   bool openResult, bool cancelInOpen)
-        : GPSTransport(requestStop)
+        : ScriptedReceiver(requestStop)
         , _trace(trace)
         , _stop(stop)
         , _openResult(openResult)
         , _cancelInOpen(cancelInOpen)
     {
         _trace.constructedOn = QThread::currentThread();
+        setOpenHandler([this] {
+            _trace.openedOn = QThread::currentThread();
+            if (_cancelInOpen) {
+                _stop();
+            }
+            return GPSOpenResult{_openResult ? GPSOpenStatus::Opened : GPSOpenStatus::Error};
+        });
+        setReadHandler(
+            [](uint8_t*, int, int) -> std::optional<GPSReadResult> { return GPSReadResult{GPSReadStatus::Error}; });
+        setWriteHandler([](const QByteArray&, const ScriptedReceiver::WriteContext&) {
+            return std::optional<GPSWriteResult>{GPSWriteResult{GPSWriteStatus::Error}};
+        });
     }
 
     ~TestTransport() override
@@ -185,24 +190,6 @@ public:
         _trace.destroyedOn = QThread::currentThread();
         _trace.factoryAliveDuringDestruction = !_trace.factoryLifetime.expired();
     }
-
-    GPSOpenResult open() override
-    {
-        _trace.openedOn = QThread::currentThread();
-        // Stop before receiver configuration; this test exercises transport ownership only.
-        if (_cancelInOpen) {
-            _stop();
-        }
-        return {_openResult ? GPSOpenStatus::Opened : GPSOpenStatus::Error};
-    }
-
-    bool fatalError() const override { return false; }
-
-    GPSReadResult read(uint8_t*, int, int) override { return {GPSReadStatus::Error}; }
-
-    GPSWriteResult writeBounded(const uint8_t*, int, QDeadlineTimer) override { return {GPSWriteStatus::Error}; }
-
-    bool setBaudrate(unsigned) override { return true; }
 
 private:
     TransportTrace& _trace;
@@ -238,9 +225,9 @@ void GPSProviderTest::_transportLifetimeStaysOnWorker()
     QSignalSpy errors(&provider, &GPSProvider::connectionError);
     provider.start();
     QVERIFY(provider.wait(TestTimeout::shortMs()));
-    QCOMPARE(trace.constructedOn, &provider);
-    QCOMPARE(trace.openedOn, &provider);
-    QCOMPARE(trace.destroyedOn, &provider);
+    QVERIFY(trace.constructedOn && trace.constructedOn != QThread::currentThread());
+    QCOMPARE(trace.openedOn, trace.constructedOn);
+    QCOMPARE(trace.destroyedOn, trace.constructedOn);
     QVERIFY(trace.factoryAliveDuringDestruction);
     QVERIFY(trace.factoryLifetime.expired());
     QCOMPARE(errors.size(), cancelInOpen ? 0 : 1);
@@ -288,144 +275,140 @@ void GPSProviderTest::_cancelledProviderDoesNotCreateTransport()
     QVERIFY(errors.isEmpty());
 }
 
+void GPSProviderTest::_workerLifecycle()
+{
+    QSemaphore entered;
+    QSemaphore idle;
+    QThread* sessionThread = nullptr;
+    bool tokenStopped = false;
+    auto provider = std::make_unique<GPSProvider>(
+        [&](const std::atomic_bool& requestStop) {
+            sessionThread = QThread::currentThread();
+            entered.release();
+            while (!requestStop) {
+                (void) idle.tryAcquire(1, 10);
+            }
+            tokenStopped = requestStop;
+            return std::unique_ptr<GPSTransport>{};
+        },
+        GPSType::ublox, GPSReceiverConfig{});
+    QVERIFY(provider->wait(0));
+    QVERIFY(!provider->isRunning());
+    QSignalSpy finished(provider.get(), &GPSProvider::finished);
+    provider->start();
+    provider->start();
+    QVERIFY(entered.tryAcquire(1, TestTimeout::shortMs()));
+    QVERIFY(provider->isRunning());
+    QVERIFY(sessionThread != QThread::currentThread());
+    QCOMPARE(provider->thread(), QThread::currentThread());
+    QVERIFY(!provider->wait(1));
+    provider->stop();
+    QVERIFY(provider->wait(TestTimeout::shortMs()));
+    QVERIFY(tokenStopped);
+    QVERIFY(finished.isEmpty());
+    QTRY_COMPARE_WITH_TIMEOUT(finished.size(), 1, TestTimeout::shortMs());
+    QVERIFY(!provider->isRunning());
+    provider.reset();
+}
+
 UT_REGISTER_TEST(GPSProviderTest, TestLabel::Unit)
 
 namespace {
-class FemtoAckTransport : public GPSTransport
+class FemtoAckTransport : public ScriptedReceiver
 {
 public:
-    using GPSTransport::GPSTransport;
-
-    GPSOpenResult open() override { return {GPSOpenStatus::Opened}; }
-
-    bool fatalError() const override { return false; }
-
-    bool setBaudrate(unsigned) override { return true; }
-
-    GPSWriteResult writeBounded(const uint8_t* bytes, int size, QDeadlineTimer deadline) override
+    explicit FemtoAckTransport(const std::atomic_bool& stop)
+        : ScriptedReceiver(stop)
     {
-        if (isCancelled() || deadline.hasExpired()) {
-            return {isCancelled() ? GPSWriteStatus::Cancelled : GPSWriteStatus::TimedOut};
-        }
-        const QByteArray command(reinterpret_cast<const char*>(bytes), size);
-        _reply = '<' + command.split(' ').first().trimmed() + " OK";
-        _reply.append(char(0));
-        return {GPSWriteStatus::Completed, size, size};
-    }
-
-    GPSReadResult read(uint8_t* bytes, int size, int) override
-    {
-        if (_reply.isEmpty()) {
-            return {GPSReadStatus::Error, 0, QStringLiteral("Scripted receiver connection lost")};
-        }
-        const auto count = qMin(size, static_cast<int>(_reply.size()));
-        std::memcpy(bytes, _reply.constData(), count);
-        _reply.remove(0, count);
-        return {GPSReadStatus::Data, count};
+        _model.failIdleReads = true;
+        setModel(&_model);
     }
 
 private:
-    QByteArray _reply;
+    GPSTestClock _clock;
+    FemtoReceiverModel _model{_clock};
 };
 
-class ExpiringSatelliteTransport : public GPSTransport
+class ExpiringSatelliteTransport : public ScriptedReceiver
 {
 public:
     static constexpr int POSITION_AT_MS = 2000;
 
     ExpiringSatelliteTransport(const std::atomic_bool& stop, std::atomic<qint64>& lastPositionAtMs)
-        : GPSTransport(stop)
+        : ScriptedReceiver(stop)
         , _lastPositionAtMs(lastPositionAtMs)
-    {}
+    {
+        setReadHandler([this](uint8_t*, int, int timeoutMs) -> std::optional<GPSReadResult> {
+            if (!hasQueuedReadData() && timeoutMs > 0) {
+                const qint64 untilPosition =
+                    _sentPosition ? timeoutMs : qMax(qint64{0}, POSITION_AT_MS - _elapsed.elapsed());
+                QThread::msleep(static_cast<unsigned long>(qMin(qint64{timeoutMs}, untilPosition)));
+            }
+            if (isCancelled()) {
+                return GPSReadResult{GPSReadStatus::Cancelled};
+            }
+            if (!_sentPosition && _elapsed.elapsed() >= POSITION_AT_MS) {
+                _sentPosition = true;
+                queueReply(position());
+                _lastPositionAtMs = _elapsed.elapsed();
+            }
+            return std::nullopt;
+        });
+    }
 
     GPSOpenResult open() override
     {
+        const auto result = ScriptedReceiver::open();
         _elapsed.start();
-        _pending = "$GPGSV,1,1,01,01,10,20,30*79\r\n" + position();
+        _sentPosition = false;
+        clearReplies();
+        queueReply("$GPGSV,1,1,01,01,10,20,30*79\r\n" + position());
         _lastPositionAtMs = 0;
-        return {GPSOpenStatus::Opened};
-    }
-
-    bool fatalError() const override { return false; }
-
-    bool setBaudrate(unsigned) override { return true; }
-
-    GPSReadResult read(uint8_t* bytes, int size, int timeoutMs) override
-    {
-        if (_pending.isEmpty() && timeoutMs > 0) {
-            const qint64 untilPosition =
-                _sentPosition ? timeoutMs : qMax(qint64{0}, POSITION_AT_MS - _elapsed.elapsed());
-            QThread::msleep(static_cast<unsigned long>(qMin(qint64{timeoutMs}, untilPosition)));
-        }
-        if (isCancelled()) {
-            return {GPSReadStatus::Cancelled};
-        }
-        if (!_sentPosition && _elapsed.elapsed() >= POSITION_AT_MS) {
-            _sentPosition = true;
-            _pending.append(position());
-            _lastPositionAtMs = _elapsed.elapsed();
-        }
-        if (_pending.isEmpty()) {
-            return {GPSReadStatus::TimedOut};
-        }
-        const int count = qMin(size, static_cast<int>(_pending.size()));
-        std::memcpy(bytes, _pending.constData(), static_cast<size_t>(count));
-        _pending.remove(0, count);
-        return {GPSReadStatus::Data, count};
+        return result;
     }
 
 private:
     static QByteArray position() { return "$GPGGA,123519,4807.038,N,01131.000,E,1,08,0.9,545.4,M,46.9,M,,*47\r\n"; }
 
     QElapsedTimer _elapsed;
-    QByteArray _pending;
     bool _sentPosition = false;
     std::atomic<qint64>& _lastPositionAtMs;
 };
 
-class FixSequenceTransport : public GPSTransport
+class FixSequenceTransport : public ScriptedReceiver
 {
 public:
-    using GPSTransport::GPSTransport;
+    explicit FixSequenceTransport(const std::atomic_bool& stop)
+        : ScriptedReceiver(stop)
+    {
+        setReadHandler([this](uint8_t*, int, int) -> std::optional<GPSReadResult> {
+            if (!hasQueuedReadData()) {
+                return GPSReadResult{GPSReadStatus::Cancelled};
+            }
+            return std::nullopt;
+        });
+    }
 
     GPSOpenResult open() override
     {
+        const auto result = ScriptedReceiver::open();
+        QByteArray pending;
         for (const int quality : {0, 0, 1, 1, 4, 4, 0}) {
-            _pending += NMEAUtils::repairChecksum("$GPGGA,123519,4807.038,N,01131.000,E," +
-                                                  QByteArray::number(quality) + ",08,0.9,545.4,M,46.9,M,,");
+            pending += NMEAUtils::repairChecksum("$GPGGA,123519,4807.038,N,01131.000,E," + QByteArray::number(quality) +
+                                                 ",08,0.9,545.4,M,46.9,M,,");
         }
-        return {GPSOpenStatus::Opened};
+        queueReply(pending);
+        return result;
     }
-
-    bool fatalError() const override { return false; }
-
-    bool setBaudrate(unsigned) override { return true; }
-
-    GPSReadResult read(uint8_t* bytes, int size, int) override
-    {
-        if (_pending.isEmpty()) {
-            return {GPSReadStatus::Cancelled};
-        }
-        const auto count = qMin(size, static_cast<int>(_pending.size()));
-        std::memcpy(bytes, _pending.constData(), static_cast<size_t>(count));
-        _pending.remove(0, count);
-        return {GPSReadStatus::Data, count};
-    }
-
-private:
-    QByteArray _pending;
 };
 }  // namespace
 
 void GPSProviderTest::_positionFixTransitions()
 {
-    if (!GPSDriver::supportsType(GPSType::passive)) {
-        QSKIP("Passive receiver support is disabled");
-    }
     for (int session = 0; session < 2; ++session) {
         GPSProvider provider([](const std::atomic_bool& stop) { return std::make_unique<FixSequenceTransport>(stop); },
                              GPSType::passive, {.role = GPSReceiverConfig::Role::Passive, .baudRate = 115200});
-        QSignalSpy fixes(&provider, &GPSProvider::fixTypeChanged);
+        QSignalSpy positions(&provider, &GPSProvider::positionUpdate);
         provider.start();
         const bool finished = provider.wait(TestTimeout::shortMs());
         if (!finished) {
@@ -433,21 +416,22 @@ void GPSProviderTest::_positionFixTransitions()
             QVERIFY(provider.wait(TestTimeout::longMs()));
         }
         QVERIFY(finished);
-        QCOMPARE(fixes.size(), 4);
-        const QList<GPSPositionReport::FixType> expected{
-            GPSPositionReport::FixType::NoFix, GPSPositionReport::FixType::Fix3D, GPSPositionReport::FixType::RTKFixed,
-            GPSPositionReport::FixType::NoFix};
+        using Fix = GPSPositionReport::FixType;
+        const QList<Fix> expected{Fix::NoFix,    Fix::NoFix,    Fix::Fix3D, Fix::Fix3D,
+                                  Fix::RTKFixed, Fix::RTKFixed, Fix::NoFix};
+        QCOMPARE(positions.size(), expected.size());
         for (qsizetype i = 0; i < expected.size(); ++i) {
-            QCOMPARE(qvariant_cast<GPSPositionReport::FixType>(fixes[i].first()), expected[i]);
+            const auto report = qvariant_cast<GPSPositionReport>(positions[i].first());
+            QCOMPARE(report.navigation.fixType, expected[i]);
+            if (expected[i] != Fix::NoFix) {
+                QVERIFY(qAbs(report.navigation.latitudeDegrees - 48.1173) < 1e-6);
+            }
         }
     }
 }
 
 void GPSProviderTest::_satelliteExpiryDoesNotRenewLiveness()
 {
-    if (!GPSDriver::supportsType(GPSType::passive)) {
-        QSKIP("Passive receiver support is disabled");
-    }
     std::atomic<qint64> lastPositionAtMs = -1;
     GPSProvider provider(
         [&](const std::atomic_bool& stop) {
@@ -460,14 +444,14 @@ void GPSProviderTest::_satelliteExpiryDoesNotRenewLiveness()
     connect(
         &provider, &GPSProvider::satelliteInfoUpdate, &provider,
         [&](const GPSSatelliteReport& report) {
-            if (report.timestampUs && report.count) {
+            if (report.timestampUs && report.inView.value_or(0)) {
                 freshView = true;
             } else if (!report.timestampUs && freshView.load()) {
                 expiredView = true;
             }
         },
         Qt::DirectConnection);
-    QSignalSpy fixes(&provider, &GPSProvider::fixTypeChanged);
+    QSignalSpy positions(&provider, &GPSProvider::positionUpdate);
     QSignalSpy errors(&provider, &GPSProvider::connectionError);
     elapsed.start();
     provider.start();
@@ -479,7 +463,7 @@ void GPSProviderTest::_satelliteExpiryDoesNotRenewLiveness()
     QVERIFY(finished);
     QVERIFY(freshView.load());
     QVERIFY(expiredView.load());
-    QCOMPARE(fixes.size(), 1);
+    QCOMPARE(positions.size(), 2);
     QCOMPARE(errors.size(), 1);
     QCOMPARE(qvariant_cast<GPSConnectionError>(errors.first().first()), GPSConnectionError::DeviceError);
     // An expiry credited as new traffic would add another complete inactivity window.
@@ -499,18 +483,18 @@ void GPSProviderTest::_ancillaryTraffic_data()
 void GPSProviderTest::_ancillaryTraffic()
 {
     QFETCH(bool, sendUsage);
-    ScriptedSBFReceiver* peer = nullptr;
+    GPSTestClock clock;
+    auto model = std::make_shared<SBFReceiverModel>(clock);
+    SBFReceiverModel* peer = model.get();
     QElapsedTimer streamingTime;
     GPSProvider provider(
-        [&](const std::atomic_bool& stop) {
-            auto transport = std::make_unique<ScriptedSBFReceiver>(stop);
-            transport->sendUsage = sendUsage;
-            peer = transport.get();
-            return transport;
+        [model, sendUsage](const std::atomic_bool& stop) {
+            model->sendUsage = sendUsage;
+            return std::make_unique<ScriptedReceiver>(stop, model.get());
         },
         GPSType::septentrio,
-        {.base = {.useFixedBase = true,
-                  .fixedPosition = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}}});
+        {.base = {.mode = GPSBaseStationConfig::Fixed{
+                      .position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}}}});
     connect(
         &provider, &GPSProvider::receiverReady, &provider,
         [&] {
@@ -519,10 +503,10 @@ void GPSProviderTest::_ancillaryTraffic()
         },
         Qt::DirectConnection);
     connect(
-        &provider, &GPSProvider::satelliteUsageUpdate, &provider, [&](const auto&) { provider.stop(); },
+        &provider, &GPSProvider::satelliteInfoUpdate, &provider, [&](const auto&) { provider.stop(); },
         Qt::DirectConnection);
     QSignalSpy ready(&provider, &GPSProvider::receiverReady);
-    QSignalSpy usage(&provider, &GPSProvider::satelliteUsageUpdate);
+    QSignalSpy satellites(&provider, &GPSProvider::satelliteInfoUpdate);
     QSignalSpy errors(&provider, &GPSProvider::connectionError);
     provider.start();
     const bool finished = provider.wait(TestTimeout::mediumMs());
@@ -532,10 +516,12 @@ void GPSProviderTest::_ancillaryTraffic()
     }
     QVERIFY(finished);
     QCOMPARE(ready.size(), 1);
-    QCOMPARE(usage.size(), sendUsage ? 1 : 0);
+    QCOMPARE(satellites.size(), sendUsage ? 1 : 0);
     QCOMPARE(errors.size(), sendUsage ? 0 : 1);
     if (sendUsage) {
-        QCOMPARE(qvariant_cast<GPSSatelliteUsageReport>(usage.first().first()).usedCount, std::optional<int>{12});
+        const auto report = qvariant_cast<GPSSatelliteReport>(satellites.first().first());
+        QVERIFY(!report.inView);
+        QCOMPARE(report.used, std::optional<int>{12});
     } else {
         QVERIFY(streamingTime.elapsed() >= GPSProvider::kUsefulDataTimeoutMs);
         QCOMPARE(qvariant_cast<GPSConnectionError>(errors.first().first()), GPSConnectionError::DeviceError);
@@ -545,32 +531,29 @@ void GPSProviderTest::_ancillaryTraffic()
 void GPSProviderTest::_configuredReceiverReportsReadyThenLoss_data()
 {
     QTest::addColumn<GPSBaseStationConfig>("config");
-    QTest::newRow("survey") << GPSBaseStationConfig{.surveyInAccMeters = 2, .surveyInDurationSecs = 180};
-    QTest::newRow("minimum-survey") << GPSBaseStationConfig{.surveyInAccMeters = 0.0001, .surveyInDurationSecs = 1};
-    QTest::newRow("maximum-survey") << GPSBaseStationConfig{.surveyInAccMeters = 429496.7295,
-                                                            .surveyInDurationSecs = 4294967295LL};
+    QTest::newRow("survey") << GPSBaseStationConfig{.mode = GPSBaseStationConfig::SurveyIn{2, 180}};
+    QTest::newRow("minimum-survey") << GPSBaseStationConfig{.mode = GPSBaseStationConfig::SurveyIn{0.0001, 1}};
+    QTest::newRow("maximum-survey") << GPSBaseStationConfig{
+        .mode = GPSBaseStationConfig::SurveyIn{429496.7295, 4294967295LL}};
     QTest::newRow("fixed") << GPSBaseStationConfig{
-        .useFixedBase = true,
-        .fixedPosition = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500},
-        .fixedBaseAccuracyMeters = 1};
+        .mode = GPSBaseStationConfig::Fixed{
+            .position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}, .accuracyMeters = 1}};
     QTest::newRow("fixed-wire-limits") << GPSBaseStationConfig{
-        .useFixedBase = true,
-        .fixedPosition = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 21474836.0f},
-        .fixedBaseAccuracyMeters = 429496.71875f};
-    QTest::newRow("fixed-unknown-accuracy")
-        << GPSBaseStationConfig{.useFixedBase = true,
-                                .fixedPosition = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500},
-                                .fixedBaseAccuracyMeters = 0};
+        .mode = GPSBaseStationConfig::Fixed{
+            .position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 21474836.0f},
+            .accuracyMeters = 429496.71875f}};
+    QTest::newRow("fixed-unknown-accuracy") << GPSBaseStationConfig{
+        .mode = GPSBaseStationConfig::Fixed{
+            .position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}, .accuracyMeters = 0}};
 }
 
 void GPSProviderTest::_configuredReceiverReportsReadyThenLoss()
 {
     QFETCH(GPSBaseStationConfig, config);
-    const QString diagnostic =
-        QStringLiteral("Receiver read failed (status %1, code %2): Scripted receiver connection lost")
-            .arg(static_cast<int>(GPSReadStatus::Error))
-            .arg(-EIO);
-    expectLogMessage("GPS.Drivers", QtWarningMsg, QRegularExpression(QRegularExpression::escape(diagnostic)));
+    const QString diagnostic = QStringLiteral("Receiver read failed (status %1): Scripted receiver connection lost")
+                                   .arg(static_cast<int>(GPSReadStatus::Error));
+    expectLogMessage("GPS.Driver.Protocols.Femto", QtWarningMsg,
+                     QRegularExpression(QRegularExpression::escape(diagnostic)));
     GPSProvider provider(
         [](const std::atomic_bool& requestStop) { return std::make_unique<FemtoAckTransport>(requestStop); },
         GPSType::femto, GPSReceiverConfig{.base = config});
@@ -583,58 +566,17 @@ void GPSProviderTest::_configuredReceiverReportsReadyThenLoss()
     QCOMPARE(ready.size(), 1);
     QCOMPARE(errors.size(), 1);
     QCOMPARE(qvariant_cast<GPSConnectionError>(errors.first().first()), GPSConnectionError::DeviceError);
-    if (config.useFixedBase) {
+    if (const auto* fixed = std::get_if<GPSBaseStationConfig::Fixed>(&config.mode)) {
         QCOMPARE(surveys.size(), 1);
-        const auto status = qvariant_cast<GPSSurveyInStatus>(surveys.first().first());
-        QCOMPARE(status.coordinate.type(), QGeoCoordinate::Coordinate2D);
-        QCOMPARE(status.coordinate.latitude(), config.fixedPosition.latitudeDegrees);
-        QCOMPARE(status.coordinate.longitude(), config.fixedPosition.longitudeDegrees);
-        QVERIFY(std::isnan(status.coordinate.altitude()));
-        QCOMPARE(status.altitudeEllipsoidMeters, config.fixedPosition.altitudeMeters);
-        QCOMPARE(status.altitudeDatum, GPSAltitudeDatum::Ellipsoid);
+        const auto status = qvariant_cast<GPSSurveyReport>(surveys.first().first());
+        QCOMPARE(status.position.latitudeDegrees, fixed->position.latitudeDegrees);
+        QCOMPARE(status.position.longitudeDegrees, fixed->position.longitudeDegrees);
+        QCOMPARE(status.position.altitudeMeters, fixed->position.altitudeMeters);
         QVERIFY(!status.meanAccuracyMeters.has_value());
         QCOMPARE(status.duration.count(), 0);
         QVERIFY(status.valid);
         QVERIFY(!status.active);
     }
-}
-
-void GPSProviderTest::_unsupportedPositionRoleReportsConfigFailure_data()
-{
-    QTest::addColumn<GPSType>("type");
-    QTest::newRow("trimble") << GPSType::trimble;
-    QTest::newRow("septentrio") << GPSType::septentrio;
-    QTest::newRow("femto") << GPSType::femto;
-}
-
-void GPSProviderTest::_unsupportedPositionRoleReportsConfigFailure()
-{
-    QFETCH(GPSType, type);
-    const GPSReceiverConfig config{.role = GPSReceiverConfig::Role::Position};
-    const QString error = gpsReceiverConfigError(type, config);
-    QVERIFY(!error.isEmpty());
-    expectLogMessage("GPS.GPSDriver", QtWarningMsg, QRegularExpression(QRegularExpression::escape(error)));
-    GPSProvider provider(
-        [](const std::atomic_bool& requestStop) { return std::make_unique<FemtoAckTransport>(requestStop); }, type,
-        config);
-    QSignalSpy ready(&provider, &GPSProvider::receiverReady);
-    QSignalSpy errors(&provider, &GPSProvider::connectionError);
-    QObject observer;
-    QStringList errorOrder;
-    connect(
-        &provider, &GPSProvider::configurationError, &observer,
-        [&errorOrder](const QString& detail) { errorOrder.append(detail); }, Qt::QueuedConnection);
-    connect(
-        &provider, &GPSProvider::connectionError, &observer,
-        [&errorOrder](GPSConnectionError) { errorOrder.append(QStringLiteral("ConfigFailed")); }, Qt::QueuedConnection);
-    provider.start();
-    QVERIFY(provider.wait(TestTimeout::mediumMs()));
-    verifyExpectedLogMessage();
-    QVERIFY(ready.isEmpty());
-    QCOMPARE(errors.size(), 1);
-    QCOMPARE(qvariant_cast<GPSConnectionError>(errors.first().first()), GPSConnectionError::ConfigFailed);
-    QCoreApplication::sendPostedEvents(&observer, QEvent::MetaCall);
-    QCOMPARE(errorOrder, (QStringList{error, QStringLiteral("ConfigFailed")}));
 }
 
 void GPSProviderTest::_cancelledFactoryDoesNotOpenTransport()
@@ -651,9 +593,9 @@ void GPSProviderTest::_cancelledFactoryDoesNotOpenTransport()
     QSignalSpy errors(&provider, &GPSProvider::connectionError);
     provider.start();
     QVERIFY(provider.wait(TestTimeout::shortMs()));
-    QCOMPARE(trace.constructedOn, &provider);
+    QVERIFY(trace.constructedOn && trace.constructedOn != QThread::currentThread());
     QVERIFY(!trace.openedOn);
-    QCOMPARE(trace.destroyedOn, &provider);
+    QCOMPARE(trace.destroyedOn, trace.constructedOn);
     QVERIFY(errors.isEmpty());
 }
 

@@ -236,6 +236,32 @@ class TestLoadPageDef:
         assert page.groups[0].sectionName == "Custom"
         assert page.groups[0].keywords == ["a", "b"]
 
+    def test_loads_component_group_properties(self, tmp_path: Path):
+        data = {
+            "version": 1,
+            "groups": [
+                {"component": "MyCustomComponent", "properties": {"editable": False, "rows": 3}},
+            ],
+        }
+        page = load_page_def(_make_page_json(tmp_path, data))
+        assert page.groups[0].properties == {"editable": "false", "rows": "3"}
+
+    def test_group_properties_require_component(self, tmp_path: Path):
+        data = {
+            "version": 1,
+            "groups": [{"heading": "G", "properties": {"editable": False}, "controls": []}],
+        }
+        with pytest.raises(ValueError, match="component groups"):
+            load_page_def(_make_page_json(tmp_path, data))
+
+    def test_group_properties_reserved_name_rejected(self, tmp_path: Path):
+        data = {
+            "version": 1,
+            "groups": [{"component": "MyCustomComponent", "properties": {"id": "other"}}],
+        }
+        with pytest.raises(ValueError, match="reserved"):
+            load_page_def(_make_page_json(tmp_path, data))
+
     def test_loads_showWhen_enableWhen(self, tmp_path: Path):
         data = {
             "version": 1,
@@ -535,6 +561,14 @@ class TestGeneratePageQml:
         # override the component's own visible: binding.
         assert "ColumnLayout {" in qml
         assert "spacing: 0" in qml
+
+    def test_component_group_properties(self, settings_dir: Path):
+        page = PageDef(
+            groups=[GroupDef(component="MyCustomWidget", properties={"editable": "false"})]
+        )
+        qml = generate_page_qml(page, settings_dir)
+        assert "MyCustomWidget {" in qml
+        assert "editable: false" in qml
 
     def test_component_group_with_showWhen(self, settings_dir: Path):
         page = PageDef(
@@ -1329,28 +1363,51 @@ class TestRealPageDefinitions:
         assert "ListModel {" in qml
         assert "General" in qml
 
-    def test_ntrip_correction_controls(self, repo_root: Path):
+    def test_rtk_corrections_controls(self, repo_root: Path):
         pages_dir = repo_root / "src" / "AppSettings" / "pages"
         settings_dir = repo_root / "src" / "Settings"
-        page = load_page_def(pages_dir / "NTRIP.SettingsUI.json")
+        page = load_page_def(pages_dir / "RTKCorrections.SettingsUI.json")
         qml = generate_page_qml(page, settings_dir)
         components = {group.component for group in page.groups if group.component}
         assert components == {
+            "CorrectionsStatus",
             "NtripConnectionSettings",
             "NtripServerSettings",
             "NtripMountpointBrowser",
             "CorrectionRoutingSettings",
             "CorrectionDiagnostics",
         }
-        for name in ("rtcmUdpInputEnabled", "rtcmUdpInputPort", "rtcmUdpValidate"):
+        for name in (
+            "rtcmUdpInputEnabled",
+            "rtcmUdpInputPort",
+            "rtcmUdpValidate",
+            "rtcmUdpOutputEnabled",
+            "rtcmUdpOutputAddress",
+            "rtcmUdpOutputPort",
+        ):
             assert f"gpsCorrectionSettings.{name}" in qml
             assert f"ntripSettings.{name}" not in qml
-        assert "ntripSettings.ntripUdpForwardEnabled" in qml
-        assert 'heading: qsTr("NTRIP UDP Forwarding")' in qml
+        assert "ntripUdp" not in qml
+        assert 'heading: qsTr("UDP Forwarding")' in qml
         assert "gpsCorrectionSettings.userVisible" in qml
         assert "correctionSource as SettingsFact).userVisible" in qml
         assert "correctionSource.userVisible" not in qml
         assert "injectLocalReceiver" not in qml
+
+    def test_gnss_receiver_page(self, repo_root: Path):
+        pages_dir = repo_root / "src" / "AppSettings" / "pages"
+        receiver = load_page_def(pages_dir / "GNSSReceiver.SettingsUI.json")
+        assert [group.component for group in receiver.groups] == [
+            "GPSReceiverStatus",
+            "GPSReceiverSettings",
+            "GcsPositionStatus",
+        ]
+        # Only the receiver page edits the GCS position source.
+        comm_links = load_page_def(pages_dir / "CommLinks.SettingsUI.json")
+        assert "GcsPositionStatus" not in {group.component for group in comm_links.groups}
+        remote_id = load_page_def(pages_dir / "RemoteID.SettingsUI.json")
+        gcs = next(group for group in remote_id.groups if group.component == "GcsPositionStatus")
+        assert gcs.properties == {"sourceEditable": "false"}
 
 
 def test_cli_preserves_unchanged_output_timestamps(tmp_path: Path, monkeypatch) -> None:

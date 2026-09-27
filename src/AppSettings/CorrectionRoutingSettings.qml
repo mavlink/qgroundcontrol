@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FactControls
+import QGroundControl.GPS
 
 SettingsGroupLayout {
     id: root
@@ -18,8 +19,8 @@ SettingsGroupLayout {
     readonly property SettingsFact _sourceFact: root._settings.correctionSource as SettingsFact
     readonly property SettingsFact _instanceFact: root._settings.correctionSourceInstance as SettingsFact
     readonly property int _source: root._settings.correctionSource.rawValue
-    readonly property var _streams: {
-        const streams = [{ instanceId: "", label: qsTr("Automatic within source") }];
+    readonly property var _sourceStreams: {
+        const streams = [];
         for (const source of root.corrections.sourceInstances) {
             if (source.source === root._source && !streams.some(stream => stream.instanceId === source.instanceId)) {
                 streams.push({
@@ -28,6 +29,10 @@ SettingsGroupLayout {
                 });
             }
         }
+        return streams;
+    }
+    readonly property var _streams: {
+        const streams = [{ instanceId: "", label: qsTr("Automatic within source") }].concat(root._sourceStreams);
         if (!streams.some(stream => stream.instanceId === root._selectedInstance)) {
             streams.push({
                 instanceId: root._selectedInstance,
@@ -38,7 +43,7 @@ SettingsGroupLayout {
     }
 
     heading: qsTr("Correction Routing")
-    headingDescription: qsTr("Selects streams for vehicle links only. NTRIP UDP forwarding uses the NTRIP stream independently.")
+    headingDescription: qsTr("Selects the stream sent to vehicles. UDP forwarding sends the same stream.")
     objectName: "correctionRoutingSettings"
     visible: root._settings.userVisible && root._sourceFact && root._sourceFact.userVisible
 
@@ -62,9 +67,7 @@ SettingsGroupLayout {
         text: {
             if (root._source === GPSCorrectionSettings.Automatic)
                 return qsTr("Uses one fresh stream, preferring the local base station, then NTRIP, then UDP.");
-            if (root._source === GPSCorrectionSettings.All)
-                return qsTr("Forwards all fresh streams to vehicles. Corrections from different base stations may be mixed.");
-            return qsTr("Uses only the chosen source category, without fallback to other categories. Automatic within source chooses a fresh stream in that category; a pinned stream waits if unavailable.");
+            return qsTr("Uses only the chosen source category, without fallback to other categories. When the category has several streams, one can be pinned; a pinned stream waits if unavailable.");
         }
         wrapMode: Text.WordWrap
     }
@@ -80,6 +83,7 @@ SettingsGroupLayout {
         textRole: "label"
         valueRole: "instanceId"
         visible: root._manual && root._instanceFact && root._instanceFact.userVisible
+                 && (root._sourceStreams.length > 1 || root._selectedInstance !== "")
 
         onActivated: index => {
             if (index >= 0 && index < root._streams.length) {

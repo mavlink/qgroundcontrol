@@ -16,13 +16,14 @@
 // We mean it.
 //
 
+#include <atomic>
+
+#include <QtCore/QDeadlineTimer>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QMutex>
 #include <QtCore/QWaitCondition>
 #include <QtCore/private/qiodevice_p.h>
 #include <QtCore/private/qproperty_p.h>
-
-#include <atomic>
 
 #include "AndroidSerial.h"
 #include "qserialport.h"
@@ -33,6 +34,8 @@ constexpr qint64 MAX_READ_SIZE = 16 * 1024;
 constexpr qint64 DEFAULT_READ_BUFFER_SIZE = MAX_READ_SIZE;
 constexpr qint64 DEFAULT_WRITE_BUFFER_SIZE = 16 * 1024;
 constexpr int DEFAULT_WRITE_TIMEOUT = 5000;
+// Best-effort send of buffered writes when closing; a stalled link must not delay close.
+constexpr int CLOSE_WRITE_TIMEOUT = 100;
 constexpr int DEFAULT_READ_TIMEOUT = 0;
 constexpr int EMIT_THRESHOLD = 64;
 
@@ -66,6 +69,8 @@ public:
     void close();
 
     bool flush();
+
+    bool flushBeforeClose() { return _writeDataOneShot(CLOSE_WRITE_TIMEOUT); }
     bool clear(QSerialPort::Directions directions);
 
     QSerialPort::PinoutSignals pinoutSignals();
@@ -146,6 +151,10 @@ public:
 
 private:
     qint64 _writeToPort(const char* data, qint64 maxSize, int timeout = DEFAULT_WRITE_TIMEOUT, bool async = false);
+    /// Returns bytes written, fewer than maxSize on timeout, or -1 on error.
+    qint64 _writeToPortWithProgress(const char* data, qint64 maxSize, int timeout);
+    void _scheduleWrite();
+    static int _writeTimeoutMs(const QDeadlineTimer& deadline);
     bool _stopAsyncRead();
     void _scheduleReadyRead();
     qsizetype _pendingSizeLocked() const;
@@ -166,6 +175,7 @@ private:
     bool _posixStartAsyncRead();
     bool _posixStopAsyncRead();
     qint64 _posixWrite(const char* data, qint64 maxSize, int timeoutMs);
+    qint64 _posixWriteWithProgress(const char* data, qint64 maxSize, int timeoutMs);
     bool _posixApplyPortSettings(qint32 baudRate, QSerialPort::DataBits dataBits,
                                  QSerialPort::StopBits stopBits, QSerialPort::Parity parity,
                                  QSerialPort::FlowControl flowControl);
@@ -182,6 +192,7 @@ private:
     int _deviceId = INVALID_DEVICE_ID;
 
     std::atomic<bool> _readyReadPending{false};
+    bool _writePending = false;
     std::atomic<qint64> _bufferBytesEstimate{0};
     QMutex _readMutex;
     QWaitCondition _readWaitCondition;

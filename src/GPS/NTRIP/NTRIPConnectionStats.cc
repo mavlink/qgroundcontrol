@@ -2,9 +2,11 @@
 
 #include <algorithm>
 
+#include <QtCore/QPointer>
+
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(NTRIPConnectionStatsLog, "GPS.NTRIPConnectionStats")
+QGC_LOGGING_CATEGORY(NTRIPConnectionStatsLog, "GPS.NTRIP.NTRIPConnectionStats")
 
 NTRIPConnectionStats::NTRIPConnectionStats(QObject* parent) : QObject(parent), _rateTimer(this)
 {
@@ -38,17 +40,34 @@ NTRIPConnectionStats::NTRIPConnectionStats(QObject* parent) : QObject(parent), _
 
 void NTRIPConnectionStats::start()
 {
+    _startedAtMs = static_cast<qint64>(MonotonicClock::nowUs() / 1000);
     _rateTimer.start();
 }
 
 void NTRIPConnectionStats::stop()
 {
     _rateTimer.stop();
-    if (_rateTracker.bytesPerSec() != 0.0) {
-        _rateTracker.reset();
-        _prevBytesReceived = 0;
+    _startedAtMs = 0;
+    const bool rateChanged = _rateTracker.bytesPerSec() != 0.0;
+    const bool bytesChanged = _prevBytesReceived != _rateTracker.totalBytes();
+    const bool messagesChanged = _prevMessagesReceived != _messagesReceived;
+    const bool countsChanged = _messageCountsDirty;
+    _prevBytesReceived = _rateTracker.totalBytes();
+    _prevMessagesReceived = _messagesReceived;
+    _messageCountsDirty = false;
+    _rateTracker.resetRate();
+    const QPointer<NTRIPConnectionStats> guard(this);
+    if (rateChanged) {
         emit dataRateChanged();
+    }
+    if (guard && bytesChanged) {
         emit bytesReceivedChanged();
+    }
+    if (guard && messagesChanged) {
+        emit messagesReceivedChanged();
+    }
+    if (guard && countsChanged) {
+        emit messageCountsByIdChanged();
     }
 }
 
@@ -61,7 +80,8 @@ double NTRIPConnectionStats::correctionAgeSec() const
 
 void NTRIPConnectionStats::_updateDataStale(qint64 nowMs)
 {
-    const auto age = MonotonicClock::ageMilliseconds(_lastReceivedAtMs > 0 ? quint64(_lastReceivedAtMs) * 1000 : 0,
+    const qint64 referenceMs = _lastReceivedAtMs > 0 ? _lastReceivedAtMs : _startedAtMs;
+    const auto age = MonotonicClock::ageMilliseconds(referenceMs > 0 ? quint64(referenceMs) * 1000 : 0,
                                                      nowMs > 0 ? quint64(nowMs) * 1000 : 0);
     const bool stale = age >= kStaleThreshold.count();
     if (stale != _dataStale) {
@@ -98,7 +118,9 @@ void NTRIPConnectionStats::reset()
     _rateTracker.reset();
     _prevBytesReceived = 0;
     _messagesReceived = 0;
+    _prevMessagesReceived = 0;
     _lastReceivedAtMs = 0;
+    _startedAtMs = 0;
     _messageCountsById.clear();
     _messageCountsDirty = false;
     if (_dataStale) {
@@ -112,15 +134,7 @@ void NTRIPConnectionStats::reset()
     emit messageCountsByIdChanged();
 }
 
-QVariantList NTRIPConnectionStats::messageCountsById() const
+QList<RTCMMessageCount> NTRIPConnectionStats::messageCountsById() const
 {
-    QList<int> ids = _messageCountsById.keys();
-    std::sort(ids.begin(), ids.end());
-
-    QVariantList out;
-    out.reserve(ids.size());
-    for (int id : ids) {
-        out.append(QVariant(QVariantList{id, _messageCountsById.value(id)}));
-    }
-    return out;
+    return rtcmMessageCounts(_messageCountsById);
 }

@@ -7,6 +7,7 @@
 
 #include <QtTest/QSignalSpy>
 
+#include "GpsMavlinkTestHelpers.h"
 #include "MAVLinkLib.h"
 #include "ManualScheduler.h"
 #include "VehicleGPSAggregateFactGroup.h"
@@ -21,10 +22,8 @@ class IntegrityReceiver : public VehicleGPSFactGroup
 {
 public:
     IntegrityReceiver(uint8_t id, RuntimeScheduler* scheduler)
-        : VehicleGPSFactGroup(nullptr, scheduler)
-    {
-        _gnssIntegrityId = id;
-    }
+        : VehicleGPSFactGroup(nullptr, scheduler, id == 0 ? ReceiverIndex::Primary : ReceiverIndex::Secondary)
+    {}
 };
 
 mavlink_message_t integrityMessage(uint8_t id, uint8_t spoofing, uint8_t jamming, uint8_t authentication)
@@ -212,10 +211,7 @@ void VehicleGPSAggregateFactGroupTest::_onlyIntegrityRefreshesReceipt()
     const quint64 receipt = gps.gnssIntegrityTimestampUs();
     QVERIFY(scheduler.advanceBy(4s));
     gps.handleMessage(nullptr, integrityMessage(1, 3, 3, 2));
-    mavlink_message_t message{};
-    mavlink_gps_raw_int_t position{};
-    mavlink_msg_gps_raw_int_encode(1, 1, &message, &position);
-    gps.handleMessage(nullptr, message);
+    gps.handleMessage(nullptr, GpsTestHelpers::gpsRawMessage({}));
     QCOMPARE(gps.gnssIntegrityTimestampUs(), receipt);
     QVERIFY(scheduler.advanceBy(1s));
     verifyAggregate(aggregate, 255, 255, 255, false);
@@ -244,19 +240,6 @@ void VehicleGPSAggregateFactGroupTest::_receiverDestruction()
     QCOMPARE(scheduler.pendingCount(), 0);
     survivor.handleMessage(nullptr, integrityMessage(0, 3, 3, 2));
     QVERIFY(scheduler.advanceBy(5s));
-}
-
-void VehicleGPSAggregateFactGroupTest::_schedulerDestruction()
-{
-    auto scheduler = std::make_unique<ManualScheduler>();
-    IntegrityReceiver gps(0, scheduler.get());
-    VehicleGPSAggregateFactGroup aggregate(nullptr, scheduler.get());
-    aggregate.bindToGps(&gps, nullptr);
-    gps.handleMessage(nullptr, integrityMessage(0, 1, 1, 3));
-    scheduler.reset();
-    verifyAggregate(aggregate, 255, 255, 255, false);
-    gps.handleMessage(nullptr, integrityMessage(0, 3, 3, 2));
-    verifyAggregate(aggregate, 255, 255, 255, false);
 }
 
 void VehicleGPSAggregateFactGroupTest::_reentrantRebind()

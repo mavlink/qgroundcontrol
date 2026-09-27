@@ -10,13 +10,15 @@
 
 #include <QtCore/QScopeGuard>
 
-#include "Ashtech/GPSDriverAshtech.h"
-#include "Femto/GPSDriverFemto.h"
-#include "GPSProtocolFeatures.h"
+#include "Ashtech/AshtechProtocol.h"
+#include "Femto/FemtoProtocol.h"
+#include "GPSAsciiProtocol.h"
 #include "GPSProtocolTestIO.h"
 #include "NMEAUtils.h"
-#include "SBF/GPSDriverSBF.h"
-#include "UBX/GPSDriverUBX.h"
+#include "Quectel/QuectelProtocol.h"
+#include "SBF/SBFProtocol.h"
+#include "UBX/UBXProtocol.h"
+#include "Unicore/UnicoreProtocol.h"
 #include "UnitTest.h"
 
 #define CHECK(condition)                          \
@@ -35,11 +37,13 @@ struct ScriptedIO
         Write,
         Baud
     };
+    GPSTestClock& clock;
     Operation fault;
-    int error;
+    GPSProtocolError error;
     bool failed = false;
     unsigned operations = 0;
     QString detail = QStringLiteral("Receiver connection lost: Gerät disconnected");
+    QStringList warnings{};
 
     bool fail(Operation operation)
     {
@@ -51,26 +55,26 @@ struct ScriptedIO
 
     GPSProtocolIO io()
     {
-        auto result = makeGPSProtocolTestIO();
+        auto result = makeGPSProtocolTestIO(clock, &warnings);
         result.read = [this](std::span<uint8_t>, GPSDeadline deadline) -> GPSReadResult {
             if (fail(Operation::Read)) {
-                return {error == GPSProtocol::ReadCancelled ? GPSReadStatus::Cancelled : GPSReadStatus::Error, 0,
+                return {error == GPSProtocolError::Cancelled ? GPSReadStatus::Cancelled : GPSReadStatus::Error, 0,
                         detail};
             }
-            gps_test_time = deadline.untilUs + 1000;
+            clock.advanceTo(deadline.untilUs + 1000);
             return {GPSReadStatus::TimedOut};
         };
         result.write = [this](std::span<const uint8_t> bytes, GPSDeadline) -> GPSWriteResult {
             if (fail(Operation::Write)) {
-                return {error == GPSProtocol::ReadCancelled ? GPSWriteStatus::Cancelled : GPSWriteStatus::Error, 0, 0,
+                return {error == GPSProtocolError::Cancelled ? GPSWriteStatus::Cancelled : GPSWriteStatus::Error, 0, 0,
                         detail};
             }
             return {GPSWriteStatus::Completed, int(bytes.size()), int(bytes.size())};
         };
         result.setBaudrate = [this](unsigned) {
-            return !fail(Operation::Baud)                ? GPSBaudStatus::Configured
-                   : error == GPSProtocol::ReadCancelled ? GPSBaudStatus::Cancelled
-                                                         : GPSBaudStatus::Error;
+            return !fail(Operation::Baud)                 ? GPSBaudStatus::Configured
+                   : error == GPSProtocolError::Cancelled ? GPSBaudStatus::Cancelled
+                                                          : GPSBaudStatus::Error;
         };
         return result;
     }
@@ -86,7 +90,7 @@ public:
     using GPSProtocol::resetIOError;
     using GPSProtocol::write;
 
-    int configure(unsigned&, const GPSConfig&) override { return 0; }
+    bool configure(unsigned&, const GPSConfig&) override { return true; }
 
     int receive(unsigned timeout) override { return receiveDecoded(timeout); }
 };
@@ -105,10 +109,10 @@ public:
             "SET", std::chrono::milliseconds(100), {GPSReceiverSetting::OutputRateHz}, required};
         static constexpr std::array<uint8_t, 3> bytes{'S', 'E', 'T'};
         if (!writeCommand(step, bytes)) {
-            return completeCommand(ioError() == ReadCancelled ? GPSCommandOutcome::Cancelled
-                                                              : GPSCommandOutcome::TransportError);
+            return completeCommand(ioError() == GPSProtocolError::Cancelled ? GPSCommandOutcome::Cancelled
+                                                                            : GPSCommandOutcome::TransportError);
         }
-        return awaitCommand(step, [this] { return _reply; });
+        return awaitCommand([this] { return _reply; });
     }
 
     GPSCommandResult attemptWithin(unsigned timeout)
@@ -119,8 +123,7 @@ public:
 
     GPSCommandResult awaitAgain()
     {
-        return awaitCommand({"must not replace completed evidence", std::chrono::milliseconds(100)},
-                            [this] { return _reply; });
+        return awaitCommand([this] { return _reply; });
     }
 
     bool awaiting() const { return _awaiting; }
@@ -152,6 +155,11 @@ private:
 
 struct CommandIO
 {
+    explicit CommandIO(GPSTestClock& testClock)
+        : clock(testClock)
+    {}
+
+    GPSTestClock& clock;
     std::deque<std::string> chunks;
     std::vector<std::string> transcript;
     std::vector<GPSCommandResult> completions;
@@ -163,29 +171,29 @@ struct CommandIO
 
     GPSProtocolIO io()
     {
-        auto result = makeGPSProtocolTestIO();
+        auto result = makeGPSProtocolTestIO(clock);
         result.write = [this](std::span<const uint8_t> bytes, GPSDeadline deadline) {
             CHECK(!bytes.empty());
             CHECK(std::string(reinterpret_cast<const char*>(bytes.data()), bytes.size()) == "SET");
             transcript.push_back("write/" + std::to_string(deadline.untilUs));
-            gps_test_time += writeDurationUs;
+            clock.advanceBy(writeDurationUs);
             return writeResult;
         };
         result.read = [this](std::span<uint8_t> bytes, GPSDeadline deadline) -> GPSReadResult {
             transcript.push_back("read/" + std::to_string(deadline.untilUs));
-            CHECK(gps_test_time < deadline.untilUs);
+            CHECK(clock.nowUs() < deadline.untilUs);
             if (readStatus != GPSReadStatus::Data) {
                 return {readStatus};
             }
             if (chunks.empty()) {
-                gps_test_time = deadline.untilUs;
+                clock.advanceTo(deadline.untilUs);
                 return {GPSReadStatus::TimedOut};
             }
             const auto chunk = std::move(chunks.front());
             chunks.pop_front();
             CHECK(chunk.size() <= bytes.size());
             std::memcpy(bytes.data(), chunk.data(), chunk.size());
-            gps_test_time += 1000;
+            clock.advanceBy(1000);
             return {GPSReadStatus::Data, static_cast<int>(chunk.size())};
         };
         result.decoded = [this](const auto& batch) { decodedReports += batch.events.size(); };
@@ -199,10 +207,10 @@ struct CommandIO
     }
 };
 
-static void commandAttempts()
+static void commandAttempts(GPSTestClock& clock)
 {
-    gps_test_time = 1000000;
-    CommandIO io;
+    clock.reset(1000000);
+    CommandIO io(clock);
     io.chunks = {"N\nA", "CK\nN\n"};
     CommandProbe probe(io.io());
     io.onCompletion = [&] { probe.finishConfigurationEvidence(); };
@@ -235,8 +243,8 @@ static void commandAttempts()
     CHECK(!probe.awaiting());
 
     for (const auto readStatus : {GPSReadStatus::Data, GPSReadStatus::Cancelled, GPSReadStatus::Error}) {
-        gps_test_time = 1000000;
-        CommandIO failed;
+        clock.reset(1000000);
+        CommandIO failed(clock);
         failed.readStatus = readStatus;
         CommandProbe receiver(failed.io());
         const auto failure = receiver.attempt();
@@ -249,9 +257,10 @@ static void commandAttempts()
         CHECK(!receiver.awaiting());
         receiver.finishConfigurationEvidence();
         if (readStatus != GPSReadStatus::Data) {
-            CHECK(receiver.receive(100) < 0);
+            CHECK(receiver.receive(100) == 0);
+            CHECK(receiver.hasIOError());
         } else {
-            CHECK(gps_test_time == 1100000);  // Writing did not buy a second read deadline.
+            CHECK(clock.nowUs() == 1100000);  // Writing did not buy a second read deadline.
         }
         CHECK(failed.completions.size() == 1);
         CHECK(failed.transcript.size() == 2);
@@ -260,8 +269,8 @@ static void commandAttempts()
     for (const GPSWriteResult& failure :
          {GPSWriteResult{GPSWriteStatus::TimedOut, 3, 3}, GPSWriteResult{GPSWriteStatus::Cancelled, 3, 1},
           GPSWriteResult{GPSWriteStatus::Error, 3, 1}, GPSWriteResult{GPSWriteStatus::Unsupported}}) {
-        gps_test_time = 1000000;
-        CommandIO failed;
+        clock.reset(1000000);
+        CommandIO failed(clock);
         failed.writeResult = failure;
         CommandProbe receiver(failed.io());
         const auto attemptResult = receiver.attempt(false);
@@ -278,16 +287,17 @@ static void commandAttempts()
         CHECK(receiver.awaitAgain().evidence.outcome == attemptResult.evidence.outcome);
         receiver.finishConfigurationEvidence();
         if (failure.status != GPSWriteStatus::Unsupported) {
-            CHECK(receiver.receive(100) < 0);
+            CHECK(receiver.receive(100) == 0);
+            CHECK(receiver.hasIOError());
         } else {
-            CHECK(receiver.ioError() == 0);  // Unsupported is a rejected attempt, not a poisoned connection.
+            CHECK(!receiver.hasIOError());  // Unsupported is a rejected attempt, not a poisoned connection.
         }
         CHECK(failed.completions.size() == 1);
         CHECK(failed.transcript == std::vector<std::string>{"write/1100000"});
     }
 
-    gps_test_time = 1000000;
-    CommandIO exhausted;
+    clock.reset(1000000);
+    CommandIO exhausted(clock);
     exhausted.writeDurationUs = 100000;
     CommandProbe receiver(exhausted.io());
     CHECK(receiver.attempt().evidence.outcome == GPSCommandOutcome::TimedOut);
@@ -295,20 +305,20 @@ static void commandAttempts()
     CHECK(exhausted.completions.size() == 1);
     CHECK(!receiver.awaiting());
 
-    gps_test_time = 1000000;
-    CommandIO outerDeadline;
+    clock.reset(1000000);
+    CommandIO outerDeadline(clock);
     CommandProbe bounded(outerDeadline.io());
     CHECK(bounded.attemptWithin(50).evidence.outcome == GPSCommandOutcome::TimedOut);
     CHECK(outerDeadline.transcript == (std::vector<std::string>{"write/1050000", "read/1050000"}));
-    CHECK(gps_test_time == 1050000);
+    CHECK(clock.nowUs() == 1050000);
 
-    gps_test_time = 1000000;
-    CommandIO nested;
+    clock.reset(1000000);
+    CommandIO nested(clock);
     nested.chunks = {"ACK\n"};
     CommandProbe nestedReceiver(nested.io());
     nested.onCompletion = [&] {
         if (nested.completions.size() == 1) {
-            nestedReceiver.beginCommandWrite("next");
+            nestedReceiver.beginCommandWrite({"next", std::chrono::milliseconds(100)});
         }
     };
     CHECK(nestedReceiver.attempt().evidence.outcome == GPSCommandOutcome::Acknowledged);
@@ -318,8 +328,8 @@ static void commandAttempts()
     CHECK(nested.completions.back().evidence.command == "next");
     CHECK(nested.completions.back().evidence.outcome == GPSCommandOutcome::Written);
 
-    gps_test_time = 1000000;
-    CommandIO throwing;
+    clock.reset(1000000);
+    CommandIO throwing(clock);
     throwing.chunks = {"ACK\n"};
     CommandProbe throwingReceiver(throwing.io());
     throwing.onCompletion = [] { throw std::runtime_error("completion"); };
@@ -334,18 +344,17 @@ static void commandAttempts()
     CHECK(throwing.completions.size() == 1);
 }
 
-static void ashtechAcknowledgementReturnsImmediately()
+static void ashtechAcknowledgementReturnsImmediately(GPSTestClock& clock)
 {
-#if QGC_GPS_ENABLE_ASHTECH
-    gps_test_time = 1000000;
+    clock.reset(1000000);
     std::string reply = NMEAUtils::repairChecksum("$PASHR,PRT,A,115200").toStdString();
     std::vector<std::string> writes;
     std::vector<GPSCommandResult> completions;
     int reads = 0;
-    auto io = makeGPSProtocolTestIO();
+    auto io = makeGPSProtocolTestIO(clock);
     io.write = [&](std::span<const uint8_t> bytes, GPSDeadline) -> GPSWriteResult {
         writes.emplace_back(reinterpret_cast<const char*>(bytes.data()), bytes.size());
-        gps_test_time += 1000;
+        clock.advanceBy(1000);
         return writes.size() == 1 ? GPSWriteResult{GPSWriteStatus::Completed, int(bytes.size()), int(bytes.size())}
                                   : GPSWriteResult{GPSWriteStatus::Cancelled};
     };
@@ -355,25 +364,27 @@ static void ashtechAcknowledgementReturnsImmediately()
         const auto size = std::min<size_t>({bytes.size(), reply.size(), 4});
         std::memcpy(bytes.data(), reply.data(), size);
         reply.erase(0, size);
-        gps_test_time += 1000;
+        clock.advanceBy(1000);
         return {GPSReadStatus::Data, static_cast<int>(size)};
     };
     io.commandFinished = [&](const auto& result) { completions.push_back(result); };
-    GPSNativePositionReport position;
-    GPSNativeAshtech receiver(std::move(io), &position, nullptr);
+    GPSDecodedPosition position;
+    AshtechProtocol receiver(captureGPSReports(std::move(io), position), false);
     unsigned baud = 115200;
-    CHECK(receiver.configure(baud, {}) < 0);
+    GPSProtocol::GPSConfig config;
+    std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 1;
+    std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).durationSecs = 60;
+    CHECK(!receiver.configure(baud, config));
     CHECK(writes == (std::vector<std::string>{"$PASHQ,PRT\r\n", "$PASHQ,RID\r\n"}));
     CHECK(reads > 1);
     CHECK(completions.size() == 2);
     CHECK(completions[0].evidence.outcome == GPSCommandOutcome::Acknowledged);
     CHECK(completions[0].evidence.finishedAtUs == 1001000 + uint64_t(reads) * 1000);
     CHECK(completions[1].evidence.outcome == GPSCommandOutcome::Cancelled);
-    CHECK(receiver.ioError() == GPSProtocol::ReadCancelled);
-#endif
+    CHECK(receiver.ioError() == GPSProtocolError::Cancelled);
 }
 
-static void sharedResults()
+static void sharedResults(GPSTestClock& clock)
 {
     const uint8_t payload[6] = {};
     const QString detail = QStringLiteral("Invalid receiver progress: Gerät");
@@ -389,21 +400,21 @@ static void sharedResults()
     for (const auto& result : invalidWrites) {
         int writes = 0;
         GPSCommandResult completion;
-        auto io = makeGPSProtocolTestIO();
+        auto io = makeGPSProtocolTestIO(clock);
         io.write = [&](std::span<const uint8_t>, GPSDeadline) {
             ++writes;
             return result;
         };
         io.commandFinished = [&](const auto& command) { completion = command; };
         IOProbe probe(std::move(io));
-        probe.beginCommandWrite("probe");
-        CHECK(probe.write(payload, sizeof(payload)) < 0);
-        CHECK(probe.ioError() == -EIO);
+        probe.beginCommandWrite({"probe", std::chrono::milliseconds(100)});
+        CHECK(!probe.write(payload, sizeof(payload)));
+        CHECK(probe.ioError() == GPSProtocolError::Transport);
         CHECK(probe.ioErrorDetail() == detail);
         CHECK(completion.evidence.acceptedBytes == result.acceptedBytes);
         CHECK(completion.evidence.writtenBytes == result.writtenBytes);
         CHECK(completion.evidence.uncertainBytes == result.uncertainBytes());
-        CHECK(probe.write(payload, sizeof(payload)) < 0);
+        CHECK(!probe.write(payload, sizeof(payload)));
         CHECK(writes == 1);
         probe.resetIOError();
         CHECK(probe.ioErrorDetail().isEmpty());
@@ -414,46 +425,76 @@ static void sharedResults()
         {GPSReadStatus::TimedOut, 1, detail},
     }};
     for (const auto& result : invalidReads) {
-        auto io = makeGPSProtocolTestIO();
+        auto io = makeGPSProtocolTestIO(clock);
         io.read = [&](std::span<uint8_t>, GPSDeadline) { return result; };
         IOProbe probe(std::move(io));
         uint8_t byte;
-        CHECK(probe.read(&byte, 1, 0) == -EIO);
+        CHECK(probe.read(&byte, 1, 0) == -1);
+        CHECK(probe.ioError() == GPSProtocolError::Transport);
         CHECK(probe.ioErrorDetail() == detail);
     }
     QStringList messages;
     GPSProtocolIO io;
-    io.log = [&](GPSProtocolLogLevel, QStringView message) { messages.push_back(message.toString()); };
+    io.log = [&](const QLoggingCategory&, GPSProtocolLogLevel, QStringView message) {
+        messages.push_back(message.toString());
+    };
     IOProbe probe(std::move(io));
     probe.log(GPSProtocolLogLevel::Warning, "Gerät");
     probe.log(GPSProtocolLogLevel::Warning, "%s %d", "Gerät", 2);
     CHECK(messages == (QStringList{QStringLiteral("Gerät"), QStringLiteral("Gerät 2")}));
 }
 
-static std::unique_ptr<GPSBaseProtocol> createReceiver(unsigned family, ScriptedIO& io,
-                                                       GPSNativePositionReport& position,
-                                                       GPSNativeSatelliteReport& satellites)
+static std::unique_ptr<GPSProtocol> createReceiver(unsigned family, ScriptedIO& io, GPSDecodedPosition& position,
+                                                   GPSDecodedSatellites& satellites)
 {
     switch (family) {
-#if QGC_GPS_ENABLE_UBX
         case 0:
-            return std::make_unique<GPSNativeUBX>(io.io(), &position, &satellites);
-#endif
-#if QGC_GPS_ENABLE_ASHTECH
+            return std::make_unique<UBXProtocol>(captureGPSReports(io.io(), position, &satellites));
         case 1:
-            return std::make_unique<GPSNativeAshtech>(io.io(), &position, &satellites);
-#endif
-#if QGC_GPS_ENABLE_SBF
+            return std::make_unique<AshtechProtocol>(captureGPSReports(io.io(), position, &satellites));
         case 2:
-            return std::make_unique<GPSNativeSBF>(io.io(), &position, &satellites);
-#endif
-#if QGC_GPS_ENABLE_FEMTO
+            return std::make_unique<SBFProtocol>(captureGPSReports(io.io(), position, &satellites));
         case 3:
-            return std::make_unique<GPSNativeFemto>(io.io(), &position, &satellites);
-#endif
+            return std::make_unique<FemtoProtocol>(captureGPSReports(io.io(), position, &satellites));
+        case 4:
+            return std::make_unique<UnicoreProtocol>(captureGPSReports(io.io(), position, &satellites));
+        case 5:
+            return std::make_unique<QuectelProtocol>(captureGPSReports(io.io(), position, &satellites));
+        case 6:
+            return std::make_unique<PassiveProtocol>(captureGPSReports(io.io(), position, &satellites));
         default:
             return {};
     }
+}
+
+/// Every driver logs under its own child of GPS.Driver.Protocols, so a single family can be enabled.
+template <typename Driver>
+void checkLogCategory(GPSTestClock& clock, const char* expected)
+{
+    QStringList categories;
+    auto io = makeGPSProtocolTestIO(clock);
+    io.log = [&categories](const QLoggingCategory& category, GPSProtocolLogLevel, QStringView) {
+        categories.push_back(QString::fromLatin1(category.categoryName()));
+    };
+    Driver driver(std::move(io), false);
+    // No family supports both persistent changes and receiver-managed averaging, so validation rejects this.
+    GPSProtocol::GPSConfig config{.base = {.mode = GPSBaseStationConfig::ReceiverAveraging{}},
+                                  .allowPersistentChanges = true};
+    unsigned baud = 115200;
+    CHECK(!driver.configure(baud, config));
+    CHECK(!categories.empty());
+    CHECK(categories.count(QString::fromLatin1(expected)) == categories.size());
+}
+
+void driverLogCategories(GPSTestClock& clock)
+{
+    checkLogCategory<UBXProtocol>(clock, "GPS.Driver.Protocols.UBX");
+    checkLogCategory<SBFProtocol>(clock, "GPS.Driver.Protocols.SBF");
+    checkLogCategory<AshtechProtocol>(clock, "GPS.Driver.Protocols.Ashtech");
+    checkLogCategory<FemtoProtocol>(clock, "GPS.Driver.Protocols.Femto");
+    checkLogCategory<QuectelProtocol>(clock, "GPS.Driver.Protocols.Quectel");
+    checkLogCategory<UnicoreProtocol>(clock, "GPS.Driver.Protocols.Unicore");
+    checkLogCategory<PassiveProtocol>(clock, "GPS.Driver.Protocols.Passive");
 }
 
 }  // namespace
@@ -469,12 +510,12 @@ private slots:
 
 void GPSProtocolIOContractTest::_protocol()
 {
-    gps_test_time = 0;
-    gps_test_warnings.clear();
+    GPSTestClock clock;
     try {
-        commandAttempts();
-        ashtechAcknowledgementReturnsImmediately();
-        sharedResults();
+        commandAttempts(clock);
+        ashtechAcknowledgementReturnsImmediately(clock);
+        sharedResults(clock);
+        driverLogCategories(clock);
         CHECK(GPSDeadline{}.remainingMilliseconds(0) == INT32_MAX);
         CHECK(GPSDeadline{0}.remainingMilliseconds(0) == 0);
         CHECK(GPSDeadline{1}.remainingMilliseconds(0) == 1);
@@ -491,47 +532,52 @@ void GPSProtocolIOContractTest::_protocol()
         const auto qtDeadline = deadline.toQDeadlineTimer();
         CHECK(!qtDeadline.isForever());
         CHECK(std::abs(qtDeadline.deadline() - QDeadlineTimer(liveDeadline, Qt::PreciseTimer).deadline()) <= 1);
-        for (unsigned family = 0; family != 4; ++family) {
+        for (unsigned family = 0; family != 7; ++family) {
             for (const auto fault :
                  {ScriptedIO::Operation::Read, ScriptedIO::Operation::Write, ScriptedIO::Operation::Baud}) {
-                for (const int error : {GPSProtocol::ReadCancelled, -EIO}) {
-                    for (const auto mode : {GPSProtocol::OutputMode::GPS, GPSProtocol::OutputMode::RTCM}) {
-                        gps_test_time = 0;
-                        gps_test_warnings.clear();
-                        ScriptedIO io{fault, error};
-                        GPSNativePositionReport position{};
-                        GPSNativeSatelliteReport satellites{};
-                        auto receiver = createReceiver(family, io, position, satellites);
-                        if (!receiver) {
-                            continue;
-                        }
-                        GPSProtocol::GPSConfig config{};
-                        config.base.surveyInAccMeters = 1;
-                        config.base.surveyInDurationSecs = 60;
-                        config.output_mode = mode;
-                        unsigned baudrate = 115200;
-                        const int result = receiver->configure(baudrate, config);
-                        CHECK(io.failed);
-                        CHECK(result < 0);
-                        CHECK(receiver->ioError() == error);
-                        CHECK(receiver->ioErrorDetail() ==
-                              (fault == ScriptedIO::Operation::Baud ? QString() : io.detail));
-                        const auto warnings = gps_test_warnings;
-                        if (fault == ScriptedIO::Operation::Read && error != GPSProtocol::ReadCancelled) {
-                            CHECK(warnings ==
-                                  QStringList{QStringLiteral("Receiver read failed (status %1, code %2): %3")
-                                                  .arg(static_cast<int>(GPSReadStatus::Error))
-                                                  .arg(error)
-                                                  .arg(io.detail)});
-                        } else {
-                            CHECK(warnings.empty());
-                        }
-                        CHECK(receiver->receive(10) < 0);
-                        CHECK(receiver->ioError() == error);
-                        CHECK(receiver->ioErrorDetail() ==
-                              (fault == ScriptedIO::Operation::Baud ? QString() : io.detail));
-                        CHECK(gps_test_warnings == warnings);
+                if (family == 6 && fault != ScriptedIO::Operation::Baud) {
+                    continue;
+                }
+                for (const auto error : {GPSProtocolError::Cancelled, GPSProtocolError::Transport}) {
+                    clock.reset();
+                    ScriptedIO io{clock, fault, error};
+                    GPSDecodedPosition position{};
+                    GPSDecodedSatellites satellites{};
+                    auto receiver = createReceiver(family, io, position, satellites);
+                    if (!receiver) {
+                        continue;
                     }
+                    GPSProtocol::GPSConfig config{};
+                    if (family == 4) {
+                        config.base.mode = GPSBaseStationConfig::ReceiverAveraging{.maximumDurationSecs = 60};
+                    } else if (family != 6) {
+                        std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 1;
+                        std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).durationSecs = 60;
+                    }
+                    unsigned baudrate = family == 6 ? 115200 : 0;
+                    const bool configured = receiver->configure(baudrate, config);
+                    CHECK(io.failed);
+                    CHECK(!configured);
+                    CHECK(receiver->ioError() == error);
+                    if (fault != ScriptedIO::Operation::Baud) {
+                        CHECK(!receiver->ioErrorDetail().isEmpty());
+                    }
+                    const auto warnings = io.warnings;
+                    if (fault == ScriptedIO::Operation::Read && error != GPSProtocolError::Cancelled && family < 4) {
+                        CHECK(warnings == QStringList{QStringLiteral("Receiver read failed (status %1): %2")
+                                                          .arg(static_cast<int>(GPSReadStatus::Error))
+                                                          .arg(io.detail)});
+                    } else if (fault == ScriptedIO::Operation::Read && error != GPSProtocolError::Cancelled) {
+                        CHECK(!warnings.empty());
+                    } else if (family < 4) {
+                        CHECK(warnings.empty());
+                    }
+                    CHECK(receiver->receive(10) == 0);
+                    CHECK(receiver->ioError() == error);
+                    if (fault != ScriptedIO::Operation::Baud) {
+                        CHECK(!receiver->ioErrorDetail().isEmpty());
+                    }
+                    CHECK(io.warnings == warnings);
                 }
             }
         }

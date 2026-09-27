@@ -20,7 +20,6 @@ enum class NTRIPError
     HttpError,
     HeaderTooLarge,
     InvalidMountpoint,
-    NoLocation,
     InvalidConfig,
     Unknown
 };

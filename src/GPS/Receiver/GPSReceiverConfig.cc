@@ -2,15 +2,15 @@
 
 #include <cmath>
 #include <limits>
-#include <numbers>
+
+#include <QtCore/QCoreApplication>
 
 #include "GPSReceiverCapabilities.h"
 #include "GPSReceiverDescriptor.h"
 
 GPSReceiverCapabilities gpsReceiverCapabilities(GPSType type, GPSReceiverConfig::Role role)
 {
-    if (role != GPSReceiverConfig::Role::RTKBase && role != GPSReceiverConfig::Role::Position &&
-        role != GPSReceiverConfig::Role::Passive) {
+    if (role != GPSReceiverConfig::Role::RTKBase && role != GPSReceiverConfig::Role::Passive) {
         return {};
     }
 
@@ -18,30 +18,23 @@ GPSReceiverCapabilities gpsReceiverCapabilities(GPSType type, GPSReceiverConfig:
     if (!descriptor) {
         return {};
     }
-    auto capabilities = descriptor->capabilities;
-    capabilities.dynamicModel &= role == GPSReceiverConfig::Role::Position;
-    return capabilities;
+    return descriptor->capabilities;
 }
 
 GPSReceiverConfigError gpsValidateBaseStationConfig(const GPSBaseStationConfig& config)
 {
     constexpr double MAX_UNSIGNED_VALUE = (std::numeric_limits<uint32_t>::max)();
-    if (config.surveyMode != GPSBaseStationConfig::SurveyMode::AccuracyControlled &&
-        config.surveyMode != GPSBaseStationConfig::SurveyMode::ReceiverManaged) {
-        return GPSReceiverConfigError::UnsupportedBaseMode;
-    }
-    if (config.surveyMode == GPSBaseStationConfig::SurveyMode::ReceiverManaged) {
-        if (config.useFixedBase || config.receiverAveragingDurationSecs < 1 ||
-            config.receiverAveragingDurationSecs > 3600) {
+    if (const auto* averaging = std::get_if<GPSBaseStationConfig::ReceiverAveraging>(&config.mode)) {
+        if (averaging->maximumDurationSecs < 1 || averaging->maximumDurationSecs > 3600) {
             return GPSReceiverConfigError::InvalidReceiverAveraging;
         }
         return GPSReceiverConfigError::None;
     }
-    if (config.useFixedBase) {
-        const auto& position = config.fixedPosition;
+    if (const auto* fixed = std::get_if<GPSBaseStationConfig::Fixed>(&config.mode)) {
+        const auto& position = fixed->position;
         const double altitudeCm = static_cast<double>(position.altitudeMeters) * 100.0;
         // Match legacy float conversions before checking wire limits.
-        const double accuracyUnits = static_cast<double>((config.fixedBaseAccuracyMeters * 1000.0f) * 10.0f);
+        const double accuracyUnits = static_cast<double>((fixed->accuracyMeters * 1000.0f) * 10.0f);
         if (!std::isfinite(position.latitudeDegrees) || std::abs(position.latitudeDegrees) > 90.0 ||
             !std::isfinite(position.longitudeDegrees) || std::abs(position.longitudeDegrees) > 180.0 ||
             !std::isfinite(altitudeCm) || altitudeCm < (std::numeric_limits<int32_t>::min)() ||
@@ -50,9 +43,10 @@ GPSReceiverConfigError gpsValidateBaseStationConfig(const GPSBaseStationConfig& 
             return GPSReceiverConfigError::InvalidFixedBase;
         }
     } else {
-        const double accuracyUnits = config.surveyInAccMeters * 10000.0;
+        const auto& survey = std::get<GPSBaseStationConfig::SurveyIn>(config.mode);
+        const double accuracyUnits = survey.accuracyMeters * 10000.0;
         if (!std::isfinite(accuracyUnits) || accuracyUnits < 1 || accuracyUnits > MAX_UNSIGNED_VALUE ||
-            config.surveyInDurationSecs < 1 || config.surveyInDurationSecs > (std::numeric_limits<uint32_t>::max)()) {
+            survey.durationSecs < 1 || survey.durationSecs > (std::numeric_limits<uint32_t>::max)()) {
             return GPSReceiverConfigError::InvalidSurveyIn;
         }
     }
@@ -61,69 +55,86 @@ GPSReceiverConfigError gpsValidateBaseStationConfig(const GPSBaseStationConfig& 
 
 GPSReceiverConfigError gpsValidateReceiverConfig(GPSType type, const GPSReceiverConfig& config)
 {
-    if (config.role != GPSReceiverConfig::Role::RTKBase && config.role != GPSReceiverConfig::Role::Position &&
-        config.role != GPSReceiverConfig::Role::Passive) {
+    if (config.role != GPSReceiverConfig::Role::RTKBase && config.role != GPSReceiverConfig::Role::Passive) {
         return GPSReceiverConfigError::InvalidRole;
     }
     const GPSReceiverCapabilities capabilities = gpsReceiverCapabilities(type, config.role);
     if (!capabilities.recognized) {
         return GPSReceiverConfigError::UnknownReceiver;
     }
-    if ((config.role == GPSReceiverConfig::Role::Position && !capabilities.position) ||
-        (config.role == GPSReceiverConfig::Role::RTKBase && !capabilities.rtkBase) ||
+    if ((config.role == GPSReceiverConfig::Role::RTKBase && !capabilities.rtkBase) ||
         (config.role == GPSReceiverConfig::Role::Passive && !capabilities.passive)) {
         return GPSReceiverConfigError::UnsupportedRole;
     }
+    return gpsValidateReceiverPhysicalConfig(config, capabilities);
+}
+
+GPSReceiverConfigError gpsValidateReceiverPhysicalConfig(const GPSReceiverConfig& config,
+                                                         const GPSReceiverCapabilities& capabilities)
+{
     if (config.allowPersistentChanges && !capabilities.persistentConfiguration) {
         return GPSReceiverConfigError::UnsupportedPersistentConfiguration;
     }
     if (config.role == GPSReceiverConfig::Role::RTKBase) {
-        if (!config.base.useFixedBase &&
-            ((config.base.surveyMode == GPSBaseStationConfig::SurveyMode::ReceiverManaged &&
-              !capabilities.receiverAveraging) ||
-             (config.base.surveyMode == GPSBaseStationConfig::SurveyMode::AccuracyControlled &&
-              !capabilities.surveyIn))) {
+        if ((std::holds_alternative<GPSBaseStationConfig::ReceiverAveraging>(config.base.mode) &&
+             !capabilities.receiverAveraging) ||
+            (std::holds_alternative<GPSBaseStationConfig::SurveyIn>(config.base.mode) && !capabilities.surveyIn)) {
             return GPSReceiverConfigError::UnsupportedBaseMode;
+        }
+        if (config.base.compactObservations && !capabilities.compactObservations) {
+            return GPSReceiverConfigError::UnsupportedCompactObservations;
         }
         const GPSReceiverConfigError error = gpsValidateBaseStationConfig(config.base);
         if (error != GPSReceiverConfigError::None) {
             return error;
         }
     }
-    if (config.role == GPSReceiverConfig::Role::Passive &&
-        (config.base.useFixedBase || config.base.surveyInAccMeters != 0 || config.base.surveyInDurationSecs != 0 ||
-         config.base.surveyMode != GPSBaseStationConfig::SurveyMode::AccuracyControlled)) {
+    if (config.role == GPSReceiverConfig::Role::Passive && config.base != GPSBaseStationConfig{}) {
         return GPSReceiverConfigError::UnsupportedBaseMode;
     }
     if ((config.baudRate != 0 && (config.baudRate < 1200 || config.baudRate > 4000000)) ||
         (config.role == GPSReceiverConfig::Role::Passive && config.baudRate == 0)) {
         return GPSReceiverConfigError::InvalidBaudRate;
     }
-    if (config.constellationMask != 0) {
-        if (capabilities.constellationMask == 0) {
-            return GPSReceiverConfigError::UnsupportedConstellations;
-        }
-        if ((config.constellationMask & ~capabilities.constellationMask) != 0) {
-            return GPSReceiverConfigError::InvalidConstellations;
-        }
-    }
-    if (config.dynamicModel.has_value()) {
-        if (!capabilities.dynamicModel) {
-            return GPSReceiverConfigError::UnsupportedDynamicModel;
-        }
-        const int model = *config.dynamicModel;
-        if (model != 0 && (model < 2 || model > 8)) {
-            return GPSReceiverConfigError::InvalidDynamicModel;
-        }
-    }
-    if (config.headingOffsetRadians.has_value()) {
-        if (!capabilities.headingOffset) {
-            return GPSReceiverConfigError::UnsupportedHeadingOffset;
-        }
-        const float offset = *config.headingOffsetRadians;
-        if (!std::isfinite(offset) || std::abs(offset) > std::numbers::pi_v<float>) {
-            return GPSReceiverConfigError::InvalidHeadingOffset;
-        }
-    }
     return GPSReceiverConfigError::None;
+}
+
+QString gpsReceiverConfigErrorText(GPSReceiverConfigError error)
+{
+    switch (error) {
+        case GPSReceiverConfigError::None:
+            return {};
+        case GPSReceiverConfigError::UnknownReceiver:
+            return QCoreApplication::translate("GPSReceiverConfig", "Unsupported GPS receiver type");
+        case GPSReceiverConfigError::InvalidRole:
+            return QCoreApplication::translate("GPSReceiverConfig", "Unsupported GPS receiver role");
+        case GPSReceiverConfigError::UnsupportedRole:
+            return QCoreApplication::translate("GPSReceiverConfig",
+                                               "This receiver does not support the requested role");
+        case GPSReceiverConfigError::InvalidFixedBase:
+            return QCoreApplication::translate("GPSReceiverConfig", "Enter a valid fixed base position and accuracy");
+        case GPSReceiverConfigError::InvalidSurveyIn:
+            return QCoreApplication::translate("GPSReceiverConfig", "Enter a valid survey-in accuracy and duration");
+        case GPSReceiverConfigError::UnsupportedBaseMode:
+            return QCoreApplication::translate("GPSReceiverConfig",
+                                               "This receiver does not support the selected base mode");
+        case GPSReceiverConfigError::InvalidReceiverAveraging:
+            return QCoreApplication::translate("GPSReceiverConfig",
+                                               "Enter a receiver averaging duration between 1 and 3600 seconds");
+        case GPSReceiverConfigError::InvalidBaudRate:
+            return QCoreApplication::translate(
+                "GPSReceiverConfig", "Select a valid serial baud rate; passive input requires an explicit rate");
+        case GPSReceiverConfigError::UnsupportedPersistentConfiguration:
+            return QCoreApplication::translate("GPSReceiverConfig",
+                                               "This driver does not support persistent receiver configuration");
+        case GPSReceiverConfigError::UnsupportedCompactObservations:
+            return QCoreApplication::translate("GPSReceiverConfig",
+                                               "This receiver cannot send compact (MSM4) RTCM corrections");
+    }
+    return QCoreApplication::translate("GPSReceiverConfig", "Invalid GPS receiver configuration");
+}
+
+QString gpsReceiverConfigError(GPSType type, const GPSReceiverConfig& config)
+{
+    return gpsReceiverConfigErrorText(gpsValidateReceiverConfig(type, config));
 }

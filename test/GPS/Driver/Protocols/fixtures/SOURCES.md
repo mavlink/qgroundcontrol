@@ -97,7 +97,9 @@ UTC uses Python's timezone-independent Gregorian calendar conversion, including
 signed nanoseconds. No expected value is obtained by executing a QGC decoder.
 
 The native tests also assert consumer policy separately from scalar decoding:
-missing NMEA coordinates cannot form a GGA position, GNSS week/TOW is not UTC,
+missing NMEA coordinates cannot form a usable position, but a quality-zero GGA
+still emits explicit fix loss (including when its hemisphere fields are retained).
+GNSS week/TOW is not UTC,
 unavailable or out-of-week SBF time must not produce a position, and corrupted
 PVT must not turn remaining metadata into a fix. Fragmented delivery checks
 incomplete frames before completion; checksum corruption and NMEA checksum

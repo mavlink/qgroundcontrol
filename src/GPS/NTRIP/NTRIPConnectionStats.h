@@ -5,11 +5,10 @@
 #include <QtCore/QChronoTimer>
 #include <QtCore/QHash>
 #include <QtCore/QObject>
-#include <QtCore/QVariant>
-#include <QtCore/QVariantList>
 
 #include "DataRateTracker.h"
 #include "MonotonicClock.h"
+#include "RTCMMessageCount.h"
 
 class NTRIPConnectionStats : public QObject
 {
@@ -22,7 +21,7 @@ class NTRIPConnectionStats : public QObject
     /// Per-RTCM-message-ID counts since the current connection started.
     /// Returned as a list of [id, count] pairs sorted ascending by id so the
     /// QML Repeater can render deterministic chips without re-sorting.
-    Q_PROPERTY(QVariantList messageCountsById READ messageCountsById NOTIFY messageCountsByIdChanged)
+    Q_PROPERTY(QList<RTCMMessageCount> messageCountsById READ messageCountsById NOTIFY messageCountsByIdChanged)
 
 public:
     explicit NTRIPConnectionStats(QObject* parent = nullptr);
@@ -44,7 +43,7 @@ public:
 
     bool dataStale() const { return _dataStale; }
 
-    QVariantList messageCountsById() const;
+    QList<RTCMMessageCount> messageCountsById() const;
 
 signals:
     void bytesReceivedChanged();
@@ -57,6 +56,7 @@ signals:
 private:
     void _updateDataStale(qint64 nowMs);
 
+    /// UI indicator only, measured from the last receipt or stream start; routing freshness is separate.
     static constexpr std::chrono::milliseconds kStaleThreshold{5000};
 
     DataRateTracker _rateTracker;
@@ -66,7 +66,8 @@ private:
     bool _dataStale = false;
     bool _messageCountsDirty = false;
     qint64 _lastReceivedAtMs = 0;
+    qint64 _startedAtMs = 0;
     QChronoTimer _rateTimer;
-    // Per-ID counts. Using int for compatibility with QVariant in QML.
+    // Per-ID counts.
     QHash<int, quint32> _messageCountsById;
 };

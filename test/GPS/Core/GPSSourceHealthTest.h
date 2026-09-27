@@ -7,8 +7,6 @@ class GPSSourceHealthTest : public UnitTest
     Q_OBJECT
 
 private slots:
-    void _schedulerDestructionClearsAcceptedState();
-    void _foreignSchedulerRejected();
     void _invalidatedPositionTimeout();
     void _retainedMeasurementExpires_data();
     void _retainedMeasurementExpires();

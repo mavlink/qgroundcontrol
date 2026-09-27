@@ -73,17 +73,17 @@
         },
         {
             "name": "ntripGgaPositionSource",
-            "shortDesc": "GGA Position Source",
+            "shortDesc": "Position reported to the caster. Network (VRS) mountpoints need it; Auto selects the best available source.",
             "longDesc": "Position source for NMEA GGA sentences sent to the NTRIP caster. Auto selects the best available source.",
             "type": "uint8",
-            "enumStrings": "Auto,Vehicle GPS,Vehicle EKF,RTK Base Station,GCS Position",
+            "enumStrings": "Auto,Vehicle GPS,Vehicle EKF,RTK Receiver,GCS Position",
             "enumValues": "0,1,2,3,4",
             "default": 0,
             "label": "GGA Position Source"
         },
         {
             "name": "ntripGgaIntervalSec",
-            "shortDesc": "GGA Send Interval",
+            "shortDesc": "How often the position is reported to the caster.",
             "longDesc": "How often to send NMEA GGA sentences upstream to the NTRIP caster. VRS mountpoints typically require 1-10s; set lower for tighter VRS tracking, higher to reduce bandwidth.",
             "type": "uint32",
             "default": 5,
@@ -91,33 +91,6 @@
             "max": 60,
             "units": "s",
             "label": "GGA Send Interval"
-        },
-        {
-            "name": "ntripUdpForwardEnabled",
-            "shortDesc": "Forward received RTCM correction data to another application via UDP.",
-            "longDesc": "Forward received RTCM correction data via UDP to the specified address and port",
-            "type": "bool",
-            "default": false,
-            "label": "UDP forward RTCM data",
-            "keywords": "udp forward,relay,corrections forward"
-        },
-        {
-            "name": "ntripUdpTargetAddress",
-            "shortDesc": "IP address to forward RTCM correction data to.",
-            "longDesc": "IP address to forward RTCM data to via UDP",
-            "type": "string",
-            "default": "",
-            "label": "UDP target address",
-            "keywords": "udp forward,relay"
-        },
-        {
-            "name": "ntripUdpTargetPort",
-            "shortDesc": "Port number for forwarding RTCM correction data via UDP.",
-            "longDesc": "Port to forward RTCM data to via UDP",
-            "type": "uint16",
-            "default": 0,
-            "label": "UDP target port",
-            "keywords": "udp forward,relay"
         }
     ]
 }

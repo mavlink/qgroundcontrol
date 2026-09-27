@@ -6,8 +6,9 @@
 #include "NMEAUtils.h"
 #include "NTRIPTransport.h"
 #include "QGCLoggingCategory.h"
+#include "QtRuntimeScheduler.h"
 
-QGC_LOGGING_CATEGORY(NTRIPGgaProviderLog, "GPS.NTRIPGgaProvider")
+QGC_LOGGING_CATEGORY(NTRIPGgaProviderLog, "GPS.NTRIP.NTRIPGgaProvider")
 
 namespace {
 QString sourceName(NTRIPGgaProvider::PositionSource source)
@@ -19,27 +20,59 @@ QString sourceName(NTRIPGgaProvider::PositionSource source)
             return QStringLiteral("VehicleGPS");
         case NTRIPGgaProvider::PositionSource::VehicleEKF:
             return QStringLiteral("VehicleEKF");
-        case NTRIPGgaProvider::PositionSource::RTKBase:
-            return QStringLiteral("RTKBase");
+        case NTRIPGgaProvider::PositionSource::RTKReceiver:
+            return QStringLiteral("RTKReceiver");
         case NTRIPGgaProvider::PositionSource::GCSPosition:
             return QStringLiteral("GCSPosition");
     }
+
     return QStringLiteral("Unknown");
+}
+
+unsigned ggaQuality(GPSObservation::FixQuality quality)
+{
+    using Quality = GPSObservation::FixQuality;
+    switch (quality) {
+        case Quality::NoFix:
+            return NMEA::GgaQuality::INVALID;
+        case Quality::Differential:
+            return NMEA::GgaQuality::DIFFERENTIAL;
+        case Quality::RTKFloat:
+            return NMEA::GgaQuality::RTK_FLOAT;
+        case Quality::RTKFixed:
+            return NMEA::GgaQuality::RTK_FIXED;
+        case Quality::Extrapolated:
+        case Quality::Unknown:
+            return NMEA::GgaQuality::ESTIMATED;
+        case Quality::Fix2D:
+        case Quality::Fix3D:
+            return NMEA::GgaQuality::GPS;
+    }
+    return NMEA::GgaQuality::INVALID;
 }
 }  // namespace
 
-NTRIPGgaProvider::NTRIPGgaProvider(QObject* parent) : QObject(parent)
+QDebug operator<<(QDebug debug, const NTRIPGgaProvider::Configuration& configuration)
 {
-    _timer.setInterval(_normalInterval);
-    connect(&_timer, &QChronoTimer::timeout, this, &NTRIPGgaProvider::_sendGGA);
+    const QDebugStateSaver saver(debug);
+    debug.nospace().noquote() << "NTRIPGgaProvider::Configuration(source=" << configuration.source
+                              << ", intervalMs=" << configuration.interval.count() << ')';
+    return debug;
 }
+
+NTRIPGgaProvider::NTRIPGgaProvider(QObject* parent, RuntimeScheduler* scheduler)
+    : QObject(parent)
+    , _scheduler(scheduler ? scheduler : new QtRuntimeScheduler(this))
+    , _ggaTask(_scheduler, this)
+{}
 
 void NTRIPGgaProvider::configure(const Configuration& configuration)
 {
     _cachedSource = configuration.source;
+    const auto previousInterval = _normalInterval;
     _normalInterval = configuration.interval.count() > 0 ? configuration.interval : kDefaultInterval;
-    if (_retryPhase == RetryPhase::Normal && _timer.interval() != _normalInterval) {
-        _timer.setInterval(_normalInterval);
+    if (_retryPhase == RetryPhase::Normal && previousInterval != _normalInterval && _transport) {
+        _scheduleNextGGA();
     }
 }
 
@@ -50,32 +83,56 @@ void NTRIPGgaProvider::setPositionProvider(PositionSource source, PositionProvid
 
 void NTRIPGgaProvider::start(NTRIPTransport* transport)
 {
-    const QPointer<NTRIPGgaProvider> guard(this);
-    const quint64 generation = ++_generation;
+    const auto session = _generation.advance(this);
     _transport = transport;
     _fastRetryCount = 0;
     _selectionDiagnostic.clear();
     _clearSource();
-    if (!guard || _generation != generation || !_transport) {
+    if (!session.isCurrent() || !_transport) {
         return;
     }
     _setRetryPhase(RetryPhase::Fast);
-    _timer.start();
     _sendGGA();
+    if (session.isCurrent() && _transport == transport) {
+        _scheduleNextGGA();
+    }
 }
 
 void NTRIPGgaProvider::stop()
 {
-    ++_generation;
-    _timer.stop();
+    _generation.invalidate();
+    _ggaTask.cancel();
     _transport = nullptr;
     _clearSource();
+}
+
+void NTRIPGgaProvider::_scheduleNextGGA()
+{
+    _ggaTask.cancel();
+    const auto transport = _transport;
+    const auto session = _generation.current(this);
+    if (!transport) {
+        return;
+    }
+    _ggaTask.schedule(_currentInterval(), [this, transport, session]() {
+        if (!session.isCurrent() || !transport || _transport != transport) {
+            return;
+        }
+        _sendGGA();
+        if (session.isCurrent() && transport && _transport == transport) {
+            _scheduleNextGGA();
+        }
+    });
+}
+
+std::chrono::milliseconds NTRIPGgaProvider::_currentInterval() const
+{
+    return _retryPhase == RetryPhase::Fast ? kFastRetryInterval : _normalInterval;
 }
 
 void NTRIPGgaProvider::_setRetryPhase(RetryPhase phase)
 {
     _retryPhase = phase;
-    _timer.setInterval(phase == RetryPhase::Fast ? kFastRetryInterval : _normalInterval);
 }
 
 void NTRIPGgaProvider::_clearSource()
@@ -92,11 +149,9 @@ void NTRIPGgaProvider::_sendGGA()
     if (!_transport) {
         return;
     }
-    const QPointer<NTRIPGgaProvider> guard(this);
     const auto transport = _transport;
-    const quint64 generation = _generation;
-    const auto current = [this, guard, transport, generation]() {
-        return guard && transport && _transport == transport && _generation == generation;
+    const auto current = [this, transport, session = _generation.current(this)]() {
+        return session.isCurrent() && transport && _transport == transport;
     };
     const auto requested = _cachedSource;
     const auto selection = _getBestPosition(requested);
@@ -109,6 +164,10 @@ void NTRIPGgaProvider::_sendGGA()
     }
     const auto& position = selection.position;
     if (!position.isValid()) {
+        _clearSource();
+        if (!current()) {
+            return;
+        }
         if (++_fastRetryCount >= 5 && _retryPhase == RetryPhase::Fast) {
             _setRetryPhase(RetryPhase::Normal);
         }
@@ -120,14 +179,17 @@ void NTRIPGgaProvider::_sendGGA()
         _setRetryPhase(RetryPhase::Normal);
     }
 
-    // Preserve nominal fix metadata; position providers do not supply geoid separation.
     const NMEA::GGA fix{
         .latitude = position.coordinate.latitude(),
         .longitude = position.coordinate.longitude(),
         .altitude = position.coordinate.altitude(),
-        .hdop = 1.0,
-        .quality = NMEA::GgaQuality::GPS,
-        .satellitesUsed = 12,
+        .hdop = position.horizontalDop && qIsFinite(*position.horizontalDop) && *position.horizontalDop >= 0
+                    ? *position.horizontalDop
+                    : qQNaN(),
+        .quality = ggaQuality(position.fixQuality),
+        .satellitesUsed = position.satellitesUsed && *position.satellitesUsed >= 0
+                              ? std::optional<unsigned>(static_cast<unsigned>(*position.satellitesUsed))
+                              : std::nullopt,
     };
     const QByteArray gga = NMEAUtils::makeGGA(fix, QDateTime::currentDateTimeUtc().time());
     transport->sendNMEA(gga);
@@ -151,16 +213,15 @@ NTRIPGgaProvider::SelectedPosition NTRIPGgaProvider::_getBestPosition(PositionSo
     static constexpr PositionSource kPriority[] = {
         PositionSource::VehicleGPS,
         PositionSource::VehicleEKF,
-        PositionSource::RTKBase,
+        PositionSource::RTKReceiver,
         PositionSource::GCSPosition,
     };
-    const QPointer<const NTRIPGgaProvider> guard(this);
-    const quint64 generation = _generation;
+    const auto session = _generation.current(this);
     for (PositionSource source : kPriority) {
         const auto provider = providers.value(source);
         if (provider) {
             const auto result = provider();
-            if (!guard || _generation != generation) {
+            if (!session.isCurrent()) {
                 return {};
             }
             if (result.isValid()) {

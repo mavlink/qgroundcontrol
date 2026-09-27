@@ -1,18 +1,17 @@
 #include <algorithm>
+#include <cmath>
+#include <limits>
 #include <memory>
-#include <type_traits>
+#include <numbers>
 
 #include <QtTest/QTest>
 
+#include "GPSDriverReports.h"
 #include "GPSObservation.h"
-#include "GPSSatelliteStore.h"
 #include "GPSSourceHealth.h"
-#include "GPSSurveyInStatus.h"
 #include "ManualScheduler.h"
 #include "MonotonicClock.h"
 #include "UnitTest.h"
-
-static_assert(std::is_same_v<decltype(GPSObservation::altitudeDatum), decltype(GPSSurveyInStatus::altitudeDatum)>);
 
 class GPSAcceptedStateTest : public UnitTest
 {
@@ -21,8 +20,9 @@ class GPSAcceptedStateTest : public UnitTest
 private slots:
     void _consumerPolicies_data();
     void _consumerPolicies();
+    void _remoteIdDatum_data();
+    void _remoteIdDatum();
     void _ggaDoesNotRequireAccuracy();
-    void _independentSatelliteExpiry();
     void _freshnessReconfiguration_data();
     void _freshnessReconfiguration();
     void _futureReceiptRemainsRejected_data();
@@ -30,10 +30,8 @@ private slots:
     void _maximumAge_data();
     void _maximumAge();
     void _receiptDeadlineBoundaries();
-    void _satelliteNormalization_data();
-    void _satelliteNormalization();
-    void _surveyStatusRetainsUnitsAndProvenance();
-    void _schedulerDestructionClearsAcceptedState();
+    void _surveyReportRetainsUnits();
+    void _navigationObservation();
 };
 
 void GPSAcceptedStateTest::_receiptDeadlineBoundaries()
@@ -138,37 +136,63 @@ void GPSAcceptedStateTest::_ggaDoesNotRequireAccuracy()
     QVERIFY(!health.acceptedObservation(GPSObservation::PositionUse::Gga));
 }
 
-void GPSAcceptedStateTest::_independentSatelliteExpiry()
+void GPSAcceptedStateTest::_remoteIdDatum_data()
 {
-    ManualScheduler scheduler;
-    GPSSourceHealth health(nullptr, &scheduler);
+    QTest::addColumn<GPSAltitudeDatum>("datum");
+    QTest::addColumn<double>("altitude");
+    QTest::addColumn<double>("ellipsoid");
+    QTest::addColumn<double>("expected");
+    QTest::newRow("unknown") << GPSAltitudeDatum::Unknown << 500.0 << qQNaN() << qQNaN();
+    QTest::newRow("msl-without-geoid") << GPSAltitudeDatum::MeanSeaLevel << 500.0 << qQNaN() << qQNaN();
+    QTest::newRow("msl-with-ellipsoid") << GPSAltitudeDatum::MeanSeaLevel << 500.0 << 550.0 << 550.0;
+    QTest::newRow("ellipsoid-coordinate") << GPSAltitudeDatum::Ellipsoid << 550.0 << qQNaN() << 550.0;
+    QTest::newRow("ellipsoid-only") << GPSAltitudeDatum::MeanSeaLevel << qQNaN() << 550.0 << 550.0;
+    QTest::newRow("nonfinite-ellipsoid") << GPSAltitudeDatum::Ellipsoid << qInf() << qQNaN() << qQNaN();
+}
+
+void GPSAcceptedStateTest::_remoteIdDatum()
+{
+    QFETCH(GPSAltitudeDatum, datum);
+    QFETCH(double, altitude);
+    QFETCH(double, ellipsoid);
+    QFETCH(double, expected);
     GPSObservation observation;
-    observation.monotonicTimestampUs = scheduler.nowUs();
-    observation.position = QGeoPositionInfo(QGeoCoordinate(47, 8), QDateTime::currentDateTimeUtc());
-    observation.position.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 1.0);
-    observation.satellitesUsed = 12;
-    health.updateObservation(observation);
-    QCOMPARE(health.acceptedObservation()->satellitesUsed, std::optional<int>(12));
-    health.clearSatellites();
-    QVERIFY(health.acceptedObservation());
-    QVERIFY(!health.acceptedObservation()->satellitesUsed);
-    QCOMPARE(health.observation().satellitesUsed, std::optional<int>(12));
+    observation.position = QGeoPositionInfo(QGeoCoordinate(47, 8, altitude), QDateTime::currentDateTimeUtc());
+    observation.position.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 1);
+    observation.position.setAttribute(QGeoPositionInfo::VerticalAccuracy, 1);
+    observation.altitudeDatum = datum;
+    if (qIsFinite(ellipsoid)) {
+        observation.altitudeEllipsoidMeters = ellipsoid;
+    }
+    const auto projected = observation.projected(GPSObservation::PositionUse::RemoteID);
+    QVERIFY(projected);
+    QCOMPARE(projected->position.coordinate().latitude(), 47);
+    QCOMPARE(projected->position.coordinate().longitude(), 8);
+    if (qIsFinite(expected)) {
+        QCOMPARE(projected->position.coordinate().altitude(), expected);
+        QCOMPARE(projected->altitudeDatum, GPSAltitudeDatum::Ellipsoid);
+    } else {
+        QCOMPARE(projected->position.coordinate().type(), QGeoCoordinate::Coordinate2D);
+        QVERIFY(!projected->position.hasAttribute(QGeoPositionInfo::VerticalAccuracy));
+        QCOMPARE(projected->altitudeDatum, GPSAltitudeDatum::Unknown);
+    }
+    QCOMPARE(observation.altitudeDatum, datum);
 }
 
 void GPSAcceptedStateTest::_freshnessReconfiguration_data()
 {
-    QTest::addColumn<bool>("clearCount");
+    QTest::addColumn<bool>("invalidate");
     QTest::addColumn<int>("timeoutMs");
-    QTest::newRow("cleared-same") << true << 5000;
-    QTest::newRow("cleared-shorter") << true << 2000;
-    QTest::newRow("cleared-longer") << true << 10000;
-    QTest::newRow("invalid-position-shorter") << false << 2000;
-    QTest::newRow("invalid-position-longer") << false << 10000;
+    QTest::newRow("same") << false << 5000;
+    QTest::newRow("shorter") << false << 2000;
+    QTest::newRow("longer") << false << 10000;
+    QTest::newRow("invalid-position-shorter") << true << 2000;
+    QTest::newRow("invalid-position-longer") << true << 10000;
 }
 
 void GPSAcceptedStateTest::_freshnessReconfiguration()
 {
-    QFETCH(bool, clearCount);
+    QFETCH(bool, invalidate);
     QFETCH(int, timeoutMs);
     ManualScheduler scheduler;
     GPSSourceHealth health(nullptr, &scheduler);
@@ -178,22 +202,22 @@ void GPSAcceptedStateTest::_freshnessReconfiguration()
     observation.position.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 1.0);
     observation.satellitesUsed = 12;
     health.updateObservation(observation);
-    if (clearCount) {
-        health.clearSatellites();
-    } else {
+    if (invalidate) {
         health.invalidatePosition();
     }
     QVERIFY(scheduler.advanceBy(std::chrono::seconds(1)));
     health.setFreshnessTimeoutMs(timeoutMs);
-    QCOMPARE(health.satellitesInUseCount(), clearCount ? -1 : 12);
-    QCOMPARE(health.observation().satellitesUsed, std::optional<int>(12));
+    QCOMPARE(bool(health.acceptedObservation()), !invalidate);
+    if (!invalidate) {
+        QCOMPARE(health.acceptedObservation()->satellitesUsed, std::optional<int>(12));
+    }
     QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(timeoutMs - 1001)));
-    QCOMPARE(health.satellitesInUseCount(), clearCount ? -1 : 12);
+    QCOMPARE(bool(health.acceptedObservation()), !invalidate);
     QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(1)));
-    QCOMPARE(health.satellitesInUseCount(), -1);
     QVERIFY(!health.acceptedObservation());
+    QCOMPARE(health.state(), GPSSourceHealth::State::Stale);
     health.setFreshnessTimeoutMs(timeoutMs * 2);
-    QCOMPARE(health.satellitesInUseCount(), -1);
+    QCOMPARE(health.observation().satellitesUsed, std::optional<int>(12));
 }
 
 void GPSAcceptedStateTest::_futureReceiptRemainsRejected_data()
@@ -228,7 +252,6 @@ void GPSAcceptedStateTest::_futureReceiptRemainsRejected()
         health.setFreshnessTimeoutMs(timeoutMs);
         QVERIFY(!health.acceptedObservation(use));
         QCOMPARE(health.state(), GPSSourceHealth::State::Invalid);
-        QCOMPARE(health.satellitesInUseCount(), -1);
     }
     observation.monotonicTimestampUs = scheduler.nowUs();
     health.updateObservation(observation);
@@ -275,124 +298,70 @@ void GPSAcceptedStateTest::_maximumAge()
     QVERIFY(health.acceptedObservation(Use::RemoteID, 5000ms));
 }
 
-void GPSAcceptedStateTest::_satelliteNormalization_data()
+void GPSAcceptedStateTest::_surveyReportRetainsUnits()
 {
-    QTest::addColumn<bool>("empty");
-    QTest::addColumn<bool>("unknownUsage");
-    QTest::newRow("empty") << true << false;
-    QTest::newRow("known") << false << false;
-    QTest::newRow("partly-unknown") << false << true;
-}
-
-void GPSAcceptedStateTest::_satelliteNormalization()
-{
-    QFETCH(bool, empty);
-    QFETCH(bool, unknownUsage);
-    ManualScheduler scheduler;
-    GPSSatelliteStore native(nullptr, 1000, &scheduler);
-    GPSSatelliteStore normalized(nullptr, 1000, &scheduler);
-    native.beginSession(QStringLiteral("receiver"), 1);
-    normalized.beginSession(QStringLiteral("receiver"), 1);
-    GPSSatelliteObservation report;
-    report.sessionId = 1;
-    report.monotonicTimestampUs = scheduler.nowUs();
-    using Constellation = GPSConstellation;
-    if (!empty) {
-        GPSSatellite gps;
-        gps.id = 1;
-        gps.constellation = Constellation::GPS;
-        gps.used = false;
-        GPSSatellite galileo;
-        galileo.id = 2;
-        galileo.constellation = Constellation::Galileo;
-        galileo.used = unknownUsage ? std::nullopt : std::optional<bool>(true);
-        report.satellites = {gps, galileo};
-    }
-    native.updateObservation(report);
-    const auto receipt = report.monotonicTimestampUs;
-    if (empty) {
-        report.provenance = {{Constellation::Unknown, receipt, receipt, 0}};
-    } else {
-        report.provenance = {
-            {Constellation::GPS, receipt, receipt, 0},
-            {Constellation::Galileo, receipt, unknownUsage ? 0 : receipt,
-             unknownUsage ? std::nullopt : std::optional<int>(1)},
-        };
-    }
-    normalized.updateObservation(report);
-    const auto actual = native.observation();
-    const auto expected = normalized.observation();
-    QCOMPARE(actual.satellitesInViewCount(), expected.satellitesInViewCount());
-    QCOMPARE(actual.satellitesInUseCount(), expected.satellitesInUseCount());
-    QCOMPARE(actual.satellites.size(), expected.satellites.size());
-    QCOMPARE(actual.provenance.size(), expected.provenance.size());
-    for (qsizetype index = 0; index < actual.satellites.size(); ++index) {
-        QCOMPARE(actual.satellites[index].id, expected.satellites[index].id);
-        QCOMPARE(actual.satellites[index].used, expected.satellites[index].used);
-    }
-    for (qsizetype index = 0; index < actual.provenance.size(); ++index) {
-        QCOMPARE(actual.provenance[index].inViewTimestampUs, expected.provenance[index].inViewTimestampUs);
-        QCOMPARE(actual.provenance[index].inUseTimestampUs, expected.provenance[index].inUseTimestampUs);
-        QCOMPARE(actual.provenance[index].satellitesUsed, expected.provenance[index].satellitesUsed);
-        QCOMPARE(actual.provenance[index].usedSatelliteIds, expected.provenance[index].usedSatelliteIds);
-    }
-    QVERIFY(scheduler.advanceBy(std::chrono::seconds(1)));
-    QCOMPARE(native.observation().satellitesInViewCount(), -1);
-    QCOMPARE(normalized.observation().satellitesInUseCount(), -1);
-}
-
-void GPSAcceptedStateTest::_surveyStatusRetainsUnitsAndProvenance()
-{
-    GPSSurveyInStatus status;
-    QVERIFY(!status.coordinate.isValid());
+    GPSSurveyReport status;
+    QVERIFY(std::isnan(status.position.latitudeDegrees));
     QVERIFY(!status.meanAccuracyMeters);
-    QCOMPARE(status.altitudeDatum, GPSAltitudeDatum::Unknown);
 
-    status.coordinate = QGeoCoordinate(47, 8);
-    status.altitudeEllipsoidMeters = 500;
+    status.position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500};
     status.meanAccuracyMeters = 4000000.001;
     status.duration = std::chrono::seconds(4294967295LL);
-    status.altitudeDatum = GPSAltitudeDatum::Ellipsoid;
-    status.sessionId = 42;
-    status.monotonicTimestampUs = 100;
-    const auto restored = QVariant::fromValue(status).value<GPSSurveyInStatus>();
-    QCOMPARE(restored.coordinate, QGeoCoordinate(47, 8));
-    QCOMPARE(restored.altitudeEllipsoidMeters, 500.0f);
+    const auto restored = QVariant::fromValue(status).value<GPSSurveyReport>();
+    QCOMPARE(restored.position.latitudeDegrees, 47.0);
+    QCOMPARE(restored.position.longitudeDegrees, 8.0);
+    QCOMPARE(restored.position.altitudeMeters, 500.0f);
     QCOMPARE(restored.meanAccuracyMeters.value(), 4000000.001);
     QCOMPARE(restored.duration.count(), 4294967295LL);
-    QCOMPARE(restored.altitudeDatum, GPSAltitudeDatum::Ellipsoid);
-    QCOMPARE(restored.sessionId, quint64{42});
-    QCOMPARE(restored.monotonicTimestampUs, quint64{100});
-}
-
-void GPSAcceptedStateTest::_schedulerDestructionClearsAcceptedState()
-{
-    auto scheduler = std::make_unique<ManualScheduler>();
-    GPSSatelliteStore satellites(nullptr, 5000, scheduler.get());
-    GPSSourceHealth health(nullptr, scheduler.get());
-    satellites.beginSession(QStringLiteral("receiver"), 1);
-    GPSSatelliteObservation report;
-    report.sessionId = 1;
-    report.monotonicTimestampUs = scheduler->nowUs();
-    report.satellites = {GPSSatellite{}};
-    satellites.updateObservation(report);
-    GPSObservation fix;
-    fix.monotonicTimestampUs = scheduler->nowUs();
-    fix.position = QGeoPositionInfo(QGeoCoordinate(47, 8, 500), QDateTime::currentDateTimeUtc());
-    fix.position.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 1.0);
-    health.updateObservation(fix);
-    QCOMPARE(satellites.observation().satellites.size(), 1);
-    QVERIFY(health.usable());
-    scheduler.reset();
-    QVERIFY(satellites.observation().satellites.isEmpty());
-    QVERIFY(!health.usable());
-    satellites.updateObservation(report);
-    satellites.clear();
-    satellites.reset();
-    satellites.beginSession(QStringLiteral("replacement"), 2);
-    QVERIFY(satellites.observation().satellites.isEmpty());
 }
 
 UT_REGISTER_TEST(GPSAcceptedStateTest, TestLabel::Unit)
+
+void GPSAcceptedStateTest::_navigationObservation()
+{
+    GPSNavigationValues navigation;
+    navigation.fixType = GPSFixQuality::RTKFloat;
+    navigation.utcTimeUs = 1'700'000'000'123'000ULL;
+    navigation.latitudeDegrees = 47.5;
+    navigation.longitudeDegrees = 8.25;
+    navigation.altitudeMslMeters = 450;
+    navigation.altitudeEllipsoidMeters = 497.5;
+    navigation.horizontalAccuracyMeters = 0.3f;
+    navigation.verticalAccuracyMeters = 0.6f;
+    navigation.horizontalDop = 0.8f;
+    navigation.speedMetersPerSecond = 2;
+    navigation.courseRadians = -std::numbers::pi_v<float> / 2;
+    navigation.satellitesUsed = 18;
+    const auto observation = GPSObservation::fromNavigation(navigation, 1234);
+    QVERIFY(observation.usable());
+    QCOMPARE(observation.monotonicTimestampUs, quint64(1234));
+    QCOMPARE(observation.fixQuality, GPSFixQuality::RTKFloat);
+    QCOMPARE(observation.position.timestamp().toMSecsSinceEpoch(), qint64(1'700'000'000'123));
+    QCOMPARE(observation.coordinate(), QGeoCoordinate(47.5, 8.25, 450));
+    QCOMPARE(observation.altitudeDatum, GPSAltitudeDatum::MeanSeaLevel);
+    QCOMPARE(observation.altitudeEllipsoidMeters, std::optional<double>(497.5));
+    QCOMPARE(observation.position.attribute(QGeoPositionInfo::HorizontalAccuracy), qreal(0.3f));
+    QCOMPARE(observation.horizontalDop, std::optional<double>(0.8f));
+    QCOMPARE(observation.satellitesUsed, std::optional<int>(18));
+    QVERIFY(qAbs(observation.heading() - 270) < 1e-3);
+    QVERIFY(!observation.verticalDop);
+
+    // NMEA receivers without GST report only DOP.
+    navigation.fixType = GPSFixQuality::Differential;
+    navigation.horizontalAccuracyMeters = std::numeric_limits<float>::quiet_NaN();
+    navigation.horizontalDop = 0.5f;
+    const auto dopOnly = GPSObservation::fromNavigation(navigation, 1236);
+    QVERIFY(dopOnly.usable());
+    QCOMPARE(dopOnly.position.attribute(QGeoPositionInfo::HorizontalAccuracy), GPSObservation::accuracyFromDop(0.5f));
+
+    navigation.fixType = GPSFixQuality::NoFix;
+    navigation.altitudeMslMeters = std::numeric_limits<double>::quiet_NaN();
+    navigation.utcTimeUs = 0;
+    const auto lost = GPSObservation::fromNavigation(navigation, 1235);
+    QVERIFY(!lost.hasNavigationSolution());
+    QCOMPARE(lost.altitudeDatum, GPSAltitudeDatum::Unknown);
+    QVERIFY(lost.position.timestamp().isValid());
+    QVERIFY(!GPSObservation::fromNavigation(GPSNavigationValues{}, 1).position.isValid());
+}
 
 #include "GPSAcceptedStateTest.moc"

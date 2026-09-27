@@ -1,4 +1,5 @@
 #include "QGCCorePlugin.h"
+
 #include "AppSettings.h"
 #ifdef Q_OS_ANDROID
 #include "Viewer3DSettings.h"
@@ -6,31 +7,31 @@
 #include "AndroidSerial.h"
 #endif
 #endif
+#include "BlankPlanCreator.h"
+#include "ComplexMissionItem.h"
+#include "CorridorScanComplexItem.h"
+#include "CorridorScanPlanCreator.h"
 #include "FactMetaData.h"
 #include "FirmwarePluginManager.h"
-#include "QGCMAVLink.h"
+#include "FixedWingLandingComplexItem.h"
 #include "HorizontalFactValueGrid.h"
 #include "InstrumentValueData.h"
 #include "JoystickManager.h"
+#include "PlanMasterController.h"
 #include "QGCLoggingCategory.h"
+#include "QGCMAVLink.h"
 #include "QGCOptions.h"
 #include "QmlComponentInfo.h"
 #include "QmlObjectListModel.h"
 #include "SettingsManager.h"
-#include "VideoReceiver.h"
-#include "VideoBackend.h"
-#include "SurveyPlanCreator.h"
-#include "CorridorScanPlanCreator.h"
+#include "StructureScanComplexItem.h"
 #include "StructureScanPlanCreator.h"
 #include "SurveyComplexItem.h"
-#include "CorridorScanComplexItem.h"
-#include "StructureScanComplexItem.h"
-#include "FixedWingLandingComplexItem.h"
+#include "SurveyPlanCreator.h"
 #include "VTOLLandingComplexItem.h"
 #include "Vehicle.h"
-#include "BlankPlanCreator.h"
-#include "ComplexMissionItem.h"
-#include "PlanMasterController.h"
+#include "VideoBackend.h"
+#include "VideoReceiver.h"
 
 #ifdef QGC_CUSTOM_BUILD
 #include CUSTOMHEADER
@@ -48,7 +49,7 @@ QGC_LOGGING_CATEGORY(QGCCorePluginLog, "API.QGCCorePlugin");
 Q_APPLICATION_STATIC(QGCCorePlugin, _qgcCorePluginInstance);
 #endif
 
-QGCCorePlugin::QGCCorePlugin(QObject *parent)
+QGCCorePlugin::QGCCorePlugin(QObject* parent)
     : QObject(parent)
     , _defaultOptions(new QGCOptions(this))
     , _emptyCustomMapItems(new QmlObjectListModel(this))
@@ -61,7 +62,7 @@ QGCCorePlugin::~QGCCorePlugin()
     qCDebug(QGCCorePluginLog) << this;
 }
 
-QGCCorePlugin *QGCCorePlugin::instance()
+QGCCorePlugin* QGCCorePlugin::instance()
 {
 #ifndef QGC_CUSTOM_BUILD
     return _qgcCorePluginInstance();
@@ -70,7 +71,7 @@ QGCCorePlugin *QGCCorePlugin::instance()
 #endif
 }
 
-const QVariantList &QGCCorePlugin::analyzePages()
+const QVariantList& QGCCorePlugin::analyzePages()
 {
     // Log Viewer is excluded on mobile (Android/iOS) because parsing large log files
     // (e.g. 900 MB ULog files with 1000+ fields) exhausts the mobile heap, causing
@@ -88,43 +89,45 @@ const QVariantList &QGCCorePlugin::analyzePages()
         QVariant::fromValue(new QmlComponentInfo(
             tr("Onboard Logs"),
             QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/OnboardLogs/OnboardLogPage.qml")),
-            QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/OnboardLogIcon.svg")),
-            nullptr, true /* requiresVehicle */)),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/OnboardLogIcon.svg")), nullptr,
+            true /* requiresVehicle */)),
         QVariant::fromValue(new QmlComponentInfo(
             tr("GeoTag Images"),
             QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/GeoTag/GeoTagPage.qml")),
             QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/GeoTag/GeoTagIcon.svg")))),
         QVariant::fromValue(new QmlComponentInfo(
             tr("MAVLink Console"),
-            QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/MAVLinkConsole/MAVLinkConsolePage.qml")),
-            QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/MAVLinkConsoleIcon.svg")),
-            nullptr, true /* requiresVehicle */)),
+            QUrl::fromUserInput(
+                QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/MAVLinkConsole/MAVLinkConsolePage.qml")),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/MAVLinkConsoleIcon.svg")), nullptr,
+            true /* requiresVehicle */)),
         QVariant::fromValue(new QmlComponentInfo(
             tr("MAVLink Inspector"),
-            QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/MAVLinkInspector/MAVLinkInspectorPage.qml")),
-            QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/MAVLinkInspector.svg")),
-            nullptr, true /* requiresVehicle */)),
+            QUrl::fromUserInput(
+                QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/MAVLinkInspector/MAVLinkInspectorPage.qml")),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/MAVLinkInspector.svg")), nullptr,
+            true /* requiresVehicle */)),
         QVariant::fromValue(new QmlComponentInfo(
             tr("Vibration"),
             QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/Vibration/VibrationPage.qml")),
-            QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/VibrationPageIcon")),
-            nullptr, true /* requiresVehicle */)),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/VibrationPageIcon")), nullptr,
+            true /* requiresVehicle */)),
     };
 
     return analyzeList;
 }
 
-QGCOptions *QGCCorePlugin::options()
+QGCOptions* QGCCorePlugin::options()
 {
     return _defaultOptions;
 }
 
-const QmlObjectListModel *QGCCorePlugin::customMapItems()
+const QmlObjectListModel* QGCCorePlugin::customMapItems()
 {
     return _emptyCustomMapItems;
 }
 
-void QGCCorePlugin::adjustSettingMetaData(const QString &settingsGroup, FactMetaData &metaData, bool &userVisible)
+void QGCCorePlugin::adjustSettingMetaData(const QString& settingsGroup, FactMetaData& metaData, bool& userVisible)
 {
 #ifdef Q_OS_ANDROID
     // 3D view rendering is too flaky on Android GPUs/drivers; force the
@@ -167,10 +170,11 @@ void QGCCorePlugin::adjustSettingMetaData(const QString &settingsGroup, FactMeta
 
 QString QGCCorePlugin::showAdvancedUIMessage() const
 {
-    return tr("WARNING: You are about to enter Advanced Mode. "
-              "If used incorrectly, this may cause your vehicle to malfunction thus voiding your warranty. "
-              "You should do so only if instructed by customer support. "
-              "Are you sure you want to enable Advanced Mode?");
+    return tr(
+        "WARNING: You are about to enter Advanced Mode. "
+        "If used incorrectly, this may cause your vehicle to malfunction thus voiding your warranty. "
+        "You should do so only if instructed by customer support. "
+        "Are you sure you want to enable Advanced Mode?");
 }
 
 bool QGCCorePlugin::showInitialSetupVehiclePreferences() const
@@ -192,7 +196,9 @@ void QGCCorePlugin::factValueGridCreateDefaultSettings(FactValueGrid* factValueG
 #endif
 
     if (factValueGrid->specificVehicleForCard()) {
-        bool includeFWValues = factValueGrid->vehicleClass() == QGCMAVLink::VehicleClassFixedWing || factValueGrid->vehicleClass() == QGCMAVLink::VehicleClassVTOL || factValueGrid->vehicleClass() == QGCMAVLink::VehicleClassAirship;
+        bool includeFWValues = factValueGrid->vehicleClass() == QGCMAVLink::VehicleClassFixedWing ||
+                               factValueGrid->vehicleClass() == QGCMAVLink::VehicleClassVTOL ||
+                               factValueGrid->vehicleClass() == QGCMAVLink::VehicleClassAirship;
 
         factValueGrid->setFontSize(defaultFontSize);
         factValueGrid->appendColumn();
@@ -223,7 +229,9 @@ void QGCCorePlugin::factValueGridCreateDefaultSettings(FactValueGrid* factValueG
             value->setShowUnits(true);
         }
     } else {
-        const bool includeFWValues = ((factValueGrid->vehicleClass() == QGCMAVLink::VehicleClassFixedWing) || (factValueGrid->vehicleClass() == QGCMAVLink::VehicleClassVTOL) || (factValueGrid->vehicleClass() == QGCMAVLink::VehicleClassAirship));
+        const bool includeFWValues = ((factValueGrid->vehicleClass() == QGCMAVLink::VehicleClassFixedWing) ||
+                                      (factValueGrid->vehicleClass() == QGCMAVLink::VehicleClassVTOL) ||
+                                      (factValueGrid->vehicleClass() == QGCMAVLink::VehicleClassAirship));
 
         factValueGrid->setFontSize(defaultFontSize);
 
@@ -236,9 +244,9 @@ void QGCCorePlugin::factValueGridCreateDefaultSettings(FactValueGrid* factValueG
         factValueGrid->appendRow();
 
         int rowIndex = 0;
-        QmlObjectListModel *column = factValueGrid->columns()->value<QmlObjectListModel*>(0);
+        QmlObjectListModel* column = factValueGrid->columns()->value<QmlObjectListModel*>(0);
 
-        InstrumentValueData *value = column->value<InstrumentValueData*>(rowIndex++);
+        InstrumentValueData* value = column->value<InstrumentValueData*>(rowIndex++);
         value->setFact(QStringLiteral("Vehicle"), QStringLiteral("AltitudeRelative"));
         value->setIcon(QStringLiteral("arrow-thick-up.svg"));
         value->setText(value->fact()->shortDescription());
@@ -297,46 +305,44 @@ void QGCCorePlugin::factValueGridCreateDefaultSettings(FactValueGrid* factValueG
     }
 }
 
-QQmlApplicationEngine *QGCCorePlugin::createQmlApplicationEngine(QObject *parent)
+QQmlApplicationEngine* QGCCorePlugin::createQmlApplicationEngine(QObject* parent)
 {
-    QQmlApplicationEngine *const qmlEngine = new QQmlApplicationEngine(parent);
+    QQmlApplicationEngine* const qmlEngine = new QQmlApplicationEngine(parent);
     qmlEngine->addImportPath(QStringLiteral("qrc:/qml"));
     qmlEngine->rootContext()->setContextProperty(QStringLiteral("joystickManager"), JoystickManager::instance());
     return qmlEngine;
 }
 
-void QGCCorePlugin::destroyQmlApplicationEngine(QQmlApplicationEngine *qmlEngine)
+void QGCCorePlugin::destroyQmlApplicationEngine(QQmlApplicationEngine* qmlEngine)
 {
     delete qmlEngine;
 }
 
-void QGCCorePlugin::createRootWindow(QQmlApplicationEngine *qmlEngine)
+void QGCCorePlugin::createRootWindow(QQmlApplicationEngine* qmlEngine)
 {
     qmlEngine->load(QUrl(QStringLiteral("qrc:/qml/QGroundControl/MainWindow.qml")));
 }
 
-VideoReceiver *QGCCorePlugin::createVideoReceiver(QObject *parent)
+VideoReceiver* QGCCorePlugin::createVideoReceiver(QObject* parent)
 {
     return VideoBackend::createReceiver(parent);
 }
 
-void *QGCCorePlugin::createVideoSink(QQuickItem *widget, QObject *parent)
+void* QGCCorePlugin::createVideoSink(QQuickItem* widget, QObject* parent)
 {
     return VideoBackend::createSink(widget, parent);
 }
 
-void QGCCorePlugin::releaseVideoSink(void *sink)
+void QGCCorePlugin::releaseVideoSink(void* sink)
 {
     VideoBackend::releaseSink(sink);
 }
 
-const QVariantList &QGCCorePlugin::toolBarIndicators()
+const QVariantList& QGCCorePlugin::toolBarIndicators()
 {
-    static const QVariantList toolBarIndicatorList = QVariantList(
-        {
-            QVariant::fromValue(QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/Toolbar/RTKGPSIndicator.qml"))),
-        }
-    );
+    static const QVariantList toolBarIndicatorList = QVariantList({
+        QVariant::fromValue(QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/Toolbar/GPSIndicator.qml"))),
+    });
 
     return toolBarIndicatorList;
 }
@@ -344,7 +350,7 @@ const QVariantList &QGCCorePlugin::toolBarIndicators()
 QList<int> QGCCorePlugin::firstRunPromptStdIds()
 {
     if (showInitialSetupVehiclePreferences() || showInitialSetupMeasurementUnits()) {
-        return { kInitialSetupPromptId };
+        return {kInitialSetupPromptId};
     }
 
     return {};
@@ -357,13 +363,14 @@ QVariantList QGCCorePlugin::firstRunPromptsToShow()
     rgIdsToShow.append(firstRunPromptStdIds());
     rgIdsToShow.append(firstRunPromptCustomIds());
 
-    const QList<int> rgAlreadyShownIds = AppSettings::firstRunPromptsIdsVariantToList(SettingsManager::instance()->appSettings()->firstRunPromptIdsShown()->rawValue());
-    for (int idToRemove: rgAlreadyShownIds) {
+    const QList<int> rgAlreadyShownIds = AppSettings::firstRunPromptsIdsVariantToList(
+        SettingsManager::instance()->appSettings()->firstRunPromptIdsShown()->rawValue());
+    for (int idToRemove : rgAlreadyShownIds) {
         (void) rgIdsToShow.removeOne(idToRemove);
     }
 
     QVariantList rgVarIdsToShow;
-    for (int id: rgIdsToShow) {
+    for (int id : rgIdsToShow) {
         rgVarIdsToShow.append(id);
     }
 
@@ -373,10 +380,10 @@ QVariantList QGCCorePlugin::firstRunPromptsToShow()
 QString QGCCorePlugin::firstRunPromptResource(int id) const
 {
     switch (id) {
-    case kInitialSetupPromptId:
-        return QStringLiteral("/qml/QGroundControl/FirstRunPromptDialogs/InitialSetupPrompt.qml");
-    default:
-        return QString();
+        case kInitialSetupPromptId:
+            return QStringLiteral("/qml/QGroundControl/FirstRunPromptDialogs/InitialSetupPrompt.qml");
+        default:
+            return QString();
     }
 }
 
@@ -396,26 +403,28 @@ void QGCCorePlugin::_setShowAdvancedUI(bool show)
     }
 }
 
-QVariantList QGCCorePlugin::complexMissionItemNames(Vehicle *vehicle)
+QVariantList QGCCorePlugin::complexMissionItemNames(Vehicle* vehicle)
 {
     auto makeEntry = [](const char* canonical, const QString& translated) {
         QVariantMap entry;
-        entry[QStringLiteral("canonicalName")]  = QString(canonical);
+        entry[QStringLiteral("canonicalName")] = QString(canonical);
         entry[QStringLiteral("translatedName")] = translated;
         return entry;
     };
 
     QVariantList items;
-    items.append(makeEntry(SurveyComplexItem::canonicalName,       SurveyComplexItem::tr(SurveyComplexItem::canonicalName)));
-    items.append(makeEntry(CorridorScanComplexItem::canonicalName, CorridorScanComplexItem::tr(CorridorScanComplexItem::canonicalName)));
+    items.append(makeEntry(SurveyComplexItem::canonicalName, SurveyComplexItem::tr(SurveyComplexItem::canonicalName)));
+    items.append(makeEntry(CorridorScanComplexItem::canonicalName,
+                           CorridorScanComplexItem::tr(CorridorScanComplexItem::canonicalName)));
     if (vehicle->multiRotor() || vehicle->vtol()) {
-        items.append(makeEntry(StructureScanComplexItem::canonicalName, StructureScanComplexItem::tr(StructureScanComplexItem::canonicalName)));
+        items.append(makeEntry(StructureScanComplexItem::canonicalName,
+                               StructureScanComplexItem::tr(StructureScanComplexItem::canonicalName)));
     }
     // Note: Landing pattern items are not added here — they have their own dedicated button
     return items;
 }
 
-QList<PlanCreator*> QGCCorePlugin::planCreators(PlanMasterController *planMasterController)
+QList<PlanCreator*> QGCCorePlugin::planCreators(PlanMasterController* planMasterController)
 {
     return {
         new SurveyPlanCreator(planMasterController),
@@ -425,24 +434,28 @@ QList<PlanCreator*> QGCCorePlugin::planCreators(PlanMasterController *planMaster
     };
 }
 
-ComplexMissionItem *QGCCorePlugin::createComplexMissionItem(
-    const QString &complexItemType,
-    PlanMasterController *masterController,
-    bool flyView,
-    const QString &kmlOrShpFile)
+ComplexMissionItem* QGCCorePlugin::createComplexMissionItem(const QString& complexItemType,
+                                                            PlanMasterController* masterController, bool flyView,
+                                                            const QString& kmlOrShpFile)
 {
-    if (complexItemType == SurveyComplexItem::canonicalName || complexItemType == SurveyComplexItem::jsonComplexItemTypeValue) {
+    if (complexItemType == SurveyComplexItem::canonicalName ||
+        complexItemType == SurveyComplexItem::jsonComplexItemTypeValue) {
         return new SurveyComplexItem(masterController, flyView, kmlOrShpFile);
-    } else if (complexItemType == CorridorScanComplexItem::canonicalName || complexItemType == CorridorScanComplexItem::jsonComplexItemTypeValue) {
+    } else if (complexItemType == CorridorScanComplexItem::canonicalName ||
+               complexItemType == CorridorScanComplexItem::jsonComplexItemTypeValue) {
         return new CorridorScanComplexItem(masterController, flyView, kmlOrShpFile);
-    } else if (complexItemType == StructureScanComplexItem::canonicalName || complexItemType == StructureScanComplexItem::jsonComplexItemTypeValue) {
+    } else if (complexItemType == StructureScanComplexItem::canonicalName ||
+               complexItemType == StructureScanComplexItem::jsonComplexItemTypeValue) {
         return new StructureScanComplexItem(masterController, flyView, kmlOrShpFile);
-    } else if (complexItemType == FixedWingLandingComplexItem::canonicalName || complexItemType == FixedWingLandingComplexItem::jsonComplexItemTypeValue) {
+    } else if (complexItemType == FixedWingLandingComplexItem::canonicalName ||
+               complexItemType == FixedWingLandingComplexItem::jsonComplexItemTypeValue) {
         return new FixedWingLandingComplexItem(masterController, flyView);
-    } else if (complexItemType == VTOLLandingComplexItem::canonicalName || complexItemType == VTOLLandingComplexItem::jsonComplexItemTypeValue) {
+    } else if (complexItemType == VTOLLandingComplexItem::canonicalName ||
+               complexItemType == VTOLLandingComplexItem::jsonComplexItemTypeValue) {
         return new VTOLLandingComplexItem(masterController, flyView);
     }
 
-    qCWarning(QGCCorePluginLog) << "QGCCorePlugin::createComplexMissionItem - Unknown complex item type:" << complexItemType;
+    qCWarning(QGCCorePluginLog) << "QGCCorePlugin::createComplexMissionItem - Unknown complex item type:"
+                                << complexItemType;
     return nullptr;
 }

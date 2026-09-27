@@ -7,6 +7,7 @@
 
 #include "GPSCommandTransaction.h"
 #include "LittleEndian.h"
+#include "UBXConfigurationValues.h"
 #include "UBXReceiverProfile.h"
 
 namespace UBX {
@@ -18,8 +19,7 @@ struct Acknowledgement
 
 struct ConfigurationValues
 {
-    std::array<uint32_t, 9> keys{};
-    std::array<uint32_t, 9> values{};
+    std::array<ConfigurationValue, 9> values{};
     size_t count = 0;
 };
 
@@ -29,25 +29,13 @@ inline std::optional<ConfigurationValues> decodeConfigurationValues(std::span<co
         return std::nullopt;
     }
     ConfigurationValues result;
-    for (size_t offset = 4; offset < payload.size();) {
-        const auto key = LittleEndian::read<uint32_t>(payload, offset);
-        if (!key || result.count == result.keys.size()) {
+    ConfigurationValueCursor cursor(payload.subspan(4));
+    while (!cursor.empty()) {
+        const auto entry = cursor.next();
+        if (!entry || result.count == result.values.size()) {
             return std::nullopt;
         }
-        offset += 4;
-        const auto width = configurationValueBytes(*key);
-        if (!width || payload.size() - offset < width) {
-            return std::nullopt;
-        }
-        uint32_t value = 0;
-        for (unsigned byte = 0; byte < width; ++byte) {
-            value |= uint32_t(payload[offset++]) << (8 * byte);
-        }
-        if ((*key >> 28) == 1 && value > 1) {
-            return std::nullopt;
-        }
-        result.keys[result.count] = *key;
-        result.values[result.count++] = value;
+        result.values[result.count++] = *entry;
     }
     return result;
 }
@@ -95,11 +83,13 @@ public:
     void beginReadback(std::span<const uint32_t> keys)
     {
         _readback = {};
-        _readbackPending = !keys.empty() && keys.size() <= _readback.keys.size();
+        _readbackPending = !keys.empty() && keys.size() <= _readback.values.size();
         _readbackReady = false;
         if (_readbackPending) {
             _readback.count = keys.size();
-            std::copy(keys.begin(), keys.end(), _readback.keys.begin());
+            for (size_t index = 0; index < keys.size(); ++index) {
+                _readback.values[index].key = keys[index];
+            }
         }
     }
 
@@ -116,11 +106,11 @@ public:
         if (!_readbackPending || response.count != _readback.count) {
             return;
         }
-        std::array<uint32_t, 9> values{};
+        std::array<ConfigurationValue, 9> values{};
         uint16_t seen = 0;
         for (size_t entry = 0; entry < response.count; ++entry) {
             size_t index = 0;
-            while (index < _readback.count && _readback.keys[index] != response.keys[entry]) {
+            while (index < _readback.count && _readback.values[index].key != response.values[entry].key) {
                 ++index;
             }
             if (index == _readback.count || (seen & (1u << index))) {

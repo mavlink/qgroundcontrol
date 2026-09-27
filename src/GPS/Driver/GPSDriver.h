@@ -25,8 +25,6 @@ struct GPSDriverSinks
     /// Borrowed until the synchronous callback returns.
     std::function<void(std::span<const uint8_t>)> onRTCM;
     std::function<void(const GPSSurveyReport&)> onSurveyIn;
-    /// Count-only observations do not imply a list of satellites in view.
-    std::function<void(const GPSSatelliteUsageReport&)> onSatelliteUsage;
 };
 
 enum class GPSReceiveStatus
@@ -43,9 +41,11 @@ enum class GPSReceiveStatus
 
 struct GPSReceiveResult
 {
+    static constexpr int POSITION_UPDATE = 1;
+    static constexpr int SATELLITES_UPDATE = 2;
+
     GPSReceiveStatus status = GPSReceiveStatus::NotConfigured;
     int updates = 0;
-    int errorCode = 0;
     QString detail = {};
 
     [[nodiscard]] bool terminal() const
@@ -65,7 +65,7 @@ public:
     GPSDriver(const GPSDriver&) = delete;
     GPSDriver& operator=(const GPSDriver&) = delete;
 
-    /// Whether this build contains the requested native protocol implementation.
+    /// Whether a native protocol exists for @a type.
     static bool supportsType(GPSType type);
 
     /// Create and configure the underlying driver. Reentrant calls fail without replacing the active driver.
@@ -82,8 +82,12 @@ public:
     /// Diagnostic from the latest configure() failure; cleared when a new attempt starts.
     [[nodiscard]] const QString& configurationError() const;
 
+    /// Receiver model and firmware reported by the configured protocol; empty when unknown.
+    [[nodiscard]] QString receiverIdentity() const;
+
 private:
     void _publishExpiredSatellites();
+    void _publishSatellites(const GPSSatelliteReport& report);
 
     GPSType _type;
     GPSTransport& _transport;

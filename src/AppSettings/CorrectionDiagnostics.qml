@@ -5,6 +5,7 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
+import QGroundControl.GPS
 
 SettingsGroupLayout {
     id: root
@@ -12,8 +13,8 @@ SettingsGroupLayout {
     property GPSCorrectionManager corrections: QGroundControl.gpsManager.corrections
 
     function destinationName(destinationId: string): string {
-        if (destinationId === "ntripUdp")
-            return qsTr("NTRIP UDP output");
+        if (destinationId === "udpOutput")
+            return qsTr("UDP forwarding");
         if (destinationId === "mavlink")
             return qsTr("Vehicles");
         if (destinationId.startsWith("mavlink/"))
@@ -25,10 +26,6 @@ SettingsGroupLayout {
         switch (reason) {
         case GPSCorrectionEventModel.None:
             return "";
-        case GPSCorrectionEventModel.InactiveSource:
-            return qsTr("Inactive source");
-        case GPSCorrectionEventModel.SessionMismatch:
-            return qsTr("Previous source session");
         case GPSCorrectionEventModel.InvalidTimestamp:
             return qsTr("Invalid receipt time");
         case GPSCorrectionEventModel.Expired:
@@ -39,39 +36,10 @@ SettingsGroupLayout {
             return qsTr("Source not selected");
         case GPSCorrectionEventModel.DestinationUnavailable:
             return qsTr("Destination unavailable");
-        case GPSCorrectionEventModel.QueueFull:
-            return qsTr("Queue full");
         case GPSCorrectionEventModel.InvalidFrame:
             return qsTr("Invalid frame");
-        case GPSCorrectionEventModel.Cancelled:
-            return qsTr("Connection cancelled");
-        case GPSCorrectionEventModel.SourceChanged:
-            return qsTr("Source changed");
-        case GPSCorrectionEventModel.WriteFailed:
-            return qsTr("Write failed");
-        case GPSCorrectionEventModel.PartialWrite:
-            return qsTr("Incomplete write");
-        case GPSCorrectionEventModel.InvalidDelivery:
-            return qsTr("Unmatched delivery report");
-        case GPSCorrectionEventModel.DeliveryUnconfirmed:
-            return qsTr("Connection ended before the write result was available");
-        case GPSCorrectionEventModel.DiagnosticsBackpressure:
-            return qsTr("Delivery tracking full");
         default:
             return qsTr("Unknown");
-        }
-    }
-
-    function sourceName(source) {
-        switch (source) {
-        case GPSCorrectionSettings.LocalReceiver:
-            return qsTr("Local base station");
-        case GPSCorrectionSettings.Ntrip:
-            return qsTr("NTRIP");
-        case GPSCorrectionSettings.Udp:
-            return qsTr("UDP");
-        default:
-            return qsTr("Unclassified");
         }
     }
 
@@ -85,10 +53,6 @@ SettingsGroupLayout {
             return qsTr("Selected");
         case GPSCorrectionEventModel.Queued:
             return qsTr("Queued");
-        case GPSCorrectionEventModel.Written:
-            return qsTr("Written");
-        case GPSCorrectionEventModel.Unconfirmed:
-            return qsTr("Unconfirmed");
         case GPSCorrectionEventModel.Dropped:
             return qsTr("Dropped");
         default:
@@ -103,7 +67,7 @@ SettingsGroupLayout {
         Layout.fillWidth: true
         Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 50
         objectName: "correctionSelectionStatus"
-        text: root.corrections.sourceInstances.some(source => source.selected)
+        text: root.corrections.hasSelectedStream
               ? qsTr("Current correction streams:")
               : qsTr("No fresh stream is selected for vehicles.")
         wrapMode: Text.WordWrap
@@ -113,7 +77,7 @@ SettingsGroupLayout {
         model: root.corrections.sourceInstances
 
         QGCLabel {
-            required property var modelData
+            required property gpsCorrectionStream modelData
 
             Layout.fillWidth: true
             Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 50
@@ -128,9 +92,10 @@ SettingsGroupLayout {
                     status = qsTr("Active; waiting for fresh corrections");
                 else
                     status = qsTr("Unavailable");
-                return qsTr("%1 — %2: %3").arg(root.sourceName(modelData.source))
+                return qsTr("%1 — %2: %3").arg(root.corrections.sourceName(modelData.source))
                                          .arg(modelData.instanceId || qsTr("Default stream")).arg(status);
             }
+            textFormat: Text.PlainText
             wrapMode: Text.WordWrap
         }
     }
@@ -138,27 +103,50 @@ SettingsGroupLayout {
     QGCLabel {
         Layout.fillWidth: true
         Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 50
-        text: qsTr("Queued bytes have been submitted to an output. Written bytes reached an output transport; they do not confirm that a receiver applied the corrections or obtained a fix. Vehicle writes are unconfirmed.")
+        text: qsTr("Queued bytes have been admitted to an output. They do not confirm that a receiver applied the corrections or obtained a fix.")
         wrapMode: Text.WordWrap
     }
 
     QGCLabel {
         Layout.fillWidth: true
         Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 50
-        text: qsTr("Received/dropped source bytes measure frame-candidate evidence, not raw transport traffic. Recovered frames can overlap rejected candidates. Drop events count separate selection, admission, and delivery losses; one frame may contribute more than once.")
+        text: qsTr("Received rates measure frame-candidate bytes, not raw transport traffic. Recovered frames can overlap rejected candidates. Drop events count separate selection and admission losses; one frame may contribute more than once.")
         wrapMode: Text.WordWrap
     }
 
     Repeater {
         model: root.corrections.sources
 
-        QGCLabel {
-            required property var modelData
+        ColumnLayout {
+            id: sourceRow
+
+            required property int source
+            required property double receivedBytesPerSecond
+            required property double receivedFrames
+            required property double validatedFrames
+            required property double selectedFrames
+            required property double queuedFrames
+            required property double droppedFrames
+            required property list<rtcmMessageCount> messageCounts
 
             Layout.fillWidth: true
             Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 50
-            text: qsTr("%1 — frames: received %2, validated %3, selected %4, queued %5, written %6; drop events %7").arg(root.sourceName(modelData.source)).arg(modelData.receivedFrames).arg(modelData.validatedFrames).arg(modelData.selectedFrames).arg(modelData.queuedFrames).arg(modelData.writtenFrames).arg(modelData.droppedFrames)
-            wrapMode: Text.WordWrap
+            spacing: ScreenTools.defaultFontPixelHeight / 4
+
+            QGCLabel {
+                Layout.fillWidth: true
+                objectName: "correctionSource_" + sourceRow.source
+                text: qsTr("%1 — received %2; frames: received %3, validated %4, selected %5, queued %6; drop events %7").arg(root.corrections.sourceName(sourceRow.source)).arg(GPSFormat.dataRate(sourceRow.receivedBytesPerSecond)).arg(sourceRow.receivedFrames).arg(sourceRow.validatedFrames).arg(sourceRow.selectedFrames).arg(sourceRow.queuedFrames).arg(sourceRow.droppedFrames)
+                textFormat: Text.PlainText
+                wrapMode: Text.WordWrap
+            }
+
+            RTCMMessageChips {
+                Layout.fillWidth: true
+                objectName: "correctionSourceMessages_" + sourceRow.source
+                messageCounts: sourceRow.messageCounts
+                visible: sourceRow.messageCounts.length > 0
+            }
         }
     }
 
@@ -166,12 +154,15 @@ SettingsGroupLayout {
         model: root.corrections.destinations
 
         QGCLabel {
-            required property var modelData
+            required property string destinationId
+            required property double queuedBytes
+            required property double droppedBytes
 
             Layout.fillWidth: true
             Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 50
-            objectName: "correctionDestination_" + modelData.destinationId
-            text: qsTr("%1 — queued %2 B, written %3, dropped %4 B, pending %5 B, unconfirmed %6 B").arg(root.destinationName(modelData.destinationId)).arg(modelData.queuedBytes).arg(modelData.reportsWrites ? qsTr("%1 B").arg(modelData.writtenBytes) : qsTr("unconfirmed")).arg(modelData.droppedBytes).arg(modelData.pendingBytes).arg(modelData.unconfirmedBytes)
+            objectName: "correctionDestination_" + destinationId
+            text: qsTr("%1 — queued %2 B, dropped %3 B").arg(root.destinationName(destinationId)).arg(queuedBytes).arg(droppedBytes)
+            textFormat: Text.PlainText
             wrapMode: Text.WordWrap
         }
     }
@@ -208,7 +199,8 @@ SettingsGroupLayout {
                 required property double sourceSession
                 required property int stage
 
-                text: qsTr("%1. %2 — %3, %4 B%5\nSource: %6 (session %7); destination: %8 (session %9)").arg(eventSequence).arg(root.sourceName(source)).arg(root.stageName(stage)).arg(bytes).arg(reason === GPSCorrectionEventModel.None ? "" : qsTr(" — %1").arg(root.reasonName(reason))).arg(sourceInstance || root.sourceName(source)).arg(sourceSession).arg(root.destinationName(destinationId)).arg(destinationSession)
+                text: qsTr("%1. %2 — %3, %4 B%5\nSource: %6 (session %7); destination: %8 (session %9)").arg(eventSequence).arg(root.corrections.sourceName(source)).arg(root.stageName(stage)).arg(bytes).arg(reason === GPSCorrectionEventModel.None ? "" : qsTr(" — %1").arg(root.reasonName(reason))).arg(sourceInstance || root.corrections.sourceName(source)).arg(sourceSession).arg(root.destinationName(destinationId)).arg(destinationSession)
+                textFormat: Text.PlainText
                 width: ListView.view.width
                 wrapMode: Text.WordWrap
             }

@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <array>
 
+#include <QtCore/QHash>
+
 namespace {
 using Accuracy = GPSReceiverDescriptor::SurveyAccuracy;
 using Duration = GPSReceiverDescriptor::SurveyDuration;
@@ -29,19 +31,14 @@ constexpr std::array DESCRIPTORS{
         .detectionKey = "femtomes",
         .capabilities = {.recognized = true, .rtkBase = true, .surveyIn = true},
         .surveyDuration = Duration::ElapsedTime,
-        .configurableSurveyDuration = true,
+        // POSAVE ON uses the receiver's averaging policy; the driver does not program a duration.
+        .configurableSurveyDuration = false,
     },
     GPSReceiverDescriptor{
         .type = GPSType::ublox,
         .manufacturerId = 4,
         .detectionKey = "blox",
-        // Pre-v27 configuration has no NavIC path; GPS also controls QZSS.
-        .capabilities = {.recognized = true,
-                         .position = true,
-                         .rtkBase = true,
-                         .constellationMask = 0x1f,
-                         .dynamicModel = true,
-                         .surveyIn = true},
+        .capabilities = {.recognized = true, .rtkBase = true, .surveyIn = true, .compactObservations = true},
         .surveyAccuracy = Accuracy::PositionAccuracy,
         .surveyDuration = Duration::ElapsedTime,
         .configurableSurveyDuration = true,
@@ -51,14 +48,13 @@ constexpr std::array DESCRIPTORS{
         .type = GPSType::unicore,
         .manufacturerId = 5,
         .detectionKey = "unicore",
-        .capabilities = {.recognized = true, .position = true, .rtkBase = true, .receiverAveraging = true},
+        .capabilities = {.recognized = true, .rtkBase = true, .receiverAveraging = true},
     },
     GPSReceiverDescriptor{
         .type = GPSType::quectel,
         .manufacturerId = 6,
         .detectionKey = "quectel",
-        .capabilities =
-            {.recognized = true, .position = true, .rtkBase = true, .surveyIn = true, .persistentConfiguration = true},
+        .capabilities = {.recognized = true, .rtkBase = true, .surveyIn = true, .persistentConfiguration = true},
         .surveyAccuracy = Accuracy::ObservationFilter,
         .surveyDuration = Duration::AcceptedObservations,
         .configurableSurveyDuration = true,
@@ -91,43 +87,48 @@ const GPSReceiverDescriptor* gpsReceiverDescriptorForManufacturer(int manufactur
     return entry == DESCRIPTORS.end() ? nullptr : &*entry;
 }
 
-QVariantMap gpsReceiverPresentation(int manufacturer)
+namespace {
+GPSReceiverPresentation buildPresentation(int manufacturer)
 {
     const auto* selected = gpsReceiverDescriptorForManufacturer(manufacturer);
-    GPSReceiverCapabilities capabilities;
-    bool surveyAccuracy = false;
-    bool surveyDuration = false;
-    bool fixedBaseAccuracy = false;
+    GPSReceiverPresentation presentation;
     for (const auto& descriptor : DESCRIPTORS) {
         if (manufacturer != 0 && &descriptor != selected) {
             continue;
         }
-        capabilities.recognized |= descriptor.capabilities.recognized;
-        capabilities.rtkBase |= descriptor.capabilities.rtkBase;
-        capabilities.surveyIn |= descriptor.capabilities.surveyIn;
-        capabilities.receiverAveraging |= descriptor.capabilities.receiverAveraging;
-        surveyAccuracy |= descriptor.surveyAccuracy != Accuracy::Unavailable;
-        surveyDuration |= descriptor.configurableSurveyDuration;
-        fixedBaseAccuracy |= descriptor.fixedBaseAccuracy;
+        presentation.recognized |= descriptor.capabilities.recognized;
+        presentation.rtkBase |= descriptor.capabilities.rtkBase;
+        presentation.surveyIn |= descriptor.capabilities.surveyIn;
+        presentation.receiverAveraging |= descriptor.capabilities.receiverAveraging;
+        presentation.compactObservations |= descriptor.capabilities.compactObservations;
+        presentation.surveyAccuracy |= descriptor.surveyAccuracy != Accuracy::Unavailable;
+        presentation.surveyDuration |= descriptor.configurableSurveyDuration;
+        presentation.fixedBaseAccuracy |= descriptor.fixedBaseAccuracy;
     }
     // "All" combines editable fields, not receiver-specific side effects or live status.
-    return {
-        {QStringLiteral("recognized"), capabilities.recognized},
-        {QStringLiteral("specificReceiver"), selected != nullptr},
-        {QStringLiteral("rtkBase"), capabilities.rtkBase},
-        {QStringLiteral("surveyIn"), capabilities.surveyIn},
-        {QStringLiteral("receiverAveraging"), capabilities.receiverAveraging},
-        {QStringLiteral("passive"), selected && selected->capabilities.passive},
-        {QStringLiteral("surveyAccuracy"), surveyAccuracy},
-        {QStringLiteral("surveyDuration"), surveyDuration},
-        {QStringLiteral("fixedBaseAccuracy"), fixedBaseAccuracy},
-        {QStringLiteral("observationAccuracyFilter"),
-         selected && selected->surveyAccuracy == Accuracy::ObservationFilter},
-        {QStringLiteral("acceptedObservationTime"),
-         selected && selected->surveyDuration == Duration::AcceptedObservations},
-        {QStringLiteral("reportsSurveyDuration"), selected && selected->surveyDuration != Duration::Unavailable},
-        {QStringLiteral("persistentConfiguration"), selected && selected->capabilities.persistentConfiguration},
-        {QStringLiteral("restartOnConnect"), selected && selected->restartOnConnect},
-        {QStringLiteral("surveyMaySavePosition"), selected && selected->surveyMaySavePosition},
-    };
+    presentation.specificReceiver = selected != nullptr;
+    presentation.passive = selected && selected->capabilities.passive;
+    presentation.observationAccuracyFilter = selected && selected->surveyAccuracy == Accuracy::ObservationFilter;
+    presentation.acceptedObservationTime = selected && selected->surveyDuration == Duration::AcceptedObservations;
+    presentation.reportsSurveyDuration = selected && selected->surveyDuration != Duration::Unavailable;
+    presentation.persistentConfiguration = selected && selected->capabilities.persistentConfiguration;
+    presentation.restartOnConnect = selected && selected->restartOnConnect;
+    presentation.surveyMaySavePosition = selected && selected->surveyMaySavePosition;
+    return presentation;
+}
+}  // namespace
+
+const GPSReceiverPresentation& gpsReceiverPresentation(int manufacturer)
+{
+    // Immutable after first use, so QML bindings see one value per receiver family.
+    static const QHash<int, GPSReceiverPresentation> presentations = [] {
+        QHash<int, GPSReceiverPresentation> result{{0, buildPresentation(0)}};
+        for (const auto& descriptor : DESCRIPTORS) {
+            result.insert(descriptor.manufacturerId, buildPresentation(descriptor.manufacturerId));
+        }
+        return result;
+    }();
+    static const GPSReceiverPresentation unknown = buildPresentation(-1);
+    const auto presentation = presentations.constFind(manufacturer);
+    return presentation != presentations.cend() ? *presentation : unknown;
 }

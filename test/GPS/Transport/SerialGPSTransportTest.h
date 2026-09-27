@@ -14,6 +14,4 @@ private slots:
     void _testPendingWriteDeadline();
     void _inputBudgetEndsStream();
     void _consecutiveWrites();
-    void _testLowBaudCorrectionAllowance_data();
-    void _testLowBaudCorrectionAllowance();
 };

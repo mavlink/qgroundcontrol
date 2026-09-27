@@ -15,6 +15,5 @@ private slots:
     void _rebindDisconnectsPreviousReceivers();
     void _onlyIntegrityRefreshesReceipt();
     void _receiverDestruction();
-    void _schedulerDestruction();
     void _reentrantRebind();
 };
