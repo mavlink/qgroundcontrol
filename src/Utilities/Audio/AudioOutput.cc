@@ -15,25 +15,45 @@ QGC_LOGGING_CATEGORY(AudioOutputLog, "Utilities.AudioOutput");
 // qt.speech.tts.flite
 // qt.speech.tts.android
 
+// Keys in both tables must not end in a digit: trailing instance digits are split off before lookup.
 const QHash<QString, QString> AudioOutput::_textHash = {
-    { "ERR",            "error" },
-    { "POSCTL",         "Position Control" },
-    { "ALTCTL",         "Altitude Control" },
-    { "AUTO_RTL",       "auto return to launch" },
-    { "RTL",            "return To launch" },
-    { "ACCEL",          "accelerometer" },
-    { "RC_MAP_MODE_SW", "RC mode switch" },
-    { "REJ",            "rejected" },
-    { "WP",             "waypoint" },
-    { "CMD",            "command" },
-    { "COMPID",         "component eye dee" },
-    { "PARAMS",         "parameters" },
-    { "ID",             "I.D." },
-    { "ADSB",           "A.D.S.B." },
-    { "EKF",            "E.K.F." },
-    { "PREARM",         "pre arm" },
-    { "PITOT",          "pee toe" },
-    { "SERVOX_FUNCTION","Servo X Function" },
+    {"ERR", "error"},
+    {"POSCTL", "Position Control"},
+    {"ALTCTL", "Altitude Control"},
+    {"AUTO_RTL", "auto return to launch"},
+    {"RTL", "return To launch"},
+    {"ACCEL", "accelerometer"},
+    {"RC_MAP_MODE_SW", "RC mode switch"},
+    {"REJ", "rejected"},
+    {"WP", "waypoint"},
+    {"CMD", "command"},
+    {"COMPID", "component eye dee"},
+    {"PARAMS", "parameters"},
+    {"ID", "I.D."},
+    {"ADSB", "A.D.S.B."},
+    {"EKF", "E.K.F."},
+    {"PREARM", "pre arm"},
+    {"PITOT", "pee toe"},
+    {"SERVOX_FUNCTION", "Servo X Function"},
+    {"CNT", "count"},
+    {"DNST", "density"},
+    {"TKOFF", "takeoff"},
+    {"TERRN", "terrain"},
+    {"AROT", "autorotation"},
+    {"TCAL", "temperature calibration"},
+    {"PWR", "power"},
+    {"PERF", "performance"},
+    {"CFG", "config"},
+    {"FBWA", "fly-by-wire A"},
+};
+
+// Matched case-sensitively so lowercase words ("rc", "ins") are left alone. CAN is omitted: it is spoken as a word.
+const QSet<QString> AudioOutput::_spelledAcronyms = {
+    "GPS",  "GNSS", "GCS",  "ESC",  "VTOL", "RC",   "IMU",  "AHRS", "INS",   "CPU",  "RPM",  "SD",   "USB",
+    "PWM",  "PPS",  "CRC",  "ICAO", "SIH",  "HAGL", "FMU",  "UTM",  "MAV",   "FFT",  "AFS",  "AMSL", "MSL",
+    "HDOP", "GPIO", "SITL", "ODID", "TCP",  "UDP",  "UART", "I2C",  "IOMCU", "FTP",  "NACK", "NED",  "RSSI",
+    "OSD",  "MSP",  "DMA",  "DFU",  "DNA",  "EFI",  "ISR",  "WDG",  "NMEA",  "RTCM", "VTX",  "WMM",  "HW",
+    "SW",   "FW",   "RX",   "LLH",  "IP",   "IO",   "RF",   "LQ",   "DEVID",
 };
 
 Q_APPLICATION_STATIC(AudioOutput, _audioOutput);
@@ -268,31 +288,69 @@ void AudioOutput::testAudioOutput()
 QString AudioOutput::_fixTextMessageForAudio(const QString &string)
 {
     QString result = string;
-    result = _replaceAbbreviations(result);
+    // Before abbreviations: spelled acronyms end in '.', which would hide the word a hyphen is attached to.
     result = _replaceNegativeSigns(result);
+    result = _replaceAbbreviations(result);
     result = _replaceDecimalPoints(result);
     result = _replaceMeters(result);
     result = _convertMilliseconds(result);
     return result;
 }
 
-QString AudioOutput::_replaceAbbreviations(const QString &input)
+QString AudioOutput::_spokenAbbreviation(const QString& token)
 {
-    QStringList words = input.split(' ');
-    for (QString &word : words) {
-        const auto it = _textHash.constFind(word.toUpper());
-        if (it != _textHash.constEnd()) {
-            word = it.value();
-        }
+    const auto it = _textHash.constFind(token.toUpper());
+    if (it != _textHash.constEnd()) {
+        return it.value();
     }
 
-    return words.join(' ');
+    if (!_spelledAcronyms.contains(token)) {
+        return QString();
+    }
+
+    QString spelled;
+    spelled.reserve(token.size() * 2);
+    for (const QChar c : token) {
+        spelled.append(c);
+        spelled.append(QLatin1Char('.'));
+    }
+    return spelled;
+}
+
+QString AudioOutput::_replaceAbbreviations(const QString &input)
+{
+    // Captures a whole identifier-like token, splitting off trailing instance digits ("EKF3" -> "EKF", "3").
+    static const QRegularExpression tokenRegex(
+        QStringLiteral("(?<![A-Za-z0-9_])([A-Za-z][A-Za-z0-9_]*?)([0-9]*)(?![A-Za-z0-9_])"));
+
+    QString output;
+    output.reserve(input.size());
+    qsizetype last = 0;
+
+    QRegularExpressionMatchIterator it = tokenRegex.globalMatch(input);
+    while (it.hasNext()) {
+        const QRegularExpressionMatch match = it.next();
+        const QString spoken = _spokenAbbreviation(match.captured(1));
+        if (spoken.isEmpty()) {
+            continue;
+        }
+
+        output.append(QStringView(input).mid(last, match.capturedStart() - last));
+        output.append(spoken);
+        if (match.capturedLength(2) > 0) {
+            output.append(QLatin1Char(' '));
+            output.append(match.capturedView(2));
+        }
+        last = match.capturedEnd();
+    }
+    output.append(QStringView(input).mid(last));
+
+    return output;
 }
 
 QString AudioOutput::_replaceNegativeSigns(const QString &input)
 {
-    static const QRegularExpression negNumRegex(QStringLiteral("-\\s*(?=\\d)"));
-    Q_ASSERT(negNumRegex.isValid());
+    static const QRegularExpression negNumRegex(QStringLiteral("(?<![A-Za-z0-9_])-\\s*(?=\\d)"));
 
     QString output = input;
     (void) output.replace(negNumRegex, "negative ");
@@ -302,7 +360,6 @@ QString AudioOutput::_replaceNegativeSigns(const QString &input)
 QString AudioOutput::_replaceDecimalPoints(const QString &input)
 {
     static const QRegularExpression realNumRegex(QStringLiteral("([0-9]+)(\\.)([0-9]+)"));
-    Q_ASSERT(realNumRegex.isValid());
 
     QString output = input;
     QRegularExpressionMatch realNumRegexMatch = realNumRegex.match(output);
@@ -319,7 +376,6 @@ QString AudioOutput::_replaceDecimalPoints(const QString &input)
 QString AudioOutput::_replaceMeters(const QString &input)
 {
     static const QRegularExpression realNumMeterRegex(QStringLiteral("[0-9]*\\.?[0-9]\\s?(m)([^A-Za-z]|$)"));
-    Q_ASSERT(realNumMeterRegex.isValid());
 
     QString output = input;
     QRegularExpressionMatch realNumMeterRegexMatch = realNumMeterRegex.match(output);
@@ -365,7 +421,6 @@ QString AudioOutput::_convertMilliseconds(const QString &input)
 bool AudioOutput::_getMillisecondString(const QString &string, QString &match, int &number)
 {
     static const QRegularExpression msRegex("((?<number>[0-9]+)ms)");
-    Q_ASSERT(msRegex.isValid());
 
     bool result = false;
 

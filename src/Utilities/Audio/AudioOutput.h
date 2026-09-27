@@ -1,8 +1,11 @@
 #pragma once
 
-#include <QtCore/QObject>
-
 #include <chrono>
+
+#include <QtCore/QHash>
+#include <QtCore/QObject>
+#include <QtCore/QSet>
+#include <QtCore/QString>
 
 class QTextToSpeech;
 class Fact;
@@ -72,6 +75,7 @@ private:
     void _finishInit();
 
     static const QHash<QString, QString> _textHash;
+    static const QSet<QString> _spelledAcronyms;
 
     static constexpr qsizetype kMaxTextQueueSize = 20;
 
@@ -87,6 +91,10 @@ private:
     ///     @param input The input string containing abbreviations.
     ///     @return A string with abbreviations replaced by their full forms.
     static QString _replaceAbbreviations(const QString &input);
+
+    /// Returns the spoken form of an abbreviation token, or an empty string if none.
+    /// _textHash ignores case; _spelledAcronyms matches all-caps only.
+    static QString _spokenAbbreviation(const QString& token);
 
     /// Replaces negative signs with the word "negative".
     static QString _replaceNegativeSigns(const QString &input);

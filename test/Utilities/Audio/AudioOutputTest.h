@@ -8,4 +8,6 @@ class AudioOutputTest : public UnitTest
 
 private slots:
     void _testSpokenReplacements();
+    void _abbreviationsReplacedAtTokenBoundaries_data();
+    void _abbreviationsReplacedAtTokenBoundaries();
 };
