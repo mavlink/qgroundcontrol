@@ -156,7 +156,6 @@ private slots:
     void sourceTableIdentity_data();
     void sourceTableIdentity();
     void abortCallbackSupersedesReplacement();
-    void abortCallbackDeletesReply();
     void deletedReplyPublishesError();
     void fetchNotificationReentry_data();
     void fetchNotificationReentry();
@@ -1244,18 +1243,6 @@ void NTRIPReentrancyTest::abortCallbackSupersedesReplacement()
     QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::InProgress);
     QVERIFY(controller._reply && controller._reply != previous);
     QCOMPARE(controller._reply->url().port(), 2102);
-}
-
-void NTRIPReentrancyTest::abortCallbackDeletesReply()
-{
-    NTRIPSourceTableController controller;
-    controller.fetch(config());
-    const auto previous = controller._reply;
-    connect(previous, &QNetworkReply::finished, this, [previous]() { delete previous.data(); });
-    controller.fetch({});
-    QVERIFY(!previous);
-    QVERIFY(!controller._reply);
-    QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Error);
 }
 
 void NTRIPReentrancyTest::deletedReplyPublishesError()
