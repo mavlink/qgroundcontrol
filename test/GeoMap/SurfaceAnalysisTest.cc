@@ -12,22 +12,32 @@ namespace {
 constexpr int kGridSize = 4;
 constexpr int kVertexCount = (kGridSize + 1) * (kGridSize + 1);
 
+SurfaceModel::Patch makePatch(const TileMath::TileKey& key, const QList<float>& heights, bool ready, bool covered)
+{
+    SurfaceModel::Patch patch;
+    patch.key = key;
+    patch.heights = heights;
+    patch.ready = ready;
+    patch.covered = covered;
+    return patch;
+}
+
 /// Ready patch with a constant height everywhere
 SurfaceModel::Patch readyPatch(const TileMath::TileKey& key, float height)
 {
-    return SurfaceModel::Patch{key, QList<float>(kVertexCount, height), true, false};
+    return makePatch(key, QList<float>(kVertexCount, height), true, false);
 }
 
 /// Pending patch: heights still loading, renders flat unless covered
 SurfaceModel::Patch pendingPatch(const TileMath::TileKey& key, bool covered = false)
 {
-    return SurfaceModel::Patch{key, {}, false, covered};
+    return makePatch(key, {}, false, covered);
 }
 
 /// Degraded patch: retries exhausted, ready with empty heights (flat fallback)
 SurfaceModel::Patch degradedPatch(const TileMath::TileKey& key)
 {
-    return SurfaceModel::Patch{key, {}, true, false};
+    return makePatch(key, {}, true, false);
 }
 
 QRectF worldRect(const TileMath::TileKey& key)
@@ -157,7 +167,7 @@ void SurfaceAnalysisTest::_lodTJunction()
     }
 
     const QList<SurfaceModel::Patch> patches{
-        SurfaceModel::Patch{coarseKey, coarseHeights, true, false},
+        makePatch(coarseKey, coarseHeights, true, false),
         readyPatch(fineKey, 0.0f),
     };
 
@@ -378,12 +388,32 @@ void SurfaceAnalysisTest::_nonFiniteHeights()
     QList<float> heights(kVertexCount, 10.0f);
     heights[3] = std::numeric_limits<float>::quiet_NaN();
     heights[7] = std::numeric_limits<float>::infinity();
-    const QList<SurfaceModel::Patch> patches{SurfaceModel::Patch{kWestKey, heights, true, false}};
+    const QList<SurfaceModel::Patch> patches{makePatch(kWestKey, heights, true, false)};
 
     const SurfaceAnalysis::Report report = SurfaceAnalysis::analyze(patches, kGridSize, kSeamsOnly);
     QCOMPARE(report.badHeights.count(), 1);
     QCOMPARE(report.badHeights.first().key, kWestKey);
     QCOMPARE(report.badHeights.first().count, 2);
+}
+
+void SurfaceAnalysisTest::_inPatchEdgeStepsAboveThresholdReported()
+{
+    // Identical boundaries by design make the seam check blind to steps one
+    // cell inside a patch edge: those come from the cliff monitor instead
+    SurfaceModel::Patch stepped = readyPatch(kWestKey, 0.0f);
+    stepped.edgeStep = 12.0f;
+    stepped.edgeStepAt = worldRect(kWestKey).center();
+    stepped.edgeCliff = true;
+    // Measured but gentle: a slope, not a cliff
+    SurfaceModel::Patch belowThreshold = readyPatch(kEastKey, 0.0f);
+    belowThreshold.edgeStep = 3.0f;
+
+    const SurfaceAnalysis::Report report = SurfaceAnalysis::analyze({belowThreshold, stepped}, kGridSize, kSeamsOnly);
+    QVERIFY(report.seams.isEmpty());
+    QCOMPARE(report.inPatchSteps.count(), 1);
+    QCOMPARE(report.inPatchSteps.first().patch, kWestKey);
+    QCOMPARE(report.inPatchSteps.first().step, 12.0);
+    QVERIFY(report.text().contains("12.0 m in-patch step"));
 }
 
 void SurfaceAnalysisTest::_reportText()

@@ -44,7 +44,7 @@ GeoMap {
 
     function _updateActiveVehicleHomeTerrainBias() {
         if (root.surfaceModel && root._activeVehicle && root._activeVehicle.homePosition.isValid && !isNaN(root._activeVehicle.homePosition.altitude)) {
-            root._activeVehicleHomeTerrainBias = root.surfaceModel.terrainHeightAt(root._activeVehicle.homePosition) - root._activeVehicle.homePosition.altitude
+            root._activeVehicleHomeTerrainBias = root.surfaceModel.terrainDataHeightAt(root._activeVehicle.homePosition) - root._activeVehicle.homePosition.altitude
         } else {
             root._activeVehicleHomeTerrainBias = 0
         }

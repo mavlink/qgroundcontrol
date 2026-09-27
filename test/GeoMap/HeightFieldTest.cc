@@ -262,6 +262,114 @@ void HeightFieldTest::_crossZoomVertexIdentity()
     }
 }
 
+void HeightFieldTest::_edgeMismatchRampsAcrossInterior_data()
+{
+    QTest::addColumn<bool>("ancestorBacked");
+    QTest::addColumn<float>("ownHeight");
+
+    QTest::newRow("ancestor-backed interior") << true << 100.0f;
+    QTest::newRow("no-data interior") << false << 0.0f;
+}
+
+void HeightFieldTest::_edgeMismatchRampsAcrossInterior()
+{
+    QFETCH(bool, ancestorBacked);
+    QFETCH(float, ownHeight);
+
+    HeightField field;
+    if (ancestorBacked) {
+        QVERIFY(field.insertTile(TileKey{0, 0, 0}, uniformGrid(ownHeight)));
+    }
+    constexpr float neighborHeight = 200.0f;
+    QVERIFY(field.insertTile(TileKey{6, 6, 3}, uniformGrid(neighborHeight)));
+
+    // A's east edge canonically takes neighbor B's data: the mismatch must ramp
+    // in across A's interior, not drop in the last cell (a cliff)
+    constexpr int gridSize = 16;
+    const QList<float> heights = field.samplePatch(TileKey{5, 6, 3}, gridSize);
+    const auto at = [&heights](int row, int col) { return heights[(row * (gridSize + 1)) + col]; };
+    const float mismatch = neighborHeight - ownHeight;
+    for (int row = 0; row < gridSize; row++) {
+        QCOMPARE(at(row, gridSize), neighborHeight);
+        QCOMPARE(at(row, 0), ownHeight);
+    }
+    for (int row = 1; row < gridSize; row++) {
+        for (int col = 1; col < gridSize; col++) {
+            QCOMPARE_GE(at(row, col), ownHeight);
+            QCOMPARE_LE(at(row, col), neighborHeight);
+            QCOMPARE_LE(at(row, col - 1), at(row, col));
+        }
+        // Corners pin two disagreeing edges together; mid-edge has room to spread
+        if ((row >= (gridSize / 4)) && (row <= ((3 * gridSize) / 4))) {
+            QCOMPARE_LT(at(row, gridSize) - at(row, gridSize - 1), mismatch / 10.0f);
+        }
+    }
+}
+
+void HeightFieldTest::_edgeStepMeasuresRenderedStep_data()
+{
+    QTest::addColumn<bool>("ancestorBacked");
+    QTest::addColumn<int>("ownZoom");
+
+    QTest::newRow("ancestor-backed interior") << true << 0;
+    QTest::newRow("no-data interior") << false << -1;
+}
+
+void HeightFieldTest::_edgeStepMeasuresRenderedStep()
+{
+    QFETCH(bool, ancestorBacked);
+    QFETCH(int, ownZoom);
+
+    HeightField field;
+    if (ancestorBacked) {
+        QVERIFY(field.insertTile(TileKey{0, 0, 0}, uniformGrid(100.0f)));
+    }
+    QVERIFY(field.insertTile(TileKey{6, 6, 3}, uniformGrid(200.0f)));
+
+    constexpr int gridSize = 16;
+    PatchSampler::EdgeStep edgeStep;
+    const QList<float> heights = field.samplePatch(TileKey{5, 6, 3}, gridSize, &edgeStep);
+    const auto at = [&heights](int row, int col) { return heights[(row * (gridSize + 1)) + col]; };
+
+    // Uniform own data has no natural slope, so the metric must equal the
+    // largest rendered one-cell step off A's east edge (inward neighbor),
+    // away from the corners' expected notches
+    float rendered = 0.0f;
+    for (int row = gridSize / 4; row <= ((3 * gridSize) / 4); row++) {
+        rendered = std::max(rendered, std::abs(at(row, gridSize) - at(row, gridSize - 1)));
+    }
+    QCOMPARE_LT(std::abs(edgeStep.step - rendered), 1e-3f);
+    QCOMPARE_GT(edgeStep.step, 0.0f);
+    QCOMPARE(edgeStep.col, gridSize);
+    QCOMPARE(edgeStep.ownZoom, ownZoom);
+    QCOMPARE(edgeStep.boundaryZoom, 3);
+}
+
+void HeightFieldTest::_edgeStepNoneForSharedBacking()
+{
+    HeightField field;
+    QVERIFY(field.insertTile(TileKey{0, 0, 0}, gradientGrid()));
+
+    // Every vertex resolves to the same z0 tile: nothing to step between
+    PatchSampler::EdgeStep edgeStep;
+    field.samplePatch(TileKey{5, 6, 3}, 4, &edgeStep);
+    QCOMPARE(edgeStep.step, 0.0f);
+    QCOMPARE(edgeStep.boundaryZoom, -1);
+}
+
+void HeightFieldTest::_edgeStepNoneForSameZoomNeighbors()
+{
+    HeightField field;
+    QVERIFY(field.insertTile(TileKey{5, 6, 3}, gradientGrid()));
+    QVERIFY(field.insertTile(TileKey{6, 6, 3}, transposedGradientGrid()));
+
+    // Adjacent exact tiles of the same zoom differ only by edge clamping: real data both sides, not a cliff
+    PatchSampler::EdgeStep edgeStep;
+    field.samplePatch(TileKey{5, 6, 3}, 4, &edgeStep);
+    QCOMPARE(edgeStep.step, 0.0f);
+    QCOMPARE(edgeStep.boundaryZoom, -1);
+}
+
 void HeightFieldTest::_regionChangedOnInsert()
 {
     HeightField field;

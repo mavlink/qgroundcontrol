@@ -53,7 +53,7 @@ GeoMapItem {
 
     function _updateHomeTerrainBias() {
         if (surfaceModel && vehicle && vehicle.homePosition.isValid && !isNaN(vehicle.homePosition.altitude)) {
-            _homeTerrainBias = surfaceModel.terrainHeightAt(vehicle.homePosition) - vehicle.homePosition.altitude
+            _homeTerrainBias = surfaceModel.terrainDataHeightAt(vehicle.homePosition) - vehicle.homePosition.altitude
         } else {
             _homeTerrainBias = 0
         }

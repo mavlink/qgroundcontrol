@@ -13,6 +13,7 @@
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QHash>
 #include <QtCore/QList>
+#include <QtCore/QPointF>
 #include <QtCore/QSet>
 #include <QtCore/QString>
 #include <QtCore/QStringList>
@@ -102,13 +103,19 @@ public:
     /// whenever the surface model is rebuilt.
     HeightField* heightField() const { return _heightField; }
 
-    /// Best-estimate terrain height (true meters) at a coordinate: real data
-    /// where loaded, coarser estimate or 0 elsewhere (see HeightField). Emits
-    /// terrainHeightsChanged as estimates improve.
+    /// Terrain height (true meters) at a coordinate as rendered: the patch mesh
+    /// where a patch draws, else the field's estimate (real data, coarser
+    /// estimate, or 0; see HeightField). Emits terrainHeightsChanged when
+    /// either changes.
     Q_INVOKABLE double terrainHeightAt(const QGeoCoordinate& coordinate) const;
 
+    /// The field's estimate alone (see HeightField), independent of the drawn
+    /// detail level: for the camera pivot and altitude datums, where following
+    /// the mesh would couple them to patch churn.
+    Q_INVOKABLE double terrainDataHeightAt(const QGeoCoordinate& coordinate) const;
+
     /// Coordinate of the rendered surface under screenPos: marches the camera's
-    /// pick ray to its first crossing of z = heightAt(x, y) * zScale, so the pick
+    /// pick ray to its first crossing of z = terrain height(x, y) * zScale, so the pick
     /// lands on the visible front surface and ridges occlude the ground behind
     /// them. zScale is the height-to-scene-z factor (verticalScale * terrainScale,
     /// never negative); 0 reduces to a flat z=0 plane pick. The march is capped at
@@ -191,6 +198,7 @@ private slots:
 
 private:
     void _rebuildSurfaceModel();
+    double _surfaceHeightAt(const QPointF& world) const;
     void _resetImagery();
     void _requestTileImage(const TileMath::TileKey& key);
     void _retryFailedImages();

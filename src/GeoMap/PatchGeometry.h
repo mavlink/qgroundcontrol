@@ -117,7 +117,6 @@ private:
     /// immediate otherwise (C++ construction is always "complete")
     void _requestRebuild();
     float _heightAt(int row, int col) const;
-    float _rawHeightAt(int row, int col) const;
 
     int _gridSize = 16;
     qreal _span = 1000.0;

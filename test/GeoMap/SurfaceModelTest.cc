@@ -1,22 +1,28 @@
 #include "SurfaceModelTest.h"
 
+#include <algorithm>
+#include <cmath>
+#include <cstring>
+#include <optional>
+#include <utility>
+
 #include <QtCore/QByteArray>
 #include <QtCore/QCoreApplication>
 #include <QtCore/QHash>
 #include <QtCore/QLatin1StringView>
+#include <QtCore/QScopeGuard>
 #include <QtCore/QSet>
+#include <QtCore/QtNumeric>
 #include <QtTest/QSignalSpy>
 
-#include <algorithm>
-#include <cmath>
-#include <cstring>
-#include <utility>
-
 #include "ElevationTilePyramid.h"
+#include "Fact.h"
+#include "FlyViewSettings.h"
 #include "GeoMapCamera.h"
 #include "HeightField.h"
 #include "HeightSource.h"
 #include "PatchGeometry.h"
+#include "SettingsManager.h"
 #include "SurfaceModel.h"
 #include "TileMath.h"
 
@@ -39,6 +45,19 @@ QRectF tileRect(const TileMath::TileKey& key)
 {
     const double span = TileMath::tileSpanAtZoom(key.zoom);
     return QRectF(TileMath::tileMinCorner(key), QSizeF(span, span));
+}
+
+/// East neighbor of the patch reaching furthest east: outside every resident
+/// patch and its ancestors, yet touched by that patch's east edge vertices
+std::pair<TileMath::TileKey, TileMath::TileKey> edgeAndEastNeighbor(const QList<SurfaceModel::Patch>& patches)
+{
+    TileMath::TileKey edge = patches.first().key;
+    for (const SurfaceModel::Patch& patch : patches) {
+        if (tileRect(patch.key).right() > tileRect(edge).right()) {
+            edge = patch.key;
+        }
+    }
+    return {edge, TileMath::TileKey{edge.x + 1, edge.y, edge.zoom}};
 }
 
 /// Inflated-rect region contact, matching the model's re-mesh predicate:
@@ -979,11 +998,22 @@ void SurfaceModelTest::_coverageAfterInteractiveGesture()
     }
 }
 
+void SurfaceModelTest::_pinsPatchBackingTiles_data()
+{
+    QTest::addColumn<bool>("acrossEdge");
+
+    QTest::newRow("resident patch's own tile") << false;
+    QTest::newRow("tile across a resident patch's edge") << true;
+}
+
 void SurfaceModelTest::_pinsPatchBackingTiles()
 {
-    // Tiles that back resident patches (their keys and resolving ancestors)
-    // must be pinned against LRU eviction: an evicted backing tile silently
+    // Tiles that back resident patches must be pinned against LRU eviction:
+    // their own keys and ancestors, and the neighbors' too, since boundary
+    // vertices resolve into neighbor cells. An evicted backing tile silently
     // coarsens a rendered mesh next to an intact neighbor — a cliff
+    QFETCH(bool, acrossEdge);
+
     GeoMapCamera camera;
     FlatHeightSource source;
     HeightField field;
@@ -993,15 +1023,169 @@ void SurfaceModelTest::_pinsPatchBackingTiles()
     model.drainUpdates();
     QCOMPARE_GT(model.patchCount(), 0);
 
-    // Give one resident patch backing data at its own key, then flood with
-    // unrelated tiles far past the pyramid cap
-    const TileMath::TileKey backingKey = model.patches().first().key;
+    // Give it backing data, then flood with unrelated tiles far past the pyramid cap
+    const TileMath::TileKey backingKey =
+        acrossEdge ? edgeAndEastNeighbor(model.patches()).second : model.patches().first().key;
     QVERIFY(field.insertTile(backingKey, constantGrid(123.0f)));
     for (int i = 0; i < ElevationTilePyramid::kMaxTiles + 8; i++) {
         QVERIFY(field.insertTile(TileMath::TileKey{i, 200, 9}, constantGrid(1.0f)));
     }
 
     QVERIFY2(field.hasTile(backingKey), "patch-backing tile was evicted");
+}
+
+void SurfaceModelTest::_renderedHeightFollowsMesh()
+{
+    // Consumers seat items on what is drawn: the rendered height must follow
+    // the patch mesh (edge blend included), not the raw field estimate, and be
+    // current by the time consumers are notified
+    GeoMapCamera camera;
+    FlatHeightSource source;
+    HeightField field;
+    SurfaceModel model(&camera, &source, &field);
+    camera.setViewportSize(kViewport);
+    camera.lookAt(kCenter, 0, 0, 2000);
+    model.drainUpdates();
+    QCOMPARE_GT(model.patchCount(), 0);
+
+    const auto [edgeKey, eastKey] = edgeAndEastNeighbor(model.patches());
+    constexpr int gridSize = SurfaceModel::kGridSize;
+    constexpr int row = gridSize / 2;
+    constexpr int col = gridSize - 1;
+    const QRectF rect = tileRect(edgeKey);
+    const double cell = rect.width() / gridSize;
+    const QPointF vertex(rect.left() + (col * cell), (rect.top() + rect.height()) - (row * cell));
+
+    double heightAtSignal = qQNaN();
+    connect(&model, &SurfaceModel::surfaceHeightsChanged, this,
+            [&]() { heightAtSignal = model.renderedHeightAt(vertex).value_or(qQNaN()); });
+    QVERIFY(field.insertTile(TileMath::TileKey{0, 0, 0}, constantGrid(100.0f)));
+    QVERIFY(field.insertTile(eastKey, constantGrid(110.0f)));
+
+    const float meshHeight = model.patch(edgeKey)->heights.at((row * (gridSize + 1)) + col);
+    QCOMPARE(model.renderedHeightAt(vertex).value_or(qQNaN()), double(meshHeight));
+    QCOMPARE_GT(double(meshHeight), field.heightAt(vertex));  // blend lifts it toward the neighbor
+    QCOMPARE(heightAtSignal, double(meshHeight));
+
+    // Exactly on the patch set's exposed east and south edges the patch drawing them still answers
+    const QList<SurfaceModel::Patch> patches = model.patches();
+    const auto southmost = std::min_element(patches.cbegin(), patches.cend(), [](const auto& a, const auto& b) {
+        return tileRect(a.key).top() < tileRect(b.key).top();
+    });
+    const QRectF southRect = tileRect(southmost->key);
+    const auto meshAt = [&](const TileMath::TileKey& key, int vertexRow, int vertexCol) {
+        return double(model.patch(key)->heights.at((vertexRow * (gridSize + 1)) + vertexCol));
+    };
+    QCOMPARE(model.renderedHeightAt(QPointF(rect.right(), vertex.y())).value_or(qQNaN()),
+             meshAt(edgeKey, row, gridSize));
+    QCOMPARE(model.renderedHeightAt(QPointF(southRect.center().x(), southRect.top())).value_or(qQNaN()),
+             meshAt(southmost->key, gridSize, gridSize / 2));
+
+    // Beyond the resident patches nothing renders
+    QVERIFY(!model.renderedHeightAt(TileMath::geoToWorld(QGeoCoordinate(-40.0, -120.0))).has_value());
+}
+
+void SurfaceModelTest::_renderedHeightFollowsStitchedEdges()
+{
+    // Against a coarser neighbor the drawn edge runs straight between the
+    // coincident vertices: heights there must follow it, not the raw samples
+    GeoMapCamera camera;
+    DebugHeightSource source;
+    HeightField field;
+    source.setHeightField(&field);
+    SurfaceModel model(&camera, &source, &field);
+    camera.setViewportSize(kViewport);
+    camera.lookAt(kCenter, 0, 45, 2000);
+    model.drainUpdates();
+
+    struct Probe
+    {
+        QPointF world;
+        double drawn = 0.0;
+    };
+
+    constexpr int gridSize = SurfaceModel::kGridSize;
+    // East-edge vertex midway between two coincident ones, where the hills pull the raw sample off the drawn segment
+    const auto findProbe = [&]() -> std::optional<Probe> {
+        for (const SurfaceModel::Patch& patch : model.patches()) {
+            const int delta = model.edgeLodDeltas(patch.key).at(3);
+            if ((delta <= 0) || (patch.heights.count() != ((gridSize + 1) * (gridSize + 1)))) {
+                continue;
+            }
+            const int step = 1 << delta;
+            const auto eastHeight = [&](int row) {
+                return double(patch.heights.at((row * (gridSize + 1)) + gridSize));
+            };
+            const QRectF rect = tileRect(patch.key);
+            const double cell = rect.width() / gridSize;
+            for (int base = 0; (base + step) <= gridSize; base += step) {
+                const int row = base + (step / 2);
+                const double drawn = (eastHeight(base) + eastHeight(base + step)) / 2.0;
+                if (std::abs(eastHeight(row) - drawn) > 0.01) {
+                    // Just inside the edge: exactly on it, the coarser neighbor answers
+                    return Probe{QPointF(rect.right() - (cell * 1e-6), rect.bottom() - (row * cell)), drawn};
+                }
+            }
+        }
+        return std::nullopt;
+    };
+    QTRY_VERIFY_WITH_TIMEOUT(findProbe().has_value(), TestTimeout::mediumMs());
+
+    const Probe probe = *findProbe();
+    QCOMPARE_LT(std::abs(model.renderedHeightAt(probe.world).value_or(qQNaN()) - probe.drawn), 1e-3);
+}
+
+void SurfaceModelTest::_surfaceHeightsNotifiedOnPatchChurn()
+{
+    // Replacing patches changes what is drawn without any field change
+    GeoMapCamera camera;
+    FlatHeightSource source;
+    HeightField field;
+    SurfaceModel model(&camera, &source, &field);
+    camera.setViewportSize(kViewport);
+    camera.lookAt(kCenter, 0, 0, 2000);
+    model.drainUpdates();
+
+    QSignalSpy heightsSpy(&model, &SurfaceModel::surfaceHeightsChanged);
+    camera.lookAt(kCenter, 0, 0, 500);
+    model.drainUpdates();
+    QCOMPARE_GE(heightsSpy.count(), 1);
+
+    // An identical pass changes nothing and stays silent
+    heightsSpy.clear();
+    model.update();
+    QCOMPARE(heightsSpy.count(), 0);
+}
+
+void SurfaceModelTest::_cliffMonitorFollowsSetting()
+{
+    Fact* const debugUI = SettingsManager::instance()->flyViewSettings()->geoMapDebugUI();
+    const QVariant saved = debugUI->rawValue();
+    const auto restore = qScopeGuard([debugUI, saved] { debugUI->setRawValue(saved); });
+    debugUI->setRawValue(true);
+
+    GeoMapCamera camera;
+    FlatHeightSource source;
+    HeightField field;
+    SurfaceModel model(&camera, &source, &field);
+    camera.setViewportSize(kViewport);
+    camera.lookAt(kCenter, 0, 0, 2000);
+    model.drainUpdates();
+    QCOMPARE_GT(model.patchCount(), 0);
+
+    // A small data mismatch across the edge patch's east boundary: measured,
+    // but far too gentle to log as a cliff
+    const auto [edgeKey, eastKey] = edgeAndEastNeighbor(model.patches());
+    QVERIFY(field.insertTile(TileMath::TileKey{0, 0, 0}, constantGrid(100.0f)));
+    QVERIFY(field.insertTile(eastKey, constantGrid(110.0f)));
+    QCOMPARE_GT(model.patch(edgeKey)->edgeStep, 0.0f);
+
+    // Toggling must take effect on resident patches immediately, not on each
+    // patch's next data change
+    debugUI->setRawValue(false);
+    QCOMPARE(model.patch(edgeKey)->edgeStep, 0.0f);
+    debugUI->setRawValue(true);
+    QCOMPARE_GT(model.patch(edgeKey)->edgeStep, 0.0f);
 }
 
 UT_REGISTER_TEST_LIGHTWEIGHT(SurfaceModelTest, TestLabel::Unit)

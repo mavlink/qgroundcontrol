@@ -1,5 +1,10 @@
 #include "TerrariumTileFetcherTest.h"
 
+#include <algorithm>
+#include <cstring>
+#include <limits>
+#include <utility>
+
 #include <QtCore/QBuffer>
 #include <QtCore/QPointer>
 #include <QtCore/QRegularExpression>
@@ -9,10 +14,6 @@
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkReply>
 #include <QtTest/QSignalSpy>
-
-#include <algorithm>
-#include <cstring>
-#include <limits>
 
 #include "ElevationMapProvider.h"
 #include "HeightField.h"
@@ -175,20 +176,29 @@ void TerrariumTileFetcherTest::_patchSamplingMatchesFieldSampling()
     TerrariumTileFetcher source;
     source.setHeightField(&field);
     QSignalSpy readySpy(&source, &HeightSource::patchHeightsReady);
-    QSignalSpy regionSpy(&field, &HeightField::regionChanged);
 
     const TileMath::TileKey key = keyOver(linearSlopeRegion().center(), kFineZoom);
     const int requestId = source.requestPatchHeights(key, kGridSize);
     QVERIFY(source.requestTile(key));
 
     QTRY_COMPARE_WITH_TIMEOUT(readySpy.count(), 1, TestTimeout::mediumMs());
-    QTRY_COMPARE_WITH_TIMEOUT(regionSpy.count(), 1, TestTimeout::mediumMs());
+    // Inserted only after its anchors
+    QTRY_VERIFY_WITH_TIMEOUT(field.hasTile(key), TestTimeout::mediumMs());
     QCOMPARE(readySpy.first().at(0).toInt(), requestId);
 
+    // South row and east column resolve canonically into the neighbors' cells
+    // (the anchor there) and the interior absorbs that mismatch, so only the
+    // boundary vertices owned by this tile (north row, west column) must match
     const auto imageHeights = readySpy.first().at(1).value<QList<float>>();
     const QList<float> fieldHeights = field.samplePatch(key, kGridSize);
     QCOMPARE(imageHeights.count(), kExpectedCount);
-    QCOMPARE(fieldHeights, imageHeights);
+    QCOMPARE(fieldHeights.count(), kExpectedCount);
+    for (int i = 0; i < kGridSize; i++) {
+        const int northIndex = i;
+        const int westIndex = i * (kGridSize + 1);
+        QCOMPARE(fieldHeights.at(northIndex), imageHeights.at(northIndex));
+        QCOMPARE(fieldHeights.at(westIndex), imageHeights.at(westIndex));
+    }
 }
 
 void TerrariumTileFetcherTest::_coarseZoomDeliversRealTerrain()
@@ -578,15 +588,14 @@ void TerrariumTileFetcherTest::_tileRequestPopulatesField()
     HeightField field;
     TerrariumTileFetcher source;
     source.setHeightField(&field);
-    QSignalSpy regionSpy(&field, &HeightField::regionChanged);
-    QVERIFY(regionSpy.isValid());
 
     const TileMath::TileKey key = keyOver(flat10Region().center(), kFineZoom);
     QVERIFY(source.requestTile(key));
     QCOMPARE(field.tileCount(), 0);  // delivery is async, never re-entrant
 
-    QTRY_COMPARE_WITH_TIMEOUT(regionSpy.count(), 1, TestTimeout::mediumMs());
-    QCOMPARE(field.tileCount(), 1);
+    // Inserted only after its anchors
+    QTRY_VERIFY_WITH_TIMEOUT(field.hasTile(key), TestTimeout::mediumMs());
+    QCOMPARE_GE(field.tileCount(), 2);
 
     // 10m encodes exactly in terrarium quanta; bilinear blend of equal corners
     // may differ by rounding only
@@ -601,7 +610,6 @@ void TerrariumTileFetcherTest::_deepZoomTileRequestFetchesAncestor()
     HeightField field;
     TerrariumTileFetcher source;
     source.setHeightField(&field);
-    QSignalSpy regionSpy(&field, &HeightField::regionChanged);
 
     constexpr int deepZoom = 18;
     const TileMath::TileKey key = keyOver(flat10Region().center(), deepZoom);
@@ -612,9 +620,9 @@ void TerrariumTileFetcherTest::_deepZoomTileRequestFetchesAncestor()
     QCOMPARE(fetched.x, key.x >> (deepZoom - TerrariumTileFetcher::kMaxTileZoom));
     QCOMPARE(fetched.y, key.y >> (deepZoom - TerrariumTileFetcher::kMaxTileZoom));
 
-    QTRY_COMPARE_WITH_TIMEOUT(regionSpy.count(), 1, TestTimeout::mediumMs());
-    QCOMPARE(field.tileCount(), 1);
-    QCOMPARE(regionSpy[0][0].toRectF().width(), TileMath::tileSpanAtZoom(TerrariumTileFetcher::kMaxTileZoom));
+    // Inserted only after its anchors
+    QTRY_VERIFY_WITH_TIMEOUT(field.hasTile(fetched), TestTimeout::mediumMs());
+    QCOMPARE_GE(field.tileCount(), 2);
 
     const double height = field.heightAt(TileMath::geoToWorld(flat10Region().center()));
     QCOMPARE_LT(qAbs(height - UnitTestTerrainData::Flat10Region::amslElevation), 0.01);
@@ -750,6 +758,80 @@ void TerrariumTileFetcherTest::_tileRequestGuards()
 
     QCOMPARE(nam.requestCount, 0);
     QCOMPARE(field.tileCount(), 0);
+}
+
+void TerrariumTileFetcherTest::_fineTileHeldUntilAnchorsArrive_data()
+{
+    QTest::addColumn<double>("longitudeOffset");
+    QTest::addColumn<int>("fineX");
+    QTest::addColumn<int>("fineY");
+    QTest::addColumn<int>("anchorCount");
+
+    // Longitude offsets keep each row's anchors apart and off the test regions:
+    // no other test writes tiles back to the shared cache there
+    QTest::newRow("inside its anchor") << 1.0 << 8 << 8 << 1;
+    QTest::newRow("on its anchor's west edge") << 2.0 << 0 << 8 << 2;
+    QTest::newRow("in its anchor's NW corner") << 3.0 << 0 << 0 << 4;
+}
+
+void TerrariumTileFetcherTest::_fineTileHeldUntilAnchorsArrive()
+{
+    QFETCH(double, longitudeOffset);
+    QFETCH(int, fineX);
+    QFETCH(int, fineY);
+    QFETCH(int, anchorCount);
+
+    const QGeoCoordinate coord(flat10Region().center().latitude(),
+                               flat10Region().center().longitude() + longitudeOffset);
+    const TileMath::TileKey anchor = keyOver(coord, TerrariumTileFetcher::kAnchorZoom);
+    const int shift = kFineZoom - TerrariumTileFetcher::kAnchorZoom;
+    const TileMath::TileKey key{(anchor.x << shift) + fineX, (anchor.y << shift) + fineY, kFineZoom};
+
+    MockNam nam;
+    nam.body = UnitTestTileGenerator::syntheticTerrariumTileData(key.x, key.y, key.zoom);
+    nam.holdReplies = true;
+    HeightField field;
+    TerrariumTileFetcher source(nullptr, &nam);
+    source.setHeightField(&field);
+    QSignalSpy regionSpy(&field, &HeightField::regionChanged);
+
+    UnitTestTileGenerator::setForcedMissCount(anchorCount + 1);
+    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+
+    // A fine tile request also fetches the anchor of every tile it touches:
+    // its own, plus the neighbors' across an anchor boundary
+    QVERIFY(source.requestTile(key));
+    QTRY_COMPARE_WITH_TIMEOUT(nam.requestCount, anchorCount + 1, TestTimeout::mediumMs());
+    const QString finePath = QStringLiteral("/%1/%2/%3.png").arg(key.zoom).arg(key.x).arg(key.y);
+    CannedReply* fineReply = nullptr;
+    QList<CannedReply*> anchorReplies;
+    for (CannedReply* const reply : std::as_const(nam.replies)) {
+        if (reply->request().url().path().endsWith(finePath)) {
+            fineReply = reply;
+        } else {
+            anchorReplies.append(reply);
+        }
+    }
+    QVERIFY(fineReply);
+    QCOMPARE(anchorReplies.count(), anchorCount);
+
+    // Fine tile first: inserting it now would leave neighbors without any data
+    // rendering 0 m next to real terrain
+    fineReply->finishNormally();
+    QVERIFY_NO_SIGNAL_WAIT(regionSpy, TestTimeout::shortMs());
+    QCOMPARE(field.tileCount(), 0);
+
+    for (int i = 0; i < (anchorCount - 1); i++) {
+        anchorReplies.at(i)->finishNormally();
+        QTRY_COMPARE_WITH_TIMEOUT(field.tileCount(), i + 1, TestTimeout::mediumMs());
+        QVERIFY(!field.hasTile(key));
+    }
+    anchorReplies.last()->finishNormally();
+    QTRY_VERIFY_WITH_TIMEOUT(field.hasTile(key), TestTimeout::mediumMs());
+    QCOMPARE(field.tileCount(), anchorCount + 1);
+    QVERIFY(field.hasTile(anchor));
+    QCOMPARE(regionSpy.count(), anchorCount + 1);
+    QCOMPARE(regionSpy.last()[0].toRectF().width(), TileMath::tileSpanAtZoom(kFineZoom));
 }
 
 UT_REGISTER_TEST(TerrariumTileFetcherTest, TestLabel::Integration, TestLabel::Terrain)

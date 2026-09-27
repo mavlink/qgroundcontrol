@@ -88,7 +88,7 @@ Item {
 
     function _updateHomeTerrainBias() {
         if (_activeVehicle && _activeVehicle.homePosition.isValid && !isNaN(_activeVehicle.homePosition.altitude)) {
-            _homeTerrainBias = patchModel.terrainHeightAt(_activeVehicle.homePosition) - _activeVehicle.homePosition.altitude
+            _homeTerrainBias = patchModel.terrainDataHeightAt(_activeVehicle.homePosition) - _activeVehicle.homePosition.altitude
         } else {
             _homeTerrainBias = 0
         }
@@ -137,11 +137,12 @@ Item {
         recenterAnimation.stop()
     }
 
-    // Keep the camera's look-at point riding the rendered surface: without
-    // this the orbit center stays at z=0 and a close-zoom 2D->3D switch over
-    // high terrain puts the camera under the mesh (blank view)
+    // Keep the camera's look-at point riding the terrain data, not the drawn
+    // mesh: the pivot feeds LOD selection, so following patch churn would loop.
+    // Without this the orbit center stays at z=0 and a close-zoom 2D->3D switch
+    // over high terrain puts the camera under the mesh (blank view)
     function _updateCenterElevation() {
-        geoCamera.centerElevation = patchModel.terrainHeightAt(geoCamera.center)
+        geoCamera.centerElevation = patchModel.terrainDataHeightAt(geoCamera.center)
                                     * geoScene.verticalScale * geoScene.terrainScale
     }
 
@@ -218,7 +219,7 @@ Item {
             // the elevation the pivot will settle to at the destination
             let target = geoScene.centerForCoordinateAtScreenPoint(root._trackedVehicleCoordinate, screenPoint)
             target = geoScene.centerForCoordinateAtScreenPoint(root._trackedVehicleCoordinate, screenPoint,
-                                                               patchModel.terrainHeightAt(target))
+                                                               patchModel.terrainDataHeightAt(target))
             recenterAnimation.to = target
             recenterAnimation.start()
         }

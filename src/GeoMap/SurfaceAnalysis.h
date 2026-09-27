@@ -13,6 +13,9 @@
 ///  - coverage holes: visible screen points with no rendered geometry under them
 ///  - camera below the rendered surface (view clips into the mesh)
 ///  - seams: height discontinuities ("cliffs") along patch boundaries
+///  - in-patch edge steps: neighbor data dropping in one cell inside a patch
+///    edge (boundaries match by design, so seams can't see these; measured
+///    by the cliff monitor while the GeoMap debug UI is on)
 ///  - non-finite height data (NaN/inf vertices)
 namespace SurfaceAnalysis {
 
@@ -57,6 +60,13 @@ struct BadHeights
     int count = 0;  ///< non-finite vertices in the patch
 };
 
+struct InPatchStep
+{
+    TileMath::TileKey patch;
+    double step = 0.0;  ///< see SurfaceModel::Patch::edgeStep (m)
+    QGeoCoordinate at;
+};
+
 /// Camera-view context for the checks that need more than the patch set.
 /// groundSamples come from unprojecting screen points, so they catch holes
 /// the model's own visible-region estimate cannot see. When cameraGround,
@@ -75,6 +85,7 @@ struct Report
     QList<Seam> seams;                ///< sorted by maxStep, largest first
     QList<Hole> holes;                ///< one entry per uncovered sample point
     QList<BadHeights> badHeights;
+    QList<InPatchStep> inPatchSteps;  ///< cliff-monitor steps steep enough to log, largest first
     int totalSamples = 0;             ///< coverage sample points tested (0 = hole check skipped)
     int rendered = 0;                 ///< patches participating (ready, or rendering flat uncovered)
     int pending = 0;                  ///< rendered flat: heights still loading

@@ -367,6 +367,22 @@ QString Report::text() const
             out += QStringLiteral("   %1x %2\n").arg(it.value()).arg(seamCauseDescription(it.key()));
         }
     }
+
+    out += QStringLiteral("In-patch edge cliffs (cliff monitor): %1\n").arg(inPatchSteps.count());
+    for (qsizetype i = 0; i < std::min(inPatchSteps.count(), kMaxListed); i++) {
+        const InPatchStep& step = inPatchSteps.at(i);
+        out += QStringLiteral("%1. %2 m in-patch step at %3,%4 - zoom %5 tile (%6,%7)\n")
+                   .arg(i + 1)
+                   .arg(step.step, 0, 'f', 1)
+                   .arg(step.at.latitude(), 0, 'f', 5)
+                   .arg(step.at.longitude(), 0, 'f', 5)
+                   .arg(step.patch.zoom)
+                   .arg(step.patch.x)
+                   .arg(step.patch.y);
+    }
+    if (inPatchSteps.count() > kMaxListed) {
+        out += QStringLiteral("... %1 more not listed\n").arg(inPatchSteps.count() - kMaxListed);
+    }
     return out;
 }
 
@@ -531,10 +547,16 @@ Report analyze(const QList<SurfaceModel::Patch>& patches, int gridSize, const Vi
                                          TileMath::worldToGeo(worstWorld), classify(patch, *neighbor)});
             }
         }
+
+        if (patch.edgeCliff) {
+            report.inPatchSteps.append(InPatchStep{key, patch.edgeStep, TileMath::worldToGeo(patch.edgeStepAt)});
+        }
     }
 
     std::sort(report.seams.begin(), report.seams.end(),
               [](const Seam& a, const Seam& b) { return a.maxStep > b.maxStep; });
+    std::sort(report.inPatchSteps.begin(), report.inPatchSteps.end(),
+              [](const InPatchStep& a, const InPatchStep& b) { return a.step > b.step; });
     return report;
 }
 

@@ -62,6 +62,10 @@ thr = "thr"
 # Geographic/organizational acronyms
 LINZ = "LINZ"  # Land Information New Zealand
 
+# Graphics terms
+LOD = "LOD"  # level of detail
+PN = "PN"  # typos splits "PNGs" into "PN" + "Gs"
+
 [files]
 extend-exclude = [
     "build/",

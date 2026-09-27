@@ -21,6 +21,8 @@ private slots:
     void _resampleAfterFieldGainsData();
     void _stitchedEdgeLiesOnCoarseSegments();
     void _stitchedNorthEdgeLiesOnCoarseRenderedRow();
+    void _surfaceHeightMatchesDrawnTriangles_data();
+    void _surfaceHeightMatchesDrawnTriangles();
     void _stitchAppliesToAllFourEdges();
     void _stitchInvalidDeltaWarns();
     void _declarativeHeightsStitchLikeSampleFromField();
