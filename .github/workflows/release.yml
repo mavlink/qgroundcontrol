@@ -68,6 +68,16 @@ jobs:
             echo "No new release"
           fi
 
+  publish-qgc-dev:
+    needs: semantic-release
+    if: needs.semantic-release.outputs.new_release == 'true'
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/qgc-dev.yml
+    with:
+      release_tag: v${{ needs.semantic-release.outputs.version }}
+
   wait-for-builds:
     name: Wait for Platform Builds
     needs: semantic-release

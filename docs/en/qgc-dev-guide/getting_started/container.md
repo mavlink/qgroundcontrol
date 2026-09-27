@@ -35,20 +35,9 @@ The `-t` flag is essential.
 Keep in mind this is tagging the image for later reference since you can have multiple builds of the same container
 :::
 
-::: info
-If building on a Mac computer with an M1 chip you must also specify the build option `--platform linux/x86_64` as shown:
-
-```sh
-docker build --platform linux/x86_64 --target linux --file ./deploy/docker/Dockerfile -t qgc-ubuntu-docker .
-```
-
-Otherwise you will get a build error like:
-
-```sh
-qemu-x86_64: Could not open '/lib64/ld-linux-x86-64.so.2': No such file or directory
-```
-
-:::
+The native Linux target selects the matching Qt kit on amd64 and ARM64 hosts,
+including Apple Silicon Docker Desktop. The separate `linux-cross` target remains
+an amd64-to-ARM64 cross-compilation environment.
 
 ## Building QGC using the Container
 
@@ -76,6 +65,151 @@ docker run --rm -v %cd%:/project/source -v %cd%/build:/project/build qgc-ubuntu-
 :::
 
 Depending on your system resources, or the resources assigned to your Docker Daemon, the build step can take some time.
+
+## Development Container
+
+The existing VS Code development container is named __qgc-dev__. It includes Clang,
+clang-tidy, clang-scan-deps, clangd, and Clazy built against the same LLVM.
+`.github/build-config.json` supplies the LLVM major version, checksum-verified Clazy
+revision, and Qt version used by CI. The image build uses `deploy/docker/install_analysis.py`;
+ccache uses the pinned, signature-verified release from `.github/scripts/ccache_helper.py`.
+The locked Python `dev` profile includes `just`, build, lint and test tools.
+Git and the GitHub CLI are prebuilt too, without separate devcontainer feature installs.
+Linux GStreamer libraries come from the existing system dependency installer,
+satisfying the configured minimum. The amd64 image also includes Android tooling;
+Apple SDKs are not included.
+Existing application builder tags and Docker Hub flows are unchanged.
+
+`ghcr.io/mavlink/qgc-dev:latest` is one multi-platform OCI index for native
+`linux/amd64` and `linux/arm64`. Docker selects the correct architecture automatically.
+The `qgc-dev.yml` workflow updates `latest` only for meaningful image-input changes
+on `master`. A published stable QGC release gets its exact existing tag, for example
+`ghcr.io/mavlink/qgc-dev:v5.0.0`, built from that released commit, without changing
+`latest`. Retries preserve an existing matching stable tag and reject a changed source.
+The workflow summary records `ghcr.io/mavlink/qgc-dev@sha256:<digest>` for pinning.
+
+Relevant PRs and manual __Run workflow__ dispatches build both architectures without
+publishing. Dispatch does not require changed files. Drafts and prereleases do not
+publish stable images. Release automation explicitly calls the same publisher because
+`GITHUB_TOKEN`-created release events do not start another workflow.
+Older releases lacking this definition cannot be backfilled using current master.
+No application or analyzer workflow adopts this image in this change.
+
+Qt, Python, and analysis executables are on `PATH` for non-login shells and non-root users.
+Image checks verify native executable architectures, configured tool versions, Clazy's
+LLVM linkage, Python imports, and real Qt compilation plus clang-tidy/Clazy execution
+as a non-root user. The prebuilt environment is used by `just` without runtime
+SDK provisioning or Python synchronization.
+
+### VS Code workflow
+
+Install Docker and the VS Code Dev Containers extension, open a normal QGC clone,
+then run __Dev Containers: Reopen in Container__. The checked-in configuration
+builds the canonical `qgc-dev` target on first use; it does not pull a published
+image. Qt and build tools are installed during image creation, not each application
+build. Post-create initializes submodules and creates missing VS Code workspace
+files without overwriting existing settings. Linked Git worktrees require access
+to their external Git metadata; a normal clone needs no extra mounts.
+
+Wait for extension installation to finish, then use the Command Palette:
+
+1. __CMake: Select Configure Preset__ -> __Linux Debug__ or __Linux Release__.
+2. __CMake: Configure__.
+3. __CMake: Select Build Preset__ -> `Linux-debug` or `Linux`, respectively.
+4. __Tasks: Run Build Task__ to build QGC.
+
+These presets use the native compiler on both amd64 and ARM64. Outputs are
+`build/Linux-debug/Debug/QGroundControl` and `build/Linux/Release/QGroundControl`.
+Changing application code does not require rebuilding the container. After changing
+the image definition or its dependencies, use __Dev Containers: Rebuild Container__.
+If a first-open task runs before CMake Tools finishes installing, wait for installation
+and use __Developer: Reload Window__ before retrying.
+
+The result is a Linux executable, including on macOS hosts. GUI launching requires
+separate display forwarding or a remote desktop; this configuration does not provide
+either. Copilot is optional and managed through VS Code rather than forced by the
+container extension list.
+
+### Android development
+
+The __linux/amd64__ variant of this same image includes the configured Java JDK,
+Android command-line tools, platform tools, SDK platform, build-tools, official NDK,
+and Qt Android kits for __arm64-v8a__, __armeabi-v7a__, and __x86_64__ (emulator
+target). Versions and Qt modules come from `.github/build-config.json`, using the
+same provisioning helper as the existing Android application builder.
+SDK licenses are accepted during image creation.
+
+The official NDK's Linux host tools are x86-64 only. Native __linux/arm64__
+qgc-dev provides Linux desktop development and analysis, __not Android builds__.
+On Apple Silicon select `--platform linux/amd64`; Docker Desktop supplies emulation
+(Rosetta when enabled). This still uses `ghcr.io/mavlink/qgc-dev`, not another image.
+The image does not include an emulator, system images, Android Studio, or the x86
+Qt target. Running an emulator requires a separate appropriately accelerated host.
+
+Java, `sdkmanager`, `adb`, `aapt2`, `zipalign`, and `apksigner` work in non-login
+shells as the non-root image user. `JAVA_HOME`, `ANDROID_SDK_ROOT`,
+`ANDROID_NDK_ROOT`/`ANDROID_NDK`, and `ANDROID_BUILD_TOOLS_DIR` point at preinstalled
+tools. Qt target kits are under `/opt/qt-android/<ABI>`. Desktop `QT_ROOT_DIR`,
+`qt-cmake`, `just configure`, and `just release` remain native Linux defaults.
+Use `qgc-android <ABI> <command>` to supply the Android preset's target Qt root,
+host Qt path, and configured SDK settings for that command only:
+
+```sh
+docker run --rm -it --platform linux/amd64 \
+  -v "$PWD:/workspaces/qgroundcontrol" ghcr.io/mavlink/qgc-dev:latest \
+  bash -c 'qgc-android arm64-v8a cmake --preset Android -B build/android-arm64 &&
+           qgc-android arm64-v8a cmake --build build/android-arm64 --parallel 4'
+```
+
+Initialize submodules and writable checkout ownership as for the desktop example.
+Use separate build directories for each ABI. Android SDK/NDK/Qt installation is
+not repeated at runtime. A full QGC build can still download project dependencies,
+Android GStreamer/OpenSSL, and Gradle/Maven packages; those caches and release-signing
+credentials are not bundled.
+
+The existing shared image smoke test compiles and links a small Qt Android library
+for all three installed ABIs and checks their ELF architectures. It also exercises
+resource compilation, APK alignment, signing with a disposable test key, and signature
+verification offline as non-root. This is a bounded toolchain test, not a full QGC
+APK build or emulator boot test. Native ARM64 checks the explicit Android limitation
+instead, without installing unusable cross-compiler binaries.
+
+### Local image builds
+
+To build and load the host platform using the same Bake target as CI, run from the
+repository root (use `linux/amd64` on an x86-64 Docker host):
+
+```sh
+docker buildx bake -f deploy/docker/docker-bake.hcl qgc-dev \
+  --set qgc-dev.platform=linux/arm64 --load
+docker run --rm -it -v "$PWD:/workspaces/qgroundcontrol" qgc-dev:local
+```
+
+To exercise x86-64 locally on Apple Silicon, select `linux/amd64` in Bake and add
+`--platform linux/amd64` to `docker run`. Docker Desktop provides x86-64 emulation,
+using Rosetta when enabled.
+
+For a full native Linux QGC build, initialize the checkout's submodules, make the
+checkout and build directory writable by the container user, and run the existing recipes:
+
+```sh
+git submodule update --init --recursive
+mkdir -p build
+docker run --rm -it -v "$PWD:/workspaces/qgroundcontrol" qgc-dev:local \
+  bash -c 'git config --global --add safe.directory /workspaces/qgroundcontrol && just release'
+```
+
+On Linux, map ownership to the development user's UID/GID (1000 by default), or
+set `USER_UID`/`USER_GID` when building the image. `just` uses detected CPU parallelism;
+set `JOBS` to limit it. The result is `build/Release/QGroundControl`, a Linux artifact
+even when Docker runs on macOS or Windows. The image workflow runs the same
+container build and bounded smoke checks for both architectures.
+
+After configuring a compilation database and generating headers and autogen targets
+as described in the [tools guide](https://github.com/mavlink/qgroundcontrol/blob/master/tools/README.md#centralized-configuration),
+run `python tools/analyze.py --tool clang-tidy --build-dir build` or
+`python tools/analyze.py --tool clazy --build-dir build`. ccache accelerates compilation,
+not the analyzers' AST scans.
 
 ## Troubleshooting
 

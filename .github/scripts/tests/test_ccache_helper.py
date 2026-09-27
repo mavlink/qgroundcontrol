@@ -24,6 +24,24 @@ from ccache_helper import (
 class TestCcacheInstaller:
     """Tests for CcacheInstaller class."""
 
+    @pytest.mark.parametrize("uid", [0, 1000])
+    def test_install_supports_root_containers_and_sudo_runners(self, tmp_path, uid):
+        installer = CcacheInstaller(arch="x86_64", prefix=tmp_path / "install")
+        source = tmp_path / f"ccache-{installer.version}-linux-x86_64-glibc/ccache"
+        source.parent.mkdir()
+        source.touch()
+        with (
+            patch("ccache_helper.extract_tar_data"),
+            patch("ccache_helper.os.geteuid", return_value=uid, create=True),
+            patch("ccache_helper.run_captured") as run,
+        ):
+            run.return_value.returncode = 0
+            assert installer.install(tmp_path / "ccache.tar.xz")
+        privilege = [] if uid == 0 else ["sudo"]
+        dest = str(installer.prefix / "bin/ccache")
+        assert run.call_args_list[0].args[0] == [*privilege, "cp", str(source), dest]
+        assert run.call_args_list[1].args[0] == [*privilege, "chmod", "+x", dest]
+
     def test_validate_version_valid(self):
         """Test valid version formats."""
         assert CcacheInstaller.validate_version("4.13.1")

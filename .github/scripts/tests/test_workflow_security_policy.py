@@ -105,10 +105,15 @@ def test_workflow_checkouts_do_not_persist_credentials() -> None:
                 )
 
 
-def test_runson_selection_keeps_independent_forks_on_hosted_runners() -> None:
+def test_runson_selection_matches_workflow_hosting_policy() -> None:
     for path in WORKFLOWS:
         for job_name, job in _executable_jobs(path):
             for runner in _runson_routes(job):
+                if path.name == "qgc-dev.yml":
+                    assert runner.startswith("runs-on=${{ github.run_id }}/runner=")
+                    assert "||" not in runner
+                    assert "github.repository_owner" not in runner
+                    continue
                 normalized = " ".join(runner.removeprefix("${{").removesuffix("}}").split())
                 assert normalized.startswith("github.repository_owner == 'mavlink' && "), (
                     f"{path.name}:{job_name} must limit RunsOn selection to upstream workflows"
@@ -125,6 +130,7 @@ def test_runson_selection_keeps_independent_forks_on_hosted_runners() -> None:
         ("windows.yml", 2),
         ("android.yml", 1),
         ("docker.yml", 1),
+        ("qgc-dev.yml", 4),
         ("custom-build.yml", 1),
         ("vm-builds.yml", 2),
     ],
