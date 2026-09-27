@@ -1065,16 +1065,15 @@ void APMFirmwarePlugin::startTakeoff(Vehicle *vehicle) const
         return;
     }
 
-    if (!vehicle->armed()) {
-        if (!_setFlightModeAndValidate(vehicle, takeOffFlightMode())) {
-            QGC::showAppMessage(tr("Unable to start takeoff: Vehicle failed to change to Takeoff mode."));
-            return;
-        }
+    // The vehicle is on the ground, so it's safe to switch to Takeoff mode regardless of arming state
+    if (!_setFlightModeAndValidate(vehicle, takeOffFlightMode())) {
+        QGC::showAppMessage(tr("Unable to start takeoff: Vehicle failed to change to Takeoff mode."));
+        return;
+    }
 
-        if (!_armVehicleAndValidate(vehicle)) {
-            QGC::showAppMessage(tr("Unable to start takeoff: Vehicle failed to arm."));
-            return;
-        }
+    if (!_armVehicleAndValidate(vehicle)) {
+        QGC::showAppMessage(tr("Unable to start takeoff: Vehicle failed to arm."));
+        return;
     }
 }
 
