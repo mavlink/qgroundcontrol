@@ -162,4 +162,3 @@ QGroundControl uygulamasının öğeleriyle videoyu kaydetmek için başka bir e
 
 Start/stop video recording _on the camera itself_ using the [camera instrument page](hud.md#camera_instrument_page).
 İlk olarak video moduna geçiş yapın, ardından kırmızı butona basarak kaydı başlatabilirsiniz.
-

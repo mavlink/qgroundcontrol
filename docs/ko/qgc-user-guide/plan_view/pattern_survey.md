@@ -17,22 +17,22 @@ If the survey area has significant elevation variation then consider enabling [T
 
 탐사를 생성하려면:
 
-1. [계획 뷰](../plan_view/plan_view.md)에서 _계획 도구_를 엽니다.
+1. [계획 뷰](../plan_view/plan_view.md)에서 _계획 도&#xAD6C;_&#xB97C; 엽니다.
 
-2. _계획 도구_에서 _패턴 도구_를 선택한 다음 _탐사_를 선택합니다.
+2. _계획 도&#xAD6C;_&#xC5D0;서 _패턴 도&#xAD6C;_&#xB97C; 선택한 다음 _탐&#xC0AC;_&#xB97C; 선택합니다.
 
    그러면 지도에 설문조사 그리드가 추가되고 임무 목록(오른쪽)에 _설문조사_ 항목이 추가됩니다.
 
 3. 지도에서 정점을 끌어 다각형의 모양을 변경합니다.
 
-4. 기존 정점 사이의 `(+)` 기호를 클릭하여 새 정점을 만듭니다.
-   그런 다음 새 정점을 새 위치로 끌어서 수정할 수 있습니다.
+4. Click the `(+)` symbol between existing vertices to create a new vertex.
+   The new vertex can then be dragged into a new position.
 
 The survey settings are covered in the next section.
 
 ## 설정
 
-설문조사는 연결된 미션 항목(_플랜 보기_의 오른쪽에 있는 미션 항목 목록)에서 추가하여 설정할 수 있습니다.
+설문조사는 연결된 미션 항목(_플랜 보&#xAE30;_&#xC758; 오른쪽에 있는 미션 항목 목록)에서 추가하여 설정할 수 있습니다.
 
 ### 카메라
 
@@ -108,4 +108,3 @@ Enabling _Terrain Following_ makes the vehicle maintain a constant height relati
 ### 통계
 
 _통계_ 섹션에는 계산된 조사 영역, 사진 간격, 사진 간격 및 계획된 사진 수가 표시됩니다.
-

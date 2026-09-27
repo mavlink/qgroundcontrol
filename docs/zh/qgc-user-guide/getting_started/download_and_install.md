@@ -10,9 +10,7 @@ These are **daily build** download links with the latest features. If you are lo
 
 ## 系统配置要求
 
-QGC可以在任何当下流行的计算机或移动设备上正常运行。 性能表现将取决于系统环境、第三方应用程序和当前系统可使用的资源状况。
-性能更强的硬件将带来更好的体验。
-一台拥有至少 8GB 内存、固态硬盘、Nvidia 或 AMD 显卡以及英特尔酷睿i5或更优CPU的电脑，将适用于大多数应用场景。
+QGC可以在任何当下流行的计算机或移动设备上正常运行。性能表现将取决于系统环境、第三方应用程序和当前系统可使用的资源状况。性能更强的硬件将带来更好的体验。一台拥有至少 8GB 内存、固态硬盘、Nvidia 或 AMD 显卡以及英特尔酷睿i5或更优CPU的电脑，将适用于大多数应用场景。
 
 为了获得最好的体验和兼容性，我们推荐您使用最新版本的操作系统。
 
@@ -26,9 +24,7 @@ Supported versions: Windows 10 (1809 or later), Windows 11:
 2. Double-click the executable to launch the installer.
 
 :::info
-Windows 安装程序创建 3 个快捷方式：**QGroundControl**，**GPU 兼容模式**，**GPU 安全模式**。
-使用第一个快捷方式，除非您遇到启动或视频渲染问题。
-更多信息请见[QGC 设置故障排查 > Windows：用户界面渲染 / 视频驱动问题](../troubleshooting/qgc_setup.md#opengl_troubleshooting)。
+Windows 安装程序创建 3 个快捷方式：**QGroundControl**，**GPU 兼容模式**，**GPU 安全模式**。使用第一个快捷方式，除非您遇到启动或视频渲染问题。更多信息请见[QGC 设置故障排查 > Windows：用户界面渲染 / 视频驱动问题](../troubleshooting/qgc_setup.md#opengl_troubleshooting)。
 :::
 
 ## Mac OS {#macOS}
@@ -55,15 +51,14 @@ Supported versions: Ubuntu 24.04 LTS, 26.04 LTS:
 The AppImage downloads below run on Ubuntu 24.04 LTS and 26.04 LTS. If you need a version of _QGroundControl_ that runs on Ubuntu 22.04, it is possible, but you have to [build it yourself](../../qgc-dev-guide/getting_started/index.md).
 :::
 
-Ubuntu 自带一个串口调制解调器管理器，它会干扰串口（或 USB 转串口）在任何与机器人相关方面的使用。
-在安装 _QGroundControl_ 之前，您应该删除调制解调器管理器并授予自己访问串行端口的权限。
+Ubuntu 自带一个串口调制解调器管理器，它会干扰串口（或 USB 转串口）在任何与机器人相关方面的使用。在安装 _QGroundControl_ 之前，您应该删除调制解调器管理器并授予自己访问串行端口的权限。
 
 **Before installing _QGroundControl_ for the first time:**
 
 1. Enable serial-port access
    Add your user to the dialout group so you can talk to USB devices without root:
 
-```
+```bash
 sudo usermod -aG dialout "$(id -un)"
 ```
 
@@ -74,7 +69,7 @@ At login, your shell takes a snapshot of your user and group memberships. Becaus
 1. (Optional) Disable ModemManager
    On some Ubuntu-based systems, ModemManager can claim serial ports that QGC needs. If you don't use it elsewhere, mask or remove it.
 
-```
+```bash
 # preferred: stop and mask the service
 sudo systemctl mask --now ModemManager.service
 
@@ -96,14 +91,14 @@ sudo apt install -y libfuse2 libxcb-xinerama0 libxkbcommon-x11-0 libxcb-cursor0
 
 2. Make the AppImage executable
 
-```
+```bash
 chmod +x QGroundControl-<arch>.AppImage
 ```
 
 1. Run QGroundControl
    Either double-click the AppImage in your file manager or launch it from a terminal:
 
-```
+```bash
 ./QGroundControl-<arch>.AppImage
 ```
 

@@ -25,8 +25,8 @@ To create a survey:
 
 3. On the map drag the vertices to change the shape of the polygon.
 
-4. Click the `(+)` symbol between existing vertices to create a new vertix.
-   The new vertix can then be dragged into a new position.
+4. Click the `(+)` symbol between existing vertices to create a new vertex.
+   The new vertex can then be dragged into a new position.
 
 The survey settings are covered in the next section.
 
@@ -108,4 +108,3 @@ The configurable options are:
 ### Statistics
 
 The _Statistics_ section shows the calculated survey area, photo interval, photo spacing and planned photo count.
-

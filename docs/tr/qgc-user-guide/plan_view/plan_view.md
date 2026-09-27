@@ -54,6 +54,9 @@ The plan tools are a vertical tool strip on the left side of the map, used for a
 
 Inserts a takeoff command into the mission. This tool is available for all vehicle types except rovers.
 
+For PX4 VTOL vehicles, choose **VTOL takeoff** to climb and transition to fixed-wing flight, or
+**Multicopter takeoff** to remain in multicopter mode. The VTOL takeoff remains the default choice.
+
 ### Pattern
 
 The [Pattern](pattern.md) tool simplifies the creation of missions for flying complex geometries, including [surveys](../plan_view/pattern_survey.md) and [structure scans](../plan_view/pattern_structure_scan_v2.md).

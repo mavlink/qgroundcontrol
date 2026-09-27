@@ -8,7 +8,7 @@
 
 ## FactMetaData
 
-与每个事实有FactMetaData相关联 它提供有关事实的详细信息，以便驱动自动用户界面生成和验证。 它提供了关于事实的详细资料，以便驱动用户界面自动生成和验证。
+与每个事实有FactMetaData相关联 它提供有关事实的详细信息，以便驱动自动用户界面生成和验证。它提供了关于事实的详细资料，以便驱动用户界面自动生成和验证。
 
 ## Fact Controls
 
@@ -21,10 +21,8 @@ It is used to organise facts and manage user defined facts.
 
 ## 自定义构建支持
 
-用户定义的事实可以通过覆盖 `FirmwarePlugin` 的 `factGroups` 函数添加到自定义固件插件类中。
-这些函数返回一个名为FactGroup的地图，用于识别添加的事实组。
-可以通过扩展 `FactGroup` 类添加一个自定义的事实组。
-FactMetaData可以使用合适的 `FactGroup` 构造函数通过提供包含必要信息的 json 文件来定义。
+用户定义的事实可以通过覆盖 `FirmwarePlugin` 的 `factGroups` 函数添加到自定义固件插件类中。这些函数返回一个名为FactGroup的地图，用于识别添加的事实组。可以通过扩展 `FactGroup` 类添加一个自定义的事实组。
+Fact metadata could be defined using the appropriate `FactGroup` constructor by providing a json file containing necessary information.
 
 还可以通过覆盖 `FirmwarePlugin` 类的 `adata` 来更改现有事实的元数据。
 

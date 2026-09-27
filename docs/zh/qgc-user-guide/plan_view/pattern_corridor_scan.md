@@ -18,8 +18,8 @@ To create a corridor scan:
 
 3. On the map drag the ends of the corridor to the start and end positions of the scan, respectively.
 
-4. Click the `(+)` symbol at the centre of a line to create a new vertix.
-   The new vertix can then be dragged into position to follow the path of the desired corridor.
+4. Click the `(+)` symbol at the centre of a line to create a new vertex.
+   The new vertex can then be dragged into position to follow the path of the desired corridor.
 
 The corridor scan settings are covered in the next section.
 
@@ -84,4 +84,3 @@ The configurable options are:
 ### Statistics
 
 The _Statistics_ section shows the calculated survey area, photo interval, photo spacing and planned photo count.
-

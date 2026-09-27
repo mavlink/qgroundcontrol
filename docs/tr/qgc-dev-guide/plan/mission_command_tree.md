@@ -14,7 +14,7 @@ The root of the tree is json metadata which matches the mavlink spec exactly.
 
 Here you can see an example of the root [json](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoCommon.json#L27) for `MAV_CMD_NAV_WAYPOINT`:
 
-```
+```json
         {
             "id":                   16,
             "rawName":              "MAV_CMD_NAV_WAYPOINT",
@@ -83,9 +83,9 @@ Let's walk through an example hierarchy for `MAV_CMD_NAV_WAYPOINT`. Root informa
 
 ### Root - Vehicle Type Specific leaf node
 
-The next level of the hiearchy is generic mavlink but vehicle specific. Json files are here: [MR](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoMultiRotor.json), [FW](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoFixedWing.json), [ROVER](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoRover.json), [Sub](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoSub.json), [VTOL](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoVTOL.json). And here are the overrides for (Fixed Wings)(https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoFixedWing.json#L7):
+The next level of the hierarchy is generic mavlink but vehicle specific. Json files are here: [MR](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoMultiRotor.json), [FW](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoFixedWing.json), [ROVER](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoRover.json), [Sub](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoSub.json), [VTOL](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoVTOL.json). And here are the overrides for (Fixed Wings)(<https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoFixedWing.json#L7>):
 
-```
+```json
         {
             "id":           16,
             "comment":      "MAV_CMD_NAV_WAYPOINT",
@@ -97,11 +97,11 @@ What this does is remove the editing UI for param4 which is Yaw and not used by 
 
 ### Root - Firmware Type Specific leaf node
 
-The next level of the hiearchy are overrides which are specific to a firmware type but apply to all vehicle types. Once again lets loook at the waypoint overrides:
+The next level of the hierarchy are overrides which are specific to a firmware type but apply to all vehicle types. Once again lets look at the waypoint overrides:
 
 [ArduPilot](https://github.com/mavlink/qgroundcontrol/blob/master/src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json#L6):
 
-```
+```json
         {
             "id":           16,
             "comment":      "MAV_CMD_NAV_WAYPOINT",
@@ -111,7 +111,7 @@ The next level of the hiearchy are overrides which are specific to a firmware ty
 
 [PX4](https://github.com/mavlink/qgroundcontrol/blob/master/src/FirmwarePlugin/PX4/PX4-MavCmdInfoCommon.json#L7):
 
-```
+```json
         {
             "id":           16,
             "comment":      "MAV_CMD_NAV_WAYPOINT",
@@ -125,11 +125,11 @@ You can also see that for PX4 param3/PassThru is removed since it is not support
 
 ### Root - Firmware Type Specific - Vehicle Type Specific leaf node
 
-The last level of the hiearchy is both firmware and vehicle type specific.
+The last level of the hierarchy is both firmware and vehicle type specific.
 
 [ArduPilot/MR](https://github.com/mavlink/qgroundcontrol/blob/master/src/FirmwarePlugin/APM/APM-MavCmdInfoMultiRotor.json#L7):
 
-```
+```json
         {
             "id":           16,
             "comment":      "MAV_CMD_NAV_WAYPOINT",
@@ -150,7 +150,7 @@ The source is commented with full details of the json keys which are supported.
 
 [MissionCommandUIInfo](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MissionCommandUIInfo.h#L82):
 
-```
+```cpp
 /// UI Information associated with a mission command (MAV_CMD)
 ///
 /// MissionCommandUIInfo is used to automatically generate editing ui for a MAV_CMD. This object also supports the concept of only having a set of partial
@@ -160,14 +160,14 @@ The source is commented with full details of the json keys which are supported.
 /// The json format for a MissionCommandUIInfo object is:
 ///
 /// Key                     Type    Default     Description
-/// id                      int     reauired    MAV_CMD id
+/// id                      int     required    MAV_CMD id
 /// comment                 string              Used to add a comment
 /// rawName                 string  required    MAV_CMD enum name, should only be set of base tree information
 /// friendlyName            string  rawName     Short description of command
 /// description             string              Long description of command
 /// specifiesCoordinate     bool    false       true: Command specifies a lat/lon/alt coordinate
 /// specifiesAltitudeOnly   bool    false       true: Command specifies an altitude only (no coordinate)
-/// standaloneCoordinate    bool    false       true: Vehicle does not fly through coordinate associated with command (exampl: ROI)
+/// standaloneCoordinate    bool    false       true: Vehicle does not fly through coordinate associated with command (example: ROI)
 /// isLandCommand           bool    false       true: Command specifies a land command (LAND, VTOL_LAND, ...)
 /// friendlyEdit            bool    false       true: Command supports friendly editing dialog, false: Command supports 'Show all values" style editing only
 /// category                string  Advanced    Category which this command belongs to
@@ -178,7 +178,7 @@ The source is commented with full details of the json keys which are supported.
 
 [MissionCmdParamInfo](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MissionCommandUIInfo.h#L25):
 
-```
+```cpp
 /// UI Information associated with a mission command (MAV_CMD) parameter
 ///
 /// MissionCommandParamInfo is used to automatically generate editing ui for a parameter associated with a MAV_CMD.

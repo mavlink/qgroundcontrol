@@ -37,4 +37,3 @@ Otomatik motor yönü algılamasını gerçekleştirmek için \*\*Vehicle Setup-
 :::warning
 Bu prosedür hala motorların gövde görünümünde gösterildiği gibi _ doğru çıkışlara _ bağlanmasını gerektirir!
 :::
-

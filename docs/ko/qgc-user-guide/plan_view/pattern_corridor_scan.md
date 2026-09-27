@@ -10,16 +10,16 @@
 
 복도 스캔을 생성하려면:
 
-1. [계획 뷰](../plan_view/plan_view.md)에서 _계획 도구_를 엽니다.
+1. [계획 뷰](../plan_view/plan_view.md)에서 _계획 도&#xAD6C;_&#xB97C; 엽니다.
 
-2. _계획 도구_에서 _패턴 도구_를 선택한 다음 _복도 스캔_을 선택합니다.
+2. _계획 도&#xAD6C;_&#xC5D0;서 _패턴 도&#xAD6C;_&#xB97C; 선택한 다음 _복도 스&#xCE94;_&#xC744; 선택합니다.
 
    그러면 지도에 복도 도형이 추가되고 임무 목록(오른쪽)에 _복도 스캔_ 항목이 추가됩니다.
 
 3. 지도에서 복도 끝을 스캔의 시작 위치와 끝 위치로 드래그합니다.
 
-4. 선 중앙에 있는 `(+)` 기호를 클릭하여 정점을 추가합니다.
-   그런 다음, 새 정점을 원하는 복도 경로를 따라 위치로 끌어서 변경할 수 있습니다.
+4. Click the `(+)` symbol at the centre of a line to create a new vertex.
+   The new vertex can then be dragged into position to follow the path of the desired corridor.
 
 The corridor scan settings are covered in the next section.
 
@@ -84,4 +84,3 @@ Enabling _Terrain Following_ makes the vehicle maintain a constant height relati
 ### 통계
 
 _통계_ 섹션에는 계산된 조사 영역, 사진 간격, 사진 간격 및 계획된 사진 수가 표시됩니다.
-

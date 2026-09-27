@@ -2,7 +2,7 @@
 
 This page explains how the Vehicle Setup pages (Power, Safety, etc.) are generated from JSON definitions and how to extend them.
 
-For the complete JSON schema reference see [tools/generators/config_qml/README.md](../../../../tools/generators/config_qml/README.md).
+For the complete JSON schema reference see [tools/generators/config_qml/README.md](https://github.com/mavlink/qgroundcontrol/blob/master/tools/generators/config_qml/README.md).
 
 ## Architecture Overview
 
@@ -48,11 +48,11 @@ Subclasses only need to implement `vehicleConfigJson()` to return the path to th
 
 1. Create a new JSON file in the appropriate `VehicleConfig/` directory:
 
-   ```
+   ```text
    src/AutoPilotPlugins/APM/VehicleConfig/MyFeature.VehicleConfig.json
    ```
 
-   See [tools/generators/config_qml/README.md](../../../../tools/generators/config_qml/README.md) for the full JSON schema.
+   See [tools/generators/config_qml/README.md](https://github.com/mavlink/qgroundcontrol/blob/master/tools/generators/config_qml/README.md) for the full JSON schema.
 
 2. Create a minimal C++ component class inheriting `VehicleComponent`:
    - Implement `vehicleConfigJson()` to return the JSON path
