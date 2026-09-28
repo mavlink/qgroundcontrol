@@ -36,9 +36,9 @@ public:
 
     Q_INVOKABLE void initValues();
     Q_INVOKABLE void setFromGeo();
-    Q_INVOKABLE void setFromDMS();
-    Q_INVOKABLE void setFromUTM();
-    Q_INVOKABLE void setFromMGRS();
+    Q_INVOKABLE bool setFromDMS();
+    Q_INVOKABLE bool setFromUTM();
+    Q_INVOKABLE bool setFromMGRS();
     Q_INVOKABLE void setFromVehicle();
 
     void setCoordinate(QGeoCoordinate coordinate);

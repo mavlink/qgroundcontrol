@@ -175,14 +175,15 @@ QGCPopupDialog {
             label:               qsTr("Set position")
             buttonText:          qsTr("Move")
             onClicked: {
+                let positionValid = true
                 if (_showGeographic)
                     controller.setFromGeo()
                 else if (_showDMS)
-                    controller.setFromDMS()
+                    positionValid = controller.setFromDMS()
                 else if (_showUTM)
-                    controller.setFromUTM()
+                    positionValid = controller.setFromUTM()
                 else if (_showMGRS)
-                    controller.setFromMGRS()
+                    positionValid = controller.setFromMGRS()
                 else if (_showVehicle) {
                     if (setPositionCheckBox.checked)
                         controller.setFromVehicle()
@@ -199,6 +200,10 @@ QGCPopupDialog {
                         if (_isFiniteAltitude(sourceAltitude))
                             altitudeFact.rawValue = sourceAltitude
                     }
+                }
+                if (!positionValid) {
+                    QGroundControl.showMessageDialog(root, qsTr("Edit Position"), qsTr("Invalid coordinate. Check the entered values and try again."))
+                    return
                 }
                 root.close()
             }

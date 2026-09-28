@@ -220,8 +220,10 @@ Rectangle {
                 enabled:          _hasHome
                 visible:          repositionContent._showDMS
                 onClicked: {
-                    positionController.setFromDMS()
-                    _root.missionController.repositionMission(positionController.coordinate)
+                    if (positionController.setFromDMS())
+                        _root.missionController.repositionMission(positionController.coordinate)
+                    else
+                        QGroundControl.showMessageDialog(_root, qsTr("Move to Position"), qsTr("Invalid coordinate. Check the entered values and try again."))
                 }
             }
 
@@ -266,8 +268,10 @@ Rectangle {
                 enabled:          _hasHome && !zoneField.textField.validationError && !eastingField.textField.validationError && !northingField.textField.validationError
                 visible:          repositionContent._showUTM
                 onClicked: {
-                    positionController.setFromUTM()
-                    _root.missionController.repositionMission(positionController.coordinate)
+                    if (positionController.setFromUTM())
+                        _root.missionController.repositionMission(positionController.coordinate)
+                    else
+                        QGroundControl.showMessageDialog(_root, qsTr("Move to Position"), qsTr("Invalid coordinate. Check the entered values and try again."))
                 }
             }
 
@@ -286,8 +290,10 @@ Rectangle {
                 enabled:          _hasHome && !mgrsField.textField.validationError
                 visible:          repositionContent._showMGRS
                 onClicked: {
-                    positionController.setFromMGRS()
-                    _root.missionController.repositionMission(positionController.coordinate)
+                    if (positionController.setFromMGRS())
+                        _root.missionController.repositionMission(positionController.coordinate)
+                    else
+                        QGroundControl.showMessageDialog(_root, qsTr("Move to Position"), qsTr("Invalid coordinate. Check the entered values and try again."))
                 }
             }
 

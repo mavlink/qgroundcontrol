@@ -110,36 +110,42 @@ void TransformPositionController::setFromGeo()
     setCoordinate(newCoordinate);
 }
 
-void TransformPositionController::setFromDMS()
+bool TransformPositionController::setFromDMS()
 {
     QGeoCoordinate newCoordinate = _coordinate;
     if (QGCGeo::convertDMSToGeo(_latitudeDMSFact->rawValue().toString(), _longitudeDMSFact->rawValue().toString(), newCoordinate)) {
         setCoordinate(newCoordinate);
-    } else {
-        initValues();
+        return true;
     }
+
+    initValues();
+    return false;
 }
 
-void TransformPositionController::setFromUTM()
+bool TransformPositionController::setFromUTM()
 {
     qCDebug(TransformPositionControllerLog) << _eastingFact->rawValue().toDouble() << _northingFact->rawValue().toDouble() << _zoneFact->rawValue().toInt() << (_hemisphereFact->rawValue().toInt() == 1);
     QGeoCoordinate newCoordinate;
     if (QGCGeo::convertUTMToGeo(_eastingFact->rawValue().toDouble(), _northingFact->rawValue().toDouble(), _zoneFact->rawValue().toInt(), _hemisphereFact->rawValue().toInt() == 1, newCoordinate)) {
         qCDebug(TransformPositionControllerLog) << _eastingFact->rawValue().toDouble() << _northingFact->rawValue().toDouble() << _zoneFact->rawValue().toInt() << (_hemisphereFact->rawValue().toInt() == 1) << newCoordinate;
         setCoordinate(newCoordinate);
-    } else {
-        initValues();
+        return true;
     }
+
+    initValues();
+    return false;
 }
 
-void TransformPositionController::setFromMGRS()
+bool TransformPositionController::setFromMGRS()
 {
     QGeoCoordinate newCoordinate;
     if (QGCGeo::convertMGRSToGeo(_mgrsFact->rawValue().toString(), newCoordinate)) {
         setCoordinate(newCoordinate);
-    } else {
-        initValues();
+        return true;
     }
+
+    initValues();
+    return false;
 }
 
 void TransformPositionController::setFromVehicle()
