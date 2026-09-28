@@ -179,6 +179,7 @@ SetupPage {
                         QGCButton {
                             id: button
                             anchors.left: checked ? downloadIcon.right : parent.left
+                            anchors.leftMargin: checked ? leftPadding : 0
                             text: modelData
                             checkable: true
                         }
@@ -186,6 +187,7 @@ SetupPage {
                         QGCColoredImage {
                             id: deleteIcon
                             anchors.left: button.right
+                            anchors.leftMargin: button.rightPadding
                             anchors.verticalCenter: button.verticalCenter
                             width: height
                             height: button._iconHeight
