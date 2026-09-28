@@ -51,12 +51,20 @@ public:
         WeightUnitsLbs
     };
 
+    enum CoordinateFormat {
+        CoordinateFormatDecimal = 0,
+        CoordinateFormatDMS,
+        CoordinateFormatUTM,
+        CoordinateFormatMGRS
+    };
+
     Q_ENUM(HorizontalDistanceUnits)
     Q_ENUM(VerticalDistanceUnits)
     Q_ENUM(AreaUnits)
     Q_ENUM(SpeedUnits)
     Q_ENUM(TemperatureUnits)
     Q_ENUM(WeightUnits)
+    Q_ENUM(CoordinateFormat)
 
     DEFINE_SETTING_NAME_GROUP()
 
@@ -66,4 +74,5 @@ public:
     DEFINE_SETTINGFACT(speedUnits)
     DEFINE_SETTINGFACT(temperatureUnits)
     DEFINE_SETTINGFACT(weightUnits)
+    DEFINE_SETTINGFACT(coordinateFormat)
 };

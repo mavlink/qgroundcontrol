@@ -204,3 +204,26 @@ DECLARE_SETTINGSFACT_NO_FUNC(UnitsSettings, weightUnits)
     }
     return _weightUnitsFact;
 }
+
+DECLARE_SETTINGSFACT_NO_FUNC(UnitsSettings, coordinateFormat)
+{
+    if (!_coordinateFormatFact) {
+        // Units settings can't be loaded from json since it creates an infinite loop of meta data loading.
+        QStringList     enumStrings;
+        QVariantList    enumValues;
+        enumStrings << UnitsSettings::tr("Decimal Degrees") << UnitsSettings::tr("Degrees Minutes Seconds") << UnitsSettings::tr("UTM") << UnitsSettings::tr("MGRS");
+        enumValues
+            << QVariant::fromValue(static_cast<uint32_t>(CoordinateFormatDecimal))
+            << QVariant::fromValue(static_cast<uint32_t>(CoordinateFormatDMS))
+            << QVariant::fromValue(static_cast<uint32_t>(CoordinateFormatUTM))
+            << QVariant::fromValue(static_cast<uint32_t>(CoordinateFormatMGRS));
+        FactMetaData* metaData = new FactMetaData(FactMetaData::valueTypeUint32, this);
+        metaData->setName(coordinateFormatName);
+        metaData->setLabel(UnitsSettings::tr("Coordinates"));
+        metaData->setShortDescription(UnitsSettings::tr("Default format for entering and displaying coordinates."));
+        metaData->setEnumInfo(enumStrings, enumValues);
+        metaData->setRawDefaultValue(CoordinateFormatDecimal);
+        _coordinateFormatFact = new SettingsFact(_settingsGroup, metaData, this);
+    }
+    return _coordinateFormatFact;
+}

@@ -19,9 +19,10 @@ QGCPopupDialog {
     property real _margin:          ScreenTools.defaultFontPixelWidth / 2
     property real _textFieldWidth:  ScreenTools.defaultFontPixelWidth * 20
     property bool _showGeographic:  coordinateSystemCombo.comboBox.currentIndex === 0
-    property bool _showUTM:         coordinateSystemCombo.comboBox.currentIndex === 1
-    property bool _showMGRS:        coordinateSystemCombo.comboBox.currentIndex === 2
-    property bool _showVehicle:     coordinateSystemCombo.comboBox.currentIndex === 3
+    property bool _showDMS:         coordinateSystemCombo.comboBox.currentIndex === 1
+    property bool _showUTM:         coordinateSystemCombo.comboBox.currentIndex === 2
+    property bool _showMGRS:        coordinateSystemCombo.comboBox.currentIndex === 3
+    property bool _showVehicle:     coordinateSystemCombo.comboBox.currentIndex === 4
     property bool _supportsAltitude: altitudeFact !== null
 
     function _isFiniteAltitude(value) {
@@ -43,8 +44,10 @@ QGCPopupDialog {
             Layout.fillWidth:   true
             label:              qsTr("Coordinate System")
             model:              globals.activeVehicle ?
-                                    [ qsTr("Geographic"), qsTr("Universal Transverse Mercator"), qsTr("Military Grid Reference"), qsTr("Vehicle Position") ] :
-                                    [ qsTr("Geographic"), qsTr("Universal Transverse Mercator"), qsTr("Military Grid Reference") ]
+                                    [ qsTr("Geographic"), qsTr("Degrees Minutes Seconds"), qsTr("Universal Transverse Mercator"), qsTr("Military Grid Reference"), qsTr("Vehicle Position") ] :
+                                    [ qsTr("Geographic"), qsTr("Degrees Minutes Seconds"), qsTr("Universal Transverse Mercator"), qsTr("Military Grid Reference") ]
+
+            Component.onCompleted: comboBox.currentIndex = controller.defaultCoordinateSystem
         }
 
         LabelledFactTextField {
@@ -61,6 +64,22 @@ QGCPopupDialog {
             textFieldPreferredWidth: _textFieldWidth
             Layout.fillWidth:   true
             visible:            _showGeographic
+        }
+
+        LabelledFactTextField {
+            label:              qsTr("Latitude")
+            fact:               controller.latitudeDMS
+            textFieldPreferredWidth: _textFieldWidth
+            Layout.fillWidth:   true
+            visible:            _showDMS
+        }
+
+        LabelledFactTextField {
+            label:              qsTr("Longitude")
+            fact:               controller.longitudeDMS
+            textFieldPreferredWidth: _textFieldWidth
+            Layout.fillWidth:   true
+            visible:            _showDMS
         }
 
         LabelledFactTextField {
@@ -158,6 +177,8 @@ QGCPopupDialog {
             onClicked: {
                 if (_showGeographic)
                     controller.setFromGeo()
+                else if (_showDMS)
+                    controller.setFromDMS()
                 else if (_showUTM)
                     controller.setFromUTM()
                 else if (_showMGRS)

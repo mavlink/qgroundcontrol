@@ -143,9 +143,10 @@ Rectangle {
             }
 
             property bool _showGeographic: coordinateSystemCombo.currentIndex === 0
-            property bool _showUTM:        coordinateSystemCombo.currentIndex === 1
-            property bool _showMGRS:       coordinateSystemCombo.currentIndex === 2
-            property bool _showVehicle:    coordinateSystemCombo.currentIndex === 3
+            property bool _showDMS:        coordinateSystemCombo.currentIndex === 1
+            property bool _showUTM:        coordinateSystemCombo.currentIndex === 2
+            property bool _showMGRS:       coordinateSystemCombo.currentIndex === 3
+            property bool _showVehicle:    coordinateSystemCombo.currentIndex === 4
 
             ColumnLayout {
                 Layout.fillWidth: true
@@ -159,8 +160,10 @@ Rectangle {
                     id:               coordinateSystemCombo
                     Layout.fillWidth: true
                     model:            globals.activeVehicle
-                                      ? [ qsTr("Geographic"), qsTr("Universal Transverse Mercator"), qsTr("Military Grid Reference"), qsTr("Vehicle Position") ]
-                                      : [ qsTr("Geographic"), qsTr("Universal Transverse Mercator"), qsTr("Military Grid Reference") ]
+                                      ? [ qsTr("Geographic"), qsTr("Degrees Minutes Seconds"), qsTr("Universal Transverse Mercator"), qsTr("Military Grid Reference"), qsTr("Vehicle Position") ]
+                                      : [ qsTr("Geographic"), qsTr("Degrees Minutes Seconds"), qsTr("Universal Transverse Mercator"), qsTr("Military Grid Reference") ]
+
+                    Component.onCompleted: currentIndex = positionController.defaultCoordinateSystem
                 }
             }
 
@@ -189,6 +192,35 @@ Rectangle {
                 visible:          repositionContent._showGeographic
                 onClicked: {
                     positionController.setFromGeo()
+                    _root.missionController.repositionMission(positionController.coordinate)
+                }
+            }
+
+            LabelledFactTextField {
+                id:                      latitudeDMSField
+                label:                   qsTr("Latitude")
+                fact:                    positionController.latitudeDMS
+                textFieldPreferredWidth: _textFieldWidth
+                Layout.fillWidth:        true
+                visible:                 repositionContent._showDMS
+            }
+
+            LabelledFactTextField {
+                id:                      longitudeDMSField
+                label:                   qsTr("Longitude")
+                fact:                    positionController.longitudeDMS
+                textFieldPreferredWidth: _textFieldWidth
+                Layout.fillWidth:        true
+                visible:                 repositionContent._showDMS
+            }
+
+            QGCButton {
+                Layout.alignment: Qt.AlignHCenter
+                text:             qsTr("Move to Position")
+                enabled:          _hasHome
+                visible:          repositionContent._showDMS
+                onClicked: {
+                    positionController.setFromDMS()
                     _root.missionController.repositionMission(positionController.coordinate)
                 }
             }
