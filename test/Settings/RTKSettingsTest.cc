@@ -73,7 +73,7 @@ void RTKSettingsTest::_autoConnectMigration()
     QVERIFY(readGroup(QLatin1String(AutoConnectSettings::settingsGroup)).isEmpty());
 }
 
-void RTKSettingsTest::_nmeaInputBecomesPositionOnlyReceiver_data()
+void RTKSettingsTest::_nmeaInputBecomesPassiveReceiver_data()
 {
     QTest::addColumn<int>("source");
     QTest::addColumn<int>("connection");
@@ -82,7 +82,7 @@ void RTKSettingsTest::_nmeaInputBecomesPositionOnlyReceiver_data()
     QTest::newRow("tcp") << 3 << 1;
 }
 
-void RTKSettingsTest::_nmeaInputBecomesPositionOnlyReceiver()
+void RTKSettingsTest::_nmeaInputBecomesPassiveReceiver()
 {
     QFETCH(int, source);
     QFETCH(int, connection);
@@ -96,7 +96,8 @@ void RTKSettingsTest::_nmeaInputBecomesPositionOnlyReceiver()
                    {QStringLiteral("nmeaTcpPort"), 2101},
                });
     const RTKSettings rtk;
-    QCOMPARE(stored(RTKSettings::settingsGroup, "receiverRole").toInt(), 0);
+    QCOMPARE(stored(RTKSettings::settingsGroup, "receiverRole").toInt(), 1);
+    QCOMPARE(stored(RTKSettings::settingsGroup, "forwardReceiverRtcm").toBool(), false);
     QCOMPARE(stored(RTKSettings::settingsGroup, "connectOnStartup").toBool(), true);
     QCOMPARE(stored(RTKSettings::settingsGroup, "connectionType").toInt(), connection);
     if (source == 1) {
@@ -115,7 +116,7 @@ void RTKSettingsTest::_nmeaInputBecomesPositionOnlyReceiver()
     QCOMPARE(stored(RTKSettings::settingsGroup, "connectionType").toInt(), connection);
 }
 
-void RTKSettingsTest::_nmeaPortLabelBecomesPositionOnlyReceiver_data()
+void RTKSettingsTest::_nmeaPortLabelBecomesPassiveReceiver_data()
 {
     QTest::addColumn<QString>("port");
     QTest::addColumn<int>("connection");
@@ -125,7 +126,7 @@ void RTKSettingsTest::_nmeaPortLabelBecomesPositionOnlyReceiver_data()
     QTest::newRow("no-serial-label") << QStringLiteral("Serial <none available>") << -1;
 }
 
-void RTKSettingsTest::_nmeaPortLabelBecomesPositionOnlyReceiver()
+void RTKSettingsTest::_nmeaPortLabelBecomesPassiveReceiver()
 {
     QFETCH(QString, port);
     QFETCH(int, connection);
@@ -144,7 +145,8 @@ void RTKSettingsTest::_nmeaPortLabelBecomesPositionOnlyReceiver()
         QCOMPARE(stored(RTKSettings::settingsGroup, "receiverRole").toInt(), 2);
         return;
     }
-    QCOMPARE(stored(RTKSettings::settingsGroup, "receiverRole").toInt(), 0);
+    QCOMPARE(stored(RTKSettings::settingsGroup, "receiverRole").toInt(), 1);
+    QCOMPARE(stored(RTKSettings::settingsGroup, "forwardReceiverRtcm").toBool(), false);
     QCOMPARE(stored(RTKSettings::settingsGroup, "connectOnStartup").toBool(), true);
     QCOMPARE(stored(RTKSettings::settingsGroup, "connectionType").toInt(), connection);
     if (connection == 0) {
@@ -178,6 +180,20 @@ void RTKSettingsTest::_manufacturerMigration_data()
     QTest::newRow("legacy-view-filter") << QVariant() << 1 << 2 << 0;
     QTest::newRow("legacy-passive") << QVariant() << 7 << 1 << 0;
     QTest::newRow("modern") << QVariant(2) << 6 << 2 << 6;
+}
+
+void RTKSettingsTest::_positionOnlyRoleBecomesPassive()
+{
+    writeGroup(QLatin1String(RTKSettings::settingsGroup), {{QStringLiteral("receiverRole"), 0}});
+    const RTKSettings rtk;
+    QCOMPARE(stored(RTKSettings::settingsGroup, "receiverRole").toInt(), 1);
+    QCOMPARE(stored(RTKSettings::settingsGroup, "forwardReceiverRtcm").toBool(), false);
+
+    // A passive receiver that forwards RTCM keeps doing so.
+    writeGroup(QLatin1String(RTKSettings::settingsGroup), {{QStringLiteral("receiverRole"), 1}});
+    const RTKSettings passive;
+    QCOMPARE(stored(RTKSettings::settingsGroup, "receiverRole").toInt(), 1);
+    QVERIFY(!stored(RTKSettings::settingsGroup, "forwardReceiverRtcm").isValid());
 }
 
 void RTKSettingsTest::_manufacturerMigration()

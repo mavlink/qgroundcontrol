@@ -42,7 +42,7 @@ struct ScriptedNTRIP
     {
         auto* transport = new MockNTRIPTransport(&manager);
         transport->autoConnect = autoConnect;
-        manager.setTransportForTest(transport);
+        injectNextTransport(manager, transport);
         return transport;
     }
 
@@ -185,7 +185,8 @@ void NTRIPSettingsUITest::_testErrorActionRetries()
         verifyExpectedLogMessage();
     };
     ScriptedNTRIP ntrip;
-    MockNTRIPTransport* first = ntrip.nextTransport();
+    // The manager deletes a failed transport when it retries.
+    QPointer<MockNTRIPTransport> first = ntrip.nextTransport();
     ntrip.manager.init();
     fail(first);
     QCOMPARE(ntrip.manager.connectionStatus(), NTRIPManager::ConnectionStatus::Error);
@@ -214,7 +215,8 @@ void NTRIPSettingsUITest::_testErrorActionRetries()
     QVERIFY(QMetaObject::invokeMethod(button, "click"));
     QVERIFY(retry);
     QCOMPARE(retry->startCount, 1);
-    QCOMPARE(first->startCount, 1);
+    // Retrying starts a new transport; the failed one is never restarted.
+    QVERIFY(!first || first->startCount == 1);
     QCOMPARE(ntrip.manager.connectionStatus(), NTRIPManager::ConnectionStatus::Connecting);
     QVERIFY(enabled.rawValue().toBool());
     QVERIFY(!button->property("enabled").toBool());

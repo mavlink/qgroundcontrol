@@ -44,7 +44,6 @@ public:
     {
         bool enabled = false;
         quint16 port = 0;
-        bool validate = true;
         bool operator==(const UdpInputConfiguration&) const = default;
     };
 

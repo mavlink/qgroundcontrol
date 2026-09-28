@@ -15,32 +15,17 @@ Item {
     anchors.bottom: parent.bottom
 
     property bool   showIndicator:  true
-    // Vehicle exposes its GPS groups as FactGroup, which lacks their GPS Facts, so the vehicle stays untyped.
-    property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+    property Vehicle _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
     readonly property bool _vehicleGps: !!_activeVehicle && !!_activeVehicle.gps && _activeVehicle.gps.telemetryAvailable
-    property GPSReceiver _receiver:      QGroundControl.gpsManager.gpsRtk
-    property GPSReceiverFactGroup _rtkFacts: QGroundControl.gpsManager.gpsRtkFacts
-    property bool   _rtkConnected:  _rtkFacts.connected.value
-    readonly property bool _rtkInterference: _rtkConnected && _rtkFacts.interferenceWarning
-    readonly property int _receiverSatellites: _rtkFacts.numSatellitesUsed.rawValue
-    readonly property string _receiverDetail: {
-        if (_receiver.activeRole === GPSReceiver.ConfiguredBase) {
-            return _rtkFacts.active.value ? qsTr("Survey", "Base survey-in in progress") : qsTr("Base")
-        }
-        switch (_rtkFacts.fixType.rawValue) {
-        case GPSFixQuality.NoFix: return qsTr("No fix")
-        case GPSFixQuality.Fix2D: return qsTr("2D")
-        case GPSFixQuality.Fix3D: return qsTr("3D")
-        case GPSFixQuality.Differential: return qsTr("DGPS")
-        case GPSFixQuality.RTKFloat: return qsTr("Float", "RTK float fix")
-        case GPSFixQuality.RTKFixed: return qsTr("Fixed", "RTK fixed fix")
-        case GPSFixQuality.Extrapolated: return qsTr("DR", "Dead reckoning (extrapolated) fix")
-        default: return ""
-        }
-    }
+    property GPSReceiver _receiver:      QGroundControl.gpsManager.receiver
+    property GPSReceiverFactGroup _receiverFacts: QGroundControl.gpsManager.receiverFacts
+    property bool   _rtkConnected:  _receiverFacts.connected.value
+    readonly property bool _rtkInterference: _rtkConnected && _receiverFacts.interferenceWarning
+    readonly property int _receiverSatellites: _receiverFacts.numSatellitesUsed.rawValue
+    readonly property string _receiverDetail: _receiverFacts.summaryLabel
     property int    _correctionState: QGroundControl.gpsManager.correctionState
     readonly property bool _showRtk: _correctionState !== GPSManager.Inactive
-    property var    _gpsAggregate:  _activeVehicle ? _activeVehicle.gpsAggregate : null
+    property VehicleGPSAggregateFactGroup _gpsAggregate: _activeVehicle ? _activeVehicle.gpsAggregate : null
     readonly property int _authenticationState: _gpsAggregate && _gpsAggregate.authenticationReported
                                                 ? _gpsAggregate.authenticationState.value : 0
     readonly property int _interferenceState: _gpsAggregate ? _gpsAggregate.interferenceState : 0

@@ -2,12 +2,15 @@
 
 #include <chrono>
 #include <functional>
+#include <utility>
 
 #include <QtCore/QByteArray>
+#include <QtCore/QPointer>
 #include <QtCore/QVector>
 
 #include "MonotonicClock.h"
 #include "NTRIPError.h"
+#include "NTRIPManager.h"
 #include "NTRIPTransport.h"
 #include "RTCMFramer.h"
 
@@ -70,3 +73,12 @@ public:
     QVector<QByteArray> sentNmea;
     QVector<int> lastWhitelist;
 };
+
+/// Makes @a manager open @a transport on its next connection attempt, then NTRIPHttpTransport again.
+inline void injectNextTransport(NTRIPManager& manager, NTRIPTransport* transport)
+{
+    manager.setTransportFactory(
+        [next = QPointer<NTRIPTransport>(transport)](const NTRIPManager::Configuration&, QObject*) mutable {
+            return std::exchange(next, {}).data();
+        });
+}

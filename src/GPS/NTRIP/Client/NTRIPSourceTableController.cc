@@ -264,16 +264,6 @@ void NTRIPSourceTableController::cancel()
     }
 }
 
-void NTRIPSourceTableController::injectSourceTableForTest(const QString& table)
-{
-    _completeFetch(_fetchRevision.advance(this), table);
-}
-
-void NTRIPSourceTableController::injectFetchErrorForTest(const QString& error)
-{
-    _completeFetch(_fetchRevision.advance(this), {}, error);
-}
-
 void NTRIPSourceTableController::selectMountpoint(const QString& mountpoint)
 {
     emit mountpointSelected(mountpoint);

@@ -24,6 +24,7 @@ QDebug operator<<(QDebug debug, const GPSReceiver::Configuration& configuration)
 {
     const QDebugStateSaver saver(debug);
     debug.nospace().noquote() << "GPSReceiver::Configuration(receiverRole=" << configuration.receiverRole
+                              << ", forwardReceiverRtcm=" << configuration.forwardReceiverRtcm
                               << ", baseReceiverManufacturer=" << configuration.baseReceiverManufacturer
                               << ", connectionType=" << configuration.connectionType
                               << ", tcpHost=" << configuration.tcpHost << ", tcpPort=" << configuration.tcpPort
@@ -361,10 +362,7 @@ bool GPSReceiver::connectUdp(quint16 port, GPSType type)
 
 GPSReceiver::ReceiverRole GPSReceiver::_roleFor(GPSType type) const
 {
-    if (type != GPSType::passive) {
-        return ConfiguredBase;
-    }
-    return _configuration.receiverRole == PositionOnly ? PositionOnly : Passive;
+    return type == GPSType::passive ? Passive : ConfiguredBase;
 }
 
 bool GPSReceiver::serialSupported() const
@@ -433,6 +431,11 @@ QString GPSReceiver::detectedReceiver() const
 GPSReceiver::ReceiverRole GPSReceiver::activeRole() const
 {
     return _session ? _session->role() : ConfiguredBase;
+}
+
+bool GPSReceiver::forwardingCorrections() const
+{
+    return _session && _session->forwardsCorrections();
 }
 
 GPSReceiverPresentation GPSReceiver::activePresentation() const
@@ -538,10 +541,15 @@ bool GPSReceiver::_connectReceiver(GPSType type, ReceiverRole role, GPSProvider:
     _retireSession();
     _resetStatus();
     _setError(GPSConnectionError::None);
-    auto* const session = new GPSReceiverSession(
-        ++_sessionCount,
-        {.type = type, .role = role, .config = std::move(config), .serialDevice = serialDevice, .endpoint = endpoint},
-        this);
+    auto* const session =
+        new GPSReceiverSession(++_sessionCount,
+                               {.type = type,
+                                .role = role,
+                                .forwardsCorrections = role == ConfiguredBase || _configuration.forwardReceiverRtcm,
+                                .config = std::move(config),
+                                .serialDevice = serialDevice,
+                                .endpoint = endpoint},
+                               this);
     session->registerCorrections(_correctionManager, sourceInstance);
     // A registration observer that connected another receiver is superseded by this request.
     _retireSession();

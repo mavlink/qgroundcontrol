@@ -16,13 +16,14 @@ private slots:
     void cleanup() override;
 
     void _autoConnectMigration();
-    void _nmeaInputBecomesPositionOnlyReceiver_data();
-    void _nmeaInputBecomesPositionOnlyReceiver();
-    void _nmeaPortLabelBecomesPositionOnlyReceiver_data();
-    void _nmeaPortLabelBecomesPositionOnlyReceiver();
+    void _nmeaInputBecomesPassiveReceiver_data();
+    void _nmeaInputBecomesPassiveReceiver();
+    void _nmeaPortLabelBecomesPassiveReceiver_data();
+    void _nmeaPortLabelBecomesPassiveReceiver();
     void _configuredReceiverKeepsSettings();
     void _manufacturerMigration_data();
     void _manufacturerMigration();
+    void _positionOnlyRoleBecomesPassive();
 
 private:
     QHash<QString, QHash<QString, QVariant>> _savedGroups;

@@ -31,6 +31,8 @@ public:
     {
         GPSType type = GPSType::ublox;
         GPSReceiver::ReceiverRole role = GPSReceiver::ConfiguredBase;
+        /// The receiver's RTCM output is a correction source.
+        bool forwardsCorrections = true;
         GPSReceiverConfig config{};
         /// Serial device whose removal ends the session; empty for network receivers.
         QString serialDevice;
@@ -41,7 +43,7 @@ public:
     GPSReceiverSession(quint64 id, Connection connection, QObject* parent);
     ~GPSReceiverSession() override;
 
-    /// Forwards the receiver's RTCM as the local correction source unless the role is PositionOnly. Registration
+    /// Forwards the receiver's RTCM as the local correction source when the connection asks for it. Registration
     /// observers may reenter the owner.
     void registerCorrections(GPSCorrectionManager* manager, const QString& sourceInstance);
     /// Creates the provider, with a real worker for an empty @a factory, and starts it. False when none is created.
@@ -55,6 +57,8 @@ public:
     bool hasProvider() const { return !_provider.isNull(); }
 
     GPSReceiver::ReceiverRole role() const { return _connection.role; }
+
+    bool forwardsCorrections() const { return _connection.forwardsCorrections; }
 
     /// The detected family's once an Automatic session detected it.
     int manufacturer() const { return GPSReceiver::manufacturerForType(_detectedType.value_or(_connection.type)); }

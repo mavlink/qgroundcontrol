@@ -36,7 +36,7 @@ QDebug operator<<(QDebug debug, const GPSCorrectionManager::UdpInputConfiguratio
 {
     const QDebugStateSaver saver(debug);
     debug.nospace().noquote() << "GPSCorrectionManager::UdpInputConfiguration(enabled=" << configuration.enabled
-                              << ", port=" << configuration.port << ", validate=" << configuration.validate << ')';
+                              << ", port=" << configuration.port << ')';
     return debug;
 }
 
@@ -150,7 +150,7 @@ void GPSCorrectionManager::setUdpInputConfiguration(const UdpInputConfiguration&
         return;
     }
     disconnect(&_udpInput, nullptr, this, nullptr);
-    _udpInput.configure(input.port, input.validate);
+    _udpInput.setPort(input.port);
     if (!current() || !enabled) {
         return;
     }

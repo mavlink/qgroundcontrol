@@ -4,8 +4,11 @@ target_sources(
             BlockedTransportGate.h
             GPSProviderTest.cc
             GPSProviderTest.h
+            GPSReceiverConfigurationTest.cc
+            GPSReceiverConfigurationTest.h
             GPSReceiverTest.cc
             GPSReceiverTest.h
+            GPSReceiverTestSupport.h
             ScriptedProvider.h
 )
 
@@ -16,6 +19,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSProtocols QGCGPSReceiv
 add_qgc_test(GPSProviderTest LABELS Unit GPS)
 add_qgc_test(GPSBaseStationConfigTest LABELS Unit GPS Receiver)
 add_qgc_test(GPSReceiverTest LABELS Unit GPS)
+add_qgc_test(GPSReceiverConfigurationTest LABELS Unit GPS)
 
 if(NOT QGC_NO_SERIAL_LINK)
     target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSReceiverConnectionPolicyTest.cc GPSReceiverConnectionPolicyTest.h)

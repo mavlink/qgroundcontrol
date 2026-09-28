@@ -117,16 +117,19 @@ void NTRIPSourceTableControllerTest::sourceTablePublishesSortedRowsOnce()
         }
         QVERIFY(model->data(model->index(2, 0), NTRIPSourceTableModel::DistanceKmRole).toDouble() > 1000);
     });
-    controller.fetch(config(), QGeoCoordinate(40, -74));
-    controller.injectSourceTableForTest(table);
-    QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success);
+    ScriptedNTRIPCaster caster;
+    QVERIFY(caster.isListening());
+    controller.fetch(caster.connectionConfig(), QGeoCoordinate(40, -74));
+    QVERIFY(caster.serveSourceTable(table));
+    QTRY_COMPARE_WITH_TIMEOUT(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success,
+                              TestTimeout::mediumMs());
     QCOMPARE(resets.size(), 1);
     QCOMPARE(counts.size(), 1);
     // QML reads the row count through this property.
     QCOMPARE(model->property("count").toInt(), 5);
 
     // A cached table reorders for a new position without a reset; equal distances keep caster order.
-    controller.fetch(config(), QGeoCoordinate(52, 13));
+    controller.fetch(caster.connectionConfig(), QGeoCoordinate(52, 13));
     QStringList names;
     for (int row = 0; row < model->rowCount(); ++row) {
         names.append(model->data(model->index(row, 0), NTRIPSourceTableModel::MountpointRole).toString());
@@ -267,15 +270,22 @@ void NTRIPSourceTableControllerTest::sourceTableIdentity()
     // The identity rows use credentials over plain HTTP, which the controller reports.
     ignoreLogMessage("GPS.NTRIP.NTRIPSourceTableController", QtWarningMsg,
                      QRegularExpression(QStringLiteral("credentials without TLS")));
+    // The rows vary the request; a scripted caster answers the initial one on its own port.
+    ScriptedNTRIPCaster caster;
+    QVERIFY(caster.isListening());
+    const int portOffset = replacement.port - initial.port;
+    initial.port = caster.port();
+    replacement.port = caster.port() + portOffset;
     NTRIPSourceTableController controller;
     controller.fetch(initial);
     const auto previous = controller._activeSession();
     QVERIFY(previous);
     if (cached) {
-        controller.injectSourceTableForTest(
-            QStringLiteral("STR;MP;Id;RTCM 3.2;;2;GPS;NET;USA;40;-74;0;1;gen;none;B;N;4800\r\n"
-                           "ENDSOURCETABLE\r\n"));
-        QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success);
+        QVERIFY(
+            caster.serveSourceTable(QStringLiteral("STR;MP;Id;RTCM 3.2;;2;GPS;NET;USA;40;-74;0;1;gen;none;B;N;4800\r\n"
+                                                   "ENDSOURCETABLE\r\n")));
+        QTRY_COMPARE_WITH_TIMEOUT(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success,
+                                  TestTimeout::mediumMs());
         QVERIFY(!controller._activeSession());
     }
     const auto revision = controller._fetchRevision.value();

@@ -16,7 +16,11 @@ ToolIndicatorPage {
     property string na: qsTr("N/A", "No data to display")
     property string valueNA: qsTr("–.––", "No data to display")
     property RTKSettings rtkSettings: QGroundControl.settingsManager.rtkSettings
-    readonly property GPSReceiver _receiver: QGroundControl.gpsManager.gpsRtk
+    readonly property GPSReceiver _receiver: QGroundControl.gpsManager.receiver
+    readonly property NTRIPSettings _ntripSettings: QGroundControl.settingsManager.ntripSettings
+    // Connecting to a configured caster is the common field action, so it is offered without opening settings.
+    readonly property bool _ntripConfigured: _ntripSettings.userVisible
+                                             && _ntripSettings.ntripServerHostAddress.rawValue !== ""
     readonly property bool _vehicleGps: !!activeVehicle && !!activeVehicle.gps && activeVehicle.gps.telemetryAvailable
     readonly property real _preferredStatusWidth: ScreenTools.defaultFontPixelWidth * 36
     readonly property real _preferredSettingsWidth: ScreenTools.defaultFontPixelWidth * 56
@@ -37,7 +41,7 @@ ToolIndicatorPage {
     component ResilienceGroup: SettingsGroupLayout {
         id: group
 
-        // Vehicle GPS groups are exposed as FactGroup, which lacks their resilience Facts.
+        // A receiver's group or the aggregate; they share the resilience properties but no common QML type.
         required property var facts
         readonly property bool jammingReported: !!facts && facts.jammingReported
         readonly property bool spoofingReported: !!facts && facts.spoofingReported
@@ -189,6 +193,23 @@ ToolIndicatorPage {
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
                 showWhenInactive: false
+            }
+
+            SettingsGroupLayout {
+                objectName: "gpsIndicatorNtrip"
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                heading: qsTr("NTRIP")
+                visible: root._ntripConfigured
+
+                NTRIPConnectionStatus {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    ntripManager: QGroundControl.gpsManager.ntrip
+                    enabledFact: root._ntripSettings.ntripServerConnectEnabled
+                    canConnect: root._ntripConfigured
+                    corrections: QGroundControl.gpsManager.corrections
+                }
             }
 
             GcsPositionStatus {

@@ -9,11 +9,10 @@ SettingsGroupLayout {
     id:                 root
     Layout.fillWidth:   true
     heading:            qsTr("NTRIP Server")
-    visible:            _ntrip.ntripServerHostAddress.userVisible || _ntrip.ntripServerPort.userVisible ||
-                        _ntrip.ntripUsername.userVisible || _ntrip.ntripPassword.userVisible
+    visible:            (_ntrip.ntripServerHostAddress as SettingsFact).userVisible || (_ntrip.ntripServerPort as SettingsFact).userVisible ||
+                        (_ntrip.ntripUsername as SettingsFact).userVisible || (_ntrip.ntripPassword as SettingsFact).userVisible
 
-    // NTRIPSettings is not registered for QML, and SettingsGroup is not either.
-    property var  _ntrip:       QGroundControl.settingsManager.ntripSettings
+    property NTRIPSettings _ntrip:       QGroundControl.settingsManager.ntripSettings
     property bool _isActive:    _ntrip.ntripServerConnectEnabled.rawValue
     property real _textFieldWidth: ScreenTools.defaultFontPixelWidth * 30
 
@@ -45,7 +44,7 @@ SettingsGroupLayout {
 
     RowLayout {
         Layout.fillWidth:   true
-        visible:            root._ntrip.ntripPassword.userVisible
+        visible:            (root._ntrip.ntripPassword as SettingsFact).userVisible
         spacing:            ScreenTools.defaultFontPixelWidth * 0.5
 
         LabelledFactTextField {

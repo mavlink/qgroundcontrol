@@ -34,20 +34,7 @@ SettingsGroupLayout {
     }
 
     function stageName(stage: int): string {
-        switch (stage) {
-        case GPSCorrectionEventModel.Received:
-            return qsTr("Received");
-        case GPSCorrectionEventModel.Validated:
-            return qsTr("Validated");
-        case GPSCorrectionEventModel.Selected:
-            return qsTr("Selected");
-        case GPSCorrectionEventModel.Queued:
-            return qsTr("Queued");
-        case GPSCorrectionEventModel.Dropped:
-            return qsTr("Dropped");
-        default:
-            return qsTr("Unknown");
-        }
+        return stage === GPSCorrectionEventModel.Selected ? qsTr("Now sent to vehicles") : qsTr("Dropped");
     }
 
     heading: qsTr("Correction Diagnostics")
@@ -161,7 +148,7 @@ SettingsGroupLayout {
         id: historyToggle
 
         objectName: "correctionHistoryToggle"
-        text: qsTr("Show recent correction events")
+        text: qsTr("Show stream switches and drops")
     }
 
     Loader {

@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <limits>
+#include <utility>
 
 #include "GPSReceiverConfig.h"
 #include "GPSReceiverReports.h"
@@ -11,6 +12,7 @@ QGC_LOGGING_CATEGORY(GPSReceiverFactGroupLog, "GPS.Receiver.GPSReceiverFactGroup
 
 GPSReceiverFactGroup::GPSReceiverFactGroup(const GPSReceiver* receiver, QObject* parent)
     : FactGroup(1000, QStringLiteral(":/json/Vehicle/GPSReceiverFact.json"), parent)
+    , _receiver(receiver)
 {
     // qCDebug(GPSReceiverFactGroupLog) << Q_FUNC_INFO << this;
 
@@ -35,9 +37,51 @@ GPSReceiverFactGroup::GPSReceiverFactGroup(const GPSReceiver* receiver, QObject*
     for (Fact* fact : {&_jammingStateFact, &_spoofingStateFact}) {
         connect(fact, &Fact::rawValueChanged, this, &GPSReceiverFactGroup::interferenceWarningChanged);
     }
+    for (Fact* fact : {&_fixTypeFact, &_activeFact}) {
+        connect(fact, &Fact::rawValueChanged, this, &GPSReceiverFactGroup::_updateSummaryLabel);
+    }
     if (receiver) {
         _mirror(receiver->status());
         connect(receiver, &GPSReceiver::statusChanged, this, [this, receiver]() { _mirror(receiver->status()); });
+        connect(receiver, &GPSReceiver::receiverChanged, this, &GPSReceiverFactGroup::_updateSummaryLabel);
+    }
+    _updateSummaryLabel();
+}
+
+void GPSReceiverFactGroup::_updateSummaryLabel()
+{
+    QString label;
+    if (_receiver && _receiver->hasReceiver() && _receiver->activeRole() == GPSReceiver::ConfiguredBase) {
+        label = _activeFact.rawValue().toBool() ? tr("Survey", "Base survey-in in progress") : tr("Base");
+    } else {
+        switch (gpsFixQualityFromValue(_fixTypeFact.rawValue().toInt())) {
+            case GPSFixQuality::NoFix:
+                label = tr("No fix");
+                break;
+            case GPSFixQuality::Fix2D:
+                label = tr("2D");
+                break;
+            case GPSFixQuality::Fix3D:
+                label = tr("3D");
+                break;
+            case GPSFixQuality::Differential:
+                label = tr("DGPS");
+                break;
+            case GPSFixQuality::RTKFloat:
+                label = tr("Float", "RTK float fix");
+                break;
+            case GPSFixQuality::RTKFixed:
+                label = tr("Fixed", "RTK fixed fix");
+                break;
+            case GPSFixQuality::Extrapolated:
+                label = tr("DR", "Dead reckoning (extrapolated) fix");
+                break;
+            case GPSFixQuality::Unknown:
+                break;
+        }
+    }
+    if (std::exchange(_summaryLabel, label) != label) {
+        emit summaryLabelChanged();
     }
 }
 

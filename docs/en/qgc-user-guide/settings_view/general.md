@@ -100,35 +100,24 @@ Settings include:
 - **LibrePilot:** Autoconnect to Libre Pilot autopilot
 - **UDP:** Autoconnect to UDP
 - **RTK GPS:** Autoconnect to RTK GPS device
-- **NMEA GPS Device:** Autoconnect to an external GPS device to get ground station position ([see below](#nmea_gps))
 
-### Ground Station Location (NMEA GPS Device) {#nmea_gps}
+### Ground Station Location {#nmea_gps}
 
 _QGroundControl_ will automatically use an internal GPS to display its own location on the map with a purple `Q` icon (if the GPS provides a heading, this will be also indicated by the icon).
 It may also use the GPS as a location source for _Follow Me Mode_ - currently supported on [PX4 Multicopters only](https://docs.px4.io/en/flight_modes/follow_me.html).
 
-You can also configure QGC to connect to an external GPS device via a serial or UDP port.
-The GPS device must support the ASCII NMEA format - this is normally the case.
+An external GNSS receiver connected over serial, TCP or UDP can provide the ground station position instead.
+Configure it in the _GNSS Receiver_ settings with the _Passive_ role, which uses the receiver's existing NMEA output without configuring it:
 
-::: tip
-A higher quality external GPS system may be useful even if the ground station has internal GPS support.
+- Turn off **Forward receiver RTCM** to use the receiver only for the ground station position.
+- Select the connection (**Serial** with the receiver's existing baud rate, **TCP**, or **UDP** with the port QGC listens on).
+- **GCS position source**: _Best available_ uses the GNSS receiver while it has a fix and falls back to this device; select _GNSS receiver_ or _This device_ to use only one.
+
+Settings from versions with a separate _NMEA GPS Device_ setting are migrated to a passive receiver automatically.
+
+:::tip
+To troubleshoot serial GPS problems: Disable RTK GPS [auto connection](#auto_connect), close _QGroundControl_, reconnect your GPS, and open QGC.
 :::
-
-Use the _NMEA GPS Device_ drop-down selector to manually select the GPS device and other options:
-
-- USB connection:
-
-  - **NMEA GPS Device:** _Serial_
-  - **NMEA GPS Baudrate**: The baudrate for the serial port
-
-  :::tip
-  To troubleshoot serial GPS problems: Disable RTK GPS [auto connection](#auto_connect), close _QGroundControl_, reconnect your GPS, and open QGC.
-  :::
-
-- Network connection:
-
-  - **NMEA GPS Device:** _UDP Port_.
-  - **NMEA Stream UDP Port**: The UDP port on which QGC will listen for NMEA data (QGC binds the port as a server)
 
 ## RTK GPS {#rtk_gps}
 
@@ -142,17 +131,19 @@ For more information see [RTK GPS](https://docs.px4.io/en/advanced_features/rtk-
 :::
 
 ::: tip
-In order to save and reuse a base position (because Survey-In is time consuming!) perform Survey-In once, select _Use Specified Base Position_ and press **Save Current Base Position** to copy in the values for the last survey.
-The values will then persist across QGC reboots until they are changed.
+Survey-In is time consuming, so save its result: when a survey completes, the receiver status offers **Save Survey Position**.
+Select _Use Specified Base Position_ to start the base from the saved position next time.
+The values persist across QGC reboots until they are changed.
 :::
 
 The settings are:
 
+- **Receiver role:** _Configured base_ sets up a supported receiver as an RTK base station. _Passive_ uses a receiver's existing output without configuring it; turn on **Forward receiver RTCM** when it is already a base station whose corrections should reach vehicles.
 - **Receiver / settings:** The receiver family QGroundControl configures as a base station.
-  _Automatic_, the default, identifies the receiver each time it connects: QGroundControl listens to its output and sends read-only identification queries at each baud rate the supported receivers use.
+  _Detect automatically_, the default, identifies the receiver each time it connects: QGroundControl listens to its output and sends read-only identification queries at each baud rate the supported receivers use.
   Until then the settings of every supported receiver are shown, and connecting reports a base mode the identified receiver does not support.
   Select a manufacturer to configure only that receiver family.
-  A manufacturer saved by a version without receiver roles only filtered the settings shown, so it resets to _Automatic_.
+  A manufacturer saved by a version without receiver roles only filtered the settings shown, so it resets to _Detect automatically_.
 - Perform Survey-In
   - **Survey-in accuracy (U-blox only):** The minimum position accuracy for the RTK Survey-In process to complete.
   - **Minimum observation duration:** The minimum time that will be taken for the RTK Survey-in process.

@@ -105,18 +105,12 @@ OperationRevision::Token RTCMUdpInput::_stop()
 
 void RTCMUdpInput::setPort(quint16 port)
 {
-    configure(port, _validateRtcm);
-}
-
-void RTCMUdpInput::configure(quint16 port, bool validate)
-{
-    if (_port == port && _validateRtcm == validate) {
+    if (_port == port) {
         return;
     }
     const auto operation = _resetStream();
     const bool portHasChanged = _port != port;
     _port = port;
-    _validateRtcm = validate;
     if (portHasChanged) {
         emit portChanged();
     }
@@ -164,12 +158,6 @@ void RTCMUdpInput::_readDatagrams()
         const qint64 receivedAtMs = GPSCorrectionFrame::monotonicNowMs();
         const QHostAddress sender = senderAddress(datagram);
         const QString instance = udpPeerKey(sender, datagram.senderPort());
-
-        if (!_validateRtcm) {
-            qCDebug(RTCMUdpInputLog) << "Received RTCM datagram:" << data.size() << "bytes";
-            emit frameReceived({GPSCorrectionSource::Udp, 0, receivedAtMs, data, 0, false, false, instance});
-            continue;
-        }
 
         // Preserve sender boundaries and one MAVLink sequence per frame.
         const auto peer = _parserForPeer(sender, datagram.senderPort());

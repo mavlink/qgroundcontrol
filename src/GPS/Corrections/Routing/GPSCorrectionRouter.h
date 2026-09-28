@@ -118,6 +118,8 @@ private:
     GPSCorrectionSelector _selector;
     GPSCorrectionLedger _ledger;
     QMap<QString, Output> _sinks;
+    /// The last selected stream and its source session, so the history records each switch once.
+    std::optional<std::pair<GPSCorrectionSelector::SourceIdentity, quint64>> _lastSelected;
     OperationRevision _revision;
     bool _shutdown = false;
     bool _submitting = false;

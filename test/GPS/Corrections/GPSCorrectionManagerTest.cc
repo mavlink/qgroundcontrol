@@ -43,7 +43,6 @@ void configureUdp(TestFixtures::SettingsFixture& saved, GPSCorrectionSettings* s
     saved.setFactValue(SettingsManager::instance()->ntripSettings()->ntripServerConnectEnabled(), false);
     saved.setFactValue(settings->rtcmUdpInputEnabled(), true);
     saved.setFactValue(settings->rtcmUdpInputPort(), port);
-    saved.setFactValue(settings->rtcmUdpValidate(), true);
     saved.setFactValue(settings->correctionSource(), GPSCorrectionSettings::Automatic);
     saved.setFactValue(settings->correctionSourceInstance(), QString());
 }
@@ -93,7 +92,7 @@ void GPSCorrectionManagerTest::_sourcesShareForwarder()
     GPSSettingsBindings::bindNtrip(ntripSettings, &ntrip);
     auto* stream = new MockNTRIPTransport(&ntrip);
     stream->autoConnect = false;
-    ntrip.setTransportForTest(stream);
+    injectNextTransport(ntrip, stream);
     ntrip.setCorrectionManager(&corrections);
     ntrip.init();
     settings->correctionSource()->setRawValue(GPSCorrectionSettings::LocalReceiver);
@@ -224,7 +223,6 @@ void GPSCorrectionManagerTest::_udpSettingsAndShutdown()
 
     corrections.shutdown();
     corrections.shutdown();
-    settings->rtcmUdpValidate()->setRawValue(false);
     settings->rtcmUdpInputEnabled()->setRawValue(false);
     settings->rtcmUdpInputEnabled()->setRawValue(true);
     QUdpSocket stopped;
@@ -348,12 +346,12 @@ void GPSCorrectionManagerTest::_qmlForwarderAvailableBeforeInit()
         import QGroundControl
         QtObject {
             readonly property var forwarder: QGroundControl.gpsManager.corrections.rtcmMavlink
-            readonly property var baseFacts: QGroundControl.gpsManager.gpsRtkFacts
+            readonly property var baseFacts: QGroundControl.gpsManager.receiverFacts
         }
     )"));
     QVERIFY2(root, qPrintable(engine.lastError()));
     QCOMPARE(root->property("forwarder").value<RTCMMAVLink*>(), GPSManager::instance()->corrections()->rtcmMavlink());
-    QCOMPARE(root->property("baseFacts").value<FactGroup*>(), GPSManager::instance()->gpsRtkFacts());
+    QCOMPARE(root->property("baseFacts").value<FactGroup*>(), GPSManager::instance()->receiverFacts());
 }
 
 void GPSCorrectionManagerTest::_sourceMessageCounts()

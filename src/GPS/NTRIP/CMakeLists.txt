@@ -5,7 +5,9 @@
 
 add_subdirectory(Http)
 
-if(DEFINED QGC_GPS_COMPONENTS_ENABLED AND NOT "NTRIP" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+include("${CMAKE_CURRENT_LIST_DIR}/../GPSComponents.cmake")
+qgc_gps_component_enabled(NTRIP _qgc_ntrip_enabled)
+if(NOT _qgc_ntrip_enabled)
     return()
 endif()
 

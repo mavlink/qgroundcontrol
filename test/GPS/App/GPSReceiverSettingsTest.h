@@ -9,6 +9,7 @@ class GPSReceiverSettingsTest : public UnitTest
 private slots:
     void _surveySaveWorkflow_data();
     void _surveySaveWorkflow();
+    void _surveyCompletePrompt();
     void _unavailablePositionCannotBeSaved_data();
     void _unavailablePositionCannotBeSaved();
     void _reconnectingOffersDisconnect();
@@ -31,6 +32,7 @@ private slots:
     void _indicatorShowsReceiverWithoutVehicleGPS_data();
     void _indicatorShowsReceiverWithoutVehicleGPS();
     void _resiliencePageGroups();
+    void _indicatorOffersNtripConnect();
     void _horizontalAccuracyLabel();
     void _vehicleAccuracyFacts();
 };

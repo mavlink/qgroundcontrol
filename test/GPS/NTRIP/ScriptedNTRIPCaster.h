@@ -132,6 +132,30 @@ public:
 
     Connection* latestConnection() const { return _connections.empty() ? nullptr : _connections.back().get(); }
 
+    /// Answers the next source-table request with @a table. @return whether a request arrived and was answered.
+    bool serveSourceTable(const QString& table, int timeoutMs = TestTimeout::mediumMs())
+    {
+        Connection* connection = waitForConnection(timeoutMs);
+        if (!connection || connection->waitForRequest(timeoutMs).isEmpty()) {
+            return false;
+        }
+        const QByteArray body = table.toUtf8();
+        const QByteArray response =
+            "HTTP/1.1 200 OK\r\nContent-Length: " + QByteArray::number(body.size()) + "\r\n\r\n" + body;
+        return connection->write(response) == response.size();
+    }
+
+    /// Accepts the next request and drops the connection without an answer.
+    bool dropNextRequest(int timeoutMs = TestTimeout::mediumMs())
+    {
+        Connection* connection = waitForConnection(timeoutMs);
+        if (!connection || connection->waitForRequest(timeoutMs).isEmpty()) {
+            return false;
+        }
+        connection->disconnectFromHost();
+        return true;
+    }
+
     void write(const QByteArray& bytes) const
     {
         if (Connection* connection = latestConnection()) {

@@ -47,6 +47,8 @@ class GPSReceiver : public QObject, private GPSReceiverConnectionTarget
     Q_PROPERTY(bool reconnecting READ reconnecting NOTIFY receiverChanged FINAL)
     Q_PROPERTY(GPSReceiverPresentation activePresentation READ activePresentation NOTIFY receiverChanged FINAL)
     Q_PROPERTY(ReceiverRole activeRole READ activeRole NOTIFY receiverChanged FINAL)
+    /// The active receiver's RTCM output is a correction source.
+    Q_PROPERTY(bool forwardingCorrections READ forwardingCorrections NOTIFY receiverChanged FINAL)
     /// The one-use permission to write receiver flash, for the configuration currently selected.
     Q_PROPERTY(bool persistentChangesAllowed READ persistentChangesAllowed WRITE setPersistentChangesAllowed NOTIFY
                    persistentChangesAllowedChanged FINAL)
@@ -54,6 +56,7 @@ class GPSReceiver : public QObject, private GPSReceiverConnectionTarget
     Q_PROPERTY(bool connectionSupported READ connectionSupported NOTIFY configurationChanged FINAL)
 
     friend class GPSReceiverTest;
+    friend class GPSReceiverConfigurationTest;
     friend class GPSReceiverConnectionPolicyTest;
 
 public:
@@ -69,7 +72,6 @@ public:
     /// Values of RTKSettings::receiverRole. Only a configured base is written to by QGroundControl.
     enum ReceiverRole
     {
-        PositionOnly = 0,
         Passive = 1,
         ConfiguredBase = 2,
     };
@@ -79,6 +81,8 @@ public:
     struct Configuration
     {
         ReceiverRole receiverRole = ConfiguredBase;
+        /// A passive receiver's RTCM output becomes a correction source for vehicles.
+        bool forwardReceiverRtcm = true;
         /// A GPSReceiverDescriptor manufacturer, or GPS_AUTOMATIC_MANUFACTURER to detect the family on every connect.
         int baseReceiverManufacturer = 1;
         ConnectionType connectionType = Serial;
@@ -148,7 +152,7 @@ public:
     std::optional<GPSObservation> acceptedPositionObservation(GPSObservation::PositionUse use) const;
     /// Lifecycle observers may stop or replace this receiver, and delete it only with deleteLater().
     /// Superseded attempts return false.
-    /// A passive @a type forwards the receiver's RTCM output unless @a role is PositionOnly.
+    /// A passive @a type forwards the receiver's RTCM output when the configuration asks for it.
     bool connectReceiver(GPSType type, GPSProvider::TransportFactory transportFactory,
                          const QString& sourceInstance = {}, uint32_t baudRate = 0, bool allowPersistentChanges = false,
                          std::optional<ReceiverRole> role = std::nullopt);
@@ -193,6 +197,8 @@ public:
     GPSReceiverPresentation activePresentation() const;
 
     ReceiverRole activeRole() const;
+
+    bool forwardingCorrections() const;
 
     bool persistentChangesAllowed() const { return _persistentChangesAllowed; }
 

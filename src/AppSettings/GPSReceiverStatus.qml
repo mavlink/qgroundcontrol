@@ -11,9 +11,9 @@ import QGroundControl.GPS
 SettingsGroupLayout {
     id: root
 
-    property GPSReceiver receiver: QGroundControl.gpsManager.gpsRtk
+    property GPSReceiver receiver: QGroundControl.gpsManager.receiver
     /// The receiver's status Facts.
-    property GPSReceiverFactGroup facts: QGroundControl.gpsManager.gpsRtkFacts
+    property GPSReceiverFactGroup facts: QGroundControl.gpsManager.receiverFacts
     /// Keep the group visible without a receiver, showing disconnectedText.
     property bool showWhenDisconnected: false
     property string disconnectedText: qsTr("No GNSS receiver connected.")
@@ -22,6 +22,16 @@ SettingsGroupLayout {
     readonly property gpsReceiverPresentation _presentation: root.receiver.activePresentation
     readonly property bool _surveyConnected: root.receiver.activeBaseMode === BaseModeDefinition.BaseSurveyIn
     readonly property string _na: qsTr("N/A", "No data to display")
+    // A finished survey is the moment to keep its position, so the next connection can start as a fixed base.
+    readonly property bool _surveyComplete: root._connected && root._surveyConnected && !root.facts.active.value
+                                            && root.facts.canSaveCurrentBasePosition
+    property bool _surveySaved: false
+
+    on_SurveyCompleteChanged: {
+        if (!root._surveyComplete) {
+            root._surveySaved = false
+        }
+    }
 
     heading: qsTr("GNSS Receiver Status")
     visible: root._connected || root.receiver.hasReceiver || root.receiver.reconnecting || root.showWhenDisconnected
@@ -37,8 +47,9 @@ SettingsGroupLayout {
                  ? (root._presentation.automatic ? qsTr("Identifying receiver...") : qsTr("Connecting to receiver..."))
                  : root.receiver.reconnecting ? qsTr("Receiver connection lost. Reconnecting...")
                  : root.disconnectedText)
-              : root.receiver.activeRole === GPSReceiver.PositionOnly ? qsTr("Position-only receiver connected")
-              : root.receiver.activeRole === GPSReceiver.Passive ? qsTr("Passive RTCM/NMEA input connected")
+              : root.receiver.activeRole === GPSReceiver.Passive
+                ? (root.receiver.forwardingCorrections ? qsTr("Passive receiver connected; forwarding its RTCM")
+                                                       : qsTr("Passive receiver connected; position only"))
               : root.receiver.activeBaseMode === BaseModeDefinition.BaseReceiverAveraging
                 ? qsTr("Receiver-managed averaging — no accuracy guarantee")
               : root.receiver.activeBaseMode === BaseModeDefinition.BaseFixed ? qsTr("Fixed base position")
@@ -127,5 +138,27 @@ SettingsGroupLayout {
         label: root.facts.valid.value ? qsTr("Accuracy") : qsTr("Current Accuracy")
         labelText: root.facts.currentAccuracy.valueString + " " + root.facts.currentAccuracy.units
         visible: root._connected && root._surveyConnected && root.facts.currentAccuracy.value > 0
+    }
+
+    QGCLabel {
+        objectName: "rtkSurveyCompletePrompt"
+        Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        Layout.preferredWidth: 0
+        wrapMode: Text.Wrap
+        visible: root._surveyComplete
+        text: root._surveySaved
+              ? qsTr("Survey position saved. Select Fixed base position to start from it next time.")
+              : qsTr("Survey complete. Save this position to start the base from it next time.")
+    }
+
+    QGCButton {
+        objectName: "rtkSurveySaveButton"
+        Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        wrapMode: Text.Wrap
+        visible: root._surveyComplete && !root._surveySaved
+        text: qsTr("Save Survey Position")
+        onClicked: root._surveySaved = QGroundControl.gpsManager.saveCurrentBasePosition()
     }
 }

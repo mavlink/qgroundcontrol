@@ -14,12 +14,11 @@ private slots:
     void _testStartNotificationReentrancy();
     void _testStartupPortReplacement_data();
     void _testStartupPortReplacement();
-    void _testValidationResetsStream();
     void _testReentrantDrainPreservesOrder();
     void _testDrainInterruption_data();
     void _testDrainInterruption();
-    void _testPassthroughWithoutValidation_data();
-    void _testPassthroughWithoutValidation();
+    void _testSenderInstanceNaming_data();
+    void _testSenderInstanceNaming();
     void _testEmitsOneSignalPerFrame();
     void _testDropsBadCrcFrame();
     void _testRecoversBufferedFrames();

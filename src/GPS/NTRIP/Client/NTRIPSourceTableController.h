@@ -75,10 +75,6 @@ signals:
 private:
     friend class NTRIPSourceTableControllerTest;
 
-    /// Test seam: drive the reply-processing paths without a live network reply.
-    void injectSourceTableForTest(const QString& table);
-    void injectFetchErrorForTest(const QString& error);
-
     void _onSourceTableReceived(const QString& table);
     void _onFetchError(const QString& error);
     void _completeFetch(const OperationRevision::Token& fetch, QString table,

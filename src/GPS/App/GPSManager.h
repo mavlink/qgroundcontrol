@@ -27,8 +27,8 @@ class GPSManager : public QObject
     Q_MOC_INCLUDE("GPSReceiverFactGroup.h")
     Q_MOC_INCLUDE("NTRIPManager.h")
     Q_PROPERTY(GPSCorrectionManager* corrections READ corrections CONSTANT FINAL)
-    Q_PROPERTY(GPSReceiver* gpsRtk READ gpsRtk CONSTANT FINAL)
-    Q_PROPERTY(GPSReceiverFactGroup* gpsRtkFacts READ gpsRtkFacts CONSTANT FINAL)
+    Q_PROPERTY(GPSReceiver* receiver READ receiver CONSTANT FINAL)
+    Q_PROPERTY(GPSReceiverFactGroup* receiverFacts READ receiverFacts CONSTANT FINAL)
     Q_PROPERTY(NTRIPManager* ntrip READ ntrip CONSTANT FINAL)
     Q_PROPERTY(CorrectionState correctionState READ correctionState NOTIFY correctionStateChanged FINAL)
 
@@ -55,10 +55,10 @@ public:
     /// Stops the GPS services, then the position manager.
     void shutdown();
 
-    GPSReceiver* gpsRtk() const { return _gpsRtk; }
+    GPSReceiver* receiver() const { return _receiver; }
 
     /// The receiver's status as Facts for QML.
-    GPSReceiverFactGroup* gpsRtkFacts() const { return _gpsRtkFacts; }
+    GPSReceiverFactGroup* receiverFacts() const { return _receiverFacts; }
 
     GPSCorrectionManager* corrections() const { return _corrections; }
 
@@ -69,7 +69,7 @@ public:
     CorrectionState correctionState() const;
 
     /// Stores the receiver's current position and accuracy as the fixed base position for a later connection.
-    /// Returns false, leaving the settings unchanged, when gpsRtkFacts cannot save the current position.
+    /// Returns false, leaving the settings unchanged, when receiverFacts cannot save the current position.
     Q_INVOKABLE bool saveCurrentBasePosition();
 
 signals:
@@ -81,8 +81,8 @@ private:
     void _updateConnections();
     QTimer* _connectionTimer = nullptr;
     GPSCorrectionManager* _corrections = nullptr;
-    GPSReceiver* _gpsRtk = nullptr;
-    GPSReceiverFactGroup* _gpsRtkFacts = nullptr;
+    GPSReceiver* _receiver = nullptr;
+    GPSReceiverFactGroup* _receiverFacts = nullptr;
     NTRIPManager* _ntripManager = nullptr;
     NTRIPNetworkMonitor* _ntripNetworkMonitor = nullptr;
     PositionManager* const _positionManager;

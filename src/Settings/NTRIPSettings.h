@@ -1,10 +1,14 @@
 #pragma once
 
+#include <QtQmlIntegration/QtQmlIntegration>
+
 #include "SettingsGroup.h"
 
 class NTRIPSettings : public SettingsGroup
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 
 public:
     explicit NTRIPSettings(QObject* parent = nullptr);

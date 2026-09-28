@@ -32,6 +32,7 @@ public:
     RTKSettings(QObject* parent = nullptr);
     DEFINE_SETTING_NAME_GROUP()
     DEFINE_SETTINGFACT(receiverRole)
+    DEFINE_SETTINGFACT(forwardReceiverRtcm)
     DEFINE_SETTINGFACT(baseReceiverManufacturers)
     DEFINE_SETTINGFACT(surveyInAccuracyLimit)
     DEFINE_SETTINGFACT(surveyInMinObservationDuration)

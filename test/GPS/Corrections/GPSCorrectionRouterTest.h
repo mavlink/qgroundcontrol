@@ -39,6 +39,7 @@ private slots:
     void diagnosticStagesStayDistinct_data();
     void diagnosticStagesStayDistinct();
     void boundedDiagnosticsAndEventHistory();
+    void streamSwitchesAreRecordedOnce();
     void rejectedCandidateHasNoValidatedCredit();
     void eventHistoryUsesIncrementalRows();
     void eventHistoryAllowsReentrantUpdates();

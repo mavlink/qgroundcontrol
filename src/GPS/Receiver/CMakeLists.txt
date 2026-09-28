@@ -1,5 +1,7 @@
 # Local GPS receiver sessions and connection policy. The application supplies Facts and serial ports.
-if(DEFINED QGC_GPS_COMPONENTS_ENABLED AND NOT "Receiver" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+include("${CMAKE_CURRENT_LIST_DIR}/../GPSComponents.cmake")
+qgc_gps_component_enabled(Receiver _qgc_receiver_enabled)
+if(NOT _qgc_receiver_enabled)
     return()
 endif()
 

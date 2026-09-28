@@ -124,6 +124,23 @@ NTRIPManager::~NTRIPManager()
     shutdown();
 }
 
+QString NTRIPManager::connectionStatusText() const
+{
+    switch (_connectionStatus) {
+        case ConnectionStatus::Disconnected:
+            return tr("Disconnected");
+        case ConnectionStatus::Connecting:
+            return tr("Connecting");
+        case ConnectionStatus::Connected:
+            return tr("Connected");
+        case ConnectionStatus::Reconnecting:
+            return tr("Reconnecting");
+        case ConnectionStatus::Error:
+            break;
+    }
+    return tr("Error");
+}
+
 void NTRIPManager::setCorrectionManager(GPSCorrectionManager* manager)
 {
     if (_correctionManager == manager) {
@@ -496,8 +513,10 @@ void NTRIPManager::_openSession()
 
     _runningConfig = config;
     session->open(connection, _correctionManager, [this, config]() -> NTRIPTransport* {
-        if (_injectedTransport) {
-            return std::exchange(_injectedTransport, {}).data();
+        if (_transportFactory) {
+            if (NTRIPTransport* const transport = _transportFactory(_configuration, this)) {
+                return transport;
+            }
         }
         return new NTRIPHttpTransport(config.connection, config.filter, this, _scheduler);
     });

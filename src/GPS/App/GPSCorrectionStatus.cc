@@ -39,7 +39,7 @@ void GPSCorrectionStatus::_update()
         state = State::Fresh;
     } else if ((_ntrip && _ntrip->connectionStatus() != NTRIPManager::ConnectionStatus::Disconnected) ||
                (_udpInputEnabled && _udpInputEnabled->rawValue().toBool()) ||
-               (_rtk && _rtk->hasReceiver() && _rtk->activeRole() != GPSReceiver::PositionOnly) ||
+               (_rtk && _rtk->hasReceiver() && _rtk->forwardingCorrections()) ||
                (_corrections && !_corrections->sourceInstances().isEmpty())) {
         state = State::Waiting;
     }

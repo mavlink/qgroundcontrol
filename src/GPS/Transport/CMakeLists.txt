@@ -45,7 +45,9 @@ endif()
 unset(CMAKE_TRY_COMPILE_TARGET_TYPE)
 cmake_pop_check_state()
 
-if(NOT DEFINED QGC_GPS_COMPONENTS_ENABLED OR "ReceiverTransports" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+include("${CMAKE_CURRENT_LIST_DIR}/../GPSComponents.cmake")
+qgc_gps_component_enabled(ReceiverTransports _qgc_receiver_transports_enabled)
+if(_qgc_receiver_transports_enabled)
     find_package(Qt6 6.8 REQUIRED COMPONENTS Network)
     qt_add_library(
         QGCGPSReceiverTransports

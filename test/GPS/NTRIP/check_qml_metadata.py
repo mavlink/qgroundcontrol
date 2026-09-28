@@ -27,7 +27,7 @@ PROPERTIES = {
         },
     ),
     "NTRIPSourceTableController": (GPS_MODULE, {"fetchStatus", "fetchError", "mountpointModel"}),
-    "GPSManager": (APP_MODULE, {"corrections", "gpsRtk", "gpsRtkFacts"}),
+    "GPSManager": (APP_MODULE, {"corrections", "receiver", "receiverFacts"}),
     "GPSReceiverFactGroup": (
         APP_MODULE,
         {"canSaveCurrentBasePosition", "numSatellites", "numSatellitesUsed"},
@@ -96,10 +96,10 @@ def check_metadata(text: str) -> list[str]:
     if "rtcmMavlink" in named_blocks(ntrip, "Property"):
         errors.append("NTRIPManager: obsolete rtcmMavlink compatibility property")
     manager = named_blocks(components.get("GPSManager", ""), "Property")
-    if not re.search(r'\btype:\s*"GPSReceiverFactGroup"', manager.get("gpsRtkFacts", "")):
-        errors.append("GPSManager.gpsRtkFacts: expected precise GPSReceiverFactGroup type")
+    if not re.search(r'\btype:\s*"GPSReceiverFactGroup"', manager.get("receiverFacts", "")):
+        errors.append("GPSManager.receiverFacts: expected precise GPSReceiverFactGroup type")
     if "gpsRtk" in named_blocks(components.get("QGroundControlQmlGlobal", ""), "Property"):
-        errors.append("QGroundControl.gpsRtk: obsolete alias for GPSManager.gpsRtkFacts")
+        errors.append("QGroundControl.gpsRtk: obsolete alias for GPSManager.receiverFacts")
     return errors
 
 

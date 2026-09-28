@@ -3,6 +3,7 @@
 #include <chrono>
 
 #include <QtCore/QPointer>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "FactGroup.h"
 #include "GPSObservation.h"
@@ -14,6 +15,8 @@ class RuntimeScheduler;
 class VehicleGPSFactGroup : public FactGroup
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     Q_PROPERTY(Fact *lat                    READ lat                    CONSTANT)
     Q_PROPERTY(Fact *lon                    READ lon                    CONSTANT)
     Q_PROPERTY(Fact *mgrs                   READ mgrs                   CONSTANT)

@@ -31,9 +31,10 @@ LegacyNmeaSource legacyNmeaSourceFromPort(const QString& port)
     return matches("UDP Port") ? NmeaUdp : NmeaSerial;
 }
 
+/// Persisted receiver roles; the position-only role became passive without RTCM forwarding.
 enum Role
 {
-    PositionOnly = 0,
+    LegacyPositionOnly = 0,
     Passive = 1,
     ConfiguredBase = 2,
 };
@@ -57,6 +58,9 @@ DECLARE_SETTINGGROUP(RTK, "RTK")
         const bool passive = settings.value(baseReceiverManufacturersName).toInt() == kLegacyPassiveManufacturer;
         settings.setValue(receiverRoleName, passive ? Passive : ConfiguredBase);
         settings.remove(baseReceiverManufacturersName);
+    } else if (settings.value(receiverRoleName).toInt() == LegacyPositionOnly) {
+        settings.setValue(receiverRoleName, Passive);
+        settings.setValue(forwardReceiverRtcmName, false);
     }
     const bool receiverConfigured = !settings.value(serialDeviceName).toString().trimmed().isEmpty() ||
                                     !settings.value(tcpHostName).toString().trimmed().isEmpty();
@@ -73,7 +77,8 @@ DECLARE_SETTINGGROUP(RTK, "RTK")
     }
     settings.endGroup();
 
-    // The separate NMEA GPS input became the position-only receiver role. A configured receiver keeps its settings.
+    // The separate NMEA GPS input became a passive receiver that forwards no RTCM. A configured receiver keeps its
+    // settings.
     settings.beginGroup(AutoConnectSettings::settingsGroup);
     const QVariant nmeaPort = settings.value(QStringLiteral("autoConnectNmeaPort"));
     const int nmeaSource = settings.contains(QStringLiteral("nmeaSource"))
@@ -92,7 +97,8 @@ DECLARE_SETTINGGROUP(RTK, "RTK")
         return;
     }
     settings.beginGroup(settingsGroup);
-    settings.setValue(receiverRoleName, PositionOnly);
+    settings.setValue(receiverRoleName, Passive);
+    settings.setValue(forwardReceiverRtcmName, false);
     settings.setValue(connectOnStartupName, true);
     if (nmeaSource == NmeaUdp) {
         settings.setValue(connectionTypeName, Udp);
@@ -112,6 +118,7 @@ DECLARE_SETTINGGROUP(RTK, "RTK")
 }
 
 DECLARE_SETTINGSFACT(RTKSettings, receiverRole)
+DECLARE_SETTINGSFACT(RTKSettings, forwardReceiverRtcm)
 DECLARE_SETTINGSFACT(RTKSettings, baseReceiverManufacturers)
 DECLARE_SETTINGSFACT(RTKSettings, surveyInAccuracyLimit)
 DECLARE_SETTINGSFACT(RTKSettings, surveyInMinObservationDuration)

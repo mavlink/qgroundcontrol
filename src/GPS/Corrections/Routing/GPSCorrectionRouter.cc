@@ -226,7 +226,10 @@ bool GPSCorrectionRouter::acceptFrame(GPSCorrectionFrame frame)
         _ledger.recordDrop(frame, GPSCorrectionReason::NotSelected, frame.data.size());
         return false;
     }
-    _ledger.selected(frame);
+    const GPSCorrectionSelector::SourceIdentity identity{frame.source, frame.sourceInstance};
+    const bool switched = _lastSelected != std::make_pair(identity, frame.session);
+    _lastSelected = std::make_pair(identity, frame.session);
+    _ledger.selected(frame, switched);
     return _submit(frame);
 }
 
@@ -292,9 +295,7 @@ bool GPSCorrectionRouter::_submit(const GPSCorrectionFrame& frame)
             const auto& submitted = admission.submission;
             const quint64 bytes = (std::min) (submitted.queuedBytes, static_cast<quint64>(frame.data.size()));
             const bool complete = admission.complete && bytes == static_cast<quint64>(frame.data.size());
-            if (!_ledger.admitted(frame, admission.destination, submitted.destinationSession, bytes, complete)) {
-                continue;
-            }
+            _ledger.admitted(admission.destination, submitted.destinationSession, bytes, complete);
             logicalQueuedBytes = (std::max) (logicalQueuedBytes, bytes);
             completeSubmission |= complete;
             if (!complete) {

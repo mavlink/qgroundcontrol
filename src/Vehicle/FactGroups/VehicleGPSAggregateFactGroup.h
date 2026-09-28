@@ -14,6 +14,7 @@
 #include <QtCore/QMetaObject>
 #include <QtCore/QPointer>
 #include <QtCore/QVector>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "FactGroup.h"
 #include "ScheduledTask.h"
@@ -23,6 +24,8 @@ class VehicleGPSFactGroup;
 class VehicleGPSAggregateFactGroup : public FactGroup
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     Q_PROPERTY(Fact* spoofingState       READ spoofingState       CONSTANT)
     Q_PROPERTY(Fact* jammingState        READ jammingState        CONSTANT)
     Q_PROPERTY(Fact* authenticationState READ authenticationState CONSTANT)

@@ -39,15 +39,15 @@ Q_APPLICATION_STATIC(GPSManager, _gpsManager);
 GPSManager::GPSManager(QObject* parent)
     : QObject(parent)
     , _corrections(new GPSCorrectionManager(this))
-    , _gpsRtk(new GPSReceiver(this))
-    , _gpsRtkFacts(new GPSReceiverFactGroup(_gpsRtk, this))
+    , _receiver(new GPSReceiver(this))
+    , _receiverFacts(new GPSReceiverFactGroup(_receiver, this))
     , _ntripManager(new NTRIPManager(this))
     , _ntripNetworkMonitor(new QtNTRIPNetworkMonitor(this))
     , _positionManager(new PositionManager(this))
     , _correctionStatus(
-          new GPSCorrectionStatus(_corrections, _ntripManager, _gpsRtk,
+          new GPSCorrectionStatus(_corrections, _ntripManager, _receiver,
                                   SettingsManager::instance()->gpsCorrectionSettings()->rtcmUdpInputEnabled(), this))
-    , _ggaSources(new GPSGgaSources(_ntripManager, _gpsRtk, _positionManager, this))
+    , _ggaSources(new GPSGgaSources(_ntripManager, _receiver, _positionManager, this))
 {
     qCDebug(GPSManagerLog) << this;
     _positionManager->setPlatformSourceFactory(
@@ -56,9 +56,9 @@ GPSManager::GPSManager(QObject* parent)
     connect(_positionManager, &PositionManager::simulatedPositionCreated, this,
             [](SimulatedPosition* simulated) { _followVehicleHome(MultiVehicleManager::instance(), simulated); });
     _corrections->rtcmMavlink()->setOutputProvider(createGPSMAVLinkOutputProvider());
-    _gpsRtk->setCorrectionManager(_corrections);
+    _receiver->setCorrectionManager(_corrections);
 #ifndef QGC_NO_SERIAL_LINK
-    _gpsRtk->setSerialPorts(new GPSSerialPortManagerAdapter(SerialPortManager::instance(), this));
+    _receiver->setSerialPorts(new GPSSerialPortManagerAdapter(SerialPortManager::instance(), this));
 #endif
     _ntripManager->setCorrectionManager(_corrections);
     _ntripManager->setNetworkMonitor(_ntripNetworkMonitor);
@@ -83,14 +83,14 @@ GPSManager::CorrectionState GPSManager::correctionState() const
 
 bool GPSManager::saveCurrentBasePosition()
 {
-    if (!_gpsRtkFacts->canSaveCurrentBasePosition()) {
+    if (!_receiverFacts->canSaveCurrentBasePosition()) {
         return false;
     }
     // Read every value first: a settings observer may reconfigure the receiver, which republishes these Facts.
-    const QVariant latitude = _gpsRtkFacts->currentLatitude()->rawValue();
-    const QVariant longitude = _gpsRtkFacts->currentLongitude()->rawValue();
-    const QVariant altitude = _gpsRtkFacts->currentAltitude()->rawValue();
-    const QVariant accuracy = _gpsRtkFacts->currentAccuracy()->rawValue();
+    const QVariant latitude = _receiverFacts->currentLatitude()->rawValue();
+    const QVariant longitude = _receiverFacts->currentLongitude()->rawValue();
+    const QVariant altitude = _receiverFacts->currentAltitude()->rawValue();
+    const QVariant accuracy = _receiverFacts->currentAccuracy()->rawValue();
     RTKSettings* settings = SettingsManager::instance()->rtkSettings();
     settings->fixedBasePositionLatitude()->setRawValue(latitude);
     settings->fixedBasePositionLongitude()->setRawValue(longitude);
@@ -107,8 +107,8 @@ void GPSManager::init()
     GPSSettingsBindings::bindPosition(SettingsManager::instance()->rtkSettings(), _positionManager);
     _positionManager->init();
     _ggaSources->init();
-    _gpsRtk->setPositionService(_positionManager);
-    GPSSettingsBindings::bindRtk(SettingsManager::instance()->rtkSettings(), _gpsRtk);
+    _receiver->setPositionService(_positionManager);
+    GPSSettingsBindings::bindRtk(SettingsManager::instance()->rtkSettings(), _receiver);
     GPSSettingsBindings::bindCorrections(SettingsManager::instance()->gpsCorrectionSettings(), _corrections);
     GPSSettingsBindings::bindNtrip(SettingsManager::instance()->ntripSettings(), _ntripManager);
     _ntripManager->init();
@@ -159,10 +159,10 @@ void GPSManager::_updateConnections()
         return;
     }
     if (std::exchange(_startupConnectPending, false)) {
-        _gpsRtk->connectionPolicy()->connectSaved();
+        _receiver->connectionPolicy()->connectSaved();
         return;
     }
-    _gpsRtk->connectionPolicy()->update();
+    _receiver->connectionPolicy()->update();
 }
 
 void GPSManager::shutdown()
@@ -175,7 +175,7 @@ void GPSManager::shutdown()
     if (_connectionTimer) {
         _connectionTimer->stop();
     }
-    _gpsRtk->disconnectGPS();
+    _receiver->disconnectGPS();
     _ntripManager->shutdown();
     _corrections->shutdown();
     _positionManager->shutdown();

@@ -9,12 +9,10 @@
 
 inline constexpr qsizetype GPS_CORRECTION_MAX_EVENTS = 256;
 
+/// The routing transitions the event history records; accepted frames are counted, not logged.
 enum class GPSCorrectionStage
 {
-    Received,
-    Validated,
     Selected,
-    Queued,
     Dropped,
 };
 
@@ -52,7 +50,7 @@ public:
     quint64 sourceSession = 0;
     QString destinationId = {};
     quint64 destinationSession = 0;
-    GPSCorrectionStage stage = GPSCorrectionStage::Received;
+    GPSCorrectionStage stage = GPSCorrectionStage::Dropped;
     GPSCorrectionReason reason = GPSCorrectionReason::None;
     quint64 bytes = 0;
 

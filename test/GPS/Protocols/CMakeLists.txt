@@ -83,15 +83,50 @@ set_property(
     PROPERTY COMPILE_DEFINITIONS GPS_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures"
 )
 qgc_add_protocol_test(GPSGoldenTranscriptTest GPSGoldenTranscriptTest.cc)
+target_sources(
+    ${CMAKE_PROJECT_NAME}
+    PRIVATE Scenarios/GoldenScenarios.cc
+            Scenarios/GoldenScenarios.h
+            Scenarios/GoldenScenariosAshtech.cc
+            Scenarios/GoldenScenariosAutomatic.cc
+            Scenarios/GoldenScenariosFemto.cc
+            Scenarios/GoldenScenariosPassive.cc
+            Scenarios/GoldenScenariosQuectel.cc
+            Scenarios/GoldenScenariosSBF.cc
+            Scenarios/GoldenScenariosUBX.cc
+            Scenarios/GoldenScenariosUnicore.cc
+)
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSGoldenTranscriptTest.h Support/GoldenTranscript.cc
                                              Support/GoldenTranscript.h
 )
-set_property(
-    SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/GPSGoldenTranscriptTest.cc" TARGET_DIRECTORY ${CMAKE_PROJECT_NAME}
-    APPEND
-    PROPERTY COMPILE_DEFINITIONS GPS_GOLDEN_DIR="${CMAKE_CURRENT_SOURCE_DIR}/golden"
-             GPS_CORPUS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/corpus" GPS_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures"
+set(_golden_sources GPSGoldenTranscriptTest.cc)
+foreach(
+    family
+    ""
+    Ashtech
+    Automatic
+    Femto
+    Passive
+    Quectel
+    SBF
+    UBX
+    Unicore
 )
+    list(APPEND _golden_sources Scenarios/GoldenScenarios${family}.cc)
+endforeach()
+foreach(source IN LISTS _golden_sources)
+    set_property(
+        SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/${source}" TARGET_DIRECTORY ${CMAKE_PROJECT_NAME}
+        APPEND
+        PROPERTY COMPILE_DEFINITIONS GPS_GOLDEN_DIR="${CMAKE_CURRENT_SOURCE_DIR}/golden"
+                 GPS_CORPUS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/corpus"
+                 GPS_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures"
+    )
+    # The scenario files share inline helpers but each still defines file-local lambdas.
+    set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/${source}" TARGET_DIRECTORY ${CMAKE_PROJECT_NAME}
+                                PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON
+    )
+endforeach()
 qgc_add_protocol_test(GPSProtocolUnicoreTest gps-unicore-test.cpp)
 qgc_add_protocol_test(GPSProtocolQuectelTest gps-quectel-test.cpp)
 qgc_add_protocol_test(GPSProtocolPassiveTest gps-passive-test.cpp)

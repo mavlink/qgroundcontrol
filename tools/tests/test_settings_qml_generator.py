@@ -1380,7 +1380,6 @@ class TestRealPageDefinitions:
         for name in (
             "rtcmUdpInputEnabled",
             "rtcmUdpInputPort",
-            "rtcmUdpValidate",
             "rtcmUdpOutputEnabled",
             "rtcmUdpOutputAddress",
             "rtcmUdpOutputPort",

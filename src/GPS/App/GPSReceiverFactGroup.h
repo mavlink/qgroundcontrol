@@ -26,6 +26,8 @@ class GPSReceiverFactGroup : public FactGroup
     Q_PROPERTY(Fact* spoofingState READ spoofingState CONSTANT FINAL)
     Q_PROPERTY(bool canSaveCurrentBasePosition READ canSaveCurrentBasePosition NOTIFY currentBasePositionChanged FINAL)
     Q_PROPERTY(bool interferenceWarning READ interferenceWarning NOTIFY interferenceWarningChanged FINAL)
+    /// Short state for compact views: a configured base's survey state, otherwise the fix type.
+    Q_PROPERTY(QString summaryLabel READ summaryLabel NOTIFY summaryLabelChanged FINAL)
 
 public:
     /// Follows @a receiver's status when one is given.
@@ -64,13 +66,20 @@ public:
     /// Jamming at Warning or Critical, or any spoofing indication.
     bool interferenceWarning() const;
 
+    QString summaryLabel() const { return _summaryLabel; }
+
 signals:
     void currentBasePositionChanged();
     void interferenceWarningChanged();
+    void summaryLabelChanged();
 
 private:
     // By value: a Fact observer may reconfigure the receiver while the Facts update; each pass mirrors one status.
     void _mirror(GPSReceiver::Status status);
+    void _updateSummaryLabel();
+
+    const GPSReceiver* const _receiver;
+    QString _summaryLabel;
 
     Fact _connectedFact = Fact(0, QStringLiteral("connected"), FactMetaData::valueTypeBool);
     Fact _currentDurationFact = Fact(0, QStringLiteral("currentDuration"), FactMetaData::valueTypeDouble);

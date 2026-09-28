@@ -94,10 +94,7 @@ GPSTask<bool> UBXConfigurator::configure(GPSCommandChannel& channel, GPSConfig c
     if (!detection.found || identity.board == UBX::Board::unknown || _baseStationUnsupported()) {
         co_return false;
     }
-    const unsigned desiredBaud = requestedBaud ? requestedBaud
-                                 : identity.protocol27 || identity.board == UBX::Board::u_blox8
-                                     ? Plan::BAUD_M8_AND_NEWER
-                                     : Plan::BAUD_BEFORE_M8;
+    const unsigned desiredBaud = requestedBaud ? requestedBaud : Plan::BASE_BAUD;
     if (!co_await _setUpPort(detection.baud, desiredBaud)) {
         co_return false;
     }

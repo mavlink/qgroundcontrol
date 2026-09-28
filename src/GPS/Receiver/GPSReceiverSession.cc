@@ -27,7 +27,7 @@ GPSReceiverSession::~GPSReceiverSession()
 
 void GPSReceiverSession::registerCorrections(GPSCorrectionManager* manager, const QString& sourceInstance)
 {
-    if (_retired || _connection.role == GPSReceiver::PositionOnly || !manager) {
+    if (_retired || !_connection.forwardsCorrections || !manager) {
         return;
     }
     _correctionManager = manager;
@@ -153,7 +153,7 @@ void GPSReceiverSession::_onDetected(GPSType type)
 void GPSReceiverSession::_forwardCorrection(const QByteArray& data, qint64 receivedAtMs)
 {
     if (!_correctionManager) {
-        if (_connection.role != GPSReceiver::PositionOnly) {
+        if (_connection.forwardsCorrections) {
             qCWarning(GPSReceiverSessionLog) << "Correction manager not ready; dropping" << data.size() << "bytes";
         }
         return;

@@ -6,7 +6,8 @@ option(QGC_NTRIP_LIBFUZZER "Build the NTRIP HTTP decoder with libFuzzer, ASan, a
 find_package(Qt6 6.11 REQUIRED COMPONENTS Core Network)
 
 set(_root "${CMAKE_CURRENT_SOURCE_DIR}/../../..")
-set(QGC_GPS_COMPONENTS_ENABLED NTRIPHttp)
+# Only the HTTP library, which src/GPS/GPSComponents.cmake always builds.
+set(QGC_GPS_COMPONENTS_ENABLED "")
 add_subdirectory("${_root}/src/GPS/NTRIP" NTRIP)
 
 add_executable(ntrip_http_decoder_smoke NTRIPHttpDecoderFuzzer.cc NTRIPHttpDecoderSmoke.cc)

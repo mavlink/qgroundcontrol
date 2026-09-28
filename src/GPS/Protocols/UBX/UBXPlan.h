@@ -36,8 +36,8 @@ inline constexpr std::chrono::microseconds COMMS_REPLY_WINDOW{2000000};
 
 /// Probing order of the automatic baud detection.
 inline constexpr std::array<unsigned, 7> BAUD_RATES{38400, 57600, 9600, 115200, 230400, 460800, 921600};
-inline constexpr unsigned BAUD_M8_AND_NEWER = 115200;
-inline constexpr unsigned BAUD_BEFORE_M8 = 38400;
+/// The link rate a base is moved to when no rate is selected.
+inline constexpr unsigned BASE_BAUD = 115200;
 
 /// Bounds a CFG-VALSET independently of received message sizes.
 inline constexpr size_t VALSET_CAPACITY = 256;

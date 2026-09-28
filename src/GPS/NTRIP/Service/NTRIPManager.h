@@ -40,6 +40,8 @@ class NTRIPManager : public QObject
     Q_MOC_INCLUDE("NTRIPSourceTableController.h")
     Q_PROPERTY(ConnectionStatus connectionStatus READ connectionStatus NOTIFY connectionStatusChanged FINAL)
     Q_PROPERTY(QString statusMessage READ statusMessage NOTIFY statusMessageChanged FINAL)
+    /// Short connection state for compact views.
+    Q_PROPERTY(QString connectionStatusText READ connectionStatusText NOTIFY connectionStatusChanged FINAL)
     Q_PROPERTY(QString securityWarning READ securityWarning NOTIFY securityWarningChanged FINAL)
     Q_PROPERTY(QString ggaSource READ ggaSource NOTIFY ggaSourceChanged FINAL)
     Q_PROPERTY(NTRIPSourceTableController* sourceTableController READ sourceTableController CONSTANT FINAL)
@@ -101,6 +103,8 @@ public:
 
     ConnectionStatus connectionStatus() const { return _connectionStatus; }
 
+    QString connectionStatusText() const;
+
     QString statusMessage() const { return _statusMessage; }
 
     QString securityWarning() const { return _securityWarning; }
@@ -118,9 +122,11 @@ public:
         _sourceTableController.selectMountpoint(mountpoint);
     }
 
-    /// Test seam: inject a transport (e.g. MockNTRIPTransport) consumed by the
-    /// next Connecting entry. Production always constructs NTRIPHttpTransport.
-    void setTransportForTest(NTRIPTransport* transport) { _injectedTransport = transport; }
+    /// Creates the transport of one connection attempt, parented to @a parent; null opens an NTRIPHttpTransport.
+    using TransportFactory = std::function<NTRIPTransport*(const Configuration& configuration, QObject* parent)>;
+
+    /// An empty factory restores NTRIPHttpTransport for every attempt.
+    void setTransportFactory(TransportFactory factory) { _transportFactory = std::move(factory); }
 
     /// Inject before init(); the caller retains ownership.
     void setCorrectionManager(GPSCorrectionManager* manager);
@@ -207,7 +213,7 @@ private:
     QString _statusMessage;
     QString _securityWarning;
 
-    QPointer<NTRIPTransport> _injectedTransport;
+    TransportFactory _transportFactory;
     QPointer<NTRIPStreamSession> _session;
 
     QPointer<GPSCorrectionManager> _correctionManager;

@@ -59,7 +59,6 @@ void GPSCorrectionLedger::received(const GPSCorrectionFrame& frame)
         ++stats->receivedFrames;
         stats->receivedBytes += frame.data.size();
     }
-    recordEvent(frame, GPSCorrectionStage::Received, GPSCorrectionReason::None, frame.data.size());
 }
 
 void GPSCorrectionLedger::validated(const GPSCorrectionFrame& frame)
@@ -69,15 +68,16 @@ void GPSCorrectionLedger::validated(const GPSCorrectionFrame& frame)
         ++stats->messageCounts[frame.messageId];
         stats->lastValidMs = (std::max) (stats->lastValidMs, frame.receivedAtMs);
     }
-    recordEvent(frame, GPSCorrectionStage::Validated, GPSCorrectionReason::None, frame.data.size());
 }
 
-void GPSCorrectionLedger::selected(const GPSCorrectionFrame& frame)
+void GPSCorrectionLedger::selected(const GPSCorrectionFrame& frame, bool switched)
 {
     if (auto* stats = _currentStatistics(frame)) {
         ++stats->selectedFrames;
     }
-    recordEvent(frame, GPSCorrectionStage::Selected, GPSCorrectionReason::None, frame.data.size());
+    if (switched) {
+        recordEvent(frame, GPSCorrectionStage::Selected, GPSCorrectionReason::None, frame.data.size());
+    }
 }
 
 void GPSCorrectionLedger::queued(const GPSCorrectionFrame& frame, quint64 bytes, bool complete)
@@ -172,20 +172,14 @@ void GPSCorrectionLedger::removeOutput(const QString& id)
     pruneDestinationHistory();
 }
 
-bool GPSCorrectionLedger::admitted(const GPSCorrectionFrame& frame, const QString& id, quint64 session, quint64 bytes,
-                                   bool complete)
+void GPSCorrectionLedger::admitted(const QString& id, quint64 session, quint64 bytes, bool complete)
 {
     auto& destination = _destinations[id];
     destination.id = id;
     destination.session = session;
     destination.lastActivityMs = _clock();
-    if (!bytes) {
-        return true;
-    }
-    destination.queuedFrames += complete ? 1 : 0;
+    destination.queuedFrames += bytes && complete ? 1 : 0;
     destination.queuedBytes += bytes;
-    recordEvent(frame, GPSCorrectionStage::Queued, GPSCorrectionReason::None, bytes, id, session);
-    return true;
 }
 
 void GPSCorrectionLedger::shutdown()

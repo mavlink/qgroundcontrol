@@ -117,7 +117,7 @@ void NTRIPSourceTableControllerTest::testFetchInvalidConfigTriggersError()
 {
     NTRIPSourceTableController ctrl;
 
-    NTRIPConnectionConfig config = casterConfig(QStringLiteral("caster.example.com"));
+    NTRIPConnectionConfig config = casterConfig(QStringLiteral("127.0.0.1"));
     config.username = QStringLiteral("bad:user");
 
     ctrl.fetch(config);
@@ -128,16 +128,24 @@ void NTRIPSourceTableControllerTest::testFetchInvalidConfigTriggersError()
 
 void NTRIPSourceTableControllerTest::testFetchErrorInvalidatesCache()
 {
-    NTRIPSourceTableController ctrl;
-    const NTRIPConnectionConfig config = casterConfig(QStringLiteral("caster.example.com"));
+    ScriptedNTRIPCaster caster;
+    QVERIFY(caster.isListening());
+    ManualScheduler scheduler;
+    NTRIPSourceTableController ctrl(nullptr, &scheduler);
+    const NTRIPConnectionConfig config = caster.connectionConfig(QString());
 
     ctrl.fetch(config);
-    ctrl.injectSourceTableForTest(kValidTable);
-    QCOMPARE(ctrl.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success);
+    QVERIFY(caster.serveSourceTable(kValidTable));
+    QTRY_COMPARE_WITH_TIMEOUT(ctrl.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success,
+                              TestTimeout::mediumMs());
     QCOMPARE(ctrl.mountpointModel()->rowCount(), 1);
 
-    ctrl.injectFetchErrorForTest(QStringLiteral("network down"));
-    QCOMPARE(ctrl.fetchStatus(), NTRIPSourceTableController::FetchStatus::Error);
+    // A failed refresh discards the cached table, so the next fetch asks the caster again.
+    QVERIFY(scheduler.advanceBy(NTRIPSourceTableController::kCacheTtl + std::chrono::milliseconds(1)));
+    ctrl.fetch(config);
+    QVERIFY(caster.dropNextRequest());
+    QTRY_COMPARE_WITH_TIMEOUT(ctrl.fetchStatus(), NTRIPSourceTableController::FetchStatus::Error,
+                              TestTimeout::mediumMs());
     QCOMPARE(ctrl.mountpointModel()->rowCount(), 0);
 
     ctrl.fetch(config);
@@ -149,7 +157,7 @@ void NTRIPSourceTableControllerTest::testFetchValidHostGoesInProgress()
     NTRIPSourceTableController ctrl;
     QSignalSpy statusSpy(&ctrl, &NTRIPSourceTableController::fetchStatusChanged);
 
-    ctrl.fetch(casterConfig(QStringLiteral("caster.example.com")));
+    ctrl.fetch(casterConfig(QStringLiteral("127.0.0.1")));
 
     QCOMPARE(ctrl.fetchStatus(), NTRIPSourceTableController::FetchStatus::InProgress);
     QVERIFY(statusSpy.count() >= 1);
@@ -159,7 +167,7 @@ void NTRIPSourceTableControllerTest::testFetchWarnsForPlaintextCredentials()
 {
     NTRIPSourceTableController ctrl;
     QSignalSpy warnings(&ctrl, &NTRIPSourceTableController::securityWarningChanged);
-    auto config = casterConfig(QStringLiteral("caster.example.com"));
+    auto config = casterConfig(QStringLiteral("127.0.0.1"));
     config.useTls = false;
     ctrl.fetch(config);
     QVERIFY(ctrl.securityWarning().isEmpty());
@@ -263,44 +271,54 @@ void NTRIPSourceTableControllerTest::testFetchCertificatePolicyChanges()
 
 void NTRIPSourceTableControllerTest::testCacheTtlPreventsFetch()
 {
+    ScriptedNTRIPCaster caster;
+    QVERIFY(caster.isListening());
     ManualScheduler scheduler;
     NTRIPSourceTableController ctrl(nullptr, &scheduler);
+    const NTRIPConnectionConfig config = caster.connectionConfig(QString());
 
-    ctrl.fetch(casterConfig(QStringLiteral("caster.example.com")));
+    ctrl.fetch(config);
     QCOMPARE(ctrl.fetchStatus(), NTRIPSourceTableController::FetchStatus::InProgress);
-
-    ctrl.injectSourceTableForTest(kValidTable);
-
-    QCOMPARE(ctrl.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success);
+    QVERIFY(caster.serveSourceTable(kValidTable));
+    QTRY_COMPARE_WITH_TIMEOUT(ctrl.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success,
+                              TestTimeout::mediumMs());
     QVERIFY(ctrl.mountpointModel() != nullptr);
     QVERIFY(ctrl.mountpointModel()->rowCount() > 0);
 
     QSignalSpy statusSpy(&ctrl, &NTRIPSourceTableController::fetchStatusChanged);
-    ctrl.fetch(casterConfig(QStringLiteral("caster.example.com")));
+    ctrl.fetch(config);
 
     QCOMPARE(ctrl.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success);
     QVERIFY(statusSpy.count() >= 1);
 
     QVERIFY(scheduler.advanceBy(NTRIPSourceTableController::kCacheTtl + std::chrono::milliseconds(1)));
-    ctrl.fetch(casterConfig(QStringLiteral("caster.example.com")));
+    ctrl.fetch(config);
     QCOMPARE(ctrl.fetchStatus(), NTRIPSourceTableController::FetchStatus::InProgress);
 }
 
 void NTRIPSourceTableControllerTest::testConfigChangeInvalidatesCache()
 {
+    ScriptedNTRIPCaster first;
+    ScriptedNTRIPCaster second;
+    QVERIFY(first.isListening() && second.isListening());
     NTRIPSourceTableController ctrl;
 
-    ctrl.fetch(casterConfig(QStringLiteral("caster.example.com")));
-    ctrl.injectSourceTableForTest(kValidTable);
-    QCOMPARE(ctrl.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success);
+    ctrl.fetch(first.connectionConfig(QString()));
+    QVERIFY(first.serveSourceTable(kValidTable));
+    QTRY_COMPARE_WITH_TIMEOUT(ctrl.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success,
+                              TestTimeout::mediumMs());
 
-    ctrl.fetch(casterConfig(QStringLiteral("other.caster.com")));
+    ctrl.fetch(second.connectionConfig(QString()));
     QCOMPARE(ctrl.fetchStatus(), NTRIPSourceTableController::FetchStatus::InProgress);
 
-    ctrl.injectSourceTableForTest(kValidTable);
-    QCOMPARE(ctrl.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success);
+    QVERIFY(second.serveSourceTable(kValidTable));
+    QTRY_COMPARE_WITH_TIMEOUT(ctrl.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success,
+                              TestTimeout::mediumMs());
 
-    ctrl.fetch(casterConfig(QStringLiteral("other.caster.com"), 9999));
+    // The same host on another port is another caster.
+    auto otherPort = second.connectionConfig(QString());
+    otherPort.port = first.port();
+    ctrl.fetch(otherPort);
     QCOMPARE(ctrl.fetchStatus(), NTRIPSourceTableController::FetchStatus::InProgress);
 }
 

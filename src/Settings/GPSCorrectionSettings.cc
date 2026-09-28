@@ -27,6 +27,8 @@ DECLARE_SETTINGGROUP(GPSCorrection, "NTRIP")
             settings.remove(legacyKey);
         }
     }
+    // UDP input is always validated.
+    settings.remove(QStringLiteral("rtcmUdpValidate"));
     settings.endGroup();
 }
 
@@ -37,7 +39,6 @@ GPSCorrectionSettings::~GPSCorrectionSettings()
 
 DECLARE_SETTINGSFACT(GPSCorrectionSettings, rtcmUdpInputEnabled)
 DECLARE_SETTINGSFACT(GPSCorrectionSettings, rtcmUdpInputPort)
-DECLARE_SETTINGSFACT(GPSCorrectionSettings, rtcmUdpValidate)
 DECLARE_SETTINGSFACT(GPSCorrectionSettings, rtcmUdpOutputEnabled)
 DECLARE_SETTINGSFACT(GPSCorrectionSettings, rtcmUdpOutputAddress)
 DECLARE_SETTINGSFACT(GPSCorrectionSettings, rtcmUdpOutputPort)

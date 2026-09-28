@@ -84,7 +84,7 @@ void GPSGgaSources::init()
         if (!vehicle) {
             return {};
         }
-        const auto* gps = qobject_cast<VehicleGPSFactGroup*>(vehicle->gpsFactGroup());
+        const auto* gps = vehicle->gpsFactGroup();
         return gps ? ggaPosition(gps->acceptedObservation(), QStringLiteral("Vehicle GPS")) : PositionResult{};
     });
     _ntrip->setGgaPositionProvider(

@@ -11,12 +11,11 @@ SettingsGroupLayout {
 
     Layout.fillWidth:   true
     heading:            qsTr("NTRIP Mountpoint")
-    visible:            _ntrip.ntripMountpoint.userVisible
+    visible:            (_ntrip.ntripMountpoint as SettingsFact).userVisible
 
     QGCPalette { id: qgcPal }
 
-    // NTRIPSettings is not registered for QML, and SettingsGroup is not either.
-    property var  _ntrip:       QGroundControl.settingsManager.ntripSettings
+    property NTRIPSettings _ntrip:       QGroundControl.settingsManager.ntripSettings
     property NTRIPManager _ntripMgr: QGroundControl.gpsManager.ntrip
     property bool _isActive:    _ntrip.ntripServerConnectEnabled.rawValue
     property bool _hasHost:     _ntrip.ntripServerHostAddress.rawValue !== ""

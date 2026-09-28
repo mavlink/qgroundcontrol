@@ -55,9 +55,19 @@ struct ReceiverProfile
 
 inline constexpr std::array RECEIVER_PROFILES = {
     ReceiverProfile{},
-    ReceiverProfile{.board = Board::u_blox5, .hardwareVersion = "00040005", .timeModeUnsupported = true},
-    ReceiverProfile{.board = Board::u_blox6, .hardwareVersion = "00040007", .timeModeUnsupported = true},
-    ReceiverProfile{.board = Board::u_blox7, .hardwareVersion = "00070000", .timeModeUnsupported = true},
+    // Generations before u-blox 8 cannot output RTCM, so they are never configured as a base.
+    ReceiverProfile{.board = Board::u_blox5,
+                    .hardwareVersion = "00040005",
+                    .baseCapabilityKnown = true,
+                    .timeModeUnsupported = true},
+    ReceiverProfile{.board = Board::u_blox6,
+                    .hardwareVersion = "00040007",
+                    .baseCapabilityKnown = true,
+                    .timeModeUnsupported = true},
+    ReceiverProfile{.board = Board::u_blox7,
+                    .hardwareVersion = "00070000",
+                    .baseCapabilityKnown = true,
+                    .timeModeUnsupported = true},
     ReceiverProfile{.board = Board::u_blox8, .hardwareVersion = "00080000"},
     ReceiverProfile{.board = Board::u_blox9,
                     .hardwareVersion = "00190000",

@@ -11,10 +11,10 @@ import QGroundControl.GPS
 SettingsGroupLayout {
     id: root
 
-    property GPSReceiver receiver: QGroundControl.gpsManager.gpsRtk
+    property GPSReceiver receiver: QGroundControl.gpsManager.receiver
     // Saving the base position writes GPSManager's receiver Facts to the application's settings, the defaults here.
     property RTKSettings settings: QGroundControl.settingsManager.rtkSettings
-    property GPSReceiverFactGroup baseFacts: QGroundControl.gpsManager.gpsRtkFacts
+    property GPSReceiverFactGroup baseFacts: QGroundControl.gpsManager.receiverFacts
     property SettingsFact autoConnectFact: settings.autoConnect as SettingsFact
     property list<string> serialPorts: _serialPortManager ? _serialPortManager.serialPorts : []
     property list<string> serialBaudRates: _serialPortManager ? _serialPortManager.serialBaudRates : []
@@ -110,11 +110,23 @@ SettingsGroupLayout {
 
     Explanation {
         objectName: "receiverRoleExplanation"
-        text: root.role === GPSReceiver.PositionOnly
-              ? qsTr("QGroundControl never configures this receiver. Its NMEA output provides the ground station position; RTCM output is ignored.")
-              : root.role === GPSReceiver.Passive
-                ? qsTr("QGroundControl never configures this receiver. Its NMEA output provides the ground station position and its RTCM output is forwarded to vehicles. Configure the receiver's output externally and select its existing baud rate. No survey-in status is inferred.")
-                : qsTr("QGroundControl configures a supported receiver as an RTK base station and forwards its RTCM corrections to vehicles.")
+        text: root.configuredBase
+              ? qsTr("QGroundControl configures a supported receiver as an RTK base station and forwards its RTCM corrections to vehicles.")
+              : qsTr("QGroundControl never configures this receiver. Its NMEA output provides the ground station position. Configure the receiver's output externally and select its existing baud rate. No survey-in status is inferred.")
+    }
+
+    RowLayout {
+        Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        visible: !root.configuredBase && (root.settings.forwardReceiverRtcm as SettingsFact).userVisible
+        Explanation { text: root.settings.forwardReceiverRtcm.shortDescription }
+        FactCheckBoxSlider {
+            objectName: "rtkForwardReceiverRtcm"
+            text: ""
+            Accessible.name: root.settings.forwardReceiverRtcm.shortDescription
+            fact: root.settings.forwardReceiverRtcm
+            enabled: root._editable
+        }
     }
 
     RowLayout {

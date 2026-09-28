@@ -19,7 +19,7 @@ namespace {
 GPSReceiver::ReceiverRole selectedRole(const GPSReceiver::Configuration& configuration)
 {
     const auto saved = configuration.receiverRole;
-    return saved == GPSReceiver::PositionOnly || saved == GPSReceiver::Passive ? saved : GPSReceiver::ConfiguredBase;
+    return saved == GPSReceiver::Passive ? GPSReceiver::Passive : GPSReceiver::ConfiguredBase;
 }
 
 bool savedConnectionChanged(const GPSReceiver::Configuration& oldConfiguration,

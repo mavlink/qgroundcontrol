@@ -43,7 +43,7 @@ MockNTRIPTransport* injectTransport(NTRIPManager& manager, bool autoConnect = fa
 {
     auto* transport = new MockNTRIPTransport(&manager);
     transport->autoConnect = autoConnect;
-    manager.setTransportForTest(transport);
+    injectNextTransport(manager, transport);
     return transport;
 }
 
@@ -84,6 +84,28 @@ void NTRIPManagerTest::testInitialStateIsDisconnected()
 {
     NTRIPManager manager;
     QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Disconnected);
+    QCOMPARE(manager.connectionStatusText(), NTRIPManager::tr("Disconnected"));
+    QCOMPARE(manager.property("connectionStatusText").toString(), NTRIPManager::tr("Disconnected"));
+}
+
+void NTRIPManagerTest::testTransportFactory()
+{
+    NTRIPManager manager;
+    QList<QObject*> parents;
+    QString requestedHost;
+    MockNTRIPTransport* transport = nullptr;
+    manager.setTransportFactory([&](const NTRIPManager::Configuration& configuration, QObject* parent) {
+        parents.append(parent);
+        requestedHost = configuration.stream.connection.host;
+        transport = new MockNTRIPTransport(parent);
+        return transport;
+    });
+    initialize(manager);
+    QCOMPARE(parents.size(), 1);
+    QCOMPARE(parents.first(), &manager);
+    QCOMPARE(requestedHost, testConfiguration().stream.connection.host);
+    QVERIFY(transport);
+    QCOMPARE(transport->startCount, 1);
 }
 
 void NTRIPManagerTest::testStopFromIdleIsNoop()
@@ -215,7 +237,7 @@ void NTRIPManagerTest::testStatusCallbackStopsTransition()
     manager.setConfiguration(testConfiguration());
     auto* transport = new MockNTRIPTransport(&manager);
     transport->autoConnect = false;
-    manager.setTransportForTest(transport);
+    injectNextTransport(manager, transport);
     QList<NTRIPManager::ConnectionStatus> observed;
     connect(&manager, &NTRIPManager::connectionStatusChanged, this, [&]() {
         observed.append(manager.connectionStatus());
@@ -789,7 +811,7 @@ void NTRIPManagerTest::testRetryPublicationSuperseded()
             return;
         }
         manager.stopNTRIP();
-        manager.setTransportForTest(replacement);
+        injectNextTransport(manager, replacement);
         manager.startNTRIP();
     };
     if (phase == 1) {
@@ -821,7 +843,7 @@ void NTRIPManagerTest::testMissingMountpointDoesNotStartTransport()
     configuration.stream.connection.mountpoint.clear();
     mgr.setConfiguration(configuration);
     auto* transport = new MockNTRIPTransport(&mgr);
-    mgr.setTransportForTest(transport);
+    injectNextTransport(mgr, transport);
     expectLogMessage("GPS.NTRIP.NTRIPManager", QtWarningMsg, QRegularExpression(QStringLiteral("Select a mountpoint")));
     mgr.startNTRIP();
     QCOMPARE(mgr.connectionStatus(), NTRIPManager::ConnectionStatus::Error);
@@ -848,7 +870,7 @@ void NTRIPManagerTest::testCorrectionIngressKeepsSessionAndIdentity()
     auto* first = new MockNTRIPTransport(&mgr);
     first->autoConnect = false;
     QSignalSpy observed(first, &NTRIPTransport::correctionFrameReceived);
-    mgr.setTransportForTest(first);
+    injectNextTransport(mgr, first);
     mgr.init();
     QCOMPARE(first->startCount, 0);
     QCOMPARE(mgr.connectionStatus(), NTRIPManager::ConnectionStatus::Disconnected);
@@ -880,7 +902,7 @@ void NTRIPManagerTest::testCorrectionIngressKeepsSessionAndIdentity()
     QVERIFY(corrections.sourceInstances().isEmpty());
     auto* second = new MockNTRIPTransport(&mgr);
     second->autoConnect = false;
-    mgr.setTransportForTest(second);
+    injectNextTransport(mgr, second);
     mgr.startNTRIP();
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     QCOMPARE(mgr.connectionStatus(), NTRIPManager::ConnectionStatus::Connecting);
@@ -948,7 +970,7 @@ void NTRIPManagerTest::testGgaSettingsUseInjectedProviders()
                               GPSAltitudeDatum::MeanSeaLevel};
     });
     auto* transport = new MockNTRIPTransport(&manager);
-    manager.setTransportForTest(transport);
+    injectNextTransport(manager, transport);
     manager.init();
     QCOMPARE(manager.ggaSource(), QStringLiteral("Injected vehicle"));
     QCOMPARE(transport->sentNmea.size(), 1);
@@ -982,7 +1004,7 @@ void NTRIPManagerTest::testFactChangesReconfigureTransport()
     auto* first = new MockNTRIPTransport(&mgr);
     int stops = 0;
     first->onStop = [&]() { ++stops; };
-    mgr.setTransportForTest(first);
+    injectNextTransport(mgr, first);
     mgr.init();
     QCOMPARE(first->startCount, 1);
     QCOMPARE(mgr.connectionStatus(), NTRIPManager::ConnectionStatus::Connected);
@@ -993,7 +1015,7 @@ void NTRIPManagerTest::testFactChangesReconfigureTransport()
     const auto original = qvariant_cast<GPSCorrectionFrame>(routed[0][0]);
 
     auto* second = new MockNTRIPTransport(&mgr);
-    mgr.setTransportForTest(second);
+    injectNextTransport(mgr, second);
     const bool reconnect = setting == QStringLiteral("mountpoint");
     auto changed = configuration;
     if (reconnect) {

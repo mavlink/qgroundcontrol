@@ -404,7 +404,7 @@ void GPSReceiverConnectionPolicyTest::_excludedPorts()
     QFETCH(QString, reason);
     auto configuration = serialConfiguration(true);
     if (reason == QStringLiteral("passive-role")) {
-        configuration.receiverRole = GPSReceiver::PositionOnly;
+        configuration.receiverRole = GPSReceiver::Passive;
     }
     Port port = rtkPort();
     port.bootloader = reason == QStringLiteral("bootloader");
@@ -710,17 +710,17 @@ void GPSReceiverConnectionPolicyTest::_shutdownDuringConnectionTick()
     });
     GPSSerialPortManagerAdapter serialPorts(&ports);
     GPSManager manager;
-    manager.gpsRtk()->setConfiguration(serialConfiguration(true));
-    manager.gpsRtk()->setSerialPorts(&serialPorts);
+    manager.receiver()->setConfiguration(serialConfiguration(true));
+    manager.receiver()->setSerialPorts(&serialPorts);
     connect(&ports, &SerialPortManager::portsEnumerated, &manager, &GPSManager::shutdown);
     manager._updateConnections();
     QVERIFY(manager._shutdown);
-    QVERIFY(!manager.gpsRtk()->hasReceiver());
+    QVERIFY(!manager.receiver()->hasReceiver());
     const int seen = enumerations;
     manager._updateConnections();
     manager._updateConnections();
     QCOMPARE(enumerations, seen);
-    QVERIFY(!manager.gpsRtk()->hasReceiver());
+    QVERIFY(!manager.receiver()->hasReceiver());
 }
 
 void GPSReceiverConnectionPolicyTest::_manualRetryRecreatesGPSReceiverSession()

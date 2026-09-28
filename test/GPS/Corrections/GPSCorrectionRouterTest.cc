@@ -829,15 +829,11 @@ void GPSCorrectionRouterTest::diagnosticStagesStayDistinct_data()
     QTest::addColumn<bool>("filtered");
     QTest::addColumn<bool>("queueAccepted");
     QTest::addColumn<QList<Stage>>("stages");
-    QTest::newRow("valid-queued") << true << false << true
-                                  << QList{Stage::Received, Stage::Validated, Stage::Selected, Stage::Queued};
-    QTest::newRow("unvalidated-passthrough")
-        << false << false << true << QList{Stage::Received, Stage::Selected, Stage::Queued};
-    QTest::newRow("whitelist-filtered") << true << true << true
-                                        << QList{Stage::Received, Stage::Validated, Stage::Dropped};
-    QTest::newRow("queue-full") << true << false << false
-                                << QList{Stage::Received, Stage::Validated, Stage::Selected, Stage::Dropped,
-                                         Stage::Dropped};
+    // Accepted frames are counted; the history records the stream switch and every drop.
+    QTest::newRow("valid-queued") << true << false << true << QList{Stage::Selected};
+    QTest::newRow("unvalidated-passthrough") << false << false << true << QList{Stage::Selected};
+    QTest::newRow("whitelist-filtered") << true << true << true << QList{Stage::Dropped};
+    QTest::newRow("queue-full") << true << false << false << QList{Stage::Selected, Stage::Dropped, Stage::Dropped};
 }
 
 void GPSCorrectionRouterTest::diagnosticStagesStayDistinct()
@@ -878,7 +874,7 @@ void GPSCorrectionRouterTest::diagnosticStagesStayDistinct()
         QCOMPARE(events.index(index, 0).data(GPSCorrectionEventModel::StageRole).toInt(), int(stages[index]));
     }
     const auto& last = router.events().last();
-    QCOMPARE(last.stage, !filtered && queueAccepted ? GPSCorrectionStage::Queued : GPSCorrectionStage::Dropped);
+    QCOMPARE(last.stage, !filtered && queueAccepted ? GPSCorrectionStage::Selected : GPSCorrectionStage::Dropped);
     QCOMPARE(last.reason, filtered        ? GPSCorrectionReason::MessageFiltered
                           : queueAccepted ? GPSCorrectionReason::None
                                           : GPSCorrectionReason::DestinationUnavailable);
@@ -896,30 +892,67 @@ void GPSCorrectionRouterTest::boundedDiagnosticsAndEventHistory()
         return quint64(received.data.size());
     });
     auto source = router.registerSource(GPSCorrectionSource::Udp);
+    // Accepted frames of one stream are counted without growing the history.
     for (qsizetype i = 0; i < GPSCorrectionRouter::MAX_EVENTS + 20; ++i) {
         QVERIFY(router.acceptIngress(ingress(source, now)));
-        QVERIFY(router.events().size() <= GPSCorrectionRouter::MAX_EVENTS);
     }
+    QCOMPARE(router.events().size(), 1);
     QCOMPARE(submissions, quint64(GPSCorrectionRouter::MAX_EVENTS + 20));
     const auto destination = router.destinations().first();
     QCOMPARE(destination.queuedFrames, submissions);
+    // Drops are recorded, and the history stays bounded.
+    for (qsizetype i = 0; i < GPSCorrectionRouter::MAX_EVENTS + 20; ++i) {
+        QVERIFY(!router.acceptIngress(
+            source.event(GPSTestHelpers::buildRtcmFrame(1005, 20), now, 1005, true, true, GPSCorrectionReason::None)));
+        QVERIFY(router.events().size() <= GPSCorrectionRouter::MAX_EVENTS);
+    }
     GPSCorrectionEventModel model;
     QAbstractItemModelTester tester(&model, QAbstractItemModelTester::FailureReportingMode::QtTest);
     model.setEvents(router.events());
     QCOMPARE(model.rowCount(), int(GPSCorrectionRouter::MAX_EVENTS));
     const auto last = model.index(model.rowCount() - 1, 0);
-    QCOMPARE(model.data(last, GPSCorrectionEventModel::StageRole).toInt(), int(GPSCorrectionStage::Queued));
-    QCOMPARE(model.data(last, GPSCorrectionEventModel::DestinationIdRole).toString(), QStringLiteral("receiver"));
+    QCOMPARE(model.data(last, GPSCorrectionEventModel::StageRole).toInt(), int(GPSCorrectionStage::Dropped));
+    QCOMPARE(model.data(last, GPSCorrectionEventModel::ReasonRole).toInt(), int(GPSCorrectionReason::MessageFiltered));
     QVERIFY(!model.roleNames().values().contains(QByteArrayLiteral("data")));
     QVERIFY(!(model.flags(last) & Qt::ItemIsEditable));
-    QVERIFY(!model.setData(last, int(GPSCorrectionStage::Dropped), GPSCorrectionEventModel::StageRole));
-    QCOMPARE(model.data(last, GPSCorrectionEventModel::StageRole).toInt(), int(GPSCorrectionStage::Queued));
+    QVERIFY(!model.setData(last, int(GPSCorrectionStage::Selected), GPSCorrectionEventModel::StageRole));
+    QCOMPARE(model.data(last, GPSCorrectionEventModel::StageRole).toInt(), int(GPSCorrectionStage::Dropped));
     QSignalSpy resets(&model, &QAbstractItemModel::modelReset);
     model.setEvents(router.events());
     QVERIFY(resets.isEmpty());
     model.setEvents({});
     QCOMPARE(model.rowCount(), 0);
     QVERIFY(resets.isEmpty());
+}
+
+void GPSCorrectionRouterTest::streamSwitchesAreRecordedOnce()
+{
+    qint64 now = 100000;
+    GPSCorrectionRouter router(nullptr, [&now]() { return now; });
+    setAdmissionOutput(router, QStringLiteral("receiver"),
+                       [](const GPSCorrectionFrame& received) { return quint64(received.data.size()); });
+    auto udp = router.registerSource(GPSCorrectionSource::Udp);
+    auto ntrip = router.registerSource(GPSCorrectionSource::NTRIP);
+    for (int index = 0; index < 5; ++index) {
+        QVERIFY(router.acceptIngress(ingress(udp, ++now)));
+    }
+    QCOMPARE(router.events().size(), 1);
+    QCOMPARE(router.events().last().stage, GPSCorrectionStage::Selected);
+    QCOMPARE(router.events().last().source, GPSCorrectionSource::Udp);
+
+    // NTRIP outranks UDP; once it takes over, the switch is recorded once more.
+    now += GPSCorrectionRouter::SWITCH_HOLD_DOWN.count() + 1;
+    for (int index = 0; index < 5; ++index) {
+        (void) router.acceptIngress(ingress(ntrip, ++now));
+        now += GPSCorrectionRouter::SWITCH_HOLD_DOWN.count() + 1;
+    }
+    QCOMPARE(router.activeSource(), GPSCorrectionSource::NTRIP);
+    qsizetype switches = 0;
+    for (const auto& event : router.events()) {
+        switches += event.stage == GPSCorrectionStage::Selected ? 1 : 0;
+    }
+    QCOMPARE(switches, 2);
+    QCOMPARE(router.events().last().source, GPSCorrectionSource::NTRIP);
 }
 
 void GPSCorrectionRouterTest::rejectedCandidateHasNoValidatedCredit()

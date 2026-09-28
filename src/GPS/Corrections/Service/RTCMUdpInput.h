@@ -38,11 +38,8 @@ public:
 
     quint16 port() const { return _port; }
 
-    /// Change the listen port. If already running, restarts automatically.
+    /// Changes the listen port, starting a fresh stream and restarting the listener if running.
     void setPort(quint16 port);
-
-    /// Changes start a fresh stream, restarting the listener if running.
-    void configure(quint16 port, bool validate);
 
 signals:
     void frameReceived(const GPSCorrectionFrame& frame);
@@ -63,7 +60,6 @@ private:
     QUdpSocket* _socket = nullptr;
     quint16 _port;
     bool _running = false;
-    bool _validateRtcm = false;
 
     struct PeerParser
     {

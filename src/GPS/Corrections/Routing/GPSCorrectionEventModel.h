@@ -18,10 +18,7 @@ class GPSCorrectionEventModel : public QRangeModel
 public:
     enum Stage
     {
-        Received = static_cast<int>(GPSCorrectionStage::Received),
-        Validated = static_cast<int>(GPSCorrectionStage::Validated),
         Selected = static_cast<int>(GPSCorrectionStage::Selected),
-        Queued = static_cast<int>(GPSCorrectionStage::Queued),
         Dropped = static_cast<int>(GPSCorrectionStage::Dropped),
     };
     Q_ENUM(Stage)

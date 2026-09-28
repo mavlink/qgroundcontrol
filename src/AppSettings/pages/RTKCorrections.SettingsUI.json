@@ -38,16 +38,6 @@
             ]
         },
         {
-            "heading": "NTRIP Message Filter",
-            "keywords": ["rtcm", "whitelist", "message filter", "ntrip"],
-            "controls": [
-                {
-                    "setting": "ntripSettings.ntripWhitelist",
-                    "placeholder": "e.g. 1005,1077,1087"
-                }
-            ]
-        },
-        {
             "heading": "UDP RTCM Input",
             "showWhen": "QGroundControl.settingsManager.gpsCorrectionSettings.userVisible",
             "keywords": ["udp rtcm", "udp input", "corrections"],
@@ -58,18 +48,8 @@
                 {
                     "setting": "gpsCorrectionSettings.rtcmUdpInputPort",
                     "enableWhen": "QGroundControl.settingsManager.gpsCorrectionSettings.rtcmUdpInputEnabled.rawValue"
-                },
-                {
-                    "setting": "gpsCorrectionSettings.rtcmUdpValidate",
-                    "enableWhen": "QGroundControl.settingsManager.gpsCorrectionSettings.rtcmUdpInputEnabled.rawValue"
                 }
             ]
-        },
-        {
-            "component": "CorrectionRoutingSettings",
-            "sectionName": "Correction Routing",
-            "showWhen": "QGroundControl.settingsManager.gpsCorrectionSettings.userVisible && (QGroundControl.settingsManager.gpsCorrectionSettings.correctionSource as SettingsFact).userVisible",
-            "keywords": ["corrections", "rtcm", "source", "stream", "routing", "automatic"]
         },
         {
             "heading": "UDP Forwarding",
@@ -86,6 +66,22 @@
                 {
                     "setting": "gpsCorrectionSettings.rtcmUdpOutputPort",
                     "enableWhen": "QGroundControl.settingsManager.gpsCorrectionSettings.rtcmUdpOutputEnabled.rawValue"
+                }
+            ]
+        },
+        {
+            "component": "CorrectionRoutingSettings",
+            "sectionName": "Correction Routing",
+            "showWhen": "QGroundControl.settingsManager.gpsCorrectionSettings.userVisible && (QGroundControl.settingsManager.gpsCorrectionSettings.correctionSource as SettingsFact).userVisible",
+            "keywords": ["corrections", "rtcm", "source", "stream", "routing", "automatic"]
+        },
+        {
+            "heading": "NTRIP Message Filter",
+            "keywords": ["rtcm", "whitelist", "message filter", "ntrip"],
+            "controls": [
+                {
+                    "setting": "ntripSettings.ntripWhitelist",
+                    "placeholder": "e.g. 1005,1077,1087"
                 }
             ]
         },

@@ -410,9 +410,20 @@ Vehicle::~Vehicle()
     _autopilotPlugin = nullptr;
 }
 
-FactGroup* Vehicle::gpsFactGroup()                  { return _gpsFactGroup; }
-FactGroup* Vehicle::gps2FactGroup()                 { return _gps2FactGroup; }
-FactGroup* Vehicle::gpsAggregateFactGroup()         { return _gpsAggregateFactGroup; }
+VehicleGPSFactGroup* Vehicle::gpsFactGroup()
+{
+    return _gpsFactGroup;
+}
+
+VehicleGPSFactGroup* Vehicle::gps2FactGroup()
+{
+    return _gps2FactGroup;
+}
+
+VehicleGPSAggregateFactGroup* Vehicle::gpsAggregateFactGroup()
+{
+    return _gpsAggregateFactGroup;
+}
 FactGroup* Vehicle::windFactGroup()                 { return _windFactGroup; }
 FactGroup* Vehicle::vibrationFactGroup()            { return _vibrationFactGroup; }
 FactGroup* Vehicle::temperatureFactGroup()          { return _temperatureFactGroup; }

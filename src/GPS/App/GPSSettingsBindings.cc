@@ -89,7 +89,6 @@ constexpr Binding<GPSCorrectionSettings, RoutingConfig> kRoutingBindings[] = {
 constexpr Binding<GPSCorrectionSettings, UdpInputConfig> kUdpInputBindings[] = {
     {&GPSCorrectionSettings::rtcmUdpInputEnabled, assign<&UdpInputConfig::enabled>},
     {&GPSCorrectionSettings::rtcmUdpInputPort, assign<&UdpInputConfig::port>},
-    {&GPSCorrectionSettings::rtcmUdpValidate, assign<&UdpInputConfig::validate>},
 };
 
 constexpr Binding<GPSCorrectionSettings, UdpOutputConfig> kUdpOutputBindings[] = {
@@ -122,6 +121,7 @@ constexpr Binding<NTRIPSettings, NTRIPConfig> kNTRIPBindings[] = {
 
 constexpr Binding<RTKSettings, ReceiverConfig> kReceiverBindings[] = {
     {&RTKSettings::receiverRole, assign<&ReceiverConfig::receiverRole>},
+    {&RTKSettings::forwardReceiverRtcm, assign<&ReceiverConfig::forwardReceiverRtcm>},
     {&RTKSettings::baseReceiverManufacturers, assign<&ReceiverConfig::baseReceiverManufacturer>},
     {&RTKSettings::connectionType, assign<&ReceiverConfig::connectionType>},
     {&RTKSettings::tcpHost, assign<&ReceiverConfig::tcpHost>},

@@ -26,25 +26,11 @@ private slots:
     void _currentBaseSaveValidity_data();
     void _currentBaseSaveValidity();
     void _logsFixTransitionsWithoutCoordinates();
-    void _configurationDebugRedactsFixedBaseCoordinates();
-    void _manufacturerIds_data();
-    void _manufacturerIds();
-    void _runtimeSettingsDoNotRequireAppRestart_data();
-    void _runtimeSettingsDoNotRequireAppRestart();
-    void _receiverSettingsMapping_data();
-    void _receiverSettingsMapping();
-    void _invalidReceiverSettings_data();
-    void _invalidReceiverSettings();
-    void _configurationDiagnosticRetained_data();
-    void _configurationDiagnosticRetained();
-    void _rtkSettingsBinding();
     void _automaticConnection();
-    void _persistentConsentScope();
-    void _persistentConsentIsSpentOnConnect_data();
-    void _persistentConsentIsSpentOnConnect();
-    void _effectiveConnection_data();
-    void _effectiveConnection();
+    void _summaryLabel();
     void _udpPositionOnlyReceiver();
+    void _passiveForwardingRegistersCorrections_data();
+    void _passiveForwardingRegistersCorrections();
     void _silentReceiverClearsSolution();
 #ifndef QGC_NO_SERIAL_LINK
     void _serialReservationSurvivesDelayedStop();

@@ -27,7 +27,6 @@ public:
 
     DEFINE_SETTINGFACT(rtcmUdpInputEnabled)
     DEFINE_SETTINGFACT(rtcmUdpInputPort)
-    DEFINE_SETTINGFACT(rtcmUdpValidate)
     DEFINE_SETTINGFACT(rtcmUdpOutputEnabled)
     DEFINE_SETTINGFACT(rtcmUdpOutputAddress)
     DEFINE_SETTINGFACT(rtcmUdpOutputPort)

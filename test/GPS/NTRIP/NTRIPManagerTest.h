@@ -12,6 +12,7 @@ private slots:
 
     void testInitialStateIsDisconnected();
     void testStopFromIdleIsNoop();
+    void testTransportFactory();
     void testStopCancelsDeferredSettings_data();
     void testStopCancelsDeferredSettings();
     void testNewSessionRetryBudget_data();

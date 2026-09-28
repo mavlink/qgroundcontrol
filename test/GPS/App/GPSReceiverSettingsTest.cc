@@ -20,6 +20,7 @@
 #include "GPSReceiverFactGroup.h"
 #include "GPSSettingsBindings.h"
 #include "MAVLinkLib.h"
+#include "NTRIPSettings.h"
 #include "RTKSettings.h"
 #include "ScriptedProvider.h"
 #include "SettingsManager.h"
@@ -86,6 +87,7 @@ struct SettingsFixture
         const bool passive = manufacturer == GPSReceiver::manufacturerForType(GPSType::passive);
         saved.setFactValue(autoConnect, false);
         saved.setFactValue(settings->receiverRole(), passive ? GPSReceiver::Passive : GPSReceiver::ConfiguredBase);
+        saved.setFactValue(settings->forwardReceiverRtcm(), true);
         saved.setFactValue(settings->baseReceiverManufacturers(),
                            passive ? settings->baseReceiverManufacturers()->rawValue() : QVariant(manufacturer));
         saved.setFactValue(settings->udpPort(), settings->udpPort()->rawValue());
@@ -108,7 +110,7 @@ struct SettingsFixture
 /// Publishes a surveyed base position on the application's receiver Facts, which GPSManager saves.
 GPSReceiverFactGroup* setSurvey(SettingsFixture& settings)
 {
-    GPSReceiverFactGroup* facts = GPSManager::instance()->gpsRtkFacts();
+    GPSReceiverFactGroup* facts = GPSManager::instance()->receiverFacts();
     settings.saved.setFactValue(facts->currentLatitude(), 47.123456789);
     settings.saved.setFactValue(facts->currentLongitude(), 8.987654321);
     settings.saved.setFactValue(facts->currentAltitude(), 512.25f);
@@ -125,7 +127,7 @@ std::unique_ptr<QObject> createPanel(GPSTestHelpers::QmlEngine& engine, Settings
         GPSTestHelpers::sourceQmlUrl(QStringLiteral("AppSettings/GPSReceiverSettings.qml")),
         {{QStringLiteral("receiver"), QVariant::fromValue(&receiver.rtk)},
          {QStringLiteral("settings"), QVariant::fromValue(settings.settings)},
-         {QStringLiteral("baseFacts"), QVariant::fromValue(GPSManager::instance()->gpsRtkFacts())},
+         {QStringLiteral("baseFacts"), QVariant::fromValue(GPSManager::instance()->receiverFacts())},
          {QStringLiteral("autoConnectFact"), QVariant::fromValue(settings.autoConnect)},
          {QStringLiteral("serialPorts"), QStringList{QStringLiteral("/test/receiver")}},
          {QStringLiteral("serialBaudRates"), QStringList{QStringLiteral("115200"), QStringLiteral("230400")}}});
@@ -196,6 +198,37 @@ void GPSReceiverSettingsTest::_surveySaveWorkflow()
     QCOMPARE(fixedPosition.accuracyMeters, 0.75f);
     QCOMPARE(gpsValidateReceiverConfig(provider->type(), {.base = provider->capturedConfig().base}),
              GPSReceiverConfigError::None);
+}
+
+void GPSReceiverSettingsTest::_surveyCompletePrompt()
+{
+    SettingsFixture settings(GPSReceiver::manufacturerForType(GPSType::ublox));
+    SettingsReceiver receiver(settings.settings);
+    QVERIFY(receiver.rtk.connectConfiguredGPS());
+    receiver.provider()->ready();
+    QCOMPARE(receiver.rtk.activeBaseMode(), int(BaseModeDefinition::Mode::BaseSurveyIn));
+    GPSReceiverFactGroup* facts = setSurvey(settings);
+    settings.saved.setFactValue(facts->active(), true);
+    GPSTestHelpers::QmlEngine engine;
+    auto status = engine.create(GPSTestHelpers::sourceQmlUrl(QStringLiteral("AppSettings/GPSReceiverStatus.qml")),
+                                {{QStringLiteral("receiver"), QVariant::fromValue(&receiver.rtk)},
+                                 {QStringLiteral("facts"), QVariant::fromValue(facts)}});
+    QVERIFY2(status, qPrintable(engine.lastError()));
+    auto* prompt = status->findChild<QObject*>(QStringLiteral("rtkSurveyCompletePrompt"));
+    auto* save = status->findChild<QObject*>(QStringLiteral("rtkSurveySaveButton"));
+    QVERIFY(prompt && save);
+    // Still surveying: nothing to keep yet.
+    QVERIFY(!prompt->property("visible").toBool());
+
+    // Receiver Facts publish to QML at the fact group's update rate.
+    facts->active()->setRawValue(false);
+    QTRY_VERIFY_WITH_TIMEOUT(prompt->property("visible").toBool(), TestTimeout::mediumMs());
+    QVERIFY(save->property("visible").toBool());
+    QVERIFY(QMetaObject::invokeMethod(save, "clicked"));
+    QCOMPARE(settings.settings->fixedBasePositionLatitude()->rawValue(), facts->currentLatitude()->rawValue());
+    QCOMPARE(settings.settings->fixedBasePositionAccuracy()->rawValue().toDouble(), 0.75);
+    QVERIFY(!save->property("visible").toBool());
+    QVERIFY(prompt->property("text").toString().contains(QStringLiteral("saved")));
 }
 
 void GPSReceiverSettingsTest::_unavailablePositionCannotBeSaved_data()
@@ -316,7 +349,8 @@ void GPSReceiverSettingsTest::_roleSelectsFields()
     QVERIFY(connect->isEnabled());
 
     // A receiver QGroundControl does not configure hides every base setting.
-    settings.settings->receiverRole()->setRawValue(GPSReceiver::PositionOnly);
+    settings.settings->receiverRole()->setRawValue(GPSReceiver::Passive);
+    settings.settings->forwardReceiverRtcm()->setRawValue(false);
     QVERIFY(!manufacturer->isVisible());
     QVERIFY(!survey->isVisible());
     QCOMPARE(device->isVisible(), receiver.rtk.serialSupported());
@@ -329,7 +363,8 @@ void GPSReceiverSettingsTest::_roleSelectsFields()
     QVERIFY(QMetaObject::invokeMethod(connect, "clicked"));
     QVERIFY(receiver.rtk.hasReceiver());
     QCOMPARE(receiver.provider()->type(), GPSType::passive);
-    QCOMPARE(receiver.rtk.activeRole(), GPSReceiver::PositionOnly);
+    QCOMPARE(receiver.rtk.activeRole(), GPSReceiver::Passive);
+    QVERIFY(!receiver.rtk.forwardingCorrections());
     receiver.rtk.disconnectConfiguredGPS();
 
     // UDP cannot carry base configuration.
@@ -354,7 +389,7 @@ void GPSReceiverSettingsTest::_automaticManufacturer()
     auto* explanation = panel->findChild<QQuickItem*>(QStringLiteral("rtkAutomaticExplanation"));
     auto* connect = panel->findChild<QObject*>(QStringLiteral("rtkConnectButton"));
     QVERIFY(manufacturer && explanation && connect);
-    QCOMPARE(manufacturer->property("currentText").toString(), QStringLiteral("Automatic"));
+    QCOMPARE(manufacturer->property("currentText").toString(), QStringLiteral("Detect automatically"));
     QVERIFY(explanation->isVisible());
     QVERIFY(explanation->property("text").toString().contains(QStringLiteral("identification queries")));
     QVERIFY(connect->property("enabled").toBool());
@@ -519,7 +554,7 @@ void GPSReceiverSettingsTest::_indicatorConsentTracksSettings()
 {
     SettingsFixture settings(6);
     // The page shows the application's receiver, which the application binds to the settings at startup.
-    GPSReceiver* const receiver = GPSManager::instance()->gpsRtk();
+    GPSReceiver* const receiver = GPSManager::instance()->receiver();
     const GPSReceiver::Configuration unbound = receiver->configuration();
     const auto restore = qScopeGuard([receiver, unbound] { receiver->setConfiguration(unbound); });
     QObject binding;
@@ -656,8 +691,8 @@ void GPSReceiverSettingsTest::_disconnectedPage()
 {
     QFETCH(int, width);
     SettingsFixture settings(4);
-    QVERIFY(!GPSManager::instance()->gpsRtk()->hasReceiver());
-    auto* facts = GPSManager::instance()->gpsRtkFacts();
+    QVERIFY(!GPSManager::instance()->receiver()->hasReceiver());
+    auto* facts = GPSManager::instance()->receiverFacts();
     settings.saved.setFactValue(facts->connected(), false);
     settings.saved.setFactValue(facts->active(), false);
     settings.saved.setFactValue(facts->numSatellites(), 12);
@@ -795,7 +830,8 @@ void GPSReceiverSettingsTest::_resilienceUnknownStates()
     auto* icon = indicator->findChild<QObject*>(QStringLiteral("gpsInterferenceIcon"));
     QVERIFY(icon);
     QCOMPARE(icon->property("visible").toBool(), expected > 0);
-    QVERIFY(indicator->setProperty("_gpsAggregate", QVariant::fromValue(static_cast<QObject*>(nullptr))));
+    QVERIFY(indicator->setProperty("_gpsAggregate",
+                                   QVariant::fromValue(static_cast<VehicleGPSAggregateFactGroup*>(nullptr))));
     QCOMPARE(indicator->property("_interferenceState").toInt(), 0);
     QVERIFY(!icon->property("visible").toBool());
 }
@@ -820,7 +856,7 @@ void GPSReceiverSettingsTest::_horizontalAccuracyLabel()
 void GPSReceiverSettingsTest::_vehicleAccuracyFacts()
 {
     Vehicle vehicle(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR);
-    auto* gps = qobject_cast<VehicleGPSFactGroup*>(vehicle.gpsFactGroup());
+    auto* gps = vehicle.gpsFactGroup();
     QVERIFY(gps);
     gps->setLiveUpdates(true);
     // The page shows vehicle GPS status only once the vehicle reports GPS telemetry.
@@ -885,8 +921,8 @@ void GPSReceiverSettingsTest::_indicatorShowsReceiverWithoutVehicleGPS_data()
     QTest::addColumn<int>("correctionState");
     QTest::addColumn<QString>("label");
     QTest::addColumn<QString>("detail");
-    QTest::newRow("position-only") << int(GPSReceiver::PositionOnly) << 3 << false << int(State::Inactive) << "GNSS"
-                                   << "3D";
+    QTest::newRow("passive-position-only") << int(GPSReceiver::Passive) << 3 << false << int(State::Inactive) << "GNSS"
+                                           << "3D";
     QTest::newRow("passive-float") << int(GPSReceiver::Passive) << 5 << false << int(State::Waiting) << "RTK"
                                    << "Float";
     QTest::newRow("base-surveying") << int(GPSReceiver::ConfiguredBase) << 0 << true << int(State::Waiting) << "RTK"
@@ -915,7 +951,7 @@ void GPSReceiverSettingsTest::_indicatorShowsReceiverWithoutVehicleGPS()
     receiver.setConfiguration(configuration);
     QVERIFY(receiver.connectConfiguredGPS());
     QCOMPARE(int(receiver.activeRole()), role);
-    GPSReceiverFactGroup facts;
+    GPSReceiverFactGroup facts(&receiver);
     facts.setLiveUpdates(true);
     facts.fixType()->setRawValue(fixType);
     facts.numSatellitesUsed()->setRawValue(9);
@@ -927,7 +963,7 @@ void GPSReceiverSettingsTest::_indicatorShowsReceiverWithoutVehicleGPS()
                       {{QStringLiteral("parent"), QVariant::fromValue(window.contentItem())},
                        {QStringLiteral("_activeVehicle"), QVariant::fromValue(static_cast<QObject*>(nullptr))},
                        {QStringLiteral("_receiver"), QVariant::fromValue(&receiver)},
-                       {QStringLiteral("_rtkFacts"), QVariant::fromValue(&facts)},
+                       {QStringLiteral("_receiverFacts"), QVariant::fromValue(&facts)},
                        {QStringLiteral("_correctionState"), correctionState}});
     QVERIFY2(indicator, qPrintable(engine.lastError()));
     QVERIFY(indicator->property("showIndicator").toBool());
@@ -946,13 +982,40 @@ void GPSReceiverSettingsTest::_indicatorShowsReceiverWithoutVehicleGPS()
     QCOMPARE(detailLabel->property("text").toString(), detail);
 }
 
+void GPSReceiverSettingsTest::_indicatorOffersNtripConnect()
+{
+    TestFixtures::SettingsFixture saved;
+    NTRIPSettings* ntrip = SettingsManager::instance()->ntripSettings();
+    saved.setFactValue(ntrip->ntripServerConnectEnabled(), false);
+    saved.setFactValue(ntrip->ntripServerHostAddress(), QString());
+    QQuickWindow window;
+    window.resize(640, 800);
+    GPSTestHelpers::QmlEngine engine;
+    std::unique_ptr<QObject> page =
+        engine.create(GPSTestHelpers::sourceQmlUrl(QStringLiteral("Toolbar/GPSIndicatorPage.qml")),
+                      {{QStringLiteral("parent"), QVariant::fromValue(window.contentItem())},
+                       {QStringLiteral("activeVehicle"), QVariant::fromValue(static_cast<QObject*>(nullptr))},
+                       {QStringLiteral("availableWidth"), 640}});
+    QVERIFY2(page, qPrintable(engine.lastError()));
+    auto* section = page->findChild<QObject*>(QStringLiteral("gpsIndicatorNtrip"));
+    QVERIFY(section);
+    QVERIFY(!section->property("visible").toBool());
+
+    ntrip->ntripServerHostAddress()->setRawValue(QStringLiteral("caster.example"));
+    QTRY_VERIFY_WITH_TIMEOUT(section->property("visible").toBool(), TestTimeout::shortMs());
+    auto* connect = section->findChild<QObject*>(QStringLiteral("ntripConnectButton"));
+    QVERIFY(connect);
+    QVERIFY(connect->property("enabled").toBool());
+}
+
 void GPSReceiverSettingsTest::_resiliencePageGroups()
 {
     Vehicle vehicle(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR);
-    auto* gps1 = qobject_cast<VehicleGPSFactGroup*>(vehicle.gpsFactGroup());
-    auto* gps2 = qobject_cast<VehicleGPSFactGroup*>(vehicle.gps2FactGroup());
+    auto* gps1 = vehicle.gpsFactGroup();
+    auto* gps2 = vehicle.gps2FactGroup();
     QVERIFY(gps1 && gps2);
-    for (FactGroup* group : {vehicle.gpsFactGroup(), vehicle.gps2FactGroup(), vehicle.gpsAggregateFactGroup()}) {
+    for (FactGroup* group : std::initializer_list<FactGroup*>{vehicle.gpsFactGroup(), vehicle.gps2FactGroup(),
+                                                              vehicle.gpsAggregateFactGroup()}) {
         group->setLiveUpdates(true);
     }
     const auto integrity = [&vehicle](VehicleGPSFactGroup* gps, uint8_t id, uint8_t spoofing, uint8_t jamming) {

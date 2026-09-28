@@ -8,7 +8,8 @@
 
 #include "GPSCorrectionDiagnostics.h"
 
-/// Bounded accounting of admission evidence, independent of routing policy.
+/// Bounded accounting of admission evidence, independent of routing policy. Accepted frames are counted; the event
+/// history records only drops and switches of the selected stream.
 class GPSCorrectionLedger
 {
 public:
@@ -60,7 +61,8 @@ public:
     void sampleReceivedByteRates(qint64 nowMs);
     void received(const GPSCorrectionFrame& frame);
     void validated(const GPSCorrectionFrame& frame);
-    void selected(const GPSCorrectionFrame& frame);
+    /// Counts a selected frame; @a switched records it as the start of a newly selected stream.
+    void selected(const GPSCorrectionFrame& frame, bool switched);
     void queued(const GPSCorrectionFrame& frame, quint64 bytes, bool complete);
     void registerOutput(const QString& id);
     void updateOutputDestinations(const QString& id, const QSet<QString>& destinations);
@@ -74,14 +76,13 @@ public:
 
     void removeOutput(const QString& id);
 
-    bool admitted(const GPSCorrectionFrame& frame, const QString& destination, quint64 session, quint64 bytes,
-                  bool complete);
+    void admitted(const QString& destination, quint64 session, quint64 bytes, bool complete);
     void recordEvent(const GPSCorrectionFrame& frame, GPSCorrectionStage stage, GPSCorrectionReason reason,
                      quint64 bytes, const QString& destination = {}, quint64 destinationSession = 0);
     void recordDrop(const GPSCorrectionFrame& frame, GPSCorrectionReason reason, quint64 bytes,
                     const QString& destination = {}, quint64 destinationSession = 0, bool creditSource = true);
-    void pruneDestinationHistory();
     void shutdown();
+    void pruneDestinationHistory();
     static constexpr qsizetype MAX_EVENTS = GPS_CORRECTION_MAX_EVENTS;
     static constexpr qsizetype MAX_DESTINATION_HISTORY = 16;
 

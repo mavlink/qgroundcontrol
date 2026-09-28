@@ -61,14 +61,7 @@ SettingsGroupLayout {
         Layout.fillWidth: true
         visible: root._ntripActive
         label: qsTr("NTRIP")
-        labelText: {
-            switch (root._ntripStatus) {
-            case NTRIPManager.Connecting: return qsTr("Connecting")
-            case NTRIPManager.Connected: return qsTr("Connected")
-            case NTRIPManager.Reconnecting: return qsTr("Reconnecting")
-            default: return qsTr("Error")
-            }
-        }
+        labelText: root.ntrip.connectionStatusText
     }
 
     QGCLabel {
