@@ -96,6 +96,8 @@ set_property(DIRECTORY "${SDL3_SOURCE_DIR}" PROPERTY QT_EXCLUDE_FROM_TRANSLATION
 if(ANDROID)
     target_compile_definitions(SDL3-shared PRIVATE SDL_MAIN_NOIMPL SDL_MAIN_HANDLED)
     target_link_libraries(SDL3-shared PRIVATE log android)
+    # SDL3 doesn't link Qt, so it misses Qt's 16 KB page-size link option (NDK r27 defaults to 4 KB).
+    target_link_options(SDL3-shared PRIVATE "-Wl,-z,max-page-size=16384")
     set(QGC_SDL3_TARGET SDL3::SDL3-shared)
 else()
     target_compile_definitions(SDL3-static PRIVATE SDL_MAIN_NOIMPL SDL_MAIN_HANDLED)
