@@ -1,13 +1,10 @@
 #include "VehicleCameraControlTest.h"
-#include <QtTest/QSignalSpy>
 
 #include <cstring>
 
 #include <QtCore/QDir>
 #include <QtCore/QTemporaryDir>
-
-#include "VehicleCameraControl.h"
-
+#include <QtTest/QSignalSpy>
 
 #include "LinkManager.h"
 #include "MavlinkCameraControlInterface.h"
@@ -16,13 +13,19 @@
 #include "MultiVehicleManager.h"
 #include "QGCCameraManager.h"
 #include "Vehicle.h"
+#include "VehicleCameraControl.h"
 
 void VehicleCameraControlTest::_testNameFieldReadIsBounded()
 {
     // CAMERA_INFORMATION.vendor_name and model_name are uint8_t[32] filled straight from
     // the wire. MAVLink does not guarantee a NUL, so reading them as C strings runs past
     // the array into whatever follows it in the struct.
-    struct { uint8_t vendor[32]; uint8_t model[32]; } wire{};
+    struct
+    {
+        uint8_t vendor[32];
+        uint8_t model[32];
+    } wire{};
+
     memset(wire.vendor, 'A', sizeof(wire.vendor));
     memcpy(wire.model, "SHOULD_NOT_APPEAR", 18);
 
@@ -34,8 +37,7 @@ void VehicleCameraControlTest::_testNameFieldReadIsBounded()
     // A short, properly terminated field must still read normally.
     memset(&wire, 0, sizeof(wire));
     memcpy(wire.vendor, "Sony", 5);
-    QCOMPARE(VehicleCameraControl::boundedNameField(wire.vendor, sizeof(wire.vendor)),
-             QStringLiteral("Sony"));
+    QCOMPARE(VehicleCameraControl::boundedNameField(wire.vendor, sizeof(wire.vendor)), QStringLiteral("Sony"));
 
     QVERIFY(VehicleCameraControl::boundedNameField(nullptr, 32).isEmpty());
 }
@@ -50,21 +52,20 @@ void VehicleCameraControlTest::_testCameraNamesCannotSteerCachePath()
     const QString base = QDir::cleanPath(QDir(tempDir.path()).absolutePath());
 
     const QList<QPair<QString, QString>> hostile = {
-        { QStringLiteral("../../../Desktop/QGC01_PWNED"), QStringLiteral("marker") },
-        { QStringLiteral("..\\..\\..\\Desktop\\PWNED"),   QStringLiteral("marker") },
-        { QStringLiteral("C:\\Windows\\Temp\\PWNED"),     QStringLiteral("marker") },
-        { QStringLiteral("/etc/cron.d/PWNED"),            QStringLiteral("marker") },
-        { QStringLiteral("T.txt:"),                       QStringLiteral("s") },
-        { QStringLiteral("vendor"),                       QStringLiteral("../../evil") },
-        { QStringLiteral(".."),                           QStringLiteral("..") },
-        { QString(),                                      QStringLiteral("marker") },
+        {QStringLiteral("../../../Desktop/QGC01_PWNED"), QStringLiteral("marker")},
+        {QStringLiteral("..\\..\\..\\Desktop\\PWNED"), QStringLiteral("marker")},
+        {QStringLiteral("C:\\Windows\\Temp\\PWNED"), QStringLiteral("marker")},
+        {QStringLiteral("/etc/cron.d/PWNED"), QStringLiteral("marker")},
+        {QStringLiteral("T.txt:"), QStringLiteral("s")},
+        {QStringLiteral("vendor"), QStringLiteral("../../evil")},
+        {QStringLiteral(".."), QStringLiteral("..")},
+        {QString(), QStringLiteral("marker")},
     };
 
-    for (const auto &testCase : hostile) {
-        const QString token = QString::asprintf("%s_%s_%03d",
-            VehicleCameraControl::pathSafeNameToken(testCase.first).toStdString().c_str(),
-            VehicleCameraControl::pathSafeNameToken(testCase.second).toStdString().c_str(),
-            1);
+    for (const auto& testCase : hostile) {
+        const QString token = QString::asprintf(
+            "%s_%s_%03d", VehicleCameraControl::pathSafeNameToken(testCase.first).toStdString().c_str(),
+            VehicleCameraControl::pathSafeNameToken(testCase.second).toStdString().c_str(), 1);
         const QString candidate = QDir(base).filePath(token + QStringLiteral(".xml"));
 
         QVERIFY2(VehicleCameraControl::pathIsInside(base, candidate), qPrintable(candidate));

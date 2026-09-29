@@ -1,37 +1,34 @@
 #include "VehicleCameraControl.h"
-#include "QGCCameraIO.h"
-#include "AppMessages.h"
-#include "QGCFormat.h"
-#include "SettingsManager.h"
-#include "AppSettings.h"
-#include "VideoManager.h"
-#include "QGCCameraManager.h"
-#include "FTPManager.h"
-#include "QGCCompression.h"
-#include "QGCCorePlugin.h"
-#include "AppMessages.h"
-#include "QGCFormat.h"
-#include "Vehicle.h"
-#include "VehicleLinkManager.h"
-#include "LinkInterface.h"
-#include "MAVLinkProtocol.h"
-#include "QGCVideoStreamInfo.h"
-#include "MissionCommandTree.h"
+
+#include <algorithm>
 
 #include <QtCore/QDir>
 #include <QtCore/QFileInfo>
-#include <QtNetwork/QNetworkAccessManager>
-#include <QtCore/QDir>
-
-#include <algorithm>
 #include <QtCore/QSettings>
+#include <QtNetwork/QNetworkAccessManager>
+#include <QtNetwork/QNetworkReply>
+#include <QtQml/QQmlEngine>
 #include <QtXml/QDomDocument>
 #include <QtXml/QDomNodeList>
-#include <QtQml/QQmlEngine>
-#include <QtNetwork/QNetworkReply>
 
-#include "QGCNetworkHelper.h"
+#include "AppMessages.h"
+#include "AppSettings.h"
+#include "FTPManager.h"
+#include "LinkInterface.h"
+#include "MAVLinkProtocol.h"
+#include "MissionCommandTree.h"
+#include "QGCCameraIO.h"
+#include "QGCCameraManager.h"
+#include "QGCCompression.h"
+#include "QGCCorePlugin.h"
+#include "QGCFormat.h"
 #include "QGCLoggingCategory.h"
+#include "QGCNetworkHelper.h"
+#include "QGCVideoStreamInfo.h"
+#include "SettingsManager.h"
+#include "Vehicle.h"
+#include "VehicleLinkManager.h"
+#include "VideoManager.h"
 
 QGC_LOGGING_CATEGORY(VehicleCameraControlLog, "Camera.VehicleCameraControl")
 QGC_LOGGING_CATEGORY(VehicleCameraControlVerboseLog, "Camera.VehicleCameraControl.Verbose")
@@ -107,27 +104,25 @@ static bool read_value(QDomNode& element, const char* tagName, QString& target)
     return true;
 }
 
-QString VehicleCameraControl::boundedNameField(const uint8_t *raw, size_t maxLen)
+QString VehicleCameraControl::boundedNameField(const uint8_t* raw, size_t maxLen)
 {
     if ((raw == nullptr) || (maxLen == 0)) {
         return QString();
     }
 
-    const char *chars = reinterpret_cast<const char*>(raw);
+    const char* chars = reinterpret_cast<const char*>(raw);
     const qsizetype length = static_cast<qsizetype>(qstrnlen(chars, maxLen));
     return QString::fromLatin1(chars, length);
 }
 
-QString VehicleCameraControl::pathSafeNameToken(const QString &name)
+QString VehicleCameraControl::pathSafeNameToken(const QString& name)
 {
     QString token = name;
 
-    for (QChar &ch : token) {
+    for (QChar& ch : token) {
         const char16_t c = ch.unicode();
-        const bool safe = ((c >= u'A') && (c <= u'Z'))
-                       || ((c >= u'a') && (c <= u'z'))
-                       || ((c >= u'0') && (c <= u'9'))
-                       || (c == u'.') || (c == u'-') || (c == u'_');
+        const bool safe = ((c >= u'A') && (c <= u'Z')) || ((c >= u'a') && (c <= u'z')) ||
+                          ((c >= u'0') && (c <= u'9')) || (c == u'.') || (c == u'-') || (c == u'_');
         if (!safe) {
             ch = QLatin1Char('_');
         }
@@ -149,7 +144,7 @@ QString VehicleCameraControl::pathSafeNameToken(const QString &name)
     return token;
 }
 
-bool VehicleCameraControl::pathIsInside(const QString &baseDir, const QString &candidate)
+bool VehicleCameraControl::pathIsInside(const QString& baseDir, const QString& candidate)
 {
     if (baseDir.isEmpty() || candidate.isEmpty()) {
         return false;
@@ -175,10 +170,9 @@ VehicleCameraControl::VehicleCameraControl(const mavlink_camera_information_t *i
     _vendor = boundedNameField(info->vendor_name, sizeof(info->vendor_name));
     _modelName = boundedNameField(info->model_name, sizeof(info->model_name));
 
-    _cacheFileToken = QString::asprintf("%s_%s_%03d",
-                                    pathSafeNameToken(_vendor).toStdString().c_str(),
-                                    pathSafeNameToken(_modelName).toStdString().c_str(),
-                                    static_cast<int>(_mavlinkCameraInfo.cam_definition_version));
+    _cacheFileToken = QString::asprintf("%s_%s_%03d", pathSafeNameToken(_vendor).toStdString().c_str(),
+                                        pathSafeNameToken(_modelName).toStdString().c_str(),
+                                        static_cast<int>(_mavlinkCameraInfo.cam_definition_version));
 
     const QString cacheDir = SettingsManager::instance()->appSettings()->parameterSavePath();
     const QString cacheCandidate = QDir(cacheDir).filePath(_cacheFileToken + QStringLiteral(".xml"));
