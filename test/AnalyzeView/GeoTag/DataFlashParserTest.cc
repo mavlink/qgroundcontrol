@@ -85,12 +85,12 @@ void DataFlashParserTest::_getTagsFromLogTruncatedValueTest()
     const QByteArray logBuffer = QByteArray::fromHex("a39580") + format + QByteArray::fromHex("a3956400");
     QList<GeoTagData> cameraFeedback;
     QString errorMessage;
-    expectLogMessage("Utilities.APMDataFlashUtility", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("^Missing or truncated DataFlash value for format:")));
+    // The format declares eight bytes and the length leaves one, so the record is dropped
+    // while the formats are collected and never reaches parseValue(). parseValue()'s own
+    // guard is covered by APMDataFlashUtilityTest::_testParseValueInvalid().
     QVERIFY(!DataFlashParser::getTagsFromLog(logBuffer, cameraFeedback, errorMessage));
-    verifyExpectedLogMessage();
     QVERIFY(cameraFeedback.isEmpty());
-    QVERIFY(!errorMessage.isEmpty());
+    QCOMPARE(errorMessage, QStringLiteral("No message formats found in log"));
 }
 
 void DataFlashParserTest::_parseGeoTagDataFieldsTest()
