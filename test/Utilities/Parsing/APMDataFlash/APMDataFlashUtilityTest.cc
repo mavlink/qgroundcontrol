@@ -307,7 +307,7 @@ void APMDataFlashUtilityTest::_testParseFmtMessagesRejectsInconsistentLength()
     // length and format are both read from the log. A format may only be registered when
     // they agree, because "length - 3" is used as a payload size elsewhere and the format
     // string drives how many bytes parseMessage() reads.
-    auto fmtRecord = [](uint8_t type, uint8_t length, const char *format) {
+    auto fmtRecord = [](uint8_t type, uint8_t length, const char* format) {
         QByteArray record;
         record.append(static_cast<char>(0xA3));
         record.append(static_cast<char>(0x95));
@@ -326,7 +326,7 @@ void APMDataFlashUtilityTest::_testParseFmtMessagesRejectsInconsistentLength()
     // length < 3 makes "length - 3" negative. With a record of that type following, the
     // cursor stops advancing and the scan never terminates.
     for (uint8_t badLength : {uint8_t(0), uint8_t(1), uint8_t(2)}) {
-        const QByteArray data = fmtRecord(100, badLength, "BB") + QByteArray("\xA3\x95\x64" "ABCD", 7);
+        const QByteArray data = fmtRecord(100, badLength, "BB") + QByteArray::fromHex("a3956441424344");
         QMap<uint8_t, APMDataFlashUtility::MessageFormat> formats;
         APMDataFlashUtility::parseFmtMessages(data.constData(), data.size(), formats);
         QVERIFY2(!formats.contains(100), qPrintable(QStringLiteral("length %1 was registered").arg(badLength)));
