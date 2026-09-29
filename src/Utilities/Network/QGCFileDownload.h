@@ -222,7 +222,7 @@ private:
     QNetworkAccessManager *_networkManager = nullptr;
     QNetworkReply *_currentReply = nullptr;
     QGCCompressionJob *_decompressionJob = nullptr;
-    QSaveFile *_outputFile = nullptr;
+    QSaveFile* _outputFile = nullptr;
 
     QUrl _url;
     QString _localPath;

@@ -1,14 +1,15 @@
 #include "QGCFileDownload.h"
-#include "QGCCompression.h"
-#include "QGCCompressionJob.h"
-#include "QGCFileHelper.h"
-#include "QGCLoggingCategory.h"
 
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 #include <QtCore/QSaveFile>
 #include <QtCore/QStandardPaths>
 #include <QtNetwork/QNetworkAccessManager>
+
+#include "QGCCompression.h"
+#include "QGCCompressionJob.h"
+#include "QGCFileHelper.h"
+#include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(QGCFileDownloadLog, "Utilities.QGCFileDownload")
 

@@ -1,18 +1,18 @@
 #include "QGCFileDownloadTest.h"
 
+#include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QStandardPaths>
+#include <QtCore/QTemporaryDir>
 #include <QtTest/QSignalSpy>
 
 #include "QGCCompression.h"
 #include "QGCFileDownload.h"
 #include "QGCFileHelper.h"
-#include <QtCore/QTemporaryDir>
-#include <QtCore/QDir>
 
 void QGCFileDownloadTest::_testFileDownload()
 {
@@ -179,8 +179,8 @@ void QGCFileDownloadTest::_testFileDownloadRemoteNameCannotNameTheDirectory()
     // paths. QUrl::fileName() percent-decodes the last segment before splitting it on '/',
     // so an encoded separator survives into the derived name. Whatever the url says, the
     // output has to resolve inside the download directory.
-    const QString downloadDir = QDir::cleanPath(
-        QDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation)).absolutePath());
+    const QString downloadDir =
+        QDir::cleanPath(QDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation)).absolutePath());
 
     const QStringList hostileUrls = {
         QStringLiteral("file:///nonexistent/a%5C..%5C..%5C..%5CQGCFileDownloadTest_escaped.bin"),
@@ -191,7 +191,7 @@ void QGCFileDownloadTest::_testFileDownloadRemoteNameCannotNameTheDirectory()
 
     ignoreLogMessage("Utilities.QGCFileDownload", QtWarningMsg, QRegularExpression("Download error:"));
 
-    for (const QString &url : hostileUrls) {
+    for (const QString& url : hostileUrls) {
         QGCFileDownload downloader(this);
         QVERIFY2(downloader.start(url), qPrintable(url));
 
@@ -233,8 +233,7 @@ void QGCFileDownloadTest::_testFileDownloadFailedDownloadPreservesExistingFile()
 
     expectLogMessage("Utilities.QGCFileDownload", QtWarningMsg, QRegularExpression("Download error:"));
     QVERIFY(downloader.start(missingSource));
-    QCOMPARE(QFileInfo(downloader.localPath()).absoluteFilePath(),
-             QFileInfo(victimPath).absoluteFilePath());
+    QCOMPARE(QFileInfo(downloader.localPath()).absoluteFilePath(), QFileInfo(victimPath).absoluteFilePath());
     QVERIFY_SIGNAL_WAIT(finishedSpy, TestTimeout::mediumMs());
     verifyExpectedLogMessage();
 
