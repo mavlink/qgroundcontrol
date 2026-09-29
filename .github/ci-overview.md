@@ -399,10 +399,11 @@ uv run --project tools --group scripts --group test pytest -q tools/tests .githu
   custom-plugin unit/integration suites, excluding stock-UI integration tests. Master
   pushes, merge-queue runs, and manual dispatches also build Release without test hooks
   and verify its AppImage. Debug and Release retain separate compiler caches.
-- Windows x64 and macOS run six standalone portable utility executables in their existing
-  platform build jobs (`QGC_BUILD_PORTABLE_TESTS=ON`). They share test bodies with the full
-  Linux harness and do not enable test hooks in the packaged application. There is no
-  separate Extended Tests workflow. Manual Linux coverage jobs reuse their existing
+- Windows x64 and the macOS Release leg run six standalone portable utility executables in their
+  existing platform build jobs (`QGC_BUILD_PORTABLE_TESTS=ON`). They share test bodies with the full
+  Linux harness and do not enable test hooks in the packaged application. The macOS Debug leg
+  runs the Unit and Integration suites; only the Release leg packages and uploads the DMG.
+  There is no separate Extended Tests workflow. Manual Linux coverage jobs reuse their existing
   binary for `Network|Flaky` tests, after the
   ordinary coverage report. Those tests have separate reports and still fail the job. iOS simulator builds run `--simple-boot-test` and require
   QGC's success marker. Simulator cold boots have a 600-second deadline and at most two

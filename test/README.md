@@ -326,8 +326,9 @@ ctest --output-junit results.xml
 
 ## Portable utility tests
 
-Windows x64 and macOS CI enable `QGC_BUILD_PORTABLE_TESTS` alongside the normal application
-build. The six `Portable.*` CTest entries use small Qt Test executables, with the same test
+Windows x64 and the macOS Release CI leg enable `QGC_BUILD_PORTABLE_TESTS` alongside the normal
+application build (the macOS Debug leg runs the Unit and Integration suites instead, same as
+Linux). The six `Portable.*` CTest entries use small Qt Test executables, with the same test
 bodies and production utility libraries as the Linux application tests. They require no
 QGCApplication, vehicles, or QML engine. The portable command-line parser target enables
 its own test hooks; the packaged application keeps its normal build configuration.

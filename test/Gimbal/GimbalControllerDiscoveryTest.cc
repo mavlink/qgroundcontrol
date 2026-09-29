@@ -2,6 +2,7 @@
 
 #include <optional>
 
+#include <QtCore/QScopeGuard>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
@@ -197,6 +198,31 @@ void GimbalControllerDiscoveryTest::_testManagerInformationUnavailable()
     }
     QVERIFY(!activeGimbal());
     QCOMPARE(gimbalController()->gimbals()->count(), 0);
+}
+
+void GimbalControllerDiscoveryTest::_testInFlightRequestKeepsRetryBudget()
+{
+    _startGimbalMockLink(nullptr, nullptr);
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    GimbalController* const controller = gimbalController();
+    QVERIFY(controller);
+    const int previousPending = controller->_pendingInformationRequestCompId;
+    const auto restorePending = qScopeGuard([&]() { controller->_pendingInformationRequestCompId = previousPending; });
+
+    // Another manager's request is still in flight, so this heartbeat cannot issue a request.
+    controller->_pendingInformationRequestCompId = MAV_COMP_ID_GIMBAL;
+    mavlink_message_t heartbeat{};
+    (void) mavlink_msg_heartbeat_pack(static_cast<uint8_t>(_vehicle->id()), kUnknownGimbalCompId, &heartbeat,
+                                      MAV_TYPE_GIMBAL, MAV_AUTOPILOT_INVALID, 0, 0, MAV_STATE_ACTIVE);
+    controller->_handleHeartbeat(heartbeat);
+
+    QVERIFY(controller->_potentialGimbalManagers.contains(kUnknownGimbalCompId));
+    QCOMPARE(controller->_potentialGimbalManagers[kUnknownGimbalCompId].requestGimbalManagerInformationRetries,
+             static_cast<unsigned>(kManagerInfoHeartbeatRetries));
+    QCOMPARE(controller->_pendingInformationRequestCompId, static_cast<int>(MAV_COMP_ID_GIMBAL));
 }
 
 void GimbalControllerDiscoveryTest::_testStatusBeforeInformation()

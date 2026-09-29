@@ -1,10 +1,12 @@
 #include "RTCMUdpInputTest.h"
 
 #include <QtCore/QCoreApplication>
+#include <QtCore/QDeadlineTimer>
 #include <QtCore/QEvent>
 #include <QtCore/QPointer>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
+#include <QtCore/QThread>
 #include <QtNetwork/QUdpSocket>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
@@ -19,6 +21,23 @@ bool sendDatagram(quint16 port, const QByteArray& payload)
 {
     QUdpSocket sender;
     return sender.writeDatagram(payload, QHostAddress::LocalHost, port) == payload.size();
+}
+
+// Loopback delivery is asynchronous on some platforms (macOS); wait without dispatching readyRead.
+bool waitForPendingDatagram(const RTCMUdpInput& input)
+{
+    const auto* socket = input.findChild<QUdpSocket*>();
+    if (!socket) {
+        return false;
+    }
+    const QDeadlineTimer deadline(TestTimeout::shortMs());
+    while (!socket->hasPendingDatagrams()) {
+        if (deadline.hasExpired()) {
+            return false;
+        }
+        QThread::yieldCurrentThread();
+    }
+    return true;
 }
 
 }  // namespace
@@ -204,6 +223,7 @@ void RTCMUdpInputTest::_testValidationResetsStream()
     const auto frame = GpsTestHelpers::buildRtcmFrame(1005, 20);
     const auto prefix = frame.first(5);
     QCOMPARE(sender.writeDatagram(prefix, QHostAddress::LocalHost, input.port()), prefix.size());
+    QVERIFY(waitForPendingDatagram(input));
     QVERIFY(QMetaObject::invokeMethod(&input, "_readDatagrams", Qt::DirectConnection));
     QVERIFY(frames.isEmpty());
 
@@ -241,6 +261,7 @@ void RTCMUdpInputTest::_testReentrantDrainPreservesOrder()
     QUdpSocket sender;
     QCOMPARE(sender.writeDatagram(head, QHostAddress::LocalHost, input.port()), head.size());
     QCOMPARE(sender.writeDatagram(tail, QHostAddress::LocalHost, input.port()), tail.size());
+    QVERIFY(waitForPendingDatagram(input));
     QVERIFY(QMetaObject::invokeMethod(&input, "_readDatagrams", Qt::DirectConnection));
     QVERIFY(reentered);
     QTRY_COMPARE_WITH_TIMEOUT(frames.size(), 2, TestTimeout::mediumMs());
@@ -289,6 +310,7 @@ void RTCMUdpInputTest::_testDrainInterruption()
     });
     const auto frame = GpsTestHelpers::buildRtcmFrame(1005, 20);
     QVERIFY(sendDatagram(input->port(), frame + frame));
+    QVERIFY(waitForPendingDatagram(*input));
     QVERIFY(QMetaObject::invokeMethod(input, "_readDatagrams", Qt::DirectConnection));
     QVERIFY(interrupted);
     QCOMPARE(frames.size(), 1);
@@ -444,6 +466,7 @@ void RTCMUdpInputTest::_testBurstYieldsBetweenDrains()
         QCOMPARE(sender.writeDatagram(payload, QHostAddress::LocalHost, input.port()), payload.size());
     }
     // Invoke one drain without processing the event loop: it must leave work for a continuation.
+    QVERIFY(waitForPendingDatagram(input));
     QVERIFY(QMetaObject::invokeMethod(&input, "_readDatagrams", Qt::DirectConnection));
     QVERIFY(frames.size() > 0);
     QVERIFY(frames.size() <= 16);

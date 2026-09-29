@@ -94,8 +94,9 @@ void GimbalController::_handleHeartbeat(const mavlink_message_t &message)
     // This is because we address the gimbal manager by compid, but a gimbal device might have an
     // id different than the message compid it comes from. For more information see https://mavlink.io/en/services/gimbal_v2.html
     if (!gimbalManager.receivedGimbalManagerInformation && (gimbalManager.requestGimbalManagerInformationRetries > 0)) {
-        _requestGimbalInformation(message.compid);
-        --gimbalManager.requestGimbalManagerInformationRetries;
+        if (_requestGimbalInformation(message.compid)) {
+            --gimbalManager.requestGimbalManagerInformationRetries;
+        }
     }
 }
 
@@ -343,16 +344,16 @@ void GimbalController::_handleGimbalDeviceInformation(const mavlink_message_t& m
     }
 }
 
-void GimbalController::_requestGimbalInformation(uint8_t compid)
+bool GimbalController::_requestGimbalInformation(uint8_t compid)
 {
     qCDebug(GimbalControllerLog) << "_requestGimbalInformation(" << compid << ")";
 
     if (!_vehicle) {
-        return;
+        return false;
     }
     if (_pendingInformationRequestCompId != -1) {
         qCDebug(GimbalControllerLog) << "_requestGimbalInformation: request already in flight for compid" << _pendingInformationRequestCompId;
-        return;
+        return false;
     }
 
     // Must go through requestMessage rather than sending MAV_CMD_REQUEST_MESSAGE directly so
@@ -363,6 +364,7 @@ void GimbalController::_requestGimbalInformation(uint8_t compid)
                              this,
                              compid,
                              MAVLINK_MSG_ID_GIMBAL_MANAGER_INFORMATION);
+    return true;
 }
 
 void GimbalController::_requestMessageResultHandler(void* resultHandlerData, MAV_RESULT result, VehicleTypes::RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t& message)
@@ -402,8 +404,9 @@ void GimbalController::_checkComplete(Gimbal &gimbal, GimbalPairId pairId)
     }
 
     if (!gimbal._receivedGimbalManagerInformation && gimbal._requestInformationRetries > 0) {
-        _requestGimbalInformation(pairId.managerCompid);
-        --gimbal._requestInformationRetries;
+        if (_requestGimbalInformation(pairId.managerCompid)) {
+            --gimbal._requestInformationRetries;
+        }
     }
     // Limit to 1 second between set message interval requests, per gimbal
     const qint64 now = QDateTime::currentMSecsSinceEpoch();

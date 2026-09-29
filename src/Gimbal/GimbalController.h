@@ -17,6 +17,8 @@ class GimbalController : public QObject
     QML_UNCREATABLE("")
     Q_MOC_INCLUDE("QmlObjectListModel.h")
 
+    friend class GimbalControllerDiscoveryTest;
+
     Q_PROPERTY(Gimbal*              activeGimbal    READ activeGimbal WRITE setActiveGimbal NOTIFY activeGimbalChanged)
     Q_PROPERTY(QmlObjectListModel*  gimbals         READ gimbals                            CONSTANT)
 
@@ -91,7 +93,8 @@ private:
         uint8_t deviceId = 0;
     };
 
-    void _requestGimbalInformation(uint8_t compid);
+    /// @return true if a request was sent; false if skipped (another request is in flight)
+    bool _requestGimbalInformation(uint8_t compid);
     static void _requestMessageResultHandler(void* resultHandlerData, MAV_RESULT result, VehicleTypes::RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t& message);
     static void _requestDeviceInformationResultHandler(
         void* resultHandlerData, MAV_RESULT result, VehicleTypes::RequestMessageResultHandlerFailureCode_t failureCode,

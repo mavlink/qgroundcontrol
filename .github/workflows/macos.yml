@@ -17,14 +17,6 @@ on:
         description: 'Open an actor-only SSH session after a failure (up to 15 minutes, branches only)'
         type: boolean
         default: false
-      build_type:
-        description: 'Build type'
-        required: false
-        default: 'Release'
-        type: choice
-        options:
-          - Release
-          - Debug
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -56,7 +48,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        build_type: ['${{ inputs.build_type || ''Release'' }}']
+        # Release packages and uploads the DMG; Debug has test hooks and runs the Unit and Integration suites.
+        build_type: [Release, Debug]
 
     defaults:
       run:
@@ -98,8 +91,8 @@ jobs:
           build-type: ${{ matrix.build_type }}
           preset: ${{ matrix.build_type == 'Debug' && 'macOS-debug' || 'macOS' }}
           extra-args: >-
-            -DQGC_BUILD_PORTABLE_TESTS=ON
-            -DQGC_MACOS_SIGN_WITH_IDENTITY=${{ github.event_name != 'pull_request' && 'ON' || 'OFF' }}
+            -DQGC_BUILD_PORTABLE_TESTS=${{ matrix.build_type == 'Release' && 'ON' || 'OFF' }}
+            -DQGC_MACOS_SIGN_WITH_IDENTITY=${{ github.event_name != 'pull_request' && matrix.build_type == 'Release' && 'ON' || 'OFF' }}
             -DQGC_MACOS_UNIVERSAL_BUILD=ON
 
       - name: Build
@@ -111,7 +104,7 @@ jobs:
 
       - name: Run portable tests
         id: portable
-        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.build.outcome == 'success' && matrix.build_type == 'Release' }}
         uses: ./.github/actions/run-unit-tests
         with:
           build-dir: ${{ runner.temp }}/build
@@ -130,6 +123,13 @@ jobs:
           output-file: portable-output.txt
           artifact-name: test-results-portable-macos
 
+      - name: Run and report tests
+        if: ${{ !cancelled() && steps.build.outcome == 'success' && matrix.build_type == 'Debug' }}
+        uses: ./.github/actions/test-phase
+        with:
+          build-dir: ${{ runner.temp }}/build
+          suite: macos
+
       - name: Verify dev build executable
         uses: ./.github/actions/verify-executable
         with:
@@ -138,7 +138,7 @@ jobs:
           expect-archs: x86_64h arm64
 
       - name: Import Code Signing Certificate
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && matrix.build_type == 'Release'
         uses: apple-actions/import-codesign-certs@v7
         with:
           p12-file-base64: ${{ secrets.MACOS_CERT_P12_BASE64 }}
@@ -146,6 +146,7 @@ jobs:
 
       # PRs configure with QGC_MACOS_SIGN_WITH_IDENTITY=OFF, so the signing env vars are unused there — leaving them resolved-but-empty is harmless and lets us avoid duplicating the install step.
       - name: Create app bundle
+        if: matrix.build_type == 'Release'
         uses: ./.github/actions/cmake-install
         with:
           build-dir: ${{ runner.temp }}/build
@@ -157,6 +158,7 @@ jobs:
           QGC_MACOS_NOTARIZATION_TEAM_ID: ${{ secrets.MACOS_NOTARIZATION_TEAM_ID }}
 
       - name: Mount DMG
+        if: matrix.build_type == 'Release'
         working-directory: ${{ runner.temp }}/build
         run: |
           if ! hdiutil attach QGroundControl.dmg; then
@@ -166,6 +168,7 @@ jobs:
           fi
 
       - name: Verify DMG executable
+        if: matrix.build_type == 'Release'
         uses: ./.github/actions/verify-executable
         with:
           binary-path: /Volumes/QGroundControl/QGroundControl.app/Contents/MacOS/QGroundControl

@@ -114,8 +114,6 @@ void QmlUITestBase::startUI()
     // Ignore benign Qt platform warnings that cannot be avoided in offscreen mode
     ignoreLogMessage("default", QtWarningMsg,
                      QRegularExpression(QStringLiteral("This plugin does not support propagateSizeHints")));
-    ignoreLogMessage("qt.qpa.fonts", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("Populating font family aliases")));
     ignoreLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("QRhiGles2")));
     // Async QML incubation rides QQuickWindow's render-loop controller, which never pumps in
     // offscreen mode, so a component still incubating at engine teardown logs this.

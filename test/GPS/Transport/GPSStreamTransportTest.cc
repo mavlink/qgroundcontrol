@@ -315,9 +315,12 @@ private slots:
         }
         QElapsedTimer elapsed;
         elapsed.start();
-        const auto result = transport->writeBounded(
-            reinterpret_cast<const uint8_t*>(payload.constData()), payload.size(),
-            outcome == "cancelled-forever" ? QDeadlineTimer(QDeadlineTimer::Forever) : QDeadlineTimer(100));
+        // A finite cancel deadline must outlast the cancellation delay even on loaded runners.
+        const QDeadlineTimer deadline = outcome == "cancelled-forever" ? QDeadlineTimer(QDeadlineTimer::Forever)
+                                        : cancelled                    ? QDeadlineTimer(TestTimeout::mediumMs())
+                                                                       : QDeadlineTimer(100);
+        const auto result =
+            transport->writeBounded(reinterpret_cast<const uint8_t*>(payload.constData()), payload.size(), deadline);
         QCOMPARE(result.status, cancelled ? GPSWriteStatus::Cancelled : GPSWriteStatus::TimedOut);
         QVERIFY(elapsed.elapsed() < 1000);
         QVERIFY(result.acceptedBytes > 0);
