@@ -24,7 +24,7 @@ FTPManager::FTPManager(Vehicle* vehicle)
     connect(&_ackOrNakTimeoutTimer, &QTimer::timeout, this, &FTPManager::_ackOrNakTimeout);
 
     // Make sure we don't have bad structure packing
-    Q_ASSERT(sizeof(MavlinkFTP::RequestHeader) == 12);
+    static_assert(sizeof(MavlinkFTP::RequestHeader) == 12, "MavlinkFTP::RequestHeader must be 12 bytes");
 
     _uploadState.reset();
 }
