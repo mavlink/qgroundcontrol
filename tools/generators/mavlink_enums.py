@@ -13,6 +13,7 @@ If the QML paths are omitted they are derived from <enums_h_output>'s directory.
 import re
 import sys
 from pathlib import Path
+from textwrap import indent
 
 _tools_dir = Path(__file__).resolve().parents[1]
 if str(_tools_dir) not in sys.path:
@@ -58,8 +59,8 @@ def find_dialects(mavlink_dir):
     return dialects
 
 
-def strip_duplicate_blocks(enums_text, seen_names, dialect):
-    """Drop duplicate `typedef enum X { ... } X;` blocks; warn on each skip."""
+def strip_duplicate_blocks(enums_text, enum_bodies, dialect):
+    """Drop duplicate `typedef enum X { ... } X;` blocks (warn on each); record kept bodies in enum_bodies."""
     out = []
     i = 0
     while True:
@@ -73,17 +74,18 @@ def strip_duplicate_blocks(enums_text, seen_names, dialect):
         closer = re.compile(r"\}\s*" + re.escape(name) + r"\s*;", re.MULTILINE)
         c = closer.search(enums_text, m.start())
         if not c:
-            out.append(enums_text[m.start() :])
-            break
+            sys.exit(
+                f"mavlink_enums.py: enum '{name}' in dialect '{dialect}' has no closing '}} {name};'"
+            )
         block_end = c.end()
 
-        if name in seen_names:
+        if name in enum_bodies:
             sys.stderr.write(
                 f"mavlink_enums.py: duplicate enum '{name}' in dialect '{dialect}' — "
                 "keeping first occurrence\n"
             )
         else:
-            seen_names.add(name)
+            enum_bodies[name] = enums_text[m.end() : c.start() + 1].lstrip()
             out.append(enums_text[m.start() : block_end])
         i = block_end
     return "".join(out)
@@ -105,12 +107,12 @@ extern "C" {
 #endif
 """
     ]
-    seen = set()
+    enum_bodies = {}
     for name, path in dialects:
         enums = extract_enum_block(path)
         if not enums.strip():
             continue
-        filtered = strip_duplicate_blocks(enums, seen, name)
+        filtered = strip_duplicate_blocks(enums, enum_bodies, name)
         if filtered.strip():
             parts.append(f"\n// ---- enums from {name}/{name}.h ----\n")
             parts.append(filtered)
@@ -119,20 +121,15 @@ extern "C" {
 }
 #endif
 """)
-    # Preserve deterministic order: names in first-seen dialect order.
-    enum_names = []
-    seen_for_names = set()
-    for line in "".join(parts).splitlines():
-        m = ENUM_DECL_RE.match(line)
-        if m and m.group(1) not in seen_for_names:
-            seen_for_names.add(m.group(1))
-            enum_names.append(m.group(1))
-    return "".join(parts), enum_names
+    return "".join(parts), enum_bodies
 
 
-def build_qml_header(enum_names):
-    using_lines = "\n".join(f"    using ::{n};" for n in enum_names)
-    q_enum_lines = "\n".join(f"    Q_ENUM_NS({n})" for n in enum_names)
+def build_qml_header(enum_bodies):
+    # moc ignores `using ::NAME;`, so the enums must be declared inside the namespace.
+    enum_lines = "\n\n".join(
+        indent(f"enum {name}\n{body};\nQ_ENUM_NS({name})", "    ")
+        for name, body in enum_bodies.items()
+    )
     return f"""\
 #pragma once
 
@@ -149,9 +146,7 @@ namespace MAVLinkEnums {{
     Q_NAMESPACE
     QML_NAMED_ELEMENT(MAVLinkEnums)
 
-{using_lines}
-
-{q_enum_lines}
+{enum_lines}
 }}
 """
 
@@ -185,7 +180,7 @@ def main():
         print(f"Error: no dialect headers found in {mavlink_dir}", file=sys.stderr)
         sys.exit(1)
 
-    enums_h, enum_names = build_enums_header(dialects)
+    enums_h, enum_bodies = build_enums_header(dialects)
     if len(sys.argv) == 5:
         qml_h_path = Path(sys.argv[3])
         qml_cc_path = Path(sys.argv[4])
@@ -197,14 +192,14 @@ def main():
     written: list[Path] = []
     if write_text_if_changed(enums_h_path, enums_h):
         written.append(enums_h_path)
-    if write_text_if_changed(qml_h_path, build_qml_header(enum_names)):
+    if write_text_if_changed(qml_h_path, build_qml_header(enum_bodies)):
         written.append(qml_h_path)
     if write_text_if_changed(qml_cc_path, build_qml_anchor_cc()):
         written.append(qml_cc_path)
 
     if written:
         print(
-            f"Generated {len(enum_names)} enums from {len(dialects)} dialects -> {', '.join(p.name for p in written)}"
+            f"Generated {len(enum_bodies)} enums from {len(dialects)} dialects -> {', '.join(p.name for p in written)}"
         )
     else:
         print("MAVLinkEnums.h / MAVLinkEnumsQml.{h,cc} up to date")
