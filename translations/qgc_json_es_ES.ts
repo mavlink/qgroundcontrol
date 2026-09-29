@@ -8112,7 +8112,7 @@
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Vehicle/FactGroups/SubmarineFact.json"/>
       <source>Disabled,Enabled</source>
-      <translation>Desactivado/activado</translation>
+      <translation>Desactivado,Activado</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[rangefinderDistance].shortDesc</extracomment>
