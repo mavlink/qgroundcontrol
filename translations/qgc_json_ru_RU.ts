@@ -10235,115 +10235,115 @@
       <extracomment>.groups[Save To Disk].heading, .groups[Save To Disk].sectionName</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Logging.SettingsUI.json"/>
       <source>Save To Disk</source>
-      <translation type="unfinished">Save To Disk</translation>
+      <translation>Сохранение на диск</translation>
     </message>
     <message>
       <extracomment>.groups[Save To Disk].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Logging.SettingsUI.json"/>
       <source>disk</source>
-      <translation type="unfinished">disk</translation>
+      <translation>диск</translation>
     </message>
     <message>
       <extracomment>.groups[Save To Disk].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Logging.SettingsUI.json"/>
       <source>logging</source>
-      <translation type="unfinished">logging</translation>
+      <translation>логи</translation>
     </message>
     <message>
       <extracomment>.groups[Save To Disk].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Logging.SettingsUI.json"/>
       <source>file</source>
-      <translation type="unfinished">file</translation>
+      <translation>файл</translation>
     </message>
     <message>
       <extracomment>.groups[Save To Disk].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Logging.SettingsUI.json"/>
       <source>flush</source>
-      <translation type="unfinished">flush</translation>
+      <translation>сброс</translation>
     </message>
     <message>
       <extracomment>.groups[Save To Disk].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Logging.SettingsUI.json"/>
       <source>save</source>
-      <translation type="unfinished">save</translation>
+      <translation>сохранить</translation>
     </message>
     <message>
       <extracomment>.groups[Save To Disk].keywords[5]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Logging.SettingsUI.json"/>
       <source>path</source>
-      <translation type="unfinished">path</translation>
+      <translation>путь</translation>
     </message>
     <message>
       <extracomment>.groups[Save To Disk].keywords[6]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Logging.SettingsUI.json"/>
       <source>compression</source>
-      <translation type="unfinished">compression</translation>
+      <translation>сжатие</translation>
     </message>
     <message>
       <extracomment>.groups[Save To Disk].keywords[7]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Logging.SettingsUI.json"/>
       <source>rotation</source>
-      <translation type="unfinished">rotation</translation>
+      <translation>ротация</translation>
     </message>
     <message>
       <extracomment>.groups[Save To Disk].keywords[8]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Logging.SettingsUI.json"/>
       <source>backup</source>
-      <translation type="unfinished">backup</translation>
+      <translation>резервная копия</translation>
     </message>
     <message>
       <extracomment>.groups[Log Viewer].heading, .groups[Log Viewer].sectionName</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Logging.SettingsUI.json"/>
       <source>Log Viewer</source>
-      <translation type="unfinished">Log Viewer</translation>
+      <translation>Просмотр логов</translation>
     </message>
     <message>
       <extracomment>.groups[Log Viewer].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Logging.SettingsUI.json"/>
       <source>console</source>
-      <translation type="unfinished">console</translation>
+      <translation>консоль</translation>
     </message>
     <message>
       <extracomment>.groups[Log Viewer].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Logging.SettingsUI.json"/>
       <source>buffer</source>
-      <translation type="unfinished">buffer</translation>
+      <translation>буфер</translation>
     </message>
     <message>
       <extracomment>.groups[Log Viewer].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Logging.SettingsUI.json"/>
       <source>entries</source>
-      <translation type="unfinished">entries</translation>
+      <translation>записи</translation>
     </message>
     <message>
       <extracomment>.groups[Log Viewer].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Logging.SettingsUI.json"/>
       <source>elapsed</source>
-      <translation type="unfinished">elapsed</translation>
+      <translation>прошедшее время</translation>
     </message>
     <message>
       <extracomment>.groups[Log Viewer].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Logging.SettingsUI.json"/>
       <source>timestamp</source>
-      <translation type="unfinished">timestamp</translation>
+      <translation>временная метка</translation>
     </message>
     <message>
       <extracomment>.groups[Log Viewer].keywords[5]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Logging.SettingsUI.json"/>
       <source>time</source>
-      <translation type="unfinished">time</translation>
+      <translation>время</translation>
     </message>
     <message>
       <extracomment>.groups[Log Viewer].keywords[6]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Logging.SettingsUI.json"/>
       <source>gstreamer</source>
-      <translation type="unfinished">gstreamer</translation>
+      <translation>gstreamer</translation>
     </message>
     <message>
       <extracomment>.groups[Log Viewer].keywords[7]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Logging.SettingsUI.json"/>
       <source>debug</source>
-      <translation type="unfinished">debug</translation>
+      <translation>отладка</translation>
     </message>
   </context>
   <context>
