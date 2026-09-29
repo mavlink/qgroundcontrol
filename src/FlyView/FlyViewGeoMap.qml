@@ -232,16 +232,18 @@ GeoMap {
         }
     }
 
-    // GoTo Location forward flight circle visuals (FlyViewMap parity, outline
-    // only: no drag-to-edit radius on the GeoMap engine yet)
-    GeoMapCircle {
+    // GoTo Location forward flight circle visuals
+    GeoMapCircleVisuals {
         id: fwdFlightGotoMapCircle
+        objectName: "flyViewGeoFwdFlightGotoCircle"
         scene: root.scene
         surfaceModel: root.surfaceModel
-        center: _fwdFlightGotoCircleModel.center
-        radiusMeters: _fwdFlightGotoCircleModel.radius.rawValue
+        mapCircle: _fwdFlightGotoCircleModel
+        radiusLabelVisible: true
+        // Only the radius is editable, not the position
+        centerDragHandleVisible: false
         // Loiter happens at the goto altitude (carried in the center coordinate)
-        altitudeMode: (center && !isNaN(center.altitude)) ? GeoMapItem.Absolute : GeoMapItem.ClampToGround
+        altitudeMode: !isNaN(_fwdFlightGotoCircleModel.center.altitude) ? GeoMapItem.Absolute : GeoMapItem.ClampToGround
         // PX4 ignores the commanded loiter radius (flies NAV_LOITER_RAD), so the circle size is unknown
         visible: gotoLocationItem.visible && root._activeVehicle &&
                  !root._activeVehicle.px4Firmware &&
@@ -308,6 +310,7 @@ GeoMap {
     // GoTo Location visuals
     GeoMapMissionLabel {
         id: gotoLocationItem
+        objectName: "flyViewGeoGotoLocation"
         scene: root.scene
         surfaceModel: root.surfaceModel
         visible: false
@@ -366,17 +369,17 @@ GeoMap {
         }
     }
 
-    // Orbit editing visuals (outline only: no drag-to-edit radius on the
-    // GeoMap engine yet, the confirm slider still sets the altitude)
-    GeoMapCircle {
+    // Orbit editing visuals
+    GeoMapCircleVisuals {
         id: orbitMapCircle
+        objectName: "flyViewGeoOrbitCircle"
         scene: root.scene
         surfaceModel: root.surfaceModel
-        center: _orbitCircleModel.center
-        radiusMeters: _orbitCircleModel.radius.rawValue
-        altitudeMode: (center && !isNaN(center.altitude)) ? GeoMapItem.Absolute : GeoMapItem.ClampToGround
+        mapCircle: _orbitCircleModel
+        altitudeMode: !isNaN(_orbitCircleModel.center.altitude) ? GeoMapItem.Absolute : GeoMapItem.ClampToGround
         visible: false
 
+        property alias center: _orbitCircleModel.center
         property alias clockwiseRotation: _orbitCircleModel.clockwiseRotation
         readonly property real defaultRadius: 30
 
@@ -416,7 +419,7 @@ GeoMap {
 
         QGCMapCircle {
             id: _orbitCircleModel
-            interactive: false
+            interactive: true
             radius.rawValue: 30
             showRotation: true
             clockwiseRotation: true

@@ -1,9 +1,13 @@
 #include "FlyViewGeoUITest.h"
 
+#include <cmath>
+#include <optional>
+
 #include <QtCore/QList>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QtMath>
+#include <QtCore/QtNumeric>
 #include <QtGui/QGuiApplication>
 #include <QtGui/QMouseEvent>
 #include <QtGui/QPointingDevice>
@@ -12,16 +16,18 @@
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
+#include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
-
-#include <cmath>
-#include <optional>
 
 #include "Fact.h"
 #include "FlyViewSettings.h"
 #include "GeoMapCamera.h"
+#include "MockLink.h"
+#include "QGCMapCircle.h"
 #include "SettingsManager.h"
 #include "SurfacePatchModel.h"
+#include "TileMath.h"
+#include "Vehicle.h"
 
 UT_REGISTER_TEST(FlyViewGeoUITest, TestLabel::Integration)
 
@@ -461,4 +467,247 @@ void FlyViewGeoUITest::_testDebugHillsToggle()
     QVERIFY(!anyNonZeroHeight());
 
     stopUI();
+}
+
+void FlyViewGeoUITest::_testCircleEditHandles_data()
+{
+    QTest::addColumn<bool>("mode3D");
+    QTest::addColumn<qreal>("heading");
+    QTest::addColumn<qreal>("distance");
+    QTest::addColumn<double>("altitude");  // NaN: ground-clamped circle
+
+    QTest::addRow("2D ground-clamped") << false << 0.0 << 300.0 << qQNaN();
+    QTest::addRow("3D ground-clamped") << true << 30.0 << 600.0 << qQNaN();
+    QTest::addRow("3D absolute altitude") << true << 30.0 << 600.0 << 100.0;
+}
+
+// Orbit circle editing: a dragged handle stays under the cursor on the surface
+// the circle is drawn on (terrain, or the horizontal plane at its altitude), at
+// any camera tilt. The rotation arrows flip direction, and none of it pans the
+// map or reaches the map-click popup. Handles hide when not interactive.
+void FlyViewGeoUITest::_testCircleEditHandles()
+{
+    QFETCH(bool, mode3D);
+    QFETCH(qreal, heading);
+    QFETCH(qreal, distance);
+    QFETCH(double, altitude);
+
+    Fact* const geoEngineFact = SettingsManager::instance()->flyViewSettings()->useGeoMapEngine();
+    const QVariant savedEnabled = geoEngineFact->rawValue();
+    const auto guard = qScopeGuard([geoEngineFact, savedEnabled] { geoEngineFact->setRawValue(savedEnabled); });
+    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                     QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
+    geoEngineFact->setRawValue(true);
+
+    startUI();
+    if (QTest::currentTestFailed())
+        return;
+
+    const std::optional<bool> rhiBased = expectSoftwareBackendWarnings(/*strict*/ false);
+    QVERIFY2(rhiBased.has_value(), "No renderer interface on the main window");
+
+    QQuickItem* const viewport = findVisibleItem(_rootItem, QStringLiteral("geoMapViewport"), kItemAppearTimeoutMs);
+    QVERIFY2(viewport, "GeoMap 3D viewport not visible");
+    QQuickItem* const geoMap = viewport->parentItem();
+    auto* const cam = geoMap->findChild<GeoMapCamera*>(QStringLiteral("geoMapCamera"));
+    QVERIFY2(cam, "GeoMapCamera not found");
+
+    auto* const orbitVisuals = geoMap->findChild<QQuickItem*>(QStringLiteral("flyViewGeoOrbitCircle"));
+    QVERIFY2(orbitVisuals, "Orbit circle visuals not found");
+    auto* const orbitCircle = qobject_cast<QGCMapCircle*>(orbitVisuals->property("mapCircle").value<QObject*>());
+    QVERIFY2(orbitCircle, "Orbit QGCMapCircle not found");
+
+    // Let the animated 2D->3D transition settle before posing the camera
+    const qreal tilt = mode3D ? GeoMapCamera::kDefault3DTilt : 0.0;
+    if (mode3D) {
+        cam->setMode(GeoMapCamera::Mode::Mode3D);
+        QTRY_COMPARE_WITH_TIMEOUT(cam->tilt(), GeoMapCamera::kDefault3DTilt, kSettleTimeoutMs);
+        QTRY_COMPARE_WITH_TIMEOUT(geoMap->property("terrainScale").toDouble(), 1.0, kSettleTimeoutMs);
+    }
+
+    // Zoomed in so the 30 m default radius separates the center and radius handles
+    const QGeoCoordinate mapCenter(47.6329078, -122.0876875);
+    cam->lookAt(mapCenter, heading, tilt, distance);
+    QVERIFY(QMetaObject::invokeMethod(orbitVisuals, "show", Q_ARG(QVariant, QVariant::fromValue(mapCenter))));
+    if (!std::isnan(altitude)) {
+        orbitCircle->setCenter(QGeoCoordinate(mapCenter.latitude(), mapCenter.longitude(), altitude));
+    }
+    QVERIFY(orbitVisuals->isVisible());
+
+    // Center the view on the circle as drawn (a floating circle renders high on
+    // screen) so its handles stay clear of the Fly View toolbar at any window size
+    QQuickItem* const centerHandle = findVisibleItem(_rootItem, QStringLiteral("geoMapCircleCenterHandle"));
+    QVERIFY2(centerHandle, "Center drag handle not visible");
+    const QPointF viewCenter(viewport->width() / 2, viewport->height() / 2);
+    const double circleZ = centerHandle->property("scenePosition").value<QVector3D>().z();
+    const QGeoCoordinate cameraCenter =
+        cam->centerForCoordinateAtScreenPoint(orbitCircle->center(), viewCenter, circleZ);
+    cam->setCenter(cameraCenter);
+
+    QSignalSpy mapClickedSpy(geoMap, SIGNAL(mapClicked(QVariant)));
+    QVERIFY(mapClickedSpy.isValid());
+
+    const auto handleCenter = [viewport](QQuickItem* item) {
+        return viewport->mapFromItem(item, QPointF(item->width() / 2, item->height() / 2));
+    };
+    const auto toWin = [viewport](const QPointF& viewportPos) { return viewport->mapToScene(viewportPos).toPoint(); };
+    const auto mouseDrag = [this, &toWin](const QPointF& from, const QPointF& to) {
+        QTest::mousePress(_window, Qt::LeftButton, Qt::NoModifier, toWin(from));
+        constexpr int steps = 10;
+        for (int i = 1; i <= steps; i++) {
+            QTest::mouseMove(_window, toWin(from + (((to - from) * i) / steps)));
+        }
+        QTest::mouseRelease(_window, Qt::LeftButton, Qt::NoModifier, toWin(to));
+    };
+    // Integer window coordinates round each end of a drag by up to half a pixel
+    constexpr qreal kPixelTolerance = 1.5;
+
+    // Radius handle: drag it to where a 50 m ring's handle would be drawn
+    QQuickItem* const radiusHandle = findVisibleItem(_rootItem, QStringLiteral("geoMapCircleRadiusHandle"));
+    QVERIFY2(radiusHandle, "Radius drag handle not visible");
+    constexpr double kTargetRadius = 50.0;
+    const double handleZ = radiusHandle->property("scenePosition").value<QVector3D>().z();
+    const auto radiusTarget = cam->worldToScreen(
+        TileMath::geoToWorld(orbitCircle->center().atDistanceAndAzimuth(kTargetRadius, 90)), handleZ);
+    QVERIFY(radiusTarget.has_value());
+    mouseDrag(handleCenter(radiusHandle), *radiusTarget);
+    QCOMPARE_LT(qAbs(orbitCircle->radius()->rawValue().toDouble() - kTargetRadius), 1.0);
+    QCOMPARE_LT((handleCenter(radiusHandle) - *radiusTarget).manhattanLength(), kPixelTolerance);
+
+    // Center handle: follows the cursor, keeping the circle's altitude
+    const QPointF centerTarget = handleCenter(centerHandle) + QPointF(-40, 30);
+    mouseDrag(handleCenter(centerHandle), centerTarget);
+    QCOMPARE_LT((handleCenter(centerHandle) - centerTarget).manhattanLength(), kPixelTolerance);
+    if (std::isnan(altitude)) {
+        QVERIFY(std::isnan(orbitCircle->center().altitude()));
+    } else {
+        QCOMPARE(orbitCircle->center().altitude(), altitude);
+    }
+
+    // A floating center is anchored to the terrain by a drop line and ground
+    // shadow, like the non-interactive orbit center marker
+    const bool expectGroundDrop = mode3D && !std::isnan(altitude);
+    auto* const dropShadow = centerHandle->findChild<QQuickItem*>(QStringLiteral("geoMapDragHandleDropShadow"));
+    QVERIFY2(dropShadow, "Center handle drop shadow not found");
+    QCOMPARE(dropShadow->isVisible(), expectGroundDrop);
+    QCOMPARE(dropShadow->property("dropLength").toDouble() > 0.0, expectGroundDrop);
+    QVERIFY2(centerHandle->property("node3D").value<QObject*>(), "Center handle has no drop line node");
+    QVERIFY2(!radiusHandle->property("node3D").value<QObject*>(), "Radius handle has a drop line node");
+
+    // Rotation arrow click flips direction
+    QVERIFY(orbitCircle->clockwiseRotation());
+    QQuickItem* const arrow = findVisibleItem(_rootItem, QStringLiteral("geoMapCircleRotationIndicator"));
+    QVERIFY2(arrow, "Rotation indicator not visible");
+    QTest::mouseClick(_window, Qt::LeftButton, Qt::NoModifier, toWin(handleCenter(arrow)));
+    QTRY_VERIFY_WITH_TIMEOUT(!orbitCircle->clockwiseRotation(), kSettleTimeoutMs);
+
+    QCOMPARE(mapClickedSpy.count(), 0);
+    QCOMPARE_LT(cam->center().distanceTo(cameraCenter), 0.01);
+    QCOMPARE(cam->heading(), heading);
+
+    // Not interactive: no handles, and the arrows no longer flip direction
+    orbitCircle->setInteractive(false);
+    QVERIFY(!findVisibleItem(_rootItem, QStringLiteral("geoMapCircleRadiusHandle"), 0));
+    QVERIFY(!findVisibleItem(_rootItem, QStringLiteral("geoMapCircleCenterHandle"), 0));
+    QTest::mouseClick(_window, Qt::LeftButton, Qt::NoModifier, toWin(handleCenter(arrow)));
+    QVERIFY(!orbitCircle->clockwiseRotation());
+
+    stopUI();
+}
+
+// Change Loiter Radius on a forward-flight (ArduPilot fixed-wing) goto: the
+// loiter circle offers only the radius handle while editing, and the radius the
+// guided action sends follows the drag, reverting on cancel and sticking on confirm.
+void FlyViewGeoUITest::_testLoiterRadiusEdit()
+{
+    if (!apmFirmwareSupported()) {
+        QSKIP("ArduPilot support not registered in this build");
+    }
+
+    Fact* const geoEngineFact = SettingsManager::instance()->flyViewSettings()->useGeoMapEngine();
+    const QVariant savedEnabled = geoEngineFact->rawValue();
+    const auto guard = qScopeGuard([geoEngineFact, savedEnabled] { geoEngineFact->setRawValue(savedEnabled); });
+    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                     QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
+    geoEngineFact->setRawValue(true);
+
+    runWithMockLink(
+        [] { return MockLink::startAPMArduPlaneMockLink(); },
+        [this](QPointer<MockLink>, Vehicle* vehicle) {
+            const std::optional<bool> rhiBased = expectSoftwareBackendWarnings(/*strict*/ false);
+            QVERIFY2(rhiBased.has_value(), "No renderer interface on the main window");
+            QVERIFY(vehicle->fixedWing());
+
+            QQuickItem* const viewport =
+                findVisibleItem(_rootItem, QStringLiteral("geoMapViewport"), kItemAppearTimeoutMs);
+            QVERIFY2(viewport, "GeoMap 3D viewport not visible");
+            QQuickItem* const geoMap = viewport->parentItem();
+            auto* const cam = geoMap->findChild<GeoMapCamera*>(QStringLiteral("geoMapCamera"));
+            QVERIFY2(cam, "GeoMapCamera not found");
+            auto* const gotoItem = geoMap->findChild<QQuickItem*>(QStringLiteral("flyViewGeoGotoLocation"));
+            QVERIFY2(gotoItem, "Goto location marker not found");
+            auto* const loiterVisuals = geoMap->findChild<QQuickItem*>(QStringLiteral("flyViewGeoFwdFlightGotoCircle"));
+            QVERIFY2(loiterVisuals, "Loiter circle visuals not found");
+            auto* const loiterRadius = loiterVisuals->property("radius").value<Fact*>();
+            QVERIFY2(loiterRadius, "Loiter radius Fact not found");
+
+            const double defaultRadius = SettingsManager::instance()
+                                             ->flyViewSettings()
+                                             ->forwardFlightGoToLocationLoiterRad()
+                                             ->rawValue()
+                                             .toDouble();
+            const QGeoCoordinate gotoCoord(47.6329078, -122.0876875);
+            cam->lookAt(gotoCoord, 0, 0, 600);
+            QVERIFY(QMetaObject::invokeMethod(gotoItem, "show", Q_ARG(QVariant, QVariant::fromValue(gotoCoord))));
+            QTRY_VERIFY_WITH_TIMEOUT(loiterVisuals->isVisible(), kSettleTimeoutMs);
+            QCOMPARE(loiterRadius->rawValue().toDouble(), defaultRadius);
+
+            // Not editing yet: the ring shows without handles
+            QVERIFY(!findVisibleItem(_rootItem, QStringLiteral("geoMapCircleRadiusHandle"), 0));
+            QVERIFY(!findVisibleItem(_rootItem, QStringLiteral("geoMapCircleCenterHandle"), 0));
+
+            const auto handleCenter = [viewport](QQuickItem* item) {
+                return viewport->mapFromItem(item, QPointF(item->width() / 2, item->height() / 2));
+            };
+            const auto toWin = [viewport](const QPointF& viewportPos) {
+                return viewport->mapToScene(viewportPos).toPoint();
+            };
+            // Drags the radius handle to where a ring of targetRadius draws its handle
+            const auto dragRadiusTo = [this, cam, &handleCenter, &toWin](
+                                          QQuickItem* handle, const QGeoCoordinate& center, double targetRadius) {
+                const double handleZ = handle->property("scenePosition").value<QVector3D>().z();
+                const auto target =
+                    cam->worldToScreen(TileMath::geoToWorld(center.atDistanceAndAzimuth(targetRadius, 90)), handleZ);
+                QVERIFY(target.has_value());
+                const QPointF from = handleCenter(handle);
+                QTest::mousePress(_window, Qt::LeftButton, Qt::NoModifier, toWin(from));
+                constexpr int steps = 10;
+                for (int i = 1; i <= steps; i++) {
+                    QTest::mouseMove(_window, toWin(from + (((*target - from) * i) / steps)));
+                }
+                QTest::mouseRelease(_window, Qt::LeftButton, Qt::NoModifier, toWin(*target));
+            };
+            const double editedRadius = defaultRadius + 50.0;
+
+            // Cancel: the drag is discarded
+            QVERIFY(QMetaObject::invokeMethod(loiterVisuals, "startLoiterRadiusEdit"));
+            QQuickItem* const radiusHandle = findVisibleItem(_rootItem, QStringLiteral("geoMapCircleRadiusHandle"));
+            QVERIFY2(radiusHandle, "Radius drag handle not visible while editing");
+            QVERIFY(radiusHandle->property("labelVisible").toBool());
+            QVERIFY2(!findVisibleItem(_rootItem, QStringLiteral("geoMapCircleCenterHandle"), 0),
+                     "Loiter center must not be draggable");
+            dragRadiusTo(radiusHandle, gotoItem->property("coordinate").value<QGeoCoordinate>(), editedRadius);
+            QCOMPARE_LT(qAbs(loiterRadius->rawValue().toDouble() - editedRadius), 1.0);
+            QVERIFY(QMetaObject::invokeMethod(loiterVisuals, "actionCancelled"));
+            QCOMPARE(loiterRadius->rawValue().toDouble(), defaultRadius);
+            QVERIFY(!findVisibleItem(_rootItem, QStringLiteral("geoMapCircleRadiusHandle"), 0));
+
+            // Confirm: the dragged radius is kept for the guided command
+            QVERIFY(QMetaObject::invokeMethod(loiterVisuals, "startLoiterRadiusEdit"));
+            QVERIFY(findVisibleItem(_rootItem, QStringLiteral("geoMapCircleRadiusHandle")));
+            dragRadiusTo(radiusHandle, gotoItem->property("coordinate").value<QGeoCoordinate>(), editedRadius);
+            QVERIFY(QMetaObject::invokeMethod(loiterVisuals, "actionConfirmed"));
+            QCOMPARE_LT(qAbs(loiterRadius->rawValue().toDouble() - editedRadius), 1.0);
+            QVERIFY(!findVisibleItem(_rootItem, QStringLiteral("geoMapCircleRadiusHandle"), 0));
+        });
 }

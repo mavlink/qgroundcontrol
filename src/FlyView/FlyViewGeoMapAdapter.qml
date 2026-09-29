@@ -16,8 +16,7 @@ import QGroundControl.GeoMap
 
 /// GeoMap-engine drop-in for FlyViewMap: hosts a FlyViewGeoMap and implements
 /// the mapControl contract the Fly View overlays consume (pipState,
-/// isSatelliteMap, toCoordinate/fromCoordinate, zoomLevel, ...). Interactive
-/// map editing is 2D-only; 3D is view-only (see issue #14901).
+/// isSatelliteMap, toCoordinate/fromCoordinate, zoomLevel, ...).
 Item {
     id: root
 
