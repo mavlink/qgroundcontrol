@@ -77,7 +77,9 @@ private:
     /// Add the next level of the hierarchy to a collapsed tree.
     ///     @param cmdList          List of mission commands to collapse into ui info
     ///     @param collapsedTree    Tree we are collapsing into
-    void _collapseHierarchy(const MissionCommandList *cmdList, QMap<MAV_CMD, MissionCommandUIInfo*> &collapsedTree) const;
+    ///     @param baseList         true only for the base list; override lists cannot add new commands
+    void _collapseHierarchy(const MissionCommandList* cmdList, QMap<MAV_CMD, MissionCommandUIInfo*>& collapsedTree,
+                            bool baseList = false) const;
     void _buildAllCommands(Vehicle *vehicle, QGCMAVLink::VehicleClass_t vtolMode);
     QStringList _availableCategoriesForVehicle(Vehicle *vehicle);
     void _firmwareAndVehicleClassInfo(Vehicle *vehicle, QGCMAVLink::VehicleClass_t vtolMode, QGCMAVLink::FirmwareClass_t &firmwareClass, QGCMAVLink::VehicleClass_t &vehicleClass) const;
