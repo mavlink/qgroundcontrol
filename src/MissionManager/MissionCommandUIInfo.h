@@ -182,6 +182,7 @@ private:
     void _overrideInfo(MissionCommandUIInfo* uiInfo);
 
     MAV_CMD                         _command;
+    bool _commandIdLoaded = false;  ///< Only used to label load errors
     QMap<QString, QVariant>         _infoMap;
     QMap<int, MissionCmdParamInfo*> _paramInfoMap;
     QList<int>                      _paramRemoveList;
