@@ -15,6 +15,8 @@ target_sources(
             FTPManagerTest.h
             FTPControllerTest.cc
             FTPControllerTest.h
+            GenericFirmwareCommandFallbackTest.cc
+            GenericFirmwareCommandFallbackTest.h
             GuidedModeROITest.cc
             GuidedModeROITest.h
             InitialConnectTest.cc
@@ -73,6 +75,7 @@ if(NOT QGC_NO_SERIAL_LINK)
     target_sources(${CMAKE_PROJECT_NAME} PRIVATE FirmwareUpgradeControllerTest.cc FirmwareUpgradeControllerTest.h)
     add_qgc_test(FirmwareUpgradeControllerTest LABELS Unit Vehicle)
 endif()
+add_qgc_test(GenericFirmwareCommandFallbackTest LABELS Integration Vehicle)
 add_qgc_test(GuidedModeROITest LABELS Integration Vehicle)
 add_qgc_test(GuidedModeROIAPMTest LABELS Integration Vehicle)
 add_qgc_test(InitialConnectTest LABELS Integration Vehicle)
