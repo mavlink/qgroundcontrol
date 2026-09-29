@@ -12881,73 +12881,73 @@ VTOL</translation>
     <message>
       <location filename="../src/PlanView/MissionStats.qml" line="55"/>
       <source> deg</source>
-      <translation type="unfinished"> deg</translation>
+      <translation> °</translation>
     </message>
     <message>
       <location filename="../src/PlanView/MissionStats.qml" line="60"/>
       <location filename="../src/PlanView/MissionStats.qml" line="61"/>
       <source>N/A</source>
-      <translation type="unfinished">N/A</translation>
+      <translation>Н/Д</translation>
     </message>
     <message>
       <location filename="../src/PlanView/MissionStats.qml" line="98"/>
       <source>Selected Waypoint</source>
-      <translation type="unfinished">Selected Waypoint</translation>
+      <translation>Выбранная путевая точка</translation>
     </message>
     <message>
       <location filename="../src/PlanView/MissionStats.qml" line="103"/>
       <source>Alt diff:</source>
-      <translation type="unfinished">Alt diff:</translation>
+      <translation>Разница высот:</translation>
     </message>
     <message>
       <location filename="../src/PlanView/MissionStats.qml" line="112"/>
       <source>Azimuth:</source>
-      <translation type="unfinished">Azimuth:</translation>
+      <translation>Азимут:</translation>
     </message>
     <message>
       <location filename="../src/PlanView/MissionStats.qml" line="121"/>
       <source>Dist prev WP:</source>
-      <translation type="unfinished">Dist prev WP:</translation>
+      <translation>Расст. до пред. ПТ:</translation>
     </message>
     <message>
       <location filename="../src/PlanView/MissionStats.qml" line="128"/>
       <source>Gradient:</source>
-      <translation type="unfinished">Gradient:</translation>
+      <translation>Уклон:</translation>
     </message>
     <message>
       <location filename="../src/PlanView/MissionStats.qml" line="137"/>
       <source>Heading:</source>
-      <translation type="unfinished">Heading:</translation>
+      <translation>Курс:</translation>
     </message>
     <message>
       <location filename="../src/PlanView/MissionStats.qml" line="151"/>
       <source>Total Mission</source>
-      <translation type="unfinished">Total Mission</translation>
+      <translation>Итого по заданию</translation>
     </message>
     <message>
       <location filename="../src/PlanView/MissionStats.qml" line="156"/>
       <source>Distance:</source>
-      <translation type="unfinished">Distance:</translation>
+      <translation>Расстояние:</translation>
     </message>
     <message>
       <location filename="../src/PlanView/MissionStats.qml" line="165"/>
       <source>Max telem dist:</source>
-      <translation type="unfinished">Max telem dist:</translation>
+      <translation>Макс. дальность телеметрии:</translation>
     </message>
     <message>
       <location filename="../src/PlanView/MissionStats.qml" line="172"/>
       <source>Time:</source>
-      <translation type="unfinished">Time:</translation>
+      <translation>Время:</translation>
     </message>
     <message>
       <location filename="../src/PlanView/MissionStats.qml" line="187"/>
       <source>Battery</source>
-      <translation type="unfinished">Battery</translation>
+      <translation>Аккумулятор</translation>
     </message>
     <message>
       <location filename="../src/PlanView/MissionStats.qml" line="192"/>
       <source>Batteries required:</source>
-      <translation type="unfinished">Batteries required:</translation>
+      <translation>Требуется аккумуляторов:</translation>
     </message>
   </context>
   <context>
@@ -13593,114 +13593,114 @@ Do you wish to proceed?</translation>
     <message>
       <location filename="../src/AppSettings/OfflineMapEditor.qml" line="201"/>
       <source>System Wide Tile Cache</source>
-      <translation type="unfinished">System Wide Tile Cache</translation>
+      <translation>Общесистемный кэш тайлов</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapEditor.qml" line="214"/>
       <source>Zoom Levels:</source>
-      <translation type="unfinished">Zoom Levels:</translation>
+      <translation>Уровни масштаба:</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapEditor.qml" line="221"/>
       <source>Total:</source>
-      <translation type="unfinished">Total:</translation>
+      <translation>Всего:</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapEditor.qml" line="228"/>
       <source>Unique:</source>
-      <translation type="unfinished">Unique:</translation>
+      <translation>Уникально:</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapEditor.qml" line="236"/>
       <source>Downloaded:</source>
-      <translation type="unfinished">Downloaded:</translation>
+      <translation>Загружено:</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapEditor.qml" line="243"/>
       <source>Error Count:</source>
-      <translation type="unfinished">Error Count:</translation>
+      <translation>Количество ошибок:</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapEditor.qml" line="251"/>
       <source>Size:</source>
-      <translation type="unfinished">Size:</translation>
+      <translation>Размер:</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapEditor.qml" line="258"/>
       <location filename="../src/AppSettings/OfflineMapEditor.qml" line="615"/>
       <source>Tile Count:</source>
-      <translation type="unfinished">Tile Count:</translation>
+      <translation>Количество тайлов:</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapEditor.qml" line="265"/>
       <source>Resume Download</source>
-      <translation type="unfinished">Resume Download</translation>
+      <translation>Возобновить загрузку</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapEditor.qml" line="271"/>
       <source>Cancel Download</source>
-      <translation type="unfinished">Cancel Download</translation>
+      <translation>Отменить загрузку</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapEditor.qml" line="277"/>
       <source>Delete</source>
-      <translation type="unfinished">Delete</translation>
+      <translation>Удалить</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapEditor.qml" line="283"/>
       <source>Ok</source>
-      <translation type="unfinished">Ok</translation>
+      <translation>ОК</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapEditor.qml" line="295"/>
       <source>Close</source>
-      <translation type="unfinished">Close</translation>
+      <translation>Закрыть</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapEditor.qml" line="295"/>
       <location filename="../src/AppSettings/OfflineMapEditor.qml" line="668"/>
       <source>Cancel</source>
-      <translation type="unfinished">Cancel</translation>
+      <translation>Отмена</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapEditor.qml" line="321"/>
       <source>Show zoom previews</source>
-      <translation type="unfinished">Show zoom previews</translation>
+      <translation>Показывать превью масштаба</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapEditor.qml" line="355"/>
       <source>Min Zoom: %1</source>
-      <translation type="unfinished">Min Zoom: %1</translation>
+      <translation>Мин. масштаб: %1</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapEditor.qml" line="393"/>
       <source>Max Zoom: %1</source>
-      <translation type="unfinished">Max Zoom: %1</translation>
+      <translation>Макс. масштаб: %1</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapEditor.qml" line="424"/>
       <source>Add New Set</source>
-      <translation type="unfinished">Add New Set</translation>
+      <translation>Добавить новый набор</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapEditor.qml" line="452"/>
       <source>Name:</source>
-      <translation type="unfinished">Name:</translation>
+      <translation>Имя:</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapEditor.qml" line="471"/>
       <source>Map type:</source>
-      <translation type="unfinished">Map type:</translation>
+      <translation>Тип карты:</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapEditor.qml" line="494"/>
       <source>Fetch elevation data</source>
-      <translation type="unfinished">Fetch elevation data</translation>
+      <translation>Загружать данные высот</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapEditor.qml" line="520"/>
       <source>Min/Max Zoom Levels</source>
-      <translation type="unfinished">Min/Max Zoom Levels</translation>
+      <translation>Мин./Макс. уровни масштаба</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapEditor.qml" line="624"/>
@@ -13710,45 +13710,45 @@ Do you wish to proceed?</translation>
     <message>
       <location filename="../src/AppSettings/OfflineMapEditor.qml" line="636"/>
       <source>Too many tiles</source>
-      <translation type="unfinished">Too many tiles</translation>
+      <translation>Слишком много тайлов</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapEditor.qml" line="644"/>
       <source>Tile set with this name already exists</source>
-      <translation type="unfinished">Tile set with this name already exists</translation>
+      <translation>Набор тайлов с таким именем уже существует</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapEditor.qml" line="655"/>
       <source>Download</source>
-      <translation type="unfinished">Download</translation>
+      <translation>Загрузить</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapEditor.qml" line="701"/>
       <source>Error Message</source>
-      <translation type="unfinished">Error Message</translation>
+      <translation>Сообщение об ошибке</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapEditor.qml" line="717"/>
       <source>Confirm Delete</source>
-      <translation type="unfinished">Confirm Delete</translation>
+      <translation>Подтверждение удаления</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapEditor.qml" line="719"/>
       <source>This will delete all tiles INCLUDING the tile sets you have created yourself.
 
 Is this really what you want?</source>
-      <translation type="unfinished">This will delete all tiles INCLUDING the tile sets you have created yourself.
+      <translation>Это удалит все тайлы, ВКЛЮЧАЯ созданные вами наборы тайлов.
 
-Is this really what you want?</translation>
+Вы действительно этого хотите?</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapEditor.qml" line="720"/>
       <source>Delete %1 and all its tiles.
 
 Is this really what you want?</source>
-      <translation type="unfinished">Delete %1 and all its tiles.
+      <translation>Удалить %1 и все его тайлы.
 
-Is this really what you want?</translation>
+Вы действительно этого хотите?</translation>
     </message>
   </context>
   <context>
@@ -13764,92 +13764,92 @@ Is this really what you want?</translation>
     <message>
       <location filename="../src/AppSettings/OfflineMapSettings.qml" line="33"/>
       <source>Offline Maps</source>
-      <translation type="unfinished">Offline Maps</translation>
+      <translation>Автономные карты</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapSettings.qml" line="34"/>
       <source>Download map tiles for use when offline</source>
-      <translation type="unfinished">Download map tiles for use when offline</translation>
+      <translation>Скачивать тайлы карт для использования в автономном режиме</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapSettings.qml" line="47"/>
       <source>Add New Set</source>
-      <translation type="unfinished">Add New Set</translation>
+      <translation>Добавить новый набор</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapSettings.qml" line="48"/>
       <source>Add</source>
-      <translation type="unfinished">Add</translation>
+      <translation>Добавить</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapSettings.qml" line="54"/>
       <source>Import Map Tiles</source>
-      <translation type="unfinished">Import Map Tiles</translation>
+      <translation>Импорт тайлов карты</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapSettings.qml" line="55"/>
       <source>Import</source>
-      <translation type="unfinished">Import</translation>
+      <translation>Импорт</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapSettings.qml" line="65"/>
       <source>Export Map Tiles</source>
-      <translation type="unfinished">Export Map Tiles</translation>
+      <translation>Экспорт тайлов карты</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapSettings.qml" line="66"/>
       <source>Export</source>
-      <translation type="unfinished">Export</translation>
+      <translation>Экспорт</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapSettings.qml" line="78"/>
       <source>Exporting</source>
-      <translation type="unfinished">Exporting</translation>
+      <translation>Экспортируется</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapSettings.qml" line="78"/>
       <source>Importing</source>
-      <translation type="unfinished">Importing</translation>
+      <translation>Импортируется</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapSettings.qml" line="94"/>
       <source>Tile Sets (*.%1)</source>
-      <translation type="unfinished">Tile Sets (*.%1)</translation>
+      <translation>Наборы тайлов (*.%1)</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapSettings.qml" line="117"/>
       <source>Export Selected Tile Sets</source>
-      <translation type="unfinished">Export Selected Tile Sets</translation>
+      <translation>Экспортировать выбранные наборы тайлов</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapSettings.qml" line="122"/>
       <source>Export Tiles</source>
-      <translation type="unfinished">Export Tiles</translation>
+      <translation>Экспортировать тайлы</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapSettings.qml" line="151"/>
       <source>Import TileSets</source>
-      <translation type="unfinished">Import TileSets</translation>
+      <translation>Импортировать наборы тайлов</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapSettings.qml" line="156"/>
       <source>Import Tiles</source>
-      <translation type="unfinished">Import Tiles</translation>
+      <translation>Импортировать тайлы</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapSettings.qml" line="164"/>
       <source>Append to existing sets</source>
-      <translation type="unfinished">Append to existing sets</translation>
+      <translation>Добавить к существующим наборам</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapSettings.qml" line="169"/>
       <source>Replace existing sets</source>
-      <translation type="unfinished">Replace existing sets</translation>
+      <translation>Заменить существующие наборы</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/OfflineMapSettings.qml" line="186"/>
       <source>Error Message</source>
-      <translation type="unfinished">Error Message</translation>
+      <translation>Сообщение об ошибке</translation>
     </message>
   </context>
   <context>
