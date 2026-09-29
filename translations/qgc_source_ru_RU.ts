@@ -9423,17 +9423,17 @@ VTOL</translation>
     <message>
       <location filename="../src/Joystick/Joystick.h" line="484"/>
       <source>No Action</source>
-      <translation type="unfinished">No Action</translation>
+      <translation>Нет действия</translation>
     </message>
     <message>
       <location filename="../src/Joystick/Joystick.h" line="485"/>
       <source>Arm</source>
-      <translation type="unfinished">Arm</translation>
+      <translation>Arm</translation>
     </message>
     <message>
       <location filename="../src/Joystick/Joystick.h" line="486"/>
       <source>Disarm</source>
-      <translation type="unfinished">Disarm</translation>
+      <translation>Disarm</translation>
     </message>
     <message>
       <location filename="../src/Joystick/Joystick.h" line="487"/>
@@ -9443,12 +9443,12 @@ VTOL</translation>
     <message>
       <location filename="../src/Joystick/Joystick.h" line="488"/>
       <source>VTOL: Fixed Wing</source>
-      <translation type="unfinished">VTOL: Fixed Wing</translation>
+      <translation>VTOL: Самолётный режим</translation>
     </message>
     <message>
       <location filename="../src/Joystick/Joystick.h" line="489"/>
       <source>VTOL: Multi-Rotor</source>
-      <translation type="unfinished">VTOL: Multi-Rotor</translation>
+      <translation>VTOL: Мультироторный режим</translation>
     </message>
     <message>
       <location filename="../src/Joystick/Joystick.h" line="490"/>
@@ -9473,22 +9473,22 @@ VTOL</translation>
     <message>
       <location filename="../src/Joystick/Joystick.h" line="494"/>
       <source>Continuous Focus In</source>
-      <translation type="unfinished">Continuous Focus In</translation>
+      <translation>Непрерывная фокусировка ближе</translation>
     </message>
     <message>
       <location filename="../src/Joystick/Joystick.h" line="495"/>
       <source>Continuous Focus Out</source>
-      <translation type="unfinished">Continuous Focus Out</translation>
+      <translation>Непрерывная фокусировка дальше</translation>
     </message>
     <message>
       <location filename="../src/Joystick/Joystick.h" line="496"/>
       <source>Step Focus In</source>
-      <translation type="unfinished">Step Focus In</translation>
+      <translation>Шаг фокусировки ближе</translation>
     </message>
     <message>
       <location filename="../src/Joystick/Joystick.h" line="497"/>
       <source>Step Focus Out</source>
-      <translation type="unfinished">Step Focus Out</translation>
+      <translation>Шаг фокусировки дальше</translation>
     </message>
     <message>
       <location filename="../src/Joystick/Joystick.h" line="502"/>
@@ -9513,37 +9513,37 @@ VTOL</translation>
     <message>
       <location filename="../src/Joystick/Joystick.h" line="506"/>
       <source>Gimbal Down</source>
-      <translation type="unfinished">Gimbal Down</translation>
+      <translation>Гимбал вниз</translation>
     </message>
     <message>
       <location filename="../src/Joystick/Joystick.h" line="507"/>
       <source>Gimbal Up</source>
-      <translation type="unfinished">Gimbal Up</translation>
+      <translation>Гимбал вверх</translation>
     </message>
     <message>
       <location filename="../src/Joystick/Joystick.h" line="508"/>
       <source>Gimbal Left</source>
-      <translation type="unfinished">Gimbal Left</translation>
+      <translation>Гимбал влево</translation>
     </message>
     <message>
       <location filename="../src/Joystick/Joystick.h" line="509"/>
       <source>Gimbal Right</source>
-      <translation type="unfinished">Gimbal Right</translation>
+      <translation>Гимбал вправо</translation>
     </message>
     <message>
       <location filename="../src/Joystick/Joystick.h" line="510"/>
       <source>Gimbal Center</source>
-      <translation type="unfinished">Gimbal Center</translation>
+      <translation>Гимбал в центр</translation>
     </message>
     <message>
       <location filename="../src/Joystick/Joystick.h" line="511"/>
       <source>Gimbal Yaw Lock</source>
-      <translation type="unfinished">Gimbal Yaw Lock</translation>
+      <translation>Гимбал: фиксация рыскания</translation>
     </message>
     <message>
       <location filename="../src/Joystick/Joystick.h" line="512"/>
       <source>Gimbal Yaw Follow</source>
-      <translation type="unfinished">Gimbal Yaw Follow</translation>
+      <translation>Гимбал: следование по рысканию</translation>
     </message>
     <message>
       <location filename="../src/Joystick/Joystick.h" line="513"/>
@@ -9553,37 +9553,37 @@ VTOL</translation>
     <message>
       <location filename="../src/Joystick/Joystick.h" line="514"/>
       <source>Gripper Grab</source>
-      <translation type="unfinished">Gripper Grab</translation>
+      <translation>Захват: закрыть</translation>
     </message>
     <message>
       <location filename="../src/Joystick/Joystick.h" line="515"/>
       <source>Gripper Release</source>
-      <translation type="unfinished">Gripper Release</translation>
+      <translation>Захват: отпустить</translation>
     </message>
     <message>
       <location filename="../src/Joystick/Joystick.h" line="516"/>
       <source>Gripper Hold</source>
-      <translation type="unfinished">Gripper Hold</translation>
+      <translation>Захват: удерживать</translation>
     </message>
     <message>
       <location filename="../src/Joystick/Joystick.h" line="517"/>
       <source>Landing gear deploy</source>
-      <translation type="unfinished">Landing gear deploy</translation>
+      <translation>Выпустить шасси</translation>
     </message>
     <message>
       <location filename="../src/Joystick/Joystick.h" line="518"/>
       <source>Landing gear retract</source>
-      <translation type="unfinished">Landing gear retract</translation>
+      <translation>Убрать шасси</translation>
     </message>
     <message>
       <location filename="../src/Joystick/Joystick.h" line="519"/>
       <source>Motor Interlock enable</source>
-      <translation type="unfinished">Motor Interlock enable</translation>
+      <translation>Включить блокировку моторов</translation>
     </message>
     <message>
       <location filename="../src/Joystick/Joystick.h" line="520"/>
       <source>Motor Interlock disable</source>
-      <translation type="unfinished">Motor Interlock disable</translation>
+      <translation>Отключить блокировку моторов</translation>
     </message>
     <message>
       <location filename="../src/Joystick/Joystick.h" line="498"/>
