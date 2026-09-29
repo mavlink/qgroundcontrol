@@ -189,6 +189,14 @@ public:
 
     static double flightMapZoom() { return _zoom; }
 
+#ifdef QGC_UNITTEST_BUILD
+    static void setFlightMapViewForTest(const QGeoCoordinate& position, double zoom)
+    {
+        _coord = position;
+        _zoom = zoom;
+    }
+#endif
+
     qreal zOrderTopMost             () { return 1000; }
     qreal zOrderWidgets             () { return 100; }
     qreal zOrderMapItems            () { return 50; }

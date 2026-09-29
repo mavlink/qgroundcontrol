@@ -51,23 +51,55 @@ Item {
     readonly property string _mapTypeSetting: QGroundControl.settingsManager.flightMapSettings.mapType.rawValue
 
     // PiP analog of FlyViewMap._adjustMapZoomForPipMode: pull the camera back
-    // 3 zoom levels in the small window for situational context, restore the
-    // full-view distance on swap back. PiP is also too small for a useful 3D
-    // view, so force 2D and restore the previous camera mode with it.
-    property real _fullViewDistance: NaN
+    // 3 zoom levels in the small window for situational context; the swap-back
+    // resize re-applies the shared saved zoom. PiP is also too small for a useful
+    // 3D view, so force 2D and restore the previous camera mode with it.
     property int _fullViewCameraMode: GeoMapCamera.Mode2D
 
     onPipModeChanged: {
         const camera = geoMapControl.camera
         if (pipMode) {
-            _fullViewDistance = camera.distance
             _fullViewCameraMode = camera.mode
             camera.mode = GeoMapCamera.Mode2D
             camera.distance = camera.distanceForZoomLevel(camera.zoomLevelForDistance(camera.distance) - 3)
-        } else if (!isNaN(_fullViewDistance)) {
+        } else {
             camera.mode = _fullViewCameraMode
-            camera.distance = _fullViewDistance
-            _fullViewDistance = NaN
+        }
+    }
+
+    // Map view shared with Plan view and persisted across restarts, as
+    // FlyViewMap does via QGroundControl.flightMapPosition/flightMapZoom
+    property bool _applyingSavedZoom: false
+
+    function _restoreSavedMapView() {
+        geoMapControl.camera.center = QGroundControl.flightMapPosition
+        _applySavedZoom()
+    }
+
+    // Zoom level -> distance depends on the viewport size, so this also runs on
+    // every resize: the zoom level is kept, as FlyViewMap does. PiP keeps its own zoom.
+    function _applySavedZoom() {
+        const camera = geoMapControl.camera
+        if (pipMode || camera.viewportSize.width <= 0 || camera.viewportSize.height <= 0) {
+            return
+        }
+        _applyingSavedZoom = true
+        camera.distance = camera.distanceForZoomLevel(QGroundControl.flightMapZoom)
+        _applyingSavedZoom = false
+    }
+
+    // Only the full-view zoom is saved: PiP distance changes are not
+    function _onCameraDistanceChanged() {
+        if (_applyingSavedZoom || !visible || pipMode) {
+            return
+        }
+        const camera = geoMapControl.camera
+        QGroundControl.flightMapZoom = camera.zoomLevelForDistance(camera.distance)
+    }
+
+    onVisibleChanged: {
+        if (visible) {
+            _restoreSavedMapView()
         }
     }
 
@@ -163,10 +195,23 @@ Item {
             root._echoingCameraCenter = true
             root.center = geoMapControl.camera.center
             root._echoingCameraCenter = false
+            // Hidden: don't overwrite the position another view is sharing
+            if (root.visible) {
+                QGroundControl.flightMapPosition = geoMapControl.camera.center
+            }
+        }
+
+        function onDistanceChanged() {
+            root._onCameraDistanceChanged()
+        }
+
+        function onViewportSizeChanged() {
+            root._applySavedZoom()
         }
     }
 
     Component.onCompleted: {
+        _restoreSavedMapView()
         _echoingCameraCenter = true
         center = geoMapControl.camera.center
         _echoingCameraCenter = false
