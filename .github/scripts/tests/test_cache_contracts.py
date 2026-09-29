@@ -142,8 +142,10 @@ def test_ios_matrix_forwards_distinct_cache_write_suffixes() -> None:
 
 def test_macos_installed_cache_binary_is_selected_explicitly() -> None:
     action = _read(".github/actions/cache/action.yml")
-    assert 'echo QGC_CACHE_PROGRAM=/usr/local/bin/ccache >> "$GITHUB_ENV"' in action
-    assert 'echo /usr/local/bin >> "$GITHUB_PATH"' in action
+    assert 'prefix="${RUNNER_TEMP}/ccache"' in action
+    assert 'echo "QGC_CACHE_PROGRAM=${prefix}/bin/ccache" >> "$GITHUB_ENV"' in action
+    assert 'echo "${prefix}/bin" >> "$GITHUB_PATH"' in action
+    assert "echo /usr/local/bin >> " not in action
 
 
 def test_link_cache_has_restore_and_save_with_fork_read_only_policy() -> None:

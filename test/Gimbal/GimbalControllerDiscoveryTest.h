@@ -19,6 +19,7 @@ private slots:
     void _testInvalidMessagesIgnored();
     void _testManagerInformationUnavailable_data();
     void _testManagerInformationUnavailable();
+    void _testInFlightRequestKeepsRetryBudget();
     void _testStatusBeforeInformation();
     void _testStatusIntervalRetryFallback();
     void _testDeviceInformationName();

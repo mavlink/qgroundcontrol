@@ -231,8 +231,14 @@ void TCPGPSTransportTest::_immediateRead()
     QCOMPARE(peer->write("reply", 5), 5);
     QVERIFY(peer->waitForBytesWritten(TestTimeout::shortMs()));
     // Do not dispatch receiver events before polling; the bytes are still in the kernel.
+    // Loopback delivery is asynchronous on some platforms (macOS), so repeat the immediate poll.
     uint8_t bytes[16]{};
-    const auto result = transport.read(bytes, sizeof(bytes), timeout);
+    const QDeadlineTimer deadline(TestTimeout::shortMs());
+    GPSReadResult result = transport.read(bytes, sizeof(bytes), timeout);
+    while (result.status == GPSReadStatus::TimedOut && !deadline.hasExpired()) {
+        QThread::yieldCurrentThread();
+        result = transport.read(bytes, sizeof(bytes), timeout);
+    }
     QCOMPARE(result.status, GPSReadStatus::Data);
     QCOMPARE(QByteArray(reinterpret_cast<char*>(bytes), result.bytesRead), QByteArray("reply"));
 }

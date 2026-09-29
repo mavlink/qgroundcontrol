@@ -847,6 +847,10 @@ void UnitTest::init()
     ignoreLogMessage("qt.graphs2d.axis.properties", QtWarningMsg,
                      QRegularExpression(QStringLiteral("axis already associated with")));
 
+    // Platforms without a "Sans Serif" family (macOS) warn once per process on first QML load.
+    ignoreLogMessage("qt.qpa.fonts", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Populating font family aliases")));
+
     // Headless software-GL (xvfb) gives GStreamer no usable X11/EGL GL context, so the
     // GL bridge disables itself and falls back to software decode — by design in tests.
     ignoreLogMessage("Video.GStreamer.HwBuffers.GstGlBridge", QtWarningMsg,

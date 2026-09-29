@@ -47,7 +47,21 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     set(_qgc_coverage_compile_options --coverage -O0 -g)
     set(_qgc_coverage_link_options --coverage)
 
-    find_program(LLVM_COV_PATH llvm-cov)
+    set(_qgc_llvm_cov_hints)
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+        # Xcode ships llvm-cov matching AppleClang but does not put it on PATH.
+        execute_process(
+            COMMAND xcrun --find llvm-cov
+            OUTPUT_VARIABLE _qgc_xcrun_llvm_cov
+            OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET
+        )
+        if(_qgc_xcrun_llvm_cov)
+            cmake_path(GET _qgc_xcrun_llvm_cov PARENT_PATH _qgc_llvm_cov_hints)
+        endif()
+        unset(_qgc_xcrun_llvm_cov)
+    endif()
+    find_program(LLVM_COV_PATH llvm-cov HINTS ${_qgc_llvm_cov_hints})
+    unset(_qgc_llvm_cov_hints)
     if(NOT LLVM_COV_PATH)
         message(FATAL_ERROR "QGC: Clang coverage requires llvm-cov")
     endif()

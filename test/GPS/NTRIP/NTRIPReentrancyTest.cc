@@ -1741,7 +1741,10 @@ void NTRIPReentrancyTest::ggaConfigurationPreservesFastRetry()
     QVERIFY(elapsed.elapsed() >= NTRIPGgaProvider::kFastRetryInterval.count() * 4 / 5);
     QCOMPARE(transport.sentNmea.size(), 1);
     QCOMPARE(provider.currentSource(), QStringLiteral("RTK"));
-    QTRY_COMPARE(transport.sentNmea.size(), 2);
+    QCOMPARE(std::chrono::duration_cast<std::chrono::milliseconds>(provider._timer.interval()),
+             std::chrono::milliseconds{100});
+    // Cadence keeps running while polling; a scheduling stall can skip past exactly 2.
+    QTRY_VERIFY(transport.sentNmea.size() >= 2);
     provider.stop();
 }
 

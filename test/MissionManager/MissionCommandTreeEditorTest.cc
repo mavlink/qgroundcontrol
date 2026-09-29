@@ -52,9 +52,6 @@ void MissionCommandTreeEditorTest::_testEditorsWorker(QGCMAVLinkTypes::FirmwareC
 
 void MissionCommandTreeEditorTest::testEditors()
 {
-    // Qt font alias lookup warning is a platform-level timing artifact.
-    ignoreLogMessage("qt.qpa.fonts", QtWarningMsg,
-                     QRegularExpression("Populating font family aliases"));
     // RTL_CONE_SLOPE has an invalid enum value of 0 in ArduPilot metadata; skip warning is expected.
     ignoreLogMessage("FirmwarePlugin.ParameterMetaData", QtWarningMsg,
                      QRegularExpression("Skipping invalid enum value"));
