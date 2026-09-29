@@ -13,9 +13,9 @@ import QtQuick.Shapes
 import QGroundControl
 import QGroundControl.GeoMap
 
-/// Circle outline: the GeoMap counterpart of the QtLocation
-/// QGCMapCircleVisuals ring (outline only — no drag handles or rotation
-/// arrows). Built from great-circle points so it stays correct under 3D
+/// Circle outline only; GeoMapCircleVisuals is the full QGCMapCircleVisuals
+/// counterpart (adds drag handles and rotation arrows). Built from
+/// great-circle points so it stays correct under 3D
 /// camera tilt. Ground-projected by default; set altitudeMode to
 /// GeoMapItem.Absolute to render at the center coordinate's altitude.
 /// Set extrudeHeightMeters to also render a 3D fence wall from the terrain

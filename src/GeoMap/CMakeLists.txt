@@ -64,6 +64,7 @@ qt_add_qml_module(
     QML_FILES GeoMap.qml
               GeoMapADSBVehicleItem.qml
               GeoMapCircle.qml
+              GeoMapCircleVisuals.qml
               GeoMapDropLine.qml
               GeoMapDropShadow.qml
               GeoMapFenceWall.qml

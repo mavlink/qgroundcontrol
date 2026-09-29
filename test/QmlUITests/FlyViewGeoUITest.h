@@ -18,4 +18,7 @@ private slots:
     void _testCameraGestures();
     void _testModeToggleAndCompass();
     void _testDebugHillsToggle();
+    void _testCircleEditHandles_data();
+    void _testCircleEditHandles();
+    void _testLoiterRadiusEdit();
 };
