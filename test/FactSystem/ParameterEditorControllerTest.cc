@@ -76,7 +76,6 @@ void ParameterEditorControllerTest::_buildDiffQGCFormat()
     TestFixtures::TempFileFixture tempFile(QStringLiteral("test_XXXXXX.params"));
     QVERIFY(tempFile.isValid());
     QVERIFY(tempFile.write(QByteArray(kQGCParamsWithDiff)));
-    QVERIFY(tempFile.file()->flush());
 
     ParameterEditorController controller;
     const bool result = controller.buildDiffFromFile(tempFile.path());
@@ -106,7 +105,6 @@ void ParameterEditorControllerTest::_buildDiffMPFormat()
     TestFixtures::TempFileFixture tempFile(QStringLiteral("test_XXXXXX.param"));
     QVERIFY(tempFile.isValid());
     QVERIFY(tempFile.write(QByteArray(kMPParamsWithDiff)));
-    QVERIFY(tempFile.file()->flush());
 
     ParameterEditorController controller;
     const bool result = controller.buildDiffFromFile(tempFile.path());
@@ -125,7 +123,6 @@ void ParameterEditorControllerTest::_buildDiffNoDifferencesQGC()
     TestFixtures::TempFileFixture tempFile(QStringLiteral("test_XXXXXX.params"));
     QVERIFY(tempFile.isValid());
     QVERIFY(tempFile.write(QByteArray(kQGCParamsNoDiff)));
-    QVERIFY(tempFile.file()->flush());
 
     ParameterEditorController controller;
     const bool result = controller.buildDiffFromFile(tempFile.path());
@@ -142,7 +139,6 @@ void ParameterEditorControllerTest::_buildDiffNoDifferencesMP()
     TestFixtures::TempFileFixture tempFile(QStringLiteral("test_XXXXXX.param"));
     QVERIFY(tempFile.isValid());
     QVERIFY(tempFile.write(QByteArray(kMPParamsNoDiff)));
-    QVERIFY(tempFile.file()->flush());
 
     ParameterEditorController controller;
     const bool result = controller.buildDiffFromFile(tempFile.path());
@@ -159,7 +155,6 @@ void ParameterEditorControllerTest::_buildDiffBadFormat()
     TestFixtures::TempFileFixture tempFile(QStringLiteral("test_XXXXXX.txt"));
     QVERIFY(tempFile.isValid());
     QVERIFY(tempFile.write(QByteArray(kBadFormatParams)));
-    QVERIFY(tempFile.file()->flush());
 
     ParameterEditorController controller;
     expectAppMessage(QRegularExpression("No valid parameters found"));
@@ -176,7 +171,6 @@ void ParameterEditorControllerTest::_buildDiffMissingOnVehicle()
     TestFixtures::TempFileFixture tempFile(QStringLiteral("test_XXXXXX.params"));
     QVERIFY(tempFile.isValid());
     QVERIFY(tempFile.write(QByteArray(kQGCParamsUnknownParam)));
-    QVERIFY(tempFile.file()->flush());
 
     ParameterEditorController controller;
     const bool result = controller.buildDiffFromFile(tempFile.path());
@@ -202,7 +196,6 @@ void ParameterEditorControllerTest::_buildDiffMPMissingParam()
     TestFixtures::TempFileFixture tempFile(QStringLiteral("test_XXXXXX.param"));
     QVERIFY(tempFile.isValid());
     QVERIFY(tempFile.write(QByteArray(kMPParamsMissingParam)));
-    QVERIFY(tempFile.file()->flush());
 
     ParameterEditorController controller;
     const bool result = controller.buildDiffFromFile(tempFile.path());
@@ -227,7 +220,6 @@ void ParameterEditorControllerTest::_buildDiffMixedMP()
     TestFixtures::TempFileFixture tempFile(QStringLiteral("test_XXXXXX.param"));
     QVERIFY(tempFile.isValid());
     QVERIFY(tempFile.write(QByteArray(kMPParamsMixed)));
-    QVERIFY(tempFile.file()->flush());
 
     ParameterEditorController controller;
     const bool result = controller.buildDiffFromFile(tempFile.path());
@@ -256,7 +248,6 @@ void ParameterEditorControllerTest::_clearDiffResetsState()
     TestFixtures::TempFileFixture tempFile(QStringLiteral("test_XXXXXX.param"));
     QVERIFY(tempFile.isValid());
     QVERIFY(tempFile.write(QByteArray(kMPParamsMixed)));
-    QVERIFY(tempFile.file()->flush());
 
     ParameterEditorController controller;
     QVERIFY(controller.buildDiffFromFile(tempFile.path()));
@@ -295,7 +286,6 @@ void ParameterEditorControllerTest::_diffSignalsEmitOnlyOnChange()
     TestFixtures::TempFileFixture tempFile(QStringLiteral("test_XXXXXX.param"));
     QVERIFY(tempFile.isValid());
     QVERIFY(tempFile.write(QByteArray(kMPParamsMixed)));
-    QVERIFY(tempFile.file()->flush());
 
     ParameterEditorController controller;
 
@@ -333,7 +323,6 @@ void ParameterEditorControllerTest::_sendDiffUnknownParamStopsAfterWriteFailure(
     TestFixtures::TempFileFixture tempFile(QStringLiteral("test_XXXXXX.params"));
     QVERIFY(tempFile.isValid());
     QVERIFY(tempFile.write(QByteArray(kQGCParamsUnknownParam)));
-    QVERIFY(tempFile.file()->flush());
 
     ParameterEditorController controller;
     QVERIFY(controller.buildDiffFromFile(tempFile.path()));

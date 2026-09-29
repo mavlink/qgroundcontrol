@@ -1,12 +1,14 @@
 #include "MissionCommandTreeTest.h"
 
+#include <QtCore/QJsonDocument>
+#include <QtCore/QRegularExpression>
+
+#include "Fixtures/RAIIFixtures.h"
 #include "MissionCommandList.h"
 #include "MissionCommandTree.h"
 #include "MissionCommandUIInfo.h"
 #include "UnitTest.h"
 #include "Vehicle.h"
-
-#include <QtCore/QRegularExpression>
 
 void MissionCommandTreeTest::init()
 {
@@ -207,6 +209,72 @@ void MissionCommandTreeTest::testUnknownCommandFallbacks()
     QCOMPARE(_commandTree->rawName(unknownCommand), QStringLiteral("MAV_CMD(9999)"));
     QVERIFY(!_commandTree->isLandCommand(unknownCommand));
     QVERIFY(!_commandTree->isTakeoffCommand(unknownCommand));
+}
+
+void MissionCommandTreeTest::testBadCommandSkipped()
+{
+    // Middle entry has an enum strings/values count mismatch, as a broken translation produces
+    const QByteArray json = R"({
+        "version": 1,
+        "fileType": "MavCmdInfo",
+        "mavCmdInfo": [
+            { "id": 1, "rawName": "UNITTEST_1" },
+            { "id": 2, "rawName": "UNITTEST_2",
+              "param1": { "label": "param1", "enumStrings": "1,2", "enumValues": "1,2,3" } },
+            { "id": 3, "rawName": "UNITTEST_3" }
+        ]
+    })";
+    TestFixtures::TempJsonFileFixture jsonFile;
+    QVERIFY(jsonFile.writeJson(QJsonDocument::fromJson(json)));
+
+    expectLogMessage("MissionManager.MissionCommandList", QtWarningMsg, QRegularExpression("count mismatch"));
+    const MissionCommandList commandList(jsonFile.path(), true);
+    verifyExpectedLogMessage();
+
+    QVERIFY(commandList.getUIInfo(static_cast<MAV_CMD>(1)));
+    QVERIFY(!commandList.getUIInfo(static_cast<MAV_CMD>(2)));
+    QVERIFY(commandList.getUIInfo(static_cast<MAV_CMD>(3)));
+    QCOMPARE(commandList.commandIds(), (QList<MAV_CMD>{static_cast<MAV_CMD>(1), static_cast<MAV_CMD>(3)}));
+}
+
+void MissionCommandTreeTest::testOverrideWithoutBaseSkipped()
+{
+    // Base entry for command 2 fails to load, so its partial override must not become a command on its own
+    const QByteArray baseJson = R"({
+        "version": 1,
+        "fileType": "MavCmdInfo",
+        "mavCmdInfo": [
+            { "id": 1, "rawName": "UNITTEST_1" },
+            { "id": 2, "rawName": "UNITTEST_2",
+              "param1": { "label": "param1", "enumStrings": "1,2", "enumValues": "1,2,3" } }
+        ]
+    })";
+    const QByteArray overrideJson = R"({
+        "version": 1,
+        "fileType": "MavCmdInfo",
+        "mavCmdInfo": [
+            { "id": 1, "paramRemove": "1" },
+            { "id": 2, "paramRemove": "1" }
+        ]
+    })";
+    TestFixtures::TempJsonFileFixture baseFile;
+    QVERIFY(baseFile.writeJson(QJsonDocument::fromJson(baseJson)));
+    TestFixtures::TempJsonFileFixture overrideFile;
+    QVERIFY(overrideFile.writeJson(QJsonDocument::fromJson(overrideJson)));
+
+    expectLogMessage("MissionManager.MissionCommandList", QtWarningMsg, QRegularExpression("count mismatch"));
+    _commandTree->_staticCommandTree[MAV_AUTOPILOT_GENERIC][QGCMAVLink::VehicleClassGeneric] =
+        new MissionCommandList(baseFile.path(), true, _commandTree);
+    verifyExpectedLogMessage();
+    _commandTree->_staticCommandTree[MAV_AUTOPILOT_GENERIC][QGCMAVLink::VehicleClassFixedWing] =
+        new MissionCommandList(overrideFile.path(), false, _commandTree);
+
+    Vehicle* const vehicle = new Vehicle(MAV_AUTOPILOT_GENERIC, MAV_TYPE_FIXED_WING, this);
+    expectLogMessage("Plan.MissionCommandTree", QtWarningMsg, QRegularExpression("no base command info"));
+    QVERIFY(_commandTree->getUIInfo(vehicle, QGCMAVLink::VehicleClassGeneric, static_cast<MAV_CMD>(1)));
+    verifyExpectedLogMessage();
+    QVERIFY(!_commandTree->getUIInfo(vehicle, QGCMAVLink::VehicleClassGeneric, static_cast<MAV_CMD>(2)));
+    delete vehicle;
 }
 
 UT_REGISTER_TEST(MissionCommandTreeTest, TestLabel::Unit, TestLabel::MissionManager)
