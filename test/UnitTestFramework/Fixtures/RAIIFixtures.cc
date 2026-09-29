@@ -225,7 +225,7 @@ bool TempFileFixture::write(const QByteArray& content)
 
     _file->seek(0);
     _file->resize(0);
-    return _file->write(content) == content.size();
+    return (_file->write(content) == content.size()) && _file->flush();
 }
 
 bool TempFileFixture::write(const QString& content)

@@ -192,12 +192,24 @@ void MissionCommandUIInfo::_overrideInfo(MissionCommandUIInfo* uiInfo)
 
 QString MissionCommandUIInfo::_loadErrorString(const QString& errorString) const
 {
-    return QString("%1 %2").arg(_infoValue(_rawNameJsonKey).toString()).arg(errorString);
+    const QString rawName = _infoValue(_rawNameJsonKey).toString();
+    if (!rawName.isEmpty()) {
+        return QStringLiteral("%1 %2").arg(rawName, errorString);
+    }
+    // Override entries have no rawName, so fall back to the command id
+    if (_commandIdLoaded) {
+        return QStringLiteral("MAV_CMD(%1) %2").arg(QString::number(static_cast<int>(_command)), errorString);
+    }
+    return errorString;
 }
 
 bool MissionCommandUIInfo::loadJsonInfo(const QJsonObject& jsonObject, bool requireFullObject, QString& errorString)
 {
     QString internalError;
+
+    const QJsonValue idValue = jsonObject.value(_idJsonKey);
+    _command = static_cast<MAV_CMD>(idValue.toInt());
+    _commandIdLoaded = idValue.toInt(-1) >= 0;
 
     QStringList allKeys;
     allKeys << _idJsonKey << _rawNameJsonKey << _friendlyNameJsonKey << _descriptionJsonKey << _standaloneCoordinateJsonKey << _specifiesCoordinateJsonKey
@@ -241,8 +253,6 @@ bool MissionCommandUIInfo::loadJsonInfo(const QJsonObject& jsonObject, bool requ
     }
 
     // Read in top level values
-
-    _command = (MAV_CMD)jsonObject.value(_idJsonKey).toInt();
 
     if (jsonObject.contains(_categoryJsonKey)) {
         _infoMap[_categoryJsonKey] = jsonObject.value(_categoryJsonKey).toVariant();
