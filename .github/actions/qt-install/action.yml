@@ -80,7 +80,7 @@ runs:
     - name: Restore Qt cache
       id: qt-cache
       if: steps.qt-preinstalled.outputs.available != 'true'
-      uses: actions/cache/restore@v5
+      uses: actions/cache/restore@v6
       continue-on-error: true
       with:
         path: ${{ steps.qt-meta.outputs.cache_dir }}/Qt/${{ inputs.version }}/${{ steps.qt-meta.outputs.arch_dir }}
@@ -118,7 +118,7 @@ runs:
         steps.qt-cache.outputs.cache-hit != 'true' &&
         inputs.target != 'ios' &&
         (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
-      uses: actions/cache/restore@v5
+      uses: actions/cache/restore@v6
       continue-on-error: true
       with:
         path: ${{ steps.qt-meta.outputs.cache_dir }}/Qt/${{ inputs.version }}/${{ steps.qt-meta.outputs.arch_dir }}
@@ -132,7 +132,7 @@ runs:
         steps.qt-presave.outputs.cache-hit != 'true' &&
         inputs.target != 'ios' &&
         (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
-      uses: actions/cache/save@v5
+      uses: actions/cache/save@v6
       with:
         path: ${{ steps.qt-meta.outputs.cache_dir }}/Qt/${{ inputs.version }}/${{ steps.qt-meta.outputs.arch_dir }}
         key: ${{ steps.qt-cache.outputs.cache-primary-key }}

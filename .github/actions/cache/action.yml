@@ -222,7 +222,7 @@ runs:
     # redirects these actions to S3 and keeps using its existing storage route.
     - name: Restore Build Cache (ccache)
       if: steps.artifact-cache.outputs.restored != 'true'
-      uses: actions/cache/restore@v5
+      uses: actions/cache/restore@v6
       with:
         path: .ccache
         key: ${{ steps.cache-keys.outputs.ccache_key }}-${{ github.run_id }}-${{ github.run_attempt }}
@@ -252,7 +252,7 @@ runs:
     # MOCCACHE_MAX_SIZE (set by the launcher) bounds growth via LRU trim.
     - name: Restore moc output (moccache)
       if: steps.artifact-cache.outputs.restored != 'true'
-      uses: actions/cache/restore@v5
+      uses: actions/cache/restore@v6
       with:
         path: .cache/moccache
         key: ${{ steps.cache-keys.outputs.moccache_key }}-${{ github.run_id }}-${{ github.run_attempt }}
@@ -288,14 +288,14 @@ runs:
     # Keep them out of the CPM archive and reuse an immutable SDK archive.
     - name: Cache GStreamer SDK (restore and save)
       if: inputs.cpm-modules != '' && steps.cache-policy.outputs.save == 'true' && inputs.build-type == 'Release'
-      uses: actions/cache@v5
+      uses: actions/cache@v6
       with:
         path: ${{ env.CPM_CACHE_PATH }}/gstreamer*
         key: gst-sdk-v1-${{ inputs.host }}-${{ inputs.target }}-${{ hashFiles('.github/build-config.json', 'cmake/GStreamer/**/*.cmake') }}
 
     - name: Cache GStreamer SDK (restore only)
       if: inputs.cpm-modules != '' && (steps.cache-policy.outputs.save != 'true' || inputs.build-type != 'Release')
-      uses: actions/cache/restore@v5
+      uses: actions/cache/restore@v6
       with:
         path: ${{ env.CPM_CACHE_PATH }}/gstreamer*
         key: gst-sdk-v1-${{ inputs.host }}-${{ inputs.target }}-${{ hashFiles('.github/build-config.json', 'cmake/GStreamer/**/*.cmake') }}
@@ -304,7 +304,7 @@ runs:
     # restore the ordinary platform sources when their custom cache is absent.
     - name: Cache CPM Modules (restore and save)
       if: inputs.cpm-modules != '' && steps.cache-policy.outputs.save == 'true' && inputs.build-type == 'Release'
-      uses: actions/cache@v5
+      uses: actions/cache@v6
       with:
         # Nested composite step outputs are unavailable during post-job saves.
         path: |
@@ -319,7 +319,7 @@ runs:
 
     - name: Cache CPM Modules (restore only)
       if: inputs.cpm-modules != '' && (steps.cache-policy.outputs.save != 'true' || inputs.build-type != 'Release')
-      uses: actions/cache/restore@v5
+      uses: actions/cache/restore@v6
       with:
         path: |
           ${{ env.CPM_CACHE_PATH }}/*
