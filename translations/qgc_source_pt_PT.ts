@@ -1562,7 +1562,7 @@
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="679"/>
       <source>Error during Solo video link setup: %1</source>
-      <translation>Erro durante a configuração da ligação de vídeo do Solo</translation>
+      <translation>Erro durante a configuração da ligação de vídeo do Solo: %1</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="849"/>
@@ -7187,7 +7187,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="310"/>
       <source>  Board ID: %1</source>
-      <translation>Identificador Placa:</translation>
+      <translation>  Identificador da Placa: %1</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="311"/>
