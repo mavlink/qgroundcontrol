@@ -16,7 +16,6 @@ Item {
 
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
     property bool   _communicationLost: _activeVehicle ? _activeVehicle.vehicleLinkManager.communicationLost : false
-    property color  _mainStatusBGColor: qgcPal.brandPrimary
     property real   _leftRightMargin:   ScreenTools.defaultFontPixelWidth * 0.75
     property var    _guidedController:  globals.guidedControllerFlyView
 
@@ -26,139 +25,173 @@ Item {
 
     QGCPalette { id: qgcPal }
 
+    // ---------------------------------------------------------------------
+    // ATLAS toolbar background
+    // Blue -> dark -> orange
+    // ---------------------------------------------------------------------
+    Rectangle {
+        anchors.fill: parent
+        z: -1
+
+        gradient: Gradient {
+            orientation: Gradient.Horizontal
+
+            GradientStop {
+                position: 0.00
+                color: "#5793BC"
+            }
+
+            GradientStop {
+                position: 0.32
+                color: "#263640"
+            }
+
+            GradientStop {
+                position: 0.50
+                color: "#101112"
+            }
+
+            GradientStop {
+                position: 0.58
+                color: "#0C0C0C"
+            }
+
+            GradientStop {
+                position: 0.72
+                color: "#54340E"
+            }
+
+            GradientStop {
+                position: 1.00
+                color: "#F28A08"
+            }
+        }
+    }
+
     QGCFlickable {
         anchors.fill:       parent
         contentWidth:       toolBarLayout.width
         flickableDirection: Flickable.HorizontalFlick
 
         Row {
-            id:         toolBarLayout
-            height:     parent.height
-            spacing:    0
+            id:      toolBarLayout
+            height:  parent.height
+            spacing: 0
 
+            // -----------------------------------------------------------------
+            // LEFT
+            // -----------------------------------------------------------------
             Item {
                 id:     leftPanel
                 width:  leftPanelLayout.implicitWidth
                 height: parent.height
 
-                // Gradient background behind Q button and main status indicator
                 Rectangle {
-                    id:         gradientBackground
-                    height:     parent.height
-                    width:      mainStatusLayout.width
-                    opacity:    qgcPal.windowTransparent.a
-
-                    gradient: Gradient {
-                        orientation: Gradient.Horizontal
-                        GradientStop { position: 0; color: _mainStatusBGColor }
-                        //GradientStop { position: qgcButton.x + qgcButton.width; color: _mainStatusBGColor }
-                        GradientStop { position: 1; color: qgcPal.window }
-                    }
-                }
-
-                // Standard toolbar background to the right of the gradient
-                Rectangle {
-                    anchors.left:   gradientBackground.right
-                    anchors.right:  parent.right
-                    height:         parent.height
-                    color:          qgcPal.windowTransparent
+                    anchors.fill: parent
+                    color: "transparent"
                 }
 
                 RowLayout {
-                    id:         leftPanelLayout
-                    height:     parent.height
-                    spacing:    ScreenTools.defaultFontPixelWidth * 2
+                    id:      leftPanelLayout
+                    height:  parent.height
+                    spacing: ScreenTools.defaultFontPixelWidth * 2
 
-                RowLayout {
-                    id:         mainStatusLayout
-                    height:     parent.height
-                    spacing:    0
+                    RowLayout {
+                        id:      mainStatusLayout
+                        height:  parent.height
+                        spacing: 0
 
+                        Item {
+                            id:                 atlasLogoButton
+                            objectName:         "toolbar_atlasLogo"
+                            Layout.fillHeight:  true
+                            Layout.preferredWidth: 150
 
-                    Item {
-                        id:                 atlasLogoButton
-                        objectName:         "toolbar_atlasLogo"
-                        Layout.fillHeight:  true
-                        Layout.preferredWidth: 180
+                            Image {
+                                anchors.fill: parent
+                                anchors.leftMargin:   10
+                                anchors.rightMargin:  10
+                                anchors.topMargin:    5
+                                anchors.bottomMargin: 5
 
-                        Image {
-                            anchors.fill: parent
-                            anchors.leftMargin: 10
-                            anchors.rightMargin: 10
-                            anchors.topMargin: 5
-                            anchors.bottomMargin: 5
+                                source: "qrc:/atlas/atlas_logo_white.svg"
 
-                            source: "qrc:/atlas/atlas_logo_white.svg"
+                                fillMode: Image.PreserveAspectFit
+                                smooth: true
+                                asynchronous: true
+                            }
 
-                            fillMode: Image.PreserveAspectFit
-                            smooth: true
-                            asynchronous: true
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: mainWindow.showToolSelectDialog()
+                            }
                         }
 
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: mainWindow.showToolSelectDialog()
+                        // Mantemos o objeto porque outras partes do QGC
+                        // ainda o referenciam, mas não o mostramos.
+                        MainStatusIndicator {
+                            id:                 mainStatusIndicator
+                            objectName:         "toolbar_mainStatusIndicator"
+                            Layout.fillHeight:  true
+                            visible:            false
                         }
                     }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: mainWindow.showToolSelectDialog()
-                        }
-
-
-                    MainStatusIndicator {
-                        id:                 mainStatusIndicator
-                        objectName:         "toolbar_mainStatusIndicator"
-                        Layout.fillHeight:  true
-                    }
-                }
 
                     QGCButton {
-                        id:         disconnectButton
-                        text:       qsTr("Disconnect")
-                        onClicked:  _activeVehicle.closeVehicle()
-                        visible:    _activeVehicle && _communicationLost
+                        id:        disconnectButton
+                        text:      qsTr("Disconnect")
+                        onClicked: _activeVehicle.closeVehicle()
+                        visible:   _activeVehicle && _communicationLost
                     }
 
                     FlightModeIndicator {
-                        objectName:         "toolbar_flightModeIndicator"
-                        Layout.fillHeight:  true
-                        visible:            _activeVehicle
+                        objectName:        "toolbar_flightModeIndicator"
+                        Layout.fillHeight: true
+                        visible:           _activeVehicle
                     }
                 }
             }
+
+            // -----------------------------------------------------------------
+            // CENTER
+            // -----------------------------------------------------------------
             Item {
-                id:     centerPanel
-                // center panel takes up all remaining space in toolbar between left and right panels
-                width:  Math.max(guidedActionConfirm.visible ? guidedActionConfirm.width : 0, control.width - (leftPanel.width + rightPanel.width))
+                id: centerPanel
+
+                width: Math.max(
+                    guidedActionConfirm.visible ? guidedActionConfirm.width : 0,
+                    control.width - (leftPanel.width + rightPanel.width)
+                )
+
                 height: parent.height
 
                 Rectangle {
-                    anchors.fill:   parent
-                    color:          qgcPal.windowTransparent
+                    anchors.fill: parent
+                    color: "transparent"
                 }
 
                 GuidedActionConfirm {
-                    id:                         guidedActionConfirm
-                    height:                     parent.height
-                    anchors.horizontalCenter:   parent.horizontalCenter
-                    guidedController:           control._guidedController
-                    guidedValueSlider:          control.guidedValueSlider
-                    messageDisplay:             guidedActionMessageDisplay
+                    id:                       guidedActionConfirm
+                    height:                   parent.height
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    guidedController:         control._guidedController
+                    guidedValueSlider:        control.guidedValueSlider
+                    messageDisplay:           guidedActionMessageDisplay
                 }
             }
 
+            // -----------------------------------------------------------------
+            // RIGHT
+            // -----------------------------------------------------------------
             Item {
                 id:     rightPanel
                 width:  flyViewIndicators.width
                 height: parent.height
 
                 Rectangle {
-                    anchors.fill:   parent
-                    color:          qgcPal.windowTransparent
+                    anchors.fill: parent
+                    color: "transparent"
                 }
 
                 FlyViewToolBarIndicators {
@@ -169,8 +202,9 @@ Item {
         }
     }
 
-    // The guided action message display is outside of the GuidedActionConfirm control so that it doesn't end up as
-    // part of the Flickable
+    // ---------------------------------------------------------------------
+    // Guided action message
+    // ---------------------------------------------------------------------
     Rectangle {
         id:                         guidedActionMessageDisplay
         anchors.top:                control.bottom
@@ -183,27 +217,27 @@ Item {
         visible:                    guidedActionConfirm.visible
 
         QGCLabel {
-            id:         messageLabel
-            x:          _margins
-            y:          _margins
-            width:      ScreenTools.defaultFontPixelWidth * 30
-            wrapMode:   Text.WordWrap
-            text:       guidedActionConfirm.message
+            id:       messageLabel
+            x:        _margins
+            y:        _margins
+            width:    ScreenTools.defaultFontPixelWidth * 30
+            wrapMode: Text.WordWrap
+            text:     guidedActionConfirm.message
         }
 
         PropertyAnimation {
-            id:         messageOpacityAnimation
-            target:     guidedActionMessageDisplay
-            property:   "opacity"
-            from:       1
-            to:         0
-            duration:   500
+            id:       messageOpacityAnimation
+            target:   guidedActionMessageDisplay
+            property: "opacity"
+            from:     1
+            to:       0
+            duration: 500
         }
 
         Timer {
-            id:             messageFadeTimer
-            interval:       4000
-            onTriggered:    messageOpacityAnimation.start()
+            id:          messageFadeTimer
+            interval:    4000
+            onTriggered: messageOpacityAnimation.start()
         }
     }
 
