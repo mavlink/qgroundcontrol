@@ -270,7 +270,7 @@ function(_qgc_download_ios_ca_bundle)
     qgc_resilient_download(
         FILENAME        ca-certificates.crt
         DESTINATION_DIR "${_ca_dir}"
-        URLS            "https://curl.se/ca/cacert.pem"
+        URLS            "https://curl.se/ca/cacert-2026-08-13.pem"
         RESULT_VAR      _ca_path
         LOG_TAG         "iOS CA bundle"
         FAILURE_HINT    "Network is required at first iOS configure to fetch the Mozilla CA bundle from curl.se."
