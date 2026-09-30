@@ -12835,7 +12835,7 @@ VTOL</translation>
     <message>
       <location filename="../src/PlanView/MissionItemEditor.qml" line="295"/>
       <source>Item #%1</source>
-      <translation>항목 1</translation>
+      <translation>항목 #%1</translation>
     </message>
   </context>
   <context>
@@ -14165,7 +14165,7 @@ Is this really what you want?</translation>
     <message>
       <location filename="../src/QmlControls/PIDTuning.qml" line="334"/>
       <source>Switches to &apos;%1&apos; when you click Stop.</source>
-      <translation>중지를 클릭하면 '% 1'(으)로 전환합니다. </translation>
+      <translation>중지를 클릭하면 '%1'(으)로 전환합니다. </translation>
     </message>
     <message>
       <location filename="../src/QmlControls/PIDTuning.qml" line="350"/>
@@ -16370,7 +16370,7 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/MissionManager/PlanMasterController.cc" line="691"/>
       <source>Plan Files (*.%1)</source>
-      <translation>계획 파일 (*.*)</translation>
+      <translation>계획 파일 (*.%1)</translation>
     </message>
   </context>
   <context>
@@ -16629,7 +16629,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
       <location filename="../src/PlanView/PlanView.qml" line="90"/>
       <location filename="../src/PlanView/PlanView.qml" line="95"/>
       <source>Unable to %1</source>
-      <translation>라이딩 종료 불가</translation>
+      <translation>%1 불가</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="90"/>
@@ -17047,7 +17047,7 @@ sudo apt-get remove modemmanager</translation>
     <message>
       <location filename="../src/QmlControls/QGCFileDialog.qml" line="178"/>
       <source>Path: %1</source>
-      <translation>경로: %@</translation>
+      <translation>경로: %1</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCFileDialog.qml" line="209"/>
