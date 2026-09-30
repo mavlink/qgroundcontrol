@@ -69,26 +69,52 @@ Item {
                     height:     parent.height
                     spacing:    ScreenTools.defaultFontPixelWidth * 2
 
-                    RowLayout {
-                        id:         mainStatusLayout
-                        height:     parent.height
-                        spacing:    0
+                RowLayout {
+                    id:         mainStatusLayout
+                    height:     parent.height
+                    spacing:    0
 
-                        QGCToolBarButton {
-                            id:                 qgcButton
-                            objectName:         "toolbar_qgcLogo"
-                            Layout.fillHeight:  true
-                            icon.source:        "/res/QGCLogoFull.svg"
-                            logo:               true
-                            onClicked:          mainWindow.showToolSelectDialog()
+
+                    Item {
+                        id:                 atlasLogoButton
+                        objectName:         "toolbar_atlasLogo"
+                        Layout.fillHeight:  true
+                        Layout.preferredWidth: 180
+
+                        Image {
+                            anchors.fill: parent
+                            anchors.leftMargin: 10
+                            anchors.rightMargin: 10
+                            anchors.topMargin: 5
+                            anchors.bottomMargin: 5
+
+                            source: "qrc:/atlas/atlas_logo_white.svg"
+
+                            fillMode: Image.PreserveAspectFit
+                            smooth: true
+                            asynchronous: true
                         }
 
-                        MainStatusIndicator {
-                            id:                 mainStatusIndicator
-                            objectName:         "toolbar_mainStatusIndicator"
-                            Layout.fillHeight:  true
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: mainWindow.showToolSelectDialog()
                         }
                     }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: mainWindow.showToolSelectDialog()
+                        }
+
+
+                    MainStatusIndicator {
+                        id:                 mainStatusIndicator
+                        objectName:         "toolbar_mainStatusIndicator"
+                        Layout.fillHeight:  true
+                    }
+                }
 
                     QGCButton {
                         id:         disconnectButton
