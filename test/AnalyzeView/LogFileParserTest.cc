@@ -126,6 +126,111 @@ void LogFileParserTest::_parseULogNumericTopicTest()
     QVERIFY(qAbs(samples[1].toPointF().y() - 0.2) < 1e-5);
 }
 
+void LogFileParserTest::_parseULogArrayFieldTest()
+{
+    const auto makePayload = [](uint64_t ts, float c0, float c1, float c2) {
+        std::vector<uint8_t> buf(8 + 3 * sizeof(float));
+        const float control[3] = {c0, c1, c2};
+        memcpy(buf.data(), &ts, 8);
+        memcpy(buf.data() + 8, control, sizeof(control));
+        return buf;
+    };
+
+    const QByteArray bytes = buildULog(
+        [](ulog_cpp::Writer& w) {
+            w.messageFormat(ulog_cpp::MessageFormat{
+                "actuator_motors", {ulog_cpp::Field{"uint64_t", "timestamp"}, ulog_cpp::Field{"float", "control", 3}}});
+        },
+        [&makePayload](ulog_cpp::Writer& w) {
+            w.addLoggedMessage(ulog_cpp::AddLoggedMessage{0, 1, "actuator_motors"});
+            w.data(ulog_cpp::Data{1, makePayload(500000ULL, 0.1f, 0.2f, 0.3f)});
+            w.data(ulog_cpp::Data{1, makePayload(1000000ULL, 0.4f, 0.5f, 0.6f)});
+        });
+
+    QTemporaryFile tmp;
+    tmp.setFileTemplate(QDir::tempPath() + QStringLiteral("/logtest_XXXXXX.ulg"));
+    QVERIFY(writeTempFile(tmp, bytes));
+
+    LogFileParser parser;
+    QVERIFY(parser.parseFile(tmp.fileName()));
+    QVERIFY(parser.parseComplete());
+
+    const QStringList expectedFields = {
+        QStringLiteral("actuator_motors.control[0]"),
+        QStringLiteral("actuator_motors.control[1]"),
+        QStringLiteral("actuator_motors.control[2]"),
+    };
+    QCOMPARE(parser.plottableFields(), expectedFields);
+
+    const QVariantList samples = parser.fieldSamples(QStringLiteral("actuator_motors.control[2]"));
+    QCOMPARE(samples.size(), 2);
+    QVERIFY(qAbs(samples[0].toPointF().x() - 0.5) < 1e-5);
+    QVERIFY(qAbs(samples[0].toPointF().y() - 0.3) < 1e-5);
+    QVERIFY(qAbs(samples[1].toPointF().x() - 1.0) < 1e-5);
+    QVERIFY(qAbs(samples[1].toPointF().y() - 0.6) < 1e-5);
+}
+
+void LogFileParserTest::_parseULogNestedArrayFieldTest()
+{
+    // esc_status { uint64 timestamp; uint8 esc_count; esc_report esc[2] }
+    // esc_report { int32 esc_rpm; float esc_voltage }
+    const auto makePayload = [](uint64_t ts, int32_t rpm0, float volt0, int32_t rpm1, float volt1) {
+        std::vector<uint8_t> buf;
+        const auto append = [&buf](const auto& value) {
+            const auto* bytes = reinterpret_cast<const uint8_t*>(&value);
+            buf.insert(buf.end(), bytes, bytes + sizeof(value));
+        };
+        const uint8_t escCount = 2;
+        append(ts);
+        append(escCount);
+        append(rpm0);
+        append(volt0);
+        append(rpm1);
+        append(volt1);
+        return buf;
+    };
+
+    const QByteArray bytes = buildULog(
+        [](ulog_cpp::Writer& w) {
+            w.messageFormat(ulog_cpp::MessageFormat{
+                "esc_report", {ulog_cpp::Field{"int32_t", "esc_rpm"}, ulog_cpp::Field{"float", "esc_voltage"}}});
+            w.messageFormat(ulog_cpp::MessageFormat{
+                "esc_status",
+                {ulog_cpp::Field{"uint64_t", "timestamp"}, ulog_cpp::Field{"uint8_t", "esc_count"},
+                 ulog_cpp::Field{"esc_report", "esc", 2}}});
+        },
+        [&makePayload](ulog_cpp::Writer& w) {
+            w.addLoggedMessage(ulog_cpp::AddLoggedMessage{0, 1, "esc_status"});
+            w.data(ulog_cpp::Data{1, makePayload(500000ULL, 1000, 15.1f, 1100, 15.2f)});
+            w.data(ulog_cpp::Data{1, makePayload(1000000ULL, 2000, 14.9f, 2100, 14.8f)});
+        });
+
+    QTemporaryFile tmp;
+    tmp.setFileTemplate(QDir::tempPath() + QStringLiteral("/logtest_XXXXXX.ulg"));
+    QVERIFY(writeTempFile(tmp, bytes));
+
+    LogFileParser parser;
+    QVERIFY(parser.parseFile(tmp.fileName()));
+    QVERIFY(parser.parseComplete());
+
+    const QStringList expectedFields = {
+        QStringLiteral("esc_status.esc[0].esc_rpm"), QStringLiteral("esc_status.esc[0].esc_voltage"),
+        QStringLiteral("esc_status.esc[1].esc_rpm"), QStringLiteral("esc_status.esc[1].esc_voltage"),
+        QStringLiteral("esc_status.esc_count"),
+    };
+    QCOMPARE(parser.plottableFields(), expectedFields);
+
+    const QVariantList rpm1 = parser.fieldSamples(QStringLiteral("esc_status.esc[1].esc_rpm"));
+    QCOMPARE(rpm1.size(), 2);
+    QVERIFY(qAbs(rpm1[0].toPointF().y() - 1100.0) < 1e-5);
+    QVERIFY(qAbs(rpm1[1].toPointF().y() - 2100.0) < 1e-5);
+
+    const QVariantList volt0 = parser.fieldSamples(QStringLiteral("esc_status.esc[0].esc_voltage"));
+    QCOMPARE(volt0.size(), 2);
+    QVERIFY(qAbs(volt0[0].toPointF().y() - 15.1) < 1e-5);
+    QVERIFY(qAbs(volt0[1].toPointF().y() - 14.9) < 1e-5);
+}
+
 void LogFileParserTest::_parseULogParameterTest()
 {
     const QByteArray bytes = buildULog(

@@ -326,10 +326,12 @@ ApplicationWindow {
         color:          QGroundControl.globalPalette.window
     }
 
+    // Disabled under the tool drawer: pointer handlers (e.g. GeoMap DragHandler) still get presses through it and steal drags
     FlyView {
         id:                     flyView
         objectName:             "mainView_fly"
         anchors.fill:           parent
+        enabled:                !toolDrawer.visible
     }
 
     PlanView {
@@ -337,6 +339,7 @@ ApplicationWindow {
         objectName:     "mainView_plan"
         anchors.fill:   parent
         visible:        false
+        enabled:        !toolDrawer.visible
     }
 
     footer: LogReplayStatusBar {

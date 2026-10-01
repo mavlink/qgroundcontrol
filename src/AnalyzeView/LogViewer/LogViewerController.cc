@@ -7,6 +7,48 @@
 
 QGC_LOGGING_CATEGORY(LogViewerControllerLog, "AnalyzeView.LogViewerController")
 
+namespace {
+
+// Compares digit runs by numeric value so "control[2]" sorts before "control[10]"
+bool _naturalLess(const QString& a, const QString& b)
+{
+    const auto isDigit = [](QChar c) { return (c >= QLatin1Char('0')) && (c <= QLatin1Char('9')); };
+
+    qsizetype i = 0;
+    qsizetype j = 0;
+    while ((i < a.size()) && (j < b.size())) {
+        if (isDigit(a[i]) && isDigit(b[j])) {
+            const qsizetype aStart = i;
+            const qsizetype bStart = j;
+            while ((i < a.size()) && isDigit(a[i])) {
+                i++;
+            }
+            while ((j < b.size()) && isDigit(b[j])) {
+                j++;
+            }
+            const QStringView aNumber = QStringView(a).sliced(aStart, i - aStart);
+            const QStringView bNumber = QStringView(b).sliced(bStart, j - bStart);
+            if (aNumber.size() != bNumber.size()) {
+                return aNumber.size() < bNumber.size();
+            }
+            const int numberCompare = aNumber.compare(bNumber);
+            if (numberCompare != 0) {
+                return numberCompare < 0;
+            }
+            continue;
+        }
+        if (a[i] != b[j]) {
+            return a[i] < b[j];
+        }
+        i++;
+        j++;
+    }
+
+    return (a.size() - i) < (b.size() - j);
+}
+
+}  // namespace
+
 LogViewerController::LogViewerController(QObject *parent)
     : QObject(parent)
 {
@@ -24,6 +66,7 @@ void LogViewerController::clear()
     _fieldRows.clear();
     _selectedFields.clear();
     _expandedGroups.clear();
+    emit plottableFieldsChanged();
     emit fieldRowsChanged();
     emit selectedFieldsChanged();
     _setLog(SourceType::None, QString());
@@ -47,7 +90,8 @@ void LogViewerController::openULogFile(const QString &path)
 void LogViewerController::setPlottableFields(const QStringList &fieldNames)
 {
     _plottableFields = fieldNames;
-    std::sort(_plottableFields.begin(), _plottableFields.end());
+    std::sort(_plottableFields.begin(), _plottableFields.end(), _naturalLess);
+    emit plottableFieldsChanged();
     _selectedFields.clear();
     emit selectedFieldsChanged();
     _rebuildFieldRows();
@@ -153,7 +197,7 @@ void LogViewerController::_rebuildFieldRows()
         groupedMap[groupName].append(shortName);
     }
 
-    std::sort(groups.begin(), groups.end());
+    std::sort(groups.begin(), groups.end(), _naturalLess);
 
     QVariantList rows;
     for (const QString &groupName : groups) {
@@ -167,7 +211,7 @@ void LogViewerController::_rebuildFieldRows()
         }
 
         QStringList fieldNames = groupedMap.value(groupName);
-        std::sort(fieldNames.begin(), fieldNames.end());
+        std::sort(fieldNames.begin(), fieldNames.end(), _naturalLess);
         for (const QString &shortName : fieldNames) {
             QVariantMap fieldRow;
             fieldRow[QStringLiteral("rowType")] = QStringLiteral("field");

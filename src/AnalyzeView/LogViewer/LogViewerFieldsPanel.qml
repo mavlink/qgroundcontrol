@@ -57,7 +57,7 @@ Rectangle {
         }
 
         const groupedMap = {}
-        const fields = logParser.plottableFields
+        const fields = logViewerController.plottableFields
         for (let i = 0; i < fields.length; i++) {
             const fullName = String(fields[i])
             const splitIndex = fullName.indexOf(".")
@@ -73,12 +73,12 @@ Rectangle {
             groupedMap[groupName].push({ fullName: fullName, shortName: shortName })
         }
 
-        const groups = Object.keys(groupedMap).sort()
+        // Insertion order follows the controller's numeric-aware field order
+        const groups = Object.keys(groupedMap)
         const rows = []
         for (let g = 0; g < groups.length; g++) {
             const groupName = groups[g]
             rows.push({ rowType: "group", group: groupName })
-            groupedMap[groupName].sort((a, b) => String(a.shortName).localeCompare(String(b.shortName)))
             for (let s = 0; s < groupedMap[groupName].length; s++) {
                 rows.push({
                     rowType: "field",

@@ -212,9 +212,7 @@ ColumnLayout {
             } else {
                 series = _lineSeriesComponent.createObject(_base.graphsView, {
                     color: fieldColor(fieldName),
-                    width: 2,
-                    axisX: _base.xAxis,
-                    axisY: _base.yAxis
+                    width: 2
                 })
                 _base.graphsView.addSeries(series)
                 _seriesByField[fieldName] = series
@@ -274,9 +272,7 @@ ColumnLayout {
             if (ev.time < _base.xAxis.min || ev.time > _base.xAxis.max) continue
             if (!_eventSeriesByType[ev.type]) {
                 const eventSeries = _scatterSeriesComponent.createObject(_base.graphsView, {
-                    color: eventColor(ev.type),
-                    axisX: _base.xAxis,
-                    axisY: _base.yAxis
+                    color: eventColor(ev.type)
                 })
                 _base.graphsView.addSeries(eventSeries)
                 _eventSeriesByType[ev.type] = eventSeries

@@ -47,6 +47,12 @@ public:
     void finalize();
 
 private:
+    // Flattens arrays to "name[i]" and nested structs to "name.sub" so each numeric element is a signal
+    void _collectFieldSamples(const QString& fieldName, const ulog_cpp::Field& field, const ulog_cpp::Value& value,
+                              double timestampSecs);
+    void _collectElementSamples(const QString& fieldName, const ulog_cpp::Field& field, const ulog_cpp::Value& value,
+                                double timestampSecs);
+
     LogParseResult &_result;
 
     struct SubscriptionInfo {
