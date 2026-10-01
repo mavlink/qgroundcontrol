@@ -21,6 +21,7 @@ Item {
     // ---------------------------------------------------------------------
     // Menu comum aos quatro indicadores
     // ---------------------------------------------------------------------
+
     Menu {
         id: statusMenu
 
@@ -48,37 +49,46 @@ Item {
         }
     }
 
+
     Row {
         id: mainLayout
 
-        anchors.top:          parent.top
-        anchors.bottom:       parent.bottom
-        anchors.right:        parent.right
-        anchors.rightMargin:  _margin
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        anchors.right: parent.right
+        anchors.rightMargin: _margin
 
         spacing: ScreenTools.defaultFontPixelWidth * 2
 
+
         // ================================================================
         // JETSON
+        //
+        // Estado REAL da ligação TCP AtlasJetsonClient.
         // ================================================================
+
         Item {
-            width:  jetsonRow.implicitWidth
+            width: jetsonRow.implicitWidth
             height: parent.height
 
             Row {
                 id: jetsonRow
+
                 anchors.centerIn: parent
 
                 spacing: ScreenTools.defaultFontPixelWidth * 0.6
 
                 Rectangle {
-                    width:  _dotSize
+                    width: _dotSize
                     height: _dotSize
                     radius: width / 2
 
-                    color: "#808080"
-
                     anchors.verticalCenter: parent.verticalCenter
+
+                    color:
+                        atlasJetsonClient.connected
+                        ? "#39D353"
+                        : "#808080"
                 }
 
                 QGCLabel {
@@ -91,32 +101,47 @@ Item {
 
             MouseArea {
                 anchors.fill: parent
+
                 cursorShape: Qt.PointingHandCursor
 
                 onClicked: {
                     statusMenu.statusTitle = "JETSON"
-                    statusMenu.statusText  = "Status: Not connected"
-                    statusMenu.extraText   = "AI / video processing / SIYI control"
+
+                    statusMenu.statusText =
+                        atlasJetsonClient.connected
+                        ? "Status: Connected"
+                        : "Status: Not connected"
+
+                    statusMenu.extraText =
+                        atlasJetsonClient.connected
+                        ? "ATLAS service reachable via TCP"
+                        : "AI / video processing / SIYI control"
+
                     statusMenu.popup()
                 }
             }
         }
 
+
         // ================================================================
         // HM30
+        //
+        // Ainda MOCK.
         // ================================================================
+
         Item {
-            width:  hm30Row.implicitWidth
+            width: hm30Row.implicitWidth
             height: parent.height
 
             Row {
                 id: hm30Row
+
                 anchors.centerIn: parent
 
                 spacing: ScreenTools.defaultFontPixelWidth * 0.6
 
                 Rectangle {
-                    width:  _dotSize
+                    width: _dotSize
                     height: _dotSize
                     radius: width / 2
 
@@ -135,32 +160,39 @@ Item {
 
             MouseArea {
                 anchors.fill: parent
+
                 cursorShape: Qt.PointingHandCursor
 
                 onClicked: {
                     statusMenu.statusTitle = "HM30"
-                    statusMenu.statusText  = "Status: Not connected"
-                    statusMenu.extraText   = "Air-ground data link"
+                    statusMenu.statusText = "Status: Not connected"
+                    statusMenu.extraText = "Air-ground data link"
+
                     statusMenu.popup()
                 }
             }
         }
 
+
         // ================================================================
         // A8 MINI
+        //
+        // Ainda MOCK.
         // ================================================================
+
         Item {
-            width:  a8Row.implicitWidth
+            width: a8Row.implicitWidth
             height: parent.height
 
             Row {
                 id: a8Row
+
                 anchors.centerIn: parent
 
                 spacing: ScreenTools.defaultFontPixelWidth * 0.6
 
                 Rectangle {
-                    width:  _dotSize
+                    width: _dotSize
                     height: _dotSize
                     radius: width / 2
 
@@ -179,32 +211,40 @@ Item {
 
             MouseArea {
                 anchors.fill: parent
+
                 cursorShape: Qt.PointingHandCursor
 
                 onClicked: {
                     statusMenu.statusTitle = "SIYI A8 MINI"
-                    statusMenu.statusText  = "Status: Not connected"
-                    statusMenu.extraText   = "Gimbal / zoom / recording control"
+                    statusMenu.statusText = "Status: Not connected"
+                    statusMenu.extraText =
+                        "Gimbal / zoom / recording control"
+
                     statusMenu.popup()
                 }
             }
         }
 
+
         // ================================================================
         // VIDEO
+        //
+        // Ainda MOCK.
         // ================================================================
+
         Item {
-            width:  videoRow.implicitWidth
+            width: videoRow.implicitWidth
             height: parent.height
 
             Row {
                 id: videoRow
+
                 anchors.centerIn: parent
 
                 spacing: ScreenTools.defaultFontPixelWidth * 0.6
 
                 Rectangle {
-                    width:  _dotSize
+                    width: _dotSize
                     height: _dotSize
                     radius: width / 2
 
@@ -223,12 +263,17 @@ Item {
 
             MouseArea {
                 anchors.fill: parent
+
                 cursorShape: Qt.PointingHandCursor
 
                 onClicked: {
                     statusMenu.statusTitle = "VIDEO"
-                    statusMenu.statusText  = "Status: Waiting for stream"
-                    statusMenu.extraText   = "Processed RTSP stream from Jetson"
+                    statusMenu.statusText =
+                        "Status: Waiting for stream"
+
+                    statusMenu.extraText =
+                        "Processed RTSP stream from Jetson"
+
                     statusMenu.popup()
                 }
             }
