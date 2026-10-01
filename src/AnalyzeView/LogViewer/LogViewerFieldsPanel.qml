@@ -124,7 +124,6 @@ Rectangle {
         id: _groupRowComponent
 
         Item {
-            width: _maxFieldRowWidth
             implicitWidth: _groupLayout.implicitWidth
             implicitHeight: _groupLayout.implicitHeight
 
@@ -162,7 +161,6 @@ Rectangle {
 
         QGCCheckBoxSlider {
             id: _fieldSlider
-            width: _maxFieldRowWidth
             checked: logViewerController.selectedFields.indexOf(rowData.fullName) !== -1
             text: rowData.shortName ? " " + String(rowData.shortName) : ""
             onClicked: logViewerController.setFieldSelected(rowData.fullName, checked)
@@ -261,12 +259,14 @@ Rectangle {
         QGCListView {
             id: _fieldsListView
             Layout.fillHeight: true
+            Layout.fillWidth: true
             Layout.preferredWidth: _maxFieldRowWidth + ScreenTools.defaultFontPixelWidth
             visible: _isFirmwareLog
             model: _filteredFieldRows
             spacing: ScreenTools.defaultFontPixelHeight * 0.25
 
             delegate: Loader {
+                width: _fieldsListView.width - ScreenTools.defaultFontPixelWidth
                 sourceComponent: modelData.rowType === "group" ? _groupRowComponent : _fieldRowComponent
                 property var rowData: modelData
             }

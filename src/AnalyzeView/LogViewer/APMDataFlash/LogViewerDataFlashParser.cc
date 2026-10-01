@@ -296,16 +296,24 @@ LogParseResult parseFile(const QString &filePath, const ProgressCallback &progre
     double modeSegmentStartSecs = -1.0;
     QString currentModeName;
 
+    const auto buildFieldNames = [](const APMDataFlashUtility::MessageFormat& fmt, const QString& prefix) {
+        QHash<QString, QString> perCol;
+        perCol.reserve(fmt.columns.size());
+        for (const QString& col : fmt.columns) {
+            if (fmt.instanceColumn.isEmpty() || (col != fmt.instanceColumn)) {
+                perCol.insert(col, prefix + col);
+            }
+        }
+        return perCol;
+    };
+
     QHash<uint8_t, QHash<QString, QString>> fieldNameByCol;
     fieldNameByCol.reserve(formats.size());
     for (auto fmtIt = formats.cbegin(); fmtIt != formats.cend(); ++fmtIt) {
         const APMDataFlashUtility::MessageFormat &fmt = fmtIt.value();
-        QHash<QString, QString> &perCol = fieldNameByCol[fmtIt.key()];
-        perCol.reserve(fmt.columns.size());
-        for (const QString &col : fmt.columns) {
-            perCol.insert(col, fmt.name + QLatin1Char('.') + col);
-        }
+        fieldNameByCol.insert(fmtIt.key(), buildFieldNames(fmt, fmt.name + QLatin1Char('.')));
     }
+    QHash<uint8_t, QHash<int, QHash<QString, QString>>> instanceFieldNameByCol;
 
     static const QString kPARM = QStringLiteral("PARM");
     static const QString kMSG  = QStringLiteral("MSG");
@@ -408,11 +416,21 @@ LogParseResult parseFile(const QString &filePath, const ProgressCallback &progre
 
         result.sampleCount++;
 
-        const QHash<QString, QString>& perCol = fieldNameByCol[msgType];
+        const QHash<QString, QString>* perCol = &fieldNameByCol[msgType];
+        if (!fmt.instanceColumn.isEmpty()) {
+            const int instance = values.value(fmt.instanceColumn).toInt();
+            QHash<int, QHash<QString, QString>>& byInstance = instanceFieldNameByCol[msgType];
+            auto instIt = byInstance.find(instance);
+            if (instIt == byInstance.end()) {
+                const QString prefix = QStringLiteral("%1[%2].").arg(fmt.name).arg(instance);
+                instIt = byInstance.insert(instance, buildFieldNames(fmt, prefix));
+            }
+            perCol = &instIt.value();
+        }
         const bool haveTimestamp = (timestampSecs >= 0.0);
         for (auto it = values.cbegin(); it != values.cend(); ++it) {
-            const auto nameIt = perCol.constFind(it.key());
-            if (nameIt == perCol.constEnd()) {
+            const auto nameIt = perCol->constFind(it.key());
+            if (nameIt == perCol->constEnd()) {
                 continue;
             }
             const QString& fieldName = nameIt.value();
@@ -435,6 +453,26 @@ LogParseResult parseFile(const QString &filePath, const ProgressCallback &progre
 
     if (cancelToken && cancelToken->load(std::memory_order_relaxed)) {
         return result; // cancelled; ok remains false
+    }
+
+    // Drop the instance index from message types that only logged a single instance
+    for (auto typeIt = instanceFieldNameByCol.cbegin(); typeIt != instanceFieldNameByCol.cend(); ++typeIt) {
+        if (typeIt.value().size() != 1) {
+            continue;
+        }
+        const QHash<QString, QString> plainNames = fieldNameByCol.value(typeIt.key());
+        const QHash<QString, QString> indexedNames = typeIt.value().cbegin().value();
+        for (auto colIt = indexedNames.cbegin(); colIt != indexedNames.cend(); ++colIt) {
+            const QString& indexedName = colIt.value();
+            const QString plainName = plainNames.value(colIt.key());
+            if (fieldSet.remove(indexedName)) {
+                fieldSet.insert(plainName);
+            }
+            if (plottableFieldSet.remove(indexedName)) {
+                plottableFieldSet.insert(plainName);
+                result.fieldSamples.insert(plainName, result.fieldSamples.take(indexedName));
+            }
+        }
     }
 
     if (hasOpenModeSegment && (maxTimestampSecs >= modeSegmentStartSecs)) {

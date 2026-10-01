@@ -302,6 +302,73 @@ void APMDataFlashUtilityTest::_testParseFmtMessages()
     QCOMPARE(formats[128].name, QStringLiteral("FMT"));
 }
 
+void APMDataFlashUtilityTest::_testParseFmtMessagesInstanceColumn()
+{
+    const auto appendFmt = [](QByteArray& data, uint8_t type, uint8_t length, const char* name, const char* format,
+                              const char* columns) {
+        QByteArray payload(86, '\0');
+        payload[0] = static_cast<char>(type);
+        payload[1] = static_cast<char>(length);
+        memcpy(payload.data() + 2, name, qMin<int>(4, static_cast<int>(strlen(name))));
+        memcpy(payload.data() + 6, format, qMin<int>(16, static_cast<int>(strlen(format))));
+        memcpy(payload.data() + 22, columns, qMin<int>(64, static_cast<int>(strlen(columns))));
+        data.append(static_cast<char>(0xA3));
+        data.append(static_cast<char>(0x95));
+        data.append(static_cast<char>(128));
+        data.append(payload);
+    };
+
+    QByteArray data;
+    appendFmt(data, 150, 16, "IMU", "QBf", "TimeUS,I,GyrX");
+    appendFmt(data, 151, 15, "ATT", "Qf", "TimeUS,Roll");
+    appendFmt(data, 177, 44, "FMTU", "QBNN", "TimeUS,FmtType,UnitIds,MultIds");
+
+    QByteArray fmtu(41, '\0');
+    fmtu[8] = static_cast<char>(150);
+    memcpy(fmtu.data() + 9, "s#E", 3);
+    memcpy(fmtu.data() + 25, "F-0", 3);
+    data.append(static_cast<char>(0xA3));
+    data.append(static_cast<char>(0x95));
+    data.append(static_cast<char>(177));
+    data.append(fmtu);
+
+    QMap<uint8_t, APMDataFlashUtility::MessageFormat> formats;
+    QVERIFY(APMDataFlashUtility::parseFmtMessages(data.constData(), data.size(), formats));
+    QCOMPARE(formats[150].instanceColumn, QStringLiteral("I"));
+    QVERIFY(formats[151].instanceColumn.isEmpty());
+}
+
+void APMDataFlashUtilityTest::_testParseFmtMessagesInvalidLength()
+{
+    QByteArray payload(86, '\0');
+    payload[0] = static_cast<char>(150);
+    payload[1] = 0;
+    memcpy(payload.data() + 2, "BAD", 3);
+    memcpy(payload.data() + 6, "Q", 1);
+    memcpy(payload.data() + 22, "TimeUS", 6);
+
+    QByteArray data;
+    data.append(static_cast<char>(0xA3));
+    data.append(static_cast<char>(0x95));
+    data.append(static_cast<char>(128));
+    data.append(payload);
+    // A record of the bad type must not make the parsers loop forever on its header
+    data.append(static_cast<char>(0xA3));
+    data.append(static_cast<char>(0x95));
+    data.append(static_cast<char>(150));
+
+    expectLogMessage("Utilities.APMDataFlashUtility", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^Ignoring FMT with invalid length:")));
+    QMap<uint8_t, APMDataFlashUtility::MessageFormat> formats;
+    QVERIFY(!APMDataFlashUtility::parseFmtMessages(data.constData(), data.size(), formats));
+    verifyExpectedLogMessage();
+    QVERIFY(!formats.contains(150));
+    QCOMPARE(APMDataFlashUtility::iterateMessages(
+                 data.constData(), data.size(), formats,
+                 [](uint8_t, const char*, int, const APMDataFlashUtility::MessageFormat&) { return true; }),
+             0);
+}
+
 // ============================================================================
 // Message Parsing Tests
 // ============================================================================
