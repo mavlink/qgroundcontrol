@@ -16,6 +16,7 @@ class LogViewerController : public QObject
     Q_PROPERTY(SourceType   sourceType     READ sourceType     NOTIFY sourceTypeChanged)
     Q_PROPERTY(QString      currentLogPath READ currentLogPath NOTIFY currentLogPathChanged)
     Q_PROPERTY(bool         hasLoadedLog   READ hasLoadedLog   NOTIFY currentLogPathChanged)
+    Q_PROPERTY(QStringList plottableFields READ plottableFields NOTIFY plottableFieldsChanged)
     Q_PROPERTY(QVariantList fieldRows      READ fieldRows      NOTIFY fieldRowsChanged)
     Q_PROPERTY(QStringList  selectedFields READ selectedFields NOTIFY selectedFieldsChanged)
 
@@ -34,6 +35,8 @@ public:
     SourceType sourceType() const { return _sourceType; }
     QString currentLogPath() const { return _currentLogPath; }
     bool hasLoadedLog() const { return !_currentLogPath.isEmpty(); }
+
+    QStringList plottableFields() const { return _plottableFields; }
     QVariantList fieldRows() const { return _fieldRows; }
     QStringList selectedFields() const { return _selectedFields; }
 
@@ -55,6 +58,7 @@ public:
 signals:
     void sourceTypeChanged();
     void currentLogPathChanged();
+    void plottableFieldsChanged();
     void fieldRowsChanged();
     void selectedFieldsChanged();
 

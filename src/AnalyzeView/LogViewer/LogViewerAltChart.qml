@@ -49,10 +49,7 @@ Item {
     }
 
     Component.onCompleted: {
-        _altSeries = _altSeriesComp.createObject(_base.graphsView, {
-            axisX: _base.xAxis,
-            axisY: _base.yAxis
-        })
+        _altSeries = _altSeriesComp.createObject(_base.graphsView)
         _base.graphsView.addSeries(_altSeries)
     }
 
@@ -177,4 +174,3 @@ Item {
         }
     }
 }
-
