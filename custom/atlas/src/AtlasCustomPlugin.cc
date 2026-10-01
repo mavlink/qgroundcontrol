@@ -5,6 +5,8 @@
 #include <QtQml/QQmlApplicationEngine>
 #include <QtQml/QQmlContext>
 
+#include "VideoManager.h"
+
 Q_APPLICATION_STATIC(
     AtlasCustomPlugin,
     _atlasCustomPluginInstance
@@ -39,6 +41,13 @@ QQmlApplicationEngine *AtlasCustomPlugin::createQmlApplicationEngine(
         ->setContextProperty(
             QStringLiteral("atlasJetsonClient"),
             &_jetsonClient
+        );
+
+    _qmlEngine
+        ->rootContext()
+        ->setContextProperty(
+            QStringLiteral("atlasVideoManager"),
+            VideoManager::instance()
         );
 
     // Permite substituir ficheiros QML originais por versões

@@ -64,7 +64,7 @@ Item {
         // ================================================================
         // JETSON
         //
-        // Estado REAL da ligação TCP AtlasJetsonClient.
+        // Estado REAL da ligação TCP entre QGC e serviço ATLAS na Jetson.
         // ================================================================
 
         Item {
@@ -126,7 +126,7 @@ Item {
         // ================================================================
         // HM30
         //
-        // Ainda MOCK.
+        // Estado reportado pelo serviço ATLAS na Jetson.
         // ================================================================
 
         Item {
@@ -145,9 +145,12 @@ Item {
                     height: _dotSize
                     radius: width / 2
 
-                    color: "#808080"
-
                     anchors.verticalCenter: parent.verticalCenter
+
+                    color:
+                        atlasJetsonClient.hm30Connected
+                        ? "#39D353"
+                        : "#808080"
                 }
 
                 QGCLabel {
@@ -165,8 +168,14 @@ Item {
 
                 onClicked: {
                     statusMenu.statusTitle = "HM30"
-                    statusMenu.statusText = "Status: Not connected"
-                    statusMenu.extraText = "Air-ground data link"
+
+                    statusMenu.statusText =
+                        atlasJetsonClient.hm30Connected
+                        ? "Status: Connected"
+                        : "Status: Not connected"
+
+                    statusMenu.extraText =
+                        "Air-ground data link"
 
                     statusMenu.popup()
                 }
@@ -177,7 +186,7 @@ Item {
         // ================================================================
         // A8 MINI
         //
-        // Ainda MOCK.
+        // Estado da ligação Jetson <-> SIYI A8 Mini.
         // ================================================================
 
         Item {
@@ -196,9 +205,12 @@ Item {
                     height: _dotSize
                     radius: width / 2
 
-                    color: "#808080"
-
                     anchors.verticalCenter: parent.verticalCenter
+
+                    color:
+                        atlasJetsonClient.a8Connected
+                        ? "#39D353"
+                        : "#808080"
                 }
 
                 QGCLabel {
@@ -216,7 +228,12 @@ Item {
 
                 onClicked: {
                     statusMenu.statusTitle = "SIYI A8 MINI"
-                    statusMenu.statusText = "Status: Not connected"
+
+                    statusMenu.statusText =
+                        atlasJetsonClient.a8Connected
+                        ? "Status: Connected"
+                        : "Status: Not connected"
+
                     statusMenu.extraText =
                         "Gimbal / zoom / recording control"
 
@@ -229,7 +246,10 @@ Item {
         // ================================================================
         // VIDEO
         //
-        // Ainda MOCK.
+        // Estado REAL do decoder de vídeo do QGroundControl.
+        //
+        // Só fica verde quando o QGC está efetivamente a descodificar
+        // frames de vídeo.
         // ================================================================
 
         Item {
@@ -248,9 +268,12 @@ Item {
                     height: _dotSize
                     radius: width / 2
 
-                    color: "#808080"
-
                     anchors.verticalCenter: parent.verticalCenter
+
+                    color:
+                        atlasVideoManager.decoding
+                        ? "#39D353"
+                        : "#808080"
                 }
 
                 QGCLabel {
@@ -268,11 +291,16 @@ Item {
 
                 onClicked: {
                     statusMenu.statusTitle = "VIDEO"
+
                     statusMenu.statusText =
-                        "Status: Waiting for stream"
+                        atlasVideoManager.decoding
+                        ? "Status: Decoding video"
+                        : "Status: Waiting for stream"
 
                     statusMenu.extraText =
-                        "Processed RTSP stream from Jetson"
+                        atlasVideoManager.decoding
+                        ? "Video frames are being decoded by QGroundControl"
+                        : "Processed RTSP stream from Jetson"
 
                     statusMenu.popup()
                 }
