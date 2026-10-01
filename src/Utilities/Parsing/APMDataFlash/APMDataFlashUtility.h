@@ -31,6 +31,7 @@ struct MessageFormat {
     QString name;
     QString format;
     QStringList columns;
+    QString instanceColumn;  ///< Column marked with the '#' unit in FMTU, empty if none
 };
 
 // ============================================================================
@@ -97,6 +98,7 @@ qint64 findNextHeader(const char *data, qint64 size, qint64 offset);
 MessageFormat parseFmtPayload(const char *data);
 
 /// Parse all FMT messages from a DataFlash log (first pass)
+/// Also applies FMTU units to set MessageFormat::instanceColumn
 /// @param data Pointer to complete log data
 /// @param size Size of log data
 /// @param formats Output map of message type -> MessageFormat

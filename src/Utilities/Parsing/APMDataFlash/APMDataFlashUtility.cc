@@ -2,6 +2,7 @@
 
 #include <bit>
 
+#include <QtCore/QHash>
 #include <QtCore/qfloat16.h>
 
 #include "LittleEndian.h"
@@ -226,6 +227,7 @@ bool parseFmtMessages(const char *data, qint64 size, QMap<uint8_t, MessageFormat
         return false;
     }
 
+    QHash<uint8_t, QString> unitsByType;
     qint64 pos = 0;
 
     while (pos + 3 <= size) {
@@ -245,16 +247,42 @@ bool parseFmtMessages(const char *data, qint64 size, QMap<uint8_t, MessageFormat
             }
 
             const MessageFormat fmt = parseFmtPayload(data + pos);
-            formats[fmt.type] = fmt;
+            if (fmt.length < 3) {
+                qCWarning(APMDataFlashUtilityLog)
+                    << "Ignoring FMT with invalid length:" << fmt.name << static_cast<int>(fmt.length);
+            } else {
+                formats[fmt.type] = fmt;
+            }
             pos += kFmtPayloadSize;
         } else {
             // Skip message if we know its length
             if (formats.contains(msgType)) {
-                pos += formats[msgType].length - 3;  // -3 for header already consumed
+                const MessageFormat& msgFmt = formats[msgType];
+                const int payloadSize = msgFmt.length - 3;  // -3 for header already consumed
+                if ((msgFmt.name == QLatin1String("FMTU")) && (pos + payloadSize <= size)) {
+                    const QMap<QString, QVariant> values = parseMessage(data + pos, payloadSize, msgFmt);
+                    const QVariant fmtType = values.value(QStringLiteral("FmtType"));
+                    if (fmtType.isValid()) {
+                        unitsByType.insert(static_cast<uint8_t>(fmtType.toUInt()),
+                                           values.value(QStringLiteral("UnitIds")).toString());
+                    }
+                }
+                pos += payloadSize;
             } else {
                 // Unknown format, try to find next header
                 ++pos;
             }
+        }
+    }
+
+    for (auto it = unitsByType.cbegin(); it != unitsByType.cend(); ++it) {
+        const auto fmtIt = formats.find(it.key());
+        if (fmtIt == formats.end()) {
+            continue;
+        }
+        const qsizetype index = it.value().indexOf(QLatin1Char('#'));
+        if ((index >= 0) && (index < fmtIt->columns.size())) {
+            fmtIt->instanceColumn = fmtIt->columns.at(index);
         }
     }
 

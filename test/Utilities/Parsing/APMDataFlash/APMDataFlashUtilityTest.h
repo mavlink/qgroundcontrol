@@ -35,6 +35,8 @@ private slots:
     // FMT message parsing tests
     void _testParseFmtPayload();
     void _testParseFmtMessages();
+    void _testParseFmtMessagesInstanceColumn();
+    void _testParseFmtMessagesInvalidLength();
 
     // Message parsing tests
     void _testParseMessage();

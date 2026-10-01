@@ -806,6 +806,119 @@ void LogFileParserTest::_gpsPathAPMDataFlashPOSTest()
     }
 }
 
+void LogFileParserTest::_gpsPathAPMDataFlashMultiInstanceTest()
+{
+    // GPS: Q(TimeUS) + B(I) + B(Status) + L(Lat) + L(Lng) + e(Alt) = 22 byte payload
+    QByteArray bytes;
+    appendBinMessage(bytes, 128, makeFmtPayloadStr(153, 25, "GPS", "QBBLLe", "TimeUS,I,Status,Lat,Lng,Alt"));
+    appendBinMessage(bytes, 128, makeFmtPayloadStr(177, 44, "FMTU", "QBNN", "TimeUS,FmtType,UnitIds,MultIds"));
+
+    QByteArray fmtu(41, '\0');
+    fmtu[8] = static_cast<char>(153);
+    memcpy(fmtu.data() + 9, "s#-DUm", 6);
+    memcpy(fmtu.data() + 25, "F--GGB", 6);
+    appendBinMessage(bytes, 177, fmtu);
+
+    const auto makeGps = [](int i, uint8_t instance, uint8_t status, double lat, double lon) {
+        QByteArray payload(22, '\0');
+        const uint64_t timeUs = static_cast<uint64_t>(i + 1) * 1000000ULL;
+        const int32_t latRaw = static_cast<int32_t>(lat * 1.0e7);
+        const int32_t lonRaw = static_cast<int32_t>(lon * 1.0e7);
+        const int32_t altRaw = 58400;
+        memcpy(payload.data(), &timeUs, 8);
+        payload[8] = static_cast<char>(instance);
+        payload[9] = static_cast<char>(status);
+        memcpy(payload.data() + 10, &latRaw, 4);
+        memcpy(payload.data() + 14, &lonRaw, 4);
+        memcpy(payload.data() + 18, &altRaw, 4);
+        return payload;
+    };
+
+    // Instance 0 never gets a 3D fix, so the path must come from instance 1
+    for (int i = 0; i < 3; i++) {
+        appendBinMessage(bytes, 153, makeGps(i, 0, 1, 10.0, 20.0));
+        appendBinMessage(bytes, 153, makeGps(i, 1, 3, -35.0 + (i * 0.001), 149.0));
+    }
+
+    QTemporaryFile tmp;
+    tmp.setFileTemplate(QDir::tempPath() + QStringLiteral("/logtest_XXXXXX.bin"));
+    QVERIFY(writeTempFile(tmp, bytes));
+
+    LogFileParser parser;
+    QVERIFY(parser.parseFile(tmp.fileName()));
+    QVERIFY(parser.parseComplete());
+
+    const QVariantList path = parser.gpsPath();
+    QCOMPARE(path.size(), 3);
+    for (int i = 0; i < path.size(); i++) {
+        const QVariantMap coord = path[i].toMap();
+        QVERIFY(qAbs(coord.value(QStringLiteral("latitude")).toDouble() - (-35.0 + (i * 0.001))) < 1e-6);
+        QVERIFY(qAbs(coord.value(QStringLiteral("longitude")).toDouble() - 149.0) < 1e-6);
+    }
+    QCOMPARE(parser.gpsAltitudeFieldName(), QStringLiteral("GPS[1].Alt"));
+}
+
+void LogFileParserTest::_parseDataFlashMultiInstanceTest()
+{
+    QByteArray bytes;
+    // IMU/BARO: Q(TimeUS) + B(I) + f = 13 byte payload
+    appendBinMessage(bytes, 128, makeFmtPayloadStr(150, 16, "IMU", "QBf", "TimeUS,I,GyrX"));
+    appendBinMessage(bytes, 128, makeFmtPayloadStr(151, 16, "BARO", "QBf", "TimeUS,I,Alt"));
+    appendBinMessage(bytes, 128, makeFmtPayloadStr(177, 44, "FMTU", "QBNN", "TimeUS,FmtType,UnitIds,MultIds"));
+
+    for (const uint8_t fmtType : {uint8_t(150), uint8_t(151)}) {
+        QByteArray fmtu(41, '\0');
+        fmtu[8] = static_cast<char>(fmtType);
+        memcpy(fmtu.data() + 9, "s#E", 3);
+        memcpy(fmtu.data() + 25, "F-0", 3);
+        appendBinMessage(bytes, 177, fmtu);
+    }
+
+    const auto makeRecord = [](int i, uint8_t instance, float value) {
+        QByteArray payload(13, '\0');
+        const uint64_t timeUs = static_cast<uint64_t>(i + 1) * 1000000ULL;
+        memcpy(payload.data(), &timeUs, 8);
+        payload[8] = static_cast<char>(instance);
+        memcpy(payload.data() + 9, &value, 4);
+        return payload;
+    };
+    for (int i = 0; i < 3; i++) {
+        appendBinMessage(bytes, 150, makeRecord(i, 0, 1.0f));
+        appendBinMessage(bytes, 150, makeRecord(i, 1, 2.0f));
+        appendBinMessage(bytes, 151, makeRecord(i, 0, 3.0f));
+    }
+
+    QTemporaryFile tmp;
+    tmp.setFileTemplate(QDir::tempPath() + QStringLiteral("/logtest_XXXXXX.bin"));
+    QVERIFY(writeTempFile(tmp, bytes));
+
+    LogFileParser parser;
+    QVERIFY(parser.parseFile(tmp.fileName()));
+    QVERIFY(parser.parseComplete());
+
+    QVERIFY(parser.availableFields().contains(QStringLiteral("IMU[0].GyrX")));
+    QVERIFY(parser.availableFields().contains(QStringLiteral("IMU[1].GyrX")));
+    QVERIFY(!parser.availableFields().contains(QStringLiteral("IMU.GyrX")));
+    QVERIFY(!parser.availableFields().contains(QStringLiteral("IMU[0].I")));
+    QVERIFY(!parser.availableFields().contains(QStringLiteral("IMU[1].I")));
+
+    QVERIFY(parser.availableFields().contains(QStringLiteral("BARO.Alt")));
+    QVERIFY(!parser.availableFields().contains(QStringLiteral("BARO[0].Alt")));
+    QVERIFY(!parser.availableFields().contains(QStringLiteral("BARO.I")));
+    QCOMPARE(parser.fieldSamples(QStringLiteral("BARO.Alt")).size(), 3);
+
+    const QVariantList instance0 = parser.fieldSamples(QStringLiteral("IMU[0].GyrX"));
+    const QVariantList instance1 = parser.fieldSamples(QStringLiteral("IMU[1].GyrX"));
+    QCOMPARE(instance0.size(), 3);
+    QCOMPARE(instance1.size(), 3);
+    for (const QVariant& v : instance0) {
+        QCOMPARE(v.toPointF().y(), 1.0);
+    }
+    for (const QVariant& v : instance1) {
+        QCOMPARE(v.toPointF().y(), 2.0);
+    }
+}
+
 void LogFileParserTest::_startTimeAPMFromGwkGmsTest()
 {
     // GPS week 2243, GMS=18000 ms (18 s), boot at TimeUS=0.
