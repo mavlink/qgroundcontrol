@@ -11,10 +11,13 @@ import threading
 class AtlasState:
     def __init__(self):
         self.lock = threading.Lock()
+
         self.clients = set()
 
         self.hm30_connected = False
         self.a8_connected = False
+
+        self.frozen = False
 
     def add_client(self, client):
         with self.lock:
@@ -31,12 +34,31 @@ class AtlasState:
                 "a8_connected": self.a8_connected,
             }
 
+    def is_frozen(self):
+        with self.lock:
+            return self.frozen
+
+    def set_frozen(self, frozen):
+        with self.lock:
+            self.frozen = frozen
+
+        print(
+            "[MOCK] Serviço "
+            + ("CONGELADO" if frozen else "ATIVO"),
+            flush=True,
+        )
+
+        if not frozen:
+            self.broadcast_status()
+
     def set_status(self, name, value):
         with self.lock:
             if name == "hm30":
                 self.hm30_connected = value
+
             elif name == "a8":
                 self.a8_connected = value
+
             else:
                 return
 
@@ -50,12 +72,17 @@ class AtlasState:
         self.broadcast_status()
 
     def broadcast_status(self):
+        if self.is_frozen():
+            return
+
         message = {
             "type": "status",
             **self.snapshot(),
         }
 
-        data = (json.dumps(message) + "\n").encode("utf-8")
+        data = (
+            json.dumps(message) + "\n"
+        ).encode("utf-8")
 
         with self.lock:
             clients = list(self.clients)
@@ -63,11 +90,20 @@ class AtlasState:
         for client in clients:
             try:
                 client.sendall(data)
+
             except OSError:
                 self.remove_client(client)
 
 
 STATE = AtlasState()
+
+
+def send_json(sock, message):
+    data = (
+        json.dumps(message) + "\n"
+    ).encode("utf-8")
+
+    sock.sendall(data)
 
 
 class AtlasRequestHandler(socketserver.StreamRequestHandler):
@@ -85,18 +121,22 @@ class AtlasRequestHandler(socketserver.StreamRequestHandler):
             1,
         )
 
-        STATE.add_client(self.request)
-
-        hello = {
-            "type": "hello",
-            "server": "ATLAS-Jetson-Mock",
-            "protocol": 1,
-            **STATE.snapshot(),
-        }
-
-        self.request.sendall(
-            (json.dumps(hello) + "\n").encode("utf-8")
+        STATE.add_client(
+            self.request
         )
+
+        # Se o serviço estiver congelado, simulamos um processo
+        # que mantém TCP aberto mas não responde.
+        if not STATE.is_frozen():
+            send_json(
+                self.request,
+                {
+                    "type": "hello",
+                    "server": "ATLAS-Jetson-Mock",
+                    "protocol": 1,
+                    **STATE.snapshot(),
+                },
+            )
 
         try:
             while True:
@@ -116,6 +156,16 @@ class AtlasRequestHandler(socketserver.StreamRequestHandler):
                         error,
                         flush=True,
                     )
+
+                    continue
+
+                # ---------------------------------------------------------
+                # FREEZE
+
+                # Mantemos o TCP aberto mas ignoramos os comandos.
+                #--------------------------------------------------------
+
+                if STATE.is_frozen():
                     continue
 
                 message_type = message.get(
@@ -123,9 +173,30 @@ class AtlasRequestHandler(socketserver.StreamRequestHandler):
                     "unknown",
                 )
 
-                if message_type == "gimbal_rate":
-                    yaw = message.get("yaw", 0)
-                    pitch = message.get("pitch", 0)
+                # ---------------------------------------------------------
+                # HEARTBEAT
+                #---------------------------------------------------------
+
+                if message_type == "ping":
+                    send_json(
+                        self.request,
+                        {
+                            "type": "pong",
+                            "ping_seq": message.get("seq"),
+                            **STATE.snapshot(),
+                        },
+                    )
+
+                elif message_type == "gimbal_rate":
+                    yaw = message.get(
+                        "yaw",
+                        0,
+                    )
+
+                    pitch = message.get(
+                        "pitch",
+                        0,
+                    )
 
                     print(
                         f"[GIMBAL] yaw={yaw:6.1f} pitch={pitch:6.1f}",
@@ -185,7 +256,9 @@ class AtlasRequestHandler(socketserver.StreamRequestHandler):
                     )
 
         finally:
-            STATE.remove_client(self.request)
+            STATE.remove_client(
+                self.request
+            )
 
             print(
                 f"[MOCK] Cliente desligado: {client_ip}:{client_port}",
@@ -207,6 +280,8 @@ def console_loop():
     print("  a8 off")
     print("  all on")
     print("  all off")
+    print("  freeze on")
+    print("  freeze off")
     print("  status")
     print()
 
@@ -219,16 +294,28 @@ def console_loop():
         command = line.strip().lower()
 
         if command == "hm30 on":
-            STATE.set_status("hm30", True)
+            STATE.set_status(
+                "hm30",
+                True,
+            )
 
         elif command == "hm30 off":
-            STATE.set_status("hm30", False)
+            STATE.set_status(
+                "hm30",
+                False,
+            )
 
         elif command == "a8 on":
-            STATE.set_status("a8", True)
+            STATE.set_status(
+                "a8",
+                True,
+            )
 
         elif command == "a8 off":
-            STATE.set_status("a8", False)
+            STATE.set_status(
+                "a8",
+                False,
+            )
 
         elif command == "all on":
             STATE.set_all(True)
@@ -236,10 +323,19 @@ def console_loop():
         elif command == "all off":
             STATE.set_all(False)
 
+        elif command == "freeze on":
+            STATE.set_frozen(True)
+
+        elif command == "freeze off":
+            STATE.set_frozen(False)
+
         elif command == "status":
             print(
                 "[MOCK STATUS]",
-                STATE.snapshot(),
+                {
+                    **STATE.snapshot(),
+                    "frozen": STATE.is_frozen(),
+                },
                 flush=True,
             )
 
@@ -279,18 +375,22 @@ def main():
             flush=True,
         )
 
-        console_thread = threading.Thread(
+        thread = threading.Thread(
             target=console_loop,
             daemon=True,
         )
 
-        console_thread.start()
+        thread.start()
 
         try:
             server.serve_forever()
+
         except KeyboardInterrupt:
             print()
-            print("[MOCK] Servidor terminado.")
+            print(
+                "[MOCK] Servidor terminado.",
+                flush=True,
+            )
 
 
 if __name__ == "__main__":

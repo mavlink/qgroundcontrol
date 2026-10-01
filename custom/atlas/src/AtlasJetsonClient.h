@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QtCore/QByteArray>
+#include <QtCore/QElapsedTimer>
 #include <QtCore/QJsonObject>
 #include <QtCore/QObject>
 #include <QtCore/QTimer>
@@ -10,25 +11,15 @@ class AtlasJetsonClient : public QObject
 {
     Q_OBJECT
 
-    Q_PROPERTY(bool connected
-               READ connected
-               NOTIFY connectedChanged)
+    // "connected" significa que o serviço ATLAS da Jetson
+    // está ligado E está efetivamente a responder.
+    Q_PROPERTY(bool connected READ connected NOTIFY connectedChanged)
 
-    Q_PROPERTY(bool hm30Connected
-               READ hm30Connected
-               NOTIFY hm30ConnectedChanged)
+    Q_PROPERTY(bool hm30Connected READ hm30Connected NOTIFY hm30ConnectedChanged)
+    Q_PROPERTY(bool a8Connected READ a8Connected NOTIFY a8ConnectedChanged)
 
-    Q_PROPERTY(bool a8Connected
-               READ a8Connected
-               NOTIFY a8ConnectedChanged)
-
-    Q_PROPERTY(QString host
-               READ host
-               NOTIFY endpointChanged)
-
-    Q_PROPERTY(int port
-               READ port
-               NOTIFY endpointChanged)
+    Q_PROPERTY(QString host READ host NOTIFY endpointChanged)
+    Q_PROPERTY(int port READ port NOTIFY endpointChanged)
 
 public:
     explicit AtlasJetsonClient(QObject *parent = nullptr);
@@ -59,28 +50,16 @@ public:
         return static_cast<int>(_port);
     }
 
-    Q_INVOKABLE void connectToHost(
-        const QString &host,
-        int port
-    );
-
+    Q_INVOKABLE void connectToHost(const QString &host, int port);
     Q_INVOKABLE void disconnectFromHost();
 
-    Q_INVOKABLE void gimbalRate(
-        double yaw,
-        double pitch
-    );
-
+    Q_INVOKABLE void gimbalRate(double yaw, double pitch);
     Q_INVOKABLE void gimbalStop();
     Q_INVOKABLE void gimbalCenter();
 
     Q_INVOKABLE void zoom(int value);
-
     Q_INVOKABLE void takePhoto();
-
-    Q_INVOKABLE void setRecording(
-        bool enabled
-    );
+    Q_INVOKABLE void setRecording(bool enabled);
 
 signals:
     void connectedChanged();
@@ -93,11 +72,10 @@ private slots:
     void _onDisconnected();
     void _onReadyRead();
 
-    void _onSocketError(
-        QAbstractSocket::SocketError error
-    );
+    void _onSocketError(QAbstractSocket::SocketError error);
 
     void _connectNow();
+    void _onHeartbeat();
 
 private:
     void _setConnected(bool connected);
@@ -108,16 +86,19 @@ private:
 
     void _scheduleReconnect();
 
-    void _sendCommand(
-        QJsonObject command
-    );
+    void _sendCommand(QJsonObject command);
+
+    static constexpr int kHeartbeatIntervalMs = 500;
+    static constexpr qint64 kWatchdogTimeoutMs = 2000;
 
     QTcpSocket _socket;
+
     QTimer _reconnectTimer;
+    QTimer _heartbeatTimer;
 
-    QString _host =
-        QStringLiteral("127.0.0.1");
+    QElapsedTimer _lastRxTimer;
 
+    QString _host = QStringLiteral("127.0.0.1");
     quint16 _port = 45900;
 
     QByteArray _rxBuffer;

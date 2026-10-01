@@ -7,11 +7,13 @@
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonParseError>
 
-AtlasJetsonClient::AtlasJetsonClient(
-    QObject *parent
-)
+AtlasJetsonClient::AtlasJetsonClient(QObject *parent)
     : QObject(parent)
 {
+    // ---------------------------------------------------------------------
+    // RECONEXÃO
+    // ---------------------------------------------------------------------
+
     _reconnectTimer.setInterval(2000);
     _reconnectTimer.setSingleShot(true);
 
@@ -21,6 +23,25 @@ AtlasJetsonClient::AtlasJetsonClient(
         this,
         &AtlasJetsonClient::_connectNow
     );
+
+    // ---------------------------------------------------------------------
+    // HEARTBEAT
+    // ---------------------------------------------------------------------
+
+    _heartbeatTimer.setInterval(kHeartbeatIntervalMs);
+    _heartbeatTimer.setSingleShot(false);
+    _heartbeatTimer.setTimerType(Qt::PreciseTimer);
+
+    connect(
+        &_heartbeatTimer,
+        &QTimer::timeout,
+        this,
+        &AtlasJetsonClient::_onHeartbeat
+    );
+
+    // ---------------------------------------------------------------------
+    // TCP
+    // ---------------------------------------------------------------------
 
     connect(
         &_socket,
@@ -57,11 +78,17 @@ AtlasJetsonClient::~AtlasJetsonClient()
     _wantConnection = false;
 
     _reconnectTimer.stop();
+    _heartbeatTimer.stop();
 
-    if (
-        _socket.state() !=
-        QAbstractSocket::UnconnectedState
-    ) {
+    // Evita callbacks durante a destruição da aplicação.
+    QObject::disconnect(
+        &_socket,
+        nullptr,
+        this,
+        nullptr
+    );
+
+    if (_socket.state() != QAbstractSocket::UnconnectedState) {
         _socket.abort();
     }
 }
@@ -76,19 +103,13 @@ void AtlasJetsonClient::connectToHost(
         return;
     }
 
-    if (
-        (port <= 0) ||
-        (port > 65535)
-    ) {
+    if (port <= 0 || port > 65535) {
         return;
     }
 
     const bool endpointHasChanged =
         (_host != host) ||
-        (
-            _port !=
-            static_cast<quint16>(port)
-        );
+        (_port != static_cast<quint16>(port));
 
     _host = host;
     _port = static_cast<quint16>(port);
@@ -101,10 +122,7 @@ void AtlasJetsonClient::connectToHost(
 
     _reconnectTimer.stop();
 
-    if (
-        _socket.state() !=
-        QAbstractSocket::UnconnectedState
-    ) {
+    if (_socket.state() != QAbstractSocket::UnconnectedState) {
         _socket.abort();
     }
 
@@ -117,11 +135,13 @@ void AtlasJetsonClient::disconnectFromHost()
     _wantConnection = false;
 
     _reconnectTimer.stop();
+    _heartbeatTimer.stop();
+
+    _lastRxTimer.invalidate();
 
     _socket.abort();
 
     _setConnected(false);
-
     _clearRemoteStatus();
 }
 
@@ -133,13 +153,13 @@ void AtlasJetsonClient::_connectNow()
     }
 
     if (
-        (_socket.state() ==
-         QAbstractSocket::ConnectedState) ||
-        (_socket.state() ==
-         QAbstractSocket::ConnectingState)
+        _socket.state() == QAbstractSocket::ConnectedState ||
+        _socket.state() == QAbstractSocket::ConnectingState
     ) {
         return;
     }
+
+    _rxBuffer.clear();
 
     qInfo()
         << "[ATLAS JETSON] Connecting to"
@@ -169,10 +189,16 @@ void AtlasJetsonClient::_onConnected()
         1
     );
 
-    _setConnected(true);
+    // O TCP está aberto, mas ainda não consideramos
+    // a Jetson operacional até recebermos uma resposta.
+    _setConnected(false);
+    _clearRemoteStatus();
+
+    _lastRxTimer.start();
+    _heartbeatTimer.start();
 
     qInfo()
-        << "[ATLAS JETSON] Connected to"
+        << "[ATLAS JETSON] TCP connected to"
         << _host
         << _port;
 
@@ -185,9 +211,7 @@ void AtlasJetsonClient::_onConnected()
 
     hello.insert(
         QStringLiteral("client"),
-        QStringLiteral(
-            "ATLAS-QGroundControl"
-        )
+        QStringLiteral("ATLAS-QGroundControl")
     );
 
     hello.insert(
@@ -201,15 +225,16 @@ void AtlasJetsonClient::_onConnected()
 
 void AtlasJetsonClient::_onDisconnected()
 {
+    _heartbeatTimer.stop();
+
+    _lastRxTimer.invalidate();
+
     if (_connected) {
         qInfo()
             << "[ATLAS JETSON] Disconnected";
     }
 
     _setConnected(false);
-
-    // Se perdemos a Jetson, também deixamos
-    // de poder afirmar que HM30 e A8 estão ligados.
     _clearRemoteStatus();
 
     _scheduleReconnect();
@@ -230,8 +255,9 @@ void AtlasJetsonClient::_onSocketError(
         _errorLogged = true;
     }
 
-    _setConnected(false);
+    _heartbeatTimer.stop();
 
+    _setConnected(false);
     _clearRemoteStatus();
 
     _scheduleReconnect();
@@ -250,9 +276,59 @@ void AtlasJetsonClient::_scheduleReconnect()
 }
 
 
-void AtlasJetsonClient::_setConnected(
-    bool connected
-)
+void AtlasJetsonClient::_onHeartbeat()
+{
+    if (!_wantConnection) {
+        return;
+    }
+
+    if (_socket.state() != QAbstractSocket::ConnectedState) {
+        return;
+    }
+
+    // ---------------------------------------------------------------------
+    // WATCHDOG
+    //
+    // O socket pode continuar tecnicamente aberto mesmo que o processo
+    // remoto deixe de responder.
+    // ---------------------------------------------------------------------
+
+    if (
+        _lastRxTimer.isValid() &&
+        _lastRxTimer.elapsed() > kWatchdogTimeoutMs
+    ) {
+        qWarning()
+            << "[ATLAS JETSON] Watchdog timeout - service not responding";
+
+        _setConnected(false);
+        _clearRemoteStatus();
+
+        _heartbeatTimer.stop();
+
+        // Forçamos uma nova sessão TCP.
+        _socket.abort();
+
+        _scheduleReconnect();
+
+        return;
+    }
+
+    // ---------------------------------------------------------------------
+    // PING
+    // ---------------------------------------------------------------------
+
+    QJsonObject ping;
+
+    ping.insert(
+        QStringLiteral("type"),
+        QStringLiteral("ping")
+    );
+
+    _sendCommand(ping);
+}
+
+
+void AtlasJetsonClient::_setConnected(bool connected)
 {
     if (_connected == connected) {
         return;
@@ -264,9 +340,7 @@ void AtlasJetsonClient::_setConnected(
 }
 
 
-void AtlasJetsonClient::_setHm30Connected(
-    bool connected
-)
+void AtlasJetsonClient::_setHm30Connected(bool connected)
 {
     if (_hm30Connected == connected) {
         return;
@@ -278,9 +352,7 @@ void AtlasJetsonClient::_setHm30Connected(
 }
 
 
-void AtlasJetsonClient::_setA8Connected(
-    bool connected
-)
+void AtlasJetsonClient::_setA8Connected(bool connected)
 {
     if (_a8Connected == connected) {
         return;
@@ -299,41 +371,37 @@ void AtlasJetsonClient::_clearRemoteStatus()
 }
 
 
-void AtlasJetsonClient::_sendCommand(
-    QJsonObject command
-)
+void AtlasJetsonClient::_sendCommand(QJsonObject command)
 {
-    if (!_connected) {
+    // Importante:
+    // usamos o estado REAL do socket e não _connected.
+    //
+    // Isto permite enviar heartbeat/hello antes de a Jetson
+    // ser considerada operacional.
+    if (_socket.state() != QAbstractSocket::ConnectedState) {
         return;
     }
 
     command.insert(
         QStringLiteral("seq"),
-        static_cast<double>(
-            ++_sequence
-        )
+        static_cast<double>(++_sequence)
     );
 
     command.insert(
         QStringLiteral("ts_ms"),
         static_cast<double>(
-            QDateTime::
-                currentMSecsSinceEpoch()
+            QDateTime::currentMSecsSinceEpoch()
         )
     );
 
     QByteArray packet =
-        QJsonDocument(command)
-            .toJson(
-                QJsonDocument::Compact
-            );
+        QJsonDocument(command).toJson(
+            QJsonDocument::Compact
+        );
 
     packet.append('\n');
 
     _socket.write(packet);
-
-    // LowDelayOption + flush ajudam a minimizar
-    // latência nos comandos da gimbal.
     _socket.flush();
 }
 
@@ -343,19 +411,21 @@ void AtlasJetsonClient::gimbalRate(
     double pitch
 )
 {
-    yaw =
-        std::clamp(
-            yaw,
-            -100.0,
-            100.0
-        );
+    if (!_connected) {
+        return;
+    }
 
-    pitch =
-        std::clamp(
-            pitch,
-            -100.0,
-            100.0
-        );
+    yaw = std::clamp(
+        yaw,
+        -100.0,
+        100.0
+    );
+
+    pitch = std::clamp(
+        pitch,
+        -100.0,
+        100.0
+    );
 
     QJsonObject command;
 
@@ -380,6 +450,10 @@ void AtlasJetsonClient::gimbalRate(
 
 void AtlasJetsonClient::gimbalStop()
 {
+    if (!_connected) {
+        return;
+    }
+
     QJsonObject command;
 
     command.insert(
@@ -393,6 +467,10 @@ void AtlasJetsonClient::gimbalStop()
 
 void AtlasJetsonClient::gimbalCenter()
 {
+    if (!_connected) {
+        return;
+    }
+
     QJsonObject command;
 
     command.insert(
@@ -406,12 +484,15 @@ void AtlasJetsonClient::gimbalCenter()
 
 void AtlasJetsonClient::zoom(int value)
 {
-    value =
-        std::clamp(
-            value,
-            -1,
-            1
-        );
+    if (!_connected) {
+        return;
+    }
+
+    value = std::clamp(
+        value,
+        -1,
+        1
+    );
 
     QJsonObject command;
 
@@ -431,6 +512,10 @@ void AtlasJetsonClient::zoom(int value)
 
 void AtlasJetsonClient::takePhoto()
 {
+    if (!_connected) {
+        return;
+    }
+
     QJsonObject command;
 
     command.insert(
@@ -442,10 +527,12 @@ void AtlasJetsonClient::takePhoto()
 }
 
 
-void AtlasJetsonClient::setRecording(
-    bool enabled
-)
+void AtlasJetsonClient::setRecording(bool enabled)
 {
+    if (!_connected) {
+        return;
+    }
+
     QJsonObject command;
 
     command.insert(
@@ -469,7 +556,6 @@ void AtlasJetsonClient::_onReadyRead()
     );
 
     while (true) {
-
         const qsizetype newline =
             _rxBuffer.indexOf('\n');
 
@@ -517,44 +603,51 @@ void AtlasJetsonClient::_onReadyRead()
         const QJsonObject message =
             document.object();
 
+        // -------------------------------------------------------------
+        // Qualquer mensagem JSON válida prova que o serviço remoto
+        // está vivo.
+        // -------------------------------------------------------------
+
+        _lastRxTimer.restart();
+
+        if (!_connected) {
+            qInfo()
+                << "[ATLAS JETSON] Service responsive";
+        }
+
+        _setConnected(true);
 
         // -------------------------------------------------------------
-        // ESTADOS REPORTADOS PELA JETSON
+        // HM30
         // -------------------------------------------------------------
 
         if (
             message.contains(
-                QStringLiteral(
-                    "hm30_connected"
-                )
+                QStringLiteral("hm30_connected")
             )
         ) {
             _setHm30Connected(
                 message.value(
-                    QStringLiteral(
-                        "hm30_connected"
-                    )
+                    QStringLiteral("hm30_connected")
                 ).toBool()
             );
         }
 
+        // -------------------------------------------------------------
+        // A8
+        // -------------------------------------------------------------
 
         if (
             message.contains(
-                QStringLiteral(
-                    "a8_connected"
-                )
+                QStringLiteral("a8_connected")
             )
         ) {
             _setA8Connected(
                 message.value(
-                    QStringLiteral(
-                        "a8_connected"
-                    )
+                    QStringLiteral("a8_connected")
                 ).toBool()
             );
         }
-
 
         qInfo()
             << "[ATLAS JETSON] RX:"
