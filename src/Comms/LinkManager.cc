@@ -27,10 +27,11 @@
 #include "MockLink.h"
 #endif
 
+#include <algorithm>
+#include <utility>
+
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QTimer>
-
-#include <utility>
 
 QGC_LOGGING_CATEGORY(LinkManagerLog, "Comms.LinkManager")
 QGC_LOGGING_CATEGORY(LinkManagerVerboseLog, "Comms.LinkManager:verbose")
@@ -475,6 +476,11 @@ void LinkManager::_addUDPAutoConnectLink()
     qCDebug(LinkManagerLog) << "New auto-connect UDP port added";
     UDPConfiguration* const udpConfig = new UDPConfiguration(_defaultUDPLinkName);
     udpConfig->setDynamic(true);
+    udpConfig->setLocalPort(_autoConnectSettings->udpListenPort()->rawValue().toUInt());
+    const QString targetHostIP = _autoConnectSettings->udpTargetHostIP()->rawValue().toString();
+    if (!targetHostIP.isEmpty()) {
+        udpConfig->addHost(targetHostIP, _autoConnectSettings->udpTargetHostPort()->rawValue().toUInt());
+    }
     udpConfig->setAutoConnect(true);
     SharedLinkConfigurationPtr config = addConfiguration(udpConfig);
     createConnectedLink(config);
@@ -699,6 +705,13 @@ SharedLinkConfigurationPtr LinkManager::addConfiguration(LinkConfiguration *conf
     (void) _rgLinkConfigs.append(SharedLinkConfigurationPtr(config));
 
     return _rgLinkConfigs.last();
+}
+
+bool LinkManager::containsConfiguration(const QString& name) const
+{
+    return std::ranges::any_of(_rgLinkConfigs, [&name](const SharedLinkConfigurationPtr& config) {
+        return config && (config->name() == name);
+    });
 }
 
 void LinkManager::startAutoConnectedLinks()

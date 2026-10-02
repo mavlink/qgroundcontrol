@@ -103,6 +103,7 @@ public:
     bool containsLink(const LinkInterface *link);
 
     SharedLinkConfigurationPtr addConfiguration(LinkConfiguration *config);
+    bool containsConfiguration(const QString& name) const;
 
     void startAutoConnectedLinks();
 

@@ -348,6 +348,7 @@ void QGCApplication::_initForNormalAppBoot()
 
     // Load known link configurations
     LinkManager::instance()->loadLinkConfigurationList();
+    QGCCorePlugin::instance()->linkConfigurationsLoaded(LinkManager::instance());
 
     // Probe for joysticks
     JoystickManager::instance()->init();

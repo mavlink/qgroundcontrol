@@ -9,6 +9,7 @@
 class ComplexMissionItem;
 class FactMetaData;
 class LinkInterface;
+class LinkManager;
 class PlanCreator;
 class PlanMasterController;
 class QFile;
@@ -61,6 +62,9 @@ public:
 
     virtual void init() { }
     virtual void cleanup() { }
+
+    /// Called at boot after saved link configurations are loaded and before auto-connect links are started
+    virtual void linkConfigurationsLoaded(LinkManager* linkManager) { Q_UNUSED(linkManager); }
 
     /// The list of pages/buttons under the Analyze Menu
     /// @return A list of QmlPageInfo
