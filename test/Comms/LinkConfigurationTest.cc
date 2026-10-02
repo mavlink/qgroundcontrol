@@ -322,6 +322,21 @@ void LinkConfigurationTest::_testUdpSetLocalPortEmitsSignal()
     QCOMPARE(spy.count(), 2);
 }
 
+void LinkConfigurationTest::_testUdpAutoConnectToggleKeepsPortAndHosts()
+{
+    UDPConfiguration config(QStringLiteral("UDPAutoConnectToggle"));
+    config.setLocalPort(14551);
+    config.addHost(QStringLiteral("127.0.0.1"), 14552);
+
+    config.setAutoConnect(true);
+    QCOMPARE(config.localPort(), quint16(14551));
+    QCOMPARE(config.hostList(), QStringList{QStringLiteral("127.0.0.1:14552")});
+
+    config.setAutoConnect(false);
+    QCOMPARE(config.localPort(), quint16(14551));
+    QCOMPARE(config.hostList(), QStringList{QStringLiteral("127.0.0.1:14552")});
+}
+
 void LinkConfigurationTest::_testUdpCopyConstruction()
 {
     UDPConfiguration original(QStringLiteral("UDPCopyOrig"));

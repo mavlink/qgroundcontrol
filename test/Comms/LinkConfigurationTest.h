@@ -30,6 +30,7 @@ private slots:
     void _testUdpConstruction();
     void _testUdpAddRemoveHost();
     void _testUdpSetLocalPortEmitsSignal();
+    void _testUdpAutoConnectToggleKeepsPortAndHosts();
     void _testUdpCopyConstruction();
     void _testUdpCopyFrom();
     void _testUdpSettingsRoundtrip();
