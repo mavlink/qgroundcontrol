@@ -15,6 +15,9 @@ Item {
     property string item1IsFullSettingsKey          // Settings key to save whether item1 was saved in full mode
     property bool   show:                   true
 
+    // Area covering the parent, in PipView coordinates: just the restore button while collapsed
+    readonly property rect occupiedRect: _isExpanded ? Qt.rect(0, 0, width, height) : Qt.rect(showPip.x, showPip.y, showPip.width, showPip.height)
+
     readonly property string _pipExpandedSettingsKey: "IsPIPVisible"
 
     property var    _fullItem

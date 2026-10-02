@@ -168,7 +168,6 @@ qt_add_qml_module(QGroundControlControlsModule
         QGCTabButton.qml
         QGCTextField.qml
         QGCToolBarButton.qml
-        QGCToolInsets.qml
         QGCVectorImage.qml
         RCChannelMonitor.qml
         RCToParamDialog.qml

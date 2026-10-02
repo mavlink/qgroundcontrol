@@ -40,6 +40,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         ${CMAKE_CURRENT_SOURCE_DIR}/FlyViewROIUITest.h
         ${CMAKE_CURRENT_SOURCE_DIR}/FlyViewGeoUITest.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/FlyViewGeoUITest.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/FlyViewOccluderUITest.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/FlyViewOccluderUITest.h
         # Manual perf benchmark: standalone-registered, deliberately NOT added
         # via add_qgc_test so no ctest/CI sweep ever runs it
         ${CMAKE_CURRENT_SOURCE_DIR}/GeoMapPerfUITest.cc
@@ -99,3 +101,5 @@ endif()
 add_qgc_test(Viewer3DUITest LABELS Integration NoSanitizer StockUI TIMEOUT 120 ${_viewer3d_env_mod})
 add_qgc_test(FlyViewGeoUITest LABELS Integration NoSanitizer TIMEOUT 120 ${_viewer3d_env_mod})
 add_qgc_test(FlyViewGeoROIUITest LABELS Integration NoSanitizer TIMEOUT 120 ${_viewer3d_env_mod})
+# Runs one row on the GeoMap engine, so it needs the same RHI environment
+add_qgc_test(FlyViewOccluderUITest LABELS Integration NoSanitizer TIMEOUT 120 ${_viewer3d_env_mod})

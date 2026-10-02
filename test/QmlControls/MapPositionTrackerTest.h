@@ -17,6 +17,6 @@ private slots:
     void _allowEnabledAfterPositionReevaluates();
     void _hardFollow();
     void _interactionPausesAndResumes();
-    void _insetFollow();
-    void _insetFollowGates();
+    void _occluderFollow();
+    void _occluderFollowGates();
 };

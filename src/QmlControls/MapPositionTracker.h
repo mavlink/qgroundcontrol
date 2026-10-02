@@ -24,8 +24,8 @@ Q_DECLARE_LOGGING_CATEGORY(MapPositionTrackerLog)
 /// GeoMap). Owns the decisions of when and where to center:
 ///   - one-time centering on the first valid vehicle or GCS position
 ///   - continuous vehicle following (keepVehicleCentered)
-///   - inset-rect following: recenter when the vehicle drifts outside the
-///     unobstructed center area of the viewport (evaluateInsetFollow)
+///   - occluder following: recenter when the vehicle leaves the viewport or
+///     moves under a UI element covering the map (evaluateOccluderFollow)
 /// Following pauses while the user interacts with the map and resumes after a
 /// cooldown. The consumer owns everything engine-specific: coordinate/screen
 /// projection, camera movement and recenter animation.
@@ -91,7 +91,7 @@ public:
 
     void setUserInteracting(bool interacting);
 
-    /// Consumer's recenter animation is running: inset evaluation is skipped
+    /// Consumer's recenter animation is running: occluder evaluation is skipped
     bool animating() const { return _animating; }
 
     void setAnimating(bool animating);
@@ -102,13 +102,13 @@ public:
 
     void setFirstVehiclePositionReceived(bool received);
 
-    /// Inset-follow evaluation, called periodically by the consumer with the
-    /// vehicle's current screen position, the unobstructed center rect and the
-    /// (possibly empty) list of corner rects covered by UI elements. Emits
-    /// recenterVehicleTo(centerRect.center()) when the vehicle is outside the
-    /// center rect or under a corner rect.
-    Q_INVOKABLE void evaluateInsetFollow(const QPointF& vehicleScreenPoint, const QRectF& centerRect,
-                                         const QVariantList& cornerRects);
+    /// Occluder-follow evaluation, called periodically by the consumer with the
+    /// vehicle's current screen position, the viewport rect and the (possibly
+    /// empty) list of rects covered by UI elements. Emits
+    /// recenterVehicleTo(viewportRect.center()) when the vehicle is outside the
+    /// viewport or under an occluder.
+    Q_INVOKABLE void evaluateOccluderFollow(const QPointF& vehicleScreenPoint, const QRectF& viewportRect,
+                                            const QVariantList& occluderRects);
 
 #ifdef QGC_UNITTEST_BUILD
     void setResumeDelayMsForTest(int ms) { _resumeTimer.setInterval(ms); }

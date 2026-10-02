@@ -9,7 +9,7 @@ namespace {
 const QGeoCoordinate kVehicleCoord(47.3977419, 8.5455938);
 const QGeoCoordinate kVehicleCoord2(47.40, 8.55);
 const QGeoCoordinate kGcsCoord(47.6329078, -122.0876875);
-constexpr QRectF kCenterRect(100, 100, 600, 400);
+constexpr QRectF kViewportRect(100, 100, 600, 400);
 
 }  // namespace
 
@@ -194,59 +194,64 @@ void MapPositionTrackerTest::_interactionPausesAndResumes()
     QCOMPARE(centerSpy.last().at(1).toBool(), false);
 }
 
-void MapPositionTrackerTest::_insetFollow()
+void MapPositionTrackerTest::_occluderFollow()
 {
     MapPositionTracker tracker;
     QSignalSpy recenterSpy(&tracker, &MapPositionTracker::recenterVehicleTo);
     tracker.setVehicleCoordinate(kVehicleCoord);
     tracker.setFirstVehiclePositionReceived(true);
 
-    // Inside the center rect: no recenter
-    tracker.evaluateInsetFollow(QPointF(400, 300), kCenterRect, {});
+    const QVariantList occluders{
+        QVariant(QRectF(100, 100, 50, 200)),  QVariant(QRectF(600, 100, 100, 100)), QVariant(QRectF(100, 450, 100, 50)),
+        QVariant(QRectF(550, 400, 150, 100)), QVariant(QRectF(300, 100, 200, 30)),
+    };
+
+    // Inside the viewport and clear of every occluder: no recenter
+    tracker.evaluateOccluderFollow(QPointF(400, 300), kViewportRect, occluders);
     QCOMPARE(recenterSpy.count(), 0);
 
-    // Outside the center rect: recenter to its center
-    tracker.evaluateInsetFollow(QPointF(50, 300), kCenterRect, {});
+    // Outside the viewport: recenter to the viewport center
+    tracker.evaluateOccluderFollow(QPointF(50, 300), kViewportRect, occluders);
     QCOMPARE(recenterSpy.count(), 1);
-    QCOMPARE(recenterSpy.last().at(0).toPointF(), kCenterRect.center());
+    QCOMPARE(recenterSpy.last().at(0).toPointF(), kViewportRect.center());
 
-    // Inside the center rect but under a corner UI element: recenter
-    const QVariantList cornerRects{QVariant(QRectF(380, 280, 40, 40))};
-    tracker.evaluateInsetFollow(QPointF(400, 300), kCenterRect, cornerRects);
+    // Under an occluder that is not in a corner: recenter to the viewport center
+    tracker.evaluateOccluderFollow(QPointF(400, 110), kViewportRect, occluders);
     QCOMPARE(recenterSpy.count(), 2);
+    QCOMPARE(recenterSpy.last().at(0).toPointF(), kViewportRect.center());
 }
 
-void MapPositionTrackerTest::_insetFollowGates()
+void MapPositionTrackerTest::_occluderFollowGates()
 {
     MapPositionTracker tracker;
     QSignalSpy recenterSpy(&tracker, &MapPositionTracker::recenterVehicleTo);
     const QPointF outside(50, 300);
 
     // No vehicle position yet
-    tracker.evaluateInsetFollow(outside, kCenterRect, {});
+    tracker.evaluateOccluderFollow(outside, kViewportRect, {});
     QCOMPARE(recenterSpy.count(), 0);
 
     tracker.setVehicleCoordinate(kVehicleCoord);
 
     // First position not marked received
-    tracker.evaluateInsetFollow(outside, kCenterRect, {});
+    tracker.evaluateOccluderFollow(outside, kViewportRect, {});
     QCOMPARE(recenterSpy.count(), 0);
 
     tracker.setFirstVehiclePositionReceived(true);
 
     // Hard follow owns centering
     tracker.setKeepVehicleCentered(true);
-    tracker.evaluateInsetFollow(outside, kCenterRect, {});
+    tracker.evaluateOccluderFollow(outside, kViewportRect, {});
     QCOMPARE(recenterSpy.count(), 0);
     tracker.setKeepVehicleCentered(false);
 
-    // User interaction pauses inset follow
+    // User interaction pauses occluder follow
     tracker.setUserInteracting(true);
-    tracker.evaluateInsetFollow(outside, kCenterRect, {});
+    tracker.evaluateOccluderFollow(outside, kViewportRect, {});
     QCOMPARE(recenterSpy.count(), 0);
     tracker.setUserInteracting(false);
     // Still paused during the resume cooldown
-    tracker.evaluateInsetFollow(outside, kCenterRect, {});
+    tracker.evaluateOccluderFollow(outside, kViewportRect, {});
     QCOMPARE(recenterSpy.count(), 0);
 
     // A running recenter animation blocks re-evaluation
@@ -255,10 +260,10 @@ void MapPositionTrackerTest::_insetFollowGates()
     animTracker.setVehicleCoordinate(kVehicleCoord);
     animTracker.setFirstVehiclePositionReceived(true);
     animTracker.setAnimating(true);
-    animTracker.evaluateInsetFollow(outside, kCenterRect, {});
+    animTracker.evaluateOccluderFollow(outside, kViewportRect, {});
     QCOMPARE(animRecenterSpy.count(), 0);
     animTracker.setAnimating(false);
-    animTracker.evaluateInsetFollow(outside, kCenterRect, {});
+    animTracker.evaluateOccluderFollow(outside, kViewportRect, {});
     QCOMPARE(animRecenterSpy.count(), 1);
 }
 

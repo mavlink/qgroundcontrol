@@ -41,7 +41,7 @@ Rectangle {
         id:                 topRightPanelColumnLayout
         anchors.fill:       parent
         anchors.margins:    topRightPanel.color.a ? ScreenTools.defaultFontPixelHeight / 2 : 0
-        spacing:            ScreenTools.defaultFontPixelWidth * 0.75 // _layoutMargin
+        spacing:            ScreenTools.defaultFontPixelWidth * 0.75
 
         MultiVehicleList {
             id:                    multiVehicleList
@@ -202,8 +202,6 @@ Rectangle {
                         id:                         photoVideoControlLoader
                         anchors.horizontalCenter:   parent.horizontalCenter
                         sourceComponent:            globals.activeVehicle ? photoVideoControlComponent : undefined
-
-                        property real rightEdgeCenterInset: visible ? parent.width - x : 0
 
                         Component {
                             id: photoVideoControlComponent

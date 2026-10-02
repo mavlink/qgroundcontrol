@@ -42,30 +42,17 @@ Item {
     property var    _guidedValueSlider:     guidedValueSlider
     property var    _widgetLayer:           widgetLayer
     property real   _toolsMargin:           ScreenTools.defaultFontPixelWidth * 0.75
-    property rect   _centerViewport:        Qt.rect(0, 0, width, height)
     property real   _rightPanelWidth:       ScreenTools.defaultFontPixelWidth * 30
     property var    _mapControl:            mapEngineLoader.item
     property real   _widgetMargin:          ScreenTools.defaultFontPixelWidth * 0.75
+    property var    _layerOccluders:        widgetLayer.occluders
+    property var    _mapOccluders:          _layerOccluders.all.concat(customOverlay.customOccluders).map(r => Qt.rect(r.x + widgetLayer.x, r.y + widgetLayer.y, r.width, r.height))
 
     property real   _fullItemZorder:    0
     property real   _pipItemZorder:     QGroundControl.zOrderWidgets
 
-    function _calcCenterViewPort() {
-        var newToolInset = Qt.rect(0, 0, width, height)
-        toolstrip.adjustToolInset(newToolInset)
-    }
-
     function dropMainStatusIndicatorTool() {
         toolbar.dropMainStatusIndicatorTool();
-    }
-
-    QGCToolInsets {
-        id:                     _toolInsets
-        topEdgeLeftInset:       toolbar.height
-        topEdgeCenterInset:     topEdgeLeftInset
-        topEdgeRightInset:      topEdgeLeftInset
-        leftEdgeBottomInset:    _pipView.leftEdgeBottomInset
-        bottomEdgeLeftInset:    _pipView.bottomEdgeLeftInset
     }
 
     Item {
@@ -92,7 +79,8 @@ Item {
                 rightPanelWidth:        ScreenTools.defaultFontPixelHeight * 9
                 pipView:                _pipView
                 pipMode:                !_mainWindowIsMap
-                toolInsets:             customOverlay.totalToolInsets
+                viewportRect:           Qt.rect(widgetLayer.x, widgetLayer.y, widgetLayer.width, widgetLayer.height)
+                occluders:              _mapOccluders
                 mapName:                "FlightDisplayView"
                 enabled:                !_is3DMode
                 visible:                !_is3DMode
@@ -108,8 +96,10 @@ Item {
                 rightPanelWidth:        ScreenTools.defaultFontPixelHeight * 9
                 pipView:                _pipView
                 pipMode:                !_mainWindowIsMap
-                toolInsets:             customOverlay.totalToolInsets
-                toolInsetsTopOffset:    toolbar.height + _widgetMargin
+                viewportRect:           Qt.rect(widgetLayer.x, widgetLayer.y, widgetLayer.width, widgetLayer.height)
+                occluders:              _mapOccluders
+                chromeTopMargin:        widgetLayer.y + _layerOccluders.topRight.y + _layerOccluders.topRight.height + _widgetMargin
+                chromeBottomMargin:     mapHolder.height - widgetLayer.y - Math.min(_layerOccluders.pipView.y, _layerOccluders.virtualJoystickLeft.y) + ScreenTools.defaultFontPixelWidth / 2
                 mapName:                "FlightDisplayView"
                 enabled:                !_is3DMode
                 visible:                !_is3DMode
@@ -134,13 +124,11 @@ Item {
                                         (videoControl.pipState.state === videoControl.pipState.pipState ||
                                          (_mapControl && _mapControl.pipState.state === _mapControl.pipState.pipState))
             z:                      QGroundControl.zOrderWidgets
-
-            property real leftEdgeBottomInset: visible ? width + anchors.margins : 0
-            property real bottomEdgeLeftInset: visible ? height + anchors.margins : 0
         }
 
         FlyViewWidgetLayer {
             id:                     widgetLayer
+            objectName:             "flyViewWidgetLayer"
             anchors.top:            parent.top
             anchors.bottom:         parent.bottom
             anchors.left:           parent.left
@@ -148,7 +136,7 @@ Item {
             anchors.margins:        _widgetMargin
             anchors.topMargin:      toolbar.height + _widgetMargin
             z:                      _fullItemZorder + 2
-            parentToolInsets:       _toolInsets
+            pipViewRect:            _pipView.visible ? Qt.rect(_pipView.x + _pipView.occupiedRect.x - x, _pipView.y + _pipView.occupiedRect.y - y, _pipView.occupiedRect.width, _pipView.occupiedRect.height) : Qt.rect(0, height, 0, 0)
             mapControl:             _mapControl
             viewer3DCameraController: viewer3DLoader.item ? viewer3DLoader.item.cameraController : null
             visible:                !QGroundControl.videoManager.fullScreen
@@ -158,20 +146,18 @@ Item {
             id:                 customOverlay
             anchors.fill:       widgetLayer
             z:                  _fullItemZorder + 2
-            parentToolInsets:   widgetLayer.totalToolInsets
+            occluders:          _layerOccluders
             mapControl:         _mapControl
             visible:            !QGroundControl.videoManager.fullScreen
         }
 
-        // Development tool for visualizing the insets for a paticular layer, show if needed
-        FlyViewInsetViewer {
-            id:                     widgetLayerInsetViewer
-            anchors.top:            parent.top
-            anchors.bottom:         parent.bottom
-            anchors.left:           parent.left
-            anchors.right:          guidedValueSlider.visible ? guidedValueSlider.left : parent.right
+        // Development tool for visualizing the occluders, show if needed
+        FlyViewOccluderViewer {
+            id:                     occluderViewer
+            anchors.fill:           widgetLayer
             z:                      widgetLayer.z + 1
-            insetsToView:           widgetLayer.totalToolInsets
+            occluders:              _layerOccluders
+            customOccluders:        customOverlay.customOccluders
             visible:                false
         }
 

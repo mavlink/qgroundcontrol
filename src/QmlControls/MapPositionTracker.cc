@@ -172,20 +172,19 @@ void MapPositionTracker::_resumeFollowing()
     if (_active && _keepVehicleCentered && _vehicleCoordinate.isValid()) {
         emit centerMap(_vehicleCoordinate, false);
     }
-    // Inset following resumes on the consumer's next evaluateInsetFollow call
+    // Occluder following resumes on the consumer's next evaluateOccluderFollow call
 }
 
-void MapPositionTracker::evaluateInsetFollow(const QPointF& vehicleScreenPoint, const QRectF& centerRect,
-                                             const QVariantList& cornerRects)
+void MapPositionTracker::evaluateOccluderFollow(const QPointF& vehicleScreenPoint, const QRectF& viewportRect,
+                                                const QVariantList& occluderRects)
 {
     if (!_active || _keepVehicleCentered || !_firstVehiclePositionReceived || !_vehicleCoordinate.isValid() ||
         _paused() || _animating) {
         return;
     }
-    bool recenterNeeded = !centerRect.contains(vehicleScreenPoint);
+    bool recenterNeeded = !viewportRect.contains(vehicleScreenPoint);
     if (!recenterNeeded) {
-        // Inside the center rect, but possibly hidden under a corner UI element
-        for (const QVariant& rect : cornerRects) {
+        for (const QVariant& rect : occluderRects) {
             if (rect.toRectF().contains(vehicleScreenPoint)) {
                 recenterNeeded = true;
                 break;
@@ -193,6 +192,6 @@ void MapPositionTracker::evaluateInsetFollow(const QPointF& vehicleScreenPoint, 
         }
     }
     if (recenterNeeded) {
-        emit recenterVehicleTo(centerRect.center());
+        emit recenterVehicleTo(viewportRect.center());
     }
 }
