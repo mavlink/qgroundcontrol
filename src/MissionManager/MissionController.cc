@@ -1176,6 +1176,15 @@ void MissionController::_recalcFlightPathSegments(void)
     _simpleFlightPathSegments.endResetModel();
     _directionArrows.endResetModel();
 
+    // The split segment may have been recreated with a new segment type, or removed entirely
+    if (_splitSegment != nullptr) {
+        const VisualItemPair obsoleteSplitPair = oldSegmentTable.key(_splitSegment);
+        if (obsoleteSplitPair.first != nullptr) {
+            _splitSegment = _flightPathSegmentHashTable.value(obsoleteSplitPair, nullptr);
+            signalSplitSegmentChanged = true;
+        }
+    }
+
     // Anything left in the old table is an obsolete line object that can go
     qDeleteAll(oldSegmentTable);
 
