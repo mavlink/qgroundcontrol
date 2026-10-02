@@ -59,7 +59,7 @@ public:
     bool isAutoConnect() const { return _autoConnect; }
 
     /// Set if this is this an Auto Connect configuration.
-    virtual void setAutoConnect(bool autoc = true);
+    void setAutoConnect(bool autoc = true);
 
     bool suppressAutoReconnect() const { return _suppressAutoReconnect; }
     void setSuppressAutoReconnect(bool suppress) {
