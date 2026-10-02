@@ -4,6 +4,8 @@
 #include <optional>
 
 #include <QtCore/QList>
+#include <QtCore/QPointer>
+#include <QtCore/QRectF>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QSettings>
@@ -24,14 +26,19 @@
 #include "FlyViewSettings.h"
 #include "GeoMapCamera.h"
 #include "MapPositionTracker.h"
+#include "MissionController.h"
+#include "MissionManager.h"
 #include "MockLink.h"
+#include "PlanMasterController.h"
 #include "QGCMapCircle.h"
 #include "QGroundControlQmlGlobal.h"
+#include "QmlObjectListModel.h"
 #include "SettingsManager.h"
 #include "SurfacePatchModel.h"
 #include "TileMath.h"
 #include "Vehicle.h"
 #include "VideoSettings.h"
+#include "VisualMissionItem.h"
 
 UT_REGISTER_TEST(FlyViewGeoUITest, TestLabel::Integration)
 
@@ -913,4 +920,95 @@ void FlyViewGeoUITest::_testPipExitAppliesSharedZoom()
     QCOMPARE_LT(qAbs(QGroundControlQmlGlobal::flightMapZoom() - kPlanZoom), 0.01);
 
     stopUI();
+}
+
+void FlyViewGeoUITest::_testZoomToMissionFromVehicle_data()
+{
+    QTest::addColumn<bool>("inPip");
+
+    QTest::addRow("full view") << false;
+    // The fit must survive the swap back to the full view
+    QTest::addRow("pip") << true;
+}
+
+// A mission downloaded from the vehicle zooms the map to show it (FlyViewMap parity)
+void FlyViewGeoUITest::_testZoomToMissionFromVehicle()
+{
+    QFETCH(bool, inPip);
+
+    Fact* const geoEngineFact = SettingsManager::instance()->flyViewSettings()->useGeoMapEngine();
+    const QVariant savedEnabled = geoEngineFact->rawValue();
+    const auto guard = qScopeGuard([geoEngineFact, savedEnabled] { geoEngineFact->setRawValue(savedEnabled); });
+    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                     QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
+    geoEngineFact->setRawValue(true);
+    // A configured video stream is what makes the Fly View offer PiP
+    Fact* const videoSource = SettingsManager::instance()->videoSettings()->videoSource();
+    const QVariant savedVideoSource = videoSource->rawValue();
+    const auto videoGuard =
+        qScopeGuard([videoSource, savedVideoSource] { videoSource->setRawValue(savedVideoSource); });
+    if (inPip) {
+        videoSource->setRawValue(QString::fromLatin1(VideoSettings::videoSourceUDPH264));
+    }
+
+    runWithMockLink(
+        [] { return MockLink::startPX4MockLinkWithMission(); },
+        [this, inPip](QPointer<MockLink>, Vehicle* vehicle) {
+            const std::optional<bool> rhiBased = expectSoftwareBackendWarnings(/*strict*/ false);
+            QVERIFY2(rhiBased.has_value(), "No renderer interface on the main window");
+
+            QQuickItem* const adapter =
+                findVisibleItem(_rootItem, QStringLiteral("flyViewGeoMapAdapter"), kItemAppearTimeoutMs);
+            QVERIFY2(adapter, "GeoMap adapter not visible");
+            auto* const planController = adapter->property("planMasterController").value<PlanMasterController*>();
+            QVERIFY2(planController, "Fly View PlanMasterController not found");
+            QQuickItem* const viewport =
+                findVisibleItem(_rootItem, QStringLiteral("geoMapViewport"), kItemAppearTimeoutMs);
+            QVERIFY2(viewport, "GeoMap 3D viewport not visible");
+            QQuickItem* const geoMap = viewport->parentItem();
+            auto* const cam = geoMap->findChild<GeoMapCamera*>(QStringLiteral("geoMapCamera"));
+            QVERIFY2(cam, "GeoMapCamera not found");
+            auto* const positionTracker = geoMap->findChild<MapPositionTracker*>();
+            QVERIFY2(positionTracker, "MapPositionTracker not found");
+
+            // Past the one-shot vehicle centering (it would also set a zoom), then zoom far
+            // out: only the mission fit can bring the camera back in
+            QTRY_VERIFY_WITH_TIMEOUT(positionTracker->firstVehiclePositionReceived(), kItemAppearTimeoutMs);
+            constexpr double kFarZoom = 5.0;
+            cam->lookAt(vehicle->coordinate(), 0, 0, cam->distanceForZoomLevel(kFarZoom));
+
+            const QString pipName = QStringLiteral("flyViewPipView");
+            QQuickItem* const pipView = inPip ? findVisibleItem(_rootItem, pipName, kItemAppearTimeoutMs) : nullptr;
+            if (inPip) {
+                QVERIFY2(pipView, "PiP view not visible");
+                QVERIFY(_clickItemAt(pipView, 0.5, 0.5, pipName));
+                QTRY_VERIFY_WITH_TIMEOUT(adapter->property("pipMode").toBool(), kSettleTimeoutMs);
+            }
+
+            QSignalSpy newItemsSpy(planController->missionController(), &MissionController::newItemsFromVehicle);
+            vehicle->missionManager()->loadFromVehicle();
+            QVERIFY(newItemsSpy.wait(kItemAppearTimeoutMs));
+
+            if (inPip) {
+                QVERIFY(_clickItemAt(pipView, 0.5, 0.5, pipName));
+                QTRY_VERIFY_WITH_TIMEOUT(!adapter->property("pipMode").toBool(), kSettleTimeoutMs);
+            }
+
+            // The mission fills the view: fitted well past the far zoom, every item on screen
+            QTRY_COMPARE_GT_WITH_TIMEOUT(cam->zoomLevelForDistance(cam->distance()), kFarZoom + 5.0, kSettleTimeoutMs);
+            const QRectF screen(QPointF(0, 0), cam->viewportSize());
+            QmlObjectListModel* const visualItems = planController->missionController()->visualItems();
+            int coordinateItems = 0;
+            for (int i = 1; i < visualItems->count(); i++) {
+                const auto* const item = visualItems->value<VisualMissionItem*>(i);
+                if (!item->specifiesCoordinate() || item->isStandaloneCoordinate()) {
+                    continue;
+                }
+                coordinateItems++;
+                const auto projected = cam->worldToScreen(TileMath::geoToWorld(item->coordinate()));
+                QVERIFY(projected.has_value());
+                QVERIFY2(screen.contains(*projected), qPrintable(QStringLiteral("Mission item %1 off screen").arg(i)));
+            }
+            QCOMPARE_GT(coordinateItems, 1);
+        });
 }
