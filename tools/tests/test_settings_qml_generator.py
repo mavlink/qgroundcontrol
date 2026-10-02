@@ -962,6 +962,16 @@ class TestGeneratePageQml:
         qml = generate_page_qml(page, settings_dir)
         assert "_stringFieldWidth" in qml
 
+    def test_string_field_width_declared_for_enum_textfield(self, tmp_path: Path):
+        fact = {"name": "s", "type": "string", "enumStrings": "A,B", "enumValues": "a,b"}
+        stock_dir = _make_settings_dir(tmp_path, {"App": [fact]})
+        page = PageDef(
+            groups=[GroupDef(controls=[ControlDef(setting="appSettings.s", control="textfield")])]
+        )
+        qml = generate_page_qml(page, stock_dir)
+        assert "textFieldPreferredWidth: _stringFieldWidth" in qml
+        assert "property real _stringFieldWidth" in qml
+
     def test_layout_fill_width(self, settings_dir: Path):
         page = PageDef(
             groups=[
@@ -1309,6 +1319,19 @@ class TestRealPageDefinitions:
             page = load_page_def(json_file)
             qml = generate_page_qml(page, settings_dir)
             assert "SettingsPage {" in qml, f"Generation failed for {json_file.name}"
+
+    def test_cpp_defined_units_settings(self, repo_root: Path):
+        # Units.SettingsGroup.json is empty; its facts are declared in UnitsSettings.cc
+        settings_dir = repo_root / "src" / "Settings"
+        page = PageDef(
+            groups=[
+                GroupDef(
+                    heading="Units",
+                    controls=[ControlDef(setting="unitsSettings.speedUnits", control="combobox")],
+                )
+            ]
+        )
+        assert "LabelledFactComboBox {" in generate_page_qml(page, settings_dir)
 
     def test_viewer3d_page(self, repo_root: Path):
         pages_dir = repo_root / "src" / "AppSettings" / "pages"
@@ -1771,6 +1794,86 @@ class TestCustomOverlay:
         generated = sorted(p.name for p in output_dir.glob("*.qml"))
         assert generated == ["Alpha.qml", "Beta.qml", "Gamma.qml", "SettingsPagesModel.qml"]
         assert "Custom Section" in (output_dir / "Gamma.qml").read_text(encoding="utf-8")
+
+
+class TestStockSettingsMetadata:
+    """Stock SettingsGroup.json files validated against SettingsManager.h."""
+
+    @staticmethod
+    def _stock_dir(tmp_path: Path, stems: list[str]) -> Path:
+        fact = {"name": "x", "type": "bool", "shortDesc": "X", "label": "X"}
+        stock_dir = _make_settings_dir(tmp_path, {stem: [fact] for stem in stems})
+        (stock_dir / "SettingsManager.h").write_text(
+            "Q_PROPERTY(QObject *appSettings READ appSettings CONSTANT)\n", encoding="utf-8"
+        )
+        return stock_dir
+
+    def test_per_instance_group_skipped_silently(self, tmp_path: Path, capsys):
+        metadata = load_settings_metadata(self._stock_dir(tmp_path, ["App", "Joystick"]))
+        assert "appSettings.x" in metadata
+        assert "joystickSettings.x" not in metadata
+        assert capsys.readouterr().err == ""
+
+    def test_unmatched_group_rejected(self, tmp_path: Path):
+        with pytest.raises(ValueError, match="'bogusSettings' but no matching Q_PROPERTY"):
+            load_settings_metadata(self._stock_dir(tmp_path, ["App", "Bogus"]))
+
+    def test_unknown_setting_rejected(self, tmp_path: Path):
+        stock_dir = self._stock_dir(tmp_path, ["App"])
+        with pytest.raises(ValueError, match=re.escape("appSettings.missing")):
+            get_fact_type("appSettings.missing", stock_dir)
+
+    def test_page_with_unknown_setting_rejected(self, tmp_path: Path):
+        stock_dir = self._stock_dir(tmp_path, ["App"])
+        page = PageDef(
+            groups=[
+                GroupDef(
+                    heading="G",
+                    controls=[ControlDef(setting="appSettings.missing", control="checkbox")],
+                )
+            ]
+        )
+        with pytest.raises(ValueError, match=re.escape("appSettings.missing")):
+            generate_page_qml(page, stock_dir)
+
+    def test_unknown_setting_after_string_field_rejected(self, tmp_path: Path):
+        string_fact = {"name": "s", "type": "string", "shortDesc": "S", "label": "S"}
+        stock_dir = _make_settings_dir(tmp_path, {"App": [string_fact]})
+        page = PageDef(
+            groups=[
+                GroupDef(
+                    heading="G",
+                    controls=[
+                        ControlDef(setting="appSettings.s"),
+                        ControlDef(setting="appSettings.missing", control="checkbox"),
+                    ],
+                )
+            ]
+        )
+        with pytest.raises(ValueError, match=re.escape("appSettings.missing")):
+            generate_page_qml(page, stock_dir)
+
+    def test_cpp_defined_setting_requires_explicit_control(self, tmp_path: Path):
+        stock_dir = self._stock_dir(tmp_path, ["App"])
+        (stock_dir / "AppSettings.cc").write_text(
+            "DECLARE_SETTINGSFACT_NO_FUNC(AppSettings, cppOnly)\n", encoding="utf-8"
+        )
+        page = PageDef(
+            groups=[GroupDef(heading="G", controls=[ControlDef(setting="appSettings.cppOnly")])]
+        )
+        with pytest.raises(ValueError, match=r"'appSettings\.cppOnly' is C\+\+-defined"):
+            generate_page_qml(page, stock_dir)
+
+    def test_page_with_component_control_needs_no_metadata(self, tmp_path: Path):
+        stock_dir = self._stock_dir(tmp_path, ["App"])
+        page = PageDef(
+            groups=[
+                GroupDef(
+                    heading="G", controls=[ControlDef(control="component", component="Foo.qml")]
+                )
+            ]
+        )
+        assert "Foo.qml" in generate_page_qml(page, stock_dir)
 
 
 class TestCustomSettingsMetadata:
