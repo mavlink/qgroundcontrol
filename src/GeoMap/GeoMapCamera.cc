@@ -1,9 +1,11 @@
 #include "GeoMapCamera.h"
 
-#include <QtCore/QtMath>
-
 #include <algorithm>
+#include <array>
 #include <cmath>
+
+#include <QtCore/QRectF>
+#include <QtCore/QtMath>
 
 #include "QGCLoggingCategory.h"
 #include "TileMath.h"
@@ -70,6 +72,35 @@ Ray pickRay(const QPointF& centerWorld, qreal heading, qreal tilt, qreal distanc
 
     const Vec3 offset = cameraOffset(heading, tilt, distance);
     return Ray{Vec3{centerWorld.x() + offset.x, centerWorld.y() + offset.y, centerElevation + offset.z}, dir};
+}
+
+// Inverse of pickRay: world point (mercator meters, z in scene units) to screen
+// pixels; std::nullopt at or behind the camera plane
+std::optional<QPointF> projectToScreen(const QPointF& centerWorld, qreal heading, qreal tilt, qreal distance,
+                                       qreal centerElevation, const QSizeF& viewport, qreal fov,
+                                       const QPointF& worldGround, double worldZ)
+{
+    const Vec3 offset = cameraOffset(heading, tilt, distance);
+    const Vec3 d{worldGround.x() - (centerWorld.x() + offset.x), worldGround.y() - (centerWorld.y() + offset.y),
+                 worldZ - (centerElevation + offset.z)};
+
+    // World-to-camera: inverse of the pose rotation, R^T = Rx(-tilt) * Rz(-heading)
+    const double h = qDegreesToRadians(heading);
+    const double t = qDegreesToRadians(tilt);
+    const Vec3 a{(d.x * std::cos(h)) + (d.y * std::sin(h)), (-d.x * std::sin(h)) + (d.y * std::cos(h)), d.z};
+    const Vec3 c{a.x, (a.y * std::cos(t)) + (a.z * std::sin(t)), (-a.y * std::sin(t)) + (a.z * std::cos(t))};
+
+    // Camera looks along -z; the epsilon guards the projection divide (not a near plane)
+    const double depth = -c.z;
+    if (depth <= 1e-9) {
+        return std::nullopt;
+    }
+
+    const double aspect = viewport.width() / viewport.height();
+    const double tanHalfFov = std::tan(qDegreesToRadians(fov) / 2.0);
+    const double ndcX = c.x / (depth * tanHalfFov * aspect);
+    const double ndcY = c.y / (depth * tanHalfFov);
+    return QPointF(((ndcX + 1.0) / 2.0) * viewport.width(), ((1.0 - ndcY) / 2.0) * viewport.height());
 }
 
 }  // namespace
@@ -326,27 +357,8 @@ std::optional<QPointF> GeoMapCamera::worldToScreen(const QPointF& worldGround, d
         return std::nullopt;
     }
 
-    const Vec3 offset = cameraOffset(_heading, _tilt, _distance);
-    const Vec3 d{worldGround.x() - (_centerWorld.x() + offset.x), worldGround.y() - (_centerWorld.y() + offset.y),
-                 worldZ - (_centerElevation + offset.z)};
-
-    // World-to-camera: inverse of the pose rotation, R^T = Rx(-tilt) * Rz(-heading)
-    const double h = qDegreesToRadians(_heading);
-    const double t = qDegreesToRadians(_tilt);
-    const Vec3 a{(d.x * std::cos(h)) + (d.y * std::sin(h)), (-d.x * std::sin(h)) + (d.y * std::cos(h)), d.z};
-    const Vec3 c{a.x, (a.y * std::cos(t)) + (a.z * std::sin(t)), (-a.y * std::sin(t)) + (a.z * std::cos(t))};
-
-    // Camera looks along -z; the epsilon guards the projection divide (not a near plane)
-    const double depth = -c.z;
-    if (depth <= 1e-9) {
-        return std::nullopt;
-    }
-
-    const double aspect = _viewportSize.width() / _viewportSize.height();
-    const double tanHalfFov = std::tan(qDegreesToRadians(verticalFieldOfView()) / 2.0);
-    const double ndcX = c.x / (depth * tanHalfFov * aspect);
-    const double ndcY = c.y / (depth * tanHalfFov);
-    return QPointF(((ndcX + 1.0) / 2.0) * _viewportSize.width(), ((1.0 - ndcY) / 2.0) * _viewportSize.height());
+    return projectToScreen(_centerWorld, _heading, _tilt, _distance, _centerElevation, _viewportSize,
+                           verticalFieldOfView(), worldGround, worldZ);
 }
 
 qreal GeoMapCamera::sceneUnitsPerPixel() const
@@ -412,6 +424,49 @@ QGeoCoordinate GeoMapCamera::centerForCoordinateAtScreenPoint(const QGeoCoordina
     const QPointF hit(ray.origin.x + (s * ray.dir.x), ray.origin.y + (s * ray.dir.y));
     const QPointF delta = TileMath::geoToWorld(coordinate) - hit;
     return TileMath::worldToGeo(_centerWorld + delta);
+}
+
+void GeoMapCamera::fitToRegion(const QGeoRectangle& region)
+{
+    if (_viewportSize.isEmpty() || !region.isValid()) {
+        return;
+    }
+
+    const QPointF topLeft = TileMath::geoToWorld(region.topLeft());
+    const QPointF bottomRight = TileMath::geoToWorld(region.bottomRight());
+    const std::array<QPointF, 4> corners{topLeft, bottomRight, QPointF(topLeft.x(), bottomRight.y()),
+                                         QPointF(bottomRight.x(), topLeft.y())};
+
+    // Center first: consumers re-sample centerElevation on centerChanged, and
+    // the corners are fitted on that pivot plane
+    _setCenterWorld((topLeft + bottomRight) / 2.0);
+
+    const QRectF viewport(QPointF(0, 0), _viewportSize);
+    const qreal fov = verticalFieldOfView();
+    const auto fits = [&](double distance) {
+        return std::ranges::all_of(corners, [&](const QPointF& corner) {
+            const auto screen = projectToScreen(_centerWorld, _heading, _tilt, distance, _centerElevation,
+                                                _viewportSize, fov, corner, _centerElevation);
+            return screen && viewport.contains(*screen);
+        });
+    };
+
+    // Backing away along the view axis shrinks every on-plane point toward the
+    // screen center, so fits() is monotonic in distance: bisect in log space
+    double fitDistance = kMinDistance;
+    if (!fits(kMinDistance)) {
+        double tooClose = kMinDistance;
+        fitDistance = kMaxDistance;
+        while ((fitDistance / tooClose) > (1.0 + 1e-6)) {
+            const double mid = std::sqrt(tooClose * fitDistance);
+            if (fits(mid)) {
+                fitDistance = mid;
+            } else {
+                tooClose = mid;
+            }
+        }
+    }
+    setDistance(fitDistance);
 }
 
 void GeoMapCamera::beginPan(const QPointF& screenPos, double anchorZ)

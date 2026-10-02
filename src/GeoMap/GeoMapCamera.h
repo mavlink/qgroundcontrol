@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <optional>
+
 #include <QtCore/QObject>
 #include <QtCore/QPointF>
 #include <QtCore/QSizeF>
@@ -16,9 +18,8 @@
 #include <QtGui/QQuaternion>
 #include <QtGui/QVector3D>
 #include <QtPositioning/QGeoCoordinate>
+#include <QtPositioning/QGeoRectangle>
 #include <QtQmlIntegration/QtQmlIntegration>
-
-#include <optional>
 
 /// Camera pose model for the GeoMap engine.
 ///
@@ -217,6 +218,12 @@ public:
     Q_INVOKABLE QGeoCoordinate centerForCoordinateAtScreenPoint(const QGeoCoordinate& coordinate,
                                                                 const QPointF& screenPos, double worldZ = 0.0,
                                                                 double centerElevation = qQNaN()) const;
+
+    /// QtLocation Map.visibleRegion analog: centers on region and moves to the
+    /// closest distance at which all of its corners (on the pivot plane) are on
+    /// screen, keeping heading and tilt. No-op for an invalid region or when the
+    /// viewport is not set.
+    Q_INVOKABLE void fitToRegion(const QGeoRectangle& region);
 
     /// Derived camera position in world space (mercator meters, z up).
     /// Float precision — for rendering/debug display; internal math is double.
