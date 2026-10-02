@@ -26,7 +26,10 @@ Item {
     property var rightPanelWidth
     property var planMasterController
     property bool pipMode: false // true: map is shown in a small pip mode
-    property var toolInsets // Insets for the center viewport area
+    property rect viewportRect: Qt.rect(0, 0, width, height)  // Map area the vehicle is kept within
+    property var occluders: []                               // Rects within the viewport covered by UI
+    property real chromeTopMargin: 0     // Map controls on the right edge start below this
+    property real chromeBottomMargin: 0  // Map overlays on the bottom left stay above this
     property string mapName
 
     // Writable center (contract parity with FlyViewMap): assignments recentre
@@ -43,10 +46,6 @@ Item {
 
     // Escape hatch for GeoMap-specific chrome/controls
     readonly property var geoMap: geoMapControl
-
-    // Host-provided offset from the map top to where the toolInsets frame
-    // starts (the widget layer sits below the toolbar)
-    property real toolInsetsTopOffset: 0
 
     readonly property string _mapTypeSetting: QGroundControl.settingsManager.flightMapSettings.mapType.rawValue
 
@@ -131,6 +130,8 @@ Item {
     FlyViewGeoMap {
         id: geoMapControl
         anchors.fill: parent
+        followViewportRect: root.viewportRect
+        followOccluders: root.occluders
 
         // The PiP window is too small for free camera panning to be useful
         keepVehicleCentered: root.pipMode || QGroundControl.settingsManager.flyViewSettings.keepMapCenteredOnVehicle.rawValue
@@ -176,10 +177,8 @@ Item {
         anchors.fill: parent
         geoMap: geoMapControl
         visible: !root.pipMode
-        // Right edge below the instrument/photo-video panel
-        buttonsTopMargin: root.toolInsetsTopOffset
-                          + (root.toolInsets ? root.toolInsets.topEdgeRightInset : 0)
-        overlayBottomMargin: (root.toolInsets ? root.toolInsets.bottomEdgeLeftInset : 0) + ScreenTools.defaultFontPixelWidth / 2
+        buttonsTopMargin: root.chromeTopMargin
+        overlayBottomMargin: root.chromeBottomMargin
     }
 
     PipState {

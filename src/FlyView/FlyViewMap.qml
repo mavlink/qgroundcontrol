@@ -24,7 +24,8 @@ FlightMap {
     property var    rightPanelWidth
     property var    planMasterController
     property bool   pipMode:                    false   // true: map is shown in a small pip mode
-    property var    toolInsets                          // Insets for the center viewport area
+    property rect   viewportRect:               Qt.rect(0, 0, width, height)    // Map area the vehicle is kept within
+    property var    occluders:                  []                              // Rects within the viewport covered by UI
 
     property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
     property var    _planMasterController:      planMasterController
@@ -74,7 +75,7 @@ FlightMap {
     onMapPanStop:   positionTracker.userInteracting = false
 
     // Follow behavior on top of FlightMap's one-shot centering: hard follow while
-    // the keep-centered setting or pip mode is active, inset-rect follow otherwise
+    // the keep-centered setting or pip mode is active, occluder follow otherwise
     Binding {
         target: positionTracker
         property: "keepVehicleCentered"
@@ -121,33 +122,6 @@ FlightMap {
         animateLong.start()
     }
 
-    // returns the rectangle formed by the four center insets
-    // used for checking if vehicle is under ui, and as a target for recentering the view
-    function _insetCenterRect() {
-        return Qt.rect(toolInsets.leftEdgeCenterInset,
-                       toolInsets.topEdgeCenterInset,
-                       _root.width - toolInsets.leftEdgeCenterInset - toolInsets.rightEdgeCenterInset,
-                       _root.height - toolInsets.topEdgeCenterInset - toolInsets.bottomEdgeCenterInset)
-    }
-
-    // returns the four rectangles formed by the 8 corner insets
-    // used for detecting if the vehicle has flown under the instrument panel, virtual joystick etc
-    function _insetCornerRects() {
-        return [
-            Qt.rect(0,0,
-                    toolInsets.leftEdgeTopInset,
-                    toolInsets.topEdgeLeftInset),
-            Qt.rect(_root.width-toolInsets.rightEdgeTopInset,0,
-                    toolInsets.rightEdgeTopInset,
-                    toolInsets.topEdgeRightInset),
-            Qt.rect(0,_root.height-toolInsets.bottomEdgeLeftInset,
-                    toolInsets.leftEdgeBottomInset,
-                    toolInsets.bottomEdgeLeftInset),
-            Qt.rect(_root.width-toolInsets.rightEdgeBottomInset,_root.height-toolInsets.bottomEdgeRightInset,
-                    toolInsets.rightEdgeBottomInset,
-                    toolInsets.bottomEdgeRightInset)]
-    }
-
     PipState {
         id:         _pipState
         pipView:    _root.pipView
@@ -160,7 +134,7 @@ FlightMap {
         repeat:         true
         onTriggered: {
             let vehiclePoint = _root.fromCoordinate(_activeVehicleCoordinate, false /* clipToViewport */)
-            positionTracker.evaluateInsetFollow(vehiclePoint, _insetCenterRect(), _insetCornerRects())
+            positionTracker.evaluateOccluderFollow(vehiclePoint, viewportRect, occluders)
         }
     }
 

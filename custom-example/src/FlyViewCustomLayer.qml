@@ -7,9 +7,15 @@ import QGroundControl.Controls
 import Custom.Widgets
 
 Item {
-    property var parentToolInsets                       // These insets tell you what screen real estate is available for positioning the controls in your overlay
-    property var totalToolInsets:   _totalToolInsets    // The insets updated for the custom overlay additions
+    property var occluders      // FlyViewOccluders: where the upstream widgets are, use these to position your controls
     property var mapControl
+
+    // Rects of the controls in this layer which cover the map, so the map keeps the vehicle out from under them
+    property var customOccluders: [
+        exampleRectangle.visible ? Qt.rect(exampleRectangle.x, exampleRectangle.y, exampleRectangle.width, exampleRectangle.height) : Qt.rect(0, 0, 0, 0),
+        Qt.rect(compassBar.x, headingIndicator.y, compassBar.width, compassArrowIndicator.y + compassArrowIndicator.height - headingIndicator.y),
+        Qt.rect(compassBackground.x, attitudeIndicator.y, attitudeIndicator.x + attitudeIndicator.width - compassBackground.x, attitudeIndicator.height)
+    ]
 
     readonly property string noGPS:         qsTr("NO GPS")
     readonly property real   indicatorValueWidth:   ScreenTools.defaultFontPixelWidth * 7
@@ -39,40 +45,21 @@ Item {
         return hours+':'+minutes+':'+seconds;
     }
 
-    QGCToolInsets {
-        id:                     _totalToolInsets
-        leftEdgeTopInset:       parentToolInsets.leftEdgeTopInset
-        leftEdgeCenterInset:    exampleRectangle.leftEdgeCenterInset
-        leftEdgeBottomInset:    parentToolInsets.leftEdgeBottomInset
-        rightEdgeTopInset:      parentToolInsets.rightEdgeTopInset
-        rightEdgeCenterInset:   parentToolInsets.rightEdgeCenterInset
-        rightEdgeBottomInset:   parent.width - compassBackground.x
-        topEdgeLeftInset:       parentToolInsets.topEdgeLeftInset
-        topEdgeCenterInset:     compassArrowIndicator.y + compassArrowIndicator.height
-        topEdgeRightInset:      parentToolInsets.topEdgeRightInset
-        bottomEdgeLeftInset:    parentToolInsets.bottomEdgeLeftInset
-        bottomEdgeCenterInset:  parentToolInsets.bottomEdgeCenterInset
-        bottomEdgeRightInset:   parent.height - attitudeIndicator.y
-    }
-
-    // This is an example of how you can use parent tool insets to position an element on the custom fly view layer
-    // - we use parent topEdgeLeftInset to position the widget below the toolstrip
-    // - we use parent bottomEdgeLeftInset to dodge the virtual joystick if enabled
-    // - we use the parent leftEdgeTopInset to size our element to the same width as the ToolStripAction
-    // - we export the width of this element as the leftEdgeCenterInset so that the map will recenter if the vehicle flys behind this element
+    // This is an example of how you can use the upstream occluders to position an element on the custom fly view layer
+    // - we position the element below the toolstrip and size it to the same width
+    // - we keep the element above the PiP view and virtual joystick if they are shown
+    // - we add the element to customOccluders so that the map will recenter if the vehicle flies behind this element
     Rectangle {
         id: exampleRectangle
-        visible: false // to see this example, set this to true. To view insets, enable the insets viewer FlyView.qml
+        visible: false // to see this example, set this to true. To view occluders, enable the occluder viewer in FlyView.qml
         anchors.left: parent.left
         anchors.top: parent.top
         anchors.bottom: parent.bottom
-        anchors.topMargin: parentToolInsets.topEdgeLeftInset + _toolsMargin
-        anchors.bottomMargin: parentToolInsets.bottomEdgeLeftInset + _toolsMargin
+        anchors.topMargin: occluders.toolStrip.y + occluders.toolStrip.height + _toolsMargin
+        anchors.bottomMargin: parent.height - Math.min(occluders.pipView.y, occluders.virtualJoystickLeft.y) + _toolsMargin
         anchors.leftMargin: _toolsMargin
-        width: parentToolInsets.leftEdgeTopInset - _toolsMargin
+        width: occluders.toolStrip.width - _toolsMargin
         color: 'red'
-
-        property real leftEdgeCenterInset: visible ? x + width : 0
     }
 
     //-------------------------------------------------------------------------
@@ -225,7 +212,7 @@ Item {
 
     Rectangle {
         id:                     attitudeIndicator
-        anchors.bottomMargin:   _toolsMargin + parentToolInsets.bottomEdgeRightInset
+        anchors.bottomMargin:   _toolsMargin + parent.height - Math.min(occluders.bottomRight.y, occluders.virtualJoystickRight.y)
         anchors.rightMargin:    _toolsMargin
         anchors.bottom:         parent.bottom
         anchors.right:          parent.right

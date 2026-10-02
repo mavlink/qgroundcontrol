@@ -18,24 +18,7 @@ import QGroundControl.FlightMap
 Item {
     id: _root
 
-    property var parentToolInsets               // These insets tell you what screen real estate is available for positioning the controls in your overlay
-    property var totalToolInsets:   _toolInsets // These are the insets for your custom overlay additions
+    property var occluders              // FlyViewOccluders: where the upstream widgets are, use these to position your controls
+    property var customOccluders: []    // Rects of your controls which cover the map, so the map keeps the vehicle out from under them. Keep them off the view center, the map recenters there
     property var mapControl
-
-    // since this file is a placeholder for the custom layer in a standard build, we will just pass through the parent insets
-    QGCToolInsets {
-        id:                     _toolInsets
-        leftEdgeTopInset:       parentToolInsets.leftEdgeTopInset
-        leftEdgeCenterInset:    parentToolInsets.leftEdgeCenterInset
-        leftEdgeBottomInset:    parentToolInsets.leftEdgeBottomInset
-        rightEdgeTopInset:      parentToolInsets.rightEdgeTopInset
-        rightEdgeCenterInset:   parentToolInsets.rightEdgeCenterInset
-        rightEdgeBottomInset:   parentToolInsets.rightEdgeBottomInset
-        topEdgeLeftInset:       parentToolInsets.topEdgeLeftInset
-        topEdgeCenterInset:     parentToolInsets.topEdgeCenterInset
-        topEdgeRightInset:      parentToolInsets.topEdgeRightInset
-        bottomEdgeLeftInset:    parentToolInsets.bottomEdgeLeftInset
-        bottomEdgeCenterInset:  parentToolInsets.bottomEdgeCenterInset
-        bottomEdgeRightInset:   parentToolInsets.bottomEdgeRightInset
-    }
 }
