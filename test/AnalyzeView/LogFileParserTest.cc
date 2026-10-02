@@ -31,14 +31,14 @@ namespace {
 // Callers add formats, subscriptions, and data messages via the callbacks.
 using WriterFn = std::function<void(ulog_cpp::Writer &)>;
 
-QByteArray buildULog(WriterFn headerFn, WriterFn dataFn)
+QByteArray buildULog(WriterFn headerFn, WriterFn dataFn, uint64_t headerTimestampUs = 0)
 {
     std::vector<uint8_t> buffer;
     ulog_cpp::Writer writer([&](const uint8_t *data, int length) {
         buffer.insert(buffer.end(), data, data + length);
     });
 
-    writer.fileHeader(ulog_cpp::FileHeader{});
+    writer.fileHeader(ulog_cpp::FileHeader{headerTimestampUs});
     if (headerFn) {
         headerFn(writer);
     }
@@ -335,6 +335,47 @@ void LogFileParserTest::_parseULogModeSegmentsTest()
 
     QVERIFY(modes.contains(QStringLiteral("Manual")));
     QVERIFY(modes.contains(QStringLiteral("Mission")));
+}
+
+void LogFileParserTest::_parseULogStaleInitialSamplesTest()
+{
+    // PX4 logs each topic's last value when logging starts, keeping its original (older) timestamp
+    constexpr uint64_t logStartUs = 148300000ULL;
+    const QByteArray bytes = buildULog(
+        [](ulog_cpp::Writer& w) {
+            w.messageFormat(ulog_cpp::MessageFormat{
+                "transponder_report",
+                {ulog_cpp::Field{"uint64_t", "timestamp"}, ulog_cpp::Field{"float", "altitude"}}});
+            w.messageFormat(ulog_cpp::MessageFormat{
+                "sensor_combined", {ulog_cpp::Field{"uint64_t", "timestamp"}, ulog_cpp::Field{"float", "gyro_rad_x"}}});
+        },
+        [](ulog_cpp::Writer& w) {
+            w.addLoggedMessage(ulog_cpp::AddLoggedMessage{0, 1, "transponder_report"});
+            w.addLoggedMessage(ulog_cpp::AddLoggedMessage{0, 2, "sensor_combined"});
+            w.data(ulog_cpp::Data{1, makePayload64Float(0ULL, 42.0f)});
+            w.data(ulog_cpp::Data{2, makePayload64Float(logStartUs + 20000ULL, 0.1f)});
+            w.data(ulog_cpp::Data{2, makePayload64Float(212500000ULL, 0.2f)});
+        },
+        logStartUs);
+
+    QTemporaryFile tmp;
+    tmp.setFileTemplate(QDir::tempPath() + QStringLiteral("/logtest_XXXXXX.ulg"));
+    QVERIFY(writeTempFile(tmp, bytes));
+
+    LogFileParser parser;
+    QVERIFY(parser.parseFile(tmp.fileName()));
+
+    QCOMPARE_LT(qAbs(parser.minTimestamp() - 148.3), 1e-6);
+    QCOMPARE_LT(qAbs(parser.maxTimestamp() - 212.5), 1e-6);
+
+    const QVariantList stale = parser.fieldSamples(QStringLiteral("transponder_report.altitude"));
+    QCOMPARE(stale.size(), 1);
+    QCOMPARE_LT(qAbs(stale[0].toPointF().x() - 148.3), 1e-6);
+    QCOMPARE_LT(qAbs(stale[0].toPointF().y() - 42.0), 1e-5);
+
+    const QVariantList fresh = parser.fieldSamples(QStringLiteral("sensor_combined.gyro_rad_x"));
+    QCOMPARE(fresh.size(), 2);
+    QCOMPARE_LT(qAbs(fresh[0].toPointF().x() - 148.32), 1e-6);
 }
 
 void LogFileParserTest::_parseULogDropoutTest()

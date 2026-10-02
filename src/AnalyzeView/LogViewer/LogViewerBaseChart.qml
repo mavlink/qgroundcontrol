@@ -83,13 +83,17 @@ Item {
     /// Set the full and zoom range (called on log load).
     /// Emits zoomRangeSet so derived charts can refresh their series.
     function initRange(minX, maxX) {
-        fullMinX   = minX
-        fullMaxX   = maxX
-        zoomMinX   = minX
-        zoomMaxX   = maxX
-        _xAxis.min = minX
-        _xAxis.max = maxX
-        zoomRangeSet(minX, maxX)
+        // Small margin each side so data doesn't touch the edges; timestamps are time since boot so never below 0
+        const pad = (maxX - minX) * 0.025
+        const paddedMinX = Math.max(0, minX - pad)
+        const paddedMaxX = maxX + pad
+        fullMinX   = paddedMinX
+        fullMaxX   = paddedMaxX
+        zoomMinX   = paddedMinX
+        zoomMaxX   = paddedMaxX
+        _xAxis.min = paddedMinX
+        _xAxis.max = paddedMaxX
+        zoomRangeSet(paddedMinX, paddedMaxX)
     }
 
     /// User-driven zoom — also emits zoomApplied for cross-chart sync.

@@ -85,6 +85,11 @@ void ULogFullHandler::error(const std::string &msg, bool is_recoverable)
     qCWarning(ULogFullHandlerLog) << "ULog parse error:" << errorMessage;
 }
 
+void ULogFullHandler::fileHeader(const ulog_cpp::FileHeader& header)
+{
+    _logStartSecs = static_cast<double>(header.header().timestamp) / 1e6;
+}
+
 void ULogFullHandler::messageFormat(const ulog_cpp::MessageFormat &message_format)
 {
     _formats[message_format.name()] = std::make_shared<ulog_cpp::MessageFormat>(message_format);
@@ -134,6 +139,11 @@ void ULogFullHandler::data(const ulog_cpp::Data &data)
         if (sub.format->fieldMap().count("timestamp") > 0) {
             const uint64_t tsUs = view.at("timestamp").as<uint64_t>();
             timestampSecs = static_cast<double>(tsUs) / 1e6;
+            // The logger writes each topic's last value at log start with its original, older timestamp
+            if (timestampSecs < _logStartSecs) {
+                timestampSecs = _logStartSecs;
+                _staleSampleCount++;
+            }
             _lastTimestampSecs = timestampSecs;
         }
 
@@ -327,6 +337,11 @@ void ULogFullHandler::dropout(const ulog_cpp::Dropout &dropout)
 
 void ULogFullHandler::finalize()
 {
+    if (_staleSampleCount > 0) {
+        qCDebug(ULogFullHandlerLog) << "Moved" << _staleSampleCount << "samples older than log start to"
+                                    << _logStartSecs << "s";
+    }
+
     // Detect vehicle type from vehicle_status.vehicle_type
     // PX4 vehicle_type enum: 0=Unknown, 1=Rotary Wing, 2=Fixed Wing, 3=Rover, 4=Airship
     const auto vehicleTypeIt = _result.fieldSamples.constFind(QStringLiteral("vehicle_status.vehicle_type"));
