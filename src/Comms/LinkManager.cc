@@ -27,10 +27,11 @@
 #include "MockLink.h"
 #endif
 
+#include <algorithm>
+#include <utility>
+
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QTimer>
-
-#include <utility>
 
 QGC_LOGGING_CATEGORY(LinkManagerLog, "Comms.LinkManager")
 QGC_LOGGING_CATEGORY(LinkManagerVerboseLog, "Comms.LinkManager:verbose")
@@ -704,6 +705,13 @@ SharedLinkConfigurationPtr LinkManager::addConfiguration(LinkConfiguration *conf
     (void) _rgLinkConfigs.append(SharedLinkConfigurationPtr(config));
 
     return _rgLinkConfigs.last();
+}
+
+bool LinkManager::containsConfiguration(const QString& name) const
+{
+    return std::ranges::any_of(_rgLinkConfigs, [&name](const SharedLinkConfigurationPtr& config) {
+        return config && (config->name() == name);
+    });
 }
 
 void LinkManager::startAutoConnectedLinks()
