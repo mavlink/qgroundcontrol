@@ -23,6 +23,7 @@
 #include "Fact.h"
 #include "FlyViewSettings.h"
 #include "GeoMapCamera.h"
+#include "MapPositionTracker.h"
 #include "MockLink.h"
 #include "QGCMapCircle.h"
 #include "QGroundControlQmlGlobal.h"
@@ -703,8 +704,14 @@ void FlyViewGeoUITest::_testLoiterRadiusEdit()
                                              ->forwardFlightGoToLocationLoiterRad()
                                              ->rawValue()
                                              .toDouble();
-            cam->lookAt(kMapCenter, 0, 0, 600);
-            QVERIFY(QMetaObject::invokeMethod(gotoItem, "show", Q_ARG(QVariant, QVariant::fromValue(kMapCenter))));
+            // The map one-shot centers on the first vehicle position and follows the vehicle back into view:
+            // wait out the one-shot and edit next to the vehicle so the camera stays put under the drags
+            auto* const positionTracker = geoMap->findChild<MapPositionTracker*>();
+            QVERIFY2(positionTracker, "MapPositionTracker not found");
+            QTRY_VERIFY_WITH_TIMEOUT(positionTracker->firstVehiclePositionReceived(), kItemAppearTimeoutMs);
+            const QGeoCoordinate loiterCenter = vehicle->coordinate().atDistanceAndAzimuth(100, 0);
+            cam->lookAt(loiterCenter, 0, 0, 600);
+            QVERIFY(QMetaObject::invokeMethod(gotoItem, "show", Q_ARG(QVariant, QVariant::fromValue(loiterCenter))));
             QTRY_VERIFY_WITH_TIMEOUT(loiterVisuals->isVisible(), kSettleTimeoutMs);
             QCOMPARE(loiterRadius->rawValue().toDouble(), defaultRadius);
 
