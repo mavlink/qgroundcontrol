@@ -58,7 +58,7 @@ repos:
   # Check changed C++ regions, matching CODING_STYLE.md; new files are checked in full.
   # Note: Install matching clang-format version locally to avoid formatting differences
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: v23.1.0
+    rev: v23.1.2
     hooks:
       - id: clang-format
         entry: python tools/check_clang_format.py
@@ -68,7 +68,7 @@ repos:
 
   # Python formatting (report-only)
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.16.5
+    rev: v0.16.10
     hooks:
       - id: ruff
       - id: ruff-format
@@ -76,7 +76,7 @@ repos:
 
   # Python type checking
   - repo: https://github.com/RobertCraigie/pyright-python
-    rev: v1.1.411
+    rev: v1.1.414
     hooks:
       - id: pyright
         files: ^(tools|test|\.github/scripts)/.*\.py$
