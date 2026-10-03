@@ -38,19 +38,24 @@ qt_add_resources(${CMAKE_PROJECT_NAME} firmaware_plugin_apm_resource
 
 #===========================================================================#
 
-CPMAddPackage(
-    NAME              ArduPilotParams
-    GITHUB_REPOSITORY ArduPilot/ParameterRepository
-    GIT_TAG           main
-    GIT_SHALLOW       TRUE
-    DOWNLOAD_ONLY     TRUE
-)
-qgc_track_git_head(
-    REPO_PATH "${ArduPilotParams_SOURCE_DIR}"
-    GIT_REF   main
-    INTERVAL  3600
-    OFFLINE_OK
-)
+if(QGC_USE_SYSTEM_LIBS OR QGC_SYSTEM_LIBS_ONLY)
+    # ALT ships the ArduPilot parameter repository in /usr/share.
+    set(ArduPilotParams_SOURCE_DIR "/usr/share/ParameterRepository" CACHE PATH "ArduPilot parameter repository")
+else()
+    CPMAddPackage(
+        NAME              ArduPilotParams
+        GITHUB_REPOSITORY ArduPilot/ParameterRepository
+        GIT_TAG           main
+        GIT_SHALLOW       TRUE
+        DOWNLOAD_ONLY     TRUE
+    )
+    qgc_track_git_head(
+        REPO_PATH "${ArduPilotParams_SOURCE_DIR}"
+        GIT_REF   main
+        INTERVAL  3600
+        OFFLINE_OK
+    )
+endif()
 
 # Filters applied to discovered ArduPilot parameter dirs (e.g. "Copter-4.7").
 # Regex (CMake syntax) — match against the dir name; matches are dropped.
