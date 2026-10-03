@@ -153,6 +153,14 @@
             "default": true,
             "label": "Enable automatic mission start/resume popups",
             "keywords": "mission popup"
+        },
+        {
+            "name": "allowForceArm",
+            "shortDesc": "Show a Force Arm button in the main status indicator. Force arming bypasses pre-arm checks. Use with caution.",
+            "type": "bool",
+            "default": false,
+            "label": "Allow Force Arm",
+            "keywords": "force arm,arming,pre-arm"
         }
     ]
 }

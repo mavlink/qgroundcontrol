@@ -1201,25 +1201,15 @@ signals:
 /*                         STATUS TEXT HANDLER                               */
 /*===========================================================================*/
 private:
-    Q_PROPERTY(bool    messageTypeNone    READ messageTypeNone    NOTIFY messageTypeChanged)
-    Q_PROPERTY(bool    messageTypeNormal  READ messageTypeNormal  NOTIFY messageTypeChanged)
-    Q_PROPERTY(bool    messageTypeWarning READ messageTypeWarning NOTIFY messageTypeChanged)
-    Q_PROPERTY(bool    messageTypeError   READ messageTypeError   NOTIFY messageTypeChanged)
-    Q_PROPERTY(int     messageCount       READ messageCount       NOTIFY messageCountChanged)
-    Q_PROPERTY(QString formattedMessages  READ formattedMessages  NOTIFY formattedMessagesChanged)
+    Q_PROPERTY(int criticalMessageCount READ criticalMessageCount NOTIFY criticalMessageCountChanged)
+    Q_PROPERTY(QString formattedMessages READ formattedMessages NOTIFY formattedMessagesChanged)
 
     // Q_PROPERTY(StatusTextHandler *statusTextHandler READ statusTextHandler NOTIFY statusTextHandlerChanged)
 
 public:
-    Q_INVOKABLE void resetAllMessages();
-    Q_INVOKABLE void resetErrorLevelMessages();
     Q_INVOKABLE void clearMessages();
 
-    bool messageTypeNone() const;
-    bool messageTypeNormal() const;
-    bool messageTypeWarning() const;
-    bool messageTypeError() const;
-    int messageCount() const;
+    int criticalMessageCount() const;
     QString formattedMessages() const;
 
     // StatusTextHandler* statusTextHandler() { return m_statusTextHandler; }
@@ -1230,8 +1220,7 @@ signals:
     void messagesReceivedChanged();
     void messagesSentChanged();
     void messagesLostChanged();
-    void messageTypeChanged();
-    void messageCountChanged();
+    void criticalMessageCountChanged();
     void formattedMessagesChanged();
     void newFormattedMessage(QString formattedMessage);
 

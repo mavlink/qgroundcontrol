@@ -1423,8 +1423,6 @@ QVariant APMFirmwarePlugin::expandedToolbarIndicatorSource(const Vehicle* vehicl
         return QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/FirmwarePlugin/APM/APMBatteryIndicator.qml"));
     } else if (indicatorName == "FlightMode" && vehicle->multiRotor()) {
         return QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/FirmwarePlugin/APM/APMFlightModeIndicator.qml"));
-    } else if (indicatorName == "MainStatus") {
-        return QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/FirmwarePlugin/APM/APMMainStatusIndicator.qml"));
     }
 
     return QVariant();

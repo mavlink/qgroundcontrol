@@ -12,6 +12,7 @@ RowLayout {
     spacing:    ScreenTools.defaultFontPixelWidth
 
     property bool       showExpand:         false   // Controls whether the expand widget is shown or not
+    property bool       fillWindow:         false   // Drawer fills the window below the toolbar
     property bool       waitForParameters:  false   // UI won't show until parameters are ready
     property bool       expandedComponentWaitForParameters: false   // If true, the expanded component won't show until parameters are ready
     property Component  contentComponent            // Item for the normal view portion of the page
@@ -38,6 +39,7 @@ RowLayout {
     Loader {
         id:                 contentItemLoader
         Layout.alignment:   Qt.AlignTop
+        Layout.fillWidth:   fillWindow
         sourceComponent:    _showMainComponent ? contentComponent : undefined
 
         property var pageProperties: control.pageProperties

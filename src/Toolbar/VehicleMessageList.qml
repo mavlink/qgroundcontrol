@@ -30,9 +30,6 @@ TextArea {
 
     Component.onCompleted: {
         messageText.text = formatMessage(_activeVehicle.formattedMessages)
-        if (_activeVehicle) {
-            _activeVehicle.resetAllMessages()
-        }
     }
 
     Connections {

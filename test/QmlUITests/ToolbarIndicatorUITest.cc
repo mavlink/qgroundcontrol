@@ -1,12 +1,14 @@
 #include "ToolbarIndicatorUITest.h"
 
+#include <QtCore/QPointer>
+#include <QtCore/QRegularExpression>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
 #include <QtTest/QTest>
 
+#include "MockConfiguration.h"
 #include "MockLink.h"
-
-#include <QtCore/QPointer>
+#include "Vehicle.h"
 
 UT_REGISTER_TEST(ToolbarIndicatorUITest, TestLabel::Integration)
 
@@ -90,14 +92,14 @@ void ToolbarIndicatorUITest::_runIndicatorTest(
         bool        expectExpand;
     };
     static const IndicatorSpec kIndicators[] = {
-        { "toolbar_mainStatusIndicator",    "MainStatus",   true  },
-        { "toolbar_flightModeIndicator",    "FlightMode",   true  },
-        { "toolbar_gpsIndicator",           "GPS",          true  },
-        { "toolbar_batteryIndicator",       "Battery",      true  },
-        { "toolbar_remoteIDIndicator",      "RemoteID",     true  },
-        { "toolbar_gimbalIndicator",        "Gimbal",       true  },
-        { "toolbar_escIndicator",           "ESC",          false },
-        { "toolbar_telemetryRSSIIndicator", "TelemetryRSSI",false },
+        {"toolbar_mainStatusIndicator", "MainStatus", false},
+        {"toolbar_flightModeIndicator", "FlightMode", true},
+        {"toolbar_gpsIndicator", "GPS", true},
+        {"toolbar_batteryIndicator", "Battery", true},
+        {"toolbar_remoteIDIndicator", "RemoteID", true},
+        {"toolbar_gimbalIndicator", "Gimbal", true},
+        {"toolbar_escIndicator", "ESC", false},
+        {"toolbar_telemetryRSSIIndicator", "TelemetryRSSI", false},
     };
 
     for (const IndicatorSpec &spec : kIndicators) {
@@ -133,4 +135,99 @@ void ToolbarIndicatorUITest::_testAPMCopterIndicators()
     _runIndicatorTest(
         [] { return MockLink::startAPMArduCopterMockLink(MockConfiguration::OptionEnableGimbal); },
         QStringLiteral("APMCopter"));
+}
+
+void ToolbarIndicatorUITest::_testEmergencyStopReplacesDisarmInFlight_data()
+{
+    QTest::addColumn<int>("firmware");
+    QTest::addColumn<int>("vehicleType");
+    QTest::addColumn<bool>("takeoff");
+    QTest::addColumn<bool>("expectEmergencyStop");
+
+    QTest::addRow("multirotor on ground") << int(MAV_AUTOPILOT_PX4) << int(MAV_TYPE_QUADROTOR) << false << false;
+    QTest::addRow("multirotor flying") << int(MAV_AUTOPILOT_PX4) << int(MAV_TYPE_QUADROTOR) << true << true;
+    // Classified as a generic vehicle, not a multirotor
+    QTest::addRow("dodecarotor flying") << int(MAV_AUTOPILOT_PX4) << int(MAV_TYPE_DODECAROTOR) << true << true;
+    // Rover reports flying while armed and moving, but accepts a normal disarm
+    QTest::addRow("rover moving") << int(MAV_AUTOPILOT_ARDUPILOTMEGA) << int(MAV_TYPE_GROUND_ROVER) << true << false;
+}
+
+void ToolbarIndicatorUITest::_testEmergencyStopReplacesDisarmInFlight()
+{
+    QFETCH(int, firmware);
+    QFETCH(int, vehicleType);
+    QFETCH(bool, takeoff);
+    QFETCH(bool, expectEmergencyStop);
+
+    if ((firmware == MAV_AUTOPILOT_ARDUPILOTMEGA) && !apmFirmwareSupported()) {
+        QSKIP("ArduPilot support not registered in this build");
+    }
+
+    runWithMockLink(
+        [firmware, vehicleType] {
+            auto* const mockConfig = new MockConfiguration(QStringLiteral("Emergency Stop MockLink"));
+            mockConfig->setFirmwareType(static_cast<MAV_AUTOPILOT>(firmware));
+            mockConfig->setVehicleType(static_cast<MAV_TYPE>(vehicleType));
+            return MockLink::startMockLink(mockConfig);
+        },
+        [&](QPointer<MockLink> /*mockLink*/, Vehicle* vehicle) {
+            if (takeoff) {
+                // The flying transition creates QGCPressure, which warns on hosts without a pressure backend
+                ignoreLogMessage("Utilities.QGCSensors", QtWarningMsg,
+                                 QRegularExpression(QStringLiteral("Failed to connect to pressure backend")));
+                ignoreLogMessage("Utilities.QGCSensors", QtWarningMsg,
+                                 QRegularExpression(QStringLiteral("Error Initializing Pressure Sensor")));
+                // MockLink arms and climbs above home on takeoff
+                vehicle->sendMavCommand(vehicle->defaultComponentId(), MAV_CMD_NAV_TAKEOFF, false /* showError */, 0.0f,
+                                        0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 10.0f /* altitude */);
+                QVERIFY_TRUE_WAIT(vehicle->flying(), TestTimeout::longMs());
+            } else {
+                vehicle->setArmed(true, false /* showError */);
+            }
+            QVERIFY_TRUE_WAIT(vehicle->armed(), TestTimeout::mediumMs());
+
+            QQuickItem* const indicator =
+                findVisibleItem(_rootItem, QStringLiteral("toolbar_mainStatusIndicator"), TestTimeout::mediumMs());
+            QVERIFY2(indicator, "Main status indicator not visible");
+            QVERIFY(_clickItemAt(indicator, 0.5, 0.5, QStringLiteral("toolbar_mainStatusIndicator")));
+
+            const QString emergencyStopName = QStringLiteral("mainStatusEmergencyStopButton");
+            const QString armName = QStringLiteral("mainStatusArmButton");
+            QQuickItem* const shownButton =
+                findVisibleItem(_rootItem, expectEmergencyStop ? emergencyStopName : armName, TestTimeout::mediumMs());
+            QVERIFY2(shownButton, "Expected arm action not shown in the main status drawer");
+            QVERIFY2(!findVisibleItem(_rootItem, expectEmergencyStop ? armName : emergencyStopName, 0),
+                     "Both Disarm and Emergency Stop shown");
+
+            if (!expectEmergencyStop) {
+                QCOMPARE(shownButton->property("text").toString(), QStringLiteral("Disarm"));
+                return;
+            }
+
+            // Held until activated: emergency stop disarms the vehicle in the air
+            const QPoint center =
+                shownButton->mapToScene(QPointF(shownButton->width() / 2, shownButton->height() / 2)).toPoint();
+            QTest::mousePress(_window, Qt::LeftButton, Qt::NoModifier, center);
+            QVERIFY_TRUE_WAIT(!vehicle->armed(), TestTimeout::mediumMs());
+            QTest::mouseRelease(_window, Qt::LeftButton, Qt::NoModifier, center);
+        });
+}
+
+void ToolbarIndicatorUITest::_testIndicatorDrawerClosesOnVehicleDisconnect()
+{
+    runWithMockLink([] { return MockLink::startPX4MockLink(); },
+                    [this](QPointer<MockLink> mockLink, Vehicle*) {
+                        const QString indicatorName = QStringLiteral("toolbar_mainStatusIndicator");
+                        const QString drawerName = QStringLiteral("indicatorDrawerLoader");
+                        QQuickItem* const indicator =
+                            findVisibleItem(_rootItem, indicatorName, TestTimeout::mediumMs());
+                        QVERIFY2(indicator, "Main status indicator not visible");
+                        QVERIFY(_clickItemAt(indicator, 0.5, 0.5, indicatorName));
+                        QVERIFY2(findVisibleItem(_rootItem, drawerName, TestTimeout::mediumMs()),
+                                 "Main status drawer did not open");
+
+                        disconnectMockLink(mockLink);
+                        QVERIFY2(!findVisibleItem(_rootItem, drawerName, 0),
+                                 "Indicator drawer still open after the vehicle disconnected");
+                    });
 }

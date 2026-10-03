@@ -10,7 +10,7 @@ private slots:
     void _testGetMessageText();
     void _testHandleTextMessage();
     void _testHandleErrorMessageAndMultiComponentPrefix();
-    void _testResetErrorLevelMessages();
+    void _testCriticalMessageCount();
     void _testChunkedStatusTextMissingChunk();
     void _testChunkedStatusTextTimeoutAddsEllipsis();
     void _testChunkedStatusTextResetsWhenChunkIdChanges();
