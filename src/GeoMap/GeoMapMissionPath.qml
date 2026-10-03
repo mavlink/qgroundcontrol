@@ -21,12 +21,16 @@ import QGroundControl.GeoMap
 /// through a complex item's own footprint rather than skipping it), at true
 /// (AMSL) altitude. A leg is flown in its destination item's frame (ArduPilot
 /// AC_WPNav): legs arriving at a terrain-frame item are draped over the DEM
-/// with a linear AGL ramp, all other legs are straight lines. Stays visible
+/// with a linear AGL ramp, all other legs are straight lines. Straight legs
+/// that pass below the terrain draw in collisionColor, as Plan view marks
+/// them. Stays visible
 /// in 2D mode (crossfade3D off), same as GeoMapFlightPath. Rebuilt wholesale
 /// on any mission change (missions are edited, not streamed, so the flight
 /// path's incremental append API is not needed here).
 GeoMapItem {
     id: root
+
+    enum Leg { Generic, Terrain, Takeoff, Land, Interior }
 
     property var missionController
     property var vehicle       ///< Active vehicle, for the RTL-to-home segment
@@ -37,6 +41,7 @@ GeoMapItem {
     property real lineWidth: ScreenTools.defaultFontPixelHeight / 5
     // Matches MissionLineView.qml's existing flight-path line color
     property color lineColor: QGroundControl.globalPalette.mapMissionTrajectory
+    property color collisionColor: "red"
 
     altitudeMode: GeoMapItem.Absolute
     crossfade3D: false
@@ -59,7 +64,7 @@ GeoMapItem {
     // each vertex's own camera distance
     readonly property real _screenFactor: _camera ? _camera.unitsPerPixelAtUnitDistance : 0
 
-    // Ordered route points ({coordinate, terrainLeg}) of every item the vehicle
+    // Ordered route points ({coordinate, leg}) of every item the vehicle
     // actually routes through, mirroring MissionController::_recalcFlightPathSegments:
     // items must specifiesCoordinate && !isStandaloneCoordinate to get a
     // segment (excludes RTL, which has no mission-encoded coordinate, and
@@ -75,11 +80,11 @@ GeoMapItem {
     // after a landing item either. The walk starts at item 1 (item 0 is the
     // MissionSettingsItem, i.e. home); home is prepended only when the mission
     // starts from the ground — rover, or a takeoff command before the first
-    // coordinate item — mirroring linkStartToHome. terrainLeg marks the leg
-    // ARRIVING at a point as terrain-frame (destination item is
-    // MAV_FRAME_GLOBAL_TERRAIN_ALT), except takeoff/land destinations, which
-    // the 2D view also draws as takeoff/land rather than terrain
-    // (segmentTypeForPair's takeoff/land override). Recomputes automatically on any
+    // coordinate item — mirroring linkStartToHome. leg is the type of the leg
+    // ARRIVING at a point, mirroring segmentTypeForPair: Takeoff / Land
+    // destinations first, then Terrain for a terrain-frame destination
+    // (MAV_FRAME_GLOBAL_TERRAIN_ALT), else Generic; Interior is a complex
+    // item's own entry -> exit span, which has no flight path segment. Recomputes automatically on any
     // structural or per-item change since the loop below reads every
     // NOTIFY-backed property it depends on.
     readonly property var _routePoints: {
@@ -91,7 +96,7 @@ GeoMapItem {
                 const visualItem = items.get(i)
                 if (visualItem.isSimpleItem && visualItem.command === MAVLinkEnums.MAV_CMD_NAV_RETURN_TO_LAUNCH) {
                     if (points.length > 0 && root.vehicle && root.vehicle.homePosition.isValid) {
-                        points.push({ coordinate: root.vehicle.homePosition, terrainLeg: false })
+                        points.push({ coordinate: root.vehicle.homePosition, leg: GeoMapMissionPath.Generic })
                     }
                     break
                 }
@@ -103,8 +108,10 @@ GeoMapItem {
                         coordinate: QtPositioning.coordinate(visualItem.entryCoordinate.latitude,
                                                              visualItem.entryCoordinate.longitude,
                                                              visualItem.amslEntryAlt),
-                        terrainLeg: visualItem.isSimpleItem && visualItem.altitudeFrame === QGroundControl.AltitudeFrameTerrain
-                                    && !visualItem.isTakeoffItem && !visualItem.isLandCommand
+                        leg: visualItem.isTakeoffItem ? GeoMapMissionPath.Takeoff
+                             : visualItem.isLandCommand ? GeoMapMissionPath.Land
+                             : (visualItem.isSimpleItem && visualItem.altitudeFrame === QGroundControl.AltitudeFrameTerrain) ? GeoMapMissionPath.Terrain
+                             : GeoMapMissionPath.Generic
                     })
                     if (visualItem.isLandCommand) {
                         break
@@ -114,7 +121,7 @@ GeoMapItem {
                             coordinate: QtPositioning.coordinate(visualItem.exitCoordinate.latitude,
                                                                  visualItem.exitCoordinate.longitude,
                                                                  visualItem.amslExitAlt),
-                            terrainLeg: false
+                            leg: GeoMapMissionPath.Interior
                         })
                     }
                 }
@@ -126,7 +133,7 @@ GeoMapItem {
                         coordinate: QtPositioning.coordinate(home.coordinate.latitude,
                                                              home.coordinate.longitude,
                                                              home.amslEntryAlt),
-                        terrainLeg: false
+                        leg: GeoMapMissionPath.Generic
                     })
                 }
             }
@@ -148,29 +155,47 @@ GeoMapItem {
 
     // Terrain sampling can't live in the _routePoints binding: terrainHeightAt
     // is not NOTIFY-reactive, so draping is re-run explicitly here on route
-    // changes and on terrainHeightsChanged as DEM patches stream in
+    // changes and on terrainHeightsChanged as DEM patches stream in.
+    // Returns the ribbon points and a highlight flag per point.
     function _expandedPath() {
         const points = root._routePoints
-        const result = []
+        const collisions = root._legCollisions
+        const coordinates = []
+        const highlights = []
         for (let i = 0; i < points.length; ++i) {
             const coord = points[i].coordinate
             if (i > 0) {
                 const prev = points[i - 1].coordinate
-                if (points[i].terrainLeg && root.surfaceModel) {
-                    root._appendTerrainLeg(result, prev, coord)
-                } else {
-                    root._appendLongLegSubdivision(result, prev, coord)
+                const collision = collisions[i]
+                // Restart a recolored leg at a copy of its start point so the color
+                // changes at the waypoint instead of blending along the leg
+                if (collision !== highlights[highlights.length - 1]) {
+                    coordinates.push(prev)
+                    highlights.push(collision)
                 }
+                if (points[i].leg === GeoMapMissionPath.Terrain && root.surfaceModel) {
+                    root._appendTerrainLeg(coordinates, prev, coord)
+                } else {
+                    coordinates.push(...root._longLegSubdivision(prev, coord))
+                }
+                coordinates.push(coord)
+                while (highlights.length < coordinates.length) {
+                    highlights.push(collision)
+                }
+            } else {
+                coordinates.push(coord)
+                highlights.push(points.length > 1 && collisions[1])
             }
-            result.push(coord)
         }
-        return result
+        return { coordinates: coordinates, highlights: highlights }
     }
 
-    function _appendLongLegSubdivision(result, prev, coord) {
+    // Interior points of a straight leg (none when it is short enough)
+    function _longLegSubdivision(prev, coord) {
+        const result = []
         const distance = prev.distanceTo(coord)
         if (distance <= root._maxSegmentLengthM) {
-            return
+            return result
         }
         const segments = Math.ceil(distance / root._maxSegmentLengthM)
         const azimuth = prev.azimuthTo(coord)
@@ -179,6 +204,7 @@ GeoMapItem {
             result.push(QtPositioning.coordinate(point.latitude, point.longitude,
                                                  prev.altitude + ((coord.altitude - prev.altitude) * j) / segments))
         }
+        return result
     }
 
     // ArduPilot flies a terrain-frame leg at a height above terrain that
@@ -205,9 +231,78 @@ GeoMapItem {
         }
     }
 
+    // Per route point: the leg arriving there passes below the terrain
+    // (FlightPathSegment::terrainCollision rules). Terrain-frame legs ride the
+    // terrain and never collide.
+    property var _legCollisions: []
+
+    // FlightPathSegment::_collisionIgnoreMeters: takeoff and land legs meet the ground at one end
+    readonly property real _collisionIgnoreMeters: 10
+
+    function _computeLegCollisions() {
+        const points = root._routePoints
+        const collisions = points.map(() => false)
+        // A rover follows the ground: its constant-altitude legs aren't a flight path
+        if (!root.surfaceModel || (root.vehicle && root.vehicle.rover)) {
+            return collisions
+        }
+        const straightUpTakeoff = !(root.vehicle && root.vehicle.fixedWing)
+        for (let i = 1; i < points.length; ++i) {
+            const leg = points[i].leg
+            if (leg === GeoMapMissionPath.Terrain || leg === GeoMapMissionPath.Interior) {
+                continue
+            }
+            const coord = points[i].coordinate
+            let prev = points[i - 1].coordinate
+            // MissionController::_createFlightPathSegmentWorker: a non-fixed-wing
+            // climbs vertically, then flies over at the takeoff altitude
+            if (leg === GeoMapMissionPath.Takeoff && straightUpTakeoff) {
+                prev = QtPositioning.coordinate(prev.latitude, prev.longitude, coord.altitude)
+            }
+            // Check the same great-circle pieces _expandedPath draws
+            const chain = [prev, ...root._longLegSubdivision(prev, coord), coord]
+            for (let j = 1; j < chain.length && !collisions[i]; ++j) {
+                collisions[i] = root.surfaceModel.segmentBelowTerrain(
+                            root._demFrame(chain[j - 1]), root._demFrame(chain[j]),
+                            (leg === GeoMapMissionPath.Takeoff && j === 1) ? root._collisionIgnoreMeters : 0,
+                            (leg === GeoMapMissionPath.Land && j === chain.length - 1) ? root._collisionIgnoreMeters : 0)
+            }
+        }
+        return collisions
+    }
+
+    // Route altitudes are vehicle AMSL; the rendered DEM sits homeTerrainBias above that frame
+    function _demFrame(coord) {
+        return QtPositioning.coordinate(coord.latitude, coord.longitude, coord.altitude + root.homeTerrainBias)
+    }
+
+    function _setGeometryPath() {
+        const path = root._expandedPath()
+        _geometry.setPath(path.coordinates, path.highlights)
+    }
+
     function _reloadPath() {
         if (_geometry) {
-            _geometry.setPath(root._expandedPath())
+            root._legCollisions = root._computeLegCollisions()
+            root._setGeometryPath()
+        }
+    }
+
+    function _refreshCollisions() {
+        if (!_geometry) {
+            return
+        }
+        const collisions = root._computeLegCollisions()
+        const changed = collisions.some((collision, i) => collision !== root._legCollisions[i])
+        root._legCollisions = collisions
+        if (changed) {
+            root._setGeometryPath()
+        }
+    }
+
+    function _redrapePath() {
+        if (_geometry) {
+            root._setGeometryPath()
         }
     }
 
@@ -218,19 +313,27 @@ GeoMapItem {
         Qt.callLater(root._reloadPath)
     }
 
-    on_RoutePointsChanged: _scheduleReloadPath()
+    function _scheduleCollisionRefresh() {
+        Qt.callLater(root._refreshCollisions)
+    }
 
-    // Only draped legs depend on the DEM; skip terrain-driven rebuilds for
-    // missions with straight legs only
-    readonly property bool _hasTerrainLeg: _routePoints.some(p => p.terrainLeg)
+    on_RoutePointsChanged: _scheduleReloadPath()
+    onHomeTerrainBiasChanged: _scheduleCollisionRefresh()
+
+    readonly property bool _hasTerrainLeg: _routePoints.some(p => p.leg === GeoMapMissionPath.Terrain)
 
     Connections {
         target: root.surfaceModel
 
+        // Draped legs follow the drawn mesh, which also changes on patch churn
         function onTerrainHeightsChanged() {
             if (root._hasTerrainLeg) {
-                root._scheduleReloadPath()
+                Qt.callLater(root._redrapePath)
             }
+        }
+
+        function onTerrainDataChanged() {
+            root._scheduleCollisionRefresh()
         }
     }
 
@@ -257,6 +360,7 @@ GeoMapItem {
                     property real lineWidth: root.lineWidth
                     property real screenFactor: root._screenFactor
                     property color pathColor: root.lineColor
+                    property color highlightColor: root.collisionColor
                     // Ramps in as the terrain flattens, effectively disabling
                     // depth testing in 2D mode (see flightpath.vert)
                     property real depthPull: root.scene ? 0.5 * (1.0 - root.scene.terrainScale) : 0.0

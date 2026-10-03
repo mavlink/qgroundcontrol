@@ -10,8 +10,8 @@
 /// wheel zoom, pinch zoom, two-finger twist) drive the camera correctly. Also
 /// covers the 2D/3D mode toggle and compass, orbit/loiter circle editing, and
 /// restoring the map position and zoom at startup and sharing them with Plan view,
-/// including across window resizes and PiP swaps, and zooming to a mission
-/// downloaded from the vehicle.
+/// including across window resizes and PiP swaps, zooming to a mission
+/// downloaded from the vehicle, and picking among overlapping waypoint markers.
 class FlyViewGeoUITest : public QmlUITestBase
 {
     Q_OBJECT
@@ -30,4 +30,6 @@ private slots:
     void _testPipExitAppliesSharedZoom();
     void _testZoomToMissionFromVehicle_data();
     void _testZoomToMissionFromVehicle();
+    void _testOverlappingMarkersPicker_data();
+    void _testOverlappingMarkersPicker();
 };

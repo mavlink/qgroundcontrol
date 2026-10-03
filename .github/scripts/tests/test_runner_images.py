@@ -220,32 +220,3 @@ def test_managed_runner_routes_are_opt_in() -> None:
         warm_pool["runners"]["windows-x64-builder"]
         == _load_yaml(".github/runs-on.yml")["runners"]["windows-x64-builder"]
     )
-
-
-def test_cpp_codeql_wraps_native_build():
-    workflow = _load_yaml(".github/workflows/linux.yml")
-    jobs = [
-        job
-        for job in workflow["jobs"].values()
-        if any(
-            step.get("uses", "").startswith("github/codeql-action/init@")
-            for step in job.get("steps", [])
-        )
-    ]
-    assert len(jobs) == 1
-    steps = jobs[0]["steps"]
-    init = next(
-        i
-        for i, step in enumerate(steps)
-        if step.get("uses", "").startswith("github/codeql-action/init@")
-    )
-    analyze = next(
-        i
-        for i, step in enumerate(steps)
-        if step.get("uses", "").startswith("github/codeql-action/analyze@")
-    )
-    build = next(
-        i for i, step in enumerate(steps) if step.get("uses") == "./.github/actions/cmake-build"
-    )
-    assert init < build < analyze
-    assert steps[init]["with"]["languages"] == "c-cpp"

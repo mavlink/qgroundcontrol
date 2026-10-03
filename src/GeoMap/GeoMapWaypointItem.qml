@@ -31,9 +31,15 @@ GeoMapItem {
     // of each one re-sampling the same DEM lookup independently
     property real homeTerrainBias: 0
     property real size: ScreenTools.defaultFontPixelHeight * 1.5
+    property bool collapsed: false  ///< Drawn by another marker of its overlap group (see GeoMapMissionItems)
+    property bool grouped: false    ///< Stands for an overlap group: shows a "…" badge
+
+    readonly property bool hasMarker: item ? item.isSimpleItem && item.specifiesCoordinate : false
+    readonly property real smallIndicatorSize: size * 0.75
 
     signal clicked()
 
+    objectName: "geoMapWaypointMarker"
     width: size
     height: size
     anchorPoint: Qt.point(width / 2, height / 2)
@@ -45,7 +51,7 @@ GeoMapItem {
                                                 item.coordinate.longitude,
                                                 item.amslEntryAlt + homeTerrainBias)
                      : QtPositioning.coordinate()
-    visible: item ? item.isSimpleItem && item.specifiesCoordinate : false
+    visible: hasMarker && !collapsed
 
     QGCPalette { id: qgcPal; colorGroupEnabled: root.enabled }
 
@@ -58,8 +64,8 @@ GeoMapItem {
     readonly property color _markerColor: root._isCurrentItem ? "green" : qgcPal.mapIndicator
 
     // MissionItemIndexLabel also grows the indicator for the current item
-    // (small: !checked); mirrored here for both the 2D dot and 3D sphere
-    readonly property real _indicatorSize: root._isCurrentItem ? root.size : root.size * 0.75
+    // (small: !checked) and for a group; mirrored here for both the 2D dot and 3D sphere
+    readonly property real _indicatorSize: (root._isCurrentItem || root.grouped) ? root.size : root.smallIndicatorSize
 
     readonly property var _camera: scene ? scene.camera : null
 
@@ -97,6 +103,15 @@ GeoMapItem {
         text: root.item ? root.item.sequenceNumber : ""
         color: "white"
         font.bold: true
+    }
+
+    QGCLabel {
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: parent.bottom
+        text: "…"
+        color: "white"
+        font.pointSize: ScreenTools.smallFontPointSize
+        visible: root.grouped
     }
 
     // The item itself tracks the projected marker position at any tilt, so

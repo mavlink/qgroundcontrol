@@ -18,6 +18,9 @@ private slots:
     void _edgeLodDeltasRoleStitchesLodRings();
     void _tileKeyAndHeightFieldExposedToDelegates();
     void _terrainHeightAt();
+    void _terrainDataChangedOnlyOnFieldChanges();
+    void _segmentBelowTerrain_data();
+    void _segmentBelowTerrain();
     void _surfacePickFlatMatchesPlanePick();
     void _surfacePickLandsOnPlateau();
     void _surfacePickOccludesGroundBehindRidge();

@@ -15,6 +15,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         HorizontalFactValueGrid.h
         InstrumentValueData.cc
         InstrumentValueData.h
+        MapMarkerGrouping.cc
+        MapMarkerGrouping.h
         MapPositionTracker.cc
         MapPositionTracker.h
         MavlinkAction.cc

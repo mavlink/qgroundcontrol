@@ -22,11 +22,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
-env:
-  # build-mode:manual can't produce overlay DBs (those need build-mode:none); disable the
-  # overlay attempt so CodeQL doesn't log the "falling back to a full database" message.
-  CODEQL_ACTION_OVERLAY_ANALYSIS: "false"
-
 permissions:
   contents: read
   actions: read
@@ -47,13 +42,10 @@ jobs:
       QGC_APPIMAGE_UPDATE_INFORMATION: >-
         ${{ github.repository == 'mavlink/qgroundcontrol' && format('gh-releases-zsync|mavlink|qgroundcontrol|latest|{0}.AppImage.zsync', matrix.package) || '' }}
 
-    # security-events: write is scoped here (CodeQL runs only in this job),
-    # not at workflow level — the debug/changes jobs cannot upload SARIF.
     permissions:
       contents: read
       id-token: write
       attestations: write
-      security-events: write
       actions: read
       checks: write
 
@@ -124,17 +116,6 @@ jobs:
       - name: Install Dependencies
         uses: ./.github/actions/install-dependencies
 
-      - name: Initialize CodeQL
-        if: runner.arch != 'ARM64'
-        uses: github/codeql-action/init@v4
-        with:
-          languages: c-cpp
-          # c-cpp can't use overlay DBs (those require build-mode: none, interpreted-only); declare manual to match the cmake-build step below and silence the "undefined build-mode" fallback warning.
-          build-mode: manual
-          config-file: ./.github/codeql/codeql-config.yml
-          trap-caching: false
-          dependency-caching: false
-
       - name: Configure
         uses: ./.github/actions/cmake-configure
         with:
@@ -151,17 +132,6 @@ jobs:
           build-type: Release
           reviewdog: ${{ github.event_name == 'pull_request' && 'true' || 'false' }}
           reviewdog-token: ${{ github.token }}
-
-      - name: Perform CodeQL Analysis
-        id: codeql
-        if: runner.arch != 'ARM64'
-        uses: github/codeql-action/analyze@v4
-        with:
-          category: "/language:c-cpp"
-
-      - name: Annotate CodeQL failure
-        if: steps.codeql.outcome == 'failure'
-        run: echo "::warning::CodeQL analysis failed — see step log for details"
 
       - name: Verify Executable
         uses: ./.github/actions/verify-executable

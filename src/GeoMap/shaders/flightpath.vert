@@ -4,9 +4,13 @@
 // the camera for any segment orientation — including vertical climbs, which
 // a fixed horizontal expansion would render edge-on and invisible. Half the
 // line width is converted from pixels to scene units at this vertex's
-// distance from the camera so the width stays constant on screen.
+// distance from the camera so the width stays constant on screen. UV0.y is
+// the highlight flag (see FlightPathGeometry).
+VARYING float vHighlight;
+
 void MAIN()
 {
+    vHighlight = UV0.y;
     vec3 worldCenter = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
     vec3 viewVec = worldCenter - CAMERA_POSITION;
     float dist = length(viewVec);
