@@ -37,10 +37,10 @@ The options/command line arguments are listed in the table below.
 | `--logging:Comms.LinkManager,FactSystem.ParameterManager`              | Turns on the specified comma separated logging categories.                                                                        |
 | `--log-output`                                                         | Writes log messages to stderr (the terminal on macOS/Linux).                                                                      |
 | `--unittest:name`                                                      | (Debug builds only) Runs the specified unit test. Leave off `:name` to run all tests.                                             |
-| `--unittest-stress:name`                                               | (Debug builds only) Runs the specified unit test 20 times in a row. Leave off :name to run all tests.                             |
+| `--unittest-stress:count`                                              | (Debug builds only) Repeats unit tests `count` times (`count > 0`). Combine with `--unittest:name` to select a test.              |
 | `--fake-mobile`                                                        | Simulates running on a mobile device.                                                                                             |
-| `--test-high-dpi`                                                      | Simulates running _QGroundControl_ on a high DPI device.                                                                          |
 
 Notes:
 
+- For example, `--unittest:ParameterManagerTest --unittest-stress:20` runs `ParameterManagerTest` 20 times.
 - Unit tests are included in debug builds automatically (as part of _QGroundControl_). _QGroundControl_ runs under the control of the unit test (it does not start normally).
