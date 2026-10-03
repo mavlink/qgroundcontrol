@@ -9,7 +9,7 @@ DelayButton {
     id:             control
     hoverEnabled:   !ScreenTools.isMobile
     topPadding:     _verticalPadding
-    bottomPadding:  _verticalPadding
+    bottomPadding:  _verticalPadding + (alwaysShowHelp ? ScreenTools.defaultFontPixelHeight * 0.25 : 0)
     leftPadding:    _horizontalPadding
     rightPadding:   _horizontalPadding
     focusPolicy:    Qt.ClickFocus
@@ -22,6 +22,7 @@ DelayButton {
     property real   fontWeight:     Font.Normal // default for qml Text
     property real   pointSize:      ScreenTools.defaultFontPointSize
     property int    defaultDelay:   500
+    property bool   alwaysShowHelp: false
 
     property alias wrapMode:            text.wrapMode
     property alias horizontalAlignment: text.horizontalAlignment
@@ -63,7 +64,7 @@ DelayButton {
     background: Rectangle {
         id:             backRect
         radius:         backRadius
-        implicitWidth:  Math.max(control._showHelp ? helpText.contentWidth : 0, ScreenTools.implicitButtonWidth)
+        implicitWidth:  Math.max(control._showHelp || control.alwaysShowHelp ? helpText.contentWidth : 0, ScreenTools.implicitButtonWidth)
         implicitHeight: ScreenTools.implicitButtonHeight
         border.width:   showBorder ? 1 : 0
         border.color:   qgcPal.buttonBorder
@@ -92,8 +93,8 @@ DelayButton {
             anchors.bottom:             parent.bottom
             anchors.horizontalCenter:   parent.horizontalCenter
             font.pointSize:             ScreenTools.smallFontPointSize
-            color:                      control._showHighlight ? qgcPal.buttonHighlightText : qgcPal.buttonText
-            visible:                    control._showHelp
+            color:                      control.textColor
+            visible:                    control._showHelp || control.alwaysShowHelp
         }
     }
 

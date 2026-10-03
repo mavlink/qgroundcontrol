@@ -16,6 +16,15 @@ private slots:
     /// Clicking the toast must acknowledge it, not just close it.
     void _testPopupAcknowledgedByClick();
 
+    /// Stacked messages stop at the window bottom; the rest wait for the status drawer.
+    void _testPopupStacksOnlyMessagesThatFit();
+
+    /// The auto-dismiss timeout only closes the toast; it never acknowledges it.
+    void _testTimeoutClosesWithoutAcknowledging();
+
+    /// The overflow heading stays inside the popup's clickable bounds on narrow windows.
+    void _testOverflowHeadingStaysInsidePopup();
+
 private:
     /// Activate the QML window, failing the test if it never becomes active.
     bool _activateWindow();

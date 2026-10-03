@@ -18,6 +18,11 @@ void FlyViewSettingsTest::_defaults()
     Fact* const geoMapDebugUI = settings->geoMapDebugUI();
     QVERIFY(geoMapDebugUI);
     QCOMPARE(geoMapDebugUI->rawValue().toBool(), false);
+
+    // Force arm bypasses pre-arm checks; it must be opt-in
+    Fact* const allowForceArm = settings->allowForceArm();
+    QVERIFY(allowForceArm);
+    QCOMPARE(allowForceArm->rawValue().toBool(), false);
     QVERIFY(settings->userVisible());
 }
 

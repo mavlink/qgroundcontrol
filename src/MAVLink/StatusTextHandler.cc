@@ -77,55 +77,9 @@ void StatusTextHandler::clearMessages()
     qDeleteAll(m_messages);
     m_messages.clear();
 
-    m_errorCount = 0;
-    m_warningCount = 0;
-    m_normalCount = 0;
-
-    _handleTextMessage(0);
-}
-
-void StatusTextHandler::resetAllMessages()
-{
-    const uint32_t count = messageCount();
-    const MessageType type = m_messageType;
-
-    m_errorCount = 0;
-    m_warningCount = 0;
-    m_normalCount = 0;
-    m_messageCount = 0;
-    m_messageType = MessageType::MessageNone;
-
-    if (count != messageCount()) {
-        emit messageCountChanged(0);
-    }
-
-    if (type != m_messageType) {
-        emit messageTypeChanged();
-    }
-}
-
-void StatusTextHandler::resetErrorLevelMessages()
-{
-    const uint32_t prevMessageCount = messageCount();
-    const MessageType prevMessagetype = m_messageType;
-
-    m_messageCount -= getErrorCount();
-    m_errorCount = 0;
-
-    if (getWarningCount() > 0) {
-        m_messageType = MessageType::MessageWarning;
-    } else if (getNormalCount() > 0) {
-        m_messageType = MessageType::MessageNormal;
-    } else {
-        m_messageType = MessageType::MessageNone;
-    }
-
-    if (prevMessageCount != messageCount()) {
-        emit messageCountChanged(messageCount());
-    }
-
-    if (prevMessagetype != m_messageType) {
-        emit messageTypeChanged();
+    if (m_criticalMessageCount != 0) {
+        m_criticalMessageCount = 0;
+        emit criticalMessageCountChanged();
     }
 }
 
@@ -152,8 +106,6 @@ void StatusTextHandler::handleHTMLEscapedTextMessage(MAV_COMPONENT compId, MAV_S
         m_multiComp = true;
     }
 
-    MessageType messageType = MessageType::MessageNone;
-
     // Color the output depending on the message severity. We have 3 distinct cases:
     // 1: If we have an ERROR or worse, make it bigger, bolder, and highlight it red.
     // 2: If we have a warning or notice, just make it bold and color it orange.
@@ -165,18 +117,15 @@ void StatusTextHandler::handleHTMLEscapedTextMessage(MAV_COMPONENT compId, MAV_S
         case MAV_SEVERITY_CRITICAL:
         case MAV_SEVERITY_ERROR:
             style = QStringLiteral("<#E>");
-            messageType = MessageType::MessageError;
             break;
 
         case MAV_SEVERITY_NOTICE:
         case MAV_SEVERITY_WARNING:
             style = QStringLiteral("<#I>");
-            messageType = MessageType::MessageWarning;
             break;
 
         default:
             style = QStringLiteral("<#N>");
-            messageType = MessageType::MessageNormal;
             break;
     }
 
@@ -234,11 +183,10 @@ void StatusTextHandler::handleHTMLEscapedTextMessage(MAV_COMPONENT compId, MAV_S
     emit newFormattedMessage(formatText);
 
     (void) m_messages.append(message);
-    const uint32_t count = m_messages.count();
-
-    _handleTextMessage(count, messageType);
 
     if (message->severityIsError()) {
+        m_criticalMessageCount++;
+        emit criticalMessageCountChanged();
         emit newErrorMessage(message->getText());
     }
 }
@@ -330,53 +278,4 @@ void StatusTextHandler::_chunkedStatusTextCompleted(MAV_COMPONENT compId)
     (void) m_chunkedStatusTextInfoMap.remove(compId);
 
     emit textMessageReceived(compId, severity, messageText, "");
-}
-
-void StatusTextHandler::_handleTextMessage(uint32_t newCount, MessageType messageType)
-{
-    if (newCount == 0) {
-        resetAllMessages();
-        return;
-    }
-
-    switch (messageType) {
-        case MessageType::MessageNormal:
-            m_normalCount++;
-            break;
-
-        case MessageType::MessageWarning:
-            m_warningCount++;
-            break;
-
-        case MessageType::MessageError:
-            m_errorCount++;
-            m_errorCountTotal++;
-            break;
-
-        case MessageType::MessageNone:
-        default:
-            qCWarning(StatusTextHandlerLog) << Q_FUNC_INFO << "Invalid MessageType";
-            break;
-    }
-
-    const uint32_t count = getErrorCount() + getWarningCount() + getNormalCount();
-    if (count != messageCount()) {
-        m_messageCount = count;
-        emit messageCountChanged(messageCount());
-    }
-
-    // messageType represents the worst message which hasn't been viewed yet
-    MessageType newMessageType = MessageType::MessageNone;
-    if (getErrorCount() > 0) {
-        newMessageType = MessageType::MessageError;
-    } else if (getWarningCount() > 0) {
-        newMessageType = MessageType::MessageWarning;
-    } else if (getNormalCount() > 0) {
-        newMessageType = MessageType::MessageNormal;
-    }
-
-    if (newMessageType != m_messageType) {
-        m_messageType = newMessageType;
-        emit messageTypeChanged();
-    }
 }

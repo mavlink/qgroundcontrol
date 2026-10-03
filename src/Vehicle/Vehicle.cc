@@ -3390,21 +3390,22 @@ void Vehicle::motorInterlock(bool enable)
 /*                         Status Text Handler                               */
 /*===========================================================================*/
 
-void Vehicle::resetAllMessages() { m_statusTextHandler->resetAllMessages(); }
-void Vehicle::resetErrorLevelMessages() { m_statusTextHandler->resetErrorLevelMessages(); }
-void Vehicle::clearMessages() { m_statusTextHandler->clearMessages(); }
-bool Vehicle::messageTypeNone() const { return m_statusTextHandler->messageTypeNone(); }
-bool Vehicle::messageTypeNormal() const { return m_statusTextHandler->messageTypeNormal(); }
-bool Vehicle::messageTypeWarning() const { return m_statusTextHandler->messageTypeWarning(); }
-bool Vehicle::messageTypeError() const { return m_statusTextHandler->messageTypeError(); }
-int Vehicle::messageCount() const { return m_statusTextHandler->messageCount(); }
+void Vehicle::clearMessages()
+{
+    m_statusTextHandler->clearMessages();
+}
+
+int Vehicle::criticalMessageCount() const
+{
+    return m_statusTextHandler->criticalMessageCount();
+}
 QString Vehicle::formattedMessages() const { return m_statusTextHandler->formattedMessages(); }
 
 void Vehicle::_createStatusTextHandler()
 {
     m_statusTextHandler = new StatusTextHandler(this);
-    (void) connect(m_statusTextHandler, &StatusTextHandler::messageTypeChanged, this, &Vehicle::messageTypeChanged);
-    (void) connect(m_statusTextHandler, &StatusTextHandler::messageCountChanged, this, &Vehicle::messageCountChanged);
+    (void) connect(m_statusTextHandler, &StatusTextHandler::criticalMessageCountChanged, this,
+                   &Vehicle::criticalMessageCountChanged);
     (void) connect(m_statusTextHandler, &StatusTextHandler::newFormattedMessage, this, &Vehicle::newFormattedMessage);
     (void) connect(m_statusTextHandler, &StatusTextHandler::textMessageReceived, this, &Vehicle::_textMessageReceived);
     (void) connect(m_statusTextHandler, &StatusTextHandler::newErrorMessage, this, &Vehicle::_errorMessageReceived);

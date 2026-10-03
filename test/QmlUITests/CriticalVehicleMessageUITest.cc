@@ -1,7 +1,9 @@
 #include "CriticalVehicleMessageUITest.h"
 
 #include <QtCore/QPointer>
+#include <QtCore/QStringList>
 #include <QtCore/QVariant>
+#include <QtCore/QtMath>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
 #include <QtTest/QTest>
@@ -14,14 +16,15 @@ namespace {
 
 constexpr const char* kPopupObjectName = "criticalVehicleMessage_popup";
 constexpr const char* kMessageTextObjectName = "criticalVehicleMessage_text";
+constexpr const char* kHeadingObjectName = "criticalVehicleMessage_heading";
+constexpr const char* kDismissTimerObjectName = "criticalVehicleMessage_dismissTimer";
 constexpr const char* kConsolePageObjectName = "mavlinkConsole_page";
 constexpr const char* kConsoleTextAreaObjectName = "mavlinkConsole_textArea";
 constexpr const char* kConsoleButtonObjectName = "analyzeButton_MAVLink Console";
 constexpr const char* kIndicatorDrawerObjectName = "indicatorDrawerLoader";
 
 constexpr const char* kFirstMessage = "Test critical vehicle message";
-constexpr const char* kSecondMessage = "Second critical vehicle message";
-constexpr const char* kThirdMessage = "Third critical vehicle message";
+constexpr int kMaxShownMessages = 5;
 
 // The second half is typed while the toast is on screen.
 constexpr const char* kCommandFirstHalf = "ver";
@@ -222,19 +225,37 @@ void CriticalVehicleMessageUITest::_testPopupAcknowledgedByClick()
             QVERIFY2(clickButton(objName(kMessageTextObjectName)), "could not click the critical message toast");
             QVERIFY2(_waitForPopupClosed(popup), "clicking the critical message toast did not close it");
 
-            QVERIFY(_showCriticalMessage(objName(kSecondMessage)));
-            QVERIFY(_waitForPopupOpened(popup, objName(kSecondMessage)));
+            QStringList stackedMessages;
+            for (int i = 1; i <= kMaxShownMessages + 1; i++) {
+                stackedMessages.append(QStringLiteral("Stacked critical vehicle message %1").arg(i));
+            }
 
-            // A further error while the toast is up only sets the flag; the text doesn't change.
-            QVERIFY(_showCriticalMessage(objName(kThirdMessage)));
+            QVERIFY(_showCriticalMessage(stackedMessages.first()));
+            QVERIFY(_waitForPopupOpened(popup, stackedMessages.first()));
+
+            // Errors arriving while the toast is up are added to it, up to the limit.
+            for (int i = 1; i < kMaxShownMessages; i++) {
+                QVERIFY(_showCriticalMessage(stackedMessages[i]));
+            }
+            const QString shownText = stackedMessages.mid(0, kMaxShownMessages).join(QStringLiteral("<br/>"));
+            QVERIFY(verifyText(objName(kMessageTextObjectName), shownText,
+                               QStringLiteral("toast text with stacked messages")));
+            QVERIFY2(!popup->property("additionalCriticalMessagesReceived").toBool(),
+                     "additionalCriticalMessagesReceived set before the toast was full");
+
+            // Beyond the limit only the flag is set; the text doesn't change.
+            QVERIFY(_showCriticalMessage(stackedMessages.last()));
             QTRY_VERIFY2_WITH_TIMEOUT(popup->property("additionalCriticalMessagesReceived").toBool(),
-                                      "second message did not set additionalCriticalMessagesReceived",
+                                      "message beyond the limit did not set additionalCriticalMessagesReceived",
                                       TestTimeout::shortMs());
-            QVERIFY(verifyText(objName(kMessageTextObjectName), objName(kSecondMessage),
-                               QStringLiteral("toast text after a second message")));
+            QVERIFY(verifyText(objName(kMessageTextObjectName), shownText,
+                               QStringLiteral("toast text after a message beyond the limit")));
 
-            QVERIFY2(clickButton(objName(kMessageTextObjectName)), "could not click the critical message toast");
-            QVERIFY2(_waitForPopupClosed(popup), "clicking the critical message toast did not close it");
+            // The "Click to see more" heading straddles the popup's top edge: its top half must acknowledge too
+            QQuickItem* const heading = findVisibleItem(_rootItem, objName(kHeadingObjectName));
+            QVERIFY2(heading, "critical message toast heading not visible");
+            QVERIFY(_clickItemAt(heading, 0.5, 0.25, objName(kHeadingObjectName)));
+            QVERIFY2(_waitForPopupClosed(popup), "clicking the critical message toast heading did not close it");
 
             QVERIFY2(!popup->property("additionalCriticalMessagesReceived").toBool(),
                      "click closed the toast without acknowledging it: additionalCriticalMessagesReceived still set");
@@ -248,4 +269,111 @@ void CriticalVehicleMessageUITest::_testPopupAcknowledgedByClick()
                     TestTimeout::mediumMs(), QStringLiteral("main status indicator drawer closed")),
                 "main status indicator drawer did not close on Escape");
         });
+}
+
+void CriticalVehicleMessageUITest::_testPopupStacksOnlyMessagesThatFit()
+{
+    startUI();
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    QObject* const popup = _criticalMessagePopup();
+    QVERIFY(popup);
+
+    QStringList messages;
+    for (int i = 1; i <= kMaxShownMessages; i++) {
+        messages.append(QStringLiteral("Height limited critical vehicle message %1").arg(i));
+    }
+
+    // A window twice the single-message popup's height has room for a second message, but not for all of them
+    QVERIFY(_showCriticalMessage(messages.first()));
+    QVERIFY(_waitForPopupOpened(popup, messages.first()));
+    const int windowHeight = qCeil(popup->property("y").toReal() + (2.0 * popup->property("height").toReal()));
+    QVERIFY(QMetaObject::invokeMethod(popup, "close"));
+    QVERIFY(_waitForPopupClosed(popup));
+    QCOMPARE_LT(windowHeight, _window->height());
+    // MainWindowSavedState sets a minimum height that onscreen platforms enforce
+    _window->setMinimumHeight(0);
+    _window->resize(_window->width(), windowHeight);
+    QTRY_COMPARE_WITH_TIMEOUT(_rootItem->height(), windowHeight, TestTimeout::shortMs());
+
+    QVERIFY(_showCriticalMessage(messages.first()));
+    QVERIFY(_waitForPopupOpened(popup, messages.first()));
+    for (int i = 1; i < kMaxShownMessages; i++) {
+        QVERIFY(_showCriticalMessage(messages[i]));
+    }
+
+    const int shownCount = popup->property("shownMessageCount").toInt();
+    QCOMPARE_GT(shownCount, 1);
+    QCOMPARE_LT(shownCount, kMaxShownMessages);
+    QVERIFY(verifyText(objName(kMessageTextObjectName), messages.mid(0, shownCount).join(QStringLiteral("<br/>")),
+                       QStringLiteral("toast text limited by window height")));
+    QVERIFY2(popup->property("additionalCriticalMessagesReceived").toBool(),
+             "messages that did not fit did not set additionalCriticalMessagesReceived");
+    QCOMPARE_LE(popup->property("y").toReal() + popup->property("height").toReal(), _window->height());
+
+    stopUI();
+}
+
+void CriticalVehicleMessageUITest::_testTimeoutClosesWithoutAcknowledging()
+{
+    startUI();
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    QObject* const popup = _criticalMessagePopup();
+    QVERIFY(popup);
+    QObject* const dismissTimer = popup->findChild<QObject*>(objName(kDismissTimerObjectName));
+    QVERIFY2(dismissTimer, "critical message dismiss timer not found");
+    QVERIFY(dismissTimer->setProperty("interval", 500));
+
+    // Overflow pending: acknowledging would drop the main status indicator drawer
+    for (int i = 1; i <= kMaxShownMessages + 1; i++) {
+        QVERIFY(_showCriticalMessage(QStringLiteral("Timed out critical vehicle message %1").arg(i)));
+    }
+    QVERIFY(popup->property("visible").toBool());
+    QVERIFY(popup->property("additionalCriticalMessagesReceived").toBool());
+
+    QVERIFY2(_waitForPopupClosed(popup), "critical message toast did not time out");
+    QVERIFY2(popup->property("additionalCriticalMessagesReceived").toBool(),
+             "timeout acknowledged the toast: additionalCriticalMessagesReceived cleared");
+    QVERIFY2(!findVisibleItem(_rootItem, objName(kIndicatorDrawerObjectName), 0),
+             "timeout dropped the main status indicator drawer");
+
+    stopUI();
+}
+
+void CriticalVehicleMessageUITest::_testOverflowHeadingStaysInsidePopup()
+{
+    startUI();
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    QObject* const popup = _criticalMessagePopup();
+    QVERIFY(popup);
+    for (int i = 1; i <= kMaxShownMessages + 1; i++) {
+        QVERIFY(_showCriticalMessage(QStringLiteral("Overflow critical vehicle message %1").arg(i)));
+    }
+    QVERIFY(popup->property("additionalCriticalMessagesReceived").toBool());
+    QQuickItem* const heading = findVisibleItem(_rootItem, objName(kHeadingObjectName));
+    QVERIFY2(heading, "critical message toast heading not visible");
+
+    // Narrow the window until the popup (55% of it) is narrower than the full overflow heading
+    const int windowWidth = qCeil((heading->width() * 0.8) / 0.55);
+    QCOMPARE_LT(windowWidth, _window->width());
+    // MainWindowSavedState sets a minimum width that onscreen platforms enforce
+    _window->setMinimumWidth(0);
+    _window->resize(windowWidth, _window->height());
+    QTRY_COMPARE_WITH_TIMEOUT(_rootItem->width(), windowWidth, TestTimeout::shortMs());
+
+    // Outside the popup a click would close it without opening the status drawer
+    const QQuickItem* const background = heading->parentItem();
+    QVERIFY(background);
+    QCOMPARE_GE(heading->x(), 0.0);
+    QCOMPARE_LE(heading->x() + heading->width(), background->width());
+
+    stopUI();
 }
