@@ -6,9 +6,6 @@ accept = ["200", "204"]
 exclude = [
     # Example addresses have no public server.
     '^https?://(localhost|127\.0\.0\.1|192\.168\.[0-9.]+|10\.[0-9.]+)([:/]|$)',
-    # Expires: 2026-09-28. Zenodo DOI and badge timed out on repeated checks.
-    '^https://doi\.org/10\.5281/zenodo\.595404$',
-    '^https://zenodo\.org/badge/DOI/10\.5281/zenodo\.595404\.svg$',
     # Expires: 2026-12-01. Existing unavailable/bot-blocked URLs; replace or recheck individually.
     # Partner Center currently fails certificate verification.
     '^https://partner\.microsoft\.com/$',
