@@ -6,6 +6,7 @@
 #include "MAVLinkLib.h"
 #include "MockLinkWorker.h"
 #include "QGCMAVLink.h"
+#include "StandardModes.h"
 #include "Vehicle.h"
 
 void StandardModesTest::_monitorSequenceBumpTriggersRequery()
@@ -23,6 +24,53 @@ void StandardModesTest::_monitorSequenceBumpTriggersRequery()
     QTRY_VERIFY_WITH_TIMEOUT(
         _mockLink->receivedRequestMessageCount(MAVLINK_MSG_ID_AVAILABLE_MODES) > baselineRequests,
         TestTimeout::longMs());
+}
+
+void StandardModesTest::_sequenceChangeDuringDownloadRestartsRequest()
+{
+    QVERIFY(_mockLink);
+    QVERIFY(_mockLink->_worker);
+
+    // Prevent AVAILABLE_MODES_MONITOR telemetry from causing the restart.
+    QVERIFY(QMetaObject::invokeMethod(_mockLink->_worker, &MockLinkWorker::stopWork, Qt::BlockingQueuedConnection));
+
+    auto* connectedVehicle = vehicle();
+    QVERIFY(connectedVehicle);
+
+    auto* standardModes = connectedVehicle->findChild<StandardModes*>();
+    QVERIFY(standardModes);
+
+    // Use a non-zero generation since MAVLink specifies that seq == 0 is ignored.
+    _mockLink->bumpAvailableModesMonitorSequence();
+
+    // First measure a normal enumeration.
+    _mockLink->clearReceivedRequestMessageCounts();
+
+    QSignalSpy baselineCompletedSpy(standardModes, &StandardModes::requestCompleted);
+    standardModes->request();
+
+    QVERIFY(baselineCompletedSpy.wait(TestTimeout::longMs()));
+
+    const int baselineRequests = _mockLink->receivedRequestMessageCount(MAVLINK_MSG_ID_AVAILABLE_MODES);
+
+    QVERIFY(baselineRequests >= 3);
+
+    // Change generation before the third response is sent.
+    _mockLink->clearReceivedRequestMessageCounts();
+    _mockLink->setAvailableModesSequenceBumpAtIndex(3);
+
+    QSignalSpy changedCompletedSpy(standardModes, &StandardModes::requestCompleted);
+    standardModes->request();
+
+    QVERIFY(changedCompletedSpy.wait(TestTimeout::longMs()));
+
+    const int changedRequests = _mockLink->receivedRequestMessageCount(MAVLINK_MSG_ID_AVAILABLE_MODES);
+
+    QVERIFY2(changedRequests > baselineRequests,
+             qPrintable(QStringLiteral("AVAILABLE_MODES seq changed during download, but enumeration was not restarted "
+                                       "(baseline=%1 changed=%2)")
+                            .arg(baselineRequests)
+                            .arg(changedRequests)));
 }
 
 void StandardModesTest::_singleModeDoesNotDependOnPeriodicTelemetry()

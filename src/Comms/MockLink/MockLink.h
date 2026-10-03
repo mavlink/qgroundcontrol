@@ -134,6 +134,9 @@ public:
     /// delayed flight mode and causes QGC to re-query standard modes.
     void bumpAvailableModesMonitorSequence() { ++_availableModesMonitorSeqNumber; }
 
+    /// Unit test support: change the AVAILABLE_MODES sequence immediately before sending this index.
+    void setAvailableModesSequenceBumpAtIndex(uint8_t index) { _availableModesSequenceBumpAtIndex = index; }
+
     /// Unit test support: sends every vehicle->QGC message twice, as when two links receive the same traffic.
     void setDuplicateResponses(bool duplicate) { _duplicateResponses = duplicate; }
 
@@ -468,6 +471,7 @@ private:
     /// Sequence number sent in AVAILABLE_MODES_MONITOR. Written from the test (main) thread via
     /// bumpAvailableModesMonitorSequence, read from the worker thread at 1Hz/500Hz.
     std::atomic<uint8_t> _availableModesMonitorSeqNumber = 0;
+    std::atomic<uint8_t> _availableModesSequenceBumpAtIndex = 0;
 
     QString _logDownloadFilename;                       ///< Filename for log download which is in progress
     bool _logsErased = false;                           ///< Set by LOG_ERASE, LOG_REQUEST_LIST reports no logs

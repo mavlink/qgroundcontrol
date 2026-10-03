@@ -34,6 +34,16 @@ void StandardModes::gotMessage(MAV_RESULT result, VehicleTypes::RequestMessageRe
     if (result == MAV_RESULT_ACCEPTED) {
         mavlink_available_modes_t availableModes;
         mavlink_msg_available_modes_decode(&message, &availableModes);
+
+        if (availableModes.seq != 0) {
+            if (_requestSeq == 0) {
+                _requestSeq = availableModes.seq;
+            } else if (_requestSeq != availableModes.seq) {
+                request();
+                return;
+            }
+        }
+
         bool cannotBeSet = availableModes.properties & MAV_MODE_PROPERTY_NOT_USER_SELECTABLE;
         bool advanced = availableModes.properties & MAV_MODE_PROPERTY_ADVANCED;
         availableModes.mode_name[sizeof(availableModes.mode_name)-1] = '\0';
@@ -132,6 +142,7 @@ void StandardModes::request()
 
     qCDebug(StandardModesLog) << "Requesting available modes";
     // Request one at a time. This could be improved by requesting all, but we can't use Vehicle::requestMessage for that
+    _requestSeq = 0;
     _modeList.clear();
     StandardModes::requestMode(1);
 }
