@@ -45,6 +45,7 @@ private:
     bool _wantReset{false};
 
     int _lastSeq{-1};
+    uint8_t _requestSeq{0};
 
     FlightModeList _modeList;
 };
