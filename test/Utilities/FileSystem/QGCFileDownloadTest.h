@@ -16,6 +16,8 @@ private slots:
     void _testFileDownloadNonExistentLocalFile();
     void _testFileDownloadOutputPathIsDirectory();
     void _testFileDownloadCancelSingleCompletion();
+    void _testFileDownloadRemoteNameCannotNameTheDirectory();
+    void _testFileDownloadFailedDownloadPreservesExistingFile();
     void _testAutoDecompressGzip();
     void _testAutoDecompressDisabled();
     void _testAutoDecompressUncompressedFile();
