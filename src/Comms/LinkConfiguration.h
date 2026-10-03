@@ -72,6 +72,8 @@ public:
     }
 
     bool reconnectReady() const { return _nextReconnect.hasExpired(); }
+
+    int reconnectAttempts() const { return _reconnectAttempts; }
     void noteReconnectAttempt() {
         const int exp = qMin(_reconnectAttempts, 16);
         _reconnectAttempts = qMin(_reconnectAttempts + 1, 17);

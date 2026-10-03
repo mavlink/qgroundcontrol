@@ -403,7 +403,6 @@ void LinkConfigurationTest::_testUdpSettingsRoundtrip()
 
 void LinkConfigurationTest::_testUdpHostnamePreservedWhenUnresolved()
 {
-    ignoreLogMessage("Comms.UDPLink", QtWarningMsg, QRegularExpression("Could not resolve host"));
     UDPConfiguration config(QStringLiteral("UDPUnresolved"));
     config.addHost(QStringLiteral("drone.invalid"), 14550);
 
@@ -417,7 +416,6 @@ void LinkConfigurationTest::_testUdpHostnamePreservedWhenUnresolved()
 
 void LinkConfigurationTest::_testUdpHostnameRoundtrip()
 {
-    ignoreLogMessage("Comms.UDPLink", QtWarningMsg, QRegularExpression("Could not resolve host"));
     TestFixtures::TempDirFixture tmpDir;
     QVERIFY(tmpDir.isValid());
     const QString iniPath = tmpDir.path() + QStringLiteral("/settings.ini");
@@ -442,7 +440,6 @@ void LinkConfigurationTest::_testUdpHostnameRoundtrip()
 
 void LinkConfigurationTest::_testUdpRemoveByHostname()
 {
-    ignoreLogMessage("Comms.UDPLink", QtWarningMsg, QRegularExpression("Could not resolve host"));
     UDPConfiguration config(QStringLiteral("UDPRemoveByName"));
     config.addHost(QStringLiteral("drone.invalid"), 14550);
     QCOMPARE(config.targetHosts().size(), 1);
@@ -460,6 +457,8 @@ void LinkConfigurationTest::_testUdpResolveHostsUpdatesAddress()
     auto targets = config.targetHosts();
     QCOMPARE(targets.size(), 1);
     QCOMPARE(targets.constFirst()->hostname, QStringLiteral("localhost"));
+    // Hostnames are resolved on connect, not when added (blocking DNS on the main thread)
+    QVERIFY(targets.constFirst()->address.isNull());
 
     config.resolveHosts();
 

@@ -53,9 +53,13 @@ MockConfiguration::~MockConfiguration()
 
 void MockConfiguration::copyFrom(const LinkConfiguration *source)
 {
-    LinkConfiguration::copyFrom(source);
-
     const MockConfiguration *mockLinkSource = qobject_cast<const MockConfiguration*>(source);
+    if (!mockLinkSource) {
+        qCWarning(MockConfigurationLog) << "Invalid source configuration type";
+        return;
+    }
+
+    LinkConfiguration::copyFrom(source);
 
     setFirmwareType(mockLinkSource->firmwareType());
     setVehicleType(mockLinkSource->vehicleType());

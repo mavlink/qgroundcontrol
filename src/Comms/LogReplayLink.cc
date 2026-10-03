@@ -34,9 +34,13 @@ LogReplayConfiguration::~LogReplayConfiguration()
 
 void LogReplayConfiguration::copyFrom(const LinkConfiguration *source)
 {
-    LinkConfiguration::copyFrom(source);
-
     const LogReplayConfiguration *logReplaySource = qobject_cast<const LogReplayConfiguration*>(source);
+    if (!logReplaySource) {
+        qCWarning(LogReplayLinkLog) << "Invalid source configuration type";
+        return;
+    }
+
+    LinkConfiguration::copyFrom(source);
 
     setLogFilename(logReplaySource->logFilename());
 }

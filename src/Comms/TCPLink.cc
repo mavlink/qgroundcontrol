@@ -54,9 +54,13 @@ void TCPConfiguration::setPort(quint16 port)
 
 void TCPConfiguration::copyFrom(const LinkConfiguration *source)
 {
-    LinkConfiguration::copyFrom(source);
-
     const TCPConfiguration* tcpSource = qobject_cast<const TCPConfiguration*>(source);
+    if (!tcpSource) {
+        qCWarning(TCPLinkLog) << "Invalid source configuration type";
+        return;
+    }
+
+    LinkConfiguration::copyFrom(source);
 
     setHost(tcpSource->host());
     setPort(tcpSource->port());
