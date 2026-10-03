@@ -415,6 +415,12 @@ void MockLinkMissionItemHandler::_handleMissionItem(const mavlink_message_t &msg
         return;
     }
 
+    if (_failureMode == FailWriteFinalAckFirstResponse && _failWriteFinalAckFirstResponse) {
+        _failWriteFinalAckFirstResponse = false;
+        qCDebug(MockLinkMissionItemHandlerLog) << "not sending final ack due to failure mode FailWriteFinalAckFirstResponse, first response";
+        return;
+    }
+
     if (_failureMode != FailWriteFinalAckNoResponse) {
         MAV_MISSION_RESULT ack = MAV_MISSION_ACCEPTED;
 
