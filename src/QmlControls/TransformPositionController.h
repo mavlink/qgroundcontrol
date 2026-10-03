@@ -17,6 +17,8 @@ class TransformPositionController : public QObject
     Q_PROPERTY(QGeoCoordinate   coordinate          READ coordinate WRITE setCoordinate NOTIFY coordinateChanged)
     Q_PROPERTY(Fact             *latitude           READ latitude                       CONSTANT)
     Q_PROPERTY(Fact             *longitude          READ longitude                      CONSTANT)
+    Q_PROPERTY(Fact             *latitudeDMS        READ latitudeDMS                    CONSTANT)
+    Q_PROPERTY(Fact             *longitudeDMS       READ longitudeDMS                   CONSTANT)
     Q_PROPERTY(Fact             *zone               READ zone                           CONSTANT)
     Q_PROPERTY(Fact             *hemisphere         READ hemisphere                     CONSTANT)
     Q_PROPERTY(Fact             *easting            READ easting                        CONSTANT)
@@ -26,6 +28,7 @@ class TransformPositionController : public QObject
     Q_PROPERTY(Fact             *offsetNorth        READ offsetNorth                    CONSTANT)
     Q_PROPERTY(Fact             *offsetUp           READ offsetUp                       CONSTANT)
     Q_PROPERTY(Fact             *rotateDegreesCW    READ rotateDegreesCW                CONSTANT)
+    Q_PROPERTY(int              defaultCoordinateSystem READ defaultCoordinateSystem    CONSTANT)
 
 public:
     explicit TransformPositionController(QObject *parent = nullptr);
@@ -33,8 +36,9 @@ public:
 
     Q_INVOKABLE void initValues();
     Q_INVOKABLE void setFromGeo();
-    Q_INVOKABLE void setFromUTM();
-    Q_INVOKABLE void setFromMGRS();
+    Q_INVOKABLE bool setFromDMS();
+    Q_INVOKABLE bool setFromUTM();
+    Q_INVOKABLE bool setFromMGRS();
     Q_INVOKABLE void setFromVehicle();
 
     void setCoordinate(QGeoCoordinate coordinate);
@@ -42,6 +46,8 @@ public:
 
     Fact *latitude() { return _latitudeFact; }
     Fact *longitude() { return _longitudeFact; }
+    Fact *latitudeDMS() { return _latitudeDMSFact; }
+    Fact *longitudeDMS() { return _longitudeDMSFact; }
     Fact *zone() { return _zoneFact; }
     Fact *hemisphere() { return _hemisphereFact; }
     Fact *easting() { return _eastingFact; }
@@ -52,6 +58,9 @@ public:
     Fact *offsetUp() { return _offsetUpFact; }
     Fact *rotateDegreesCW() { return _rotateDegreesCWFact; }
 
+    /// UnitsSettings::coordinateFormat, which matches the coordinate system combo index in the position dialogs
+    static int defaultCoordinateSystem();
+
 signals:
     void coordinateChanged(QGeoCoordinate coordinate);
 
@@ -60,6 +69,8 @@ private:
 
     Fact *_latitudeFact = nullptr;
     Fact *_longitudeFact = nullptr;
+    Fact *_latitudeDMSFact = nullptr;
+    Fact *_longitudeDMSFact = nullptr;
     Fact *_zoneFact = nullptr;
     Fact *_hemisphereFact = nullptr;
     Fact *_eastingFact = nullptr;
@@ -74,6 +85,8 @@ private:
 
     static constexpr const char *_latitudeFactName = "Latitude";
     static constexpr const char *_longitudeFactName = "Longitude";
+    static constexpr const char *_latitudeDMSFactName = "LatitudeDMS";
+    static constexpr const char *_longitudeDMSFactName = "LongitudeDMS";
     static constexpr const char *_zoneFactName = "Zone";
     static constexpr const char *_hemisphereFactName = "Hemisphere";
     static constexpr const char *_eastingFactName = "Easting";
