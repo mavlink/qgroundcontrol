@@ -1,10 +1,17 @@
 #include "LinkManagerTest.h"
 
-#include "LinkManager.h"
-#include "MockLink.h"
+#include <algorithm>
 
-#include <QtTest/QTest>
 #include <QtCore/QScopeGuard>
+#include <QtNetwork/QUdpSocket>
+#include <QtTest/QTest>
+
+#include "AutoConnectSettings.h"
+#include "LinkManager.h"
+#include "MavlinkSettings.h"
+#include "MockLink.h"
+#include "SettingsManager.h"
+#include "UDPLink.h"
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
 #include <fcntl.h>
 #include <unistd.h>
@@ -28,6 +35,20 @@ SharedLinkConfigurationPtr LinkManagerTest::_addMockConfig(const QString &name, 
 void LinkManagerTest::_reconnect()
 {
     linkManager()->_reconnectAutoConnectLinks();
+}
+
+void LinkManagerTest::_expectUdpBindFailureLogs()
+{
+    expectLogMessage("Comms.UDPLink", QtWarningMsg, QRegularExpression(QStringLiteral("AddressInUseError")));
+    expectLogMessage("Comms.UDPLink", QtWarningMsg, QRegularExpression(QStringLiteral("Failed to bind UDP socket")));
+    expectLogMessage("Comms.UDPLink", QtWarningMsg, QRegularExpression(QStringLiteral("Communication error")));
+}
+
+void LinkManagerTest::_verifyUdpBindFailureLogs()
+{
+    for (int i = 0; i < 3; i++) {
+        verifyExpectedLogMessage();
+    }
 }
 
 void LinkManagerTest::_testReconnectsDroppedAutoConnectLink()
@@ -123,6 +144,228 @@ void LinkManagerTest::_testLinkActiveStableAcrossReconnect()
     QVERIFY(config->link() == nullptr);
 
     linkManager()->removeConfiguration(config.get());
+}
+
+void LinkManagerTest::_testUdpUnresolvedHostFailsConnect()
+{
+    UDPConfiguration* const udpConfig = new UDPConfiguration(QStringLiteral("UnresolvedUdp"));
+    udpConfig->addHost(QStringLiteral("drone.invalid"), 14550);
+    SharedLinkConfigurationPtr config = linkManager()->addConfiguration(udpConfig);
+
+    expectLogMessage("Comms.UDPLink", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Could not resolve host: drone.invalid")));
+    expectAppMessage(QRegularExpression(QStringLiteral("Could not resolve host: drone.invalid")));
+    QVERIFY(linkManager()->createConnectedLink(config));
+    QTRY_VERIFY_WITH_TIMEOUT(config->link() == nullptr, TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+
+    linkManager()->removeConfiguration(config.get());
+}
+
+void LinkManagerTest::_testUdpUnresolvedHostAllowedStaysConnected()
+{
+    UDPConfiguration* const udpConfig = new UDPConfiguration(QStringLiteral("UnresolvedUdpAllowed"));
+    udpConfig->setRequireResolvedHosts(false);
+    udpConfig->addHost(QStringLiteral("drone.invalid"), 14550);
+    SharedLinkConfigurationPtr config = linkManager()->addConfiguration(udpConfig);
+
+    expectLogMessage("Comms.UDPLink", QtWarningMsg, QRegularExpression(QStringLiteral("Could not resolve host")));
+    QVERIFY(linkManager()->createConnectedLink(config));
+    QTRY_VERIFY_WITH_TIMEOUT(config->link() && config->link()->isConnected(), TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+
+    linkManager()->removeConfiguration(config.get());
+    QTRY_VERIFY_WITH_TIMEOUT(config->link() == nullptr, TestTimeout::mediumMs());
+}
+
+void LinkManagerTest::_testUdpBindFailureDisconnects()
+{
+    QUdpSocket blocker;
+    QVERIFY(blocker.bind(QHostAddress::AnyIPv4, 0, QAbstractSocket::DontShareAddress));
+
+    UDPConfiguration* const udpConfig = new UDPConfiguration(QStringLiteral("BindFailUdp"));
+    udpConfig->setLocalPort(blocker.localPort());
+    SharedLinkConfigurationPtr config = linkManager()->addConfiguration(udpConfig);
+
+    expectAppMessage(QRegularExpression(QStringLiteral("Link BindFailUdp:")));
+    _expectUdpBindFailureLogs();
+    QVERIFY(linkManager()->createConnectedLink(config));
+    QTRY_VERIFY_WITH_TIMEOUT(config->link() == nullptr, TestTimeout::mediumMs());
+    _verifyUdpBindFailureLogs();
+    verifyExpectedLogMessage();
+
+    linkManager()->removeConfiguration(config.get());
+}
+
+void LinkManagerTest::_testUdpAutoConnectBindFailureReusesConfig()
+{
+    linkManager()->init();
+    QUdpSocket blocker;
+    QVERIFY(blocker.bind(QHostAddress::AnyIPv4, 0, QAbstractSocket::DontShareAddress));
+
+    AutoConnectSettings* const autoConnectSettings = SettingsManager::instance()->autoConnectSettings();
+    const QVariant oldAutoConnectUDP = autoConnectSettings->autoConnectUDP()->rawValue();
+    const QVariant oldListenPort = autoConnectSettings->udpListenPort()->rawValue();
+    const QVariant oldTargetHost = autoConnectSettings->udpTargetHostIP()->rawValue();
+    const auto restoreSettings = qScopeGuard([&] {
+        autoConnectSettings->autoConnectUDP()->setRawValue(oldAutoConnectUDP);
+        autoConnectSettings->udpListenPort()->setRawValue(oldListenPort);
+        autoConnectSettings->udpTargetHostIP()->setRawValue(oldTargetHost);
+    });
+    autoConnectSettings->autoConnectUDP()->setRawValue(true);
+    autoConnectSettings->udpListenPort()->setRawValue(blocker.localPort());
+    autoConnectSettings->udpTargetHostIP()->setRawValue(QString());
+
+    const auto defaultConfigs = [this] { return _configsNamed(LinkManager::_defaultUDPLinkName); };
+    QVERIFY(defaultConfigs().isEmpty());
+
+    _expectUdpBindFailureLogs();
+    linkManager()->_addUDPAutoConnectLink();
+    QCOMPARE(defaultConfigs().size(), 1);
+    const SharedLinkConfigurationPtr config = defaultConfigs().constFirst();
+    QTRY_VERIFY_WITH_TIMEOUT(config->link() == nullptr, TestTimeout::mediumMs());
+    _verifyUdpBindFailureLogs();
+
+    // First retry reuses the same config once the backoff allows it
+    QTRY_VERIFY_WITH_TIMEOUT(config->reconnectReady(), TestTimeout::mediumMs());
+    _expectUdpBindFailureLogs();
+    linkManager()->_addUDPAutoConnectLink();
+    QCOMPARE(defaultConfigs().size(), 1);
+    QVERIFY(config->link());
+    QTRY_VERIFY_WITH_TIMEOUT(config->link() == nullptr, TestTimeout::mediumMs());
+    _verifyUdpBindFailureLogs();
+
+    // Next retry waits for the backoff
+    linkManager()->_addUDPAutoConnectLink();
+    QVERIFY(config->link() == nullptr);
+    QCOMPARE(defaultConfigs().size(), 1);
+
+    linkManager()->removeConfiguration(config.get());
+}
+
+void LinkManagerTest::_testForwardingLinkUnresolvedHostRetries()
+{
+    linkManager()->init();
+    MavlinkSettings* const mavlinkSettings = SettingsManager::instance()->mavlinkSettings();
+    const QVariant oldForward = mavlinkSettings->forwardMavlink()->rawValue();
+    const QVariant oldHost = mavlinkSettings->forwardMavlinkHostName()->rawValue();
+    const auto restoreSettings = qScopeGuard([&] {
+        mavlinkSettings->forwardMavlink()->setRawValue(oldForward);
+        mavlinkSettings->forwardMavlinkHostName()->setRawValue(oldHost);
+    });
+    mavlinkSettings->forwardMavlink()->setRawValue(true);
+    expectAppMessage(QRegularExpression(QStringLiteral("Restart application")));
+    mavlinkSettings->forwardMavlinkHostName()->setRawValue(QStringLiteral("drone.invalid:14445"));
+    verifyExpectedLogMessage();
+
+    const auto forwardingConfigs = [this] { return _configsNamed(LinkManager::_mavlinkForwardingLinkName); };
+    QVERIFY(forwardingConfigs().isEmpty());
+
+    const QRegularExpression unresolved(QStringLiteral("Could not resolve host: drone.invalid"));
+    expectLogMessage("Comms.UDPLink", QtWarningMsg, unresolved);
+    expectAppMessage(unresolved);
+    linkManager()->_addMAVLinkForwardingLink();
+    QCOMPARE(forwardingConfigs().size(), 1);
+    const SharedLinkConfigurationPtr config = forwardingConfigs().constFirst();
+    QVERIFY(config->isForwarding());
+    QTRY_VERIFY_WITH_TIMEOUT(config->link() == nullptr, TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+
+    // Retry reuses the config, resolves again, and does not pop up again
+    QTRY_VERIFY_WITH_TIMEOUT(config->reconnectReady(), TestTimeout::mediumMs());
+    expectLogMessage("Comms.UDPLink", QtWarningMsg, unresolved);
+    linkManager()->_addMAVLinkForwardingLink();
+    QCOMPARE(forwardingConfigs().size(), 1);
+    QVERIFY(config->link());
+    QVERIFY(config->isForwarding());
+    // Checked before the lookup completes so slow DNS can't outlast the backoff
+    QVERIFY(!config->reconnectReady());
+    QTRY_VERIFY_WITH_TIMEOUT(config->link() == nullptr, TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+
+    // A new failure streak (backoff reset, as after a stable connection) pops up again
+    config->resetReconnectBackoff();
+    expectLogMessage("Comms.UDPLink", QtWarningMsg, unresolved);
+    expectAppMessage(unresolved);
+    linkManager()->_addMAVLinkForwardingLink();
+    QTRY_VERIFY_WITH_TIMEOUT(config->link() == nullptr, TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+
+    linkManager()->removeConfiguration(config.get());
+}
+
+void LinkManagerTest::_testSupportForwardingFailureAllowsRetry()
+{
+    MavlinkSettings* const mavlinkSettings = SettingsManager::instance()->mavlinkSettings();
+    const QVariant oldHost = mavlinkSettings->forwardMavlinkAPMSupportHostName()->rawValue();
+    const auto restoreSettings =
+        qScopeGuard([&] { mavlinkSettings->forwardMavlinkAPMSupportHostName()->setRawValue(oldHost); });
+    mavlinkSettings->forwardMavlinkAPMSupportHostName()->setRawValue(QStringLiteral("drone.invalid:14445"));
+
+    const auto supportConfigs = [this] { return _configsNamed(LinkManager::_mavlinkForwardingSupportLinkName); };
+    QVERIFY(supportConfigs().isEmpty());
+
+    const QRegularExpression unresolved(QStringLiteral("Could not resolve host: drone.invalid"));
+    for (int attempt = 0; attempt < 2; attempt++) {
+        expectLogMessage("Comms.UDPLink", QtWarningMsg, unresolved);
+        expectAppMessage(unresolved);
+        linkManager()->createMavlinkForwardingSupportLink();
+        QTRY_VERIFY_WITH_TIMEOUT(!linkManager()->mavlinkSupportForwardingEnabled(), TestTimeout::mediumMs());
+        QCOMPARE(supportConfigs().size(), 1);
+        QVERIFY(supportConfigs().constFirst()->link() == nullptr);
+        verifyExpectedLogMessage();
+        verifyExpectedLogMessage();
+    }
+
+    linkManager()->removeConfiguration(supportConfigs().constFirst().get());
+}
+
+void LinkManagerTest::_testDynamicUdpLinkIgnoresSameNamedUserLink()
+{
+    linkManager()->init();
+    MavlinkSettings* const mavlinkSettings = SettingsManager::instance()->mavlinkSettings();
+    const QVariant oldForward = mavlinkSettings->forwardMavlink()->rawValue();
+    const auto restoreSettings = qScopeGuard([&] { mavlinkSettings->forwardMavlink()->setRawValue(oldForward); });
+    mavlinkSettings->forwardMavlink()->setRawValue(true);
+
+    UDPConfiguration* const userUdpConfig =
+        new UDPConfiguration(QLatin1String(LinkManager::_mavlinkForwardingLinkName));
+    userUdpConfig->setDynamic(false);
+    const SharedLinkConfigurationPtr userConfig = linkManager()->addConfiguration(userUdpConfig);
+
+    linkManager()->_addMAVLinkForwardingLink();
+
+    QVERIFY(!userConfig->isDynamic());
+    QVERIFY(!userConfig->isForwarding());
+    QVERIFY(userConfig->link() == nullptr);
+    const QList<SharedLinkConfigurationPtr> configs = _configsNamed(LinkManager::_mavlinkForwardingLinkName);
+    QCOMPARE(configs.size(), 2);
+
+    // Removing a config doesn't stop a UDP link that is still connecting, so let it connect first
+    const auto dynamicIt =
+        std::ranges::find_if(configs, [](const SharedLinkConfigurationPtr& c) { return c->isDynamic(); });
+    QVERIFY(dynamicIt != configs.cend());
+    const SharedLinkConfigurationPtr dynamicConfig = *dynamicIt;
+    QTRY_VERIFY_WITH_TIMEOUT(dynamicConfig->link() && dynamicConfig->link()->isConnected(), TestTimeout::mediumMs());
+
+    for (const SharedLinkConfigurationPtr& config : configs) {
+        linkManager()->removeConfiguration(config.get());
+    }
+    QTRY_VERIFY_WITH_TIMEOUT(dynamicConfig->link() == nullptr, TestTimeout::mediumMs());
+}
+
+QList<SharedLinkConfigurationPtr> LinkManagerTest::_configsNamed(const char* name)
+{
+    QList<SharedLinkConfigurationPtr> configs;
+    for (const SharedLinkConfigurationPtr& config : linkManager()->_rgLinkConfigs) {
+        if (config->name() == QLatin1String(name)) {
+            configs.append(config);
+        }
+    }
+    return configs;
 }
 
 UT_REGISTER_TEST(LinkManagerTest, TestLabel::Integration, TestLabel::Comms)

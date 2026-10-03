@@ -55,9 +55,13 @@ void SerialConfiguration::setPortName(const QString &name)
 
 void SerialConfiguration::copyFrom(const LinkConfiguration *source)
 {
-    LinkConfiguration::copyFrom(source);
-
     const SerialConfiguration* serialSource = qobject_cast<const SerialConfiguration*>(source);
+    if (!serialSource) {
+        qCWarning(SerialLinkLog) << "Invalid source configuration type";
+        return;
+    }
+
+    LinkConfiguration::copyFrom(source);
 
     setBaud(serialSource->baud());
     setDataBits(serialSource->dataBits());

@@ -280,13 +280,13 @@ void BluetoothConfiguration::setMode(BluetoothMode mode)
 
 void BluetoothConfiguration::copyFrom(const LinkConfiguration *source)
 {
-    LinkConfiguration::copyFrom(source);
-
     const BluetoothConfiguration *bluetoothSource = qobject_cast<const BluetoothConfiguration*>(source);
     if (!bluetoothSource) {
         qCWarning(BluetoothConfigurationLog) << "Invalid source configuration type";
         return;
     }
+
+    LinkConfiguration::copyFrom(source);
 
     if (_mode != bluetoothSource->mode()) {
         _mode = bluetoothSource->mode();

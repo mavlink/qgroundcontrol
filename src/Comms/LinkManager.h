@@ -1,13 +1,14 @@
 #pragma once
 
+#include <functional>
+#include <limits>
+#include <memory>
+
 #include <QtCore/QList>
 #include <QtCore/QMutex>
 #include <QtCore/QMutexLocker>
 #include <QtCore/QStringList>
 #include <QtQmlIntegration/QtQmlIntegration>
-
-#include <limits>
-#include <memory>
 
 #include "LinkConfiguration.h"
 #include "LinkInterface.h"
@@ -131,7 +132,9 @@ private:
     void _addUDPAutoConnectLink();
     void _addMAVLinkForwardingLink();
     void _reconnectAutoConnectLinks();
-    void _createDynamicForwardLink(const char *linkName, const QString &hostName);
+    /// (Re)connects a timer-driven dynamic UDP link, reusing its config so reconnect backoff applies
+    void _retryDynamicUdpLink(const QString& name, const std::function<void(UDPConfiguration&)>& configure);
+    SharedLinkConfigurationPtr _findDynamicUdpConfiguration(const QString& name) const;
 
     QTimer *_portListTimer = nullptr;
     QmlObjectListModel *_qmlConfigurations = nullptr;
