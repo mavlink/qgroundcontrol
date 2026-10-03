@@ -2338,6 +2338,7 @@ void MockLink::_handleCommandInt(const mavlink_message_t &msg)
         _mavCustomMode = static_cast<uint32_t>(request.param2);
         commandResult = MAV_RESULT_ACCEPTED;
         break;
+    case MAV_CMD_DO_REPOSITION:  // Unit test support: lets tests verify how firmware plugins send reposition
     case MAV_CMD_MISSION_START:
         commandResult = MAV_RESULT_ACCEPTED;
         break;

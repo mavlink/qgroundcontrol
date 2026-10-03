@@ -126,6 +126,17 @@ void lambdaFallbackResultHandler(void* resultHandlerData, int /*compId*/, const 
     delete data;
 }
 
+/// Converts param5/param6 to COMMAND_INT x/y. NaN ("no change" in COMMAND_LONG) must be sent as
+/// INT32_MAX, which is what MAVLink uses for an unset integer param. Converting NaN to an integer is
+/// undefined behavior, and yields 0 (latitude/longitude 0,0) on ARM.
+int32_t commandIntXY(double param, MAV_FRAME frame)
+{
+    if (qIsNaN(param)) {
+        return INT32_MAX;
+    }
+    return static_cast<int32_t>(frame == MAV_FRAME_MISSION ? param : param * 1e7);
+}
+
 } // namespace
 
 void MavCommandQueue::sendCommandWithLambdaFallbackWorker(std::function<void()> lambda, bool commandInt, int compId, MAV_CMD command, MAV_FRAME frame, bool showError, float param1, float param2, float param3, float param4, double param5, double param6, float param7)
@@ -418,8 +429,8 @@ void MavCommandQueue::_sendFromList(int index)
         cmd.param2 =            commandEntry.rgParam2;
         cmd.param3 =            commandEntry.rgParam3;
         cmd.param4 =            commandEntry.rgParam4;
-        cmd.x =                 commandEntry.frame == MAV_FRAME_MISSION ? commandEntry.rgParam5 : commandEntry.rgParam5 * 1e7;
-        cmd.y =                 commandEntry.frame == MAV_FRAME_MISSION ? commandEntry.rgParam6 : commandEntry.rgParam6 * 1e7;
+        cmd.x = commandIntXY(commandEntry.rgParam5, commandEntry.frame);
+        cmd.y = commandIntXY(commandEntry.rgParam6, commandEntry.frame);
         cmd.z =                 commandEntry.rgParam7;
         mavlink_msg_command_int_encode_chan(MAVLinkProtocol::instance()->getSystemId(),
                                             MAVLinkProtocol::getComponentId(),
