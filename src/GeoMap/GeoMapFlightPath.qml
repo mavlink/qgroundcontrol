@@ -97,6 +97,8 @@ GeoMapItem {
                     property real lineWidth: root.lineWidth
                     property real screenFactor: root._screenFactor
                     property color pathColor: root.lineColor
+                    // Required by flightpath.frag; the trail never highlights
+                    property color highlightColor: root.lineColor
                     // Ramps in as the terrain flattens, effectively disabling
                     // depth testing in 2D mode (see flightpath.vert)
                     property real depthPull: root.scene ? 0.5 * (1.0 - root.scene.terrainScale) : 0.0
@@ -122,7 +124,7 @@ GeoMapItem {
     Connections {
         target: root.surfaceModel
 
-        function onTerrainHeightsChanged() {
+        function onTerrainDataChanged() {
             root._updateHomeTerrainBias()
         }
     }

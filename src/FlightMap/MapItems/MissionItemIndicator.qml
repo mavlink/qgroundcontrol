@@ -16,10 +16,7 @@ MapQuickItem {
     property bool interactive: true
 
     readonly property bool _isCurrentItem: missionItem ? missionItem.isCurrentItem || missionItem.hasCurrentChildItem : false
-    readonly property bool _usesAbbreviation: missionItem
-        ? missionItem.abbreviation.charAt(0) > 'A'
-          && missionItem.abbreviation.charAt(0) < 'z'
-        : false
+    readonly property bool _usesAbbreviation: missionItem ? missionItem.abbreviation !== "" : false
     readonly property var _group: indicatorGroup ? indicatorGroup.groupForItem(missionItem) : null
     readonly property bool _isGrouped: _group ? _group.items.length > 1 : false
     readonly property bool _isGroupRepresentative: !_group || _group.representative === missionItem

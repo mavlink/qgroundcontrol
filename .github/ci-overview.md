@@ -390,8 +390,7 @@ uv run --project tools --group scripts --group test pytest -q tools/tests .githu
   timing and progress remain enabled in every run. Warnings are
   advisory, but error diagnostics, missing tools, invalid databases,
   timeouts and compiler-driver failures fail analysis.
-- C++ CodeQL is built and uploaded only by Linux (`/language:c-cpp`).
-  `codeql.yml` handles Actions, Java/Kotlin and Python.
+- C++ is not scanned by CodeQL. `codeql.yml` handles Actions, Java/Kotlin and Python.
 - `test-phase` shares Linux/custom unit and integration execution. Call it only after
   a successful build. Failures preserve JUnit, logs and durations and do not suppress
   the other suite. There are no blanket until-pass retries; empty test selections fail.
@@ -447,8 +446,8 @@ Local equivalents are `just test-python` and `just lint` after installing `dev`.
 ### Configuration and documentation checks
 
 CI Scripts validates build schema relationships and release decisions using locked Node tooling.
-Schema-only edits run validation. CodeQL C++ extraction stays in the Linux release build;
-the standalone workflow scans Actions, Java/Kotlin, and Python, including deployment and tests.
+Schema-only edits run validation. CodeQL does not scan C++; the standalone workflow
+scans Actions, Java/Kotlin, and Python, including deployment and tests.
 Runner image candidates are smoke-tested by AMI ID before production promotion, with weekly
 rebuilds and bounded retention; see [runner-images/README.md](runner-images/README.md).
 

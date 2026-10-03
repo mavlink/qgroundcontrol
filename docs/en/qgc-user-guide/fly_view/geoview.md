@@ -5,7 +5,7 @@ The GeoMap engine is an experimental technology preview and is under active deve
 It is too early to report issues against this feature — there is still too much work left to do.
 :::
 
-The GeoMap engine is a new map engine for QGroundControl that renders a single, seamless 2D/3D map: satellite/street imagery draped over real terrain elevation, with Google Earth-style camera controls. When enabled it replaces the map in the [Fly View](fly_view.md), displaying your vehicles, the planned mission (with waypoint markers, connecting path, and drop lines showing each waypoint's height above the terrain), the flown flight path, the launch location, and the ground station position — all in true 3D.
+The GeoMap engine is a new map engine for QGroundControl that renders a single, seamless 2D/3D map: satellite/street imagery draped over real terrain elevation, with Google Earth-style camera controls. When enabled it replaces the map in the [Fly View](fly_view.md), displaying your vehicles, the planned mission (with waypoint markers, connecting path drawn in red where a leg passes below the terrain, and drop lines showing each waypoint's height above the terrain), the flown flight path, the launch location, and the ground station position — all in true 3D.
 
 :::info
 Map interaction (click-to-goto, orbit, ROI, and other map click actions, including dragging the orbit and loiter circles) works in both 2D and 3D modes. All other Fly View controls (arm, takeoff, guided actions, instruments, and so on) work as usual.

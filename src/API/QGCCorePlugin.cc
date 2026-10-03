@@ -124,6 +124,11 @@ const QmlObjectListModel *QGCCorePlugin::customMapItems()
     return _emptyCustomMapItems;
 }
 
+const QmlObjectListModel* QGCCorePlugin::customGeoMapItems()
+{
+    return _emptyCustomMapItems;
+}
+
 void QGCCorePlugin::adjustSettingMetaData(const QString &settingsGroup, FactMetaData &metaData, bool &userVisible)
 {
 #ifdef Q_OS_ANDROID

@@ -10,6 +10,7 @@ private slots:
     void _emptyAndShortPaths();
     void _ribbonLayout();
     void _directionsAndSides();
+    void _highlightFlags();
     void _pathMutations();
     void _incrementalMatchesRebuild();
 };

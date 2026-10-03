@@ -3,6 +3,7 @@
 #include <cmath>
 #include <optional>
 
+#include <QtCore/QDebug>
 #include <QtCore/QList>
 #include <QtCore/QPointer>
 #include <QtCore/QRectF>
@@ -1058,5 +1059,152 @@ void FlyViewGeoUITest::_testZoomToMissionFromVehicle()
                 QVERIFY2(screen.contains(*projected), qPrintable(QStringLiteral("Mission item %1 off screen").arg(i)));
             }
             QCOMPARE_GT(coordinateItems, 1);
+        });
+}
+
+void FlyViewGeoUITest::_testOverlappingMarkersPicker_data()
+{
+    QTest::addColumn<bool>("mode3D");
+
+    QTest::addRow("2D collapses") << false;
+    QTest::addRow("3D keeps every marker") << true;
+}
+
+// Waypoint markers drawn on top of each other open a picker listing them all
+// (MissionItemIndicatorGroup parity); only top-down 2D collapses them into one marker
+void FlyViewGeoUITest::_testOverlappingMarkersPicker()
+{
+    QFETCH(bool, mode3D);
+
+    Fact* const geoEngineFact = SettingsManager::instance()->flyViewSettings()->useGeoMapEngine();
+    const QVariant savedEnabled = geoEngineFact->rawValue();
+    const auto guard = qScopeGuard([geoEngineFact, savedEnabled] { geoEngineFact->setRawValue(savedEnabled); });
+    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                     QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
+    geoEngineFact->setRawValue(true);
+
+    runWithMockLink(
+        [] { return MockLink::startPX4MockLinkWithMission(); },
+        [this, mode3D](QPointer<MockLink>, Vehicle* vehicle) {
+            const std::optional<bool> rhiBased = expectSoftwareBackendWarnings(/*strict*/ false);
+            QVERIFY2(rhiBased.has_value(), "No renderer interface on the main window");
+
+            QQuickItem* const adapter =
+                findVisibleItem(_rootItem, QStringLiteral("flyViewGeoMapAdapter"), kItemAppearTimeoutMs);
+            QVERIFY2(adapter, "GeoMap adapter not visible");
+            auto* const planController = adapter->property("planMasterController").value<PlanMasterController*>();
+            QVERIFY2(planController, "Fly View PlanMasterController not found");
+            QQuickItem* const viewport =
+                findVisibleItem(_rootItem, QStringLiteral("geoMapViewport"), kItemAppearTimeoutMs);
+            QVERIFY2(viewport, "GeoMap 3D viewport not visible");
+            QQuickItem* const geoMap = viewport->parentItem();
+            auto* const cam = geoMap->findChild<GeoMapCamera*>(QStringLiteral("geoMapCamera"));
+            QVERIFY2(cam, "GeoMapCamera not found");
+            auto* const positionTracker = geoMap->findChild<MapPositionTracker*>();
+            QVERIFY2(positionTracker, "MapPositionTracker not found");
+            QTRY_VERIFY_WITH_TIMEOUT(positionTracker->firstVehiclePositionReceived(), kItemAppearTimeoutMs);
+
+            // Completing the initial plan download refits the view, which would undo the zoom below
+            QTRY_VERIFY_WITH_TIMEOUT(vehicle->initialPlanRequestComplete(), kItemAppearTimeoutMs);
+            QSignalSpy newItemsSpy(planController->missionController(), &MissionController::newItemsFromVehicle);
+            vehicle->missionManager()->loadFromVehicle();
+            QVERIFY(newItemsSpy.wait(kItemAppearTimeoutMs));
+
+            QmlObjectListModel* const visualItems = planController->missionController()->visualItems();
+            int waypointCount = 0;
+            int firstWaypointSequence = -1;
+            for (int i = 0; i < visualItems->count(); i++) {
+                const auto* const item = visualItems->value<VisualMissionItem*>(i);
+                if (item->isSimpleItem() && item->specifiesCoordinate()) {
+                    waypointCount++;
+                    if (firstWaypointSequence < 0) {
+                        firstWaypointSequence = item->sequenceNumber();
+                    }
+                }
+            }
+            QCOMPARE_GT(waypointCount, 1);
+
+            const qreal tilt = mode3D ? GeoMapCamera::kDefault3DTilt : 0.0;
+            if (mode3D) {
+                cam->setMode(GeoMapCamera::Mode::Mode3D);
+                QTRY_COMPARE_WITH_TIMEOUT(cam->tilt(), GeoMapCamera::kDefault3DTilt, kSettleTimeoutMs);
+                QTRY_COMPARE_WITH_TIMEOUT(geoMap->property("terrainScale").toDouble(), 1.0, kSettleTimeoutMs);
+            }
+            // Zoomed far out the whole mission draws within a pixel
+            cam->lookAt(vehicle->coordinate(), 0, tilt, cam->distanceForZoomLevel(3));
+
+            // Loaded markers are only item children of the map, not QObject children
+            const auto markers = [geoMap] {
+                QList<QQuickItem*> result;
+                QList<QQuickItem*> pending{geoMap};
+                while (!pending.isEmpty()) {
+                    QQuickItem* const item = pending.takeLast();
+                    if ((item->objectName() == QStringLiteral("geoMapWaypointMarker")) &&
+                        item->property("hasMarker").toBool()) {
+                        result.append(item);
+                    }
+                    pending.append(item->childItems());
+                }
+                return result;
+            };
+            const auto visibleMarkers = [&markers] {
+                QList<QQuickItem*> result;
+                for (QQuickItem* marker : markers()) {
+                    if (marker->isVisible()) {
+                        result.append(marker);
+                    }
+                }
+                return result;
+            };
+            QTRY_COMPARE_WITH_TIMEOUT(static_cast<int>(markers().size()), waypointCount, kItemAppearTimeoutMs);
+
+            if (mode3D) {
+                QTRY_COMPARE_WITH_TIMEOUT(static_cast<int>(visibleMarkers().size()), waypointCount, kSettleTimeoutMs);
+                for (QQuickItem* marker : markers()) {
+                    QVERIFY(!marker->property("grouped").toBool());
+                }
+            } else {
+                const auto groupingState = [cam, geoMap, &markers] {
+                    QString state;
+                    QDebug debug(&state);
+                    debug.nospace() << "mode=" << static_cast<int>(cam->mode()) << " tilt=" << cam->tilt()
+                                    << " terrainScale=" << geoMap->property("terrainScale").toDouble();
+                    for (QQuickItem* marker : markers()) {
+                        const auto* const item = marker->property("item").value<VisualMissionItem*>();
+                        const QPointF point = marker->mapToItem(geoMap, marker->property("anchorPoint").toPointF());
+                        debug << " | seq=" << (item ? item->sequenceNumber() : -1) << " visible=" << marker->isVisible()
+                              << " projected=" << marker->property("projected").toBool()
+                              << " collapsed=" << marker->property("collapsed").toBool()
+                              << " grouped=" << marker->property("grouped").toBool() << " point=" << point
+                              << " radius=" << (marker->property("smallIndicatorSize").toDouble() / 2);
+                    }
+                    return state;
+                };
+                QTRY_VERIFY2_WITH_TIMEOUT(visibleMarkers().size() == 1, qPrintable(groupingState()), kSettleTimeoutMs);
+                QVERIFY(visibleMarkers().first()->property("grouped").toBool());
+            }
+
+            const QString markerName = QStringLiteral("geoMapWaypointMarker");
+            QVERIFY(_clickItemAt(visibleMarkers().first(), 0.5, 0.5, markerName));
+            QQuickItem* pickerList =
+                findVisibleItem(_rootItem, QStringLiteral("missionItemSelectionList"), kSettleTimeoutMs);
+            QVERIFY2(pickerList, "Mission item picker not shown for overlapping markers");
+
+            // A zoom without a press outside (wheel, pinch) moves the markers away from the anchor
+            cam->setDistance(cam->distance() * 0.9);
+            QTRY_VERIFY_WITH_TIMEOUT(!findVisibleItem(_rootItem, QStringLiteral("missionItemSelectionList"), 0),
+                                     kSettleTimeoutMs);
+
+            QVERIFY(_clickItemAt(visibleMarkers().first(), 0.5, 0.5, markerName));
+            pickerList = findVisibleItem(_rootItem, QStringLiteral("missionItemSelectionList"), kSettleTimeoutMs);
+            QVERIFY2(pickerList, "Mission item picker not reopened after zoom");
+            QCOMPARE(pickerList->property("count").toInt(), waypointCount);
+
+            // Picking an item asks to make it the current waypoint
+            QVERIFY(clickButton(QStringLiteral("missionItemSelection_%1").arg(firstWaypointSequence)));
+            QTRY_VERIFY_WITH_TIMEOUT(!findVisibleItem(_rootItem, QStringLiteral("missionItemSelectionList"), 0),
+                                     kSettleTimeoutMs);
+            QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("guidedActionConfirmButton"), kSettleTimeoutMs),
+                     "Set waypoint confirmation not shown");
         });
 }

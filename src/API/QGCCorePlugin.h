@@ -49,6 +49,7 @@ class QGCCorePlugin : public QObject
     Q_PROPERTY(int initialSetupPromptId                 MEMBER kInitialSetupPromptId                                       CONSTANT)
     Q_PROPERTY(const QGCOptions *options                READ options                                                        CONSTANT)
     Q_PROPERTY(const QmlObjectListModel *customMapItems READ customMapItems                                                 CONSTANT)
+    Q_PROPERTY(const QmlObjectListModel* customGeoMapItems READ customGeoMapItems CONSTANT)
     Q_PROPERTY(QString showAdvancedUIMessage            READ showAdvancedUIMessage                                          CONSTANT)
     Q_PROPERTY(QString stableDownloadUrl                READ stableDownloadUrl                                              CONSTANT)
     Q_PROPERTY(QVariantList analyzePages                READ analyzePages                                                   CONSTANT)
@@ -137,6 +138,11 @@ public:
 
     /// Allows custom builds to add custom items to the FlightMap. Objects put into QmlObjectListModel should derive from QmlComponentInfo and set the url property.
     virtual const QmlObjectListModel *customMapItems();
+
+    /// GeoMap counterpart of customMapItems, shown when the Fly View uses the GeoMap engine. Same QmlComponentInfo/url
+    /// contract; each component is created in the map with its customMapObject, scene and surfaceModel properties set,
+    /// so its root should be a GeoMapItem (or declare those properties and pass scene/surfaceModel on to GeoMap items).
+    virtual const QmlObjectListModel* customGeoMapItems();
 
     /// Allows custom builds to add custom items to the plan file before the document is created.
     virtual void preSaveToJson(PlanMasterController *pController, QJsonObject &json) { Q_UNUSED(pController); Q_UNUSED(json); }

@@ -661,7 +661,7 @@ Item {
 
     Connections {
         target: patchModel
-        function onTerrainHeightsChanged() {
+        function onTerrainDataChanged() {
             root._updateCenterElevation()
             root._updateHomeTerrainBias()
         }
