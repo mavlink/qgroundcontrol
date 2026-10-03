@@ -3427,22 +3427,21 @@ void MockLink::_sendAvailableMode(uint8_t modeIndexOneBased)
     qCDebug(MockLinkLog) << "_sendAvailableMode modeIndexOneBased:" << modeIndexOneBased;
 
     const FlightMode_t &availableMode = _flightModeList()[modeIndexOneBased - 1];
+
+    if (_availableModesSequenceBumpAtIndex.load() == modeIndexOneBased) {
+        ++_availableModesMonitorSeqNumber;
+        _availableModesSequenceBumpAtIndex = 0;
+    }
+
     char modeName[MAVLINK_MSG_AVAILABLE_MODES_FIELD_MODE_NAME_LEN] = {};
     std::strncpy(modeName, availableMode.name, sizeof(modeName) - 1);
 
     mavlink_message_t msg{};
 
     (void) mavlink_msg_available_modes_pack_chan(
-        _vehicleSystemId,
-        _vehicleComponentId,
-        _outgoingMavlinkChannel,
-        &msg,
-        _availableModesCount(),
-        modeIndexOneBased,
-        availableMode.standard_mode,
-        availableMode.custom_mode,
-        availableMode.canBeSet ? 0 : MAV_MODE_PROPERTY_NOT_USER_SELECTABLE,
-        modeName);
+        _vehicleSystemId, _vehicleComponentId, _outgoingMavlinkChannel, &msg, _availableModesCount(), modeIndexOneBased,
+        availableMode.standard_mode, availableMode.custom_mode,
+        availableMode.canBeSet ? 0 : MAV_MODE_PROPERTY_NOT_USER_SELECTABLE, modeName, _availableModesMonitorSeqNumber);
     respondWithMavlinkMessage(msg);
 }
 
