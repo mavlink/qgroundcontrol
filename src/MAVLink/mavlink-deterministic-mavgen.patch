@@ -18,8 +18,17 @@
 
  if (NOT MAVLINK_DIALECT)
      set(MAVLINK_DIALECT common)
-@@ -28,9 +17,7 @@
- set(EXAMPLE_HEADER ${CMAKE_CURRENT_BINARY_DIR}/include/mavlink/${MAVLINK_DIALECT}/mavlink.h)
+@@ -34,7 +23,7 @@
+
+ if (MAVLINK_ENABLE_CXX)
+     set(GENERATE_CXX_COMMAND
+-        COMMAND ${CMAKE_COMMAND} -E env "PYTHONPATH=${CMAKE_CURRENT_BINARY_DIR}/pip-dependencies/" ${Python_EXECUTABLE}
++        COMMAND "${CMAKE_COMMAND}" -E env "PYTHONHASHSEED=0" "${Python_EXECUTABLE}"
+         -m pymavlink.tools.mavgen
+         --lang=C++11
+         --wire-protocol=${MAVLINK_VERSION}
+@@ -43,9 +32,7 @@
+ endif()
 
  add_custom_command(OUTPUT ${EXAMPLE_HEADER}
 -    COMMAND ${Python_EXECUTABLE}
@@ -29,19 +38,19 @@
          -m pymavlink.tools.mavgen
          --lang=C
          --wire-protocol=${MAVLINK_VERSION}
-@@ -38,7 +25,8 @@
-         message_definitions/v1.0/${MAVLINK_DIALECT}.xml
+@@ -54,7 +41,8 @@
+         ${GENERATE_CXX_COMMAND}
          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
      DEPENDS message_definitions/v1.0/${MAVLINK_DIALECT}.xml
--    COMMENT "Generating C headers")
-+    COMMENT "Generating C headers"
+-    COMMENT "Generating C and C++11 headers")
++    COMMENT "Generating C and C++11 headers"
 +    VERBATIM)
 
  # Unfortunately, the dependencies don't work for INTERFACE libraries.
  # The only way I could make it work is to add ALL which means it
 --- a/pymavlink/generator/mavgen_c.py
 +++ b/pymavlink/generator/mavgen_c.py
-@@ -24,6 +24,5 @@ def generate_version_h(directory, xml):
+@@ -25,6 +25,5 @@
  #ifndef MAVLINK_VERSION_H
  #define MAVLINK_VERSION_H
 

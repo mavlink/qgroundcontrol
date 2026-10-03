@@ -172,6 +172,10 @@ public:
 
     // Test-only: when true, outgoing traffic never upgrades from MAVLink v1 to v2,
     // simulating a vehicle which only supports MAVLink v1. Not persisted.
+    quint32 systemId() const { return _systemId; }
+
+    void setSystemId(quint32 systemId) { _systemId = systemId; }
+
     bool stayMavlinkV1() const { return _stayMavlinkV1; }
     void setStayMavlinkV1(bool stayV1) { _stayMavlinkV1 = stayV1; }
 
@@ -226,6 +230,7 @@ private:
     uint16_t _boardProductId = 0;
     bool _startArmed = false;
     bool _preloadMission = false;
+    quint32 _systemId = 0;  ///< Test override; zero allocates the next mock vehicle ID.
     bool _stayMavlinkV1 = false;
     bool _ftpCapability = false;
     bool _sendRadioStatus = true;

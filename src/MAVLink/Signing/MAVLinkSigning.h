@@ -59,7 +59,7 @@ void createSetupSigning(mavlink_channel_t channel, mavlink_system_t target_syste
 
 /// Encode a complete SETUP_SIGNING message ready to send. Empty `keyBytes` encodes a disable.
 /// Returns false if the channel is invalid.
-bool encodeSetupSigning(mavlink_channel_t channel, uint8_t srcSysId, uint8_t srcCompId, mavlink_system_t target_system,
+bool encodeSetupSigning(mavlink_channel_t channel, quint32 srcSysId, uint8_t srcCompId, mavlink_system_t target_system,
                         QByteArrayView keyBytes, mavlink_message_t& message);
 
 /// Returns true if the message has a MAVLink2 signature.

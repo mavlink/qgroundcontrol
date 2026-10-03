@@ -98,25 +98,23 @@ QGC_LOGGING_CATEGORY(VehicleLog, "Vehicle.Vehicle")
 const QString guided_mode_not_supported_by_vehicle = QObject::tr("Guided mode not supported by Vehicle.");
 
 // Standard connected vehicle
-Vehicle::Vehicle(LinkInterface*             link,
-                 int                        vehicleId,
-                 int                        defaultComponentId,
-                 MAV_AUTOPILOT              firmwareType,
-                 MAV_TYPE                   vehicleType,
-                 QObject*                   parent)
-    : VehicleFactGroup              (parent)
-    , _systemID                     (vehicleId)
-    , _defaultComponentId           (defaultComponentId)
-    , _firmwareType                 (firmwareType)
-    , _vehicleType                  (vehicleType)
-    , _defaultCruiseSpeed           (SettingsManager::instance()->appSettings()->offlineEditingCruiseSpeed()->rawValue().toDouble())
-    , _defaultHoverSpeed            (SettingsManager::instance()->appSettings()->offlineEditingHoverSpeed()->rawValue().toDouble())
-    , _sysStatusSensorInfo          (std::make_unique<SysStatusSensorInfo>(this))
-    , _trajectoryPoints             (new TrajectoryPoints(this, this))
-    , _cameraTriggerPoints          (std::make_unique<QmlObjectListModel>(this))
-    , _orbitMapCircle               (std::make_unique<QGCMapCircle>(this))
-    , _mavlinkStreamConfig          (std::make_unique<MAVLinkStreamConfig>(std::bind(&Vehicle::_setMessageInterval, this, std::placeholders::_1, std::placeholders::_2)))
-    , _vehicleFactGroup             (this)
+Vehicle::Vehicle(LinkInterface* link, quint32 vehicleId, int defaultComponentId, MAV_AUTOPILOT firmwareType,
+                 MAV_TYPE vehicleType, QObject* parent)
+    : VehicleFactGroup(parent)
+    , _systemID(vehicleId)
+    , _defaultComponentId(defaultComponentId)
+    , _firmwareType(firmwareType)
+    , _vehicleType(vehicleType)
+    , _defaultCruiseSpeed(
+          SettingsManager::instance()->appSettings()->offlineEditingCruiseSpeed()->rawValue().toDouble())
+    , _defaultHoverSpeed(SettingsManager::instance()->appSettings()->offlineEditingHoverSpeed()->rawValue().toDouble())
+    , _sysStatusSensorInfo(std::make_unique<SysStatusSensorInfo>(this))
+    , _trajectoryPoints(new TrajectoryPoints(this, this))
+    , _cameraTriggerPoints(std::make_unique<QmlObjectListModel>(this))
+    , _orbitMapCircle(std::make_unique<QGCMapCircle>(this))
+    , _mavlinkStreamConfig(std::make_unique<MAVLinkStreamConfig>(
+          std::bind(&Vehicle::_setMessageInterval, this, std::placeholders::_1, std::placeholders::_2)))
+    , _vehicleFactGroup(this)
 {
     connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &Vehicle::_activeVehicleChanged);
 
@@ -524,6 +522,14 @@ void Vehicle::resetCounters()
 
 void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message)
 {
+    if (message.incompat_flags & MAVLINK_IFLAG_TARGET32) {
+        const uint8_t targetComponent = mavlink_msg_get_target_compid(&message, mavlink_get_msg_entry(message.msgid));
+        if ((message.target_sysid != 0 && message.target_sysid != MAVLinkProtocol::instance()->getSystemId()) ||
+            (targetComponent != 0 && targetComponent != MAVLinkProtocol::getComponentId())) {
+            return;
+        }
+    }
+
     if (message.sysid != _systemID && message.sysid != 0) {
         // We allow RADIO_STATUS messages which come from a link the vehicle is using to pass through and be handled
         if (!(message.msgid == MAVLINK_MSG_ID_RADIO_STATUS && _vehicleLinkManager->containsLink(link))) {
@@ -1249,17 +1255,13 @@ void Vehicle::_handlePing(LinkInterface* link, mavlink_message_t& message)
 
     mavlink_msg_ping_decode(&message, &ping);
 
-    if ((ping.target_system == 0) && (ping.target_component == 0)) {
+    if ((mavlink_msg_get_target_sysid(&message, mavlink_get_msg_entry(message.msgid)) == 0) &&
+        (ping.target_component == 0)) {
         // Mavlink defines a ping request as a MSG_ID_PING which contains target_system = 0 and target_component = 0
         // So only send a ping response when you receive a valid ping request
-        mavlink_msg_ping_pack_chan(static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId()),
-                                   static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
-                                   sharedLink->mavlinkChannel(),
-                                   &msg,
-                                   ping.time_usec,
-                                   ping.seq,
-                                   message.sysid,
-                                   message.compid);
+        mavlink_msg_ping_pack_chan(
+            MAVLinkProtocol::instance()->getSystemId(), static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
+            sharedLink->mavlinkChannel(), &msg, ping.time_usec, ping.seq, message.sysid, message.compid);
         sendMessageOnLinkThreadSafe(link, msg);
     }
 }
@@ -1542,14 +1544,12 @@ void Vehicle::requestDataStream(MAV_DATA_STREAM stream, uint16_t rate, bool send
     dataStream.req_stream_id = stream;
     dataStream.req_message_rate = rate;
     dataStream.start_stop = 1;  // start
-    dataStream.target_system = id();
     dataStream.target_component = _defaultComponentId;
 
-    mavlink_msg_request_data_stream_encode_chan(MAVLinkProtocol::instance()->getSystemId(),
-                                                MAVLinkProtocol::getComponentId(),
-                                                sharedLink->mavlinkChannel(),
-                                                &msg,
-                                                &dataStream);
+    mavlink_msg_request_data_stream_pack_chan(MAVLinkProtocol::instance()->getSystemId(),
+                                              MAVLinkProtocol::getComponentId(), sharedLink->mavlinkChannel(), &msg,
+                                              id(), dataStream.target_component, dataStream.req_stream_id,
+                                              dataStream.req_message_rate, dataStream.start_stop);
 
     if (sendMultiple) {
         // We use sendMessageMultiple since we really want these to make it to the vehicle
@@ -2127,13 +2127,8 @@ void Vehicle::setCurrentMissionSequence(int seq)
 
             // send mavlink message (deprecated since Aug 2022).
             mavlink_msg_mission_set_current_pack_chan(
-                static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId()),
-                static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
-                sharedLink->mavlinkChannel(),
-                &msg,
-                static_cast<uint8_t>(id()),
-                _compID,
-                static_cast<uint16_t>(seq));
+                MAVLinkProtocol::instance()->getSystemId(), static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
+                sharedLink->mavlinkChannel(), &msg, id(), _compID, static_cast<uint16_t>(seq));
             sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
         },
         static_cast<uint8_t>(defaultComponentId()),
@@ -2476,13 +2471,8 @@ void Vehicle::_ackMavlinkLogData(uint16_t sequence)
     memset(&ack, 0, sizeof(ack));
     ack.sequence = sequence;
     ack.target_component = _defaultComponentId;
-    ack.target_system = id();
-    mavlink_msg_logging_ack_encode_chan(
-                MAVLinkProtocol::instance()->getSystemId(),
-                MAVLinkProtocol::getComponentId(),
-                sharedLink->mavlinkChannel(),
-                &msg,
-                &ack);
+    mavlink_msg_logging_ack_pack_chan(MAVLinkProtocol::instance()->getSystemId(), MAVLinkProtocol::getComponentId(),
+                                      sharedLink->mavlinkChannel(), &msg, id(), ack.target_component, ack.sequence);
     sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
 }
 
@@ -2493,8 +2483,9 @@ void Vehicle::_handleMavlinkLoggingData(mavlink_message_t& message)
     if (static_cast<size_t>(log.length) > sizeof(log.data)) {
         qWarning() << "Invalid length for LOGGING_DATA, discarding." << log.length;
     } else {
-        emit mavlinkLogData(this, log.target_system, log.target_component, log.sequence,
-                            log.first_message_offset, QByteArray((const char*)log.data, log.length), false);
+        emit mavlinkLogData(this, mavlink_msg_get_target_sysid(&message, mavlink_get_msg_entry(message.msgid)),
+                            log.target_component, log.sequence, log.first_message_offset,
+                            QByteArray((const char*) log.data, log.length), false);
     }
 }
 
@@ -2506,8 +2497,9 @@ void Vehicle::_handleMavlinkLoggingDataAcked(mavlink_message_t& message)
     if (static_cast<size_t>(log.length) > sizeof(log.data)) {
         qWarning() << "Invalid length for LOGGING_DATA_ACKED, discarding." << log.length;
     } else {
-        emit mavlinkLogData(this, log.target_system, log.target_component, log.sequence,
-                            log.first_message_offset, QByteArray((const char*)log.data, log.length), false);
+        emit mavlinkLogData(this, mavlink_msg_get_target_sysid(&message, mavlink_get_msg_entry(message.msgid)),
+                            log.target_component, log.sequence, log.first_message_offset,
+                            QByteArray((const char*) log.data, log.length), false);
     }
 }
 
@@ -2716,7 +2708,8 @@ void Vehicle::_vehicleParamLoaded(bool ready)
     }
 }
 
-void Vehicle::_mavlinkMessageStatus(int uasId, uint64_t totalSent, uint64_t totalReceived, uint64_t totalLoss, float lossPercent)
+void Vehicle::_mavlinkMessageStatus(quint32 uasId, uint64_t totalSent, uint64_t totalReceived, uint64_t totalLoss,
+                                    float lossPercent)
 {
     if(uasId == _systemID) {
         _mavlinkSentCount       = totalSent;
@@ -2923,19 +2916,12 @@ void Vehicle::sendParamMapRC(const QString& paramName, double scale, double cent
         }
     }
 
-    mavlink_msg_param_map_rc_pack_chan(static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId()),
-                                       static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
-                                       sharedLink->mavlinkChannel(),
-                                       &message,
-                                       _systemID,
-                                       MAV_COMP_ID_AUTOPILOT1,
-                                       param_id_cstr,
-                                       -1,                                                  // parameter name specified as string in previous argument
-                                       static_cast<uint8_t>(tuningID),
-                                       static_cast<float>(centerValue),
-                                       static_cast<float>(scale),
-                                       static_cast<float>(minValue),
-                                       static_cast<float>(maxValue));
+    mavlink_msg_param_map_rc_pack_chan(
+        MAVLinkProtocol::instance()->getSystemId(), static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
+        sharedLink->mavlinkChannel(), &message, _systemID, MAV_COMP_ID_AUTOPILOT1, param_id_cstr,
+        -1,  // parameter name specified as string in previous argument
+        static_cast<uint8_t>(tuningID), static_cast<float>(centerValue), static_cast<float>(scale),
+        static_cast<float>(minValue), static_cast<float>(maxValue));
     sendMessageOnLinkThreadSafe(sharedLink.get(), message);
 }
 
@@ -2951,16 +2937,12 @@ void Vehicle::clearAllParamMapRC(void)
 
     for (int i = 0; i < 3; i++) {
         mavlink_message_t message;
-        mavlink_msg_param_map_rc_pack_chan(static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId()),
-                                           static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
-                                           sharedLink->mavlinkChannel(),
-                                           &message,
-                                           _systemID,
-                                           MAV_COMP_ID_AUTOPILOT1,
-                                           param_id_cstr,
-                                           -2,                                                  // Disable map for specified tuning id
-                                           i,                                                   // tuning id
-                                           0, 0, 0, 0);                                         // unused
+        mavlink_msg_param_map_rc_pack_chan(
+            MAVLinkProtocol::instance()->getSystemId(), static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
+            sharedLink->mavlinkChannel(), &message, _systemID, MAV_COMP_ID_AUTOPILOT1, param_id_cstr,
+            -2,           // Disable map for specified tuning id
+            i,            // tuning id
+            0, 0, 0, 0);  // unused
         sendMessageOnLinkThreadSafe(sharedLink.get(), message);
     }
 }
@@ -3000,26 +2982,12 @@ void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, flo
         outgoingExtensionValues[i] = scaledValue;
     }
     mavlink_msg_manual_control_pack_chan(
-        static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId()),
-        static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
-        sharedLink->mavlinkChannel(),
-        &message,
-        static_cast<uint8_t>(_systemID),
-        static_cast<int16_t>(newPitchCommand),
-        static_cast<int16_t>(newRollCommand),
-        static_cast<int16_t>(newThrustCommand),
-        static_cast<int16_t>(newYawCommand),
-        buttons, buttons2,
-        extensions,
-        outgoingExtensionValues[0],
-        outgoingExtensionValues[1],
-        outgoingExtensionValues[2],
-        outgoingExtensionValues[3],
-        outgoingExtensionValues[4],
-        outgoingExtensionValues[5],
-        outgoingExtensionValues[6],
-        outgoingExtensionValues[7]
-    );
+        MAVLinkProtocol::instance()->getSystemId(), static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
+        sharedLink->mavlinkChannel(), &message, _systemID, static_cast<int16_t>(newPitchCommand),
+        static_cast<int16_t>(newRollCommand), static_cast<int16_t>(newThrustCommand),
+        static_cast<int16_t>(newYawCommand), buttons, buttons2, extensions, outgoingExtensionValues[0],
+        outgoingExtensionValues[1], outgoingExtensionValues[2], outgoingExtensionValues[3], outgoingExtensionValues[4],
+        outgoingExtensionValues[5], outgoingExtensionValues[6], outgoingExtensionValues[7]);
     sendMessageOnLinkThreadSafe(sharedLink.get(), message);
 }
 
@@ -3054,60 +3022,42 @@ void Vehicle::sendJoystickAuxRcOverrideThreadSafe(const std::array<uint16_t, kAu
 
         mavlink_message_t releaseMessage;
         mavlink_msg_rc_channels_override_pack_chan(
-            static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId()),
-            static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
-            sharedLink->mavlinkChannel(),
-            &releaseMessage,
-            static_cast<uint8_t>(_systemID),
-            static_cast<uint8_t>(_defaultComponentId),
-            UINT16_MAX,                         // chan1: ignore (not overriding attitude axes)
-            UINT16_MAX,                         // chan2: ignore
-            UINT16_MAX,                         // chan3: ignore
-            UINT16_MAX,                         // chan4: ignore
-            0,                                  // chan5: release (MAVLink standard: 0 = release override)
-            0,                                  // chan6: release
-            0,                                  // chan7: release
-            0,                                  // chan8: release
+            MAVLinkProtocol::instance()->getSystemId(), static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
+            sharedLink->mavlinkChannel(), &releaseMessage, _systemID, static_cast<uint8_t>(_defaultComponentId),
+            UINT16_MAX,                             // chan1: ignore (not overriding attitude axes)
+            UINT16_MAX,                             // chan2: ignore
+            UINT16_MAX,                             // chan3: ignore
+            UINT16_MAX,                             // chan4: ignore
+            0,                                      // chan5: release (MAVLink standard: 0 = release override)
+            0,                                      // chan6: release
+            0,                                      // chan7: release
+            0,                                      // chan8: release
             static_cast<uint16_t>(UINT16_MAX - 1),  // chan9: release (extension field: UINT16_MAX-1 = release)
             static_cast<uint16_t>(UINT16_MAX - 1),  // chan10: release
-            0,                                  // chan11–18: not used
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0);
+            0,                                      // chan11–18: not used
+            0, 0, 0, 0, 0, 0, 0);
         sendMessageOnLinkThreadSafe(sharedLink.get(), releaseMessage);
         return;
     }
 
     mavlink_message_t message;
     mavlink_msg_rc_channels_override_pack_chan(
-        static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId()),
-        static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
-        sharedLink->mavlinkChannel(),
-        &message,
-        static_cast<uint8_t>(_systemID),
-        static_cast<uint8_t>(_defaultComponentId),
-        UINT16_MAX,                         // chan1: ignore (not overriding attitude axes)
-        UINT16_MAX,                         // chan2: ignore
-        UINT16_MAX,                         // chan3: ignore
-        UINT16_MAX,                         // chan4: ignore
-        channelEnabled[0] ? channelValues[0] : static_cast<uint16_t>(0),           // chan5: value or release
-        channelEnabled[1] ? channelValues[1] : static_cast<uint16_t>(0),           // chan6: value or release
-        channelEnabled[2] ? channelValues[2] : static_cast<uint16_t>(0),           // chan7: value or release
-        channelEnabled[3] ? channelValues[3] : static_cast<uint16_t>(0),           // chan8: value or release
-        channelEnabled[4] ? channelValues[4] : static_cast<uint16_t>(UINT16_MAX - 1),  // chan9: value or release (extension field)
-        channelEnabled[5] ? channelValues[5] : static_cast<uint16_t>(UINT16_MAX - 1),  // chan10: value or release (extension field)
-        0,                                  // chan11–18: not used
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0);
+        MAVLinkProtocol::instance()->getSystemId(), static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
+        sharedLink->mavlinkChannel(), &message, _systemID, static_cast<uint8_t>(_defaultComponentId),
+        UINT16_MAX,  // chan1: ignore (not overriding attitude axes)
+        UINT16_MAX,  // chan2: ignore
+        UINT16_MAX,  // chan3: ignore
+        UINT16_MAX,  // chan4: ignore
+        channelEnabled[0] ? channelValues[0] : static_cast<uint16_t>(0),  // chan5: value or release
+        channelEnabled[1] ? channelValues[1] : static_cast<uint16_t>(0),  // chan6: value or release
+        channelEnabled[2] ? channelValues[2] : static_cast<uint16_t>(0),  // chan7: value or release
+        channelEnabled[3] ? channelValues[3] : static_cast<uint16_t>(0),  // chan8: value or release
+        channelEnabled[4] ? channelValues[4]
+                          : static_cast<uint16_t>(UINT16_MAX - 1),        // chan9: value or release (extension field)
+        channelEnabled[5] ? channelValues[5]
+                          : static_cast<uint16_t>(UINT16_MAX - 1),        // chan10: value or release (extension field)
+        0,                                                                // chan11–18: not used
+        0, 0, 0, 0, 0, 0, 0);
     sendMessageOnLinkThreadSafe(sharedLink.get(), message);
     _joystickAuxRcOverrideActive = true;
 }
@@ -3319,7 +3269,8 @@ void Vehicle::_handleCommandLong(const mavlink_message_t& message)
     mavlink_command_long_t commandLong;
     mavlink_msg_command_long_decode(&message, &commandLong);
     // Ignore command if it is not targeted for us
-    if (commandLong.target_system != MAVLinkProtocol::instance()->getSystemId()) {
+    if (mavlink_msg_get_target_sysid(&message, mavlink_get_msg_entry(message.msgid)) !=
+        MAVLinkProtocol::instance()->getSystemId()) {
         return;
     }
     if (commandLong.command == MAV_CMD_REQUEST_OPERATOR_CONTROL) {

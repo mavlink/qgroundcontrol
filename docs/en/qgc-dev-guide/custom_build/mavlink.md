@@ -11,7 +11,7 @@ To modify the version of MAVLink used by QGC:
 
 - Update the CMake MAVLink Options in [/qgroundcontrol/cmake/CustomOptions.cmake](https://github.com/mavlink/qgroundcontrol/tree/master/cmake/CustomOptions.cmake)
   or when using the built-in custom build support you can override these options in [/qgroundcontrol/custom/cmake/CustomOverrides.cmake](https://github.com/mavlink/qgroundcontrol/tree/master/custom-example/cmake/CustomOverrides.cmake).
-  - QGC_MAVLINK_GIT_REPO - This is a link to the git repo to use, by default this is a link to <https://github.com/mavlink/c_library_v2>.
+  - QGC_MAVLINK_GIT_REPO - This is a link to the git repo to use, by default this is a link to <https://github.com/mavlink/mavlink>.
                            You can also [build your own libraries](https://mavlink.io/en/getting_started/generate_libraries.html) using the MAVLink toolchain and upload to your own git repo.
   - QGC_MAVLINK_GIT_TAG - This points to the git tag you would like to use in the chosen repo. This should likely be updated on occasion to use the latest version of MAVLink.
 
@@ -21,3 +21,22 @@ To modify the version of MAVLink used by QGC:
   ```cmake
   set(CPM_mavlink_SOURCE "/path/to/your/custom/mavlink")
   ```
+
+## 32-bit system IDs
+
+QGC supports the MAVLink 2 extensions for 32-bit system IDs
+and explicit header system targets provided by the upstream pymavlink generator. Vehicle
+and GCS system IDs use the unsigned range 1–4294967295. Set the GCS ID in MAVLink
+settings or with `--system-id`. Ordinary 8-bit IDs continue to use standard
+MAVLink headers; peers need extension support to communicate with larger IDs.
+
+Custom MAVLink sources must include pymavlink's 32-bit system ID support and
+provide compatible generated headers. See the
+[CMake MAVLink options](https://github.com/mavlink/qgroundcontrol/blob/master/cmake/CustomOptions.cmake)
+for the current default repository and revision.
+
+Message payload structs keep their existing wire layout. Use generated `pack`
+functions with full-width target IDs, and `mavlink_msg_get_target_sysid` when receiving
+messages. A decoded payload's 8-bit target field cannot represent a wide header
+target. Other system references embedded in payloads, such as gimbal control
+ownership fields, retain their protocol-defined width.
