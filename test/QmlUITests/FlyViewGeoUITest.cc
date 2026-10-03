@@ -47,6 +47,35 @@ namespace {
 constexpr int kItemAppearTimeoutMs = 10000;
 constexpr int kSettleTimeoutMs = 5000;
 const QGeoCoordinate kMapCenter(47.6329078, -122.0876875);
+// Integer window coordinates round each end of a drag by up to half a pixel
+constexpr qreal kPixelTolerance = 1.5;
+
+// Screen position of a circle's radius handle, which is drawn due east of the center
+std::optional<QPointF> radiusHandleScreenPos(const GeoMapCamera* cam, const QGeoCoordinate& center, double radius,
+                                             double handleZ)
+{
+    return cam->worldToScreen(TileMath::geoToWorld(center.atDistanceAndAzimuth(radius, 90)), handleZ);
+}
+
+// Worst radius error from drag rounding: the ground spread of the handle position
+// shifted by kPixelTolerance on both screen axes (a tilted camera skews the pixels)
+std::optional<double> radiusToleranceMeters(const GeoMapCamera* cam, const QGeoCoordinate& center, double radius,
+                                            double handleZ)
+{
+    const auto pos = radiusHandleScreenPos(cam, center, radius, handleZ);
+    if (!pos) {
+        return std::nullopt;
+    }
+    double tolerance = 0.0;
+    for (const QPointF& corner : {QPointF(-1, -1), QPointF(-1, 1), QPointF(1, -1), QPointF(1, 1)}) {
+        const QGeoCoordinate coord = cam->coordinateAtScreenPoint(*pos + (corner * kPixelTolerance), handleZ);
+        if (!coord.isValid()) {
+            return std::nullopt;
+        }
+        tolerance = qMax(tolerance, qAbs(center.distanceTo(coord) - radius));
+    }
+    return tolerance;
+}
 }  // namespace
 
 void FlyViewGeoUITest::_testEngineEnabledAtStartup()
@@ -362,6 +391,16 @@ void FlyViewGeoUITest::_testCameraGestures()
     QTRY_VERIFY_WITH_TIMEOUT(cam->distance() > 1500.0, kSettleTimeoutMs);
 
     QPointingDevice* const touchDevice = QTest::createTouchDevice();
+    // A real window merges touch moves until the next frame's sync; render two
+    // frames per move so a sync is sure to follow the commit
+    const auto commitTouchMove = [this](QTest::QTouchEventSequence& touch) {
+        touch.commit();
+        for (int frame = 0; frame < 2; frame++) {
+            QSignalSpy frameSpy(_window, &QQuickWindow::frameSwapped);
+            _window->update();
+            QVERIFY_SIGNAL_WAIT(frameSpy, TestTimeout::shortMs());
+        }
+    };
 
     // Pinch spread: zoom in
     resetPose();
@@ -369,7 +408,11 @@ void FlyViewGeoUITest::_testCameraGestures()
         QTest::QTouchEventSequence touch = QTest::touchEvent(_window, touchDevice);
         touch.press(0, center + QPoint(-50, 0)).press(1, center + QPoint(50, 0)).commit();
         for (int i = 1; i <= 10; i++) {
-            touch.move(0, center + QPoint(-50 - (i * 10), 0)).move(1, center + QPoint(50 + (i * 10), 0)).commit();
+            commitTouchMove(
+                touch.move(0, center + QPoint(-50 - (i * 10), 0)).move(1, center + QPoint(50 + (i * 10), 0)));
+            if (QTest::currentTestFailed()) {
+                return;
+            }
         }
         touch.release(0, center + QPoint(-150, 0)).release(1, center + QPoint(150, 0)).commit();
     }
@@ -387,7 +430,10 @@ void FlyViewGeoUITest::_testCameraGestures()
         for (int i = 1; i <= 18; i++) {
             const qreal a = -(i * 5) * M_PI / 180.0;  // decreasing angle = visual CCW with y down
             const QPoint d(qRound(r * qCos(a)), qRound(r * qSin(a)));
-            touch.move(0, center - d).move(1, center + d).commit();
+            commitTouchMove(touch.move(0, center - d).move(1, center + d));
+            if (QTest::currentTestFailed()) {
+                return;
+            }
         }
         touch.release(0, center + QPoint(0, r)).release(1, center + QPoint(0, -r)).commit();
     }
@@ -532,7 +578,7 @@ void FlyViewGeoUITest::_testCircleEditHandles_data()
     QTest::addColumn<qreal>("distance");
     QTest::addColumn<double>("altitude");  // NaN: ground-clamped circle
 
-    QTest::addRow("2D ground-clamped") << false << 0.0 << 300.0 << qQNaN();
+    QTest::addRow("2D ground-clamped") << false << 0.0 << 600.0 << qQNaN();
     QTest::addRow("3D ground-clamped") << true << 30.0 << 600.0 << qQNaN();
     QTest::addRow("3D absolute altitude") << true << 30.0 << 600.0 << 100.0;
 }
@@ -614,19 +660,18 @@ void FlyViewGeoUITest::_testCircleEditHandles()
         }
         QTest::mouseRelease(_window, Qt::LeftButton, Qt::NoModifier, toWin(to));
     };
-    // Integer window coordinates round each end of a drag by up to half a pixel
-    constexpr qreal kPixelTolerance = 1.5;
 
     // Radius handle: drag it to where a 50 m ring's handle would be drawn
     QQuickItem* const radiusHandle = findVisibleItem(_rootItem, QStringLiteral("geoMapCircleRadiusHandle"));
     QVERIFY2(radiusHandle, "Radius drag handle not visible");
     constexpr double kTargetRadius = 50.0;
     const double handleZ = radiusHandle->property("scenePosition").value<QVector3D>().z();
-    const auto radiusTarget = cam->worldToScreen(
-        TileMath::geoToWorld(orbitCircle->center().atDistanceAndAzimuth(kTargetRadius, 90)), handleZ);
+    const auto radiusTarget = radiusHandleScreenPos(cam, orbitCircle->center(), kTargetRadius, handleZ);
+    const auto radiusTolerance = radiusToleranceMeters(cam, orbitCircle->center(), kTargetRadius, handleZ);
     QVERIFY(radiusTarget.has_value());
+    QVERIFY(radiusTolerance.has_value());
     mouseDrag(handleCenter(radiusHandle), *radiusTarget);
-    QCOMPARE_LT(qAbs(orbitCircle->radius()->rawValue().toDouble() - kTargetRadius), 1.0);
+    QCOMPARE_LT(qAbs(orbitCircle->radius()->rawValue().toDouble() - kTargetRadius), *radiusTolerance);
     QCOMPARE_LT((handleCenter(radiusHandle) - *radiusTarget).manhattanLength(), kPixelTolerance);
 
     // Center handle: follows the cursor, keeping the circle's altitude
@@ -732,13 +777,16 @@ void FlyViewGeoUITest::_testLoiterRadiusEdit()
             const auto toWin = [viewport](const QPointF& viewportPos) {
                 return viewport->mapToScene(viewportPos).toPoint();
             };
+            double radiusTolerance = 0.0;
             // Drags the radius handle to where a ring of targetRadius draws its handle
-            const auto dragRadiusTo = [this, cam, &handleCenter, &toWin](
+            const auto dragRadiusTo = [this, cam, &handleCenter, &toWin, &radiusTolerance](
                                           QQuickItem* handle, const QGeoCoordinate& center, double targetRadius) {
                 const double handleZ = handle->property("scenePosition").value<QVector3D>().z();
-                const auto target =
-                    cam->worldToScreen(TileMath::geoToWorld(center.atDistanceAndAzimuth(targetRadius, 90)), handleZ);
+                const auto target = radiusHandleScreenPos(cam, center, targetRadius, handleZ);
+                const auto tolerance = radiusToleranceMeters(cam, center, targetRadius, handleZ);
                 QVERIFY(target.has_value());
+                QVERIFY(tolerance.has_value());
+                radiusTolerance = *tolerance;
                 const QPointF from = handleCenter(handle);
                 QTest::mousePress(_window, Qt::LeftButton, Qt::NoModifier, toWin(from));
                 constexpr int steps = 10;
@@ -757,7 +805,7 @@ void FlyViewGeoUITest::_testLoiterRadiusEdit()
             QVERIFY2(!findVisibleItem(_rootItem, QStringLiteral("geoMapCircleCenterHandle"), 0),
                      "Loiter center must not be draggable");
             dragRadiusTo(radiusHandle, gotoItem->property("coordinate").value<QGeoCoordinate>(), editedRadius);
-            QCOMPARE_LT(qAbs(loiterRadius->rawValue().toDouble() - editedRadius), 1.0);
+            QCOMPARE_LT(qAbs(loiterRadius->rawValue().toDouble() - editedRadius), radiusTolerance);
             QVERIFY(QMetaObject::invokeMethod(loiterVisuals, "actionCancelled"));
             QCOMPARE(loiterRadius->rawValue().toDouble(), defaultRadius);
             QVERIFY(!findVisibleItem(_rootItem, QStringLiteral("geoMapCircleRadiusHandle"), 0));
@@ -767,7 +815,7 @@ void FlyViewGeoUITest::_testLoiterRadiusEdit()
             QVERIFY(findVisibleItem(_rootItem, QStringLiteral("geoMapCircleRadiusHandle")));
             dragRadiusTo(radiusHandle, gotoItem->property("coordinate").value<QGeoCoordinate>(), editedRadius);
             QVERIFY(QMetaObject::invokeMethod(loiterVisuals, "actionConfirmed"));
-            QCOMPARE_LT(qAbs(loiterRadius->rawValue().toDouble() - editedRadius), 1.0);
+            QCOMPARE_LT(qAbs(loiterRadius->rawValue().toDouble() - editedRadius), radiusTolerance);
             QVERIFY(!findVisibleItem(_rootItem, QStringLiteral("geoMapCircleRadiusHandle"), 0));
         });
 }
