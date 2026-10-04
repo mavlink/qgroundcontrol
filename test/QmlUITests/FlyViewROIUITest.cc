@@ -69,14 +69,14 @@ void FlyViewROIUITestBase::_runROIFromMapClick(bool apmFirmware, bool geoMapEngi
 
             // Put the vehicle in the air: MockLink raises its altitude above home and reports
             // MAV_LANDED_STATE_IN_AIR, which enables the ROI guided action.
-            // The flying transition creates QGCPressure, which warns on hosts without a pressure backend.
+            // The airborne transition creates QGCPressure, which warns on hosts without a pressure backend.
             ignoreLogMessage("Utilities.QGCSensors", QtWarningMsg,
                              QRegularExpression(QStringLiteral("Failed to connect to pressure backend")));
             ignoreLogMessage("Utilities.QGCSensors", QtWarningMsg,
                              QRegularExpression(QStringLiteral("Error Initializing Pressure Sensor")));
             vehicle->sendMavCommand(vehicle->defaultComponentId(), MAV_CMD_NAV_TAKEOFF, false /* showError */, 0.0f,
                                     0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 10.0f /* altitude */);
-            QVERIFY_TRUE_WAIT(vehicle->flying(), TestTimeout::longMs());
+            QVERIFY_TRUE_WAIT(vehicle->airborne(), TestTimeout::longMs());
 
             // Click the map to open the click-action drop panel, then choose ROI.
             // Off-center so the click can't land on the vehicle icon (map is centered on the vehicle)

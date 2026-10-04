@@ -26,7 +26,9 @@ class ParameterManager : public QObject
     Q_PROPERTY(bool     missingParameters           READ missingParameters          NOTIFY missingParametersChanged)        ///< true: Parameters are missing from firmware response, false: all parameters received from firmware
     Q_PROPERTY(double   loadProgress                READ loadProgress               NOTIFY loadProgressChanged)
     Q_PROPERTY(bool     pendingWrites               READ pendingWrites              NOTIFY pendingWritesChanged)            ///< true: There are still pending write updates against the vehicle
-    Q_PROPERTY(bool     parameterDownloadSkipped    READ parameterDownloadSkipped   NOTIFY parameterDownloadSkippedChanged) ///< true: Parameter download was intentionally skipped (e.g. flying)
+    Q_PROPERTY(
+        bool parameterDownloadSkipped READ parameterDownloadSkipped NOTIFY
+            parameterDownloadSkippedChanged)  ///< true: Parameter download was intentionally skipped (e.g. armed)
     friend class ParameterEditorController;
 
 public:

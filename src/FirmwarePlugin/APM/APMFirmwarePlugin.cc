@@ -272,13 +272,13 @@ void APMFirmwarePlugin::_handleIncomingHeartbeat(Vehicle *vehicle, mavlink_messa
     mavlink_msg_heartbeat_decode(message, &heartbeat);
 
     if (message->compid == MAV_COMP_ID_AUTOPILOT1) {
-        bool flying = false;
+        bool underway = false;
 
-        // We pull Vehicle::flying state from HEARTBEAT on ArduPilot. This is a firmware specific test.
+        // We pull Vehicle::underway state from HEARTBEAT on ArduPilot. This is a firmware specific test.
         if (vehicle->armed() && ((heartbeat.system_status == MAV_STATE_ACTIVE) || (heartbeat.system_status == MAV_STATE_CRITICAL) || (heartbeat.system_status == MAV_STATE_EMERGENCY))) {
-            flying = true;
+            underway = true;
         }
-        vehicle->_setFlying(flying);
+        vehicle->_setUnderway(underway);
     }
 
     // We need to know whether this component is part of the ArduPilot stack code or not so we can adjust mavlink quirks appropriately.
@@ -1060,7 +1060,7 @@ bool APMFirmwarePlugin::_guidedModeTakeoff(Vehicle *vehicle, double altitudeRel)
 
 void APMFirmwarePlugin::startTakeoff(Vehicle *vehicle) const
 {
-    if (vehicle->flying()) {
+    if (vehicle->airborne()) {
         QGC::showAppMessage(tr("Unable to start takeoff: Vehicle is already in the air."));
         return;
     }
@@ -1079,8 +1079,8 @@ void APMFirmwarePlugin::startTakeoff(Vehicle *vehicle) const
 
 void APMFirmwarePlugin::startMission(Vehicle *vehicle) const
 {
-    if (vehicle->flying()) {
-        // Vehicle already in the air, we just need to switch to auto
+    if (vehicle->underway()) {
+        // Vehicle already underway, we just need to switch to auto
         if (!_setFlightModeAndValidate(vehicle, missionFlightMode())) {
             QGC::showAppMessage(tr("Unable to start mission: Vehicle failed to change to Auto mode."));
         }
@@ -1356,43 +1356,47 @@ qreal APMFirmwarePlugin::calcAltOffsetP(uint32_t atmospheric1, uint32_t atmosphe
 QPair<QMetaObject::Connection,QMetaObject::Connection> APMFirmwarePlugin::startCompensatingBaro(Vehicle *vehicle)
 {
     // TODO: Running Average?
-    const QMetaObject::Connection baroPressureUpdater = QObject::connect(QGCSensors::QGCPressure::instance(), &QGCSensors::QGCPressure::pressureUpdated, vehicle, [vehicle](qreal pressure, qreal temperature){
-        if (!vehicle || !vehicle->flying()) {
-            return;
-        }
+    const QMetaObject::Connection baroPressureUpdater = QObject::connect(
+        QGCSensors::QGCPressure::instance(), &QGCSensors::QGCPressure::pressureUpdated, vehicle,
+        [vehicle](qreal pressure, qreal temperature) {
+            if (!vehicle || !vehicle->airborne()) {
+                return;
+            }
 
-        if (qFuzzyIsNull(pressure)) {
-            return;
-        }
+            if (qFuzzyIsNull(pressure)) {
+                return;
+            }
 
-        const qreal initialPressure = vehicle->getInitialGCSPressure();
-        if (qFuzzyIsNull(initialPressure)) {
-            return;
-        }
+            const qreal initialPressure = vehicle->getInitialGCSPressure();
+            if (qFuzzyIsNull(initialPressure)) {
+                return;
+            }
 
-        const qreal initialTemperature = vehicle->getInitialGCSTemperature();
+            const qreal initialTemperature = vehicle->getInitialGCSTemperature();
 
-        qreal offset = 0.;
-        if (!qFuzzyIsNull(temperature) && !qFuzzyIsNull(initialTemperature)) {
-            offset = APMFirmwarePlugin::calcAltOffsetPT(initialPressure, initialTemperature, pressure, temperature);
-        } else {
-            offset = APMFirmwarePlugin::calcAltOffsetP(initialPressure, pressure);
-        }
+            qreal offset = 0.;
+            if (!qFuzzyIsNull(temperature) && !qFuzzyIsNull(initialTemperature)) {
+                offset = APMFirmwarePlugin::calcAltOffsetPT(initialPressure, initialTemperature, pressure, temperature);
+            } else {
+                offset = APMFirmwarePlugin::calcAltOffsetP(initialPressure, pressure);
+            }
 
-        APMFirmwarePlugin::_setBaroAltOffset(vehicle, offset);
-    });
+            APMFirmwarePlugin::_setBaroAltOffset(vehicle, offset);
+        });
 
-    const QMetaObject::Connection baroTempUpdater = connect(QGCSensors::QGCAmbientTemperature::instance(), &QGCSensors::QGCAmbientTemperature::temperatureUpdated, vehicle, [vehicle](qreal temperature){
-        if (!vehicle || !vehicle->flying()) {
-           return;
-        }
+    const QMetaObject::Connection baroTempUpdater =
+        connect(QGCSensors::QGCAmbientTemperature::instance(), &QGCSensors::QGCAmbientTemperature::temperatureUpdated,
+                vehicle, [vehicle](qreal temperature) {
+                    if (!vehicle || !vehicle->airborne()) {
+                        return;
+                    }
 
-        if (qFuzzyIsNull(temperature)) {
-            return;
-        }
+                    if (qFuzzyIsNull(temperature)) {
+                        return;
+                    }
 
-        APMFirmwarePlugin::_setBaroGndTemp(vehicle, temperature);
-    });
+                    APMFirmwarePlugin::_setBaroGndTemp(vehicle, temperature);
+                });
 
     return QPair<QMetaObject::Connection,QMetaObject::Connection>(baroPressureUpdater, baroTempUpdater);
 }
