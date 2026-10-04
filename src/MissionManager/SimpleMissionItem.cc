@@ -313,6 +313,14 @@ bool SimpleMissionItem::load(const QJsonObject& json, int sequenceNumber, QStrin
     _connectSignals();
     _updateOptionalSections();
     _rebuildFacts();
+
+    // Terrain-frame AMSL altitude, and calculated AMSL missing from the plan file, need a terrain query
+    const bool calcMissingAmsl =
+        (_altitudeFrame == QGroundControlQmlGlobal::AltitudeFrameCalcAboveTerrain) && qIsNaN(_missionItem.param7());
+    if (specifiesAltitude() && ((_altitudeFrame == QGroundControlQmlGlobal::AltitudeFrameTerrain) || calcMissingAmsl)) {
+        emit coordinateChanged(coordinate());
+    }
+
     setDirty(false);
 
     return true;

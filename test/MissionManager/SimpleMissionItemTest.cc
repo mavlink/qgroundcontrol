@@ -2,9 +2,13 @@
 
 #include <memory>
 
+#include <QtCore/QJsonArray>
+#include <QtCore/QJsonObject>
+#include <QtCore/QJsonValue>
 #include <QtPositioning/QGeoCoordinate>
 
 #include "AppSettings.h"
+#include "BaseClasses/TerrainTest.h"
 #include "CameraSection.h"
 #include "MissionCommandTree.h"
 #include "MissionCommandUIInfo.h"
@@ -370,6 +374,52 @@ void SimpleMissionItemTest::_testCalcAboveTerrainSaveLoad()
     QCOMPARE(loadedItem.amslAltAboveTerrain()->rawValue().toDouble(), amslAlt);
     QCOMPARE(loadedItem.missionItem().frame(), MAV_FRAME_GLOBAL);
     QCOMPARE(loadedItem.missionItem().param7(), amslAlt);
+}
+
+void SimpleMissionItemTest::_testTerrainDependentLoadQueriesTerrain_data()
+{
+    QTest::addColumn<int>("altitudeFrame");
+    QTest::addColumn<int>("mavFrame");
+    QTest::addColumn<QJsonValue>("savedParam7");
+
+    const double aboveTerrainAlt = 40.0;
+    QTest::newRow("CalcAboveTerrain without AMSL")
+        << static_cast<int>(QGroundControlQmlGlobal::AltitudeFrameCalcAboveTerrain)
+        << static_cast<int>(MAV_FRAME_GLOBAL) << QJsonValue(QJsonValue::Null);
+    QTest::newRow("Terrain frame") << static_cast<int>(QGroundControlQmlGlobal::AltitudeFrameTerrain)
+                                   << static_cast<int>(MAV_FRAME_GLOBAL_TERRAIN_ALT) << QJsonValue(aboveTerrainAlt);
+}
+
+void SimpleMissionItemTest::_testTerrainDependentLoadQueriesTerrain()
+{
+    QFETCH(int, altitudeFrame);
+    QFETCH(int, mavFrame);
+    QFETCH(QJsonValue, savedParam7);
+
+    const QGeoCoordinate terrainCoord = UnitTestTerrainData::flat10Region.center();
+    const double aboveTerrainAlt = 40.0;
+    const double expectedAmslAlt = UnitTestTerrainData::Flat10Region::amslElevation + aboveTerrainAlt;
+
+    const QJsonObject json{
+        {"AMSLAltAboveTerrain", QJsonValue::Null},
+        {"Altitude", aboveTerrainAlt},
+        {"AltitudeMode", altitudeFrame},
+        {"autoContinue", true},
+        {"command", static_cast<int>(MAV_CMD_NAV_WAYPOINT)},
+        {"doJumpId", 1},
+        {"frame", mavFrame},
+        {"params",
+         QJsonArray{0, 0, 0, QJsonValue::Null, terrainCoord.latitude(), terrainCoord.longitude(), savedParam7}},
+        {"type", "SimpleItem"},
+    };
+
+    QString errorString;
+    SimpleMissionItem loadedItem(planController(), false /* flyView */, true /* forLoad */);
+    QVERIFY2(loadedItem.load(json, 1, errorString), qPrintable(errorString));
+
+    QTRY_COMPARE_WITH_TIMEOUT(loadedItem.amslEntryAlt(), expectedAmslAlt, TestTimeout::mediumMs());
+    QCOMPARE(loadedItem.readyForSaveState(), VisualMissionItem::ReadyForSave);
+    QCOMPARE(loadedItem.amslAltAboveTerrain()->rawValue().toDouble(), expectedAmslAlt);
 }
 
 UT_REGISTER_TEST(SimpleMissionItemTest, TestLabel::Unit, TestLabel::MissionManager)
