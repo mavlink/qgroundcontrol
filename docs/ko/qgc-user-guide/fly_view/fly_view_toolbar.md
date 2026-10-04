@@ -25,11 +25,13 @@ The Flight Status indicator shows you whether the vehicle is ready to fly or not
 - **Landing** - Vehicle is in the process of landing.
 - **Communication Lost** - QGroundControl has lost communication with the vehicle.
 
-The Flight Status indicator dropdown also gives you access to:
+The Flight Status indicator dropdown fills the window and also gives you access to:
 
 - **Arm** - Arming a vehicle starts the motors in preparation for takeoff. You will only be able to arm the vehicle if it is safe and ready to fly. Generally you do not need to manually arm the vehicle. You can simply takeoff or start a mission and the vehicle will arm itself.
-- **Disarm** - Disarming a vehicle is only available when the vehicle is on the ground. It will stop the motors. Generally you do not need to explicitly disarm as vehicles will disarm automatically after landing, or shortly after arming if you do not take off.
-- **Emergency Stop** - Emergency stop is used to disarm the vehicle while it is flying. For emergency use only, your vehicle will crash!
+- **Disarm** - Disarming a vehicle stops the motors. For aircraft it is only available when the vehicle is on the ground. Generally you do not need to explicitly disarm as vehicles will disarm automatically after landing, or shortly after arming if you do not take off.
+- **Emergency Stop** - Replaces **Disarm** while an aircraft is flying. It is a red button which you must press and hold to confirm. It stops the motors while in the air. For emergency use only, your vehicle will crash! Ground vehicles and submarines keep the normal **Disarm** button.
+- **Force Arm** - Arms the vehicle while bypassing pre-arm checks. Only shown when **Allow Force Arm** is enabled in [Fly View Settings](../settings_view/fly_view.md).
+- **Vehicle Messages** - The messages sent by the vehicle. Use the trash button to clear them.
 
 In the cases of warnings or not ready state you can click the indicator to display the dropdown which will show the reason(s) why. The toggle on the right expands each error with additional information and possible solutions.
 
@@ -43,9 +45,11 @@ The Flight Mode indicator shows you the current flight mode. The dropdown allows
 - Set global geo-fence settings
 - Add/Remove flight modes from the displayed list
 
-### Vehicle Messages <img src="../../../assets/fly/toolbar/messages_indicator.png" alt="Vehicle Messages indicator" style="height: 1.15em; vertical-align: text-bottom;" />
+### Vehicle Messages
 
-The Vehicle Messages indicator dropdown shows you messages which come from the vehicle. The indicator will turn red if there are important messages available.
+When the vehicle sends critical messages (error severity or worse) a red badge is shown at the top right of the Flight Status indicator. The badge shows the number of critical messages, or `!` if there are more than 9. Opening the dropdown does not clear the badge, only clearing the message list with the trash button does.
+
+Critical messages are also shown in a **Vehicle Alert** popup below the toolbar. Up to 5 messages are shown at once, fewer if the window is too short to fit them. If more arrive the popup title changes to **Vehicle Alert - Click to see more**, clicking it opens the Flight Status dropdown. The popup closes automatically after 10 seconds, or when you click it.
 
 ### GPS / RTK GPS <img src="../../../assets/fly/toolbar/gps_indicator.png" alt="GPS / RTK GPS indicator" style="height: 1.15em; vertical-align: text-bottom;" />
 
