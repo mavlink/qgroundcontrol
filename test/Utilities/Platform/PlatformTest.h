@@ -23,4 +23,8 @@ private slots:
     // Unit-test initialization environment setup
     void _testInitializeSetsUnitTestEnvironment();
 #endif
+
+#if defined(QGC_UNITTEST_BUILD) && defined(Q_OS_WIN)
+    void _testInitializeSwRastRequestsSoftwareDevice();
+#endif
 };
