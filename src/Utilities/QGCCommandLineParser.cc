@@ -211,9 +211,8 @@ CommandLineParseResult parseCommandLine()
 
 #if defined(Q_OS_WIN) || defined(Q_OS_MACOS)
     // --- Windows/macOS options ---
-    const QCommandLineOption swrastOpt(
-        QString(kOptSwrast),
-        QCoreApplication::translate("main", "Force software OpenGL."));
+    const QCommandLineOption swrastOpt(QString(kOptSwrast),
+                                       QCoreApplication::translate("main", "Force software rendering."));
     (void) parser.addOption(swrastOpt);
 #endif
 

@@ -212,9 +212,14 @@ std::optional<int> Platform::initialize(int argc, char* argv[],
 
     // --- Qt attributes ---
     if (args.useSwRast) {
-        // RHI defaults to D3D11/Metal on Win/macOS; AA_UseSoftwareOpenGL only bites once the scene graph is on GL.
+#ifdef Q_OS_WIN
+        // Qt 6 no longer ships opengl32sw.dll, so stay on D3D and pick the built-in WARP adapter instead.
+        (void) qputenv("QSG_RHI_PREFER_SOFTWARE_RENDERER", "1");
+#else
+        // RHI defaults to Metal on macOS; AA_UseSoftwareOpenGL only bites once the scene graph is on GL.
         QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
         QCoreApplication::setAttribute(Qt::AA_UseSoftwareOpenGL);
+#endif
     }
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID) && \
     (defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) || defined(QGC_HAS_GST_DMABUF_GPU_PATH))

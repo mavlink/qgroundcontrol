@@ -181,6 +181,20 @@ void probeHdr(QQuickWindow* window)
     }
 }
 
+void checkSoftwareDevice(QQuickWindow* window)
+{
+    const QRhi* const rhi = window->rhi();
+    if (!rhi) {
+        return;
+    }
+
+    const QRhiDriverInfo info = rhi->driverInfo();
+    if (info.deviceType != QRhiDriverInfo::CpuDevice) {
+        qCWarning(GraphicsSetupLog) << "Software rendering requested but not achieved; using" << rhi->backendName()
+                                    << info.deviceName;
+    }
+}
+
 }  // namespace
 
 void configureMainWindow(QQuickWindow* window)
@@ -211,6 +225,12 @@ void configureMainWindow(QQuickWindow* window)
 #else
         warnForcedGpuUnsupported();
 #endif
+
+        if (config.prefersSoftwareDevice()) {
+            QObject::connect(
+                window, &QQuickWindow::sceneGraphInitialized, window, [window]() { checkSoftwareDevice(window); },
+                Qt::DirectConnection);
+        }
     }
 
     if (!envFlag(kEnvRhiDebug) && !envFlag(kEnvHdrOutput)) {
