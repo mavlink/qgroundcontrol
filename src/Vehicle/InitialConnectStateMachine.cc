@@ -86,15 +86,14 @@ void InitialConnectStateMachine::_createStates()
     // ParameterManager handles all timeouts internally and always terminates via
     // parametersReadyChanged or initialParametersRequestFailed.
     _stateParameters = new SkippableAsyncState(
-        QStringLiteral("RequestParameters"),
-        this,
+        QStringLiteral("RequestParameters"), this,
         [this]() {
-            if (_shouldSkipForFlying()) {
+            if (_shouldSkipForArmed()) {
                 // PX4 can try a lightweight hash-check cache load
                 if (vehicle()->px4Firmware()) {
                     return false;
                 }
-                _lastSkipReason = QStringLiteral("(vehicle is flying)");
+                _lastSkipReason = QStringLiteral("(vehicle is armed)");
                 return true;
             }
             return false;
@@ -103,8 +102,7 @@ void InitialConnectStateMachine::_createStates()
         [this]() {
             qCDebug(InitialConnectStateMachineLog) << "Skipping parameter download" << _lastSkipReason;
             vehicle()->_parameterManager->setParameterDownloadSkipped(true);
-        }
-    );
+        });
 
     // State 4: Request mission (skippable)
     // No timeout: PlanManager handles all timeouts/retries internally and always signals completion.
@@ -246,14 +244,11 @@ bool InitialConnectStateMachine::_shouldSkipAutopilotVersionRequest() const
     return false;
 }
 
-bool InitialConnectStateMachine::_shouldSkipForFlying() const
+bool InitialConnectStateMachine::_shouldSkipForArmed() const
 {
-    if (!SettingsManager::instance()->mavlinkSettings()->noInitialDownloadWhenFlying()->rawValue().toBool()) {
+    if (!SettingsManager::instance()->mavlinkSettings()->noInitialDownloadWhenArmed()->rawValue().toBool()) {
         return false;
     }
-    // We use armed() rather than flying() as a surrogate for in-flight state because
-    // armed status is available immediately from the first heartbeat, whereas flying()
-    // depends on additional telemetry that may not have arrived yet at initial connect time.
     return vehicle()->armed();
 }
 
@@ -274,8 +269,8 @@ bool InitialConnectStateMachine::_hasPrimaryLink() const
 
 bool InitialConnectStateMachine::_shouldSkipForPlanLoad()
 {
-    if (_shouldSkipForFlying()) {
-        _lastSkipReason = QStringLiteral("(vehicle is flying)");
+    if (_shouldSkipForArmed()) {
+        _lastSkipReason = QStringLiteral("(vehicle is armed)");
         return true;
     }
     if (!_hasPrimaryLink()) {
@@ -388,16 +383,17 @@ void InitialConnectStateMachine::_requestParameters(SkippableAsyncState* state)
 {
     qCDebug(InitialConnectStateMachineLog) << "_stateRequestParameters";
 
-    const bool cacheOnly = _shouldSkipForFlying();
+    const bool cacheOnly = _shouldSkipForArmed();
     QMetaObject::Connection cacheFailedConn;
     if (cacheOnly) {
         // If cache-only check fails (miss/timeout/non-PX4), complete the state without params
-        cacheFailedConn = connect(vehicle()->_parameterManager, &ParameterManager::cacheCheckOnlyFailed,
-                state, [state, this]() {
-                    qCDebug(InitialConnectStateMachineLog) << "Parameter cache check failed while flying, advancing without parameters";
-                    vehicle()->_parameterManager->setParameterDownloadSkipped(true);
-                    state->complete();
-                });
+        cacheFailedConn =
+            connect(vehicle()->_parameterManager, &ParameterManager::cacheCheckOnlyFailed, state, [state, this]() {
+                qCDebug(InitialConnectStateMachineLog)
+                    << "Parameter cache check failed while armed, advancing without parameters";
+                vehicle()->_parameterManager->setParameterDownloadSkipped(true);
+                state->complete();
+            });
     }
 
     connect(vehicle()->_parameterManager, &ParameterManager::loadProgressChanged,

@@ -13,6 +13,8 @@ target_sources(
             FlyViewSettingsTest.h
             GPSCorrectionSettingsTest.cc
             GPSCorrectionSettingsTest.h
+            MavlinkSettingsTest.cc
+            MavlinkSettingsTest.h
             RemoteIDSettingsTest.cc
             RemoteIDSettingsTest.h
             SettingsManagerTest.cc
@@ -25,5 +27,6 @@ add_qgc_test(AppSettingsTest LABELS Unit)
 add_qgc_test(AutoConnectSettingsTest LABELS Unit)
 add_qgc_test(FlyViewSettingsTest LABELS Unit)
 add_qgc_test(GPSCorrectionSettingsTest LABELS Unit)
+add_qgc_test(MavlinkSettingsTest LABELS Unit)
 add_qgc_test(RemoteIDSettingsTest LABELS Unit)
 add_qgc_test(SettingsManagerTest LABELS Unit)

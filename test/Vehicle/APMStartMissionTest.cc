@@ -47,7 +47,7 @@ void APMStartMissionTest::_setArmedOnGround()
 {
     mockLink()->setArmed(true);
     QVERIFY_TRUE_WAIT(vehicle()->armed(), TestTimeout::mediumMs());
-    QVERIFY(!vehicle()->flying());
+    QVERIFY(!vehicle()->underway());
 }
 
 void APMStartMissionTest::_verifyNoMissionStartSent()
@@ -66,9 +66,9 @@ void APMStartMissionTest::_flyingCopterSwitchesToAuto()
         return;
     }
 
-    // Takeoff raises the mock altitude, which drives both flying signals (HEARTBEAT
+    // Takeoff raises the mock altitude, which drives both underway signals (HEARTBEAT
     // MAV_STATE_ACTIVE for ArduPilot and EXTENDED_SYS_STATE IN_AIR).
-    // The flying transition creates QGCPressure, which warns on hosts without a pressure backend.
+    // The airborne transition creates QGCPressure, which warns on hosts without a pressure backend.
     ignoreLogMessage("Utilities.QGCSensors", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Failed to connect to pressure backend")));
     ignoreLogMessage("Utilities.QGCSensors", QtWarningMsg,
@@ -76,7 +76,7 @@ void APMStartMissionTest::_flyingCopterSwitchesToAuto()
     mockLink()->setArmed(true);
     vehicle()->sendMavCommand(vehicle()->defaultComponentId(), MAV_CMD_NAV_TAKEOFF, false /* showError */,
                               0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 10.0f /* altitude */);
-    QVERIFY_TRUE_WAIT(vehicle()->flying(), TestTimeout::mediumMs());
+    QVERIFY_TRUE_WAIT(vehicle()->underway(), TestTimeout::mediumMs());
 
     vehicle()->startMission();
 

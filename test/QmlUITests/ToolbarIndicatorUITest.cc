@@ -2,12 +2,20 @@
 
 #include <QtCore/QPointer>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
+#include <QtCore/QVariant>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
+#include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
+#include "AppSettings.h"
+#include "Fact.h"
+#include "MavlinkSettings.h"
 #include "MockConfiguration.h"
 #include "MockLink.h"
+#include "MultiVehicleManager.h"
+#include "SettingsManager.h"
 #include "Vehicle.h"
 
 UT_REGISTER_TEST(ToolbarIndicatorUITest, TestLabel::Integration)
@@ -148,7 +156,7 @@ void ToolbarIndicatorUITest::_testEmergencyStopReplacesDisarmInFlight_data()
     QTest::addRow("multirotor flying") << int(MAV_AUTOPILOT_PX4) << int(MAV_TYPE_QUADROTOR) << true << true;
     // Classified as a generic vehicle, not a multirotor
     QTest::addRow("dodecarotor flying") << int(MAV_AUTOPILOT_PX4) << int(MAV_TYPE_DODECAROTOR) << true << true;
-    // Rover reports flying while armed and moving, but accepts a normal disarm
+    // Rover is underway while armed and moving, but accepts a normal disarm
     QTest::addRow("rover moving") << int(MAV_AUTOPILOT_ARDUPILOTMEGA) << int(MAV_TYPE_GROUND_ROVER) << true << false;
 }
 
@@ -172,7 +180,7 @@ void ToolbarIndicatorUITest::_testEmergencyStopReplacesDisarmInFlight()
         },
         [&](QPointer<MockLink> /*mockLink*/, Vehicle* vehicle) {
             if (takeoff) {
-                // The flying transition creates QGCPressure, which warns on hosts without a pressure backend
+                // The airborne transition creates QGCPressure, which warns on hosts without a pressure backend
                 ignoreLogMessage("Utilities.QGCSensors", QtWarningMsg,
                                  QRegularExpression(QStringLiteral("Failed to connect to pressure backend")));
                 ignoreLogMessage("Utilities.QGCSensors", QtWarningMsg,
@@ -180,7 +188,7 @@ void ToolbarIndicatorUITest::_testEmergencyStopReplacesDisarmInFlight()
                 // MockLink arms and climbs above home on takeoff
                 vehicle->sendMavCommand(vehicle->defaultComponentId(), MAV_CMD_NAV_TAKEOFF, false /* showError */, 0.0f,
                                         0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 10.0f /* altitude */);
-                QVERIFY_TRUE_WAIT(vehicle->flying(), TestTimeout::longMs());
+                QVERIFY_TRUE_WAIT(vehicle->underway(), TestTimeout::longMs());
             } else {
                 vehicle->setArmed(true, false /* showError */);
             }
@@ -204,13 +212,105 @@ void ToolbarIndicatorUITest::_testEmergencyStopReplacesDisarmInFlight()
                 return;
             }
 
-            // Held until activated: emergency stop disarms the vehicle in the air
-            const QPoint center =
-                shownButton->mapToScene(QPointF(shownButton->width() / 2, shownButton->height() / 2)).toPoint();
-            QTest::mousePress(_window, Qt::LeftButton, Qt::NoModifier, center);
+            // Emergency stop must go through the guided action confirmation, not act directly
+            QVERIFY(_clickItemAt(shownButton, 0.5, 0.5, emergencyStopName));
+            QQuickItem* const confirmButton =
+                findVisibleItem(_rootItem, QStringLiteral("guidedActionConfirmButton"), TestTimeout::mediumMs());
+            QVERIFY2(confirmButton, "Emergency stop guided action confirmation not shown");
+            QCOMPARE(confirmButton->property("text").toString(), QStringLiteral("EMERGENCY STOP"));
+            QVERIFY(vehicle->armed());
+
+            QVERIFY(QMetaObject::invokeMethod(confirmButton, "activated"));
             QVERIFY_TRUE_WAIT(!vehicle->armed(), TestTimeout::mediumMs());
-            QTest::mouseRelease(_window, Qt::LeftButton, Qt::NoModifier, center);
+
+            // MockLink keeps reporting in-air after the disarm, but there is nothing left to stop
+            QVERIFY(vehicle->airborne());
+            QVERIFY(_clickItemAt(indicator, 0.5, 0.5, QStringLiteral("toolbar_mainStatusIndicator")));
+            QVERIFY2(findVisibleItem(_rootItem, armName, TestTimeout::mediumMs()), "Arm not shown after disarm");
+            QVERIFY2(!findVisibleItem(_rootItem, emergencyStopName, 0), "Emergency Stop shown for a disarmed vehicle");
         });
+}
+
+void ToolbarIndicatorUITest::_testArmRequiresEnforcedChecklist()
+{
+    AppSettings* const appSettings = SettingsManager::instance()->appSettings();
+    Fact* const useChecklist = appSettings->useChecklist();
+    Fact* const enforceChecklist = appSettings->enforceChecklist();
+    const QVariant savedUseChecklist = useChecklist->rawValue();
+    const QVariant savedEnforceChecklist = enforceChecklist->rawValue();
+    const auto guard = qScopeGuard([=] {
+        useChecklist->setRawValue(savedUseChecklist);
+        enforceChecklist->setRawValue(savedEnforceChecklist);
+    });
+    useChecklist->setRawValue(true);
+    enforceChecklist->setRawValue(true);
+
+    runWithMockLink([] { return MockLink::startPX4MockLink(); },
+                    [this](QPointer<MockLink> /*mockLink*/, Vehicle* vehicle) {
+                        QQuickItem* const indicator = findVisibleItem(
+                            _rootItem, QStringLiteral("toolbar_mainStatusIndicator"), TestTimeout::mediumMs());
+                        QVERIFY2(indicator, "Main status indicator not visible");
+                        QVERIFY(_clickItemAt(indicator, 0.5, 0.5, QStringLiteral("toolbar_mainStatusIndicator")));
+
+                        QQuickItem* const armButton =
+                            findVisibleItem(_rootItem, QStringLiteral("mainStatusArmButton"), TestTimeout::mediumMs());
+                        QVERIFY2(armButton, "Arm button not shown in the main status drawer");
+                        QCOMPARE(armButton->property("text").toString(), QStringLiteral("Arm"));
+                        QVERIFY2(!armButton->isEnabled(), "Arm enabled before the enforced checklist passed");
+
+                        vehicle->setCheckListState(Vehicle::CheckListPassed);
+                        QTRY_VERIFY_WITH_TIMEOUT(armButton->isEnabled(), TestTimeout::mediumMs());
+                    });
+}
+
+void ToolbarIndicatorUITest::_testDisarmReachableWithoutParameters()
+{
+    if (!apmFirmwareSupported()) {
+        QSKIP("ArduPilot support not registered in this build");
+    }
+
+    Fact* const noInitialDownload = SettingsManager::instance()->mavlinkSettings()->noInitialDownloadWhenArmed();
+    const QVariant savedNoInitialDownload = noInitialDownload->rawValue();
+    const auto restoreSetting = qScopeGuard([=] { noInitialDownload->setRawValue(savedNoInitialDownload); });
+    noInitialDownload->setRawValue(true);
+
+    startUI();
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    QSignalSpy spyVehicle(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged);
+    QVERIFY(spyVehicle.isValid());
+
+    // Already armed on connect, so the parameter download is skipped and parameters never become ready
+    auto* const mockConfig = new MockConfiguration(QStringLiteral("Disarm Without Parameters MockLink"));
+    mockConfig->setFirmwareType(MAV_AUTOPILOT_ARDUPILOTMEGA);
+    mockConfig->setVehicleType(MAV_TYPE_GROUND_ROVER);
+    mockConfig->setStartArmed(true);
+    QPointer<MockLink> mockLink = MockLink::startMockLink(mockConfig);
+    const auto cleanup = qScopeGuard([&] {
+        disconnectMockLink(mockLink);
+        closeUIWindow();
+        destroyUIEngine();
+    });
+    QVERIFY(mockLink);
+
+    QVERIFY(waitForSignal(spyVehicle, TestTimeout::longMs(), QStringLiteral("activeVehicleChanged")));
+    Vehicle* const vehicle = MultiVehicleManager::instance()->activeVehicle();
+    QVERIFY(vehicle);
+    QTRY_VERIFY_WITH_TIMEOUT(vehicle->isInitialConnectComplete(), TestTimeout::longMs());
+    QVERIFY(vehicle->armed());
+    QVERIFY(!MultiVehicleManager::instance()->parameterReadyVehicleAvailable());
+
+    QQuickItem* const indicator =
+        findVisibleItem(_rootItem, QStringLiteral("toolbar_mainStatusIndicator"), TestTimeout::mediumMs());
+    QVERIFY2(indicator, "Main status indicator not visible");
+    QVERIFY(_clickItemAt(indicator, 0.5, 0.5, QStringLiteral("toolbar_mainStatusIndicator")));
+
+    QQuickItem* const disarmButton =
+        findVisibleItem(_rootItem, QStringLiteral("mainStatusArmButton"), TestTimeout::mediumMs());
+    QVERIFY2(disarmButton, "Disarm not reachable without parameters");
+    QCOMPARE(disarmButton->property("text").toString(), QStringLiteral("Disarm"));
 }
 
 void ToolbarIndicatorUITest::_testIndicatorDrawerClosesOnVehicleDisconnect()

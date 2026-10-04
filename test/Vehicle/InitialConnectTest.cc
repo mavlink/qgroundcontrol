@@ -405,7 +405,7 @@ void InitialConnectTest::_stateRunMatrix_data()
 {
     QTest::addColumn<bool>("highLatency");
     QTest::addColumn<bool>("logReplay");
-    QTest::addColumn<bool>("flying");
+    QTest::addColumn<bool>("armed");
     QTest::addColumn<bool>("expectAutopilotVersionRequest");
     QTest::addColumn<bool>("expectAvailableModesRequest");
     QTest::addColumn<bool>("expectParamRequest");
@@ -415,29 +415,25 @@ void InitialConnectTest::_stateRunMatrix_data()
 
     // Matrix reference for generated rows and expected request behavior.
     //
-    // Flying (PX4): tries cache-only hash check; cache miss advances without params.
-    // Flying rows enable noInitialDownloadWhenFlying + startArmed.
+    // Armed (PX4): tries cache-only hash check; cache miss advances without params.
+    // Armed rows enable noInitialDownloadWhenArmed + startArmed.
 
     for (int bits = 0; bits < 4; ++bits) {
         const bool highLatency = bits & 0x1;
         const bool logReplay = false;
-        const bool flying = bits & 0x2;
+        const bool armed = bits & 0x2;
         const bool skipForLinkType = highLatency || logReplay;
 
         const bool expectAutopilotVersionRequest = !skipForLinkType;
         const bool expectAvailableModesRequest = true;
-        const bool expectParamRequest = !skipForLinkType && !flying;
-        const bool expectHashCheckOnly = !skipForLinkType && flying;
-        const bool expectPlanRequestListTraffic = !skipForLinkType && !flying;
-        const bool expectParameterDownloadSkipped = flying;
+        const bool expectParamRequest = !skipForLinkType && !armed;
+        const bool expectHashCheckOnly = !skipForLinkType && armed;
+        const bool expectPlanRequestListTraffic = !skipForLinkType && !armed;
+        const bool expectParameterDownloadSkipped = armed;
 
-        QTest::addRow("HL_%d_LR_%d_Fly_%d", highLatency ? 1 : 0, logReplay ? 1 : 0, flying ? 1 : 0)
-            << highLatency << logReplay << flying
-            << expectAutopilotVersionRequest
-            << expectAvailableModesRequest
-            << expectParamRequest
-            << expectHashCheckOnly
-            << expectPlanRequestListTraffic
+        QTest::addRow("HL_%d_LR_%d_Armed_%d", highLatency ? 1 : 0, logReplay ? 1 : 0, armed ? 1 : 0)
+            << highLatency << logReplay << armed << expectAutopilotVersionRequest << expectAvailableModesRequest
+            << expectParamRequest << expectHashCheckOnly << expectPlanRequestListTraffic
             << expectParameterDownloadSkipped;
     }
 }
@@ -446,7 +442,7 @@ void InitialConnectTest::_stateRunMatrix()
 {
     QFETCH(bool, highLatency);
     QFETCH(bool, logReplay);
-    QFETCH(bool, flying);
+    QFETCH(bool, armed);
     QFETCH(bool, expectAutopilotVersionRequest);
     QFETCH(bool, expectAvailableModesRequest);
     QFETCH(bool, expectParamRequest);
@@ -463,13 +459,14 @@ void InitialConnectTest::_stateRunMatrix()
                          QRegularExpression("failed to load metadata"));
     }
 
-    // Enable noInitialDownloadWhenFlying setting for flying rows
-    auto* noInitialDownloadWhenFlying = SettingsManager::instance()->mavlinkSettings()->noInitialDownloadWhenFlying();
-    const QVariant previousNoInitialDownloadWhenFlying = noInitialDownloadWhenFlying->rawValue();
-    const auto restoreNoInitialDownloadWhenFlying = qScopeGuard([noInitialDownloadWhenFlying, previousNoInitialDownloadWhenFlying]() {
-        noInitialDownloadWhenFlying->setRawValue(previousNoInitialDownloadWhenFlying);
-    });
-    noInitialDownloadWhenFlying->setRawValue(flying);
+    // Enable noInitialDownloadWhenArmed setting for armed rows
+    auto* noInitialDownloadWhenArmed = SettingsManager::instance()->mavlinkSettings()->noInitialDownloadWhenArmed();
+    const QVariant previousNoInitialDownloadWhenArmed = noInitialDownloadWhenArmed->rawValue();
+    const auto restoreNoInitialDownloadWhenArmed =
+        qScopeGuard([noInitialDownloadWhenArmed, previousNoInitialDownloadWhenArmed]() {
+            noInitialDownloadWhenArmed->setRawValue(previousNoInitialDownloadWhenArmed);
+        });
+    noInitialDownloadWhenArmed->setRawValue(armed);
 
     LinkManager::instance()->setConnectionsAllowed();
 
@@ -482,7 +479,7 @@ void InitialConnectTest::_stateRunMatrix()
     mockConfig->setFirmwareType(MAV_AUTOPILOT_PX4);
     mockConfig->setVehicleType(MAV_TYPE_QUADROTOR);
     mockConfig->setHighLatency(skipForLinkType);
-    mockConfig->setStartArmed(flying);
+    mockConfig->setStartArmed(armed);
     mockConfig->setDynamic(true);
 
     SharedLinkConfigurationPtr linkConfig = LinkManager::instance()->addConfiguration(mockConfig);
@@ -511,8 +508,8 @@ void InitialConnectTest::_stateRunMatrix()
     // parameterDownloadSkipped flag: true when params were intentionally not downloaded
     QCOMPARE(_vehicle->parameterManager()->parameterDownloadSkipped(), expectParameterDownloadSkipped);
 
-    // Parameters: skipped when flying (with setting enabled) or on HL/LR links.
-    // PX4 starts every download with _HASH_CHECK; flying only tries the cache.
+    // Parameters: skipped when armed (with setting enabled) or on HL/LR links.
+    // PX4 starts every download with _HASH_CHECK; armed only tries the cache.
     if (expectParamRequest) {
         QVERIFY2(_mockLink->hashCheckRequestCount() > 0, "Expected _HASH_CHECK request");
     } else if (expectHashCheckOnly) {
@@ -520,12 +517,12 @@ void InitialConnectTest::_stateRunMatrix()
         // No cache file in test env → cache miss → params not ready
         QVERIFY(!_vehicle->parameterManager()->parametersReady());
     }
-    if (!flying) {
-        // When not flying, params are either loaded normally or via HL/LR internal path
+    if (!armed) {
+        // When not armed, params are either loaded normally or via HL/LR internal path
         QVERIFY(_vehicle->parameterManager()->parametersReady());
     }
 
-    // Mission/GeoFence/Rally are skipped for high-latency/log-replay or when flying.
+    // Mission/GeoFence/Rally are skipped for high-latency/log-replay or when armed.
     // Check each plan type individually via per-mission-type request list counts.
     const int missionReqCount = _mockLink->receivedMissionRequestListCount(MAV_MISSION_TYPE_MISSION);
     const int fenceReqCount   = _mockLink->receivedMissionRequestListCount(MAV_MISSION_TYPE_FENCE);

@@ -9,15 +9,12 @@ RowLayout {
     spacing:    ScreenTools.defaultFontPixelWidth
 
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
+    property var    _guidedController:  globals.guidedControllerFlyView
     property bool   _armed:             _activeVehicle ? _activeVehicle.armed : false
     property real   _margins:           ScreenTools.defaultFontPixelWidth
     property real   _spacing:           ScreenTools.defaultFontPixelWidth / 2
     property bool   _healthAndArmingChecksSupported: _activeVehicle ? _activeVehicle.healthAndArmingCheckReport.supported : false
-    property bool   _vehicleFlies:      _activeVehicle ? !(_activeVehicle.rover || _activeVehicle.sub) : false
-    // Rover/Sub report flying whenever armed but accept a normal disarm, so only aircraft lose Disarm in flight
-    property bool   _aircraftInFlight:  _armed && _vehicleFlies && _activeVehicle.flying
-    property bool   _showEmergencyStop: _aircraftInFlight && QGroundControl.corePlugin.options.flyView.guidedBarShowEmergencyStop
-    property var    _vehicleInAir:      _activeVehicle ? _activeVehicle.flying || _activeVehicle.landing : false
+    property var    _vehicleInAir:      _activeVehicle ? _activeVehicle.airborne || _activeVehicle.landing : false
     property bool   _vtolInFWDFlight:   _activeVehicle ? _activeVehicle.vtolInFwdFlight : false
 
     function dropMainStatusIndicator() {
@@ -64,7 +61,7 @@ RowLayout {
                         }
                     }
 
-                    if (_activeVehicle.flying) {
+                    if (_activeVehicle.underway) {
                         return mainStatusLabel._flyingText
                     } else if (_activeVehicle.landing) {
                         return mainStatusLabel._landingText
@@ -189,14 +186,14 @@ RowLayout {
 
             RowLayout {
                 spacing: ScreenTools.defaultFontPixelWidth
-                // Emergency stop must stay reachable while parameters are still loading
-                visible: parametersReady || _showEmergencyStop
+                // Stop controls must stay reachable without parameters
+                visible: parametersReady || _guidedController.showEmergencyStop || _guidedController.showDisarm
 
                 QGCDelayButton {
                     objectName: "mainStatusArmButton"
-                    enabled:    _armed || !_healthAndArmingChecksSupported || _activeVehicle.healthAndArmingCheckReport.canArm
+                    enabled:    _armed || _guidedController.showArm
                     text:       _armed ? qsTr("Disarm") : qsTr("Arm")
-                    visible:    parametersReady && !_aircraftInFlight
+                    visible:    _armed ? _guidedController.showDisarm : parametersReady
 
                     onActivated: {
                         _activeVehicle.armed = !_armed
@@ -204,24 +201,23 @@ RowLayout {
                     }
                 }
 
-                QGCDelayButton {
+                QGCButton {
                     objectName:         "mainStatusEmergencyStopButton"
                     text:               qsTr("Emergency Stop")
                     backgroundColor:    qgcPal.colorRed
                     textColor:          qgcPal.buttonHighlightText
                     fontWeight:         Font.Bold
-                    alwaysShowHelp:     true
-                    visible:            _showEmergencyStop
+                    visible:            _guidedController.showEmergencyStop
 
-                    onActivated: {
-                        _activeVehicle.emergencyStop()
+                    onClicked: {
+                        _guidedController.confirmAction(_guidedController.actionEmergencyStop)
                         mainWindow.closeIndicatorDrawer()
                     }
                 }
 
                 QGCDelayButton {
                     text:       qsTr("Force Arm")
-                    visible:    parametersReady && !_armed && QGroundControl.settingsManager.flyViewSettings.allowForceArm.rawValue
+                    visible:    parametersReady && _guidedController.showForceArm
 
                     onActivated: {
                         _activeVehicle.forceArm()

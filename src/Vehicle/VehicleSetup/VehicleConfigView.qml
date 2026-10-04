@@ -295,7 +295,7 @@ Rectangle {
                     text:               !_activeVehicle
                                             ? qsTr("Vehicle configuration pages will display after you connect your vehicle and parameters have been downloaded.")
                                             : (_activeVehicle.parameterManager.parameterDownloadSkipped
-                                                ? qsTr("Parameter download was skipped because the vehicle is flying. Configuration pages will be available after parameters are downloaded.")
+                                                ? qsTr("Parameter download was skipped because the vehicle is armed. Configuration pages will be available after parameters are downloaded.")
                                                 : qsTr("Waiting for vehicle parameters to download…"))
                 }
                 QGCButton {

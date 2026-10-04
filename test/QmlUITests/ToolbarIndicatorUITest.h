@@ -25,6 +25,8 @@ private slots:
     void _testAPMCopterIndicators();
     void _testEmergencyStopReplacesDisarmInFlight_data();
     void _testEmergencyStopReplacesDisarmInFlight();
+    void _testArmRequiresEnforcedChecklist();
+    void _testDisarmReachableWithoutParameters();
     void _testIndicatorDrawerClosesOnVehicleDisconnect();
 
 private:

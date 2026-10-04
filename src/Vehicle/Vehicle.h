@@ -219,7 +219,9 @@ public:
     Q_PROPERTY(QGCMapCircle*    orbitMapCircle  READ orbitMapCircle     CONSTANT)
 
     // Vehicle state used for guided control
-    Q_PROPERTY(bool     flying                  READ flying                                         NOTIFY flyingChanged)       ///< Vehicle is flying
+    Q_PROPERTY(bool underway READ underway NOTIFY underwayChanged)  ///< Vehicle is flying, driving or diving
+    Q_PROPERTY(
+        bool airborne READ airborne NOTIFY airborneChanged)  ///< Vehicle is underway and is not a rover/boat or sub
     Q_PROPERTY(bool     landing                 READ landing                                        NOTIFY landingChanged)      ///< Vehicle is in landing pattern (DO_LAND_START)
     Q_PROPERTY(bool     guidedMode              READ guidedMode                 WRITE setGuidedMode NOTIFY guidedModeChanged)   ///< Vehicle is in Guided mode and can respond to guided commands
     Q_PROPERTY(QString  gotoFlightMode          READ gotoFlightMode                                 CONSTANT)                   ///< Flight mode vehicle is in while performing goto
@@ -504,7 +506,11 @@ public:
     uint            messagesReceived            () const{ return _messagesReceived; }
     uint            messagesSent                () const{ return _messagesSent; }
     uint            messagesLost                () const{ return _messagesLost; }
-    bool            flying                      () const { return _flying; }
+
+    bool underway() const { return _underway; }
+
+    bool airborne() const { return _airborne; }
+
     bool            landing                     () const { return _landing; }
     bool            guidedMode                  () const;
     bool            inFwdFlight                 () const;
@@ -716,7 +722,7 @@ public:
 
     void forceInitialPlanRequestComplete();
 
-    void _setFlying(bool flying);
+    void _setUnderway(bool underway);
     void _setLanding(bool landing);
     void _setHomePosition(QGeoCoordinate& homeCoord);
 
@@ -758,7 +764,8 @@ signals:
     void armedPositionChanged();
     void armedChanged                   (bool armed);
     void flightModeChanged              (const QString& flightMode);
-    void flyingChanged                  (bool flying);
+    void underwayChanged(bool underway);
+    void airborneChanged(bool airborne);
     void landingChanged                 (bool landing);
     void guidedModeChanged              (bool guidedMode);
     void inFwdFlightChanged             ();
@@ -842,6 +849,7 @@ private slots:
     void _parametersReady                   (bool parametersReady);
     void _handleFlightModeChanged           (const QString& flightMode);
     void _announceArmedChanged              (bool armed);
+    void _updateAirborne();
     void _offlineCruiseSpeedSettingChanged  (QVariant value);
     void _offlineHoverSpeedSettingChanged   (QVariant value);
     void _prearmErrorTimeout                ();
@@ -940,7 +948,8 @@ private:
     qreal           _initialGCSPressure = 0.;
     qreal           _initialGCSTemperature = 0.;
 
-    bool            _flying = false;
+    bool _underway = false;
+    bool _airborne = false;
     bool            _landing = false;
     bool            _vtolInFwdFlight = false;
     uint32_t        _onboardControlSensorsPresent = 0;
