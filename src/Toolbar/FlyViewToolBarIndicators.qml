@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Controls
 
 import QGroundControl
 import QGroundControl.Controls
@@ -8,303 +7,126 @@ Item {
     id: control
 
     objectName: "flyViewToolBarIndicators"
+    implicitWidth: mainLayout.implicitWidth
+    implicitHeight: ScreenTools.toolbarHeight
 
-    implicitWidth: mainLayout.implicitWidth + (_margin * 2)
+    property real _dotSize: Math.max(12, ScreenTools.defaultFontPixelHeight * 0.58)
 
-    property real _margin:  ScreenTools.defaultFontPixelHeight * 0.55
-    property real _dotSize: ScreenTools.defaultFontPixelHeight * 0.45
+    component StatusPill: Rectangle {
+        id: pill
 
-    QGCPalette {
-        id: qgcPal
+        property string label: ""
+        property string detail: ""
+        property bool online: false
+        property bool warning: false
+        property bool danger: false
+        property bool bypassed: false
+
+        width: 122
+        height: mainLayout.height
+        radius: 5
+        color: "#24081720"
+        border.width: 1
+        border.color: pill.bypassed ? "#355C73" : "#263A4A"
+
+        Rectangle {
+            id: statusDot
+            anchors.left: parent.left
+            anchors.leftMargin: 11
+            anchors.top: parent.top
+            anchors.topMargin: 12
+            width: control._dotSize
+            height: width
+            radius: width / 2
+            color: pill.danger ? "#FF3040" :
+                   pill.warning ? "#FFB020" :
+                   pill.online ? "#39D353" :
+                   pill.bypassed ? "#46A8E5" : "#7C8A94"
+        }
+
+        Column {
+            anchors.left: statusDot.right
+            anchors.leftMargin: 9
+            anchors.right: parent.right
+            anchors.rightMargin: 6
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 2
+
+            QGCLabel {
+                width: parent.width
+                text: pill.label
+                color: "#F4F8FA"
+                font.bold: true
+                font.pointSize: ScreenTools.smallFontPointSize * 1.20
+                horizontalAlignment: Text.AlignLeft
+            }
+
+            QGCLabel {
+                width: parent.width
+                text: pill.detail
+                color: pill.bypassed ? "#A9D8F3" : "#C7D8E2"
+                font.pointSize: ScreenTools.smallFontPointSize * 0.98
+                horizontalAlignment: Text.AlignLeft
+                elide: Text.ElideRight
+            }
+        }
     }
-
-    // ---------------------------------------------------------------------
-    // Menu comum aos quatro indicadores
-    // ---------------------------------------------------------------------
-
-    Menu {
-        id: statusMenu
-
-        property string statusTitle: ""
-        property string statusText:  ""
-        property string extraText:   ""
-
-        MenuItem {
-            text: statusMenu.statusTitle
-            font.bold: true
-            enabled: false
-        }
-
-        MenuSeparator {}
-
-        MenuItem {
-            text: statusMenu.statusText
-            enabled: false
-        }
-
-        MenuItem {
-            text: statusMenu.extraText
-            enabled: false
-            visible: statusMenu.extraText.length > 0
-        }
-    }
-
 
     Row {
         id: mainLayout
+        anchors.verticalCenter: parent.verticalCenter
+        height: Math.max(52, parent.height - 10)
+        spacing: 4
 
-        anchors.top: parent.top
-        anchors.bottom: parent.bottom
-        anchors.right: parent.right
-        anchors.rightMargin: _margin
-
-        spacing: ScreenTools.defaultFontPixelWidth * 2
-
-
-        // ================================================================
-        // JETSON
-        //
-        // Estado REAL da ligação TCP entre QGC e serviço ATLAS na Jetson.
-        // ================================================================
-
-        Item {
-            width: jetsonRow.implicitWidth
-            height: parent.height
-
-            Row {
-                id: jetsonRow
-
-                anchors.centerIn: parent
-
-                spacing: ScreenTools.defaultFontPixelWidth * 0.6
-
-                Rectangle {
-                    width: _dotSize
-                    height: _dotSize
-                    radius: width / 2
-
-                    anchors.verticalCenter: parent.verticalCenter
-
-                    color:
-                        atlasJetsonClient.connected
-                        ? "#39D353"
-                        : "#808080"
-                }
-
-                QGCLabel {
-                    text: "JETSON"
-                    font.bold: true
-
-                    anchors.verticalCenter: parent.verticalCenter
-                }
-            }
-
-            MouseArea {
-                anchors.fill: parent
-
-                cursorShape: Qt.PointingHandCursor
-
-                onClicked: {
-                    statusMenu.statusTitle = "JETSON"
-
-                    statusMenu.statusText =
-                        atlasJetsonClient.connected
-                        ? "Status: Connected"
-                        : "Status: Not connected"
-
-                    statusMenu.extraText =
-                        atlasJetsonClient.connected
-                        ? "ATLAS service reachable via TCP"
-                        : "AI / video processing / SIYI control"
-
-                    statusMenu.popup()
-                }
-            }
+        StatusPill {
+            label: "Jetson"
+            detail: atlasPayload.directMode
+                    ? "BYPASSED"
+                    : (atlasPayload.connected ? "GPU " + atlasPayload.jetsonGpuPercent.toFixed(0) + "%" : "OFFLINE")
+            online: atlasPayload.jetsonMode && atlasPayload.connected
+            bypassed: atlasPayload.directMode
+            warning: atlasPayload.jetsonMode && atlasPayload.connected && atlasPayload.jetsonTempC >= 75.0
+            danger: atlasPayload.jetsonMode && atlasPayload.connected &&
+                    (atlasPayload.jetsonTempC >= 80.0 || atlasPayload.jetsonThrottled)
         }
 
-
-        // ================================================================
-        // HM30
-        //
-        // Estado reportado pelo serviço ATLAS na Jetson.
-        // ================================================================
-
-        Item {
-            width: hm30Row.implicitWidth
-            height: parent.height
-
-            Row {
-                id: hm30Row
-
-                anchors.centerIn: parent
-
-                spacing: ScreenTools.defaultFontPixelWidth * 0.6
-
-                Rectangle {
-                    width: _dotSize
-                    height: _dotSize
-                    radius: width / 2
-
-                    anchors.verticalCenter: parent.verticalCenter
-
-                    color:
-                        atlasJetsonClient.hm30Connected
-                        ? "#39D353"
-                        : "#808080"
-                }
-
-                QGCLabel {
-                    text: "HM30"
-                    font.bold: true
-
-                    anchors.verticalCenter: parent.verticalCenter
-                }
-            }
-
-            MouseArea {
-                anchors.fill: parent
-
-                cursorShape: Qt.PointingHandCursor
-
-                onClicked: {
-                    statusMenu.statusTitle = "HM30"
-
-                    statusMenu.statusText =
-                        atlasJetsonClient.hm30Connected
-                        ? "Status: Connected"
-                        : "Status: Not connected"
-
-                    statusMenu.extraText =
-                        "Air-ground data link"
-
-                    statusMenu.popup()
-                }
-            }
+        StatusPill {
+            label: "HM30"
+            detail: atlasPayload.directMode
+                    ? (atlasPayload.a8Connected ? "IP PATH OK" : "NO A8 LINK")
+                    : (atlasPayload.hm30Connected ? atlasPayload.hm30RssiDbm.toFixed(0) + " dBm" : "OFFLINE")
+            online: atlasPayload.directMode ? atlasPayload.a8Connected : atlasPayload.hm30Connected
+            warning: atlasPayload.jetsonMode && atlasPayload.hm30Connected && atlasPayload.hm30PacketLossPercent >= 3.0
+            danger: atlasPayload.jetsonMode && atlasPayload.hm30Connected && atlasPayload.hm30PacketLossPercent >= 8.0
         }
 
-
-        // ================================================================
-        // A8 MINI
-        //
-        // Estado da ligação Jetson <-> SIYI A8 Mini.
-        // ================================================================
-
-        Item {
-            width: a8Row.implicitWidth
-            height: parent.height
-
-            Row {
-                id: a8Row
-
-                anchors.centerIn: parent
-
-                spacing: ScreenTools.defaultFontPixelWidth * 0.6
-
-                Rectangle {
-                    width: _dotSize
-                    height: _dotSize
-                    radius: width / 2
-
-                    anchors.verticalCenter: parent.verticalCenter
-
-                    color:
-                        atlasJetsonClient.a8Connected
-                        ? "#39D353"
-                        : "#808080"
-                }
-
-                QGCLabel {
-                    text: "A8"
-                    font.bold: true
-
-                    anchors.verticalCenter: parent.verticalCenter
-                }
-            }
-
-            MouseArea {
-                anchors.fill: parent
-
-                cursorShape: Qt.PointingHandCursor
-
-                onClicked: {
-                    statusMenu.statusTitle = "SIYI A8 MINI"
-
-                    statusMenu.statusText =
-                        atlasJetsonClient.a8Connected
-                        ? "Status: Connected"
-                        : "Status: Not connected"
-
-                    statusMenu.extraText =
-                        "Gimbal / zoom / recording control"
-
-                    statusMenu.popup()
-                }
-            }
+        StatusPill {
+            label: "A8"
+            detail: atlasPayload.a8Connected
+                    ? atlasPayload.zoomLevel.toFixed(1) + "x" + (atlasPayload.directMode ? " DIRECT" : "")
+                    : "OFFLINE"
+            online: atlasPayload.a8Connected
         }
 
+        StatusPill {
+            label: "Video"
+            detail: atlasVideoManager.decoding
+                    ? (atlasPayload.directMode ? "LIVE" : atlasPayload.videoFps.toFixed(0) + " FPS")
+                    : "WAITING"
+            online: atlasVideoManager.decoding
+            warning: atlasPayload.connected && !atlasVideoManager.decoding
+        }
 
-        // ================================================================
-        // VIDEO
-        //
-        // Estado REAL do decoder de vídeo do QGroundControl.
-        //
-        // Só fica verde quando o QGC está efetivamente a descodificar
-        // frames de vídeo.
-        // ================================================================
-
-        Item {
-            width: videoRow.implicitWidth
-            height: parent.height
-
-            Row {
-                id: videoRow
-
-                anchors.centerIn: parent
-
-                spacing: ScreenTools.defaultFontPixelWidth * 0.6
-
-                Rectangle {
-                    width: _dotSize
-                    height: _dotSize
-                    radius: width / 2
-
-                    anchors.verticalCenter: parent.verticalCenter
-
-                    color:
-                        atlasVideoManager.decoding
-                        ? "#39D353"
-                        : "#808080"
-                }
-
-                QGCLabel {
-                    text: "VIDEO"
-                    font.bold: true
-
-                    anchors.verticalCenter: parent.verticalCenter
-                }
-            }
-
-            MouseArea {
-                anchors.fill: parent
-
-                cursorShape: Qt.PointingHandCursor
-
-                onClicked: {
-                    statusMenu.statusTitle = "VIDEO"
-
-                    statusMenu.statusText =
-                        atlasVideoManager.decoding
-                        ? "Status: Decoding video"
-                        : "Status: Waiting for stream"
-
-                    statusMenu.extraText =
-                        atlasVideoManager.decoding
-                        ? "Video frames are being decoded by QGroundControl"
-                        : "Processed RTSP stream from Jetson"
-
-                    statusMenu.popup()
-                }
-            }
+        StatusPill {
+            label: "AI"
+            detail: atlasPayload.directMode
+                    ? "N/A"
+                    : (atlasPayload.connected && atlasPayload.aiEnabled ? atlasPayload.aiFps.toFixed(0) + " FPS" : "OFF")
+            online: atlasPayload.jetsonMode && atlasPayload.connected && atlasPayload.aiEnabled
+            bypassed: atlasPayload.directMode
+            warning: atlasPayload.jetsonMode && atlasPayload.connected && atlasPayload.aiEnabled &&
+                     atlasPayload.aiFpsTarget > 0 &&
+                     atlasPayload.aiFps < atlasPayload.aiFpsTarget * 0.55
         }
     }
 }

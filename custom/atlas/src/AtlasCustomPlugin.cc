@@ -4,6 +4,7 @@
 #include <QtCore/QFile>
 #include <QtQml/QQmlApplicationEngine>
 #include <QtQml/QQmlContext>
+#include <QtQml/qqml.h>
 
 #include "VideoManager.h"
 
@@ -15,7 +16,14 @@ Q_APPLICATION_STATIC(
 AtlasCustomPlugin::AtlasCustomPlugin(QObject *parent)
     : QGCCorePlugin(parent)
     , _jetsonClient(this)
+    , _siyiClient(this)
+    , _payloadRouter(&_jetsonClient, &_siyiClient, this)
+    , _screenRecorder(this)
+    , _kmlManager(this)
 {
+    // Instantiable 3D geometry used by the KML renderer. Register it before
+    // any ATLAS FlyView QML is loaded.
+    qmlRegisterType<AtlasKmlWallGeometry>("ATLAS.Kml", 1, 0, "AtlasKmlWallGeometry");
 }
 
 QGCCorePlugin *AtlasCustomPlugin::instance()
@@ -23,136 +31,91 @@ QGCCorePlugin *AtlasCustomPlugin::instance()
     return _atlasCustomPluginInstance();
 }
 
-QQmlApplicationEngine *AtlasCustomPlugin::createQmlApplicationEngine(
-    QObject *parent
-)
+QQmlApplicationEngine *AtlasCustomPlugin::createQmlApplicationEngine(QObject *parent)
 {
-    _qmlEngine =
-        QGCCorePlugin::createQmlApplicationEngine(parent);
+    _qmlEngine = QGCCorePlugin::createQmlApplicationEngine(parent);
 
-    // Disponibiliza o cliente diretamente em QML:
-    //
-    // atlasJetsonClient.gimbalRate(...)
-    // atlasJetsonClient.gimbalStop()
-    // atlasJetsonClient.zoom(...)
-    // etc.
-    _qmlEngine
-        ->rootContext()
-        ->setContextProperty(
-            QStringLiteral("atlasJetsonClient"),
-            &_jetsonClient
-        );
-
-    _qmlEngine
-        ->rootContext()
-        ->setContextProperty(
-            QStringLiteral("atlasVideoManager"),
-            VideoManager::instance()
-        );
-
-    // Permite substituir ficheiros QML originais por versões
-    // presentes em /Custom/qml/...
-    _urlInterceptor =
-        new AtlasOverrideInterceptor();
-
-    _qmlEngine->addUrlInterceptor(
-        _urlInterceptor
+    // Stable UI-facing API: QML controls atlasPayload; the router decides
+    // whether the command goes directly to the A8 or through Jetson.
+    _qmlEngine->rootContext()->setContextProperty(
+        QStringLiteral("atlasPayload"),
+        &_payloadRouter
     );
 
-    // Por enquanto ligamos ao Mock Jetson local.
-    //
-    // Mais tarde:
-    // 127.0.0.1 -> IP real da Jetson através do HM30.
-    _jetsonClient.connectToHost(
-        QStringLiteral("127.0.0.1"),
-        45900
+    // Concrete clients remain exposed only for diagnostics/development.
+    _qmlEngine->rootContext()->setContextProperty(
+        QStringLiteral("atlasJetsonClient"),
+        &_jetsonClient
     );
+    _qmlEngine->rootContext()->setContextProperty(
+        QStringLiteral("atlasSiyiClient"),
+        &_siyiClient
+    );
+
+    _qmlEngine->rootContext()->setContextProperty(
+        QStringLiteral("atlasVideoManager"),
+        VideoManager::instance()
+    );
+
+    // Local recording of the ATLAS application window. This is deliberately
+    // independent from payload routing and from the VideoManager stream recorder.
+    _qmlEngine->rootContext()->setContextProperty(
+        QStringLiteral("atlasScreenRecorder"),
+        &_screenRecorder
+    );
+
+    // Operator-loaded flight/restricted-area KML overlay. The same model is
+    // projected by the native GeoMap in 2D and extruded in terrain 3D.
+    _qmlEngine->rootContext()->setContextProperty(
+        QStringLiteral("atlasKml"),
+        &_kmlManager
+    );
+
+    _urlInterceptor = new AtlasOverrideInterceptor();
+    _qmlEngine->addUrlInterceptor(_urlInterceptor);
+
+    // Loads the operator-selected route from QSettings. No auto-detection and
+    // no automatic failover are performed.
+    _payloadRouter.start();
 
     return _qmlEngine;
 }
 
-void AtlasCustomPlugin::destroyQmlApplicationEngine(
-    QQmlApplicationEngine *qmlEngine
-)
+void AtlasCustomPlugin::destroyQmlApplicationEngine(QQmlApplicationEngine *qmlEngine)
 {
-    if (qmlEngine &&
-        (qmlEngine == _qmlEngine) &&
-        _urlInterceptor) {
-
-        qmlEngine->removeUrlInterceptor(
-            _urlInterceptor
-        );
-
+    if (qmlEngine && (qmlEngine == _qmlEngine) && _urlInterceptor) {
+        qmlEngine->removeUrlInterceptor(_urlInterceptor);
         delete _urlInterceptor;
-
         _urlInterceptor = nullptr;
         _qmlEngine = nullptr;
     }
 
-    QGCCorePlugin::destroyQmlApplicationEngine(
-        qmlEngine
-    );
+    QGCCorePlugin::destroyQmlApplicationEngine(qmlEngine);
 }
-
-
-// -------------------------------------------------------------------------
-// QML OVERRIDE
-//
-// Exemplo:
-//
-// qrc:/qml/QGroundControl/FlyView/FlyViewCustomLayer.qml
-//
-// passa para:
-//
-// qrc:/Custom/qml/QGroundControl/FlyView/FlyViewCustomLayer.qml
-//
-// quando existir um override.
-// -------------------------------------------------------------------------
 
 AtlasOverrideInterceptor::AtlasOverrideInterceptor()
     : QQmlAbstractUrlInterceptor()
 {
 }
 
-QUrl AtlasOverrideInterceptor::intercept(
-    const QUrl &url,
-    QQmlAbstractUrlInterceptor::DataType type
-)
+QUrl AtlasOverrideInterceptor::intercept(const QUrl &url,
+                                         QQmlAbstractUrlInterceptor::DataType type)
 {
     switch (type) {
-
     case QQmlAbstractUrlInterceptor::QmlFile:
     case QQmlAbstractUrlInterceptor::UrlString:
-
         if (url.scheme() == QStringLiteral("qrc")) {
-
-            const QString originalPath =
-                url.path();
-
-            const QString overrideResource =
-                QStringLiteral(":/Custom%1")
-                    .arg(originalPath);
+            const QString originalPath = url.path();
+            const QString overrideResource = QStringLiteral(":/Custom%1").arg(originalPath);
 
             if (QFile::exists(overrideResource)) {
-
-                const QString relativePath =
-                    overrideResource.mid(2);
-
+                const QString relativePath = overrideResource.mid(2);
                 QUrl result;
-
-                result.setScheme(
-                    QStringLiteral("qrc")
-                );
-
-                result.setPath(
-                    QStringLiteral("/") +
-                    relativePath
-                );
-
+                result.setScheme(QStringLiteral("qrc"));
+                result.setPath(QStringLiteral("/") + relativePath);
                 return result;
             }
         }
-
         break;
 
     default:

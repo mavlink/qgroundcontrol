@@ -173,16 +173,7 @@ void GstVideoReceiver::start(uint32_t timeout)
             qCCritical(GstVideoReceiverLog) << "gst_element_factory_make('queue') failed";
             break;
         }
-
-        // leaky=downstream (2) + tiny depth: the live-display branch must drop the oldest
-        // buffer on backpressure, not stall the streaming thread. Recording branch (below)
-        // keeps default non-leaky semantics so every frame reaches the muxer.
-        g_object_set(decoderQueue,
-                     "leaky", 2,
-                     "max-size-buffers", 2,
-                     "max-size-bytes", 0,
-                     "max-size-time", G_GUINT64_CONSTANT(0),
-                     nullptr);
+        // [ATLAS SIYI VIDEO] default pre-decoder queue, matching SIYI-QGroundControl.
 
         _decoderValve = gst_element_factory_make("valve", nullptr);
         if (!_decoderValve)  {

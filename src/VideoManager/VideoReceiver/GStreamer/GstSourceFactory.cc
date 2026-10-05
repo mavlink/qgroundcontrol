@@ -293,7 +293,9 @@ void linkPad(GstElement* element, GstPad* pad, gpointer data)
 // Each build* helper makes and configures the source element for one scheme family, logs the
 // specific failure, and returns the owning element (or nullptr). create() owns it from here on.
 
-GstElement* buildRtspSource(const QString& uri, const QUrl& sourceUrl, const Config& config, guint latencyMs)
+GstElement* buildRtspSource(const QString& uri, const QUrl& sourceUrl,
+                                [[maybe_unused]] const Config& config,
+                                [[maybe_unused]] guint latencyMs)
 {
     if (!GStreamer::isValidRtspUri(uri.toUtf8().constData())) {
         qCWarning(GstSourceFactoryLog) << "Invalid RTSP URI:" << QGCNetworkHelper::redactedUrlForLogging(sourceUrl);
@@ -306,30 +308,23 @@ GstElement* buildRtspSource(const QString& uri, const QUrl& sourceUrl, const Con
         return nullptr;
     }
 
-    QUrl cleanUrl(sourceUrl);
-    cleanUrl.setUserInfo(QString());
-    const QByteArray cleanLocation = cleanUrl.toEncoded();
+    // SIYI-QGroundControl RTSP baseline. Keep these values literal on purpose.
+    // protocols 0x00000004 == GST_RTSP_LOWER_TRANS_TCP.
+    constexpr guint kSiyiRtspLatencyMs = 17;
+    constexpr guint64 kSiyiRtspTimeoutUs = G_GUINT64_CONSTANT(5000000);
+    constexpr GstRTSPLowerTrans kSiyiRtspProtocols = GST_RTSP_LOWER_TRANS_TCP;
 
-    // protocols mask enables TCP-interleaved fallback when UDP is blocked; without it
-    // firewalled networks hang until tcp-timeout instead of negotiating TCP.
-    constexpr GstRTSPLowerTrans kRtspProtocols =
-        static_cast<GstRTSPLowerTrans>(GST_RTSP_LOWER_TRANS_UDP | GST_RTSP_LOWER_TRANS_TCP);
+    const QByteArray location = uri.toUtf8();
+    g_object_set(source,
+                 "location", location.constData(),
+                 "latency", kSiyiRtspLatencyMs,
+                 "udp-reconnect", TRUE,
+                 "timeout", kSiyiRtspTimeoutUs,
+                 "protocols", kSiyiRtspProtocols,
+                 nullptr);
 
-    // rtspsrc always owns an internal jitterbuffer, so None maps to zero playout latency and no retransmission.
-    const guint rtspLatencyMs = (config.jitterBuffer == JitterBuffer::None) ? 0u : latencyMs;
-    const gboolean doRetransmission =
-        ((config.jitterBuffer != JitterBuffer::None) && config.doRetransmission) ? TRUE : FALSE;
-    const gboolean dropOnLatency = (config.jitterBuffer == JitterBuffer::Buffered) ? FALSE : TRUE;
-    g_object_set(source, "location", cleanLocation.constData(), "latency", rtspLatencyMs, "do-rtcp", TRUE,
-                 "do-retransmission", doRetransmission, "tcp-timeout", kRtspTcpTimeoutUs, "udp-reconnect", TRUE,
-                 "drop-on-latency", dropOnLatency, "retry", kRtspRetry, "protocols", kRtspProtocols, nullptr);
-
-    const QString rtspUser = sourceUrl.userName(QUrl::FullyDecoded);
-    const QString rtspPassword = sourceUrl.password(QUrl::FullyDecoded);
-    if (!rtspUser.isEmpty()) {
-        g_object_set(source, "user-id", rtspUser.toUtf8().constData(), "user-pw",
-                     rtspPassword.toUtf8().constData(), nullptr);
-    }
+    qCInfo(GstSourceFactoryLog)
+        << "[ATLAS SIYI VIDEO] RTSP source: SIYI baseline — TCP only, latency=17 ms, timeout=5 s";
     return source;
 }
 
@@ -581,16 +576,17 @@ GstElement* create(const QString& uri, const Config& config)
                 break;
             }
             configureH26xParser(parser);
-        } else {
-            // parsebin creates the codec parser only after it sees the stream caps. Configure that
-            // parser as soon as it is autoplugged, before the pipeline reaches PLAYING.
+        } else if (!isRtsp) {
+            // SIYI RTSP path: plain parsebin defaults. Keep ATLAS/QGC parser
+            // tuning only for non-RTSP sources.
             (void) g_signal_connect(parser, "deep-element-added", G_CALLBACK(configureAutopluggedParser), nullptr);
         }
 
         // Older Linux/system GStreamer misnegotiates parser->decoder caps; force avc/hvc1 there only.
         // Bundled 1.28+ SDKs do not need it, and the forced caps break byte-stream HW decoders.
 #if defined(QGC_GST_ENABLE_LEGACY_PARSEBIN_CAPS_FILTER)
-        if (!isUdpH265) {
+        if (!isUdpH265 && !isRtsp) {
+            // SIYI RTSP path leaves parsebin negotiation untouched.
             (void) g_signal_connect(parser, "autoplug-query", G_CALLBACK(filterParserCaps), nullptr);
         }
 #endif
