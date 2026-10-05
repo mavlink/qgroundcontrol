@@ -22,6 +22,8 @@ private slots:
     void _testLoadJsonSectionAvailable();
     void _testGlobalAltFrame();
     void _testFlightPathSegmentCacheReuse();
+    void _testSplitSegmentTracksSegmentRebuild_data();
+    void _testSplitSegmentTracksSegmentRebuild();
     void _testGimbalRecalc();
     void _testVehicleYawRecalc();
     void _testMissionReposition();

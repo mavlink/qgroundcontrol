@@ -596,6 +596,99 @@ void MissionControllerTest::_testFlightPathSegmentCacheReuse()
     QCOMPARE(wp4->simpleFlightPathSegment()->segmentType(), FlightPathSegment::SegmentTypeLand);
 }
 
+void MissionControllerTest::_testSplitSegmentTracksSegmentRebuild_data()
+{
+    QTest::addColumn<QGroundControlQmlGlobal::AltitudeFrame>("initialFrame");
+    QTest::addColumn<bool>("editPreviousItem");
+    QTest::addColumn<QGroundControlQmlGlobal::AltitudeFrame>("newFrame");
+    QTest::addColumn<int>("newCommand");
+    QTest::addColumn<bool>("segmentRecreated");
+    QTest::addColumn<FlightPathSegment::SegmentType>("recreatedSegmentType");
+
+    const auto relative = QGroundControlQmlGlobal::AltitudeFrameRelative;
+    const auto terrain = QGroundControlQmlGlobal::AltitudeFrameTerrain;
+    const int keepCommand = MAV_CMD_NAV_WAYPOINT;
+
+    // Segment type changes: the segment is deleted and a new one created for the same item pair
+    QTest::newRow("previous item to terrain frame")
+        << relative << true << terrain << keepCommand << true << FlightPathSegment::SegmentTypeTerrainFrame;
+    QTest::newRow("previous item from terrain frame")
+        << terrain << true << relative << keepCommand << true << FlightPathSegment::SegmentTypeGeneric;
+    QTest::newRow("current item to land command")
+        << relative << false << relative << int(MAV_CMD_NAV_LAND) << true << FlightPathSegment::SegmentTypeLand;
+
+    // Item pair is no longer linked: the segment is deleted with no replacement
+    QTest::newRow("current item to non-coordinate command")
+        << relative << false << relative << int(MAV_CMD_DO_CHANGE_SPEED) << false
+        << FlightPathSegment::SegmentTypeGeneric;
+    QTest::newRow("current item to return to launch")
+        << relative << false << relative << int(MAV_CMD_NAV_RETURN_TO_LAUNCH) << false
+        << FlightPathSegment::SegmentTypeGeneric;
+    QTest::newRow("previous item to land command")
+        << relative << true << relative << int(MAV_CMD_NAV_LAND) << false << FlightPathSegment::SegmentTypeGeneric;
+    QTest::newRow("previous item to non-coordinate command")
+        << relative << true << relative << int(MAV_CMD_DO_CHANGE_SPEED) << false
+        << FlightPathSegment::SegmentTypeGeneric;
+}
+
+void MissionControllerTest::_testSplitSegmentTracksSegmentRebuild()
+{
+    QFETCH(QGroundControlQmlGlobal::AltitudeFrame, initialFrame);
+    QFETCH(bool, editPreviousItem);
+    QFETCH(QGroundControlQmlGlobal::AltitudeFrame, newFrame);
+    QFETCH(int, newCommand);
+    QFETCH(bool, segmentRecreated);
+    QFETCH(FlightPathSegment::SegmentType, recreatedSegmentType);
+
+    // Terrain frame is only selectable in the Plan view on ArduPilot
+    _initForFirmwareType(MAV_AUTOPILOT_ARDUPILOTMEGA);
+
+    MissionSettingsItem* settingsItem = _missionController->visualItems()->value<MissionSettingsItem*>(0);
+    QVERIFY(settingsItem);
+    const QGeoCoordinate home = Coord::zurich();
+    settingsItem->setCoordinate(home);
+    _missionController->setGlobalAltitudeFrame(QGroundControlQmlGlobal::AltitudeFrameMixed);
+
+    // home(0) wp1(1) wp2(2), wp2 is the current item so wp1->wp2 is the split segment
+    SimpleMissionItem* wp1 = qobject_cast<SimpleMissionItem*>(
+        _missionController->insertSimpleMissionItem(home.atDistanceAndAzimuth(100, 0), 1, true /* makeCurrentItem */));
+    SimpleMissionItem* wp2 = qobject_cast<SimpleMissionItem*>(
+        _missionController->insertSimpleMissionItem(home.atDistanceAndAzimuth(200, 0), 2, true /* makeCurrentItem */));
+    QVERIFY(wp1);
+    QVERIFY(wp2);
+    SimpleMissionItem* editedItem = editPreviousItem ? wp1 : wp2;
+    editedItem->setAltitudeFrame(initialFrame);
+
+    const auto splitSegment = [this]() {
+        return _missionController->property("splitSegment").value<FlightPathSegment*>();
+    };
+    QVERIFY_TRUE_WAIT(splitSegment() != nullptr, TestTimeout::mediumMs());
+    QCOMPARE(splitSegment(), wp1->simpleFlightPathSegment());
+
+    QSignalSpy staleSplitSegmentDestroyedSpy(splitSegment(), &QObject::destroyed);
+    QSignalSpy splitSegmentChangedSpy(_missionController, &MissionController::splitSegmentChanged);
+
+    // None of these edits reselect the current item, so only the segment recalc can update splitSegment
+    editedItem->setAltitudeFrame(newFrame);
+    editedItem->setCommand(newCommand);
+    if (newFrame != initialFrame) {
+        // A frame change alone doesn't recalc segments; adding an item (map click) does
+        _missionController->insertSimpleMissionItem(home.atDistanceAndAzimuth(300, 0), 3);
+    }
+    QCOMPARE_TRUE_WAIT(staleSplitSegmentDestroyedSpy.count(), 1, TestTimeout::mediumMs());
+
+    // Identity is compared as quintptr: on regression splitSegment is dangling and
+    // QCOMPARE on QObject* dereferences it when formatting the failure message.
+    if (segmentRecreated) {
+        QVERIFY(wp1->simpleFlightPathSegment());
+        QCOMPARE(quintptr(splitSegment()), quintptr(wp1->simpleFlightPathSegment()));
+        QCOMPARE(wp1->simpleFlightPathSegment()->segmentType(), recreatedSegmentType);
+    } else {
+        QCOMPARE(quintptr(splitSegment()), quintptr(0));
+    }
+    QCOMPARE(splitSegmentChangedSpy.count(), 1);
+}
+
 void MissionControllerTest::_testInsertComplexItemFromKML()
 {
     _initForFirmwareType(MAV_AUTOPILOT_PX4);
