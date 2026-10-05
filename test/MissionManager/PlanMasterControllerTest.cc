@@ -41,6 +41,29 @@ void PlanMasterControllerTest::_testMissionPlannerFileLoad()
     QCOMPARE(_masterController->missionController()->visualItems()->count(), 6);
 }
 
+void PlanMasterControllerTest::_testManualTestPlansLoad_data()
+{
+    QTest::addColumn<QString>("planPath");
+
+    const QDir plansDir(QStringLiteral(":/unittest/manualTestPlans"));
+    const QStringList planFiles = plansDir.entryList({QStringLiteral("*.plan")}, QDir::Files);
+    QVERIFY(!planFiles.isEmpty());
+    for (const QString& planFile : planFiles) {
+        QTest::newRow(qPrintable(planFile)) << plansDir.filePath(planFile);
+    }
+}
+
+// test/plans are hand-loaded for manual testing, so they must stay loadable
+void PlanMasterControllerTest::_testManualTestPlansLoad()
+{
+    QFETCH(QString, planPath);
+
+    _masterController->loadFromFile(planPath);
+
+    QCOMPARE(_masterController->currentPlanFile(), planPath);
+    QVERIFY(_masterController->missionController()->visualItems()->count() > 1);
+}
+
 void PlanMasterControllerTest::_testTakeoffTextFileLoad_data()
 {
     QTest::addColumn<int>("firmwareClass");

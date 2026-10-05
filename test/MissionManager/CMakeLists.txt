@@ -63,6 +63,14 @@ qt_add_resources(${CMAKE_PROJECT_NAME} "MissionManagerTest_res1"
         MissionCommandTreeEditorTestWindow.qml
 )
 
+set(_manualTestPlansDir "${CMAKE_CURRENT_SOURCE_DIR}/../plans")
+file(GLOB _manualTestPlans CONFIGURE_DEPENDS "${_manualTestPlansDir}/*.plan")
+qt_add_resources(${CMAKE_PROJECT_NAME} "MissionManagerTest_manualTestPlans"
+    PREFIX "/unittest/manualTestPlans"
+    BASE "${_manualTestPlansDir}"
+    FILES ${_manualTestPlans}
+)
+
 # TODO: Enable QML module for mission manager tests
 # qt_add_library(MissionManagerTestModule STATIC)
 #

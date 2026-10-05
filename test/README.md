@@ -24,6 +24,7 @@
   - [QML Test Split](#qml-test-split)
   - [JUnit XML Output](#junit-xml-output)
 - [MultiSignalSpy](#multisignalspy)
+- [Manual Test Plans](#manual-test-plans)
 - [Code Coverage](#code-coverage)
 - [Sanitizers](#sanitizers)
 - [Debugging Test Failures](#debugging-test-failures)
@@ -367,6 +368,21 @@ int value = spy.argument<int>("valueChanged");
 
 // Multiple-signal API (each signal emitted exactly once)
 QVERIFY(spy.emittedOnce("signal1", "signal2"));
+```
+
+## Manual Test Plans
+
+`plans/` holds `.plan` files for manually checking 2D/3D mission display. There is one for each
+MockLink home location and PX4/ArduPilot vehicle type. Each plan mixes altitude frames
+(relative, AMSL, calculated above terrain, and terrain frame on ArduPilot) and item types over
+~3 km legs, so the paths cross terrain. The plans exercise the UI and aren't meant to be flown.
+Start a MockLink with the matching home location, then load the plan in Plan View and upload it.
+
+`PlanMasterControllerTest::_testManualTestPlansLoad` loads every plan, so they stay loadable as the
+plan format changes. Regenerate them after changing the generator:
+
+```bash
+test/plans/generate_test_plans.py
 ```
 
 ## Code Coverage

@@ -13,6 +13,8 @@ private slots:
     void cleanup() final;
 
     void _testMissionPlannerFileLoad();
+    void _testManualTestPlansLoad_data();
+    void _testManualTestPlansLoad();
     void _testTakeoffTextFileLoad_data();
     void _testTakeoffTextFileLoad();
     void _testActiveVehicleChanged();
