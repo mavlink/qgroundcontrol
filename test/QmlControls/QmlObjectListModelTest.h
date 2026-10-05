@@ -14,4 +14,6 @@ private slots:
     void _removeDisconnectsDirtyPropagation();
     void _skipDirtyFirstItemSkipsFirstConnection();
     void _appendObjectWithoutDirtySignal();
+    void _swapObjectListTracksDirtyPropagation();
+    void _swapObjectListDirtyItemMarksListDirty();
 };

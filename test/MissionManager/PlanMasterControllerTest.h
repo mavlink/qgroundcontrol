@@ -46,6 +46,9 @@ private slots:
 
     void _testPlanCreatorsFiltered();
 
+    void _testEditMarksDirtyForSave_data();
+    void _testEditMarksDirtyForSave();
+
 private:
     enum DirtyScenario {
         UploadPreservesSaveDirtyTrue,

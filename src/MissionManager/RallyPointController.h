@@ -57,6 +57,7 @@ private slots:
     void _managerRemoveAllComplete  (bool error);
     void _setFirstPointCurrent      (void);
     void _managerVehicleChanged     (Vehicle* managerVehicle);
+    void _pointsDirtyChanged        (bool dirty);
 
 private:
     Vehicle*            _managerVehicle =       nullptr;
