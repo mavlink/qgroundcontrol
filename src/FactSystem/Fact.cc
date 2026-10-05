@@ -5,7 +5,6 @@
 #include <limits>
 
 #include "Fact.h"
-#include "FactValueSliderListModel.h"
 #include "AppMessages.h"
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
@@ -98,10 +97,12 @@ const Fact &Fact::operator=(const Fact& other)
     _type = other._type;
     _sendValueChangedSignals = other._sendValueChangedSignals;
     _deferredValueChangeSignal = other._deferredValueChangeSignal;
-    _valueSliderModel = nullptr;
     if (_metaData && other._metaData) {
         *_metaData = *other._metaData;
     } else {
+        if (_metaData) {
+            (void) disconnect(_metaData, &FactMetaData::appSettingsUnitsChanged, this, &Fact::_appSettingsUnitsChanged);
+        }
         _metaData = nullptr;
     }
 
@@ -740,11 +741,24 @@ QString Fact::group() const
 
 void Fact::setMetaData(FactMetaData *metaData, bool setDefaultFromMetaData)
 {
+    if (_metaData) {
+        (void) disconnect(_metaData, &FactMetaData::appSettingsUnitsChanged, this, &Fact::_appSettingsUnitsChanged);
+    }
     _metaData = metaData;
+    if (_metaData) {
+        (void) connect(_metaData, &FactMetaData::appSettingsUnitsChanged, this, &Fact::_appSettingsUnitsChanged);
+    }
     if (setDefaultFromMetaData && metaData->defaultValueAvailable()) {
         setRawValue(rawDefaultValue());
     }
+    emit cookedValuesChanged();
     emit valueChanged(cookedValue());
+}
+
+void Fact::_appSettingsUnitsChanged()
+{
+    emit cookedValuesChanged();
+    _sendValueChangedSignal(cookedValue());
 }
 
 bool Fact::valueEqualsDefault() const
@@ -920,15 +934,6 @@ bool Fact::volatileValue() const
         qCWarning(FactLog) << kMissingMetadata << name();
         return false;
     }
-}
-
-FactValueSliderListModel *Fact::valueSliderModel()
-{
-    if (!_valueSliderModel) {
-        _valueSliderModel = new FactValueSliderListModel(*this);
-    }
-
-    return _valueSliderModel;
 }
 
 void Fact::_checkForRebootMessaging()

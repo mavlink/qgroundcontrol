@@ -206,7 +206,7 @@ Item {
             guidedValueSlider.setupSlider(
                 GuidedValueSlider.SliderType.Takeoff,
                 _unitsConversion.metersToAppSettingsVerticalDistanceUnits(_activeVehicle.minimumTakeoffAltitudeMeters()),
-                _flyViewSettings.guidedMaximumAltitude.value,
+                _unitsConversion.metersToAppSettingsVerticalDistanceUnits(_flyViewSettings.guidedMaximumAltitude.rawValue),
                 _unitsConversion.metersToAppSettingsVerticalDistanceUnits(_activeVehicle.minimumTakeoffAltitudeMeters()),
                 qsTr("Height (rel)"))
         } else if (actionCode === actionChangeSpeed) {
@@ -230,16 +230,16 @@ Item {
         } else if (actionCode === actionChangeAlt || actionCode === actionOrbit || actionCode === actionGoto || actionCode === actionPause) {
             guidedValueSlider.setupSlider(
                 GuidedValueSlider.SliderType.Altitude,
-                _flyViewSettings.guidedMinimumAltitude.value,
-                _flyViewSettings.guidedMaximumAltitude.value,
-                _activeVehicle.altitudeRelative.value,
+                _unitsConversion.metersToAppSettingsVerticalDistanceUnits(_flyViewSettings.guidedMinimumAltitude.rawValue),
+                _unitsConversion.metersToAppSettingsVerticalDistanceUnits(_flyViewSettings.guidedMaximumAltitude.rawValue),
+                _unitsConversion.metersToAppSettingsVerticalDistanceUnits(_activeVehicle.altitudeRelative.rawValue),
                 qsTr("Alt (rel)"))
         } else if (actionCode === actionROI) {
             // ROI targets a point on the ground by default, so start at 0 above home
             guidedValueSlider.setupSlider(
                 GuidedValueSlider.SliderType.Altitude,
                 0,
-                _flyViewSettings.guidedMaximumAltitude.value,
+                _unitsConversion.metersToAppSettingsVerticalDistanceUnits(_flyViewSettings.guidedMaximumAltitude.rawValue),
                 0,
                 qsTr("Alt (rel)"))
         }
@@ -359,6 +359,17 @@ Item {
         function onArmVehicleRequest() { armVehicleRequest() }
         function onForceArmVehicleRequest() { forceArmVehicleRequest() }
         function onDisarmVehicleRequest() { disarmVehicleRequest() }
+    }
+
+    Connections {
+        target: _unitsConversion
+
+        function onUnitsChanged() {
+            // Slider range and value were captured in the previous units
+            if (_activeVehicle && guidedValueSlider.visible) {
+                setupSlider(confirmDialog.action)
+            }
+        }
     }
 
     function armVehicleRequest() {

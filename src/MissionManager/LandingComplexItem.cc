@@ -35,10 +35,10 @@ void LandingComplexItem::_init(void)
         stopTakingPhotos()->setRawValue(false);
     }
 
-    connect(landingDistance(),          &Fact::valueChanged,                                this, &LandingComplexItem::_recalcFromHeadingAndDistanceChange);
-    connect(landingHeading(),           &Fact::valueChanged,                                this, &LandingComplexItem::_recalcFromHeadingAndDistanceChange);
+    connect(landingDistance(),          &Fact::rawValueChanged,                             this, &LandingComplexItem::_recalcFromHeadingAndDistanceChange);
+    connect(landingHeading(),           &Fact::rawValueChanged,                             this, &LandingComplexItem::_recalcFromHeadingAndDistanceChange);
 
-    connect(loiterRadius(),             &Fact::valueChanged,                                this, &LandingComplexItem::_recalcFromRadiusChange);
+    connect(loiterRadius(),             &Fact::rawValueChanged,                             this, &LandingComplexItem::_recalcFromRadiusChange);
     connect(loiterClockwise(),          &Fact::rawValueChanged,                             this, &LandingComplexItem::_recalcFromRadiusChange);
 
     connect(useLoiterToAlt(),           &Fact::rawValueChanged,                             this, &LandingComplexItem::_recalcFromApproachModeChange);
@@ -52,17 +52,17 @@ void LandingComplexItem::_init(void)
     connect(this,                       &LandingComplexItem::finalApproachCoordinateChanged,this, &LandingComplexItem::_recalcFromCoordinateChange);
     connect(this,                       &LandingComplexItem::landingCoordinateChanged,      this, &LandingComplexItem::_recalcFromCoordinateChange);
 
-    connect(finalApproachAltitude(),    &Fact::valueChanged,                                this, &LandingComplexItem::_setDirty);
-    connect(useDoChangeSpeed(),         &Fact::valueChanged,                                this, &LandingComplexItem::_setDirty);
-    connect(finalApproachSpeed(),       &Fact::valueChanged,                                this, &LandingComplexItem::_setDirty);
-    connect(landingAltitude(),          &Fact::valueChanged,                                this, &LandingComplexItem::_setDirty);
-    connect(landingDistance(),          &Fact::valueChanged,                                this, &LandingComplexItem::_setDirty);
-    connect(landingHeading(),           &Fact::valueChanged,                                this, &LandingComplexItem::_setDirty);
-    connect(loiterRadius(),             &Fact::valueChanged,                                this, &LandingComplexItem::_setDirty);
-    connect(loiterClockwise(),          &Fact::valueChanged,                                this, &LandingComplexItem::_setDirty);
-    connect(useLoiterToAlt(),           &Fact::valueChanged,                                this, &LandingComplexItem::_setDirty);
-    connect(stopTakingPhotos(),         &Fact::valueChanged,                                this, &LandingComplexItem::_setDirty);
-    connect(stopTakingVideo(),          &Fact::valueChanged,                                this, &LandingComplexItem::_setDirty);
+    connect(finalApproachAltitude(),    &Fact::rawValueChanged,                             this, &LandingComplexItem::_setDirty);
+    connect(useDoChangeSpeed(),         &Fact::rawValueChanged,                             this, &LandingComplexItem::_setDirty);
+    connect(finalApproachSpeed(),       &Fact::rawValueChanged,                             this, &LandingComplexItem::_setDirty);
+    connect(landingAltitude(),          &Fact::rawValueChanged,                             this, &LandingComplexItem::_setDirty);
+    connect(landingDistance(),          &Fact::rawValueChanged,                             this, &LandingComplexItem::_setDirty);
+    connect(landingHeading(),           &Fact::rawValueChanged,                             this, &LandingComplexItem::_setDirty);
+    connect(loiterRadius(),             &Fact::rawValueChanged,                             this, &LandingComplexItem::_setDirty);
+    connect(loiterClockwise(),          &Fact::rawValueChanged,                             this, &LandingComplexItem::_setDirty);
+    connect(useLoiterToAlt(),           &Fact::rawValueChanged,                             this, &LandingComplexItem::_setDirty);
+    connect(stopTakingPhotos(),         &Fact::rawValueChanged,                             this, &LandingComplexItem::_setDirty);
+    connect(stopTakingVideo(),          &Fact::rawValueChanged,                             this, &LandingComplexItem::_setDirty);
     connect(this,                       &LandingComplexItem::finalApproachCoordinateChanged,this, &LandingComplexItem::_setDirty);
     connect(this,                       &LandingComplexItem::landingCoordinateChanged,      this, &LandingComplexItem::_setDirty);
     connect(this,                       &LandingComplexItem::altitudesAreRelativeChanged,   this, &LandingComplexItem::_setDirty);
@@ -94,8 +94,8 @@ void LandingComplexItem::_init(void)
 
     connect(_missionController,         &MissionController::_recalcFlightPathSegmentsSignal,this, &LandingComplexItem::patternNameChanged);
 
-    connect(finalApproachAltitude(),    &Fact::valueChanged,                                this, &LandingComplexItem::_updateFinalApproachCoodinateAltitudeFromFact);
-    connect(landingAltitude(),          &Fact::valueChanged,                                this, &LandingComplexItem::_updateLandingCoodinateAltitudeFromFact);
+    connect(finalApproachAltitude(),    &Fact::rawValueChanged,                             this, &LandingComplexItem::_updateFinalApproachCoodinateAltitudeFromFact);
+    connect(landingAltitude(),          &Fact::rawValueChanged,                             this, &LandingComplexItem::_updateLandingCoodinateAltitudeFromFact);
 }
 
 void LandingComplexItem::setLandingHeadingToTakeoffHeading()

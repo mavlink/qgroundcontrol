@@ -46,6 +46,8 @@ private slots:
     void _testVTOLMulticopterTakeoffAfterFixedWingTransition();
     void _testVTOLTakeoffJsonRoundTrip_data();
     void _testVTOLTakeoffJsonRoundTrip();
+    void _testUnitsChangeDoesNotDirtyPlan_data();
+    void _testUnitsChangeDoesNotDirtyPlan();
 
     // Parameterized tests - runs once per autopilot type
     UT_PARAMETERIZED_TEST(_testEmptyVehicle);

@@ -8,14 +8,14 @@ class QmlUnitsConversion : public QObject
 {
     Q_OBJECT
 public:
-    QmlUnitsConversion(QObject *parent=nullptr): QObject(parent) {}
+    explicit QmlUnitsConversion(QObject* parent = nullptr);
     ~QmlUnitsConversion() = default;
 
-    Q_PROPERTY(QString appSettingsHorizontalDistanceUnitsString READ appSettingsHorizontalDistanceUnitsString CONSTANT)
-    Q_PROPERTY(QString appSettingsVerticalDistanceUnitsString   READ appSettingsVerticalDistanceUnitsString   CONSTANT)
-    Q_PROPERTY(QString appSettingsAreaUnitsString               READ appSettingsAreaUnitsString               CONSTANT)
-    Q_PROPERTY(QString appSettingsWeightUnitsString             READ appSettingsWeightUnitsString             CONSTANT)
-    Q_PROPERTY(QString appSettingsSpeedUnitsString              READ appSettingsSpeedUnitsString              CONSTANT)
+    Q_PROPERTY(QString appSettingsHorizontalDistanceUnitsString READ appSettingsHorizontalDistanceUnitsString NOTIFY unitsChanged)
+    Q_PROPERTY(QString appSettingsVerticalDistanceUnitsString   READ appSettingsVerticalDistanceUnitsString   NOTIFY unitsChanged)
+    Q_PROPERTY(QString appSettingsAreaUnitsString               READ appSettingsAreaUnitsString               NOTIFY unitsChanged)
+    Q_PROPERTY(QString appSettingsWeightUnitsString             READ appSettingsWeightUnitsString             NOTIFY unitsChanged)
+    Q_PROPERTY(QString appSettingsSpeedUnitsString              READ appSettingsSpeedUnitsString              NOTIFY unitsChanged)
 
     /// Converts from meters to the user specified distance unit
     Q_INVOKABLE QVariant metersToAppSettingsHorizontalDistanceUnits(const QVariant& meters) const { return FactMetaData::metersToAppSettingsHorizontalDistanceUnits(meters); }
@@ -74,4 +74,8 @@ public:
 
     Q_INVOKABLE double degreesToRadians(double degrees) { return qDegreesToRadians(degrees); }
     Q_INVOKABLE double radiansToDegrees(double radians) { return qRadiansToDegrees(radians); }
+
+signals:
+    /// Any app units setting changed. Bindings which only call the conversion methods must refresh on this.
+    void unitsChanged();
 };

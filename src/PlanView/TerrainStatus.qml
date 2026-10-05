@@ -77,7 +77,7 @@ Rectangle {
                 axisX: ValueAxis {
                     id:                         axisX
                     min:                        0
-                    max:                        _unitsConversion.metersToAppSettingsHorizontalDistanceUnits(_missionTotalDistance)
+                    max:                        _axisXMax()
                     lineVisible:                true
                     tickInterval:               max > 0 ? max / 4 : 1
                     labelDecimals:              1
@@ -85,8 +85,8 @@ Rectangle {
 
                 axisY: ValueAxis {
                     id:                         axisY
-                    min:                        _unitsConversion.metersToAppSettingsVerticalDistanceUnits(_minAMSLAltitude)
-                    max:                        _unitsConversion.metersToAppSettingsVerticalDistanceUnits(_maxAMSLAltitude)
+                    min:                        _axisYMin()
+                    max:                        _axisYMax()
                     lineVisible:                true
                     tickInterval:               (max - min) > 0 ? (max - min) / 3 : 1
                     labelDecimals:              1
@@ -225,5 +225,30 @@ Rectangle {
 
     function applyOpacity(colorIn, opacity){
         return Qt.rgba(colorIn.r, colorIn.g, colorIn.b, opacity)
+    }
+
+    function _axisXMax() {
+        return _unitsConversion.metersToAppSettingsHorizontalDistanceUnits(_missionTotalDistance)
+    }
+
+    function _axisYMin() {
+        return _unitsConversion.metersToAppSettingsVerticalDistanceUnits(_minAMSLAltitude)
+    }
+
+    function _axisYMax() {
+        return _unitsConversion.metersToAppSettingsVerticalDistanceUnits(_maxAMSLAltitude)
+    }
+
+    Connections {
+        target: _unitsConversion
+
+        function onUnitsChanged() {
+            axisX.max = Qt.binding(_axisXMax)
+            axisY.min = Qt.binding(_axisYMin)
+            axisY.max = Qt.binding(_axisYMax)
+            terrainProfile.horizontalScale = _unitsConversion.metersToAppSettingsHorizontalDistanceUnits(1)
+            terrainProfile.verticalScale = _unitsConversion.metersToAppSettingsVerticalDistanceUnits(1)
+            terrainProfile.updateSeries(terrainSeries, flightSeries, missingSeries, collisionSeries)
+        }
     }
 }

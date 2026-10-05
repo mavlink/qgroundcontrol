@@ -22,14 +22,14 @@ CameraCalc::CameraCalc(PlanMasterController* masterController, const QString& se
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 
-    connect(&_valueSetIsDistanceFact,       &Fact::valueChanged,                this, &CameraCalc::_setDirty);
-    connect(&_distanceToSurfaceFact,        &Fact::valueChanged,                this, &CameraCalc::_setDirty);
-    connect(&_imageDensityFact,             &Fact::valueChanged,                this, &CameraCalc::_setDirty);
-    connect(&_frontalOverlapFact,           &Fact::valueChanged,                this, &CameraCalc::_setDirty);
-    connect(&_sideOverlapFact,              &Fact::valueChanged,                this, &CameraCalc::_setDirty);
-    connect(&_adjustedFootprintSideFact,    &Fact::valueChanged,                this, &CameraCalc::_setDirty);
-    connect(&_adjustedFootprintFrontalFact, &Fact::valueChanged,                this, &CameraCalc::_setDirty);
-    connect(&_cameraNameFact,               &Fact::valueChanged,                this, &CameraCalc::_setDirty);
+    connect(&_valueSetIsDistanceFact,       &Fact::rawValueChanged,             this, &CameraCalc::_setDirty);
+    connect(&_distanceToSurfaceFact,        &Fact::rawValueChanged,             this, &CameraCalc::_setDirty);
+    connect(&_imageDensityFact,             &Fact::rawValueChanged,             this, &CameraCalc::_setDirty);
+    connect(&_frontalOverlapFact,           &Fact::rawValueChanged,             this, &CameraCalc::_setDirty);
+    connect(&_sideOverlapFact,              &Fact::rawValueChanged,             this, &CameraCalc::_setDirty);
+    connect(&_adjustedFootprintSideFact,    &Fact::rawValueChanged,             this, &CameraCalc::_setDirty);
+    connect(&_adjustedFootprintFrontalFact, &Fact::rawValueChanged,             this, &CameraCalc::_setDirty);
+    connect(&_cameraNameFact,               &Fact::rawValueChanged,             this, &CameraCalc::_setDirty);
     connect(this,                           &CameraCalc::distanceModeChanged,   this, &CameraCalc::_setDirty);
 
     connect(&_cameraNameFact, &Fact::valueChanged, this, &CameraCalc::_cameraNameChanged);

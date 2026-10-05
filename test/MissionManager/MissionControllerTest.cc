@@ -1,28 +1,31 @@
-#include "QmlObjectListModel.h"
 #include "MissionControllerTest.h"
+
+#include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
+#include <QtCore/QTemporaryDir>
 
 #include "AppSettings.h"
 #include "CameraCalc.h"
 #include "CorridorScanComplexItem.h"
 #include "FlightPathSegment.h"
-#include "StructureScanComplexItem.h"
-#include "SurveyComplexItem.h"
-#include "UnitTestCoords.h"
+#include "LandingComplexItem.h"
 #include "MissionController.h"
 #include "MissionSettingsItem.h"
+#include "MultiSignalSpy.h"
 #include "PlanMasterController.h"
 #include "PlanViewSettings.h"
+#include "QmlObjectListModel.h"
 #include "SettingsManager.h"
 #include "SimpleMissionItem.h"
+#include "StructureScanComplexItem.h"
+#include "SurveyComplexItem.h"
 #include "TakeoffMissionItem.h"
 #include "TestFixtures.h"
-#include "MultiSignalSpy.h"
+#include "UnitTestCoords.h"
+#include "UnitsSettings.h"
 #include "Vehicle.h"
 #include "VehicleSupports.h"
 
-#include <QtCore/QRegularExpression>
-#include <QtCore/QScopeGuard>
-#include <QtCore/QTemporaryDir>
 using namespace TestFixtures;
 
 MissionControllerTest::~MissionControllerTest() = default;
@@ -1079,6 +1082,92 @@ void MissionControllerTest::_testInsertNonSurveyComplexItemMixedModeNoCrash()
 
     QCOMPARE(corridorItem->cameraCalc()->distanceMode(), QGroundControlQmlGlobal::AltitudeFrameRelative);
     QCOMPARE(_missionController->visualItems()->count(), 3);
+}
+
+void MissionControllerTest::_testUnitsChangeDoesNotDirtyPlan_data()
+{
+    QTest::addColumn<int>("vehicleType");
+    QTest::addColumn<bool>("landingPattern");
+
+    QTest::newRow("PX4 multirotor") << int(MAV_TYPE_QUADROTOR) << false;
+    QTest::newRow("PX4 fixed wing") << int(MAV_TYPE_FIXED_WING) << true;
+    QTest::newRow("PX4 VTOL") << int(MAV_TYPE_VTOL_TAILSITTER_QUADROTOR) << true;
+}
+
+void MissionControllerTest::_testUnitsChangeDoesNotDirtyPlan()
+{
+    QFETCH(int, vehicleType);
+    QFETCH(bool, landingPattern);
+
+    _initForVehicleType(MAV_AUTOPILOT_PX4, static_cast<MAV_TYPE>(vehicleType));
+
+    const QGeoCoordinate home = Coord::zurich();
+    _missionController->setHomePosition(home);
+
+    QVERIFY(_missionController->insertTakeoffItem(home, 1));
+    SimpleMissionItem* simpleItem = qobject_cast<SimpleMissionItem*>(
+        _missionController->insertSimpleMissionItem(home.atDistanceAndAzimuth(200, 0), -1, false));
+    QVERIFY(simpleItem);
+    QVERIFY(_missionController->insertComplexMissionItem(SurveyComplexItem::canonicalName,
+                                                         home.atDistanceAndAzimuth(400, 0), -1, false));
+    QVERIFY(_missionController->insertComplexMissionItem(CorridorScanComplexItem::canonicalName,
+                                                         home.atDistanceAndAzimuth(600, 0), -1, false));
+    QVERIFY(_missionController->insertComplexMissionItem(StructureScanComplexItem::canonicalName,
+                                                         home.atDistanceAndAzimuth(800, 0), -1, false));
+    VisualMissionItem* const landItem =
+        _missionController->insertLandItem(home.atDistanceAndAzimuth(300, 90), -1, false);
+    QVERIFY(landItem);
+    QCOMPARE(qobject_cast<LandingComplexItem*>(landItem) != nullptr, landingPattern);
+    simpleItem->altitude()->setRawValue(50.0);
+
+    GeoFenceController* const geoFenceController = _masterController->geoFenceController();
+    geoFenceController->addInclusionCircle(home.atDistanceAndAzimuth(500, 315), home.atDistanceAndAzimuth(500, 135));
+    geoFenceController->addInclusionPolygon(home.atDistanceAndAzimuth(800, 315), home.atDistanceAndAzimuth(800, 135));
+    RallyPointController* const rallyPointController = _masterController->rallyPointController();
+    rallyPointController->addPoint(home.atDistanceAndAzimuth(100, 180));
+    QCoreApplication::processEvents();
+
+    _missionController->setDirty(false);
+    geoFenceController->setDirty(false);
+    rallyPointController->setDirty(false);
+    QCoreApplication::processEvents();
+    QVERIFY(!_missionController->dirty());
+    QVERIFY(!geoFenceController->dirty());
+    QVERIFY(!rallyPointController->dirty());
+
+    UnitsSettings* const unitsSettings = SettingsManager::instance()->unitsSettings();
+    const QList<Fact*> unitsFacts = {
+        unitsSettings->horizontalDistanceUnits(),
+        unitsSettings->verticalDistanceUnits(),
+        unitsSettings->areaUnits(),
+        unitsSettings->speedUnits(),
+    };
+    QVariantList savedUnits;
+    for (const Fact* fact : unitsFacts) {
+        savedUnits.append(fact->rawValue());
+    }
+    const auto restoreUnits = qScopeGuard([&unitsFacts, &savedUnits] {
+        for (qsizetype i = 0; i < unitsFacts.count(); i++) {
+            unitsFacts[i]->setRawValue(savedUnits[i]);
+        }
+    });
+
+    const bool toFeet =
+        unitsSettings->horizontalDistanceUnits()->rawValue().toUInt() != UnitsSettings::HorizontalDistanceUnitsFeet;
+    unitsSettings->horizontalDistanceUnits()->setRawValue(toFeet ? UnitsSettings::HorizontalDistanceUnitsFeet
+                                                                 : UnitsSettings::HorizontalDistanceUnitsMeters);
+    unitsSettings->verticalDistanceUnits()->setRawValue(toFeet ? UnitsSettings::VerticalDistanceUnitsFeet
+                                                               : UnitsSettings::VerticalDistanceUnitsMeters);
+    unitsSettings->areaUnits()->setRawValue(toFeet ? UnitsSettings::AreaUnitsSquareFeet
+                                                   : UnitsSettings::AreaUnitsSquareMeters);
+    unitsSettings->speedUnits()->setRawValue(toFeet ? UnitsSettings::SpeedUnitsFeetPerSecond
+                                                    : UnitsSettings::SpeedUnitsMetersPerSecond);
+    QCoreApplication::processEvents();
+
+    QCOMPARE_FUZZY(simpleItem->altitude()->cookedValue().toDouble(), toFeet ? 164.042 : 50.0, 1e-3);
+    QVERIFY(!_missionController->dirty());
+    QVERIFY(!geoFenceController->dirty());
+    QVERIFY(!rallyPointController->dirty());
 }
 
 #include "UnitTest.h"

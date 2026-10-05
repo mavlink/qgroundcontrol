@@ -358,11 +358,6 @@ void FactMetaDataTest::_verticalMetersUnitsFeetTranslation_test()
     const auto restoreUnits = qScopeGuard([vertUnitsFact, savedUnits] {
         vertUnitsFact->setRawValue(savedUnits);
     });
-    // Changing units is a qgcRebootRequired setting, so the restart-app message
-    // fires — but only when the locale-dependent default isn't already feet, so
-    // it cannot be asserted deterministically with expectAppMessage()
-    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
-                     QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
     vertUnitsFact->setRawValue(UnitsSettings::VerticalDistanceUnitsFeet);
 
     FactMetaData meta(FactMetaData::valueTypeDouble);
@@ -371,6 +366,24 @@ void FactMetaDataTest::_verticalMetersUnitsFeetTranslation_test()
     QCOMPARE(meta.cookedUnits(), QStringLiteral("ft"));
     QCOMPARE_FUZZY(meta.rawTranslator()(QVariant(1.0)).toDouble(), 3.28084, 1e-4);
     QCOMPARE_FUZZY(meta.cookedTranslator()(QVariant(3.28084)).toDouble(), 1.0, 1e-4);
+}
+
+void FactMetaDataTest::_copiedMetaDataTracksUnitsChange_test()
+{
+    Fact* const vertUnitsFact = SettingsManager::instance()->unitsSettings()->verticalDistanceUnits();
+    const QVariant savedUnits = vertUnitsFact->rawValue();
+    const auto restoreUnits = qScopeGuard([vertUnitsFact, savedUnits] { vertUnitsFact->setRawValue(savedUnits); });
+    vertUnitsFact->setRawValue(UnitsSettings::VerticalDistanceUnitsMeters);
+
+    FactMetaData meta(FactMetaData::valueTypeDouble);
+    meta.setRawUnits("vertical m");
+    const FactMetaData copy(meta);
+    QCOMPARE(copy.cookedUnits(), QStringLiteral("m"));
+
+    vertUnitsFact->setRawValue(UnitsSettings::VerticalDistanceUnitsFeet);
+
+    QCOMPARE(copy.cookedUnits(), QStringLiteral("ft"));
+    QCOMPARE_FUZZY(copy.rawTranslator()(QVariant(1.0)).toDouble(), 3.28084, 1e-4);
 }
 
 void FactMetaDataTest::_setMinMax_test()
