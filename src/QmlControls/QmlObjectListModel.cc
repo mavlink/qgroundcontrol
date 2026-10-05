@@ -249,9 +249,24 @@ void QmlObjectListModel::append(QList<QObject*> objects)
 QObjectList QmlObjectListModel::swapObjectList(const QObjectList& newlist)
 {
     QObjectList oldlist(_objectList);
+    for (qsizetype i = 0; i < oldlist.count(); i++) {
+        if (oldlist[i] && (!_skipDirtyFirstItem || i != 0)) {
+            disconnectDirtyChangedIfAvailable(oldlist[i], this);
+        }
+    }
+    bool anyItemDirty = false;
+    for (qsizetype i = 0; i < newlist.count(); i++) {
+        if (newlist[i] && (!_skipDirtyFirstItem || i != 0)) {
+            connectDirtyChangedIfAvailable(newlist[i], this);
+            anyItemDirty |= newlist[i]->property("dirty").toBool();
+        }
+    }
     beginResetModel();
     _objectList = newlist;
     endResetModel();
+    if (anyItemDirty) {
+        setDirty(true);
+    }
     return oldlist;
 }
 

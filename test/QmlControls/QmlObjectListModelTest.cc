@@ -111,4 +111,48 @@ void QmlObjectListModelTest::_appendObjectWithoutDirtySignal()
     QCOMPARE(model.dirty(), true);
 }
 
+void QmlObjectListModelTest::_swapObjectListTracksDirtyPropagation()
+{
+    TestQmlObjectListModel model;
+    TestDirtyObject oldObject;
+    TestDirtyObject newObject;
+
+    QSignalSpy modelDirtySpy(&model, &QmlObjectListModel::dirtyChanged);
+    QVERIFY(modelDirtySpy.isValid());
+
+    model.append(&oldObject);
+    (void) model.swapObjectList({&newObject});
+    model.setDirty(false);
+    modelDirtySpy.clear();
+
+    oldObject.setDirty(true);
+    QCOMPARE(modelDirtySpy.count(), 0);
+    QCOMPARE(model.dirty(), false);
+
+    newObject.setDirty(true);
+    QCOMPARE(modelDirtySpy.count(), 1);
+    QCOMPARE(modelDirtySpy.takeFirst().at(0).toBool(), true);
+    QCOMPARE(model.dirty(), true);
+}
+
+void QmlObjectListModelTest::_swapObjectListDirtyItemMarksListDirty()
+{
+    TestQmlObjectListModel model;
+    TestDirtyObject cleanObject;
+    TestDirtyObject dirtyObject;
+    dirtyObject.setDirty(true);
+
+    QSignalSpy modelDirtySpy(&model, &QmlObjectListModel::dirtyChanged);
+    QVERIFY(modelDirtySpy.isValid());
+
+    (void) model.swapObjectList({&cleanObject});
+    QCOMPARE(modelDirtySpy.count(), 0);
+    QCOMPARE(model.dirty(), false);
+
+    (void) model.swapObjectList({&cleanObject, &dirtyObject});
+    QCOMPARE(modelDirtySpy.count(), 1);
+    QCOMPARE(modelDirtySpy.takeFirst().at(0).toBool(), true);
+    QCOMPARE(model.dirty(), true);
+}
+
 UT_REGISTER_TEST(QmlObjectListModelTest, TestLabel::Unit)

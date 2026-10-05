@@ -1,22 +1,29 @@
 #include "PlanMasterControllerTest.h"
 
-#include "AppSettings.h"
-#include "SurveyPlanCreator.h"
-#include "MissionManager.h"
-#include "MultiSignalSpy.h"
-#include "MultiVehicleManager.h"
-#include "PlanMasterController.h"
-#include "QmlObjectListModel.h"
-#include "SettingsManager.h"
-#include "TakeoffMissionItem.h"
-#include "Vehicle.h"
-
 #include <QtCore/QDateTime>
 #include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QTemporaryDir>
 #include <QtTest/QSignalSpy>
+
+#include "AppSettings.h"
+#include "GeoFenceController.h"
+#include "MissionController.h"
+#include "MissionManager.h"
+#include "MultiSignalSpy.h"
+#include "MultiVehicleManager.h"
+#include "PlanMasterController.h"
+#include "QGCMapCircle.h"
+#include "QGCMapPolygon.h"
+#include "QmlObjectListModel.h"
+#include "RallyPoint.h"
+#include "RallyPointController.h"
+#include "SettingsManager.h"
+#include "SimpleMissionItem.h"
+#include "SurveyPlanCreator.h"
+#include "TakeoffMissionItem.h"
+#include "Vehicle.h"
 
 void PlanMasterControllerTest::init()
 {
@@ -674,6 +681,83 @@ void PlanMasterControllerTest::_testPlanCreatorsFiltered()
     QVERIFY(fixedWingCount > 0);
 
     QCOMPARE(fixedWingCount, multiRotorCount - 1);
+}
+
+void PlanMasterControllerTest::_testEditMarksDirtyForSave_data()
+{
+    QTest::addColumn<bool>("reloadAfterSave");
+    QTest::addColumn<QString>("editTarget");
+
+    for (const bool reload : {false, true}) {
+        for (const QString& target :
+             {QStringLiteral("waypoint"), QStringLiteral("fencePolygon"), QStringLiteral("fenceCircle"),
+              QStringLiteral("rallyPoint"), QStringLiteral("rallyPointFact")}) {
+            QTest::newRow(qPrintable(QStringLiteral("%1, %2").arg(reload ? "after load" : "after save", target)))
+                << reload << target;
+        }
+    }
+}
+
+void PlanMasterControllerTest::_testEditMarksDirtyForSave()
+{
+    QFETCH(bool, reloadAfterSave);
+    QFETCH(QString, editTarget);
+
+    const QGeoCoordinate center(47.3977, 8.5456);
+    MissionController* const missionController = _masterController->missionController();
+    GeoFenceController* const geoFenceController = _masterController->geoFenceController();
+    RallyPointController* const rallyPointController = _masterController->rallyPointController();
+    missionController->setHomePosition(center);
+    QVERIFY(missionController->insertSimpleMissionItem(center.atDistanceAndAzimuth(200, 0), 1, false));
+    geoFenceController->addInclusionPolygon(center.atDistanceAndAzimuth(500, 315),
+                                            center.atDistanceAndAzimuth(500, 135));
+    geoFenceController->addInclusionCircle(center.atDistanceAndAzimuth(300, 315),
+                                           center.atDistanceAndAzimuth(300, 135));
+    rallyPointController->addPoint(center.atDistanceAndAzimuth(100, 180));
+    QVERIFY(_masterController->dirtyForSave());
+
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const QString planFile = tempDir.filePath(QStringLiteral("edit.plan"));
+    QVERIFY(_masterController->saveToFile(planFile));
+    if (reloadAfterSave) {
+        _masterController->removeAll();
+        _masterController->loadFromFile(planFile);
+        QCOMPARE(missionController->visualItems()->count(), 2);
+        QCOMPARE(geoFenceController->polygons()->count(), 1);
+        QCOMPARE(geoFenceController->circles()->count(), 1);
+        QCOMPARE(rallyPointController->points()->count(), 1);
+    }
+    QVERIFY(!_masterController->dirtyForSave());
+
+    if (editTarget == QStringLiteral("waypoint")) {
+        SimpleMissionItem* const waypoint = missionController->visualItems()->value<SimpleMissionItem*>(1);
+        QVERIFY(waypoint);
+        waypoint->altitude()->setRawValue(waypoint->altitude()->rawValue().toDouble() + 10);
+    } else if (editTarget == QStringLiteral("fencePolygon")) {
+        QGCMapPolygon* const polygon = geoFenceController->polygons()->value<QGCMapPolygon*>(0);
+        QVERIFY(polygon);
+        polygon->adjustVertex(0, polygon->vertexCoordinate(0).atDistanceAndAzimuth(50, 0));
+    } else if (editTarget == QStringLiteral("fenceCircle")) {
+        QGCMapCircle* const circle = geoFenceController->circles()->value<QGCMapCircle*>(0);
+        QVERIFY(circle);
+        circle->radius()->setRawValue(circle->radius()->rawValue().toDouble() + 50);
+    } else if (editTarget == QStringLiteral("rallyPointFact")) {
+        // The rally point editor writes these Facts directly
+        RallyPoint* const rallyPoint = rallyPointController->points()->value<RallyPoint*>(0);
+        QVERIFY(rallyPoint);
+        const QVariantList textFieldFacts = rallyPoint->property("textFieldFacts").toList();
+        QCOMPARE(textFieldFacts.count(), 3);
+        Fact* const altitudeFact = textFieldFacts[2].value<Fact*>();
+        QVERIFY(altitudeFact);
+        altitudeFact->setRawValue(altitudeFact->rawValue().toDouble() + 10);
+    } else {
+        RallyPoint* const rallyPoint = rallyPointController->points()->value<RallyPoint*>(0);
+        QVERIFY(rallyPoint);
+        rallyPoint->setCoordinate(rallyPoint->coordinate().atDistanceAndAzimuth(50, 0));
+    }
+
+    QVERIFY(_masterController->dirtyForSave());
 }
 
 #include "UnitTest.h"

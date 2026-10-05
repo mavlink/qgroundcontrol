@@ -509,9 +509,6 @@ void PlanMasterController::removeAll(void)
     _missionController.removeAll();
     _geoFenceController.removeAll();
     _rallyPointController.removeAll();
-    _missionController.setDirty(false);
-    _geoFenceController.setDirty(false);
-    _rallyPointController.setDirty(false);
     _suppressOverallDirtyUpdate = false;
 
     _setDirtyStates(false, false);
@@ -626,9 +623,6 @@ void PlanMasterController::_showPlanFromManagerVehicle(void)
 
     // The editor now shows the vehicle's plan: not dirty, and any previous file
     // association no longer describes the contents
-    _missionController.setDirty(false);
-    _geoFenceController.setDirty(false);
-    _rallyPointController.setDirty(false);
     _clearCurrentPlanFile();
     _setDirtyStates(false, false);
 }
@@ -673,6 +667,9 @@ void PlanMasterController::_updateOverallDirty(void)
 
 void PlanMasterController::_setDirtyForSave(bool dirtyForSave)
 {
+    if (!dirtyForSave) {
+        _clearElementDirtyStates();
+    }
     if (_dirtyForSave != dirtyForSave) {
         _dirtyForSave = dirtyForSave;
         emit dirtyForSaveChanged(_dirtyForSave);
@@ -693,6 +690,10 @@ void PlanMasterController::_setDirtyForUpload(bool dirtyForUpload)
 
 void PlanMasterController::_setDirtyStates(bool dirtyForSave, bool dirtyForUpload)
 {
+    if (!dirtyForSave) {
+        _clearElementDirtyStates();
+    }
+
     const bool saveChanged = (_dirtyForSave != dirtyForSave);
     const bool uploadChanged = (_dirtyForUpload != dirtyForUpload);
 
@@ -705,6 +706,16 @@ void PlanMasterController::_setDirtyStates(bool dirtyForSave, bool dirtyForUploa
     if (uploadChanged) {
         emit dirtyForUploadChanged(_dirtyForUpload);
     }
+}
+
+// Element controllers only signal on a dirty transition, so they must be clean whenever the plan is clean for save
+void PlanMasterController::_clearElementDirtyStates()
+{
+    _suppressOverallDirtyUpdate = true;
+    _missionController.setDirty(false);
+    _geoFenceController.setDirty(false);
+    _rallyPointController.setDirty(false);
+    _suppressOverallDirtyUpdate = false;
 }
 
 void PlanMasterController::_updatePlanCreatorsList(void)
