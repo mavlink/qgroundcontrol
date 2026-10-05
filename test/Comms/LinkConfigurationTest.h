@@ -38,4 +38,8 @@ private slots:
     void _testUdpHostnameRoundtrip();
     void _testUdpRemoveByHostname();
     void _testUdpResolveHostsUpdatesAddress();
+
+    // MockConfiguration
+    void _testMockConfigurationCopiedAndPersisted();
+    void _testMockHomeLocationOutOfRangeFallsBackToPX4SITL();
 };

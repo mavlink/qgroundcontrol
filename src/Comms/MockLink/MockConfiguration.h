@@ -1,7 +1,8 @@
 #pragma once
 
-#include "LinkConfiguration.h"
+#include <QtPositioning/QGeoCoordinate>
 
+#include "LinkConfiguration.h"
 #include "MAVLinkEnums.h"
 
 class MockConfiguration : public LinkConfiguration
@@ -14,6 +15,7 @@ class MockConfiguration : public LinkConfiguration
     Q_PROPERTY(bool enableCamera                         READ enableCamera                        WRITE setEnableCamera                        NOTIFY enableCameraChanged)
     Q_PROPERTY(bool enableGimbal                        READ enableGimbal                        WRITE setEnableGimbal                        NOTIFY enableGimbalChanged)
     Q_PROPERTY(bool enableProximity                      READ enableProximity                     WRITE setEnableProximity                     NOTIFY enableProximityChanged)
+    Q_PROPERTY(bool enableADSB READ enableADSB WRITE setEnableADSB NOTIFY enableADSBChanged)
     Q_PROPERTY(bool gimbalHasRollAxis                   READ gimbalHasRollAxis                   WRITE setGimbalHasRollAxis                   NOTIFY gimbalHasRollAxisChanged)
     Q_PROPERTY(bool gimbalHasPitchAxis                  READ gimbalHasPitchAxis                  WRITE setGimbalHasPitchAxis                  NOTIFY gimbalHasPitchAxisChanged)
     Q_PROPERTY(bool gimbalHasYawAxis                    READ gimbalHasYawAxis                    WRITE setGimbalHasYawAxis                    NOTIFY gimbalHasYawAxisChanged)
@@ -33,6 +35,7 @@ class MockConfiguration : public LinkConfiguration
     Q_PROPERTY(bool cameraHasTrackingPoint               READ cameraHasTrackingPoint              WRITE setCameraHasTrackingPoint              NOTIFY cameraHasTrackingPointChanged)
     Q_PROPERTY(bool cameraHasTrackingRectangle           READ cameraHasTrackingRectangle          WRITE setCameraHasTrackingRectangle          NOTIFY cameraHasTrackingRectangleChanged)
     Q_PROPERTY(int  videoStreamType                      READ videoStreamType                     WRITE setVideoStreamType                     NOTIFY videoStreamTypeChanged)
+    Q_PROPERTY(int homeLocation READ homeLocation WRITE setHomeLocation NOTIFY homeLocationChanged)
 
 public:
     explicit MockConfiguration(const QString &name, QObject *parent = nullptr);
@@ -67,6 +70,16 @@ public:
     };
     Q_ENUM(VideoStreamType)
 
+    /// Simulated vehicle home position.
+    /// Order must match the combo box model in MockLinkSettings.qml / MockLink.qml.
+    enum HomeLocation
+    {
+        HomeLocationPX4SITL = 0,    ///< PX4 Gazebo SITL default (Zurich), allows mixing with a SITL vehicle
+        HomeLocationArduPilotSITL,  ///< ArduPilot SITL default (CMAC, Canberra)
+        HomeLocationTerrainTest,    ///< Location with good terrain elevation variation
+    };
+    Q_ENUM(HomeLocation)
+
     LinkType type() const final { return LinkConfiguration::TypeMock; }
     void copyFrom(const LinkConfiguration *source) final;
     void loadSettings(QSettings &settings, const QString &root) final;
@@ -97,6 +110,14 @@ public:
     void setEnableGimbal(bool enableGimbal) { _enableGimbal = enableGimbal; emit enableGimbalChanged(); }
     bool enableProximity() const { return _enableProximity; }
     void setEnableProximity(bool enableProximity) { _enableProximity = enableProximity; emit enableProximityChanged(); }
+
+    bool enableADSB() const { return _enableADSB; }
+
+    void setEnableADSB(bool enableADSB)
+    {
+        _enableADSB = enableADSB;
+        emit enableADSBChanged();
+    }
 
     bool gimbalHasRollAxis() const { return _gimbalHasRollAxis; }
     void setGimbalHasRollAxis(bool value) { _gimbalHasRollAxis = value; emit gimbalHasRollAxisChanged(); }
@@ -146,6 +167,27 @@ public:
         return ((value >= VideoStreamNone) && (value <= VideoStreamMpegTsTcp)) ? static_cast<VideoStreamType>(value) : VideoStreamNone;
     }
 
+    int homeLocation() const { return static_cast<int>(_homeLocation); }
+
+    void setHomeLocation(int value)
+    {
+        _homeLocation = homeLocationFromInt(value);
+        emit homeLocationChanged();
+    }
+
+    HomeLocation homeLocationEnum() const { return _homeLocation; }
+
+    /// Maps an int (QML combo index / persisted setting) to a valid HomeLocation.
+    /// Out-of-range values (e.g. corrupted settings) map to HomeLocationPX4SITL.
+    static HomeLocation homeLocationFromInt(int value)
+    {
+        return ((value >= HomeLocationPX4SITL) && (value <= HomeLocationTerrainTest)) ? static_cast<HomeLocation>(value)
+                                                                                      : HomeLocationPX4SITL;
+    }
+
+    /// Home coordinate, altitude AMSL, for the given location
+    static QGeoCoordinate homeCoordinate(HomeLocation location);
+
     enum FailureMode_t {
         FailNone,                                                   ///< No failures
         FailParamNoResponseToRequestList,                           ///< Do not respond to PARAM_REQUEST_LIST
@@ -192,6 +234,7 @@ signals:
     void enableCameraChanged();
     void enableGimbalChanged();
     void enableProximityChanged();
+    void enableADSBChanged();
     void gimbalHasRollAxisChanged();
     void gimbalHasPitchAxisChanged();
     void gimbalHasYawAxisChanged();
@@ -211,6 +254,7 @@ signals:
     void cameraHasTrackingPointChanged();
     void cameraHasTrackingRectangleChanged();
     void videoStreamTypeChanged();
+    void homeLocationChanged();
 
 private:
     MAV_AUTOPILOT _firmwareType = MAV_AUTOPILOT_PX4;
@@ -220,6 +264,7 @@ private:
     bool _enableCamera = false;
     bool _enableGimbal = false;
     bool _enableProximity = false;
+    bool _enableADSB = false;
     FailureMode_t _failureMode = FailNone;
     bool _incrementVehicleId = true;
     uint16_t _boardVendorId = 0;
@@ -241,6 +286,7 @@ private:
     bool _cameraHasTrackingPoint = true;
     bool _cameraHasTrackingRectangle = true;
     VideoStreamType _videoStreamType = VideoStreamNone;
+    HomeLocation _homeLocation = HomeLocationPX4SITL;
 
     // Gimbal capability flags (defaults - all enabled)
     bool _gimbalHasRollAxis = true;
@@ -259,6 +305,7 @@ private:
     static constexpr const char *_enableCameraKey = "EnableCamera";
     static constexpr const char *_enableGimbalKey = "EnableGimbal";
     static constexpr const char *_enableProximityKey = "EnableProximity";
+    static constexpr const char* _enableADSBKey = "EnableADSB";
     static constexpr const char *_gimbalHasRollAxisKey = "GimbalHasRollAxis";
     static constexpr const char *_gimbalHasPitchAxisKey = "GimbalHasPitchAxis";
     static constexpr const char *_gimbalHasYawAxisKey = "GimbalHasYawAxis";
@@ -279,6 +326,7 @@ private:
     static constexpr const char *_cameraHasTrackingPointKey = "CameraHasTrackingPoint";
     static constexpr const char *_cameraHasTrackingRectangleKey = "CameraHasTrackingRectangle";
     static constexpr const char *_videoStreamTypeKey = "VideoStreamType";
+    static constexpr const char* _homeLocationKey = "HomeLocation";
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(MockConfiguration::Options)

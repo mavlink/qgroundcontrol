@@ -1,13 +1,13 @@
 #include "LinkConfigurationTest.h"
 
-#include "LinkConfiguration.h"
-#include "TCPLink.h"
-#include "UDPLink.h"
-
-#include "Fixtures/RAIIFixtures.h"
-
 #include <QtCore/QSettings>
 #include <QtTest/QSignalSpy>
+
+#include "Fixtures/RAIIFixtures.h"
+#include "LinkConfiguration.h"
+#include "MockConfiguration.h"
+#include "TCPLink.h"
+#include "UDPLink.h"
 
 // ============================================================================
 // LinkConfiguration base tests (exercised via TCPConfiguration)
@@ -466,6 +466,45 @@ void LinkConfigurationTest::_testUdpResolveHostsUpdatesAddress()
     const QHostAddress resolved = targets.constFirst()->address;
     QVERIFY(!resolved.isNull());
     QVERIFY(resolved.isLoopback());
+}
+
+void LinkConfigurationTest::_testMockConfigurationCopiedAndPersisted()
+{
+    MockConfiguration original(QStringLiteral("MockOrig"));
+    QVERIFY(!original.enableADSB());
+    original.setHomeLocation(MockConfiguration::HomeLocationArduPilotSITL);
+    original.setEnableADSB(true);
+
+    const MockConfiguration copy(&original);
+    QCOMPARE(copy.homeLocationEnum(), MockConfiguration::HomeLocationArduPilotSITL);
+    QVERIFY(copy.enableADSB());
+
+    MockConfiguration dest(QStringLiteral("MockDest"));
+    dest.copyFrom(&original);
+    QCOMPARE(dest.homeLocationEnum(), MockConfiguration::HomeLocationArduPilotSITL);
+    QVERIFY(dest.enableADSB());
+
+    TestFixtures::TempDirFixture tmpDir;
+    QVERIFY(tmpDir.isValid());
+    QSettings settings(tmpDir.path() + QStringLiteral("/settings.ini"), QSettings::IniFormat);
+    const QString root = QStringLiteral("LinkConfigTest_Mock");
+    original.saveSettings(settings, root);
+
+    MockConfiguration loaded(QStringLiteral("MockLoad"));
+    loaded.loadSettings(settings, root);
+    QCOMPARE(loaded.homeLocationEnum(), MockConfiguration::HomeLocationArduPilotSITL);
+    QVERIFY(loaded.enableADSB());
+}
+
+void LinkConfigurationTest::_testMockHomeLocationOutOfRangeFallsBackToPX4SITL()
+{
+    MockConfiguration config(QStringLiteral("MockHomeRange"));
+
+    config.setHomeLocation(MockConfiguration::HomeLocationTerrainTest + 1);
+    QCOMPARE(config.homeLocationEnum(), MockConfiguration::HomeLocationPX4SITL);
+
+    config.setHomeLocation(-1);
+    QCOMPARE(config.homeLocationEnum(), MockConfiguration::HomeLocationPX4SITL);
 }
 
 UT_REGISTER_TEST(LinkConfigurationTest, TestLabel::Unit, TestLabel::Comms)
