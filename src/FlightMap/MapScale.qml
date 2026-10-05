@@ -130,6 +130,11 @@ Item {
         function onZoomLevelChanged() { triggerRecalc() }
     }
 
+    Connections {
+        target: QGroundControl.unitsConversion
+        function onUnitsChanged() { triggerRecalc() }
+    }
+
     PropertyAnimation {
         id:         autoHideAnimation
         target:     control
@@ -147,6 +152,7 @@ Item {
 
     QGCMapLabel {
         id:                 scaleText
+        objectName:         "scaleText"
         map:                mapControl
         font.bold:          true
         anchors.left:       parent.left

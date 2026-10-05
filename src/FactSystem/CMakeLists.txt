@@ -17,8 +17,6 @@ target_sources(${CMAKE_PROJECT_NAME}
         FactGroupWithId.h
         FactMetaData.cc
         FactMetaData.h
-        FactValueSliderListModel.cc
-        FactValueSliderListModel.h
         ParameterManager.cc
         ParameterManager.h
         SettingsFact.cc

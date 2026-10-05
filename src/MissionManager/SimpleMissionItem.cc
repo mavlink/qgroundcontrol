@@ -107,19 +107,19 @@ SimpleMissionItem::SimpleMissionItem(PlanMasterController* masterController, boo
 void SimpleMissionItem::_connectSignals(void)
 {
     // Connect to change signals to track dirty state
-    connect(&_missionItem._param1Fact,          &Fact::valueChanged,                        this, &SimpleMissionItem::_setDirty);
-    connect(&_missionItem._param2Fact,          &Fact::valueChanged,                        this, &SimpleMissionItem::_setDirty);
-    connect(&_missionItem._param3Fact,          &Fact::valueChanged,                        this, &SimpleMissionItem::_setDirty);
-    connect(&_missionItem._param4Fact,          &Fact::valueChanged,                        this, &SimpleMissionItem::_setDirty);
-    connect(&_missionItem._param5Fact,          &Fact::valueChanged,                        this, &SimpleMissionItem::_setDirty);
-    connect(&_missionItem._param6Fact,          &Fact::valueChanged,                        this, &SimpleMissionItem::_setDirty);
-    connect(&_missionItem._param7Fact,          &Fact::valueChanged,                        this, &SimpleMissionItem::_setDirty);
-    connect(&_missionItem._frameFact,           &Fact::valueChanged,                        this, &SimpleMissionItem::_setDirty);
-    connect(&_missionItem._commandFact,         &Fact::valueChanged,                        this, &SimpleMissionItem::_setDirty);
+    connect(&_missionItem._param1Fact,          &Fact::rawValueChanged,                     this, &SimpleMissionItem::_setDirty);
+    connect(&_missionItem._param2Fact,          &Fact::rawValueChanged,                     this, &SimpleMissionItem::_setDirty);
+    connect(&_missionItem._param3Fact,          &Fact::rawValueChanged,                     this, &SimpleMissionItem::_setDirty);
+    connect(&_missionItem._param4Fact,          &Fact::rawValueChanged,                     this, &SimpleMissionItem::_setDirty);
+    connect(&_missionItem._param5Fact,          &Fact::rawValueChanged,                     this, &SimpleMissionItem::_setDirty);
+    connect(&_missionItem._param6Fact,          &Fact::rawValueChanged,                     this, &SimpleMissionItem::_setDirty);
+    connect(&_missionItem._param7Fact,          &Fact::rawValueChanged,                     this, &SimpleMissionItem::_setDirty);
+    connect(&_missionItem._frameFact,           &Fact::rawValueChanged,                     this, &SimpleMissionItem::_setDirty);
+    connect(&_missionItem._commandFact,         &Fact::rawValueChanged,                     this, &SimpleMissionItem::_setDirty);
     connect(&_missionItem,                      &MissionItem::sequenceNumberChanged,        this, &SimpleMissionItem::_setDirty);
     connect(this,                               &SimpleMissionItem::altitudeFrameChanged,    this, &SimpleMissionItem::_setDirty);
 
-    connect(&_altitudeFact,                     &Fact::valueChanged,                        this, &SimpleMissionItem::_altitudeChanged);
+    connect(&_altitudeFact,                     &Fact::rawValueChanged,                     this, &SimpleMissionItem::_altitudeChanged);
     connect(this,                               &SimpleMissionItem::altitudeFrameChanged,    this, &SimpleMissionItem::_altitudeFrameChanged);
     connect(this,                               &SimpleMissionItem::terrainAltitudeChanged, this, &SimpleMissionItem::_terrainAltChanged);
 

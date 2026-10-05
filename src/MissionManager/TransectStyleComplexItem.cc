@@ -38,16 +38,16 @@ TransectStyleComplexItem::TransectStyleComplexItem(PlanMasterController* masterC
     connect(this, &TransectStyleComplexItem::_updateFlightPathSegmentsSignal, this, &TransectStyleComplexItem::_updateFlightPathSegmentsDontCallDirectly,   Qt::QueuedConnection);
     qgcApp()->addCompressedSignal(QMetaMethod::fromSignal(&TransectStyleComplexItem::_updateFlightPathSegmentsSignal));
 
-    connect(&_turnAroundDistanceFact,                   &Fact::valueChanged,                this, &TransectStyleComplexItem::_rebuildTransects);
-    connect(&_hoverAndCaptureFact,                      &Fact::valueChanged,                this, &TransectStyleComplexItem::_rebuildTransects);
-    connect(&_refly90DegreesFact,                       &Fact::valueChanged,                this, &TransectStyleComplexItem::_rebuildTransects);
-    connect(&_terrainAdjustMaxClimbRateFact,            &Fact::valueChanged,                this, &TransectStyleComplexItem::_rebuildTransects);
-    connect(&_terrainAdjustMaxDescentRateFact,          &Fact::valueChanged,                this, &TransectStyleComplexItem::_rebuildTransects);
-    connect(&_terrainAdjustToleranceFact,               &Fact::valueChanged,                this, &TransectStyleComplexItem::_rebuildTransects);
+    connect(&_turnAroundDistanceFact,                   &Fact::rawValueChanged,             this, &TransectStyleComplexItem::_rebuildTransects);
+    connect(&_hoverAndCaptureFact,                      &Fact::rawValueChanged,             this, &TransectStyleComplexItem::_rebuildTransects);
+    connect(&_refly90DegreesFact,                       &Fact::rawValueChanged,             this, &TransectStyleComplexItem::_rebuildTransects);
+    connect(&_terrainAdjustMaxClimbRateFact,            &Fact::rawValueChanged,             this, &TransectStyleComplexItem::_rebuildTransects);
+    connect(&_terrainAdjustMaxDescentRateFact,          &Fact::rawValueChanged,             this, &TransectStyleComplexItem::_rebuildTransects);
+    connect(&_terrainAdjustToleranceFact,               &Fact::rawValueChanged,             this, &TransectStyleComplexItem::_rebuildTransects);
     connect(&_surveyAreaPolygon,                        &QGCMapPolygon::pathChanged,        this, &TransectStyleComplexItem::_rebuildTransects);
-    connect(&_cameraTriggerInTurnAroundFact,            &Fact::valueChanged,                this, &TransectStyleComplexItem::_rebuildTransects);
-    connect(_cameraCalc.adjustedFootprintSide(),        &Fact::valueChanged,                this, &TransectStyleComplexItem::_rebuildTransects);
-    connect(_cameraCalc.adjustedFootprintFrontal(),     &Fact::valueChanged,                this, &TransectStyleComplexItem::_rebuildTransects);
+    connect(&_cameraTriggerInTurnAroundFact,            &Fact::rawValueChanged,             this, &TransectStyleComplexItem::_rebuildTransects);
+    connect(_cameraCalc.adjustedFootprintSide(),        &Fact::rawValueChanged,             this, &TransectStyleComplexItem::_rebuildTransects);
+    connect(_cameraCalc.adjustedFootprintFrontal(),     &Fact::rawValueChanged,             this, &TransectStyleComplexItem::_rebuildTransects);
     connect(_cameraCalc.distanceToSurface(),            &Fact::rawValueChanged,             this, &TransectStyleComplexItem::_rebuildTransects);
     connect(&_cameraCalc,                               &CameraCalc::distanceModeChanged,   this, &TransectStyleComplexItem::_rebuildTransects);
 
@@ -61,13 +61,13 @@ TransectStyleComplexItem::TransectStyleComplexItem(PlanMasterController* masterC
     connect(&_refly90DegreesFact,                       &Fact::valueChanged,            this, &TransectStyleComplexItem::greatestDistanceToChanged);
     connect(&_surveyAreaPolygon,                        &QGCMapPolygon::pathChanged,    this, &TransectStyleComplexItem::greatestDistanceToChanged);
 
-    connect(&_turnAroundDistanceFact,                   &Fact::valueChanged,            this, &TransectStyleComplexItem::_setDirty);
-    connect(&_cameraTriggerInTurnAroundFact,            &Fact::valueChanged,            this, &TransectStyleComplexItem::_setDirty);
-    connect(&_hoverAndCaptureFact,                      &Fact::valueChanged,            this, &TransectStyleComplexItem::_setDirty);
-    connect(&_refly90DegreesFact,                       &Fact::valueChanged,            this, &TransectStyleComplexItem::_setDirty);
-    connect(&_terrainAdjustMaxClimbRateFact,            &Fact::valueChanged,            this, &TransectStyleComplexItem::_setDirty);
-    connect(&_terrainAdjustMaxDescentRateFact,          &Fact::valueChanged,            this, &TransectStyleComplexItem::_setDirty);
-    connect(&_terrainAdjustToleranceFact,               &Fact::valueChanged,            this, &TransectStyleComplexItem::_setDirty);
+    connect(&_turnAroundDistanceFact,                   &Fact::rawValueChanged,         this, &TransectStyleComplexItem::_setDirty);
+    connect(&_cameraTriggerInTurnAroundFact,            &Fact::rawValueChanged,         this, &TransectStyleComplexItem::_setDirty);
+    connect(&_hoverAndCaptureFact,                      &Fact::rawValueChanged,         this, &TransectStyleComplexItem::_setDirty);
+    connect(&_refly90DegreesFact,                       &Fact::rawValueChanged,         this, &TransectStyleComplexItem::_setDirty);
+    connect(&_terrainAdjustMaxClimbRateFact,            &Fact::rawValueChanged,         this, &TransectStyleComplexItem::_setDirty);
+    connect(&_terrainAdjustMaxDescentRateFact,          &Fact::rawValueChanged,         this, &TransectStyleComplexItem::_setDirty);
+    connect(&_terrainAdjustToleranceFact,               &Fact::rawValueChanged,         this, &TransectStyleComplexItem::_setDirty);
     connect(&_surveyAreaPolygon,                        &QGCMapPolygon::pathChanged,    this, &TransectStyleComplexItem::_setDirty);
 
     connect(&_surveyAreaPolygon,                        &QGCMapPolygon::dirtyChanged,   this, &TransectStyleComplexItem::_setIfDirty);

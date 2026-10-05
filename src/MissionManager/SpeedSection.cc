@@ -31,7 +31,7 @@ SpeedSection::SpeedSection(PlanMasterController* masterController, QObject* pare
     _flightSpeedFact.setRawValue(flightSpeed);
 
     connect(this,               &SpeedSection::specifyFlightSpeedChanged,   this, &SpeedSection::settingsSpecifiedChanged);
-    connect(&_flightSpeedFact,  &Fact::valueChanged,                        this, &SpeedSection::_flightSpeedChanged);
+    connect(&_flightSpeedFact,  &Fact::rawValueChanged,                     this, &SpeedSection::_flightSpeedChanged);
 
     connect(this,               &SpeedSection::specifyFlightSpeedChanged,   this, &SpeedSection::_updateSpecifiedFlightSpeed);
     connect(&_flightSpeedFact,  &Fact::valueChanged,                        this, &SpeedSection::_updateSpecifiedFlightSpeed);

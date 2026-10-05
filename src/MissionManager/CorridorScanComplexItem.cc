@@ -24,13 +24,13 @@ CorridorScanComplexItem::CorridorScanComplexItem(PlanMasterController* masterCon
         _cameraCalc.distanceToSurface()->setRawValue(SettingsManager::instance()->appSettings()->defaultMissionItemAltitude()->rawValue());
     }
 
-    connect(&_corridorWidthFact,    &Fact::valueChanged,                            this, &CorridorScanComplexItem::_setDirty);
+    connect(&_corridorWidthFact,    &Fact::rawValueChanged,                         this, &CorridorScanComplexItem::_setDirty);
     connect(&_corridorPolyline,     &QGCMapPolyline::pathChanged,                   this, &CorridorScanComplexItem::_setDirty);
 
     connect(&_corridorPolyline,     &QGCMapPolyline::dirtyChanged,                  this, &CorridorScanComplexItem::_polylineDirtyChanged);
 
     connect(&_corridorPolyline,     &QGCMapPolyline::pathChanged,                   this, &CorridorScanComplexItem::_rebuildCorridorPolygon);
-    connect(&_corridorWidthFact,    &Fact::valueChanged,                            this, &CorridorScanComplexItem::_rebuildCorridorPolygon);
+    connect(&_corridorWidthFact,    &Fact::rawValueChanged,                         this, &CorridorScanComplexItem::_rebuildCorridorPolygon);
 
     connect(&_corridorPolyline,     &QGCMapPolyline::countChanged,                  this, &CorridorScanComplexItem::_updateSpecifiesCoordinate);
 

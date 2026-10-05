@@ -44,6 +44,10 @@ Item {
         ? size * _camera.distance * _camera.unitsPerPixelAtUnitDistance / 100
         : 1
 
+    function _labelText() {
+        return root._hasAltitude ? QGroundControl.unitsConversion.metersToAppSettingsVerticalDistanceUnitsString(root.altitude, 0) + "\n" + root.callsign : ""
+    }
+
     // Drop shadow on the terrain below the target, draped as a filled circle
     // so it follows slopes instead of clipping into them (a flat 3D quad at
     // the sampled ground height gets partially buried on sloped terrain).
@@ -122,13 +126,23 @@ Item {
         }
 
         QGCLabel {
+            id: altitudeLabel
+            objectName: "adsbAltitudeLabel"
             anchors.top: parent.bottom
             anchors.horizontalCenter: parent.horizontalCenter
             horizontalAlignment: Text.AlignHCenter
             color: "white"
             font.bold: true
             visible: root._hasAltitude
-            text: visible ? QGroundControl.unitsConversion.metersToAppSettingsVerticalDistanceUnitsString(root.altitude, 0) + "\n" + root.callsign : ""
+            text: root._labelText()
+        }
+    }
+
+    Connections {
+        target: QGroundControl.unitsConversion
+
+        function onUnitsChanged() {
+            altitudeLabel.text = Qt.binding(root._labelText)
         }
     }
 }

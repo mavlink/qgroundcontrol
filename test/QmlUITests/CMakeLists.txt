@@ -34,6 +34,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         ${CMAKE_CURRENT_SOURCE_DIR}/FlyViewCameraCaptureUITest.h
         ${CMAKE_CURRENT_SOURCE_DIR}/FlyViewCameraZoomUITest.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/FlyViewCameraZoomUITest.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/FlyViewGuidedUnitsUITest.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/FlyViewGuidedUnitsUITest.h
         ${CMAKE_CURRENT_SOURCE_DIR}/FlyViewProximityRadarUITest.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/FlyViewProximityRadarUITest.h
         ${CMAKE_CURRENT_SOURCE_DIR}/FlyViewROIUITest.cc
@@ -76,6 +78,7 @@ add_qgc_test(PX4AirframeSetupUITest LABELS Integration NoSanitizer StockUI TIMEO
 add_qgc_test(AppCloseWarningUITest LABELS Integration NoSanitizer TIMEOUT 120)
 add_qgc_test(FlyViewCameraCaptureUITest LABELS Integration NoSanitizer TIMEOUT 120)
 add_qgc_test(FlyViewCameraZoomUITest LABELS Integration NoSanitizer TIMEOUT 120)
+add_qgc_test(FlyViewGuidedUnitsUITest LABELS Integration NoSanitizer TIMEOUT 120)
 add_qgc_test(FlyViewProximityRadarUITest LABELS Integration NoSanitizer TIMEOUT 120)
 add_qgc_test(FlyViewROIUITest LABELS Integration NoSanitizer TIMEOUT 120)
 add_qgc_test(FlyViewROIAPMUITest LABELS Integration NoSanitizer TIMEOUT 120)

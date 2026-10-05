@@ -9,23 +9,20 @@
 
 #include "FactMetaData.h"
 
-class FactValueSliderListModel;
-
 /// \brief A Fact is used to hold a single value within the system.
 ///
 class Fact : public QObject
 {
     Q_OBJECT
     QML_ELEMENT
-    Q_MOC_INCLUDE("FactValueSliderListModel.h")
     Q_PROPERTY(int          componentId             READ componentId                                            CONSTANT)
     Q_PROPERTY(QStringList  bitmaskStrings          READ bitmaskStrings                                         NOTIFY bitmaskStringsChanged)
     Q_PROPERTY(QVariantList bitmaskValues           READ bitmaskValues                                          NOTIFY bitmaskValuesChanged)
     Q_PROPERTY(QStringList  selectedBitmaskStrings  READ selectedBitmaskStrings                                 NOTIFY valueChanged)
-    Q_PROPERTY(int          decimalPlaces           READ decimalPlaces                                          CONSTANT)
+    Q_PROPERTY(int          decimalPlaces           READ decimalPlaces                                          NOTIFY cookedValuesChanged)
     Q_PROPERTY(int          maxStringLength         READ maxStringLength                                        CONSTANT)
-    Q_PROPERTY(QVariant     defaultValue            READ cookedDefaultValue                                     CONSTANT)
-    Q_PROPERTY(QString      defaultValueString      READ cookedDefaultValueString                               CONSTANT)
+    Q_PROPERTY(QVariant     defaultValue            READ cookedDefaultValue                                     NOTIFY cookedValuesChanged)
+    Q_PROPERTY(QString      defaultValueString      READ cookedDefaultValueString                               NOTIFY cookedValuesChanged)
     Q_PROPERTY(bool         defaultValueAvailable   READ defaultValueAvailable                                  CONSTANT)
     Q_PROPERTY(int          enumIndex               READ enumIndex                  WRITE setEnumIndex          NOTIFY valueChanged)
     Q_PROPERTY(QStringList  enumStrings             READ enumStrings                                            NOTIFY enumsChanged)
@@ -34,29 +31,29 @@ class Fact : public QObject
     Q_PROPERTY(QString      category                READ category                                               CONSTANT)
     Q_PROPERTY(QString      group                   READ group                                                  CONSTANT)
     Q_PROPERTY(QString      longDescription         READ longDescription                                        CONSTANT)
-    Q_PROPERTY(QVariant     max                     READ cookedMax                                              CONSTANT)
-    Q_PROPERTY(QString      maxString               READ cookedMaxString                                        CONSTANT)
+    Q_PROPERTY(QVariant     max                     READ cookedMax                                              NOTIFY cookedValuesChanged)
+    Q_PROPERTY(QString      maxString               READ cookedMaxString                                        NOTIFY cookedValuesChanged)
     Q_PROPERTY(bool         maxIsDefaultForType     READ maxIsDefaultForType                                    CONSTANT)
-    Q_PROPERTY(QVariant     min                     READ cookedMin                                              CONSTANT)
-    Q_PROPERTY(QString      minString               READ cookedMinString                                        CONSTANT)
+    Q_PROPERTY(QVariant     min                     READ cookedMin                                              NOTIFY cookedValuesChanged)
+    Q_PROPERTY(QString      minString               READ cookedMinString                                        NOTIFY cookedValuesChanged)
     Q_PROPERTY(bool         minIsDefaultForType     READ minIsDefaultForType                                    CONSTANT)
-    Q_PROPERTY(QVariant     userMin                 READ cookedUserMin                                          CONSTANT)
-    Q_PROPERTY(QString      userMinString           READ cookedUserMinString                                    CONSTANT)
-    Q_PROPERTY(QVariant     userMax                 READ cookedUserMax                                          CONSTANT)
-    Q_PROPERTY(QString      userMaxString           READ cookedUserMaxString                                    CONSTANT)
+    Q_PROPERTY(QVariant     userMin                 READ cookedUserMin                                          NOTIFY cookedValuesChanged)
+    Q_PROPERTY(QString      userMinString           READ cookedUserMinString                                    NOTIFY cookedValuesChanged)
+    Q_PROPERTY(QVariant     userMax                 READ cookedUserMax                                          NOTIFY cookedValuesChanged)
+    Q_PROPERTY(QString      userMaxString           READ cookedUserMaxString                                    NOTIFY cookedValuesChanged)
     Q_PROPERTY(QString      name                    READ name                                                   CONSTANT)
     Q_PROPERTY(bool         vehicleRebootRequired   READ vehicleRebootRequired                                  CONSTANT)
     Q_PROPERTY(bool         qgcRebootRequired       READ qgcRebootRequired                                      CONSTANT)
     Q_PROPERTY(QString      shortDescription        READ shortDescription                                       CONSTANT)
     Q_PROPERTY(QString      label                   READ label                                                  CONSTANT)
-    Q_PROPERTY(QString      units                   READ cookedUnits                                            CONSTANT)
+    Q_PROPERTY(QString      units                   READ cookedUnits                                            NOTIFY cookedValuesChanged)
     Q_PROPERTY(QVariant     value                   READ cookedValue                WRITE setCookedValue        NOTIFY valueChanged)
     Q_PROPERTY(QVariant     rawValue                READ rawValue                   WRITE setRawValue           NOTIFY rawValueChanged)
     Q_PROPERTY(bool         valueEqualsDefault      READ valueEqualsDefault                                     NOTIFY valueChanged)
-    Q_PROPERTY(QString      invalidValueString      READ invalidValueString                                     CONSTANT)
+    Q_PROPERTY(QString      invalidValueString      READ invalidValueString                                     NOTIFY cookedValuesChanged)
     Q_PROPERTY(QString      valueString             READ cookedValueString                                      NOTIFY valueChanged)
     Q_PROPERTY(QString      enumOrValueString       READ enumOrValueString                                      NOTIFY valueChanged)
-    Q_PROPERTY(double       increment               READ cookedIncrement                                        CONSTANT)
+    Q_PROPERTY(double       increment               READ cookedIncrement                                        NOTIFY cookedValuesChanged)
     Q_PROPERTY(bool         typeIsString            READ typeIsString                                           CONSTANT)
     Q_PROPERTY(bool         typeIsBool              READ typeIsBool                                             CONSTANT)
     Q_PROPERTY(bool         hasControl              READ hasControl                                             CONSTANT)
@@ -147,8 +144,6 @@ public:
     bool writeOnly() const;
     bool volatileValue() const;
 
-    Q_INVOKABLE FactValueSliderListModel *valueSliderModel();
-
     /// Returns the values as a string with full 18 digit precision if float/double.
     QString rawValueStringFullPrecision() const;
 
@@ -188,6 +183,8 @@ public:
 signals:
     void bitmaskStringsChanged();
     void bitmaskValuesChanged();
+    /// Cooked units, ranges, defaults, increment or precision changed without a raw value change
+    void cookedValuesChanged();
     void enumsChanged();
     void sendValueChangedSignalsChanged(bool sendValueChangedSignals);
 
@@ -213,11 +210,11 @@ protected:
     FactMetaData *_metaData = nullptr;
     bool _sendValueChangedSignals = true;
     bool _deferredValueChangeSignal = false;
-    FactValueSliderListModel *_valueSliderModel = nullptr;
 
     static constexpr const char *kMissingMetadata = "Meta data pointer missing";
 
 private slots:
+    void _appSettingsUnitsChanged();
     void _checkForRebootMessaging();
 
 private:

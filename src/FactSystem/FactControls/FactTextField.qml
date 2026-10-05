@@ -21,6 +21,11 @@ QGCTextField {
     onEditingFinished: _onEditingFinished()
 
     function _onEditingFinished() {
+        // Focus loss also lands here; writing back the unedited, rounded display text would change the value
+        if (text === fact.valueString) {
+            clearValidationError()
+            return
+        }
         var errorString = fact.validate(text, false /* convertOnly */)
         if (errorString === "") {
             clearValidationError()

@@ -242,6 +242,13 @@ public:
     static constexpr const char *kDefaultGroup = QT_TRANSLATE_NOOP("FactMetaData", "Misc");
     static constexpr const char *qgcFileType = "FactMetaData";
 
+signals:
+    /// Translators and cooked units were updated to a new app units setting
+    void appSettingsUnitsChanged();
+
+private slots:
+    void _appSettingsUnitsChanged();
+
 private:
     QVariant _minForType() const { return minForType(_type); };
     QVariant _maxForType() const { return maxForType(_type); };
@@ -361,6 +368,7 @@ private:
     QString _cookedUnits;
     Translator _rawTranslator = _defaultTranslator;
     Translator _cookedTranslator = _defaultTranslator;
+    QMetaObject::Connection _appSettingsUnitsConnection;
     bool _vehicleRebootRequired = false;
     bool _qgcRebootRequired = false;
     double _rawIncrement = std::numeric_limits<double>::quiet_NaN();
