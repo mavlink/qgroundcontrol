@@ -905,6 +905,57 @@ void MissionControllerTest::_testSplitSegmentTracksSegmentRebuild()
     QCOMPARE(splitSegmentChangedSpy.count(), 1);
 }
 
+void MissionControllerTest::_testSplitSegmentWhenCurrentItemGainsCoordinate()
+{
+    _initForFirmwareType(MAV_AUTOPILOT_PX4);
+
+    MissionSettingsItem* settingsItem = _missionController->visualItems()->value<MissionSettingsItem*>(0);
+    QVERIFY(settingsItem);
+    const QGeoCoordinate home = Coord::zurich();
+    settingsItem->setCoordinate(home);
+
+    SimpleMissionItem* wp1 = qobject_cast<SimpleMissionItem*>(
+        _missionController->insertSimpleMissionItem(home.atDistanceAndAzimuth(100, 0), 1, true /* makeCurrentItem */));
+    SimpleMissionItem* wp2 = qobject_cast<SimpleMissionItem*>(
+        _missionController->insertSimpleMissionItem(home.atDistanceAndAzimuth(200, 0), 2, true /* makeCurrentItem */));
+    QVERIFY(wp1);
+    QVERIFY(wp2);
+
+    const auto splitSegment = [this]() {
+        return _missionController->property("splitSegment").value<FlightPathSegment*>();
+    };
+    QVERIFY_TRUE_WAIT(splitSegment() != nullptr, TestTimeout::mediumMs());
+
+    // Current item loses its coordinate: no split segment
+    wp2->setCommand(MAV_CMD_DO_CHANGE_SPEED);
+    QVERIFY_TRUE_WAIT(splitSegment() == nullptr, TestTimeout::mediumMs());
+
+    // Current item regains a coordinate without being reselected: wp1->wp2 must become the split segment
+    QSignalSpy splitSegmentChangedSpy(_missionController, &MissionController::splitSegmentChanged);
+    wp2->setMapCenterHintForCommandChange(home.atDistanceAndAzimuth(200, 0));
+    wp2->setCommand(MAV_CMD_NAV_WAYPOINT);
+    QVERIFY_TRUE_WAIT(wp1->simpleFlightPathSegment() != nullptr, TestTimeout::mediumMs());
+
+    QCOMPARE(quintptr(splitSegment()), quintptr(wp1->simpleFlightPathSegment()));
+    QCOMPARE(splitSegmentChangedSpy.count(), 1);
+}
+
+void MissionControllerTest::_testSplitSegmentNotOnLegFromHome()
+{
+    _initForFirmwareType(MAV_AUTOPILOT_PX4);
+
+    MissionSettingsItem* settingsItem = _missionController->visualItems()->value<MissionSettingsItem*>(0);
+    QVERIFY(settingsItem);
+    const QGeoCoordinate home = Coord::zurich();
+    settingsItem->setCoordinate(home);
+
+    QVERIFY(_missionController->insertTakeoffItem(home, 1, true /* makeCurrentItem */));
+
+    // A takeoff links home to the first item, but that leg must never offer the split UI
+    QVERIFY_TRUE_WAIT(settingsItem->simpleFlightPathSegment() != nullptr, TestTimeout::mediumMs());
+    QCOMPARE(quintptr(_missionController->property("splitSegment").value<FlightPathSegment*>()), quintptr(0));
+}
+
 void MissionControllerTest::_testInsertComplexItemFromKML()
 {
     _initForFirmwareType(MAV_AUTOPILOT_PX4);

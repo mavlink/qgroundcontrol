@@ -449,7 +449,6 @@ private:
     QGeoCoordinate              _takeoffCoordinate;
     QGeoCoordinate              _previousCoordinate;
     FlightPathSegment*          _splitSegment =                 nullptr;
-    bool                        _delayedSplitSegmentUpdate =    false;
     bool                        _isInsertTakeoffValid =         true;
     bool                        _isInsertLandValid =            false;
     bool                        _isInsertROIValid =             false;
