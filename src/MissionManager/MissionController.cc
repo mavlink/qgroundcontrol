@@ -1009,7 +1009,8 @@ void MissionController::_recalcFlightPathSegments(void)
     bool                homePositionValid =         _settingsItem->coordinate().isValid();
     bool                roiActive =                 false;
     bool                previousItemIsIncomplete =  false;
-    bool                signalSplitSegmentChanged = false;
+
+    FlightPathSegment* newSplitSegment = nullptr;
 
     qCDebug(MissionControllerLog) << "_recalcFlightPathSegments homePositionValid" << homePositionValid;
 
@@ -1124,10 +1125,12 @@ void MissionController::_recalcFlightPathSegments(void)
                     if (addDirectionArrow) {
                         _directionArrows.append(segment);
                     }
-                    if (visualItem->isCurrentItem() && _delayedSplitSegmentUpdate) {
-                        _splitSegment = segment;
-                        _delayedSplitSegmentUpdate = false;
-                        signalSplitSegmentChanged = true;
+                    // Same rule as setCurrentPlanViewSeqNum: the leg must start at a coordinate item other than home
+                    const bool legStartsAtCoordinateItem = lastFlyThroughVI != _settingsItem &&
+                                                           lastFlyThroughVI->specifiesCoordinate() &&
+                                                           !lastFlyThroughVI->isStandaloneCoordinate();
+                    if (!_flyView && visualItem->isCurrentItem() && legStartsAtCoordinateItem) {
+                        newSplitSegment = segment;
                     }
                     lastFlyThroughVI->setSimpleFlighPathSegment(segment);
                 }
@@ -1176,14 +1179,9 @@ void MissionController::_recalcFlightPathSegments(void)
     _simpleFlightPathSegments.endResetModel();
     _directionArrows.endResetModel();
 
-    // The split segment may have been recreated with a new segment type, or removed entirely
-    if (_splitSegment != nullptr) {
-        const VisualItemPair obsoleteSplitPair = oldSegmentTable.key(_splitSegment);
-        if (obsoleteSplitPair.first != nullptr) {
-            _splitSegment = _flightPathSegmentHashTable.value(obsoleteSplitPair, nullptr);
-            signalSplitSegmentChanged = true;
-        }
-    }
+    // Must be updated before the old segments are deleted so _splitSegment never dangles
+    const bool signalSplitSegmentChanged = newSplitSegment != _splitSegment;
+    _splitSegment = newSplitSegment;
 
     // Anything left in the old table is an obsolete line object that can go
     qDeleteAll(oldSegmentTable);
@@ -1192,6 +1190,7 @@ void MissionController::_recalcFlightPathSegments(void)
 
     emit recalcTerrainProfile();
     if (signalSplitSegmentChanged) {
+        qCDebug(MissionControllerLog) << "splitSegmentSet:" << (_splitSegment != nullptr);
         emit splitSegmentChanged();
     }
 }
@@ -2079,14 +2078,8 @@ void MissionController::setCurrentPlanViewSeqNum(int sequenceNumber, bool force)
                         for (int j=viIndex-1; j>0; j--) {
                             VisualMissionItem* pPrev = qobject_cast<VisualMissionItem*>(_visualItems->get(j));
                             if (pPrev->specifiesCoordinate() && !pPrev->isStandaloneCoordinate()) {
-                                VisualItemPair splitPair(pPrev, pVI);
-                                if (_flightPathSegmentHashTable.contains(splitPair)) {
-                                    _splitSegment = _flightPathSegmentHashTable[splitPair];
-                                } else {
-                                    // The recalc of flight path segments hasn't happened yet since it is delayed and compressed.
-                                    // So we need to register the fact that we need a split segment update and it will happen in the recalc instead.
-                                    _delayedSplitSegmentUpdate = true;
-                                }
+                                // Missing while a compressed segment recalc is pending; that recalc sets it instead
+                                _splitSegment = _flightPathSegmentHashTable.value(VisualItemPair(pPrev, pVI), nullptr);
                                 break;
                             }
                         }

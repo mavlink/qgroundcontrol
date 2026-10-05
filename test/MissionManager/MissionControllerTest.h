@@ -24,6 +24,8 @@ private slots:
     void _testFlightPathSegmentCacheReuse();
     void _testSplitSegmentTracksSegmentRebuild_data();
     void _testSplitSegmentTracksSegmentRebuild();
+    void _testSplitSegmentWhenCurrentItemGainsCoordinate();
+    void _testSplitSegmentNotOnLegFromHome();
     void _testGimbalRecalc();
     void _testVehicleYawRecalc();
     void _testMissionReposition();
