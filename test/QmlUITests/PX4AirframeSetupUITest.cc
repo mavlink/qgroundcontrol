@@ -204,8 +204,8 @@ void PX4AirframeSetupUITest::_testApplyAirframe()
     QVERIFY2(spyCmdResult.isValid(), "Failed to create mavCommandResult spy");
 
     // SYS_AUTOSTART requires a vehicle reboot, so applying the airframe must
-    // pop the reboot app message
-    expectAppMessage(QRegularExpression(QStringLiteral("Reboot vehicle for changes to take effect")));
+    // pop the reboot-required notice
+    expectAppMessage(QRegularExpression(QStringLiteral("Vehicle reboot required for changes to take effect")));
 
     QVERIFY2(clickButton(QStringLiteral("airframeSetup_applyButton")), "Failed to click Apply and Restart");
     QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("popupDialog_acceptButton"), 3000),
@@ -239,10 +239,9 @@ void PX4AirframeSetupUITest::_testApplyAirframe()
     QVERIFY2(QTest::qWaitFor([&] { return MultiVehicleManager::instance()->activeVehicle() == nullptr; }, 10000),
              "Vehicle never disconnected after Apply and Restart");
 
-    // By now the SYS_AUTOSTART ack has round-tripped, so the vehicle
-    // reboot-required dialog must have been shown — dismiss and verify it.
-    // Cancel rather than Ok — Ok would reboot the (already disconnected) vehicle.
-    QVERIFY2(rejectDialog(5000), "Vehicle reboot-required dialog never shown");
+    // By now the SYS_AUTOSTART write has happened, so the reboot-required
+    // notice must have been shown — dismiss and verify it.
+    QVERIFY2(acceptDialog(5000), "Vehicle reboot-required notice never shown");
     verifyExpectedLogMessage();
     });
 }

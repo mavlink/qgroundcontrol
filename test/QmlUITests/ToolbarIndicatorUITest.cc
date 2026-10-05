@@ -313,6 +313,47 @@ void ToolbarIndicatorUITest::_testDisarmReachableWithoutParameters()
     QCOMPARE(disarmButton->property("text").toString(), QStringLiteral("Disarm"));
 }
 
+void ToolbarIndicatorUITest::_testRebootRequiredIndicator_data()
+{
+    QTest::addColumn<bool>("armed");
+
+    QTest::newRow("disarmed") << false;
+    QTest::newRow("armed") << true;
+}
+
+void ToolbarIndicatorUITest::_testRebootRequiredIndicator()
+{
+    QFETCH(bool, armed);
+
+    runWithMockLink(
+        [] { return MockLink::startPX4MockLink(); },
+        [&](QPointer<MockLink> /*mockLink*/, Vehicle* vehicle) {
+            const QString iconName = QStringLiteral("mainStatusRebootRequiredIcon");
+            QVERIFY2(!findVisibleItem(_rootItem, iconName, 0),
+                     "Reboot-required icon shown before a reboot was required");
+            vehicle->setRebootRequired();
+            QVERIFY2(findVisibleItem(_rootItem, iconName, TestTimeout::mediumMs()), "Reboot-required icon not shown");
+
+            if (armed) {
+                vehicle->setArmed(true, false /* showError */);
+                QVERIFY_TRUE_WAIT(vehicle->armed(), TestTimeout::mediumMs());
+            }
+
+            const QString indicatorName = QStringLiteral("toolbar_mainStatusIndicator");
+            QQuickItem* const indicator = findVisibleItem(_rootItem, indicatorName, TestTimeout::mediumMs());
+            QVERIFY2(indicator, "Main status indicator not visible");
+            QVERIFY(_clickItemAt(indicator, 0.5, 0.5, indicatorName));
+
+            // Reboot is only offered while disarmed
+            const QString rebootName = QStringLiteral("mainStatusRebootButton");
+            const QString disarmLabelName = QStringLiteral("mainStatusRebootDisarmLabel");
+            QVERIFY2(findVisibleItem(_rootItem, armed ? disarmLabelName : rebootName, TestTimeout::mediumMs()),
+                     "Expected reboot action not shown in the main status drawer");
+            QVERIFY2(!findVisibleItem(_rootItem, armed ? rebootName : disarmLabelName, 0),
+                     "Both the reboot button and the disarm hint shown");
+        });
+}
+
 void ToolbarIndicatorUITest::_testIndicatorDrawerClosesOnVehicleDisconnect()
 {
     runWithMockLink([] { return MockLink::startPX4MockLink(); },

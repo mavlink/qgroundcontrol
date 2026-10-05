@@ -12,6 +12,7 @@
 #include "AppSettings.h"
 #include "AutoPilotPlugin.h"
 #include "Fact.h"
+#include "MultiVehicleManager.h"
 #include "ParameterManager.h"
 #include "QGCApplication.h"
 #include "SettingsManager.h"
@@ -401,6 +402,9 @@ void VehicleConfigUITestBase::runAPMFullAccelCal()
              "Post-accel-cal dialog not shown");
     QVERIFY2(!_rootItem->findChild<QQuickItem*>(QStringLiteral("postOnboardCompassCalibrationDialog")),
              "Compass results dialog incorrectly shown after accel cal");
+    Vehicle* const vehicle = MultiVehicleManager::instance()->activeVehicle();
+    QVERIFY(vehicle);
+    QVERIFY2(vehicle->rebootRequired(), "Accel calibration did not latch rebootRequired");
     QVERIFY2(clickButton(QStringLiteral("popupDialog_acceptButton")),
              "Failed to dismiss post-accel-cal dialog");
 }
@@ -429,6 +433,9 @@ void VehicleConfigUITestBase::runAPMCompassCal()
     // the post-cal dialog directly rather than waiting for progress == 1.0.
     QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("postOnboardCompassCalibrationDialog"), 25000),
              "Post-compass-cal dialog not shown");
+    Vehicle* const vehicle = MultiVehicleManager::instance()->activeVehicle();
+    QVERIFY(vehicle);
+    QVERIFY2(vehicle->rebootRequired(), "Compass calibration did not latch rebootRequired");
     QVERIFY2(clickButton(QStringLiteral("popupDialog_acceptButton")),
              "Failed to dismiss post-compass-cal dialog");
 }

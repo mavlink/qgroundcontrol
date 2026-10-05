@@ -16,6 +16,7 @@ RowLayout {
     property bool   _healthAndArmingChecksSupported: _activeVehicle ? _activeVehicle.healthAndArmingCheckReport.supported : false
     property var    _vehicleInAir:      _activeVehicle ? _activeVehicle.airborne || _activeVehicle.landing : false
     property bool   _vtolInFWDFlight:   _activeVehicle ? _activeVehicle.vtolInFwdFlight : false
+    property bool   _rebootRequired:    _activeVehicle ? _activeVehicle.rebootRequired : false
 
     function dropMainStatusIndicator() {
         let overallStatusComponent = _activeVehicle ? overallStatusIndicatorPage : overallStatusOfflineIndicatorPage
@@ -27,7 +28,8 @@ RowLayout {
     QGCLabel {
         id:                 mainStatusLabel
         Layout.fillHeight:  true
-        Layout.preferredWidth: contentWidth + (criticalMessageBadge.visible ? criticalMessageBadge.width / 2 : 0)
+        Layout.preferredWidth: contentWidth + (criticalMessageBadge.visible ? criticalMessageBadge.width / 2 : 0) +
+                               (rebootRequiredIcon.visible ? rebootRequiredIcon.width + rebootRequiredIcon.anchors.rightMargin : 0)
         verticalAlignment:  Text.AlignVCenter
         text:               mainStatusText()
         color:              qgcPal.text
@@ -128,6 +130,19 @@ RowLayout {
             }
         }
 
+        QGCColoredImage {
+            id:                 rebootRequiredIcon
+            objectName:         "mainStatusRebootRequiredIcon"
+            anchors.verticalCenter: criticalMessageBadge.verticalCenter
+            anchors.right:      criticalMessageBadge.visible ? criticalMessageBadge.left : parent.right
+            anchors.rightMargin: criticalMessageBadge.visible ? ScreenTools.defaultFontPixelWidth * 0.25 : 0
+            width:              criticalMessageBadge.width * 0.9
+            height:             width
+            source:             "/res/PowerButton.svg"
+            color:              qgcPal.colorOrange
+            visible:            _rebootRequired
+        }
+
         QGCMouseArea {
             anchors.fill:   parent
             onClicked:      dropMainStatusIndicator()
@@ -185,9 +200,10 @@ RowLayout {
             property bool parametersReady: QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable
 
             RowLayout {
-                spacing: ScreenTools.defaultFontPixelWidth
+                Layout.fillWidth:   true
+                spacing:            ScreenTools.defaultFontPixelWidth
                 // Stop controls must stay reachable without parameters
-                visible: parametersReady || _guidedController.showEmergencyStop || _guidedController.showDisarm
+                visible:            parametersReady || _guidedController.showEmergencyStop || _guidedController.showDisarm || _rebootRequired
 
                 QGCDelayButton {
                     objectName: "mainStatusArmButton"
@@ -252,6 +268,43 @@ RowLayout {
 
                     onActivated:    (index) => {
                         _activeVehicle.vehicleLinkManager.primaryLinkName = _rgLinkNames[index]; currentIndex = -1
+                        mainWindow.closeIndicatorDrawer()
+                    }
+                }
+
+                Item { Layout.fillWidth: true }
+
+                QGCLabel {
+                    Layout.maximumWidth:    ScreenTools.defaultFontPixelWidth * 16
+                    Layout.maximumHeight:   rebootButton.height
+                    text:                   qsTr("Reboot required for changes to take effect")
+                    font.pointSize:         ScreenTools.smallFontPointSize
+                    wrapMode:               Text.WordWrap
+                    elide:                  Text.ElideRight
+                    horizontalAlignment:    Text.AlignRight
+                    visible:                _rebootRequired && !_armed
+                }
+
+                QGCLabel {
+                    objectName:             "mainStatusRebootDisarmLabel"
+                    Layout.maximumWidth:    ScreenTools.defaultFontPixelWidth * 16
+                    Layout.maximumHeight:   rebootButton.height
+                    text:                   qsTr("Reboot required. Disarm vehicle first.")
+                    font.pointSize:         ScreenTools.smallFontPointSize
+                    wrapMode:               Text.WordWrap
+                    elide:                  Text.ElideRight
+                    horizontalAlignment:    Text.AlignRight
+                    visible:                _rebootRequired && _armed
+                }
+
+                QGCDelayButton {
+                    id:         rebootButton
+                    objectName: "mainStatusRebootButton"
+                    text:       qsTr("Reboot Vehicle")
+                    visible:    _rebootRequired && !_armed
+
+                    onActivated: {
+                        _activeVehicle.rebootVehicle()
                         mainWindow.closeIndicatorDrawer()
                     }
                 }
