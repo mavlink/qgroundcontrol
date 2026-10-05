@@ -63,6 +63,26 @@ def test_tool_uses_resolved_environment_not_path(tmp_path: Path) -> None:
         assert python_env.tool_command("aqt", "qt") == [str(tool)]
 
 
+def test_new_environment_interpreter_is_resolved_by_uv(tmp_path: Path) -> None:
+    def python_arg() -> str | None:
+        command = run.call_args.args[0]
+        return command[command.index("--python") + 1] if "--python" in command else None
+
+    with (
+        patch("qgc_tools.python_env.require_uv", return_value="uv"),
+        patch("qgc_tools.python_env.run_with_retry") as run,
+    ):
+        python_env.sync_groups("dev", environment=tmp_path)
+        assert python_arg() is None
+        python_env.sync_groups("dev", environment=tmp_path, python="python3.12")
+        assert python_arg() == "python3.12"
+        interpreter = python_env.executable("python", tmp_path)
+        interpreter.parent.mkdir(parents=True)
+        interpreter.touch()
+        python_env.sync_groups("dev", environment=tmp_path)
+        assert python_arg() == str(interpreter)
+
+
 def test_fresh_environment_and_repeated_setup_preserve_tools(tmp_path: Path) -> None:
     environment = tmp_path / "venv"
     python_env.sync_groups("scripts,test", environment=environment, python=sys.executable)
