@@ -449,7 +449,7 @@ jobs:
           name: cpm-dependency-snapshot
 
       - name: Submit CPM dependency snapshot
-        uses: advanced-security/spdx-dependency-submission-action@v0.2.0
+        uses: advanced-security/spdx-dependency-submission-action@v0.4.0
         with:
           filePath: .
           filePattern: cpm-sbom.spdx.json
