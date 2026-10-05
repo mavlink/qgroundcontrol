@@ -1296,7 +1296,8 @@ void VehicleCameraControl::handleParamExtAck(const mavlink_param_ext_ack_t& para
         << "\n\tType:" << static_cast<int>(paramExtAck.param_type);
 
     if(!_paramIO.contains(paramName)) {
-        qCWarning(VehicleCameraControlLog) << "Received PARAM_EXT_ACK for unknown param:" << paramName;
+        // ParameterManager queries the full ext parameter list, so acks for params outside the camera definition are expected
+        qCDebug(VehicleCameraControlLog) << "Ignoring PARAM_EXT_ACK for param not in camera definition:" << paramName;
         return;
     }
     if(_paramIO[paramName]) {
@@ -1316,7 +1317,8 @@ void VehicleCameraControl::handleParamExtValue(const mavlink_param_ext_value_t& 
         << "\n\tCount:" << static_cast<int>(paramExtValue.param_count);
 
     if(!_paramIO.contains(paramName)) {
-        qCWarning(VehicleCameraControlLog) << "Received PARAM_EXT_VALUE for unknown param:" << paramName;
+        // ParameterManager queries the full ext parameter list, so values outside the camera definition are expected
+        qCDebug(VehicleCameraControlLog) << "Ignoring PARAM_EXT_VALUE for param not in camera definition:" << paramName;
         return;
     }
     if(_paramIO[paramName]) {

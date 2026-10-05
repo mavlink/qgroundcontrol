@@ -212,6 +212,10 @@ MockLink::MockLink(SharedLinkConfigurationPtr &config, QObject *parent)
         _missionItemHandler->loadSimpleMultirotorMission();
     }
 
+    if (_mockLinkCamera && _mockConfig->dropFirstExtParam()) {
+        _mockLinkCamera->setExtParamListDropIndex(0);
+    }
+
     // Initialize ADS-B vehicles with different starting conditions
     _adsbVehicles.reserve(_numberOfVehicles);
     for (int i = 0; i < _numberOfVehicles; ++i) {
@@ -2778,6 +2782,7 @@ MockLink *MockLink::_startMockLinkWorker(const QString &configName, MAV_AUTOPILO
     mockConfig->setApmStartFreshParams(options.testFlag(MockConfiguration::OptionAPMStartFreshParams));
     mockConfig->setFtpCapability(options.testFlag(MockConfiguration::OptionFtpCapability));
     mockConfig->setSendRadioStatus(!options.testFlag(MockConfiguration::OptionNoRadioStatus));
+    mockConfig->setDropFirstExtParam(options.testFlag(MockConfiguration::OptionDropFirstExtParam));
     mockConfig->setVideoStreamType(videoStreamType);
     mockConfig->setFailureMode(failureMode);
 
@@ -3417,6 +3422,11 @@ void MockLink::clearVehicleAttitudeOverride()
 {
     QMutexLocker locker(&_attitudeOverrideMutex);
     _attitudeOverride.enabled = false;
+}
+
+MockLinkCamera *MockLink::mockLinkCamera() const
+{
+    return _mockLinkCamera;
 }
 
 void MockLink::_sendAvailableMode(uint8_t modeIndexOneBased)
