@@ -21,7 +21,7 @@ You can also _search_ for a parameter by entering a term in the _Search_ field. 
 To change the value of a parameter click on the parameter row in a group or search list. This will open a side dialog in which you can update the value (this dialog also provides additional detailed information about the parameter - including whether a reboot is required for the change to take effect).
 
 ::: info
-When you click **Save** the parameter is automatically and silently uploaded to the connected vehicle. Depending on the parameter, you may then need to reboot the flight controller for the change to take effect.
+When you click **Save** the parameter is automatically and silently uploaded to the connected vehicle. Depending on the parameter, you may then need to reboot the flight controller for the change to take effect. QGroundControl shows a [reboot required indicator](../fly_view/fly_view_toolbar.md#vehicle-reboot-required) in the toolbar until the vehicle is rebooted.
 :::
 
 ## Tools

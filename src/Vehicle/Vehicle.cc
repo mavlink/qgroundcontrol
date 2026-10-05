@@ -2348,6 +2348,16 @@ void Vehicle::rebootVehicle()
     sendMavCommandWithHandler(&handlerInfo, _defaultComponentId, MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 1);
 }
 
+void Vehicle::setRebootRequired()
+{
+    if (_rebootRequired) {
+        return;
+    }
+
+    _rebootRequired = true;
+    emit rebootRequiredChanged();
+}
+
 void Vehicle::startCalibration(QGCMAVLink::CalibrationType calType)
 {
     SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();

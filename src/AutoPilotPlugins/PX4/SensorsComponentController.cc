@@ -125,6 +125,7 @@ void SensorsComponentController::_stopCalibration(SensorsComponentController::St
                 emit resetStatusTextArea();
             }
             if (_magCalInProgress) {
+                _vehicle->setRebootRequired();
                 emit magCalComplete();
             }
             break;

@@ -27,6 +27,8 @@ private slots:
     void _testEmergencyStopReplacesDisarmInFlight();
     void _testArmRequiresEnforcedChecklist();
     void _testDisarmReachableWithoutParameters();
+    void _testRebootRequiredIndicator_data();
+    void _testRebootRequiredIndicator();
     void _testIndicatorDrawerClosesOnVehicleDisconnect();
 
 private:

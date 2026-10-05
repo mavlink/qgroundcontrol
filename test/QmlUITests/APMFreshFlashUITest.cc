@@ -142,8 +142,8 @@ void APMFreshFlashUITest::_testFreshFlashSetupState()
     QVERIFY2(quadBox, "Quad airframe box not found on Frame page");
 
     // FRAME_CLASS/FRAME_TYPE require a vehicle reboot, so selecting a frame
-    // must pop the reboot app message
-    expectAppMessage(QRegularExpression(QStringLiteral("Reboot vehicle for changes to take effect")));
+    // must pop the reboot-required notice
+    expectAppMessage(QRegularExpression(QStringLiteral("Vehicle reboot required for changes to take effect")));
 
     Fact *frameClassFact = mgr->getParameter(ParameterManager::defaultComponentId, QStringLiteral("FRAME_CLASS"));
     Fact *frameTypeFact = mgr->getParameter(ParameterManager::defaultComponentId, QStringLiteral("FRAME_TYPE"));
@@ -158,14 +158,13 @@ void APMFreshFlashUITest::_testFreshFlashSetupState()
              "FRAME_CLASS never set to Quad after clicking the Quad box");
     QCOMPARE(frameTypeFact->rawValue().toInt(), 1); // X is the Quad default frame type
 
-    // The reboot message fires when the vehicle acks the param write: dismiss
-    // the resulting dialog before interacting with the UI again. Cancel rather
-    // than Ok — Ok would reboot the vehicle.
+    // Dismiss the reboot-required notice before interacting with the UI again
     QVERIFY2(QTest::qWaitFor([&] { return frameClassAckSpy.count() >= 1; }, 5000),
              "FRAME_CLASS write never acked by the vehicle");
-    QVERIFY2(rejectDialog(5000), "Reboot app message dialog never shown");
+    QVERIFY2(acceptDialog(5000), "Reboot-required notice never shown");
     verifyExpectedLogMessage();
     if (QTest::currentTestFailed()) return;
+    QVERIFY(vehicle->rebootRequired());
 
     // The red setup-required indicator on the Frame sidebar button must turn
     // green (setupComplete) once a frame class is selected
