@@ -12643,17 +12643,17 @@ VTOL</translation>
     <message>
       <location filename="../src/MissionManager/MissionController.cc" line="657"/>
       <source>Mission item %1 is not an object</source>
-      <translation type="unfinished">Mission item %1 is not an object</translation>
+      <translation>Элемент полётного задания %1 не является объектом</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/MissionController.cc" line="700"/>
       <source>Unsupported complex item type: %1</source>
-      <translation type="unfinished">Unsupported complex item type: %1</translation>
+      <translation>Неподдерживаемый тип сложного элемента: %1</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/MissionController.cc" line="711"/>
       <source>Unknown item type: %1</source>
-      <translation type="unfinished">Unknown item type: %1</translation>
+      <translation>Неизвестный тип элемента: %1</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/MissionController.cc" line="734"/>
@@ -12663,18 +12663,18 @@ VTOL</translation>
     <message>
       <location filename="../src/MissionManager/MissionController.cc" line="784"/>
       <source>The mission file is corrupted.</source>
-      <translation type="unfinished">The mission file is corrupted.</translation>
+      <translation>Файл полётного задания повреждён.</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/MissionController.cc" line="789"/>
       <source>The mission file is not compatible with this version of %1.</source>
-      <translation type="unfinished">The mission file is not compatible with this version of %1.</translation>
+      <translation>Файл полётного задания несовместим с этой версией %1.</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/MissionController.cc" line="824"/>
       <location filename="../src/MissionManager/MissionController.cc" line="839"/>
       <source>Mission: %1</source>
-      <translation type="unfinished">Mission: %1</translation>
+      <translation>Полётное задание: %1</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/MissionController.cc" line="1245"/>
@@ -12800,17 +12800,17 @@ VTOL</translation>
     <message>
       <location filename="../src/PlanView/MissionItemEditor.qml" line="227"/>
       <source>Move to vehicle position</source>
-      <translation type="unfinished">Move to vehicle position</translation>
+      <translation>Переместить в положение борта</translation>
     </message>
     <message>
       <location filename="../src/PlanView/MissionItemEditor.qml" line="240"/>
       <source>Move to previous item position</source>
-      <translation type="unfinished">Move to previous item position</translation>
+      <translation>Переместить в положение предыдущего элемента</translation>
     </message>
     <message>
       <location filename="../src/PlanView/MissionItemEditor.qml" line="250"/>
       <source>Edit position...</source>
-      <translation type="unfinished">Edit position...</translation>
+      <translation>Изменить положение...</translation>
     </message>
     <message>
       <location filename="../src/PlanView/MissionItemEditor.qml" line="272"/>
@@ -12820,17 +12820,17 @@ VTOL</translation>
     <message>
       <location filename="../src/PlanView/MissionItemEditor.qml" line="282"/>
       <source>Mission Edit</source>
-      <translation type="unfinished">Mission Edit</translation>
+      <translation>Редактирование полётного задания</translation>
     </message>
     <message>
       <location filename="../src/PlanView/MissionItemEditor.qml" line="282"/>
       <source>You have made changes to the mission item which cannot be shown in Simple Mode</source>
-      <translation type="unfinished">You have made changes to the mission item which cannot be shown in Simple Mode</translation>
+      <translation>Вы внесли изменения в элемент полётного задания, которые нельзя показать в простом режиме</translation>
     </message>
     <message>
       <location filename="../src/PlanView/MissionItemEditor.qml" line="295"/>
       <source>Item #%1</source>
-      <translation type="unfinished">Item #%1</translation>
+      <translation>Элемент №%1</translation>
     </message>
   </context>
   <context>
@@ -15661,17 +15661,17 @@ Is this really what you want?</source>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="32"/>
       <source>Missing Parameters</source>
-      <translation type="unfinished">Missing Parameters</translation>
+      <translation>Отсутствующие параметры</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="33"/>
       <source>The following parameters from the file were not found on the vehicle and were skipped: %1</source>
-      <translation type="unfinished">The following parameters from the file were not found on the vehicle and were skipped: %1</translation>
+      <translation>Следующие параметры из файла не найдены на борту и были пропущены: %1</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="55"/>
       <source>Reset all to firmware&apos;s defaults</source>
-      <translation type="unfinished">Reset all to firmware&apos;s defaults</translation>
+      <translation>Сбросить все параметры до значений прошивки по умолчанию</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="56"/>
@@ -15682,12 +15682,12 @@ Is this really what you want?</source>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="62"/>
       <source>Reset to vehicle&apos;s configuration defaults</source>
-      <translation type="unfinished">Reset to vehicle&apos;s configuration defaults</translation>
+      <translation>Сбросить борт до настроек конфигурации по умолчанию</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="73"/>
       <source>Load Parameters</source>
-      <translation type="unfinished">Load Parameters</translation>
+      <translation>Загрузить параметры</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="78"/>
@@ -15702,12 +15702,12 @@ Is this really what you want?</source>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="86"/>
       <source>Clear all favorites</source>
-      <translation type="unfinished">Clear all favorites</translation>
+      <translation>Очистить всё избранное</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="91"/>
       <source>Clear all RC to Param</source>
-      <translation type="unfinished">Clear all RC to Param</translation>
+      <translation>Очистить все привязки RC к параметрам</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="109"/>
@@ -15717,52 +15717,50 @@ Is this really what you want?</source>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="109"/>
       <source>Mission Planner Files (*.param)</source>
-      <translation type="unfinished">Mission Planner Files (*.param)</translation>
+      <translation>Файлы Mission Planner (*.param)</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="164"/>
       <source>Search</source>
-      <translation type="unfinished">Search</translation>
+      <translation>Поиск</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="179"/>
       <source>Hide read-only</source>
-      <translation type="unfinished">Hide read-only</translation>
+      <translation>Скрыть параметры только для чтения</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="199"/>
       <source>Full List</source>
-      <translation type="unfinished">Full List</translation>
+      <translation>Полный список</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="200"/>
       <source>Modified</source>
-      <translation type="unfinished">Modified</translation>
+      <translation>Изменённые</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="201"/>
       <source>Favorites</source>
-      <translation type="unfinished">Favorites</translation>
+      <translation>Избранное</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="57"/>
       <source>Select Reset to reset all parameters to their defaults.
 
 Note that this will also completely reset everything, including UAVCAN nodes, all vehicle settings, setup and calibrations.</source>
-      <translation type="unfinished">Select Reset to reset all parameters to their defaults.
-
-Note that this will also completely reset everything, including UAVCAN nodes, all vehicle settings, setup and calibrations.</translation>
+      <translation>Выберите «Сбросить», чтобы сбросить все параметры до значений по умолчанию.\n\nОбратите внимание, что это также полностью сбросит всё, включая узлы UAVCAN, все настройки борта, конфигурацию и калибровки.</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="71"/>
       <source>Load from file for review...</source>
-      <translation type="unfinished">Load from file for review...</translation>
+      <translation>Загрузить из файла для просмотра...</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="97"/>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="98"/>
       <source>Reboot Vehicle</source>
-      <translation type="unfinished">Reboot Vehicle</translation>
+      <translation>Перезагрузить борт</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="109"/>
@@ -15772,12 +15770,12 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="65"/>
       <source>Select Reset to reset all parameters to the vehicle&apos;s configuration defaults.</source>
-      <translation type="unfinished">Select Reset to reset all parameters to the vehicle&apos;s configuration defaults.</translation>
+      <translation>Выберите «Сбросить», чтобы сбросить все параметры до конфигурации борта по умолчанию.</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="99"/>
       <source>Select Ok to reboot vehicle.</source>
-      <translation type="unfinished">Select Ok to reboot vehicle.</translation>
+      <translation>Нажмите «ОК», чтобы перезагрузить борт.</translation>
     </message>
   </context>
   <context>
@@ -15785,17 +15783,17 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/QmlControls/ParameterEditorController.cc" line="351"/>
       <source>Unable to create file: %1</source>
-      <translation type="unfinished">Unable to create file: %1</translation>
+      <translation>Не удалось создать файл: %1</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditorController.cc" line="393"/>
       <source>Unable to open file: %1</source>
-      <translation type="unfinished">Unable to open file: %1</translation>
+      <translation>Не удалось открыть файл: %1</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditorController.cc" line="500"/>
       <source>No valid parameters found in file. Check that the file is in QGC or Mission Planner format.</source>
-      <translation type="unfinished">No valid parameters found in file. Check that the file is in QGC or Mission Planner format.</translation>
+      <translation>В файле не найдено допустимых параметров. Проверьте, что файл в формате QGC или Mission Planner.</translation>
     </message>
   </context>
   <context>
@@ -15803,7 +15801,7 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="139"/>
       <source>Reset To Default</source>
-      <translation type="unfinished">Reset To Default</translation>
+      <translation>Сбросить к значению по умолчанию</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="194"/>
@@ -15823,42 +15821,42 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="12"/>
       <source>Value Editor</source>
-      <translation type="unfinished">Value Editor</translation>
+      <translation>Редактор значения</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="85"/>
       <source>This parameter is read-only and cannot be modified.</source>
-      <translation type="unfinished">This parameter is read-only and cannot be modified.</translation>
+      <translation>Этот параметр доступен только для чтения и не может быть изменён.</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="151"/>
       <source>Value: </source>
-      <translation type="unfinished">Value: </translation>
+      <translation>Значение: </translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="211"/>
       <source>Vehicle reboot required after change</source>
-      <translation type="unfinished">Vehicle reboot required after change</translation>
+      <translation>После изменения требуется перезагрузка борта</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="216"/>
       <source>Application restart required after change</source>
-      <translation type="unfinished">Application restart required after change</translation>
+      <translation>После изменения требуется перезапуск приложения</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="222"/>
       <source>Warning: Modifying values while vehicle is in flight can lead to vehicle instability and possible vehicle loss. </source>
-      <translation type="unfinished">Warning: Modifying values while vehicle is in flight can lead to vehicle instability and possible vehicle loss. </translation>
+      <translation>Предупреждение: Изменение значений во время полёта может привести к нестабильности борта и его возможной потере. </translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="223"/>
       <source>Make sure you know what you are doing and double-check your values before Save!</source>
-      <translation type="unfinished">Make sure you know what you are doing and double-check your values before Save!</translation>
+      <translation>Убедитесь, что вы понимаете, что делаете, и дважды проверьте значения перед сохранением!</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="230"/>
       <source>Force save (dangerous!)</source>
-      <translation type="unfinished">Force save (dangerous!)</translation>
+      <translation>Всё равно сохранить (опасно!)</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="235"/>
@@ -15873,7 +15871,7 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="251"/>
       <source>Set RC to Param</source>
-      <translation type="unfinished">Set RC to Param</translation>
+      <translation>Установить RC в параметр</translation>
     </message>
   </context>
   <context>
@@ -15899,22 +15897,22 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/QmlControls/ParameterEditorController.cc" line="63"/>
       <source>Fav</source>
-      <translation type="unfinished">Fav</translation>
+      <translation>Изб.</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditorController.cc" line="64"/>
       <source>Name</source>
-      <translation type="unfinished">Name</translation>
+      <translation>Название</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditorController.cc" line="65"/>
       <source>Value</source>
-      <translation type="unfinished">Value</translation>
+      <translation>Значение</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditorController.cc" line="66"/>
       <source>Description</source>
-      <translation type="unfinished">Description</translation>
+      <translation>Описание</translation>
     </message>
   </context>
   <context>
@@ -16297,12 +16295,12 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/MissionManager/PlanMasterController.cc" line="207"/>
       <source>Download not supported on high latency links.</source>
-      <translation type="unfinished">Download not supported on high latency links.</translation>
+      <translation>Скачивание не поддерживается на соединениях с высокой задержкой.</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanMasterController.cc" line="311"/>
       <source>Upload not supported on high latency links.</source>
-      <translation type="unfinished">Upload not supported on high latency links.</translation>
+      <translation>Загрузка не поддерживается на соединениях с высокой задержкой.</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanMasterController.cc" line="333"/>
@@ -16364,7 +16362,7 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/MissionManager/PlanMasterController.cc" line="691"/>
       <source>Plan Files (*.%1)</source>
-      <translation type="unfinished">Plan Files (*.%1)</translation>
+      <translation>Файлы планов (*.%1)</translation>
     </message>
   </context>
   <context>
@@ -16467,7 +16465,7 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="95"/>
       <source>Plan is waiting on terrain data from server for correct altitude values.</source>
-      <translation type="unfinished">Plan is waiting on terrain data from server for correct altitude values.</translation>
+      <translation>План ожидает данные о рельефе с сервера для корректных значений высоты.</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="118"/>
@@ -16517,27 +16515,27 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="787"/>
       <source>Plan View - Vehicle Disconnected</source>
-      <translation>Просмотр плана — борт отключён</translation>
+      <translation>Экран плана — борт отключён</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="787"/>
       <source>Plan View - Vehicle Changed</source>
-      <translation>Просмотр плана — борт изменён</translation>
+      <translation>Экран плана — борт изменён</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="795"/>
       <source>The vehicle associated with the plan in the Plan View is no longer available. What would you like to do with that plan?</source>
-      <translation>Борт, связанный с планом в Plan View, больше не доступен. Что вы хотите сделать с этим планом?</translation>
+      <translation>Борт, связанный с планом на экране плана, больше недоступен. Что вы хотите сделать с этим планом?</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="795"/>
       <source>The plan being worked on in the Plan View is not from the current vehicle. What would you like to do with that plan?</source>
-      <translation>План, над которым ведётся работа в Plan View, не относится к текущему борту. Что бы вы хотели сделать с этим планом?</translation>
+      <translation>План, над которым ведётся работа на экране плана, не относится к текущему борту. Что вы хотите сделать с этим планом?</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="802"/>
       <source>Discard Unsaved Changes</source>
-      <translation type="unfinished">Discard Unsaved Changes</translation>
+      <translation>Отменить несохранённые изменения</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="802"/>
@@ -16557,7 +16555,7 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="813"/>
       <source>Keep Current Plan, Don&apos;t Update From Vehicle</source>
-      <translation type="unfinished">Keep Current Plan, Don&apos;t Update From Vehicle</translation>
+      <translation>Оставить текущий план, не обновлять с борта</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="838"/>
@@ -16601,7 +16599,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="486"/>
       <source>Alt Land</source>
-      <translation type="unfinished">Alt Land</translation>
+      <translation>Альт. Land</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="487"/>
@@ -19944,12 +19942,12 @@ If a vehicle still has this key configured, you will no longer be able to commun
     <message>
       <location filename="../src/MissionManager/SimpleMissionItem.cc" line="380"/>
       <source>Takeoff</source>
-      <translation type="unfinished">Takeoff</translation>
+      <translation>Takeoff</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/SimpleMissionItem.cc" line="382"/>
       <source>Land</source>
-      <translation type="unfinished">Land</translation>
+      <translation>Land</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/SimpleMissionItem.cc" line="384"/>
@@ -19959,7 +19957,7 @@ If a vehicle still has this key configured, you will no longer be able to commun
     <message>
       <location filename="../src/MissionManager/SimpleMissionItem.cc" line="386"/>
       <source>VTOL Land</source>
-      <translation type="unfinished">VTOL Land</translation>
+      <translation>VTOL Land</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/SimpleMissionItem.cc" line="389"/>
