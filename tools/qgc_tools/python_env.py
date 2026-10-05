@@ -116,9 +116,10 @@ def sync_groups(
         "--frozen",
         "--no-default-groups",
         "--no-install-project",
-        "--python",
-        python or (str(interpreter) if interpreter.exists() else sys.executable),
     ]
+    python = python or (str(interpreter) if interpreter.exists() else None)
+    if python:
+        command.extend(["--python", python])
     if not replace:
         command.append("--inexact")
     if dry_run:
