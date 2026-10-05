@@ -1,5 +1,7 @@
 #include "MockLinkMissionItemHandler.h"
 
+#include <QtPositioning/QGeoCoordinate>
+
 #include "MAVLinkProtocol.h"
 #include "MockLink.h"
 #include "QGCLoggingCategory.h"
@@ -31,8 +33,9 @@ void MockLinkMissionItemHandler::loadSimpleMultirotorMission()
 {
     _missionItems.clear();
 
-    constexpr double homeLatitude = 47.397;
-    constexpr double homeLongitude = 8.5455;
+    const QGeoCoordinate home = _mockLink->homeCoordinate();
+    const double homeLatitude = home.latitude();
+    const double homeLongitude = home.longitude();
     constexpr float relativeAltitude = 50.0f;
 
     const auto makeItem = [](uint16_t seq, uint16_t command, bool current, double latitude, double longitude, float altitude) {
