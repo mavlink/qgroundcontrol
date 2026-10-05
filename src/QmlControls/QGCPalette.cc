@@ -33,6 +33,7 @@ QGCPalette::~QGCPalette()
 
 void QGCPalette::_buildMap()
 {
+    // clang-format off
     //                                      Light                 Dark
     //                                      Disabled   Enabled    Disabled   Enabled
     DECLARE_QGC_COLOR(window,               "#ffffff", "#ffffff", "#222222", "#222222")
@@ -85,10 +86,10 @@ void QGCPalette::_buildMap()
     // Colors not affecting by theming or enable/disable
     DECLARE_QGC_SINGLE_COLOR(mapWidgetBorderLight,          "#ffffff")
     DECLARE_QGC_SINGLE_COLOR(mapWidgetBorderDark,           "#000000")
-    DECLARE_QGC_SINGLE_COLOR(mapMissionTrajectory,          "#be781c")
+    DECLARE_QGC_SINGLE_COLOR(mapMissionTrajectory,          "#ffa000")
     DECLARE_QGC_SINGLE_COLOR(surveyPolygonInterior,         "green")
     DECLARE_QGC_SINGLE_COLOR(surveyPolygonTerrainCollision, "red")
-
+    // clang-format on
 }
 
 void QGCPalette::setColorGroupEnabled(bool enabled)

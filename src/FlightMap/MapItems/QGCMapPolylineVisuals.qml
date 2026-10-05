@@ -17,7 +17,7 @@ Item {
     property var    mapPolyline                 ///< QGCMapPolyline object
     property bool   interactive:    mapPolyline.interactive
     property int    lineWidth:      3
-    property color  lineColor:      "#be781c"
+    property color  lineColor:      QGroundControl.globalPalette.mapMissionTrajectory
 
     property var    _dragHandlesComponent
     property var    _splitHandlesComponent
