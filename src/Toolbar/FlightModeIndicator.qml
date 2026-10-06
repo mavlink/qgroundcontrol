@@ -20,7 +20,7 @@ Item {
 
     property bool _isVTOL:          activeVehicle ? activeVehicle.vtol : false
     property bool _vtolInFWDFlight: activeVehicle ? activeVehicle.vtolInFwdFlight : false
-    property var  _vehicleInAir:    activeVehicle ? activeVehicle.flying || activeVehicle.landing : false
+    property var  _vehicleInAir:    activeVehicle ? activeVehicle.airborne || activeVehicle.landing : false
 
     QGCPalette { id: qgcPal }
 

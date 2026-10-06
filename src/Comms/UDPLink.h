@@ -74,7 +74,6 @@ public:
     Q_INVOKABLE void removeHost(const QString &host, quint16 port);
 
     LinkType type() const override { return LinkConfiguration::TypeUdp; }
-    void setAutoConnect(bool autoc = true) override;
     void copyFrom(const LinkConfiguration *source) override;
     void loadSettings(QSettings &settings, const QString &root) override;
     void saveSettings(QSettings &settings, const QString &root) const override;
@@ -83,7 +82,15 @@ public:
 
     QStringList hostList() const { return _hostList; }
     QList<std::shared_ptr<UDPClient>> targetHosts() const { return _targetHosts; }
-    void resolveHosts() const;
+
+    /// Returns the hostnames that failed to resolve
+    QStringList resolveHosts() const;
+
+    /// When false, connect proceeds (listening) even if a target host fails to resolve
+    bool requireResolvedHosts() const { return _requireResolvedHosts; }
+
+    void setRequireResolvedHosts(bool require) { _requireResolvedHosts = require; }
+
     quint16 localPort() const { return _localPort; }
     void setLocalPort(quint16 port) { if (port != _localPort) { _localPort = port; emit localPortChanged(); } }
 
@@ -99,6 +106,7 @@ private:
     QStringList _hostList;
     QList<std::shared_ptr<UDPClient>> _targetHosts;
     quint16 _localPort = 0;
+    bool _requireResolvedHosts = true;
 };
 
 /*===========================================================================*/

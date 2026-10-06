@@ -23,16 +23,13 @@ TextArea {
 
     function formatMessage(message) {
         message = message.replace(new RegExp("<#E>", "g"), "color: " + qgcPal.warningText + "; font: " + (ScreenTools.defaultFontPointSize.toFixed(0) - 1) + "pt monospace;");
-        message = message.replace(new RegExp("<#I>", "g"), "color: " + qgcPal.warningText + "; font: " + (ScreenTools.defaultFontPointSize.toFixed(0) - 1) + "pt monospace;");
+        message = message.replace(new RegExp("<#I>", "g"), "color: " + qgcPal.colorOrange + "; font: " + (ScreenTools.defaultFontPointSize.toFixed(0) - 1) + "pt monospace;");
         message = message.replace(new RegExp("<#N>", "g"), "color: " + qgcPal.text + "; font: " + (ScreenTools.defaultFontPointSize.toFixed(0) - 1) + "pt monospace;");
         return message;
     }
 
     Component.onCompleted: {
         messageText.text = formatMessage(_activeVehicle.formattedMessages)
-        if (_activeVehicle) {
-            _activeVehicle.resetAllMessages()
-        }
     }
 
     Connections {

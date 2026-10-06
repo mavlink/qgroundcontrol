@@ -5,7 +5,6 @@ import QtQuick
 import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FlightMap
-import QGroundControl.PlanView
 
 /// Groups mission item indicators which are too close to select individually.
 Item {
@@ -131,49 +130,16 @@ Item {
             return first.item.sequenceNumber - second.item.sequenceNumber
         })
 
-        const cells = {}
+        const representatives = MapMarkerGrouping.representatives(entries.map(entry => entry.point), groupingDistance)
         const groups = []
-        for (const entry of entries) {
-            const cellX = Math.floor(entry.point.x / groupingDistance)
-            const cellY = Math.floor(entry.point.y / groupingDistance)
-            let closestGroup = null
-            let closestDistanceSquared = Infinity
-
-            for (let x = cellX - 1; x <= cellX + 1; x++) {
-                for (let y = cellY - 1; y <= cellY + 1; y++) {
-                    const nearbyGroups = cells[`${x},${y}`] || []
-                    for (const group of nearbyGroups) {
-                        const deltaX = entry.point.x - group.point.x
-                        const deltaY = entry.point.y - group.point.y
-                        const distanceSquared = (deltaX * deltaX) + (deltaY * deltaY)
-                        if (distanceSquared <= groupingDistance * groupingDistance
-                                && (distanceSquared < closestDistanceSquared
-                                    || (distanceSquared === closestDistanceSquared
-                                        && group.representative.sequenceNumber < closestGroup.representative.sequenceNumber))) {
-                            closestGroup = group
-                            closestDistanceSquared = distanceSquared
-                        }
-                    }
-                }
+        const groupsByRepresentative = {}
+        for (let i = 0; i < entries.length; i++) {
+            const representative = representatives[i]
+            if (!groupsByRepresentative[representative]) {
+                groupsByRepresentative[representative] = { items: [], representative: entries[representative].item }
+                groups.push(groupsByRepresentative[representative])
             }
-
-            if (closestGroup) {
-                closestGroup.items.push(entry.item)
-                continue
-            }
-
-            const group = {
-                items: [entry.item],
-                point: entry.point,
-                representative: entry.item
-            }
-            groups.push(group)
-
-            const cellKey = `${cellX},${cellY}`
-            if (!cells[cellKey]) {
-                cells[cellKey] = []
-            }
-            cells[cellKey].push(group)
+            groupsByRepresentative[representative].items.push(entries[i].item)
         }
 
         const groupsBySequenceNumber = {}
@@ -197,104 +163,10 @@ Item {
     Component {
         id: selectionPanelComponent
 
-        DropPanel {
+        MissionItemSelectionPanel {
             id: selectionPanel
 
-            modal: false
-
-            required property var groupItems
-
-            sourceComponent: Component {
-                Item {
-                    implicitWidth: itemListView.width
-                    implicitHeight: itemListView.height
-
-                    QGCListView {
-                        id: itemListView
-
-                        width: Math.min(Math.max(contentItem.childrenRect.width, _itemExtent), _maxWidth)
-                        height: _itemExtent
-                        orientation: ListView.Horizontal
-                        model: selectionPanel.groupItems
-                        cacheBuffer: width * 2
-                        reuseItems: true
-                        currentIndex: -1
-
-                        readonly property real _itemExtent: Math.max(ScreenTools.minTouchPixels, ScreenTools.defaultFontPixelHeight * 2.5)
-                        readonly property real _maxWidth: selectionPanel.dropViewPort.width * 0.4
-
-                        function _scrollBy(delta) {
-                            const currentTarget = wheelScrollAnimation.running ? wheelScrollAnimation.to : contentX
-                            const target = Math.max(0, Math.min(currentTarget - delta, Math.max(0, contentWidth - width)))
-                            wheelScrollAnimation.stop()
-                            wheelScrollAnimation.from = contentX
-                            wheelScrollAnimation.to = target
-                            wheelScrollAnimation.start()
-                        }
-
-                        delegate: Item {
-                            id: itemDelegate
-
-                            width: Math.max(itemListView._itemExtent, itemLabel.width + ScreenTools.defaultFontPixelWidth)
-                            height: itemListView._itemExtent
-
-                            required property var modelData
-
-                            readonly property bool _usesAbbreviation: modelData.abbreviation.charAt(0) > 'A' && modelData.abbreviation.charAt(0) < 'z'
-                            readonly property string _supplementaryLabel: !_usesAbbreviation ? "" : `${modelData.abbreviation} (${modelData.sequenceNumber})`
-
-                            MissionItemIndexLabel {
-                                id: itemLabel
-                                anchors.centerIn: parent
-                                checked: itemDelegate.modelData.isCurrentItem || itemDelegate.modelData.hasCurrentChildItem
-                                label: itemDelegate.modelData.abbreviation
-                                index: itemDelegate._usesAbbreviation ? -1 : itemDelegate.modelData.sequenceNumber
-                                small: false
-                                supplementaryLabel: itemDelegate._supplementaryLabel
-                            }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                onClicked: {
-                                    selectionPanel.close()
-                                    root.itemSelected(itemDelegate.modelData.sequenceNumber)
-                                }
-                            }
-                        }
-
-                        NumberAnimation {
-                            id: wheelScrollAnimation
-
-                            target: itemListView
-                            property: "contentX"
-                            duration: 120
-                            easing.type: Easing.OutCubic
-                        }
-
-                        WheelHandler {
-                            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-                            orientation: Qt.Vertical
-                            target: null
-                            onWheel: event => {
-                                itemListView._scrollBy(event.pixelDelta.y || event.angleDelta.y)
-                                event.accepted = true
-                            }
-                        }
-
-                        WheelHandler {
-                            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-                            orientation: Qt.Horizontal
-                            target: null
-                            onWheel: event => {
-                                itemListView._scrollBy(event.pixelDelta.x || event.angleDelta.x)
-                                event.accepted = true
-                            }
-                        }
-
-                        onMovementStarted: wheelScrollAnimation.stop()
-                    }
-                }
-            }
+            onItemSelected: (sequenceNumber) => root.itemSelected(sequenceNumber)
 
             onClosed: {
                 if (root._selectionPanel === selectionPanel) {

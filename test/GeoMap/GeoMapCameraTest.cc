@@ -1,11 +1,17 @@
 #include "GeoMapCameraTest.h"
 
+#include <cmath>
+
+#include <QtCore/QList>
+#include <QtCore/QRectF>
+#include <QtCore/QSizeF>
 #include <QtCore/QtMath>
 #include <QtGui/QQuaternion>
 #include <QtGui/QVector3D>
+#include <QtPositioning/QGeoCoordinate>
+#include <QtPositioning/QGeoRectangle>
 #include <QtTest/QSignalSpy>
-
-#include <cmath>
+#include <QtTest/QTest>
 
 #include "GeoMapCamera.h"
 #include "TileMath.h"
@@ -201,6 +207,7 @@ void GeoMapCameraTest::_screenToGroundNoViewport()
     camera.beginPan(QPointF(1, 1));
     camera.panTo(QPointF(50, 50));
     camera.zoomBy(0.5, QPointF(1, 1));
+    camera.fitToRegion(QGeoRectangle(QGeoCoordinate(47.40, 8.54), QGeoCoordinate(47.39, 8.56)));
     QCOMPARE_LT(qAbs(camera.center().latitude() - before.latitude()), 1e-12);
 }
 
@@ -382,6 +389,83 @@ void GeoMapCameraTest::_centerForCoordinateAtScreenPoint()
         camera.centerForCoordinateAtScreenPoint(target, screenPos, GeoMapCamera::kMaxDistance * 2.0);
     QCOMPARE_LT(groundDistance(TileMath::geoToWorld(unchangedAbove), TileMath::geoToWorld(camera.center())),
                 kWorldEpsilon);
+}
+
+void GeoMapCameraTest::_fitToRegionInvariant_data()
+{
+    QTest::addColumn<double>("heading");
+    QTest::addColumn<double>("tilt");
+    QTest::addColumn<double>("centerElevation");
+    QTest::addColumn<QSizeF>("viewport");
+    QTest::addColumn<QGeoRectangle>("region");
+    QTest::addColumn<bool>("atMinDistance");
+
+    const QGeoRectangle region(QGeoCoordinate(47.40, 8.54), QGeoCoordinate(47.39, 8.56));
+    QTest::newRow("top-down landscape") << 0.0 << 0.0 << 0.0 << kViewport << region << false;
+    QTest::newRow("top-down portrait") << 0.0 << 0.0 << 0.0 << QSizeF(600, 800) << region << false;
+    QTest::newRow("tilted rotated") << 30.0 << 55.0 << 0.0 << kViewport << region << false;
+    QTest::newRow("tilted elevated pivot") << 200.0 << 40.0 << 700.0 << kViewport << region << false;
+    // Closer than the distance limit would be needed: clamps to it
+    QTest::newRow("tiny region") << 0.0 << 0.0 << 0.0 << kViewport
+                                 << QGeoRectangle(kCenter, kCenter.atDistanceAndAzimuth(1.0, 135)) << true;
+    // Unusable input leaves the pose alone
+    QTest::newRow("invalid region") << 0.0 << 0.0 << 0.0 << kViewport << QGeoRectangle() << false;
+}
+
+void GeoMapCameraTest::_fitToRegionInvariant()
+{
+    QFETCH(double, heading);
+    QFETCH(double, tilt);
+    QFETCH(double, centerElevation);
+    QFETCH(QSizeF, viewport);
+    QFETCH(QGeoRectangle, region);
+    QFETCH(bool, atMinDistance);
+
+    GeoMapCamera camera;
+    camera.setViewportSize(viewport);
+    camera.setMode(GeoMapCamera::Mode::Mode3D);
+    camera.lookAt(kCenter, heading, tilt, GeoMapCamera::kDefaultDistance);
+    camera.setCenterElevation(centerElevation);
+
+    camera.fitToRegion(region);
+
+    // Orientation is kept
+    QCOMPARE(camera.heading(), heading);
+    QCOMPARE(camera.tilt(), tilt);
+
+    if (!region.isValid()) {
+        QCOMPARE_LT(camera.center().distanceTo(kCenter), 1e-6);
+        QCOMPARE(camera.distance(), GeoMapCamera::kDefaultDistance);
+        return;
+    }
+
+    const QPointF topLeft = TileMath::geoToWorld(region.topLeft());
+    const QPointF bottomRight = TileMath::geoToWorld(region.bottomRight());
+    QCOMPARE_LT(groundDistance(TileMath::geoToWorld(camera.center()), (topLeft + bottomRight) / 2.0), kWorldEpsilon);
+
+    const QList<QPointF> corners{topLeft, bottomRight, QPointF(topLeft.x(), bottomRight.y()),
+                                 QPointF(bottomRight.x(), topLeft.y())};
+    const QRectF screen(QPointF(0, 0), viewport);
+    const auto allCornersOnScreen = [&camera, &corners, &screen, centerElevation] {
+        for (const QPointF& corner : corners) {
+            const auto projected = camera.worldToScreen(corner, centerElevation);
+            if (!projected || !screen.contains(*projected)) {
+                return false;
+            }
+        }
+        return true;
+    };
+
+    // The whole region is visible...
+    QVERIFY(allCornersOnScreen());
+
+    // ...and only just: any closer and a corner leaves the screen
+    if (atMinDistance) {
+        QCOMPARE(camera.distance(), GeoMapCamera::kMinDistance);
+    } else {
+        camera.setDistance(camera.distance() * (1.0 - 1e-4));
+        QVERIFY(!allCornersOnScreen());
+    }
 }
 
 void GeoMapCameraTest::_centerElevation()

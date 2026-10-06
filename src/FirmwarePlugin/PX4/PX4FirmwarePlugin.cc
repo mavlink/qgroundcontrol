@@ -866,8 +866,6 @@ QVariant PX4FirmwarePlugin::expandedToolbarIndicatorSource(const Vehicle* /*vehi
         return QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/FirmwarePlugin/PX4/PX4BatteryIndicator.qml"));
     } else if (indicatorName == "FlightMode") {
         return QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/FirmwarePlugin/PX4/PX4FlightModeIndicator.qml"));
-    } else if (indicatorName == "MainStatus") {
-        return QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/FirmwarePlugin/PX4/PX4MainStatusIndicator.qml"));
     }
 
     return QVariant();

@@ -16,9 +16,10 @@
 
 namespace {
 
-// Float offsets within a vertex: position 3, tangent 3, side flag 2
+// Float offsets within a vertex: position 3, tangent 3, side flag, highlight flag
 constexpr int kTangentOffset = 3;
 constexpr int kSideOffset = 6;
+constexpr int kHighlightOffset = 7;
 
 // Near-equator coordinates: unanchored GeoScene has verticalScale == 1, so z
 // offsets equal altitude differences exactly
@@ -177,6 +178,43 @@ void FlightPathGeometryTest::_directionsAndSides()
     QCOMPARE(climb[kTangentOffset], 0.0f);
     QCOMPARE(climb[kTangentOffset + 1], 0.0f);
     QCOMPARE(climb[kTangentOffset + 2], 1.0f);
+}
+
+void FlightPathGeometryTest::_highlightFlags()
+{
+    GeoScene scene;
+    FlightPathGeometry geometry;
+    geometry.setScene(&scene);
+
+    const auto highlightsOf = [&geometry] {
+        QList<float> highlights;
+        for (int point = 0; point < geometry.pointCount(); point++) {
+            const float left = vertexAt(geometry.vertexData(), point * 2)[kHighlightOffset];
+            const float right = vertexAt(geometry.vertexData(), (point * 2) + 1)[kHighlightOffset];
+            if (left != right) {
+                return QList<float>();
+            }
+            highlights.append(left);
+        }
+        return highlights;
+    };
+
+    const QGeoCoordinate second = kStart.atDistanceAndAzimuth(100, 90);
+    const QGeoCoordinate third = second.atDistanceAndAzimuth(100, 90);
+
+    // No flags: nothing highlighted
+    geometry.setPath(makePath({kStart, second, third}));
+    QCOMPARE(highlightsOf(), QList<float>({0.0f, 0.0f, 0.0f}));
+
+    // Each point's flag reaches both of its vertices; a dropped invalid
+    // coordinate takes its flag with it
+    geometry.setPath(makePath({kStart, QGeoCoordinate(), second, third}), QVariantList{false, true, true, false});
+    QCOMPARE(highlightsOf(), QList<float>({0.0f, 1.0f, 0.0f}));
+
+    // Missing trailing flags and appended points are unhighlighted
+    geometry.setPath(makePath({kStart, second}), QVariantList{true});
+    geometry.appendPoint(third);
+    QCOMPARE(highlightsOf(), QList<float>({1.0f, 0.0f, 0.0f}));
 }
 
 void FlightPathGeometryTest::_pathMutations()

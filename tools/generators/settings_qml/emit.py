@@ -15,10 +15,15 @@ from ..common.controls import (
     render_textfield,
 )
 from ..common.validation import require_qml_safe_string
-from .metadata import get_fact_type, has_enum_strings
+from .metadata import get_fact_type, has_enum_strings, validate_setting
 from .model import ControlDef, PageDef, load_page_def, load_pages_data, resolve_page_def_path
 
 _env = make_env(Path(__file__).parent / "templates")
+
+# Only textfield and auto-detected controls can render a string text field
+_NON_TEXTFIELD_CONTROLS = frozenset(
+    {"component", "info", "checkbox", "combobox", "slider", "browse", "scaler"}
+)
 
 
 def _object_name(text: str) -> str:
@@ -168,9 +173,13 @@ def _qml_missing_placeholder(description: str) -> str:
 def _needs_string_field_width(page: PageDef, settings_dirs: Path | tuple[Path, ...]) -> bool:
     for grp in page.groups:
         for ctrl in grp.controls:
+            if ctrl.control in _NON_TEXTFIELD_CONTROLS:
+                continue
             fact_type = get_fact_type(ctrl.setting, settings_dirs)
-            has_enums = has_enum_strings(ctrl.setting, settings_dirs)
-            if fact_type == "string" and not has_enums:
+            if ctrl.control == "textfield":
+                if fact_type == "string":
+                    return True
+            elif fact_type == "string" and not has_enum_strings(ctrl.setting, settings_dirs):
                 return True
     return False
 
@@ -221,6 +230,11 @@ def generate_page_qml(
         {"type": _binding_qml_type(expr), "name": name, "expr": expr}
         for name, expr in page.bindings.items()
     ]
+
+    for grp in page.groups:
+        for ctrl in grp.controls:
+            if ctrl.control not in ("component", "info"):
+                validate_setting(ctrl.setting, settings_dirs)
 
     group_blocks: list[str] = []
     seen_object_names: dict[str, str] = {}  # objectName -> heading that produced it

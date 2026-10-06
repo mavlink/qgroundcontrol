@@ -12,6 +12,7 @@ import QtPositioning
 
 import QGroundControl
 import QGroundControl.Controls
+import QGroundControl.FlightMap
 import QGroundControl.GeoMap
 
 /// GeoMap-engine drop-in for FlyViewMap: hosts a FlyViewGeoMap and implements
@@ -127,6 +128,16 @@ Item {
         return (screenPos === undefined) ? Qt.point(-1, -1) : screenPos
     }
 
+    // MapFitFunctions contract (FlightMap.setVisibleRegion parity)
+    function setVisibleRegion(region) {
+        geoMapControl.fitToRegion(region)
+        // PiP zoom is otherwise never shared: save the fit so the swap back keeps it (FlyViewMap parity)
+        if (pipMode && visible) {
+            const camera = geoMapControl.camera
+            QGroundControl.flightMapZoom = camera.zoomLevelForDistance(camera.distance)
+        }
+    }
+
     FlyViewGeoMap {
         id: geoMapControl
         anchors.fill: parent
@@ -185,6 +196,26 @@ Item {
         id: _pipState
         pipView: root.pipView
         isDark: _isFullWindowItemDark
+    }
+
+    MapFitFunctions {
+        id: mapFitFunctions
+        map: root
+        usePlannedHomePosition: false
+        planMasterController: root.planMasterController
+    }
+
+    // Zoom to a mission downloaded from the vehicle (FlyViewMap parity)
+    Connections {
+        target: root.planMasterController ? root.planMasterController.missionController : null
+
+        function onNewItemsFromVehicle() {
+            const visualItems = root.planMasterController.missionController.visualItems
+            if (visualItems && visualItems.count !== 1) {
+                mapFitFunctions.fitMapViewportToMissionItems()
+                geoMapControl.positionTracker.firstVehiclePositionReceived = true
+            }
+        }
     }
 
     Connections {

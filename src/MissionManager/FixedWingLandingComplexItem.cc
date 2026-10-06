@@ -33,7 +33,7 @@ FixedWingLandingComplexItem::FixedWingLandingComplexItem(PlanMasterController* m
     _init();
 
     connect(&_glideSlopeFact,           &Fact::valueChanged, this, &FixedWingLandingComplexItem::_glideSlopeChanged);
-    connect(&_valueSetIsDistanceFact,   &Fact::valueChanged, this, &FixedWingLandingComplexItem::_setDirty);
+    connect(&_valueSetIsDistanceFact,   &Fact::rawValueChanged, this, &FixedWingLandingComplexItem::_setDirty);
 
     if (_valueSetIsDistanceFact.rawValue().toBool()) {
         _recalcFromHeadingAndDistanceChange();

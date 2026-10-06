@@ -10,6 +10,7 @@
 import QtQuick
 import QtPositioning
 
+import QGroundControl
 import QGroundControl.Controls
 
 /// General flight-path direction indicators for the GeoMap: one arrow per

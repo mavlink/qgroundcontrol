@@ -51,7 +51,7 @@ private:
 
     // Skip predicates
     bool _shouldSkipAutopilotVersionRequest() const;
-    bool _shouldSkipForFlying() const;
+    bool _shouldSkipForArmed() const;
     bool _shouldSkipForLinkType() const;
     bool _hasPrimaryLink() const;
     bool _shouldSkipForPlanLoad();

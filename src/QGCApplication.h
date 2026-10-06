@@ -112,9 +112,6 @@ public slots:
     /// one after the other.
     void showRebootAppMessage(const QString &message, const QString &title = QString());
 
-    /// Same as showRebootAppMessage() but the dialog also includes a button which reboots the active vehicle.
-    void showRebootVehicleMessage(const QString &message, const QString &title = QString());
-
     QGCImageProvider *qgcImageProvider();
 
 private slots:

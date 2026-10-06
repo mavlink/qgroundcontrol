@@ -13,6 +13,7 @@ private slots:
     void _parseULogParameterTest();
     void _parseULogWarningEventTest();
     void _parseULogModeSegmentsTest();
+    void _parseULogStaleInitialSamplesTest();
     void _parseULogDropoutTest();
     void _parseULogInvalidFileTest();
     void _parseDataFlashRegressionTest();

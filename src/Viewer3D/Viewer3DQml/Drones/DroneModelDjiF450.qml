@@ -115,10 +115,10 @@ Node {
                     DronePart { meshSource: "Djif450/DroneModel_Base_bottom_1/node.mesh"; baseColor: "gray"; indexOfRefraction: 2.0; metalness: 0.9 }
 
                     // Propellers — counter-rotating pairs
-                    AnimatedPropeller { meshSource: "Djif450/DroneModel_propeller22_1/node.mesh"; pivotPoint: Qt.vector3d(343.50, 404.07, 783.00); rotationTarget: -360; flightMode: vehicle ? (vehicle.armed + vehicle.flying) : 0 }
-                    AnimatedPropeller { meshSource: "Djif450/DroneModel_propeller22_2/node.mesh"; pivotPoint: Qt.vector3d(343.42, 404.16, 333.06); rotationTarget: -360; flightMode: vehicle ? (vehicle.armed + vehicle.flying) : 0 }
-                    AnimatedPropeller { meshSource: "Djif450/DroneModel_propeller2_2/node.mesh"; pivotPoint: Qt.vector3d(119.51, 402.66, 557.75); rotationTarget: 360; flightMode: vehicle ? (vehicle.armed + vehicle.flying) : 0 }
-                    AnimatedPropeller { meshSource: "Djif450/DroneModel_propeller2_7/node.mesh"; pivotPoint: Qt.vector3d(567.97, 404.00, 558.26); rotationTarget: 360; flightMode: vehicle ? (vehicle.armed + vehicle.flying) : 0 }
+                    AnimatedPropeller { meshSource: "Djif450/DroneModel_propeller22_1/node.mesh"; pivotPoint: Qt.vector3d(343.50, 404.07, 783.00); rotationTarget: -360; flightMode: vehicle ? (vehicle.armed + vehicle.airborne) : 0 }
+                    AnimatedPropeller { meshSource: "Djif450/DroneModel_propeller22_2/node.mesh"; pivotPoint: Qt.vector3d(343.42, 404.16, 333.06); rotationTarget: -360; flightMode: vehicle ? (vehicle.armed + vehicle.airborne) : 0 }
+                    AnimatedPropeller { meshSource: "Djif450/DroneModel_propeller2_2/node.mesh"; pivotPoint: Qt.vector3d(119.51, 402.66, 557.75); rotationTarget: 360; flightMode: vehicle ? (vehicle.armed + vehicle.airborne) : 0 }
+                    AnimatedPropeller { meshSource: "Djif450/DroneModel_propeller2_7/node.mesh"; pivotPoint: Qt.vector3d(567.97, 404.00, 558.26); rotationTarget: 360; flightMode: vehicle ? (vehicle.armed + vehicle.airborne) : 0 }
                 }
             }
         }

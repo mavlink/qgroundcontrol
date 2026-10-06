@@ -15,6 +15,14 @@ DECLARE_SETTINGGROUP(Mavlink, "")
         deprecatedSettings.remove(deprecatedGCSHeartbeatEnabledKey);
     }
 
+    static const char* deprecatedNoInitialDownloadWhenFlyingKey = "noInitialDownloadWhenFlying";
+    if (!newSettings.contains(noInitialDownloadWhenArmedName) &&
+        newSettings.contains(deprecatedNoInitialDownloadWhenFlyingKey)) {
+        newSettings.setValue(noInitialDownloadWhenArmedName,
+                             newSettings.value(deprecatedNoInitialDownloadWhenFlyingKey));
+        newSettings.remove(deprecatedNoInitialDownloadWhenFlyingKey);
+    }
+
     static const char* deprecatedMavlinkGroup = "QGC_MAVLINK_PROTOCOL";
     static const char* deprecatedMavlinkSystemIdKey = "GCS_SYSTEM_ID";
     deprecatedSettings.beginGroup(deprecatedMavlinkGroup);
@@ -36,4 +44,4 @@ DECLARE_SETTINGSFACT(MavlinkSettings, forwardMavlinkHostName)
 DECLARE_SETTINGSFACT(MavlinkSettings, forwardMavlinkAPMSupportHostName)
 DECLARE_SETTINGSFACT(MavlinkSettings, sendGCSHeartbeat)
 DECLARE_SETTINGSFACT(MavlinkSettings, gcsMavlinkSystemID)
-DECLARE_SETTINGSFACT(MavlinkSettings, noInitialDownloadWhenFlying)
+DECLARE_SETTINGSFACT(MavlinkSettings, noInitialDownloadWhenArmed)

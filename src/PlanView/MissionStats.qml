@@ -50,8 +50,8 @@ Rectangle {
                                                          0 : (Math.atan(_currentMissionItem.altDifference / _currentMissionItem.distance) * (180.0/Math.PI)))
                                                   : NaN
 
-    property string _distanceText: isNaN(_distance) ? "-.-" : QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnitsString(_distance)
-    property string _altDifferenceText: isNaN(_altDifference) ? "-.-" : QGroundControl.unitsConversion.metersToAppSettingsVerticalDistanceUnitsString(_altDifference)
+    property string _distanceText: _distanceString()
+    property string _altDifferenceText: _altDifferenceString()
     property string _gradientText: isNaN(_gradient) ? "-.-" : _gradient.toFixed(0) + qsTr(" deg")
     property string _azimuthText: isNaN(_azimuth) ? "-.-" : Math.round(_azimuth) % 360
     property string _headingText: isNaN(_azimuth) ? "-.-" : Math.round(_heading) % 360
@@ -61,6 +61,14 @@ Rectangle {
     property string _batteriesRequiredText: _batteriesRequired < 0 ? qsTr("N/A") : _batteriesRequired
 
     readonly property real _margins: ScreenTools.defaultFontPixelWidth
+
+    function _distanceString() {
+        return isNaN(_distance) ? "-.-" : QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnitsString(_distance)
+    }
+
+    function _altDifferenceString() {
+        return isNaN(_altDifference) ? "-.-" : QGroundControl.unitsConversion.metersToAppSettingsVerticalDistanceUnitsString(_altDifference)
+    }
 
     function getMissionTime() {
         var totalSeconds = Number(_missionTime)
@@ -196,6 +204,15 @@ Rectangle {
                     Layout.minimumWidth: _mediumValueWidth
                 }
             }
+        }
+    }
+
+    Connections {
+        target: QGroundControl.unitsConversion
+
+        function onUnitsChanged() {
+            _distanceText = Qt.binding(_distanceString)
+            _altDifferenceText = Qt.binding(_altDifferenceString)
         }
     }
 }

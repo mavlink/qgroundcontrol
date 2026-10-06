@@ -86,7 +86,7 @@ Rectangle {
                 small:                      true
                 checked:                    object.isCurrentItem
                 label:                      object.abbreviation.charAt(0)
-                index:                      object.abbreviation.charAt(0) > 'A' && object.abbreviation.charAt(0) < 'z' ? -1 : object.sequenceNumber
+                index:                      object.abbreviation !== "" ? -1 : object.sequenceNumber
                 showSequenceNumbers:        false
             }
 

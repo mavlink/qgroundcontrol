@@ -111,8 +111,16 @@ public:
 
     /// The field's estimate alone (see HeightField), independent of the drawn
     /// detail level: for the camera pivot and altitude datums, where following
-    /// the mesh would couple them to patch churn.
+    /// the mesh would couple them to patch churn. Emits terrainDataChanged when
+    /// it changes.
     Q_INVOKABLE double terrainDataHeightAt(const QGeoCoordinate& coordinate) const;
+
+    /// True when the straight segment from -> to (altitude linear along it, in
+    /// the field's frame) passes strictly below the field's estimate anywhere
+    /// outside the first ignoreStartMeters and last ignoreEndMeters. False when
+    /// either end has no altitude.
+    Q_INVOKABLE bool segmentBelowTerrain(const QGeoCoordinate& from, const QGeoCoordinate& to, double ignoreStartMeters,
+                                         double ignoreEndMeters) const;
 
     /// Coordinate of the rendered surface under screenPos: marches the camera's
     /// pick ray to its first crossing of z = terrain height(x, y) * zScale, so the pick
@@ -185,6 +193,8 @@ signals:
     void capturingChanged();
     /// terrainHeightAt answers changed somewhere: consumers re-query
     void terrainHeightsChanged();
+    /// terrainDataHeightAt / segmentBelowTerrain answers changed somewhere (not on patch churn)
+    void terrainDataChanged();
 
 private slots:
     void _patchAdded(const TileMath::TileKey& key);
@@ -216,6 +226,8 @@ private:
     static constexpr int kMaxRetiredImages = 128;         ///< tiles kept after patch removal (fallback source)
     static constexpr int kMaxAncestorFallbackLevels = 8;  ///< how far up the quadtree fallback looks
     static constexpr int kImageRetryMs = 3000;            ///< pacing for re-requesting failed tile images
+    static constexpr double kSegmentSampleSpacingMeters = 30.0;
+    static constexpr int kMaxSegmentSamples = 2000;       ///< full spacing up to GeoMapMissionPath's 50 km pieces
 
     GeoScene* _scene = nullptr;
     HeightSource* _heightSource = nullptr;

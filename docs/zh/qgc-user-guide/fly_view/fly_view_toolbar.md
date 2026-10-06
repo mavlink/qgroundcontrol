@@ -25,11 +25,13 @@ Next are multiple toolbar indicators for vehicle status. 每个工具栏指示�
 - **着陆** - 载具正在着陆。
 - **通信丢失** - QGroundControl已失去与载具的通信。
 
-The Flight Status indicator dropdown also gives you access to:
+The Flight Status indicator dropdown fills the window and also gives you access to:
 
 - **解锁** - 解锁一辆载具开启发动机以准备起飞。你只有在载具安全和准备飞行时才能解锁载具。通常你不需要手动解锁载具。你可以简单地起飞或开始执行任务，载具将解锁自己。
-- **Disarm** - Disarming a vehicle is only available when the vehicle is on the ground. 它会关停电机。一般来说，你无需明确进行锁定操作，因为飞行器会在着陆后自动锁定，或者如果在解锁后若未起飞，不久后也会自动锁定。
-- **紧急停机** - 在载具飞行时用紧急停机锁定载具。仅供紧急情况使用，你的飞行器会坠毁！
+- **Disarm** - Disarming a vehicle stops the motors. For aircraft it is only available when the vehicle is on the ground. 一般来说，你无需明确进行锁定操作，因为飞行器会在着陆后自动锁定，或者如果在解锁后若未起飞，不久后也会自动锁定。
+- **Emergency Stop** - Replaces **Disarm** while an aircraft is flying. It is a red button which you must press and hold to confirm. It stops the motors while in the air. 仅供紧急情况使用，你的飞行器会坠毁！ Ground vehicles and submarines keep the normal **Disarm** button.
+- **Force Arm** - Arms the vehicle while bypassing pre-arm checks. Only shown when **Allow Force Arm** is enabled in [Fly View Settings](../settings_view/fly_view.md).
+- **Vehicle Messages** - The messages sent by the vehicle. Use the trash button to clear them.
 
 在警告或尚未准备好状态的情况下，您可以点击指示器来显示下拉菜单，显示原因(s)。右侧的切换按钮会展开每个错误，并显示更多信息及可能的解决方案。
 
@@ -43,9 +45,11 @@ The Flight Status indicator dropdown also gives you access to:
 - 设置全局地理栅栏设置
 - 从显示列表中添加/删除飞行模式
 
-### Vehicle Messages <img src="../../../assets/fly/toolbar/messages_indicator.png" alt="Vehicle Messages indicator" style="height: 1.15em; vertical-align: text-bottom;" />
+### Vehicle Messages
 
-车辆消息指示器下拉显示来自车辆的消息。如果有重要信息，指示器将会变红。
+When the vehicle sends critical messages (error severity or worse) a red badge is shown at the top right of the Flight Status indicator. The badge shows the number of critical messages, or `!` if there are more than 9. Opening the dropdown does not clear the badge, only clearing the message list with the trash button does.
+
+Critical messages are also shown in a **Vehicle Alert** popup below the toolbar. Up to 5 messages are shown at once, fewer if the window is too short to fit them. If more arrive the popup title changes to **Vehicle Alert - Click to see more**, clicking it opens the Flight Status dropdown. The popup closes automatically after 10 seconds, or when you click it.
 
 ### GPS / RTK GPS <img src="../../../assets/fly/toolbar/gps_indicator.png" alt="GPS / RTK GPS indicator" style="height: 1.15em; vertical-align: text-bottom;" />
 

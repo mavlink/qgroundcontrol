@@ -415,7 +415,9 @@ void MockLink::run1HzTasks()
     _sendBatteryStatus();
     _sendNamedValueFloats();
     _sendSysStatus();
-    _sendADSBVehicles();
+    if (_enableADSB) {
+        _sendADSBVehicles();
+    }
     if (_vehicleType != MAV_TYPE_SUBMARINE) {
         _sendRemoteIDArmStatus();
     }

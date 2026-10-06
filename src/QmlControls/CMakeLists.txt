@@ -15,6 +15,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         HorizontalFactValueGrid.h
         InstrumentValueData.cc
         InstrumentValueData.h
+        MapMarkerGrouping.cc
+        MapMarkerGrouping.h
         MapPositionTracker.cc
         MapPositionTracker.h
         MavlinkAction.cc
@@ -55,6 +57,7 @@ target_sources(${CMAKE_PROJECT_NAME}
         QmlObjectListModel.h
         QmlObjectTreeModel.cc
         QmlObjectTreeModel.h
+        QmlUnitsConversion.cc
         QmlUnitsConversion.h
         RCChannelMonitorController.cc
         RCChannelMonitorController.h

@@ -105,7 +105,7 @@ QGCApplication::QGCApplication(int& argc, char* argv[], const QGCCommandLinePars
                                << "Is writable?:" << settings.isWritable();
 
     if (!settings.isWritable()) {
-        qCWarning(QGCApplicationLog) << "Setings location is not writable";
+        qCWarning(QGCApplicationLog) << "Settings location is not writable";
     }
 
     // The setting will delete all settings on this boot
@@ -171,7 +171,7 @@ void QGCApplication::setLanguage()
 {
     _locale = QLocale::system();
     qCDebug(QGCApplicationLog) << "System reported locale:" << _locale << "; Name" << _locale.name()
-                               << "; Preffered (used in maps): "
+                               << "; Preferred (used in maps): "
                                << (QLocale::system().uiLanguages().length() > 0 ? QLocale::system().uiLanguages()[0]
                                                                                 : "None");
 
@@ -348,6 +348,7 @@ void QGCApplication::_initForNormalAppBoot()
 
     // Load known link configurations
     LinkManager::instance()->loadLinkConfigurationList();
+    QGCCorePlugin::instance()->linkConfigurationsLoaded(LinkManager::instance());
 
     // Probe for joysticks
     JoystickManager::instance()->init();
@@ -475,35 +476,6 @@ void QGCApplication::showRebootAppMessage(const QString& message, const QString&
     }
 
     showAppMessage(message, title);
-}
-
-void QGCApplication::showRebootVehicleMessage(const QString& message, const QString& title)
-{
-    if (_rebootMessageDebounced()) {
-        return;
-    }
-
-    const QString dialogTitle = title.isEmpty() ? applicationName() : title;
-
-    if (runningUnitTests()) {
-        // Same log format as showAppMessage() so tests assert this via expectAppMessage()
-        qCDebug(QGCAppMessageLog) << "showAppMessage:" << dialogTitle << "-" << message;
-        if (!_uiTestMode) {
-            return;
-        }
-    }
-
-    QObject* const rootQmlObject = _rootQmlObject();
-    if (rootQmlObject) {
-        QVariant varReturn;
-        QVariant varMessage = QVariant::fromValue(message);
-        QMetaObject::invokeMethod(rootQmlObject, "_showRebootVehicleDialog", Q_RETURN_ARG(QVariant, varReturn),
-                                  Q_ARG(QVariant, dialogTitle), Q_ARG(QVariant, varMessage));
-    } else {
-        // UI isn't ready yet: fall back to the plain app message queue
-        _delayedAppMessages.append(QPair<QString, QString>(dialogTitle, message));
-        QTimer::singleShot(200, this, &QGCApplication::_showDelayedAppMessages);
-    }
 }
 
 void QGCApplication::_showDelayedAppMessages()

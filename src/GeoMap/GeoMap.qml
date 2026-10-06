@@ -122,6 +122,12 @@ Item {
         headingAnimation.start()
     }
 
+    // Show the whole QGeoRectangle at the current heading/tilt
+    function fitToRegion(region) {
+        completeCameraAnimations()
+        geoCamera.fitToRegion(region)
+    }
+
     // LOD checker colors for debug mode (imagery off)
     function _lodColor(centerX, centerY, span, zoomLevel) {
         const parity = (Math.round(centerX / span) + Math.round(centerY / span)) & 1
@@ -655,7 +661,7 @@ Item {
 
     Connections {
         target: patchModel
-        function onTerrainHeightsChanged() {
+        function onTerrainDataChanged() {
             root._updateCenterElevation()
             root._updateHomeTerrainBias()
         }

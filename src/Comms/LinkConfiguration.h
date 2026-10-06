@@ -59,7 +59,7 @@ public:
     bool isAutoConnect() const { return _autoConnect; }
 
     /// Set if this is this an Auto Connect configuration.
-    virtual void setAutoConnect(bool autoc = true);
+    void setAutoConnect(bool autoc = true);
 
     bool suppressAutoReconnect() const { return _suppressAutoReconnect; }
     void setSuppressAutoReconnect(bool suppress) {
@@ -72,6 +72,8 @@ public:
     }
 
     bool reconnectReady() const { return _nextReconnect.hasExpired(); }
+
+    int reconnectAttempts() const { return _reconnectAttempts; }
     void noteReconnectAttempt() {
         const int exp = qMin(_reconnectAttempts, 16);
         _reconnectAttempts = qMin(_reconnectAttempts + 1, 17);

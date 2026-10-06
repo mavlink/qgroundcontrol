@@ -9,7 +9,10 @@ RallyPoint::RallyPoint(const QGeoCoordinate& coordinate, QObject* parent)
     , _latitudeFact(0, _latitudeFactName, FactMetaData::valueTypeDouble)
     , _altitudeFact(0, _altitudeFactName, FactMetaData::valueTypeDouble)
 {
-    setCoordinate(coordinate);
+    // Using setCoordinate() would set dirty
+    _longitudeFact.setRawValue(coordinate.longitude());
+    _latitudeFact.setRawValue(coordinate.latitude());
+    _altitudeFact.setRawValue(coordinate.altitude());
 
     _factSetup();
 }
@@ -59,6 +62,11 @@ void RallyPoint::_factSetup(void)
     connect(&_latitudeFact, &Fact::valueChanged, this, &RallyPoint::_sendCoordinateChanged);
     connect(&_longitudeFact, &Fact::valueChanged, this, &RallyPoint::_sendCoordinateChanged);
     connect(&_altitudeFact, &Fact::valueChanged, this, &RallyPoint::_sendCoordinateChanged);
+
+    // Raw, not cooked: a units change must not dirty the point
+    for (Fact* const fact : {&_latitudeFact, &_longitudeFact, &_altitudeFact}) {
+        connect(fact, &Fact::rawValueChanged, this, [this]() { setDirty(true); });
+    }
 }
 
 void RallyPoint::_cacheFactMetadata() {

@@ -27,10 +27,11 @@
 #include "MockLink.h"
 #endif
 
+#include <algorithm>
+#include <utility>
+
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QTimer>
-
-#include <utility>
 
 QGC_LOGGING_CATEGORY(LinkManagerLog, "Comms.LinkManager")
 QGC_LOGGING_CATEGORY(LinkManagerVerboseLog, "Comms.LinkManager:verbose")
@@ -238,6 +239,12 @@ void LinkManager::_communicationError(const QString &title, const QString &error
         return;
     }
 
+    // Dynamic links recreated on a timer: only the first attempt of a failure streak pops up
+    if (config && (config->reconnectAttempts() > 1)) {
+        qCDebug(LinkManagerLog) << "Link error on retry:" << title << error;
+        return;
+    }
+
     QGC::showAppMessage(error, title);
 }
 
@@ -315,6 +322,12 @@ void LinkManager::_linkDisconnected()
     if (config) {
         config->noteDisconnected();
         config->setLink(nullptr);
+
+        if (config->isDynamic() && (config->name() == _mavlinkForwardingSupportLinkName) &&
+            _mavlinkSupportForwardingEnabled) {
+            _mavlinkSupportForwardingEnabled = false;
+            emit mavlinkSupportForwardingEnabledChanged();
+        }
     }
 
     (void) disconnect(link, &LinkInterface::communicationError, this, &LinkManager::_communicationError);
@@ -462,22 +475,16 @@ void LinkManager::_addUDPAutoConnectLink()
         return;
     }
 
-    {
-        QMutexLocker locker(&_linksMutex);
-        for (const SharedLinkInterfacePtr &link : _rgLinks) {
-            const SharedLinkConfigurationPtr linkConfig = link->linkConfiguration();
-            if (linkConfig && (linkConfig->type() == LinkConfiguration::TypeUdp) && (linkConfig->name() == _defaultUDPLinkName)) {
-                return;
-            }
+    _retryDynamicUdpLink(_defaultUDPLinkName, [this](UDPConfiguration& udpConfig) {
+        udpConfig.setAutoConnect(true);
+        // Listening is this link's main job; an unresolvable target must not stop it
+        udpConfig.setRequireResolvedHosts(false);
+        udpConfig.setLocalPort(_autoConnectSettings->udpListenPort()->rawValue().toUInt());
+        const QString targetHostIP = _autoConnectSettings->udpTargetHostIP()->rawValue().toString();
+        if (!targetHostIP.isEmpty()) {
+            udpConfig.addHost(targetHostIP, _autoConnectSettings->udpTargetHostPort()->rawValue().toUInt());
         }
-    }
-
-    qCDebug(LinkManagerLog) << "New auto-connect UDP port added";
-    UDPConfiguration* const udpConfig = new UDPConfiguration(_defaultUDPLinkName);
-    udpConfig->setDynamic(true);
-    udpConfig->setAutoConnect(true);
-    SharedLinkConfigurationPtr config = addConfiguration(udpConfig);
-    createConnectedLink(config);
+    });
 }
 
 void LinkManager::_addMAVLinkForwardingLink()
@@ -486,19 +493,48 @@ void LinkManager::_addMAVLinkForwardingLink()
         return;
     }
 
-    {
-        QMutexLocker locker(&_linksMutex);
-        for (const SharedLinkInterfacePtr &link : _rgLinks) {
-            const SharedLinkConfigurationPtr linkConfig = link->linkConfiguration();
-            if (linkConfig && (linkConfig->type() == LinkConfiguration::TypeUdp) && (linkConfig->name() == _mavlinkForwardingLinkName)) {
-                // TODO: should we check if the host/port matches the mavlinkForwardHostName setting and update if it does not match?
-                return;
-            }
+    _retryDynamicUdpLink(_mavlinkForwardingLinkName, [](UDPConfiguration& udpConfig) {
+        udpConfig.setForwarding(true);
+        udpConfig.addHost(
+            SettingsManager::instance()->mavlinkSettings()->forwardMavlinkHostName()->rawValue().toString());
+    });
+}
+
+void LinkManager::_retryDynamicUdpLink(const QString& name, const std::function<void(UDPConfiguration&)>& configure)
+{
+    SharedLinkConfigurationPtr config = _findDynamicUdpConfiguration(name);
+    if (config && (config->link() || !config->reconnectReady())) {
+        return;
+    }
+
+    UDPConfiguration udpConfig(name);
+    udpConfig.setDynamic(true);
+    configure(udpConfig);
+
+    // Reuse the config on retry so its backoff applies and configs don't pile up
+    if (config) {
+        config->copyFrom(&udpConfig);
+        qCDebug(LinkManagerLog) << "Retrying dynamic UDP link:" << name;
+    } else {
+        config = addConfiguration(new UDPConfiguration(&udpConfig));
+        qCDebug(LinkManagerLog) << "New dynamic UDP link added:" << name << udpConfig.hostList();
+    }
+
+    config->noteReconnectAttempt();
+    createConnectedLink(config);
+}
+
+SharedLinkConfigurationPtr LinkManager::_findDynamicUdpConfiguration(const QString& name) const
+{
+    // User-created links may use the same name; those must never be reused
+    for (const SharedLinkConfigurationPtr& config : _rgLinkConfigs) {
+        if (config && config->isDynamic() && (config->type() == LinkConfiguration::TypeUdp) &&
+            (config->name() == name)) {
+            return config;
         }
     }
 
-    const QString hostName = SettingsManager::instance()->mavlinkSettings()->forwardMavlinkHostName()->rawValue().toString();
-    _createDynamicForwardLink(_mavlinkForwardingLinkName, hostName);
+    return nullptr;
 }
 
 void LinkManager::_reconnectAutoConnectLinks()
@@ -655,8 +691,28 @@ void LinkManager::removeConfiguration(LinkConfiguration *config)
 
 void LinkManager::createMavlinkForwardingSupportLink()
 {
-    const QString hostName = SettingsManager::instance()->mavlinkSettings()->forwardMavlinkAPMSupportHostName()->rawValue().toString();
-    _createDynamicForwardLink(_mavlinkForwardingSupportLinkName, hostName);
+    SharedLinkConfigurationPtr config = _findDynamicUdpConfiguration(_mavlinkForwardingSupportLinkName);
+    if (config && config->link()) {
+        return;
+    }
+
+    UDPConfiguration udpConfig(_mavlinkForwardingSupportLinkName);
+    udpConfig.setDynamic(true);
+    udpConfig.setForwarding(true);
+    udpConfig.addHost(
+        SettingsManager::instance()->mavlinkSettings()->forwardMavlinkAPMSupportHostName()->rawValue().toString());
+
+    if (config) {
+        config->copyFrom(&udpConfig);
+    } else {
+        config = addConfiguration(new UDPConfiguration(&udpConfig));
+    }
+
+    if (!createConnectedLink(config)) {
+        return;
+    }
+
+    // Cleared again in _linkDisconnected if the connect fails
     _mavlinkSupportForwardingEnabled = true;
     emit mavlinkSupportForwardingEnabledChanged();
 }
@@ -699,6 +755,13 @@ SharedLinkConfigurationPtr LinkManager::addConfiguration(LinkConfiguration *conf
     (void) _rgLinkConfigs.append(SharedLinkConfigurationPtr(config));
 
     return _rgLinkConfigs.last();
+}
+
+bool LinkManager::containsConfiguration(const QString& name) const
+{
+    return std::ranges::any_of(_rgLinkConfigs, [&name](const SharedLinkConfigurationPtr& config) {
+        return config && (config->name() == name);
+    });
 }
 
 void LinkManager::startAutoConnectedLinks()
@@ -753,20 +816,6 @@ LogReplayLink *LinkManager::startLogReplay(const QString &logFile)
     }
 
     return nullptr;
-}
-
-void LinkManager::_createDynamicForwardLink(const char *linkName, const QString &hostName)
-{
-    UDPConfiguration* const udpConfig = new UDPConfiguration(linkName);
-
-    udpConfig->setDynamic(true);
-    udpConfig->setForwarding(true);
-    udpConfig->addHost(hostName);
-
-    SharedLinkConfigurationPtr config = addConfiguration(udpConfig);
-    createConnectedLink(config);
-
-    qCDebug(LinkManagerLog) << "New dynamic MAVLink forwarding port added:" << linkName << " hostname:" << hostName;
 }
 
 bool LinkManager::isLinkUSBDirect([[maybe_unused]] const LinkInterface *link)

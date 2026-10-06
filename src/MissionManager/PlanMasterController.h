@@ -167,6 +167,7 @@ private:
     void _setDirtyForSave(bool dirtyForSave);
     void _setDirtyForUpload(bool dirtyForUpload);
     void _setDirtyStates(bool dirtyForSave, bool dirtyForUpload);
+    void _clearElementDirtyStates();
     void _clearCurrentPlanFile();
     bool _loadPlanJson(const QByteArray& bytes, QString& errorString);
 

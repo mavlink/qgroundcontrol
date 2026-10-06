@@ -60,23 +60,18 @@ void StatusTextHandlerTest::_testHandleTextMessage()
     QString messages = statusTextHandler->formattedMessages();
     QVERIFY(!messages.isEmpty());
     QVERIFY(messages.contains("StatusTextHandlerTestInfo"));
-    QCOMPARE(statusTextHandler->getNormalCount(), 1);
-    QCOMPARE(statusTextHandler->messageCount(), 1);
+    QCOMPARE(statusTextHandler->messages().count(), 1);
     statusTextHandler->handleHTMLEscapedTextMessage(MAV_COMP_ID_USER1, MAV_SEVERITY_WARNING,
                                                     "StatusTextHandlerTestWarning",
                                                     "This is the StatusTextHandlerTestWarning Test");
     messages = statusTextHandler->formattedMessages();
     QVERIFY(messages.contains("StatusTextHandlerTestInfo"));
     QVERIFY(messages.contains("StatusTextHandlerTestWarning"));
-    QCOMPARE(statusTextHandler->getNormalCount(), 1);
-    QCOMPARE(statusTextHandler->getWarningCount(), 1);
-    QCOMPARE(statusTextHandler->messageCount(), 2);
+    QCOMPARE(statusTextHandler->messages().count(), 2);
     statusTextHandler->clearMessages();
     messages = statusTextHandler->formattedMessages();
     QVERIFY(messages.isEmpty());
-    QCOMPARE(statusTextHandler->getNormalCount(), 0);
-    QCOMPARE(statusTextHandler->getWarningCount(), 0);
-    QCOMPARE(statusTextHandler->messageCount(), 0);
+    QCOMPARE(statusTextHandler->messages().count(), 0);
 }
 
 void StatusTextHandlerTest::_testHandleErrorMessageAndMultiComponentPrefix()
@@ -89,10 +84,8 @@ void StatusTextHandlerTest::_testHandleErrorMessageAndMultiComponentPrefix()
     statusTextHandler.handleHTMLEscapedTextMessage(MAV_COMP_ID_USER1, MAV_SEVERITY_INFO, "InfoMessage", "");
     statusTextHandler.handleHTMLEscapedTextMessage(MAV_COMP_ID_USER2, MAV_SEVERITY_ERROR, "ErrorMessage", "");
 
-    QCOMPARE(statusTextHandler.getNormalCount(), 1);
-    QCOMPARE(statusTextHandler.getErrorCount(), 1);
-    QCOMPARE(statusTextHandler.messageCount(), 2);
-    QVERIFY(statusTextHandler.messageTypeError());
+    QCOMPARE(statusTextHandler.messages().count(), 2);
+    QCOMPARE(statusTextHandler.criticalMessageCount(), 1);
 
     QCOMPARE(errorSpy.count(), 1);
     QCOMPARE(errorSpy.at(0).at(0).toString(), QStringLiteral("ErrorMessage"));
@@ -102,36 +95,26 @@ void StatusTextHandlerTest::_testHandleErrorMessageAndMultiComponentPrefix()
     QVERIFY(formatted.contains(QStringLiteral("Error")));
 }
 
-void StatusTextHandlerTest::_testResetErrorLevelMessages()
+void StatusTextHandlerTest::_testCriticalMessageCount()
 {
     StatusTextHandler statusTextHandler;
 
+    QSignalSpy countSpy(&statusTextHandler, &StatusTextHandler::criticalMessageCountChanged);
+    QVERIFY(countSpy.isValid());
+
     statusTextHandler.handleHTMLEscapedTextMessage(MAV_COMP_ID_USER1, MAV_SEVERITY_INFO, "InfoMessage", "");
     statusTextHandler.handleHTMLEscapedTextMessage(MAV_COMP_ID_USER1, MAV_SEVERITY_WARNING, "WarningMessage", "");
+    QCOMPARE(statusTextHandler.criticalMessageCount(), 0);
+    QCOMPARE(countSpy.count(), 0);
+
     statusTextHandler.handleHTMLEscapedTextMessage(MAV_COMP_ID_USER1, MAV_SEVERITY_ERROR, "ErrorMessage", "");
+    statusTextHandler.handleHTMLEscapedTextMessage(MAV_COMP_ID_USER1, MAV_SEVERITY_CRITICAL, "CriticalMessage", "");
+    QCOMPARE(statusTextHandler.criticalMessageCount(), 2);
+    QCOMPARE(countSpy.count(), 2);
 
-    QCOMPARE(statusTextHandler.getNormalCount(), 1);
-    QCOMPARE(statusTextHandler.getWarningCount(), 1);
-    QCOMPARE(statusTextHandler.getErrorCount(), 1);
-    QCOMPARE(statusTextHandler.getErrorCountTotal(), 1);
-    QCOMPARE(statusTextHandler.messageCount(), 3);
-    QVERIFY(statusTextHandler.messageTypeError());
-
-    statusTextHandler.resetErrorLevelMessages();
-
-    QCOMPARE(statusTextHandler.getNormalCount(), 1);
-    QCOMPARE(statusTextHandler.getWarningCount(), 1);
-    QCOMPARE(statusTextHandler.getErrorCount(), 0);
-    QCOMPARE(statusTextHandler.getErrorCountTotal(), 1);
-    QCOMPARE(statusTextHandler.messageCount(), 2);
-    QVERIFY(statusTextHandler.messageTypeWarning());
-
-    StatusTextHandler infoAndErrorOnly;
-    infoAndErrorOnly.handleHTMLEscapedTextMessage(MAV_COMP_ID_USER1, MAV_SEVERITY_INFO, "InfoOnly", "");
-    infoAndErrorOnly.handleHTMLEscapedTextMessage(MAV_COMP_ID_USER1, MAV_SEVERITY_ERROR, "ErrorOnly", "");
-    infoAndErrorOnly.resetErrorLevelMessages();
-    QCOMPARE(infoAndErrorOnly.messageCount(), 1);
-    QVERIFY(infoAndErrorOnly.messageTypeNormal());
+    statusTextHandler.clearMessages();
+    QCOMPARE(statusTextHandler.criticalMessageCount(), 0);
+    QCOMPARE(countSpy.count(), 3);
 }
 
 void StatusTextHandlerTest::_testChunkedStatusTextMissingChunk()
@@ -216,7 +199,7 @@ void StatusTextHandlerTest::_testMavlinkMessageReceivedIgnoresNonStatusText()
     statusTextHandler.mavlinkMessageReceived(heartbeat);
 
     QCOMPARE(textSpy.count(), 0);
-    QCOMPARE(statusTextHandler.messageCount(), 0);
+    QVERIFY(statusTextHandler.messages().isEmpty());
 }
 
 UT_REGISTER_TEST(StatusTextHandlerTest, TestLabel::Unit)

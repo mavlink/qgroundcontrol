@@ -124,7 +124,7 @@ Item {
 
         onMagCalComplete: {
             setOrientationsDialogShowBoardOrientation   = false
-            setOrientationsDialogFactory.open({ title: qsTr("Compass Calibration Complete"), showRebootVehicleButton: true })
+            setOrientationsDialogFactory.open({ title: qsTr("Compass Calibration Complete"), showRebootMessage: true })
         }
 
         onWaitingForCancelChanged: {
@@ -255,20 +255,14 @@ Item {
         QGCPopupDialog {
             buttons: Dialog.Ok
 
-            property bool showRebootVehicleButton: true
+            property bool showRebootMessage: true
 
             ColumnLayout {
                 spacing: ScreenTools.defaultFontPixelHeight
 
                 QGCLabel {
                     text:       qsTr("Reboot the vehicle prior to flight.")
-                    visible:    showRebootVehicleButton
-                }
-
-                QGCButton {
-                    text:       qsTr("Reboot Vehicle")
-                    visible:    showRebootVehicleButton
-                    onClicked: { controller.vehicle.rebootVehicle(); close() }
+                    visible:    showRebootMessage
                 }
 
                 QGCLabel {
@@ -417,7 +411,7 @@ Item {
                 visible:    sectionIdFilter === "" || sectionIdFilter === "Orientations"
                 onClicked: {
                     setOrientationsDialogShowBoardOrientation = true
-                    setOrientationsDialogFactory.open({ title: qsTr("Set Orientations"), showRebootVehicleButton: false })
+                    setOrientationsDialogFactory.open({ title: qsTr("Set Orientations"), showRebootMessage: false })
                 }
             }
 

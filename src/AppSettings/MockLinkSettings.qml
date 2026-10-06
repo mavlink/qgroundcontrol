@@ -8,19 +8,13 @@ import QGroundControl.Controls
 ColumnLayout {
     spacing: _rowSpacing
 
-    readonly property int _MAV_AUTOPILOT_GENERIC:       0
-    readonly property int _MAV_AUTOPILOT_PX4:           12
-    readonly property int _MAV_AUTOPILOT_ARDUPILOTMEGA: 3
-    readonly property int _MAV_TYPE_FIXED_WING:         1
-    readonly property int _MAV_TYPE_QUADROTOR:          2
-
     function saveSettings() {
         subEditConfig.firmware = firmwareTypeCombo.selectedFirmware
         if (firmwareTypeCombo.apmFirmwareSelected) {
-            if (vehicleTypeCombo.currentIndex === 1) {          // Hardcoded _MAV_TYPE_FIXED_WING
-                subEditConfig.vehicle = _MAV_TYPE_FIXED_WING
+            if (vehicleTypeCombo.currentIndex === 1) {
+                subEditConfig.vehicle = MAVLinkEnums.MAV_TYPE_FIXED_WING
             } else {
-                subEditConfig.vehicle = _MAV_TYPE_QUADROTOR
+                subEditConfig.vehicle = MAVLinkEnums.MAV_TYPE_QUADROTOR
             }
         }
         subEditConfig.sendStatus = sendStatus.checked
@@ -28,7 +22,9 @@ ColumnLayout {
         subEditConfig.enableCamera = enableCamera.checked
         subEditConfig.enableGimbal = enableGimbal.checked
         subEditConfig.enableProximity = enableProximity.checked
+        subEditConfig.enableADSB = enableADSB.checked
         subEditConfig.incrementVehicleId = incrementVehicleId.checked
+        subEditConfig.homeLocation = homeLocationCombo.currentIndex
         subEditConfig.cameraCaptureVideo = cameraCaptureVideo.checked
         subEditConfig.cameraCaptureImage = cameraCaptureImage.checked
         subEditConfig.cameraHasModes = cameraHasModes.checked
@@ -57,12 +53,13 @@ ColumnLayout {
             firmwareIndex = 0
         }
         firmwareTypeCombo.currentIndex = firmwareIndex
-        if (subEditConfig.vehicle === _MAV_TYPE_FIXED_WING) {          // Hardcoded _MAV_TYPE_FIXED_WING
+        if (subEditConfig.vehicle === MAVLinkEnums.MAV_TYPE_FIXED_WING) {
             vehicleTypeCombo.currentIndex = 1
         } else {
             vehicleTypeCombo.currentIndex = 0
         }
         videoStreamTypeCombo.currentIndex = subEditConfig.videoStreamType
+        homeLocationCombo.currentIndex = subEditConfig.homeLocation
     }
 
     QGCCheckBoxSlider {
@@ -94,6 +91,13 @@ ColumnLayout {
     }
 
     QGCCheckBoxSlider {
+        id: enableADSB
+        Layout.fillWidth: true
+        text: qsTr("Enable ADS-B Vehicles")
+        checked: subEditConfig.enableADSB
+    }
+
+    QGCCheckBoxSlider {
         id: incrementVehicleId
         Layout.fillWidth: true
         text: qsTr("Increment Vehicle Id")
@@ -109,17 +113,17 @@ ColumnLayout {
         readonly property var _firmwareEntries: {
             let entries = []
             if (QGroundControl.px4ProFirmwareSupported) {
-                entries.push({ value: _MAV_AUTOPILOT_PX4, name: qsTr("PX4 Pro") })
+                entries.push({ value: MAVLinkEnums.MAV_AUTOPILOT_PX4, name: qsTr("PX4 Pro") })
             }
             if (QGroundControl.apmFirmwareSupported) {
-                entries.push({ value: _MAV_AUTOPILOT_ARDUPILOTMEGA, name: qsTr("ArduPilot") })
+                entries.push({ value: MAVLinkEnums.MAV_AUTOPILOT_ARDUPILOTMEGA, name: qsTr("ArduPilot") })
             }
-            entries.push({ value: _MAV_AUTOPILOT_GENERIC, name: qsTr("Generic MAVLink") })
+            entries.push({ value: MAVLinkEnums.MAV_AUTOPILOT_GENERIC, name: qsTr("Generic MAVLink") })
             return entries
         }
         readonly property var _firmwareValues: _firmwareEntries.map(entry => entry.value)
         readonly property int selectedFirmware: currentIndex >= 0 ? _firmwareValues[currentIndex] : _firmwareValues[0]
-        readonly property bool apmFirmwareSelected: selectedFirmware === _MAV_AUTOPILOT_ARDUPILOTMEGA
+        readonly property bool apmFirmwareSelected: selectedFirmware === MAVLinkEnums.MAV_AUTOPILOT_ARDUPILOTMEGA
     }
 
     LabelledComboBox {
@@ -128,6 +132,17 @@ ColumnLayout {
         label:                  qsTr("Vehicle Type")
         model:                  [ qsTr("ArduCopter"), qsTr("ArduPlane") ]
         visible:                firmwareTypeCombo.apmFirmwareSelected
+    }
+
+    LabelledComboBox {
+        id: homeLocationCombo
+        Layout.fillWidth: true
+        label: qsTr("Home Location")
+        model: [
+            qsTr("PX4 SITL Default"),
+            qsTr("ArduPilot SITL Default"),
+            qsTr("Terrain Test")
+        ]
     }
 
     QGCCheckBoxSlider {

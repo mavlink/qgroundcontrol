@@ -22,6 +22,8 @@ private slots:
     void _distanceForZoomLevel();
     void _zoomLevelForDistance();
     void _centerForCoordinateAtScreenPoint();
+    void _fitToRegionInvariant_data();
+    void _fitToRegionInvariant();
     void _centerElevation();
     void _panAnchorInvariant_data();
     void _panAnchorInvariant();

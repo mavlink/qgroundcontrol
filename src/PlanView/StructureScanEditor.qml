@@ -41,6 +41,14 @@ Rectangle {
     function polygonAdjustStarted() { }
     function polygonAdjustFinished() { }
 
+    function _topLayerAltText() {
+        return QGroundControl.unitsConversion.metersToAppSettingsVerticalDistanceUnitsString(missionItem.topFlightAlt)
+    }
+
+    function _bottomLayerAltText() {
+        return QGroundControl.unitsConversion.metersToAppSettingsVerticalDistanceUnitsString(missionItem.bottomFlightAlt)
+    }
+
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
     ColumnLayout {
@@ -190,10 +198,10 @@ Rectangle {
                     QGCLabel { text: missionItem.cameraCalc.adjustedFootprintFrontal.valueString + " " + QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString }
 
                     QGCLabel { text: qsTr("Top Layer Alt") }
-                    QGCLabel { text: QGroundControl.unitsConversion.metersToAppSettingsVerticalDistanceUnitsString(missionItem.topFlightAlt) }
+                    QGCLabel { id: topLayerAltLabel; text: _topLayerAltText() }
 
                     QGCLabel { text: qsTr("Bottom Layer Alt") }
-                    QGCLabel { text: QGroundControl.unitsConversion.metersToAppSettingsVerticalDistanceUnitsString(missionItem.bottomFlightAlt) }
+                    QGCLabel { id: bottomLayerAltLabel; text: _bottomLayerAltText() }
 
                     QGCLabel { text: qsTr("Photo Count") }
                     QGCLabel { text: missionItem.cameraShots }
@@ -216,6 +224,15 @@ Rectangle {
                     cameraCalc: missionItem.cameraCalc
                 }
             }
+        }
+    }
+
+    Connections {
+        target: QGroundControl.unitsConversion
+
+        function onUnitsChanged() {
+            topLayerAltLabel.text = Qt.binding(_topLayerAltText)
+            bottomLayerAltLabel.text = Qt.binding(_bottomLayerAltText)
         }
     }
 }

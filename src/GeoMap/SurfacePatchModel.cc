@@ -298,6 +298,7 @@ void SurfacePatchModel::_rebuildSurfaceModel()
         qCDebug(GeoMapSurfacePatchModelLog) << "rebuilding surface model, height source:"
                                             << (_debugHills ? "debug hills" : (_terrain ? "terrain" : "flat"));
         _heightField = new HeightField(this);
+        connect(_heightField, &HeightField::regionChanged, this, &SurfacePatchModel::terrainDataChanged);
         _heightSource->setHeightField(_heightField);
         _surfaceModel = new SurfaceModel(camera, _heightSource, _heightField, this);
         // Via the surface model, so patches are re-meshed before consumers re-query
@@ -316,6 +317,7 @@ void SurfacePatchModel::_rebuildSurfaceModel()
     emit statsChanged();
     // Field replacement invalidates every previous height answer
     emit terrainHeightsChanged();
+    emit terrainDataChanged();
 }
 
 double SurfacePatchModel::terrainHeightAt(const QGeoCoordinate& coordinate) const
@@ -333,6 +335,32 @@ double SurfacePatchModel::terrainDataHeightAt(const QGeoCoordinate& coordinate) 
         return 0.0;
     }
     return _heightField->heightAt(TileMath::geoToWorld(coordinate));
+}
+
+bool SurfacePatchModel::segmentBelowTerrain(const QGeoCoordinate& from, const QGeoCoordinate& to,
+                                            double ignoreStartMeters, double ignoreEndMeters) const
+{
+    if (!_heightField || !from.isValid() || !to.isValid() || std::isnan(from.altitude()) || std::isnan(to.altitude())) {
+        return false;
+    }
+    const double distance = from.distanceTo(to);
+    const int steps =
+        std::clamp(static_cast<int>(std::ceil(distance / kSegmentSampleSpacingMeters)), 1, kMaxSegmentSamples);
+    // Linear in mercator, as the mission path draws the segment
+    const QPointF fromWorld = TileMath::geoToWorld(from);
+    const QPointF toWorld = TileMath::geoToWorld(to);
+    for (int i = 0; i <= steps; i++) {
+        const double fraction = static_cast<double>(i) / steps;
+        const double along = distance * fraction;
+        if ((along < ignoreStartMeters) || (along > (distance - ignoreEndMeters))) {
+            continue;
+        }
+        const double altitude = from.altitude() + ((to.altitude() - from.altitude()) * fraction);
+        if (_heightField->heightAt(fromWorld + ((toWorld - fromWorld) * fraction)) > altitude) {
+            return true;
+        }
+    }
+    return false;
 }
 
 double SurfacePatchModel::_surfaceHeightAt(const QPointF& world) const

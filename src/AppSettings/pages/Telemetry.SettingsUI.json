@@ -13,7 +13,7 @@
                     "setting": "mavlinkSettings.sendGCSHeartbeat"
                 },
                 {
-                    "setting": "mavlinkSettings.noInitialDownloadWhenFlying"
+                    "setting": "mavlinkSettings.noInitialDownloadWhenArmed"
                 }
             ]
         },

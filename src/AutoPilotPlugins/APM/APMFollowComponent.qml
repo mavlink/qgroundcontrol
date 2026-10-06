@@ -155,6 +155,14 @@ SetupPage {
                 return QGroundControl.unitsConversion.degreesToRadians(geometricAngle)
             }
 
+            function _distanceLabelText() {
+                return QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnitsString(controller.distance.rawValue)
+            }
+
+            function _heightLabelText() {
+                return QGroundControl.unitsConversion.metersToAppSettingsVerticalDistanceUnitsString(controller.height.rawValue)
+            }
+
             APMFollowComponentController {
                 id: controller
 
@@ -414,7 +422,7 @@ SetupPage {
                         QGCLabel {
                             id:                 distanceLabel
                             anchors.centerIn:   distanceLine
-                            text:               QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnitsString(controller.distance.rawValue)
+                            text:               _distanceLabelText()
 
                             transform: Rotation {
                                 origin.x:       distanceLabel.width  / 2
@@ -492,7 +500,7 @@ SetupPage {
                         QGCLabel {
                             id:                 heightValueLabel
                             anchors.centerIn:   parent
-                            text:               QGroundControl.unitsConversion.metersToAppSettingsVerticalDistanceUnitsString(controller.height.rawValue)
+                            text:               _heightLabelText()
                         }
                     }
 
@@ -516,6 +524,15 @@ SetupPage {
                                 axis { x: 1; y: 0; z: 0 }
                             } ]
                     }
+                }
+            }
+
+            Connections {
+                target: QGroundControl.unitsConversion
+
+                function onUnitsChanged() {
+                    distanceLabel.text = Qt.binding(_distanceLabelText)
+                    heightValueLabel.text = Qt.binding(_heightLabelText)
                 }
             }
         }

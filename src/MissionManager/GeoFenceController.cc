@@ -37,8 +37,8 @@ GeoFenceController::GeoFenceController(PlanMasterController* masterController, Q
 
     connect(this,                       &GeoFenceController::breachReturnPointChanged,  this, &GeoFenceController::_setDirty);
     connect(&_breachReturnAltitudeFact, &Fact::rawValueChanged,                         this, &GeoFenceController::_setDirty);
-    connect(&_polygons,                 &QmlObjectListModel::dirtyChanged,              this, &GeoFenceController::_setDirty);
-    connect(&_circles,                  &QmlObjectListModel::dirtyChanged,              this, &GeoFenceController::_setDirty);
+    connect(&_polygons,                 &QmlObjectListModel::dirtyChanged,              this, &GeoFenceController::_fenceListDirtyChanged);
+    connect(&_circles,                  &QmlObjectListModel::dirtyChanged,              this, &GeoFenceController::_fenceListDirtyChanged);
 }
 
 GeoFenceController::~GeoFenceController()
@@ -265,20 +265,15 @@ void GeoFenceController::setDirty(bool dirty)
     if (dirty != _dirty) {
         _dirty = dirty;
         if (!dirty) {
-            for (int i=0; i<_polygons.count(); i++) {
-                QGCFencePolygon* polygon = _polygons.value<QGCFencePolygon*>(i);
-                polygon->setDirty(false);
-            }
-            for (int i=0; i<_circles.count(); i++) {
-                QGCFenceCircle* circle = _circles.value<QGCFenceCircle*>(i);
-                circle->setDirty(false);
-            }
+            // Clearing the lists also clears their items; a still-dirty list would swallow the next item edit
+            _polygons.setDirty(false);
+            _circles.setDirty(false);
         }
         emit dirtyChanged(dirty);
     }
 }
 
-void GeoFenceController::_polygonDirtyChanged(bool dirty)
+void GeoFenceController::_fenceListDirtyChanged(bool dirty)
 {
     if (dirty) {
         setDirty(true);

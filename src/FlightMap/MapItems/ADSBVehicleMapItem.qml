@@ -20,6 +20,10 @@ MapQuickItem {
     anchorPoint.y:  vehicleItem.height / 2
     visible:        coordinate.isValid
 
+    function _labelText() {
+        return isNaN(altitude) ? "" : QGroundControl.unitsConversion.metersToAppSettingsVerticalDistanceUnitsString(altitude, 0) + "\n" + callsign
+    }
+
     sourceItem: Item {
         id:     vehicleItem
         width:  vehicleIcon.width
@@ -40,12 +44,22 @@ MapQuickItem {
         }
 
         QGCMapLabel {
+            id:                         altitudeLabel
+            objectName:                 "adsbAltitudeLabel"
             anchors.top:                parent.bottom
             anchors.horizontalCenter:   parent.horizontalCenter
             map:                        _root.map
             font.pointSize:             ScreenTools.defaultFontPointSize
             visible:                    !isNaN(altitude)
-            text:                       visible ? QGroundControl.unitsConversion.metersToAppSettingsVerticalDistanceUnitsString(altitude, 0) + "\n" + callsign : ""
+            text:                       _labelText()
+        }
+    }
+
+    Connections {
+        target: QGroundControl.unitsConversion
+
+        function onUnitsChanged() {
+            altitudeLabel.text = Qt.binding(_labelText)
         }
     }
 }

@@ -124,6 +124,11 @@ const FactMetaData &FactMetaData::operator=(const FactMetaData &other)
     _writeOnly = other._writeOnly;
     _volatile = other._volatile;
 
+    disconnect(_appSettingsUnitsConnection);
+    if (other._appSettingsUnitsConnection) {
+        _setAppSettingsTranslators();
+    }
+
     return *this;
 }
 
@@ -638,6 +643,7 @@ void FactMetaData::removeEnumInfo(const QVariant &value)
 
 void FactMetaData::setTranslators(Translator rawTranslator_, Translator cookedTranslator_)
 {
+    disconnect(_appSettingsUnitsConnection);
     _rawTranslator = rawTranslator_;
     _cookedTranslator = cookedTranslator_;
 }
@@ -920,6 +926,8 @@ size_t FactMetaData::typeToSize(ValueType_t type)
 
 void FactMetaData::_setAppSettingsTranslators()
 {
+    disconnect(_appSettingsUnitsConnection);
+
     // We can only translate between real numbers
     if (_enumStrings.isEmpty() && ((type() == valueTypeDouble) || (type() == valueTypeFloat))) {
         for (size_t i = 0; i < std::size(_rgAppSettingsTranslations); i++) {
@@ -930,34 +938,36 @@ void FactMetaData::_setAppSettingsTranslators()
             }
 
             UnitsSettings *const settings = SettingsManager::instance()->unitsSettings();
-            uint settingsUnits = 0;
+            Fact* settingsFact = nullptr;
 
             switch (pAppSettingsTranslation->unitType) {
             case UnitHorizontalDistance:
-                settingsUnits = settings->horizontalDistanceUnits()->rawValue().toUInt();
+                settingsFact = settings->horizontalDistanceUnits();
                 break;
             case UnitVerticalDistance:
-                settingsUnits = settings->verticalDistanceUnits()->rawValue().toUInt();
+                settingsFact = settings->verticalDistanceUnits();
                 break;
             case UnitSpeed:
-                settingsUnits = settings->speedUnits()->rawValue().toUInt();
+                settingsFact = settings->speedUnits();
                 break;
             case UnitArea:
-                settingsUnits = settings->areaUnits()->rawValue().toUInt();
+                settingsFact = settings->areaUnits();
                 break;
             case UnitTemperature:
-                settingsUnits = settings->temperatureUnits()->rawValue().toUInt();
+                settingsFact = settings->temperatureUnits();
                 break;
             case UnitWeight:
-                settingsUnits = settings->weightUnits()->rawValue().toUInt();
+                settingsFact = settings->weightUnits();
                 break;
             default:
                 break;
             }
 
-            if (settingsUnits == pAppSettingsTranslation->unitOption) {
+            if (settingsFact && (settingsFact->rawValue().toUInt() == pAppSettingsTranslation->unitOption)) {
                 _cookedUnits = pAppSettingsTranslation->cookedUnits;
                 setTranslators(pAppSettingsTranslation->rawTranslator, pAppSettingsTranslation->cookedTranslator);
+                _appSettingsUnitsConnection =
+                    connect(settingsFact, &Fact::rawValueChanged, this, &FactMetaData::_appSettingsUnitsChanged);
                 return;
             }
         }
@@ -968,6 +978,12 @@ void FactMetaData::_setAppSettingsTranslators()
     if (_cookedUnits.compare(QStringLiteral("vertical m"), Qt::CaseInsensitive) == 0) {
         _cookedUnits = QStringLiteral("m");
     }
+}
+
+void FactMetaData::_appSettingsUnitsChanged()
+{
+    _setAppSettingsTranslators();
+    emit appSettingsUnitsChanged();
 }
 
 const FactMetaData::AppSettingsTranslation_s* FactMetaData::_findAppSettingsUnitsTranslation(const QString &rawUnits, UnitTypes type)

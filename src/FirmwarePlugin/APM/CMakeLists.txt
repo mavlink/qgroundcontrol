@@ -122,7 +122,6 @@ qt_add_qml_module(APMFirmwareModule
     QML_FILES
         APMBatteryIndicator.qml
         APMFlightModeIndicator.qml
-        APMMainStatusIndicator.qml
         APMSupportForwardingIndicator.qml
     NO_PLUGIN
 )

@@ -13,6 +13,7 @@ import QtPositioning
 
 import QGroundControl
 import QGroundControl.Controls
+import QGroundControl.FlightMap
 import QGroundControl.GeoMap
 
 /// Fly-view 2D/3D map: the GeoMap-engine counterpart of FlyViewMap.
@@ -94,10 +95,23 @@ GeoMap {
         return QtPositioning.coordinate(coord.latitude, coord.longitude)
     }
 
+    property var _missionItemSelectionPanel: null
+
+    function _confirmSetWaypoint(sequenceNumber) {
+        globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionSetWaypoint,
+                                                      Math.max(sequenceNumber, 1))
+    }
+
+    function _closeMissionItemSelectionPanel() {
+        if (_missionItemSelectionPanel) {
+            _missionItemSelectionPanel.close()
+        }
+    }
+
     Connections {
         target: root.surfaceModel
 
-        function onTerrainHeightsChanged() {
+        function onTerrainDataChanged() {
             root._updateActiveVehicleHomeTerrainBias()
         }
     }
@@ -154,8 +168,42 @@ GeoMap {
         homeTerrainBias: root._activeVehicleHomeTerrainBias
         // Same action as PlanMapItems in the QtLocation fly view: clicking a
         // marker adjusts the vehicle's current mission item (after confirm)
-        onItemClicked: (item) => globals.guidedControllerFlyView.confirmAction(
-            globals.guidedControllerFlyView.actionSetWaypoint, Math.max(item.sequenceNumber, 1))
+        onItemClicked: (item) => root._confirmSetWaypoint(item.sequenceNumber)
+        onGroupClicked: (items, marker) => {
+            root._closeMissionItemSelectionPanel()
+            const topLeft = marker.mapToItem(globals.parent, 0, 0)
+            root._missionItemSelectionPanel = missionItemSelectionPanelComponent.createObject(mainWindow, {
+                clickRect: Qt.rect(topLeft.x, topLeft.y, marker.width, marker.height),
+                groupItems: items
+            })
+            if (root._missionItemSelectionPanel) {
+                root._missionItemSelectionPanel.open()
+            }
+        }
+        onGroupsInvalidated: root._closeMissionItemSelectionPanel()
+    }
+
+    // The picker lists the old mission's items: close it when the mission is replaced
+    Connections {
+        target: root._missionController
+
+        function onVisualItemsReset() { root._closeMissionItemSelectionPanel() }
+    }
+
+    Component {
+        id: missionItemSelectionPanelComponent
+
+        MissionItemSelectionPanel {
+            id: missionItemSelectionPanel
+
+            onItemSelected: (sequenceNumber) => root._confirmSetWaypoint(sequenceNumber)
+            onClosed: {
+                if (root._missionItemSelectionPanel === missionItemSelectionPanel) {
+                    root._missionItemSelectionPanel = null
+                }
+                destroy()
+            }
+        }
     }
 
     GeoMapMissionDirectionArrows {
@@ -163,6 +211,19 @@ GeoMap {
         surfaceModel: root.surfaceModel
         missionController: root._missionController
         homeTerrainBias: root._activeVehicleHomeTerrainBias
+    }
+
+    // Allow custom builds to add map items (QGCCorePlugin::customGeoMapItems)
+    Repeater {
+        model: QGroundControl.corePlugin.customGeoMapItems
+
+        Loader {
+            Component.onCompleted: setSource(object.url, {
+                customMapObject: object,
+                scene: root.scene,
+                surfaceModel: root.surfaceModel
+            })
+        }
     }
 
     GeoMapGeoFenceVisuals {

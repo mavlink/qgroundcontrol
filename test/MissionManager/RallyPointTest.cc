@@ -26,8 +26,8 @@ void RallyPointTest::_testCoordinateConstruction()
     QCOMPARE(rp.coordinate().longitude(), coord.longitude());
     QCOMPARE(rp.coordinate().altitude(),  coord.altitude());
 
-    // setCoordinate() is called from the constructor; that triggers setDirty(true).
-    QVERIFY(rp.dirty());
+    // Constructing from a coordinate is not an edit
+    QVERIFY(!rp.dirty());
 }
 
 void RallyPointTest::_testCopyConstruction()
@@ -61,7 +61,6 @@ void RallyPointTest::_testAssignmentUpdatesAllAxes()
 void RallyPointTest::_testSetCoordinateEmitsSignalAndMarksDirty()
 {
     RallyPoint rp(QGeoCoordinate(0.0, 0.0, 0.0));
-    rp.setDirty(false);  // Reset the dirty flag seeded by the constructor.
 
     QSignalSpy coordSpy(&rp, &RallyPoint::coordinateChanged);
     QSignalSpy dirtySpy(&rp, &RallyPoint::dirtyChanged);
@@ -84,7 +83,6 @@ void RallyPointTest::_testSetCoordinateEmitsSignalAndMarksDirty()
 void RallyPointTest::_testSetCoordinateIdenticalIsNoOp()
 {
     RallyPoint rp(referenceCoord());
-    rp.setDirty(false);
 
     QSignalSpy coordSpy(&rp, &RallyPoint::coordinateChanged);
     QSignalSpy dirtySpy(&rp, &RallyPoint::dirtyChanged);
@@ -100,7 +98,6 @@ void RallyPointTest::_testSetCoordinateIdenticalIsNoOp()
 void RallyPointTest::_testDirtyFlagTransitions()
 {
     RallyPoint rp(referenceCoord());
-    rp.setDirty(false);
 
     QSignalSpy dirtySpy(&rp, &RallyPoint::dirtyChanged);
 

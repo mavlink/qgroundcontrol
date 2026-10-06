@@ -20,5 +20,5 @@ Item {
 
     property var occluders              // FlyViewOccluders: where the upstream widgets are, use these to position your controls
     property var customOccluders: []    // Rects of your controls which cover the map, so the map keeps the vehicle out from under them. Keep them off the view center, the map recenters there
-    property var mapControl
+    property var mapControl             // FlyViewMap, or FlyViewGeoMapAdapter with the GeoMap engine: add GeoMap items through QGCCorePlugin::customGeoMapItems
 }

@@ -37,9 +37,9 @@ SurveyComplexItem::SurveyComplexItem(PlanMasterController* masterController, boo
         _cameraCalc.distanceToSurface()->setRawValue(SettingsManager::instance()->appSettings()->defaultMissionItemAltitude()->rawValue());
     }
 
-    connect(&_gridAngleFact,            &Fact::valueChanged,                        this, &SurveyComplexItem::_setDirty);
-    connect(&_flyAlternateTransectsFact,&Fact::valueChanged,                        this, &SurveyComplexItem::_setDirty);
-    connect(&_splitConcavePolygonsFact, &Fact::valueChanged,                        this, &SurveyComplexItem::_setDirty);
+    connect(&_gridAngleFact,            &Fact::rawValueChanged,                     this, &SurveyComplexItem::_setDirty);
+    connect(&_flyAlternateTransectsFact,&Fact::rawValueChanged,                     this, &SurveyComplexItem::_setDirty);
+    connect(&_splitConcavePolygonsFact, &Fact::rawValueChanged,                     this, &SurveyComplexItem::_setDirty);
     connect(this,                       &SurveyComplexItem::refly90DegreesChanged,  this, &SurveyComplexItem::_setDirty);
 
     connect(&_gridAngleFact,            &Fact::valueChanged,                        this, &SurveyComplexItem::_rebuildTransects);

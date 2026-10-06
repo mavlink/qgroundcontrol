@@ -18,7 +18,7 @@ ColumnLayout {
         id:        autotuneButton
         primary:   true
         text:      qsTr("Start AutoTune")
-        enabled:   _activeVehicle.flying && !_activeVehicle.landing && !_autotuneManager.autotuneInProgress
+        enabled:   _activeVehicle.airborne && !_activeVehicle.landing && !_autotuneManager.autotuneInProgress
 
         onClicked: QGroundControl.showMessageDialog(_root, autotuneButton.text,
                                                 qsTr("WARNING!\

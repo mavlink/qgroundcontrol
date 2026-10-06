@@ -2,6 +2,7 @@
 
 #include <QtCore/QPointF>
 #include <QtCore/QTimer>
+#include <QtCore/QVariantMap>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQml/QJSValue>
 #include <QtQmlIntegration/QtQmlIntegration>
@@ -113,14 +114,8 @@ public:
     Q_INVOKABLE void    saveBoolGlobalSetting   (const QString& key, bool value);
     Q_INVOKABLE bool    loadBoolGlobalSetting   (const QString& key, bool defaultValue);
 
-
-
-    Q_INVOKABLE void    startPX4MockLink            (bool sendStatusText, bool enableCamera, bool enableGimbal, bool enableProximity = false, int videoStreamType = 0);
-    Q_INVOKABLE void    startGenericMockLink        (bool sendStatusText, bool enableCamera, bool enableGimbal, bool enableProximity = false, int videoStreamType = 0);
-    Q_INVOKABLE void    startAPMArduCopterMockLink  (bool sendStatusText, bool enableCamera, bool enableGimbal, bool enableProximity = false, bool apmStartFreshParams = false, int videoStreamType = 0);
-    Q_INVOKABLE void    startAPMArduPlaneMockLink   (bool sendStatusText, bool enableCamera, bool enableGimbal, bool enableProximity = false, bool apmStartFreshParams = false, int videoStreamType = 0);
-    Q_INVOKABLE void    startAPMArduSubMockLink     (bool sendStatusText, bool enableCamera, bool enableGimbal, bool enableProximity = false, bool apmStartFreshParams = false, int videoStreamType = 0);
-    Q_INVOKABLE void    startAPMArduRoverMockLink   (bool sendStatusText, bool enableCamera, bool enableGimbal, bool enableProximity = false, bool apmStartFreshParams = false, int videoStreamType = 0);
+    /// Starts a MockLink whose MockConfiguration properties are set from the map (e.g. { name: "PX4", firmware: 12 })
+    Q_INVOKABLE void startMockLink(const QVariantMap& properties);
     Q_INVOKABLE void    stopOneMockLink             (void);
 
     Q_INVOKABLE bool linesIntersect(QPointF xLine1, QPointF yLine1, QPointF xLine2, QPointF yLine2);

@@ -20,6 +20,7 @@ RallyPointController::RallyPointController(PlanMasterController* masterControlle
     , _rallyPointManager    (masterController->managerVehicle()->rallyPointManager())
 {
     connect(&_points, &QmlObjectListModel::countChanged, this, &RallyPointController::containsItemsChanged);
+    connect(&_points, &QmlObjectListModel::dirtyChanged, this, &RallyPointController::_pointsDirtyChanged);
 }
 
 RallyPointController::~RallyPointController()
@@ -180,7 +181,17 @@ void RallyPointController::setDirty(bool dirty)
 {
     if (dirty != _dirty) {
         _dirty = dirty;
+        if (!dirty) {
+            _points.setDirty(false);
+        }
         emit dirtyChanged(dirty);
+    }
+}
+
+void RallyPointController::_pointsDirtyChanged(bool dirty)
+{
+    if (dirty) {
+        setDirty(true);
     }
 }
 

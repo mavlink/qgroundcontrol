@@ -4810,26 +4810,26 @@
       <extracomment>.QGC.MetaData.Facts[valueDisplay].shortDesc, .QGC.MetaData.Facts[valueDisplay].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/BatteryIndicator.SettingsGroup.json"/>
       <source>Select values to display in indicator</source>
-      <translation type="unfinished">Select values to display in indicator</translation>
+      <translation>Выбор отображаемых значений</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[valueDisplay].enumStrings</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/BatteryIndicator.SettingsGroup.json"/>
       <source>Percentage,Voltage,Percentage and Voltage</source>
-      <translation type="unfinished">Percentage,Voltage,Percentage and Voltage</translation>
+      <translation>Процент,Напряжение,Процент и напряжение</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[threshold1].shortDesc, .QGC.MetaData.Facts[threshold1].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/BatteryIndicator.SettingsGroup.json"/>
       <source>Battery level threshold 1</source>
-      <translation type="unfinished">Battery level threshold 1</translation>
+      <translation>Порог уровня заряда батареи 1</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[threshold2].shortDesc, .QGC.MetaData.Facts[threshold2].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/BatteryIndicator.SettingsGroup.json"/>
       <source>Battery level threshold 2</source>
-      <translation type="unfinished">Battery level threshold 2</translation>
+      <translation>Порог уровня заряда батареи 2</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[consolidateMultipleBatteries].shortDesc, .QGC.MetaData.Facts[consolidateMultipleBatteries].label</extracomment>
@@ -5381,38 +5381,38 @@
       <extracomment>.QGC.MetaData.Facts[autoConnectUDP].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/AutoConnect.SettingsGroup.json"/>
       <source>Automatically connect to vehicles detected on UDP network connections.</source>
-      <translation type="unfinished">Automatically connect to vehicles detected on UDP network connections.</translation>
+      <translation>Автоматически подключаться к бортам, обнаруженным в сетевых UDP-соединениях.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[autoConnectUDP].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/AutoConnect.SettingsGroup.json"/>
       <source>If this option is enabled GroundControl will automatically connect to a vehicle which is detected on a UDP communication link.</source>
-      <translation type="unfinished">If this option is enabled GroundControl will automatically connect to a vehicle which is detected on a UDP communication link.</translation>
+      <translation>Если эта опция включена, GroundControl автоматически подключится к борту, обнаруженному по UDP-соединению.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[autoConnectUDP].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/AutoConnect.SettingsGroup.json"/>
       <source>Automatically open a connection over UDP</source>
-      <translation type="unfinished">Automatically open a connection over UDP</translation>
+      <translation>Автоматически открывать соединение по UDP</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[autoConnectUDP].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/AutoConnect.SettingsGroup.json"/>
       <source>auto connect,udp</source>
-      <translation type="unfinished">auto connect,udp</translation>
+      <translation>автоподключение,udp</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[autoConnectPixhawk].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/AutoConnect.SettingsGroup.json"/>
       <source>Automatically connect to Pixhawk autopilots detected on USB.</source>
-      <translation type="unfinished">Automatically connect to Pixhawk autopilots detected on USB.</translation>
+      <translation>Автоматически подключаться к автопилотам Pixhawk, обнаруженным по USB.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[autoConnectPixhawk].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/AutoConnect.SettingsGroup.json"/>
       <source>If this option is enabled GroundControl will automatically connect to a Pixhawk board which is connected via USB.</source>
-      <translation type="unfinished">If this option is enabled GroundControl will automatically connect to a Pixhawk board which is connected via USB.</translation>
+      <translation>Если эта опция включена, GroundControl автоматически подключится к плате Pixhawk, подключённой через USB.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[autoConnectPixhawk].label</extracomment>
@@ -5425,19 +5425,19 @@
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/AutoConnect.SettingsGroup.json"/>
       <source>auto connect,pixhawk,usb</source>
-      <translation type="unfinished">auto connect,pixhawk,usb</translation>
+      <translation>автоподключение,pixhawk,usb</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[autoConnectSiKRadio].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/AutoConnect.SettingsGroup.json"/>
       <source>Automatically connect to SiK radio modules detected on serial/USB.</source>
-      <translation type="unfinished">Automatically connect to SiK radio modules detected on serial/USB.</translation>
+      <translation>Автоматически подключаться к радиомодулям SiK, обнаруженным по последовательному порту/USB.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[autoConnectSiKRadio].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/AutoConnect.SettingsGroup.json"/>
       <source>If this option is enabled GroundControl will automatically connect to a vehicle which is detected on a SiK Radio communication link.</source>
-      <translation type="unfinished">If this option is enabled GroundControl will automatically connect to a vehicle which is detected on a SiK Radio communication link.</translation>
+      <translation>Если эта опция включена, GroundControl автоматически подключится к борту, обнаруженному по соединению через радиомодуль SiK.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[autoConnectSiKRadio].label</extracomment>
@@ -5450,19 +5450,19 @@
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/AutoConnect.SettingsGroup.json"/>
       <source>auto connect,sik radio</source>
-      <translation type="unfinished">auto connect,sik radio</translation>
+      <translation>автоподключение,радиомодуль sik</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[autoConnectRTKGPS].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/AutoConnect.SettingsGroup.json"/>
       <source>Automatically connect to RTK GPS receivers detected on USB.</source>
-      <translation type="unfinished">Automatically connect to RTK GPS receivers detected on USB.</translation>
+      <translation>Автоматически подключаться к RTK GPS-приёмникам, обнаруженным по USB.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[autoConnectRTKGPS].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/AutoConnect.SettingsGroup.json"/>
       <source>If this option is enabled GroundControl will automatically connect to an RTK GPS which is connected via USB.</source>
-      <translation type="unfinished">If this option is enabled GroundControl will automatically connect to an RTK GPS which is connected via USB.</translation>
+      <translation>Если эта опция включена, GroundControl автоматически подключится к RTK GPS, подключённому через USB.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[autoConnectRTKGPS].label</extracomment>
@@ -5475,19 +5475,19 @@
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/AutoConnect.SettingsGroup.json"/>
       <source>auto connect,rtk gps</source>
-      <translation type="unfinished">auto connect,rtk gps</translation>
+      <translation>автоподключение,rtk gps</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[autoConnectLibrePilot].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/AutoConnect.SettingsGroup.json"/>
       <source>Automatically connect to LibrePilot autopilots detected on USB.</source>
-      <translation type="unfinished">Automatically connect to LibrePilot autopilots detected on USB.</translation>
+      <translation>Автоматически подключаться к автопилотам LibrePilot, обнаруженным по USB.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[autoConnectLibrePilot].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/AutoConnect.SettingsGroup.json"/>
       <source>If this option is enabled GroundControl will automatically connect to a LibrePilot board which is connected via USB.</source>
-      <translation type="unfinished">If this option is enabled GroundControl will automatically connect to a LibrePilot board which is connected via USB.</translation>
+      <translation>Если эта опция включена, GroundControl автоматически подключится к плате LibrePilot, подключённой через USB.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[autoConnectLibrePilot].label</extracomment>
@@ -5500,7 +5500,7 @@
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/AutoConnect.SettingsGroup.json"/>
       <source>auto connect,librepilot</source>
-      <translation type="unfinished">auto connect,librepilot</translation>
+      <translation>автоподключение,librepilot</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[autoConnectNmeaPort].shortDesc, .QGC.MetaData.Facts[autoConnectNmeaPort].longDesc, .QGC.MetaData.Facts[autoConnectNmeaPort].label</extracomment>
@@ -5524,7 +5524,7 @@
       <extracomment>.QGC.MetaData.Facts[autoConnectZeroConf].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/AutoConnect.SettingsGroup.json"/>
       <source>If this option is enabled GroundControl will automatically connect to a vehicle which is detected over Zero-Conf.</source>
-      <translation type="unfinished">If this option is enabled GroundControl will automatically connect to a vehicle which is detected over Zero-Conf.</translation>
+      <translation>Если эта опция включена, GroundControl автоматически подключится к борту, обнаруженному через Zero-Conf.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[udpListenPort].shortDesc, .QGC.MetaData.Facts[udpListenPort].label</extracomment>
@@ -8639,7 +8639,7 @@
       <extracomment>.QGC.MetaData.Facts[heading].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Vehicle/FactGroups/VehicleFact.json"/>
       <source>Heading</source>
-      <translation type="unfinished">Heading</translation>
+      <translation>Курс</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[rollRate].shortDesc</extracomment>
@@ -8669,7 +8669,7 @@
       <extracomment>.QGC.MetaData.Facts[airSpeed].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Vehicle/FactGroups/VehicleFact.json"/>
       <source>Air Speed</source>
-      <translation type="unfinished">Air Speed</translation>
+      <translation>Воздушная скорость</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[climbRate].shortDesc</extracomment>
@@ -8681,109 +8681,109 @@
       <extracomment>.QGC.MetaData.Facts[altitudeRelative].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Vehicle/FactGroups/VehicleFact.json"/>
       <source>Alt (Rel)</source>
-      <translation type="unfinished">Alt (Rel)</translation>
+      <translation>Высота (отн.)</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[altitudeAMSL].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Vehicle/FactGroups/VehicleFact.json"/>
       <source>Alt (AMSL)</source>
-      <translation type="unfinished">Alt (AMSL)</translation>
+      <translation>Высота (AMSL)</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[altitudeAboveTerr].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Vehicle/FactGroups/VehicleFact.json"/>
       <source>Alt (Above Terrain)</source>
-      <translation type="unfinished">Alt (Above Terrain)</translation>
+      <translation>Высота (над рельефом)</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[flightDistance].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Vehicle/FactGroups/VehicleFact.json"/>
       <source>Flight Distance</source>
-      <translation type="unfinished">Flight Distance</translation>
+      <translation>Пройденное расстояние</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[distanceToHome].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Vehicle/FactGroups/VehicleFact.json"/>
       <source>Distance to Home</source>
-      <translation type="unfinished">Distance to Home</translation>
+      <translation>Расстояние до точки Home</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[timeToHome].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Vehicle/FactGroups/VehicleFact.json"/>
       <source>Time to Home</source>
-      <translation type="unfinished">Time to Home</translation>
+      <translation>Время до точки Home</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[headingToHome].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Vehicle/FactGroups/VehicleFact.json"/>
       <source>Heading to Home</source>
-      <translation type="unfinished">Heading to Home</translation>
+      <translation>Курс на точку Home</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[headingFromHome].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Vehicle/FactGroups/VehicleFact.json"/>
       <source>Heading from Home</source>
-      <translation type="unfinished">Heading from Home</translation>
+      <translation>Курс от точки Home</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[headingFromGCS].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Vehicle/FactGroups/VehicleFact.json"/>
       <source>Heading from GCS</source>
-      <translation type="unfinished">Heading from GCS</translation>
+      <translation>Курс от наземной станции</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[distanceToGCS].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Vehicle/FactGroups/VehicleFact.json"/>
       <source>Distance to GCS</source>
-      <translation type="unfinished">Distance to GCS</translation>
+      <translation>Расстояние до наземной станции</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[missionItemIndex].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Vehicle/FactGroups/VehicleFact.json"/>
       <source>Mission Item Index</source>
-      <translation type="unfinished">Mission Item Index</translation>
+      <translation>Номер элемента полётного задания</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[headingToNextWP].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Vehicle/FactGroups/VehicleFact.json"/>
       <source>Next WP Heading</source>
-      <translation type="unfinished">Next WP Heading</translation>
+      <translation>Курс на следующую путевую точку</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[distanceToNextWP].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Vehicle/FactGroups/VehicleFact.json"/>
       <source>Next WP distance</source>
-      <translation type="unfinished">Next WP distance</translation>
+      <translation>Расстояние до следующей путевой точки</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[flightTime].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Vehicle/FactGroups/VehicleFact.json"/>
       <source>Flight Time</source>
-      <translation type="unfinished">Flight Time</translation>
+      <translation>Время полёта</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[hobbs].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Vehicle/FactGroups/VehicleFact.json"/>
       <source>Hobbs Meter</source>
-      <translation type="unfinished">Hobbs Meter</translation>
+      <translation>Счётчик налёта</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[throttlePct].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Vehicle/FactGroups/VehicleFact.json"/>
       <source>Throttle %</source>
-      <translation type="unfinished">Throttle %</translation>
+      <translation>Газ %</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[imuTemp].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Vehicle/FactGroups/VehicleFact.json"/>
       <source>Imu temperature</source>
-      <translation type="unfinished">Imu temperature</translation>
+      <translation>Температура IMU</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[rcRSSI].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Vehicle/FactGroups/VehicleFact.json"/>
       <source>RC RSSI</source>
-      <translation type="unfinished">RC RSSI</translation>
+      <translation>RC RSSI</translation>
     </message>
   </context>
   <context>

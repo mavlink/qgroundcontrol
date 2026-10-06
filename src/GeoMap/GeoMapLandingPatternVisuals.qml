@@ -10,6 +10,7 @@
 import QtPositioning
 import QtQuick.Shapes
 
+import QGroundControl
 import QGroundControl.GeoMap
 
 /// Base visual shared by Fixed Wing and VTOL landing patterns on GeoMap:
@@ -54,7 +55,7 @@ Item {
     Shape {
         visible: root.item.landingCoordSet && flightPathProjector.projected
         ShapePath {
-            strokeColor: "#be781c"
+            strokeColor: QGroundControl.globalPalette.mapMissionTrajectory
             strokeWidth: 2
             fillColor: "transparent"
             PathPolyline { path: flightPathProjector.screenPoints }

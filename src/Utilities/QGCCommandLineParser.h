@@ -53,7 +53,7 @@ struct CommandLineParseResult
     bool allowMultiple = false;
 
     // --- Graphics options ---
-    bool useSwRast = false;         ///< Windows/macOS: Force software OpenGL
+    bool useSwRast = false;            ///< Windows/macOS: Force software rendering
     bool quietWindowsAsserts = false;  ///< Windows only: Disable assert dialogs
 };
 

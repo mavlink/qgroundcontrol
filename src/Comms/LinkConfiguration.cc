@@ -20,17 +20,20 @@ LinkConfiguration::LinkConfiguration(const QString &name, QObject *parent)
     qCDebug(LinkConfigurationLog) << this;
 }
 
-LinkConfiguration::LinkConfiguration(const LinkConfiguration *copy, QObject *parent)
+LinkConfiguration::LinkConfiguration(const LinkConfiguration* copy, QObject* parent)
     : QObject(parent)
     , _link(copy->_link)
     , _name(copy->name())
     , _dynamic(copy->isDynamic())
+    , _forwarding(copy->isForwarding())
     , _autoConnect(copy->isAutoConnect())
     , _highLatency(copy->isHighLatency())
 {
     qCDebug(LinkConfigurationLog) << this;
 
-    Q_ASSERT(!_name.isEmpty());
+    if (_name.isEmpty()) {
+        qCWarning(LinkConfigurationLog) << "Copied configuration has no name";
+    }
 }
 
 LinkConfiguration::~LinkConfiguration()
@@ -40,13 +43,17 @@ LinkConfiguration::~LinkConfiguration()
 
 void LinkConfiguration::copyFrom(const LinkConfiguration *source)
 {
-    Q_ASSERT(source);
+    if (!source) {
+        qCWarning(LinkConfigurationLog) << "copyFrom called with null source";
+        return;
+    }
 
     setLink(source->_link.lock());
     setName(source->name());
     setDynamic(source->isDynamic());
     setAutoConnect(source->isAutoConnect());
     setHighLatency(source->isHighLatency());
+    setForwarding(source->isForwarding());
 }
 
 LinkConfiguration *LinkConfiguration::createSettings(int type, const QString &name)

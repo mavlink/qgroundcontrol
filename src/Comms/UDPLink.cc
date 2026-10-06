@@ -63,34 +63,18 @@ UDPConfiguration::~UDPConfiguration()
     qCDebug(UDPLinkLog) << this;
 }
 
-void UDPConfiguration::setAutoConnect(bool autoc)
-{
-    if (isAutoConnect() != autoc) {
-        AutoConnectSettings *const settings = SettingsManager::instance()->autoConnectSettings();
-        const QString targetHostIP = settings->udpTargetHostIP()->rawValue().toString();
-        const quint16 targetHostPort = settings->udpTargetHostPort()->rawValue().toUInt();
-        if (autoc) {
-            setLocalPort(settings->udpListenPort()->rawValue().toInt());
-            if (!targetHostIP.isEmpty()) {
-                addHost(targetHostIP, targetHostPort);
-            }
-        } else {
-            setLocalPort(0);
-            if (!targetHostIP.isEmpty()) {
-                removeHost(targetHostIP, targetHostPort);
-            }
-        }
-        LinkConfiguration::setAutoConnect(autoc);
-    }
-}
-
 void UDPConfiguration::copyFrom(const LinkConfiguration *source)
 {
+    const UDPConfiguration *udpSource = qobject_cast<const UDPConfiguration*>(source);
+    if (!udpSource) {
+        qCWarning(UDPLinkLog) << "Invalid source configuration type";
+        return;
+    }
+
     LinkConfiguration::copyFrom(source);
 
-    const UDPConfiguration *udpSource = qobject_cast<const UDPConfiguration*>(source);
-
     setLocalPort(udpSource->localPort());
+    setRequireResolvedHosts(udpSource->requireResolvedHosts());
     _targetHosts.clear();
 
     for (const std::shared_ptr<UDPClient> &target : udpSource->targetHosts()) {
@@ -171,10 +155,8 @@ void UDPConfiguration::addHost(const QString &host, quint16 port)
         return;
     }
 
-    const QHostAddress address(_getIpAddress(cleanHost));
-    if (address.isNull()) {
-        qCWarning(UDPLinkLog) << "Could not resolve host:" << cleanHost << "port:" << port << "- will retry on connect";
-    }
+    // Hostnames stay unresolved (null address) until resolveHosts() on connect; DNS lookup blocks.
+    const QHostAddress address(cleanHost);
 
     _targetHosts.append(std::make_shared<UDPClient>(cleanHost, address, port));
     _updateHostList();
@@ -235,8 +217,9 @@ void UDPConfiguration::_updateHostList()
     emit hostListChanged();
 }
 
-void UDPConfiguration::resolveHosts() const
+QStringList UDPConfiguration::resolveHosts() const
 {
+    QStringList unresolved;
     for (const std::shared_ptr<UDPClient> &target : _targetHosts) {
         if (target->hostname.isEmpty()) {
             continue;
@@ -246,9 +229,12 @@ void UDPConfiguration::resolveHosts() const
         if (!ipAdd.isEmpty()) {
             target->address = QHostAddress(ipAdd);
         } else {
-            qCWarning(UDPLinkLog) << "Could not resolve host:" << target->hostname << "port:" << target->port;
+            target->address = QHostAddress();
+            unresolved.append(target->hostname);
         }
     }
+
+    return unresolved;
 }
 
 QString UDPConfiguration::_getIpAddress(const QString &address)
@@ -345,7 +331,17 @@ void UDPWorker::connectLink()
 
     _errorEmitted = false;
 
-    _udpConfig->resolveHosts();
+    const QStringList unresolvedHosts = _udpConfig->resolveHosts();
+    if (!unresolvedHosts.isEmpty()) {
+        const QString error = tr("Could not resolve host: %1").arg(unresolvedHosts.join(QStringLiteral(", ")));
+        if (_udpConfig->requireResolvedHosts()) {
+            emit errorOccurred(error);
+            _errorEmitted = true;
+            _onSocketDisconnected();
+            return;
+        }
+        qCWarning(UDPLinkLog) << error << "- listening without those targets";
+    }
 
     qCDebug(UDPLinkLog) << "Attempting to bind to port:" << _udpConfig->localPort();
     const bool bindSuccess = _socket->bind(QHostAddress::AnyIPv4, _udpConfig->localPort(), QAbstractSocket::ReuseAddressHint | QAbstractSocket::ShareAddress);
@@ -357,11 +353,7 @@ void UDPWorker::connectLink()
             _errorEmitted = true;
         }
 
-        // Disconnecting here on autoconnect will cause continuous error popups
-        /*if (!_udpConfig->isAutoConnect()) {
-            _onSocketDisconnected();
-        }*/
-
+        _onSocketDisconnected();
         return;
     }
 

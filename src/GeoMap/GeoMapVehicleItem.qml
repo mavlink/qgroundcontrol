@@ -106,7 +106,7 @@ GeoMapItem {
     Connections {
         target: root.surfaceModel
 
-        function onTerrainHeightsChanged() {
+        function onTerrainDataChanged() {
             root._updateHomeTerrainBias()
         }
     }

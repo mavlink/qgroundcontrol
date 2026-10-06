@@ -244,6 +244,7 @@ void PX4SensorsCalibrationUITest::_testMagCalibration()
 
     QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("popupDialog_acceptButton"), 5000),
              "Compass Calibration Complete dialog not shown");
+    QVERIFY2(vehicle->rebootRequired(), "Compass calibration did not latch rebootRequired");
     QVERIFY2(clickButton(QStringLiteral("popupDialog_acceptButton")), "Failed to dismiss completion dialog");
 
     // Calibration no longer active: the cancel button row hides

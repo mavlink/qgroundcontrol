@@ -30,6 +30,7 @@ public:
     ~ULogFullHandler() = default;
 
     void error(const std::string &msg, bool is_recoverable) override;
+    void fileHeader(const ulog_cpp::FileHeader& header) override;
     void messageFormat(const ulog_cpp::MessageFormat &message_format) override;
     void addLoggedMessage(const ulog_cpp::AddLoggedMessage &add_logged_message) override;
     void headerComplete() override;
@@ -67,6 +68,8 @@ private:
     QSet<QString> _plottableFieldSet;
     // Map of parameter name -> default value (system default, from ParameterDefault messages)
     QHash<QString, double> _paramDefaults;
+    double _logStartSecs{0.0};
+    int _staleSampleCount{0};
     double _lastTimestampSecs{-1.0};
     bool _hadFatalError{false};
     bool _headerComplete{false};

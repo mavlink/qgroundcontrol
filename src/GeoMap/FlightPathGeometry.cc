@@ -47,14 +47,17 @@ void FlightPathGeometry::setScene(GeoScene* scene)
     _rebuild();
 }
 
-void FlightPathGeometry::setPath(const QVariantList& coordinates)
+void FlightPathGeometry::setPath(const QVariantList& coordinates, const QVariantList& highlights)
 {
     _points.clear();
+    _highlights.clear();
     _points.reserve(coordinates.size());
-    for (const QVariant& variant : coordinates) {
-        const QGeoCoordinate coordinate = variant.value<QGeoCoordinate>();
+    _highlights.reserve(coordinates.size());
+    for (qsizetype i = 0; i < coordinates.size(); i++) {
+        const QGeoCoordinate coordinate = coordinates[i].value<QGeoCoordinate>();
         if (coordinate.isValid()) {
             _points.append(coordinate);
+            _highlights.append((i < highlights.size()) && highlights[i].toBool());
         }
     }
     emit anchorCoordinateChanged();
@@ -68,6 +71,7 @@ void FlightPathGeometry::appendPoint(const QGeoCoordinate& coordinate)
         return;
     }
     _points.append(coordinate);
+    _highlights.append(false);
     if (_points.size() == 1) {
         emit anchorCoordinateChanged();
     }
@@ -124,6 +128,7 @@ void FlightPathGeometry::clearPath()
         return;
     }
     _points.clear();
+    _highlights.clear();
     emit anchorCoordinateChanged();
     emit pointCountChanged();
     _rebuild();
@@ -219,6 +224,7 @@ QVector3D FlightPathGeometry::_tangentAt(qsizetype index) const
 void FlightPathGeometry::_writeVertexPair(qsizetype index, const QVector3D& tangent)
 {
     const QVector3D& position = _positions[index];
+    const float highlight = _highlights[index] ? 1.0f : 0.0f;
     float* vertex = reinterpret_cast<float*>(_vertexData.data()) + (index * 2 * kFloatsPerVertex);
     for (const float side : {-1.0f, 1.0f}) {
         *vertex++ = position.x();
@@ -228,7 +234,7 @@ void FlightPathGeometry::_writeVertexPair(qsizetype index, const QVector3D& tang
         *vertex++ = tangent.y();
         *vertex++ = tangent.z();
         *vertex++ = side;
-        *vertex++ = 0.0f;
+        *vertex++ = highlight;
     }
 }
 

@@ -26,7 +26,7 @@ PerimeterScanComplexItem::PerimeterScanComplexItem(PlanMasterController *masterC
     _altitudeFact.setRawValue(
         SettingsManager::instance()->appSettings()->defaultMissionItemAltitude()->rawValue());
 
-    connect(&_altitudeFact, &Fact::valueChanged, this, [this]() {
+    connect(&_altitudeFact, &Fact::rawValueChanged, this, [this]() {
         _setDirty();
         emit amslEntryAltChanged(amslEntryAlt());
         emit amslExitAltChanged(amslExitAlt());

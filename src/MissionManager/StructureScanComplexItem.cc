@@ -33,20 +33,20 @@ StructureScanComplexItem::StructureScanComplexItem(PlanMasterController* masterC
 
     _entranceAltFact.setRawValue(SettingsManager::instance()->appSettings()->defaultMissionItemAltitude()->rawValue());
 
-    connect(&_entranceAltFact,      &Fact::valueChanged, this, &StructureScanComplexItem::_setDirty);
-    connect(&_scanBottomAltFact,    &Fact::valueChanged, this, &StructureScanComplexItem::_setDirty);
-    connect(&_layersFact,           &Fact::valueChanged, this, &StructureScanComplexItem::_setDirty);
-    connect(&_gimbalPitchFact,      &Fact::valueChanged, this, &StructureScanComplexItem::_setDirty);
-    connect(&_startFromTopFact,     &Fact::valueChanged, this, &StructureScanComplexItem::_setDirty);
+    connect(&_entranceAltFact,      &Fact::rawValueChanged, this, &StructureScanComplexItem::_setDirty);
+    connect(&_scanBottomAltFact,    &Fact::rawValueChanged, this, &StructureScanComplexItem::_setDirty);
+    connect(&_layersFact,           &Fact::rawValueChanged, this, &StructureScanComplexItem::_setDirty);
+    connect(&_gimbalPitchFact,      &Fact::rawValueChanged, this, &StructureScanComplexItem::_setDirty);
+    connect(&_startFromTopFact,     &Fact::rawValueChanged, this, &StructureScanComplexItem::_setDirty);
 
     connect(&_startFromTopFact,     &Fact::valueChanged, this, &StructureScanComplexItem::_signalTopBottomAltChanged);
     connect(&_layersFact,           &Fact::valueChanged, this, &StructureScanComplexItem::_signalTopBottomAltChanged);
 
-    connect(&_structureHeightFact,                  &Fact::valueChanged,    this, &StructureScanComplexItem::_recalcLayerInfo);
-    connect(&_scanBottomAltFact,                    &Fact::valueChanged,    this, &StructureScanComplexItem::_recalcLayerInfo);
-    connect(_cameraCalc.adjustedFootprintFrontal(), &Fact::valueChanged,    this, &StructureScanComplexItem::_recalcLayerInfo);
+    connect(&_structureHeightFact,                  &Fact::rawValueChanged, this, &StructureScanComplexItem::_recalcLayerInfo);
+    connect(&_scanBottomAltFact,                    &Fact::rawValueChanged, this, &StructureScanComplexItem::_recalcLayerInfo);
+    connect(_cameraCalc.adjustedFootprintFrontal(), &Fact::rawValueChanged, this, &StructureScanComplexItem::_recalcLayerInfo);
 
-    connect(&_entranceAltFact, &Fact::valueChanged, this, &StructureScanComplexItem::_updateCoordinateAltitudes);
+    connect(&_entranceAltFact, &Fact::rawValueChanged, this, &StructureScanComplexItem::_updateCoordinateAltitudes);
 
     connect(&_structurePolygon, &QGCMapPolygon::dirtyChanged,   this, &StructureScanComplexItem::_polygonDirtyChanged);
     connect(&_structurePolygon, &QGCMapPolygon::pathChanged,    this, &StructureScanComplexItem::_rebuildFlightPolygon);
@@ -59,10 +59,10 @@ StructureScanComplexItem::StructureScanComplexItem(PlanMasterController* masterC
 
     connect(&_flightPolygon,    &QGCMapPolygon::pathChanged,    this, &StructureScanComplexItem::_flightPathChanged);
 
-    connect(_cameraCalc.distanceToSurface(),    &Fact::valueChanged,                this, &StructureScanComplexItem::_rebuildFlightPolygon);
+    connect(_cameraCalc.distanceToSurface(),    &Fact::rawValueChanged,             this, &StructureScanComplexItem::_rebuildFlightPolygon);
 
     connect(&_flightPolygon,                        &QGCMapPolygon::pathChanged,    this, &StructureScanComplexItem::_recalcCameraShots);
-    connect(_cameraCalc.adjustedFootprintSide(),    &Fact::valueChanged,            this, &StructureScanComplexItem::_recalcCameraShots);
+    connect(_cameraCalc.adjustedFootprintSide(),    &Fact::rawValueChanged,         this, &StructureScanComplexItem::_recalcCameraShots);
     connect(&_layersFact,                           &Fact::valueChanged,            this, &StructureScanComplexItem::_recalcCameraShots);
 
     connect(&_cameraCalc, &CameraCalc::isManualCameraChanged, this, &StructureScanComplexItem::_updateGimbalPitch);

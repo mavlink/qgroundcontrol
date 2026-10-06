@@ -30,6 +30,7 @@ private slots:
     void _testUdpConstruction();
     void _testUdpAddRemoveHost();
     void _testUdpSetLocalPortEmitsSignal();
+    void _testUdpAutoConnectToggleKeepsPortAndHosts();
     void _testUdpCopyConstruction();
     void _testUdpCopyFrom();
     void _testUdpSettingsRoundtrip();
@@ -37,4 +38,8 @@ private slots:
     void _testUdpHostnameRoundtrip();
     void _testUdpRemoveByHostname();
     void _testUdpResolveHostsUpdatesAddress();
+
+    // MockConfiguration
+    void _testMockConfigurationCopiedAndPersisted();
+    void _testMockHomeLocationOutOfRangeFallsBackToPX4SITL();
 };

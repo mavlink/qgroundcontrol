@@ -122,32 +122,32 @@ Item {
     property bool   _canStartMission:           _activeVehicle ? (_checklistPassed && (!_activeVehicle.healthAndArmingCheckReport.supported || _activeVehicle.healthAndArmingCheckReport.canStartMission)) : false
     property bool   _initialConnectComplete:    _activeVehicle ? _activeVehicle.initialConnectComplete : false
 
-    property bool showEmergenyStop:         _guidedActionsEnabled && !_hideEmergenyStop && _vehicleArmed && _vehicleFlying
+    property bool showEmergencyStop:        !_hideEmergencyStop && _vehicleArmed && _vehicleAirborne
     property bool showArm:                  _guidedActionsEnabled && !_vehicleArmed && _canArm
-    property bool showForceArm:             _guidedActionsEnabled && !_vehicleArmed
-    property bool showDisarm:               _guidedActionsEnabled && _vehicleArmed && !_vehicleFlying
-    property bool showRTL:                  _guidedActionsEnabled && _activeVehicle && _vehicleArmed && _activeVehicle.supports.guidedMode && _vehicleFlying && !_vehicleInRTLMode
-    property bool showTakeoff:              _guidedActionsEnabled && _activeVehicle && (_activeVehicle.supports.guidedTakeoffWithAltitude || _activeVehicle.supports.guidedTakeoffWithoutAltitude) && !_vehicleFlying && _canTakeoff
+    property bool showForceArm:             _guidedActionsEnabled && !_vehicleArmed && _flyViewSettings.allowForceArm.rawValue
+    property bool showDisarm:               _vehicleArmed && !_vehicleAirborne
+    property bool showRTL:                  _guidedActionsEnabled && _activeVehicle && _vehicleArmed && _activeVehicle.supports.guidedMode && _vehicleUnderway && !_vehicleInRTLMode
+    property bool showTakeoff:              _guidedActionsEnabled && _activeVehicle && (_activeVehicle.supports.guidedTakeoffWithAltitude || _activeVehicle.supports.guidedTakeoffWithoutAltitude) && !_vehicleUnderway && _canTakeoff
     property bool showLand:                 _guidedActionsEnabled && _activeVehicle && _activeVehicle.supports.guidedMode && _vehicleArmed && !_activeVehicle.fixedWing && !_vehicleInLandMode
-    property bool showStartMission:         _guidedActionsEnabled && _missionAvailable && !_missionActive && !_vehicleFlying && _canStartMission
-    property bool showContinueMission:      _guidedActionsEnabled && _missionAvailable && !_missionActive && _vehicleArmed && _vehicleFlying && (_currentMissionIndex < _visualItemsCount - 1)
-    property bool showPause:                _guidedActionsEnabled && _activeVehicle && _vehicleArmed && _activeVehicle.supports.pauseVehicle && _vehicleFlying && !_vehiclePaused && !_fixedWingOnApproach
-    property bool showChangeAlt:            _guidedActionsEnabled && _activeVehicle && _vehicleFlying && _activeVehicle.supports.guidedMode && _vehicleArmed && !_missionActive
-    property bool showChangeLoiterRadius:   _guidedActionsEnabled && _activeVehicle && _vehicleFlying && _activeVehicle.supports.guidedMode && _vehicleArmed && !_missionActive && _vehicleInFwdFlight && fwdFlightGotoMapCircle.visible
-    property bool showChangeSpeed:          _guidedActionsEnabled && _activeVehicle && _vehicleFlying && _activeVehicle.supports.guidedMode && _vehicleArmed && !_missionActive && _speedLimitsAvailable
-    property bool showOrbit:                _guidedActionsEnabled && _activeVehicle && _vehicleFlying && __orbitSupported && !_missionActive && _activeVehicle.homePosition.isValid && !isNaN(_activeVehicle.homePosition.altitude)
-    property bool showROI:                  _guidedActionsEnabled && _vehicleFlying && __roiSupported
-    property bool showLandAbort:            _guidedActionsEnabled && _vehicleFlying && _fixedWingOnApproach
-    property bool showGotoLocation:         _guidedActionsEnabled && _vehicleFlying
+    property bool showStartMission:         _guidedActionsEnabled && _missionAvailable && !_missionActive && !_vehicleUnderway && _canStartMission
+    property bool showContinueMission:      _guidedActionsEnabled && _missionAvailable && !_missionActive && _vehicleArmed && _vehicleUnderway && (_currentMissionIndex < _visualItemsCount - 1)
+    property bool showPause:                _guidedActionsEnabled && _activeVehicle && _vehicleArmed && _activeVehicle.supports.pauseVehicle && _vehicleUnderway && !_vehiclePaused && !_fixedWingOnApproach
+    property bool showChangeAlt:            _guidedActionsEnabled && _activeVehicle && _vehicleUnderway && _activeVehicle.supports.guidedMode && _vehicleArmed && !_missionActive
+    property bool showChangeLoiterRadius:   _guidedActionsEnabled && _activeVehicle && _vehicleUnderway && _activeVehicle.supports.guidedMode && _vehicleArmed && !_missionActive && _vehicleInFwdFlight && fwdFlightGotoMapCircle.visible
+    property bool showChangeSpeed:          _guidedActionsEnabled && _activeVehicle && _vehicleUnderway && _activeVehicle.supports.guidedMode && _vehicleArmed && !_missionActive && _speedLimitsAvailable
+    property bool showOrbit:                _guidedActionsEnabled && _activeVehicle && _vehicleUnderway && __orbitSupported && !_missionActive && _activeVehicle.homePosition.isValid && !isNaN(_activeVehicle.homePosition.altitude)
+    property bool showROI:                  _guidedActionsEnabled && _vehicleUnderway && __roiSupported
+    property bool showLandAbort:            _guidedActionsEnabled && _vehicleUnderway && _fixedWingOnApproach
+    property bool showGotoLocation:         _guidedActionsEnabled && _vehicleUnderway
     property bool showSetHome:              _guidedActionsEnabled
     property bool showSetEstimatorOrigin:   _activeVehicle && !(_activeVehicle.sensorsPresentBits & MAVLinkEnums.MAV_SYS_STATUS_SENSOR_GPS)
-    property bool showChangeHeading:        _guidedActionsEnabled && _vehicleFlying
+    property bool showChangeHeading:        _guidedActionsEnabled && _vehicleUnderway
 
     property string changeSpeedTitle:   _vehicleInFwdFlight ? changeAirspeedTitle : changeCruiseSpeedTitle
     property string changeSpeedMessage: _vehicleInFwdFlight ? changeAirspeedMessage : changeCruiseSpeedMessage
 
     // Note: The '_visualItemsCount - 2' is a hack to not trigger resume mission when a mission ends with an RTL item
-    property bool showResumeMission:    _activeVehicle && !_vehicleArmed && _vehicleWasFlying && _missionAvailable && _resumeMissionIndex > 0 && (_resumeMissionIndex < _visualItemsCount - 2)
+    property bool showResumeMission:    _activeVehicle && !_vehicleArmed && _vehicleWasUnderway && _missionAvailable && _resumeMissionIndex > 0 && (_resumeMissionIndex < _visualItemsCount - 2)
 
     property bool guidedUIVisible:          confirmDialog.visible
 
@@ -158,7 +158,9 @@ Item {
     property bool   _missionAvailable:      missionController.containsItems
     property bool   _missionActive:         _activeVehicle ? _vehicleArmed && (_vehicleInLandMode || _vehicleInRTLMode || _vehicleInMissionMode) : false
     property bool   _vehicleArmed:          _activeVehicle ? _activeVehicle.armed  : false
-    property bool   _vehicleFlying:         _activeVehicle ? _activeVehicle.flying  : false
+    property bool   _vehicleUnderway:       _activeVehicle ? _activeVehicle.underway  : false
+    // Rover/Sub are underway whenever armed but accept a normal disarm, so only airborne vehicles need emergency stop
+    property bool   _vehicleAirborne:       _activeVehicle ? _activeVehicle.airborne  : false
     property bool   _vehicleLanding:        _activeVehicle ? _activeVehicle.landing  : false
     property bool   _vehiclePaused:         false
     property bool   _vehicleInMissionMode:  false
@@ -167,10 +169,10 @@ Item {
     property int    _visualItemsCount:      missionController.visualItems ? missionController.visualItems.count : 0
     property int    _currentMissionIndex:   missionController.currentMissionIndex
     property int    _resumeMissionIndex:    missionController.resumeMissionIndex
-    property bool   _hideEmergenyStop:      !_corePluginOptions.flyView.guidedBarShowEmergencyStop
+    property bool   _hideEmergencyStop:     !_corePluginOptions.flyView.guidedBarShowEmergencyStop
     property bool   _hideOrbit:             !_corePluginOptions.flyView.guidedBarShowOrbit
     property bool   _hideROI:               !_corePluginOptions.flyView.guidedBarShowROI
-    property bool   _vehicleWasFlying:      false
+    property bool   _vehicleWasUnderway:    false
     property bool   _rcRSSIAvailable:       _activeVehicle ? _activeVehicle.rcRSSI.rawValue > 0 && _activeVehicle.rcRSSI.rawValue <= 100 : false
     property bool   _fixedWingOnApproach:   _activeVehicle ? _activeVehicle.fixedWing && _vehicleLanding : false
     property bool   _vehicleInFwdFlight:    _activeVehicle ? _activeVehicle.inFwdFlight : false
@@ -195,7 +197,7 @@ Item {
 
     function _outputState() {
         if (_isGuidedActionsControllerLogEnabled()) {
-            console.log(qsTr("_activeVehicle(%1) _vehicleArmed(%2) guidedModeSupported(%3) _vehicleFlying(%4) _vehicleWasFlying(%5) _vehicleInRTLMode(%6) pauseVehicleSupported(%7) _vehiclePaused(%8) _flightMode(%9) _visualItemsCount(%10) roiSupported(%11) orbitSupported(%12) _missionActive(%13) _hideROI(%14) _hideOrbit(%15)").arg(_activeVehicle ? 1 : 0).arg(_vehicleArmed ? 1 : 0).arg(__guidedModeSupported ? 1 : 0).arg(_vehicleFlying ? 1 : 0).arg(_vehicleWasFlying ? 1 : 0).arg(_vehicleInRTLMode ? 1 : 0).arg(__pauseVehicleSupported ? 1 : 0).arg(_vehiclePaused ? 1 : 0).arg(_flightMode).arg(_visualItemsCount).arg(__roiSupported).arg(__orbitSupported).arg(_missionActive).arg(_hideROI).arg(_hideOrbit))
+            console.log(qsTr("_activeVehicle(%1) _vehicleArmed(%2) guidedModeSupported(%3) _vehicleUnderway(%4) _vehicleWasUnderway(%5) _vehicleInRTLMode(%6) pauseVehicleSupported(%7) _vehiclePaused(%8) _flightMode(%9) _visualItemsCount(%10) roiSupported(%11) orbitSupported(%12) _missionActive(%13) _hideROI(%14) _hideOrbit(%15)").arg(_activeVehicle ? 1 : 0).arg(_vehicleArmed ? 1 : 0).arg(__guidedModeSupported ? 1 : 0).arg(_vehicleUnderway ? 1 : 0).arg(_vehicleWasUnderway ? 1 : 0).arg(_vehicleInRTLMode ? 1 : 0).arg(__pauseVehicleSupported ? 1 : 0).arg(_vehiclePaused ? 1 : 0).arg(_flightMode).arg(_visualItemsCount).arg(__roiSupported).arg(__orbitSupported).arg(_missionActive).arg(_hideROI).arg(_hideOrbit))
         }
     }
 
@@ -204,7 +206,7 @@ Item {
             guidedValueSlider.setupSlider(
                 GuidedValueSlider.SliderType.Takeoff,
                 _unitsConversion.metersToAppSettingsVerticalDistanceUnits(_activeVehicle.minimumTakeoffAltitudeMeters()),
-                _flyViewSettings.guidedMaximumAltitude.value,
+                _unitsConversion.metersToAppSettingsVerticalDistanceUnits(_flyViewSettings.guidedMaximumAltitude.rawValue),
                 _unitsConversion.metersToAppSettingsVerticalDistanceUnits(_activeVehicle.minimumTakeoffAltitudeMeters()),
                 qsTr("Height (rel)"))
         } else if (actionCode === actionChangeSpeed) {
@@ -228,16 +230,16 @@ Item {
         } else if (actionCode === actionChangeAlt || actionCode === actionOrbit || actionCode === actionGoto || actionCode === actionPause) {
             guidedValueSlider.setupSlider(
                 GuidedValueSlider.SliderType.Altitude,
-                _flyViewSettings.guidedMinimumAltitude.value,
-                _flyViewSettings.guidedMaximumAltitude.value,
-                _activeVehicle.altitudeRelative.value,
+                _unitsConversion.metersToAppSettingsVerticalDistanceUnits(_flyViewSettings.guidedMinimumAltitude.rawValue),
+                _unitsConversion.metersToAppSettingsVerticalDistanceUnits(_flyViewSettings.guidedMaximumAltitude.rawValue),
+                _unitsConversion.metersToAppSettingsVerticalDistanceUnits(_activeVehicle.altitudeRelative.rawValue),
                 qsTr("Alt (rel)"))
         } else if (actionCode === actionROI) {
             // ROI targets a point on the ground by default, so start at 0 above home
             guidedValueSlider.setupSlider(
                 GuidedValueSlider.SliderType.Altitude,
                 0,
-                _flyViewSettings.guidedMaximumAltitude.value,
+                _unitsConversion.metersToAppSettingsVerticalDistanceUnits(_flyViewSettings.guidedMaximumAltitude.rawValue),
                 0,
                 qsTr("Alt (rel)"))
         }
@@ -329,12 +331,12 @@ Item {
         }
     }
 
-    on_VehicleFlyingChanged: {
+    on_VehicleUnderwayChanged: {
         _outputState()
-        if (!_vehicleFlying) {
-            // We use _vehicleWasFLying to help trigger Resume Mission only if the vehicle actually flew and came back down.
+        if (!_vehicleUnderway) {
+            // We use _vehicleWasUnderway to help trigger Resume Mission only if the vehicle actually moved and came back down.
             // Otherwise it may trigger during the Start Mission sequence due to signal ordering or armed and resume mission index.
-            _vehicleWasFlying = true
+            _vehicleWasUnderway = true
         }
     }
 
@@ -359,6 +361,17 @@ Item {
         function onDisarmVehicleRequest() { disarmVehicleRequest() }
     }
 
+    Connections {
+        target: _unitsConversion
+
+        function onUnitsChanged() {
+            // Slider range and value were captured in the previous units
+            if (_activeVehicle && guidedValueSlider.visible) {
+                setupSlider(confirmDialog.action)
+            }
+        }
+    }
+
     function armVehicleRequest() {
         confirmAction(actionArm)
     }
@@ -368,7 +381,7 @@ Item {
     }
 
     function disarmVehicleRequest() {
-        if (showEmergenyStop) {
+        if (showEmergencyStop) {
             confirmAction(actionEmergencyStop)
         } else {
             confirmAction(actionDisarm)
@@ -398,7 +411,7 @@ Item {
 
         switch (actionCode) {
         case actionArm:
-            if (_vehicleFlying || !_guidedActionsEnabled) {
+            if (_vehicleUnderway || !_guidedActionsEnabled) {
                 return
             }
             confirmDialog.title = armTitle
@@ -415,7 +428,7 @@ Item {
             confirmDialog.hideTrigger = Qt.binding(function() { return !showForceArm })
             break;
         case actionDisarm:
-            if (_vehicleFlying) {
+            if (_vehicleAirborne) {
                 return
             }
             confirmDialog.title = disarmTitle
@@ -429,7 +442,7 @@ Item {
         case actionEmergencyStop:
             confirmDialog.title = emergencyStopTitle
             confirmDialog.message = emergencyStopMessage
-            confirmDialog.hideTrigger = Qt.binding(function() { return !showEmergenyStop })
+            confirmDialog.hideTrigger = Qt.binding(function() { return !showEmergencyStop })
             break;
         case actionTakeoff:
             confirmDialog.title = takeoffTitle
