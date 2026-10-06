@@ -84,6 +84,7 @@
 #endif
 
 #include <QtCore/QDateTime>
+#include <QtCore/QSettings>
 
 QGC_LOGGING_CATEGORY(VehicleLog, "Vehicle.Vehicle")
 
@@ -2356,6 +2357,49 @@ void Vehicle::setRebootRequired()
 
     _rebootRequired = true;
     emit rebootRequiredChanged();
+}
+
+void Vehicle::setNewStableFirmwareVersion(const QString& version)
+{
+    if (_newStableFirmwareVersion == version) {
+        return;
+    }
+
+    _newStableFirmwareVersion = version;
+    _newStableFirmwareVersionAcknowledged = _isNewStableFirmwareVersionAcknowledged();
+    emit newStableFirmwareVersionChanged();
+}
+
+void Vehicle::acknowledgeNewStableFirmwareVersion()
+{
+    if (_newStableFirmwareVersion.isEmpty() || _newStableFirmwareVersionAcknowledged) {
+        return;
+    }
+
+    QSettings().setValue(_acknowledgedStableFirmwareSettingsKey(), _newStableFirmwareVersion);
+
+    // The acknowledgement is shared by all vehicles of the same firmware/vehicle class
+    const QmlObjectListModel* const vehicles = MultiVehicleManager::instance()->vehicles();
+    for (int i = 0; i < vehicles->count(); i++) {
+        Vehicle* const vehicle = vehicles->value<Vehicle*>(i);
+        if (vehicle && !vehicle->_newStableFirmwareVersionAcknowledged &&
+            vehicle->_isNewStableFirmwareVersionAcknowledged()) {
+            vehicle->_newStableFirmwareVersionAcknowledged = true;
+            emit vehicle->newStableFirmwareVersionChanged();
+        }
+    }
+}
+
+bool Vehicle::_isNewStableFirmwareVersionAcknowledged() const
+{
+    const QString acknowledgedVersion = QSettings().value(_acknowledgedStableFirmwareSettingsKey()).toString();
+    return !_newStableFirmwareVersion.isEmpty() &&
+           !FirmwarePlugin::isStableFirmwareVersionUnseen(_newStableFirmwareVersion, acknowledgedVersion);
+}
+
+QString Vehicle::_acknowledgedStableFirmwareSettingsKey() const
+{
+    return QStringLiteral("AcknowledgedStableFirmware/") + FirmwarePlugin::stableFirmwareSettingsKey(this);
 }
 
 void Vehicle::startCalibration(QGCMAVLink::CalibrationType calType)

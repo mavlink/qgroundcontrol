@@ -9,6 +9,8 @@ target_sources(
             APMAirframeComponentControllerTest.h
             APMStartMissionTest.cc
             APMStartMissionTest.h
+            FirmwarePluginTest.cc
+            FirmwarePluginTest.h
             FTPManagerTest.cc
             FTPManagerTest.h
             FTPControllerTest.cc
@@ -47,6 +49,8 @@ target_sources(
             VehicleAirborneTest.h
             VehicleDistanceSensorFactGroupTest.cc
             VehicleDistanceSensorFactGroupTest.h
+            VehicleFirmwareUpdateTest.cc
+            VehicleFirmwareUpdateTest.h
             VehicleGPSAggregateFactGroupTest.cc
             VehicleGPSAggregateFactGroupTest.h
             VehicleLinkManagerTest.cc
@@ -62,6 +66,7 @@ add_subdirectory(ComponentInformation)
 
 add_qgc_test(APMAirframeComponentControllerTest LABELS Integration Vehicle)
 add_qgc_test(APMStartMissionTest LABELS Integration Vehicle)
+add_qgc_test(FirmwarePluginTest LABELS Unit Vehicle)
 add_qgc_test(FTPControllerTest LABELS Integration Vehicle RESOURCE_LOCK TempFiles)
 add_qgc_test(FTPManagerTest LABELS Integration Vehicle)
 if(NOT QGC_NO_SERIAL_LINK)
@@ -86,5 +91,6 @@ add_qgc_test(StandardModesTest LABELS Integration Vehicle)
 add_qgc_test(TrajectoryPointsTest LABELS Unit Vehicle)
 add_qgc_test(VehicleAirborneTest LABELS Integration Vehicle)
 add_qgc_test(VehicleDistanceSensorFactGroupTest LABELS Integration Vehicle)
+add_qgc_test(VehicleFirmwareUpdateTest LABELS Integration Vehicle)
 add_qgc_test(VehicleGPSAggregateFactGroupTest LABELS Unit)
 add_qgc_test(VehicleLinkManagerTest LABELS Integration Vehicle SERIAL)

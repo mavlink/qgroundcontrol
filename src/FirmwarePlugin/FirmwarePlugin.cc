@@ -1,28 +1,31 @@
 #include "FirmwarePlugin.h"
+
+#include <QtCore/QDir>
+#include <QtCore/QFile>
+#include <QtCore/QRegularExpression>
+#include <QtCore/QSettings>
+#include <QtCore/QStandardPaths>
+#include <QtCore/QThread>
+
+#include "AppMessages.h"
 #include "AutoPilotPlugin.h"
 #include "Autotune.h"
 #include "GenericAutoPilotPlugin.h"
 #include "MAVLinkLib.h"
 #include "MAVLinkProtocol.h"
 #include "ParameterMetaData.h"
-#include "AppMessages.h"
 #include "QGCApplication.h"
 #include "QGCCameraManager.h"
+#include "QGCCompression.h"
 #include "QGCFileDownload.h"
+#include "QGCFileHelper.h"
 #include "QGCLoggingCategory.h"
+#include "QGCMAVLink.h"
+#include "QGCVersionCheck.h"
 #include "Vehicle.h"
-#include "VehicleLinkManager.h"
 #include "VehicleCameraControl.h"
 #include "VehicleComponent.h"
-
-#include "QGCCompression.h"
-#include "QGCFileHelper.h"
-
-#include <QtCore/QDir>
-#include <QtCore/QFile>
-#include <QtCore/QRegularExpression>
-#include <QtCore/QStandardPaths>
-#include <QtCore/QThread>
+#include "VehicleLinkManager.h"
 
 QGC_LOGGING_CATEGORY(FirmwarePluginLog, "FirmwarePlugin.FirmwarePlugin")
 
@@ -366,7 +369,8 @@ void FirmwarePlugin::checkIfIsLatestStable(Vehicle *vehicle) const
     }
 }
 
-void FirmwarePlugin::_versionFileDownloadFinished(const QString &remoteFile, const QString &localFile, const Vehicle *vehicle) const
+void FirmwarePlugin::_versionFileDownloadFinished(const QString& remoteFile, const QString& localFile,
+                                                  Vehicle* vehicle) const
 {
     qCDebug(FirmwarePluginLog) << "Download complete" << remoteFile << localFile;
     // Now read the version file and pull out the version string
@@ -399,8 +403,32 @@ void FirmwarePlugin::_versionFileDownloadFinished(const QString &remoteFile, con
         const QString currentVersionNumber = QStringLiteral("%1.%2.%3").arg(vehicle->firmwareMajorVersion())
                                                                        .arg(vehicle->firmwareMinorVersion())
                                                                        .arg(vehicle->firmwarePatchVersion());
+        vehicle->setNewStableFirmwareVersion(version);
+
+        QSettings settings;
+        settings.beginGroup(QStringLiteral("LastNotifiedStableFirmware"));
+        const QString settingsKey = stableFirmwareSettingsKey(vehicle);
+        if (!isStableFirmwareVersionUnseen(version, settings.value(settingsKey).toString())) {
+            return;
+        }
+        settings.setValue(settingsKey, version);
+
         QGC::showAppMessage(tr("Vehicle is not running latest stable firmware! Running %1, latest stable is %2.").arg(currentVersionNumber, version));
     }
+}
+
+QString FirmwarePlugin::stableFirmwareSettingsKey(const Vehicle* vehicle)
+{
+    return QStringLiteral("%1_%2").arg(QString::fromLatin1(QGCMAVLink::firmwareClassToCanonicalString(
+                                           QGCMAVLink::firmwareClass(vehicle->firmwareType()))),
+                                       QString::fromLatin1(QGCMAVLink::vehicleClassToCanonicalString(
+                                           QGCMAVLink::vehicleClass(vehicle->vehicleType()))));
+}
+
+bool FirmwarePlugin::isStableFirmwareVersionUnseen(const QString& latestVersion, const QString& seenVersion)
+{
+    // Firmware version strings lack the "v" prefix QGCVersionCheck parses
+    return QGCVersionCheck::shouldNotify(QStringLiteral("v") + latestVersion, QStringLiteral("v") + seenVersion);
 }
 
 int FirmwarePlugin::versionCompare(const Vehicle *vehicle, int major, int minor, int patch) const

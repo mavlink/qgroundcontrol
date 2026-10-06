@@ -374,6 +374,12 @@ public:
     /// Used to check if running firmware is latest stable version.
     virtual void checkIfIsLatestStable(Vehicle *vehicle) const;
 
+    /// Settings key identifying the stable firmware stream (firmware + vehicle class) for this vehicle
+    static QString stableFirmwareSettingsKey(const Vehicle* vehicle);
+
+    /// @return true if latestVersion is newer than seenVersion (or seenVersion is empty/unparseable)
+    static bool isStableFirmwareVersionUnseen(const QString& latestVersion, const QString& seenVersion);
+
     /// Used to check if running current version is equal or higher than the one being compared.
     /// returns 1 if current > compare, 0 if current == compare, -1 if current < compare
     int versionCompare(const Vehicle *vehicle, const QString &compare) const;
@@ -423,7 +429,8 @@ protected:
     virtual QString _getLatestVersionFileUrl(Vehicle* /*vehicle*/) const { return QString(); }
 
     /// Callback to process file with latest release information
-    virtual void _versionFileDownloadFinished(const QString &remoteFile, const QString &localFile, const Vehicle *vehicle) const;
+    virtual void _versionFileDownloadFinished(const QString& remoteFile, const QString& localFile,
+                                              Vehicle* vehicle) const;
 
     /// Returns regex QString to extract version information from text
     virtual QString _versionRegex() const { return QString(); }
