@@ -28,9 +28,9 @@ RowLayout {
     QGCLabel {
         id:                 mainStatusLabel
         Layout.fillHeight:  true
-        Layout.preferredWidth: contentWidth + (criticalMessageBadge.visible ? criticalMessageBadge.width / 2 : 0) +
-                               (rebootRequiredIcon.visible ? rebootRequiredIcon.width + rebootRequiredIcon.anchors.rightMargin : 0) +
-                               (firmwareUpdateBadge.visible ? firmwareUpdateBadge.width + firmwareUpdateBadge.anchors.rightMargin : 0)
+        Layout.preferredWidth: Math.max(contentWidth,
+                                        criticalMessageBadge.width + rebootRequiredIcon.width +
+                                        firmwareUpdateBadge.width + ScreenTools.defaultFontPixelWidth * 0.5)
         verticalAlignment:  Text.AlignVCenter
         text:               mainStatusText()
         color:              qgcPal.text
