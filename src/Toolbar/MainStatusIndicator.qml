@@ -29,7 +29,8 @@ RowLayout {
         id:                 mainStatusLabel
         Layout.fillHeight:  true
         Layout.preferredWidth: contentWidth + (criticalMessageBadge.visible ? criticalMessageBadge.width / 2 : 0) +
-                               (rebootRequiredIcon.visible ? rebootRequiredIcon.width + rebootRequiredIcon.anchors.rightMargin : 0)
+                               (rebootRequiredIcon.visible ? rebootRequiredIcon.width + rebootRequiredIcon.anchors.rightMargin : 0) +
+                               (firmwareUpdateBadge.visible ? firmwareUpdateBadge.width + firmwareUpdateBadge.anchors.rightMargin : 0)
         verticalAlignment:  Text.AlignVCenter
         text:               mainStatusText()
         color:              qgcPal.text
@@ -141,6 +142,25 @@ RowLayout {
             source:             "/res/PowerButton.svg"
             color:              qgcPal.colorOrange
             visible:            _rebootRequired
+        }
+
+        Rectangle {
+            id:                 firmwareUpdateBadge
+            objectName:         "mainStatusFirmwareUpdateBadge"
+            anchors.verticalCenter: criticalMessageBadge.verticalCenter
+            anchors.right:      rebootRequiredIcon.visible ? rebootRequiredIcon.left : (criticalMessageBadge.visible ? criticalMessageBadge.left : parent.right)
+            anchors.rightMargin: (rebootRequiredIcon.visible || criticalMessageBadge.visible) ? ScreenTools.defaultFontPixelWidth * 0.25 : 0
+            width:              criticalMessageBadge.width
+            height:             width
+            radius:             width / 2
+            color:              Qt.rgba(1, 1, 1, 0.75)
+            visible:            _activeVehicle ? _activeVehicle.newStableFirmwareVersion !== "" && !_activeVehicle.newStableFirmwareVersionAcknowledged : false
+
+            QGCColoredImage {
+                anchors.fill:   parent
+                source:         "/res/UpdateAvailable.svg"
+                color:          qgcPal.colorBlue
+            }
         }
 
         QGCMouseArea {
@@ -307,6 +327,33 @@ RowLayout {
                         _activeVehicle.rebootVehicle()
                         mainWindow.closeIndicatorDrawer()
                     }
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth:   true
+                spacing:            ScreenTools.defaultFontPixelWidth
+                visible:            _activeVehicle && _activeVehicle.newStableFirmwareVersion !== ""
+
+                QGCLabel {
+                    objectName:         "mainStatusFirmwareUpdateLabel"
+                    text:               _activeVehicle ? qsTr("Firmware update available: %1.%2.%3 → %4")
+                                                             .arg(_activeVehicle.firmwareMajorVersion)
+                                                             .arg(_activeVehicle.firmwareMinorVersion)
+                                                             .arg(_activeVehicle.firmwarePatchVersion)
+                                                             .arg(_activeVehicle.newStableFirmwareVersion) : ""
+                }
+
+                QGCButton {
+                    objectName:     "mainStatusFirmwareUpdateAckButton"
+                    implicitHeight: contentItem.implicitHeight + topPadding + bottomPadding
+                    heightFactor:   0.2
+                    leftPadding:    ScreenTools.defaultFontPixelWidth
+                    rightPadding:   leftPadding
+                    text:           qsTr("Acknowledge and Hide")
+                    pointSize:      ScreenTools.smallFontPointSize
+                    visible:        _activeVehicle && !_activeVehicle.newStableFirmwareVersionAcknowledged
+                    onClicked:      _activeVehicle.acknowledgeNewStableFirmwareVersion()
                 }
             }
 

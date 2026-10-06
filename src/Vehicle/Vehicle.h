@@ -212,6 +212,8 @@ public:
     Q_PROPERTY(bool                 allSensorsHealthy           READ allSensorsHealthy                                              NOTIFY allSensorsHealthyChanged)    //< true: all sensors in SYS_STATUS reported as healthy
     Q_PROPERTY(bool                 requiresGpsFix              READ requiresGpsFix                                                 NOTIFY requiresGpsFixChanged)
     Q_PROPERTY(bool                 rebootRequired              READ rebootRequired                                                 NOTIFY rebootRequiredChanged)
+    Q_PROPERTY(QString              newStableFirmwareVersion    READ newStableFirmwareVersion                                       NOTIFY newStableFirmwareVersionChanged) ///< Non-empty when vehicle firmware is older than this stable version
+    Q_PROPERTY(bool                 newStableFirmwareVersionAcknowledged READ newStableFirmwareVersionAcknowledged                  NOTIFY newStableFirmwareVersionChanged)
     Q_PROPERTY(double               loadProgress                READ loadProgress                                                   NOTIFY loadProgressChanged)
     Q_PROPERTY(bool                 initialConnectComplete      READ isInitialConnectComplete                                       NOTIFY initialConnectComplete)
 
@@ -362,6 +364,11 @@ public:
 
     /// Latches rebootRequired until the vehicle reboots
     void setRebootRequired();
+
+    void setNewStableFirmwareVersion(const QString& version);
+
+    /// Hides the update indicator until a newer stable firmware is released
+    Q_INVOKABLE void acknowledgeNewStableFirmwareVersion();
 
     Q_INVOKABLE void sendPlan(QString planFile);
     Q_INVOKABLE void setEstimatorOrigin(const QGeoCoordinate& centerCoord);
@@ -551,6 +558,8 @@ public:
     QObject*        sysStatusSensorInfo         ();
     bool            requiresGpsFix              () const { return static_cast<bool>(_onboardControlSensorsPresent & MAV_SYS_STATUS_SENSOR_GPS); }
     bool            rebootRequired              () const { return _rebootRequired; }
+    QString         newStableFirmwareVersion    () const { return _newStableFirmwareVersion; }
+    bool            newStableFirmwareVersionAcknowledged() const { return _newStableFirmwareVersionAcknowledged; }
     bool            hilMode                     () const { return _base_mode & MAV_MODE_FLAG_HIL_ENABLED; }
     Actuators*      actuators                   () const { return _actuators; }
     VehicleSigningController* signingController() { return _signingController; }
@@ -801,6 +810,7 @@ signals:
     void allSensorsHealthyChanged       (bool allSensorsHealthy);
     void requiresGpsFixChanged          ();
     void rebootRequiredChanged          ();
+    void newStableFirmwareVersionChanged();
     void haveMRSpeedLimChanged          ();
     void haveFWSpeedLimChanged          ();
     void hasGripperChanged              ();
@@ -911,6 +921,8 @@ private:
     void _commonInit                    (LinkInterface* link);
     void _setupAutoDisarmSignalling     ();
     void _setCapabilities               (uint64_t capabilityBits);
+    QString _acknowledgedStableFirmwareSettingsKey() const;
+    bool _isNewStableFirmwareVersionAcknowledged() const;
     void _updateArmed                   (bool armed);
     bool _apmArmingNotRequired          ();
     void _initializeCsv                 ();
@@ -975,6 +987,8 @@ private:
     bool            _readyToFly                             = false;
     bool            _allSensorsHealthy                      = true;
     bool            _rebootRequired                         = false;
+    QString         _newStableFirmwareVersion;
+    bool            _newStableFirmwareVersionAcknowledged   = false;
     VehicleSigningController* _signingController            = nullptr;
     std::atomic<bool> _joystickAuxRcOverrideActive           = false;
 

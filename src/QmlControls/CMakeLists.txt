@@ -217,6 +217,7 @@ qt_add_resources(QGroundControlControlsModule qmlcontrols_resources
         "${CMAKE_SOURCE_DIR}/resources/clockwise-arrow.svg"
         "${CMAKE_SOURCE_DIR}/resources/counter-clockwise-arrow.svg"
         "${CMAKE_SOURCE_DIR}/resources/JoystickBezelLight.png"
+        "${CMAKE_SOURCE_DIR}/resources/UpdateAvailable.svg"
 )
 
 # subMenuButtonImage.png aliases the shared CogWheels.png at the repo root.

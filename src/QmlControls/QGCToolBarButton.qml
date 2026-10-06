@@ -38,6 +38,26 @@ Button {
             width:                  height
             source:                 visible ? button.icon.source : ""
             anchors.verticalCenter: parent.verticalCenter
+
+            Rectangle {
+                objectName:         "toolbar_qgcUpdateAvailableBadge"
+                z:                  1   // VectorImage adds its rendered SVG as a later child
+                anchors.top:        parent.top
+                anchors.right:      parent.right
+                anchors.topMargin:  -height * 0.25
+                anchors.rightMargin: -width * 0.25
+                width:              ScreenTools.defaultFontPixelHeight
+                height:             width
+                radius:             width / 2
+                color:              Qt.rgba(1, 1, 1, 0.75)
+                visible:            QGroundControl.newStableVersion !== ""
+
+                QGCColoredImage {
+                    anchors.fill:   parent
+                    source:         "/res/UpdateAvailable.svg"
+                    color:          qgcPal.colorBlue
+                }
+            }
         }
         QGCColoredImage {
             visible:                !button.logo

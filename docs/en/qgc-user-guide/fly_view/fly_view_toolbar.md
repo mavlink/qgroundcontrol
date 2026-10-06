@@ -9,6 +9,8 @@ The "Q" icon on the left of the toolbar allows you to select between additional 
 - **Vehicle Configuration:** The various options for the initial configuration of a new vehicle.
 - **Application Settings:** Settings for the QGroundControl application itself.
 
+When a newer stable version of QGroundControl is available, a blue update badge is shown at the top right of the "Q" icon, and the views dropdown shows an **Update** button which opens the download page. A message about the new version is shown once per new version. The check only runs in stable builds.
+
 ## Toolbar Indicators
 
 Next are multiple toolbar indicators for vehicle status. The dropdowns for each toolbar indicator provide additional detail on status. You can also expand the indicators to show additional application and vehicle settings associated with the indicator. Press the ">" button to expand.
@@ -32,6 +34,7 @@ The Flight Status indicator dropdown fills the window and also gives you access 
 - **Emergency Stop** - Replaces **Disarm** while an aircraft is flying. It is a red button which you must press and hold to confirm. It stops the motors while in the air. For emergency use only, your vehicle will crash! Ground vehicles and submarines keep the normal **Disarm** button.
 - **Force Arm** - Arms the vehicle while bypassing pre-arm checks. Only shown when **Allow Force Arm** is enabled in [Fly View Settings](../settings_view/fly_view.md).
 - **Reboot Vehicle** - Shown at the right when the vehicle needs a reboot (see [Vehicle Reboot Required](#vehicle-reboot-required)).
+- **Firmware update available** - Shown when the vehicle is not running the latest stable firmware (see [Firmware Update Available](#firmware-update-available)).
 - **Vehicle Messages** - The messages sent by the vehicle. Use the trash button to clear them.
 
 In the cases of warnings or not ready state you can click the indicator to display the dropdown which will show the reason(s) why. The toggle on the right expands each error with additional information and possible solutions.
@@ -50,7 +53,7 @@ The Flight Mode indicator shows you the current flight mode. The dropdown allows
 
 ![Flight Status badges](../../../assets/fly/toolbar/main_status_indicator_badges.png)
 
-Small badges can appear at the top right of the Flight Status indicator: an orange power icon when the vehicle needs a reboot, and a red badge with the count of critical vehicle messages. Click the indicator to open the dropdown and act on them.
+Small badges can appear at the top right of the Flight Status indicator: a blue update icon when newer stable vehicle firmware is available, an orange power icon when the vehicle needs a reboot, and a red badge with the count of critical vehicle messages. Click the indicator to open the dropdown and act on them.
 
 #### Vehicle Messages
 
@@ -67,6 +70,14 @@ Some parameter changes and sensor calibrations only take effect after the vehicl
 When a parameter change needs a reboot, a message also reminds you that the change will not take effect until the vehicle is rebooted. The message is not repeated for further changes made within 2 minutes.
 
 To reboot, open the Flight Status dropdown and press and hold **Reboot Vehicle** on the right. The vehicle can only be rebooted while disarmed. If it is armed, the button is replaced by a reminder to disarm first.
+
+#### Firmware Update Available
+
+When the vehicle connects, QGroundControl checks whether it is running the latest stable firmware release. The check only applies to official (non-development) firmware. If a newer stable release is available a blue update icon is shown at the top right of the Flight Status indicator, and the dropdown shows the current and latest stable versions.
+
+A message about the out of date firmware is shown once for each new stable release. Press **Acknowledge and Hide** in the dropdown to hide the update icon. It stays hidden, across reconnects and restarts, until a newer stable release is available. The dropdown still shows the version information.
+
+To update the firmware use [Vehicle Configuration > Firmware](../setup_view/firmware.md).
 
 ### GPS / RTK GPS <img src="../../../assets/fly/toolbar/gps_indicator.png" alt="GPS / RTK GPS indicator" style="height: 1.15em; vertical-align: text-bottom;" />
 
