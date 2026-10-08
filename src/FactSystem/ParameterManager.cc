@@ -607,7 +607,8 @@ void ParameterManager::_ftpDownloadComplete(const QString &fileName, const QStri
 
 void ParameterManager::_handleHeartbeat(int componentId)
 {
-    if ((componentId == MAV_COMP_ID_AUTOPILOT1) || _heartbeatComponentIds.contains(componentId)) {
+    if ((componentId == MAV_COMP_ID_ALL) || (componentId == MAV_COMP_ID_AUTOPILOT1) ||
+        _heartbeatComponentIds.contains(componentId)) {
         return;
     }
     _heartbeatComponentIds.insert(componentId);
