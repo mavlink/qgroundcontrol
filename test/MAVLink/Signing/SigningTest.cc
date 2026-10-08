@@ -641,8 +641,22 @@ void SigningTest::_testInitSigningWithPersistedTimestamp()
     signingKeys->removeAllKeys();
 }
 
+void SigningTest::_testStripSignatureForRetransmitProducesValidCrc_data()
+{
+    QTest::addColumn<quint32>("sourceId");
+    QTest::addColumn<quint32>("targetId");
+    QTest::newRow("legacy") << quint32(1) << quint32(0);
+    QTest::newRow("wide-source") << quint32(0xffffffff) << quint32(0);
+    QTest::newRow("wide-target") << quint32(1) << quint32(0x800001ff);
+    QTest::newRow("both-wide") << quint32(0xffffffff) << quint32(0x800001ff);
+    QTest::newRow("small-target") << quint32(1) << quint32(255);
+    QTest::newRow("broadcast") << quint32(1) << quint32(0);
+}
+
 void SigningTest::_testStripSignatureForRetransmitProducesValidCrc()
 {
+    QFETCH(quint32, sourceId);
+    QFETCH(quint32, targetId);
     auto* signingKeys = MAVLinkSigningKeys::instance();
     signingKeys->removeAllKeys();
     QVERIFY(signingKeys->addRawKey(QStringLiteral("CrcKey"),
@@ -654,9 +668,27 @@ void SigningTest::_testStripSignatureForRetransmitProducesValidCrc()
     {
         SigningChannel ch;
         QVERIFY(ch.init(MAVLINK_COMM_0, kv, MAVLinkSigning::insecureConnectionAcceptUnsignedCallback));
-        const mavlink_heartbeat_t heartbeat{};
-        (void)mavlink_msg_heartbeat_encode_chan(1, MAV_COMP_ID_AUTOPILOT1, MAVLINK_COMM_0, &signed_msg, &heartbeat);
+        mavlink_msg_command_long_pack_chan(sourceId, MAV_COMP_ID_AUTOPILOT1, MAVLINK_COMM_0, &signed_msg, targetId, 0,
+                                           MAV_CMD_REQUEST_MESSAGE, 0, 1, 2, 3, 4, 5, 6, 7);
         QVERIFY(MAVLinkSigning::isMessageSigned(signed_msg));
+        QVERIFY(MAVLinkSigning::verifySignature(kv, signed_msg));
+        MAVLinkSigning::signMessage(kv, 0, 123456789, signed_msg);
+        mavlink_signing_t receiver{};
+        mavlink_signing_streams_t streams{};
+        memcpy(receiver.secret_key, kv.data(), sizeof(receiver.secret_key));
+        mavlink_message_t receiveBuffer{};
+        mavlink_message_t verified{};
+        mavlink_status_t receiveStatus{};
+        receiveStatus.signing = &receiver;
+        receiveStatus.signing_streams = &streams;
+        uint8_t wire[MAVLINK_MAX_PACKET_LEN];
+        const uint16_t length = mavlink_msg_to_send_buffer(wire, &signed_msg);
+        uint8_t result = MAVLINK_FRAMING_INCOMPLETE;
+        for (uint16_t i = 0; i < length; ++i) {
+            result = mavlink_frame_char_buffer(&receiveBuffer, &receiveStatus, wire[i], &verified, nullptr);
+        }
+        QCOMPARE(result, uint8_t(MAVLINK_FRAMING_OK));
+        QCOMPARE(receiver.last_status, MAVLINK_SIGNING_STATUS_OK);
         QVERIFY(ch.init(MAVLINK_COMM_0, QByteArrayView(), nullptr));
     }
 
@@ -670,8 +702,12 @@ void SigningTest::_testStripSignatureForRetransmitProducesValidCrc()
         framing = mavlink_parse_char(MAVLINK_COMM_1, static_cast<uint8_t>(bytes[i]), &parsed, &parseStatus);
     }
     QCOMPARE(static_cast<int>(framing), static_cast<int>(MAVLINK_FRAMING_OK));
-    QCOMPARE(static_cast<uint32_t>(parsed.msgid), static_cast<uint32_t>(MAVLINK_MSG_ID_HEARTBEAT));
+    QCOMPARE(static_cast<uint32_t>(parsed.msgid), static_cast<uint32_t>(MAVLINK_MSG_ID_COMMAND_LONG));
     QVERIFY(!MAVLinkSigning::isMessageSigned(parsed));
+    QCOMPARE(parsed.sysid, sourceId);
+    QCOMPARE(mavlink_msg_get_target_sysid(&parsed, mavlink_get_msg_entry(parsed.msgid)), targetId);
+    QCOMPARE(bool(parsed.incompat_flags & MAVLINK_IFLAG_TARGET32), targetId > 255);
+    QCOMPARE(parsed.seq, signed_msg.seq);
 
     signingKeys->removeAllKeys();
 }

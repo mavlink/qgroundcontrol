@@ -491,13 +491,9 @@ void FirmwarePlugin::sendGCSMotionReport(Vehicle *vehicle, const FollowMe::GCSMo
     follow_target.vel[1] = static_cast<float>(motionReport.vyMetersPerSec);
 
     mavlink_message_t message{};
-    mavlink_msg_follow_target_encode_chan(
-        static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId()),
-        static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
-        sharedLink->mavlinkChannel(),
-        &message,
-        &follow_target
-    );
+    mavlink_msg_follow_target_encode_chan(MAVLinkProtocol::instance()->getSystemId(),
+                                          static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
+                                          sharedLink->mavlinkChannel(), &message, &follow_target);
 
     (void) vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), message);
 }

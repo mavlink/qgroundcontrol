@@ -69,7 +69,7 @@ public:
     void                updateAvailableFlightModes      (FlightModeList &modeList) override;
 
 private slots:
-    void _mavCommandResult(int vehicleId, int component, int command, int result, int failureCode);
+    void _mavCommandResult(quint32 vehicleId, int component, int command, int result, int failureCode);
 
 private:
     void    _handleAutopilotVersion         (Vehicle* vehicle, mavlink_message_t* message);
