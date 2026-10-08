@@ -15646,17 +15646,17 @@ Is this really what you want?</source>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="169"/>
       <source>Clear</source>
-      <translation type="unfinished">Clear</translation>
+      <translation>Очистить</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="187"/>
       <source>Tools</source>
-      <translation type="unfinished">Tools</translation>
+      <translation>Инструменты</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="51"/>
       <source>Refresh</source>
-      <translation type="unfinished">Refresh</translation>
+      <translation>Обновить</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="32"/>
@@ -15677,7 +15677,7 @@ Is this really what you want?</source>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="56"/>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="64"/>
       <source>Reset All</source>
-      <translation type="unfinished">Reset All</translation>
+      <translation>Сбросить всё</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="62"/>
@@ -15692,12 +15692,12 @@ Is this really what you want?</source>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="78"/>
       <source>Save to file...</source>
-      <translation type="unfinished">Save to file...</translation>
+      <translation>Сохранить в файл...</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="80"/>
       <source>Save Parameters</source>
-      <translation type="unfinished">Save Parameters</translation>
+      <translation>Сохранить параметры</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="86"/>
@@ -15712,7 +15712,7 @@ Is this really what you want?</source>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="109"/>
       <source>All Files (*)</source>
-      <translation type="unfinished">All Files (*)</translation>
+      <translation>Все файлы (*)</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="109"/>
@@ -15754,7 +15754,7 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="71"/>
       <source>Load from file for review...</source>
-      <translation>Загрузить из файла для просмотра...</translation>
+      <translation>Загрузить из файла...</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="97"/>
@@ -15765,7 +15765,7 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="109"/>
       <source>Parameter Files (*.%1)</source>
-      <translation type="unfinished">Parameter Files (*.%1)</translation>
+      <translation>Файлы параметров (*.%1)</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="65"/>
@@ -15806,17 +15806,17 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="194"/>
       <source>Min: </source>
-      <translation type="unfinished">Min: </translation>
+      <translation>Мин: </translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="199"/>
       <source>Max: </source>
-      <translation type="unfinished">Max: </translation>
+      <translation>Макс: </translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="204"/>
       <source>Default: </source>
-      <translation type="unfinished">Default: </translation>
+      <translation>По умолчанию: </translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="12"/>
@@ -15861,12 +15861,12 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="235"/>
       <source>Advanced settings</source>
-      <translation type="unfinished">Advanced settings</translation>
+      <translation>Расширенные настройки</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="243"/>
       <source>Manual Entry</source>
-      <translation type="unfinished">Manual Entry</translation>
+      <translation>Ручной ввод</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="251"/>
