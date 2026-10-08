@@ -45,11 +45,15 @@ if(WIN32)
     )
 endif()
 
+if(QGC_USE_SYSTEM_LIBS OR QGC_SYSTEM_LIBS_ONLY)
+    set(_qgc_zlib_version_args)
+else()
+    set(_qgc_zlib_version_args VERSION 1.3.2 GIT_TAG v1.3.2)
+endif()
 CPMAddPackage(
     NAME ZLIB
     GITHUB_REPOSITORY madler/zlib
-    VERSION 1.3.2
-    GIT_TAG v1.3.2
+    ${_qgc_zlib_version_args}
     OPTIONS
         "ZLIB_BUILD_TESTING OFF"
         "ZLIB_BUILD_SHARED OFF"
@@ -76,11 +80,15 @@ endif()
 # XZ (LZMA) Integration - liblzma from xz-utils
 # ============================================================================
 
+if(QGC_USE_SYSTEM_LIBS OR QGC_SYSTEM_LIBS_ONLY)
+    set(_qgc_liblzma_version_args)
+else()
+    set(_qgc_liblzma_version_args VERSION 5.8.3 GIT_TAG v5.8.3)
+endif()
 CPMAddPackage(
     NAME LibLZMA
-    VERSION 5.8.3
     GITHUB_REPOSITORY tukaani-project/xz
-    GIT_TAG v5.8.3
+    ${_qgc_liblzma_version_args}
     OPTIONS
         "BUILD_TESTING OFF"
         "BUILD_SHARED_LIBS OFF"
@@ -131,11 +139,15 @@ message(STATUS "liblzma support enabled")
 # Zstandard (ZSTD) Integration
 # ============================================================================
 
+if(QGC_USE_SYSTEM_LIBS OR QGC_SYSTEM_LIBS_ONLY)
+    set(_qgc_zstd_version_args)
+else()
+    set(_qgc_zstd_version_args VERSION 1.5.7 GIT_TAG v1.5.7)
+endif()
 CPMAddPackage(
     NAME zstd
-    VERSION 1.5.7
     GITHUB_REPOSITORY facebook/zstd
-    GIT_TAG v1.5.7
+    ${_qgc_zstd_version_args}
     SOURCE_SUBDIR build/cmake
     OPTIONS
         "ZSTD_BUILD_PROGRAMS OFF"
@@ -168,10 +180,10 @@ if(zstd_ADDED)
     endif()
 elseif(zstd_FOUND OR Zstd_FOUND)
     if(NOT TARGET Zstd::Zstd)
-        if(TARGET zstd::libzstd_static)
-            add_library(Zstd::Zstd ALIAS zstd::libzstd_static)
-        elseif(TARGET zstd::libzstd_shared)
+        if(TARGET zstd::libzstd_shared)
             add_library(Zstd::Zstd ALIAS zstd::libzstd_shared)
+        elseif(TARGET zstd::libzstd_static)
+            add_library(Zstd::Zstd ALIAS zstd::libzstd_static)
         endif()
     endif()
 else()
@@ -188,11 +200,15 @@ message(STATUS "Zstandard support enabled")
 # ============================================================================
 
 if(QGC_ENABLE_LZ4)
+    if(QGC_USE_SYSTEM_LIBS OR QGC_SYSTEM_LIBS_ONLY)
+        set(_qgc_lz4_version_args)
+    else()
+        set(_qgc_lz4_version_args VERSION 1.10.0 GIT_TAG v1.10.0)
+    endif()
     CPMAddPackage(
         NAME lz4
-        VERSION 1.10.0
         GITHUB_REPOSITORY lz4/lz4
-        GIT_TAG v1.10.0
+        ${_qgc_lz4_version_args}
         SOURCE_SUBDIR build/cmake
         OPTIONS
             "LZ4_BUILD_CLI OFF"
@@ -226,11 +242,15 @@ endif()
 # ============================================================================
 
 if(QGC_ENABLE_BZIP2)
+    if(QGC_USE_SYSTEM_LIBS OR QGC_SYSTEM_LIBS_ONLY)
+        set(_qgc_bzip2_version_args)
+    else()
+        set(_qgc_bzip2_version_args VERSION 1.0.8 GIT_TAG 66c46b8c9436613fd81bc5d03f63a61933a4dcc3)
+    endif()
     CPMAddPackage(
         NAME BZip2
-        VERSION 1.0.8
         GIT_REPOSITORY https://gitlab.com/bzip2/bzip2.git
-        GIT_TAG 66c46b8c9436613fd81bc5d03f63a61933a4dcc3
+        ${_qgc_bzip2_version_args}
         OPTIONS
             "ENABLE_LIB_ONLY ON"
             "ENABLE_SHARED_LIB OFF"
@@ -275,11 +295,15 @@ else()
     set(_LIBARCHIVE_LZ4 "OFF")
 endif()
 
+if(QGC_USE_SYSTEM_LIBS OR QGC_SYSTEM_LIBS_ONLY)
+    set(_qgc_libarchive_version_args)
+else()
+    set(_qgc_libarchive_version_args VERSION 3.8.8 GIT_TAG v3.8.8)
+endif()
 CPMAddPackage(
     NAME LibArchive
-    VERSION 3.8.8
     GITHUB_REPOSITORY libarchive/libarchive
-    GIT_TAG v3.8.8
+    ${_qgc_libarchive_version_args}
     OPTIONS
         "ENABLE_WERROR OFF"
         "ENABLE_TEST OFF"

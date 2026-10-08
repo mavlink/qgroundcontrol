@@ -197,4 +197,8 @@ endif()
 # scoped here so bundled SDK files are included without packaging dependency
 # development files declared elsewhere in the source tree.
 set(CMAKE_INSTALL_DEFAULT_COMPONENT_NAME Runtime)
-gstreamer_install_platform_sdk(${CMAKE_PROJECT_NAME})
+# Distro builds take GStreamer from system packages; only bundle the SDK for
+# self-contained targets (AppImage / Windows / macOS).
+if(NOT LINUX OR QGC_CREATE_APPIMAGE)
+    gstreamer_install_platform_sdk(${CMAKE_PROJECT_NAME})
+endif()
