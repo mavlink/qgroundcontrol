@@ -727,7 +727,10 @@ void ParameterManagerTest::_FTPRequestsHeartbeatComponentParams()
     QVERIFY_SIGNAL_COUNT_WAIT(spyParamsReady, 1, TestTimeout::longMs());
     QVERIFY(_mockLink->receivedMavlinkMessageCount(MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL) > 0);
 
-    ParameterManager* const paramManager = vehicleMgr->activeVehicle()->parameterManager();
+    Vehicle* const vehicle = vehicleMgr->activeVehicle();
+    QVERIFY(vehicle);
+    ParameterManager* const paramManager = vehicle->parameterManager();
+    QVERIFY(paramManager);
     QTRY_COMPARE_WITH_TIMEOUT(paramManager->parameterNames(MAV_COMP_ID_ONBOARD_COMPUTER).count(), 3,
                               TestTimeout::longMs());
 
