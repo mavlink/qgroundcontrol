@@ -436,6 +436,9 @@ void MockLink::run1HzTasks()
     if (_sendRadioStatusEnabled) {
         _sendRadioStatus();
     }
+    if (_companionParams) {
+        _sendCompanionHeartBeat();
+    }
 
     if (_enableCamera) {
         _mockLinkCamera->sendCameraHeartbeats();
@@ -681,6 +684,13 @@ void MockLink::_loadParams()
         }
     }
 
+    if (_companionParams) {
+        for (const char* name : {"CMP_ENABLE", "CMP_PORT", "CMP_RATE"}) {
+            _mapParamName2Value[_companionComponentId][QLatin1StringView(name)] = QVariant(static_cast<qint32>(1));
+            _mapParamName2MavParamType[_companionComponentId][QLatin1StringView(name)] = MAV_PARAM_TYPE_INT32;
+        }
+    }
+
     if ((_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) && _apmStartFreshParams) {
         _applyAPMFreshFlashState();
     }
@@ -846,6 +856,14 @@ void MockLink::_sendHeartBeat()
         _mavCustomMode,     // custom mode
         mavState            // MAV_STATE
     );
+    respondWithMavlinkMessage(msg);
+}
+
+void MockLink::_sendCompanionHeartBeat()
+{
+    mavlink_message_t msg{};
+    (void) mavlink_msg_heartbeat_pack_chan(_vehicleSystemId, _companionComponentId, _outgoingMavlinkChannel, &msg,
+                                           MAV_TYPE_ONBOARD_CONTROLLER, MAV_AUTOPILOT_INVALID, 0, 0, MAV_STATE_ACTIVE);
     respondWithMavlinkMessage(msg);
 }
 
@@ -1721,6 +1739,7 @@ void MockLink::_handleParamRequestList(const mavlink_message_t &msg)
         qCDebug(MockLinkLog) << "Ignoring PARAM_REQUEST_LIST for system" << request.target_system;
         return;
     }
+    _paramRequestListTargetLog.append(request.target_component);
 
     // Cache component IDs and first component's param names to avoid repeated keys() calls in worker
     // Thread safety: Lock mutex before modifying shared state accessed by worker thread
@@ -2778,6 +2797,7 @@ MockLink *MockLink::_startMockLinkWorker(const QString &configName, MAV_AUTOPILO
     mockConfig->setApmStartFreshParams(options.testFlag(MockConfiguration::OptionAPMStartFreshParams));
     mockConfig->setFtpCapability(options.testFlag(MockConfiguration::OptionFtpCapability));
     mockConfig->setSendRadioStatus(!options.testFlag(MockConfiguration::OptionNoRadioStatus));
+    mockConfig->setCompanionParams(options.testFlag(MockConfiguration::OptionCompanionParams));
     mockConfig->setVideoStreamType(videoStreamType);
     mockConfig->setFailureMode(failureMode);
 
