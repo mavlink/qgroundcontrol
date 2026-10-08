@@ -97,7 +97,7 @@ runs:
 
     - name: Restore apt download cache (Linux)
       if: runner.os == 'Linux'
-      uses: actions/cache@v5
+      uses: actions/cache@v6
       with:
         path: ~/.cache/qgc-apt-archives
         key: >-
