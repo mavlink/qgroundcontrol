@@ -63,6 +63,8 @@
         { "vendorID": 5840, "productID": 5374,      "boardClass": "Pixhawk",    "name": "AEDROX AEDROXH7" },
 
         { "vendorID": 2106, "productID": 7120,      "boardClass": "Pixhawk",    "name": "PX4 Accton Godwit GA1" },
+        { "vendorID": 2106, "productID": 7121,      "boardClass": "Pixhawk",    "name": "PX4 Accton Godwit GFF4" },
+        { "vendorID": 2106, "productID": 7122,      "boardClass": "Pixhawk",    "name": "PX4 Accton Godwit GFH7" },
 
         { "vendorID": 4617, "productID": 4115,      "boardClass": "Pixhawk",    "name": "MATEK H743-Slim" },
 
