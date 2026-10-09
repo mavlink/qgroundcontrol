@@ -116,8 +116,9 @@ repos:
         types: [file]
 
   # GitHub Actions linting
-  - repo: https://github.com/rhysd/actionlint
-    rev: v1.7.12
+  # Fork used by reviewdog/action-actionlint in CI; upstream lacks newer syntax such as cache-mode.
+  - repo: https://github.com/kjanat/actionlint
+    rev: v1.17.0
     hooks:
       - id: actionlint
 
