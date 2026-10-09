@@ -21,6 +21,10 @@ class PlanMasterController;
 /// the unsaved-mission warning either: the edits are safe on the vehicle, so
 /// nothing is lost by closing (see issue #14537). The same applies to a plan
 /// saved to disk but not uploaded.
+///
+/// On Android, a back press runs the same checks while any of them would warn
+/// (Qt 6.12 otherwise sends the app to the background). The back-key tests
+/// cover that condition and the key routing, including popups taking back first.
 class AppCloseWarningUITest : public QmlUITestBase
 {
     Q_OBJECT
@@ -34,6 +38,9 @@ private slots:
     void _testNoUnsavedMissionWarningForDownloadedMission();
     void _testNoUnsavedMissionWarningAfterSuccessfulUpload();
     void _testNoUnsavedMissionWarningAfterSaveToFile();
+    void _testCloseNeedsConfirmation_data();
+    void _testCloseNeedsConfirmation();
+    void _testBackKeyRaisesCloseWarning();
 
 private:
     /// Returns the Plan view's PlanMasterController, or nullptr (after recording
