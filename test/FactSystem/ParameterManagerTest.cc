@@ -699,6 +699,46 @@ void ParameterManagerTest::_FTPnoFailure()
     QCOMPARE(batt2MonFact->rawValue().toInt(), 4);
 }
 
+void ParameterManagerTest::_FTPRequestsHeartbeatComponentParams_data()
+{
+    QTest::addColumn<MAV_AUTOPILOT>("firmwareType");
+
+    QTest::newRow("ArduPilot") << MAV_AUTOPILOT_ARDUPILOTMEGA;
+    QTest::newRow("PX4") << MAV_AUTOPILOT_PX4;
+}
+
+// param.pck only carries the autopilot's params. Other components that heartbeat must still be asked over the
+// parameter protocol, without making the autopilot stream the params it just sent in the file.
+void ParameterManagerTest::_FTPRequestsHeartbeatComponentParams()
+{
+    QFETCH(MAV_AUTOPILOT, firmwareType);
+    QVERIFY2(!_mockLink, "MockLink already connected");
+    // The AVAILABLE_MODES enumeration started during connect can still be in flight while the companion loads
+    // and fails against MockLink. Timing dependent.
+    ignoreLogMessage("Vehicle.StandardModes", QtWarningMsg, QRegularExpression("Failed to retrieve available modes"));
+
+    MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
+    QSignalSpy spyVehicle(vehicleMgr, &MultiVehicleManager::activeVehicleAvailableChanged);
+    QSignalSpy spyParamsReady(vehicleMgr, &MultiVehicleManager::parameterReadyVehicleAvailableChanged);
+    _mockLink = (firmwareType == MAV_AUTOPILOT_PX4)
+                    ? MockLink::startPX4MockLink(MockConfiguration::OptionCompanionParams)
+                    : MockLink::startAPMArduPlaneMockLink(MockConfiguration::OptionCompanionParams);
+    QVERIFY_SIGNAL_COUNT_WAIT(spyVehicle, 1, TestTimeout::mediumMs());
+    QVERIFY_SIGNAL_COUNT_WAIT(spyParamsReady, 1, TestTimeout::longMs());
+    QVERIFY(_mockLink->receivedMavlinkMessageCount(MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL) > 0);
+
+    Vehicle* const vehicle = vehicleMgr->activeVehicle();
+    QVERIFY(vehicle);
+    ParameterManager* const paramManager = vehicle->parameterManager();
+    QVERIFY(paramManager);
+    QTRY_COMPARE_WITH_TIMEOUT(paramManager->parameterNames(MAV_COMP_ID_ONBOARD_COMPUTER).count(), 3,
+                              TestTimeout::longMs());
+
+    const QList<int> requestListTargets = _mockLink->paramRequestListTargetLog();
+    QVERIFY(!requestListTargets.contains(MAV_COMP_ID_AUTOPILOT1));
+    QVERIFY(!requestListTargets.contains(MAV_COMP_ID_ALL));
+}
+
 void ParameterManagerTest::_FTPChangeParam()
 {
     // Test that parameter set works after APM FTP param download
