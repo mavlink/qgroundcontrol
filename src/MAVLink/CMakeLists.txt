@@ -49,7 +49,11 @@ CPMAddPackage(
     GIT_TAG ${QGC_MAVLINK_GIT_TAG}
     # CPM's default source-cache key does not hash PATCHES file contents.
     CUSTOM_CACHE_KEY "${_mavlink_cache_key}"
-    OPTIONS "MAVLINK_DIALECT ${QGC_MAVLINK_DIALECT}" "MAVLINK_VERSION ${QGC_MAVLINK_VERSION}"
+    OPTIONS "MAVLINK_DIALECT ${QGC_MAVLINK_DIALECT}"
+            "MAVLINK_VERSION ${QGC_MAVLINK_VERSION}"
+            # Nothing in QGC includes the C++11 headers, and upstream generates them without the
+            # deterministic PYTHONHASHSEED the patch below sets.
+            "MAVLINK_ENABLE_CXX OFF"
     # Use the locked generator environment and make mavgen hashes deterministic.
     PATCHES "${_mavlink_patch}"
 )
