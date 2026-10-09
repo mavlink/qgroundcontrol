@@ -484,6 +484,11 @@ void MAVLinkProtocol::_saveTelemetryLog(const QString& tempLogfile)
             }
         }
 
+        // QSaveFile applies permissions during commit().
+        constexpr QFileDevice::Permissions perms =
+            QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ReadGroup | QFileDevice::ReadOther;
+        (void) out.setPermissions(perms);
+
         if (!out.commit()) {
             const QString error =
                 tr("Unable to finalize telemetry log '%1': '%2'.").arg(saveFilePath, out.errorString());
@@ -491,10 +496,6 @@ void MAVLinkProtocol::_saveTelemetryLog(const QString& tempLogfile)
             (void)QFile::remove(tempLogfile);
             return;
         }
-
-        constexpr QFileDevice::Permissions perms =
-            QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ReadGroup | QFileDevice::ReadOther;
-        (void)out.setPermissions(perms);
     }
 
     (void)QFile::remove(tempLogfile);
