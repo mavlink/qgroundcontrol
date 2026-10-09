@@ -1,0 +1,59 @@
+name: Analysis Review
+
+on:
+  workflow_run:  # zizmor: ignore[dangerous-triggers] validates run/PR/SHA and bounded JSON; executes only default-branch code
+    workflows: [Code Analysis]
+    types: [completed]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: analysis-inline-${{ github.event.workflow_run.head_repository.full_name }}-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: false
+
+jobs:
+  post:
+    if: >-
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion != 'cancelled'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: write
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      # workflow_run's SHA is the trusted default-branch commit, never the producer head.
+      - name: Checkout trusted poster
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          sparse-checkout: |
+            .github/actions/setup-python
+            .github/scripts/analysis_review_poster.py
+            .github/scripts/report_context.py
+            .github/scripts/ci_bootstrap.py
+            tools/_bootstrap.py
+            tools/common
+            tools/qgc_tools
+            tools/setup/install_python.py
+            tools/pyproject.toml
+            tools/uv.lock
+          sparse-checkout-cone-mode: false
+
+      - name: Setup Python
+        uses: ./.github/actions/setup-python
+        with:
+          groups: scripts
+
+      - name: Validate and post inline analysis
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 .github/scripts/analysis_review_poster.py
