@@ -5,10 +5,12 @@ on:
     types: [closed]
 
 permissions:
+  contents: read
   actions: write
 
 jobs:
   cleanup:
+    cache-mode: read
     uses: ./.github/workflows/_cache-cleanup.yml
     with:
       branch: refs/pull/${{ github.event.pull_request.number }}/merge

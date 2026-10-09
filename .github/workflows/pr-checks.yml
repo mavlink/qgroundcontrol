@@ -18,11 +18,10 @@ jobs:
     if: github.event.action != 'closed'
     timeout-minutes: 5
 
-    # pull-requests: write (post title suggestion), models: read (ai-inference) used only here.
+    # pull-requests: write scoped here: the title check sets a pending status on [WIP] titles.
     permissions:
       contents: read
       pull-requests: write
-      models: read
 
     steps:
       - name: Harden Runner
@@ -31,7 +30,6 @@ jobs:
           egress-policy: audit
 
       - name: Check PR title format
-        id: title_check
         continue-on-error: true
         uses: amannn/action-semantic-pull-request@v6
         env:
@@ -54,205 +52,6 @@ jobs:
           subjectPatternError: PR title must be 80 characters or less.
           wip: true
           validateSingleCommit: false
-
-      - name: Checkout prompt file
-        if: |
-          steps.title_check.outcome == 'failure' &&
-          github.event.pull_request.user.type != 'Bot'
-        uses: actions/checkout@v7
-        with:
-          ref: ${{ github.event.pull_request.base.sha }}
-          sparse-checkout: .github/prompts
-          sparse-checkout-cone-mode: false
-          persist-credentials: false
-
-      - name: Get changed files
-        id: files
-        if: |
-          steps.title_check.outcome == 'failure' &&
-          github.event.pull_request.user.type != 'Bot'
-        uses: actions/github-script@v9
-        with:
-          result-encoding: string
-          script: |
-            const files = await github.paginate(
-              github.rest.pulls.listFiles,
-              {
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                pull_number: context.payload.pull_request.number,
-                per_page: 100
-              }
-            );
-            const maxFiles = 200;
-            const lines = files
-              .slice(0, maxFiles)
-              .map(f => `${f.filename} (+${f.additions}/-${f.deletions})`);
-            if (files.length > maxFiles) {
-              lines.push(`... (${files.length - maxFiles} more files)`);
-            }
-            return lines.join('\n');
-
-      - name: Sanitize inputs for AI
-        id: sanitize
-        if: |
-          steps.title_check.outcome == 'failure' &&
-          github.event.pull_request.user.type != 'Bot'
-        shell: bash
-        env:
-          PR_TITLE: ${{ github.event.pull_request.title }}
-          PR_BODY: ${{ github.event.pull_request.body }}
-          CHANGED_FILES: ${{ steps.files.outputs.result }}
-        run: |
-          # Truncate inputs to prevent token flooding
-          SAFE_TITLE=$(echo "$PR_TITLE" | head -c 200 | tr -d '\r')
-          SAFE_BODY=$(echo "$PR_BODY" | head -c 2000 | tr -d '\r')
-          SAFE_FILES=$(echo "$CHANGED_FILES" | head -30)
-
-          # Write to outputs using heredoc with dynamic delimiters to prevent injection
-          TITLE_DELIM="TITLE_EOF_$(echo "$SAFE_TITLE" | sha256sum | head -c 16)"
-          BODY_DELIM="BODY_EOF_$(echo "$SAFE_BODY" | sha256sum | head -c 16)"
-          FILES_DELIM="FILES_EOF_$(echo "$SAFE_FILES" | sha256sum | head -c 16)"
-          {
-            echo "title<<${TITLE_DELIM}"
-            echo "$SAFE_TITLE"
-            echo "${TITLE_DELIM}"
-            echo "body<<${BODY_DELIM}"
-            echo "$SAFE_BODY"
-            echo "${BODY_DELIM}"
-            echo "files<<${FILES_DELIM}"
-            echo "$SAFE_FILES"
-            echo "${FILES_DELIM}"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Suggest title with GitHub Models
-        id: suggest
-        if: |
-          steps.title_check.outcome == 'failure' &&
-          github.event.pull_request.user.type != 'Bot'
-        continue-on-error: true
-        uses: actions/ai-inference@v3
-        with:
-          prompt-file: .github/prompts/pr-title-suggestion.prompt.yml
-          max-tokens: 100
-          input: |
-            current_title: ${{ toJson(steps.sanitize.outputs.title) }}
-            pr_body: ${{ toJson(steps.sanitize.outputs.body) }}
-            changed_files: ${{ toJson(steps.sanitize.outputs.files) }}
-
-      - name: Comment title suggestion
-        if: steps.title_check.outcome == 'failure' && github.event.pull_request.user.type != 'Bot' && steps.suggest.outputs.response
-        uses: actions/github-script@v9
-        env:
-          SUGGESTED_TITLE: ${{ steps.suggest.outputs.response }}
-        with:
-          script: |
-            const pr = context.payload.pull_request;
-            let suggestedTitle = process.env.SUGGESTED_TITLE.trim();
-
-            // Validate AI output format - must be conventional commit
-            const validFormat = /^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-zA-Z0-9\-\/]+\))?:\s.{1,80}$/;
-            if (!validFormat.test(suggestedTitle)) {
-              console.log('AI response did not match conventional commit format, skipping');
-              return;
-            }
-
-            // Escape HTML entities for safety
-            const escapeHtml = (str) => str
-              .replace(/&/g, '&amp;')
-              .replace(/</g, '&lt;')
-              .replace(/>/g, '&gt;')
-              .replace(/`/g, '&#96;');
-
-            const currentTitle = escapeHtml(pr.title);
-            suggestedTitle = escapeHtml(suggestedTitle);
-
-            const comments = await github.paginate(
-              github.rest.issues.listComments,
-              {
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: pr.number,
-                per_page: 100
-              }
-            );
-
-            const botComment = comments.find(c =>
-              c.user?.type === 'Bot' && c.body?.includes('<!-- pr-title-suggestion -->')
-            );
-
-            const commentBody = [
-              '<!-- pr-title-suggestion -->',
-              '## PR Title Suggestion',
-              '',
-              "Your PR title doesn't follow the [conventional commit](https://www.conventionalcommits.org/) format.",
-              '',
-              '| Current Title | Suggested Title |',
-              '|---------------|-----------------|',
-              `| \`${currentTitle}\` | \`${suggestedTitle}\` |`,
-              '',
-              '### Format',
-              '`<type>(<scope>): <description>`',
-              '',
-              '**Types:** `feat` `fix` `docs` `refactor` `perf` `test` `ci` `chore` `build` `style` `revert`',
-              '',
-              '*Suggested by GitHub Models. Update your title to dismiss this suggestion.*'
-            ].join('\n');
-
-            if (botComment) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: botComment.id,
-                body: commentBody
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: pr.number,
-                body: commentBody
-              });
-            }
-
-      - name: Minimize suggestion if title valid
-        if: steps.title_check.outcome == 'success'
-        uses: actions/github-script@v9
-        with:
-          script: |
-            const pr = context.payload.pull_request;
-
-            const comments = await github.paginate(
-              github.rest.issues.listComments,
-              {
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: pr.number,
-                per_page: 100
-              }
-            );
-
-            const botComment = comments.find(c =>
-              c.user?.type === 'Bot' && c.body?.includes('<!-- pr-title-suggestion -->')
-            );
-
-            if (botComment && !botComment.body.includes('(resolved)')) {
-              const minimizedBody = [
-                '<!-- pr-title-suggestion -->',
-                '<details>',
-                '<summary>PR Title Suggestion (resolved)</summary>',
-                '',
-                botComment.body.replace('<!-- pr-title-suggestion -->', '').trim(),
-                '</details>'
-              ].join('\n');
-
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: botComment.id,
-                body: minimizedBody
-              });
-            }
 
   size:
     name: Label PR Size

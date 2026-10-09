@@ -143,7 +143,8 @@ void UDPGPSTransportTest::_cancelledRead()
 void UDPGPSTransportTest::_portInUse()
 {
     QUdpSocket owner;
-    QVERIFY(owner.bind(QHostAddress::AnyIPv4, 0));
+    // Match the transport's dual-stack bind: BSD stacks (macOS) let it coexist with an IPv4-only owner.
+    QVERIFY(owner.bind(QHostAddress::Any, 0));
     GPSCancelSource stop;
     UDPGPSTransport transport(owner.localPort(), stop.token());
     expectLogMessage("GPS.Transport.UDPGPSTransport", QtWarningMsg,
