@@ -1,0 +1,5 @@
+about Transport cannot change its baud
+request type=passive role=passive mode=survey-in accuracy=0.0000m duration=0s compact=0 persistent=0 baud=115200
+configure configured=0 baud=115200->115200 failure=protocol ready=0 elapsed=0ms
+  error "The link cannot run at 115200 baud"
+  baud 115200 unsupported

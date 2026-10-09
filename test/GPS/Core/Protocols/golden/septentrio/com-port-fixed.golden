@@ -1,0 +1,41 @@
+about Serial COM1 connection, fixed base
+request type=septentrio role=rtk-base mode=fixed lat=47.00000000 lon=8.00000000 alt=500.0000 accuracy=1.00000m compact=0 persistent=0 baud=0
+configure configured=1 baud=0->115200 failure=none ready=1 elapsed=0ms
+  baud 115200 configured
+  write - 11
+    text "SSSSSSSSSS\n"
+  write "setDataInOut,COM1,,-RTCMv3-RTCMv2-CMRv2" 40 acknowledged optional
+    text "setDataInOut,COM1,,-RTCMv3-RTCMv2-CMRv2\n"
+  write "setDataInOut,COM2,,-RTCMv3-RTCMv2-CMRv2" 40 acknowledged optional
+    text "setDataInOut,COM2,,-RTCMv3-RTCMv2-CMRv2\n"
+  write "setDataInOut,USB1,,-RTCMv3-RTCMv2-CMRv2" 40 acknowledged optional
+    text "setDataInOut,USB1,,-RTCMv3-RTCMv2-CMRv2\n"
+  write "setDataInOut,USB2,,-RTCMv3-RTCMv2-CMRv2" 40 acknowledged optional
+    text "setDataInOut,USB2,,-RTCMv3-RTCMv2-CMRv2\n"
+  write "setDataInOut,USB3,,-RTCMv3-RTCMv2-CMRv2" 40 acknowledged optional
+    text "setDataInOut,USB3,,-RTCMv3-RTCMv2-CMRv2\n"
+  write "setDataInOut,USB4,,-RTCMv3-RTCMv2-CMRv2" 40 acknowledged optional
+    text "setDataInOut,USB4,,-RTCMv3-RTCMv2-CMRv2\n"
+  write - 2
+    text "\n\r"
+  write "setSBFOutput, Stream1, COM1, none, off" 39 acknowledged required
+    text "setSBFOutput, Stream1, COM1, none, off\n"
+  write "setCOMSettings, COM1, baud115200" 33 acknowledged required
+    text "setCOMSettings, COM1, baud115200\n"
+  write "setDataInOut, COM1, Auto, SBF" 30 acknowledged required
+    text "setDataInOut, COM1, Auto, SBF\n"
+  write "setGeodeticDatum, WGS84" 24 acknowledged required
+    text "setGeodeticDatum, WGS84\n"
+  write "setDataInOut, COM1, Auto, RTCMv3+SBF" 37 acknowledged required
+    text "setDataInOut, COM1, Auto, RTCMv3+SBF\n"
+  write "setStaticPosGeodetic (fixed position)" 76 acknowledged required
+    text "setStaticPosGeodetic, Geodetic1, 47.000000000, 8.000000000, 500.0000, WGS84\n"
+  write "setAntennaOffset, Main, 0.000000, 0.000000, 0.000000" 53 acknowledged required
+    text "setAntennaOffset, Main, 0.000000, 0.000000, 0.000000\n"
+  write "setReceiverDynamics, Low, Static" 33 acknowledged required
+    text "setReceiverDynamics, Low, Static\n"
+  write "setPVTMode, Static, , Geodetic1" 32 acknowledged required
+    text "setPVTMode, Static, , Geodetic1\n"
+  write "setSBFOutput, Stream1, COM1, +PVTGeodetic, msec500" 51 acknowledged required
+    text "setSBFOutput, Stream1, COM1, +PVTGeodetic, msec500\n"
+stream failure=none ready=1

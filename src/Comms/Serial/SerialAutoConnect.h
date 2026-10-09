@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QtCore/QDeadlineTimer>
 #include <QtCore/QMap>
 
 #include <functional>
@@ -41,12 +40,6 @@ private:
     SerialPortManager& _ports;
     Connect _connect;
     QMap<QString, Identity> _identities;
-    QMap<QString, QDeadlineTimer> _waitingPorts;
+    SerialPortSettleTracker _waitingPorts;
     QMap<QString, SharedLinkConfigurationPtr> _configs;
-#ifdef Q_OS_WIN
-    // Allow the bootloader to finish before opening a new Windows device.
-    static constexpr int kConnectDelayMs = 6000;
-#else
-    static constexpr int kConnectDelayMs = 1000;
-#endif
 };

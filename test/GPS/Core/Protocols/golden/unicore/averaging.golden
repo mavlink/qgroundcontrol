@@ -1,0 +1,57 @@
+about UM982 receiver averaging
+request type=unicore role=rtk-base mode=averaging maximum=5s compact=0 persistent=0 baud=0
+configure configured=1 baud=0->115200 failure=none ready=1 elapsed=2ms
+  identity "UM982 R4.10Build15434"
+  baud 115200 configured
+  write "VERSIONA" 10 readback-verified required
+    text "VERSIONA\r\n"
+  write "UNLOG" 7 acknowledged required
+    text "UNLOG\r\n"
+  write "MODE ROVER" 12 acknowledged required
+    text "MODE ROVER\r\n"
+  write "MODE" 6 readback-verified required
+    text "MODE\r\n"
+  write "GPGGA 1" 9 acknowledged required
+    text "GPGGA 1\r\n"
+  write "GPGST 1" 9 acknowledged required
+    text "GPGST 1\r\n"
+  write "GPGSV 1" 9 acknowledged required
+    text "GPGSV 1\r\n"
+  write "GPGSA 1" 9 acknowledged required
+    text "GPGSA 1\r\n"
+  write "MODE BASE TIME 5 0" 20 acknowledged required
+    text "MODE BASE TIME 5 0\r\n"
+  write "MODE" 6 readback-verified required
+    text "MODE\r\n"
+  write "BESTNAVXYZA 1" 15 acknowledged required
+    text "BESTNAVXYZA 1\r\n"
+  write "RTCM1005 1" 12 acknowledged required
+    text "RTCM1005 1\r\n"
+  write "RTCM1033 10" 13 acknowledged required
+    text "RTCM1033 10\r\n"
+  write "RTCM1074 1" 12 acknowledged required
+    text "RTCM1074 1\r\n"
+  write "RTCM1084 1" 12 acknowledged required
+    text "RTCM1084 1\r\n"
+  write "RTCM1094 1" 12 acknowledged required
+    text "RTCM1094 1\r\n"
+  write "RTCM1124 1" 12 acknowledged required
+    text "RTCM1124 1\r\n"
+  survey active=0 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
+  survey active=1 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
+stream failure=none ready=1
+  usage used=12 receipt=1
+  position fix=3d lat=47.00000000 lon=8.00000000 msl=450.0000 ellipsoid=500.0000 hacc=nan vacc=nan hdop=0.900 vdop=nan speed=nan course=nan used=12 utc=0 velocity=0 receipt=1
+  satellites full=0 gps:view=3/1,use=-/0
+  satellites full=0 sbas:view=0/1,use=-/0
+  survey active=1 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
+  survey active=1 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
+  survey active=1 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
+  survey active=1 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
+  survey active=0 valid=1 duration=0s accuracy=- lat=40.07899408 lon=116.23661281 alt=58.0041 receipt=1
+  survey active=0 valid=1 duration=0s accuracy=- lat=40.07899408 lon=116.23661281 alt=58.0041 receipt=1
+  survey active=0 valid=1 duration=0s accuracy=- lat=40.07899408 lon=116.23661281 alt=58.0041 receipt=1
+  survey active=0 valid=1 duration=0s accuracy=- lat=40.07899408 lon=116.23661281 alt=58.0041 receipt=1
+  rtcm type=1005 size=25 fnv=f8e3bb62
+  survey active=0 valid=1 duration=0s accuracy=- lat=40.07899408 lon=116.23661281 alt=58.0041 receipt=1
+  survey active=0 valid=1 duration=0s accuracy=- lat=40.07899408 lon=116.23661281 alt=58.0041 receipt=1

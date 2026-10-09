@@ -1,0 +1,30 @@
+about Receiver at 38400 ignores the speed command
+request type=trimble role=rtk-base mode=survey-in accuracy=1.0000m duration=100s compact=0 persistent=0 baud=38400
+configure configured=0 baud=38400->115200 failure=protocol ready=0 elapsed=2200ms
+  error "No Trimble receiver answered at 115200 baud"
+  baud 38400 configured
+  write "$PASHQ,PRT" 12 acknowledged required
+    text "$PASHQ,PRT\r\n"
+  write "$PASHS,SPD,A,9" 16 written required
+    text "$PASHS,SPD,A,9\r\n"
+  baud 115200 configured
+  write "$PASHQ,PRT" 12 timed-out required
+    text "$PASHQ,PRT\r\n"
+  write "$PASHQ,PRT" 12 timed-out required
+    text "$PASHQ,PRT\r\n"
+  write "$PASHQ,PRT" 12 timed-out required
+    text "$PASHQ,PRT\r\n"
+  write "$PASHQ,PRT" 12 timed-out required
+    text "$PASHQ,PRT\r\n"
+  write "$PASHQ,PRT" 12 timed-out required
+    text "$PASHQ,PRT\r\n"
+  write "$PASHQ,PRT" 12 timed-out required
+    text "$PASHQ,PRT\r\n"
+  write "$PASHQ,PRT" 12 timed-out required
+    text "$PASHQ,PRT\r\n"
+  write "$PASHQ,PRT" 12 timed-out required
+    text "$PASHQ,PRT\r\n"
+  write "$PASHQ,PRT" 12 timed-out required
+    text "$PASHQ,PRT\r\n"
+  write "$PASHQ,PRT" 12 timed-out required
+    text "$PASHQ,PRT\r\n"

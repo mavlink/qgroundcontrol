@@ -1,0 +1,470 @@
+#include "NMEASentence.h"
+
+#include <chrono>
+#include <cmath>
+#include <cstdint>
+#include <limits>
+
+#include "Checksums.h"
+
+namespace {
+constexpr double DEGREE_MINUTE_SCALE = 100.0;
+constexpr double MAX_LATITUDE_DEGREES = 90.0;
+constexpr double MAX_LONGITUDE_DEGREES = 180.0;
+constexpr unsigned MAX_GGA_SATELLITES = std::numeric_limits<uint8_t>::max();
+constexpr size_t UTC_COMPONENT_DIGITS = 2;
+constexpr size_t UTC_INTEGER_DIGITS = 3 * UTC_COMPONENT_DIGITS;
+constexpr size_t UTC_FRACTION_OFFSET = UTC_INTEGER_DIGITS + 1;
+constexpr unsigned HOURS_PER_DAY = 24;
+constexpr unsigned MINUTES_PER_HOUR = 60;
+constexpr unsigned SECONDS_PER_MINUTE = 60;
+constexpr size_t FIRST_MILLISECOND_DIGIT_WEIGHT = 100;
+constexpr double KNOTS_TO_METERS_PER_SECOND = 0.5144444444444445;
+constexpr double KILOMETERS_PER_HOUR_TO_METERS_PER_SECOND = 1.0 / 3.6;
+
+std::optional<NMEA::UtcDate> dateFromParts(unsigned day, unsigned month, int year)
+{
+    if (!std::chrono::year_month_day{std::chrono::year{year}, std::chrono::month{month}, std::chrono::day{day}}.ok()) {
+        return {};
+    }
+    return NMEA::UtcDate{year, month, day};
+}
+
+std::optional<double> nonnegativeDegrees(std::string_view field)
+{
+    const auto value = NMEA::number<double>(field);
+    return value && *value >= 0.0 && *value <= 360.0 ? value : std::nullopt;
+}
+
+std::optional<double> nonnegativeSpeed(std::string_view field, double scale)
+{
+    const auto value = NMEA::number<double>(field);
+    return value && *value >= 0.0 ? std::optional<double>(*value * scale) : std::nullopt;
+}
+
+constexpr int MIN_REPAIRABLE_SENTENCE_LENGTH = 5;
+constexpr int MINUTE_DECIMAL_PLACES = 4;
+constexpr double MINUTE_FRACTION_SCALE = 10000.0;
+constexpr int LATITUDE_DEGREE_DIGITS = 2;
+constexpr int LONGITUDE_DEGREE_DIGITS = 3;
+constexpr int ALTITUDE_DECIMAL_PLACES = 1;
+constexpr int DOP_DECIMAL_PLACES = 1;
+}  // namespace
+
+namespace NMEA {
+unsigned char checksum(std::string_view body)
+{
+    return QGC::nmeaChecksum({reinterpret_cast<const uint8_t*>(body.data()), body.size()});
+}
+
+std::optional<uint32_t> hexNumber(std::string_view digits)
+{
+    uint32_t value = 0;
+    const auto parsed = std::from_chars(digits.data(), digits.data() + digits.size(), value, HEX_BASE);
+    if (parsed.ec != std::errc{} || parsed.ptr != digits.data() + digits.size()) {
+        return std::nullopt;
+    }
+    return value;
+}
+
+size_t splitFields(std::string_view text, std::span<std::string_view> fields)
+{
+    size_t count = 0;
+    for (;;) {
+        if (count == fields.size()) {
+            return 0;
+        }
+        const auto comma = text.find(',');
+        fields[count++] = text.substr(0, comma);
+        if (comma == std::string_view::npos) {
+            return count;
+        }
+        text.remove_prefix(comma + 1);
+    }
+}
+
+bool Frame::hasValidChecksum() const
+{
+    return checksum.size() == CHECKSUM_DIGITS && hexNumber(checksum) == NMEA::checksum(body);
+}
+
+std::optional<Frame> frame(std::string_view text)
+{
+    if (text.ends_with('\n')) {
+        text.remove_suffix(1);
+        if (text.ends_with('\r')) {
+            text.remove_suffix(1);
+        }
+    }
+    if (text.empty() || text.front() != '$') {
+        return {};
+    }
+    text.remove_prefix(Sentence::PREFIX_LENGTH);
+    const auto star = text.find('*');
+    const auto body = text.substr(0, star);
+    if (body.empty()) {
+        return {};
+    }
+    for (char byte : body) {
+        if (byte < ' ' || byte > '~' || byte == '$') {
+            return {};
+        }
+    }
+    return Frame{body, star == std::string_view::npos ? std::string_view() : text.substr(star + 1)};
+}
+
+bool isStandardSentence(std::string_view text)
+{
+    const auto checked = sentence(text);
+    return checked && !checked->talker().starts_with('P');
+}
+
+std::optional<Sentence> sentence(std::string_view text)
+{
+    const auto wire = frame(text);
+    if (!wire || !wire->hasValidChecksum()) {
+        return {};
+    }
+    Sentence result;
+    text = text.substr(0, Sentence::PREFIX_LENGTH + wire->body.size());
+    result.count = splitFields(text, result.fields);
+    if (result.count == 0 || result.fields[0].size() != Sentence::HEADER_LENGTH) {
+        return {};
+    }
+    return result;
+}
+
+double degreesFromDegreesMinutes(double ddmm)
+{
+    if (!std::isfinite(ddmm) || std::abs(ddmm) > MAX_LONGITUDE_DEGREES * DEGREE_MINUTE_SCALE) {
+        return NAN;
+    }
+    const double degrees = std::trunc(ddmm / DEGREE_MINUTE_SCALE);
+    const double minutes = ddmm - degrees * DEGREE_MINUTE_SCALE;
+    return std::abs(minutes) < MINUTES_PER_DEGREE ? degrees + minutes / MINUTES_PER_DEGREE : NAN;
+}
+
+std::optional<double> coordinate(std::string_view field, std::string_view hemisphere, bool latitude)
+{
+    const auto value = number<double>(field);
+    if (!value || *value < 0 || hemisphere.size() != 1) {
+        return {};
+    }
+    const double degrees = std::trunc(*value / DEGREE_MINUTE_SCALE);
+    const double minutes = *value - degrees * DEGREE_MINUTE_SCALE;
+    const double limit = latitude ? MAX_LATITUDE_DEGREES : MAX_LONGITUDE_DEGREES;
+    if (minutes >= MINUTES_PER_DEGREE || degrees + minutes / MINUTES_PER_DEGREE > limit) {
+        return {};
+    }
+    const char positive = latitude ? 'N' : 'E';
+    const char negative = latitude ? 'S' : 'W';
+    if (hemisphere[0] != positive && hemisphere[0] != negative) {
+        return {};
+    }
+    return (degrees + minutes / MINUTES_PER_DEGREE) * (hemisphere[0] == negative ? -1 : 1);
+}
+
+std::optional<GGA> gga(const Sentence& input)
+{
+    if (input.type() != "GGA" || input.count < Field::GGA_MIN_FIELDS) {
+        return {};
+    }
+    const auto& f = input.fields;
+    const auto latitude = coordinate(f[Field::GGA_LATITUDE], f[Field::GGA_LATITUDE_HEMISPHERE], true);
+    const auto longitude = coordinate(f[Field::GGA_LONGITUDE], f[Field::GGA_LONGITUDE_HEMISPHERE], false);
+    const auto quality = number<unsigned>(f[Field::GGA_QUALITY]);
+    const auto satellites = number<unsigned>(f[Field::GGA_SATELLITES_USED]);
+    if (!quality || *quality > GgaQuality::MAX_VALUE || (satellites && *satellites > MAX_GGA_SATELLITES)) {
+        return {};
+    }
+    const auto latitudeHemisphere = f[Field::GGA_LATITUDE_HEMISPHERE];
+    const auto longitudeHemisphere = f[Field::GGA_LONGITUDE_HEMISPHERE];
+    const bool missingLatitude = f[Field::GGA_LATITUDE].empty() &&
+                                 (latitudeHemisphere.empty() || latitudeHemisphere == "N" || latitudeHemisphere == "S");
+    const bool missingLongitude =
+        f[Field::GGA_LONGITUDE].empty() &&
+        (longitudeHemisphere.empty() || longitudeHemisphere == "E" || longitudeHemisphere == "W");
+    if ((!latitude && !(*quality == GgaQuality::INVALID && missingLatitude)) ||
+        (!longitude && !(*quality == GgaQuality::INVALID && missingLongitude))) {
+        return {};
+    }
+    GGA result{latitude.value_or(NAN), longitude.value_or(NAN)};
+    result.quality = *quality;
+    result.satellitesUsed = satellites;
+    if (const auto hdop = number<double>(f[Field::GGA_HDOP]); hdop && *hdop >= 0) {
+        result.hdop = *hdop;
+    }
+    if (f[Field::GGA_ALTITUDE_UNITS] == "M") {
+        result.altitude = number<double>(f[Field::GGA_ALTITUDE]).value_or(NAN);
+    }
+    if (f[Field::GGA_GEOID_UNITS] == "M") {
+        result.geoidSeparation = number<double>(f[Field::GGA_GEOID_SEPARATION]).value_or(NAN);
+    }
+    return result;
+}
+
+std::optional<int> utcMilliseconds(std::string_view field)
+{
+    if (field.size() < UTC_INTEGER_DIGITS ||
+        (field.size() > UTC_INTEGER_DIGITS &&
+         (field[UTC_INTEGER_DIGITS] != '.' || field.size() == UTC_FRACTION_OFFSET))) {
+        return {};
+    }
+    for (size_t index = 0; index < field.size(); ++index) {
+        if (index != UTC_INTEGER_DIGITS && (field[index] < '0' || field[index] > '9')) {
+            return {};
+        }
+    }
+    const auto hours = number<unsigned>(field.substr(0, UTC_COMPONENT_DIGITS));
+    const auto minutes = number<unsigned>(field.substr(UTC_COMPONENT_DIGITS, UTC_COMPONENT_DIGITS));
+    const auto seconds = number<unsigned>(field.substr(2 * UTC_COMPONENT_DIGITS, UTC_COMPONENT_DIGITS));
+    if (!hours || !minutes || !seconds || *hours >= HOURS_PER_DAY || *minutes >= MINUTES_PER_HOUR ||
+        *seconds >= SECONDS_PER_MINUTE) {
+        return {};
+    }
+    int milliseconds = 0;
+    // Truncate sub-millisecond precision without floating-point rounding into the preceding epoch.
+    for (size_t index = UTC_FRACTION_OFFSET, scale = FIRST_MILLISECOND_DIGIT_WEIGHT; index < field.size() && scale > 0;
+         ++index, scale /= DECIMAL_BASE) {
+        milliseconds += static_cast<int>((field[index] - '0') * scale);
+    }
+    const auto wholeSeconds =
+        std::chrono::hours(*hours) + std::chrono::minutes(*minutes) + std::chrono::seconds(*seconds);
+    return static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(wholeSeconds).count()) + milliseconds;
+}
+
+std::optional<UtcDate> rmcDate(std::string_view field)
+{
+    if (field.size() != 6) {
+        return {};
+    }
+    for (const char digit : field) {
+        if (digit < '0' || digit > '9') {
+            return {};
+        }
+    }
+    const auto day = number<unsigned>(field.substr(0, 2));
+    const auto month = number<unsigned>(field.substr(2, 2));
+    const auto year = number<unsigned>(field.substr(4, 2));
+    if (!day || !month || !year) {
+        return {};
+    }
+    return dateFromParts(*day, *month, 2000 + static_cast<int>(*year));
+}
+
+std::optional<RMC> rmc(const Sentence& input)
+{
+    if (input.type() != "RMC" || input.count < Field::RMC_MIN_FIELDS || input.fields[Field::RMC_STATUS] != "A") {
+        return {};
+    }
+    const auto& f = input.fields;
+    const auto latitude = coordinate(f[Field::RMC_LATITUDE], f[Field::RMC_LATITUDE_HEMISPHERE], true);
+    const auto longitude = coordinate(f[Field::RMC_LONGITUDE], f[Field::RMC_LONGITUDE_HEMISPHERE], false);
+    if (!latitude || !longitude) {
+        return {};
+    }
+    RMC result;
+    result.latitude = *latitude;
+    result.longitude = *longitude;
+    result.utcMilliseconds = utcMilliseconds(f[Field::UTC_TIME]);
+    result.speedMetersPerSecond = nonnegativeSpeed(f[Field::RMC_SPEED_KNOTS], KNOTS_TO_METERS_PER_SECOND).value_or(NAN);
+    result.courseDegrees = nonnegativeDegrees(f[Field::RMC_COURSE]).value_or(NAN);
+    return result;
+}
+
+std::optional<GLL> gll(const Sentence& input)
+{
+    if (input.type() != "GLL" || input.count < Field::GLL_MIN_FIELDS || input.fields[Field::GLL_STATUS] != "A") {
+        return {};
+    }
+    const auto& f = input.fields;
+    const auto latitude = coordinate(f[Field::GLL_LATITUDE], f[Field::GLL_LATITUDE_HEMISPHERE], true);
+    const auto longitude = coordinate(f[Field::GLL_LONGITUDE], f[Field::GLL_LONGITUDE_HEMISPHERE], false);
+    if (!latitude || !longitude) {
+        return {};
+    }
+    return GLL{*latitude, *longitude, utcMilliseconds(f[Field::GLL_TIME])};
+}
+
+std::optional<VTG> vtg(const Sentence& input)
+{
+    if (input.type() != "VTG" || input.count < Field::VTG_MIN_FIELDS) {
+        return {};
+    }
+    VTG result;
+    result.courseDegrees = nonnegativeDegrees(input.fields[Field::VTG_TRUE_COURSE]).value_or(NAN);
+    const auto speedKmh =
+        nonnegativeSpeed(input.fields[Field::VTG_SPEED_KMH], KILOMETERS_PER_HOUR_TO_METERS_PER_SECOND);
+    const auto speedKnots = nonnegativeSpeed(input.fields[Field::VTG_SPEED_KNOTS], KNOTS_TO_METERS_PER_SECOND);
+    result.speedMetersPerSecond = speedKmh.value_or(speedKnots.value_or(NAN));
+    return result;
+}
+
+std::optional<ZDA> zda(const Sentence& input)
+{
+    if (input.type() != "ZDA" || input.count < Field::ZDA_MIN_FIELDS) {
+        return {};
+    }
+    const auto day = number<unsigned>(input.fields[Field::ZDA_DAY]);
+    const auto month = number<unsigned>(input.fields[Field::ZDA_MONTH]);
+    const auto year = number<int>(input.fields[Field::ZDA_YEAR]);
+    if (!day || !month || !year) {
+        return {};
+    }
+    const auto date = dateFromParts(*day, *month, *year);
+    if (!date) {
+        return {};
+    }
+    return ZDA{utcMilliseconds(input.fields[Field::UTC_TIME]), *date};
+}
+
+GPSFixQuality fixQuality(unsigned quality, GPSFixQuality autonomous)
+{
+    switch (quality) {
+        case GgaQuality::INVALID:
+            return GPSFixQuality::NoFix;
+        case GgaQuality::GPS:
+            return autonomous;
+        case GgaQuality::DIFFERENTIAL:
+            return GPSFixQuality::Differential;
+        case GgaQuality::RTK_FIXED:
+            return GPSFixQuality::RTKFixed;
+        case GgaQuality::RTK_FLOAT:
+            return GPSFixQuality::RTKFloat;
+        case GgaQuality::ESTIMATED:
+            return GPSFixQuality::Extrapolated;
+        case GgaQuality::MANUAL:
+            return GPSFixQuality::Fix3D;
+        default:
+            return GPSFixQuality::Unknown;
+    }
+}
+
+std::optional<NavigationStatus> navigationStatus(const Sentence& input)
+{
+    const auto type = input.type();
+    const auto& fields = input.fields;
+    if (type == "GGA" && input.count > Field::GGA_QUALITY) {
+        const auto quality = number<unsigned>(fields[Field::GGA_QUALITY]);
+        if (quality && *quality <= GgaQuality::MAX_VALUE) {
+            return NavigationStatus{*quality != GgaQuality::INVALID, utcMilliseconds(fields[Field::UTC_TIME])};
+        }
+    } else if (type == "GSA" && input.count > Field::GSA_DIMENSION) {
+        const auto dimension = number<unsigned>(fields[Field::GSA_DIMENSION]);
+        if (dimension && *dimension >= FixDimension::NO_FIX && *dimension <= FixDimension::THREE_D) {
+            return NavigationStatus{*dimension != FixDimension::NO_FIX, std::nullopt};
+        }
+    } else if (type == "RMC" || type == "GLL") {
+        const auto status = type == "RMC" ? Field::RMC_STATUS : Field::GLL_STATUS;
+        const auto time = type == "RMC" ? Field::UTC_TIME : Field::GLL_TIME;
+        if (input.count > status && (fields[status] == "A" || fields[status] == "V")) {
+            return NavigationStatus{fields[status] == "A", utcMilliseconds(fields[time])};
+        }
+    }
+    return std::nullopt;
+}
+
+std::optional<GST> gst(const Sentence& input)
+{
+    // Receivers may omit the trailing altitude error or append proprietary fields.
+    if (input.type() != "GST" || input.count <= Field::GST_LONGITUDE_ERROR) {
+        return {};
+    }
+    const auto latitude = number<double>(input.fields[Field::GST_LATITUDE_ERROR]);
+    const auto longitude = number<double>(input.fields[Field::GST_LONGITUDE_ERROR]);
+    GST result;
+    if (latitude && longitude && *latitude >= 0 && *longitude >= 0) {
+        result.horizontalAccuracy = std::hypot(*latitude, *longitude);
+    }
+    if (input.count > Field::GST_ALTITUDE_ERROR) {
+        const auto altitude = number<double>(input.fields[Field::GST_ALTITUDE_ERROR]);
+        if (altitude && *altitude >= 0) {
+            result.verticalAccuracy = *altitude;
+        }
+    }
+    return result;
+}
+}  // namespace NMEA
+
+namespace NMEAUtils {
+QByteArray frame(QByteArrayView body)
+{
+    const char checksum = static_cast<char>(NMEA::checksum(body));
+    return '$' + body.toByteArray() + '*' + QByteArray(1, checksum).toHex().toUpper() + "\r\n";
+}
+
+QByteArray repairChecksum(const QByteArray& sentence)
+{
+    const auto wire = NMEA::frame(QByteArrayView(sentence));
+    if (wire && wire->body.size() + NMEA::Sentence::PREFIX_LENGTH >= MIN_REPAIRABLE_SENTENCE_LENGTH) {
+        return frame(QByteArrayView(wire->body));
+    }
+    QByteArray line = sentence;
+    if (line.endsWith('\n')) {
+        line.chop(1);
+        if (line.endsWith('\r')) {
+            line.chop(1);
+        }
+    }
+    return line + "\r\n";
+}
+
+QByteArray makeGGA(const NMEA::GGA& fix, const QTime& utc)
+{
+    if (!utc.isValid() || !std::isfinite(fix.latitude) || fix.latitude < -90.0 || fix.latitude > 90.0 ||
+        !std::isfinite(fix.longitude) || fix.longitude < -180.0 || fix.longitude > 180.0 || std::isinf(fix.altitude) ||
+        std::isinf(fix.geoidSeparation) || std::isinf(fix.hdop) || fix.hdop < 0.0 ||
+        fix.quality > NMEA::GgaQuality::MAX_VALUE) {
+        return {};
+    }
+    const QByteArray hhmmss = utc.toString(u"hhmmss").toLatin1();
+
+    auto dmm = [](double deg, bool lat) -> QByteArray {
+        const double a = qFabs(deg);
+        int d = static_cast<int>(a);
+        double m = (a - d) * NMEA::MINUTES_PER_DEGREE;
+
+        const int scaledMinutes = static_cast<int>(m * MINUTE_FRACTION_SCALE + 0.5);
+        double mRounded = scaledMinutes / MINUTE_FRACTION_SCALE;
+        if (mRounded >= NMEA::MINUTES_PER_DEGREE) {
+            mRounded -= NMEA::MINUTES_PER_DEGREE;
+            d += 1;
+        }
+
+        QByteArray mm = QByteArray::number(mRounded, 'f', MINUTE_DECIMAL_PLACES);
+        if (mRounded < NMEA::DECIMAL_BASE) {
+            mm.prepend('0');
+        }
+
+        const int dWidth = lat ? LATITUDE_DEGREE_DIGITS : LONGITUDE_DEGREE_DIGITS;
+        return QByteArray::number(d).rightJustified(dWidth, '0') + mm;
+    };
+
+    const bool latNorth = fix.latitude >= 0.0;
+    const bool lonEast = fix.longitude >= 0.0;
+
+    const QByteArray latField = dmm(fix.latitude, true);
+    const QByteArray lonField = dmm(fix.longitude, false);
+    const auto measurement = [](double value, int decimalPlaces) {
+        return std::isnan(value) ? QByteArray() : QByteArray::number(value, 'f', decimalPlaces);
+    };
+
+    QByteArray core;
+    core += "GPGGA,";
+    core += hhmmss + ',';
+    core += latField + ',';
+    core += (latNorth ? "N" : "S");
+    core += ',';
+    core += lonField + ',';
+    core += (lonEast ? "E" : "W");
+    core += ',' + QByteArray::number(fix.quality) + ',';
+    if (fix.satellitesUsed) {
+        core += QByteArray::number(*fix.satellitesUsed);
+    }
+    core += ',' + measurement(fix.hdop, DOP_DECIMAL_PLACES) + ',';
+    core += measurement(fix.altitude, ALTITUDE_DECIMAL_PLACES);
+    core += ",M," + measurement(fix.geoidSeparation, ALTITUDE_DECIMAL_PLACES) + ",M,,";
+    return frame(core);
+}
+
+}  // namespace NMEAUtils

@@ -1,0 +1,37 @@
+about Transport accepts a truncated command
+request type=unicore role=rtk-base mode=averaging maximum=5s compact=0 persistent=0 baud=0
+configure configured=0 baud=0->115200 failure=transport ready=0 elapsed=1ms
+  identity "UM982 R4.10Build15434"
+  error "Unicore receiver did not accept the full 'RTCM1074 1' command"
+  baud 115200 configured
+  write "VERSIONA" 10 readback-verified required
+    text "VERSIONA\r\n"
+  write "UNLOG" 7 acknowledged required
+    text "UNLOG\r\n"
+  write "MODE ROVER" 12 acknowledged required
+    text "MODE ROVER\r\n"
+  write "MODE" 6 readback-verified required
+    text "MODE\r\n"
+  write "GPGGA 1" 9 acknowledged required
+    text "GPGGA 1\r\n"
+  write "GPGST 1" 9 acknowledged required
+    text "GPGST 1\r\n"
+  write "GPGSV 1" 9 acknowledged required
+    text "GPGSV 1\r\n"
+  write "GPGSA 1" 9 acknowledged required
+    text "GPGSA 1\r\n"
+  write "MODE BASE TIME 5 0" 20 acknowledged required
+    text "MODE BASE TIME 5 0\r\n"
+  write "MODE" 6 readback-verified required
+    text "MODE\r\n"
+  write "BESTNAVXYZA 1" 15 acknowledged required
+    text "BESTNAVXYZA 1\r\n"
+  write "RTCM1005 1" 12 acknowledged required
+    text "RTCM1005 1\r\n"
+  write "RTCM1033 10" 13 acknowledged required
+    text "RTCM1033 10\r\n"
+  write "RTCM1074 1" 12 status=completed accepted=11 written=11 transport-error required
+    text "RTCM1074 1\r\n"
+  survey active=0 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
+  survey active=1 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
+  survey active=0 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1

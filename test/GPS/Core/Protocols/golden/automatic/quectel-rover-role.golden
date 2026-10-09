@@ -1,0 +1,39 @@
+about Factory Quectel in its rover role, without consent: nothing is changed
+request type=automatic role=rtk-base mode=survey-in accuracy=15.0000m duration=10s compact=0 persistent=0 baud=0
+configure configured=0 baud=0->460800 failure=consent-required ready=0 elapsed=16703ms
+  identity "LG290P03AANR01A03S"
+  detected type=quectel baud=460800 evidence="identity query"
+  error "Detected Quectel receiver at 460800 baud: LG290P role mismatch: save the requested base role externally, reboot and reconnect. Alternatively, explicitly allow persistent changes for this connection"
+  baud 115200 configured
+  write "UBX-MON-VER" 8 timed-out required
+    b5620a0400000e34
+  write "$PASHQ,PRT" 12 timed-out required
+    text "$PASHQ,PRT\r\n"
+  write "$PASHQ,PRT" 12 timed-out required
+    text "$PASHQ,PRT\r\n"
+  write "\n\r" 2 timed-out required
+    text "\n\r"
+  write "VERSION" 9 timed-out required
+    text "VERSION\r\n"
+  write "VERSION" 9 timed-out required
+    text "VERSION\r\n"
+  write "VERSIONA" 10 timed-out required
+    text "VERSIONA\r\n"
+  write "PQTMVERNO" 15 timed-out required
+    text "$PQTMVERNO*58\r\n"
+  baud 38400 configured
+  write "UBX-MON-VER" 8 timed-out required
+    b5620a0400000e34
+  write "$PASHQ,PRT" 12 timed-out required
+    text "$PASHQ,PRT\r\n"
+  write "$PASHQ,PRT" 12 timed-out required
+    text "$PASHQ,PRT\r\n"
+  write "VERSIONA" 10 timed-out required
+    text "VERSIONA\r\n"
+  baud 460800 configured
+  write "UBX-MON-VER" 8 timed-out required
+    b5620a0400000e34
+  write "VERSIONA" 10 timed-out required
+    text "VERSIONA\r\n"
+  write "PQTMVERNO" 15 acknowledged required
+    text "$PQTMVERNO*58\r\n"

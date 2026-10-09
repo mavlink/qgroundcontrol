@@ -1,0 +1,81 @@
+about Nothing answers at any rate: every probe at every rate, within the time limit
+request type=automatic role=rtk-base mode=survey-in accuracy=1.0000m duration=60s compact=0 persistent=0 baud=0
+configure configured=0 baud=0->0 failure=protocol ready=0 elapsed=43400ms
+  detected none
+  error "No supported receiver answered at 115200, 38400, 460800, 9600, 230400, 921600, 57600, 19200 baud"
+  baud 115200 configured
+  write "UBX-MON-VER" 8 timed-out required
+    b5620a0400000e34
+  write "$PASHQ,PRT" 12 timed-out required
+    text "$PASHQ,PRT\r\n"
+  write "$PASHQ,PRT" 12 timed-out required
+    text "$PASHQ,PRT\r\n"
+  write "\n\r" 2 timed-out required
+    text "\n\r"
+  write "VERSION" 9 timed-out required
+    text "VERSION\r\n"
+  write "VERSION" 9 timed-out required
+    text "VERSION\r\n"
+  write "VERSIONA" 10 timed-out required
+    text "VERSIONA\r\n"
+  write "PQTMVERNO" 15 timed-out required
+    text "$PQTMVERNO*58\r\n"
+  baud 38400 configured
+  write "UBX-MON-VER" 8 timed-out required
+    b5620a0400000e34
+  write "$PASHQ,PRT" 12 timed-out required
+    text "$PASHQ,PRT\r\n"
+  write "$PASHQ,PRT" 12 timed-out required
+    text "$PASHQ,PRT\r\n"
+  write "VERSIONA" 10 timed-out required
+    text "VERSIONA\r\n"
+  baud 460800 configured
+  write "UBX-MON-VER" 8 timed-out required
+    b5620a0400000e34
+  write "VERSIONA" 10 timed-out required
+    text "VERSIONA\r\n"
+  write "PQTMVERNO" 15 timed-out required
+    text "$PQTMVERNO*58\r\n"
+  baud 9600 configured
+  write "UBX-MON-VER" 8 timed-out required
+    b5620a0400000e34
+  write "$PASHQ,PRT" 12 timed-out required
+    text "$PASHQ,PRT\r\n"
+  write "$PASHQ,PRT" 12 timed-out required
+    text "$PASHQ,PRT\r\n"
+  write "VERSIONA" 10 timed-out required
+    text "VERSIONA\r\n"
+  write "PQTMVERNO" 15 timed-out required
+    text "$PQTMVERNO*58\r\n"
+  baud 230400 configured
+  write "UBX-MON-VER" 8 timed-out required
+    b5620a0400000e34
+  write "VERSIONA" 10 timed-out required
+    text "VERSIONA\r\n"
+  write "PQTMVERNO" 15 timed-out required
+    text "$PQTMVERNO*58\r\n"
+  baud 921600 configured
+  write "UBX-MON-VER" 8 timed-out required
+    b5620a0400000e34
+  write "VERSIONA" 10 timed-out required
+    text "VERSIONA\r\n"
+  write "PQTMVERNO" 15 timed-out required
+    text "$PQTMVERNO*58\r\n"
+  baud 57600 configured
+  write "UBX-MON-VER" 8 timed-out required
+    b5620a0400000e34
+  write "$PASHQ,PRT" 12 timed-out required
+    text "$PASHQ,PRT\r\n"
+  write "$PASHQ,PRT" 12 timed-out required
+    text "$PASHQ,PRT\r\n"
+  write "VERSIONA" 10 timed-out required
+    text "VERSIONA\r\n"
+  write "PQTMVERNO" 15 timed-out required
+    text "$PQTMVERNO*58\r\n"
+  baud 19200 configured
+  write "$PASHQ,PRT" 12 timed-out required
+    text "$PASHQ,PRT\r\n"
+  write "$PASHQ,PRT" 12 timed-out required
+    text "$PASHQ,PRT\r\n"
+  write "VERSIONA" 10 timed-out required
+    text "VERSIONA\r\n"

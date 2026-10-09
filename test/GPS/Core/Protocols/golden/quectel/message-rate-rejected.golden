@@ -1,0 +1,40 @@
+about Receiver rejects a required NMEA rate
+request type=quectel role=rtk-base mode=survey-in accuracy=15.0000m duration=10s compact=0 persistent=0 baud=0
+configure configured=0 baud=0->460800 failure=protocol ready=0 elapsed=216ms
+  identity "LG290P03AANR01A03S"
+  error "LG290P NMEA output configuration/readback failed"
+  baud 460800 configured
+  write "PQTMVERNO" 15 readback-verified required
+    text "$PQTMVERNO*58\r\n"
+  write "PQTMCFGRCVRMODE,R" 23 readback-verified required
+    text "$PQTMCFGRCVRMODE,R*32\r\n"
+  write "PQTMCFGFIXRATE,R" 22 readback-verified required
+    text "$PQTMCFGFIXRATE,R*71\r\n"
+  write "PQTMCFGSVIN,R" 19 readback-verified required
+    text "$PQTMCFGSVIN,R*26\r\n"
+  write "PQTMCFGSVIN,W (survey restart)" 54 acknowledged required
+    text "$PQTMCFGSVIN,W,1,10,15.0,0.0000,0.0000,0.0000,0.0*15\r\n"
+  write "PQTMSRR" 13 written required
+    text "$PQTMSRR*4B\r\n"
+  write "PQTMVERNO" 15 readback-verified required
+    text "$PQTMVERNO*58\r\n"
+  write "PQTMCFGRCVRMODE,R" 23 readback-verified required
+    text "$PQTMCFGRCVRMODE,R*32\r\n"
+  write "PQTMCFGFIXRATE,R" 22 readback-verified required
+    text "$PQTMCFGFIXRATE,R*71\r\n"
+  write "PQTMCFGSVIN,R" 19 readback-verified required
+    text "$PQTMCFGSVIN,R*26\r\n"
+  write "PQTMCFGMSGRATE,W,PQTMSVINSTATUS,1,1" 41 acknowledged required
+    text "$PQTMCFGMSGRATE,W,PQTMSVINSTATUS,1,1*58\r\n"
+  write "PQTMCFGMSGRATE,R,PQTMSVINSTATUS,1" 39 readback-verified required
+    text "$PQTMCFGMSGRATE,R,PQTMSVINSTATUS,1*40\r\n"
+  write "PQTMCFGMSGRATE,W,RTCM3-1005,1" 35 acknowledged required
+    text "$PQTMCFGMSGRATE,W,RTCM3-1005,1*59\r\n"
+  write "PQTMCFGMSGRATE,R,RTCM3-1005" 33 readback-verified required
+    text "$PQTMCFGMSGRATE,R,RTCM3-1005*41\r\n"
+  write "PQTMCFGMSGRATE,W,RTCM3-107X,1,0" 37 acknowledged required
+    text "$PQTMCFGMSGRATE,W,RTCM3-107X,1,0*2F\r\n"
+  write "PQTMCFGMSGRATE,R,RTCM3-107X,0" 35 readback-verified required
+    text "$PQTMCFGMSGRATE,R,RTCM3-107X,0*37\r\n"
+  write "PQTMCFGMSGRATE,W,GGA,1" 28 rejected required
+    text "$PQTMCFGMSGRATE,W,GGA,1*0A\r\n"

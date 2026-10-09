@@ -19,6 +19,7 @@ CheckBox {
     property color  textColor:          qgcPal.buttonText
     property bool   textBold:           false
     property real   textFontPointSize:  ScreenTools.defaultFontPointSize
+    property int    wrapMode:           Text.NoWrap
     property ButtonGroup buttonGroup: null
 
     property bool _noText: text === ""
@@ -41,6 +42,7 @@ CheckBox {
         font.bold:          control.textBold
         font.family:        ScreenTools.normalFontFamily
         color:              control.textColor
+        wrapMode:           control.wrapMode
     }
 
     indicator:  Rectangle {

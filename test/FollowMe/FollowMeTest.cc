@@ -7,11 +7,13 @@
 #include "AppSettings.h"
 #include "Fixtures/RAIIFixtures.h"
 #include "FollowMe.h"
+#include "GPSManager.h"
 #include "MAVLinkLib.h"
 #include "ManualScheduler.h"
 #include "MultiVehicleManager.h"
 #include "PositionManager.h"
 #include "SettingsManager.h"
+#include "Support/GPSTestHelpers.h"
 #include "Vehicle.h"
 
 void FollowMeTest::_testFollowMe()
@@ -23,12 +25,22 @@ void FollowMeTest::_testFollowMe()
     ignoreLogMessage("Vehicle.Vehicle", QtWarningMsg,
                      QRegularExpression("setFlightMode failed"));
     FollowMe::instance()->init();
-    QGCPositionManager::instance()->init();
+    // Unit tests otherwise have no position for this device.
+    auto* positioning = GPSManager::instance()->positionManager();
+    GPSTest::PositionSource gcsSource;
+    positioning->setInternalPositionSource(&gcsSource, PositionManager::SourceStatus::WaitingForFix);
+    const auto removeSource = qScopeGuard(
+        [positioning]() { positioning->setInternalPositionSource(nullptr, PositionManager::SourceStatus::NoSource); });
     _connectMockLinkNoInitialConnectSequence();
     MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
     Vehicle* vehicle = vehicleMgr->activeVehicle();
     vehicle->setFlightMode(vehicle->followFlightMode());
     saved.setFactValue(SettingsManager::instance()->appSettings()->followTarget(), 1);
+    // FollowMe reports this fix every 250 ms while it is fresh.
+    QGeoPositionInfo fix(QGeoCoordinate(47.3977420, 8.5455941, 488.), QDateTime::currentDateTimeUtc());
+    fix.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 1.0);
+    fix.setAttribute(QGeoPositionInfo::VerticalAccuracy, 1.0);
+    gcsSource.publish(fix);
     QSignalSpy spyGCSMotionReport(vehicle, &Vehicle::messagesSentChanged);
     QVERIFY_SIGNAL_WAIT(spyGCSMotionReport, TestTimeout::mediumMs());
     _disconnectMockLink();
@@ -84,20 +96,17 @@ void FollowMeTest::_motionPolicyReports()
                                  TestTimeout::mediumMs());
     }
     const uint32_t messageId = ardupilot ? MAVLINK_MSG_ID_GLOBAL_POSITION_INT : MAVLINK_MSG_ID_FOLLOW_TARGET;
-    auto* positioning = QGCPositionManager::instance();
-    const auto savedMode = positioning->sourceMode();
-    const auto restore = qScopeGuard([&]() { positioning->setSourceMode(savedMode); });
+    auto* positioning = GPSManager::instance()->positionManager();
+    const auto savedPositioning = positioning->configuration();
+    const auto restore = qScopeGuard([&]() { positioning->setConfiguration(savedPositioning); });
     ManualScheduler scheduler;
-    QObject producer;
     GPSSourceHealth health(nullptr, &scheduler);
-    auto registration =
-        positioning->registerPositionSource(GPSPositionService::SelectedSource::Receiver, &producer, &health, 7);
-    positioning->setSourceMode(GPSPositionService::SourceMode::ReceiverOnly);
+    auto registration = positioning->registerReceiver(&health, 7);
+    positioning->setConfiguration({.sourceMode = PositionManager::SourceMode::ReceiverOnly});
     GPSObservation observation;
     observation.sessionId = 7;
     observation.monotonicTimestampUs = scheduler.nowUs();
-    observation.receivedAt = QDateTime::currentDateTimeUtc();
-    observation.position = QGeoPositionInfo(QGeoCoordinate(47, 8, altitude), observation.receivedAt);
+    observation.position = QGeoPositionInfo(QGeoCoordinate(47, 8, altitude), QDateTime::currentDateTimeUtc());
     if (hasHorizontalAccuracy) {
         observation.position.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 1);
     }

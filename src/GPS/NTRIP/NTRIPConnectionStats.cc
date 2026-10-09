@@ -1,73 +1,58 @@
 #include "NTRIPConnectionStats.h"
 
 #include <algorithm>
+#include <utility>
 
+#include "MonotonicClock.h"
 #include "QGCLoggingCategory.h"
+#include "RuntimeScheduler.h"
 
 QGC_LOGGING_CATEGORY(NTRIPConnectionStatsLog, "GPS.NTRIPConnectionStats")
 
-NTRIPConnectionStats::NTRIPConnectionStats(QObject* parent) : QObject(parent), _rateTimer(this)
-{
-    _rateTimer.setInterval(std::chrono::seconds{1});
-    _rateTimer.callOnTimeout(this, [this]() {
-        const double previousRate = _rateTracker.bytesPerSec();
-        _rateTracker.refresh();
-        const quint64 totalBytes = _rateTracker.totalBytes();
-        if (totalBytes != _prevBytesReceived) {
-            _prevBytesReceived = totalBytes;
-            emit bytesReceivedChanged();
-            emit dataRateChanged();
-        } else if (_rateTracker.bytesPerSec() != previousRate) {
-            emit dataRateChanged();
-        }
-        if (_prevMessagesReceived != _messagesReceived) {
-            _prevMessagesReceived = _messagesReceived;
-            emit messagesReceivedChanged();
-        }
-        if (_lastReceivedAtMs > 0) {
-            emit correctionAgeChanged();
-        }
+NTRIPConnectionStats::NTRIPConnectionStats(std::chrono::milliseconds staleAfter, QObject* parent,
+                                           RuntimeScheduler* scheduler)
+    : QObject(parent)
+    , _staleAfter(staleAfter)
+    , _scheduler(RuntimeScheduler::orDefault(scheduler, this))
+    , _publishTask(_scheduler, this)
+    , _rateTracker([this]() { return _scheduler->nowUs(); })
+{}
 
-        _updateDataStale(static_cast<qint64>(MonotonicClock::nowUs() / 1000));
-        if (_messageCountsDirty) {
-            _messageCountsDirty = false;
-            emit messageCountsByIdChanged();
-        }
-    });
+std::chrono::milliseconds NTRIPConnectionStats::_now() const
+{
+    return std::chrono::milliseconds(_scheduler->nowMs());
 }
 
 void NTRIPConnectionStats::start()
 {
-    _rateTimer.start();
+    _startedAt = _now();
+    _publishTask.scheduleRepeating(std::chrono::seconds{1}, [this]() {
+        _rateTracker.refresh();
+        (void) _updateDataStale(_now());
+        emit statsChanged();
+    });
 }
 
 void NTRIPConnectionStats::stop()
 {
-    _rateTimer.stop();
-    if (_rateTracker.bytesPerSec() != 0.0) {
-        _rateTracker.reset();
-        _prevBytesReceived = 0;
-        emit dataRateChanged();
-        emit bytesReceivedChanged();
-    }
+    _publishTask.cancel();
+    _startedAt = std::chrono::milliseconds::zero();
+    _rateTracker.resetRate();
+    emit statsChanged();
 }
 
 double NTRIPConnectionStats::correctionAgeSec() const
 {
-    const auto age = MonotonicClock::ageMilliseconds(_lastReceivedAtMs > 0 ? quint64(_lastReceivedAtMs) * 1000 : 0,
-                                                     MonotonicClock::nowUs());
-    return age < 0 ? -1.0 : age / 1000.0;
+    const auto age = MonotonicClock::age(_lastReceivedAt, std::chrono::milliseconds(_scheduler->nowMs()));
+    return age ? std::chrono::duration<double>(*age).count() : -1.0;
 }
 
-void NTRIPConnectionStats::_updateDataStale(qint64 nowMs)
+bool NTRIPConnectionStats::_updateDataStale(std::chrono::milliseconds now)
 {
-    const auto age = MonotonicClock::ageMilliseconds(_lastReceivedAtMs > 0 ? quint64(_lastReceivedAtMs) * 1000 : 0,
-                                                     nowMs > 0 ? quint64(nowMs) * 1000 : 0);
-    const bool stale = age >= kStaleThreshold.count();
-    if (stale != _dataStale) {
-        _dataStale = stale;
-        emit dataStaleChanged();
-    }
+    const auto since = _lastReceivedAt > std::chrono::milliseconds::zero() ? _lastReceivedAt : _startedAt;
+    const auto age = MonotonicClock::age(since, now);
+    const bool stale = age && *age >= _staleAfter;
+    return std::exchange(_dataStale, stale) != stale;
 }
 
 void NTRIPConnectionStats::recordMessage(int bytes, int messageId, qint64 receivedAtMs)
@@ -77,50 +62,38 @@ void NTRIPConnectionStats::recordMessage(int bytes, int messageId, qint64 receiv
     }
     _rateTracker.recordBytes(bytes);
     _messagesReceived++;
-    const qint64 nowMs = static_cast<qint64>(MonotonicClock::nowUs() / 1000);
-    if (receivedAtMs <= 0 || receivedAtMs > nowMs) {
+    ++_messageCountsById[messageId];
+    const auto now = _now();
+    const std::chrono::milliseconds receivedAt(receivedAtMs);
+    if (receivedAt <= std::chrono::milliseconds::zero() || receivedAt > now) {
         qCWarning(NTRIPConnectionStatsLog) << "Invalid RTCM receipt timestamp:" << receivedAtMs;
     } else {
-        _lastReceivedAtMs = (std::max) (_lastReceivedAtMs, receivedAtMs);
+        _lastReceivedAt = (std::max) (_lastReceivedAt, receivedAt);
     }
-    _updateDataStale(nowMs);
-    if (_rateTracker.rateUpdated()) {
-        _prevBytesReceived = _rateTracker.totalBytes();
-        emit dataRateChanged();
-        emit bytesReceivedChanged();
+    // A stream that recovers shows it at once; the counters follow at the next second.
+    if (_updateDataStale(now)) {
+        emit statsChanged();
     }
-    ++_messageCountsById[messageId];
-    _messageCountsDirty = true;
 }
 
 void NTRIPConnectionStats::reset()
 {
     _rateTracker.reset();
-    _prevBytesReceived = 0;
     _messagesReceived = 0;
-    _lastReceivedAtMs = 0;
+    _lastReceivedAt = std::chrono::milliseconds::zero();
+    _startedAt = std::chrono::milliseconds::zero();
     _messageCountsById.clear();
-    _messageCountsDirty = false;
-    if (_dataStale) {
-        _dataStale = false;
-        emit dataStaleChanged();
-    }
-    emit bytesReceivedChanged();
-    emit messagesReceivedChanged();
-    emit dataRateChanged();
-    emit correctionAgeChanged();
-    emit messageCountsByIdChanged();
+    _dataStale = false;
+    emit statsChanged();
 }
 
-QVariantList NTRIPConnectionStats::messageCountsById() const
+QList<RTCMMessageCount> NTRIPConnectionStats::messageCountsById() const
 {
-    QList<int> ids = _messageCountsById.keys();
-    std::sort(ids.begin(), ids.end());
-
-    QVariantList out;
-    out.reserve(ids.size());
-    for (int id : ids) {
-        out.append(QVariant(QVariantList{id, _messageCountsById.value(id)}));
+    QList<RTCMMessageCount> counts;
+    counts.reserve(_messageCountsById.size());
+    for (auto it = _messageCountsById.cbegin(); it != _messageCountsById.cend(); ++it) {
+        counts.append({it.key(), it.value()});
     }
-    return out;
+    std::ranges::sort(counts, {}, &RTCMMessageCount::messageId);
+    return counts;
 }

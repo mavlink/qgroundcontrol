@@ -1,0 +1,20 @@
+decoder type=trimble role=rtk-base mode=survey-in accuracy=1.0000m duration=100s compact=0 persistent=0 baud=0
+file corpus/gga.nmea bytes=88
+    position fix=differential lat=37.39109795 lon=-122.03782631 msl=18.8930 ellipsoid=-6.7760 hacc=nan vacc=nan hdop=1.200 vdop=nan speed=nan course=nan used=6 utc=0 velocity=0 receipt=1
+file corpus/gsv.nmea bytes=30
+    expired satellites full=0 gps:view=1/1,use=-/0
+    expired satellites full=0 sbas:view=0/1,use=-/0
+file corpus/pashr-receipt-replay.nmea bytes=139
+file corpus/pashr.nmea bytes=86
+file corpus/zda-overflow.nmea bytes=33
+file corpus/zda.nmea bytes=38
+file fixtures/gga.nmea bytes=73
+    position fix=3d lat=53.45065700 lon=-2.24041033 msl=56.0000 ellipsoid=104.5000 hacc=nan vacc=nan hdop=5.880 vdop=nan speed=nan course=nan used=6 utc=0 velocity=0 receipt=1
+file fixtures/synthetic-gga.nmea bytes=398
+    position fix=3d lat=0.00000000 lon=0.00000000 msl=0.0000 ellipsoid=0.0000 hacc=nan vacc=nan hdop=0.000 vdop=nan speed=nan course=nan used=0 utc=0 velocity=0 receipt=1
+    position fix=rtk-fixed lat=12.50000000 lon=-45.25000000 msl=nan ellipsoid=nan hacc=nan vacc=nan hdop=nan vdop=nan speed=nan course=nan used=- utc=0 velocity=0 receipt=1
+    position fix=rtk-float lat=-12.50000000 lon=-45.25000000 msl=-15.5000 ellipsoid=-45.7500 hacc=nan vacc=nan hdop=0.000 vdop=nan speed=nan course=nan used=12 utc=0 velocity=0 receipt=1
+    position fix=differential lat=12.50000000 lon=45.25000000 msl=0.0000 ellipsoid=nan hacc=nan vacc=nan hdop=0.750 vdop=nan speed=nan course=nan used=8 utc=0 velocity=0 receipt=1
+    position fix=none lat=0.00000000 lon=0.00000000 msl=0.0000 ellipsoid=0.0000 hacc=nan vacc=nan hdop=0.000 vdop=nan speed=nan course=nan used=0 utc=0 velocity=0 receipt=1
+    position fix=none lat=nan lon=nan msl=0.0000 ellipsoid=0.0000 hacc=nan vacc=nan hdop=0.000 vdop=nan speed=nan course=nan used=- utc=0 velocity=0 receipt=1
+file fixtures/synthetic-gst.nmea bytes=145

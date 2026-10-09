@@ -427,7 +427,7 @@ void LinkManagerTest::_testOccupiedSerialAutoConnectRecovers()
         linkManager()->_serialAutoConnect->_waitingPorts.remove(location);
     });
     linkManager()->_serialAutoConnect->update(ports, {.pixhawk = true});
-    linkManager()->_serialAutoConnect->_waitingPorts[location].setRemainingTime(0);
+    linkManager()->_serialAutoConnect->_waitingPorts._deadlinesUs[location] = 0;
     linkManager()->_serialAutoConnect->update(ports, {.pixhawk = true});
     const auto config = linkManager()->_serialAutoConnect->_configs.value(location);
     QVERIFY(config);

@@ -1,0 +1,17 @@
+about Port configuration is never acknowledged
+request type=ublox role=rtk-base mode=survey-in accuracy=1.0000m duration=60s compact=0 persistent=0 baud=0
+configure configured=0 baud=0->0 failure=protocol ready=0 elapsed=6060ms
+  identity "ZED-F9P HPG 1.32"
+  error "u-blox receiver did not acknowledge 'UBX-CFG-VALSET'"
+  baud 38400 configured
+  write "UBX-MON-VER" 8 timed-out required
+    b5620a0400000e34
+  baud 57600 configured
+  write "UBX-MON-VER" 8 timed-out required
+    b5620a0400000e34
+  baud 9600 configured
+  write "UBX-MON-VER" 8 acknowledged required
+    b5620a0400000e34
+  write "UBX-CFG-VALSET" 47 timed-out required
+    b562068a27000001000002005220010300522000040052200001007310010200
+    731000010074100102007410002edb

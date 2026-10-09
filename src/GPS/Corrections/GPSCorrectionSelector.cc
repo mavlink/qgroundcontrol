@@ -2,132 +2,129 @@
 
 #include <algorithm>
 
-#include "QGCLoggingCategory.h"
+#include "MonotonicClock.h"
 
-QGC_LOGGING_CATEGORY(GPSCorrectionSelectorLog, "GPS.Corrections.GPSCorrectionSelector")
-
-GPSCorrectionSelector::GPSCorrectionSelector()
+int GPSCorrectionSelector::_index(GPSCorrectionSettings::CorrectionSource source)
 {
-    qCDebug(GPSCorrectionSelectorLog) << this;
+    const int index = static_cast<int>(source);
+    return index >= 0 && index < GPS_CORRECTION_SOURCE_COUNT ? index : -1;
 }
 
-GPSCorrectionSelector::~GPSCorrectionSelector()
+bool GPSCorrectionSelector::_fresh(const Category& category, qint64 now) const
 {
-    qCDebug(GPSCorrectionSelectorLog) << this;
+    const auto age =
+        MonotonicClock::age(std::chrono::milliseconds(category.lastRoutableMs), std::chrono::milliseconds(now));
+    return category.begun && age && *age < FRESHNESS_TIMEOUT;
 }
 
-int GPSCorrectionSelector::_priority(GPSCorrectionSource source)
+bool GPSCorrectionSelector::_eligible(int index, qint64 now) const
 {
-    return source == GPSCorrectionSource::Unknown ? 4 : static_cast<int>(source);
-}
-
-bool GPSCorrectionSelector::_eligible(const Source& source, qint64 now) const
-{
-    const qint64 age = GPSCorrectionFrame::ageMs(source.lastRoutableMs, now);
-    if (age < 0 || age >= FRESHNESS_TIMEOUT_MS) {
+    if (index <= 0 || !_fresh(_categories[index], now)) {
         return false;
     }
-    return _configuration.policy != Policy::Manual ||
-           (source.identity.category == _configuration.source &&
-            (_configuration.instance.isEmpty() || source.identity.instance == _configuration.instance));
+    return _configuredSource == GPSCorrectionSettings::HighestPriority || index == static_cast<int>(_configuredSource);
 }
 
 void GPSCorrectionSelector::_select(qint64 now)
 {
-    auto best = _sources.cend();
-    for (auto it = _sources.cbegin(); it != _sources.cend(); ++it) {
-        if (_eligible(it.value(), now) &&
-            (best == _sources.cend() || _priority(it->identity.category) < _priority(best->identity.category))) {
-            best = it;
+    int best = -1;
+    for (int index = 1; index < GPS_CORRECTION_SOURCE_COUNT && best < 0; ++index) {
+        if (_eligible(index, now)) {
+            best = index;
         }
     }
-    const auto active = _active ? _sources.constFind(*_active) : _sources.cend();
-    if (active == _sources.cend() || !_eligible(active.value(), now)) {
-        _active = best == _sources.cend() ? std::nullopt : std::optional(best.key());
-        _candidate.reset();
+    if (!_eligible(_active, now)) {
+        _active = best;
+        _candidate = -1;
         return;
     }
-    if (best == _sources.cend() || _priority(best->identity.category) >= _priority(active->identity.category) ||
-        _configuration.policy != Policy::Automatic) {
-        _candidate.reset();
+    if (best < 0 || best >= _active) {
+        _candidate = -1;
         return;
     }
-    if (_candidate != best.key()) {
-        _candidate = best.key();
+    if (_candidate != best) {
+        _candidate = best;
         _candidateSinceMs = now;
-    } else if (GPSCorrectionFrame::ageMs(_candidateSinceMs, now) >= SWITCH_HOLD_DOWN_MS) {
+    } else if (const auto held =
+                   MonotonicClock::age(std::chrono::milliseconds(_candidateSinceMs), std::chrono::milliseconds(now));
+               held && *held >= SWITCH_HOLD_DOWN) {
         _active = _candidate;
-        _candidate.reset();
+        _candidate = -1;
     }
 }
 
-QString GPSCorrectionSelector::activeInstance(qint64 now) const
+void GPSCorrectionSelector::configure(GPSCorrectionSettings::CorrectionSource source, qint64 now)
 {
-    const auto active = _active ? _sources.constFind(*_active) : _sources.cend();
-    return active != _sources.cend() && _eligible(active.value(), now) ? active->identity.instance : QString();
-}
-
-GPSCorrectionSource GPSCorrectionSelector::activeSource(qint64 now) const
-{
-    const auto active = _active ? _sources.constFind(*_active) : _sources.cend();
-    return active != _sources.cend() && _eligible(active.value(), now) ? active->identity.category
-                                                                       : GPSCorrectionSource::Unknown;
-}
-
-void GPSCorrectionSelector::configure(const Configuration& configuration, qint64 now)
-{
-    _configuration = configuration;
-    _active.reset();
-    _candidate.reset();
+    if (_shutdown || _index(source) < 0 || source == _configuredSource) {
+        return;
+    }
+    _configuredSource = source;
+    _active = -1;
+    _candidate = -1;
     _select(now);
 }
 
-void GPSCorrectionSelector::clear()
+void GPSCorrectionSelector::beginSource(GPSCorrectionSettings::CorrectionSource source, qint64 now)
 {
-    _sources.clear();
-    _active.reset();
-    _candidate.reset();
+    const int index = _index(source);
+    if (_shutdown || index <= 0) {
+        return;
+    }
+    endSource(source, now);
+    _categories[index].begun = true;
 }
 
-void GPSCorrectionSelector::retire(GPSCorrectionSource source, qint64 now)
+void GPSCorrectionSelector::endSource(GPSCorrectionSettings::CorrectionSource source, qint64 now)
 {
-    _sources.removeIf([source](auto it) { return it->identity.category == source; });
+    const int index = _index(source);
+    if (index <= 0) {
+        return;
+    }
+    _categories[index] = {};
     _select(now);
 }
 
-void GPSCorrectionSelector::observe(const GPSCorrectionFrame& frame, bool routable, qint64 now)
+bool GPSCorrectionSelector::submit(GPSCorrectionSettings::CorrectionSource source, const QString& instance,
+                                   qint64 receivedAtMs, qint64 now)
 {
-    const SourceIdentity id{frame.source, frame.sourceInstance};
-    if (!_sources.contains(id) && _sources.size() >= MAX_SOURCE_INSTANCES) {
-        auto oldest = _sources.end();
-        for (auto it = _sources.begin(); it != _sources.end(); ++it) {
-            if (it.key() != _active && (oldest == _sources.end() || it->lastReceivedMs < oldest->lastReceivedMs)) {
-                oldest = it;
-            }
-        }
-        if (oldest != _sources.end()) {
-            _sources.erase(oldest);
-        }
-    }
-    auto& source = _sources[id];
-    source.identity = id;
-    source.session = frame.session;
-    source.lastReceivedMs = (std::max) (source.lastReceivedMs, frame.receivedAtMs);
-    if (routable) {
-        source.lastRoutableMs = (std::max) (source.lastRoutableMs, frame.receivedAtMs);
-        _select(now);
-    }
-}
-
-bool GPSCorrectionSelector::selected(const GPSCorrectionFrame& frame, qint64 now) const
-{
-    if (_configuration.policy == Policy::All) {
-        return true;
-    }
-    const SourceIdentity identity{frame.source, frame.sourceInstance};
-    if (_active != identity) {
+    const int index = _index(source);
+    if (_shutdown || index <= 0 || !_categories[index].begun) {
         return false;
     }
-    const auto active = _sources.constFind(identity);
-    return active != _sources.cend() && _eligible(active.value(), now);
+    const auto age = MonotonicClock::age(std::chrono::milliseconds(receivedAtMs), std::chrono::milliseconds(now));
+    if (!age || *age >= FRESHNESS_TIMEOUT) {
+        return false;
+    }
+    Category& category = _categories[index];
+    if (category.instance != instance) {
+        // The category keeps following its instance until that goes stale.
+        if (_fresh(category, now)) {
+            return false;
+        }
+        category.instance = instance;
+    }
+    category.lastRoutableMs = (std::max) (category.lastRoutableMs, receivedAtMs);
+    _select(now);
+    return _active == index;
+}
+
+bool GPSCorrectionSelector::hasSources() const
+{
+    return std::ranges::any_of(_categories, &Category::begun);
+}
+
+std::optional<GPSCorrectionStream> GPSCorrectionSelector::selectedStream(qint64 now) const
+{
+    if (!_eligible(_active, now)) {
+        return std::nullopt;
+    }
+    return GPSCorrectionStream{.source = _active, .instanceId = _categories[_active].instance};
+}
+
+void GPSCorrectionSelector::shutdown()
+{
+    _shutdown = true;
+    _categories = {};
+    _active = -1;
+    _candidate = -1;
 }

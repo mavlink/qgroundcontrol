@@ -14,12 +14,6 @@ inline uint64_t nowUs()
             .count());
 }
 
-/// A missing or future timestamp has no valid age. Both arguments must share a clock domain.
-constexpr int64_t ageMilliseconds(uint64_t timestampUs, uint64_t nowUs)
-{
-    return timestampUs == 0 || timestampUs > nowUs ? -1 : static_cast<int64_t>((nowUs - timestampUs) / 1000);
-}
-
 /// Age of @a timestamp at @a now, both in the same unit; empty for a missing or future timestamp.
 template <typename Rep, typename Period>
 constexpr std::optional<std::chrono::duration<Rep, Period>> age(std::chrono::duration<Rep, Period> timestamp,

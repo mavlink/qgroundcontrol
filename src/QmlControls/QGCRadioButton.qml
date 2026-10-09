@@ -10,6 +10,7 @@ RadioButton {
     font.pointSize: ScreenTools.defaultFontPointSize
 
     property color  textColor:  qgcPal.text
+    property int    wrapMode:   Text.NoWrap
     property bool   _noText:    text === ""
 
     QGCPalette { id:qgcPal; colorGroupEnabled: enabled }
@@ -48,6 +49,7 @@ RadioButton {
         font.pointSize:     control.font.pointSize
         font.bold:          control.font.bold
         color:              control.textColor
+        wrapMode:           control.wrapMode
         verticalAlignment:  Text.AlignVCenter
         leftPadding:        control.indicator.width + (_noText ? 0 : ScreenTools.defaultFontPixelWidth * 0.25)
     }

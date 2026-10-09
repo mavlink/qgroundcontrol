@@ -473,6 +473,10 @@ void QSerialPort::close()
         return;
     }
 
+    // Buffered writes were accepted by write(); try to send them unless writing already failed.
+    if (d->error != QSerialPort::WriteError) {
+        (void) d->flushBeforeClose();
+    }
     d->close();
     d->isBreakEnabled.setValue(false);
     QIODevice::close();

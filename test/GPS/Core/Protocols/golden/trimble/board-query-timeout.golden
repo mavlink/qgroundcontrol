@@ -1,0 +1,9 @@
+about Receiver never answers the board query
+request type=trimble role=rtk-base mode=survey-in accuracy=1.0000m duration=100s compact=0 persistent=0 baud=0
+configure configured=0 baud=115200->115200 failure=protocol ready=0 elapsed=200ms
+  error "Trimble receiver did not acknowledge '$PASHQ,RID'"
+  baud 115200 configured
+  write "$PASHQ,PRT" 12 acknowledged required
+    text "$PASHQ,PRT\r\n"
+  write "$PASHQ,RID" 12 timed-out required
+    text "$PASHQ,RID\r\n"

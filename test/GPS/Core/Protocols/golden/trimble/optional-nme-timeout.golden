@@ -1,0 +1,29 @@
+about Receiver never answers disabling NMEA output (optional)
+request type=trimble role=rtk-base mode=survey-in accuracy=1.0000m duration=100s compact=0 persistent=0 baud=0
+configure configured=1 baud=115200->115200 failure=none ready=1 elapsed=200ms
+  identity "MB2"
+  baud 115200 configured
+  write "$PASHQ,PRT" 12 acknowledged required
+    text "$PASHQ,PRT\r\n"
+  write "$PASHQ,RID" 12 acknowledged required
+    text "$PASHQ,RID\r\n"
+  write "$PASHS,POP,20" 15 acknowledged optional
+    text "$PASHS,POP,20\r\n"
+  write "$PASHS,SNS,SOL" 16 acknowledged optional
+    text "$PASHS,SNS,SOL\r\n"
+  write "$PASHS,NME,ALL,A,OFF" 22 timed-out optional
+    text "$PASHS,NME,ALL,A,OFF\r\n"
+  write "$PASHS,ATM,ALL,A,OFF" 22 acknowledged optional
+    text "$PASHS,ATM,ALL,A,OFF\r\n"
+  write "$PASHS,OUT,A,ON" 17 acknowledged optional
+    text "$PASHS,OUT,A,ON\r\n"
+  write "$PASHS,NME,ZDA,A,ON,3" 23 acknowledged optional
+    text "$PASHS,NME,ZDA,A,ON,3\r\n"
+  write "$PASHS,NME,GST,A,ON,3" 23 acknowledged optional
+    text "$PASHS,NME,GST,A,ON,3\r\n"
+  write "$PASHS,NME,POS,A,ON,0.05" 26 acknowledged optional
+    text "$PASHS,NME,POS,A,ON,0.05\r\n"
+  write "$PASHS,NME,GSV,A,ON,1" 23 acknowledged optional
+    text "$PASHS,NME,GSV,A,ON,1\r\n"
+  survey active=1 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
+stream failure=none ready=1

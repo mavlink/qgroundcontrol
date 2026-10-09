@@ -1,0 +1,10 @@
+about Positions from the first protocol until it stops
+request type=passive role=passive mode=survey-in accuracy=0.0000m duration=0s compact=0 persistent=0 baud=115200
+configure configured=1 baud=115200->115200 failure=none ready=1 elapsed=0ms
+  baud 115200 configured
+stream failure=none ready=1
+  input type=passive
+  usage used=12 receipt=1
+  position fix=3d lat=47.00000000 lon=8.00000000 msl=450.0000 ellipsoid=500.0000 hacc=nan vacc=nan hdop=0.900 vdop=nan speed=nan course=nan used=12 utc=0 velocity=0 receipt=1
+  input type=ublox
+  position fix=3d lat=47.00000000 lon=8.00000000 msl=450.0000 ellipsoid=500.0000 hacc=1.5000 vacc=2.5000 hdop=nan vdop=nan speed=0.2240 course=1.107150 used=12 utc=1704164650000000 velocity=1 receipt=1

@@ -1,102 +1,111 @@
 #pragma once
 
-#include <deque>
-#include <functional>
+#include <optional>
 
-#include <QtCore/QAbstractListModel>
+#include <QtCore/QByteArrayView>
 #include <QtCore/QList>
-#include <QtCore/QLoggingCategory>
+#include <QtCore/QRangeModel>
+#include <QtCore/QSortFilterProxyModel>
 #include <QtCore/QString>
+#include <QtCore/qnumeric.h>
 #include <QtPositioning/QGeoCoordinate>
 
-Q_DECLARE_LOGGING_CATEGORY(NTRIPSourceTableLog)
+/// True once an ENDSOURCETABLE line arrives, with CRLF, LF, or no final line ending. When the first @a checkedSize
+/// bytes were already checked, only a terminator that may have completed since is searched for.
+[[nodiscard]] bool ntripSourceTableComplete(QByteArrayView body, qsizetype checkedSize = 0);
 
-/// Parsed NTRIP source-table STR row. Plain value type — all fields are immutable
-/// after parse except distanceKm, which is recomputed by updateDistances().
+/// The parsed fields of an NTRIP source-table STR row that the mountpoint list shows or sorts by. All fields are
+/// immutable after parse except distanceKm, which is recomputed by updateDistances(). Each property is a model role of
+/// the same name.
 struct NTRIPMountpoint
 {
+    Q_GADGET
+    Q_PROPERTY(QString mountpoint MEMBER mountpoint FINAL)
+    Q_PROPERTY(QString format MEMBER format FINAL)
+    Q_PROPERTY(QString navSystem MEMBER navSystem FINAL)
+    Q_PROPERTY(QString country MEMBER country FINAL)
+    Q_PROPERTY(int bitrate MEMBER bitrate FINAL)
+    Q_PROPERTY(double distanceKm MEMBER distanceKm FINAL)
+    /// The format, navigation systems, country, bitrate and distance that are known, as one line.
+    Q_PROPERTY(QString details READ details FINAL)
+
+public:
     QString mountpoint;
-    QString identifier;
     QString format;
-    QString formatDetails;
-    int carrier = 0;
     QString navSystem;
-    QString network;
     QString country;
-    double latitude = 0.0;
-    double longitude = 0.0;
-    bool nmea = false;
-    bool solution = false;
-    QString generator;
-    QString compression;
-    QString authentication;
-    bool fee = false;
     int bitrate = 0;
     double distanceKm = -1.0;
+    double latitude = qQNaN();
+    double longitude = qQNaN();
 
-    /// Parse one source-table line ("STR;..."). Returns true and fills out on a
-    /// valid STR row; returns false (out untouched) otherwise.
-    static bool fromSourceTableLine(const QString& line, NTRIPMountpoint& out);
+    /// Parses one source-table line ("STR;..."); none unless it is a valid STR row.
+    static std::optional<NTRIPMountpoint> fromSourceTableLine(const QString& line);
 
     /// Recompute distanceKm, or mark it unknown for invalid reference/mountpoint coordinates.
     void updateDistance(const QGeoCoordinate& from);
+
+    QString details() const;
 };
 
-/// Single QAbstractListModel over the parsed source table. Replaces the former
-/// QObject-per-row + QmlObjectListModel double-wrapping. QML binds against the
-/// role names below (mountpoint, format, distanceKm, ...).
-class NTRIPSourceTableModel : public QAbstractListModel
+template <>
+struct QRangeModel::RowOptions<NTRIPMountpoint>
+{
+    static constexpr auto rowCategory = QRangeModel::RowCategory::MultiRoleItem;
+};
+
+/// Read-only list model over the parsed source table in caster order; NTRIPSourceTableSortModel orders it by
+/// distance. QML binds to the NTRIPMountpoint property names.
+class NTRIPSourceTableModel : public QRangeModel
 {
     Q_OBJECT
-    Q_PROPERTY(int count READ count NOTIFY countChanged)
+    Q_PROPERTY(int count READ count NOTIFY countChanged FINAL)
 
 public:
+    /// Roles follow the NTRIPMountpoint property order, as QRangeModel assigns them.
     enum Roles
     {
-        MountpointRole = Qt::UserRole + 1,
-        IdentifierRole,
+        MountpointRole = Qt::UserRole,
         FormatRole,
-        FormatDetailsRole,
-        CarrierRole,
         NavSystemRole,
-        NetworkRole,
         CountryRole,
-        LatitudeRole,
-        LongitudeRole,
-        NmeaRole,
-        SolutionRole,
-        GeneratorRole,
-        CompressionRole,
-        AuthenticationRole,
-        FeeRole,
         BitrateRole,
         DistanceKmRole,
+        DetailsRole,
     };
 
     explicit NTRIPSourceTableModel(QObject* parent = nullptr);
 
     int count() const { return static_cast<int>(_mountpoints.size()); }
 
-    int rowCount(const QModelIndex& parent = QModelIndex()) const override;
-    QVariant data(const QModelIndex& index, int role) const override;
-    QHash<int, QByteArray> roleNames() const override;
-
-    void parseSourceTable(const QString& raw);
+    /// Publish the parsed rows and their distances in a single reset.
+    void parseSourceTable(const QString& raw, const QGeoCoordinate& from = {});
+    /// Recompute distances; one dataChanged for DistanceKmRole spans the rows whose distance changed.
     void updateDistances(const QGeoCoordinate& from);
-    void sortByDistance();
     void clear();
 
 signals:
     void countChanged();
 
 private:
-    friend class NTRIPSourceTableController;
-
-    /// Reset observers may request another mutation; finish the current notification first.
-    void _mutate(std::function<void()> mutation);
-    void _sortByDistance();
-
     QList<NTRIPMountpoint> _mountpoints;
-    std::deque<std::function<void()>> _pendingMutations;
-    bool _mutating = false;
+};
+
+/// Distance-ordered view of a source table: known distances ascending, unknown distances last, and caster order
+/// among equal distances. Distance updates reorder rows without resetting the view.
+class NTRIPSourceTableSortModel : public QSortFilterProxyModel
+{
+    Q_OBJECT
+    Q_PROPERTY(int count READ count NOTIFY countChanged FINAL)
+
+public:
+    explicit NTRIPSourceTableSortModel(NTRIPSourceTableModel* source, QObject* parent = nullptr);
+
+    int count() const { return rowCount(); }
+
+signals:
+    void countChanged();
+
+protected:
+    bool lessThan(const QModelIndex& left, const QModelIndex& right) const override;
 };

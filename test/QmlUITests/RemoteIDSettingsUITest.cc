@@ -261,13 +261,50 @@ void RemoteIDSettingsUITest::_testFAARegionForcesLiveLocationInUI()
     RemoteIDSettings* settings = SettingsManager::instance()->remoteIDSettings();
     settings->locationType()->setRawValue(static_cast<int>(RemoteIDSettings::LocationType::FIXED));
 
-    QVERIFY(verifyEnabled(QStringLiteral("settingsTextField_latitudeFixed"), true, QStringLiteral("EU region, FIXED location")));
+    QVERIFY(verifyVisibility(QStringLiteral("settingsTextField_latitudeFixed"), true,
+                             QStringLiteral("EU region, FIXED location")));
 
     settings->region()->setRawValue(static_cast<int>(RemoteIDSettings::RegionOperation::FAA));
 
-    // FAA forces locationType to LIVE, which disables the fixed-position fields
+    // FAA forces locationType to LIVE, which hides the fixed-position fields
     QCOMPARE(settings->locationType()->rawValue().toInt(), static_cast<int>(RemoteIDSettings::LocationType::LIVE));
-    QVERIFY(verifyEnabled(QStringLiteral("settingsTextField_latitudeFixed"), false, QStringLiteral("FAA region forces LIVE")));
+    QVERIFY(verifyVisibility(QStringLiteral("settingsTextField_latitudeFixed"), false,
+                             QStringLiteral("FAA region forces LIVE")));
+
+    stopUI();
+}
+
+// The Ground Station Location section shows the fixed coordinates only for a fixed location, and the GCS position
+// Live GNSS sends only for live GNSS; the GNSS Receiver page chooses that position's source.
+void RemoteIDSettingsUITest::_testLocationTypeShowsItsRows()
+{
+    startUI();
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    QVERIFY(_navigateToRemoteIDPage());
+
+    const QStringList fixedRows = {QStringLiteral("settingsTextField_latitudeFixed"),
+                                   QStringLiteral("settingsTextField_longitudeFixed"),
+                                   QStringLiteral("settingsTextField_altitudeFixed")};
+    const auto verifyRows = [this, &fixedRows](bool fixed, bool live, const QString& context) {
+        for (const QString& row : fixedRows) {
+            if (!verifyVisibility(row, fixed, context)) {
+                return false;
+            }
+        }
+        return verifyVisibility(QStringLiteral("gcsPositionSelectedSource"), live, context) &&
+               verifyVisibility(QStringLiteral("gcsPositionSource"), false, context);
+    };
+
+    RemoteIDSettings* settings = SettingsManager::instance()->remoteIDSettings();
+    settings->locationType()->setRawValue(static_cast<int>(RemoteIDSettings::LocationType::LIVE));
+    QVERIFY(verifyRows(false, true, QStringLiteral("LIVE location")));
+    settings->locationType()->setRawValue(static_cast<int>(RemoteIDSettings::LocationType::FIXED));
+    QVERIFY(verifyRows(true, false, QStringLiteral("FIXED location")));
+    settings->locationType()->setRawValue(static_cast<int>(RemoteIDSettings::LocationType::TAKEOFF));
+    QVERIFY(verifyRows(false, false, QStringLiteral("TAKEOFF location")));
 
     stopUI();
 }

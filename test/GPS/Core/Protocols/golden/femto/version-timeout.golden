@@ -1,0 +1,13 @@
+about Receiver never answers the version query (identity)
+request type=femto role=rtk-base mode=survey-in accuracy=1.0000m duration=60s compact=0 persistent=0 baud=0
+configure configured=0 baud=0->115200 failure=protocol ready=0 elapsed=400ms
+  error "No Femtomes receiver answered at 115200 baud"
+  baud 115200 configured
+  write "UNLOGALL THISPORT" 19 acknowledged required
+    text "UNLOGALL THISPORT\r\n"
+  write "VERSION" 9 timed-out required
+    text "VERSION\r\n"
+  write "UNLOGALL THISPORT" 19 acknowledged required
+    text "UNLOGALL THISPORT\r\n"
+  write "VERSION" 9 timed-out required
+    text "VERSION\r\n"

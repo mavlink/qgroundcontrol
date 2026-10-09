@@ -6,16 +6,15 @@
 #include "FirmwarePluginManager.h"
 #include "FlightMapSettings.h"
 #include "GPSManager.h"
-#include "GPSRtk.h"
 #include "LinkManager.h"
 #include "LoggingCategoryModel.h"
 #include "MAVLinkProtocol.h"
 #include "MAVLinkSigningKeys.h"
 #include "MissionCommandTree.h"
 #include "MultiVehicleManager.h"
-#include "NTRIPManager.h"
 #include "PositionManager.h"
 #include "QGCCorePlugin.h"
+#include "QGCFormat.h"
 #include "QGCMapEngineManager.h"
 #include "QGCVersionCheck.h"
 #include "SettingsManager.h"
@@ -45,8 +44,6 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QObject *parent)
     : QObject(parent)
     , _mapEngineManager(QGCMapEngineManager::instance())
     , _adsbVehicleManager(ADSBVehicleManager::instance())
-    , _ntripManager(NTRIPManager::instance())
-    , _qgcPositionManager(QGCPositionManager::instance())
     , _missionCommandTree(MissionCommandTree::instance())
     , _mavlinkSigningKeys(MAVLinkSigningKeys::instance())
     , _videoManager(VideoManager::instance())
@@ -55,7 +52,6 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QObject *parent)
     , _settingsManager(SettingsManager::instance())
     , _corePlugin(QGCCorePlugin::instance())
     , _globalPalette(new QGCPalette(this))
-    , _gpsRtkFactGroup(GPSManager::instance()->gpsRtk()->gpsRtkFactGroup())
 {
     // We clear the parent on this object since we run into shutdown problems caused by hybrid qml app. Instead we let it leak on shutdown.
     // setParent(nullptr);
@@ -97,6 +93,11 @@ QGroundControlQmlGlobal::~QGroundControlQmlGlobal()
 GPSManager* QGroundControlQmlGlobal::gpsManager() const
 {
     return GPSManager::instance();
+}
+
+PositionManager* QGroundControlQmlGlobal::positionManager() const
+{
+    return GPSManager::instance()->positionManager();
 }
 
 void QGroundControlQmlGlobal::saveGlobalSetting (const QString& key, const QString& value)
@@ -180,6 +181,11 @@ bool QGroundControlQmlGlobal::px4ProFirmwareSupported()
 bool QGroundControlQmlGlobal::apmFirmwareSupported()
 {
     return FirmwarePluginManager::instance()->firmwareClassSupported(QGCMAVLink::FirmwareClassArduPilot);
+}
+
+QString QGroundControlQmlGlobal::bigSizeToString(quint64 size)
+{
+    return QGC::bigSizeToString(size);
 }
 
 bool QGroundControlQmlGlobal::linesIntersect(QPointF line1A, QPointF line1B, QPointF line2A, QPointF line2B)

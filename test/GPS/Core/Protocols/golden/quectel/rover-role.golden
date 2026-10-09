@@ -1,0 +1,10 @@
+about Rover role without consent to change it
+request type=quectel role=rtk-base mode=survey-in accuracy=15.0000m duration=10s compact=0 persistent=0 baud=0
+configure configured=0 baud=0->460800 failure=consent-required ready=0 elapsed=2ms
+  identity "LG290P03AANR01A03S"
+  error "LG290P role mismatch: save the requested base role externally, reboot and reconnect. Alternatively, explicitly allow persistent changes for this connection"
+  baud 460800 configured
+  write "PQTMVERNO" 15 readback-verified required
+    text "$PQTMVERNO*58\r\n"
+  write "PQTMCFGRCVRMODE,R" 23 readback-verified required
+    text "$PQTMCFGRCVRMODE,R*32\r\n"

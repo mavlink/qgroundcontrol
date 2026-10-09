@@ -1,5 +1,8 @@
 #include "RAIIFixtures.h"
 
+#include <cstring>
+#include <memory>
+
 #include <QtCore/QCoreApplication>
 #include <QtCore/QDir>
 #include <QtNetwork/QNetworkRequest>
@@ -8,12 +11,10 @@
 #include "Fact.h"
 #include "MavCommandQueue.h"
 #include "QGCLoggingCategory.h"
+#include "QGCLoggingCategoryManager.h"
 #include "QGCMAVLink.h"
 #include "RunGuard.h"
 #include "SettingsManager.h"
-
-#include <cstring>
-#include <memory>
 
 QGC_LOGGING_CATEGORY(RAIIFixturesLog, "Test.RAIIFixtures")
 
@@ -346,6 +347,26 @@ QString TempDirFixture::createFile(const QString& relativePath, const QByteArray
     }
 
     return fullPath;
+}
+
+// ============================================================================
+// LoggingCategoryFixture Implementation
+// ============================================================================
+
+LoggingCategoryFixture::LoggingCategoryFixture(const QString& category)
+    : _category(category)
+    , _wasEnabled(QGCLoggingCategoryManager::instance()->isCategoryEnabled(category))
+{
+    if (!_wasEnabled) {
+        QGCLoggingCategoryManager::instance()->setCategoryEnabled(_category, true);
+    }
+}
+
+LoggingCategoryFixture::~LoggingCategoryFixture()
+{
+    if (!_wasEnabled) {
+        QGCLoggingCategoryManager::instance()->setCategoryEnabled(_category, false);
+    }
 }
 
 }  // namespace TestFixtures

@@ -1,0 +1,29 @@
+about Receiver never answers the version query (identity)
+request type=unicore role=rtk-base mode=averaging maximum=5s compact=0 persistent=0 baud=0
+configure configured=0 baud=0->0 failure=protocol ready=0 elapsed=12000ms
+  error "No Unicore receiver answered at 115200, 230400, 460800, 921600, 57600, 38400, 19200, 9600 baud"
+  baud 115200 configured
+  write "VERSIONA" 10 timed-out required
+    text "VERSIONA\r\n"
+  baud 230400 configured
+  write "VERSIONA" 10 timed-out required
+    text "VERSIONA\r\n"
+  baud 460800 configured
+  write "VERSIONA" 10 timed-out required
+    text "VERSIONA\r\n"
+  baud 921600 configured
+  write "VERSIONA" 10 timed-out required
+    text "VERSIONA\r\n"
+  baud 57600 configured
+  write "VERSIONA" 10 timed-out required
+    text "VERSIONA\r\n"
+  baud 38400 configured
+  write "VERSIONA" 10 timed-out required
+    text "VERSIONA\r\n"
+  baud 19200 configured
+  write "VERSIONA" 10 timed-out required
+    text "VERSIONA\r\n"
+  baud 9600 configured
+  write "VERSIONA" 10 timed-out required
+    text "VERSIONA\r\n"
+  survey active=0 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1

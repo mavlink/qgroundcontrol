@@ -1,0 +1,21 @@
+about Receiver rejects RTCM output after averaging completes
+request type=femto role=rtk-base mode=survey-in accuracy=1.0000m duration=60s compact=0 persistent=0 baud=0
+configure configured=1 baud=0->115200 failure=none ready=1 elapsed=0ms
+  baud 115200 configured
+  write "UNLOGALL THISPORT" 19 acknowledged required
+    text "UNLOGALL THISPORT\r\n"
+  write "VERSION" 9 acknowledged required
+    text "VERSION\r\n"
+  write "POSAVE ON" 12 acknowledged required
+    text "POSAVE ON \r\n"
+  write "LOG GPGGA 1" 14 acknowledged required
+    text "LOG GPGGA 1 \r\n"
+  survey active=1 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
+stream failure=protocol ready=0
+  write "LOG RTCM 1" 12 rejected required
+    text "LOG RTCM 1\r\n"
+  usage used=12 receipt=1
+  position fix=3d lat=47.00000000 lon=8.00000000 msl=450.0000 ellipsoid=500.0000 hacc=nan vacc=nan hdop=0.900 vdop=nan speed=nan course=nan used=12 utc=0 velocity=0 receipt=1
+  usage used=12 receipt=1
+  survey active=0 valid=1 duration=1s accuracy=- lat=47.00000000 lon=8.00000000 alt=500.0000 receipt=1
+  position fix=3d lat=47.00000000 lon=8.00000000 msl=450.0000 ellipsoid=500.0000 hacc=nan vacc=nan hdop=0.900 vdop=nan speed=nan course=nan used=12 utc=0 velocity=0 receipt=1

@@ -1,0 +1,19 @@
+about Required measurement rate rejected
+request type=ublox role=rtk-base mode=survey-in accuracy=1.2500m duration=60s compact=0 persistent=0 baud=115200
+configure configured=0 baud=115200->115200 failure=protocol ready=0 elapsed=20ms
+  identity "ZED-F9P HPG 1.32"
+  error "u-blox receiver rejected 'UBX-CFG-VALSET'"
+  baud 115200 configured
+  write "UBX-MON-VER" 8 acknowledged required
+    b5620a0400000e34
+  write "UBX-CFG-VALSET" 47 acknowledged required
+    b562068a27000001000002005220010300522000040052200001007310010200
+    731000010074100102007410002edb
+  write "UBX-CFG-VALSET" 52 acknowledged required
+    b562068a2c000001000004007310000100771001040077100002007710000100
+    7810010200781001040074100104007810010c13
+  write "UBX-CFG-VALSET" 22 acknowledged optional
+    b562068a0e000001000005007310000500771000b35b
+  write "UBX-CFG-VALSET" 44 rejected required
+    b562068a24000001000011001120031c00112003210011200201002130c80002
+    002130010003002120005053

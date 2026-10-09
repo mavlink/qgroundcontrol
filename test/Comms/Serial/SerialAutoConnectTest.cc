@@ -1,5 +1,7 @@
 #include "SerialAutoConnectTest.h"
 
+#include <limits>
+
 #include "SerialAutoConnect.h"
 #include "SerialLink.h"
 
@@ -68,13 +70,13 @@ void SerialAutoConnectTest::_discoveryDeadlineAndRetryState()
     const SerialAutoConnect::Options enabled{.pixhawk = true};
     discovery.update(inventory, enabled);
     QVERIFY(attempts.isEmpty());
-    QVERIFY(!discovery._waitingPorts.value(name).hasExpired());
-    discovery._waitingPorts[name] = QDeadlineTimer::Forever;
+    QVERIFY(!discovery._waitingPorts.settled(name, 0));
+    discovery._waitingPorts._deadlinesUs[name] = std::numeric_limits<quint64>::max();
     for (int i = 0; i < 10; ++i) {
         discovery.update(inventory, enabled);
     }
     QVERIFY(attempts.isEmpty());
-    discovery._waitingPorts[name].setRemainingTime(0);
+    discovery._waitingPorts._deadlinesUs[name] = 0;
     discovery.update(inventory, enabled);
     QCOMPARE(attempts.size(), 1);
     const auto config = attempts.first();
@@ -125,7 +127,7 @@ void SerialAutoConnectTest::_replacementDeviceResetsConfiguration()
     port.physicalDeviceId = QStringLiteral("controller-A");
     const SerialAutoConnect::Options options{.pixhawk = true, .sikRadio = true};
     discovery.update({port}, options);
-    discovery._waitingPorts[port.systemLocation].setRemainingTime(0);
+    discovery._waitingPorts._deadlinesUs[port.systemLocation] = 0;
     discovery.update({port}, options);
     QCOMPARE(attempts.size(), 1);
     attempts.first()->setSuppressAutoReconnect(true);
@@ -137,7 +139,7 @@ void SerialAutoConnectTest::_replacementDeviceResetsConfiguration()
     discovery.update({port}, options);
     QVERIFY(!discovery._configs.contains(port.systemLocation));
     QVERIFY(discovery._waitingPorts.contains(port.systemLocation));
-    discovery._waitingPorts[port.systemLocation].setRemainingTime(0);
+    discovery._waitingPorts._deadlinesUs[port.systemLocation] = 0;
     discovery.update({port}, options);
     QCOMPARE(attempts.size(), 2);
     QVERIFY(attempts.last() != attempts.first());

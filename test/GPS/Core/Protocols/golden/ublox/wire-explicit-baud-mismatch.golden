@@ -1,0 +1,7 @@
+about Explicit 38400 while the receiver is at 9600
+request type=ublox role=rtk-base mode=survey-in accuracy=1.0000m duration=60s compact=0 persistent=0 baud=38400
+configure configured=0 baud=38400->38400 failure=protocol ready=0 elapsed=2020ms
+  error "No u-blox receiver answered at 38400 baud"
+  baud 38400 configured
+  write "UBX-MON-VER" 8 timed-out required
+    b5620a0400000e34

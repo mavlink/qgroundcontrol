@@ -1,0 +1,7 @@
+about Explicit 9600 while the receiver is at 460800
+request type=quectel role=rtk-base mode=survey-in accuracy=15.0000m duration=10s compact=0 persistent=0 baud=9600
+configure configured=0 baud=9600->9600 failure=protocol ready=0 elapsed=1000ms
+  error "No Quectel receiver answered at 9600 baud"
+  baud 9600 configured
+  write "PQTMVERNO" 15 timed-out required
+    text "$PQTMVERNO*58\r\n"

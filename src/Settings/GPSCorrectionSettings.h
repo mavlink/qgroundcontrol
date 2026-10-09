@@ -11,13 +11,13 @@ class GPSCorrectionSettings : public SettingsGroup
     QML_UNCREATABLE("")
 
 public:
-    enum CorrectionSource
+    /// Persisted values of correctionSource. The storage type keeps any saved value a valid enum value.
+    enum CorrectionSource : quint8
     {
-        Automatic = 0,
+        HighestPriority = 0,
         LocalReceiver = 1,
         Ntrip = 2,
         Udp = 3,
-        All = 4,
     };
     Q_ENUM(CorrectionSource)
 
@@ -28,7 +28,8 @@ public:
 
     DEFINE_SETTINGFACT(rtcmUdpInputEnabled)
     DEFINE_SETTINGFACT(rtcmUdpInputPort)
-    DEFINE_SETTINGFACT(rtcmUdpValidate)
+    DEFINE_SETTINGFACT(rtcmUdpOutputEnabled)
+    DEFINE_SETTINGFACT(rtcmUdpOutputAddress)
+    DEFINE_SETTINGFACT(rtcmUdpOutputPort)
     DEFINE_SETTINGFACT(correctionSource)
-    DEFINE_SETTINGFACT(correctionSourceInstance)
 };

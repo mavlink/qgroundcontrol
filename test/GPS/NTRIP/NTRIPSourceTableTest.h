@@ -7,11 +7,14 @@ class NTRIPSourceTableTest : public UnitTest
     Q_OBJECT
 
 private slots:
-    void _testParseSTRLine();
-    void _testParseShortLine();
-    void _testParseNonSTRLine();
-    void _testParseFullTable();
-    void _testDistanceCalculation();
-    void _testUpdateDistancesAll();
-    void _testEmptyTable();
+    void _parseSTRLine();
+    void _parseFullTable();
+    void _updateDistancesAll();
+    void _singleMountpointDistanceNotification();
+    void _emptyTable();
+    void _rolesAreReadOnlyProperties();
+    void _coordinateValidity_data();
+    void _coordinateValidity();
+    void _tableTerminator_data();
+    void _tableTerminator();
 };

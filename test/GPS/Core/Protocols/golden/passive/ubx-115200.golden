@@ -1,0 +1,12 @@
+about u-blox UBX and RTCM input, never answered
+request type=passive role=passive mode=survey-in accuracy=0.0000m duration=0s compact=0 persistent=0 baud=115200
+configure configured=1 baud=115200->115200 failure=none ready=1 elapsed=0ms
+  baud 115200 configured
+stream failure=none ready=1
+  input type=ublox
+  satellites full=1 gps:view=2/1,use=1/1 glonass:view=1/1,use=1/1
+  position fix=3d lat=47.00000000 lon=8.00000000 msl=450.0000 ellipsoid=500.0000 hacc=1.5000 vacc=2.5000 hdop=nan vdop=nan speed=0.2240 course=1.107150 used=12 utc=1704164646000000 velocity=1 receipt=1
+  integrity receipt=1 jamming=critical/1 spoofing=unknown/0 antenna=ok/1 output-overflow=0
+  integrity receipt=1 jamming=critical/1 spoofing=indicated/1 antenna=ok/1 output-overflow=0
+  rtcm type=1005 size=25 fnv=f8e3bb62
+  position fix=3d lat=47.00000000 lon=8.00000000 msl=450.0000 ellipsoid=500.0000 hacc=1.5000 vacc=2.5000 hdop=nan vdop=nan speed=0.2240 course=1.107150 used=12 utc=1704164647000000 velocity=1 receipt=1

@@ -8,7 +8,6 @@
 #include "QGCLoggingCategory.h"
 #include "ScheduledTask.h"
 #include "UdpForwarder.h"
-#include "UdpIODevice.h"
 
 class UtilityLibraryTest : public QObject
 {
@@ -126,13 +125,12 @@ private slots:
 
     void networkAndRateLibraryLinkage()
     {
-        UdpIODevice input;
-        QVERIFY(input.bind(QHostAddress::LocalHost, 0));
         UdpForwarder output;
+        QVERIFY(output.configure(QStringLiteral("127.0.0.1"), 9));
         DataRateTracker rate;
         QCOMPARE(rate.totalBytes(), quint64{0});
-        QCOMPARE(input.bytesAvailable(), qint64{0});
-        input.close();
+        output.stop();
+        QVERIFY(!output.isEnabled());
     }
 };
 

@@ -1,0 +1,57 @@
+about Trimble answers the port query at 38400 and follows the speed command
+request type=automatic role=rtk-base mode=survey-in accuracy=1.0000m duration=100s compact=0 persistent=0 baud=0
+configure configured=1 baud=0->115200 failure=none ready=1 elapsed=10500ms
+  identity "MB2"
+  detected type=trimble baud=38400 evidence="identity query"
+  baud 115200 configured
+  write "UBX-MON-VER" 8 timed-out required
+    b5620a0400000e34
+  write "$PASHQ,PRT" 12 timed-out required
+    text "$PASHQ,PRT\r\n"
+  write "$PASHQ,PRT" 12 timed-out required
+    text "$PASHQ,PRT\r\n"
+  write "\n\r" 2 timed-out required
+    text "\n\r"
+  write "VERSION" 9 timed-out required
+    text "VERSION\r\n"
+  write "VERSION" 9 timed-out required
+    text "VERSION\r\n"
+  write "VERSIONA" 10 timed-out required
+    text "VERSIONA\r\n"
+  write "PQTMVERNO" 15 timed-out required
+    text "$PQTMVERNO*58\r\n"
+  baud 38400 configured
+  write "UBX-MON-VER" 8 timed-out required
+    b5620a0400000e34
+  write "$PASHQ,PRT" 12 acknowledged required
+    text "$PASHQ,PRT\r\n"
+  baud 38400 configured
+  write "$PASHQ,PRT" 12 acknowledged required
+    text "$PASHQ,PRT\r\n"
+  write "$PASHS,SPD,A,9" 16 written required
+    text "$PASHS,SPD,A,9\r\n"
+  baud 115200 configured
+  write "$PASHQ,PRT" 12 acknowledged required
+    text "$PASHQ,PRT\r\n"
+  write "$PASHQ,RID" 12 acknowledged required
+    text "$PASHQ,RID\r\n"
+  write "$PASHS,POP,20" 15 acknowledged optional
+    text "$PASHS,POP,20\r\n"
+  write "$PASHS,SNS,SOL" 16 acknowledged optional
+    text "$PASHS,SNS,SOL\r\n"
+  write "$PASHS,NME,ALL,A,OFF" 22 acknowledged optional
+    text "$PASHS,NME,ALL,A,OFF\r\n"
+  write "$PASHS,ATM,ALL,A,OFF" 22 acknowledged optional
+    text "$PASHS,ATM,ALL,A,OFF\r\n"
+  write "$PASHS,OUT,A,ON" 17 acknowledged optional
+    text "$PASHS,OUT,A,ON\r\n"
+  write "$PASHS,NME,ZDA,A,ON,3" 23 acknowledged optional
+    text "$PASHS,NME,ZDA,A,ON,3\r\n"
+  write "$PASHS,NME,GST,A,ON,3" 23 acknowledged optional
+    text "$PASHS,NME,GST,A,ON,3\r\n"
+  write "$PASHS,NME,POS,A,ON,0.05" 26 acknowledged optional
+    text "$PASHS,NME,POS,A,ON,0.05\r\n"
+  write "$PASHS,NME,GSV,A,ON,1" 23 acknowledged optional
+    text "$PASHS,NME,GSV,A,ON,1\r\n"
+  survey active=1 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
+stream failure=none ready=1

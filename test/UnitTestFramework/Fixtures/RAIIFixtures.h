@@ -8,6 +8,7 @@
 #include <QtCore/QJsonObject>
 #include <QtCore/QJsonParseError>
 #include <QtCore/QList>
+#include <QtCore/QString>
 #include <QtCore/QTemporaryDir>
 #include <QtCore/QTemporaryFile>
 #include <QtCore/QUrl>
@@ -229,6 +230,25 @@ private:
     const char* _name;
     QByteArray _value;
     bool _wasSet;
+};
+
+// ============================================================================
+// LoggingCategoryFixture - RAII guard that enables a logging category
+// ============================================================================
+
+/// Enables a QGC logging category so its debug messages are captured, and restores it on destruction.
+class LoggingCategoryFixture
+{
+public:
+    explicit LoggingCategoryFixture(const QString& category);
+    ~LoggingCategoryFixture();
+
+    LoggingCategoryFixture(const LoggingCategoryFixture&) = delete;
+    LoggingCategoryFixture& operator=(const LoggingCategoryFixture&) = delete;
+
+private:
+    QString _category;
+    bool _wasEnabled;
 };
 
 // ============================================================================

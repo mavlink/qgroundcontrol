@@ -64,6 +64,7 @@ def _qml_control(
             component=ctrl.component,
             show_when=ctrl.showWhen,
             enable_when=ctrl.enableWhen,
+            properties=ctrl.properties,
         )
     elif ctrl.control == "info":
         label_expr = qml_tr(ctrl.label, json_context) if ctrl.label else '""'
@@ -247,6 +248,7 @@ def generate_page_qml(
                 _env.get_template("group_component.qml.j2").render(
                     visible=visible_expr,
                     component=grp.component,
+                    properties=grp.properties,
                 )
             )
             continue

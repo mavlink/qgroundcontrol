@@ -3,18 +3,95 @@
     "fileType": "FactMetaData",
     "QGC.MetaData.Facts": [
         {
-            "name": "baseReceiverManufacturers",
-            "shortDesc": "GPS manufacturers for settings",
+            "name": "receiverRole",
+            "shortDesc": "Receiver role",
+            "longDesc": "Passive uses the receiver's existing output without configuring it: its NMEA, u-blox UBX or Septentrio SBF position output provides the ground station position, and its RTCM output can be forwarded to vehicles. Configured base sets up a supported receiver as an RTK base station.",
             "type": "uint8",
-            "enumStrings": "All,Trimble,Septentrio,Femtomes,UBlox,Unicore UM980/UM982,Quectel LG290P,Passive RTCM/NMEA",
-            "enumValues": "0,1,2,3,4,5,6,7",
-            "default": 1,
-            "label": "GPS manufacturers for settings"
+            "enumStrings": "Passive,Configured base",
+            "enumValues": "1,2",
+            "default": 2,
+            "label": "Receiver role"
+        },
+        {
+            "name": "forwardReceiverRtcm",
+            "shortDesc": "Makes a passive receiver that already outputs RTCM, such as a pre-configured base station, a correction source for vehicles.",
+            "type": "bool",
+            "default": true,
+            "label": "Forward receiver RTCM"
+        },
+        {
+            "name": "baseReceiverManufacturers",
+            "shortDesc": "Detect automatically identifies the receiver each time it connects, by listening to its output and sending read-only identification queries. Until then the settings of every supported receiver are shown.",
+            "longDesc": "Detect automatically identifies the receiver family on every connection: QGroundControl listens to the receiver's output and sends read-only identification queries at each supported baud rate, then configures the family it found. Until then the settings of every supported receiver are shown. Select a manufacturer to configure only that receiver family.",
+            "type": "uint8",
+            "enumStrings": "Detect automatically,Trimble,Septentrio,Femtomes,u-blox,Unicore UM980/UM982,Quectel LG290P",
+            "enumValues": "0,1,2,3,4,5,6",
+            "default": 0,
+            "label": "Receiver manufacturer"
+        },
+        {
+            "name": "connectionType",
+            "shortDesc": "Receiver connection",
+            "longDesc": "Serial connects a receiver on a local port. TCP connects a receiver's network port or a serial-to-TCP bridge. UDP listens for the output of a receiver QGroundControl does not configure.",
+            "type": "uint8",
+            "enumStrings": "Serial,TCP,UDP",
+            "enumValues": "0,1,2",
+            "default": 0,
+            "label": "Receiver connection"
+        },
+        {
+            "name": "tcpHost",
+            "shortDesc": "Receiver host",
+            "longDesc": "Host name or address of the receiver or serial-to-TCP bridge.",
+            "type": "string",
+            "default": "",
+            "label": "Receiver host"
+        },
+        {
+            "name": "tcpPort",
+            "shortDesc": "Receiver TCP port",
+            "longDesc": "TCP port of the receiver or serial-to-TCP bridge.",
+            "type": "uint32",
+            "default": 0,
+            "min": 0,
+            "max": 65535,
+            "decimalPlaces": 0,
+            "label": "Receiver TCP port"
+        },
+        {
+            "name": "udpPort",
+            "shortDesc": "Listens on this local port for the receiver's output. The first sender is used until it stops sending.",
+            "type": "uint32",
+            "default": 14401,
+            "min": 1,
+            "max": 65535,
+            "decimalPlaces": 0,
+            "label": "Receiver UDP port"
+        },
+        {
+            "name": "autoConnect",
+            "shortDesc": "Connects the saved receiver at startup and reconnects it when the connection is lost or the receiver is plugged back in. Disconnect pauses this until you connect again.",
+            "longDesc": "Connect the saved receiver when QGroundControl starts, reconnect it with increasing delays when the connection is lost, and reconnect a serial receiver as soon as it is plugged back in. A configured base without a saved serial device connects to an RTK receiver detected on USB instead. Disconnect pauses automatic connection until you connect again. When off, receivers connect only when you select Connect, and a lost connection is reported. Automatic connections never save settings to receiver flash.",
+            "type": "bool",
+            "default": true,
+            "label": "Connect automatically",
+            "keywords": "auto connect,reconnect,startup,rtk gps"
+        },
+        {
+            "name": "gcsPositionSource",
+            "shortDesc": "GCS position source",
+            "longDesc": "Source of the ground station position. Best available uses the connected GNSS receiver, then this device, and switches when the preferred source loses its fix.",
+            "type": "uint32",
+            "enumStrings": "Best available,GNSS receiver,This device",
+            "enumValues": "0,1,2",
+            "default": 0,
+            "label": "GCS position source",
+            "keywords": "gcs position,ground station position,gps,gnss,rtk,nmea,location"
         },
         {
             "name": "serialDevice",
             "shortDesc": "Serial device",
-            "longDesc": "Explicitly selected receiver port. Generic USB serial adapters are not automatically identified as GNSS receivers.",
+            "longDesc": "Explicitly selected receiver port. Leave it empty for a configured base to connect to an RTK receiver detected on USB; generic USB serial adapters are not automatically identified as GNSS receivers.",
             "type": "string",
             "default": "",
             "label": "Serial device"
@@ -22,17 +99,17 @@
         {
             "name": "serialBaudRate",
             "shortDesc": "Baud rate",
-            "longDesc": "Serial rate for an explicitly selected receiver. Passive input requires the rate already configured on the receiver.",
+            "longDesc": "Serial rate for an explicitly selected receiver. Auto (0) lets configurable receivers detect the rate; passive input requires the rate already configured on the receiver.",
             "type": "uint32",
             "default": 115200,
-            "min": 1200,
+            "min": 0,
             "max": 4000000,
             "decimalPlaces": 0,
             "label": "Baud rate"
         },
         {
             "name": "surveyInAccuracyLimit",
-            "shortDesc": "Survey in accuracy",
+            "shortDesc": "Survey-In accuracy",
             "longDesc": "Receiver-specific survey accuracy limit. Quectel applies this limit to individual observations, not to guaranteed final position accuracy.",
             "type": "double",
             "default": 2.0,
@@ -41,7 +118,7 @@
             "increment": 0.01,
             "units": "m",
             "decimalPlaces": 2,
-            "label": "Survey in accuracy"
+            "label": "Survey-In accuracy"
         },
         {
             "name": "surveyInMinObservationDuration",
@@ -58,8 +135,7 @@
         },
         {
             "name": "receiverAveragingDuration",
-            "shortDesc": "Maximum averaging time",
-            "longDesc": "Maximum receiver-managed averaging time. This mode does not guarantee a position accuracy.",
+            "shortDesc": "The receiver averages its position for up to this time. This is not accuracy-controlled survey-in and does not guarantee a position accuracy.",
             "type": "uint32",
             "default": 60,
             "min": 1,
@@ -71,13 +147,13 @@
         },
         {
             "name": "useFixedBasePosition",
-            "shortDesc": "Use specified base mode",
+            "shortDesc": "Base mode",
             "longDesc": "Specify the RTK base mode: accuracy-controlled survey-in, fixed position, or receiver-managed averaging without an accuracy guarantee.",
             "type": "uint8",
-            "enumStrings": "Survey-In,Fixed,Receiver-managed averaging",
+            "enumStrings": "Survey-In,Fixed position,Receiver-managed averaging",
             "enumValues": "0,1,2",
             "default": 0,
-            "label": "Use specified base mode"
+            "label": "Base mode"
         },
         {
             "name": "fixedBasePositionLatitude",
@@ -120,6 +196,13 @@
             "units": "m",
             "decimalPlaces": 2,
             "label": "Base Position Accuracy"
+        },
+        {
+            "name": "compactRtcmCorrections",
+            "shortDesc": "Uses about a third less correction bandwidth, for example on slow telemetry radios. Doppler is omitted and measurements use lower resolution.",
+            "type": "bool",
+            "default": false,
+            "label": "Compact RTCM corrections (MSM4)"
         }
     ]
 }

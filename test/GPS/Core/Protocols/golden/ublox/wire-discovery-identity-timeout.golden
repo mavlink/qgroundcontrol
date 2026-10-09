@@ -1,0 +1,25 @@
+about Identity replies are always corrupt
+request type=ublox role=rtk-base mode=survey-in accuracy=1.0000m duration=60s compact=0 persistent=0 baud=0
+configure configured=0 baud=0->0 failure=protocol ready=0 elapsed=14140ms
+  error "No u-blox receiver answered at 38400, 57600, 9600, 115200, 230400, 460800, 921600 baud"
+  baud 38400 configured
+  write "UBX-MON-VER" 8 timed-out required
+    b5620a0400000e34
+  baud 57600 configured
+  write "UBX-MON-VER" 8 timed-out required
+    b5620a0400000e34
+  baud 9600 configured
+  write "UBX-MON-VER" 8 timed-out required
+    b5620a0400000e34
+  baud 115200 configured
+  write "UBX-MON-VER" 8 timed-out required
+    b5620a0400000e34
+  baud 230400 configured
+  write "UBX-MON-VER" 8 timed-out required
+    b5620a0400000e34
+  baud 460800 configured
+  write "UBX-MON-VER" 8 timed-out required
+    b5620a0400000e34
+  baud 921600 configured
+  write "UBX-MON-VER" 8 timed-out required
+    b5620a0400000e34

@@ -1,0 +1,11 @@
+about u-blox antenna, jamming and output overflow, never answered
+request type=passive role=passive mode=survey-in accuracy=0.0000m duration=0s compact=0 persistent=0 baud=115200
+configure configured=1 baud=115200->115200 failure=none ready=1 elapsed=0ms
+  baud 115200 configured
+stream failure=none ready=1
+  input type=ublox
+  position fix=3d lat=47.00000000 lon=8.00000000 msl=450.0000 ellipsoid=500.0000 hacc=1.5000 vacc=2.5000 hdop=nan vdop=nan speed=0.2240 course=1.107150 used=12 utc=1704164646000000 velocity=1 receipt=1
+  integrity receipt=1 jamming=unknown/1 spoofing=unknown/0 antenna=open/1 output-overflow=0
+  integrity receipt=1 jamming=unknown/1 spoofing=unknown/0 antenna=open/1 output-overflow=1
+  integrity receipt=1 jamming=warning/1 spoofing=unknown/0 antenna=short/1 output-overflow=1
+  position fix=3d lat=47.00000000 lon=8.00000000 msl=450.0000 ellipsoid=500.0000 hacc=1.5000 vacc=2.5000 hdop=nan vdop=nan speed=0.2240 course=1.107150 used=12 utc=1704164647000000 velocity=1 receipt=1
