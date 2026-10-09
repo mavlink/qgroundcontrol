@@ -33,7 +33,7 @@ For more information see [Troubleshooting QGC Setup > Windows: UI Rendering/Vide
 
 ## Mac OS {#macOS}
 
-Supported versions: macOS 13 (Ventura) or later:
+Supported versions: macOS 14.4 (Sonoma) or later:
 
 <!-- match version using https://docs.qgroundcontrol.com/master/en/qgc-dev-guide/getting_started/#native-builds -->
 <!-- usually based on Qt macOS dependency -->

@@ -1,8 +1,8 @@
 {
   "$schema": "build-config.schema.json",
   "qt": {
-    "version": "6.11.1",
-    "minimum_version": "6.11.0",
+    "version": "6.12.0",
+    "minimum_version": "6.12.0",
     "modules": "qtgraphs qtlocation qtpositioning qtspeech qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml qtwebsockets qthttpserver"
   },
   "android": {
@@ -17,8 +17,8 @@
   "apple": {
     "xcode_version": "26.x",
     "xcode_ios_version": "26.x",
-    "macos_deployment_target": "13.0",
-    "ios_deployment_target": "17.0"
+    "macos_deployment_target": "14.4",
+    "ios_deployment_target": "18.0"
   },
   "build": {
     "cmake_minimum_version": "3.25",
