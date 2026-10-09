@@ -1,6 +1,7 @@
 # Plan File Format
 
-Plan files are stored in JSON file format and contain mission items and (optional) geo-fence and rally-points.
+Plan files are stored in JSON file format and contain mission, geofence, and rally point objects.
+The geofence and rally point objects are required, but their lists can be empty.
 Below you can see the top level format of a Plan file
 
 ::: tip
@@ -34,8 +35,8 @@ The main fields are:
 | `fileType`                     | Must be `"Plan"`.                                                              |
 | `groundStation`                | The name of the ground station which created this file (here _QGroundControl_) |
 | [`mission`](#mission)          | The mission associated with this flight plan.                                  |
-| [`geoFence`](#geofence)        | (Optional) Geofence information for this plan.                                 |
-| [`rallyPoints`](#rally_points) | (Optional) Rally/Safe point information for this plan                          |
+| [`geoFence`](#geofence)        | Required geofence object. Its circles and polygons lists may be empty.         |
+| [`rallyPoints`](#rally_points) | Required rally point object. Its points list may be empty.                     |
 
 ## Mission Object {#mission}
 
@@ -218,7 +219,7 @@ The object definition for a `CorridorScan` complex mission item is given below.
 
 | Key                                                     | Description                                                           |
 | ------------------------------------------------------- | --------------------------------------------------------------------- |
-| `version`                                               | The version for this `CorridorScan` definition. Current version is 3. |
+| `version`                                               | The version for this `CorridorScan` definition. Current version is 2. |
 | `type`                                                  | `ComplexItem` (this is a complex item).                               |
 | `complexItemType`                                       | `CorridorScan`                                                        |
 | `CorridorWidth`                                         | ?                                                                     |
@@ -371,7 +372,7 @@ The `CameraCalc` contains camera information used for a survey, corridor or stru
 
 ## GeoFence {#geofence}
 
-Geofence information is optional.
+The `geoFence` object is required, but its `circles` and `polygons` lists may be empty.
 The plan can contain an arbitrary number of geofences defined in terms of polygons and circles.
 
 The minimal definition is shown below.
@@ -397,7 +398,7 @@ The fields are:
 ### Circle Geofence {#circle_geofence}
 
 Each circular geofence is defined in a separate item, as shown below (multiple comma-separated items can be defined).
-The items define the centre and radius of the circle, and whether or not the specific geofence is activated.
+The items define the centre and radius of the circle, and whether it is an inclusion or exclusion fence.
 
 ```json
 {
@@ -416,7 +417,7 @@ The fields are:
 | ----------- | -------------------------------------------------------------------------------------------------- |
 | `version`   | The version number for the geofence "circle" plan format. The documented version is 1.             |
 | `circle`    | The definition of the circle. Includes `centre` (latitude, longitude) and `radisu` as shown above. |
-| `inclusion` | Whether or not the geofence is enabled (true) or disabled.                                         |
+| `inclusion` | `true`: inclusion fence; `false`: exclusion fence.                                                 |
 
 ### Polygon Geofence {#polygon_geofence}
 
@@ -457,11 +458,11 @@ The fields are:
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | `version`   | The version number for the geofence "polygon" plan format. The documented version is 2.                                        |
 | `polygon`   | A list of points for the polygon. Each point contains a latitude and longitude. The points are ordered in a clockwise winding. |
-| `inclusion` | Whether or not the geofence is enabled (true) or disabled.                                                                     |
+| `inclusion` | `true`: inclusion fence; `false`: exclusion fence.                                                                             |
 
 ## Rally Points {#rally_points}
 
-Rally point information is optional.
+The `rallyPoints` object is required, but its `points` list may be empty.
 The plan can contain an arbitrary number of rally points, each of which has a latitude, longitude, and altitude (above home position).
 
 A definition with two points is shown below.
