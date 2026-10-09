@@ -16,8 +16,8 @@ Map {
 
     property string mapName:                        'defaultMap'
     property bool   isSatelliteMap:                 activeMapType.name.indexOf("Satellite") > -1 || activeMapType.name.indexOf("Hybrid") > -1
-    property var    gcsPosition:                    QGroundControl.qgcPositionManger.gcsPosition
-    property real   gcsHeading:                     QGroundControl.qgcPositionManger.gcsHeading
+    property var    gcsPosition:                    QGroundControl.positionManager.gcsPosition
+    property real   gcsHeading:                     QGroundControl.positionManager.gcsHeading
     property alias  allowGCSLocationCenter:         _positionTracker.allowGCSLocationCenter     ///< true: map will center to gcs location one time
     property alias  allowVehicleLocationCenter:     _positionTracker.allowVehicleLocationCenter ///< true: map will center/zoom to vehicle location one time
     property alias  firstVehiclePositionReceived:   _positionTracker.firstVehiclePositionReceived ///< true: first vehicle position update was responded to

@@ -32,4 +32,7 @@ private slots:
     // SettingsFixture
     void _testSettingsFixtureRestore();
     void _testSettingsFixtureFactValue();
+
+    // LoggingCategoryFixture
+    void _testLoggingCategoryFixtureRestore();
 };

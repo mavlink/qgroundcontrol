@@ -1,0 +1,4 @@
+about Survey-in beyond 24 hours is not supported
+request type=quectel role=rtk-base mode=survey-in accuracy=15.0000m duration=90000s compact=0 persistent=0 baud=0
+configure configured=0 baud=0->0 failure=protocol ready=0 elapsed=0ms
+  error "Unsupported LG290P configuration: use native 1 Hz observation count (maximum 86400) and 3D position accuracy threshold (maximum 1000 m), not receiver-managed survey"

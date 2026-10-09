@@ -29,6 +29,7 @@ private slots:
     void _testMaximumLengthEnforced();
     void _testRegionSwitchSwapsOperatorIDFields();
     void _testFAARegionForcesLiveLocationInUI();
+    void _testLocationTypeShowsItsRows();
     void _testEUVehicleInfoGroupFollowsRegion();
     void _testEURegionForcesOperatorIDBroadcastInUI();
 

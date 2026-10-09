@@ -337,11 +337,9 @@ void QGCCorePlugin::releaseVideoSink(void *sink)
 
 const QVariantList &QGCCorePlugin::toolBarIndicators()
 {
-    static const QVariantList toolBarIndicatorList = QVariantList(
-        {
-            QVariant::fromValue(QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/Toolbar/RTKGPSIndicator.qml"))),
-        }
-    );
+    static const QVariantList toolBarIndicatorList = QVariantList({
+        QVariant::fromValue(QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/Toolbar/GPSIndicator.qml"))),
+    });
 
     return toolBarIndicatorList;
 }

@@ -1,282 +1,198 @@
 #include "NTRIPSourceTableController.h"
 
+#include <chrono>
 #include <utility>
 
-#include <QtNetwork/QHttpHeaders>
-#include <QtNetwork/QNetworkAccessManager>
-#include <QtNetwork/QNetworkReply>
-#include <QtNetwork/QNetworkRequest>
-#include <QtNetwork/QSslError>
+#include <QtCore/QPointer>
 
+#include "MonotonicClock.h"
+#include "NTRIPHttpSession.h"
 #include "NTRIPSourceTable.h"
-#include "NTRIPTlsPolicy_p.h"
 #include "QGCLoggingCategory.h"
-#include "QGCNetworkClient.h"
+#include "RuntimeScheduler.h"
+#include "ScheduledTask.h"
 
 QGC_LOGGING_CATEGORY(NTRIPSourceTableControllerLog, "GPS.NTRIPSourceTableController")
 
-NTRIPSourceTableController::NTRIPSourceTableController(QObject* parent)
-    : QObject(parent),
-      _model(new NTRIPSourceTableModel(this)),
-      _networkManager(QGCNetworkHelper::createNetworkManager(this))
+struct NTRIPSourceTableController::FetchAttempt
+{
+    FetchAttempt(RuntimeScheduler* scheduler, QObject* context)
+        : timeout(scheduler, context)
+    {}
+
+    QPointer<NTRIPHttpSession> session;
+    ScheduledTask timeout;
+    QByteArray body;
+};
+
+NTRIPSourceTableController::NTRIPSourceTableController(QObject* parent, RuntimeScheduler* scheduler)
+    : QObject(parent)
+    , _model(new NTRIPSourceTableModel(this))
+    , _sortedModel(new NTRIPSourceTableSortModel(_model, this))
+    , _scheduler(RuntimeScheduler::orDefault(scheduler, this))
 {}
 
 NTRIPSourceTableController::~NTRIPSourceTableController()
 {
-    // Abort any in-flight reply before the shared QNAM is destroyed by ~QObject's
-    // child cleanup, otherwise the reply outlives its manager.
-    _abortReply();
+    // Detach the session before child cleanup so its callbacks cannot reach a destroyed controller.
+    _abortFetch();
 }
 
-QAbstractListModel* NTRIPSourceTableController::mountpointModel() const
+QAbstractItemModel* NTRIPSourceTableController::mountpointModel() const
 {
-    return _model;
+    return _sortedModel;
 }
 
 void NTRIPSourceTableController::fetch(const NTRIPConnectionConfig& config, const QGeoCoordinate& sortCoord)
 {
-    if (_deferModelMutation([this, config, sortCoord]() { fetch(config, sortCoord); })) {
-        return;
-    }
     auto casterConfig = config;
     casterConfig.mountpoint.clear();
     const bool sameCaster = casterConfig == _lastFetchConfig;
-    const QString invalid = config.validationError();
+    const QString error = config.validationError();
 
-    if (invalid.isEmpty() && _reply && _fetchStatus == FetchStatus::InProgress && sameCaster) {
+    if (error.isEmpty() && _attempt && sameCaster) {
         _sortCoord = sortCoord;
         return;
     }
 
-    const QPointer<NTRIPSourceTableController> guard(this);
-    const quint64 revision = ++_fetchRevision;
-    const auto current = [this, guard, revision]() { return guard && _fetchRevision == revision; };
-    _abortReply();
-    if (!current()) {
-        return;
-    }
-    if (!invalid.isEmpty()) {
-        _onFetchError(invalid);
+    _abortFetch();
+    if (!error.isEmpty()) {
+        _onFetchError(error);
         return;
     }
 
-    if (_model->count() > 0 && _cacheAge.isValid() && sameCaster) {
-        if (const qint64 age = _cacheAge.elapsed(); age < kCacheTtlMs) {
-            qCDebug(NTRIPSourceTableControllerLog) << "Source table cache hit, age:" << age << "ms";
+    if (_model->count() > 0 && _cacheStoredAtUs && sameCaster) {
+        const auto nowUs = _scheduler->nowUs();
+        if (MonotonicClock::fresh(*_cacheStoredAtUs, nowUs, CACHE_TTL)) {
+            qCDebug(NTRIPSourceTableControllerLog) << "Source table cache hit, age:"
+                                                   << std::chrono::duration_cast<std::chrono::milliseconds>(
+                                                          *MonotonicClock::age(*_cacheStoredAtUs, nowUs));
             _sortCoord = sortCoord;
             _model->updateDistances(_sortCoord);
-            if (!current()) {
-                return;
-            }
-            _fetchStatus = FetchStatus::Success;
-            emit fetchStatusChanged();
+            _setFetchState(FetchStatus::Success, QString());
             return;
         }
     }
 
-    if (!sameCaster) {
-        // Retire TLS connections authenticated under the previous certificate policy.
-        _networkManager->clearConnectionCache();
-        if (!current()) {
-            return;
-        }
-    }
-    _cacheAge.invalidate();
+    _cacheStoredAtUs.reset();
     _sortCoord = sortCoord;
+    const QString previousWarning = securityWarning();
     _lastFetchConfig = casterConfig;
-    _fetchStatus = FetchStatus::InProgress;
-    _fetchError.clear();
 
-    QUrl url;
-    url.setScheme(config.useTls ? QStringLiteral("https") : QStringLiteral("http"));
-    url.setHost(config.host);
-    url.setPort(config.port);
-    url.setPath(QStringLiteral("/"));
-
-    QNetworkRequest request(url);
-    request.setTransferTimeout(kFetchTimeoutMs);
-    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
-    request.setAttribute(QNetworkRequest::Http2AllowedAttribute, false);
-    request.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::AlwaysNetwork);
-    request.setAttribute(QNetworkRequest::CacheSaveControlAttribute, false);
-    QHttpHeaders headers;
-    using Header = QHttpHeaders::WellKnownHeader;
-    if (!headers.append(Header::UserAgent, "QGC-NTRIP") || !headers.append(Header::Accept, "*/*") ||
-        !headers.append(Header::Connection, "keep-alive") || !headers.append("Ntrip-Version", "Ntrip/2.0")) {
-        _onFetchError(tr("Invalid NTRIP source-table request header"));
-        return;
+    if (casterConfig.sendsCredentialsInClear()) {
+        qCWarning(NTRIPSourceTableControllerLog) << "Sending source-table credentials without TLS";
     }
-    request.setHeaders(headers);
-    if (!config.username.isEmpty() || !config.password.isEmpty()) {
-        QGCNetworkHelper::setBasicAuth(request, config.username, config.password);
+    _startFetch();
+    if (securityWarning() != previousWarning) {
+        emit securityWarningChanged();
     }
+    // The session reports failures to open asynchronously or, without a TLS backend, already from _startFetch().
+    if (_attempt) {
+        _setFetchState(FetchStatus::InProgress, QString());
+    }
+}
 
-    _replyTooLarge = false;
-    _reply = _networkManager->get(request);
-    const auto reply = _reply;
-    const auto currentReply = [this, current, reply]() { return current() && reply && _reply == reply; };
-    connect(reply, &QNetworkReply::sslErrors, this,
-            [reply, currentReply, allowSelfSigned = config.allowSelfSignedCerts](const QList<QSslError>& errors) {
-                if (currentReply() && allowSelfSigned && NTRIPTlsPolicy::isSelfSignedOnly(errors)) {
-                    reply->ignoreSslErrors(errors);
-                }
-            });
-    // Bound memory: abort mid-download if the caster streams an oversized body.
-    connect(reply, &QNetworkReply::downloadProgress, this, [this, reply, currentReply](qint64 received, qint64) {
-        if (currentReply() && received >= kMaxSourceTableBytes) {
-            _replyTooLarge = true;
-            reply->abort();
+void NTRIPSourceTableController::_startFetch()
+{
+    _attempt = std::make_unique<FetchAttempt>(_scheduler, this);
+    auto* session = new NTRIPHttpSession(this, _scheduler, NTRIPHttpPurpose::SourceTable);
+    _attempt->session = session;
+    // _abortFetch() retires the session, which disconnects it, so these run only for the live attempt.
+    connect(session, &NTRIPHttpSession::certificatePinned, this, &NTRIPSourceTableController::certificatePinned);
+    connect(session, &NTRIPHttpSession::responseStarted, this, &NTRIPSourceTableController::_armFetchTimeout);
+    connect(session, &NTRIPHttpSession::bodyReceived, this, &NTRIPSourceTableController::_readReply);
+    connect(session, &NTRIPHttpSession::failed, this,
+            [this](const NTRIPFailure& failure) { _finishFetch(failure.detail); });
+    connect(session, &NTRIPHttpSession::finished, this,
+            [this]() { _finishFetch(tr("Response does not contain a valid source table")); });
+    _armFetchTimeout();
+    if (const QString openError = session->open(_lastFetchConfig); !openError.isEmpty()) {
+        _finishFetch(openError);
+    }
+}
+
+void NTRIPSourceTableController::_armFetchTimeout()
+{
+    // An inactivity timeout: a large table on a slow link keeps the fetch alive while bytes arrive.
+    _attempt->timeout.schedule(FETCH_TIMEOUT, [this]() {
+        // A refusal the caster is still explaining ends on its own deadline.
+        if (!_attempt->session || !_attempt->session->awaitingErrorBody()) {
+            _finishFetch(tr("Source table request timed out"));
         }
     });
-    connect(reply, &QNetworkReply::finished, this, [this, reply, revision]() { _onReplyFinished(reply, revision); });
-    connect(reply, &QObject::destroyed, this, [this, revision]() {
-        if (_fetchRevision == revision && _fetchStatus == FetchStatus::InProgress) {
-            _onFetchError(tr("Source table reply was destroyed before completion"));
-        }
-    });
-    emit fetchErrorChanged();
-    if (currentReply()) {
-        emit fetchStatusChanged();
+}
+
+void NTRIPSourceTableController::_readReply(const QByteArray& bytes)
+{
+    _armFetchTimeout();
+    if (_attempt->body.size() + bytes.size() >= MAX_SOURCE_TABLE_BYTES) {
+        _finishFetch(tr("Source table too large (exceeds %1 MB)").arg(MAX_SOURCE_TABLE_BYTES / (1024 * 1024)));
+        return;
+    }
+    const qsizetype checkedSize = _attempt->body.size();
+    _attempt->body += bytes;
+    // A complete table ends the fetch before any framing error in the bytes that follow it.
+    if (ntripSourceTableComplete(_attempt->body, checkedSize)) {
+        _finishFetch();
     }
 }
 
-void NTRIPSourceTableController::_onReplyFinished(QNetworkReply* reply, quint64 revision)
+void NTRIPSourceTableController::_finishFetch(const QString& error)
 {
-    if (!reply || _reply != reply || _fetchRevision != revision) {
+    if (!_attempt) {
         return;
     }
-    const QPointer<NTRIPSourceTableController> guard(this);
-    const auto current = [this, guard, revision]() { return guard && _fetchRevision == revision; };
-    if (_replyTooLarge) {
-        _abortReply();
-        if (current()) {
-            _onFetchError(tr("Source table too large (exceeds %1 MB)").arg(kMaxSourceTableBytes / (1024 * 1024)));
-        }
-        return;
-    }
-
-    const bool networkError = reply->error() != QNetworkReply::NoError;
-    const QString networkErrorMsg = networkError ? reply->errorString() : QString();
-    const QString body = networkError ? QString() : QString::fromUtf8(reply->readAll());
-    _abortReply();
-    if (!current()) {
-        return;
-    }
-
-    if (networkError) {
-        _onFetchError(networkErrorMsg);
-        return;
-    }
-
-    if (!body.contains(QStringLiteral("ENDSOURCETABLE"))) {
-        _onFetchError(tr("Response does not contain a valid source table"));
-        return;
-    }
-
-    _onSourceTableReceived(body);
-}
-
-void NTRIPSourceTableController::_onSourceTableReceived(const QString& table)
-{
-    if (_deferModelMutation([this, table]() { _onSourceTableReceived(table); })) {
-        return;
-    }
-    const QPointer<NTRIPSourceTableController> guard(this);
-    const quint64 revision = _fetchRevision;
-    const auto current = [this, guard, revision]() { return guard && _fetchRevision == revision; };
-    _model->parseSourceTable(table);
-    if (!current()) {
-        return;
-    }
-    _cacheAge.start();
-
-    if (_sortCoord.isValid()) {
-        _model->updateDistances(_sortCoord);
-    }
-    if (!current()) {
-        return;
-    }
-
-    _fetchStatus = FetchStatus::Success;
-    emit fetchStatusChanged();
-    if (current()) {
-        emit mountpointModelChanged();
-    }
-}
-
-void NTRIPSourceTableController::_onFetchError(const QString& error)
-{
-    if (_deferModelMutation([this, error]() { _onFetchError(error); })) {
-        return;
-    }
-    const QPointer<NTRIPSourceTableController> guard(this);
-    const quint64 revision = _fetchRevision;
-    const auto current = [this, guard, revision]() { return guard && _fetchRevision == revision; };
-    _cacheAge.invalidate();
-    _fetchError = error;
-    _fetchStatus = FetchStatus::Error;
-    _model->clear();
-    if (!current()) {
-        return;
-    }
-    emit fetchErrorChanged();
-    if (current()) {
-        emit fetchStatusChanged();
-    }
-}
-
-bool NTRIPSourceTableController::_deferModelMutation(std::function<void()> action)
-{
-    if (!_model->_mutating) {
-        return false;
-    }
-    // A reset observer can replace this fetch. Retire its publication now, but
-    // defer the replacement (including status signals) until the model is stable.
-    const quint64 revision = ++_fetchRevision;
-    QMetaObject::invokeMethod(
-        this,
-        [this, revision, action = std::move(action)]() {
-            if (_fetchRevision == revision) {
-                action();
-            }
-        },
-        Qt::QueuedConnection);
-    return true;
-}
-
-void NTRIPSourceTableController::_abortReply()
-{
-    const auto reply = std::exchange(_reply, {});
-    if (reply) {
-        disconnect(reply, nullptr, this, nullptr);
-        reply->deleteLater();
-        if (reply->isRunning()) {
-            reply->abort();
-        }
-    }
-}
-
-void NTRIPSourceTableController::injectSourceTableForTest(const QString& table)
-{
-    const QPointer<NTRIPSourceTableController> guard(this);
-    const quint64 revision = ++_fetchRevision;
-    _abortReply();
-    if (guard && _fetchRevision == revision) {
-        _onSourceTableReceived(table);
-    }
-}
-
-void NTRIPSourceTableController::injectFetchErrorForTest(const QString& error)
-{
-    const QPointer<NTRIPSourceTableController> guard(this);
-    const quint64 revision = ++_fetchRevision;
-    _abortReply();
-    if (guard && _fetchRevision == revision) {
+    const QByteArray body = _attempt->body;
+    _abortFetch();
+    if (error.isEmpty()) {
+        _onSourceTableReceived(QString::fromUtf8(body));
+    } else {
         _onFetchError(error);
     }
 }
 
-void NTRIPSourceTableController::selectMountpoint(const QString& mountpoint)
+void NTRIPSourceTableController::_onSourceTableReceived(const QString& table)
 {
-    emit mountpointSelected(mountpoint);
+    _model->parseSourceTable(table, _sortCoord);
+    _cacheStoredAtUs = _scheduler->nowUs();
+    _setFetchState(FetchStatus::Success, QString());
+}
+
+void NTRIPSourceTableController::_onFetchError(const QString& error)
+{
+    _cacheStoredAtUs.reset();
+    _model->clear();
+    _setFetchState(FetchStatus::Error, error);
+}
+
+void NTRIPSourceTableController::_setFetchState(FetchStatus status, const QString& error)
+{
+    const bool statusChanged = std::exchange(_fetchStatus, status) != status;
+    const bool errorChanged = std::exchange(_fetchError, error) != error;
+    if (errorChanged) {
+        emit fetchErrorChanged();
+    }
+    if (statusChanged) {
+        emit fetchStatusChanged();
+    }
+}
+
+void NTRIPSourceTableController::_abortFetch()
+{
+    if (!_attempt) {
+        return;
+    }
+    // retire() disconnects the session before aborting it, so the abort cannot call back into this controller.
+    if (_attempt->session) {
+        _attempt->session->retire();
+    }
+    _attempt.reset();
+}
+
+void NTRIPSourceTableController::cancel()
+{
+    _abortFetch();
+    if (_fetchStatus == FetchStatus::InProgress) {
+        _setFetchState(FetchStatus::Idle, QString());
+    }
 }

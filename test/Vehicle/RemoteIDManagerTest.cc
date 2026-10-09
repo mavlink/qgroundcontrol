@@ -1,8 +1,10 @@
 #include "RemoteIDManagerTest.h"
 
+#include <chrono>
+
 #include <QtCore/QScopeGuard>
 
-#include "GpsTestHelpers.h"
+#include "GPSManager.h"
 #include "MAVLinkLib.h"
 #include "ManualScheduler.h"
 #include "MockLink.h"
@@ -10,14 +12,17 @@
 #include "RemoteIDManager.h"
 #include "RemoteIDSettings.h"
 #include "SettingsManager.h"
+#include "Support/GPSTestHelpers.h"
 #include "Vehicle.h"
+
+using namespace std::chrono_literals;
 
 namespace {
 
 constexpr const char* kValidFullOperatorID = "FIN87astrdge12k8-xyz";
 constexpr const char* kValidPublicOperatorID = "FIN87astrdge12k8";
 
-using GpsTestHelpers::PositionSource;
+using GPSTest::PositionSource;
 
 }  // namespace
 
@@ -132,49 +137,72 @@ void RemoteIDManagerTest::_operatorIDBroadcastNullPadded()
 void RemoteIDManagerTest::_liveGpsFailureDiagnostics_data()
 {
     QTest::addColumn<int>("error");
-    QTest::addColumn<GPSPositionService::SourceStatus>("status");
+    QTest::addColumn<PositionManager::SourceStatus>("status");
     QTest::addColumn<QString>("diagnostic");
-    QTest::newRow("stale") << int(QGeoPositionInfoSource::NoError) << GPSPositionService::SourceStatus::Stale
+    QTest::newRow("stale") << int(QGeoPositionInfoSource::NoError) << PositionManager::SourceStatus::Stale
                            << QStringLiteral("Position data is stale");
-    QTest::newRow("inaccurate") << int(QGeoPositionInfoSource::NoError) << GPSPositionService::SourceStatus::InvalidFix
+    QTest::newRow("inaccurate") << int(QGeoPositionInfoSource::NoError) << PositionManager::SourceStatus::InvalidFix
                                 << QStringLiteral("Position fix does not meet accuracy requirements");
     QTest::newRow("permission-denied")
-        << int(QGeoPositionInfoSource::AccessError) << GPSPositionService::SourceStatus::PermissionDenied
+        << int(QGeoPositionInfoSource::AccessError) << PositionManager::SourceStatus::PermissionDenied
         << QStringLiteral("GCS GPS data error: %1").arg(QGeoPositionInfoSource::AccessError);
     QTest::newRow("backend-unavailable")
-        << int(QGeoPositionInfoSource::ClosedError) << GPSPositionService::SourceStatus::BackendUnavailable
+        << int(QGeoPositionInfoSource::ClosedError) << PositionManager::SourceStatus::BackendUnavailable
         << QStringLiteral("GCS GPS data error: %1").arg(QGeoPositionInfoSource::ClosedError);
 }
 
 void RemoteIDManagerTest::_liveGpsFailureDiagnostics()
 {
     QFETCH(int, error);
-    QFETCH(GPSPositionService::SourceStatus, status);
+    QFETCH(PositionManager::SourceStatus, status);
     QFETCH(QString, diagnostic);
 
     auto* settings = SettingsManager::instance()->remoteIDSettings();
     auto* manager = vehicle()->remoteIDManager();
-    auto* positioning = QGCPositionManager::instance();
+    auto* positioning = GPSManager::instance()->positionManager();
+    // A fix goes stale on a receiver source whose clock the test advances; the other failures are this device's.
+    const bool stale = status == PositionManager::SourceStatus::Stale;
     PositionSource source;
-    const auto savedMode = positioning->sourceMode();
+    ManualScheduler scheduler;
+    GPSSourceHealth receiver(nullptr, &scheduler);
+    const auto saved = positioning->configuration();
     const auto restore = qScopeGuard([&]() {
         settings->locationType()->setRawValue(_savedLocationType);
-        positioning->setInternalPositionSource(nullptr, GPSPositionService::SourceStatus::NoSource);
-        positioning->setSourceMode(savedMode);
+        positioning->setInternalPositionSource(nullptr, PositionManager::SourceStatus::NoSource);
+        positioning->setConfiguration(saved);
     });
-    positioning->setSourceMode(GPSPositionService::SourceMode::InternalOnly);
-    positioning->setInternalPositionSource(&source, GPSPositionService::SourceStatus::WaitingForFix);
-    settings->region()->setRawValue(static_cast<int>(RemoteIDSettings::RegionOperation::FAA));
+    GPSPositionSourceRegistration registration;
+    if (stale) {
+        registration = positioning->registerReceiver(&receiver);
+        positioning->setConfiguration({.sourceMode = PositionManager::SourceMode::ReceiverOnly});
+    } else {
+        positioning->setConfiguration({.sourceMode = PositionManager::SourceMode::InternalOnly});
+        // The source reports ellipsoid heights, as Android's does, so the operator altitude raises no datum warning.
+        positioning->setInternalPositionSource(&source, PositionManager::SourceStatus::WaitingForFix, false,
+                                               GPSAltitudeDatum::Ellipsoid);
+    }
+    const auto publish = [&](const QGeoPositionInfo& fix) {
+        if (!stale) {
+            source.publish(fix);
+            return;
+        }
+        GPSObservation observation;
+        observation.monotonicTimestampUs = scheduler.nowUs();
+        observation.position = fix;
+        observation.altitudeDatum = GPSAltitudeDatum::Ellipsoid;
+        receiver.updateObservation(observation);
+    };
+    settings->region()->setRawValue(static_cast<int>(RemoteIDSettings::RegionOperation::EU));
     settings->locationType()->setRawValue(RemoteIDManager::LocationTypes::LiveGNSS);
 
-    QCOMPARE(positioning->sourceStatus(), GPSPositionService::SourceStatus::WaitingForFix);
+    QCOMPARE(positioning->sourceStatus(), PositionManager::SourceStatus::WaitingForFix);
     QVERIFY(QMetaObject::invokeMethod(manager, "_sendMessages", Qt::DirectConnection));
     QVERIFY(!manager->gcsPositionUsable());
 
     QGeoPositionInfo fix(QGeoCoordinate(47, 8, 500), QDateTime::currentDateTimeUtc());
     fix.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 1);
     fix.setAttribute(QGeoPositionInfo::VerticalAccuracy, 1);
-    source.publish(fix);
+    publish(fix);
     QVERIFY(QMetaObject::invokeMethod(manager, "_sendMessages", Qt::DirectConnection));
     QVERIFY(manager->gcsPositionUsable());
 
@@ -194,18 +222,17 @@ void RemoteIDManagerTest::_liveGpsFailureDiagnostics()
                      QRegularExpression(QRegularExpression::escape(diagnostic)));
     if (error != QGeoPositionInfoSource::NoError) {
         source.fail(static_cast<QGeoPositionInfoSource::Error>(error));
-    } else if (status == GPSPositionService::SourceStatus::Stale) {
-        positioning->sourceHealth()->setFreshnessTimeoutMs(1);
+    } else if (stale) {
+        QVERIFY(scheduler.advanceBy(GPSSourceHealth::FRESHNESS_TIMEOUT));
     } else {
         fix.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 101);
-        source.publish(fix);
+        publish(fix);
     }
     QTRY_COMPARE_WITH_TIMEOUT(positioning->sourceStatus(), status, 1000);
     QVERIFY(QMetaObject::invokeMethod(manager, "_sendMessages", Qt::DirectConnection));
     verifyExpectedLogMessage();
     QVERIFY(!manager->gcsPositionUsable());
-    QVERIFY(!positioning->geoPositionInfo().isValid());
-    QVERIFY(!positioning->gcsPositionTimestamp().isValid());
+    QVERIFY(!positioning->acceptedObservation());
 
     QTRY_VERIFY_WITH_TIMEOUT(
         ([&]() {
@@ -217,10 +244,9 @@ void RemoteIDManagerTest::_liveGpsFailureDiagnostics()
         })(),
         5000);
 
-    positioning->sourceHealth()->setFreshnessTimeoutMs(5000);
     fix.setTimestamp(QDateTime::currentDateTimeUtc());
     fix.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 1);
-    source.publish(fix);
+    publish(fix);
     QVERIFY(QMetaObject::invokeMethod(manager, "_sendMessages", Qt::DirectConnection));
     QVERIFY(manager->gcsPositionUsable());
     QCOMPARE(positioning->gcsPosition(), fix.coordinate());
@@ -234,14 +260,28 @@ void RemoteIDManagerTest::_gpsAltitudePolicy_data()
     QTest::addColumn<double>("verticalAccuracy");
     QTest::addColumn<double>("ellipsoid");
     QTest::addColumn<bool>("usable");
-    QTest::newRow("fixed") << true << true << 500.0 << qQNaN() << qQNaN() << true;
-    QTest::newRow("accurate") << false << true << 500.0 << 1.0 << qQNaN() << true;
-    QTest::newRow("poor-vertical-accuracy") << false << true << 500.0 << 100.0 << qQNaN() << true;
-    QTest::newRow("no-vertical-accuracy") << false << true << 500.0 << qQNaN() << qQNaN() << true;
-    QTest::newRow("ellipsoid") << false << true << 500.0 << 100.0 << 550.0 << true;
-    QTest::newRow("ellipsoid-only") << false << true << qQNaN() << qQNaN() << 550.0 << true;
-    QTest::newRow("faa-missing-altitude") << false << true << qQNaN() << qQNaN() << qQNaN() << false;
-    QTest::newRow("eu-missing-altitude") << false << false << qQNaN() << qQNaN() << qQNaN() << true;
+    QTest::addColumn<GPSAltitudeDatum>("datum");
+    // How each datum becomes a Remote ID altitude is GPSSourceHealthTest's; these rows cover the region rules.
+    QTest::newRow("fixed") << true << true << 500.0 << qQNaN() << qQNaN() << true << GPSAltitudeDatum::Ellipsoid;
+    // Without an ellipsoid height, the altitude of another datum is sent, with a warning.
+    QTest::newRow("msl-without-geoid") << false << true << 500.0 << 1.0 << qQNaN() << true
+                                       << GPSAltitudeDatum::MeanSeaLevel;
+    QTest::newRow("unknown-datum") << false << true << 500.0 << 1.0 << qQNaN() << true << GPSAltitudeDatum::Unknown;
+    QTest::newRow("msl-with-ellipsoid") << false << true << 500.0 << 1.0 << 550.0 << true
+                                        << GPSAltitudeDatum::MeanSeaLevel;
+    QTest::newRow("declared-ellipsoid") << false << true << 500.0 << 1.0 << qQNaN() << true
+                                        << GPSAltitudeDatum::Ellipsoid;
+    // The ground-station position drops an altitude without a usable vertical accuracy; Remote ID still sends it.
+    QTest::newRow("poor-vertical-accuracy")
+        << false << true << 500.0 << 100.0 << qQNaN() << true << GPSAltitudeDatum::Ellipsoid;
+    QTest::newRow("no-vertical-accuracy")
+        << false << true << 500.0 << qQNaN() << qQNaN() << true << GPSAltitudeDatum::Ellipsoid;
+    QTest::newRow("ellipsoid-only") << false << true << qQNaN() << qQNaN() << 550.0 << true
+                                    << GPSAltitudeDatum::Unknown;
+    QTest::newRow("faa-missing-altitude")
+        << false << true << qQNaN() << qQNaN() << qQNaN() << false << GPSAltitudeDatum::Ellipsoid;
+    QTest::newRow("eu-missing-altitude") << false << false << qQNaN() << qQNaN() << qQNaN() << true
+                                         << GPSAltitudeDatum::Unknown;
 }
 
 void RemoteIDManagerTest::_gpsAltitudePolicy()
@@ -252,10 +292,13 @@ void RemoteIDManagerTest::_gpsAltitudePolicy()
     QFETCH(double, verticalAccuracy);
     QFETCH(double, ellipsoid);
     QFETCH(bool, usable);
+    QFETCH(GPSAltitudeDatum, datum);
+    const bool notGeodetic =
+        !fixed && datum != GPSAltitudeDatum::Ellipsoid && qIsFinite(altitude) && !qIsFinite(ellipsoid);
     auto* settings = SettingsManager::instance()->remoteIDSettings();
     auto* manager = vehicle()->remoteIDManager();
-    auto* positioning = QGCPositionManager::instance();
-    const auto savedMode = positioning->sourceMode();
+    auto* positioning = GPSManager::instance()->positionManager();
+    const auto saved = positioning->configuration();
     const auto savedLatitude = settings->latitudeFixed()->rawValue();
     const auto savedLongitude = settings->longitudeFixed()->rawValue();
     const auto savedAltitude = settings->altitudeFixed()->rawValue();
@@ -264,14 +307,12 @@ void RemoteIDManagerTest::_gpsAltitudePolicy()
         settings->latitudeFixed()->setRawValue(savedLatitude);
         settings->longitudeFixed()->setRawValue(savedLongitude);
         settings->altitudeFixed()->setRawValue(savedAltitude);
-        positioning->setSourceMode(savedMode);
+        positioning->setConfiguration(saved);
     });
     ManualScheduler scheduler;
-    QObject producer;
     GPSSourceHealth health(nullptr, &scheduler);
-    auto registration =
-        positioning->registerPositionSource(GPSPositionService::SelectedSource::Receiver, &producer, &health, 7);
-    positioning->setSourceMode(GPSPositionService::SourceMode::ReceiverOnly);
+    auto registration = positioning->registerReceiver(&health, 7);
+    positioning->setConfiguration({.sourceMode = PositionManager::SourceMode::ReceiverOnly});
     settings->region()->setRawValue(
         int(faa ? RemoteIDSettings::RegionOperation::FAA : RemoteIDSettings::RegionOperation::EU));
     settings->locationType()->setRawValue(fixed ? RemoteIDManager::FIXED : RemoteIDManager::LiveGNSS);
@@ -283,15 +324,19 @@ void RemoteIDManagerTest::_gpsAltitudePolicy()
     } else {
         GPSObservation observation;
         observation.sessionId = 7;
-        observation.receivedAt = QDateTime::currentDateTimeUtc();
         observation.monotonicTimestampUs = scheduler.nowUs();
-        observation.position = QGeoPositionInfo(QGeoCoordinate(47, 8, altitude), observation.receivedAt);
+        observation.position = QGeoPositionInfo(QGeoCoordinate(47, 8, altitude), QDateTime::currentDateTimeUtc());
         observation.position.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 1);
+        observation.altitudeDatum = datum;
         if (qIsFinite(verticalAccuracy)) {
             observation.position.setAttribute(QGeoPositionInfo::VerticalAccuracy, verticalAccuracy);
         }
         if (qIsFinite(ellipsoid)) {
             observation.altitudeEllipsoidMeters = ellipsoid;
+        }
+        if (notGeodetic) {
+            expectLogMessage("Vehicle.RemoteIDManager", QtWarningMsg,
+                             QRegularExpression(QStringLiteral("not a WGS84 ellipsoid height")));
         }
         health.updateObservation(observation);
         QVERIFY(positioning->acceptedObservation(GPSObservation::PositionUse::RemoteID));
@@ -305,9 +350,11 @@ void RemoteIDManagerTest::_gpsAltitudePolicy()
     }
     QVERIFY(QMetaObject::invokeMethod(manager, "_sendMessages", Qt::DirectConnection));
     QCOMPARE(manager->gcsPositionUsable(), usable);
-    if (!usable) {
+    if (!usable || notGeodetic) {
         verifyExpectedLogMessage();
     }
+    // The warning is given once, not on every message.
+    QVERIFY(QMetaObject::invokeMethod(manager, "_sendMessages", Qt::DirectConnection));
     const double acceptedAltitude = qIsFinite(ellipsoid) ? ellipsoid : altitude;
     const float expectedAltitude = usable && qIsFinite(acceptedAltitude) ? float(acceptedAltitude) : -1000.0f;
     QTRY_VERIFY_WITH_TIMEOUT(
@@ -338,47 +385,44 @@ void RemoteIDManagerTest::_liveGpsArrivalBudget()
     QFETCH(int, utcJumpSeconds);
     auto* settings = SettingsManager::instance()->remoteIDSettings();
     auto* manager = vehicle()->remoteIDManager();
-    auto* positioning = QGCPositionManager::instance();
-    const auto savedMode = positioning->sourceMode();
+    auto* positioning = GPSManager::instance()->positionManager();
+    const auto saved = positioning->configuration();
     const auto restore = qScopeGuard([&]() {
         settings->locationType()->setRawValue(_savedLocationType);
-        positioning->setSourceMode(savedMode);
+        positioning->setConfiguration(saved);
     });
     ManualScheduler scheduler;
-    QObject producer;
     GPSSourceHealth health(nullptr, &scheduler);
-    health.setFreshnessTimeoutMs(60000);
-    auto registration =
-        positioning->registerPositionSource(GPSPositionService::SelectedSource::Receiver, &producer, &health);
-    positioning->setSourceMode(GPSPositionService::SourceMode::ReceiverOnly);
+    health.setFreshnessTimeout(60000ms);
+    auto registration = positioning->registerReceiver(&health);
+    positioning->setConfiguration({.sourceMode = PositionManager::SourceMode::ReceiverOnly});
     settings->region()->setRawValue(int(RemoteIDSettings::RegionOperation::FAA));
     settings->locationType()->setRawValue(RemoteIDManager::LiveGNSS);
     GPSObservation observation;
-    observation.receivedAt = QDateTime::currentDateTimeUtc();
     observation.monotonicTimestampUs = scheduler.nowUs();
-    observation.position = QGeoPositionInfo(QGeoCoordinate(47, 8, 500), observation.receivedAt);
+    observation.position = QGeoPositionInfo(QGeoCoordinate(47, 8, 500), QDateTime::currentDateTimeUtc());
     observation.position.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 1);
+    observation.altitudeDatum = GPSAltitudeDatum::Ellipsoid;
     health.updateObservation(observation);
     QVERIFY(QMetaObject::invokeMethod(manager, "_sendMessages", Qt::DirectConnection));
     QVERIFY(manager->gcsPositionUsable());
 
     QVERIFY(scheduler.advanceBy(std::chrono::milliseconds{4999}));
-    observation.receivedAt = observation.receivedAt.addSecs(utcJumpSeconds);
-    observation.position.setTimestamp(observation.receivedAt);
+    observation.position.setTimestamp(observation.position.timestamp().addSecs(utcJumpSeconds));
     health.updateObservation(observation);
     QVERIFY(QMetaObject::invokeMethod(manager, "_sendMessages", Qt::DirectConnection));
     QVERIFY(manager->gcsPositionUsable());
 
     QVERIFY(scheduler.advanceBy(std::chrono::milliseconds{1}));
     QVERIFY(positioning->acceptedObservation(GPSObservation::PositionUse::RemoteID));
-    QVERIFY(!positioning->acceptedObservation(GPSObservation::PositionUse::RemoteID, std::chrono::milliseconds{5000}));
+    QVERIFY(
+        !positioning->acceptedObservation(GPSObservation::PositionUse::RemoteID, GPSSourceHealth::FRESHNESS_TIMEOUT));
     expectLogMessage("Vehicle.RemoteIDManager", QtWarningMsg,
                      QRegularExpression(QStringLiteral("GCS GPS data is not valid")));
     QVERIFY(QMetaObject::invokeMethod(manager, "_sendMessages", Qt::DirectConnection));
     verifyExpectedLogMessage();
     QVERIFY(!manager->gcsPositionUsable());
-    observation.receivedAt = QDateTime::currentDateTimeUtc();
-    observation.position.setTimestamp(observation.receivedAt);
+    observation.position.setTimestamp(QDateTime::currentDateTimeUtc());
     observation.monotonicTimestampUs = scheduler.nowUs();
     health.updateObservation(observation);
     QVERIFY(QMetaObject::invokeMethod(manager, "_sendMessages", Qt::DirectConnection));

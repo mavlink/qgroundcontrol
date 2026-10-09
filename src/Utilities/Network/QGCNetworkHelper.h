@@ -19,6 +19,7 @@
 
 class QIODevice;
 class QNetworkAccessManager;
+class QNetworkInformation;
 
 /// Network utility functions for HTTP requests, URL handling, and connectivity
 /// All functions are stateless and thread-safe
@@ -190,9 +191,6 @@ void setJsonHeaders(QNetworkRequest& request);
 /// Set form data content headers
 void setFormHeaders(QNetworkRequest& request);
 
-/// Get the default User-Agent string for QGC
-QString defaultUserAgent();
-
 // ============================================================================
 // Authentication Helpers
 // ============================================================================
@@ -245,11 +243,6 @@ QHttpPart createFilePart(const QString& name, const QString& fileName, QIODevice
 // ============================================================================
 // SSL/TLS Configuration Builders
 // ============================================================================
-
-/// Create SSL configuration with specified protocol
-/// @param protocol TLS protocol version (default: TLS 1.2 or later)
-/// @return Configured QSslConfiguration
-QSslConfiguration createSslConfig(QSsl::SslProtocol protocol = QSsl::TlsV1_2OrLater);
 
 /// Create SSL configuration that disables peer verification (use with caution!)
 /// Only for development/testing or known self-signed certificates
@@ -334,7 +327,10 @@ bool isJsonResponse(const QNetworkReply* reply);
 // Network Availability
 // ============================================================================
 
-/// Check if network is available (not disconnected)
+/// The platform's network information, preferring a backend that reports reachability; null without a backend.
+QNetworkInformation* networkInformation();
+
+/// Check if network is available (not disconnected); assumed available without a backend
 bool isNetworkAvailable();
 
 /// Check if internet is reachable (online state, stricter than isNetworkAvailable)

@@ -1,6 +1,7 @@
 {
     "version": 1,
     "fileType": "SettingsUI",
+    "imports": ["QGroundControl.GPS"],
     "bindings": {
         "ridSettings": "QGroundControl.settingsManager.remoteIDSettings",
         "isEURegion": "ridSettings.region.rawValue === RemoteIDSettings.RegionOperation.EU",
@@ -8,6 +9,7 @@
         "sendBasicIDOn": "ridSettings.sendBasicID.rawValue",
         "sendSelfIDOn": "ridSettings.sendSelfID.rawValue",
         "locationIsFixed": "ridSettings.locationType.rawValue === RemoteIDSettings.LocationType.FIXED",
+        "locationIsLive": "ridSettings.locationType.rawValue === RemoteIDSettings.LocationType.LIVE",
         "classificationIsEU": "ridSettings.classificationType.rawValue === RemoteIDSettings.ClassificationType.EU"
     },
     "groups": [
@@ -89,43 +91,34 @@
         },
         {
             "heading": "GroundStation Location",
-            "keywords": ["ground station", "gcs location", "latitude", "longitude", "altitude", "fixed position", "gnss"],
+            "keywords": ["ground station", "gcs location", "gcs position", "position source", "latitude", "longitude", "altitude", "accuracy", "fixed position", "gnss"],
             "controls": [
                 {
                     "setting": "remoteIDSettings.locationType"
                 },
                 {
                     "setting": "remoteIDSettings.latitudeFixed",
-                    "enableWhen": "locationIsFixed"
+                    "showWhen": "locationIsFixed"
                 },
                 {
                     "setting": "remoteIDSettings.longitudeFixed",
-                    "enableWhen": "locationIsFixed"
+                    "showWhen": "locationIsFixed"
                 },
                 {
                     "setting": "remoteIDSettings.altitudeFixed",
-                    "enableWhen": "locationIsFixed"
+                    "showWhen": "locationIsFixed"
+                },
+                {
+                    "comment": "The position Live GNSS sends, shown as rows of this section; the GNSS Receiver page chooses its source.",
+                    "control": "component",
+                    "component": "GcsPositionStatus",
+                    "showWhen": "locationIsLive",
+                    "properties": {
+                        "sourceEditable": false,
+                        "heading": "\"\"",
+                        "showBorder": false
+                    }
                 }
-            ]
-        },
-        {
-            "component": "GcsPositionStatus",
-            "sectionName": "GCS Position",
-            "keywords": [
-                "latitude",
-                "longitude",
-                "hdop",
-                "gcs position"
-            ]
-        },
-        {
-            "component": "RemoteIDGpsLocation",
-            "sectionName": "GPS Location",
-            "keywords": [
-                "gps",
-                "nmea",
-                "hdop",
-                "position"
             ]
         },
         {

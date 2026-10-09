@@ -1,0 +1,79 @@
+about Septentrio streaming SBF at 230400 is identified and configured at that rate
+request type=automatic role=rtk-base mode=survey-in accuracy=1.0000m duration=60s compact=0 persistent=0 baud=0
+configure configured=1 baud=0->230400 failure=none ready=1 elapsed=23700ms
+  detected type=septentrio baud=230400 evidence="SBF blocks"
+  baud 115200 configured
+  write "UBX-MON-VER" 8 timed-out required
+    b5620a0400000e34
+  write "$PASHQ,PRT" 12 timed-out required
+    text "$PASHQ,PRT\r\n"
+  write "$PASHQ,PRT" 12 timed-out required
+    text "$PASHQ,PRT\r\n"
+  write "\n\r" 2 timed-out required
+    text "\n\r"
+  write "VERSION" 9 timed-out required
+    text "VERSION\r\n"
+  write "VERSION" 9 timed-out required
+    text "VERSION\r\n"
+  write "VERSIONA" 10 timed-out required
+    text "VERSIONA\r\n"
+  write "PQTMVERNO" 15 timed-out required
+    text "$PQTMVERNO*58\r\n"
+  baud 38400 configured
+  write "UBX-MON-VER" 8 timed-out required
+    b5620a0400000e34
+  write "$PASHQ,PRT" 12 timed-out required
+    text "$PASHQ,PRT\r\n"
+  write "$PASHQ,PRT" 12 timed-out required
+    text "$PASHQ,PRT\r\n"
+  write "VERSIONA" 10 timed-out required
+    text "VERSIONA\r\n"
+  baud 460800 configured
+  write "UBX-MON-VER" 8 timed-out required
+    b5620a0400000e34
+  write "VERSIONA" 10 timed-out required
+    text "VERSIONA\r\n"
+  write "PQTMVERNO" 15 timed-out required
+    text "$PQTMVERNO*58\r\n"
+  baud 9600 configured
+  write "UBX-MON-VER" 8 timed-out required
+    b5620a0400000e34
+  write "$PASHQ,PRT" 12 timed-out required
+    text "$PASHQ,PRT\r\n"
+  write "$PASHQ,PRT" 12 timed-out required
+    text "$PASHQ,PRT\r\n"
+  write "VERSIONA" 10 timed-out required
+    text "VERSIONA\r\n"
+  write "PQTMVERNO" 15 timed-out required
+    text "$PQTMVERNO*58\r\n"
+  baud 230400 configured
+  baud 230400 configured
+  write - 11
+    text "SSSSSSSSSS\n"
+  write "setDataInOut,COM1,,-RTCMv3-RTCMv2-CMRv2" 40 acknowledged optional
+    text "setDataInOut,COM1,,-RTCMv3-RTCMv2-CMRv2\n"
+  write "setDataInOut,COM2,,-RTCMv3-RTCMv2-CMRv2" 40 acknowledged optional
+    text "setDataInOut,COM2,,-RTCMv3-RTCMv2-CMRv2\n"
+  write "setDataInOut,USB1,,-RTCMv3-RTCMv2-CMRv2" 40 acknowledged optional
+    text "setDataInOut,USB1,,-RTCMv3-RTCMv2-CMRv2\n"
+  write "setDataInOut,USB2,,-RTCMv3-RTCMv2-CMRv2" 40 acknowledged optional
+    text "setDataInOut,USB2,,-RTCMv3-RTCMv2-CMRv2\n"
+  write "setDataInOut,USB3,,-RTCMv3-RTCMv2-CMRv2" 40 acknowledged optional
+    text "setDataInOut,USB3,,-RTCMv3-RTCMv2-CMRv2\n"
+  write "setDataInOut,USB4,,-RTCMv3-RTCMv2-CMRv2" 40 acknowledged optional
+    text "setDataInOut,USB4,,-RTCMv3-RTCMv2-CMRv2\n"
+  write - 2
+    text "\n\r"
+  write "setSBFOutput, Stream1, USB1, none, off" 39 acknowledged required
+    text "setSBFOutput, Stream1, USB1, none, off\n"
+  write "setDataInOut, USB1, Auto, SBF" 30 acknowledged required
+    text "setDataInOut, USB1, Auto, SBF\n"
+  write "setGeodeticDatum, WGS84" 24 acknowledged required
+    text "setGeodeticDatum, WGS84\n"
+  write "setDataInOut, USB1, Auto, RTCMv3+SBF" 37 acknowledged required
+    text "setDataInOut, USB1, Auto, RTCMv3+SBF\n"
+  write "setPVTMode, Static, All, auto" 30 acknowledged required
+    text "setPVTMode, Static, All, auto\n"
+  write "setSBFOutput, Stream1, USB1, +PVTGeodetic, msec500" 51 acknowledged required
+    text "setSBFOutput, Stream1, USB1, +PVTGeodetic, msec500\n"
+stream failure=none ready=1

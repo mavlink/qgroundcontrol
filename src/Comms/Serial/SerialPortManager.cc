@@ -21,6 +21,16 @@ SerialPortManager* SerialPortManager::instance()
     return _serialPortManager();
 }
 
+bool SerialPortManager::isPrimaryInterface(const Port& port, QSet<QString>& seenDevices)
+{
+    if (port.physicalDeviceId.isEmpty()) {
+        return true;
+    }
+    const qsizetype seen = seenDevices.size();
+    seenDevices.insert(port.physicalDeviceId);
+    return seenDevices.size() != seen;
+}
+
 QList<SerialPortManager::Port> SerialPortManager::_enumeratePorts()
 {
     QList<Port> ports;
@@ -73,6 +83,12 @@ QList<SerialPortManager::Port> SerialPortManager::availablePorts()
     }
     emit portsEnumerated(identities);
     return _ports;
+}
+
+void SerialPortManager::rescan()
+{
+    _scanTimer.invalidate();
+    (void) availablePorts();
 }
 
 QString SerialPortManager::displayName(const QString& systemLocation)

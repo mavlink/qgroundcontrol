@@ -7,15 +7,14 @@ class NTRIPConnectionStatsTest : public UnitTest
     Q_OBJECT
 
 private slots:
-    void testInitialState();
-    void testRecordMessage();
-    void testReset();
-    void testDataRate();
-    void testCorrectionAgeInitial();
-    void testCorrectionAgeAfterMessage_data();
-    void testCorrectionAgeAfterMessage();
-    void testInvalidReceiptTimestamp_data();
-    void testInvalidReceiptTimestamp();
-    void testMessageCountsByIdSortedAndReset();
-    void testDataStaleAfterNoRecentMessages();
+    void _noFirstCorrectionBecomesStale();
+    void _reset();
+    void _dataRate();
+    void _correctionAgeAfterMessage_data();
+    void _correctionAgeAfterMessage();
+    void _invalidReceiptTimestamp_data();
+    void _invalidReceiptTimestamp();
+    void _messageCountsByIdSortedAndReset();
+    void _dataStaleAfterNoRecentMessages();
+    void _statisticsExpireDuringSilence();
 };

@@ -86,7 +86,7 @@ tools/
 │   ├── profile.py           # Profiling (valgrind, perf)
 │   ├── qt6.natvis           # Visual Studio debugger visualizers
 │   └── valgrind.supp        # Valgrind suppressions
-├── generators/                # Build-time code generation (mavlink enums, config/settings QML)
+├── generators/                # Code generation (mavlink enums, config/settings QML)
 ├── schemas/                   # JSON schemas for editor validation
 ├── setup/                     # Environment setup scripts
 ├── simulation/                # Vehicle simulators

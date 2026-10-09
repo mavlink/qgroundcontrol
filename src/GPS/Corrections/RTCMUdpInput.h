@@ -1,66 +1,46 @@
 #pragma once
 
+#include <chrono>
 #include <memory>
 
 #include <QtCore/QHash>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtNetwork/QHostAddress>
 
-#include "GPSCorrectionDiagnostics.h"
-#include "GPSCorrectionFrame.h"
-#include "RTCMFrameDecoder.h"
-
-Q_DECLARE_LOGGING_CATEGORY(RTCMUdpInputLog)
+#include "RTCMFramer.h"
 
 class QUdpSocket;
+class RuntimeScheduler;
 
 /// Receives RTCM datagrams with bounded work and independent framing for each sender.
-/// Validated input emits complete timestamped frames; raw mode preserves datagram boundaries.
+/// Valid frames are emitted complete and stamped with the scheduler's time; candidates that fail framing or CRC are
+/// dropped.
 class RTCMUdpInput : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(bool running READ isRunning NOTIFY runningChanged)
-    Q_PROPERTY(quint16 port READ port NOTIFY portChanged)
 
 public:
-    explicit RTCMUdpInput(quint16 port, QObject* parent = nullptr);
+    explicit RTCMUdpInput(QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr);
     ~RTCMUdpInput() override;
 
-    /// Restarts listening; port zero requests an ephemeral port.
-    bool start();
+    /// Listens on @a port with fresh framing state, replacing any current socket; port zero requests an ephemeral
+    /// port. When binding fails, @a errorString receives the reason.
+    bool start(quint16 port, QString* errorString = nullptr);
 
     void stop();
 
-    bool isRunning() const { return _running; }
-
-    quint16 port() const { return _port; }
-
-    /// Change the listen port. If already running, restarts automatically.
-    void setPort(quint16 port);
-
-    void setValidation(bool validate);
-    /// Changes start a fresh stream, restarting the listener if running.
-    void configure(quint16 port, bool validate);
-
 signals:
-    void frameReceived(const GPSCorrectionFrame& frame);
-    void frameRejected(const GPSCorrectionFrame& frame, GPSCorrectionReason reason);
-
-    void runningChanged();
-    void portChanged();
+    /// A valid frame from @a sender, the sender's address, stamped @a receivedAtMs with the scheduler's time.
+    void frameReceived(const QString& sender, const QByteArray& data, qint64 receivedAtMs);
 
 private slots:
     void _readDatagrams();
 
 private:
-    quint64 _resetStream();
     void _scheduleRead();
 
+    RuntimeScheduler* const _scheduler;
     QUdpSocket* _socket = nullptr;
-    quint16 _port;
-    bool _running = false;
-    bool _validateRtcm = false;
 
     struct PeerParser
     {
@@ -71,10 +51,6 @@ private:
     std::shared_ptr<PeerParser> _parserForPeer(const QHostAddress& address, quint16 port);
     QHash<QString, std::shared_ptr<PeerParser>> _peerParsers;
     static constexpr qsizetype MAX_PEERS = 32;
-    static constexpr qint64 PEER_IDLE_TIMEOUT_MS = 30000;
-    quint64 _validFrames = 0;
-    quint64 _invalidFrames = 0;
+    static constexpr std::chrono::milliseconds PEER_IDLE_TIMEOUT{30000};
     bool _drainScheduled = false;
-    bool _readingDatagrams = false;
-    quint64 _lifecycleRevision = 0;
 };

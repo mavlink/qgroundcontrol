@@ -23,11 +23,11 @@
 *.keystore      binary
 
 # Receiver recordings and fuzz seeds must preserve their original wire bytes.
-test/GPS/Driver/Protocols/**/*.bin  binary
-test/GPS/Driver/Protocols/**/*.gps  binary
-test/GPS/Driver/Protocols/**/*.nmea binary
-test/GPS/Driver/Protocols/**/*.sbf  binary
-test/GPS/Driver/Protocols/**/*.ubx  binary
+test/GPS/Core/Protocols/**/*.bin  binary
+test/GPS/Core/Protocols/**/*.gps  binary
+test/GPS/Core/Protocols/**/*.nmea binary
+test/GPS/Core/Protocols/**/*.sbf  binary
+test/GPS/Core/Protocols/**/*.ubx  binary
 
 # Compiled Object files
 *.slo           binary

@@ -1,0 +1,8 @@
+about Receiver profile without base support
+request type=ublox role=rtk-base mode=survey-in accuracy=2.0000m duration=180s compact=0 persistent=0 baud=0
+configure configured=0 baud=115200->115200 failure=protocol ready=0 elapsed=20ms
+  identity "NEO-M8N SPG 3.01"
+  error "NEO-M8N cannot run as an RTK base station"
+  baud 115200 configured
+  write "UBX-MON-VER" 8 acknowledged required
+    b5620a0400000e34

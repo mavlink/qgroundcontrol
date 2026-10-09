@@ -10,9 +10,9 @@ private slots:
     void _storageNamespace_data();
     void _storageNamespace();
     void _metadataPartition();
+    void _udpOutputKeysMigrate();
+    void _removedSettingsAreDropped_data();
+    void _removedSettingsAreDropped();
     void _routingDefaults();
     void _qmlRegistration();
-    void _routingPanel_data();
-    void _routingPanel();
-    void _routingPanelTracksStreams();
 };

@@ -1,0 +1,123 @@
+{
+    "version": 1,
+    "fileType": "SettingsUI",
+    "imports": ["QGroundControl.GPS"],
+    "bindings": {
+        "ntripActive": "QGroundControl.settingsManager.ntripSettings.ntripServerConnectEnabled.rawValue"
+    },
+    "groups": [
+        {
+            "component": "CorrectionsStatus",
+            "sectionName": "Corrections Status",
+            "keywords": ["corrections", "rtk", "status", "selected stream", "data rate"]
+        },
+        {
+            "component": "NTRIPConnectionStatus",
+            "sectionName": "NTRIP Connection",
+            "keywords": ["ntrip", "rtk", "connection status", "corrections"]
+        },
+        {
+            "heading": "NTRIP Server",
+            "showWhen": "QGroundControl.settingsManager.ntripSettings.userVisible",
+            "keywords": ["ntrip server", "rtk", "caster", "host", "port", "username", "password", "tls"],
+            "controls": [
+                {
+                    "setting": "ntripSettings.ntripServerHostAddress",
+                    "enableWhen": "!ntripActive"
+                },
+                {
+                    "setting": "ntripSettings.ntripServerPort",
+                    "enableWhen": "!ntripActive"
+                },
+                {
+                    "setting": "ntripSettings.ntripUsername",
+                    "enableWhen": "!ntripActive"
+                },
+                {
+                    "control": "component",
+                    "component": "NTRIPPasswordField",
+                    "enableWhen": "!ntripActive"
+                },
+                {
+                    "setting": "ntripSettings.ntripUseTls",
+                    "enableWhen": "!ntripActive"
+                },
+                {
+                    "setting": "ntripSettings.ntripAllowSelfSignedCerts",
+                    "enableWhen": "!ntripActive && QGroundControl.settingsManager.ntripSettings.ntripUseTls.rawValue"
+                }
+            ]
+        },
+        {
+            "component": "NTRIPMountpointBrowser",
+            "sectionName": "NTRIP Mountpoint",
+            "keywords": ["mountpoint", "browse", "stream", "source table"]
+        },
+        {
+            "heading": "GGA Position Reporting",
+            "showWhen": "QGroundControl.settingsManager.ntripSettings.userVisible",
+            "keywords": ["gga", "vrs", "nmea", "position", "network rtk", "ntrip"],
+            "controls": [
+                {
+                    "setting": "ntripSettings.ntripGgaPositionSource"
+                },
+                {
+                    "setting": "ntripSettings.ntripGgaIntervalSec"
+                }
+            ]
+        },
+        {
+            "heading": "NTRIP Message Filter",
+            "showWhen": "QGroundControl.settingsManager.ntripSettings.userVisible",
+            "keywords": ["rtcm", "whitelist", "message filter", "ntrip"],
+            "controls": [
+                {
+                    "setting": "ntripSettings.ntripWhitelist",
+                    "placeholder": "e.g. 1005,1077,1087"
+                }
+            ]
+        },
+        {
+            "heading": "UDP RTCM Input",
+            "showWhen": "QGroundControl.settingsManager.gpsCorrectionSettings.userVisible",
+            "keywords": ["udp rtcm", "udp input", "corrections"],
+            "controls": [
+                {
+                    "setting": "gpsCorrectionSettings.rtcmUdpInputEnabled"
+                },
+                {
+                    "setting": "gpsCorrectionSettings.rtcmUdpInputPort",
+                    "enableWhen": "QGroundControl.settingsManager.gpsCorrectionSettings.rtcmUdpInputEnabled.rawValue"
+                }
+            ]
+        },
+        {
+            "heading": "UDP Forwarding",
+            "showWhen": "QGroundControl.settingsManager.gpsCorrectionSettings.userVisible",
+            "keywords": ["udp forward", "udp output", "relay", "corrections forward", "rtcm"],
+            "controls": [
+                {
+                    "setting": "gpsCorrectionSettings.rtcmUdpOutputEnabled"
+                },
+                {
+                    "setting": "gpsCorrectionSettings.rtcmUdpOutputAddress",
+                    "enableWhen": "QGroundControl.settingsManager.gpsCorrectionSettings.rtcmUdpOutputEnabled.rawValue"
+                },
+                {
+                    "setting": "gpsCorrectionSettings.rtcmUdpOutputPort",
+                    "enableWhen": "QGroundControl.settingsManager.gpsCorrectionSettings.rtcmUdpOutputEnabled.rawValue"
+                }
+            ]
+        },
+        {
+            "heading": "Correction Routing",
+            "showWhen": "QGroundControl.settingsManager.gpsCorrectionSettings.userVisible",
+            "keywords": ["corrections", "rtcm", "source", "stream", "routing", "automatic", "priority"],
+            "controls": [
+                {
+                    "setting": "gpsCorrectionSettings.correctionSource"
+                }
+            ]
+        }
+    ]
+}

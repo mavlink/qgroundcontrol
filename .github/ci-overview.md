@@ -398,7 +398,7 @@ uv run --project tools --group scripts --group test pytest -q tools/tests .githu
   custom-plugin unit/integration suites, excluding stock-UI integration tests. Master
   pushes, merge-queue runs, and manual dispatches also build Release without test hooks
   and verify its AppImage. Debug and Release retain separate compiler caches.
-- Windows x64 and the macOS Release leg run six standalone portable utility executables in their
+- Windows x64 and the macOS Release leg run ten standalone portable utility executables in their
   existing platform build jobs (`QGC_BUILD_PORTABLE_TESTS=ON`). They share test bodies with the full
   Linux harness and do not enable test hooks in the packaged application. The macOS Debug leg
   runs the Unit and Integration suites; only the Release leg packages and uploads the DMG.

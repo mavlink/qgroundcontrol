@@ -1,0 +1,71 @@
+#include "NTRIPConfiguration.h"
+
+#include <algorithm>
+
+#include <QtCore/QCoreApplication>
+#include <QtCore/QRegularExpression>
+
+QString NTRIPConnectionConfig::validationError() const
+{
+    const auto tr = [](const char* s) { return QCoreApplication::translate("NTRIPConnectionConfig", s); };
+
+    if (host.isEmpty()) {
+        return tr("No host address");
+    }
+    if (port <= 0 || port > 65535) {
+        return tr("Invalid port");
+    }
+
+    static const QRegularExpression controlChars(QStringLiteral("[\\x00-\\x1f\\x7f]"));
+    if (host.contains(controlChars)) {
+        return tr("Invalid host (contains control characters)");
+    }
+    if (host.contains(QLatin1Char(' '))) {
+        return tr("Invalid host (contains spaces)");
+    }
+    if (mountpoint.contains(controlChars)) {
+        return tr("Invalid mountpoint name (contains control characters)");
+    }
+    if (std::ranges::any_of(mountpoint, [](QChar c) { return c.isSpace(); })) {
+        return tr("Invalid mountpoint name (contains spaces)");
+    }
+    // RFC 7617 forbids colons in Basic-auth usernames.
+    if (username.contains(QLatin1Char(':'))) {
+        return tr("Invalid username (must not contain ':')");
+    }
+
+    return QString();
+}
+
+QString NTRIPConnectionConfig::streamValidationError() const
+{
+    if (const QString error = validationError(); !error.isEmpty()) {
+        return error;
+    }
+    if (mountpoint.isEmpty()) {
+        return QCoreApplication::translate("NTRIPConnectionConfig", "Select a mountpoint before connecting");
+    }
+    return {};
+}
+
+QUrl NTRIPConnectionConfig::url(bool withMountpoint) const
+{
+    QUrl url;
+    url.setScheme(useTls ? QStringLiteral("https") : QStringLiteral("http"));
+    url.setHost(host);
+    url.setPort(port);
+    url.setPath(QLatin1Char('/') + (withMountpoint ? mountpoint : QString()));
+    return url;
+}
+
+bool NTRIPConnectionConfig::sendsCredentialsInClear() const
+{
+    return !useTls && (!username.isEmpty() || !password.isEmpty());
+}
+
+QString NTRIPConnectionConfig::credentialsInClearWarning() const
+{
+    return sendsCredentialsInClear() ? QCoreApplication::translate("NTRIPConnectionConfig",
+                                                                   "Credentials are being sent without TLS encryption.")
+                                     : QString();
+}

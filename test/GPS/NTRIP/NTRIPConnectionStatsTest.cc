@@ -1,43 +1,44 @@
 #include "NTRIPConnectionStatsTest.h"
 
+#include <chrono>
 #include <limits>
 
 #include <QtCore/QRegularExpression>
-#include <QtCore/QTimer>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
-#include "MonotonicClock.h"
+#include "ManualScheduler.h"
 #include "NTRIPConnectionStats.h"
 
-void NTRIPConnectionStatsTest::testInitialState()
+using namespace std::chrono_literals;
+
+namespace {
+/// Far enough from the clock's epoch for receipts seconds in the past.
+constexpr quint64 START_US = 100'000'000;
+constexpr std::chrono::milliseconds STALE_AFTER = 5s;
+}  // namespace
+
+void NTRIPConnectionStatsTest::_noFirstCorrectionBecomesStale()
 {
-    NTRIPConnectionStats stats;
-    QCOMPARE(stats.bytesReceived(), quint64(0));
+    ManualScheduler scheduler(nullptr, START_US);
+    NTRIPConnectionStats stats(STALE_AFTER, nullptr, &scheduler);
+    stats.start();
+    QCOMPARE(stats.correctionAgeSec(), -1.0);
+    QVERIFY(scheduler.advanceBy(5s));
+    QVERIFY(stats.dataStale());
     QCOMPARE(stats.messagesReceived(), quint32(0));
-    QCOMPARE(stats.dataRateBytesPerSec(), 0.0);
+    QCOMPARE(stats.correctionAgeSec(), -1.0);
+    stats.recordMessage(100, 0, scheduler.nowMs());
     QVERIFY(!stats.dataStale());
 }
 
-void NTRIPConnectionStatsTest::testRecordMessage()
+void NTRIPConnectionStatsTest::_reset()
 {
-    NTRIPConnectionStats stats;
+    ManualScheduler scheduler(nullptr, START_US);
+    NTRIPConnectionStats stats(STALE_AFTER, nullptr, &scheduler);
+    QSignalSpy changes(&stats, &NTRIPConnectionStats::statsChanged);
 
-    stats.recordMessage(100);
-    QCOMPARE(stats.bytesReceived(), quint64(100));
-    QCOMPARE(stats.messagesReceived(), quint32(1));
-
-    stats.recordMessage(200);
-    QCOMPARE(stats.bytesReceived(), quint64(300));
-    QCOMPARE(stats.messagesReceived(), quint32(2));
-}
-
-void NTRIPConnectionStatsTest::testReset()
-{
-    NTRIPConnectionStats stats;
-    QSignalSpy bytesSpy(&stats, &NTRIPConnectionStats::bytesReceivedChanged);
-
-    stats.recordMessage(500, 1005, static_cast<qint64>(MonotonicClock::nowUs() / 1000) - 6000);
+    stats.recordMessage(500, 1005, scheduler.nowMs() - 6000);
     QCOMPARE(stats.bytesReceived(), quint64(500));
     QVERIFY(stats.dataStale());
 
@@ -47,45 +48,42 @@ void NTRIPConnectionStatsTest::testReset()
     QCOMPARE(stats.dataRateBytesPerSec(), 0.0);
     QCOMPARE(stats.correctionAgeSec(), -1.0);
     QVERIFY(!stats.dataStale());
-    QVERIFY(bytesSpy.count() > 0);
+    QVERIFY(changes.count() > 0);
 
-    stats.recordMessage(100);
+    stats.recordMessage(100, 0, scheduler.nowMs());
     QCOMPARE(stats.messagesReceived(), quint32(1));
     QVERIFY(stats.correctionAgeSec() >= 0.0);
     QVERIFY(stats.correctionAgeSec() < 1.0);
     QVERIFY(!stats.dataStale());
 }
 
-void NTRIPConnectionStatsTest::testDataRate()
+void NTRIPConnectionStatsTest::_dataRate()
 {
-    NTRIPConnectionStats stats;
-    QSignalSpy rateSpy(&stats, &NTRIPConnectionStats::dataRateChanged);
+    ManualScheduler scheduler(nullptr, START_US);
+    NTRIPConnectionStats stats(STALE_AFTER, nullptr, &scheduler);
+    stats.recordMessage(1024, 0, scheduler.nowMs());
+    for (int i = 0; i < 25 && stats.dataRateBytesPerSec() == 0.0; ++i) {
+        QVERIFY(scheduler.advanceBy(50ms));
+        stats.recordMessage(1024, 0, scheduler.nowMs());
+    }
 
-    stats.recordMessage(1024);
-    QTimer producer;
-    connect(&producer, &QTimer::timeout, &stats, [&stats]() { stats.recordMessage(1024); });
-    producer.start(50);
-    QVERIFY_SIGNAL_WAIT(rateSpy, TestTimeout::mediumMs());
-    producer.stop();
-
-    QVERIFY(rateSpy.count() >= 1);
     QVERIFY(stats.dataRateBytesPerSec() > 0.0);
+    QSignalSpy changes(&stats, &NTRIPConnectionStats::statsChanged);
 
     const auto messageCount = stats.messagesReceived();
+    const auto byteCount = stats.bytesReceived();
     const double ageBeforeStop = stats.correctionAgeSec();
     stats.stop();
+    QCOMPARE(changes.count(), 1);
     QCOMPARE(stats.dataRateBytesPerSec(), 0.0);
     QCOMPARE(stats.messagesReceived(), messageCount);
+    QCOMPARE(stats.bytesReceived(), byteCount);
+    stats.stop();
+    QCOMPARE(stats.bytesReceived(), byteCount);
     QVERIFY(stats.correctionAgeSec() >= ageBeforeStop);
 }
 
-void NTRIPConnectionStatsTest::testCorrectionAgeInitial()
-{
-    NTRIPConnectionStats stats;
-    QCOMPARE(stats.correctionAgeSec(), -1.0);
-}
-
-void NTRIPConnectionStatsTest::testCorrectionAgeAfterMessage_data()
+void NTRIPConnectionStatsTest::_correctionAgeAfterMessage_data()
 {
     QTest::addColumn<QList<qint64>>("agesMs");
     QTest::addColumn<qint64>("expectedAgeMs");
@@ -99,22 +97,24 @@ void NTRIPConnectionStatsTest::testCorrectionAgeAfterMessage_data()
     QTest::newRow("fresh-after-stale") << QList<qint64>{6000, 0} << qint64(0) << false << 2;
 }
 
-void NTRIPConnectionStatsTest::testCorrectionAgeAfterMessage()
+void NTRIPConnectionStatsTest::_correctionAgeAfterMessage()
 {
     QFETCH(QList<qint64>, agesMs);
     QFETCH(qint64, expectedAgeMs);
     QFETCH(bool, stale);
     QFETCH(int, staleChanges);
-    NTRIPConnectionStats stats;
-    QSignalSpy staleSpy(&stats, &NTRIPConnectionStats::dataStaleChanged);
-    const qint64 nowMs = static_cast<qint64>(MonotonicClock::nowUs() / 1000);
+    ManualScheduler scheduler(nullptr, START_US);
+    NTRIPConnectionStats stats(STALE_AFTER, nullptr, &scheduler);
+    // Before start(), only a change of the stale state notifies.
+    QSignalSpy staleSpy(&stats, &NTRIPConnectionStats::statsChanged);
+    const qint64 nowMs = scheduler.nowMs();
     for (const qint64 ageMs : agesMs) {
         stats.recordMessage(100, 1005, nowMs - ageMs);
     }
 
     QCOMPARE(stats.bytesReceived(), quint64(100 * agesMs.size()));
     QCOMPARE(stats.messagesReceived(), quint32(agesMs.size()));
-    QCOMPARE(stats.messageCountsById().first().toList().at(1).toUInt(), quint32(agesMs.size()));
+    QCOMPARE(stats.messageCountsById().first().count, quint64(agesMs.size()));
     QVERIFY(stats.correctionAgeSec() >= expectedAgeMs / 1000.0);
     QVERIFY(stats.correctionAgeSec() < expectedAgeMs / 1000.0 + 1.0);
     QCOMPARE(stats.dataStale(), stale);
@@ -125,7 +125,7 @@ void NTRIPConnectionStatsTest::testCorrectionAgeAfterMessage()
     QVERIFY(stats.correctionAgeSec() >= expectedAgeMs / 1000.0);
 }
 
-void NTRIPConnectionStatsTest::testInvalidReceiptTimestamp_data()
+void NTRIPConnectionStatsTest::_invalidReceiptTimestamp_data()
 {
     QTest::addColumn<qint64>("receivedAtMs");
     QTest::newRow("missing") << qint64(0);
@@ -133,10 +133,11 @@ void NTRIPConnectionStatsTest::testInvalidReceiptTimestamp_data()
     QTest::newRow("future") << (std::numeric_limits<qint64>::max)();
 }
 
-void NTRIPConnectionStatsTest::testInvalidReceiptTimestamp()
+void NTRIPConnectionStatsTest::_invalidReceiptTimestamp()
 {
     QFETCH(qint64, receivedAtMs);
-    NTRIPConnectionStats stats;
+    ManualScheduler scheduler(nullptr, START_US);
+    NTRIPConnectionStats stats(STALE_AFTER, nullptr, &scheduler);
     expectLogMessage("GPS.NTRIPConnectionStats", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Invalid RTCM receipt timestamp")));
     stats.recordMessage(100, 1005, receivedAtMs);
@@ -144,7 +145,7 @@ void NTRIPConnectionStatsTest::testInvalidReceiptTimestamp()
     QCOMPARE(stats.correctionAgeSec(), -1.0);
     QVERIFY(!stats.dataStale());
 
-    stats.recordMessage(100, 1005, static_cast<qint64>(MonotonicClock::nowUs() / 1000) - 6000);
+    stats.recordMessage(100, 1005, scheduler.nowMs() - 6000);
     QVERIFY(stats.dataStale());
     expectLogMessage("GPS.NTRIPConnectionStats", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Invalid RTCM receipt timestamp")));
@@ -156,48 +157,60 @@ void NTRIPConnectionStatsTest::testInvalidReceiptTimestamp()
     QCOMPARE(stats.bytesReceived(), quint64(300));
 }
 
-void NTRIPConnectionStatsTest::testMessageCountsByIdSortedAndReset()
+void NTRIPConnectionStatsTest::_messageCountsByIdSortedAndReset()
 {
-    NTRIPConnectionStats stats;
+    ManualScheduler scheduler(nullptr, START_US);
+    NTRIPConnectionStats stats(STALE_AFTER, nullptr, &scheduler);
 
-    stats.recordMessage(10, 1077);
-    stats.recordMessage(10, 1005);
-    stats.recordMessage(10, 1077);
-    stats.recordMessage(10, 0);
+    stats.recordMessage(10, 1077, scheduler.nowMs());
+    stats.recordMessage(10, 1005, scheduler.nowMs());
+    stats.recordMessage(10, 1077, scheduler.nowMs());
+    stats.recordMessage(10, 0, scheduler.nowMs());
 
-    const QVariantList counts = stats.messageCountsById();
-    QCOMPARE(counts.size(), 3);
-
-    const QVariantList unknown = counts.at(0).toList();
-    QCOMPARE(unknown.at(0).toInt(), 0);
-    QCOMPARE(unknown.at(1).toUInt(), quint32(1));
-
-    const QVariantList base = counts.at(1).toList();
-    QCOMPARE(base.at(0).toInt(), 1005);
-    QCOMPARE(base.at(1).toUInt(), quint32(1));
-
-    const QVariantList msm = counts.at(2).toList();
-    QCOMPARE(msm.at(0).toInt(), 1077);
-    QCOMPARE(msm.at(1).toUInt(), quint32(2));
+    // Ascending ID order, with ID 0 counting unidentified frames.
+    const QList<RTCMMessageCount> expected{{0, 1}, {1005, 1}, {1077, 2}};
+    QCOMPARE(stats.messageCountsById(), expected);
 
     stats.reset();
     QVERIFY(stats.messageCountsById().isEmpty());
 }
 
-void NTRIPConnectionStatsTest::testDataStaleAfterNoRecentMessages()
+void NTRIPConnectionStatsTest::_dataStaleAfterNoRecentMessages()
 {
-    NTRIPConnectionStats stats;
-    QSignalSpy staleSpy(&stats, &NTRIPConnectionStats::dataStaleChanged);
+    ManualScheduler scheduler(nullptr, START_US);
+    NTRIPConnectionStats stats(STALE_AFTER, nullptr, &scheduler);
+    QSignalSpy staleSpy(&stats, &NTRIPConnectionStats::statsChanged);
 
-    stats.recordMessage(100, 1005, static_cast<qint64>(MonotonicClock::nowUs() / 1000) - 4000);
+    stats.recordMessage(100, 1005, scheduler.nowMs() - 4000);
     QVERIFY(!stats.dataStale());
     stats.start();
 
-    QVERIFY_SIGNAL_WAIT(staleSpy, TestTimeout::mediumMs());
+    QVERIFY(scheduler.advanceBy(1s));
+    QVERIFY(!staleSpy.isEmpty());
     QVERIFY(stats.dataStale());
 
-    stats.recordMessage(100, 1005);
+    stats.recordMessage(100, 1005, scheduler.nowMs());
     QVERIFY(!stats.dataStale());
 }
 
-UT_REGISTER_TEST(NTRIPConnectionStatsTest, TestLabel::Unit)
+void NTRIPConnectionStatsTest::_statisticsExpireDuringSilence()
+{
+    ManualScheduler scheduler(nullptr, START_US);
+    NTRIPConnectionStats stats(STALE_AFTER, nullptr, &scheduler);
+    QSignalSpy rateChanges(&stats, &NTRIPConnectionStats::statsChanged);
+    stats.start();
+    stats.recordMessage(2048, 0, scheduler.nowMs());
+    QVERIFY(scheduler.advanceBy(1s));
+    QVERIFY(stats.dataRateBytesPerSec() > 0.0);
+    rateChanges.clear();
+    QVERIFY(scheduler.advanceBy(1s));
+    QCOMPARE(stats.dataRateBytesPerSec(), 0.0);
+    QVERIFY(!rateChanges.isEmpty());
+    QCOMPARE(stats.bytesReceived(), quint64(2048));
+    QCOMPARE(stats.messagesReceived(), quint32(1));
+    QCOMPARE(stats.messageCountsById().first().count, quint64(1));
+    stats.stop();
+    QCOMPARE(stats.bytesReceived(), quint64(2048));
+}
+
+UT_REGISTER_TEST_LIGHTWEIGHT(NTRIPConnectionStatsTest, TestLabel::Unit)

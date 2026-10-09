@@ -1,46 +1,70 @@
 #pragma once
 
 #include <chrono>
+#include <functional>
+#include <memory>
 
-#include <QtCore/QChronoTimer>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
+#include <QtCore/QString>
+#include <QtCore/QVector>
+#include <QtPositioning/QGeoCoordinate>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-#include "GPSCorrectionSourceRegistration.h"
+#include "ExponentialBackoff.h"
 #include "NTRIPConfiguration.h"
 #include "NTRIPConnectionStats.h"
-#include "NTRIPGgaProvider.h"
+#include "NTRIPGgaReporter.h"
 #include "NTRIPSourceTableController.h"
 #include "NTRIPTransport.h"
-#include "RTCMDecodedFrame.h"
+#include "ScheduledTask.h"
 
-Q_DECLARE_LOGGING_CATEGORY(NTRIPManagerLog)
-
-class NTRIPSettings;
 class GPSCorrectionManager;
+class GPSCorrectionSourceHandle;
+class QGCNetworkAvailabilityMonitor;
+class RuntimeScheduler;
+
+/// The RTCM message filter as the settings store it: comma-separated message IDs, empty for every message.
+struct NTRIPRTCMFilterConfig
+{
+    QString whitelist;
+    bool operator==(const NTRIPRTCMFilterConfig&) const = default;
+
+    /// The positive message IDs of the whitelist; entries that are not one are skipped.
+    [[nodiscard]] QVector<int> messageIds() const;
+};
+
+/// Services an NTRIPManager uses, which must outlive it.
+struct NTRIPManagerDependencies
+{
+    /// Receives the stream as the NTRIP correction source.
+    GPSCorrectionManager* corrections = nullptr;
+    /// Reconnects wait for a network while it reports none.
+    QGCNetworkAvailabilityMonitor* network = nullptr;
+};
 
 /// Manages the NTRIP caster connection lifecycle as an explicit event-driven
 /// state machine. All connection state changes flow through `_dispatch()` and
 /// the transition table in NTRIPManager.cc — there is no second, internal
-/// state enum. Entry actions own per-state side effects (start/tear down
-/// transport, schedule reconnect, toggle GGA/stats).
+/// state enum. Entry actions own per-state side effects: each Connecting entry
+/// opens a new transport and registers it as the NTRIP correction source,
+/// teardown retires both, and the manager schedules reconnects.
 class NTRIPManager : public QObject
 {
     Q_OBJECT
-    friend class NTRIPManagerTest;
     QML_ELEMENT
-    QML_UNCREATABLE("")
+    QML_UNCREATABLE("Provided by the GPS manager")
     Q_MOC_INCLUDE("NTRIPConnectionStats.h")
-    Q_MOC_INCLUDE("NTRIPSourceTableController.h")
-    Q_PROPERTY(ConnectionStatus connectionStatus READ connectionStatus NOTIFY connectionStatusChanged)
-    Q_PROPERTY(QString statusMessage READ statusMessage NOTIFY statusMessageChanged)
-    Q_PROPERTY(QString securityWarning READ securityWarning NOTIFY securityWarningChanged)
-    Q_PROPERTY(CasterStatus casterStatus READ casterStatus NOTIFY casterStatusChanged)
-    Q_PROPERTY(QString ggaSource READ ggaSource NOTIFY ggaSourceChanged)
-    Q_PROPERTY(NTRIPSourceTableController* sourceTableController READ sourceTableController CONSTANT)
-    Q_PROPERTY(NTRIPConnectionStats* connectionStats READ connectionStats CONSTANT)
+    Q_PROPERTY(ConnectionStatus connectionStatus READ connectionStatus NOTIFY connectionStatusChanged FINAL)
+    Q_PROPERTY(QString statusMessage READ statusMessage NOTIFY statusMessageChanged FINAL)
+    /// Short connection state for compact views.
+    Q_PROPERTY(QString connectionStatusText READ connectionStatusText NOTIFY connectionStatusChanged FINAL)
+    Q_PROPERTY(QString securityWarning READ securityWarning NOTIFY securityWarningChanged FINAL)
+    Q_PROPERTY(QString ggaSource READ ggaSource NOTIFY ggaSourceChanged FINAL)
+    Q_PROPERTY(NTRIPSourceTableController* sourceTableController READ sourceTableController CONSTANT FINAL)
+    Q_PROPERTY(NTRIPConnectionStats* connectionStats READ connectionStats CONSTANT FINAL)
+
+    friend class NTRIPManagerTest;
 
 public:
     /// Public connection status. Numeric values are stable — QML binds against them.
@@ -54,152 +78,177 @@ public:
     };
     Q_ENUM(ConnectionStatus)
 
-    enum class CasterStatus
-    {
-        CasterConnected,
-        CasterNoLocation,
-        CasterError
-    };
-    Q_ENUM(CasterStatus)
-
-    /// State-machine events. Each represents an external stimulus; the
-    /// transition table in NTRIPManager.cc maps (state, event) → next state.
-    /// Public so test code can drive the machine directly — entry actions
-    /// are internal, events are the observable API.
+    /// Internal state-machine events, public only so the log names them. Each represents an external stimulus; the
+    /// transition table in _dispatch() maps (state, event) to the next state.
     enum class Event
     {
-        StartRequested,       ///< startNTRIP() called or settings enable went true.
-        StopRequested,        ///< stopNTRIP() called or settings enable went false.
+        StartRequested,       ///< Settings enable went true, or the user retried an error.
+        StopRequested,        ///< Settings enable went false, or the manager shut down.
         ConfigInvalid,        ///< Connection configuration failed validation.
         TransportConnected,   ///< NTRIPTransport emitted connected().
-        RTCMBeforeConnected,  ///< RTCM data arrived before the connected() signal was processed.
         TransportError,       ///< NTRIPTransport emitted a retryable error.
         TransportFatalError,  ///< NTRIPTransport emitted a non-retryable error.
-        ReconnectDue,         ///< NTRIPReconnectPolicy fired reconnectRequested().
-        ReconnectGaveUp,      ///< NTRIPReconnectPolicy fired gaveUp().
+        ReconnectDue,         ///< The reconnect delay elapsed or the network returned.
+        ReconnectGaveUp,      ///< The reconnect attempt ceiling was reached.
         HotReconfigure,       ///< Transport-affecting setting changed while connected; reconnect in place.
     };
+    Q_ENUM(Event)
 
-    explicit NTRIPManager(QObject* parent = nullptr);
+    /// The NTRIP settings as values; the application's settings binding supplies them.
+    struct Configuration
+    {
+        bool enabled = false;
+        NTRIPConnectionConfig connection;
+        NTRIPRTCMFilterConfig filter;
+        NTRIPGgaReporter::Configuration gga;
+        bool operator==(const Configuration&) const = default;
+    };
+
+    using Dependencies = NTRIPManagerDependencies;
+
+    explicit NTRIPManager(QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr,
+                          const Dependencies& dependencies = {});
     ~NTRIPManager() override;
 
-    static NTRIPManager* instance();
-
-    /// Explicit post-construction init. Must be called from QGCApplication after
-    /// SettingsManager is ready — matches QGCPositionManager::init(). Do not rely
-    /// on the singleton constructor for anything that touches other singletons.
+    /// Applies the configuration; call once the position providers are installed.
     void init();
+    /// Before init() the configuration is only stored. After it, stream changes apply after a short debounce, so
+    /// editing a field does not reconnect per keystroke, and GGA changes apply at once.
+    void setConfiguration(const Configuration& configuration);
+
+    const Configuration& configuration() const { return _configuration; }
 
     ConnectionStatus connectionStatus() const { return _connectionStatus; }
 
+    QString connectionStatusText() const;
+
     QString statusMessage() const { return _statusMessage; }
 
-    QString securityWarning() const { return _securityWarning; }
+    /// Set while a connected stream sends its credentials without TLS.
+    QString securityWarning() const;
 
-    CasterStatus casterStatus() const { return _casterStatus; }
-
-    QString ggaSource() const { return _ggaProvider.currentSource(); }
+    QString ggaSource() const { return _ggaReporter.currentSource(); }
 
     NTRIPSourceTableController* sourceTableController() { return &_sourceTableController; }
 
     NTRIPConnectionStats* connectionStats() { return &_stats; }
 
-    Q_INVOKABLE void fetchMountpoints();
+    /// Fetches the caster's mountpoints, ordered by distance from @a sortCoordinate; an invalid coordinate keeps the
+    /// caster's order.
+    Q_INVOKABLE void fetchMountpoints(const QGeoCoordinate& sortCoordinate = QGeoCoordinate());
 
-    Q_INVOKABLE void selectMountpoint(const QString& mountpoint)
-    {
-        _sourceTableController.selectMountpoint(mountpoint);
-    }
+    /// Creates the transport of one connection attempt, parented to @a parent; null opens an NTRIPHttpTransport.
+    using TransportFactory = std::function<NTRIPTransport*(const Configuration& configuration, QObject* parent)>;
 
-    /// Test seam: inject a transport (e.g. MockNTRIPTransport) consumed by the
-    /// next Connecting entry. Production always constructs NTRIPHttpTransport.
-    void setTransportForTest(NTRIPTransport* transport) { _injectedTransport = transport; }
+    /// An empty factory restores NTRIPHttpTransport for every attempt.
+    void setTransportFactory(TransportFactory factory) { _transportFactory = std::move(factory); }
 
-    /// Inject before init(); the caller retains ownership.
-    void setCorrectionManager(GPSCorrectionManager* manager);
+    void setGgaPositionProvider(NTRIPGgaReporter::PositionSource source, NTRIPGgaReporter::PositionProvider provider);
 
-    void setGgaPositionProvider(NTRIPGgaProvider::PositionSource source, NTRIPGgaProvider::PositionProvider provider);
-
-    void startNTRIP();
-    void stopNTRIP();
+    /// Retry a user-visible error, preserving the enabled setting for subsequent automatic retries.
+    Q_INVOKABLE void retryNTRIP();
+    /// Permanently retire this manager, including deferred settings work.
+    void shutdown();
 
 signals:
     void connectionStatusChanged();
     void statusMessageChanged();
     void securityWarningChanged();
-    void casterStatusChanged(CasterStatus status);
     void ggaSourceChanged();
+    /// Retrying after an error turns the saved connection on.
+    void enableRequested();
+    /// The trusted self-signed caster certificate changed, or was forgotten (empty); the settings should store it.
+    void certificatePinChanged(const QString& pin);
 
 private:
+    /// What the change signals last announced.
+    struct Notified
+    {
+        ConnectionStatus status = ConnectionStatus::Disconnected;
+        QString message;
+        QString securityWarning;
+    };
+
+    /// Emits one change signal for each property that differs from what the signals last announced. Public operations
+    /// and event handlers call it once the state machine has settled, so observers never see a half-entered state.
+    void _publish();
+    /// Starts with a fresh retry budget, unless already connecting or connected, and publishes the result.
+    void _start();
+    /// Stops, cancelling deferred settings work and reconnects, and publishes the result.
+    void _stop();
+
     /// Dispatch an event. Returns true if a transition was found and taken.
     /// Events with no matching row for the current state are ignored (debug log).
     bool _dispatch(Event ev, const QString& detail = {}, std::chrono::milliseconds retryAfter = {});
 
-    /// Commit a state change. Updates _connectionStatus/_statusMessage and
-    /// emits change signals *before* invoking entry actions so recursive
-    /// dispatches from entry actions observe the new state, not the old.
+    /// Commit a state change before invoking entry actions, so recursive dispatches from entry
+    /// actions observe the new state.
     void _enterState(ConnectionStatus to, const QString& detail, std::chrono::milliseconds retryAfter = {});
 
-    /// Per-state side effects (start transport, tear down, schedule reconnect, etc.).
-    void _onEnterState(ConnectionStatus from, ConnectionStatus to, std::chrono::milliseconds retryAfter);
+    /// Per-state side effects (open or retire the transport, schedule reconnect, etc.).
+    void _onEnterState(ConnectionStatus to, std::chrono::milliseconds retryAfter);
 
     /// Default user-visible message for a state. Callers may override via detail.
     static QString _defaultMessageFor(ConnectionStatus state);
 
-    void _startTransport();
-    void _teardownTransport();
+    /// Stops the previous stream, validates the configuration, then opens a new transport and registers it as the
+    /// NTRIP correction source.
+    void _openSession();
+    /// Ends the correction source, retires the transport, and stops GGA and statistics.
+    void _stopStreaming();
 
-    // Reconnect backoff (inlined; was NTRIPReconnectPolicy). The single-shot
-    // timer fires reconnectRequested → ReconnectDue; exhausting the attempt
-    // ceiling fires ReconnectGaveUp instead.
-    static constexpr int kMinReconnectMs = 1000;
-    static constexpr int kMaxReconnectMs = 30000;
-    static constexpr int kMaxReconnectAttempts = 100;
+    // The single-shot reconnect timer fires ReconnectDue; a failure after the attempt ceiling fires ReconnectGaveUp.
+    static constexpr int MAX_RECONNECT_ATTEMPTS = 100;
 
     void _scheduleReconnect(std::chrono::milliseconds retryAfter = {});
 
-    void _cancelReconnect() { _reconnectTimer.stop(); }
+    void _cancelReconnect();
 
-    void _resetReconnectAttempts() { _reconnectAttempts = 0; }
+    bool _shouldWaitForNetwork() const;
+    bool _casterIsLoopback() const;
+    void _waitForNetwork();
 
-    int _reconnectBackoffMs(std::chrono::milliseconds retryAfter = {}) const;
+    bool _reconnectExhausted() const { return _reconnectBackoff.attempts() >= MAX_RECONNECT_ATTEMPTS; }
 
-    bool _reconnectExhausted() const { return _reconnectAttempts >= kMaxReconnectAttempts; }
-
-    /// Reconfigure the manager-owned NTRIP sink without restarting transport.
-    void _applyUdpForwarderConfig(const NTRIPUdpForwardConfig& config);
-
+    void _onTransportConnected();
     void _onTransportError(const NTRIPFailure& failure);
-    void _onPlaintextCredentialsWarning();
-    void _setSecurityWarning(const QString& warning);
-    void _rtcmDataReceived(const RTCMDecodedFrame& frame);
-    void _onSettingChanged();
-    NTRIPConfiguration _configFromSettings() const;
-    bool _isEnabled() const;
+    void _onCertificatePinned(const QString& pin);
+    void _setPinnedCertificate(const QString& pin);
+    void _onCorrectionFrame(const RTCMDecodedFrame& frame);
+    /// Brings the connection in line with the latest configuration.
+    void _applyConfiguration();
 
-    NTRIPGgaProvider _ggaProvider{this};
-    NTRIPConnectionStats _stats{this};
+    bool _isEnabled() const { return _configuration.enabled; }
+
+    RuntimeScheduler* const _scheduler;
+    ScheduledTask _settingsDebounceTask;
+    ScheduledTask _reconnectTask;
+    NTRIPGgaReporter _ggaReporter;
+    NTRIPConnectionStats _stats;
 
     ConnectionStatus _connectionStatus = ConnectionStatus::Disconnected;
     QString _statusMessage;
-    QString _securityWarning;
-    CasterStatus _casterStatus = CasterStatus::CasterError;
+    Notified _notified;
 
-    QPointer<NTRIPTransport> _injectedTransport;
+    TransportFactory _transportFactory;
     QPointer<NTRIPTransport> _transport;
+    /// The stream's registration as the NTRIP correction source.
+    std::unique_ptr<GPSCorrectionSourceHandle> _correctionSource;
 
-    QPointer<GPSCorrectionManager> _correctionManager;
-    GPSCorrectionSourceRegistration _correctionRegistration;
+    const QPointer<GPSCorrectionManager> _correctionManager;
+    const QPointer<QGCNetworkAvailabilityMonitor> _networkMonitor;
 
-    NTRIPConfiguration _runningConfig;
-    NTRIPSettings* _settings = nullptr;
+    // Latest supplied configuration, and the one the current transport uses.
+    Configuration _configuration;
+    Configuration _running;
 
-    NTRIPSourceTableController _sourceTableController{this};
+    NTRIPSourceTableController _sourceTableController;
 
-    static constexpr std::chrono::milliseconds kSettingsDebounceMs{250};
-    QChronoTimer _settingsDebounceTimer{this};
-    QChronoTimer _reconnectTimer{this};
-    int _reconnectAttempts = 0;
+    static constexpr std::chrono::milliseconds SETTINGS_DEBOUNCE{250};
+    ExponentialBackoff _reconnectBackoff{std::chrono::seconds(1), 2, std::chrono::seconds(30),
+                                         NTRIPFailure::MAX_RETRY_AFTER};
+    QString _lastFailureDetail;  ///< The latest transport failure, for the give-up message.
+    bool _waitingForNetwork = false;
     bool _initialized = false;
-    quint64 _stateRevision = 0;
+    bool _shutdown = false;
 };

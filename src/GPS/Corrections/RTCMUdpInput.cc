@@ -3,19 +3,30 @@
 #include <utility>
 
 #include <QtCore/QPointer>
-#include <QtCore/QScopeGuard>
 #include <QtNetwork/QNetworkDatagram>
 #include <QtNetwork/QUdpSocket>
 
-#include "GPSCorrectionFrame.h"
+#include "MonotonicClock.h"
 #include "QGCLoggingCategory.h"
+#include "RuntimeScheduler.h"
 #include "UdpPeer.h"
 
 QGC_LOGGING_CATEGORY(RTCMUdpInputLog, "GPS.Corrections.RTCMUdpInput")
 
-RTCMUdpInput::RTCMUdpInput(quint16 port, QObject* parent)
+namespace {
+/// The dual-stack socket reports IPv4 senders as IPv4-mapped IPv6 addresses; identify them by their IPv4 address.
+QHostAddress senderAddress(const QNetworkDatagram& datagram)
+{
+    const QHostAddress sender = datagram.senderAddress();
+    bool ipv4 = false;
+    const quint32 address = sender.toIPv4Address(&ipv4);
+    return ipv4 ? QHostAddress(address) : sender;
+}
+}  // namespace
+
+RTCMUdpInput::RTCMUdpInput(QObject* parent, RuntimeScheduler* scheduler)
     : QObject(parent)
-    , _port(port)
+    , _scheduler(RuntimeScheduler::orDefault(scheduler, this))
 {
     qCDebug(RTCMUdpInputLog) << this;
 }
@@ -26,121 +37,49 @@ RTCMUdpInput::~RTCMUdpInput()
     stop();
 }
 
-bool RTCMUdpInput::start()
+bool RTCMUdpInput::start(quint16 port, QString* errorString)
 {
-    const QPointer<RTCMUdpInput> guard(this);
-    const quint64 revision = _lifecycleRevision + 1;
     stop();
-    if (!guard || _lifecycleRevision != revision) {
-        return false;
-    }
-    const QPointer<QUdpSocket> socket = new QUdpSocket(this);
-    _socket = socket;
-    auto rollback = qScopeGuard([guard, socket]() {
-        if (guard && socket && socket == guard->_socket) {
-            guard->stop();
+    auto* const socket = new QUdpSocket(this);
+    if (!socket->bind(QHostAddress::Any, port)) {
+        qCDebug(RTCMUdpInputLog) << "Failed to bind UDP socket on port" << port << ":" << socket->errorString();
+        if (errorString) {
+            *errorString = socket->errorString();
         }
-    });
-    if (!socket->bind(QHostAddress::AnyIPv4, _port)) {
-        qCWarning(RTCMUdpInputLog) << "Failed to bind UDP socket on port" << _port << ":" << socket->errorString();
+        delete socket;
         return false;
     }
     connect(socket, &QUdpSocket::readyRead, this, &RTCMUdpInput::_readDatagrams);
-    connect(socket, &QAbstractSocket::errorOccurred, this, [this, guard, socket, revision]() {
-        if (guard && socket && socket == _socket && revision == _lifecycleRevision) {
-            qCWarning(RTCMUdpInputLog) << "UDP socket error on port" << _port << ":" << socket->errorString();
-        }
+    connect(socket, &QAbstractSocket::errorOccurred, this, [socket]() {
+        qCWarning(RTCMUdpInputLog) << "UDP socket error on port" << socket->localPort() << ":" << socket->errorString();
     });
-
-    if (_port == 0) {
-        _port = socket->localPort();
-        emit portChanged();
-        if (!guard || _lifecycleRevision != revision) {
-            return false;
-        }
-    }
-
-    _running = true;
-    emit runningChanged();
-    if (!guard || _lifecycleRevision != revision) {
-        return false;
-    }
-    rollback.dismiss();
-    qCDebug(RTCMUdpInputLog) << "Listening for RTCM data on UDP port" << _port;
+    _socket = socket;
+    qCDebug(RTCMUdpInputLog) << "Listening for RTCM data on UDP port" << socket->localPort();
     return true;
 }
 
 void RTCMUdpInput::stop()
 {
-    const QPointer<RTCMUdpInput> guard(this);
-    const quint64 revision = _resetStream();
-    const bool wasRunning = std::exchange(_running, false);
-    const QPointer<QUdpSocket> socket = std::exchange(_socket, nullptr);
-    if (socket) {
-        socket->close();
-        if (socket) {
-            socket->deleteLater();
-        }
-    }
-    if (guard && revision == _lifecycleRevision && wasRunning) {
-        qCDebug(RTCMUdpInputLog) << "Stopped listening on UDP port" << _port;
-        emit runningChanged();
-    }
-}
-
-void RTCMUdpInput::setPort(quint16 port)
-{
-    configure(port, _validateRtcm);
-}
-
-void RTCMUdpInput::setValidation(bool validate)
-{
-    configure(_port, validate);
-}
-
-void RTCMUdpInput::configure(quint16 port, bool validate)
-{
-    if (_port == port && _validateRtcm == validate) {
-        return;
-    }
-    const QPointer<RTCMUdpInput> guard(this);
-    const quint64 revision = _resetStream();
-    const bool portHasChanged = _port != port;
-    _port = port;
-    _validateRtcm = validate;
-    if (portHasChanged) {
-        emit portChanged();
-    }
-    if (guard && revision == _lifecycleRevision && _running) {
-        start();
-    }
-}
-
-quint64 RTCMUdpInput::_resetStream()
-{
     _drainScheduled = false;
     _peerParsers.clear();
-    return ++_lifecycleRevision;
+    QUdpSocket* const socket = std::exchange(_socket, nullptr);
+    if (!socket) {
+        return;
+    }
+    qCDebug(RTCMUdpInputLog) << "Stopped listening on UDP port" << socket->localPort();
+    socket->disconnect(this);
+    socket->close();
+    socket->deleteLater();
 }
 
 void RTCMUdpInput::_readDatagrams()
 {
-    if (!_running || !_socket || _readingDatagrams) {
+    QUdpSocket* const socket = _socket;
+    if (!socket) {
         return;
     }
-    const QPointer<RTCMUdpInput> guard(this);
-    const QPointer<QUdpSocket> socket = _socket;
-    const quint64 revision = _lifecycleRevision;
-    _readingDatagrams = true;
-    const auto finishReading = qScopeGuard([guard]() {
-        if (guard) {
-            guard->_readingDatagrams = false;
-            guard->_scheduleRead();
-        }
-    });
-    const auto current = [this, guard, socket, revision]() {
-        return guard && socket && socket == _socket && revision == _lifecycleRevision && _running;
-    };
+    // An observer that stops or restarts the input retires this socket.
+    const auto current = [this, socket]() { return socket == _socket; };
     UdpDrainBudget budget;
     while (current() && socket->hasPendingDatagrams() && budget.available()) {
         const QNetworkDatagram datagram = socket->receiveDatagram();
@@ -152,82 +91,58 @@ void RTCMUdpInput::_readDatagrams()
         if (data.isEmpty()) {
             continue;
         }
-        const qint64 receivedAtMs = GPSCorrectionFrame::monotonicNowMs();
-        const QString instance = udpPeerKey(datagram.senderAddress(), datagram.senderPort());
-
-        if (!_validateRtcm) {
-            qCDebug(RTCMUdpInputLog) << "Received RTCM datagram:" << data.size() << "bytes";
-            emit frameReceived({GPSCorrectionSource::Udp, 0, receivedAtMs, data, 0, false, false, instance});
-            continue;
-        }
-
-        // Preserve sender boundaries and one MAVLink sequence per frame.
-        const auto peer = _parserForPeer(datagram.senderAddress(), datagram.senderPort());
+        const qint64 receivedAtMs = _scheduler->nowMs();
+        const QHostAddress sender = senderAddress(datagram);
+        // A stream is named by its sender's address, so selection stays on a sender that restarts on a new source
+        // port; each source port still frames independently.
+        const QString instance = sender.toString();
+        const auto peer = _parserForPeer(sender, datagram.senderPort());
         int framesFound = 0;
         int framesDropped = 0;
-        for (const char ch : data) {
-            for (auto decoded = peer->decoder.addByte(static_cast<uint8_t>(ch), receivedAtMs); decoded;
-                 decoded = peer->decoder.nextFrame()) {
-                const GPSCorrectionFrame frame = {GPSCorrectionSource::Udp, 0,
-                                                  decoded->receivedAtMs,    decoded->data,
-                                                  decoded->messageId,       decoded->valid,
-                                                  decoded->filtered,        instance};
-                if (decoded->valid) {
-                    ++framesFound;
-                    ++_validFrames;
-                    emit frameReceived(frame);
-                } else {
-                    ++framesDropped;
-                    ++_invalidFrames;
-                    emit frameRejected(frame, GPSCorrectionReason::InvalidFrame);
-                }
-                if (!current()) {
-                    return;
-                }
+        const bool delivered = peer->decoder.feed(data, receivedAtMs, [&](const RTCMDecodedFrame& decoded) {
+            if (!decoded.valid) {
+                ++framesDropped;
+                return current();
             }
-        }
-
-        if (framesDropped > 0) {
-            qCWarning(RTCMUdpInputLog) << "Dropped" << framesDropped << "RTCM frame(s) - invalid framing or CRC";
+            ++framesFound;
+            emit frameReceived(instance, decoded.data, decoded.receivedAtMs);
+            return current();
+        });
+        if (!delivered) {
+            return;
         }
 
         qCDebug(RTCMUdpInputLog) << "Datagram" << data.size() << "bytes -" << "framesFound:" << framesFound
                                  << "framesDropped:" << framesDropped;
-
-        const quint64 totalFrames = _validFrames + _invalidFrames;
-        if (totalFrames > 0) {
-            const double dropPct = 100.0 * _invalidFrames / totalFrames;
-            qCDebug(RTCMUdpInputLog) << QString("RTCM frame stats: %1 valid, %2 invalid, %3% dropped")
-                                            .arg(_validFrames)
-                                            .arg(_invalidFrames)
-                                            .arg(dropPct, 0, 'f', 1);
-        }
     }
+    _scheduleRead();
 }
 
 void RTCMUdpInput::_scheduleRead()
 {
-    if (_running && _socket && _socket->hasPendingDatagrams() && !_drainScheduled) {
-        _drainScheduled = true;
-        const QPointer<QUdpSocket> socket = _socket;
-        const quint64 revision = _lifecycleRevision;
-        QMetaObject::invokeMethod(
-            this,
-            [this, socket, revision]() {
-                if (socket && socket == _socket && revision == _lifecycleRevision) {
-                    _drainScheduled = false;
-                    _readDatagrams();
-                }
-            },
-            Qt::QueuedConnection);
+    if (!_socket || !_socket->hasPendingDatagrams() || _drainScheduled) {
+        return;
     }
+    _drainScheduled = true;
+    // Bounded drains yield to the event loop; a stop or restart before this runs retires the socket.
+    QMetaObject::invokeMethod(
+        this,
+        [this, socket = QPointer<QUdpSocket>(_socket)]() {
+            if (socket && socket == _socket) {
+                _drainScheduled = false;
+                _readDatagrams();
+            }
+        },
+        Qt::QueuedConnection);
 }
 
 std::shared_ptr<RTCMUdpInput::PeerParser> RTCMUdpInput::_parserForPeer(const QHostAddress& address, quint16 port)
 {
-    const qint64 now = GPSCorrectionFrame::monotonicNowMs();
+    const qint64 now = _scheduler->nowMs();
     for (auto it = _peerParsers.begin(); it != _peerParsers.end();) {
-        if (now - it.value()->lastReceivedMs >= PEER_IDLE_TIMEOUT_MS) {
+        if (const auto idle = MonotonicClock::age(std::chrono::milliseconds(it.value()->lastReceivedMs),
+                                                  std::chrono::milliseconds(now));
+            idle && *idle >= PEER_IDLE_TIMEOUT) {
             it = _peerParsers.erase(it);
         } else {
             ++it;

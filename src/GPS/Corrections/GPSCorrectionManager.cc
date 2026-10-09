@@ -1,46 +1,87 @@
 #include "GPSCorrectionManager.h"
 
-#include <QtCore/QScopeGuard>
-#include <QtNetwork/QHostAddress>
+#include <algorithm>
+#include <chrono>
+#include <utility>
 
-#include "GPSCorrectionSettings.h"
+#include <QtNetwork/QHostAddress>
+#include <QtNetwork/QNetworkInterface>
+
 #include "QGCLoggingCategory.h"
+#include "RuntimeScheduler.h"
 
 QGC_LOGGING_CATEGORY(GPSCorrectionManagerLog, "GPS.Corrections.GPSCorrectionManager")
 
-GPSCorrectionManager::GPSCorrectionManager(QObject* parent)
+namespace {
+/// Whether this host's own sockets may receive datagrams sent to @a target. The UDP input is dual-stack, so an
+/// IPv4-mapped IPv6 target reaches it as the IPv4 address does, and multicast loops back to local group members.
+bool reachesThisHost(const QHostAddress& target)
+{
+    const auto matches = [&target](const QHostAddress& address) {
+        return !address.isNull() && address.isEqual(target, QHostAddress::TolerantConversion);
+    };
+    if (target.isLoopback() || target.isBroadcast() || target.isMulticast() || matches(QHostAddress::Any)) {
+        return true;
+    }
+    return std::ranges::any_of(QNetworkInterface::allInterfaces(), [&matches](const QNetworkInterface& interface) {
+        return std::ranges::any_of(interface.addressEntries(), [&matches](const QNetworkAddressEntry& entry) {
+            return matches(entry.ip()) || matches(entry.broadcast());
+        });
+    });
+}
+}  // namespace
+
+GPSCorrectionSourceHandle::GPSCorrectionSourceHandle(GPSCorrectionManager* manager,
+                                                     GPSCorrectionSettings::CorrectionSource source,
+                                                     const QString& instance)
+    : _manager(manager)
+    , _source(source)
+    , _instance(instance)
+{
+    manager->_beginSource(source);
+}
+
+GPSCorrectionSourceHandle::~GPSCorrectionSourceHandle()
+{
+    if (_manager) {
+        _manager->_endSource(_source);
+    }
+}
+
+void GPSCorrectionSourceHandle::submit(const QByteArray& data, qint64 receivedAtMs, const QString& instance) const
+{
+    if (_manager) {
+        _manager->_submit(_source, instance.isEmpty() ? _instance : instance, data, receivedAtMs);
+    }
+}
+
+GPSCorrectionManager::GPSCorrectionManager(QObject* parent, RuntimeScheduler* scheduler)
     : QObject(parent)
-    , _router(this)
-    , _eventModel(this)
-    , _diagnosticsTimer(this)
-    , _healthTimer(this)
-    , _rtcmMavlink(this)
-    , _udpInput(0, this)
+    , _scheduler(RuntimeScheduler::orDefault(scheduler, this))
+    , _refreshTask(_scheduler, this)
+    , _tickTask(_scheduler, this)
+    , _selectedRate([scheduler = _scheduler]() { return scheduler->nowUs(); })
+    , _udpInput(this, _scheduler)
 {
     qCDebug(GPSCorrectionManagerLog) << this;
-    connect(&_router, &GPSCorrectionRouter::sourceSelected, this, &GPSCorrectionManager::selectedSourceChanged);
-    connect(&_router, &GPSCorrectionRouter::sourceInvalidated, this, &GPSCorrectionManager::selectedSourceChanged);
-    connect(&_router, &GPSCorrectionRouter::frameRouted, this, &GPSCorrectionManager::correctionRouted);
-    _router.setOutput(QStringLiteral("mavlink"), {.admit = [this](const GPSCorrectionFrame& frame) {
-                          QList<GPSCorrectionRouter::Admission> results;
-                          for (const auto& admission : _rtcmMavlink.submitToOutputs(frame.data)) {
-                              results.append({admission.id,
-                                              {admission.queuedBytes, admission.session,
-                                               admission.complete ? GPSCorrectionReason::None
-                                                                  : GPSCorrectionReason::DestinationUnavailable},
-                                              admission.complete});
-                          }
-                          if (results.isEmpty()) {
-                              results.append({QStringLiteral("mavlink"), {}, false});
-                          }
-                          return results;
-                      }});
-    _diagnosticsTimer.setSingleShot(true);
-    _diagnosticsTimer.setInterval(100);
-    connect(&_diagnosticsTimer, &QTimer::timeout, this, &GPSCorrectionManager::_refreshDiagnostics);
-    _healthTimer.setInterval(1000);
-    connect(&_healthTimer, &QTimer::timeout, this, &GPSCorrectionManager::_refreshDiagnostics);
-    _healthTimer.start();
+    connect(&_udpInput, &RTCMUdpInput::frameReceived, this,
+            [this](const QString& sender, const QByteArray& data, qint64 receivedAtMs) {
+                if (_udpSource) {
+                    _udpSource->submit(data, receivedAtMs, sender);
+                }
+            });
+    _tickTask.scheduleRepeating(std::chrono::seconds(1), [this]() {
+        _retryUdpInput();
+        _selectedRate.refresh();
+        _refresh();
+    });
+    _refresh();
+}
+
+std::unique_ptr<GPSCorrectionSourceHandle> GPSCorrectionManager::openSource(
+    GPSCorrectionSettings::CorrectionSource source, const QString& instance)
+{
+    return std::unique_ptr<GPSCorrectionSourceHandle>(new GPSCorrectionSourceHandle(this, source, instance));
 }
 
 GPSCorrectionManager::~GPSCorrectionManager()
@@ -49,230 +90,164 @@ GPSCorrectionManager::~GPSCorrectionManager()
     shutdown();
 }
 
-void GPSCorrectionManager::configureNtripUdpOutput(bool enabled, const QString& address, quint16 port)
+void GPSCorrectionManager::setConfiguration(const Configuration& configuration)
 {
-    const QString id = QStringLiteral("ntripUdp");
-    if (_shutdown) {
+    if (_shutdown || configuration == _configuration) {
         return;
     }
-    if (enabled && _ntripUdpOutput.isEnabled() && _ntripUdpOutput.address() == QHostAddress(address).toString() &&
-        _ntripUdpOutput.port() == port) {
-        return;
+    const std::optional<Configuration> previous = std::exchange(_configuration, configuration);
+    _selector.configure(configuration.source, _scheduler->nowMs());
+    const bool inputChanged = !previous || previous->udpInput != configuration.udpInput;
+    const bool enabledChanged = (previous && previous->udpInput.enabled) != configuration.udpInput.enabled;
+    const bool inputNotified = inputChanged && (_applyUdpInput() || enabledChanged);
+    // The output also depends on the input port, which it must not feed back into.
+    const bool outputNotified = (inputChanged || previous->udpOutput != configuration.udpOutput) && _applyUdpOutput();
+    _refresh();
+    if (inputNotified) {
+        emit udpInputChanged();
     }
-    removeSink(id);
-    _ntripUdpOutput.stop();
-    if (enabled && _ntripUdpOutput.configure(address, port)) {
-        setOutput(id, GPSCorrectionRouter::admissionOnlyOutput(
-                          id, GPSCorrectionSource::Ntrip, [this](const GPSCorrectionFrame& frame) {
-                              return static_cast<quint64>(_ntripUdpOutput.forward(frame.data));
-                          }));
-    }
-    _scheduleSourcesChanged();
-}
-
-void GPSCorrectionManager::init(GPSCorrectionSettings* settings)
-{
-    if (_settings || !settings || _shutdown) {
-        return;
-    }
-    _settings = settings;
-    const QPointer<GPSCorrectionManager> guard(this);
-    for (const Fact* fact : {settings->correctionSource(), settings->correctionSourceInstance()}) {
-        connect(fact, &Fact::rawValueChanged, this, &GPSCorrectionManager::_applyRoutingSettings);
-    }
-    for (const Fact* fact :
-         {settings->rtcmUdpInputEnabled(), settings->rtcmUdpInputPort(), settings->rtcmUdpValidate()}) {
-        connect(fact, &Fact::rawValueChanged, this, &GPSCorrectionManager::_applyUdpInputSettings);
-    }
-    _applyRoutingSettings();
-    if (guard) {
-        _applyUdpInputSettings();
+    if (outputNotified) {
+        emit udpOutputChanged();
     }
 }
 
-void GPSCorrectionManager::_applyRoutingSettings()
+bool GPSCorrectionManager::_applyUdpOutput()
 {
-    if (!_settings || _shutdown) {
-        return;
+    const UdpOutputConfiguration& output = _configuration->udpOutput;
+    const QString address = output.address.trimmed();
+    _udpOutput.stop();
+    QString error;
+    if (output.enabled) {
+        // Forwarding to this host's own UDP input would feed the selected stream back into itself.
+        if (_udpInputEnabled() && output.port == _configuration->udpInput.port &&
+            reachesThisHost(QHostAddress(address))) {
+            qCWarning(GPSCorrectionManagerLog)
+                << "Not forwarding corrections to this host's own UDP input port" << output.port;
+            //: %1 is an IP address, %2 a UDP port
+            error = tr("Not forwarding to %1 port %2: this computer's UDP input receives on that port.")
+                        .arg(address)
+                        .arg(output.port);
+        } else if (!_udpOutput.configure(address, output.port)) {
+            error = tr("Enter an IP address and a port for UDP output.");
+        }
     }
-    RoutingConfiguration configuration;
-    configuration.instance = _settings->correctionSourceInstance()->rawValue().toString();
-    switch (_settings->correctionSource()->rawValue().toInt()) {
-        case GPSCorrectionSettings::LocalReceiver:
-            configuration.source = GPSCorrectionSource::LocalReceiver;
-            configuration.policy = RoutingPolicy::Manual;
-            break;
-        case GPSCorrectionSettings::Ntrip:
-            configuration.source = GPSCorrectionSource::Ntrip;
-            configuration.policy = RoutingPolicy::Manual;
-            break;
-        case GPSCorrectionSettings::Udp:
-            configuration.source = GPSCorrectionSource::Udp;
-            configuration.policy = RoutingPolicy::Manual;
-            break;
-        case GPSCorrectionSettings::All:
-            configuration.policy = RoutingPolicy::All;
-            break;
-        case GPSCorrectionSettings::Automatic:
-            break;
-        default:
-            qCWarning(GPSCorrectionManagerLog) << "Invalid correction source; using automatic selection";
-            break;
-    }
-    applyRoutingConfiguration(configuration);
+    return std::exchange(_udpOutputError, error) != error;
 }
 
-void GPSCorrectionManager::_applyUdpInputSettings()
+bool GPSCorrectionManager::_applyUdpInput()
 {
-    if (!_settings || _shutdown) {
-        return;
-    }
-    const QPointer<GPSCorrectionManager> guard(this);
-    const quint64 revision = ++_udpConfigurationRevision;
-    const bool enabled = _settings->rtcmUdpInputEnabled()->rawValue().toBool();
-    const bool validate = _settings->rtcmUdpValidate()->rawValue().toBool();
-    const quint16 port = static_cast<quint16>(_settings->rtcmUdpInputPort()->rawValue().toUInt());
-    const auto current = [this, guard, revision]() {
-        return guard && !_shutdown && _udpConfigurationRevision == revision;
-    };
-    _udpRegistration.reset();
-    if (!current()) {
-        return;
-    }
+    const QString previousError = _udpInputError;
+    _udpSource.reset();
     _udpInput.stop();
-    if (!current()) {
-        return;
+    _udpInputError.clear();
+    if (_udpInputEnabled()) {
+        _startUdpInput();
     }
-    disconnect(&_udpInput, nullptr, this, nullptr);
-    _udpInput.configure(port, validate);
-    if (!current() || !enabled) {
-        return;
-    }
-    auto registration = registerSource(GPSCorrectionSource::Udp);
-    if (!current()) {
-        return;
-    }
-    _udpRegistration = std::move(registration);
-    const auto token = _udpRegistration.token();
-    connect(&_udpInput, &RTCMUdpInput::frameReceived, this,
-            [this, token](const GPSCorrectionFrame& frame) { acceptIngress(token.event(frame)); });
-    connect(&_udpInput, &RTCMUdpInput::frameRejected, this,
-            [this, token](const GPSCorrectionFrame& frame, GPSCorrectionReason reason) {
-                acceptIngress(token.event(frame, reason));
-            });
-    const bool started = _udpInput.start();
-    if (current() && !started) {
-        _udpRegistration.reset();
-    }
+    return _udpInputError != previousError;
 }
 
-void GPSCorrectionManager::applyRoutingConfiguration(const RoutingConfiguration& configuration)
+void GPSCorrectionManager::_startUdpInput()
 {
-    const QPointer<GPSCorrectionManager> guard(this);
-    _router.applyConfiguration(configuration);
-    if (guard) {
-        _scheduleSourcesChanged();
-    }
-}
-
-GPSCorrectionSourceRegistration GPSCorrectionManager::registerSource(GPSCorrectionSource source,
-                                                                     const QString& instance)
-{
-    const QPointer<GPSCorrectionManager> guard(this);
-    auto registration = _router.registerSource(source, instance);
-    if (guard) {
-        _scheduleSourcesChanged();
-    }
-    return registration;
-}
-
-void GPSCorrectionManager::acceptIngress(const GPSCorrectionIngress& ingress)
-{
-    const QPointer<GPSCorrectionManager> guard(this);
-    ++_ingressDepth;
-    const auto finishIngress = qScopeGuard([guard]() {
-        if (guard) {
-            --guard->_ingressDepth;
-            guard->_scheduleSourcesChanged();
+    const quint16 port = _configuration->udpInput.port;
+    QString error;
+    if (!_udpInput.start(port, &error)) {
+        const QString reason = tr("Cannot listen on UDP port %1: %2").arg(port).arg(error);
+        // The tick retries every second, so only a new reason is worth a warning.
+        if (std::exchange(_udpInputError, reason) != reason) {
+            qCWarning(GPSCorrectionManagerLog) << "UDP correction input unavailable:" << reason;
         }
-    });
-    _router.acceptIngress(ingress);
-}
-
-GPSCorrectionManager::RoutingPolicy GPSCorrectionManager::routingPolicy() const
-{
-    return _router.policy();
-}
-
-void GPSCorrectionManager::removeSink(const QString& id)
-{
-    const QPointer<GPSCorrectionManager> guard(this);
-    _router.removeSink(id);
-    if (guard) {
-        _scheduleSourcesChanged();
-    }
-}
-
-void GPSCorrectionManager::setOutput(const QString& id, GPSCorrectionRouter::Output output)
-{
-    if (_shutdown) {
         return;
     }
-    const QPointer<GPSCorrectionManager> guard(this);
-    _router.setOutput(id, std::move(output));
-    if (guard) {
-        _scheduleSourcesChanged();
+    _udpInputError.clear();
+    _udpSource = openSource(GPSCorrectionSettings::Udp, QString());
+}
+
+void GPSCorrectionManager::_retryUdpInput()
+{
+    if (!_udpInputEnabled() || _udpInputError.isEmpty()) {
+        return;
+    }
+    const QString previousError = _udpInputError;
+    _startUdpInput();
+    if (_udpInputError != previousError) {
+        emit udpInputChanged();
     }
 }
 
-void GPSCorrectionManager::_refreshDiagnostics()
+bool GPSCorrectionManager::_udpInputEnabled() const
 {
-    const QPointer<GPSCorrectionManager> guard(this);
-    const auto events = _router.events();
-    const auto instances = _router.sourceInstanceDiagnostics();
-    _eventModel.setEvents(events);
-    if (guard) {
-        _refreshSourceInstances(instances);
-    }
-    if (guard) {
-        emit sourcesChanged();
-    }
+    return _configuration && _configuration->udpInput.enabled;
 }
 
-void GPSCorrectionManager::_scheduleSourcesChanged()
+void GPSCorrectionManager::_beginSource(GPSCorrectionSettings::CorrectionSource source)
 {
-    if (_shutdown) {
-        // Final diagnostics must include in-flight admission results.
-        if (_ingressDepth == 0 && _finalDiagnosticsPending) {
-            _finalDiagnosticsPending = false;
-            QMetaObject::invokeMethod(this, &GPSCorrectionManager::_refreshDiagnostics, Qt::QueuedConnection);
+    _selector.beginSource(source, _scheduler->nowMs());
+    _scheduleRefresh();
+}
+
+void GPSCorrectionManager::_endSource(GPSCorrectionSettings::CorrectionSource source)
+{
+    _selector.endSource(source, _scheduler->nowMs());
+    _scheduleRefresh();
+}
+
+void GPSCorrectionManager::_submit(GPSCorrectionSettings::CorrectionSource source, const QString& instance,
+                                   const QByteArray& data, qint64 receivedAtMs)
+{
+    if (_selector.submit(source, instance, receivedAtMs, _scheduler->nowMs())) {
+        _selectedRate.recordBytes(data.size());
+        if (_rtcmMavlink.submitToOutputs(data) > 0) {
+            emit vehicleBytesSubmittedChanged();
         }
-    } else if (!_diagnosticsTimer.isActive()) {
-        _diagnosticsTimer.start();
+        (void) _udpOutput.forward(data);
+    }
+    _scheduleRefresh();
+}
+
+QString GPSCorrectionManager::sourceName(int source)
+{
+    switch (static_cast<GPSCorrectionSettings::CorrectionSource>(source)) {
+        case GPSCorrectionSettings::LocalReceiver:
+            return tr("Local base station");
+        case GPSCorrectionSettings::Ntrip:
+            return tr("NTRIP");
+        case GPSCorrectionSettings::Udp:
+            return tr("UDP");
+        case GPSCorrectionSettings::HighestPriority:
+            break;
+    }
+    return tr("Unclassified");
+}
+
+void GPSCorrectionManager::_refresh()
+{
+    const std::optional<GPSCorrectionStream> selected = _selector.selectedStream(_scheduler->nowMs());
+    State state = State::Inactive;
+    if (selected) {
+        state = State::Fresh;
+    } else {
+        _selectedRate.resetRate();
+        if (_selector.hasSources() || _udpInputEnabled()) {
+            state = State::Waiting;
+        }
+    }
+    const quint64 rate = static_cast<quint64>(qRound64(_selectedRate.bytesPerSec()));
+    const bool rateChanged = std::exchange(_selectedBytesPerSecond, rate) != rate;
+    const GPSCorrectionStream stream = selected.value_or(GPSCorrectionStream{});
+    const bool streamChanged = std::exchange(_selected, stream) != stream;
+    if (std::exchange(_state, state) != state || streamChanged) {
+        emit stateChanged();
+    }
+    if (rateChanged) {
+        emit selectedBytesPerSecondChanged();
     }
 }
 
-QVariantList GPSCorrectionManager::sources() const
+void GPSCorrectionManager::_scheduleRefresh()
 {
-    return _router.sourceDiagnostics();
-}
-
-void GPSCorrectionManager::_refreshSourceInstances(const QVariantList& instances)
-{
-    if (instances != _lastSourceInstances) {
-        _lastSourceInstances = instances;
-        emit sourceInstancesChanged();
+    if (!_shutdown && !_refreshTask.active()) {
+        _refreshTask.schedule(std::chrono::milliseconds(100), [this]() { _refresh(); });
     }
-}
-
-QVariantList GPSCorrectionManager::sourceInstances() const
-{
-    return _router.sourceInstanceDiagnostics();
-}
-
-QVariantList GPSCorrectionManager::destinations() const
-{
-    return _router.destinationDiagnostics();
 }
 
 void GPSCorrectionManager::shutdown()
@@ -280,25 +255,12 @@ void GPSCorrectionManager::shutdown()
     if (_shutdown) {
         return;
     }
-    const QPointer<GPSCorrectionManager> guard(this);
     _shutdown = true;
-    _finalDiagnosticsPending = true;
-    _healthTimer.stop();
-    _diagnosticsTimer.stop();
+    _tickTask.cancel();
+    _refreshTask.cancel();
     _rtcmMavlink.setOutputProvider({});
-    if (!guard) {
-        return;
-    }
-    _ntripUdpOutput.stop();
-    if (!guard) {
-        return;
-    }
-    _router.shutdown();
-    if (!guard) {
-        return;
-    }
+    _udpOutput.stop();
+    _udpSource.reset();
+    _selector.shutdown();
     _udpInput.stop();
-    if (guard) {
-        _scheduleSourcesChanged();
-    }
 }

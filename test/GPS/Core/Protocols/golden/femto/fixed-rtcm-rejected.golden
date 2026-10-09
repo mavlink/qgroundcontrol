@@ -1,0 +1,17 @@
+about Receiver rejects RTCM output for a fixed base
+request type=femto role=rtk-base mode=fixed lat=47.00000000 lon=8.00000000 alt=500.0000 accuracy=1.00000m compact=0 persistent=0 baud=0
+configure configured=0 baud=0->115200 failure=protocol ready=0 elapsed=0ms
+  error "Femtomes receiver rejected 'LOG RTCM 1'"
+  baud 115200 configured
+  write "UNLOGALL THISPORT" 19 acknowledged required
+    text "UNLOGALL THISPORT\r\n"
+  write "VERSION" 9 acknowledged required
+    text "VERSION\r\n"
+  write "UNDULATION USER 0" 19 acknowledged required
+    text "UNDULATION USER 0\r\n"
+  write "FIX POSITION (fixed position)" 47 acknowledged required
+    text "FIX POSITION 47.00000000 8.00000000 500.00000\r\n"
+  write "LOG GPGGA 1" 14 acknowledged required
+    text "LOG GPGGA 1 \r\n"
+  write "LOG RTCM 1" 12 rejected required
+    text "LOG RTCM 1\r\n"

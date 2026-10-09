@@ -37,6 +37,20 @@ bool ScheduledTask::schedule(std::chrono::microseconds delay, RuntimeScheduler::
     return _state->id != 0;
 }
 
+bool ScheduledTask::scheduleRepeating(std::chrono::microseconds interval, RuntimeScheduler::Callback callback)
+{
+    if (!callback) {
+        cancel();
+        return false;
+    }
+    return schedule(interval, [this, interval, callback = std::move(callback)]() {
+        // Rescheduling replaces this closure, so the run keeps its own copy.
+        const RuntimeScheduler::Callback run = callback;
+        (void) scheduleRepeating(interval, run);
+        run();
+    });
+}
+
 void ScheduledTask::cancel()
 {
     ++_state->generation;

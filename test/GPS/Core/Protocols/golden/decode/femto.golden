@@ -1,0 +1,5 @@
+decoder type=femto role=rtk-base mode=fixed lat=47.00000000 lon=8.00000000 alt=500.0000 accuracy=1.00000m compact=0 persistent=0 baud=0
+file corpus/femto-0.bin bytes=32
+file corpus/femto-160.bin bytes=192
+file corpus/femto-2.bin bytes=34
+file corpus/femto-600.bin bytes=632

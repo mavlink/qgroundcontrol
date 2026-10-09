@@ -8,6 +8,7 @@ class ScheduledTaskTest : public UnitTest
 
 private slots:
     void _replacementAndReentrantScheduling();
+    void _repeatingRunsUntilCancelled();
     void _dependencyLifetime_data();
     void _dependencyLifetime();
     void _cancellationAndReplacement_data();

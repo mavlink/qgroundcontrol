@@ -1,5 +1,6 @@
 #include "QGCNetworkClient.h"
 
+#include <QtCore/QCoreApplication>
 #include <QtNetwork/QHttpHeaders>
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkProxy>
@@ -29,6 +30,21 @@ QString createBasicAuthCredentials(const QString& username, const QString& passw
 {
     const QString credentials = username + QLatin1Char(':') + password;
     return QString::fromLatin1(credentials.toUtf8().toBase64());
+}
+
+QString defaultUserAgent()
+{
+    static const QString userAgent = QStringLiteral("%1/%2 (Qt %3)")
+                                         .arg(QCoreApplication::applicationName(),
+                                              QCoreApplication::applicationVersion(), QString::fromLatin1(qVersion()));
+    return userAgent;
+}
+
+QSslConfiguration createSslConfig()
+{
+    QSslConfiguration config = QSslConfiguration::defaultConfiguration();
+    config.setProtocol(QSsl::TlsV1_2OrLater);
+    return config;
 }
 
 QNetworkAccessManager* createNetworkManager(QObject* parent)

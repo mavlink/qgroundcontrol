@@ -1,0 +1,8 @@
+decoder type=unicore role=rtk-base mode=fixed lat=0.00000000 lon=90.00000000 alt=100.0000 accuracy=0.00000m compact=0 persistent=0 baud=0
+file corpus/synthetic-unicore-averaging.ascii bytes=190
+    survey active=0 valid=1 duration=0s accuracy=- lat=0.00000000 lon=90.00000000 alt=100.0000 receipt=1
+    expired survey active=0 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
+file corpus/synthetic-unicore-base.ascii bytes=754
+    survey active=0 valid=1 duration=0s accuracy=- lat=0.00000000 lon=90.00000000 alt=100.0000 receipt=1
+    survey active=0 valid=1 duration=0s accuracy=- lat=0.00000000 lon=90.00000000 alt=100.0000 receipt=1
+    survey active=0 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1

@@ -1,94 +1,177 @@
 #pragma once
 
+#include <memory>
+#include <optional>
+
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
-#include <QtCore/QTimer>
-#include <QtCore/QVariantList>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-#include "GPSCorrectionEventModel.h"
-#include "GPSCorrectionFrame.h"
-#include "GPSCorrectionRouter.h"
-#include "RTCMMavlink.h"
+#include "DataRateTracker.h"
+#include "GPSCorrectionSelector.h"
+#include "RTCMMAVLink.h"
 #include "RTCMUdpInput.h"
+#include "ScheduledTask.h"
 #include "UdpForwarder.h"
 
-class GPSCorrectionSettings;
+class GPSCorrectionManager;
+class RuntimeScheduler;
 
-/// Owns the shared MAVLink sequence domain and UDP correction input for all GPS sources.
+/// A begun correction source and the stream it delivers; destroying it ends the source.
+class GPSCorrectionSourceHandle
+{
+public:
+    ~GPSCorrectionSourceHandle();
+    Q_DISABLE_COPY_MOVE(GPSCorrectionSourceHandle)
+
+    /// Offers one valid RTCM frame of the source's stream, received at @a receivedAtMs on the scheduler's clock. Fresh
+    /// frames of the selected stream go to vehicles and UDP forwarding. A non-empty @a instance names the frame's
+    /// stream instead, for a source that names streams per frame.
+    void submit(const QByteArray& data, qint64 receivedAtMs, const QString& instance = {}) const;
+
+private:
+    friend class GPSCorrectionManager;
+    GPSCorrectionSourceHandle(GPSCorrectionManager* manager, GPSCorrectionSettings::CorrectionSource source,
+                              const QString& instance);
+
+    const QPointer<GPSCorrectionManager> _manager;
+    const GPSCorrectionSettings::CorrectionSource _source;
+    const QString _instance;
+};
+
+/// Owns the shared MAVLink sequence domain and the UDP correction input and output for all GPS sources. The selected
+/// stream goes to vehicles over MAVLink and to UDP forwarding. Receipt times are on the scheduler's clock; producers
+/// on worker threads stamp with the steady clock, which the application's QtRuntimeScheduler uses.
 class GPSCorrectionManager : public QObject
 {
     Q_OBJECT
     QML_ELEMENT
-    QML_UNCREATABLE("")
-    Q_PROPERTY(RTCMMavlink* rtcmMavlink READ rtcmMavlink CONSTANT)
-    Q_PROPERTY(QVariantList sources READ sources NOTIFY sourcesChanged)
-    Q_PROPERTY(QVariantList sourceInstances READ sourceInstances NOTIFY sourceInstancesChanged)
-    Q_PROPERTY(QString activeInstance READ activeInstance NOTIFY sourcesChanged)
-    Q_PROPERTY(GPSCorrectionEventModel* events READ events CONSTANT)
-    Q_PROPERTY(QVariantList destinations READ destinations NOTIFY sourcesChanged)
+    QML_UNCREATABLE("Provided by the GPS manager")
+    Q_PROPERTY(State state READ state NOTIFY stateChanged FINAL)
+    Q_PROPERTY(GPSCorrectionStream selectedStream READ selectedStream NOTIFY stateChanged FINAL)
+    Q_PROPERTY(quint64 selectedBytesPerSecond READ selectedBytesPerSecond NOTIFY selectedBytesPerSecondChanged FINAL)
+    Q_PROPERTY(quint64 vehicleBytesSubmitted READ vehicleBytesSubmitted NOTIFY vehicleBytesSubmittedChanged FINAL)
+    Q_PROPERTY(QString udpInputError READ udpInputError NOTIFY udpInputChanged FINAL)
+    Q_PROPERTY(QString udpOutputError READ udpOutputError NOTIFY udpOutputChanged FINAL)
 
-    friend class GPSCorrectionManagerTest;
+    friend class GPSCorrectionSourceHandle;
 
 public:
-    using RoutingPolicy = GPSCorrectionRouter::Policy;
-    using RoutingConfiguration = GPSCorrectionRouter::Configuration;
+    /// Whether vehicles receive RTK corrections, across NTRIP, UDP input, and the local receiver.
+    enum class State
+    {
+        /// No correction source is enabled.
+        Inactive,
+        /// A source is enabled, but no fresh stream is selected for vehicles.
+        Waiting,
+        /// A fresh stream is selected for vehicles.
+        Fresh,
+    };
+    Q_ENUM(State)
 
-    explicit GPSCorrectionManager(QObject* parent = nullptr);
+    struct UdpInputConfiguration
+    {
+        bool enabled = false;
+        quint16 port = 0;
+        bool operator==(const UdpInputConfiguration&) const = default;
+    };
+
+    struct UdpOutputConfiguration
+    {
+        bool enabled = false;
+        QString address{};
+        quint16 port = 0;
+        bool operator==(const UdpOutputConfiguration&) const = default;
+    };
+
+    /// The correction settings as values; the application's settings binding supplies them.
+    struct Configuration
+    {
+        /// The only source routed to vehicles, or HighestPriority to select automatically.
+        GPSCorrectionSettings::CorrectionSource source = GPSCorrectionSettings::HighestPriority;
+        /// Listens for RTCM on a UDP port as the Udp source. A port that cannot be bound is retried every second.
+        UdpInputConfiguration udpInput;
+        /// Forwards the selected stream to a UDP peer.
+        UdpOutputConfiguration udpOutput;
+        bool operator==(const Configuration&) const = default;
+    };
+
+    explicit GPSCorrectionManager(QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr);
     ~GPSCorrectionManager() override;
 
-    void init(GPSCorrectionSettings* settings);
     void shutdown();
-    void configureNtripUdpOutput(bool enabled, const QString& address, quint16 port);
 
-    RTCMMavlink* rtcmMavlink() { return &_rtcmMavlink; }
+    /// The vehicle output, whose links tests replace with RTCMMAVLink::setOutputProvider().
+    RTCMMAVLink* rtcmMavlink() { return &_rtcmMavlink; }
 
-    void applyRoutingConfiguration(const RoutingConfiguration& configuration);
-    GPSCorrectionSourceRegistration registerSource(GPSCorrectionSource source, const QString& instance = {});
-    void acceptIngress(const GPSCorrectionIngress& ingress);
+    /// Applies the parts that changed; ignored after shutdown().
+    void setConfiguration(const Configuration& configuration);
+    /// Begins @a source, which delivers the stream @a instance, until the returned handle is destroyed. A category
+    /// has one source at a time, so a replacement opens after the previous handle is gone.
+    [[nodiscard]] std::unique_ptr<GPSCorrectionSourceHandle> openSource(GPSCorrectionSettings::CorrectionSource source,
+                                                                        const QString& instance);
 
-    GPSCorrectionSource selectedSource() const { return _router.selectedSource(); }
+    /// As last published with stateChanged().
+    State state() const { return _state; }
 
-    RoutingPolicy routingPolicy() const;
+    /// The fresh stream selected for vehicles, as last published with stateChanged(); a HighestPriority source when
+    /// none is.
+    GPSCorrectionStream selectedStream() const { return _selected; }
 
-    QString activeInstance() const { return _router.activeInstance(); }
+    /// Rate of the corrections sent from the selected stream.
+    quint64 selectedBytesPerSecond() const { return _selectedBytesPerSecond; }
 
-    void removeSink(const QString& id);
-    void setOutput(const QString& id, GPSCorrectionRouter::Output output);
+    /// Bytes of the selected streams that vehicle links admitted, from every source since startup.
+    quint64 vehicleBytesSubmitted() const { return _rtcmMavlink.totalBytesSubmitted(); }
 
-    GPSCorrectionEventModel* events() { return &_eventModel; }
+    /// Why the enabled UDP input is not listening; empty while it listens or is disabled.
+    QString udpInputError() const { return _udpInputError; }
 
-    QVariantList destinations() const;
+    /// Why the enabled UDP output does not forward; empty while it forwards or is disabled.
+    QString udpOutputError() const { return _udpOutputError; }
 
-    QVariantList sources() const;
-    QVariantList sourceInstances() const;
+    Q_INVOKABLE static QString sourceName(int source);
 
 signals:
-    void sourcesChanged();
-    void sourceInstancesChanged();
-    void correctionRouted(const GPSCorrectionFrame& frame);
-    void selectedSourceChanged();
+    void stateChanged();
+    void selectedBytesPerSecondChanged();
+    void vehicleBytesSubmittedChanged();
+    void udpInputChanged();
+    void udpOutputChanged();
 
 private:
-    void _applyRoutingSettings();
-    void _applyUdpInputSettings();
+    /// See GPSCorrectionSelector::beginSource(); each source calls _endSource() before it is replaced or stops.
+    void _beginSource(GPSCorrectionSettings::CorrectionSource source);
+    void _endSource(GPSCorrectionSettings::CorrectionSource source);
+    /// See GPSCorrectionSelector::submit(); a selected frame goes to vehicles and UDP forwarding.
+    void _submit(GPSCorrectionSettings::CorrectionSource source, const QString& instance, const QByteArray& data,
+                 qint64 receivedAtMs);
 
-    void _scheduleSourcesChanged();
-    void _refreshDiagnostics();
-    void _refreshSourceInstances(const QVariantList& instances);
+    /// Each returns whether the input's state or the output's error changed.
+    [[nodiscard]] bool _applyUdpInput();
+    [[nodiscard]] bool _applyUdpOutput();
+    bool _udpInputEnabled() const;
+    void _startUdpInput();
+    void _retryUdpInput();
 
-    GPSCorrectionRouter _router;
-    GPSCorrectionEventModel _eventModel;
-    QTimer _diagnosticsTimer;
-    QTimer _healthTimer;
-    RTCMMavlink _rtcmMavlink;
+    void _scheduleRefresh();
+    void _refresh();
+
+    RuntimeScheduler* const _scheduler;
+    ScheduledTask _refreshTask;
+    /// Every second: retries the UDP input, completes the rate window and refreshes the state.
+    ScheduledTask _tickTask;
+    GPSCorrectionSelector _selector;
+    DataRateTracker _selectedRate;
+    RTCMMAVLink _rtcmMavlink;
     RTCMUdpInput _udpInput;
-    GPSCorrectionSourceRegistration _udpRegistration;
-    UdpForwarder _ntripUdpOutput{this};
-    QPointer<GPSCorrectionSettings> _settings;
-    QVariantList _lastSourceInstances;
-    quint64 _udpConfigurationRevision = 0;
-    int _ingressDepth = 0;
-    bool _finalDiagnosticsPending = false;
+    std::unique_ptr<GPSCorrectionSourceHandle> _udpSource;
+    UdpForwarder _udpOutput{this};
+    std::optional<Configuration> _configuration;
+    State _state = State::Inactive;
+    GPSCorrectionStream _selected;
+    quint64 _selectedBytesPerSecond = 0;
+    QString _udpInputError;
+    QString _udpOutputError;
     bool _shutdown = false;
 };

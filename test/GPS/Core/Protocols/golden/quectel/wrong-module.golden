@@ -1,0 +1,8 @@
+about Identity reports an unqualified LG580P
+request type=quectel role=rtk-base mode=survey-in accuracy=15.0000m duration=10s compact=0 persistent=0 baud=0
+configure configured=0 baud=0->0 failure=protocol ready=0 elapsed=1ms
+  identity "LG580P03AANR01A03S"
+  error "No verified LG290P(03) identity; receiver configuration was not changed"
+  baud 460800 configured
+  write "PQTMVERNO" 15 rejected required
+    text "$PQTMVERNO*58\r\n"

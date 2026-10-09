@@ -5,8 +5,6 @@
 
 #include "RuntimeScheduler.h"
 
-class QChronoTimer;
-
 /// Qt event-loop implementation; no callback runs inside schedule().
 class QtRuntimeScheduler final : public RuntimeScheduler
 {
@@ -18,7 +16,19 @@ public:
     TaskId schedule(QObject* context, std::chrono::microseconds delay, Callback callback) override;
     void cancel(TaskId task) override;
 
+protected:
+    void timerEvent(QTimerEvent* event) override;
+
 private:
+    struct Task
+    {
+        TaskId id = 0;
+        QPointer<QObject> context;
+        Callback callback;
+        QMetaObject::Connection contextDestroyed;
+    };
+
     TaskId _nextTask = 0;
-    QHash<TaskId, QPointer<QChronoTimer>> _tasks;
+    QHash<int, Task> _tasks;
+    QHash<TaskId, int> _timers;
 };

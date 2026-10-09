@@ -7,6 +7,7 @@ class DataRateTrackerTest : public PortableTest
 private slots:
     void testInitialState();
     void testRecordBytesAccumulates();
+    void testReset_data();
     void testReset();
     void testKBpsConversion();
     void testRefreshDuringSilence();

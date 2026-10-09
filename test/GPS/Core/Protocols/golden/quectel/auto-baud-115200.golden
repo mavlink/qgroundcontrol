@@ -1,0 +1,57 @@
+about Detects a receiver at 115200
+request type=quectel role=rtk-base mode=survey-in accuracy=15.0000m duration=10s compact=0 persistent=0 baud=0
+configure configured=1 baud=0->115200 failure=none ready=1 elapsed=1223ms
+  identity "LG290P03AANR01A03S"
+  baud 460800 configured
+  write "PQTMVERNO" 15 timed-out required
+    text "$PQTMVERNO*58\r\n"
+  baud 115200 configured
+  write "PQTMVERNO" 15 readback-verified required
+    text "$PQTMVERNO*58\r\n"
+  write "PQTMCFGRCVRMODE,R" 23 readback-verified required
+    text "$PQTMCFGRCVRMODE,R*32\r\n"
+  write "PQTMCFGFIXRATE,R" 22 readback-verified required
+    text "$PQTMCFGFIXRATE,R*71\r\n"
+  write "PQTMCFGSVIN,R" 19 readback-verified required
+    text "$PQTMCFGSVIN,R*26\r\n"
+  write "PQTMCFGSVIN,W (survey restart)" 54 acknowledged required
+    text "$PQTMCFGSVIN,W,1,10,15.0,0.0000,0.0000,0.0000,0.0*15\r\n"
+  write "PQTMSRR" 13 written required
+    text "$PQTMSRR*4B\r\n"
+  write "PQTMVERNO" 15 readback-verified required
+    text "$PQTMVERNO*58\r\n"
+  write "PQTMCFGRCVRMODE,R" 23 readback-verified required
+    text "$PQTMCFGRCVRMODE,R*32\r\n"
+  write "PQTMCFGFIXRATE,R" 22 readback-verified required
+    text "$PQTMCFGFIXRATE,R*71\r\n"
+  write "PQTMCFGSVIN,R" 19 readback-verified required
+    text "$PQTMCFGSVIN,R*26\r\n"
+  write "PQTMCFGMSGRATE,W,PQTMSVINSTATUS,1,1" 41 acknowledged required
+    text "$PQTMCFGMSGRATE,W,PQTMSVINSTATUS,1,1*58\r\n"
+  write "PQTMCFGMSGRATE,R,PQTMSVINSTATUS,1" 39 readback-verified required
+    text "$PQTMCFGMSGRATE,R,PQTMSVINSTATUS,1*40\r\n"
+  write "PQTMCFGMSGRATE,W,RTCM3-1005,1" 35 acknowledged required
+    text "$PQTMCFGMSGRATE,W,RTCM3-1005,1*59\r\n"
+  write "PQTMCFGMSGRATE,R,RTCM3-1005" 33 readback-verified required
+    text "$PQTMCFGMSGRATE,R,RTCM3-1005*41\r\n"
+  write "PQTMCFGMSGRATE,W,RTCM3-107X,1,0" 37 acknowledged required
+    text "$PQTMCFGMSGRATE,W,RTCM3-107X,1,0*2F\r\n"
+  write "PQTMCFGMSGRATE,R,RTCM3-107X,0" 35 readback-verified required
+    text "$PQTMCFGMSGRATE,R,RTCM3-107X,0*37\r\n"
+  write "PQTMCFGMSGRATE,W,GGA,1" 28 acknowledged required
+    text "$PQTMCFGMSGRATE,W,GGA,1*0A\r\n"
+  write "PQTMCFGMSGRATE,R,GGA" 26 readback-verified required
+    text "$PQTMCFGMSGRATE,R,GGA*12\r\n"
+  write "PQTMCFGMSGRATE,W,GST,1" 28 acknowledged required
+    text "$PQTMCFGMSGRATE,W,GST,1*0B\r\n"
+  write "PQTMCFGMSGRATE,R,GST" 26 readback-verified required
+    text "$PQTMCFGMSGRATE,R,GST*13\r\n"
+  write "PQTMCFGMSGRATE,W,GSA,1" 28 acknowledged required
+    text "$PQTMCFGMSGRATE,W,GSA,1*1E\r\n"
+  write "PQTMCFGMSGRATE,R,GSA" 26 readback-verified required
+    text "$PQTMCFGMSGRATE,R,GSA*06\r\n"
+  write "PQTMCFGMSGRATE,W,GSV,1" 28 acknowledged required
+    text "$PQTMCFGMSGRATE,W,GSV,1*09\r\n"
+  write "PQTMCFGMSGRATE,R,GSV" 26 readback-verified required
+    text "$PQTMCFGMSGRATE,R,GSV*11\r\n"
+stream failure=none ready=1

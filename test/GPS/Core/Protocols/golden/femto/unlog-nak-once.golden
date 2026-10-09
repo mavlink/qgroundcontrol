@@ -1,0 +1,16 @@
+about First UNLOGALL rejected; the second round succeeds
+request type=femto role=rtk-base mode=survey-in accuracy=1.0000m duration=60s compact=0 persistent=0 baud=0
+configure configured=1 baud=0->115200 failure=none ready=1 elapsed=0ms
+  baud 115200 configured
+  write "UNLOGALL THISPORT" 19 rejected required
+    text "UNLOGALL THISPORT\r\n"
+  write "UNLOGALL THISPORT" 19 acknowledged required
+    text "UNLOGALL THISPORT\r\n"
+  write "VERSION" 9 acknowledged required
+    text "VERSION\r\n"
+  write "POSAVE ON" 12 acknowledged required
+    text "POSAVE ON \r\n"
+  write "LOG GPGGA 1" 14 acknowledged required
+    text "LOG GPGGA 1 \r\n"
+  survey active=1 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
+stream failure=none ready=1

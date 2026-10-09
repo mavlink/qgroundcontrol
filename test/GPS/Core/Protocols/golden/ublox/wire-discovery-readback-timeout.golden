@@ -1,0 +1,24 @@
+about Baud readback after a lost ACK times out
+request type=ublox role=rtk-base mode=survey-in accuracy=1.0000m duration=60s compact=0 persistent=0 baud=0
+configure configured=0 baud=0->0 failure=protocol ready=0 elapsed=4560ms
+  identity "ZED-F9P HPG 1.32"
+  error "u-blox receiver did not acknowledge 'UBX-CFG-VALSET readback'"
+  baud 38400 configured
+  write "UBX-MON-VER" 8 timed-out required
+    b5620a0400000e34
+  baud 57600 configured
+  write "UBX-MON-VER" 8 timed-out required
+    b5620a0400000e34
+  baud 9600 configured
+  write "UBX-MON-VER" 8 acknowledged required
+    b5620a0400000e34
+  write "UBX-CFG-VALSET" 47 acknowledged required
+    b562068a27000001000002005220010300522000040052200001007310010200
+    731000010074100102007410002edb
+  write "UBX-CFG-VALSET" 20 timed-out optional
+    b562068a0c00000100000100524000c20100f3a5
+  baud 115200 configured
+  write "UBX-MON-VER" 8 acknowledged required
+    b5620a0400000e34
+  write "UBX-CFG-VALSET readback" 16 timed-out required
+    b562068b080000000000010052402c79

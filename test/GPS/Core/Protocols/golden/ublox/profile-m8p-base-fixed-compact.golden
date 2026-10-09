@@ -1,0 +1,98 @@
+about M8P base profile, fixed base with MSM4
+request type=ublox role=rtk-base mode=fixed lat=47.00000000 lon=8.00000000 alt=500.0000 accuracy=1.00000m compact=1 persistent=0 baud=0
+configure configured=1 baud=115200->115200 failure=none ready=1 elapsed=20ms
+  identity "NEO-M8P-2 HPG 1.40"
+  baud 115200 configured
+  write "UBX-MON-VER" 8 acknowledged required
+    b5620a0400000e34
+  write "UBX-CFG-PRT" 48 acknowledged required
+    b5620600280001000000d008000000c20100010021000000000003000000d008
+    000000c201000100230000000000ae18
+  write "UBX-CFG-RATE" 14 acknowledged required
+    b56206080600c80001000000dd68
+  write "UBX-CFG-NAV5" 44 acknowledged required
+    b562062424000500020200000000000000000000000000000000000000000000
+    0000000000000000000057fe
+  write "UBX-CFG-MSG" 11 acknowledged required
+    b562060103000107011351
+  write "UBX-CFG-MSG" 11 acknowledged required
+    b562060103000103010f49
+  write "UBX-CFG-MSG" 11 acknowledged required
+    b56206010300010401104b
+  write "UBX-CFG-MSG" 11 acknowledged required
+    b5620601030001300540a7
+  write "UBX-CFG-MSG" 11 acknowledged required
+    b562060103000a09011e70
+  write "UBX-CFG-MSG" 11 written required
+    b56206010300f505000428
+  write "UBX-CFG-MSG" 11 written required
+    b56206010300f5e600e5ea
+  write "UBX-CFG-MSG" 11 written required
+    b56206010300f54d004cb8
+  write "UBX-CFG-MSG" 11 written required
+    b56206010300f5570056cc
+  write "UBX-CFG-MSG" 11 written required
+    b56206010300f5610060e0
+  write "UBX-CFG-MSG" 11 written required
+    b56206010300f57f007e1c
+  write "UBX-CFG-MSG" 11 written required
+    b56206010300f54a0049b2
+  write "UBX-CFG-MSG" 11 written required
+    b56206010300f5540053c6
+  write "UBX-CFG-MSG" 11 written required
+    b56206010300f55e005dda
+  write "UBX-CFG-MSG" 11 written required
+    b56206010300f57c007b16
+  write "UBX-CFG-TMODE3" 48 acknowledged required
+    b562067128000000000000000000000000000000000000000000000000000000
+    00000000000000000000000000009f93
+  write "UBX-CFG-TMODE3 disabled readback" 8 readback-verified required
+    b56206710000776b
+  write "UBX-CFG-TMODE3" 48 acknowledged required
+    b562067128000000020180a1031c00b4c40450c3000000000000102700000000
+    0000000000000000000000000000a8b7
+  write "UBX-CFG-RATE" 14 acknowledged required
+    b56206080600e803010000000037
+  write "UBX-CFG-MSG" 11 acknowledged required
+    b56206010300013b0046b8
+  write "UBX-CFG-MSG" 11 acknowledged required
+    b562060103000130023da4
+  write "UBX-CFG-MSG" 11 acknowledged required
+    b56206010300f50505092d
+  write "UBX-CFG-MSG" 11 acknowledged required
+    b56206010300f54a014ab3
+  write "UBX-CFG-MSG" 11 acknowledged required
+    b56206010300f5540154c7
+  write "UBX-CFG-MSG" 11 acknowledged required
+    b56206010300f5e601e6eb
+  write "UBX-CFG-MSG" 11 acknowledged required
+    b56206010300f55e015edb
+  write "UBX-CFG-MSG" 11 acknowledged required
+    b56206010300f57c017c17
+stream failure=none ready=1
+  write "UBX-CFG-RATE" 14 acknowledged required
+    b56206080600e803010000000037
+  write "UBX-CFG-MSG" 11 acknowledged required
+    b56206010300013b0046b8
+  write "UBX-CFG-MSG" 11 acknowledged required
+    b562060103000130023da4
+  write "UBX-CFG-MSG" 11 acknowledged required
+    b56206010300f50505092d
+  write "UBX-CFG-MSG" 11 acknowledged required
+    b56206010300f54a014ab3
+  write "UBX-CFG-MSG" 11 acknowledged required
+    b56206010300f5540154c7
+  write "UBX-CFG-MSG" 11 acknowledged required
+    b56206010300f5e601e6eb
+  write "UBX-CFG-MSG" 11 acknowledged required
+    b56206010300f55e015edb
+  write "UBX-CFG-MSG" 11 acknowledged required
+    b56206010300f57c017c17
+  survey active=1 valid=0 duration=30s accuracy=2.5000 lat=0.00000000 lon=90.00000000 alt=100.0000 receipt=1
+  satellites full=1 gps:view=2/1,use=1/1 glonass:view=1/1,use=1/1
+  position fix=3d lat=47.00000000 lon=8.00000000 msl=450.0000 ellipsoid=500.0000 hacc=1.5000 vacc=2.5000 hdop=nan vdop=nan speed=0.2240 course=1.107150 used=12 utc=1704164646000000 velocity=1 receipt=1
+  integrity receipt=1 jamming=critical/1 spoofing=unknown/0 antenna=ok/1 output-overflow=0
+  integrity receipt=1 jamming=critical/1 spoofing=indicated/1 antenna=ok/1 output-overflow=0
+  survey active=0 valid=1 duration=181s accuracy=2.5000 lat=0.00000000 lon=90.00000000 alt=100.0000 receipt=1
+  position fix=3d lat=47.00000000 lon=8.00000000 msl=450.0000 ellipsoid=500.0000 hacc=1.5000 vacc=2.5000 hdop=nan vdop=nan speed=0.2240 course=1.107150 used=12 utc=1704164647000000 velocity=1 receipt=1
+  rtcm type=1005 size=25 fnv=f8e3bb62

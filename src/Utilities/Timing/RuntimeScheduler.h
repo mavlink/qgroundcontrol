@@ -6,6 +6,8 @@
 #include <functional>
 
 /// One-thread monotonic clock and deferred callbacks, shared by production controllers and deterministic replay.
+/// Classes that accept an injected scheduler create their own when none is supplied; an injected scheduler
+/// must share the owner's thread and outlive it.
 class RuntimeScheduler : public QObject
 {
     Q_OBJECT
@@ -17,6 +19,10 @@ public:
 
     explicit RuntimeScheduler(QObject* parent = nullptr);
     ~RuntimeScheduler() override;
+
+    /// @a scheduler, or a QtRuntimeScheduler owned by @a owner when it is null.
+    [[nodiscard]] static RuntimeScheduler* orDefault(RuntimeScheduler* scheduler, QObject* owner);
+
     virtual quint64 nowUs() const = 0;
 
     qint64 nowMs() const { return static_cast<qint64>(nowUs() / 1000); }

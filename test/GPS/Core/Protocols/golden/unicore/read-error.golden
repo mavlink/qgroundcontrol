@@ -1,0 +1,8 @@
+about Transport read fails
+request type=unicore role=rtk-base mode=averaging maximum=5s compact=0 persistent=0 baud=0
+configure configured=0 baud=0->0 failure=transport ready=0 elapsed=0ms
+  error "Unicore test disconnect"
+  baud 115200 configured
+  write "VERSIONA" 10 transport-error required
+    text "VERSIONA\r\n"
+  survey active=0 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1

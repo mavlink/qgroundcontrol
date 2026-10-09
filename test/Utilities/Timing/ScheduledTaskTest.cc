@@ -35,6 +35,27 @@ void ScheduledTaskTest::_replacementAndReentrantScheduling()
     QCOMPARE(delivered, QList<int>({1, 2, 3}));
 }
 
+void ScheduledTaskTest::_repeatingRunsUntilCancelled()
+{
+    ManualScheduler scheduler;
+    QObject context;
+    ScheduledTask task(&scheduler, &context);
+    int calls = 0;
+    QVERIFY(!task.scheduleRepeating(std::chrono::milliseconds(10), {}));
+    QVERIFY(task.scheduleRepeating(std::chrono::milliseconds(10), [&] {
+        // Each run is already rescheduled, so the callback can end the repetition.
+        QVERIFY(task.active());
+        if (++calls == 3) {
+            task.cancel();
+        }
+    }));
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(9)));
+    QCOMPARE(calls, 0);
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(51)));
+    QCOMPARE(calls, 3);
+    QVERIFY(!task.active());
+}
+
 namespace {
 void addBackends()
 {

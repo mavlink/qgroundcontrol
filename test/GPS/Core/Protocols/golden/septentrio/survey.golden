@@ -1,0 +1,37 @@
+about USB connection, survey-in
+request type=septentrio role=rtk-base mode=survey-in accuracy=1.0000m duration=60s compact=0 persistent=0 baud=0
+configure configured=1 baud=0->115200 failure=none ready=1 elapsed=0ms
+  baud 115200 configured
+  write - 11
+    text "SSSSSSSSSS\n"
+  write "setDataInOut,COM1,,-RTCMv3-RTCMv2-CMRv2" 40 acknowledged optional
+    text "setDataInOut,COM1,,-RTCMv3-RTCMv2-CMRv2\n"
+  write "setDataInOut,COM2,,-RTCMv3-RTCMv2-CMRv2" 40 acknowledged optional
+    text "setDataInOut,COM2,,-RTCMv3-RTCMv2-CMRv2\n"
+  write "setDataInOut,USB1,,-RTCMv3-RTCMv2-CMRv2" 40 acknowledged optional
+    text "setDataInOut,USB1,,-RTCMv3-RTCMv2-CMRv2\n"
+  write "setDataInOut,USB2,,-RTCMv3-RTCMv2-CMRv2" 40 acknowledged optional
+    text "setDataInOut,USB2,,-RTCMv3-RTCMv2-CMRv2\n"
+  write "setDataInOut,USB3,,-RTCMv3-RTCMv2-CMRv2" 40 acknowledged optional
+    text "setDataInOut,USB3,,-RTCMv3-RTCMv2-CMRv2\n"
+  write "setDataInOut,USB4,,-RTCMv3-RTCMv2-CMRv2" 40 acknowledged optional
+    text "setDataInOut,USB4,,-RTCMv3-RTCMv2-CMRv2\n"
+  write - 2
+    text "\n\r"
+  write "setSBFOutput, Stream1, USB1, none, off" 39 acknowledged required
+    text "setSBFOutput, Stream1, USB1, none, off\n"
+  write "setDataInOut, USB1, Auto, SBF" 30 acknowledged required
+    text "setDataInOut, USB1, Auto, SBF\n"
+  write "setGeodeticDatum, WGS84" 24 acknowledged required
+    text "setGeodeticDatum, WGS84\n"
+  write "setDataInOut, USB1, Auto, RTCMv3+SBF" 37 acknowledged required
+    text "setDataInOut, USB1, Auto, RTCMv3+SBF\n"
+  write "setPVTMode, Static, All, auto" 30 acknowledged required
+    text "setPVTMode, Static, All, auto\n"
+  write "setSBFOutput, Stream1, USB1, +PVTGeodetic, msec500" 51 acknowledged required
+    text "setSBFOutput, Stream1, USB1, +PVTGeodetic, msec500\n"
+stream failure=none ready=1
+  usage used=17 receipt=1
+  survey active=0 valid=0 duration=0s accuracy=- lat=7.16197244 lon=-14.32394488 alt=123.5000 receipt=1
+  position fix=rtk-fixed lat=7.16197244 lon=-14.32394488 msl=135.7500 ellipsoid=123.5000 hacc=0.6000 vacc=1.7000 hdop=nan vdop=nan speed=5.0000 course=4.712389 used=17 utc=0 velocity=1 receipt=1
+  rtcm type=1005 size=25 fnv=f8e3bb62

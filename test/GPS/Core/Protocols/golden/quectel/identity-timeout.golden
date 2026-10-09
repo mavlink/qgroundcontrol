@@ -1,0 +1,22 @@
+about Receiver never answers the identity query
+request type=quectel role=rtk-base mode=survey-in accuracy=15.0000m duration=10s compact=0 persistent=0 baud=0
+configure configured=0 baud=0->0 failure=protocol ready=0 elapsed=6000ms
+  error "No Quectel receiver answered at 460800, 115200, 230400, 921600, 57600, 9600 baud"
+  baud 460800 configured
+  write "PQTMVERNO" 15 timed-out required
+    text "$PQTMVERNO*58\r\n"
+  baud 115200 configured
+  write "PQTMVERNO" 15 timed-out required
+    text "$PQTMVERNO*58\r\n"
+  baud 230400 configured
+  write "PQTMVERNO" 15 timed-out required
+    text "$PQTMVERNO*58\r\n"
+  baud 921600 configured
+  write "PQTMVERNO" 15 timed-out required
+    text "$PQTMVERNO*58\r\n"
+  baud 57600 configured
+  write "PQTMVERNO" 15 timed-out required
+    text "$PQTMVERNO*58\r\n"
+  baud 9600 configured
+  write "PQTMVERNO" 15 timed-out required
+    text "$PQTMVERNO*58\r\n"

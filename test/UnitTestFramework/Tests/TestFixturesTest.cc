@@ -1,22 +1,24 @@
 #include "TestFixturesTest.h"
-#include "SignalEmitter.h"
+
+#include <cmath>
 
 #include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QJsonObject>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
 #include <QtCore/QTimer>
 #include <QtCore/QUuid>
 #include <QtNetwork/QNetworkRequest>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
-#include <cmath>
-
 #include "AppSettings.h"
 #include "Fact.h"
 #include "Fixtures/TestFixtures.h"
+#include "QGCLoggingCategoryManager.h"
 #include "SettingsManager.h"
+#include "SignalEmitter.h"
 #include "UnitTest.h"
 using namespace TestFixtures;
 
@@ -289,6 +291,26 @@ void TestFixturesTest::_testSettingsFixtureFactValue()
     }
     // After fixture destruction, original value should be restored
     QCOMPARE(testFact->rawValue(), originalValue);
+}
+
+// ============================================================================
+// LoggingCategoryFixture Tests
+// ============================================================================
+void TestFixturesTest::_testLoggingCategoryFixtureRestore()
+{
+    auto* const categories = QGCLoggingCategoryManager::instance();
+    const QString category = QStringLiteral("Utilities.Timing.ScheduledTask");
+    const bool original = categories->isCategoryEnabled(category);
+    const auto restore = qScopeGuard([&] { categories->setCategoryEnabled(category, original); });
+    // The fixture enables the category and leaves it as it found it, enabled or not.
+    for (const bool enabled : {false, true}) {
+        categories->setCategoryEnabled(category, enabled);
+        {
+            const LoggingCategoryFixture logging(category);
+            QVERIFY(categories->isCategoryEnabled(category));
+        }
+        QCOMPARE(categories->isCategoryEnabled(category), enabled);
+    }
 }
 
 UT_REGISTER_TEST(TestFixturesTest, TestLabel::Unit)

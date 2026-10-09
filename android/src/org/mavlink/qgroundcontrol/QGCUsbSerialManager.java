@@ -1066,6 +1066,34 @@ public class QGCUsbSerialManager {
     }
 
     /**
+     * Writes data to the USB serial device and reports partial progress on timeout.
+     *
+     * @param deviceId    The device ID.
+     * @param data        The byte array of data to write.
+     * @param length      The number of bytes to write.
+     * @param timeoutMSec The timeout in milliseconds; 0 waits without limit.
+     * @return The number of bytes written, fewer than length on timeout, or -1 if failed.
+     */
+    public static int writeWithProgress(final int deviceId, final byte[] data, final int length, final int timeoutMSec) {
+        final UsbSerialPort port = getOpenPortOrWarn(deviceId, "writeWithProgress");
+        if (port == null) {
+            return -1;
+        }
+
+        try {
+            port.write(data, length, timeoutMSec);
+            return length;
+        } catch (final SerialTimeoutException e) {
+            final int transferred = Math.max(0, Math.min(e.bytesTransferred, length));
+            QGCLogger.d(TAG, "Write timed out after " + transferred + " of " + length + " bytes");
+            return transferred;
+        } catch (final IOException e) {
+            QGCLogger.e(TAG, "Error writing data", e);
+            return -1;
+        }
+    }
+
+    /**
      * Writes data asynchronously to the USB serial device.
      *
      * @param deviceId    The device ID.

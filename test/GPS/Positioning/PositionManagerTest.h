@@ -2,31 +2,34 @@
 
 #include "UnitTest.h"
 
-class QIODevice;
-
 class PositionManagerTest : public UnitTest
 {
     Q_OBJECT
 
 private slots:
-    void init() override;
-    void cleanup() override;
-
-    void _nmeaSourceProducesGcsPosition();
-    void _resetNmeaSourceTearsDownAndClearsState();
-    void _nmeaUpdatesStayHealthyUntilStale();
+    void _sourcesShareAcceptance_data();
+    void _sourcesShareAcceptance();
+    void _deviceAltitudeDatum_data();
+    void _deviceAltitudeDatum();
+    void _registrationReplacementAndSessions();
+    void _producerLoss_data();
+    void _producerLoss();
+    void _selectionStatusMatchesPublication_data();
+    void _selectionStatusMatchesPublication();
+    void _automaticRejectionMatchesPublication_data();
+    void _automaticRejectionMatchesPublication();
+    void _automaticFailoverAndRecovery();
+    void _standbyReportsDoNotRepublish();
+    void _consumerMaximumAge();
+    void _policySelectionGates();
+    void _sourceAndHealthLifetime();
+    void _backendStatus();
+    void _backendTimeoutPreservesFreshness_data();
+    void _backendTimeoutPreservesFreshness();
+    void _deviceRunsUnlessReceiverOnly();
+    void _accuracyNotifiesOnlyChanges();
+    void _destructionStopsDevice();
     void _qmlPositionProperties();
-    void _destructionDoesNotPublishPosition();
-    void _deviceDestructionRetiresNmea();
-    void _nmeaLifecycleDiagnostics_data();
-    void _nmeaLifecycleDiagnostics();
-    void _simulatedPosition_data();
-    void _simulatedPosition();
-    void _facadeUsesInjectedScheduler();
-    void _facadeSchedulerDestruction();
-    void _simulatedHomeSelection_data();
-    void _simulatedHomeSelection();
-
-private:
-    QIODevice* _nmeaDevice = nullptr;
+    void _initUsesPlatformSourceFactory();
+    void _shutdownReleasesSources();
 };

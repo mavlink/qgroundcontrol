@@ -133,6 +133,7 @@ A collapsible group with an optional heading.
 | `sectionName` | string | no | Tree-nav display name; falls back to `heading` |
 | `keywords` | array of strings | no | Extra search terms |
 | `component` | string | no | Name of a hand-written QML component to embed instead of generating controls |
+| `properties` | object | no | QML property bindings set on the `component` (same value rules as control `properties`) |
 | `missing` | array of strings | no | Descriptions of complex UI not yet generated (documentation only) |
 | `controls` | array of [Control](#control) | yes* | Controls in this group |
 
@@ -150,7 +151,8 @@ A collapsible group with an optional heading.
 | `showWhen` | string | no | Extra QML visibility expression (combined with `fact.userVisible` via logical AND) |
 | `enableWhen` | string | no | QML expression bound to `enabled` |
 | `placeholder` | string | no | Placeholder text for text fields |
-| `properties` | object | no | Extra QML property bindings for `browse`/`scaler` controls (see below) |
+| `component` | string | no | Hand-written QML component a `component` control embeds; it needs no `setting` |
+| `properties` | object | no | Extra QML property bindings for `browse`/`scaler`/`component` controls (see below) |
 | `enableCheckbox` | object | no | Enable-checkbox for sliders (see below) |
 | `button` | object | no | Adjacent button (see below) |
 
@@ -181,6 +183,7 @@ Explicit `control` values:
 | `slider` | Slider with optional enable-checkbox and adjacent button |
 | `browse` | File/path browser (desktop only; pair with `showWhen: "!ScreenTools.isMobile"`) |
 | `scaler` | Percentage scaler (for `uiScalePercent`) |
+| `component` | The hand-written QML component named by `component`, inside the group |
 
 #### `slider` extra keys
 
@@ -189,7 +192,7 @@ Explicit `control` values:
 | `enableCheckbox` | object | `{ "checked": "expr", "onClicked": "body" }` |
 | `button` | object | `{ "text": "label", "onClicked": "body", "enabled": "expr" }` |
 
-#### `browse` / `scaler` extra keys
+#### `browse` / `scaler` / `component` extra keys
 
 `properties` maps QML property names to values emitted into the control.
 Booleans and numbers map to their QML literals; strings are emitted verbatim

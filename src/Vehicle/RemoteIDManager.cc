@@ -1,7 +1,8 @@
 #include "RemoteIDManager.h"
 
-#include <chrono>
+#include <utility>
 
+#include "GPSManager.h"
 #include "MAVLinkLib.h"
 #include "MAVLinkProtocol.h"
 #include "PositionManager.h"
@@ -19,7 +20,6 @@ QGC_LOGGING_CATEGORY(RemoteIDManagerLog, "Vehicle.RemoteIDManager")
 #define MAVLINK_UNKNOWN_LAT 0
 #define MAVLINK_UNKNOWN_LON 0
 #define SENDING_RATE_MSEC 1000
-#define ALLOWED_GPS_DELAY 5000
 #define RID_TIMEOUT 2500 // Messages should be arriving at 1 Hz, so we set a 2 second timeout
 
 const uint8_t* RemoteIDManager::_id_or_mac_unknown = new uint8_t[MAVLINK_MSG_OPEN_DRONE_ID_OPERATOR_ID_FIELD_ID_OR_MAC_LEN]();
@@ -299,11 +299,20 @@ void RemoteIDManager::_sendSystem()
             _updateGcsPositionStatus(false, "The provided coordinates for FIXED position are invalid.");
         }
     } else {
-        QGCPositionManager* positionManager = QGCPositionManager::instance();
+        PositionManager* positionManager = GPSManager::instance()->positionManager();
         const auto observation = positionManager->acceptedObservation(GPSObservation::PositionUse::RemoteID,
-                                                                      std::chrono::milliseconds{ALLOWED_GPS_DELAY});
+                                                                      GPSSourceHealth::FRESHNESS_TIMEOUT);
         if (observation) {
             gcsPosition = observation->position.coordinate();
+            // An altitude of another or an unknown datum is still the best available operator altitude.
+            const bool notGeodetic =
+                observation->altitudeDatum != GPSAltitudeDatum::Ellipsoid && qIsFinite(gcsPosition.altitude());
+            if (notGeodetic && !std::exchange(_gcsAltitudeNotGeodeticReported, true)) {
+                qCWarning(RemoteIDManagerLog)
+                    << "GCS altitude is not a WGS84 ellipsoid height; sending it as the operator's geodetic altitude";
+            } else if (!notGeodetic) {
+                _gcsAltitudeNotGeodeticReported = false;
+            }
         }
 
         const auto sourceStatus = positionManager->sourceStatus();
@@ -311,9 +320,9 @@ void RemoteIDManager::_sendSystem()
         if (positioningError != QGeoPositionInfoSource::NoError &&
             positioningError != QGeoPositionInfoSource::UpdateTimeoutError) {
             _updateGcsPositionStatus(false, QString("GCS GPS data error: %1").arg(positioningError));
-        } else if (sourceStatus != GPSPositionService::SourceStatus::Active) {
-            const bool waiting = sourceStatus == GPSPositionService::SourceStatus::WaitingForFix ||
-                                 sourceStatus == GPSPositionService::SourceStatus::PermissionRequired;
+        } else if (sourceStatus != PositionManager::SourceStatus::Active) {
+            const bool waiting = sourceStatus == PositionManager::SourceStatus::WaitingForFix ||
+                                 sourceStatus == PositionManager::SourceStatus::PermissionRequired;
             _updateGcsPositionStatus(false, waiting ? QString() : positionManager->sourceStatusText());
         } else if (!observation) {
             _updateGcsPositionStatus(false, QStringLiteral("GCS GPS data is not valid."));

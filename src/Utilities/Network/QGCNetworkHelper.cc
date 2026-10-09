@@ -1,7 +1,6 @@
 #include "QGCNetworkHelper.h"
 
 #include <QtBluetooth/QBluetoothLocalDevice>
-#include <QtCore/QCoreApplication>
 #include <QtCore/QFile>
 #include <QtCore/QIODevice>
 #include <QtCore/QJsonDocument>
@@ -570,18 +569,6 @@ void setFormHeaders(QNetworkRequest& request)
     request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/x-www-form-urlencoded"));
 }
 
-QString defaultUserAgent()
-{
-    static QString userAgent;
-    if (userAgent.isEmpty()) {
-        userAgent = QStringLiteral("%1/%2 (Qt %3)")
-                        .arg(QCoreApplication::applicationName())
-                        .arg(QCoreApplication::applicationVersion())
-                        .arg(QString::fromLatin1(qVersion()));
-    }
-    return userAgent;
-}
-
 // ============================================================================
 // Multipart Form Data Helpers
 // ============================================================================
@@ -612,13 +599,6 @@ QHttpPart createFilePart(const QString& name, const QString& fileName, QIODevice
 // ============================================================================
 // SSL/TLS Configuration Builders
 // ============================================================================
-
-QSslConfiguration createSslConfig(QSsl::SslProtocol protocol)
-{
-    QSslConfiguration config = QSslConfiguration::defaultConfiguration();
-    config.setProtocol(protocol);
-    return config;
-}
 
 QSslConfiguration createInsecureSslConfig()
 {
@@ -834,59 +814,33 @@ bool isJsonResponse(const QNetworkReply* reply)
 // Network Availability
 // ============================================================================
 
-bool isNetworkAvailable()
+QNetworkInformation* networkInformation()
 {
     if (!QNetworkInformation::loadDefaultBackend()) {
         qCDebug(QGCNetworkHelperLog) << "Failed to load network information backend";
-        return true;  // Assume available if we can't check
     }
-
-    const QNetworkInformation* netInfo = QNetworkInformation::instance();
-    if (netInfo == nullptr) {
-        return true;
+    if (!QNetworkInformation::loadBackendByFeatures(QNetworkInformation::Feature::Reachability)) {
+        qCDebug(QGCNetworkHelperLog) << "Network information backend does not provide reachability";
     }
+    return QNetworkInformation::instance();
+}
 
-    return netInfo->reachability() != QNetworkInformation::Reachability::Disconnected;
+bool isNetworkAvailable()
+{
+    const QNetworkInformation* netInfo = networkInformation();
+    return !netInfo || netInfo->reachability() != QNetworkInformation::Reachability::Disconnected;
 }
 
 bool isInternetAvailable()
 {
-    if (QNetworkInformation::availableBackends().isEmpty()) {
-        return false;
-    }
-
-    if (!QNetworkInformation::loadDefaultBackend()) {
-        return false;
-    }
-
-    if (!QNetworkInformation::loadBackendByFeatures(QNetworkInformation::Feature::Reachability)) {
-        return false;
-    }
-
-    const QNetworkInformation* netInfo = QNetworkInformation::instance();
-    if (netInfo == nullptr) {
-        return false;
-    }
-
-    return netInfo->reachability() == QNetworkInformation::Reachability::Online;
+    const QNetworkInformation* netInfo = networkInformation();
+    return netInfo && netInfo->reachability() == QNetworkInformation::Reachability::Online;
 }
 
 bool isNetworkEthernet()
 {
-    if (QNetworkInformation::availableBackends().isEmpty()) {
-        return false;
-    }
-
-    if (!QNetworkInformation::loadDefaultBackend()) {
-        return false;
-    }
-
-    const QNetworkInformation* netInfo = QNetworkInformation::instance();
-    if (netInfo == nullptr) {
-        return false;
-    }
-
-    return netInfo->transportMedium() == QNetworkInformation::TransportMedium::Ethernet;
+    const QNetworkInformation* netInfo = networkInformation();
+    return netInfo && netInfo->transportMedium() == QNetworkInformation::TransportMedium::Ethernet;
 }
 
 bool isBluetoothAvailable()
@@ -897,11 +851,7 @@ bool isBluetoothAvailable()
 
 ConnectionType connectionType()
 {
-    if (!QNetworkInformation::loadDefaultBackend()) {
-        return ConnectionType::Unknown;
-    }
-
-    const QNetworkInformation* netInfo = QNetworkInformation::instance();
+    const QNetworkInformation* netInfo = networkInformation();
     if (!netInfo) {
         return ConnectionType::Unknown;
     }

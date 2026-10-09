@@ -1,0 +1,7 @@
+decoder type=quectel role=rtk-base mode=survey-in accuracy=15.0000m duration=60s compact=0 persistent=0 baud=0
+file corpus/synthetic-quectel-base.nmea bytes=456
+    survey active=1 valid=0 duration=1s accuracy=1.2500 lat=0.00000000 lon=90.00000000 alt=100.0000 receipt=1
+    survey active=0 valid=1 duration=60s accuracy=1.2500 lat=0.00000000 lon=90.00000000 alt=100.0000 receipt=1
+    survey active=0 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
+    survey active=0 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
+file corpus/synthetic-quectel-fixed.nmea bytes=151

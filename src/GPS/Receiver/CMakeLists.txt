@@ -1,41 +1,22 @@
-if(TARGET QGCGPSReceiver)
-    return()
-endif()
+# Local GPS receiver: sessions, connection policy, and the receiver's status Facts.
+target_sources(
+    ${CMAKE_PROJECT_NAME}
+    PRIVATE GPSReceiver.cc
+            GPSReceiver.h
+            GPSReceiverConnectionPolicy.cc
+            GPSReceiverConnectionPolicy.h
+            GPSReceiverConnector.h
+            GPSReceiverFactGroup.cc
+            GPSReceiverFactGroup.h
+            GPSReceiverMessages.cc
+            GPSReceiverMessages.h
+            GPSReceiverSession.cc
+            GPSReceiverSession.h
+)
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-qt_add_library(QGCGPSReceiver STATIC GPSReceiverConfig.cc GPSReceiverDescriptor.cc)
-add_library(QGC::GPSReceiver ALIAS QGCGPSReceiver)
-set_target_properties(
-    QGCGPSReceiver
-    PROPERTIES AUTOMOC OFF
-               AUTOUIC OFF
-               AUTORCC OFF
-               POSITION_INDEPENDENT_CODE ON
-)
-target_compile_features(QGCGPSReceiver PUBLIC cxx_std_20)
-target_link_libraries(QGCGPSReceiver PUBLIC Qt6::Core)
-target_sources(
-    QGCGPSReceiver
-    PUBLIC FILE_SET
-           HEADERS
-           FILES
-           GPSReceiverConfig.h
-           GPSReceiverCapabilities.h
-           GPSReceiverDescriptor.h
-           GPSBaseStationConfig.h
-           GPSEllipsoidPosition.h
-           GPSType.h
-           GPSDriverReports.h
-           GPSConfigurationEvidence.h
-           GPSSatelliteUsageReport.h
-)
-target_sources(
-    QGCGPSReceiver
-    PUBLIC FILE_SET
-           constellation_types
-           TYPE
-           HEADERS
-           BASE_DIRS
-           ..
-           FILES
-           ../GPSConstellation.h
+qt_add_resources(
+    ${CMAKE_PROJECT_NAME} json_gps
+    PREFIX "/json/GPS"
+    FILES GPSReceiverFact.json
 )

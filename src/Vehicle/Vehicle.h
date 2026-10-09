@@ -41,9 +41,7 @@ class VehicleDistanceSensorFactGroup;
 class VehicleEFIFactGroup;
 class VehicleEstimatorStatusFactGroup;
 class VehicleGeneratorFactGroup;
-class VehicleGPS2FactGroup;
 class VehicleGPSFactGroup;
-class VehicleGPSAggregateFactGroup;
 class VehicleHygrometerFactGroup;
 class VehicleLocalPositionFactGroup;
 class VehicleLocalPositionSetpointFactGroup;
@@ -102,6 +100,7 @@ class Vehicle : public VehicleFactGroup, public VehicleTypes
     Q_MOC_INCLUDE("VehicleLinkManager.h")
     Q_MOC_INCLUDE("VehicleObjectAvoidance.h")
     Q_MOC_INCLUDE("VehicleSupports.h")
+    Q_MOC_INCLUDE("VehicleGPSFactGroup.h")
 
     friend class InitialConnectStateMachine;
     friend class VehicleLinkManager;
@@ -240,9 +239,8 @@ public:
     // FactGroup object model properties
 
     Q_PROPERTY(FactGroup*           vehicle         READ vehicleFactGroup           CONSTANT)
-    Q_PROPERTY(FactGroup*           gps             READ gpsFactGroup               CONSTANT)
-    Q_PROPERTY(FactGroup*           gps2            READ gps2FactGroup              CONSTANT)
-    Q_PROPERTY(FactGroup*           gpsAggregate    READ gpsAggregateFactGroup      CONSTANT)
+    Q_PROPERTY(VehicleGPSFactGroup* gps READ gpsFactGroup CONSTANT)
+    Q_PROPERTY(VehicleGPSFactGroup* gps2 READ gps2FactGroup CONSTANT)
     Q_PROPERTY(FactGroup*           wind            READ windFactGroup              CONSTANT)
     Q_PROPERTY(FactGroup*           vibration       READ vibrationFactGroup         CONSTANT)
     Q_PROPERTY(FactGroup*           temperature     READ temperatureFactGroup       CONSTANT)
@@ -568,10 +566,10 @@ public:
     void startCalibration   (QGCMAVLink::CalibrationType calType);
     void stopCalibration    (bool showError);
 
-    FactGroup* vehicleFactGroup             () { return _vehicleFactGroup; }
-    FactGroup* gpsFactGroup                 ();
-    FactGroup* gps2FactGroup                ();
-    FactGroup* gpsAggregateFactGroup        ();
+    FactGroup* vehicleFactGroup() { return _vehicleFactGroup; }
+
+    VehicleGPSFactGroup* gpsFactGroup();
+    VehicleGPSFactGroup* gps2FactGroup();
     FactGroup* windFactGroup                ();
     FactGroup* vibrationFactGroup           ();
     FactGroup* temperatureFactGroup         ();
@@ -1103,7 +1101,6 @@ public:
     const QString _vehicleFactGroupName =            QStringLiteral("vehicle");
     const QString _gpsFactGroupName =                QStringLiteral("gps");
     const QString _gps2FactGroupName =               QStringLiteral("gps2");
-    const QString _gpsAggregateFactGroupName =       QStringLiteral("gpsAggregate");
     const QString _windFactGroupName =               QStringLiteral("wind");
     const QString _vibrationFactGroupName =          QStringLiteral("vibration");
     const QString _temperatureFactGroupName =        QStringLiteral("temperature");
@@ -1122,8 +1119,7 @@ public:
 
     VehicleFactGroup*               _vehicleFactGroup;
     VehicleGPSFactGroup*                _gpsFactGroup               = nullptr;
-    VehicleGPS2FactGroup*               _gps2FactGroup              = nullptr;
-    VehicleGPSAggregateFactGroup*       _gpsAggregateFactGroup      = nullptr;
+    VehicleGPSFactGroup* _gps2FactGroup = nullptr;
     VehicleWindFactGroup*               _windFactGroup              = nullptr;
     VehicleVibrationFactGroup*          _vibrationFactGroup         = nullptr;
     VehicleTemperatureFactGroup*        _temperatureFactGroup       = nullptr;

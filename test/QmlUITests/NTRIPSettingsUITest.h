@@ -1,10 +1,11 @@
 #pragma once
 
+#include <memory>
+
+#include "Fixtures/RAIIFixtures.h"
 #include "QmlUITestBase.h"
 
-class QQuickItem;
-
-/// UI tests for the NTRIP/RTK settings page.
+/// UI tests for the NTRIP sections of the RTK Corrections settings page.
 ///
 /// Navigates to the page through the real settings left-nav and verifies the
 /// enable/disable gating of the hand-written NTRIP controls: the Browse button
@@ -20,12 +21,12 @@ public:
     NTRIPSettingsUITest() = default;
 
 private slots:
-    void init();
-    void _testPageRenders();
-    void _testConnectGatedByHost();
-    void _testBrowseGatedByHost();
-    void _testSelfSignedGatedByTls();
+    void init() override;
+    void cleanup() override;
+    void _testControlsGated();
 
 private:
     bool _navigateToNtripPage();
+
+    std::unique_ptr<TestFixtures::SettingsFixture> _settings;
 };

@@ -1,0 +1,5 @@
+about NMEA and RTCM input at 9600
+request type=passive role=passive mode=survey-in accuracy=0.0000m duration=0s compact=0 persistent=0 baud=9600
+configure configured=1 baud=9600->9600 failure=none ready=1 elapsed=0ms
+  baud 9600 configured
+stream failure=none ready=1

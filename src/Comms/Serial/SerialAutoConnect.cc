@@ -1,11 +1,12 @@
 #include "SerialAutoConnect.h"
 
-#include <QtCore/QCoreApplication>
-#include <QtCore/QSet>
-
 #include <algorithm>
 #include <utility>
 
+#include <QtCore/QCoreApplication>
+#include <QtCore/QSet>
+
+#include "MonotonicClock.h"
 #include "QGCLoggingCategory.h"
 #include "SerialLink.h"
 
@@ -24,10 +25,11 @@ SerialAutoConnect::~SerialAutoConnect()
 
 void SerialAutoConnect::update(const QList<SerialPortManager::Port>& ports, const Options& options)
 {
-    const auto isAbsent = [&ports](const auto& entry) {
+    const auto isAbsentLocation = [&ports](const QString& location) {
         return std::none_of(ports.cbegin(), ports.cend(),
-                            [&entry](const auto& port) { return port.systemLocation == entry.key(); });
+                            [&location](const auto& port) { return port.systemLocation == location; });
     };
+    const auto isAbsent = [&isAbsentLocation](const auto& entry) { return isAbsentLocation(entry.key()); };
     _identities.removeIf(isAbsent);
     for (const auto& port : ports) {
         const Identity identity{port.physicalDeviceId, port.boardType, port.bootloader};
@@ -39,7 +41,7 @@ void SerialAutoConnect::update(const QList<SerialPortManager::Port>& ports, cons
         _identities.insert(port.systemLocation, identity);
     }
     _configs.removeIf(isAbsent);
-    _waitingPorts.removeIf(isAbsent);
+    _waitingPorts.removeIf(isAbsentLocation);
 
     QSet<QString> seenDevices;
     for (const SerialPortManager::Port& port : ports) {
@@ -48,13 +50,8 @@ void SerialAutoConnect::update(const QList<SerialPortManager::Port>& ports, cons
             continue;
         }
         // Select one MAVLink interface per physical device, even while its port is reserved or retrying.
-        if (!port.physicalDeviceId.isEmpty()) {
-            if (seenDevices.contains(port.physicalDeviceId)) {
-                continue;
-            }
-            seenDevices.insert(port.physicalDeviceId);
-        }
-        if (!_ports.canAutoConnectPort(port.systemLocation)) {
+        if (!SerialPortManager::isPrimaryInterface(port, seenDevices) ||
+            !_ports.canAutoConnectPort(port.systemLocation)) {
             continue;
         }
         auto config = _configs.value(port.systemLocation);
@@ -65,11 +62,7 @@ void SerialAutoConnect::update(const QList<SerialPortManager::Port>& ports, cons
             }
             continue;
         }
-        if (!_waitingPorts.contains(port.systemLocation)) {
-            _waitingPorts.insert(port.systemLocation, QDeadlineTimer(kConnectDelayMs));
-            continue;
-        }
-        if (!_waitingPorts.value(port.systemLocation).hasExpired()) {
+        if (!_waitingPorts.settled(port.systemLocation, MonotonicClock::nowUs())) {
             continue;
         }
         _waitingPorts.remove(port.systemLocation);

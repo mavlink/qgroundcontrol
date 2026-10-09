@@ -1,0 +1,23 @@
+about Fixed base
+request type=femto role=rtk-base mode=fixed lat=47.00000000 lon=8.00000000 alt=500.0000 accuracy=1.00000m compact=0 persistent=0 baud=0
+configure configured=1 baud=0->115200 failure=none ready=1 elapsed=0ms
+  baud 115200 configured
+  write "UNLOGALL THISPORT" 19 acknowledged required
+    text "UNLOGALL THISPORT\r\n"
+  write "VERSION" 9 acknowledged required
+    text "VERSION\r\n"
+  write "UNDULATION USER 0" 19 acknowledged required
+    text "UNDULATION USER 0\r\n"
+  write "FIX POSITION (fixed position)" 47 acknowledged required
+    text "FIX POSITION 47.00000000 8.00000000 500.00000\r\n"
+  write "LOG GPGGA 1" 14 acknowledged required
+    text "LOG GPGGA 1 \r\n"
+  write "LOG RTCM 1" 12 acknowledged required
+    text "LOG RTCM 1\r\n"
+  survey active=0 valid=1 duration=0s accuracy=- lat=47.00000000 lon=8.00000000 alt=500.0000 receipt=1
+stream failure=none ready=1
+  usage used=12 receipt=1
+  position fix=3d lat=47.00000000 lon=8.00000000 msl=450.0000 ellipsoid=500.0000 hacc=nan vacc=nan hdop=0.900 vdop=nan speed=nan course=nan used=12 utc=0 velocity=0 receipt=1
+  usage used=12 receipt=1
+  position fix=3d lat=47.00000000 lon=8.00000000 msl=450.0000 ellipsoid=500.0000 hacc=nan vacc=nan hdop=0.900 vdop=nan speed=nan course=nan used=12 utc=0 velocity=0 receipt=1
+  rtcm type=1005 size=25 fnv=f8e3bb62

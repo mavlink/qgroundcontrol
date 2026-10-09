@@ -1,0 +1,58 @@
+about ZED-F9P hardware reporting PROTVER 20.30
+request type=ublox role=rtk-base mode=survey-in accuracy=1.2500m duration=60s compact=0 persistent=0 baud=115200
+configure configured=1 baud=115200->115200 failure=none ready=1 elapsed=20ms
+  identity "ZED-F9P HPG 1.32"
+  baud 115200 configured
+  write "UBX-MON-VER" 8 acknowledged required
+    b5620a0400000e34
+  write "UBX-CFG-PRT" 48 acknowledged required
+    b5620600280001000000d008000000c20100010021000000000003000000d008
+    000000c201000100230000000000ae18
+  write "UBX-CFG-RATE" 14 acknowledged required
+    b56206080600c80001000000dd68
+  write "UBX-CFG-NAV5" 44 acknowledged required
+    b562062424000500020200000000000000000000000000000000000000000000
+    0000000000000000000057fe
+  write "UBX-CFG-MSG" 11 acknowledged required
+    b562060103000107011351
+  write "UBX-CFG-MSG" 11 acknowledged required
+    b562060103000103010f49
+  write "UBX-CFG-MSG" 11 acknowledged required
+    b56206010300010401104b
+  write "UBX-CFG-MSG" 11 acknowledged required
+    b5620601030001300540a7
+  write "UBX-CFG-MSG" 11 acknowledged required
+    b562060103000a09011e70
+  write "UBX-CFG-MSG" 11 written required
+    b56206010300f505000428
+  write "UBX-CFG-MSG" 11 written required
+    b56206010300f5e600e5ea
+  write "UBX-CFG-MSG" 11 written required
+    b56206010300f54d004cb8
+  write "UBX-CFG-MSG" 11 written required
+    b56206010300f5570056cc
+  write "UBX-CFG-MSG" 11 written required
+    b56206010300f5610060e0
+  write "UBX-CFG-MSG" 11 written required
+    b56206010300f57f007e1c
+  write "UBX-CFG-MSG" 11 written required
+    b56206010300f54a0049b2
+  write "UBX-CFG-MSG" 11 written required
+    b56206010300f5540053c6
+  write "UBX-CFG-MSG" 11 written required
+    b56206010300f55e005dda
+  write "UBX-CFG-MSG" 11 written required
+    b56206010300f57c007b16
+  write "UBX-CFG-TMODE3" 48 acknowledged required
+    b562067128000000000000000000000000000000000000000000000000000000
+    00000000000000000000000000009f93
+  write "UBX-CFG-TMODE3 disabled readback" 8 readback-verified required
+    b56206710000776b
+  write "UBX-NAV-SVIN stopped" 8 readback-verified required
+    b562013b00003cb5
+  write "UBX-CFG-TMODE3" 48 acknowledged required
+    b562067128000000010000000000000000000000000000000000000000003c00
+    0000d43000000000000000000000e079
+  write "UBX-CFG-MSG" 11 acknowledged required
+    b56206010300013b054bbd
+stream failure=none ready=1

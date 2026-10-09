@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QtCore/QString>
+#include <QtNetwork/QSslConfiguration>
 
 class QObject;
 class QNetworkAccessManager;
@@ -12,6 +13,12 @@ QString createBasicAuthCredentials(const QString& username, const QString& passw
 void setBasicAuth(QNetworkRequest& request, const QString& credentials);
 void setBasicAuth(QNetworkRequest& request, const QString& username, const QString& password);
 void setBearerToken(QNetworkRequest& request, const QString& token);
+
+/// "<application>/<version> (Qt <version>)".
+QString defaultUserAgent();
+
+/// The default TLS configuration restricted to TLS 1.2 or later.
+QSslConfiguration createSslConfig();
 
 QNetworkAccessManager* createNetworkManager(QObject* parent = nullptr);
 void configureProxy(QNetworkAccessManager* manager);

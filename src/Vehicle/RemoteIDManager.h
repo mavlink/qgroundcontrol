@@ -89,6 +89,7 @@ private:
     bool    _ridDeviceCommsGood;
     bool    _gcsPositionUsable;
     QString _gcsPositionError;
+    bool _gcsAltitudeNotGeodeticReported = false;
     bool    _vehicleReportsBasicIDMissing;
 
     bool        _emergencyDeclared;
