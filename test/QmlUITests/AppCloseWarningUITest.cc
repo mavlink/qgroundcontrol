@@ -322,3 +322,100 @@ void AppCloseWarningUITest::_testNoUnsavedMissionWarningAfterSaveToFile()
                      "Unsaved mission warning shown after saving the plan to disk");
         });
 }
+
+void AppCloseWarningUITest::_testCloseNeedsConfirmation_data()
+{
+    // Pending writes always come with a connection, which already needs
+    // confirmation, so they add no distinguishable row.
+    QTest::addColumn<bool>("mission");
+    QTest::addColumn<bool>("connection");
+
+    QTest::newRow("none") << false << false;
+    QTest::newRow("mission") << true << false;
+    QTest::newRow("connection") << false << true;
+}
+
+void AppCloseWarningUITest::_testCloseNeedsConfirmation()
+{
+    QFETCH(bool, mission);
+    QFETCH(bool, connection);
+
+    // Incidental one-time startup message when the map cache DB is upgraded.
+    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                     QRegularExpression(QStringLiteral("Offline Map Cache database has been upgraded")));
+
+    startUI();
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    QPointer<MockLink> mockLink;
+    const auto guard = qScopeGuard([&] {
+        disconnectMockLink(mockLink);
+        closeUIWindow();
+        destroyUIEngine();
+    });
+
+    if (connection) {
+        Vehicle* vehicle = nullptr;
+        mockLink = connectMockLinkAndWaitReady([] { return MockLink::startPX4MockLink(); }, vehicle);
+        if (!mockLink) {
+            return;
+        }
+    }
+
+    if (mission && !_forcePlanViewMissionDirty()) {
+        return;
+    }
+
+    // The Android back shortcut is enabled exactly when this is true.
+    QVariant needsConfirmation;
+    QVERIFY(QMetaObject::invokeMethod(_window, "_closeNeedsConfirmation", Q_RETURN_ARG(QVariant, needsConfirmation)));
+    QCOMPARE(needsConfirmation.toBool(), mission || connection);
+}
+
+void AppCloseWarningUITest::_testBackKeyRaisesCloseWarning()
+{
+    // Incidental one-time startup message when the map cache DB is upgraded.
+    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                     QRegularExpression(QStringLiteral("Offline Map Cache database has been upgraded")));
+
+    runWithMockLink(
+        [] { return MockLink::startPX4MockLink(); },
+        [this](QPointer<MockLink> mockLink, Vehicle* vehicle) {
+            Q_UNUSED(mockLink);
+            Q_UNUSED(vehicle);
+
+            // The shortcut is Android-only; enable it to drive the real key routing here.
+            QObject* const backShortcut = _window->findChild<QObject*>(QStringLiteral("androidBackShortcut"));
+            QVERIFY2(backShortcut, "androidBackShortcut not found");
+            QVERIFY(backShortcut->setProperty("enabled", true));
+
+            // Shortcuts only match in the active window.
+            _window->requestActivate();
+            QVERIFY2(QTest::qWaitForWindowActive(_window, TestTimeout::mediumMs()), "QML window never became active");
+
+            // An open popup takes back first. onClosing runs synchronously and sets the guard
+            // before any warning is shown, so an unset guard proves the checks never started.
+            QVERIFY2(clickButton(QStringLiteral("toolbar_qgcLogo")), "Failed to open the tool select drawer");
+            QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("toolbar_viewClose"), TestTimeout::mediumMs()),
+                     "Tool select drawer did not open");
+            QTest::keyClick(_window, Qt::Key_Back);
+            QVERIFY2(!_window->property("_reentrantCloseGuard").toBool(),
+                     "Back with a popup open started the close checks");
+
+            QTest::keyClick(_window, Qt::Key_Escape);
+            QVERIFY2(
+                waitForCondition([this] { return !findVisibleItem(_rootItem, QStringLiteral("toolbar_viewClose"), 0); },
+                                 TestTimeout::mediumMs(), QStringLiteral("tool select drawer closed")),
+                "Tool select drawer did not close on Escape");
+
+            QTest::keyClick(_window, Qt::Key_Back);
+            QVERIFY2(waitForDialog(QStringLiteral("Active Vehicle Connections")),
+                     "Back did not raise the active vehicle connection warning");
+
+            // Declining keeps QGC open.
+            QVERIFY2(rejectDialog(), "Failed to reject the close warning");
+            QVERIFY2(_window->isVisible(), "Window closed after rejecting the close warning");
+        });
+}

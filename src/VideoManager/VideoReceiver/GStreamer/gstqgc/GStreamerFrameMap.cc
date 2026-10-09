@@ -34,7 +34,7 @@ QVideoFrameFormat::ColorSpace toQtColorSpace(GstVideoColorMatrix matrix)
 
 QVideoFrameFormat::ColorTransfer toQtColorTransfer(GstVideoTransferFunction transfer)
 {
-    // Mirrors Qt's qgst.cpp QGstCaps::formatAndVideoInfo() (cross-checked Qt 6.10.3).
+    // Mirrors Qt's qgst.cpp QGstCaps::formatAndVideoInfo() (cross-checked Qt 6.12.0).
     switch (transfer) {
         case GST_VIDEO_TRANSFER_BT601:
             return QVideoFrameFormat::ColorTransfer_BT601;
