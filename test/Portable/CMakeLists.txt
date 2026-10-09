@@ -35,6 +35,18 @@ target_link_libraries(QGCCommandLineParserTest PRIVATE QGCLoggingCategory)
 qgc_add_portable_test(QGCMathTest ../Utilities/QGCMathTest)
 target_link_libraries(QGCMathTest PRIVATE QGCMath)
 
+qgc_add_portable_test(ChecksumsTest ../Utilities/Math/ChecksumsTest)
+target_link_libraries(ChecksumsTest PRIVATE QGCChecksums)
+
+qgc_add_portable_test(WireFieldsTest ../Utilities/Parsing/Wire/WireFieldsTest)
+target_link_libraries(WireFieldsTest PRIVATE QGCWire)
+
+qgc_add_portable_test(ExponentialBackoffTest ../Utilities/Timing/ExponentialBackoffTest)
+target_link_libraries(ExponentialBackoffTest PRIVATE QGCTiming)
+
+qgc_add_portable_test(MonotonicClockTest ../Utilities/Timing/MonotonicClockTest)
+target_link_libraries(MonotonicClockTest PRIVATE QGCClock)
+
 qgc_add_portable_test(SecureMemoryTest ../Utilities/SecureMemoryTest)
 target_include_directories(SecureMemoryTest PRIVATE ${PROJECT_SOURCE_DIR}/src/Utilities/Memory)
 

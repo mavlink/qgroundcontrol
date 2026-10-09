@@ -41,6 +41,8 @@ public:
 
     /// Reset all counters and restart the rate window.
     void reset();
+    /// Zero the rate and restart its window; cumulative bytes are kept.
+    void resetRate();
 
 private:
     Clock _clock;

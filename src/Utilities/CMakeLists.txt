@@ -18,6 +18,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCIO)
 
 add_subdirectory(Logging)
 add_subdirectory(Timing)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCTiming)
 add_subdirectory(Audio)
 add_subdirectory(Compression)
 add_subdirectory(Concurrency)

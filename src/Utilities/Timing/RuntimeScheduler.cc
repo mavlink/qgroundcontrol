@@ -3,8 +3,14 @@
 #include <QtCore/QThread>
 
 #include "QGCLoggingCategory.h"
+#include "QtRuntimeScheduler.h"
 
 QGC_LOGGING_CATEGORY(RuntimeSchedulerLog, "Utilities.Timing.RuntimeScheduler")
+
+RuntimeScheduler* RuntimeScheduler::orDefault(RuntimeScheduler* scheduler, QObject* owner)
+{
+    return scheduler ? scheduler : new QtRuntimeScheduler(owner);
+}
 
 RuntimeScheduler::RuntimeScheduler(QObject* parent) : QObject(parent)
 {

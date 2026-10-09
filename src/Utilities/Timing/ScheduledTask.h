@@ -17,6 +17,9 @@ public:
     Q_DISABLE_COPY_MOVE(ScheduledTask)
 
     bool schedule(std::chrono::microseconds delay, RuntimeScheduler::Callback callback);
+    /// Runs @a callback every @a interval until cancelled or replaced. Each run is rescheduled before the callback,
+    /// so the callback may cancel or replace it.
+    bool scheduleRepeating(std::chrono::microseconds interval, RuntimeScheduler::Callback callback);
     void cancel();
     bool active() const;
 

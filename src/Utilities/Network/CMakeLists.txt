@@ -8,6 +8,8 @@ qt_add_library(
     QGCCachedFileDownload.h
     QGCFileDownload.cc
     QGCFileDownload.h
+    QGCNetworkAvailabilityMonitor.cc
+    QGCNetworkAvailabilityMonitor.h
     QGCNetworkHelper.cc
     QGCNetworkHelper.h
 )

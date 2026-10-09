@@ -1,9 +1,9 @@
 #include "QtRuntimeScheduler.h"
 
-#include <QtCore/QChronoTimer>
-
 #include <algorithm>
 #include <utility>
+
+#include <QtCore/QTimerEvent>
 
 #include "MonotonicClock.h"
 #include "QGCLoggingCategory.h"
@@ -31,27 +31,14 @@ RuntimeScheduler::TaskId QtRuntimeScheduler::schedule(QObject* context, std::chr
     if (!_canSchedule(context, delay, callback)) {
         return 0;
     }
+    const int timer = startTimer((std::max) (delay, std::chrono::microseconds::zero()), Qt::PreciseTimer);
+    if (timer == 0) {
+        return 0;
+    }
     const auto id = ++_nextTask;
-    auto* timer = new QChronoTimer(this);
-    timer->setSingleShot(true);
-    timer->setTimerType(Qt::PreciseTimer);
-    _tasks.insert(id, timer);
-    const QPointer<QObject> guard(context);
-    const QPointer<QtRuntimeScheduler> scheduler(this);
-    connect(context, &QObject::destroyed, timer, [scheduler, id]() {
-        if (scheduler) {
-            scheduler->cancel(id);
-        }
-    });
-    connect(timer, &QChronoTimer::timeout, this, [this, id, timer, guard, callback = std::move(callback)]() {
-        _tasks.remove(id);
-        timer->deleteLater();
-        if (guard) {
-            callback();
-        }
-    });
-    timer->setInterval((std::max) (delay, std::chrono::microseconds::zero()));
-    timer->start();
+    const auto contextDestroyed = connect(context, &QObject::destroyed, this, [this, id]() { cancel(id); });
+    _tasks.insert(timer, {id, context, std::move(callback), contextDestroyed});
+    _timers.insert(id, timer);
     return id;
 }
 
@@ -60,10 +47,28 @@ void QtRuntimeScheduler::cancel(TaskId task)
     if (!_isCurrentThread()) {
         return;
     }
-    const auto timer = _tasks.take(task);
-    if (timer) {
-        timer->stop();
-        timer->disconnect();
-        timer->deleteLater();
+    const auto timer = _timers.find(task);
+    if (timer == _timers.end()) {
+        return;
+    }
+    killTimer(*timer);
+    disconnect(_tasks.take(*timer).contextDestroyed);
+    _timers.erase(timer);
+}
+
+void QtRuntimeScheduler::timerEvent(QTimerEvent* event)
+{
+    const auto found = _tasks.find(event->timerId());
+    if (found == _tasks.end()) {
+        RuntimeScheduler::timerEvent(event);
+        return;
+    }
+    killTimer(found.key());
+    Task task = std::move(*found);
+    _tasks.erase(found);
+    _timers.remove(task.id);
+    disconnect(task.contextDestroyed);
+    if (task.context) {
+        task.callback();
     }
 }
