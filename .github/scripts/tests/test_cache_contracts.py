@@ -318,7 +318,7 @@ def test_compiler_caches_save_before_downstream_failures():
     restore = yaml.safe_load(_read(".github/actions/cache/action.yml"))["runs"]["steps"]
     for step in restore:
         if step.get("with", {}).get("path") in {".ccache", ".cache/moccache"}:
-            assert step["uses"] == "actions/cache/restore@v5"
+            assert step["uses"] == "actions/cache/restore@v6"
     build = yaml.safe_load(_read(".github/actions/cmake-build/action.yml"))["runs"]["steps"]
     save = next(step for step in build if step.get("uses") == "./.github/actions/save-build-cache")
     assert "steps.compile.outputs.build_success == 'true'" in save["if"]

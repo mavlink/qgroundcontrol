@@ -158,7 +158,7 @@ def test_dependency_review_covers_every_pull_request() -> None:
     steps = workflow["jobs"]["dependency-review"]["steps"]
     uses = {step.get("uses") for step in steps}
     assert "actions/dependency-review-action@v5" in uses
-    assert "gradle/actions/wrapper-validation@v4" in uses
+    assert "gradle/actions/wrapper-validation@v6" in uses
 
 
 def test_build_action_uses_lockfile_aware_npm_install() -> None:
