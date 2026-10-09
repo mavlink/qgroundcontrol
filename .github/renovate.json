@@ -62,6 +62,14 @@
       "matchManagers": [
         "devcontainer",
         "dockerfile",
+        "nvm"
+      ]
+    },
+    {
+      "description": "Group Android build updates; the Android Gradle Plugin, Kotlin, and Gradle versions are coupled",
+      "groupName": "android dependencies",
+      "matchManagers": [
+        "gradle",
         "gradle-wrapper"
       ]
     },
@@ -76,8 +84,25 @@
         "RobertCraigie/pyright-python"
       ],
       "groupName": "code quality tools"
+    },
+    {
+      "description": "Keep lock file maintenance in one PR instead of one per group",
+      "matchUpdateTypes": [
+        "lockFileMaintenance"
+      ],
+      "groupName": null
+    },
+    {
+      "description": "Newer androidx.core releases require a compileSdk newer than the one Qt supports",
+      "matchPackageNames": [
+        "androidx.core:core"
+      ],
+      "enabled": false
     }
   ],
+  "major": {
+    "dependencyDashboardApproval": true
+  },
   "prConcurrentLimit": 5,
   "prHourlyLimit": 2,
   "schedule": [
