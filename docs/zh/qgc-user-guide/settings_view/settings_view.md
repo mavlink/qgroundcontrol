@@ -1,6 +1,6 @@
 # 设置视图
 
-_设置视图_ 用于配置 _QGroundControl_ 应用程序 (而不是特定的载具) 的设置。 您无需连接载具就能更改这些值。
+_设置视图_ 用于配置 _QGroundControl_ 应用程序 (而不是特定的载具) 的设置。您无需连接载具就能更改这些值。
 
 You can switch between the various settings pages by clicking the buttons in the left-sidebar.
 
@@ -26,7 +26,9 @@ Use the **search bar** at the top of the settings sidebar to find any setting by
 
 **[Maps](maps.md)** <br>Map provider selection, offline tile management, API tokens, custom tile servers, and cache settings.
 
-**[NTRIP / RTK](ntrip_rtk.md)** <br>Configure the built-in NTRIP client for streaming RTK correction data to the vehicle.
+**[GNSS Receiver](gnss_receiver.md)** <br>Connect an external GNSS receiver as an RTK base station or as the ground station position source.
+
+**[RTK Corrections](ntrip_rtk.md)** <br>Configure where RTK corrections come from (NTRIP, a local base station or UDP) and how they reach vehicles.
 
 **[PX4 Log Transfer](px4_log_transfer.md)** <br>Configure PX4 log download and upload settings.
 

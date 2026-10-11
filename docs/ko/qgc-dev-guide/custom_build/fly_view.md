@@ -29,6 +29,15 @@ This layer contains all the remaining controls of the fly view. You have the abi
 
 This provides the simplest customization ability to the Fly View. Allowing you to add UI elements which are additive to the existing upstream controls. The upstream code adds no UI elements and is meant to be the basis for your own custom code used as a resource override for this QML. The custom example code provides you with an example of how to do it.
 
+### Map items
+
+To add your own items to the Fly View map, override `QGCCorePlugin::customMapItems` and `QGCCorePlugin::customGeoMapItems`. Each returns a list of `QmlComponentInfo` objects whose `url` points to the QML for an item. Which list is used depends on the map engine:
+
+- `customMapItems` is used by the QtLocation map. Each item is added with `addMapItem`, so it must be a QtLocation map item such as `MapQuickItem`. Its `customMapObject` property is set to the `QmlComponentInfo`.
+- `customGeoMapItems` is used by the GeoMap engine (the **Use GeoMap engine (preview)** Fly View setting). Each item is created in the map with its `customMapObject`, `scene` and `surfaceModel` properties set. Its root should be a `GeoMapItem`, or declare those properties and pass `scene` and `surfaceModel` on to its own GeoMap items.
+
+With the GeoMap engine, `mapControl` in `FlyViewCustomLayer.qml` is not a QtLocation map, so it can't be used to add map items. Use `customGeoMapItems` instead.
+
 ## Recommendations
 
 ### Simple customization
