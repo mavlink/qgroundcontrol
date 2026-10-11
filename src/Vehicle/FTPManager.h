@@ -291,8 +291,8 @@ public:
     static constexpr uint8_t kRadioReadChunkSizeSigned = kRadioReadChunkSize - 13;
     /// Max times a download re-opens after the server expires the session (PX4 idle timer fires mid-burst)
     static constexpr int kMaxDownloadSessionReopens = 2;
-    /// Ack timeout used in unit tests (much shorter for faster tests)
-    static constexpr int kTestAckTimeoutMs = 10;
+    /// Keep timeout tests fast while allowing queued MockLink replies during UI startup.
+    static constexpr int kTestAckTimeoutMs = 100;
     /// Maximum wait time for FTP operations in unit tests (generous for multi-packet transfers)
     static constexpr int kTestOperationMaxWaitMs = 5000;
 };

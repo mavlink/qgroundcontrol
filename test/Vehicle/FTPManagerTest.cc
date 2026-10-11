@@ -75,15 +75,18 @@ void FTPManagerTest::_testDownloadUri_data()
     QTest::addColumn<QString>("uri");
     QTest::addColumn<int>("fromCompId");
     QTest::addColumn<bool>("absolutePath");
+    QTest::addColumn<int>("responseDelayMs");
 
-    QTest::newRow("plain-absolute") << "/general.json" << int(MAV_COMP_ID_AUTOPILOT1) << true;
-    QTest::newRow("plain-relative") << "mocklink-size-239" << int(MAV_COMP_ID_AUTOPILOT1) << false;
-    QTest::newRow("scheme-absolute") << "mftp:///general.json" << int(MAV_COMP_ID_AUTOPILOT1) << true;
-    QTest::newRow("scheme-relative") << "mftp://mocklink-size-239" << int(MAV_COMP_ID_AUTOPILOT1) << false;
-    QTest::newRow("component-absolute") << "mftp://[;comp=1]/general.json" << int(MAV_COMP_ID_CAMERA) << true;
-    QTest::newRow("component-relative") << "mftp://[;comp=1]mocklink-size-239" << int(MAV_COMP_ID_CAMERA) << false;
-    QTest::newRow("uppercase-scheme") << "MFTP://[;comp=1]/general.json" << int(MAV_COMP_ID_CAMERA) << true;
-    QTest::newRow("default-component") << "mftp:///general.json" << int(MAV_COMP_ID_ALL) << true;
+    QTest::newRow("plain-absolute") << "/general.json" << int(MAV_COMP_ID_AUTOPILOT1) << true << 0;
+    QTest::newRow("plain-relative") << "mocklink-size-239" << int(MAV_COMP_ID_AUTOPILOT1) << false << 0;
+    QTest::newRow("scheme-absolute") << "mftp:///general.json" << int(MAV_COMP_ID_AUTOPILOT1) << true << 0;
+    QTest::newRow("scheme-relative") << "mftp://mocklink-size-239" << int(MAV_COMP_ID_AUTOPILOT1) << false << 0;
+    QTest::newRow("component-absolute") << "mftp://[;comp=1]/general.json" << int(MAV_COMP_ID_CAMERA) << true << 0;
+    QTest::newRow("component-relative") << "mftp://[;comp=1]mocklink-size-239" << int(MAV_COMP_ID_CAMERA) << false << 0;
+    QTest::newRow("uppercase-scheme") << "MFTP://[;comp=1]/general.json" << int(MAV_COMP_ID_CAMERA) << true << 0;
+    QTest::newRow("default-component") << "mftp:///general.json" << int(MAV_COMP_ID_ALL) << true << 0;
+    // Allow for queued FTP responses being delayed during UI startup.
+    QTest::newRow("delayed-metadata") << "mftp://[;comp=1]/general.json" << int(MAV_COMP_ID_CAMERA) << true << 50;
 }
 
 void FTPManagerTest::_testDownloadUri()
@@ -91,9 +94,11 @@ void FTPManagerTest::_testDownloadUri()
     QFETCH(QString, uri);
     QFETCH(int, fromCompId);
     QFETCH(bool, absolutePath);
+    QFETCH(int, responseDelayMs);
 
     _connectMockLinkNoInitialConnectSequence();
     QVERIFY(_vehicle);
+    _mockLink->mockLinkFTP()->setResponseDelayMs(responseDelayMs);
     FTPManager* ftpManager = _vehicle->ftpManager();
     QTemporaryDir destination;
     QVERIFY(destination.isValid());

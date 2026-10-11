@@ -1,6 +1,4 @@
 #include "MockLinkFTP.h"
-#include "MockLink.h"
-#include "QGCLoggingCategory.h"
 
 #include <cerrno>
 
@@ -8,6 +6,10 @@
 #include <QtCore/QDir>
 #include <QtCore/QTemporaryFile>
 #include <QtCore/QThread>
+#include <QtCore/QTimer>
+
+#include "MockLink.h"
+#include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(MockLinkFTPLog, "Comms.MockLink.MockLinkFTP")
 
@@ -561,7 +563,7 @@ void MockLinkFTP::mavlinkMessageReceived(const mavlink_message_t &message)
         // This is the same request as the one we replied to last. It means the (n)ack got lost, and the GCS
         // resent the request
         qCDebug(MockLinkFTPLog) << "MockLinkFTP: resending response";
-        _mockLink->respondWithMavlinkMessage(_lastReply);
+        _sendLastReply();
         return;
     }
 
@@ -698,9 +700,18 @@ void MockLinkFTP::_sendResponse(quint32 targetSystemId, uint8_t targetComponentI
         }
     }
 
-    _mockLink->respondWithMavlinkMessage(_lastReply);
+    _sendLastReply();
 }
 
+void MockLinkFTP::_sendLastReply()
+{
+    if (_responseDelayMs > 0) {
+        QTimer::singleShot(_responseDelayMs, this,
+                           [this, reply = _lastReply]() { _mockLink->respondWithMavlinkMessage(reply); });
+    } else {
+        _mockLink->respondWithMavlinkMessage(_lastReply);
+    }
+}
 
 uint16_t MockLinkFTP::_nextSeqNumber(uint16_t seqNumber) const
 {
