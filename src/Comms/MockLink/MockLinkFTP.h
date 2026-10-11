@@ -48,6 +48,9 @@ public:
     /// MockLink worker thread so it paces transfers without blocking the main thread.
     void setBurstReadDelayMs(int delayMs) { _burstReadDelayMs = delayMs; }
 
+    /// Delays replies asynchronously so timeout tests can keep processing events.
+    void setResponseDelayMs(int delayMs) { _responseDelayMs = delayMs; }
+
     /// When false, OpenFileRO of @PARAM/param.pck NAKs errno ENOENT, as PX4 without the virtual file does.
     void setParamPckEnabled(bool enabled) { _paramPckEnabled = enabled; }
 
@@ -163,6 +166,7 @@ private:
     /// Emits a Request through the messageReceived signal.
     void _sendResponse(quint32 targetSystemId, uint8_t targetComponentId, MavlinkFTP::Request* request,
                        uint16_t seqNumber);
+    void _sendLastReply();
     /// Handles List command requests for the root path and the @MAV_LOG virtual log directory tree.
     void _listCommand(quint32 senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request* request,
                       uint16_t seqNumber, bool withTime);
@@ -203,6 +207,7 @@ private:
 
     bool _lastReplyValid = false;
     bool _randomDropsEnabled = false;
+    int _responseDelayMs = 0;
     int _burstReadDelayMs = 0;                  ///< Per-burst delay to simulate a slow link
     ErrorMode_t _errMode = errModeNone;         ///< Currently set error mode, as specified by setErrorMode
     bool _listDirectoryWithTimeSupported = true; ///< Whether the server implements kCmdListDirectoryWithTime
