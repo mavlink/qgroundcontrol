@@ -19,7 +19,6 @@ FTPManager::FTPManager(Vehicle* vehicle)
     , _vehicle  (vehicle)
 {
     _ackOrNakTimeoutTimer.setSingleShot(true);
-    // Mock link responds immediately if at all, speed up unit tests with faster timeout
     _ackOrNakTimeoutTimer.setInterval(QGC::runningUnitTests() ? kTestAckTimeoutMs : _ackOrNakTimeoutMsecs);
     connect(&_ackOrNakTimeoutTimer, &QTimer::timeout, this, &FTPManager::_ackOrNakTimeout);
 
