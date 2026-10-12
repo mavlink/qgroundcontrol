@@ -9,4 +9,5 @@ class FirmwarePluginTest : public UnitTest
 private slots:
     void _stableFirmwareNotifiedOncePerVersion_data();
     void _stableFirmwareNotifiedOncePerVersion();
+    void _arduSubHasNoRtlFlightMode();
 };

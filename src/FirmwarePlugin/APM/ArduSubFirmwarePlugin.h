@@ -101,6 +101,9 @@ public:
 
     QString stabilizedFlightMode() const override;
     QString motorDetectionFlightMode() const override;
+
+    QString rtlFlightMode() const override { return QString(); }
+
     void updateAvailableFlightModes(FlightModeList &modeList) override;
 
     QString offlineEditingParamFile(Vehicle *vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/APM/Sub.OfflineEditing.params"); }
