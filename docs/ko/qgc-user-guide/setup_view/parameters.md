@@ -21,7 +21,7 @@ _검색_ 필드에 용어를 입력하여 매개변수를 _검&#xC0C9;_&#xD569;�
 To change the value of a parameter click on the parameter row in a group or search list. This will open a side dialog in which you can update the value (this dialog also provides additional detailed information about the parameter - including whether a reboot is required for the change to take effect).
 
 :::info
-**저장** 버튼을 클릭하면 매개변수는 기체에 업로드됩니다. 매개변수에 따라 변경된 내용을 적용하기 위해서 비행 컨트롤러 재부팅이 필요할 수 있습니다.
+**저장** 버튼을 클릭하면 매개변수는 기체에 업로드됩니다. 매개변수에 따라 변경된 내용을 적용하기 위해서 비행 컨트롤러 재부팅이 필요할 수 있습니다. QGroundControl shows a [reboot required indicator](../fly_view/fly_view_toolbar.md#vehicle-reboot-required) in the toolbar until the vehicle is rebooted.
 :::
 
 ## 도구

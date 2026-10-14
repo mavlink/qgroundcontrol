@@ -1,7 +1,7 @@
 # 일반 설정(설정 화면)
 
 일반 설정(**설정 화면> 일반 설정**)은 애플리케이션의 주요 항목들을 설정합니다.
-디스플레이 장치, 자동 연결 장치, 비디오 디스플레이 및 저장 장치, RTK GPS, 브랜드 이미지 및 기타 항목들을 설정합니다.
+Settable values include: display units, autoconnection devices, video display and storage, brand image, and other miscellaneous settings.
 
 :::info
 Values are settable even if no vehicle is connected. 차량 재시동이 필요한 설정은 UI에 표시됩니다.
@@ -120,64 +120,16 @@ The settings are:
 - **PX4 Flow:** PX4Flow 기기에 자동 연결
 - **LibrePilot:** Libre Pilot 자동조종장치에 자동 연결
 - **UDP:** UDP에 자동 연결
-- **RTK GPS:** RTK GPS 기기에 자동 연결
-- **NMEA GPS 장치:** 외부 GPS 장치에 자동 연결하여 지상국 위치를 획득합니다([아래 참조](#nmea_gps)).
 
-### 지상국 위치(NMEA GPS 장치) {#nmea_gps}
+GNSS receivers connect automatically with **Connect automatically** in the [GNSS Receiver](gnss_receiver.md#receiver) settings.
 
-_QGroundContro&#x6C;_&#xC740; 자동으로 내부 GPS를 사용하여 자주색 `Q` 아이콘으로 지도에 자신의 위치를 표시합니다(GPS가 방향을 제공하는 경우 이는 아이콘으로도 표시됩니다.
-현재 [PX4 멀티콥터에서만](https://docs.px4.io/en/flight_modes/follow_me.html) 지원됩니다.
+### Ground Station Location {#nmea_gps}
 
-직렬 또는 UDP 포트를 통하여 외부 GPS 장치에 연결하도록 QGroundControl을 설정할 수 있습니다.
-GPS 장치는 일반적으로 ASCII NMEA 형식을 지원합니다.
-
-:::tip
-**도움말** 지상국에 내부 GPS 지원 기능이 있는 경우에도 고품질 외부 GPS 시스템이 유용할 수 있습니다.
-:::
-
-_NMEA GPS 장치_ 드롭다운 선택기를 사용하여 GPS 장치 및 기타 옵션을 수동으로 선택합니다.
-
-- USB 연결:
-
-  - **NMEA GPS 장치:** _직렬_
-  - **NMEA GPS Baudrate**: 직렬 포트 전송 속도
-
-  ::: tip
-  직렬 GPS 문제를 해결하려면 RTK GPS [자동 연결](#auto_connect)을 비활성화하고 _QGroundContro&#x6C;_&#xC744; 닫고 GPS를 다시 연결한 다음 QGroundControl을 실행합니다.
-  :::
-
-- 네트워크 연결:
-
-  - **NMEA GPS 장치:** _UDP 포트_.
-  - **NMEA 스트림 UDP 포트**: QGC가 NMEA 데이터를 수신할 UDP 포트(QGC는 포트를 서버로 바인딩)
+The ground station position, including from an external GNSS receiver, is configured in the [GNSS Receiver](gnss_receiver.md#gcs_position) settings.
 
 ## RTK GPS {#rtk_gps}
 
-이 섹션에서는 RTK GPS "측량" 설정을 지정하고, 측량 작업의 결과를 저장 및 재사용하거나, 베이스 스테이션에 대해 알려진 다른 위치를 직접 입력할 수 있습니다.
-
-:::info
-_설문조사_ 프로세스는 기지국 위치의 정확한 추정치를 얻기 위해 RTK GPS 시스템에 필요한 시작 절차입니다.
-이 프로세스는 시간이 지남에 따라 측정을 수행하여 위치 정확도를 높입니다.
-설문조사가 완료되려면 두 가지 설정 조건이 모두 충족되어야 합니다.
-자세한 내용은 [RTK GPS](https://docs.px4.io/en/advanced_features/rtk-gps.html)(PX4 문서) 및 [GPS- 작동 방식](http://ardupilot.org/copter/docs/common-gps-how-it-works.html#rtk-corrections)(ArduPilot 문서)을 참고하십시오.
-:::
-
-:::tip
-기본 위치를 저장하고 재사용하려면(서베이 인은 시간이 많이 소요됩니다!) 현재 기준 위치를 저장\*\*하여 마지막 설문조사의 값을 복사합니다.
-그러면, 값이 변경시까지 QGC 재부팅시에도 유지됩니다.
-:::
-
-설정 항목들은 다음과 같습니다:
-
-- 측량 수행
-  - **설문 조사 정확도(U-blox만 해당):** RTK 조사 조사를 완료하기 위한 최소 위치 정확도입니다.
-  - **최소 관찰 기간:** RTK 설문 조사에 소요되는 최소 시간입니다.
-- 지정된 기준 위치 사용
-  - **기본 위치 위도:** 고정 RTK 기지국의 위도입니다.
-  - **기본 위치 경도:** 고정 RTK 기지국의 경도입니다.
-  - **Base Position Alt (WGS84):** Altitude of fixed RTK base station.
-  - **기지 위치 정확도:** 기지국 위치 정보의 정확도.
-  - **현재 베이스 위치 저장**(버튼): 마지막 Survey-In 작업의 설정을 위의 _지정된 베이스 위치 사용_ 필드에 복사하려면 누릅니다.
+RTK base station receivers are configured in the [GNSS Receiver](gnss_receiver.md#receiver) settings, and NTRIP and UDP corrections in [RTK Corrections](ntrip_rtk.md).
 
 ## ADSB 서버 {#adsb_server}
 
@@ -206,7 +158,7 @@ One way to get ADSB information from nearby vehicles is to use [dump1090](https:
 
 _비디오_ 섹션은 _비행 화&#xBA74;_&#xC5D0; 표시될 비디오의 소스 및 연결 설정을 정의합니다.
 
-The settings are:
+설정 항목들은 다음과 같습니다:
 
 - **Video Source**: Video Stream Disabled | RTSP Video Stream | UDP h.264 Video Stream | UDP h.265 Video Stream | TCP-MPEG2 Video Stream | MPEG-TS Video Stream | Integrated Camera
 
@@ -227,7 +179,7 @@ The settings are:
 _동영상 녹화_ 섹션은 파일 형식과 동영상 저장을 위해 할당된 최대 파일 저장 공간을 지정하는 데 사용됩니다.
 비디오는 [애플리케이션 로드/저장 경로](#load_save_path)의 하위 디렉토리("비디오")에 저장됩니다.
 
-설정 항목들은 다음과 같습니다:
+The settings are:
 
 - **파일 자동 삭제**: 이 옵션을 선택하면 지정된 저장용량을 사용하면 파일이 자동으로 삭제됩니다.
 - **최대 저장용량**: 동영상 파일이 자동 삭제되기 전의 최대 동영상 파일 저장용량입니다.

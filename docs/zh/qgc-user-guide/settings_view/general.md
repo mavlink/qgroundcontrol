@@ -1,6 +1,7 @@
 # 常规设置(设置视图)
 
-常规设置 (**设置视图 > 常规视图**) 是应用程序级别配置的主要位置。设置值包括：显示单位、自动连接装置、视频显示和存储、RTK GPS、品牌图像和其他杂项设置。
+常规设置 (**设置视图 > 常规视图**) 是应用程序级别配置的主要位置。
+Settable values include: display units, autoconnection devices, video display and storage, brand image, and other miscellaneous settings.
 
 :::info
 即使没有工具连接，值也是可以设置的。需要重新启动载具的设置会在用户界面中显示。
@@ -117,63 +118,20 @@ The settings are:
 - **PX4 Flow：** 自动连接到 PX4Flow 设备
 - **LibrePilot:** 自动连接到 Libre Pilot autopilot
 - **UDP:** 自动连接到 UDP
-- **RTK GPS：** 自动连接到 RTK GPS 设备
-- **NMEA GPS Device:** Autoconnect to an external GPS device to get ground station position ([see below](#nmea_gps))
 
-### 地面站位置(NMEA GPS 设备) {#nmea_gps}
+GNSS receivers connect automatically with **Connect automatically** in the [GNSS Receiver](gnss_receiver.md#receiver) settings.
 
-_QGroundControl_ 将自动使用内置GPS，通过紫色的 “Q” 图标在地图上显示自身位置（如果GPS提供航向，图标也会指示出来）。它也可能将GPS用作 _跟随我模式_ 的位置源 - 目前仅在[PX4多旋翼飞行器上支持](https://docs.px4.io/en/flight_modes/follow_me.html) 。
+### Ground Station Location {#nmea_gps}
 
-您也可以通过串口或 UDP端口配置QGC 连接到外部GPS设备。
-GPS设备必须支持 ASCII NMEA 格式――通常情况是这样。
-
-:::tip
-即使地面站得到内部全球定位系统支持，质量更高的外部全球定位系统也可能有用。
-:::
-
-使用 _NMEA GPS 设备_下拉选择器手动选择GPS 设备和其他选项：
-
-- USB 连接：
-
-  - **NMEA GPS设备**：_串口_
-  - **NMEA GPS波特率**：串口的波特率
-
-  :::tip
-  解决串行GPS问题: 禁用 RTK GPS [自动连接](#auto_connect), 关闭 _QGroundControl_, 重新连接您的 GPS, 并打开 QGC。
-  :::
-
-- 网络连接：
-
-  - **NMEA GPS 设备:** _UDP 端口_。
-  - **NMEA 流 UDP 端口**: QGC 监听NMEA 数据的 UDP 端口(QGC 绑定端口作为服务器)
+The ground station position, including from an external GNSS receiver, is configured in the [GNSS Receiver](gnss_receiver.md#gcs_position) settings.
 
 ## RTK GPS {#rtk_gps}
 
-此部分允许您指定RTK GPS “测量初始化” 设置，保存并复用测量初始化操作的结果，或者直接输入基站的任何其他已知位置。
-
-:::info
-_Survey-In_进程是 RTK GPS 系统为准确估算基站位置所需的启动程序。这一过程经过一段时间后进行测量，从而提高了位置准确性。这两个设置条件都必须满足，以便完成调查进程。欲了解更多信息，请参阅[RTK GPS](https://docs.px4.io/en/advanced_features/rtk-gps.html) (PX4 文档) 和 [GPS- 它如何工作](http://ardupilot.org/copter/docs/common-gps-how-it-works.html#rtk-corrections) (ArduPilot 文档)。
-:::
-
-:::tip
-为了保存和重新使用基本位置(因为检查耗费时间！)执行一次测量初始化，选择 _使用指定的基站位置_ ，然后按下 _保存当前基站位置_ ，将上次测量的值复制进去。然后，值将在所有QGC 重启后持续，直到它们被更改。
-:::
-
-步骤如下：
-
-- 执行 Survey-In
-  - **调查精度(仅有U-blox)：** RTK调查完成的最低位置精度。
-  - **最小观察持续时间：** RTK调查过程的最短时间。
-- 使用指定的基站位置
-  - **基础位置纬度：** 固定RTK基站纬度。
-  - **基础位置经度：** 固定RTK基地站的经度。
-  - **Base Position Alt (WGS84):** Altitude of fixed RTK base station.
-  - **基础位置精确度：** 基础站位置信息的准确性。
-  - **保存当前基地位置** (按钮)：点击复制上次调查操作中的设置到上面的 _Use 指定的基础位置_ 字段。
+RTK base station receivers are configured in the [GNSS Receiver](gnss_receiver.md#receiver) settings, and NTRIP and UDP corrections in [RTK Corrections](ntrip_rtk.md).
 
 ## ADSB 服务器 {#adsb_server}
 
-设置如下：
+步骤如下：
 
 - **连接到 ADSB SBS 服务器**：检查启动时连接到 ADSB 服务器。
 - **主机地址**: ADSB 服务器的主机地址
@@ -198,7 +156,7 @@ One way to get ADSB information from nearby vehicles is to use [dump1090](https:
 
 _视频_ 部分用于定义视频的源和连接设置，将显示在 _飞行视图_中。
 
-The settings are:
+设置如下：
 
 - **视频源** ：视频流已禁用 | RTSP 视频流| UDP h.264 视频流| UDP h. 65 视频流 | TCP-MPEG2 视频流 | MPEGTS 视频流 | 集成摄像头
 
@@ -218,7 +176,7 @@ The settings are:
 
 使用 _视频录制_ 部分指定文件格式和最大分配的文件存储以存储视频。视频被保存到 [应用程序加载/保存路径]的子目录 ("视频") (#load_save_path)。
 
-设置为：
+The settings are:
 
 - **自动删除文件**：如果选中，当使用指定的存储量时，文件将被自动删除。
 - **最大存储使用率**：视频文件自动删除前最大视频存储。
@@ -230,7 +188,7 @@ The settings are:
 
 品牌图像将以图标取代工具栏右上角的连接自动化图标。提供它是为了用户能够轻松创建屏幕/视频捕获，包括公司标志/品牌。
 
-设置如下：
+设置为：
 
 - **内部图像**：[内部颜色方案]中使用的品牌图像(#colour_scheme)
 - **外部图像**：[外部色彩方案]中使用的品牌图像(#colour_scheme)
