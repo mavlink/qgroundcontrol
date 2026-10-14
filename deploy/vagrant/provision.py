@@ -47,9 +47,12 @@ def provision() -> None:
     if not ci:
         packages += ["xubuntu-desktop", "qtcreator"]
     subprocess.run([*apt, "install", *packages], check=True, env=env)
+    # Provisioning runs as root, so a uv-managed interpreter would land under /root where the
+    # vagrant user cannot reach it. Build the venv on the system interpreter instead.
+    python_arguments = ["build,qt", "--environment", str(environment), "--python", sys.executable]
     for script, arguments in (
         ("tools/setup/install_uv.py", []),
-        ("tools/setup/install_python.py", ["build,qt", "--environment", str(environment)]),
+        ("tools/setup/install_python.py", python_arguments),
         ("tools/setup/install_dependencies", ["--platform", "debian"]),
     ):
         subprocess.run([sys.executable, str(repo / script), *arguments], check=True, env=env)
