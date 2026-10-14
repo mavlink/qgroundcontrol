@@ -41,7 +41,7 @@ RUN if [ -n "${CC_PIN}" ]; then \
     fi
 
 # Locked Python environment for generators, Qt installation, and build tools.
-COPY --from=ghcr.io/astral-sh/uv:0.12.23 /uv /usr/local/bin/uv
+COPY --from=ghcr.io/astral-sh/uv:0.13.1 /uv /usr/local/bin/uv
 COPY tools/pyproject.toml tools/uv.lock /opt/qgc-tools/
 RUN UV_PROJECT_ENVIRONMENT=/opt/qgc-venv uv sync \
         --project /opt/qgc-tools --python python3 \
