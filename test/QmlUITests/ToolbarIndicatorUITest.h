@@ -30,6 +30,7 @@ private slots:
     void _testRebootRequiredIndicator_data();
     void _testRebootRequiredIndicator();
     void _testIndicatorDrawerClosesOnVehicleDisconnect();
+    void _testVehicleMessagesMarkReadAndClear();
 
 private:
     /// Shared implementation: connect a MockLink via \a factory and cycle

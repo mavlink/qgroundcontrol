@@ -372,3 +372,66 @@ void ToolbarIndicatorUITest::_testIndicatorDrawerClosesOnVehicleDisconnect()
                                  "Indicator drawer still open after the vehicle disconnected");
                     });
 }
+
+void ToolbarIndicatorUITest::_testVehicleMessagesMarkReadAndClear()
+{
+    runWithMockLink(
+        [] { return MockLink::startPX4MockLink(); },
+        [this](QPointer<MockLink> mockLink, Vehicle* vehicle) {
+            const QString indicatorName = QStringLiteral("toolbar_mainStatusIndicator");
+            const QString drawerName = QStringLiteral("indicatorDrawerLoader");
+            const QString markReadName = QStringLiteral("vehicleMessagesMarkReadButton");
+            const QString clearName = QStringLiteral("vehicleMessagesClearButton");
+
+            vehicle->clearMessages();
+            QVERIFY(!vehicle->hasUnreadMessages());
+
+            QQuickItem* const indicator = findVisibleItem(_rootItem, indicatorName, TestTimeout::mediumMs());
+            QVERIFY2(indicator, "Main status indicator not visible");
+            QVERIFY(_clickItemAt(indicator, 0.5, 0.5, indicatorName));
+            QVERIFY2(findVisibleItem(_rootItem, drawerName, TestTimeout::mediumMs()),
+                     "Main status drawer did not open");
+            QVERIFY2(!findVisibleItem(_rootItem, markReadName, 0), "Mark as Read shown with no messages");
+            QVERIFY2(!findVisibleItem(_rootItem, clearName, 0), "Clear shown with no messages");
+
+            // Messages arriving while the drawer is open are unread
+            mockLink->sendStatusTextMessage(MAV_SEVERITY_INFO, QStringLiteral("Status text info"));
+            mockLink->sendStatusTextMessage(MAV_SEVERITY_ERROR, QStringLiteral("Status text error"));
+            QVERIFY_TRUE_WAIT(vehicle->unreadCriticalMessageCount() == 1 &&
+                                  vehicle->formattedMessages().contains(QStringLiteral("Status text info")),
+                              TestTimeout::mediumMs());
+            QCOMPARE(vehicle->formattedMessages().count(QStringLiteral("<b>")), 2);
+
+            QQuickItem* const markReadButton = findVisibleItem(_rootItem, markReadName, TestTimeout::mediumMs());
+            QVERIFY2(markReadButton, "Mark as Read not shown with unread messages");
+            QVERIFY2(findVisibleItem(_rootItem, clearName, TestTimeout::mediumMs()), "Clear not shown with messages");
+
+            // Mark as Read clears the badge count but keeps the messages and the drawer open
+            QVERIFY(_clickItemAt(markReadButton, 0.5, 0.5, markReadName));
+            QVERIFY_TRUE_WAIT(!vehicle->hasUnreadMessages(), TestTimeout::mediumMs());
+            QCOMPARE(vehicle->unreadCriticalMessageCount(), 0);
+            QVERIFY(vehicle->formattedMessages().contains(QStringLiteral("Status text error")));
+            QVERIFY(!vehicle->formattedMessages().contains(QStringLiteral("<b>")));
+            QVERIFY2(findVisibleItem(_rootItem, drawerName, 0), "Drawer closed by Mark as Read");
+            QVERIFY2(waitForCondition([&] { return findVisibleItem(_rootItem, markReadName, 0) == nullptr; },
+                                      TestTimeout::mediumMs(), QStringLiteral("Mark as Read hidden")),
+                     "Mark as Read still shown after marking all read");
+
+            // A new message is unread again
+            mockLink->sendStatusTextMessage(MAV_SEVERITY_ERROR, QStringLiteral("Status text error 2"));
+            QVERIFY_TRUE_WAIT(vehicle->unreadCriticalMessageCount() == 1, TestTimeout::mediumMs());
+            QCOMPARE(vehicle->formattedMessages().count(QStringLiteral("<b>")), 1);
+            QVERIFY2(findVisibleItem(_rootItem, markReadName, TestTimeout::mediumMs()),
+                     "Mark as Read not shown for a new message");
+
+            // Clear deletes the messages and closes the drawer
+            QQuickItem* const clearButton = findVisibleItem(_rootItem, clearName, TestTimeout::mediumMs());
+            QVERIFY2(clearButton, "Clear not shown with messages");
+            QVERIFY(_clickItemAt(clearButton, 0.5, 0.5, clearName));
+            QVERIFY(vehicle->formattedMessages().isEmpty());
+            QCOMPARE(vehicle->unreadCriticalMessageCount(), 0);
+            QVERIFY2(waitForCondition([&] { return findVisibleItem(_rootItem, drawerName, 0) == nullptr; },
+                                      TestTimeout::mediumMs(), QStringLiteral("drawer closed")),
+                     "Drawer still open after Clear");
+        });
+}

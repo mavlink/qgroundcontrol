@@ -141,10 +141,13 @@ void ParameterManagerTest::_requestListNoResponse()
     QSignalSpy spyParamsReady(vehicleMgr, &MultiVehicleManager::parameterReadyVehicleAvailableChanged);
     QSignalSpy spyProgress(vehicle->parameterManager(), &ParameterManager::loadProgressChanged);
     expectAppMessage(QRegularExpression("did not respond to request for parameters"));
+    expectLogMessage("FactSystem.ParameterManager", QtWarningMsg,
+                     QRegularExpression("did not respond to request for parameters"));
     // We should not get any progress bar updates, nor a parameter ready signal.
     // ParameterManager exhausts initial request retries in bounded test intervals.
     QVERIFY_NO_SIGNAL_WAIT(spyProgress, TestTimeout::shortMs());
     QVERIFY_NO_SIGNAL_WAIT(spyParamsReady, ParameterManager::kTestMaxInitialRequestTimeMs);
+    verifyExpectedLogMessage();
     verifyExpectedLogMessage();
 }
 
