@@ -1528,7 +1528,7 @@ void ParameterManager::_paramRequestListTimeout()
     if (!_vehicle->genericFirmware()) {
         const QString errorMsg = tr("Vehicle %1 did not respond to request for parameters. "
                                     "This will cause %2 to be unable to display its full user interface.").arg(_vehicle->id()).arg(QCoreApplication::applicationName());
-        qCDebug(ParameterManagerLog) << errorMsg;
+        qCWarning(ParameterManagerLog) << errorMsg;
         QGC::showAppMessage(errorMsg);
     }
     emit initialParametersRequestFailed();

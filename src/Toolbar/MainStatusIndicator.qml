@@ -120,7 +120,7 @@ RowLayout {
             color:              qgcPal.colorRed
             visible:            _criticalMessageCount > 0
 
-            property int _criticalMessageCount: _activeVehicle ? _activeVehicle.criticalMessageCount : 0
+            property int _criticalMessageCount: _activeVehicle ? _activeVehicle.unreadCriticalMessageCount : 0
 
             QGCLabel {
                 anchors.centerIn:   parent
@@ -357,19 +357,64 @@ RowLayout {
                 }
             }
 
-            SettingsGroupLayout {
+            ColumnLayout {
                 Layout.fillWidth:   true
-                heading:            qsTr("Vehicle Messages")
+                spacing:            ScreenTools.defaultFontPixelHeight / 4
 
-                VehicleMessageList {
-                    id:                 vehicleMessageList
+                RowLayout {
                     Layout.fillWidth:   true
-                    visible:            !noMessages
+                    Layout.leftMargin:  ScreenTools.defaultFontPixelHeight / 2
+                    Layout.rightMargin: ScreenTools.defaultFontPixelHeight / 2
+                    spacing:            ScreenTools.defaultFontPixelWidth / 2
+
+                    QGCLabel {
+                        Layout.fillWidth:   true
+                        text:               qsTr("Vehicle Messages")
+                        font.pointSize:     ScreenTools.defaultFontPointSize + 1
+                        font.bold:          true
+                    }
+
+                    QGCButton {
+                        objectName:     "vehicleMessagesMarkReadButton"
+                        implicitHeight: contentItem.implicitHeight + topPadding + bottomPadding
+                        heightFactor:   0.2
+                        leftPadding:    ScreenTools.defaultFontPixelWidth
+                        rightPadding:   leftPadding
+                        text:           qsTr("Mark as Read")
+                        pointSize:      ScreenTools.smallFontPointSize
+                        visible:        _activeVehicle && _activeVehicle.hasUnreadMessages
+                        onClicked:      _activeVehicle.markMessagesRead()
+                    }
+
+                    QGCButton {
+                        objectName:     "vehicleMessagesClearButton"
+                        implicitHeight: contentItem.implicitHeight + topPadding + bottomPadding
+                        heightFactor:   0.2
+                        leftPadding:    ScreenTools.defaultFontPixelWidth
+                        rightPadding:   leftPadding
+                        text:           qsTr("Clear")
+                        pointSize:      ScreenTools.smallFontPointSize
+                        visible:        !vehicleMessageList.noMessages
+                        onClicked: {
+                            _activeVehicle.clearMessages()
+                            mainWindow.closeIndicatorDrawer()
+                        }
+                    }
                 }
 
-                QGCLabel {
-                    text: qsTr("No new vehicle messages")
-                    visible: vehicleMessageList.noMessages
+                SettingsGroupLayout {
+                    Layout.fillWidth:   true
+
+                    VehicleMessageList {
+                        id:                 vehicleMessageList
+                        Layout.fillWidth:   true
+                        visible:            !noMessages
+                    }
+
+                    QGCLabel {
+                        text: qsTr("No new vehicle messages")
+                        visible: vehicleMessageList.noMessages
+                    }
                 }
             }
 

@@ -35,7 +35,7 @@ The Flight Status indicator dropdown fills the window and also gives you access 
 - **Force Arm** - Arms the vehicle while bypassing pre-arm checks. Only shown when **Allow Force Arm** is enabled in [Fly View Settings](../settings_view/fly_view.md).
 - **Reboot Vehicle** - Shown at the right when the vehicle needs a reboot (see [Vehicle Reboot Required](#vehicle-reboot-required)).
 - **Firmware update available** - Shown when the vehicle is not running the latest stable firmware (see [Firmware Update Available](#firmware-update-available)).
-- **Vehicle Messages** - The messages sent by the vehicle. Use the trash button to clear them.
+- **Vehicle Messages** - The messages sent by the vehicle. Unread messages are shown in bold. Use **Mark as Read** to mark them all as read, or **Clear** to delete them.
 
 In the cases of warnings or not ready state you can click the indicator to display the dropdown which will show the reason(s) why. The toggle on the right expands each error with additional information and possible solutions.
 
@@ -57,9 +57,9 @@ Small badges can appear at the top right of the Flight Status indicator: a blue 
 
 #### Vehicle Messages
 
-When the vehicle sends critical messages (error severity or worse) a red badge is shown at the top right of the Flight Status indicator. The badge shows the number of critical messages, or `!` if there are more than 9. Opening the dropdown does not clear the badge, only clearing the message list with the trash button does.
+When the vehicle sends critical messages (error severity or worse) a red badge is shown at the top right of the Flight Status indicator. The badge shows the number of unread critical messages, or `!` if there are more than 9. Opening the dropdown does not clear the badge. Press **Mark as Read** in the message list to clear it while keeping the messages, or use **Clear** to delete the messages.
 
-In the dropdown message list, critical messages are shown in red and warnings and notices in orange.
+In the dropdown message list, unread messages are shown in bold and read messages in normal weight. Critical messages are shown in red and warnings and notices in orange. New messages are always unread, even after earlier ones were marked as read.
 
 Critical messages are also shown in a **Vehicle Alert** popup below the toolbar. Up to 5 messages are shown at once, fewer if the window is too short to fit them. If more arrive the popup title changes to **Vehicle Alert - Click to see more**, clicking it opens the Flight Status dropdown. The popup closes automatically after 10 seconds, or when you click it.
 

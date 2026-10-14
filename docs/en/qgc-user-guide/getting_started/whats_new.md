@@ -16,6 +16,12 @@ It is disabled by default — see [GeoMap Engine (Tech Preview)](../fly_view/geo
 The **ROI at location** map click action now supports setting the ROI altitude.
 An altitude slider (meters above home, defaulting to 0 = ground level) is shown before you confirm the ROI, so the vehicle can point at an elevated target instead of only ground points.
 
+### Vehicle Messages Read/Unread
+
+Vehicle messages now have a read/unread state. Unread messages are shown in bold in the **Flight Status** indicator's message list, and the red badge on the indicator counts only unread critical messages.
+Press **Mark as Read** to clear the badge while keeping the messages, instead of having to delete them. **Clear** still deletes them.
+See [Vehicle Messages](../fly_view/fly_view_toolbar.md#vehicle-messages) for details.
+
 ## Custom Builds
 
 ### Custom Settings Pages

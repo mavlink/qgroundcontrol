@@ -134,9 +134,10 @@ void PlanMasterControllerTest::_testTakeoffTextFileLoad()
 void PlanMasterControllerTest::_testActiveVehicleChanged()
 {
     // The test emits missionManager->error() twice to verify signal propagation.
-    // Each emission triggers a showAppMessage debug log via PlanMasterController.
+    // Each emission triggers a showAppMessage debug log via PlanMasterController and a Vehicle warning.
     ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
                      QRegularExpression("Mission transfer failed"));
+    ignoreLogMessage("Vehicle.Vehicle", QtWarningMsg, QRegularExpression("Mission transfer failed"));
     // There was a defect where the PlanMasterController would, upon a new active vehicle,
     // overzelously disconnect all subscribers interested in the outgoing active vechicle.
     Vehicle* outgoingManagerVehicle = _masterController->managerVehicle();

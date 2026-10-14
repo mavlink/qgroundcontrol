@@ -22,13 +22,18 @@ public:
     QString getText() const { return m_text; }
     QString getFormattedText() const { return m_formatedText; }
 
-    void setFormatedText(const QString &formatedText) { m_formatedText = formatedText; }
+    bool isRead() const { return m_read; }
+
+    void setFormatedText(const QString& formatedText) { m_formatedText = formatedText; }
+
+    void markRead() { m_read = true; }
 
 private:
     MAV_COMPONENT m_compId;
     MAV_SEVERITY m_severity;
     QString m_text;
     QString m_formatedText;
+    bool m_read = false;
 };
 
 class StatusTextHandler : public QObject
@@ -43,18 +48,25 @@ public:
     void handleHTMLEscapedTextMessage(MAV_COMPONENT componentid, MAV_SEVERITY severity, const QString &text, const QString &description);
 
     void clearMessages();
+    void markAllRead();
 
     const QList<StatusText*>& messages() const { return m_messages; }
+
+    /// Unread messages are wrapped in <b> so they render bold.
     QString formattedMessages() const;
 
-    uint32_t criticalMessageCount() const { return m_criticalMessageCount; }
+    uint32_t unreadCriticalMessageCount() const { return m_unreadCriticalMessageCount; }
+
+    bool hasUnreadMessages() const { return m_unreadMessageCount != 0; }
 
     static QString getMessageText(const mavlink_message_t &message);
 
 signals:
     void newFormattedMessage(QString message);
     void textMessageReceived(MAV_COMPONENT componentid, MAV_SEVERITY severity, QString text, QString description);
-    void criticalMessageCountChanged();
+    void unreadCriticalMessageCountChanged();
+    void hasUnreadMessagesChanged();
+    void formattedMessagesChanged();
     void newErrorMessage(QString message);
 
 private slots:
@@ -63,12 +75,14 @@ private slots:
 private:
     void _handleStatusText(const mavlink_message_t &message);
     void _chunkedStatusTextCompleted(MAV_COMPONENT compId);
+    static QString _displayText(const StatusText& message);
 
     QTimer *m_chunkedStatusTextTimer = nullptr;
 
     bool m_multiComp = false;
     MAV_COMPONENT m_activeComponent = MAV_COMPONENT::MAV_COMPONENT_ENUM_END;
-    uint32_t m_criticalMessageCount = 0;
+    uint32_t m_unreadCriticalMessageCount = 0;
+    uint32_t m_unreadMessageCount = 0;
 
     QVector<StatusText*> m_messages;
 

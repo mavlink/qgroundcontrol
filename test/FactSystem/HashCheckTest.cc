@@ -155,6 +155,8 @@ void HashCheckTest::_hashCheckMatrix()
     // BothTimersExhaust row: parameters never become ready, producing a showAppMessage for the timeout.
     ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
                      QRegularExpression("did not respond to request for parameters"));
+    ignoreLogMessage("FactSystem.ParameterManager", QtWarningMsg,
+                     QRegularExpression("did not respond to request for parameters"));
     QFETCH(bool, px4);
     QFETCH(bool, highLatency);
     QFETCH(bool, populateCache);
