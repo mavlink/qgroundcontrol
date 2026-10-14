@@ -211,7 +211,7 @@ void RequestMessageTest::_staleAvailableModesIgnored()
         mavlink_message_t msg{};
         (void) mavlink_msg_available_modes_pack_chan(_mockLink->vehicleId(), MAV_COMP_ID_AUTOPILOT1,
                                                      _mockLink->outgoingMavlinkChannel(), &msg, 3, modeIndex, 0,
-                                                     modeIndex, 0, modeName);
+                                                     modeIndex, 0, modeName, 0);
         _mockLink->respondWithMavlinkMessage(msg);
     };
 

@@ -85,17 +85,15 @@ EventHandler &MAVLinkEventManager::_eventHandlerForCompId(uint8_t compid)
     }
 
     // Send mavlink REQUEST_EVENT on behalf of the protocol state machine.
-    auto sendRequestEventMessageCB = [this](const mavlink_request_event_t &msg) {
+    auto sendRequestEventMessageCB = [this](const mavlink_request_event_t& msg, uint32_t targetSystemId) {
         SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
         if (!sharedLink) {
             return;
         }
         mavlink_message_t message;
-        mavlink_msg_request_event_encode_chan(MAVLinkProtocol::instance()->getSystemId(),
-                                              MAVLinkProtocol::getComponentId(),
-                                              sharedLink->mavlinkChannel(),
-                                              &message,
-                                              &msg);
+        mavlink_msg_request_event_pack_chan(
+            MAVLinkProtocol::instance()->getSystemId(), MAVLinkProtocol::getComponentId(), sharedLink->mavlinkChannel(),
+            &message, targetSystemId, msg.target_component, msg.first_sequence, msg.last_sequence);
         _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), message);
     };
 

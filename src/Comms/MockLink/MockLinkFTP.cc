@@ -1,6 +1,4 @@
 #include "MockLinkFTP.h"
-#include "MockLink.h"
-#include "QGCLoggingCategory.h"
 
 #include <cerrno>
 
@@ -8,10 +6,14 @@
 #include <QtCore/QDir>
 #include <QtCore/QTemporaryFile>
 #include <QtCore/QThread>
+#include <QtCore/QTimer>
+
+#include "MockLink.h"
+#include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(MockLinkFTPLog, "Comms.MockLink.MockLinkFTP")
 
-MockLinkFTP::MockLinkFTP(uint8_t systemIdServer, uint8_t componentIdServer, MockLink *mockLink)
+MockLinkFTP::MockLinkFTP(quint32 systemIdServer, uint8_t componentIdServer, MockLink* mockLink)
     : QObject(mockLink)
     , _systemIdServer(systemIdServer)
     , _componentIdServer(componentIdServer)
@@ -39,7 +41,8 @@ void MockLinkFTP::ensureNullTemination(MavlinkFTP::Request *request)
     }
 }
 
-void MockLinkFTP::_listCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber, bool withTime)
+void MockLinkFTP::_listCommand(quint32 senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request* request,
+                               uint16_t seqNumber, bool withTime)
 {
     MavlinkFTP::Request ackResponse{};
     ensureNullTemination(request);
@@ -127,7 +130,8 @@ void MockLinkFTP::_listCommand(uint8_t senderSystemId, uint8_t senderComponentId
     _sendResponse(senderSystemId, senderComponentId, &ackResponse, outgoingSeqNumber);
 }
 
-void MockLinkFTP::_openCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber)
+void MockLinkFTP::_openCommand(quint32 senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request* request,
+                               uint16_t seqNumber)
 {
     MavlinkFTP::Request response{};
     ensureNullTemination(request);
@@ -198,7 +202,8 @@ void MockLinkFTP::_openCommand(uint8_t senderSystemId, uint8_t senderComponentId
     _sendResponse(senderSystemId, senderComponentId, &response, outgoingSeqNumber);
 }
 
-void MockLinkFTP::_createFileCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber)
+void MockLinkFTP::_createFileCommand(quint32 senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request* request,
+                                     uint16_t seqNumber)
 {
     ensureNullTemination(request);
 
@@ -223,7 +228,8 @@ void MockLinkFTP::_createFileCommand(uint8_t senderSystemId, uint8_t senderCompo
     _sendResponse(senderSystemId, senderComponentId, &response, outgoingSeqNumber);
 }
 
-void MockLinkFTP::_openFileWOCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber)
+void MockLinkFTP::_openFileWOCommand(quint32 senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request* request,
+                                     uint16_t seqNumber)
 {
     ensureNullTemination(request);
 
@@ -248,7 +254,8 @@ void MockLinkFTP::_openFileWOCommand(uint8_t senderSystemId, uint8_t senderCompo
     _sendResponse(senderSystemId, senderComponentId, &response, outgoingSeqNumber);
 }
 
-void MockLinkFTP::_readCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber)
+void MockLinkFTP::_readCommand(quint32 senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request* request,
+                               uint16_t seqNumber)
 {
     MavlinkFTP::Request	response{};
     const uint16_t outgoingSeqNumber = _nextSeqNumber(seqNumber);
@@ -305,7 +312,8 @@ void MockLinkFTP::_readCommand(uint8_t senderSystemId, uint8_t senderComponentId
     _sendResponse(senderSystemId, senderComponentId, &response, outgoingSeqNumber);
 }
 
-void MockLinkFTP::_removeFileCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber)
+void MockLinkFTP::_removeFileCommand(quint32 senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request* request,
+                                     uint16_t seqNumber)
 {
     ensureNullTemination(request);
     const QString path = reinterpret_cast<char*>(request->data);
@@ -333,7 +341,8 @@ void MockLinkFTP::_removeFileCommand(uint8_t senderSystemId, uint8_t senderCompo
     _sendNak(senderSystemId, senderComponentId, MavlinkFTP::kErrFailFileNotFound, outgoingSeqNumber, MavlinkFTP::kCmdRemoveFile);
 }
 
-void MockLinkFTP::_burstReadCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber)
+void MockLinkFTP::_burstReadCommand(quint32 senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request* request,
+                                    uint16_t seqNumber)
 {
     _lastBurstReadRequestSize = request->hdr.size;
 
@@ -417,7 +426,8 @@ void MockLinkFTP::_burstReadCommand(uint8_t senderSystemId, uint8_t senderCompon
     }
 }
 
-void MockLinkFTP::_terminateCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber)
+void MockLinkFTP::_terminateCommand(quint32 senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request* request,
+                                    uint16_t seqNumber)
 {
     const uint16_t outgoingSeqNumber = _nextSeqNumber(seqNumber);
 
@@ -434,7 +444,7 @@ void MockLinkFTP::_terminateCommand(uint8_t senderSystemId, uint8_t senderCompon
     emit terminateCommandReceived();
 }
 
-void MockLinkFTP::_resetCommand(uint8_t senderSystemId, uint8_t senderComponentId, uint16_t seqNumber)
+void MockLinkFTP::_resetCommand(quint32 senderSystemId, uint8_t senderComponentId, uint16_t seqNumber)
 {
     emit resetCommandReceived();
 
@@ -457,7 +467,8 @@ void MockLinkFTP::openStaleSessionForTest()
     (void) _currentFile.open(QIODevice::ReadOnly);
 }
 
-void MockLinkFTP::_writeCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber)
+void MockLinkFTP::_writeCommand(quint32 senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request* request,
+                                uint16_t seqNumber)
 {
     const uint16_t outgoingSeqNumber = _nextSeqNumber(seqNumber);
 
@@ -534,7 +545,7 @@ void MockLinkFTP::mavlinkMessageReceived(const mavlink_message_t &message)
     mavlink_file_transfer_protocol_t requestFTP{};
     mavlink_msg_file_transfer_protocol_decode(&message, &requestFTP);
 
-    if (requestFTP.target_system != _systemIdServer) {
+    if (mavlink_msg_get_target_sysid(&message, mavlink_get_msg_entry(message.msgid)) != _systemIdServer) {
         return;
     }
 
@@ -552,7 +563,7 @@ void MockLinkFTP::mavlinkMessageReceived(const mavlink_message_t &message)
         // This is the same request as the one we replied to last. It means the (n)ack got lost, and the GCS
         // resent the request
         qCDebug(MockLinkFTPLog) << "MockLinkFTP: resending response";
-        _mockLink->respondWithMavlinkMessage(_lastReply);
+        _sendLastReply();
         return;
     }
 
@@ -621,7 +632,8 @@ void MockLinkFTP::mavlinkMessageReceived(const mavlink_message_t &message)
     }
 }
 
-void MockLinkFTP::_sendAck(uint8_t targetSystemId, uint8_t targetComponentId, uint16_t seqNumber, MavlinkFTP::OpCode_t reqOpcode)
+void MockLinkFTP::_sendAck(quint32 targetSystemId, uint8_t targetComponentId, uint16_t seqNumber,
+                           MavlinkFTP::OpCode_t reqOpcode)
 {
     MavlinkFTP::Request ackResponse{};
 
@@ -633,7 +645,8 @@ void MockLinkFTP::_sendAck(uint8_t targetSystemId, uint8_t targetComponentId, ui
     _sendResponse(targetSystemId, targetComponentId, &ackResponse, seqNumber);
 }
 
-void MockLinkFTP::_sendNak(uint8_t targetSystemId, uint8_t targetComponentId, MavlinkFTP::ErrorCode_t error, uint16_t seqNumber, MavlinkFTP::OpCode_t reqOpcode)
+void MockLinkFTP::_sendNak(quint32 targetSystemId, uint8_t targetComponentId, MavlinkFTP::ErrorCode_t error,
+                           uint16_t seqNumber, MavlinkFTP::OpCode_t reqOpcode)
 {
     MavlinkFTP::Request nakResponse{};
 
@@ -646,7 +659,8 @@ void MockLinkFTP::_sendNak(uint8_t targetSystemId, uint8_t targetComponentId, Ma
     _sendResponse(targetSystemId, targetComponentId, &nakResponse, seqNumber);
 }
 
-void MockLinkFTP::_sendNakErrno(uint8_t targetSystemId, uint8_t targetComponentId, uint8_t nakErrno, uint16_t seqNumber, MavlinkFTP::OpCode_t reqOpcode)
+void MockLinkFTP::_sendNakErrno(quint32 targetSystemId, uint8_t targetComponentId, uint8_t nakErrno, uint16_t seqNumber,
+                                MavlinkFTP::OpCode_t reqOpcode)
 {
     MavlinkFTP::Request nakResponse{};
 
@@ -660,8 +674,8 @@ void MockLinkFTP::_sendNakErrno(uint8_t targetSystemId, uint8_t targetComponentI
     _sendResponse(targetSystemId, targetComponentId, &nakResponse, seqNumber);
 }
 
-
-void MockLinkFTP::_sendResponse(uint8_t targetSystemId, uint8_t targetComponentId, MavlinkFTP::Request *request, uint16_t seqNumber)
+void MockLinkFTP::_sendResponse(quint32 targetSystemId, uint8_t targetComponentId, MavlinkFTP::Request* request,
+                                uint16_t seqNumber)
 {
     request->hdr.seqNumber = seqNumber;
     _lastReplySequence = seqNumber;
@@ -686,9 +700,18 @@ void MockLinkFTP::_sendResponse(uint8_t targetSystemId, uint8_t targetComponentI
         }
     }
 
-    _mockLink->respondWithMavlinkMessage(_lastReply);
+    _sendLastReply();
 }
 
+void MockLinkFTP::_sendLastReply()
+{
+    if (_responseDelayMs > 0) {
+        QTimer::singleShot(_responseDelayMs, this,
+                           [this, reply = _lastReply]() { _mockLink->respondWithMavlinkMessage(reply); });
+    } else {
+        _mockLink->respondWithMavlinkMessage(_lastReply);
+    }
+}
 
 uint16_t MockLinkFTP::_nextSeqNumber(uint16_t seqNumber) const
 {

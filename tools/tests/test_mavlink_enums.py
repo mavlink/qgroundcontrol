@@ -102,6 +102,27 @@ def test_unterminated_enum_is_rejected(tmp_path):
         mavlink_enums.build_enums_header(mavlink_enums.find_dialects(tmp_path))
 
 
+@pytest.mark.parametrize(
+    "values,base",
+    [
+        ("LOW=-2147483648, HIGH=2147483647,", ""),
+        ("LOW=0, HIGH=4294967295,", ""),
+        ("LOW=-1, HIGH=2147483648,", " : qint64"),
+        ("LOW=0, HIGH=4294967296,", " : quint64"),
+        ("LOW=0, HIGH=0x8000000000,", " : quint64"),
+        ("LOW=-2147483649, HIGH=1,", " : qint64"),
+        ("LOW=-1, HIGH=4294967296,", " : qint64"),
+        ("LOW=0, /* example HIGH=4294967296, */ HIGH=1,", ""),
+    ],
+)
+def test_qml_wide_enums_have_explicit_underlying_type(values, base):
+    body = "{\n" + values + "\n}"
+    header = mavlink_enums.build_qml_header({"TEST_WIDE": body})
+    # Implicit enum bases work with GCC/Clang but truncate the wide values on MSVC.
+    assert f"enum TEST_WIDE{base}\n" in header
+    assert textwrap.indent(body, "    ") in header
+
+
 @pytest.mark.parametrize("explicit_qml_paths", [False, True])
 def test_main_generates_headers_without_rewriting_unchanged_files(
     dialect_dir, tmp_path, monkeypatch, capsys, explicit_qml_paths

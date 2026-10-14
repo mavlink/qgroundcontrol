@@ -36,11 +36,11 @@ public:
     QString statusText() const;
 
     /// Begin pending-enable. Caller must send SETUP_SIGNING only on nullopt; outcome arrives via signingConfirmed/signingFailed.
-    [[nodiscard]] std::optional<SigningFailure> tryBeginEnable(uint8_t expectedSysId, const QString& keyName,
+    [[nodiscard]] std::optional<SigningFailure> tryBeginEnable(quint32 expectedSysId, const QString& keyName,
                                                                const MAVLinkSigning::SigningKey& keyBytes);
 
     /// Atomic check-and-commit for disable; same contract as tryBeginEnable.
-    [[nodiscard]] std::optional<SigningFailure> tryBeginDisable(uint8_t expectedSysId);
+    [[nodiscard]] std::optional<SigningFailure> tryBeginDisable(quint32 expectedSysId);
 
     /// Abort any in-flight operation. Emits signingFailed if pending. No-op if Idle.
     /// `detail` overrides the default ("primary link changed before vehicle confirmation").
@@ -94,7 +94,7 @@ private:
     struct PendingOp
     {
         OpKind kind = OpKind::None;
-        uint8_t expectedSysId = 0;
+        quint32 expectedSysId = 0;
         QString keyName;
         MAVLinkSigning::SigningKey keyBytes{};
         bool unsignedSeen = false;

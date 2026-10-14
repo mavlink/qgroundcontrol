@@ -19,7 +19,6 @@ FTPManager::FTPManager(Vehicle* vehicle)
     , _vehicle  (vehicle)
 {
     _ackOrNakTimeoutTimer.setSingleShot(true);
-    // Mock link responds immediately if at all, speed up unit tests with faster timeout
     _ackOrNakTimeoutTimer.setInterval(QGC::runningUnitTests() ? kTestAckTimeoutMs : _ackOrNakTimeoutMsecs);
     connect(&_ackOrNakTimeoutTimer, &QTimer::timeout, this, &FTPManager::_ackOrNakTimeout);
 
@@ -624,8 +623,8 @@ void FTPManager::_mavlinkMessageReceived(const mavlink_message_t& message)
     mavlink_msg_file_transfer_protocol_decode(&message, &data);
 
     // Make sure we are the target system
-    int qgcId = MAVLinkProtocol::instance()->getSystemId();
-    if (data.target_system != qgcId) {
+    quint32 qgcId = MAVLinkProtocol::instance()->getSystemId();
+    if (mavlink_msg_get_target_sysid(&message, mavlink_get_msg_entry(message.msgid)) != qgcId) {
         return;
     }
 

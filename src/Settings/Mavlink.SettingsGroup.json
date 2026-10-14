@@ -75,11 +75,11 @@
         },
         {
             "name": "gcsMavlinkSystemID",
-            "shortDesc": "MAVLink system identifier (1-255) for this ground station.",
+            "shortDesc": "MAVLink system identifier (1-4294967295) for this ground station.",
             "type": "uint32",
             "default": 255,
             "min": 1,
-            "max": 255,
+            "max": 4294967295,
             "label": "MAVLink System ID",
             "keywords": "system id,mavlink id"
         },
