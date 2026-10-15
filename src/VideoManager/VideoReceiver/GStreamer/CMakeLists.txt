@@ -16,7 +16,7 @@ endif()
 if(LINUX)
     list(APPEND _qgc_gst_components Allocators)
 endif()
-set(QGCGStreamer_FIND_COMPONENTS ${_qgc_gst_components})
+set(QGC_GST_COMPONENTS ${_qgc_gst_components})
 include(GStreamer/Orchestrator)
 
 # QGCGStreamer: one static lib for the self-contained HwBuffers + gstqgc leaf layer (no app deps).

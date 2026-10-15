@@ -11,7 +11,7 @@ set(_paths
     /sdk/libgstcoreelements.so
     /sdk/libgstbadplugin.so
 )
-_gstreamer_filter_plugin_paths("libgst" "${_paths}" _kept)
+_qgc_gst_filter_plugin_paths("libgst" "${_paths}" _kept)
 
 qgc_test_assert_in_list("keeps exact video"        "/sdk/libgstvideo.so"        _kept)
 qgc_test_assert_in_list("keeps coreelements"       "/sdk/libgstcoreelements.so" _kept)

@@ -29,7 +29,7 @@ if(QGC_TEST_ANDROID_ABI)
     add_library(${PROJECT_NAME} SHARED "${CMAKE_CURRENT_SOURCE_DIR}/fake_app.cpp")
 endif()
 
-set(QGCGStreamer_FIND_COMPONENTS
+set(QGC_GST_COMPONENTS
     Core
     Base
     Gl

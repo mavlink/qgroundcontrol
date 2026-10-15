@@ -60,7 +60,7 @@ set(GSTREAMER_MOCK_SERVER_DEBUG_PLUGINS
 )
 
 # Invariant: no plugin may be both runtime-required and xcframework-skipped.
-function(_gstreamer_assert_policy_consistent)
+function(_qgc_gst_assert_policy_consistent)
     foreach(_skip IN LISTS GSTREAMER_XCFRAMEWORK_SKIP_PLUGINS)
         if(_skip IN_LIST GSTREAMER_RUNTIME_REQUIRED_PLUGINS)
             message(FATAL_ERROR
@@ -69,7 +69,7 @@ function(_gstreamer_assert_policy_consistent)
         endif()
     endforeach()
 endfunction()
-_gstreamer_assert_policy_consistent()
+_qgc_gst_assert_policy_consistent()
 
 # gstreamer_plugins_for(PLATFORM <key> OUT_VAR <var>)
 # Reads the plugin list for <key> ("android"|"apple"|"windows"|"linux"|"") from
@@ -92,9 +92,9 @@ function(gstreamer_plugins_for)
         message(FATAL_ERROR "gstreamer_plugins_for: build-config.json not loaded; "
             "expected QGC_BUILD_CONFIG_CONTENT to be set by BuildConfig.cmake.")
     endif()
-    _qgc_json_array_to_list(_plugins "${QGC_BUILD_CONFIG_CONTENT}" gstreamer plugins common)
+    _qgc_gst_json_array_to_list(_plugins "${QGC_BUILD_CONFIG_CONTENT}" gstreamer plugins common)
     if(ARG_PLATFORM)
-        _qgc_json_array_to_list(_extra "${QGC_BUILD_CONFIG_CONTENT}" gstreamer plugins ${ARG_PLATFORM})
+        _qgc_gst_json_array_to_list(_extra "${QGC_BUILD_CONFIG_CONTENT}" gstreamer plugins ${ARG_PLATFORM})
         list(APPEND _plugins ${_extra})
     endif()
     set(${ARG_OUT_VAR} "${_plugins}" PARENT_SCOPE)

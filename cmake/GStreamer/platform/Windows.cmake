@@ -2,7 +2,7 @@
 
 include_guard(GLOBAL)
 
-function(_qgc_windows_sdk_complete ROOT_DIR OUT_VAR)
+function(_qgc_gst_windows_sdk_complete ROOT_DIR OUT_VAR)
     set(_required_paths
         "bin/pkg-config.exe"
         "include/gstreamer-1.0"
@@ -21,7 +21,7 @@ function(_qgc_windows_sdk_complete ROOT_DIR OUT_VAR)
     set(${OUT_VAR} "${_is_complete}" PARENT_SCOPE)
 endfunction()
 
-function(_qgc_find_win_sdk_root EXTRACTED_DIR OUT_VAR)
+function(_qgc_gst_find_windows_sdk_root EXTRACTED_DIR OUT_VAR)
     if(EXISTS "${EXTRACTED_DIR}/bin/pkg-config.exe")
         set(${OUT_VAR} "${EXTRACTED_DIR}" PARENT_SCOPE)
         return()
@@ -93,10 +93,10 @@ function(_qgc_gst_windows_extract staging installer)
         )
     endif()
 
-    _qgc_find_win_sdk_root("${staging}" _root)
+    _qgc_gst_find_windows_sdk_root("${staging}" _root)
     set(_complete FALSE)
     if(_root)
-        _qgc_windows_sdk_complete("${_root}" _complete)
+        _qgc_gst_windows_sdk_complete("${_root}" _complete)
     endif()
     if(NOT _complete)
         message(FATAL_ERROR "GStreamer SDK installed into ${staging} but required files are missing.\n"
@@ -127,14 +127,14 @@ function(_qgc_gst_windows_sdk_arch out_var)
     )
 endfunction()
 
-# _qgc_discover_windows_sdk()
+# _qgc_gst_discover_windows_sdk()
 # Uses the SDK under GStreamer_ROOT_DIR, the GSTREAMER_1_0_ROOT_* environment or a standard install location when it is
 # complete and recent enough, else downloads the official MSVC SDK for the target architecture. Points pkg-config at
 # the SDK. Sets GStreamer_ROOT_DIR, GStreamer_AUTO_DOWNLOADED, GSTREAMER_{LIB,PLUGIN,INCLUDE}_PATH and the SDK's
 # PKG_CONFIG_EXECUTABLE and PKG_CONFIG_ARGN.
 # cmakelang 0.6.13 predates return(PROPAGATE).
 # cmake-lint: disable=C0103,E1121
-function(_qgc_discover_windows_sdk)
+function(_qgc_gst_discover_windows_sdk)
     _qgc_gst_windows_sdk_arch(_gst_win_arch)
     if(_gst_win_arch STREQUAL "arm64")
         set(_gst_win_platform "windows_msvc_arm64")
@@ -175,7 +175,7 @@ function(_qgc_discover_windows_sdk)
     endif()
 
     if(GStreamer_ROOT_DIR AND EXISTS "${GStreamer_ROOT_DIR}")
-        _qgc_windows_sdk_complete("${GStreamer_ROOT_DIR}" _gst_win_sdk_complete)
+        _qgc_gst_windows_sdk_complete("${GStreamer_ROOT_DIR}" _gst_win_sdk_complete)
         _qgc_gst_sdk_pc_version("${GStreamer_ROOT_DIR}/lib" _gst_win_sdk_version)
         if(NOT _gst_win_sdk_complete)
             message(WARNING "Existing GStreamer SDK at ${GStreamer_ROOT_DIR} is incomplete "
@@ -219,7 +219,7 @@ function(_qgc_discover_windows_sdk)
             CONTENT_DIR_OUT
             _gst_win_install_dir
         )
-        _qgc_find_win_sdk_root("${_gst_win_install_dir}" _gst_win_root)
+        _qgc_gst_find_windows_sdk_root("${_gst_win_install_dir}" _gst_win_root)
         if(_gst_win_root AND NOT _gst_win_root STREQUAL "${_gst_win_install_dir}")
             message(STATUS "GStreamer: SDK root at ${_gst_win_root}")
         endif()

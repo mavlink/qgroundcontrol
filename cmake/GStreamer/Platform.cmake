@@ -37,11 +37,11 @@ endfunction()
 function(qgc_gst_platform_descriptor platform prefix)
     # platform|version variable|plugin key|discovery|installer
     set(_rows
-        "linux|QGC_CONFIG_GSTREAMER_MIN_VERSION|linux|_qgc_discover_linux_sdk|gstreamer_install_linux_sdk"
-        "windows|QGC_CONFIG_GSTREAMER_WIN_VERSION|windows|_qgc_discover_windows_sdk|gstreamer_install_windows_sdk"
-        "macos|QGC_CONFIG_GSTREAMER_MACOS_VERSION|apple|_qgc_discover_macos_sdk|gstreamer_install_macos_sdk"
-        "android|QGC_CONFIG_GSTREAMER_ANDROID_VERSION|android|_qgc_discover_android_sdk|"
-        "ios|QGC_CONFIG_GSTREAMER_IOS_VERSION|apple|_qgc_discover_ios_sdk|"
+        "linux|QGC_CONFIG_GSTREAMER_MIN_VERSION|linux|_qgc_gst_discover_linux_sdk|gstreamer_install_linux_sdk"
+        "windows|QGC_CONFIG_GSTREAMER_WIN_VERSION|windows|_qgc_gst_discover_windows_sdk|gstreamer_install_windows_sdk"
+        "macos|QGC_CONFIG_GSTREAMER_MACOS_VERSION|apple|_qgc_gst_discover_macos_sdk|gstreamer_install_macos_sdk"
+        "android|QGC_CONFIG_GSTREAMER_ANDROID_VERSION|android|_qgc_gst_discover_android_sdk|"
+        "ios|QGC_CONFIG_GSTREAMER_IOS_VERSION|apple|_qgc_gst_discover_ios_sdk|"
     )
     foreach(_row IN LISTS _rows)
         string(REPLACE "|" ";" _fields "${_row}")

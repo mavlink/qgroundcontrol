@@ -1,16 +1,16 @@
 # SDK layout target — captures the on-disk shape of the GStreamer SDK
-# (FLAT / FRAMEWORK / XCFRAMEWORK / STATIC_TARBALL) as a single IMPORTED
+# (FLAT / FRAMEWORK / MERGED_STATIC / STATIC_TARBALL) as a single IMPORTED
 # INTERFACE target with properties, so consumers can read GSTREAMER_*_DIR
 # without depending on PARENT_SCOPE propagation chains.
 #
 # Properties on GStreamer::Layout (single source of truth):
-#   GSTREAMER_LAYOUT_TYPE     - FLAT | FRAMEWORK | XCFRAMEWORK | STATIC_TARBALL
+#   GSTREAMER_LAYOUT_TYPE     - FLAT | FRAMEWORK | MERGED_STATIC | STATIC_TARBALL
 #   GSTREAMER_SDK_ROOT        - resolved SDK root (normalized)
 #   GSTREAMER_LIB_DIR         - directory containing libgstreamer-1.0.* and friends
 #   GSTREAMER_PLUGIN_DIR      - directory containing libgst<plugin>.* (== LIB_DIR/gstreamer-1.0 for FLAT)
 #   GSTREAMER_INCLUDE_DIR     - root of gstreamer-1.0/ + glib-2.0/ headers
 #   GSTREAMER_FRAMEWORK_BUNDLE- discovered macOS GStreamer.framework path (set by overlay, optional)
-#   GSTREAMER_XCFRAMEWORK_PATH- iOS GStreamer.xcframework path (set when TYPE=XCFRAMEWORK)
+#   GSTREAMER_XCFRAMEWORK_PATH- iOS GStreamer.xcframework or .framework bundle (set when TYPE=MERGED_STATIC)
 #   GSTREAMER_VERSION         - SDK version found (set by Orchestrator.cmake)
 #   GSTREAMER_AUTO_DOWNLOADED - whether the SDK was auto-downloaded (set by Orchestrator.cmake)
 #
@@ -21,16 +21,17 @@ include_guard(GLOBAL)
 
 # gstreamer_create_layout_target(SDK_ROOT <root> TYPE <type>
 #   [INCLUDE_PATH <path>] [FRAMEWORK_BUNDLE <path>] [XCFRAMEWORK_BUNDLE <path>])
-# TYPE: FLAT | FRAMEWORK | XCFRAMEWORK | STATIC_TARBALL
+# TYPE: FLAT | FRAMEWORK | MERGED_STATIC | STATIC_TARBALL
+#   MERGED_STATIC is iOS's single merged static archive: SDK_ROOT is the xcframework slice or the
+#   framework's Versions/<v> directory holding it, and XCFRAMEWORK_BUNDLE the .xcframework or .framework.
 # Sets GSTREAMER_LIB_PATH, GSTREAMER_PLUGIN_PATH, GSTREAMER_INCLUDE_PATH,
-# GSTREAMER_FRAMEWORK_PATH (FRAMEWORK only), GSTREAMER_XCFRAMEWORK_PATH (XCFRAMEWORK only)
+# GSTREAMER_FRAMEWORK_PATH (FRAMEWORK only), GSTREAMER_XCFRAMEWORK_PATH (MERGED_STATIC only)
 # in PARENT_SCOPE and creates/updates IMPORTED INTERFACE target GStreamer::Layout.
 #
-# The FRAMEWORK_BUNDLE / XCFRAMEWORK_BUNDLE keyword names are deliberately
-# distinct from their TYPE values — cmake_parse_arguments treats keyword strings
-# as reserved at parse time, so reusing "FRAMEWORK" or "XCFRAMEWORK" both as a
-# TYPE value and as a sibling keyword would make `TYPE FRAMEWORK FRAMEWORK
-# <path>` ambiguous (TYPE's value gets eaten by the keyword recognizer).
+# The FRAMEWORK_BUNDLE keyword name is deliberately distinct from the FRAMEWORK
+# TYPE value — cmake_parse_arguments treats keyword strings as reserved at parse
+# time, so `TYPE FRAMEWORK FRAMEWORK <path>` would be ambiguous (TYPE's value
+# gets eaten by the keyword recognizer).
 function(gstreamer_create_layout_target)
     cmake_parse_arguments(PARSE_ARGV 0 GCLT ""
         "SDK_ROOT;TYPE;LIB_PATH;INCLUDE_PATH;FRAMEWORK_BUNDLE;XCFRAMEWORK_BUNDLE" "")
@@ -57,16 +58,13 @@ function(gstreamer_create_layout_target)
     endif()
     set(GStreamer_ROOT_DIR "${_gclt_root}" PARENT_SCOPE)
 
-    if(GCLT_TYPE STREQUAL "XCFRAMEWORK")
-        # Slice dir IS the lib root; no lib/ subdir exists.
+    if(GCLT_TYPE STREQUAL "MERGED_STATIC")
+        # The archive's directory IS the lib root; no lib/ subdir exists.
         set(_gclt_lib     "${_gclt_root}")
         set(_gclt_plugins "${_gclt_root}")
         set(_gclt_include "${GCLT_INCLUDE_PATH}")
         if(NOT _gclt_include)
             set(_gclt_include "${_gclt_root}/Headers")
-        endif()
-        if(NOT EXISTS "${_gclt_root}")
-            message(FATAL_ERROR "GStreamer: xcframework slice dir not found: ${_gclt_root}")
         endif()
         if(GCLT_XCFRAMEWORK_BUNDLE AND NOT EXISTS "${GCLT_XCFRAMEWORK_BUNDLE}")
             message(FATAL_ERROR "GStreamer: xcframework not found at ${GCLT_XCFRAMEWORK_BUNDLE}")
@@ -106,7 +104,7 @@ function(gstreamer_create_layout_target)
             endif()
         endforeach()
     else()
-        message(FATAL_ERROR "gstreamer_create_layout_target: unknown TYPE \'${GCLT_TYPE}\' — must be FLAT, FRAMEWORK, XCFRAMEWORK, or STATIC_TARBALL")
+        message(FATAL_ERROR "gstreamer_create_layout_target: unknown TYPE \'${GCLT_TYPE}\' — must be FLAT, FRAMEWORK, MERGED_STATIC, or STATIC_TARBALL")
     endif()
 
     set(GSTREAMER_LIB_PATH     "${_gclt_lib}"     PARENT_SCOPE)
@@ -126,7 +124,7 @@ function(gstreamer_create_layout_target)
             GSTREAMER_PLUGIN_DIR     "${_gclt_plugins}"
             GSTREAMER_INCLUDE_DIR    "${_gclt_include}"
         )
-        if(GCLT_TYPE STREQUAL "XCFRAMEWORK" AND GCLT_XCFRAMEWORK_BUNDLE)
+        if(GCLT_TYPE STREQUAL "MERGED_STATIC" AND GCLT_XCFRAMEWORK_BUNDLE)
             set_target_properties(GStreamer::Layout PROPERTIES
                 GSTREAMER_XCFRAMEWORK_PATH "${GCLT_XCFRAMEWORK_BUNDLE}")
         endif()

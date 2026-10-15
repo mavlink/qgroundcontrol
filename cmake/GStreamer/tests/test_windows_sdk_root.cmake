@@ -11,23 +11,23 @@ function(_qgc_test_touch_pkg_config dir)
 endfunction()
 
 _qgc_test_touch_pkg_config(direct)
-_qgc_find_win_sdk_root("${_sandbox}/direct" _root)
+_qgc_gst_find_windows_sdk_root("${_sandbox}/direct" _root)
 qgc_test_assert_streq("pkg-config directly under root" "${_sandbox}/direct" "${_root}")
 
 # The installer nests the SDK under 1.0/<arch>; a bundled helper pkg-config deeper in the
 # tree must not win.
 _qgc_test_touch_pkg_config(nested/1.0/msvc_x86_64)
 _qgc_test_touch_pkg_config(nested/1.0/msvc_x86_64/lib/gstreamer-1.0/tools)
-_qgc_find_win_sdk_root("${_sandbox}/nested" _root)
+_qgc_gst_find_windows_sdk_root("${_sandbox}/nested" _root)
 qgc_test_assert_streq("shortest pkg-config path" "${_sandbox}/nested/1.0/msvc_x86_64" "${_root}")
 
 _qgc_test_touch_pkg_config(tie/Zeta)
 _qgc_test_touch_pkg_config(tie/alpha)
-_qgc_find_win_sdk_root("${_sandbox}/tie" _root)
+_qgc_gst_find_windows_sdk_root("${_sandbox}/tie" _root)
 qgc_test_assert_streq("equal depth tiebreak ignores case" "${_sandbox}/tie/alpha" "${_root}")
 
 file(MAKE_DIRECTORY "${_sandbox}/empty")
-_qgc_find_win_sdk_root("${_sandbox}/empty" _root)
+_qgc_gst_find_windows_sdk_root("${_sandbox}/empty" _root)
 qgc_test_assert_streq("no pkg-config" "" "${_root}")
 
 file(REMOVE_RECURSE "${_sandbox}")
@@ -61,7 +61,7 @@ if(CMAKE_HOST_UNIX)
     )
     set(GStreamer_REQUIRE_CHECKSUM ON)
     _qgc_gst_windows_extract("${_sandbox}/sdk/install.partial" "${_installer}")
-    _qgc_windows_sdk_complete("${_sandbox}/sdk/install.partial" _complete)
+    _qgc_gst_windows_sdk_complete("${_sandbox}/sdk/install.partial" _complete)
     qgc_test_assert_streq("installed SDK is complete" TRUE "${_complete}")
     if(EXISTS "${_recorded}")
         file(READ "${_recorded}" _recorded_dir)

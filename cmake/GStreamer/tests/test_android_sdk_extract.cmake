@@ -10,7 +10,7 @@ include(PkgConfig)
 include("${CMAKE_CURRENT_LIST_DIR}/../platform/Android.cmake")
 
 # Discovery looks up a Homebrew pkg-config on macOS hosts; that lookup is not under test here.
-function(_qgc_find_apple_pkg_config out_var)
+function(_qgc_gst_find_apple_pkg_config out_var)
 
 endfunction()
 
@@ -41,7 +41,7 @@ foreach(_case IN ITEMS "x86|x86" "x86_64|x86_64" "arm64-v8a|arm64")
     list(GET _parts 1 _abi_dir)
     set(GStreamer_ROOT_DIR "")
     set(GStreamer_AUTO_DOWNLOADED FALSE)
-    _qgc_discover_android_sdk()
+    _qgc_gst_discover_android_sdk()
 
     set(_root "${_cache_dir}/${_abi_dir}/${_abi_dir}")
     qgc_test_assert_streq("${CMAKE_ANDROID_ARCH_ABI} root" "${_root}" "${GStreamer_ROOT_DIR}")

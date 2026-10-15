@@ -2,12 +2,12 @@
 
 include_guard(GLOBAL)
 
-# _qgc_discover_linux_sdk()
+# _qgc_gst_discover_linux_sdk()
 # Uses the GStreamer under GStreamer_ROOT_DIR, else the system one (/usr, or CMAKE_SYSROOT/usr), and prepends its
 # pkgconfig directory to PKG_CONFIG_PATH. Sets GStreamer_ROOT_DIR and GSTREAMER_{LIB,PLUGIN,INCLUDE}_PATH.
 # cmakelang 0.6.13 predates return(PROPAGATE).
 # cmake-lint: disable=C0103,E1121
-function(_qgc_discover_linux_sdk)
+function(_qgc_gst_discover_linux_sdk)
     if(NOT GStreamer_ROOT_DIR)
         if(CMAKE_SYSROOT)
             set(GStreamer_ROOT_DIR "${CMAKE_SYSROOT}/usr")
@@ -64,11 +64,11 @@ function(_qgc_discover_linux_sdk)
     return(PROPAGATE GStreamer_ROOT_DIR GSTREAMER_LIB_PATH GSTREAMER_PLUGIN_PATH GSTREAMER_INCLUDE_PATH)
 endfunction()
 
-# _qgc_detect_dmabuf()
+# _qgc_gst_detect_dmabuf()
 # Zero-copy DMABuf GPU path probe. Sets QGC_GST_HAS_DMABUF, which HwBuffers/CMakeLists.txt reads to build the DMABuf
 # path. Needs gst-allocators: the Linux branch of src/.../GStreamer/CMakeLists.txt requests the Allocators component.
 # The cached result is dropped when the SDK changes (_qgc_gst_refresh_sdk_cache).
-function(_qgc_detect_dmabuf)
+function(_qgc_gst_detect_dmabuf)
     qgc_check_gst_header(VAR QGC_GST_HAS_DMABUF HEADER gst/allocators/gstdmabuf.h SYMBOL gst_is_dmabuf_memory)
     set(QGC_GST_HAS_DMABUF
         "${QGC_GST_HAS_DMABUF}"

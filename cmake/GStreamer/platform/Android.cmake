@@ -3,7 +3,7 @@
 #
 # Android GStreamer SDK discovery — invoked by Orchestrator.cmake.
 #
-# The mobile target (_qgc_create_android_mobile_target and its helpers) is derived from FindGStreamerMobile.cmake in
+# The mobile target (_qgc_gst_create_android_mobile_target and its helpers) is derived from FindGStreamerMobile.cmake in
 # cerbero (https://gitlab.freedesktop.org/gstreamer/cerbero, data/mobile/FindGStreamerMobile.cmake), which the Android
 # SDK installs as share/cmake/FindGStreamerMobile.cmake. QGC changes:
 #   - the plugin archives are linked into the application, which carries the only GStreamer core, instead of into a
@@ -20,7 +20,7 @@ include_guard(GLOBAL)
 # Single source of truth for Android ABI → cerbero dir + textrel flag.
 # Sets, in PARENT_SCOPE: <prefix>_DIR, <prefix>_NEEDS_TEXTREL_ERROR.
 # cmake-lint: disable=C0103
-function(_qgc_android_abi_info abi prefix)
+function(_qgc_gst_android_abi_info abi prefix)
     if(abi STREQUAL "armeabi-v7a")
         set(_dir "armv7")
         set(_textrel TRUE)
@@ -66,16 +66,16 @@ function(_qgc_gst_android_extract staging archive abi_dir)
     endif()
 endfunction()
 
-# _qgc_discover_android_sdk()
+# _qgc_gst_discover_android_sdk()
 # Uses the SDK under GStreamer_ROOT_DIR, else extracts the CMAKE_ANDROID_ARCH_ABI tree of the downloaded universal SDK,
 # and points pkg-config at it. Sets GStreamer_ROOT_DIR, GStreamer_AUTO_DOWNLOADED and
 # GSTREAMER_{LIB,PLUGIN,INCLUDE}_PATH; on a Windows host also the SDK's PKG_CONFIG_EXECUTABLE and PKG_CONFIG_ARGN,
 # while a macOS host uses Homebrew's pkg-config (cached PKG_CONFIG_EXECUTABLE).
 # cmakelang 0.6.13 predates return(PROPAGATE).
 # cmake-lint: disable=C0103,E1121
-function(_qgc_discover_android_sdk)
+function(_qgc_gst_discover_android_sdk)
     if(NOT GStreamer_ROOT_DIR)
-        _qgc_android_abi_info("${CMAKE_ANDROID_ARCH_ABI}" _gst_android_abi)
+        _qgc_gst_android_abi_info("${CMAKE_ANDROID_ARCH_ABI}" _gst_android_abi)
         qgc_gst_acquire_sdk(
             PLATFORM
             android
@@ -117,7 +117,7 @@ function(_qgc_discover_android_sdk)
         list(APPEND _outputs PKG_CONFIG_EXECUTABLE PKG_CONFIG_ARGN)
     elseif(CMAKE_HOST_UNIX)
         if(CMAKE_HOST_APPLE)
-            _qgc_find_apple_pkg_config(PKG_CONFIG_EXECUTABLE)
+            _qgc_gst_find_apple_pkg_config(PKG_CONFIG_EXECUTABLE)
         endif()
         gstreamer_apply_pkgconfig_env(MODE SDK LIBDIR "${GSTREAMER_LIB_PATH}/pkgconfig"
                                       "${GSTREAMER_PLUGIN_PATH}/pkgconfig"
@@ -126,11 +126,11 @@ function(_qgc_discover_android_sdk)
     return(PROPAGATE ${_outputs})
 endfunction()
 
-# _qgc_android_find_plugin_archives(<out_var>)
+# _qgc_gst_android_find_plugin_archives(<out_var>)
 # Sets <out_var> to the GSTREAMER_PLUGINS, in order, that have a pkg-config target and a static archive in the SDK; the
 # archive of each is cached as _gst_plugin_lib_<abi>_<plugin>. Orchestrator.cmake reports the requested plugins left
 # out.
-function(_qgc_android_find_plugin_archives out_var)
+function(_qgc_gst_android_find_plugin_archives out_var)
     set(_plugins ${GSTREAMER_PLUGINS})
     list(REMOVE_DUPLICATES _plugins)
     if(GStreamer_DEBUG)
@@ -165,13 +165,13 @@ function(_qgc_android_find_plugin_archives out_var)
     )
 endfunction()
 
-# _qgc_android_whole_archive_plugins(<plugin>...)
-# Links each plugin's static archive (found by _qgc_android_find_plugin_archives) as
+# _qgc_gst_android_whole_archive_plugins(<plugin>...)
+# Links each plugin's static archive (found by _qgc_gst_android_find_plugin_archives) as
 # $<LINK_LIBRARY:WHOLE_ARCHIVE,GStreamer::<plugin>_archive> wherever GStreamer::<plugin> is linked, so every
 # gst_plugin_<plugin>_register() and its GType objects survive the linker's dead-strip and register into the
 # app's single core. GStreamer::<plugin> no longer links the archive by path as well: a plain occurrence ahead of
 # the whole-archive one would let the linker load some members twice.
-function(_qgc_android_whole_archive_plugins)
+function(_qgc_gst_android_whole_archive_plugins)
     foreach(_plugin IN LISTS ARGN)
         set(_archive "${_gst_plugin_lib_${CMAKE_ANDROID_ARCH_ABI}_${_plugin}}")
         add_library(GStreamer::${_plugin}_archive STATIC IMPORTED GLOBAL)
@@ -190,13 +190,13 @@ function(_qgc_android_whole_archive_plugins)
     endforeach()
 endfunction()
 
-# _qgc_android_stage_files(JAVA <source>|<relative path>... ASSETS <source>|<relative path>...)
+# _qgc_gst_android_stage_files(JAVA <source>|<relative path>... ASSETS <source>|<relative path>...)
 # Copies the plugin Java sources under QGC_ANDROID_EXTRA_JAVA_SOURCES_DIR and the assets under
 # QGC_ANDROID_EXTRA_ASSETS_DIR when the app builds; android/build.gradle adds both build-directory trees to the APK
 # (androiddeployqt deletes files written into android-build/ itself). Earlier builds copied these files into
 # QGC_ANDROID_PACKAGE_SOURCE_DIR, where they would now duplicate the staged copies, so those copies are removed.
 # cmake-lint: disable=C0113
-function(_qgc_android_stage_files)
+function(_qgc_gst_android_stage_files)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "" "" "JAVA;ASSETS")
     if(NOT QGC_ANDROID_EXTRA_JAVA_SOURCES_DIR OR NOT QGC_ANDROID_EXTRA_ASSETS_DIR)
         message(FATAL_ERROR "GStreamer: QGC_ANDROID_EXTRA_JAVA_SOURCES_DIR and QGC_ANDROID_EXTRA_ASSETS_DIR must be "
@@ -250,10 +250,10 @@ function(_qgc_android_stage_files)
     endif()
 endfunction()
 
-# _qgc_android_link_gio_modules(<target>)
+# _qgc_gst_android_link_gio_modules(<target>)
 # Links the static GIO modules named in G_IO_MODULES, plus OpenSSL for gioopenssl, into <target> through
 # GStreamer::gio_modules.
-function(_qgc_android_link_gio_modules target)
+function(_qgc_gst_android_link_gio_modules target)
     list(TRANSFORM G_IO_MODULES PREPEND "gio" OUTPUT_VARIABLE _gio_module_libs)
     if(NOT _gio_module_libs)
         return()
@@ -309,9 +309,9 @@ function(_qgc_android_link_gio_modules target)
     target_link_libraries(${target} INTERFACE GStreamer::gio_modules)
 endfunction()
 
-# _qgc_android_stage_sdk_files(<ndk_build_dir> <plugin>...)
-# Stages the Java sources of the <plugin>s and the SDK's fonts and CA bundle (_qgc_android_stage_files).
-function(_qgc_android_stage_sdk_files ndk_build)
+# _qgc_gst_android_stage_sdk_files(<ndk_build_dir> <plugin>...)
+# Stages the Java sources of the <plugin>s and the SDK's fonts and CA bundle (_qgc_gst_android_stage_files).
+function(_qgc_gst_android_stage_sdk_files ndk_build)
     set(_gst_staged_java)
     foreach(_gst_java_plugin IN LISTS ARGN)
         file(
@@ -351,19 +351,21 @@ function(_qgc_android_stage_sdk_files ndk_build)
         endif()
     endif()
 
-    _qgc_android_stage_files(JAVA ${_gst_staged_java} ASSETS ${_gst_staged_assets})
+    _qgc_gst_android_stage_files(JAVA ${_gst_staged_java} ASSETS ${_gst_staged_assets})
 endfunction()
 
-# _qgc_create_android_mobile_target()
+# _qgc_gst_create_android_mobile_target()
 # Creates GStreamer::mobile, an INTERFACE target that links the plugin archives, their helper libraries and the GIO
 # modules into the application, and stages the plugin Java sources and the fonts/CA assets for the APK. Sets
 # GSTREAMER_STATIC_PLUGINS, the plugins the application registers (qgc_gst_generate_static_init), in the caller's scope.
-function(_qgc_create_android_mobile_target)
+function(_qgc_gst_create_android_mobile_target)
     if(NOT GStreamer_USE_STATIC_LIBS)
         message(FATAL_ERROR "Shared library GStreamer is not supported on mobile platforms")
     endif()
     if(NOT TARGET GStreamer::GStreamer)
-        message(FATAL_ERROR "qgc_gst_create_pkgconfig_targets() must run before _qgc_create_android_mobile_target().")
+        message(FATAL_ERROR "qgc_gst_create_pkgconfig_targets() must run before "
+                            "_qgc_gst_create_android_mobile_target()."
+        )
     endif()
     set(_ndk_build "${GStreamer_ROOT_DIR}/share/gst-android/ndk-build")
     # GStreamer.java is not consumed (init runs in C++); used only as a stable
@@ -375,7 +377,7 @@ function(_qgc_create_android_mobile_target)
         )
     endif()
 
-    _qgc_android_find_plugin_archives(_plugins)
+    _qgc_gst_android_find_plugin_archives(_plugins)
     if(GStreamer_DEBUG)
         message(STATUS "[GstMobile] GStreamer_ROOT_DIR = ${GStreamer_ROOT_DIR}")
         message(STATUS "[GstMobile] GSTREAMER_LIB_PATH = ${GSTREAMER_LIB_PATH}")
@@ -390,9 +392,9 @@ function(_qgc_create_android_mobile_target)
     target_include_directories(GStreamerMobile
                                INTERFACE $<TARGET_PROPERTY:GStreamer::GStreamer,INTERFACE_INCLUDE_DIRECTORIES>
     )
-    _qgc_android_link_gio_modules(GStreamerMobile)
-    _qgc_android_stage_sdk_files("${_ndk_build}" ${_plugins})
-    _qgc_android_whole_archive_plugins(${_plugins})
+    _qgc_gst_android_link_gio_modules(GStreamerMobile)
+    _qgc_gst_android_stage_sdk_files("${_ndk_build}" ${_plugins})
+    _qgc_gst_android_whole_archive_plugins(${_plugins})
 
     # Each plugin target carries its whole-archived .a plus the GStreamer helper libraries the plugin references
     # (gstbase/rtp/rtpbase/app/video/audio/tag/pbutils/net/sdp/rtsp/controller), which are absent from

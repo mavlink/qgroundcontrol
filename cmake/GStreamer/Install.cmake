@@ -17,7 +17,7 @@ include_guard(GLOBAL)
 # Pure (script-testable) plugin-name filter: keep only paths whose basename is
 # ${PREFIX}<name>(boundary) where <name> is in GSTREAMER_PLUGINS. The trailing
 # boundary stops gstvideo matching gstvideoconvert.
-function(_gstreamer_filter_plugin_paths PREFIX PATHS OUT_VAR)
+function(_qgc_gst_filter_plugin_paths PREFIX PATHS OUT_VAR)
     set(_filtered "")
     foreach(_path IN LISTS PATHS)
         get_filename_component(_name "${_path}" NAME)
@@ -32,7 +32,7 @@ function(_gstreamer_filter_plugin_paths PREFIX PATHS OUT_VAR)
     set(${OUT_VAR} "${_filtered}" PARENT_SCOPE)
 endfunction()
 
-function(_gstreamer_install_glob LABEL)
+function(_qgc_gst_install_glob LABEL)
     cmake_parse_arguments(PARSE_ARGV 1 ARG "REQUIRE_NONEMPTY"
         "SOURCE_DIR;DEST_DIR;GLOB_PATTERN;FILTER_PREFIX" "")
     if(ARG_KEYWORDS_MISSING_VALUES)
@@ -52,7 +52,7 @@ function(_gstreamer_install_glob LABEL)
     endif()
     file(GLOB _matches "${ARG_SOURCE_DIR}/${ARG_GLOB_PATTERN}")
     if(ARG_FILTER_PREFIX)
-        _gstreamer_filter_plugin_paths("${ARG_FILTER_PREFIX}" "${_matches}" _matches)
+        _qgc_gst_filter_plugin_paths("${ARG_FILTER_PREFIX}" "${_matches}" _matches)
     endif()
     if(_matches)
         install(FILES ${_matches} DESTINATION "${ARG_DEST_DIR}")
@@ -81,7 +81,7 @@ function(gstreamer_install_gio_modules)
             message(FATAL_ERROR "gstreamer_install_gio_modules: ${_required} is required")
         endif()
     endforeach()
-    _gstreamer_install_glob("gstreamer_install_gio_modules"
+    _qgc_gst_install_glob("gstreamer_install_gio_modules"
         SOURCE_DIR "${ARG_SOURCE_DIR}" DEST_DIR "${ARG_DEST_DIR}"
         GLOB_PATTERN "*.${ARG_EXTENSION}")
 endfunction()
@@ -101,7 +101,7 @@ function(gstreamer_install_plugins)
             message(FATAL_ERROR "gstreamer_install_plugins: ${_required} is required")
         endif()
     endforeach()
-    _gstreamer_install_glob("gstreamer_install_plugins"
+    _qgc_gst_install_glob("gstreamer_install_plugins"
         SOURCE_DIR "${ARG_SOURCE_DIR}" DEST_DIR "${ARG_DEST_DIR}"
         GLOB_PATTERN "${ARG_PREFIX}*.${ARG_EXTENSION}"
         FILTER_PREFIX "${ARG_PREFIX}"
@@ -129,7 +129,7 @@ function(gstreamer_install_libs)
         return()
     endif()
 
-    _gstreamer_is_blocked_lib_copy_source("${ARG_SOURCE_DIR}" _blocked_lib_source)
+    _qgc_gst_is_blocked_lib_copy_source("${ARG_SOURCE_DIR}" _blocked_lib_source)
     if(_blocked_lib_source)
         message(FATAL_ERROR
             "gstreamer_install_libs: refusing to copy from system/shared prefix '${ARG_SOURCE_DIR}'.\n"
@@ -153,7 +153,7 @@ function(gstreamer_install_libs)
     endif()
 endfunction()
 
-function(_gstreamer_windows_runtime_dependency_dirs ROOT_DIR OUT_VAR)
+function(_qgc_gst_windows_runtime_dependency_dirs ROOT_DIR OUT_VAR)
     set(_runtime_dirs)
 
     # giolibproxy.dll loads proxy-1.dll, which loads pxbackend-1.0.dll from
@@ -170,7 +170,7 @@ function(_gstreamer_windows_runtime_dependency_dirs ROOT_DIR OUT_VAR)
     set(${OUT_VAR} "${_runtime_dirs}" PARENT_SCOPE)
 endfunction()
 
-function(_gstreamer_is_blocked_lib_copy_source SOURCE_DIR OUT_VAR)
+function(_qgc_gst_is_blocked_lib_copy_source SOURCE_DIR OUT_VAR)
     set(_blocked_prefixes
         /usr/lib /usr/local/lib /opt/homebrew/lib /opt/homebrew/opt)
     set(_allowed_prefixes)
@@ -277,7 +277,7 @@ function(gstreamer_install_windows_sdk app_name plugin_dest_out)
         DEST_DIR "${CMAKE_INSTALL_BINDIR}"
         EXTENSION "dll"
     )
-    _gstreamer_windows_runtime_dependency_dirs("${GStreamer_ROOT_DIR}" _gst_win_runtime_dependency_dirs)
+    _qgc_gst_windows_runtime_dependency_dirs("${GStreamer_ROOT_DIR}" _gst_win_runtime_dependency_dirs)
     foreach(_dependency_dir IN LISTS _gst_win_runtime_dependency_dirs)
         gstreamer_install_libs(
             SOURCE_DIR "${_dependency_dir}"

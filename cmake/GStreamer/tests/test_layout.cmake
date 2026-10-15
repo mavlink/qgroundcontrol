@@ -71,15 +71,15 @@ file(MAKE_DIRECTORY "${_xcfw_bundle}")
 
 gstreamer_create_layout_target(
     SDK_ROOT           "${_xcfw_root}"
-    TYPE               XCFRAMEWORK
+    TYPE               MERGED_STATIC
     INCLUDE_PATH       "${_xcfw_root}/Headers"
     XCFRAMEWORK_BUNDLE "${_xcfw_bundle}"
 )
-qgc_test_assert_streq("XCFRAMEWORK lib (slice)"     "${_xcfw_root}"        "${GSTREAMER_LIB_PATH}")
-qgc_test_assert_streq("XCFRAMEWORK plugins (slice)" "${_xcfw_root}"        "${GSTREAMER_PLUGIN_PATH}")
-qgc_test_assert_streq("XCFRAMEWORK include"         "${_xcfw_root}/Headers" "${GSTREAMER_INCLUDE_PATH}")
-qgc_test_assert_streq("XCFRAMEWORK_PATH"            "${_xcfw_bundle}"      "${GSTREAMER_XCFRAMEWORK_PATH}")
-qgc_test_pass("XCFRAMEWORK layout")
+qgc_test_assert_streq("MERGED_STATIC lib (slice)"     "${_xcfw_root}"        "${GSTREAMER_LIB_PATH}")
+qgc_test_assert_streq("MERGED_STATIC plugins (slice)" "${_xcfw_root}"        "${GSTREAMER_PLUGIN_PATH}")
+qgc_test_assert_streq("MERGED_STATIC include"         "${_xcfw_root}/Headers" "${GSTREAMER_INCLUDE_PATH}")
+qgc_test_assert_streq("XCFRAMEWORK_PATH"              "${_xcfw_bundle}"      "${GSTREAMER_XCFRAMEWORK_PATH}")
+qgc_test_pass("MERGED_STATIC layout")
 
 gstreamer_layout_get(LIB_DIR _none_lib)
 qgc_test_assert_streq("layout_get LIB_DIR (no target)" "" "${_none_lib}")

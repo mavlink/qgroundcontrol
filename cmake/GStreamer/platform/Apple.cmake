@@ -2,7 +2,7 @@
 
 include_guard(GLOBAL)
 
-function(_qgc_find_apple_pkg_config OUT_VAR)
+function(_qgc_gst_find_apple_pkg_config OUT_VAR)
     if(DEFINED CACHE{${OUT_VAR}} AND EXISTS "$CACHE{${OUT_VAR}}")
         return()
     endif()
@@ -26,7 +26,7 @@ endfunction()
 
 # Validates a pkgutil-expanded GStreamer package directory. Used by the macOS
 # and iOS SDK extractors (_qgc_gst_macos_extract / _qgc_gst_ios_extract).
-function(_qgc_validate_expanded_pkg EXPANDED_DIR LABEL)
+function(_qgc_gst_validate_expanded_pkg EXPANDED_DIR LABEL)
     file(GLOB _payloads "${EXPANDED_DIR}/*.pkg/Payload")
     if(NOT _payloads)
         file(REMOVE_RECURSE "${EXPANDED_DIR}")
@@ -37,7 +37,7 @@ endfunction()
 
 # Expand a .pkg with pkgutil --expand-full into EXPANDED_DIR, FATAL on failure,
 # then validate payloads. Shared by macOS (runtime+devel) and iOS discovery.
-function(_qgc_pkgutil_expand_and_validate PKG EXPANDED_DIR LABEL)
+function(_qgc_gst_pkgutil_expand_and_validate PKG EXPANDED_DIR LABEL)
     message(STATUS "Expanding GStreamer ${LABEL} package...")
     execute_process(
         COMMAND pkgutil --expand-full "${PKG}" "${EXPANDED_DIR}"
@@ -47,5 +47,5 @@ function(_qgc_pkgutil_expand_and_validate PKG EXPANDED_DIR LABEL)
         file(REMOVE_RECURSE "${EXPANDED_DIR}")
         message(FATAL_ERROR "pkgutil failed to expand GStreamer ${LABEL} .pkg (exit code: ${_pkgutil_rc})")
     endif()
-    _qgc_validate_expanded_pkg("${EXPANDED_DIR}" "${LABEL}")
+    _qgc_gst_validate_expanded_pkg("${EXPANDED_DIR}" "${LABEL}")
 endfunction()

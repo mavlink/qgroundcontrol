@@ -1,3 +1,15 @@
+# GStreamer SDK orchestration, included once by src/VideoManager/VideoReceiver/GStreamer/CMakeLists.txt: picks the
+# requested version, discovers or downloads the target platform's SDK (Platform.cmake, platform/*.cmake), creates the
+# GStreamer:: targets, checks the plugin set and records the resolved SDK (SdkState.cmake, GStreamer::Layout).
+#
+# Input: QGC_GST_COMPONENTS (components beyond the mandatory registry rows, Components.cmake) and the cache options
+# GStreamer_ROOT_DIR, QGC_GST_VERSION, GStreamer_USE_{STATIC_LIBS,FRAMEWORK} and PKG_CONFIG_ARGN.
+# Sets, in the including directory: GStreamer_ROOT_DIR (resolved), GStreamer_VERSION, GStreamer_AUTO_DOWNLOADED,
+# GStreamer_USE_{STATIC_LIBS,FRAMEWORK,MERGED_STATIC}, GSTREAMER_{LIB,PLUGIN,INCLUDE}_PATH, GSTREAMER_APIS,
+# GSTREAMER_PLUGINS, GSTREAMER_STATIC_PLUGINS (static layouts), G_IO_MODULES (mobile), GStreamer_<component>_FOUND,
+# GST_PLUGIN_<plugin>_FOUND, QGC_GST_HAS_DMABUF (Linux) and the SDK's pkg-config view (PKG_CONFIG_EXECUTABLE and
+# PKG_CONFIG_ARGN normal variables plus the environment), which qgc_gst_restore_pkgconfig_env undoes.
+
 include("${CMAKE_CURRENT_LIST_DIR}/Helpers.cmake")
 
 qgc_gst_platform(_qgc_gst_platform)
@@ -53,7 +65,7 @@ endif()
 option(GStreamer_USE_FRAMEWORK "macOS: use the GStreamer SDK as GStreamer.framework" ${_qgc_gst_framework_default})
 
 # iOS discovery switches to its single merged static archive (platform/IOS.cmake).
-set(GStreamer_USE_XCFRAMEWORK OFF)
+set(GStreamer_USE_MERGED_STATIC OFF)
 
 # The cached PKG_CONFIG_ARGN is user input; discovery derives its flags into a normal variable.
 set(PKG_CONFIG_ARGN "" CACHE STRING "Extra arguments for pkg-config")
@@ -79,8 +91,8 @@ cmake_language(CALL ${_qgc_gst_platform_DISCOVER})
 
 # Post-dispatch invariant: at most one of the three layout modes may be ON.
 set(_qgc_gst_active_modes)
-if(GStreamer_USE_XCFRAMEWORK)
-    list(APPEND _qgc_gst_active_modes GStreamer_USE_XCFRAMEWORK)
+if(GStreamer_USE_MERGED_STATIC)
+    list(APPEND _qgc_gst_active_modes GStreamer_USE_MERGED_STATIC)
 endif()
 if(GStreamer_USE_FRAMEWORK)
     list(APPEND _qgc_gst_active_modes GStreamer_USE_FRAMEWORK)
@@ -91,16 +103,16 @@ endif()
 list(LENGTH _qgc_gst_active_modes _qgc_gst_active_count)
 if(_qgc_gst_active_count GREATER 1)
     message(FATAL_ERROR
-        "GStreamer: conflicting layout modes — only one of GStreamer_USE_XCFRAMEWORK, "
+        "GStreamer: conflicting layout modes — only one of GStreamer_USE_MERGED_STATIC, "
         "GStreamer_USE_FRAMEWORK, GStreamer_USE_STATIC_LIBS may be ON simultaneously. "
         "Active: ${_qgc_gst_active_modes}")
 endif()
 unset(_qgc_gst_active_modes)
 unset(_qgc_gst_active_count)
 
-# xcframework sets GSTREAMER_LIB_PATH / GSTREAMER_PLUGIN_PATH to the slice dir
-# (which has no lib/ subdir), so the existence checks still pass.
-if(NOT GStreamer_USE_XCFRAMEWORK)
+# The merged-archive layout sets GSTREAMER_LIB_PATH / GSTREAMER_PLUGIN_PATH to the archive's directory
+# (which has no lib/ subdir), so it checks the archive instead.
+if(NOT GStreamer_USE_MERGED_STATIC)
     set(_gst_missing_paths)
     if(NOT EXISTS "${GStreamer_ROOT_DIR}")
         list(APPEND _gst_missing_paths "GStreamer_ROOT_DIR=${GStreamer_ROOT_DIR}")
@@ -141,7 +153,7 @@ endif()
 
 # Always recompute from the current component set — a stale list from a prior
 # configure would miss a newly-requested component.
-gstreamer_build_apis(GSTREAMER_APIS ${QGCGStreamer_FIND_COMPONENTS})
+gstreamer_build_apis(GSTREAMER_APIS ${QGC_GST_COMPONENTS})
 
 # Plugin list lives in .github/build-config.json. Alternate groups (e.g. the
 # videoconvertscale↔videoconvert+videoscale 1.22 split) are owned by
@@ -174,9 +186,9 @@ endif()
 # Cached pkg-config, find_library and try-compile results describe one SDK: drop them when the
 # root, its .pc version, the linkage or the pkg-config invocation changes.
 set(_qgc_gst_fingerprint_pkg_config "")
-if(NOT GStreamer_USE_XCFRAMEWORK)
+if(NOT GStreamer_USE_MERGED_STATIC)
     find_package(PkgConfig REQUIRED QUIET)
-    # --static is appended later by _qgc_create_pkgconfig_targets (the linkage below covers it), and
+    # --static is appended later by _qgc_gst_create_sdk_targets (the linkage below covers it), and
     # discovery may re-derive the other flags in a different order on reconfigure.
     set(_qgc_gst_fingerprint_args ${PKG_CONFIG_ARGN})
     list(REMOVE_ITEM _qgc_gst_fingerprint_args --static)
@@ -194,10 +206,10 @@ string(APPEND _qgc_gst_fingerprint "|${_qgc_gst_linkage}|${_qgc_gst_fingerprint_
 _qgc_gst_refresh_sdk_cache("${_qgc_gst_fingerprint}")
 
 # Create GStreamer::* IMPORTED targets via the appropriate platform helper.
-if(GStreamer_USE_XCFRAMEWORK)
-    _qgc_create_xcframework_targets()
+if(GStreamer_USE_MERGED_STATIC)
+    _qgc_gst_create_ios_targets()
 else()
-    _qgc_create_pkgconfig_targets()
+    _qgc_gst_create_sdk_targets()
 endif()
 
 # Mandatory registry rows (GSTREAMER_COMPONENT_REGISTRY in cmake/GStreamer/Components.cmake)
@@ -225,8 +237,8 @@ unset(_qgc_gst_missing_mandatory)
 unset(_qgc_gst_mandatory)
 unset(_qgc_gst_mandatory_apis)
 # User-requested optional components: mark FOUND only if the corresponding
-# api_ target was actually created by find_package(GStreamer).
-foreach(_comp IN LISTS QGCGStreamer_FIND_COMPONENTS)
+# api_ target was actually created (Targets.cmake, or the iOS targets).
+foreach(_comp IN LISTS QGC_GST_COMPONENTS)
     gstreamer_resolve_component("${_comp}" _resolved_name _api _ _)
     # A registry match (non-empty resolved name) includes umbrella entries like
     # Core whose api/pc are intentionally empty; keying off _api alone mis-flags
@@ -257,7 +269,7 @@ if(GStreamer_USE_STATIC_LIBS)
         # Cerbero gstreamer-1.0.mk linker flags: --export-dynamic re-exports symbols for dlopen'd GIO
         # modules/plugins and -Bsymbolic keeps FFmpeg's page-relative relocations valid (both every ABI);
         # -z text hard-errors residual text relocations (armv7/x86, from platform/Android.cmake).
-        _qgc_android_abi_info("${CMAKE_ANDROID_ARCH_ABI}" _GST_ABI)
+        _qgc_gst_android_abi_info("${CMAKE_ANDROID_ARCH_ABI}" _GST_ABI)
         set(_gst_android_link_opts "-Wl,--export-dynamic" "-Wl,-Bsymbolic")
         if(_GST_ABI_NEEDS_TEXTREL_ERROR)
             list(APPEND _gst_android_link_opts "-Wl,-z,text")
@@ -270,7 +282,7 @@ endif()
 # link, and Install.cmake verifies desktop installs), plus the GStreamer::<plugin> targets of static layouts.
 set(_gst_available_plugins "")
 set(_gst_plugins_scanned FALSE)
-if(NOT GStreamer_USE_STATIC_LIBS AND NOT GStreamer_USE_XCFRAMEWORK AND EXISTS "${GSTREAMER_PLUGIN_PATH}")
+if(NOT GStreamer_USE_STATIC_LIBS AND NOT GStreamer_USE_MERGED_STATIC AND EXISTS "${GSTREAMER_PLUGIN_PATH}")
     gstreamer_scan_plugin_basenames(_gst_available_plugins "${GSTREAMER_PLUGIN_PATH}")
     set(_gst_plugins_scanned TRUE)
 endif()
@@ -289,7 +301,7 @@ endforeach()
 
 # Static layouts register GSTREAMER_STATIC_PLUGINS in a generated gst_init_static_plugins(); the Android and iOS
 # backends resolve it from the SDK's plugin archives while creating their targets.
-if(GStreamer_USE_STATIC_LIBS OR GStreamer_USE_XCFRAMEWORK)
+if(GStreamer_USE_STATIC_LIBS OR GStreamer_USE_MERGED_STATIC)
     if(NOT ANDROID AND NOT IOS)
         # Desktop static layouts register every requested plugin that has a GStreamer::<plugin> target.
         set(GSTREAMER_STATIC_PLUGINS "")
@@ -385,13 +397,13 @@ endif()
 
 # Zero-copy DMABuf GPU path probe — Linux-only, defined in platform/Linux.cmake.
 if(LINUX)
-    _qgc_detect_dmabuf()
+    _qgc_gst_detect_dmabuf()
 endif()
 
 # One-line diagnostic — surfaces which discovery path won when CI logs are the
 # only forensics available.
-if(GStreamer_USE_XCFRAMEWORK)
-    set(_qgc_gst_path "xcframework")
+if(GStreamer_USE_MERGED_STATIC)
+    set(_qgc_gst_path "merged-static")
 elseif(GStreamer_USE_FRAMEWORK)
     set(_qgc_gst_path "framework")
 elseif(GStreamer_USE_STATIC_LIBS)
@@ -400,7 +412,7 @@ else()
     set(_qgc_gst_path "shared")
 endif()
 list(LENGTH GSTREAMER_PLUGINS _qgc_gst_plugin_total)
-if(GStreamer_USE_STATIC_LIBS OR GStreamer_USE_XCFRAMEWORK)
+if(GStreamer_USE_STATIC_LIBS OR GStreamer_USE_MERGED_STATIC)
     list(LENGTH GSTREAMER_STATIC_PLUGINS _qgc_gst_plugin_count)
 else()
     set(_qgc_gst_plugin_count 0)

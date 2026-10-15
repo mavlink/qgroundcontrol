@@ -5,13 +5,13 @@
 
 include_guard(GLOBAL)
 
-# _qgc_create_pkgconfig_targets()
+# _qgc_gst_create_sdk_targets()
 # Creates the GStreamer:: targets for the discovered SDK, then applies the macOS framework overlay or builds the Android
 # mobile target. Sets GStreamer_VERSION, on static layouts appends --static to PKG_CONFIG_ARGN and, on Android, sets
 # GSTREAMER_STATIC_PLUGINS, all in the caller's scope.
 # cmakelang 0.6.13 predates return(PROPAGATE).
 # cmake-lint: disable=C0103,E1121
-function(_qgc_create_pkgconfig_targets)
+function(_qgc_gst_create_sdk_targets)
     # MACOS is set out-of-band by cmake/Toolchain.cmake; the overlay below gates on
     # it, so warn loudly if it's unset rather than silently no-op the overlay.
     if(APPLE
@@ -19,7 +19,7 @@ function(_qgc_create_pkgconfig_targets)
        AND NOT DEFINED MACOS
     )
         message(WARNING "GStreamer: MACOS is undefined on an Apple host — cmake/Toolchain.cmake "
-                        "must run before _qgc_create_pkgconfig_targets or the macOS framework "
+                        "must run before _qgc_gst_create_sdk_targets or the macOS framework "
                         "overlay will be skipped."
         )
     endif()
@@ -57,13 +57,13 @@ function(_qgc_create_pkgconfig_targets)
        AND GStreamer_USE_FRAMEWORK
        AND TARGET GStreamer::GStreamer
     )
-        _qgc_apply_macos_framework_overlay()
+        _qgc_gst_apply_macos_framework_overlay()
     endif()
 
     # Android mobile-target setup: bundle plugins + optional fonts/CA assets into the
     # GStreamerMobile target. iOS uses the xcframework path upstream, so this is Android-only.
     if(ANDROID)
-        _qgc_create_android_mobile_target()
+        _qgc_gst_create_android_mobile_target()
         list(APPEND _outputs GSTREAMER_STATIC_PLUGINS)
     endif()
     return(PROPAGATE ${_outputs})

@@ -76,7 +76,7 @@ function(gstreamer_get_fallback_checksum PLATFORM VERSION OUTPUT_VAR)
 endfunction()
 
 # Without a pin, missing sidecar data is fatal under GStreamer_REQUIRE_CHECKSUM and a warning otherwise.
-function(_gstreamer_unverified_or_fail platform version output_var reason)
+function(_qgc_gst_unverified_or_fail platform version output_var reason)
     if(GStreamer_REQUIRE_CHECKSUM)
         message(FATAL_ERROR "GStreamer: ${reason} for ${platform} ${version} "
                             "and no pinned checksum exists. Set GStreamer_REQUIRE_CHECKSUM=OFF to bypass."
@@ -94,9 +94,9 @@ function(_gstreamer_unverified_or_fail platform version output_var reason)
     )
 endfunction()
 
-# _gstreamer_download_sidecar(<url> <dest_file> <result_var>)
+# _qgc_gst_download_sidecar(<url> <dest_file> <result_var>)
 # Downloads the .sha256sum sidecar to DEST_FILE; sets RESULT_VAR TRUE on success.
-function(_gstreamer_download_sidecar URL DEST_FILE RESULT_VAR)
+function(_qgc_gst_download_sidecar URL DEST_FILE RESULT_VAR)
     file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/_deps/checksums")
     set(_tmp "${DEST_FILE}.tmp")
     foreach(_attempt RANGE 1 3)
@@ -142,9 +142,9 @@ function(gstreamer_fetch_checksum PLATFORM VERSION OUTPUT_VAR)
     set(_dl_ok FALSE)
     foreach(_round RANGE 1 2)
         if(NOT EXISTS "${_checksum_file}")
-            _gstreamer_download_sidecar("${_checksum_url}" "${_checksum_file}" _dl_ok)
+            _qgc_gst_download_sidecar("${_checksum_url}" "${_checksum_file}" _dl_ok)
             if(NOT _dl_ok)
-                _gstreamer_unverified_or_fail(${PLATFORM} ${VERSION} _result "Checksum sidecar unavailable")
+                _qgc_gst_unverified_or_fail(${PLATFORM} ${VERSION} _result "Checksum sidecar unavailable")
                 set(${OUTPUT_VAR} "${_result}" PARENT_SCOPE)
                 return()
             endif()
@@ -181,7 +181,7 @@ function(gstreamer_fetch_checksum PLATFORM VERSION OUTPUT_VAR)
         file(REMOVE "${_checksum_file}")
     endforeach()
 
-    _gstreamer_unverified_or_fail(${PLATFORM} ${VERSION} _result "Checksum content invalid/unparseable")
+    _qgc_gst_unverified_or_fail(${PLATFORM} ${VERSION} _result "Checksum content invalid/unparseable")
     set(${OUTPUT_VAR} "${_result}" PARENT_SCOPE)
 endfunction()
 

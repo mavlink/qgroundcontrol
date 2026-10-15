@@ -9,7 +9,7 @@ file(MAKE_DIRECTORY "${_sandbox}/bin" "${_sandbox}/lib/libproxy")
 file(TOUCH "${_sandbox}/bin/proxy-1.dll")
 file(TOUCH "${_sandbox}/lib/libproxy/pxbackend-1.0.dll")
 
-_gstreamer_windows_runtime_dependency_dirs("${_sandbox}" _runtime_dirs)
+_qgc_gst_windows_runtime_dependency_dirs("${_sandbox}" _runtime_dirs)
 
 qgc_test_assert_in_list(
     "includes libproxy backend dll directory"

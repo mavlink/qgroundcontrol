@@ -7,21 +7,21 @@
 # static archive containing every library and plugin. Older/future SDKs may
 # ship a GStreamer.xcframework with a fat libGStreamer.a per slice. Both reduce
 # to the same single-merged-archive consumption model
-# (_qgc_create_xcframework_targets) — discovery just locates the binary + Headers.
+# (_qgc_gst_create_ios_targets) — discovery just locates the binary + Headers.
 #
-# The GStreamerMobile framework target in _qgc_create_xcframework_targets is derived from FindGStreamerMobile.cmake in
+# The GStreamerMobile framework target in _qgc_gst_create_ios_targets is derived from FindGStreamerMobile.cmake in
 # cerbero (https://gitlab.freedesktop.org/gstreamer/cerbero, data/mobile/FindGStreamerMobile.cmake). QGC changes: it is
 # built from the SDK's merged static archive, registers the requested plugins found in that archive through the shared
 # C registration template instead of an Objective-C one, and SDK discovery is QGC's own.
 
 include_guard(GLOBAL)
 
-# _qgc_ios_bundle_from_root(<root> <out_bundle> <out_kind>)
+# _qgc_gst_ios_bundle_from_root(<root> <out_bundle> <out_kind>)
 # Maps a GStreamer_ROOT_DIR to the SDK bundle (<out_kind> "xcframework" or "framework"). Accepts
 # the bundle itself, a directory containing GStreamer.xcframework/.framework (e.g. iPhone.sdk),
 # an xcframework slice or a framework's Versions/<v> directory; the last two are the roots
 # discovery records. <out_bundle> is empty when <root> matches none of these.
-function(_qgc_ios_bundle_from_root root out_bundle out_kind)
+function(_qgc_gst_ios_bundle_from_root root out_bundle out_kind)
     string(REGEX REPLACE "/+$" "" _root "${root}")
     cmake_path(GET _root PARENT_PATH _parent)
     cmake_path(GET _parent PARENT_PATH _grandparent)
@@ -64,18 +64,18 @@ endfunction()
 # qgc_gst_acquire_sdk extractor: expands the iOS .pkg into <staging>/expanded.
 function(_qgc_gst_ios_extract staging pkg)
     file(MAKE_DIRECTORY "${staging}")
-    _qgc_pkgutil_expand_and_validate("${pkg}" "${staging}/expanded" "iOS")
+    _qgc_gst_pkgutil_expand_and_validate("${pkg}" "${staging}/expanded" "iOS")
 endfunction()
 
-# _qgc_discover_ios_sdk()
+# _qgc_gst_discover_ios_sdk()
 # Uses the GStreamer.xcframework or GStreamer.framework at or under GStreamer_ROOT_DIR, else the system iPhone.sdk,
 # else downloads the official iOS package, and selects its single merged static archive. Sets GStreamer_ROOT_DIR,
-# GStreamer_AUTO_DOWNLOADED, GStreamer_USE_{XCFRAMEWORK,FRAMEWORK,STATIC_LIBS}, GSTREAMER_XCFRAMEWORK_LIB,
+# GStreamer_AUTO_DOWNLOADED, GStreamer_USE_{MERGED_STATIC,FRAMEWORK,STATIC_LIBS}, GSTREAMER_XCFRAMEWORK_LIB,
 # GStreamer_IOS_INFO_PLIST, GSTREAMER_{LIB,PLUGIN,INCLUDE,XCFRAMEWORK}_PATH and the GStreamer_IOS_CA_BUNDLE cache
 # entry.
 # cmakelang 0.6.13 predates return(PROPAGATE).
 # cmake-lint: disable=C0103,E1121
-function(_qgc_discover_ios_sdk)
+function(_qgc_gst_discover_ios_sdk)
     if(NOT CMAKE_HOST_APPLE)
         message(FATAL_ERROR "GStreamer for iOS can only be built on macOS")
     endif()
@@ -93,7 +93,7 @@ function(_qgc_discover_ios_sdk)
 
     # ── User-provided or reused root, else system install ─────────────────────
     if(GStreamer_ROOT_DIR)
-        _qgc_ios_bundle_from_root("${GStreamer_ROOT_DIR}" _gst_ios_bundle _gst_ios_bundle_kind)
+        _qgc_gst_ios_bundle_from_root("${GStreamer_ROOT_DIR}" _gst_ios_bundle _gst_ios_bundle_kind)
         if(NOT _gst_ios_bundle)
             message(FATAL_ERROR
                 "GStreamer: GStreamer_ROOT_DIR '${GStreamer_ROOT_DIR}' is not a GStreamer.xcframework or "
@@ -169,9 +169,9 @@ function(_qgc_discover_ios_sdk)
     endif()
 
     # ── Resolve merged static binary + Headers; force single-archive mode ─────
-    # Both kinds consume one merged archive via _qgc_create_xcframework_targets.
+    # Both kinds consume one merged archive via _qgc_gst_create_ios_targets.
     # Keep the three layout-mode flags mutually exclusive (Orchestrator validates).
-    set(GStreamer_USE_XCFRAMEWORK ON)
+    set(GStreamer_USE_MERGED_STATIC ON)
     set(GStreamer_USE_FRAMEWORK OFF)
     set(GStreamer_USE_STATIC_LIBS OFF)
 
@@ -275,23 +275,23 @@ function(_qgc_discover_ios_sdk)
     endif()
 
     # gstreamer_create_layout_target sets GSTREAMER_LIB/PLUGIN/INCLUDE/XCFRAMEWORK_PATH.
-    # TYPE XCFRAMEWORK collapses lib/plugin paths to the layout root (no lib/ subdir
+    # TYPE MERGED_STATIC collapses lib/plugin paths to the layout root (no lib/ subdir
     # in a merged binary). XCFRAMEWORK_BUNDLE = the .xcframework or .framework dir;
     # Layout.cmake only EXISTS-checks SDK_ROOT and the bundle, both real dirs here.
     gstreamer_create_layout_target(
         SDK_ROOT           "${_gst_ios_layout_root}"
-        TYPE               XCFRAMEWORK
+        TYPE               MERGED_STATIC
         INCLUDE_PATH       "${_gst_ios_include}"
         XCFRAMEWORK_BUNDLE "${_gst_ios_xcfw_bundle}"
     )
 
     # iOS SDK ships no CA bundle reachable from libgioopenssl; fetch Mozilla NSS.
-    _qgc_download_ios_ca_bundle()
+    _qgc_gst_download_ios_ca_bundle()
     return(
         PROPAGATE
         GStreamer_ROOT_DIR
         GStreamer_AUTO_DOWNLOADED
-        GStreamer_USE_XCFRAMEWORK
+        GStreamer_USE_MERGED_STATIC
         GStreamer_USE_FRAMEWORK
         GStreamer_USE_STATIC_LIBS
         GSTREAMER_XCFRAMEWORK_LIB
@@ -307,7 +307,7 @@ endfunction()
 # GStreamer_IOS_CA_BUNDLE (cache var) to its absolute path. Re-uses the same
 # CPM_SOURCE_CACHE root the SDK download uses so a `rm -rf build` doesn't
 # re-fetch it.
-function(_qgc_download_ios_ca_bundle)
+function(_qgc_gst_download_ios_ca_bundle)
     if(CPM_SOURCE_CACHE)
         set(_ca_dir "${CPM_SOURCE_CACHE}/gstreamer-ios-ca")
     else()
@@ -357,10 +357,10 @@ function(_qgc_download_ios_ca_bundle)
         "Mozilla CA bundle bundled into iOS app resources at ssl/certs/ca-certificates.crt" FORCE)
 endfunction()
 
-# _qgc_ios_select_static_plugins(<descriptors> <requested> <registered_out> <absent_out>)
+# _qgc_gst_ios_select_static_plugins(<descriptors> <requested> <registered_out> <absent_out>)
 # Splits the <requested> plugins, in order, into those whose descriptor symbol (_gst_plugin_<name>_get_desc, as nm
 # lists it for the merged archive) is in <descriptors> and those the archive does not contain.
-function(_qgc_ios_select_static_plugins descriptors requested registered_out absent_out)
+function(_qgc_gst_ios_select_static_plugins descriptors requested registered_out absent_out)
     list(TRANSFORM descriptors REPLACE "^_gst_plugin_(.+)_get_desc$" "\\1" OUTPUT_VARIABLE _archived)
     set(_registered "")
     set(_absent "")
@@ -382,14 +382,14 @@ function(_qgc_ios_select_static_plugins descriptors requested registered_out abs
 endfunction()
 
 # ─────────────────────────────────────────────────────────────────────────────
-# _qgc_create_xcframework_targets
+# _qgc_gst_create_ios_targets
 # Build IMPORTED targets directly from the iOS xcframework's fat .a — bypasses
 # pkg-config entirely. Caller must have set GSTREAMER_XCFRAMEWORK_LIB and
-# GSTREAMER_INCLUDE_PATH (done by _qgc_discover_ios_sdk above).
+# GSTREAMER_INCLUDE_PATH (done by _qgc_gst_discover_ios_sdk above).
 # Function: exports GStreamer_VERSION, GSTREAMER_STATIC_PLUGINS and GStreamer_<api|plugin>_FOUND via PARENT_SCOPE and
 # creates GLOBAL IMPORTED targets.
 # ─────────────────────────────────────────────────────────────────────────────
-function(_qgc_create_xcframework_targets)
+function(_qgc_gst_create_ios_targets)
     # Read the bundle's real version from Info.plist to re-check the floor — the
     # _discover check only sees the requested version. Warn + fall back if unreadable.
     set(_xcfw_bundle_version "")
@@ -587,11 +587,11 @@ function(_qgc_create_xcframework_targets)
         file(
             WRITE "${_xcfw_cache_file}"
             "# Auto-generated cache of plugin descriptors enumerated from the iOS xcframework.\n"
-            "# Regenerated when GStreamer_VERSION or libGStreamer.a (size+mtime) changes.\n"
+            "# Regenerated when GStreamer_VERSION or libGStreamer.a (size, mtime or SHA256) changes.\n"
             "set(_xcfw_cached_key \"${_xcfw_cache_key}\")\n" "set(_xcfw_descs \"${_xcfw_descs}\")\n"
         )
     endif()
-    _qgc_ios_select_static_plugins("${_xcfw_descs}" "${GSTREAMER_PLUGINS}" _xcfw_registered _xcfw_absent)
+    _qgc_gst_ios_select_static_plugins("${_xcfw_descs}" "${GSTREAMER_PLUGINS}" _xcfw_registered _xcfw_absent)
     list(LENGTH _xcfw_registered _xcfw_registered_count)
     list(LENGTH GSTREAMER_PLUGINS _xcfw_requested_count)
     list(LENGTH _xcfw_descs _xcfw_archived_count)

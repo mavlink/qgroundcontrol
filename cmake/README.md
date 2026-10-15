@@ -57,6 +57,19 @@ ctest --test-dir build --output-on-failure -L FindModule
 Use `just configure`, `just build`, and the relevant CTest labels for the final validation described
 in the root [AGENTS.md](../AGENTS.md).
 
+## GStreamer
+
+`src/VideoManager/VideoReceiver/GStreamer/CMakeLists.txt` includes `GStreamer/Orchestrator.cmake`. It picks the SDK
+version from `.github/build-config.json` and runs the target platform's discovery or download (`GStreamer/platform/`).
+It then creates the `GStreamer::` imported targets and checks the configured plugins. `GStreamer/Helpers.cmake`
+includes the helper modules and indexes their functions. The GStreamer
+[README](../src/VideoManager/VideoReceiver/GStreamer/README.md#build-configuration) describes each module and the
+configure options.
+
+Each HwBuffers zero-copy GPU path can be compiled out with `QGC_GST_ENABLE_<PATH>=OFF` (DMABUF, CUDA, GLMEMORY,
+IOSURFACE, D3D11, D3D12, AHARDWAREBUFFER, VULKAN; all ON by default). Configure prints which compiled paths the sink
+can't reach at runtime.
+
 ## Presets
 
 The root [`CMakePresets.json`](../CMakePresets.json) aggregates the platform definitions in
