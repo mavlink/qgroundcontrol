@@ -142,7 +142,7 @@ def test_ios_workflow_builds_device_and_simulator_targets() -> None:
         },
         {
             "target": "simulator",
-            "runner": "macos-15-intel",
+            "runner": "macos-15",
             "build_type": "Debug",
             "preset": "iOS-debug",
         },
@@ -154,9 +154,11 @@ def test_ios_workflow_builds_device_and_simulator_targets() -> None:
     assert "github.ref_type == 'tag'" in configure["preset"]
     assert "startsWith(github.ref_name, 'v')" in configure["preset"]
     assert "-DCMAKE_OSX_SYSROOT=iphonesimulator" in configure["extra-args"]
-    assert "-DCMAKE_OSX_ARCHITECTURES=x86_64" in configure["extra-args"]
     simulator_verification = steps["Verify Simulator Bundle"]["run"]
-    assert 'ios_package.py verify --app "$APP_PATH" --arch x86_64' in simulator_verification
+    assert (
+        'ios_package.py verify --app "$APP_PATH" --arch arm64 --platform IOSSIMULATOR'
+        in simulator_verification
+    )
     package = steps["Package IPA"]["run"]
     assert 'ios_package.py" package' in package
     assert "ios_package.py select-profile" in steps["Select App Store provisioning profile"]["run"]

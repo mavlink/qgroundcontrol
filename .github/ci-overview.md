@@ -119,7 +119,7 @@ version numbers) do not match the trigger glob and never start a build.
 
 ### TestFlight releases
 
-`ios.yml` builds a Release device bundle and a Debug x86_64 simulator bundle. Pull-request and
+`ios.yml` builds a Release device bundle and a Debug arm64 simulator bundle. Pull-request and
 branch builds remain unsigned. A release tag selects the Xcode App Store preset, imports an Apple
 Distribution certificate and provisioning profile, verifies the signed bundle, packages an IPA,
 and uploads it to TestFlight.

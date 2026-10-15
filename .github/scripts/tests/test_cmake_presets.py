@@ -203,6 +203,16 @@ def test_platform_bases_define_the_required_qt_paths() -> None:
     assert "CMAKE_OSX_DEPLOYMENT_TARGET" not in ios_cache
 
 
+def test_ios_presets_build_arm64() -> None:
+    configure_presets = _load_preset_graph()["configure"]
+
+    for name in ("iOS", "iOS-appstore", "iOS-debug"):
+        assert (
+            _effective_configure_cache_value(configure_presets, name, "CMAKE_OSX_ARCHITECTURES")
+            == "arm64"
+        )
+
+
 def test_macos_local_builds_default_to_host_architecture(tmp_path: Path) -> None:
     configure_presets = _load_preset_graph()["configure"]
     source_dir = tmp_path / "source"

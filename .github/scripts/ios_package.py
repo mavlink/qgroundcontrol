@@ -7,6 +7,7 @@ import argparse
 import json
 import os
 import plistlib
+import re
 import shlex
 import subprocess
 import sys
@@ -53,7 +54,16 @@ def select_profile() -> None:
     )
 
 
-def verify_bundle(app: Path, arch: str, *, signed: bool = False) -> None:
+def verify_platform(binary: Path, platform: str) -> None:
+    output = subprocess.run(
+        ["vtool", "-show-build", str(binary)], check=True, capture_output=True, text=True
+    ).stdout
+    found = re.findall(r"^\s*platform (\S+)", output, re.MULTILINE)
+    if not found or any(item != platform for item in found):
+        raise ValueError(f"Expected Mach-O platform {platform}, found {found or 'none'}")
+
+
+def verify_bundle(app: Path, arch: str, *, platform: str, signed: bool = False) -> None:
     for relative in ("Info.plist", "Assets.car", app.stem):
         if not (app / relative).is_file():
             raise ValueError(f"Missing bundle file: {app / relative}")
@@ -64,6 +74,7 @@ def verify_bundle(app: Path, arch: str, *, signed: bool = False) -> None:
         raise ValueError("Bundle contains an uncompiled launch storyboard")
     metadata = plistlib.loads((app / "Info.plist").read_bytes())
     subprocess.run(["lipo", str(app / app.stem), "-verify_arch", arch], check=True)
+    verify_platform(app / app.stem, platform)
     if signed:
         expected = os.environ.get("APPSTORE_BUNDLE_ID", "")
         if not expected or metadata.get("CFBundleIdentifier") != expected:
@@ -80,7 +91,7 @@ def package(app: Path) -> Path:
     signed = os.environ.get("GITHUB_REF_TYPE") == "tag" and os.environ.get(
         "GITHUB_REF_NAME", ""
     ).startswith("v")
-    verify_bundle(app, "arm64", signed=signed)
+    verify_bundle(app, "arm64", platform="IOS", signed=signed)
     output = app.with_suffix(".ipa")
     # ditto preserves Apple bundle metadata and signatures; publish only after ZIP validation.
     with tempfile.TemporaryDirectory(prefix=".qgc-ipa-", dir=app.parent) as temporary:
@@ -104,7 +115,8 @@ def main(argv: list[str] | None = None) -> int:
     commands.add_parser("select-profile")
     verify = commands.add_parser("verify")
     verify.add_argument("--app", type=Path, required=True)
-    verify.add_argument("--arch", choices=("arm64", "x86_64"), required=True)
+    verify.add_argument("--arch", choices=("arm64",), required=True)
+    verify.add_argument("--platform", choices=("IOS", "IOSSIMULATOR"), required=True)
     archive = commands.add_parser("package")
     archive.add_argument(
         "--app", type=Path, default=Path(f"{os.environ.get('PACKAGE', 'QGroundControl')}.app")
@@ -114,7 +126,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "select-profile":
             select_profile()
         elif args.command == "verify":
-            verify_bundle(args.app, args.arch)
+            verify_bundle(args.app, args.arch, platform=args.platform)
         else:
             print(package(args.app))
         return 0

@@ -54,7 +54,7 @@ jobs:
             build_type: Release
             preset: iOS
           - target: simulator
-            runner: macos-15-intel
+            runner: macos-15
             build_type: Debug
             preset: iOS-debug
 
@@ -131,7 +131,7 @@ jobs:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ matrix.build_type }}
           extra-args: >-
-            ${{ matrix.target == 'simulator' && '-DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_ARCHITECTURES=x86_64' || '' }}
+            ${{ matrix.target == 'simulator' && '-DCMAKE_OSX_SYSROOT=iphonesimulator' || '' }}
             ${{ steps.profile.outputs.cmake_args }}
 
       - name: Build
@@ -144,7 +144,7 @@ jobs:
         if: matrix.target == 'simulator'
         env:
           APP_PATH: ${{ runner.temp }}/build/${{ matrix.build_type }}/${{ env.PACKAGE }}.app
-        run: python3 .github/scripts/ios_package.py verify --app "$APP_PATH" --arch x86_64
+        run: python3 .github/scripts/ios_package.py verify --app "$APP_PATH" --arch arm64 --platform IOSSIMULATOR
 
       - name: Run simulator boot test
         if: matrix.target == 'simulator'
