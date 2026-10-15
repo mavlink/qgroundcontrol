@@ -84,20 +84,20 @@ void GStreamerTest::_testBridgeDispatcherFanout()
     GstMessage* unrelated = gst_message_new_need_context(GST_OBJECT(dummy), "totally.unrelated.context");
     QVERIFY(unrelated);
 #if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
-    QCOMPARE(GstGlContextBridge::handleSyncMessage(unrelated), GST_BUS_PASS);
+    QCOMPARE(GstGlContextBridge::instance().handleSyncMessage(unrelated), GST_BUS_PASS);
 #endif
 #if defined(QGC_HAS_GST_D3D11_GPU_PATH)
-    QCOMPARE(GstD3D11ContextBridge::handleSyncMessage(unrelated), GST_BUS_PASS);
+    QCOMPARE(GstD3D11ContextBridge::instance().handleSyncMessage(unrelated), GST_BUS_PASS);
 #endif
 #if defined(QGC_HAS_GST_D3D12_GPU_PATH)
-    QCOMPARE(GstD3D12ContextBridge::handleSyncMessage(unrelated), GST_BUS_PASS);
+    QCOMPARE(GstD3D12ContextBridge::instance().handleSyncMessage(unrelated), GST_BUS_PASS);
 #endif
     gst_message_unref(unrelated);
 
 #if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
     GstMessage* glReq = gst_message_new_need_context(GST_OBJECT(dummy), GST_GL_DISPLAY_CONTEXT_TYPE);
     QVERIFY(glReq);
-    const GstBusSyncReply r = GstGlContextBridge::handleSyncMessage(glReq);
+    const GstBusSyncReply r = GstGlContextBridge::instance().handleSyncMessage(glReq);
     // Either PASS (couldn't prime — expected in CI without GL) or DROP (primed
     // and consumed). Both are valid; the contract is "never crash".
     QVERIFY(r == GST_BUS_PASS || r == GST_BUS_DROP);

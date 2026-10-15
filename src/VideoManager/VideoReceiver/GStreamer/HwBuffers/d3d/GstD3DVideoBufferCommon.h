@@ -20,7 +20,7 @@
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoFrameFormat>
 
-#include "GstD3DContextBridgeCommon.h"
+#include "GstD3DContextBridge.h"
 #include "GstHwFrameTexturesBase.h"
 #include "GstHwPathTelemetry.h"
 #include "GstHwVideoBuffer.h"
@@ -132,8 +132,8 @@ int resolvePlanes(GstBuffer* buffer, Api& api, MapDiagnostics& diag, PlaneResour
             // currentDevice() is transfer-full — unref on every branch to avoid UAF after reset().
             Device* bridgeDev = Api::bridgeDevice();
             if (bridgeDev && !Api::sameDevice(d3dmem->device, bridgeDev)) {
-                const gint64 bridgeLuid = GstD3DContextBridgeCommon::readAdapterLuid(bridgeDev);
-                const gint64 bufLuid = GstD3DContextBridgeCommon::readAdapterLuid(d3dmem->device);
+                const gint64 bridgeLuid = GstD3DContextBridge::readAdapterLuid(bridgeDev);
+                const gint64 bufLuid = GstD3DContextBridge::readAdapterLuid(d3dmem->device);
                 gst_object_unref(bridgeDev);
                 QGC_HW_WARN_ONCE(Api::log, diag.loggedDeviceMismatch,
                                  "resolve:" << Api::kMemoryName << "on foreign device (bridge LUID=" << bridgeLuid

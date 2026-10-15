@@ -231,10 +231,10 @@ void onPipelineRestart() noexcept
     // Latch-only: shared bridge objects and import caches stay, because another stream may be using them. Full resets
     // are reserved for scene-graph teardown, window swaps and device loss (resetCachedGpuResources).
 #if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
-    GstGlContextBridge::rearm();
+    GstGlContextBridge::instance().rearm();
 #endif
 #if defined(QGC_HAS_GST_VULKAN_GPU_PATH)
-    GstVulkanContextBridge::rearm();
+    GstVulkanContextBridge::instance().rearm();
 #endif
 }
 
@@ -323,21 +323,21 @@ bool answerSinkBinContextQuery(GstQuery* query) noexcept
 {
     bool handled = false;
 #if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
-    handled = GstGlContextBridge::answerContextQuery(query);
+    handled = GstGlContextBridge::instance().answerContextQuery(query);
 #endif
 #if defined(QGC_HAS_GST_VULKAN_GPU_PATH)
     if (!handled) {
-        handled = GstVulkanContextBridge::answerContextQuery(query);
+        handled = GstVulkanContextBridge::instance().answerContextQuery(query);
     }
 #endif
 #if defined(QGC_HAS_GST_D3D11_GPU_PATH)
     if (!handled) {
-        handled = GstD3D11ContextBridge::answerContextQuery(query);
+        handled = GstD3D11ContextBridge::instance().answerContextQuery(query);
     }
 #endif
 #if defined(QGC_HAS_GST_D3D12_GPU_PATH)
     if (!handled) {
-        handled = GstD3D12ContextBridge::answerContextQuery(query);
+        handled = GstD3D12ContextBridge::instance().answerContextQuery(query);
     }
 #endif
     Q_UNUSED(query);

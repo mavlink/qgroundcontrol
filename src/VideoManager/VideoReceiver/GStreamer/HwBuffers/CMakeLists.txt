@@ -266,8 +266,8 @@ if(_qgc_gpu_unstable_api)
 endif()
 
 if(_qgc_gpu_D3D11 OR _qgc_gpu_D3D12)
-    target_sources(QGCGStreamer PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/d3d/GstD3DContextBridgeCommon.cc
-                                        ${CMAKE_CURRENT_SOURCE_DIR}/d3d/GstD3DContextBridgeCommon.h
+    target_sources(QGCGStreamer PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/d3d/GstD3DContextBridge.cc
+                                        ${CMAKE_CURRENT_SOURCE_DIR}/d3d/GstD3DContextBridge.h
     )
 endif()
 
@@ -325,12 +325,11 @@ target_sources(
             ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwImportCache.h
             ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwImportPreflight.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwImportPreflight.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstBridgePrimeRetry.h
             ${CMAKE_CURRENT_SOURCE_DIR}/vulkan/GstVulkanFrameTextures.h
             ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwVideoBuffer.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwVideoBuffer.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstContextBridgeCommon.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstContextBridgeCommon.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstContextBridgeBase.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstContextBridgeBase.h
             ${CMAKE_CURRENT_SOURCE_DIR}/common/GstContextBridgeRegistry.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/common/GstContextBridgeRegistry.h
             ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwVideoBufferFactory.cc

@@ -122,11 +122,11 @@ void pullD3DSample(D3DSample& result, const char* inputCaps, const char* uploadE
                 switch (path) {
 #if defined(QGC_HAS_GST_D3D11_GPU_PATH)
                     case HwVideoBufferPath::D3D11:
-                        return GstD3D11ContextBridge::handleSyncMessage(message);
+                        return GstD3D11ContextBridge::instance().handleSyncMessage(message);
 #endif
 #if defined(QGC_HAS_GST_D3D12_GPU_PATH)
                     case HwVideoBufferPath::D3D12:
-                        return GstD3D12ContextBridge::handleSyncMessage(message);
+                        return GstD3D12ContextBridge::instance().handleSyncMessage(message);
 #endif
                     default:
                         break;
@@ -250,9 +250,9 @@ void GStreamerTest::_testD3D11MapTexturesWithQRhi()
                                                       std::memory_order_release);
     QGCRhiCapture::deviceSnapshot().backend.store(static_cast<int>(QRhi::D3D11), std::memory_order_release);
 
-    GstD3D11ContextBridge::reset();
-    auto bridgeGuard = qScopeGuard([] { GstD3D11ContextBridge::reset(); });
-    QVERIFY2(GstD3D11ContextBridge::prime(), "Could not prime D3D11 context bridge from QRhi snapshot");
+    GstD3D11ContextBridge::instance().reset();
+    auto bridgeGuard = qScopeGuard([] { GstD3D11ContextBridge::instance().reset(); });
+    QVERIFY2(GstD3D11ContextBridge::instance().prime(), "Could not prime D3D11 context bridge from QRhi snapshot");
 
     testD3DMapTextures(*rhi, "video/x-raw,format=RGBA,width=64,height=64,framerate=30/1", "d3d11upload",
                        "video/x-raw(memory:D3D11Memory)", QVideoFrameFormat::Format_RGBA8888, 1,
@@ -283,9 +283,9 @@ void GStreamerTest::_testD3D11MapNv12TexturesWithQRhi()
                                                       std::memory_order_release);
     QGCRhiCapture::deviceSnapshot().backend.store(static_cast<int>(QRhi::D3D11), std::memory_order_release);
 
-    GstD3D11ContextBridge::reset();
-    auto bridgeGuard = qScopeGuard([] { GstD3D11ContextBridge::reset(); });
-    QVERIFY2(GstD3D11ContextBridge::prime(), "Could not prime D3D11 context bridge from QRhi snapshot");
+    GstD3D11ContextBridge::instance().reset();
+    auto bridgeGuard = qScopeGuard([] { GstD3D11ContextBridge::instance().reset(); });
+    QVERIFY2(GstD3D11ContextBridge::instance().prime(), "Could not prime D3D11 context bridge from QRhi snapshot");
 
     testD3DMapTextures(*rhi, "video/x-raw,format=NV12,width=64,height=64,framerate=30/1", "d3d11upload",
                        "video/x-raw(memory:D3D11Memory),format=NV12", QVideoFrameFormat::Format_NV12, 2,
@@ -316,9 +316,9 @@ void GStreamerTest::_testD3D12MapTexturesWithQRhi()
                                                       std::memory_order_release);
     QGCRhiCapture::deviceSnapshot().backend.store(static_cast<int>(QRhi::D3D12), std::memory_order_release);
 
-    GstD3D12ContextBridge::reset();
-    auto bridgeGuard = qScopeGuard([] { GstD3D12ContextBridge::reset(); });
-    QVERIFY2(GstD3D12ContextBridge::prime(), "Could not prime D3D12 context bridge from QRhi snapshot");
+    GstD3D12ContextBridge::instance().reset();
+    auto bridgeGuard = qScopeGuard([] { GstD3D12ContextBridge::instance().reset(); });
+    QVERIFY2(GstD3D12ContextBridge::instance().prime(), "Could not prime D3D12 context bridge from QRhi snapshot");
 
     testD3DMapTextures(*rhi, "video/x-raw,format=RGBA,width=64,height=64,framerate=30/1", "d3d12upload",
                        "video/x-raw(memory:D3D12Memory)", QVideoFrameFormat::Format_RGBA8888, 1,
@@ -349,9 +349,9 @@ void GStreamerTest::_testD3D12MapNv12TexturesWithQRhi()
                                                       std::memory_order_release);
     QGCRhiCapture::deviceSnapshot().backend.store(static_cast<int>(QRhi::D3D12), std::memory_order_release);
 
-    GstD3D12ContextBridge::reset();
-    auto bridgeGuard = qScopeGuard([] { GstD3D12ContextBridge::reset(); });
-    QVERIFY2(GstD3D12ContextBridge::prime(), "Could not prime D3D12 context bridge from QRhi snapshot");
+    GstD3D12ContextBridge::instance().reset();
+    auto bridgeGuard = qScopeGuard([] { GstD3D12ContextBridge::instance().reset(); });
+    QVERIFY2(GstD3D12ContextBridge::instance().prime(), "Could not prime D3D12 context bridge from QRhi snapshot");
 
     testD3DMapTextures(*rhi, "video/x-raw,format=NV12,width=64,height=64,framerate=30/1", "d3d12upload",
                        "video/x-raw(memory:D3D12Memory),format=NV12", QVideoFrameFormat::Format_NV12, 2,
