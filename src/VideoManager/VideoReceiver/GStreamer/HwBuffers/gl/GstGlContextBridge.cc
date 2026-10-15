@@ -118,9 +118,9 @@ bool GlContextBridge::primeLocked()
                 GstGLDisplayWayland* displayWl = gst_gl_display_wayland_new_with_display(wlDisp);
                 if (displayWl) {
                     _display = GST_GL_DISPLAY(displayWl);
-                    if (GstGLDisplayEGL* derived = gst_gl_display_egl_from_gl_display(_display)) {
-                        gst_gl_display_egl_set_foreign(derived, TRUE);
-                        gst_object_unref(derived);
+                    if (const std::unique_ptr<GstGLDisplayEGL, GStreamer::GstObjectDeleter> derived{
+                            gst_gl_display_egl_from_gl_display(_display)}) {
+                        gst_gl_display_egl_set_foreign(derived.get(), TRUE);
                     }
                 }
             }

@@ -14,7 +14,8 @@
 QGC_LOGGING_CATEGORY(QGCQVideoSinkControllerLog, "Video.GStreamer.QGCQVideoSinkController")
 
 QGCQVideoSinkController::QGCQVideoSinkController(GstElement* element, QObject* parent)
-    : QObject(parent), _element(element ? GST_ELEMENT(gst_object_ref(element)) : nullptr)
+    : QObject(parent)
+    , _element(element ? GStreamer::adoptElement(GST_ELEMENT(gst_object_ref(element))) : nullptr)
 {
     _emitTimer.setInterval(1000);
     _emitTimer.setSingleShot(false);
@@ -25,10 +26,6 @@ QGCQVideoSinkController::QGCQVideoSinkController(GstElement* element, QObject* p
 QGCQVideoSinkController::~QGCQVideoSinkController()
 {
     _releaseElementBinding();
-    if (_element) {
-        gst_object_unref(_element);
-        _element = nullptr;
-    }
     _emitTimer.stop();
 }
 
@@ -71,7 +68,7 @@ void QGCQVideoSinkController::syncActiveToWindowVisibility(QObject* receiver, QQ
 
 const GstElement* QGCQVideoSinkController::element() const noexcept
 {
-    return _element;
+    return _element.get();
 }
 
 void QGCQVideoSinkController::updateNegotiation(const QString& format, const QSize& resolution)
@@ -99,7 +96,7 @@ void QGCQVideoSinkController::setActive(bool active)
     }
     if (!_element || _bindingReleased)
         return;
-    g_object_set(_element, "active", active ? TRUE : FALSE, nullptr);
+    g_object_set(_element.get(), "active", active ? TRUE : FALSE, nullptr);
 }
 
 void QGCQVideoSinkController::setVideoSink(QPointer<QVideoSink> sink)
@@ -118,12 +115,12 @@ void QGCQVideoSinkController::setVideoSink(QPointer<QVideoSink> sink)
     if (!raw) {
         // Caller's QVideoSink was destroyed between the call site and here — clear the
         // element's snapshot and gate show_frame until a replacement sink is installed.
-        g_object_set(_element, "active", FALSE, "qvideosink", static_cast<gpointer>(nullptr), nullptr);
+        g_object_set(_element.get(), "active", FALSE, "qvideosink", static_cast<gpointer>(nullptr), nullptr);
         _bindingReleased = true;
         _clearVideoSinkFrame();
         return;
     }
-    g_object_set(_element, "qvideosink", static_cast<gpointer>(raw), nullptr);
+    g_object_set(_element.get(), "qvideosink", static_cast<gpointer>(raw), nullptr);
     if (_videoSink != raw) {
         _clearVideoSinkFrame();
     }
@@ -160,7 +157,7 @@ quint64 QGCQVideoSinkController::frameCount() const noexcept
     if (!_element || _bindingReleased)
         return 0;
     guint64 delivered = 0;
-    g_object_get(_element, "frames-delivered", &delivered, nullptr);
+    g_object_get(_element.get(), "frames-delivered", &delivered, nullptr);
     return static_cast<quint64>(delivered);
 }
 
@@ -183,7 +180,7 @@ void QGCQVideoSinkController::_releaseElementBinding() noexcept
         QObject::disconnect(_sinkDestroyedConnection);
         _sinkDestroyedConnection = {};
     }
-    g_object_set(_element, "active", FALSE, "qvideosink", static_cast<gpointer>(nullptr), nullptr);
+    g_object_set(_element.get(), "active", FALSE, "qvideosink", static_cast<gpointer>(nullptr), nullptr);
     _bindingReleased = true;
     _clearVideoSinkFrame();
 }
@@ -199,7 +196,7 @@ void QGCQVideoSinkController::_onEmitTimer()
     if (!_element || _bindingReleased)
         return;
     guint64 delivered = 0;
-    g_object_get(_element, "frames-delivered", &delivered, nullptr);
+    g_object_get(_element.get(), "frames-delivered", &delivered, nullptr);
     if (delivered != _lastEmittedFrameTotal) {
         _lastEmittedFrameTotal = delivered;
         emit frameCountsChanged();

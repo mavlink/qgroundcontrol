@@ -46,9 +46,7 @@ public slots:
     void startRecording(const QString &videoFile, FILE_FORMAT format) override;
     void stopRecording() override;
 
-    /// Dumps the running pipeline's graph, without element properties, to GST_DEBUG_DUMP_DOT_DIR when that is set,
-    /// else to CacheLocation/qgc-pipeline-dot for bug reports. @p tag becomes part of the file name; anything but
-    /// letters, digits, '-' and '_' is replaced. Callable from QML for a debug menu.
+    /// Writes PipelineDotDumper::snapshot() under @p tag; callable from QML.
     Q_INVOKABLE void dumpPipelineGraph(const QString &tag = QStringLiteral("manual"));
 
 signals:
@@ -118,8 +116,8 @@ private:
     /// Tears down a pipeline that failed (error, watchdog, end of stream), reports it with
     /// onStopComplete(STATUS_FAIL) and schedules a reconnect.
     void _onStreamFailure(const char* reason);
-    /// Queues a restart with exponential backoff; no-op when autoReconnect() is off. The receiver is the
-    /// only one that restarts after a failure. `reason` is logged so reconnect storms are diagnosable.
+    /// Queues a restart with exponential backoff; no-op when autoReconnect() is off. `reason` is logged so reconnect
+    /// storms are diagnosable.
     void _scheduleReconnect(const char *reason);
     void _reconnect();
 

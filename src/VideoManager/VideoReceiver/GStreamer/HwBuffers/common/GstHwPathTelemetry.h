@@ -9,7 +9,7 @@
 /// thread-safe.
 namespace GstHwPathTelemetry {
 
-/// Specific cause a HW path was rejected for a sample; surfaced as a per-(path,reason) breakdown.
+/// Specific cause a GPU path was rejected for a sample; surfaced as a per-(path,reason) breakdown.
 enum class HwFallbackReason
 {
     NoExt,

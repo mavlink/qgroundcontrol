@@ -33,23 +33,21 @@ bool GstContextBridgeBase::primeIfNeededLocked()
     return _primed;
 }
 
-GstContext* GstContextBridgeBase::makeContext(const char* contextType)
+GStreamer::GstContextPtr GstContextBridgeBase::makeContext(const char* contextType)
 {
-    GstObject* object = nullptr;
+    GStreamer::GstObjectPtr object;
     {
         QMutexLocker lock(&_mutex);
         if (!primeIfNeededLocked()) {
             return nullptr;
         }
-        object = refObject(contextType);
+        object = GStreamer::adoptObject(refObject(contextType));
     }
     if (!object) {
         return nullptr;
     }
     // The context holds its own ref on the object.
-    GstContext* context = buildContext(contextType, object);
-    gst_object_unref(object);
-    return context;
+    return GStreamer::adoptContext(buildContext(contextType, object.get()));
 }
 
 GstBusSyncReply GstContextBridgeBase::handleSyncMessage(GstMessage* message)
@@ -70,12 +68,11 @@ GstBusSyncReply GstContextBridgeBase::handleSyncMessage(GstMessage* message)
         return GST_BUS_PASS;
     }
 
-    GstContext* context = makeContext(matched);
+    const GStreamer::GstContextPtr context = makeContext(matched);
     if (!context) {
         return GST_BUS_PASS;
     }
-    gst_element_set_context(element, context);
-    gst_context_unref(context);
+    gst_element_set_context(element, context.get());
     qCDebug(category()) << "Provided" << _apiName << matched << "context to" << GST_ELEMENT_NAME(element);
     // `element` is borrowed from the message, so the message must outlive its last use.
     gst_message_unref(message);
@@ -96,12 +93,11 @@ bool GstContextBridgeBase::answerContextQuery(GstQuery* query)
         return false;
     }
 
-    GstContext* context = makeContext(matched);
+    const GStreamer::GstContextPtr context = makeContext(matched);
     if (!context) {
         return false;
     }
-    gst_query_set_context(query, context);
-    gst_context_unref(context);
+    gst_query_set_context(query, context.get());
     return true;
 }
 

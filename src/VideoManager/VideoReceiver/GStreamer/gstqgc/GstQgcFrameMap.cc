@@ -211,7 +211,7 @@ void applyColorimetry(QVideoFrameFormat& format, const GstVideoInfo& info, GstCa
     }
 }
 
-// QQuickVideoOutput computes sample rect as viewport/frameSize (qquickvideooutput.cpp:498);
+// QQuickVideoOutput computes sample rect as viewport/frameSize (QQuickVideoOutput::updateGeometry());
 // externalTextureMatrix is only used for Format_SamplerExternalOES, so can't crop standard formats.
 QVideoFrameFormat applyCropMeta(QVideoFrameFormat format, GstBuffer* buffer)
 {

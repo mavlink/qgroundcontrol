@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <atomic>
-#include <memory>
 
 #include <QtCore/QByteArray>
 #include <QtCore/QList>
@@ -98,12 +97,7 @@ void qtGstLog(GstDebugCategory* category, GstDebugLevel level, const gchar* file
 
     QMessageLogger log(file, line, function);
 
-    struct GFree
-    {
-        void operator()(gchar* p) const { g_free(p); }
-    };
-
-    const std::unique_ptr<gchar, GFree> object_info(gst_info_strdup_printf("%" GST_PTR_FORMAT, object));
+    const GStreamer::GCharPtr object_info = GStreamer::adoptGChar(gst_info_strdup_printf("%" GST_PTR_FORMAT, object));
 
     switch (level) {
         case GST_LEVEL_ERROR:

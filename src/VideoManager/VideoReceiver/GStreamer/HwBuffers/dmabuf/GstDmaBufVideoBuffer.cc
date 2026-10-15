@@ -855,7 +855,7 @@ QVideoFrameTexturesUPtr GstDmaBufVideoBuffer::mapTextures(QRhi& rhi, QVideoFrame
 
     QOpenGLContext* glContext = GstEglHelpers::bindRhiContext(rhi);
 
-    // Mirror Qt 6.10 qgstvideobuffer.cpp:349 — surface latent GL/EGL state from prior frames.
+    // Mirror Qt's QGstVideoBuffer::mapTextures() (logGlAndEglErrors) — surface latent GL/EGL state from prior frames.
     // Qt 6.12 moved its DMABuf gate from eglfs-only to qGstEglCanMapDmaBuf() and added modifier checks; keep this
     // richer QGC path in sync when raising the Qt-private-source baseline.
     if (Q_UNLIKELY(GstDmaBufLog().isDebugEnabled())) {

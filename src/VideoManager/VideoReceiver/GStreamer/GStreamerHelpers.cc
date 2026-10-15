@@ -195,12 +195,11 @@ bool isHardwareDecoderFactory(GstElementFactory* factory)
     }
 
     const auto containsHardware = [](const gchar* value) {
-        if (!value)
+        if (!value) {
             return false;
-        gchar* lower = g_ascii_strdown(value, -1);
-        bool found = (g_strrstr(lower, "hardware") != nullptr);
-        g_free(lower);
-        return found;
+        }
+        const GCharPtr lower = adoptGChar(g_ascii_strdown(value, -1));
+        return g_strrstr(lower.get(), "hardware") != nullptr;
     };
 
     return containsHardware(gst_element_factory_get_metadata(factory, GST_ELEMENT_METADATA_KLASS)) ||

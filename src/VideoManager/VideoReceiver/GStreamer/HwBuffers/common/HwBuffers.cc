@@ -98,8 +98,6 @@ GstBusSyncReply onBusSyncMessage(GstMessage* msg) noexcept
 
 void onPipelineRestart() noexcept
 {
-    // Latch-only: shared bridge objects and import caches stay, because another stream may be using them. Full resets
-    // are reserved for scene-graph teardown, window swaps and device loss (resetCachedGpuResources).
 #if defined(QGC_HAS_ANY_GPU_PATH)
     for (const HwPathDescriptor* path : GstHwPathRegistry::paths()) {
         if (path->bridge) {

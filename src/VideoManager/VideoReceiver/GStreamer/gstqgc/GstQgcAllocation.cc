@@ -1,7 +1,9 @@
 #include "GstQgcAllocation.h"
 
 #include <gst/video/video.h>
+#include <memory>
 
+#include "GstScoped.h"
 #include "HwBuffers/common/CpuVideoFramePool.h"
 #include "HwBuffers/common/GstHwVideoInfo.h"
 #include "HwBuffers/common/HwBuffers.h"
@@ -40,21 +42,19 @@ void addConsumedAllocationMetas(GstQuery* query)
 // decoders that check the option (avdec direct rendering) decode straight into it instead of copying.
 bool tryProposeMetaPool(GstQuery* query, GstCaps* caps, gsize size)
 {
-    GstBufferPool* pool = gst_video_buffer_pool_new();
+    const std::unique_ptr<GstBufferPool, GStreamer::GstObjectDeleter> pool{gst_video_buffer_pool_new()};
     if (!pool) {
         return false;
     }
 
-    bool proposed = false;
-    GstStructure* config = gst_buffer_pool_get_config(pool);
+    GstStructure* config = gst_buffer_pool_get_config(pool.get());
     gst_buffer_pool_config_set_params(config, caps, size, kProposedMinBuffers, 0);
     gst_buffer_pool_config_add_option(config, GST_BUFFER_POOL_OPTION_VIDEO_META);
-    if (gst_buffer_pool_set_config(pool, config)) {
-        gst_query_add_allocation_pool(query, pool, size, kProposedMinBuffers, 0);
-        proposed = true;
+    if (!gst_buffer_pool_set_config(pool.get(), config)) {
+        return false;
     }
-    gst_object_unref(pool);
-    return proposed;
+    gst_query_add_allocation_pool(query, pool.get(), size, kProposedMinBuffers, 0);
+    return true;
 }
 
 }  // namespace

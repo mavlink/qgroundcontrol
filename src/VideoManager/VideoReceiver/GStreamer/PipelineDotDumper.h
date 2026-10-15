@@ -5,8 +5,7 @@
 #include <QtCore/QByteArray>
 #include <QtCore/QString>
 
-/// Writes a receiver pipeline's graph as Graphviz .dot files. Every dump leaves out element properties, since source
-/// properties can hold stream credentials.
+/// Writes a receiver pipeline's graph as Graphviz .dot files.
 ///
 /// Threading: the receiver's worker only, since a dump walks the pipeline and writes to disk.
 class PipelineDotDumper

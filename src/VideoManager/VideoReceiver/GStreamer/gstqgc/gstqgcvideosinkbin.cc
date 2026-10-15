@@ -4,6 +4,7 @@
 
 #include "GstQgcBinChain.h"
 #include "GstQgcCaps.h"
+#include "GstScoped.h"
 #include "gstqgcelements.h"
 
 #define GST_CAT_DEFAULT gst_qgc_debug
@@ -149,8 +150,7 @@ static gboolean wireGpuPath(GstQgcVideoSinkBin* self, GstQgc::BinChain& chain, G
         GST_ERROR_OBJECT(self, "Failed to create glupload element");
         return FALSE;
     }
-    // Converts amcvideodec's external-OES Surface textures to GL_TEXTURE_2D (else the Qt RHI 2D sink
-    // samples them black); no-op passthrough when upstream is already 2D (Linux va/DMABuf).
+    // glcolorconvert honours texture-target=2D (GstQgcCaps.cc); a passthrough when upstream is already 2D.
     GstElement* glcolorconvert = chain.adopt(gst_element_factory_make("glcolorconvert", NULL));
     if (!glcolorconvert) {
         GST_ERROR_OBJECT(self, "Failed to create glcolorconvert element");
@@ -197,10 +197,9 @@ static gboolean wireCpuPath(GstQgcVideoSinkBin* self, GstQgc::BinChain& chain, G
         if (!par) {
             GST_WARNING_OBJECT(self, "capsfilter factory missing — PAR normalization disabled");
         } else {
-            GstCaps* parCaps = gst_caps_from_string("video/x-raw, pixel-aspect-ratio=(fraction)1/1");
-            if (parCaps) {
-                g_object_set(par, "caps", parCaps, NULL);
-                gst_caps_unref(parCaps);
+            if (const GStreamer::GstCapsPtr parCaps =
+                    GStreamer::adoptCaps(gst_caps_from_string("video/x-raw, pixel-aspect-ratio=(fraction)1/1"))) {
+                g_object_set(par, "caps", parCaps.get(), NULL);
             }
         }
     }
@@ -254,13 +253,12 @@ static void gst_qgc_video_sink_bin_setup(GstQgcVideoSinkBin* self)
     // so without it upstream could pick a format that fails in set_caps. On the CPU path, listing the formats
     // QVideoSink renders natively also keeps videoconvert from forcing BGRA.
     const std::string capsStr = self->gpu_zerocopy ? GstQgc::buildGpuCapsString() : GstQgc::buildCpuCapsString();
-    GstCaps* caps = gst_caps_from_string(capsStr.c_str());
+    const GStreamer::GstCapsPtr caps = GStreamer::adoptCaps(gst_caps_from_string(capsStr.c_str()));
     if (!caps) {
         GST_ERROR_OBJECT(self, "gst_caps_from_string() returned NULL for %s caps", pathName);
         return;
     }
-    g_object_set(capsf, "caps", caps, NULL);
-    gst_caps_unref(caps);
+    g_object_set(capsf, "caps", caps.get(), NULL);
 
     if (self->gpu_zerocopy ? wireGpuPath(self, chain, videosink, capsf) : wireCpuPath(self, chain, videosink, capsf)) {
         chain.commit();

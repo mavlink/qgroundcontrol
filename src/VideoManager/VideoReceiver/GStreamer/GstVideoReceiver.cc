@@ -1,13 +1,3 @@
-//-----------------------------------------------------------------------------
-// Our pipeline look like this:
-//
-//              +-->DecodingBranch: queue-->valve[-->decodebin3-->video sink]
-//              |
-// _source-->_tee
-//              |
-//              +-->RecordingBranch: queue-->valve[-->sinkbin]
-//-----------------------------------------------------------------------------
-
 #include "GstVideoReceiver.h"
 
 #include <chrono>
@@ -32,7 +22,7 @@ namespace {
 // abandoned.
 constexpr std::chrono::seconds kWorkerShutdownTimeout = RecordingBranch::kFinalizeTimeout + std::chrono::seconds{2};
 constexpr std::chrono::milliseconds kWatchdogInterval{1000};
-// The live HW path counters are logged every this many watchdog ticks.
+// The live GPU path counters are logged every this many watchdog ticks.
 constexpr int kHwStatsLogIntervalTicks = 10;
 // Source flow is logged every this many frames.
 constexpr quint64 kSourceFlowLogIntervalFrames = 300;
@@ -314,7 +304,7 @@ bool GstVideoReceiver::_stopPipeline()
 
     if (hwStats.totalDelivered > 0) {
         qCDebug(GstVideoReceiverLog).noquote()
-            << "HW path stats" << _redactedUri() << hwStats.line + HwBuffers::takeExtraPathStats();
+            << "GPU path stats" << _redactedUri() << hwStats.line + HwBuffers::takeExtraPathStats();
     }
 
     return true;
@@ -389,7 +379,7 @@ void GstVideoReceiver::_onWatchdogTick()
     if (++_statsTickCounter >= kHwStatsLogIntervalTicks) {
         _statsTickCounter = 0;
         if (const GstQgc::PathStats hwStats = _decodingBranch.sinkPathStats(); hwStats.totalDelivered > 0) {
-            qCDebug(GstVideoReceiverLog).noquote() << "HW path live" << _redactedUri() << hwStats.line;
+            qCDebug(GstVideoReceiverLog).noquote() << "GPU path live" << _redactedUri() << hwStats.line;
         }
     }
 

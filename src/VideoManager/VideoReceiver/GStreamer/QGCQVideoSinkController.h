@@ -1,5 +1,7 @@
 #pragma once
 
+#include <gst/gst.h>
+
 #include <QtCore/QList>
 #include <QtCore/QMetaObject>
 #include <QtCore/QObject>
@@ -7,14 +9,15 @@
 #include <QtCore/QSize>
 #include <QtCore/QString>
 #include <QtCore/QTimer>
-#include <gst/gst.h>
+
+#include "GstScoped.h"
 
 class QQuickVideoOutput;
 class QVideoSink;
 
 /// GUI-thread companion for the GstQgcQVideoSink element: mirrors negotiation/telemetry into
-/// Q_PROPERTYs for QML and owns the 1 Hz timer polling `frames-delivered`. Driven by
-/// GstVideoReceiver's bus pump. Ownership: parent owns the controller; the controller owns one
+/// Q_PROPERTYs for QML and owns the 1 Hz timer polling `frames-delivered`. Negotiation is pushed by
+/// DecodingBranch::onBusCapsInfo(). Ownership: parent owns the controller; the controller owns one
 /// GstElement ref so deferred QObject teardown can still clear the element binding.
 /// Every member function runs on the controller's (GUI) thread.
 class QGCQVideoSinkController : public QObject
@@ -69,7 +72,7 @@ private:
     void _clearVideoSinkFrame();
     void _onEmitTimer();
 
-    GstElement* _element = nullptr;  // owned ref
+    GStreamer::GstElementPtr _element;
     QPointer<QVideoSink> _videoSink;
     QMetaObject::Connection _sinkDestroyedConnection;
     bool _bindingReleased = false;

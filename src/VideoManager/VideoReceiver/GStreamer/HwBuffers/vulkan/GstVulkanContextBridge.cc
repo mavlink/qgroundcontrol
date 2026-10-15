@@ -57,20 +57,18 @@ bool readSnapshotHandles(SnapshotHandles& out)
 // VkInstance/VkDevice. We build a gst instance, then bind a GstVulkanDevice to the GstVulkanPhysicalDevice matching
 // QRhi's physDev. That yields same-physical-device but a distinct VkDevice; the importer's device-match guard then
 // routes those (foreign-VkDevice) frames to CPU. True same-VkDevice zero-copy needs a wrap API not present here.
-GstVulkanPhysicalDevice* matchPhysicalDevice(GstVulkanInstance* instance, VkPhysicalDevice want)
+using PhysicalDevicePtr = std::unique_ptr<GstVulkanPhysicalDevice, GStreamer::GstObjectDeleter>;
+
+PhysicalDevicePtr matchPhysicalDevice(GstVulkanInstance* instance, VkPhysicalDevice want)
 {
     const guint n = instance->n_physical_devices;
     for (guint i = 0; i < n; ++i) {
-        GstVulkanPhysicalDevice* phys = gst_vulkan_physical_device_new(instance, i);
-        if (!phys) {
-            continue;
-        }
-        if (phys->device == want) {
+        PhysicalDevicePtr phys{gst_vulkan_physical_device_new(instance, i)};
+        if (phys && (phys->device == want)) {
             return phys;
         }
-        gst_object_unref(phys);
     }
-    return nullptr;
+    return {};
 }
 
 constexpr const char* kContextTypes[] = {
@@ -122,12 +120,11 @@ bool VulkanContextBridge::primeLocked()
         return bail("gst_vulkan_instance_open");
     }
 
-    GstVulkanPhysicalDevice* phys = matchPhysicalDevice(_instance, nh.physDev);
+    const PhysicalDevicePtr phys = matchPhysicalDevice(_instance, nh.physDev);
     if (!phys) {
         return bail("no GstVulkanPhysicalDevice matches QRhi physDev");
     }
-    _device = gst_vulkan_device_new(phys);
-    gst_object_unref(phys);
+    _device = gst_vulkan_device_new(phys.get());
     if (!_device || !gst_vulkan_device_open(_device, nullptr)) {
         return bail("gst_vulkan_device_open");
     }

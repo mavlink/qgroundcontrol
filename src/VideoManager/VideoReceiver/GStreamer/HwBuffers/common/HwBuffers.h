@@ -18,7 +18,7 @@ class QQuickWindow;
 namespace HwBuffers {
 
 /// Process-wide QGC_GST_* runtime toggles, parsed once and logged at first access so operators can paste the
-/// effective config into bug reports. Semantics match the historical per-call-site g_getenv reads.
+/// effective config into bug reports.
 struct HwBufferEnvConfig
 {
     bool dmaBufCache = false;           // QGC_GST_DMABUF_CACHE        (default off)

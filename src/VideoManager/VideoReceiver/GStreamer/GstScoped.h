@@ -35,6 +35,11 @@ struct GstEventDeleter
     void operator()(GstEvent* event) const noexcept { gst_event_unref(event); }
 };
 
+struct GstContextDeleter
+{
+    void operator()(GstContext* context) const noexcept { gst_context_unref(context); }
+};
+
 struct GstStructureDeleter
 {
     void operator()(GstStructure* structure) const noexcept { gst_structure_free(structure); }
@@ -60,6 +65,7 @@ using GstQueryPtr = std::unique_ptr<GstQuery, GstQueryDeleter>;
 using GstCapsPtr = std::unique_ptr<GstCaps, GstCapsDeleter>;
 using GstMessagePtr = std::unique_ptr<GstMessage, GstMessageDeleter>;
 using GstEventPtr = std::unique_ptr<GstEvent, GstEventDeleter>;
+using GstContextPtr = std::unique_ptr<GstContext, GstContextDeleter>;
 using GstStructurePtr = std::unique_ptr<GstStructure, GstStructureDeleter>;
 using GCharPtr = std::unique_ptr<gchar, GFreeDeleter>;
 using GErrorPtr = std::unique_ptr<GError, GErrorDeleter>;
@@ -112,6 +118,11 @@ inline GstMessagePtr adoptMessage(GstMessage* message) noexcept
 inline GstEventPtr adoptEvent(GstEvent* event) noexcept
 {
     return GstEventPtr(event);
+}
+
+inline GstContextPtr adoptContext(GstContext* context) noexcept
+{
+    return GstContextPtr(context);
 }
 
 inline GstStructurePtr adoptStructure(GstStructure* structure) noexcept

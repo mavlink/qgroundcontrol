@@ -52,7 +52,7 @@ struct PrivState
     QVideoSink* qvideosink = nullptr;
     // Read lock-free by show_frame.
     std::atomic<bool> active{true};
-    // Construct-only; start() derives hw_context from it.
+    // start() derives hw_context from it.
     bool gpu_zerocopy = false;
     // Negotiated state: set_caps/stop write it and show_frame reads it, all serialised by GstBaseSink.
     std::atomic<bool> caps_valid{false};

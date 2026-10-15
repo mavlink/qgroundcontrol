@@ -254,7 +254,6 @@ bool initialize(const QStringList& arguments, const Environment::ValidationResul
 // takes another on gst_bin_add (dropped by gst_bin_remove). Keep the ref/unref sites balanced.
 void* createVideoSink(const VideoSinkConfig& config)
 {
-    // All bin tunables are construct-only — properties drive behavior, no env-var indirection.
     const gboolean disablePar = config.disablePixelAspectRatio ? TRUE : FALSE;
     const char* const conversion = config.conversionElement.isEmpty() ? nullptr : config.conversionElement.constData();
 
@@ -266,8 +265,6 @@ void* createVideoSink(const VideoSinkConfig& config)
     }
 
 #if defined(QGC_HAS_ANY_GPU_PATH)
-    // gpu-zerocopy is construct-only; the bin hands it to the qgcqvideosink it constructs, which derives its GPU
-    // context from it, so the two can't disagree.
     GstElement* videoSinkBin =
         gst_element_factory_create_full(factory.get(), "gpu-zerocopy", config.gpuZeroCopy ? TRUE : FALSE,
                                         "conversion-element", conversion, "disable-par", disablePar, NULL);
@@ -315,7 +312,7 @@ bool setupQVideoSinkElement(void* sinkBin, QVideoSink* videoSink, QObject* contr
     }
 
     // Clear the GL/Vulkan bridges' exhausted-retry latches so a restart after Qt's RHI appears can
-    // prime on the next NEED_CONTEXT. Shared GPU objects stay: another receiver may be streaming.
+    // prime on the next NEED_CONTEXT.
     HwBuffers::onPipelineRestart();
 
     // Accessor returns a transfer-full ref; the guard releases it once the controller has taken

@@ -1502,11 +1502,11 @@ void GStreamerTest::_testAllocationQueryHwMemoryPoolHint()
     GstBufferPool* pool = nullptr;
     guint size = 0, minBuffers = 0, maxBuffers = 0;
     gst_query_parse_nth_allocation_pool(query, 0, &pool, &size, &minBuffers, &maxBuffers);
-    QVERIFY2(pool == nullptr, "HW path must not propose a generic pool for native memory");
+    QVERIFY2(pool == nullptr, "GPU path must not propose a generic pool for native memory");
     QVERIFY2(minBuffers > guint(CpuVideoFramePool::kMaxPinnedFrames),
              "min-buffer hint must leave the decoder a buffer beyond those the sink and Qt hold");
     QVERIFY2(gst_query_find_allocation_meta(query, GST_VIDEO_META_API_TYPE, nullptr),
-             "VideoMeta not advertised on HW path");
+             "VideoMeta not advertised on GPU path");
 
     gst_query_unref(query);
     gst_caps_unref(caps);

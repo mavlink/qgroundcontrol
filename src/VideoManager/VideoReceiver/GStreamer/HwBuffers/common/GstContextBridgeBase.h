@@ -9,6 +9,8 @@
 
 #include <QtCore/QMutex>
 
+#include "GstScoped.h"
+
 QT_FORWARD_DECLARE_CLASS(QLoggingCategory)
 
 /// Process-wide hand-off of Qt's GPU device to GStreamer (GL, Vulkan, D3D11, D3D12). A bridge lazily builds ("primes")
@@ -88,7 +90,7 @@ private:
     bool primeIfNeededLocked();
     /// Primes, refs the object for @p contextType under the mutex, then builds its context unlocked; null when the
     /// bridge can't serve it.
-    GstContext* makeContext(const char* contextType);
+    GStreamer::GstContextPtr makeContext(const char* contextType);
 
     const char* _apiName;
     std::span<const char* const> _contextTypes;
