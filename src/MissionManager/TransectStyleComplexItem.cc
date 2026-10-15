@@ -1218,9 +1218,11 @@ TransectStyleComplexItem::BuildMissionItemsState_t TransectStyleComplexItem::_bu
     state.imagesInTurnaround        = _cameraTriggerInTurnAroundFact.rawValue().toBool();
     state.hasTurnarounds            = _turnAroundDistance() != 0;
     state.addTriggerAtFirstAndLastPoint  = !hoverAndCaptureEnabled() && state.imagesInTurnaround && triggerCamera();
-    state.useConditionGate          = _controllerVehicle->firmwarePlugin()->supportedMissionCommands(QGCMAVLink::VehicleClassGeneric).contains(MAV_CMD_CONDITION_GATE) &&
-            triggerCamera() &&
-            !hoverAndCaptureEnabled();
+    state.useConditionGate = _useConditionGate() &&
+                             _controllerVehicle->firmwarePlugin()
+                                 ->supportedMissionCommands(QGCMAVLink::VehicleClassGeneric)
+                                 .contains(MAV_CMD_CONDITION_GATE) &&
+                             triggerCamera() && !hoverAndCaptureEnabled();
 
     return state;
 }

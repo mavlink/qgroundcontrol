@@ -44,3 +44,24 @@ private:
 
     static const int _expectedTransectCount = 2;
 };
+
+class SurveyComplexItemObstacleTest : public TransectStyleComplexItemTestBase
+{
+    Q_OBJECT
+
+protected:
+    void init() final;
+    void cleanup() final;
+
+private slots:
+    void _testObstacleAvoidance_data();
+    void _testObstacleAvoidance();
+    void _testObstacleChanges();
+    void _testBlockedSurvey_data();
+    void _testBlockedSurvey();
+    void _testObstacleLoad();
+
+private:
+    SurveyComplexItem* _surveyItem = nullptr;
+    QList<QGeoCoordinate> _polyVertices;
+};

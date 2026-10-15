@@ -1,19 +1,234 @@
 #include "SurveyComplexItem.h"
-#include "JsonParsing.h"
-#include "QGCGeo.h"
-#include "QGCQGeoCoordinate.h"
-#include "SettingsManager.h"
-#include "AppSettings.h"
-#include "PlanMasterController.h"
-#include "MissionItem.h"
-#include "AppMessages.h"
-#include "QGCApplication.h"
-#include "Vehicle.h"
-#include "QGCLoggingCategory.h"
 
-#include <QtGui/QPolygonF>
+#include <algorithm>
+#include <cmath>
+#include <limits>
+#include <utility>
+
 #include <QtCore/QJsonArray>
 #include <QtCore/QLineF>
+#include <QtGui/QPainterPath>
+#include <QtGui/QPainterPathStroker>
+#include <QtGui/QPolygonF>
+
+#include "AppMessages.h"
+#include "AppSettings.h"
+#include "GeoFenceController.h"
+#include "JsonParsing.h"
+#include "MissionItem.h"
+#include "PlanMasterController.h"
+#include "QGCApplication.h"
+#include "QGCFenceCircle.h"
+#include "QGCFencePolygon.h"
+#include "QGCGeo.h"
+#include "QGCLoggingCategory.h"
+#include "QGCQGeoCoordinate.h"
+#include "SettingsManager.h"
+#include "Vehicle.h"
+
+namespace {
+
+constexpr double GEOMETRY_TOLERANCE = 1e-5;
+constexpr double OBSTACLE_CLEARANCE = 2.0;
+constexpr double ROUTING_TOLERANCE = 0.1;
+
+QPainterPath polygonPath(const QPolygonF& polygon)
+{
+    QPainterPath path;
+    path.addPolygon(polygon);
+    path.closeSubpath();
+    return path;
+}
+
+QPainterPath expandedArea(const QPainterPath& area, double distance)
+{
+    if (distance <= 0) {
+        return area;
+    }
+    QPainterPathStroker stroker;
+    stroker.setWidth(distance * 2);
+    stroker.setJoinStyle(Qt::MiterJoin);
+    return area.united(stroker.createStroke(area));
+}
+
+class SurveyPathPlanner
+{
+public:
+    explicit SurveyPathPlanner(const QPainterPath& area)
+        : _area(area)
+    {
+        for (const QPolygonF& polygon : area.toSubpathPolygons()) {
+            for (int i = 1; i < polygon.count(); ++i) {
+                const QLineF edge(polygon[i - 1], polygon[i]);
+                if (edge.length() > GEOMETRY_TOLERANCE) {
+                    _edges.append(edge);
+                    if (!_vertices.contains(edge.p1())) {
+                        _vertices.append(edge.p1());
+                    }
+                }
+            }
+        }
+    }
+
+    QList<QLineF> clip(const QLineF& line) const
+    {
+        QList<QLineF> result;
+        const QPointF direction = line.p2() - line.p1();
+        const double lengthSquared = QPointF::dotProduct(direction, direction);
+        if (lengthSquared < GEOMETRY_TOLERANCE * GEOMETRY_TOLERANCE) {
+            return result;
+        }
+        QList<double> parameters{0, 1};
+        const auto addParameter = [&](const QPointF& point) {
+            const double t = QPointF::dotProduct(point - line.p1(), direction) / lengthSquared;
+            if (t > 0 && t < 1) {
+                parameters.append(t);
+            }
+        };
+        for (const QLineF& edge : _edges) {
+            QPointF intersection;
+            if (line.intersects(edge, &intersection) == QLineF::BoundedIntersection) {
+                addParameter(intersection);
+            } else {
+                // Collinear edges have no unique intersection in QLineF.
+                if (_distanceToLine(edge.p1(), line) < GEOMETRY_TOLERANCE) {
+                    addParameter(edge.p1());
+                }
+                if (_distanceToLine(edge.p2(), line) < GEOMETRY_TOLERANCE) {
+                    addParameter(edge.p2());
+                }
+            }
+        }
+        std::sort(parameters.begin(), parameters.end());
+        const double parameterTolerance = GEOMETRY_TOLERANCE / line.length();
+        parameters.erase(
+            std::unique(parameters.begin(), parameters.end(),
+                        [parameterTolerance](double a, double b) { return std::abs(a - b) < parameterTolerance; }),
+            parameters.end());
+        for (int i = 1; i < parameters.count(); ++i) {
+            if (_contains(line.pointAt((parameters[i - 1] + parameters[i]) * 0.5))) {
+                const QLineF part(line.pointAt(parameters[i - 1]), line.pointAt(parameters[i]));
+                if (!result.isEmpty() && QLineF(result.last().p2(), part.p1()).length() < GEOMETRY_TOLERANCE) {
+                    result.last().setP2(part.p2());
+                } else {
+                    result.append(part);
+                }
+            }
+        }
+        return result;
+    }
+
+    QList<QPointF> shortestPath(const QPointF& start, const QPointF& end)
+    {
+        if (_clear(QLineF(start, end))) {
+            return {start, end};
+        }
+        if (!_graphBuilt) {
+            _buildGraph();
+        }
+        const double infinity = std::numeric_limits<double>::infinity();
+        QList<double> distances(_vertices.count(), infinity);
+        QList<double> toEnd(_vertices.count(), infinity);
+        QList<int> previous(_vertices.count(), -1);
+        QList<bool> visited(_vertices.count(), false);
+        for (int i = 0; i < _vertices.count(); ++i) {
+            const QLineF fromStart(start, _vertices[i]);
+            const QLineF toGoal(_vertices[i], end);
+            if (_clear(fromStart)) {
+                distances[i] = fromStart.length();
+            }
+            if (_clear(toGoal)) {
+                toEnd[i] = toGoal.length();
+            }
+        }
+        double bestDistance = infinity;
+        int goal = -1;
+        for (int step = 0; step < _vertices.count(); ++step) {
+            int current = -1;
+            for (int i = 0; i < _vertices.count(); ++i) {
+                if (!visited[i] && (current < 0 || distances[i] < distances[current])) {
+                    current = i;
+                }
+            }
+            if (current < 0 || !std::isfinite(distances[current]) || distances[current] >= bestDistance) {
+                break;
+            }
+            visited[current] = true;
+            if (distances[current] + toEnd[current] < bestDistance) {
+                bestDistance = distances[current] + toEnd[current];
+                goal = current;
+            }
+            for (const auto& [next, cost] : _graph[current]) {
+                if (distances[current] + cost < distances[next]) {
+                    distances[next] = distances[current] + cost;
+                    previous[next] = current;
+                }
+            }
+        }
+        if (goal < 0) {
+            return {};
+        }
+        QList<QPointF> result{end};
+        for (int index = goal; index >= 0; index = previous[index]) {
+            result.prepend(_vertices[index]);
+        }
+        result.prepend(start);
+        return result;
+    }
+
+private:
+    static double _distanceToLine(const QPointF& point, const QLineF& line)
+    {
+        const QPointF direction = line.p2() - line.p1();
+        const double lengthSquared = QPointF::dotProduct(direction, direction);
+        const double t = lengthSquared > 0
+                             ? std::clamp(QPointF::dotProduct(point - line.p1(), direction) / lengthSquared, 0.0, 1.0)
+                             : 0;
+        return QLineF(point, line.pointAt(t)).length();
+    }
+
+    bool _contains(const QPointF& point) const
+    {
+        if (_area.contains(point)) {
+            return true;
+        }
+        return std::any_of(_edges.cbegin(), _edges.cend(),
+                           [&point](const QLineF& edge) { return _distanceToLine(point, edge) < GEOMETRY_TOLERANCE; });
+    }
+
+    bool _clear(const QLineF& line) const
+    {
+        if (line.length() < GEOMETRY_TOLERANCE) {
+            return _contains(line.p1());
+        }
+        const QList<QLineF> parts = clip(line);
+        return parts.count() == 1 && QLineF(parts.first().p1(), line.p1()).length() < GEOMETRY_TOLERANCE &&
+               QLineF(parts.first().p2(), line.p2()).length() < GEOMETRY_TOLERANCE;
+    }
+
+    void _buildGraph()
+    {
+        _graph.resize(_vertices.count());
+        for (int i = 0; i < _vertices.count(); ++i) {
+            for (int j = i + 1; j < _vertices.count(); ++j) {
+                const QLineF line(_vertices[i], _vertices[j]);
+                if (_clear(line)) {
+                    _graph[i].append({j, line.length()});
+                    _graph[j].append({i, line.length()});
+                }
+            }
+        }
+        _graphBuilt = true;
+    }
+
+    QPainterPath _area;
+    QList<QLineF> _edges;
+    QList<QPointF> _vertices;
+    QList<QList<std::pair<int, double>>> _graph;
+    bool _graphBuilt = false;
+};
+
+}  // namespace
 
 QGC_LOGGING_CATEGORY(SurveyComplexItemLog, "Plan.SurveyComplexItem")
 
@@ -49,6 +264,15 @@ SurveyComplexItem::SurveyComplexItem(PlanMasterController* masterController, boo
 
     connect(&_surveyAreaPolygon,        &QGCMapPolygon::isValidChanged,             this, &SurveyComplexItem::_updateWizardMode);
     connect(&_surveyAreaPolygon,        &QGCMapPolygon::traceModeChanged,           this, &SurveyComplexItem::_updateWizardMode);
+
+    if (!flyView) {
+        GeoFenceController* fences = masterController->geoFenceController();
+        connect(fences->polygons(), &QmlObjectListModel::countChanged, this,
+                &SurveyComplexItem::_updateObstacleConnections);
+        connect(fences->circles(), &QmlObjectListModel::countChanged, this,
+                &SurveyComplexItem::_updateObstacleConnections);
+        _updateObstacleConnections();
+    }
 
     if (!kmlOrShpFile.isEmpty()) {
         _surveyAreaPolygon.loadKMLOrSHPFile(kmlOrShpFile);
@@ -150,6 +374,9 @@ bool SurveyComplexItem::load(const QJsonObject& complexObject, int sequenceNumbe
         _rebuildTransects();
     }
 
+    if (!_flyView && _hasExclusionFences()) {
+        _rebuildTransects();
+    }
     return true;
 }
 
@@ -623,10 +850,219 @@ double SurveyComplexItem::_turnaroundDistance(void) const
 
 void SurveyComplexItem::_rebuildTransectsPhase1(void)
 {
+    const QString previousError = _obstacleError;
+    _obstacleError.clear();
+    _obstacleAvoidanceActive = false;
     _rebuildTransectsPhase1WorkerSinglePolygon(false /* refly */);
-    if (_refly90DegreesFact.rawValue().toBool()) {
+    if (_refly90DegreesFact.rawValue().toBool() && !_transects.isEmpty()) {
         _rebuildTransectsPhase1WorkerSinglePolygon(true /* refly */);
     }
+    _avoidObstacles();
+    if (previousError != _obstacleError) {
+        emit obstacleErrorChanged();
+        emit readyForSaveStateChanged();
+    }
+}
+
+bool SurveyComplexItem::_hasExclusionFences() const
+{
+    GeoFenceController* fences = _masterController->geoFenceController();
+    for (int i = 0; i < fences->polygons()->count(); ++i) {
+        const auto* polygon = fences->polygons()->value<QGCFencePolygon*>(i);
+        if (polygon && !polygon->inclusion()) {
+            return true;
+        }
+    }
+    for (int i = 0; i < fences->circles()->count(); ++i) {
+        const auto* circle = fences->circles()->value<QGCFenceCircle*>(i);
+        if (circle && !circle->inclusion()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void SurveyComplexItem::_updateObstacleConnections()
+{
+    for (const QMetaObject::Connection& connection : _obstacleConnections) {
+        disconnect(connection);
+    }
+    _obstacleConnections.clear();
+    GeoFenceController* fences = _masterController->geoFenceController();
+    for (int i = 0; i < fences->polygons()->count(); ++i) {
+        auto* polygon = fences->polygons()->value<QGCFencePolygon*>(i);
+        if (polygon) {
+            _obstacleConnections.append(
+                connect(polygon, &QGCMapPolygon::pathChanged, this, &SurveyComplexItem::_obstaclesChanged));
+            _obstacleConnections.append(
+                connect(polygon, &QGCFencePolygon::inclusionChanged, this, &SurveyComplexItem::_obstaclesChanged));
+        }
+    }
+    for (int i = 0; i < fences->circles()->count(); ++i) {
+        auto* circle = fences->circles()->value<QGCFenceCircle*>(i);
+        if (circle) {
+            _obstacleConnections.append(
+                connect(circle, &QGCMapCircle::centerChanged, this, &SurveyComplexItem::_obstaclesChanged));
+            _obstacleConnections.append(
+                connect(circle->radius(), &Fact::rawValueChanged, this, &SurveyComplexItem::_obstaclesChanged));
+            _obstacleConnections.append(
+                connect(circle, &QGCFenceCircle::inclusionChanged, this, &SurveyComplexItem::_obstaclesChanged));
+        }
+    }
+    _obstaclesChanged();
+}
+
+void SurveyComplexItem::_obstaclesChanged()
+{
+    if (!_ignoreRecalc && (_obstacleAvoidanceActive || _hasExclusionFences())) {
+        _rebuildTransects();
+        setDirty(true);
+    }
+}
+
+void SurveyComplexItem::_avoidObstacles()
+{
+    if (_flyView || _transects.isEmpty() || !_hasExclusionFences()) {
+        return;
+    }
+    const QGeoCoordinate origin = _surveyAreaPolygon.coordinateList().first();
+    const auto toLocal = [&origin](const QGeoCoordinate& coordinate) {
+        if (coordinate.latitude() == origin.latitude() && coordinate.longitude() == origin.longitude()) {
+            return QPointF();
+        }
+        double north, east, down;
+        QGCGeo::convertGeoToNed(coordinate, origin, north, east, down);
+        return QPointF(east, north);
+    };
+    const auto toGeo = [&origin](const QPointF& point) {
+        QGeoCoordinate coordinate;
+        QGCGeo::convertNedToGeo(point.y(), point.x(), 0, origin, coordinate);
+        return coordinate;
+    };
+    QPolygonF surveyPolygon;
+    for (const QGeoCoordinate& coordinate : _surveyAreaPolygon.coordinateList()) {
+        surveyPolygon.append(toLocal(coordinate));
+    }
+    const QPainterPath surveyArea = polygonPath(surveyPolygon);
+    const double turnaround = qMax(0.0, _turnaroundDistance());
+    const QPainterPath flightArea = expandedArea(surveyArea, turnaround);
+    QPainterPath obstacles;
+    GeoFenceController* fences = _masterController->geoFenceController();
+    for (int i = 0; i < fences->polygons()->count(); ++i) {
+        const auto* fence = fences->polygons()->value<QGCFencePolygon*>(i);
+        if (!fence || fence->inclusion() || !fence->isValid()) {
+            continue;
+        }
+        QPolygonF polygon;
+        for (const QGeoCoordinate& coordinate : fence->coordinateList()) {
+            polygon.append(toLocal(coordinate));
+        }
+        obstacles = obstacles.united(expandedArea(polygonPath(polygon), OBSTACLE_CLEARANCE + ROUTING_TOLERANCE));
+    }
+    for (int i = 0; i < fences->circles()->count(); ++i) {
+        auto* fence = fences->circles()->value<QGCFenceCircle*>(i);
+        if (!fence || fence->inclusion() || !fence->center().isValid()) {
+            continue;
+        }
+        const double radius = fence->radius()->rawValue().toDouble();
+        if (!std::isfinite(radius) || radius <= 0) {
+            continue;
+        }
+        // A circumscribed polygon keeps every chord outside the circular fence and clearance.
+        constexpr int CIRCLE_SIDES = 8;
+        const double expandedRadius = (radius + OBSTACLE_CLEARANCE + ROUTING_TOLERANCE) / std::cos(M_PI / CIRCLE_SIDES);
+        const double rotation = M_PI / CIRCLE_SIDES - _gridAngleFact.rawValue().toDouble() * M_PI / 180;
+        const QPointF center = toLocal(fence->center());
+        QPolygonF polygon;
+        for (int vertex = 0; vertex < CIRCLE_SIDES; ++vertex) {
+            const double angle = rotation + 2 * M_PI * vertex / CIRCLE_SIDES;
+            polygon.append(center + QPointF(std::cos(angle), std::sin(angle)) * expandedRadius);
+        }
+        obstacles = obstacles.united(polygonPath(polygon));
+    }
+    if (!obstacles.intersects(flightArea)) {
+        return;
+    }
+    _obstacleAvoidanceActive = true;
+    SurveyPathPlanner coveragePlanner(surveyArea.subtracted(obstacles));
+    SurveyPathPlanner routingPlanner(flightArea.subtracted(obstacles));
+
+    struct CoverageSegment
+    {
+        QLineF coverage;
+        QLineF flight;
+    };
+
+    QList<CoverageSegment> segments;
+    for (const QList<CoordInfo_t>& transect : _transects) {
+        const auto entry = std::find_if(transect.cbegin(), transect.cend(), [](const CoordInfo_t& point) {
+            return point.coordType == CoordTypeSurveyEntry;
+        });
+        const auto exit = std::find_if(transect.cbegin(), transect.cend(),
+                                       [](const CoordInfo_t& point) { return point.coordType == CoordTypeSurveyExit; });
+        if (entry == transect.cend() || exit == transect.cend()) {
+            continue;
+        }
+        for (const QLineF& coverage : coveragePlanner.clip(QLineF(toLocal(entry->coord), toLocal(exit->coord)))) {
+            QLineF flight = coverage;
+            if (turnaround > 0) {
+                const QPointF extension = (coverage.p2() - coverage.p1()) * (turnaround / coverage.length());
+                const QList<QLineF> before = routingPlanner.clip(QLineF(coverage.p1() - extension, coverage.p1()));
+                if (!before.isEmpty() && QLineF(before.last().p2(), coverage.p1()).length() < GEOMETRY_TOLERANCE) {
+                    flight.setP1(before.last().p1());
+                }
+                const QList<QLineF> after = routingPlanner.clip(QLineF(coverage.p2(), coverage.p2() + extension));
+                if (!after.isEmpty() && QLineF(after.first().p1(), coverage.p2()).length() < GEOMETRY_TOLERANCE) {
+                    flight.setP2(after.first().p2());
+                }
+            }
+            segments.append({coverage, flight});
+            if (segments.count() > maxTransectCount) {
+                _obstacleError = tr("Exclusion fences create too many survey segments. Increase the transect spacing.");
+                _transects.clear();
+                return;
+            }
+        }
+    }
+    QList<QList<CoordInfo_t>> planned;
+    QPointF current;
+    for (const CoverageSegment& segment : segments) {
+        if (!planned.isEmpty()) {
+            const QList<QPointF> path = routingPlanner.shortestPath(current, segment.flight.p1());
+            if (path.isEmpty()) {
+                _obstacleError = tr("No safe path connects the survey transects around the exclusion fences.");
+                _transects.clear();
+                return;
+            }
+            for (int i = 1; i + 1 < path.count(); ++i) {
+                planned.last().append({toGeo(path[i]), CoordTypeInterior});
+            }
+        }
+        QList<CoordInfo_t> transect;
+        if (turnaround > 0) {
+            transect.append({toGeo(segment.flight.p1()), CoordTypeTurnaround});
+        }
+        const QGeoCoordinate entry = toGeo(segment.coverage.p1());
+        const QGeoCoordinate exit = toGeo(segment.coverage.p2());
+        transect.append({entry, CoordTypeSurveyEntry});
+        if (triggerCamera() && hoverAndCaptureEnabled()) {
+            const double length = entry.distanceTo(exit);
+            const double azimuth = entry.azimuthTo(exit);
+            for (double distance = triggerDistance(); distance < length; distance += triggerDistance()) {
+                transect.append({entry.atDistanceAndAzimuth(distance, azimuth), CoordTypeInteriorHoverTrigger});
+            }
+        }
+        transect.append({exit, CoordTypeSurveyExit});
+        if (turnaround > 0) {
+            transect.append({toGeo(segment.flight.p2()), CoordTypeTurnaround});
+        }
+        planned.append(transect);
+        current = segment.flight.p2();
+    }
+    if (planned.isEmpty()) {
+        _obstacleError = tr("The exclusion fences leave no survey area to fly.");
+    }
+    _transects = planned;
 }
 
 void SurveyComplexItem::_rebuildTransectsPhase1WorkerSinglePolygon(bool refly)
@@ -912,7 +1348,24 @@ void SurveyComplexItem::_recalcCameraShots(void)
                 // We have transects available, calc from those
                 for (const QList<TransectStyleComplexItem::CoordInfo_t>& transect: _transects) {
                     QGeoCoordinate firstCameraCoord, lastCameraCoord;
-                    if (_hasTurnaround() && !hoverAndCaptureEnabled()) {
+                    if (_obstacleAvoidanceActive) {
+                        int hoverShots = 0;
+                        for (const CoordInfo_t& point : transect) {
+                            if (point.coordType == CoordTypeSurveyEntry) {
+                                firstCameraCoord = point.coord;
+                            } else if (point.coordType == CoordTypeSurveyExit) {
+                                lastCameraCoord = point.coord;
+                            }
+                            if (point.coordType == CoordTypeSurveyEntry || point.coordType == CoordTypeSurveyExit ||
+                                point.coordType == CoordTypeInteriorHoverTrigger) {
+                                ++hoverShots;
+                            }
+                        }
+                        if (hoverAndCaptureEnabled()) {
+                            _cameraShots += hoverShots;
+                            continue;
+                        }
+                    } else if (_hasTurnaround() && !hoverAndCaptureEnabled()) {
                         firstCameraCoord = transect[1].coord;
                         lastCameraCoord = transect[transect.count() - 2].coord;
                     } else {
@@ -930,6 +1383,9 @@ void SurveyComplexItem::_recalcCameraShots(void)
 
 SurveyComplexItem::ReadyForSaveState SurveyComplexItem::readyForSaveState(void) const
 {
+    if (!_obstacleError.isEmpty()) {
+        return NotReadyForSaveData;
+    }
     return TransectStyleComplexItem::readyForSaveState();
 }
 
@@ -957,7 +1413,16 @@ double SurveyComplexItem::additionalTimeDelay (void) const
 
     if (hoverAndCaptureEnabled()) {
         for (const QList<TransectStyleComplexItem::CoordInfo_t>& transect: _transects) {
-            hoverTime += _hoverAndCaptureDelaySeconds * transect.count();
+            if (_obstacleAvoidanceActive) {
+                for (const CoordInfo_t& point : transect) {
+                    if (point.coordType == CoordTypeSurveyEntry || point.coordType == CoordTypeSurveyExit ||
+                        point.coordType == CoordTypeInteriorHoverTrigger) {
+                        hoverTime += _hoverAndCaptureDelaySeconds;
+                    }
+                }
+            } else {
+                hoverTime += _hoverAndCaptureDelaySeconds * transect.count();
+            }
         }
     }
 
