@@ -15,7 +15,7 @@ on:
           - android
           - ios
       version:
-        description: 'GStreamer version (empty for default)'
+        description: 'GStreamer version (empty for the platform''s build-config.json version)'
         required: false
         default: ''
         type: string
@@ -92,28 +92,6 @@ jobs:
         id: buildconfig
         uses: ./.github/actions/build-config
 
-      - name: Resolve GStreamer version
-        id: config
-        shell: bash
-        env:
-          PLATFORM: ${{ inputs.platform }}
-          VERSION: ${{ inputs.version }}
-          PLATFORM_VERSION: >-
-            ${{
-              (inputs.platform == 'macos'   && steps.buildconfig.outputs.gstreamer_macos_version)   ||
-              (inputs.platform == 'windows' && steps.buildconfig.outputs.gstreamer_windows_version) ||
-              (inputs.platform == 'android' && steps.buildconfig.outputs.gstreamer_android_version) ||
-              (inputs.platform == 'ios'     && steps.buildconfig.outputs.gstreamer_ios_version)     ||
-              ''
-            }}
-          FALLBACK_VERSION: ${{ steps.buildconfig.outputs.gstreamer_version }}
-        run: >-
-          python3 "${GITHUB_WORKSPACE}/.github/scripts/resolve_gstreamer_config.py"
-          --platform "$PLATFORM"
-          --version "$VERSION"
-          --platform-version "$PLATFORM_VERSION"
-          --fallback-version "$FALLBACK_VERSION"
-
       - name: Install dependencies (Linux)
         if: inputs.platform == 'linux'
         run: |
@@ -170,7 +148,7 @@ jobs:
         env:
           PLATFORM: ${{ inputs.platform }}
           ARCH: ${{ inputs.arch }}
-          VERSION: ${{ steps.config.outputs.version }}
+          VERSION: ${{ inputs.version }}
           BUILD_TYPE: ${{ inputs.build_type }}
           SIMULATOR: ${{ inputs.simulator && 'true' || 'false' }}
           QT_PREFIX: ${{ env.QT_ROOT_DIR }}
@@ -219,7 +197,7 @@ jobs:
         env:
           PLATFORM: ${{ inputs.platform }}
           ARCH: ${{ inputs.arch }}
-          VERSION: ${{ steps.config.outputs.version }}
+          VERSION: ${{ inputs.version }}
           OUTPUT_DIR: ${{ runner.temp }}
           SIMULATOR: ${{ inputs.simulator && 'true' || 'false' }}
           UPLOAD_S3: ${{ inputs.upload_s3 && 'true' || 'false' }}

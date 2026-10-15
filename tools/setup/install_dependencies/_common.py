@@ -20,9 +20,15 @@ _tools_dir = Path(__file__).resolve().parents[2]
 if str(_tools_dir) not in sys.path:
     sys.path.insert(0, str(_tools_dir))
 
-from common.build_config import get_build_config_value, load_build_config  # noqa: E402
+from common.build_config import get_build_config_value  # noqa: E402
 from common.env import is_ci  # noqa: E402  re-exported for submodules
 from common.gh_actions import append_github_env  # noqa: E402
+from common.gstreamer import (  # noqa: E402  URL helpers re-exported for submodules
+    mirror_url,
+    package_filename,
+    package_url,
+    pinned_checksum,
+)
 from common.io import require_tar_data_filter  # noqa: E402  re-exported for submodules
 from common.logging import log_error, log_info, log_warn  # noqa: E402  re-exported for submodules
 from common.net import download_file as atomic_download_file  # noqa: E402
@@ -44,12 +50,7 @@ def get_config_value(key: str) -> str | None:
 
 def get_gstreamer_checksum(version: str, artifact: str) -> str | None:
     """Return a GStreamer artifact checksum for a version containing dots."""
-    try:
-        checksums = load_build_config().get("gstreamer", {}).get("checksums", {})
-    except (AttributeError, FileNotFoundError, OSError):
-        return None
-    value = checksums.get(version, {}).get(artifact)
-    return str(value) if value else None
+    return pinned_checksum(version, artifact)
 
 
 def _os_release_ids() -> set[str]:
@@ -387,6 +388,9 @@ __all__ = [
     "log_error",
     "log_info",
     "log_warn",
+    "mirror_url",
+    "package_filename",
+    "package_url",
     "require_tar_data_filter",
     "run_apt_install_with_retry",
     "run_command",

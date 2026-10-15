@@ -21,18 +21,6 @@ outputs:
   qt_version:
     description: Qt version from build-config
     value: ${{ steps.config.outputs.qt_version }}
-  gstreamer_version:
-    description: GStreamer version (generic/minimum) from build-config
-    value: ${{ steps.config.outputs.gstreamer_version }}
-  gstreamer_macos_version:
-    description: GStreamer version for macOS
-    value: ${{ steps.config.outputs.gstreamer_macos_version }}
-  gstreamer_android_version:
-    description: GStreamer version for Android
-    value: ${{ steps.config.outputs.gstreamer_android_version }}
-  gstreamer_windows_version:
-    description: GStreamer version for Windows
-    value: ${{ steps.config.outputs.gstreamer_windows_version }}
   apple_xcode_version:
     description: Xcode version for macOS
     value: ${{ steps.config.outputs.apple_xcode_version }}

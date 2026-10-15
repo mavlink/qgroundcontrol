@@ -289,19 +289,26 @@ runs:
 
     # SDK payloads change independently of source declarations and are large.
     # Keep them out of the CPM archive and reuse an immutable SDK archive.
+    # Only Windows, Android and iOS builds download one; desktop Linux and
+    # macOS use the system GStreamer. The key covers what selects, fetches
+    # and extracts the SDK, so other GStreamer CMake edits keep it.
     - name: Cache GStreamer SDK (restore and save)
-      if: inputs.cpm-modules != '' && steps.cache-policy.outputs.save == 'true' && inputs.build-type == 'Release'
+      if: >-
+        inputs.cpm-modules != '' && steps.cache-policy.outputs.save == 'true' && inputs.build-type == 'Release' &&
+        (startsWith(inputs.target, 'win') || inputs.target == 'android' || inputs.target == 'ios')
       uses: actions/cache@v6
       with:
         path: ${{ env.CPM_CACHE_PATH }}/gstreamer*
-        key: gst-sdk-v1-${{ inputs.host }}-${{ inputs.target }}-${{ hashFiles('.github/build-config.json', 'cmake/GStreamer/**/*.cmake') }}
+        key: gst-sdk-v1-${{ inputs.host }}-${{ inputs.target }}-${{ hashFiles('.github/build-config.json', 'cmake/GStreamer/Download.cmake', 'cmake/GStreamer/platform/*.cmake') }}
 
     - name: Cache GStreamer SDK (restore only)
-      if: inputs.cpm-modules != '' && (steps.cache-policy.outputs.save != 'true' || inputs.build-type != 'Release')
+      if: >-
+        inputs.cpm-modules != '' && (steps.cache-policy.outputs.save != 'true' || inputs.build-type != 'Release') &&
+        (startsWith(inputs.target, 'win') || inputs.target == 'android' || inputs.target == 'ios')
       uses: actions/cache/restore@v6
       with:
         path: ${{ env.CPM_CACHE_PATH }}/gstreamer*
-        key: gst-sdk-v1-${{ inputs.host }}-${{ inputs.target }}-${{ hashFiles('.github/build-config.json', 'cmake/GStreamer/**/*.cmake') }}
+        key: gst-sdk-v1-${{ inputs.host }}-${{ inputs.target }}-${{ hashFiles('.github/build-config.json', 'cmake/GStreamer/Download.cmake', 'cmake/GStreamer/platform/*.cmake') }}
 
     # Release populates immutable dependency snapshots. Debug jobs can also
     # restore the ordinary platform sources when their custom cache is absent.

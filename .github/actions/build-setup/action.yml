@@ -69,18 +69,6 @@ outputs:
   qt_version:
     description: Resolved Qt version for this build
     value: ${{ inputs.qt-version || steps.prereq.outputs.qt_version }}
-  gstreamer_version:
-    description: GStreamer version (generic/minimum)
-    value: ${{ steps.prereq.outputs.gstreamer_version }}
-  gstreamer_macos_version:
-    description: GStreamer version for macOS
-    value: ${{ steps.prereq.outputs.gstreamer_macos_version }}
-  gstreamer_android_version:
-    description: GStreamer version for Android
-    value: ${{ steps.prereq.outputs.gstreamer_android_version }}
-  gstreamer_windows_version:
-    description: GStreamer version for Windows
-    value: ${{ steps.prereq.outputs.gstreamer_windows_version }}
   apple_xcode_version:
     description: Xcode version for macOS
     value: ${{ steps.prereq.outputs.apple_xcode_version }}

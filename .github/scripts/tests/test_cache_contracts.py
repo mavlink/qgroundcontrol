@@ -312,6 +312,10 @@ def test_dependencies_use_immutable_separate_sdk_archives():
         assert "cpm_unvaried_scope" in step["with"]["restore-keys"]
         assert "cpm_unvaried_shared" in step["with"]["restore-keys"]
     assert all(step["with"]["path"] == "${{ env.CPM_CACHE_PATH }}/gstreamer*" for step in sdk)
+    # Unrelated GStreamer CMake edits must not invalidate the SDK archives.
+    for step in sdk:
+        assert "cmake/GStreamer/**" not in step["with"]["key"]
+        assert "'cmake/GStreamer/Download.cmake'" in step["with"]["key"]
 
 
 def test_compiler_caches_save_before_downstream_failures():

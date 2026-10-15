@@ -16,15 +16,13 @@ ensure_tools_dir(__file__)
 from common.build_config import get_build_config_value
 from common.file_traversal import find_repo_root
 from common.git import run_git
+from common.gstreamer import PLATFORM_PACKAGES, release_index_url
 from common.logging import log_error, log_info, log_ok, log_warn
 from common.proc import run_captured
 
 QT_RELEASES_URL = "https://download.qt.io/official_releases/qt/"
 GSTREAMER_PACKAGE_INDEX_URLS = {
-    "android": "https://gstreamer.freedesktop.org/data/pkg/android/",
-    "ios": "https://gstreamer.freedesktop.org/data/pkg/ios/",
-    "macos": "https://gstreamer.freedesktop.org/data/pkg/macos/",
-    "windows": "https://gstreamer.freedesktop.org/data/pkg/windows/",
+    platform: release_index_url(platform) for platform in PLATFORM_PACKAGES
 }
 GSTREAMER_VERSION_PATTERN = re.compile(r'href=["\'](\d+)\.(\d+)\.(\d+)/["\']')
 REQ_FILES = [

@@ -582,7 +582,10 @@ def test_install_windows_gstreamer(monkeypatch, tmp_path: Path) -> None:
     installer = dl.call_args_list[0].args[1]
     assert installer.name == "gstreamer-1.0-msvc-x86_64-1.28.4.exe"
     assert [call.args[0] for call in dl.call_args_list] == [
-        (f"{_windows.WINDOWS_GSTREAMER_BASE_URL}/gstreamer-1.0-msvc-x86_64-1.28.4.exe"),
+        (
+            "https://qgroundcontrol.s3.us-west-2.amazonaws.com/dependencies/gstreamer/windows/"
+            "gstreamer-1.0-msvc-x86_64-1.28.4.exe"
+        ),
         (
             "https://gstreamer.freedesktop.org/data/pkg/windows/1.28.4/msvc/"
             "gstreamer-1.0-msvc-x86_64-1.28.4.exe"

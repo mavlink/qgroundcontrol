@@ -219,7 +219,6 @@ Python helpers in `.github/scripts/` invoked by workflows and composite actions.
 | `precommit_results.py` | Normalize pre-commit outputs into uploaded CI artifacts |
 | `release_builds.py` | Dispatch and freeze exact release workflow run identities |
 | `report_context.py` | Reject stale PR/default-branch reporting contexts |
-| `resolve_gstreamer_config.py` | Pick the platform-specific GStreamer version from build-config outputs |
 | `size_analysis.py` | Analyze binary size changes |
 | `release_tag_check.py` | Report whether the current tag is a `vX.Y.Z` release tag reachable from a `Stable*` branch |
 | `test_duration_report.py` | Generate test-duration reports and regressions |
@@ -305,6 +304,9 @@ Compiler and moc caches use rolling write keys, with a distinct suffix per matri
 moc save keys include the coverage/sanitizer variant while restore prefixes stay shared.
 CPM uses immutable dependency-fingerprint keys; unchanged snapshots are not saved again.
 GStreamer SDK payloads have separate immutable archives and are excluded from CPM archives.
+Only Windows, Android, and iOS jobs cache them (desktop Linux and macOS use the system
+GStreamer), keyed on `build-config.json`, `cmake/GStreamer/Download.cmake`, and
+`cmake/GStreamer/platform/*.cmake`.
 Custom Debug can fall back to the ordinary platform's CPM sources. Coverage's 3 GB GitHub
 budget is a targeted trial: compare cache hits, LRU evictions, and transfer time on warm runs.
 macOS explicitly passes the installed ccache binary to CMake so Homebrew discovery

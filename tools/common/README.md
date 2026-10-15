@@ -26,6 +26,7 @@ from common.proc import run_captured
 | `format.py` | Human-readable byte and size-delta formatting |
 | `gh_actions.py` | GitHub CLI calls, read-only API retries, annotations, outputs, and summaries |
 | `git.py` | Captured Git commands and default-branch discovery |
+| `gstreamer.py` | GStreamer SDK package and mirror URLs and their pinned checksums |
 | `io.py` | JSON/TOML I/O, checksums, atomic writes, and safe archive extraction |
 | `logging.py` | Color-aware terminal logging |
 | `markdown.py` | Escaped GitHub-Flavored Markdown tables |

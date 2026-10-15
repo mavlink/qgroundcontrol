@@ -124,6 +124,16 @@ def get_build_config_value(
     return str(value) if value is not None else default
 
 
+def get_gstreamer_version(platform: str, **kwargs: Any) -> str:
+    """Return gstreamer.version.<platform>, else gstreamer.version.default (Linux has no entry).
+
+    Keyword arguments are passed to get_build_config_value.
+    """
+    return get_build_config_value(f"gstreamer.version.{platform}", **kwargs) or (
+        get_build_config_value("gstreamer.version.default", **kwargs)
+    )
+
+
 def derive_ios_qt_modules(qt_modules: str) -> str:
     """Return the iOS-safe Qt module list."""
     modules = [module for module in qt_modules.split() if module not in IOS_QT_MODULE_EXCLUDES]

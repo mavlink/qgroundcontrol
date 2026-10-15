@@ -14,18 +14,6 @@ outputs:
   gstreamer_version:
     description: GStreamer version (generic/minimum)
     value: ${{ steps.read.outputs.gstreamer_version }}
-  gstreamer_macos_version:
-    description: GStreamer version (macOS)
-    value: ${{ steps.read.outputs.gstreamer_macos_version }}
-  gstreamer_android_version:
-    description: GStreamer version (Android)
-    value: ${{ steps.read.outputs.gstreamer_android_version }}
-  gstreamer_windows_version:
-    description: GStreamer version (Windows)
-    value: ${{ steps.read.outputs.gstreamer_windows_version }}
-  gstreamer_ios_version:
-    description: GStreamer version (iOS)
-    value: ${{ steps.read.outputs.gstreamer_ios_version }}
   android_ndk_version:
     description: Android NDK version (short form)
     value: ${{ steps.read.outputs.android_ndk_version }}

@@ -18,10 +18,7 @@ MACOS_GSTREAMER_BASE_URL = (
 
 def get_gstreamer_macos_urls(version: str) -> tuple[str, str]:
     """Get GStreamer download URLs for macOS."""
-    base_url = f"https://gstreamer.freedesktop.org/data/pkg/osx/{version}"
-    runtime = f"{base_url}/gstreamer-1.0-{version}-universal.pkg"
-    devel = f"{base_url}/gstreamer-1.0-devel-{version}-universal.pkg"
-    return runtime, devel
+    return _c.package_url("macos", version), _c.package_url("macos_devel", version)
 
 
 def _download_gstreamer_package(url: str, dest: Path, expected_sha256: str) -> bool:
