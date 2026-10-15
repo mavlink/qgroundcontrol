@@ -1,46 +1,20 @@
 #include "CpuVideoFramePool.h"
 
-#include <QtCore/QLoggingCategory>
-#include <QtMultimedia/QAbstractVideoBuffer>
 #include <atomic>
 #include <cstring>
 #include <gst/video/video.h>
 #include <memory>
 #include <utility>
 
+#include <QtCore/QLoggingCategory>
+#include <QtMultimedia/QAbstractVideoBuffer>
+
+#include "GstHwVideoInfo.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(CpuVideoFramePoolLog, "Video.GStreamer.HwBuffers.CpuPool")
 
 namespace {
-
-/// The first component stored in @p plane. Plane and component indices differ in general (AV12's third plane holds
-/// component 3, the full-height alpha, not the half-height V component 2), so per-plane sizes must go through this.
-int firstComponentOf(const GstVideoInfo& info, int plane)
-{
-    gint components[GST_VIDEO_MAX_COMPONENTS];
-    gst_video_format_info_component(info.finfo, static_cast<guint>(plane), components);
-    return components[0];
-}
-
-int planeHeight(const GstVideoInfo& info, int plane)
-{
-    const int component = firstComponentOf(info, plane);
-    if (component < 0) {
-        return 0;
-    }
-    return static_cast<int>(GST_VIDEO_INFO_COMP_HEIGHT(&info, component));
-}
-
-/// Bytes of image data in one row of @p plane, i.e. the stride without its alignment padding.
-int planeRowBytes(const GstVideoInfo& info, int plane)
-{
-    const int component = firstComponentOf(info, plane);
-    if (component < 0) {
-        return 0;
-    }
-    return GST_VIDEO_INFO_COMP_WIDTH(&info, component) * GST_VIDEO_INFO_COMP_PSTRIDE(&info, component);
-}
 
 class PooledCpuVideoBuffer final : public QAbstractVideoBuffer
 {
@@ -150,7 +124,7 @@ CpuVideoFramePool::PlaneLayout CpuVideoFramePool::computeLayout(const GstVideoIn
     for (int i = 0; i < n; ++i) {
         L.bytesPerLine[i] = GST_VIDEO_INFO_PLANE_STRIDE(&info, i);
         L.planeOffset[i] = static_cast<qsizetype>(GST_VIDEO_INFO_PLANE_OFFSET(&info, i));
-        L.height[i] = planeHeight(info, i);
+        L.height[i] = GstHw::planeHeight(info, i);
     }
     L.byteSize = static_cast<qsizetype>(GST_VIDEO_INFO_SIZE(&info));
     return L;
@@ -163,7 +137,8 @@ QAbstractVideoBuffer::MapData CpuVideoFramePool::mapDataFor(const GstVideoFrame&
     for (int i = 0; i < data.planeCount; ++i) {
         data.data[i] = static_cast<uchar*>(GST_VIDEO_FRAME_PLANE_DATA(&frame, i));
         data.bytesPerLine[i] = GST_VIDEO_FRAME_PLANE_STRIDE(&frame, i);
-        data.dataSize[i] = static_cast<qsizetype>(GST_VIDEO_FRAME_PLANE_STRIDE(&frame, i)) * planeHeight(frame.info, i);
+        data.dataSize[i] =
+            static_cast<qsizetype>(GST_VIDEO_FRAME_PLANE_STRIDE(&frame, i)) * GstHw::planeHeight(frame.info, i);
     }
     return data;
 }
@@ -312,8 +287,8 @@ QVideoFrame CpuVideoFramePool::copyFromBuffer(GstBuffer* buffer, const GstVideoI
     for (int p = 0; p < srcPlanes; ++p) {
         const int dstStride = videoFrame.bytesPerLine(p);
         const int srcStride = GST_VIDEO_FRAME_PLANE_STRIDE(&gstFrame, p);
-        const int rows = planeHeight(gstFrame.info, p);
-        const int activeRowBytes = planeRowBytes(gstFrame.info, p);
+        const int rows = GstHw::planeHeight(gstFrame.info, p);
+        const int activeRowBytes = GstHw::planeRowBytes(gstFrame.info, p);
         // Reject before copy: a dst stride too narrow for a source row would tear the plane.
         if (activeRowBytes > dstStride) {
             static std::atomic<bool> s_warnedStrideOverflow{false};

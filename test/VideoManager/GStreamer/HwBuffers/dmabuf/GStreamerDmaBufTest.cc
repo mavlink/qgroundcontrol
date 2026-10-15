@@ -324,6 +324,19 @@ void GStreamerTest::_testDmaDrmCapsRejectNonLinearModifiers()
 #endif
 }
 
+void GStreamerTest::_testLinearDmaDrmCapsFollowFormatTable()
+{
+#if defined(QGC_HAS_GST_DMABUF_GPU_PATH) && GST_CHECK_VERSION(1, 24, 0)
+    // Every format the table offers as DMA_DRM, in table order: YV12 imports exactly as I420 does.
+    const std::vector<GstVideoFormat> formats = GstQgc::advertisedFormats(GstQgc::kOfferLinearDmaDrm);
+    QCOMPARE(QString::fromStdString(GstHw::buildLinearDmaDrmCaps(formats)),
+             QStringLiteral("video/x-raw(memory:DMABuf), format=DMA_DRM, "
+                            "drm-format={ NV12, NV21, YU12, YV12, P010, AR24, AB24 }; "));
+#else
+    QSKIP("DMABuf DMA_DRM caps unavailable in this build");
+#endif
+}
+
 void GStreamerTest::_testDmaBufRejectsNonLinearDirectImport()
 {
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)

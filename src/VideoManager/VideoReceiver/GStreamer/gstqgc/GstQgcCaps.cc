@@ -25,13 +25,14 @@ std::string buildGpuCapsString()
 #else
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
 #if GST_CHECK_VERSION(1, 24, 0)
+    const std::vector<GstVideoFormat> dmaDrmFormats = advertisedFormats(kOfferLinearDmaDrm);
     // Best-effort: advertise the GPU's actually-supported (format, modifier) pairs (EGL query) so modifier-aware
     // drivers negotiate a tiling QGC's importer can consume. Additive — empty on any query failure (see below).
-    capsStr += GstHw::buildSupportedDmaDrmCaps(kFormats.c_str());
+    capsStr += GstHw::buildSupportedDmaDrmCaps(dmaDrmFormats);
     // QGC_GST_OFFER_DMA_DRM_LINEAR=1 force-offers LINEAR-modifier (0x0) DMA_DRM as a fallback/override so a driver
     // that mis-reports modifiers still gets a guaranteed-LINEAR option and iHD can't pick tiled+CCS.
     if (HwBuffers::hwBufferEnvConfig().offerDmaDrmLinear) {
-        capsStr += GstHw::buildLinearDmaDrmCaps(advertisedFormatList(kOfferLinearDmaDrm).c_str());
+        capsStr += GstHw::buildLinearDmaDrmCaps(dmaDrmFormats);
     }
 #endif
     // Legacy memory:DMABuf covers v4l2h264dec/Mali/V3D LINEAR. Unrestricted DMA_DRM is never offered (only the

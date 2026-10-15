@@ -49,6 +49,7 @@ private slots:
     void _testD3D12MapNv12TexturesWithQRhi();
     void _testDmaBufDispatch();
     void _testDmaDrmCapsRejectNonLinearModifiers();
+    void _testLinearDmaDrmCapsFollowFormatTable();
     void _testDmaBufRejectsNonLinearDirectImport();
     void _testDmaBufTiledImportAvoidsTexStorage();
     void _testVulkanDispatchDemotesToCpu();

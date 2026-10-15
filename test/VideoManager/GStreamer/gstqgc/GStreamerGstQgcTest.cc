@@ -1685,7 +1685,7 @@ void GStreamerTest::_testAdvertisedFormatListForOffer_data()
     // Multi-plane GLMemory renders green through Qt's GL import, so glupload must stay single-plane RGB.
     QTest::newRow("glupload") << uint(GstQgc::kOfferGlUpload) << QStringLiteral("{ BGRA, RGBA }");
     QTest::newRow("linear-dma-drm") << uint(GstQgc::kOfferLinearDmaDrm)
-                                    << QStringLiteral("{ NV12, NV21, I420, P010_10LE, BGRA, RGBA }");
+                                    << QStringLiteral("{ NV12, NV21, I420, YV12, P010_10LE, BGRA, RGBA }");
 }
 
 void GStreamerTest::_testAdvertisedFormatListForOffer()

@@ -5,20 +5,15 @@
 #endif
 
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH) && GST_CHECK_VERSION(1, 24, 0)
-#include "GstDmaFourcc.h"
-#include "GstEglHelpers.h"
+#include <algorithm>
+#include <vector>
 
-#include "QGCLoggingCategory.h"
-
-#include <QtCore/QByteArray>
-#include <QtCore/QSet>
 #include <QtGui/QOpenGLContext>
 
+#include "GstEglHelpers.h"
+#include "QGCLoggingCategory.h"
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
-
-#include <cstdint>
-#include <vector>
 
 QGC_LOGGING_CATEGORY(GstDmaDrmCapsLog, "Video.GStreamer.HwBuffers.GstDmaDrmCaps")
 #endif
@@ -31,22 +26,6 @@ namespace {
 
 constexpr const char* kModifiersExt = "EGL_EXT_image_dma_buf_import_modifiers";
 
-// Renderable tokens from the kFormats brace list ("{ NV12, NV21, ... }"); intersected with EGL results below so we
-// never advertise a format the Qt mapper would reject.
-QSet<QByteArray> parseFormatTokens(const char* gstFormatList)
-{
-    QSet<QByteArray> tokens;
-    if (!gstFormatList)
-        return tokens;
-    for (QByteArray tok : QByteArray(gstFormatList).split(',')) {
-        tok.replace('{', "").replace('}', "");
-        tok = tok.trimmed();
-        if (!tok.isEmpty())
-            tokens.insert(tok);
-    }
-    return tokens;
-}
-
 // LINEAR-only: tiled external DMABuf from gst-va/iHD can be negotiated and even imported, but binding the resulting
 // EGLImage through Qt's render-thread GL path segfaults Mesa/Gallium on this stack. The default glupload path can
 // handle those tiled buffers; direct-QGC DMABuf only advertises layouts it can safely bind itself.
@@ -57,10 +36,9 @@ bool isImportableModifier(EGLuint64KHR mod) noexcept
 
 }  // namespace
 
-std::string buildSupportedDmaDrmCaps(const char* gstFormatList)
+std::string buildSupportedDmaDrmCaps(std::span<const GstVideoFormat> formats)
 {
-    const QSet<QByteArray> allowed = parseFormatTokens(gstFormatList);
-    if (allowed.isEmpty())
+    if (formats.empty())
         return std::string();
 
     // Prefer the display of Qt's EGL share context: Qt initialized it and owns its lifetime. Without one (GLX, or no
@@ -89,18 +67,19 @@ std::string buildSupportedDmaDrmCaps(const char* gstFormatList)
     EGLint numFormats = 0;
     if (queryFormats(dpy, 0, nullptr, &numFormats) != EGL_TRUE || numFormats <= 0)
         return std::string();
-    std::vector<EGLint> formats(static_cast<std::size_t>(numFormats));
-    if (queryFormats(dpy, numFormats, formats.data(), &numFormats) != EGL_TRUE || numFormats <= 0)
+    std::vector<EGLint> fourccs(static_cast<std::size_t>(numFormats));
+    if (queryFormats(dpy, numFormats, fourccs.data(), &numFormats) != EGL_TRUE || numFormats <= 0)
         return std::string();
-    formats.resize(static_cast<std::size_t>(numFormats));
+    fourccs.resize(static_cast<std::size_t>(numFormats));
 
     std::string entries;
     int formatCount = 0;
     int modifierCount = 0;
     int excludedCount = 0;
-    for (const EGLint fourcc : formats) {
-        const char* gstName = gstFormatNameForImportableFourcc(static_cast<uint32_t>(fourcc));
-        if (!gstName || !allowed.contains(QByteArray(gstName)))
+    for (const EGLint fourcc : fourccs) {
+        // GStreamer's own fourcc mapping, the one it reads drm-format caps with.
+        const GstVideoFormat format = gst_video_dma_drm_fourcc_to_format(static_cast<guint32>(fourcc));
+        if (std::ranges::find(formats, format) == formats.end())
             continue;
 
         EGLint numMods = 0;
@@ -141,13 +120,10 @@ std::string buildSupportedDmaDrmCaps(const char* gstFormatList)
     return std::string("video/x-raw(memory:DMABuf), format=DMA_DRM, drm-format={ ") + entries + " }; ";
 }
 
-std::string buildLinearDmaDrmCaps(const char* gstFormatList)
+std::string buildLinearDmaDrmCaps(std::span<const GstVideoFormat> formats)
 {
     std::string entries;
-    for (const QByteArray& tok : parseFormatTokens(gstFormatList)) {
-        const GstVideoFormat fmt = gst_video_format_from_string(tok.constData());
-        if (fmt == GST_VIDEO_FORMAT_UNKNOWN)
-            continue;
+    for (const GstVideoFormat fmt : formats) {
         const guint32 fourcc = gst_video_dma_drm_fourcc_from_format(fmt);
         if (fourcc == 0)  // DRM_FORMAT_INVALID
             continue;
@@ -173,12 +149,12 @@ bool dmaDrmModifierAdvertisedForTest(guint64 modifier) noexcept
 
 #else
 
-std::string buildSupportedDmaDrmCaps(const char*)
+std::string buildSupportedDmaDrmCaps(std::span<const GstVideoFormat>)
 {
     return std::string();
 }
 
-std::string buildLinearDmaDrmCaps(const char*)
+std::string buildLinearDmaDrmCaps(std::span<const GstVideoFormat>)
 {
     return std::string();
 }

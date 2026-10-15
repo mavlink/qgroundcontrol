@@ -9,6 +9,7 @@
 #include "GstHwPathRegistry.h"
 #include "GstHwPathTelemetry.h"
 #include "GstHwVideoBuffer.h"
+#include "GstHwVideoInfo.h"
 #include "HwBuffers.h"
 #include "QGCRhiCapture.h"
 
@@ -640,8 +641,8 @@ bool importPerPlane(const EglImport& ctx, bool sharedFd)
 
         // Per-plane key: same fd may back several planes (NV12 single-fd), so include geometry and layout.
         DmaImageKey key{.fd = fd,
-                        .width = GST_VIDEO_INFO_COMP_WIDTH(ctx.info, i),
-                        .height = GST_VIDEO_INFO_COMP_HEIGHT(ctx.info, i),
+                        .width = GstHw::planeWidth(*ctx.info, i),
+                        .height = GstHw::planeHeight(*ctx.info, i),
                         .fourcc = fourcc,
                         .planeCount = 1};
         key.offsets[0] = offset;

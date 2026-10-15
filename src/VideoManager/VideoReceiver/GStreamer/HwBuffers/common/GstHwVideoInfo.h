@@ -9,4 +9,13 @@ namespace GstHw {
 /// decode. False on parse failure or null args.
 bool dmaDrmAwareVideoInfo(GstCaps* caps, GstVideoInfo* info);
 
+/// Size of @p plane, taken from the first component stored in it: plane and component indices differ in general (AV12's
+/// third plane holds component 3, the full-height alpha, not the half-height V component 2). 0 for a plane without
+/// components.
+int planeWidth(const GstVideoInfo& info, int plane);
+int planeHeight(const GstVideoInfo& info, int plane);
+
+/// Bytes of image data in one row of @p plane, i.e. the stride without its alignment padding.
+int planeRowBytes(const GstVideoInfo& info, int plane);
+
 }  // namespace GstHw
