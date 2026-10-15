@@ -5,6 +5,7 @@
 #include <limits>
 #include <utility>
 
+#include <QtCore/QHash>
 #include <QtCore/QJsonArray>
 #include <QtCore/QLineF>
 #include <QtGui/QPainterPath>
@@ -50,6 +51,12 @@ QPainterPath expandedArea(const QPainterPath& area, double distance)
     stroker.setJoinStyle(Qt::MiterJoin);
     return area.united(stroker.createStroke(area));
 }
+
+struct SurveyCoverageSegment
+{
+    QLineF coverage;
+    QLineF flight;
+};
 
 class SurveyPathPlanner
 {
@@ -174,6 +181,94 @@ public:
         }
         result.prepend(start);
         return result;
+    }
+
+    void optimizeOrder(QList<SurveyCoverageSegment>& segments)
+    {
+        if (segments.count() < 4) {
+            return;
+        }
+        QList<int> order;
+        QList<int> sweeps;
+        int sweep = 0;
+        // Each order entry is a starting endpoint id; toggling its low bit reverses the segment.
+        for (int i = 0; i < segments.count(); ++i) {
+            order.append(i * 2);
+            if (i > 0) {
+                const QPointF previous = segments[i - 1].coverage.p2() - segments[i - 1].coverage.p1();
+                const QPointF current = segments[i].coverage.p2() - segments[i].coverage.p1();
+                if (std::abs(QPointF::dotProduct(previous, current)) <
+                    0.5 * segments[i - 1].coverage.length() * segments[i].coverage.length()) {
+                    ++sweep;
+                }
+            }
+            sweeps.append(sweep);
+        }
+        const auto endpoint = [&segments](int index) {
+            return index & 1 ? segments[index / 2].flight.p2() : segments[index / 2].flight.p1();
+        };
+        QHash<quint64, double> distances;
+        const auto distance = [this, &distances, &endpoint](int from, int to) {
+            const quint64 key = (quint64(qMin(from, to)) << 32) | quint64(qMax(from, to));
+            const auto cached = distances.constFind(key);
+            if (cached != distances.cend()) {
+                return cached.value();
+            }
+            const QList<QPointF> path = shortestPath(endpoint(from), endpoint(to));
+            double length = path.isEmpty() ? std::numeric_limits<double>::infinity() : 0;
+            for (int i = 1; i < path.count(); ++i) {
+                length += QLineF(path[i - 1], path[i]).length();
+            }
+            distances.insert(key, length);
+            return length;
+        };
+
+        // Reversing a section preserves its internal distances. Only the two new connectors need checking.
+        // Bound the search to keep fence edits responsive at the transect limit.
+        constexpr int MAX_PASSES = 4;
+        constexpr int SEARCH_WINDOW = 64;
+        for (int pass = 0; pass < MAX_PASSES; ++pass) {
+            bool improved = false;
+            // Keep the survey entry/exit fixed and do not mix the primary and refly sweeps.
+            for (int first = 1; first + 1 < order.count(); ++first) {
+                const int before = order[first - 1] ^ 1;
+                const int start = order[first];
+                const int lastCandidate = qMin(first + SEARCH_WINDOW, int(order.count()) - 2);
+                for (int last = first; last <= lastCandidate; ++last) {
+                    if (sweeps[order[last] / 2] != sweeps[start / 2]) {
+                        break;
+                    }
+                    const int end = order[last] ^ 1;
+                    const int after = order[last + 1];
+                    const double original = distance(before, start) + distance(end, after);
+                    const double lowerBound = QLineF(endpoint(before), endpoint(end)).length() +
+                                              QLineF(endpoint(start), endpoint(after)).length();
+                    if (lowerBound + ROUTING_TOLERANCE >= original ||
+                        distance(before, end) + distance(start, after) + ROUTING_TOLERANCE >= original) {
+                        continue;
+                    }
+                    std::reverse(order.begin() + first, order.begin() + last + 1);
+                    for (int i = first; i <= last; ++i) {
+                        order[i] ^= 1;
+                    }
+                    improved = true;
+                    break;
+                }
+            }
+            if (!improved) {
+                break;
+            }
+        }
+        QList<SurveyCoverageSegment> optimized;
+        for (int index : order) {
+            SurveyCoverageSegment segment = segments[index / 2];
+            if (index & 1) {
+                segment.coverage = QLineF(segment.coverage.p2(), segment.coverage.p1());
+                segment.flight = QLineF(segment.flight.p2(), segment.flight.p1());
+            }
+            optimized.append(segment);
+        }
+        segments = optimized;
     }
 
 private:
@@ -1006,13 +1101,7 @@ void SurveyComplexItem::_avoidObstacles()
     SurveyPathPlanner coveragePlanner(surveyArea.subtracted(obstacles));
     SurveyPathPlanner routingPlanner(flightArea.subtracted(obstacles));
 
-    struct CoverageSegment
-    {
-        QLineF coverage;
-        QLineF flight;
-    };
-
-    QList<CoverageSegment> segments;
+    QList<SurveyCoverageSegment> segments;
     for (const QList<CoordInfo_t>& transect : _transects) {
         const auto entry = std::find_if(transect.cbegin(), transect.cend(), [](const CoordInfo_t& point) {
             return point.coordType == CoordTypeSurveyEntry;
@@ -1043,9 +1132,12 @@ void SurveyComplexItem::_avoidObstacles()
             }
         }
     }
+    if (!_flyAlternateTransectsFact.rawValue().toBool()) {
+        routingPlanner.optimizeOrder(segments);
+    }
     QList<QList<CoordInfo_t>> planned;
     QPointF current;
-    for (const CoverageSegment& segment : segments) {
+    for (const SurveyCoverageSegment& segment : segments) {
         if (!planned.isEmpty()) {
             const QList<QPointF> path = routingPlanner.shortestPath(current, segment.flight.p1());
             if (path.isEmpty()) {

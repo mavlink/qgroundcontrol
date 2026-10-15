@@ -56,6 +56,8 @@ protected:
 private slots:
     void _testObstacleAvoidance_data();
     void _testObstacleAvoidance();
+    void _testObstacleRouteEfficiency_data();
+    void _testObstacleRouteEfficiency();
     void _testObstacleChanges();
     void _testBlockedSurvey_data();
     void _testBlockedSurvey();

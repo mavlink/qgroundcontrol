@@ -570,8 +570,10 @@ void SurveyComplexItemObstacleTest::_testObstacleAvoidance()
         QCOMPARE(lastTriggerDistance, 0.0);
     }
     if (!originalCoverage.isEmpty()) {
+        const QList<QLineF> coverage = surveyCoverageSegments(items, origin);
         int previousRow = 0;
-        for (const QLineF& segment : surveyCoverageSegments(items, origin)) {
+        bool reflyStarted = false;
+        for (const QLineF& segment : coverage) {
             int row = -1;
             for (int i = 0; i < originalCoverage.count(); ++i) {
                 if (distanceToSurveySegment(segment.p1(), originalCoverage[i]) < 0.05 &&
@@ -580,11 +582,53 @@ void SurveyComplexItemObstacleTest::_testObstacleAvoidance()
                     break;
                 }
             }
-            QVERIFY2(row >= previousRow, "Obstacle avoidance changes the lawnmower transect order");
-            QVERIFY2(QPointF::dotProduct(segment.p2() - segment.p1(),
-                                         originalCoverage[row].p2() - originalCoverage[row].p1()) > 0,
-                     "A split transect reverses the survey direction");
+            QVERIFY2(row >= 0, "Obstacle avoidance changes the survey coverage lines");
+            if (alternate) {
+                QVERIFY2(row >= previousRow, "Obstacle avoidance changes the alternate transect order");
+                QVERIFY2(QPointF::dotProduct(segment.p2() - segment.p1(),
+                                             originalCoverage[row].p2() - originalCoverage[row].p1()) > 0,
+                         "A split alternate transect reverses the survey direction");
+            }
+            const QLineF& first = originalCoverage.first();
+            const bool reflySegment =
+                std::abs(QPointF::dotProduct(segment.p2() - segment.p1(), first.p2() - first.p1())) <
+                0.5 * segment.length() * first.length();
+            QVERIFY2(!reflyStarted || reflySegment, "Primary and refly coverage sweeps are interleaved");
+            reflyStarted = reflyStarted || reflySegment;
             previousRow = row;
+        }
+        // Independently sample the original coverage lines outside the expanded exclusions.
+        for (const QLineF& original : originalCoverage) {
+            const int steps = qMax(1, qCeil(original.length() / 0.25));
+            for (int step = 0; step <= steps; ++step) {
+                const QPointF point = original.pointAt(double(step) / steps);
+                double boundaryDistance;
+                if (circle) {
+                    boundaryDistance = -std::numeric_limits<double>::infinity();
+                    for (int side = 0; side < 8; ++side) {
+                        const double normalAngle = (side * 45.0 - angle) * M_PI / 180;
+                        const QPointF normal(std::cos(normalAngle), std::sin(normalAngle));
+                        boundaryDistance =
+                            qMax(boundaryDistance, QPointF::dotProduct(point - QPointF(50, -50), normal) - 17.1);
+                    }
+                } else {
+                    boundaryDistance =
+                        qMax(qMax(32.9 - point.x(), point.x() - 67.1), qMax(-67.1 - point.y(), point.y() + 32.9));
+                }
+                if (std::abs(boundaryDistance) < 0.05) {
+                    continue;
+                }
+                int coveringSegments = 0;
+                for (const QLineF& segment : coverage) {
+                    const bool parallel =
+                        std::abs(QPointF::dotProduct(segment.p2() - segment.p1(), original.p2() - original.p1())) >
+                        0.5 * segment.length() * original.length();
+                    if (parallel && distanceToSurveySegment(point, segment) < 0.05) {
+                        ++coveringSegments;
+                    }
+                }
+                QCOMPARE(coveringSegments, boundaryDistance > 0 ? 1 : 0);
+            }
         }
     }
     // Check the segments actually flown, including turns and transitions, independently of the planner.
@@ -619,6 +663,84 @@ void SurveyComplexItemObstacleTest::_testObstacleAvoidance()
             }
         }
     }
+}
+
+void SurveyComplexItemObstacleTest::_testObstacleRouteEfficiency_data()
+{
+    QTest::addColumn<int>("entryPoint");
+    QTest::addColumn<double>("spacing");
+    QTest::addColumn<double>("maximumDistance");
+    for (int entry = 0; entry < 4; ++entry) {
+        QTest::newRow(qPrintable(QStringLiteral("entry-%1").arg(entry))) << entry << 10.0 << 1100.0;
+    }
+    QTest::newRow("dense") << 0 << 1.0 << 10000.0;
+}
+
+void SurveyComplexItemObstacleTest::_testObstacleRouteEfficiency()
+{
+    QFETCH(int, entryPoint);
+    QFETCH(double, spacing);
+    QFETCH(double, maximumDistance);
+    _surveyItem->cameraTriggerInTurnAround()->setRawValue(false);
+    _surveyItem->hoverAndCapture()->setRawValue(false);
+    _surveyItem->refly90Degrees()->setRawValue(false);
+    _surveyItem->flyAlternateTransects()->setRawValue(false);
+    _surveyItem->cameraCalc()->adjustedFootprintSide()->setRawValue(spacing);
+    for (int entry = 0; entry < entryPoint; ++entry) {
+        _surveyItem->rotateEntryPoint();
+    }
+    const QGeoCoordinate entry = _surveyItem->coordinate();
+    const QGeoCoordinate exit = _surveyItem->exitCoordinate();
+    const QGeoCoordinate origin = _polyVertices.first();
+    QList<MissionItem*> originalItems;
+    _surveyItem->appendMissionItems(originalItems, this);
+    int segmentCount = 0;
+    double expectedCoverage = 0;
+    for (const QLineF& segment : surveyCoverageSegments(originalItems, origin)) {
+        const bool crossesBarrier = segment.x1() > 7.9 && segment.x1() < 92.1;
+        segmentCount += crossesBarrier ? 2 : 1;
+        // The 20 m barrier plus clearance removes 24.2 m from each crossing line.
+        expectedCoverage += segment.length() - (crossesBarrier ? 24.2 : 0);
+    }
+    GeoFenceController* fences = planController()->geoFenceController();
+    auto* polygon = new QGCFencePolygon(false, fences);
+    polygon->appendVertices(obstacleVertices(origin, QRectF(10, -60, 80, 20)));
+    fences->polygons()->append(polygon);
+
+    QCOMPARE(_surveyItem->readyForSaveState(), VisualMissionItem::ReadyForSave);
+    QVERIFY(_surveyItem->coordinate().distanceTo(entry) < 0.01);
+    QVERIFY(_surveyItem->exitCoordinate().distanceTo(exit) < 0.01);
+    QList<MissionItem*> items;
+    _surveyItem->appendMissionItems(items, this);
+    const QList<QLineF> coverage = surveyCoverageSegments(items, origin);
+    QCOMPARE(coverage.count(), segmentCount);
+    double coverageLength = 0;
+    for (const QLineF& segment : coverage) {
+        coverageLength += segment.length();
+    }
+    QVERIFY(std::abs(coverageLength - expectedCoverage) < 0.05);
+    double distance = 0;
+    QGeoCoordinate previous;
+    for (const MissionItem* item : items) {
+        if (item->command() == MAV_CMD_NAV_WAYPOINT) {
+            const QGeoCoordinate coordinate = item->coordinate();
+            if (previous.isValid()) {
+                distance += previous.distanceTo(coordinate);
+                const QLineF flight(localSurveyPoint(previous, origin), localSurveyPoint(coordinate, origin));
+                const int steps = qMax(1, qCeil(flight.length() / 0.25));
+                for (int step = 0; step <= steps; ++step) {
+                    const QPointF point = flight.pointAt(double(step) / steps);
+                    const double dx = qMax(qMax(10.0 - point.x(), point.x() - 90.0), 0.0);
+                    const double dy = qMax(qMax(-60.0 - point.y(), point.y() + 40.0), 0.0);
+                    QVERIFY2(std::hypot(dx, dy) >= 1.95, "Optimized route enters the barrier clearance");
+                    QVERIFY(point.x() >= -0.05 && point.x() <= 100.05);
+                    QVERIFY(point.y() >= -100.05 && point.y() <= 0.05);
+                }
+            }
+            previous = coordinate;
+        }
+    }
+    QVERIFY2(distance < maximumDistance, qPrintable(QStringLiteral("Survey route is %1 m").arg(distance)));
 }
 
 void SurveyComplexItemObstacleTest::_testObstacleChanges()
