@@ -115,6 +115,10 @@ GstElement* RecordingBranch::makeFileSink(const QString& videoFile, VideoReceive
             qCCritical(GstVideoReceiverLog) << "gst_bin_new('sinkbin') failed";
             break;
         }
+        // splitmuxsink completes its change to PAUSED only once the first fragment opens, at the next keyframe.
+        // Waited out inside the bin, that doesn't make the live pipeline lose PLAYING meanwhile, nor leave it
+        // stuck in PAUSED when the sink fails first.
+        g_object_set(bin, "async-handling", TRUE, nullptr);
 
         // splitmuxsink's video sink pad is a request pad — request once during construction
         // and ghost it as "sink" so the existing recorderValve→fileSink link works unchanged.
@@ -589,13 +593,6 @@ void RecordingBranch::_onRecorderError()
         return;
     }
     _shutdown();
-
-    // Adding the sink made the live pipeline wait for it to preroll; a sink that failed first leaves that
-    // PAUSED->PLAYING commit failed, and later sinks would sync to PAUSED. With the sink gone, resume PLAYING.
-    if (gst_element_set_state(_pipeline, GST_STATE_PLAYING) == GST_STATE_CHANGE_FAILURE) {
-        qCWarning(GstVideoReceiverLog) << "Pipeline did not resume after the recording failed"
-                                       << _receiver._redactedUri();
-    }
 }
 
 void RecordingBranch::_onStopTimeout()

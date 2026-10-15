@@ -751,6 +751,54 @@ void GstVideoReceiverTest::_testRecordingErrorKeepsStreaming()
              qPrintable(QStringLiteral("%1 frames recorded %2").arg(frames).arg(failure)));
 }
 
+void GstVideoReceiverTest::_testRecordingStartKeepsPipelinePlaying()
+{
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const quint16 port = freeLoopbackUdpPort();
+    QVERIFY(port != 0);
+    H264RtpSender sender;
+    QVERIFY(sender.start(port));
+
+    QQuickItem widget;
+    const auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &widget);
+    auto* gstReceiver = qobject_cast<GstVideoReceiver*>(receiver.get());
+    QVERIFY(gstReceiver);
+    QSignalSpy startSpy(receiver.get(), &VideoReceiver::onStartComplete);
+    QSignalSpy streamingSpy(receiver.get(), &VideoReceiver::streamingChanged);
+    QSignalSpy recordingStartedSpy(receiver.get(), &VideoReceiver::recordingStarted);
+
+    // Read on the worker that changes it; "PAUSED->PLAYING" while a change is pending.
+    const auto pipelineState = [gstReceiver]() {
+        QString state;
+        (void) QMetaObject::invokeMethod(
+            gstReceiver->_workerContext,
+            [gstReceiver, &state]() {
+                GstState current = GST_STATE_VOID_PENDING;
+                GstState pending = GST_STATE_VOID_PENDING;
+                (void) gst_element_get_state(gstReceiver->_pipeline, &current, &pending, 0);
+                state = QString::fromUtf8(gst_element_state_get_name(current));
+                if (pending != GST_STATE_VOID_PENDING) {
+                    state += QStringLiteral("->") + QString::fromUtf8(gst_element_state_get_name(pending));
+                }
+            },
+            Qt::BlockingQueuedConnection);
+        return state;
+    };
+
+    receiver->start(kWatchdogTimeoutSec);
+    QVERIFY_SIGNAL_COUNT_WAIT(startSpy, 1, TestTimeout::mediumMs());
+    QCOMPARE(lastStatus(startSpy), VideoReceiver::STATUS_OK);
+    QVERIFY_SIGNAL_COUNT_WAIT(streamingSpy, 1, TestTimeout::mediumMs());
+    QCOMPARE_TRUE_WAIT(pipelineState(), QStringLiteral("PLAYING"), TestTimeout::mediumMs());
+
+    // The file sink can't preroll before the next keyframe; the live pipeline must not wait for it meanwhile.
+    receiver->startRecording(tempDir.filePath(QStringLiteral("recording.mp4")), VideoReceiver::FILE_FORMAT_MP4);
+    QCOMPARE(pipelineState(), QStringLiteral("PLAYING"));
+    QVERIFY_SIGNAL_COUNT_WAIT(recordingStartedSpy, 1, TestTimeout::mediumMs());
+    QCOMPARE(pipelineState(), QStringLiteral("PLAYING"));
+}
+
 void GstVideoReceiverTest::_testDecoderQosDisabledAndReported()
 {
     const quint16 port = freeLoopbackUdpPort();
@@ -941,6 +989,11 @@ void GstVideoReceiverTest::_testStopWhileStoppingRecordingFinalizesFile()
 }
 
 void GstVideoReceiverTest::_testRecordingErrorKeepsStreaming()
+{
+    QSKIP("GStreamer not enabled");
+}
+
+void GstVideoReceiverTest::_testRecordingStartKeepsPipelinePlaying()
 {
     QSKIP("GStreamer not enabled");
 }
