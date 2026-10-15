@@ -13,8 +13,7 @@
 
 /// Read-only RHI capability pre-flight: rejects a GPU import before createFrom() so mapTextures() fails on a cheap
 /// query instead of a driver error, and Qt uploads the frame through GstHwVideoBuffer::map() instead. All queries are
-/// light (backends cache resource limits); safe on the streaming/bus-sync thread as long as @p rhi is the live render
-/// QRhi.
+/// light (backends cache resource limits).
 namespace GstHwImportPreflight {
 
 /// True iff @p rhi can create a texture of @p fmt + @p flags at @p size (format supported AND within TextureSizeMax).
@@ -28,8 +27,14 @@ bool canImportPlanes(QRhi* rhi, QVideoFrameFormat::PixelFormat pixelFormat, cons
 
 /// Pre-flight + telemetry: runs canImportPlanes and, on rejection, records an ImportUnsupported fallback for
 /// @p path so the rejection shows up in the per-(path,reason) breakdown. Returns the canImportPlanes result.
+/// The verdict is memoized per path until @p rhi is destroyed, so call it on @p rhi's thread (mapTextures()).
 bool preflightOrRecord(QRhi* rhi, HwVideoBufferPath path, QVideoFrameFormat::PixelFormat pixelFormat,
                        const QSize& size, QRhiTexture::Flags flags = {}) noexcept;
+
+#ifdef QGC_GST_BUILD_TESTING
+/// Memoized verdicts currently keyed on @p rhi (compared by address only, never dereferenced).
+std::size_t memoizedVerdictCountForTest(const QRhi* rhi) noexcept;
+#endif
 
 }  // namespace GstHwImportPreflight
 

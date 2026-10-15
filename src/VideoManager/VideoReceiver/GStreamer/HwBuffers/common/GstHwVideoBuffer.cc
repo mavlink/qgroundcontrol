@@ -2,6 +2,7 @@
 
 #include <rhi/qrhi.h>
 
+#include "CpuVideoFramePool.h"
 #include "GstHwPathTelemetry.h"
 
 QVideoFrameTexturesUPtr GstHwPathTelemetry::fail(HwVideoBufferPath path) noexcept
@@ -41,15 +42,7 @@ QAbstractVideoBuffer::MapData GstHwVideoBuffer::map(QVideoFrame::MapMode mode)
         }
         _cpuMapped = true;
     }
-    MapData data;
-    data.planeCount = static_cast<int>(GST_VIDEO_FRAME_N_PLANES(&_cpuFrame));
-    for (int i = 0; i < data.planeCount; ++i) {
-        data.data[i] = static_cast<uchar*>(GST_VIDEO_FRAME_PLANE_DATA(&_cpuFrame, i));
-        data.bytesPerLine[i] = GST_VIDEO_FRAME_PLANE_STRIDE(&_cpuFrame, i);
-        data.dataSize[i] = static_cast<qsizetype>(GST_VIDEO_FRAME_PLANE_STRIDE(&_cpuFrame, i)) *
-                           GST_VIDEO_FRAME_COMP_HEIGHT(&_cpuFrame, i);
-    }
-    return data;
+    return CpuVideoFramePool::mapDataFor(_cpuFrame);
 }
 
 void GstHwVideoBuffer::unmap()

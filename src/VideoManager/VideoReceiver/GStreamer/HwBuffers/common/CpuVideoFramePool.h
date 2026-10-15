@@ -1,17 +1,18 @@
 #pragma once
 
-#include <QtCore/QByteArray>
-#include <QtCore/QMutex>
-#include <QtCore/QSize>
-#include <QtMultimedia/QVideoFrame>
-#include <QtMultimedia/QVideoFrameFormat>
 #include <array>
 #include <atomic>
 #include <gst/gst.h>
+#include <gst/video/video-frame.h>
 #include <gst/video/video-info.h>
 #include <memory>
 
-class QAbstractVideoBuffer;
+#include <QtCore/QByteArray>
+#include <QtCore/QMutex>
+#include <QtCore/QSize>
+#include <QtMultimedia/QAbstractVideoBuffer>
+#include <QtMultimedia/QVideoFrame>
+#include <QtMultimedia/QVideoFrameFormat>
 
 /// \brief Recycles CPU-backed QVideoFrame storage keyed by (size, pixelFormat) to avoid per-frame malloc churn.
 class CpuVideoFramePool
@@ -49,6 +50,9 @@ public:
 
     /// Destination plane layout mirroring @p info (strides/offsets from the decoder). planeCount==0 means unsupported.
     static PlaneLayout computeLayout(const GstVideoInfo& info);
+
+    /// Qt map data for a frame mapped with gst_video_frame_map, each plane sized by its own row count.
+    static QAbstractVideoBuffer::MapData mapDataFor(const GstVideoFrame& frame);
 
     /// Copy @p buffer's planes into a pool-allocated QVideoFrame; invalid on stride overflow or unsupported format.
     static QVideoFrame copyFromBuffer(GstBuffer* buffer, const GstVideoInfo& videoInfo,

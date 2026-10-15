@@ -62,6 +62,8 @@ private slots:
     void _testInactiveQgcQVideoSinkDropsAndCounts();
     void _testQgcQVideoSinkDeliversLatestFrameOnly();
     void _testQgcQVideoSinkShowsPrerollBufferOnce();
+    void _testQgcQVideoSinkRenegotiatesMidStream();
+    void _testQgcQVideoSinkAppliesCropMeta();
     void _testQgcQVideoSinkStatsArePerSink();
     void _testQgcQVideoSinkGpuPathSelection_data();
     void _testQgcQVideoSinkGpuPathSelection();
@@ -101,7 +103,14 @@ private slots:
     void _testCpuZeroCopyFrameRejectsWritableMap();
     void _testCpuZeroCopyPinnedFramesCappedPerSink();
     void _testCpuMemcpyActiveRowStrideHandling();
+    void _testCpuLayoutSizesPlanesByComponent_data();
+    void _testCpuLayoutSizesPlanesByComponent();
+    void _testCpuCopyOddDimensions_data();
+    void _testCpuCopyOddDimensions();
     void _testQGCRhiCaptureCacheLifecycle();
+    void _testPreflightVerdictsDroppedWithRhi();
+    void _testHwBufferEnvConfigParsing_data();
+    void _testHwBufferEnvConfigParsing();
     void _testColorimetryPixelFormatMapping();
     void _testCpuCapsFormatsRoundTripToQt();
     void _testAllocationQueryHwMemoryPoolHint();

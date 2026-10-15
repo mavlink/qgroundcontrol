@@ -30,7 +30,11 @@ struct HwBufferEnvConfig
     bool offerDmaDrmLinear = false;     // QGC_GST_OFFER_DMA_DRM_LINEAR (default off)
 };
 
-/// Lazily parses + logs the toggle config on first call; thread-safe via static-init guarantees.
+/// Parses the toggles from the current environment. Values are case-insensitive and trimmed; unset or empty keeps the
+/// default, "0"/"false"/"off"/"no" turn a toggle off and anything else turns it on.
+HwBufferEnvConfig readHwBufferEnvConfig() noexcept;
+
+/// readHwBufferEnvConfig() of the first call, logged once; thread-safe via static-init guarantees.
 const HwBufferEnvConfig& hwBufferEnvConfig() noexcept;
 
 /// Bus sync handler (GstBusSyncHandler) installed on every pipeline; no-op when no GPU path compiled.

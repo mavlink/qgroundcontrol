@@ -57,6 +57,7 @@
 #include "GstHwVideoBufferFactory.h"
 #include "gstqgc/gstqgcvideosinkbin.h"
 #if defined(QGC_HAS_ANY_GPU_PATH)
+#include "GstHwImportPreflight.h"
 #include "QGCRhiCapture.h"
 #endif
 #include <rhi/qrhi.h>
@@ -349,6 +350,141 @@ void GStreamerTest::_testQGCRhiCaptureCacheLifecycle()
     delete window;
     QVERIFY(!QGCRhiCapture::cachedRhi());
 #endif
+}
+
+void GStreamerTest::_testPreflightVerdictsDroppedWithRhi()
+{
+#if !defined(QGC_HAS_ANY_GPU_PATH) || !defined(QGC_GST_BUILD_TESTING)
+    QSKIP("Import preflight not compiled in this build (no GPU path enabled)");
+#else
+    QRhiNullInitParams nullParams;
+    std::unique_ptr<QRhi> rhi(QRhi::create(QRhi::Null, &nullParams));
+    QVERIFY(rhi);
+    const QRhi* const address = rhi.get();
+    QVERIFY(GstHwImportPreflight::preflightOrRecord(rhi.get(), HwVideoBufferPath::DmaBuf,
+                                                    QVideoFrameFormat::Format_NV12, QSize(64, 64)));
+    QCOMPARE(GstHwImportPreflight::memoizedVerdictCountForTest(address), std::size_t(1));
+
+    // The next QRhi may be allocated at the same address; it must not inherit this one's verdicts.
+    rhi.reset();
+    QCOMPARE(GstHwImportPreflight::memoizedVerdictCountForTest(address), std::size_t(0));
+#endif
+}
+
+void GStreamerTest::_testHwBufferEnvConfigParsing_data()
+{
+    QTest::addColumn<QByteArray>("value");  // null: variable unset
+    QTest::addColumn<bool>("expectedDefaultOff");
+    QTest::addColumn<bool>("expectedDefaultOn");
+
+    QTest::newRow("unset") << QByteArray() << false << true;
+    QTest::newRow("empty") << QByteArray("") << false << true;
+    QTest::newRow("zero") << QByteArray("0") << false << false;
+    QTest::newRow("false-padded-mixed-case") << QByteArray(" False ") << false << false;
+    QTest::newRow("off") << QByteArray("OFF") << false << false;
+    QTest::newRow("no") << QByteArray("no") << false << false;
+    QTest::newRow("one") << QByteArray("1") << true << true;
+    QTest::newRow("other-word") << QByteArray("force") << true << true;
+}
+
+void GStreamerTest::_testHwBufferEnvConfigParsing()
+{
+    QFETCH(QByteArray, value);
+    QFETCH(bool, expectedDefaultOff);
+    QFETCH(bool, expectedDefaultOn);
+
+    // QGC_GST_DMABUF_CACHE defaults off, QGC_GST_DMABUF_SINGLE_EGLIMAGE defaults on.
+    const TestFixtures::EnvVarFixture defaultOffGuard("QGC_GST_DMABUF_CACHE");
+    const TestFixtures::EnvVarFixture defaultOnGuard("QGC_GST_DMABUF_SINGLE_EGLIMAGE");
+    for (const char* const name : {"QGC_GST_DMABUF_CACHE", "QGC_GST_DMABUF_SINGLE_EGLIMAGE"}) {
+        if (value.isNull()) {
+            qunsetenv(name);
+        } else {
+            qputenv(name, value);
+        }
+    }
+
+    const HwBuffers::HwBufferEnvConfig config = HwBuffers::readHwBufferEnvConfig();
+    QCOMPARE(config.dmaBufCache, expectedDefaultOff);
+    QCOMPARE(config.dmaBufSingleEglImage, expectedDefaultOn);
+}
+
+void GStreamerTest::_testCpuLayoutSizesPlanesByComponent_data()
+{
+    QTest::addColumn<int>("format");
+    QTest::addColumn<QList<int>>("planeHeights");
+
+    QTest::newRow("NV12") << int(GST_VIDEO_FORMAT_NV12) << QList<int>{48, 24};
+    QTest::newRow("YV12") << int(GST_VIDEO_FORMAT_YV12) << QList<int>{48, 24, 24};
+    // Third plane holds component 3 (full-height alpha); component 2 is the half-height V in plane 1.
+    QTest::newRow("AV12") << int(GST_VIDEO_FORMAT_AV12) << QList<int>{48, 24, 48};
+}
+
+void GStreamerTest::_testCpuLayoutSizesPlanesByComponent()
+{
+    QFETCH(int, format);
+    QFETCH(QList<int>, planeHeights);
+
+    GstVideoInfo info;
+    QVERIFY(gst_video_info_set_format(&info, static_cast<GstVideoFormat>(format), 64, 48));
+    const CpuVideoFramePool::PlaneLayout layout = CpuVideoFramePool::computeLayout(info);
+    QCOMPARE(layout.planeCount, planeHeights.size());
+    for (int plane = 0; plane < layout.planeCount; ++plane) {
+        QCOMPARE(layout.height[plane], planeHeights[plane]);
+    }
+}
+
+void GStreamerTest::_testCpuCopyOddDimensions_data()
+{
+    QTest::addColumn<int>("gstFormat");
+    QTest::addColumn<int>("qtFormat");
+    QTest::addColumn<QList<int>>("planeRows");
+    QTest::addColumn<QList<int>>("planeRowBytes");
+
+    // 5x3: chroma rounds up to 3x2.
+    QTest::newRow("I420") << int(GST_VIDEO_FORMAT_I420) << int(QVideoFrameFormat::Format_YUV420P) << QList<int>{3, 2, 2}
+                          << QList<int>{5, 3, 3};
+    QTest::newRow("YV12") << int(GST_VIDEO_FORMAT_YV12) << int(QVideoFrameFormat::Format_YV12) << QList<int>{3, 2, 2}
+                          << QList<int>{5, 3, 3};
+    QTest::newRow("NV12") << int(GST_VIDEO_FORMAT_NV12) << int(QVideoFrameFormat::Format_NV12) << QList<int>{3, 2}
+                          << QList<int>{5, 6};
+}
+
+void GStreamerTest::_testCpuCopyOddDimensions()
+{
+    QFETCH(int, gstFormat);
+    QFETCH(int, qtFormat);
+    QFETCH(QList<int>, planeRows);
+    QFETCH(QList<int>, planeRowBytes);
+
+    GstVideoInfo info;
+    QVERIFY(gst_video_info_set_format(&info, static_cast<GstVideoFormat>(gstFormat), 5, 3));
+    GstBuffer* const buffer = gst_buffer_new_allocate(nullptr, GST_VIDEO_INFO_SIZE(&info), nullptr);
+    QVERIFY(buffer);
+    const auto bufferGuard = qScopeGuard([&] { gst_buffer_unref(buffer); });
+    GstMapInfo source;
+    QVERIFY(gst_buffer_map(buffer, &source, GST_MAP_READWRITE));
+    const auto sourceGuard = qScopeGuard([&] { gst_buffer_unmap(buffer, &source); });
+    for (gsize i = 0; i < source.size; ++i) {
+        source.data[i] = static_cast<guint8>((i * 7) + 1);
+    }
+
+    QVideoFrame frame = CpuVideoFramePool::copyFromBuffer(
+        buffer, info, QVideoFrameFormat(QSize(5, 3), static_cast<QVideoFrameFormat::PixelFormat>(qtFormat)));
+    QVERIFY(frame.isValid());
+    QVERIFY(frame.map(QVideoFrame::ReadOnly));
+    const auto frameGuard = qScopeGuard([&] { frame.unmap(); });
+    QCOMPARE(frame.planeCount(), planeRows.size());
+    for (int plane = 0; plane < frame.planeCount(); ++plane) {
+        const int stride = frame.bytesPerLine(plane);
+        QVERIFY(frame.mappedBytes(plane) >= ((planeRows[plane] - 1) * stride) + planeRowBytes[plane]);
+        const auto* const src = reinterpret_cast<const char*>(source.data + GST_VIDEO_INFO_PLANE_OFFSET(&info, plane));
+        const auto* const dst = reinterpret_cast<const char*>(frame.bits(plane));
+        for (int row = 0; row < planeRows[plane]; ++row) {
+            QCOMPARE(QByteArray(dst + (row * stride), planeRowBytes[plane]),
+                     QByteArray(src + (row * GST_VIDEO_INFO_PLANE_STRIDE(&info, plane)), planeRowBytes[plane]));
+        }
+    }
 }
 
 namespace {

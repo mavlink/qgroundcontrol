@@ -160,16 +160,24 @@ public:
     bool pushEvent(GstEvent* event) { return gst_pad_push_event(_src, event); }
 
     /// @p size below kFrameBytes produces a buffer gst_video_frame_map rejects.
-    GstFlowReturn pushFrame(GstClockTime pts, bool discont = false, gsize size = kFrameBytes)
+    static GstBuffer* makeFrame(GstClockTime pts, gsize size = kFrameBytes)
     {
         GstBuffer* buffer = gst_buffer_new_allocate(nullptr, size, nullptr);
         gst_buffer_memset(buffer, 0, 0x80, size);
         GST_BUFFER_PTS(buffer) = pts;
+        return buffer;
+    }
+
+    GstFlowReturn pushFrame(GstClockTime pts, bool discont = false, gsize size = kFrameBytes)
+    {
+        GstBuffer* buffer = makeFrame(pts, size);
         if (discont) {
             GST_BUFFER_FLAG_SET(buffer, GST_BUFFER_FLAG_DISCONT);
         }
-        return gst_pad_push(_src, buffer);
+        return pushBuffer(buffer);
     }
+
+    GstFlowReturn pushBuffer(GstBuffer* buffer) { return gst_pad_push(_src, buffer); }
 
     guint64 delivered() const { return framesDelivered(_sink); }
 
@@ -1864,6 +1872,54 @@ void GStreamerTest::_testQgcQVideoSinkShowsPrerollBufferOnce()
     g_object_get(harness.element(), "frames-input", &input, nullptr);
     QCOMPARE(input, guint64(1));
     QCOMPARE(harness.delivered(), guint64(1));
+}
+
+void GStreamerTest::_testQgcQVideoSinkRenegotiatesMidStream()
+{
+    QVERIFY2(GStreamer::completeInit(), "completeInit failed");
+
+    QVideoSink videoSink;
+    QgcQVideoSinkHarness harness(&videoSink);
+    QVERIFY(harness.isReady());
+    QVERIFY(harness.start());
+    QCOMPARE(harness.pushFrame(GST_SECOND), GST_FLOW_OK);
+    QCoreApplication::sendPostedEvents(&videoSink, QEvent::MetaCall);
+    QCOMPARE(videoSink.videoFrame().pixelFormat(), QVideoFrameFormat::Format_BGRA8888);
+
+    // Same byte size as the first format, so a frame mapped with stale caps would still map and show the old layout.
+    GstCaps* const caps = gst_caps_new_simple("video/x-raw", "format", G_TYPE_STRING, "RGBA", "width", G_TYPE_INT, 8,
+                                              "height", G_TYPE_INT, 2, "framerate", GST_TYPE_FRACTION, 30, 1, nullptr);
+    QVERIFY(harness.pushEvent(gst_event_new_caps(caps)));
+    gst_caps_unref(caps);
+    QCOMPARE(harness.pushFrame(2 * GST_SECOND), GST_FLOW_OK);
+    QCoreApplication::sendPostedEvents(&videoSink, QEvent::MetaCall);
+
+    const QVideoFrame frame = videoSink.videoFrame();
+    QCOMPARE(frame.pixelFormat(), QVideoFrameFormat::Format_RGBA8888);
+    QCOMPARE(frame.size(), QSize(8, 2));
+}
+
+void GStreamerTest::_testQgcQVideoSinkAppliesCropMeta()
+{
+    QVERIFY2(GStreamer::completeInit(), "completeInit failed");
+
+    QVideoSink videoSink;
+    QgcQVideoSinkHarness harness(&videoSink);
+    QVERIFY(harness.isReady());
+    QVERIFY(harness.start());
+
+    GstBuffer* const buffer = QgcQVideoSinkHarness::makeFrame(GST_SECOND);
+    GstVideoCropMeta* const crop = gst_buffer_add_video_crop_meta(buffer);
+    crop->x = 1;
+    crop->y = 1;
+    crop->width = 2;
+    crop->height = 3;
+    QCOMPARE(harness.pushBuffer(buffer), GST_FLOW_OK);
+    QCoreApplication::sendPostedEvents(&videoSink, QEvent::MetaCall);
+
+    const QVideoFrameFormat format = videoSink.videoFrame().surfaceFormat();
+    QCOMPARE(format.viewport(), QRect(1, 1, 2, 3));
+    QCOMPARE(format.frameSize(), QSize(QgcQVideoSinkHarness::kWidth, QgcQVideoSinkHarness::kHeight));
 }
 
 void GStreamerTest::_testQgcQVideoSinkStatsArePerSink()

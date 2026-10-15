@@ -14,6 +14,34 @@ QGC_LOGGING_CATEGORY(CpuVideoFramePoolLog, "Video.GStreamer.HwBuffers.CpuPool")
 
 namespace {
 
+/// The first component stored in @p plane. Plane and component indices differ in general (AV12's third plane holds
+/// component 3, the full-height alpha, not the half-height V component 2), so per-plane sizes must go through this.
+int firstComponentOf(const GstVideoInfo& info, int plane)
+{
+    gint components[GST_VIDEO_MAX_COMPONENTS];
+    gst_video_format_info_component(info.finfo, static_cast<guint>(plane), components);
+    return components[0];
+}
+
+int planeHeight(const GstVideoInfo& info, int plane)
+{
+    const int component = firstComponentOf(info, plane);
+    if (component < 0) {
+        return 0;
+    }
+    return static_cast<int>(GST_VIDEO_INFO_COMP_HEIGHT(&info, component));
+}
+
+/// Bytes of image data in one row of @p plane, i.e. the stride without its alignment padding.
+int planeRowBytes(const GstVideoInfo& info, int plane)
+{
+    const int component = firstComponentOf(info, plane);
+    if (component < 0) {
+        return 0;
+    }
+    return GST_VIDEO_INFO_COMP_WIDTH(&info, component) * GST_VIDEO_INFO_COMP_PSTRIDE(&info, component);
+}
+
 class PooledCpuVideoBuffer final : public QAbstractVideoBuffer
 {
 public:
@@ -90,15 +118,7 @@ public:
             }
             _mapped = true;
         }
-        MapData data;
-        data.planeCount = GST_VIDEO_FRAME_N_PLANES(&_frame);
-        for (int i = 0; i < data.planeCount; ++i) {
-            data.data[i] = static_cast<uchar*>(GST_VIDEO_FRAME_PLANE_DATA(&_frame, i));
-            data.bytesPerLine[i] = GST_VIDEO_FRAME_PLANE_STRIDE(&_frame, i);
-            data.dataSize[i] = static_cast<qsizetype>(GST_VIDEO_FRAME_PLANE_STRIDE(&_frame, i)) *
-                               GST_VIDEO_FRAME_COMP_HEIGHT(&_frame, i);
-        }
-        return data;
+        return CpuVideoFramePool::mapDataFor(_frame);
     }
 
     void unmap() override
@@ -151,10 +171,22 @@ CpuVideoFramePool::PlaneLayout CpuVideoFramePool::computeLayout(const GstVideoIn
     for (int i = 0; i < n; ++i) {
         L.bytesPerLine[i] = GST_VIDEO_INFO_PLANE_STRIDE(&info, i);
         L.planeOffset[i] = static_cast<qsizetype>(GST_VIDEO_INFO_PLANE_OFFSET(&info, i));
-        L.height[i] = static_cast<int>(GST_VIDEO_INFO_COMP_HEIGHT(&info, i));
+        L.height[i] = planeHeight(info, i);
     }
     L.byteSize = static_cast<qsizetype>(GST_VIDEO_INFO_SIZE(&info));
     return L;
+}
+
+QAbstractVideoBuffer::MapData CpuVideoFramePool::mapDataFor(const GstVideoFrame& frame)
+{
+    QAbstractVideoBuffer::MapData data;
+    data.planeCount = static_cast<int>(GST_VIDEO_FRAME_N_PLANES(&frame));
+    for (int i = 0; i < data.planeCount; ++i) {
+        data.data[i] = static_cast<uchar*>(GST_VIDEO_FRAME_PLANE_DATA(&frame, i));
+        data.bytesPerLine[i] = GST_VIDEO_FRAME_PLANE_STRIDE(&frame, i);
+        data.dataSize[i] = static_cast<qsizetype>(GST_VIDEO_FRAME_PLANE_STRIDE(&frame, i)) * planeHeight(frame.info, i);
+    }
+    return data;
 }
 
 QByteArray CpuVideoFramePool::acquireBacking(const PlaneLayout& layout, QSize size,
@@ -282,9 +314,8 @@ QVideoFrame CpuVideoFramePool::copyFromBuffer(GstBuffer* buffer, const GstVideoI
     for (int p = 0; p < srcPlanes; ++p) {
         const int dstStride = videoFrame.bytesPerLine(p);
         const int srcStride = GST_VIDEO_FRAME_PLANE_STRIDE(&gstFrame, p);
-        const int planeHeight = GST_VIDEO_FRAME_COMP_HEIGHT(&gstFrame, p);
-        const int activeRowBytes =
-            GST_VIDEO_FRAME_COMP_WIDTH(&gstFrame, p) * GST_VIDEO_FRAME_COMP_PSTRIDE(&gstFrame, p);
+        const int rows = planeHeight(gstFrame.info, p);
+        const int activeRowBytes = planeRowBytes(gstFrame.info, p);
         // Reject before copy: a dst stride too narrow for a source row would tear the plane.
         if (activeRowBytes > dstStride) {
             static std::atomic<bool> s_warnedStrideOverflow{false};
@@ -302,9 +333,9 @@ QVideoFrame CpuVideoFramePool::copyFromBuffer(GstBuffer* buffer, const GstVideoI
             continue;
         }
         if (srcStride == dstStride && activeRowBytes == srcStride) {
-            std::memcpy(dst, src, static_cast<size_t>(planeHeight) * srcStride);
+            std::memcpy(dst, src, static_cast<size_t>(rows) * srcStride);
         } else {
-            for (int y = 0; y < planeHeight; ++y) {
+            for (int y = 0; y < rows; ++y) {
                 std::memcpy(dst + y * dstStride, src + y * srcStride, static_cast<size_t>(activeRowBytes));
             }
         }
