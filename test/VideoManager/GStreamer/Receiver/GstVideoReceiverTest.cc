@@ -97,6 +97,14 @@ std::unique_ptr<VideoReceiver> makeReceiver(const QString& uri, QQuickItem* widg
     return receiver;
 }
 
+/// QSignalSpy takes the receiver's signals on the worker and streaming threads that emit them, so a spy must not be
+/// destroyed while one may still arrive. Declared after a test's spies, the returned guard destroys the receiver, and
+/// with it those threads, first.
+[[nodiscard]] auto destroyBeforeSpies(std::unique_ptr<VideoReceiver>& receiver)
+{
+    return qScopeGuard([&receiver] { receiver.reset(); });
+}
+
 /// Stand-in for the qgcvideosinkbin, owned the way GStreamer::createVideoSink() hands it out.
 GstElement* makeFakeVideoSink()
 {
@@ -260,10 +268,11 @@ void GstVideoReceiverTest::_testStartDecodeStop()
     const auto sinkCleanup = qScopeGuard([videoSink] { gst_object_unref(videoSink); });
 
     QQuickItem widget;
-    const auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &widget);
+    auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &widget);
     QSignalSpy startSpy(receiver.get(), &VideoReceiver::onStartComplete);
     QSignalSpy decodingSpy(receiver.get(), &VideoReceiver::decodingChanged);
     QSignalSpy stopSpy(receiver.get(), &VideoReceiver::onStopComplete);
+    const auto receiverCleanup = destroyBeforeSpies(receiver);
 
     // Decoding is requested while the first source pad may be arriving, as VideoManager does.
     receiver->start(kWatchdogTimeoutSec);
@@ -285,9 +294,10 @@ void GstVideoReceiverTest::_testStopAfterUriClearedTearsDown()
     QVERIFY(port != 0);
 
     QQuickItem widget;
-    const auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &widget);
+    auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &widget);
     QSignalSpy startSpy(receiver.get(), &VideoReceiver::onStartComplete);
     QSignalSpy stopSpy(receiver.get(), &VideoReceiver::onStopComplete);
+    const auto receiverCleanup = destroyBeforeSpies(receiver);
 
     receiver->start(kWatchdogTimeoutSec);
     QVERIFY_SIGNAL_COUNT_WAIT(startSpy, 1, TestTimeout::mediumMs());
@@ -312,10 +322,11 @@ void GstVideoReceiverTest::_testFailedStartLeavesCleanState()
     QQuickItem widget;
     // udp265 exposes its source pad statically, so the receiver reports streaming before the
     // bind failure surfaces in the READY transition.
-    const auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp265"), portBlocker.localPort()), &widget);
+    auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp265"), portBlocker.localPort()), &widget);
     QSignalSpy startSpy(receiver.get(), &VideoReceiver::onStartComplete);
     QSignalSpy streamingSpy(receiver.get(), &VideoReceiver::streamingChanged);
     QSignalSpy stopSpy(receiver.get(), &VideoReceiver::onStopComplete);
+    const auto receiverCleanup = destroyBeforeSpies(receiver);
 
     expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
                      QRegularExpression(QStringLiteral("^GStreamer error:")));
@@ -357,10 +368,11 @@ void GstVideoReceiverTest::_testVideoSinkRefcountStableAcrossRestarts()
     QVERIFY(sender.start(port));
 
     QQuickItem widget;
-    const auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &widget);
+    auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &widget);
     QSignalSpy startSpy(receiver.get(), &VideoReceiver::onStartComplete);
     QSignalSpy decodingSpy(receiver.get(), &VideoReceiver::decodingChanged);
     QSignalSpy stopSpy(receiver.get(), &VideoReceiver::onStopComplete);
+    const auto receiverCleanup = destroyBeforeSpies(receiver);
 
     for (int cycle = 1; cycle <= kRestartCycles; ++cycle) {
         receiver->start(kWatchdogTimeoutSec);
@@ -399,9 +411,10 @@ void GstVideoReceiverTest::_testRecordingPlayableWhileInProgress()
     QVERIFY(sender.start(port));
 
     QQuickItem widget;
-    const auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &widget);
+    auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &widget);
     QSignalSpy startSpy(receiver.get(), &VideoReceiver::onStartComplete);
     QSignalSpy recordingStartedSpy(receiver.get(), &VideoReceiver::recordingStarted);
+    const auto receiverCleanup = destroyBeforeSpies(receiver);
 
     receiver->start(kWatchdogTimeoutSec);
     QVERIFY_SIGNAL_COUNT_WAIT(startSpy, 1, TestTimeout::mediumMs());
@@ -436,6 +449,7 @@ void GstVideoReceiverTest::_testDestroyWhileRecordingFinalizesFile()
     auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &widget);
     QSignalSpy startSpy(receiver.get(), &VideoReceiver::onStartComplete);
     QSignalSpy recordingStartedSpy(receiver.get(), &VideoReceiver::recordingStarted);
+    const auto receiverCleanup = destroyBeforeSpies(receiver);
 
     receiver->start(kWatchdogTimeoutSec);
     QVERIFY_SIGNAL_COUNT_WAIT(startSpy, 1, TestTimeout::mediumMs());
@@ -469,11 +483,12 @@ void GstVideoReceiverTest::_testSecondRecordingIsNotTruncated()
     QVERIFY(sender.start(port));
 
     QQuickItem widget;
-    const auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &widget);
+    auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &widget);
     QSignalSpy startSpy(receiver.get(), &VideoReceiver::onStartComplete);
     QSignalSpy recordingStartedSpy(receiver.get(), &VideoReceiver::recordingStarted);
     QSignalSpy stopRecordingSpy(receiver.get(), &VideoReceiver::onStopRecordingComplete);
     QSignalSpy stopSpy(receiver.get(), &VideoReceiver::onStopComplete);
+    const auto receiverCleanup = destroyBeforeSpies(receiver);
 
     receiver->start(kWatchdogTimeoutSec);
     QVERIFY_SIGNAL_COUNT_WAIT(startSpy, 1, TestTimeout::mediumMs());
@@ -513,9 +528,10 @@ void GstVideoReceiverTest::_testReconnectBacksOffAfterFailedStart()
     const quint16 port = portBlocker.localPort();
 
     QQuickItem widget;
-    const auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp265"), port), &widget);
+    auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp265"), port), &widget);
     receiver->setAutoReconnect(true);
     QSignalSpy startSpy(receiver.get(), &VideoReceiver::onStartComplete);
+    const auto receiverCleanup = destroyBeforeSpies(receiver);
 
     // The first start and its retry both fail on the bound port.
     for (int attempt = 0; attempt < 2; ++attempt) {
@@ -568,12 +584,13 @@ void GstVideoReceiverTest::_testStreamLossRestartPolicy()
     QVERIFY(sender.start(port));
 
     QQuickItem widget;
-    const auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &widget);
+    auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &widget);
     receiver->setAutoReconnect(autoReconnect);
     QSignalSpy startSpy(receiver.get(), &VideoReceiver::onStartComplete);
     QSignalSpy streamingSpy(receiver.get(), &VideoReceiver::streamingChanged);
     QSignalSpy timeoutSpy(receiver.get(), &VideoReceiver::timeout);
     QSignalSpy stopSpy(receiver.get(), &VideoReceiver::onStopComplete);
+    const auto receiverCleanup = destroyBeforeSpies(receiver);
 
     // The shortest watchdog timeout, so losing the stream is noticed within about two seconds.
     receiver->start(1);
@@ -609,10 +626,11 @@ void GstVideoReceiverTest::_testDecodingRequestedBeforeStreamStarts()
     const auto sinkCleanup = qScopeGuard([videoSink] { gst_object_unref(videoSink); });
 
     QQuickItem widget;
-    const auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &widget);
+    auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &widget);
     QSignalSpy startSpy(receiver.get(), &VideoReceiver::onStartComplete);
     QSignalSpy startDecodingSpy(receiver.get(), &VideoReceiver::onStartDecodingComplete);
     QSignalSpy decodingSpy(receiver.get(), &VideoReceiver::decodingChanged);
+    const auto receiverCleanup = destroyBeforeSpies(receiver);
 
     receiver->start(kWatchdogTimeoutSec);
     receiver->startDecoding(videoSink);
@@ -640,12 +658,13 @@ void GstVideoReceiverTest::_testStopDecodingBeforeFirstFrame()
     const auto sinkCleanup = qScopeGuard([videoSink] { gst_object_unref(videoSink); });
 
     QQuickItem widget;
-    const auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &widget);
+    auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &widget);
     QSignalSpy startSpy(receiver.get(), &VideoReceiver::onStartComplete);
     QSignalSpy streamingSpy(receiver.get(), &VideoReceiver::streamingChanged);
     QSignalSpy startDecodingSpy(receiver.get(), &VideoReceiver::onStartDecodingComplete);
     QSignalSpy stopDecodingSpy(receiver.get(), &VideoReceiver::onStopDecodingComplete);
     QSignalSpy decodingSpy(receiver.get(), &VideoReceiver::decodingChanged);
+    const auto receiverCleanup = destroyBeforeSpies(receiver);
 
     receiver->start(kWatchdogTimeoutSec);
     QVERIFY_SIGNAL_COUNT_WAIT(startSpy, 1, TestTimeout::mediumMs());
@@ -674,11 +693,12 @@ void GstVideoReceiverTest::_testStopWhileStoppingRecordingFinalizesFile()
     QVERIFY(sender.start(port));
 
     QQuickItem widget;
-    const auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &widget);
+    auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &widget);
     QSignalSpy startSpy(receiver.get(), &VideoReceiver::onStartComplete);
     QSignalSpy recordingStartedSpy(receiver.get(), &VideoReceiver::recordingStarted);
     QSignalSpy stopRecordingSpy(receiver.get(), &VideoReceiver::onStopRecordingComplete);
     QSignalSpy stopSpy(receiver.get(), &VideoReceiver::onStopComplete);
+    const auto receiverCleanup = destroyBeforeSpies(receiver);
 
     receiver->start(kWatchdogTimeoutSec);
     QVERIFY_SIGNAL_COUNT_WAIT(startSpy, 1, TestTimeout::mediumMs());
@@ -713,12 +733,13 @@ void GstVideoReceiverTest::_testRecordingErrorKeepsStreaming()
     QVERIFY(sender.start(port));
 
     QQuickItem widget;
-    const auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &widget);
+    auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &widget);
     QSignalSpy startSpy(receiver.get(), &VideoReceiver::onStartComplete);
     QSignalSpy streamingSpy(receiver.get(), &VideoReceiver::streamingChanged);
     QSignalSpy recordingSpy(receiver.get(), &VideoReceiver::recordingChanged);
     QSignalSpy recordingStartedSpy(receiver.get(), &VideoReceiver::recordingStarted);
     QSignalSpy stopSpy(receiver.get(), &VideoReceiver::onStopComplete);
+    const auto receiverCleanup = destroyBeforeSpies(receiver);
 
     receiver->start(kWatchdogTimeoutSec);
     QVERIFY_SIGNAL_COUNT_WAIT(startSpy, 1, TestTimeout::mediumMs());
@@ -765,13 +786,14 @@ void GstVideoReceiverTest::_testFailedRecordingStartLeavesBranchUsable()
     QVERIFY(sender.start(port));
 
     QQuickItem widget;
-    const auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &widget);
+    auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &widget);
     auto* gstReceiver = qobject_cast<GstVideoReceiver*>(receiver.get());
     QVERIFY(gstReceiver);
     QSignalSpy startSpy(receiver.get(), &VideoReceiver::onStartComplete);
     QSignalSpy streamingSpy(receiver.get(), &VideoReceiver::streamingChanged);
     QSignalSpy startRecordingSpy(receiver.get(), &VideoReceiver::onStartRecordingComplete);
     QSignalSpy recordingSpy(receiver.get(), &VideoReceiver::recordingChanged);
+    const auto receiverCleanup = destroyBeforeSpies(receiver);
 
     receiver->start(kWatchdogTimeoutSec);
     QVERIFY_SIGNAL_COUNT_WAIT(startSpy, 1, TestTimeout::mediumMs());
@@ -818,12 +840,13 @@ void GstVideoReceiverTest::_testRecordingStartKeepsPipelinePlaying()
     QVERIFY(sender.start(port));
 
     QQuickItem widget;
-    const auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &widget);
+    auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &widget);
     auto* gstReceiver = qobject_cast<GstVideoReceiver*>(receiver.get());
     QVERIFY(gstReceiver);
     QSignalSpy startSpy(receiver.get(), &VideoReceiver::onStartComplete);
     QSignalSpy streamingSpy(receiver.get(), &VideoReceiver::streamingChanged);
     QSignalSpy recordingStartedSpy(receiver.get(), &VideoReceiver::recordingStarted);
+    const auto receiverCleanup = destroyBeforeSpies(receiver);
 
     // Read on the worker that changes it; "PAUSED->PLAYING" while a change is pending.
     const auto pipelineState = [gstReceiver]() {
@@ -868,11 +891,12 @@ void GstVideoReceiverTest::_testDecoderQosDisabledAndReported()
     const auto sinkCleanup = qScopeGuard([videoSink] { gst_object_unref(videoSink); });
 
     QQuickItem widget;
-    const auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &widget);
+    auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &widget);
     auto* gstReceiver = qobject_cast<GstVideoReceiver*>(receiver.get());
     QVERIFY(gstReceiver);
     QSignalSpy decodingSpy(receiver.get(), &VideoReceiver::decodingChanged);
     QSignalSpy decoderNameSpy(gstReceiver, &GstVideoReceiver::decoderNameChanged);
+    const auto receiverCleanup = destroyBeforeSpies(receiver);
 
     receiver->start(kWatchdogTimeoutSec);
     receiver->startDecoding(videoSink);
@@ -925,8 +949,9 @@ void GstVideoReceiverTest::_testVideoSizeFromNegotiatedCaps()
     QVERIFY(sender.start(port));
 
     QQuickItem widget;
-    const auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &widget);
+    auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &widget);
     QSignalSpy sizeSpy(receiver.get(), &VideoReceiver::videoSizeChanged);
+    const auto receiverCleanup = destroyBeforeSpies(receiver);
 
     receiver->start(kWatchdogTimeoutSec);
     receiver->startDecoding(videoSink);
@@ -951,10 +976,11 @@ void GstVideoReceiverTest::_testScreenshotSavesDisplayedFrame()
     QVERIFY(sender.start(port));
 
     QQuickVideoOutput videoOutput;
-    const auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &videoOutput);
+    auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &videoOutput);
     // What attachAppSink() does once the widget's window is visible; there is no window here.
     QVERIFY(GStreamer::setupQVideoSinkElement(videoSink, videoOutput.videoSink(), receiver.get()));
     QSignalSpy screenshotSpy(receiver.get(), &VideoReceiver::onTakeScreenshotComplete);
+    const auto receiverCleanup = destroyBeforeSpies(receiver);
 
     const QString path = tempDir.filePath(QStringLiteral("screenshot.png"));
     expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
@@ -991,10 +1017,11 @@ void GstVideoReceiverTest::_testStopReleasesDisplayedFrame()
     QVERIFY(sender.start(port));
 
     QQuickVideoOutput videoOutput;
-    const auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &videoOutput);
+    auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &videoOutput);
     // Bound once per receiver, as VideoManager does through attachAppSink().
     QVERIFY(GStreamer::setupQVideoSinkElement(videoSink, videoOutput.videoSink(), receiver.get()));
     QSignalSpy stopSpy(receiver.get(), &VideoReceiver::onStopComplete);
+    const auto receiverCleanup = destroyBeforeSpies(receiver);
 
     receiver->start(kWatchdogTimeoutSec);
     receiver->startDecoding(videoSink);
@@ -1022,12 +1049,13 @@ void GstVideoReceiverTest::_testBusDoesNotQueueMessages()
     const auto sinkCleanup = qScopeGuard([videoSink] { gst_object_unref(videoSink); });
 
     QQuickItem widget;
-    const auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &widget);
+    auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &widget);
     auto* gstReceiver = qobject_cast<GstVideoReceiver*>(receiver.get());
     QVERIFY(gstReceiver);
     QSignalSpy startSpy(receiver.get(), &VideoReceiver::onStartComplete);
     QSignalSpy streamingSpy(receiver.get(), &VideoReceiver::streamingChanged);
     QSignalSpy decodingSpy(receiver.get(), &VideoReceiver::decodingChanged);
+    const auto receiverCleanup = destroyBeforeSpies(receiver);
 
     receiver->start(kWatchdogTimeoutSec);
     QVERIFY_SIGNAL_COUNT_WAIT(startSpy, 1, TestTimeout::mediumMs());
