@@ -1253,6 +1253,22 @@ void TransectStyleComplexItem::_buildAndAppendMissionItems(QList<MissionItem*>& 
         break;
     }
 
+    // Approach/departure points outside the capture interval must not start or delay stopping the camera.
+    const auto isTransit = [](const CoordInfo_t& point) {
+        return point.coordType == CoordTypeInterior || point.coordType == CoordTypeInteriorTerrainAdded;
+    };
+    int firstCapturePoint = 0;
+    int lastCapturePoint = _rgFlightPathCoordInfo.count() - 1;
+    while (firstCapturePoint <= lastCapturePoint && isTransit(_rgFlightPathCoordInfo[firstCapturePoint])) {
+        ++firstCapturePoint;
+    }
+    while (lastCapturePoint >= firstCapturePoint && isTransit(_rgFlightPathCoordInfo[lastCapturePoint])) {
+        --lastCapturePoint;
+    }
+    if (firstCapturePoint > 0 && triggerCamera()) {
+        _appendCameraTriggerDistance(items, missionItemParent, seqNum, 0);
+    }
+
     // Note: The code below is written to be understable as opposed to being compact and/or remove all duplicate code
     for (int coordIndex=0; coordIndex<_rgFlightPathCoordInfo.count(); coordIndex++) {
         const CoordInfo_t& coordInfo = _rgFlightPathCoordInfo[coordIndex];
@@ -1263,8 +1279,8 @@ void TransectStyleComplexItem::_buildAndAppendMissionItems(QList<MissionItem*>& 
             break;
         case CoordTypeTurnaround:
         {
-            bool firstEntryTurnaround   = coordIndex == 0;
-            bool lastExitTurnaround     = coordIndex == _rgFlightPathCoordInfo.count() - 1;
+            bool firstEntryTurnaround = coordIndex == firstCapturePoint;
+            bool lastExitTurnaround = coordIndex == lastCapturePoint;
             if (buildState.addTriggerAtFirstAndLastPoint && (firstEntryTurnaround || lastExitTurnaround)) {
                 _appendCameraTriggerDistanceUpdatePoint(items, missionItemParent, seqNum, mavFrame, coordInfo.coord, buildState.useConditionGate, firstEntryTurnaround ? triggerDistance() : 0);
             } else {
@@ -1290,7 +1306,7 @@ void TransectStyleComplexItem::_buildAndAppendMissionItems(QList<MissionItem*>& 
             }
             break;
         case CoordTypeSurveyExit:
-            bool lastSurveyExit = coordIndex == _rgFlightPathCoordInfo.count() - 1;
+            bool lastSurveyExit = coordIndex == lastCapturePoint;
             if (triggerCamera()) {
                 if (hoverAndCaptureEnabled()) {
                     _appendWaypoint(items, missionItemParent, seqNum, mavFrame, _hoverAndCaptureDelaySeconds, coordInfo.coord);

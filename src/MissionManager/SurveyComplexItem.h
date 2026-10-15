@@ -5,6 +5,7 @@
 
 class PlanMasterController;
 class MissionItem;
+class QPainterPath;
 
 class SurveyComplexItem : public TransectStyleComplexItem
 {
@@ -88,6 +89,8 @@ protected:
 private slots:
     void _updateWizardMode              (void);
     void _updateObstacleConnections();
+    void _updateTransitionConnections();
+    void _updateTransitionCoordinates();
     void _obstaclesChanged();
 
     // Overrides from TransectStyleComplexItem
@@ -127,6 +130,9 @@ private:
     void _saveCommon(QJsonObject& complexObject);
     void _rebuildTransectsPhase1WorkerSinglePolygon(bool refly);
     void _avoidObstacles();
+    void _avoidObstacleTransitions();
+    QPainterPath _exclusionAreas(const QGeoCoordinate& origin) const;
+    bool _refreshTransitionCoordinates();
     bool _hasExclusionFences() const;
 
     QMap<QString, FactMetaData*> _metaDataMap;
@@ -136,6 +142,13 @@ private:
     SettingsFact    _splitConcavePolygonsFact;
     int             _entryPoint;
     QList<QMetaObject::Connection> _obstacleConnections;
+    QList<QMetaObject::Connection> _transitionConnections;
+    QGeoCoordinate _surveyEntryCoordinate;
+    QGeoCoordinate _surveyExitCoordinate;
+    QGeoCoordinate _transitionStart;
+    QGeoCoordinate _transitionEnd;
+    double _transitionDistance = 0;
+    bool _transitionEndIsReturn = false;
     QString _obstacleError;
     bool _obstacleAvoidanceActive = false;
 

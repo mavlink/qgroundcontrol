@@ -16,6 +16,7 @@
 #include "AppSettings.h"
 #include "GeoFenceController.h"
 #include "JsonParsing.h"
+#include "MissionController.h"
 #include "MissionItem.h"
 #include "PlanMasterController.h"
 #include "QGCApplication.h"
@@ -25,6 +26,7 @@
 #include "QGCLoggingCategory.h"
 #include "QGCQGeoCoordinate.h"
 #include "SettingsManager.h"
+#include "SimpleMissionItem.h"
 #include "Vehicle.h"
 
 namespace {
@@ -32,6 +34,16 @@ namespace {
 constexpr double GEOMETRY_TOLERANCE = 1e-5;
 constexpr double OBSTACLE_CLEARANCE = 2.0;
 constexpr double ROUTING_TOLERANCE = 0.1;
+
+QPointF surveyPoint(const QGeoCoordinate& coordinate, const QGeoCoordinate& origin)
+{
+    if (coordinate.latitude() == origin.latitude() && coordinate.longitude() == origin.longitude()) {
+        return QPointF();
+    }
+    double north, east, down;
+    QGCGeo::convertGeoToNed(coordinate, origin, north, east, down);
+    return QPointF(east, north);
+}
 
 QPainterPath polygonPath(const QPolygonF& polygon)
 {
@@ -370,6 +382,11 @@ SurveyComplexItem::SurveyComplexItem(PlanMasterController* masterController, boo
         connect(fences->circles(), &QmlObjectListModel::countChanged, this,
                 &SurveyComplexItem::_updateObstacleConnections);
         _updateObstacleConnections();
+        MissionController* mission = masterController->missionController();
+        connect(mission, &MissionController::visualItemsReset, this, &SurveyComplexItem::_updateTransitionConnections);
+        connect(mission, &MissionController::plannedHomePositionChanged, this,
+                &SurveyComplexItem::_updateTransitionCoordinates);
+        _updateTransitionConnections();
     }
 
     if (!kmlOrShpFile.isEmpty()) {
@@ -967,11 +984,20 @@ void SurveyComplexItem::_rebuildTransectsPhase1(void)
     const QString previousError = _obstacleError;
     _obstacleError.clear();
     _obstacleAvoidanceActive = false;
+    _transitionDistance = 0;
+    _surveyEntryCoordinate = QGeoCoordinate();
+    _surveyExitCoordinate = QGeoCoordinate();
     _rebuildTransectsPhase1WorkerSinglePolygon(false /* refly */);
     if (_refly90DegreesFact.rawValue().toBool() && !_transects.isEmpty()) {
         _rebuildTransectsPhase1WorkerSinglePolygon(true /* refly */);
     }
     _avoidObstacles();
+    if (!_transects.isEmpty()) {
+        _surveyEntryCoordinate = _transects.first().first().coord;
+        _surveyExitCoordinate = _transects.last().last().coord;
+        _refreshTransitionCoordinates();
+        _avoidObstacleTransitions();
+    }
     if (previousError != _obstacleError) {
         emit obstacleErrorChanged();
         emit readyForSaveStateChanged();
@@ -1034,32 +1060,89 @@ void SurveyComplexItem::_obstaclesChanged()
     }
 }
 
-void SurveyComplexItem::_avoidObstacles()
+void SurveyComplexItem::_updateTransitionConnections()
 {
-    if (_flyView || _transects.isEmpty() || !_hasExclusionFences()) {
-        return;
+    for (const QMetaObject::Connection& connection : _transitionConnections) {
+        disconnect(connection);
     }
-    const QGeoCoordinate origin = _surveyAreaPolygon.coordinateList().first();
-    const auto toLocal = [&origin](const QGeoCoordinate& coordinate) {
-        if (coordinate.latitude() == origin.latitude() && coordinate.longitude() == origin.longitude()) {
-            return QPointF();
+    _transitionConnections.clear();
+    QmlObjectListModel* items = _masterController->missionController()->visualItems();
+    _transitionConnections.append(
+        connect(items, &QmlObjectListModel::countChanged, this, &SurveyComplexItem::_updateTransitionConnections));
+    for (int i = 0; i < items->count(); ++i) {
+        auto* item = items->value<VisualMissionItem*>(i);
+        if (!item || item == this) {
+            continue;
         }
-        double north, east, down;
-        QGCGeo::convertGeoToNed(coordinate, origin, north, east, down);
-        return QPointF(east, north);
-    };
-    const auto toGeo = [&origin](const QPointF& point) {
-        QGeoCoordinate coordinate;
-        QGCGeo::convertNedToGeo(point.y(), point.x(), 0, origin, coordinate);
-        return coordinate;
-    };
-    QPolygonF surveyPolygon;
-    for (const QGeoCoordinate& coordinate : _surveyAreaPolygon.coordinateList()) {
-        surveyPolygon.append(toLocal(coordinate));
+        _transitionConnections.append(connect(item, &VisualMissionItem::entryCoordinateChanged, this,
+                                              &SurveyComplexItem::_updateTransitionCoordinates));
+        _transitionConnections.append(connect(item, &VisualMissionItem::exitCoordinateChanged, this,
+                                              &SurveyComplexItem::_updateTransitionCoordinates));
+        _transitionConnections.append(connect(item, &VisualMissionItem::specifiesCoordinateChanged, this,
+                                              &SurveyComplexItem::_updateTransitionCoordinates));
+        if (auto* simple = qobject_cast<SimpleMissionItem*>(item)) {
+            _transitionConnections.append(connect(simple, &SimpleMissionItem::commandChanged, this,
+                                                  &SurveyComplexItem::_updateTransitionCoordinates));
+        }
     }
-    const QPainterPath surveyArea = polygonPath(surveyPolygon);
-    const double turnaround = qMax(0.0, _turnaroundDistance());
-    const QPainterPath flightArea = expandedArea(surveyArea, turnaround);
+    _updateTransitionCoordinates();
+}
+
+bool SurveyComplexItem::_refreshTransitionCoordinates()
+{
+    MissionController* mission = _masterController->missionController();
+    QmlObjectListModel* items = mission->visualItems();
+    const int index = mission->visualItemIndexForObject(this);
+    QGeoCoordinate start;
+    QGeoCoordinate end;
+    bool returnHome = false;
+    if (index > 0) {
+        start = mission->plannedHomePosition();
+        for (int i = 1; i < index; ++i) {
+            auto* item = items->value<VisualMissionItem*>(i);
+            if (auto* simple = qobject_cast<SimpleMissionItem*>(item);
+                simple && simple->mavCommand() == MAV_CMD_NAV_RETURN_TO_LAUNCH) {
+                start = QGeoCoordinate();
+                break;
+            }
+            if (item && item->specifiesCoordinate() && !item->isStandaloneCoordinate()) {
+                const auto* survey = qobject_cast<SurveyComplexItem*>(item);
+                start = survey ? survey->_surveyExitCoordinate : item->exitCoordinate();
+            }
+        }
+        for (int i = index + 1; i < items->count(); ++i) {
+            auto* item = items->value<VisualMissionItem*>(i);
+            if (auto* simple = qobject_cast<SimpleMissionItem*>(item);
+                simple && simple->mavCommand() == MAV_CMD_NAV_RETURN_TO_LAUNCH) {
+                end = mission->plannedHomePosition();
+                returnHome = true;
+                break;
+            }
+            if (item && item->specifiesCoordinate() && !item->isStandaloneCoordinate()) {
+                // The following survey owns the incoming leg between two surveys.
+                if (!qobject_cast<SurveyComplexItem*>(item)) {
+                    end = item->entryCoordinate();
+                }
+                break;
+            }
+        }
+    }
+    const bool changed = start != _transitionStart || end != _transitionEnd || returnHome != _transitionEndIsReturn;
+    _transitionStart = start;
+    _transitionEnd = end;
+    _transitionEndIsReturn = returnHome;
+    return changed;
+}
+
+void SurveyComplexItem::_updateTransitionCoordinates()
+{
+    if (_refreshTransitionCoordinates()) {
+        _obstaclesChanged();
+    }
+}
+
+QPainterPath SurveyComplexItem::_exclusionAreas(const QGeoCoordinate& origin) const
+{
     QPainterPath obstacles;
     GeoFenceController* fences = _masterController->geoFenceController();
     for (int i = 0; i < fences->polygons()->count(); ++i) {
@@ -1069,7 +1152,7 @@ void SurveyComplexItem::_avoidObstacles()
         }
         QPolygonF polygon;
         for (const QGeoCoordinate& coordinate : fence->coordinateList()) {
-            polygon.append(toLocal(coordinate));
+            polygon.append(surveyPoint(coordinate, origin));
         }
         obstacles = obstacles.united(expandedArea(polygonPath(polygon), OBSTACLE_CLEARANCE + ROUTING_TOLERANCE));
     }
@@ -1086,7 +1169,7 @@ void SurveyComplexItem::_avoidObstacles()
         constexpr int CIRCLE_SIDES = 8;
         const double expandedRadius = (radius + OBSTACLE_CLEARANCE + ROUTING_TOLERANCE) / std::cos(M_PI / CIRCLE_SIDES);
         const double rotation = M_PI / CIRCLE_SIDES - _gridAngleFact.rawValue().toDouble() * M_PI / 180;
-        const QPointF center = toLocal(fence->center());
+        const QPointF center = surveyPoint(fence->center(), origin);
         QPolygonF polygon;
         for (int vertex = 0; vertex < CIRCLE_SIDES; ++vertex) {
             const double angle = rotation + 2 * M_PI * vertex / CIRCLE_SIDES;
@@ -1094,6 +1177,99 @@ void SurveyComplexItem::_avoidObstacles()
         }
         obstacles = obstacles.united(polygonPath(polygon));
     }
+    return obstacles;
+}
+
+void SurveyComplexItem::_avoidObstacleTransitions()
+{
+    if (_flyView || !_hasExclusionFences()) {
+        return;
+    }
+    const QGeoCoordinate origin = _surveyAreaPolygon.coordinateList().first();
+    const QPainterPath obstacles = _exclusionAreas(origin);
+    if (obstacles.isEmpty()) {
+        return;
+    }
+    if (_transitionEndIsReturn && !_transitionEnd.isValid()) {
+        _obstacleError = tr("Set a valid planned home position to route the survey return around exclusion fences.");
+        _transects.clear();
+        return;
+    }
+    if (!_transitionStart.isValid() && !_transitionEnd.isValid()) {
+        return;
+    }
+    QRectF bounds = obstacles.boundingRect();
+    for (const QGeoCoordinate& coordinate :
+         {_transitionStart, _transitionEnd, _surveyEntryCoordinate, _surveyExitCoordinate}) {
+        if (coordinate.isValid()) {
+            const QPointF point = surveyPoint(coordinate, origin);
+            bounds.setLeft(qMin(bounds.left(), point.x()));
+            bounds.setRight(qMax(bounds.right(), point.x()));
+            bounds.setTop(qMin(bounds.top(), point.y()));
+            bounds.setBottom(qMax(bounds.bottom(), point.y()));
+        }
+    }
+    QPainterPath flightArea;
+    const double margin = OBSTACLE_CLEARANCE + ROUTING_TOLERANCE;
+    flightArea.addRect(bounds.adjusted(-margin, -margin, margin, margin));
+    SurveyPathPlanner planner(flightArea.subtracted(obstacles));
+    const auto route = [&planner, &origin](const QGeoCoordinate& start, const QGeoCoordinate& end) {
+        return planner.shortestPath(surveyPoint(start, origin), surveyPoint(end, origin));
+    };
+    const QList<QPointF> approach =
+        _transitionStart.isValid() ? route(_transitionStart, _surveyEntryCoordinate) : QList<QPointF>();
+    const QList<QPointF> departure =
+        _transitionEnd.isValid() ? route(_surveyExitCoordinate, _transitionEnd) : QList<QPointF>();
+    if ((_transitionStart.isValid() && approach.isEmpty()) || (_transitionEnd.isValid() && departure.isEmpty())) {
+        _obstacleError = tr("No safe path connects the survey to the adjacent mission point or planned home position.");
+        _transects.clear();
+        return;
+    }
+    const auto toGeo = [&origin](const QPointF& point) {
+        QGeoCoordinate coordinate;
+        QGCGeo::convertNedToGeo(point.y(), point.x(), 0, origin, coordinate);
+        return coordinate;
+    };
+    if (approach.count() > 2) {
+        _obstacleAvoidanceActive = true;
+        for (int i = approach.count() - 2; i > 0; --i) {
+            const QGeoCoordinate coordinate = toGeo(approach[i]);
+            _transitionDistance += coordinate.distanceTo(_transects.first().first().coord);
+            _transects.first().prepend({coordinate, CoordTypeInterior});
+        }
+    }
+    if (departure.count() > 2) {
+        _obstacleAvoidanceActive = true;
+        // Reach home in mission mode before RTL can choose a direct return leg.
+        const int end = departure.count() - (_transitionEndIsReturn ? 0 : 1);
+        for (int i = 1; i < end; ++i) {
+            const QGeoCoordinate coordinate = toGeo(departure[i]);
+            _transitionDistance += coordinate.distanceTo(_transects.last().last().coord);
+            _transects.last().append({coordinate, CoordTypeInterior});
+        }
+    }
+}
+
+void SurveyComplexItem::_avoidObstacles()
+{
+    if (_flyView || _transects.isEmpty() || !_hasExclusionFences()) {
+        return;
+    }
+    const QGeoCoordinate origin = _surveyAreaPolygon.coordinateList().first();
+    const auto toLocal = [&origin](const QGeoCoordinate& coordinate) { return surveyPoint(coordinate, origin); };
+    const auto toGeo = [&origin](const QPointF& point) {
+        QGeoCoordinate coordinate;
+        QGCGeo::convertNedToGeo(point.y(), point.x(), 0, origin, coordinate);
+        return coordinate;
+    };
+    QPolygonF surveyPolygon;
+    for (const QGeoCoordinate& coordinate : _surveyAreaPolygon.coordinateList()) {
+        surveyPolygon.append(toLocal(coordinate));
+    }
+    const QPainterPath surveyArea = polygonPath(surveyPolygon);
+    const double turnaround = qMax(0.0, _turnaroundDistance());
+    const QPainterPath flightArea = expandedArea(surveyArea, turnaround);
+    const QPainterPath obstacles = _exclusionAreas(origin);
     if (!obstacles.intersects(flightArea)) {
         return;
     }
@@ -1418,7 +1594,7 @@ void SurveyComplexItem::_recalcCameraShots(void)
         _cameraShots = 0;
     } else {
         if (_cameraTriggerInTurnAroundFact.rawValue().toBool()) {
-            _cameraShots = qCeil(_complexDistance / triggerDistance);
+            _cameraShots = qCeil(qMax(0.0, _complexDistance - _transitionDistance) / triggerDistance);
         } else {
             _cameraShots = 0;
 
