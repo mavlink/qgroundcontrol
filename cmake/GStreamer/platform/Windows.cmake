@@ -54,6 +54,53 @@ function(_qgc_find_win_sdk_root EXTRACTED_DIR OUT_VAR)
     endif()
 endfunction()
 
+# _qgc_gst_windows_extract(<staging> <installer>)
+# qgc_gst_acquire_sdk extractor: runs the SDK installer silently into <staging> and checks the result.
+function(_qgc_gst_windows_extract staging installer)
+    cmake_path(NATIVE_PATH installer _installer_native)
+    cmake_path(NATIVE_PATH staging _staging_native)
+    cmake_path(GET staging PARENT_PATH _cache_dir)
+    set(_installer_log "${_cache_dir}/installer.log")
+    cmake_path(NATIVE_PATH _installer_log _installer_log_native)
+
+    # The .exe is auto-run with /VERYSILENT below; with checksum verification
+    # off it may be unverified — refuse to silently execute it.
+    if(NOT GStreamer_REQUIRE_CHECKSUM)
+        message(
+            FATAL_ERROR "GStreamer: refusing to silently run the downloaded Windows installer "
+                        "'${_installer_native}' because GStreamer_REQUIRE_CHECKSUM is OFF, so its "
+                        "integrity was not verified. Re-enable checksum verification "
+                        "(-DGStreamer_REQUIRE_CHECKSUM=ON) or install the SDK manually and point "
+                        "GStreamer_ROOT_DIR at it."
+        )
+    endif()
+
+    message(STATUS "Installing GStreamer SDK (silent)...")
+    execute_process(
+        COMMAND "${_installer_native}" /VERYSILENT /SUPPRESSMSGBOXES /SP- /NORESTART "/LOG=${_installer_log_native}"
+                "/DIR=${_staging_native}"
+        RESULT_VARIABLE _installer_rc
+        ERROR_VARIABLE _installer_err
+        TIMEOUT 600
+    )
+    if(NOT _installer_rc EQUAL 0)
+        message(FATAL_ERROR "GStreamer installer failed (exit code: ${_installer_rc}).\n" "stderr: ${_installer_err}\n"
+                            "See installer log: ${_installer_log}"
+        )
+    endif()
+
+    _qgc_find_win_sdk_root("${staging}" _root)
+    set(_complete FALSE)
+    if(_root)
+        _qgc_windows_sdk_complete("${_root}" _complete)
+    endif()
+    if(NOT _complete)
+        message(FATAL_ERROR "GStreamer SDK installed into ${staging} but required files are missing.\n"
+                            "See installer log: ${_installer_log}"
+        )
+    endif()
+endfunction()
+
 macro(_qgc_discover_windows_sdk)
     if(CMAKE_GENERATOR_PLATFORM MATCHES "ARM64|aarch64" OR
        (NOT CMAKE_GENERATOR_PLATFORM AND CMAKE_SYSTEM_PROCESSOR MATCHES "ARM64|aarch64"))
@@ -117,71 +164,25 @@ macro(_qgc_discover_windows_sdk)
                 "Set GStreamer_ROOT_DIR to a complete SDK matching your toolchain/architecture.")
         endif()
 
-        gstreamer_resolve_or_download_sdk(
-            PLATFORM     ${_gst_win_platform}
-            CACHE_SUBDIR "gstreamer-win-${_gst_win_arch}-${GStreamer_FIND_VERSION}"
-            FILENAME_PRIMARY "gstreamer-${_gst_win_arch}.exe"
-            CACHE_DIR_OUT _gst_win_cache_dir
-            ARCHIVE_OUT   _gst_win_exe
+        qgc_gst_acquire_sdk(
+            PLATFORM
+            ${_gst_win_platform}
+            VERSION
+            ${GStreamer_FIND_VERSION}
+            CACHE_SUBDIR
+            "gstreamer-win-${_gst_win_arch}-${GStreamer_FIND_VERSION}"
+            ARCHIVES
+            "gstreamer-${_gst_win_arch}.exe"
+            CONTENT
+            install
+            EXTRACT_FUNCTION
+            _qgc_gst_windows_extract
+            CONTENT_DIR_OUT
+            _gst_win_install_dir
         )
-        set(_gst_win_extracted "${_gst_win_cache_dir}/sdk")
-
-        set(_gst_win_root "")
-        if(EXISTS "${_gst_win_extracted}")
-            _qgc_find_win_sdk_root("${_gst_win_extracted}" _gst_win_root)
-        endif()
-
-        if(NOT _gst_win_root
-           OR NOT EXISTS "${_gst_win_root}/lib/gstreamer-1.0"
-           OR NOT EXISTS "${_gst_win_root}/lib/pkgconfig/gstreamer-1.0.pc")
-            file(REMOVE_RECURSE "${_gst_win_extracted}")
-            cmake_path(NATIVE_PATH _gst_win_exe _gst_win_exe_native)
-            cmake_path(NATIVE_PATH _gst_win_extracted _gst_win_extracted_native)
-            set(_gst_win_installer_log "${_gst_win_cache_dir}/installer-${_gst_win_arch}.log")
-            cmake_path(NATIVE_PATH _gst_win_installer_log _gst_win_installer_log_native)
-
-            # The .exe is auto-run with /VERYSILENT below; with checksum verification
-            # off it may be unverified — refuse to silently execute it.
-            if(NOT GStreamer_REQUIRE_CHECKSUM)
-                message(FATAL_ERROR
-                    "GStreamer: refusing to silently run the downloaded Windows installer "
-                    "'${_gst_win_exe_native}' because GStreamer_REQUIRE_CHECKSUM is OFF, so its "
-                    "integrity was not verified. Re-enable checksum verification "
-                    "(-DGStreamer_REQUIRE_CHECKSUM=ON) or install the SDK manually and point "
-                    "GStreamer_ROOT_DIR at it.")
-            endif()
-
-            message(STATUS "Installing GStreamer ${_gst_win_arch} SDK (silent)...")
-            execute_process(
-                COMMAND "${_gst_win_exe_native}"
-                    /VERYSILENT /SUPPRESSMSGBOXES /SP- /NORESTART
-                    "/LOG=${_gst_win_installer_log_native}"
-                    "/DIR=${_gst_win_extracted_native}"
-                RESULT_VARIABLE _installer_rc
-                ERROR_VARIABLE _installer_err
-                TIMEOUT 600
-            )
-            if(NOT _installer_rc EQUAL 0)
-                file(REMOVE_RECURSE "${_gst_win_extracted}")
-                message(FATAL_ERROR "GStreamer installer failed (exit code: ${_installer_rc}).\n"
-                    "stderr: ${_installer_err}\n"
-                    "See installer log: ${_gst_win_installer_log}")
-            endif()
-
-            _qgc_find_win_sdk_root("${_gst_win_extracted}" _gst_win_root)
-            if(_gst_win_root AND NOT _gst_win_root STREQUAL "${_gst_win_extracted}")
-                message(STATUS "GStreamer: SDK root at ${_gst_win_root}")
-            endif()
-
-            set(_gst_win_post_complete FALSE)
-            if(_gst_win_root)
-                _qgc_windows_sdk_complete("${_gst_win_root}" _gst_win_post_complete)
-            endif()
-            if(NOT _gst_win_post_complete)
-                file(REMOVE_RECURSE "${_gst_win_extracted}")
-                message(FATAL_ERROR "GStreamer SDK extracted but required files are missing.\n"
-                    "Delete ${_gst_win_cache_dir} and re-run cmake to retry.")
-            endif()
+        _qgc_find_win_sdk_root("${_gst_win_install_dir}" _gst_win_root)
+        if(_gst_win_root AND NOT _gst_win_root STREQUAL "${_gst_win_install_dir}")
+            message(STATUS "GStreamer: SDK root at ${_gst_win_root}")
         endif()
 
         set(GStreamer_ROOT_DIR "${_gst_win_root}")

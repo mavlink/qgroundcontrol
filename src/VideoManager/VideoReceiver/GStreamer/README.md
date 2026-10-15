@@ -107,7 +107,7 @@ Configure never overwrites `GStreamer_ROOT_DIR`: the SDK it selected is recorded
 
 ### Android
 
-Auto-downloaded during CMake configure. No manual setup required.
+Auto-downloaded during CMake configure. No manual setup required. Each ABI build extracts only its own tree from the universal SDK tarball.
 
 > **Windows users building for Android**: Enable Developer Mode (Settings > System > For developers) to support symbolic links during the build.
 
@@ -119,7 +119,7 @@ Auto-downloaded SDK archives are cached to `${CPM_SOURCE_CACHE}/gstreamer-*` whe
 export CPM_SOURCE_CACHE=$HOME/.cache/CPM
 ```
 
-Cached archives are checksum-verified against the upstream `.sha256` on every hit.
+Cached archives are verified on every hit against the checksum pinned in `.github/build-config.json`, or the upstream `.sha256sum` sidecar for an unpinned version. Each archive is extracted once into a directory beside it that is stamped with the version and archive hash; configures sharing the cache take a lock instead of downloading or extracting over each other.
 
 ## Testing Pipelines
 

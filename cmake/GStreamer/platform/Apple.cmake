@@ -24,8 +24,8 @@ function(_qgc_find_apple_pkg_config OUT_VAR)
     unset(_qgc_pkg_config CACHE)
 endfunction()
 
-# Validates a pkgutil-expanded GStreamer package directory. Used by the
-# CPM-downloaded SDK paths in macOS and iOS discovery macros.
+# Validates a pkgutil-expanded GStreamer package directory. Used by the macOS
+# and iOS SDK extractors (_qgc_gst_macos_extract / _qgc_gst_ios_extract).
 function(_qgc_validate_expanded_pkg EXPANDED_DIR LABEL)
     file(GLOB _payloads "${EXPANDED_DIR}/*.pkg/Payload")
     if(NOT _payloads)

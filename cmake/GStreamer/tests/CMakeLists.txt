@@ -19,6 +19,8 @@ set(_qgc_findmod_tests
     test_windows_sdk_root
     test_checksum_authority
     test_ios_bundle_from_root
+    test_sdk_acquire
+    test_android_sdk_extract
 )
 
 foreach(_t IN LISTS _qgc_findmod_tests)
@@ -69,7 +71,7 @@ set(_qgc_gst_argument_failure_cases
     "DownloadDelegatesRequired|download-delegates-required|qgc_resilient_download: missing values for: FILENAME"
     "DownloadResultRequired|download-result-required|gstreamer_resilient_download: RESULT_VAR is required"
     "DownloadUnknown|download-unknown|gstreamer_resilient_download: unknown arguments"
-    "SecondaryArchivePair|secondary-archive-pair|FILENAME_SECONDARY and ARCHIVE2_OUT"
+    "AcquireExtractor|acquire-extractor|EXTRACT_FUNCTION '_qgc_no_such_extractor' is not a command"
     "InstallUnknown|install-unknown|gstreamer_install_plugins: unknown arguments"
     "LayoutUnknown|layout-unknown|gstreamer_create_layout_target: unknown arguments"
     "PkgConfigUnknown|pkgconfig-unknown|gstreamer_apply_pkgconfig_env: unknown arguments"

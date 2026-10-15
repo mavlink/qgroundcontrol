@@ -15,22 +15,23 @@ elseif(TEST_CASE STREQUAL "download-result-required")
 elseif(TEST_CASE STREQUAL "download-unknown")
     include(Download)
     gstreamer_resilient_download(UNKNOWN_ARGUMENT value)
-elseif(TEST_CASE STREQUAL "secondary-archive-pair")
+elseif(TEST_CASE STREQUAL "acquire-extractor")
     include(Download)
-    set(GStreamer_FIND_VERSION 1.28.4)
-    gstreamer_resolve_or_download_sdk(
+    qgc_gst_acquire_sdk(
         PLATFORM
         macos
+        VERSION
+        1.28.4
         CACHE_SUBDIR
         gstreamer-test
-        FILENAME_PRIMARY
+        ARCHIVES
         runtime.pkg
-        FILENAME_SECONDARY
-        devel.pkg
-        CACHE_DIR_OUT
-        _cache_dir
-        ARCHIVE_OUT
-        _archive
+        CONTENT
+        sdk
+        EXTRACT_FUNCTION
+        _qgc_no_such_extractor
+        CONTENT_DIR_OUT
+        _content_dir
     )
 elseif(TEST_CASE STREQUAL "install-unknown")
     include(Install)

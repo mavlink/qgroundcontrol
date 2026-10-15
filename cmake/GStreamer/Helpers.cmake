@@ -10,7 +10,7 @@
 #                  gstreamer_resilient_download (thin wrapper over
 #                  project-level qgc_resilient_download in
 #                  cmake/modules/Download.cmake) / gstreamer_download_sdk /
-#                  gstreamer_resolve_or_download_sdk
+#                  qgc_gst_acquire_sdk (locked download + stamped extraction)
 #   Components   — GSTREAMER_COMPONENT_REGISTRY,
 #                  gstreamer_build_apis_and_deps, gstreamer_platform_plugin_attrs,
 #                  gstreamer_scan_plugin_basenames

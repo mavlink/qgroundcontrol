@@ -52,6 +52,13 @@ function(_qgc_ios_bundle_from_root root out_bundle out_kind)
     )
 endfunction()
 
+# _qgc_gst_ios_extract(<staging> <pkg>)
+# qgc_gst_acquire_sdk extractor: expands the iOS .pkg into <staging>/expanded.
+function(_qgc_gst_ios_extract staging pkg)
+    file(MAKE_DIRECTORY "${staging}")
+    _qgc_pkgutil_expand_and_validate("${pkg}" "${staging}/expanded" "iOS")
+endfunction()
+
 macro(_qgc_discover_ios_sdk)
     if(NOT CMAKE_HOST_APPLE)
         message(FATAL_ERROR "GStreamer for iOS can only be built on macOS")
@@ -88,42 +95,23 @@ macro(_qgc_discover_ios_sdk)
 
     # ── Auto-download / expand ────────────────────────────────────────────────
     if(NOT _gst_ios_bundle)
-        gstreamer_resolve_or_download_sdk(
-            PLATFORM         ios
-            CACHE_SUBDIR     "gstreamer-ios-${GStreamer_FIND_VERSION}"
-            FILENAME_PRIMARY "gstreamer-ios.pkg"
-            CACHE_DIR_OUT    _gst_ios_cache_dir
-            ARCHIVE_OUT      _gst_ios_pkg
+        qgc_gst_acquire_sdk(
+            PLATFORM
+            ios
+            VERSION
+            ${GStreamer_FIND_VERSION}
+            CACHE_SUBDIR
+            "gstreamer-ios-${GStreamer_FIND_VERSION}"
+            ARCHIVES
+            gstreamer-ios.pkg
+            CONTENT
+            sdk
+            EXTRACT_FUNCTION
+            _qgc_gst_ios_extract
+            CONTENT_DIR_OUT
+            _gst_ios_sdk
         )
-        set(_gst_ios_expanded "${_gst_ios_cache_dir}/expanded")
-
-        # Anchors that prove a complete expansion for either SDK layout.
-        set(_gst_ios_anchor_globs
-            "${_gst_ios_expanded}/*/GStreamer.xcframework/Info.plist"
-            "${_gst_ios_expanded}/GStreamer.xcframework/Info.plist"
-            "${_gst_ios_expanded}/*/GStreamer.framework/Versions/1.0/GStreamer"
-            "${_gst_ios_expanded}/*/GStreamer.framework/GStreamer"
-            "${_gst_ios_expanded}/*/GStreamer.framework/Versions/1.0/Headers/gst/gst.h"
-            "${_gst_ios_expanded}/*/GStreamer.framework/Headers/gst/gst.h"
-        )
-
-        if(EXISTS "${_gst_ios_expanded}")
-            set(_cached_anchor "")
-            foreach(_glob IN LISTS _gst_ios_anchor_globs)
-                file(GLOB_RECURSE _cached_anchor "${_glob}")
-                if(_cached_anchor)
-                    break()
-                endif()
-            endforeach()
-            if(NOT _cached_anchor)
-                message(STATUS "GStreamer: cached iOS expansion is incomplete; re-expanding")
-                file(REMOVE_RECURSE "${_gst_ios_expanded}")
-            endif()
-        endif()
-
-        if(NOT EXISTS "${_gst_ios_expanded}")
-            _qgc_pkgutil_expand_and_validate("${_gst_ios_pkg}" "${_gst_ios_expanded}" "iOS")
-        endif()
+        set(_gst_ios_expanded "${_gst_ios_sdk}/expanded")
 
         # Prefer xcframework when present (future SDKs); fall back to framework.
         file(GLOB_RECURSE _xcfw_info_plists LIST_DIRECTORIES false

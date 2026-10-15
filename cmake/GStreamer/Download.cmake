@@ -248,8 +248,11 @@ function(gstreamer_resilient_download)
     set(${ARG_RESULT_VAR} "${_qrd_result}" PARENT_SCOPE)
 endfunction()
 
+# gstreamer_download_sdk(<platform> <version> <filename> <destination_dir> <result_var>
+#                        [ALLOW_FAILURE] [HASH_VAR <var>])
+# HASH_VAR receives the "SHA256=<hex>" the archive was verified against, or "" when unverified.
 function(gstreamer_download_sdk PLATFORM VERSION FILENAME DESTINATION_DIR RESULT_VAR)
-    cmake_parse_arguments(PARSE_ARGV 5 _DL "ALLOW_FAILURE" "" "")
+    cmake_parse_arguments(PARSE_ARGV 5 _DL "ALLOW_FAILURE" "HASH_VAR" "")
     if(_DL_UNPARSED_ARGUMENTS)
         message(FATAL_ERROR "gstreamer_download_sdk: unknown arguments: ${_DL_UNPARSED_ARGUMENTS}")
     endif()
@@ -283,44 +286,88 @@ function(gstreamer_download_sdk PLATFORM VERSION FILENAME DESTINATION_DIR RESULT
 
     gstreamer_resilient_download(${_args})
     set(${RESULT_VAR} "${_result}" PARENT_SCOPE)
+    if(_DL_HASH_VAR)
+        set(${_DL_HASH_VAR}
+            "${_hash}"
+            PARENT_SCOPE
+        )
+    endif()
 endfunction()
 
-# gstreamer_resolve_or_download_sdk
-# Shared prologue for Windows/macOS/iOS: selects the cache directory and downloads
-# the SDK package(s). Callers remain responsible for extraction and validation.
-#
-# OUT parameters (all set in PARENT_SCOPE if provided):
-#   CACHE_DIR_OUT  — resolved cache directory
-#   ARCHIVE_OUT    — path to the downloaded primary archive (FILENAME_PRIMARY)
-#   ARCHIVE2_OUT   — path to the downloaded secondary archive (FILENAME_SECONDARY, optional)
-#
-# This is a function so scratch variables don't leak; callers must pass OUT vars
-# and read them back to propagate GStreamer_ROOT_DIR / GStreamer_AUTO_DOWNLOADED.
-function(gstreamer_resolve_or_download_sdk)
-    cmake_parse_arguments(PARSE_ARGV 0 ARG ""
-        "PLATFORM;CACHE_SUBDIR;FILENAME_PRIMARY;FILENAME_SECONDARY;CACHE_DIR_OUT;ARCHIVE_OUT;ARCHIVE2_OUT"
-        "")
-    if(ARG_KEYWORDS_MISSING_VALUES)
-        message(FATAL_ERROR
-            "gstreamer_resolve_or_download_sdk: missing values for: ${ARG_KEYWORDS_MISSING_VALUES}")
-    endif()
-    if(ARG_UNPARSED_ARGUMENTS)
-        message(FATAL_ERROR
-            "gstreamer_resolve_or_download_sdk: unknown arguments: ${ARG_UNPARSED_ARGUMENTS}")
-    endif()
-    if(NOT GStreamer_FIND_VERSION)
-        message(FATAL_ERROR "gstreamer_resolve_or_download_sdk: GStreamer_FIND_VERSION not set")
+# _qgc_gst_extract_once(<dir> <stamp> <extract_function> <archives> [<extract_arg>...])
+# Publishes <dir> exactly once per <stamp>: a matching <dir>/.complete means it is already extracted.
+# Otherwise <extract_function>(<staging> <archives> [<extract_arg>...]) must create and fill <staging>,
+# which is then stamped and renamed to <dir>, so <dir> only ever exists complete. The caller must
+# hold the cache lock (see qgc_gst_acquire_sdk).
+function(_qgc_gst_extract_once dir stamp extract_function archives)
+    set(_stamp_file "${dir}/.complete")
+    if(EXISTS "${_stamp_file}")
+        file(READ "${_stamp_file}" _existing_stamp)
+        if(_existing_stamp STREQUAL stamp)
+            return()
+        endif()
+        message(STATUS "GStreamer: ${dir} was extracted from another archive; extracting again")
+    elseif(EXISTS "${dir}")
+        message(STATUS "GStreamer: ${dir} has no completion stamp; extracting again")
     endif()
 
-    foreach(_req IN ITEMS PLATFORM CACHE_SUBDIR FILENAME_PRIMARY CACHE_DIR_OUT ARCHIVE_OUT)
-        if("${ARG_${_req}}" STREQUAL "")
-            message(FATAL_ERROR "gstreamer_resolve_or_download_sdk: ${_req} is required")
+    set(_staging "${dir}.partial")
+    file(REMOVE_RECURSE "${dir}" "${_staging}")
+    cmake_language(CALL ${extract_function} "${_staging}" "${archives}" ${ARGN})
+    if(NOT IS_DIRECTORY "${_staging}")
+        message(FATAL_ERROR "GStreamer: ${extract_function} did not create ${_staging}")
+    endif()
+    file(WRITE "${_staging}/.complete" "${stamp}")
+
+    # Freshly written files can briefly hold the directory open on Windows (e.g. antivirus scans).
+    foreach(_attempt IN ITEMS 1 2 3 4 5)
+        file(RENAME "${_staging}" "${dir}" RESULT _rename_result)
+        if(_rename_result EQUAL 0)
+            return()
+        endif()
+        execute_process(COMMAND "${CMAKE_COMMAND}" -E sleep 2)
+    endforeach()
+    message(FATAL_ERROR "GStreamer: could not move ${_staging} to ${dir}: ${_rename_result}")
+endfunction()
+
+# qgc_gst_acquire_sdk(PLATFORM <platform> VERSION <version> CACHE_SUBDIR <subdir>
+#                     ARCHIVES <primary> [<devel>] CONTENT <name>
+#                     EXTRACT_FUNCTION <command> [EXTRACT_ARGS <arg>...] CONTENT_DIR_OUT <var>)
+# Downloads the SDK archive(s) for <platform> (the second one as <platform>_devel) into
+# <cache>/<subdir> and extracts them once into <cache>/<subdir>/<name>, returned in CONTENT_DIR_OUT.
+# <cache> is CPM_SOURCE_CACHE when set (shared by build directories and CI jobs), else
+# <build>/_deps. Concurrent configures are serialized on <cache>/<subdir>/.lock, and the extracted
+# tree is stamped with the version and archive hashes; see _qgc_gst_extract_once.
+function(qgc_gst_acquire_sdk)
+    cmake_parse_arguments(PARSE_ARGV 0 ARG "" "PLATFORM;VERSION;CACHE_SUBDIR;CONTENT;EXTRACT_FUNCTION;CONTENT_DIR_OUT"
+                          "ARCHIVES;EXTRACT_ARGS"
+    )
+    if(ARG_KEYWORDS_MISSING_VALUES)
+        message(FATAL_ERROR "qgc_gst_acquire_sdk: missing values for: ${ARG_KEYWORDS_MISSING_VALUES}")
+    endif()
+    if(ARG_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR "qgc_gst_acquire_sdk: unknown arguments: ${ARG_UNPARSED_ARGUMENTS}")
+    endif()
+    foreach(
+        _required IN
+        ITEMS PLATFORM
+              VERSION
+              CACHE_SUBDIR
+              ARCHIVES
+              CONTENT
+              EXTRACT_FUNCTION
+              CONTENT_DIR_OUT
+    )
+        if("${ARG_${_required}}" STREQUAL "")
+            message(FATAL_ERROR "qgc_gst_acquire_sdk: ${_required} is required")
         endif()
     endforeach()
-    if((ARG_FILENAME_SECONDARY AND NOT ARG_ARCHIVE2_OUT)
-            OR (ARG_ARCHIVE2_OUT AND NOT ARG_FILENAME_SECONDARY))
-        message(FATAL_ERROR
-            "gstreamer_resolve_or_download_sdk: FILENAME_SECONDARY and ARCHIVE2_OUT must be provided together")
+    list(LENGTH ARG_ARCHIVES _archive_count)
+    if(_archive_count GREATER 2)
+        message(FATAL_ERROR "qgc_gst_acquire_sdk: ARCHIVES takes a primary and an optional devel archive")
+    endif()
+    if(NOT COMMAND ${ARG_EXTRACT_FUNCTION})
+        message(FATAL_ERROR "qgc_gst_acquire_sdk: EXTRACT_FUNCTION '${ARG_EXTRACT_FUNCTION}' is not a command")
     endif()
 
     if(CPM_SOURCE_CACHE)
@@ -328,15 +375,54 @@ function(gstreamer_resolve_or_download_sdk)
     else()
         set(_cache_dir "${CMAKE_BINARY_DIR}/_deps/${ARG_CACHE_SUBDIR}")
     endif()
-    set(${ARG_CACHE_DIR_OUT} "${_cache_dir}" PARENT_SCOPE)
-
-    gstreamer_download_sdk(${ARG_PLATFORM} ${GStreamer_FIND_VERSION}
-        "${ARG_FILENAME_PRIMARY}" "${_cache_dir}" _primary_archive)
-    set(${ARG_ARCHIVE_OUT} "${_primary_archive}" PARENT_SCOPE)
-
-    if(ARG_FILENAME_SECONDARY AND ARG_ARCHIVE2_OUT)
-        gstreamer_download_sdk(${ARG_PLATFORM}_devel ${GStreamer_FIND_VERSION}
-            "${ARG_FILENAME_SECONDARY}" "${_cache_dir}" _secondary_archive)
-        set(${ARG_ARCHIVE2_OUT} "${_secondary_archive}" PARENT_SCOPE)
+    file(MAKE_DIRECTORY "${_cache_dir}")
+    set(_lock "${_cache_dir}/.lock")
+    file(
+        LOCK "${_lock}"
+        GUARD FUNCTION
+        TIMEOUT 0
+        RESULT_VARIABLE _lock_result
+    )
+    if(NOT _lock_result EQUAL 0)
+        message(STATUS "GStreamer: waiting for another configure to release ${_lock}")
+        file(
+            LOCK "${_lock}"
+            GUARD FUNCTION
+            TIMEOUT 1800
+            RESULT_VARIABLE _lock_result
+        )
+        if(NOT _lock_result EQUAL 0)
+            message(FATAL_ERROR "GStreamer: could not lock ${_lock}: ${_lock_result}")
+        endif()
     endif()
+
+    set(_platforms "${ARG_PLATFORM}" "${ARG_PLATFORM}_devel")
+    set(_archive_paths "")
+    set(_stamp "version=${ARG_VERSION}\nextract=${ARG_EXTRACT_FUNCTION} ${ARG_EXTRACT_ARGS}\n")
+    foreach(_archive IN LISTS ARG_ARCHIVES)
+        list(POP_FRONT _platforms _platform)
+        gstreamer_download_sdk(
+            ${_platform}
+            ${ARG_VERSION}
+            "${_archive}"
+            "${_cache_dir}"
+            _archive_path
+            HASH_VAR
+            _archive_hash
+        )
+        if(NOT _archive_hash)
+            file(SHA256 "${_archive_path}" _archive_sha256)
+            set(_archive_hash "SHA256=${_archive_sha256}")
+        endif()
+        list(APPEND _archive_paths "${_archive_path}")
+        string(APPEND _stamp "${_archive}=${_archive_hash}\n")
+    endforeach()
+
+    _qgc_gst_extract_once("${_cache_dir}/${ARG_CONTENT}" "${_stamp}" ${ARG_EXTRACT_FUNCTION} "${_archive_paths}"
+                          ${ARG_EXTRACT_ARGS}
+    )
+    set(${ARG_CONTENT_DIR_OUT}
+        "${_cache_dir}/${ARG_CONTENT}"
+        PARENT_SCOPE
+    )
 endfunction()

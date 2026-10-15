@@ -120,7 +120,9 @@ function(qgc_resilient_download)
     endif()
 
     file(MAKE_DIRECTORY "${ARG_DESTINATION_DIR}")
-    set(_tmp "${_dest}.tmp")
+    # Per-process name: configures sharing DESTINATION_DIR must not write the same partial file.
+    string(RANDOM LENGTH 12 _tmp_token)
+    set(_tmp "${_dest}.${_tmp_token}.tmp")
     set(_tried_urls "")
 
     foreach(_url IN LISTS ARG_URLS)

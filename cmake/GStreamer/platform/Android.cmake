@@ -29,24 +29,48 @@ function(_qgc_android_abi_info ABI PFX)
     set(${PFX}_NEEDS_BSYMBOLIC_FIX "${_bsym}" PARENT_SCOPE)
 endfunction()
 
+# _qgc_gst_android_extract(<staging> <archive> <abi_dir>)
+# qgc_gst_acquire_sdk extractor: unpacks only the <abi_dir>/ tree of the universal SDK tarball into
+# <staging>. Every ABI build (including Qt's multi-ABI sub-builds) acquires its own tree.
+# cmakelang 0.6.13 does not recognize file(ARCHIVE_EXTRACT).
+# cmake-lint: disable=E1126
+function(_qgc_gst_android_extract staging archive abi_dir)
+    file(
+        ARCHIVE_EXTRACT
+        INPUT
+        "${archive}"
+        DESTINATION
+        "${staging}"
+        PATTERNS
+        "${abi_dir}/*"
+    )
+    if(NOT EXISTS "${staging}/${abi_dir}/lib/pkgconfig/gstreamer-1.0.pc")
+        message(FATAL_ERROR "GStreamer: ${archive} has no ${abi_dir}/ SDK tree")
+    endif()
+endfunction()
+
 macro(_qgc_discover_android_sdk)
     if(NOT GStreamer_ROOT_DIR)
-        if(CPM_SOURCE_CACHE)
-            set(_gst_android_cache "${CPM_SOURCE_CACHE}/gstreamer-android")
-        else()
-            set(_gst_android_cache "${CMAKE_BINARY_DIR}/_deps/gstreamer-android")
-        endif()
-        gstreamer_download_sdk(android ${GStreamer_FIND_VERSION}
-            "gstreamer-android-${GStreamer_FIND_VERSION}.tar.xz" "${_gst_android_cache}" _gst_android_archive)
-
-        CPMAddPackage(
-            NAME gstreamer
-            VERSION ${GStreamer_FIND_VERSION}
-            URL "file://${_gst_android_archive}"
+        _qgc_android_abi_info("${CMAKE_ANDROID_ARCH_ABI}" _gst_android_abi)
+        qgc_gst_acquire_sdk(
+            PLATFORM
+            android
+            VERSION
+            ${GStreamer_FIND_VERSION}
+            CACHE_SUBDIR
+            "gstreamer-android-${GStreamer_FIND_VERSION}"
+            ARCHIVES
+            "gstreamer-android-${GStreamer_FIND_VERSION}.tar.xz"
+            CONTENT
+            ${_gst_android_abi_DIR}
+            EXTRACT_FUNCTION
+            _qgc_gst_android_extract
+            EXTRACT_ARGS
+            ${_gst_android_abi_DIR}
+            CONTENT_DIR_OUT
+            _gst_android_sdk
         )
-
-        _qgc_android_abi_info("${CMAKE_ANDROID_ARCH_ABI}" GStreamer_ABI)
-        set(GStreamer_ROOT_DIR "${gstreamer_SOURCE_DIR}/${GStreamer_ABI_DIR}")
+        set(GStreamer_ROOT_DIR "${_gst_android_sdk}/${_gst_android_abi_DIR}")
         set(GStreamer_AUTO_DOWNLOADED TRUE)
     endif()
 
