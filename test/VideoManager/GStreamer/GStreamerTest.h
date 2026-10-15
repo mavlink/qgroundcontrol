@@ -135,6 +135,9 @@ private slots:
     void _testSourceFactoryNoRetransmission();
     void _testSourceFactoryRtspJitterBufferPolicy_data();
     void _testSourceFactoryRtspJitterBufferPolicy();
+    void _testSourceFactoryRtspSelectsOnlyVideoStreams_data();
+    void _testSourceFactoryRtspSelectsOnlyVideoStreams();
+    void _testSourceFactoryRtspSetsUpOnlyVideoStream();
     void _testSourceFactoryRejectsBadUri();
     void _testSourceFactoryTcpMpegTs();
     void _testSourceFactoryRejectsBadTcpUri();
@@ -145,6 +148,7 @@ private slots:
     void _testSourceFactorySchemeCaseInsensitive();
     void _testSourceFactoryNegativeLatencyClamped();
     void _testSourceFactoryDynamicRtpLinkFailureCleansJitterBuffer();
+    void _testSourceFactoryDynamicLinkSkipsNonVideoRtp();
     void _testColorimetryColorRangeMapping();
     void _testPixelFormatAcceptedButNotAdvertised();
     void _testAdvertisedFormatListMatchesTable();

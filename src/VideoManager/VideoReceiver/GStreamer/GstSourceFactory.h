@@ -15,13 +15,13 @@ enum class JitterBuffer
 };
 
 /// Source-bin construction parameters. Defaults match the drone-GCS profile: 80 ms playout
-/// latency with RFC 4588 retransmission, leaving ~3× the 20 ms rtx-delay for packet recovery.
+/// latency with RFC 4588 retransmission on RTSP, leaving ~3× the 25 ms rtx-delay for packet recovery.
 /// Callers wanting sub-frame latency should use JitterBuffer::None.
 struct Config
 {
     JitterBuffer jitterBuffer = JitterBuffer::DropOnLatency;
     int latencyMs = 80;
-    bool doRetransmission = true;
+    bool doRetransmission = true;  ///< RTSP only: plain UDP/TCP sources have no RTCP back-channel for NACKs.
 };
 
 /// Build a source bin (`source` [+ `tsdemux`] [+ `rtpjitterbuffer`] + `parsebin`)
