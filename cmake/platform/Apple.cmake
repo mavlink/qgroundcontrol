@@ -102,6 +102,19 @@ elseif(IOS)
             )
             message(STATUS "QGC: GStreamerMobile will be embedded at build time (Ninja)")
         endif()
+
+        set(_nm "${CMAKE_NM}")
+        if(NOT _nm)
+            set(_nm nm)
+        endif()
+        add_custom_command(
+            TARGET "${target}"
+            POST_BUILD
+            COMMAND "${CMAKE_COMMAND}" "-DAPP=$<TARGET_FILE:${target}>" "-DNM=${_nm}" -P
+                    "${CMAKE_SOURCE_DIR}/cmake/GStreamer/platform/IOSSingleCoreCheck.cmake"
+            COMMENT "Checking that the app links a single GStreamer core"
+            VERBATIM
+        )
     endfunction()
 
     set(_qgc_ios_asset_catalog "${CMAKE_SOURCE_DIR}/deploy/ios/Images.xcassets")

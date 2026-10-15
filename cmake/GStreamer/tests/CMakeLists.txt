@@ -23,6 +23,7 @@ set(_qgc_findmod_tests
     test_android_sdk_extract
     test_static_init
     test_ios_static_plugins
+    test_ios_single_core
 )
 
 foreach(_t IN LISTS _qgc_findmod_tests)

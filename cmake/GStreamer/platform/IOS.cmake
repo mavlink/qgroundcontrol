@@ -413,6 +413,25 @@ function(_qgc_gst_download_ios_ca_bundle)
     )
 endfunction()
 
+# Core functions QGC calls directly that the registered plugins don't necessarily link into GStreamerMobile.
+set(QGC_GST_IOS_APP_CORE_SYMBOLS _gst_debug_bin_to_dot_data _gst_debug_bin_to_dot_file)
+
+# _qgc_gst_ios_app_core_symbols(<nm_output> <out_var>)
+# Sets <out_var> to the GStreamer core symbols that `nm -gU` output for the app lists as defined. The app must take the
+# core from GStreamerMobile; a core symbol defined in the app means a second core was linked in from the archive.
+function(_qgc_gst_ios_app_core_symbols nm_output out_var)
+    set(_found "")
+    foreach(_sym IN ITEMS _gst_init_check _gst_element_get_type _gst_plugin_feature_get_type)
+        if(nm_output MATCHES "[ \t]${_sym}(\n|$)")
+            list(APPEND _found "${_sym}")
+        endif()
+    endforeach()
+    set(${out_var}
+        "${_found}"
+        PARENT_SCOPE
+    )
+endfunction()
+
 # _qgc_gst_ios_select_static_plugins(<descriptors> <requested> <registered_out>)
 # Sets <registered_out> to the <requested> plugins, in order, whose descriptor symbol (_gst_plugin_<name>_get_desc, as
 # nm lists it for the merged archive) is in <descriptors>.
@@ -686,6 +705,11 @@ function(_qgc_gst_create_ios_targets)
         # loading it registers the default GIO TLS backend.
         qgc_gst_generate_static_init(TARGET GStreamerMobileXcfw PLUGINS ${_xcfw_registered} GIO_MODULES ${G_IO_MODULES})
         target_link_libraries(GStreamerMobileXcfw PRIVATE GStreamer::GStreamer)
+        # The app resolves GStreamer from this framework. A core function QGC calls that no registered plugin pulls in
+        # would be missing here, so the app would link it from the archive and drag a second core in with it.
+        foreach(_sym IN LISTS QGC_GST_IOS_APP_CORE_SYMBOLS)
+            target_link_options(GStreamerMobileXcfw PRIVATE "LINKER:-u,${_sym}")
+        endforeach()
         set_target_properties(
             GStreamerMobileXcfw
             PROPERTIES LIBRARY_OUTPUT_NAME gstreamer_mobile
