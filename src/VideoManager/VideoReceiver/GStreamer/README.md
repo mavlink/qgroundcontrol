@@ -13,7 +13,12 @@ The pipeline is split into focused components (all in this directory):
 
 | Component | Role |
 | --- | --- |
-| `GstVideoReceiver` | Pipeline owner: builds/starts/stops the receiver pipeline, recording, watchdog, and `.dot` dumps. All pipeline changes run on its own worker thread (a `QThread` event loop); a single bus sync handler consumes every bus message. After a stream failure it stops itself (`onStopComplete(STATUS_FAIL)`) and is the only component that reconnects, with exponential backoff while `autoReconnect` is set. Exposes decoder/telemetry as `Q_PROPERTY`s to QML. |
+| `GstVideoReceiver` | Pipeline owner and the `VideoReceiver` the app uses: builds, starts and stops the receiver pipeline (source → tee → the two branches below). All pipeline changes run on its own worker thread (a `QThread` event loop). After a stream failure it stops itself (`onStopComplete(STATUS_FAIL)`) and is the only component that reconnects, with exponential backoff while `autoReconnect` is set. Exposes decoder/telemetry as `Q_PROPERTY`s to QML. The five components below are plain classes it owns; each header states which thread calls what. |
+| `DecodingBranch` | Display branch behind the tee: holds the video sink until the source streams, inserts `decodebin3` (QoS off on every decoder it plugs), reports decoding from the first displayed frame, and keeps the decoder name, QoS values and video size. |
+| `RecordingBranch` | Recording branch behind the tee: a `splitmuxsink` file sink per recording, started at the first keyframe and finalized on stop within a deadline. A recorder error ends the recording, not the stream. `RecordingFinalizer` matches bus messages to the current file by ancestry. |
+| `BusMessageRouter` | The pipeline's only bus consumer: a sync handler that routes each message to the branches or the worker and drops it. |
+| `StreamWatchdog` | Notices stalled source or decoder output on a monotonic clock, and paces reconnects (1 s, 2 s, 4 s, … 30 s). |
+| `PipelineDotDumper` | Writes the pipeline's `.dot` graphs; see [Pipeline Observability](#pipeline-observability). |
 | `GstSourceFactory` | Constructs the source element from the stream URI and applies RTP jitter-buffer policy for `application/x-rtp` sources. |
 | `GStreamerEnvironment` | Process-wide environment setup (plugin/scanner/helper/GIO paths, env hygiene) run before `gst_init()`. See [Runtime Environment Setup](#runtime-environment-setup). |
 | `GStreamerHelpers` | Small utilities (element-rank overrides, etc.). |

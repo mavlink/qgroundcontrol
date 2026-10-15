@@ -1,0 +1,84 @@
+#pragma once
+
+#include <atomic>
+#include <chrono>
+#include <glib.h>
+
+#include <QtCore/QString>
+
+#include "RecordingFinalizer.h"
+#include "VideoReceiver.h"
+
+class GstVideoReceiver;
+class QObject;
+class QTimer;
+typedef struct _GstCaps GstCaps;
+typedef struct _GstElement GstElement;
+typedef struct _GstMessage GstMessage;
+
+/// \brief The recording branch behind GstVideoReceiver's tee: queue ! valve [! parser ! splitmuxsink].
+///
+/// Builds a file sink per recording, starts the file at the first keyframe, and finalizes it on stop within
+/// kFinalizeTimeout. A failing recorder ends the recording, not the stream. Reports through the receiver's signals.
+///
+/// Threading: the onBus*() methods run on whichever thread posts, the keyframe probe on the streaming thread, and
+/// everything else on the receiver's worker.
+class RecordingBranch
+{
+public:
+    enum class State
+    {
+        Idle,
+        Recording,
+        Stopping,  ///< stop() sent EOS into the branch; waiting for the file to be finalized
+    };
+
+    /// How long a recording may take to finalize before it is closed anyway; covers slow storage.
+    static constexpr std::chrono::seconds kFinalizeTimeout{3};
+
+    RecordingBranch(GstVideoReceiver& receiver, QObject* workerContext);
+
+    /// The sink bin a recording links to the valve: an optional parser for @p inputCaps, then splitmuxsink writing
+    /// @p videoFile. Returns a floating ref, or null on failure.
+    static GstElement* makeFileSink(const QString& videoFile, VideoReceiver::FILE_FORMAT format,
+                                    const GstCaps* inputCaps);
+
+    /// Adds the branch's queue and closed valve to @p pipeline behind @p tee.
+    [[nodiscard]] bool build(GstElement* pipeline, GstElement* tee);
+    /// Drops the recording, if any, and forgets the pipeline, which must be in NULL with its callbacks stopped.
+    void reset();
+
+    State state() const { return _state; }
+
+    void start(const QString& videoFile, VideoReceiver::FILE_FORMAT format);
+    void stop();
+    /// Before the pipeline is torn down: drains an active recording into its file, then waits up to
+    /// kFinalizeTimeout for the file (or one stop() is finalizing) to be closed.
+    void finishForTeardown();
+
+    /// Pipeline EOS: every branch drained, the recorder included.
+    void onBusEos();
+    void onBusElement(GstMessage* message);
+    /// Returns whether the error came from the recording.
+    bool onBusError(GstMessage* message, const QString& text);
+
+private:
+    /// Unlinks the branch from the valve and sends EOS into it.
+    bool _unlinkBranch();
+    void _shutdown();
+    void _onFinalized();
+    void _onRecorderError();
+    void _onStopTimeout();
+
+    GstVideoReceiver& _receiver;
+    /// Bounds stop(): completes it when the file isn't reported finalized in time.
+    QTimer* _stopTimer = nullptr;
+    GstElement* _pipeline = nullptr;
+    GstElement* _tee = nullptr;
+    /// Closed by the bus handler on a recorder error; fixed while the handler is attached.
+    GstElement* _valve = nullptr;
+    GstElement* _fileSink = nullptr;
+    State _state = State::Idle;
+    std::atomic<gulong> _keyframeWatchId = 0;  ///< Cleared by the keyframe probe when it removes itself.
+    RecordingFinalizer _finalizer;
+};

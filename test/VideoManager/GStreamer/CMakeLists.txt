@@ -15,9 +15,12 @@ target_sources(${CMAKE_PROJECT_NAME}
         Receiver/GstVideoReceiverTest.h
         SourceFactory/GStreamerSourceFactoryTest.cc
         gstqgc/GStreamerGstQgcTest.cc
+        Receiver/GstVideoReceiverComponentsTest.cc
+        Receiver/GstVideoReceiverComponentsTest.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_qgc_test(GStreamerTest LABELS Integration)
 add_qgc_test(GstVideoReceiverTest LABELS Integration)
+add_qgc_test(GstVideoReceiverComponentsTest LABELS Unit)

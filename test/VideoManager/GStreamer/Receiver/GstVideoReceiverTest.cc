@@ -216,11 +216,11 @@ int countPlayableFrames(const QString& path, QString& failure)
 
 void GstVideoReceiverTest::init()
 {
+    // Every skip comes before UnitTest::init(): skipping in init() also skips cleanup(), which UnitTest requires
+    // after its init().
 #if defined(__SANITIZE_ADDRESS__) || (defined(__has_feature) && __has_feature(address_sanitizer))
     QSKIP("GStreamer init deadlocks under AddressSanitizer (bindtextdomain lock)");
 #endif
-
-    UnitTest::init();
 
     if (!gst_is_initialized()) {
         (void) GStreamer::prepareEnvironment();
@@ -240,6 +240,8 @@ void GstVideoReceiverTest::init()
     if (!missing.isEmpty()) {
         QSKIP(qPrintable(QStringLiteral("Required GStreamer factory is unavailable: %1").arg(missing)));
     }
+
+    UnitTest::init();
 }
 
 void GstVideoReceiverTest::_testStartDecodeStop()
@@ -779,7 +781,7 @@ void GstVideoReceiverTest::_testDecoderQosDisabledAndReported()
     QVERIFY(QMetaObject::invokeMethod(
         gstReceiver->_workerContext,
         [gstReceiver, &decoders, &qosEnabled]() {
-            GstIterator* it = gst_bin_iterate_recurse(GST_BIN(gstReceiver->_decoder));
+            GstIterator* it = gst_bin_iterate_recurse(GST_BIN(gstReceiver->_decodingBranch.decoder()));
             GValue item = G_VALUE_INIT;
             while (gst_iterator_next(it, &item) == GST_ITERATOR_OK) {
                 auto* element = GST_ELEMENT(g_value_get_object(&item));
@@ -868,47 +870,95 @@ void GstVideoReceiverTest::_testBusDoesNotQueueMessages()
 
 #else
 
+// Skipping in init() would skip cleanup() too, which UnitTest requires after its init().
 void GstVideoReceiverTest::init()
 {
     UnitTest::init();
+}
+
+void GstVideoReceiverTest::_testStartDecodeStop()
+{
     QSKIP("GStreamer not enabled");
 }
 
-void GstVideoReceiverTest::_testStartDecodeStop() {}
+void GstVideoReceiverTest::_testStopAfterUriClearedTearsDown()
+{
+    QSKIP("GStreamer not enabled");
+}
 
-void GstVideoReceiverTest::_testStopAfterUriClearedTearsDown() {}
+void GstVideoReceiverTest::_testFailedStartLeavesCleanState()
+{
+    QSKIP("GStreamer not enabled");
+}
 
-void GstVideoReceiverTest::_testFailedStartLeavesCleanState() {}
-
-void GstVideoReceiverTest::_testVideoSinkRefcountStableAcrossRestarts() {}
+void GstVideoReceiverTest::_testVideoSinkRefcountStableAcrossRestarts()
+{
+    QSKIP("GStreamer not enabled");
+}
 
 void GstVideoReceiverTest::_testRecordingPlayableWhileInProgress_data() {}
 
-void GstVideoReceiverTest::_testRecordingPlayableWhileInProgress() {}
+void GstVideoReceiverTest::_testRecordingPlayableWhileInProgress()
+{
+    QSKIP("GStreamer not enabled");
+}
 
-void GstVideoReceiverTest::_testDestroyWhileRecordingFinalizesFile() {}
+void GstVideoReceiverTest::_testDestroyWhileRecordingFinalizesFile()
+{
+    QSKIP("GStreamer not enabled");
+}
 
-void GstVideoReceiverTest::_testSecondRecordingIsNotTruncated() {}
+void GstVideoReceiverTest::_testSecondRecordingIsNotTruncated()
+{
+    QSKIP("GStreamer not enabled");
+}
 
-void GstVideoReceiverTest::_testReconnectBacksOffAfterFailedStart() {}
+void GstVideoReceiverTest::_testReconnectBacksOffAfterFailedStart()
+{
+    QSKIP("GStreamer not enabled");
+}
 
 void GstVideoReceiverTest::_testStreamLossRestartPolicy_data() {}
 
-void GstVideoReceiverTest::_testStreamLossRestartPolicy() {}
+void GstVideoReceiverTest::_testStreamLossRestartPolicy()
+{
+    QSKIP("GStreamer not enabled");
+}
 
-void GstVideoReceiverTest::_testDecodingRequestedBeforeStreamStarts() {}
+void GstVideoReceiverTest::_testDecodingRequestedBeforeStreamStarts()
+{
+    QSKIP("GStreamer not enabled");
+}
 
-void GstVideoReceiverTest::_testStopDecodingBeforeFirstFrame() {}
+void GstVideoReceiverTest::_testStopDecodingBeforeFirstFrame()
+{
+    QSKIP("GStreamer not enabled");
+}
 
-void GstVideoReceiverTest::_testStopWhileStoppingRecordingFinalizesFile() {}
+void GstVideoReceiverTest::_testStopWhileStoppingRecordingFinalizesFile()
+{
+    QSKIP("GStreamer not enabled");
+}
 
-void GstVideoReceiverTest::_testRecordingErrorKeepsStreaming() {}
+void GstVideoReceiverTest::_testRecordingErrorKeepsStreaming()
+{
+    QSKIP("GStreamer not enabled");
+}
 
-void GstVideoReceiverTest::_testDecoderQosDisabledAndReported() {}
+void GstVideoReceiverTest::_testDecoderQosDisabledAndReported()
+{
+    QSKIP("GStreamer not enabled");
+}
 
-void GstVideoReceiverTest::_testVideoSizeFromNegotiatedCaps() {}
+void GstVideoReceiverTest::_testVideoSizeFromNegotiatedCaps()
+{
+    QSKIP("GStreamer not enabled");
+}
 
-void GstVideoReceiverTest::_testBusDoesNotQueueMessages() {}
+void GstVideoReceiverTest::_testBusDoesNotQueueMessages()
+{
+    QSKIP("GStreamer not enabled");
+}
 
 #endif
 

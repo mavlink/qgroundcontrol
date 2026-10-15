@@ -2,24 +2,28 @@
 
 #include <atomic>
 #include <glib.h>
-#include <gst/gstbin.h>
-#include <gst/gstbus.h>
 #include <gst/gstelement.h>
 #include <gst/gstpad.h>
-#include <memory>
 #include <utility>
 
+#include <QtCore/QLoggingCategory>
 #include <QtCore/QMetaObject>
-#include <QtCore/QMutex>
-#include <QtCore/QSemaphore>
 #include <QtCore/QString>
 
+#include "BusMessageRouter.h"
+#include "DecodingBranch.h"
+#include "PipelineDotDumper.h"
+#include "RecordingBranch.h"
+#include "StreamWatchdog.h"
 #include "VideoReceiver.h"
 
 class QThread;
 class QTimer;
 class GStreamerTest;
 class GstVideoReceiverTest;
+
+/// Shared by GstVideoReceiver and its components.
+Q_DECLARE_LOGGING_CATEGORY(GstVideoReceiverLog)
 
 class GstVideoReceiver : public VideoReceiver
 {
@@ -35,12 +39,17 @@ public:
     explicit GstVideoReceiver(QObject *parent = nullptr);
     ~GstVideoReceiver();
 
-    QString decoderName()     const { QMutexLocker locker(&_decoderNameMutex); return _decoderName; }
-    quint64 processedFrames() const { return _processedFrames.load(std::memory_order_relaxed); }
-    quint64 droppedFrames()   const { return _droppedFrames.load(std::memory_order_relaxed); }
-    qint64  currentJitterNs() const { return _currentJitterNs.load(std::memory_order_relaxed); }
-    double  qosProportion()   const { return _qosProportion.load(std::memory_order_relaxed); }
-    int     qosQuality()      const { return _qosQuality.load(std::memory_order_relaxed); }
+    QString decoderName() const { return _decodingBranch.decoderName(); }
+
+    quint64 processedFrames() const { return _decodingBranch.processedFrames(); }
+
+    quint64 droppedFrames() const { return _decodingBranch.droppedFrames(); }
+
+    qint64 currentJitterNs() const { return _decodingBranch.currentJitterNs(); }
+
+    double qosProportion() const { return _decodingBranch.qosProportion(); }
+
+    int qosQuality() const { return _decodingBranch.qosQuality(); }
 
 public slots:
     void start(uint32_t timeout) override;
@@ -62,6 +71,9 @@ signals:
 private:
     friend class GStreamerTest;
     friend class GstVideoReceiverTest;
+    friend class BusMessageRouter;
+    friend class DecodingBranch;
+    friend class RecordingBranch;
 
     /// Settings a pipeline is started with, captured on the caller's thread so the worker and
     /// streaming threads never read members the GUI thread writes.
@@ -73,15 +85,6 @@ private:
         bool lowLatency = false;
         int rtpJitterLatencyMs = 0;
     };
-
-    enum class RecordingState
-    {
-        Idle,
-        Recording,
-        Stopping,  ///< stopRecording() sent EOS into the branch; waiting for the file to be finalized
-    };
-
-    class RecordingFinalizer;
 
     /// Queues @p task on the worker thread, which owns the pipeline and all receiver state not marked atomic.
     template <typename Task>
@@ -106,25 +109,11 @@ private:
     bool _onWorkerThread() const;
 
     QString _redactedUri() const;
-    GstElement *_makeDecoder();
-    static GstElement* _makeFileSink(const QString& videoFile, FILE_FORMAT format, const GstCaps* inputCaps);
 
     void _startPipeline(const StartConfig& config);
-    void _startDecoding(GstElement* videoSink, bool hasWidget);
     void _onNewSourcePad(GstPad *pad);
-    void _onNewDecoderPad(GstPad *pad);
-    bool _addDecoder(GstElement *src);
-    void _ensureVideoSinkInPipeline();
-    bool _addVideoSink(GstPad *pad);
     void _onPadAdded(GstElement* element, GstPad* pad);
     void _noteTeeFrame();
-    void _noteVideoSinkFrame();
-    void _onFirstVideoFrame();
-    /// -Unlink the branch from the src pad
-    /// -Send an EOS event at the beginning of that branch
-    bool _unlinkBranch(GstElement *from);
-    void _shutdownDecodingBranch();
-    void _shutdownRecordingBranch();
     void _removeSourceEosProbe();
     /// Tears down the running pipeline (finalizing an active recording first) and resets all
     /// pipeline state. Returns false when nothing was running.
@@ -132,16 +121,9 @@ private:
     /// Releases every pipeline-scoped element, probe and flag, emitting the matching change
     /// signals. Safe on a partially built pipeline (failed start()).
     void _resetPipelineState();
-    void _notifyDecoderStatsChanged();
     void _onWatchdogTick();
-    void _attachBusHandler();
-    /// Returns once no thread is inside the bus handler any more, so no bus callback can reach `this`.
-    void _detachBusHandler();
     void _onPipelineError();
     void _onPipelinePlaying();
-    void _onRecordingFinalized();
-    void _onRecorderError();
-    void _onRecordingStopTimeout();
 
     /// Tears down a pipeline that failed (error, watchdog, end of stream), reports it with
     /// onStopComplete(STATUS_FAIL) and schedules a reconnect.
@@ -151,74 +133,33 @@ private:
     void _scheduleReconnect(const char *reason);
     void _reconnect();
 
-    /// The pipeline's only bus consumer. Runs on whichever thread posts: lets the HwBuffers context bridges answer
-    /// NEED_CONTEXT, does the cheap per-type work inline, queues the rest on the worker, and drops every message.
-    static GstBusSyncReply _onBusSyncMessage(GstBus* bus, GstMessage* message, gpointer user_data);
-    void _onBusError(GstMessage* message);
-    void _onBusElement(GstMessage* message);
-    void _onBusQos(GstMessage* message);
-    void _onBusStateChanged(GstMessage* message);
     static void _onNewPad(GstElement *element, GstPad *pad, gpointer data);
-    static void _onDecoderElementAdded(GstBin* decodebin, GstBin* subBin, GstElement* element, gpointer data);
     static GstPadProbeReturn _teeProbe(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
-    static GstPadProbeReturn _videoSinkProbe(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
     static GstPadProbeReturn _eosProbe(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
-    static GstPadProbeReturn _keyframeWatch(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
 
     QThread* _workerThread = nullptr;
     /// Lives on _workerThread; tasks and the timers below run there. Deleted when the thread finishes.
     QObject* _workerContext = nullptr;
     QTimer* _watchdogTimer = nullptr;
     QTimer* _reconnectTimer = nullptr;
-    /// Bounds stopRecording(): completes it when the file isn't reported finalized in time.
-    QTimer* _recordingStopTimer = nullptr;
 
     StartConfig _config;
-    GstElement *_decoder = nullptr;
-    GstElement *_decoderValve = nullptr;
-    GstElement *_fileSink = nullptr;
     GstElement *_pipeline = nullptr;
-    GstElement *_recorderValve = nullptr;
     GstElement *_source = nullptr;
     GstElement *_tee = nullptr;
-    GstElement *_videoSink = nullptr;
-    int _reconnectAttempts = 0;
     /// Identifies the current pipeline; bumped on every teardown (stop() or failed start()) once its callbacks have
     /// stopped. Written on the worker, read by callbacks on streaming threads.
     std::atomic<quint64> _pipelineGeneration = 0;
-    bool _busHandlerAttached = false;
-    QSemaphore _busHandlerReleased;  ///< Released by GStreamer once the detached bus handler is no longer running.
-    std::atomic<quint64> _sourceFrameCount =
-        0;  ///< Tee-probe frame tally (streaming thread); drives the source-side flow heartbeat log.
     gulong _teeProbeId = 0;
-    gulong _videoSinkProbeId = 0;
     gulong _eosProbeId = 0;
     // Ref-held source pad carrying _eosProbeId; released with the pipeline, not the decode branch.
     GstPad* _eosProbePad = nullptr;
-    std::atomic<gulong> _keyframeWatchId = 0;  // cleared by _keyframeWatch (streaming thread) when it removes itself
-    RecordingState _recordingState = RecordingState::Idle;
-    /// Signalled from the bus handler; the pointer is fixed for the receiver's lifetime.
-    const std::unique_ptr<RecordingFinalizer> _recordingFinalizer;
+    RecordingBranch _recordingBranch;
+    DecodingBranch _decodingBranch;
+    BusMessageRouter _busRouter;
 
     int _statsTickCounter = 0;
     bool _streaming = false;
-    std::atomic<bool> _decoding = false;  ///< Read by the tee probe's flow log.
-    // Monotonic ms. Written on streaming threads (pad probes), read/written by the watchdog on the worker thread.
-    std::atomic<qint64> _lastSourceFrameTime = 0;
-    std::atomic<qint64> _lastVideoFrameTime = 0;
-
-    mutable QMutex _decoderNameMutex;  // QString refcount isn't thread-safe across reader/writer threads
-    QString _decoderName;
-    std::atomic<quint64> _processedFrames{0};   // written on streaming thread (QOS), read on GUI
-    std::atomic<quint64> _droppedFrames{0};
-    std::atomic<qint64>  _currentJitterNs{0};
-    std::atomic<double>  _qosProportion{1.0};
-    std::atomic<int>     _qosQuality{1000000};
-    std::atomic<bool> _qosStatsDirty{false};  // set per QOS message, drained by the 1 Hz watchdog tick
-
-    static constexpr const char *_kFileMux[FILE_FORMAT_MAX + 1] = {
-        "matroskamux",
-        "qtmux",
-        "mp4mux"
-    };
+    StreamWatchdog _watchdog;
+    PipelineDotDumper _dotDumper;
 };
