@@ -329,7 +329,7 @@ void GstVideoReceiverTest::_testFailedStartLeavesCleanState()
     const auto receiverCleanup = destroyBeforeSpies(receiver);
 
     expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("^GStreamer error:")));
+                     QRegularExpression(QStringLiteral("^GStreamer error from ")));
     expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
                      QRegularExpression(QStringLiteral("^Failed to start")));
     receiver->start(kWatchdogTimeoutSec);
@@ -536,7 +536,7 @@ void GstVideoReceiverTest::_testReconnectBacksOffAfterFailedStart()
     // The first start and its retry both fail on the bound port.
     for (int attempt = 0; attempt < 2; ++attempt) {
         expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
-                         QRegularExpression(QStringLiteral("^GStreamer error:")));
+                         QRegularExpression(QStringLiteral("^GStreamer error from ")));
         expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
                          QRegularExpression(QStringLiteral("^Failed to start")));
     }

@@ -658,7 +658,10 @@ void GstVideoReceiver::_onBusError(GstMessage* message)
         return;
     }
 
-    qCWarning(GstVideoReceiverLog) << "GStreamer error:" << text;
+    const GStreamer::GCharPtr sourcePath = GStreamer::adoptGChar(
+        GST_MESSAGE_SRC(message) ? gst_object_get_path_string(GST_MESSAGE_SRC(message)) : nullptr);
+    qCWarning(GstVideoReceiverLog) << "GStreamer error from" << (sourcePath ? sourcePath.get() : "(unknown)") << ":"
+                                   << text;
     // Drops cached GPU devices on a device-loss error.
     HwBuffers::dispatchBusMessage(message);
     // A failing pipeline usually posts several ERRORs; the first one's teardown makes the rest stale.
