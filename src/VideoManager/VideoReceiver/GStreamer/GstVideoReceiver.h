@@ -45,6 +45,8 @@ public slots:
     void stopDecoding() override;
     void startRecording(const QString &videoFile, FILE_FORMAT format) override;
     void stopRecording() override;
+    /// Saves the frame on display in the widget's video sink to @p imageFile. Runs on the caller's thread, which must
+    /// be the widget's (the GUI thread).
     void takeScreenshot(const QString &imageFile) override;
 
     /// Dumps the running pipeline's graph, without element properties, to GST_DEBUG_DUMP_DOT_DIR when that is set,

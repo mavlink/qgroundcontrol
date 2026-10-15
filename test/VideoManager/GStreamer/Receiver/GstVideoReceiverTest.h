@@ -29,5 +29,6 @@ private slots:
     void _testRecordingStartKeepsPipelinePlaying();
     void _testDecoderQosDisabledAndReported();
     void _testVideoSizeFromNegotiatedCaps();
+    void _testScreenshotSavesDisplayedFrame();
     void _testBusDoesNotQueueMessages();
 };

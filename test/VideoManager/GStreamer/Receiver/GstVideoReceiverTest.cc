@@ -12,6 +12,10 @@
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QTemporaryDir>
+#include <QtGui/QImage>
+#include <QtMultimedia/QVideoFrame>
+#include <QtMultimedia/QVideoSink>
+#include <QtMultimediaQuick/private/qquickvideooutput_p.h>
 #include <QtNetwork/QHostAddress>
 #include <QtNetwork/QUdpSocket>
 #include <QtQuick/QQuickItem>
@@ -930,6 +934,48 @@ void GstVideoReceiverTest::_testVideoSizeFromNegotiatedCaps()
     QCOMPARE(sizeSpy.constLast().constFirst().toSize(), QSize(kFrameWidth, kFrameHeight));
 }
 
+void GstVideoReceiverTest::_testScreenshotSavesDisplayedFrame()
+{
+    if (!firstMissingFactory({"qgcvideosinkbin"}).isEmpty()) {
+        QVERIFY2(GStreamer::completeInit(), "GStreamer::completeInit() failed");
+    }
+    auto* videoSink = static_cast<GstElement*>(GStreamer::createVideoSink(GStreamer::VideoSinkConfig{}));
+    QVERIFY(videoSink);
+    const auto sinkCleanup = qScopeGuard([videoSink] { GStreamer::releaseVideoSink(videoSink); });
+
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const quint16 port = freeLoopbackUdpPort();
+    QVERIFY(port != 0);
+    H264RtpSender sender;
+    QVERIFY(sender.start(port));
+
+    QQuickVideoOutput videoOutput;
+    const auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &videoOutput);
+    // What attachAppSink() does once the widget's window is visible; there is no window here.
+    QVERIFY(GStreamer::setupQVideoSinkElement(videoSink, videoOutput.videoSink(), receiver.get()));
+    QSignalSpy screenshotSpy(receiver.get(), &VideoReceiver::onTakeScreenshotComplete);
+
+    const QString path = tempDir.filePath(QStringLiteral("screenshot.png"));
+    expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^No video frame to take a screenshot from")));
+    receiver->takeScreenshot(path);
+    verifyExpectedLogMessage();
+    QCOMPARE(screenshotSpy.count(), 1);
+    QCOMPARE(lastStatus(screenshotSpy), VideoReceiver::STATUS_FAIL);
+
+    receiver->start(kWatchdogTimeoutSec);
+    receiver->startDecoding(videoSink);
+    QVERIFY_TRUE_WAIT(videoOutput.videoSink()->videoFrame().isValid(), TestTimeout::mediumMs());
+
+    // Qt Multimedia converts on the CPU when the platform (offscreen here) has no RHI, and says so.
+    ignoreLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("No RHI backend")));
+    receiver->takeScreenshot(path);
+    QCOMPARE(screenshotSpy.count(), 2);
+    QCOMPARE(lastStatus(screenshotSpy), VideoReceiver::STATUS_OK);
+    QCOMPARE(QImage(path).size(), QSize(kFrameWidth, kFrameHeight));
+}
+
 void GstVideoReceiverTest::_testBusDoesNotQueueMessages()
 {
     const quint16 port = freeLoopbackUdpPort();
@@ -1062,6 +1108,11 @@ void GstVideoReceiverTest::_testDecoderQosDisabledAndReported()
 }
 
 void GstVideoReceiverTest::_testVideoSizeFromNegotiatedCaps()
+{
+    QSKIP("GStreamer not enabled");
+}
+
+void GstVideoReceiverTest::_testScreenshotSavesDisplayedFrame()
 {
     QSKIP("GStreamer not enabled");
 }
