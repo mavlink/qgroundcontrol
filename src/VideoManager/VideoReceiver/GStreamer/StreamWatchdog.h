@@ -30,8 +30,6 @@ public:
 
     /// Watches a new pipeline, which stalls after @p timeoutSec without frames (at least 1 s).
     void start(uint32_t timeoutSec);
-    /// Forgets the frame times of a pipeline that is gone. The source frame count stays for nextReconnectDelay().
-    void stop();
 
     /// Returns the number of source frames since start().
     quint64 noteSourceFrame(qint64 nowMs);

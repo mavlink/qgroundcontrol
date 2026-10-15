@@ -5,8 +5,8 @@
 
 /// Scoped owners for transfer-full GStreamer returns so refs can't leak on early return.
 /// Use the adopt* helpers at the transfer-full call boundary; .get() yields a non-owning view.
-/// Floating refs (e.g. gst_element_factory_make) are sunk by gst_bin_add/gst_element_add_pad on
-/// success, so release() the owner once such a call succeeds.
+/// Floating refs (e.g. gst_element_factory_make) are consumed by gst_bin_add/gst_element_add_pad even
+/// when the call fails, so release() the owner into the call.
 namespace GStreamer {
 
 struct GstObjectDeleter
@@ -35,24 +35,9 @@ struct GstEventDeleter
     void operator()(GstEvent* event) const noexcept { gst_event_unref(event); }
 };
 
-struct GstSampleDeleter
-{
-    void operator()(GstSample* sample) const noexcept { gst_sample_unref(sample); }
-};
-
-struct GstBufferDeleter
-{
-    void operator()(GstBuffer* buffer) const noexcept { gst_buffer_unref(buffer); }
-};
-
 struct GstStructureDeleter
 {
     void operator()(GstStructure* structure) const noexcept { gst_structure_free(structure); }
-};
-
-struct GstIteratorDeleter
-{
-    void operator()(GstIterator* iterator) const noexcept { gst_iterator_free(iterator); }
 };
 
 struct GFreeDeleter
@@ -75,10 +60,7 @@ using GstQueryPtr = std::unique_ptr<GstQuery, GstQueryDeleter>;
 using GstCapsPtr = std::unique_ptr<GstCaps, GstCapsDeleter>;
 using GstMessagePtr = std::unique_ptr<GstMessage, GstMessageDeleter>;
 using GstEventPtr = std::unique_ptr<GstEvent, GstEventDeleter>;
-using GstSamplePtr = std::unique_ptr<GstSample, GstSampleDeleter>;
-using GstBufferPtr = std::unique_ptr<GstBuffer, GstBufferDeleter>;
 using GstStructurePtr = std::unique_ptr<GstStructure, GstStructureDeleter>;
-using GstIteratorPtr = std::unique_ptr<GstIterator, GstIteratorDeleter>;
 using GCharPtr = std::unique_ptr<gchar, GFreeDeleter>;
 using GErrorPtr = std::unique_ptr<GError, GErrorDeleter>;
 
@@ -132,24 +114,9 @@ inline GstEventPtr adoptEvent(GstEvent* event) noexcept
     return GstEventPtr(event);
 }
 
-inline GstSamplePtr adoptSample(GstSample* sample) noexcept
-{
-    return GstSamplePtr(sample);
-}
-
-inline GstBufferPtr adoptBuffer(GstBuffer* buffer) noexcept
-{
-    return GstBufferPtr(buffer);
-}
-
 inline GstStructurePtr adoptStructure(GstStructure* structure) noexcept
 {
     return GstStructurePtr(structure);
-}
-
-inline GstIteratorPtr adoptIterator(GstIterator* iterator) noexcept
-{
-    return GstIteratorPtr(iterator);
 }
 
 inline GCharPtr adoptGChar(gchar* str) noexcept

@@ -82,7 +82,7 @@ void DecodingBranch::start(GstElement* videoSink, bool hasWidget, bool streaming
         _shutdown();
     }
 
-    if (_videoSink || _decoding) {
+    if (_videoSink) {
         qCDebug(GstVideoReceiverLog) << "Already decoding!" << _receiver._redactedUri();
         emit _receiver.onStartDecodingComplete(VideoReceiver::STATUS_INVALID_STATE);
         return;
@@ -99,7 +99,6 @@ void DecodingBranch::start(GstElement* videoSink, bool hasWidget, bool streaming
 
     _sinkProbeId = gst_pad_add_probe(pad.get(), GST_PAD_PROBE_TYPE_BUFFER, _sinkProbe, this, nullptr);
 
-    // The caller keeps its own (non-floating) reference; ours is dropped in _shutdown().
     _videoSink = GStreamer::adoptElement(GST_ELEMENT(gst_object_ref(videoSink)));
     _sinkStatsAtStart = _readSinkStats();
 
@@ -163,17 +162,16 @@ void DecodingBranch::onBusCapsInfo(GstMessage* message)
     const QSize resolution(w, h);
     // src compared by address only on the GUI thread; never dereferenced (may be gone by then).
     void* src = GST_MESSAGE_SRC(message);
-    GstVideoReceiver* const receiver = &_receiver;
     QMetaObject::invokeMethod(
-        receiver,
-        [receiver, format, resolution, src]() {
-            for (auto* c : QGCQVideoSinkController::controllersOf(receiver)) {
+        &_receiver,
+        [this, format, resolution, src]() {
+            for (auto* c : QGCQVideoSinkController::controllersOf(&_receiver)) {
                 if (static_cast<const void*>(c->element()) == src) {
                     c->updateNegotiation(format, resolution);
                 }
             }
             // The sink's negotiated raw caps are always fixed, unlike the encoded caps upstream of the decoder.
-            emit receiver->videoSizeChanged(resolution);
+            emit _receiver.videoSizeChanged(resolution);
         },
         Qt::QueuedConnection);
 }
@@ -240,7 +238,7 @@ bool DecodingBranch::_addDecoder()
 
     if (!gst_element_link(_valve, _decoder.get())) {
         qCWarning(GstVideoReceiverLog) << "Unable to link decoder";
-        GStreamer::disposeChild(GST_BIN(_pipeline), _decoder.get());
+        GStreamer::disposeChild(_decoder.get());
         _decoder.reset();
         return false;
     }
@@ -267,7 +265,6 @@ void DecodingBranch::_ensureVideoSinkInPipeline()
 
     g_object_set(_videoSink.get(), "sync", !_receiver._config.lowLatency, NULL);
 
-    // The sink is never floating here, so the bin takes its own reference; removal drops only that one.
     (void) gst_bin_add(GST_BIN(_pipeline), _videoSink.get());
 
     // PAUSED (not READY) triggers downstream caps negotiation before source data arrives.
@@ -284,7 +281,7 @@ bool DecodingBranch::_addVideoSink(GstPad* pad)
         qCWarning(GstVideoReceiverLog) << "Unable to link decoder pad to video sink:" << gst_pad_link_get_name(linkRet);
 
         // _ensureVideoSinkInPipeline() added it before linking; detach for the next retry.
-        GStreamer::disposeChild(GST_BIN(_pipeline), _videoSink.get());
+        GStreamer::disposeChild(_videoSink.get());
         return false;
     }
 
@@ -308,7 +305,7 @@ void DecodingBranch::_onFirstFrame()
 void DecodingBranch::_shutdown()
 {
     if (_decoder) {
-        GStreamer::disposeChild(GST_BIN(_pipeline), _decoder.get());
+        GStreamer::disposeChild(_decoder.get());
         _decoder.reset();
     }
 
@@ -323,7 +320,7 @@ void DecodingBranch::_shutdown()
     _receiver._watchdog.clearSinkFrames();
 
     if (_videoSink) {
-        GStreamer::disposeChild(GST_BIN(_pipeline), _videoSink.get());
+        GStreamer::disposeChild(_videoSink.get());
         _videoSink.reset();
         _releaseDisplayedFrame();
     }
@@ -339,11 +336,10 @@ void DecodingBranch::_shutdown()
 
 void DecodingBranch::_releaseDisplayedFrame()
 {
-    GstVideoReceiver* const receiver = &_receiver;
     QMetaObject::invokeMethod(
-        receiver,
-        [receiver]() {
-            for (auto* c : QGCQVideoSinkController::controllersOf(receiver)) {
+        &_receiver,
+        [this]() {
+            for (auto* c : QGCQVideoSinkController::controllersOf(&_receiver)) {
                 c->releaseFrame();
             }
         },
@@ -385,9 +381,8 @@ void DecodingBranch::_onDecoderElementAdded(GstBin* /*decodebin*/, GstBin* /*sub
             }
             self->_decoderName = decoderName;
         }
-        GstVideoReceiver* const receiver = &self->_receiver;
         (void) QMetaObject::invokeMethod(
-            receiver, [receiver]() { emit receiver->decoderNameChanged(); }, Qt::QueuedConnection);
+            &self->_receiver, [self]() { emit self->_receiver.decoderNameChanged(); }, Qt::QueuedConnection);
     });
 }
 

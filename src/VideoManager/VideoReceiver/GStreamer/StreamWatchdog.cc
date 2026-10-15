@@ -29,12 +29,6 @@ void StreamWatchdog::start(uint32_t timeoutSec)
     _lastSinkFrameMs.store(0, std::memory_order_relaxed);
 }
 
-void StreamWatchdog::stop()
-{
-    _lastSourceFrameMs.store(0, std::memory_order_relaxed);
-    _lastSinkFrameMs.store(0, std::memory_order_relaxed);
-}
-
 quint64 StreamWatchdog::noteSourceFrame(qint64 nowMs)
 {
     _lastSourceFrameMs.store(nowMs, std::memory_order_relaxed);

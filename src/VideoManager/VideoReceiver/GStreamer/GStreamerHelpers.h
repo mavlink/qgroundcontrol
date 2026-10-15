@@ -25,10 +25,14 @@ QString dotFileTag(QStringView tag);
 /// keeping at most 10 .dot files there. Returns the file's path, or empty on failure.
 QString writePipelineDot(GstElement* pipeline, QStringView tag, const QString& directory);
 
-/// Takes @p element out of @p bin, then sets it to NULL. Removed first, so the bin can't bring it back up and nothing
-/// it posts while stopping reaches the bin's bus. No-op unless @p element is a child of @p bin. The caller's refs on
+/// Takes @p element out of its parent bin, then sets it to NULL. Removed first, so the bin can't bring it back up and
+/// nothing it posts while stopping reaches the bin's bus. No-op when @p element has no parent. The caller's refs on
 /// @p element, if any, stay valid.
-void disposeChild(GstBin* bin, GstElement* element);
+void disposeChild(GstElement* element);
+
+/// Adds @p element to @p bin. gst_bin_add consumes a floating element even when it fails, so ownership always moves.
+/// Returns the borrowed (bin-owned) element, or null if the bin rejected it; @p what names it in the warning.
+GstElement* addToBin(GstElement* bin, GstElementPtr element, const char* what);
 
 /// @p element's first src pad, or null when it has none (yet).
 GstPadPtr firstSrcPad(GstElement* element);
@@ -52,4 +56,8 @@ void setCodecPriorities(int rawOption);
 /// Walk every plugin in the GStreamer registry, invoking @p visitor for each; frees the GList
 /// internally. The plugin pointer is valid only for the duration of the call (don't ref it).
 void forEachPlugin(GstRegistry* registry, const std::function<void(GstPlugin*)>& visitor);
+
+/// Invokes @p visitor for every video decoder factory of at least @p minRank in the default registry. The factory is
+/// valid only for the duration of the call.
+void forEachVideoDecoderFactory(GstRank minRank, const std::function<void(GstElementFactory*)>& visitor);
 }  // namespace GStreamer

@@ -132,7 +132,7 @@ const HwBufferEnvConfig& hwBufferEnvConfig() noexcept
     return cfg;
 }
 
-GstBusSyncReply onBusSyncMessage(GstBus* /*bus*/, GstMessage* msg, gpointer /*userData*/) noexcept
+GstBusSyncReply onBusSyncMessage(GstMessage* msg) noexcept
 {
 #if defined(QGC_HAS_ANY_GPU_PATH)
     // First GST_BUS_DROP wins; bridges answer disjoint context types, so none shadows another.

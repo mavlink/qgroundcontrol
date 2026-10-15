@@ -76,7 +76,7 @@ private:
     // Borrowed: the receiver owns the pipeline, the pipeline the valve.
     GstElement* _pipeline = nullptr;
     GstElement* _valve = nullptr;
-    // Our refs, besides the pipeline's while they are inside it.
+
     GStreamer::GstElementPtr _decoder;
     GStreamer::GstElementPtr _videoSink;
     // The sink's "frame-stats" when start() took it: the sink outlives sessions and its counters don't restart.

@@ -444,18 +444,13 @@ void onMainWindowReady(QQuickWindow* window)
 QList<VideoDecoderOptions> availableDecoderFamilies()
 {
     QList<VideoDecoderOptions> families;
-    GList* decoderFactories = gst_element_factory_list_get_elements(
-        static_cast<GstElementFactoryListType>(GST_ELEMENT_FACTORY_TYPE_DECODER | GST_ELEMENT_FACTORY_TYPE_MEDIA_VIDEO),
-        GST_RANK_NONE);
-    for (GList* node = decoderFactories; node != nullptr; node = node->next) {
+    forEachVideoDecoderFactory(GST_RANK_NONE, [&families](GstElementFactory* factory) {
         const VideoDecoderOptions family =
-            decoderFamilyForFactory(gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(node->data)));
+            decoderFamilyForFactory(gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory)));
         if ((family != ForceVideoDecoderDefault) && !families.contains(family)) {
             families.append(family);
         }
-    }
-    gst_plugin_feature_list_free(decoderFactories);
-
+    });
     return families;
 }
 

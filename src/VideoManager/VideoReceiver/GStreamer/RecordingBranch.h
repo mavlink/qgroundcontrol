@@ -1,6 +1,5 @@
 #pragma once
 
-#include <atomic>
 #include <chrono>
 
 #include <QtCore/QString>
@@ -23,13 +22,6 @@ class QTimer;
 class RecordingBranch
 {
 public:
-    enum class State
-    {
-        Idle,
-        Recording,
-        Stopping,  ///< stop() sent EOS into the branch; waiting for the file to be finalized
-    };
-
     /// How long a recording may take to finalize before it is closed anyway; covers slow storage.
     static constexpr std::chrono::seconds kFinalizeTimeout{3};
 
@@ -46,8 +38,6 @@ public:
     /// Drops the recording, if any, and forgets the pipeline, which must be in NULL with its callbacks stopped.
     void reset();
 
-    State state() const { return _state; }
-
     void start(const QString& videoFile, VideoReceiver::FILE_FORMAT format);
     void stop();
     /// Before the pipeline is torn down: drains an active recording into its file, then waits up to
@@ -61,6 +51,13 @@ public:
     bool onBusError(GstMessage* message, const QString& text);
 
 private:
+    enum class State
+    {
+        Idle,
+        Recording,
+        Stopping,  ///< stop() sent EOS into the branch; waiting for the file to be finalized
+    };
+
     /// Unlinks the branch from the valve and sends EOS into it.
     bool _unlinkBranch();
     void _shutdown();
@@ -79,6 +76,6 @@ private:
     /// Ours, besides the pipeline's while it is inside.
     GStreamer::GstElementPtr _fileSink;
     State _state = State::Idle;
-    std::atomic<gulong> _keyframeWatchId = 0;  ///< Cleared by the keyframe probe when it removes itself.
+    gulong _keyframeWatchId = 0;
     RecordingFinalizer _finalizer;
 };

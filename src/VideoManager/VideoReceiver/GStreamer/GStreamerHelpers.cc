@@ -113,18 +113,29 @@ QString writePipelineDot(GstElement* pipeline, QStringView tag, const QString& d
     return wrote ? fullPath : QString{};
 }
 
-void disposeChild(GstBin* bin, GstElement* element)
+void disposeChild(GstElement* element)
 {
-    if (!bin || !element || !gst_object_has_as_parent(GST_OBJECT(element), GST_OBJECT(bin))) {
+    const GstObjectPtr parent = element ? adoptObject(gst_object_get_parent(GST_OBJECT(element))) : nullptr;
+    if (!parent) {
         return;
     }
 
     // gst_bin_remove drops the bin's ref, which may be the last one, before the element reaches NULL.
     const GstElementPtr keepAlive = adoptElement(GST_ELEMENT(gst_object_ref(element)));
-    (void) gst_bin_remove(bin, element);
+    (void) gst_bin_remove(GST_BIN(parent.get()), element);
     // Synchronous: gst_element_change_state() commits an ASYNC return at once when the target is READY or NULL, so
     // the streaming threads have stopped when this returns.
     (void) gst_element_set_state(element, GST_STATE_NULL);
+}
+
+GstElement* addToBin(GstElement* bin, GstElementPtr element, const char* what)
+{
+    GstElement* const borrowed = element.release();
+    if (!gst_bin_add(GST_BIN(bin), borrowed)) {
+        qCWarning(GStreamerHelpersLog) << "gst_bin_add() failed for" << what;
+        return nullptr;
+    }
+    return borrowed;
 }
 
 GstPadPtr firstSrcPad(GstElement* element)
@@ -152,6 +163,17 @@ void forEachPlugin(GstRegistry* registry, const std::function<void(GstPlugin*)>&
             visitor(plugin);
     }
     gst_plugin_list_free(plugins);
+}
+
+void forEachVideoDecoderFactory(GstRank minRank, const std::function<void(GstElementFactory*)>& visitor)
+{
+    GList* factories = gst_element_factory_list_get_elements(
+        static_cast<GstElementFactoryListType>(GST_ELEMENT_FACTORY_TYPE_DECODER | GST_ELEMENT_FACTORY_TYPE_MEDIA_VIDEO),
+        minRank);
+    for (GList* node = factories; node != nullptr; node = node->next) {
+        visitor(GST_ELEMENT_FACTORY(node->data));
+    }
+    gst_plugin_feature_list_free(factories);
 }
 
 namespace {
@@ -235,6 +257,17 @@ bool isHardwareDecoderFactory(GstElementFactory* factory)
            containsHardware(gst_element_factory_get_metadata(factory, GST_ELEMENT_METADATA_DESCRIPTION));
 }
 
+namespace {
+
+void setFeatureRank(GstPluginFeature* feature, uint16_t rank)
+{
+    qCDebug(GStreamerHelpersLog) << "  Changing feature (" << gst_plugin_feature_get_name(feature)
+                                 << ") to use rank:" << rank;
+    gst_plugin_feature_set_rank(feature, rank);
+}
+
+}  // namespace
+
 bool changeFeatureRank(GstRegistry* registry, const char* featureName, uint16_t rank)
 {
     if (!registry || !featureName) {
@@ -246,100 +279,54 @@ bool changeFeatureRank(GstRegistry* registry, const char* featureName, uint16_t 
         return false;
     }
 
-    qCDebug(GStreamerHelpersLog) << "  Changing feature (" << featureName << ") to use rank:" << rank;
-    gst_plugin_feature_set_rank(feature.get(), rank);
+    setFeatureRank(feature.get(), rank);
     return true;
 }
 
 namespace {
 
 // Ranks every installed video decoder that decoderFamilyForFactory() assigns to @p family.
-void applyFamilyRank(GstRegistry* registry, VideoDecoderOptions family, uint16_t rank)
+void applyFamilyRank(VideoDecoderOptions family, uint16_t rank)
 {
-    GList* decoderFactories = gst_element_factory_list_get_elements(
-        static_cast<GstElementFactoryListType>(GST_ELEMENT_FACTORY_TYPE_DECODER | GST_ELEMENT_FACTORY_TYPE_MEDIA_VIDEO),
-        GST_RANK_NONE);
-    for (GList* node = decoderFactories; node != nullptr; node = node->next) {
-        const gchar* name = gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(node->data));
-        if (decoderFamilyForFactory(name) == family) {
-            changeFeatureRank(registry, name, rank);
+    forEachVideoDecoderFactory(GST_RANK_NONE, [family, rank](GstElementFactory* factory) {
+        GstPluginFeature* const feature = GST_PLUGIN_FEATURE(factory);
+        if (decoderFamilyForFactory(gst_plugin_feature_get_name(feature)) == family) {
+            setFeatureRank(feature, rank);
         }
-    }
-    gst_plugin_feature_list_free(decoderFactories);
+    });
 }
 
-void lowerDecoderRanksByClass(GstRegistry* registry, bool lowerHardware)
+void lowerDecoderRanksByClass(bool lowerHardware)
 {
-    static constexpr uint16_t NewRank = GST_RANK_NONE;
-    if (!registry) {
-        qCCritical(GStreamerHelpersLog) << "Invalid registry!";
-        return;
-    }
-
-    GList* decoderFactories = gst_element_factory_list_get_elements(
-        static_cast<GstElementFactoryListType>(GST_ELEMENT_FACTORY_TYPE_DECODER | GST_ELEMENT_FACTORY_TYPE_MEDIA_VIDEO),
-        GST_RANK_MARGINAL);
-
-    for (GList* node = decoderFactories; node != nullptr; node = node->next) {
-        GstElementFactory* factory = GST_ELEMENT_FACTORY(node->data);
-        if (!factory) {
-            continue;
+    forEachVideoDecoderFactory(GST_RANK_MARGINAL, [lowerHardware](GstElementFactory* factory) {
+        if (isHardwareDecoderFactory(factory) != lowerHardware) {
+            return;
         }
-
-        if (GStreamer::isHardwareDecoderFactory(factory) != lowerHardware) {
-            continue;
-        }
-
-        const gchar* name = gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory));
-        if (!name) {
-            continue;
-        }
-
+        GstPluginFeature* const feature = GST_PLUGIN_FEATURE(factory);
         qCDebug(GStreamerHelpersLog) << "Lowering" << (lowerHardware ? "hardware" : "software")
-                                     << "decoder rank:" << name;
-        gst_plugin_feature_set_rank(GST_PLUGIN_FEATURE(factory), NewRank);
-    }
-
-    gst_plugin_feature_list_free(decoderFactories);
+                                     << "decoder rank:" << gst_plugin_feature_get_name(feature);
+        gst_plugin_feature_set_rank(feature, GST_RANK_NONE);
+    });
 }
 
-void prioritizeByHardwareClass(GstRegistry* registry, uint16_t prioritizedRank, bool requireHardware)
+void prioritizeByHardwareClass(uint16_t prioritizedRank, bool requireHardware)
 {
-    if (!registry) {
-        qCCritical(GStreamerHelpersLog) << "Failed to get gstreamer registry.";
-        return;
-    }
+    qCDebug(GStreamerHelpersLog) << "Prioritizing" << (requireHardware ? "hardware" : "software")
+                                 << "video decoders with rank:" << prioritizedRank;
+    int decoderFactories = 0;
+    int matchedFactories = 0;
+    forEachVideoDecoderFactory(GST_RANK_NONE, [&](GstElementFactory* factory) {
+        ++decoderFactories;
+        if (isHardwareDecoderFactory(factory) == requireHardware) {
+            setFeatureRank(GST_PLUGIN_FEATURE(factory), prioritizedRank);
+            ++matchedFactories;
+        }
+    });
 
-    GList* decoderFactories = gst_element_factory_list_get_elements(
-        static_cast<GstElementFactoryListType>(GST_ELEMENT_FACTORY_TYPE_DECODER | GST_ELEMENT_FACTORY_TYPE_MEDIA_VIDEO),
-        GST_RANK_NONE);
-
-    if (!decoderFactories) {
+    if (decoderFactories == 0) {
         qCDebug(GStreamerHelpersLog) << "No decoder factories available while prioritizing"
                                      << (requireHardware ? "hardware" : "software") << "decoders";
         return;
-    }
-
-    qCDebug(GStreamerHelpersLog) << "Prioritizing" << (requireHardware ? "hardware" : "software")
-                                 << "video decoders with rank:" << prioritizedRank;
-    int matchedFactories = 0;
-    for (GList* node = decoderFactories; node != nullptr; node = node->next) {
-        GstElementFactory* factory = GST_ELEMENT_FACTORY(node->data);
-        if (!factory) {
-            continue;
-        }
-
-        if (GStreamer::isHardwareDecoderFactory(factory) != requireHardware) {
-            continue;
-        }
-
-        const gchar* featureName = gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory));
-        if (!featureName) {
-            continue;
-        }
-
-        changeFeatureRank(registry, featureName, prioritizedRank);
-        ++matchedFactories;
     }
 
     if (matchedFactories == 0) {
@@ -348,9 +335,7 @@ void prioritizeByHardwareClass(GstRegistry* registry, uint16_t prioritizedRank, 
     }
 
     qCDebug(GStreamerHelpersLog) << "Lowering" << (requireHardware ? "software" : "hardware") << "decoder ranks.";
-    lowerDecoderRanksByClass(registry, !requireHardware);
-
-    gst_plugin_feature_list_free(decoderFactories);
+    lowerDecoderRanksByClass(!requireHardware);
 }
 
 #ifdef Q_OS_WIN
@@ -430,7 +415,7 @@ void preferZeroCopyDecoders(GstRegistry* registry)
 
     // Modern va decoders (gst-va, supersedes gstreamer-vaapi) emit DMABuf/DMA_DRM, and V4L2 stateless
     // decoders expose DMA_DRM caps on 1.26+; bump both above software so the zero-copy allocator is picked.
-    applyFamilyRank(registry, ForceVideoDecoderVAAPI, ZeroCopyRank);
+    applyFamilyRank(ForceVideoDecoderVAAPI, ZeroCopyRank);
     applyRanks(registry, kV4l2StatelessDecoders, ZeroCopyRank);
 }
 #endif  // Q_OS_LINUX
@@ -466,31 +451,22 @@ void setCodecPriorities(VideoDecoderOptions option)
 #endif
             break;
         case ForceVideoDecoderSoftware:
-            prioritizeByHardwareClass(registry, PrioritizedRank, false);
+            prioritizeByHardwareClass(PrioritizedRank, false);
             break;
         case ForceVideoDecoderHardware:
-            prioritizeByHardwareClass(registry, PrioritizedRank, true);
-            break;
-        case ForceVideoDecoderVAAPI:
-            applyFamilyRank(registry, ForceVideoDecoderVAAPI, PrioritizedRank);
-            break;
-        case ForceVideoDecoderNVIDIA:
-            applyFamilyRank(registry, ForceVideoDecoderNVIDIA, PrioritizedRank);
-            break;
-        case ForceVideoDecoderDirectX3D:
-            applyFamilyRank(registry, ForceVideoDecoderDirectX3D, PrioritizedRank);
-            break;
-        case ForceVideoDecoderVideoToolbox:
-            applyFamilyRank(registry, ForceVideoDecoderVideoToolbox, PrioritizedRank);
-            break;
-        case ForceVideoDecoderIntel:
-            applyFamilyRank(registry, ForceVideoDecoderIntel, PrioritizedRank);
+            prioritizeByHardwareClass(PrioritizedRank, true);
             break;
         case ForceVideoDecoderVulkan:
             // Vulkan zero-copy import is dormant: gst-vulkan's own VkDevice fails QGC's device-match guard → CPU copy.
             qCWarning(GStreamerHelpersLog) << "Forcing Vulkan video decoders: zero-copy import is dormant "
                                               "(foreign VkDevice → CPU fallback), so decode will not be zero-copy.";
-            applyFamilyRank(registry, ForceVideoDecoderVulkan, PrioritizedRank);
+            [[fallthrough]];
+        case ForceVideoDecoderVAAPI:
+        case ForceVideoDecoderNVIDIA:
+        case ForceVideoDecoderDirectX3D:
+        case ForceVideoDecoderVideoToolbox:
+        case ForceVideoDecoderIntel:
+            applyFamilyRank(option, PrioritizedRank);
             break;
     }
 

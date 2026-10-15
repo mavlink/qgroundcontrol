@@ -38,8 +38,9 @@ HwBufferEnvConfig readHwBufferEnvConfig() noexcept;
 /// readHwBufferEnvConfig() of the first call, logged once; thread-safe via static-init guarantees.
 const HwBufferEnvConfig& hwBufferEnvConfig() noexcept;
 
-/// Bus sync handler (GstBusSyncHandler) installed on every pipeline; no-op when no GPU path compiled.
-GstBusSyncReply onBusSyncMessage(GstBus* bus, GstMessage* msg, gpointer userData) noexcept;
+/// For a receiver's bus sync handler: the context bridges answer NEED_CONTEXT. GST_BUS_DROP means @p msg was consumed
+/// (and unreffed); always GST_BUS_PASS when no GPU path is compiled.
+GstBusSyncReply onBusSyncMessage(GstMessage* msg) noexcept;
 
 /// Receiver-side bus hook; drops cached GPU devices on GST_MESSAGE_ERROR. No-op when no GPU paths compiled.
 void dispatchBusMessage(GstMessage* msg) noexcept;

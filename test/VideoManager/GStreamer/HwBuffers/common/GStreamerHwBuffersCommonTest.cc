@@ -213,7 +213,7 @@ void GStreamerTest::_testContextBridgeRegistry()
 
     // NEED_CONTEXT reaches the bridge owning the context type, and only that bridge primes.
     GstMessage* needA = gst_message_new_need_context(GST_OBJECT(element), kTestContextTypeA[0]);
-    QCOMPARE(HwBuffers::onBusSyncMessage(nullptr, needA, nullptr), GST_BUS_DROP);
+    QCOMPARE(HwBuffers::onBusSyncMessage(needA), GST_BUS_DROP);
     GstContext* deliveredA = gst_element_get_context(element, kTestContextTypeA[0]);
     QVERIFY2(deliveredA, "Bridge A's context was not set on the requesting element");
     gst_context_unref(deliveredA);
@@ -221,7 +221,7 @@ void GStreamerTest::_testContextBridgeRegistry()
     QCOMPARE(testBridgeB().primes, 0);
 
     GstMessage* unknown = gst_message_new_need_context(GST_OBJECT(element), "qgc.test.context-unknown");
-    QCOMPARE(HwBuffers::onBusSyncMessage(nullptr, unknown, nullptr), GST_BUS_PASS);
+    QCOMPARE(HwBuffers::onBusSyncMessage(unknown), GST_BUS_PASS);
     gst_message_unref(unknown);
 
     // A context query is answered through the same bridges; a primed bridge isn't primed again.

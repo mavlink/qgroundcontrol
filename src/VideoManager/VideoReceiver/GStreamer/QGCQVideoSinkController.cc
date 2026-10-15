@@ -13,17 +13,6 @@
 
 QGC_LOGGING_CATEGORY(QGCQVideoSinkControllerLog, "Video.GStreamer.QGCQVideoSinkController")
 
-namespace {
-
-// Without this the sink's last frame would keep a GstSample (and the decoder buffer behind it) alive after the element
-// stopped feeding it.
-void clearVideoFrame(QVideoSink* sink)
-{
-    QMetaObject::invokeMethod(sink, [sink]() { sink->setVideoFrame(QVideoFrame()); }, Qt::AutoConnection);
-}
-
-}  // namespace
-
 QGCQVideoSinkController::QGCQVideoSinkController(GstElement* element, QObject* parent)
     : QObject(parent), _element(element ? GST_ELEMENT(gst_object_ref(element)) : nullptr)
 {
@@ -161,8 +150,8 @@ void QGCQVideoSinkController::releaseFrame()
         qCCritical(QGCQVideoSinkControllerLog) << "called from wrong thread";
         return;
     }
-    if (QVideoSink* const sink = _videoSink.data()) {
-        clearVideoFrame(sink);
+    if (_videoSink) {
+        _videoSink->setVideoFrame(QVideoFrame());
     }
 }
 
@@ -201,11 +190,8 @@ void QGCQVideoSinkController::_releaseElementBinding() noexcept
 
 void QGCQVideoSinkController::_clearVideoSinkFrame()
 {
-    QVideoSink* const sink = _videoSink.data();
+    releaseFrame();
     _videoSink.clear();
-    if (sink) {
-        clearVideoFrame(sink);
-    }
 }
 
 void QGCQVideoSinkController::_onEmitTimer()

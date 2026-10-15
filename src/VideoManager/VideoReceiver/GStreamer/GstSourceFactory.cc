@@ -106,7 +106,6 @@ void wrapWithGhostPad(GstElement* element, GstPad* pad, [[maybe_unused]] gpointe
         return;
     }
 
-    // gst_element_add_pad is transfer-floating: it consumes the ghost pad even when it fails.
     if (!gst_element_add_pad(GST_ELEMENT(parent.get()), ghostpad.release())) {
         qCWarning(GstSourceFactoryLog) << "gst_element_add_pad() failed";
     }
@@ -154,32 +153,6 @@ bool isVideoRtp(const GstStructure* structure)
     return gst_structure_has_name(structure, "application/x-rtp") && isVideoMedia(structure);
 }
 
-// gst_bin_add is transfer-floating: it consumes @p element even when it fails, so ownership always
-// moves. Returns the borrowed (bin-owned) element, or nullptr if the bin rejected it.
-GstElement* addToBin(GstElement* bin, GstElementPtr element, const char* what)
-{
-    GstElement* const borrowed = element.release();
-    if (!gst_bin_add(GST_BIN(bin), borrowed)) {
-        qCWarning(GstSourceFactoryLog) << "gst_bin_add() failed for" << what;
-        return nullptr;
-    }
-    return borrowed;
-}
-
-// Detach before the NULL transition so the parent can't re-sync it; disposing a non-NULL element
-// raises a GStreamer critical.
-void removeFromParent(GstElement* element)
-{
-    const GstObjectPtr parent = adoptObject(gst_object_get_parent(GST_OBJECT(element)));
-    if (!parent) {
-        return;
-    }
-
-    const GstElementPtr keepAlive = adoptElement(GST_ELEMENT(gst_object_ref(element)));
-    (void) gst_bin_remove(GST_BIN(parent.get()), element);
-    (void) gst_element_set_state(element, GST_STATE_NULL);
-}
-
 }  // namespace
 
 namespace GStreamer::SourceFactory {
@@ -194,11 +167,6 @@ constexpr int kRtxMaxRetries = 1;
 // Shared by the static and dynamic (pad-added) link paths so both apply the identical jitter-buffer
 // policy. Retransmission stays off: these sources have no RTCP back-channel, so the jitterbuffer's
 // retransmission requests would only reach the source element, which drops them.
-void configureJitterBuffer(GstElement* buffer, guint latencyMs)
-{
-    g_object_set(buffer, "latency", latencyMs, "do-lost", TRUE, "drop-on-latency", TRUE, nullptr);
-}
-
 GstElement* addJitterBuffer(GstElement* bin, guint latencyMs)
 {
     GstElementPtr buffer = adoptElement(gst_element_factory_make("rtpjitterbuffer", nullptr));
@@ -207,7 +175,7 @@ GstElement* addJitterBuffer(GstElement* bin, guint latencyMs)
         return nullptr;
     }
 
-    configureJitterBuffer(buffer.get(), latencyMs);
+    g_object_set(buffer.get(), "latency", latencyMs, "do-lost", TRUE, "drop-on-latency", TRUE, nullptr);
     return addToBin(bin, std::move(buffer), "rtpjitterbuffer");
 }
 
@@ -246,9 +214,8 @@ gboolean selectVideoStream([[maybe_unused]] GstElement* rtspsrc, guint num, GstC
 struct DynamicLinkContext
 {
     GstElement* binParser;
-    Config config;
     guint latencyMs;
-    bool allowJitterBuffer;  // false for RTSP (rtspsrc has its own internal jitterbuffer)
+    bool insertJitterBuffer;  // false for RTSP (rtspsrc has its own internal jitterbuffer) and JitterBuffer::None
 };
 
 // Inserts a running rtpjitterbuffer linked to the parser; returns it (bin-owned) or nullptr to link directly.
@@ -267,7 +234,7 @@ GstElement* insertDynamicJitterBuffer(const DynamicLinkContext* ctx)
 
     if (!gst_element_sync_state_with_parent(buffer) || !gst_element_link(buffer, ctx->binParser)) {
         qCWarning(GstSourceFactoryLog) << "dynamic rtpjitterbuffer link/sync failed; linking pad straight to parser";
-        removeFromParent(buffer);
+        disposeChild(buffer);
         return nullptr;
     }
 
@@ -317,7 +284,7 @@ void linkPad(GstElement* element, GstPad* pad, gpointer data)
     // Insert a jitterbuffer ahead of the parser for RTP pads on non-RTSP dynamic sources, matching the
     // static path's policy. RTSP is excluded: rtspsrc owns an internal jitterbuffer (no double-buffering).
     GstElement* dynamicBuffer = nullptr;
-    if (isRtp && ctx->allowJitterBuffer && (ctx->config.jitterBuffer != JitterBuffer::None)) {
+    if (isRtp && ctx->insertJitterBuffer) {
         dynamicBuffer = insertDynamicJitterBuffer(ctx);
     }
     GstElement* const downstream = dynamicBuffer ? dynamicBuffer : ctx->binParser;
@@ -326,7 +293,7 @@ void linkPad(GstElement* element, GstPad* pad, gpointer data)
     if (!name || !gst_element_link_pads(element, name.get(), downstream, "sink")) {
         qCWarning(GstSourceFactoryLog) << "gst_element_link_pads() failed for" << (name ? name.get() : "(unnamed pad)");
         if (dynamicBuffer) {
-            removeFromParent(dynamicBuffer);
+            disposeChild(dynamicBuffer);
         }
     }
 }
@@ -494,7 +461,8 @@ bool linkSourceToParser(GstElement* bin, GstElement* upstream, GstElement* binPa
     } else {
         // linkPad applies the jitter-buffer policy itself when an application/x-rtp pad appears on a
         // non-RTSP source. Context lifetime is tied to binParser (freed on its finalize).
-        auto* ctx = new DynamicLinkContext{binParser, config, latencyMs, !isRtsp};
+        auto* ctx =
+            new DynamicLinkContext{binParser, latencyMs, !isRtsp && (config.jitterBuffer != JitterBuffer::None)};
         g_object_set_data_full(G_OBJECT(binParser), "qgc-dynamic-link-ctx", ctx,
                                [](gpointer p) { delete static_cast<DynamicLinkContext*>(p); });
         (void) g_signal_connect(upstream, "pad-added", G_CALLBACK(linkPad), ctx);
