@@ -5,7 +5,7 @@ include_guard(GLOBAL)
 include(CMakePushCheckState)
 
 macro(_qgc_discover_linux_sdk)
-    if(NOT DEFINED GStreamer_ROOT_DIR)
+    if(NOT GStreamer_ROOT_DIR)
         if(CMAKE_SYSROOT)
             set(GStreamer_ROOT_DIR "${CMAKE_SYSROOT}/usr")
         else()
@@ -64,8 +64,7 @@ endmacro()
 # HwBuffers/CMakeLists.txt to compile GstDmaBufVideoBuffer when present.
 # Requires gst-allocators (pulled in via the Allocators QGCGStreamer component
 # requested by the Linux-only branch in src/.../GStreamer/CMakeLists.txt).
-# NOTE: QGC_GST_HAS_DMABUF is a cached try-compile result; if the GStreamer
-# include dirs change, clear the cache var to force a re-probe.
+# The cached result is dropped when the SDK changes (_qgc_gst_refresh_sdk_cache).
 macro(_qgc_detect_dmabuf)
     include(CheckCXXSourceCompiles)
     if(TARGET GStreamer::GStreamer)

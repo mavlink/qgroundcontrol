@@ -8,6 +8,50 @@
 
 include_guard(GLOBAL)
 
+# _qgc_ios_bundle_from_root(<root> <out_bundle> <out_kind>)
+# Maps a GStreamer_ROOT_DIR to the SDK bundle (<out_kind> "xcframework" or "framework"). Accepts
+# the bundle itself, a directory containing GStreamer.xcframework/.framework (e.g. iPhone.sdk),
+# an xcframework slice or a framework's Versions/<v> directory; the last two are the roots
+# discovery records. <out_bundle> is empty when <root> matches none of these.
+function(_qgc_ios_bundle_from_root root out_bundle out_kind)
+    string(REGEX REPLACE "/+$" "" _root "${root}")
+    cmake_path(GET _root PARENT_PATH _parent)
+    cmake_path(GET _parent PARENT_PATH _grandparent)
+    set(_bundle "")
+    set(_kind "")
+    if(_root MATCHES "\\.xcframework$")
+        set(_bundle "${_root}")
+        set(_kind xcframework)
+    elseif(_root MATCHES "\\.framework$")
+        set(_bundle "${_root}")
+        set(_kind framework)
+    elseif(IS_DIRECTORY "${_root}/GStreamer.xcframework")
+        set(_bundle "${_root}/GStreamer.xcframework")
+        set(_kind xcframework)
+    elseif(IS_DIRECTORY "${_root}/GStreamer.framework")
+        set(_bundle "${_root}/GStreamer.framework")
+        set(_kind framework)
+    elseif(_parent MATCHES "\\.xcframework$")
+        set(_bundle "${_parent}")
+        set(_kind xcframework)
+    elseif(_parent MATCHES "/Versions$" AND _grandparent MATCHES "\\.framework$")
+        set(_bundle "${_grandparent}")
+        set(_kind framework)
+    endif()
+    if(NOT IS_DIRECTORY "${_bundle}")
+        set(_bundle "")
+        set(_kind "")
+    endif()
+    set(${out_bundle}
+        "${_bundle}"
+        PARENT_SCOPE
+    )
+    set(${out_kind}
+        "${_kind}"
+        PARENT_SCOPE
+    )
+endfunction()
+
 macro(_qgc_discover_ios_sdk)
     if(NOT CMAKE_HOST_APPLE)
         message(FATAL_ERROR "GStreamer for iOS can only be built on macOS")
@@ -24,8 +68,15 @@ macro(_qgc_discover_ios_sdk)
     set(_gst_ios_bundle "")
     set(_gst_ios_bundle_kind "")
 
-    # ── System install ────────────────────────────────────────────────────────
-    if(NOT DEFINED GStreamer_ROOT_DIR)
+    # ── User-provided or reused root, else system install ─────────────────────
+    if(GStreamer_ROOT_DIR)
+        _qgc_ios_bundle_from_root("${GStreamer_ROOT_DIR}" _gst_ios_bundle _gst_ios_bundle_kind)
+        if(NOT _gst_ios_bundle)
+            message(FATAL_ERROR
+                "GStreamer: GStreamer_ROOT_DIR '${GStreamer_ROOT_DIR}' is not a GStreamer.xcframework or "
+                "GStreamer.framework, or a directory containing one.")
+        endif()
+    else()
         if(EXISTS "/Library/Developer/GStreamer/iPhone.sdk/GStreamer.xcframework")
             set(_gst_ios_bundle "/Library/Developer/GStreamer/iPhone.sdk/GStreamer.xcframework")
             set(_gst_ios_bundle_kind "xcframework")

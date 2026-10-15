@@ -3,7 +3,7 @@
 include_guard(GLOBAL)
 
 macro(_qgc_discover_macos_sdk)
-    if(NOT DEFINED GStreamer_ROOT_DIR)
+    if(NOT GStreamer_ROOT_DIR)
         if(EXISTS "/Library/Frameworks/GStreamer.framework")
             set(GStreamer_ROOT_DIR "/Library/Frameworks/GStreamer.framework/Versions/1.0")
         else()
@@ -18,7 +18,7 @@ macro(_qgc_discover_macos_sdk)
         endif()
     endif()
 
-    if(NOT DEFINED GStreamer_ROOT_DIR OR NOT EXISTS "${GStreamer_ROOT_DIR}")
+    if(NOT GStreamer_ROOT_DIR OR NOT EXISTS "${GStreamer_ROOT_DIR}")
         gstreamer_resolve_or_download_sdk(
             PLATFORM         macos
             CACHE_SUBDIR     "gstreamer-mac-${GStreamer_FIND_VERSION}"

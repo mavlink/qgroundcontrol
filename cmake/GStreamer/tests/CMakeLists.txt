@@ -13,10 +13,12 @@ set(_qgc_findmod_tests
     test_download_helper
     test_install_filter
     test_windows_runtime_libproxy
-    test_windows_sdk_version
+    test_sdk_state
     test_install_libs_guard_windows
     test_android_abi_info
     test_windows_sdk_root
+    test_checksum_authority
+    test_ios_bundle_from_root
 )
 
 foreach(_t IN LISTS _qgc_findmod_tests)
@@ -103,11 +105,16 @@ endforeach()
 _qgc_add_findmodule_failure_test(test_android_abi_info.UnsupportedAbi test_android_abi_info
                                  "Unsupported Android ABI: mips" unsupported-abi
 )
+_qgc_add_findmodule_failure_test(test_checksum_authority.SidecarOnlyRequired test_checksum_authority
+                                 "cannot satisfy GStreamer_REQUIRE_CHECKSUM=ON" sidecar-only-required
+)
 
 # The Orchestrator fixture generates a Linux-layout fake SDK and drives it through the host's
 # pkg-config, so it only runs on Linux hosts.
 if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
-    foreach(_qgc_scenario IN ITEMS targets idempotent)
+    foreach(_qgc_scenario IN ITEMS targets idempotent reconfigure-root reconfigure-version reuse-auto-root
+                                   missing-mandatory missing-gl
+    )
         add_test(
             NAME "FindModule.test_orchestrator.${_qgc_scenario}"
             COMMAND

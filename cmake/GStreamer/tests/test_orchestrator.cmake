@@ -108,6 +108,18 @@ function(_qgc_configure_ok label)
     )
 endfunction()
 
+# Configures the fixture and fails the test, labelled <label>, unless configure fails with <regex>.
+function(_qgc_configure_fails label regex)
+    _qgc_configure(${ARGN})
+    string(REGEX REPLACE "[ \t\r\n]+" " " _normalized "${_qgc_output}")
+    if(_qgc_result EQUAL 0)
+        message(FATAL_ERROR "ASSERT [${label}]: configure unexpectedly succeeded\n${_qgc_output}")
+    endif()
+    if(NOT _normalized MATCHES "${regex}")
+        message(FATAL_ERROR "ASSERT [${label}]: expected '${regex}'\n${_qgc_output}")
+    endif()
+endfunction()
+
 # Returns the -D arguments that make the fixture assert it resolved <root> at <version>, with
 # <probes> telling whether the SDK ships the probed headers.
 function(_qgc_expect out_var root version probes)
@@ -145,6 +157,30 @@ elseif(SCENARIO STREQUAL "reconfigure-version")
     _qgc_write_fake_sdk("${_sdk_a}" 1.26.0 WITH_PROBE_HEADERS)
     _qgc_expect(_expect "${_sdk_a}" 1.26.0 ON)
     _qgc_configure_ok("SDK A upgraded in place to 1.26" ${_expect})
+elseif(SCENARIO STREQUAL "reuse-auto-root")
+    # Linux never downloads, so stand in for a previous configure that auto-downloaded SDK A.
+    _qgc_write_fake_sdk("${_sdk_a}" 1.24.0)
+    _qgc_expect(_expect "${_sdk_a}" 1.24.0 OFF)
+    _qgc_configure_ok(
+        "reused auto-downloaded root"
+        --fresh
+        "-DQGC_GST_RESOLVED_ROOT=${_sdk_a}"
+        -DQGC_GST_RESOLVED_VERSION=1.20.0
+        -DQGC_GST_RESOLVED_AUTO=TRUE
+        ${_expect}
+        -DEXPECT_AUTO=TRUE
+    )
+elseif(SCENARIO STREQUAL "missing-mandatory")
+    _qgc_write_fake_sdk("${_sdk_a}" 1.24.0 OMIT gstreamer-rtsp-1.0)
+    _qgc_configure_fails("SDK without a mandatory module"
+                         "mandatory pkg-config modules not found .*: gstreamer-rtsp-1.0" --fresh
+                         "-DGStreamer_ROOT_DIR=${_sdk_a}"
+    )
+elseif(SCENARIO STREQUAL "missing-gl")
+    # A cross sysroot can lack gst-gl's x11 dependencies; only the optional GL GPU path needs it.
+    _qgc_write_fake_sdk("${_sdk_a}" 1.24.0 OMIT gstreamer-gl-1.0 gstreamer-gl-prototypes-1.0)
+    _qgc_expect(_expect "${_sdk_a}" 1.24.0 OFF)
+    _qgc_configure_ok("SDK without gst-gl" --fresh "-DGStreamer_ROOT_DIR=${_sdk_a}" ${_expect} -DEXPECT_GL=OFF)
 else()
     message(FATAL_ERROR "Unknown SCENARIO: ${SCENARIO}")
 endif()

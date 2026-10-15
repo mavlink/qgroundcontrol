@@ -30,7 +30,7 @@ function(_qgc_android_abi_info ABI PFX)
 endfunction()
 
 macro(_qgc_discover_android_sdk)
-    if(NOT DEFINED GStreamer_ROOT_DIR)
+    if(NOT GStreamer_ROOT_DIR)
         if(CPM_SOURCE_CACHE)
             set(_gst_android_cache "${CPM_SOURCE_CACHE}/gstreamer-android")
         else()

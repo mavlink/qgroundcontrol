@@ -21,19 +21,6 @@ function(_qgc_windows_sdk_complete ROOT_DIR OUT_VAR)
     set(${OUT_VAR} "${_is_complete}" PARENT_SCOPE)
 endfunction()
 
-function(_qgc_windows_sdk_version ROOT_DIR OUT_VAR)
-    set(_pkg_config_file "${ROOT_DIR}/lib/pkgconfig/gstreamer-1.0.pc")
-    if(NOT EXISTS "${_pkg_config_file}")
-        set(${OUT_VAR} "" PARENT_SCOPE)
-        return()
-    endif()
-
-    file(STRINGS "${_pkg_config_file}" _version_line REGEX "^Version:[ \t]*" LIMIT_COUNT 1)
-    string(REGEX REPLACE "^Version:[ \t]*" "" _version "${_version_line}")
-    string(STRIP "${_version}" _version)
-    set(${OUT_VAR} "${_version}" PARENT_SCOPE)
-endfunction()
-
 function(_qgc_find_win_sdk_root EXTRACTED_DIR OUT_VAR)
     if(EXISTS "${EXTRACTED_DIR}/bin/pkg-config.exe")
         set(${OUT_VAR} "${EXTRACTED_DIR}" PARENT_SCOPE)
@@ -77,7 +64,7 @@ macro(_qgc_discover_windows_sdk)
         set(_gst_win_platform "windows_msvc_x64")
     endif()
 
-    if(NOT DEFINED GStreamer_ROOT_DIR)
+    if(NOT GStreamer_ROOT_DIR)
         if(_gst_win_arch STREQUAL "arm64")
             if(DEFINED ENV{GSTREAMER_1_0_ROOT_ARM64} AND EXISTS "$ENV{GSTREAMER_1_0_ROOT_ARM64}")
                 set(GStreamer_ROOT_DIR "$ENV{GSTREAMER_1_0_ROOT_ARM64}")
@@ -101,9 +88,9 @@ macro(_qgc_discover_windows_sdk)
         endif()
     endif()
 
-    if(DEFINED GStreamer_ROOT_DIR AND EXISTS "${GStreamer_ROOT_DIR}")
+    if(GStreamer_ROOT_DIR AND EXISTS "${GStreamer_ROOT_DIR}")
         _qgc_windows_sdk_complete("${GStreamer_ROOT_DIR}" _gst_win_sdk_complete)
-        _qgc_windows_sdk_version("${GStreamer_ROOT_DIR}" _gst_win_sdk_version)
+        _qgc_gst_sdk_pc_version("${GStreamer_ROOT_DIR}/lib" _gst_win_sdk_version)
         if(NOT _gst_win_sdk_complete)
             message(WARNING
                 "Existing GStreamer SDK at ${GStreamer_ROOT_DIR} is incomplete "
@@ -121,7 +108,7 @@ macro(_qgc_discover_windows_sdk)
         endif()
     endif()
 
-    if(NOT DEFINED GStreamer_ROOT_DIR OR NOT EXISTS "${GStreamer_ROOT_DIR}")
+    if(NOT GStreamer_ROOT_DIR OR NOT EXISTS "${GStreamer_ROOT_DIR}")
         if(NOT MSVC OR NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
             message(FATAL_ERROR
                 "Automatic GStreamer download on Windows requires MSVC 64-bit (x64 or ARM64).\n"

@@ -67,6 +67,7 @@ function(gstreamer_get_fallback_checksum PLATFORM VERSION OUTPUT_VAR)
         string(JSON _hash ERROR_VARIABLE _err
             GET "${QGC_BUILD_CONFIG_CONTENT}" "gstreamer" "checksums" "${VERSION}" "${PLATFORM}")
         if(NOT _err AND _hash)
+            string(TOLOWER "${_hash}" _hash)
             set(_checksum "SHA256=${_hash}")
         endif()
     endif()
@@ -74,24 +75,23 @@ function(gstreamer_get_fallback_checksum PLATFORM VERSION OUTPUT_VAR)
     set(${OUTPUT_VAR} "${_checksum}" PARENT_SCOPE)
 endfunction()
 
-function(_gstreamer_fallback_or_warn PLATFORM VERSION OUTPUT_VAR MESSAGE)
-    gstreamer_get_fallback_checksum(${PLATFORM} ${VERSION} _fallback_hash)
-    if(_fallback_hash)
-        message(WARNING "GStreamer: ${MESSAGE} for ${PLATFORM} ${VERSION}; using pinned fallback checksum.")
-        set(${OUTPUT_VAR} "${_fallback_hash}" PARENT_SCOPE)
-        return()
-    endif()
+# Without a pin, missing sidecar data is fatal under GStreamer_REQUIRE_CHECKSUM and a warning otherwise.
+function(_gstreamer_unverified_or_fail platform version output_var reason)
     if(GStreamer_REQUIRE_CHECKSUM)
-        message(FATAL_ERROR
-            "GStreamer: ${MESSAGE} for ${PLATFORM} ${VERSION} "
-            "and no pinned fallback exists. Set GStreamer_REQUIRE_CHECKSUM=OFF to bypass.")
+        message(FATAL_ERROR "GStreamer: ${reason} for ${platform} ${version} "
+                            "and no pinned checksum exists. Set GStreamer_REQUIRE_CHECKSUM=OFF to bypass."
+        )
     endif()
-    message(WARNING
-        "GStreamer: ${MESSAGE} for ${PLATFORM} ${VERSION}; "
-        "the SDK will be used WITHOUT integrity verification — supply-chain "
-        "authenticity is NOT guaranteed. Only proceed on a trusted network/mirror. "
-        "(GStreamer_REQUIRE_CHECKSUM=ON makes this a hard error.)")
-    set(${OUTPUT_VAR} "" PARENT_SCOPE)
+    message(
+        WARNING "GStreamer: ${reason} for ${platform} ${version}; "
+                "the SDK will be used WITHOUT integrity verification — supply-chain "
+                "authenticity is NOT guaranteed. Only proceed on a trusted network/mirror. "
+                "(GStreamer_REQUIRE_CHECKSUM=ON makes this a hard error.)"
+    )
+    set(${output_var}
+        ""
+        PARENT_SCOPE
+    )
 endfunction()
 
 # _gstreamer_download_sidecar(<url> <dest_file> <result_var>)
@@ -115,6 +115,17 @@ function(_gstreamer_download_sidecar URL DEST_FILE RESULT_VAR)
 endfunction()
 
 function(gstreamer_fetch_checksum PLATFORM VERSION OUTPUT_VAR)
+    # The in-tree pin is authoritative and the download is verified against it, so the
+    # same-origin .sha256sum sidecar is only fetched for unpinned SDKs.
+    gstreamer_get_fallback_checksum(${PLATFORM} ${VERSION} _pinned_hash)
+    if(_pinned_hash)
+        set(${OUTPUT_VAR}
+            "${_pinned_hash}"
+            PARENT_SCOPE
+        )
+        return()
+    endif()
+
     gstreamer_get_package_url(${PLATFORM} ${VERSION} _pkg_url)
 
     string(FIND "${_pkg_url}" "?" _qs_pos)
@@ -128,16 +139,12 @@ function(gstreamer_fetch_checksum PLATFORM VERSION OUTPUT_VAR)
     string(SHA256 _url_hash "${_checksum_url}")
     set(_checksum_file "${CMAKE_BINARY_DIR}/_deps/checksums/${_url_hash}.sha256sum")
 
-    # In-tree pin is authoritative: a fetched sidecar is attacker-influenceable
-    # (compromised mirror/MITM), so it can never silently override the pin.
-    gstreamer_get_fallback_checksum(${PLATFORM} ${VERSION} _pinned_hash)
-
     set(_dl_ok FALSE)
     foreach(_round RANGE 1 2)
         if(NOT EXISTS "${_checksum_file}")
             _gstreamer_download_sidecar("${_checksum_url}" "${_checksum_file}" _dl_ok)
             if(NOT _dl_ok)
-                _gstreamer_fallback_or_warn(${PLATFORM} ${VERSION} _result "Checksum sidecar unavailable")
+                _gstreamer_unverified_or_fail(${PLATFORM} ${VERSION} _result "Checksum sidecar unavailable")
                 set(${OUTPUT_VAR} "${_result}" PARENT_SCOPE)
                 return()
             endif()
@@ -145,27 +152,13 @@ function(gstreamer_fetch_checksum PLATFORM VERSION OUTPUT_VAR)
 
         file(READ "${_checksum_file}" _content)
         string(STRIP "${_content}" _content)
-        string(REGEX MATCH "([0-9a-fA-F]{64})" _match "${_content}")
+        # CMake regex has no {n} quantifier.
+        string(REPEAT "[0-9a-fA-F]" 64 _sha256_hex)
+        string(REGEX MATCH "(${_sha256_hex})" _match "${_content}")
         if(_match)
-            set(_fetched_hash "SHA256=${CMAKE_MATCH_1}")
-            if(_pinned_hash AND NOT _pinned_hash STREQUAL _fetched_hash)
-                message(FATAL_ERROR
-                    "GStreamer: checksum mismatch for ${PLATFORM} ${VERSION} — the fetched "
-                    ".sha256sum sidecar does NOT match the in-tree pinned hash. The pinned "
-                    "hash is authoritative; a divergent sidecar indicates a compromised "
-                    "mirror, MITM, or an out-of-date pin.\n"
-                    "  pinned (authoritative): ${_pinned_hash}\n"
-                    "  fetched (sidecar):      ${_fetched_hash}\n"
-                    "If the upstream SDK legitimately changed, update the pinned hash in "
-                    ".github/build-config.json (gstreamer.checksums.${VERSION}.${PLATFORM}).")
-            endif()
-            # Hand the authoritative pinned hash to the integrity check when present.
-            if(_pinned_hash)
-                set(${OUTPUT_VAR} "${_pinned_hash}" PARENT_SCOPE)
-                return()
-            endif()
-            # No trusted pin: the same-origin sidecar proves nothing against a bad
-            # mirror/MITM, so it must not satisfy GStreamer_REQUIRE_CHECKSUM=ON.
+            string(TOLOWER "${CMAKE_MATCH_1}" _fetched_hex)
+            # A same-origin sidecar proves nothing against a bad mirror/MITM, so it must not
+            # satisfy GStreamer_REQUIRE_CHECKSUM=ON.
             if(GStreamer_REQUIRE_CHECKSUM)
                 message(FATAL_ERROR
                     "GStreamer: no trusted (in-tree pinned) checksum for ${PLATFORM} ${VERSION}; "
@@ -173,11 +166,14 @@ function(gstreamer_fetch_checksum PLATFORM VERSION OUTPUT_VAR)
                     "GStreamer_REQUIRE_CHECKSUM=ON. Pin the hash in .github/build-config.json "
                     "(gstreamer.checksums.${VERSION}.${PLATFORM}) or set GStreamer_REQUIRE_CHECKSUM=OFF.")
             endif()
-            message(WARNING
-                "GStreamer: using same-origin .sha256sum sidecar for ${PLATFORM} ${VERSION}; "
-                "this detects corruption only, NOT supply-chain tampering. Pin the hash in "
-                ".github/build-config.json for authenticity.")
-            set(${OUTPUT_VAR} "${_fetched_hash}" PARENT_SCOPE)
+            message(WARNING "GStreamer: using same-origin .sha256sum sidecar for ${PLATFORM} ${VERSION}; "
+                            "this detects corruption only, NOT supply-chain tampering. Pin the hash in "
+                            ".github/build-config.json for authenticity."
+            )
+            set(${OUTPUT_VAR}
+                "SHA256=${_fetched_hex}"
+                PARENT_SCOPE
+            )
             return()
         endif()
 
@@ -185,7 +181,7 @@ function(gstreamer_fetch_checksum PLATFORM VERSION OUTPUT_VAR)
         file(REMOVE "${_checksum_file}")
     endforeach()
 
-    _gstreamer_fallback_or_warn(${PLATFORM} ${VERSION} _result "Checksum content invalid/unparseable")
+    _gstreamer_unverified_or_fail(${PLATFORM} ${VERSION} _result "Checksum content invalid/unparseable")
     set(${OUTPUT_VAR} "${_result}" PARENT_SCOPE)
 endfunction()
 

@@ -32,6 +32,8 @@
 #   Install      — gstreamer_install_{plugins,gio_modules,libs} +
 #                  gstreamer_install_{linux,windows,macos}_sdk +
 #                  gstreamer_install_platform_sdk dispatcher
+#   SdkState     — resolved-SDK cache entries, _qgc_gst_sdk_pc_version and
+#                  fingerprint-based invalidation of cached probe results
 
 include_guard(GLOBAL)
 
@@ -45,3 +47,4 @@ include("${CMAKE_CURRENT_LIST_DIR}/PkgConfig.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/Download.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/PluginPolicy.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/Install.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/SdkState.cmake")

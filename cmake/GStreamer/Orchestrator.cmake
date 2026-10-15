@@ -24,17 +24,19 @@ if(NOT GStreamer_FIND_VERSION)
         "and .github/build-config.json contains the appropriate gstreamer.version.<platform> entry.")
 endif()
 
-if(NOT DEFINED GStreamer_ROOT_DIR)
-    if(DEFINED GSTREAMER_ROOT)
-        set(GStreamer_ROOT_DIR ${GSTREAMER_ROOT})
-    elseif(DEFINED GStreamer_ROOT)
-        set(GStreamer_ROOT_DIR ${GStreamer_ROOT})
+# GStreamer_ROOT_DIR is user input only (never written back), so a later configure can tell a
+# user-chosen SDK from one discovery picked; see SdkState.cmake.
+set(_qgc_gst_user_root "${GStreamer_ROOT_DIR}")
+if(NOT _qgc_gst_user_root)
+    if(GSTREAMER_ROOT)
+        set(_qgc_gst_user_root "${GSTREAMER_ROOT}")
+    elseif(GStreamer_ROOT)
+        set(_qgc_gst_user_root "${GStreamer_ROOT}")
     endif()
-
-    if(DEFINED GStreamer_ROOT_DIR AND NOT EXISTS "${GStreamer_ROOT_DIR}")
-        message(FATAL_ERROR "GStreamer: User-provided directory does not exist: ${GStreamer_ROOT_DIR}\n"
-            "Correct the path or unset GStreamer_ROOT_DIR to allow auto-download.")
-    endif()
+endif()
+if(_qgc_gst_user_root AND NOT EXISTS "${_qgc_gst_user_root}")
+    message(FATAL_ERROR "GStreamer: User-provided directory does not exist: ${_qgc_gst_user_root}\n"
+        "Correct the path or unset GStreamer_ROOT_DIR to allow auto-download.")
 endif()
 
 # CONTRACT: include() at directory scope, never inside a function — the layout
@@ -63,7 +65,11 @@ endif()
 
 # User-supplied PKG_CONFIG_ARGN must survive reconfigures; only seed an empty default.
 set(PKG_CONFIG_ARGN "" CACHE STRING "Extra arguments for pkg-config")
-set(GStreamer_AUTO_DOWNLOADED FALSE)
+# Empty GStreamer_ROOT_DIR from here on means "discover or download"; platform discovery
+# fills it in and sets GStreamer_AUTO_DOWNLOADED when it downloads.
+_qgc_gst_select_sdk_root(GStreamer_ROOT_DIR GStreamer_AUTO_DOWNLOADED "${_qgc_gst_user_root}"
+                         "${GStreamer_FIND_VERSION}"
+)
 
 # Per-platform discovery macros — extracted to keep this file focused on orchestration.
 # _qgc_validate_expanded_pkg lives in platform/Apple.cmake (used only by Mac+iOS).
@@ -198,6 +204,28 @@ if(GStreamer_USE_FRAMEWORK)
     list(APPEND CMAKE_FRAMEWORK_PATH "${GSTREAMER_FRAMEWORK_PATH}")
 endif()
 
+# Cached pkg-config, find_library and try-compile results describe one SDK: drop them when the
+# root, its .pc version, the linkage or the pkg-config invocation changes.
+set(_qgc_gst_fingerprint_pkg_config "")
+if(NOT GStreamer_USE_XCFRAMEWORK)
+    find_package(PkgConfig REQUIRED QUIET)
+    # --static is appended later by _qgc_create_pkgconfig_targets (the linkage below covers it), and
+    # discovery may re-derive the other flags in a different order on reconfigure.
+    set(_qgc_gst_fingerprint_args ${PKG_CONFIG_ARGN})
+    list(REMOVE_ITEM _qgc_gst_fingerprint_args --static)
+    list(SORT _qgc_gst_fingerprint_args)
+    set(_qgc_gst_fingerprint_pkg_config "${PKG_CONFIG_EXECUTABLE}|${_qgc_gst_fingerprint_args}")
+endif()
+if(GStreamer_USE_STATIC_LIBS)
+    set(_qgc_gst_linkage static)
+else()
+    set(_qgc_gst_linkage shared)
+endif()
+_qgc_gst_sdk_pc_version("${GSTREAMER_LIB_PATH}" _qgc_gst_pc_version)
+set(_qgc_gst_fingerprint "${GStreamer_ROOT_DIR}|${GStreamer_FIND_VERSION}|${_qgc_gst_pc_version}|${_qgc_gst_linkage}")
+string(APPEND _qgc_gst_fingerprint "|${_qgc_gst_fingerprint_pkg_config}")
+_qgc_gst_refresh_sdk_cache("${_qgc_gst_fingerprint}")
+
 # Create GStreamer::* IMPORTED targets via the appropriate platform helper.
 if(GStreamer_USE_XCFRAMEWORK)
     _qgc_create_xcframework_targets()
@@ -205,14 +233,29 @@ else()
     _qgc_create_pkgconfig_targets()
 endif()
 
-# Mark mandatory components found unconditionally — drives the registry
-# (GSTREAMER_COMPONENT_REGISTRY in cmake/GStreamer/Components.cmake), so adding
-# a new always-present API doesn't require editing this file.
+# Mandatory registry rows (GSTREAMER_COMPONENT_REGISTRY in cmake/GStreamer/Components.cmake)
+# are hard requirements: the sources include their headers unconditionally, so fail here
+# rather than at compile time when one was not found.
 gstreamer_mandatory_components(_qgc_gst_mandatory _qgc_gst_mandatory_apis)
+set(_qgc_gst_missing_mandatory "")
+foreach(_api IN LISTS _qgc_gst_mandatory_apis)
+    if(NOT TARGET GStreamer::${_api})
+        gstreamer_resolve_component("${_api}" _ _ _qgc_gst_missing_pc _)
+        list(APPEND _qgc_gst_missing_mandatory "${_qgc_gst_missing_pc}")
+    endif()
+endforeach()
+if(_qgc_gst_missing_mandatory)
+    string(REPLACE ";" ", " _qgc_gst_missing_mandatory "${_qgc_gst_missing_mandatory}")
+    message(FATAL_ERROR "GStreamer: mandatory pkg-config modules not found for the SDK at ${GStreamer_ROOT_DIR}: "
+                        "${_qgc_gst_missing_mandatory}\nInstall the GStreamer development packages (gst-plugins-base) "
+                        "or point GStreamer_ROOT_DIR at a complete SDK."
+    )
+endif()
 foreach(_comp IN LISTS _qgc_gst_mandatory)
     set(QGCGStreamer_${_comp}_FOUND TRUE)
     set(GStreamer_${_comp}_FOUND TRUE)
 endforeach()
+unset(_qgc_gst_missing_mandatory)
 unset(_qgc_gst_mandatory)
 unset(_qgc_gst_mandatory_apis)
 # User-requested optional components: mark FOUND only if the corresponding
@@ -421,9 +464,10 @@ endforeach()
 unset(_qgc_required_vars)
 unset(_qgc_disco_macro)
 
-# Promote the resolved root into the cache so post-configure tooling
-# (.github/scripts/verify_executable.py / cmake_helper.py cache-var) can read it from CMakeCache.txt;
-# the discovery macros set it only as a normal/PARENT_SCOPE variable.
-set(GStreamer_ROOT_DIR "${GStreamer_ROOT_DIR}" CACHE PATH "GStreamer SDK root directory" FORCE)
+# Post-configure tooling (.github/scripts/verify_executable.py, the Windows workflow) reads
+# QGC_GST_RESOLVED_ROOT from CMakeCache.txt; PrintSummary reads the GStreamer::Layout properties.
+_qgc_gst_record_resolved_sdk("${GStreamer_ROOT_DIR}" "${GStreamer_FIND_VERSION}" "${GStreamer_AUTO_DOWNLOADED}")
+gstreamer_layout_set(VERSION "${GStreamer_VERSION}")
+gstreamer_layout_set(AUTO_DOWNLOADED "${GStreamer_AUTO_DOWNLOADED}")
 
 set(QGCGStreamer_FOUND TRUE)

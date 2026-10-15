@@ -19,7 +19,7 @@ class TestSetupGstreamerEnv:
         assert "GST_PLUGIN_PATH" not in os.environ
 
     def test_no_gstreamer_in_cache(self, tmp_path, monkeypatch):
-        """Returns without setting env if no GStreamer_ROOT_DIR in cache."""
+        """Returns without setting env if no resolved GStreamer root in cache."""
         cache = tmp_path / "CMakeCache.txt"
         cache.write_text("CMAKE_BUILD_TYPE:STRING=Release\n")
         monkeypatch.delenv("GST_PLUGIN_PATH", raising=False)
@@ -33,7 +33,7 @@ class TestSetupGstreamerEnv:
         plugin_dir.mkdir(parents=True)
 
         cache = tmp_path / "CMakeCache.txt"
-        cache.write_text(f"GStreamer_ROOT_DIR:PATH={gst_root}\n")
+        cache.write_text(f"GStreamer_ROOT_DIR:PATH=\nQGC_GST_RESOLVED_ROOT:INTERNAL={gst_root}\n")
 
         monkeypatch.delenv("GST_PLUGIN_PATH", raising=False)
         _setup_gstreamer_env(tmp_path)

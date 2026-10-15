@@ -5,11 +5,14 @@
 #
 # Properties on GStreamer::Layout (single source of truth):
 #   GSTREAMER_LAYOUT_TYPE     - FLAT | FRAMEWORK | XCFRAMEWORK | STATIC_TARBALL
+#   GSTREAMER_SDK_ROOT        - resolved SDK root (normalized)
 #   GSTREAMER_LIB_DIR         - directory containing libgstreamer-1.0.* and friends
 #   GSTREAMER_PLUGIN_DIR      - directory containing libgst<plugin>.* (== LIB_DIR/gstreamer-1.0 for FLAT)
 #   GSTREAMER_INCLUDE_DIR     - root of gstreamer-1.0/ + glib-2.0/ headers
 #   GSTREAMER_FRAMEWORK_BUNDLE- discovered macOS GStreamer.framework path (set by overlay, optional)
 #   GSTREAMER_XCFRAMEWORK_PATH- iOS GStreamer.xcframework path (set when TYPE=XCFRAMEWORK)
+#   GSTREAMER_VERSION         - SDK version found (set by Orchestrator.cmake)
+#   GSTREAMER_AUTO_DOWNLOADED - whether the SDK was auto-downloaded (set by Orchestrator.cmake)
 #
 # Use gstreamer_layout_get(<KEY> <OUT_VAR>) / gstreamer_layout_set(<KEY> <VALUE>)
 # to read/write so callers don't replicate the NOTFOUND-handling boilerplate.
@@ -118,6 +121,7 @@ function(gstreamer_create_layout_target)
         endif()
         set_target_properties(GStreamer::Layout PROPERTIES
             GSTREAMER_LAYOUT_TYPE    "${GCLT_TYPE}"
+            GSTREAMER_SDK_ROOT       "${_gclt_root}"
             GSTREAMER_LIB_DIR        "${_gclt_lib}"
             GSTREAMER_PLUGIN_DIR     "${_gclt_plugins}"
             GSTREAMER_INCLUDE_DIR    "${_gclt_include}"

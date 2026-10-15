@@ -7,9 +7,9 @@ set(_sandbox "${CMAKE_BINARY_DIR}/qgc_download_test")
 file(REMOVE_RECURSE "${_sandbox}")
 file(MAKE_DIRECTORY "${_sandbox}")
 
-qgc_parse_expected_hash("SHA256=abcdef" _algo _hash)
+qgc_parse_expected_hash("SHA256=AbCdEf" _algo _hash)
 qgc_test_assert_streq("algo" "SHA256" "${_algo}")
-qgc_test_assert_streq("hash" "abcdef" "${_hash}")
+qgc_test_assert_streq("hash, lowercased" "abcdef" "${_hash}")
 qgc_test_pass("parse_expected_hash valid")
 
 file(WRITE "${_sandbox}/cached.txt" "hello world")
@@ -34,6 +34,33 @@ qgc_resilient_download(
 )
 qgc_test_assert_streq("cache hit valid hash" "${_sandbox}/cached.txt" "${_r2}")
 qgc_test_pass("cache hit valid hash")
+
+string(TOUPPER "${_real_hash}" _real_hash_upper)
+qgc_resilient_download(
+    FILENAME
+    cached.txt
+    DESTINATION_DIR
+    "${_sandbox}"
+    RESULT_VAR
+    _r2_upper
+    URLS
+    "https://invalid.example.invalid/never.txt"
+    EXPECTED_HASH
+    "SHA256=${_real_hash_upper}"
+    LOG_TAG
+    test
+    ALLOW_FAILURE
+    TIMEOUT
+    1
+    INACTIVITY_TIMEOUT
+    1
+    RETRIES
+    1
+    RETRY_BACKOFF
+    0
+)
+qgc_test_assert_streq("cache hit uppercase hash" "${_sandbox}/cached.txt" "${_r2_upper}")
+qgc_test_pass("cache hit uppercase hash")
 
 qgc_resilient_download(
     FILENAME        nonexistent.bin

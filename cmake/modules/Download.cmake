@@ -13,7 +13,12 @@ function(qgc_parse_expected_hash _HASH_VALUE _OUT_ALGO _OUT_EXPECTED)
         message(FATAL_ERROR "qgc_parse_expected_hash: Invalid EXPECTED_HASH format '${_HASH_VALUE}' (expected ALGO=hex)")
     endif()
     set(${_OUT_ALGO} "${CMAKE_MATCH_1}" PARENT_SCOPE)
-    set(${_OUT_EXPECTED} "${CMAKE_MATCH_2}" PARENT_SCOPE)
+    # file(<algorithm>) reports lowercase hex; accept digests written in either case.
+    string(TOLOWER "${CMAKE_MATCH_2}" _expected_digest)
+    set(${_OUT_EXPECTED}
+        "${_expected_digest}"
+        PARENT_SCOPE
+    )
     list(FIND _valid "${CMAKE_MATCH_1}" _idx)
     if(_idx EQUAL -1)
         message(FATAL_ERROR "qgc_parse_expected_hash: Unsupported hash algorithm '${CMAKE_MATCH_1}'")

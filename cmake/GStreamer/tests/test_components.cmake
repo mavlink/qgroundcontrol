@@ -42,8 +42,8 @@ qgc_test_pass("resolve_component empty query")
 gstreamer_mandatory_components(_mn _ma)
 qgc_test_assert_in_list("mandatory: Core"          Core             _mn)
 qgc_test_assert_in_list("mandatory: Base"          Base             _mn)
-qgc_test_assert_in_list("mandatory: Gl"            Gl               _mn)
-qgc_test_assert_in_list("mandatory: GlPrototypes"  GlPrototypes     _mn)
+qgc_test_assert_not_in_list("optional: Gl"        Gl               _mn)
+qgc_test_assert_not_in_list("optional: GlPrototypes" GlPrototypes   _mn)
 qgc_test_assert_in_list("mandatory: Rtsp"          Rtsp             _mn)
 qgc_test_assert_in_list("mandatory: Video"         Video            _mn)
 qgc_test_assert_not_in_list("optional: App"        App              _mn)
@@ -65,10 +65,9 @@ set(IOS OFF)
 
 gstreamer_build_apis_and_deps(_apis _deps Core)
 qgc_test_assert_in_list("seed: api_base"           api_base           _apis)
-qgc_test_assert_in_list("seed: api_gl"             api_gl             _apis)
-qgc_test_assert_in_list("seed: api_gl_prototypes"  api_gl_prototypes  _apis)
 qgc_test_assert_in_list("seed: api_rtsp"           api_rtsp           _apis)
 qgc_test_assert_in_list("seed: api_video"          api_video          _apis)
+qgc_test_assert_not_in_list("unrequested: api_gl"  api_gl             _apis)
 qgc_test_assert_in_list("seed deps: gstreamer-base-1.0" gstreamer-base-1.0 _deps)
 qgc_test_pass("build_apis_and_deps Core seed")
 
@@ -102,8 +101,14 @@ qgc_test_pass("ANDROID platform extras")
 
 gstreamer_build_apis_and_deps(_apis_idem _deps_idem Core App App)
 list(LENGTH _apis_idem _apis_idem_len)
-qgc_test_assert_streq("idempotent apis length" "6" "${_apis_idem_len}")
+qgc_test_assert_streq("idempotent apis length" "4" "${_apis_idem_len}")
 qgc_test_pass("idempotence")
+
+gstreamer_build_apis_and_deps(_apis_order _deps_order Core HwBuffers App GlPrototypes Gl)
+qgc_test_assert_streq("registry order" "api_base;api_gl;api_gl_prototypes;api_rtsp;api_video;api_app;api_hw_buffers"
+                      "${_apis_order}"
+)
+qgc_test_pass("build_apis registry order")
 
 set(_apis_stale "stale-sentinel")
 gstreamer_build_apis_and_deps(_apis_stale _deps_stale App)

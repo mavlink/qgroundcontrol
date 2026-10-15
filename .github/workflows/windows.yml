@@ -162,7 +162,7 @@ jobs:
         run: |
           python3 "${GITHUB_WORKSPACE}/.github/scripts/cmake_helper.py" cache-var \
             --build-dir "${RUNNER_TEMP}/build" \
-            --name GStreamer_ROOT_DIR \
+            --name QGC_GST_RESOLVED_ROOT \
             --required \
             --output-key gst_root
 

@@ -2,12 +2,14 @@ if(NOT QGC_ENABLE_GST_VIDEOSTREAMING)
     return()
 endif()
 
+# Gl and GlPrototypes (gst-gl) are optional: the GLMemory GPU path and the glupload bin are built only when
+# HwBuffers' gst-gl header probe succeeds.
 # Linux adds Allocators (gstreamer-allocators-1.0) for the DMABuf header probe in Orchestrator.cmake.
 # RtspServer (gstreamer-rtsp-server-1.0) drives the MockLink test video stream server, which is
 # Debug-only (see Comms/MockLink/CMakeLists.txt) — so only request it in Debug to keep the
 # rtsp-server lib out of release builds. It is also optional: a define is emitted below only
 # when the SDK actually ships it.
-set(_qgc_gst_components Core Base Video App Rtsp)
+set(_qgc_gst_components Core Base Gl GlPrototypes Video App Rtsp)
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     list(APPEND _qgc_gst_components RtspServer)
 endif()

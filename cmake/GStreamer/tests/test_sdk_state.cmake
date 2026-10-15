@@ -1,0 +1,109 @@
+cmake_minimum_required(VERSION 3.25)
+include("${CMAKE_CURRENT_LIST_DIR}/_assert.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/../SdkState.cmake")
+
+set(_sandbox "${CMAKE_CURRENT_BINARY_DIR}/sdk-state")
+file(REMOVE_RECURSE "${_sandbox}")
+file(MAKE_DIRECTORY "${_sandbox}/lib/pkgconfig" "${_sandbox}/auto-root")
+
+file(WRITE "${_sandbox}/lib/pkgconfig/gstreamer-1.0.pc" "prefix=/sdk\nVersion: 1.22.12\n")
+_qgc_gst_sdk_pc_version("${_sandbox}/lib" _version)
+qgc_test_assert_streq("SDK version" "1.22.12" "${_version}")
+file(WRITE "${_sandbox}/lib/pkgconfig/gstreamer-1.0.pc" "prefix=/invalid\n")
+_qgc_gst_sdk_pc_version("${_sandbox}/lib" _version)
+qgc_test_assert_streq("missing Version field" "" "${_version}")
+_qgc_gst_sdk_pc_version("${_sandbox}/missing" _version)
+qgc_test_assert_streq("missing .pc file" "" "${_version}")
+qgc_test_pass("SDK .pc version")
+
+_qgc_gst_record_resolved_sdk("${_sandbox}/auto-root" 1.28.4 TRUE)
+# requested version|user root|expected root|expected auto
+set(_cases "1.28.4|${_sandbox}/user-root|${_sandbox}/user-root|FALSE" "1.28.4||${_sandbox}/auto-root|TRUE"
+           "1.28.5|||FALSE"
+)
+foreach(_case IN LISTS _cases)
+    string(REPLACE "|" ";" _parts "${_case}")
+    list(GET _parts 0 _requested)
+    list(GET _parts 1 _user_root)
+    list(GET _parts 2 _expected_root)
+    list(GET _parts 3 _expected_auto)
+    _qgc_gst_select_sdk_root(_root _auto "${_user_root}" ${_requested})
+    qgc_test_assert_streq("root for '${_case}'" "${_expected_root}" "${_root}")
+    qgc_test_assert_streq("auto for '${_case}'" "${_expected_auto}" "${_auto}")
+endforeach()
+
+file(REMOVE_RECURSE "${_sandbox}/auto-root")
+_qgc_gst_select_sdk_root(_root _auto "" 1.28.4)
+qgc_test_assert_streq("vanished auto root" "" "${_root}")
+
+_qgc_gst_record_resolved_sdk(/usr 1.28.4 FALSE)
+_qgc_gst_select_sdk_root(_root _auto "" 1.28.4)
+qgc_test_assert_streq("discovered root is rediscovered" "" "${_root}")
+qgc_test_pass("resolved SDK root selection")
+
+set(_stale
+    __pkg_config_checked_PC_GStreamer
+    __pkg_config_arguments_PC_GStreamer_api_video
+    PC_GStreamer_INCLUDE_DIRS
+    pkgcfg_lib_PC_GStreamer_gstreamer-1.0
+    _gst_arm64-v8a_gstreamer_1_0
+    GStreamer_FW_CoreFoundation_LIB
+    "QGC_GST_HAS_VIDEO_ORIENTATION_META_GStreamer::GStreamer"
+    GST_D3D11_LIB
+    QGC_GST_VULKAN_LIB
+    _GST_gst_plugin_scanner_PROG
+    GStreamer_CA_BUNDLE
+    _xcfw_foundation
+)
+set(_kept __pkg_config_checked_LIBURING PC_LibUSB_FOUND PKG_CONFIG_EXECUTABLE GStreamer_ROOT_DIR QGC_GST_RESOLVED_ROOT)
+# Returns <var>'s cache value, or "<unset>"; get_property handles names that ${} cannot (e.g. "::").
+function(_qgc_test_cache_value var out_var)
+    set(_value "<unset>")
+    if(DEFINED CACHE{${var}})
+        get_property(
+            _value
+            CACHE "${var}"
+            PROPERTY VALUE
+        )
+    endif()
+    set(${out_var}
+        "${_value}"
+        PARENT_SCOPE
+    )
+endfunction()
+
+# Seeds every entry in _stale and _kept with "cached".
+function(_qgc_test_seed_cache)
+    foreach(_var IN LISTS _stale _kept)
+        set(${_var}
+            "cached"
+            CACHE INTERNAL ""
+        )
+    endforeach()
+endfunction()
+
+# Asserts the _stale entries are <stale_state> and the _kept entries survived, after <label>.
+function(_qgc_test_assert_cache label stale_state)
+    foreach(_var IN LISTS _stale)
+        _qgc_test_cache_value("${_var}" _value)
+        qgc_test_assert_streq("${label}: ${_var}" "${stale_state}" "${_value}")
+    endforeach()
+    foreach(_var IN LISTS _kept)
+        _qgc_test_cache_value("${_var}" _value)
+        qgc_test_assert_streq("${label}: ${_var}" "cached" "${_value}")
+    endforeach()
+endfunction()
+
+_qgc_test_seed_cache()
+_qgc_gst_refresh_sdk_cache("sdk-a|1.24.0")
+_qgc_test_assert_cache("first fingerprint" "<unset>")
+
+_qgc_test_seed_cache()
+_qgc_gst_refresh_sdk_cache("sdk-a|1.24.0")
+_qgc_test_assert_cache("unchanged fingerprint" "cached")
+
+_qgc_gst_refresh_sdk_cache("sdk-a|1.26.0")
+_qgc_test_assert_cache("changed fingerprint" "<unset>")
+
+file(REMOVE_RECURSE "${_sandbox}")
+qgc_test_pass("SDK fingerprint invalidates cached probe results")

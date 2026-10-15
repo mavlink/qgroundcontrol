@@ -13,20 +13,42 @@ set(QGC_BUILD_CONFIG_CONTENT [=[{"gstreamer": {"plugins": {"common": ["coreeleme
 # The fake SDK's libraries are empty files, so feature probes must compile without linking.
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 
-set(QGCGStreamer_FIND_COMPONENTS Core Base Video App Rtsp Allocators)
+set(QGCGStreamer_FIND_COMPONENTS
+    Core
+    Base
+    Gl
+    GlPrototypes
+    Video
+    App
+    Rtsp
+    Allocators
+)
 include(GStreamer/Orchestrator)
 
 set(_qgc_state_targets
     GStreamer::GStreamer
     GStreamer::deps
     GStreamer::api_base
-    GStreamer::api_gl
-    GStreamer::api_gl_prototypes
     GStreamer::api_rtsp
     GStreamer::api_video
     GStreamer::api_app
     GStreamer::api_allocators
 )
+# EXPECT_GL=OFF: the SDK lacks the optional gst-gl modules, so configure succeeds without their targets.
+set(_qgc_gl_targets GStreamer::api_gl GStreamer::api_gl_prototypes)
+if(NOT DEFINED EXPECT_GL OR EXPECT_GL)
+    list(APPEND _qgc_state_targets ${_qgc_gl_targets})
+    qgc_test_assert_streq("Gl found" TRUE "${GStreamer_Gl_FOUND}")
+else()
+    foreach(_target IN LISTS _qgc_gl_targets)
+        if(TARGET ${_target})
+            message(FATAL_ERROR "ASSERT [optional GL]: ${_target} was created")
+        endif()
+    endforeach()
+    if(GStreamer_Gl_FOUND OR GStreamer_GlPrototypes_FOUND)
+        message(FATAL_ERROR "ASSERT [optional GL]: GL reported found without its pkg-config modules")
+    endif()
+endif()
 set(_qgc_state "")
 foreach(_target IN LISTS _qgc_state_targets)
     qgc_test_assert_target("${_target} exists" ${_target})
@@ -37,12 +59,24 @@ foreach(_target IN LISTS _qgc_state_targets)
         string(APPEND _qgc_state "${_target}.${_property}=${_value}\n")
     endforeach()
 endforeach()
-foreach(_key IN ITEMS LAYOUT_TYPE LIB_DIR PLUGIN_DIR INCLUDE_DIR)
+foreach(
+    _key IN
+    ITEMS LAYOUT_TYPE
+          SDK_ROOT
+          LIB_DIR
+          PLUGIN_DIR
+          INCLUDE_DIR
+          VERSION
+          AUTO_DOWNLOADED
+)
     gstreamer_layout_get(${_key} _value)
     string(APPEND _qgc_state "GStreamer::Layout.${_key}=${_value}\n")
 endforeach()
 foreach(_var IN ITEMS GStreamer_VERSION GStreamer_ROOT_DIR GSTREAMER_APIS GSTREAMER_PLUGINS QGC_GST_HAS_DMABUF)
     string(APPEND _qgc_state "${_var}=${${_var}}\n")
+endforeach()
+foreach(_var IN ITEMS QGC_GST_RESOLVED_ROOT QGC_GST_RESOLVED_VERSION QGC_GST_RESOLVED_AUTO)
+    string(APPEND _qgc_state "${_var}=$CACHE{${_var}}\n")
 endforeach()
 file(WRITE "${CMAKE_BINARY_DIR}/gst-state.txt" "${_qgc_state}")
 
@@ -67,6 +101,13 @@ qgc_test_assert_property("layout lib dir" GStreamer::Layout GSTREAMER_LIB_DIR "$
 qgc_test_assert_property("layout plugin dir" GStreamer::Layout GSTREAMER_PLUGIN_DIR "${EXPECT_ROOT}/lib/gstreamer-1.0")
 qgc_test_assert_property("layout include dir" GStreamer::Layout GSTREAMER_INCLUDE_DIR "${EXPECT_ROOT}/include")
 qgc_test_assert_streq("plugin scan" "TRUE" "${GST_PLUGIN_coreelements_FOUND}")
+qgc_test_assert_property("layout SDK root" GStreamer::Layout GSTREAMER_SDK_ROOT "${EXPECT_ROOT}")
+qgc_test_assert_property("layout version" GStreamer::Layout GSTREAMER_VERSION "${EXPECT_VERSION}")
+if(NOT DEFINED EXPECT_AUTO)
+    set(EXPECT_AUTO FALSE)
+endif()
+qgc_test_assert_property("layout auto-downloaded" GStreamer::Layout GSTREAMER_AUTO_DOWNLOADED "${EXPECT_AUTO}")
+qgc_test_assert_streq("recorded root" "${EXPECT_ROOT}" "$CACHE{QGC_GST_RESOLVED_ROOT}")
 
 # The fake SDK ships the DMABuf and orientation-meta headers only when EXPECT_PROBES is set,
 # so a stale try-compile result shows up as a mismatch here.

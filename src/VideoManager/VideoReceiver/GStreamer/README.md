@@ -101,7 +101,9 @@ CI host exercises the direct DMABuf importer.
 
 ### macOS / Windows / iOS
 
-GStreamer SDKs are auto-downloaded during CMake configure. To use a local installation instead, set `GStreamer_ROOT_DIR`.
+GStreamer SDKs are auto-downloaded during CMake configure. To use a local installation instead, set `GStreamer_ROOT_DIR` (on iOS, a `GStreamer.xcframework` or `GStreamer.framework`, or a directory containing one).
+
+Configure never overwrites `GStreamer_ROOT_DIR`: the SDK it selected is recorded as `QGC_GST_RESOLVED_ROOT` in `CMakeCache.txt`, an auto-downloaded SDK is fetched again when its `gstreamer.version.<platform>` changes, and cached GStreamer probe results are recomputed whenever the SDK changes.
 
 ### Android
 

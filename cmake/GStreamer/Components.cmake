@@ -56,12 +56,13 @@ endfunction()
 #
 # Mandatory entries seed gstreamer_build_apis_and_deps and the always-FOUND
 # iteration in Orchestrator.cmake. Adding a new always-present API requires
-# only an entry here.
+# only an entry here. Gl/GlPrototypes are optional: a sysroot whose x11 .pc files are
+# incomplete fails their pkg-config checks, and only the GL GPU path needs them.
 set(GSTREAMER_COMPONENT_REGISTRY
     "Core:::1"                                                   # umbrella; gstreamer-1.0 is queried directly
     "Base:api_base:gstreamer-base-1.0:1"
-    "Gl:api_gl:gstreamer-gl-1.0:1"
-    "GlPrototypes:api_gl_prototypes:gstreamer-gl-prototypes-1.0:1"
+    "Gl:api_gl:gstreamer-gl-1.0:0"
+    "GlPrototypes:api_gl_prototypes:gstreamer-gl-prototypes-1.0:0"
     "Rtsp:api_rtsp:gstreamer-rtsp-1.0:1"
     "Video:api_video:gstreamer-video-1.0:1"
     "App:api_app:gstreamer-app-1.0:0"
@@ -154,11 +155,9 @@ endfunction()
 # optional platform extras. The seed of always-present APIs comes from the
 # registry's mandatory rows (no hardcoded list).
 function(gstreamer_build_apis_and_deps APIS_OUT DEPS_OUT)
-    # Seed from registry-mandatory rows (single source of truth).
-    gstreamer_mandatory_components(_seed_names _apis)
-
     # Add extra apis from caller's component list — resolve via registry first
     # to handle CamelCase → api_snake mapping for non-mandatory components.
+    set(_requested "")
     foreach(_comp IN LISTS ARGN)
         if(_comp STREQUAL "Core")
             continue()
@@ -168,6 +167,19 @@ function(gstreamer_build_apis_and_deps APIS_OUT DEPS_OUT)
             # Unknown component name: derive api via CamelCase → snake_case.
             gstreamer_component_to_api("${_comp}" _api)
         endif()
+        list(APPEND _requested "${_api}")
+    endforeach()
+
+    # Registry-mandatory rows plus the requested ones, in registry order (unregistered
+    # components last), so the probe and link order doesn't depend on how callers list them.
+    set(_apis "")
+    foreach(_entry IN LISTS GSTREAMER_COMPONENT_REGISTRY)
+        _gstreamer_registry_split("${_entry}" _name _api _pc _mand)
+        if(_api AND (_mand STREQUAL "1" OR _api IN_LIST _requested))
+            list(APPEND _apis "${_api}")
+        endif()
+    endforeach()
+    foreach(_api IN LISTS _requested)
         if(NOT _api IN_LIST _apis)
             list(APPEND _apis "${_api}")
         endif()
