@@ -207,11 +207,13 @@ void GstVideoReceiverComponentsTest::_testPipelineDotStaysInDirectory_data()
     QTest::addColumn<QString>("fileStem");
 
     QTest::newRow("plain") << QStringLiteral("pipeline-error") << QStringLiteral("pipeline-error");
+    QTest::newRow("receiver snapshot") << QStringLiteral("receiver-videoContent-pipeline-watchdog-timeout")
+                                       << QStringLiteral("receiver-videoContent-pipeline-watchdog-timeout");
     QTest::newRow("parent traversal") << QStringLiteral("../../escaped") << QStringLiteral("______escaped");
     QTest::newRow("path separators") << QStringLiteral("a/b\\c") << QStringLiteral("a_b_c");
     QTest::newRow("non-ASCII letters") << QStringLiteral("d\u00e9faut") << QStringLiteral("d\u00e9faut");
     QTest::newRow("empty") << QString() << QStringLiteral("graph");
-    QTest::newRow("too long") << QString(100, u'a') << QString(40, u'a');
+    QTest::newRow("too long") << QString(100, u'a') << QString(57, u'a');
 }
 
 void GstVideoReceiverComponentsTest::_testPipelineDotStaysInDirectory()

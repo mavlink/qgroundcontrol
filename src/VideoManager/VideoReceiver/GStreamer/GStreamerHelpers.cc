@@ -57,8 +57,9 @@ bool isValidRtspUri(const gchar* uri_str)
 
 QString dotFileTag(QStringView tag)
 {
-    // Leaves room in a 255-byte file name for the prefix and timestamp around it, even at 4 UTF-8 bytes a character.
-    constexpr qsizetype kMaxTagLength = 40;
+    // Fits a 255-byte file name with the "-yyyyMMdd-HHmmss-zzz.dot" suffix writePipelineDot() adds, even at 4 UTF-8
+    // bytes a character.
+    constexpr qsizetype kMaxTagLength = (255 - 24) / 4;
 
     QString safe;
     for (const QChar c : tag.left(kMaxTagLength)) {

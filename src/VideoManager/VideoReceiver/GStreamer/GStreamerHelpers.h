@@ -17,7 +17,7 @@ inline constexpr GstDebugGraphDetails kDiagnosticDotGraphDetails = static_cast<G
 
 bool isValidRtspUri(const gchar* uri_str);
 
-/// Returns @p tag as a file-name part: letters, digits, '-' and '_' only (anything else becomes '_'), at most 40
+/// Returns @p tag as a file-name part: letters, digits, '-' and '_' only (anything else becomes '_'), at most 57
 /// characters, never empty. A dump tag can then neither leave its directory nor make the file name too long.
 QString dotFileTag(QStringView tag);
 

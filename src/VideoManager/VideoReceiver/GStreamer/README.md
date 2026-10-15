@@ -13,15 +13,15 @@ The pipeline is split into focused components (all in this directory):
 
 | Component | Role |
 | --- | --- |
-| `GstVideoReceiver` | Pipeline owner and the `VideoReceiver` the app uses: builds, starts and stops the receiver pipeline (source → tee → the two branches below). All pipeline changes run on its own worker thread (a `QThread` event loop). After a stream failure it stops itself (`onStopComplete(STATUS_FAIL)`) and is the only component that reconnects, with exponential backoff while `autoReconnect` is set. Exposes the plugged decoder's name as the `decoderName` property. The five components below are plain classes it owns; each header states which thread calls what. |
+| `GstVideoReceiver` | Pipeline owner and the `VideoReceiver` the app uses: builds, starts and stops the receiver pipeline (source → tee → the two branches below). All pipeline changes run on its own worker thread (a `QThread` event loop). After a stream failure it stops itself (`onStopComplete(STATUS_FAIL)`) and is the only component that reconnects, with exponential backoff while `autoReconnect` is set. Exposes the plugged decoder's name as the `decoderName` property, and saves screenshots from the frame on display in the widget's `QVideoSink`. The five components below are plain classes it owns; each header states which thread calls what. |
 | `DecodingBranch` | Display branch behind the tee: holds the video sink until the source streams, inserts `decodebin3` (QoS off on every decoder it plugs), reports decoding from the first displayed frame, and reports the decoder name and the negotiated video size. |
-| `RecordingBranch` | Recording branch behind the tee: a `splitmuxsink` file sink per recording, started at the first keyframe and finalized on stop within a deadline. A recorder error ends the recording, not the stream. `RecordingFinalizer` matches bus messages to the current file by ancestry. |
+| `RecordingBranch` | Recording branch behind the tee: a `splitmuxsink` file sink per recording, started at the first keyframe and finalized on stop within a deadline. MP4/MOV files are written with robust muxing, so a file cut off by a crash still plays up to its last header update (every 5 s). A recorder error ends the recording, not the stream. `RecordingFinalizer` matches bus messages to the current file by ancestry. |
 | `BusMessageRouter` | The pipeline's only bus consumer: a sync handler that routes each message to the branches or the worker and drops it. |
 | `StreamWatchdog` | Notices stalled source or decoder output on a monotonic clock, and paces reconnects (1 s, 2 s, 4 s, … 30 s). |
 | `PipelineDotDumper` | Writes the pipeline's `.dot` graphs; see [Pipeline Observability](#pipeline-observability). |
 | `GstSourceFactory` | Constructs the source element from the stream URI and applies RTP jitter-buffer policy for `application/x-rtp` sources. |
 | `GStreamerEnvironment` | Process-wide environment setup (plugin/scanner/helper/GIO paths, env hygiene) run before `gst_init()`. See [Runtime Environment Setup](#runtime-environment-setup). |
-| `GStreamerHelpers` | Small utilities (element-rank overrides, etc.). |
+| `GStreamerHelpers` | Small utilities: decoder classification and rank overrides, pipeline-graph files, and taking a child element out of a running bin. |
 | `GStreamerLogging` | Routes GStreamer's log output through QGC's logging and applies the persisted debug level. |
 | `GstScoped` | RAII owners for transfer-full GStreamer returns so refs can't leak on early return. |
 
@@ -159,13 +159,32 @@ gst-launch-1.0 udpsrc port=5600 caps='application/x-rtp, media=(string)video, cl
 
 ### Supported protocols
 
-UDP RTP, RTSP, TCP-MPEG2, MPEG-TS.
+`GstSourceFactory` accepts these URI schemes:
+
+- `rtsp://`, `rtspt://`: RTSP (the video stream only).
+- `udp://`: H.264 over RTP/UDP; `udp265://`: H.265 over RTP/UDP.
+- `mpegts://`: MPEG-TS over UDP; `tcp://`: MPEG-TS over TCP.
+
+### Automated tests
+
+| Test | Label | Covers |
+| --- | --- | --- |
+| `GStreamerTest` | Unit | Helpers, the source factory, the `gstqgc` sink and the `HwBuffers` paths. |
+| `GstVideoReceiverComponentsTest` | Unit | The receiver's components without a stream: reconnect backoff, stall detection, recording finalization by ancestry, pipeline and `.dot` file names. |
+| `GstVideoReceiverTest` | Integration | `GstVideoReceiver` end to end against a live H.264 RTP stream it sends itself on loopback: start, decode and stop, failed starts, reconnects, recordings (playable while in progress, finalized on stop and on destruction, recorder errors), decoder setup and video size, bus hygiene and screenshots. |
+
+Each test skips, rather than fails, when GStreamer or a plugin it needs is missing (`GstVideoReceiverTest` needs `x264enc` among others).
+
+```bash
+cd build && QT_QPA_PLATFORM=offscreen ctest -R '^(GStreamerTest|GstVideoReceiverComponentsTest|GstVideoReceiverTest)$' --output-on-failure
+```
 
 ## GStreamer Logging
 
 - In-app: Use QGroundControl's logging settings
 - Environment variables: See <https://gstreamer.freedesktop.org/documentation/gstreamer/running.html>
 - Command line options: `--gst-debug-level`, `--gst-debug`, `--gst-debug-help`, etc.
+- Receiver flow (starts, stops, reconnects, the decoder chosen, pipeline latency, HW path statistics): enable the `Video.GStreamer.GstVideoReceiver` category. Failures are logged as warnings even with it off.
 
 ## Pipeline Observability
 
@@ -181,7 +200,7 @@ export GST_DEBUG_DUMP_DOT_DIR=/tmp/qgc-pipeline-dots
 dot -Tpng /tmp/qgc-pipeline-dots/receiver-videoContent-pipeline-started.dot -o pipeline.png
 ```
 
-When the env var is **unset**, QGC instead writes a snapshot to `<CacheLocation>/qgc-pipeline-dot/receiver-<stream>-<tag>-<UTC timestamp>.dot` on a pipeline `ERROR` and on a watchdog timeout, keeping the 10 newest, so field-bug-report bundles include the topology automatically. The `GstVideoReceiver::dumpPipelineGraph(tag)` slot (callable from QML) writes the same snapshot on demand for use from a debug menu; characters in `tag` other than letters, digits, `-` and `_` become `_`.
+When the env var is **unset**, QGC instead writes a snapshot to `<CacheLocation>/qgc-pipeline-dot/receiver-<stream>-<tag>-<UTC timestamp>.dot` on a pipeline `ERROR` and on a watchdog timeout, keeping the 10 newest, so field-bug-report bundles include the topology automatically. `GstVideoReceiver::dumpPipelineGraph(tag)` (`Q_INVOKABLE`, so callable from QML) writes the same snapshot on demand for use from a debug menu; characters in `tag` other than letters, digits, `-` and `_` become `_`, and a very long tag is shortened to fit the file name.
 
 Every dump shows topology, caps, media types and states, but leaves out element properties, which can hold stream credentials (such as `rtspsrc`'s `user-id` and `user-pw`).
 
