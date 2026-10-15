@@ -23,25 +23,25 @@ enum class HwFallbackReason
     _Count,
 };
 
-/// mapTextures() returned an invalid bundle (GPU import failed).
-void recordMapFailure(HwVideoBufferPath path) noexcept;
-quint64 takeMapFailureCount(HwVideoBufferPath path) noexcept;
-quint64 peekMapFailureCount(HwVideoBufferPath path) noexcept;
+/// Per-path event counts.
+enum class Counter
+{
+    MapFailures,   ///< mapTextures() returned an invalid bundle (GPU import failed).
+    TextureReuse,  ///< Prior frame's QRhiTexture wrappers reused (decoder pool returned same native handle).
+    GpuWaits,      ///< GPU-side waits on the producer's writes before sampling a frame.
+    CpuWaits,      ///< CPU-blocking waits on the producer's writes before sampling a frame.
+    ImageCacheHits,
+    ImageCacheMisses,
+    /// DMABuf wait on the producer's write fences (poll() on the dma-buf fds) timed out or failed; the frame was
+    /// imported without a producer barrier.
+    ProducerFenceTimeouts,
+    _Count,
+};
 
-/// Prior frame's QRhiTexture wrappers reused (decoder pool returned same native handle).
-void recordTextureReuse(HwVideoBufferPath path) noexcept;
-quint64 takeTextureReuseHits(HwVideoBufferPath path) noexcept;
-
-/// Wait on the producer's writes before sampling a frame; split CPU-blocking vs GPU-side.
-void recordSyncWait(HwVideoBufferPath path, bool gpuSide) noexcept;
-/// Reads-and-resets CPU waits; writes GPU waits into @p gpuWaits.
-quint64 takeSyncWaitCounts(HwVideoBufferPath path, quint64& gpuWaits) noexcept;
-
-/// Native image/texture cache hit/miss accounting.
-void recordImageCacheHit(HwVideoBufferPath path) noexcept;
-void recordImageCacheMiss(HwVideoBufferPath path) noexcept;
-quint64 takeImageCacheHits(HwVideoBufferPath path) noexcept;
-quint64 takeImageCacheMisses(HwVideoBufferPath path) noexcept;
+void record(HwVideoBufferPath path, Counter counter) noexcept;
+quint64 peek(HwVideoBufferPath path, Counter counter) noexcept;
+/// Reads and resets.
+quint64 take(HwVideoBufferPath path, Counter counter) noexcept;
 
 /// Per-path mapTextures() wall-time, fed into an EWMA; peek returns the smoothed value in microseconds.
 void recordMapDuration(HwVideoBufferPath path, qint64 nsecs) noexcept;
@@ -60,11 +60,6 @@ private:
     HwVideoBufferPath _path;
     QElapsedTimer _timer;
 };
-
-/// DMABuf wait on the producer's write fences (poll() on the dma-buf fds) timed out or failed; the frame was imported
-/// without a producer barrier.
-void recordProducerFenceTimeout(HwVideoBufferPath path) noexcept;
-quint64 takeProducerFenceTimeouts(HwVideoBufferPath path) noexcept;
 
 /// Per-(path,reason) fallback accounting; lets a bug report show *why* a path demoted to CPU.
 void recordFallbackReason(HwVideoBufferPath attemptedPath, HwFallbackReason reason) noexcept;

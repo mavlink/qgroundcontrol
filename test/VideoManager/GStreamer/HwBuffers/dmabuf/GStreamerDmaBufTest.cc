@@ -368,7 +368,8 @@ void GStreamerTest::_testHwBufferMapTexturesGuard()
 #else
     GStreamer::redirectGLibLogging();
 
-    const quint64 failsBefore = GstHwPathTelemetry::peekMapFailureCount(HwVideoBufferPath::DmaBuf);
+    const quint64 failsBefore =
+        GstHwPathTelemetry::peek(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::MapFailures);
 
     GstElement* pipeline = gst_parse_launch(
         "videotestsrc num-buffers=1 ! "
@@ -409,7 +410,8 @@ void GStreamerTest::_testHwBufferMapTexturesGuard()
     QVideoFrameTexturesUPtr result = buf.mapTextures(*reinterpret_cast<QRhi*>(1), old);
     QVERIFY(!result);
 
-    const quint64 failsAfter = GstHwPathTelemetry::peekMapFailureCount(HwVideoBufferPath::DmaBuf);
+    const quint64 failsAfter =
+        GstHwPathTelemetry::peek(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::MapFailures);
     QVERIFY(failsAfter > failsBefore);
 
     gst_sample_unref(sample);

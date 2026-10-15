@@ -1,5 +1,6 @@
 #include "GstGlVideoBuffer.h"
 
+#include "CpuVideoFramePool.h"
 #include "GstGlContextBridge.h"
 #include "GstGlFrameTextures.h"
 #include "GstHwImportPreflight.h"
@@ -67,12 +68,12 @@ void waitInQtContext(GstGLSyncMeta* syncMeta, GstGLContext* glCtx)
         QOpenGLExtraFunctions* gl = hasSyncObjects ? qtCtx->extraFunctions() : nullptr;
         if (gl && gl->glIsSync(sync)) {
             gl->glWaitSync(sync, 0, GL_TIMEOUT_IGNORED);
-            GstHwPathTelemetry::recordSyncWait(HwVideoBufferPath::GlMemory, /*gpuSide=*/true);
+            GstHwPathTelemetry::record(HwVideoBufferPath::GlMemory, GstHwPathTelemetry::Counter::GpuWaits);
             return;
         }
     }
     gst_gl_sync_meta_wait_cpu(syncMeta, glCtx);
-    GstHwPathTelemetry::recordSyncWait(HwVideoBufferPath::GlMemory, /*gpuSide=*/false);
+    GstHwPathTelemetry::record(HwVideoBufferPath::GlMemory, GstHwPathTelemetry::Counter::CpuWaits);
 }
 
 // mapTextures() binds GLMemory only under Qt's OpenGL(ES2) QRhi, but the glupload bin still emits GLMemory under a
@@ -122,9 +123,9 @@ QVideoFrameTexturesUPtr GstGlVideoBuffer::mapTextures(QRhi& rhi, QVideoFrameText
         return GstHwPathTelemetry::fail(HwVideoBufferPath::GlMemory);
     }
 
-    GstVideoFrame frame = {};
+    CpuVideoFramePool::FrameMapping mapping;
     // GST_MAP_GL (a gst-gl extension flag) OR'd with GST_MAP_READ triggers GstGLMemory upload.
-    if (!gst_video_frame_map(&frame, &_videoInfo, buffer, static_cast<GstMapFlags>(GST_MAP_READ | GST_MAP_GL))) {
+    if (!mapping.mapFrame(buffer, _videoInfo, static_cast<GstMapFlags>(GST_MAP_READ | GST_MAP_GL))) {
         qCWarning(GstGlBufLog) << "gst_video_frame_map(GST_MAP_READ | GST_MAP_GL) failed";
         GstHwPathTelemetry::recordFallbackReason(HwVideoBufferPath::GlMemory,
                                                  GstHwPathTelemetry::HwFallbackReason::MapFailed);
@@ -144,7 +145,6 @@ QVideoFrameTexturesUPtr GstGlVideoBuffer::mapTextures(QRhi& rhi, QVideoFrameText
                 qCWarning(GstGlBufLog) << "gst_buffer_new() failed while creating GL sync meta holder";
                 GstHwPathTelemetry::recordFallbackReason(HwVideoBufferPath::GlMemory,
                                                          GstHwPathTelemetry::HwFallbackReason::MapFailed);
-                gst_video_frame_unmap(&frame);
                 return GstHwPathTelemetry::fail(HwVideoBufferPath::GlMemory);
             }
             syncMeta = gst_buffer_add_gl_sync_meta(glCtx, throwaway);
@@ -158,6 +158,7 @@ QVideoFrameTexturesUPtr GstGlVideoBuffer::mapTextures(QRhi& rhi, QVideoFrameText
         }
     }
 
+    const GstVideoFrame& frame = mapping.frame();
     const int planeCount = std::clamp(int(GST_VIDEO_FRAME_N_PLANES(&frame)), 1, kMaxPlanes);
     std::array<GLuint, kMaxPlanes> names{};
     for (int i = 0; i < planeCount; ++i) {
@@ -166,7 +167,7 @@ QVideoFrameTexturesUPtr GstGlVideoBuffer::mapTextures(QRhi& rhi, QVideoFrameText
         names[i] = texIdPtr ? *texIdPtr : 0;
     }
 
-    gst_video_frame_unmap(&frame);
+    mapping.unmap();
 
     const GstHwMapTail tail{.path = HwVideoBufferPath::GlMemory,
                             .frameSize = _format.frameSize(),

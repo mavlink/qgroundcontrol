@@ -53,7 +53,7 @@ public:
         const std::size_t slot = ring->next;
         ring->next = (ring->next + 1) % kRingSize;
         if (ring->textures[slot]) {
-            GstHwPathTelemetry::recordImageCacheHit(HwVideoBufferPath::D3D11);
+            GstHwPathTelemetry::record(HwVideoBufferPath::D3D11, GstHwPathTelemetry::Counter::ImageCacheHits);
             ring->textures[slot]->AddRef();
             return ring->textures[slot];
         }
@@ -66,7 +66,7 @@ public:
         }
         tex->AddRef();
         ring->textures[slot] = tex;  // pool keeps the create ref
-        GstHwPathTelemetry::recordImageCacheMiss(HwVideoBufferPath::D3D11);
+        GstHwPathTelemetry::record(HwVideoBufferPath::D3D11, GstHwPathTelemetry::Counter::ImageCacheMisses);
         return tex;
     }
 

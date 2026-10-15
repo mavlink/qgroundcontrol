@@ -143,13 +143,18 @@ QAbstractVideoBuffer::MapData CpuVideoFramePool::mapDataFor(const GstVideoFrame&
     return data;
 }
 
-QAbstractVideoBuffer::MapData CpuVideoFramePool::FrameMapping::map(GstBuffer* buffer, const GstVideoInfo& info)
+bool CpuVideoFramePool::FrameMapping::mapFrame(GstBuffer* buffer, const GstVideoInfo& info, GstMapFlags flags)
 {
     if (!_mapped) {
-        if (!buffer || !gst_video_frame_map(&_frame, &info, buffer, GST_MAP_READ)) {
-            return {};
-        }
-        _mapped = true;
+        _mapped = buffer && gst_video_frame_map(&_frame, &info, buffer, flags);
+    }
+    return _mapped;
+}
+
+QAbstractVideoBuffer::MapData CpuVideoFramePool::FrameMapping::map(GstBuffer* buffer, const GstVideoInfo& info)
+{
+    if (!mapFrame(buffer, info)) {
+        return {};
     }
     return mapDataFor(_frame);
 }
@@ -256,8 +261,8 @@ QVideoFrame CpuVideoFramePool::copyFromBuffer(GstBuffer* buffer, const GstVideoI
         return {};
     }
 
-    GstVideoFrame gstFrame;
-    if (!gst_video_frame_map(&gstFrame, &videoInfo, buffer, GST_MAP_READ)) {
+    FrameMapping source;
+    if (!source.mapFrame(buffer, videoInfo)) {
         static std::atomic<quint64> s_failCount{0};
         const quint64 count = s_failCount.fetch_add(1, std::memory_order_relaxed) + 1;
         if ((count & 0x3F) == 1) {
@@ -266,9 +271,10 @@ QVideoFrame CpuVideoFramePool::copyFromBuffer(GstBuffer* buffer, const GstVideoI
         return {};
     }
 
+    const GstVideoFrame& gstFrame = source.frame();
+
     QVideoFrame videoFrame = instance().acquireFrame(format, videoInfo);
     if (!videoFrame.isValid() || !videoFrame.map(QVideoFrame::WriteOnly)) {
-        gst_video_frame_unmap(&gstFrame);
         return {};
     }
 
@@ -280,7 +286,6 @@ QVideoFrame CpuVideoFramePool::copyFromBuffer(GstBuffer* buffer, const GstVideoI
                                             << videoFrame.planeCount() << "— dropping frame";
         }
         videoFrame.unmap();
-        gst_video_frame_unmap(&gstFrame);
         return {};
     }
 
@@ -297,7 +302,6 @@ QVideoFrame CpuVideoFramePool::copyFromBuffer(GstBuffer* buffer, const GstVideoI
                                                 << "> dstStride" << dstStride << "— dropping frame";
             }
             videoFrame.unmap();
-            gst_video_frame_unmap(&gstFrame);
             return {};
         }
         const uchar* src = static_cast<const uchar*>(GST_VIDEO_FRAME_PLANE_DATA(&gstFrame, p));
@@ -315,6 +319,5 @@ QVideoFrame CpuVideoFramePool::copyFromBuffer(GstBuffer* buffer, const GstVideoI
     }
 
     videoFrame.unmap();
-    gst_video_frame_unmap(&gstFrame);
     return videoFrame;
 }

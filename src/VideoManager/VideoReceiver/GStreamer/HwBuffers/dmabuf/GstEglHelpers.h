@@ -5,6 +5,9 @@
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH) || defined(QGC_HAS_GST_AHARDWAREBUFFER_GPU_PATH)
 
 #include <EGL/egl.h>
+#include <EGL/eglext.h>
+#include <GLES2/gl2.h>
+#include <GLES2/gl2ext.h>
 
 class QOpenGLContext;
 class QRhi;
@@ -29,6 +32,10 @@ bool displaySupportsExtension(EGLDisplay display, const char* extension);
 
 /// Clears the per-display extension cache; call from sceneGraph/context teardown.
 void resetExtensionCache();
+
+/// eglGetProcAddress() lookups, done once; null when the EGL/GL implementation lacks the function.
+PFNGLEGLIMAGETARGETTEXTURE2DOESPROC imageTargetTexture2D() noexcept;
+PFNEGLDESTROYIMAGEKHRPROC destroyImageKHR() noexcept;
 
 }  // namespace GstEglHelpers
 

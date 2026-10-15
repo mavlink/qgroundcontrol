@@ -613,7 +613,7 @@ static void gst_qgc_q_video_sink_class_init(GstQgcQVideoSinkClass* klass)
         g_param_spec_uint64("frames-dropped", "Frames dropped",
                             "Buffers rejected by show_frame (inactive sink, missing QVideoSink, "
                             "PTS regression, or map failure). Detailed map failures are tracked separately "
-                            "via GstHwPathTelemetry::peekMapFailureCount.",
+                            "in GstHwPathTelemetry.",
                             0, G_MAXUINT64, 0, (GParamFlags) (G_PARAM_READABLE | G_PARAM_STATIC_STRINGS)));
 
     g_object_class_install_property(

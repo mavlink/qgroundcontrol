@@ -11,6 +11,7 @@
 #include <QtGui/QOpenGLContext>
 
 #include "GstEglHelpers.h"
+#include "GstScoped.h"
 #include "QGCLoggingCategory.h"
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
@@ -32,6 +33,32 @@ constexpr const char* kModifiersExt = "EGL_EXT_image_dma_buf_import_modifiers";
 bool isImportableModifier(EGLuint64KHR mod) noexcept
 {
     return mod == 0;  // DRM_FORMAT_MOD_LINEAR
+}
+
+/// Appends the drm-format entry for (@p fourcc, @p modifier) to the comma-separated @p entries; false when GStreamer
+/// can't name it.
+bool appendDrmFormat(std::string& entries, guint32 fourcc, guint64 modifier)
+{
+    // drm-format wants the DRM fourcc 4CC string, not the GStreamer format name; to_string emits a bare fourcc for
+    // LINEAR and "FOURCC:0xMOD" otherwise ("FOURCC:0x0" fails to parse in gst 1.24).
+    const GStreamer::GCharPtr drmFormat = GStreamer::adoptGChar(gst_video_dma_drm_fourcc_to_string(fourcc, modifier));
+    if (!drmFormat) {
+        return false;
+    }
+    if (!entries.empty()) {
+        entries += ", ";
+    }
+    entries += drmFormat.get();
+    return true;
+}
+
+/// The DMA_DRM caps fragment offering @p entries; "" without any.
+std::string dmaDrmCaps(const std::string& entries)
+{
+    if (entries.empty()) {
+        return std::string();
+    }
+    return "video/x-raw(memory:DMABuf), format=DMA_DRM, drm-format={ " + entries + " }; ";
 }
 
 }  // namespace
@@ -96,17 +123,10 @@ std::string buildSupportedDmaDrmCaps(std::span<const GstVideoFormat> formats)
                 ++excludedCount;
                 continue;
             }
-            // drm-format wants the DRM fourcc 4CC string, not the GStreamer format name; to_string emits a bare
-            // fourcc for LINEAR and "FOURCC:0xMOD" otherwise ("FOURCC:0x0" fails to parse in gst 1.24).
-            gchar* drmStr = gst_video_dma_drm_fourcc_to_string(static_cast<guint32>(fourcc), mod);
-            if (!drmStr)
-                continue;
-            if (!entries.empty())
-                entries += ", ";
-            entries += drmStr;
-            g_free(drmStr);
-            ++modifierCount;
-            counted = true;
+            if (appendDrmFormat(entries, static_cast<guint32>(fourcc), mod)) {
+                ++modifierCount;
+                counted = true;
+            }
         }
         if (counted)
             ++formatCount;
@@ -117,7 +137,7 @@ std::string buildSupportedDmaDrmCaps(std::span<const GstVideoFormat> formats)
 
     qCInfo(GstDmaDrmCapsLog) << "EGL-derived DMA_DRM caps:" << formatCount << "formats," << modifierCount
                              << "modifiers offered," << excludedCount << "non-importable modifiers excluded";
-    return std::string("video/x-raw(memory:DMABuf), format=DMA_DRM, drm-format={ ") + entries + " }; ";
+    return dmaDrmCaps(entries);
 }
 
 std::string buildLinearDmaDrmCaps(std::span<const GstVideoFormat> formats)
@@ -125,19 +145,11 @@ std::string buildLinearDmaDrmCaps(std::span<const GstVideoFormat> formats)
     std::string entries;
     for (const GstVideoFormat fmt : formats) {
         const guint32 fourcc = gst_video_dma_drm_fourcc_from_format(fmt);
-        if (fourcc == 0)  // DRM_FORMAT_INVALID
-            continue;
-        gchar* drmStr = gst_video_dma_drm_fourcc_to_string(fourcc, 0);  // 0 == DRM_FORMAT_MOD_LINEAR; bare fourcc
-        if (!drmStr)
-            continue;
-        if (!entries.empty())
-            entries += ", ";
-        entries += drmStr;
-        g_free(drmStr);
+        if (fourcc != 0) {                               // DRM_FORMAT_INVALID
+            (void) appendDrmFormat(entries, fourcc, 0);  // 0 == DRM_FORMAT_MOD_LINEAR
+        }
     }
-    if (entries.empty())
-        return std::string();
-    return std::string("video/x-raw(memory:DMABuf), format=DMA_DRM, drm-format={ ") + entries + " }; ";
+    return dmaDrmCaps(entries);
 }
 
 #ifdef QGC_GST_BUILD_TESTING

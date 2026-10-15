@@ -86,6 +86,19 @@ void resetExtensionCache()
     s_extCache.clear();
 }
 
+PFNGLEGLIMAGETARGETTEXTURE2DOESPROC imageTargetTexture2D() noexcept
+{
+    static const auto fn =
+        reinterpret_cast<PFNGLEGLIMAGETARGETTEXTURE2DOESPROC>(eglGetProcAddress("glEGLImageTargetTexture2DOES"));
+    return fn;
+}
+
+PFNEGLDESTROYIMAGEKHRPROC destroyImageKHR() noexcept
+{
+    static const auto fn = reinterpret_cast<PFNEGLDESTROYIMAGEKHRPROC>(eglGetProcAddress("eglDestroyImageKHR"));
+    return fn;
+}
+
 }  // namespace GstEglHelpers
 
 #endif  // QGC_HAS_GST_DMABUF_GPU_PATH || QGC_HAS_GST_AHARDWAREBUFFER_GPU_PATH

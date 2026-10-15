@@ -888,7 +888,8 @@ void GStreamerTest::_testGpuZeroCopyFallback()
     QVERIFY2(GStreamer::completeInit(), "completeInit failed");
 
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
-    const quint64 dmabufBefore = GstHwPathTelemetry::peekMapFailureCount(HwVideoBufferPath::DmaBuf);
+    const quint64 dmabufBefore =
+        GstHwPathTelemetry::peek(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::MapFailures);
 #endif
 
     QVideoSink videoSink;
@@ -907,7 +908,8 @@ void GStreamerTest::_testGpuZeroCopyFallback()
     QCOMPARE(r.lastPixelFormat, QVideoFrameFormat::Format_BGRA8888);
 
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
-    QCOMPARE(GstHwPathTelemetry::peekMapFailureCount(HwVideoBufferPath::DmaBuf), dmabufBefore);
+    QCOMPARE(GstHwPathTelemetry::peek(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::MapFailures),
+             dmabufBefore);
 #endif
 }
 
@@ -1024,7 +1026,7 @@ void GStreamerTest::_testFrameCountsTelemetrySignal()
     for (auto p :
          {HwVideoBufferPath::None, HwVideoBufferPath::DmaBuf, HwVideoBufferPath::GlMemory, HwVideoBufferPath::D3D11,
           HwVideoBufferPath::D3D12, HwVideoBufferPath::IOSurface, HwVideoBufferPath::AHardwareBuffer}) {
-        (void) GstHwPathTelemetry::takeMapFailureCount(p);
+        (void) GstHwPathTelemetry::take(p, GstHwPathTelemetry::Counter::MapFailures);
     }
 
     QVideoSink videoSink;
@@ -1061,7 +1063,7 @@ void GStreamerTest::_testFrameCountsTelemetrySignal()
     quint64 gpuFallback = 0;
     for (auto p : {HwVideoBufferPath::DmaBuf, HwVideoBufferPath::GlMemory, HwVideoBufferPath::D3D11,
                    HwVideoBufferPath::D3D12, HwVideoBufferPath::IOSurface, HwVideoBufferPath::AHardwareBuffer}) {
-        gpuFallback += GstHwPathTelemetry::peekMapFailureCount(p);
+        gpuFallback += GstHwPathTelemetry::peek(p, GstHwPathTelemetry::Counter::MapFailures);
     }
     QCOMPARE(gpuFallback, quint64(0));
 

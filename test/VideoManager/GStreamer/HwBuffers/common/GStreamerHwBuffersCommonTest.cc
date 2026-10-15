@@ -850,30 +850,28 @@ void GStreamerTest::_testTelemetrySyncWaitSplit()
 {
     const HwVideoBufferPath path = HwVideoBufferPath::IOSurface;
 
-    quint64 drainGpu = 0;
-    (void) GstHwPathTelemetry::takeSyncWaitCounts(path, drainGpu);
-    (void) GstHwPathTelemetry::takeImageCacheHits(path);
-    (void) GstHwPathTelemetry::takeImageCacheMisses(path);
+    using GstHwPathTelemetry::Counter;
+    for (const Counter counter :
+         {Counter::CpuWaits, Counter::GpuWaits, Counter::ImageCacheHits, Counter::ImageCacheMisses}) {
+        (void) GstHwPathTelemetry::take(path, counter);
+    }
 
-    GstHwPathTelemetry::recordSyncWait(path, false);
-    GstHwPathTelemetry::recordSyncWait(path, false);
-    GstHwPathTelemetry::recordSyncWait(path, true);
-    GstHwPathTelemetry::recordImageCacheHit(path);
-    GstHwPathTelemetry::recordImageCacheHit(path);
-    GstHwPathTelemetry::recordImageCacheMiss(path);
+    GstHwPathTelemetry::record(path, Counter::CpuWaits);
+    GstHwPathTelemetry::record(path, Counter::CpuWaits);
+    GstHwPathTelemetry::record(path, Counter::GpuWaits);
+    GstHwPathTelemetry::record(path, Counter::ImageCacheHits);
+    GstHwPathTelemetry::record(path, Counter::ImageCacheHits);
+    GstHwPathTelemetry::record(path, Counter::ImageCacheMisses);
 
-    quint64 gpuWaits = 0;
-    const quint64 cpuWaits = GstHwPathTelemetry::takeSyncWaitCounts(path, gpuWaits);
-    QCOMPARE(cpuWaits, quint64(2));
-    QCOMPARE(gpuWaits, quint64(1));
-    QCOMPARE(GstHwPathTelemetry::takeImageCacheHits(path), quint64(2));
-    QCOMPARE(GstHwPathTelemetry::takeImageCacheMisses(path), quint64(1));
+    QCOMPARE(GstHwPathTelemetry::take(path, Counter::CpuWaits), quint64(2));
+    QCOMPARE(GstHwPathTelemetry::take(path, Counter::GpuWaits), quint64(1));
+    QCOMPARE(GstHwPathTelemetry::take(path, Counter::ImageCacheHits), quint64(2));
+    QCOMPARE(GstHwPathTelemetry::take(path, Counter::ImageCacheMisses), quint64(1));
 
-    quint64 gpuWaits2 = 99;
-    QCOMPARE(GstHwPathTelemetry::takeSyncWaitCounts(path, gpuWaits2), quint64(0));
-    QCOMPARE(gpuWaits2, quint64(0));
-    QCOMPARE(GstHwPathTelemetry::takeImageCacheHits(path), quint64(0));
-    QCOMPARE(GstHwPathTelemetry::takeImageCacheMisses(path), quint64(0));
+    QCOMPARE(GstHwPathTelemetry::take(path, Counter::CpuWaits), quint64(0));
+    QCOMPARE(GstHwPathTelemetry::take(path, Counter::GpuWaits), quint64(0));
+    QCOMPARE(GstHwPathTelemetry::take(path, Counter::ImageCacheHits), quint64(0));
+    QCOMPARE(GstHwPathTelemetry::take(path, Counter::ImageCacheMisses), quint64(0));
 }
 
 void GStreamerTest::_testTelemetryMapFailuresReportedInExtraStats()
@@ -899,7 +897,7 @@ void GStreamerTest::_testTelemetryMapFailuresReportedInExtraStats()
 
     (void) HwBuffers::takeExtraPathStats();
 
-    GstHwPathTelemetry::recordMapFailure(path);
+    GstHwPathTelemetry::record(path, GstHwPathTelemetry::Counter::MapFailures);
 
     const QString failures = QStringLiteral(" %1-failures:1").arg(QLatin1String(GstHw::toString(path)));
     const QString first = HwBuffers::takeExtraPathStats();
@@ -915,12 +913,12 @@ void GStreamerTest::_testTelemetryDmaBufExtraStatsDrain()
     QSKIP("DMABuf GPU path not compiled in this build");
 #else
     (void) HwBuffers::takeExtraPathStats();
-    GstHwPathTelemetry::recordProducerFenceTimeout(HwVideoBufferPath::DmaBuf);
-    GstHwPathTelemetry::recordSyncWait(HwVideoBufferPath::DmaBuf, /*gpuSide=*/false);
-    GstHwPathTelemetry::recordSyncWait(HwVideoBufferPath::DmaBuf, /*gpuSide=*/true);
-    GstHwPathTelemetry::recordImageCacheHit(HwVideoBufferPath::DmaBuf);
-    GstHwPathTelemetry::recordImageCacheHit(HwVideoBufferPath::DmaBuf);
-    GstHwPathTelemetry::recordImageCacheMiss(HwVideoBufferPath::DmaBuf);
+    GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::ProducerFenceTimeouts);
+    GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::CpuWaits);
+    GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::GpuWaits);
+    GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::ImageCacheHits);
+    GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::ImageCacheHits);
+    GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::ImageCacheMisses);
 
     const QString first = HwBuffers::takeExtraPathStats();
     QVERIFY2(first.contains(QStringLiteral("DMABuf-fence-timeouts:1")), qPrintable(first));

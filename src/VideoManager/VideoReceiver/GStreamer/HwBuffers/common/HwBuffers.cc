@@ -1,5 +1,6 @@
 #include "HwBuffers.h"
 
+#include <optional>
 #include <utility>
 
 #include <QtCore/QByteArray>
@@ -195,6 +196,23 @@ QString takeExtraPathStats() noexcept
 {
     QString out;
 #if defined(QGC_HAS_ANY_GPU_PATH)
+    using GstHwPathTelemetry::Counter;
+
+    // "<path>-<label>:<count>", or "<count>/<count>" for a pair, when any count is nonzero.
+    struct CounterField
+    {
+        const char* label;
+        Counter first;
+        std::optional<Counter> second = std::nullopt;
+    };
+
+    static constexpr CounterField kCounterFields[] = {
+        {"failures", Counter::MapFailures},
+        {"reuse", Counter::TextureReuse},
+        {"wait[gpu/cpu]", Counter::GpuWaits, Counter::CpuWaits},
+        {"fence-timeouts", Counter::ProducerFenceTimeouts},
+        {"image-cache[hit/miss]", Counter::ImageCacheHits, Counter::ImageCacheMisses},
+    };
     static constexpr std::pair<GstHwPathTelemetry::HwFallbackReason, const char*> kReasons[] = {
         {GstHwPathTelemetry::HwFallbackReason::NoExt, "no-ext"},
         {GstHwPathTelemetry::HwFallbackReason::ModifierRejected, "modifier"},
@@ -207,31 +225,22 @@ QString takeExtraPathStats() noexcept
     };
     forEachCompiledPath([&out](HwVideoBufferPath path) {
         const QLatin1String pathLabel(GstHw::toString(path));
-        const quint64 mapFailures = GstHwPathTelemetry::takeMapFailureCount(path);
-        if (mapFailures > 0) {
-            out += QStringLiteral(" %1-failures:%2").arg(pathLabel).arg(mapFailures);
+        for (const CounterField& field : kCounterFields) {
+            const quint64 first = GstHwPathTelemetry::take(path, field.first);
+            bool nonzero = (first > 0);
+            QString counts = QString::number(first);
+            if (field.second) {
+                const quint64 second = GstHwPathTelemetry::take(path, *field.second);
+                nonzero = nonzero || (second > 0);
+                counts += u'/' + QString::number(second);
+            }
+            if (nonzero) {
+                out += QStringLiteral(" %1-%2:%3").arg(pathLabel, QLatin1String(field.label), counts);
+            }
         }
         const quint64 ewmaUs = GstHwPathTelemetry::peekMapDurationUsEwma(path);
         if (ewmaUs > 0) {
             out += QStringLiteral(" %1-map-us:%2").arg(pathLabel).arg(ewmaUs);
-        }
-        const quint64 reuse = GstHwPathTelemetry::takeTextureReuseHits(path);
-        if (reuse > 0) {
-            out += QStringLiteral(" %1-reuse:%2").arg(pathLabel).arg(reuse);
-        }
-        quint64 gpuWaits = 0;
-        const quint64 cpuWaits = GstHwPathTelemetry::takeSyncWaitCounts(path, gpuWaits);
-        if ((gpuWaits > 0) || (cpuWaits > 0)) {
-            out += QStringLiteral(" %1-wait[gpu/cpu]:%2/%3").arg(pathLabel).arg(gpuWaits).arg(cpuWaits);
-        }
-        const quint64 fenceTimeouts = GstHwPathTelemetry::takeProducerFenceTimeouts(path);
-        if (fenceTimeouts > 0) {
-            out += QStringLiteral(" %1-fence-timeouts:%2").arg(pathLabel).arg(fenceTimeouts);
-        }
-        const quint64 cacheHits = GstHwPathTelemetry::takeImageCacheHits(path);
-        const quint64 cacheMisses = GstHwPathTelemetry::takeImageCacheMisses(path);
-        if ((cacheHits > 0) || (cacheMisses > 0)) {
-            out += QStringLiteral(" %1-image-cache[hit/miss]:%2/%3").arg(pathLabel).arg(cacheHits).arg(cacheMisses);
         }
         QString reasonBreakdown;
         for (const auto& [reason, label] : kReasons) {

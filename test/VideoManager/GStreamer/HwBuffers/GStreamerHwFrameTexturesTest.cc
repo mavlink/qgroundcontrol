@@ -143,7 +143,7 @@ void GStreamerTest::_testHwFrameTexturesFinishMapReusesAcceptedBundle()
     QVideoFrameTexturesUPtr old = fixture.map(firstFrame, none, /*reuse=*/false, /*chromaRejected=*/false);
     QVERIFY(old);
     QVideoFrameTextures* const previous = old.get();
-    (void) GstHwPathTelemetry::takeTextureReuseHits(HwVideoBufferPath::GlMemory);
+    (void) GstHwPathTelemetry::take(HwVideoBufferPath::GlMemory, GstHwPathTelemetry::Counter::TextureReuse);
 
     GstSample* nextSample = fixture.makeSample();
     bool nextSampleReleased = false;
@@ -158,7 +158,8 @@ void GStreamerTest::_testHwFrameTexturesFinishMapReusesAcceptedBundle()
     QVERIFY(mapped);
     QCOMPARE(mapped.get() == previous, reuse);
     QCOMPARE(built, !reuse);
-    QCOMPARE(GstHwPathTelemetry::takeTextureReuseHits(HwVideoBufferPath::GlMemory), quint64(reuse ? 1 : 0));
+    QCOMPARE(GstHwPathTelemetry::take(HwVideoBufferPath::GlMemory, GstHwPathTelemetry::Counter::TextureReuse),
+             quint64(reuse ? 1 : 0));
     nextFrame.reset();
     QVERIFY2(!nextSampleReleased, "The mapped bundle must keep the frame's sample alive while Qt samples it");
     mapped.reset();
@@ -170,7 +171,8 @@ void GStreamerTest::_testHwFrameTexturesFinishMapRejectsIncompleteBundle()
     TailFixture fixture;
     QVERIFY(fixture.sample && fixture.rhi);
     TailTestBuffer frame(fixture.sample, fixture.info);
-    const quint64 failuresBefore = GstHwPathTelemetry::peekMapFailureCount(HwVideoBufferPath::GlMemory);
+    const quint64 failuresBefore =
+        GstHwPathTelemetry::peek(HwVideoBufferPath::GlMemory, GstHwPathTelemetry::Counter::MapFailures);
     const quint64 mapFailedBefore = GstHwPathTelemetry::peekFallbackReason(
         HwVideoBufferPath::GlMemory, GstHwPathTelemetry::HwFallbackReason::MapFailed);
 
@@ -181,7 +183,8 @@ void GStreamerTest::_testHwFrameTexturesFinishMapRejectsIncompleteBundle()
     verifyExpectedLogMessage();
 
     QVERIFY2(!mapped, "A bundle with an unwrapped plane would render with missing chroma");
-    QCOMPARE(GstHwPathTelemetry::peekMapFailureCount(HwVideoBufferPath::GlMemory), failuresBefore + 1);
+    QCOMPARE(GstHwPathTelemetry::peek(HwVideoBufferPath::GlMemory, GstHwPathTelemetry::Counter::MapFailures),
+             failuresBefore + 1);
     QCOMPARE(GstHwPathTelemetry::peekFallbackReason(HwVideoBufferPath::GlMemory,
                                                     GstHwPathTelemetry::HwFallbackReason::MapFailed),
              mapFailedBefore + 1);

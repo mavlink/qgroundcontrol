@@ -270,13 +270,13 @@ AcquiredImage acquireImage(EGLDisplay eglDpy, const DmaImageKey& key, const EglA
         const QMutexLocker lock(&s_dmaCacheMutex);
         if (const auto hit = s_dmaImageCache.find(key); hit && hit.resource->display == eglDpy) {
             s_dmaImageCache.pin(hit.id);
-            GstHwPathTelemetry::recordImageCacheHit(HwVideoBufferPath::DmaBuf);
+            GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::ImageCacheHits);
             return {hit.resource->image, hit.id};
         }
     }
     const EGLImage image = eglCreateImage(eglDpy, EGL_NO_CONTEXT, EGL_LINUX_DMA_BUF_EXT, nullptr, attribs.data());
     if (cacheOn) {
-        GstHwPathTelemetry::recordImageCacheMiss(HwVideoBufferPath::DmaBuf);
+        GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::ImageCacheMisses);
     }
     return {image, 0};
 }
@@ -391,7 +391,7 @@ bool tryExplicitFenceWait(EGLDisplay eglDpy, int dmaFd)
     }
     QGC_HW_WARN_ONCE(GstDmaBufLog, s_loggedExplicitFence,
                      "DMABuf: using producer dma-buf fence for GPU-side sync (CPU barrier skipped)");
-    GstHwPathTelemetry::recordSyncWait(HwVideoBufferPath::DmaBuf, /*gpuSide=*/true);
+    GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::GpuWaits);
     return true;
 #else
     Q_UNUSED(eglDpy);
@@ -423,14 +423,14 @@ bool waitForProducerWrites(GstBuffer* buffer)
         } while (ret < 0 && (errno == EINTR || errno == EAGAIN));
         if (ret <= 0) {
             const int pollError = (ret < 0) ? errno : 0;
-            GstHwPathTelemetry::recordProducerFenceTimeout(HwVideoBufferPath::DmaBuf);
+            GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::ProducerFenceTimeouts);
             QGC_HW_WARN_ONCE(GstDmaBufLog, s_loggedProducerWaitTimeout,
                              "dma-buf producer fence wait" << (ret == 0 ? "timed out" : "failed") << "errno="
                                                            << pollError << "— no producer barrier for this frame");
             return false;
         }
     }
-    GstHwPathTelemetry::recordSyncWait(HwVideoBufferPath::DmaBuf, /*gpuSide=*/false);
+    GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::CpuWaits);
     return true;
 }
 
@@ -476,8 +476,6 @@ struct EglImageBinder
 
 EglImageBinder eglImageBinder(const QOpenGLContext& ctx)
 {
-    static const auto targetTexture2D =
-        reinterpret_cast<PFNGLEGLIMAGETARGETTEXTURE2DOESPROC>(eglGetProcAddress("glEGLImageTargetTexture2DOES"));
     static const auto targetTexStorage =
         reinterpret_cast<PFNGLEGLIMAGETARGETTEXSTORAGEEXTPROC>(eglGetProcAddress("glEGLImageTargetTexStorageEXT"));
     // Desktop GL with GL_EXT_EGL_image_storage: bind DMABuf via immutable storage to skip the per-frame texture-storage
@@ -485,7 +483,7 @@ EglImageBinder eglImageBinder(const QOpenGLContext& ctx)
     // ext isn't reliably exposed and the OES bind is the contract there.
     const bool useTexStorage =
         texStorageImportAllowed(ctx.isOpenGLES(), ctx.hasExtension(QByteArrayLiteral("GL_EXT_EGL_image_storage")));
-    return {targetTexture2D, useTexStorage ? targetTexStorage : nullptr};
+    return {GstEglHelpers::imageTargetTexture2D(), useTexStorage ? targetTexStorage : nullptr};
 }
 
 /// Per-frame state shared by the single-fd and per-plane EGLImage imports. Both import LINEAR buffers only:

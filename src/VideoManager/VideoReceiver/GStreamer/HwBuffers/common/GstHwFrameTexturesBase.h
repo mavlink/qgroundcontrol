@@ -100,7 +100,7 @@ public:
     {
         if constexpr (!std::is_null_pointer_v<std::remove_cvref_t<Reuse>>) {
             if (FT* prev = reusableBundle<FT>(old); prev && reuse(*prev)) {
-                GstHwPathTelemetry::recordTextureReuse(tail.path);
+                GstHwPathTelemetry::record(tail.path, GstHwPathTelemetry::Counter::TextureReuse);
                 prev->setSourceSample(source.refSample());
                 return std::move(old);
             }

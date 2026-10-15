@@ -6,7 +6,7 @@
 
 QVideoFrameTexturesUPtr GstHwPathTelemetry::fail(HwVideoBufferPath path) noexcept
 {
-    recordMapFailure(path);
+    record(path, Counter::MapFailures);
     return {};
 }
 

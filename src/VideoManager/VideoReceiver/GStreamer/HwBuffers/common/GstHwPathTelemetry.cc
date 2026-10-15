@@ -7,85 +7,29 @@ namespace GstHwPathTelemetry {
 
 namespace {
 
-struct PathCounters
-{
-    std::atomic<quint64> mapFailures{0};
-    std::atomic<quint64> textureReuseHits{0};
-    std::atomic<quint64> syncCpuWaits{0};
-    std::atomic<quint64> syncGpuWaits{0};
-    std::atomic<quint64> imageCacheHits{0};
-    std::atomic<quint64> imageCacheMisses{0};
-    std::atomic<quint64> mapDurationUsEwma{0};
-    std::atomic<quint64> producerFenceTimeouts{0};
-};
+constexpr size_t kCounterCount = size_t(Counter::_Count);
+std::array<std::array<std::atomic<quint64>, kCounterCount>, GstHw::kPathCount> s_counters{};
 
-std::array<PathCounters, GstHw::kPathCount> s_counters{};
+std::array<std::atomic<quint64>, GstHw::kPathCount> s_mapDurationUsEwma{};
 
 constexpr size_t kReasonCount = size_t(HwFallbackReason::_Count);
 std::array<std::array<std::atomic<quint64>, kReasonCount>, GstHw::kPathCount> s_fallbackReasons{};
 
-inline PathCounters& slot(HwVideoBufferPath path) noexcept
-{
-    return s_counters[size_t(path)];
-}
-
 }  // namespace
 
-void recordMapFailure(HwVideoBufferPath path) noexcept
+void record(HwVideoBufferPath path, Counter counter) noexcept
 {
-    slot(path).mapFailures.fetch_add(1, std::memory_order_relaxed);
+    s_counters[size_t(path)][size_t(counter)].fetch_add(1, std::memory_order_relaxed);
 }
 
-quint64 takeMapFailureCount(HwVideoBufferPath path) noexcept
+quint64 peek(HwVideoBufferPath path, Counter counter) noexcept
 {
-    return slot(path).mapFailures.exchange(0, std::memory_order_relaxed);
+    return s_counters[size_t(path)][size_t(counter)].load(std::memory_order_relaxed);
 }
 
-quint64 peekMapFailureCount(HwVideoBufferPath path) noexcept
+quint64 take(HwVideoBufferPath path, Counter counter) noexcept
 {
-    return slot(path).mapFailures.load(std::memory_order_relaxed);
-}
-
-void recordTextureReuse(HwVideoBufferPath path) noexcept
-{
-    slot(path).textureReuseHits.fetch_add(1, std::memory_order_relaxed);
-}
-
-quint64 takeTextureReuseHits(HwVideoBufferPath path) noexcept
-{
-    return slot(path).textureReuseHits.exchange(0, std::memory_order_relaxed);
-}
-
-void recordSyncWait(HwVideoBufferPath path, bool gpuSide) noexcept
-{
-    auto& target = gpuSide ? slot(path).syncGpuWaits : slot(path).syncCpuWaits;
-    target.fetch_add(1, std::memory_order_relaxed);
-}
-
-quint64 takeSyncWaitCounts(HwVideoBufferPath path, quint64& gpuWaits) noexcept
-{
-    gpuWaits = slot(path).syncGpuWaits.exchange(0, std::memory_order_relaxed);
-    return slot(path).syncCpuWaits.exchange(0, std::memory_order_relaxed);
-}
-
-void recordImageCacheHit(HwVideoBufferPath path) noexcept
-{
-    slot(path).imageCacheHits.fetch_add(1, std::memory_order_relaxed);
-}
-
-void recordImageCacheMiss(HwVideoBufferPath path) noexcept
-{
-    slot(path).imageCacheMisses.fetch_add(1, std::memory_order_relaxed);
-}
-
-quint64 takeImageCacheHits(HwVideoBufferPath path) noexcept
-{
-    return slot(path).imageCacheHits.exchange(0, std::memory_order_relaxed);
-}
-
-quint64 takeImageCacheMisses(HwVideoBufferPath path) noexcept
-{
-    return slot(path).imageCacheMisses.exchange(0, std::memory_order_relaxed);
+    return s_counters[size_t(path)][size_t(counter)].exchange(0, std::memory_order_relaxed);
 }
 
 void recordMapDuration(HwVideoBufferPath path, qint64 nsecs) noexcept
@@ -95,7 +39,7 @@ void recordMapDuration(HwVideoBufferPath path, qint64 nsecs) noexcept
     }
     // EWMA in microseconds (alpha = 1/8); seed on the first sample so the average tracks immediately.
     const quint64 sampleUs = static_cast<quint64>(nsecs) / 1000;
-    auto& ewma = slot(path).mapDurationUsEwma;
+    auto& ewma = s_mapDurationUsEwma[size_t(path)];
     quint64 prev = ewma.load(std::memory_order_relaxed);
     quint64 next;
     do {
@@ -105,17 +49,7 @@ void recordMapDuration(HwVideoBufferPath path, qint64 nsecs) noexcept
 
 quint64 peekMapDurationUsEwma(HwVideoBufferPath path) noexcept
 {
-    return slot(path).mapDurationUsEwma.load(std::memory_order_relaxed);
-}
-
-void recordProducerFenceTimeout(HwVideoBufferPath path) noexcept
-{
-    slot(path).producerFenceTimeouts.fetch_add(1, std::memory_order_relaxed);
-}
-
-quint64 takeProducerFenceTimeouts(HwVideoBufferPath path) noexcept
-{
-    return slot(path).producerFenceTimeouts.exchange(0, std::memory_order_relaxed);
+    return s_mapDurationUsEwma[size_t(path)].load(std::memory_order_relaxed);
 }
 
 void recordFallbackReason(HwVideoBufferPath attemptedPath, HwFallbackReason reason) noexcept

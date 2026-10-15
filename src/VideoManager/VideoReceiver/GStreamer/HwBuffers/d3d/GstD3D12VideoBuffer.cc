@@ -156,9 +156,9 @@ public:
             }
             StagingEntry& e = ring->entries[slot];
             if (e.resource) {
-                GstHwPathTelemetry::recordImageCacheHit(HwVideoBufferPath::D3D12);
+                GstHwPathTelemetry::record(HwVideoBufferPath::D3D12, GstHwPathTelemetry::Counter::ImageCacheHits);
             } else if (createEntry(dev, queueType, dstDesc, heapProps, planeIdx, subIdx, e)) {
-                GstHwPathTelemetry::recordImageCacheMiss(HwVideoBufferPath::D3D12);
+                GstHwPathTelemetry::record(HwVideoBufferPath::D3D12, GstHwPathTelemetry::Counter::ImageCacheMisses);
             } else {
                 (*ring->leased)[slot].store(false, std::memory_order_release);
                 return nullptr;
@@ -424,7 +424,7 @@ private:
             return true;
         }
         _waited = true;
-        GstHwPathTelemetry::recordSyncWait(HwVideoBufferPath::D3D12, /*gpuSide=*/false);
+        GstHwPathTelemetry::record(HwVideoBufferPath::D3D12, GstHwPathTelemetry::Counter::CpuWaits);
         if (FAILED(gst_d3d12_cmd_queue_fence_wait(_queue, _maxFenceValue))) {
             QGC_HW_WARN_ONCE(GstD3D12Log, s_diag.loggedTextureCreateFail,
                              "resolve: gst_d3d12_cmd_queue_fence_wait failed");
