@@ -21,9 +21,7 @@ std::string buildGpuCapsString()
     // texture-target=2D is load-bearing: it forces glcolorconvert to convert amcvideodec's external-OES
     // Surface textures to GL_TEXTURE_2D; the default ANY target passes external-OES through and the Qt
     // RHI 2D sink samples it black.
-    // Keep this path single-plane for Qt's GL import. VA H.265 can negotiate NV12 GLMemory here, which
-    // reaches QVideoFrame delivery cleanly but renders as intermittent green frames through Qt's sampler.
-    capsStr = "video/x-raw(memory:GLMemory), texture-target=2D, format={ BGRA, RGBA }";
+    capsStr = "video/x-raw(memory:GLMemory), texture-target=2D, format=" + advertisedFormatList(kOfferGlUpload);
 #else
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
 #if GST_CHECK_VERSION(1, 24, 0)
@@ -33,11 +31,11 @@ std::string buildGpuCapsString()
     // QGC_GST_OFFER_DMA_DRM_LINEAR=1 force-offers LINEAR-modifier (0x0) DMA_DRM as a fallback/override so a driver
     // that mis-reports modifiers still gets a guaranteed-LINEAR option and iHD can't pick tiled+CCS.
     if (HwBuffers::hwBufferEnvConfig().offerDmaDrmLinear) {
-        capsStr += GstHw::buildLinearDmaDrmCaps("{ NV12, NV21, I420, P010_10LE, BGRA, RGBA }");
+        capsStr += GstHw::buildLinearDmaDrmCaps(advertisedFormatList(kOfferLinearDmaDrm).c_str());
     }
 #endif
-    // Legacy memory:DMABuf covers v4l2h264dec/Mali/V3D LINEAR. DMA_DRM omitted: gst-va iHD
-    // negotiates tiled+CCS that crashes both paths (system catch-all routes va to GstVaMemory).
+    // Legacy memory:DMABuf covers v4l2h264dec/Mali/V3D LINEAR. Unrestricted DMA_DRM is never offered (only the
+    // importable modifiers above): gst-va iHD would negotiate tiled+CCS, which crashes both import paths.
     capsStr += "video/x-raw(memory:DMABuf), format=";
     capsStr += kFormats;
     capsStr += "; ";

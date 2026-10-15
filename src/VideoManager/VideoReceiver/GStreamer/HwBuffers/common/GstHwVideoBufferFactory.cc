@@ -60,21 +60,6 @@ QGC_LOGGING_CATEGORY(GstHwBufFactoryLog, "Video.GStreamer.HwBuffers.Factory")
 
 namespace {
 
-const char* pathName(HwVideoBufferPath path) noexcept
-{
-    switch (path) {
-        case HwVideoBufferPath::DmaBuf:          return "DMABuf";
-        case HwVideoBufferPath::GlMemory:        return "GL";
-        case HwVideoBufferPath::D3D11:           return "D3D11";
-        case HwVideoBufferPath::D3D12:           return "D3D12";
-        case HwVideoBufferPath::IOSurface:       return "IOSurface";
-        case HwVideoBufferPath::AHardwareBuffer: return "AHWBuf";
-        case HwVideoBufferPath::Vulkan:          return "Vulkan";
-        case HwVideoBufferPath::None:            break;
-    }
-    return "None";
-}
-
 #if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
 // GstGlVideoBuffer::mapTextures binds GLMemory only under Qt's OpenGL(ES2) QRhi; the glupload bin still emits GLMemory
 // under a non-GL RHI (forced Vulkan), so gate selection here and let the frame take the CPU path instead. Runs on the
@@ -144,6 +129,7 @@ std::unique_ptr<GstHwVideoBuffer> constructForPath(HwVideoBufferPath path, GstSa
             break;
 #endif
         case HwVideoBufferPath::None:
+        case HwVideoBufferPath::_Count:
             break;
     }
 
@@ -200,6 +186,7 @@ bool memoryMatchesPath(HwVideoBufferPath path, GstMemory* mem, [[maybe_unused]] 
             break;
 #endif
         case HwVideoBufferPath::None:
+        case HwVideoBufferPath::_Count:
             break;
     }
 
@@ -248,9 +235,9 @@ std::unique_ptr<QHwVideoBuffer> makeHwVideoBuffer(GstSample* sample, [[maybe_unu
         }
         if (cache && !cache->validated) {
             qCDebug(GstHwBufFactoryLog).noquote()
-                << "zero-copy path selected:" << pathName(matchedPath)
-                << "format=" << gst_video_format_to_string(GST_VIDEO_INFO_FORMAT(&info))
-                << GST_VIDEO_INFO_WIDTH(&info) << "x" << GST_VIDEO_INFO_HEIGHT(&info);
+                << "zero-copy path selected:" << GstHw::toString(matchedPath)
+                << "format=" << gst_video_format_to_string(GST_VIDEO_INFO_FORMAT(&info)) << GST_VIDEO_INFO_WIDTH(&info)
+                << "x" << GST_VIDEO_INFO_HEIGHT(&info);
         }
         if (cache) {
             cache->path = matchedPath;

@@ -131,6 +131,8 @@ private slots:
     void _testColorimetryColorRangeMapping();
     void _testPixelFormatAcceptedButNotAdvertised();
     void _testAdvertisedFormatListMatchesTable();
+    void _testAdvertisedFormatListForOffer_data();
+    void _testAdvertisedFormatListForOffer();
     void _testTelemetryMapDurationEwma();
     void _testTelemetryFallbackReasonMatrix();
     void _testTelemetrySyncWaitSplit();

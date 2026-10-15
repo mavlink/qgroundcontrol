@@ -23,9 +23,8 @@ struct PreflightMemo {
     bool valid = false;
 };
 
-constexpr std::size_t kPathCount = static_cast<std::size_t>(HwVideoBufferPath::Vulkan) + 1;
 QMutex s_memoMutex;
-std::array<PreflightMemo, kPathCount> s_memo{};
+std::array<PreflightMemo, GstHw::kPathCount> s_memo{};
 
 }  // namespace
 

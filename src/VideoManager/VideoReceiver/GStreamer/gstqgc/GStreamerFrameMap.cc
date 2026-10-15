@@ -11,6 +11,10 @@
 #include "HwBuffers/common/CpuVideoFramePool.h"
 #include "QGCLoggingCategory.h"
 
+#if defined(QGC_HAS_ANY_GPU_PATH)
+#include <private/qhwvideobuffer_p.h>
+#endif
+
 QGC_LOGGING_CATEGORY(GStreamerFrameMapLog, "Video.GStreamer.FrameMap")
 
 QVideoFrameFormat::ColorSpace toQtColorSpace(GstVideoColorMatrix matrix)

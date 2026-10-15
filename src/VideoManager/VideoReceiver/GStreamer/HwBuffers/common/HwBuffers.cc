@@ -17,6 +17,12 @@
 #include "GstD3D12ContextBridge.h"
 #include "GstD3D12VideoBuffer.h"
 #endif
+#if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D11_GPU_PATH)
+#include <gst/d3d11/gstd3d11.h>
+#endif
+#if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D12_GPU_PATH)
+#include <gst/d3d12/gstd3d12.h>
+#endif
 #if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
 #include "GstGlContextBridge.h"
 #endif
@@ -43,7 +49,6 @@ QGC_LOGGING_CATEGORY(HwBuffersFacadeLog, "Video.GStreamer.HwBuffers.Facade")
 #endif
 
 #include <QtCore/QByteArray>
-#include <array>
 #include <utility>
 
 #include "QGCLoggingCategory.h"
@@ -54,60 +59,98 @@ QGC_LOGGING_CATEGORY(HwBuffersConfigLog, "Video.GStreamer.HwBuffers.Config")
 
 #if defined(QGC_HAS_ANY_GPU_PATH)
 namespace {
-// Compile-time table of enabled GPU paths; iterated by formatPathStats/takeExtraPathStats to avoid repeating the
-// ifdef ladder.
-struct GpuPathEntry
-{
-    HwVideoBufferPath path;
-    const char* label;
+// GPU paths compiled into this build; the stats formatters iterate it instead of repeating the ifdef ladder.
+constexpr HwVideoBufferPath kEnabledPaths[] = {
+#if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
+    HwVideoBufferPath::DmaBuf,
+#endif
+#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
+    HwVideoBufferPath::GlMemory,
+#endif
+#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
+    HwVideoBufferPath::D3D11,
+#endif
+#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
+    HwVideoBufferPath::D3D12,
+#endif
+#if defined(QGC_HAS_GST_IOSURFACE_GPU_PATH)
+    HwVideoBufferPath::IOSurface,
+#endif
+#if defined(QGC_HAS_GST_AHARDWAREBUFFER_GPU_PATH)
+    HwVideoBufferPath::AHardwareBuffer,
+#endif
+#if defined(QGC_HAS_GST_VULKAN_GPU_PATH)
+    HwVideoBufferPath::Vulkan,
+#endif
 };
 
-constexpr std::array<GpuPathEntry, 0
-#if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
-                                       + 1
+#if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D11_GPU_PATH)
+// Bind allocation to QRhi's shared device so import stays same-device instead of hitting
+// GstD3D11VideoBuffer's foreign-device copy path; SHADER_RESOURCE matches the importer's sampled texture.
+bool tryProposeD3D11Pool(GstQuery* query, GstCaps* caps, const GstVideoInfo* vinfo, gsize size, guint minBuffers)
+{
+    GstD3D11Device* device = GstD3D11ContextBridge::currentDevice();
+    if (!device) {
+        return false;
+    }
+    bool proposed = false;
+    if (GstBufferPool* pool = gst_d3d11_buffer_pool_new(device)) {
+        GstStructure* config = gst_buffer_pool_get_config(pool);
+        gst_buffer_pool_config_set_params(config, caps, size, minBuffers, 0);
+        gst_buffer_pool_config_add_option(config, GST_BUFFER_POOL_OPTION_VIDEO_META);
+        if (GstD3D11AllocationParams* params = gst_d3d11_allocation_params_new(
+                device, vinfo, GST_D3D11_ALLOCATION_FLAG_DEFAULT, D3D11_BIND_SHADER_RESOURCE, 0)) {
+            gst_buffer_pool_config_set_d3d11_allocation_params(config, params);
+            gst_d3d11_allocation_params_free(params);
+        }
+        if (gst_buffer_pool_set_config(pool, config)) {
+            // The d3d11 pool may grow the buffer size to the allocated texture's pitch; re-read it.
+            GstStructure* updated = gst_buffer_pool_get_config(pool);
+            guint poolSize = static_cast<guint>(size);
+            gst_buffer_pool_config_get_params(updated, nullptr, &poolSize, nullptr, nullptr);
+            gst_structure_free(updated);
+            gst_query_add_allocation_pool(query, pool, poolSize, minBuffers, 0);
+            proposed = true;
+        }
+        gst_object_unref(pool);
+    }
+    gst_object_unref(device);  // currentDevice() returns a transfer-full ref.
+    return proposed;
+}
 #endif
-#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
-                                       + 1
+
+#if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D12_GPU_PATH)
+// D3D12 counterpart of tryProposeD3D11Pool — steers allocation onto QRhi's shared (LUID-matched) adapter.
+bool tryProposeD3D12Pool(GstQuery* query, GstCaps* caps, const GstVideoInfo* vinfo, gsize size, guint minBuffers)
+{
+    GstD3D12Device* device = GstD3D12ContextBridge::currentDevice();
+    if (!device) {
+        return false;
+    }
+    bool proposed = false;
+    if (GstBufferPool* pool = gst_d3d12_buffer_pool_new(device)) {
+        GstStructure* config = gst_buffer_pool_get_config(pool);
+        gst_buffer_pool_config_set_params(config, caps, size, minBuffers, 0);
+        gst_buffer_pool_config_add_option(config, GST_BUFFER_POOL_OPTION_VIDEO_META);
+        if (GstD3D12AllocationParams* params = gst_d3d12_allocation_params_new(
+                device, vinfo, GST_D3D12_ALLOCATION_FLAG_DEFAULT, D3D12_RESOURCE_FLAG_NONE, D3D12_HEAP_FLAG_NONE)) {
+            gst_buffer_pool_config_set_d3d12_allocation_params(config, params);
+            gst_d3d12_allocation_params_free(params);
+        }
+        if (gst_buffer_pool_set_config(pool, config)) {
+            GstStructure* updated = gst_buffer_pool_get_config(pool);
+            guint poolSize = static_cast<guint>(size);
+            gst_buffer_pool_config_get_params(updated, nullptr, &poolSize, nullptr, nullptr);
+            gst_structure_free(updated);
+            gst_query_add_allocation_pool(query, pool, poolSize, minBuffers, 0);
+            proposed = true;
+        }
+        gst_object_unref(pool);
+    }
+    gst_object_unref(device);
+    return proposed;
+}
 #endif
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
-                                       + 1
-#endif
-#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
-                                       + 1
-#endif
-#if defined(QGC_HAS_GST_IOSURFACE_GPU_PATH)
-                                       + 1
-#endif
-#if defined(QGC_HAS_GST_AHARDWAREBUFFER_GPU_PATH)
-                                       + 1
-#endif
-#if defined(QGC_HAS_GST_VULKAN_GPU_PATH)
-                                       + 1
-#endif
-                     >
-    kEnabledPaths = {{
-#if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
-        {HwVideoBufferPath::DmaBuf, "DMABuf"},
-#endif
-#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
-        {HwVideoBufferPath::GlMemory, "GL"},
-#endif
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
-        {HwVideoBufferPath::D3D11, "D3D11"},
-#endif
-#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
-        {HwVideoBufferPath::D3D12, "D3D12"},
-#endif
-#if defined(QGC_HAS_GST_IOSURFACE_GPU_PATH)
-        {HwVideoBufferPath::IOSurface, "IOSurface"},
-#endif
-#if defined(QGC_HAS_GST_AHARDWAREBUFFER_GPU_PATH)
-        {HwVideoBufferPath::AHardwareBuffer, "AHWBuf"},
-#endif
-#if defined(QGC_HAS_GST_VULKAN_GPU_PATH)
-        {HwVideoBufferPath::Vulkan, "Vulkan"},
-#endif
-    }};
 }  // namespace
 #endif
 
@@ -209,10 +252,10 @@ void connectMainWindow(QQuickWindow* window) noexcept
 #endif
 }
 
-#if defined(QGC_HAS_ANY_GPU_PATH)
 HwVideoBufferContext makeAdapterContext(bool gpuEnabled) noexcept
 {
     HwVideoBufferContext ctx;
+#if defined(QGC_HAS_ANY_GPU_PATH)
     ctx.gpuEnabled = gpuEnabled;
     if (!gpuEnabled) {
         return ctx;
@@ -263,10 +306,12 @@ HwVideoBufferContext makeAdapterContext(bool gpuEnabled) noexcept
 #if defined(QGC_HAS_GST_VULKAN_GPU_PATH)
     qCInfo(HwBuffersFacadeLog) << "Vulkan zero-copy path available (active only when QRhi uses the Vulkan backend)";
 #endif
+#else
+    Q_UNUSED(gpuEnabled);
+#endif  // QGC_HAS_ANY_GPU_PATH
 
     return ctx;
 }
-#endif  // QGC_HAS_ANY_GPU_PATH
 
 bool answerSinkBinContextQuery(GstQuery* query) noexcept
 {
@@ -293,21 +338,45 @@ bool answerSinkBinContextQuery(GstQuery* query) noexcept
     return handled;
 }
 
+bool proposeDeviceBoundPool(GstQuery* query, GstCaps* caps, const GstVideoInfo* vinfo, gsize size,
+                            guint minBuffers) noexcept
+{
+    GstCapsFeatures* features = gst_caps_get_features(caps, 0);
+    if (!features) {
+        return false;
+    }
+#if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D11_GPU_PATH)
+    if (gst_caps_features_contains(features, GST_CAPS_FEATURE_MEMORY_D3D11_MEMORY)) {
+        return tryProposeD3D11Pool(query, caps, vinfo, size, minBuffers);
+    }
+#endif
+#if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D12_GPU_PATH)
+    if (gst_caps_features_contains(features, GST_CAPS_FEATURE_MEMORY_D3D12_MEMORY)) {
+        return tryProposeD3D12Pool(query, caps, vinfo, size, minBuffers);
+    }
+#endif
+    (void) query;
+    (void) vinfo;
+    (void) size;
+    (void) minBuffers;
+    return false;
+}
+
 PathStats formatPathStats(bool reset) noexcept
 {
     PathStats out;
 #if defined(QGC_HAS_ANY_GPU_PATH)
-    for (const auto& entry : kEnabledPaths) {
-        const quint64 delivered = reset ? GstHwPathTelemetry::takeDeliveredCount(entry.path)
-                                        : GstHwPathTelemetry::peekDeliveredCount(entry.path);
-        const quint64 failures = reset ? GstHwPathTelemetry::takeMapFailureCount(entry.path)
-                                       : GstHwPathTelemetry::peekMapFailureCount(entry.path);
+    for (const HwVideoBufferPath path : kEnabledPaths) {
+        const QLatin1String label(GstHw::toString(path));
+        const quint64 delivered =
+            reset ? GstHwPathTelemetry::takeDeliveredCount(path) : GstHwPathTelemetry::peekDeliveredCount(path);
+        const quint64 failures =
+            reset ? GstHwPathTelemetry::takeMapFailureCount(path) : GstHwPathTelemetry::peekMapFailureCount(path);
         // Teardown (reset) uses expanded label so operators can copy the failures field into bug reports.
         if (reset) {
-            out.line +=
-                QStringLiteral(" %1:%2 %1-failures:%3").arg(QLatin1String(entry.label)).arg(delivered).arg(failures);
+            out.line += QStringLiteral(" %1:%2 %1-failures:%3").arg(label).arg(delivered).arg(failures);
         } else {
-            out.line += QStringLiteral(" %1:%2/%3").arg(QLatin1String(entry.label)).arg(delivered).arg(failures);
+            out.line += QStringLiteral(" %1:%2/%3").arg(label).arg(delivered).arg(failures);
         }
         out.totalDelivered += delivered;
     }
@@ -350,25 +419,26 @@ QString takeExtraPathStats() noexcept
         {GstHwPathTelemetry::HwFallbackReason::VulkanNoSync, "vulkan-no-sync"},
         {GstHwPathTelemetry::HwFallbackReason::ImportUnsupported, "import-unsupported"},
     };
-    for (const auto& entry : kEnabledPaths) {
-        const quint64 ewmaUs = GstHwPathTelemetry::peekMapDurationUsEwma(entry.path);
+    for (const HwVideoBufferPath path : kEnabledPaths) {
+        const QLatin1String pathLabel(GstHw::toString(path));
+        const quint64 ewmaUs = GstHwPathTelemetry::peekMapDurationUsEwma(path);
         if (ewmaUs > 0) {
-            out += QStringLiteral(" %1-map-us:%2").arg(QLatin1String(entry.label)).arg(ewmaUs);
+            out += QStringLiteral(" %1-map-us:%2").arg(pathLabel).arg(ewmaUs);
         }
-        const quint64 demotions = GstHwPathTelemetry::takeStreamDemotions(entry.path);
+        const quint64 demotions = GstHwPathTelemetry::takeStreamDemotions(path);
         if (demotions > 0) {
-            out += QStringLiteral(" %1-demotions:%2").arg(QLatin1String(entry.label)).arg(demotions);
+            out += QStringLiteral(" %1-demotions:%2").arg(pathLabel).arg(demotions);
         }
         QString reasonBreakdown;
         for (const auto& [reason, label] : kReasons) {
-            const quint64 n = GstHwPathTelemetry::takeFallbackReason(entry.path, reason);
+            const quint64 n = GstHwPathTelemetry::takeFallbackReason(path, reason);
             if (n > 0) {
                 reasonBreakdown += QStringLiteral("%1=%2,").arg(QLatin1String(label)).arg(n);
             }
         }
         if (!reasonBreakdown.isEmpty()) {
             reasonBreakdown.chop(1);
-            out += QStringLiteral(" %1-fallback[%2]").arg(QLatin1String(entry.label)).arg(reasonBreakdown);
+            out += QStringLiteral(" %1-fallback[%2]").arg(pathLabel).arg(reasonBreakdown);
         }
     }
     // None-path accumulates UnknownMemType (no allocator matched any compiled path).

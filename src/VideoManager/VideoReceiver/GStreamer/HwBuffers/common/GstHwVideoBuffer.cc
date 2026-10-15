@@ -2,6 +2,14 @@
 
 #include <rhi/qrhi.h>
 
+#include "GstHwPathTelemetry.h"
+
+QVideoFrameTexturesUPtr GstHwPathTelemetry::fail(HwVideoBufferPath path) noexcept
+{
+    recordMapFailure(path);
+    return {};
+}
+
 GstHwVideoBuffer::GstHwVideoBuffer(QVideoFrame::HandleType handleType, GstSample* sample, const GstVideoInfo& videoInfo,
                                    QVideoFrameFormat format)
     : QHwVideoBuffer(handleType),

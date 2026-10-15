@@ -2,31 +2,19 @@
 
 #include <gst/video/video.h>
 
-#include <QtCore/qglobal.h>
-
 #include "HwBuffers/common/CpuVideoFramePool.h"
+#include "HwBuffers/common/HwBuffers.h"
 #include "HwBuffers/dmabuf/GstDmaDrmCaps.h"
-#if GST_CHECK_VERSION(1, 24, 0)
-#include <gst/video/video-info-dma.h>
-#endif
 #if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
 #include <gst/gl/gstglsyncmeta.h>
-#endif
-#if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D11_GPU_PATH)
-#include <gst/d3d11/gstd3d11.h>
-#include "HwBuffers/d3d/GstD3D11ContextBridge.h"
-#endif
-#if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D12_GPU_PATH)
-#include <gst/d3d12/gstd3d12.h>
-#include "HwBuffers/d3d/GstD3D12ContextBridge.h"
 #endif
 
 namespace GstQgc {
 
 namespace {
 
-// Downstream holds up to kMaxPinnedFrames decoder buffers (zero-copy CPU and GPU frames alike); one more keeps a
-// fixed-size decoder pool from stalling while all of those are held.
+// Most decoder buffers downstream holds at once: kMaxPinnedFrames, plus the texture bundle Qt moves out of a reused
+// in-flight slot and keeps (with its sample) until that render frame ends.
 constexpr guint kProposedMinBuffers = CpuVideoFramePool::kMaxPinnedFrames + 1;
 
 // Advertise every meta API qgcqvideosink/GStreamerFrameMap consume so upstream keeps them;
@@ -46,98 +34,6 @@ void addConsumedAllocationMetas(GstQuery* query)
     // doesn't synchronize against the real producer — a cross-context tearing hazard on the Qt render thread.
     gst_query_add_allocation_meta(query, GST_GL_SYNC_META_API_TYPE, NULL);
 #endif
-}
-
-#if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D11_GPU_PATH)
-// Bind allocation to QRhi's shared device so import stays same-device instead of hitting
-// GstD3D11VideoBuffer's foreign-device copy path; SHADER_RESOURCE matches the importer's sampled texture.
-bool tryProposeD3D11Pool(GstQuery* query, GstCaps* caps, const GstVideoInfo* vinfo, gsize size)
-{
-    GstD3D11Device* device = GstD3D11ContextBridge::currentDevice();
-    if (!device) {
-        return false;
-    }
-    bool proposed = false;
-    if (GstBufferPool* pool = gst_d3d11_buffer_pool_new(device)) {
-        GstStructure* config = gst_buffer_pool_get_config(pool);
-        gst_buffer_pool_config_set_params(config, caps, size, kProposedMinBuffers, 0);
-        gst_buffer_pool_config_add_option(config, GST_BUFFER_POOL_OPTION_VIDEO_META);
-        if (GstD3D11AllocationParams* params = gst_d3d11_allocation_params_new(
-                device, vinfo, GST_D3D11_ALLOCATION_FLAG_DEFAULT, D3D11_BIND_SHADER_RESOURCE, 0)) {
-            gst_buffer_pool_config_set_d3d11_allocation_params(config, params);
-            gst_d3d11_allocation_params_free(params);
-        }
-        if (gst_buffer_pool_set_config(pool, config)) {
-            // The d3d11 pool may grow the buffer size to the allocated texture's pitch; re-read it.
-            GstStructure* updated = gst_buffer_pool_get_config(pool);
-            guint poolSize = static_cast<guint>(size);
-            gst_buffer_pool_config_get_params(updated, nullptr, &poolSize, nullptr, nullptr);
-            gst_structure_free(updated);
-            gst_query_add_allocation_pool(query, pool, poolSize, kProposedMinBuffers, 0);
-            proposed = true;
-        }
-        gst_object_unref(pool);
-    }
-    gst_object_unref(device);  // currentDevice() returns a transfer-full ref.
-    return proposed;
-}
-#endif
-
-#if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D12_GPU_PATH)
-// D3D12 counterpart of tryProposeD3D11Pool — steers allocation onto QRhi's shared (LUID-matched) adapter.
-bool tryProposeD3D12Pool(GstQuery* query, GstCaps* caps, const GstVideoInfo* vinfo, gsize size)
-{
-    GstD3D12Device* device = GstD3D12ContextBridge::currentDevice();
-    if (!device) {
-        return false;
-    }
-    bool proposed = false;
-    if (GstBufferPool* pool = gst_d3d12_buffer_pool_new(device)) {
-        GstStructure* config = gst_buffer_pool_get_config(pool);
-        gst_buffer_pool_config_set_params(config, caps, size, kProposedMinBuffers, 0);
-        gst_buffer_pool_config_add_option(config, GST_BUFFER_POOL_OPTION_VIDEO_META);
-        if (GstD3D12AllocationParams* params = gst_d3d12_allocation_params_new(
-                device, vinfo, GST_D3D12_ALLOCATION_FLAG_DEFAULT, D3D12_RESOURCE_FLAG_NONE,
-                D3D12_HEAP_FLAG_NONE)) {
-            gst_buffer_pool_config_set_d3d12_allocation_params(config, params);
-            gst_d3d12_allocation_params_free(params);
-        }
-        if (gst_buffer_pool_set_config(pool, config)) {
-            GstStructure* updated = gst_buffer_pool_get_config(pool);
-            guint poolSize = static_cast<guint>(size);
-            gst_buffer_pool_config_get_params(updated, nullptr, &poolSize, nullptr, nullptr);
-            gst_structure_free(updated);
-            gst_query_add_allocation_pool(query, pool, poolSize, kProposedMinBuffers, 0);
-            proposed = true;
-        }
-        gst_object_unref(pool);
-    }
-    gst_object_unref(device);
-    return proposed;
-}
-#endif
-
-// Propose a shared-device pool for D3D11/D3D12 caps; false for other HW memory or before the bridge is primed.
-bool tryProposeDeviceBoundPool(GstQuery* query, GstCaps* caps, const GstVideoInfo* vinfo, gsize size)
-{
-    GstCapsFeatures* features = gst_caps_get_features(caps, 0);
-    if (!features) {
-        return false;
-    }
-#if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D11_GPU_PATH)
-    if (gst_caps_features_contains(features, GST_CAPS_FEATURE_MEMORY_D3D11_MEMORY)) {
-        return tryProposeD3D11Pool(query, caps, vinfo, size);
-    }
-#endif
-#if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D12_GPU_PATH)
-    if (gst_caps_features_contains(features, GST_CAPS_FEATURE_MEMORY_D3D12_MEMORY)) {
-        return tryProposeD3D12Pool(query, caps, vinfo, size);
-    }
-#endif
-    (void) query;
-    (void) vinfo;
-    (void) size;
-    return false;
 }
 
 // A GstVideoBufferPool, unlike a plain GstBufferPool, supports VIDEO_META and attaches GstVideoMeta per buffer, so
@@ -183,7 +79,7 @@ void populateAllocationQuery(GstQuery* query)
         !features || gst_caps_features_is_equal(features, GST_CAPS_FEATURES_MEMORY_SYSTEM_MEMORY);
 
     if (!is_system_memory) {
-        if (!tryProposeDeviceBoundPool(query, caps, &vinfo, size)) {
+        if (!HwBuffers::proposeDeviceBoundPool(query, caps, &vinfo, size, kProposedMinBuffers)) {
             gst_query_add_allocation_pool(query, NULL, size, kProposedMinBuffers, 0);
         }
         addConsumedAllocationMetas(query);

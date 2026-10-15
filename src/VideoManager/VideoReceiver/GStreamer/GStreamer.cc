@@ -345,15 +345,6 @@ bool setupQVideoSinkElement(void* sinkBin, QVideoSink* videoSink, QObject* contr
     }
     GstElement* const elementRaw = GST_ELEMENT(element.get());
 
-#if defined(QGC_HAS_ANY_GPU_PATH)
-    // Resolve the GPU context on the GUI thread and push it in, else gpu-zerocopy=TRUE negotiates
-    // GPU caps but show_frame still memcpys. gpu-zerocopy is the bin's property, not the inner sink's.
-    const gboolean gpuZeroCopy = gst_qgc_video_sink_bin_get_gpu_zerocopy(GST_ELEMENT(sinkBin));
-    if (gpuZeroCopy) {
-        gst_qgc_q_video_sink_set_hw_context(GST_QGC_Q_VIDEO_SINK(elementRaw), HwBuffers::makeAdapterContext(true));
-    }
-#endif
-
     auto* controller = new QGCQVideoSinkController(elementRaw, controllerParent);
 
     // Route the initial install through the controller so its destroyed-sink QPointer guard

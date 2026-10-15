@@ -12,6 +12,8 @@
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoFrameFormat>
 
+#include "GstHwTypes.h"
+
 namespace GstHw {
 
 /// Matches GST_VIDEO_MAX_PLANES (gst-video pins it at 4); single source of truth for every per-platform buffer.
@@ -29,6 +31,13 @@ struct MapDiagnostics
 };
 
 }  // namespace GstHw
+
+namespace GstHwPathTelemetry {
+
+/// Records a map failure for @p path and returns the empty bundle mapTextures() reports it with.
+QVideoFrameTexturesUPtr fail(HwVideoBufferPath path) noexcept;
+
+}  // namespace GstHwPathTelemetry
 
 /// Logs once via qCWarning(LOGCAT) the first time @p FLAG flips true; subsequent trips are silent.
 #define QGC_HW_WARN_ONCE(LOGCAT, FLAG, ...)                      \

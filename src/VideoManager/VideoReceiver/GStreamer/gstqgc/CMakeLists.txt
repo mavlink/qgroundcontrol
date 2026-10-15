@@ -14,6 +14,7 @@ target_sources(QGCGStreamer
         GStreamerFrameMap.h
         GstQgcAllocation.cc
         GstQgcAllocation.h
+        GstQgcBinChain.h
         GstQgcCaps.cc
         GstQgcCaps.h
         GstQgcVideoFormats.h

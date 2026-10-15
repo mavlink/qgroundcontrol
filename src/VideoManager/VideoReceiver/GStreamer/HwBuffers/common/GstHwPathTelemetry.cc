@@ -7,8 +7,6 @@ namespace GstHwPathTelemetry {
 
 namespace {
 
-constexpr size_t kPathCount = size_t(HwVideoBufferPath::Vulkan) + 1;
-
 struct PathCounters
 {
     std::atomic<quint64> mapFailures{0};
@@ -25,10 +23,10 @@ struct PathCounters
     std::atomic<quint64> streamDemotions{0};
 };
 
-std::array<PathCounters, kPathCount> s_counters{};
+std::array<PathCounters, GstHw::kPathCount> s_counters{};
 
 constexpr size_t kReasonCount = size_t(HwFallbackReason::_Count);
-std::array<std::array<std::atomic<quint64>, kReasonCount>, kPathCount> s_fallbackReasons{};
+std::array<std::array<std::atomic<quint64>, kReasonCount>, GstHw::kPathCount> s_fallbackReasons{};
 
 inline PathCounters& slot(HwVideoBufferPath path) noexcept
 {
@@ -94,14 +92,6 @@ quint64 takeImageCacheMisses(HwVideoBufferPath path) noexcept
     return slot(path).imageCacheMisses.exchange(0, std::memory_order_relaxed);
 }
 
-#if defined(QGC_HAS_ANY_GPU_PATH)
-QVideoFrameTexturesUPtr fail(HwVideoBufferPath path) noexcept
-{
-    recordMapFailure(path);
-    return {};
-}
-#endif
-
 void recordDelivered(HwVideoBufferPath path) noexcept
 {
     slot(path).delivered.fetch_add(1, std::memory_order_relaxed);
@@ -142,11 +132,6 @@ void recordFenceTimeout(HwVideoBufferPath path) noexcept
     slot(path).fenceTimeouts.fetch_add(1, std::memory_order_relaxed);
 }
 
-quint64 peekFenceTimeouts(HwVideoBufferPath path) noexcept
-{
-    return slot(path).fenceTimeouts.load(std::memory_order_relaxed);
-}
-
 quint64 takeFenceTimeouts(HwVideoBufferPath path) noexcept
 {
     return slot(path).fenceTimeouts.exchange(0, std::memory_order_relaxed);
@@ -155,11 +140,6 @@ quint64 takeFenceTimeouts(HwVideoBufferPath path) noexcept
 void recordMmapBarrierHit(HwVideoBufferPath path) noexcept
 {
     slot(path).mmapBarrierHits.fetch_add(1, std::memory_order_relaxed);
-}
-
-quint64 peekMmapBarrierHits(HwVideoBufferPath path) noexcept
-{
-    return slot(path).mmapBarrierHits.load(std::memory_order_relaxed);
 }
 
 quint64 takeMmapBarrierHits(HwVideoBufferPath path) noexcept

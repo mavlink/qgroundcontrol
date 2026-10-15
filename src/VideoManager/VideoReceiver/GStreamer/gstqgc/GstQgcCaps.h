@@ -4,8 +4,8 @@
 
 namespace GstQgc {
 
-/// Builds the upstream caps string for gpu_zerocopy=TRUE, branching on enabled GPU paths and the
-/// bin variant. Pure policy: no GObject state, no allocations.
+/// Builds the format capsfilter caps for the gpu-zerocopy bin, branching on the compiled GPU paths and the bin
+/// variant. DMABuf builds also query EGL for importable DMA_DRM modifiers and read QGC_GST_OFFER_DMA_DRM_LINEAR.
 std::string buildGpuCapsString();
 
 /// System-memory caps for the CPU branch's format capsfilter; shares the Qt-renderable format set

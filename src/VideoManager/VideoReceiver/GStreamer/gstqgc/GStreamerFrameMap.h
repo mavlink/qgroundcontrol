@@ -41,10 +41,8 @@ struct MappedFrame
         Cpu,
         Gpu
     } source = Source::Cpu;
-#if defined(QGC_HAS_ANY_GPU_PATH)
     HwVideoBufferPath gpuPath = HwVideoBufferPath::None;
     bool demoted = false;  ///< A GPU path was requested for this stream but this frame fell back to CPU.
-#endif
 };
 
 MappedFrame mapSampleToFrame(GstBuffer* buffer, GstCaps* caps, const GstVideoInfo& info,

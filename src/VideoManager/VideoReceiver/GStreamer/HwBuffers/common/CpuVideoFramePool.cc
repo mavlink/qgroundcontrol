@@ -169,14 +169,12 @@ QByteArray CpuVideoFramePool::acquireBacking(const PlaneLayout& layout, QSize si
             while (slot.availableCount > 0) {
                 QByteArray b = std::move(slot.available[--slot.availableCount]);
                 if (b.size() == layout.byteSize) {
-                    _hits.fetch_add(1, std::memory_order_relaxed);
                     return b;
                 }
             }
             break;
         }
     }
-    _misses.fetch_add(1, std::memory_order_relaxed);
     // Qt::Uninitialized skips the value-init memset; caller overwrites every plane.
     return QByteArray(layout.byteSize, Qt::Uninitialized);
 }

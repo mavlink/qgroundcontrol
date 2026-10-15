@@ -4,11 +4,12 @@
 
 #if defined(QGC_HAS_ANY_GPU_PATH)
 
-#include <QtCore/QSize>
-#include <QtMultimedia/QVideoFrameFormat>
 #include <rhi/qrhi.h>
 
-#include "GstHwVideoBufferFactory.h"  // HwVideoBufferPath
+#include <QtCore/QSize>
+#include <QtMultimedia/QVideoFrameFormat>
+
+#include "GstHwTypes.h"
 
 /// Read-only RHI capability pre-flight: rejects a GPU import before createFrom() so mapTextures() fails on a cheap
 /// query instead of a driver error, and Qt uploads the frame through GstHwVideoBuffer::map() instead. All queries are

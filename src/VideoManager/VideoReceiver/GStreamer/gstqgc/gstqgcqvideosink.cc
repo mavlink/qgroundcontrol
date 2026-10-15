@@ -1,7 +1,11 @@
 #include "gstqgcqvideosink.h"
 
+#include <atomic>
 #include <gst/video/video-info.h>
 #include <gst/video/video.h>
+#include <memory>
+#include <new>
+#include <utility>
 
 #include <QtCore/QMetaObject>
 #include <QtCore/QMutex>
@@ -16,13 +20,6 @@
 #include "HwBuffers/dmabuf/GstDmaDrmCaps.h"
 #include "QGCLoggingCategory.h"
 #include "gstqgcelements.h"
-#if GST_CHECK_VERSION(1, 24, 0)
-#include <gst/video/video-info-dma.h>
-#endif
-
-#include <atomic>
-#include <memory>
-#include <utility>
 
 QGC_LOGGING_CATEGORY(GstQgcQVideoSinkLog, "Video.GStreamer.QgcQVideoSink")
 
@@ -45,13 +42,20 @@ QVideoFrame take_pending_frame(PendingFrameSlot& slot)
     return std::exchange(slot.frame, QVideoFrame());
 }
 
-/// Non-POD state hung off the GObject instance via `priv`. Owned, new'd in instance_init,
-/// delete'd in finalize.
+/// The element's C++ state, placement-constructed in instance_init and destroyed in finalize.
 struct PrivState
 {
+    // Caller-owned and never unref'd; written by the controller on the GUI thread under GST_OBJECT_LOCK.
+    QVideoSink* qvideosink = nullptr;
+    // Read lock-free by show_frame.
+    std::atomic<bool> active{true};
+    // Construct-only; start() derives hw_context from it.
+    bool gpu_zerocopy = false;
+    // Negotiated state: set_caps/stop write it and show_frame reads it, all serialised by GstBaseSink.
+    std::atomic<bool> caps_valid{false};
+    GstVideoInfo video_info = {};
     QVideoFrameFormat format;
-    // Written under GST_OBJECT_LOCK from the GUI thread, snapshotted by show_frame.
-    // Default (gpuEnabled=false) keeps the CPU memcpy path until the controller wires it.
+    // Written by start() under GST_OBJECT_LOCK and snapshotted by show_frame.
     HwVideoBufferContext hw_context = {};
     std::atomic<quint64> cpu_frames{0};
     std::atomic<int64_t> last_pts_ns{-1};
@@ -68,15 +72,23 @@ struct PrivState
     std::shared_ptr<PendingFrameSlot> pending = std::make_shared<PendingFrameSlot>();
     // Negotiated caps held from set_caps; avoids per-frame allocation and preserves DRM modifiers.
     GstCaps* cached_caps{nullptr};
-#if defined(QGC_HAS_ANY_GPU_PATH)
     // Per-caps-epoch resolved-path cache; reset on set_caps so a format change re-runs path selection.
     HwResolvedPathCache resolved_path_cache = {};
-#endif
 };
+
+}  // namespace
+
+struct _GstQgcQVideoSink
+{
+    GstVideoSink parent;
+    PrivState state;
+};
+
+namespace {
 
 inline PrivState* priv_of(GstQgcQVideoSink* self)
 {
-    return static_cast<PrivState*>(self->priv);
+    return &self->state;
 }
 
 /// Copies the GPU context under GST_OBJECT_LOCK and reports whether a QVideoSink is bound, so show_frame skips mapping
@@ -84,7 +96,7 @@ inline PrivState* priv_of(GstQgcQVideoSink* self)
 bool snapshot_sink(GstQgcQVideoSink* self, HwVideoBufferContext& hwOut)
 {
     GST_OBJECT_LOCK(self);
-    const bool hasSink = (self->qvideosink != nullptr);
+    const bool hasSink = (priv_of(self)->qvideosink != nullptr);
     hwOut = priv_of(self)->hw_context;
     GST_OBJECT_UNLOCK(self);
     return hasSink;
@@ -107,7 +119,7 @@ bool push_frame_queued(GstQgcQVideoSink* self, QVideoFrame&& frame)
 {
     QVideoFrame superseded;
     GST_OBJECT_LOCK(self);
-    QVideoSink* const sink = static_cast<QVideoSink*>(self->qvideosink);
+    QVideoSink* const sink = priv_of(self)->qvideosink;
     if (!sink) {
         GST_OBJECT_UNLOCK(self);
         return false;
@@ -162,12 +174,8 @@ GST_ELEMENT_REGISTER_DEFINE(qgcqvideosink, "qgcqvideosink", GST_RANK_NONE, GST_T
 
 static void gst_qgc_q_video_sink_init(GstQgcQVideoSink* self)
 {
-    self->qvideosink = nullptr;
-    self->active = TRUE;
-    self->gpu_zerocopy = FALSE;
-    self->caps_valid = FALSE;
-    gst_video_info_init(&self->video_info);
-    self->priv = new PrivState();
+    new (&self->state) PrivState();
+    gst_video_info_init(&self->state.video_info);
     // sync=FALSE: drone video is "as fast as decoded"; GstBaseSink clock-sync would
     // stall on live RTSP. async=FALSE skips preroll wait so caps changes don't stall.
     gst_base_sink_set_sync(GST_BASE_SINK(self), FALSE);
@@ -176,51 +184,40 @@ static void gst_qgc_q_video_sink_init(GstQgcQVideoSink* self)
     gst_base_sink_set_last_sample_enabled(GST_BASE_SINK(self), FALSE);
 }
 
-void gst_qgc_q_video_sink_set_hw_context(GstQgcQVideoSink* self, const HwVideoBufferContext& ctx)
-{
-    if (!self)
-        return;
-    GST_OBJECT_LOCK(self);
-    priv_of(self)->hw_context = ctx;
-    GST_OBJECT_UNLOCK(self);
-}
-
 static void gst_qgc_q_video_sink_finalize(GObject* obj)
 {
     GstQgcQVideoSink* self = GST_QGC_Q_VIDEO_SINK(obj);
     gst_clear_caps(&priv_of(self)->cached_caps);
-    delete priv_of(self);
-    self->priv = nullptr;
+    self->state.~PrivState();
     G_OBJECT_CLASS(gst_qgc_q_video_sink_parent_class)->finalize(obj);
 }
 
 static void gst_qgc_q_video_sink_set_property(GObject* obj, guint id, const GValue* val, GParamSpec* pspec)
 {
     GstQgcQVideoSink* self = GST_QGC_Q_VIDEO_SINK(obj);
+    PrivState* p = priv_of(self);
     QVideoFrame undelivered;
     GST_OBJECT_LOCK(self);
     switch (id) {
         case PROP_QVIDEOSINK: {
-            gpointer raw = g_value_get_pointer(val);
-            if (raw != self->qvideosink) {
+            auto* const target = static_cast<QVideoSink*>(g_value_get_pointer(val));
+            if (target != p->qvideosink) {
                 // A frame bound for the previous sink must not reach the new one; a fresh slot also detaches any
                 // invoke still queued to the old sink.
-                PrivState* p = priv_of(self);
                 undelivered = take_pending_frame(*p->pending);
                 p->pending = std::make_shared<PendingFrameSlot>();
             }
-            self->qvideosink = raw;
+            p->qvideosink = target;
             // Reset PTS guard on sink swap so a new sink doesn't see a stale last_pts_ns
             // from the previous sink and erroneously drop the first frames.
-            priv_of(self)->last_pts_ns.store(-1, std::memory_order_relaxed);
+            p->last_pts_ns.store(-1, std::memory_order_relaxed);
             break;
         }
         case PROP_ACTIVE:
-            // Read lock-free on the streaming thread (show_frame); publish atomically.
-            g_atomic_int_set(&self->active, g_value_get_boolean(val));
+            p->active.store(g_value_get_boolean(val), std::memory_order_relaxed);
             break;
         case PROP_GPU_ZEROCOPY:
-            self->gpu_zerocopy = g_value_get_boolean(val);
+            p->gpu_zerocopy = g_value_get_boolean(val);
             break;
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID(obj, id, pspec);
@@ -235,13 +232,13 @@ static void gst_qgc_q_video_sink_get_property(GObject* obj, guint id, GValue* va
     GST_OBJECT_LOCK(self);
     switch (id) {
         case PROP_QVIDEOSINK:
-            g_value_set_pointer(val, self->qvideosink);
+            g_value_set_pointer(val, priv_of(self)->qvideosink);
             break;
         case PROP_ACTIVE:
-            g_value_set_boolean(val, self->active);
+            g_value_set_boolean(val, priv_of(self)->active.load(std::memory_order_relaxed));
             break;
         case PROP_GPU_ZEROCOPY:
-            g_value_set_boolean(val, self->gpu_zerocopy);
+            g_value_set_boolean(val, priv_of(self)->gpu_zerocopy);
             break;
         case PROP_FRAMES_INPUT:
             g_value_set_uint64(val, priv_of(self)->input_frames.load(std::memory_order_relaxed));
@@ -292,20 +289,17 @@ static gboolean gst_qgc_q_video_sink_set_caps(GstBaseSink* bsink, GstCaps* caps)
         fmt.setStreamFrameRate(static_cast<qreal>(fpsN) / static_cast<qreal>(fpsD));
     }
 
-    self->video_info = parsedInfo;
+    p->video_info = parsedInfo;
     p->format = std::move(fmt);
     gst_clear_caps(&p->cached_caps);
     // Hold the negotiated caps verbatim: rebuilding from video_info drops DRM modifiers and other
     // negotiated fields the downstream frame mapping relies on.
     p->cached_caps = gst_caps_ref(caps);
-#if defined(QGC_HAS_ANY_GPU_PATH)
     p->resolved_path_cache = HwResolvedPathCache{};
-#endif
     // New caps = new segment; clear PTS history so a restart/format change that resumes at a
     // lower PTS isn't wedged by the monotonic-PTS guard in show_frame.
     p->last_pts_ns.store(-1, std::memory_order_relaxed);
-    // caps_valid is read lock-free on the streaming thread (show_frame); publish atomically.
-    g_atomic_int_set(&self->caps_valid, TRUE);
+    p->caps_valid.store(true, std::memory_order_release);
 
     // Posted on the bus so the controller can mirror negotiation state into Q_PROPERTY.
     {
@@ -328,32 +322,9 @@ constexpr quint64 kMaxConsecutiveMapFailures = 120;
 // A backward PTS jump larger than this is a new timeline (source restart, loop), not reordered output to drop.
 constexpr int64_t kPtsResyncThresholdNs = static_cast<int64_t>(GST_SECOND);
 
-static const char* describeMappedPath([[maybe_unused]] const MappedFrame& m) noexcept
+static const char* describeMappedPath(const MappedFrame& m) noexcept
 {
-#if defined(QGC_HAS_ANY_GPU_PATH)
-    if (m.source == MappedFrame::Source::Gpu) {
-        switch (m.gpuPath) {
-            case HwVideoBufferPath::DmaBuf:
-                return "GPU/DmaBuf";
-            case HwVideoBufferPath::GlMemory:
-                return "GPU/GlMemory";
-            case HwVideoBufferPath::D3D11:
-                return "GPU/D3D11";
-            case HwVideoBufferPath::D3D12:
-                return "GPU/D3D12";
-            case HwVideoBufferPath::IOSurface:
-                return "GPU/IOSurface";
-            case HwVideoBufferPath::AHardwareBuffer:
-                return "GPU/AHardwareBuffer";
-            case HwVideoBufferPath::Vulkan:
-                return "GPU/Vulkan";
-            case HwVideoBufferPath::None:
-                break;
-        }
-        return "GPU/Unknown";
-    }
-#endif
-    return "CPU";
+    return GstHw::toString((m.source == MappedFrame::Source::Gpu) ? m.gpuPath : HwVideoBufferPath::None);
 }
 
 static GstFlowReturn gst_qgc_q_video_sink_show_frame(GstVideoSink* vsink, GstBuffer* buf)
@@ -363,11 +334,11 @@ static GstFlowReturn gst_qgc_q_video_sink_show_frame(GstVideoSink* vsink, GstBuf
 
     p->input_frames.fetch_add(1, std::memory_order_relaxed);
 
-    if (!g_atomic_int_get(&self->caps_valid)) {
+    if (!p->caps_valid.load(std::memory_order_acquire)) {
         // Should never happen — GstBaseSink calls set_caps before show_frame.
         return GST_FLOW_NOT_NEGOTIATED;
     }
-    if (!g_atomic_int_get(&self->active)) {
+    if (!p->active.load(std::memory_order_relaxed)) {
         p->dropped_frames.fetch_add(1, std::memory_order_relaxed);
         return GST_FLOW_OK;  // drop silently — controller drives the active flag
     }
@@ -401,13 +372,8 @@ static GstFlowReturn gst_qgc_q_video_sink_show_frame(GstVideoSink* vsink, GstBuf
     if (hasCrop) {
         croppedFmt = applyCropMeta(p->format, buf);
     }
-    MappedFrame mapped = mapSampleToFrame(buf, p->cached_caps, self->video_info, hasCrop ? croppedFmt : p->format,
-                                          hwCtx, p->pinned_cpu_frames,
-#if defined(QGC_HAS_ANY_GPU_PATH)
-                                          &p->resolved_path_cache);
-#else
-                                          nullptr);
-#endif
+    MappedFrame mapped = mapSampleToFrame(buf, p->cached_caps, p->video_info, hasCrop ? croppedFmt : p->format, hwCtx,
+                                          p->pinned_cpu_frames, &p->resolved_path_cache);
     if (!mapped.frame.isValid()) {
         p->dropped_frames.fetch_add(1, std::memory_order_relaxed);
         const quint64 c = p->consecutive_map_failures.fetch_add(1, std::memory_order_relaxed) + 1;
@@ -415,7 +381,7 @@ static GstFlowReturn gst_qgc_q_video_sink_show_frame(GstVideoSink* vsink, GstBuf
             qCWarning(GstQgcQVideoSinkLog) << "mapping failed, consecutive=" << c;
         }
         if (c >= kMaxConsecutiveMapFailures) {
-            const char* const format = gst_video_format_to_string(GST_VIDEO_INFO_FORMAT(&self->video_info));
+            const char* const format = gst_video_format_to_string(GST_VIDEO_INFO_FORMAT(&p->video_info));
             qCWarning(GstQgcQVideoSinkLog) << c << "consecutive map failures — erroring out";
             // Without an element error upstream reports only a generic "Internal data stream error".
             GST_ELEMENT_ERROR(self, STREAM, FAILED, ("Video frames could not be mapped for display"),
@@ -493,17 +459,28 @@ static gboolean gst_qgc_q_video_sink_event(GstBaseSink* bsink, GstEvent* event)
     return GST_BASE_SINK_CLASS(gst_qgc_q_video_sink_parent_class)->event(bsink, event);
 }
 
+// NULL->READY: build the GPU context from gpu-zerocopy, so the element maps GPU memory without any controller glue.
+static gboolean gst_qgc_q_video_sink_start(GstBaseSink* bsink)
+{
+    GstQgcQVideoSink* self = GST_QGC_Q_VIDEO_SINK(bsink);
+    const HwVideoBufferContext hwContext = HwBuffers::makeAdapterContext(priv_of(self)->gpu_zerocopy);
+    GST_OBJECT_LOCK(self);
+    priv_of(self)->hw_context = hwContext;
+    GST_OBJECT_UNLOCK(self);
+
+    GstBaseSinkClass* parentClass = GST_BASE_SINK_CLASS(gst_qgc_q_video_sink_parent_class);
+    return parentClass->start ? parentClass->start(bsink) : TRUE;
+}
+
 // READY->NULL: streaming has stopped, so drop all negotiated and per-stream state; a restart renegotiates from scratch
 // and no undelivered frame keeps a decoder buffer alive.
 static gboolean gst_qgc_q_video_sink_stop(GstBaseSink* bsink)
 {
     GstQgcQVideoSink* self = GST_QGC_Q_VIDEO_SINK(bsink);
     PrivState* p = priv_of(self);
-    g_atomic_int_set(&self->caps_valid, FALSE);
+    p->caps_valid.store(false, std::memory_order_release);
     gst_clear_caps(&p->cached_caps);
-#if defined(QGC_HAS_ANY_GPU_PATH)
     p->resolved_path_cache = HwResolvedPathCache{};
-#endif
     p->last_pts_ns.store(-1, std::memory_order_release);
     p->consecutive_map_failures.store(0, std::memory_order_relaxed);
     drop_pending_frame(self);
@@ -562,7 +539,9 @@ static void gst_qgc_q_video_sink_class_init(GstQgcQVideoSinkClass* klass)
     g_object_class_install_property(
         gobject_class, PROP_GPU_ZEROCOPY,
         g_param_spec_boolean("gpu-zerocopy", "GPU zero-copy",
-                             "Attempt GPU-zerocopy mapping in show_frame; false forces CPU memcpy.", FALSE,
+                             "Import frames in GPU memory without a copy when a zero-copy path supports them; "
+                             "FALSE maps every frame through the CPU.",
+                             FALSE,
                              (GParamFlags) (G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS)));
 
     g_object_class_install_property(
@@ -593,6 +572,7 @@ static void gst_qgc_q_video_sink_class_init(GstQgcQVideoSinkClass* klass)
 
     basesink_class->set_caps = gst_qgc_q_video_sink_set_caps;
     basesink_class->event = gst_qgc_q_video_sink_event;
+    basesink_class->start = gst_qgc_q_video_sink_start;
     basesink_class->stop = gst_qgc_q_video_sink_stop;
     basesink_class->propose_allocation = gst_qgc_q_video_sink_propose_allocation;
     basesink_class->query = gst_qgc_q_video_sink_query;

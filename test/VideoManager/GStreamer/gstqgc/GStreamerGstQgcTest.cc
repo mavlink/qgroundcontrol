@@ -3,19 +3,20 @@
 #ifdef QGC_GST_STREAMING
 
 #include "CpuVideoFramePool.h"
-#include "Fixtures/RAIIFixtures.h"
 #include "Fact.h"
+#include "Fixtures/RAIIFixtures.h"
 #include "GStreamer.h"
 #include "GStreamerFrameMap.h"
 #include "GStreamerHelpers.h"
 #include "GStreamerLogging.h"
-#include "GstVideoReceiver.h"
 #include "GstHwPathTelemetry.h"
 #include "GstHwVideoBufferFactory.h"
 #include "GstSourceFactory.h"
+#include "GstVideoReceiver.h"
 #include "HwBuffers/dmabuf/GstDmaDrmCaps.h"
 #include "QGCQVideoSinkController.h"
 #include "gstqgc/GstQgcAllocation.h"
+#include "gstqgc/GstQgcBinChain.h"
 #include "gstqgc/GstQgcCaps.h"
 #include "gstqgc/GstQgcVideoFormats.h"
 
@@ -650,14 +651,30 @@ void GStreamerTest::_testQgcVideoSinkBinGpuZeroCopyProperty()
 
 void GStreamerTest::_testQgcVideoSinkBinRejectsFailedAdopt()
 {
-#ifdef QGC_GST_BUILD_TESTING
-    GStreamer::redirectGLibLogging();
     QVERIFY2(GStreamer::completeInit(), "GStreamer::completeInit() failed");
-    QVERIFY2(gst_qgc_video_sink_bin_rejects_failed_adopt_for_test(),
-             "BinChain::adopt must reject elements that gst_bin_add() did not accept");
-#else
-    QSKIP("GStreamer test helpers are unavailable");
-#endif
+
+    GstElement* const target = gst_bin_new("qgc-adopt-target");
+    GstElement* const parent = gst_bin_new("qgc-adopt-existing-parent");
+    GstElement* const element = gst_element_factory_make("identity", "preparented");
+    QVERIFY(target && parent && element);
+    const auto guard = qScopeGuard([&] {
+        gst_object_unref(parent);
+        gst_object_unref(target);
+    });
+    QVERIFY(gst_bin_add(GST_BIN(parent), element));
+
+    GstElement* adopted = nullptr;
+    {
+        GstQgc::BinChain chain(GST_BIN(target));
+        // adopt() consumes a ref even on failure.
+        adopted = chain.adopt(GST_ELEMENT(gst_object_ref(element)));
+        chain.commit();
+    }
+
+    QVERIFY2(!adopted, "BinChain::adopt must reject elements that gst_bin_add() did not accept");
+    GstObject* const currentParent = gst_object_get_parent(GST_OBJECT(element));
+    QCOMPARE(currentParent, GST_OBJECT(parent));
+    gst_object_unref(currentParent);
 }
 
 namespace {
@@ -1578,6 +1595,24 @@ void GStreamerTest::_testAdvertisedFormatListMatchesTable()
     QVERIFY2(list.find("BGRx") == std::string::npos, "accepted-only BGRx must not be advertised");
     QVERIFY2(list.find("I420_10LE") == std::string::npos, "accepted-only I420_10LE must not be advertised");
     QVERIFY2(list.rfind("{ ", 0) == 0 && list.find(" }") != std::string::npos, "list must be brace-wrapped");
+}
+
+void GStreamerTest::_testAdvertisedFormatListForOffer_data()
+{
+    QTest::addColumn<uint>("offer");
+    QTest::addColumn<QString>("expected");
+
+    // Multi-plane GLMemory renders green through Qt's GL import, so glupload must stay single-plane RGB.
+    QTest::newRow("glupload") << uint(GstQgc::kOfferGlUpload) << QStringLiteral("{ BGRA, RGBA }");
+    QTest::newRow("linear-dma-drm") << uint(GstQgc::kOfferLinearDmaDrm)
+                                    << QStringLiteral("{ NV12, NV21, I420, P010_10LE, BGRA, RGBA }");
+}
+
+void GStreamerTest::_testAdvertisedFormatListForOffer()
+{
+    QFETCH(uint, offer);
+    QFETCH(QString, expected);
+    QCOMPARE(QString::fromStdString(GstQgc::advertisedFormatList(offer)), expected);
 }
 
 void GStreamerTest::_testColorimetryFrameRatePropagation()

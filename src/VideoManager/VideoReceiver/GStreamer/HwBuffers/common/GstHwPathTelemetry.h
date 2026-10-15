@@ -3,11 +3,7 @@
 #include <QtCore/QElapsedTimer>
 #include <QtCore/qglobal.h>
 
-#include "GstHwVideoBufferFactory.h"  // HwVideoBufferPath enum
-
-#if defined(QGC_HAS_ANY_GPU_PATH)
-#include <private/qhwvideobuffer_p.h>
-#endif
+#include "GstHwTypes.h"
 
 /// Per-path telemetry counters (map failures, reuse hits, sync waits) keyed by `HwVideoBufferPath`; atomics,
 /// thread-safe.
@@ -50,11 +46,6 @@ void recordImageCacheMiss(HwVideoBufferPath path) noexcept;
 quint64 takeImageCacheHits(HwVideoBufferPath path) noexcept;
 quint64 takeImageCacheMisses(HwVideoBufferPath path) noexcept;
 
-#if defined(QGC_HAS_ANY_GPU_PATH)
-/// Single-shot helper for the common "increment-and-return-empty" pattern.
-QVideoFrameTexturesUPtr fail(HwVideoBufferPath path) noexcept;
-#endif
-
 /// Frames successfully delivered via this path.
 void recordDelivered(HwVideoBufferPath path) noexcept;
 quint64 peekDeliveredCount(HwVideoBufferPath path) noexcept;
@@ -78,14 +69,12 @@ private:
     QElapsedTimer _timer;
 };
 
-/// DMABuf EGL fence wait timed out (GPU stall) and fell through to the mmap barrier.
+/// DMABuf wait on the producer's fence (poll() on the dma-buf fd) timed out or failed.
 void recordFenceTimeout(HwVideoBufferPath path) noexcept;
-quint64 peekFenceTimeouts(HwVideoBufferPath path) noexcept;
 quint64 takeFenceTimeouts(HwVideoBufferPath path) noexcept;
 
-/// DMABuf mmap CPU-side completion barrier taken (no usable fence ext).
+/// DMABuf CPU-side completion barrier taken (poll() on the dma-buf fd) because no usable fence ext was present.
 void recordMmapBarrierHit(HwVideoBufferPath path) noexcept;
-quint64 peekMmapBarrierHits(HwVideoBufferPath path) noexcept;
 quint64 takeMmapBarrierHits(HwVideoBufferPath path) noexcept;
 
 /// DMABuf imported the producer's dma-buf/native fence and did a GPU-side wait (skipped the mmap barrier).

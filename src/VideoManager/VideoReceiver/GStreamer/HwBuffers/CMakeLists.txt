@@ -12,6 +12,7 @@ target_sources(
             ${CMAKE_CURRENT_SOURCE_DIR}/common/HwBuffers.h
             ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwPathTelemetry.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwPathTelemetry.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwTypes.h
             ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwVideoBufferFactory.h
             ${CMAKE_CURRENT_SOURCE_DIR}/common/CpuVideoFramePool.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/common/CpuVideoFramePool.h

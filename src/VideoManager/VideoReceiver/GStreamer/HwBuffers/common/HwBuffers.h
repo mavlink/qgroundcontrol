@@ -2,19 +2,18 @@
 
 /// Umbrella header / public facade for the HwBuffers subsystem; per-platform bridges stay internal.
 
+#include <gst/gst.h>
+#include <gst/video/video-info.h>
+
 #include <QtCore/QString>
 #include <QtCore/qglobal.h>
-#include <gst/gst.h>
 
 class QQuickWindow;
 
-// HwVideoBufferContext/Path and telemetry are unconditional (CPU path uses them); GstHwVideoBuffer needs
-// MultimediaPrivate so it's GPU-only.
+// Same in every build and free of EGL/Qt-private headers; GstHwVideoBuffer.h (Qt-private) is included where needed.
 #include "GstHwPathTelemetry.h"
-#include "GstHwVideoBufferFactory.h"  // HwVideoBufferContext, HwVideoBufferPath, makeHwVideoBuffer
-#if defined(QGC_HAS_ANY_GPU_PATH)
-#include "GstHwVideoBuffer.h"
-#endif
+#include "GstHwTypes.h"
+#include "GstHwVideoBufferFactory.h"  // makeHwVideoBuffer, HwResolvedPathCache
 
 namespace HwBuffers {
 
@@ -51,13 +50,18 @@ void resetCachedGpuResources() noexcept;
 /// Wire the main QQuickWindow into the RHI-capture path so snapshots follow its QRhi; no-op without GPU.
 void connectMainWindow(QQuickWindow* window) noexcept;
 
-#if defined(QGC_HAS_ANY_GPU_PATH)
-/// Populate the per-pipeline HwVideoBufferContext (EGL displays, gpu-enabled flag) the factory needs.
+/// Populate the per-pipeline HwVideoBufferContext (EGL displays, gpu-enabled flag) the factory needs. GPU stays
+/// disabled in builds without a GPU path. Safe off the GUI thread.
 HwVideoBufferContext makeAdapterContext(bool gpuEnabled) noexcept;
-#endif
 
 /// Synchronously answer GST_QUERY_CONTEXT (gst.gl.GLDisplay/app_context); false -> let bus NEED_CONTEXT run.
 bool answerSinkBinContextQuery(GstQuery* query) noexcept;
+
+/// Add a buffer pool on Qt's D3D11/D3D12 device to an ALLOCATION query for caps in that memory, so the decoder
+/// allocates on the device the importer samples from. False for any other memory, or before the device bridge is
+/// primed.
+bool proposeDeviceBoundPool(GstQuery* query, GstCaps* caps, const GstVideoInfo* vinfo, gsize size,
+                            guint minBuffers) noexcept;
 
 /// Formatted per-path counters + delivered total; reset=true reads-and-clears (teardown), false peeks.
 struct PathStats
