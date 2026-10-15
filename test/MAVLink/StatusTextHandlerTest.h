@@ -15,7 +15,9 @@ private slots:
     void _testMarkAllRead();
     void _testMarkAllReadThenNewMessage();
     void _testClearMessagesEmitsFormattedMessagesChanged();
-    void _testChunkedStatusTextMissingChunk();
+    void _testChunkedStatusTextReassembly_data();
+    void _testChunkedStatusTextReassembly();
+    void _testChunkedStatusTextLateChunkStartsNewSequence();
     void _testChunkedStatusTextTimeoutAddsEllipsis();
     void _testChunkedStatusTextResetsWhenChunkIdChanges();
     void _testMavlinkMessageReceivedIgnoresNonStatusText();

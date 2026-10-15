@@ -1,5 +1,8 @@
 #pragma once
 
+#include <optional>
+
+#include <QtCore/QByteArray>
 #include <QtCore/QList>
 #include <QtCore/QMap>
 #include <QtCore/QObject>
@@ -89,7 +92,8 @@ private:
     typedef struct __ChunkedStatusTextInfo {
         uint16_t chunkId;
         MAV_SEVERITY severity;
-        QStringList rgMessageChunks;
+        // nullopt marks a chunk that was never received; an empty value is a received NUL-first terminator
+        QList<std::optional<QByteArray>> rgMessageChunks;
     } ChunkedStatusTextInfo_t;
 
     QMap<MAV_COMPONENT, ChunkedStatusTextInfo_t> m_chunkedStatusTextInfoMap;
