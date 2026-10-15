@@ -103,7 +103,9 @@ public slots:
     virtual void stopDecoding() = 0;
     virtual void startRecording(const QString &videoFile, FILE_FORMAT format) = 0;
     virtual void stopRecording() = 0;
-    virtual void takeScreenshot(const QString &imageFile) = 0;
+    /// Saves the frame on display in widget()'s video sink to @p imageFile. Runs on the caller's thread, which must be
+    /// the widget's (the GUI thread).
+    virtual void takeScreenshot(const QString& imageFile);
 
 protected:
     VideoSinkHandle _sink = nullptr;

@@ -1,6 +1,5 @@
 #include "QtMultimediaReceiver.h"
 
-#include <QtGui/QImage>
 #include <QtMultimedia/QMediaCaptureSession>
 #include <QtMultimedia/QMediaFormat>
 #include <QtMultimedia/QMediaMetaData>
@@ -281,46 +280,4 @@ void QtMultimediaReceiver::stopRecording()
     qCDebug(QtMultimediaReceiverLog) << "Stopped Recording";
 
     emit onStopRecordingComplete(STATUS_OK);
-}
-
-void QtMultimediaReceiver::takeScreenshot(const QString& imageFile)
-{
-    qCDebug(QtMultimediaReceiverLog) << Q_FUNC_INFO;
-
-    if (!_videoSink) {
-        qCWarning(QtMultimediaReceiverLog) << "Video Sink is NULL";
-        emit onTakeScreenshotComplete(STATUS_FAIL);
-        return;
-    }
-
-    const QVideoFrame frame = _videoSink->videoFrame();
-    if (!frame.isValid() || !frame.isReadable()) {
-        qCWarning(QtMultimediaReceiverLog) << "Screenshot Frame is Invalid";
-        emit onTakeScreenshotComplete(STATUS_FAIL);
-        return;
-    }
-
-    // toImage() maps RhiTextureHandle frames GPU->CPU internally, yielding the actual decoded
-    // frame rather than a grab of the Quick item (which was the prior broken behavior).
-    const QImage image = frame.toImage();
-    if (!image.isNull()) {
-        if (!image.save(imageFile)) {
-            qCWarning(QtMultimediaReceiverLog) << "Screenshot save failed:" << imageFile;
-            emit onTakeScreenshotComplete(STATUS_FAIL);
-            return;
-        }
-        qCDebug(QtMultimediaReceiverLog) << "Screenshot saved:" << imageFile;
-        emit onTakeScreenshotComplete(STATUS_OK);
-        return;
-    }
-
-    // Fallback only matters for GPU-backed frames; a manual RHI readback here needs the frame's
-    // native texture via private QtMultimedia APIs on the render thread, which is fragile -- fail
-    // loudly instead of hand-rolling it.
-    if (frame.handleType() == QVideoFrame::RhiTextureHandle) {
-        qCWarning(QtMultimediaReceiverLog) << "Screenshot: GPU frame readback unavailable (toImage returned null)";
-    } else {
-        qCWarning(QtMultimediaReceiverLog) << "Screenshot: frame.toImage() returned null";
-    }
-    emit onTakeScreenshotComplete(STATUS_FAIL);
 }

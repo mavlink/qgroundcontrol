@@ -45,8 +45,6 @@ public:
 
     void stopRecording() override {}
 
-    void takeScreenshot(const QString& /*imageFile*/) override {}
-
     int stops = 0;
 };
 

@@ -983,7 +983,7 @@ void GstVideoReceiverTest::_testScreenshotSavesDisplayedFrame()
     const auto receiverCleanup = destroyBeforeSpies(receiver);
 
     const QString path = tempDir.filePath(QStringLiteral("screenshot.png"));
-    expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
+    expectLogMessage("Video.VideoReceiver", QtWarningMsg,
                      QRegularExpression(QStringLiteral("^No video frame to take a screenshot from")));
     receiver->takeScreenshot(path);
     verifyExpectedLogMessage();

@@ -16,10 +16,6 @@
 #include <QtCore/QDeadlineTimer>
 #include <QtCore/QThread>
 #include <QtCore/QTimer>
-#include <QtGui/QImage>
-#include <QtMultimedia/QVideoFrame>
-#include <QtMultimedia/QVideoSink>
-#include <QtMultimediaQuick/private/qquickvideooutput_p.h>
 
 #include "GStreamerHelpers.h"
 #include "GstScoped.h"
@@ -394,36 +390,6 @@ void GstVideoReceiver::startRecording(const QString &videoFile, FILE_FORMAT form
 void GstVideoReceiver::stopRecording()
 {
     _runOnWorker([this]() { _recordingBranch.stop(); });
-}
-
-void GstVideoReceiver::takeScreenshot(const QString& imageFile)
-{
-    // The widget's sink is the one attachAppSink() bound to the video sink, so its frame is the one on display.
-    auto* const videoOutput = qobject_cast<QQuickVideoOutput*>(_widget);
-    QVideoSink* const videoSink = videoOutput ? videoOutput->videoSink() : nullptr;
-    if (!videoSink) {
-        qCWarning(GstVideoReceiverLog) << "No video sink to take a screenshot from" << _name;
-        emit onTakeScreenshotComplete(STATUS_FAIL);
-        return;
-    }
-
-    // toImage() maps a GPU-backed frame back to the CPU.
-    const QVideoFrame frame = videoSink->videoFrame();
-    const QImage image = frame.isValid() ? frame.toImage() : QImage();
-    if (image.isNull()) {
-        qCWarning(GstVideoReceiverLog) << "No video frame to take a screenshot from" << _name;
-        emit onTakeScreenshotComplete(STATUS_FAIL);
-        return;
-    }
-
-    if (!image.save(imageFile)) {
-        qCWarning(GstVideoReceiverLog) << "Failed to save screenshot" << imageFile;
-        emit onTakeScreenshotComplete(STATUS_FAIL);
-        return;
-    }
-
-    qCDebug(GstVideoReceiverLog) << "Screenshot saved:" << imageFile;
-    emit onTakeScreenshotComplete(STATUS_OK);
 }
 
 void GstVideoReceiver::_onWatchdogTick()
