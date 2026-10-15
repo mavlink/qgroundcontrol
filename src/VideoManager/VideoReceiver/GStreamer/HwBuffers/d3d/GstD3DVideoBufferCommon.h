@@ -132,7 +132,10 @@ public:
             return;
         for (int i = 0; i < _count; ++i) {
             const QSize planeSize = desc->rhiPlaneSize(size, i, rhi);
-            _textures[i].reset(rhi->newTexture(desc->rhiTextureFormat(i, rhi), planeSize, 1, {}));
+            // Native import: a substituted fallback format would misread the resource's real layout.
+            _textures[i].reset(rhi->newTexture(
+                desc->rhiTextureFormat(i, rhi, QVideoTextureHelper::TextureDescription::FallbackPolicy::Disable),
+                planeSize, 1, {}));
             if (_textures[i] && !_textures[i]->createFrom({reinterpret_cast<quint64>(handles[i]), 0})) {
                 _textures[i].reset();
             }
@@ -148,6 +151,9 @@ public:
     }
 
     HwVideoBufferPath sourcePath() const override { return _path; }
+
+    /// Keeps backend-owned state (D3D12 staging slot leases) alive for as long as QRhi may sample this bundle.
+    void setKeepAlive(std::shared_ptr<void> keepAlive) noexcept { _keepAlive = std::move(keepAlive); }
 
     /// Reuse-eligible when the pooled staging handles are identical: the pool rotates a stable set of resources, so the
     /// existing QRhiTexture views transparently sample the newly-copied frame.
@@ -167,6 +173,7 @@ public:
 
 private:
     std::array<HandleT*, kMaxPlanes> _handles;
+    std::shared_ptr<void> _keepAlive;
     HwVideoBufferPath _path = HwVideoBufferPath::None;
     QRhi* _rhi = nullptr;
     QSize _size;
@@ -184,7 +191,8 @@ QVideoFrameTexturesUPtr mapResolvedTextures(GstHwVideoBuffer& self, QRhi& rhi, Q
                                             const std::array<HandleT*, kMaxPlanes>& resolvedHandles, int resolvedCount,
                                             QSize frameSize, QVideoFrameFormat::PixelFormat pixelFormat,
                                             std::atomic<bool>& loggedFirstSuccess,
-                                            std::atomic<bool>& loggedTextureCreateFail, CatFn catFn, const char* tag)
+                                            std::atomic<bool>& loggedTextureCreateFail, CatFn catFn, const char* tag,
+                                            const std::shared_ptr<void>& keepAlive = {})
 {
     using BundleT = FrameTextures<HandleT>;
 
@@ -217,6 +225,7 @@ QVideoFrameTexturesUPtr mapResolvedTextures(GstHwVideoBuffer& self, QRhi& rhi, Q
         if (prev->matches(&rhi, frameSize, pixelFormat, handles, textureCount)) {
             GstHwPathTelemetry::recordTextureReuse(path);
             prev->setSourceSample(self.takeSample());
+            prev->setKeepAlive(keepAlive);
             QVideoFrameTexturesUPtr reused = std::move(old);
             return reused;
         }
@@ -247,6 +256,7 @@ QVideoFrameTexturesUPtr mapResolvedTextures(GstHwVideoBuffer& self, QRhi& rhi, Q
 
     GstHwVideoBuffer::logFirstSuccess(loggedFirstSuccess, catFn(), tag, frameSize, pixelFormat, textureCount);
     textures->setSourceSample(self.takeSample());
+    textures->setKeepAlive(keepAlive);
     return textures;
 }
 

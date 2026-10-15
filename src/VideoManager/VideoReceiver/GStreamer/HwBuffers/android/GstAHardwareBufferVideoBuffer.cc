@@ -147,6 +147,33 @@ bool insertCacheEntryLocked(QRhi* rhi, AHardwareBuffer* ahb, EGLDisplay eglDpy, 
     return true;
 }
 
+// QRhi cleanup callback (runs in ~QRhi on its render thread while its GL context still exists, after Qt destroyed the
+// frame bundles holding pins): drop every entry keyed on @p rhi, so a QRhi later allocated at the same address can
+// never hit a texture name from the dead context.
+void purgeImageCacheForRhi(QRhi* rhi)
+{
+    rhi->makeThreadLocalNativeContextCurrent();
+    QOpenGLContext* ctx = QOpenGLContext::currentContext();
+    QOpenGLFunctions* gl = ctx ? ctx->functions() : nullptr;
+    static const auto eglDestroyImageKHR_ =
+        reinterpret_cast<PFNEGLDESTROYIMAGEKHRPROC>(eglGetProcAddress("eglDestroyImageKHR"));
+
+    QMutexLocker lock(&s_imageCacheMutex);
+    for (auto& e : s_imageCache) {
+        if (e.rhi == rhi && e.textureName != 0) {
+            destroyCacheEntryLocked(e, eglDestroyImageKHR_, gl);
+        }
+    }
+    for (auto it = s_deferredImageCache.begin(); it != s_deferredImageCache.end();) {
+        if (it->rhi == rhi) {
+            destroyCacheEntryLocked(*it, eglDestroyImageKHR_, gl);
+            it = s_deferredImageCache.erase(it);
+        } else {
+            ++it;
+        }
+    }
+}
+
 void clearImageCacheLocked(PFNEGLDESTROYIMAGEKHRPROC destroyImage, QOpenGLFunctions* gl)
 {
     drainDeferredImageCacheLocked(destroyImage, gl);
@@ -269,15 +296,15 @@ private:
 };
 
 // MediaCodec writes the AHB asynchronously; without a producer-side wait the EGLImage import can sample a half-written,
-// recycled buffer (tearing). Only the buffer's GstGLSyncMeta is a real producer fence — it carries the decoder's
-// GPU-completion point. A consumer-side EGL fence (glFlush + eglCreateSync in the GL context) cannot observe
-// MediaCodec's async write, so it would synchronise nothing while masking the hazard; we deliberately do not use one.
-// When no sync meta is present, warn once and proceed (no bogus barrier).
+// recycled buffer (tearing). MediaCodec AHB buffers carry no GstGLSyncMeta and the gstandroid memory API exposes no
+// acquire fence, so in practice no producer wait happens here; a sync meta is only present when a gst-gl element
+// produced the buffer. A consumer-side EGL fence cannot observe MediaCodec's write, so none is used.
 void waitProducerComplete(GstBuffer* buffer)
 {
     if (GstGLSyncMeta* syncMeta = buffer ? gst_buffer_get_gl_sync_meta(buffer) : nullptr) {
         if (GstGLContext* glObj = syncMeta->context) {
-            gst_gl_sync_meta_wait(syncMeta, glObj);
+            // CPU wait: gst_gl_sync_meta_wait() would only order the producer's own context, not Qt's.
+            gst_gl_sync_meta_wait_cpu(syncMeta, glObj);
             return;
         }
     }
@@ -467,6 +494,9 @@ QVideoFrameTexturesUPtr GstAHardwareBufferVideoBuffer::mapTextures(QRhi& rhi, QV
             eglDestroyImageKHR_(eglDpy, image);
             functions.glDeleteTextures(1, &name);
             name = 0;
+        } else {
+            // Keyed: registered once per QRhi however many entries it inserts.
+            rhi.addCleanupCallback(&s_imageCache, purgeImageCacheForRhi);
         }
         acquireCacheEntryLocked(name);  // provisional pin (no-op if name == 0)
     }

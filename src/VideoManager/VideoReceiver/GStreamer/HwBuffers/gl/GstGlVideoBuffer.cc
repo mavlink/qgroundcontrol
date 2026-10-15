@@ -25,6 +25,13 @@
 #include <algorithm>
 #include <array>
 
+#ifndef GL_TIMEOUT_IGNORED
+#define GL_TIMEOUT_IGNORED 0xFFFFFFFFFFFFFFFFull
+#endif
+
+#include <QtGui/QOpenGLContext>
+#include <QtGui/QOpenGLExtraFunctions>
+
 QGC_LOGGING_CATEGORY(GstGlBufLog, "Video.GStreamer.HwBuffers.GstGlBuf")
 
 namespace {
@@ -79,10 +86,35 @@ struct GlTexKeyHash
     }
 };
 
-// Render-thread-confined (mapTextures runs on the QRhi thread): no locking needed. Values are non-owning markers — the
-// GL textures belong to gst-gl, so the deleter is a no-op; the cache only tracks ring membership for reuse telemetry.
+// Per render thread (each window has its own QRhi thread): no locking needed. Values are non-owning markers — the GL
+// textures belong to gst-gl, so the deleter is a no-op; the cache only tracks ring membership for reuse telemetry.
 constexpr std::size_t kGlRingCapacity = 8;
-GstHw::GstHwImportCache<GlTexKey, char, GlTexKeyHash> s_glRingCache{kGlRingCapacity, [](const GlTexKey&, char&) {}};
+thread_local GstHw::GstHwImportCache<GlTexKey, char, GlTexKeyHash> s_glRingCache{kGlRingCapacity,
+                                                                                 [](const GlTexKey&, char&) {}};
+
+// Orders Qt's context after gst-gl's fence. gst_gl_sync_meta_wait() would wait inside gst-gl's own context and leave
+// Qt's unordered; GL sync objects are shared across the share group, so Qt's context waits on the GLsync server-side.
+// CPU wait when Qt's context has no sync objects or the meta carries no GLsync (a custom meta, or gst-gl without
+// fences).
+void waitInQtContext(GstGLSyncMeta* syncMeta, GstGLContext* glCtx)
+{
+    QOpenGLContext* qtCtx = QOpenGLContext::currentContext();
+    const auto sync = static_cast<GLsync>(syncMeta->data);
+    if (qtCtx && sync) {
+        const QSurfaceFormat format = qtCtx->format();
+        const bool hasSyncObjects = qtCtx->isOpenGLES() ? format.majorVersion() >= 3
+                                                        : (format.version() >= qMakePair(3, 2) ||
+                                                           qtCtx->hasExtension(QByteArrayLiteral("GL_ARB_sync")));
+        QOpenGLExtraFunctions* gl = hasSyncObjects ? qtCtx->extraFunctions() : nullptr;
+        if (gl && gl->glIsSync(sync)) {
+            gl->glWaitSync(sync, 0, GL_TIMEOUT_IGNORED);
+            GstHwPathTelemetry::recordSyncWait(HwVideoBufferPath::GlMemory, /*gpuSide=*/true);
+            return;
+        }
+    }
+    gst_gl_sync_meta_wait_cpu(syncMeta, glCtx);
+    GstHwPathTelemetry::recordSyncWait(HwVideoBufferPath::GlMemory, /*gpuSide=*/false);
+}
 
 }  // namespace
 
@@ -122,7 +154,9 @@ QVideoFrameTexturesUPtr GstGlVideoBuffer::mapTextures(QRhi& rhi, QVideoFrameText
         return GstHwPathTelemetry::fail(HwVideoBufferPath::GlMemory);
     }
 
-    // Mirror Qt's mapFromGlTexture: set_sync_point + GPU-side wait; synthesize meta when upstream omits one.
+    // Always set a fresh sync point after the GST_MAP_GL map above: glupload attaches its meta without one and uploads
+    // lazily on that map, so an upstream sync point would predate the upload. Synthesize a meta when upstream omits
+    // one.
     GstGLContext* glCtx = GST_GL_BASE_MEMORY_CAST(mem0)->context;
     if (glCtx) {
         GstGLSyncMeta* syncMeta = gst_buffer_get_gl_sync_meta(buffer);
@@ -140,8 +174,7 @@ QVideoFrameTexturesUPtr GstGlVideoBuffer::mapTextures(QRhi& rhi, QVideoFrameText
         }
         if (syncMeta) {
             gst_gl_sync_meta_set_sync_point(syncMeta, glCtx);
-            gst_gl_sync_meta_wait(syncMeta, glCtx);
-            GstHwPathTelemetry::recordSyncWait(HwVideoBufferPath::GlMemory, /*gpuSide=*/true);
+            waitInQtContext(syncMeta, glCtx);
         }
         if (throwaway) {
             gst_buffer_unref(throwaway);

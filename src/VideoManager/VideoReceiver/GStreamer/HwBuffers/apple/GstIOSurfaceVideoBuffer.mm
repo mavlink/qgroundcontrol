@@ -16,10 +16,6 @@
 #include <rhi/qrhi.h>
 
 #include <gst/video/video.h>
-#if defined(__has_include) && __has_include(<gst/applemedia/coremediabuffer.h>)
-#define QGC_HAS_PUBLIC_CORE_VIDEO_META 1
-#include <gst/applemedia/coremediabuffer.h>
-#endif
 
 #include <CoreVideo/CoreVideo.h>
 #include <CoreVideo/CVMetalTexture.h>
@@ -44,6 +40,7 @@ using GstHw::kMaxPlanes;
 struct IOSurfaceDiagnostics : GstHw::MapDiagnostics
 {
     std::atomic<bool> loggedNoMemory{false};
+    std::atomic<bool> loggedMetaLayoutMismatch{false};
     std::atomic<bool> loggedPixelBufferExtractFail{false};
     std::atomic<bool> loggedNoIOSurface{false};
     std::atomic<bool> loggedNoMtlDevice{false};
@@ -134,7 +131,10 @@ public:
         }
         for (int i = 0; i < _count; ++i) {
             const QSize planeSize = desc->rhiPlaneSize(size, i, rhi);
-            _textures[i].reset(rhi->newTexture(desc->rhiTextureFormat(i, rhi), planeSize, 1, {}));
+            // Native import: a substituted fallback format would misread the IOSurface plane.
+            _textures[i].reset(rhi->newTexture(
+                desc->rhiTextureFormat(i, rhi, QVideoTextureHelper::TextureDescription::FallbackPolicy::Disable),
+                planeSize, 1, {}));
             const quint64 handle = reinterpret_cast<quint64>(static_cast<void*>(mtex[i]));
             if (_textures[i] && !_textures[i]->createFrom({handle, 0})) {
                 QGC_HW_WARN_ONCE(GstIOSurfaceLog, s_diag.loggedRhiCreateFromFail,
@@ -245,30 +245,25 @@ QVideoFrameTexturesUPtr GstIOSurfaceVideoBuffer::mapTextures(QRhi &rhi, QVideoFr
         return GstHwPathTelemetry::fail(HwVideoBufferPath::IOSurface);
     }
 
-    // Prefer gst-applemedia's public GstCoreVideoMeta when its header is installed (included at file top); otherwise
-    // fall back to the hand-mirrored layout (gst-plugins-bad <= 1.28 ships no public applemedia header), verified
-    // against upstream coremediabuffer.h: { GstMeta meta; GstBuffer *buf; CVBufferRef cvbuf; CVPixelBufferRef pixbuf; }.
-#if defined(QGC_HAS_PUBLIC_CORE_VIDEO_META)
-    using _QgcCoreVideoMeta = GstCoreVideoMeta;
-#else
-    struct _QgcCoreVideoMeta { GstMeta meta; GstBuffer *buf; CVBufferRef cvbuf; CVPixelBufferRef pixbuf; };
-    // Punning relies on cvbuf/pixbuf sitting right after the GstMeta+GstBuffer* prefix; a layout drift here would read
-    // garbage CFTypeRefs, so fail the build loudly instead.
-    static_assert(sizeof(_QgcCoreVideoMeta) == sizeof(GstMeta) + sizeof(GstBuffer *) + 2 * sizeof(CVBufferRef),
-                  "GstCoreVideoMeta layout drift — re-check gst-plugins-bad coremediabuffer.h");
-    static_assert(offsetof(_QgcCoreVideoMeta, pixbuf) > offsetof(_QgcCoreVideoMeta, cvbuf),
-                  "GstCoreVideoMeta pixbuf must follow cvbuf");
-#endif
+    // Mirror of GstCoreVideoMeta from gst-plugins-bad sys/applemedia/corevideobuffer.h (plugin-private, not installed;
+    // identical in 1.20-1.28). The registered meta size is checked below before reading past the GstMeta header.
+    struct CoreVideoMetaMirror { GstMeta meta; CVBufferRef cvbuf; CVPixelBufferRef pixbuf; };
     static std::atomic<GType> s_coreVideoMetaApiType{0};
     GType coreVideoMetaApiType = s_coreVideoMetaApiType.load(std::memory_order_acquire);
     if (G_UNLIKELY(coreVideoMetaApiType == 0)) {
         coreVideoMetaApiType = g_type_from_name("GstCoreVideoMetaAPI");
         s_coreVideoMetaApiType.store(coreVideoMetaApiType, std::memory_order_release);
     }
-    auto *cvMeta = reinterpret_cast<_QgcCoreVideoMeta *>(
+    auto *cvMeta = reinterpret_cast<CoreVideoMetaMirror *>(
         coreVideoMetaApiType ? gst_buffer_get_meta(buffer, coreVideoMetaApiType) : nullptr);
     if (!cvMeta) {
         QGC_HW_WARN_ONCE(GstIOSurfaceLog, s_diag.loggedNoMemory, "mapTextures: GstCoreVideoMeta not found on buffer");
+        return GstHwPathTelemetry::fail(HwVideoBufferPath::IOSurface);
+    }
+    if (!cvMeta->meta.info || cvMeta->meta.info->size != sizeof(CoreVideoMetaMirror)) {
+        QGC_HW_WARN_ONCE(GstIOSurfaceLog, s_diag.loggedMetaLayoutMismatch,
+                  "mapTextures: GstCoreVideoMeta size" << (cvMeta->meta.info ? cvMeta->meta.info->size : 0)
+                  << "!= mirrored layout size" << sizeof(CoreVideoMetaMirror) << "— upstream layout changed");
         return GstHwPathTelemetry::fail(HwVideoBufferPath::IOSurface);
     }
 

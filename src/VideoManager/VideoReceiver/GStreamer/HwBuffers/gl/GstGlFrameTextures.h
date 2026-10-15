@@ -14,12 +14,12 @@
 class GstGlFrameTextures : public GstHwFrameTexturesBase
 {
 public:
-    using FallbackPolicy = QVideoTextureHelper::TextureDescription::FallbackPolicy;
-
     GstGlFrameTextures(QRhi* rhi, QSize size, QVideoFrameFormat::PixelFormat pixelFormat,
-                       std::array<GLuint, GstHw::kMaxPlanes> names, int count,
-                       FallbackPolicy fallback = FallbackPolicy::Enable)
-        : _rhi(rhi), _size(size), _pixelFormat(pixelFormat), _names(names)
+                       std::array<GLuint, GstHw::kMaxPlanes> names, int count)
+        : _rhi(rhi)
+        , _size(size)
+        , _pixelFormat(pixelFormat)
+        , _names(names)
     {
         _count = count;
         const auto* desc = QVideoTextureHelper::textureDescription(pixelFormat);
@@ -31,7 +31,10 @@ public:
             if (_names[i] == 0)
                 continue;
             const QSize planeSize = desc->rhiPlaneSize(size, i, rhi);
-            _textures[i].reset(rhi->newTexture(desc->rhiTextureFormat(i, rhi, fallback), planeSize, 1, {}));
+            // Native import: a substituted fallback format would misread the texture's real layout.
+            _textures[i].reset(rhi->newTexture(
+                desc->rhiTextureFormat(i, rhi, QVideoTextureHelper::TextureDescription::FallbackPolicy::Disable),
+                planeSize, 1, {}));
             if (_textures[i] && !_textures[i]->createFrom({_names[i], 0})) {
                 _textures[i].reset();
             }

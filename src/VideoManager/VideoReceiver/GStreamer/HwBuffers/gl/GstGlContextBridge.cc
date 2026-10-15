@@ -30,8 +30,8 @@
 #define QGC_GST_BRIDGE_HAS_GLX 1
 #endif
 // Wayland: downstream elements probe GST_IS_GL_DISPLAY_WAYLAND; wl_display must be tagged on GstGLDisplay or zero-copy
-// paths are silently missed.
-#if __has_include(<gst/gl/wayland/gstgldisplay_wayland.h>)
+// paths are silently missed. Only from 1.26, where the EGL display gst derives from it can be marked foreign.
+#if __has_include(<gst/gl/wayland/gstgldisplay_wayland.h>) && GST_CHECK_VERSION(1, 26, 0)
 #include <gst/gl/wayland/gstgldisplay_wayland.h>
 #define QGC_GST_BRIDGE_HAS_WAYLAND 1
 #endif
@@ -109,7 +109,8 @@ bool primeLocked()
     if (eglCtx != EGL_NO_CONTEXT && eglDisp != EGL_NO_DISPLAY) {
 #if defined(QGC_GST_BRIDGE_HAS_WAYLAND)
         // On Wayland, primary display must be GstGLDisplayWayland; derived EGL display is marked foreign so unref
-        // doesn't tear down Qt's EGLDisplay.
+        // doesn't tear down Qt's EGLDisplay. Before 1.26 that derived display can't be marked foreign and its finalize
+        // eglTerminate()s Qt's display, so older GStreamer takes the foreign EGL wrap below instead.
         const QString platformName = QGuiApplication::platformName();
         if (platformName == QLatin1String("wayland") || platformName == QLatin1String("wayland-egl")) {
             struct wl_display* wlDisp = nullptr;
@@ -120,19 +121,17 @@ bool primeLocked()
                 GstGLDisplayWayland* displayWl = gst_gl_display_wayland_new_with_display(wlDisp);
                 if (displayWl) {
                     s_display = GST_GL_DISPLAY(displayWl);
-#if GST_CHECK_VERSION(1, 26, 0)
-                    // set_foreign(TRUE) is mandatory: Qt owns the EGLDisplay; without it gst calls eglTerminate on Qt's
-                    // display.
                     if (GstGLDisplayEGL* derived = gst_gl_display_egl_from_gl_display(s_display)) {
                         gst_gl_display_egl_set_foreign(derived, TRUE);
                         gst_object_unref(derived);
                     }
-#endif
                 }
             }
         }
 #endif
         if (!s_display) {
+            // Marked foreign: finalize never eglTerminate()s Qt's EGLDisplay, and gst_gl_display_egl_from_gl_display()
+            // returns this same object rather than deriving a non-foreign one.
             GstGLDisplayEGL* displayEgl = gst_gl_display_egl_new_with_egl_display(eglDisp);
             if (!displayEgl) {
                 qCWarning(GstGlBridgeLog) << "gst_gl_display_egl_new_with_egl_display failed";

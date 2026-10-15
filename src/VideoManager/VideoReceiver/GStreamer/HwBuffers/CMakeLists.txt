@@ -112,9 +112,10 @@ if(LINUX AND _qgc_dmabuf_path_enabled)
     if(_qgc_cuda_inc AND PkgConfig_FOUND)
         pkg_check_modules(PC_GStreamer_Cuda QUIET gstreamer-cuda-1.0)
         if(PC_GStreamer_Cuda_FOUND)
-            qgc_check_gst_header(VAR QGC_GST_HAS_CUDA HEADER gst/cuda/gstcuda.h SYMBOL gst_is_cuda_memory
+            # gst_cuda_memory_export (the export the path relies on) is 1.24+; gst_is_cuda_memory alone passes on 1.22.
+            qgc_check_gst_header(VAR QGC_GST_HAS_CUDA_EXPORT HEADER gst/cuda/gstcuda.h SYMBOL gst_cuda_memory_export
                 INCLUDES ${_qgc_cuda_inc} ${PC_GStreamer_Cuda_INCLUDE_DIRS})
-            if(QGC_GST_HAS_CUDA)
+            if(QGC_GST_HAS_CUDA_EXPORT)
                 set(_gst_cuda_found TRUE)
             endif()
         endif()
@@ -131,7 +132,8 @@ if(LINUX AND _qgc_dmabuf_path_enabled)
             DEFINE QGC_HAS_GST_CUDA_GPU_PATH
             LOG    "CUDA/NVMM zero-copy GPU path enabled (DMABuf export)")
     else()
-        message(STATUS "QGCGStreamer: gst-cuda (gst/cuda/gstcuda.h + cuda.h + gstreamer-cuda-1.0) not found — CUDA GPU path disabled")
+        message(STATUS "QGCGStreamer: gst-cuda 1.24+ (gst/cuda/gstcuda.h + cuda.h + gstreamer-cuda-1.0) not found"
+                       " — CUDA GPU path disabled")
     endif()
 endif()
 

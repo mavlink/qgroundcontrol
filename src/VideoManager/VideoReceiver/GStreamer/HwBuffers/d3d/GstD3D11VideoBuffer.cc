@@ -201,7 +201,9 @@ void GstD3D11VideoBuffer::resolvePlaneResources()
             // currentDevice() is transfer-full — unref both branches to avoid UAF after reset().
             GstD3D11Device* bridgeDev = GstD3D11ContextBridge::currentDevice();
             GstD3D11Device* bufDev = GST_D3D11_MEMORY_CAST(mem)->device;
-            if (bridgeDev && bufDev != bridgeDev) {
+            // Compare the wrapped ID3D11Device, not the wrapper: each bridge prime wraps QRhi's device anew.
+            if (bridgeDev &&
+                gst_d3d11_device_get_device_handle(bufDev) != gst_d3d11_device_get_device_handle(bridgeDev)) {
                 const gint64 bridgeLuid = GstD3DContextBridgeCommon::readAdapterLuid(bridgeDev);
                 const gint64 bufLuid = GstD3DContextBridgeCommon::readAdapterLuid(bufDev);
                 gst_object_unref(bridgeDev);

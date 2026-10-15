@@ -5,6 +5,7 @@
 #if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D12_GPU_PATH)
 
 #include <array>
+#include <memory>
 
 #include "GstHwVideoBuffer.h"
 
@@ -36,6 +37,8 @@ private:
     std::array<ID3D12Resource*, GstHw::kMaxPlanes> _resources{};
     int _resolvedCount = 0;
     bool _resolved = false;
+    /// Staging ring slots backing sliced planes; shared with the frame bundle so they stay leased while QRhi samples.
+    std::shared_ptr<void> _stagingLeases;
 };
 
 #endif  // Q_OS_WIN && QGC_HAS_GST_D3D12_GPU_PATH

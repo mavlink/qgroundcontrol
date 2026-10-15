@@ -6,7 +6,6 @@
 #include <gst/cuda/gstcuda.h>
 #include <gst/video/video.h>
 #include <memory>
-#include <unistd.h>
 
 #include "GstDmaBufVideoBuffer.h"
 
@@ -22,8 +21,11 @@ int exportCudaMemoryToFd(GstMemory* mem)
     }
     auto* cudaMem = reinterpret_cast<GstCudaMemory*>(mem);
 
-    // Linux: os_handle is an int* receiving a POSIX file descriptor (CU_MEM_HANDLE_TYPE_POSIX_FILE_DESCRIPTOR).
-    // gst_cuda_memory_export hands us an owned fd; we transfer it to the dmabuf allocator below.
+    // The decoder's CUDA stream may still be writing; the EGL import has no ordering against it.
+    gst_cuda_memory_sync(cudaMem);
+
+    // Linux: os_handle is an int* receiving a POSIX file descriptor (CU_MEM_HANDLE_TYPE_POSIX_FILE_DESCRIPTOR). The fd
+    // stays owned by @p mem (closed when the CUDA memory is freed) and is reused across exports.
     int fd = -1;
     if (!gst_cuda_memory_export(cudaMem, &fd) || fd < 0) {
         return -1;
@@ -53,27 +55,28 @@ std::unique_ptr<GstHwVideoBuffer> exportToDmaBuf(GstSample* sample, const GstVid
         return nullptr;
     }
 
-    GstAllocator* allocator = gst_dmabuf_allocator_new();
-    if (!allocator) {
-        close(fd);
+    // Process-lifetime allocator; memories hold their own ref on it.
+    static GstAllocator* const s_dmabufAllocator = gst_dmabuf_allocator_new();
+    if (!s_dmabufAllocator) {
         return nullptr;
     }
 
-    // Allocator takes ownership of fd; on success it is closed when dmaMem (and the GstBuffer wrapping it) is unreffed.
-    GstMemory* dmaMem = gst_dmabuf_allocator_alloc(allocator, fd, gst_memory_get_sizes(mem0, nullptr, nullptr));
+    // DONT_CLOSE: the fd belongs to the CUDA memory, which the parent-buffer meta below keeps alive.
+    GstMemory* dmaMem = gst_dmabuf_allocator_alloc_with_flags(
+        s_dmabufAllocator, fd, gst_memory_get_sizes(mem0, nullptr, nullptr), GST_FD_MEMORY_FLAG_DONT_CLOSE);
     if (!dmaMem) {
-        close(fd);
-        gst_object_unref(allocator);
         return nullptr;
     }
 
     GstBuffer* dmaBuffer = gst_buffer_new();
     if (!dmaBuffer) {
         gst_memory_unref(dmaMem);
-        gst_object_unref(allocator);
         return nullptr;
     }
     gst_buffer_append_memory(dmaBuffer, dmaMem);
+    // Pin the CUDA buffer until the render thread drops this frame, else it returns to the decoder pool and is
+    // rewritten while still being sampled.
+    gst_buffer_add_parent_buffer_meta(dmaBuffer, buffer);
 
     // Carry the source GstVideoMeta so GstDmaBufVideoBuffer reads correct per-plane offsets/strides without mmapping.
     if (GstVideoMeta* srcMeta = gst_buffer_get_video_meta(buffer)) {
@@ -90,14 +93,12 @@ std::unique_ptr<GstHwVideoBuffer> exportToDmaBuf(GstSample* sample, const GstVid
     GstSample* dmaSample = gst_sample_new(dmaBuffer, caps, nullptr, nullptr);
     gst_buffer_unref(dmaBuffer);
     if (!dmaSample) {
-        gst_object_unref(allocator);
         return nullptr;
     }
 
-    // GstHwVideoBuffer refs the sample; our local refs (sample + allocator) drop here.
+    // GstHwVideoBuffer refs the sample; our local ref drops here.
     auto buf = std::make_unique<GstDmaBufVideoBuffer>(dmaSample, info, format, context.dmaBufEglDisplay);
     gst_sample_unref(dmaSample);
-    gst_object_unref(allocator);
     return buf;
 }
 

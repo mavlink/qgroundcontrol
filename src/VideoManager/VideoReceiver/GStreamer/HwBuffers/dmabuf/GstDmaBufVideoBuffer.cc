@@ -305,7 +305,7 @@ class FrameTextures final : public GstGlFrameTextures
 public:
     FrameTextures(QRhi* rhi, QSize size, QVideoFrameFormat::PixelFormat pixelFormat,
                   std::array<GLuint, kMaxPlanes> names, int count)
-        : GstGlFrameTextures(rhi, size, pixelFormat, names, count, FallbackPolicy::Disable)
+        : GstGlFrameTextures(rhi, size, pixelFormat, names, count)
     {}
 
     ~FrameTextures() override

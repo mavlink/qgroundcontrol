@@ -30,9 +30,7 @@ using GstD3DVideoBufferCommon::StagingKeyHash;
 
 MapDiagnostics s_diag;
 
-/// Per-key pooled COPY/DIRECT-queue objects: staging resource plus the allocator/list that record the slice copy.
-/// Per-frame allocator Reset() is safe because resolvePlaneResources() fence-waits before returning, so the prior
-/// submit has completed.
+/// One ring slot's COPY/DIRECT-queue objects: staging resource plus the allocator/list that record its slice copy.
 struct StagingEntry
 {
     ID3D12Resource* resource = nullptr;
@@ -82,13 +80,6 @@ public:
 
     ID3D12GraphicsCommandList* list() const noexcept { return _entry.list; }
 
-    ID3D12Resource* takeResource() noexcept
-    {
-        ID3D12Resource* resource = _entry.resource;
-        _entry.resource = nullptr;
-        return resource;
-    }
-
 private:
     StagingEntry _entry;
 };
@@ -104,8 +95,41 @@ StagingEntryRef addRefEntry(const StagingEntry& e)
     return StagingEntryRef(e);
 }
 
-/// Caches StagingEntry per (size, format, plane); pool owns one ref on each held COM object, acquire() returns the
-/// COM objects AddRef'd.
+// Covers the slots a stream keeps leased (Qt's FramesInFlight bundles, the frames queued towards them and the one being
+// resolved) plus spares, so round-robin reuses a slot released at least one acquisition earlier, after QRhi's last
+// sample of it. Exhaustion (e.g. several same-key streams) fails the resolve and demotes the frame to CPU.
+constexpr std::size_t kStagingRingSize = 8;
+
+using StagingLeaseFlags = std::array<std::atomic<bool>, kStagingRingSize>;
+
+/// Holds one ring slot, plus refs on its COM objects, from acquire() until the last holder (the GstD3D12VideoBuffer and
+/// the frame bundle QRhi samples) drops it; another stream or a later frame can't reset its allocator/list or overwrite
+/// its resource meanwhile. Its copy has completed by the time the first holder exists (resolvePlaneResources
+/// fence-waits), so the next acquirer may Reset() the allocator immediately.
+class StagingSlotLease
+{
+public:
+    StagingSlotLease(std::shared_ptr<StagingLeaseFlags> flags, std::size_t slot, StagingEntryRef entry)
+        : _flags(std::move(flags))
+        , _slot(slot)
+        , _entry(std::move(entry))
+    {}
+
+    ~StagingSlotLease() { (*_flags)[_slot].store(false, std::memory_order_release); }
+
+    StagingSlotLease(const StagingSlotLease&) = delete;
+    StagingSlotLease& operator=(const StagingSlotLease&) = delete;
+
+    const StagingEntryRef& entry() const noexcept { return _entry; }
+
+private:
+    std::shared_ptr<StagingLeaseFlags> _flags;
+    std::size_t _slot;
+    StagingEntryRef _entry;
+};
+
+/// Per (size, format, plane) ring of staging slots, each with its own allocator/list so concurrent streams never record
+/// into the same command objects. The pool owns one ref on each created COM object; leases add their own.
 class StagingResourcePool
 {
 public:
@@ -117,45 +141,38 @@ public:
 
     ~StagingResourcePool() { clear(); }
 
-    /// Returns AddRef'd pooled COM objects for @p key (creating them on a miss). Returns an invalid ref on creation
-    /// failure.
-    StagingEntryRef acquire(ID3D12Device* dev, D3D12_COMMAND_LIST_TYPE queueType, const StagingKey& key,
-                            const D3D12_RESOURCE_DESC& dstDesc, const D3D12_HEAP_PROPERTIES& heapProps, int planeIdx,
-                            guint subIdx)
+    /// Leases the next free slot for @p key round-robin, creating its objects on first use. nullptr when creation fails
+    /// or every slot is leased.
+    std::shared_ptr<StagingSlotLease> acquire(ID3D12Device* dev, D3D12_COMMAND_LIST_TYPE queueType,
+                                              const StagingKey& key, const D3D12_RESOURCE_DESC& dstDesc,
+                                              const D3D12_HEAP_PROPERTIES& heapProps, int planeIdx, guint subIdx)
     {
         QMutexLocker lock(&_mutex);
-        StagingEntry* cachedEntry = _entries.find(key);
-        if (cachedEntry && cachedEntry->resource && cachedEntry->allocator && cachedEntry->list) {
-            GstHwPathTelemetry::recordImageCacheHit(HwVideoBufferPath::D3D12);
-            return addRefEntry(*cachedEntry);
+        StagingRing* ring = _entries.find(key);
+        if (!ring) {
+            _entries.insert(key, StagingRing{});
+            ring = _entries.find(key);
         }
-
-        StagingEntry e;
-        if (FAILED(dev->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &dstDesc, D3D12_RESOURCE_STATE_COMMON,
-                                                nullptr, IID_PPV_ARGS(&e.resource)))) {
-            QGC_HW_WARN_ONCE(GstD3D12Log, s_diag.loggedTextureCreateFail,
-                             "mapTextures: CreateCommittedResource for slice copy failed (plane="
-                                 << planeIdx << " subresource=" << subIdx << ")");
-            return {};
+        for (std::size_t probe = 0; probe < kStagingRingSize; ++probe) {
+            const std::size_t slot = (ring->next + probe) % kStagingRingSize;
+            if ((*ring->leased)[slot].exchange(true, std::memory_order_acq_rel)) {
+                continue;
+            }
+            StagingEntry& e = ring->entries[slot];
+            if (e.resource) {
+                GstHwPathTelemetry::recordImageCacheHit(HwVideoBufferPath::D3D12);
+            } else if (createEntry(dev, queueType, dstDesc, heapProps, planeIdx, subIdx, e)) {
+                GstHwPathTelemetry::recordImageCacheMiss(HwVideoBufferPath::D3D12);
+            } else {
+                (*ring->leased)[slot].store(false, std::memory_order_release);
+                return nullptr;
+            }
+            ring->next = (slot + 1) % kStagingRingSize;
+            return std::make_shared<StagingSlotLease>(ring->leased, slot, addRefEntry(e));
         }
-        if (FAILED(dev->CreateCommandAllocator(queueType, IID_PPV_ARGS(&e.allocator))) ||
-            FAILED(dev->CreateCommandList(0, queueType, e.allocator, nullptr, IID_PPV_ARGS(&e.list)))) {
-            QGC_HW_WARN_ONCE(GstD3D12Log, s_diag.loggedTextureCreateFail,
-                             "mapTextures: command allocator/list create failed (plane=" << planeIdx << ")");
-            if (e.list)
-                e.list->Release();
-            if (e.allocator)
-                e.allocator->Release();
-            e.resource->Release();
-            return {};
-        }
-        // Freshly created lists are open; close so the per-frame Reset() path is uniform.
-        e.list->Close();
-
-        StagingEntryRef ref = addRefEntry(e);
-        _entries.insert(key, e);
-        GstHwPathTelemetry::recordImageCacheMiss(HwVideoBufferPath::D3D12);
-        return ref;
+        QGC_HW_WARN_ONCE(GstD3D12Log, s_diag.loggedTextureCreateFail,
+                         "resolve: every staging slot is in use (plane=" << planeIdx << ") — CPU fallback");
+        return nullptr;
     }
 
     void clear()
@@ -165,23 +182,58 @@ public:
     }
 
 private:
-    static constexpr std::size_t kMaxEntries = 8;
-    QMutex _mutex;
-    GstHw::GstHwImportCache<StagingKey, StagingEntry, StagingKeyHash> _entries{
-        kMaxEntries,
-        [](const StagingKey&, StagingEntry& e) {
+    struct StagingRing
+    {
+        std::array<StagingEntry, kStagingRingSize> entries{};
+        std::shared_ptr<StagingLeaseFlags> leased = std::make_shared<StagingLeaseFlags>();
+        std::size_t next = 0;
+    };
+
+    static bool createEntry(ID3D12Device* dev, D3D12_COMMAND_LIST_TYPE queueType, const D3D12_RESOURCE_DESC& dstDesc,
+                            const D3D12_HEAP_PROPERTIES& heapProps, int planeIdx, guint subIdx, StagingEntry& e)
+    {
+        if (FAILED(dev->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &dstDesc, D3D12_RESOURCE_STATE_COMMON,
+                                                nullptr, IID_PPV_ARGS(&e.resource)))) {
+            QGC_HW_WARN_ONCE(GstD3D12Log, s_diag.loggedTextureCreateFail,
+                             "mapTextures: CreateCommittedResource for slice copy failed (plane="
+                                 << planeIdx << " subresource=" << subIdx << ")");
+            e = {};
+            return false;
+        }
+        if (FAILED(dev->CreateCommandAllocator(queueType, IID_PPV_ARGS(&e.allocator))) ||
+            FAILED(dev->CreateCommandList(0, queueType, e.allocator, nullptr, IID_PPV_ARGS(&e.list)))) {
+            QGC_HW_WARN_ONCE(GstD3D12Log, s_diag.loggedTextureCreateFail,
+                             "mapTextures: command allocator/list create failed (plane=" << planeIdx << ")");
             releaseEntryResources(e);
             e = {};
-        }};
+            return false;
+        }
+        // Freshly created lists are open; close so the per-frame Reset() path is uniform.
+        e.list->Close();
+        return true;
+    }
+
+    static void releaseRing(const StagingKey&, StagingRing& ring)
+    {
+        for (StagingEntry& e : ring.entries) {
+            releaseEntryResources(e);
+            e = {};
+        }
+    }
+
+    static constexpr std::size_t kMaxEntries = 8;
+    QMutex _mutex;
+    GstHw::GstHwImportCache<StagingKey, StagingRing, StagingKeyHash> _entries{kMaxEntries, &releaseRing};
 };
 
-/// Copy one subresource slice into a pooled COPY-queue (DIRECT fallback) resource and submit the copy WITHOUT waiting;
-/// the caller does a single fence wait after all planes. On success returns the staging resource AddRef'd (caller owns
-/// the ref) and advances @p maxFenceValue to the highest submitted fence value. nullptr on failure.
+/// Copy one subresource slice into a leased COPY-queue (DIRECT fallback) staging slot and submit the copy WITHOUT
+/// waiting; the caller does a single fence wait after all planes. On success returns the staging resource AddRef'd
+/// (caller owns the ref), hands the slot lease to @p lease and advances @p maxFenceValue to the highest submitted fence
+/// value. nullptr on failure.
 ID3D12Resource* copySliceToStaging(ID3D12Resource* resource, guint subIdx, int planeIdx,
                                    const D3D12_RESOURCE_DESC& srcDesc, ID3D12Device* d3dDev, GstD3D12CmdQueue* cmdQueue,
                                    D3D12_COMMAND_LIST_TYPE queueType, guint64& maxFenceValue,
-                                   StagingEntryRef& retainedEntry)
+                                   std::shared_ptr<StagingSlotLease>& lease)
 {
     D3D12_RESOURCE_DESC dstDesc = srcDesc;
     dstDesc.DepthOrArraySize = 1;
@@ -191,11 +243,12 @@ ID3D12Resource* copySliceToStaging(ID3D12Resource* resource, guint subIdx, int p
     heapProps.Type = D3D12_HEAP_TYPE_DEFAULT;
 
     const StagingKey key{srcDesc.Width, srcDesc.Height, UINT(srcDesc.Format), planeIdx};
-    StagingEntryRef entry =
+    std::shared_ptr<StagingSlotLease> slotLease =
         StagingResourcePool::instance().acquire(d3dDev, queueType, key, dstDesc, heapProps, planeIdx, subIdx);
-    if (!entry.valid()) {
+    if (!slotLease || !slotLease->entry().valid()) {
         return nullptr;
     }
+    const StagingEntryRef& entry = slotLease->entry();
 
     if (FAILED(entry.allocator()->Reset()) || FAILED(entry.list()->Reset(entry.allocator(), nullptr))) {
         QGC_HW_WARN_ONCE(GstD3D12Log, s_diag.loggedTextureCreateFail,
@@ -245,8 +298,9 @@ ID3D12Resource* copySliceToStaging(ID3D12Resource* resource, guint subIdx, int p
     if (fenceValue > maxFenceValue) {
         maxFenceValue = fenceValue;
     }
-    ID3D12Resource* stagingResource = entry.takeResource();
-    retainedEntry = std::move(entry);
+    ID3D12Resource* stagingResource = entry.resource();
+    stagingResource->AddRef();
+    lease = std::move(slotLease);
     return stagingResource;
 }
 
@@ -305,7 +359,9 @@ void GstD3D12VideoBuffer::resolvePlaneResources()
 
     const int memCount = (std::min)(int(gst_buffer_n_memory(buffer)), kMaxPlanes);
     GstD3DVideoBufferCommon::PlaneResourceGuard<ID3D12Resource> guard;
-    std::array<StagingEntryRef, kMaxPlanes> stagingLeases;
+    // Declared before the copy wait below so an early return releases the slots only after their copies completed.
+    using PlaneLeases = std::array<std::shared_ptr<StagingSlotLease>, kMaxPlanes>;
+    PlaneLeases stagingLeases;
 
     // Shared copy state: the queue is resolved lazily on the first staged plane (constant per device) and all planes
     // submit to it, then a single fence wait covers every submit. The guard unrefs the held queue ref on any early
@@ -372,7 +428,8 @@ void GstD3D12VideoBuffer::resolvePlaneResources()
         if (i == 0) {
             // currentDevice() is transfer-full — unref both branches to avoid UAF after reset().
             GstD3D12Device* bridgeDev = GstD3D12ContextBridge::currentDevice();
-            if (bridgeDev && d3dmem->device != bridgeDev) {
+            // Compare the underlying device, not the wrapper: each bridge prime creates a new GstD3D12Device.
+            if (bridgeDev && !gst_d3d12_device_is_equal(d3dmem->device, bridgeDev)) {
                 const gint64 bridgeLuid = GstD3DContextBridgeCommon::readAdapterLuid(bridgeDev);
                 const gint64 bufLuid = GstD3DContextBridgeCommon::readAdapterLuid(d3dmem->device);
                 gst_object_unref(bridgeDev);
@@ -448,6 +505,9 @@ void GstD3D12VideoBuffer::resolvePlaneResources()
     _resolvedCount = memCount;
     _resolved = true;
     guard.commit();
+    if (anyCopy) {
+        _stagingLeases = std::make_shared<PlaneLeases>(std::move(stagingLeases));
+    }
 }
 
 QVideoFrameTexturesUPtr GstD3D12VideoBuffer::mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& old)
@@ -463,9 +523,10 @@ QVideoFrameTexturesUPtr GstD3D12VideoBuffer::mapTextures(QRhi& rhi, QVideoFrameT
         return GstHwPathTelemetry::fail(HwVideoBufferPath::D3D12);
     }
 
-    return GstD3DVideoBufferCommon::mapResolvedTextures(
-        *this, rhi, old, HwVideoBufferPath::D3D12, _resources, _resolvedCount, _format.frameSize(),
-        _format.pixelFormat(), s_diag.loggedFirstSuccess, s_diag.loggedTextureCreateFail, GstD3D12Log, "D3D12");
+    return GstD3DVideoBufferCommon::mapResolvedTextures(*this, rhi, old, HwVideoBufferPath::D3D12, _resources,
+                                                        _resolvedCount, _format.frameSize(), _format.pixelFormat(),
+                                                        s_diag.loggedFirstSuccess, s_diag.loggedTextureCreateFail,
+                                                        GstD3D12Log, "D3D12", _stagingLeases);
 }
 
 #endif  // Q_OS_WIN && QGC_HAS_GST_D3D12_GPU_PATH
