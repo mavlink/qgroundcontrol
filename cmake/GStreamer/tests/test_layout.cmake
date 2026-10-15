@@ -31,6 +31,15 @@ qgc_test_assert_streq("FLAT multiarch lib"     "${_flat_multi}/lib/x86_64-linux-
 qgc_test_assert_streq("FLAT multiarch plugins" "${_flat_multi}/lib/x86_64-linux-gnu/gstreamer-1.0" "${GSTREAMER_PLUGIN_PATH}")
 qgc_test_pass("FLAT lib_path override")
 
+# A root is one path even when it contains the POSIX path-list separator.
+if(NOT CMAKE_HOST_WIN32)
+    set(_colon "${_sandbox}/flat:sdk")
+    file(MAKE_DIRECTORY "${_colon}/lib/gstreamer-1.0" "${_colon}/include")
+    gstreamer_create_layout_target(SDK_ROOT "${_colon}" TYPE FLAT)
+    qgc_test_assert_streq("FLAT root with ':' lib" "${_colon}/lib" "${GSTREAMER_LIB_PATH}")
+    qgc_test_pass("FLAT root with ':'")
+endif()
+
 set(_static "${_sandbox}/static")
 file(MAKE_DIRECTORY "${_static}/lib/gstreamer-1.0")
 file(MAKE_DIRECTORY "${_static}/include")

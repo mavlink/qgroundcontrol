@@ -50,7 +50,7 @@ function(gstreamer_create_layout_target)
         message(FATAL_ERROR "gstreamer_create_layout_target: TYPE is required")
     endif()
 
-    cmake_path(CONVERT "${GCLT_SDK_ROOT}" TO_CMAKE_PATH_LIST _gclt_root NORMALIZE)
+    cmake_path(SET _gclt_root NORMALIZE "${GCLT_SDK_ROOT}")
     if(NOT EXISTS "${_gclt_root}")
         message(FATAL_ERROR "GStreamer: SDK not found at '${_gclt_root}' — "
             "check installation or set GStreamer_ROOT_DIR")

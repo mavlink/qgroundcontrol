@@ -360,20 +360,24 @@ if(GStreamer_VERSION)
 endif()
 
 # GstVideoOrientationMeta is officially in 1.26+, but bundled iOS/Android SDKs sometimes
-# strip it. Feature-test the actual header instead of trusting the version number.
-foreach(_gst_target IN ITEMS GStreamer::GStreamer GStreamerMobile)
-    if(TARGET ${_gst_target})
-        qgc_check_gst_header(
-            VAR    QGC_GST_HAS_VIDEO_ORIENTATION_META_${_gst_target}
-            HEADER gst/video/gstvideometa.h
-            SYMBOL "sizeof(GstVideoOrientationMeta)"
-            TARGET ${_gst_target}
-        )
-        if(QGC_GST_HAS_VIDEO_ORIENTATION_META_${_gst_target})
-            _qgc_gst_apply_def(${_gst_target} QGC_HAS_GST_VIDEO_ORIENTATION_META=1)
-        endif()
-    endif()
-endforeach()
+# strip it. Feature-test the actual header instead of trusting the version number. Only the core is
+# probed: GStreamerMobile has the same headers, and on iOS it is a framework this project builds, which
+# try_compile cannot link (it takes imported targets only).
+qgc_check_gst_header(
+    VAR
+    QGC_GST_HAS_VIDEO_ORIENTATION_META
+    HEADER
+    gst/video/gstvideometa.h
+    SYMBOL
+    "sizeof(GstVideoOrientationMeta)"
+    TARGET
+    GStreamer::GStreamer
+)
+if(QGC_GST_HAS_VIDEO_ORIENTATION_META)
+    foreach(_gst_target IN ITEMS GStreamer::GStreamer GStreamerMobile)
+        _qgc_gst_apply_def(${_gst_target} QGC_HAS_GST_VIDEO_ORIENTATION_META=1)
+    endforeach()
+endif()
 
 # Zero-copy DMABuf GPU path probe — Linux-only, defined in platform/Linux.cmake.
 if(LINUX)

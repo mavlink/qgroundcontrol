@@ -111,7 +111,7 @@ function(_qgc_discover_macos_sdk)
 
     if(GStreamer_USE_FRAMEWORK)
         if(NOT DEFINED GSTREAMER_FRAMEWORK_PATH)
-            cmake_path(CONVERT "${GStreamer_ROOT_DIR}/../.." TO_CMAKE_PATH_LIST _gst_mac_fwpath NORMALIZE)
+            cmake_path(SET _gst_mac_fwpath NORMALIZE "${GStreamer_ROOT_DIR}/../..")
         else()
             set(_gst_mac_fwpath "${GSTREAMER_FRAMEWORK_PATH}")
         endif()
