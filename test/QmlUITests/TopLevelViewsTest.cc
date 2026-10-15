@@ -69,6 +69,32 @@ static QList<QQuickItem*> findSettingsDividers(QQuickItem* root)
     return dividers;
 }
 
+static void collectVisibleSettingsButtons(QQuickItem* item, QList<QQuickItem*>& buttons)
+{
+    if (!item || !item->isVisible()) {
+        return;
+    }
+    if (item->objectName().startsWith(QStringLiteral("settingsButton_"))) {
+        buttons.append(item);
+    }
+    const auto children = item->childItems();
+    for (auto* child : children) {
+        collectVisibleSettingsButtons(child, buttons);
+    }
+}
+
+// The sidebar lays page buttons out top to bottom in model order, so the top-most visible
+// button is the first available page. Custom builds may insert pages ahead of General.
+static QQuickItem* findFirstVisibleSettingsButton(QQuickItem* root)
+{
+    QList<QQuickItem*> buttons;
+    collectVisibleSettingsButtons(root, buttons);
+    const auto first = std::min_element(buttons.cbegin(), buttons.cend(), [](const QQuickItem* a, const QQuickItem* b) {
+        return a->mapToScene(QPointF()).y() < b->mapToScene(QPointF()).y();
+    });
+    return (first == buttons.cend()) ? nullptr : *first;
+}
+
 // Sets the video source and returns a guard restoring the original value on scope exit
 [[nodiscard]] static auto setVideoSourceWithRestore(const char* source)
 {
@@ -282,10 +308,15 @@ void TopLevelViewsTest::_testSettingsPageUnavailableFallback()
     videoSettings->setUserVisible(false);
 
     QTRY_VERIFY(!findVisibleItem(_rootItem, QStringLiteral("settingsButton_Video"), 0));
-    QTRY_VERIFY(findVisibleItem(_rootItem, QStringLiteral("settingsPage_General"), 0));
-    QQuickItem* const generalButton = findVisibleItem(_rootItem, QStringLiteral("settingsButton_General"));
-    QVERIFY(generalButton);
-    QTRY_VERIFY(generalButton->property("checked").toBool());
+    QTRY_VERIFY(!findVisibleItem(_rootItem, QStringLiteral("settingsPage_Video"), 0));
+
+    QQuickItem* const firstButton = findFirstVisibleSettingsButton(_rootItem);
+    QVERIFY(firstButton);
+    QTRY_VERIFY2(firstButton->property("checked").toBool(), qPrintable(firstButton->objectName()));
+
+    QQuickItem* const rightPanel = findVisibleItem(_rootItem, QStringLiteral("settings_rightPanel"));
+    QVERIFY(rightPanel);
+    QTRY_VERIFY(rightPanel->property("item").value<QQuickItem*>());
 }
 
 // Search must not match or offer navigation to sections that are hidden.
