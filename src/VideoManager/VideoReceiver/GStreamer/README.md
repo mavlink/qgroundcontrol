@@ -84,7 +84,8 @@ QGC configures GStreamer runtime paths before `gst_init()`:
 - **Desktop (Linux/macOS/Windows)**: `GStreamer::prepareEnvironment()` sets plugin paths, scanner/helper paths, and GIO module paths when bundled runtimes are detected.
 - **Linux AppImage**: [`deploy/linux/AppRun`](../../../../deploy/linux/AppRun) exports `GST_PLUGIN_*`, `GST_PLUGIN_SCANNER*`, and `GST_PTP_HELPER*` only when bundled paths are valid.
 - **Environment hygiene**: Python virtualenv/conda variables are cleared for scanner stability (`PYTHONHOME`, `PYTHONPATH`, `VIRTUAL_ENV`, `CONDA_*`), and `PYTHONNOUSERSITE=1` is set.
-- **Validation**: If bundled plugin directories are present but `gst-plugin-scanner` is missing or non-executable, QGC fails initialization early with a clear error instead of running with a broken plugin loader.
+- **Plugin search path**: The bundled plugin directory is set as `GST_PLUGIN_SYSTEM_PATH*`, which replaces GStreamer's default system and user plugin directories. `GST_PLUGIN_PATH*` is cleared, because it would only rescan the same directory.
+- **Validation**: A macOS app that ships `GStreamer.framework` without its plugin directory fails initialization with a clear error. A missing or non-executable bundled `gst-plugin-scanner` only logs a warning: QGC sets `GST_REGISTRY_FORK=no`, so GStreamer scans plugins in-process.
 
 ## Platform Setup
 
