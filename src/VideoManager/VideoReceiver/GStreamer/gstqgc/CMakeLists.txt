@@ -4,7 +4,7 @@
 target_sources(QGCGStreamer
     PRIVATE
         gstqgc.cc
-        gstqgcelement.cc
+        gstqgcelements.cc
         gstqgcelements.h
         gstqgcvideosinkbin.cc
         gstqgcvideosinkbin.h
