@@ -322,6 +322,11 @@ Scripts in `setup/` help configure development environments. They read configura
 `.github/build-config.json` for consistent versioning. `install_dependencies` is a Python package
 (`tools/setup/install_dependencies/`), invoked directly via its `__main__.py`.
 
+The macOS dependency installer downloads the GStreamer runtime and development packages
+from the official server, falling back to QGroundControl's public S3 mirror if a download
+fails. Both sources are verified against the same pinned SHA-256 checksums in
+`.github/build-config.json`; installation stops if either package cannot be verified.
+
 | Script                                    | Platform              | Description                                                                   |
 | ----------------------------------------- | --------------------- | ----------------------------------------------------------------------------- |
 | `install_dependencies --platform debian`  | Linux (Debian/Ubuntu) | Install build dependencies via apt                                            |
