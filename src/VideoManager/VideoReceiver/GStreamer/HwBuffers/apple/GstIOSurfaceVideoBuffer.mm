@@ -155,15 +155,6 @@ public:
         }
     }
 
-    void onFrameEndInvoked() override
-    {
-        // Release CVMetalTextureRefs eagerly to return IOSurface pool slots; defer to dtor risks pool pressure.
-        for (int i = 0; i < _count; ++i) {
-            if (_cvtex[i]) { CFRelease(_cvtex[i]); _cvtex[i] = nullptr; }
-        }
-        GstHwFrameTexturesBase::onFrameEndInvoked();
-    }
-
     HwVideoBufferPath sourcePath() const override { return HwVideoBufferPath::IOSurface; }
 
     // Reuse eligibility: identical rhi+size+format and identical, non-nil MTLTexture handles

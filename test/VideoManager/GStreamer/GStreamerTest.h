@@ -36,6 +36,7 @@ private slots:
     void _testQgcVideoSinkBinGpuZeroCopyProperty();
     void _testQgcVideoSinkBinRejectsFailedAdopt();
     void _testGlMemoryDispatch();
+    void _testHwFrameTexturesKeepResourcesUntilDestroyed();
     void _testD3D11MemoryDispatch();
     void _testD3D12MemoryDispatch();
     void _testD3D11MapTexturesWithQRhi();
@@ -47,6 +48,7 @@ private slots:
     void _testDmaBufRejectsNonLinearDirectImport();
     void _testDmaBufTiledImportAvoidsTexStorage();
     void _testVulkanDispatchDemotesToCpu();
+    void _testVulkanOwnedFrameTexturesReleaseOnDestroy();
     void _testCapsCacheInvalidation();
     void _testGpuZeroCopyFallback();
     void _testWindowsGpuSinkPreservesSoftwarePixels();

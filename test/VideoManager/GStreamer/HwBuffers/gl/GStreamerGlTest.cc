@@ -45,6 +45,13 @@
 
 #include "GstGlContextBridge.h"
 #endif
+#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) || defined(QGC_HAS_GST_DMABUF_GPU_PATH)
+#include <array>
+#include <limits>
+#include <rhi/qrhi.h>
+
+#include "GstGlFrameTextures.h"
+#endif
 #if defined(QGC_HAS_GST_D3D11_GPU_PATH)
 #include "GstD3D11ContextBridge.h"
 #endif
@@ -190,6 +197,51 @@ void GStreamerTest::_testGlMemoryDispatch()
                             .arg(negotiatedStr)));
     QVERIFY2(negotiatedStr.contains(QStringLiteral("memory:GLMemory")),
              qPrintable(QStringLiteral("Appsink negotiated caps lack memory:GLMemory: %1").arg(negotiatedStr)));
+}
+
+void GStreamerTest::_testHwFrameTexturesKeepResourcesUntilDestroyed()
+{
+#if !defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) && !defined(QGC_HAS_GST_DMABUF_GPU_PATH)
+    QSKIP("GL-texture frame bundles not compiled in this build");
+#else
+    QRhiNullInitParams params;
+    std::unique_ptr<QRhi> rhi(QRhi::create(QRhi::Null, &params));
+    QVERIFY(rhi);
+
+    GstVideoInfo info;
+    gst_video_info_set_format(&info, GST_VIDEO_FORMAT_NV12, 64, 64);
+    GstBuffer* buffer = gst_buffer_new_allocate(nullptr, GST_VIDEO_INFO_SIZE(&info), nullptr);
+    GstCaps* caps = gst_video_info_to_caps(&info);
+    GstSample* sample = gst_sample_new(buffer, caps, nullptr, nullptr);
+    gst_buffer_unref(buffer);
+    gst_caps_unref(caps);
+    QVERIFY(sample);
+
+    bool sampleReleased = false;
+    gst_mini_object_weak_ref(
+        GST_MINI_OBJECT(sample), [](gpointer data, GstMiniObject*) { *static_cast<bool*>(data) = true; },
+        &sampleReleased);
+
+    constexpr int kPlanes = 2;
+    auto bundle = std::make_unique<GstGlFrameTextures>(rhi.get(), QSize(64, 64), QVideoFrameFormat::Format_NV12,
+                                                       std::array<GLuint, GstHw::kMaxPlanes>{11, 12}, kPlanes);
+    bundle->setSourceSample(sample);
+    std::array<QRhiTexture*, kPlanes> planes{bundle->texture(0), bundle->texture(1)};
+    QVERIFY(planes[0] && planes[1]);
+    QVERIFY(!bundle->texture(kPlanes));
+    QVERIFY(!bundle->texture(std::numeric_limits<uint>::max()));
+
+    // Qt re-renders the current bundle and calls onFrameEndInvoked() after every window frame until its slot is reused.
+    for (int frame = 0; frame < 3; ++frame) {
+        bundle->onFrameEndInvoked();
+    }
+    QCOMPARE(bundle->texture(0), planes[0]);
+    QCOMPARE(bundle->texture(1), planes[1]);
+    QVERIFY2(!sampleReleased, "Source sample must stay alive while Qt can still sample the bundle");
+
+    bundle.reset();
+    QVERIFY2(sampleReleased, "Destroying the bundle must release the source sample");
+#endif
 }
 
 #endif

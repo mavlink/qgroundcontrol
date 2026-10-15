@@ -36,7 +36,7 @@ protected:
     }
 };
 
-/// Owns the imported VkImage + backing VkDeviceMemory (DMABuf zero-copy import); destroyed when Qt finishes the frame.
+/// Owns the imported VkImage + backing VkDeviceMemory (DMABuf zero-copy import); destroyed with the bundle.
 class GstVulkanOwnedFrameTextures final : public GstVulkanFrameTexturesBase
 {
 public:
@@ -45,12 +45,16 @@ public:
         wrapImage(rhi, size, pixelFormat, image, VK_IMAGE_LAYOUT_UNDEFINED);
     }
 
-    ~GstVulkanOwnedFrameTextures() override { releaseVulkan(); }
-
-    void onFrameEndInvoked() override
+    ~GstVulkanOwnedFrameTextures() override
     {
-        releaseVulkan();
-        GstHwFrameTexturesBase::onFrameEndInvoked();
+        // QRhiTexture must be gone before the VkImage it wraps; reset it first.
+        _textures[0].reset();
+        if (_image != VK_NULL_HANDLE && _destroyImage) {
+            _destroyImage(_dev, _image, nullptr);
+        }
+        if (_memory != VK_NULL_HANDLE && _freeMemory) {
+            _freeMemory(_dev, _memory, nullptr);
+        }
     }
 
     HwVideoBufferPath sourcePath() const override { return HwVideoBufferPath::DmaBuf; }
@@ -67,20 +71,6 @@ public:
     }
 
 private:
-    void releaseVulkan()
-    {
-        // QRhiTexture must be gone before the VkImage it wraps; reset it first.
-        _textures[0].reset();
-        if (_image != VK_NULL_HANDLE && _destroyImage) {
-            _destroyImage(_dev, _image, nullptr);
-        }
-        if (_memory != VK_NULL_HANDLE && _freeMemory) {
-            _freeMemory(_dev, _memory, nullptr);
-        }
-        _image = VK_NULL_HANDLE;
-        _memory = VK_NULL_HANDLE;
-    }
-
     VkDevice _dev = VK_NULL_HANDLE;
     VkImage _image = VK_NULL_HANDLE;
     VkDeviceMemory _memory = VK_NULL_HANDLE;

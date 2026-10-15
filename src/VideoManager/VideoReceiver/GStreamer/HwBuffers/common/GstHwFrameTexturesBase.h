@@ -11,14 +11,18 @@
 class QRhiTexture;
 
 /// Common base for per-platform `FrameTextures : QVideoFrameTextures` from `*VideoBuffer::mapTextures()`.
+/// Qt invokes onFrameEndInvoked() on the current bundle after every window frame and keeps sampling it until its pool
+/// slot is reused, so the source sample and every native resource must live until destruction — never release them
+/// from onFrameEndInvoked().
 class GstHwFrameTexturesBase : public QVideoFrameTextures
 {
 public:
     ~GstHwFrameTexturesBase() override { g_clear_pointer(&_srcSample, gst_sample_unref); }
 
-    void onFrameEndInvoked() override { g_clear_pointer(&_srcSample, gst_sample_unref); }
-
-    QRhiTexture* texture(uint plane) const override { return int(plane) < _count ? _textures[plane].get() : nullptr; }
+    QRhiTexture* texture(uint plane) const override
+    {
+        return plane < static_cast<uint>(_count) ? _textures[plane].get() : nullptr;
+    }
 
     /// GPU path that produced this bundle; used after a type-safe downcast to decide path-local reuse.
     virtual HwVideoBufferPath sourcePath() const { return HwVideoBufferPath::None; }

@@ -290,30 +290,15 @@ public:
 
     ~FrameTextures() override
     {
-        releaseGLTextures();  // safety net if onFrameEndInvoked() was never called
-    }
-
-    void onFrameEndInvoked() override
-    {
-        releaseGLTextures();
-        GstHwFrameTexturesBase::onFrameEndInvoked();
-    }
-
-private:
-    void releaseGLTextures()
-    {
-        if (_released || !_rhi || _count == 0)
+        if (!_rhi || _count == 0)
             return;
         // Bind the QRhi GL context so currentContext() returns it (mirrors ~QGstQVideoFrameTextures), avoiding the
         // backend-conditional NativeHandles cast.
         _rhi->makeThreadLocalNativeContextCurrent();
         if (QOpenGLContext* ctx = QOpenGLContext::currentContext()) {
             ctx->functions()->glDeleteTextures(int(_count), _names.data());
-            _released = true;  // only after deletion, so the dtor can retry
         }
     }
-
-    bool _released = false;
 };
 
 // RPi eglfs quirk: V3D EGL implicitly converts YUYV/UYVY DMABuf to RGBA, so declare RGBA8888 to pick Qt's RGB shader
@@ -1023,7 +1008,7 @@ textures_built:
     for (int i = 0; i < planeCount; ++i) {
         if (!frameTextures->texture(i)) {
             qCWarning(GstDmaBufLog) << "FrameTextures plane" << i << "createFrom failed — dropping frame";
-            // ~FrameTextures glDeleteTextures via releaseGLTextures() — names are owned now.
+            // ~FrameTextures glDeleteTextures — names are owned now.
             return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
         }
     }
