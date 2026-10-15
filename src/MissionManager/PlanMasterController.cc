@@ -333,6 +333,15 @@ void PlanMasterController::sendToVehicle(void)
         qCCritical(PlanMasterControllerLog) << "PlanMasterController::sendToVehicle called while offline";
     } else if (syncInProgress()) {
         qCCritical(PlanMasterControllerLog) << "PlanMasterController::sendToVehicle called while syncInProgress";
+    } else if (_geoFenceController.supported() && _geoFenceController.hasHomeCircle() &&
+               !_geoFenceController.homeCircleSupported()) {
+        // Refuse before sending anything, rather than failing part way through the upload sequence
+        QGC::showAppMessage(
+            tr("This vehicle does not support home-centered GeoFence circles. "
+               "Untick Home on those circles or delete them, then upload again."));
+        if (_deleteWhenSendCompleted) {
+            deleteLater();
+        }
     } else {
         qCDebug(PlanMasterControllerLog) << "PlanMasterController::sendToVehicle start mission sendToVehicle";
         _sendSequence = SyncSequence::Mission;

@@ -419,6 +419,10 @@ The fields are:
 | `circle`    | The definition of the circle. Includes `centre` (latitude, longitude) and `radisu` as shown above. |
 | `inclusion` | `true`: inclusion fence; `false`: exclusion fence.                                                 |
 
+A circle that the vehicle centres on its home position (`MAV_CMD_NAV_FENCE_HOME_CIRCLE_INCLUSION`) is written as
+version 2 with an additional `"homeCentered": true` key, so that readers which only understand version 1 reject it
+rather than loading it as a fixed circle. Such circles are always inclusion fences and their saved `center` is ignored.
+
 ### Polygon Geofence {#polygon_geofence}
 
 Each polygon geofence is defined in a separate item, as shown below (multiple comma-separated items can be defined).
