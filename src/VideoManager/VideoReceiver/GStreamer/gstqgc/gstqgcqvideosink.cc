@@ -8,6 +8,7 @@
 #include <new>
 #include <utility>
 
+#include <QtCore/QByteArray>
 #include <QtCore/QMetaObject>
 #include <QtCore/QMutex>
 #include <QtCore/QMutexLocker>
@@ -21,6 +22,7 @@
 #include "HwBuffers/common/HwBuffers.h"
 #include "QGCLoggingCategory.h"
 #include "gstqgcelements.h"
+#include "gstqgcvideosinkbin.h"
 
 QGC_LOGGING_CATEGORY(GstQgcQVideoSinkLog, "Video.GStreamer.QgcQVideoSink")
 
@@ -138,25 +140,19 @@ bool nothing_to_import(GstBuffer* buf)
     return mem && gst_memory_is_type(mem, GST_ALLOCATOR_SYSMEM);
 }
 
+constexpr const char* kGpuFallbacksField = "gpu-fallbacks";
+constexpr const char* kStreamDemotionsField = "stream-demotions";
+
 /// The "frame-stats" property value (transfer-full).
 GstStructure* make_stats(const PrivState& p)
 {
     GstStructure* const stats = gst_structure_new_empty("qgc-video-sink-stats");
-    const std::pair<const char*, const std::atomic<quint64>*> totals[] = {
-        {"frames-input", &p.input_frames},
-        {"frames-dropped", &p.dropped_frames},
-        {"frames-delivered", &p.delivered_frames},
-    };
-    for (const auto& [field, counter] : totals) {
-        gst_structure_set(stats, field, G_TYPE_UINT64, static_cast<guint64>(counter->load(std::memory_order_relaxed)),
-                          nullptr);
-    }
     for (std::size_t i = 0; i < GstHw::kPathCount; ++i) {
-        gst_structure_set(stats, HwBuffers::sinkFramesField(HwVideoBufferPath(i)), G_TYPE_UINT64,
+        gst_structure_set(stats, GstQgc::sinkFramesField(HwVideoBufferPath(i)), G_TYPE_UINT64,
                           static_cast<guint64>(p.path_frames[i].load(std::memory_order_relaxed)), nullptr);
     }
-    gst_structure_set(stats, "gpu-fallbacks", G_TYPE_UINT64,
-                      static_cast<guint64>(p.gpu_fallbacks.load(std::memory_order_relaxed)), "stream-demotions",
+    gst_structure_set(stats, kGpuFallbacksField, G_TYPE_UINT64,
+                      static_cast<guint64>(p.gpu_fallbacks.load(std::memory_order_relaxed)), kStreamDemotionsField,
                       G_TYPE_UINT64, static_cast<guint64>(p.stream_demotions.load(std::memory_order_relaxed)), nullptr);
     return stats;
 }
@@ -376,13 +372,10 @@ static gboolean gst_qgc_q_video_sink_set_caps(GstBaseSink* bsink, GstCaps* caps)
     p->caps_valid.store(true, std::memory_order_release);
 
     // Posted on the bus so the controller can mirror negotiation state into Q_PROPERTY.
-    {
-        gchar* fmtName = g_strdup(gst_video_format_to_string(GST_VIDEO_INFO_FORMAT(&parsedInfo)));
-        GstStructure* s = gst_structure_new("qgc-caps-info", "width", G_TYPE_INT, w, "height", G_TYPE_INT, h, "format",
-                                            G_TYPE_STRING, fmtName, nullptr);
-        gst_element_post_message(GST_ELEMENT(self), gst_message_new_element(GST_OBJECT(self), s));
-        g_free(fmtName);
-    }
+    GstStructure* const capsInfo =
+        gst_structure_new(GstQgc::kCapsInfoMessage, "width", G_TYPE_INT, w, "height", G_TYPE_INT, h, "format",
+                          G_TYPE_STRING, gst_video_format_to_string(GST_VIDEO_INFO_FORMAT(&parsedInfo)), nullptr);
+    gst_element_post_message(GST_ELEMENT(self), gst_message_new_element(GST_OBJECT(self), capsInfo));
 
     qCInfo(GstQgcQVideoSinkLog).noquote()
         << "set_caps: format=" << gst_video_format_to_string(GST_VIDEO_INFO_FORMAT(&parsedInfo)) << w << "x" << h
@@ -636,10 +629,10 @@ static void gst_qgc_q_video_sink_class_init(GstQgcQVideoSinkClass* klass)
         gobject_class, PROP_FRAME_STATS,
         g_param_spec_boxed("frame-stats", "Frame statistics",
                            "This sink's own frame accounting, as a qgc-video-sink-stats structure of guint64 fields: "
-                           "frames-input, frames-dropped and frames-delivered as above; frames-<path> per delivery "
-                           "path (frames-cpu, frames-dmabuf, frames-gl, frames-d3d11, frames-d3d12, frames-iosurface, "
-                           "frames-ahwbuf, frames-vulkan); gpu-fallbacks (frames a GPU path was tried for but the CPU "
-                           "delivered) and stream-demotions (caps epochs that fell back from a GPU path).",
+                           "frames-<path> per delivery path (frames-cpu, frames-dmabuf, frames-gl, frames-d3d11, "
+                           "frames-d3d12, frames-iosurface, frames-ahwbuf, frames-vulkan); gpu-fallbacks (frames a GPU "
+                           "path was tried for but the CPU delivered) and stream-demotions (caps epochs that fell back "
+                           "from a GPU path).",
                            GST_TYPE_STRUCTURE, (GParamFlags) (G_PARAM_READABLE | G_PARAM_STATIC_STRINGS)));
 
     gst_element_class_set_static_metadata(element_class, "QGC QVideoSink", "Sink/Video",
@@ -655,3 +648,77 @@ static void gst_qgc_q_video_sink_class_init(GstQgcQVideoSinkClass* klass)
     basesink_class->query = gst_qgc_q_video_sink_query;
     videosink_class->show_frame = gst_qgc_q_video_sink_show_frame;
 }
+
+namespace GstQgc {
+
+CapsInfo parseCapsInfo(GstMessage* message)
+{
+    const GstStructure* const structure = gst_message_get_structure(message);
+    gint width = 0;
+    gint height = 0;
+    (void) gst_structure_get_int(structure, "width", &width);
+    (void) gst_structure_get_int(structure, "height", &height);
+    return {.format = QString::fromUtf8(gst_structure_get_string(structure, "format")), .size = QSize(width, height)};
+}
+
+const char* sinkFramesField(HwVideoBufferPath path) noexcept
+{
+    static const std::array<QByteArray, GstHw::kPathCount> s_fields = [] {
+        std::array<QByteArray, GstHw::kPathCount> fields;
+        for (std::size_t i = 0; i < fields.size(); ++i) {
+            fields[i] = QByteArray("frames-") + QByteArray(GstHw::toString(HwVideoBufferPath(i))).toLower();
+        }
+        return fields;
+    }();
+    const auto index = static_cast<std::size_t>(path);
+    return (index < s_fields.size()) ? s_fields[index].constData() : nullptr;
+}
+
+GStreamer::GstStructurePtr frameStats(GstElement* sinkOrBin)
+{
+    GStreamer::GstElementPtr inner;
+    if (sinkOrBin && GST_IS_QGC_VIDEO_SINK_BIN(sinkOrBin)) {
+        inner = GStreamer::adoptElement(gst_qgc_video_sink_bin_get_qvideosink(GST_QGC_VIDEO_SINK_BIN(sinkOrBin)));
+        sinkOrBin = inner.get();
+    }
+    if (!sinkOrBin || !GST_IS_QGC_Q_VIDEO_SINK(sinkOrBin)) {
+        return {};
+    }
+    GstStructure* stats = nullptr;
+    g_object_get(sinkOrBin, "frame-stats", &stats, nullptr);
+    return GStreamer::adoptStructure(stats);
+}
+
+PathStats formatSinkStats(const GstStructure* stats, const GstStructure* since) noexcept
+{
+    PathStats out;
+    if (!stats) {
+        return out;
+    }
+    const auto countOf = [stats, since](const char* field) -> quint64 {
+        guint64 now = 0;
+        guint64 before = 0;
+        (void) gst_structure_get_uint64(stats, field, &now);
+        if (since) {
+            (void) gst_structure_get_uint64(since, field, &before);
+        }
+        return (now > before) ? (now - before) : 0;
+    };
+    for (std::size_t i = 0; i < GstHw::kPathCount; ++i) {
+        const auto path = HwVideoBufferPath(i);
+        if (const quint64 frames = countOf(sinkFramesField(path)); frames > 0) {
+            out.line += QStringLiteral(" %1:%2").arg(QLatin1String(GstHw::toString(path))).arg(frames);
+            if (path != HwVideoBufferPath::None) {
+                out.totalDelivered += frames;
+            }
+        }
+    }
+    for (const char* const field : {kGpuFallbacksField, kStreamDemotionsField}) {
+        if (const quint64 count = countOf(field); count > 0) {
+            out.line += QStringLiteral(" %1:%2").arg(QLatin1String(field)).arg(count);
+        }
+    }
+    return out;
+}
+
+}  // namespace GstQgc

@@ -6,6 +6,8 @@
 
 #include <QtCore/QtTypes>
 
+#include "ExponentialBackoff.h"
+
 /// Health of one receiver's stream: notices when frames stop arriving, and paces the reconnects after a failure.
 ///
 /// Times are monotonic milliseconds from now(), passed in so the policy can be checked without waiting on a clock.
@@ -46,13 +48,14 @@ public:
     std::chrono::seconds nextReconnectDelay();
 
     /// A user start or stop starts the backoff over.
-    void resetBackoff() { _reconnectAttempts = 0; }
+    void resetBackoff() { _reconnectBackoff.reset(); }
 
-    int reconnectAttempts() const { return _reconnectAttempts; }
+    int reconnectAttempts() const { return _reconnectBackoff.attempts(); }
 
 private:
     qint64 _timeoutMs = 0;
-    int _reconnectAttempts = 0;
+    // The cap bounds worst-case recovery after a long RF outage and stays below a typical RTSP server keepalive (60 s).
+    ExponentialBackoff _reconnectBackoff{std::chrono::seconds(1), 2, std::chrono::seconds(30)};
     std::atomic<quint64> _sourceFrames = 0;
     std::atomic<qint64> _lastSourceFrameMs = 0;
     std::atomic<qint64> _lastSinkFrameMs = 0;

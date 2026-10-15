@@ -76,6 +76,6 @@ private:
     /// Ours, besides the pipeline's while it is inside.
     GStreamer::GstElementPtr _fileSink;
     State _state = State::Idle;
-    gulong _keyframeWatchId = 0;
+    GStreamer::PadProbe _keyframeWatch;
     RecordingFinalizer _finalizer;
 };

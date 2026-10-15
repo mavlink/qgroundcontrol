@@ -3,13 +3,11 @@
 #include <gst/gst.h>
 
 #include <QtCore/QMutexLocker>
-#include <QtCore/QSize>
 
 #include "GStreamerHelpers.h"
 #include "GstVideoReceiver.h"
-#include "HwBuffers/common/HwBuffers.h"
 #include "QGCQVideoSinkController.h"
-#include "gstqgc/gstqgcvideosinkbin.h"
+#include "gstqgc/gstqgcqvideosink.h"
 
 namespace {
 
@@ -25,33 +23,18 @@ bool DecodingBranch::build(GstElement* pipeline, GstElement* tee)
 {
     _pipeline = pipeline;
 
-    GstElement* queue = gst_element_factory_make("queue", nullptr);
-    if (!queue) {
-        qCWarning(GstVideoReceiverLog) << "gst_element_factory_make('queue') failed";
+    const GStreamer::TeeBranch branch = GStreamer::addTeeBranch(_pipeline, tee, "display");
+    if (!branch.valve) {
         return false;
     }
+    _valve = branch.valve;
 
     // Leaky downstream + tiny depth: the live-display branch must drop the oldest
     // buffer on backpressure, not stall the streaming thread. The recording branch
     // keeps default non-leaky semantics so every frame reaches the muxer.
-    gst_util_set_object_arg(G_OBJECT(queue), "leaky", "downstream");
-    g_object_set(queue, "max-size-buffers", kDisplayQueueMaxBuffers, "max-size-bytes", 0, "max-size-time",
+    gst_util_set_object_arg(G_OBJECT(branch.queue), "leaky", "downstream");
+    g_object_set(branch.queue, "max-size-buffers", kDisplayQueueMaxBuffers, "max-size-bytes", 0, "max-size-time",
                  G_GUINT64_CONSTANT(0), nullptr);
-    (void) gst_bin_add(GST_BIN(_pipeline), queue);
-
-    _valve = gst_element_factory_make("valve", nullptr);
-    if (!_valve) {
-        qCWarning(GstVideoReceiverLog) << "gst_element_factory_make('valve') failed";
-        return false;
-    }
-
-    g_object_set(_valve, "drop", TRUE, nullptr);
-    (void) gst_bin_add(GST_BIN(_pipeline), _valve);
-
-    if (!gst_element_link_many(tee, queue, _valve, nullptr)) {
-        qCWarning(GstVideoReceiverLog) << "Unable to link decoder queue";
-        return false;
-    }
     return true;
 }
 
@@ -97,10 +80,10 @@ void DecodingBranch::start(GstElement* videoSink, bool hasWidget, bool streaming
 
     _receiver._watchdog.clearSinkFrames();
 
-    _sinkProbeId = gst_pad_add_probe(pad.get(), GST_PAD_PROBE_TYPE_BUFFER, _sinkProbe, this, nullptr);
+    (void) _sinkFrameProbe.add(pad.get(), GST_PAD_PROBE_TYPE_BUFFER, _sinkProbe, this);
 
     _videoSink = GStreamer::adoptElement(GST_ELEMENT(gst_object_ref(videoSink)));
-    _sinkStatsAtStart = _readSinkStats();
+    _sinkStatsAtStart = GstQgc::frameStats(_videoSink.get());
 
     if (!streaming) {
         emit _receiver.onStartDecodingComplete(VideoReceiver::STATUS_OK);
@@ -153,25 +136,19 @@ void DecodingBranch::onDecoderPad(GstPad* pad)
 
 void DecodingBranch::onBusCapsInfo(GstMessage* message)
 {
-    const GstStructure* structure = gst_message_get_structure(message);
-    gint w = 0, h = 0;
-    const gchar* fmt = gst_structure_get_string(structure, "format");
-    gst_structure_get_int(structure, "width", &w);
-    gst_structure_get_int(structure, "height", &h);
-    const QString format = QString::fromUtf8(fmt ? fmt : "");
-    const QSize resolution(w, h);
+    const GstQgc::CapsInfo info = GstQgc::parseCapsInfo(message);
     // src compared by address only on the GUI thread; never dereferenced (may be gone by then).
     void* src = GST_MESSAGE_SRC(message);
     QMetaObject::invokeMethod(
         &_receiver,
-        [this, format, resolution, src]() {
+        [this, info, src]() {
             for (auto* c : QGCQVideoSinkController::controllersOf(&_receiver)) {
                 if (static_cast<const void*>(c->element()) == src) {
-                    c->updateNegotiation(format, resolution);
+                    c->updateNegotiation(info.format, info.size);
                 }
             }
-            // The sink's negotiated raw caps are always fixed, unlike the encoded caps upstream of the decoder.
-            emit _receiver.videoSizeChanged(resolution);
+            // Unlike the encoded caps upstream of the decoder, the sink's are always fixed.
+            emit _receiver.videoSizeChanged(info.size);
         },
         Qt::QueuedConnection);
 }
@@ -182,25 +159,10 @@ QString DecodingBranch::decoderName() const
     return _decoderName;
 }
 
-HwBuffers::PathStats DecodingBranch::sinkPathStats() const
+GstQgc::PathStats DecodingBranch::sinkPathStats() const
 {
-    const GStreamer::GstStructurePtr stats = _readSinkStats();
-    return HwBuffers::formatSinkStats(stats.get(), _sinkStatsAtStart.get());
-}
-
-GStreamer::GstStructurePtr DecodingBranch::_readSinkStats() const
-{
-    if (!_videoSink || !GST_IS_QGC_VIDEO_SINK_BIN(_videoSink.get())) {
-        return {};
-    }
-    const GStreamer::GstElementPtr qvideosink =
-        GStreamer::adoptElement(gst_qgc_video_sink_bin_get_qvideosink(GST_QGC_VIDEO_SINK_BIN(_videoSink.get())));
-    if (!qvideosink) {
-        return {};
-    }
-    GstStructure* stats = nullptr;
-    g_object_get(qvideosink.get(), "frame-stats", &stats, nullptr);
-    return GStreamer::adoptStructure(stats);
+    const GStreamer::GstStructurePtr stats = GstQgc::frameStats(_videoSink.get());
+    return GstQgc::formatSinkStats(stats.get(), _sinkStatsAtStart.get());
 }
 
 bool DecodingBranch::_insertDecoder()
@@ -309,13 +271,7 @@ void DecodingBranch::_shutdown()
         _decoder.reset();
     }
 
-    if (_sinkProbeId != 0 && _videoSink) {
-        if (const GStreamer::GstPadPtr sinkPad =
-                GStreamer::adoptPad(gst_element_get_static_pad(_videoSink.get(), "sink"))) {
-            gst_pad_remove_probe(sinkPad.get(), _sinkProbeId);
-        }
-    }
-    _sinkProbeId = 0;
+    _sinkFrameProbe.remove();
 
     _receiver._watchdog.clearSinkFrames();
 
@@ -360,17 +316,9 @@ void DecodingBranch::_onDecoderElementAdded(GstBin* /*decodebin*/, GstBin* /*sub
         g_object_set(element, "qos", FALSE, nullptr);
     }
 
-    GstPluginFeature* feature = GST_PLUGIN_FEATURE(factory);
-    const QString decoderName = QString::fromUtf8(gst_plugin_feature_get_name(feature));
-    QString pluginName = decoderName;
-    if (const GStreamer::GstObjectPtr plugin =
-            GStreamer::adoptObject(GST_OBJECT(gst_plugin_feature_get_plugin(feature)))) {
-        pluginName = QString::fromUtf8(gst_plugin_get_name(GST_PLUGIN(plugin.get())));
-    }
-    qCDebug(GstVideoReceiverLog) << "Decodebin3 selected codec:rank -" << pluginName << "/" << decoderName << "-"
-                                 << gst_element_factory_get_klass(factory)
-                                 << (GStreamer::isHardwareDecoderFactory(factory) ? "(HW)" : "(SW)") << ":"
-                                 << gst_plugin_feature_get_rank(feature) << "- QoS disabled";
+    qCDebug(GstVideoReceiverLog).noquote()
+        << "Decodebin3 selected" << GStreamer::describeDecoderFactory(factory) << "- QoS disabled";
+    const QString decoderName = QString::fromUtf8(gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory)));
 
     auto* self = static_cast<DecodingBranch*>(data);
     self->_receiver._runOnWorkerForPipeline([self, decoderName]() {

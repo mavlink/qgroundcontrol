@@ -11,7 +11,7 @@
 
 class GstVideoReceiver;
 
-namespace HwBuffers {
+namespace GstQgc {
 struct PathStats;
 }
 
@@ -47,18 +47,16 @@ public:
 
     bool isDecoding() const { return _decoding.load(std::memory_order_relaxed); }
 
-    /// The sink's negotiated raw caps ("qgc-caps-info").
+    /// The sink's negotiated raw caps (GstQgc::kCapsInfoMessage).
     void onBusCapsInfo(GstMessage* message);
 
     QString decoderName() const;
 
     /// The frames the video sink delivered since start() took it, from qgcqvideosink's "frame-stats"; empty for other
     /// sinks.
-    HwBuffers::PathStats sinkPathStats() const;
+    GstQgc::PathStats sinkPathStats() const;
 
 private:
-    /// The qgcqvideosink's "frame-stats" when the video sink is a qgcvideosinkbin.
-    GStreamer::GstStructurePtr _readSinkStats() const;
     /// Puts the video sink into the pipeline and decodebin3 between it and the valve, then opens the valve.
     bool _insertDecoder();
     bool _addDecoder();
@@ -81,7 +79,7 @@ private:
     GStreamer::GstElementPtr _videoSink;
     // The sink's "frame-stats" when start() took it: the sink outlives sessions and its counters don't restart.
     GStreamer::GstStructurePtr _sinkStatsAtStart;
-    gulong _sinkProbeId = 0;
+    GStreamer::PadProbe _sinkFrameProbe;
     std::atomic<bool> _decoding = false;  ///< Read by the receiver's tee probe log.
 
     mutable QMutex _decoderNameMutex;     // Written on the worker, read from any thread.

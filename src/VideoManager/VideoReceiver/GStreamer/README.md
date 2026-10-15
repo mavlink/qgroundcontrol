@@ -20,7 +20,7 @@ The pipeline is split into focused components (all in this directory):
 | `PipelineDotDumper` | Writes the pipeline's `.dot` graphs; see [Pipeline Observability](#pipeline-observability). |
 | `GstSourceFactory` | Constructs the source element from the stream URI and applies RTP jitter-buffer policy for `application/x-rtp` sources. |
 | `GStreamerEnvironment` | Process-wide environment setup (plugin/scanner/helper/GIO paths, env hygiene) run before `gst_init()`. See [Runtime Environment Setup](#runtime-environment-setup). |
-| `GStreamerHelpers` | Small utilities: decoder classification and rank overrides, pipeline-graph files, and taking a child element out of a running bin. |
+| `GStreamerHelpers` | Small utilities: decoder classification and rank overrides, tee branch heads, and taking a child element out of a running bin. |
 | `GStreamerLogging` | Routes GStreamer's log output through QGC's logging and applies the persisted debug level. |
 | `GstScoped` | RAII owners for transfer-full GStreamer returns so refs can't leak on early return. |
 
@@ -31,7 +31,7 @@ A QGC-owned plugin (`gstqgc/`) bridging the pipeline into Qt:
 - **`qgcqvideosink`** — a `GstVideoSink` that pushes decoded frames into a Qt `QVideoSink`. Delivery keeps only the
   latest frame, so a stalled GUI thread never holds more than one undelivered frame (or the decoder buffer behind it).
   Its construct-only `gpu-zerocopy` property (passed down by the bin) enables zero-copy import of GPU memory, and its
-  `frame-stats` property reports that sink's own frame counts per delivery path (`HwBuffers::formatSinkStats` formats
+  `frame-stats` property reports that sink's own frame counts per delivery path (`GstQgc::formatSinkStats` formats
   them); GstBaseSink's standard `stats` property is left as is.
 - **`qgcvideosinkbin`** — a bin wrapping a format-restriction capsfilter plus `qgcqvideosink`.
 - **`QGCQVideoSinkController`** — GUI-thread companion that mirrors negotiation/telemetry from the sink into QGC, and

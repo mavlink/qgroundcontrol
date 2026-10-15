@@ -232,7 +232,7 @@ void GstVideoReceiverComponentsTest::_testPipelineDotStaysInDirectory()
     GstElement* pipeline = GST_ELEMENT(gst_object_ref_sink(gst_pipeline_new("receiver")));
     const auto cleanup = qScopeGuard([pipeline] { gst_object_unref(pipeline); });
 
-    const QString path = GStreamer::writePipelineDot(pipeline, tag, directory);
+    const QString path = PipelineDotDumper::writePipelineDot(pipeline, tag, directory);
     QVERIFY(!path.isEmpty());
     const QFileInfo file(path);
     QCOMPARE(file.absolutePath(), QDir(directory).absolutePath());

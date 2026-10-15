@@ -129,4 +129,42 @@ inline GErrorPtr adoptError(GError* error) noexcept
     return GErrorPtr(error);
 }
 
+/// A pad probe owned like a scoped pointer: holds the pad and the probe id from add() until remove() or destruction.
+/// Call remove() explicitly where the probe must go before something else is torn down.
+class PadProbe
+{
+public:
+    PadProbe() = default;
+
+    ~PadProbe() { remove(); }
+
+    PadProbe(const PadProbe&) = delete;
+    PadProbe& operator=(const PadProbe&) = delete;
+
+    /// gst_pad_add_probe() on @p pad, replacing the probe held so far. False when the probe wasn't added.
+    bool add(GstPad* pad, GstPadProbeType mask, GstPadProbeCallback callback, gpointer userData,
+             GDestroyNotify destroyData = nullptr)
+    {
+        remove();
+        _id = gst_pad_add_probe(pad, mask, callback, userData, destroyData);
+        if (_id != 0) {
+            _pad = adoptPad(GST_PAD(gst_object_ref(pad)));
+        }
+        return _id != 0;
+    }
+
+    void remove() noexcept
+    {
+        if (_id != 0) {
+            gst_pad_remove_probe(_pad.get(), _id);
+            _id = 0;
+        }
+        _pad.reset();
+    }
+
+private:
+    GstPadPtr _pad;
+    gulong _id = 0;
+};
+
 }  // namespace GStreamer

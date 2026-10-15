@@ -35,6 +35,7 @@
 #include "GstD3D12ContextBridge.h"
 #endif
 #include "GstHwVideoBuffer.h"
+#include "gstqgc/gstqgcqvideosink.h"
 #include "gstqgc/gstqgcvideosinkbin.h"
 #if defined(QGC_HAS_ANY_GPU_PATH)
 #include "QGCRhiCapture.h"
@@ -80,13 +81,9 @@ guint64 framesDelivered(GstElement* qvideosink)
 /// A guint64 field of the sink's "frame-stats" structure; -1 if the field is missing.
 qint64 sinkStat(GstElement* qvideosink, const char* field)
 {
-    GstStructure* stats = nullptr;
-    g_object_get(qvideosink, "frame-stats", &stats, nullptr);
+    const GStreamer::GstStructurePtr stats = GstQgc::frameStats(qvideosink);
     guint64 value = 0;
-    const bool found = stats && gst_structure_get_uint64(stats, field, &value);
-    if (stats) {
-        gst_structure_free(stats);
-    }
+    const bool found = stats && gst_structure_get_uint64(stats.get(), field, &value);
     return found ? static_cast<qint64>(value) : -1;
 }
 
@@ -1060,7 +1057,7 @@ void GStreamerTest::_testFrameCountsTelemetrySignal()
 
     QTRY_VERIFY_WITH_TIMEOUT(spy.size() > 0, 5000);
 
-    QVERIFY(sinkStat(qvideosink, HwBuffers::sinkFramesField(HwVideoBufferPath::None)) > 0);
+    QVERIFY(sinkStat(qvideosink, GstQgc::sinkFramesField(HwVideoBufferPath::None)) > 0);
     quint64 gpuFallback = 0;
     for (auto p : {HwVideoBufferPath::DmaBuf, HwVideoBufferPath::GlMemory, HwVideoBufferPath::D3D11,
                    HwVideoBufferPath::D3D12, HwVideoBufferPath::IOSurface, HwVideoBufferPath::AHardwareBuffer}) {
@@ -1993,26 +1990,22 @@ void GStreamerTest::_testQgcQVideoSinkStatsArePerSink()
     QCOMPARE(harnessA.pushFrame(2 * GST_SECOND), GST_FLOW_OK);
     QCOMPARE(harnessB.pushFrame(GST_SECOND), GST_FLOW_OK);
 
-    const char* const cpuField = HwBuffers::sinkFramesField(HwVideoBufferPath::None);
+    const char* const cpuField = GstQgc::sinkFramesField(HwVideoBufferPath::None);
     QCOMPARE(sinkStat(harnessA.element(), cpuField), qint64(2));
     QCOMPARE(sinkStat(harnessB.element(), cpuField), qint64(1));
-    QCOMPARE(sinkStat(harnessB.element(), "frames-delivered"), qint64(1));
+    QCOMPARE(framesDelivered(harnessB.element()), guint64(1));
 
-    GstStructure* rawStats = nullptr;
-    g_object_get(harnessA.element(), "frame-stats", &rawStats, nullptr);
-    const GStreamer::GstStructurePtr stats = GStreamer::adoptStructure(rawStats);
+    const GStreamer::GstStructurePtr stats = GstQgc::frameStats(harnessA.element());
     QVERIFY(stats);
-    const HwBuffers::PathStats formatted = HwBuffers::formatSinkStats(stats.get());
+    const GstQgc::PathStats formatted = GstQgc::formatSinkStats(stats.get());
     QCOMPARE(formatted.line, QStringLiteral(" CPU:2"));
     QCOMPARE(formatted.totalDelivered, quint64(0));
 
     // A receiver reuses its sink across sessions and reports each session from its start.
     QCOMPARE(harnessA.pushFrame(3 * GST_SECOND), GST_FLOW_OK);
-    GstStructure* rawLater = nullptr;
-    g_object_get(harnessA.element(), "frame-stats", &rawLater, nullptr);
-    const GStreamer::GstStructurePtr later = GStreamer::adoptStructure(rawLater);
+    const GStreamer::GstStructurePtr later = GstQgc::frameStats(harnessA.element());
     QVERIFY(later);
-    QCOMPARE(HwBuffers::formatSinkStats(later.get(), stats.get()).line, QStringLiteral(" CPU:1"));
+    QCOMPARE(GstQgc::formatSinkStats(later.get(), stats.get()).line, QStringLiteral(" CPU:1"));
 }
 
 void GStreamerTest::_testQgcQVideoSinkKeepsBaseSinkStats()
@@ -2097,7 +2090,7 @@ void GStreamerTest::_testQgcQVideoSinkGpuPathSelection()
     const quint64 noPathAfter =
         GstHwPathTelemetry::peekFallbackReason(HwVideoBufferPath::None, HwFallbackReason::UnknownMemType);
 
-    QCOMPARE(sinkStat(harness.element(), HwBuffers::sinkFramesField(HwVideoBufferPath::None)), qint64(3));
+    QCOMPARE(sinkStat(harness.element(), GstQgc::sinkFramesField(HwVideoBufferPath::None)), qint64(3));
     QCOMPARE(sinkStat(harness.element(), "gpu-fallbacks"), expectedGpuFallbacks);
     QCOMPARE(sinkStat(harness.element(), "stream-demotions"), qint64(expectedGpuFallbacks > 0 ? 1 : 0));
     QCOMPARE(noPathAfter - noPathBefore, expectedNoPathVerdicts);

@@ -1,6 +1,5 @@
 #include "HwBuffers.h"
 
-#include <array>
 #include <utility>
 
 #include <QtCore/QByteArray>
@@ -37,29 +36,17 @@ void forEachCompiledPath(Fn&& fn)
 }  // namespace
 #endif
 
-void dispatchBusMessage(GstMessage* msg) noexcept
+void onPipelineError(const GError* error, const gchar* debug) noexcept
 {
-    if (!msg || GST_MESSAGE_TYPE(msg) != GST_MESSAGE_ERROR)
-        return;
-
     // Only a real device loss should drop every GPU cache; ordinary stream errors must not. There is no structured
     // device-lost event, so classify by the D3D/DXGI device-removed/reset text surfaced in the error/debug strings.
-    GError* err = nullptr;
-    gchar* debug = nullptr;
-    gst_message_parse_error(msg, &err, &debug);
-
     const auto mentionsDeviceLoss = [](const gchar* text) {
         return text && (g_strstr_len(text, -1, "DEVICE_REMOVED") || g_strstr_len(text, -1, "DEVICE_RESET") ||
                         g_strstr_len(text, -1, "device removed") || g_strstr_len(text, -1, "device reset"));
     };
-    const bool deviceLost = mentionsDeviceLoss(err ? err->message : nullptr) || mentionsDeviceLoss(debug);
-
-    if (err)
-        g_error_free(err);
-    g_free(debug);
-
-    if (deviceLost)
+    if (mentionsDeviceLoss(error ? error->message : nullptr) || mentionsDeviceLoss(debug)) {
         resetCachedGpuResources();
+    }
 }
 
 HwBufferEnvConfig readHwBufferEnvConfig() noexcept
@@ -202,51 +189,6 @@ bool proposeDeviceBoundPool(GstQuery* query, GstCaps* caps, const GstVideoInfo* 
     Q_UNUSED(minBuffers);
 #endif
     return false;
-}
-
-const char* sinkFramesField(HwVideoBufferPath path) noexcept
-{
-    static const std::array<QByteArray, GstHw::kPathCount> s_fields = [] {
-        std::array<QByteArray, GstHw::kPathCount> fields;
-        for (std::size_t i = 0; i < fields.size(); ++i) {
-            fields[i] = QByteArray("frames-") + QByteArray(GstHw::toString(HwVideoBufferPath(i))).toLower();
-        }
-        return fields;
-    }();
-    const auto index = static_cast<std::size_t>(path);
-    return (index < s_fields.size()) ? s_fields[index].constData() : nullptr;
-}
-
-PathStats formatSinkStats(const GstStructure* stats, const GstStructure* since) noexcept
-{
-    PathStats out;
-    if (!stats) {
-        return out;
-    }
-    const auto countOf = [stats, since](const char* field) -> quint64 {
-        guint64 now = 0;
-        guint64 before = 0;
-        (void) gst_structure_get_uint64(stats, field, &now);
-        if (since) {
-            (void) gst_structure_get_uint64(since, field, &before);
-        }
-        return (now > before) ? (now - before) : 0;
-    };
-    for (std::size_t i = 0; i < GstHw::kPathCount; ++i) {
-        const auto path = HwVideoBufferPath(i);
-        if (const quint64 frames = countOf(sinkFramesField(path)); frames > 0) {
-            out.line += QStringLiteral(" %1:%2").arg(QLatin1String(GstHw::toString(path))).arg(frames);
-            if (path != HwVideoBufferPath::None) {
-                out.totalDelivered += frames;
-            }
-        }
-    }
-    for (const char* const field : {"gpu-fallbacks", "stream-demotions"}) {
-        if (const quint64 count = countOf(field); count > 0) {
-            out.line += QStringLiteral(" %1:%2").arg(QLatin1String(field)).arg(count);
-        }
-    }
-    return out;
 }
 
 QString takeExtraPathStats() noexcept

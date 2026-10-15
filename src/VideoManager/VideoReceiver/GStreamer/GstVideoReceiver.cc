@@ -23,6 +23,7 @@
 #include "HwBuffers/common/HwBuffers.h"
 #include "QGCLoggingCategory.h"
 #include "QGCNetworkHelper.h"
+#include "gstqgc/gstqgcqvideosink.h"
 
 QGC_LOGGING_CATEGORY(GstVideoReceiverLog, "Video.GStreamer.GstVideoReceiver")
 
@@ -96,12 +97,6 @@ bool isRecoverableH265PaciError(GstMessage* msg, const GError* error, const gcha
 
     GstElementFactory* factory = gst_element_get_factory(GST_ELEMENT(src));
     return factory && (g_strcmp0(GST_OBJECT_NAME(factory), "rtph265depay") == 0);
-}
-
-bool isCapsInfo(GstMessage* message)
-{
-    const GstStructure* structure = gst_message_get_structure(message);
-    return structure && gst_structure_has_name(structure, "qgc-caps-info");
 }
 
 bool pipelineEnteredPlaying(GstMessage* message)
@@ -234,8 +229,7 @@ void GstVideoReceiver::_startPipeline(const StartConfig& config)
             break;
         }
 
-        _teeProbeId = gst_pad_add_probe(teeSink.get(), GST_PAD_PROBE_TYPE_BUFFER, _teeProbe, this, nullptr);
-        if (_teeProbeId == 0) {
+        if (!_teeFrameProbe.add(teeSink.get(), GST_PAD_PROBE_TYPE_BUFFER, _teeProbe, this)) {
             // _teeProbe feeds the watchdog; without it the watchdog fires spuriously instead of reporting a real
             // failure.
             qCCritical(GstVideoReceiverLog) << "Failed to add the tee frame probe";
@@ -312,7 +306,7 @@ bool GstVideoReceiver::_stopPipeline()
     _recordingBranch.finishForTeardown();
 
     // Before the teardown releases the video sink.
-    const HwBuffers::PathStats hwStats = _decodingBranch.sinkPathStats();
+    const GstQgc::PathStats hwStats = _decodingBranch.sinkPathStats();
 
     _resetPipelineState();
 
@@ -340,14 +334,8 @@ void GstVideoReceiver::_resetPipelineState()
     _detachBus();
     _pipelineGeneration.fetch_add(1, std::memory_order_relaxed);
 
-    if (_teeProbeId != 0 && _tee) {
-        if (const GStreamer::GstPadPtr teeSink = GStreamer::adoptPad(gst_element_get_static_pad(_tee, "sink"))) {
-            gst_pad_remove_probe(teeSink.get(), _teeProbeId);
-        }
-    }
-    _teeProbeId = 0;
-
-    _removeSourceEosProbe();
+    _teeFrameProbe.remove();
+    _sourceEosProbe.remove();
 
     _recordingBranch.reset();
     _decodingBranch.reset();
@@ -400,7 +388,7 @@ void GstVideoReceiver::_onWatchdogTick()
 
     if (++_statsTickCounter >= kHwStatsLogIntervalTicks) {
         _statsTickCounter = 0;
-        if (const HwBuffers::PathStats hwStats = _decodingBranch.sinkPathStats(); hwStats.totalDelivered > 0) {
+        if (const GstQgc::PathStats hwStats = _decodingBranch.sinkPathStats(); hwStats.totalDelivered > 0) {
             qCDebug(GstVideoReceiverLog).noquote() << "HW path live" << _redactedUri() << hwStats.line;
         }
     }
@@ -479,11 +467,7 @@ void GstVideoReceiver::_onNewSourcePad(GstPad *pad)
 
     // Lives as long as the source pad/pipeline (removed in _resetPipelineState), so stopDecoding()
     // doesn't lose source-EOS detection.
-    _removeSourceEosProbe();
-    _eosProbeId = gst_pad_add_probe(pad, GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM, _eosProbe, this, nullptr);
-    if (_eosProbeId != 0) {
-        _eosProbePad = GStreamer::adoptPad(GST_PAD(gst_object_ref(pad)));
-    }
+    (void) _sourceEosProbe.add(pad, GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM, _eosProbe, this);
 
     _decodingBranch.onSourceStreaming();
 }
@@ -497,15 +481,6 @@ void GstVideoReceiver::_noteTeeFrame()
         qCDebug(GstVideoReceiverLog).noquote() << "Source flow: teeFrames=" << sourceFrames
                                                << "decoding=" << _decodingBranch.isDecoding() << _redactedUri();
     }
-}
-
-void GstVideoReceiver::_removeSourceEosProbe()
-{
-    if (_eosProbeId != 0 && _eosProbePad) {
-        gst_pad_remove_probe(_eosProbePad.get(), _eosProbeId);
-    }
-    _eosProbeId = 0;
-    _eosProbePad.reset();
 }
 
 void GstVideoReceiver::_onPipelinePlaying()
@@ -573,7 +548,7 @@ GstBusSyncReply GstVideoReceiver::_onBusSyncMessage(GstBus* /*bus*/, GstMessage*
             self->_recordingBranch.onBusEos();
             break;
         case GST_MESSAGE_ELEMENT:
-            if (isCapsInfo(message)) {
+            if (gst_message_has_name(message, GstQgc::kCapsInfoMessage)) {
                 self->_decodingBranch.onBusCapsInfo(message);
             } else {
                 self->_recordingBranch.onBusElement(message);
@@ -628,8 +603,7 @@ void GstVideoReceiver::_onBusError(GstMessage* message)
         GST_MESSAGE_SRC(message) ? gst_object_get_path_string(GST_MESSAGE_SRC(message)) : nullptr);
     qCWarning(GstVideoReceiverLog) << "GStreamer error from" << (sourcePath ? sourcePath.get() : "(unknown)") << ":"
                                    << text;
-    // Drops cached GPU devices on a device-loss error.
-    HwBuffers::dispatchBusMessage(message);
+    HwBuffers::onPipelineError(error.get(), debug.get());
     // A failing pipeline usually posts several ERRORs; the first one's teardown makes the rest stale.
     _runOnWorkerForPipeline([this]() { _onPipelineError(); });
 }

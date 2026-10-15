@@ -38,8 +38,9 @@ const HwBufferEnvConfig& hwBufferEnvConfig() noexcept;
 /// (and unreffed); always GST_BUS_PASS when no GPU path is compiled.
 GstBusSyncReply onBusSyncMessage(GstMessage* msg) noexcept;
 
-/// Receiver-side bus hook; drops cached GPU devices on GST_MESSAGE_ERROR. No-op when no GPU paths compiled.
-void dispatchBusMessage(GstMessage* msg) noexcept;
+/// For a receiver's pipeline ERROR (@p error and @p debug as gst_message_parse_error() returns them): drops cached GPU
+/// devices when it reports a device loss. No-op when no GPU paths compiled.
+void onPipelineError(const GError* error, const gchar* debug) noexcept;
 
 /// Pipeline-restart hook; clears exhausted prime-retry latches (GL, Vulkan) so a restart can prime on the next
 /// NEED_CONTEXT. Never drops shared GPU objects: other streams may still be using them.
@@ -64,22 +65,6 @@ bool answerSinkBinContextQuery(GstQuery* query) noexcept;
 /// primed.
 bool proposeDeviceBoundPool(GstQuery* query, GstCaps* caps, const GstVideoInfo* vinfo, gsize size,
                             guint minBuffers) noexcept;
-
-/// Formatted per-path frame counts + the total delivered through GPU paths.
-struct PathStats
-{
-    QString line;
-    quint64 totalDelivered = 0;
-};
-
-/// guint64 "frame-stats" field holding the frames @p path delivered: "frames-" plus the lower-cased
-/// GstHw::toString(path).
-const char* sinkFramesField(HwVideoBufferPath path) noexcept;
-
-/// One qgcqvideosink's frame accounting, from its "frame-stats" structure: the per-path counts it has delivered, plus
-/// its GPU fallbacks and demotions. With @p since (an earlier "frame-stats" value of the same sink), only what changed
-/// since.
-PathStats formatSinkStats(const GstStructure* stats, const GstStructure* since = nullptr) noexcept;
 
 /// Process-wide render-time counters no sink can attribute (map failures, texture reuse, producer waits, fallback
 /// reasons, ...), each printed only when nonzero; reads-and-clears, teardown only.

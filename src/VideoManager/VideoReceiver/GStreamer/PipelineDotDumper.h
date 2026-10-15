@@ -1,9 +1,9 @@
 #pragma once
 
+#include <gst/gstdebugutils.h>
+
 #include <QtCore/QByteArray>
 #include <QtCore/QString>
-
-typedef struct _GstElement GstElement;
 
 /// Writes a receiver pipeline's graph as Graphviz .dot files. Every dump leaves out element properties, since source
 /// properties can hold stream credentials.
@@ -12,6 +12,18 @@ typedef struct _GstElement GstElement;
 class PipelineDotDumper
 {
 public:
+    /// Every pipeline graph QGC writes omits element properties, because source properties can contain credentials.
+    static constexpr GstDebugGraphDetails kDiagnosticDotGraphDetails = static_cast<GstDebugGraphDetails>(
+        GST_DEBUG_GRAPH_SHOW_MEDIA_TYPE | GST_DEBUG_GRAPH_SHOW_CAPS_DETAILS | GST_DEBUG_GRAPH_SHOW_STATES);
+
+    /// Returns @p tag as a file-name part: letters, digits, '-' and '_' only (anything else becomes '_'), at most 57
+    /// characters, never empty. A dump tag can then neither leave its directory nor make the file name too long.
+    static QString dotFileTag(QStringView tag);
+
+    /// Writes @p pipeline's graph (kDiagnosticDotGraphDetails) into @p directory as "<dotFileTag(tag)>-<UTC time>.dot",
+    /// keeping at most 10 .dot files there. Returns the file's path, or empty on failure.
+    static QString writePipelineDot(GstElement* pipeline, QStringView tag, const QString& directory);
+
     /// Names the pipeline, and so its dump files, "receiver-<receiverName>". VideoManager names each receiver
     /// uniquely, so receivers don't overwrite each other's dumps.
     void setReceiverName(const QString& receiverName);

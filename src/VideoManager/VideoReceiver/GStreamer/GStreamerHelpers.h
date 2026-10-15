@@ -11,19 +11,7 @@
 #include "GstScoped.h"
 
 namespace GStreamer {
-/// Every pipeline graph QGC writes omits element properties, because source properties can contain credentials.
-inline constexpr GstDebugGraphDetails kDiagnosticDotGraphDetails = static_cast<GstDebugGraphDetails>(
-    GST_DEBUG_GRAPH_SHOW_MEDIA_TYPE | GST_DEBUG_GRAPH_SHOW_CAPS_DETAILS | GST_DEBUG_GRAPH_SHOW_STATES);
-
 bool isValidRtspUri(const gchar* uri_str);
-
-/// Returns @p tag as a file-name part: letters, digits, '-' and '_' only (anything else becomes '_'), at most 57
-/// characters, never empty. A dump tag can then neither leave its directory nor make the file name too long.
-QString dotFileTag(QStringView tag);
-
-/// Writes @p pipeline's graph (kDiagnosticDotGraphDetails) into @p directory as "<dotFileTag(tag)>-<UTC time>.dot",
-/// keeping at most 10 .dot files there. Returns the file's path, or empty on failure.
-QString writePipelineDot(GstElement* pipeline, QStringView tag, const QString& directory);
 
 /// Takes @p element out of its parent bin, then sets it to NULL. Removed first, so the bin can't bring it back up and
 /// nothing it posts while stopping reaches the bin's bus. No-op when @p element has no parent. The caller's refs on
@@ -34,10 +22,23 @@ void disposeChild(GstElement* element);
 /// Returns the borrowed (bin-owned) element, or null if the bin rejected it; @p what names it in the warning.
 GstElement* addToBin(GstElement* bin, GstElementPtr element, const char* what);
 
+/// The head of a branch behind @p tee: a queue and a closed valve (drop=TRUE), added to @p pipeline and linked
+/// tee ! queue ! valve. Both are null on failure, which is logged with @p what naming the branch.
+struct TeeBranch
+{
+    GstElement* queue = nullptr;
+    GstElement* valve = nullptr;
+};
+
+TeeBranch addTeeBranch(GstElement* pipeline, GstElement* tee, const char* what);
+
 /// @p element's first src pad, or null when it has none (yet).
 GstPadPtr firstSrcPad(GstElement* element);
 
 bool isHardwareDecoderFactory(GstElementFactory* factory);
+
+/// "[HW|SW] <plugin>/<factory> rank=<rank> (<klass>)" for decoder logs.
+QString describeDecoderFactory(GstElementFactory* factory);
 
 /// ForceVideoDecoder* family that claims decoder factory @p factoryName by name prefix, or
 /// ForceVideoDecoderDefault when it belongs to no user-selectable hardware family.

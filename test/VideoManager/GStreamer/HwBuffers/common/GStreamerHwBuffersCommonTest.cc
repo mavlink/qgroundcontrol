@@ -260,26 +260,17 @@ void GStreamerTest::_testHwBufferLifecycleResetsNativeCaches()
     QCOMPARE(testBridgeA().clears, 1);
     QCOMPARE(s_testCacheResets, 1);
 
-    GstElement* dummy = gst_element_factory_make("identity", nullptr);
-    QVERIFY(dummy);
-    GstMessage* ordinaryError = gst_message_new_error(
-        GST_OBJECT(dummy), g_error_new_literal(GST_RESOURCE_ERROR, GST_RESOURCE_ERROR_FAILED, "ordinary stream error"),
-        "debug");
-    QVERIFY(ordinaryError);
-    HwBuffers::dispatchBusMessage(ordinaryError);
+    const GStreamer::GErrorPtr ordinaryError = GStreamer::adoptError(
+        g_error_new_literal(GST_RESOURCE_ERROR, GST_RESOURCE_ERROR_FAILED, "ordinary stream error"));
+    HwBuffers::onPipelineError(ordinaryError.get(), "debug");
     QCOMPARE(testBridgeA().clears, 1);
     QCOMPARE(s_testCacheResets, 1);
-    gst_message_unref(ordinaryError);
 
-    GstMessage* deviceLostError = gst_message_new_error(
-        GST_OBJECT(dummy), g_error_new_literal(GST_RESOURCE_ERROR, GST_RESOURCE_ERROR_FAILED, "DEVICE_REMOVED"),
-        "debug");
-    QVERIFY(deviceLostError);
-    HwBuffers::dispatchBusMessage(deviceLostError);
+    const GStreamer::GErrorPtr deviceLostError =
+        GStreamer::adoptError(g_error_new_literal(GST_RESOURCE_ERROR, GST_RESOURCE_ERROR_FAILED, "DEVICE_REMOVED"));
+    HwBuffers::onPipelineError(deviceLostError.get(), "debug");
     QCOMPARE(testBridgeA().clears, 2);
     QCOMPARE(s_testCacheResets, 2);
-    gst_message_unref(deviceLostError);
-    gst_object_unref(dummy);
 
     // A (re)starting pipeline must leave shared bridge objects and caches alone: another stream may be using them.
     QVERIFY(testBridgeA().prime());

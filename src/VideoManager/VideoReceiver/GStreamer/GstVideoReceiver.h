@@ -98,7 +98,6 @@ private:
     void _onNewSourcePad(GstPad *pad);
     void _onPadAdded(GstElement* element, GstPad* pad);
     void _noteTeeFrame();
-    void _removeSourceEosProbe();
     /// Tears down the running pipeline (finalizing an active recording first) and resets all
     /// pipeline state. Returns false when nothing was running.
     bool _stopPipeline();
@@ -145,10 +144,9 @@ private:
     /// Identifies the current pipeline; bumped on every teardown (stop() or failed start()) once its callbacks have
     /// stopped. Written on the worker, read by callbacks on streaming threads.
     std::atomic<quint64> _pipelineGeneration = 0;
-    gulong _teeProbeId = 0;
-    gulong _eosProbeId = 0;
-    /// Source pad carrying _eosProbeId; released with the pipeline, not the decode branch.
-    GStreamer::GstPadPtr _eosProbePad;
+    GStreamer::PadProbe _teeFrameProbe;
+    /// Released with the pipeline, not the decode branch.
+    GStreamer::PadProbe _sourceEosProbe;
     GStreamer::GstBusPtr _bus;       ///< Held while the bus handler is attached.
     QSemaphore _busHandlerReleased;  ///< Released by GStreamer once the detached bus handler is no longer running.
     RecordingBranch _recordingBranch;

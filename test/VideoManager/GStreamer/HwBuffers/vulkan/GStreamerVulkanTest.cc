@@ -51,6 +51,7 @@
 #endif
 #include "GstHwVideoBuffer.h"
 #include "GstHwVideoBufferFactory.h"
+#include "gstqgc/gstqgcqvideosink.h"
 #include "gstqgc/gstqgcvideosinkbin.h"
 #if defined(QGC_HAS_ANY_GPU_PATH)
 #include "QGCRhiCapture.h"
@@ -195,11 +196,8 @@ void GStreamerTest::_testVulkanDispatchDemotesToCpu()
 
     const int probedBuffers = bufferCount.load();
     guint64 vulkanFrames = 0;
-    GstStructure* stats = nullptr;
-    g_object_get(qvideosink, "frame-stats", &stats, nullptr);
-    if (stats) {
-        (void) gst_structure_get_uint64(stats, HwBuffers::sinkFramesField(HwVideoBufferPath::Vulkan), &vulkanFrames);
-        gst_structure_free(stats);
+    if (const GStreamer::GstStructurePtr stats = GstQgc::frameStats(qvideosink)) {
+        (void) gst_structure_get_uint64(stats.get(), GstQgc::sinkFramesField(HwVideoBufferPath::Vulkan), &vulkanFrames);
     }
 
     if (sawError) {

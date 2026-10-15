@@ -547,10 +547,10 @@ void GStreamerTest::_testWritePipelineDotReturnsEmptyOnWriteFailure()
     QVERIFY(pipeline);
     const auto cleanup = qScopeGuard([&] { gst_object_unref(pipeline); });
 
-    expectLogMessage("Video.GStreamer.GStreamerHelpers", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("^Failed to create")));
+    expectLogMessage("Utilities.QGCFileHelper", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("failed to create parent directory")));
     const QString path =
-        GStreamer::writePipelineDot(pipeline, u"pipeline", blocker.fileName() + QStringLiteral("/dots"));
+        PipelineDotDumper::writePipelineDot(pipeline, u"pipeline", blocker.fileName() + QStringLiteral("/dots"));
     verifyExpectedLogMessage();
     QVERIFY2(path.isEmpty(), qPrintable(QStringLiteral("Expected empty path for failed dot write, got %1").arg(path)));
 }
@@ -571,7 +571,7 @@ void GStreamerTest::_testPipelineDotOmitsElementProperties()
     gst_bin_add_many(GST_BIN(pipeline), source, sink, nullptr);
     QVERIFY(gst_element_link(source, sink));
 
-    gchar* dotData = gst_debug_bin_to_dot_data(GST_BIN(pipeline), GStreamer::kDiagnosticDotGraphDetails);
+    gchar* dotData = gst_debug_bin_to_dot_data(GST_BIN(pipeline), PipelineDotDumper::kDiagnosticDotGraphDetails);
     QVERIFY(dotData);
     const QByteArray dot(dotData);
     g_free(dotData);

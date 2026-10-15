@@ -211,29 +211,15 @@ bool RecordingBranch::build(GstElement* pipeline, GstElement* tee)
     _pipeline = pipeline;
     _tee = tee;
 
-    GstElement* queue = gst_element_factory_make("queue", nullptr);
-    if (!queue) {
-        qCWarning(GstVideoReceiverLog) << "gst_element_factory_make('queue') failed";
+    const GStreamer::TeeBranch branch = GStreamer::addTeeBranch(_pipeline, _tee, "recording");
+    if (!branch.valve) {
         return false;
     }
-    (void) gst_bin_add(GST_BIN(_pipeline), queue);
-
-    _valve = gst_element_factory_make("valve", nullptr);
-    if (!_valve) {
-        qCWarning(GstVideoReceiverLog) << "gst_element_factory_make('valve') failed";
-        return false;
-    }
-    g_object_set(_valve, "drop", TRUE, nullptr);
+    _valve = branch.valve;
     // Preserve stream-start/caps/segment events while buffers are dropped. When recording
     // starts later, the newly linked parser receives the negotiated codec configuration.
     // drop-mode exists since GStreamer 1.20, the oldest version QGC supports.
     gst_util_set_object_arg(G_OBJECT(_valve), "drop-mode", "forward-sticky-events");
-    (void) gst_bin_add(GST_BIN(_pipeline), _valve);
-
-    if (!gst_element_link_many(_tee, queue, _valve, nullptr)) {
-        qCWarning(GstVideoReceiverLog) << "Unable to link recorder queue";
-        return false;
-    }
     return true;
 }
 
@@ -324,10 +310,9 @@ void RecordingBranch::start(const QString& videoFile, VideoReceiver::FILE_FORMAT
 
     _receiver._recordingOutput = videoFile;
     // The file starts with a keyframe at t=0, so playback can decode from its first frame.
-    _keyframeWatchId = gst_pad_add_probe(probepad.get(), GST_PAD_PROBE_TYPE_BUFFER, keyframeWatch,
-                                         new KeyframeWatch{.receiver = &_receiver, .file = videoFile},
-                                         [](gpointer watch) { delete static_cast<KeyframeWatch*>(watch); });
-    if (_keyframeWatchId == 0) {
+    if (!_keyframeWatch.add(probepad.get(), GST_PAD_PROBE_TYPE_BUFFER, keyframeWatch,
+                            new KeyframeWatch{.receiver = &_receiver, .file = videoFile},
+                            [](gpointer watch) { delete static_cast<KeyframeWatch*>(watch); })) {
         qCCritical(GstVideoReceiverLog) << "Failed to add the keyframe probe" << _receiver._redactedUri();
         failRecordingStart();
         return;
@@ -484,12 +469,7 @@ void RecordingBranch::_shutdown()
 {
     _stopTimer->stop();
 
-    if (_keyframeWatchId != 0 && _valve) {
-        if (const GStreamer::GstPadPtr probepad = GStreamer::adoptPad(gst_element_get_static_pad(_valve, "src"))) {
-            gst_pad_remove_probe(probepad.get(), _keyframeWatchId);
-        }
-    }
-    _keyframeWatchId = 0;
+    _keyframeWatch.remove();
 
     if (_fileSink) {
         // Removed before going NULL, so nothing it posts while stopping reaches the bus as a pipeline error.

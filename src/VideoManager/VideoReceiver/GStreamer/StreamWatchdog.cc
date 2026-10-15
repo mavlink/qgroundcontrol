@@ -7,10 +7,6 @@ namespace {
 constexpr qint64 kMinTimeoutMs = 1000;
 // The decoder may lag the source by up to this many timeouts before it counts as stalled.
 constexpr qint64 kDecoderTimeoutFactor = 2;
-// The cap bounds worst-case recovery after a long RF outage and stays below a typical RTSP server keepalive (60 s).
-constexpr int kMaxReconnectBackoffSec = 30;
-// 2^5 s already exceeds the cap; bounds the shift.
-constexpr int kMaxBackoffDoublings = 5;
 
 }  // namespace
 
@@ -67,9 +63,7 @@ StreamWatchdog::Result StreamWatchdog::check(qint64 nowMs, bool decoding)
 std::chrono::seconds StreamWatchdog::nextReconnectDelay()
 {
     if (_sourceFrames.exchange(0, std::memory_order_relaxed) > 0) {
-        _reconnectAttempts = 0;
+        _reconnectBackoff.reset();
     }
-    ++_reconnectAttempts;
-    return std::chrono::seconds(
-        std::min(1 << std::min(_reconnectAttempts - 1, kMaxBackoffDoublings), kMaxReconnectBackoffSec));
+    return std::chrono::duration_cast<std::chrono::seconds>(_reconnectBackoff.next());
 }
