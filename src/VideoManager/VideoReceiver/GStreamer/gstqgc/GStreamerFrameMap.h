@@ -31,8 +31,8 @@ void applyColorimetry(QVideoFrameFormat& format, const GstVideoInfo& info, GstCa
 /// Apply video crop meta to @p format's viewport. Pass-through when no crop meta present.
 QVideoFrameFormat applyCropMeta(QVideoFrameFormat format, GstBuffer* buffer);
 
-/// Sample-to-frame result (GPU wins when it can, CPU fallback). mapSampleToFrame() does NOT ref
-/// @p buffer — GPU wraps it in a transient GstSample (own ref), CPU copies; caller keeps @p buffer/@p caps.
+/// Sample-to-frame result (GPU wins when it can, CPU fallback). mapSampleToFrame() does NOT take the caller's refs on
+/// @p buffer/@p caps: a GPU frame holds its own GstSample, a zero-copy CPU frame its own buffer ref.
 struct MappedFrame
 {
     QVideoFrame frame;

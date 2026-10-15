@@ -57,6 +57,9 @@ struct PrivState
     QVideoFrameFormat format;
     // Written by start() under GST_OBJECT_LOCK and snapshotted by show_frame.
     HwVideoBufferContext hw_context = {};
+    // Whether the negotiated caps carry a GPU memory feature; without one every frame is system memory, which no GPU
+    // path imports, so show_frame skips path selection.
+    bool gpu_caps = false;
     std::atomic<int64_t> last_pts_ns{-1};
     std::atomic<quint64> input_frames{0};
     std::atomic<quint64> dropped_frames{0};
@@ -102,6 +105,22 @@ bool snapshot_sink(GstQgcQVideoSink* self, HwVideoBufferContext& hwOut)
     hwOut = priv_of(self)->hw_context;
     GST_OBJECT_UNLOCK(self);
     return hasSink;
+}
+
+/// True if @p caps name a memory feature other than system memory (memory:DMABuf, memory:GLMemory, ...).
+bool caps_carry_gpu_memory(GstCaps* caps)
+{
+    const GstCapsFeatures* const features = gst_caps_get_features(caps, 0);
+    if (!features || gst_caps_features_is_any(features)) {
+        return false;
+    }
+    for (guint i = 0; i < gst_caps_features_get_size(features); ++i) {
+        const gchar* const feature = gst_caps_features_get_nth(features, i);
+        if (g_str_has_prefix(feature, "memory:") && (g_strcmp0(feature, GST_CAPS_FEATURE_MEMORY_SYSTEM_MEMORY) != 0)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 /// The "stats" property value (transfer-full).
@@ -327,6 +346,7 @@ static gboolean gst_qgc_q_video_sink_set_caps(GstBaseSink* bsink, GstCaps* caps)
     // Hold the negotiated caps verbatim: rebuilding from video_info drops DRM modifiers and other
     // negotiated fields the downstream frame mapping relies on.
     p->cached_caps = gst_caps_ref(caps);
+    p->gpu_caps = caps_carry_gpu_memory(caps);
     p->resolved_path_cache = HwResolvedPathCache{};
     p->demotion_recorded = false;
     // New caps = new segment; clear PTS history so a restart/format change that resumes at a
@@ -381,6 +401,7 @@ static GstFlowReturn gst_qgc_q_video_sink_show_frame(GstVideoSink* vsink, GstBuf
         p->dropped_frames.fetch_add(1, std::memory_order_relaxed);
         return GST_FLOW_OK;  // no destination yet; drop
     }
+    hwCtx.gpuEnabled = hwCtx.gpuEnabled && p->gpu_caps;
 
     // PTS regression guard ahead of mapping: a regressed timestamp wedges QVideoOutput's internal
     // advance, and checking first avoids a wasted full-frame map on a buffer we'd drop anyway.
@@ -508,6 +529,7 @@ static gboolean gst_qgc_q_video_sink_stop(GstBaseSink* bsink)
     PrivState* p = priv_of(self);
     p->caps_valid.store(false, std::memory_order_release);
     gst_clear_caps(&p->cached_caps);
+    p->gpu_caps = false;
     p->resolved_path_cache = HwResolvedPathCache{};
     p->demotion_recorded = false;
     p->last_pts_ns.store(-1, std::memory_order_release);

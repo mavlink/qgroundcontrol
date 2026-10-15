@@ -1,10 +1,8 @@
 #include "GstHwVideoBufferFactory.h"
 
-#include <QtCore/QMutex>
-#include <QtCore/QMutexLocker>
-#include <QtCore/QSet>
-#include <QtCore/QString>
+#include <atomic>
 #include <private/qhwvideobuffer_p.h>
+#include <utility>
 
 #include "GstHwPathTelemetry.h"
 #include "QGCLoggingCategory.h"
@@ -193,20 +191,52 @@ bool memoryMatchesPath(HwVideoBufferPath path, GstMemory* mem, [[maybe_unused]] 
     return false;
 }
 
-}  // namespace
-
-std::unique_ptr<QHwVideoBuffer> makeHwVideoBuffer(GstSample* sample, [[maybe_unused]] const GstVideoInfo& info,
-                                                  [[maybe_unused]] QVideoFrameFormat format,
-                                                  const HwVideoBufferContext& context, HwVideoBufferPath& matchedPath,
-                                                  HwResolvedPathCache* cache)
+/// Creates the GstSample a backend buffer holds only once a path has matched the memory, so a frame that ends up on
+/// the CPU path never allocates one.
+class LazySample
 {
-    matchedPath = HwVideoBufferPath::None;
-    if (!context.gpuEnabled || !sample) {
-        return nullptr;
+public:
+    LazySample(GstBuffer* buffer, GstCaps* caps)
+        : _buffer(buffer)
+        , _caps(caps)
+    {}
+
+    explicit LazySample(GstSample* sample)
+        : _sample(gst_sample_ref(sample))
+    {}
+
+    ~LazySample()
+    {
+        if (_sample) {
+            gst_sample_unref(_sample);
+        }
     }
 
-    GstBuffer* buffer = gst_sample_get_buffer(sample);
-    if (!buffer) {
+    LazySample(const LazySample&) = delete;
+    LazySample& operator=(const LazySample&) = delete;
+
+    GstSample* get()
+    {
+        if (!_sample) {
+            _sample = gst_sample_new(_buffer, _caps, nullptr, nullptr);
+        }
+        return _sample;
+    }
+
+private:
+    GstBuffer* _buffer = nullptr;
+    GstCaps* _caps = nullptr;
+    GstSample* _sample = nullptr;
+};
+
+std::unique_ptr<QHwVideoBuffer> selectHwVideoBuffer(LazySample& sample, GstBuffer* buffer,
+                                                    [[maybe_unused]] const GstVideoInfo& info,
+                                                    [[maybe_unused]] QVideoFrameFormat format,
+                                                    const HwVideoBufferContext& context, HwVideoBufferPath& matchedPath,
+                                                    HwResolvedPathCache* cache)
+{
+    matchedPath = HwVideoBufferPath::None;
+    if (!context.gpuEnabled || !buffer) {
         return nullptr;
     }
 
@@ -216,16 +246,20 @@ std::unique_ptr<QHwVideoBuffer> makeHwVideoBuffer(GstSample* sample, [[maybe_unu
     if (!mem0) {
         return nullptr;
     }
+    const GType allocatorType = mem0->allocator ? G_OBJECT_TYPE(mem0->allocator) : G_TYPE_INVALID;
+    if (cache && (allocatorType != G_TYPE_INVALID) && (allocatorType == cache->unmatchedAllocator)) {
+        return nullptr;
+    }
 
     // Validate before commit — failure resets matchedPath so per-path counters don't double-count.
     auto buildOrFallback = [&matchedPath, &info, cache](auto&& buf) -> std::unique_ptr<QHwVideoBuffer> {
         if (!buf || !buf->validatePlaneHandles()) {
             GstHwPathTelemetry::recordFallbackReason(matchedPath, GstHwPathTelemetry::HwFallbackReason::ValidateFailed);
-            static std::atomic<quint64> s_validateFails{0};
-            const quint64 c = s_validateFails.fetch_add(1, std::memory_order_relaxed) + 1;
-            if ((c & 0x3F) == 1) {
+            // Some imports fail on every frame of a stream (e.g. multi-planar DMABuf under a Vulkan QRhi): warn once
+            // per caps epoch, not per frame.
+            if (!cache || !std::exchange(cache->validationFailureLogged, true)) {
                 qCWarning(GstHwBufFactoryLog)
-                    << "validatePlaneHandles failed — CPU memcpy fallback (total:" << c << ")";
+                    << GstHw::toString(matchedPath) << "buffer failed plane-handle validation — CPU fallback";
             }
             if (cache) {
                 cache->validated = false;
@@ -251,7 +285,7 @@ std::unique_ptr<QHwVideoBuffer> makeHwVideoBuffer(GstSample* sample, [[maybe_unu
     if (cache && cache->validated && cache->path != HwVideoBufferPath::None) {
         if (memoryMatchesPath(cache->path, mem0, context)) {
             matchedPath = cache->path;
-            if (auto buf = constructForPath(cache->path, sample, info, format, context)) {
+            if (auto buf = constructForPath(cache->path, sample.get(), info, format, context)) {
                 return buildOrFallback(std::move(buf));
             }
             matchedPath = HwVideoBufferPath::None;
@@ -260,8 +294,8 @@ std::unique_ptr<QHwVideoBuffer> makeHwVideoBuffer(GstSample* sample, [[maybe_unu
     }
 
 #if defined(QGC_HAS_GST_CUDA_GPU_PATH)
-    // NVMM/CUDA memory exports to a DMABuf fd (gst_cuda_memory_export / Jetson NvBufSurfaceMapEglImage) and then reuses
-    // the DMABuf EGLImage path, avoiding a separate CUDA-GL interop. Scaffold: requires NVIDIA hardware to validate.
+    // CUDA memory exported as a DMABuf fd (gst_cuda_memory_export) reuses the DMABuf EGLImage path instead of a
+    // CUDA-GL interop. Scaffold: requires NVIDIA hardware to validate.
     if (gst_is_cuda_memory(mem0)) {
         // One-shot capability latch: desktop dGPU drivers can reject the export every frame, so probe once and skip
         // the per-frame retry thereafter (CPU fallback).
@@ -270,7 +304,7 @@ std::unique_ptr<QHwVideoBuffer> makeHwVideoBuffer(GstSample* sample, [[maybe_unu
             return nullptr;
         }
         matchedPath = HwVideoBufferPath::DmaBuf;
-        if (auto buf = buildOrFallback(GstCudaVideoBuffer::exportToDmaBuf(sample, info, format, context))) {
+        if (auto buf = buildOrFallback(GstCudaVideoBuffer::exportToDmaBuf(sample.get(), info, format, context))) {
             return buf;
         }
         if (!s_cudaExportUnsupported.exchange(true, std::memory_order_relaxed)) {
@@ -287,7 +321,8 @@ std::unique_ptr<QHwVideoBuffer> makeHwVideoBuffer(GstSample* sample, [[maybe_unu
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
     if (context.dmaBufEglDisplay != EGL_NO_DISPLAY && gst_is_dmabuf_memory(mem0)) {
         matchedPath = HwVideoBufferPath::DmaBuf;
-        return buildOrFallback(std::make_unique<GstDmaBufVideoBuffer>(sample, info, format, context.dmaBufEglDisplay));
+        return buildOrFallback(
+            std::make_unique<GstDmaBufVideoBuffer>(sample.get(), info, format, context.dmaBufEglDisplay));
     }
 #endif
 
@@ -303,28 +338,28 @@ std::unique_ptr<QHwVideoBuffer> makeHwVideoBuffer(GstSample* sample, [[maybe_unu
             return nullptr;
         }
         matchedPath = HwVideoBufferPath::GlMemory;
-        return buildOrFallback(std::make_unique<GstGlVideoBuffer>(sample, info, format));
+        return buildOrFallback(std::make_unique<GstGlVideoBuffer>(sample.get(), info, format));
     }
 #endif
 
 #if defined(QGC_HAS_GST_D3D11_GPU_PATH)
     if (gst_is_d3d11_memory(mem0)) {
         matchedPath = HwVideoBufferPath::D3D11;
-        return buildOrFallback(std::make_unique<GstD3D11VideoBuffer>(sample, info, format));
+        return buildOrFallback(std::make_unique<GstD3D11VideoBuffer>(sample.get(), info, format));
     }
 #endif
 
 #if defined(QGC_HAS_GST_D3D12_GPU_PATH)
     if (gst_is_d3d12_memory(mem0)) {
         matchedPath = HwVideoBufferPath::D3D12;
-        return buildOrFallback(std::make_unique<GstD3D12VideoBuffer>(sample, info, format));
+        return buildOrFallback(std::make_unique<GstD3D12VideoBuffer>(sample.get(), info, format));
     }
 #endif
 
 #if defined(QGC_HAS_GST_VULKAN_GPU_PATH)
     if (gst_is_vulkan_image_memory(mem0)) {
         matchedPath = HwVideoBufferPath::Vulkan;
-        return buildOrFallback(std::make_unique<GstVulkanVideoBuffer>(sample, info, format));
+        return buildOrFallback(std::make_unique<GstVulkanVideoBuffer>(sample.get(), info, format));
     }
 #endif
 
@@ -332,7 +367,7 @@ std::unique_ptr<QHwVideoBuffer> makeHwVideoBuffer(GstSample* sample, [[maybe_unu
     // String-compare the allocator name; gst-applemedia exports no public gst_is_apple_core_video_memory() predicate.
     if (mem0->allocator && g_strcmp0(mem0->allocator->mem_type, "AppleCoreVideoMemory") == 0) {
         matchedPath = HwVideoBufferPath::IOSurface;
-        return buildOrFallback(std::make_unique<GstIOSurfaceVideoBuffer>(sample, info, format));
+        return buildOrFallback(std::make_unique<GstIOSurfaceVideoBuffer>(sample.get(), info, format));
     }
 #endif
 
@@ -342,23 +377,40 @@ std::unique_ptr<QHwVideoBuffer> makeHwVideoBuffer(GstSample* sample, [[maybe_unu
         // GL_TEXTURE_EXTERNAL_OES requires the SamplerExternalOES pixel format for Qt's shader path.
         format.setPixelFormat(QVideoFrameFormat::Format_SamplerExternalOES);
         return buildOrFallback(
-            std::make_unique<GstAHardwareBufferVideoBuffer>(sample, info, format, context.ahbEglDisplay));
+            std::make_unique<GstAHardwareBufferVideoBuffer>(sample.get(), info, format, context.ahbEglDisplay));
     }
 #endif
 
-    {
-        static QSet<QString> s_seen;
-        static QMutex s_mtx;
-        const QString memType =
-            mem0->allocator ? QString::fromUtf8(mem0->allocator->mem_type) : QStringLiteral("<no-allocator>");
-        QMutexLocker lock(&s_mtx);
-        if (!s_seen.contains(memType)) {
-            s_seen.insert(memType);
-            qCDebug(GstHwBufFactoryLog) << "no zero-copy path for memory type" << memType
-                                        << "— falling back to CPU memcpy";
-        }
+    // No compiled path imports this allocator's memory; that holds for the whole caps epoch.
+    if (cache) {
+        cache->unmatchedAllocator = allocatorType;
     }
+    qCDebug(GstHwBufFactoryLog) << "no zero-copy path for memory type"
+                                << (mem0->allocator ? mem0->allocator->mem_type : "<no-allocator>")
+                                << "— falling back to CPU";
     GstHwPathTelemetry::recordFallbackReason(HwVideoBufferPath::None,
                                              GstHwPathTelemetry::HwFallbackReason::UnknownMemType);
     return nullptr;
+}
+}  // namespace
+
+std::unique_ptr<QHwVideoBuffer> makeHwVideoBuffer(GstBuffer* buffer, GstCaps* caps, const GstVideoInfo& info,
+                                                  QVideoFrameFormat format, const HwVideoBufferContext& context,
+                                                  HwVideoBufferPath& matchedPath, HwResolvedPathCache* cache)
+{
+    LazySample sample(buffer, caps);
+    return selectHwVideoBuffer(sample, buffer, info, std::move(format), context, matchedPath, cache);
+}
+
+std::unique_ptr<QHwVideoBuffer> makeHwVideoBuffer(GstSample* sample, const GstVideoInfo& info, QVideoFrameFormat format,
+                                                  const HwVideoBufferContext& context, HwVideoBufferPath& matchedPath,
+                                                  HwResolvedPathCache* cache)
+{
+    matchedPath = HwVideoBufferPath::None;
+    if (!sample) {
+        return nullptr;
+    }
+    LazySample lazy(sample);
+    return selectHwVideoBuffer(lazy, gst_sample_get_buffer(sample), info, std::move(format), context, matchedPath,
+                               cache);
 }

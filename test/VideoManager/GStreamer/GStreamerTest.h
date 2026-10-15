@@ -63,6 +63,8 @@ private slots:
     void _testQgcQVideoSinkDeliversLatestFrameOnly();
     void _testQgcQVideoSinkShowsPrerollBufferOnce();
     void _testQgcQVideoSinkStatsArePerSink();
+    void _testQgcQVideoSinkGpuPathSelection_data();
+    void _testQgcQVideoSinkGpuPathSelection();
     void _testQgcQVideoSinkDropsUndeliveredFrame_data();
     void _testQgcQVideoSinkDropsUndeliveredFrame();
     void _testQgcQVideoSinkPtsGuardResync_data();

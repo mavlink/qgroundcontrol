@@ -95,8 +95,8 @@ public:
     static constexpr int kHeight = 4;
     static constexpr gsize kFrameBytes = kWidth * kHeight * 4;
 
-    explicit QgcQVideoSinkHarness(QVideoSink* target)
-        : _sink(gst_element_factory_make("qgcqvideosink", nullptr))
+    explicit QgcQVideoSinkHarness(QVideoSink* target, bool gpuZeroCopy = false)
+        : _sink(gst_element_factory_make_full("qgcqvideosink", "gpu-zerocopy", gpuZeroCopy, nullptr))
         , _bus(gst_bus_new())
         , _src(gst_pad_new("src", GST_PAD_SRC))
     {
@@ -134,12 +134,16 @@ public:
 
     GstBus* bus() const { return _bus; }
 
-    /// stream-start, BGRA caps and a TIME segment, as an upstream element sends before its first buffer.
-    bool start()
+    /// stream-start, BGRA caps (in @p memoryFeature, if given) and a TIME segment, as an upstream element sends before
+    /// its first buffer.
+    bool start(const char* memoryFeature = nullptr)
     {
         GstCaps* caps =
             gst_caps_new_simple("video/x-raw", "format", G_TYPE_STRING, "BGRA", "width", G_TYPE_INT, kWidth, "height",
                                 G_TYPE_INT, kHeight, "framerate", GST_TYPE_FRACTION, 30, 1, nullptr);
+        if (memoryFeature) {
+            gst_caps_set_features(caps, 0, gst_caps_features_new(memoryFeature, nullptr));
+        }
         const bool ok = pushEvent(gst_event_new_stream_start("qgc-harness")) && pushEvent(gst_event_new_caps(caps)) &&
                         pushSegment();
         gst_caps_unref(caps);
@@ -1889,6 +1893,53 @@ void GStreamerTest::_testQgcQVideoSinkStatsArePerSink()
     gst_structure_free(stats);
     QCOMPARE(formatted.line, QStringLiteral(" CPU:2"));
     QCOMPARE(formatted.totalDelivered, quint64(0));
+}
+
+void GStreamerTest::_testQgcQVideoSinkGpuPathSelection_data()
+{
+    QTest::addColumn<bool>("gpuZeroCopy");
+    QTest::addColumn<QString>("memoryFeature");
+    QTest::addColumn<qint64>("expectedGpuFallbacks");
+    QTest::addColumn<quint64>("expectedNoPathVerdicts");
+
+    // Every row pushes three system-memory buffers.
+    QTest::newRow("gpu-zerocopy-off") << false << QStringLiteral("memory:DMABuf") << qint64(0) << quint64(0);
+    QTest::newRow("system-memory-caps") << true << QString() << qint64(0) << quint64(0);
+    // GPU caps: the first frame finds no path for the system allocator; the rest reuse that verdict.
+    QTest::newRow("gpu-caps-system-buffers") << true << QStringLiteral("memory:DMABuf") << qint64(3) << quint64(1);
+}
+
+void GStreamerTest::_testQgcQVideoSinkGpuPathSelection()
+{
+#if !defined(QGC_HAS_ANY_GPU_PATH)
+    QSKIP("No GPU path compiled in this build");
+#else
+    QFETCH(bool, gpuZeroCopy);
+    QFETCH(QString, memoryFeature);
+    QFETCH(qint64, expectedGpuFallbacks);
+    QFETCH(quint64, expectedNoPathVerdicts);
+    QVERIFY2(GStreamer::completeInit(), "completeInit failed");
+
+    QVideoSink videoSink;
+    QgcQVideoSinkHarness harness(&videoSink, gpuZeroCopy);
+    QVERIFY(harness.isReady());
+    const QByteArray feature = memoryFeature.toUtf8();
+    QVERIFY(harness.start(feature.isEmpty() ? nullptr : feature.constData()));
+
+    using GstHwPathTelemetry::HwFallbackReason;
+    const quint64 noPathBefore =
+        GstHwPathTelemetry::peekFallbackReason(HwVideoBufferPath::None, HwFallbackReason::UnknownMemType);
+    for (int i = 1; i <= 3; ++i) {
+        QCOMPARE(harness.pushFrame(i * GST_SECOND), GST_FLOW_OK);
+    }
+    const quint64 noPathAfter =
+        GstHwPathTelemetry::peekFallbackReason(HwVideoBufferPath::None, HwFallbackReason::UnknownMemType);
+
+    QCOMPARE(sinkStat(harness.element(), GstHwPathTelemetry::sinkFramesField(HwVideoBufferPath::None)), qint64(3));
+    QCOMPARE(sinkStat(harness.element(), "gpu-fallbacks"), expectedGpuFallbacks);
+    QCOMPARE(sinkStat(harness.element(), "stream-demotions"), qint64(expectedGpuFallbacks > 0 ? 1 : 0));
+    QCOMPARE(noPathAfter - noPathBefore, expectedNoPathVerdicts);
+#endif
 }
 
 void GStreamerTest::_testQgcQVideoSinkDropsUndeliveredFrame_data()

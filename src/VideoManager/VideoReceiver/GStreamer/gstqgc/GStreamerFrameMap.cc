@@ -229,17 +229,11 @@ MappedFrame mapSampleToFrame(GstBuffer* buffer, [[maybe_unused]] GstCaps* caps, 
 #if defined(QGC_HAS_ANY_GPU_PATH)
     HwVideoBufferPath matchedPath = HwVideoBufferPath::None;
     if (hwContext.gpuEnabled) {
-        // GPU-only: GstHwVideoBuffer holds the sample for the frame's lifetime; makeHwVideoBuffer
-        // takes its own ref, so drop ours immediately after.
-        if (GstSample* sample = gst_sample_new(buffer, caps, nullptr, nullptr)) {
-            auto hwBuf = makeHwVideoBuffer(sample, info, format, hwContext, matchedPath, pathCache);
-            gst_sample_unref(sample);
-            if (hwBuf) {
-                out.frame = QVideoFrame(std::move(hwBuf));
-                out.source = MappedFrame::Source::Gpu;
-                out.gpuPath = matchedPath;
-                return out;
-            }
+        if (auto hwBuf = makeHwVideoBuffer(buffer, caps, info, format, hwContext, matchedPath, pathCache)) {
+            out.frame = QVideoFrame(std::move(hwBuf));
+            out.source = MappedFrame::Source::Gpu;
+            out.gpuPath = matchedPath;
+            return out;
         }
         // HW selection failed though GPU was requested: signal the demotion. show_frame owns the
         // once-per-epoch latch and telemetry so this mapper stays free of the telemetry singleton.
