@@ -133,7 +133,7 @@ bool nothing_to_import(GstBuffer* buf)
     return mem && gst_memory_is_type(mem, GST_ALLOCATOR_SYSMEM);
 }
 
-/// The "stats" property value (transfer-full).
+/// The "frame-stats" property value (transfer-full).
 GstStructure* make_stats(const PrivState& p)
 {
     GstStructure* const stats = gst_structure_new_empty("qgc-video-sink-stats");
@@ -215,7 +215,7 @@ enum
     PROP_FRAMES_INPUT,
     PROP_FRAMES_DROPPED,
     PROP_FRAMES_DELIVERED,
-    PROP_STATS,
+    PROP_FRAME_STATS,
 };
 
 G_DEFINE_FINAL_TYPE(GstQgcQVideoSink, gst_qgc_q_video_sink, GST_TYPE_VIDEO_SINK)
@@ -307,7 +307,7 @@ static void gst_qgc_q_video_sink_get_property(GObject* obj, guint id, GValue* va
         case PROP_FRAMES_DELIVERED:
             g_value_set_uint64(val, priv_of(self)->delivered_frames.load(std::memory_order_relaxed));
             break;
-        case PROP_STATS:
+        case PROP_FRAME_STATS:
             g_value_take_boxed(val, make_stats(*priv_of(self)));
             break;
         default:
@@ -469,7 +469,7 @@ static GstFlowReturn gst_qgc_q_video_sink_show_frame(GstVideoSink* vsink, GstBuf
         return GST_FLOW_OK;  // QVideoSink unbound while mapping
     }
 
-    // Per-sink counters back the "stats" property; the process-global ones total every sink's deliveries.
+    // Per-sink counters back the "frame-stats" property; the process-global ones total every sink's deliveries.
     const HwVideoBufferPath deliveredPath =
         (mapped.source == MappedFrame::Source::Gpu) ? mapped.gpuPath : HwVideoBufferPath::None;
     p->path_counters.delivered[static_cast<std::size_t>(deliveredPath)].fetch_add(1, std::memory_order_relaxed);
@@ -629,9 +629,10 @@ static void gst_qgc_q_video_sink_class_init(GstQgcQVideoSinkClass* klass)
                             "Per-element — the GUI controller reads this for the QML frameCount.",
                             0, G_MAXUINT64, 0, (GParamFlags) (G_PARAM_READABLE | G_PARAM_STATIC_STRINGS)));
 
+    // Not "stats": that is GstBaseSink's own property (average-rate, dropped, rendered), which generic tools read.
     g_object_class_install_property(
-        gobject_class, PROP_STATS,
-        g_param_spec_boxed("stats", "Statistics",
+        gobject_class, PROP_FRAME_STATS,
+        g_param_spec_boxed("frame-stats", "Frame statistics",
                            "This sink's own frame accounting, as a qgc-video-sink-stats structure of guint64 fields: "
                            "frames-input, frames-dropped and frames-delivered as above; frames-<path> per delivery "
                            "path (frames-cpu, frames-dmabuf, frames-gl, frames-d3d11, frames-d3d12, frames-iosurface, "

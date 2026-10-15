@@ -32,7 +32,8 @@ A QGC-owned plugin (`gstqgc/`) bridging the pipeline into Qt:
 - **`qgcqvideosink`** — a `GstVideoSink` that pushes decoded frames into a Qt `QVideoSink`. Delivery keeps only the
   latest frame, so a stalled GUI thread never holds more than one undelivered frame (or the decoder buffer behind it).
   Its construct-only `gpu-zerocopy` property (passed down by the bin) enables zero-copy import of GPU memory, and its
-  `stats` property reports that sink's own frame counts per delivery path (`HwBuffers::formatSinkStats` formats them).
+  `frame-stats` property reports that sink's own frame counts per delivery path (`HwBuffers::formatSinkStats` formats
+  them); GstBaseSink's standard `stats` property is left as is.
 - **`qgcvideosinkbin`** — a bin wrapping a format-restriction capsfilter plus `qgcqvideosink`.
 - **`QGCQVideoSinkController`** — GUI-thread companion that mirrors negotiation/telemetry from the sink into QGC, and
   clears the frame its `QVideoSink` displays when the sink leaves the pipeline.
@@ -49,7 +50,7 @@ Per-platform zero-copy import of decoded GPU frames, all sharing `GstHwFrameText
 - **`GstContextBridgeBase`**: GL, Vulkan, D3D11 and D3D12 bridges hand Qt's GPU device to GStreamer elements through
   `NEED_CONTEXT` and context queries.
 - **`GstHwPathTelemetry`** tracks process-wide render-time counters (map failures, reuse hits, sync waits) for fallback
-  diagnostics. A receiver's `HW path stats` debug line pairs its own sink's `stats` with them.
+  diagnostics. A receiver's `HW path stats` debug line pairs its own sink's `frame-stats` with them.
 - **`CpuVideoFramePool`** recycles CPU-backed `QVideoFrame` storage (WebRTC-style slab) for the software-fallback path, avoiding per-frame allocation.
 - **Build options**: `HwBuffers/CMakeLists.txt` probes one table row per path; each compiled path can be dropped with
   `QGC_GST_ENABLE_<PATH>=OFF` (`DMABUF`, `CUDA`, `GLMEMORY`, `IOSURFACE`, `D3D11`, `D3D12`, `AHARDWAREBUFFER`, `VULKAN`;

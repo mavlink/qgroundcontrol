@@ -52,11 +52,12 @@ public:
 
     QString decoderName() const;
 
-    /// The frames the video sink delivered since start() took it, from qgcqvideosink's "stats"; empty for other sinks.
+    /// The frames the video sink delivered since start() took it, from qgcqvideosink's "frame-stats"; empty for other
+    /// sinks.
     HwBuffers::PathStats sinkPathStats() const;
 
 private:
-    /// The qgcqvideosink's "stats" when the video sink is a qgcvideosinkbin.
+    /// The qgcqvideosink's "frame-stats" when the video sink is a qgcvideosinkbin.
     GStreamer::GstStructurePtr _readSinkStats() const;
     /// Puts the video sink into the pipeline and decodebin3 between it and the valve, then opens the valve.
     bool _insertDecoder();
@@ -78,7 +79,7 @@ private:
     // Our refs, besides the pipeline's while they are inside it.
     GStreamer::GstElementPtr _decoder;
     GStreamer::GstElementPtr _videoSink;
-    // The sink's "stats" when start() took it: the sink outlives sessions and its counters don't restart.
+    // The sink's "frame-stats" when start() took it: the sink outlives sessions and its counters don't restart.
     GStreamer::GstStructurePtr _sinkStatsAtStart;
     gulong _sinkProbeId = 0;
     std::atomic<bool> _decoding = false;  ///< Read by the receiver's tee probe log.

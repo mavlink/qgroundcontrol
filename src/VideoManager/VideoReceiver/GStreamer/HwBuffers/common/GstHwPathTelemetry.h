@@ -97,7 +97,7 @@ void recordStreamDemotion(HwVideoBufferPath negotiated) noexcept;
 quint64 takeStreamDemotions(HwVideoBufferPath negotiated) noexcept;
 
 /// Frame accounting for one sink. The process-wide counters above mix every stream; these let each receiver report
-/// only its own frames. qgcqvideosink exposes them through its "stats" property.
+/// only its own frames. qgcqvideosink exposes them through its "frame-stats" property.
 struct SinkCounters
 {
     std::array<std::atomic<quint64>, GstHw::kPathCount> delivered{};  ///< per path; None counts CPU frames

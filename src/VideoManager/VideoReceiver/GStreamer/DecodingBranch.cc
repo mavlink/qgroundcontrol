@@ -201,7 +201,7 @@ GStreamer::GstStructurePtr DecodingBranch::_readSinkStats() const
         return {};
     }
     GstStructure* stats = nullptr;
-    g_object_get(qvideosink.get(), "stats", &stats, nullptr);
+    g_object_get(qvideosink.get(), "frame-stats", &stats, nullptr);
     return GStreamer::adoptStructure(stats);
 }
 

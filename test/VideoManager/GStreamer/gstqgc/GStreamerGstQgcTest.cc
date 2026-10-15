@@ -77,11 +77,11 @@ guint64 framesDelivered(GstElement* qvideosink)
     return delivered;
 }
 
-/// A guint64 field of the sink's "stats" structure; -1 if the field is missing.
+/// A guint64 field of the sink's "frame-stats" structure; -1 if the field is missing.
 qint64 sinkStat(GstElement* qvideosink, const char* field)
 {
     GstStructure* stats = nullptr;
-    g_object_get(qvideosink, "stats", &stats, nullptr);
+    g_object_get(qvideosink, "frame-stats", &stats, nullptr);
     guint64 value = 0;
     const bool found = stats && gst_structure_get_uint64(stats, field, &value);
     if (stats) {
@@ -1970,7 +1970,7 @@ void GStreamerTest::_testQgcQVideoSinkStatsArePerSink()
     QCOMPARE(sinkStat(harnessB.element(), "frames-delivered"), qint64(1));
 
     GstStructure* rawStats = nullptr;
-    g_object_get(harnessA.element(), "stats", &rawStats, nullptr);
+    g_object_get(harnessA.element(), "frame-stats", &rawStats, nullptr);
     const GStreamer::GstStructurePtr stats = GStreamer::adoptStructure(rawStats);
     QVERIFY(stats);
     const HwBuffers::PathStats formatted = HwBuffers::formatSinkStats(stats.get());
@@ -1980,10 +1980,33 @@ void GStreamerTest::_testQgcQVideoSinkStatsArePerSink()
     // A receiver reuses its sink across sessions and reports each session from its start.
     QCOMPARE(harnessA.pushFrame(3 * GST_SECOND), GST_FLOW_OK);
     GstStructure* rawLater = nullptr;
-    g_object_get(harnessA.element(), "stats", &rawLater, nullptr);
+    g_object_get(harnessA.element(), "frame-stats", &rawLater, nullptr);
     const GStreamer::GstStructurePtr later = GStreamer::adoptStructure(rawLater);
     QVERIFY(later);
     QCOMPARE(HwBuffers::formatSinkStats(later.get(), stats.get()).line, QStringLiteral(" CPU:1"));
+}
+
+void GStreamerTest::_testQgcQVideoSinkKeepsBaseSinkStats()
+{
+    QVERIFY2(GStreamer::completeInit(), "completeInit failed");
+    GstElement* const element = gst_element_factory_make("qgcqvideosink", nullptr);
+    QVERIFY(element);
+    const GStreamer::GstElementPtr sink = GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(element)));
+
+    // Generic tools read GstBaseSink's "stats"; the sink's own accounting must not replace it.
+    GObjectClass* const klass = G_OBJECT_GET_CLASS(sink.get());
+    const GParamSpec* const baseStats = g_object_class_find_property(klass, "stats");
+    QVERIFY(baseStats);
+    QCOMPARE(baseStats->owner_type, GST_TYPE_BASE_SINK);
+    const GParamSpec* const frameStats = g_object_class_find_property(klass, "frame-stats");
+    QVERIFY(frameStats);
+    QCOMPARE(frameStats->owner_type, G_OBJECT_TYPE(sink.get()));
+
+    GstStructure* rawStats = nullptr;
+    g_object_get(sink.get(), "stats", &rawStats, nullptr);
+    const GStreamer::GstStructurePtr stats = GStreamer::adoptStructure(rawStats);
+    QVERIFY(stats);
+    QVERIFY(gst_structure_has_field(stats.get(), "rendered"));
 }
 
 void GStreamerTest::_testQgcQVideoSinkGpuPathSelection_data()
