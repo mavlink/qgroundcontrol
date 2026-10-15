@@ -31,6 +31,8 @@ private slots:
     void _rebootRequiredNoticeDebounced();
     void _FTPnoFailure();
     void _FTPChangeParam();
+    void _FTPRequestsHeartbeatComponentParams_data();
+    void _FTPRequestsHeartbeatComponentParams();
     void _bulkRefreshExactNamesAllSucceed();
     void _bulkRefreshPrefixExpansion();
     void _bulkRefreshUnknownNameSkipped();

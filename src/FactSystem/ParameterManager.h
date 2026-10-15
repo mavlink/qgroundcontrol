@@ -4,6 +4,7 @@
 #include <QtCore/QMap>
 #include <QtCore/QObject>
 #include <QtCore/QPair>
+#include <QtCore/QSet>
 #include <QtCore/QString>
 #include <QtCore/QTimer>
 #include <QtQmlIntegration/QtQmlIntegration>
@@ -194,6 +195,9 @@ private:
     void _checkOtherComponentsLoadComplete();
     bool _anyComponentWaiting() const;
     void _ftpDownloadComplete(const QString &fileName, const QString &errorMsg);
+    /// param.pck only carries the autopilot's params, so other components are asked over the parameter protocol
+    void _handleHeartbeat(int componentId);
+    void _sendParamRequestList(uint8_t componentId);
     void _ftpDownloadProgress(float progress);
     /// Parse the binary parameter file and inject the parameters in the qgc fact system.
     /// See: https://github.com/ArduPilot/ardupilot/tree/master/libraries/AP_Filesystem
@@ -259,4 +263,6 @@ private:
 
     bool _tryftp = false;
     bool _ftpDownloadInProgress = false;        ///< true: @PARAM/param.pck transfer in flight
+    bool _ftpParamsLoaded = false;              ///< true: autopilot params came from param.pck
+    QSet<int> _heartbeatComponentIds;           ///< Non-autopilot components heard via HEARTBEAT
 };
