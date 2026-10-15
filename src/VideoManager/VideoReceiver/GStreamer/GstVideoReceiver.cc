@@ -13,7 +13,6 @@
 #include <algorithm>
 #include <chrono>
 #include <gst/gst.h>
-#include <gst/video/video.h>
 
 #include <QtCore/QDeadlineTimer>
 #include <QtCore/QMutexLocker>
@@ -923,7 +922,7 @@ void GstVideoReceiver::_onWatchdogTick()
 
     // Drain QoS updates accumulated since the last tick (see GST_MESSAGE_QOS).
     if (_qosStatsDirty.exchange(false, std::memory_order_acq_rel)) {
-        emit decoderStatsChanged();
+        _notifyDecoderStatsChanged();
     }
 
     qint64 elapsed = now - lastSourceFrameTime;
@@ -1194,60 +1193,50 @@ void GstVideoReceiver::_onNewSourcePad(GstPad *pad)
     qCDebug(GstVideoReceiverLog) << "Decoding started" << _redactedUri();
 }
 
-void GstVideoReceiver::_logDecodebin3SelectedCodec(GstElement *decodebin3)
+void GstVideoReceiver::_onDecoderElementAdded(GstBin* /*decodebin*/, GstBin* /*subBin*/, GstElement* element,
+                                              gpointer data)
 {
-    GValue value = G_VALUE_INIT;
-    GstIterator *iter = gst_bin_iterate_elements(GST_BIN(decodebin3));
-    GstElement *child;
-
-    while (gst_iterator_next(iter, &value) == GST_ITERATOR_OK) {
-        child = GST_ELEMENT(g_value_get_object(&value));
-        GstElementFactory *factory = gst_element_get_factory(child);
-
-        if (factory) {
-            gboolean is_decoder = gst_element_factory_list_is_type(factory, GST_ELEMENT_FACTORY_TYPE_DECODER);
-            if (is_decoder) {
-                const gchar *decoderKlass = gst_element_factory_get_klass(factory);
-                GstPluginFeature *feature = GST_PLUGIN_FEATURE(factory);
-                const gchar *featureName = gst_plugin_feature_get_name(feature);
-                const guint rank = gst_plugin_feature_get_rank(feature);
-                bool isHardwareDecoder = GStreamer::isHardwareDecoderFactory(factory);
-
-                QString pluginName = featureName;
-                GstPlugin *plugin = gst_plugin_feature_get_plugin(feature);
-                if (plugin) {
-                    pluginName = gst_plugin_get_name(plugin);
-                    gst_object_unref(plugin);
-                }
-                qCDebug(GstVideoReceiverLog) << "Decodebin3 selected codec:rank -" << pluginName << "/" << featureName << "-" << decoderKlass << (isHardwareDecoder ? "(HW)" : "(SW)") << ":" << rank;
-
-                const QString newName = QString::fromUtf8(featureName);
-                bool nameChanged = false;
-                {
-                    QMutexLocker locker(&_decoderNameMutex);
-                    if (newName != _decoderName) {
-                        _decoderName = newName;
-                        nameChanged = true;
-                    }
-                }
-                if (nameChanged) {
-                    emit decoderStatsChanged();
-                }
-
-                // Disable QoS on the internal decoder to prevent cascading
-                // frame drops on live streams.  The videodecoder base class
-                // aggressively advances earliest_time after the first late
-                // frame, causing all subsequent frames to be dropped.
-                g_object_set(child, "qos", FALSE, nullptr);
-                qCDebug(GstVideoReceiverLog) << "Disabled QoS on internal decoder" << featureName;
-            }
-        }
-        g_value_reset(&value);
+    GstElementFactory* factory = gst_element_get_factory(element);
+    if (!factory || !gst_element_factory_list_is_type(factory, GST_ELEMENT_FACTORY_TYPE_DECODER)) {
+        return;
     }
-    g_value_unset(&value);
-    gst_iterator_free(iter);
+
+    // Live streams: once a frame is late, the videodecoder base class advances earliest_time and drops every frame
+    // after it. Turned off here, before the decoder sees data, for each decoder decodebin3 plugs, later swaps included.
+    if (g_object_class_find_property(G_OBJECT_GET_CLASS(element), "qos")) {
+        g_object_set(element, "qos", FALSE, nullptr);
+    }
+
+    GstPluginFeature* feature = GST_PLUGIN_FEATURE(factory);
+    const QString decoderName = QString::fromUtf8(gst_plugin_feature_get_name(feature));
+    QString pluginName = decoderName;
+    if (GstPlugin* plugin = gst_plugin_feature_get_plugin(feature)) {
+        pluginName = QString::fromUtf8(gst_plugin_get_name(plugin));
+        gst_object_unref(plugin);
+    }
+    qCDebug(GstVideoReceiverLog) << "Decodebin3 selected codec:rank -" << pluginName << "/" << decoderName << "-"
+                                 << gst_element_factory_get_klass(factory)
+                                 << (GStreamer::isHardwareDecoderFactory(factory) ? "(HW)" : "(SW)") << ":"
+                                 << gst_plugin_feature_get_rank(feature) << "- QoS disabled";
+
+    auto* self = static_cast<GstVideoReceiver*>(data);
+    self->_runOnWorkerForPipeline([self, decoderName]() {
+        {
+            QMutexLocker locker(&self->_decoderNameMutex);
+            if (decoderName == self->_decoderName) {
+                return;
+            }
+            self->_decoderName = decoderName;
+        }
+        self->_notifyDecoderStatsChanged();
+    });
 }
 
+void GstVideoReceiver::_notifyDecoderStatsChanged()
+{
+    // Emitted on the receiver's own thread, where its QML consumers live.
+    QMetaObject::invokeMethod(this, [this]() { emit decoderStatsChanged(); }, Qt::QueuedConnection);
+}
 
 void GstVideoReceiver::_onNewDecoderPad(GstPad *pad)
 {
@@ -1255,12 +1244,7 @@ void GstVideoReceiver::_onNewDecoderPad(GstPad *pad)
 
     GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-with-new-decoder-pad");
 
-    // We should now know what codec decodebin3 selected.
-    _logDecodebin3SelectedCodec(_decoder);
-
-    if (!_addVideoSink(pad)) {
-        qCCritical(GstVideoReceiverLog) << "_addVideoSink() failed";
-    }
+    (void) _addVideoSink(pad);
 }
 
 bool GstVideoReceiver::_addDecoder(GstElement *src)
@@ -1272,6 +1256,7 @@ bool GstVideoReceiver::_addDecoder(GstElement *src)
     }
 
     (void) gst_object_ref(_decoder);
+    (void) g_signal_connect(_decoder, "deep-element-added", G_CALLBACK(_onDecoderElementAdded), this);
 
     (void) gst_bin_add(GST_BIN(_pipeline), _decoder);
     (void) gst_element_sync_state_with_parent(_decoder);
@@ -1279,7 +1264,7 @@ bool GstVideoReceiver::_addDecoder(GstElement *src)
     GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-with-decoder");
 
     if (!gst_element_link(src, _decoder)) {
-        qCCritical(GstVideoReceiverLog) << "Unable to link decoder";
+        qCWarning(GstVideoReceiverLog) << "Unable to link decoder";
         gst_element_set_state(_decoder, GST_STATE_NULL);
         (void) gst_element_get_state(_decoder, nullptr, nullptr, GST_CLOCK_TIME_NONE);
         (void) gst_bin_remove(GST_BIN(_pipeline), _decoder);
@@ -1323,14 +1308,13 @@ void GstVideoReceiver::_ensureVideoSinkInPipeline()
 
 bool GstVideoReceiver::_addVideoSink(GstPad *pad)
 {
-    GstCaps *caps = gst_pad_query_caps(pad, nullptr);
-
     _ensureVideoSinkInPipeline();
 
     GstPad *sinkPad = gst_element_get_static_pad(_videoSink, "sink");
     GstPadLinkReturn linkRet = sinkPad ? gst_pad_link(pad, sinkPad) : GST_PAD_LINK_WRONG_HIERARCHY;
+    gst_clear_object(&sinkPad);
     if (linkRet != GST_PAD_LINK_OK) {
-        qCCritical(GstVideoReceiverLog) << "Unable to link decoder pad to video sink, result:" << linkRet;
+        qCWarning(GstVideoReceiverLog) << "Unable to link decoder pad to video sink:" << gst_pad_link_get_name(linkRet);
 
         // _ensureVideoSinkInPipeline() added it before linking; detach for the next retry.
         GstObject *parent = gst_element_get_parent(_videoSink);
@@ -1340,72 +1324,13 @@ bool GstVideoReceiver::_addVideoSink(GstPad *pad)
             (void) gst_bin_remove(GST_BIN(_pipeline), _videoSink);
             gst_clear_object(&parent);
         }
-
-        gst_clear_object(&sinkPad);
-        gst_clear_caps(&caps);
         return false;
     }
-    gst_clear_object(&sinkPad);
 
     (void) gst_element_sync_state_with_parent(_videoSink);
 
     GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-with-videosink");
 
-    // Determine video size. Errors here are non-fatal.
-    QSize videoSize;
-    do {
-        if (!_decoderValve) {
-            qCCritical(GstVideoReceiverLog) << "Unable to determine video size - _decoderValve is NULL"
-                                            << _redactedUri();
-            break;
-        }
-
-        GstPad *valveSrcPad = gst_element_get_static_pad(_decoderValve, "src");
-        if (!valveSrcPad) {
-            qCCritical(GstVideoReceiverLog) << "gst_element_get_static_pad() failed";
-            break;
-        }
-
-        GstCaps *valveSrcPadCaps = gst_pad_query_caps(valveSrcPad, nullptr);
-        if (!valveSrcPadCaps) {
-            qCCritical(GstVideoReceiverLog) << "gst_pad_query_caps() failed";
-            gst_clear_object(&valveSrcPad);
-            break;
-        }
-
-        const GstStructure *structure = gst_caps_get_structure(valveSrcPadCaps, 0);
-        if (!structure) {
-            qCCritical(GstVideoReceiverLog) << "Unable to determine video size - structure is NULL"
-                                            << _redactedUri();
-            gst_clear_object(&valveSrcPad);
-            break;
-        }
-
-        gint width = 0;
-        gint height = 0;
-        (void) gst_structure_get_int(structure, "width", &width);
-        (void) gst_structure_get_int(structure, "height", &height);
-
-        // Swap W×H for 90°/270° streams so QML AR is computed on display dimensions.
-        gint orientation = 0;
-        if (gst_structure_get_int(structure, "video-orientation", &orientation)
-            && (orientation == GST_VIDEO_ORIENTATION_90R
-                || orientation == GST_VIDEO_ORIENTATION_90L
-                || orientation == GST_VIDEO_ORIENTATION_UL_LR
-                || orientation == GST_VIDEO_ORIENTATION_UR_LL)) {
-            videoSize.setWidth(height);
-            videoSize.setHeight(width);
-        } else {
-            videoSize.setWidth(width);
-            videoSize.setHeight(height);
-        }
-
-        gst_clear_caps(&valveSrcPadCaps);
-        gst_clear_object(&valveSrcPad);
-    } while (false);
-    emit videoSizeChanged(videoSize);
-
-    gst_clear_caps(&caps);
     return true;
 }
 
@@ -1689,6 +1614,8 @@ void GstVideoReceiver::_onBusElement(GstMessage* message)
                         c->updateNegotiation(format, resolution);
                     }
                 }
+                // The sink's negotiated raw caps are always fixed, unlike the encoded caps upstream of the decoder.
+                emit videoSizeChanged(resolution);
             },
             Qt::QueuedConnection);
         return;

@@ -2,6 +2,7 @@
 
 #include <atomic>
 #include <glib.h>
+#include <gst/gstbin.h>
 #include <gst/gstbus.h>
 #include <gst/gstelement.h>
 #include <gst/gstpad.h>
@@ -131,7 +132,7 @@ private:
     /// Releases every pipeline-scoped element, probe and flag, emitting the matching change
     /// signals. Safe on a partially built pipeline (failed start()).
     void _resetPipelineState();
-    void _logDecodebin3SelectedCodec(GstElement *decodebin3);
+    void _notifyDecoderStatsChanged();
     void _onWatchdogTick();
     void _attachBusHandler();
     /// Returns once no thread is inside the bus handler any more, so no bus callback can reach `this`.
@@ -158,6 +159,7 @@ private:
     void _onBusQos(GstMessage* message);
     void _onBusStateChanged(GstMessage* message);
     static void _onNewPad(GstElement *element, GstPad *pad, gpointer data);
+    static void _onDecoderElementAdded(GstBin* decodebin, GstBin* subBin, GstElement* element, gpointer data);
     static GstPadProbeReturn _teeProbe(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
     static GstPadProbeReturn _videoSinkProbe(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
     static GstPadProbeReturn _eosProbe(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);

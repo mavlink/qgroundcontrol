@@ -25,5 +25,7 @@ private slots:
     void _testStopDecodingBeforeFirstFrame();
     void _testStopWhileStoppingRecordingFinalizesFile();
     void _testRecordingErrorKeepsStreaming();
+    void _testDecoderQosDisabledAndReported();
+    void _testVideoSizeFromNegotiatedCaps();
     void _testBusDoesNotQueueMessages();
 };

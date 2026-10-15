@@ -28,6 +28,8 @@
 namespace {
 
 constexpr int kFrameRate = 30;
+constexpr int kFrameWidth = 320;
+constexpr int kFrameHeight = 240;
 constexpr int kKeyframeInterval = 15;
 // Frames the sender produces while a recording is open. Some may still be in flight when the
 // recording ends, but a finalized file holds far more than kMinRecordedFrames; a file cut off
@@ -111,12 +113,14 @@ public:
     {
         const QByteArray description =
             QStringLiteral(
-                "videotestsrc is-live=true pattern=ball ! video/x-raw,width=320,height=240,framerate=%1/1 ! "
+                "videotestsrc is-live=true pattern=ball ! video/x-raw,width=%4,height=%5,framerate=%1/1 ! "
                 "x264enc name=encoder tune=zerolatency speed-preset=ultrafast key-int-max=%2 ! "
                 "rtph264pay config-interval=-1 pt=96 ! udpsink host=127.0.0.1 port=%3 sync=false async=false")
                 .arg(kFrameRate)
                 .arg(kKeyframeInterval)
                 .arg(port)
+                .arg(kFrameWidth)
+                .arg(kFrameHeight)
                 .toUtf8();
         GError* error = nullptr;
         _pipeline = gst_parse_launch(description.constData(), &error);
@@ -745,6 +749,84 @@ void GstVideoReceiverTest::_testRecordingErrorKeepsStreaming()
              qPrintable(QStringLiteral("%1 frames recorded %2").arg(frames).arg(failure)));
 }
 
+void GstVideoReceiverTest::_testDecoderQosDisabledAndReported()
+{
+    const quint16 port = freeLoopbackUdpPort();
+    QVERIFY(port != 0);
+    H264RtpSender sender;
+    QVERIFY(sender.start(port));
+
+    GstElement* videoSink = makeFakeVideoSink();
+    QVERIFY(videoSink);
+    const auto sinkCleanup = qScopeGuard([videoSink] { gst_object_unref(videoSink); });
+
+    QQuickItem widget;
+    const auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &widget);
+    auto* gstReceiver = qobject_cast<GstVideoReceiver*>(receiver.get());
+    QVERIFY(gstReceiver);
+    QSignalSpy decodingSpy(receiver.get(), &VideoReceiver::decodingChanged);
+    QSignalSpy statsSpy(gstReceiver, &GstVideoReceiver::decoderStatsChanged);
+
+    receiver->start(kWatchdogTimeoutSec);
+    receiver->startDecoding(videoSink);
+    QVERIFY_SIGNAL_COUNT_WAIT(decodingSpy, 1, TestTimeout::mediumMs());
+    QVERIFY_SIGNAL_COUNT_WAIT(statsSpy, 1, TestTimeout::mediumMs());
+    QVERIFY(!gstReceiver->decoderName().isEmpty());
+
+    // The decoders decodebin3 plugged, inspected on the worker that owns the pipeline.
+    int decoders = 0;
+    QStringList qosEnabled;
+    QVERIFY(QMetaObject::invokeMethod(
+        gstReceiver->_workerContext,
+        [gstReceiver, &decoders, &qosEnabled]() {
+            GstIterator* it = gst_bin_iterate_recurse(GST_BIN(gstReceiver->_decoder));
+            GValue item = G_VALUE_INIT;
+            while (gst_iterator_next(it, &item) == GST_ITERATOR_OK) {
+                auto* element = GST_ELEMENT(g_value_get_object(&item));
+                GstElementFactory* factory = gst_element_get_factory(element);
+                if (factory && gst_element_factory_list_is_type(factory, GST_ELEMENT_FACTORY_TYPE_DECODER) &&
+                    g_object_class_find_property(G_OBJECT_GET_CLASS(element), "qos")) {
+                    ++decoders;
+                    gboolean qos = TRUE;
+                    g_object_get(element, "qos", &qos, nullptr);
+                    if (qos) {
+                        qosEnabled.append(QString::fromUtf8(GST_OBJECT_NAME(element)));
+                    }
+                }
+                g_value_reset(&item);
+            }
+            g_value_unset(&item);
+            gst_iterator_free(it);
+        },
+        Qt::BlockingQueuedConnection));
+    QVERIFY(decoders > 0);
+    QVERIFY2(qosEnabled.isEmpty(), qPrintable(qosEnabled.join(u',')));
+}
+
+void GstVideoReceiverTest::_testVideoSizeFromNegotiatedCaps()
+{
+    if (!firstMissingFactory({"qgcvideosinkbin"}).isEmpty()) {
+        QVERIFY2(GStreamer::completeInit(), "GStreamer::completeInit() failed");
+    }
+    auto* videoSink = static_cast<GstElement*>(GStreamer::createVideoSink(GStreamer::VideoSinkConfig{}));
+    QVERIFY(videoSink);
+    const auto sinkCleanup = qScopeGuard([videoSink] { GStreamer::releaseVideoSink(videoSink); });
+
+    const quint16 port = freeLoopbackUdpPort();
+    QVERIFY(port != 0);
+    H264RtpSender sender;
+    QVERIFY(sender.start(port));
+
+    QQuickItem widget;
+    const auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &widget);
+    QSignalSpy sizeSpy(receiver.get(), &VideoReceiver::videoSizeChanged);
+
+    receiver->start(kWatchdogTimeoutSec);
+    receiver->startDecoding(videoSink);
+    QVERIFY_SIGNAL_COUNT_WAIT(sizeSpy, 1, TestTimeout::mediumMs());
+    QCOMPARE(sizeSpy.constLast().constFirst().toSize(), QSize(kFrameWidth, kFrameHeight));
+}
+
 void GstVideoReceiverTest::_testBusDoesNotQueueMessages()
 {
     const quint16 port = freeLoopbackUdpPort();
@@ -821,6 +903,10 @@ void GstVideoReceiverTest::_testStopDecodingBeforeFirstFrame() {}
 void GstVideoReceiverTest::_testStopWhileStoppingRecordingFinalizesFile() {}
 
 void GstVideoReceiverTest::_testRecordingErrorKeepsStreaming() {}
+
+void GstVideoReceiverTest::_testDecoderQosDisabledAndReported() {}
+
+void GstVideoReceiverTest::_testVideoSizeFromNegotiatedCaps() {}
 
 void GstVideoReceiverTest::_testBusDoesNotQueueMessages() {}
 
