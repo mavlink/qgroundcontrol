@@ -4,7 +4,6 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QSize>
-#include <QtCore/QTimer>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 class QGCVideoStreamInfo;
@@ -111,29 +110,10 @@ protected:
     QString _name;
     QString _uri;
     bool _started = false;
-    // Flipped on streaming threads, read cross-thread (e.g. tee probe logging).
-    std::atomic<bool> _decoding = false;
-    bool _recording = false;
-    std::atomic<bool> _streaming = false;
     bool _lowLatency = false;
     int _rtpJitterLatencyMs = 80;
     // Written live on the GUI thread, read on the receiver worker thread.
     std::atomic<bool> _autoReconnect = true;     ///< RTSP/UDP auto-reconnect with exponential backoff on watchdog/error.
-    std::atomic<bool> _resetVideoSink = false;
-    std::atomic<bool> _endOfStream = false;
-    bool _removingDecoder = false;
-    bool _removingRecorder = false;
-    // buffer:
-    //      -1 - disable buffer and video sync
-    //      0 - default buffer length
-    //      N - buffer length, ms
-    int _buffer = 0;
-    // Monotonic ms. Written on streaming threads (pad probes), read/written by the watchdog on the worker thread.
-    std::atomic<qint64> _lastSourceFrameTime = 0;
-    std::atomic<qint64> _lastVideoFrameTime = 0;
-    int _statsTickCounter = 0;
-    QTimer _watchdogTimer;
-    uint32_t _timeout = 0;
     QString _recordingOutput;
 
     // bool _initialized = false;

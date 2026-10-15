@@ -19,6 +19,7 @@
 
 #include "GStreamer.h"
 #include "GStreamerLogging.h"
+#include "GstVideoReceiver.h"
 #include "VideoReceiver.h"
 
 // Receiver signals are emitted on its worker thread, so tests wait on spy counts: QSignalSpy::wait()
@@ -246,18 +247,14 @@ void GstVideoReceiverTest::_testStartDecodeStop()
     QQuickItem widget;
     const auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &widget);
     QSignalSpy startSpy(receiver.get(), &VideoReceiver::onStartComplete);
-    QSignalSpy streamingSpy(receiver.get(), &VideoReceiver::streamingChanged);
     QSignalSpy decodingSpy(receiver.get(), &VideoReceiver::decodingChanged);
     QSignalSpy stopSpy(receiver.get(), &VideoReceiver::onStopComplete);
 
+    // Decoding is requested while the first source pad may be arriving, as VideoManager does.
     receiver->start(kWatchdogTimeoutSec);
+    receiver->startDecoding(videoSink);
     QVERIFY_SIGNAL_COUNT_WAIT(startSpy, 1, TestTimeout::mediumMs());
     QCOMPARE(lastStatus(startSpy), VideoReceiver::STATUS_OK);
-
-    // startDecoding() racing the first source pad is a known, separate receiver issue; let
-    // streaming begin first so this test only exercises the lifecycle.
-    QVERIFY_SIGNAL_COUNT_WAIT(streamingSpy, 1, TestTimeout::mediumMs());
-    receiver->startDecoding(videoSink);
     QVERIFY_SIGNAL_COUNT_WAIT(decodingSpy, 1, TestTimeout::mediumMs());
     QVERIFY(lastBool(decodingSpy));
 
@@ -305,7 +302,7 @@ void GstVideoReceiverTest::_testFailedStartLeavesCleanState()
     QSignalSpy streamingSpy(receiver.get(), &VideoReceiver::streamingChanged);
     QSignalSpy stopSpy(receiver.get(), &VideoReceiver::onStopComplete);
 
-    expectLogMessage("Video.GStreamer.GstVideoReceiver", QtCriticalMsg,
+    expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
                      QRegularExpression(QStringLiteral("^GStreamer error:")));
     expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
                      QRegularExpression(QStringLiteral("^Failed to start")));
@@ -347,18 +344,14 @@ void GstVideoReceiverTest::_testVideoSinkRefcountStableAcrossRestarts()
     QQuickItem widget;
     const auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &widget);
     QSignalSpy startSpy(receiver.get(), &VideoReceiver::onStartComplete);
-    QSignalSpy streamingSpy(receiver.get(), &VideoReceiver::streamingChanged);
     QSignalSpy decodingSpy(receiver.get(), &VideoReceiver::decodingChanged);
     QSignalSpy stopSpy(receiver.get(), &VideoReceiver::onStopComplete);
 
     for (int cycle = 1; cycle <= kRestartCycles; ++cycle) {
         receiver->start(kWatchdogTimeoutSec);
+        receiver->startDecoding(videoSink);
         QVERIFY_SIGNAL_COUNT_WAIT(startSpy, cycle, TestTimeout::mediumMs());
         QCOMPARE(lastStatus(startSpy), VideoReceiver::STATUS_OK);
-
-        // See _testStartDecodeStop: decode only once streaming has begun.
-        QVERIFY_SIGNAL_COUNT_WAIT(streamingSpy, (2 * cycle) - 1, TestTimeout::mediumMs());
-        receiver->startDecoding(videoSink);
         QVERIFY_SIGNAL_COUNT_WAIT(decodingSpy, (2 * cycle) - 1, TestTimeout::mediumMs());
 
         receiver->stop();
@@ -498,6 +491,201 @@ void GstVideoReceiverTest::_testSecondRecordingIsNotTruncated()
              qPrintable(QStringLiteral("second: %1 frames %2").arg(secondFrames).arg(failure)));
 }
 
+void GstVideoReceiverTest::_testDecodingRequestedBeforeStreamStarts()
+{
+    const quint16 port = freeLoopbackUdpPort();
+    QVERIFY(port != 0);
+
+    GstElement* videoSink = makeFakeVideoSink();
+    QVERIFY(videoSink);
+    const auto sinkCleanup = qScopeGuard([videoSink] { gst_object_unref(videoSink); });
+
+    QQuickItem widget;
+    const auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &widget);
+    QSignalSpy startSpy(receiver.get(), &VideoReceiver::onStartComplete);
+    QSignalSpy startDecodingSpy(receiver.get(), &VideoReceiver::onStartDecodingComplete);
+    QSignalSpy decodingSpy(receiver.get(), &VideoReceiver::decodingChanged);
+
+    receiver->start(kWatchdogTimeoutSec);
+    receiver->startDecoding(videoSink);
+    QVERIFY_SIGNAL_COUNT_WAIT(startSpy, 1, TestTimeout::mediumMs());
+    QCOMPARE(lastStatus(startSpy), VideoReceiver::STATUS_OK);
+    QVERIFY_SIGNAL_COUNT_WAIT(startDecodingSpy, 1, TestTimeout::mediumMs());
+    QCOMPARE(lastStatus(startDecodingSpy), VideoReceiver::STATUS_OK);
+
+    // Nothing is sent until decoding was requested, so the source pad appears only now.
+    H264RtpSender sender;
+    QVERIFY(sender.start(port));
+    QVERIFY_SIGNAL_COUNT_WAIT(decodingSpy, 1, TestTimeout::mediumMs());
+    QVERIFY(lastBool(decodingSpy));
+}
+
+void GstVideoReceiverTest::_testStopDecodingBeforeFirstFrame()
+{
+    const quint16 port = freeLoopbackUdpPort();
+    QVERIFY(port != 0);
+    H264RtpSender sender;
+    QVERIFY(sender.start(port));
+
+    GstElement* videoSink = makeFakeVideoSink();
+    QVERIFY(videoSink);
+    const auto sinkCleanup = qScopeGuard([videoSink] { gst_object_unref(videoSink); });
+
+    QQuickItem widget;
+    const auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &widget);
+    QSignalSpy startSpy(receiver.get(), &VideoReceiver::onStartComplete);
+    QSignalSpy streamingSpy(receiver.get(), &VideoReceiver::streamingChanged);
+    QSignalSpy startDecodingSpy(receiver.get(), &VideoReceiver::onStartDecodingComplete);
+    QSignalSpy stopDecodingSpy(receiver.get(), &VideoReceiver::onStopDecodingComplete);
+    QSignalSpy decodingSpy(receiver.get(), &VideoReceiver::decodingChanged);
+
+    receiver->start(kWatchdogTimeoutSec);
+    QVERIFY_SIGNAL_COUNT_WAIT(startSpy, 1, TestTimeout::mediumMs());
+    QCOMPARE(lastStatus(startSpy), VideoReceiver::STATUS_OK);
+    QVERIFY_SIGNAL_COUNT_WAIT(streamingSpy, 1, TestTimeout::mediumMs());
+
+    // Queued back to back, so the decoder is torn down before it can deliver a frame.
+    receiver->startDecoding(videoSink);
+    receiver->stopDecoding();
+    QVERIFY_SIGNAL_COUNT_WAIT(stopDecodingSpy, 1, TestTimeout::mediumMs());
+    QCOMPARE(lastStatus(stopDecodingSpy), VideoReceiver::STATUS_OK);
+
+    receiver->startDecoding(videoSink);
+    QVERIFY_SIGNAL_COUNT_WAIT(startDecodingSpy, 2, TestTimeout::mediumMs());
+    QCOMPARE(lastStatus(startDecodingSpy), VideoReceiver::STATUS_OK);
+    QVERIFY_TRUE_WAIT(!decodingSpy.isEmpty() && lastBool(decodingSpy), TestTimeout::mediumMs());
+}
+
+void GstVideoReceiverTest::_testStopWhileStoppingRecordingFinalizesFile()
+{
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const quint16 port = freeLoopbackUdpPort();
+    QVERIFY(port != 0);
+    H264RtpSender sender;
+    QVERIFY(sender.start(port));
+
+    QQuickItem widget;
+    const auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &widget);
+    QSignalSpy startSpy(receiver.get(), &VideoReceiver::onStartComplete);
+    QSignalSpy recordingStartedSpy(receiver.get(), &VideoReceiver::recordingStarted);
+    QSignalSpy stopRecordingSpy(receiver.get(), &VideoReceiver::onStopRecordingComplete);
+    QSignalSpy stopSpy(receiver.get(), &VideoReceiver::onStopComplete);
+
+    receiver->start(kWatchdogTimeoutSec);
+    QVERIFY_SIGNAL_COUNT_WAIT(startSpy, 1, TestTimeout::mediumMs());
+    QCOMPARE(lastStatus(startSpy), VideoReceiver::STATUS_OK);
+
+    const QString path = tempDir.filePath(QStringLiteral("stopped.mp4"));
+    receiver->startRecording(path, VideoReceiver::FILE_FORMAT_MP4);
+    QVERIFY_SIGNAL_COUNT_WAIT(recordingStartedSpy, 1, TestTimeout::mediumMs());
+    const int recordStart = sender.frames();
+    QVERIFY_TRUE_WAIT(sender.frames() >= (recordStart + kRecordFrames), TestTimeout::mediumMs());
+
+    // stop() lands while the muxer is still finalizing the file stopRecording() ended.
+    receiver->stopRecording();
+    receiver->stop();
+    QVERIFY_SIGNAL_COUNT_WAIT(stopSpy, 1, TestTimeout::mediumMs());
+    QCOMPARE(stopRecordingSpy.count(), 1);
+    QCOMPARE(lastStatus(stopRecordingSpy), VideoReceiver::STATUS_OK);
+
+    QString failure;
+    const int frames = countPlayableFrames(path, failure);
+    QVERIFY2(frames >= kMinRecordedFrames,
+             qPrintable(QStringLiteral("%1 frames recorded %2").arg(frames).arg(failure)));
+}
+
+void GstVideoReceiverTest::_testRecordingErrorKeepsStreaming()
+{
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const quint16 port = freeLoopbackUdpPort();
+    QVERIFY(port != 0);
+    H264RtpSender sender;
+    QVERIFY(sender.start(port));
+
+    QQuickItem widget;
+    const auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &widget);
+    QSignalSpy startSpy(receiver.get(), &VideoReceiver::onStartComplete);
+    QSignalSpy streamingSpy(receiver.get(), &VideoReceiver::streamingChanged);
+    QSignalSpy recordingSpy(receiver.get(), &VideoReceiver::recordingChanged);
+    QSignalSpy recordingStartedSpy(receiver.get(), &VideoReceiver::recordingStarted);
+    QSignalSpy stopSpy(receiver.get(), &VideoReceiver::onStopComplete);
+
+    receiver->start(kWatchdogTimeoutSec);
+    QVERIFY_SIGNAL_COUNT_WAIT(startSpy, 1, TestTimeout::mediumMs());
+    QCOMPARE(lastStatus(startSpy), VideoReceiver::STATUS_OK);
+    QVERIFY_SIGNAL_COUNT_WAIT(streamingSpy, 1, TestTimeout::mediumMs());
+
+    // splitmuxsink opens the file once it has a GOP, so the failure surfaces mid-recording. GStreamer adds
+    // follow-up errors (failed state change, no output sink) whose number isn't ours to pin.
+    expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^Recording error: .*Could not open file")));
+    ignoreLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^Recording error:")));
+    receiver->startRecording(tempDir.filePath(QStringLiteral("missing/unwritable.mp4")),
+                             VideoReceiver::FILE_FORMAT_MP4);
+    QVERIFY_SIGNAL_COUNT_WAIT(recordingSpy, 2, TestTimeout::mediumMs());
+    QVERIFY(!lastBool(recordingSpy));
+    verifyExpectedLogMessage();
+
+    QCOMPARE(streamingSpy.count(), 1);
+    QVERIFY(stopSpy.isEmpty());
+
+    const QString path = tempDir.filePath(QStringLiteral("recovered.mp4"));
+    receiver->startRecording(path, VideoReceiver::FILE_FORMAT_MP4);
+    // The failed recording had already reported its first keyframe; the muxer only fails after it.
+    QVERIFY_SIGNAL_COUNT_WAIT(recordingStartedSpy, 2, TestTimeout::mediumMs());
+    const int recordStart = sender.frames();
+    QVERIFY_TRUE_WAIT(sender.frames() >= (recordStart + kRecordFrames), TestTimeout::mediumMs());
+    receiver->stop();
+    QVERIFY_SIGNAL_COUNT_WAIT(stopSpy, 1, TestTimeout::mediumMs());
+
+    QString failure;
+    const int frames = countPlayableFrames(path, failure);
+    QVERIFY2(frames >= kMinRecordedFrames,
+             qPrintable(QStringLiteral("%1 frames recorded %2").arg(frames).arg(failure)));
+}
+
+void GstVideoReceiverTest::_testBusDoesNotQueueMessages()
+{
+    const quint16 port = freeLoopbackUdpPort();
+    QVERIFY(port != 0);
+    H264RtpSender sender;
+    QVERIFY(sender.start(port));
+
+    GstElement* videoSink = makeFakeVideoSink();
+    QVERIFY(videoSink);
+    const auto sinkCleanup = qScopeGuard([videoSink] { gst_object_unref(videoSink); });
+
+    QQuickItem widget;
+    const auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &widget);
+    auto* gstReceiver = qobject_cast<GstVideoReceiver*>(receiver.get());
+    QVERIFY(gstReceiver);
+    QSignalSpy startSpy(receiver.get(), &VideoReceiver::onStartComplete);
+    QSignalSpy streamingSpy(receiver.get(), &VideoReceiver::streamingChanged);
+    QSignalSpy decodingSpy(receiver.get(), &VideoReceiver::decodingChanged);
+
+    receiver->start(kWatchdogTimeoutSec);
+    QVERIFY_SIGNAL_COUNT_WAIT(startSpy, 1, TestTimeout::mediumMs());
+    QCOMPARE(lastStatus(startSpy), VideoReceiver::STATUS_OK);
+    QVERIFY_SIGNAL_COUNT_WAIT(streamingSpy, 1, TestTimeout::mediumMs());
+    receiver->startDecoding(videoSink);
+    QVERIFY_SIGNAL_COUNT_WAIT(decodingSpy, 1, TestTimeout::mediumMs());
+
+    // State changes, stream collection, latency and QoS have all been posted by now.
+    bool pending = true;
+    QVERIFY(QMetaObject::invokeMethod(
+        gstReceiver->_workerContext,
+        [gstReceiver, &pending]() {
+            GstBus* bus = gst_pipeline_get_bus(GST_PIPELINE(gstReceiver->_pipeline));
+            pending = gst_bus_have_pending(bus);
+            gst_object_unref(bus);
+        },
+        Qt::BlockingQueuedConnection));
+    QVERIFY2(!pending, "Messages are piling up on the pipeline bus");
+}
+
 #else
 
 void GstVideoReceiverTest::init()
@@ -521,6 +709,16 @@ void GstVideoReceiverTest::_testRecordingPlayableWhileInProgress() {}
 void GstVideoReceiverTest::_testDestroyWhileRecordingFinalizesFile() {}
 
 void GstVideoReceiverTest::_testSecondRecordingIsNotTruncated() {}
+
+void GstVideoReceiverTest::_testDecodingRequestedBeforeStreamStarts() {}
+
+void GstVideoReceiverTest::_testStopDecodingBeforeFirstFrame() {}
+
+void GstVideoReceiverTest::_testStopWhileStoppingRecordingFinalizesFile() {}
+
+void GstVideoReceiverTest::_testRecordingErrorKeepsStreaming() {}
+
+void GstVideoReceiverTest::_testBusDoesNotQueueMessages() {}
 
 #endif
 
