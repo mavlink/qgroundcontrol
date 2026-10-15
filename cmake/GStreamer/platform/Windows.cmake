@@ -183,9 +183,9 @@ function(_qgc_discover_windows_sdk)
             )
             unset(GStreamer_ROOT_DIR)
             unset(GStreamer_ROOT_DIR CACHE)
-        elseif(NOT _gst_win_sdk_version OR _gst_win_sdk_version VERSION_LESS GStreamer_FIND_VERSION)
+        elseif(NOT _gst_win_sdk_version OR _gst_win_sdk_version VERSION_LESS QGC_GST_REQUESTED_VERSION)
             message(WARNING "Existing GStreamer SDK at ${GStreamer_ROOT_DIR} has version "
-                            "'${_gst_win_sdk_version}', but ${GStreamer_FIND_VERSION}+ is required. "
+                            "'${_gst_win_sdk_version}', but ${QGC_GST_REQUESTED_VERSION}+ is required. "
                             "Falling back to auto-download."
             )
             unset(GStreamer_ROOT_DIR)
@@ -207,9 +207,9 @@ function(_qgc_discover_windows_sdk)
             PLATFORM
             ${_gst_win_platform}
             VERSION
-            ${GStreamer_FIND_VERSION}
+            ${QGC_GST_REQUESTED_VERSION}
             CACHE_SUBDIR
-            "gstreamer-win-${_gst_win_arch}-${GStreamer_FIND_VERSION}"
+            "gstreamer-win-${_gst_win_arch}-${QGC_GST_REQUESTED_VERSION}"
             ARCHIVES
             "gstreamer-${_gst_win_arch}.exe"
             CONTENT

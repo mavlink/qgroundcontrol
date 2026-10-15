@@ -17,13 +17,13 @@ endfunction()
 set(_sandbox "${CMAKE_CURRENT_BINARY_DIR}/android-sdk-extract")
 file(REMOVE_RECURSE "${_sandbox}")
 set(CPM_SOURCE_CACHE "${_sandbox}/cache")
-set(GStreamer_FIND_VERSION 9.9.2)
-set(_cache_dir "${CPM_SOURCE_CACHE}/gstreamer-android-${GStreamer_FIND_VERSION}")
-set(_archive "${_cache_dir}/gstreamer-android-${GStreamer_FIND_VERSION}.tar.xz")
+set(QGC_GST_REQUESTED_VERSION 9.9.2)
+set(_cache_dir "${CPM_SOURCE_CACHE}/gstreamer-android-${QGC_GST_REQUESTED_VERSION}")
+set(_archive "${_cache_dir}/gstreamer-android-${QGC_GST_REQUESTED_VERSION}.tar.xz")
 
 set(_abi_dirs armv7 arm64 x86 x86_64)
 foreach(_abi_dir IN LISTS _abi_dirs)
-    file(WRITE "${_sandbox}/src/${_abi_dir}/lib/pkgconfig/gstreamer-1.0.pc" "Version: ${GStreamer_FIND_VERSION}\n")
+    file(WRITE "${_sandbox}/src/${_abi_dir}/lib/pkgconfig/gstreamer-1.0.pc" "Version: ${QGC_GST_REQUESTED_VERSION}\n")
     file(WRITE "${_sandbox}/src/${_abi_dir}/include/abi.txt" "${_abi_dir}")
 endforeach()
 file(MAKE_DIRECTORY "${_cache_dir}")
@@ -32,7 +32,7 @@ execute_process(COMMAND "${CMAKE_COMMAND}" -E tar cJf "${_archive}" ${_abi_dirs}
 )
 file(SHA256 "${_archive}" _hash)
 set(QGC_BUILD_CONFIG_CONTENT
-    "{\"gstreamer\":{\"checksums\":{\"${GStreamer_FIND_VERSION}\":{\"android\":\"${_hash}\"}}}}"
+    "{\"gstreamer\":{\"checksums\":{\"${QGC_GST_REQUESTED_VERSION}\":{\"android\":\"${_hash}\"}}}}"
 )
 
 foreach(_case IN ITEMS "x86|x86" "x86_64|x86_64" "arm64-v8a|arm64")

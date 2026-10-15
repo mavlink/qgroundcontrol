@@ -108,9 +108,16 @@ set(QGC_LINK_PARALLEL_LEVEL
     CACHE STRING "Maximum parallel link jobs (prevents OOM during LTO)"
 )
 # ---- GStreamer SDK download / debug ----
+# GStreamer_USE_STATIC_LIBS / GStreamer_USE_FRAMEWORK depend on the target platform and are declared in
+# cmake/GStreamer/Orchestrator.cmake.
 set(GStreamer_ROOT_DIR
     ""
     CACHE PATH "GStreamer SDK to use; empty selects the system SDK or an auto-downloaded one"
+)
+set(QGC_GST_VERSION
+    ""
+    CACHE STRING
+          "GStreamer version to require (Linux) or download; empty uses gstreamer.version in .github/build-config.json"
 )
 # Fail closed: only the SDK-download platforms (Android/macOS/iOS/Windows) hit this path;
 # Linux uses system pkg-config and never downloads, so ON is a no-op there.
@@ -123,6 +130,10 @@ set(QGC_GST_DOWNLOAD_TIMEOUT
 set(QGC_GST_DOWNLOAD_INACTIVITY_TIMEOUT
     ""
     CACHE STRING "GStreamer SDK download inactivity timeout (seconds, default 60)"
+)
+# The CA bundle becomes the iOS app's TLS trust root, so it is only fetched against a pinned checksum.
+option(QGC_GST_ALLOW_UNVERIFIED_CA
+       "iOS: fetch the CA bundle unverified when build-config.json pins none (never for CI or release builds)" OFF
 )
 
 # Coverage thresholds

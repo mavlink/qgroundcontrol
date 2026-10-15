@@ -80,11 +80,11 @@ function(_qgc_discover_android_sdk)
             PLATFORM
             android
             VERSION
-            ${GStreamer_FIND_VERSION}
+            ${QGC_GST_REQUESTED_VERSION}
             CACHE_SUBDIR
-            "gstreamer-android-${GStreamer_FIND_VERSION}"
+            "gstreamer-android-${QGC_GST_REQUESTED_VERSION}"
             ARCHIVES
-            "gstreamer-android-${GStreamer_FIND_VERSION}.tar.xz"
+            "gstreamer-android-${QGC_GST_REQUESTED_VERSION}.tar.xz"
             CONTENT
             ${_gst_android_abi_DIR}
             EXTRACT_FUNCTION

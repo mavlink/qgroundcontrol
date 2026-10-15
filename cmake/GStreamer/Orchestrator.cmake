@@ -3,11 +3,15 @@ include("${CMAKE_CURRENT_LIST_DIR}/Helpers.cmake")
 qgc_gst_platform(_qgc_gst_platform)
 qgc_gst_platform_descriptor("${_qgc_gst_platform}" _qgc_gst_platform)
 
-if(NOT DEFINED GStreamer_FIND_VERSION)
-    set(GStreamer_FIND_VERSION ${${_qgc_gst_platform_VERSION_VAR}})
+# The version asked of the SDK: QGC_GST_VERSION when set, else the platform's gstreamer.version entry in
+# .github/build-config.json (the minimum on Linux; the SDK to download or accept elsewhere).
+if(QGC_GST_VERSION)
+    set(QGC_GST_REQUESTED_VERSION "${QGC_GST_VERSION}")
+else()
+    set(QGC_GST_REQUESTED_VERSION "${${_qgc_gst_platform_VERSION_VAR}}")
 endif()
 
-if(NOT GStreamer_FIND_VERSION)
+if(NOT QGC_GST_REQUESTED_VERSION)
     message(FATAL_ERROR "GStreamer version not configured. Ensure BuildConfig.cmake has been included "
         "and .github/build-config.json contains the appropriate gstreamer.version.<platform> entry.")
 endif()
@@ -15,41 +19,41 @@ endif()
 # GStreamer_ROOT_DIR is user input only (never written back), so a later configure can tell a
 # user-chosen SDK from one discovery picked; see SdkState.cmake.
 set(_qgc_gst_user_root "${GStreamer_ROOT_DIR}")
+# GSTREAMER_ROOT (upstream FindGStreamer.cmake) and GStreamer_ROOT (find_package's <Package>_ROOT) are older spellings.
 if(NOT _qgc_gst_user_root)
-    if(GSTREAMER_ROOT)
-        set(_qgc_gst_user_root "${GSTREAMER_ROOT}")
-    elseif(GStreamer_ROOT)
-        set(_qgc_gst_user_root "${GStreamer_ROOT}")
-    endif()
+    foreach(_qgc_gst_legacy_root IN ITEMS GSTREAMER_ROOT GStreamer_ROOT)
+        if(${_qgc_gst_legacy_root})
+            message(DEPRECATION "GStreamer: ${_qgc_gst_legacy_root} is deprecated; set GStreamer_ROOT_DIR instead.")
+            set(_qgc_gst_user_root "${${_qgc_gst_legacy_root}}")
+            break()
+        endif()
+    endforeach()
 endif()
 if(_qgc_gst_user_root AND NOT EXISTS "${_qgc_gst_user_root}")
     message(FATAL_ERROR "GStreamer: User-provided directory does not exist: ${_qgc_gst_user_root}\n"
         "Correct the path or unset GStreamer_ROOT_DIR to allow auto-download.")
 endif()
 
-# CONTRACT: include() at directory scope, never inside a function — the layout
-# flags below are directory-scope normal vars (if(NOT DEFINED)-guarded for override).
-if(NOT DEFINED GStreamer_USE_STATIC_LIBS)
-    if(ANDROID OR IOS)
-        set(GStreamer_USE_STATIC_LIBS ON)
-    else()
-        set(GStreamer_USE_STATIC_LIBS OFF)
-    endif()
+# Layout preferences; discovery overrides them with normal variables for the SDK it finds (a flat macOS SDK is not a
+# framework, iOS links one merged archive). CONTRACT: include() this file at directory scope, never inside a function:
+# these flags and the other outputs are directory-scope normal variables.
+if(ANDROID OR IOS)
+    set(_qgc_gst_static_default ON)
+else()
+    set(_qgc_gst_static_default OFF)
 endif()
+option(GStreamer_USE_STATIC_LIBS "Link the GStreamer SDK statically (required on Android and iOS)"
+       ${_qgc_gst_static_default}
+)
+if(APPLE)
+    set(_qgc_gst_framework_default ON)
+else()
+    set(_qgc_gst_framework_default OFF)
+endif()
+option(GStreamer_USE_FRAMEWORK "macOS: use the GStreamer SDK as GStreamer.framework" ${_qgc_gst_framework_default})
 
-if(NOT DEFINED GStreamer_USE_FRAMEWORK)
-    if(APPLE)
-        set(GStreamer_USE_FRAMEWORK ON)
-    else()
-        set(GStreamer_USE_FRAMEWORK OFF)
-    endif()
-endif()
-
-# xcframework is the iOS-only layout; platforms override this to ON only when they
-# confirm a GStreamer.xcframework path exists (see platform/IOS.cmake).
-if(NOT DEFINED GStreamer_USE_XCFRAMEWORK)
-    set(GStreamer_USE_XCFRAMEWORK OFF)
-endif()
+# iOS discovery switches to its single merged static archive (platform/IOS.cmake).
+set(GStreamer_USE_XCFRAMEWORK OFF)
 
 # The cached PKG_CONFIG_ARGN is user input; discovery derives its flags into a normal variable.
 set(PKG_CONFIG_ARGN "" CACHE STRING "Extra arguments for pkg-config")
@@ -57,7 +61,7 @@ _qgc_gst_drop_legacy_pkg_config_args()
 # Empty GStreamer_ROOT_DIR from here on means "discover or download"; platform discovery
 # fills it in and sets GStreamer_AUTO_DOWNLOADED when it downloads.
 _qgc_gst_select_sdk_root(GStreamer_ROOT_DIR GStreamer_AUTO_DOWNLOADED "${_qgc_gst_user_root}"
-                         "${GStreamer_FIND_VERSION}"
+                         "${QGC_GST_REQUESTED_VERSION}"
 )
 
 # Per-platform discovery functions, named by the platform descriptor; each sets GStreamer_ROOT_DIR, the
@@ -185,8 +189,8 @@ else()
     set(_qgc_gst_linkage shared)
 endif()
 _qgc_gst_sdk_pc_version("${GSTREAMER_LIB_PATH}" _qgc_gst_pc_version)
-set(_qgc_gst_fingerprint "${GStreamer_ROOT_DIR}|${GStreamer_FIND_VERSION}|${_qgc_gst_pc_version}|${_qgc_gst_linkage}")
-string(APPEND _qgc_gst_fingerprint "|${_qgc_gst_fingerprint_pkg_config}")
+set(_qgc_gst_fingerprint "${GStreamer_ROOT_DIR}|${QGC_GST_REQUESTED_VERSION}|${_qgc_gst_pc_version}")
+string(APPEND _qgc_gst_fingerprint "|${_qgc_gst_linkage}|${_qgc_gst_fingerprint_pkg_config}")
 _qgc_gst_refresh_sdk_cache("${_qgc_gst_fingerprint}")
 
 # Create GStreamer::* IMPORTED targets via the appropriate platform helper.
@@ -410,6 +414,6 @@ message(STATUS "QGCGStreamer: version=${GStreamer_VERSION} path=${_qgc_gst_path}
 
 # Post-configure tooling (.github/scripts/verify_executable.py, the Windows workflow) reads
 # QGC_GST_RESOLVED_ROOT from CMakeCache.txt; PrintSummary reads the GStreamer::Layout properties.
-_qgc_gst_record_resolved_sdk("${GStreamer_ROOT_DIR}" "${GStreamer_FIND_VERSION}" "${GStreamer_AUTO_DOWNLOADED}")
+_qgc_gst_record_resolved_sdk("${GStreamer_ROOT_DIR}" "${QGC_GST_REQUESTED_VERSION}" "${GStreamer_AUTO_DOWNLOADED}")
 gstreamer_layout_set(VERSION "${GStreamer_VERSION}")
 gstreamer_layout_set(AUTO_DOWNLOADED "${GStreamer_AUTO_DOWNLOADED}")

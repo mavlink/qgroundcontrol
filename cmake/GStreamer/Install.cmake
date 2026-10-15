@@ -174,12 +174,8 @@ function(_gstreamer_is_blocked_lib_copy_source SOURCE_DIR OUT_VAR)
     set(_blocked_prefixes
         /usr/lib /usr/local/lib /opt/homebrew/lib /opt/homebrew/opt)
     set(_allowed_prefixes)
-    set(_is_windows_guard ${WIN32})
-    if(QGC_GSTREAMER_TEST_WIN32)
-        set(_is_windows_guard TRUE)
-    endif()
 
-    if(_is_windows_guard)
+    if(WIN32)
         list(APPEND _blocked_prefixes
             "C:/Windows" "C:/Program Files" "C:/Program Files (x86)")
         # The official GStreamer MSVC SDK installs here by default; it is an SDK
@@ -190,12 +186,12 @@ function(_gstreamer_is_blocked_lib_copy_source SOURCE_DIR OUT_VAR)
 
     # Normalize case + separators so the guard isn't bypassed by C:\Windows or c:/windows.
     cmake_path(SET _src_norm NORMALIZE "${SOURCE_DIR}")
-    if(_is_windows_guard)
+    if(WIN32)
         string(TOLOWER "${_src_norm}" _src_norm)
     endif()
 
     foreach(_prefix IN LISTS _allowed_prefixes)
-        if(_is_windows_guard)
+        if(WIN32)
             string(TOLOWER "${_prefix}" _prefix)
             string(FIND "${_src_norm}/" "${_prefix}/" _is_allowed_pos)
             if(_is_allowed_pos EQUAL 0)
@@ -212,7 +208,7 @@ function(_gstreamer_is_blocked_lib_copy_source SOURCE_DIR OUT_VAR)
     endforeach()
 
     foreach(_prefix IN LISTS _blocked_prefixes)
-        if(_is_windows_guard)
+        if(WIN32)
             string(TOLOWER "${_prefix}" _prefix)
             string(FIND "${_src_norm}/" "${_prefix}/" _is_system_pos)
             if(_is_system_pos EQUAL 0)

@@ -56,6 +56,31 @@ set(_stale
     _xcfw_foundation
 )
 set(_kept __pkg_config_checked_LIBURING PC_LibUSB_FOUND PKG_CONFIG_EXECUTABLE GStreamer_ROOT_DIR QGC_GST_RESOLVED_ROOT)
+# User options share the QGC_GST_ / GStreamer_ prefixes and must survive an SDK change.
+set(_gpu_paths
+    DMABUF
+    CUDA
+    GLMEMORY
+    IOSURFACE
+    D3D11
+    D3D12
+    AHARDWAREBUFFER
+    VULKAN
+)
+list(TRANSFORM _gpu_paths PREPEND QGC_GST_ENABLE_)
+list(
+    APPEND
+    _kept
+    ${_gpu_paths}
+    QGC_GST_VERSION
+    QGC_GST_ALLOW_UNVERIFIED_CA
+    QGC_GST_CUDA_STUB_DIR
+    QGC_GST_DOWNLOAD_TIMEOUT
+    GStreamer_USE_STATIC_LIBS
+    GStreamer_USE_FRAMEWORK
+    GStreamer_REQUIRE_CHECKSUM
+    GStreamer_DEBUG
+)
 # Returns <var>'s cache value, or "<unset>"; get_property handles names that ${} cannot (e.g. "::").
 function(_qgc_test_cache_value var out_var)
     set(_value "<unset>")

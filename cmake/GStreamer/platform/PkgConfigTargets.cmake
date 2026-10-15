@@ -38,13 +38,13 @@ function(_qgc_create_pkgconfig_targets)
     if(GStreamer_USE_FRAMEWORK)
         list(APPEND _qgc_gst_target_args FRAMEWORK_PATH "${GSTREAMER_FRAMEWORK_PATH}")
     endif()
-    # GStreamer_FIND_VERSION is the per-platform floor chosen by Orchestrator.cmake — Linux honors the distro
+    # QGC_GST_REQUESTED_VERSION is the per-platform floor chosen by Orchestrator.cmake — Linux honors the distro
     # minimum (1.20), bundled-SDK platforms enforce ≥1.28 so a downgraded SDK fails configure loudly.
     qgc_gst_create_pkgconfig_targets(
         ROOT
         "${GStreamer_ROOT_DIR}"
         VERSION
-        "${GStreamer_FIND_VERSION}"
+        "${QGC_GST_REQUESTED_VERSION}"
         APIS
         ${GSTREAMER_APIS}
         PLUGINS

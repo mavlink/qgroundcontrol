@@ -80,10 +80,10 @@ function(_qgc_discover_ios_sdk)
         message(FATAL_ERROR "GStreamer for iOS can only be built on macOS")
     endif()
 
-    if(GStreamer_FIND_VERSION VERSION_LESS "1.28.0")
+    if(QGC_GST_REQUESTED_VERSION VERSION_LESS "1.28.0")
         message(FATAL_ERROR
             "GStreamer for iOS requires version 1.28 or later. "
-            "Got '${GStreamer_FIND_VERSION}' — bump gstreamer.version.ios in build-config.json.")
+            "Got '${QGC_GST_REQUESTED_VERSION}' — bump gstreamer.version.ios in build-config.json.")
     endif()
 
     # Resolved below: _gst_ios_bundle (abs path to .xcframework or .framework)
@@ -115,9 +115,9 @@ function(_qgc_discover_ios_sdk)
             PLATFORM
             ios
             VERSION
-            ${GStreamer_FIND_VERSION}
+            ${QGC_GST_REQUESTED_VERSION}
             CACHE_SUBDIR
-            "gstreamer-ios-${GStreamer_FIND_VERSION}"
+            "gstreamer-ios-${QGC_GST_REQUESTED_VERSION}"
             ARCHIVES
             gstreamer-ios.pkg
             CONTENT
@@ -429,10 +429,10 @@ function(_qgc_create_xcframework_targets)
                 "1.28 floor. A downgraded or stale GStreamer.framework was found — "
                 "remove it / clear the SDK cache and re-fetch the pinned version.")
         endif()
-        if(GStreamer_FIND_VERSION AND _xcfw_bundle_version VERSION_LESS GStreamer_FIND_VERSION)
+        if(QGC_GST_REQUESTED_VERSION AND _xcfw_bundle_version VERSION_LESS QGC_GST_REQUESTED_VERSION)
             message(WARNING
                 "GStreamer iOS bundle version '${_xcfw_bundle_version}' is older than the "
-                "requested '${GStreamer_FIND_VERSION}'. Using the bundle's actual version.")
+                "requested '${QGC_GST_REQUESTED_VERSION}'. Using the bundle's actual version.")
         endif()
         set(GStreamer_VERSION "${_xcfw_bundle_version}" PARENT_SCOPE)
         set(GStreamer_VERSION "${_xcfw_bundle_version}")
@@ -440,10 +440,10 @@ function(_qgc_create_xcframework_targets)
         message(WARNING
             "GStreamer iOS: could not read CFBundleShortVersionString from the bundle "
             "Info.plist (looked at '${GStreamer_IOS_INFO_PLIST}'). Falling back to the "
-            "REQUESTED version '${GStreamer_FIND_VERSION}' — the bundle's actual version "
+            "REQUESTED version '${QGC_GST_REQUESTED_VERSION}' — the bundle's actual version "
             "is UNVERIFIED, so a downgraded SDK cannot be detected.")
-        set(GStreamer_VERSION "${GStreamer_FIND_VERSION}" PARENT_SCOPE)
-        set(GStreamer_VERSION "${GStreamer_FIND_VERSION}")
+        set(GStreamer_VERSION "${QGC_GST_REQUESTED_VERSION}" PARENT_SCOPE)
+        set(GStreamer_VERSION "${QGC_GST_REQUESTED_VERSION}")
     endif()
 
     # ── xcframework path: create IMPORTED targets directly from the fat .a ───

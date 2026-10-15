@@ -125,6 +125,7 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
               reconfigure-version
               reuse-auto-root
               legacy-pkg-config-args
+              version-override
               missing-mandatory
               missing-gl
               install

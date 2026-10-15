@@ -81,9 +81,9 @@ function(_qgc_discover_macos_sdk)
             PLATFORM
             macos
             VERSION
-            ${GStreamer_FIND_VERSION}
+            ${QGC_GST_REQUESTED_VERSION}
             CACHE_SUBDIR
-            "gstreamer-mac-${GStreamer_FIND_VERSION}"
+            "gstreamer-mac-${QGC_GST_REQUESTED_VERSION}"
             ARCHIVES
             gstreamer.pkg
             gstreamer-devel.pkg
