@@ -119,7 +119,7 @@ Auto-downloaded SDK archives are cached to `${CPM_SOURCE_CACHE}/gstreamer-*` whe
 export CPM_SOURCE_CACHE=$HOME/.cache/CPM
 ```
 
-Cached archives are verified on every hit against the checksum pinned in `.github/build-config.json`, or the upstream `.sha256sum` sidecar for an unpinned version. Each archive is extracted once into a directory beside it that is stamped with the version and archive hash; configures sharing the cache take a lock instead of downloading or extracting over each other.
+Cached archives are verified on every hit against the checksum pinned in `.github/build-config.json`, or the upstream `.sha256sum` sidecar for an unpinned version. Each archive is extracted once into a directory beside it that is stamped with the version and archive hash; configures sharing the cache take a lock instead of downloading or extracting over each other. The Windows SDK installer runs in its portable mode, so it leaves no `GSTREAMER_1_0_ROOT_*` environment variable, registry key or uninstall entry behind.
 
 ## Testing Pipelines
 
