@@ -38,8 +38,13 @@
 #include "gstqgc/GstQgcVideoFormats.h"
 
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
+#include <gst/allocators/gstdmabuf.h>
+#include <sys/mman.h>
+#include <unistd.h>
+
 #include "GstDmaBufVideoBuffer.h"
 #endif
+#include <rhi/qrhi.h>
 #if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
 #include <gst/gl/gl.h>
 
@@ -475,6 +480,123 @@ void GStreamerTest::_testDmaBufSingleFdImportEnvGate()
 
     qputenv("QGC_GST_DMABUF_SINGLE_EGLIMAGE", "force");
     QVERIFY(GstDmaBufVideoBuffer::singleFdImportEnabledForTest());
+#endif
+}
+
+#if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
+namespace {
+
+// Single-memory DMABuf sample backed by a memfd: enough for the streaming-thread validatePlaneHandles() gate.
+GstSample* makeMemfdDmaBufSample(GstVideoFormat format, GstVideoInfo& info)
+{
+    gst_video_info_set_format(&info, format, 64, 64);
+    const int fd = memfd_create("qgc-dmabuf-test", MFD_CLOEXEC);
+    if (fd < 0) {
+        return nullptr;
+    }
+    if (ftruncate(fd, static_cast<off_t>(GST_VIDEO_INFO_SIZE(&info))) != 0) {
+        ::close(fd);
+        return nullptr;
+    }
+    GstAllocator* allocator = gst_dmabuf_allocator_new();
+    GstMemory* memory = gst_dmabuf_allocator_alloc(allocator, fd, GST_VIDEO_INFO_SIZE(&info));
+    gst_object_unref(allocator);
+    if (!memory) {
+        ::close(fd);
+        return nullptr;
+    }
+    GstBuffer* buffer = gst_buffer_new();
+    gst_buffer_append_memory(buffer, memory);
+    GstCaps* caps = gst_video_info_to_caps(&info);
+    GstSample* sample = gst_sample_new(buffer, caps, nullptr, nullptr);
+    gst_buffer_unref(buffer);
+    gst_caps_unref(caps);
+    return sample;
+}
+
+}  // namespace
+#endif
+
+void GStreamerTest::_testDmaBufEglBadMatchLatch_data()
+{
+    QTest::addColumn<bool>("singleFd");
+    QTest::addColumn<quint64>("drmModifier");
+    QTest::addColumn<bool>("expectDisabled");
+
+    constexpr quint64 kIntelTileYModifier = 0x0100000000000009ULL;
+    QTest::newRow("single-fd LINEAR keeps per-plane import") << true << quint64(0) << false;
+    QTest::newRow("single-fd tiled has no fallback") << true << kIntelTileYModifier << true;
+    QTest::newRow("per-plane disables path") << false << quint64(0) << true;
+}
+
+void GStreamerTest::_testDmaBufEglBadMatchLatch()
+{
+#if !defined(QGC_HAS_GST_DMABUF_GPU_PATH)
+    QSKIP("DMABuf GPU path not compiled in this build");
+#else
+    QFETCH(bool, singleFd);
+    QFETCH(quint64, drmModifier);
+    QFETCH(bool, expectDisabled);
+
+    GstDmaBufVideoBuffer::resetCachedState();
+    const auto resetGuard = qScopeGuard([] { GstDmaBufVideoBuffer::resetCachedState(); });
+
+    GstVideoInfo info;
+    GstSample* sample = makeMemfdDmaBufSample(GST_VIDEO_FORMAT_NV12, info);
+    QVERIFY(sample);
+    GstDmaBufVideoBuffer frame(sample, info, QVideoFrameFormat(QSize(64, 64), QVideoFrameFormat::Format_NV12),
+                               EGL_NO_DISPLAY);
+    gst_sample_unref(sample);
+    QVERIFY(frame.validatePlaneHandles());
+
+    if (expectDisabled) {
+        expectLogMessage("Video.GStreamer.HwBuffers.GstDmaBuf", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("EGL_BAD_MATCH.*disabling DMABuf zero-copy")));
+    }
+    GstDmaBufVideoBuffer::recordEglBadMatchForTest(singleFd, drmModifier);
+    if (expectDisabled) {
+        verifyExpectedLogMessage();
+    }
+    QCOMPARE(frame.validatePlaneHandles(), !expectDisabled);
+#endif
+}
+
+void GStreamerTest::_testDmaBufVulkanImportRejectsMultiPlanar_data()
+{
+    QTest::addColumn<int>("format");
+    QTest::addColumn<int>("rhiBackend");
+    QTest::addColumn<bool>("expectAccepted");
+
+    QTest::newRow("NV12 under Vulkan") << int(GST_VIDEO_FORMAT_NV12) << int(QRhi::Vulkan) << false;
+    QTest::newRow("P010 under Vulkan") << int(GST_VIDEO_FORMAT_P010_10LE) << int(QRhi::Vulkan) << false;
+    QTest::newRow("I420 under Vulkan") << int(GST_VIDEO_FORMAT_I420) << int(QRhi::Vulkan) << false;
+    QTest::newRow("RGBA under Vulkan") << int(GST_VIDEO_FORMAT_RGBA) << int(QRhi::Vulkan) << true;
+    QTest::newRow("BGRA under Vulkan") << int(GST_VIDEO_FORMAT_BGRA) << int(QRhi::Vulkan) << true;
+    QTest::newRow("NV12 under OpenGL") << int(GST_VIDEO_FORMAT_NV12) << int(QRhi::OpenGLES2) << true;
+}
+
+void GStreamerTest::_testDmaBufVulkanImportRejectsMultiPlanar()
+{
+#if !defined(QGC_HAS_GST_DMABUF_GPU_PATH) || !defined(QGC_HAS_GST_VULKAN_GPU_PATH)
+    QSKIP("DMABuf->Vulkan import not compiled in this build");
+#else
+    QFETCH(int, format);
+    QFETCH(int, rhiBackend);
+    QFETCH(bool, expectAccepted);
+
+    auto& snapshotBackend = QGCRhiCapture::deviceSnapshot().backend;
+    const int previousBackend = snapshotBackend.load();
+    const auto restoreBackend = qScopeGuard([&] { snapshotBackend.store(previousBackend); });
+    snapshotBackend.store(rhiBackend);
+
+    GstVideoInfo info;
+    GstSample* sample = makeMemfdDmaBufSample(static_cast<GstVideoFormat>(format), info);
+    QVERIFY(sample);
+    const GstDmaBufVideoBuffer frame(sample, info, QVideoFrameFormat(QSize(64, 64), QVideoFrameFormat::Format_NV12),
+                                     EGL_NO_DISPLAY);
+    gst_sample_unref(sample);
+
+    QCOMPARE(frame.validatePlaneHandles(), expectAccepted);
 #endif
 }
 

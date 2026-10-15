@@ -77,6 +77,11 @@ export QGC_GST_DMABUF_SINGLE_EGLIMAGE=0
 
 Unset the variable, or set it to `1`, to restore the default behavior.
 
+QGC also switches to per-plane import on its own when the single-EGLImage
+importer fails with `EGL_BAD_MATCH`. It disables DMABuf zero-copy for the
+session only when per-plane import fails the same way, or when a tiled buffer
+(which has no per-plane fallback) does.
+
 ### macOS / Windows / iOS
 
 GStreamer SDKs are auto-downloaded during CMake configure. To use a local installation instead, set `GStreamer_ROOT_DIR`.

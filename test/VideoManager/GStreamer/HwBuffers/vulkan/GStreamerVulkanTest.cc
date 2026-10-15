@@ -67,36 +67,8 @@
 
 #if defined(QGC_HAS_GST_VULKAN_GPU_PATH) && QT_CONFIG(vulkan)
 #include <rhi/qrhi.h>
-#include <type_traits>
 
 #include "GstVulkanFrameTextures.h"
-
-namespace {
-
-template <class Handle>
-Handle fakeVkHandle(quintptr value)
-{
-    if constexpr (std::is_pointer_v<Handle>) {
-        return reinterpret_cast<Handle>(value);
-    } else {
-        return static_cast<Handle>(value);
-    }
-}
-
-std::vector<VkImage> s_destroyedImages;
-std::vector<VkDeviceMemory> s_freedMemory;
-
-VKAPI_ATTR void VKAPI_CALL recordDestroyImage(VkDevice, VkImage image, const VkAllocationCallbacks*)
-{
-    s_destroyedImages.push_back(image);
-}
-
-VKAPI_ATTR void VKAPI_CALL recordFreeMemory(VkDevice, VkDeviceMemory memory, const VkAllocationCallbacks*)
-{
-    s_freedMemory.push_back(memory);
-}
-
-}  // namespace
 #endif
 
 void GStreamerTest::_testVulkanDispatchDemotesToCpu()
@@ -266,31 +238,22 @@ void GStreamerTest::_testVulkanOwnedFrameTexturesReleaseOnDestroy()
     std::unique_ptr<QRhi> rhi(QRhi::create(QRhi::Null, &params));
     QVERIFY(rhi);
 
-    s_destroyedImages.clear();
-    s_freedMemory.clear();
-    const auto device = fakeVkHandle<VkDevice>(0x1000);
-    const auto image = fakeVkHandle<VkImage>(0x2000);
-    const auto memory = fakeVkHandle<VkDeviceMemory>(0x3000);
-
     auto bundle = std::make_unique<GstVulkanOwnedFrameTextures>(rhi.get(), QSize(64, 64),
-                                                                QVideoFrameFormat::Format_RGBA8888, image);
+                                                                QVideoFrameFormat::Format_RGBA8888, VK_NULL_HANDLE);
     QVERIFY(bundle->valid());
-    bundle->adoptVulkanResources(device, image, memory, &recordDestroyImage, &recordFreeMemory);
+    int releases = 0;
+    bundle->adoptVulkanResources([&releases] { ++releases; });
     QRhiTexture* wrapped = bundle->texture(0);
 
-    // Qt keeps sampling the current bundle across window frames; frame end must not free the imported image.
+    // Qt keeps sampling the current bundle across window frames; frame end must not release the imported image.
     for (int frame = 0; frame < 3; ++frame) {
         bundle->onFrameEndInvoked();
     }
     QCOMPARE(bundle->texture(0), wrapped);
-    QVERIFY(s_destroyedImages.empty());
-    QVERIFY(s_freedMemory.empty());
+    QCOMPARE(releases, 0);
 
     bundle.reset();
-    QCOMPARE(s_destroyedImages.size(), std::size_t(1));
-    QCOMPARE(s_destroyedImages.front(), image);
-    QCOMPARE(s_freedMemory.size(), std::size_t(1));
-    QCOMPARE(s_freedMemory.front(), memory);
+    QCOMPARE(releases, 1);
 #endif
 }
 

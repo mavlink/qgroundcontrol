@@ -12,8 +12,8 @@
 
 #include "GstHwFrameTexturesBase.h"
 
-/// Wraps a single multi-plane VkImage as a QRhiTexture (NV12/P010/RGBA). Owning and borrowing variants share this
-/// wrap; only the image lifetime differs. `_textures[0]` is null when the wrap fails, surfaced via valid().
+/// Wraps a single VkImage as one QRhiTexture. Owning and borrowing variants share this wrap; only the image lifetime
+/// differs. `_textures[0]` is null when the wrap fails, surfaced via valid().
 class GstVulkanFrameTexturesBase : public GstHwFrameTexturesBase
 {
 public:
@@ -36,46 +36,33 @@ protected:
     }
 };
 
-/// Owns the imported VkImage + backing VkDeviceMemory (DMABuf zero-copy import); destroyed with the bundle.
+/// Owns the imported VkImage + backing VkDeviceMemory (DMABuf zero-copy import); released with the bundle.
 class GstVulkanOwnedFrameTextures final : public GstVulkanFrameTexturesBase
 {
 public:
     GstVulkanOwnedFrameTextures(QRhi* rhi, QSize size, QVideoFrameFormat::PixelFormat pixelFormat, VkImage image)
     {
-        wrapImage(rhi, size, pixelFormat, image, VK_IMAGE_LAYOUT_UNDEFINED);
+        // QRhi's first barrier transitions from this layout; UNDEFINED would let the driver discard the imported
+        // contents, GENERAL preserves them.
+        wrapImage(rhi, size, pixelFormat, image, VK_IMAGE_LAYOUT_GENERAL);
     }
 
     ~GstVulkanOwnedFrameTextures() override
     {
         // QRhiTexture must be gone before the VkImage it wraps; reset it first.
         _textures[0].reset();
-        if (_image != VK_NULL_HANDLE && _destroyImage) {
-            _destroyImage(_dev, _image, nullptr);
-        }
-        if (_memory != VK_NULL_HANDLE && _freeMemory) {
-            _freeMemory(_dev, _memory, nullptr);
+        if (_release) {
+            _release();
         }
     }
 
     HwVideoBufferPath sourcePath() const override { return HwVideoBufferPath::DmaBuf; }
 
-    /// Transfers VkImage/VkDeviceMemory ownership into the bundle for deferred destruction.
-    void adoptVulkanResources(VkDevice dev, VkImage image, VkDeviceMemory memory, PFN_vkDestroyImage destroyImage,
-                              PFN_vkFreeMemory freeMemory) noexcept
-    {
-        _dev = dev;
-        _image = image;
-        _memory = memory;
-        _destroyImage = destroyImage;
-        _freeMemory = freeMemory;
-    }
+    /// Transfers VkImage/VkDeviceMemory ownership into the bundle: @p release runs once, when Qt destroys the bundle.
+    void adoptVulkanResources(std::function<void()> release) noexcept { _release = std::move(release); }
 
 private:
-    VkDevice _dev = VK_NULL_HANDLE;
-    VkImage _image = VK_NULL_HANDLE;
-    VkDeviceMemory _memory = VK_NULL_HANDLE;
-    PFN_vkDestroyImage _destroyImage = nullptr;
-    PFN_vkFreeMemory _freeMemory = nullptr;
+    std::function<void()> _release;
 };
 
 /// Borrows a VkImage owned by GstVulkanImageMemory and kept alive via the held GstSample (setSourceSample). Never

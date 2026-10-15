@@ -33,6 +33,8 @@ public:
     static bool directGlImportAllowedForTest(bool hasModifiersExt, guint64 drmModifier) noexcept;
     static bool texStorageImportAllowedForTest(bool contextIsOpenGles, bool hasTexStorageExt,
                                                guint64 drmModifier) noexcept;
+    /// Feeds an eglCreateImage EGL_BAD_MATCH into the import latches, as the single-fd or per-plane import would.
+    static void recordEglBadMatchForTest(bool singleFd, guint64 drmModifier) noexcept;
 #endif
 
 private:

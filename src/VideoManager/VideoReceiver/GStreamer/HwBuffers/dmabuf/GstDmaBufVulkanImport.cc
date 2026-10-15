@@ -1,5 +1,7 @@
 #include "GstDmaBufVulkanImport.h"
 
+#include <vector>
+
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH) && defined(QGC_HAS_GST_VULKAN_GPU_PATH)
 
 #include <QtCore/QLoggingCategory>
@@ -12,7 +14,6 @@
 #include <gst/allocators/gstdmabuf.h>
 #include <gst/video/video.h>
 #include <limits>
-#include <mutex>
 #include <rhi/qrhi.h>
 #include <rhi/qrhi_platform.h>
 #include <unistd.h>
@@ -32,31 +33,28 @@ namespace {
 
 std::atomic<bool> s_loggedVulkanUnimpl{false};
 
-// DRM fourcc -> single-plane VkFormat for formats importable as one VkImage. Returns VK_FORMAT_UNDEFINED for layouts
-// that need a multi-disjoint-plane import (handled by the CPU fallback).
-VkFormat vkFormatForDrmFourcc(int fourcc)
+// VkFormat for single-plane RGB layouts. Multi-planar YUV (NV12/P010/I420) maps to VK_FORMAT_UNDEFINED: QRhi would wrap
+// a multi-planar VkImage as one single-plane texture with a COLOR-aspect view (invalid usage, no chroma), so those
+// layouts take the CPU path until a per-plane import exists.
+VkFormat vkFormatForVideoInfo(const GstVideoInfo& videoInfo)
 {
-    switch (fourcc) {
+    if (GST_VIDEO_INFO_N_PLANES(&videoInfo) != 1) {
+        return VK_FORMAT_UNDEFINED;
+    }
+    switch (GstHw::drmFourccForPlane(videoInfo, 0)) {
         case DRM_FORMAT_ABGR8888:
         case DRM_FORMAT_XBGR8888:
             return VK_FORMAT_R8G8B8A8_UNORM;
         case DRM_FORMAT_ARGB8888:
         case DRM_FORMAT_XRGB8888:
             return VK_FORMAT_B8G8R8A8_UNORM;
-        case DRM_FORMAT_NV12:
-            return VK_FORMAT_G8_B8R8_2PLANE_420_UNORM;
-        case DRM_FORMAT_P010:
-            return VK_FORMAT_G10X6_B10X6R10X6_2PLANE_420_UNORM_3PACK16;
-        case DRM_FORMAT_YUV420:
-            return VK_FORMAT_G8_B8_R8_3PLANE_420_UNORM;
         default:
             return VK_FORMAT_UNDEFINED;
     }
 }
 
-// Process-cached Vulkan dispatch for the DMABuf import. Device-level entry points are resolved through
-// vkGetDeviceProcAddr (itself obtained from the instance loader); vkGetPhysicalDeviceMemoryProperties stays on the
-// instance loader. The QRhi VkDevice is process-stable, so a single resolve serves every frame.
+// Vulkan dispatch for the DMABuf import. Device-level entry points are resolved through vkGetDeviceProcAddr (itself
+// obtained from the instance loader); vkGetPhysicalDeviceMemoryProperties stays on the instance loader.
 struct VulkanImportFns
 {
     PFN_vkCreateImage createImage = nullptr;
@@ -67,37 +65,124 @@ struct VulkanImportFns
     PFN_vkGetImageMemoryRequirements getImageMemoryRequirements = nullptr;
     PFN_vkGetMemoryFdPropertiesKHR getMemoryFdProperties = nullptr;
     PFN_vkGetPhysicalDeviceMemoryProperties getPhysicalDeviceMemoryProperties = nullptr;
+    PFN_vkCreateFence createFence = nullptr;
+    PFN_vkDestroyFence destroyFence = nullptr;
+    PFN_vkGetFenceStatus getFenceStatus = nullptr;
+    PFN_vkWaitForFences waitForFences = nullptr;
+    PFN_vkQueueSubmit queueSubmit = nullptr;
+    PFN_vkQueueWaitIdle queueWaitIdle = nullptr;
 
     bool ok() const noexcept
     {
         return createImage && destroyImage && allocateMemory && freeMemory && bindImageMemory &&
-               getImageMemoryRequirements && getMemoryFdProperties && getPhysicalDeviceMemoryProperties;
+               getImageMemoryRequirements && getMemoryFdProperties && getPhysicalDeviceMemoryProperties &&
+               createFence && destroyFence && getFenceStatus && waitForFences && queueSubmit && queueWaitIdle;
     }
 };
 
+// Bumped by resetCachedState() so every render thread re-resolves after a device reset.
+std::atomic<quint64> s_importFnsGeneration{0};
+
+// Cached per render thread (each window's QRhi owns its VkDevice) and re-resolved when that thread's QRhi device
+// changes (window recreation, device loss) or after a reset.
 const VulkanImportFns& resolveVulkanImportFns(QVulkanInstance& inst, VkDevice dev)
 {
-    static VulkanImportFns fns;
-    static std::once_flag once;
-    std::call_once(once, [&] {
-        const auto getDeviceProcAddr =
-            reinterpret_cast<PFN_vkGetDeviceProcAddr>(inst.getInstanceProcAddr("vkGetDeviceProcAddr"));
-        const auto dev_fn = [&](const char* name) -> PFN_vkVoidFunction {
-            return getDeviceProcAddr ? getDeviceProcAddr(dev, name) : nullptr;
-        };
-        fns.createImage = reinterpret_cast<PFN_vkCreateImage>(dev_fn("vkCreateImage"));
-        fns.destroyImage = reinterpret_cast<PFN_vkDestroyImage>(dev_fn("vkDestroyImage"));
-        fns.allocateMemory = reinterpret_cast<PFN_vkAllocateMemory>(dev_fn("vkAllocateMemory"));
-        fns.freeMemory = reinterpret_cast<PFN_vkFreeMemory>(dev_fn("vkFreeMemory"));
-        fns.bindImageMemory = reinterpret_cast<PFN_vkBindImageMemory>(dev_fn("vkBindImageMemory"));
-        fns.getImageMemoryRequirements =
-            reinterpret_cast<PFN_vkGetImageMemoryRequirements>(dev_fn("vkGetImageMemoryRequirements"));
-        fns.getMemoryFdProperties =
-            reinterpret_cast<PFN_vkGetMemoryFdPropertiesKHR>(dev_fn("vkGetMemoryFdPropertiesKHR"));
-        fns.getPhysicalDeviceMemoryProperties = reinterpret_cast<PFN_vkGetPhysicalDeviceMemoryProperties>(
-            inst.getInstanceProcAddr("vkGetPhysicalDeviceMemoryProperties"));
-    });
+    struct CachedFns
+    {
+        VkDevice dev = VK_NULL_HANDLE;
+        quint64 generation = 0;
+        VulkanImportFns fns;
+    };
+
+    thread_local CachedFns cache;
+
+    const quint64 generation = s_importFnsGeneration.load(std::memory_order_acquire);
+    if (cache.dev == dev && cache.generation == generation) {
+        return cache.fns;
+    }
+    const auto getDeviceProcAddr =
+        reinterpret_cast<PFN_vkGetDeviceProcAddr>(inst.getInstanceProcAddr("vkGetDeviceProcAddr"));
+    const auto dev_fn = [&](const char* name) -> PFN_vkVoidFunction {
+        return getDeviceProcAddr ? getDeviceProcAddr(dev, name) : nullptr;
+    };
+    VulkanImportFns& fns = cache.fns;
+    fns.createImage = reinterpret_cast<PFN_vkCreateImage>(dev_fn("vkCreateImage"));
+    fns.destroyImage = reinterpret_cast<PFN_vkDestroyImage>(dev_fn("vkDestroyImage"));
+    fns.allocateMemory = reinterpret_cast<PFN_vkAllocateMemory>(dev_fn("vkAllocateMemory"));
+    fns.freeMemory = reinterpret_cast<PFN_vkFreeMemory>(dev_fn("vkFreeMemory"));
+    fns.bindImageMemory = reinterpret_cast<PFN_vkBindImageMemory>(dev_fn("vkBindImageMemory"));
+    fns.getImageMemoryRequirements =
+        reinterpret_cast<PFN_vkGetImageMemoryRequirements>(dev_fn("vkGetImageMemoryRequirements"));
+    fns.getMemoryFdProperties = reinterpret_cast<PFN_vkGetMemoryFdPropertiesKHR>(dev_fn("vkGetMemoryFdPropertiesKHR"));
+    fns.getPhysicalDeviceMemoryProperties = reinterpret_cast<PFN_vkGetPhysicalDeviceMemoryProperties>(
+        inst.getInstanceProcAddr("vkGetPhysicalDeviceMemoryProperties"));
+    fns.createFence = reinterpret_cast<PFN_vkCreateFence>(dev_fn("vkCreateFence"));
+    fns.destroyFence = reinterpret_cast<PFN_vkDestroyFence>(dev_fn("vkDestroyFence"));
+    fns.getFenceStatus = reinterpret_cast<PFN_vkGetFenceStatus>(dev_fn("vkGetFenceStatus"));
+    fns.waitForFences = reinterpret_cast<PFN_vkWaitForFences>(dev_fn("vkWaitForFences"));
+    fns.queueSubmit = reinterpret_cast<PFN_vkQueueSubmit>(dev_fn("vkQueueSubmit"));
+    fns.queueWaitIdle = reinterpret_cast<PFN_vkQueueWaitIdle>(dev_fn("vkQueueWaitIdle"));
+    cache.dev = dev;
+    cache.generation = generation;
     return fns;
+}
+
+// Qt destroys a frame bundle when its pool slot is reused, which can be right after the frame that last sampled it was
+// submitted, so the imported image is only destroyed once a fence queued behind that work on QRhi's queue signals.
+// Render-thread confined, like the QRhi whose queue the fences are submitted to.
+struct RetiredImport
+{
+    VkDevice dev = VK_NULL_HANDLE;
+    VkFence fence = VK_NULL_HANDLE;
+    VkImage image = VK_NULL_HANDLE;
+    VkDeviceMemory memory = VK_NULL_HANDLE;
+    VulkanImportFns fns;
+};
+
+thread_local std::vector<RetiredImport> t_retiredImports;
+const char s_retiredImportsCleanupKey = 0;
+
+void destroyRetiredImport(const RetiredImport& retired)
+{
+    retired.fns.destroyImage(retired.dev, retired.image, nullptr);
+    retired.fns.freeMemory(retired.dev, retired.memory, nullptr);
+    if (retired.fence != VK_NULL_HANDLE) {
+        retired.fns.destroyFence(retired.dev, retired.fence, nullptr);
+    }
+}
+
+// Destroys @p dev's retired imports whose fence signalled; with @p waitAll (QRhi teardown) waits for every fence first.
+void reapRetiredImports(VkDevice dev, bool waitAll)
+{
+    auto& retiredImports = t_retiredImports;
+    for (auto it = retiredImports.begin(); it != retiredImports.end();) {
+        if (it->dev != dev) {
+            ++it;
+            continue;
+        }
+        if (waitAll) {
+            (void) it->fns.waitForFences(dev, 1, &it->fence, VK_TRUE, UINT64_MAX);
+        } else if (it->fns.getFenceStatus(dev, it->fence) != VK_SUCCESS) {
+            ++it;
+            continue;
+        }
+        destroyRetiredImport(*it);
+        it = retiredImports.erase(it);
+    }
+}
+
+void retireImport(VkQueue queue, RetiredImport retired)
+{
+    const VkFenceCreateInfo fenceInfo = {VK_STRUCTURE_TYPE_FENCE_CREATE_INFO, nullptr, 0};
+    // A submit without batches signals its fence once all work already submitted to the queue has completed.
+    if (retired.fns.createFence(retired.dev, &fenceInfo, nullptr, &retired.fence) != VK_SUCCESS ||
+        retired.fns.queueSubmit(queue, 0, nullptr, retired.fence) != VK_SUCCESS) {
+        (void) retired.fns.queueWaitIdle(queue);
+        destroyRetiredImport(retired);
+        return;
+    }
+    t_retiredImports.push_back(retired);
+    reapRetiredImports(retired.dev, /*waitAll=*/false);
 }
 
 quint64 dmaMemoryBound(GstMemory* memory, const GstVideoInfo& videoInfo) noexcept
@@ -183,9 +268,15 @@ bool validateVulkanPlaneLayouts(const GstVideoInfo& videoInfo, GstVideoMeta* vme
 
 namespace GstDmaBufVulkan {
 
-void resetLoggedState() noexcept
+bool canImport(const GstVideoInfo& videoInfo) noexcept
+{
+    return vkFormatForVideoInfo(videoInfo) != VK_FORMAT_UNDEFINED;
+}
+
+void resetCachedState() noexcept
 {
     s_loggedVulkanUnimpl.store(false, std::memory_order_release);
+    s_importFnsGeneration.fetch_add(1, std::memory_order_acq_rel);
 }
 
 }  // namespace GstDmaBufVulkan
@@ -193,16 +284,16 @@ void resetLoggedState() noexcept
 QVideoFrameTexturesUPtr GstDmaBufVideoBuffer::importVulkan(QRhi& rhi)
 {
     // dmabuf-fd -> VkImage via VK_EXT_external_memory_dma_buf + VkImageDrmFormatModifierExplicitCreateInfoEXT, wrapped
-    // with QRhiTexture::createFrom. Every step is capability-gated; any miss returns fail() so the caller does the CPU
-    // upload. Single VkImage per buffer only (multi-plane YUV uses disjoint VkFormat planes); odd layouts fall back.
+    // with QRhiTexture::createFrom. Every step is capability-gated; any miss returns fail(). Single-plane RGB layouts
+    // only (see vkFormatForVideoInfo); validatePlaneHandles() already routed other layouts to the CPU path.
     const auto* nh = static_cast<const QRhiVulkanNativeHandles*>(rhi.nativeHandles());
-    if (!nh || nh->dev == VK_NULL_HANDLE || nh->physDev == VK_NULL_HANDLE || !nh->inst) {
+    if (!nh || nh->dev == VK_NULL_HANDLE || nh->physDev == VK_NULL_HANDLE || nh->gfxQueue == VK_NULL_HANDLE ||
+        !nh->inst) {
         QGC_HW_WARN_ONCE(GstDmaBufVulkanLog, s_loggedVulkanUnimpl, "Vulkan import: native device handles unavailable");
         return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
     }
     const VkDevice dev = nh->dev;
-    // Resolved once per process (see VulkanImportFns); an instance-level lookup of device functions may return a
-    // trampoline or null.
+    // Device-level lookup: an instance-level lookup of device functions may return a trampoline or null.
     const VulkanImportFns& fns = resolveVulkanImportFns(*nh->inst, dev);
     if (!fns.ok()) {
         QGC_HW_WARN_ONCE(GstDmaBufVulkanLog, s_loggedVulkanUnimpl,
@@ -225,8 +316,7 @@ QVideoFrameTexturesUPtr GstDmaBufVideoBuffer::importVulkan(QRhi& rhi)
                          "Vulkan import: multi-fd DMABuf not supported — CPU upload");
         return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
     }
-    const int fourcc = GstHw::drmFourccForSingleFd(_videoInfo);
-    const VkFormat vkFormat = vkFormatForDrmFourcc(fourcc);
+    const VkFormat vkFormat = vkFormatForVideoInfo(_videoInfo);
     if (vkFormat == VK_FORMAT_UNDEFINED) {
         QGC_HW_WARN_ONCE(GstDmaBufVulkanLog, s_loggedVulkanUnimpl,
                          "Vulkan import: no VkFormat for DMABuf layout — CPU upload");
@@ -367,9 +457,14 @@ QVideoFrameTexturesUPtr GstDmaBufVideoBuffer::importVulkan(QRhi& rhi)
         return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
     }
     // Ownership of image/memory passes to the bundle; disarm the scope guards.
-    frameTextures->adoptVulkanResources(dev, image, memory, pfnDestroyImage, pfnFreeMemory);
+    frameTextures->adoptVulkanResources(
+        [queue = nh->gfxQueue, retired = RetiredImport{dev, VK_NULL_HANDLE, image, memory, fns}] {
+            retireImport(queue, retired);
+        });
     image = VK_NULL_HANDLE;
     memory = VK_NULL_HANDLE;
+    // Keyed: one teardown hook per QRhi, run while its device is still alive.
+    rhi.addCleanupCallback(&s_retiredImportsCleanupKey, [dev](QRhi*) { reapRetiredImports(dev, /*waitAll=*/true); });
     frameTextures->setSourceSample(takeSample());
     static std::atomic<bool> s_loggedVulkanOk{false};
     if (!s_loggedVulkanOk.exchange(true, std::memory_order_relaxed)) {

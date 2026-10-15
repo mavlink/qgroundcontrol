@@ -4,10 +4,15 @@
 
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH) && defined(QGC_HAS_GST_VULKAN_GPU_PATH)
 
+#include <gst/video/video-info.h>
+
 namespace GstDmaBufVulkan {
 
-/// Reset the once-logged warning flags for the Vulkan DMABuf import (test/reinit hook). Render-thread or pre-init only.
-void resetLoggedState() noexcept;
+/// True when @p videoInfo's layout can be imported as a single QRhi Vulkan texture; safe from any thread.
+bool canImport(const GstVideoInfo& videoInfo) noexcept;
+
+/// Re-arm the once-logged warnings and force every render thread to re-resolve its Vulkan device functions.
+void resetCachedState() noexcept;
 
 }  // namespace GstDmaBufVulkan
 

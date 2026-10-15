@@ -70,6 +70,10 @@ private slots:
     void _testHwBufferFactoryDispatchSystemMemory();
     void _testHwBufferFactoryCacheRejectsMemoryTypeChange();
     void _testDmaBufSingleFdImportEnvGate();
+    void _testDmaBufEglBadMatchLatch_data();
+    void _testDmaBufEglBadMatchLatch();
+    void _testDmaBufVulkanImportRejectsMultiPlanar_data();
+    void _testDmaBufVulkanImportRejectsMultiPlanar();
     void _testCpuZeroCopyFrameRejectsWritableMap();
     void _testCpuMemcpyActiveRowStrideHandling();
     void _testQGCRhiCaptureCacheLifecycle();
