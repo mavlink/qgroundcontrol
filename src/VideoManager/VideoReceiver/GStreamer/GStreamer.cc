@@ -28,7 +28,6 @@
 #endif
 #include "QGCLoggingCategory.h"
 #include "QGCQVideoSinkController.h"
-#include "gstqgc/gstqgcqvideosink.h"
 #include "gstqgc/gstqgcvideosinkbin.h"
 
 #include <gst/gst.h>
@@ -37,8 +36,8 @@ QGC_LOGGING_CATEGORY(GStreamerLog, "Video.GStreamer.GStreamer")
 
 G_BEGIN_DECLS
 #ifdef QGC_GST_STATIC_BUILD
-// Generated from gst_static_plugins.c.in (Android/IOS.cmake on mobile, desktop static cmake):
-// registers every configured plugin, and on mobile loads gioopenssl + the bundled CA bundle.
+// Generated from cmake/GStreamer/gst_static_plugins.c.in by qgc_gst_generate_static_init (StaticInit.cmake):
+// registers every configured plugin and loads the static GIO modules (gioopenssl + the bundled CA bundle on mobile).
 extern void gst_init_static_plugins(void);
 #endif
 
@@ -267,7 +266,8 @@ void* createVideoSink(const VideoSinkConfig& config)
     }
 
 #if defined(QGC_HAS_ANY_GPU_PATH)
-    // gpu-zerocopy is construct-only on the bin; adapter reads it back from the bin so the two halves can't desync.
+    // gpu-zerocopy is construct-only; the bin hands it to the qgcqvideosink it constructs, which derives its GPU
+    // context from it, so the two can't disagree.
     GstElement* videoSinkBin =
         gst_element_factory_create_full(factory.get(), "gpu-zerocopy", config.gpuZeroCopy ? TRUE : FALSE,
                                         "conversion-element", conversion, "disable-par", disablePar, NULL);
