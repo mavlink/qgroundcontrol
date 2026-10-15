@@ -300,6 +300,10 @@ void GStreamerTest::_testSourceFactoryRtspSetsUpOnlyVideoStream()
         QSKIP("rtspsrc plugin unavailable");
     }
 
+    // libproxy warns about host proxy bypass entries it cannot parse (e.g. "169.254/16" on macOS runners).
+    ignoreLogMessage("Video.GStreamer.GStreamerLogging", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("\"pxbackend\" \"Could not parse ignore mask")));
+
     // Audio listed first, as on many IP cameras; rtspsrc sets streams up in SDP order.
     FakeRtspServer server(
         QByteArrayLiteral("v=0\r\n"
