@@ -10,7 +10,10 @@ private slots:
     void init() override;
 
     void _testIsValidRtspUri();
+    void _testIsHardwareDecoderFactory_data();
     void _testIsHardwareDecoderFactory();
+    void _testDecoderFamilyForFactory_data();
+    void _testDecoderFamilyForFactory();
     void _testSetCodecPrioritiesDefault();
     void _testSetCodecPrioritiesDefaultPrefersMatchingD3DDecoder();
     void _testSetCodecPrioritiesSkipsAbsentD3DDecoders();

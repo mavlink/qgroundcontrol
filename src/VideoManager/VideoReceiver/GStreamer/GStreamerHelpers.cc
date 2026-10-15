@@ -126,6 +126,59 @@ void forEachPlugin(GstRegistry* registry, const std::function<void(GstPlugin*)>&
     gst_plugin_list_free(plugins);
 }
 
+namespace {
+
+struct DecoderFamilyPrefix
+{
+    const char* prefix;
+    VideoDecoderOptions family;  // ForceVideoDecoderDefault: not a user-selectable family
+    bool isHardware;
+};
+
+// Single name-based decoder classification for the hardware/software split, the ForceVideoDecoder*
+// rank overrides and availableDecoderFamilies(). Prefix (not substring) matching, so e.g. avdec_wnv1
+// isn't taken for an NVIDIA decoder. The first match wins: specific prefixes precede general ones.
+constexpr DecoderFamilyPrefix kDecoderFamilyPrefixes[] = {
+    // Android MediaCodec: Google/Codec2 software wrappers; every other amcviddec is a hardware codec.
+    {"amcviddec-omxgoogle", ForceVideoDecoderDefault, false},
+    {"amcviddec-c2android", ForceVideoDecoderDefault, false},
+    {"amcviddec-", ForceVideoDecoderDefault, true},
+    // Legacy gstreamer-vaapi is demoted on Linux and never bumped by ForceVideoDecoderVAAPI (modern va* only).
+    {"vaapi", ForceVideoDecoderDefault, true},
+    {"va", ForceVideoDecoderVAAPI, true},
+    {"nv", ForceVideoDecoderNVIDIA, true},
+    {"d3d11", ForceVideoDecoderDirectX3D, true},
+    {"d3d12", ForceVideoDecoderDirectX3D, true},
+    {"dxva", ForceVideoDecoderDirectX3D, true},
+    {"vtdec", ForceVideoDecoderVideoToolbox, true},
+    {"qsv", ForceVideoDecoderIntel, true},
+    {"msdk", ForceVideoDecoderIntel, true},
+    {"vulkan", ForceVideoDecoderVulkan, true},
+};
+
+const DecoderFamilyPrefix* findDecoderFamilyPrefix(const char* factoryName)
+{
+    const GCharPtr lowerName = adoptGChar(g_ascii_strdown(factoryName, -1));
+    for (const DecoderFamilyPrefix& entry : kDecoderFamilyPrefixes) {
+        if (g_str_has_prefix(lowerName.get(), entry.prefix)) {
+            return &entry;
+        }
+    }
+    return nullptr;
+}
+
+}  // namespace
+
+VideoDecoderOptions decoderFamilyForFactory(const char* factoryName)
+{
+    if (!factoryName) {
+        return ForceVideoDecoderDefault;
+    }
+
+    const DecoderFamilyPrefix* entry = findDecoderFamilyPrefix(factoryName);
+    return entry ? entry->family : ForceVideoDecoderDefault;
+}
+
 bool isHardwareDecoderFactory(GstElementFactory* factory)
 {
     if (!factory) {
@@ -137,14 +190,8 @@ bool isHardwareDecoderFactory(GstElementFactory* factory)
         return false;
     }
 
-    const QByteArray nameLower = QByteArray::fromRawData(factoryName, qstrlen(factoryName)).toLower();
-
-    // Android MediaCodec: exclude software wrappers, accept remaining as hardware
-    if (nameLower.startsWith("amcviddec-omxgoogle") || nameLower.startsWith("amcviddec-c2android")) {
-        return false;
-    }
-    if (nameLower.startsWith("amcviddec-")) {
-        return true;
+    if (const DecoderFamilyPrefix* entry = findDecoderFamilyPrefix(factoryName)) {
+        return entry->isHardware;
     }
 
     const auto containsHardware = [](const gchar* value) {
@@ -156,25 +203,8 @@ bool isHardwareDecoderFactory(GstElementFactory* factory)
         return found;
     };
 
-    if (containsHardware(gst_element_factory_get_metadata(factory, GST_ELEMENT_METADATA_KLASS))) {
-        return true;
-    }
-
-    if (containsHardware(gst_element_factory_get_metadata(factory, GST_ELEMENT_METADATA_DESCRIPTION))) {
-        return true;
-    }
-
-    static constexpr const char* kHardwareTags[] = {
-        "va", "nv", "qsv", "msdk", "vulkan", "d3d", "dxva", "vtdec", "metal",
-    };
-
-    for (const auto& tag : kHardwareTags) {
-        if (nameLower.contains(tag)) {
-            return true;
-        }
-    }
-
-    return false;
+    return containsHardware(gst_element_factory_get_metadata(factory, GST_ELEMENT_METADATA_KLASS)) ||
+           containsHardware(gst_element_factory_get_metadata(factory, GST_ELEMENT_METADATA_DESCRIPTION));
 }
 
 bool changeFeatureRank(GstRegistry* registry, const char* featureName, uint16_t rank)
@@ -195,28 +225,20 @@ bool changeFeatureRank(GstRegistry* registry, const char* featureName, uint16_t 
 
 namespace {
 
-void applyRanks(GstRegistry* registry, std::span<const char* const> features, uint16_t rank)
+// Ranks every installed video decoder that decoderFamilyForFactory() assigns to @p family.
+void applyFamilyRank(GstRegistry* registry, VideoDecoderOptions family, uint16_t rank)
 {
-    for (const char* name : features) {
-        changeFeatureRank(registry, name, rank);
+    GList* decoderFactories = gst_element_factory_list_get_elements(
+        static_cast<GstElementFactoryListType>(GST_ELEMENT_FACTORY_TYPE_DECODER | GST_ELEMENT_FACTORY_TYPE_MEDIA_VIDEO),
+        GST_RANK_NONE);
+    for (GList* node = decoderFactories; node != nullptr; node = node->next) {
+        const gchar* name = gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(node->data));
+        if (decoderFamilyForFactory(name) == family) {
+            changeFeatureRank(registry, name, rank);
+        }
     }
+    gst_plugin_feature_list_free(decoderFactories);
 }
-
-// Decoder-family rank tables, shared by setCodecPriorities and the zero-copy steering below.
-constexpr std::array<const char* const, 7> kVaDecoders = {"vaav1dec",   "vah264dec", "vah265dec", "vajpegdec",
-                                                          "vampeg2dec", "vavp8dec",  "vavp9dec"};
-constexpr std::array<const char* const, 9> kNvidiaDecoders = {"nvav1dec",       "nvh264dec",       "nvh265dec",
-                                                              "nvjpegdec",      "nvmpeg2videodec", "nvmpeg4videodec",
-                                                              "nvmpegvideodec", "nvvp8dec",        "nvvp9dec"};
-constexpr std::array<const char* const, 18> kDirectX3DDecoders = {
-    "d3d11av1dec",    "d3d11h264dec",    "d3d11h265dec",    "d3d11mpeg2dec",    "d3d11vp8dec",    "d3d11vp9dec",
-    "d3d12av1dec",    "d3d12h264dec",    "d3d12h265dec",    "d3d12mpeg2dec",    "d3d12vp8dec",    "d3d12vp9dec",
-    "dxvaav1decoder", "dxvah264decoder", "dxvah265decoder", "dxvampeg2decoder", "dxvavp8decoder", "dxvavp9decoder"};
-constexpr std::array<const char* const, 2> kVideoToolboxDecoders = {"vtdec_hw", "vtdec"};
-constexpr std::array<const char* const, 12> kIntelDecoders = {
-    "qsvh264dec",  "qsvh265dec",   "qsvjpegdec",   "qsvvp9dec",  "msdkav1dec", "msdkh264dec",
-    "msdkh265dec", "msdkmjpegdec", "msdkmpeg2dec", "msdkvc1dec", "msdkvp8dec", "msdkvp9dec"};
-constexpr std::array<const char* const, 2> kVulkanDecoders = {"vulkanh264dec", "vulkanh265dec"};
 
 void lowerDecoderRanksByClass(GstRegistry* registry, bool lowerHardware)
 {
@@ -355,6 +377,13 @@ void alignD3DDecoderRanksToRhi(GstRegistry* registry, bool promoteMatchedFamily)
 #endif  // Q_OS_WIN
 
 #ifdef Q_OS_LINUX
+void applyRanks(GstRegistry* registry, std::span<const char* const> features, uint16_t rank)
+{
+    for (const char* name : features) {
+        changeFeatureRank(registry, name, rank);
+    }
+}
+
 constexpr std::array<const char* const, 8> kLegacyVaapiDecoders = {"vaapiav1dec",  "vaapih264dec",  "vaapih265dec",
                                                                    "vaapijpegdec", "vaapimpeg2dec", "vaapivp8dec",
                                                                    "vaapivp9dec",  "vaapidecodebin"};
@@ -373,7 +402,7 @@ void preferZeroCopyDecoders(GstRegistry* registry)
 
     // Modern va decoders (gst-va, supersedes gstreamer-vaapi) emit DMABuf/DMA_DRM, and V4L2 stateless
     // decoders expose DMA_DRM caps on 1.26+; bump both above software so the zero-copy allocator is picked.
-    applyRanks(registry, kVaDecoders, ZeroCopyRank);
+    applyFamilyRank(registry, ForceVideoDecoderVAAPI, ZeroCopyRank);
     applyRanks(registry, kV4l2StatelessDecoders, ZeroCopyRank);
 }
 #endif  // Q_OS_LINUX
@@ -415,25 +444,25 @@ void setCodecPriorities(VideoDecoderOptions option)
             prioritizeByHardwareClass(registry, PrioritizedRank, true);
             break;
         case ForceVideoDecoderVAAPI:
-            applyRanks(registry, kVaDecoders, PrioritizedRank);
+            applyFamilyRank(registry, ForceVideoDecoderVAAPI, PrioritizedRank);
             break;
         case ForceVideoDecoderNVIDIA:
-            applyRanks(registry, kNvidiaDecoders, PrioritizedRank);
+            applyFamilyRank(registry, ForceVideoDecoderNVIDIA, PrioritizedRank);
             break;
         case ForceVideoDecoderDirectX3D:
-            applyRanks(registry, kDirectX3DDecoders, PrioritizedRank);
+            applyFamilyRank(registry, ForceVideoDecoderDirectX3D, PrioritizedRank);
             break;
         case ForceVideoDecoderVideoToolbox:
-            applyRanks(registry, kVideoToolboxDecoders, PrioritizedRank);
+            applyFamilyRank(registry, ForceVideoDecoderVideoToolbox, PrioritizedRank);
             break;
         case ForceVideoDecoderIntel:
-            applyRanks(registry, kIntelDecoders, PrioritizedRank);
+            applyFamilyRank(registry, ForceVideoDecoderIntel, PrioritizedRank);
             break;
         case ForceVideoDecoderVulkan:
             // Vulkan zero-copy import is dormant: gst-vulkan's own VkDevice fails QGC's device-match guard → CPU copy.
             qCWarning(GStreamerHelpersLog) << "Forcing Vulkan video decoders: zero-copy import is dormant "
                                               "(foreign VkDevice → CPU fallback), so decode will not be zero-copy.";
-            applyRanks(registry, kVulkanDecoders, PrioritizedRank);
+            applyFamilyRank(registry, ForceVideoDecoderVulkan, PrioritizedRank);
             break;
     }
 

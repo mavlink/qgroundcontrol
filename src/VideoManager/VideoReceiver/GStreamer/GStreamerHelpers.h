@@ -25,6 +25,10 @@ QString writePipelineDot(GstElement* pipeline, QStringView tag, const QString& d
 
 bool isHardwareDecoderFactory(GstElementFactory* factory);
 
+/// ForceVideoDecoder* family that claims decoder factory @p factoryName by name prefix, or
+/// ForceVideoDecoderDefault when it belongs to no user-selectable hardware family.
+VideoDecoderOptions decoderFamilyForFactory(const char* factoryName);
+
 /// Look up @p featureName in @p registry and set its autoplug rank to @p rank, releasing the
 /// transfer-full feature ref. Returns false when the registry/name is null or the feature is absent.
 bool changeFeatureRank(GstRegistry* registry, const char* featureName, uint16_t rank);

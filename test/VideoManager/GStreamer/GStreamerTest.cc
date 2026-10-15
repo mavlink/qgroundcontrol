@@ -177,42 +177,65 @@ void GStreamerTest::_testIsValidRtspUri()
     QVERIFY(!GStreamer::isValidRtspUri("rtsp://"));
 }
 
+void GStreamerTest::_testIsHardwareDecoderFactory_data()
+{
+    QTest::addColumn<QString>("factoryName");
+    QTest::addColumn<bool>("expectedHardware");
+
+    QTest::newRow("null-factory") << QString() << false;
+    QTest::newRow("avdec_h264") << QStringLiteral("avdec_h264") << false;
+    // Software decoders whose names merely contain a hardware family tag ("nv").
+    QTest::newRow("avdec_wnv1") << QStringLiteral("avdec_wnv1") << false;
+    QTest::newRow("avdec_dsicinvideo") << QStringLiteral("avdec_dsicinvideo") << false;
+    QTest::newRow("vah264dec") << QStringLiteral("vah264dec") << true;
+    QTest::newRow("vaapih264dec") << QStringLiteral("vaapih264dec") << true;
+    QTest::newRow("vulkanh264dec") << QStringLiteral("vulkanh264dec") << true;
+}
+
 void GStreamerTest::_testIsHardwareDecoderFactory()
 {
-    GList* factories = gst_element_factory_list_get_elements(
-        static_cast<GstElementFactoryListType>(GST_ELEMENT_FACTORY_TYPE_DECODER | GST_ELEMENT_FACTORY_TYPE_MEDIA_VIDEO),
-        GST_RANK_NONE);
-    if (!factories) {
-        QSKIP("No video decoder factories available on this system");
+    QFETCH(QString, factoryName);
+    QFETCH(bool, expectedHardware);
+
+    if (factoryName.isEmpty()) {
+        QCOMPARE(GStreamer::isHardwareDecoderFactory(nullptr), expectedHardware);
+        return;
     }
 
-    int total = 0;
-    int hwCount = 0;
-    int swCount = 0;
-
-    for (GList* node = factories; node != nullptr; node = node->next) {
-        GstElementFactory* factory = GST_ELEMENT_FACTORY(node->data);
-        QVERIFY(factory != nullptr);
-
-        const gchar* name = gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory));
-        QVERIFY(name != nullptr);
-
-        if (GStreamer::isHardwareDecoderFactory(factory)) {
-            ++hwCount;
-        } else {
-            ++swCount;
-        }
-        ++total;
+    GstElementFactory* factory = gst_element_factory_find(factoryName.toUtf8().constData());
+    if (!factory) {
+        QSKIP(qPrintable(QStringLiteral("Decoder factory not installed: %1").arg(factoryName)));
     }
+    const auto cleanup = qScopeGuard([factory] { gst_object_unref(factory); });
+    QCOMPARE(GStreamer::isHardwareDecoderFactory(factory), expectedHardware);
+}
 
-    qCDebug(GStreamerTestLog) << "Decoder factory classification:" << total << "total," << hwCount << "hardware,"
-                              << swCount << "software";
+void GStreamerTest::_testDecoderFamilyForFactory_data()
+{
+    QTest::addColumn<QString>("factoryName");
+    QTest::addColumn<int>("expectedFamily");
 
-    QVERIFY(total > 0);
-    QVERIFY(swCount > 0);
-    QVERIFY(!GStreamer::isHardwareDecoderFactory(nullptr));
+    QTest::newRow("nvidia") << QStringLiteral("nvh264dec") << int(GStreamer::ForceVideoDecoderNVIDIA);
+    QTest::newRow("va") << QStringLiteral("vah265dec") << int(GStreamer::ForceVideoDecoderVAAPI);
+    // Legacy gstreamer-vaapi is demoted and never bumped by the VAAPI option.
+    QTest::newRow("legacy-vaapi") << QStringLiteral("vaapih264dec") << int(GStreamer::ForceVideoDecoderDefault);
+    QTest::newRow("qsv") << QStringLiteral("qsvh265dec") << int(GStreamer::ForceVideoDecoderIntel);
+    QTest::newRow("msdk") << QStringLiteral("msdkh264dec") << int(GStreamer::ForceVideoDecoderIntel);
+    QTest::newRow("d3d11") << QStringLiteral("d3d11h264dec") << int(GStreamer::ForceVideoDecoderDirectX3D);
+    QTest::newRow("d3d12") << QStringLiteral("d3d12h265dec") << int(GStreamer::ForceVideoDecoderDirectX3D);
+    QTest::newRow("videotoolbox") << QStringLiteral("vtdec_hw") << int(GStreamer::ForceVideoDecoderVideoToolbox);
+    QTest::newRow("vulkan") << QStringLiteral("vulkanh264dec") << int(GStreamer::ForceVideoDecoderVulkan);
+    QTest::newRow("software-with-nv") << QStringLiteral("avdec_wnv1") << int(GStreamer::ForceVideoDecoderDefault);
+    QTest::newRow("android-mediacodec") << QStringLiteral("amcviddec-c2qtiavcdecoder")
+                                        << int(GStreamer::ForceVideoDecoderDefault);
+}
 
-    gst_plugin_feature_list_free(factories);
+void GStreamerTest::_testDecoderFamilyForFactory()
+{
+    QFETCH(QString, factoryName);
+    QFETCH(int, expectedFamily);
+
+    QCOMPARE(int(GStreamer::decoderFamilyForFactory(factoryName.toUtf8().constData())), expectedFamily);
 }
 
 void GStreamerTest::_testSetCodecPrioritiesDefault()
@@ -851,7 +874,10 @@ void GStreamerTest::init()
     }
 
 QGC_GST_SKIP_TEST(_testIsValidRtspUri)
+QGC_GST_SKIP_TEST(_testIsHardwareDecoderFactory_data)
 QGC_GST_SKIP_TEST(_testIsHardwareDecoderFactory)
+QGC_GST_SKIP_TEST(_testDecoderFamilyForFactory_data)
+QGC_GST_SKIP_TEST(_testDecoderFamilyForFactory)
 QGC_GST_SKIP_TEST(_testSetCodecPrioritiesDefault)
 QGC_GST_SKIP_TEST(_testSetCodecPrioritiesDefaultPrefersMatchingD3DDecoder)
 QGC_GST_SKIP_TEST(_testSetCodecPrioritiesSkipsAbsentD3DDecoders)

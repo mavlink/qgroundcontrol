@@ -464,51 +464,15 @@ void onMainWindowReady(QQuickWindow* window)
 
 QList<VideoDecoderOptions> availableDecoderFamilies()
 {
-    // One walk of the decoder factory list (mirrors prioritizeByHardwareClass) classifies each
-    // factory by name prefix into a VideoDecoderOptions family.
-    static constexpr std::array<std::pair<VideoDecoderOptions, const char*>, 5> kFamilyPrefixes = {{
-        {ForceVideoDecoderNVIDIA, "nv"},
-        {ForceVideoDecoderVAAPI, "va"},
-        {ForceVideoDecoderIntel, "qsv"},
-        {ForceVideoDecoderVideoToolbox, "vtdec"},
-        {ForceVideoDecoderVulkan, "vulkan"},
-    }};
-
     QList<VideoDecoderOptions> families;
-    const auto note = [&families](VideoDecoderOptions f) {
-        if (!families.contains(f))
-            families.append(f);
-    };
-
     GList* decoderFactories = gst_element_factory_list_get_elements(
         static_cast<GstElementFactoryListType>(GST_ELEMENT_FACTORY_TYPE_DECODER | GST_ELEMENT_FACTORY_TYPE_MEDIA_VIDEO),
         GST_RANK_NONE);
     for (GList* node = decoderFactories; node != nullptr; node = node->next) {
-        GstElementFactory* factory = GST_ELEMENT_FACTORY(node->data);
-        if (!factory)
-            continue;
-        const gchar* name = gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory));
-        if (!name)
-            continue;
-
-        if (g_str_has_prefix(name, "msdk")) {
-            note(ForceVideoDecoderIntel);
-            continue;
-        }
-        if (g_str_has_prefix(name, "d3d11") || g_str_has_prefix(name, "d3d12") || g_str_has_prefix(name, "dxva")) {
-            note(ForceVideoDecoderDirectX3D);
-            continue;
-        }
-        // Legacy gstreamer-vaapi (vaapi*) also matches "va" but is demoted to RANK_NONE and never bumped by
-        // ForceVideoDecoderVAAPI (modern va* only); skip it so an unusable VAAPI option isn't kept.
-        if (g_str_has_prefix(name, "vaapi")) {
-            continue;
-        }
-        for (const auto& [family, prefix] : kFamilyPrefixes) {
-            if (g_str_has_prefix(name, prefix)) {
-                note(family);
-                break;
-            }
+        const VideoDecoderOptions family =
+            decoderFamilyForFactory(gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(node->data)));
+        if ((family != ForceVideoDecoderDefault) && !families.contains(family)) {
+            families.append(family);
         }
     }
     gst_plugin_feature_list_free(decoderFactories);
