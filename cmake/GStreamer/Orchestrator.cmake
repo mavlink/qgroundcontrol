@@ -30,19 +30,8 @@ endif()
 
 # GStreamer_ROOT_DIR is user input only (never written back), so a later configure can tell a
 # user-chosen SDK from one discovery picked; see SdkState.cmake.
-set(_qgc_gst_user_root "${GStreamer_ROOT_DIR}")
-# GSTREAMER_ROOT (upstream FindGStreamer.cmake) and GStreamer_ROOT (find_package's <Package>_ROOT) are older spellings.
-if(NOT _qgc_gst_user_root)
-    foreach(_qgc_gst_legacy_root IN ITEMS GSTREAMER_ROOT GStreamer_ROOT)
-        if(${_qgc_gst_legacy_root})
-            message(DEPRECATION "GStreamer: ${_qgc_gst_legacy_root} is deprecated; set GStreamer_ROOT_DIR instead.")
-            set(_qgc_gst_user_root "${${_qgc_gst_legacy_root}}")
-            break()
-        endif()
-    endforeach()
-endif()
-if(_qgc_gst_user_root AND NOT EXISTS "${_qgc_gst_user_root}")
-    message(FATAL_ERROR "GStreamer: User-provided directory does not exist: ${_qgc_gst_user_root}\n"
+if(GStreamer_ROOT_DIR AND NOT EXISTS "${GStreamer_ROOT_DIR}")
+    message(FATAL_ERROR "GStreamer: User-provided directory does not exist: ${GStreamer_ROOT_DIR}\n"
                         "Correct the path or unset GStreamer_ROOT_DIR to allow auto-download."
     )
 endif()
@@ -76,7 +65,7 @@ set(PKG_CONFIG_ARGN
 _qgc_gst_drop_legacy_pkg_config_args()
 # Empty GStreamer_ROOT_DIR from here on means "discover or download"; platform discovery
 # fills it in and sets GStreamer_AUTO_DOWNLOADED when it downloads.
-_qgc_gst_select_sdk_root(GStreamer_ROOT_DIR GStreamer_AUTO_DOWNLOADED "${_qgc_gst_user_root}"
+_qgc_gst_select_sdk_root(GStreamer_ROOT_DIR GStreamer_AUTO_DOWNLOADED "${GStreamer_ROOT_DIR}"
                          "${QGC_GST_REQUESTED_VERSION}"
 )
 
