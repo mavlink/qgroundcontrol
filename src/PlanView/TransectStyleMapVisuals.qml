@@ -16,6 +16,8 @@ Item {
     property bool   interactive: true
     property var    vehicle
     property bool   hideMapPolygon: false
+    property color  transectColor: QGroundControl.globalPalette.mapWidgetBorderLight
+    property real   transectLineWidth: ScreenTools.defaultFontPixelWidth / 4
 
     property var    _missionItem:               object
     property var    _mapPolygon:                object.surveyAreaPolygon
@@ -77,8 +79,8 @@ Item {
         id: fullTransectsComponent
 
         MapPolyline {
-            line.color: "white"
-            line.width: 2
+            line.color: _root.transectColor
+            line.width: _root.transectLineWidth
             path:       _transectPoints
             visible:    _currentItem && !_vertexDrag
             opacity:    _root.opacity
@@ -90,8 +92,8 @@ Item {
         id: entryTransectComponent
 
         MapPolyline {
-            line.color: "white"
-            line.width: 2
+            line.color: _root.transectColor
+            line.width: _root.transectLineWidth
             path:       _showPartialEntryExit ? [ _transectPoints[0], _transectPoints[1] ] : []
             visible:    _showPartialEntryExit && !_vertexDrag
             opacity:    _root.opacity
@@ -101,8 +103,8 @@ Item {
         id: exitTransectComponent
 
         MapPolyline {
-            line.color: "white"
-            line.width: 2
+            line.color: _root.transectColor
+            line.width: _root.transectLineWidth
             path:       _showPartialEntryExit ? [ _transectPoints[_lastPointIndex - 1], _transectPoints[_lastPointIndex] ] : []
             visible:    _showPartialEntryExit && !_vertexDrag
             opacity:    _root.opacity
