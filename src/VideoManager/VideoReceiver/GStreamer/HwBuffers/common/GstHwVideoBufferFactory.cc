@@ -69,6 +69,25 @@ bool glMemoryConsumable() noexcept
 }
 #endif
 
+#if defined(QGC_HAS_GST_AHARDWAREBUFFER_GPU_PATH)
+// GL_TEXTURE_EXTERNAL_OES needs the SamplerExternalOES pixel format for Qt's shader path. QVideoFrameFormat has no
+// pixel-format setter, so rebuild the format around it.
+QVideoFrameFormat externalOesFormat(const QVideoFrameFormat& format)
+{
+    QVideoFrameFormat external(format.frameSize(), QVideoFrameFormat::Format_SamplerExternalOES);
+    external.setViewport(format.viewport());
+    external.setScanLineDirection(format.scanLineDirection());
+    external.setStreamFrameRate(format.streamFrameRate());
+    external.setColorSpace(format.colorSpace());
+    external.setColorTransfer(format.colorTransfer());
+    external.setColorRange(format.colorRange());
+    external.setMirrored(format.isMirrored());
+    external.setRotation(format.rotation());
+    external.setMaxLuminance(format.maxLuminance());
+    return external;
+}
+#endif
+
 // Construct the QHwVideoBuffer for an already-resolved path (fast path: skips the gst_is_*_memory ladder). Returns
 // nullptr for paths that need extra context the cache can't carry, forcing a full re-resolve.
 std::unique_ptr<GstHwVideoBuffer> constructForPath(HwVideoBufferPath path, GstSample* sample,
@@ -121,8 +140,8 @@ std::unique_ptr<GstHwVideoBuffer> constructForPath(HwVideoBufferPath path, GstSa
             if (context.ahbEglDisplay == EGL_NO_DISPLAY) {
                 return nullptr;
             }
-            format.setPixelFormat(QVideoFrameFormat::Format_SamplerExternalOES);
-            return std::make_unique<GstAHardwareBufferVideoBuffer>(sample, info, format, context.ahbEglDisplay);
+            return std::make_unique<GstAHardwareBufferVideoBuffer>(sample, info, externalOesFormat(format),
+                                                                   context.ahbEglDisplay);
 #else
             break;
 #endif
@@ -374,10 +393,8 @@ std::unique_ptr<QHwVideoBuffer> selectHwVideoBuffer(LazySample& sample, GstBuffe
 #if defined(QGC_HAS_GST_AHARDWAREBUFFER_GPU_PATH)
     if (context.ahbEglDisplay != EGL_NO_DISPLAY && gst_is_ahardware_buffer_memory(mem0)) {
         matchedPath = HwVideoBufferPath::AHardwareBuffer;
-        // GL_TEXTURE_EXTERNAL_OES requires the SamplerExternalOES pixel format for Qt's shader path.
-        format.setPixelFormat(QVideoFrameFormat::Format_SamplerExternalOES);
-        return buildOrFallback(
-            std::make_unique<GstAHardwareBufferVideoBuffer>(sample.get(), info, format, context.ahbEglDisplay));
+        return buildOrFallback(std::make_unique<GstAHardwareBufferVideoBuffer>(
+            sample.get(), info, externalOesFormat(format), context.ahbEglDisplay));
     }
 #endif
 
