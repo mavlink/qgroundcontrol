@@ -37,46 +37,29 @@ qgc_test_assert_in_list("windows has d3d11" d3d11 _plugins_windows_real)
 qgc_test_assert_in_list("windows has d3d12" d3d12 _plugins_windows_real)
 qgc_test_pass("plugins_for real windows d3d addenda")
 
-set(_req videoconvertscale videoconvert videoscale x264enc)
-set(_avail videoconvertscale x264enc)
-gstreamer_filter_alternates(IN_OUT_PLUGINS _req AVAILABLE ${_avail})
-qgc_test_assert_in_list("filtered: videoconvertscale retained (present)" videoconvertscale _req)
-qgc_test_assert_not_in_list("filtered: videoconvert removed (absent)"    videoconvert      _req)
-qgc_test_assert_not_in_list("filtered: videoscale removed (absent)"      videoscale        _req)
-qgc_test_assert_in_list("filtered: x264enc retained"                     x264enc           _req)
-qgc_test_pass("filter_alternates fused-satisfied")
-
-set(_req2 videoconvertscale videoconvert videoscale)
-set(_avail2 videoconvert videoscale)
-gstreamer_filter_alternates(IN_OUT_PLUGINS _req2 AVAILABLE ${_avail2})
-qgc_test_assert_not_in_list("split-sat: videoconvertscale removed (absent)" videoconvertscale _req2)
-qgc_test_assert_in_list("split-sat: videoconvert retained (present)"        videoconvert      _req2)
-qgc_test_assert_in_list("split-sat: videoscale retained (present)"          videoscale        _req2)
-qgc_test_pass("filter_alternates split-pair satisfied")
-
-set(_req3 videoconvertscale videoconvert videoscale x264enc)
-set(_avail3 x264enc)
-gstreamer_filter_alternates(IN_OUT_PLUGINS _req3 AVAILABLE ${_avail3})
-qgc_test_assert_in_list("unsat: videoconvertscale retained" videoconvertscale _req3)
-qgc_test_assert_in_list("unsat: videoconvert retained"      videoconvert      _req3)
-qgc_test_assert_in_list("unsat: videoscale retained"        videoscale        _req3)
-qgc_test_pass("filter_alternates none-satisfied")
-
-set(_req_empty videoconvertscale videoconvert videoscale)
-gstreamer_filter_alternates(IN_OUT_PLUGINS _req_empty AVAILABLE)
-qgc_test_assert_in_list("empty available: fused retained" videoconvertscale _req_empty)
-qgc_test_assert_in_list("empty available: convert retained" videoconvert _req_empty)
-qgc_test_assert_in_list("empty available: scale retained" videoscale _req_empty)
-qgc_test_pass("filter_alternates empty available")
-
-set(_req_partial videoconvertscale videoconvert videoscale x264enc)
-set(_avail_partial videoconvert x264enc)
-gstreamer_filter_alternates(IN_OUT_PLUGINS _req_partial AVAILABLE ${_avail_partial})
-qgc_test_assert_in_list("partial: videoconvertscale retained" videoconvertscale _req_partial)
-qgc_test_assert_in_list("partial: videoconvert retained"      videoconvert      _req_partial)
-qgc_test_assert_in_list("partial: videoscale retained (absent half)" videoscale _req_partial)
-qgc_test_assert_in_list("partial: x264enc retained"           x264enc           _req_partial)
-qgc_test_pass("filter_alternates partial-pair unsatisfied")
+# required|available|expected missing, lists comma-separated. videoconvertscale is satisfied by itself or by
+# videoconvert+videoscale; each of those two is satisfied by itself or by videoconvertscale.
+set(_missing_cases
+    "videoconvertscale,videoconvert,videoscale,x264enc|videoconvertscale,x264enc|"
+    "videoconvertscale,videoconvert,videoscale|videoconvert,videoscale|"
+    "videoconvertscale,videoconvert,videoscale,x264enc|x264enc|videoconvertscale,videoconvert,videoscale"
+    "videoconvertscale,videoconvert,videoscale||videoconvertscale,videoconvert,videoscale"
+    "videoconvertscale,videoconvert,videoscale,x264enc|videoconvert,x264enc|videoconvertscale,videoscale"
+    "coreelements,rtsp|rtsp|coreelements"
+    "|coreelements|"
+)
+foreach(_case IN LISTS _missing_cases)
+    string(REPLACE "|" ";" _parts "${_case}")
+    list(GET _parts 0 _required)
+    list(GET _parts 1 _available)
+    list(GET _parts 2 _expected)
+    string(REPLACE "," ";" _required "${_required}")
+    string(REPLACE "," ";" _available "${_available}")
+    string(REPLACE "," ";" _expected "${_expected}")
+    gstreamer_missing_required(REQUIRED ${_required} AVAILABLE ${_available} OUT_VAR _missing)
+    qgc_test_assert_streq("missing for ${_case}" "${_expected}" "${_missing}")
+endforeach()
+qgc_test_pass("missing_required honours alternate sets")
 
 gstreamer_runtime_required_plugins(_required)
 foreach(_p IN ITEMS

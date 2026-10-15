@@ -123,64 +123,21 @@ if(IOS AND GStreamer_IOS_CA_BUNDLE)
     )
 endif()
 
-# gst_init_static_plugins() shim source (called in GStreamer.cc::_registerPlugins), per platform:
-#   iOS: provided by GStreamer.xcframework (via GStreamer::mobile); no shim generated.
-#   Android: shim generated here from the plugin/GIO lists the Android backend put in scope via
-#            include(GStreamer/Orchestrator); GStreamer::mobile whole-archives the .a's into the app core.
-#   Desktop static: shim generated from GSTREAMER_PLUGINS below.
-if(IOS AND TARGET GStreamer::mobile)
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE GStreamer::mobile)
-elseif(ANDROID AND TARGET GStreamer::mobile)
+# Static layouts register their plugins in a generated gst_init_static_plugins() (called by
+# GStreamer.cc::_registerPlugins) for GSTREAMER_STATIC_PLUGINS, which Orchestrator.cmake resolves. iOS generates it
+# into GStreamer::mobile (platform/IOS.cmake); Android and desktop static SDKs into the app, which carries the only
+# GStreamer core. The Android SDK's gst_init() does NOT register the bundled plugins (verified on-device: without
+# this, coreelements/tcp/udp/rtp/... stay unregistered).
+if(ANDROID AND TARGET GStreamer::mobile)
     # Pull the whole-archived plugin .a's + helpers + GIO modules into the app's one core.
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE GStreamer::mobile)
-    # The Android SDK gst_init() does NOT register the bundled plugins (verified on-device: without this,
-    # coreelements/tcp/udp/rtp/... stay unregistered), so the generated gst_init_static_plugins() is required.
-    configure_file(
-        "${CMAKE_CURRENT_SOURCE_DIR}/gst_static_plugins.c.in"
-        "${CMAKE_CURRENT_BINARY_DIR}/gst_static_plugins.c"
-        @ONLY)
-    target_sources(${CMAKE_PROJECT_NAME} PRIVATE
-        "${CMAKE_CURRENT_BINARY_DIR}/gst_static_plugins.c")
-    # This generated C source must not pull the app's C++ precompiled header (the app PCH
-    # includes C++-only Qt headers); a C-language PCH built from it fails to compile.
-    set_source_files_properties(
-        "${CMAKE_CURRENT_BINARY_DIR}/gst_static_plugins.c"
-        TARGET_DIRECTORY ${CMAKE_PROJECT_NAME}
-        PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
+    qgc_gst_generate_static_init(TARGET ${CMAKE_PROJECT_NAME} PLUGINS ${GSTREAMER_STATIC_PLUGINS} GIO_MODULES
+                                 ${G_IO_MODULES}
+    )
+elseif(IOS AND TARGET GStreamer::mobile)
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE GStreamer::mobile)
 elseif(GStreamer_USE_STATIC_LIBS)
-    set(_qgc_found_static "")
-    set(_qgc_missing_static "")
-    foreach(_p IN LISTS GSTREAMER_PLUGINS)
-        if(GST_PLUGIN_${_p}_FOUND)
-            list(APPEND _qgc_found_static "${_p}")
-        else()
-            list(APPEND _qgc_missing_static "${_p}")
-        endif()
-    endforeach()
-    _gst_emit_static_plugin_registration(_qgc_found_static _qgc_decl _qgc_reg)
-    if(_qgc_missing_static)
-        # AVAILABLE = what was found, not the full request, else real gaps are hidden.
-        gstreamer_filter_alternates(IN_OUT_PLUGINS _qgc_missing_static AVAILABLE ${_qgc_found_static})
-    endif()
-    if(_qgc_missing_static)
-        message(WARNING "GStreamer (static): requested plugins not found as targets and omitted from static registration: ${_qgc_missing_static}")
-    endif()
-    set(PLUGINS_DECLARATION  "${_qgc_decl}")
-    set(PLUGINS_REGISTRATION "${_qgc_reg}")
-    set(G_IO_MODULES_DECLARE "")
-    set(G_IO_MODULES_LOAD    "")
-    configure_file(
-        "${CMAKE_CURRENT_SOURCE_DIR}/gst_static_plugins.c.in"
-        "${CMAKE_CURRENT_BINARY_DIR}/gst_static_plugins.c"
-        @ONLY)
-    target_sources(${CMAKE_PROJECT_NAME} PRIVATE
-        "${CMAKE_CURRENT_BINARY_DIR}/gst_static_plugins.c")
-    set_source_files_properties(
-        "${CMAKE_CURRENT_BINARY_DIR}/gst_static_plugins.c"
-        TARGET_DIRECTORY ${CMAKE_PROJECT_NAME}
-        PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
-    unset(_qgc_decl)
-    unset(_qgc_reg)
+    qgc_gst_generate_static_init(TARGET ${CMAKE_PROJECT_NAME} PLUGINS ${GSTREAMER_STATIC_PLUGINS})
 endif()
 
 # Mobile platforms ship plugins inside the static .a / xcfw — no install steps below.

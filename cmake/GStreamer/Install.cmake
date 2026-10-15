@@ -3,7 +3,7 @@
 # src/VideoManager/VideoReceiver/GStreamer/CMakeLists.txt after the ANDROID/IOS
 # early-return.
 # Depends on: Components.cmake (gstreamer_platform_plugin_attrs),
-#             PluginPolicy.cmake (gstreamer_runtime_required_plugins, gstreamer_plugin_satisfy_sets).
+#             PluginPolicy.cmake (gstreamer_runtime_required_plugins; included again by the install-time verifier).
 
 include_guard(GLOBAL)
 
@@ -577,39 +577,28 @@ function(gstreamer_install_platform_sdk PROJECT_NAME)
     endif()
 
     if(_verify_dest)
-        # Build an OR-of-AND existence test per required plugin so an alternate
-        # set (videoconvert+videoscale on 1.20) satisfies the fused name
-        # (videoconvertscale on 1.22+) instead of tripping the verifier.
-        set(_verify_blocks "")
-        foreach(_p IN LISTS GIPS_REQUIRED_PLUGINS)
-            gstreamer_plugin_satisfy_sets(PLUGIN "${_p}" OUT_VAR _sets)
-            set(_checks "")
-            set(_alt_labels "")
-            foreach(_set IN LISTS _sets)
-                string(REPLACE "+" ";" _members "${_set}")
-                set(_conds "")
-                foreach(_m IN LISTS _members)
-                    # Honor DESTDIR: CPack stages into $ENV{DESTDIR}, so this check must
-                    # prepend it like install(FILES) does, or DEB/RPM/pacman packaging false-fails.
-                    list(APPEND _conds "EXISTS \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${_verify_dest}/${_verify_prefix}${_m}.${_verify_ext}\"")
-                endforeach()
-                string(JOIN " AND " _and_cond ${_conds})
-                string(APPEND _checks "                if(${_and_cond})\n                    set(_ok TRUE)\n                endif()\n")
-                list(APPEND _alt_labels "${_set}")
-            endforeach()
-            string(JOIN " or " _plugin_label ${_alt_labels})
-            string(APPEND _verify_blocks "            set(_ok FALSE)\n${_checks}            if(NOT _ok)\n                list(APPEND _missing_plugins \"${_plugin_label}\")\n            endif()\n")
-        endforeach()
-
-        install(CODE "
-            set(_missing_plugins)
-${_verify_blocks}
-            if(_missing_plugins)
-                list(JOIN _missing_plugins \", \" _missing_list)
-                message(FATAL_ERROR \"GStreamer install verification: missing required plugins in ${_verify_dest}: \${_missing_list} — bundle is missing configured video plugins\")
-            else()
-                message(STATUS \"GStreamer install verification: all required plugins present in ${_verify_dest}\")
-            endif()
-        ")
+        # Checked at install time against $ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}, where CPack stages packages. Install
+        # scripts run with every policy unset, which PluginPolicy.cmake (IN_LIST) cannot use.
+        set(_verify_code
+            [=[
+cmake_policy(PUSH)
+cmake_policy(VERSION 3.25)
+include("@_policy_file@")
+set(_verify_dir "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@_verify_dest@")
+file(GLOB _installed_plugins RELATIVE "${_verify_dir}" "${_verify_dir}/@_verify_prefix@*.@_verify_ext@")
+list(TRANSFORM _installed_plugins REPLACE "^@_verify_prefix@(.*)\\.@_verify_ext@$" "\\1")
+gstreamer_missing_required(REQUIRED @GIPS_REQUIRED_PLUGINS@ AVAILABLE ${_installed_plugins} OUT_VAR _missing_plugins)
+if(_missing_plugins)
+    list(JOIN _missing_plugins ", " _missing_list)
+    message(FATAL_ERROR "GStreamer install verification: missing required plugins in @_verify_dest@: "
+                        "${_missing_list} — bundle is missing configured video plugins")
+endif()
+message(STATUS "GStreamer install verification: all required plugins present in @_verify_dest@")
+cmake_policy(POP)
+]=]
+        )
+        set(_policy_file "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/PluginPolicy.cmake")
+        string(CONFIGURE "${_verify_code}" _verify_code @ONLY)
+        install(CODE "${_verify_code}")
     endif()
 endfunction()

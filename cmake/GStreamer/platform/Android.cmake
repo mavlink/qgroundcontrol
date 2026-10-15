@@ -110,30 +110,17 @@ endmacro()
 
 # ─────────────────────────────────────────────────────────────────────────────
 # _qgc_create_android_mobile_target
-# Build the libgstreamer_android.so wrapper, register static plugins via the
-# shared gst_static_plugins.c.in template, copy fonts/CA assets into the APK.
+# Creates GStreamer::mobile, which links the plugin archives, their helper libraries and the GIO modules into
+# the application (the static-plugin registration source is generated on the application; see
+# GSTREAMER_STATIC_PLUGINS), and copies the fonts/CA assets into the APK.
 # Caller must set GStreamerMobile_FIND_COMPONENTS (the COMPONENTS list a
 # find_package-style call would have set).
 # Macro (not function): GStreamerMobile target / GStreamer_*_FOUND / cache
 # variables must propagate to caller scope.
 # ─────────────────────────────────────────────────────────────────────────────
-# Wrap each item of INPUT_LIST as MACRO_NAME(item), join, return via OUT_VAR.
-function(_gst_generate_macro_list INPUT_LIST MACRO_NAME OUT_VAR)
-    list(TRANSFORM ${INPUT_LIST} PREPEND "\n${MACRO_NAME}\(" OUTPUT_VARIABLE _result)
-    list(TRANSFORM _result APPEND "\)")
-    if(_result)
-        set(_result "${_result};")
-    endif()
-    set(${OUT_VAR} "${_result}" PARENT_SCOPE)
-endfunction()
-
 # Pure-computation helper — no add_library / target_* calls.
 # Reads GStreamer* globals set by the parent scope; returns results via OUT params.
-function(_qgc_compute_android_mobile_target
-    PLUGINS_OUT APIS_OUT FOUND_COMPONENTS_OUT
-    WA_LIBS_OUT PLUGINS_DECL_OUT PLUGINS_REG_OUT
-    GIO_DECL_OUT GIO_LOAD_OUT
-)
+function(_qgc_compute_android_mobile_target plugins_out apis_out found_components_out wa_libs_out)
     set(_gst_plugins ${GStreamerMobile_FIND_COMPONENTS})
     list(REMOVE_ITEM _gst_plugins fonts ca_certificates mobile)
     list(REMOVE_DUPLICATES _gst_plugins)
@@ -175,28 +162,9 @@ function(_qgc_compute_android_mobile_target
     # per-ABI SDK). Alternate-aware: videoconvert+videoscale satisfies videoconvertscale.
     if(_gst_dropped_plugins)
         gstreamer_runtime_required_plugins(_gst_required)
-        set(_gst_missing_required)
-        foreach(_req IN LISTS _gst_required)
-            gstreamer_plugin_satisfy_sets(PLUGIN "${_req}" OUT_VAR _req_sets)
-            set(_req_ok FALSE)
-            foreach(_set IN LISTS _req_sets)
-                string(REPLACE "+" ";" _members "${_set}")
-                set(_set_ok TRUE)
-                foreach(_m IN LISTS _members)
-                    if(NOT _m IN_LIST _gst_found_plugins)
-                        set(_set_ok FALSE)
-                        break()
-                    endif()
-                endforeach()
-                if(_set_ok)
-                    set(_req_ok TRUE)
-                    break()
-                endif()
-            endforeach()
-            if(NOT _req_ok)
-                list(APPEND _gst_missing_required "${_req}")
-            endif()
-        endforeach()
+        gstreamer_missing_required(REQUIRED ${_gst_required} AVAILABLE ${_gst_found_plugins} OUT_VAR
+                                   _gst_missing_required
+        )
         if(_gst_missing_required)
             list(JOIN _gst_missing_required ", " _gst_missing_required_str)
             message(FATAL_ERROR "GStreamerMobile: runtime-required plugins missing static libraries "
@@ -212,11 +180,6 @@ function(_qgc_compute_android_mobile_target
             message(STATUS "[GstMobile]   ${_dbg_p} -> ${_gst_plugin_lib_${CMAKE_ANDROID_ARCH_ABI}_${_dbg_p}}")
         endforeach()
     endif()
-
-    _gst_generate_macro_list(_gst_mobile_plugins "GST_PLUGIN_STATIC_DECLARE" _decl)
-    _gst_generate_macro_list(_gst_mobile_plugins "QGC_REGISTER_STATIC_PLUGIN" _reg)
-    _gst_generate_macro_list(G_IO_MODULES "GST_G_IO_MODULE_DECLARE" _gio_decl)
-    _gst_generate_macro_list(G_IO_MODULES "GST_G_IO_MODULE_LOAD" _gio_load)
 
     set(_gst_validate_components)
     foreach(_component IN ITEMS mobile ca_certificates fonts)
@@ -240,14 +203,10 @@ function(_qgc_compute_android_mobile_target
         endif()
     endforeach()
 
-    set(${PLUGINS_OUT}         "${_gst_mobile_plugins}"    PARENT_SCOPE)
-    set(${APIS_OUT}            "${_gst_mobile_apis}"       PARENT_SCOPE)
-    set(${FOUND_COMPONENTS_OUT} "${_gst_validate_components}" PARENT_SCOPE)
-    set(${WA_LIBS_OUT}         "${_gst_wa_libs}"           PARENT_SCOPE)
-    set(${PLUGINS_DECL_OUT}    "${_decl}"                  PARENT_SCOPE)
-    set(${PLUGINS_REG_OUT}     "${_reg}"                   PARENT_SCOPE)
-    set(${GIO_DECL_OUT}        "${_gio_decl}"              PARENT_SCOPE)
-    set(${GIO_LOAD_OUT}        "${_gio_load}"              PARENT_SCOPE)
+    set(${plugins_out}         "${_gst_mobile_plugins}"    PARENT_SCOPE)
+    set(${apis_out}            "${_gst_mobile_apis}"       PARENT_SCOPE)
+    set(${found_components_out} "${_gst_validate_components}" PARENT_SCOPE)
+    set(${wa_libs_out}         "${_gst_wa_libs}"           PARENT_SCOPE)
 endfunction()
 
 macro(_qgc_create_android_mobile_target)
@@ -327,11 +286,8 @@ if(NOT TARGET GStreamer::GStreamer)
 endif()
 
 # ── Computation phase (function to avoid variable leakage) ───────────────────
-_qgc_compute_android_mobile_target(
-    _gst_mobile_plugins _gst_mobile_apis _gst_validate_components
-    _gst_wa_libs PLUGINS_DECLARATION PLUGINS_REGISTRATION
-    G_IO_MODULES_DECLARE G_IO_MODULES_LOAD
-)
+_qgc_compute_android_mobile_target(_gst_mobile_plugins _gst_mobile_apis _gst_validate_components _gst_wa_libs)
+set(GSTREAMER_STATIC_PLUGINS ${_gst_mobile_plugins})
 list(TRANSFORM G_IO_MODULES PREPEND "gio" OUTPUT_VARIABLE G_IO_MODULES_LIBS)
 
 if(GStreamer_DEBUG)
@@ -459,8 +415,6 @@ if(GSTREAMER_IS_MOBILE AND TARGET GStreamerMobile)
         target_link_libraries(GStreamerMobile INTERFACE GStreamer::gio_modules)
     endif()
     set(GStreamerMobile_mobile_FOUND TRUE)
-    # The static-plugin registration shim (gst_init_static_plugins) is generated on the
-    # APP target (single core) by the app CMakeLists, not as a separate .so source here.
 endif()
 
 set(GStreamerMobile_FIND_COMPONENTS ${_gst_validate_components})

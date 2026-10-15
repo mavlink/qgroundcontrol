@@ -21,6 +21,7 @@ set(_qgc_findmod_tests
     test_ios_bundle_from_root
     test_sdk_acquire
     test_android_sdk_extract
+    test_static_init
 )
 
 foreach(_t IN LISTS _qgc_findmod_tests)
@@ -125,6 +126,7 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
               legacy-pkg-config-args
               missing-mandatory
               missing-gl
+              install
     )
         add_test(
             NAME "FindModule.test_orchestrator.${_qgc_scenario}"

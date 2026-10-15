@@ -485,8 +485,6 @@ function(_qgc_create_xcframework_targets)
 
     # Build the xcframework mobile init shim — calls gst_init_static_plugins().
     if(NOT TARGET GStreamer::mobile)
-        enable_language(OBJC OBJCXX)
-
         # GStreamer 1.28+ ships every plugin compiled into libGStreamer.a but
         # provides no auto-registration entrypoint; enumerate plugin descriptors
         # from the archive and emit explicit GST_PLUGIN_STATIC_REGISTER() calls.
@@ -572,32 +570,15 @@ function(_qgc_create_xcframework_targets)
             endif()
             list(APPEND _xcfw_names "${_name}")
         endforeach()
-        _gst_emit_static_plugin_registration(_xcfw_names _xcfw_decl _xcfw_reg)
         list(LENGTH _xcfw_names _xcfw_used)
         list(LENGTH _xcfw_descs _xcfw_n)
-        message(STATUS "GStreamer xcframework: registering ${_xcfw_used}/${_xcfw_n} static plugins (skipped: ${_xcfw_skip_plugins})")
-        # Match the substitution variable names _qgc_create_android_mobile_target populates so the
-        # template at GStreamer/gst_static_plugins.c.in works for both call sites.
-        set(PLUGINS_DECLARATION  "${_xcfw_decl}")
-        set(PLUGINS_REGISTRATION "${_xcfw_reg}")
-        # gioopenssl is statically linked into libGStreamer.a — load it so it
-        # registers as the default GIO TLS backend (verified via nm: symbol
-        # _g_io_openssl_load is exported from the xcframework slice).
-        set(G_IO_MODULES_DECLARE "GST_G_IO_MODULE_DECLARE(openssl);")
-        set(G_IO_MODULES_LOAD    "    GST_G_IO_MODULE_LOAD(openssl);")
-
-        set(_xcfw_static_shim "${CMAKE_BINARY_DIR}/${GStreamer_Mobile_MODULE_NAME}_static.c")
-        # Template lives in src/VideoManager/VideoReceiver/GStreamer/ alongside
-        # the C++ code that calls gst_init_static_plugins().
-        set(_qgc_gst_src "${CMAKE_SOURCE_DIR}/src/VideoManager/VideoReceiver/GStreamer")
-        configure_file(
-            "${_qgc_gst_src}/gst_static_plugins.c.in"
-            "${_xcfw_static_shim}"
-            @ONLY
+        message(STATUS "GStreamer xcframework: registering ${_xcfw_used}/${_xcfw_n} static plugins "
+                       "(skipped: ${_xcfw_skip_plugins})"
         )
         add_library(GStreamerMobileXcfw SHARED)
-        target_sources(GStreamerMobileXcfw PRIVATE "${_xcfw_static_shim}")
-        set_source_files_properties("${_xcfw_static_shim}" PROPERTIES GENERATED TRUE)
+        # gioopenssl is statically linked into libGStreamer.a (nm: _g_io_openssl_load is exported from the slice);
+        # loading it registers the default GIO TLS backend.
+        qgc_gst_generate_static_init(TARGET GStreamerMobileXcfw PLUGINS ${_xcfw_names} GIO_MODULES ${G_IO_MODULES})
         target_link_libraries(GStreamerMobileXcfw PRIVATE GStreamer::GStreamer)
         set_target_properties(GStreamerMobileXcfw PROPERTIES
             LIBRARY_OUTPUT_NAME ${GStreamer_Mobile_MODULE_NAME}

@@ -26,13 +26,16 @@
 #   PkgConfig    — gstreamer_apply_pkgconfig_env (MODE SDK |
 #                  SYSTEM_AUGMENT) — single PKG_CONFIG_PATH/LIBDIR
 #                  mutator — and qgc_gst_restore_pkgconfig_env
-#   PluginPolicy — gstreamer_plugins_for / gstreamer_filter_alternates /
+#   PluginPolicy — gstreamer_plugins_for / gstreamer_plugin_satisfied /
+#                  gstreamer_missing_required /
 #                  gstreamer_runtime_required_plugins / gstreamer_xcfw_skip /
 #                  gstreamer_current_platform_key (alternate groups, runtime
 #                  required, xcfw skip)
 #   Install      — gstreamer_install_{plugins,gio_modules,libs} +
 #                  gstreamer_install_{linux,windows,macos}_sdk +
 #                  gstreamer_install_platform_sdk dispatcher
+#   StaticInit   — qgc_gst_generate_static_init (gst_init_static_plugins() source
+#                  for static layouts, from gst_static_plugins.c.in)
 #   SdkState     — resolved-SDK cache entries, _qgc_gst_sdk_pc_version,
 #                  fingerprint-based invalidation of cached probe results and
 #                  cleanup of legacy cached pkg-config flags
@@ -50,4 +53,5 @@ include("${CMAKE_CURRENT_LIST_DIR}/PkgConfig.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/Download.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/PluginPolicy.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/Install.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/StaticInit.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/SdkState.cmake")

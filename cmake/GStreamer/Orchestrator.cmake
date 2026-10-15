@@ -196,8 +196,9 @@ if(ANDROID)
     set(GStreamer_JAVA_SRC_DIR "${_gst_android_build_dir}/src")
     set(GStreamer_ASSETS_DIR "${_gst_android_build_dir}/assets")
 elseif(IOS)
-    # xcframework bundles GIO modules and assets into libGStreamer.a — no separate paths needed.
+    # The merged archive also carries the static GIO modules.
     set(GStreamer_Mobile_MODULE_NAME gstreamer_mobile)
+    set(G_IO_MODULES openssl)
     set(GStreamer_ASSETS_DIR "${CMAKE_BINARY_DIR}/assets")
 endif()
 
@@ -307,49 +308,50 @@ if(GStreamer_USE_STATIC_LIBS)
     endif()
 endif()
 
-# Shared-layout only: Android/iOS bake plugins into the static lib/xcframework
-# and are NOT runtime-verified (Install.cmake's _verify_dest is desktop-only).
+# Plugins the app can use: the plugin files of a shared layout (Android/iOS bake plugins into the static
+# link, and Install.cmake verifies desktop installs), plus the GStreamer::<plugin> targets of static layouts.
+set(_gst_available_plugins "")
+set(_gst_plugins_scanned FALSE)
 if(NOT GStreamer_USE_STATIC_LIBS AND NOT GStreamer_USE_XCFRAMEWORK AND EXISTS "${GSTREAMER_PLUGIN_PATH}")
-    gstreamer_scan_plugin_basenames(_gst_available_basenames "${GSTREAMER_PLUGIN_PATH}")
-else()
-    set(_gst_available_basenames "")
+    gstreamer_scan_plugin_basenames(_gst_available_plugins "${GSTREAMER_PLUGIN_PATH}")
+    set(_gst_plugins_scanned TRUE)
 endif()
-
-# Alternate-aware (like the warning below): satisfied directly, or by any fully
-# present alternate set (e.g. videoconvert+videoscale for videoconvertscale).
-foreach(plugin IN LISTS GSTREAMER_PLUGINS)
-    set(_gst_plugin_found FALSE)
-    if(TARGET GStreamer::${plugin} OR plugin IN_LIST _gst_available_basenames)
-        set(_gst_plugin_found TRUE)
-    else()
-        gstreamer_plugin_satisfy_sets(PLUGIN "${plugin}" OUT_VAR _gst_sat_sets)
-        foreach(_set IN LISTS _gst_sat_sets)
-            string(REPLACE "+" ";" _members "${_set}")
-            set(_set_ok TRUE)
-            foreach(_member IN LISTS _members)
-                if(NOT (TARGET GStreamer::${_member} OR _member IN_LIST _gst_available_basenames))
-                    set(_set_ok FALSE)
-                    break()
-                endif()
-            endforeach()
-            if(_set_ok)
-                set(_gst_plugin_found TRUE)
-                break()
-            endif()
-        endforeach()
+foreach(_gst_plugin IN LISTS GSTREAMER_PLUGINS)
+    if(TARGET GStreamer::${_gst_plugin})
+        list(APPEND _gst_available_plugins "${_gst_plugin}")
     endif()
-    set(GST_PLUGIN_${plugin}_FOUND ${_gst_plugin_found})
 endforeach()
 
-if(NOT GStreamer_USE_STATIC_LIBS AND NOT GStreamer_USE_XCFRAMEWORK AND EXISTS "${GSTREAMER_PLUGIN_PATH}")
-    set(_gst_check_plugins "${GSTREAMER_PLUGINS}")
-    gstreamer_filter_alternates(IN_OUT_PLUGINS _gst_check_plugins AVAILABLE ${_gst_available_basenames})
-    set(_gst_missing_plugins)
-    foreach(_plugin IN LISTS _gst_check_plugins)
-        if(NOT _plugin IN_LIST _gst_available_basenames)
-            list(APPEND _gst_missing_plugins "${_plugin}")
+# Alternate-aware: e.g. videoconvert+videoscale satisfy videoconvertscale.
+foreach(_gst_plugin IN LISTS GSTREAMER_PLUGINS)
+    gstreamer_plugin_satisfied(PLUGIN "${_gst_plugin}" AVAILABLE ${_gst_available_plugins} OUT_VAR
+                               GST_PLUGIN_${_gst_plugin}_FOUND
+    )
+endforeach()
+
+if(GStreamer_USE_STATIC_LIBS AND NOT ANDROID)
+    # Desktop static layouts register every requested plugin that has a GStreamer::<plugin> target (Android
+    # and iOS resolve GSTREAMER_STATIC_PLUGINS while creating their targets).
+    set(GSTREAMER_STATIC_PLUGINS "")
+    foreach(_gst_plugin IN LISTS GSTREAMER_PLUGINS)
+        if(TARGET GStreamer::${_gst_plugin})
+            list(APPEND GSTREAMER_STATIC_PLUGINS "${_gst_plugin}")
         endif()
     endforeach()
+    gstreamer_missing_required(REQUIRED ${GSTREAMER_PLUGINS} AVAILABLE ${GSTREAMER_STATIC_PLUGINS} OUT_VAR
+                               _gst_missing_plugins
+    )
+    if(_gst_missing_plugins)
+        message(WARNING "GStreamer (static): requested plugins not found as targets and omitted from static "
+                        "registration: ${_gst_missing_plugins}"
+        )
+    endif()
+endif()
+
+if(_gst_plugins_scanned)
+    gstreamer_missing_required(REQUIRED ${GSTREAMER_PLUGINS} AVAILABLE ${_gst_available_plugins} OUT_VAR
+                               _gst_missing_plugins
+    )
     if(_gst_missing_plugins)
         message(WARNING "GStreamer: The following plugins are listed in GSTREAMER_PLUGINS "
             "but not found in ${GSTREAMER_PLUGIN_PATH}: ${_gst_missing_plugins}\n"
@@ -427,7 +429,7 @@ else()
     # Reuse the basenames scanned above instead of re-globbing the same dir.
     set(_qgc_gst_plugin_count 0)
     foreach(_p IN LISTS GSTREAMER_PLUGINS)
-        if(TARGET GStreamer::${_p} OR _p IN_LIST _gst_available_basenames)
+        if(_p IN_LIST _gst_available_plugins)
             math(EXPR _qgc_gst_plugin_count "${_qgc_gst_plugin_count}+1")
         endif()
     endforeach()

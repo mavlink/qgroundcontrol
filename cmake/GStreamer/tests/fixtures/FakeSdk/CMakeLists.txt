@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.25)
-project(QGCGStreamerFakeSdk LANGUAGES CXX)
+project(QGCGStreamerFakeSdk LANGUAGES C CXX)
 
 if(NOT QGC_MODULE_DIR)
     message(FATAL_ERROR "QGC_MODULE_DIR is required")
@@ -9,7 +9,12 @@ include("${QGC_MODULE_DIR}/GStreamer/tests/_assert.cmake")
 
 # Stand-ins for BuildConfig.cmake, which reads build-config.json from the top-level source dir.
 set(QGC_CONFIG_GSTREAMER_MIN_VERSION 1.20.0)
-set(QGC_BUILD_CONFIG_CONTENT [=[{"gstreamer": {"plugins": {"common": ["coreelements"]}}}]=])
+# QGC_TEST_PLUGINS: comma-separated plugin allowlist, default coreelements.
+if(NOT QGC_TEST_PLUGINS)
+    set(QGC_TEST_PLUGINS coreelements)
+endif()
+string(REPLACE "," "\", \"" _qgc_test_plugins_json "${QGC_TEST_PLUGINS}")
+set(QGC_BUILD_CONFIG_CONTENT "{\"gstreamer\": {\"plugins\": {\"common\": [\"${_qgc_test_plugins_json}\"]}}}")
 # The fake SDK's libraries are empty files, so feature probes must compile without linking.
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 
@@ -97,6 +102,12 @@ foreach(_var IN ITEMS QGC_GST_RESOLVED_ROOT QGC_GST_RESOLVED_VERSION QGC_GST_RES
 endforeach()
 file(WRITE "${CMAKE_BINARY_DIR}/gst-state.txt" "${_qgc_state}")
 
+# QGC_TEST_INSTALL_REQUIRED_PLUGINS: comma-separated plugins the install rules must verify.
+if(QGC_TEST_INSTALL_REQUIRED_PLUGINS)
+    string(REPLACE "," ";" _qgc_required_plugins "${QGC_TEST_INSTALL_REQUIRED_PLUGINS}")
+    gstreamer_install_platform_sdk(QGCFake REQUIRED_PLUGINS ${_qgc_required_plugins})
+endif()
+
 if(NOT DEFINED EXPECT_ROOT)
     return()
 endif()
@@ -120,6 +131,18 @@ if(GStreamer_USE_STATIC_LIBS)
     qgc_test_assert_property("plugin libraries" GStreamer::coreelements INTERFACE_LINK_LIBRARIES
                              "${EXPECT_ROOT}/lib/gstreamer-1.0/libgstcoreelements.a"
     )
+    # The static plugins get a generated gst_init_static_plugins() compiled into the consuming target.
+    qgc_test_assert_streq("static plugins" coreelements "${GSTREAMER_STATIC_PLUGINS}")
+    add_library(QGCFakeApp STATIC "${CMAKE_CURRENT_SOURCE_DIR}/fake_app.cpp")
+    qgc_gst_generate_static_init(TARGET QGCFakeApp PLUGINS ${GSTREAMER_STATIC_PLUGINS})
+    set(_qgc_static_init "${CMAKE_CURRENT_BINARY_DIR}/QGCFakeApp_gst_static_plugins.c")
+    get_target_property(_qgc_app_sources QGCFakeApp SOURCES)
+    qgc_test_assert_in_list("static init source" "${_qgc_static_init}" _qgc_app_sources)
+    get_source_file_property(_qgc_skip_pch "${_qgc_static_init}" TARGET_DIRECTORY QGCFakeApp SKIP_PRECOMPILE_HEADERS)
+    qgc_test_assert_streq("static init skips the precompiled header" ON "${_qgc_skip_pch}")
+    file(STRINGS "${_qgc_static_init}" _qgc_registered REGEX "^    QGC_REGISTER_STATIC_PLUGIN\\(")
+    list(TRANSFORM _qgc_registered REPLACE "^    QGC_REGISTER_STATIC_PLUGIN\\(([a-z0-9_]+)\\);$" "\\1")
+    qgc_test_assert_streq("static init registrations" coreelements "${_qgc_registered}")
 else()
     qgc_test_assert_property("core libraries" GStreamer::deps INTERFACE_LINK_LIBRARIES
                              "${EXPECT_ROOT}/lib/libgstreamer-1.0.so"

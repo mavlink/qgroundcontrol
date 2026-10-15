@@ -239,16 +239,3 @@ function(_gst_resolve_and_link_libraries _grll_TARGET _grll_SCOPE _grll_LIBS _gr
 
     _gst_restore_find_suffixes()
 endfunction()
-
-# Emit GST_PLUGIN_STATIC_DECLARE(...) / QGC_REGISTER_STATIC_PLUGIN(...) blocks for
-# the gst_static_plugins.c.in template. Shared by the iOS and desktop-static backends.
-function(_gst_emit_static_plugin_registration PLUGIN_LIST DECL_OUT REG_OUT)
-    set(_decl "")
-    set(_reg  "")
-    foreach(_p IN LISTS ${PLUGIN_LIST})
-        string(APPEND _decl "GST_PLUGIN_STATIC_DECLARE(${_p});\n")
-        string(APPEND _reg  "    QGC_REGISTER_STATIC_PLUGIN(${_p});\n")
-    endforeach()
-    set(${DECL_OUT} "${_decl}" PARENT_SCOPE)
-    set(${REG_OUT}  "${_reg}"  PARENT_SCOPE)
-endfunction()

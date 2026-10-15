@@ -128,6 +128,27 @@ function(_qgc_configure_fails label regex)
     endif()
 endfunction()
 
+# Installs the configured fixture with --prefix /opt/qgc into DESTDIR <WORK_DIR>/stage; sets _qgc_result and
+# _qgc_output in the caller.
+function(_qgc_install)
+    file(REMOVE_RECURSE "${WORK_DIR}/stage")
+    execute_process(
+        COMMAND "${CMAKE_COMMAND}" -E env "DESTDIR=${WORK_DIR}/stage" "${CMAKE_COMMAND}" --install "${_binary_dir}"
+                --prefix /opt/qgc
+        RESULT_VARIABLE _result
+        OUTPUT_VARIABLE _stdout
+        ERROR_VARIABLE _stderr
+    )
+    set(_qgc_result
+        "${_result}"
+        PARENT_SCOPE
+    )
+    set(_qgc_output
+        "${_stdout}\n${_stderr}"
+        PARENT_SCOPE
+    )
+endfunction()
+
 # Returns the -D arguments that make the fixture assert it resolved <root> at <version>, with
 # <probes> telling whether the SDK ships the probed headers.
 function(_qgc_expect out_var root version probes)
@@ -215,6 +236,34 @@ elseif(SCENARIO STREQUAL "missing-gl")
     _qgc_write_fake_sdk("${_sdk_a}" 1.24.0 OMIT gstreamer-gl-1.0 gstreamer-gl-prototypes-1.0)
     _qgc_expect(_expect "${_sdk_a}" 1.24.0 OFF)
     _qgc_configure_ok("SDK without gst-gl" --fresh "-DGStreamer_ROOT_DIR=${_sdk_a}" ${_expect} -DEXPECT_GL=OFF)
+elseif(SCENARIO STREQUAL "install")
+    # videoconvert+videoscale stand in for the fused videoconvertscale the verifier requires.
+    _qgc_write_fake_sdk("${_sdk_a}" 1.24.0)
+    foreach(_plugin IN ITEMS videoconvert videoscale)
+        file(WRITE "${_sdk_a}/lib/gstreamer-1.0/libgst${_plugin}.so" "")
+    endforeach()
+    set(_plugins -DQGC_TEST_PLUGINS=coreelements,videoconvert,videoscale)
+    _qgc_configure_ok("install rules" --fresh "-DGStreamer_ROOT_DIR=${_sdk_a}" ${_plugins}
+                      -DQGC_TEST_INSTALL_REQUIRED_PLUGINS=coreelements,videoconvertscale
+    )
+    _qgc_install()
+    if(NOT _qgc_result EQUAL 0 OR NOT _qgc_output MATCHES "all required plugins present in lib/gstreamer-1.0")
+        message(FATAL_ERROR "ASSERT [install verified]: install failed or skipped the verifier\n${_qgc_output}")
+    endif()
+    foreach(_plugin IN ITEMS coreelements videoconvert videoscale)
+        if(NOT EXISTS "${WORK_DIR}/stage/opt/qgc/lib/gstreamer-1.0/libgst${_plugin}.so")
+            message(FATAL_ERROR "ASSERT [staged plugins]: libgst${_plugin}.so is not under DESTDIR/prefix")
+        endif()
+    endforeach()
+
+    _qgc_configure_ok("install rules requiring udp" ${_plugins}
+                      -DQGC_TEST_INSTALL_REQUIRED_PLUGINS=coreelements,videoconvertscale,udp
+    )
+    _qgc_install()
+    string(REGEX REPLACE "[ \t\r\n]+" " " _normalized "${_qgc_output}")
+    if(_qgc_result EQUAL 0 OR NOT _normalized MATCHES "missing required plugins in lib/gstreamer-1.0: udp ")
+        message(FATAL_ERROR "ASSERT [missing plugin]: install did not fail for udp alone\n${_qgc_output}")
+    endif()
 else()
     message(FATAL_ERROR "Unknown SCENARIO: ${SCENARIO}")
 endif()
