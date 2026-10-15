@@ -61,6 +61,7 @@ private slots:
     void _testFrameCountsTelemetrySignal();
     void _testInactiveQgcQVideoSinkDropsAndCounts();
     void _testQgcQVideoSinkDeliversLatestFrameOnly();
+    void _testQgcQVideoSinkShowsPrerollBufferOnce();
     void _testQgcQVideoSinkDropsUndeliveredFrame_data();
     void _testQgcQVideoSinkDropsUndeliveredFrame();
     void _testQgcQVideoSinkPtsGuardResync_data();

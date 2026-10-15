@@ -184,6 +184,15 @@ static void gst_qgc_q_video_sink_init(GstQgcQVideoSink* self)
     gst_base_sink_set_last_sample_enabled(GST_BASE_SINK(self), FALSE);
 }
 
+// GstVideoSink shows a preroll buffer and then renders the same buffer, so the first buffer after each preroll would
+// be mapped and delivered twice. QGC drives pipelines straight to PLAYING, where render follows preroll at once, so
+// the preroll frame adds nothing. show-preroll-frame is a construct property: override it once construction is done.
+static void gst_qgc_q_video_sink_constructed(GObject* obj)
+{
+    G_OBJECT_CLASS(gst_qgc_q_video_sink_parent_class)->constructed(obj);
+    g_object_set(obj, "show-preroll-frame", FALSE, nullptr);
+}
+
 static void gst_qgc_q_video_sink_finalize(GObject* obj)
 {
     GstQgcQVideoSink* self = GST_QGC_Q_VIDEO_SINK(obj);
@@ -522,6 +531,7 @@ static void gst_qgc_q_video_sink_class_init(GstQgcQVideoSinkClass* klass)
 
     gobject_class->set_property = gst_qgc_q_video_sink_set_property;
     gobject_class->get_property = gst_qgc_q_video_sink_get_property;
+    gobject_class->constructed = gst_qgc_q_video_sink_constructed;
     gobject_class->finalize = gst_qgc_q_video_sink_finalize;
 
     g_object_class_install_property(

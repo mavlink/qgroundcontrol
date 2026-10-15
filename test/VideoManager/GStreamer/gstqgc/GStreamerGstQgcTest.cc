@@ -92,8 +92,7 @@ public:
         }
         gst_object_ref_sink(_sink);
         gst_element_set_bus(_sink, _bus);
-        // GstVideoSink would otherwise show the first buffer after each preroll twice (preroll + render).
-        g_object_set(_sink, "qvideosink", static_cast<gpointer>(target), "show-preroll-frame", FALSE, nullptr);
+        g_object_set(_sink, "qvideosink", static_cast<gpointer>(target), nullptr);
         GstPad* sinkPad = gst_element_get_static_pad(_sink, "sink");
         _ready = sinkPad && (gst_pad_link(_src, sinkPad) == GST_PAD_LINK_OK) && gst_pad_set_active(_src, TRUE) &&
                  (gst_element_set_state(_sink, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
@@ -1831,6 +1830,23 @@ void GStreamerTest::_testQgcQVideoSinkDeliversLatestFrameOnly()
     QCoreApplication::sendPostedEvents(&videoSink, QEvent::MetaCall);
     QCOMPARE(emissions, 2);
     QCOMPARE(lastStartUs, qint64(4 * GST_SECOND / GST_USECOND));
+}
+
+void GStreamerTest::_testQgcQVideoSinkShowsPrerollBufferOnce()
+{
+    QVERIFY2(GStreamer::completeInit(), "completeInit failed");
+
+    QVideoSink videoSink;
+    QgcQVideoSinkHarness harness(&videoSink);
+    QVERIFY(harness.isReady());
+    QVERIFY(harness.start());
+
+    // The first buffer is both the preroll buffer and the first rendered one.
+    QCOMPARE(harness.pushFrame(GST_SECOND), GST_FLOW_OK);
+    guint64 input = 0;
+    g_object_get(harness.element(), "frames-input", &input, nullptr);
+    QCOMPARE(input, guint64(1));
+    QCOMPARE(harness.delivered(), guint64(1));
 }
 
 void GStreamerTest::_testQgcQVideoSinkDropsUndeliveredFrame_data()
