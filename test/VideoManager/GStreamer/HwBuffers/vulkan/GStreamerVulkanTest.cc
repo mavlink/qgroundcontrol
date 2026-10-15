@@ -238,9 +238,11 @@ void GStreamerTest::_testVulkanOwnedFrameTexturesReleaseOnDestroy()
     std::unique_ptr<QRhi> rhi(QRhi::create(QRhi::Null, &params));
     QVERIFY(rhi);
 
+    // Any non-null handle: the Null QRhi wraps it without touching Vulkan, while a null one is left unwrapped.
+    const auto image = VkImage(quintptr(1));
     auto bundle = std::make_unique<GstVulkanOwnedFrameTextures>(rhi.get(), QSize(64, 64),
-                                                                QVideoFrameFormat::Format_RGBA8888, VK_NULL_HANDLE);
-    QVERIFY(bundle->valid());
+                                                                QVideoFrameFormat::Format_RGBA8888, image);
+    QVERIFY(bundle->allPlanesValid());
     int releases = 0;
     bundle->adoptVulkanResources([&releases] { ++releases; });
     QRhiTexture* wrapped = bundle->texture(0);

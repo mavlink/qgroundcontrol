@@ -4,35 +4,24 @@
 
 #if defined(QGC_HAS_GST_VULKAN_GPU_PATH) && QT_CONFIG(vulkan)
 
+#include <functional>
+#include <span>
+#include <vulkan/vulkan.h>
+
 #include <QtCore/QSize>
 #include <QtMultimedia/QVideoFrameFormat>
-#include <private/qvideotexturehelper_p.h>
-#include <rhi/qrhi.h>
-#include <vulkan/vulkan.h>
 
 #include "GstHwFrameTexturesBase.h"
 
 /// Wraps a single VkImage as one QRhiTexture. Owning and borrowing variants share this wrap; only the image lifetime
-/// differs. `_textures[0]` is null when the wrap fails, surfaced via valid().
+/// differs. The plane is null when the wrap fails, surfaced via allPlanesValid().
 class GstVulkanFrameTexturesBase : public GstHwFrameTexturesBase
 {
-public:
-    bool valid() const noexcept { return _textures[0] != nullptr; }
-
 protected:
     void wrapImage(QRhi* rhi, QSize size, QVideoFrameFormat::PixelFormat pixelFormat, VkImage image, int layout)
     {
-        _count = 1;
-        const auto* desc = QVideoTextureHelper::textureDescription(pixelFormat);
-        if (!desc) {
-            return;
-        }
-        _textures[0].reset(rhi->newTexture(
-            desc->rhiTextureFormat(0, rhi, QVideoTextureHelper::TextureDescription::FallbackPolicy::Disable), size, 1,
-            {}));
-        if (_textures[0] && !_textures[0]->createFrom({reinterpret_cast<quint64>(image), layout})) {
-            _textures[0].reset();
-        }
+        const quint64 handle = reinterpret_cast<quint64>(image);
+        wrapPlanes(rhi, size, pixelFormat, std::span<const quint64>(&handle, 1), layout);
     }
 };
 

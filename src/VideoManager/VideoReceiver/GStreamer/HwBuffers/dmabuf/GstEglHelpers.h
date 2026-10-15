@@ -7,12 +7,21 @@
 #include <EGL/egl.h>
 
 class QOpenGLContext;
+class QRhi;
 
 /// Shared EGL helpers for EGL-backed zero-copy paths (DMABuf, AHB): display resolution + extension cache.
 namespace GstEglHelpers {
 
 /// EGLDisplay bound to @p qtCtx (else current-thread display, else EGL_NO_DISPLAY); does NOT initialize it.
 EGLDisplay resolveEglDisplay(QOpenGLContext* qtCtx) noexcept;
+
+/// Makes @p rhi's GL context current on the calling render thread (EGL/GL calls otherwise no-op into a foreign or null
+/// context) and returns it; nullptr when the QRhi exposes none.
+QOpenGLContext* bindRhiContext(QRhi& rhi);
+
+/// EGLDisplay Qt renders @p qtCtx on, else @p fallback. EGLImages from one display can't be sampled by a context on
+/// another, so prefer this over a display captured elsewhere.
+EGLDisplay renderDisplay(QOpenGLContext* qtCtx, EGLDisplay fallback) noexcept;
 
 /// True iff @p extension is in @p display's EGL_EXTENSIONS; does NOT eglInitialize, cached per (display, extension),
 /// thread-safe.

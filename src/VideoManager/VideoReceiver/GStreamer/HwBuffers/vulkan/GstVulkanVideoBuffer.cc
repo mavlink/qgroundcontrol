@@ -2,7 +2,6 @@
 
 #include <QtGui/qtguiglobal.h>
 
-#include "GstHwImportPreflight.h"
 #include "GstHwPathTelemetry.h"
 #include "GstHwVideoBuffer.h"
 #include "GstVulkanFrameTextures.h"
@@ -36,7 +35,6 @@ GstHw::MapDiagnostics s_diag;
 std::atomic<bool> s_loggedDeviceMismatch{false};
 std::atomic<bool> s_loggedMultiMemory{false};
 std::atomic<bool> s_loggedSyncFallback{false};
-std::atomic<bool> s_loggedFirstSuccess{false};
 
 }  // namespace
 
@@ -50,13 +48,9 @@ bool GstVulkanVideoBuffer::validatePlaneHandles() const
     return validatePlanes([](GstMemory* mem) { return mem && gst_is_vulkan_image_memory(mem); });
 }
 
-QVideoFrameTexturesUPtr GstVulkanVideoBuffer::mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& /*old*/)
+QVideoFrameTexturesUPtr GstVulkanVideoBuffer::mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& old)
 {
     const GstHwPathTelemetry::ScopedMapTimer mapTimer(HwVideoBufferPath::Vulkan);
-    if (!rhi.thread()->isCurrentThread()) {
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::Vulkan);
-    }
-
     GstBuffer* buffer = nullptr;
     if (!checkMapPreconditions(rhi, static_cast<int>(QRhi::Vulkan), GstVulkanBufLog(), s_diag, buffer)) {
         return GstHwPathTelemetry::fail(HwVideoBufferPath::Vulkan);
@@ -111,25 +105,15 @@ QVideoFrameTexturesUPtr GstVulkanVideoBuffer::mapTextures(QRhi& rhi, QVideoFrame
         return GstHwPathTelemetry::fail(HwVideoBufferPath::Vulkan);
     }
 
-    // Pre-flight RHI format/size support before createFrom() so an unsupported import demotes to CPU on a query.
-    if (!GstHwImportPreflight::preflightOrRecord(&rhi, HwVideoBufferPath::Vulkan, _format.pixelFormat(),
-                                                 _format.frameSize())) {
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::Vulkan);
-    }
-
-    auto textures = std::make_unique<GstVulkanBorrowedFrameTextures>(&rhi, _format.frameSize(), _format.pixelFormat(),
-                                                                     image, layout);
-    if (!textures->texture(0)) {
-        GstHwPathTelemetry::recordFallbackReason(HwVideoBufferPath::Vulkan,
-                                                 GstHwPathTelemetry::HwFallbackReason::MapFailed);
-        QGC_HW_WARN_ONCE(GstVulkanBufLog, s_diag.loggedTextureCreateFail,
-                         "Vulkan import: QRhiTexture::createFrom(VkImage) failed — CPU fallback");
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::Vulkan);
-    }
-
-    logFirstSuccess(s_loggedFirstSuccess, GstVulkanBufLog(), "Vulkan", _format.frameSize(), _format.pixelFormat(), 1);
-    textures->setSourceSample(takeSample());
-    return textures;
+    const GstHwMapTail tail{.path = HwVideoBufferPath::Vulkan,
+                            .frameSize = _format.frameSize(),
+                            .pixelFormat = _format.pixelFormat(),
+                            .log = &GstVulkanBufLog(),
+                            .diag = &s_diag,
+                            .successTag = "Vulkan"};
+    return GstHwFrameTexturesBase::finishMap<GstVulkanBorrowedFrameTextures>(*this, rhi, old, tail, nullptr, [&] {
+        return std::make_unique<GstVulkanBorrowedFrameTextures>(&rhi, tail.frameSize, tail.pixelFormat, image, layout);
+    });
 }
 
 #endif  // QGC_HAS_GST_VULKAN_GPU_PATH

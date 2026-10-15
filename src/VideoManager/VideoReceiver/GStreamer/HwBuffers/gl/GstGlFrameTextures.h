@@ -1,11 +1,12 @@
 #pragma once
 
+#include <algorithm>
+#include <array>
+#include <span>
+
 #include <QtCore/QSize>
 #include <QtGui/qopengl.h>
 #include <QtMultimedia/QVideoFrameFormat>
-#include <array>
-#include <private/qvideotexturehelper_p.h>
-#include <rhi/qrhi.h>
 
 #include "GstHwFrameTexturesBase.h"
 #include "GstHwVideoBuffer.h"
@@ -21,24 +22,10 @@ public:
         , _pixelFormat(pixelFormat)
         , _names(names)
     {
-        _count = count;
-        const auto* desc = QVideoTextureHelper::textureDescription(pixelFormat);
-        if (!desc)
-            return;
-        for (int i = 0; i < _count; ++i) {
-            // GL_NONE (0) is silently accepted by createFrom but samples as black; gst-gl can hand us 0 if a plane
-            // wasn't uploaded yet.
-            if (_names[i] == 0)
-                continue;
-            const QSize planeSize = desc->rhiPlaneSize(size, i, rhi);
-            // Native import: a substituted fallback format would misread the texture's real layout.
-            _textures[i].reset(rhi->newTexture(
-                desc->rhiTextureFormat(i, rhi, QVideoTextureHelper::TextureDescription::FallbackPolicy::Disable),
-                planeSize, 1, {}));
-            if (_textures[i] && !_textures[i]->createFrom({_names[i], 0})) {
-                _textures[i].reset();
-            }
-        }
+        std::array<quint64, GstHw::kMaxPlanes> handles{};
+        std::copy(names.begin(), names.end(), handles.begin());
+        wrapPlanes(rhi, size, pixelFormat,
+                   std::span<const quint64>(handles.data(), std::size_t(std::clamp(count, 0, GstHw::kMaxPlanes))));
     }
 
 protected:

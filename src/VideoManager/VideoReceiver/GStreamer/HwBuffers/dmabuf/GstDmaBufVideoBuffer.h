@@ -39,7 +39,7 @@ public:
 
 private:
 #if defined(QGC_HAS_GST_VULKAN_GPU_PATH)
-    QVideoFrameTexturesUPtr importVulkan(QRhi& rhi);
+    QVideoFrameTexturesUPtr importVulkan(QRhi& rhi, QVideoFrameTexturesUPtr& old);
 #endif
 
     EGLDisplay _eglDisplay = EGL_NO_DISPLAY;

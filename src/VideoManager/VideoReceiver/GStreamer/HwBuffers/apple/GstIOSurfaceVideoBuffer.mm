@@ -28,6 +28,7 @@
 #include <array>
 #include <atomic>
 #include <cstddef>
+#include <span>
 
 QGC_LOGGING_CATEGORY(GstIOSurfaceLog, "Video.GStreamer.HwBuffers.GstIOSurface")
 
@@ -45,7 +46,6 @@ struct IOSurfaceDiagnostics : GstHw::MapDiagnostics
     std::atomic<bool> loggedNoIOSurface{false};
     std::atomic<bool> loggedNoMtlDevice{false};
     std::atomic<bool> loggedUnsupportedFormat{false};
-    std::atomic<bool> loggedRhiCreateFromFail{false};
     std::atomic<bool> loggedCacheCreateFail{false};
 };
 IOSurfaceDiagnostics s_diag;
@@ -122,27 +122,12 @@ public:
         , _mtex(mtex)
         , _cvtex(cvtex)
     {
-        _count = count;
-        const auto *desc = QVideoTextureHelper::textureDescription(pixelFormat);
-        if (!desc) {
-            QGC_HW_WARN_ONCE(GstIOSurfaceLog, s_diag.loggedTextureCreateFail,
-                      "FrameTextures: QVideoTextureHelper has no description for format" << int(pixelFormat));
-            return;
+        std::array<quint64, kMaxPlanes> handles{};
+        for (int i = 0; i < count && i < kMaxPlanes; ++i) {
+            handles[i] = reinterpret_cast<quint64>(static_cast<void*>(mtex[i]));
         }
-        for (int i = 0; i < _count; ++i) {
-            const QSize planeSize = desc->rhiPlaneSize(size, i, rhi);
-            // Native import: a substituted fallback format would misread the IOSurface plane.
-            _textures[i].reset(rhi->newTexture(
-                desc->rhiTextureFormat(i, rhi, QVideoTextureHelper::TextureDescription::FallbackPolicy::Disable),
-                planeSize, 1, {}));
-            const quint64 handle = reinterpret_cast<quint64>(static_cast<void*>(mtex[i]));
-            if (_textures[i] && !_textures[i]->createFrom({handle, 0})) {
-                QGC_HW_WARN_ONCE(GstIOSurfaceLog, s_diag.loggedRhiCreateFromFail,
-                          "FrameTextures: QRhiTexture::createFrom failed for plane" << i
-                          << "(planeSize=" << planeSize << ")");
-                _textures[i].reset();
-            }
-        }
+        wrapPlanes(rhi, size, pixelFormat,
+                   std::span<const quint64>(handles.data(), std::size_t(std::clamp(count, 0, kMaxPlanes))));
     }
 
     ~FrameTextures() override
@@ -231,10 +216,6 @@ const IOSurfaceCacheResetRegistrar s_ioSurfaceCacheResetRegistrar;
 
 QVideoFrameTexturesUPtr GstIOSurfaceVideoBuffer::mapTextures(QRhi &rhi, QVideoFrameTexturesUPtr &old)
 {
-    // Qt's contract: mapTextures runs on the QRhi (render) thread. Bail rather than crash if ever called off-thread.
-    if (!rhi.thread()->isCurrentThread()) {
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::IOSurface);
-    }
     // *** UNTESTED on macOS hardware. CI compiles this path; runtime validation TBD. ***
     // Pulls a CVPixelBufferRef from the GstBuffer (gst-vt path), grabs its
     // IOSurfaceRef, imports each plane via [MTLDevice newTextureWithDescriptor:
@@ -362,32 +343,26 @@ QVideoFrameTexturesUPtr GstIOSurfaceVideoBuffer::mapTextures(QRhi &rhi, QVideoFr
 
     CFRelease(pixelBuffer);
 
-    if (auto *prev = GstHwFrameTexturesBase::reusableBundle<FrameTextures>(old, HwVideoBufferPath::IOSurface)) {
-        if (prev->matches(&rhi, _format.frameSize(), _format.pixelFormat(), mtex, planeCount)) {
-            GstHwPathTelemetry::recordTextureReuse(HwVideoBufferPath::IOSurface);
-            prev->adoptCvRefs(cvtex);
-            prev->setSourceSample(takeSample());
-            QVideoFrameTexturesUPtr reused = std::move(old);
-            return reused;
-        }
-    }
-
-    auto textures = std::make_unique<FrameTextures>(&rhi, _format.frameSize(),
-                                                    _format.pixelFormat(), mtex, cvtex, planeCount);
-    // Per-plane: NV12 chroma can fail while luma succeeds. Returning a partial bundle
-    // would render with missing planes and no failure-counter increment.
-    for (int i = 0; i < planeCount; ++i) {
-        if (!textures->texture(static_cast<uint>(i))) {
-            qCWarning(GstIOSurfaceLog) << "createFrom failed for plane" << i
-                                       << "format=" << int(_format.pixelFormat());
-            return GstHwPathTelemetry::fail(HwVideoBufferPath::IOSurface);
-        }
-    }
-
-    logFirstSuccess(s_diag.loggedFirstSuccess, GstIOSurfaceLog(), "IOSurface", _format.frameSize(),
-                    _format.pixelFormat(), planeCount);
-    textures->setSourceSample(takeSample());
-    return textures;
+    // No preflight: the CVMetalTextureRefs above are already created, and only the bundle releases them.
+    const GstHwMapTail tail{.path = HwVideoBufferPath::IOSurface,
+                            .frameSize = _format.frameSize(),
+                            .pixelFormat = _format.pixelFormat(),
+                            .log = &GstIOSurfaceLog(),
+                            .diag = &s_diag,
+                            .preflight = false,
+                            .successTag = "IOSurface"};
+    return GstHwFrameTexturesBase::finishMap<FrameTextures>(
+        *this, rhi, old, tail,
+        [&](FrameTextures &prev) {
+            if (!prev.matches(&rhi, tail.frameSize, tail.pixelFormat, mtex, planeCount)) {
+                return false;
+            }
+            prev.adoptCvRefs(cvtex);
+            return true;
+        },
+        [&] {
+            return std::make_unique<FrameTextures>(&rhi, tail.frameSize, tail.pixelFormat, mtex, cvtex, planeCount);
+        });
 }
 
 

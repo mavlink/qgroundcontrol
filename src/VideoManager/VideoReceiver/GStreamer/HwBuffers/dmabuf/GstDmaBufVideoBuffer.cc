@@ -70,7 +70,7 @@ namespace {
 
 using GstHw::kMaxPlanes;
 
-std::atomic<bool> s_loggedBadBackend{false};
+GstHw::MapDiagnostics s_diag;
 
 // EGL_BAD_MATCH from eglCreateImage = broken EGL/VA-API combo (QTBUG-112312); short-circuits mapTextures on first hit.
 std::atomic<bool> s_permanentlyDisabled{false};
@@ -155,30 +155,6 @@ struct DmaImageKey
     }
 };
 
-template <typename T>
-void hashCombine(std::size_t& h, const T& value) noexcept
-{
-    h ^= std::hash<T>{}(value) + 0x9e3779b97f4a7c15ULL + (h << 6) + (h >> 2);
-}
-
-struct DmaImageKeyHash
-{
-    std::size_t operator()(const DmaImageKey& k) const noexcept
-    {
-        std::size_t h = std::hash<int>{}(k.fd);
-        hashCombine(h, k.modifier);
-        hashCombine(h, k.width);
-        hashCombine(h, k.height);
-        hashCombine(h, k.fourcc);
-        hashCombine(h, k.planeCount);
-        for (int p = 0; p < k.planeCount; ++p) {
-            hashCombine(h, k.offsets[p]);
-            hashCombine(h, k.strides[p]);
-        }
-        return h;
-    }
-};
-
 struct DmaCachedImage
 {
     EGLDisplay display = EGL_NO_DISPLAY;
@@ -186,39 +162,25 @@ struct DmaCachedImage
     GstMemory* mem = nullptr;  // eviction key only; never dereferenced
 };
 
-constexpr int kImageCacheCapacity = 8;
+constexpr std::size_t kImageCacheCapacity = 8;
+
+void destroyCachedDmaImage(DmaCachedImage& entry)
+{
+    if (entry.image != EGL_NO_IMAGE_KHR && entry.display != EGL_NO_DISPLAY) {
+        eglDestroyImage(entry.display, entry.image);
+    }
+}
+
+// EGLImages are destroyed on a render thread with Qt's GL context current; an off-thread finalize notify or reset
+// parks them until the next render-thread drain.
+bool glContextCurrent(const DmaCachedImage&)
+{
+    return QOpenGLContext::currentContext() != nullptr;
+}
 
 QMutex s_dmaCacheMutex;
-// EGLImages orphaned by an off-thread finalize notify; destroyed on the render thread (drainOrphanedImagesLocked).
-std::vector<std::pair<EGLDisplay, EGLImage>> s_orphanedImages;
-
-// Render-thread; caller holds s_dmaCacheMutex with Qt's GL context current.
-void drainOrphanedImagesLocked()
-{
-    for (const auto& [display, image] : s_orphanedImages) {
-        if (image != EGL_NO_IMAGE_KHR && display != EGL_NO_DISPLAY) {
-            eglDestroyImage(display, image);
-        }
-    }
-    s_orphanedImages.clear();
-}
-
-// Eviction/erase/clear hook. Render thread (GL context current): destroy the EGLImage. Off-thread finalize notify (no
-// GL context): defer the image to s_orphanedImages.
-void destroyCachedDmaImage(const DmaImageKey&, DmaCachedImage& entry)
-{
-    if (entry.image == EGL_NO_IMAGE_KHR || entry.display == EGL_NO_DISPLAY) {
-        return;
-    }
-    if (QOpenGLContext::currentContext()) {
-        eglDestroyImage(entry.display, entry.image);
-    } else {
-        s_orphanedImages.emplace_back(entry.display, entry.image);
-    }
-}
-
-GstHw::GstHwImportCache<DmaImageKey, DmaCachedImage, DmaImageKeyHash> s_dmaImageCache{kImageCacheCapacity,
-                                                                                      destroyCachedDmaImage};
+GstHw::GstHwImportCache<DmaImageKey, DmaCachedImage, kImageCacheCapacity> s_dmaImageCache{destroyCachedDmaImage,
+                                                                                          glContextCurrent};
 
 GQuark cachedMemoryQuark()
 {
@@ -227,8 +189,8 @@ GQuark cachedMemoryQuark()
 }
 
 // qdata destroy-notify, run while the GstMemory finalizes on a pool/streaming thread (no GL context): the stale
-// EGLImage is queued for render-thread destruction (drainOrphanedImagesLocked). Unlike a weak ref, the qdata is never
-// removed from the render thread, which would mutate the notify list gst is iterating during finalize.
+// EGLImage is parked for render-thread destruction. Unlike a weak ref, the qdata is never removed from the render
+// thread, which would mutate the notify list gst is iterating during finalize.
 void onSourceMemoryFinalized(gpointer finalizedMem)
 {
     const QMutexLocker lock(&s_dmaCacheMutex);
@@ -236,19 +198,11 @@ void onSourceMemoryFinalized(gpointer finalizedMem)
         [&](const DmaImageKey&, const DmaCachedImage& e) { return static_cast<gpointer>(e.mem) == finalizedMem; });
 }
 
-// Render-thread; caller holds s_dmaCacheMutex with Qt's GL context current.
-void clearDmaImageCacheLocked(EGLDisplay eglDpy)
-{
-    s_dmaImageCache.clear();
-    drainOrphanedImagesLocked();
-    Q_UNUSED(eglDpy);
-}
-
 EGLImage cachedDmaImageLocked(const DmaImageKey& key, EGLDisplay eglDpy)
 {
-    if (DmaCachedImage* entry = s_dmaImageCache.find(key);
-        entry && entry->display == eglDpy && entry->image != EGL_NO_IMAGE_KHR) {
-        return entry->image;
+    if (const auto hit = s_dmaImageCache.find(key);
+        hit && hit.resource->display == eglDpy && hit.resource->image != EGL_NO_IMAGE_KHR) {
+        return hit.resource->image;
     }
     return EGL_NO_IMAGE_KHR;
 }
@@ -260,8 +214,6 @@ void insertDmaImageLocked(const DmaImageKey& key, EGLDisplay eglDpy, EGLImage im
     }
     s_dmaImageCache.insert(key, DmaCachedImage{eglDpy, image, mem});
 }
-
-std::atomic<bool> s_dmaCacheResetPending{false};
 
 bool singleFdImportEnabled() noexcept
 {
@@ -459,21 +411,13 @@ void GstDmaBufVideoBuffer::resetCachedState() noexcept
 #if defined(QGC_HAS_GST_VULKAN_GPU_PATH)
     GstDmaBufVulkan::resetCachedState();
 #endif
-    s_loggedBadBackend.store(false, std::memory_order_release);
     s_loggedProducerWaitTimeout.store(false, std::memory_order_release);
     s_bindValidated.store(false, std::memory_order_release);
     s_loggedBindFailed.store(false, std::memory_order_release);
-    if (QOpenGLContext::currentContext()) {
-        // GL context current (render-thread reset, e.g. sceneGraphInvalidated): drain now so cached/orphaned EGLImages
-        // can't leak when no DMABuf frame is ever mapped again.
-        const QMutexLocker lock(&s_dmaCacheMutex);
-        clearDmaImageCacheLocked(EGL_NO_DISPLAY);
-        s_dmaCacheResetPending.store(false, std::memory_order_release);
-    } else {
-        // Defer EGLImage teardown to the next render-thread mapTextures(); eglDestroyImage off the GL thread is
-        // unsafe.
-        s_dmaCacheResetPending.store(true, std::memory_order_release);
-    }
+    // Destroyed now on a render-thread reset (e.g. sceneGraphInvalidated); otherwise parked for the next mapTextures().
+    const QMutexLocker lock(&s_dmaCacheMutex);
+    s_dmaImageCache.clear();
+    s_dmaImageCache.drainDeferred();
 }
 
 namespace {
@@ -548,15 +492,17 @@ bool GstDmaBufVideoBuffer::validatePlaneHandles() const
     return true;
 }
 
-QVideoFrameTexturesUPtr GstDmaBufVideoBuffer::mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& /*old*/)
+QVideoFrameTexturesUPtr GstDmaBufVideoBuffer::mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& old)
 {
     const GstHwPathTelemetry::ScopedMapTimer mapTimer(HwVideoBufferPath::DmaBuf);
-    // Qt's contract: mapTextures runs on the QRhi (render) thread. Bail rather than crash if ever called off-thread.
-    if (!rhi.thread()->isCurrentThread()) {
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
-    }
-
-    if (!_sample) {
+#if defined(QGC_HAS_GST_VULKAN_GPU_PATH)
+    const bool vulkan = (rhi.backend() == QRhi::Vulkan);
+#else
+    constexpr bool vulkan = false;
+#endif
+    GstBuffer* buffer = nullptr;
+    if (!checkMapPreconditions(rhi, static_cast<int>(vulkan ? QRhi::Vulkan : QRhi::OpenGLES2), GstDmaBufLog(), s_diag,
+                               buffer)) {
         return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
     }
 
@@ -575,25 +521,17 @@ QVideoFrameTexturesUPtr GstDmaBufVideoBuffer::mapTextures(QRhi& rhi, QVideoFrame
     const bool needLinearFence = (drmModifier == 0 /* DRM_FORMAT_MOD_LINEAR / unknown */ && !skipLinearFence);
 
 #if defined(QGC_HAS_GST_VULKAN_GPU_PATH)
-    if (rhi.backend() == QRhi::Vulkan) {
+    if (vulkan) {
         // Vulkan does not wait on implicit fences of imported dma-buf memory, so import only after the producer's
         // writes are confirmed complete (same policy as GstVulkanVideoBuffer: no import without producer sync).
-        GstBuffer* buffer = gst_sample_get_buffer(_sample);
-        if (!buffer || !waitForProducerWrites(buffer)) {
+        if (!waitForProducerWrites(buffer)) {
             return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
         }
-        return importVulkan(rhi);
+        return importVulkan(rhi, old);
     }
 #endif
-    if (rhi.backend() != QRhi::OpenGLES2) {
-        QGC_HW_WARN_ONCE(GstDmaBufLog, s_loggedBadBackend,
-                         "QRhi backend is not OpenGLES2/Vulkan; zero-copy DMABuf path unsupported");
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
-    }
 
-    // Bind Qt's GL context before any EGL/GL call, else the calls no-op into a foreign/null context (import succeeds
-    // but samples green).
-    rhi.makeThreadLocalNativeContextCurrent();
+    QOpenGLContext* glContext = GstEglHelpers::bindRhiContext(rhi);
 
     // Mirror Qt 6.10 qgstvideobuffer.cpp:349 — surface latent GL/EGL state from prior frames.
     // Qt 6.12 moved its DMABuf gate from eglfs-only to qGstEglCanMapDmaBuf() and added modifier checks; keep this
@@ -606,41 +544,30 @@ QVideoFrameTexturesUPtr GstDmaBufVideoBuffer::mapTextures(QRhi& rhi, QVideoFrame
         }
     }
 
-    const auto* nativeHandles = static_cast<const QRhiGles2NativeHandles*>(rhi.nativeHandles());
-    if (!nativeHandles || !nativeHandles->context) {
+    if (!glContext) {
         qCWarning(GstDmaBufLog) << "QRhi exposes no GL context";
         return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
     }
 
-    // Prefer QEGLContext::display(): EGLImages from one display can't be sampled by a context on another, and
-    // eglGetCurrentDisplay/eglGetDisplay disagree under xcb_egl.
+    // EGLDisplay is process-stable; resolve once per epoch (resetCachedState). First writer wins; racing renders that
+    // resolve the same display make this idempotent.
     EGLDisplay eglDpy = s_cachedDisplay.load(std::memory_order_acquire);
     if (eglDpy == EGL_NO_DISPLAY) {
-        eglDpy = GstEglHelpers::resolveEglDisplay(nativeHandles->context);
-        if (eglDpy == EGL_NO_DISPLAY)
-            eglDpy = _eglDisplay;
+        eglDpy = GstEglHelpers::renderDisplay(glContext, _eglDisplay);
         if (eglDpy == EGL_NO_DISPLAY) {
             return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
         }
-        // First writer wins; racing renders that resolve the same display make this idempotent.
         EGLDisplay expected = EGL_NO_DISPLAY;
         s_cachedDisplay.compare_exchange_strong(expected, eglDpy, std::memory_order_release);
     }
 
-    // Render thread, GL context current: reap EGLImages orphaned by off-thread weak-notifies, then any pending reset.
+    // Render thread, GL context current: destroy EGLImages parked by off-thread finalize notifies or resets.
     if (imageCacheEnabled()) {
-        const bool resetPending = s_dmaCacheResetPending.exchange(false, std::memory_order_acq_rel);
         const QMutexLocker lock(&s_dmaCacheMutex);
-        if (!s_orphanedImages.empty()) {
-            drainOrphanedImagesLocked();
-        }
-        if (resetPending) {
-            clearDmaImageCacheLocked(eglDpy);
-        }
+        s_dmaImageCache.drainDeferred();
     }
 
-    GstBuffer* buffer = gst_sample_get_buffer(_sample);
-    if (!buffer || !gst_is_dmabuf_memory(gst_buffer_peek_memory(buffer, 0))) {
+    if (!gst_is_dmabuf_memory(gst_buffer_peek_memory(buffer, 0))) {
         return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
     }
     const bool hasModifiersExt = GstEglHelpers::displaySupportsExtension(eglDpy, kModifiersExt);
@@ -728,7 +655,7 @@ QVideoFrameTexturesUPtr GstDmaBufVideoBuffer::mapTextures(QRhi& rhi, QVideoFrame
     // No texture reuse: caching QRhiTextures across frames caused periodic green frames on real RTSP H.264, and the
     // ~us/frame win isn't worth it.
     std::array<GLuint, kMaxPlanes> names{};
-    QOpenGLFunctions functions(nativeHandles->context);
+    QOpenGLFunctions functions(glContext);
     functions.glGenTextures(planeCount, names.data());
 
     // Modifier attribs only with the ext present; otherwise impl assumes LINEAR (matches our rejection above).
@@ -1017,19 +944,16 @@ textures_built:
         return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
     }
 
-    auto frameTextures =
-        std::make_unique<FrameTextures>(&rhi, _format.frameSize(), _format.pixelFormat(), names, planeCount);
-    // FrameTextures null-resets planes createFrom() rejects; a partial bundle renders black without bumping the failure
-    // counter, so bail loudly instead.
-    for (int i = 0; i < planeCount; ++i) {
-        if (!frameTextures->texture(i)) {
-            qCWarning(GstDmaBufLog) << "FrameTextures plane" << i << "createFrom failed — dropping frame";
-            // ~FrameTextures glDeleteTextures — names are owned now.
-            return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
-        }
-    }
-    frameTextures->setSourceSample(takeSample());
-    return frameTextures;
+    // FrameTextures owns the names from here: its dtor deletes them if a plane failed to wrap.
+    const GstHwMapTail tail{.path = HwVideoBufferPath::DmaBuf,
+                            .frameSize = _format.frameSize(),
+                            .pixelFormat = _format.pixelFormat(),
+                            .log = &GstDmaBufLog(),
+                            .diag = &s_diag,
+                            .preflight = false};
+    return GstHwFrameTexturesBase::finishMap<FrameTextures>(*this, rhi, old, tail, nullptr, [&] {
+        return std::make_unique<FrameTextures>(&rhi, tail.frameSize, tail.pixelFormat, names, planeCount);
+    });
 }
 
 #endif  // QGC_HAS_GST_DMABUF_GPU_PATH

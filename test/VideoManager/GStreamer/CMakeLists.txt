@@ -4,6 +4,8 @@ target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         GStreamerTest.cc
         GStreamerTest.h
+        HwBuffers/GStreamerHwFrameTexturesTest.cc
+        HwBuffers/GStreamerHwImportCacheTest.cc
         HwBuffers/common/GStreamerHwBuffersCommonTest.cc
         HwBuffers/d3d/GStreamerD3DTest.cc
         HwBuffers/dmabuf/GStreamerDmaBufTest.cc

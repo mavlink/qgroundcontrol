@@ -1,7 +1,6 @@
 #include "GstGlVideoBuffer.h"
 
 #include "GstGlFrameTextures.h"
-#include "GstHwImportCache.h"
 #include "GstHwImportPreflight.h"
 #include "GstHwPathTelemetry.h"
 #include "GstHwVideoBuffer.h"
@@ -63,34 +62,6 @@ public:
 };
 
 GstHw::MapDiagnostics s_diag;
-
-// Pool-ring recycle key: the gst-gl texture id tuple for a frame. gst-gl rotates a fixed set of ids, so re-seeing a
-// tuple means a pool slot recycled (the immediate `old`-bundle reuse below only covers the last frame, not the ring).
-struct GlTexKey
-{
-    std::array<GLuint, kMaxPlanes> names{};
-    int count = 0;
-
-    bool operator==(const GlTexKey& o) const noexcept { return count == o.count && names == o.names; }
-};
-
-struct GlTexKeyHash
-{
-    std::size_t operator()(const GlTexKey& k) const noexcept
-    {
-        std::size_t h = std::hash<int>{}(k.count);
-        for (int i = 0; i < k.count; ++i) {
-            h ^= std::hash<GLuint>{}(k.names[i]) + 0x9e3779b97f4a7c15ULL + (h << 6) + (h >> 2);
-        }
-        return h;
-    }
-};
-
-// Per render thread (each window has its own QRhi thread): no locking needed. Values are non-owning markers — the GL
-// textures belong to gst-gl, so the deleter is a no-op; the cache only tracks ring membership for reuse telemetry.
-constexpr std::size_t kGlRingCapacity = 8;
-thread_local GstHw::GstHwImportCache<GlTexKey, char, GlTexKeyHash> s_glRingCache{kGlRingCapacity,
-                                                                                 [](const GlTexKey&, char&) {}};
 
 // Orders Qt's context after gst-gl's fence. gst_gl_sync_meta_wait() would wait inside gst-gl's own context and leave
 // Qt's unordered; GL sync objects are shared across the share group, so Qt's context waits on the GLsync server-side.
@@ -191,45 +162,17 @@ QVideoFrameTexturesUPtr GstGlVideoBuffer::mapTextures(QRhi& rhi, QVideoFrameText
 
     gst_video_frame_unmap(&frame);
 
-    if (auto* prev = GstHwFrameTexturesBase::reusableBundle<FrameTextures>(old, HwVideoBufferPath::GlMemory)) {
-        if (prev->matches(&rhi, _format.frameSize(), _format.pixelFormat(), names, planeCount)) {
-            GstHwPathTelemetry::recordTextureReuse(HwVideoBufferPath::GlMemory);
-            prev->setSourceSample(takeSample());
-            QVideoFrameTexturesUPtr reused = std::move(old);
-            return reused;
-        }
-    }
-
-    // Ring recycle: the `old` bundle missed (different frame) but this id tuple was validated within the last
-    // kGlRingCapacity frames, so the pool reused a slot. Record the reuse; the createFrom below is a cheap non-owning
-    // view over the existing gst-gl texture (no real re-import).
-    const GlTexKey ringKey{names, planeCount};
-    const bool ringHit = (s_glRingCache.find(ringKey) != nullptr);
-
-    // Pre-flight the per-plane RHI format/size before createFrom() so an unsupported import demotes to CPU on a cheap
-    // capability query instead of a driver error.
-    if (!GstHwImportPreflight::preflightOrRecord(&rhi, HwVideoBufferPath::GlMemory, _format.pixelFormat(),
-                                                 _format.frameSize())) {
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::GlMemory);
-    }
-
-    auto textures =
-        std::make_unique<FrameTextures>(&rhi, _format.frameSize(), _format.pixelFormat(), names, planeCount);
-    // For NV12/I420 chroma can fail while luma succeeds; must verify all planes, not just plane 0.
-    for (int i = 0; i < planeCount; ++i) {
-        if (!textures->texture(static_cast<uint>(i))) {
-            qCWarning(GstGlBufLog) << "createFrom failed for plane" << i << "format=" << _format.pixelFormat();
-            GstHwPathTelemetry::recordFallbackReason(HwVideoBufferPath::GlMemory,
-                                                     GstHwPathTelemetry::HwFallbackReason::MapFailed);
-            return GstHwPathTelemetry::fail(HwVideoBufferPath::GlMemory);
-        }
-    }
-    if (ringHit) {
-        GstHwPathTelemetry::recordTextureReuse(HwVideoBufferPath::GlMemory);
-    }
-    s_glRingCache.insert(ringKey, char{});
-    textures->setSourceSample(takeSample());
-    return textures;
+    const GstHwMapTail tail{.path = HwVideoBufferPath::GlMemory,
+                            .frameSize = _format.frameSize(),
+                            .pixelFormat = _format.pixelFormat(),
+                            .log = &GstGlBufLog(),
+                            .diag = &s_diag};
+    return GstHwFrameTexturesBase::finishMap<FrameTextures>(
+        *this, rhi, old, tail,
+        [&](const FrameTextures& prev) {
+            return prev.matches(&rhi, tail.frameSize, tail.pixelFormat, names, planeCount);
+        },
+        [&] { return std::make_unique<FrameTextures>(&rhi, tail.frameSize, tail.pixelFormat, names, planeCount); });
 }
 
 #endif  // QGC_HAS_GST_GLMEMORY_GPU_PATH

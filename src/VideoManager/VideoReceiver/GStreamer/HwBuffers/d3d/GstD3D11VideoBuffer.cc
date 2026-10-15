@@ -25,7 +25,6 @@ using GstD3DVideoBufferCommon::kMaxPlanes;
 using GstD3DVideoBufferCommon::MapDiagnostics;
 using D3D11FrameTextures = GstD3DVideoBufferCommon::FrameTextures<ID3D11Texture2D>;
 using GstD3DVideoBufferCommon::StagingKey;
-using GstD3DVideoBufferCommon::StagingKeyHash;
 
 MapDiagnostics s_diag;
 
@@ -50,10 +49,9 @@ public:
                              int planeIdx, guint subIdx)
     {
         QMutexLocker lock(&_mutex);
-        StagingRing* ring = _entries.find(key);
+        StagingRing* ring = _entries.find(key).resource;
         if (!ring) {
-            _entries.insert(key, StagingRing{});
-            ring = _entries.find(key);
+            ring = _entries.insert(key, StagingRing{}).resource;
         }
         const std::size_t slot = ring->next;
         ring->next = (ring->next + 1) % kRingSize;
@@ -91,18 +89,19 @@ private:
         std::size_t next = 0;
     };
 
+    static void releaseRing(StagingRing& ring)
+    {
+        for (ID3D11Texture2D*& tex : ring.textures) {
+            if (tex) {
+                tex->Release();
+                tex = nullptr;
+            }
+        }
+    }
+
     static constexpr std::size_t kMaxEntries = 8;
     QMutex _mutex;
-    GstHw::GstHwImportCache<StagingKey, StagingRing, StagingKeyHash> _entries{
-        kMaxEntries,
-        [](const StagingKey&, StagingRing& ring) {
-            for (ID3D11Texture2D*& tex : ring.textures) {
-                if (tex) {
-                    tex->Release();
-                    tex = nullptr;
-                }
-            }
-        }};
+    GstHw::GstHwImportCache<StagingKey, StagingRing, kMaxEntries> _entries{&releaseRing};
 };
 
 /// Copy one subresource slice into a pooled ID3D11Texture2D for QRhi (which has no subresource selector); returns the
@@ -266,9 +265,13 @@ QVideoFrameTexturesUPtr GstD3D11VideoBuffer::mapTextures(QRhi& rhi, QVideoFrameT
         return GstHwPathTelemetry::fail(HwVideoBufferPath::D3D11);
     }
 
-    return GstD3DVideoBufferCommon::mapResolvedTextures(
-        *this, rhi, old, HwVideoBufferPath::D3D11, _textures, _resolvedCount, _format.frameSize(),
-        _format.pixelFormat(), s_diag.loggedFirstSuccess, s_diag.loggedTextureCreateFail, GstD3D11Log, "D3D11");
+    const GstHwMapTail tail{.path = HwVideoBufferPath::D3D11,
+                            .frameSize = _format.frameSize(),
+                            .pixelFormat = _format.pixelFormat(),
+                            .log = &GstD3D11Log(),
+                            .diag = &s_diag,
+                            .successTag = "D3D11"};
+    return GstD3DVideoBufferCommon::mapResolvedTextures(*this, rhi, old, tail, _textures, _resolvedCount);
 }
 
 #endif  // Q_OS_WIN && QGC_HAS_GST_D3D11_GPU_PATH

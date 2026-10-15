@@ -4,9 +4,6 @@
 
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH) && defined(QGC_HAS_GST_VULKAN_GPU_PATH)
 
-#include <QtCore/QLoggingCategory>
-#include <QtCore/QScopeGuard>
-#include <QtGui/QVulkanInstance>
 #include <algorithm>
 #include <atomic>
 #include <drm_fourcc.h>
@@ -19,8 +16,13 @@
 #include <unistd.h>
 #include <vulkan/vulkan.h>
 
+#include <QtCore/QLoggingCategory>
+#include <QtCore/QScopeGuard>
+#include <QtGui/QVulkanInstance>
+
 #include "GstDmaBufVideoBuffer.h"
 #include "GstDmaFourcc.h"
+#include "GstHwFrameTexturesBase.h"
 #include "GstHwImportPreflight.h"
 #include "GstHwPathTelemetry.h"
 #include "GstHwVideoBuffer.h"
@@ -31,6 +33,7 @@ QGC_LOGGING_CATEGORY(GstDmaBufVulkanLog, "Video.GStreamer.HwBuffers.GstDmaBufVul
 
 namespace {
 
+GstHw::MapDiagnostics s_diag;
 std::atomic<bool> s_loggedVulkanUnimpl{false};
 
 // VkFormat for single-plane RGB layouts. Multi-planar YUV (NV12/P010/I420) maps to VK_FORMAT_UNDEFINED: QRhi would wrap
@@ -281,7 +284,7 @@ void resetCachedState() noexcept
 
 }  // namespace GstDmaBufVulkan
 
-QVideoFrameTexturesUPtr GstDmaBufVideoBuffer::importVulkan(QRhi& rhi)
+QVideoFrameTexturesUPtr GstDmaBufVideoBuffer::importVulkan(QRhi& rhi, QVideoFrameTexturesUPtr& old)
 {
     // dmabuf-fd -> VkImage via VK_EXT_external_memory_dma_buf + VkImageDrmFormatModifierExplicitCreateInfoEXT, wrapped
     // with QRhiTexture::createFrom. Every step is capability-gated; any miss returns fail(). Single-plane RGB layouts
@@ -449,29 +452,33 @@ QVideoFrameTexturesUPtr GstDmaBufVideoBuffer::importVulkan(QRhi& rhi)
         return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
     }
 
-    auto frameTextures =
-        std::make_unique<GstVulkanOwnedFrameTextures>(&rhi, _format.frameSize(), _format.pixelFormat(), image);
-    if (!frameTextures->valid()) {
-        QGC_HW_WARN_ONCE(GstDmaBufVulkanLog, s_loggedVulkanUnimpl,
-                         "Vulkan import: QRhiTexture::createFrom(VkImage) failed");
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
-    }
-    // Ownership of image/memory passes to the bundle; disarm the scope guards.
-    frameTextures->adoptVulkanResources(
-        [queue = nh->gfxQueue, retired = RetiredImport{dev, VK_NULL_HANDLE, image, memory, fns}] {
-            retireImport(queue, retired);
+    const GstHwMapTail tail{.path = HwVideoBufferPath::DmaBuf,
+                            .frameSize = _format.frameSize(),
+                            .pixelFormat = _format.pixelFormat(),
+                            .log = &GstDmaBufVulkanLog(),
+                            .diag = &s_diag,
+                            .preflight = false,
+                            .successTag = "DMABuf->Vulkan"};
+    QVideoFrameTexturesUPtr textures =
+        GstHwFrameTexturesBase::finishMap<GstVulkanOwnedFrameTextures>(*this, rhi, old, tail, nullptr, [&] {
+            auto bundle = std::make_unique<GstVulkanOwnedFrameTextures>(&rhi, tail.frameSize, tail.pixelFormat, image);
+            if (bundle->allPlanesValid()) {
+                // Ownership of image/memory passes to the bundle; disarm the scope guards.
+                bundle->adoptVulkanResources(
+                    [queue = nh->gfxQueue, retired = RetiredImport{dev, VK_NULL_HANDLE, image, memory, fns}] {
+                        retireImport(queue, retired);
+                    });
+                image = VK_NULL_HANDLE;
+                memory = VK_NULL_HANDLE;
+            }
+            return bundle;
         });
-    image = VK_NULL_HANDLE;
-    memory = VK_NULL_HANDLE;
-    // Keyed: one teardown hook per QRhi, run while its device is still alive.
-    rhi.addCleanupCallback(&s_retiredImportsCleanupKey, [dev](QRhi*) { reapRetiredImports(dev, /*waitAll=*/true); });
-    frameTextures->setSourceSample(takeSample());
-    static std::atomic<bool> s_loggedVulkanOk{false};
-    if (!s_loggedVulkanOk.exchange(true, std::memory_order_relaxed)) {
-        qCInfo(GstDmaBufVulkanLog) << "First Vulkan DMABuf zero-copy import success: format="
-                                   << int(_format.pixelFormat());
+    if (textures) {
+        // Keyed: one teardown hook per QRhi, run while its device is still alive.
+        rhi.addCleanupCallback(&s_retiredImportsCleanupKey,
+                               [dev](QRhi*) { reapRetiredImports(dev, /*waitAll=*/true); });
     }
-    return frameTextures;
+    return textures;
 }
 
 #endif  // QGC_HAS_GST_DMABUF_GPU_PATH && QGC_HAS_GST_VULKAN_GPU_PATH
