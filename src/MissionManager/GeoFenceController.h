@@ -32,6 +32,9 @@ public:
     // Radius of the "paramCircularFence" which is called the "Geofence Failsafe" in PX4 and the "Circular Geofence" on ArduPilot
     Q_PROPERTY(double               paramCircularFence      READ paramCircularFence                                 NOTIFY paramCircularFenceChanged)
 
+    /// true: firmware supports circles centered on the vehicle home position (ArduPilot 4.8+)
+    Q_PROPERTY(bool                 homeCircleSupported     READ homeCircleSupported                                NOTIFY homeCircleSupportedChanged)
+
     /// Add a new inclusion polygon to the fence
     ///     @param topLeft: Top left coordinate or map viewport
     ///     @param bottomRight: Bottom right left coordinate or map viewport
@@ -54,6 +57,7 @@ public:
     Q_INVOKABLE void clearAllInteractive(void);
 
     double  paramCircularFence  (void);
+    bool    homeCircleSupported (void) const;
     Fact*   breachReturnAltitude(void) { return &_breachReturnAltitudeFact; }
 
     // Overrides from PlanElementController
@@ -83,6 +87,7 @@ signals:
     void editorQmlChanged               (QString editorQml);
     void loadComplete                   (void);
     void paramCircularFenceChanged      (void);
+    void homeCircleSupportedChanged     (void);
 
 private slots:
     void _fenceListDirtyChanged     (bool dirty);
@@ -94,9 +99,11 @@ private slots:
     void _managerRemoveAllComplete  (bool error);
     void _parametersReady           (void);
     void _managerVehicleChanged      (Vehicle* managerVehicle);
+    void _updateHomeCircleCenters   (void);
 
 private:
     void _init(void);
+    void _appendCircle(QGCFenceCircle* circle);
 
     Vehicle*            _managerVehicle =               nullptr;
     GeoFenceManager*    _geoFenceManager =              nullptr;

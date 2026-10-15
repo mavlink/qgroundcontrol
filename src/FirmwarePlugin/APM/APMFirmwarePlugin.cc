@@ -638,6 +638,11 @@ bool APMFirmwarePlugin::hasGripper(const Vehicle *vehicle) const
     return false;
 }
 
+bool APMFirmwarePlugin::supportsFenceHomeCircle(const Vehicle *vehicle) const
+{
+    return vehicle->versionCompare(4, 8, 0) >= 0;
+}
+
 const QVariantList &APMFirmwarePlugin::toolIndicators(const Vehicle *vehicle)
 {
     if (_toolIndicatorList.isEmpty()) {

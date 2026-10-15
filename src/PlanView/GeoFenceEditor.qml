@@ -221,7 +221,7 @@ Rectangle {
                 GridLayout {
                     anchors.left:       parent.left
                     anchors.right:      parent.right
-                    columns:            4
+                    columns:            5
                     flow:               GridLayout.TopToBottom
                     visible:            polygonSection.checked && myGeoFenceController.circles.count > 0
 
@@ -236,14 +236,33 @@ Rectangle {
 
                         QGCCheckBox {
                             checked:            object.inclusion
+                            enabled:            !object.homeCentered
                             onClicked:          object.inclusion = checked
                             Layout.alignment:   Qt.AlignHCenter
                         }
                     }
 
                     QGCLabel {
-                        text:               qsTr("Edit")
+                        text:               qsTr("Home")
+                        visible:            myGeoFenceController.homeCircleSupported
                         Layout.column:      1
+                        Layout.alignment:   Qt.AlignHCenter
+                    }
+
+                    Repeater {
+                        model: myGeoFenceController.circles
+
+                        QGCCheckBox {
+                            checked:            object.homeCentered
+                            visible:            myGeoFenceController.homeCircleSupported
+                            onClicked:          object.homeCentered = checked
+                            Layout.alignment:   Qt.AlignHCenter
+                        }
+                    }
+
+                    QGCLabel {
+                        text:               qsTr("Edit")
+                        Layout.column:      2
                         Layout.alignment:   Qt.AlignHCenter
                     }
 
@@ -267,7 +286,7 @@ Rectangle {
 
                     QGCLabel {
                         text:               qsTr("Radius")
-                        Layout.column:      2
+                        Layout.column:      3
                         Layout.alignment:   Qt.AlignHCenter
                     }
 
@@ -283,7 +302,7 @@ Rectangle {
 
                     QGCLabel {
                         text:               qsTr("Delete")
-                        Layout.column:      3
+                        Layout.column:      4
                         Layout.alignment:   Qt.AlignHCenter
                     }
 

@@ -52,6 +52,7 @@ public:
     virtual void initializeStreamRates(Vehicle *vehicle);
     void initializeVehicle(Vehicle *vehicle) override;
     bool sendHomePositionToVehicle() const override { return true; }
+    bool supportsFenceHomeCircle(const Vehicle *vehicle) const override;
     QString missionCommandOverrides(QGCMAVLink::VehicleClass_t vehicleClass) const override;
     QString _internalParameterMetaDataFile(const Vehicle* vehicle) const override;
     MAV_AUTOPILOT _autopilotType() const override { return MAV_AUTOPILOT_ARDUPILOTMEGA; }

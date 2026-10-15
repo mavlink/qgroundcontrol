@@ -1,5 +1,7 @@
 #include "GeoFenceController.h"
 #include "Vehicle.h"
+#include "FirmwarePlugin.h"
+#include "MissionController.h"
 #include "ParameterManager.h"
 #include "GeoJsonHelper.h"
 #include "JsonParsing.h"
@@ -52,6 +54,7 @@ void GeoFenceController::start(bool flyView)
 
     _managerVehicleChanged(_masterController->managerVehicle());
     connect(_masterController, &PlanMasterController::managerVehicleChanged, this, &GeoFenceController::_managerVehicleChanged);
+    connect(_masterController->missionController(), &MissionController::plannedHomePositionChanged, this, &GeoFenceController::_updateHomeCircleCenters);
 
     PlanElementController::start(flyView);
     _init();
@@ -97,11 +100,13 @@ void GeoFenceController::_managerVehicleChanged(Vehicle* managerVehicle)
         Q_UNUSED(capabilityBits);
         emit supportedChanged(supported());
     });
+    (void) connect(_managerVehicle, &Vehicle::firmwareVersionChanged, this, &GeoFenceController::homeCircleSupportedChanged);
 
     connect(_managerVehicle->parameterManager(), &ParameterManager::parametersReadyChanged, this, &GeoFenceController::_parametersReady);
     _parametersReady();
 
     emit supportedChanged(supported());
+    emit homeCircleSupportedChanged();
 }
 
 bool GeoFenceController::load(const QJsonObject& json, QString& errorString)
@@ -156,8 +161,9 @@ bool GeoFenceController::load(const QJsonObject& json, QString& errorString)
         if (!fenceCircle->loadFromJson(jsonCircleValue.toObject(), errorString)) {
             return false;
         }
-        _circles.append(fenceCircle);
+        _appendCircle(fenceCircle);
     }
+    _updateHomeCircleCenters();
 
     if (json.contains(_jsonBreachReturnKey)) {
         if (!GeoJsonHelper::loadGeoCoordinate(json[_jsonBreachReturnKey], true /* altitudeRequred */, _breachReturnPoint, errorString)) {
@@ -296,8 +302,9 @@ void GeoFenceController::_setFenceFromManager(const QList<QGCFencePolygon>& poly
     }
 
     for (int i=0; i<circles.count(); i++) {
-        _circles.append(new QGCFenceCircle(circles[i], this));
+        _appendCircle(new QGCFenceCircle(circles[i], this));
     }
+    _updateHomeCircleCenters();
 
     setDirty(false);
 }
@@ -423,7 +430,7 @@ void GeoFenceController::addInclusionCircle(QGeoCoordinate topLeft, QGeoCoordina
     QGeoCoordinate center(centerLeftEdge.latitude(), centerTopEdge.longitude());
 
     QGCFenceCircle* circle = new QGCFenceCircle(center, radius, true /* inclusion */, this);
-    _circles.append(circle);
+    _appendCircle(circle);
 
     clearAllInteractive();
     circle->setInteractive(true);
@@ -462,6 +469,35 @@ void GeoFenceController::clearAllInteractive(void)
 bool GeoFenceController::supported(void) const
 {
     return _managerVehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_MISSION_FENCE;
+}
+
+bool GeoFenceController::homeCircleSupported(void) const
+{
+    return _managerVehicle && _managerVehicle->firmwarePlugin()->supportsFenceHomeCircle(_managerVehicle);
+}
+
+void GeoFenceController::_appendCircle(QGCFenceCircle* circle)
+{
+    connect(circle, &QGCFenceCircle::homeCenteredChanged, this, &GeoFenceController::_updateHomeCircleCenters);
+    _circles.append(circle);
+}
+
+void GeoFenceController::_updateHomeCircleCenters(void)
+{
+    const QGeoCoordinate home = _masterController->missionController()->plannedHomePosition();
+    if (!home.isValid()) {
+        return;
+    }
+
+    // Following home does not change what is sent to the vehicle, so it must not dirty the plan
+    const bool wasDirty = _dirty;
+    for (int i=0; i<_circles.count(); i++) {
+        QGCFenceCircle* circle = _circles.value<QGCFenceCircle*>(i);
+        if (circle->homeCentered()) {
+            circle->setCenter(QGeoCoordinate(home.latitude(), home.longitude()));
+        }
+    }
+    setDirty(wasDirty);
 }
 
 /* Returns the radius of the "paramCircularFence"
