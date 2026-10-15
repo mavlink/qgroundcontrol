@@ -7,6 +7,25 @@
 
 QGC_LOGGING_CATEGORY(StatusTextHandlerLog, "MAVLink.StatusTextHandler")
 
+namespace {
+
+// Raw bytes up to the first NUL. A NUL anywhere in the field marks the last chunk of a chunked sequence.
+QByteArray statusTextBytes(const mavlink_statustext_t& statusText, bool& includesNullTerminator)
+{
+    constexpr int textLength = MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN;
+    const char* const textEnd = static_cast<const char*>(memchr(statusText.text, '\0', textLength));
+    includesNullTerminator = (textEnd != nullptr);
+    return QByteArray(statusText.text, includesNullTerminator ? (textEnd - statusText.text) : textLength);
+}
+
+// resize() default-constructs the slot in place; append(std::nullopt) trips GCC 13 -Wmaybe-uninitialized
+void appendMissingChunk(QList<std::optional<QByteArray>>& chunks)
+{
+    chunks.resize(chunks.size() + 1);
+}
+
+}  // namespace
+
 StatusText::StatusText(MAV_COMPONENT componentid, MAV_SEVERITY severity, const QString &text)
     : m_compId(componentid)
     , m_severity(severity)
@@ -55,11 +74,8 @@ QString StatusTextHandler::getMessageText(const mavlink_message_t &message)
     mavlink_statustext_t statusText;
     mavlink_msg_statustext_decode(&message, &statusText);
 
-    char buffer[MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN + 1];
-    memcpy(buffer, statusText.text, MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN);
-    buffer[MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN] = '\0';
-
-    return QString(buffer);
+    bool includesNullTerminator;
+    return QString::fromUtf8(statusTextBytes(statusText, includesNullTerminator));
 }
 
 QString StatusTextHandler::formattedMessages() const
@@ -257,13 +273,13 @@ void StatusTextHandler::_handleStatusText(const mavlink_message_t &message)
     mavlink_statustext_t statustext;
     mavlink_msg_statustext_decode(&message, &statustext);
 
-    const QString messageText = getMessageText(message);
-    const bool includesNullTerminator = messageText.length() < MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN;
+    bool includesNullTerminator;
+    const QByteArray chunkBytes = statusTextBytes(statustext, includesNullTerminator);
 
     const MAV_COMPONENT compId = static_cast<MAV_COMPONENT>(message.compid);
     if (m_chunkedStatusTextInfoMap.contains(compId) && (m_chunkedStatusTextInfoMap.value(compId).chunkId != statustext.id)) {
         // We have an incomplete chunked status still pending
-        (void) m_chunkedStatusTextInfoMap.value(compId).rgMessageChunks.append(QString());
+        appendMissingChunk(m_chunkedStatusTextInfoMap[compId].rgMessageChunks);
         _chunkedStatusTextCompleted(compId);
     }
 
@@ -272,28 +288,23 @@ void StatusTextHandler::_handleStatusText(const mavlink_message_t &message)
         ChunkedStatusTextInfo_t chunkedInfo;
         chunkedInfo.chunkId = 0;
         chunkedInfo.severity = static_cast<MAV_SEVERITY>(statustext.severity);
-        (void) chunkedInfo.rgMessageChunks.append(messageText);
+        chunkedInfo.rgMessageChunks.append(chunkBytes);
         (void) m_chunkedStatusTextInfoMap.insert(compId, chunkedInfo);
     } else {
-        if (m_chunkedStatusTextInfoMap.contains(compId)) {
-            // A chunk sequence is in progress
-            QStringList& chunks = m_chunkedStatusTextInfoMap[compId].rgMessageChunks;
-            if (statustext.chunk_seq > chunks.size()) {
-                // We are missing some chunks in between, fill them in as missing
-                for (size_t i = chunks.size(); i < statustext.chunk_seq; i++) {
-                    (void) chunks.append(QString());
-                }
-            }
-
-            (void) chunks.append(messageText);
-        } else {
+        if (!m_chunkedStatusTextInfoMap.contains(compId)) {
             // Starting a new chunk sequence
             ChunkedStatusTextInfo_t chunkedInfo;
             chunkedInfo.chunkId = statustext.id;
             chunkedInfo.severity = static_cast<MAV_SEVERITY>(statustext.severity);
-            (void) chunkedInfo.rgMessageChunks.append(messageText);
             (void) m_chunkedStatusTextInfoMap.insert(compId, chunkedInfo);
         }
+
+        QList<std::optional<QByteArray>>& chunks = m_chunkedStatusTextInfoMap[compId].rgMessageChunks;
+        if (statustext.chunk_seq >= chunks.size()) {
+            // Chunks skipped in between stay nullopt and are rendered as missing
+            chunks.resize(statustext.chunk_seq + 1);
+        }
+        chunks[statustext.chunk_seq] = chunkBytes;
 
         m_chunkedStatusTextTimer->start();
     }
@@ -308,7 +319,7 @@ void StatusTextHandler::_chunkedStatusTextTimeout()
 {
     for (auto compId : m_chunkedStatusTextInfoMap.keys()) {
         auto& chunkedInfo = m_chunkedStatusTextInfoMap[compId];
-        (void) chunkedInfo.rgMessageChunks.append(QString());
+        appendMissingChunk(chunkedInfo.rgMessageChunks);
         _chunkedStatusTextCompleted(compId);
     }
 }
@@ -318,14 +329,19 @@ void StatusTextHandler::_chunkedStatusTextCompleted(MAV_COMPONENT compId)
     const ChunkedStatusTextInfo_t& chunkedInfo = m_chunkedStatusTextInfoMap.value(compId);
     const MAV_SEVERITY severity = chunkedInfo.severity;
 
+    // Decode only after reassembly so multibyte characters split across chunks survive
     QString messageText;
-    for (const QString& chunk : std::as_const(chunkedInfo.rgMessageChunks)) {
-        if (chunk.isEmpty()) {
-            (void) messageText.append(tr(" ... ", "Indicates missing chunk from chunked STATUS_TEXT"));
+    QByteArray pendingBytes;
+    for (const std::optional<QByteArray>& chunk : std::as_const(chunkedInfo.rgMessageChunks)) {
+        if (chunk.has_value()) {
+            pendingBytes.append(*chunk);
         } else {
-            (void) messageText.append(chunk);
+            (void) messageText.append(QString::fromUtf8(pendingBytes));
+            pendingBytes.clear();
+            (void) messageText.append(tr(" ... ", "Indicates missing chunk from chunked STATUS_TEXT"));
         }
     }
+    (void) messageText.append(QString::fromUtf8(pendingBytes));
 
     (void) m_chunkedStatusTextInfoMap.remove(compId);
 
