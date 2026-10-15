@@ -7,8 +7,8 @@
 
 namespace GstQgc {
 
-/// Linked element chain with automatic rollback: adopt() elements (bin takes the floating ref),
-/// linkChain() in flow order, ghostSink() the head, commit() on success; ~BinChain unwinds the rest.
+/// Linked element chain with automatic rollback: adopt() elements, linkChain() in flow order, ghostSink() the head,
+/// commit() on success; ~BinChain unwinds the rest.
 class BinChain
 {
 public:
@@ -32,18 +32,20 @@ public:
     BinChain(const BinChain&) = delete;
     BinChain& operator=(const BinChain&) = delete;
 
-    /// Adds @p element to the bin, or unrefs it and returns nullptr when the bin rejects it.
+    /// Adds @p element to the bin and returns it (owned by the bin), or nullptr when the bin rejects it. Consumes the
+    /// caller's ref, floating or not, either way.
     GstElement* adopt(GstElement* element)
     {
         if (!element) {
             return nullptr;
         }
-        if (_ownedCount == _owned.size()) {
-            gst_object_unref(element);
-            return nullptr;
+        // A failed gst_bin_add() sinks and drops a floating ref itself; holding a full ref keeps ours the one to drop.
+        if (g_object_is_floating(element)) {
+            (void) gst_object_ref_sink(element);
         }
-        if (!gst_bin_add(_bin, element)) {
-            gst_object_unref(element);
+        const bool added = (_ownedCount < _owned.size()) && gst_bin_add(_bin, element);
+        gst_object_unref(element);
+        if (!added) {
             return nullptr;
         }
         _owned[_ownedCount++] = element;
@@ -77,7 +79,7 @@ public:
             return false;
         }
         if (!gst_element_add_pad(GST_ELEMENT(_bin), _ghost)) {
-            gst_object_unref(_ghost);
+            // gst_element_add_pad() consumed the floating ghost pad.
             _ghost = nullptr;
             return false;
         }

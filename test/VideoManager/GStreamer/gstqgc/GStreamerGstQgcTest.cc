@@ -728,6 +728,33 @@ void GStreamerTest::_testQgcVideoSinkBinRejectsFailedAdopt()
     gst_object_unref(currentParent);
 }
 
+void GStreamerTest::_testQgcBinChainFailedAdoptDropsFloatingRefOnce()
+{
+    QVERIFY2(GStreamer::completeInit(), "GStreamer::completeInit() failed");
+
+    GstElement* const target = gst_bin_new("qgc-adopt-target");
+    QVERIFY(target);
+    const auto guard = qScopeGuard([target] { gst_object_unref(target); });
+    QVERIFY(gst_bin_add(GST_BIN(target), gst_element_factory_make("identity", "taken")));
+
+    // Floating, as from gst_element_factory_make(), plus a plain ref of the test's own.
+    GstElement* const duplicate = gst_element_factory_make("identity", "taken");
+    QVERIFY(duplicate);
+    (void) g_object_ref(duplicate);
+    bool destroyed = false;
+    g_object_weak_ref(
+        G_OBJECT(duplicate), [](gpointer data, GObject*) { *static_cast<bool*>(data) = true; }, &destroyed);
+
+    {
+        GstQgc::BinChain chain(GST_BIN(target));
+        QVERIFY(!chain.adopt(duplicate));
+    }
+
+    QVERIFY2(!destroyed, "a failed BinChain::adopt must drop the floating ref exactly once");
+    gst_object_unref(duplicate);
+    QVERIFY2(destroyed, "a failed BinChain::adopt must consume the floating ref");
+}
+
 namespace {
 
 struct PipelineRunResult

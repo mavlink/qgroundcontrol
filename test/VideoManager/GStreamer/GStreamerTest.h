@@ -38,6 +38,7 @@ private slots:
     void _testAppsinkPtsAndColorimetry();
     void _testQgcVideoSinkBinGpuZeroCopyProperty();
     void _testQgcVideoSinkBinRejectsFailedAdopt();
+    void _testQgcBinChainFailedAdoptDropsFloatingRefOnce();
     void _testGlMemoryDispatch();
     void _testHwFrameTexturesKeepResourcesUntilDestroyed();
     void _testD3D11MemoryDispatch();
