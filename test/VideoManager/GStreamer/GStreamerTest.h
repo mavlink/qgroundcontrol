@@ -110,6 +110,7 @@ private slots:
     void _testColorimetryFrameRatePropagation();
     void _testHwBufferCropMatrixIdentityWithoutMeta();
     void _testHwBufferCropMatrixFromVideoCropMeta();
+    void _testHwVideoBufferCpuMapFallback();
     void _testApplyOrientationToFrameMapping();
     void _testAdapterFlushDropsInFlightSamples();
     void _testSourceFactoryUdpRtpJitterBuffer();

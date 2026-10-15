@@ -77,11 +77,12 @@ const char* pathName(HwVideoBufferPath path) noexcept
 
 #if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
 // GstGlVideoBuffer::mapTextures binds GLMemory only under Qt's OpenGL(ES2) QRhi; the glupload bin still emits GLMemory
-// under a non-GL RHI (forced Vulkan), so gate selection here or mapTextures fails on the render thread → black frame.
+// under a non-GL RHI (forced Vulkan), so gate selection here and let the frame take the CPU path instead. Runs on the
+// streaming thread, so read the published backend rather than the render-thread-owned QRhi.
 bool glMemoryConsumable() noexcept
 {
-    const QRhi* rhi = QGCRhiCapture::cachedRhi();
-    return !rhi || rhi->backend() == QRhi::OpenGLES2;
+    const int backend = QGCRhiCapture::deviceSnapshot().backend.load(std::memory_order_acquire);
+    return (backend < 0) || (backend == static_cast<int>(QRhi::OpenGLES2));
 }
 #endif
 

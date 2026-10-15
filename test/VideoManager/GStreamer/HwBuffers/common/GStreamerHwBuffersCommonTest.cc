@@ -59,13 +59,15 @@
 #if defined(QGC_HAS_ANY_GPU_PATH)
 #include "QGCRhiCapture.h"
 #endif
+#include <rhi/qrhi.h>
+#include <string_view>
+
 #include <QtCore/QCoreApplication>
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QEventLoop>
+#include <QtMultimedia/private/qvideotexturehelper_p.h>
 #include <QtQuick/QQuickWindow>
 #include <QtTest/QSignalSpy>
-#include <rhi/qrhi.h>
-#include <string_view>
 
 void GStreamerTest::_testBridgeDispatcherFanout()
 {
@@ -244,8 +246,9 @@ void GStreamerTest::_testHwBufferLifecycleResetsNativeCaches()
     gst_message_unref(deviceLostError);
     gst_object_unref(dummy);
 
+    // A (re)starting pipeline must leave shared bridge objects alone: another stream may be using them.
     HwBuffers::onPipelineRestart();
-    QCOMPARE(s_resetCount, 3);
+    QCOMPARE(s_resetCount, 2);
 
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH) || defined(QGC_HAS_GST_D3D11_GPU_PATH) ||    \
     defined(QGC_HAS_GST_D3D12_GPU_PATH) || defined(QGC_HAS_GST_IOSURFACE_GPU_PATH) || \
@@ -254,6 +257,8 @@ void GStreamerTest::_testHwBufferLifecycleResetsNativeCaches()
     static int s_cacheReset = 0;
     s_cacheReset = 0;
     GstContextBridgeRegistry::registerCacheReset([]() { ++s_cacheReset; });
+    HwBuffers::onPipelineRestart();
+    QCOMPARE(s_cacheReset, 0);
     GstContextBridgeRegistry::resetAllCaches();
     QCOMPARE(s_cacheReset, 1);
     s_cacheReset = 0;
@@ -354,11 +359,10 @@ class TestableHwVideoBuffer : public GstHwVideoBuffer
 {
 public:
     TestableHwVideoBuffer(GstSample* sample, const GstVideoInfo& info, QVideoFrameFormat fmt)
-        : GstHwVideoBuffer(QVideoFrame::NoHandle, sample, info, std::move(fmt))
+        : GstHwVideoBuffer(QVideoFrame::RhiTextureHandle, sample, info, std::move(fmt))
     {}
 
-    MapData map(QVideoFrame::MapMode) override { return {}; }
-
+    /// Always fails, like a GPU import the active QRhi rejects.
     QVideoFrameTexturesUPtr mapTextures(QRhi&, QVideoFrameTexturesUPtr&) override { return {}; }
 };
 
@@ -428,6 +432,51 @@ void GStreamerTest::_testHwBufferCropMatrixIdentityWithoutMeta()
     // for crop because Qt only consults externalTextureMatrix for Format_SamplerExternalOES.
     QCOMPARE(hw.externalTextureMatrix(), QMatrix4x4());
     gst_sample_unref(sample);
+#endif
+}
+
+void GStreamerTest::_testHwVideoBufferCpuMapFallback()
+{
+#if !defined(QGC_HAS_ANY_GPU_PATH)
+    QSKIP("GstHwVideoBuffer not compiled in this build (no GPU path enabled)");
+#else
+    GstVideoInfo info;
+    gst_video_info_set_format(&info, GST_VIDEO_FORMAT_BGRA, 4, 2);
+    GstBuffer* buffer = gst_buffer_new_allocate(nullptr, GST_VIDEO_INFO_SIZE(&info), nullptr);
+    QVERIFY(buffer);
+    QByteArray pixels(static_cast<qsizetype>(GST_VIDEO_INFO_SIZE(&info)), Qt::Uninitialized);
+    for (qsizetype i = 0; i < pixels.size(); ++i) {
+        pixels[i] = static_cast<char>(i);
+    }
+    gst_buffer_fill(buffer, 0, pixels.constData(), static_cast<gsize>(pixels.size()));
+    GstCaps* caps = gst_video_info_to_caps(&info);
+    GstSample* sample = gst_sample_new(buffer, caps, nullptr, nullptr);
+    gst_caps_unref(caps);
+    gst_buffer_unref(buffer);
+    QVERIFY(sample);
+
+    auto hw = std::make_unique<TestableHwVideoBuffer>(
+        sample, info, QVideoFrameFormat(QSize(4, 2), QVideoFrameFormat::Format_BGRA8888));
+    gst_sample_unref(sample);
+    // A bundle from an earlier successful import takes its own sample ref; the CPU view must survive that.
+    gst_sample_unref(hw->takeSample());
+    QVideoFrame frame(std::move(hw));
+
+    // Qt's createTextures() falls back to uploading map() when mapTextures() fails.
+    QRhiNullInitParams nullParams;
+    const std::unique_ptr<QRhi> rhi(QRhi::create(QRhi::Null, &nullParams));
+    QVERIFY(rhi);
+    QRhiResourceUpdateBatch* updates = rhi->nextResourceUpdateBatch();
+    QVideoFrameTexturesUPtr oldTextures;
+    const QVideoFrameTexturesUPtr textures = QVideoTextureHelper::createTextures(frame, *rhi, *updates, oldTextures);
+    updates->release();
+    QVERIFY2(textures, "a failed GPU import must still produce textures through the CPU upload");
+
+    QVERIFY(frame.map(QVideoFrame::ReadOnly));
+    const auto unmapGuard = qScopeGuard([&] { frame.unmap(); });
+    QCOMPARE(frame.planeCount(), 1);
+    QCOMPARE(frame.bytesPerLine(0), GST_VIDEO_INFO_PLANE_STRIDE(&info, 0));
+    QCOMPARE(QByteArray(reinterpret_cast<const char*>(frame.bits(0)), frame.mappedBytes(0)), pixels);
 #endif
 }
 

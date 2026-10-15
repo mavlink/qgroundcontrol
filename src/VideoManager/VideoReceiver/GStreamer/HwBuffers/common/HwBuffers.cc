@@ -54,7 +54,7 @@ QGC_LOGGING_CATEGORY(HwBuffersConfigLog, "Video.GStreamer.HwBuffers.Config")
 
 #if defined(QGC_HAS_ANY_GPU_PATH)
 namespace {
-// Compile-time table of enabled GPU paths; iterated by resetCachedGpuResources/formatPathStats to avoid repeating the
+// Compile-time table of enabled GPU paths; iterated by formatPathStats/takeExtraPathStats to avoid repeating the
 // ifdef ladder.
 struct GpuPathEntry
 {
@@ -179,8 +179,8 @@ GstBusSyncReply onBusSyncMessage(GstBus* /*bus*/, GstMessage* msg, gpointer /*us
 
 void onPipelineRestart() noexcept
 {
-    resetCachedGpuResources();
-    // GL is the only path needing a pipeline-restart rearm (re-prime the shared GstGLContext).
+    // Latch-only: shared bridge objects and import caches stay, because another stream may be using them. Full resets
+    // are reserved for scene-graph teardown, window swaps and device loss (resetCachedGpuResources).
 #if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
     GstGlContextBridge::rearm();
 #endif

@@ -11,7 +11,9 @@ class QQuickWindow;
 /// Resolves and caches the `QRhi*` driving QGC's main scene graph; Qt has no global RHI accessor.
 namespace QGCRhiCapture {
 
-/// Cached QRhi* maintained by sceneGraph signals; safe from any thread via acquire ordering.
+/// Cached QRhi* maintained by sceneGraph signals. The QRhi is owned by the render thread and destroyed right after
+/// sceneGraphInvalidated clears this cache, so dereference it only on the render thread or the GUI thread; streaming
+/// and bus threads must use deviceSnapshot() instead.
 QRhi* cachedRhi() noexcept;
 
 /// Atomic snapshot of native device handles; populated on render thread (where nativeHandles() is safe), safe from any

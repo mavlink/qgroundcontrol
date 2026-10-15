@@ -332,8 +332,8 @@ bool setupQVideoSinkElement(void* sinkBin, QVideoSink* videoSink, QObject* contr
         c->deleteLater();
     }
 
-    // Clear the GL bridge's exhausted-retry latch so a restart after Qt's globalShareContext
-    // appears can prime on the next NEED_CONTEXT. No-op when already primed.
+    // Clear the GL/Vulkan bridges' exhausted-retry latches so a restart after Qt's RHI appears can
+    // prime on the next NEED_CONTEXT. Shared GPU objects stay: another receiver may be streaming.
     HwBuffers::onPipelineRestart();
 
     // Accessor returns a transfer-full ref; the guard releases it once the controller has taken

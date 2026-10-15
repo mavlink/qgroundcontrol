@@ -14,8 +14,41 @@ GstHwVideoBuffer::GstHwVideoBuffer(QVideoFrame::HandleType handleType, GstSample
 
 GstHwVideoBuffer::~GstHwVideoBuffer()
 {
+    GstHwVideoBuffer::unmap();
     if (_sample) {
         gst_sample_unref(_sample);
+    }
+}
+
+QAbstractVideoBuffer::MapData GstHwVideoBuffer::map(QVideoFrame::MapMode mode)
+{
+    // An external-OES frame has no CPU layout Qt could upload (it would read it as RGBA8).
+    if ((mode != QVideoFrame::ReadOnly) || (_format.pixelFormat() == QVideoFrameFormat::Format_SamplerExternalOES)) {
+        return {};
+    }
+    if (!_cpuMapped) {
+        GstBuffer* const buffer = _sample ? gst_sample_get_buffer(_sample) : nullptr;
+        if (!buffer || !gst_video_frame_map(&_cpuFrame, &_videoInfo, buffer, GST_MAP_READ)) {
+            return {};
+        }
+        _cpuMapped = true;
+    }
+    MapData data;
+    data.planeCount = static_cast<int>(GST_VIDEO_FRAME_N_PLANES(&_cpuFrame));
+    for (int i = 0; i < data.planeCount; ++i) {
+        data.data[i] = static_cast<uchar*>(GST_VIDEO_FRAME_PLANE_DATA(&_cpuFrame, i));
+        data.bytesPerLine[i] = GST_VIDEO_FRAME_PLANE_STRIDE(&_cpuFrame, i);
+        data.dataSize[i] = static_cast<qsizetype>(GST_VIDEO_FRAME_PLANE_STRIDE(&_cpuFrame, i)) *
+                           GST_VIDEO_FRAME_COMP_HEIGHT(&_cpuFrame, i);
+    }
+    return data;
+}
+
+void GstHwVideoBuffer::unmap()
+{
+    if (_cpuMapped) {
+        gst_video_frame_unmap(&_cpuFrame);
+        _cpuMapped = false;
     }
 }
 

@@ -40,10 +40,12 @@ GstBusSyncReply onBusSyncMessage(GstBus* bus, GstMessage* msg, gpointer userData
 /// Receiver-side bus hook; drops cached GPU devices on GST_MESSAGE_ERROR. No-op when no GPU paths compiled.
 void dispatchBusMessage(GstMessage* msg) noexcept;
 
-/// Pipeline-restart hook; re-arms one-shot priming latches so a restart can prime on the next NEED_CONTEXT.
+/// Pipeline-restart hook; clears exhausted prime-retry latches (GL, Vulkan) so a restart can prime on the next
+/// NEED_CONTEXT. Never drops shared GPU objects: other streams may still be using them.
 void onPipelineRestart() noexcept;
 
-/// Drop process-wide native GPU handles tied to the current Qt scene-graph device/context.
+/// Drop process-wide native GPU handles tied to the current Qt scene-graph device/context. Affects every running
+/// stream, so only for scene-graph teardown, window swaps and device loss.
 void resetCachedGpuResources() noexcept;
 
 /// Wire the main QQuickWindow into the RHI-capture path so snapshots follow its QRhi; no-op without GPU.
