@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2024 L. E. Segovia <amy@centricular.com>
+# SPDX-License-Identifier: LGPL-2.1-or-later
+#
 # iOS GStreamer SDK discovery — invoked by Orchestrator.cmake.
 # GStreamer 1.28 for iOS ships a universal GStreamer.framework (cerbero
 # versioned bundle) whose Versions/1.0/GStreamer binary is a single merged
@@ -5,6 +8,11 @@
 # ship a GStreamer.xcframework with a fat libGStreamer.a per slice. Both reduce
 # to the same single-merged-archive consumption model
 # (_qgc_create_xcframework_targets) — discovery just locates the binary + Headers.
+#
+# The GStreamerMobile framework target in _qgc_create_xcframework_targets is derived from FindGStreamerMobile.cmake in
+# cerbero (https://gitlab.freedesktop.org/gstreamer/cerbero, data/mobile/FindGStreamerMobile.cmake). QGC changes: it is
+# built from the SDK's merged static archive, registers the plugins enumerated from that archive through the shared
+# C registration template instead of an Objective-C one, and SDK discovery is QGC's own.
 
 include_guard(GLOBAL)
 

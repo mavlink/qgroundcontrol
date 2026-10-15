@@ -1,4 +1,15 @@
+# SPDX-FileCopyrightText: 2024 L. E. Segovia <amy@centricular.com>
+# SPDX-License-Identifier: LGPL-2.1-or-later
+#
 # Android GStreamer SDK discovery — invoked by Orchestrator.cmake.
+#
+# The mobile target (_qgc_create_android_mobile_target and its helpers) is derived from FindGStreamerMobile.cmake in
+# cerbero (https://gitlab.freedesktop.org/gstreamer/cerbero, data/mobile/FindGStreamerMobile.cmake), which the Android
+# SDK installs as share/cmake/FindGStreamerMobile.cmake. QGC changes:
+#   - the plugin archives are linked into the application, which carries the only GStreamer core, instead of into a
+#     separate libgstreamer_android.so, and the static-plugin registration source is generated on the application;
+#   - plugins without a static library are left out, failing configure when a runtime-required one is missing;
+#   - SDK discovery and extraction (above the mobile target) are QGC's own.
 
 include_guard(GLOBAL)
 
