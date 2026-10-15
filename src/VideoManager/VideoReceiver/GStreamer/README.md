@@ -34,7 +34,8 @@ A QGC-owned plugin (`gstqgc/`) bridging the pipeline into Qt:
   Its construct-only `gpu-zerocopy` property (passed down by the bin) enables zero-copy import of GPU memory, and its
   `stats` property reports that sink's own frame counts per delivery path (`HwBuffers::formatSinkStats` formats them).
 - **`qgcvideosinkbin`** — a bin wrapping a format-restriction capsfilter plus `qgcqvideosink`.
-- **`QGCQVideoSinkController`** — GUI-thread companion that mirrors negotiation/telemetry from the sink into QGC.
+- **`QGCQVideoSinkController`** — GUI-thread companion that mirrors negotiation/telemetry from the sink into QGC, and
+  clears the frame its `QVideoSink` displays when the sink leaves the pipeline.
 
 ### `HwBuffers` — zero-copy GPU paths
 
@@ -170,9 +171,9 @@ gst-launch-1.0 udpsrc port=5600 caps='application/x-rtp, media=(string)video, cl
 
 | Test | Label | Covers |
 | --- | --- | --- |
-| `GStreamerTest` | Unit | Helpers, the source factory, the `gstqgc` sink and the `HwBuffers` paths. |
+| `GStreamerTest` | Integration | Helpers, the source factory, the `gstqgc` sink and the `HwBuffers` paths. |
 | `GstVideoReceiverComponentsTest` | Unit | The receiver's components without a stream: reconnect backoff, stall detection, recording finalization by ancestry, pipeline and `.dot` file names. |
-| `GstVideoReceiverTest` | Integration | `GstVideoReceiver` end to end against a live H.264 RTP stream it sends itself on loopback: start, decode and stop, failed starts, reconnects, recordings (playable while in progress, finalized on stop and on destruction, recorder errors), decoder setup and video size, bus hygiene and screenshots. |
+| `GstVideoReceiverTest` | Integration | `GstVideoReceiver` end to end against a live H.264 RTP stream it sends itself on loopback: start, decode and stop, failed starts, reconnects, recordings (playable while in progress, finalized on stop and on destruction, recorder errors), decoder setup and video size, bus hygiene, screenshots, and releasing the displayed frame on stop. |
 
 Each test skips, rather than fails, when GStreamer or a plugin it needs is missing (`GstVideoReceiverTest` needs `x264enc` among others).
 

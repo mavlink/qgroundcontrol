@@ -54,7 +54,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     )
 endif()
 
-# The *ForTest() helpers (singleFdImportEnabledForTest, clearForTest) compile only under this flag.
+# The test-only hooks (the *ForTest() helpers, GstHwPathRegistry::ScopedPathsForTest) compile only under this flag.
 # PUBLIC so both QGCGStreamer (helper defs) and the app target's GStreamerTest.cc (decls) see it.
 if(QGC_BUILD_TESTING)
     target_compile_definitions(QGCGStreamer PUBLIC QGC_GST_BUILD_TESTING)
