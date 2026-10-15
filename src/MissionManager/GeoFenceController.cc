@@ -478,7 +478,8 @@ double GeoFenceController::paramCircularFence(void)
             return 0;
         }
 
-        return _managerVehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, _px4ParamCircularFence)->rawValue().toDouble();
+        const Fact* const radiusFact = _managerVehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, _px4ParamCircularFence);
+        return radiusFact->rawValue().toDouble();
     }
 
     if(_managerVehicle->apmFirmware())
@@ -489,13 +490,17 @@ double GeoFenceController::paramCircularFence(void)
             return 0;
         }
 
-        bool apm_fence_enabled = _managerVehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, _apmParamCircularFenceEnabled)->rawValue().toBool();
-        bool apm_fence_type_circle = (1 << 1) & _managerVehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, _apmParamCircularFenceType)->rawValue().toUInt();
+        const Fact* const enabledFact = _managerVehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, _apmParamCircularFenceEnabled);
+        const Fact* const typeFact = _managerVehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, _apmParamCircularFenceType);
+        const Fact* const radiusFact = _managerVehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, _apmParamCircularFenceRadius);
+
+        bool apm_fence_enabled = enabledFact->rawValue().toBool();
+        bool apm_fence_type_circle = (1 << 1) & typeFact->rawValue().toUInt();
 
         if(!apm_fence_enabled || !apm_fence_type_circle)
             return 0;
 
-        return _managerVehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, _apmParamCircularFenceRadius)->rawValue().toDouble();
+        return radiusFact->rawValue().toDouble();
     }
 
     return 0;
