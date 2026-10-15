@@ -1,9 +1,12 @@
 #include "GstGlVideoBuffer.h"
 
+#include "GstGlContextBridge.h"
 #include "GstGlFrameTextures.h"
 #include "GstHwImportPreflight.h"
+#include "GstHwPathRegistry.h"
 #include "GstHwPathTelemetry.h"
 #include "GstHwVideoBuffer.h"
+#include "QGCRhiCapture.h"
 
 #if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
 
@@ -20,9 +23,11 @@
 #include "QGCLoggingCategory.h"
 
 // Qt's portable GL types (GLuint et al.) — works on Linux/macOS/Android without GLES2 SDK headers.
-#include <QtGui/qopengl.h>
 #include <algorithm>
 #include <array>
+#include <atomic>
+
+#include <QtGui/qopengl.h>
 
 #ifndef GL_TIMEOUT_IGNORED
 #define GL_TIMEOUT_IGNORED 0xFFFFFFFFFFFFFFFFull
@@ -85,6 +90,24 @@ void waitInQtContext(GstGLSyncMeta* syncMeta, GstGLContext* glCtx)
     }
     gst_gl_sync_meta_wait_cpu(syncMeta, glCtx);
     GstHwPathTelemetry::recordSyncWait(HwVideoBufferPath::GlMemory, /*gpuSide=*/false);
+}
+
+// mapTextures() binds GLMemory only under Qt's OpenGL(ES2) QRhi, but the glupload bin still emits GLMemory under a
+// non-GL RHI (forced Vulkan): those frames take the CPU path. Streaming thread, so read the published backend rather
+// than the render-thread-owned QRhi. Records each rejected frame.
+bool admitGlMemory()
+{
+    const int backend = QGCRhiCapture::deviceSnapshot().backend.load(std::memory_order_acquire);
+    if ((backend < 0) || (backend == static_cast<int>(QRhi::OpenGLES2))) {
+        return true;
+    }
+    static std::atomic<bool> s_warned{false};
+    if (!s_warned.exchange(true, std::memory_order_relaxed)) {
+        qCWarning(GstGlBufLog) << "GLMemory frame but QRhi backend is not OpenGL — routing to CPU pool";
+    }
+    GstHwPathTelemetry::recordFallbackReason(HwVideoBufferPath::GlMemory,
+                                             GstHwPathTelemetry::HwFallbackReason::ImportUnsupported);
+    return false;
 }
 
 }  // namespace
@@ -174,5 +197,13 @@ QVideoFrameTexturesUPtr GstGlVideoBuffer::mapTextures(QRhi& rhi, QVideoFrameText
         },
         [&] { return std::make_unique<FrameTextures>(&rhi, tail.frameSize, tail.pixelFormat, names, planeCount); });
 }
+
+constinit const HwPathDescriptor GstHwPaths::kGlMemory = {
+    .path = HwVideoBufferPath::GlMemory,
+    .matches = [](GstMemory* mem, const HwVideoBufferContext&) -> bool { return gst_is_gl_memory(mem); },
+    .admits = &admitGlMemory,
+    .construct = &GstHwPaths::construct<GstGlVideoBuffer>,
+    .bridge = &GstGlContextBridge::instance,
+};
 
 #endif  // QGC_HAS_GST_GLMEMORY_GPU_PATH

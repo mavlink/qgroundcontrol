@@ -20,7 +20,6 @@ class GstVulkanVideoBuffer final : public GstHwVideoBuffer
 public:
     GstVulkanVideoBuffer(GstSample* sample, const GstVideoInfo& videoInfo, const QVideoFrameFormat& format);
 
-    const char* storageTag() const override { return "Vulkan"; }
     bool validatePlaneHandles() const override;
     QVideoFrameTexturesUPtr mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& old) override;
 };

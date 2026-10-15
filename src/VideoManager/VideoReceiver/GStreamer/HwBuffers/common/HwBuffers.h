@@ -17,7 +17,8 @@ class QQuickWindow;
 
 namespace HwBuffers {
 
-/// One-time process init; single call site for future lazy bridge registration.
+/// Registers the compiled GPU paths (factory selection, context bridges, cache resets) in selection order. Called from
+/// the qgc plugin's init, before any pipeline exists; later calls do nothing.
 void initializeOnce() noexcept;
 
 /// Process-wide QGC_GST_* runtime toggles, parsed once and logged at first access so operators can paste the
@@ -58,7 +59,7 @@ void connectMainWindow(QQuickWindow* window) noexcept;
 /// disabled in builds without a GPU path. Safe off the GUI thread.
 HwVideoBufferContext makeAdapterContext(bool gpuEnabled) noexcept;
 
-/// Synchronously answer GST_QUERY_CONTEXT (gst.gl.GLDisplay/app_context); false -> let bus NEED_CONTEXT run.
+/// Synchronously answer GST_QUERY_CONTEXT through the GPU paths' context bridges; false -> let bus NEED_CONTEXT run.
 bool answerSinkBinContextQuery(GstQuery* query) noexcept;
 
 /// Add a buffer pool on Qt's D3D11/D3D12 device to an ALLOCATION query for caps in that memory, so the decoder

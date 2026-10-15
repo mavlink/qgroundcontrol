@@ -73,15 +73,17 @@ private:
     QElapsedTimer _timer;
 };
 
-/// DMABuf wait on the producer's fence (poll() on the dma-buf fd) timed out or failed.
-void recordFenceTimeout(HwVideoBufferPath path) noexcept;
-quint64 takeFenceTimeouts(HwVideoBufferPath path) noexcept;
+/// DMABuf wait on the producer's write fences (poll() on the dma-buf fds) timed out or failed; the frame was imported
+/// without a producer barrier.
+void recordProducerFenceTimeout(HwVideoBufferPath path) noexcept;
+quint64 takeProducerFenceTimeouts(HwVideoBufferPath path) noexcept;
 
-/// DMABuf CPU-side completion barrier taken (poll() on the dma-buf fd) because no usable fence ext was present.
-void recordMmapBarrierHit(HwVideoBufferPath path) noexcept;
-quint64 takeMmapBarrierHits(HwVideoBufferPath path) noexcept;
+/// DMABuf waited on the CPU for the producer's write fences (poll() on the dma-buf fds) because no GPU-side wait was
+/// available.
+void recordCpuBarrierWait(HwVideoBufferPath path) noexcept;
+quint64 takeCpuBarrierWaits(HwVideoBufferPath path) noexcept;
 
-/// DMABuf imported the producer's dma-buf/native fence and did a GPU-side wait (skipped the mmap barrier).
+/// DMABuf imported the producer's dma-buf/native fence and did a GPU-side wait (skipped the CPU barrier).
 void recordExplicitFenceWait(HwVideoBufferPath path) noexcept;
 quint64 takeExplicitFenceWaits(HwVideoBufferPath path) noexcept;
 

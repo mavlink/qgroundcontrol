@@ -13,6 +13,8 @@ target_sources(
             ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwPathTelemetry.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwPathTelemetry.h
             ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwTypes.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwVideoInfo.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwVideoInfo.h
             ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwVideoBufferFactory.h
             ${CMAKE_CURRENT_SOURCE_DIR}/common/CpuVideoFramePool.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/common/CpuVideoFramePool.h
@@ -112,8 +114,7 @@ function(_qgc_add_gpu_path name)
     if(_libs)
         target_link_libraries(QGCGStreamer PRIVATE ${_libs})
     endif()
-    # PUBLIC: these flags gate HwVideoBufferContext fields/EGL includes in GstHwVideoBufferFactory.h, which the app
-    # facade also includes — PRIVATE gave it a mismatched struct layout (dropped EGLDisplay).
+    # PUBLIC: the app facade (GStreamer.cc) and the GStreamer tests build outside QGCGStreamer and #if on these macros.
     target_compile_definitions(QGCGStreamer PUBLIC ${ARG_DEFINE}=1)
     message(STATUS "QGCGStreamer: ${name} zero-copy GPU path enabled")
     # cmake-lint: disable=C0103
@@ -330,8 +331,8 @@ target_sources(
             ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwVideoBuffer.h
             ${CMAKE_CURRENT_SOURCE_DIR}/common/GstContextBridgeBase.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/common/GstContextBridgeBase.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstContextBridgeRegistry.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstContextBridgeRegistry.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwPathRegistry.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwPathRegistry.h
             ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwVideoBufferFactory.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/common/QGCRhiCapture.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/common/QGCRhiCapture.h

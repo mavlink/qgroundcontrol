@@ -16,8 +16,8 @@ struct PathCounters
     std::atomic<quint64> imageCacheMisses{0};
     std::atomic<quint64> delivered{0};
     std::atomic<quint64> mapDurationUsEwma{0};
-    std::atomic<quint64> fenceTimeouts{0};
-    std::atomic<quint64> mmapBarrierHits{0};
+    std::atomic<quint64> producerFenceTimeouts{0};
+    std::atomic<quint64> cpuBarrierWaits{0};
     std::atomic<quint64> explicitFenceWaits{0};
     std::atomic<quint64> streamDemotions{0};
 };
@@ -126,24 +126,24 @@ quint64 peekMapDurationUsEwma(HwVideoBufferPath path) noexcept
     return slot(path).mapDurationUsEwma.load(std::memory_order_relaxed);
 }
 
-void recordFenceTimeout(HwVideoBufferPath path) noexcept
+void recordProducerFenceTimeout(HwVideoBufferPath path) noexcept
 {
-    slot(path).fenceTimeouts.fetch_add(1, std::memory_order_relaxed);
+    slot(path).producerFenceTimeouts.fetch_add(1, std::memory_order_relaxed);
 }
 
-quint64 takeFenceTimeouts(HwVideoBufferPath path) noexcept
+quint64 takeProducerFenceTimeouts(HwVideoBufferPath path) noexcept
 {
-    return slot(path).fenceTimeouts.exchange(0, std::memory_order_relaxed);
+    return slot(path).producerFenceTimeouts.exchange(0, std::memory_order_relaxed);
 }
 
-void recordMmapBarrierHit(HwVideoBufferPath path) noexcept
+void recordCpuBarrierWait(HwVideoBufferPath path) noexcept
 {
-    slot(path).mmapBarrierHits.fetch_add(1, std::memory_order_relaxed);
+    slot(path).cpuBarrierWaits.fetch_add(1, std::memory_order_relaxed);
 }
 
-quint64 takeMmapBarrierHits(HwVideoBufferPath path) noexcept
+quint64 takeCpuBarrierWaits(HwVideoBufferPath path) noexcept
 {
-    return slot(path).mmapBarrierHits.exchange(0, std::memory_order_relaxed);
+    return slot(path).cpuBarrierWaits.exchange(0, std::memory_order_relaxed);
 }
 
 void recordExplicitFenceWait(HwVideoBufferPath path) noexcept

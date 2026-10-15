@@ -17,8 +17,6 @@ public:
     QVideoFrameTexturesUPtr mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& oldTextures) override;
     bool validatePlaneHandles() const override;
 
-    const char* storageTag() const override { return "IOSurface"; }
-
     static void resetTextureCache() noexcept;
 };
 

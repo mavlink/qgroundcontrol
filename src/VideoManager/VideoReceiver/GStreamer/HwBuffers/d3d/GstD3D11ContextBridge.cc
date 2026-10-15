@@ -7,7 +7,6 @@
 #include <gst/d3d11/gstd3d11.h>
 #include <rhi/qrhi.h>  // QRhi::Implementation enum only; no runtime use across threads
 
-#include "GstContextBridgeRegistry.h"
 #include "GstD3DContextBridge.h"
 #include "QGCLoggingCategory.h"
 #include "QGCRhiCapture.h"
@@ -73,17 +72,6 @@ GstContext* D3D11ContextBridge::makeDeviceContext(GstObject* device)
     // gst_d3d11_context_new gst_object_ref's the device internally; caller retains ownership.
     return gst_d3d11_context_new(GST_D3D11_DEVICE_CAST(device));
 }
-
-struct D3D11BridgeRegistrar
-{
-    D3D11BridgeRegistrar()
-    {
-        GstContextBridgeRegistry::registerBridgeHandler([](GstMessage* m) { return s_bridge.handleSyncMessage(m); });
-        GstContextBridgeRegistry::registerResetCallback([] { s_bridge.reset(); });
-    }
-};
-
-const D3D11BridgeRegistrar s_d3d11BridgeRegistrar;
 
 }  // namespace
 

@@ -2,8 +2,10 @@
 
 #include <QtGui/qtguiglobal.h>
 
+#include "GstHwPathRegistry.h"
 #include "GstHwPathTelemetry.h"
 #include "GstHwVideoBuffer.h"
+#include "GstVulkanContextBridge.h"
 #include "GstVulkanFrameTextures.h"
 #include "GstVulkanImport.h"
 
@@ -111,5 +113,12 @@ QVideoFrameTexturesUPtr GstVulkanVideoBuffer::mapTextures(QRhi& rhi, QVideoFrame
         return std::make_unique<GstVulkanBorrowedFrameTextures>(&rhi, tail.frameSize, tail.pixelFormat, image, layout);
     });
 }
+
+constinit const HwPathDescriptor GstHwPaths::kVulkan = {
+    .path = HwVideoBufferPath::Vulkan,
+    .matches = [](GstMemory* mem, const HwVideoBufferContext&) -> bool { return gst_is_vulkan_image_memory(mem); },
+    .construct = &GstHwPaths::construct<GstVulkanVideoBuffer>,
+    .bridge = &GstVulkanContextBridge::instance,
+};
 
 #endif  // QGC_HAS_GST_VULKAN_GPU_PATH

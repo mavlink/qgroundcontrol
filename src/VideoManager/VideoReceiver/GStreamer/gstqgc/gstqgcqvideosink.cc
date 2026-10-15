@@ -16,8 +16,8 @@
 
 #include "GStreamerFrameMap.h"
 #include "GstQgcAllocation.h"
+#include "HwBuffers/common/GstHwVideoInfo.h"
 #include "HwBuffers/common/HwBuffers.h"
-#include "HwBuffers/dmabuf/GstDmaDrmCaps.h"
 #include "QGCLoggingCategory.h"
 #include "gstqgcelements.h"
 

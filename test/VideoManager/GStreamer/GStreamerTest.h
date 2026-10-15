@@ -94,6 +94,8 @@ private slots:
     void _testHwImportCacheRejectsInsertWhenAllPinned();
     void _testHwImportCacheDefersDestroyToOwnerThread();
     void _testHwBufferFactoryDispatchSystemMemory();
+    void _testHwPathRegistrySelection_data();
+    void _testHwPathRegistrySelection();
     void _testHwBufferFactoryCacheRejectsMemoryTypeChange();
     void _testDmaBufSingleFdImportEnvGate();
     void _testDmaBufEglBadMatchLatch_data();

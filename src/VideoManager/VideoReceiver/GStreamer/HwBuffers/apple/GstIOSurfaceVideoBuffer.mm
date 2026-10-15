@@ -1,7 +1,7 @@
 #include "GstIOSurfaceVideoBuffer.h"
-#include "GstContextBridgeRegistry.h"
 #include "GstHwVideoBuffer.h"
 #include "GstHwFrameTexturesBase.h"
+#include "GstHwPathRegistry.h"
 #include "GstHwPathTelemetry.h"
 
 #if (defined(Q_OS_MACOS) || defined(Q_OS_IOS)) && defined(QGC_HAS_GST_IOSURFACE_GPU_PATH)
@@ -206,14 +206,6 @@ void GstIOSurfaceVideoBuffer::resetTextureCache() noexcept
     s_cache = MetalTextureCache{};
 }
 
-namespace {
-struct IOSurfaceCacheResetRegistrar
-{
-    IOSurfaceCacheResetRegistrar() { GstContextBridgeRegistry::registerCacheReset(&GstIOSurfaceVideoBuffer::resetTextureCache); }
-};
-const IOSurfaceCacheResetRegistrar s_ioSurfaceCacheResetRegistrar;
-}  // namespace
-
 QVideoFrameTexturesUPtr GstIOSurfaceVideoBuffer::mapTextures(QRhi &rhi, QVideoFrameTexturesUPtr &old)
 {
     // *** UNTESTED on macOS hardware. CI compiles this path; runtime validation TBD. ***
@@ -366,5 +358,15 @@ QVideoFrameTexturesUPtr GstIOSurfaceVideoBuffer::mapTextures(QRhi &rhi, QVideoFr
 }
 
 
+
+// gst-applemedia exports no public gst_is_apple_core_video_memory() predicate, so match the allocator's memory type.
+constinit const HwPathDescriptor GstHwPaths::kIOSurface = {
+    .path = HwVideoBufferPath::IOSurface,
+    .matches = [](GstMemory* mem, const HwVideoBufferContext&) -> bool {
+        return mem->allocator && (g_strcmp0(mem->allocator->mem_type, "AppleCoreVideoMemory") == 0);
+    },
+    .construct = &GstHwPaths::construct<GstIOSurfaceVideoBuffer>,
+    .resetCaches = &GstIOSurfaceVideoBuffer::resetTextureCache,
+};
 
 #endif // (Q_OS_MACOS || Q_OS_IOS) && QGC_HAS_GST_IOSURFACE_GPU_PATH

@@ -34,7 +34,6 @@
 #if defined(QGC_HAS_GST_D3D12_GPU_PATH)
 #include "GstD3D12ContextBridge.h"
 #endif
-#include "GstContextBridgeRegistry.h"
 #include "GstHwVideoBuffer.h"
 #include "gstqgc/gstqgcvideosinkbin.h"
 #if defined(QGC_HAS_ANY_GPU_PATH)

@@ -5,7 +5,6 @@
 #include <gst/d3d12/gstd3d12.h>
 #include <rhi/qrhi.h>  // QRhi::Implementation enum only; native handles come from the snapshot
 
-#include "GstContextBridgeRegistry.h"
 #include "GstD3DContextBridge.h"
 #include "QGCLoggingCategory.h"
 #include "QGCRhiCapture.h"
@@ -51,17 +50,6 @@ GstContext* D3D12ContextBridge::makeDeviceContext(GstObject* device)
     // gst_d3d12_context_new gst_object_ref's the device internally; caller retains ownership.
     return gst_d3d12_context_new(GST_D3D12_DEVICE_CAST(device));
 }
-
-struct D3D12BridgeRegistrar
-{
-    D3D12BridgeRegistrar()
-    {
-        GstContextBridgeRegistry::registerBridgeHandler([](GstMessage* m) { return s_bridge.handleSyncMessage(m); });
-        GstContextBridgeRegistry::registerResetCallback([] { s_bridge.reset(); });
-    }
-};
-
-const D3D12BridgeRegistrar s_d3d12BridgeRegistrar;
 
 }  // namespace
 

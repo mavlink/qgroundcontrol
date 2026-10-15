@@ -16,8 +16,8 @@ class GstHwVideoBuffer;
 
 namespace GstCudaVideoBuffer {
 
-/// Export @p sample's CUDA memory to a DMABuf-backed GstHwVideoBuffer via gst_cuda_memory_export. Returns nullptr to
-/// trigger the factory's CPU fallback when export is unsupported on the running driver.
+/// Export @p sample's CUDA memory to a DMABuf-backed GstHwVideoBuffer via gst_cuda_memory_export. Returns nullptr when
+/// the running driver can't export it; GstHwPaths::kCuda then sends CUDA frames to the CPU for the rest of the process.
 std::unique_ptr<GstHwVideoBuffer> exportToDmaBuf(GstSample* sample, const GstVideoInfo& info, QVideoFrameFormat format,
                                                  const HwVideoBufferContext& context);
 

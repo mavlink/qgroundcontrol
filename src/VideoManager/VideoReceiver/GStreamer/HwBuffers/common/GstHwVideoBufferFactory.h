@@ -11,8 +11,8 @@
 
 class QHwVideoBuffer;
 
-/// Per-stream GPU path cache, keyed to a caps epoch. Lets makeHwVideoBuffer() skip the predicate ladder once a path has
-/// been resolved by a validated sample, and skip GPU selection for an allocator no path imports. Reset on set_caps.
+/// Per-stream GPU path cache, keyed to a caps epoch. Once a sample validated on a path, makeHwVideoBuffer() tries that
+/// path's descriptors first; an allocator no path imports skips GPU selection altogether. Reset on set_caps.
 struct HwResolvedPathCache
 {
     HwVideoBufferPath path = HwVideoBufferPath::None;

@@ -24,8 +24,6 @@ public:
     QVideoFrameTexturesUPtr mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& oldTextures) override;
     bool validatePlaneHandles() const override;
 
-    const char* storageTag() const override { return "DMABuf"; }
-
     static void resetCachedState() noexcept;
 
 #ifdef QGC_GST_BUILD_TESTING

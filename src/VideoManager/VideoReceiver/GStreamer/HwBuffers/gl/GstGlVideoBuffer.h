@@ -18,8 +18,6 @@ public:
 
     QVideoFrameTexturesUPtr mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& oldTextures) override;
     bool validatePlaneHandles() const override;
-
-    const char* storageTag() const override { return "GstGL"; }
 };
 
 #endif  // QGC_HAS_GST_GLMEMORY_GPU_PATH

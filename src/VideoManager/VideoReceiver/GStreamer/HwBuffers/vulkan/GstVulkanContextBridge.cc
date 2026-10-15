@@ -23,7 +23,6 @@ extern "C" {
 }
 #pragma pop_macro("slots")
 
-#include "GstContextBridgeRegistry.h"
 #include "QGCLoggingCategory.h"
 #include "QGCRhiCapture.h"
 
@@ -178,17 +177,6 @@ void VulkanContextBridge::clearLocked()
     gst_clear_object(&_device);
     gst_clear_object(&_instance);
 }
-
-struct VulkanBridgeRegistrar
-{
-    VulkanBridgeRegistrar()
-    {
-        GstContextBridgeRegistry::registerBridgeHandler([](GstMessage* m) { return s_bridge.handleSyncMessage(m); });
-        GstContextBridgeRegistry::registerResetCallback([] { s_bridge.reset(); });
-    }
-};
-
-const VulkanBridgeRegistrar s_vulkanBridgeRegistrar;
 
 }  // namespace
 

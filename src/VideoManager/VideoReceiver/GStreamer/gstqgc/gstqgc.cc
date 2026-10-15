@@ -1,8 +1,10 @@
+#include "HwBuffers/common/HwBuffers.h"
 #include "gstqgcelements.h"
 #include "qgc_version.h"
 
 static gboolean plugin_init(GstPlugin* plugin)
 {
+    HwBuffers::initializeOnce();
     if (!GST_ELEMENT_REGISTER(qgcvideosinkbin, plugin))
         return FALSE;
     if (!GST_ELEMENT_REGISTER(qgcqvideosink, plugin))

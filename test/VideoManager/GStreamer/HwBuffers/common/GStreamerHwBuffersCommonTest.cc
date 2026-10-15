@@ -51,8 +51,9 @@
 #if defined(QGC_HAS_GST_D3D12_GPU_PATH)
 #include "GstD3D12ContextBridge.h"
 #endif
-#include "GstContextBridgeRegistry.h"
+#include "GstContextBridgeBase.h"
 #include "GstHwFrameTexturesBase.h"
+#include "GstHwPathRegistry.h"
 #include "GstHwVideoBuffer.h"
 #include "GstHwVideoBufferFactory.h"
 #include "gstqgc/gstqgcvideosinkbin.h"
@@ -109,124 +110,157 @@ void GStreamerTest::_testBridgeDispatcherFanout()
 #endif
 }
 
+#if defined(QGC_HAS_ANY_GPU_PATH)
+namespace {
+
+Q_LOGGING_CATEGORY(TestContextBridgeLog, "Video.GStreamer.Test.ContextBridge")
+
+/// Bridge handing out a plain GstObject under one context type; counts primes and resets.
+class TestContextBridge final : public GstContextBridgeBase
+{
+public:
+    explicit TestContextBridge(std::span<const char* const> contextTypes)
+        : GstContextBridgeBase("Test", contextTypes, &TestContextBridgeLog)
+    {}
+
+    /// Unprimed, with zeroed counters.
+    void restart()
+    {
+        reset();
+        primes = 0;
+        clears = 0;
+    }
+
+    int primes = 0;
+    int clears = 0;
+
+private:
+    bool primeLocked() override
+    {
+        ++primes;
+        _object = GST_OBJECT(gst_object_ref_sink(gst_element_factory_make("identity", nullptr)));
+        return _object != nullptr;
+    }
+
+    GstObject* refObject(const char*) override { return _object ? GST_OBJECT(gst_object_ref(_object)) : nullptr; }
+
+    GstContext* buildContext(const char* contextType, GstObject* object) override
+    {
+        GstContext* context = gst_context_new(contextType, TRUE);
+        gst_structure_set(gst_context_writable_structure(context), "object", GST_TYPE_OBJECT, object, nullptr);
+        return context;
+    }
+
+    void clearLocked() override
+    {
+        ++clears;
+        gst_clear_object(&_object);
+    }
+
+    GstObject* _object = nullptr;
+};
+
+constexpr const char* kTestContextTypeA[] = {"qgc.test.context-a"};
+constexpr const char* kTestContextTypeB[] = {"qgc.test.context-b"};
+
+TestContextBridge& testBridgeA()
+{
+    static TestContextBridge bridge(kTestContextTypeA);
+    return bridge;
+}
+
+TestContextBridge& testBridgeB()
+{
+    static TestContextBridge bridge(kTestContextTypeB);
+    return bridge;
+}
+
+int s_testCacheResets = 0;
+
+const HwPathDescriptor kTestBridgePathA = {
+    .path = HwVideoBufferPath::GlMemory,
+    .matches = [](GstMemory*, const HwVideoBufferContext&) { return false; },
+    .resetCaches = [] { ++s_testCacheResets; },
+    .bridge = []() -> GstContextBridgeBase& { return testBridgeA(); },
+};
+
+const HwPathDescriptor kTestBridgePathB = {
+    .path = HwVideoBufferPath::Vulkan,
+    .matches = [](GstMemory*, const HwVideoBufferContext&) { return false; },
+    .bridge = []() -> GstContextBridgeBase& { return testBridgeB(); },
+};
+
+}  // namespace
+#endif
+
 void GStreamerTest::_testContextBridgeRegistry()
 {
-#if !defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) && !defined(QGC_HAS_GST_D3D11_GPU_PATH) && \
-    !defined(QGC_HAS_GST_D3D12_GPU_PATH)
-    QSKIP("No GPU context bridge compiled in this build");
+#if !defined(QGC_HAS_ANY_GPU_PATH) || !defined(QGC_GST_BUILD_TESTING)
+    QSKIP("No GPU path compiled in this build");
 #else
     GStreamer::redirectGLibLogging();
     QVERIFY2(GStreamer::completeInit(), "completeInit failed");
 
-    GstContextBridgeRegistry::clearForTest();
-
-    static bool s_invoked = false;
-    s_invoked = false;
-
-    GstContextBridgeRegistry::registerBridgeHandler([](GstMessage* msg) -> GstBusSyncReply {
-        const gchar* type = nullptr;
-        gst_message_parse_context_type(msg, &type);
-        if (type && std::string_view(type) == "test-bridge-only") {
-            s_invoked = true;
-            return GST_BUS_DROP;
-        }
-        return GST_BUS_PASS;
+    testBridgeA().restart();
+    testBridgeB().restart();
+    const auto bridgeGuard = qScopeGuard([] {
+        testBridgeA().restart();
+        testBridgeB().restart();
     });
+    const GstHwPathRegistry::ScopedPathsForTest paths({&kTestBridgePathA, &kTestBridgePathB});
 
-    GstElement* dummy = gst_element_factory_make("identity", nullptr);
-    QVERIFY(dummy);
+    GstElement* element = gst_element_factory_make("identity", nullptr);
+    QVERIFY(element);
+    const auto elementGuard = qScopeGuard([element] { gst_object_unref(element); });
 
-    GstMessage* hit = gst_message_new_need_context(GST_OBJECT(dummy), "test-bridge-only");
-    QVERIFY(hit);
-    QCOMPARE(GstContextBridgeRegistry::dispatchBridges(hit), GST_BUS_DROP);
-    QVERIFY(s_invoked);
-    gst_message_unref(hit);
+    // NEED_CONTEXT reaches the bridge owning the context type, and only that bridge primes.
+    GstMessage* needA = gst_message_new_need_context(GST_OBJECT(element), kTestContextTypeA[0]);
+    QCOMPARE(HwBuffers::onBusSyncMessage(nullptr, needA, nullptr), GST_BUS_DROP);
+    GstContext* deliveredA = gst_element_get_context(element, kTestContextTypeA[0]);
+    QVERIFY2(deliveredA, "Bridge A's context was not set on the requesting element");
+    gst_context_unref(deliveredA);
+    QCOMPARE(testBridgeA().primes, 1);
+    QCOMPARE(testBridgeB().primes, 0);
 
-    s_invoked = false;
-    GstMessage* miss = gst_message_new_need_context(GST_OBJECT(dummy), "other-context-type");
-    QVERIFY(miss);
-    QCOMPARE(GstContextBridgeRegistry::dispatchBridges(miss), GST_BUS_PASS);
-    QVERIFY(!s_invoked);
-    gst_message_unref(miss);
+    GstMessage* unknown = gst_message_new_need_context(GST_OBJECT(element), "qgc.test.context-unknown");
+    QCOMPARE(HwBuffers::onBusSyncMessage(nullptr, unknown, nullptr), GST_BUS_PASS);
+    gst_message_unref(unknown);
 
-    // Reset-callback round-trip: registerResetCallback + resetAllBridges must invoke every cb.
-    // Registry capacity is one slot per compiled bridge, so single-bridge builds (e.g. macOS
-    // GLMemory-only) can only exercise a single registration.
-    const bool multiSlot = GstContextBridgeRegistry::bridgeCapacityForTest() >= 2;
-    GstContextBridgeRegistry::clearForTest();
-    static int s_resetCount = 0;
-    s_resetCount = 0;
-    GstContextBridgeRegistry::registerResetCallback([]() { ++s_resetCount; });
-    if (multiSlot) {
-        GstContextBridgeRegistry::registerResetCallback([]() { s_resetCount += 10; });
-    }
-    GstContextBridgeRegistry::resetAllBridges();
-    QCOMPARE(s_resetCount, multiSlot ? 11 : 1);
-    // clearForTest must invoke pending reset callbacks before zeroing the slots so cached
-    // bridge state can't leak across test cases. Drop the prior round's callbacks first so we
-    // measure exactly the new callback's invocation count, not 1+10+1=12 from leftovers.
-    GstContextBridgeRegistry::clearForTest();
-    s_resetCount = 0;
-    GstContextBridgeRegistry::registerResetCallback([]() { ++s_resetCount; });
-    GstContextBridgeRegistry::clearForTest();
-    QCOMPARE(s_resetCount, 1);
-    GstContextBridgeRegistry::resetAllBridges();  // post-clear: no callbacks → no-op
-    QCOMPARE(s_resetCount, 1);
+    // A context query is answered through the same bridges; a primed bridge isn't primed again.
+    GstQuery* queryB = gst_query_new_context(kTestContextTypeB[0]);
+    QVERIFY(HwBuffers::answerSinkBinContextQuery(queryB));
+    GstContext* answeredB = nullptr;
+    gst_query_parse_context(queryB, &answeredB);
+    QVERIFY(answeredB);
+    QCOMPARE(QByteArray(gst_context_get_context_type(answeredB)), QByteArray(kTestContextTypeB[0]));
+    gst_query_unref(queryB);
 
-    // Coexistence: two bridges with different context types must not consume each other's messages.
-    // Needs two handler slots, so only meaningful on multi-bridge builds.
-    if (multiSlot) {
-        GstContextBridgeRegistry::clearForTest();
-        static bool s_aHit = false;
-        static bool s_bHit = false;
-        s_aHit = s_bHit = false;
-        GstContextBridgeRegistry::registerBridgeHandler([](GstMessage* m) -> GstBusSyncReply {
-            const gchar* t = nullptr;
-            gst_message_parse_context_type(m, &t);
-            if (t && std::string_view(t) == "type-A") {
-                s_aHit = true;
-                return GST_BUS_DROP;
-            }
-            return GST_BUS_PASS;
-        });
-        GstContextBridgeRegistry::registerBridgeHandler([](GstMessage* m) -> GstBusSyncReply {
-            const gchar* t = nullptr;
-            gst_message_parse_context_type(m, &t);
-            if (t && std::string_view(t) == "type-B") {
-                s_bHit = true;
-                return GST_BUS_DROP;
-            }
-            return GST_BUS_PASS;
-        });
-        GstMessage* msgA = gst_message_new_need_context(GST_OBJECT(dummy), "type-A");
-        QCOMPARE(GstContextBridgeRegistry::dispatchBridges(msgA), GST_BUS_DROP);
-        QVERIFY(s_aHit);
-        QVERIFY(!s_bHit);
-        gst_message_unref(msgA);
-        GstMessage* msgB = gst_message_new_need_context(GST_OBJECT(dummy), "type-B");
-        QCOMPARE(GstContextBridgeRegistry::dispatchBridges(msgB), GST_BUS_DROP);
-        QVERIFY(s_bHit);
-        gst_message_unref(msgB);
-    }
+    GstQuery* queryA = gst_query_new_context(kTestContextTypeA[0]);
+    QVERIFY(HwBuffers::answerSinkBinContextQuery(queryA));
+    gst_query_unref(queryA);
+    QCOMPARE(testBridgeA().primes, 1);
+    QCOMPARE(testBridgeB().primes, 1);
 
-    gst_object_unref(dummy);
+    GstQuery* unknownQuery = gst_query_new_context("qgc.test.context-unknown");
+    QVERIFY(!HwBuffers::answerSinkBinContextQuery(unknownQuery));
+    gst_query_unref(unknownQuery);
 #endif
 }
 
 void GStreamerTest::_testHwBufferLifecycleResetsNativeCaches()
 {
-#if !defined(QGC_HAS_ANY_GPU_PATH)
+#if !defined(QGC_HAS_ANY_GPU_PATH) || !defined(QGC_GST_BUILD_TESTING)
     QSKIP("HwBuffers not compiled in this build (no GPU path enabled)");
 #else
-    GstContextBridgeRegistry::clearForTest();
-    auto guard = qScopeGuard([] { GstContextBridgeRegistry::clearForTest(); });
+    testBridgeA().restart();
+    const auto bridgeGuard = qScopeGuard([] { testBridgeA().restart(); });
+    s_testCacheResets = 0;
+    const GstHwPathRegistry::ScopedPathsForTest paths({&kTestBridgePathA});
 
-    static int s_resetCount = 0;
-    s_resetCount = 0;
-    GstContextBridgeRegistry::registerResetCallback([]() { ++s_resetCount; });
-
+    QVERIFY(testBridgeA().prime());
     HwBuffers::resetCachedGpuResources();
-    QCOMPARE(s_resetCount, 1);
+    QCOMPARE(testBridgeA().clears, 1);
+    QCOMPARE(s_testCacheResets, 1);
 
     GstElement* dummy = gst_element_factory_make("identity", nullptr);
     QVERIFY(dummy);
@@ -235,7 +269,8 @@ void GStreamerTest::_testHwBufferLifecycleResetsNativeCaches()
         "debug");
     QVERIFY(ordinaryError);
     HwBuffers::dispatchBusMessage(ordinaryError);
-    QCOMPARE(s_resetCount, 1);
+    QCOMPARE(testBridgeA().clears, 1);
+    QCOMPARE(s_testCacheResets, 1);
     gst_message_unref(ordinaryError);
 
     GstMessage* deviceLostError = gst_message_new_error(
@@ -243,30 +278,18 @@ void GStreamerTest::_testHwBufferLifecycleResetsNativeCaches()
         "debug");
     QVERIFY(deviceLostError);
     HwBuffers::dispatchBusMessage(deviceLostError);
-    QCOMPARE(s_resetCount, 2);
+    QCOMPARE(testBridgeA().clears, 2);
+    QCOMPARE(s_testCacheResets, 2);
     gst_message_unref(deviceLostError);
     gst_object_unref(dummy);
 
-    // A (re)starting pipeline must leave shared bridge objects alone: another stream may be using them.
+    // A (re)starting pipeline must leave shared bridge objects and caches alone: another stream may be using them.
+    QVERIFY(testBridgeA().prime());
     HwBuffers::onPipelineRestart();
-    QCOMPARE(s_resetCount, 2);
-
-#if defined(QGC_HAS_GST_DMABUF_GPU_PATH) || defined(QGC_HAS_GST_D3D11_GPU_PATH) ||    \
-    defined(QGC_HAS_GST_D3D12_GPU_PATH) || defined(QGC_HAS_GST_IOSURFACE_GPU_PATH) || \
-    defined(QGC_HAS_GST_AHARDWAREBUFFER_GPU_PATH)
-    GstContextBridgeRegistry::clearForTest();
-    static int s_cacheReset = 0;
-    s_cacheReset = 0;
-    GstContextBridgeRegistry::registerCacheReset([]() { ++s_cacheReset; });
-    HwBuffers::onPipelineRestart();
-    QCOMPARE(s_cacheReset, 0);
-    GstContextBridgeRegistry::resetAllCaches();
-    QCOMPARE(s_cacheReset, 1);
-    s_cacheReset = 0;
-    GstContextBridgeRegistry::resetAllBridges();
-    QCOMPARE(s_cacheReset, 0);
-    GstContextBridgeRegistry::clearForTest();
-#endif
+    QCOMPARE(testBridgeA().clears, 2);
+    QCOMPARE(s_testCacheResets, 2);
+    QVERIFY(testBridgeA().prime());
+    QCOMPARE(testBridgeA().primes, 2);
 #endif
 }
 
@@ -554,6 +577,116 @@ void GStreamerTest::_testHwFrameTexturesRejectsForeignOldTextures()
 #endif
 }
 
+#if defined(QGC_HAS_ANY_GPU_PATH)
+namespace {
+
+/// Behaviour of one test path in _testHwPathRegistrySelection, plus what the factory did with it.
+struct TestPathState
+{
+    bool matches = false;
+    bool admits = true;
+    bool constructs = true;
+    int constructed = 0;
+    int importFailures = 0;
+};
+
+TestPathState s_testPathA;
+TestPathState s_testPathB;
+
+std::unique_ptr<GstHwVideoBuffer> constructTestBuffer(TestPathState& state, GstSample* sample, const GstVideoInfo& info,
+                                                      QVideoFrameFormat format)
+{
+    ++state.constructed;
+    return state.constructs ? std::make_unique<TestableHwVideoBuffer>(sample, info, std::move(format)) : nullptr;
+}
+
+const HwPathDescriptor kTestSelectPathA = {
+    .path = HwVideoBufferPath::GlMemory,
+    .matches = [](GstMemory*, const HwVideoBufferContext&) { return s_testPathA.matches; },
+    .admits = [] { return s_testPathA.admits; },
+    .construct = [](GstSample* sample, const GstVideoInfo& info, QVideoFrameFormat format,
+                    const HwVideoBufferContext&) { return constructTestBuffer(s_testPathA, sample, info, format); },
+    .onImportFailed = [] { ++s_testPathA.importFailures; },
+};
+
+const HwPathDescriptor kTestSelectPathB = {
+    .path = HwVideoBufferPath::Vulkan,
+    .matches = [](GstMemory*, const HwVideoBufferContext&) { return s_testPathB.matches; },
+    .construct = [](GstSample* sample, const GstVideoInfo& info, QVideoFrameFormat format,
+                    const HwVideoBufferContext&) { return constructTestBuffer(s_testPathB, sample, info, format); },
+};
+
+}  // namespace
+#endif
+
+void GStreamerTest::_testHwPathRegistrySelection_data()
+{
+    QTest::addColumn<bool>("aMatches");
+    QTest::addColumn<bool>("aAdmits");
+    QTest::addColumn<bool>("aConstructs");
+    QTest::addColumn<int>("cachedPath");
+    QTest::addColumn<int>("expectedPath");
+    QTest::addColumn<int>("expectedBConstructed");
+    QTest::addColumn<int>("expectedAImportFailures");
+
+    // Path A (GL) is registered before path B (Vulkan); B always matches and imports.
+    const int none = int(HwVideoBufferPath::None);
+    const int gl = int(HwVideoBufferPath::GlMemory);
+    const int vulkan = int(HwVideoBufferPath::Vulkan);
+    QTest::newRow("first-registered-match-wins") << true << true << true << none << gl << 0 << 0;
+    QTest::newRow("non-matching-path-skipped") << false << true << true << none << vulkan << 1 << 0;
+    QTest::newRow("declining-path-sends-frame-to-cpu") << true << false << true << none << none << 0 << 0;
+    QTest::newRow("failed-import-notifies-its-path") << true << true << false << none << none << 0 << 1;
+    QTest::newRow("validated-path-tried-first") << true << true << true << vulkan << vulkan << 1 << 0;
+}
+
+void GStreamerTest::_testHwPathRegistrySelection()
+{
+#if !defined(QGC_HAS_ANY_GPU_PATH) || !defined(QGC_GST_BUILD_TESTING)
+    QSKIP("GPU path registry not compiled in this build (no GPU path enabled)");
+#else
+    QFETCH(bool, aMatches);
+    QFETCH(bool, aAdmits);
+    QFETCH(bool, aConstructs);
+    QFETCH(int, cachedPath);
+    QFETCH(int, expectedPath);
+    QFETCH(int, expectedBConstructed);
+    QFETCH(int, expectedAImportFailures);
+
+    s_testPathA = {.matches = aMatches, .admits = aAdmits, .constructs = aConstructs};
+    s_testPathB = {.matches = true};
+    const GstHwPathRegistry::ScopedPathsForTest paths({&kTestSelectPathA, &kTestSelectPathB});
+
+    GstVideoInfo info;
+    GstSample* sample = makeNv12Sample(16, 16, &info, false, 0, 0, 0, 0);
+    QVERIFY(sample);
+    const auto sampleGuard = qScopeGuard([sample] { gst_sample_unref(sample); });
+
+    HwVideoBufferContext context;
+    context.gpuEnabled = true;
+    HwResolvedPathCache cache;
+    cache.path = static_cast<HwVideoBufferPath>(cachedPath);
+    cache.validated = (cache.path != HwVideoBufferPath::None);
+    HwVideoBufferPath path = HwVideoBufferPath::None;
+
+    if (!aConstructs) {
+        expectLogMessage("Video.GStreamer.HwBuffers.Factory", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("failed plane-handle validation")));
+    }
+    const auto buffer = makeHwVideoBuffer(
+        sample, info, QVideoFrameFormat(QSize(16, 16), QVideoFrameFormat::Format_NV12), context, path, &cache);
+    if (!aConstructs) {
+        verifyExpectedLogMessage();
+    }
+
+    QCOMPARE(int(path), expectedPath);
+    QCOMPARE(bool(buffer), expectedPath != int(HwVideoBufferPath::None));
+    QCOMPARE(cache.validated, expectedPath != int(HwVideoBufferPath::None));
+    QCOMPARE(s_testPathB.constructed, expectedBConstructed);
+    QCOMPARE(s_testPathA.importFailures, expectedAImportFailures);
+#endif
+}
+
 void GStreamerTest::_testHwBufferCropMatrixIdentityWithoutMeta()
 {
 #if !defined(QGC_HAS_ANY_GPU_PATH)
@@ -595,7 +728,7 @@ void GStreamerTest::_testHwVideoBufferCpuMapFallback()
         sample, info, QVideoFrameFormat(QSize(4, 2), QVideoFrameFormat::Format_BGRA8888));
     gst_sample_unref(sample);
     // A bundle from an earlier successful import takes its own sample ref; the CPU view must survive that.
-    gst_sample_unref(hw->takeSample());
+    gst_sample_unref(hw->refSample());
     QVideoFrame frame(std::move(hw));
 
     // Qt's createTextures() falls back to uploading map() when mapTextures() fails.
@@ -745,8 +878,8 @@ void GStreamerTest::_testTelemetryDmaBufExtraStatsDrain()
     QSKIP("DMABuf GPU path not compiled in this build");
 #else
     (void) HwBuffers::takeExtraPathStats();
-    GstHwPathTelemetry::recordFenceTimeout(HwVideoBufferPath::DmaBuf);
-    GstHwPathTelemetry::recordMmapBarrierHit(HwVideoBufferPath::DmaBuf);
+    GstHwPathTelemetry::recordProducerFenceTimeout(HwVideoBufferPath::DmaBuf);
+    GstHwPathTelemetry::recordCpuBarrierWait(HwVideoBufferPath::DmaBuf);
     GstHwPathTelemetry::recordExplicitFenceWait(HwVideoBufferPath::DmaBuf);
     GstHwPathTelemetry::recordImageCacheHit(HwVideoBufferPath::DmaBuf);
     GstHwPathTelemetry::recordImageCacheHit(HwVideoBufferPath::DmaBuf);
@@ -754,13 +887,13 @@ void GStreamerTest::_testTelemetryDmaBufExtraStatsDrain()
 
     const QString first = HwBuffers::takeExtraPathStats();
     QVERIFY(first.contains(QStringLiteral("DMABuf-fence-timeouts:")));
-    QVERIFY(first.contains(QStringLiteral("DMABuf-mmap-barriers:")));
+    QVERIFY(first.contains(QStringLiteral("DMABuf-cpu-barriers:")));
     QVERIFY(first.contains(QStringLiteral("DMABuf-explicit-fence-waits:")));
     QVERIFY2(first.contains(QStringLiteral("DMABuf-image-cache[hit/miss]:2/1")), qPrintable(first));
 
     const QString second = HwBuffers::takeExtraPathStats();
     QVERIFY(second.contains(QStringLiteral("DMABuf-fence-timeouts:0")));
-    QVERIFY(second.contains(QStringLiteral("DMABuf-mmap-barriers:0")));
+    QVERIFY(second.contains(QStringLiteral("DMABuf-cpu-barriers:0")));
     QVERIFY(second.contains(QStringLiteral("DMABuf-explicit-fence-waits:0")));
     QVERIFY(!second.contains(QStringLiteral("image-cache")));
 #endif

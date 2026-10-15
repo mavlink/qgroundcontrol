@@ -2,17 +2,18 @@
 
 #if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D11_GPU_PATH)
 
-#include <QtCore/QMutex>
 #include <algorithm>
 #include <array>
 #include <cstddef>
 #include <d3d11.h>
 #include <gst/d3d11/gstd3d11.h>
 
-#include "GstContextBridgeRegistry.h"
+#include <QtCore/QMutex>
+
 #include "GstD3D11ContextBridge.h"
 #include "GstD3DVideoBufferCommon.h"
 #include "GstHwImportCache.h"
+#include "GstHwPathRegistry.h"
 #include "GstHwPathTelemetry.h"
 #include "QGCLoggingCategory.h"
 
@@ -200,14 +201,6 @@ void GstD3D11VideoBuffer::resetCachedState() noexcept
     s_diag.reset();
 }
 
-namespace {
-struct D3D11CacheResetRegistrar
-{
-    D3D11CacheResetRegistrar() { GstContextBridgeRegistry::registerCacheReset(&GstD3D11VideoBuffer::resetCachedState); }
-};
-
-const D3D11CacheResetRegistrar s_d3d11CacheResetRegistrar;
-}  // namespace
 
 GstD3D11VideoBuffer::GstD3D11VideoBuffer(GstSample* sample, const GstVideoInfo& videoInfo,
                                          const QVideoFrameFormat& format)
@@ -278,5 +271,55 @@ QVideoFrameTexturesUPtr GstD3D11VideoBuffer::mapTextures(QRhi& rhi, QVideoFrameT
                             .successTag = "D3D11"};
     return GstD3DVideoBufferCommon::mapResolvedTextures(*this, rhi, old, tail, _textures, _resolvedCount);
 }
+
+namespace {
+
+// Bind allocation to QRhi's shared device so import stays same-device instead of hitting
+// GstD3D11VideoBuffer's foreign-device copy path; SHADER_RESOURCE matches the importer's sampled texture.
+bool proposeD3D11Pool(GstQuery* query, GstCaps* caps, const GstVideoInfo* vinfo, gsize size, guint minBuffers)
+{
+    GstCapsFeatures* features = gst_caps_get_features(caps, 0);
+    if (!features || !gst_caps_features_contains(features, GST_CAPS_FEATURE_MEMORY_D3D11_MEMORY)) {
+        return false;
+    }
+    GstD3D11Device* device = GstD3D11ContextBridge::currentDevice();
+    if (!device) {
+        return false;
+    }
+    bool proposed = false;
+    if (GstBufferPool* pool = gst_d3d11_buffer_pool_new(device)) {
+        GstStructure* config = gst_buffer_pool_get_config(pool);
+        gst_buffer_pool_config_set_params(config, caps, size, minBuffers, 0);
+        gst_buffer_pool_config_add_option(config, GST_BUFFER_POOL_OPTION_VIDEO_META);
+        if (GstD3D11AllocationParams* params = gst_d3d11_allocation_params_new(
+                device, vinfo, GST_D3D11_ALLOCATION_FLAG_DEFAULT, D3D11_BIND_SHADER_RESOURCE, 0)) {
+            gst_buffer_pool_config_set_d3d11_allocation_params(config, params);
+            gst_d3d11_allocation_params_free(params);
+        }
+        if (gst_buffer_pool_set_config(pool, config)) {
+            // The d3d11 pool may grow the buffer size to the allocated texture's pitch; re-read it.
+            GstStructure* updated = gst_buffer_pool_get_config(pool);
+            guint poolSize = static_cast<guint>(size);
+            gst_buffer_pool_config_get_params(updated, nullptr, &poolSize, nullptr, nullptr);
+            gst_structure_free(updated);
+            gst_query_add_allocation_pool(query, pool, poolSize, minBuffers, 0);
+            proposed = true;
+        }
+        gst_object_unref(pool);
+    }
+    gst_object_unref(device);  // currentDevice() returns a transfer-full ref.
+    return proposed;
+}
+
+}  // namespace
+
+constinit const HwPathDescriptor GstHwPaths::kD3D11 = {
+    .path = HwVideoBufferPath::D3D11,
+    .matches = [](GstMemory* mem, const HwVideoBufferContext&) -> bool { return gst_is_d3d11_memory(mem); },
+    .construct = &GstHwPaths::construct<GstD3D11VideoBuffer>,
+    .resetCaches = &GstD3D11VideoBuffer::resetCachedState,
+    .proposePool = &proposeD3D11Pool,
+    .bridge = &GstD3D11ContextBridge::instance,
+};
 
 #endif  // Q_OS_WIN && QGC_HAS_GST_D3D11_GPU_PATH

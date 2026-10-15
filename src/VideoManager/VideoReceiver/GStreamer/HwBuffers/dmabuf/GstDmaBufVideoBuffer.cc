@@ -1,12 +1,12 @@
 #include "GstDmaBufVideoBuffer.h"
 
-#include "GstContextBridgeRegistry.h"
 #include "GstDmaBufVulkanImport.h"
 #include "GstDmaFourcc.h"
 #include "GstEglHelpers.h"
 #include "GstGlFrameTextures.h"
 #include "GstHwImportCache.h"
 #include "GstHwImportPreflight.h"
+#include "GstHwPathRegistry.h"
 #include "GstHwPathTelemetry.h"
 #include "GstHwVideoBuffer.h"
 #include "GstVulkanFrameTextures.h"
@@ -16,6 +16,11 @@
 
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
 
+#include <gst/allocators/gstdmabuf.h>
+#include <gst/video/video.h>
+#include <private/qvideotexturehelper_p.h>
+#include <rhi/qrhi.h>
+
 #include <QtCore/QByteArray>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QMutex>
@@ -24,10 +29,7 @@
 #include <QtGui/QOpenGLContext>
 #include <QtGui/QOpenGLFunctions>
 #include <QtGui/qopenglcontext_platform.h>
-#include <gst/allocators/gstdmabuf.h>
-#include <gst/video/video.h>
-#include <private/qvideotexturehelper_p.h>
-#include <rhi/qrhi.h>
+#include <qpa/qplatformnativeinterface.h>
 
 #include "QGCLoggingCategory.h"
 #if GST_CHECK_VERSION(1, 24, 0)
@@ -437,7 +439,7 @@ bool waitForProducerWrites(GstBuffer* buffer)
         } while (ret < 0 && (errno == EINTR || errno == EAGAIN));
         if (ret <= 0) {
             const int pollError = (ret < 0) ? errno : 0;
-            GstHwPathTelemetry::recordFenceTimeout(HwVideoBufferPath::DmaBuf);
+            GstHwPathTelemetry::recordProducerFenceTimeout(HwVideoBufferPath::DmaBuf);
             QGC_HW_WARN_ONCE(GstDmaBufLog, s_loggedProducerWaitTimeout,
                              "dma-buf producer fence wait" << (ret == 0 ? "timed out" : "failed") << "errno="
                                                            << pollError << "— no producer barrier for this frame");
@@ -445,7 +447,7 @@ bool waitForProducerWrites(GstBuffer* buffer)
         }
     }
     GstHwPathTelemetry::recordSyncWait(HwVideoBufferPath::DmaBuf, /*gpuSide=*/false);
-    GstHwPathTelemetry::recordMmapBarrierHit(HwVideoBufferPath::DmaBuf);
+    GstHwPathTelemetry::recordCpuBarrierWait(HwVideoBufferPath::DmaBuf);
     return true;
 }
 
@@ -751,16 +753,49 @@ void GstDmaBufVideoBuffer::resetCachedState() noexcept
 }
 
 namespace {
-struct DmaBufCacheResetRegistrar
-{
-    DmaBufCacheResetRegistrar()
-    {
-        GstContextBridgeRegistry::registerCacheReset(&GstDmaBufVideoBuffer::resetCachedState);
-    }
-};
 
-const DmaBufCacheResetRegistrar s_dmaBufCacheResetRegistrar;
+// Construction-time hint only; render-time mapTextures() prefers eglGetCurrentDisplay() to avoid xcb_egl EGLDisplay
+// mismatches.
+void prepareDmaBufContext(HwVideoBufferContext& context)
+{
+    EGLDisplay dpy = EGL_NO_DISPLAY;
+    const QString platform = QGuiApplication::platformName();
+    if (platform == QLatin1String("wayland") || platform == QLatin1String("wayland-egl")) {
+        if (auto* ni = QGuiApplication::platformNativeInterface()) {
+            dpy = static_cast<EGLDisplay>(ni->nativeResourceForIntegration("egldisplay"));
+        }
+    }
+    if (dpy == EGL_NO_DISPLAY) {
+        dpy = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+    }
+    if (dpy == EGL_NO_DISPLAY) {
+        qCWarning(GstDmaBufLog) << "GPU zero-copy requested but EGLDisplay unavailable on platform" << platform
+                                << "— DMABuf path disabled";
+    } else {
+        qCInfo(GstDmaBufLog) << "DMABuf zero-copy path available on" << platform
+                             << "— actual path chosen at caps negotiation";
+    }
+    context.dmaBufEglDisplay = dpy;
+}
+
 }  // namespace
+
+constinit const HwPathDescriptor GstHwPaths::kDmaBuf = {
+    .path = HwVideoBufferPath::DmaBuf,
+    .matches = [](GstMemory* mem, const HwVideoBufferContext& context) -> bool {
+        return (context.dmaBufEglDisplay != EGL_NO_DISPLAY) && gst_is_dmabuf_memory(mem);
+    },
+    .construct = [](GstSample* sample, const GstVideoInfo& info, QVideoFrameFormat format,
+                    const HwVideoBufferContext& context) -> std::unique_ptr<GstHwVideoBuffer> {
+        return std::make_unique<GstDmaBufVideoBuffer>(sample, info, format, context.dmaBufEglDisplay);
+    },
+    .prepareContext = &prepareDmaBufContext,
+    .resetCaches =
+        [] {
+            GstDmaBufVideoBuffer::resetCachedState();
+            GstEglHelpers::resetExtensionCache();
+        },
+};
 
 #ifdef QGC_GST_BUILD_TESTING
 bool GstDmaBufVideoBuffer::singleFdImportEnabledForTest() noexcept

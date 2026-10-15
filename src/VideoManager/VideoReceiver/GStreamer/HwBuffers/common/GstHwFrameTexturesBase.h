@@ -86,7 +86,7 @@ public:
         if constexpr (!std::is_null_pointer_v<std::remove_cvref_t<Reuse>>) {
             if (FT* prev = reusableBundle<FT>(old, tail.path); prev && reuse(*prev)) {
                 GstHwPathTelemetry::recordTextureReuse(tail.path);
-                prev->setSourceSample(source.takeSample());
+                prev->setSourceSample(source.refSample());
                 return std::move(old);
             }
         }
@@ -109,7 +109,7 @@ public:
             GstHwVideoBuffer::logFirstSuccess(tail.diag->loggedFirstSuccess, *tail.log, tail.successTag, tail.frameSize,
                                               tail.pixelFormat, textures->_count);
         }
-        textures->setSourceSample(source.takeSample());
+        textures->setSourceSample(source.refSample());
         return textures;
     }
 

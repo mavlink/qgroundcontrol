@@ -66,13 +66,10 @@ public:
     /// Streaming-thread sanity check on per-plane handles; failure routes to CPU memcpy.
     virtual bool validatePlaneHandles() const { return true; }
 
-    /// Human-readable GPU path identifier (e.g. "DMABuf"); string literal, safe from any thread.
-    virtual const char* storageTag() const { return "Unknown"; }
-
     /// New sample ref for the texture bundle built in mapTextures(). The buffer keeps its own ref so map() and a
     /// repeated mapTextures() (another window, QRhi re-creation) still find the sample; Qt keeps this frame alive
     /// alongside the bundle anyway (QVideoFrameTextures::setSourceFrame), so no buffer is held longer.
-    GstSample* takeSample() noexcept { return _sample ? gst_sample_ref(_sample) : nullptr; }
+    GstSample* refSample() noexcept { return _sample ? gst_sample_ref(_sample) : nullptr; }
 
     /// One-shot "first zero-copy success" info line; silent after @p flag first flips.
     static void logFirstSuccess(std::atomic<bool>& flag, const QLoggingCategory& cat, const char* tag, QSize frameSize,

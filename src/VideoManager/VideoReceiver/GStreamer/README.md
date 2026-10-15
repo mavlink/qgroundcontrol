@@ -36,7 +36,12 @@ A QGC-owned plugin (`gstqgc/`) bridging the pipeline into Qt:
 Per-platform zero-copy import of decoded GPU frames, all sharing `GstHwFrameTexturesBase : QVideoFrameTextures`:
 
 - **Platforms**: `dmabuf` (Linux/VA-API), `gl`, `vulkan`, `d3d` (D3D11/D3D12), `cuda`, `apple` (IOSurface), `android` (AHardwareBuffer).
-- **`GstContextBridgeRegistry`** fans `GstBus` sync messages out to every compiled context bridge for cross-thread GPU-context handoff.
+- **`HwPathDescriptor`**: each backend describes its path once (memory match, buffer construction, cache reset,
+  pool proposal, context bridge). `HwBuffers::initializeOnce()` registers the compiled ones in `GstHwPathRegistry`
+  when the qgc plugin loads. The factory selects the first registered path whose descriptor matches a frame's memory,
+  and the facade loops over the registry for bus messages, context queries, restarts and resets.
+- **`GstContextBridgeBase`**: GL, Vulkan, D3D11 and D3D12 bridges hand Qt's GPU device to GStreamer elements through
+  `NEED_CONTEXT` and context queries.
 - **`GstHwPathTelemetry`** tracks per-format/per-path counters (map failures, reuse hits, sync waits) for fallback diagnostics.
 - **`CpuVideoFramePool`** recycles CPU-backed `QVideoFrame` storage (WebRTC-style slab) for the software-fallback path, avoiding per-frame allocation.
 - **Build options**: `HwBuffers/CMakeLists.txt` probes one table row per path; each compiled path can be dropped with

@@ -1,156 +1,66 @@
 #include "HwBuffers.h"
 
-#if defined(QGC_HAS_ANY_GPU_PATH)
-#include "GstContextBridgeRegistry.h"
-#endif
-#if defined(QGC_HAS_GST_AHARDWAREBUFFER_GPU_PATH)
-#include "GstAHardwareBufferVideoBuffer.h"
-#endif
-#if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
-#include "GstDmaBufVideoBuffer.h"
-#endif
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
-#include "GstD3D11ContextBridge.h"
-#include "GstD3D11VideoBuffer.h"
-#endif
-#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
-#include "GstD3D12ContextBridge.h"
-#include "GstD3D12VideoBuffer.h"
-#endif
-#if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D11_GPU_PATH)
-#include <gst/d3d11/gstd3d11.h>
-#endif
-#if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D12_GPU_PATH)
-#include <gst/d3d12/gstd3d12.h>
-#endif
-#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
-#include "GstGlContextBridge.h"
-#endif
-#if defined(QGC_HAS_GST_VULKAN_GPU_PATH)
-#include "GstVulkanContextBridge.h"
-#endif
-#if defined(QGC_HAS_GST_IOSURFACE_GPU_PATH)
-#include "GstIOSurfaceVideoBuffer.h"
-#endif
-#if defined(QGC_HAS_ANY_GPU_PATH)
-#include "QGCRhiCapture.h"
-#endif
-
-#if defined(QGC_HAS_ANY_GPU_PATH)
-#include "QGCLoggingCategory.h"
-QGC_LOGGING_CATEGORY(HwBuffersFacadeLog, "Video.GStreamer.HwBuffers.Facade")
-#endif
-#if defined(QGC_HAS_GST_DMABUF_GPU_PATH) || defined(QGC_HAS_GST_AHARDWAREBUFFER_GPU_PATH)
-#include <EGL/egl.h>
-#include <QtGui/QGuiApplication>
-#include <qpa/qplatformnativeinterface.h>
-
-#include "GstEglHelpers.h"
-#endif
-
 #include <QtCore/QByteArray>
 #include <utility>
 
 #include "QGCLoggingCategory.h"
+
+#if defined(QGC_HAS_ANY_GPU_PATH)
+#include "GstContextBridgeBase.h"
+#include "GstHwPathRegistry.h"
+#include "QGCRhiCapture.h"
+#endif
 
 namespace HwBuffers {
 
 QGC_LOGGING_CATEGORY(HwBuffersConfigLog, "Video.GStreamer.HwBuffers.Config")
 
 #if defined(QGC_HAS_ANY_GPU_PATH)
+QGC_LOGGING_CATEGORY(HwBuffersFacadeLog, "Video.GStreamer.HwBuffers.Facade")
+
 namespace {
-// GPU paths compiled into this build; the stats formatters iterate it instead of repeating the ifdef ladder.
-constexpr HwVideoBufferPath kEnabledPaths[] = {
+
+// Every compiled GPU path in selection order: a frame takes the first one whose matches() accepts its memory. CUDA
+// precedes DMABuf because it exports CUDA memory to the DMABuf importer.
+constexpr const HwPathDescriptor* kCompiledPaths[] = {
+#if defined(QGC_HAS_GST_CUDA_GPU_PATH)
+    &GstHwPaths::kCuda,
+#endif
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
-    HwVideoBufferPath::DmaBuf,
+    &GstHwPaths::kDmaBuf,
 #endif
 #if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
-    HwVideoBufferPath::GlMemory,
+    &GstHwPaths::kGlMemory,
 #endif
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
-    HwVideoBufferPath::D3D11,
+#if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D11_GPU_PATH)
+    &GstHwPaths::kD3D11,
 #endif
-#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
-    HwVideoBufferPath::D3D12,
-#endif
-#if defined(QGC_HAS_GST_IOSURFACE_GPU_PATH)
-    HwVideoBufferPath::IOSurface,
-#endif
-#if defined(QGC_HAS_GST_AHARDWAREBUFFER_GPU_PATH)
-    HwVideoBufferPath::AHardwareBuffer,
+#if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D12_GPU_PATH)
+    &GstHwPaths::kD3D12,
 #endif
 #if defined(QGC_HAS_GST_VULKAN_GPU_PATH)
-    HwVideoBufferPath::Vulkan,
+    &GstHwPaths::kVulkan,
+#endif
+#if defined(QGC_HAS_GST_IOSURFACE_GPU_PATH)
+    &GstHwPaths::kIOSurface,
+#endif
+#if defined(QGC_HAS_GST_AHARDWAREBUFFER_GPU_PATH)
+    &GstHwPaths::kAHardwareBuffer,
 #endif
 };
 
-#if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D11_GPU_PATH)
-// Bind allocation to QRhi's shared device so import stays same-device instead of hitting
-// GstD3D11VideoBuffer's foreign-device copy path; SHADER_RESOURCE matches the importer's sampled texture.
-bool tryProposeD3D11Pool(GstQuery* query, GstCaps* caps, const GstVideoInfo* vinfo, gsize size, guint minBuffers)
+/// Calls @p fn for every registered GPU path in HwVideoBufferPath order (the stats order), once per path.
+template <class Fn>
+void forEachRegisteredPath(Fn&& fn)
 {
-    GstD3D11Device* device = GstD3D11ContextBridge::currentDevice();
-    if (!device) {
-        return false;
-    }
-    bool proposed = false;
-    if (GstBufferPool* pool = gst_d3d11_buffer_pool_new(device)) {
-        GstStructure* config = gst_buffer_pool_get_config(pool);
-        gst_buffer_pool_config_set_params(config, caps, size, minBuffers, 0);
-        gst_buffer_pool_config_add_option(config, GST_BUFFER_POOL_OPTION_VIDEO_META);
-        if (GstD3D11AllocationParams* params = gst_d3d11_allocation_params_new(
-                device, vinfo, GST_D3D11_ALLOCATION_FLAG_DEFAULT, D3D11_BIND_SHADER_RESOURCE, 0)) {
-            gst_buffer_pool_config_set_d3d11_allocation_params(config, params);
-            gst_d3d11_allocation_params_free(params);
+    for (std::size_t i = 1; i < GstHw::kPathCount; ++i) {
+        const auto path = static_cast<HwVideoBufferPath>(i);
+        if (GstHwPathRegistry::has(path)) {
+            fn(path);
         }
-        if (gst_buffer_pool_set_config(pool, config)) {
-            // The d3d11 pool may grow the buffer size to the allocated texture's pitch; re-read it.
-            GstStructure* updated = gst_buffer_pool_get_config(pool);
-            guint poolSize = static_cast<guint>(size);
-            gst_buffer_pool_config_get_params(updated, nullptr, &poolSize, nullptr, nullptr);
-            gst_structure_free(updated);
-            gst_query_add_allocation_pool(query, pool, poolSize, minBuffers, 0);
-            proposed = true;
-        }
-        gst_object_unref(pool);
     }
-    gst_object_unref(device);  // currentDevice() returns a transfer-full ref.
-    return proposed;
 }
-#endif
 
-#if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D12_GPU_PATH)
-// D3D12 counterpart of tryProposeD3D11Pool — steers allocation onto QRhi's shared (LUID-matched) adapter.
-bool tryProposeD3D12Pool(GstQuery* query, GstCaps* caps, const GstVideoInfo* vinfo, gsize size, guint minBuffers)
-{
-    GstD3D12Device* device = GstD3D12ContextBridge::currentDevice();
-    if (!device) {
-        return false;
-    }
-    bool proposed = false;
-    if (GstBufferPool* pool = gst_d3d12_buffer_pool_new(device)) {
-        GstStructure* config = gst_buffer_pool_get_config(pool);
-        gst_buffer_pool_config_set_params(config, caps, size, minBuffers, 0);
-        gst_buffer_pool_config_add_option(config, GST_BUFFER_POOL_OPTION_VIDEO_META);
-        if (GstD3D12AllocationParams* params = gst_d3d12_allocation_params_new(
-                device, vinfo, GST_D3D12_ALLOCATION_FLAG_DEFAULT, D3D12_RESOURCE_FLAG_NONE, D3D12_HEAP_FLAG_NONE)) {
-            gst_buffer_pool_config_set_d3d12_allocation_params(config, params);
-            gst_d3d12_allocation_params_free(params);
-        }
-        if (gst_buffer_pool_set_config(pool, config)) {
-            GstStructure* updated = gst_buffer_pool_get_config(pool);
-            guint poolSize = static_cast<guint>(size);
-            gst_buffer_pool_config_get_params(updated, nullptr, &poolSize, nullptr, nullptr);
-            gst_structure_free(updated);
-            gst_query_add_allocation_pool(query, pool, poolSize, minBuffers, 0);
-            proposed = true;
-        }
-        gst_object_unref(pool);
-    }
-    gst_object_unref(device);
-    return proposed;
-}
-#endif
 }  // namespace
 #endif
 
@@ -181,7 +91,14 @@ void dispatchBusMessage(GstMessage* msg) noexcept
 
 void initializeOnce() noexcept
 {
-    // Bridges self-register at static-init; function kept as a stable call site for future lazy init.
+#if defined(QGC_HAS_ANY_GPU_PATH)
+    [[maybe_unused]] static const bool s_registered = [] {
+        for (const HwPathDescriptor* path : kCompiledPaths) {
+            GstHwPathRegistry::add(*path);
+        }
+        return true;
+    }();
+#endif
 }
 
 HwBufferEnvConfig readHwBufferEnvConfig() noexcept
@@ -217,35 +134,46 @@ const HwBufferEnvConfig& hwBufferEnvConfig() noexcept
 
 GstBusSyncReply onBusSyncMessage(GstBus* /*bus*/, GstMessage* msg, gpointer /*userData*/) noexcept
 {
-#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) || defined(QGC_HAS_GST_D3D11_GPU_PATH) || \
-    defined(QGC_HAS_GST_D3D12_GPU_PATH) || defined(QGC_HAS_GST_VULKAN_GPU_PATH)
-    return GstContextBridgeRegistry::dispatchBridges(msg);
+#if defined(QGC_HAS_ANY_GPU_PATH)
+    // First GST_BUS_DROP wins; bridges answer disjoint context types, so none shadows another.
+    for (const HwPathDescriptor* path : GstHwPathRegistry::paths()) {
+        if (path->bridge && (path->bridge().handleSyncMessage(msg) == GST_BUS_DROP)) {
+            return GST_BUS_DROP;
+        }
+    }
 #else
     Q_UNUSED(msg);
-    return GST_BUS_PASS;
 #endif
+    return GST_BUS_PASS;
 }
 
 void onPipelineRestart() noexcept
 {
     // Latch-only: shared bridge objects and import caches stay, because another stream may be using them. Full resets
     // are reserved for scene-graph teardown, window swaps and device loss (resetCachedGpuResources).
-#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
-    GstGlContextBridge::instance().rearm();
-#endif
-#if defined(QGC_HAS_GST_VULKAN_GPU_PATH)
-    GstVulkanContextBridge::instance().rearm();
+#if defined(QGC_HAS_ANY_GPU_PATH)
+    for (const HwPathDescriptor* path : GstHwPathRegistry::paths()) {
+        if (path->bridge) {
+            path->bridge().rearm();
+        }
+    }
 #endif
 }
 
 void resetCachedGpuResources() noexcept
 {
 #if defined(QGC_HAS_ANY_GPU_PATH)
-    GstContextBridgeRegistry::resetAllBridges();
-    GstContextBridgeRegistry::resetAllCaches();
-#endif
-#if defined(QGC_HAS_GST_DMABUF_GPU_PATH) || defined(QGC_HAS_GST_AHARDWAREBUFFER_GPU_PATH)
-    GstEglHelpers::resetExtensionCache();
+    const auto paths = GstHwPathRegistry::paths();
+    for (const HwPathDescriptor* path : paths) {
+        if (path->bridge) {
+            path->bridge().reset();
+        }
+    }
+    for (const HwPathDescriptor* path : paths) {
+        if (path->resetCaches) {
+            path->resetCaches();
+        }
+    }
 #endif
 }
 
@@ -266,105 +194,52 @@ HwVideoBufferContext makeAdapterContext(bool gpuEnabled) noexcept
     if (!gpuEnabled) {
         return ctx;
     }
-
-#if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
-    // Construction-time hint only; render-time mapTextures() prefers eglGetCurrentDisplay() to avoid xcb_egl EGLDisplay
-    // mismatches.
-    EGLDisplay dpy = EGL_NO_DISPLAY;
-    const QString platform = QGuiApplication::platformName();
-    if (platform == QLatin1String("wayland") || platform == QLatin1String("wayland-egl")) {
-        if (auto* ni = QGuiApplication::platformNativeInterface()) {
-            dpy = static_cast<EGLDisplay>(ni->nativeResourceForIntegration("egldisplay"));
+    QString available;
+    forEachRegisteredPath(
+        [&available](HwVideoBufferPath path) { available += QLatin1Char(' ') + QLatin1String(GstHw::toString(path)); });
+    qCDebug(HwBuffersFacadeLog).noquote()
+        << "zero-copy paths compiled:" << available.trimmed() << "— actual path chosen at caps negotiation";
+    for (const HwPathDescriptor* path : GstHwPathRegistry::paths()) {
+        if (path->prepareContext) {
+            path->prepareContext(ctx);
         }
     }
-    if (dpy == EGL_NO_DISPLAY) {
-        dpy = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-    }
-    if (dpy == EGL_NO_DISPLAY) {
-        qCWarning(HwBuffersFacadeLog) << "GPU zero-copy requested but EGLDisplay unavailable on platform" << platform
-                                      << "— DMABuf path disabled";
-    } else {
-        qCInfo(HwBuffersFacadeLog) << "DMABuf zero-copy path available on" << platform
-                                   << "— actual path chosen at caps negotiation";
-    }
-    ctx.dmaBufEglDisplay = dpy;
-#endif
-
-#if defined(QGC_HAS_GST_AHARDWAREBUFFER_GPU_PATH)
-    ctx.ahbEglDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-    if (ctx.ahbEglDisplay == EGL_NO_DISPLAY) {
-        qCWarning(HwBuffersFacadeLog) << "AHardwareBuffer path: EGLDisplay unavailable";
-    } else {
-        qCInfo(HwBuffersFacadeLog) << "AHardwareBuffer zero-copy path available"
-                                   << "— actual path chosen at caps negotiation";
-    }
-#endif
-
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
-    qCInfo(HwBuffersFacadeLog) << "D3D11 zero-copy path available — actual path chosen at caps negotiation";
-#endif
-#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
-    qCInfo(HwBuffersFacadeLog) << "D3D12 zero-copy path available — actual path chosen at caps negotiation";
-#endif
-#if defined(QGC_HAS_GST_IOSURFACE_GPU_PATH)
-    qCInfo(HwBuffersFacadeLog) << "IOSurface zero-copy path available — actual path chosen at caps negotiation";
-#endif
-#if defined(QGC_HAS_GST_VULKAN_GPU_PATH)
-    qCInfo(HwBuffersFacadeLog) << "Vulkan zero-copy path available (active only when QRhi uses the Vulkan backend)";
-#endif
 #else
     Q_UNUSED(gpuEnabled);
-#endif  // QGC_HAS_ANY_GPU_PATH
-
+#endif
     return ctx;
 }
 
 bool answerSinkBinContextQuery(GstQuery* query) noexcept
 {
-    bool handled = false;
-#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
-    handled = GstGlContextBridge::instance().answerContextQuery(query);
-#endif
-#if defined(QGC_HAS_GST_VULKAN_GPU_PATH)
-    if (!handled) {
-        handled = GstVulkanContextBridge::instance().answerContextQuery(query);
+#if defined(QGC_HAS_ANY_GPU_PATH)
+    for (const HwPathDescriptor* path : GstHwPathRegistry::paths()) {
+        if (path->bridge && path->bridge().answerContextQuery(query)) {
+            return true;
+        }
     }
-#endif
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
-    if (!handled) {
-        handled = GstD3D11ContextBridge::instance().answerContextQuery(query);
-    }
-#endif
-#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
-    if (!handled) {
-        handled = GstD3D12ContextBridge::instance().answerContextQuery(query);
-    }
-#endif
+#else
     Q_UNUSED(query);
-    return handled;
+#endif
+    return false;
 }
 
 bool proposeDeviceBoundPool(GstQuery* query, GstCaps* caps, const GstVideoInfo* vinfo, gsize size,
                             guint minBuffers) noexcept
 {
-    GstCapsFeatures* features = gst_caps_get_features(caps, 0);
-    if (!features) {
-        return false;
+#if defined(QGC_HAS_ANY_GPU_PATH)
+    for (const HwPathDescriptor* path : GstHwPathRegistry::paths()) {
+        if (path->proposePool && path->proposePool(query, caps, vinfo, size, minBuffers)) {
+            return true;
+        }
     }
-#if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D11_GPU_PATH)
-    if (gst_caps_features_contains(features, GST_CAPS_FEATURE_MEMORY_D3D11_MEMORY)) {
-        return tryProposeD3D11Pool(query, caps, vinfo, size, minBuffers);
-    }
+#else
+    Q_UNUSED(query);
+    Q_UNUSED(caps);
+    Q_UNUSED(vinfo);
+    Q_UNUSED(size);
+    Q_UNUSED(minBuffers);
 #endif
-#if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D12_GPU_PATH)
-    if (gst_caps_features_contains(features, GST_CAPS_FEATURE_MEMORY_D3D12_MEMORY)) {
-        return tryProposeD3D12Pool(query, caps, vinfo, size, minBuffers);
-    }
-#endif
-    (void) query;
-    (void) vinfo;
-    (void) size;
-    (void) minBuffers;
     return false;
 }
 
@@ -372,7 +247,7 @@ PathStats formatPathStats(bool reset) noexcept
 {
     PathStats out;
 #if defined(QGC_HAS_ANY_GPU_PATH)
-    for (const HwVideoBufferPath path : kEnabledPaths) {
+    forEachRegisteredPath([reset, &out](HwVideoBufferPath path) {
         const QLatin1String label(GstHw::toString(path));
         const quint64 delivered =
             reset ? GstHwPathTelemetry::takeDeliveredCount(path) : GstHwPathTelemetry::peekDeliveredCount(path);
@@ -385,7 +260,7 @@ PathStats formatPathStats(bool reset) noexcept
             out.line += QStringLiteral(" %1:%2/%3").arg(label).arg(delivered).arg(failures);
         }
         out.totalDelivered += delivered;
-    }
+    });
 #else
     Q_UNUSED(reset);
 #endif
@@ -420,24 +295,24 @@ PathStats formatSinkStats(const GstStructure* stats) noexcept
 QString takeExtraPathStats() noexcept
 {
     QString out;
-#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
-    const quint64 glReuse = GstHwPathTelemetry::takeTextureReuseHits(HwVideoBufferPath::GlMemory);
-    quint64 glGpuWaits = 0;
-    const quint64 glCpuWaits = GstHwPathTelemetry::takeSyncWaitCounts(HwVideoBufferPath::GlMemory, glGpuWaits);
-    out += QStringLiteral(" GL-reuse:%1 GL-wait[gpu/cpu]:%2/%3").arg(glReuse).arg(glGpuWaits).arg(glCpuWaits);
-#endif
-#if defined(QGC_HAS_GST_VULKAN_GPU_PATH)
-    quint64 vkGpuWaits = 0;
-    const quint64 vkCpuWaits = GstHwPathTelemetry::takeSyncWaitCounts(HwVideoBufferPath::Vulkan, vkGpuWaits);
-    out += QStringLiteral(" Vulkan-wait[gpu/cpu]:%1/%2").arg(vkGpuWaits).arg(vkCpuWaits);
-#endif
-#if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
-    out += QStringLiteral(" DMABuf-fence-timeouts:%1 DMABuf-mmap-barriers:%2 DMABuf-explicit-fence-waits:%3")
-               .arg(GstHwPathTelemetry::takeFenceTimeouts(HwVideoBufferPath::DmaBuf))
-               .arg(GstHwPathTelemetry::takeMmapBarrierHits(HwVideoBufferPath::DmaBuf))
-               .arg(GstHwPathTelemetry::takeExplicitFenceWaits(HwVideoBufferPath::DmaBuf));
-#endif
 #if defined(QGC_HAS_ANY_GPU_PATH)
+    if (GstHwPathRegistry::has(HwVideoBufferPath::GlMemory)) {
+        const quint64 glReuse = GstHwPathTelemetry::takeTextureReuseHits(HwVideoBufferPath::GlMemory);
+        quint64 glGpuWaits = 0;
+        const quint64 glCpuWaits = GstHwPathTelemetry::takeSyncWaitCounts(HwVideoBufferPath::GlMemory, glGpuWaits);
+        out += QStringLiteral(" GL-reuse:%1 GL-wait[gpu/cpu]:%2/%3").arg(glReuse).arg(glGpuWaits).arg(glCpuWaits);
+    }
+    if (GstHwPathRegistry::has(HwVideoBufferPath::Vulkan)) {
+        quint64 vkGpuWaits = 0;
+        const quint64 vkCpuWaits = GstHwPathTelemetry::takeSyncWaitCounts(HwVideoBufferPath::Vulkan, vkGpuWaits);
+        out += QStringLiteral(" Vulkan-wait[gpu/cpu]:%1/%2").arg(vkGpuWaits).arg(vkCpuWaits);
+    }
+    if (GstHwPathRegistry::has(HwVideoBufferPath::DmaBuf)) {
+        out += QStringLiteral(" DMABuf-fence-timeouts:%1 DMABuf-cpu-barriers:%2 DMABuf-explicit-fence-waits:%3")
+                   .arg(GstHwPathTelemetry::takeProducerFenceTimeouts(HwVideoBufferPath::DmaBuf))
+                   .arg(GstHwPathTelemetry::takeCpuBarrierWaits(HwVideoBufferPath::DmaBuf))
+                   .arg(GstHwPathTelemetry::takeExplicitFenceWaits(HwVideoBufferPath::DmaBuf));
+    }
     static constexpr std::pair<GstHwPathTelemetry::HwFallbackReason, const char*> kReasons[] = {
         {GstHwPathTelemetry::HwFallbackReason::NoExt, "no-ext"},
         {GstHwPathTelemetry::HwFallbackReason::ModifierRejected, "modifier"},
@@ -450,7 +325,7 @@ QString takeExtraPathStats() noexcept
         {GstHwPathTelemetry::HwFallbackReason::VulkanNoSync, "vulkan-no-sync"},
         {GstHwPathTelemetry::HwFallbackReason::ImportUnsupported, "import-unsupported"},
     };
-    for (const HwVideoBufferPath path : kEnabledPaths) {
+    forEachRegisteredPath([&out](HwVideoBufferPath path) {
         const QLatin1String pathLabel(GstHw::toString(path));
         const quint64 ewmaUs = GstHwPathTelemetry::peekMapDurationUsEwma(path);
         if (ewmaUs > 0) {
@@ -476,7 +351,7 @@ QString takeExtraPathStats() noexcept
             reasonBreakdown.chop(1);
             out += QStringLiteral(" %1-fallback[%2]").arg(pathLabel).arg(reasonBreakdown);
         }
-    }
+    });
     // None-path accumulates UnknownMemType (no allocator matched any compiled path).
     {
         const quint64 unknownMem =

@@ -2,7 +2,6 @@
 
 #if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D12_GPU_PATH)
 
-#include <QtCore/QMutex>
 #include <algorithm>
 #include <array>
 #include <cstddef>
@@ -10,10 +9,12 @@
 #include <gst/d3d12/gstd3d12.h>
 #include <utility>
 
-#include "GstContextBridgeRegistry.h"
+#include <QtCore/QMutex>
+
 #include "GstD3D12ContextBridge.h"
 #include "GstD3DVideoBufferCommon.h"
 #include "GstHwImportCache.h"
+#include "GstHwPathRegistry.h"
 #include "GstHwPathTelemetry.h"
 #include "QGCLoggingCategory.h"
 
@@ -433,14 +434,6 @@ void GstD3D12VideoBuffer::resetCachedState() noexcept
     s_diag.reset();
 }
 
-namespace {
-struct D3D12CacheResetRegistrar
-{
-    D3D12CacheResetRegistrar() { GstContextBridgeRegistry::registerCacheReset(&GstD3D12VideoBuffer::resetCachedState); }
-};
-
-const D3D12CacheResetRegistrar s_d3d12CacheResetRegistrar;
-}  // namespace
 
 GstD3D12VideoBuffer::GstD3D12VideoBuffer(GstSample* sample, const GstVideoInfo& videoInfo,
                                          const QVideoFrameFormat& format)
@@ -514,5 +507,53 @@ QVideoFrameTexturesUPtr GstD3D12VideoBuffer::mapTextures(QRhi& rhi, QVideoFrameT
     return GstD3DVideoBufferCommon::mapResolvedTextures(*this, rhi, old, tail, _resources, _resolvedCount,
                                                         _stagingLeases);
 }
+
+namespace {
+
+// Steers allocation onto QRhi's shared (LUID-matched) adapter, like the D3D11 pool proposal.
+bool proposeD3D12Pool(GstQuery* query, GstCaps* caps, const GstVideoInfo* vinfo, gsize size, guint minBuffers)
+{
+    GstCapsFeatures* features = gst_caps_get_features(caps, 0);
+    if (!features || !gst_caps_features_contains(features, GST_CAPS_FEATURE_MEMORY_D3D12_MEMORY)) {
+        return false;
+    }
+    GstD3D12Device* device = GstD3D12ContextBridge::currentDevice();
+    if (!device) {
+        return false;
+    }
+    bool proposed = false;
+    if (GstBufferPool* pool = gst_d3d12_buffer_pool_new(device)) {
+        GstStructure* config = gst_buffer_pool_get_config(pool);
+        gst_buffer_pool_config_set_params(config, caps, size, minBuffers, 0);
+        gst_buffer_pool_config_add_option(config, GST_BUFFER_POOL_OPTION_VIDEO_META);
+        if (GstD3D12AllocationParams* params = gst_d3d12_allocation_params_new(
+                device, vinfo, GST_D3D12_ALLOCATION_FLAG_DEFAULT, D3D12_RESOURCE_FLAG_NONE, D3D12_HEAP_FLAG_NONE)) {
+            gst_buffer_pool_config_set_d3d12_allocation_params(config, params);
+            gst_d3d12_allocation_params_free(params);
+        }
+        if (gst_buffer_pool_set_config(pool, config)) {
+            GstStructure* updated = gst_buffer_pool_get_config(pool);
+            guint poolSize = static_cast<guint>(size);
+            gst_buffer_pool_config_get_params(updated, nullptr, &poolSize, nullptr, nullptr);
+            gst_structure_free(updated);
+            gst_query_add_allocation_pool(query, pool, poolSize, minBuffers, 0);
+            proposed = true;
+        }
+        gst_object_unref(pool);
+    }
+    gst_object_unref(device);
+    return proposed;
+}
+
+}  // namespace
+
+constinit const HwPathDescriptor GstHwPaths::kD3D12 = {
+    .path = HwVideoBufferPath::D3D12,
+    .matches = [](GstMemory* mem, const HwVideoBufferContext&) -> bool { return gst_is_d3d12_memory(mem); },
+    .construct = &GstHwPaths::construct<GstD3D12VideoBuffer>,
+    .resetCaches = &GstD3D12VideoBuffer::resetCachedState,
+    .proposePool = &proposeD3D12Pool,
+    .bridge = &GstD3D12ContextBridge::instance,
+};
 
 #endif  // Q_OS_WIN && QGC_HAS_GST_D3D12_GPU_PATH

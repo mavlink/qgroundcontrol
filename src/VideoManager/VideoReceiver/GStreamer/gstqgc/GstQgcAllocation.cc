@@ -3,8 +3,8 @@
 #include <gst/video/video.h>
 
 #include "HwBuffers/common/CpuVideoFramePool.h"
+#include "HwBuffers/common/GstHwVideoInfo.h"
 #include "HwBuffers/common/HwBuffers.h"
-#include "HwBuffers/dmabuf/GstDmaDrmCaps.h"
 #if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
 #include <gst/gl/gstglsyncmeta.h>
 #endif

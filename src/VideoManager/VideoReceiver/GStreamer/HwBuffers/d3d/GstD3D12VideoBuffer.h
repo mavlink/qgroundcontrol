@@ -24,8 +24,6 @@ public:
     QVideoFrameTexturesUPtr mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& oldTextures) override;
     bool validatePlaneHandles() const override;
 
-    const char* storageTag() const override { return "D3D12"; }
-
     /// Release pooled staging resources on device-loss/TDR; wired into the facade reset path.
     static void resetCachedState() noexcept;
 

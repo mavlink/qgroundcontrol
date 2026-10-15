@@ -25,8 +25,6 @@ public:
     /// External-OES texcoord transform consumed by qvideotexturehelper for Format_SamplerExternalOES.
     QMatrix4x4 externalTextureMatrix() const override;
 
-    const char* storageTag() const override { return "AHardwareBuffer"; }
-
     static void resetImageCache() noexcept;
 
 private:

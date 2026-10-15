@@ -22,10 +22,10 @@
 #include <QtGui/QOpenGLContext>
 #include <QtGui/QOpenGLFunctions>
 
-#include "GstContextBridgeRegistry.h"
 #include "GstEglHelpers.h"
 #include "GstHwFrameTexturesBase.h"
 #include "GstHwImportCache.h"
+#include "GstHwPathRegistry.h"
 #include "GstHwPathTelemetry.h"
 #include "GstHwVideoBuffer.h"
 #include "QGCLoggingCategory.h"
@@ -219,14 +219,6 @@ void GstAHardwareBufferVideoBuffer::resetImageCache() noexcept
     s_imageCache.drainDeferred();
 }
 
-namespace {
-struct AhbCacheResetRegistrar
-{
-    AhbCacheResetRegistrar() { GstContextBridgeRegistry::registerCacheReset(&GstAHardwareBufferVideoBuffer::resetImageCache); }
-};
-const AhbCacheResetRegistrar s_ahbCacheResetRegistrar;
-}  // namespace
-
 QVideoFrameTexturesUPtr GstAHardwareBufferVideoBuffer::mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& old)
 {
     GstBuffer* buffer = nullptr;
@@ -369,5 +361,55 @@ QVideoFrameTexturesUPtr GstAHardwareBufferVideoBuffer::mapTextures(QRhi& rhi, QV
         [&](const FrameTextures& prev) { return prev.matches(&rhi, tail.frameSize, tail.pixelFormat, name); },
         [&] { return std::make_unique<FrameTextures>(&rhi, tail.frameSize, tail.pixelFormat, name, entry); });
 }
+
+namespace {
+
+// GL_TEXTURE_EXTERNAL_OES needs the SamplerExternalOES pixel format for Qt's shader path. QVideoFrameFormat has no
+// pixel-format setter, so rebuild the format around it.
+QVideoFrameFormat externalOesFormat(const QVideoFrameFormat& format)
+{
+    QVideoFrameFormat external(format.frameSize(), QVideoFrameFormat::Format_SamplerExternalOES);
+    external.setViewport(format.viewport());
+    external.setScanLineDirection(format.scanLineDirection());
+    external.setStreamFrameRate(format.streamFrameRate());
+    external.setColorSpace(format.colorSpace());
+    external.setColorTransfer(format.colorTransfer());
+    external.setColorRange(format.colorRange());
+    external.setMirrored(format.isMirrored());
+    external.setRotation(format.rotation());
+    external.setMaxLuminance(format.maxLuminance());
+    return external;
+}
+
+void prepareAhbContext(HwVideoBufferContext& context)
+{
+    context.ahbEglDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+    if (context.ahbEglDisplay == EGL_NO_DISPLAY) {
+        qCWarning(GstAHWBufLog) << "AHardwareBuffer path: EGLDisplay unavailable";
+    } else {
+        qCInfo(GstAHWBufLog) << "AHardwareBuffer zero-copy path available"
+                             << "— actual path chosen at caps negotiation";
+    }
+}
+
+}  // namespace
+
+constinit const HwPathDescriptor GstHwPaths::kAHardwareBuffer = {
+    .path = HwVideoBufferPath::AHardwareBuffer,
+    .matches = [](GstMemory* mem, const HwVideoBufferContext& context) -> bool {
+        return (context.ahbEglDisplay != EGL_NO_DISPLAY) && gst_is_ahardware_buffer_memory(mem);
+    },
+    .construct = [](GstSample* sample, const GstVideoInfo& info, QVideoFrameFormat format,
+                    const HwVideoBufferContext& context) -> std::unique_ptr<GstHwVideoBuffer> {
+        return std::make_unique<GstAHardwareBufferVideoBuffer>(sample, info, externalOesFormat(format),
+                                                               context.ahbEglDisplay);
+    },
+    .prepareContext = &prepareAhbContext,
+    .resetCaches =
+        [] {
+            GstAHardwareBufferVideoBuffer::resetImageCache();
+            GstEglHelpers::resetExtensionCache();
+        },
+};
 
 #endif  // QGC_HAS_GST_AHARDWAREBUFFER_GPU_PATH

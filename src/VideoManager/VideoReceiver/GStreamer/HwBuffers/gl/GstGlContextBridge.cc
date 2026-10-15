@@ -9,7 +9,6 @@
 #include <QtGui/QOpenGLContext>
 #include <QtGui/qguiapplication_platform.h>
 
-#include "GstContextBridgeRegistry.h"
 #include "QGCLoggingCategory.h"
 // Shared by Linux and Windows-ANGLE (ANGLE ships EGL/egl.h); on Windows it's a fallback behind D3D11/D3D12.
 // GLX/Wayland/X11 wrapping stays Linux-only below.
@@ -225,17 +224,6 @@ void GlContextBridge::clearLocked()
     gst_clear_object(&_context);
     gst_clear_object(&_display);
 }
-
-struct GlBridgeRegistrar
-{
-    GlBridgeRegistrar()
-    {
-        GstContextBridgeRegistry::registerBridgeHandler([](GstMessage* m) { return s_bridge.handleSyncMessage(m); });
-        GstContextBridgeRegistry::registerResetCallback([] { s_bridge.reset(); });
-    }
-};
-
-const GlBridgeRegistrar s_glBridgeRegistrar;
 
 }  // namespace
 
