@@ -39,7 +39,22 @@ void StandardModes::gotMessage(MAV_RESULT result, VehicleTypes::RequestMessageRe
             if (_requestSeq == 0) {
                 _requestSeq = availableModes.seq;
             } else if (_requestSeq != availableModes.seq) {
-                request();
+                ++_sequenceRestartCount;
+
+                if (_sequenceRestartCount > kMaxSequenceRestarts) {
+                    qCWarning(StandardModesLog) << "AVAILABLE_MODES sequence kept changing; giving up after"
+                                                << kMaxSequenceRestarts << "restarts";
+
+                    _requestSeq = 0;
+                    _modeList.clear();
+                    emit requestCompleted();
+                    return;
+                }
+
+                qCDebug(StandardModesLog) << "AVAILABLE_MODES sequence changed during download, restarting"
+                                          << _sequenceRestartCount << "of" << kMaxSequenceRestarts;
+
+                startRequest();
                 return;
             }
         }
@@ -135,16 +150,20 @@ void StandardModes::ensureUniqueModeNames()
 void StandardModes::request()
 {
     if (_requestActive) {
-        // If we are in the middle of waiting for a request, wait for the response first
         _wantReset = true;
         return;
     }
 
+    _sequenceRestartCount = 0;
+    startRequest();
+}
+
+void StandardModes::startRequest()
+{
     qCDebug(StandardModesLog) << "Requesting available modes";
-    // Request one at a time. This could be improved by requesting all, but we can't use Vehicle::requestMessage for that
     _requestSeq = 0;
     _modeList.clear();
-    StandardModes::requestMode(1);
+    requestMode(1);
 }
 
 void StandardModes::requestMode(int modeIndex)

@@ -3432,7 +3432,14 @@ void MockLink::_sendAvailableMode(uint8_t modeIndexOneBased)
 
     if (_availableModesSequenceBumpAtIndex.load() == modeIndexOneBased) {
         ++_availableModesMonitorSeqNumber;
-        _availableModesSequenceBumpAtIndex = 0;
+
+        if (_availableModesSequenceBumpRepeatedly.load() && _availableModesMonitorSeqNumber.load() == 0) {
+            ++_availableModesMonitorSeqNumber;
+        }
+
+        if (!_availableModesSequenceBumpRepeatedly.load()) {
+            _availableModesSequenceBumpAtIndex = 0;
+        }
     }
 
     char modeName[MAVLINK_MSG_AVAILABLE_MODES_FIELD_MODE_NAME_LEN] = {};

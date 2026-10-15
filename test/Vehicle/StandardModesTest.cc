@@ -73,6 +73,61 @@ void StandardModesTest::_sequenceChangeDuringDownloadRestartsRequest()
                             .arg(changedRequests)));
 }
 
+void StandardModesTest::_repeatedSequenceChangesStillComplete()
+{
+    QVERIFY(_mockLink);
+    QVERIFY(_mockLink->_worker);
+
+    // Prevent AVAILABLE_MODES_MONITOR telemetry from independently restarting the request.
+    QVERIFY(QMetaObject::invokeMethod(_mockLink->_worker, &MockLinkWorker::stopWork, Qt::BlockingQueuedConnection));
+
+    auto* connectedVehicle = vehicle();
+    QVERIFY(connectedVehicle);
+
+    auto* standardModes = connectedVehicle->findChild<StandardModes*>();
+    QVERIFY(standardModes);
+
+    // MAVLink specifies that seq == 0 is ignored.
+    _mockLink->bumpAvailableModesMonitorSequence();
+
+    // Force the generation to change at index 3 on every enumeration.
+    _mockLink->setAvailableModesSequenceBumpAtIndex(3, true);
+
+    _mockLink->clearReceivedRequestMessageCounts();
+
+    QSignalSpy completedSpy(standardModes, &StandardModes::requestCompleted);
+    QSignalSpy modesUpdatedSpy(standardModes, &StandardModes::modesUpdated);
+
+    expectLogMessage(
+        "Vehicle.StandardModes", QtWarningMsg,
+        QRegularExpression(QStringLiteral("AVAILABLE_MODES sequence kept changing; giving up after 3 restarts")));
+
+    standardModes->request();
+
+    const bool completedWhileChurning = completedSpy.wait(TestTimeout::shortMs());
+
+    verifyExpectedLogMessage();
+
+    const int requestCount = _mockLink->receivedRequestMessageCount(MAVLINK_MSG_ID_AVAILABLE_MODES);
+
+    // Always disable persistent churn before asserting so a RED failure cannot
+    // leave requests continuously restarting in subsequent tests.
+    _mockLink->setAvailableModesSequenceBumpAtIndex(0, false);
+
+    if (!completedWhileChurning) {
+        completedSpy.wait(TestTimeout::longMs());
+    }
+
+    QVERIFY2(completedWhileChurning, "Repeated AVAILABLE_MODES sequence changes prevented requestCompleted");
+
+    QVERIFY2(requestCount > 3 && requestCount < 100,
+             qPrintable(QStringLiteral("Repeated sequence changes were not bounded as expected "
+                                       "(requestCount=%1)")
+                            .arg(requestCount)));
+
+    QCOMPARE(modesUpdatedSpy.count(), 0);
+}
+
 void StandardModesTest::_singleModeDoesNotDependOnPeriodicTelemetry()
 {
     QVERIFY(_mockLink);

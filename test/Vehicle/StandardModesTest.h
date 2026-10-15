@@ -12,6 +12,7 @@ public:
 private slots:
     void _monitorSequenceBumpTriggersRequery();
     void _sequenceChangeDuringDownloadRestartsRequest();
+    void _repeatedSequenceChangesStillComplete();
     void _singleModeDoesNotDependOnPeriodicTelemetry();
     void _duplicateDeliveryDoesNotDuplicateModes();
 
