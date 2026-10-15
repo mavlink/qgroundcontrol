@@ -259,10 +259,12 @@ Item {
                 radiusDragHandle.coordinate = Qt.binding(function() { return radiusDragCoord })
                 mapControl.addMapItem(radiusDragHandle)
                 radiusDragArea = radiusDragAreaComponent.createObject(mapControl, { "itemIndicator": radiusDragHandle, "itemCoordinate": radiusDragCoord } )
-                centerDragHandle = dragHandleComponent.createObject(mapControl, { "visible": _root.centerDragHandleVisible })
+                centerDragHandle = dragHandleComponent.createObject(mapControl)
                 centerDragHandle.coordinate = Qt.binding(function() { return circleCenterCoord })
+                centerDragHandle.visible = Qt.binding(function() { return _root.centerDragHandleVisible })
                 mapControl.addMapItem(centerDragHandle)
-                centerDragArea = centerDragAreaComponent.createObject(mapControl, { "itemIndicator": centerDragHandle, "itemCoordinate": circleCenterCoord, "visible": _root.centerDragHandleVisible })
+                centerDragArea = centerDragAreaComponent.createObject(mapControl, { "itemIndicator": centerDragHandle, "itemCoordinate": circleCenterCoord })
+                centerDragArea.visible = Qt.binding(function() { return _root.centerDragHandleVisible })
             }
 
             Component.onDestruction: {
