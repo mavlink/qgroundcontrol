@@ -160,25 +160,24 @@ void GStreamerTest::_testSourceFactoryJitterBufferNone()
 
 void GStreamerTest::_testSourceFactoryNoRetransmission()
 {
-    if (!gst_element_factory_find("udpsrc") || !gst_element_factory_find("rtpjitterbuffer")) {
-        QSKIP("udpsrc/rtpjitterbuffer plugin unavailable");
+    if (!gst_element_factory_find("rtspsrc")) {
+        QSKIP("rtspsrc plugin unavailable");
     }
 
+    // RTSP is the only source with a back-channel for retransmission requests, so it's the one the option reaches.
     GStreamer::SourceFactory::Config config;
-    config.jitterBuffer = GStreamer::SourceFactory::JitterBuffer::Buffered;
     config.doRetransmission = false;
 
-    GstElement* bin = GStreamer::SourceFactory::create(QStringLiteral("udp://127.0.0.1:5600"), config);
+    GstElement* bin = GStreamer::SourceFactory::create(QStringLiteral("rtsp://127.0.0.1:8554/test"), config);
     QVERIFY(bin);
     const auto cleanup = qScopeGuard([&] { gst_object_unref(bin); });
 
-    GstElement* jb = findChildByFactoryName(bin, "rtpjitterbuffer");
-    QVERIFY(jb);
+    GstElement* source = findChildByFactoryName(bin, "rtspsrc");
+    QVERIFY(source);
 
-    gboolean doRtx = TRUE, dropOnLatency = TRUE;
-    g_object_get(jb, "do-retransmission", &doRtx, "drop-on-latency", &dropOnLatency, nullptr);
+    gboolean doRtx = TRUE;
+    g_object_get(source, "do-retransmission", &doRtx, nullptr);
     QCOMPARE(doRtx, FALSE);
-    QCOMPARE(dropOnLatency, FALSE);
 }
 
 void GStreamerTest::_testSourceFactoryRtspJitterBufferPolicy_data()
@@ -194,7 +193,6 @@ void GStreamerTest::_testSourceFactoryRtspJitterBufferPolicy_data()
     // -1 is rtpjitterbuffer's "auto" default, i.e. the factory left the internal jitterbuffer untouched.
     QTest::newRow("low-latency") << static_cast<int>(JitterBuffer::None) << 0u << false << true << -1 << -1;
     QTest::newRow("drop-on-latency") << static_cast<int>(JitterBuffer::DropOnLatency) << 80u << true << true << 25 << 1;
-    QTest::newRow("buffered") << static_cast<int>(JitterBuffer::Buffered) << 80u << true << false << 25 << 1;
 }
 
 void GStreamerTest::_testSourceFactoryRtspJitterBufferPolicy()

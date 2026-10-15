@@ -5,8 +5,12 @@
 namespace {
 
 constexpr qint64 kMinTimeoutMs = 1000;
+// The decoder may lag the source by up to this many timeouts before it counts as stalled.
+constexpr qint64 kDecoderTimeoutFactor = 2;
 // The cap bounds worst-case recovery after a long RF outage and stays below a typical RTSP server keepalive (60 s).
 constexpr int kMaxReconnectBackoffSec = 30;
+// 2^5 s already exceeds the cap; bounds the shift.
+constexpr int kMaxBackoffDoublings = 5;
 
 }  // namespace
 
@@ -19,7 +23,7 @@ qint64 StreamWatchdog::now()
 void StreamWatchdog::start(uint32_t timeoutSec)
 {
     // start(0) would otherwise trip on every check.
-    _timeoutMs = std::max(static_cast<qint64>(timeoutSec) * 1000, kMinTimeoutMs);
+    _timeoutMs = std::max<qint64>(std::chrono::milliseconds(std::chrono::seconds(timeoutSec)).count(), kMinTimeoutMs);
     _sourceFrames.store(0, std::memory_order_relaxed);
     _lastSourceFrameMs.store(0, std::memory_order_relaxed);
     _lastSinkFrameMs.store(0, std::memory_order_relaxed);
@@ -58,7 +62,7 @@ StreamWatchdog::Result StreamWatchdog::check(qint64 nowMs, bool decoding)
     // Decoding is only reported once a frame reached the sink, so the last sink frame time is valid.
     if (decoding) {
         const qint64 sinkSilentMs = nowMs - _lastSinkFrameMs.load(std::memory_order_relaxed);
-        if (sinkSilentMs > (_timeoutMs * 2)) {
+        if (sinkSilentMs > (_timeoutMs * kDecoderTimeoutFactor)) {
             return {.stall = Stall::Decoder, .silentMs = sinkSilentMs};
         }
     }
@@ -72,5 +76,6 @@ std::chrono::seconds StreamWatchdog::nextReconnectDelay()
         _reconnectAttempts = 0;
     }
     ++_reconnectAttempts;
-    return std::chrono::seconds(std::min(1 << std::min(_reconnectAttempts - 1, 5), kMaxReconnectBackoffSec));
+    return std::chrono::seconds(
+        std::min(1 << std::min(_reconnectAttempts - 1, kMaxBackoffDoublings), kMaxReconnectBackoffSec));
 }

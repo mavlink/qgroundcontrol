@@ -117,9 +117,4 @@ protected:
     // Written live on the GUI thread, read on the receiver worker thread.
     std::atomic<bool> _autoReconnect = true;     ///< RTSP/UDP auto-reconnect with exponential backoff on watchdog/error.
     QString _recordingOutput;
-
-    // bool _initialized = false;
-    // bool _fullScreen = false;
-    // QSize _videoSize;
-    // QString _imageFile;
 };

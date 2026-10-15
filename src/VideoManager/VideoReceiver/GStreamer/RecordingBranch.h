@@ -2,19 +2,16 @@
 
 #include <atomic>
 #include <chrono>
-#include <glib.h>
 
 #include <QtCore/QString>
 
+#include "GstScoped.h"
 #include "RecordingFinalizer.h"
 #include "VideoReceiver.h"
 
 class GstVideoReceiver;
 class QObject;
 class QTimer;
-typedef struct _GstCaps GstCaps;
-typedef struct _GstElement GstElement;
-typedef struct _GstMessage GstMessage;
 
 /// \brief The recording branch behind GstVideoReceiver's tee: queue ! valve [! parser ! splitmuxsink].
 ///
@@ -39,9 +36,10 @@ public:
     RecordingBranch(GstVideoReceiver& receiver, QObject* workerContext);
 
     /// The sink bin a recording links to the valve: an optional parser for @p inputCaps, then splitmuxsink writing
-    /// @p videoFile. Returns a floating ref, or null on failure.
-    static GstElement* makeFileSink(const QString& videoFile, VideoReceiver::FILE_FORMAT format,
-                                    const GstCaps* inputCaps);
+    /// @p videoFile. Returns an owned, non-floating ref (adding the bin to a pipeline takes another), or null on
+    /// failure.
+    static GStreamer::GstElementPtr makeFileSink(const QString& videoFile, VideoReceiver::FILE_FORMAT format,
+                                                 const GstCaps* inputCaps);
 
     /// Adds the branch's queue and closed valve to @p pipeline behind @p tee.
     [[nodiscard]] bool build(GstElement* pipeline, GstElement* tee);
@@ -73,11 +71,13 @@ private:
     GstVideoReceiver& _receiver;
     /// Bounds stop(): completes it when the file isn't reported finalized in time.
     QTimer* _stopTimer = nullptr;
+    // Borrowed: the receiver owns the pipeline, the pipeline the tee and valve.
     GstElement* _pipeline = nullptr;
     GstElement* _tee = nullptr;
     /// Closed by the bus handler on a recorder error; fixed while the handler is attached.
     GstElement* _valve = nullptr;
-    GstElement* _fileSink = nullptr;
+    /// Ours, besides the pipeline's while it is inside.
+    GStreamer::GstElementPtr _fileSink;
     State _state = State::Idle;
     std::atomic<gulong> _keyframeWatchId = 0;  ///< Cleared by the keyframe probe when it removes itself.
     RecordingFinalizer _finalizer;

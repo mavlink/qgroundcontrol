@@ -1,30 +1,18 @@
 #include "GStreamer.h"
 
-#include <QtCore/QCoreApplication>
-#include <QtCore/QDir>
-#include <QtCore/QFile>
-#include <QtCore/QFileInfo>
+#include <array>
+#include <mutex>
+
+#include <QtCore/QByteArrayList>
 #include <QtCore/QList>
-#include <QtCore/QMutex>
 #include <QtCore/QPointer>
-#include <QtCore/QStandardPaths>
 #include <QtCore/QStringList>
-#include <QtGui/QGuiApplication>
-#include <QtGui/QScreen>
-#include <QtGui/QWindow>
+#include <QtCore/QVarLengthArray>
 #include <QtMultimedia/QVideoSink>
 #include <QtMultimediaQuick/private/qquickvideooutput_p.h>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
 #include <QtQuick/QSGRendererInterface>
-#ifdef Q_OS_ANDROID
-#include <QtCore/QJniEnvironment>
-#include <QtCore/QJniObject>
-#endif
-#include <array>
-#include <memory>
-#include <mutex>
-#include <utility>
 
 #include "Fact.h"
 #include "GStreamerEnvironment.h"
@@ -42,15 +30,6 @@
 #include "QGCQVideoSinkController.h"
 #include "gstqgc/gstqgcqvideosink.h"
 #include "gstqgc/gstqgcvideosinkbin.h"
-
-#ifdef Q_OS_LINUX
-#include <dlfcn.h>
-#endif
-
-#ifdef Q_OS_ANDROID
-#include <android/asset_manager.h>
-#include <android/asset_manager_jni.h>
-#endif
 
 #include <gst/gst.h>
 

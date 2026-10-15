@@ -5,23 +5,17 @@
 
 #include <QtCore/QMutexLocker>
 
-RecordingFinalizer::~RecordingFinalizer()
-{
-    (void) disarm();
-}
-
 void RecordingFinalizer::arm(GstElement* fileSink)
 {
     QMutexLocker lock(&_mutex);
-    gst_clear_object(&_fileSink);
-    _fileSink = GST_ELEMENT(gst_object_ref(fileSink));
+    _fileSink = GStreamer::adoptElement(GST_ELEMENT(gst_object_ref(fileSink)));
     _outcome = Outcome::Pending;
 }
 
 RecordingFinalizer::Outcome RecordingFinalizer::disarm()
 {
     QMutexLocker lock(&_mutex);
-    gst_clear_object(&_fileSink);
+    _fileSink.reset();
     return std::exchange(_outcome, Outcome::Pending);
 }
 
@@ -40,7 +34,8 @@ bool RecordingFinalizer::settle(Outcome outcome)
 bool RecordingFinalizer::settleFrom(GstObject* source, Outcome outcome, bool* belongs)
 {
     QMutexLocker lock(&_mutex);
-    const bool fromRecording = _fileSink && source && gst_object_has_as_ancestor(source, GST_OBJECT_CAST(_fileSink));
+    const bool fromRecording =
+        _fileSink && source && gst_object_has_as_ancestor(source, GST_OBJECT_CAST(_fileSink.get()));
     if (belongs) {
         *belongs = fromRecording;
     }

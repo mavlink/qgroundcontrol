@@ -194,13 +194,12 @@ constexpr int kRtxMaxRetries = 1;
 // Shared by the static and dynamic (pad-added) link paths so both apply the identical jitter-buffer
 // policy. Retransmission stays off: these sources have no RTCP back-channel, so the jitterbuffer's
 // retransmission requests would only reach the source element, which drops them.
-void configureJitterBuffer(GstElement* buffer, const Config& config, guint latencyMs)
+void configureJitterBuffer(GstElement* buffer, guint latencyMs)
 {
-    g_object_set(buffer, "latency", latencyMs, "do-lost", TRUE, "drop-on-latency",
-                 config.jitterBuffer == JitterBuffer::DropOnLatency ? TRUE : FALSE, nullptr);
+    g_object_set(buffer, "latency", latencyMs, "do-lost", TRUE, "drop-on-latency", TRUE, nullptr);
 }
 
-GstElement* addJitterBuffer(GstElement* bin, const Config& config, guint latencyMs)
+GstElement* addJitterBuffer(GstElement* bin, guint latencyMs)
 {
     GstElementPtr buffer = adoptElement(gst_element_factory_make("rtpjitterbuffer", nullptr));
     if (!buffer) {
@@ -208,7 +207,7 @@ GstElement* addJitterBuffer(GstElement* bin, const Config& config, guint latency
         return nullptr;
     }
 
-    configureJitterBuffer(buffer.get(), config, latencyMs);
+    configureJitterBuffer(buffer.get(), latencyMs);
     return addToBin(bin, std::move(buffer), "rtpjitterbuffer");
 }
 
@@ -260,7 +259,7 @@ GstElement* insertDynamicJitterBuffer(const DynamicLinkContext* ctx)
         return nullptr;
     }
 
-    GstElement* buffer = addJitterBuffer(GST_ELEMENT(bin.get()), ctx->config, ctx->latencyMs);
+    GstElement* buffer = addJitterBuffer(GST_ELEMENT(bin.get()), ctx->latencyMs);
     if (!buffer) {
         qCWarning(GstSourceFactoryLog) << "dynamic rtpjitterbuffer create/add failed; skipping jitter buffer";
         return nullptr;
@@ -361,10 +360,9 @@ GstElementPtr buildRtspSource(const QString& uri, const QUrl& sourceUrl, const C
     const guint rtspLatencyMs = (config.jitterBuffer == JitterBuffer::None) ? 0u : latencyMs;
     const gboolean doRetransmission =
         ((config.jitterBuffer != JitterBuffer::None) && config.doRetransmission) ? TRUE : FALSE;
-    const gboolean dropOnLatency = (config.jitterBuffer == JitterBuffer::Buffered) ? FALSE : TRUE;
     g_object_set(source.get(), "location", cleanLocation.constData(), "latency", rtspLatencyMs, "do-rtcp", TRUE,
                  "do-retransmission", doRetransmission, "tcp-timeout", kRtspTcpTimeoutUs, "udp-reconnect", TRUE,
-                 "drop-on-latency", dropOnLatency, "retry", kRtspRetry, "protocols", kRtspProtocols, nullptr);
+                 "drop-on-latency", TRUE, "retry", kRtspRetry, "protocols", kRtspProtocols, nullptr);
 
     // rtspsrc forwards latency/drop-on-latency/do-retransmission to its rtpbin, but not the rtx timing.
     if (doRetransmission) {
@@ -478,7 +476,7 @@ bool linkSourceToParser(GstElement* bin, GstElement* upstream, GstElement* binPa
 
     if (probeRes & 1) {
         if ((probeRes & 2) && config.jitterBuffer != JitterBuffer::None) {
-            GstElement* buffer = addJitterBuffer(bin, config, latencyMs);
+            GstElement* buffer = addJitterBuffer(bin, latencyMs);
             if (!buffer) {
                 return false;
             }
@@ -519,7 +517,7 @@ bool linkUdpRtpToDepayAndParser(GstElement* bin, GstElement* source, GstElement*
         return true;
     }
 
-    GstElement* buffer = addJitterBuffer(bin, config, latencyMs);
+    GstElement* buffer = addJitterBuffer(bin, latencyMs);
     if (!buffer) {
         return false;
     }

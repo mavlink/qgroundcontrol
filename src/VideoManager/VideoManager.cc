@@ -29,7 +29,6 @@
 #include <QtCore/QFutureWatcher>
 #include <QtCore/QRunnable>
 #include <QtCore/QTimer>
-#include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
 
@@ -40,6 +39,11 @@ static constexpr const char *kFileExtension[VideoReceiver::FILE_FORMAT_MAX + 1] 
     "mov",
     "mp4"
 };
+
+// Stall timeout for every source but RTSP, whose timeout is a setting.
+static constexpr uint32_t kDefaultStreamTimeoutSec = 3;
+// Pause between the stop and the start of a requested restart.
+static constexpr std::chrono::seconds kRestartDelay{1};
 
 Q_APPLICATION_STATIC(VideoManager, _videoManagerInstance);
 
@@ -402,7 +406,6 @@ void VideoManager::grabImage(const QString &imageFile)
 
     for (VideoReceiver *receiver : std::as_const(_videoReceivers)) {
         receiver->takeScreenshot(_imageFile);
-        // QSharedPointer<QQuickItemGrabResult> result = receiver->widget()->grabToImage(const QSize &targetSize = QSize())
     }
 }
 
@@ -845,7 +848,9 @@ void VideoManager::_startReceiver(VideoReceiver *receiver)
     }
 
     const QString source = _videoSettings->videoSource()->rawValue().toString();
-    const uint32_t timeout = ((source == VideoSettings::videoSourceRTSP) ? _videoSettings->rtspTimeout()->rawValue().toUInt() : 3);
+    const uint32_t timeout =
+        ((source == VideoSettings::videoSourceRTSP) ? _videoSettings->rtspTimeout()->rawValue().toUInt()
+                                                    : kDefaultStreamTimeoutSec);
 
     receiver->start(timeout);
 }
@@ -875,7 +880,7 @@ void VideoManager::_connectReceiverLifecycle(VideoReceiver* receiver)
             qCDebug(VideoManagerLog) << "Invalid video URL. Not restarting";
             return;
         }
-        QTimer::singleShot(1000, receiver, [this, receiver]() {
+        QTimer::singleShot(kRestartDelay, receiver, [this, receiver]() {
             qCDebug(VideoManagerLog) << "Restarting video receiver" << receiver->name()
                                      << QGCNetworkHelper::redactedUrlForLogging(receiver->uri());
             _startReceiver(receiver);

@@ -12,6 +12,7 @@
 
 #include "BusMessageRouter.h"
 #include "DecodingBranch.h"
+#include "GstScoped.h"
 #include "PipelineDotDumper.h"
 #include "RecordingBranch.h"
 #include "StreamWatchdog.h"
@@ -28,28 +29,14 @@ Q_DECLARE_LOGGING_CATEGORY(GstVideoReceiverLog)
 class GstVideoReceiver : public VideoReceiver
 {
     Q_OBJECT
-    Q_PROPERTY(QString decoderName       READ decoderName       NOTIFY decoderStatsChanged)
-    Q_PROPERTY(quint64 processedFrames   READ processedFrames   NOTIFY decoderStatsChanged)
-    Q_PROPERTY(quint64 droppedFrames     READ droppedFrames     NOTIFY decoderStatsChanged)
-    Q_PROPERTY(qint64  currentJitterNs   READ currentJitterNs   NOTIFY decoderStatsChanged)
-    Q_PROPERTY(double  qosProportion     READ qosProportion     NOTIFY decoderStatsChanged)
-    Q_PROPERTY(int     qosQuality        READ qosQuality        NOTIFY decoderStatsChanged)
+    Q_PROPERTY(QString decoderName READ decoderName NOTIFY decoderNameChanged)
 
 public:
     explicit GstVideoReceiver(QObject *parent = nullptr);
     ~GstVideoReceiver();
 
+    /// Factory name of the decoder decodebin3 plugged last, empty before the first one.
     QString decoderName() const { return _decodingBranch.decoderName(); }
-
-    quint64 processedFrames() const { return _decodingBranch.processedFrames(); }
-
-    quint64 droppedFrames() const { return _decodingBranch.droppedFrames(); }
-
-    qint64 currentJitterNs() const { return _decodingBranch.currentJitterNs(); }
-
-    double qosProportion() const { return _decodingBranch.qosProportion(); }
-
-    int qosQuality() const { return _decodingBranch.qosQuality(); }
 
 public slots:
     void start(uint32_t timeout) override;
@@ -66,7 +53,8 @@ public slots:
     Q_INVOKABLE void dumpPipelineGraph(const QString &tag = QStringLiteral("manual"));
 
 signals:
-    void decoderStatsChanged();
+    /// Emitted on the receiver's own thread.
+    void decoderNameChanged();
 
 private:
     friend class GStreamerTest;
@@ -145,7 +133,8 @@ private:
     QTimer* _reconnectTimer = nullptr;
 
     StartConfig _config;
-    GstElement *_pipeline = nullptr;
+    GStreamer::GstElementPtr _pipeline;
+    // Both owned by _pipeline.
     GstElement *_source = nullptr;
     GstElement *_tee = nullptr;
     /// Identifies the current pipeline; bumped on every teardown (stop() or failed start()) once its callbacks have
@@ -153,8 +142,8 @@ private:
     std::atomic<quint64> _pipelineGeneration = 0;
     gulong _teeProbeId = 0;
     gulong _eosProbeId = 0;
-    // Ref-held source pad carrying _eosProbeId; released with the pipeline, not the decode branch.
-    GstPad* _eosProbePad = nullptr;
+    /// Source pad carrying _eosProbeId; released with the pipeline, not the decode branch.
+    GStreamer::GstPadPtr _eosProbePad;
     RecordingBranch _recordingBranch;
     DecodingBranch _decodingBranch;
     BusMessageRouter _busRouter;

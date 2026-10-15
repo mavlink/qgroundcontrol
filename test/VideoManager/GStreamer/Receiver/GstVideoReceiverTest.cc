@@ -751,6 +751,59 @@ void GstVideoReceiverTest::_testRecordingErrorKeepsStreaming()
              qPrintable(QStringLiteral("%1 frames recorded %2").arg(frames).arg(failure)));
 }
 
+void GstVideoReceiverTest::_testFailedRecordingStartLeavesBranchUsable()
+{
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const quint16 port = freeLoopbackUdpPort();
+    QVERIFY(port != 0);
+    H264RtpSender sender;
+    QVERIFY(sender.start(port));
+
+    QQuickItem widget;
+    const auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &widget);
+    auto* gstReceiver = qobject_cast<GstVideoReceiver*>(receiver.get());
+    QVERIFY(gstReceiver);
+    QSignalSpy startSpy(receiver.get(), &VideoReceiver::onStartComplete);
+    QSignalSpy streamingSpy(receiver.get(), &VideoReceiver::streamingChanged);
+    QSignalSpy startRecordingSpy(receiver.get(), &VideoReceiver::onStartRecordingComplete);
+    QSignalSpy recordingSpy(receiver.get(), &VideoReceiver::recordingChanged);
+
+    receiver->start(kWatchdogTimeoutSec);
+    QVERIFY_SIGNAL_COUNT_WAIT(startSpy, 1, TestTimeout::mediumMs());
+    QCOMPARE(lastStatus(startSpy), VideoReceiver::STATUS_OK);
+    QVERIFY_SIGNAL_COUNT_WAIT(streamingSpy, 1, TestTimeout::mediumMs());
+
+    // A child holding the recording sink's name makes the pipeline refuse the sink.
+    GstElement* nameTaken = nullptr;
+    QVERIFY(QMetaObject::invokeMethod(
+        gstReceiver->_workerContext,
+        [gstReceiver, &nameTaken]() {
+            nameTaken = gst_bin_new("sinkbin");
+            if (!gst_bin_add(GST_BIN(gstReceiver->_pipeline.get()), nameTaken)) {
+                nameTaken = nullptr;
+            }
+        },
+        Qt::BlockingQueuedConnection));
+    QVERIFY(nameTaken);
+
+    expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^Failed to add the recording sink")));
+    receiver->startRecording(tempDir.filePath(QStringLiteral("refused.mp4")), VideoReceiver::FILE_FORMAT_MP4);
+    QVERIFY_SIGNAL_COUNT_WAIT(startRecordingSpy, 1, TestTimeout::mediumMs());
+    QCOMPARE(lastStatus(startRecordingSpy), VideoReceiver::STATUS_FAIL);
+    verifyExpectedLogMessage();
+    QVERIFY(recordingSpy.isEmpty());
+
+    QVERIFY(QMetaObject::invokeMethod(
+        gstReceiver->_workerContext,
+        [gstReceiver, nameTaken]() { (void) gst_bin_remove(GST_BIN(gstReceiver->_pipeline.get()), nameTaken); },
+        Qt::BlockingQueuedConnection));
+    receiver->startRecording(tempDir.filePath(QStringLiteral("accepted.mp4")), VideoReceiver::FILE_FORMAT_MP4);
+    QVERIFY_SIGNAL_COUNT_WAIT(startRecordingSpy, 2, TestTimeout::mediumMs());
+    QCOMPARE(lastStatus(startRecordingSpy), VideoReceiver::STATUS_OK);
+}
+
 void GstVideoReceiverTest::_testRecordingStartKeepsPipelinePlaying()
 {
     QTemporaryDir tempDir;
@@ -776,7 +829,7 @@ void GstVideoReceiverTest::_testRecordingStartKeepsPipelinePlaying()
             [gstReceiver, &state]() {
                 GstState current = GST_STATE_VOID_PENDING;
                 GstState pending = GST_STATE_VOID_PENDING;
-                (void) gst_element_get_state(gstReceiver->_pipeline, &current, &pending, 0);
+                (void) gst_element_get_state(gstReceiver->_pipeline.get(), &current, &pending, 0);
                 state = QString::fromUtf8(gst_element_state_get_name(current));
                 if (pending != GST_STATE_VOID_PENDING) {
                     state += QStringLiteral("->") + QString::fromUtf8(gst_element_state_get_name(pending));
@@ -815,12 +868,12 @@ void GstVideoReceiverTest::_testDecoderQosDisabledAndReported()
     auto* gstReceiver = qobject_cast<GstVideoReceiver*>(receiver.get());
     QVERIFY(gstReceiver);
     QSignalSpy decodingSpy(receiver.get(), &VideoReceiver::decodingChanged);
-    QSignalSpy statsSpy(gstReceiver, &GstVideoReceiver::decoderStatsChanged);
+    QSignalSpy decoderNameSpy(gstReceiver, &GstVideoReceiver::decoderNameChanged);
 
     receiver->start(kWatchdogTimeoutSec);
     receiver->startDecoding(videoSink);
     QVERIFY_SIGNAL_COUNT_WAIT(decodingSpy, 1, TestTimeout::mediumMs());
-    QVERIFY_SIGNAL_COUNT_WAIT(statsSpy, 1, TestTimeout::mediumMs());
+    QVERIFY_SIGNAL_COUNT_WAIT(decoderNameSpy, 1, TestTimeout::mediumMs());
     QVERIFY(!gstReceiver->decoderName().isEmpty());
 
     // The decoders decodebin3 plugged, inspected on the worker that owns the pipeline.
@@ -908,7 +961,7 @@ void GstVideoReceiverTest::_testBusDoesNotQueueMessages()
     QVERIFY(QMetaObject::invokeMethod(
         gstReceiver->_workerContext,
         [gstReceiver, &pending]() {
-            GstBus* bus = gst_pipeline_get_bus(GST_PIPELINE(gstReceiver->_pipeline));
+            GstBus* bus = gst_pipeline_get_bus(GST_PIPELINE(gstReceiver->_pipeline.get()));
             pending = gst_bus_have_pending(bus);
             gst_object_unref(bus);
         },
@@ -989,6 +1042,11 @@ void GstVideoReceiverTest::_testStopWhileStoppingRecordingFinalizesFile()
 }
 
 void GstVideoReceiverTest::_testRecordingErrorKeepsStreaming()
+{
+    QSKIP("GStreamer not enabled");
+}
+
+void GstVideoReceiverTest::_testFailedRecordingStartLeavesBranchUsable()
 {
     QSKIP("GStreamer not enabled");
 }

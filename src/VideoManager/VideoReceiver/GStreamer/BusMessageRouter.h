@@ -5,6 +5,8 @@
 
 #include <QtCore/QSemaphore>
 
+#include "GstScoped.h"
+
 class GstVideoReceiver;
 
 /// \brief The receiver pipeline's only bus consumer: a sync handler that drops every message once it is handled.
@@ -33,6 +35,6 @@ private:
     void _onLatency();
 
     GstVideoReceiver& _receiver;
-    GstBus* _bus = nullptr;       ///< Held while the handler is attached.
+    GStreamer::GstBusPtr _bus;    ///< Held while the handler is attached.
     QSemaphore _handlerReleased;  ///< Released by GStreamer once the detached handler is no longer running.
 };

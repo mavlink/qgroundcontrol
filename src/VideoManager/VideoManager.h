@@ -6,7 +6,6 @@
 #include <QtCore/QFuture>
 #include <QtCore/QMutex>
 #include <QtCore/QObject>
-#include <QtCore/QPromise>
 #include <QtCore/QSet>
 #include <QtCore/QSize>
 #include <QtQmlIntegration/QtQmlIntegration>

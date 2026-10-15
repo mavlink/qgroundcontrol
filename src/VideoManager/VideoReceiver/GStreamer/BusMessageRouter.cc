@@ -12,13 +12,13 @@ void logBusWarning(GstMessage* message)
 {
     // GStreamer posts WARNING for caps mismatches, decoder fallbacks, clock drift — surfacing keeps these
     // visible without escalating to STATUS_FAIL.
-    gchar* debug = nullptr;
-    GError* error = nullptr;
-    gst_message_parse_warning(message, &error, &debug);
+    GError* rawError = nullptr;
+    gchar* rawDebug = nullptr;
+    gst_message_parse_warning(message, &rawError, &rawDebug);
+    const GStreamer::GErrorPtr error = GStreamer::adoptError(rawError);
+    const GStreamer::GCharPtr debug = GStreamer::adoptGChar(rawDebug);
     qCWarning(GstVideoReceiverLog) << "GStreamer warning:" << (error ? error->message : "(no message)")
-                                   << "debug:" << (debug ? debug : "(none)");
-    g_clear_error(&error);
-    g_clear_pointer(&debug, g_free);
+                                   << "debug:" << (debug ? debug.get() : "(none)");
 }
 
 /// Selecting only video keeps decodebin3 from instantiating audio decoder branches. Done synchronously so the
@@ -27,7 +27,8 @@ void selectVideoStreams(GstMessage* message)
 {
     GstStreamCollection* collection = nullptr;
     gst_message_parse_stream_collection(message, &collection);
-    if (!collection) {
+    const GStreamer::GstObjectPtr collectionRef = GStreamer::adoptObject(GST_OBJECT_CAST(collection));
+    if (!collectionRef) {
         return;
     }
     GList* selectedIds = nullptr;
@@ -42,7 +43,6 @@ void selectVideoStreams(GstMessage* message)
         (void) gst_element_send_event(GST_ELEMENT(GST_MESSAGE_SRC(message)), gst_event_new_select_streams(selectedIds));
         g_list_free_full(selectedIds, g_free);
     }
-    gst_object_unref(collection);
 }
 
 bool isRecoverableH265PaciError(GstMessage* msg, const GError* error, const gchar* debug)
@@ -69,12 +69,12 @@ BusMessageRouter::BusMessageRouter(GstVideoReceiver& receiver)
 
 void BusMessageRouter::attach(GstElement* pipeline)
 {
-    _bus = gst_pipeline_get_bus(GST_PIPELINE(pipeline));
+    _bus = GStreamer::adoptBus(gst_pipeline_get_bus(GST_PIPELINE(pipeline)));
     if (!_bus) {
         qCCritical(GstVideoReceiverLog) << "gst_pipeline_get_bus() failed";
         return;
     }
-    gst_bus_set_sync_handler(_bus, _onSyncMessage, this, [](gpointer router) {
+    gst_bus_set_sync_handler(_bus.get(), _onSyncMessage, this, [](gpointer router) {
         static_cast<BusMessageRouter*>(router)->_handlerReleased.release();
     });
 }
@@ -85,8 +85,8 @@ void BusMessageRouter::detach()
         return;
     }
 
-    gst_bus_set_sync_handler(_bus, nullptr, nullptr, nullptr);
-    gst_clear_object(&_bus);
+    gst_bus_set_sync_handler(_bus.get(), nullptr, nullptr, nullptr);
+    _bus.reset();
     // GStreamer refcounts the handler per post and releases it once the last in-flight call has returned.
     _handlerReleased.acquire();
 }
@@ -115,9 +115,6 @@ GstBusSyncReply BusMessageRouter::_onSyncMessage(GstBus* bus, GstMessage* messag
         case GST_MESSAGE_STREAM_COLLECTION:
             selectVideoStreams(message);
             break;
-        case GST_MESSAGE_QOS:
-            self->_receiver._decodingBranch.onBusQos(message);
-            break;
         case GST_MESSAGE_STATE_CHANGED:
             self->_onStateChanged(message);
             break;
@@ -136,16 +133,16 @@ GstBusSyncReply BusMessageRouter::_onSyncMessage(GstBus* bus, GstMessage* messag
 
 void BusMessageRouter::_onError(GstMessage* message)
 {
-    gchar* debug = nullptr;
-    GError* error = nullptr;
-    gst_message_parse_error(message, &error, &debug);
-    const bool recoverableH265PaciError = isRecoverableH265PaciError(message, error, debug);
+    GError* rawError = nullptr;
+    gchar* rawDebug = nullptr;
+    gst_message_parse_error(message, &rawError, &rawDebug);
+    const GStreamer::GErrorPtr error = GStreamer::adoptError(rawError);
+    const GStreamer::GCharPtr debug = GStreamer::adoptGChar(rawDebug);
+    const bool recoverableH265PaciError = isRecoverableH265PaciError(message, error.get(), debug.get());
     const QString text = QString::fromUtf8(error ? error->message : "(no message)");
     if (debug) {
-        qCDebug(GstVideoReceiverLog) << "GStreamer debug:" << debug;
+        qCDebug(GstVideoReceiverLog) << "GStreamer debug:" << debug.get();
     }
-    g_clear_error(&error);
-    g_clear_pointer(&debug, g_free);
 
     if (recoverableH265PaciError) {
         qCWarning(GstVideoReceiverLog) << "Ignoring unsupported H.265 RTP PACI packet from rtph265depay:" << text;
@@ -197,7 +194,7 @@ void BusMessageRouter::_onLatency()
 {
     GstVideoReceiver* const receiver = &_receiver;
     receiver->_runOnWorkerForPipeline(
-        [receiver]() { (void) gst_bin_recalculate_latency(GST_BIN(receiver->_pipeline)); });
+        [receiver]() { (void) gst_bin_recalculate_latency(GST_BIN(receiver->_pipeline.get())); });
     // Re-prime sink-side latency tracking after the pipeline recalculation (e.g. RTSP
     // jitter-buffer reconfigure). Controllers live on the GUI thread; hop there to query.
     QMetaObject::invokeMethod(

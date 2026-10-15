@@ -6,6 +6,7 @@
 #include <QtCore/QDeadlineTimer>
 #include <QtCore/QTimer>
 
+#include "GStreamerHelpers.h"
 #include "GstVideoReceiver.h"
 
 namespace {
@@ -53,142 +54,115 @@ const char* recordingParserFactory(const GstCaps* caps)
 
 }  // namespace
 
-GstElement* RecordingBranch::makeFileSink(const QString& videoFile, VideoReceiver::FILE_FORMAT format,
-                                          const GstCaps* inputCaps)
+GStreamer::GstElementPtr RecordingBranch::makeFileSink(const QString& videoFile, VideoReceiver::FILE_FORMAT format,
+                                                       const GstCaps* inputCaps)
 {
-    GstElement* fileSink = nullptr;
-    GstElement* splitmux = nullptr;
+    if (!VideoReceiver::isValidFileFormat(format)) {
+        qCCritical(GstVideoReceiverLog) << "Unsupported file format";
+        return nullptr;
+    }
+
+    // The bin is sunk so the caller owns it outright. Its children stay floating until added: gst_bin_add and
+    // gst_element_add_pad consume a floating ref even when they fail, so each owner is released into the call.
+    GStreamer::GstElementPtr bin = GStreamer::adoptElement(gst_bin_new("sinkbin"));
+    if (!bin) {
+        qCWarning(GstVideoReceiverLog) << "gst_bin_new('sinkbin') failed";
+        return nullptr;
+    }
+    (void) gst_object_ref_sink(bin.get());
+    // splitmuxsink completes its change to PAUSED only once the first fragment opens, at the next keyframe.
+    // Waited out inside the bin, that doesn't make the live pipeline lose PLAYING meanwhile, nor leave it
+    // stuck in PAUSED when the sink fails first.
+    g_object_set(bin.get(), "async-handling", TRUE, nullptr);
+
     GstElement* parser = nullptr;
-    GstElement* bin = nullptr;
-    GstPad* videopad = nullptr;
-    GstPad* parserSrcPad = nullptr;
-    GstPad* parserSinkPad = nullptr;
-    GstPad* ghostpad = nullptr;
+    if (const char* parserFactory = recordingParserFactory(inputCaps)) {
+        GStreamer::GstElementPtr parserOwner =
+            GStreamer::adoptElement(gst_element_factory_make(parserFactory, nullptr));
+        if (!parserOwner) {
+            qCWarning(GstVideoReceiverLog) << "gst_element_factory_make() failed for" << parserFactory;
+            return nullptr;
+        }
+        g_object_set(parserOwner.get(), "config-interval", -1, nullptr);
+        parser = parserOwner.release();
+        if (!gst_bin_add(GST_BIN(bin.get()), parser)) {
+            qCWarning(GstVideoReceiverLog) << "gst_bin_add(parser) failed";
+            return nullptr;
+        }
+    }
 
-    do {
-        if (!VideoReceiver::isValidFileFormat(format)) {
-            qCCritical(GstVideoReceiverLog) << "Unsupported file format";
-            break;
+    // splitmuxsink owns its own muxer + filesink internally, handles request-pad
+    // lifetime, and finalizes asynchronously so EOS no longer wedges the worker
+    // thread (replaces the manual qtmux/matroskamux+filesink combo + "stuck muxer"
+    // bounded-wait in stop()). max-size-time=0 keeps single-file behaviour.
+    GStreamer::GstElementPtr splitmuxOwner = GStreamer::adoptElement(gst_element_factory_make("splitmuxsink", nullptr));
+    if (!splitmuxOwner) {
+        qCWarning(GstVideoReceiverLog) << "gst_element_factory_make('splitmuxsink') failed";
+        return nullptr;
+    }
+    GstElement* const splitmux = splitmuxOwner.get();
+
+    g_object_set(splitmux, "location", qPrintable(videoFile), "muxer-factory", kFileMux[format], "max-size-time",
+                 G_GUINT64_CONSTANT(0), "max-size-bytes", G_GUINT64_CONSTANT(0), "async-finalize", TRUE,
+                 // Surface "splitmuxsink-fragment-closed" element messages on the pipeline bus so
+                 // stop() can wait on the precise per-fragment finalize signal instead of EOS
+                 // (gstsplitmuxsink.c:send_fragment_opened_closed_msg posts this per fragment,
+                 // including the final fragment torn down on EOS).
+                 "message-forward", TRUE, nullptr);
+
+    // Crash-safe MP4/MOV via robust muxing. faststart is deliberately off: it spools the whole
+    // recording to a temp file and writes the real file only at EOS. matroskamux is naturally
+    // streamable; skip the GstStructure dance.
+    if (format == VideoReceiver::FILE_FORMAT_MP4 || format == VideoReceiver::FILE_FORMAT_MOV) {
+        const GStreamer::GstStructurePtr muxerProps = GStreamer::adoptStructure(
+            gst_structure_new("properties", "reserved-max-duration", G_TYPE_UINT64, kRecordingReservedMaxDurationNs,
+                              "reserved-moov-update-period", G_TYPE_UINT64, kRecordingMoovUpdatePeriodNs, nullptr));
+        g_object_set(splitmux, "muxer-properties", muxerProps.get(), nullptr);
+    }
+
+    if (!gst_bin_add(GST_BIN(bin.get()), splitmuxOwner.release())) {
+        qCWarning(GstVideoReceiverLog) << "gst_bin_add(splitmuxsink) failed";
+        return nullptr;
+    }
+
+    // splitmuxsink's video sink pad is a request pad — request once during construction
+    // and ghost it as "sink" so the existing recorderValve→fileSink link works unchanged.
+    // request_pad_simple (1.20+) does the pad-template lookup internally. No release_request_pad on failure:
+    // finalizing splitmuxsink with the bin reclaims it.
+    const GStreamer::GstPadPtr videopad = GStreamer::adoptPad(gst_element_request_pad_simple(splitmux, "video"));
+    if (!videopad) {
+        qCWarning(GstVideoReceiverLog) << "gst_element_request_pad_simple(splitmuxsink, video) failed";
+        return nullptr;
+    }
+
+    GStreamer::GstPadPtr parserSinkPad;
+    if (parser) {
+        const GStreamer::GstPadPtr parserSrcPad = GStreamer::adoptPad(gst_element_get_static_pad(parser, "src"));
+        parserSinkPad = GStreamer::adoptPad(gst_element_get_static_pad(parser, "sink"));
+        if (!parserSrcPad || !parserSinkPad) {
+            qCCritical(GstVideoReceiverLog) << "gst_element_get_static_pad(parser) failed";
+            return nullptr;
         }
 
-        const char* parserFactory = recordingParserFactory(inputCaps);
-        if (parserFactory) {
-            parser = gst_element_factory_make(parserFactory, nullptr);
-            if (!parser) {
-                qCCritical(GstVideoReceiverLog) << "gst_element_factory_make() failed for" << parserFactory;
-                break;
-            }
-            g_object_set(parser, "config-interval", -1, nullptr);
+        const GstPadLinkReturn linkResult = gst_pad_link(parserSrcPad.get(), videopad.get());
+        if (linkResult != GST_PAD_LINK_OK) {
+            qCWarning(GstVideoReceiverLog)
+                << "Failed to link parser and splitmuxsink:" << gst_pad_link_get_name(linkResult);
+            return nullptr;
         }
+    }
 
-        // splitmuxsink owns its own muxer + filesink internally, handles request-pad
-        // lifetime, and finalizes asynchronously so EOS no longer wedges the worker
-        // thread (replaces the manual qtmux/matroskamux+filesink combo + "stuck muxer"
-        // bounded-wait in stop()). max-size-time=0 keeps single-file behaviour.
-        splitmux = gst_element_factory_make("splitmuxsink", nullptr);
-        if (!splitmux) {
-            qCCritical(GstVideoReceiverLog) << "gst_element_factory_make('splitmuxsink') failed";
-            break;
-        }
+    GstPad* const ghostpad = gst_ghost_pad_new("sink", parserSinkPad ? parserSinkPad.get() : videopad.get());
+    if (!ghostpad) {
+        qCWarning(GstVideoReceiverLog) << "gst_ghost_pad_new() failed";
+        return nullptr;
+    }
+    if (!gst_element_add_pad(bin.get(), ghostpad)) {
+        qCWarning(GstVideoReceiverLog) << "gst_element_add_pad(ghost) failed";
+        return nullptr;
+    }
 
-        g_object_set(splitmux, "location", qPrintable(videoFile), "muxer-factory", kFileMux[format], "max-size-time",
-                     G_GUINT64_CONSTANT(0), "max-size-bytes", G_GUINT64_CONSTANT(0), "async-finalize", TRUE,
-                     // Surface "splitmuxsink-fragment-closed" element messages on the pipeline bus so
-                     // stop() can wait on the precise per-fragment finalize signal instead of EOS
-                     // (gstsplitmuxsink.c:send_fragment_opened_closed_msg posts this per fragment,
-                     // including the final fragment torn down on EOS).
-                     "message-forward", TRUE, nullptr);
-
-        // Crash-safe MP4/MOV via robust muxing. faststart is deliberately off: it spools the whole
-        // recording to a temp file and writes the real file only at EOS. matroskamux is naturally
-        // streamable; skip the GstStructure dance.
-        if (format == VideoReceiver::FILE_FORMAT_MP4 || format == VideoReceiver::FILE_FORMAT_MOV) {
-            GstStructure* muxerProps =
-                gst_structure_new("properties", "reserved-max-duration", G_TYPE_UINT64, kRecordingReservedMaxDurationNs,
-                                  "reserved-moov-update-period", G_TYPE_UINT64, kRecordingMoovUpdatePeriodNs, nullptr);
-            g_object_set(splitmux, "muxer-properties", muxerProps, nullptr);
-            gst_structure_free(muxerProps);
-        }
-
-        bin = gst_bin_new("sinkbin");
-        if (!bin) {
-            qCCritical(GstVideoReceiverLog) << "gst_bin_new('sinkbin') failed";
-            break;
-        }
-        // splitmuxsink completes its change to PAUSED only once the first fragment opens, at the next keyframe.
-        // Waited out inside the bin, that doesn't make the live pipeline lose PLAYING meanwhile, nor leave it
-        // stuck in PAUSED when the sink fails first.
-        g_object_set(bin, "async-handling", TRUE, nullptr);
-
-        // splitmuxsink's video sink pad is a request pad — request once during construction
-        // and ghost it as "sink" so the existing recorderValve→fileSink link works unchanged.
-        // request_pad_simple (1.20+) does the pad-template lookup internally.
-        videopad = gst_element_request_pad_simple(splitmux, "video");
-        if (!videopad) {
-            qCCritical(GstVideoReceiverLog) << "gst_element_request_pad_simple(splitmuxsink, video) failed";
-            break;
-        }
-
-        GstElement* binParser = nullptr;
-        if (parser) {
-            if (!gst_bin_add(GST_BIN(bin), parser)) {
-                qCCritical(GstVideoReceiverLog) << "gst_bin_add(parser) failed";
-                break;
-            }
-            binParser = parser;
-            parser = nullptr;  // bin now owns it
-        }
-
-        if (!gst_bin_add(GST_BIN(bin), splitmux)) {
-            qCCritical(GstVideoReceiverLog) << "gst_bin_add(splitmuxsink) failed";
-            break;
-        }
-        splitmux = nullptr;  // bin now owns it
-
-        GstPad* ghostTarget = videopad;
-        if (binParser) {
-            parserSrcPad = gst_element_get_static_pad(binParser, "src");
-            parserSinkPad = gst_element_get_static_pad(binParser, "sink");
-            if (!parserSrcPad || !parserSinkPad) {
-                qCCritical(GstVideoReceiverLog) << "gst_element_get_static_pad(parser) failed";
-                break;
-            }
-
-            const GstPadLinkReturn linkResult = gst_pad_link(parserSrcPad, videopad);
-            if (linkResult != GST_PAD_LINK_OK) {
-                qCCritical(GstVideoReceiverLog)
-                    << "Failed to link parser and splitmuxsink:" << gst_pad_link_get_name(linkResult);
-                break;
-            }
-            ghostTarget = parserSinkPad;
-        }
-
-        ghostpad = gst_ghost_pad_new("sink", ghostTarget);
-        if (!ghostpad) {
-            qCCritical(GstVideoReceiverLog) << "gst_ghost_pad_new() failed";
-            break;
-        }
-
-        if (!gst_element_add_pad(bin, ghostpad)) {
-            qCCritical(GstVideoReceiverLog) << "gst_element_add_pad(ghost) failed";
-            break;
-        }
-        ghostpad = nullptr;  // bin now owns it
-
-        fileSink = bin;
-        bin = nullptr;
-    } while (0);
-
-    gst_clear_object(&ghostpad);
-    gst_clear_object(&parserSinkPad);
-    gst_clear_object(&parserSrcPad);
-    // No release_request_pad: on success splitmux is already NULL (owned by bin), and on failure the
-    // bin/splitmux unref below finalizes splitmuxsink, which reclaims its "video" request pad itself.
-    gst_clear_object(&videopad);
-    gst_clear_object(&splitmux);
-    gst_clear_object(&parser);
-    gst_clear_object(&bin);
-    return fileSink;
+    return bin;
 }
 
 namespace {
@@ -210,13 +184,13 @@ GstPadProbeReturn keyframeWatch(GstPad* pad, GstPadProbeInfo* info, gpointer use
     // The pad offset shifts running time (gst_segment_offset_running_time), so subtract the
     // keyframe's running time, not its PTS; they differ when the segment doesn't start at 0.
     GstClockTime runningTime = GST_CLOCK_TIME_NONE;
-    if (GstEvent* segmentEvent = gst_pad_get_sticky_event(pad, GST_EVENT_SEGMENT, 0)) {
+    if (const GStreamer::GstEventPtr segmentEvent =
+            GStreamer::adoptEvent(gst_pad_get_sticky_event(pad, GST_EVENT_SEGMENT, 0))) {
         const GstSegment* segment = nullptr;
-        gst_event_parse_segment(segmentEvent, &segment);
+        gst_event_parse_segment(segmentEvent.get(), &segment);
         if (segment && (segment->format == GST_FORMAT_TIME)) {
             runningTime = gst_segment_to_running_time(segment, GST_FORMAT_TIME, GST_BUFFER_PTS(buf));
         }
-        gst_event_unref(segmentEvent);
     }
     if (!GST_CLOCK_TIME_IS_VALID(runningTime)) {
         return GST_PAD_PROBE_DROP;
@@ -255,24 +229,25 @@ bool RecordingBranch::build(GstElement* pipeline, GstElement* tee)
 
     GstElement* queue = gst_element_factory_make("queue", nullptr);
     if (!queue) {
-        qCCritical(GstVideoReceiverLog) << "gst_element_factory_make('queue') failed";
+        qCWarning(GstVideoReceiverLog) << "gst_element_factory_make('queue') failed";
         return false;
     }
     (void) gst_bin_add(GST_BIN(_pipeline), queue);
 
     _valve = gst_element_factory_make("valve", nullptr);
     if (!_valve) {
-        qCCritical(GstVideoReceiverLog) << "gst_element_factory_make('valve') failed";
+        qCWarning(GstVideoReceiverLog) << "gst_element_factory_make('valve') failed";
         return false;
     }
     g_object_set(_valve, "drop", TRUE, nullptr);
     // Preserve stream-start/caps/segment events while buffers are dropped. When recording
     // starts later, the newly linked parser receives the negotiated codec configuration.
+    // drop-mode exists since GStreamer 1.20, the oldest version QGC supports.
     gst_util_set_object_arg(G_OBJECT(_valve), "drop-mode", "forward-sticky-events");
     (void) gst_bin_add(GST_BIN(_pipeline), _valve);
 
     if (!gst_element_link_many(_tee, queue, _valve, nullptr)) {
-        qCCritical(GstVideoReceiverLog) << "Unable to link recorder queue";
+        qCWarning(GstVideoReceiverLog) << "Unable to link recorder queue";
         return false;
     }
     return true;
@@ -308,26 +283,17 @@ void RecordingBranch::start(const QString& videoFile, VideoReceiver::FILE_FORMAT
 
     qCDebug(GstVideoReceiverLog) << "New video file:" << videoFile << _receiver._redactedUri();
 
-    GstPad* probepad = gst_element_get_static_pad(_valve, "src");
+    const GStreamer::GstPadPtr probepad = GStreamer::adoptPad(gst_element_get_static_pad(_valve, "src"));
     if (!probepad) {
         qCCritical(GstVideoReceiverLog) << "gst_element_get_static_pad() failed" << _receiver._redactedUri();
         emit _receiver.onStartRecordingComplete(VideoReceiver::STATUS_FAIL);
         return;
     }
 
-    const auto failRecordingStart = [this, &probepad]() {
-        gst_clear_object(&probepad);
+    const auto failRecordingStart = [this]() {
         if (_fileSink) {
-            (void) gst_element_set_state(_fileSink, GST_STATE_NULL);
-            // Safe before and after a successful link. Removing a still-linked bin leaves the
-            // valve's src pad attached to a finalized peer and breaks every later retry.
-            gst_element_unlink(_valve, _fileSink);
-            GstObject* parent = gst_element_get_parent(_fileSink);
-            if (parent) {
-                (void) gst_bin_remove(GST_BIN(parent), _fileSink);
-                gst_clear_object(&parent);
-            }
-            gst_clear_object(&_fileSink);
+            GStreamer::disposeChild(GST_BIN(_pipeline), _fileSink.get());
+            _fileSink.reset();
         }
         // Only once the sink is out of the pipeline: until then its errors must still count as the recorder's.
         (void) _finalizer.disarm();
@@ -336,36 +302,35 @@ void RecordingBranch::start(const QString& videoFile, VideoReceiver::FILE_FORMAT
 
     // forward-sticky-events preserves the exact negotiated caps while the valve is closed. Fall
     // back to a proxied caps query during the narrow startup window before negotiation completes.
-    GstCaps* inputCaps = gst_pad_get_current_caps(probepad);
+    GStreamer::GstCapsPtr inputCaps = GStreamer::adoptCaps(gst_pad_get_current_caps(probepad.get()));
     if (!inputCaps) {
-        inputCaps = gst_pad_query_caps(probepad, nullptr);
+        inputCaps = GStreamer::adoptCaps(gst_pad_query_caps(probepad.get(), nullptr));
     }
-    _fileSink = makeFileSink(videoFile, format, inputCaps);
-    gst_clear_caps(&inputCaps);
+    _fileSink = makeFileSink(videoFile, format, inputCaps.get());
     if (!_fileSink) {
-        qCCritical(GstVideoReceiverLog) << "makeFileSink() failed" << _receiver._redactedUri();
+        qCWarning(GstVideoReceiverLog) << "Failed to create the recording sink" << _receiver._redactedUri();
         failRecordingStart();
         return;
     }
 
     // Armed before the sink can post, so the bus handler attributes its messages (e.g. a failure to open the
     // file) to this recording instead of to the pipeline.
-    _finalizer.arm(_fileSink);
+    _finalizer.arm(_fileSink.get());
 
-    if (!gst_bin_add(GST_BIN(_pipeline), _fileSink)) {
-        qCCritical(GstVideoReceiverLog) << "gst_bin_add(file sink) failed" << _receiver._redactedUri();
+    // The bin takes its own ref; ours survives a failed add.
+    if (!gst_bin_add(GST_BIN(_pipeline), _fileSink.get())) {
+        qCWarning(GstVideoReceiverLog) << "Failed to add the recording sink" << _receiver._redactedUri();
         failRecordingStart();
         return;
     }
-    (void) gst_object_ref(_fileSink);  // Keep a reference in addition to the pipeline's ownership.
 
-    if (!gst_element_link(_valve, _fileSink)) {
+    if (!gst_element_link(_valve, _fileSink.get())) {
         qCWarning(GstVideoReceiverLog) << "Failed to link valve and file sink" << _receiver._redactedUri();
         failRecordingStart();
         return;
     }
 
-    if (!gst_element_sync_state_with_parent(_fileSink)) {
+    if (!gst_element_sync_state_with_parent(_fileSink.get())) {
         qCWarning(GstVideoReceiverLog) << "Recording sink failed to start" << _receiver._redactedUri();
         failRecordingStart();
         return;
@@ -377,15 +342,14 @@ void RecordingBranch::start(const QString& videoFile, VideoReceiver::FILE_FORMAT
     // When we hit our first keyframe, we can offset the timestamps appropriately according to the first keyframe time
     // This will ensure the first frame is a keyframe at t=0, and decoding can begin immediately on playback
     _receiver._recordingOutput = videoFile;
-    _keyframeWatchId = gst_pad_add_probe(probepad, GST_PAD_PROBE_TYPE_BUFFER, keyframeWatch,
+    _keyframeWatchId = gst_pad_add_probe(probepad.get(), GST_PAD_PROBE_TYPE_BUFFER, keyframeWatch,
                                          new KeyframeWatch{&_receiver, &_keyframeWatchId, videoFile},
                                          [](gpointer watch) { delete static_cast<KeyframeWatch*>(watch); });
     if (_keyframeWatchId == 0) {
-        qCCritical(GstVideoReceiverLog) << "gst_pad_add_probe(keyframeWatch) failed" << _receiver._redactedUri();
+        qCCritical(GstVideoReceiverLog) << "Failed to add the keyframe probe" << _receiver._redactedUri();
         failRecordingStart();
         return;
     }
-    gst_clear_object(&probepad);
 
     g_object_set(_valve, "drop", FALSE, nullptr);
 
@@ -421,9 +385,8 @@ void RecordingBranch::finishForTeardown()
     if (_state == State::Recording) {
         // EOS at the tee drains the recorder queue into the file. Not sent to the pipeline: a source handles that
         // EOS under its streaming thread's stream lock, which a thread held downstream would never release.
-        if (GstPad* teeSink = gst_element_get_static_pad(_tee, "sink")) {
-            (void) gst_pad_send_event(teeSink, gst_event_new_eos());
-            gst_object_unref(teeSink);
+        if (const GStreamer::GstPadPtr teeSink = GStreamer::adoptPad(gst_element_get_static_pad(_tee, "sink"))) {
+            (void) gst_pad_send_event(teeSink.get(), gst_event_new_eos());
         }
     }
 
@@ -468,18 +431,19 @@ void RecordingBranch::onBusElement(GstMessage* message)
     }
 
     // Branch EOS (pipeline message-forward); only the recorder's needs handling.
-    GstMessage* forwarded = nullptr;
+    GStreamer::GstMessagePtr forwarded;
     if (gst_structure_has_name(structure, "GstBinForwarded")) {
-        gst_structure_get(structure, "message", GST_TYPE_MESSAGE, &forwarded, nullptr);
-        if (forwarded && (GST_MESSAGE_TYPE(forwarded) == GST_MESSAGE_EOS)) {
-            closedSource = GST_MESSAGE_SRC(forwarded);
+        GstMessage* forwardedMessage = nullptr;
+        (void) gst_structure_get(structure, "message", GST_TYPE_MESSAGE, &forwardedMessage, nullptr);
+        forwarded = GStreamer::adoptMessage(forwardedMessage);
+        if (forwarded && (GST_MESSAGE_TYPE(forwarded.get()) == GST_MESSAGE_EOS)) {
+            closedSource = GST_MESSAGE_SRC(forwarded.get());
         }
     }
 
     if (closedSource && _finalizer.settleFrom(closedSource, RecordingFinalizer::Outcome::Closed)) {
         _receiver._runOnWorkerForPipeline([this]() { _onFinalized(); });
     }
-    gst_clear_message(&forwarded);
 }
 
 bool RecordingBranch::onBusError(GstMessage* message, const QString& text)
@@ -504,32 +468,25 @@ bool RecordingBranch::onBusError(GstMessage* message, const QString& text)
 
 bool RecordingBranch::_unlinkBranch()
 {
-    GstPad* src = gst_element_get_static_pad(_valve, "src");
+    const GStreamer::GstPadPtr src = GStreamer::adoptPad(gst_element_get_static_pad(_valve, "src"));
     if (!src) {
         qCCritical(GstVideoReceiverLog) << "gst_element_get_static_pad() failed";
         return false;
     }
 
-    GstPad* sink = gst_pad_get_peer(src);
+    const GStreamer::GstPadPtr sink = GStreamer::adoptPad(gst_pad_get_peer(src.get()));
     if (!sink) {
-        gst_clear_object(&src);
         qCWarning(GstVideoReceiverLog) << "Branch is not linked";
         return false;
     }
 
-    if (!gst_pad_unlink(src, sink)) {
-        gst_clear_object(&src);
-        gst_clear_object(&sink);
+    if (!gst_pad_unlink(src.get(), sink.get())) {
         qCWarning(GstVideoReceiverLog) << "gst_pad_unlink() failed";
         return false;
     }
 
-    gst_clear_object(&src);
-
     // Send EOS at the beginning of the branch
-    const gboolean ret = gst_pad_send_event(sink, gst_event_new_eos());
-
-    gst_clear_object(&sink);
+    const gboolean ret = gst_pad_send_event(sink.get(), gst_event_new_eos());
 
     if (!ret) {
         qCWarning(GstVideoReceiverLog) << "Branch EOS was NOT sent";
@@ -547,19 +504,15 @@ void RecordingBranch::_shutdown()
 
     const gulong keyframeWatchId = _keyframeWatchId.exchange(0);
     if (keyframeWatchId != 0 && _valve) {
-        GstPad* probepad = gst_element_get_static_pad(_valve, "src");
-        if (probepad) {
-            gst_pad_remove_probe(probepad, keyframeWatchId);
-            gst_clear_object(&probepad);
+        if (const GStreamer::GstPadPtr probepad = GStreamer::adoptPad(gst_element_get_static_pad(_valve, "src"))) {
+            gst_pad_remove_probe(probepad.get(), keyframeWatchId);
         }
     }
 
     if (_fileSink) {
         // Removed before going NULL, so nothing it posts while stopping reaches the bus as a pipeline error.
-        gst_bin_remove(GST_BIN(_pipeline), _fileSink);
-        gst_element_set_state(_fileSink, GST_STATE_NULL);
-        (void) gst_element_get_state(_fileSink, nullptr, nullptr, GST_CLOCK_TIME_NONE);
-        gst_clear_object(&_fileSink);
+        GStreamer::disposeChild(GST_BIN(_pipeline), _fileSink.get());
+        _fileSink.reset();
     }
     const RecordingFinalizer::Outcome outcome = _finalizer.disarm();
 

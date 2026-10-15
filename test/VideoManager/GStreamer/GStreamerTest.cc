@@ -667,7 +667,7 @@ void GStreamerTest::_testRecordingSinkAcceptsElementaryStreams()
     QVERIFY(source);
     g_object_set(source, "caps", inputCaps, nullptr);
 
-    sink = RecordingBranch::makeFileSink(QStringLiteral("recording-test"), fileFormat, inputCaps);
+    sink = RecordingBranch::makeFileSink(QStringLiteral("recording-test"), fileFormat, inputCaps).release();
     QVERIFY(sink);
 
     linked = gst_element_link(source, sink);
@@ -760,12 +760,13 @@ void GStreamerTest::_testRecordingSinkFinalizesMidStreamH265Mp4()
     GstCaps* recordingCaps = gst_pad_get_current_caps(valveSrcPad);
     QVERIFY2(recordingCaps, "Closed recording valve did not preserve negotiated caps");
 
-    GstElement* fileSink = RecordingBranch::makeFileSink(outputPath, VideoReceiver::FILE_FORMAT_MP4, recordingCaps);
+    const GStreamer::GstElementPtr fileSink =
+        RecordingBranch::makeFileSink(outputPath, VideoReceiver::FILE_FORMAT_MP4, recordingCaps);
     gst_clear_caps(&recordingCaps);
     QVERIFY(fileSink);
-    QVERIFY(gst_bin_add(GST_BIN(pipeline), fileSink));
-    QVERIFY(gst_element_link(recorderValve, fileSink));
-    QVERIFY(gst_element_sync_state_with_parent(fileSink));
+    QVERIFY(gst_bin_add(GST_BIN(pipeline), fileSink.get()));
+    QVERIFY(gst_element_link(recorderValve, fileSink.get()));
+    QVERIFY(gst_element_sync_state_with_parent(fileSink.get()));
     g_object_set(recorderValve, "drop", FALSE, nullptr);
     gst_clear_object(&valveSrcPad);
 

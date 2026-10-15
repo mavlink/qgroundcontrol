@@ -4,8 +4,7 @@
 #include <QtCore/QMutex>
 #include <QtCore/QWaitCondition>
 
-typedef struct _GstElement GstElement;
-typedef struct _GstObject GstObject;
+#include "GstScoped.h"
 
 /// Finalization of the active recording, settled by the first of: splitmuxsink-fragment-closed or a branch/pipeline
 /// EOS (closed), or a recorder ERROR (failed). Armed with the recording's file sink, so messages about an earlier
@@ -21,8 +20,6 @@ public:
         Closed,
         Failed,
     };
-
-    ~RecordingFinalizer();
 
     void arm(GstElement* fileSink);
     /// Returns how the recording ended.
@@ -42,6 +39,6 @@ private:
 
     mutable QMutex _mutex;
     QWaitCondition _settled;
-    GstElement* _fileSink = nullptr;
+    GStreamer::GstElementPtr _fileSink;
     Outcome _outcome = Outcome::Pending;
 };

@@ -88,7 +88,7 @@ QString writePipelineDot(GstElement* pipeline, QStringView tag, const QString& d
         QFile::remove(existing.takeFirst().absoluteFilePath());
     }
 
-    gchar* data = gst_debug_bin_to_dot_data(GST_BIN(pipeline), kDiagnosticDotGraphDetails);
+    const GCharPtr data = adoptGChar(gst_debug_bin_to_dot_data(GST_BIN(pipeline), kDiagnosticDotGraphDetails));
     if (!data) {
         return {};
     }
@@ -96,7 +96,7 @@ QString writePipelineDot(GstElement* pipeline, QStringView tag, const QString& d
         QStringLiteral("%1-%2.dot")
             .arg(dotFileTag(tag), QDateTime::currentDateTimeUtc().toString(QStringLiteral("yyyyMMdd-HHmmss-zzz")));
     const QString fullPath = dir.absoluteFilePath(fileName);
-    const QByteArray dotData = QByteArray::fromRawData(data, static_cast<qsizetype>(qstrlen(data)));
+    const QByteArray dotData = QByteArray::fromRawData(data.get(), static_cast<qsizetype>(qstrlen(data.get())));
     bool wrote = false;
     QFile out(fullPath);
     if (out.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
@@ -109,8 +109,35 @@ QString writePipelineDot(GstElement* pipeline, QStringView tag, const QString& d
             wrote = false;
         }
     }
-    g_free(data);
     return wrote ? fullPath : QString{};
+}
+
+void disposeChild(GstBin* bin, GstElement* element)
+{
+    if (!bin || !element || !gst_object_has_as_parent(GST_OBJECT(element), GST_OBJECT(bin))) {
+        return;
+    }
+
+    // gst_bin_remove drops the bin's ref, which may be the last one, before the element reaches NULL.
+    const GstElementPtr keepAlive = adoptElement(GST_ELEMENT(gst_object_ref(element)));
+    (void) gst_bin_remove(bin, element);
+    // Synchronous: gst_element_change_state() commits an ASYNC return at once when the target is READY or NULL, so
+    // the streaming threads have stopped when this returns.
+    (void) gst_element_set_state(element, GST_STATE_NULL);
+}
+
+GstPadPtr firstSrcPad(GstElement* element)
+{
+    GstPad* first = nullptr;
+    // Handles iterator resync itself, unlike a bare gst_iterator_next loop.
+    (void) gst_element_foreach_src_pad(
+        element,
+        [](GstElement* /*element*/, GstPad* pad, gpointer userData) -> gboolean {
+            *static_cast<GstPad**>(userData) = GST_PAD(gst_object_ref(pad));
+            return FALSE;
+        },
+        &first);
+    return adoptPad(first);
 }
 
 void forEachPlugin(GstRegistry* registry, const std::function<void(GstPlugin*)>& visitor)

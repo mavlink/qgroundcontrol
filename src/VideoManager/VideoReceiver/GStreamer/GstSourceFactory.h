@@ -11,7 +11,6 @@ enum class JitterBuffer
 {
     None,           ///< No playout buffering; omits an explicit buffer or sets `rtspsrc` latency to zero.
     DropOnLatency,  ///< `rtpjitterbuffer` with `drop-on-latency=TRUE`.
-    Buffered,       ///< `rtpjitterbuffer` with `drop-on-latency=FALSE`.
 };
 
 /// Source-bin construction parameters. Defaults match the drone-GCS profile: 80 ms playout
