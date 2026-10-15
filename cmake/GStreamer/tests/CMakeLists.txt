@@ -22,6 +22,7 @@ set(_qgc_findmod_tests
     test_sdk_acquire
     test_android_sdk_extract
     test_static_init
+    test_ios_static_plugins
 )
 
 foreach(_t IN LISTS _qgc_findmod_tests)
@@ -127,6 +128,7 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
               missing-mandatory
               missing-gl
               install
+              android-mobile
     )
         add_test(
             NAME "FindModule.test_orchestrator.${_qgc_scenario}"

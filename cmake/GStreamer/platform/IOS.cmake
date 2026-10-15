@@ -11,7 +11,7 @@
 #
 # The GStreamerMobile framework target in _qgc_create_xcframework_targets is derived from FindGStreamerMobile.cmake in
 # cerbero (https://gitlab.freedesktop.org/gstreamer/cerbero, data/mobile/FindGStreamerMobile.cmake). QGC changes: it is
-# built from the SDK's merged static archive, registers the plugins enumerated from that archive through the shared
+# built from the SDK's merged static archive, registers the requested plugins found in that archive through the shared
 # C registration template instead of an Objective-C one, and SDK discovery is QGC's own.
 
 include_guard(GLOBAL)
@@ -335,6 +335,30 @@ function(_qgc_download_ios_ca_bundle)
         "Mozilla CA bundle bundled into iOS app resources at ssl/certs/ca-certificates.crt" FORCE)
 endfunction()
 
+# _qgc_ios_select_static_plugins(<descriptors> <requested> <registered_out> <absent_out>)
+# Splits the <requested> plugins, in order, into those whose descriptor symbol (_gst_plugin_<name>_get_desc, as nm
+# lists it for the merged archive) is in <descriptors> and those the archive does not contain.
+function(_qgc_ios_select_static_plugins descriptors requested registered_out absent_out)
+    list(TRANSFORM descriptors REPLACE "^_gst_plugin_(.+)_get_desc$" "\\1" OUTPUT_VARIABLE _archived)
+    set(_registered "")
+    set(_absent "")
+    foreach(_plugin IN LISTS requested)
+        if(_plugin IN_LIST _archived)
+            list(APPEND _registered "${_plugin}")
+        else()
+            list(APPEND _absent "${_plugin}")
+        endif()
+    endforeach()
+    set(${registered_out}
+        "${_registered}"
+        PARENT_SCOPE
+    )
+    set(${absent_out}
+        "${_absent}"
+        PARENT_SCOPE
+    )
+endfunction()
+
 # ─────────────────────────────────────────────────────────────────────────────
 # _qgc_create_xcframework_targets
 # Build IMPORTED targets directly from the iOS xcframework's fat .a — bypasses
@@ -469,116 +493,117 @@ function(_qgc_create_xcframework_targets)
         # on every reconfigure is the dominant configure-time cost on iOS.
     endif()
 
-    # Per-API alias targets — load-bearing for the optional-component FOUND
-    # check in Orchestrator.cmake (`if(TARGET GStreamer::${_api})`). On the
-    # pkg-config flow, qgc_gst_create_pkgconfig_targets creates these targets directly; on the
-    # xcframework flow the entire library lives in one .a, so we synthesize
-    # empty INTERFACE shims that link back to GStreamer::GStreamer. Iterating
-    # GSTREAMER_APIS keeps a newly requested component working without editing this file.
-    foreach(_xcfw_comp IN LISTS GSTREAMER_APIS GSTREAMER_PLUGINS)
+    # GStreamer 1.28+ compiles every plugin into the merged archive but provides no registration entry point.
+    # Enumerate the plugin descriptors in the archive and register the requested ones: registration is what links
+    # a plugin's objects in, so the archive's other plugins (some GPL) stay out of the app.
+
+    # Cache the nm-extracted plugin descriptor list — running nm -gjU on the
+    # ~300MB libGStreamer.a costs 2-5s per reconfigure. Key on archive
+    # mtime+size and SDK version so a swapped xcframework re-invokes nm.
+    file(SIZE "${GSTREAMER_XCFRAMEWORK_LIB}" _xcfw_lib_size)
+    file(TIMESTAMP "${GSTREAMER_XCFRAMEWORK_LIB}" _xcfw_lib_mtime "%s")
+    # Hash the archive so a same-size, mtime-normalized rebuild (CI cache restore)
+    # still re-invokes nm instead of reusing a stale plugin list.
+    file(SHA256 "${GSTREAMER_XCFRAMEWORK_LIB}" _xcfw_lib_hash)
+    set(_xcfw_cache_key "${GStreamer_VERSION}|${_xcfw_lib_size}|${_xcfw_lib_mtime}|${_xcfw_lib_hash}")
+    set(_xcfw_cache_file "${CMAKE_BINARY_DIR}/qgc_xcfw_plugins.cmake")
+    set(_xcfw_descs "")
+    if(EXISTS "${_xcfw_cache_file}")
+        include("${_xcfw_cache_file}")
+        if(NOT "${_xcfw_cached_key}" STREQUAL "${_xcfw_cache_key}")
+            set(_xcfw_descs "")
+        endif()
+    endif()
+    if(NOT _xcfw_descs)
+        # Prefer llvm-nm: it reads fat Mach-O natively, whereas Apple's BSD nm exits non-zero on a fat
+        # binary unless given -arch. -gjU (global, names-only, defined) is portable across both.
+        find_program(_xcfw_nm NAMES llvm-nm nm REQUIRED)
+
+        # No -arch first (works for llvm-nm + thin archives); on failure (BSD nm on a fat binary) retry per slice.
+        execute_process(
+            COMMAND "${_xcfw_nm}" -gjU "${GSTREAMER_XCFRAMEWORK_LIB}"
+            OUTPUT_VARIABLE _xcfw_nm_out
+            ERROR_VARIABLE _xcfw_nm_err
+            RESULT_VARIABLE _xcfw_nm_rc
+        )
+        if(NOT _xcfw_nm_rc EQUAL 0)
+            foreach(_xcfw_arch IN LISTS CMAKE_OSX_ARCHITECTURES)
+                execute_process(
+                    COMMAND "${_xcfw_nm}" -arch "${_xcfw_arch}" -gjU "${GSTREAMER_XCFRAMEWORK_LIB}"
+                    OUTPUT_VARIABLE _xcfw_nm_out
+                    ERROR_VARIABLE _xcfw_nm_err
+                    RESULT_VARIABLE _xcfw_nm_rc
+                )
+                if(_xcfw_nm_rc EQUAL 0)
+                    break()
+                endif()
+            endforeach()
+        endif()
+
+        # Apple's nm (Xcode 26+) exits non-zero on objects it can't parse (e.g. the
+        # Rust gstaws bitcode: "Unknown attribute kind") but still prints symbols for
+        # every object it can read. Extract from whatever it produced; fail only if
+        # that yielded no descriptors, not on a non-zero exit alone.
+        string(REGEX MATCHALL "_gst_plugin_[A-Za-z0-9_]+_get_desc" _xcfw_descs "${_xcfw_nm_out}")
+        list(REMOVE_DUPLICATES _xcfw_descs)
+        if(NOT _xcfw_descs)
+            message(
+                FATAL_ERROR "nm produced no plugin descriptors for ${GSTREAMER_XCFRAMEWORK_LIB} (rc=${_xcfw_nm_rc})\n"
+                            "  tool:        ${_xcfw_nm}\n"
+                            "  archs tried: ${CMAKE_OSX_ARCHITECTURES} (plus a no-arch attempt)\n"
+                            "  stderr:      ${_xcfw_nm_err}\n"
+                            "If this is a fat Mach-O, install llvm (brew install llvm) so "
+                            "llvm-nm is on PATH, or verify the framework slice arch matches "
+                            "CMAKE_OSX_ARCHITECTURES."
+            )
+        elseif(NOT _xcfw_nm_rc EQUAL 0)
+            message(STATUS "GStreamer xcframework: nm exited ${_xcfw_nm_rc} (unparseable objects, "
+                           "e.g. Rust gstaws bitcode) but emitted usable symbols — continuing."
+            )
+        endif()
+        file(
+            WRITE "${_xcfw_cache_file}"
+            "# Auto-generated cache of plugin descriptors enumerated from the iOS xcframework.\n"
+            "# Regenerated when GStreamer_VERSION or libGStreamer.a (size+mtime) changes.\n"
+            "set(_xcfw_cached_key \"${_xcfw_cache_key}\")\n" "set(_xcfw_descs \"${_xcfw_descs}\")\n"
+        )
+    endif()
+    _qgc_ios_select_static_plugins("${_xcfw_descs}" "${GSTREAMER_PLUGINS}" _xcfw_registered _xcfw_absent)
+    list(LENGTH _xcfw_registered _xcfw_registered_count)
+    list(LENGTH GSTREAMER_PLUGINS _xcfw_requested_count)
+    list(LENGTH _xcfw_descs _xcfw_archived_count)
+    message(STATUS "GStreamer xcframework: registering ${_xcfw_registered_count} of the ${_xcfw_requested_count} "
+                   "requested plugins (${_xcfw_archived_count} in the archive)"
+    )
+    set(GSTREAMER_STATIC_PLUGINS
+        "${_xcfw_registered}"
+        PARENT_SCOPE
+    )
+
+    # Per-API and per-registered-plugin alias targets — load-bearing for the FOUND checks in Orchestrator.cmake
+    # (`if(TARGET GStreamer::${_api})`). On the pkg-config flow, qgc_gst_create_pkgconfig_targets creates these
+    # targets directly; here the entire library lives in one archive, so they are empty INTERFACE shims that link
+    # back to GStreamer::GStreamer.
+    foreach(_xcfw_comp IN LISTS GSTREAMER_APIS _xcfw_registered)
         if(NOT TARGET GStreamer::${_xcfw_comp})
             add_library(GStreamer::${_xcfw_comp} INTERFACE IMPORTED GLOBAL)
             target_link_libraries(GStreamer::${_xcfw_comp} INTERFACE GStreamer::GStreamer)
         endif()
         set(GStreamer_${_xcfw_comp}_FOUND TRUE PARENT_SCOPE)
     endforeach()
+    foreach(_xcfw_comp IN LISTS _xcfw_absent)
+        set(GStreamer_${_xcfw_comp}_FOUND
+            FALSE
+            PARENT_SCOPE
+        )
+    endforeach()
 
     # Build the xcframework mobile init shim — calls gst_init_static_plugins().
     if(NOT TARGET GStreamer::mobile)
-        # GStreamer 1.28+ ships every plugin compiled into libGStreamer.a but
-        # provides no auto-registration entrypoint; enumerate plugin descriptors
-        # from the archive and emit explicit GST_PLUGIN_STATIC_REGISTER() calls.
-        # Skip list (plugins whose static deps aren't in the slice) is owned by
-        # GStreamerPluginPolicy.
-        gstreamer_xcfw_skip(_xcfw_skip_plugins)
-
-        # Cache the nm-extracted plugin descriptor list — running nm -gjU on the
-        # ~300MB libGStreamer.a costs 2-5s per reconfigure. Key on archive
-        # mtime+size and SDK version so a swapped xcframework re-invokes nm.
-        file(SIZE "${GSTREAMER_XCFRAMEWORK_LIB}" _xcfw_lib_size)
-        file(TIMESTAMP "${GSTREAMER_XCFRAMEWORK_LIB}" _xcfw_lib_mtime "%s")
-        # Hash the archive so a same-size, mtime-normalized rebuild (CI cache restore)
-        # still re-invokes nm instead of reusing a stale plugin list.
-        file(SHA256 "${GSTREAMER_XCFRAMEWORK_LIB}" _xcfw_lib_hash)
-        set(_xcfw_cache_key "${GStreamer_VERSION}|${_xcfw_lib_size}|${_xcfw_lib_mtime}|${_xcfw_lib_hash}|${_xcfw_skip_plugins}")
-        set(_xcfw_cache_file "${CMAKE_BINARY_DIR}/qgc_xcfw_plugins.cmake")
-        set(_xcfw_descs "")
-        if(EXISTS "${_xcfw_cache_file}")
-            include("${_xcfw_cache_file}")
-            if(NOT "${_xcfw_cached_key}" STREQUAL "${_xcfw_cache_key}")
-                set(_xcfw_descs "")
-            endif()
-        endif()
-        if(NOT _xcfw_descs)
-            # Prefer llvm-nm: it reads fat Mach-O natively, whereas Apple's BSD nm exits non-zero on a fat
-            # binary unless given -arch. -gjU (global, names-only, defined) is portable across both.
-            find_program(_xcfw_nm NAMES llvm-nm nm REQUIRED)
-
-            # No -arch first (works for llvm-nm + thin archives); on failure (BSD nm on a fat binary) retry per slice.
-            execute_process(
-                COMMAND "${_xcfw_nm}" -gjU "${GSTREAMER_XCFRAMEWORK_LIB}"
-                OUTPUT_VARIABLE _xcfw_nm_out
-                ERROR_VARIABLE _xcfw_nm_err
-                RESULT_VARIABLE _xcfw_nm_rc
-            )
-            if(NOT _xcfw_nm_rc EQUAL 0)
-                foreach(_xcfw_arch IN LISTS CMAKE_OSX_ARCHITECTURES)
-                    execute_process(
-                        COMMAND "${_xcfw_nm}" -arch "${_xcfw_arch}" -gjU "${GSTREAMER_XCFRAMEWORK_LIB}"
-                        OUTPUT_VARIABLE _xcfw_nm_out
-                        ERROR_VARIABLE _xcfw_nm_err
-                        RESULT_VARIABLE _xcfw_nm_rc
-                    )
-                    if(_xcfw_nm_rc EQUAL 0)
-                        break()
-                    endif()
-                endforeach()
-            endif()
-
-            # Apple's nm (Xcode 26+) exits non-zero on objects it can't parse (e.g. the
-            # Rust gstaws bitcode: "Unknown attribute kind") but still prints symbols for
-            # every object it can read. Extract from whatever it produced; fail only if
-            # that yielded no descriptors, not on a non-zero exit alone.
-            string(REGEX MATCHALL "_gst_plugin_[A-Za-z0-9_]+_get_desc" _xcfw_descs "${_xcfw_nm_out}")
-            list(REMOVE_DUPLICATES _xcfw_descs)
-            if(NOT _xcfw_descs)
-                message(FATAL_ERROR
-                    "nm produced no plugin descriptors for ${GSTREAMER_XCFRAMEWORK_LIB} (rc=${_xcfw_nm_rc})\n"
-                    "  tool:        ${_xcfw_nm}\n"
-                    "  archs tried: ${CMAKE_OSX_ARCHITECTURES} (plus a no-arch attempt)\n"
-                    "  stderr:      ${_xcfw_nm_err}\n"
-                    "If this is a fat Mach-O, install llvm (brew install llvm) so "
-                    "llvm-nm is on PATH, or verify the framework slice arch matches "
-                    "CMAKE_OSX_ARCHITECTURES.")
-            elseif(NOT _xcfw_nm_rc EQUAL 0)
-                message(STATUS
-                    "GStreamer xcframework: nm exited ${_xcfw_nm_rc} (unparseable objects, "
-                    "e.g. Rust gstaws bitcode) but emitted usable symbols — continuing.")
-            endif()
-            file(WRITE "${_xcfw_cache_file}"
-                "# Auto-generated cache of plugin descriptors enumerated from the iOS xcframework.\n"
-                "# Regenerated when GStreamer_VERSION or libGStreamer.a (size+mtime) changes.\n"
-                "set(_xcfw_cached_key \"${_xcfw_cache_key}\")\n"
-                "set(_xcfw_descs \"${_xcfw_descs}\")\n"
-            )
-        endif()
-        set(_xcfw_names "")
-        foreach(_sym IN LISTS _xcfw_descs)
-            string(REGEX REPLACE "^_gst_plugin_(.+)_get_desc$" "\\1" _name "${_sym}")
-            if(_name IN_LIST _xcfw_skip_plugins)
-                continue()
-            endif()
-            list(APPEND _xcfw_names "${_name}")
-        endforeach()
-        list(LENGTH _xcfw_names _xcfw_used)
-        list(LENGTH _xcfw_descs _xcfw_n)
-        message(STATUS "GStreamer xcframework: registering ${_xcfw_used}/${_xcfw_n} static plugins "
-                       "(skipped: ${_xcfw_skip_plugins})"
-        )
         add_library(GStreamerMobileXcfw SHARED)
         # gioopenssl is statically linked into libGStreamer.a (nm: _g_io_openssl_load is exported from the slice);
         # loading it registers the default GIO TLS backend.
-        qgc_gst_generate_static_init(TARGET GStreamerMobileXcfw PLUGINS ${_xcfw_names} GIO_MODULES ${G_IO_MODULES})
+        qgc_gst_generate_static_init(TARGET GStreamerMobileXcfw PLUGINS ${_xcfw_registered} GIO_MODULES ${G_IO_MODULES})
         target_link_libraries(GStreamerMobileXcfw PRIVATE GStreamer::GStreamer)
         set_target_properties(GStreamerMobileXcfw PROPERTIES
             LIBRARY_OUTPUT_NAME ${GStreamer_Mobile_MODULE_NAME}

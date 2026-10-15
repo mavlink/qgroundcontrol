@@ -1,7 +1,7 @@
 # Centralised GStreamer plugin policy — single source of truth for plugin
 # alternate groups, runtime-required plugins, and xcframework skip list.
 # Consumed by Orchestrator (build-config plugin loader / alternate-satisfied
-# check), Install (runtime-required verifier), and platform/IOS (xcfw skip).
+# check), Install (runtime-required verifier), and the iOS plugin list (xcfw skip).
 
 include_guard(GLOBAL)
 
@@ -44,16 +44,17 @@ set(GSTREAMER_RUNTIME_REQUIRED_PLUGINS
 )
 
 # iOS xcframework: plugins whose dependent static libs aren't bundled in the
-# slice. Auto-registering them would cause unresolved-symbol link failures.
+# slice. Registering them would cause unresolved-symbol link failures, so the
+# Orchestrator drops them from the iOS plugin list.
 # x265: gstreamer-ios 1.28.2 ships libgstx265.a but not libx265.a.
 set(GSTREAMER_XCFRAMEWORK_SKIP_PLUGINS
     x265
 )
 
 # Encode-side plugins needed only by the Debug-only MockLink test video stream
-# server (MockVideoStreamServer). Statically registered on Android Debug builds
-# only — desktop builds find them via the full SDK plugin scan, and release
-# builds must not ship them (APK size; x264/x265 are GPL).
+# server (MockVideoStreamServer). Statically registered on Android and iOS Debug
+# builds only — desktop builds find them via the full SDK plugin scan, and release
+# builds must not ship them (app size; x264/x265 are GPL).
 set(GSTREAMER_MOCK_SERVER_DEBUG_PLUGINS
     mpegtsmux videotestsrc x264 x265
 )

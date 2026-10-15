@@ -25,20 +25,25 @@ file(REMOVE_RECURSE "${WORK_DIR}")
 file(MAKE_DIRECTORY "${WORK_DIR}/no-system-pkgconfig")
 set(ENV{PKG_CONFIG_LIBDIR} "${WORK_DIR}/no-system-pkgconfig")
 
-# _qgc_write_fake_sdk(<root> <version> [WITH_PROBE_HEADERS] [OMIT <pc-module>...])
+# _qgc_write_fake_sdk(<root> <version> [WITH_PROBE_HEADERS] [OMIT <pc-module>...] [PLUGINS <plugin>...])
 # WITH_PROBE_HEADERS adds the DMABuf and GstVideoOrientationMeta headers the Orchestrator probes for.
-# Every library ships as .so and .a, and the coreelements plugin has a .pc file like in the
+# Every library ships as .so and .a, and each plugin (default: coreelements) has a .pc file like in the
 # static SDKs.
 function(_qgc_write_fake_sdk root version)
-    cmake_parse_arguments(PARSE_ARGV 2 ARG "WITH_PROBE_HEADERS" "" "OMIT")
+    cmake_parse_arguments(PARSE_ARGV 2 ARG "WITH_PROBE_HEADERS" "" "OMIT;PLUGINS")
+    if(NOT ARG_PLUGINS)
+        set(ARG_PLUGINS coreelements)
+    endif()
     file(REMOVE_RECURSE "${root}")
     file(MAKE_DIRECTORY "${root}/include/gstreamer-1.0/gst")
-    file(WRITE "${root}/lib/gstreamer-1.0/libgstcoreelements.so" "")
-    file(WRITE "${root}/lib/gstreamer-1.0/libgstcoreelements.a" "")
-    file(WRITE "${root}/lib/pkgconfig/gstcoreelements.pc"
-         "prefix=${root}\n" "libdir=\${prefix}/lib/gstreamer-1.0\n\n" "Name: gstcoreelements\n"
-         "Description: QGC fake GStreamer plugin\n" "Version: ${version}\n" "Libs: -L\${libdir} -lgstcoreelements\n"
-    )
+    foreach(_plugin IN LISTS ARG_PLUGINS)
+        file(WRITE "${root}/lib/gstreamer-1.0/libgst${_plugin}.so" "")
+        file(WRITE "${root}/lib/gstreamer-1.0/libgst${_plugin}.a" "")
+        file(WRITE "${root}/lib/pkgconfig/gst${_plugin}.pc"
+             "prefix=${root}\n" "libdir=\${prefix}/lib/gstreamer-1.0\n\n" "Name: gst${_plugin}\n"
+             "Description: QGC fake GStreamer plugin\n" "Version: ${version}\n" "Libs: -L\${libdir} -lgst${_plugin}\n"
+        )
+    endforeach()
     # pkg-config module|library
     set(_modules
         "gstreamer-1.0|gstreamer-1.0"
@@ -149,6 +154,26 @@ function(_qgc_install)
     )
 endfunction()
 
+# Sets <out_var> to the command line that links the fixture's shared library (Ninja or Makefile generators).
+function(_qgc_link_line out_var)
+    if(GENERATOR MATCHES "Ninja")
+        file(READ "${_binary_dir}/build.ninja" _ninja)
+        string(REGEX MATCH "\nbuild libQGCGStreamerFakeSdk\\.so: [^\n]*\n(  [^\n]*\n)*" _block "${_ninja}")
+        set(_link "")
+        foreach(_variable IN ITEMS LINK_FLAGS LINK_LIBRARIES)
+            if(_block MATCHES "\n  ${_variable} = ([^\n]*)")
+                string(APPEND _link " ${CMAKE_MATCH_1}")
+            endif()
+        endforeach()
+    else()
+        file(READ "${_binary_dir}/CMakeFiles/QGCGStreamerFakeSdk.dir/link.txt" _link)
+    endif()
+    set(${out_var}
+        " ${_link} "
+        PARENT_SCOPE
+    )
+endfunction()
+
 # Returns the -D arguments that make the fixture assert it resolved <root> at <version>, with
 # <probes> telling whether the SDK ships the probed headers.
 function(_qgc_expect out_var root version probes)
@@ -236,6 +261,56 @@ elseif(SCENARIO STREQUAL "missing-gl")
     _qgc_write_fake_sdk("${_sdk_a}" 1.24.0 OMIT gstreamer-gl-1.0 gstreamer-gl-prototypes-1.0)
     _qgc_expect(_expect "${_sdk_a}" 1.24.0 OFF)
     _qgc_configure_ok("SDK without gst-gl" --fresh "-DGStreamer_ROOT_DIR=${_sdk_a}" ${_expect} -DEXPECT_GL=OFF)
+elseif(SCENARIO STREQUAL "android-mobile")
+    if(NOT GENERATOR MATCHES "Ninja|Makefiles")
+        message(STATUS "QGC_TEST_SKIPPED: link lines are only read from Ninja and Makefile builds")
+        return()
+    endif()
+    # Mobile builds fail configure without the runtime-required plugins, so the SDK ships them; udp is left out
+    # first to check that.
+    include("${CMAKE_CURRENT_LIST_DIR}/../PluginPolicy.cmake")
+    gstreamer_runtime_required_plugins(_plugins)
+    list(REMOVE_ITEM _plugins udp)
+    string(REPLACE ";" "," _requested "${_plugins};udp")
+    set(_android -DQGC_TEST_ANDROID_ABI=arm64-v8a "-DQGC_TEST_PLUGINS=${_requested}")
+    _qgc_write_fake_sdk("${_sdk_a}" 1.24.0 PLUGINS ${_plugins})
+    file(WRITE "${_sdk_a}/share/gst-android/ndk-build/GStreamer.java" "")
+    file(WRITE "${_sdk_a}/lib/gio/modules/libgioopenssl.a" "")
+    foreach(_library IN ITEMS ssl crypto gio-2.0)
+        file(WRITE "${_sdk_a}/lib/lib${_library}.a" "")
+    endforeach()
+    _qgc_configure_fails("Android SDK without udp"
+                         "runtime-required plugins are missing from the static SDK .*: udp\\." --fresh
+                         "-DGStreamer_ROOT_DIR=${_sdk_a}" ${_android}
+    )
+
+    foreach(_suffix IN ITEMS so a)
+        file(WRITE "${_sdk_a}/lib/gstreamer-1.0/libgstudp.${_suffix}" "")
+    endforeach()
+    file(READ "${_sdk_a}/lib/pkgconfig/gstcoreelements.pc" _pc)
+    string(REPLACE "coreelements" "udp" _pc "${_pc}")
+    file(WRITE "${_sdk_a}/lib/pkgconfig/gstudp.pc" "${_pc}")
+    _qgc_configure_ok("Android mobile target" --fresh "-DGStreamer_ROOT_DIR=${_sdk_a}" ${_android})
+    _qgc_link_line(_link)
+
+    # The plugin archive is linked once, whole-archived; a plain occurrence ahead of it would load members twice.
+    string(REGEX MATCHALL "[^ ]*libgstcoreelements\\.a" _plugin_archives "${_link}")
+    qgc_test_assert_streq("plugin archive on the link line" "${_sdk_a}/lib/gstreamer-1.0/libgstcoreelements.a"
+                          "${_plugin_archives}"
+    )
+    if(NOT _link MATCHES "--whole-archive +[^ ]*libgstcoreelements\\.a +[^ ]*(--pop-state|--no-whole-archive)")
+        message(FATAL_ERROR "ASSERT [whole-archive]: the plugin archive is not whole-archived:\n${_link}")
+    endif()
+    if(_link MATCHES "--start-group|--end-group")
+        message(FATAL_ERROR "ASSERT [link group]: lld needs no link group:\n${_link}")
+    endif()
+
+    # GStreamer::deps links the core's static dependencies with their symbols hidden from the app's exports.
+    if(NOT _link MATCHES " ${_sdk_a}/lib/libgstreamer-1\\.0\\.a " OR NOT _link MATCHES
+                                                                     "--exclude-libs,libgstreamer-1\\.0\\.a"
+    )
+        message(FATAL_ERROR "ASSERT [hidden core dependencies]: missing archive or --exclude-libs:\n${_link}")
+    endif()
 elseif(SCENARIO STREQUAL "install")
     # videoconvert+videoscale stand in for the fused videoconvertscale the verifier requires.
     _qgc_write_fake_sdk("${_sdk_a}" 1.24.0)

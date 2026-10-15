@@ -18,6 +18,15 @@ set(QGC_BUILD_CONFIG_CONTENT "{\"gstreamer\": {\"plugins\": {\"common\": [\"${_q
 # The fake SDK's libraries are empty files, so feature probes must compile without linking.
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 
+# QGC_TEST_ANDROID_ABI: configure the GStreamer modules as an Android build for that ABI, with a shared library in
+# place of the app (the real app target exists before the GStreamer directory is processed).
+if(QGC_TEST_ANDROID_ABI)
+    set(ANDROID TRUE)
+    set(CMAKE_ANDROID_ARCH_ABI "${QGC_TEST_ANDROID_ABI}")
+    set(QGC_CONFIG_GSTREAMER_ANDROID_VERSION 1.20.0)
+    add_library(${PROJECT_NAME} SHARED "${CMAKE_CURRENT_SOURCE_DIR}/fake_app.cpp")
+endif()
+
 set(QGCGStreamer_FIND_COMPONENTS
     Core
     Base
@@ -101,6 +110,15 @@ foreach(_var IN ITEMS QGC_GST_RESOLVED_ROOT QGC_GST_RESOLVED_VERSION QGC_GST_RES
     string(APPEND _qgc_state "${_var}=$CACHE{${_var}}\n")
 endforeach()
 file(WRITE "${CMAKE_BINARY_DIR}/gst-state.txt" "${_qgc_state}")
+
+# Links the app the way src/VideoManager/VideoReceiver/GStreamer/CMakeLists.txt does: through a static library
+# carrying GStreamer::GStreamer, then GStreamer::mobile and the generated plugin registration.
+if(QGC_TEST_ANDROID_ABI)
+    add_library(QGCFakeGStreamer STATIC "${CMAKE_CURRENT_SOURCE_DIR}/fake_app.cpp")
+    target_link_libraries(QGCFakeGStreamer PUBLIC GStreamer::GStreamer)
+    target_link_libraries(${PROJECT_NAME} PRIVATE QGCFakeGStreamer GStreamer::mobile)
+    qgc_gst_generate_static_init(TARGET ${PROJECT_NAME} PLUGINS ${GSTREAMER_STATIC_PLUGINS} GIO_MODULES ${G_IO_MODULES})
+endif()
 
 # QGC_TEST_INSTALL_REQUIRED_PLUGINS: comma-separated plugins the install rules must verify.
 if(QGC_TEST_INSTALL_REQUIRED_PLUGINS)

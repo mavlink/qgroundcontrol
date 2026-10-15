@@ -172,7 +172,8 @@ endmacro()
 # Resolves a list of library names via find_library and links them to TARGET with the given SCOPE
 # (PRIVATE, INTERFACE, or PUBLIC). Handles SRT regex patching and system library passthrough.
 #
-#   HIDE         - Use -hidden-l (Apple) or --exclude-libs (Unix) to hide symbols
+#   HIDE         - Link the libraries with their symbols hidden from the result's exports: -hidden-l (Apple), or
+#                  the library plus --exclude-libs,<name> (ELF)
 #   WARN_MISSING - Warn and skip missing libraries instead of failing
 function(_gst_resolve_and_link_libraries _grll_TARGET _grll_SCOPE _grll_LIBS _grll_HINTS)
     cmake_parse_arguments(PARSE_ARGV 4 _grll "HIDE;WARN_MISSING" "" "")
@@ -231,7 +232,8 @@ function(_gst_resolve_and_link_libraries _grll_TARGET _grll_SCOPE _grll_LIBS _gr
         elseif(_grll_HIDE AND (UNIX OR ANDROID))
             # --exclude-libs keys on the archive basename, not the resolved full path.
             get_filename_component(_grll_EXCL_NAME "${${_grll_CACHE_VAR}}" NAME)
-            target_link_libraries(${_grll_TARGET} ${_grll_SCOPE} -Wl,--exclude-libs,${_grll_EXCL_NAME})
+            target_link_libraries(${_grll_TARGET} ${_grll_SCOPE} "${${_grll_CACHE_VAR}}")
+            target_link_options(${_grll_TARGET} ${_grll_SCOPE} "LINKER:--exclude-libs,${_grll_EXCL_NAME}")
         else()
             target_link_libraries(${_grll_TARGET} ${_grll_SCOPE} "${${_grll_CACHE_VAR}}")
         endif()

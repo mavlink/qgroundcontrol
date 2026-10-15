@@ -170,12 +170,19 @@ gstreamer_current_platform_key(_qgc_gst_plat_key)
 gstreamer_plugins_for(PLATFORM "${_qgc_gst_plat_key}" OUT_VAR GSTREAMER_PLUGINS)
 unset(_qgc_gst_plat_key)
 
-# Android has no filesystem plugin scan — only statically registered plugins exist at
+# Mobile builds have no filesystem plugin scan — only statically registered plugins exist at
 # runtime. Add the encode-side plugins the Debug-only MockLink video stream server
 # needs (GSTREAMER_MOCK_SERVER_DEBUG_PLUGINS, PluginPolicy.cmake) in Debug builds.
-if(ANDROID AND CMAKE_BUILD_TYPE STREQUAL "Debug")
+if((ANDROID OR IOS) AND CMAKE_BUILD_TYPE STREQUAL "Debug")
     list(APPEND GSTREAMER_PLUGINS ${GSTREAMER_MOCK_SERVER_DEBUG_PLUGINS})
     list(REMOVE_DUPLICATES GSTREAMER_PLUGINS)
+endif()
+# The iOS archive lacks the dependencies of these plugins, so they cannot be linked.
+if(IOS)
+    gstreamer_xcfw_skip(_gst_xcfw_skip)
+    foreach(_gst_plugin IN LISTS _gst_xcfw_skip)
+        list(REMOVE_ITEM GSTREAMER_PLUGINS "${_gst_plugin}")
+    endforeach()
 endif()
 
 if(ANDROID)
@@ -329,22 +336,39 @@ foreach(_gst_plugin IN LISTS GSTREAMER_PLUGINS)
     )
 endforeach()
 
-if(GStreamer_USE_STATIC_LIBS AND NOT ANDROID)
-    # Desktop static layouts register every requested plugin that has a GStreamer::<plugin> target (Android
-    # and iOS resolve GSTREAMER_STATIC_PLUGINS while creating their targets).
-    set(GSTREAMER_STATIC_PLUGINS "")
-    foreach(_gst_plugin IN LISTS GSTREAMER_PLUGINS)
-        if(TARGET GStreamer::${_gst_plugin})
-            list(APPEND GSTREAMER_STATIC_PLUGINS "${_gst_plugin}")
-        endif()
-    endforeach()
+# Static layouts register GSTREAMER_STATIC_PLUGINS in a generated gst_init_static_plugins(); the Android and iOS
+# backends resolve it from the SDK's plugin archives while creating their targets.
+if(GStreamer_USE_STATIC_LIBS OR GStreamer_USE_XCFRAMEWORK)
+    if(NOT ANDROID AND NOT IOS)
+        # Desktop static layouts register every requested plugin that has a GStreamer::<plugin> target.
+        set(GSTREAMER_STATIC_PLUGINS "")
+        foreach(_gst_plugin IN LISTS GSTREAMER_PLUGINS)
+            if(TARGET GStreamer::${_gst_plugin})
+                list(APPEND GSTREAMER_STATIC_PLUGINS "${_gst_plugin}")
+            endif()
+        endforeach()
+    endif()
     gstreamer_missing_required(REQUIRED ${GSTREAMER_PLUGINS} AVAILABLE ${GSTREAMER_STATIC_PLUGINS} OUT_VAR
                                _gst_missing_plugins
     )
     if(_gst_missing_plugins)
-        message(WARNING "GStreamer (static): requested plugins not found as targets and omitted from static "
-                        "registration: ${_gst_missing_plugins}"
+        message(WARNING "GStreamer: requested plugins missing from the static SDK at ${GStreamer_ROOT_DIR} are not "
+                        "registered: ${_gst_missing_plugins}"
         )
+    endif()
+    # Mobile apps have no other way to load a plugin at runtime.
+    if(ANDROID OR IOS)
+        gstreamer_runtime_required_plugins(_gst_required_plugins)
+        gstreamer_missing_required(REQUIRED ${_gst_required_plugins} AVAILABLE ${GSTREAMER_STATIC_PLUGINS} OUT_VAR
+                                   _gst_missing_required
+        )
+        if(_gst_missing_required)
+            list(JOIN _gst_missing_required ", " _gst_missing_required)
+            message(FATAL_ERROR "GStreamer: runtime-required plugins are missing from the static SDK at "
+                                "${GStreamer_ROOT_DIR}: ${_gst_missing_required}. The SDK is incomplete or "
+                                "corrupt — re-download it."
+            )
+        endif()
     endif()
 endif()
 
@@ -422,11 +446,8 @@ else()
 endif()
 list(LENGTH GSTREAMER_PLUGINS _qgc_gst_plugin_total)
 if(GStreamer_USE_STATIC_LIBS OR GStreamer_USE_XCFRAMEWORK)
-    # Static/xcframework register every requested plugin into the generated C by
-    # construction; there is no per-plugin target or scannable dir to count against.
-    set(_qgc_gst_plugin_count ${_qgc_gst_plugin_total})
+    list(LENGTH GSTREAMER_STATIC_PLUGINS _qgc_gst_plugin_count)
 else()
-    # Reuse the basenames scanned above instead of re-globbing the same dir.
     set(_qgc_gst_plugin_count 0)
     foreach(_p IN LISTS GSTREAMER_PLUGINS)
         if(_p IN_LIST _gst_available_plugins)

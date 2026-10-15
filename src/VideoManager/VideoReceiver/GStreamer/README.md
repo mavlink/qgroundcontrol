@@ -55,7 +55,7 @@ Per-platform zero-copy import of decoded GPU frames, all sharing `GstHwFrameText
 - **Enable/disable**: Set `QGC_ENABLE_GST_VIDEOSTREAMING` CMake option to `ON`/`OFF`
 - **Version & URLs**: Defined in [`.github/build-config.json`](../../../../.github/build-config.json), parsed by [`cmake/BuildConfig.cmake`](../../../../cmake/BuildConfig.cmake)
 - **SDK discovery & auto-download**: [`cmake/GStreamer/Orchestrator.cmake`](../../../../cmake/GStreamer/Orchestrator.cmake)
-- **Plugin allowlist**: `gstreamer.plugins` in [`.github/build-config.json`](../../../../.github/build-config.json) — controls both static linking (mobile) and dynamic install (desktop)
+- **Plugin allowlist**: `gstreamer.plugins` in [`.github/build-config.json`](../../../../.github/build-config.json) — controls which plugins static builds (Android, iOS) register and link, and which plugins desktop installs bundle. Debug mobile builds add the MockLink test-stream encoders. Policy (alternate plugins, runtime-required plugins) lives in [`cmake/GStreamer/PluginPolicy.cmake`](../../../../cmake/GStreamer/PluginPolicy.cmake)
 - **Install helpers**: [`cmake/GStreamer/Helpers.cmake`](../../../../cmake/GStreamer/Helpers.cmake) (aggregator), with focused submodules in [`cmake/GStreamer/`](../../../../cmake/GStreamer/)
 
 ## Runtime Environment Setup
