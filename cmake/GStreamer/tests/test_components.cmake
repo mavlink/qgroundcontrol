@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.25)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/..")
 include("${CMAKE_CURRENT_LIST_DIR}/_assert.cmake")
 include(Components)
@@ -104,6 +104,12 @@ gstreamer_build_apis_and_deps(_apis_idem _deps_idem Core App App)
 list(LENGTH _apis_idem _apis_idem_len)
 qgc_test_assert_streq("idempotent apis length" "6" "${_apis_idem_len}")
 qgc_test_pass("idempotence")
+
+set(_apis_stale "stale-sentinel")
+gstreamer_build_apis_and_deps(_apis_stale _deps_stale App)
+qgc_test_assert_not_in_list("stale output replaced" "stale-sentinel" _apis_stale)
+qgc_test_assert_in_list("replaced output recomputed" api_app _apis_stale)
+qgc_test_pass("build_apis_and_deps replaces caller output")
 
 set(WIN32 OFF)
 set(APPLE OFF)

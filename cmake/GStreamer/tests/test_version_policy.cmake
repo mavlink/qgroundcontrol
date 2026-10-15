@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.25)
 include("${CMAKE_CURRENT_LIST_DIR}/_assert.cmake")
 
 file(READ "${CMAKE_CURRENT_LIST_DIR}/../../../.github/build-config.json" _build_config)

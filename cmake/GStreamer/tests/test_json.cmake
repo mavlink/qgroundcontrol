@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.25)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/..")
 include("${CMAKE_CURRENT_LIST_DIR}/_assert.cmake")
 include(Json)
@@ -23,7 +23,8 @@ qgc_test_assert_in_list("common contains udp" udp _common)
 qgc_test_pass("happy path nested array")
 
 _qgc_json_array_to_list(_linux "${_json}" gstreamer plugins linux)
-qgc_test_assert_streq("linux length" "1" "1")
+list(LENGTH _linux _linux_len)
+qgc_test_assert_streq("linux length" "1" "${_linux_len}")
 qgc_test_assert_in_list("linux has va" va _linux)
 qgc_test_pass("single-element array")
 

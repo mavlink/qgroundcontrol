@@ -15,7 +15,8 @@ set(_qgc_findmod_tests
     test_windows_runtime_libproxy
     test_windows_sdk_version
     test_install_libs_guard_windows
-    test_orchestrator_idempotent
+    test_android_abi_info
+    test_windows_sdk_root
 )
 
 foreach(_t IN LISTS _qgc_findmod_tests)
@@ -44,6 +45,24 @@ if(QGC_ENABLE_GST_VIDEOSTREAMING AND NOT ANDROID AND NOT IOS)
     )
 endif()
 
+# Registers FindModule.<test_name>: runs <script>.cmake (optionally with TEST_CASE) and passes only
+# when it fails with a diagnostic matching expected_regex, so unrelated errors cannot satisfy it.
+function(_qgc_add_findmodule_failure_test test_name script expected_regex)
+    set(_qgc_test_case_arg "")
+    if(ARGC GREATER 3)
+        set(_qgc_test_case_arg "-DTEST_CASE=${ARGV3}")
+    endif()
+    add_test(
+        NAME "FindModule.${test_name}"
+        COMMAND
+            "${CMAKE_COMMAND}" "-DCMAKE_EXECUTABLE=${CMAKE_COMMAND}"
+            "-DSCRIPT_FILE=${CMAKE_CURRENT_SOURCE_DIR}/${script}.cmake" ${_qgc_test_case_arg}
+            "-DEXPECTED_REGEX=${expected_regex}" -P "${PROJECT_SOURCE_DIR}/cmake/tests/run_expected_failure_test.cmake"
+        WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+    )
+    set_tests_properties("FindModule.${test_name}" PROPERTIES LABELS "Unit;FindModule" TIMEOUT 15)
+endfunction()
+
 set(_qgc_gst_argument_failure_cases
     "DownloadDelegatesRequired|download-delegates-required|qgc_resilient_download: missing values for: FILENAME"
     "DownloadResultRequired|download-result-required|gstreamer_resilient_download: RESULT_VAR is required"
@@ -61,37 +80,44 @@ foreach(qgc_failure_case IN LISTS _qgc_gst_argument_failure_cases)
     list(GET _qgc_failure_parts 0 _qgc_test_name)
     list(GET _qgc_failure_parts 1 _qgc_test_case)
     list(GET _qgc_failure_parts 2 _qgc_expected_regex)
-    add_test(
-        NAME "FindModule.test_argument_validation.${_qgc_test_name}"
-        COMMAND
-            "${CMAKE_COMMAND}" "-DCMAKE_EXECUTABLE=${CMAKE_COMMAND}"
-            "-DSCRIPT_FILE=${CMAKE_CURRENT_SOURCE_DIR}/test_argument_validation.cmake"
-            "-DTEST_CASE=${_qgc_test_case}" "-DEXPECTED_REGEX=${_qgc_expected_regex}" -P
-            "${PROJECT_SOURCE_DIR}/cmake/tests/run_expected_failure_test.cmake"
-    )
-    set_tests_properties(
-        "FindModule.test_argument_validation.${_qgc_test_name}"
-        PROPERTIES LABELS "Unit;FindModule" TIMEOUT 15
+    _qgc_add_findmodule_failure_test("test_argument_validation.${_qgc_test_name}" test_argument_validation
+                                     "${_qgc_expected_regex}" "${_qgc_test_case}"
     )
 endforeach()
 
-set(_qgc_findmod_willfail_tests
-    test_components_malformed
-    test_plugin_policy_errors
-    test_plugin_policy_conflict
-    test_install_libs_guard
-    test_download_win_version_guard
+set(_qgc_gst_script_failure_cases
+    "test_components_malformed|GSTREAMER_COMPONENT_REGISTRY: malformed entry 'OnlyThree:fields:here'"
+    "test_plugin_policy_errors|gstreamer_plugins_for: build-config.json not loaded"
+    "test_plugin_policy_conflict|'foo' is in both GSTREAMER_XCFRAMEWORK_SKIP_PLUGINS and GSTREAMER_RUNTIME_REQUIRED"
+    "test_install_libs_guard|gstreamer_install_libs: refusing to copy from system/shared prefix"
+    "test_download_win_version_guard|Windows GStreamer SDK requires version 1.28 or later"
 )
 
-foreach(_t IN LISTS _qgc_findmod_willfail_tests)
-    add_test(
-        NAME FindModule.${_t}
-        COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_SOURCE_DIR}/${_t}.cmake"
-        WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-    )
-    set_tests_properties(FindModule.${_t} PROPERTIES
-        LABELS "Unit;FindModule"
-        TIMEOUT 15
-        WILL_FAIL TRUE
-    )
+foreach(qgc_failure_case IN LISTS _qgc_gst_script_failure_cases)
+    string(REPLACE "|" ";" _qgc_failure_parts "${qgc_failure_case}")
+    list(GET _qgc_failure_parts 0 _qgc_script)
+    list(GET _qgc_failure_parts 1 _qgc_expected_regex)
+    _qgc_add_findmodule_failure_test("${_qgc_script}" "${_qgc_script}" "${_qgc_expected_regex}")
 endforeach()
+
+_qgc_add_findmodule_failure_test(test_android_abi_info.UnsupportedAbi test_android_abi_info
+                                 "Unsupported Android ABI: mips" unsupported-abi
+)
+
+# The Orchestrator fixture generates a Linux-layout fake SDK and drives it through the host's
+# pkg-config, so it only runs on Linux hosts.
+if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
+    foreach(_qgc_scenario IN ITEMS targets idempotent)
+        add_test(
+            NAME "FindModule.test_orchestrator.${_qgc_scenario}"
+            COMMAND
+                "${CMAKE_COMMAND}" "-DQGC_MODULE_DIR=${PROJECT_SOURCE_DIR}/cmake"
+                "-DWORK_DIR=${CMAKE_CURRENT_BINARY_DIR}/test_orchestrator/${_qgc_scenario}"
+                "-DSCENARIO=${_qgc_scenario}" "-DGENERATOR=${CMAKE_GENERATOR}" "-DMAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}"
+                -P "${CMAKE_CURRENT_SOURCE_DIR}/test_orchestrator.cmake"
+        )
+        set_tests_properties("FindModule.test_orchestrator.${_qgc_scenario}"
+                             PROPERTIES LABELS "Unit;FindModule" TIMEOUT 120 SKIP_REGULAR_EXPRESSION "QGC_TEST_SKIPPED"
+        )
+    endforeach()
+endif()
