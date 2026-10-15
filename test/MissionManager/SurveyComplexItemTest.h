@@ -58,6 +58,11 @@ private slots:
     void _testObstacleAvoidance();
     void _testObstacleRouteEfficiency_data();
     void _testObstacleRouteEfficiency();
+    void _testIgnoredObstacles_data();
+    void _testIgnoredObstacles();
+    void _testObstacleSegmentLimit();
+    void _testHoverCaptureDelay_data();
+    void _testHoverCaptureDelay();
     void _testObstacleChanges();
     void _testBlockedSurvey_data();
     void _testBlockedSurvey();

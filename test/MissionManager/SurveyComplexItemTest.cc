@@ -743,6 +743,133 @@ void SurveyComplexItemObstacleTest::_testObstacleRouteEfficiency()
     QVERIFY2(distance < maximumDistance, qPrintable(QStringLiteral("Survey route is %1 m").arg(distance)));
 }
 
+void SurveyComplexItemObstacleTest::_testIgnoredObstacles_data()
+{
+    QTest::addColumn<bool>("circle");
+    QTest::addColumn<bool>("inclusion");
+    QTest::addColumn<int>("vertices");
+    QTest::addColumn<bool>("validCenter");
+    QTest::addColumn<double>("radius");
+    QTest::newRow("inclusion-polygon") << false << true << 4 << true << 200.0;
+    QTest::newRow("empty-polygon") << false << false << 0 << true << 200.0;
+    QTest::newRow("one-vertex-polygon") << false << false << 1 << true << 200.0;
+    QTest::newRow("two-vertex-polygon") << false << false << 2 << true << 200.0;
+    QTest::newRow("inclusion-circle") << true << true << 0 << true << 200.0;
+    QTest::newRow("invalid-center") << true << false << 0 << false << 200.0;
+    QTest::newRow("zero-radius") << true << false << 0 << true << 0.0;
+    QTest::newRow("negative-radius") << true << false << 0 << true << -10.0;
+    QTest::newRow("nan-radius") << true << false << 0 << true << qQNaN();
+    QTest::newRow("infinite-radius") << true << false << 0 << true << std::numeric_limits<double>::infinity();
+}
+
+void SurveyComplexItemObstacleTest::_testIgnoredObstacles()
+{
+    QFETCH(bool, circle);
+    QFETCH(bool, inclusion);
+    QFETCH(int, vertices);
+    QFETCH(bool, validCenter);
+    QFETCH(double, radius);
+    const QGeoCoordinate origin = _polyVertices.first();
+    GeoFenceController* fences = planController()->geoFenceController();
+    fences->circles()->append(new QGCFenceCircle(surveyCoordinate(origin, 42, -50), 10, false, fences));
+    const QVariantList originalPoints = _surveyItem->visualTransectPoints();
+    QVERIFY(!originalPoints.isEmpty());
+
+    if (circle) {
+        const QGeoCoordinate center = validCenter ? surveyCoordinate(origin, 50, -50) : QGeoCoordinate();
+        fences->circles()->append(new QGCFenceCircle(center, radius, inclusion, fences));
+    } else {
+        auto* polygon = new QGCFencePolygon(inclusion, fences);
+        polygon->appendVertices(obstacleVertices(origin, QRectF(-10, -110, 120, 120)).mid(0, vertices));
+        fences->polygons()->append(polygon);
+    }
+
+    QCOMPARE(_surveyItem->visualTransectPoints(), originalPoints);
+    QCOMPARE(_surveyItem->readyForSaveState(), VisualMissionItem::ReadyForSave);
+    QVERIFY(_surveyItem->obstacleError().isEmpty());
+}
+
+void SurveyComplexItemObstacleTest::_testObstacleSegmentLimit()
+{
+    _surveyItem->cameraCalc()->adjustedFootprintSide()->setRawValue(0.15);
+    QVERIFY(_surveyItem->_transectCount() > TransectStyleComplexItem::maxTransectCount / 2);
+    QVERIFY(_surveyItem->_transectCount() <= TransectStyleComplexItem::maxTransectCount);
+    GeoFenceController* fences = planController()->geoFenceController();
+    auto* polygon = new QGCFencePolygon(false, fences);
+    polygon->appendVertices(obstacleVertices(_polyVertices.first(), QRectF(10, -60, 80, 20)));
+    QSignalSpy errorSpy(_surveyItem, &SurveyComplexItem::obstacleErrorChanged);
+    fences->polygons()->append(polygon);
+
+    QCOMPARE(_surveyItem->readyForSaveState(), VisualMissionItem::NotReadyForSaveData);
+    QVERIFY(_surveyItem->obstacleError().contains(QStringLiteral("too many survey segments")));
+    QCOMPARE(errorSpy.count(), 1);
+    QVERIFY(_surveyItem->visualTransectPoints().isEmpty());
+    QList<MissionItem*> items;
+    _surveyItem->appendMissionItems(items, this);
+    QVERIFY(items.isEmpty());
+    QVERIFY(_surveyItem->waypointMarkers().isEmpty());
+
+    _surveyItem->cameraCalc()->adjustedFootprintSide()->setRawValue(10.0);
+    QCOMPARE(_surveyItem->readyForSaveState(), VisualMissionItem::ReadyForSave);
+    QVERIFY(_surveyItem->obstacleError().isEmpty());
+    QCOMPARE(errorSpy.count(), 2);
+    _surveyItem->appendMissionItems(items, this);
+    QVERIFY(!items.isEmpty());
+    QVERIFY(_surveyItem->_transectCount() <= TransectStyleComplexItem::maxTransectCount);
+}
+
+void SurveyComplexItemObstacleTest::_testHoverCaptureDelay_data()
+{
+    QTest::addColumn<bool>("obstacle");
+    QTest::addColumn<bool>("hover");
+    QTest::addColumn<double>("turnaround");
+    QTest::addColumn<bool>("refly");
+    QTest::newRow("continuous") << false << false << 0.0 << false;
+    QTest::newRow("continuous-obstacle") << true << false << 25.0 << false;
+    QTest::newRow("hover") << false << true << 0.0 << false;
+    QTest::newRow("hover-turnaround") << false << true << 25.0 << false;
+    QTest::newRow("hover-refly") << false << true << 0.0 << true;
+    QTest::newRow("hover-obstacle") << true << true << 0.0 << false;
+    QTest::newRow("hover-obstacle-turnaround") << true << true << 25.0 << false;
+    QTest::newRow("hover-obstacle-refly") << true << true << 0.0 << true;
+}
+
+void SurveyComplexItemObstacleTest::_testHoverCaptureDelay()
+{
+    QFETCH(bool, obstacle);
+    QFETCH(bool, hover);
+    QFETCH(double, turnaround);
+    QFETCH(bool, refly);
+    _surveyItem->hoverAndCapture()->setRawValue(hover);
+    _surveyItem->turnAroundDistance()->setRawValue(turnaround);
+    _surveyItem->refly90Degrees()->setRawValue(refly);
+    if (obstacle) {
+        GeoFenceController* fences = planController()->geoFenceController();
+        fences->circles()->append(
+            new QGCFenceCircle(surveyCoordinate(_polyVertices.first(), 42, -50), 15, false, fences));
+    }
+    QCOMPARE(_surveyItem->readyForSaveState(), VisualMissionItem::ReadyForSave);
+    QList<MissionItem*> items;
+    _surveyItem->appendMissionItems(items, this);
+    int captures = 0;
+    double waypointDelay = 0;
+    for (const MissionItem* item : items) {
+        if (item->command() == MAV_CMD_IMAGE_START_CAPTURE) {
+            ++captures;
+        } else if (item->command() == MAV_CMD_NAV_WAYPOINT) {
+            waypointDelay += item->param1();
+        }
+    }
+    if (hover) {
+        QVERIFY(captures > 0);
+        QCOMPARE(waypointDelay, captures * 4.0);
+    } else {
+        QCOMPARE(captures, 0);
+        QCOMPARE(waypointDelay, 0.0);
+    }
+    QCOMPARE(_surveyItem->additionalTimeDelay(), waypointDelay);
+}
+
 void SurveyComplexItemObstacleTest::_testObstacleChanges()
 {
     _surveyItem->turnAroundDistance()->setRawValue(0);

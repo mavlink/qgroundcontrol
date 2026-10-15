@@ -1524,15 +1524,11 @@ double SurveyComplexItem::additionalTimeDelay (void) const
 
     if (hoverAndCaptureEnabled()) {
         for (const QList<TransectStyleComplexItem::CoordInfo_t>& transect: _transects) {
-            if (_obstacleAvoidanceActive) {
-                for (const CoordInfo_t& point : transect) {
-                    if (point.coordType == CoordTypeSurveyEntry || point.coordType == CoordTypeSurveyExit ||
-                        point.coordType == CoordTypeInteriorHoverTrigger) {
-                        hoverTime += _hoverAndCaptureDelaySeconds;
-                    }
+            for (const CoordInfo_t& point : transect) {
+                if (point.coordType == CoordTypeSurveyEntry || point.coordType == CoordTypeSurveyExit ||
+                    point.coordType == CoordTypeInteriorHoverTrigger) {
+                    hoverTime += _hoverAndCaptureDelaySeconds;
                 }
-            } else {
-                hoverTime += _hoverAndCaptureDelaySeconds * transect.count();
             }
         }
     }
