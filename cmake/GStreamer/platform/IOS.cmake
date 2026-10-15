@@ -9,7 +9,7 @@
 # to the same single-merged-archive consumption model
 # (_qgc_gst_create_ios_targets) — discovery just locates the binary + Headers.
 #
-# The GStreamerMobile framework target in _qgc_gst_create_ios_targets is derived from FindGStreamerMobile.cmake in
+# The GStreamer::mobile framework target in _qgc_gst_create_ios_targets is derived from FindGStreamerMobile.cmake in
 # cerbero (https://gitlab.freedesktop.org/gstreamer/cerbero, data/mobile/FindGStreamerMobile.cmake). QGC changes: it is
 # built from the SDK's merged static archive, registers the requested plugins found in that archive through the shared
 # C registration template instead of an Objective-C one, and SDK discovery is QGC's own.
@@ -71,12 +71,9 @@ endfunction()
 
 # _qgc_gst_discover_ios_sdk()
 # Uses the GStreamer.xcframework or GStreamer.framework at or under GStreamer_ROOT_DIR, else the system iPhone.sdk,
-# else downloads the official iOS package, and selects its single merged static archive. Sets GStreamer_ROOT_DIR,
-# GStreamer_AUTO_DOWNLOADED, GStreamer_USE_{MERGED_STATIC,FRAMEWORK,STATIC_LIBS}, GSTREAMER_XCFRAMEWORK_LIB,
-# GStreamer_IOS_INFO_PLIST, GSTREAMER_{LIB,PLUGIN,INCLUDE,XCFRAMEWORK}_PATH and the GStreamer_IOS_CA_BUNDLE cache
-# entry.
-# cmakelang 0.6.13 predates return(PROPAGATE). Discovery is one ordered fallback chain (xcframework, framework,
-# iPhone.sdk, download) that fills in the whole layout.
+# else downloads the official iOS package, and selects its single merged static archive; there is no pkg-config. Also
+# sets GSTREAMER_XCFRAMEWORK_{LIB,PATH}, GStreamer_IOS_INFO_PLIST and the GStreamer_IOS_CA_BUNDLE cache entry.
+# Discovery is one ordered fallback chain (xcframework, framework, iPhone.sdk, download) that fills in the whole layout.
 # cmake-lint: disable=C0103,E1121,R0912,R0915
 function(_qgc_gst_discover_ios_sdk)
     if(NOT CMAKE_HOST_APPLE)
@@ -334,12 +331,12 @@ function(_qgc_gst_download_ios_ca_bundle)
     )
 endfunction()
 
-# Core functions QGC calls directly that the registered plugins don't necessarily link into GStreamerMobile.
+# Core functions QGC calls directly that the registered plugins don't necessarily link into GStreamer::mobile.
 set(QGC_GST_IOS_APP_CORE_SYMBOLS _gst_debug_bin_to_dot_data _gst_debug_bin_to_dot_file)
 
 # _qgc_gst_ios_app_core_symbols(<nm_output> <out_var>)
 # Sets <out_var> to the GStreamer core symbols that `nm -gU` output for the app lists as defined. The app must take the
-# core from GStreamerMobile; a core symbol defined in the app means a second core was linked in from the archive.
+# core from GStreamer::mobile; a core symbol defined in the app means a second core was linked in from the archive.
 function(_qgc_gst_ios_app_core_symbols nm_output out_var)
     set(_found "")
     foreach(_sym IN ITEMS _gst_init_check _gst_element_get_type _gst_plugin_feature_get_type)
@@ -372,7 +369,7 @@ endfunction()
 
 # ─────────────────────────────────────────────────────────────────────────────
 # _qgc_gst_create_ios_targets
-# Build IMPORTED targets directly from the iOS xcframework's fat .a — bypasses
+# Build IMPORTED targets directly from the iOS SDK's merged archive — bypasses
 # pkg-config entirely. Caller must have set GSTREAMER_XCFRAMEWORK_LIB and
 # GSTREAMER_INCLUDE_PATH (done by _qgc_gst_discover_ios_sdk above).
 # Function: exports GStreamer_VERSION and GSTREAMER_STATIC_PLUGINS via PARENT_SCOPE and creates GLOBAL IMPORTED
@@ -448,7 +445,7 @@ function(_qgc_gst_create_ios_targets)
         set(GStreamer_VERSION "${QGC_GST_REQUESTED_VERSION}")
     endif()
 
-    # ── xcframework path: create IMPORTED targets directly from the fat .a ───
+    # ── Create IMPORTED targets directly from the merged archive ───
     # No pkg-config or .framework; all APIs and plugins live in one archive.
     if(NOT TARGET GStreamer::GStreamer)
         add_library(GStreamer_static STATIC IMPORTED GLOBAL)
@@ -527,7 +524,7 @@ function(_qgc_gst_create_ios_targets)
 
     # Cache the nm-extracted plugin descriptor list — running nm -gjU on the
     # ~300MB libGStreamer.a costs 2-5s per reconfigure. Key on archive
-    # mtime+size and SDK version so a swapped xcframework re-invokes nm.
+    # mtime+size and SDK version so a swapped SDK re-invokes nm.
     file(SIZE "${GSTREAMER_XCFRAMEWORK_LIB}" _xcfw_lib_size)
     file(TIMESTAMP "${GSTREAMER_XCFRAMEWORK_LIB}" _xcfw_lib_mtime "%s")
     # Hash the archive so a same-size, mtime-normalized rebuild (CI cache restore)
@@ -585,13 +582,13 @@ function(_qgc_gst_create_ios_targets)
                             "CMAKE_OSX_ARCHITECTURES."
             )
         elseif(NOT _xcfw_nm_rc EQUAL 0)
-            message(STATUS "GStreamer xcframework: nm exited ${_xcfw_nm_rc} (unparseable objects, "
+            message(STATUS "GStreamer iOS SDK: nm exited ${_xcfw_nm_rc} (unparseable objects, "
                            "e.g. Rust gstaws bitcode) but emitted usable symbols — continuing."
             )
         endif()
         file(
             WRITE "${_xcfw_cache_file}"
-            "# Auto-generated cache of plugin descriptors enumerated from the iOS xcframework.\n"
+            "# Auto-generated cache of plugin descriptors enumerated from the iOS merged archive.\n"
             "# Regenerated when GStreamer_VERSION or libGStreamer.a (size, mtime or SHA256) changes.\n"
             "set(_xcfw_cached_key \"${_xcfw_cache_key}\")\n" "set(_xcfw_descs \"${_xcfw_descs}\")\n"
         )
@@ -600,7 +597,7 @@ function(_qgc_gst_create_ios_targets)
     list(LENGTH _xcfw_registered _xcfw_registered_count)
     list(LENGTH GSTREAMER_PLUGINS _xcfw_requested_count)
     list(LENGTH _xcfw_descs _xcfw_archived_count)
-    message(STATUS "GStreamer xcframework: registering ${_xcfw_registered_count} of the ${_xcfw_requested_count} "
+    message(STATUS "GStreamer iOS SDK: registering ${_xcfw_registered_count} of the ${_xcfw_requested_count} "
                    "requested plugins (${_xcfw_archived_count} in the archive)"
     )
     set(GSTREAMER_STATIC_PLUGINS
@@ -619,7 +616,7 @@ function(_qgc_gst_create_ios_targets)
         endif()
     endforeach()
 
-    # Build the xcframework mobile init shim — calls gst_init_static_plugins().
+    # Build the GStreamer::mobile init shim — calls gst_init_static_plugins().
     if(NOT TARGET GStreamer::mobile)
         add_library(GStreamerMobileXcfw SHARED)
         # gioopenssl is statically linked into libGStreamer.a (nm: _g_io_openssl_load is exported from the slice);

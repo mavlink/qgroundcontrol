@@ -1,6 +1,5 @@
-# Include aggregator for the cmake/GStreamer/ helper modules; it defines nothing itself. The GStreamer README
-# (src/VideoManager/VideoReceiver/GStreamer/README.md, "Build Configuration") describes each module. Orchestrator.cmake
-# and platform/*.cmake, which the Orchestrator includes, are not part of it.
+# Include aggregator for the cmake/GStreamer/ helper modules; it defines nothing itself. Each module's header describes
+# it. Orchestrator.cmake and platform/*.cmake, which the Orchestrator includes, are not part of it.
 
 include_guard(GLOBAL)
 

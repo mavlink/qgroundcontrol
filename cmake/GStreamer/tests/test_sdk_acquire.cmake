@@ -32,7 +32,6 @@ function(_qgc_test_seed_archive marker)
 endfunction()
 
 # qgc_gst_acquire_sdk extractor: records the call, checks the cache is locked and unpacks the archive.
-# cmakelang 0.6.13 does not recognize file(ARCHIVE_EXTRACT).
 # cmake-lint: disable=E1126
 function(_qgc_test_extract staging archives)
     execute_process(

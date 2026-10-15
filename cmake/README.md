@@ -29,6 +29,8 @@ entry point for normal builds.
 - In GStreamer modules with repeated basenames, include the intended file by absolute path.
 - When changing an existing file, format only the edited region. Whole-file formatting is reserved
   for new files or an explicit formatting task.
+- The lint hooks run cmakelang 0.6.13, which predates `return(PROPAGATE)` and `file(ARCHIVE_EXTRACT)`. Silence its
+  findings on those with a `# cmake-lint: disable=` line in the function; no other comment is needed.
 
 `cmake/modules/CPM.cmake` is vendored. Do not modify or reformat it as part of project CMake
 maintenance; the pre-commit CMake hooks intentionally exclude it.

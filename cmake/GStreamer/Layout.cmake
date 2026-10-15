@@ -70,7 +70,7 @@ function(gstreamer_create_layout_target)
             set(_gclt_include "${_gclt_root}/Headers")
         endif()
         if(GCLT_XCFRAMEWORK_BUNDLE AND NOT EXISTS "${GCLT_XCFRAMEWORK_BUNDLE}")
-            message(FATAL_ERROR "GStreamer: xcframework not found at ${GCLT_XCFRAMEWORK_BUNDLE}")
+            message(FATAL_ERROR "GStreamer: iOS SDK bundle not found at ${GCLT_XCFRAMEWORK_BUNDLE}")
         endif()
         set(GSTREAMER_XCFRAMEWORK_PATH
             "${GCLT_XCFRAMEWORK_BUNDLE}"

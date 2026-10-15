@@ -1,5 +1,5 @@
 # Centralised GStreamer plugin policy — single source of truth for plugin
-# alternate groups, runtime-required plugins, and xcframework skip list.
+# alternate groups, runtime-required plugins, and the iOS skip list.
 # Consumed by Orchestrator (build-config plugin loader / alternate-satisfied
 # check), Install (runtime-required verifier), and the iOS plugin list (xcfw skip).
 
@@ -44,8 +44,8 @@ set(GSTREAMER_RUNTIME_REQUIRED_PLUGINS
     videoconvertscale
 )
 
-# iOS xcframework: plugins whose dependent static libs aren't bundled in the
-# slice. Registering them would cause unresolved-symbol link failures, so the
+# iOS: plugins whose dependent static libs aren't bundled in the merged
+# archive. Registering them would cause unresolved-symbol link failures, so the
 # Orchestrator drops them from the iOS plugin list.
 # x265: gstreamer-ios 1.28.2 ships libgstx265.a but not libx265.a.
 set(GSTREAMER_XCFRAMEWORK_SKIP_PLUGINS x265)
@@ -56,7 +56,7 @@ set(GSTREAMER_XCFRAMEWORK_SKIP_PLUGINS x265)
 # builds must not ship them (app size; x264/x265 are GPL).
 set(GSTREAMER_MOCK_SERVER_DEBUG_PLUGINS mpegtsmux videotestsrc x264 x265)
 
-# Invariant: no plugin may be both runtime-required and xcframework-skipped.
+# Invariant: no plugin may be both runtime-required and skipped on iOS.
 function(_qgc_gst_assert_policy_consistent)
     foreach(_skip IN LISTS GSTREAMER_XCFRAMEWORK_SKIP_PLUGINS)
         if(_skip IN_LIST GSTREAMER_RUNTIME_REQUIRED_PLUGINS)

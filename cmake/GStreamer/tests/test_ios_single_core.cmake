@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.25)
-# The iOS app must take the GStreamer core from GStreamerMobile. The post-build check flags an app binary that defines
+# The iOS app must take the GStreamer core from GStreamer::mobile. The post-build check flags an app binary that defines
 # core symbols itself, which means it linked a second core from the merged archive.
 include("${CMAKE_CURRENT_LIST_DIR}/_assert.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/../platform/IOS.cmake")
 
-# Defined in GStreamerMobile only: the app's own symbols and imports.
+# Defined in GStreamer::mobile only: the app's own symbols and imports.
 set(_single_core "0000000100001000 T _main\n0000000100002000 T _gst_element_register_qgcvideosinkbin\n")
 _qgc_gst_ios_app_core_symbols("${_single_core}" _found)
 qgc_test_assert_streq("single core" "" "${_found}")

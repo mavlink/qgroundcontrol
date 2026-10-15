@@ -186,7 +186,6 @@ endfunction()
 #                         plugins at runtime and never link them).
 # Then applies the macOS framework overlay or builds the Android mobile target. Sets GStreamer_VERSION, on static
 # layouts appends --static to PKG_CONFIG_ARGN and, on Android, sets GSTREAMER_STATIC_PLUGINS, all in the caller's scope.
-# cmakelang 0.6.13 predates return(PROPAGATE).
 # cmake-lint: disable=C0103,E1121
 function(_qgc_gst_create_sdk_targets)
     set(_outputs GStreamer_VERSION)
@@ -221,13 +220,14 @@ function(_qgc_gst_create_sdk_targets)
         _qgc_gst_create_component_target(${_plugin} "gst${_plugin}" TRUE QUIET)
     endforeach()
 
-    # Apple framework overlay — defined in platform/MacOS.cmake; iOS uses xcframework.
+    # Apple framework overlay — defined in platform/MacOS.cmake; iOS uses its merged archive.
     if(MACOS AND GStreamer_USE_FRAMEWORK)
         _qgc_gst_apply_macos_framework_overlay()
     endif()
 
     # Android mobile-target setup: bundle plugins + optional fonts/CA assets into the
-    # GStreamerMobile target. iOS uses the xcframework path upstream, so this is Android-only.
+    # GStreamer::mobile target. iOS builds its targets from the merged archive (platform/IOS.cmake), so this is
+    # Android-only.
     if(ANDROID)
         _qgc_gst_create_android_mobile_target()
         list(APPEND _outputs GSTREAMER_STATIC_PLUGINS)

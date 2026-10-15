@@ -55,10 +55,8 @@ endfunction()
 
 # _qgc_gst_discover_macos_sdk()
 # Uses the SDK under GStreamer_ROOT_DIR, else /Library/Frameworks/GStreamer.framework or Homebrew's gstreamer, else
-# downloads the official runtime and devel packages. Points pkg-config at the SDK. Sets GStreamer_ROOT_DIR,
-# GStreamer_USE_FRAMEWORK, GStreamer_AUTO_DOWNLOADED, GSTREAMER_{LIB,PLUGIN,INCLUDE,FRAMEWORK}_PATH and, for the
-# framework, the SDK's PKG_CONFIG_EXECUTABLE; a flat SDK uses Homebrew's pkg-config (cached PKG_CONFIG_EXECUTABLE).
-# cmakelang 0.6.13 predates return(PROPAGATE).
+# downloads the official runtime and devel packages. Also sets GSTREAMER_FRAMEWORK_PATH. A framework brings its own
+# pkg-config; a flat SDK uses Homebrew's (cached PKG_CONFIG_EXECUTABLE).
 # cmake-lint: disable=C0103,E1121
 function(_qgc_gst_discover_macos_sdk)
     if(NOT GStreamer_ROOT_DIR)
@@ -153,7 +151,7 @@ endfunction()
 
 # Apple framework overlay — when GStreamer.framework is in use, link the framework
 # directly and add its Headers to the include path. Called from the pkg-config
-# branch only (iOS uses xcframework which bypasses this entirely).
+# branch only (iOS uses its merged archive, which bypasses this entirely).
 function(_qgc_gst_apply_macos_framework_overlay)
     if(NOT GSTREAMER_FRAMEWORK_PATH)
         message(FATAL_ERROR "_qgc_gst_apply_macos_framework_overlay requires GSTREAMER_FRAMEWORK_PATH; "

@@ -16,7 +16,7 @@ The pipeline is split into focused components (all in this directory):
 | `GstVideoReceiver` | The `VideoReceiver` the app uses: runs the pipeline (source → tee → the branches below) and its only bus consumer on its own worker thread, and is the only component that reconnects (with backoff) after a stream failure. The components below are plain classes it owns; each header states which thread calls what. |
 | `DecodingBranch` | Display branch behind the tee: inserts `decodebin3` once the source streams and reports decoding, the decoder name and the video size. |
 | `RecordingBranch` | Recording branch behind the tee: one `splitmuxsink` file per recording, started at a keyframe and, for MP4/MOV, muxed so a crash leaves a playable file; `RecordingFinalizer` tells when the file is closed. |
-| `StreamWatchdog` | Notices stalled source or decoder output on a monotonic clock, and paces reconnects (1 s, 2 s, 4 s, … 30 s). |
+| `StreamWatchdog` | Notices stalled source or decoder output on a monotonic clock, and paces reconnects with exponential backoff. |
 | `PipelineDotDumper` | Writes the pipeline's `.dot` graphs; see [Pipeline Observability](#pipeline-observability). |
 | `GstSourceFactory` | Constructs the source element from the stream URI and applies RTP jitter-buffer policy for `application/x-rtp` sources. |
 | `GStreamerEnvironment` | Process-wide environment setup (plugin/scanner/helper/GIO paths, env hygiene) run before `gst_init()`. See [Runtime Environment Setup](#runtime-environment-setup). |
@@ -67,18 +67,7 @@ Per-platform import of decoded GPU frames without a copy, all sharing `GstHwFram
   - `GStreamer_USE_STATIC_LIBS` / `GStreamer_USE_FRAMEWORK`: layout preferences with per-platform defaults; discovery overrides them for the SDK it finds.
   - `GStreamer_REQUIRE_CHECKSUM` and `QGC_GST_DOWNLOAD_TIMEOUT` (the SDK download's wall-clock cap, default 1200 s; its other limits are the shared `QGC_DOWNLOAD_*` ones) control downloads; `GStreamer_DEBUG` traces target creation.
 - **Plugin allowlist**: `gstreamer.plugins` (`common` plus the platform's key) decides what is registered and bundled. Android links the requested plugins that have a static archive; iOS registers only the requested plugins found in its merged archive, so the archive's other plugins (some GPL) stay out of the app; desktop static SDKs register the requested plugins that have a pkg-config module; desktop installs bundle the allowlisted plugins found in the SDK and check after install that those and the runtime-required ones arrived. Debug mobile builds add the MockLink test-stream encoders. A missing runtime-required plugin fails a mobile configure; other missing plugins are warnings.
-- **CMake modules** ([`cmake/GStreamer/`](../../../../cmake/GStreamer/)):
-  - `Orchestrator.cmake`: the entry point this directory's `CMakeLists.txt` includes. It picks the version, calls the platform's discovery function (`Platform.cmake` names the platform), creates the targets, checks the plugins and records the resolved SDK; its header lists the variables it sets.
-  - `platform/*.cmake`: per-platform discovery (user, system or downloaded SDK and its pkg-config setup), the Android `GStreamer::mobile` target and the iOS merged-archive targets.
-  - `Download.cmake`: URL templates, checksums (in-tree pins, else the upstream `.sha256sum` sidecar) and `qgc_gst_acquire_sdk`, which downloads into the shared cache under a lock and extracts once into a stamped directory.
-  - `Targets.cmake`: `GStreamer::GStreamer`, `::deps`, `::api_*` and, for static SDKs, per-plugin targets from pkg-config. `PkgConfig.cmake` points pkg-config at the SDK for this directory's subtree only.
-  - `PluginPolicy.cmake`: alternate plugins, runtime-required plugins, the iOS skip list and the MockLink encoders.
-  - `StaticInit.cmake`: generates `gst_init_static_plugins()` for static layouts from `gst_static_plugins.c.in`.
-  - `Install.cmake`: desktop install helpers; each reports the plugin directory it installs to, which the install-time verifier checks.
-  - `SdkState.cmake`: the resolved-SDK cache entries and the SDK fingerprint that drops cached probe results when the SDK changes.
-  - `Platform.cmake`, `Components.cmake`, `Layout.cmake`, `Link.cmake` and `Probe.cmake`: the target platform, the component registry, the `GStreamer::Layout` target describing the SDK's on-disk layout, library resolution for the targets and the header probes.
-  - `Helpers.cmake`: include aggregator for the modules above.
-  - `tests/`: script tests and a fake-SDK configure fixture, run with `ctest -L GStreamer` (or `-L CMake`, with the shared-module tests).
+- **CMake modules** ([`cmake/GStreamer/`](../../../../cmake/GStreamer/)): `Orchestrator.cmake` is the entry point this directory's `CMakeLists.txt` includes; its header lists inputs and outputs. `platform/<platform>.cmake` discovers each platform's SDK. The other modules are helpers included through `Helpers.cmake`, each described in its header. `tests/` holds script tests and a fake-SDK configure fixture, run with `ctest -L GStreamer`.
 
 ## Runtime Environment Setup
 
@@ -125,13 +114,11 @@ CI host exercises the direct DMABuf importer.
 
 GStreamer SDKs are auto-downloaded during CMake configure. To use a local installation instead, set `GStreamer_ROOT_DIR` (on iOS, a `GStreamer.xcframework` or `GStreamer.framework`, or a directory containing one).
 
-Configure never overwrites `GStreamer_ROOT_DIR`: the SDK it selected is recorded as `QGC_GST_RESOLVED_ROOT` in `CMakeCache.txt`, an auto-downloaded SDK is fetched again when its `gstreamer.version.<platform>` changes, and cached GStreamer probe results are recomputed whenever the SDK changes.
-
 ### Android
 
 Auto-downloaded during CMake configure. No manual setup required. Each ABI build extracts only its own tree from the universal SDK tarball.
 
-The plugins' Java sources and GStreamer's fonts and CA bundle are staged in the build directory (`extra_java_sources/`, `extra_assets/`), which [`android/build.gradle`](../../../../android/build.gradle) adds to the APK. Earlier builds copied them into `android/`; configure deletes those copies, which would otherwise duplicate the staged files.
+The plugins' Java sources and GStreamer's fonts and CA bundle are staged in the build directory (`extra_java_sources/`, `extra_assets/`), which [`android/build.gradle`](../../../../android/build.gradle) adds to the APK.
 
 > **Windows users building for Android**: Enable Developer Mode (Settings > System > For developers) to support symbolic links during the build.
 
@@ -143,7 +130,7 @@ Auto-downloaded SDK archives are cached to `${CPM_SOURCE_CACHE}/gstreamer-*`. `C
 export CPM_SOURCE_CACHE=$HOME/.cache/CPM
 ```
 
-Cached archives are verified on every hit against the checksum pinned in `.github/build-config.json`, or the upstream `.sha256sum` sidecar for an unpinned version. Each archive is extracted once into a directory beside it that is stamped with the version and archive hash; configures sharing the cache take a lock instead of downloading or extracting over each other. The Windows SDK installer runs in its portable mode, so it leaves no `GSTREAMER_1_0_ROOT_*` environment variable, registry key or uninstall entry behind.
+Cached archives are verified on every hit against the checksum pinned in `.github/build-config.json`, or the upstream `.sha256sum` sidecar for an unpinned version; an auto-downloaded SDK is fetched again when its `gstreamer.version.<platform>` changes, and cached GStreamer probe results are recomputed whenever the SDK changes. Each archive is extracted once into a directory beside it that is stamped with the archive hashes; configures sharing the cache take a lock instead of downloading or extracting over each other. The Windows SDK installer runs in its portable mode, so it leaves no `GSTREAMER_1_0_ROOT_*` environment variable, registry key or uninstall entry behind.
 
 ## Testing Pipelines
 
@@ -178,7 +165,7 @@ gst-launch-1.0 udpsrc port=5600 caps='application/x-rtp, media=(string)video, cl
 Each test skips, rather than fails, when GStreamer or a plugin it needs is missing (`GstVideoReceiverTest` needs `x264enc` among others).
 
 ```bash
-cd build && QT_QPA_PLATFORM=offscreen ctest -R '^(GStreamerTest|GstVideoReceiverComponentsTest|GstVideoReceiverTest)$' --output-on-failure
+cd build && ctest -R '^(GStreamerTest|GstVideoReceiverComponentsTest|GstVideoReceiverTest)$' --output-on-failure
 ```
 
 ## GStreamer Logging

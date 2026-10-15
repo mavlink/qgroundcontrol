@@ -168,10 +168,8 @@ endfunction()
 
 # _qgc_gst_discover_windows_sdk()
 # Uses the SDK under GStreamer_ROOT_DIR, the GSTREAMER_1_0_ROOT_* environment or a standard install location when it is
-# complete and recent enough, else downloads the official MSVC SDK for the target architecture. Points pkg-config at
-# the SDK. Sets GStreamer_ROOT_DIR, GStreamer_AUTO_DOWNLOADED, GSTREAMER_{LIB,PLUGIN,INCLUDE}_PATH and the SDK's
-# PKG_CONFIG_EXECUTABLE and PKG_CONFIG_ARGN.
-# cmakelang 0.6.13 predates return(PROPAGATE).
+# complete and recent enough, else downloads the official MSVC SDK for the target architecture. The SDK brings its own
+# pkg-config.
 # cmake-lint: disable=C0103,E1121
 function(_qgc_gst_discover_windows_sdk)
     _qgc_gst_windows_sdk_arch(_gst_win_arch)

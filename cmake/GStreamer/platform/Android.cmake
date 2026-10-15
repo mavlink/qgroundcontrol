@@ -49,7 +49,6 @@ endfunction()
 # _qgc_gst_android_extract(<staging> <archive> <abi_dir>)
 # qgc_gst_acquire_sdk extractor: unpacks only the <abi_dir>/ tree of the universal SDK tarball into
 # <staging>. Every ABI build (including Qt's multi-ABI sub-builds) acquires its own tree.
-# cmakelang 0.6.13 does not recognize file(ARCHIVE_EXTRACT).
 # cmake-lint: disable=E1126
 function(_qgc_gst_android_extract staging archive abi_dir)
     file(
@@ -67,11 +66,8 @@ function(_qgc_gst_android_extract staging archive abi_dir)
 endfunction()
 
 # _qgc_gst_discover_android_sdk()
-# Uses the SDK under GStreamer_ROOT_DIR, else extracts the CMAKE_ANDROID_ARCH_ABI tree of the downloaded universal SDK,
-# and points pkg-config at it. Sets GStreamer_ROOT_DIR, GStreamer_AUTO_DOWNLOADED and
-# GSTREAMER_{LIB,PLUGIN,INCLUDE}_PATH; on a Windows host also the SDK's PKG_CONFIG_EXECUTABLE and PKG_CONFIG_ARGN,
-# while a macOS host uses Homebrew's pkg-config (cached PKG_CONFIG_EXECUTABLE).
-# cmakelang 0.6.13 predates return(PROPAGATE).
+# Uses the SDK under GStreamer_ROOT_DIR, else extracts the CMAKE_ANDROID_ARCH_ABI tree of the downloaded universal SDK.
+# A Windows host uses the SDK's pkg-config, a macOS host Homebrew's (cached PKG_CONFIG_EXECUTABLE).
 # cmake-lint: disable=C0103,E1121
 function(_qgc_gst_discover_android_sdk)
     if(NOT GStreamer_ROOT_DIR)
@@ -132,7 +128,7 @@ function(_qgc_gst_android_find_plugin_archives out_var)
     set(_plugins ${GSTREAMER_PLUGINS})
     list(REMOVE_DUPLICATES _plugins)
     if(GStreamer_DEBUG)
-        message(STATUS "[GstMobile] Requested plugins: ${_plugins}")
+        message(STATUS "GStreamer::mobile: Requested plugins: ${_plugins}")
     endif()
 
     _gst_set_find_suffixes()
@@ -151,9 +147,9 @@ function(_qgc_gst_android_find_plugin_archives out_var)
     endforeach()
 
     if(GStreamer_DEBUG)
-        message(STATUS "[GstMobile] Found plugins with .a: ${_found}")
+        message(STATUS "GStreamer::mobile: Found plugins with .a: ${_found}")
         foreach(_dbg_p IN LISTS _found)
-            message(STATUS "[GstMobile]   ${_dbg_p} -> ${_gst_plugin_lib_${CMAKE_ANDROID_ARCH_ABI}_${_dbg_p}}")
+            message(STATUS "GStreamer::mobile:   ${_dbg_p} -> ${_gst_plugin_lib_${CMAKE_ANDROID_ARCH_ABI}_${_dbg_p}}")
         endforeach()
     endif()
     set(${out_var}
@@ -166,8 +162,8 @@ endfunction()
 # Links each plugin's static archive (found by _qgc_gst_android_find_plugin_archives) as
 # $<LINK_LIBRARY:WHOLE_ARCHIVE,GStreamer::<plugin>_archive> wherever GStreamer::<plugin> is linked, so every
 # gst_plugin_<plugin>_register() and its GType objects survive the linker's dead-strip and register into the
-# app's single core. GStreamer::<plugin> no longer links the archive by path as well: a plain occurrence ahead of
-# the whole-archive one would let the linker load some members twice.
+# app's single core. GStreamer::<plugin> must not also link the archive by path: a plain occurrence ahead of the
+# whole-archive one would let the linker load some members twice.
 function(_qgc_gst_android_whole_archive_plugins)
     foreach(_plugin IN LISTS ARGN)
         set(_archive "${_gst_plugin_lib_${CMAKE_ANDROID_ARCH_ABI}_${_plugin}}")
@@ -210,7 +206,7 @@ function(_qgc_gst_android_link_gio_modules target)
         if(${_gio_cache_var})
             target_link_libraries(GStreamer::gio_modules INTERFACE "${${_gio_cache_var}}")
         else()
-            message(WARNING "GStreamerMobile: GIO module '${_gio_lib}' not found in ${_gio_modules_path}")
+            message(WARNING "GStreamer::mobile: GIO module '${_gio_lib}' not found in ${_gio_modules_path}")
         endif()
     endforeach()
 
@@ -233,7 +229,7 @@ function(_qgc_gst_android_link_gio_modules target)
         if(${_ssl} AND ${_crypto})
             target_link_libraries(GStreamer::gio_modules INTERFACE "${${_ssl}}" "${${_crypto}}")
         else()
-            message(WARNING "GStreamerMobile: ssl/crypto not found under ${GStreamer_ROOT_DIR}/lib; "
+            message(WARNING "GStreamer::mobile: ssl/crypto not found under ${GStreamer_ROOT_DIR}/lib; "
                             "falling back to NDK sysroot link names (may be wrong/absent)"
             )
             target_link_libraries(GStreamer::gio_modules INTERFACE ssl crypto)
@@ -247,8 +243,7 @@ endfunction()
 # Copies the <plugin>s' Java sources under QGC_ANDROID_EXTRA_JAVA_SOURCES_DIR and the SDK's fonts and CA bundle under
 # QGC_ANDROID_EXTRA_ASSETS_DIR at configure time, like src/Android/CMakeLists.txt does for its Java sources;
 # android/build.gradle adds both build-directory trees to the APK (androiddeployqt deletes files written into
-# android-build/ itself). Earlier builds copied these files into QGC_ANDROID_PACKAGE_SOURCE_DIR, where they would now
-# duplicate the staged copies, so those copies are removed.
+# android-build/ itself). Removes stale copies under QGC_ANDROID_PACKAGE_SOURCE_DIR, which Gradle would package twice.
 # cmake-lint: disable=C0113
 function(_qgc_gst_android_stage_sdk_files ndk_build)
     if(NOT QGC_ANDROID_EXTRA_JAVA_SOURCES_DIR OR NOT QGC_ANDROID_EXTRA_ASSETS_DIR)
@@ -327,8 +322,8 @@ function(_qgc_gst_create_android_mobile_target)
 
     _qgc_gst_android_find_plugin_archives(_plugins)
     if(GStreamer_DEBUG)
-        message(STATUS "[GstMobile] GStreamer_ROOT_DIR = ${GStreamer_ROOT_DIR}")
-        message(STATUS "[GstMobile] GSTREAMER_LIB_PATH = ${GSTREAMER_LIB_PATH}")
+        message(STATUS "GStreamer::mobile: GStreamer_ROOT_DIR = ${GStreamer_ROOT_DIR}")
+        message(STATUS "GStreamer::mobile: GSTREAMER_LIB_PATH = ${GSTREAMER_LIB_PATH}")
     endif()
 
     # Single-core model: GStreamer::mobile is an INTERFACE target that whole-archives the plugin .a's +
@@ -355,8 +350,8 @@ function(_qgc_gst_create_android_mobile_target)
 
     if(GStreamer_DEBUG)
         get_target_property(_dbg_deps_libs GStreamer::deps INTERFACE_LINK_LIBRARIES)
-        message(STATUS "[GstMobile] GStreamer::deps INTERFACE_LINK_LIBRARIES = ${_dbg_deps_libs}")
-        message(STATUS "[GstMobile] Helper component targets: ${_plugin_targets}")
+        message(STATUS "GStreamer::mobile: GStreamer::deps INTERFACE_LINK_LIBRARIES = ${_dbg_deps_libs}")
+        message(STATUS "GStreamer::mobile: Helper component targets: ${_plugin_targets}")
     endif()
 
     target_link_libraries(GStreamerMobile INTERFACE GStreamer::deps)

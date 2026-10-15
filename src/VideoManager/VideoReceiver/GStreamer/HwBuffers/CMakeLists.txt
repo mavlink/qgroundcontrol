@@ -1,6 +1,7 @@
 # HwBuffers: platform zero-copy GPU video buffer paths. One row per path below; _qgc_add_gpu_path probes each row and
 # registers its sources/libs/defines on QGCGStreamer (created in the parent CMakeLists). gstqgc shares that target, so
-# the defines reach it with no cross-target ferrying.
+# the defines reach it with no cross-target ferrying. The defines are PUBLIC: the app facade (GStreamer.cc) and the
+# GStreamer tests build outside QGCGStreamer and #if on them.
 
 include(GStreamer/Probe)
 
@@ -97,7 +98,6 @@ function(_qgc_add_gpu_path name)
     if(_libs)
         target_link_libraries(QGCGStreamer PRIVATE ${_libs})
     endif()
-    # PUBLIC: the app facade (GStreamer.cc) and the GStreamer tests build outside QGCGStreamer and #if on these macros.
     target_compile_definitions(QGCGStreamer PUBLIC ${ARG_DEFINE}=1)
     message(STATUS "QGCGStreamer: ${name} zero-copy GPU path enabled")
     # cmake-lint: disable=C0103
@@ -170,7 +170,7 @@ endif()
 
 # ---- GPU path table (row order matters: CUDA builds on DMABuf) ----
 # cmake-format: off
-# Linux DMABuf zero-copy (VA-API / V4L2 / Mesa). QGC_GST_HAS_DMABUF comes from cmake/GStreamer/platform/Linux.cmake.
+# Linux DMABuf zero-copy (VA-API / V4L2 / Mesa). QGC_GST_HAS_DMABUF comes from cmake/GStreamer/Orchestrator.cmake.
 set(_qgc_gpu_row_DMABuf
     PLATFORMS LINUX
     REQUIRES QGC_GST_HAS_DMABUF
@@ -261,7 +261,7 @@ endif()
 
 # glupload heads the bin on Android (GstGLContext handshake amcvideodec needs for Surface output) and Linux (gst-gl
 # imports both LINEAR and Intel-tiled dmabuf to GLMemory; QGC's direct importer binds LINEAR only). Direct DMABuf is the
-# fallback. PUBLIC so the app facade and test TU #if-select the same bin structure across the link boundary.
+# fallback.
 set(_qgc_unreachable_paths "")
 if((ANDROID OR LINUX) AND _qgc_gpu_GLMemory)
     target_compile_definitions(QGCGStreamer PUBLIC QGC_GST_BIN_USE_GLUPLOAD=1)
@@ -291,8 +291,6 @@ if(NOT _qgc_any_gpu_path)
     return()
 endif()
 
-# PUBLIC: the app facade (GStreamer.cc) gates gpu-zerocopy bin construction on this macro but compiles into the app
-# target — PRIVATE hid it, so createVideoSink() always built the CPU-only bin.
 target_compile_definitions(QGCGStreamer PUBLIC QGC_HAS_ANY_GPU_PATH=1)
 # Qt6::MultimediaPrivate is already PUBLIC on QGCGStreamer (the facade reaches it through the HwBuffers headers it
 # includes); only Qt6::GuiPrivate (qrhi.h) is GPU-path-exclusive here.

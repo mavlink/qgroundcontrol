@@ -4,11 +4,10 @@
 #
 # Input: QGC_GST_COMPONENTS (components beyond the mandatory registry rows, Components.cmake) and the cache options
 # GStreamer_ROOT_DIR, QGC_GST_VERSION, GStreamer_USE_{STATIC_LIBS,FRAMEWORK} and PKG_CONFIG_ARGN.
-# Sets, in the including directory: GStreamer_ROOT_DIR (resolved), GStreamer_VERSION, GStreamer_AUTO_DOWNLOADED,
-# GStreamer_USE_{STATIC_LIBS,FRAMEWORK,MERGED_STATIC}, GSTREAMER_{LIB,PLUGIN,INCLUDE}_PATH, GSTREAMER_APIS,
-# GSTREAMER_PLUGINS, GSTREAMER_STATIC_PLUGINS (static layouts), G_IO_MODULES (mobile), GStreamer_<component>_FOUND
-# (optional components), QGC_GST_HAS_DMABUF (Linux) and the SDK's pkg-config view (PKG_CONFIG_EXECUTABLE and
-# PKG_CONFIG_ARGN normal variables plus the environment), which qgc_gst_restore_pkgconfig_env undoes.
+# Sets, in the including directory, the discovery outputs (Platform.cmake; qgc_gst_restore_pkgconfig_env undoes their
+# pkg-config environment) and GStreamer_VERSION, GStreamer_USE_MERGED_STATIC, GSTREAMER_APIS, GSTREAMER_PLUGINS,
+# GSTREAMER_STATIC_PLUGINS (static layouts), G_IO_MODULES (mobile), GStreamer_<component>_FOUND (optional components)
+# and QGC_GST_HAS_DMABUF (Linux).
 
 include("${CMAKE_CURRENT_LIST_DIR}/Helpers.cmake")
 
@@ -63,9 +62,8 @@ _qgc_gst_select_sdk_root(GStreamer_ROOT_DIR GStreamer_AUTO_DOWNLOADED "${GStream
                          "${QGC_GST_REQUESTED_VERSION}"
 )
 
-# Per-platform discovery functions, _qgc_gst_discover_<platform>_sdk; each sets GStreamer_ROOT_DIR, the
-# GSTREAMER_*_PATH layout variables and its pkg-config setup in this scope. Shared Mac+iOS helpers live in
-# platform/Apple.cmake.
+# Per-platform discovery functions, _qgc_gst_discover_<platform>_sdk, whose outputs Platform.cmake lists. Shared
+# Mac+iOS helpers live in platform/Apple.cmake.
 include("${CMAKE_CURRENT_LIST_DIR}/platform/Apple.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/platform/Windows.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/platform/Linux.cmake")
@@ -132,7 +130,7 @@ if(NOT GStreamer_USE_MERGED_STATIC)
     endif()
 else()
     if(NOT EXISTS "${GSTREAMER_XCFRAMEWORK_LIB}")
-        message(FATAL_ERROR "GStreamer: xcframework library not found at ${GSTREAMER_XCFRAMEWORK_LIB}")
+        message(FATAL_ERROR "GStreamer: iOS merged archive not found at ${GSTREAMER_XCFRAMEWORK_LIB}")
     endif()
 endif()
 
@@ -307,7 +305,7 @@ function(_qgc_gst_apply_def gst_target)
     endif()
 endfunction()
 
-# Mobile (iOS/Android) builds consume GStreamerMobile (alias GStreamer::mobile) instead
+# Mobile (iOS/Android) builds consume GStreamer::mobile instead
 # of GStreamer::GStreamer, so propagate version defines and feature-test results to both.
 if(GStreamer_VERSION)
     string(REGEX MATCH "^([0-9]+)\\.([0-9]+)" _gst_ver_match "${GStreamer_VERSION}")
@@ -322,7 +320,7 @@ endif()
 
 # GstVideoOrientationMeta is officially in 1.26+, but bundled iOS/Android SDKs sometimes
 # strip it. Feature-test the actual header instead of trusting the version number. Only the core is
-# probed: GStreamerMobile has the same headers, and on iOS it is a framework this project builds, which
+# probed: GStreamer::mobile has the same headers, and on iOS it is a framework this project builds, which
 # try_compile cannot link (it takes imported targets only).
 qgc_check_gst_header(
     VAR

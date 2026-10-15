@@ -132,7 +132,7 @@ set_property(
     PROPERTY COMPILE_DEFINITIONS "QGC_GST_RUNTIME_REQUIRED_PLUGINS=${_qgc_gst_required_entries}"
 )
 
-# iOS xcframework ships no CA list / no keychain-via-OpenSSL; bundle a Mozilla NSS extract for
+# The iOS SDK ships no CA list / no keychain-via-OpenSSL; bundle a Mozilla NSS extract for
 # libgioopenssl (fetched at configure time, IOS.cmake). On the app target for MACOSX_PACKAGE_LOCATION.
 if(IOS AND GStreamer_IOS_CA_BUNDLE)
     target_sources(${CMAKE_PROJECT_NAME} PRIVATE "${GStreamer_IOS_CA_BUNDLE}")
@@ -143,11 +143,10 @@ endif()
 
 # Static layouts register their plugins in a generated gst_init_static_plugins() (called by
 # GStreamer.cc::_registerPlugins) for GSTREAMER_STATIC_PLUGINS, which Orchestrator.cmake resolves. iOS generates it
-# into GStreamer::mobile (platform/IOS.cmake); Android and desktop static SDKs into the app, which carries the only
-# GStreamer core. The Android SDK's gst_init() does NOT register the bundled plugins (verified on-device: without
-# this, coreelements/tcp/udp/rtp/... stay unregistered).
+# into GStreamer::mobile (platform/IOS.cmake); Android and desktop static SDKs into the app. The Android SDK's
+# gst_init() does NOT register the bundled plugins (verified on-device: without this, coreelements/tcp/udp/rtp/...
+# stay unregistered).
 if(ANDROID AND TARGET GStreamer::mobile)
-    # Pull the whole-archived plugin .a's + helpers + GIO modules into the app's one core.
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE GStreamer::mobile)
     qgc_gst_generate_static_init(TARGET ${CMAKE_PROJECT_NAME} PLUGINS ${GSTREAMER_STATIC_PLUGINS} GIO_MODULES
                                  ${G_IO_MODULES}

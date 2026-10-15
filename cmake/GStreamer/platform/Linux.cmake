@@ -4,8 +4,7 @@ include_guard(GLOBAL)
 
 # _qgc_gst_discover_linux_sdk()
 # Uses the GStreamer under GStreamer_ROOT_DIR, else the system one (/usr, or CMAKE_SYSROOT/usr), and prepends its
-# pkgconfig directory to PKG_CONFIG_PATH. Sets GStreamer_ROOT_DIR and GSTREAMER_{LIB,PLUGIN,INCLUDE}_PATH.
-# cmakelang 0.6.13 predates return(PROPAGATE).
+# pkgconfig directory to PKG_CONFIG_PATH.
 # cmake-lint: disable=C0103,E1121
 function(_qgc_gst_discover_linux_sdk)
     if(NOT GStreamer_ROOT_DIR)

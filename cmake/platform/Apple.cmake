@@ -90,17 +90,17 @@ elseif(IOS)
             set_target_properties("${target}" PROPERTIES XCODE_EMBED_FRAMEWORKS_CODE_SIGN_ON_COPY YES
                                                          XCODE_EMBED_FRAMEWORKS_REMOVE_HEADERS_ON_COPY YES
             )
-            message(STATUS "QGC: GStreamerMobile will be embedded by Xcode")
+            message(STATUS "QGC: GStreamer::mobile will be embedded by Xcode")
         else()
             add_custom_command(
                 TARGET "${target}"
                 POST_BUILD
                 COMMAND "${CMAKE_COMMAND}" -E copy_directory "$<TARGET_BUNDLE_DIR:GStreamerMobileXcfw>"
                         "$<TARGET_BUNDLE_DIR:${target}>/Frameworks/$<TARGET_BUNDLE_DIR_NAME:GStreamerMobileXcfw>"
-                COMMENT "Embedding GStreamerMobile framework"
+                COMMENT "Embedding the GStreamer::mobile framework"
                 VERBATIM
             )
-            message(STATUS "QGC: GStreamerMobile will be embedded at build time (Ninja)")
+            message(STATUS "QGC: GStreamer::mobile will be embedded at build time (Ninja)")
         endif()
 
         set(_nm "${CMAKE_NM}")

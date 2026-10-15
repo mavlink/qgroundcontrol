@@ -1,5 +1,5 @@
 # Script mode: cmake -DAPP=<app executable> -DNM=<nm> -P IOSSingleCoreCheck.cmake
-# Fails when the iOS app binary defines GStreamer core symbols, i.e. it carries a second core besides GStreamerMobile.
+# Fails when the iOS app binary defines GStreamer core symbols, i.e. it carries a second core besides GStreamer::mobile.
 cmake_minimum_required(VERSION 3.25)
 include("${CMAKE_CURRENT_LIST_DIR}/IOS.cmake")
 
@@ -17,7 +17,7 @@ if(_core_symbols)
     message(
         FATAL_ERROR
             "GStreamer iOS core check: ${APP} defines GStreamer core symbols (${_core_symbols}), so it links a second "
-            "core from the merged archive. A core function QGC calls is missing from GStreamerMobile: add it to "
+            "core from the merged archive. A core function QGC calls is missing from GStreamer::mobile: add it to "
             "QGC_GST_IOS_APP_CORE_SYMBOLS in cmake/GStreamer/platform/IOS.cmake."
     )
 endif()
