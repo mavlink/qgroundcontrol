@@ -5,8 +5,9 @@
 
 #include <QtCore/QFuture>
 #include <QtCore/QMutex>
-#include <QtCore/QPromise>
 #include <QtCore/QObject>
+#include <QtCore/QPromise>
+#include <QtCore/QSet>
 #include <QtCore/QSize>
 #include <QtQmlIntegration/QtQmlIntegration>
 
@@ -45,6 +46,7 @@ class VideoManager : public QObject
     Q_PROPERTY(QString  uvcVideoSourceID        READ uvcVideoSourceID                           NOTIFY uvcVideoSourceIDChanged)
 
     friend class VideoManagerInitTest;
+    friend class VideoManagerRestartTest;
 
 public:
     explicit VideoManager(QObject *parent = nullptr);
@@ -115,6 +117,8 @@ private:
     void _onBackendInitComplete(bool success);
     void _createVideoReceivers();
     void _initVideoReceiver(VideoReceiver *receiver, QQuickWindow *window);
+    /// Start/stop completion handling: VideoManager restarts a receiver only after a stop it requested.
+    void _connectReceiverLifecycle(VideoReceiver* receiver);
     bool _updateAutoStream(VideoReceiver *receiver);
     bool _updateUVC(VideoReceiver *receiver);
     bool _updateSettings(VideoReceiver *receiver);
@@ -126,6 +130,7 @@ private:
     static void _cleanupOldVideos();
 
     QList<VideoReceiver*> _videoReceivers;
+    QSet<VideoReceiver*> _pendingRestarts;  ///< Receivers stopped by _restartVideo(), to start again once stopped.
     SubtitleWriter *_subtitleWriter = nullptr;
     VideoSettings *_videoSettings = nullptr;
     QQuickWindow *_mainWindow = nullptr;

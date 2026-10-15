@@ -800,8 +800,9 @@ void VideoManager::_restartVideo(VideoReceiver *receiver)
     qCDebug(VideoManagerLog) << "Restart video receiver" << receiver->name();
 
     if (receiver->started()) {
-        _stopReceiver(receiver);
-        // onStopComplete Signal Will Restart It
+        // Before stop(): a receiver may complete it synchronously, and onStopComplete restarts only on request.
+        _pendingRestarts.insert(receiver);
+        receiver->stop();
     } else {
         _startReceiver(receiver);
     }
@@ -814,9 +815,9 @@ void VideoManager::_stopReceiver(VideoReceiver *receiver)
         return;
     }
 
-    if (receiver->started()) {
-        receiver->stop();
-    }
+    _pendingRestarts.remove(receiver);
+    // Also when not started: a receiver that stopped itself after a failure may still be waiting to reconnect.
+    receiver->stop();
 }
 
 void VideoManager::stopVideo()
@@ -849,6 +850,39 @@ void VideoManager::_startReceiver(VideoReceiver *receiver)
     receiver->start(timeout);
 }
 
+void VideoManager::_connectReceiverLifecycle(VideoReceiver* receiver)
+{
+    // Retrying after a failure is the receiver's job (GstVideoReceiver reconnects with backoff while autoReconnect is
+    // set); restarting here as well would defeat its backoff and ignore autoReconnect.
+    (void) connect(receiver, &VideoReceiver::onStartComplete, this, [receiver](VideoReceiver::STATUS status) {
+        qCDebug(VideoManagerLog) << "Video" << receiver->name() << "Start complete, status:" << status;
+        if (status == VideoReceiver::STATUS_OK) {
+            receiver->setStarted(true);
+            if (receiver->sink()) {
+                receiver->startDecoding(receiver->sink());
+            }
+        }
+    });
+
+    (void) connect(receiver, &VideoReceiver::onStopComplete, this, [this, receiver](VideoReceiver::STATUS status) {
+        qCDebug(VideoManagerLog) << "Stop complete" << receiver->name()
+                                 << QGCNetworkHelper::redactedUrlForLogging(receiver->uri()) << ", status:" << status;
+        receiver->setStarted(false);
+        if (!_pendingRestarts.remove(receiver)) {
+            return;
+        }
+        if (status == VideoReceiver::STATUS_INVALID_URL) {
+            qCDebug(VideoManagerLog) << "Invalid video URL. Not restarting";
+            return;
+        }
+        QTimer::singleShot(1000, receiver, [this, receiver]() {
+            qCDebug(VideoManagerLog) << "Restarting video receiver" << receiver->name()
+                                     << QGCNetworkHelper::redactedUrlForLogging(receiver->uri());
+            _startReceiver(receiver);
+        });
+    });
+}
+
 void VideoManager::_initVideoReceiver(VideoReceiver *receiver, QQuickWindow *window)
 {
     if (_videoReceivers.contains(receiver)) {
@@ -879,42 +913,7 @@ void VideoManager::_initVideoReceiver(VideoReceiver *receiver, QQuickWindow *win
 
     VideoBackend::attachSink(receiver, sink, widget);
 
-    (void) connect(receiver, &VideoReceiver::onStartComplete, this, [this, receiver](VideoReceiver::STATUS status) {
-        qCDebug(VideoManagerLog) << "Video" << receiver->name() << "Start complete, status:" << status;
-        switch (status) {
-        case VideoReceiver::STATUS_OK:
-            receiver->setStarted(true);
-            if (receiver->sink()) {
-                receiver->startDecoding(receiver->sink());
-            }
-            break;
-        case VideoReceiver::STATUS_INVALID_URL:
-        case VideoReceiver::STATUS_INVALID_STATE:
-            break;
-        default:
-            // Rate limit restarts on start failure.
-            QTimer::singleShot(1000, receiver, [this, receiver]() {
-                _restartVideo(receiver);
-            });
-            break;
-        }
-    });
-
-    (void) connect(receiver, &VideoReceiver::onStopComplete, this, [this, receiver](VideoReceiver::STATUS status) {
-        qCDebug(VideoManagerLog) << "Stop complete" << receiver->name()
-                                << QGCNetworkHelper::redactedUrlForLogging(receiver->uri())
-                                << ", status:" << status;
-        receiver->setStarted(false);
-        if (status == VideoReceiver::STATUS_INVALID_URL) {
-            qCDebug(VideoManagerLog) << "Invalid video URL. Not restarting";
-        } else {
-            QTimer::singleShot(1000, receiver, [this, receiver]() {
-                qCDebug(VideoManagerLog) << "Restarting video receiver" << receiver->name()
-                                        << QGCNetworkHelper::redactedUrlForLogging(receiver->uri());
-                _startReceiver(receiver);
-            });
-        }
-    });
+    _connectReceiverLifecycle(receiver);
 
     (void) connect(receiver, &VideoReceiver::streamingChanged, this, [this, receiver](bool active) {
         qCDebug(VideoManagerLog) << "Video" << receiver->name() << "streaming changed, active:" << (active ? "yes" : "no");

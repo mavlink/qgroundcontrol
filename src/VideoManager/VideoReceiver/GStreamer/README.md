@@ -13,7 +13,7 @@ The pipeline is split into focused components (all in this directory):
 
 | Component | Role |
 | --- | --- |
-| `GstVideoReceiver` | Pipeline owner: builds/starts/stops the receiver pipeline, recording, watchdog, and `.dot` dumps. Exposes decoder/telemetry as `Q_PROPERTY`s to QML. |
+| `GstVideoReceiver` | Pipeline owner: builds/starts/stops the receiver pipeline, recording, watchdog, and `.dot` dumps. All pipeline changes run on its own worker thread (a `QThread` event loop); a single bus sync handler consumes every bus message. After a stream failure it stops itself (`onStopComplete(STATUS_FAIL)`) and is the only component that reconnects, with exponential backoff while `autoReconnect` is set. Exposes decoder/telemetry as `Q_PROPERTY`s to QML. |
 | `GstSourceFactory` | Constructs the source element from the stream URI and applies RTP jitter-buffer policy for `application/x-rtp` sources. |
 | `GStreamerEnvironment` | Process-wide environment setup (plugin/scanner/helper/GIO paths, env hygiene) run before `gst_init()`. See [Runtime Environment Setup](#runtime-environment-setup). |
 | `GStreamerHelpers` | Small utilities (element-rank overrides, etc.). |

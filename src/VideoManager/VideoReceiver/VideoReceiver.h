@@ -87,6 +87,8 @@ signals:
     void widgetChanged(QQuickItem *widget);
 
     void onStartComplete(STATUS status);
+    /// STATUS_FAIL: the receiver stopped on its own after a stream failure. Reconnecting is then its own
+    /// call (GstVideoReceiver retries with backoff while autoReconnect() is set) and shows as onStartComplete.
     void onStopComplete(STATUS status);
     void onStartDecodingComplete(STATUS status);
     void onStopDecodingComplete(STATUS status);

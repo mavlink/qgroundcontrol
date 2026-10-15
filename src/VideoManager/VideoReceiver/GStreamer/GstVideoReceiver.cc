@@ -494,6 +494,7 @@ void GstVideoReceiver::_startPipeline(const StartConfig& config)
         _resetPipelineState();
 
         emit onStartComplete(STATUS_FAIL);
+        _scheduleReconnect("start failure");
     } else {
         GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-started");
         qCDebug(GstVideoReceiverLog) << "Started" << _redactedUri();
@@ -930,7 +931,7 @@ void GstVideoReceiver::_onWatchdogTick()
         qCDebug(GstVideoReceiverLog) << "Stream timeout, no frames for" << elapsed << "ms" << _redactedUri();
         GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-watchdog-timeout");
         emit timeout();
-        _scheduleReconnect("source watchdog");
+        _onStreamFailure("source watchdog");
         return;
     }
 
@@ -942,21 +943,26 @@ void GstVideoReceiver::_onWatchdogTick()
             qCDebug(GstVideoReceiverLog) << "Video decoder timeout, no frames for" << elapsed << "ms" << _redactedUri();
             GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-watchdog-timeout");
             emit timeout();
-            _scheduleReconnect("decoder watchdog");
+            _onStreamFailure("decoder watchdog");
         }
     }
 }
 
-void GstVideoReceiver::_scheduleReconnect(const char *reason)
+void GstVideoReceiver::_onStreamFailure(const char* reason)
 {
     // A pipeline that delivered frames recovered; the next failure starts the backoff over.
     if (_sourceFrameCount.load(std::memory_order_relaxed) > 0) {
         _reconnectAttempts = 0;
     }
 
-    // Always tear down — even when autoReconnect is off we still want a clean stop.
-    emit onStopComplete(_stopPipeline() ? STATUS_OK : STATUS_INVALID_STATE);
+    qCDebug(GstVideoReceiverLog) << "Stopping after" << reason << _redactedUri();
+    (void) _stopPipeline();
+    emit onStopComplete(STATUS_FAIL);
+    _scheduleReconnect(reason);
+}
 
+void GstVideoReceiver::_scheduleReconnect(const char* reason)
+{
     if (!_autoReconnect) {
         qCDebug(GstVideoReceiverLog) << "Auto-reconnect disabled — not retrying after" << reason;
         return;
@@ -1768,14 +1774,7 @@ void GstVideoReceiver::_onPipelineError()
         qCDebug(GstVideoReceiverLog) << "Pipeline graph saved to" << dotPath;
     }
 
-    qCDebug(GstVideoReceiverLog) << "Stopping because of error";
-    _scheduleReconnect("pipeline error");
-}
-
-void GstVideoReceiver::_onSourceEndOfStream()
-{
-    qCDebug(GstVideoReceiverLog) << "Source reached end of stream" << _redactedUri();
-    emit onStopComplete(_stopPipeline() ? STATUS_OK : STATUS_INVALID_STATE);
+    _onStreamFailure("pipeline error");
 }
 
 void GstVideoReceiver::_onRecordingFinalized()
@@ -1872,7 +1871,7 @@ GstPadProbeReturn GstVideoReceiver::_eosProbe(GstPad *pad, GstPadProbeInfo *info
     const GstEvent* event = gst_pad_probe_info_get_event(info);
     if (event && (GST_EVENT_TYPE(event) == GST_EVENT_EOS)) {
         auto* self = static_cast<GstVideoReceiver*>(user_data);
-        self->_runOnWorkerForPipeline([self]() { self->_onSourceEndOfStream(); });
+        self->_runOnWorkerForPipeline([self]() { self->_onStreamFailure("end of stream"); });
     }
 
     return GST_PAD_PROBE_OK;

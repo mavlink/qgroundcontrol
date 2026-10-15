@@ -18,6 +18,9 @@ private slots:
     void _testRecordingPlayableWhileInProgress();
     void _testDestroyWhileRecordingFinalizesFile();
     void _testSecondRecordingIsNotTruncated();
+    void _testReconnectBacksOffAfterFailedStart();
+    void _testStreamLossRestartPolicy_data();
+    void _testStreamLossRestartPolicy();
     void _testDecodingRequestedBeforeStreamStarts();
     void _testStopDecodingBeforeFirstFrame();
     void _testStopWhileStoppingRecordingFinalizesFile();

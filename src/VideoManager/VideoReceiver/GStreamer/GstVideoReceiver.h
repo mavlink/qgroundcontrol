@@ -138,14 +138,15 @@ private:
     void _detachBusHandler();
     void _onPipelineError();
     void _onPipelinePlaying();
-    void _onSourceEndOfStream();
     void _onRecordingFinalized();
     void _onRecorderError();
     void _onRecordingStopTimeout();
 
-    /// Stop the pipeline and queue a delayed restart with exponential backoff.
-    /// `reason` is logged so reconnect storms are diagnosable. No-op when
-    /// autoReconnect() is disabled.
+    /// Tears down a pipeline that failed (error, watchdog, end of stream), reports it with
+    /// onStopComplete(STATUS_FAIL) and schedules a reconnect.
+    void _onStreamFailure(const char* reason);
+    /// Queues a restart with exponential backoff; no-op when autoReconnect() is off. The receiver is the
+    /// only one that restarts after a failure. `reason` is logged so reconnect storms are diagnosable.
     void _scheduleReconnect(const char *reason);
     void _reconnect();
 

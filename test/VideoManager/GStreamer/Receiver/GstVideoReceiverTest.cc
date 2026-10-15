@@ -36,6 +36,11 @@ constexpr int kRecordFrames = 30;
 constexpr int kMinRecordedFrames = 10;
 constexpr uint32_t kWatchdogTimeoutSec = 5;
 constexpr int kRestartCycles = 3;
+// Receiver reconnect backoff: the first retry follows a failure after 1 s, the second 2 s after that.
+constexpr qint64 kFirstReconnectDelayMs = 1000;
+constexpr qint64 kSecondReconnectDelayMs = 2000;
+// The test thread sees worker-emitted signals late by up to its polling interval, more so on a loaded host.
+constexpr qint64 kSignalLatencySlackMs = 200;
 
 GstPadProbeReturn countBuffers([[maybe_unused]] GstPad* pad, [[maybe_unused]] GstPadProbeInfo* info, gpointer userData)
 {
@@ -491,6 +496,99 @@ void GstVideoReceiverTest::_testSecondRecordingIsNotTruncated()
              qPrintable(QStringLiteral("second: %1 frames %2").arg(secondFrames).arg(failure)));
 }
 
+void GstVideoReceiverTest::_testReconnectBacksOffAfterFailedStart()
+{
+    QUdpSocket portBlocker;
+    QVERIFY(portBlocker.bind(QHostAddress::LocalHost, 0, QAbstractSocket::DontShareAddress));
+    const quint16 port = portBlocker.localPort();
+
+    QQuickItem widget;
+    const auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp265"), port), &widget);
+    receiver->setAutoReconnect(true);
+    QSignalSpy startSpy(receiver.get(), &VideoReceiver::onStartComplete);
+
+    // The first start and its retry both fail on the bound port.
+    for (int attempt = 0; attempt < 2; ++attempt) {
+        expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("^GStreamer error:")));
+        expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("^Failed to start")));
+    }
+
+    QElapsedTimer clock;
+    clock.start();
+    receiver->start(kWatchdogTimeoutSec);
+    QVERIFY_SIGNAL_COUNT_WAIT(startSpy, 1, TestTimeout::mediumMs());
+    const qint64 firstFailure = clock.elapsed();
+    QCOMPARE(lastStatus(startSpy), VideoReceiver::STATUS_FAIL);
+    QVERIFY_SIGNAL_COUNT_WAIT(startSpy, 2, TestTimeout::mediumMs());
+    const qint64 secondFailure = clock.elapsed();
+    QCOMPARE(lastStatus(startSpy), VideoReceiver::STATUS_FAIL);
+    for (int attempt = 0; attempt < 4; ++attempt) {
+        verifyExpectedLogMessage();
+    }
+
+    portBlocker.close();
+    QVERIFY_SIGNAL_COUNT_WAIT(startSpy, 3, TestTimeout::mediumMs());
+    const qint64 recovery = clock.elapsed();
+    QCOMPARE(lastStatus(startSpy), VideoReceiver::STATUS_OK);
+    QCOMPARE(startSpy.count(), 3);
+
+    QVERIFY2((secondFailure - firstFailure) >= (kFirstReconnectDelayMs - kSignalLatencySlackMs),
+             qPrintable(QStringLiteral("first retry after %1 ms").arg(secondFailure - firstFailure)));
+    QVERIFY2((recovery - secondFailure) >= (kSecondReconnectDelayMs - kSignalLatencySlackMs),
+             qPrintable(QStringLiteral("second retry after %1 ms").arg(recovery - secondFailure)));
+}
+
+void GstVideoReceiverTest::_testStreamLossRestartPolicy_data()
+{
+    QTest::addColumn<bool>("autoReconnect");
+
+    QTest::newRow("auto-reconnect") << true;
+    QTest::newRow("no auto-reconnect") << false;
+}
+
+void GstVideoReceiverTest::_testStreamLossRestartPolicy()
+{
+    QFETCH(bool, autoReconnect);
+
+    const quint16 port = freeLoopbackUdpPort();
+    QVERIFY(port != 0);
+    H264RtpSender sender;
+    QVERIFY(sender.start(port));
+
+    QQuickItem widget;
+    const auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &widget);
+    receiver->setAutoReconnect(autoReconnect);
+    QSignalSpy startSpy(receiver.get(), &VideoReceiver::onStartComplete);
+    QSignalSpy streamingSpy(receiver.get(), &VideoReceiver::streamingChanged);
+    QSignalSpy timeoutSpy(receiver.get(), &VideoReceiver::timeout);
+    QSignalSpy stopSpy(receiver.get(), &VideoReceiver::onStopComplete);
+
+    // The shortest watchdog timeout, so losing the stream is noticed within about two seconds.
+    receiver->start(1);
+    QVERIFY_SIGNAL_COUNT_WAIT(startSpy, 1, TestTimeout::mediumMs());
+    QCOMPARE(lastStatus(startSpy), VideoReceiver::STATUS_OK);
+    QVERIFY_SIGNAL_COUNT_WAIT(streamingSpy, 1, TestTimeout::mediumMs());
+
+    sender.stop();
+    QVERIFY_SIGNAL_COUNT_WAIT(stopSpy, 1, TestTimeout::mediumMs());
+    QElapsedTimer sinceStop;
+    sinceStop.start();
+    QCOMPARE(lastStatus(stopSpy), VideoReceiver::STATUS_FAIL);
+    QCOMPARE(timeoutSpy.count(), 1);
+
+    if (autoReconnect) {
+        QVERIFY_SIGNAL_COUNT_WAIT(startSpy, 2, TestTimeout::mediumMs());
+        QCOMPARE(lastStatus(startSpy), VideoReceiver::STATUS_OK);
+        QVERIFY2(sinceStop.elapsed() >= (kFirstReconnectDelayMs - kSignalLatencySlackMs),
+                 qPrintable(QStringLiteral("reconnected after %1 ms").arg(sinceStop.elapsed())));
+    } else {
+        // Longer than the first reconnect delay.
+        QVERIFY_NO_SIGNAL_WAIT(startSpy, kFirstReconnectDelayMs + 500);
+    }
+}
+
 void GstVideoReceiverTest::_testDecodingRequestedBeforeStreamStarts()
 {
     const quint16 port = freeLoopbackUdpPort();
@@ -709,6 +807,12 @@ void GstVideoReceiverTest::_testRecordingPlayableWhileInProgress() {}
 void GstVideoReceiverTest::_testDestroyWhileRecordingFinalizesFile() {}
 
 void GstVideoReceiverTest::_testSecondRecordingIsNotTruncated() {}
+
+void GstVideoReceiverTest::_testReconnectBacksOffAfterFailedStart() {}
+
+void GstVideoReceiverTest::_testStreamLossRestartPolicy_data() {}
+
+void GstVideoReceiverTest::_testStreamLossRestartPolicy() {}
 
 void GstVideoReceiverTest::_testDecodingRequestedBeforeStreamStarts() {}
 
