@@ -22,58 +22,15 @@ target_sources(
             ${CMAKE_CURRENT_SOURCE_DIR}/dmabuf/GstDmaDrmCaps.h
 )
 
-# _qgc_gpu_path_blocker(<out_var> <name> <_qgc_add_gpu_path row args>...)
-# Sets <out_var> to why GPU path <name> can't be built, or "" when it can. Runs the row's probe, whose <name>_* results
-# are propagated to the caller.
-function(_qgc_gpu_path_blocker out_var name)
-    cmake_parse_arguments(PARSE_ARGV 2 ARG "UNSTABLE_API" "DEFINE;EGL" "PLATFORMS;REQUIRES;PROBE;SOURCES;LIBS")
-    string(TOUPPER "${name}" _upper)
-    option(QGC_GST_ENABLE_${_upper} "Build the ${name} zero-copy GPU path when its GStreamer pieces are found" ON)
-    set(_blocker "")
-    if(NOT QGC_GST_ENABLE_${_upper})
-        set(_blocker "QGC_GST_ENABLE_${_upper}=OFF")
-    endif()
-    foreach(_var IN LISTS ARG_REQUIRES)
-        if(_blocker OR ${_var})
-            continue()
-        elseif(_var MATCHES "^_qgc_gpu_(.+)$")
-            set(_blocker "needs the ${CMAKE_MATCH_1} path")
-        else()
-            set(_blocker "${_var} unavailable")
-        endif()
-    endforeach()
-    # cmake-lint: disable=C0103
-    if(NOT _blocker AND ARG_PROBE)
-        _qgc_probe_gst_lib(${name} ${ARG_PROBE})
-        if(NOT ${name}_FOUND)
-            set(_blocker "${${name}_REASON}")
-        endif()
-        foreach(_result IN ITEMS LIBRARIES INCLUDE_DIRS LIBRARY_DIRS)
-            set(${name}_${_result}
-                "${${name}_${_result}}"
-                PARENT_SCOPE
-            )
-        endforeach()
-    endif()
-    if(NOT _blocker
-       AND ARG_EGL STREQUAL "REQUIRED"
-       AND NOT TARGET OpenGL::EGL
-    )
-        set(_blocker "EGL not found")
-    endif()
-    set(${out_var}
-        "${_blocker}"
-        PARENT_SCOPE
-    )
-endfunction()
-
 # _qgc_add_gpu_path(<name> PLATFORMS <vars>... DEFINE <macro> SOURCES <files>...
 #                   [REQUIRES <vars>...] [PROBE <_qgc_probe_gst_lib args>...] [EGL REQUIRED|OPTIONAL] [LIBS <libs>...]
 #                   [UNSTABLE_API])
 # One row of the GPU path table. On a matching platform with QGC_GST_ENABLE_<NAME> on, every REQUIRES variable truthy
-# and the probe found, adds the sources and libraries to QGCGStreamer and defines <macro>=1. Sets _qgc_gpu_<name> TRUE
-# in the caller's scope; UNSTABLE_API rows set _qgc_gpu_unstable_api.
+# and the probe found, adds the sources and libraries to QGCGStreamer and defines <macro>=1. Sets _qgc_gpu_<name> and
+# _qgc_any_gpu_path TRUE in the caller's scope; UNSTABLE_API rows set _qgc_gpu_unstable_api.
 function(_qgc_add_gpu_path name)
+    # A row's whole decision (platform, switch, requirements, probe, EGL) and its registration, in one scope.
+    # cmake-lint: disable=R0912,R0915
     cmake_parse_arguments(PARSE_ARGV 1 ARG "UNSTABLE_API" "DEFINE;EGL" "PLATFORMS;REQUIRES;PROBE;SOURCES;LIBS")
     if(ARG_UNPARSED_ARGUMENTS
        OR NOT ARG_PLATFORMS
@@ -94,7 +51,33 @@ function(_qgc_add_gpu_path name)
         return()
     endif()
 
-    _qgc_gpu_path_blocker(_reason ${name} ${ARGN})
+    string(TOUPPER "${name}" _upper)
+    option(QGC_GST_ENABLE_${_upper} "Build the ${name} zero-copy GPU path when its GStreamer pieces are found" ON)
+    set(_reason "")
+    if(NOT QGC_GST_ENABLE_${_upper})
+        set(_reason "QGC_GST_ENABLE_${_upper}=OFF")
+    endif()
+    foreach(_var IN LISTS ARG_REQUIRES)
+        if(_reason OR ${_var})
+            continue()
+        elseif(_var MATCHES "^_qgc_gpu_(.+)$")
+            set(_reason "needs the ${CMAKE_MATCH_1} path")
+        else()
+            set(_reason "${_var} unavailable")
+        endif()
+    endforeach()
+    if(NOT _reason AND ARG_PROBE)
+        _qgc_probe_gst_lib(${name} ${ARG_PROBE})
+        if(NOT ${name}_FOUND)
+            set(_reason "${${name}_REASON}")
+        endif()
+    endif()
+    if(NOT _reason
+       AND ARG_EGL STREQUAL "REQUIRED"
+       AND NOT TARGET OpenGL::EGL
+    )
+        set(_reason "EGL not found")
+    endif()
     if(_reason)
         message(STATUS "QGCGStreamer: ${name} GPU path disabled (${_reason})")
         return()
@@ -119,6 +102,10 @@ function(_qgc_add_gpu_path name)
     message(STATUS "QGCGStreamer: ${name} zero-copy GPU path enabled")
     # cmake-lint: disable=C0103
     set(_qgc_gpu_${name}
+        TRUE
+        PARENT_SCOPE
+    )
+    set(_qgc_any_gpu_path
         TRUE
         PARENT_SCOPE
     )
@@ -224,8 +211,8 @@ foreach(_ver IN ITEMS 11 12)
         LIBS d3d${_ver}
         UNSTABLE_API
         DEFINE QGC_HAS_GST_D3D${_ver}_GPU_PATH
-        SOURCES d3d/GstD3D${_ver}VideoBuffer.cc d3d/GstD3D${_ver}VideoBuffer.h d3d/GstD3D${_ver}ContextBridge.cc
-                d3d/GstD3D${_ver}ContextBridge.h d3d/GstD3DVideoBufferCommon.h)
+        SOURCES d3d/GstD3D${_ver}VideoBuffer.cc d3d/GstD3D${_ver}ContextBridge.cc d3d/GstD3D${_ver}ContextBridge.h
+                d3d/GstD3DVideoBufferCommon.h)
 endforeach()
 # Android AHardwareBuffer (gst-plugins-bad >= 1.28; GLMemory covers older SDKs).
 set(_qgc_gpu_row_AHardwareBuffer
@@ -245,7 +232,7 @@ set(_qgc_gpu_row_Vulkan
     LIBS ${_qgc_vulkan_loader_libs}
     DEFINE QGC_HAS_GST_VULKAN_GPU_PATH
     SOURCES vulkan/GstVulkanVideoBuffer.cc vulkan/GstVulkanVideoBuffer.h vulkan/GstVulkanContextBridge.cc
-            vulkan/GstVulkanContextBridge.h vulkan/GstVulkanImport.cc vulkan/GstVulkanImport.h)
+            vulkan/GstVulkanContextBridge.h)
 # cmake-format: on
 
 set(_qgc_gpu_rows
@@ -300,12 +287,6 @@ if(_qgc_unreachable_paths)
     message(STATUS "QGCGStreamer: compiled but unreachable at runtime: ${_qgc_unreachable_text}")
 endif()
 
-set(_qgc_any_gpu_path FALSE)
-foreach(_row IN LISTS _qgc_gpu_rows)
-    if(_qgc_gpu_${_row})
-        set(_qgc_any_gpu_path TRUE)
-    endif()
-endforeach()
 if(NOT _qgc_any_gpu_path)
     return()
 endif()
@@ -326,7 +307,6 @@ target_sources(
             ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwImportCache.h
             ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwImportPreflight.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwImportPreflight.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/vulkan/GstVulkanFrameTextures.h
             ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwVideoBuffer.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwVideoBuffer.h
             ${CMAKE_CURRENT_SOURCE_DIR}/common/GstContextBridgeBase.cc

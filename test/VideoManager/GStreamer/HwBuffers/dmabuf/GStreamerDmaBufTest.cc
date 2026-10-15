@@ -241,8 +241,6 @@ void GStreamerTest::_testDmaBufDispatch()
     QVERIFY(probeId);
     auto probeGuard = qScopeGuard([&] { gst_pad_remove_probe(appsinkPad, probeId); });
 
-    const quint64 deliveredBefore = GstHwPathTelemetry::peekDeliveredCount(HwVideoBufferPath::DmaBuf);
-
     GstStateChangeReturn ret = gst_element_set_state(pipeline, GST_STATE_PLAYING);
     if (ret == GST_STATE_CHANGE_FAILURE) {
         QSKIP("DMABuf pipeline failed to PLAY (no VA driver / DRI device?)");
@@ -287,7 +285,13 @@ void GStreamerTest::_testDmaBufDispatch()
         gst_caps_unref(negotiated);
     }
 
-    const quint64 deliveredAfter = GstHwPathTelemetry::peekDeliveredCount(HwVideoBufferPath::DmaBuf);
+    guint64 dmaBufFrames = 0;
+    GstStructure* stats = nullptr;
+    g_object_get(qvideosink, "frame-stats", &stats, nullptr);
+    if (stats) {
+        (void) gst_structure_get_uint64(stats, HwBuffers::sinkFramesField(HwVideoBufferPath::DmaBuf), &dmaBufFrames);
+        gst_structure_free(stats);
+    }
     const int bufferCount = probe.bufferCount.load();
     const int dmaBufCount = probe.dmaBufCount.load();
 
@@ -301,13 +305,11 @@ void GStreamerTest::_testDmaBufDispatch()
                              .arg(bufferCount)
                              .arg(negotiatedStr)));
     }
-    QVERIFY2(deliveredAfter > deliveredBefore,
-             qPrintable(QStringLiteral("DMABuf negotiated but DmaBuf delivered-count did not advance "
-                                       "(before=%1 after=%2). Buffers: %3, caps: %4")
-                            .arg(deliveredBefore)
-                            .arg(deliveredAfter)
-                            .arg(bufferCount)
-                            .arg(negotiatedStr)));
+    QVERIFY2(
+        dmaBufFrames > 0,
+        qPrintable(QStringLiteral("DMABuf negotiated but the sink delivered no DmaBuf frames. Buffers: %1, caps: %2")
+                       .arg(bufferCount)
+                       .arg(negotiatedStr)));
 }
 
 void GStreamerTest::_testDmaDrmCapsRejectNonLinearModifiers()
@@ -340,15 +342,9 @@ void GStreamerTest::_testDmaBufRejectsNonLinearDirectImport()
 void GStreamerTest::_testDmaBufTiledImportAvoidsTexStorage()
 {
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
-    constexpr guint64 kLinearModifier = 0;
-    constexpr guint64 kIntelTileYModifier = 0x0100000000000009ULL;
-
-    QVERIFY(GstDmaBufVideoBuffer::texStorageImportAllowedForTest(false, true, kLinearModifier));
-    QVERIFY2(!GstDmaBufVideoBuffer::texStorageImportAllowedForTest(false, true, kIntelTileYModifier),
-             "Tiled DMABuf EGLImages must avoid GL_EXT_EGL_image_storage; Mesa/Gallium can segfault while "
-             "binding a tiled VA image through glEGLImageTargetTexStorageEXT");
-    QVERIFY(!GstDmaBufVideoBuffer::texStorageImportAllowedForTest(true, true, kLinearModifier));
-    QVERIFY(!GstDmaBufVideoBuffer::texStorageImportAllowedForTest(false, false, kLinearModifier));
+    QVERIFY(GstDmaBufVideoBuffer::texStorageImportAllowedForTest(false, true));
+    QVERIFY(!GstDmaBufVideoBuffer::texStorageImportAllowedForTest(true, true));
+    QVERIFY(!GstDmaBufVideoBuffer::texStorageImportAllowedForTest(false, false));
 #else
     QSKIP("DMABuf unavailable in this build");
 #endif
@@ -428,10 +424,6 @@ void GStreamerTest::_testHwBufferFactoryCacheRejectsMemoryTypeChange()
     QVERIFY(caps);
     const auto capsGuard = qScopeGuard([&] { gst_caps_unref(caps); });
 
-    GstSample* sample = gst_sample_new(buffer, caps, nullptr, nullptr);
-    QVERIFY(sample);
-    const auto sampleGuard = qScopeGuard([&] { gst_sample_unref(sample); });
-
     HwVideoBufferContext context;
     context.gpuEnabled = true;
     context.dmaBufEglDisplay = reinterpret_cast<EGLDisplay>(quintptr(1));
@@ -443,7 +435,7 @@ void GStreamerTest::_testHwBufferFactoryCacheRejectsMemoryTypeChange()
     HwVideoBufferPath path = HwVideoBufferPath::None;
     QVideoFrameFormat format(QSize(4, 4), QVideoFrameFormat::Format_BGRA8888);
 
-    auto hwBuffer = makeHwVideoBuffer(sample, info, format, context, path, &cache);
+    auto hwBuffer = makeHwVideoBuffer(buffer, caps, info, format, context, path, &cache);
     QVERIFY2(!hwBuffer, "Cached DMABuf path must reject a system-memory buffer and fall back to CPU mapping");
     QCOMPARE(path, HwVideoBufferPath::None);
     QVERIFY(!cache.validated);
@@ -458,22 +450,22 @@ void GStreamerTest::_testDmaBufSingleFdImportEnvGate()
     TestFixtures::EnvVarFixture gate("QGC_GST_DMABUF_SINGLE_EGLIMAGE");
 
     qunsetenv("QGC_GST_DMABUF_SINGLE_EGLIMAGE");
-    QVERIFY(GstDmaBufVideoBuffer::singleFdImportEnabledForTest());
+    QVERIFY(HwBuffers::readHwBufferEnvConfig().dmaBufSingleEglImage);
 
     qputenv("QGC_GST_DMABUF_SINGLE_EGLIMAGE", "0");
-    QVERIFY(!GstDmaBufVideoBuffer::singleFdImportEnabledForTest());
+    QVERIFY(!HwBuffers::readHwBufferEnvConfig().dmaBufSingleEglImage);
 
     qputenv("QGC_GST_DMABUF_SINGLE_EGLIMAGE", "false");
-    QVERIFY(!GstDmaBufVideoBuffer::singleFdImportEnabledForTest());
+    QVERIFY(!HwBuffers::readHwBufferEnvConfig().dmaBufSingleEglImage);
 
     qputenv("QGC_GST_DMABUF_SINGLE_EGLIMAGE", "off");
-    QVERIFY(!GstDmaBufVideoBuffer::singleFdImportEnabledForTest());
+    QVERIFY(!HwBuffers::readHwBufferEnvConfig().dmaBufSingleEglImage);
 
     qputenv("QGC_GST_DMABUF_SINGLE_EGLIMAGE", "1");
-    QVERIFY(GstDmaBufVideoBuffer::singleFdImportEnabledForTest());
+    QVERIFY(HwBuffers::readHwBufferEnvConfig().dmaBufSingleEglImage);
 
     qputenv("QGC_GST_DMABUF_SINGLE_EGLIMAGE", "force");
-    QVERIFY(GstDmaBufVideoBuffer::singleFdImportEnabledForTest());
+    QVERIFY(HwBuffers::readHwBufferEnvConfig().dmaBufSingleEglImage);
 #endif
 }
 
@@ -514,13 +506,10 @@ GstSample* makeMemfdDmaBufSample(GstVideoFormat format, GstVideoInfo& info)
 void GStreamerTest::_testDmaBufEglBadMatchLatch_data()
 {
     QTest::addColumn<bool>("singleFd");
-    QTest::addColumn<quint64>("drmModifier");
     QTest::addColumn<bool>("expectDisabled");
 
-    constexpr quint64 kIntelTileYModifier = 0x0100000000000009ULL;
-    QTest::newRow("single-fd LINEAR keeps per-plane import") << true << quint64(0) << false;
-    QTest::newRow("single-fd tiled has no fallback") << true << kIntelTileYModifier << true;
-    QTest::newRow("per-plane disables path") << false << quint64(0) << true;
+    QTest::newRow("single-fd keeps per-plane import") << true << false;
+    QTest::newRow("per-plane disables path") << false << true;
 }
 
 void GStreamerTest::_testDmaBufEglBadMatchLatch()
@@ -529,7 +518,6 @@ void GStreamerTest::_testDmaBufEglBadMatchLatch()
     QSKIP("DMABuf GPU path not compiled in this build");
 #else
     QFETCH(bool, singleFd);
-    QFETCH(quint64, drmModifier);
     QFETCH(bool, expectDisabled);
 
     GstDmaBufVideoBuffer::resetCachedState();
@@ -547,7 +535,7 @@ void GStreamerTest::_testDmaBufEglBadMatchLatch()
         expectLogMessage("Video.GStreamer.HwBuffers.GstDmaBuf", QtWarningMsg,
                          QRegularExpression(QStringLiteral("EGL_BAD_MATCH.*disabling DMABuf zero-copy")));
     }
-    GstDmaBufVideoBuffer::recordEglBadMatchForTest(singleFd, drmModifier);
+    GstDmaBufVideoBuffer::recordEglBadMatchForTest(singleFd);
     if (expectDisabled) {
         verifyExpectedLogMessage();
     }

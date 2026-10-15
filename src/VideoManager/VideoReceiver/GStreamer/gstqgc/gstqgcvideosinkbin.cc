@@ -140,31 +140,9 @@ static GstElement* gst_qgc_video_sink_bin_make_conversion_element(GstQgcVideoSin
     return gst_element_factory_make("videoconvert", NULL);
 }
 
-// Wire format-capsfilter -> qgcqvideosink (optional glupload prefix); videosink is set only on commit.
-static gboolean wireGpuPath(GstQgcVideoSinkBin* self, GstElement* videosink, GstElement* capsf)
+// Link the adopted format-capsfilter -> qgcqvideosink (optional glupload prefix) and ghost the head.
+static gboolean wireGpuPath(GstQgcVideoSinkBin* self, GstQgc::BinChain& chain, GstElement* videosink, GstElement* capsf)
 {
-    GstQgc::BinChain chain(GST_BIN(self));
-    if (!chain.adopt(videosink)) {
-        gst_object_unref(capsf);
-        GST_ERROR_OBJECT(self, "Failed to add qgcqvideosink GPU sink element to bin");
-        return FALSE;
-    }
-    if (!chain.adopt(capsf)) {
-        GST_ERROR_OBJECT(self, "Failed to add qgcqvideosink GPU capsfilter element to bin");
-        return FALSE;
-    }
-
-    const std::string capsStr = GstQgc::buildGpuCapsString();
-    GstCaps* caps = gst_caps_from_string(capsStr.c_str());
-    if (!caps) {
-        GST_ERROR_OBJECT(self, "gst_caps_from_string() returned NULL for GPU caps");
-        return FALSE;
-    }
-    // format_capsfilter restricts negotiation to Qt-renderable formats; qgcqvideosink's pad
-    // template is CAPS_ANY, so without it upstream could pick a format that fails in set_caps.
-    g_object_set(capsf, "caps", caps, NULL);
-    gst_caps_unref(caps);
-
 #if defined(QGC_GST_BIN_USE_GLUPLOAD)
     GstElement* glupload = chain.adopt(gst_element_factory_make("glupload", NULL));
     if (!glupload) {
@@ -192,9 +170,6 @@ static gboolean wireGpuPath(GstQgcVideoSinkBin* self, GstElement* videosink, Gst
     }
 #endif
 
-    chain.commit();
-    self->videosink = videosink;
-
 #if defined(QGC_GST_BIN_USE_GLUPLOAD)
     GST_INFO_OBJECT(self, "Using glupload→qgcqvideosink GPU path (DMABuf→GL EGLImage import)");
 #elif defined(QGC_GST_BIN_USE_DMABUF)
@@ -205,34 +180,14 @@ static gboolean wireGpuPath(GstQgcVideoSinkBin* self, GstElement* videosink, Gst
     return TRUE;
 }
 
-// Wire videoconvert -> (optional PAR=1/1) -> format-capsfilter -> qgcqvideosink; videosink is set only on commit.
-static gboolean wireCpuPath(GstQgcVideoSinkBin* self, GstElement* videosink, GstElement* capsf)
+// Link videoconvert -> (optional PAR=1/1) -> the adopted format-capsfilter -> qgcqvideosink and ghost the head.
+static gboolean wireCpuPath(GstQgcVideoSinkBin* self, GstQgc::BinChain& chain, GstElement* videosink, GstElement* capsf)
 {
-    GstQgc::BinChain chain(GST_BIN(self));
-    if (!chain.adopt(videosink)) {
-        gst_object_unref(capsf);
-        GST_ERROR_OBJECT(self, "Failed to add qgcqvideosink CPU sink element to bin");
-        return FALSE;
-    }
-    if (!chain.adopt(capsf)) {
-        GST_ERROR_OBJECT(self, "Failed to add qgcqvideosink CPU capsfilter element to bin");
-        return FALSE;
-    }
-
     GstElement* videoconvert = chain.adopt(gst_qgc_video_sink_bin_make_conversion_element(self));
     if (!videoconvert) {
         GST_ERROR_OBJECT(self, "Failed to create video conversion element");
         return FALSE;
     }
-
-    // QVideoSink renders these natively; listing them avoids forcing videoconvert to BGRA.
-    GstCaps* caps = gst_caps_from_string(GstQgc::buildCpuCapsString().c_str());
-    if (!caps) {
-        GST_ERROR_OBJECT(self, "gst_caps_from_string() returned NULL for CPU caps");
-        return FALSE;
-    }
-    g_object_set(capsf, "caps", caps, NULL);
-    gst_caps_unref(caps);
 
     // PAR=1/1 capsfilter normalizes non-square pixels; disable-par for v4l2 drivers without
     // VIDIOC_CROPCAP that deadlock negotiation (GStreamer MR #6242).
@@ -256,9 +211,6 @@ static gboolean wireCpuPath(GstQgcVideoSinkBin* self, GstElement* videosink, Gst
         GST_ERROR_OBJECT(self, "Failed to link/ghost CPU path");
         return FALSE;
     }
-
-    chain.commit();
-    self->videosink = videosink;
 
     GST_INFO_OBJECT(self, "Using qgcqvideosink CPU path (videoconvert%s → caps → qgcqvideosink → QVideoSink)",
                     par ? " → PAR=1/1" : "");
@@ -284,12 +236,35 @@ static void gst_qgc_video_sink_bin_setup(GstQgcVideoSinkBin* self)
         return;
     }
 
-    // On failure the wire*Path() BinChain rolls the bin back and frees videosink/capsf; self->videosink
-    // stays NULL so change_state surfaces the construction error.
-    if (self->gpu_zerocopy) {
-        wireGpuPath(self, videosink, capsf);
-    } else {
-        wireCpuPath(self, videosink, capsf);
+    // On failure the BinChain rolls the bin back and frees videosink/capsf; self->videosink stays NULL so change_state
+    // surfaces the construction error.
+    const char* const pathName = self->gpu_zerocopy ? "GPU" : "CPU";
+    GstQgc::BinChain chain(GST_BIN(self));
+    if (!chain.adopt(videosink)) {
+        gst_object_unref(capsf);
+        GST_ERROR_OBJECT(self, "Failed to add qgcqvideosink %s sink element to bin", pathName);
+        return;
+    }
+    if (!chain.adopt(capsf)) {
+        GST_ERROR_OBJECT(self, "Failed to add qgcqvideosink %s capsfilter element to bin", pathName);
+        return;
+    }
+
+    // The format capsfilter restricts negotiation to Qt-renderable formats: qgcqvideosink's pad template is CAPS_ANY,
+    // so without it upstream could pick a format that fails in set_caps. On the CPU path, listing the formats
+    // QVideoSink renders natively also keeps videoconvert from forcing BGRA.
+    const std::string capsStr = self->gpu_zerocopy ? GstQgc::buildGpuCapsString() : GstQgc::buildCpuCapsString();
+    GstCaps* caps = gst_caps_from_string(capsStr.c_str());
+    if (!caps) {
+        GST_ERROR_OBJECT(self, "gst_caps_from_string() returned NULL for %s caps", pathName);
+        return;
+    }
+    g_object_set(capsf, "caps", caps, NULL);
+    gst_caps_unref(caps);
+
+    if (self->gpu_zerocopy ? wireGpuPath(self, chain, videosink, capsf) : wireCpuPath(self, chain, videosink, capsf)) {
+        chain.commit();
+        self->videosink = videosink;
     }
 }
 

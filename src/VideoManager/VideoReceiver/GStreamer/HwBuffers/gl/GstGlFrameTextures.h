@@ -17,20 +17,12 @@ class GstGlFrameTextures : public GstHwFrameTexturesBase
 public:
     GstGlFrameTextures(QRhi* rhi, QSize size, QVideoFrameFormat::PixelFormat pixelFormat,
                        std::array<GLuint, GstHw::kMaxPlanes> names, int count)
-        : _rhi(rhi)
-        , _size(size)
-        , _pixelFormat(pixelFormat)
-        , _names(names)
+        : _names(names)
     {
-        std::array<quint64, GstHw::kMaxPlanes> handles{};
-        std::copy(names.begin(), names.end(), handles.begin());
         wrapPlanes(rhi, size, pixelFormat,
-                   std::span<const quint64>(handles.data(), std::size_t(std::clamp(count, 0, GstHw::kMaxPlanes))));
+                   std::span<const GLuint>(_names.data(), std::size_t(std::clamp(count, 0, GstHw::kMaxPlanes))));
     }
 
 protected:
-    QRhi* _rhi = nullptr;
-    QSize _size;
-    QVideoFrameFormat::PixelFormat _pixelFormat = QVideoFrameFormat::Format_Invalid;
     std::array<GLuint, GstHw::kMaxPlanes> _names{};
 };

@@ -167,7 +167,8 @@ void testD3DMemoryDispatch(const char* uploadElement, const char* capsFilter, Hw
     QVideoFrameFormat format(QSize(GST_VIDEO_INFO_WIDTH(&sample.info), GST_VIDEO_INFO_HEIGHT(&sample.info)),
                              QVideoFrameFormat::Format_RGBA8888);
 
-    auto buffer = makeHwVideoBuffer(sample.sample, sample.info, format, context, path, &cache);
+    auto buffer = makeHwVideoBuffer(gst_sample_get_buffer(sample.sample), gst_sample_get_caps(sample.sample),
+                                    sample.info, format, context, path, &cache);
 
     QVERIFY2(buffer, "D3D memory sample did not create a hardware video buffer");
     QCOMPARE(path, expectedPath);
@@ -191,7 +192,8 @@ void testD3DMapTextures(QRhi& rhi, const char* inputCaps, const char* uploadElem
     QVideoFrameFormat format(QSize(GST_VIDEO_INFO_WIDTH(&sample.info), GST_VIDEO_INFO_HEIGHT(&sample.info)),
                              pixelFormat);
 
-    auto buffer = makeHwVideoBuffer(sample.sample, sample.info, format, context, path, &cache);
+    auto buffer = makeHwVideoBuffer(gst_sample_get_buffer(sample.sample), gst_sample_get_caps(sample.sample),
+                                    sample.info, format, context, path, &cache);
 
     QVERIFY2(buffer, "D3D memory sample did not create a hardware video buffer");
     QCOMPARE(path, expectedPath);
@@ -203,9 +205,8 @@ void testD3DMapTextures(QRhi& rhi, const char* inputCaps, const char* uploadElem
         QVERIFY2(textures->texture(static_cast<uint>(plane)),
                  qPrintable(QStringLiteral("D3D QRhi texture bundle has no plane %1 texture").arg(plane)));
     }
-    auto* base = dynamic_cast<GstHwFrameTexturesBase*>(textures.get());
-    QVERIFY2(base, "D3D texture bundle does not use the HW frame texture base");
-    QCOMPARE(base->sourcePath(), expectedPath);
+    QVERIFY2(dynamic_cast<GstHwFrameTexturesBase*>(textures.get()),
+             "D3D texture bundle does not use the HW frame texture base");
 }
 
 } // namespace

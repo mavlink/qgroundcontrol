@@ -1000,7 +1000,6 @@ void GStreamerTest::_testFrameCountsTelemetrySignal()
     for (auto p :
          {HwVideoBufferPath::None, HwVideoBufferPath::DmaBuf, HwVideoBufferPath::GlMemory, HwVideoBufferPath::D3D11,
           HwVideoBufferPath::D3D12, HwVideoBufferPath::IOSurface, HwVideoBufferPath::AHardwareBuffer}) {
-        (void) GstHwPathTelemetry::takeDeliveredCount(p);
         (void) GstHwPathTelemetry::takeMapFailureCount(p);
     }
 
@@ -1021,7 +1020,10 @@ void GStreamerTest::_testFrameCountsTelemetrySignal()
     GstElement* sinkBin = gst_bin_get_by_name(GST_BIN(pipeline), "sink");
     QVERIFY(sinkBin);
     QVERIFY(GStreamer::setupQVideoSinkElement(sinkBin, &videoSink, &controllerOwner));
+    GstElement* qvideosink = gst_bin_get_by_name(GST_BIN(sinkBin), "qgcqvideosink");
     gst_object_unref(sinkBin);
+    QVERIFY(qvideosink);
+    const auto qvideosinkGuard = qScopeGuard([qvideosink] { gst_object_unref(qvideosink); });
 
     auto* controller = controllerOwner.findChild<QGCQVideoSinkController*>(QString(), Qt::FindDirectChildrenOnly);
     QVERIFY(controller);
@@ -1031,7 +1033,7 @@ void GStreamerTest::_testFrameCountsTelemetrySignal()
 
     QTRY_VERIFY_WITH_TIMEOUT(spy.size() > 0, 5000);
 
-    QVERIFY(GstHwPathTelemetry::peekDeliveredCount(HwVideoBufferPath::None) > 0);
+    QVERIFY(sinkStat(qvideosink, HwBuffers::sinkFramesField(HwVideoBufferPath::None)) > 0);
     quint64 gpuFallback = 0;
     for (auto p : {HwVideoBufferPath::DmaBuf, HwVideoBufferPath::GlMemory, HwVideoBufferPath::D3D11,
                    HwVideoBufferPath::D3D12, HwVideoBufferPath::IOSurface, HwVideoBufferPath::AHardwareBuffer}) {
@@ -1964,7 +1966,7 @@ void GStreamerTest::_testQgcQVideoSinkStatsArePerSink()
     QCOMPARE(harnessA.pushFrame(2 * GST_SECOND), GST_FLOW_OK);
     QCOMPARE(harnessB.pushFrame(GST_SECOND), GST_FLOW_OK);
 
-    const char* const cpuField = GstHwPathTelemetry::sinkFramesField(HwVideoBufferPath::None);
+    const char* const cpuField = HwBuffers::sinkFramesField(HwVideoBufferPath::None);
     QCOMPARE(sinkStat(harnessA.element(), cpuField), qint64(2));
     QCOMPARE(sinkStat(harnessB.element(), cpuField), qint64(1));
     QCOMPARE(sinkStat(harnessB.element(), "frames-delivered"), qint64(1));
@@ -2068,7 +2070,7 @@ void GStreamerTest::_testQgcQVideoSinkGpuPathSelection()
     const quint64 noPathAfter =
         GstHwPathTelemetry::peekFallbackReason(HwVideoBufferPath::None, HwFallbackReason::UnknownMemType);
 
-    QCOMPARE(sinkStat(harness.element(), GstHwPathTelemetry::sinkFramesField(HwVideoBufferPath::None)), qint64(3));
+    QCOMPARE(sinkStat(harness.element(), HwBuffers::sinkFramesField(HwVideoBufferPath::None)), qint64(3));
     QCOMPARE(sinkStat(harness.element(), "gpu-fallbacks"), expectedGpuFallbacks);
     QCOMPARE(sinkStat(harness.element(), "stream-demotions"), qint64(expectedGpuFallbacks > 0 ? 1 : 0));
     QCOMPARE(noPathAfter - noPathBefore, expectedNoPathVerdicts);

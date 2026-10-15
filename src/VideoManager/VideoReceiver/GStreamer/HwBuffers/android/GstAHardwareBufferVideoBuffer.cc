@@ -116,11 +116,7 @@ public:
     // which this bundle pins (shared across frames on AHB recycle).
     FrameTextures(QRhi* rhi, QSize size, QVideoFrameFormat::PixelFormat pixelFormat, GLuint name,
                   AhbImportCache::EntryId entry)
-        : _rhi(rhi)
-        , _size(size)
-        , _pixelFormat(pixelFormat)
-        , _name(name)
-        , _entry(entry)
+        : _entry(entry)
     {
         {
             const QMutexLocker lock(&s_imageCacheMutex);
@@ -128,8 +124,7 @@ public:
         }
         // ExternalOES: bind GL_TEXTURE_EXTERNAL_OES + emit SamplerExternalOES, else OES_EGL_image_external samples
         // black on GLES2.
-        const quint64 handle = name;
-        wrapPlanes(rhi, size, pixelFormat, std::span<const quint64>(&handle, 1), 0, QRhiTexture::ExternalOES);
+        wrapPlanes(rhi, size, pixelFormat, std::span<const GLuint>(&name, 1), 0, QRhiTexture::ExternalOES);
     }
 
     ~FrameTextures() override
@@ -142,21 +137,7 @@ public:
         s_imageCache.drainDeferred();
     }
 
-    HwVideoBufferPath sourcePath() const override { return HwVideoBufferPath::AHardwareBuffer; }
-
-    // Reuse eligibility: same rhi+size+format and identical GL texture name (the import cache returns the same name on
-    // AHB recycle).
-    bool matches(QRhi* rhi, QSize size, QVideoFrameFormat::PixelFormat pixelFormat, GLuint name) const noexcept
-    {
-        return _rhi == rhi && _size == size && _pixelFormat == pixelFormat && _name == name && _name != 0 &&
-               _textures[0];
-    }
-
 private:
-    QRhi* _rhi = nullptr;
-    QSize _size;
-    QVideoFrameFormat::PixelFormat _pixelFormat = QVideoFrameFormat::Format_Invalid;
-    GLuint _name = 0;
     AhbImportCache::EntryId _entry = 0;
 };
 
@@ -356,9 +337,12 @@ QVideoFrameTexturesUPtr GstAHardwareBufferVideoBuffer::mapTextures(QRhi& rhi, QV
                             .textureFlags = QRhiTexture::ExternalOES,
                             .log = &GstAHWBufLog(),
                             .diag = &s_diag};
+    // The import cache returns the same texture name when MediaCodec recycles an AHB.
     return GstHwFrameTexturesBase::finishMap<FrameTextures>(
         *this, rhi, old, tail,
-        [&](const FrameTextures& prev) { return prev.matches(&rhi, tail.frameSize, tail.pixelFormat, name); },
+        [&](const FrameTextures& prev) {
+            return prev.matchesImport(&rhi, tail.frameSize, tail.pixelFormat, std::span<const GLuint>(&name, 1));
+        },
         [&] { return std::make_unique<FrameTextures>(&rhi, tail.frameSize, tail.pixelFormat, name, entry); });
 }
 

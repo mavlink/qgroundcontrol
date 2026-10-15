@@ -1,6 +1,6 @@
 #include "GstD3D11ContextBridge.h"
 
-#if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D11_GPU_PATH)
+#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
 
 #include <d3d11.h>
 #include <d3d11_4.h>  // ID3D11Multithread
@@ -85,4 +85,4 @@ GstD3D11Device* GstD3D11ContextBridge::currentDevice()
     return GST_D3D11_DEVICE_CAST(s_bridge.refDevice());
 }
 
-#endif  // Q_OS_WIN && QGC_HAS_GST_D3D11_GPU_PATH
+#endif  // QGC_HAS_GST_D3D11_GPU_PATH

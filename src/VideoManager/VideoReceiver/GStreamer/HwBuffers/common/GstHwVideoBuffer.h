@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <atomic>
 #include <gst/gst.h>
-#include <gst/video/video-frame.h>
 #include <gst/video/video-info.h>
 #include <private/qhwvideobuffer_p.h>
 
@@ -12,6 +11,7 @@
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoFrameFormat>
 
+#include "CpuVideoFramePool.h"
 #include "GstHwTypes.h"
 
 namespace GstHw {
@@ -71,10 +71,6 @@ public:
     /// alongside the bundle anyway (QVideoFrameTextures::setSourceFrame), so no buffer is held longer.
     GstSample* refSample() noexcept { return _sample ? gst_sample_ref(_sample) : nullptr; }
 
-    /// One-shot "first zero-copy success" info line; silent after @p flag first flips.
-    static void logFirstSuccess(std::atomic<bool>& flag, const QLoggingCategory& cat, const char* tag, QSize frameSize,
-                                QVideoFrameFormat::PixelFormat pixelFormat, int planes);
-
 protected:
     /// Validate each plane satisfies @p planePred; predicate runs once per plane on the streaming thread.
     template <class PlanePred>
@@ -108,6 +104,5 @@ private:
     /// Pixel format of the sample's memory, as constructed. A subclass may advertise another one in _format for its GPU
     /// import (the DMABuf eglfs YUYV/UYVY-as-RGBA quirk); such frames have no CPU layout matching format().
     QVideoFrameFormat::PixelFormat _memoryPixelFormat;
-    GstVideoFrame _cpuFrame = {};
-    bool _cpuMapped = false;
+    CpuVideoFramePool::FrameMapping _cpuView;
 };

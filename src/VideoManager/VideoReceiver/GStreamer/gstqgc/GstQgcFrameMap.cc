@@ -232,21 +232,18 @@ MappedFrame mapSampleToFrame(GstBuffer* buffer, [[maybe_unused]] GstCaps* caps, 
     if (hwContext.gpuEnabled) {
         if (auto hwBuf = makeHwVideoBuffer(buffer, caps, info, format, hwContext, matchedPath, pathCache)) {
             out.frame = QVideoFrame(std::move(hwBuf));
-            out.source = MappedFrame::Source::Gpu;
             out.gpuPath = matchedPath;
             return out;
         }
         // HW selection failed though GPU was requested: signal the demotion. show_frame owns the
-        // once-per-epoch latch and telemetry so this mapper stays free of the telemetry singleton.
+        // once-per-epoch latch and the counters.
         out.demoted = true;
     }
-    out.gpuPath = matchedPath;
 #endif
     if (auto cpuBuf = CpuVideoFramePool::wrapZeroCopy(buffer, info, format, pinnedCpuFrames)) {
         out.frame = QVideoFrame(std::move(cpuBuf));
     } else {
         out.frame = CpuVideoFramePool::copyFromBuffer(buffer, info, format);
     }
-    out.source = MappedFrame::Source::Cpu;
     return out;
 }

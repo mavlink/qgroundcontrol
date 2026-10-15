@@ -36,12 +36,7 @@ QVideoFrameFormat applyCropMeta(QVideoFrameFormat format, GstBuffer* buffer);
 struct MappedFrame
 {
     QVideoFrame frame;
-    enum class Source
-    {
-        Cpu,
-        Gpu
-    } source = Source::Cpu;
-    HwVideoBufferPath gpuPath = HwVideoBufferPath::None;
+    HwVideoBufferPath gpuPath = HwVideoBufferPath::None;  ///< None for a CPU frame
     bool demoted = false;  ///< A GPU path was requested for this stream but this frame fell back to CPU.
 };
 

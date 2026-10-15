@@ -62,13 +62,10 @@
 #include <QtTest/QSignalSpy>
 #include <string_view>
 
-#if defined(QGC_HAS_GST_VULKAN_GPU_PATH) && QT_CONFIG(vulkan)
+#if defined(QGC_HAS_GST_DMABUF_GPU_PATH) && defined(QGC_HAS_GST_VULKAN_GPU_PATH)
 #include <rhi/qrhi.h>
 
-#include "GstVulkanFrameTextures.h"
-#include "GstVulkanImport.h"
-
-Q_LOGGING_CATEGORY(VulkanImportTestLog, "Video.GStreamer.Test.VulkanImport")
+#include "GstDmaBufVulkanImport.h"
 #endif
 
 void GStreamerTest::_testVulkanDispatchDemotesToCpu()
@@ -137,12 +134,10 @@ void GStreamerTest::_testVulkanDispatchDemotesToCpu()
     auto probeGuard = qScopeGuard([&] { gst_pad_remove_probe(appsinkPad, probeId); });
 
     using GstHwPathTelemetry::HwFallbackReason;
-    const quint64 vkDeliveredBefore = GstHwPathTelemetry::peekDeliveredCount(HwVideoBufferPath::Vulkan);
     const quint64 noSyncBefore =
         GstHwPathTelemetry::peekFallbackReason(HwVideoBufferPath::Vulkan, HwFallbackReason::VulkanNoSync);
     const quint64 noExtBefore =
         GstHwPathTelemetry::peekFallbackReason(HwVideoBufferPath::Vulkan, HwFallbackReason::NoExt);
-    (void) GstHwPathTelemetry::takeStreamDemotions(HwVideoBufferPath::Vulkan);
 
     GstStateChangeReturn ret = gst_element_set_state(pipeline, GST_STATE_PLAYING);
     if (ret == GST_STATE_CHANGE_FAILURE) {
@@ -172,19 +167,17 @@ void GStreamerTest::_testVulkanDispatchDemotesToCpu()
 
     // Demotion telemetry is recorded on the QRhi render path, which can land after the bus EOS; poll up
     // to 2s (not a fixed window) so a slow demotion is observed rather than spuriously skipped.
-    quint64 streamDemotions = 0;
     bool demotionSignalled = false;
     {
         QElapsedTimer drain;
         drain.start();
         while (drain.elapsed() < 2000) {
             QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
-            streamDemotions += GstHwPathTelemetry::takeStreamDemotions(HwVideoBufferPath::Vulkan);
             const quint64 noSyncNow =
                 GstHwPathTelemetry::peekFallbackReason(HwVideoBufferPath::Vulkan, HwFallbackReason::VulkanNoSync);
             const quint64 noExtNow =
                 GstHwPathTelemetry::peekFallbackReason(HwVideoBufferPath::Vulkan, HwFallbackReason::NoExt);
-            if (streamDemotions > 0 || noSyncNow > noSyncBefore || noExtNow > noExtBefore) {
+            if (noSyncNow > noSyncBefore || noExtNow > noExtBefore) {
                 demotionSignalled = true;
                 break;
             }
@@ -201,7 +194,13 @@ void GStreamerTest::_testVulkanDispatchDemotesToCpu()
     }
 
     const int probedBuffers = bufferCount.load();
-    const quint64 vkDeliveredAfter = GstHwPathTelemetry::peekDeliveredCount(HwVideoBufferPath::Vulkan);
+    guint64 vulkanFrames = 0;
+    GstStructure* stats = nullptr;
+    g_object_get(qvideosink, "frame-stats", &stats, nullptr);
+    if (stats) {
+        (void) gst_structure_get_uint64(stats, HwBuffers::sinkFramesField(HwVideoBufferPath::Vulkan), &vulkanFrames);
+        gst_structure_free(stats);
+    }
 
     if (sawError) {
         QSKIP(qPrintable(QStringLiteral("Vulkan pipeline error (likely no Vulkan device): %1").arg(errMsg)));
@@ -215,11 +214,10 @@ void GStreamerTest::_testVulkanDispatchDemotesToCpu()
     // Vulkan is compiled but runtime-dormant: QGC pins the GL RHI, so the per-frame VkDevice-match
     // guard demotes every foreign-device frame to CPU. Assert delivery still works, never zero-copy.
     QVERIFY2(frameCount > 0 || probedBuffers > 0, "No frames delivered through the sink under Vulkan caps");
-    QVERIFY2(vkDeliveredAfter == vkDeliveredBefore,
+    QVERIFY2(vulkanFrames == 0,
              qPrintable(QStringLiteral("Vulkan zero-copy delivery was recorded but the device-match guard "
-                                       "should demote (before=%1 after=%2)")
-                            .arg(vkDeliveredBefore)
-                            .arg(vkDeliveredAfter)));
+                                       "should demote (frames=%1)")
+                            .arg(vulkanFrames)));
 
     if (!demotionSignalled) {
         QSKIP(qPrintable(QStringLiteral("Vulkan frames negotiated VulkanImage but the device-match demotion "
@@ -231,8 +229,8 @@ void GStreamerTest::_testVulkanDispatchDemotesToCpu()
 
 void GStreamerTest::_testVulkanOwnedFrameTexturesReleaseOnDestroy()
 {
-#if !defined(QGC_HAS_GST_VULKAN_GPU_PATH) || !QT_CONFIG(vulkan)
-    QSKIP("Vulkan frame bundles not compiled in this build");
+#if !defined(QGC_HAS_GST_DMABUF_GPU_PATH) || !defined(QGC_HAS_GST_VULKAN_GPU_PATH)
+    QSKIP("DMABuf->Vulkan frame bundles not compiled in this build");
 #else
     QRhiNullInitParams params;
     std::unique_ptr<QRhi> rhi(QRhi::create(QRhi::Null, &params));
@@ -259,50 +257,4 @@ void GStreamerTest::_testVulkanOwnedFrameTexturesReleaseOnDestroy()
 #endif
 }
 
-void GStreamerTest::_testVulkanImportRequiresProducerSync_data()
-{
-    QTest::addColumn<int>("path");
-    QTest::addColumn<bool>("writesComplete");
-
-    QTest::newRow("DMABuf, writes complete") << int(HwVideoBufferPath::DmaBuf) << true;
-    QTest::newRow("DMABuf, barrier failed") << int(HwVideoBufferPath::DmaBuf) << false;
-    QTest::newRow("gst-vulkan, no decoder sync") << int(HwVideoBufferPath::Vulkan) << false;
-}
-
-void GStreamerTest::_testVulkanImportRequiresProducerSync()
-{
-#if !defined(QGC_HAS_GST_VULKAN_GPU_PATH) || !QT_CONFIG(vulkan)
-    QSKIP("Vulkan imports not compiled in this build");
-#else
-    QFETCH(int, path);
-    QFETCH(bool, writesComplete);
-    const auto hwPath = static_cast<HwVideoBufferPath>(path);
-    using GstHwPathTelemetry::HwFallbackReason;
-    const quint64 noSyncBefore = GstHwPathTelemetry::peekFallbackReason(hwPath, HwFallbackReason::VulkanNoSync);
-
-    std::atomic<bool> warned{false};
-    if (!writesComplete) {
-        expectLogMessage("Video.GStreamer.Test.VulkanImport", QtWarningMsg,
-                         QRegularExpression(QStringLiteral("producer writes not known complete")));
-    }
-    const bool admitted = GstVulkanImport::admitImport(hwPath, writesComplete, VulkanImportTestLog(), warned);
-    if (!writesComplete) {
-        verifyExpectedLogMessage();
-    }
-
-    QCOMPARE(admitted, writesComplete);
-    QCOMPARE(GstHwPathTelemetry::peekFallbackReason(hwPath, HwFallbackReason::VulkanNoSync),
-             noSyncBefore + (writesComplete ? 0 : 1));
-#endif
-}
-
-#endif
-
-#ifndef QGC_GST_STREAMING
-void GStreamerTest::_testVulkanImportRequiresProducerSync_data() {}
-
-void GStreamerTest::_testVulkanImportRequiresProducerSync()
-{
-    QSKIP("GStreamer not enabled");
-}
 #endif

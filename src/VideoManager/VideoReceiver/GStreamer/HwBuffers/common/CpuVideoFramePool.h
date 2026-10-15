@@ -54,6 +54,27 @@ public:
     /// Qt map data for a frame mapped with gst_video_frame_map, each plane sized by its own row count.
     static QAbstractVideoBuffer::MapData mapDataFor(const GstVideoFrame& frame);
 
+    /// A buffer's read-only gst_video_frame_map, held until unmap() or destruction: the CPU view behind a buffer's
+    /// QAbstractVideoBuffer::map().
+    class FrameMapping
+    {
+    public:
+        FrameMapping() = default;
+
+        ~FrameMapping() { unmap(); }
+
+        FrameMapping(const FrameMapping&) = delete;
+        FrameMapping& operator=(const FrameMapping&) = delete;
+
+        /// Maps @p buffer on the first call; empty map data when that fails.
+        QAbstractVideoBuffer::MapData map(GstBuffer* buffer, const GstVideoInfo& info);
+        void unmap() noexcept;
+
+    private:
+        GstVideoFrame _frame = {};
+        bool _mapped = false;
+    };
+
     /// Copy @p buffer's planes into a pool-allocated QVideoFrame; invalid on stride overflow or unsupported format.
     static QVideoFrame copyFromBuffer(GstBuffer* buffer, const GstVideoInfo& videoInfo,
                                       const QVideoFrameFormat& format);

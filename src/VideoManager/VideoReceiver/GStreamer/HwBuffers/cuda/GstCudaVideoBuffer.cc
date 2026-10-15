@@ -7,6 +7,7 @@
 #include <gst/cuda/gstcuda.h>
 #include <gst/video/video.h>
 #include <memory>
+#include <utility>
 
 #include <QtCore/QLoggingCategory>
 
@@ -19,6 +20,19 @@ QGC_LOGGING_CATEGORY(GstCudaLog, "Video.GStreamer.HwBuffers.GstCuda")
 
 namespace GstCudaVideoBuffer {
 namespace {
+
+// Desktop dGPU drivers can reject the export on every frame, so the first failure turns the path off for the process.
+std::atomic<bool> s_exportUnsupported{false};
+
+void disableAfterFailedExport()
+{
+    if (!s_exportUnsupported.exchange(true, std::memory_order_relaxed)) {
+        GstHwPathTelemetry::recordFallbackReason(HwVideoBufferPath::DmaBuf,
+                                                 GstHwPathTelemetry::HwFallbackReason::NoExt);
+        qCWarning(GstCudaLog) << "CUDA->DMABuf export unsupported on this driver — CPU fallback for the"
+                              << "remainder of the process";
+    }
+}
 
 // gst_cuda_memory_export only succeeds for cuMemCreate/cuMemMap-backed allocations (ALLOC_MMAP); the common
 // cuMemAlloc/pitch decoder default cannot be shared and returns FALSE -> nullptr -> factory CPU latch.
@@ -41,10 +55,8 @@ int exportCudaMemoryToFd(GstMemory* mem)
     return fd;
 }
 
-}  // namespace
-
-std::unique_ptr<GstHwVideoBuffer> exportToDmaBuf(GstSample* sample, const GstVideoInfo& info, QVideoFrameFormat format,
-                                                 const HwVideoBufferContext& context)
+std::unique_ptr<GstHwVideoBuffer> exportSample(GstSample* sample, const GstVideoInfo& info, QVideoFrameFormat format,
+                                               const HwVideoBufferContext& context)
 {
     if (context.dmaBufEglDisplay == EGL_NO_DISPLAY) {
         return nullptr;  // No EGLImage display to import the exported fd; fall back to CPU.
@@ -110,36 +122,32 @@ std::unique_ptr<GstHwVideoBuffer> exportToDmaBuf(GstSample* sample, const GstVid
     return buf;
 }
 
-}  // namespace GstCudaVideoBuffer
+}  // namespace
 
-namespace {
-
-// Desktop dGPU drivers can reject the export on every frame, so the first failure turns the path off for the process.
-std::atomic<bool> s_exportUnsupported{false};
-
-bool exportSupported()
+bool exportSupported() noexcept
 {
     return !s_exportUnsupported.load(std::memory_order_relaxed);
 }
 
-void disableAfterFailedExport()
+std::unique_ptr<GstHwVideoBuffer> exportToDmaBuf(GstSample* sample, const GstVideoInfo& info, QVideoFrameFormat format,
+                                                 const HwVideoBufferContext& context)
 {
-    if (!s_exportUnsupported.exchange(true, std::memory_order_relaxed)) {
-        GstHwPathTelemetry::recordFallbackReason(HwVideoBufferPath::DmaBuf,
-                                                 GstHwPathTelemetry::HwFallbackReason::NoExt);
-        qCWarning(GstCudaLog) << "CUDA->DMABuf export unsupported on this driver — CPU fallback for the"
-                              << "remainder of the process";
+    // A frame the DMABuf importer would reject latches the path off too (the factory then re-runs this cheap check).
+    auto buf = exportSample(sample, info, std::move(format), context);
+    if (!buf || !buf->validatePlaneHandles()) {
+        disableAfterFailedExport();
+        return nullptr;
     }
+    return buf;
 }
 
-}  // namespace
+}  // namespace GstCudaVideoBuffer
 
 constinit const HwPathDescriptor GstHwPaths::kCuda = {
     .path = HwVideoBufferPath::DmaBuf,
     .matches = [](GstMemory* mem, const HwVideoBufferContext&) -> bool { return gst_is_cuda_memory(mem); },
-    .admits = &exportSupported,
+    .admits = &GstCudaVideoBuffer::exportSupported,
     .construct = &GstCudaVideoBuffer::exportToDmaBuf,
-    .onImportFailed = &disableAfterFailedExport,
 };
 
 #endif  // QGC_HAS_GST_CUDA_GPU_PATH

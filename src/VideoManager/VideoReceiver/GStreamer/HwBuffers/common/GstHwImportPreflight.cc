@@ -85,10 +85,9 @@ bool preflightOrRecord(QRhi* rhi, HwVideoBufferPath path, QVideoFrameFormat::Pix
                        const QSize& size, QRhiTexture::Flags flags) noexcept
 {
     bool ok = false;
-    const std::size_t idx = static_cast<std::size_t>(path);
-    if (idx < s_memo.size()) {
+    {
         QMutexLocker lock(&s_memoMutex);
-        PreflightMemo& memo = s_memo[idx];
+        PreflightMemo& memo = s_memo[static_cast<std::size_t>(path)];
         if (memo.valid && (memo.rhi == rhi) && (memo.pixelFormat == pixelFormat) && (memo.size == size) &&
             (memo.flags == flags)) {
             ok = memo.result;
@@ -100,8 +99,6 @@ bool preflightOrRecord(QRhi* rhi, HwVideoBufferPath path, QVideoFrameFormat::Pix
                 rhi->addCleanupCallback(&s_memo, [](QRhi* dying) { forgetRhi(dying); });
             }
         }
-    } else {
-        ok = canImportPlanes(rhi, pixelFormat, size, flags);
     }
     if (ok) {
         return true;

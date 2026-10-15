@@ -2,9 +2,8 @@
 
 #include <QtCore/qglobal.h>
 
-#if defined(Q_OS_WIN) && (defined(QGC_HAS_GST_D3D11_GPU_PATH) || defined(QGC_HAS_GST_D3D12_GPU_PATH))
+#if defined(QGC_HAS_GST_D3D11_GPU_PATH) || defined(QGC_HAS_GST_D3D12_GPU_PATH)
 
-#include <atomic>
 #include <gst/gst.h>
 
 #include "GstContextBridgeBase.h"
@@ -43,7 +42,6 @@ private:
     GstObject* refObject(const char* contextType) final;
     GstContext* buildContext(const char* contextType, GstObject* object) final;
     void clearLocked() final;
-    void logHandoff(GstElement* element, const char* contextType) final;
 
     /// True when QGCRhiCapture's snapshot reports this bridge's QRhi backend; logs the first mismatch.
     bool snapshotBackendMatches();
@@ -51,7 +49,6 @@ private:
     int _qrhiBackend;
     GstObject* _device = nullptr;
     bool _warnedWrongBackend = false;
-    std::atomic<bool> _loggedFirstHandoff{false};
 };
 
-#endif  // Q_OS_WIN && (QGC_HAS_GST_D3D11_GPU_PATH || QGC_HAS_GST_D3D12_GPU_PATH)
+#endif  // QGC_HAS_GST_D3D11_GPU_PATH || QGC_HAS_GST_D3D12_GPU_PATH

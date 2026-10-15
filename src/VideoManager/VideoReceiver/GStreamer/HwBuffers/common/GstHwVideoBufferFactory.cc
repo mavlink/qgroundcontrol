@@ -22,10 +22,6 @@ public:
         , _caps(caps)
     {}
 
-    explicit LazySample(GstSample* sample)
-        : _sample(gst_sample_ref(sample))
-    {}
-
     ~LazySample()
     {
         if (_sample) {
@@ -108,11 +104,7 @@ std::unique_ptr<QHwVideoBuffer> selectHwVideoBuffer(LazySample& sample, GstBuffe
             return nullptr;
         }
         matchedPath = path.path;
-        auto buf = buildOrFallback(path.construct(sample.get(), info, format, context));
-        if (!buf && path.onImportFailed) {
-            path.onImportFailed();
-        }
-        return buf;
+        return buildOrFallback(path.construct(sample.get(), info, format, context));
     };
 
     const auto paths = GstHwPathRegistry::paths();
@@ -153,17 +145,4 @@ std::unique_ptr<QHwVideoBuffer> makeHwVideoBuffer(GstBuffer* buffer, GstCaps* ca
 {
     LazySample sample(buffer, caps);
     return selectHwVideoBuffer(sample, buffer, info, std::move(format), context, matchedPath, cache);
-}
-
-std::unique_ptr<QHwVideoBuffer> makeHwVideoBuffer(GstSample* sample, const GstVideoInfo& info, QVideoFrameFormat format,
-                                                  const HwVideoBufferContext& context, HwVideoBufferPath& matchedPath,
-                                                  HwResolvedPathCache* cache)
-{
-    matchedPath = HwVideoBufferPath::None;
-    if (!sample) {
-        return nullptr;
-    }
-    LazySample lazy(sample);
-    return selectHwVideoBuffer(lazy, gst_sample_get_buffer(sample), info, std::move(format), context, matchedPath,
-                               cache);
 }

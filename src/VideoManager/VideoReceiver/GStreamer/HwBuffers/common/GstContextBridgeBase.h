@@ -64,9 +64,6 @@ protected:
     /// Drops the shared objects; the mutex is held.
     virtual void clearLocked() = 0;
 
-    /// Logs a context handed to @p element; the default logs every hand-off at debug level.
-    virtual void logHandoff(GstElement* element, const char* contextType);
-
     /// For primeLocked(): the next request tries again. Returns false so a failure path can `return retryLater();`.
     bool retryLater() noexcept;
 

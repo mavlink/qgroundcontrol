@@ -76,7 +76,7 @@ GstBusSyncReply GstContextBridgeBase::handleSyncMessage(GstMessage* message)
     }
     gst_element_set_context(element, context);
     gst_context_unref(context);
-    logHandoff(element, matched);
+    qCDebug(category()) << "Provided" << _apiName << matched << "context to" << GST_ELEMENT_NAME(element);
     // `element` is borrowed from the message, so the message must outlive its last use.
     gst_message_unref(message);
     return GST_BUS_DROP;
@@ -129,11 +129,6 @@ void GstContextBridgeBase::rearm()
         _failedPrimes = 0;
         qCDebug(category()) << _apiName << "bridge rearmed after exhausting its prime retries";
     }
-}
-
-void GstContextBridgeBase::logHandoff(GstElement* element, const char* contextType)
-{
-    qCDebug(category()) << "Provided" << _apiName << contextType << "context to" << GST_ELEMENT_NAME(element);
 }
 
 bool GstContextBridgeBase::retryLater() noexcept

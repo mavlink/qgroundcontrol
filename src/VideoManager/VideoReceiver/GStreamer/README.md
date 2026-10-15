@@ -43,19 +43,19 @@ Per-platform zero-copy import of decoded GPU frames, all sharing `GstHwFrameText
 
 - **Platforms**: `dmabuf` (Linux/VA-API), `gl`, `vulkan`, `d3d` (D3D11/D3D12), `cuda`, `apple` (IOSurface), `android` (AHardwareBuffer).
 - **`HwPathDescriptor`**: each backend describes its path once (memory match, buffer construction, cache reset,
-  pool proposal, context bridge). `HwBuffers::initializeOnce()` registers the compiled ones in `GstHwPathRegistry`
-  when the qgc plugin loads. The factory selects the first registered path whose descriptor matches a frame's memory,
-  and the facade loops over the registry for bus messages, context queries, restarts and resets.
+  pool proposal, context bridge). `GstHwPathRegistry` lists the compiled ones in a constant array. The factory selects
+  the first path whose descriptor matches a frame's memory, and the facade loops over the list for bus messages,
+  context queries, restarts and resets.
 - **`GstContextBridgeBase`**: GL, Vulkan, D3D11 and D3D12 bridges hand Qt's GPU device to GStreamer elements through
   `NEED_CONTEXT` and context queries.
 - **`GstHwPathTelemetry`** tracks process-wide render-time counters (map failures, reuse hits, sync waits) for fallback
   diagnostics. A receiver's `HW path stats` debug line pairs its own sink's `frame-stats` with them.
 - **`CpuVideoFramePool`** recycles CPU-backed `QVideoFrame` storage (WebRTC-style slab) for the software-fallback path, avoiding per-frame allocation.
-- **Build options**: `HwBuffers/CMakeLists.txt` probes one table row per path; each compiled path can be dropped with
-  `QGC_GST_ENABLE_<PATH>=OFF` (`DMABUF`, `CUDA`, `GLMEMORY`, `IOSURFACE`, `D3D11`, `D3D12`, `AHARDWAREBUFFER`, `VULKAN`;
-  all `ON` by default). Configure lists compiled paths that the sink can't reach at runtime: the glupload bin (Linux and
-  Android with gst-gl) offers only GLMemory caps, and no bin advertises CUDAMemory or VulkanImage caps. On Linux,
-  `QGC_GST_ENABLE_GLMEMORY=OFF` switches the bin to direct DMABuf import.
+- **Build options**: `HwBuffers/CMakeLists.txt` probes one table row per path; the `QGC_GST_ENABLE_<PATH>` switches
+  that compile a path out are listed in [`cmake/README.md`](../../../../cmake/README.md#gstreamer). Configure lists
+  compiled paths that the sink can't reach at runtime: the glupload bin (Linux and Android with gst-gl) offers only
+  GLMemory caps, and no bin advertises CUDAMemory or VulkanImage caps. On Linux, `QGC_GST_ENABLE_GLMEMORY=OFF` switches
+  the bin to direct DMABuf import.
 
 ## Build Configuration
 
@@ -115,8 +115,7 @@ Unset the variable, or set it to `1`, to restore the default behavior.
 
 QGC also switches to per-plane import on its own when the single-EGLImage
 importer fails with `EGL_BAD_MATCH`. It disables DMABuf zero-copy for the
-session only when per-plane import fails the same way, or when a tiled buffer
-(which has no per-plane fallback) does.
+session only when per-plane import fails the same way.
 
 `QGC_GST_DMABUF_CACHE=1` keeps each pooled buffer's EGLImages across frames
 instead of importing them every frame. It is off by default because no test or

@@ -340,13 +340,13 @@ void GStreamerTest::_testHwBufferFactoryDispatchSystemMemory()
 
     HwVideoBufferContext ctxGpu;
     ctxGpu.gpuEnabled = true;
-    auto buf = makeHwVideoBuffer(sample, info, fmt, ctxGpu, path);
+    auto buf = makeHwVideoBuffer(gst_sample_get_buffer(sample), caps, info, fmt, ctxGpu, path);
     QVERIFY(!buf);
     QCOMPARE(path, HwVideoBufferPath::None);
 
     HwVideoBufferContext ctxCpu;
     ctxCpu.gpuEnabled = false;
-    auto buf2 = makeHwVideoBuffer(sample, info, fmt, ctxCpu, path);
+    auto buf2 = makeHwVideoBuffer(gst_sample_get_buffer(sample), caps, info, fmt, ctxCpu, path);
     QVERIFY(!buf2);
 
     gst_sample_unref(sample);
@@ -537,8 +537,6 @@ public:
 
 class TestFrameTextures : public GstHwFrameTexturesBase
 {
-public:
-    HwVideoBufferPath sourcePath() const override { return HwVideoBufferPath::GlMemory; }
 };
 
 class ForeignFrameTextures : public QVideoFrameTextures
@@ -578,11 +576,11 @@ void GStreamerTest::_testHwFrameTexturesRejectsForeignOldTextures()
     QSKIP("GstHwFrameTexturesBase not compiled in this build (no GPU path enabled)");
 #else
     QVideoFrameTexturesUPtr foreign = std::make_unique<ForeignFrameTextures>();
-    QVERIFY(!GstHwFrameTexturesBase::reusableBundle<TestFrameTextures>(foreign, HwVideoBufferPath::GlMemory));
+    QVERIFY(!GstHwFrameTexturesBase::reusableBundle<TestFrameTextures>(foreign));
     QVERIFY(foreign);
 
     QVideoFrameTexturesUPtr own = std::make_unique<TestFrameTextures>();
-    QVERIFY(GstHwFrameTexturesBase::reusableBundle<TestFrameTextures>(own, HwVideoBufferPath::GlMemory));
+    QVERIFY(GstHwFrameTexturesBase::reusableBundle<TestFrameTextures>(own));
     QVERIFY(own);
 #endif
 }
@@ -597,7 +595,6 @@ struct TestPathState
     bool admits = true;
     bool constructs = true;
     int constructed = 0;
-    int importFailures = 0;
 };
 
 TestPathState s_testPathA;
@@ -616,7 +613,6 @@ const HwPathDescriptor kTestSelectPathA = {
     .admits = [] { return s_testPathA.admits; },
     .construct = [](GstSample* sample, const GstVideoInfo& info, QVideoFrameFormat format,
                     const HwVideoBufferContext&) { return constructTestBuffer(s_testPathA, sample, info, format); },
-    .onImportFailed = [] { ++s_testPathA.importFailures; },
 };
 
 const HwPathDescriptor kTestSelectPathB = {
@@ -637,17 +633,16 @@ void GStreamerTest::_testHwPathRegistrySelection_data()
     QTest::addColumn<int>("cachedPath");
     QTest::addColumn<int>("expectedPath");
     QTest::addColumn<int>("expectedBConstructed");
-    QTest::addColumn<int>("expectedAImportFailures");
 
     // Path A (GL) is registered before path B (Vulkan); B always matches and imports.
     const int none = int(HwVideoBufferPath::None);
     const int gl = int(HwVideoBufferPath::GlMemory);
     const int vulkan = int(HwVideoBufferPath::Vulkan);
-    QTest::newRow("first-registered-match-wins") << true << true << true << none << gl << 0 << 0;
-    QTest::newRow("non-matching-path-skipped") << false << true << true << none << vulkan << 1 << 0;
-    QTest::newRow("declining-path-sends-frame-to-cpu") << true << false << true << none << none << 0 << 0;
-    QTest::newRow("failed-import-notifies-its-path") << true << true << false << none << none << 0 << 1;
-    QTest::newRow("validated-path-tried-first") << true << true << true << vulkan << vulkan << 1 << 0;
+    QTest::newRow("first-registered-match-wins") << true << true << true << none << gl << 0;
+    QTest::newRow("non-matching-path-skipped") << false << true << true << none << vulkan << 1;
+    QTest::newRow("declining-path-sends-frame-to-cpu") << true << false << true << none << none << 0;
+    QTest::newRow("failed-import-sends-frame-to-cpu") << true << true << false << none << none << 0;
+    QTest::newRow("validated-path-tried-first") << true << true << true << vulkan << vulkan << 1;
 }
 
 void GStreamerTest::_testHwPathRegistrySelection()
@@ -661,7 +656,6 @@ void GStreamerTest::_testHwPathRegistrySelection()
     QFETCH(int, cachedPath);
     QFETCH(int, expectedPath);
     QFETCH(int, expectedBConstructed);
-    QFETCH(int, expectedAImportFailures);
 
     s_testPathA = {.matches = aMatches, .admits = aAdmits, .constructs = aConstructs};
     s_testPathB = {.matches = true};
@@ -683,8 +677,9 @@ void GStreamerTest::_testHwPathRegistrySelection()
         expectLogMessage("Video.GStreamer.HwBuffers.Factory", QtWarningMsg,
                          QRegularExpression(QStringLiteral("failed plane-handle validation")));
     }
-    const auto buffer = makeHwVideoBuffer(
-        sample, info, QVideoFrameFormat(QSize(16, 16), QVideoFrameFormat::Format_NV12), context, path, &cache);
+    const auto buffer =
+        makeHwVideoBuffer(gst_sample_get_buffer(sample), gst_sample_get_caps(sample), info,
+                          QVideoFrameFormat(QSize(16, 16), QVideoFrameFormat::Format_NV12), context, path, &cache);
     if (!aConstructs) {
         verifyExpectedLogMessage();
     }
@@ -693,7 +688,6 @@ void GStreamerTest::_testHwPathRegistrySelection()
     QCOMPARE(bool(buffer), expectedPath != int(HwVideoBufferPath::None));
     QCOMPARE(cache.validated, expectedPath != int(HwVideoBufferPath::None));
     QCOMPARE(s_testPathB.constructed, expectedBConstructed);
-    QCOMPARE(s_testPathA.importFailures, expectedAImportFailures);
 #endif
 }
 
@@ -843,7 +837,7 @@ void GStreamerTest::_testTelemetryFallbackReasonMatrix()
     using GstHwPathTelemetry::HwFallbackReason;
 
     (void) GstHwPathTelemetry::takeFallbackReason(HwVideoBufferPath::D3D11, HwFallbackReason::EglBadMatch);
-    (void) GstHwPathTelemetry::takeFallbackReason(HwVideoBufferPath::D3D11, HwFallbackReason::FenceTimeout);
+    (void) GstHwPathTelemetry::takeFallbackReason(HwVideoBufferPath::D3D11, HwFallbackReason::MapFailed);
     (void) GstHwPathTelemetry::takeFallbackReason(HwVideoBufferPath::D3D12, HwFallbackReason::EglBadMatch);
 
     GstHwPathTelemetry::recordFallbackReason(HwVideoBufferPath::D3D11, HwFallbackReason::EglBadMatch);
@@ -851,8 +845,7 @@ void GStreamerTest::_testTelemetryFallbackReasonMatrix()
 
     QCOMPARE(GstHwPathTelemetry::peekFallbackReason(HwVideoBufferPath::D3D11, HwFallbackReason::EglBadMatch),
              quint64(2));
-    QCOMPARE(GstHwPathTelemetry::peekFallbackReason(HwVideoBufferPath::D3D11, HwFallbackReason::FenceTimeout),
-             quint64(0));
+    QCOMPARE(GstHwPathTelemetry::peekFallbackReason(HwVideoBufferPath::D3D11, HwFallbackReason::MapFailed), quint64(0));
     QCOMPARE(GstHwPathTelemetry::peekFallbackReason(HwVideoBufferPath::D3D12, HwFallbackReason::EglBadMatch),
              quint64(0));
 
@@ -913,8 +906,6 @@ void GStreamerTest::_testTelemetryMapFailuresReportedInExtraStats()
     constexpr HwVideoBufferPath path = HwVideoBufferPath::Vulkan;
 #endif
 
-    // takeExtraPathStats() reports registered paths only; the qgc plugin registers them when it loads.
-    HwBuffers::initializeOnce();
     (void) HwBuffers::takeExtraPathStats();
 
     GstHwPathTelemetry::recordMapFailure(path);
@@ -934,23 +925,21 @@ void GStreamerTest::_testTelemetryDmaBufExtraStatsDrain()
 #else
     (void) HwBuffers::takeExtraPathStats();
     GstHwPathTelemetry::recordProducerFenceTimeout(HwVideoBufferPath::DmaBuf);
-    GstHwPathTelemetry::recordCpuBarrierWait(HwVideoBufferPath::DmaBuf);
-    GstHwPathTelemetry::recordExplicitFenceWait(HwVideoBufferPath::DmaBuf);
+    GstHwPathTelemetry::recordSyncWait(HwVideoBufferPath::DmaBuf, /*gpuSide=*/false);
+    GstHwPathTelemetry::recordSyncWait(HwVideoBufferPath::DmaBuf, /*gpuSide=*/true);
     GstHwPathTelemetry::recordImageCacheHit(HwVideoBufferPath::DmaBuf);
     GstHwPathTelemetry::recordImageCacheHit(HwVideoBufferPath::DmaBuf);
     GstHwPathTelemetry::recordImageCacheMiss(HwVideoBufferPath::DmaBuf);
 
     const QString first = HwBuffers::takeExtraPathStats();
-    QVERIFY(first.contains(QStringLiteral("DMABuf-fence-timeouts:")));
-    QVERIFY(first.contains(QStringLiteral("DMABuf-cpu-barriers:")));
-    QVERIFY(first.contains(QStringLiteral("DMABuf-explicit-fence-waits:")));
+    QVERIFY2(first.contains(QStringLiteral("DMABuf-fence-timeouts:1")), qPrintable(first));
+    QVERIFY2(first.contains(QStringLiteral("DMABuf-wait[gpu/cpu]:1/1")), qPrintable(first));
     QVERIFY2(first.contains(QStringLiteral("DMABuf-image-cache[hit/miss]:2/1")), qPrintable(first));
 
     const QString second = HwBuffers::takeExtraPathStats();
-    QVERIFY(second.contains(QStringLiteral("DMABuf-fence-timeouts:0")));
-    QVERIFY(second.contains(QStringLiteral("DMABuf-cpu-barriers:0")));
-    QVERIFY(second.contains(QStringLiteral("DMABuf-explicit-fence-waits:0")));
-    QVERIFY(!second.contains(QStringLiteral("image-cache")));
+    QVERIFY2(!second.contains(QStringLiteral("fence-timeouts")), qPrintable(second));
+    QVERIFY2(!second.contains(QStringLiteral("wait[gpu/cpu]")), qPrintable(second));
+    QVERIFY2(!second.contains(QStringLiteral("image-cache")), qPrintable(second));
 #endif
 }
 

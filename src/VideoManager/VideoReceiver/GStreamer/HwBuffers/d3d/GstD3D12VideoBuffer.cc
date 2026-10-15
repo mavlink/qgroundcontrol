@@ -1,6 +1,6 @@
-#include "GstD3D12VideoBuffer.h"
+#include "GstD3DVideoBufferCommon.h"
 
-#if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D12_GPU_PATH)
+#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
 
 #include <algorithm>
 #include <array>
@@ -12,7 +12,6 @@
 #include <QtCore/QMutex>
 
 #include "GstD3D12ContextBridge.h"
-#include "GstD3DVideoBufferCommon.h"
 #include "GstHwImportCache.h"
 #include "GstHwPathRegistry.h"
 #include "GstHwPathTelemetry.h"
@@ -24,7 +23,6 @@ namespace {
 
 using GstD3DVideoBufferCommon::kMaxPlanes;
 using GstD3DVideoBufferCommon::MapDiagnostics;
-using D3D12FrameTextures = GstD3DVideoBufferCommon::FrameTextures<ID3D12Resource>;
 using GstD3DVideoBufferCommon::StagingKey;
 
 MapDiagnostics s_diag;
@@ -101,10 +99,10 @@ constexpr std::size_t kStagingRingSize = 8;
 
 using StagingLeaseFlags = std::array<std::atomic<bool>, kStagingRingSize>;
 
-/// Holds one ring slot, plus refs on its COM objects, from acquire() until the last holder (the GstD3D12VideoBuffer and
+/// Holds one ring slot, plus refs on its COM objects, from acquire() until the last holder (the D3D12 video buffer and
 /// the frame bundle QRhi samples) drops it; another stream or a later frame can't reset its allocator/list or overwrite
-/// its resource meanwhile. Its copy has completed by the time the first holder exists (resolvePlaneResources
-/// fence-waits), so the next acquirer may Reset() the allocator immediately.
+/// its resource meanwhile. Its copy has completed by the time the first holder exists (the resolve fence-waits), so the
+/// next acquirer may Reset() the allocator immediately.
 class StagingSlotLease
 {
 public:
@@ -304,9 +302,10 @@ ID3D12Resource* copySliceToStaging(ID3D12Resource* resource, guint subIdx, int p
 
 using PlaneLeases = std::array<std::shared_ptr<StagingSlotLease>, kMaxPlanes>;
 
-/// D3D12 pieces of GstD3DVideoBufferCommon::resolvePlanes(). Staged planes share one copy queue, resolved on the first
-/// staged plane (constant per device); finish() does a single fence wait on the highest submitted value. An early
-/// return still waits for submitted copies (destructor) before the slot leases are released.
+/// D3D12 pieces of GstD3DVideoBufferCommon's resolvePlanes(), VideoBuffer and proposePool(). Staged planes share one
+/// copy queue, resolved on the first staged plane (constant per device); finish() does a single fence wait on the
+/// highest submitted value. An early return still waits for submitted copies (destructor) before the slot leases are
+/// released.
 class D3D12PlaneResolver
 {
 public:
@@ -315,6 +314,9 @@ public:
     using Device = GstD3D12Device;
 
     static constexpr const char* kMemoryName = "GstD3D12Memory";
+    static constexpr HwVideoBufferPath kPath = HwVideoBufferPath::D3D12;
+    static constexpr QRhi::Implementation kBackend = QRhi::D3D12;
+    static constexpr const char* kCapsFeature = GST_CAPS_FEATURE_MEMORY_D3D12_MEMORY;
 
     D3D12PlaneResolver() = default;
     D3D12PlaneResolver(const D3D12PlaneResolver&) = delete;
@@ -329,6 +331,8 @@ public:
     }
 
     static const QLoggingCategory& log() { return GstD3D12Log(); }
+
+    static MapDiagnostics& diag() { return s_diag; }
 
     static bool isMemory(GstMemory* mem) { return gst_is_d3d12_memory(mem); }
 
@@ -397,9 +401,20 @@ public:
     bool finish() { return waitForCopies(); }
 
     /// Slot leases of the staged planes; null when nothing was staged.
-    std::shared_ptr<void> takeLeases()
+    std::shared_ptr<void> takeKeepAlive()
     {
         return _anyCopy ? std::make_shared<PlaneLeases>(std::move(_leases)) : nullptr;
+    }
+
+    static GstBufferPool* newPool(Device* device) { return gst_d3d12_buffer_pool_new(device); }
+
+    static void setAllocationParams(GstStructure* config, Device* device, const GstVideoInfo* vinfo)
+    {
+        if (GstD3D12AllocationParams* params = gst_d3d12_allocation_params_new(
+                device, vinfo, GST_D3D12_ALLOCATION_FLAG_DEFAULT, D3D12_RESOURCE_FLAG_NONE, D3D12_HEAP_FLAG_NONE)) {
+            gst_buffer_pool_config_set_d3d12_allocation_params(config, params);
+            gst_d3d12_allocation_params_free(params);
+        }
     }
 
 private:
@@ -426,123 +441,10 @@ private:
     bool _waited = false;
 };
 
-}  // namespace
-
-void GstD3D12VideoBuffer::resetCachedState() noexcept
+void resetCachedState() noexcept
 {
     StagingResourcePool::instance().clear();
     s_diag.reset();
-}
-
-
-GstD3D12VideoBuffer::GstD3D12VideoBuffer(GstSample* sample, const GstVideoInfo& videoInfo,
-                                         const QVideoFrameFormat& format)
-    : GstHwVideoBuffer(QVideoFrame::RhiTextureHandle, sample, videoInfo, format)
-{
-    // Resolve on the streaming thread, never in mapTextures (render thread); blocking here is harmless since the
-    // decoder is async.
-    resolvePlaneResources();
-}
-
-GstD3D12VideoBuffer::~GstD3D12VideoBuffer()
-{
-    for (int i = 0; i < _resolvedCount; ++i) {
-        if (_resources[i])
-            _resources[i]->Release();
-    }
-}
-
-bool GstD3D12VideoBuffer::validatePlaneHandles() const
-{
-    // Constructor-time resolve failed (device mismatch, sync/copy failure) — let the factory demote to CPU.
-    if (!_resolved) {
-        return false;
-    }
-    return validatePlanes([](GstMemory* mem) {
-        if (!mem || !gst_is_d3d12_memory(mem))
-            return false;
-        return gst_d3d12_memory_get_resource_handle(GST_D3D12_MEMORY_CAST(mem)) != nullptr;
-    });
-}
-
-void GstD3D12VideoBuffer::resolvePlaneResources()
-{
-    GstBuffer* buffer = _sample ? gst_sample_get_buffer(_sample) : nullptr;
-    if (!buffer)
-        return;
-
-    GstD3DVideoBufferCommon::PlaneResourceGuard<ID3D12Resource> guard;
-    D3D12PlaneResolver resolver;
-    const int resolvedCount = GstD3DVideoBufferCommon::resolvePlanes(buffer, resolver, s_diag, guard);
-    if (resolvedCount == 0) {
-        return;
-    }
-
-    _resources = guard.handles;
-    _resolvedCount = resolvedCount;
-    _resolved = true;
-    guard.commit();
-    _stagingLeases = resolver.takeLeases();
-}
-
-QVideoFrameTexturesUPtr GstD3D12VideoBuffer::mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& old)
-{
-    // GstD3D12ContextBridge wires a shared adapter; without it createFrom() succeeds but resources sit on an isolated
-    // device and rendering corrupts.
-    GstBuffer* buffer = nullptr;
-    if (!checkMapPreconditions(rhi, static_cast<int>(QRhi::D3D12), GstD3D12Log(), s_diag, buffer)) {
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::D3D12);
-    }
-    if (!_resolved) {
-        // Failure cause was warned in resolvePlaneResources() on the streaming thread.
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::D3D12);
-    }
-
-    const GstHwMapTail tail{.path = HwVideoBufferPath::D3D12,
-                            .frameSize = _format.frameSize(),
-                            .pixelFormat = _format.pixelFormat(),
-                            .log = &GstD3D12Log(),
-                            .diag = &s_diag,
-                            .successTag = "D3D12"};
-    return GstD3DVideoBufferCommon::mapResolvedTextures(*this, rhi, old, tail, _resources, _resolvedCount,
-                                                        _stagingLeases);
-}
-
-namespace {
-
-// Steers allocation onto QRhi's shared (LUID-matched) adapter, like the D3D11 pool proposal.
-bool proposeD3D12Pool(GstQuery* query, GstCaps* caps, const GstVideoInfo* vinfo, gsize size, guint minBuffers)
-{
-    GstCapsFeatures* features = gst_caps_get_features(caps, 0);
-    if (!features || !gst_caps_features_contains(features, GST_CAPS_FEATURE_MEMORY_D3D12_MEMORY)) {
-        return false;
-    }
-    GstD3D12Device* device = GstD3D12ContextBridge::currentDevice();
-    if (!device) {
-        return false;
-    }
-    bool proposed = false;
-    if (GstBufferPool* pool = gst_d3d12_buffer_pool_new(device)) {
-        GstStructure* config = gst_buffer_pool_get_config(pool);
-        gst_buffer_pool_config_set_params(config, caps, size, minBuffers, 0);
-        gst_buffer_pool_config_add_option(config, GST_BUFFER_POOL_OPTION_VIDEO_META);
-        if (GstD3D12AllocationParams* params = gst_d3d12_allocation_params_new(
-                device, vinfo, GST_D3D12_ALLOCATION_FLAG_DEFAULT, D3D12_RESOURCE_FLAG_NONE, D3D12_HEAP_FLAG_NONE)) {
-            gst_buffer_pool_config_set_d3d12_allocation_params(config, params);
-            gst_d3d12_allocation_params_free(params);
-        }
-        if (gst_buffer_pool_set_config(pool, config)) {
-            GstStructure* updated = gst_buffer_pool_get_config(pool);
-            guint poolSize = static_cast<guint>(size);
-            gst_buffer_pool_config_get_params(updated, nullptr, &poolSize, nullptr, nullptr);
-            gst_structure_free(updated);
-            gst_query_add_allocation_pool(query, pool, poolSize, minBuffers, 0);
-            proposed = true;
-        }
-        gst_object_unref(pool);
-    }
-    gst_object_unref(device);
-    return proposed;
 }
 
 }  // namespace
@@ -550,10 +452,10 @@ bool proposeD3D12Pool(GstQuery* query, GstCaps* caps, const GstVideoInfo* vinfo,
 constinit const HwPathDescriptor GstHwPaths::kD3D12 = {
     .path = HwVideoBufferPath::D3D12,
     .matches = [](GstMemory* mem, const HwVideoBufferContext&) -> bool { return gst_is_d3d12_memory(mem); },
-    .construct = &GstHwPaths::construct<GstD3D12VideoBuffer>,
-    .resetCaches = &GstD3D12VideoBuffer::resetCachedState,
-    .proposePool = &proposeD3D12Pool,
+    .construct = &GstHwPaths::construct<GstD3DVideoBufferCommon::VideoBuffer<D3D12PlaneResolver>>,
+    .resetCaches = &resetCachedState,
+    .proposePool = &GstD3DVideoBufferCommon::proposePool<D3D12PlaneResolver>,
     .bridge = &GstD3D12ContextBridge::instance,
 };
 
-#endif  // Q_OS_WIN && QGC_HAS_GST_D3D12_GPU_PATH
+#endif  // QGC_HAS_GST_D3D12_GPU_PATH

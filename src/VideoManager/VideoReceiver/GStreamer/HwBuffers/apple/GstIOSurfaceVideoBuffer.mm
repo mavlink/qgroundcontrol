@@ -111,21 +111,12 @@ MTLPixelFormat metalPixelFormatForPlane(QVideoFrameFormat::PixelFormat fmt, int 
 class FrameTextures final : public GstHwFrameTexturesBase
 {
 public:
-    FrameTextures(QRhi *rhi, QSize size, QVideoFrameFormat::PixelFormat pixelFormat,
-                  std::array<id<MTLTexture>, kMaxPlanes> mtex,
-                  std::array<CVMetalTextureRef, kMaxPlanes> cvtex, int count)
-        : _rhi(rhi)
-        , _size(size)
-        , _pixelFormat(pixelFormat)
-        , _mtex(mtex)
-        , _cvtex(cvtex)
+    /// @p handles are the planes' MTLTexture pointers; @p cvtex the CVMetalTextureRefs that keep them alive.
+    FrameTextures(QRhi* rhi, QSize size, QVideoFrameFormat::PixelFormat pixelFormat, std::span<const quint64> handles,
+                  std::array<CVMetalTextureRef, kMaxPlanes> cvtex)
+        : _cvtex(cvtex)
     {
-        std::array<quint64, kMaxPlanes> handles{};
-        for (int i = 0; i < count && i < kMaxPlanes; ++i) {
-            handles[i] = reinterpret_cast<quint64>(static_cast<void*>(mtex[i]));
-        }
-        wrapPlanes(rhi, size, pixelFormat,
-                   std::span<const quint64>(handles.data(), std::size_t(std::clamp(count, 0, kMaxPlanes))));
+        wrapPlanes(rhi, size, pixelFormat, handles);
     }
 
     ~FrameTextures() override
@@ -134,28 +125,7 @@ public:
         // refcount; releasing returns them to the cache for reuse. Base dtor clears _srcSample.
         for (int i = 0; i < _count; ++i) {
             if (_cvtex[i]) CFRelease(_cvtex[i]);
-            _mtex[i] = nil;
         }
-    }
-
-    HwVideoBufferPath sourcePath() const override { return HwVideoBufferPath::IOSurface; }
-
-    // Reuse eligibility: identical rhi+size+format and identical, non-nil MTLTexture handles
-    // per plane. VideoToolbox recycles CVPixelBuffer/IOSurface across frames; the
-    // CVMetalTextureCache returns the same MTLTexture when the underlying IOSurface repeats,
-    // so the QRhiTexture wrapper can be reused with new sample data.
-    bool matches(QRhi *rhi, QSize size, QVideoFrameFormat::PixelFormat pixelFormat,
-                 const std::array<id<MTLTexture>, kMaxPlanes> &mtex, int count) const
-    {
-        if (_rhi != rhi || _size != size || _pixelFormat != pixelFormat || _count != count) {
-            return false;
-        }
-        for (int i = 0; i < _count; ++i) {
-            if (_mtex[i] == nil || _mtex[i] != mtex[i] || !_textures[i]) {
-                return false;
-            }
-        }
-        return true;
     }
 
     // Replace the per-plane CVMetalTextureRef holders with fresh ones (transferring the
@@ -170,10 +140,6 @@ public:
     }
 
 private:
-    QRhi *_rhi = nullptr;
-    QSize _size;
-    QVideoFrameFormat::PixelFormat _pixelFormat = QVideoFrameFormat::Format_Invalid;
-    std::array<id<MTLTexture>, kMaxPlanes> _mtex;
     std::array<CVMetalTextureRef, kMaxPlanes> _cvtex;
 };
 
@@ -293,12 +259,11 @@ QVideoFrameTexturesUPtr GstIOSurfaceVideoBuffer::mapTextures(QRhi &rhi, QVideoFr
         return GstHwPathTelemetry::fail(HwVideoBufferPath::IOSurface);
     }
 
-    std::array<id<MTLTexture>, kMaxPlanes> mtex{};
+    std::array<quint64, kMaxPlanes> handles{};
     std::array<CVMetalTextureRef, kMaxPlanes> cvtex{};
     auto cleanupAndFail = [&](int upto) {
         for (int j = 0; j < upto; ++j) {
             if (cvtex[j]) { CFRelease(cvtex[j]); cvtex[j] = nullptr; }
-            mtex[j] = nil;
         }
         CFRelease(pixelBuffer);
         return GstHwPathTelemetry::fail(HwVideoBufferPath::IOSurface);
@@ -334,7 +299,7 @@ QVideoFrameTexturesUPtr GstIOSurfaceVideoBuffer::mapTextures(QRhi &rhi, QVideoFr
             return cleanupAndFail(i);
         }
         cvtex[i] = ct;
-        mtex[i] = t;
+        handles[i] = reinterpret_cast<quint64>(static_cast<void*>(t));
     }
 
     CFRelease(pixelBuffer);
@@ -347,18 +312,19 @@ QVideoFrameTexturesUPtr GstIOSurfaceVideoBuffer::mapTextures(QRhi &rhi, QVideoFr
                             .diag = &s_diag,
                             .preflight = false,
                             .successTag = "IOSurface"};
+    const std::span<const quint64> planes(handles.data(), std::size_t(planeCount));
+    // VideoToolbox recycles CVPixelBuffer/IOSurface across frames and the CVMetalTextureCache returns the same
+    // MTLTexture for a repeated IOSurface, so a bundle over the same textures samples the new frame unchanged.
     return GstHwFrameTexturesBase::finishMap<FrameTextures>(
         *this, rhi, old, tail,
         [&](FrameTextures& prev) {
-            if (!prev.matches(&rhi, tail.frameSize, tail.pixelFormat, mtex, planeCount)) {
+            if (!prev.matchesImport(&rhi, tail.frameSize, tail.pixelFormat, planes)) {
                 return false;
             }
             prev.adoptCvRefs(cvtex);
             return true;
         },
-        [&] {
-            return std::make_unique<FrameTextures>(&rhi, tail.frameSize, tail.pixelFormat, mtex, cvtex, planeCount);
-        });
+        [&] { return std::make_unique<FrameTextures>(&rhi, tail.frameSize, tail.pixelFormat, planes, cvtex); });
 }
 
 // gst-applemedia exports no public gst_is_apple_core_video_memory() predicate, so match the allocator's memory type.

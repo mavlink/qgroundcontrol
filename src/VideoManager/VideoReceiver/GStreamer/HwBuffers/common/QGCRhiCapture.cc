@@ -7,7 +7,7 @@
 #include <QtCore/QRunnable>
 #include <QtQuick/QQuickWindow>
 #include <rhi/qrhi.h>
-#if (defined(Q_OS_WIN) && (defined(QGC_HAS_GST_D3D11_GPU_PATH) || defined(QGC_HAS_GST_D3D12_GPU_PATH))) || \
+#if defined(QGC_HAS_GST_D3D11_GPU_PATH) || defined(QGC_HAS_GST_D3D12_GPU_PATH) || \
     (defined(QGC_HAS_GST_VULKAN_GPU_PATH) && QT_CONFIG(vulkan))
 #include <rhi/qrhi_platform.h>
 #endif
@@ -53,7 +53,7 @@ void populateSnapshot(QRhi* rhi)
     quint32 vkQueueFamilyIdx = 0;
     quint32 vkQueueIdx = 0;
 
-#if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D11_GPU_PATH)
+#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
     if (rhi->backend() == QRhi::D3D11) {
         if (auto* h = static_cast<const QRhiD3D11NativeHandles*>(rhi->nativeHandles())) {
             d3d11 = h->dev;
@@ -63,7 +63,7 @@ void populateSnapshot(QRhi* rhi)
         }
     }
 #endif
-#if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D12_GPU_PATH)
+#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
     if (rhi->backend() == QRhi::D3D12) {
         if (auto* h = static_cast<const QRhiD3D12NativeHandles*>(rhi->nativeHandles())) {
             d3d12 = h->dev;

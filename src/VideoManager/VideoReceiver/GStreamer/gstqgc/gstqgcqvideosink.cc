@@ -1,5 +1,6 @@
 #include "gstqgcqvideosink.h"
 
+#include <array>
 #include <atomic>
 #include <gst/video/video-info.h>
 #include <gst/video/video.h>
@@ -67,7 +68,11 @@ struct PrivState
     // Per-element render counter (read via `frames-delivered`) so multi-receiver setups
     // don't see a shared process-global total.
     std::atomic<quint64> delivered_frames{0};
-    GstHwPathTelemetry::SinkCounters path_counters;
+    // Delivered frames per path (None counts CPU frames), frames a GPU path was tried for but delivered through the
+    // CPU, and caps epochs that started on a GPU path and fell back to the CPU; reported through "frame-stats".
+    std::array<std::atomic<quint64>, GstHw::kPathCount> path_frames{};
+    std::atomic<quint64> gpu_fallbacks{0};
+    std::atomic<quint64> stream_demotions{0};
     // One stream demotion per caps epoch; reset with the path cache.
     bool demotion_recorded = false;
     // Live zero-copy CPU frames pinning this sink's decoder buffers; shared because Qt may hold frames past finalize.
@@ -146,7 +151,13 @@ GstStructure* make_stats(const PrivState& p)
         gst_structure_set(stats, field, G_TYPE_UINT64, static_cast<guint64>(counter->load(std::memory_order_relaxed)),
                           nullptr);
     }
-    GstHwPathTelemetry::appendSinkCounters(stats, p.path_counters);
+    for (std::size_t i = 0; i < GstHw::kPathCount; ++i) {
+        gst_structure_set(stats, HwBuffers::sinkFramesField(HwVideoBufferPath(i)), G_TYPE_UINT64,
+                          static_cast<guint64>(p.path_frames[i].load(std::memory_order_relaxed)), nullptr);
+    }
+    gst_structure_set(stats, "gpu-fallbacks", G_TYPE_UINT64,
+                      static_cast<guint64>(p.gpu_fallbacks.load(std::memory_order_relaxed)), "stream-demotions",
+                      G_TYPE_UINT64, static_cast<guint64>(p.stream_demotions.load(std::memory_order_relaxed)), nullptr);
     return stats;
 }
 
@@ -385,11 +396,6 @@ constexpr quint64 kMaxConsecutiveMapFailures = 120;
 // A backward PTS jump larger than this is a new timeline (source restart, loop), not reordered output to drop.
 constexpr int64_t kPtsResyncThresholdNs = static_cast<int64_t>(GST_SECOND);
 
-static const char* describeMappedPath(const MappedFrame& m) noexcept
-{
-    return GstHw::toString((m.source == MappedFrame::Source::Gpu) ? m.gpuPath : HwVideoBufferPath::None);
-}
-
 static GstFlowReturn gst_qgc_q_video_sink_show_frame(GstVideoSink* vsink, GstBuffer* buf)
 {
     GstQgcQVideoSink* self = GST_QGC_Q_VIDEO_SINK(vsink);
@@ -452,7 +458,7 @@ static GstFlowReturn gst_qgc_q_video_sink_show_frame(GstVideoSink* vsink, GstBuf
             // Without an element error upstream reports only a generic "Internal data stream error".
             GST_ELEMENT_ERROR(self, STREAM, FAILED, ("Video frames could not be mapped for display"),
                               ("%" G_GUINT64_FORMAT " consecutive map failures (path %s, format %s)",
-                               static_cast<guint64>(c), describeMappedPath(mapped), format ? format : "unknown"));
+                               static_cast<guint64>(c), GstHw::toString(mapped.gpuPath), format ? format : "unknown"));
             return GST_FLOW_ERROR;
         }
         return GST_FLOW_OK;  // drop transient failure, keep the stream alive
@@ -469,27 +475,23 @@ static GstFlowReturn gst_qgc_q_video_sink_show_frame(GstVideoSink* vsink, GstBuf
         return GST_FLOW_OK;  // QVideoSink unbound while mapping
     }
 
-    // Per-sink counters back the "frame-stats" property; the process-global ones total every sink's deliveries.
-    const HwVideoBufferPath deliveredPath =
-        (mapped.source == MappedFrame::Source::Gpu) ? mapped.gpuPath : HwVideoBufferPath::None;
-    p->path_counters.delivered[static_cast<std::size_t>(deliveredPath)].fetch_add(1, std::memory_order_relaxed);
-    GstHwPathTelemetry::recordDelivered(deliveredPath);
+    p->path_frames[static_cast<std::size_t>(mapped.gpuPath)].fetch_add(1, std::memory_order_relaxed);
     if (mapped.demoted) {
-        p->path_counters.gpuFallbacks.fetch_add(1, std::memory_order_relaxed);
+        p->gpu_fallbacks.fetch_add(1, std::memory_order_relaxed);
         if (!std::exchange(p->demotion_recorded, true)) {
-            p->path_counters.streamDemotions.fetch_add(1, std::memory_order_relaxed);
-            GstHwPathTelemetry::recordStreamDemotion(mapped.gpuPath);
+            p->stream_demotions.fetch_add(1, std::memory_order_relaxed);
         }
     }
 
     const quint64 delivered = p->delivered_frames.fetch_add(1, std::memory_order_relaxed) + 1;
     if (delivered == 1) {
-        qCInfo(GstQgcQVideoSinkLog).noquote() << "first frame delivered via" << describeMappedPath(mapped) << "path"
-                                              << QStringLiteral("%1x%2").arg(frameSize.width()).arg(frameSize.height());
+        qCInfo(GstQgcQVideoSinkLog).noquote()
+            << "first frame delivered via" << GstHw::toString(mapped.gpuPath) << "path"
+            << QStringLiteral("%1x%2").arg(frameSize.width()).arg(frameSize.height());
     } else if ((delivered % 300) == 0) {
-        const auto& cpuFrames = p->path_counters.delivered[static_cast<std::size_t>(HwVideoBufferPath::None)];
+        const auto& cpuFrames = p->path_frames[static_cast<std::size_t>(HwVideoBufferPath::None)];
         qCDebug(GstQgcQVideoSinkLog).noquote()
-            << "frame flow:" << describeMappedPath(mapped) << "delivered=" << delivered
+            << "frame flow:" << GstHw::toString(mapped.gpuPath) << "delivered=" << delivered
             << "input=" << p->input_frames.load(std::memory_order_relaxed)
             << "dropped=" << p->dropped_frames.load(std::memory_order_relaxed)
             << "cpuFrames=" << cpuFrames.load(std::memory_order_relaxed);

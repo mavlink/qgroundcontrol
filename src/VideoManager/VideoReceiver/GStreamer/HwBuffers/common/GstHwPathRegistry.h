@@ -4,13 +4,12 @@
 
 #if defined(QGC_HAS_ANY_GPU_PATH)
 
-#include <array>
-#include <cstddef>
 #include <gst/gst.h>
 #include <gst/video/video-info.h>
 #include <initializer_list>
 #include <memory>
 #include <span>
+#include <vector>
 
 #include <QtMultimedia/QVideoFrameFormat>
 
@@ -20,7 +19,7 @@ class GstContextBridgeBase;
 class GstHwVideoBuffer;
 
 /// Everything the factory and the HwBuffers facade know about one compiled GPU path. Each backend defines its
-/// descriptor in its own translation unit (GstHwPaths below); HwBuffers::initializeOnce() registers them.
+/// descriptor in its own translation unit (GstHwPaths below); GstHwPathRegistry lists the compiled ones.
 struct HwPathDescriptor
 {
     /// Path the imported buffers report. CUDA reports DmaBuf: it imports through the DMABuf importer.
@@ -36,9 +35,6 @@ struct HwPathDescriptor
     std::unique_ptr<GstHwVideoBuffer> (*construct)(GstSample* sample, const GstVideoInfo& info,
                                                    QVideoFrameFormat format,
                                                    const HwVideoBufferContext& context) = nullptr;
-
-    /// Optional. Runs after a matched frame failed to construct or validate.
-    void (*onImportFailed)() = nullptr;
 
     /// Optional. Fills this path's fields of a GPU-enabled HwVideoBufferContext.
     void (*prepareContext)(HwVideoBufferContext& context) = nullptr;
@@ -77,24 +73,17 @@ extern const HwPathDescriptor kAHardwareBuffer;
 
 }  // namespace GstHwPaths
 
-/// The registered GPU paths. HwBuffers::initializeOnce() registers them while the qgc plugin loads, before any pipeline
-/// exists, so streaming and bus threads read the list without locking.
+/// The compiled GPU paths, a constant list any thread can read.
 namespace GstHwPathRegistry {
 
-/// One slot per GstHwPaths descriptor.
-inline constexpr std::size_t kMaxPaths = 8;
-
-/// Appends @p path; a frame takes the first registered path whose matches() accepts its memory. Ignores duplicates.
-void add(const HwPathDescriptor& path) noexcept;
-
-/// Registered paths in selection order.
+/// Compiled paths in selection order: a frame takes the first one whose matches() accepts its memory.
 std::span<const HwPathDescriptor* const> paths() noexcept;
 
-/// True when a registered path imports frames as @p path.
+/// True when a compiled path imports frames as @p path.
 bool has(HwVideoBufferPath path) noexcept;
 
 #ifdef QGC_GST_BUILD_TESTING
-/// Registers only @p paths while alive, then restores the previous registrations.
+/// paths() returns only @p paths while alive, then what it returned before.
 class ScopedPathsForTest
 {
 public:
@@ -104,8 +93,8 @@ public:
     ScopedPathsForTest& operator=(const ScopedPathsForTest&) = delete;
 
 private:
-    std::array<const HwPathDescriptor*, kMaxPaths> _saved{};
-    std::size_t _savedCount = 0;
+    std::vector<const HwPathDescriptor*> _paths;
+    const std::vector<const HwPathDescriptor*>* _previous = nullptr;
 };
 #endif
 

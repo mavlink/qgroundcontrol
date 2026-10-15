@@ -1,6 +1,6 @@
 #include "GstD3D12ContextBridge.h"
 
-#if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D12_GPU_PATH)
+#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
 
 #include <gst/d3d12/gstd3d12.h>
 #include <rhi/qrhi.h>  // QRhi::Implementation enum only; native handles come from the snapshot
@@ -63,4 +63,4 @@ GstD3D12Device* GstD3D12ContextBridge::currentDevice()
     return GST_D3D12_DEVICE_CAST(s_bridge.refDevice());
 }
 
-#endif  // Q_OS_WIN && QGC_HAS_GST_D3D12_GPU_PATH
+#endif  // QGC_HAS_GST_D3D12_GPU_PATH

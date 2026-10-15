@@ -1,6 +1,7 @@
 #include "GstHwPathTelemetry.h"
 
-#include <QtCore/QByteArray>
+#include <array>
+#include <atomic>
 
 namespace GstHwPathTelemetry {
 
@@ -14,12 +15,8 @@ struct PathCounters
     std::atomic<quint64> syncGpuWaits{0};
     std::atomic<quint64> imageCacheHits{0};
     std::atomic<quint64> imageCacheMisses{0};
-    std::atomic<quint64> delivered{0};
     std::atomic<quint64> mapDurationUsEwma{0};
     std::atomic<quint64> producerFenceTimeouts{0};
-    std::atomic<quint64> cpuBarrierWaits{0};
-    std::atomic<quint64> explicitFenceWaits{0};
-    std::atomic<quint64> streamDemotions{0};
 };
 
 std::array<PathCounters, GstHw::kPathCount> s_counters{};
@@ -91,21 +88,6 @@ quint64 takeImageCacheMisses(HwVideoBufferPath path) noexcept
     return slot(path).imageCacheMisses.exchange(0, std::memory_order_relaxed);
 }
 
-void recordDelivered(HwVideoBufferPath path) noexcept
-{
-    slot(path).delivered.fetch_add(1, std::memory_order_relaxed);
-}
-
-quint64 peekDeliveredCount(HwVideoBufferPath path) noexcept
-{
-    return slot(path).delivered.load(std::memory_order_relaxed);
-}
-
-quint64 takeDeliveredCount(HwVideoBufferPath path) noexcept
-{
-    return slot(path).delivered.exchange(0, std::memory_order_relaxed);
-}
-
 void recordMapDuration(HwVideoBufferPath path, qint64 nsecs) noexcept
 {
     if (nsecs < 0) {
@@ -136,26 +118,6 @@ quint64 takeProducerFenceTimeouts(HwVideoBufferPath path) noexcept
     return slot(path).producerFenceTimeouts.exchange(0, std::memory_order_relaxed);
 }
 
-void recordCpuBarrierWait(HwVideoBufferPath path) noexcept
-{
-    slot(path).cpuBarrierWaits.fetch_add(1, std::memory_order_relaxed);
-}
-
-quint64 takeCpuBarrierWaits(HwVideoBufferPath path) noexcept
-{
-    return slot(path).cpuBarrierWaits.exchange(0, std::memory_order_relaxed);
-}
-
-void recordExplicitFenceWait(HwVideoBufferPath path) noexcept
-{
-    slot(path).explicitFenceWaits.fetch_add(1, std::memory_order_relaxed);
-}
-
-quint64 takeExplicitFenceWaits(HwVideoBufferPath path) noexcept
-{
-    return slot(path).explicitFenceWaits.exchange(0, std::memory_order_relaxed);
-}
-
 void recordFallbackReason(HwVideoBufferPath attemptedPath, HwFallbackReason reason) noexcept
 {
     s_fallbackReasons[size_t(attemptedPath)][size_t(reason)].fetch_add(1, std::memory_order_relaxed);
@@ -169,44 +131,6 @@ quint64 peekFallbackReason(HwVideoBufferPath attemptedPath, HwFallbackReason rea
 quint64 takeFallbackReason(HwVideoBufferPath attemptedPath, HwFallbackReason reason) noexcept
 {
     return s_fallbackReasons[size_t(attemptedPath)][size_t(reason)].exchange(0, std::memory_order_relaxed);
-}
-
-void recordStreamDemotion(HwVideoBufferPath negotiated) noexcept
-{
-    slot(negotiated).streamDemotions.fetch_add(1, std::memory_order_relaxed);
-}
-
-quint64 takeStreamDemotions(HwVideoBufferPath negotiated) noexcept
-{
-    return slot(negotiated).streamDemotions.exchange(0, std::memory_order_relaxed);
-}
-
-const char* sinkFramesField(HwVideoBufferPath path) noexcept
-{
-    static const std::array<QByteArray, GstHw::kPathCount> s_fields = [] {
-        std::array<QByteArray, GstHw::kPathCount> fields;
-        for (std::size_t i = 0; i < fields.size(); ++i) {
-            fields[i] = QByteArray("frames-") + QByteArray(GstHw::toString(HwVideoBufferPath(i))).toLower();
-        }
-        return fields;
-    }();
-    const auto index = static_cast<std::size_t>(path);
-    return (index < s_fields.size()) ? s_fields[index].constData() : nullptr;
-}
-
-void appendSinkCounters(GstStructure* stats, const SinkCounters& counters) noexcept
-{
-    if (!stats) {
-        return;
-    }
-    for (std::size_t i = 0; i < GstHw::kPathCount; ++i) {
-        gst_structure_set(stats, sinkFramesField(HwVideoBufferPath(i)), G_TYPE_UINT64,
-                          static_cast<guint64>(counters.delivered[i].load(std::memory_order_relaxed)), nullptr);
-    }
-    gst_structure_set(stats, "gpu-fallbacks", G_TYPE_UINT64,
-                      static_cast<guint64>(counters.gpuFallbacks.load(std::memory_order_relaxed)), "stream-demotions",
-                      G_TYPE_UINT64, static_cast<guint64>(counters.streamDemotions.load(std::memory_order_relaxed)),
-                      nullptr);
 }
 
 }  // namespace GstHwPathTelemetry

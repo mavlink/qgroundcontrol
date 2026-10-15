@@ -149,8 +149,6 @@ public:
         return live;
     }
 
-    bool empty() const noexcept { return size() == 0; }
-
     /// Entries removed from the cache but not yet destroyed (pinned, or awaiting their owner thread).
     std::size_t parkedCount() const noexcept { return _parked.size(); }
 

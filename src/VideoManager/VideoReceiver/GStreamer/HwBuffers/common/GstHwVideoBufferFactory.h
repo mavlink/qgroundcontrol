@@ -26,8 +26,3 @@ struct HwResolvedPathCache
 std::unique_ptr<QHwVideoBuffer> makeHwVideoBuffer(GstBuffer* buffer, GstCaps* caps, const GstVideoInfo& info,
                                                   QVideoFrameFormat format, const HwVideoBufferContext& context,
                                                   HwVideoBufferPath& matchedPath, HwResolvedPathCache* cache = nullptr);
-
-/// As above, for a buffer already wrapped in @p sample.
-std::unique_ptr<QHwVideoBuffer> makeHwVideoBuffer(GstSample* sample, const GstVideoInfo& info, QVideoFrameFormat format,
-                                                  const HwVideoBufferContext& context, HwVideoBufferPath& matchedPath,
-                                                  HwResolvedPathCache* cache = nullptr);

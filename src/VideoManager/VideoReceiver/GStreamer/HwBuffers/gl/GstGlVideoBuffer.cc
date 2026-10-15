@@ -42,28 +42,11 @@ namespace {
 
 using GstHw::kMaxPlanes;
 
+// Its own type, so reuse never adopts a DMABuf bundle (also a GstGlFrameTextures).
 class FrameTextures final : public GstGlFrameTextures
 {
 public:
     using GstGlFrameTextures::GstGlFrameTextures;
-
-    HwVideoBufferPath sourcePath() const override { return HwVideoBufferPath::GlMemory; }
-
-    // Reuse-eligible when ids match: gst-gl rotates ids within a fixed pool, so the QRhiTexture view transparently
-    // samples new data.
-    bool matches(QRhi* rhi, QSize size, QVideoFrameFormat::PixelFormat pixelFormat,
-                 const std::array<GLuint, kMaxPlanes>& names, int count) const
-    {
-        if (_rhi != rhi || _size != size || _pixelFormat != pixelFormat || _count != count) {
-            return false;
-        }
-        for (int i = 0; i < _count; ++i) {
-            if (_names[i] == 0 || _names[i] != names[i] || !_textures[i]) {
-                return false;
-            }
-        }
-        return true;
-    }
 };
 
 GstHw::MapDiagnostics s_diag;
@@ -190,10 +173,12 @@ QVideoFrameTexturesUPtr GstGlVideoBuffer::mapTextures(QRhi& rhi, QVideoFrameText
                             .pixelFormat = _format.pixelFormat(),
                             .log = &GstGlBufLog(),
                             .diag = &s_diag};
+    // gst-gl rotates texture ids within a fixed pool: a bundle over the same ids samples the new frame unchanged.
     return GstHwFrameTexturesBase::finishMap<FrameTextures>(
         *this, rhi, old, tail,
         [&](const FrameTextures& prev) {
-            return prev.matches(&rhi, tail.frameSize, tail.pixelFormat, names, planeCount);
+            return prev.matchesImport(&rhi, tail.frameSize, tail.pixelFormat,
+                                      std::span<const GLuint>(names.data(), std::size_t(planeCount)));
         },
         [&] { return std::make_unique<FrameTextures>(&rhi, tail.frameSize, tail.pixelFormat, names, planeCount); });
 }

@@ -1,6 +1,6 @@
-#include "GstD3D11VideoBuffer.h"
+#include "GstD3DVideoBufferCommon.h"
 
-#if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D11_GPU_PATH)
+#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
 
 #include <algorithm>
 #include <array>
@@ -11,7 +11,6 @@
 #include <QtCore/QMutex>
 
 #include "GstD3D11ContextBridge.h"
-#include "GstD3DVideoBufferCommon.h"
 #include "GstHwImportCache.h"
 #include "GstHwPathRegistry.h"
 #include "GstHwPathTelemetry.h"
@@ -21,9 +20,7 @@ QGC_LOGGING_CATEGORY(GstD3D11Log, "Video.GStreamer.HwBuffers.GstD3D11Buf")
 
 namespace {
 
-using GstD3DVideoBufferCommon::kMaxPlanes;
 using GstD3DVideoBufferCommon::MapDiagnostics;
-using D3D11FrameTextures = GstD3DVideoBufferCommon::FrameTextures<ID3D11Texture2D>;
 using GstD3DVideoBufferCommon::StagingKey;
 
 MapDiagnostics s_diag;
@@ -128,7 +125,7 @@ ID3D11Texture2D* copySliceToStaging(ID3D11Texture2D* tex, guint subIdx, int plan
     return stagingTex;
 }
 
-/// D3D11 pieces of GstD3DVideoBufferCommon::resolvePlanes().
+/// D3D11 pieces of GstD3DVideoBufferCommon's resolvePlanes(), VideoBuffer and proposePool().
 class D3D11PlaneResolver
 {
 public:
@@ -137,8 +134,13 @@ public:
     using Device = GstD3D11Device;
 
     static constexpr const char* kMemoryName = "GstD3D11Memory";
+    static constexpr HwVideoBufferPath kPath = HwVideoBufferPath::D3D11;
+    static constexpr QRhi::Implementation kBackend = QRhi::D3D11;
+    static constexpr const char* kCapsFeature = GST_CAPS_FEATURE_MEMORY_D3D11_MEMORY;
 
     static const QLoggingCategory& log() { return GstD3D11Log(); }
+
+    static MapDiagnostics& diag() { return s_diag; }
 
     static bool isMemory(GstMemory* mem) { return gst_is_d3d11_memory(mem); }
 
@@ -189,126 +191,29 @@ public:
         return true;
     }
 
-private:
-    GstD3D11Device* _copyDevice = nullptr;
-};
+    // The staging ring rotates its textures itself; nothing for the bundle to hold.
+    static std::shared_ptr<void> takeKeepAlive() { return {}; }
 
-}  // namespace
+    static GstBufferPool* newPool(Device* device) { return gst_d3d11_buffer_pool_new(device); }
 
-void GstD3D11VideoBuffer::resetCachedState() noexcept
-{
-    StagingTexturePool::instance().clear();
-    s_diag.reset();
-}
-
-
-GstD3D11VideoBuffer::GstD3D11VideoBuffer(GstSample* sample, const GstVideoInfo& videoInfo,
-                                         const QVideoFrameFormat& format)
-    : GstHwVideoBuffer(QVideoFrame::RhiTextureHandle, sample, videoInfo, format)
-{
-    // Device guard + slice copy + flush on the streaming thread; mapTextures (render thread) only imports resolved
-    // textures.
-    resolvePlaneResources();
-}
-
-GstD3D11VideoBuffer::~GstD3D11VideoBuffer()
-{
-    for (int i = 0; i < _resolvedCount; ++i) {
-        if (_textures[i])
-            _textures[i]->Release();
-    }
-}
-
-bool GstD3D11VideoBuffer::validatePlaneHandles() const
-{
-    // Constructor-time resolve failed (device mismatch, null resource, staging copy) — let the factory demote to CPU.
-    if (!_resolved) {
-        return false;
-    }
-    return validatePlanes([](GstMemory* mem) {
-        if (!mem || !gst_is_d3d11_memory(mem))
-            return false;
-        // Cheap field read; confirms the wrapper actually backs an ID3D11Texture2D.
-        return gst_d3d11_memory_get_resource_handle(GST_D3D11_MEMORY_CAST(mem)) != nullptr;
-    });
-}
-
-void GstD3D11VideoBuffer::resolvePlaneResources()
-{
-    GstBuffer* buffer = _sample ? gst_sample_get_buffer(_sample) : nullptr;
-    if (!buffer)
-        return;
-
-    GstD3DVideoBufferCommon::PlaneResourceGuard<ID3D11Texture2D> guard;
-    D3D11PlaneResolver resolver;
-    const int resolvedCount = GstD3DVideoBufferCommon::resolvePlanes(buffer, resolver, s_diag, guard);
-    if (resolvedCount == 0) {
-        return;
-    }
-
-    _textures = guard.handles;
-    _resolvedCount = resolvedCount;
-    _resolved = true;
-    guard.commit();
-}
-
-QVideoFrameTexturesUPtr GstD3D11VideoBuffer::mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& old)
-{
-    // GstD3D11ContextBridge must be primed; without a shared device createFrom() silently renders garbage.
-    GstBuffer* buffer = nullptr;
-    if (!checkMapPreconditions(rhi, static_cast<int>(QRhi::D3D11), GstD3D11Log(), s_diag, buffer)) {
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::D3D11);
-    }
-    if (!_resolved) {
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::D3D11);
-    }
-
-    const GstHwMapTail tail{.path = HwVideoBufferPath::D3D11,
-                            .frameSize = _format.frameSize(),
-                            .pixelFormat = _format.pixelFormat(),
-                            .log = &GstD3D11Log(),
-                            .diag = &s_diag,
-                            .successTag = "D3D11"};
-    return GstD3DVideoBufferCommon::mapResolvedTextures(*this, rhi, old, tail, _textures, _resolvedCount);
-}
-
-namespace {
-
-// Bind allocation to QRhi's shared device so import stays same-device instead of hitting
-// GstD3D11VideoBuffer's foreign-device copy path; SHADER_RESOURCE matches the importer's sampled texture.
-bool proposeD3D11Pool(GstQuery* query, GstCaps* caps, const GstVideoInfo* vinfo, gsize size, guint minBuffers)
-{
-    GstCapsFeatures* features = gst_caps_get_features(caps, 0);
-    if (!features || !gst_caps_features_contains(features, GST_CAPS_FEATURE_MEMORY_D3D11_MEMORY)) {
-        return false;
-    }
-    GstD3D11Device* device = GstD3D11ContextBridge::currentDevice();
-    if (!device) {
-        return false;
-    }
-    bool proposed = false;
-    if (GstBufferPool* pool = gst_d3d11_buffer_pool_new(device)) {
-        GstStructure* config = gst_buffer_pool_get_config(pool);
-        gst_buffer_pool_config_set_params(config, caps, size, minBuffers, 0);
-        gst_buffer_pool_config_add_option(config, GST_BUFFER_POOL_OPTION_VIDEO_META);
+    // SHADER_RESOURCE matches the importer's sampled texture.
+    static void setAllocationParams(GstStructure* config, Device* device, const GstVideoInfo* vinfo)
+    {
         if (GstD3D11AllocationParams* params = gst_d3d11_allocation_params_new(
                 device, vinfo, GST_D3D11_ALLOCATION_FLAG_DEFAULT, D3D11_BIND_SHADER_RESOURCE, 0)) {
             gst_buffer_pool_config_set_d3d11_allocation_params(config, params);
             gst_d3d11_allocation_params_free(params);
         }
-        if (gst_buffer_pool_set_config(pool, config)) {
-            // The d3d11 pool may grow the buffer size to the allocated texture's pitch; re-read it.
-            GstStructure* updated = gst_buffer_pool_get_config(pool);
-            guint poolSize = static_cast<guint>(size);
-            gst_buffer_pool_config_get_params(updated, nullptr, &poolSize, nullptr, nullptr);
-            gst_structure_free(updated);
-            gst_query_add_allocation_pool(query, pool, poolSize, minBuffers, 0);
-            proposed = true;
-        }
-        gst_object_unref(pool);
     }
-    gst_object_unref(device);  // currentDevice() returns a transfer-full ref.
-    return proposed;
+
+private:
+    GstD3D11Device* _copyDevice = nullptr;
+};
+
+void resetCachedState() noexcept
+{
+    StagingTexturePool::instance().clear();
+    s_diag.reset();
 }
 
 }  // namespace
@@ -316,10 +221,10 @@ bool proposeD3D11Pool(GstQuery* query, GstCaps* caps, const GstVideoInfo* vinfo,
 constinit const HwPathDescriptor GstHwPaths::kD3D11 = {
     .path = HwVideoBufferPath::D3D11,
     .matches = [](GstMemory* mem, const HwVideoBufferContext&) -> bool { return gst_is_d3d11_memory(mem); },
-    .construct = &GstHwPaths::construct<GstD3D11VideoBuffer>,
-    .resetCaches = &GstD3D11VideoBuffer::resetCachedState,
-    .proposePool = &proposeD3D11Pool,
+    .construct = &GstHwPaths::construct<GstD3DVideoBufferCommon::VideoBuffer<D3D11PlaneResolver>>,
+    .resetCaches = &resetCachedState,
+    .proposePool = &GstD3DVideoBufferCommon::proposePool<D3D11PlaneResolver>,
     .bridge = &GstD3D11ContextBridge::instance,
 };
 
-#endif  // Q_OS_WIN && QGC_HAS_GST_D3D11_GPU_PATH
+#endif  // QGC_HAS_GST_D3D11_GPU_PATH

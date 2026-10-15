@@ -1,6 +1,6 @@
 #include "GstD3DContextBridge.h"
 
-#if defined(Q_OS_WIN) && (defined(QGC_HAS_GST_D3D11_GPU_PATH) || defined(QGC_HAS_GST_D3D12_GPU_PATH))
+#if defined(QGC_HAS_GST_D3D11_GPU_PATH) || defined(QGC_HAS_GST_D3D12_GPU_PATH)
 
 #include <glib-object.h>
 
@@ -73,15 +73,6 @@ void GstD3DContextBridge::clearLocked()
     _warnedWrongBackend = false;
 }
 
-void GstD3DContextBridge::logHandoff(GstElement* element, const char* /*contextType*/)
-{
-    if (!_loggedFirstHandoff.exchange(true, std::memory_order_relaxed)) {
-        qCInfo(category()) << "First" << apiName() << "device handoff to element" << GST_ELEMENT_NAME(element);
-    } else {
-        qCDebug(category()) << "Provided" << apiName() << "device context to" << GST_ELEMENT_NAME(element);
-    }
-}
-
 GstObject* GstD3DContextBridge::refDevice()
 {
     QMutexLocker lock(&_mutex);
@@ -101,4 +92,4 @@ void GstD3DContextBridge::logAdapterMatch(gint64 expectedLuid, gpointer gstDevic
                                  << QString::asprintf("0x%llx", static_cast<long long>(expectedLuid));
 }
 
-#endif  // Q_OS_WIN && (QGC_HAS_GST_D3D11_GPU_PATH || QGC_HAS_GST_D3D12_GPU_PATH)
+#endif  // QGC_HAS_GST_D3D11_GPU_PATH || QGC_HAS_GST_D3D12_GPU_PATH

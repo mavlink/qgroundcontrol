@@ -2,7 +2,7 @@
 
 #include <QtCore/qglobal.h>
 
-#if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D12_GPU_PATH)
+#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
 
 #include <gst/gst.h>
 
@@ -24,4 +24,4 @@ GstD3D12Device* currentDevice();
 
 }  // namespace GstD3D12ContextBridge
 
-#endif  // Q_OS_WIN && QGC_HAS_GST_D3D12_GPU_PATH
+#endif  // QGC_HAS_GST_D3D12_GPU_PATH

@@ -48,8 +48,6 @@ public:
             _textures[1].reset();
         }
     }
-
-    HwVideoBufferPath sourcePath() const override { return HwVideoBufferPath::GlMemory; }
 };
 
 struct TailFixture

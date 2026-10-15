@@ -97,37 +97,17 @@ public:
 
     ~MapThroughGstVideoBuffer() override
     {
-        if (_mapped) {
-            gst_video_frame_unmap(&_frame);
-        }
+        _cpuView.unmap();
         gst_buffer_unref(_buffer);
         _pinned->fetch_sub(1, std::memory_order_relaxed);
     }
 
     MapData map(QVideoFrame::MapMode mode) override
     {
-        if (mode == QVideoFrame::NotMapped) {
-            return {};
-        }
-        if (mode != QVideoFrame::ReadOnly) {
-            return {};
-        }
-        if (!_mapped) {
-            if (!gst_video_frame_map(&_frame, &_info, _buffer, GST_MAP_READ)) {
-                return {};
-            }
-            _mapped = true;
-        }
-        return CpuVideoFramePool::mapDataFor(_frame);
+        return (mode == QVideoFrame::ReadOnly) ? _cpuView.map(_buffer, _info) : MapData{};
     }
 
-    void unmap() override
-    {
-        if (_mapped) {
-            gst_video_frame_unmap(&_frame);
-            _mapped = false;
-        }
-    }
+    void unmap() override { _cpuView.unmap(); }
 
     QVideoFrameFormat format() const override { return _format; }
 
@@ -136,8 +116,7 @@ private:
     GstVideoInfo _info;
     QVideoFrameFormat _format;
     CpuVideoFramePool::PinnedFrameCounter _pinned;
-    GstVideoFrame _frame = {};
-    bool _mapped = false;
+    CpuVideoFramePool::FrameMapping _cpuView;
 };
 
 // Check-and-increment in one step so concurrent callers can never overshoot the cap.
@@ -187,6 +166,25 @@ QAbstractVideoBuffer::MapData CpuVideoFramePool::mapDataFor(const GstVideoFrame&
         data.dataSize[i] = static_cast<qsizetype>(GST_VIDEO_FRAME_PLANE_STRIDE(&frame, i)) * planeHeight(frame.info, i);
     }
     return data;
+}
+
+QAbstractVideoBuffer::MapData CpuVideoFramePool::FrameMapping::map(GstBuffer* buffer, const GstVideoInfo& info)
+{
+    if (!_mapped) {
+        if (!buffer || !gst_video_frame_map(&_frame, &info, buffer, GST_MAP_READ)) {
+            return {};
+        }
+        _mapped = true;
+    }
+    return mapDataFor(_frame);
+}
+
+void CpuVideoFramePool::FrameMapping::unmap() noexcept
+{
+    if (_mapped) {
+        gst_video_frame_unmap(&_frame);
+        _mapped = false;
+    }
 }
 
 QByteArray CpuVideoFramePool::acquireBacking(const PlaneLayout& layout, QSize size,
