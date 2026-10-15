@@ -767,7 +767,7 @@ constinit const HwPathDescriptor GstHwPaths::kDmaBuf = {
         },
 };
 
-#ifdef QGC_GST_BUILD_TESTING
+#ifdef QGC_UNITTEST_BUILD
 bool GstDmaBufVideoBuffer::texStorageImportAllowedForTest(bool contextIsOpenGles, bool hasTexStorageExt) noexcept
 {
     return texStorageImportAllowed(contextIsOpenGles, hasTexStorageExt);

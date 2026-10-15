@@ -16,6 +16,8 @@
 
 include_guard(GLOBAL)
 
+include("${CMAKE_CURRENT_LIST_DIR}/../../modules/AppleXCFramework.cmake")
+
 # _qgc_gst_ios_bundle_from_root(<root> <out_bundle> <out_kind>)
 # Maps a GStreamer_ROOT_DIR to the SDK bundle (<out_kind> "xcframework" or "framework"). Accepts
 # the bundle itself, a directory containing GStreamer.xcframework/.framework (e.g. iPhone.sdk),
@@ -195,49 +197,19 @@ function(_qgc_gst_discover_ios_sdk)
     set(GStreamer_USE_STATIC_LIBS OFF)
 
     if(_gst_ios_bundle_kind STREQUAL "xcframework")
-        # SYSROOT may be a name ("iphonesimulator") or path ("…/iPhoneSimulator.sdk");
-        # CMake regex has no case-insensitive flag, so fold case before matching.
-        string(TOLOWER "${CMAKE_OSX_SYSROOT}" _gst_ios_sysroot_lc)
-        if(_gst_ios_sysroot_lc MATCHES "simulator")
-            file(
-                GLOB _gst_ios_slice_dirs
-                LIST_DIRECTORIES true
-                "${_gst_ios_bundle}/ios-*-simulator"
-            )
+        # Same platform test as cmake/platform/Apple.cmake: CMAKE_OSX_SYSROOT is a name or an SDK path.
+        if(CMAKE_OSX_SYSROOT MATCHES "[Ss]imulator")
+            set(_gst_ios_platform iphonesimulator)
         else()
-            file(
-                GLOB _gst_ios_slice_dirs
-                LIST_DIRECTORIES true
-                "${_gst_ios_bundle}/ios-*"
-            )
-            list(FILTER _gst_ios_slice_dirs EXCLUDE REGEX "-(simulator|maccatalyst)$")
+            set(_gst_ios_platform iphoneos)
         endif()
-        if(NOT _gst_ios_slice_dirs)
-            message(FATAL_ERROR "GStreamer xcframework: no matching iOS slice found in ${_gst_ios_bundle}.\n"
-                                "Check ${_gst_ios_bundle}/Info.plist AvailableLibraries for the available slices."
-            )
-        endif()
-        # Prefer a slice whose name carries the requested arch; fall back to first.
-        set(_gst_ios_slice_dir "")
+        set(_gst_ios_slice_args XCFRAMEWORK "${_gst_ios_bundle}" PLATFORM ${_gst_ios_platform} OUT_VAR
+                                _gst_ios_slice_dir
+        )
         if(CMAKE_OSX_ARCHITECTURES)
-            foreach(_slice IN LISTS _gst_ios_slice_dirs)
-                foreach(_arch IN LISTS CMAKE_OSX_ARCHITECTURES)
-                    if(_slice MATCHES "(^|[-_/])${_arch}([-_]|$)")
-                        set(_gst_ios_slice_dir "${_slice}")
-                        break()
-                    endif()
-                endforeach()
-                if(_gst_ios_slice_dir)
-                    break()
-                endif()
-            endforeach()
+            list(APPEND _gst_ios_slice_args ARCHITECTURES ${CMAKE_OSX_ARCHITECTURES})
         endif()
-        if(NOT _gst_ios_slice_dir)
-            list(GET _gst_ios_slice_dirs 0 _gst_ios_slice_dir)
-        endif()
-        if(NOT EXISTS "${_gst_ios_slice_dir}")
-            message(FATAL_ERROR "GStreamer xcframework slice '${_gst_ios_slice_dir}' is not a directory.")
-        endif()
+        qgc_find_ios_xcframework_slice(${_gst_ios_slice_args})
         set(GStreamer_ROOT_DIR "${_gst_ios_slice_dir}")
         set(GSTREAMER_XCFRAMEWORK_LIB "${_gst_ios_slice_dir}/libGStreamer.a")
         set(_gst_ios_include "${_gst_ios_slice_dir}/Headers")
@@ -335,62 +307,10 @@ endfunction()
 # CPM_SOURCE_CACHE root the SDK download uses so a `rm -rf build` doesn't
 # re-fetch it.
 function(_qgc_gst_download_ios_ca_bundle)
-    if(CPM_SOURCE_CACHE)
-        set(_ca_dir "${CPM_SOURCE_CACHE}/gstreamer-ios-ca")
-    else()
-        set(_ca_dir "${CMAKE_BINARY_DIR}/_deps/gstreamer-ios-ca")
-    endif()
-
-    set(_ca_url "")
-    set(_ca_hash_arg "")
-    if(QGC_BUILD_CONFIG_CONTENT)
-        string(
-            JSON
-            _ca_url
-            ERROR_VARIABLE
-            _ca_url_error
-            GET
-            "${QGC_BUILD_CONFIG_CONTENT}"
-            "gstreamer"
-            "ca_bundle_url"
-        )
-        string(
-            JSON
-            _ca_sha256
-            ERROR_VARIABLE
-            _ca_err
-            GET
-            "${QGC_BUILD_CONFIG_CONTENT}"
-            "gstreamer"
-            "ca_bundle_sha256"
-        )
-        if(_ca_sha256 AND NOT _ca_err)
-            set(_ca_hash_arg EXPECTED_HASH "SHA256=${_ca_sha256}")
-        endif()
-    endif()
-    if(NOT _ca_url
-       OR _ca_url_error
-       OR NOT _ca_hash_arg
-    )
-        # This bundle becomes the app's TLS trust root; an unpinned fetch lets a
-        # MITM inject one. Pinning is default — opt out via QGC_GST_ALLOW_UNVERIFIED_CA.
-        if(NOT QGC_GST_ALLOW_UNVERIFIED_CA)
-            message(
-                FATAL_ERROR "GStreamer: gstreamer.ca_bundle_url or gstreamer.ca_bundle_sha256 is missing from "
-                            "build-config.json, so the iOS CA bundle (the app's TLS trust root) cannot be "
-                            "verified. Pin a dated snapshot and its checksum from https://curl.se/docs/caextract.html. "
-                            "To fetch the bundle UNVERIFIED anyway (NOT for CI/release builds), set "
-                            "-DQGC_GST_ALLOW_UNVERIFIED_CA=ON."
-            )
-        endif()
-        set(_ca_url "https://curl.se/ca/cacert.pem")
-        set(_ca_hash_arg "")
-        message(WARNING "GStreamer: CA bundle URL or checksum missing from build-config.json and "
-                        "QGC_GST_ALLOW_UNVERIFIED_CA is set; the mutable iOS CA bundle will be fetched "
-                        "UNVERIFIED. Pin a dated snapshot from https://curl.se/docs/caextract.html"
-        )
-    endif()
-
+    set(_ca_dir "${CPM_SOURCE_CACHE}/gstreamer-ios-ca")
+    # The bundle becomes the app's TLS trust root, so it is only fetched against its pinned checksum.
+    qgc_config_read(_ca_url gstreamer ca_bundle_url)
+    qgc_config_read(_ca_sha256 gstreamer ca_bundle_sha256)
     qgc_resilient_download(
         FILENAME
         ca-certificates.crt
@@ -404,7 +324,8 @@ function(_qgc_gst_download_ios_ca_bundle)
         "iOS CA bundle"
         FAILURE_HINT
         "Network is required at first iOS configure to fetch the Mozilla CA bundle from curl.se."
-        ${_ca_hash_arg}
+        EXPECTED_HASH
+        "SHA256=${_ca_sha256}"
     )
 
     set(GStreamer_IOS_CA_BUNDLE

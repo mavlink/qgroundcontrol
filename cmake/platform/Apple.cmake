@@ -209,7 +209,7 @@ elseif(IOS)
             foreach(xcframework IN LISTS _ffmpeg_xcframeworks)
                 cmake_path(GET xcframework STEM _framework_name)
                 set(_xcframework_slice_args XCFRAMEWORK "${xcframework}" PLATFORM "${_qgc_ios_platform}" OUT_VAR
-                                            _framework_source
+                                            _framework_slice
                 )
                 if(CMAKE_OSX_ARCHITECTURES)
                     list(APPEND _xcframework_slice_args ARCHITECTURES ${CMAKE_OSX_ARCHITECTURES})
@@ -218,7 +218,7 @@ elseif(IOS)
                 add_custom_command(
                     TARGET ${CMAKE_PROJECT_NAME}
                     POST_BUILD
-                    COMMAND "${CMAKE_COMMAND}" -E copy_directory "${_framework_source}"
+                    COMMAND "${CMAKE_COMMAND}" -E copy_directory "${_framework_slice}/${_framework_name}.framework"
                             "$<TARGET_BUNDLE_DIR:${CMAKE_PROJECT_NAME}>/Frameworks/${_framework_name}.framework"
                     COMMENT "Embedding ${_framework_name}.framework (${_qgc_ios_platform})"
                     VERBATIM

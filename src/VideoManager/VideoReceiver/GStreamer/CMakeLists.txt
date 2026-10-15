@@ -52,12 +52,6 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_sources(QGCGStreamer PRIVATE MockVideoStreamServer.cc MockVideoStreamServer.h)
 endif()
 
-# The test-only hooks (the *ForTest() helpers, GstHwPathRegistry::ScopedPathsForTest) compile only under this flag.
-# PUBLIC so both QGCGStreamer (helper defs) and the app target's GStreamerTest.cc (decls) see it.
-if(QGC_BUILD_TESTING)
-    target_compile_definitions(QGCGStreamer PUBLIC QGC_GST_BUILD_TESTING)
-endif()
-
 target_include_directories(
     QGCGStreamer
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
@@ -120,6 +114,22 @@ target_sources(
             RecordingFinalizer.h
             DecodingBranch.cc
             DecodingBranch.h
+)
+
+# GStreamer.cc fails initialization when a runtime-required plugin (PluginPolicy.cmake) is not registered. Each entry
+# lists, "|"-separated, the plugin sets that satisfy it, a set's plugins joined by "+".
+gstreamer_runtime_required_plugins(_qgc_gst_required_plugins)
+set(_qgc_gst_required_entries "")
+foreach(_qgc_gst_plugin IN LISTS _qgc_gst_required_plugins)
+    gstreamer_plugin_alternatives("${_qgc_gst_plugin}" _qgc_gst_alternatives)
+    list(JOIN _qgc_gst_alternatives "|" _qgc_gst_entry)
+    list(APPEND _qgc_gst_required_entries "\"${_qgc_gst_entry}\"")
+endforeach()
+list(JOIN _qgc_gst_required_entries "," _qgc_gst_required_entries)
+set_property(
+    SOURCE GStreamer.cc TARGET_DIRECTORY ${CMAKE_PROJECT_NAME}
+    APPEND
+    PROPERTY COMPILE_DEFINITIONS "QGC_GST_RUNTIME_REQUIRED_PLUGINS=${_qgc_gst_required_entries}"
 )
 
 # iOS xcframework ships no CA list / no keychain-via-OpenSSL; bundle a Mozilla NSS extract for

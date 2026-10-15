@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.25)
-# The Orchestrator and the install dispatcher call each platform's helpers by name, and the platform's version variable
-# and plugin key must exist: check every platform, including the ones this host cannot build.
+# The Orchestrator and the install dispatcher call each platform's helpers by name, and build-config.json must have the
+# platform's version and plugin keys: check every platform, including the ones this host cannot build.
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/..")
 include("${CMAKE_CURRENT_LIST_DIR}/_assert.cmake")
 include(Platform)
@@ -8,8 +8,8 @@ include(Install)
 foreach(_file IN ITEMS Apple Windows Linux Android MacOS IOS)
     include("${CMAKE_CURRENT_LIST_DIR}/../platform/${_file}.cmake")
 endforeach()
-file(READ "${CMAKE_CURRENT_LIST_DIR}/../../BuildConfig.cmake" _build_config_cmake)
-file(READ "${CMAKE_CURRENT_LIST_DIR}/../../../.github/build-config.json" _build_config_json)
+include("${CMAKE_CURRENT_LIST_DIR}/../../modules/BuildConfigReader.cmake")
+file(READ "${CMAKE_CURRENT_LIST_DIR}/../../../.github/build-config.json" QGC_BUILD_CONFIG_CONTENT)
 
 # platform variable|platform|installs an SDK
 foreach(_case IN ITEMS "ANDROID|android|FALSE" "IOS|ios|FALSE" "WIN32|windows|TRUE" "MACOS|macos|TRUE"
@@ -32,20 +32,13 @@ foreach(_case IN ITEMS "ANDROID|android|FALSE" "IOS|ios|FALSE" "WIN32|windows|TR
     if(_installs AND NOT COMMAND gstreamer_install_${_platform}_sdk)
         message(FATAL_ERROR "ASSERT [${_platform} install]: gstreamer_install_${_platform}_sdk is not defined")
     endif()
-    if(NOT _build_config_cmake MATCHES "qgc_config_get_value\\(${_platform_VERSION_VAR} \"gstreamer\\.version\\.")
-        message(FATAL_ERROR "ASSERT [${_platform} version]: BuildConfig.cmake sets no ${_platform_VERSION_VAR}")
+    qgc_config_read(_version OPTIONAL gstreamer version ${_platform_VERSION_KEY})
+    if(NOT _version)
+        message(FATAL_ERROR "ASSERT [${_platform} version]: no gstreamer.version.${_platform_VERSION_KEY}")
     endif()
-    string(
-        JSON
-        _plugins
-        ERROR_VARIABLE
-        _error
-        GET
-        "${_build_config_json}"
-        gstreamer
-        plugins
-        ${_platform_PLUGIN_KEY}
-    )
-    qgc_test_assert_streq("${_platform} plugin key ${_platform_PLUGIN_KEY}" NOTFOUND "${_error}")
+    qgc_config_read(_plugins LIST OPTIONAL gstreamer plugins ${_platform_PLUGIN_KEY})
+    if(NOT _plugins)
+        message(FATAL_ERROR "ASSERT [${_platform} plugins]: no gstreamer.plugins.${_platform_PLUGIN_KEY}")
+    endif()
 endforeach()
-qgc_test_pass("every platform's helpers, version variable and plugin key exist")
+qgc_test_pass("every platform's helpers, version and plugin keys exist")

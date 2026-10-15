@@ -31,7 +31,7 @@ bool canImportPlanes(QRhi* rhi, QVideoFrameFormat::PixelFormat pixelFormat, cons
 bool preflightOrRecord(QRhi* rhi, HwVideoBufferPath path, QVideoFrameFormat::PixelFormat pixelFormat,
                        const QSize& size, QRhiTexture::Flags flags = {}) noexcept;
 
-#ifdef QGC_GST_BUILD_TESTING
+#ifdef QGC_UNITTEST_BUILD
 /// Memoized verdicts currently keyed on @p rhi (compared by address only, never dereferenced).
 std::size_t memoizedVerdictCountForTest(const QRhi* rhi) noexcept;
 #endif

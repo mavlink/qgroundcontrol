@@ -184,11 +184,8 @@ function(_gst_strip_macos_absent_link_libs _gsmal_VAR)
     )
 endfunction()
 
-# Save/restore macros for CMAKE_FIND_LIBRARY_SUFFIXES/PREFIXES.
-# Used by Targets.cmake and the Android mobile-target macro when resolving static libs.
-macro(_gst_save_find_suffixes)
-    set(_gst_saved_suffixes ${CMAKE_FIND_LIBRARY_SUFFIXES})
-    set(_gst_saved_prefixes ${CMAKE_FIND_LIBRARY_PREFIXES})
+# Sets CMAKE_FIND_LIBRARY_SUFFIXES/PREFIXES for the SDK's linkage in the calling function, whose scope ends the change.
+macro(_gst_set_find_suffixes)
     set(CMAKE_FIND_LIBRARY_PREFIXES "" "lib")
     if(GStreamer_USE_STATIC_LIBS)
         set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
@@ -199,12 +196,6 @@ macro(_gst_save_find_suffixes)
     else()
         set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" ".lib")
     endif()
-endmacro()
-
-# Restores what _gst_save_find_suffixes saved.
-macro(_gst_restore_find_suffixes)
-    set(CMAKE_FIND_LIBRARY_SUFFIXES ${_gst_saved_suffixes})
-    set(CMAKE_FIND_LIBRARY_PREFIXES ${_gst_saved_prefixes})
 endmacro()
 
 # _gst_resolve_and_link_libraries(<TARGET> <SCOPE> <LIBS> <HINTS> [HIDE] [WARN_MISSING])
@@ -228,7 +219,7 @@ function(_gst_resolve_and_link_libraries _grll_TARGET _grll_SCOPE _grll_LIBS _gr
         target_link_directories(${_grll_TARGET} ${_grll_SCOPE} ${_grll_HINTS})
     endif()
 
-    _gst_save_find_suffixes()
+    _gst_set_find_suffixes()
 
     foreach(_grll_LIB IN LISTS _grll_LIBS)
         if(_grll_LIB MATCHES "${_gst_SRT_REGEX_PATCH}")
@@ -247,25 +238,20 @@ function(_gst_resolve_and_link_libraries _grll_TARGET _grll_SCOPE _grll_LIBS _gr
             set(_grll_ABI_TAG "${CMAKE_ANDROID_ARCH_ABI}_")
         endif()
         string(MAKE_C_IDENTIFIER "_gst_${_grll_ABI_TAG}${_grll_LIB}" _grll_CACHE_VAR)
-        if(DEFINED ${_grll_CACHE_VAR} AND "${${_grll_CACHE_VAR}}" MATCHES "NOTFOUND$")
-            unset(${_grll_CACHE_VAR} CACHE)
-        endif()
-        if(NOT DEFINED ${_grll_CACHE_VAR} OR "${${_grll_CACHE_VAR}}" MATCHES "NOTFOUND$")
-            if(_grll_WARN_MISSING)
-                find_library(
-                    ${_grll_CACHE_VAR}
-                    NAMES ${_grll_LIB}
-                    HINTS ${_grll_HINTS}
-                    NO_DEFAULT_PATH
-                )
-            else()
-                find_library(
-                    ${_grll_CACHE_VAR}
-                    NAMES ${_grll_LIB}
-                    HINTS ${_grll_HINTS}
-                    NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH REQUIRED
-                )
-            endif()
+        if(_grll_WARN_MISSING)
+            find_library(
+                ${_grll_CACHE_VAR}
+                NAMES ${_grll_LIB}
+                HINTS ${_grll_HINTS}
+                NO_DEFAULT_PATH
+            )
+        else()
+            find_library(
+                ${_grll_CACHE_VAR}
+                NAMES ${_grll_LIB}
+                HINTS ${_grll_HINTS}
+                NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH REQUIRED
+            )
         endif()
 
         if(NOT ${_grll_CACHE_VAR})
@@ -289,5 +275,4 @@ function(_gst_resolve_and_link_libraries _grll_TARGET _grll_SCOPE _grll_LIBS _gr
         endif()
     endforeach()
 
-    _gst_restore_find_suffixes()
 endfunction()

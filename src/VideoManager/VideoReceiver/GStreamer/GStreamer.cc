@@ -1,6 +1,6 @@
 #include "GStreamer.h"
 
-#include <array>
+#include <algorithm>
 #include <mutex>
 
 #include <QtCore/QByteArrayList>
@@ -95,22 +95,21 @@ bool _verifyPlugins()
         const GstObjectPtr plugin(GST_OBJECT(gst_registry_find_plugin(registry, name)));
         return plugin != nullptr;
     };
-    // Mirrors GSTREAMER_RUNTIME_REQUIRED_PLUGINS (PluginPolicy.cmake) plus qgc,
-    // so a stripped registry fails loudly instead of at first stream attempt.
-    static constexpr std::array<const char*, 13> kRequiredPlugins = {
-        "qgc", "coreelements", "isomp4", "matroska", "multifile", "opengl",          "playback",
-        "rtp", "rtpmanager",   "rtsp",   "tcp",      "udp",       "videoparsersbad",
-    };
-    for (const char* name : kRequiredPlugins) {
-        if (!hasPlugin(name)) {
-            qCCritical(GStreamerLog) << "Required GStreamer plugin not found:" << name;
+    // qgc plus GSTREAMER_RUNTIME_REQUIRED_PLUGINS (PluginPolicy.cmake), so a stripped registry fails loudly instead
+    // of at the first stream attempt. Each entry lists, '|'-separated, the plugin sets that satisfy it, a set's
+    // plugins joined by '+' (videoconvert+videoscale stand in for the fused videoconvertscale of 1.22+).
+    static constexpr const char* kRequiredPlugins[] = {"qgc", QGC_GST_RUNTIME_REQUIRED_PLUGINS};
+    for (const char* requirement : kRequiredPlugins) {
+        const QList<QByteArray> alternatives = QByteArray(requirement).split('|');
+        const bool satisfied = std::ranges::any_of(alternatives, [&hasPlugin](const QByteArray& alternative) {
+            const QList<QByteArray> plugins = alternative.split('+');
+            return std::ranges::all_of(
+                plugins, [&hasPlugin](const QByteArray& plugin) { return hasPlugin(plugin.constData()); });
+        });
+        if (!satisfied) {
+            qCCritical(GStreamerLog) << "Required GStreamer plugin not found:" << requirement;
             result = false;
         }
-    }
-    // GStreamer 1.22+ fuses videoconvert+videoscale into videoconvertscale; accept either.
-    if (!hasPlugin("videoconvertscale") && !(hasPlugin("videoconvert") && hasPlugin("videoscale"))) {
-        qCCritical(GStreamerLog) << "Required GStreamer plugin not found: videoconvertscale (or videoconvert+videoscale)";
-        result = false;
     }
 
     if (!result) {

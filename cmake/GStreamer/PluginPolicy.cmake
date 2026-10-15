@@ -5,6 +5,8 @@
 
 include_guard(GLOBAL)
 
+include("${CMAKE_CURRENT_LIST_DIR}/../modules/BuildConfigReader.cmake")
+
 if(POLICY CMP0174)
     cmake_policy(SET CMP0174 NEW)
 endif()
@@ -19,12 +21,13 @@ endif()
 set(GSTREAMER_PLUGIN_ALTERNATES "videoconvertscale|videoconvert+videoscale")
 
 # Structural plugins guaranteed to exist post-install — the install verifier
-# fails the build if any are missing; _verifyPlugins() (GStreamer.cc) mirrors this list.
+# fails the build if any are missing, and GStreamer.cc fails initialization
+# (QGC_GST_RUNTIME_REQUIRED_PLUGINS, set by src/.../GStreamer/CMakeLists.txt).
 # Codec implementations (openh264/libav) are intentionally excluded: distro
 # bundles may omit one while shipping another usable decode path.
 # opengl supplies glupload/glcolorconvert (GL zero-copy video path);
 # multifile (splitmuxsink), isomp4 (qtmux/mp4mux), and matroska (matroskamux)
-# are load-bearing for video recording (GstVideoReceiver _kFileMux).
+# are load-bearing for video recording (kFileMux, RecordingBranch.cc).
 set(GSTREAMER_RUNTIME_REQUIRED_PLUGINS
     coreelements
     isomp4
@@ -68,7 +71,6 @@ _qgc_gst_assert_policy_consistent()
 # gstreamer_plugins_for(PLATFORM <key> OUT_VAR <var>)
 # Reads the plugin list for <key> ("android"|"apple"|"windows"|"linux"|"") from
 # build-config.json (gstreamer.plugins.common + gstreamer.plugins.<key>).
-# Requires QGC_BUILD_CONFIG_CONTENT to be set by BuildConfig.cmake.
 function(gstreamer_plugins_for)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "" "PLATFORM;OUT_VAR" "")
     set(_missing_values ${ARG_KEYWORDS_MISSING_VALUES})
@@ -82,14 +84,9 @@ function(gstreamer_plugins_for)
     if(NOT ARG_OUT_VAR)
         message(FATAL_ERROR "gstreamer_plugins_for: OUT_VAR is required")
     endif()
-    if(NOT DEFINED QGC_BUILD_CONFIG_CONTENT)
-        message(FATAL_ERROR "gstreamer_plugins_for: build-config.json not loaded; "
-                            "expected QGC_BUILD_CONFIG_CONTENT to be set by BuildConfig.cmake."
-        )
-    endif()
-    _qgc_gst_json_array_to_list(_plugins "${QGC_BUILD_CONFIG_CONTENT}" gstreamer plugins common)
+    qgc_config_read(_plugins LIST gstreamer plugins common)
     if(ARG_PLATFORM)
-        _qgc_gst_json_array_to_list(_extra "${QGC_BUILD_CONFIG_CONTENT}" gstreamer plugins ${ARG_PLATFORM})
+        qgc_config_read(_extra LIST OPTIONAL gstreamer plugins ${ARG_PLATFORM})
         list(APPEND _plugins ${_extra})
     endif()
     set(${ARG_OUT_VAR}
@@ -102,6 +99,26 @@ endfunction()
 function(gstreamer_runtime_required_plugins out_var)
     set(${out_var}
         "${GSTREAMER_RUNTIME_REQUIRED_PLUGINS}"
+        PARENT_SCOPE
+    )
+endfunction()
+
+# gstreamer_plugin_alternatives(<plugin> <out_var>)
+# Sets <out_var> to the plugin sets, each "+"-joined, that satisfy <plugin>: <plugin> itself, then the alternates of its
+# GSTREAMER_PLUGIN_ALTERNATES group.
+function(gstreamer_plugin_alternatives plugin out_var)
+    set(_alternatives "${plugin}")
+    foreach(_group IN LISTS GSTREAMER_PLUGIN_ALTERNATES)
+        string(REGEX REPLACE "[|+]" ";" _group_plugins "${_group}")
+        if(plugin IN_LIST _group_plugins)
+            string(REPLACE "|" ";" _group_alternatives "${_group}")
+            list(APPEND _alternatives ${_group_alternatives})
+            list(REMOVE_DUPLICATES _alternatives)
+            break()
+        endif()
+    endforeach()
+    set(${out_var}
+        "${_alternatives}"
         PARENT_SCOPE
     )
 endfunction()
@@ -120,14 +137,7 @@ function(gstreamer_missing_required)
     endif()
     set(_missing "")
     foreach(_plugin IN LISTS ARG_REQUIRED)
-        set(_alternates "${_plugin}")
-        foreach(_group IN LISTS GSTREAMER_PLUGIN_ALTERNATES)
-            string(REGEX REPLACE "[|+]" ";" _group_plugins "${_group}")
-            if(_plugin IN_LIST _group_plugins)
-                string(REPLACE "|" ";" _alternates "${_plugin}|${_group}")
-                break()
-            endif()
-        endforeach()
+        gstreamer_plugin_alternatives("${_plugin}" _alternates)
         set(_satisfied FALSE)
         foreach(_alternate IN LISTS _alternates)
             string(REPLACE "+" ";" _alternate_plugins "${_alternate}")

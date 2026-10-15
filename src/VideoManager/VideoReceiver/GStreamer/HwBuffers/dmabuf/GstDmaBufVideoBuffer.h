@@ -26,7 +26,7 @@ public:
 
     static void resetCachedState() noexcept;
 
-#ifdef QGC_GST_BUILD_TESTING
+#ifdef QGC_UNITTEST_BUILD
     static bool directGlImportAllowedForTest(guint64 drmModifier) noexcept;
     static bool texStorageImportAllowedForTest(bool contextIsOpenGles, bool hasTexStorageExt) noexcept;
     /// Feeds an eglCreateImage EGL_BAD_MATCH into the import latches, as the single-fd or per-plane import would.

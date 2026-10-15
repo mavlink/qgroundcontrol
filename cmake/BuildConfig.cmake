@@ -17,56 +17,11 @@ set_property(
 
 file(READ "${QGC_BUILD_CONFIG_FILE}" QGC_BUILD_CONFIG_CONTENT)
 
-# Extract value from JSON using CMake's native JSON parser; supports dotted paths
-function(qgc_config_get_value var_name json_key)
-    if(NOT ARGC EQUAL 2
-       OR NOT var_name MATCHES "^[A-Za-z_][A-Za-z0-9_]*$"
-       OR NOT json_key
-    )
-        message(FATAL_ERROR "qgc_config_get_value: a valid output variable and non-empty JSON key are required")
-    endif()
-    string(REPLACE "." ";" _path "${json_key}")
-    string(
-        JSON
-        _type
-        ERROR_VARIABLE
-        _err
-        TYPE
-        "${QGC_BUILD_CONFIG_CONTENT}"
-        ${_path}
-    )
-    if(_err)
-        message(FATAL_ERROR "QGC: BuildConfig: Key '${json_key}' not found in ${QGC_BUILD_CONFIG_FILE}")
-    endif()
-    if(_type STREQUAL "ARRAY" OR _type STREQUAL "OBJECT")
-        message(FATAL_ERROR "QGC: BuildConfig: Key '${json_key}' must be scalar, got ${_type}")
-    endif()
-    string(
-        JSON
-        _value
-        ERROR_VARIABLE
-        _err
-        GET
-        "${QGC_BUILD_CONFIG_CONTENT}"
-        ${_path}
-    )
-    if(_err)
-        message(FATAL_ERROR "QGC: BuildConfig: Key '${json_key}' not found in ${QGC_BUILD_CONFIG_FILE}")
-    endif()
-    set(${var_name}
-        "${_value}"
-        CACHE STRING "${json_key}" FORCE
-    )
-endfunction()
+include("${CMAKE_CURRENT_LIST_DIR}/modules/BuildConfigReader.cmake")
 
 qgc_config_get_value(QGC_CONFIG_QT_VERSION "qt.version")
 qgc_config_get_value(QGC_CONFIG_QT_MINIMUM_VERSION "qt.minimum_version")
 qgc_config_get_value(QGC_CONFIG_GSTREAMER_VERSION "gstreamer.version.default")
-qgc_config_get_value(QGC_CONFIG_GSTREAMER_MIN_VERSION "gstreamer.version.minimum")
-qgc_config_get_value(QGC_CONFIG_GSTREAMER_ANDROID_VERSION "gstreamer.version.android")
-qgc_config_get_value(QGC_CONFIG_GSTREAMER_IOS_VERSION "gstreamer.version.ios")
-qgc_config_get_value(QGC_CONFIG_GSTREAMER_MACOS_VERSION "gstreamer.version.macos")
-qgc_config_get_value(QGC_CONFIG_GSTREAMER_WIN_VERSION "gstreamer.version.windows")
 qgc_config_get_value(QGC_CONFIG_NDK_VERSION "android.ndk_version")
 qgc_config_get_value(QGC_CONFIG_NDK_FULL_VERSION "android.ndk_full_version")
 qgc_config_get_value(QGC_CONFIG_JAVA_VERSION "android.java_version")

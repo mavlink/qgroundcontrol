@@ -127,14 +127,6 @@ set(QGC_GST_DOWNLOAD_TIMEOUT
     ""
     CACHE STRING "GStreamer SDK download wall-clock timeout (seconds, default 1200)"
 )
-set(QGC_GST_DOWNLOAD_INACTIVITY_TIMEOUT
-    ""
-    CACHE STRING "GStreamer SDK download inactivity timeout (seconds, default 60)"
-)
-# The CA bundle becomes the iOS app's TLS trust root, so it is only fetched against a pinned checksum.
-option(QGC_GST_ALLOW_UNVERIFIED_CA
-       "iOS: fetch the CA bundle unverified when build-config.json pins none (never for CI or release builds)" OFF
-)
 
 # Coverage thresholds
 set(QGC_COVERAGE_LINE_THRESHOLD

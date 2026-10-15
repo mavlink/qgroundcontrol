@@ -82,7 +82,7 @@ std::span<const HwPathDescriptor* const> paths() noexcept;
 /// True when a compiled path imports frames as @p path.
 bool has(HwVideoBufferPath path) noexcept;
 
-#ifdef QGC_GST_BUILD_TESTING
+#ifdef QGC_UNITTEST_BUILD
 /// paths() returns only @p paths while alive, then what it returned before.
 class ScopedPathsForTest
 {

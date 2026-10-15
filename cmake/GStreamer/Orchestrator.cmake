@@ -19,13 +19,7 @@ qgc_gst_platform(_qgc_gst_platform)
 if(QGC_GST_VERSION)
     set(QGC_GST_REQUESTED_VERSION "${QGC_GST_VERSION}")
 else()
-    set(QGC_GST_REQUESTED_VERSION "${${_qgc_gst_platform_VERSION_VAR}}")
-endif()
-
-if(NOT QGC_GST_REQUESTED_VERSION)
-    message(FATAL_ERROR "GStreamer version not configured. Ensure BuildConfig.cmake has been included "
-                        "and .github/build-config.json contains the appropriate gstreamer.version.<platform> entry."
-    )
+    qgc_config_read(QGC_GST_REQUESTED_VERSION gstreamer version ${_qgc_gst_platform_VERSION_KEY})
 endif()
 
 # GStreamer_ROOT_DIR is user input only (never written back), so a later configure can tell a

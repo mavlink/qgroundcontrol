@@ -323,14 +323,7 @@ elseif(SCENARIO STREQUAL "android-mobile")
     _qgc_configure_ok("Android mobile target" --fresh "-DGStreamer_ROOT_DIR=${_sdk_a}" ${_android})
     _qgc_link_line(_link)
 
-    # Plugin Java sources and fonts/CA assets are staged into the build directory, never the package sources.
-    execute_process(
-        COMMAND "${CMAKE_COMMAND}" --build "${_binary_dir}" --target gstreamer_android_files_arm64-v8a
-        RESULT_VARIABLE _result
-        OUTPUT_VARIABLE _output
-        ERROR_VARIABLE _output
-    )
-    qgc_test_assert_streq("staging build: ${_output}" 0 "${_result}")
+    # Configure stages the plugin Java sources and fonts/CA assets into the build directory, never the package sources.
     foreach(_entry IN LISTS _staged)
         string(REPLACE "|" ";" _entry "${_entry}")
         list(GET _entry 0 _source)
@@ -346,13 +339,6 @@ elseif(SCENARIO STREQUAL "android-mobile")
         "${_package}/*"
     )
     qgc_test_assert_streq("package sources" assets/keep.txt "${_package_files}")
-    if(GENERATOR MATCHES "Ninja")
-        file(READ "${_binary_dir}/build.ninja" _ninja)
-        set(_app_order_dependencies "build cmake_object_order_depends_target_QGCGStreamerFakeSdk: phony [^\n]*")
-        if(NOT _ninja MATCHES "${_app_order_dependencies}gstreamer_android_files_arm64-v8a")
-            message(FATAL_ERROR "ASSERT [staging dependency]: the app does not depend on the staged files")
-        endif()
-    endif()
 
     # The plugin archive is linked once, whole-archived; a plain occurrence ahead of it would load members twice.
     string(REGEX MATCHALL "[^ ]*libgstcoreelements\\.a" _plugin_archives "${_link}")

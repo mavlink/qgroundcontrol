@@ -189,18 +189,6 @@ endfunction()
 # cmakelang 0.6.13 predates return(PROPAGATE).
 # cmake-lint: disable=C0103,E1121
 function(_qgc_gst_create_sdk_targets)
-    # MACOS is set out-of-band by cmake/Toolchain.cmake; the overlay below gates on
-    # it, so warn loudly if it's unset rather than silently no-op the overlay.
-    if(APPLE
-       AND NOT IOS
-       AND NOT DEFINED MACOS
-    )
-        message(WARNING "GStreamer: MACOS is undefined on an Apple host — cmake/Toolchain.cmake "
-                        "must run before _qgc_gst_create_sdk_targets or the macOS framework "
-                        "overlay will be skipped."
-        )
-    endif()
-
     set(_outputs GStreamer_VERSION)
     # Normal variable: the GStreamer subtree's later pkg-config probes (HwBuffers) need the same flags.
     if(GStreamer_USE_STATIC_LIBS AND NOT "--static" IN_LIST PKG_CONFIG_ARGN)

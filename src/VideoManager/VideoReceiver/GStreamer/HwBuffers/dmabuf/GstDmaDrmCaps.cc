@@ -152,7 +152,7 @@ std::string buildLinearDmaDrmCaps(std::span<const GstVideoFormat> formats)
     return dmaDrmCaps(entries);
 }
 
-#ifdef QGC_GST_BUILD_TESTING
+#ifdef QGC_UNITTEST_BUILD
 bool dmaDrmModifierAdvertisedForTest(guint64 modifier) noexcept
 {
     return isImportableModifier(static_cast<EGLuint64KHR>(modifier));
@@ -171,7 +171,7 @@ std::string buildLinearDmaDrmCaps(std::span<const GstVideoFormat>)
     return std::string();
 }
 
-#ifdef QGC_GST_BUILD_TESTING
+#ifdef QGC_UNITTEST_BUILD
 bool dmaDrmModifierAdvertisedForTest(guint64) noexcept
 {
     return false;

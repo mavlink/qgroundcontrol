@@ -36,7 +36,7 @@ constexpr const HwPathDescriptor* kCompiledPaths[] = {
 #endif
 };
 
-#ifdef QGC_GST_BUILD_TESTING
+#ifdef QGC_UNITTEST_BUILD
 constinit std::atomic<const std::vector<const HwPathDescriptor*>*> s_testPaths{nullptr};
 #endif
 
@@ -44,7 +44,7 @@ constinit std::atomic<const std::vector<const HwPathDescriptor*>*> s_testPaths{n
 
 std::span<const HwPathDescriptor* const> paths() noexcept
 {
-#ifdef QGC_GST_BUILD_TESTING
+#ifdef QGC_UNITTEST_BUILD
     if (const auto* testPaths = s_testPaths.load(std::memory_order_acquire)) {
         return *testPaths;
     }
@@ -59,7 +59,7 @@ bool has(HwVideoBufferPath path) noexcept
                        [path](const HwPathDescriptor* descriptor) { return descriptor->path == path; });
 }
 
-#ifdef QGC_GST_BUILD_TESTING
+#ifdef QGC_UNITTEST_BUILD
 ScopedPathsForTest::ScopedPathsForTest(std::initializer_list<const HwPathDescriptor*> paths)
     : _paths(paths)
     , _previous(s_testPaths.exchange(&_paths, std::memory_order_acq_rel))

@@ -72,7 +72,6 @@ list(
     _kept
     ${_gpu_paths}
     QGC_GST_VERSION
-    QGC_GST_ALLOW_UNVERIFIED_CA
     QGC_GST_CUDA_STUB_DIR
     QGC_GST_DOWNLOAD_TIMEOUT
     GStreamer_USE_STATIC_LIBS

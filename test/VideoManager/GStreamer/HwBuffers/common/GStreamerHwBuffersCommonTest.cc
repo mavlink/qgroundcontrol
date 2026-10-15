@@ -193,7 +193,7 @@ const HwPathDescriptor kTestBridgePathB = {
 
 void GStreamerTest::_testContextBridgeRegistry()
 {
-#if !defined(QGC_HAS_ANY_GPU_PATH) || !defined(QGC_GST_BUILD_TESTING)
+#if !defined(QGC_HAS_ANY_GPU_PATH)
     QSKIP("No GPU path compiled in this build");
 #else
     GStreamer::redirectGLibLogging();
@@ -247,7 +247,7 @@ void GStreamerTest::_testContextBridgeRegistry()
 
 void GStreamerTest::_testHwBufferLifecycleResetsNativeCaches()
 {
-#if !defined(QGC_HAS_ANY_GPU_PATH) || !defined(QGC_GST_BUILD_TESTING)
+#if !defined(QGC_HAS_ANY_GPU_PATH)
     QSKIP("HwBuffers not compiled in this build (no GPU path enabled)");
 #else
     testBridgeA().restart();
@@ -366,7 +366,7 @@ void GStreamerTest::_testQGCRhiCaptureCacheLifecycle()
 
 void GStreamerTest::_testPreflightVerdictsDroppedWithRhi()
 {
-#if !defined(QGC_HAS_ANY_GPU_PATH) || !defined(QGC_GST_BUILD_TESTING)
+#if !defined(QGC_HAS_ANY_GPU_PATH)
     QSKIP("Import preflight not compiled in this build (no GPU path enabled)");
 #else
     QRhiNullInitParams nullParams;
@@ -638,7 +638,7 @@ void GStreamerTest::_testHwPathRegistrySelection_data()
 
 void GStreamerTest::_testHwPathRegistrySelection()
 {
-#if !defined(QGC_HAS_ANY_GPU_PATH) || !defined(QGC_GST_BUILD_TESTING)
+#if !defined(QGC_HAS_ANY_GPU_PATH)
     QSKIP("GPU path registry not compiled in this build (no GPU path enabled)");
 #else
     QFETCH(bool, aMatches);

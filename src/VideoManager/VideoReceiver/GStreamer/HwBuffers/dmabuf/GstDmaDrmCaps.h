@@ -17,7 +17,7 @@ std::string buildSupportedDmaDrmCaps(std::span<const GstVideoFormat> formats);
 /// mis-reports modifiers. "" if none has a DRM fourcc.
 std::string buildLinearDmaDrmCaps(std::span<const GstVideoFormat> formats);
 
-#ifdef QGC_GST_BUILD_TESTING
+#ifdef QGC_UNITTEST_BUILD
 bool dmaDrmModifierAdvertisedForTest(guint64 modifier) noexcept;
 #endif
 

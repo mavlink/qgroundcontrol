@@ -1,7 +1,6 @@
 include_guard(GLOBAL)
 
 set(_qgc_findmod_tests
-    test_json
     test_components
     test_download
     test_layout
@@ -19,6 +18,7 @@ set(_qgc_findmod_tests
     test_platform
     test_checksum_authority
     test_ios_bundle_from_root
+    test_ios_xcframework_slice
     test_sdk_acquire
     test_android_sdk_extract
     test_static_init
@@ -63,9 +63,10 @@ set(_qgc_gst_failure_cases
     "test_android_abi_info|||Unsupported Android ABI: mips"
     "test_checksum_authority|SidecarOnlyRequired|sidecar-only-required|cannot satisfy GStreamer_REQUIRE_CHECKSUM=ON"
     "test_components_malformed|||GSTREAMER_COMPONENT_REGISTRY: malformed entry 'OnlyThree:fields:here'"
-    "test_plugin_policy_errors|||gstreamer_plugins_for: build-config.json not loaded"
+    "test_plugin_policy_errors|||qgc_config_read: build-config.json is not loaded"
     "test_plugin_policy_conflict|||'foo' is in both GSTREAMER_XCFRAMEWORK_SKIP_PLUGINS and GSTREAMER_RUNTIME_REQUIRED"
     "test_install_libs_guard|||gstreamer_install_libs: refusing to copy from system/shared prefix"
+    "test_ios_xcframework_slice|NoMatchingArch|no-matching-arch|no iphoneos slice for architectures 'x86_64'"
     "test_download_win_version_guard|||Windows GStreamer SDK requires version 1.28 or later"
 )
 foreach(_qgc_failure_case IN LISTS _qgc_gst_failure_cases)

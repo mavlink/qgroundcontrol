@@ -7,14 +7,16 @@ endif()
 list(APPEND CMAKE_MODULE_PATH "${QGC_MODULE_DIR}")
 include("${QGC_MODULE_DIR}/GStreamer/tests/_assert.cmake")
 
-# Stand-ins for BuildConfig.cmake, which reads build-config.json from the top-level source dir.
-set(QGC_CONFIG_GSTREAMER_MIN_VERSION 1.20.0)
+# Stand-in for the build-config.json that BuildConfig.cmake loads from the top-level source dir.
 # QGC_TEST_PLUGINS: comma-separated plugin allowlist, default coreelements.
 if(NOT QGC_TEST_PLUGINS)
     set(QGC_TEST_PLUGINS coreelements)
 endif()
 string(REPLACE "," "\", \"" _qgc_test_plugins_json "${QGC_TEST_PLUGINS}")
-set(QGC_BUILD_CONFIG_CONTENT "{\"gstreamer\": {\"plugins\": {\"common\": [\"${_qgc_test_plugins_json}\"]}}}")
+string(CONCAT QGC_BUILD_CONFIG_CONTENT
+              "{\"gstreamer\": {\"version\": {\"minimum\": \"1.20.0\", \"android\": \"1.20.0\"}, "
+              "\"plugins\": {\"common\": [\"${_qgc_test_plugins_json}\"]}}}"
+)
 # The fake SDK's libraries are empty files, so feature probes must compile without linking.
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 
@@ -23,7 +25,6 @@ set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 if(QGC_TEST_ANDROID_ABI)
     set(ANDROID TRUE)
     set(CMAKE_ANDROID_ARCH_ABI "${QGC_TEST_ANDROID_ABI}")
-    set(QGC_CONFIG_GSTREAMER_ANDROID_VERSION 1.20.0)
     set(QGC_ANDROID_EXTRA_JAVA_SOURCES_DIR "${CMAKE_BINARY_DIR}/extra_java_sources")
     set(QGC_ANDROID_EXTRA_ASSETS_DIR "${CMAKE_BINARY_DIR}/extra_assets")
     add_library(${PROJECT_NAME} SHARED "${CMAKE_CURRENT_SOURCE_DIR}/fake_app.cpp")

@@ -6,6 +6,7 @@ include_guard(GLOBAL)
 # test_download.cmake adds cmake/GStreamer/ to MODULE_PATH, a bare `include(Download)`
 # would resolve to this file and self-recurse.
 include("${CMAKE_CURRENT_LIST_DIR}/../modules/Download.cmake") # qgc_resilient_download / qgc_parse_expected_hash
+include("${CMAKE_CURRENT_LIST_DIR}/../modules/BuildConfigReader.cmake")
 
 # gstreamer_get_package_url(<platform> <version> <output_var>)
 # Sets <output_var> to the gstreamer.freedesktop.org URL of the <version> SDK package for <platform> (android, ios,
@@ -78,87 +79,20 @@ endfunction()
 # Sets <output_var> to "SHA256=<hex>" pinned at gstreamer.checksums.<version>.<platform> in build-config.json, or ""
 # when the package is not pinned.
 function(gstreamer_get_fallback_checksum platform version output_var)
+    qgc_config_read(_hash OPTIONAL gstreamer checksums ${version} ${platform})
     set(_checksum "")
-
-    if(DEFINED QGC_BUILD_CONFIG_CONTENT)
-        string(
-            JSON
-            _hash
-            ERROR_VARIABLE
-            _err
-            GET
-            "${QGC_BUILD_CONFIG_CONTENT}"
-            "gstreamer"
-            "checksums"
-            "${version}"
-            "${platform}"
-        )
-        if(NOT _err AND _hash)
-            string(TOLOWER "${_hash}" _hash)
-            set(_checksum "SHA256=${_hash}")
-        endif()
+    if(_hash)
+        set(_checksum "SHA256=${_hash}")
     endif()
-
     set(${output_var}
         "${_checksum}"
         PARENT_SCOPE
     )
 endfunction()
 
-# Without a pin, missing sidecar data is fatal under GStreamer_REQUIRE_CHECKSUM and a warning otherwise.
-function(_qgc_gst_unverified_or_fail platform version output_var reason)
-    if(GStreamer_REQUIRE_CHECKSUM)
-        message(FATAL_ERROR "GStreamer: ${reason} for ${platform} ${version} "
-                            "and no pinned checksum exists. Set GStreamer_REQUIRE_CHECKSUM=OFF to bypass."
-        )
-    endif()
-    message(
-        WARNING "GStreamer: ${reason} for ${platform} ${version}; "
-                "the SDK will be used WITHOUT integrity verification — supply-chain "
-                "authenticity is NOT guaranteed. Only proceed on a trusted network/mirror. "
-                "(GStreamer_REQUIRE_CHECKSUM=ON makes this a hard error.)"
-    )
-    set(${output_var}
-        ""
-        PARENT_SCOPE
-    )
-endfunction()
-
-# _qgc_gst_download_sidecar(<url> <dest_file> <result_var>)
-# Downloads the .sha256sum sidecar to <dest_file>; sets <result_var> TRUE on success.
-function(_qgc_gst_download_sidecar url dest_file result_var)
-    file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/_deps/checksums")
-    set(_tmp "${dest_file}.tmp")
-    foreach(_attempt RANGE 1 3 1)
-        file(
-            DOWNLOAD "${url}" "${_tmp}"
-            STATUS _status
-            TIMEOUT 30
-            INACTIVITY_TIMEOUT 10
-            TLS_VERIFY ON
-        )
-        list(GET _status 0 _code)
-        if(_code EQUAL 0)
-            file(RENAME "${_tmp}" "${dest_file}")
-            set(${result_var}
-                TRUE
-                PARENT_SCOPE
-            )
-            return()
-        endif()
-        list(GET _status 1 _msg)
-        message(STATUS "GStreamer: Checksum download attempt ${_attempt}/3 failed: ${_msg}")
-        file(REMOVE "${_tmp}")
-    endforeach()
-    set(${result_var}
-        FALSE
-        PARENT_SCOPE
-    )
-endfunction()
-
 # gstreamer_fetch_checksum(<platform> <version> <output_var>)
 # Sets <output_var> to the checksum to verify the package against: the pinned one, else the upstream .sha256sum
-# sidecar, else "" (unverified). See GStreamer_REQUIRE_CHECKSUM for when the latter two are fatal.
+# sidecar, else "" (unverified). Without a pin, GStreamer_REQUIRE_CHECKSUM fails configure.
 function(gstreamer_fetch_checksum platform version output_var)
     # The in-tree pin is authoritative and the download is verified against it, so the
     # same-origin .sha256sum sidecar is only fetched for unpinned SDKs.
@@ -169,6 +103,15 @@ function(gstreamer_fetch_checksum platform version output_var)
             PARENT_SCOPE
         )
         return()
+    endif()
+    # A same-origin sidecar proves nothing against a bad mirror/MITM.
+    if(GStreamer_REQUIRE_CHECKSUM)
+        message(
+            FATAL_ERROR "GStreamer: no trusted (in-tree pinned) checksum for ${platform} ${version}; "
+                        "the upstream same-origin .sha256sum sidecar cannot satisfy "
+                        "GStreamer_REQUIRE_CHECKSUM=ON. Pin the hash in .github/build-config.json "
+                        "(gstreamer.checksums.${version}.${platform}) or set GStreamer_REQUIRE_CHECKSUM=OFF."
+        )
     endif()
 
     gstreamer_get_package_url(${platform} ${version} _pkg_url)
@@ -185,57 +128,56 @@ function(gstreamer_fetch_checksum platform version output_var)
 
     set(_checksum_url "${_pkg_url}.sha256sum")
     string(SHA256 _url_hash "${_checksum_url}")
-    set(_checksum_file "${CMAKE_BINARY_DIR}/_deps/checksums/${_url_hash}.sha256sum")
-
-    set(_dl_ok FALSE)
+    # CMake regex has no {n} quantifier.
+    string(REPEAT "[0-9a-fA-F]" 64 _sha256_hex)
+    # A cached sidecar that does not parse is fetched again once.
     foreach(_round RANGE 1 2 1)
-        if(NOT EXISTS "${_checksum_file}")
-            _qgc_gst_download_sidecar("${_checksum_url}" "${_checksum_file}" _dl_ok)
-            if(NOT _dl_ok)
-                _qgc_gst_unverified_or_fail(${platform} ${version} _result "Checksum sidecar unavailable")
-                set(${output_var}
-                    "${_result}"
-                    PARENT_SCOPE
-                )
-                return()
-            endif()
+        qgc_resilient_download(
+            FILENAME
+            "${_url_hash}.sha256sum"
+            DESTINATION_DIR
+            "${CMAKE_BINARY_DIR}/_deps/checksums"
+            RESULT_VAR
+            _checksum_file
+            URLS
+            "${_checksum_url}"
+            RETRIES
+            3
+            RETRY_BACKOFF
+            0
+            TIMEOUT
+            30
+            INACTIVITY_TIMEOUT
+            10
+            ALLOW_FAILURE
+            LOG_TAG
+            GStreamer
+        )
+        if(NOT _checksum_file)
+            break()
         endif()
-
         file(READ "${_checksum_file}" _content)
-        string(STRIP "${_content}" _content)
-        # CMake regex has no {n} quantifier.
-        string(REPEAT "[0-9a-fA-F]" 64 _sha256_hex)
-        string(REGEX MATCH "(${_sha256_hex})" _match "${_content}")
-        if(_match)
-            string(TOLOWER "${CMAKE_MATCH_1}" _fetched_hex)
-            # A same-origin sidecar proves nothing against a bad mirror/MITM, so it must not
-            # satisfy GStreamer_REQUIRE_CHECKSUM=ON.
-            if(GStreamer_REQUIRE_CHECKSUM)
-                message(
-                    FATAL_ERROR "GStreamer: no trusted (in-tree pinned) checksum for ${platform} ${version}; "
-                                "the fetched same-origin .sha256sum sidecar cannot satisfy "
-                                "GStreamer_REQUIRE_CHECKSUM=ON. Pin the hash in .github/build-config.json "
-                                "(gstreamer.checksums.${version}.${platform}) or set GStreamer_REQUIRE_CHECKSUM=OFF."
-                )
-            endif()
+        if(_content MATCHES "(${_sha256_hex})")
             message(WARNING "GStreamer: using same-origin .sha256sum sidecar for ${platform} ${version}; "
                             "this detects corruption only, NOT supply-chain tampering. Pin the hash in "
                             ".github/build-config.json for authenticity."
             )
             set(${output_var}
-                "SHA256=${_fetched_hex}"
+                "SHA256=${CMAKE_MATCH_1}"
                 PARENT_SCOPE
             )
             return()
         endif()
-
         message(STATUS "GStreamer: Could not parse checksum for ${platform} ${version}")
         file(REMOVE "${_checksum_file}")
     endforeach()
 
-    _qgc_gst_unverified_or_fail(${platform} ${version} _result "Checksum content invalid/unparseable")
+    message(WARNING "GStreamer: no usable checksum sidecar for ${platform} ${version}; the SDK will be used WITHOUT "
+                    "integrity verification — supply-chain authenticity is NOT guaranteed. Only proceed on a "
+                    "trusted network/mirror. (GStreamer_REQUIRE_CHECKSUM=ON makes this a hard error.)"
+    )
     set(${output_var}
-        "${_result}"
+        ""
         PARENT_SCOPE
     )
 endfunction()
@@ -259,10 +201,6 @@ function(_qgc_gst_download_archive platform version filename dir hash_out)
     if(NOT "${QGC_GST_DOWNLOAD_TIMEOUT}" STREQUAL "")
         set(_timeout "${QGC_GST_DOWNLOAD_TIMEOUT}")
     endif()
-    set(_inactivity_timeout 60)
-    if(NOT "${QGC_GST_DOWNLOAD_INACTIVITY_TIMEOUT}" STREQUAL "")
-        set(_inactivity_timeout "${QGC_GST_DOWNLOAD_INACTIVITY_TIMEOUT}")
-    endif()
 
     qgc_resilient_download(
         FILENAME
@@ -276,8 +214,6 @@ function(_qgc_gst_download_archive platform version filename dir hash_out)
         ${_s3_url}
         TIMEOUT
         ${_timeout}
-        INACTIVITY_TIMEOUT
-        ${_inactivity_timeout}
         LOG_TAG
         GStreamer
         FAILURE_HINT
@@ -333,8 +269,8 @@ endfunction()
 # Downloads the SDK archive(s) for <platform> (the second one as <platform>_devel) into
 # <cache>/<subdir> and extracts them once, with <command>(<staging> <archives> <name>), into
 # <cache>/<subdir>/<name>, returned in CONTENT_DIR_OUT. <subdir> must name the version.
-# <cache> is CPM_SOURCE_CACHE when set (shared by build directories and CI jobs), else
-# <build>/_deps. Concurrent configures are serialized on <cache>/<subdir>/.lock, and the extracted
+# <cache> is CPM_SOURCE_CACHE, which the top-level CMakeLists.txt always sets, so build directories and CI jobs
+# share it. Concurrent configures are serialized on <cache>/<subdir>/.lock, and the extracted
 # tree is stamped with the archive hashes; see _qgc_gst_extract_once.
 function(qgc_gst_acquire_sdk)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "" "PLATFORM;VERSION;CACHE_SUBDIR;CONTENT;EXTRACT_FUNCTION;CONTENT_DIR_OUT"
@@ -368,11 +304,7 @@ function(qgc_gst_acquire_sdk)
         message(FATAL_ERROR "qgc_gst_acquire_sdk: EXTRACT_FUNCTION '${ARG_EXTRACT_FUNCTION}' is not a command")
     endif()
 
-    if(CPM_SOURCE_CACHE)
-        set(_cache_dir "${CPM_SOURCE_CACHE}/${ARG_CACHE_SUBDIR}")
-    else()
-        set(_cache_dir "${CMAKE_BINARY_DIR}/_deps/${ARG_CACHE_SUBDIR}")
-    endif()
+    set(_cache_dir "${CPM_SOURCE_CACHE}/${ARG_CACHE_SUBDIR}")
     file(MAKE_DIRECTORY "${_cache_dir}")
     set(_lock "${_cache_dir}/.lock")
     file(

@@ -108,7 +108,7 @@ bool preflightOrRecord(QRhi* rhi, HwVideoBufferPath path, QVideoFrameFormat::Pix
     return false;
 }
 
-#ifdef QGC_GST_BUILD_TESTING
+#ifdef QGC_UNITTEST_BUILD
 std::size_t memoizedVerdictCountForTest(const QRhi* rhi) noexcept
 {
     QMutexLocker lock(&s_memoMutex);
