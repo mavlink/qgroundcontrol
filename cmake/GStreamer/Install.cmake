@@ -2,7 +2,7 @@
 # binaries, and CA bundles into the install tree. Called from
 # src/VideoManager/VideoReceiver/GStreamer/CMakeLists.txt after the ANDROID/IOS
 # early-return.
-# Depends on: Components.cmake (gstreamer_platform_plugin_attrs), Platform.cmake (qgc_gst_platform_descriptor),
+# Depends on: Components.cmake (gstreamer_platform_plugin_attrs), Platform.cmake (qgc_gst_platform),
 #             PluginPolicy.cmake (gstreamer_runtime_required_plugins; included again by the install-time verifier).
 
 include_guard(GLOBAL)
@@ -258,7 +258,7 @@ function(_qgc_gst_is_blocked_lib_copy_source source_dir out_var)
 endfunction()
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Per-platform install helpers, named by qgc_gst_platform_descriptor (Platform.cmake) and called as
+# Per-platform install helpers, named gstreamer_install_<platform>_sdk (Platform.cmake) and called as
 # <helper>(<app_name> <plugin_dest_out>): each sets <plugin_dest_out> to the install-prefix-relative directory it
 # installs the plugins to. They use variables set by cmake/GStreamer/Orchestrator.cmake (GSTREAMER_*_PATH,
 # GStreamer_ROOT_DIR, GStreamer_AUTO_DOWNLOADED, etc.).
@@ -565,8 +565,8 @@ function(gstreamer_install_macos_sdk app_name plugin_dest_out)
     )
 endfunction()
 
-# Top-level dispatcher — call this from CMakeLists.txt after the ANDROID/IOS guard. Runs the platform's
-# install helper (qgc_gst_platform_descriptor); mobile platforms install nothing.
+# Top-level dispatcher — call this from CMakeLists.txt after the ANDROID/IOS guard (mobile platforms link their plugins
+# statically and have no install helper). Runs the platform's gstreamer_install_<platform>_sdk.
 # <app_name> is CMAKE_PROJECT_NAME in the caller.
 # gstreamer_install_platform_sdk(<app_name> [REQUIRED_PLUGINS <names…>])
 # REQUIRED_PLUGINS: list of plugin basenames (no platform prefix or extension) to
@@ -584,10 +584,6 @@ function(gstreamer_install_platform_sdk app_name)
         message(FATAL_ERROR "gstreamer_install_platform_sdk: unknown arguments: ${GIPS_UNPARSED_ARGUMENTS}")
     endif()
     qgc_gst_platform(_gips_platform)
-    qgc_gst_platform_descriptor("${_gips_platform}" _gips_platform)
-    if(NOT _gips_platform_INSTALL)
-        return()
-    endif()
     if(NOT GIPS_REQUIRED_PLUGINS)
         gstreamer_runtime_required_plugins(GIPS_REQUIRED_PLUGINS)
     endif()
@@ -617,7 +613,7 @@ function(gstreamer_install_platform_sdk app_name)
         list(REMOVE_DUPLICATES GIPS_REQUIRED_PLUGINS)
     endif()
 
-    cmake_language(CALL ${_gips_platform_INSTALL} "${app_name}" _verify_dest)
+    cmake_language(CALL gstreamer_install_${_gips_platform}_sdk "${app_name}" _verify_dest)
 
     # Post-install plugin verification, against the plugin directory the installer reported.
     # Checked at install time against $ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}, where CPack stages packages. Install

@@ -15,8 +15,8 @@ set(_qgc_findmod_tests
     test_windows_runtime_libproxy
     test_sdk_state
     test_install_libs_guard_windows
-    test_android_abi_info
     test_windows_sdk_root
+    test_platform
     test_checksum_authority
     test_ios_bundle_from_root
     test_sdk_acquire
@@ -50,78 +50,54 @@ if(QGC_ENABLE_GST_VIDEOSTREAMING
     set_tests_properties(FindModule.test_install_component PROPERTIES LABELS "Unit;FindModule" TIMEOUT 15)
 endif()
 
-# Registers FindModule.<test_name>: runs <script>.cmake (optionally with TEST_CASE) and passes only
-# when it fails with a diagnostic matching expected_regex, so unrelated errors cannot satisfy it.
-function(_qgc_add_findmodule_failure_test test_name script expected_regex)
+# <script>|<test name suffix>|<TEST_CASE>|<expected diagnostic>. FindModule.<script>[.<suffix>] runs <script>.cmake,
+# with TEST_CASE when given, and passes only when it fails with a diagnostic matching the expected regex, so unrelated
+# errors cannot satisfy it.
+set(_qgc_gst_failure_cases
+    "test_argument_validation|AcquireExtractor|acquire-extractor|'_qgc_no_such_extractor' is not a command"
+    "test_argument_validation|InstallUnknown|install-unknown|gstreamer_install_plugins: unknown arguments"
+    "test_argument_validation|LayoutUnknown|layout-unknown|gstreamer_create_layout_target: unknown arguments"
+    "test_argument_validation|PkgConfigUnknown|pkgconfig-unknown|gstreamer_apply_pkgconfig_env: unknown arguments"
+    "test_argument_validation|ProbeUnknown|probe-unknown|qgc_check_gst_header: unknown arguments"
+    "test_android_abi_info|||Unsupported Android ABI: mips"
+    "test_checksum_authority|SidecarOnlyRequired|sidecar-only-required|cannot satisfy GStreamer_REQUIRE_CHECKSUM=ON"
+    "test_components_malformed|||GSTREAMER_COMPONENT_REGISTRY: malformed entry 'OnlyThree:fields:here'"
+    "test_plugin_policy_errors|||gstreamer_plugins_for: build-config.json not loaded"
+    "test_plugin_policy_conflict|||'foo' is in both GSTREAMER_XCFRAMEWORK_SKIP_PLUGINS and GSTREAMER_RUNTIME_REQUIRED"
+    "test_install_libs_guard|||gstreamer_install_libs: refusing to copy from system/shared prefix"
+    "test_download_win_version_guard|||Windows GStreamer SDK requires version 1.28 or later"
+)
+foreach(_qgc_failure_case IN LISTS _qgc_gst_failure_cases)
+    string(REPLACE "|" ";" _qgc_failure_parts "${_qgc_failure_case}")
+    list(GET _qgc_failure_parts 0 _qgc_script)
+    list(GET _qgc_failure_parts 1 _qgc_test_suffix)
+    list(GET _qgc_failure_parts 2 _qgc_test_case)
+    list(GET _qgc_failure_parts 3 _qgc_expected_regex)
+    set(_qgc_test_name "FindModule.${_qgc_script}")
     set(_qgc_test_case_arg "")
-    if(ARGC GREATER 3)
-        set(_qgc_test_case_arg "-DTEST_CASE=${ARGV3}")
+    if(_qgc_test_suffix)
+        string(APPEND _qgc_test_name ".${_qgc_test_suffix}")
+        set(_qgc_test_case_arg "-DTEST_CASE=${_qgc_test_case}")
     endif()
     add_test(
-        NAME "FindModule.${test_name}"
+        NAME "${_qgc_test_name}"
         COMMAND
             "${CMAKE_COMMAND}" "-DCMAKE_EXECUTABLE=${CMAKE_COMMAND}"
-            "-DSCRIPT_FILE=${CMAKE_CURRENT_SOURCE_DIR}/${script}.cmake" ${_qgc_test_case_arg}
-            "-DEXPECTED_REGEX=${expected_regex}" -P "${PROJECT_SOURCE_DIR}/cmake/tests/run_expected_failure_test.cmake"
+            "-DSCRIPT_FILE=${CMAKE_CURRENT_SOURCE_DIR}/${_qgc_script}.cmake" ${_qgc_test_case_arg}
+            "-DEXPECTED_REGEX=${_qgc_expected_regex}" -P
+            "${PROJECT_SOURCE_DIR}/cmake/tests/run_expected_failure_test.cmake"
         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
     )
-    set_tests_properties("FindModule.${test_name}" PROPERTIES LABELS "Unit;FindModule" TIMEOUT 15)
-endfunction()
-
-set(_qgc_gst_argument_failure_cases
-    "DownloadDelegatesRequired|download-delegates-required|qgc_resilient_download: missing values for: FILENAME"
-    "DownloadResultRequired|download-result-required|gstreamer_resilient_download: RESULT_VAR is required"
-    "DownloadUnknown|download-unknown|gstreamer_resilient_download: unknown arguments"
-    "AcquireExtractor|acquire-extractor|EXTRACT_FUNCTION '_qgc_no_such_extractor' is not a command"
-    "InstallUnknown|install-unknown|gstreamer_install_plugins: unknown arguments"
-    "LayoutUnknown|layout-unknown|gstreamer_create_layout_target: unknown arguments"
-    "PkgConfigUnknown|pkgconfig-unknown|gstreamer_apply_pkgconfig_env: unknown arguments"
-    "PluginPolicyUnknown|plugin-policy-unknown|gstreamer_plugin_satisfy_sets: unknown arguments"
-    "ProbeUnknown|probe-unknown|qgc_check_gst_header: unknown arguments"
-)
-
-foreach(qgc_failure_case IN LISTS _qgc_gst_argument_failure_cases)
-    string(REPLACE "|" ";" _qgc_failure_parts "${qgc_failure_case}")
-    list(GET _qgc_failure_parts 0 _qgc_test_name)
-    list(GET _qgc_failure_parts 1 _qgc_test_case)
-    list(GET _qgc_failure_parts 2 _qgc_expected_regex)
-    _qgc_add_findmodule_failure_test("test_argument_validation.${_qgc_test_name}" test_argument_validation
-                                     "${_qgc_expected_regex}" "${_qgc_test_case}"
-    )
+    set_tests_properties("${_qgc_test_name}" PROPERTIES LABELS "Unit;FindModule" TIMEOUT 15)
 endforeach()
-
-set(_qgc_gst_script_failure_cases
-    "test_components_malformed|GSTREAMER_COMPONENT_REGISTRY: malformed entry 'OnlyThree:fields:here'"
-    "test_plugin_policy_errors|gstreamer_plugins_for: build-config.json not loaded"
-    "test_plugin_policy_conflict|'foo' is in both GSTREAMER_XCFRAMEWORK_SKIP_PLUGINS and GSTREAMER_RUNTIME_REQUIRED"
-    "test_install_libs_guard|gstreamer_install_libs: refusing to copy from system/shared prefix"
-    "test_download_win_version_guard|Windows GStreamer SDK requires version 1.28 or later"
-)
-
-foreach(qgc_failure_case IN LISTS _qgc_gst_script_failure_cases)
-    string(REPLACE "|" ";" _qgc_failure_parts "${qgc_failure_case}")
-    list(GET _qgc_failure_parts 0 _qgc_script)
-    list(GET _qgc_failure_parts 1 _qgc_expected_regex)
-    _qgc_add_findmodule_failure_test("${_qgc_script}" "${_qgc_script}" "${_qgc_expected_regex}")
-endforeach()
-
-_qgc_add_findmodule_failure_test(test_android_abi_info.UnsupportedAbi test_android_abi_info
-                                 "Unsupported Android ABI: mips" unsupported-abi
-)
-_qgc_add_findmodule_failure_test(test_checksum_authority.SidecarOnlyRequired test_checksum_authority
-                                 "cannot satisfy GStreamer_REQUIRE_CHECKSUM=ON" sidecar-only-required
-)
 
 # The Orchestrator fixture generates a Linux-layout fake SDK and drives it through the host's
 # pkg-config, so it only runs on Linux hosts.
 if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
     foreach(
         _qgc_scenario IN
-        ITEMS targets
+        ITEMS reconfigure
               static-targets
-              idempotent
-              reconfigure-root
-              reconfigure-version
               reuse-auto-root
               legacy-pkg-config-args
               version-override

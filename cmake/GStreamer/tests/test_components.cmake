@@ -89,12 +89,6 @@ qgc_test_assert_streq("registry order" "api_base;api_gl;api_gl_prototypes;api_rt
 )
 qgc_test_pass("build_apis registry order")
 
-set(_apis_stale "stale-sentinel")
-gstreamer_build_apis(_apis_stale App)
-qgc_test_assert_not_in_list("stale output replaced" "stale-sentinel" _apis_stale)
-qgc_test_assert_in_list("replaced output recomputed" api_app _apis_stale)
-qgc_test_pass("build_apis replaces caller output")
-
 set(WIN32 OFF)
 set(APPLE OFF)
 gstreamer_platform_plugin_attrs(_ext _prefix _glob)

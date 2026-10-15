@@ -85,17 +85,6 @@ endforeach()
 qgc_test_assert_not_in_list("runtime required: openh264 is optional codec implementation" openh264 _required)
 qgc_test_pass("runtime_required_plugins")
 
-gstreamer_plugin_satisfy_sets(PLUGIN videoconvertscale OUT_VAR _sets_fused)
-qgc_test_assert_in_list("satisfy: fused alternative present" videoconvertscale _sets_fused)
-qgc_test_assert_in_list("satisfy: split alternative present" "videoconvert+videoscale" _sets_fused)
-qgc_test_pass("plugin_satisfy_sets grouped")
-
-gstreamer_plugin_satisfy_sets(PLUGIN coreelements OUT_VAR _sets_plain)
-qgc_test_assert_in_list("satisfy: plain returns self" coreelements _sets_plain)
-list(LENGTH _sets_plain _plain_len)
-qgc_test_assert_streq("satisfy: plain has one set" 1 "${_plain_len}")
-qgc_test_pass("plugin_satisfy_sets ungrouped")
-
 gstreamer_xcfw_skip(_skip)
 qgc_test_assert_in_list("xcfw skip: x265" x265 _skip)
 qgc_test_pass("xcfw_skip")

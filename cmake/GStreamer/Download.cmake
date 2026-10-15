@@ -240,134 +240,61 @@ function(gstreamer_fetch_checksum platform version output_var)
     )
 endfunction()
 
-# GStreamer-specific wrapper around qgc_resilient_download (cmake/modules/Download.cmake).
-# Adds the GStreamer log prefix, install hint, and honours legacy
-# QGC_GST_DOWNLOAD_TIMEOUT / QGC_GST_DOWNLOAD_INACTIVITY_TIMEOUT cache vars
-# (CI flake-fixer knobs that predate the project-level QGC_DOWNLOAD_* vars).
-function(gstreamer_resilient_download)
-    cmake_parse_arguments(PARSE_ARGV 0 ARG "ALLOW_FAILURE"
-                          "FILENAME;DESTINATION_DIR;RESULT_VAR;TIMEOUT;INACTIVITY_TIMEOUT;EXPECTED_HASH" "URLS"
-    )
-    if(ARG_KEYWORDS_MISSING_VALUES)
-        message(FATAL_ERROR "gstreamer_resilient_download: missing values for: ${ARG_KEYWORDS_MISSING_VALUES}")
-    endif()
-    if(ARG_UNPARSED_ARGUMENTS)
-        message(FATAL_ERROR "gstreamer_resilient_download: unknown arguments: ${ARG_UNPARSED_ARGUMENTS}")
-    endif()
-    if("${ARG_RESULT_VAR}" STREQUAL "")
-        message(FATAL_ERROR "gstreamer_resilient_download: RESULT_VAR is required")
-    endif()
-    if(NOT DEFINED ARG_TIMEOUT AND DEFINED QGC_GST_DOWNLOAD_TIMEOUT)
-        set(ARG_TIMEOUT ${QGC_GST_DOWNLOAD_TIMEOUT})
-    endif()
-    if(NOT DEFINED ARG_INACTIVITY_TIMEOUT AND DEFINED QGC_GST_DOWNLOAD_INACTIVITY_TIMEOUT)
-        set(ARG_INACTIVITY_TIMEOUT ${QGC_GST_DOWNLOAD_INACTIVITY_TIMEOUT})
-    endif()
-
-    # GStreamer SDKs are large (the Android universal tarball is ~1 GB); the module's
-    # 120 s wall-clock default kills slow-but-healthy CI downloads mid-transfer. Use a
-    # generous cap and let INACTIVITY_TIMEOUT (60 s) catch genuine stalls instead.
-    # Note: this 1200 s default overrides the project-level QGC_DOWNLOAD_TIMEOUT for
-    # GStreamer downloads — use QGC_GST_DOWNLOAD_TIMEOUT to tune the GStreamer cap.
-    if(NOT DEFINED ARG_TIMEOUT)
-        set(ARG_TIMEOUT 1200)
-    endif()
-    if(NOT DEFINED ARG_INACTIVITY_TIMEOUT)
-        set(ARG_INACTIVITY_TIMEOUT 60)
-    endif()
-
-    set(_fwd
-        FILENAME
-        "${ARG_FILENAME}"
-        DESTINATION_DIR
-        "${ARG_DESTINATION_DIR}"
-        RESULT_VAR
-        _qrd_result
-        URLS
-        "${ARG_URLS}"
-        LOG_TAG
-        "GStreamer"
-        FAILURE_HINT
-        "Install manually from https://gstreamer.freedesktop.org/download/ or set GStreamer_ROOT_DIR."
-    )
-    if(DEFINED ARG_TIMEOUT)
-        list(APPEND _fwd TIMEOUT ${ARG_TIMEOUT})
-    endif()
-    if(DEFINED ARG_INACTIVITY_TIMEOUT)
-        list(APPEND _fwd INACTIVITY_TIMEOUT ${ARG_INACTIVITY_TIMEOUT})
-    endif()
-    if(ARG_EXPECTED_HASH)
-        list(APPEND _fwd EXPECTED_HASH "${ARG_EXPECTED_HASH}")
-    endif()
-    if(ARG_ALLOW_FAILURE)
-        list(APPEND _fwd ALLOW_FAILURE)
-    endif()
-    qgc_resilient_download(${_fwd})
-
-    set(${ARG_RESULT_VAR}
-        "${_qrd_result}"
-        PARENT_SCOPE
-    )
-endfunction()
-
-# gstreamer_download_sdk(<platform> <version> <filename> <destination_dir> <result_var>
-#                        [ALLOW_FAILURE] [HASH_VAR <var>])
-# HASH_VAR receives the "SHA256=<hex>" the archive was verified against, or "" when unverified.
-function(gstreamer_download_sdk platform version filename destination_dir result_var)
-    cmake_parse_arguments(PARSE_ARGV 5 _DL "ALLOW_FAILURE" "HASH_VAR" "")
-    if(_DL_UNPARSED_ARGUMENTS)
-        message(FATAL_ERROR "gstreamer_download_sdk: unknown arguments: ${_DL_UNPARSED_ARGUMENTS}")
-    endif()
-    foreach(_required IN ITEMS platform version filename destination_dir result_var)
-        if("${${_required}}" STREQUAL "")
-            message(FATAL_ERROR "gstreamer_download_sdk: ${_required} is required")
-        endif()
-    endforeach()
-
+# _qgc_gst_download_archive(<platform> <version> <filename> <dir> <hash_out>)
+# Downloads the <version> SDK package for <platform> (upstream, else the QGC S3 mirror) to <dir>/<filename>, reusing a
+# cached copy that matches its checksum, and sets <hash_out> to the "SHA256=<hex>" it was verified against, or "" when
+# it is unverified. A failed download fails configure.
+function(_qgc_gst_download_archive platform version filename dir hash_out)
     gstreamer_get_package_url("${platform}" "${version}" _url)
     gstreamer_get_s3_mirror_url("${platform}" "${version}" _s3_url)
     gstreamer_fetch_checksum("${platform}" "${version}" _hash)
-
-    set(_urls "${_url}")
-    if(_s3_url)
-        list(APPEND _urls "${_s3_url}")
+    set(_hash_args "")
+    if(_hash)
+        set(_hash_args EXPECTED_HASH "${_hash}")
     endif()
 
-    set(_args
-        URLS
-        ${_urls}
+    # The SDKs are large (the Android universal tarball is ~1 GB), so the wall-clock cap is generous and the
+    # inactivity timeout catches stalls. QGC_GST_DOWNLOAD_TIMEOUT, not QGC_DOWNLOAD_TIMEOUT, tunes the cap.
+    set(_timeout 1200)
+    if(NOT "${QGC_GST_DOWNLOAD_TIMEOUT}" STREQUAL "")
+        set(_timeout "${QGC_GST_DOWNLOAD_TIMEOUT}")
+    endif()
+    set(_inactivity_timeout 60)
+    if(NOT "${QGC_GST_DOWNLOAD_INACTIVITY_TIMEOUT}" STREQUAL "")
+        set(_inactivity_timeout "${QGC_GST_DOWNLOAD_INACTIVITY_TIMEOUT}")
+    endif()
+
+    qgc_resilient_download(
         FILENAME
         "${filename}"
         DESTINATION_DIR
-        "${destination_dir}"
+        "${dir}"
         RESULT_VAR
-        _result
+        _
+        URLS
+        ${_url}
+        ${_s3_url}
+        TIMEOUT
+        ${_timeout}
+        INACTIVITY_TIMEOUT
+        ${_inactivity_timeout}
+        LOG_TAG
+        GStreamer
+        FAILURE_HINT
+        "Install manually from https://gstreamer.freedesktop.org/download/ or set GStreamer_ROOT_DIR."
+        ${_hash_args}
     )
-    if(_hash)
-        list(APPEND _args EXPECTED_HASH "${_hash}")
-    endif()
-    if(_DL_ALLOW_FAILURE)
-        list(APPEND _args ALLOW_FAILURE)
-    endif()
-
-    gstreamer_resilient_download(${_args})
-    set(${result_var}
-        "${_result}"
+    set(${hash_out}
+        "${_hash}"
         PARENT_SCOPE
     )
-    if(_DL_HASH_VAR)
-        set(${_DL_HASH_VAR}
-            "${_hash}"
-            PARENT_SCOPE
-        )
-    endif()
 endfunction()
 
-# _qgc_gst_extract_once(<dir> <stamp> <extract_function> <archives> [<extract_arg>...])
+# _qgc_gst_extract_once(<dir> <stamp> <extract_function> <archives>)
 # Publishes <dir> exactly once per <stamp>: a matching <dir>/.complete means it is already extracted.
-# Otherwise <extract_function>(<staging> <archives> [<extract_arg>...]) must create and fill <staging>,
-# which is then stamped and renamed to <dir>, so <dir> only ever exists complete. The caller must
-# hold the cache lock (see qgc_gst_acquire_sdk).
+# Otherwise <extract_function>(<staging> <archives> <name>), <name> being <dir>'s file name, must create
+# and fill <staging>, which is then stamped and renamed to <dir>, so <dir> only ever exists complete. The
+# caller must hold the cache lock (see qgc_gst_acquire_sdk).
 function(_qgc_gst_extract_once dir stamp extract_function archives)
     set(_stamp_file "${dir}/.complete")
     if(EXISTS "${_stamp_file}")
@@ -382,7 +309,8 @@ function(_qgc_gst_extract_once dir stamp extract_function archives)
 
     set(_staging "${dir}.partial")
     file(REMOVE_RECURSE "${dir}" "${_staging}")
-    cmake_language(CALL ${extract_function} "${_staging}" "${archives}" ${ARGN})
+    cmake_path(GET dir FILENAME _name)
+    cmake_language(CALL ${extract_function} "${_staging}" "${archives}" "${_name}")
     if(NOT IS_DIRECTORY "${_staging}")
         message(FATAL_ERROR "GStreamer: ${extract_function} did not create ${_staging}")
     endif()
@@ -401,15 +329,16 @@ endfunction()
 
 # qgc_gst_acquire_sdk(PLATFORM <platform> VERSION <version> CACHE_SUBDIR <subdir>
 #                     ARCHIVES <primary> [<devel>] CONTENT <name>
-#                     EXTRACT_FUNCTION <command> [EXTRACT_ARGS <arg>...] CONTENT_DIR_OUT <var>)
+#                     EXTRACT_FUNCTION <command> CONTENT_DIR_OUT <var>)
 # Downloads the SDK archive(s) for <platform> (the second one as <platform>_devel) into
-# <cache>/<subdir> and extracts them once into <cache>/<subdir>/<name>, returned in CONTENT_DIR_OUT.
+# <cache>/<subdir> and extracts them once, with <command>(<staging> <archives> <name>), into
+# <cache>/<subdir>/<name>, returned in CONTENT_DIR_OUT. <subdir> must name the version.
 # <cache> is CPM_SOURCE_CACHE when set (shared by build directories and CI jobs), else
 # <build>/_deps. Concurrent configures are serialized on <cache>/<subdir>/.lock, and the extracted
-# tree is stamped with the version and archive hashes; see _qgc_gst_extract_once.
+# tree is stamped with the archive hashes; see _qgc_gst_extract_once.
 function(qgc_gst_acquire_sdk)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "" "PLATFORM;VERSION;CACHE_SUBDIR;CONTENT;EXTRACT_FUNCTION;CONTENT_DIR_OUT"
-                          "ARCHIVES;EXTRACT_ARGS"
+                          "ARCHIVES"
     )
     if(ARG_KEYWORDS_MISSING_VALUES)
         message(FATAL_ERROR "qgc_gst_acquire_sdk: missing values for: ${ARG_KEYWORDS_MISSING_VALUES}")
@@ -467,18 +396,11 @@ function(qgc_gst_acquire_sdk)
 
     set(_platforms "${ARG_PLATFORM}" "${ARG_PLATFORM}_devel")
     set(_archive_paths "")
-    set(_stamp "version=${ARG_VERSION}\nextract=${ARG_EXTRACT_FUNCTION} ${ARG_EXTRACT_ARGS}\n")
+    set(_stamp "")
     foreach(_archive IN LISTS ARG_ARCHIVES)
         list(POP_FRONT _platforms _platform)
-        gstreamer_download_sdk(
-            ${_platform}
-            ${ARG_VERSION}
-            "${_archive}"
-            "${_cache_dir}"
-            _archive_path
-            HASH_VAR
-            _archive_hash
-        )
+        set(_archive_path "${_cache_dir}/${_archive}")
+        _qgc_gst_download_archive(${_platform} ${ARG_VERSION} "${_archive}" "${_cache_dir}" _archive_hash)
         if(NOT _archive_hash)
             file(SHA256 "${_archive_path}" _archive_sha256)
             set(_archive_hash "SHA256=${_archive_sha256}")
@@ -487,9 +409,7 @@ function(qgc_gst_acquire_sdk)
         string(APPEND _stamp "${_archive}=${_archive_hash}\n")
     endforeach()
 
-    _qgc_gst_extract_once("${_cache_dir}/${ARG_CONTENT}" "${_stamp}" ${ARG_EXTRACT_FUNCTION} "${_archive_paths}"
-                          ${ARG_EXTRACT_ARGS}
-    )
+    _qgc_gst_extract_once("${_cache_dir}/${ARG_CONTENT}" "${_stamp}" ${ARG_EXTRACT_FUNCTION} "${_archive_paths}")
     set(${ARG_CONTENT_DIR_OUT}
         "${_cache_dir}/${ARG_CONTENT}"
         PARENT_SCOPE

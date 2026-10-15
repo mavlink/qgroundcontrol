@@ -63,15 +63,3 @@ function(_qgc_gst_discover_linux_sdk)
     gstreamer_apply_pkgconfig_env(MODE SYSTEM_AUGMENT LIBDIR "${GSTREAMER_LIB_PATH}/pkgconfig")
     return(PROPAGATE GStreamer_ROOT_DIR GSTREAMER_LIB_PATH GSTREAMER_PLUGIN_PATH GSTREAMER_INCLUDE_PATH)
 endfunction()
-
-# _qgc_gst_detect_dmabuf()
-# Zero-copy DMABuf GPU path probe. Sets QGC_GST_HAS_DMABUF, which HwBuffers/CMakeLists.txt reads to build the DMABuf
-# path. Needs gst-allocators: the Linux branch of src/.../GStreamer/CMakeLists.txt requests the Allocators component.
-# The cached result is dropped when the SDK changes (_qgc_gst_refresh_sdk_cache).
-function(_qgc_gst_detect_dmabuf)
-    qgc_check_gst_header(VAR QGC_GST_HAS_DMABUF HEADER gst/allocators/gstdmabuf.h SYMBOL gst_is_dmabuf_memory)
-    set(QGC_GST_HAS_DMABUF
-        "${QGC_GST_HAS_DMABUF}"
-        PARENT_SCOPE
-    )
-endfunction()

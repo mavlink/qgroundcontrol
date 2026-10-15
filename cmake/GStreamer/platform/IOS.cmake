@@ -413,26 +413,19 @@ function(_qgc_gst_download_ios_ca_bundle)
     )
 endfunction()
 
-# _qgc_gst_ios_select_static_plugins(<descriptors> <requested> <registered_out> <absent_out>)
-# Splits the <requested> plugins, in order, into those whose descriptor symbol (_gst_plugin_<name>_get_desc, as nm
-# lists it for the merged archive) is in <descriptors> and those the archive does not contain.
-function(_qgc_gst_ios_select_static_plugins descriptors requested registered_out absent_out)
+# _qgc_gst_ios_select_static_plugins(<descriptors> <requested> <registered_out>)
+# Sets <registered_out> to the <requested> plugins, in order, whose descriptor symbol (_gst_plugin_<name>_get_desc, as
+# nm lists it for the merged archive) is in <descriptors>.
+function(_qgc_gst_ios_select_static_plugins descriptors requested registered_out)
     list(TRANSFORM descriptors REPLACE "^_gst_plugin_(.+)_get_desc$" "\\1" OUTPUT_VARIABLE _archived)
     set(_registered "")
-    set(_absent "")
     foreach(_plugin IN LISTS requested)
         if(_plugin IN_LIST _archived)
             list(APPEND _registered "${_plugin}")
-        else()
-            list(APPEND _absent "${_plugin}")
         endif()
     endforeach()
     set(${registered_out}
         "${_registered}"
-        PARENT_SCOPE
-    )
-    set(${absent_out}
-        "${_absent}"
         PARENT_SCOPE
     )
 endfunction()
@@ -442,8 +435,8 @@ endfunction()
 # Build IMPORTED targets directly from the iOS xcframework's fat .a — bypasses
 # pkg-config entirely. Caller must have set GSTREAMER_XCFRAMEWORK_LIB and
 # GSTREAMER_INCLUDE_PATH (done by _qgc_gst_discover_ios_sdk above).
-# Function: exports GStreamer_VERSION, GSTREAMER_STATIC_PLUGINS and GStreamer_<api|plugin>_FOUND via PARENT_SCOPE and
-# creates GLOBAL IMPORTED targets.
+# Function: exports GStreamer_VERSION and GSTREAMER_STATIC_PLUGINS via PARENT_SCOPE and creates GLOBAL IMPORTED
+# targets.
 # ─────────────────────────────────────────────────────────────────────────────
 # Every target comes from the one merged archive, so the steps share its state in one function.
 # cmake-lint: disable=R0912,R0915
@@ -663,7 +656,7 @@ function(_qgc_gst_create_ios_targets)
             "set(_xcfw_cached_key \"${_xcfw_cache_key}\")\n" "set(_xcfw_descs \"${_xcfw_descs}\")\n"
         )
     endif()
-    _qgc_gst_ios_select_static_plugins("${_xcfw_descs}" "${GSTREAMER_PLUGINS}" _xcfw_registered _xcfw_absent)
+    _qgc_gst_ios_select_static_plugins("${_xcfw_descs}" "${GSTREAMER_PLUGINS}" _xcfw_registered)
     list(LENGTH _xcfw_registered _xcfw_registered_count)
     list(LENGTH GSTREAMER_PLUGINS _xcfw_requested_count)
     list(LENGTH _xcfw_descs _xcfw_archived_count)
@@ -675,8 +668,8 @@ function(_qgc_gst_create_ios_targets)
         PARENT_SCOPE
     )
 
-    # Per-API and per-registered-plugin alias targets — load-bearing for the FOUND checks in Orchestrator.cmake
-    # (`if(TARGET GStreamer::${_api})`). On the pkg-config flow, qgc_gst_create_pkgconfig_targets creates these
+    # Per-API and per-registered-plugin alias targets — load-bearing for the component checks in Orchestrator.cmake
+    # (`if(TARGET GStreamer::${_api})`). On the pkg-config flow, _qgc_gst_create_sdk_targets creates these
     # targets directly; here the entire library lives in one archive, so they are empty INTERFACE shims that link
     # back to GStreamer::GStreamer.
     foreach(_xcfw_comp IN LISTS GSTREAMER_APIS _xcfw_registered)
@@ -684,16 +677,6 @@ function(_qgc_gst_create_ios_targets)
             add_library(GStreamer::${_xcfw_comp} INTERFACE IMPORTED GLOBAL)
             target_link_libraries(GStreamer::${_xcfw_comp} INTERFACE GStreamer::GStreamer)
         endif()
-        set(GStreamer_${_xcfw_comp}_FOUND
-            TRUE
-            PARENT_SCOPE
-        )
-    endforeach()
-    foreach(_xcfw_comp IN LISTS _xcfw_absent)
-        set(GStreamer_${_xcfw_comp}_FOUND
-            FALSE
-            PARENT_SCOPE
-        )
     endforeach()
 
     # Build the xcframework mobile init shim — calls gst_init_static_plugins().

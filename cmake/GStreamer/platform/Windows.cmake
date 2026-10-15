@@ -140,14 +140,39 @@ function(_qgc_gst_windows_sdk_arch out_var)
     )
 endfunction()
 
+# _qgc_gst_windows_installed_sdk(<arch> <out_var>)
+# Sets <out_var> to the installed <arch> (x86_64 or arm64) SDK named by the GSTREAMER_1_0_ROOT_<ARCH> environment
+# variable, else by GSTREAMER_1_0_ROOT_MSVC_<ARCH> in MSVC builds, else found in a standard install location; "" when
+# none exists.
+function(_qgc_gst_windows_installed_sdk arch out_var)
+    string(TOUPPER "${arch}" _env_arch)
+    set(_root "")
+    if(DEFINED ENV{GSTREAMER_1_0_ROOT_${_env_arch}} AND EXISTS "$ENV{GSTREAMER_1_0_ROOT_${_env_arch}}")
+        set(_root "$ENV{GSTREAMER_1_0_ROOT_${_env_arch}}")
+    elseif(
+        MSVC
+        AND DEFINED ENV{GSTREAMER_1_0_ROOT_MSVC_${_env_arch}}
+        AND EXISTS "$ENV{GSTREAMER_1_0_ROOT_MSVC_${_env_arch}}"
+    )
+        set(_root "$ENV{GSTREAMER_1_0_ROOT_MSVC_${_env_arch}}")
+    elseif(EXISTS "C:/Program Files/gstreamer/1.0/msvc_${arch}")
+        set(_root "C:/Program Files/gstreamer/1.0/msvc_${arch}")
+    elseif(EXISTS "C:/gstreamer/1.0/msvc_${arch}")
+        set(_root "C:/gstreamer/1.0/msvc_${arch}")
+    endif()
+    set(${out_var}
+        "${_root}"
+        PARENT_SCOPE
+    )
+endfunction()
+
 # _qgc_gst_discover_windows_sdk()
 # Uses the SDK under GStreamer_ROOT_DIR, the GSTREAMER_1_0_ROOT_* environment or a standard install location when it is
 # complete and recent enough, else downloads the official MSVC SDK for the target architecture. Points pkg-config at
 # the SDK. Sets GStreamer_ROOT_DIR, GStreamer_AUTO_DOWNLOADED, GSTREAMER_{LIB,PLUGIN,INCLUDE}_PATH and the SDK's
 # PKG_CONFIG_EXECUTABLE and PKG_CONFIG_ARGN.
-# cmakelang 0.6.13 predates return(PROPAGATE). Discovery is one ordered fallback chain (root, environment, standard
-# install, download) that fills in the whole layout.
-# cmake-lint: disable=C0103,E1121,R0912,R0915
+# cmakelang 0.6.13 predates return(PROPAGATE).
+# cmake-lint: disable=C0103,E1121
 function(_qgc_gst_discover_windows_sdk)
     _qgc_gst_windows_sdk_arch(_gst_win_arch)
     if(_gst_win_arch STREQUAL "arm64")
@@ -157,35 +182,7 @@ function(_qgc_gst_discover_windows_sdk)
     endif()
 
     if(NOT GStreamer_ROOT_DIR)
-        if(_gst_win_arch STREQUAL "arm64")
-            if(DEFINED ENV{GSTREAMER_1_0_ROOT_ARM64} AND EXISTS "$ENV{GSTREAMER_1_0_ROOT_ARM64}")
-                set(GStreamer_ROOT_DIR "$ENV{GSTREAMER_1_0_ROOT_ARM64}")
-            elseif(
-                MSVC
-                AND DEFINED ENV{GSTREAMER_1_0_ROOT_MSVC_ARM64}
-                AND EXISTS "$ENV{GSTREAMER_1_0_ROOT_MSVC_ARM64}"
-            )
-                set(GStreamer_ROOT_DIR "$ENV{GSTREAMER_1_0_ROOT_MSVC_ARM64}")
-            elseif(EXISTS "C:/Program Files/gstreamer/1.0/msvc_arm64")
-                set(GStreamer_ROOT_DIR "C:/Program Files/gstreamer/1.0/msvc_arm64")
-            elseif(EXISTS "C:/gstreamer/1.0/msvc_arm64")
-                set(GStreamer_ROOT_DIR "C:/gstreamer/1.0/msvc_arm64")
-            endif()
-        else()
-            if(DEFINED ENV{GSTREAMER_1_0_ROOT_X86_64} AND EXISTS "$ENV{GSTREAMER_1_0_ROOT_X86_64}")
-                set(GStreamer_ROOT_DIR "$ENV{GSTREAMER_1_0_ROOT_X86_64}")
-            elseif(
-                MSVC
-                AND DEFINED ENV{GSTREAMER_1_0_ROOT_MSVC_X86_64}
-                AND EXISTS "$ENV{GSTREAMER_1_0_ROOT_MSVC_X86_64}"
-            )
-                set(GStreamer_ROOT_DIR "$ENV{GSTREAMER_1_0_ROOT_MSVC_X86_64}")
-            elseif(EXISTS "C:/Program Files/gstreamer/1.0/msvc_x86_64")
-                set(GStreamer_ROOT_DIR "C:/Program Files/gstreamer/1.0/msvc_x86_64")
-            elseif(EXISTS "C:/gstreamer/1.0/msvc_x86_64")
-                set(GStreamer_ROOT_DIR "C:/gstreamer/1.0/msvc_x86_64")
-            endif()
-        endif()
+        _qgc_gst_windows_installed_sdk(${_gst_win_arch} GStreamer_ROOT_DIR)
     endif()
 
     if(GStreamer_ROOT_DIR AND EXISTS "${GStreamer_ROOT_DIR}")

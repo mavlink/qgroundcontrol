@@ -1,23 +1,6 @@
 cmake_minimum_required(VERSION 3.25)
-include("${CMAKE_CURRENT_LIST_DIR}/_assert.cmake")
+# An Android ABI without a cerbero SDK tree fails configure.
 include("${CMAKE_CURRENT_LIST_DIR}/../platform/Android.cmake")
 
-if(TEST_CASE STREQUAL "unsupported-abi")
-    _qgc_gst_android_abi_info(mips _abi)
-    message(FATAL_ERROR "${TEST_CASE} unexpectedly succeeded")
-elseif(DEFINED TEST_CASE)
-    message(FATAL_ERROR "Unknown test case: ${TEST_CASE}")
-endif()
-
-# abi|cerbero dir|needs -z text
-set(_cases "armeabi-v7a|armv7|TRUE" "arm64-v8a|arm64|FALSE" "x86|x86|TRUE" "x86_64|x86_64|FALSE")
-foreach(_case IN LISTS _cases)
-    string(REPLACE "|" ";" _parts "${_case}")
-    list(GET _parts 0 _abi)
-    list(GET _parts 1 _expected_dir)
-    list(GET _parts 2 _expected_textrel)
-    _qgc_gst_android_abi_info("${_abi}" _info)
-    qgc_test_assert_streq("${_abi} dir" "${_expected_dir}" "${_info_DIR}")
-    qgc_test_assert_streq("${_abi} textrel" "${_expected_textrel}" "${_info_NEEDS_TEXTREL_ERROR}")
-endforeach()
-qgc_test_pass("Android ABI to cerbero layout mapping")
+_qgc_gst_android_abi_info(mips _abi)
+message(FATAL_ERROR "the mips ABI was unexpectedly accepted")

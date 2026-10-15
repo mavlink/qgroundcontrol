@@ -62,13 +62,13 @@ Per-platform zero-copy import of decoded GPU frames, all sharing `GstHwFrameText
 - **Enable/disable**: Set the `QGC_ENABLE_GST_VIDEOSTREAMING` CMake option to `ON`/`OFF`.
 - **Versions, checksums and plugins**: `gstreamer.version.<platform>`, `gstreamer.checksums`, `gstreamer.plugins` and the iOS CA-bundle pin live in [`.github/build-config.json`](../../../../.github/build-config.json), read by [`cmake/BuildConfig.cmake`](../../../../cmake/BuildConfig.cmake). The download URLs (upstream and the QGC S3 mirror) are templated from the version in [`cmake/GStreamer/Download.cmake`](../../../../cmake/GStreamer/Download.cmake). Linux uses the system GStreamer and treats `gstreamer.version.minimum` as its floor.
 - **Configure options**:
-  - `GStreamer_ROOT_DIR`: the SDK to use. Configure never writes it; the SDK it selected is recorded as `QGC_GST_RESOLVED_ROOT` in `CMakeCache.txt` and as the `GSTREAMER_SDK_ROOT` property of `GStreamer::Layout`.
+  - `GStreamer_ROOT_DIR`: the SDK to use. Configure never writes it; the SDK it selected is recorded as `QGC_GST_RESOLVED_ROOT` in `CMakeCache.txt`.
   - `QGC_GST_VERSION`: overrides the build-config version (the minimum on Linux, the SDK to download elsewhere).
   - `GStreamer_USE_STATIC_LIBS` / `GStreamer_USE_FRAMEWORK`: layout preferences with per-platform defaults; discovery overrides them for the SDK it finds.
   - `GStreamer_REQUIRE_CHECKSUM`, `QGC_GST_DOWNLOAD_TIMEOUT`, `QGC_GST_DOWNLOAD_INACTIVITY_TIMEOUT` and `QGC_GST_ALLOW_UNVERIFIED_CA` (iOS CA bundle) control downloads; `GStreamer_DEBUG` traces target creation.
 - **Plugin allowlist**: `gstreamer.plugins` (`common` plus the platform's key) decides what is registered and bundled. Android links the requested plugins that have a static archive; iOS registers only the requested plugins found in its merged archive, so the archive's other plugins (some GPL) stay out of the app; desktop static SDKs register the requested plugins that have a pkg-config module; desktop installs bundle the allowlisted plugins found in the SDK and check after install that those and the runtime-required ones arrived. Debug mobile builds add the MockLink test-stream encoders. A missing runtime-required plugin fails a mobile configure; other missing plugins are warnings.
 - **CMake modules** ([`cmake/GStreamer/`](../../../../cmake/GStreamer/)):
-  - `Orchestrator.cmake`: the entry point this directory's `CMakeLists.txt` includes. It picks the version, calls the platform's discovery function through the `Platform.cmake` descriptor, creates the targets, checks the plugins and records the resolved SDK; its header lists the variables it sets.
+  - `Orchestrator.cmake`: the entry point this directory's `CMakeLists.txt` includes. It picks the version, calls the platform's discovery function (`Platform.cmake` names the platform), creates the targets, checks the plugins and records the resolved SDK; its header lists the variables it sets.
   - `platform/*.cmake`: per-platform discovery (user, system or downloaded SDK and its pkg-config setup), the Android `GStreamer::mobile` target and the iOS merged-archive targets.
   - `Download.cmake`: URL templates, checksums (in-tree pins, else the upstream `.sha256sum` sidecar) and `qgc_gst_acquire_sdk`, which downloads into the shared cache under a lock and extracts once into a stamped directory.
   - `Targets.cmake`: `GStreamer::GStreamer`, `::deps`, `::api_*` and, for static SDKs, per-plugin targets from pkg-config. `PkgConfig.cmake` points pkg-config at the SDK for this directory's subtree only.
@@ -76,7 +76,8 @@ Per-platform zero-copy import of decoded GPU frames, all sharing `GstHwFrameText
   - `StaticInit.cmake`: generates `gst_init_static_plugins()` for static layouts from `gst_static_plugins.c.in`.
   - `Install.cmake`: desktop install helpers; each reports the plugin directory it installs to, which the install-time verifier checks.
   - `SdkState.cmake`: the resolved-SDK cache entries and the SDK fingerprint that drops cached probe results when the SDK changes.
-  - `Helpers.cmake`: include aggregator for the modules above; its header indexes their functions.
+  - `Platform.cmake`, `Components.cmake`, `Layout.cmake`, `Link.cmake`, `Json.cmake` and `Probe.cmake`: the target platform, the component registry, the `GStreamer::Layout` target describing the SDK's on-disk layout, library resolution for the targets, the `build-config.json` reader and the header probes.
+  - `Helpers.cmake`: include aggregator for the modules above.
   - `tests/`: script tests and a fake-SDK configure fixture, run with `ctest -L FindModule`.
 
 ## Runtime Environment Setup

@@ -5,7 +5,7 @@
 # (https://gitlab.freedesktop.org/gstreamer/gstreamer, subprojects/gstreamer/cmake/FindGStreamer.cmake),
 # which the GStreamer SDKs install as share/cmake/FindGStreamer.cmake. QGC changes:
 #   - a function called by Orchestrator.cmake instead of a find module: the caller resolves the SDK,
-#     sets up the pkg-config environment (PkgConfig.cmake) and passes the APIs and plugins to create;
+#     sets up the pkg-config environment (PkgConfig.cmake) and lists the APIs and plugins to create;
 #   - library resolution and linking live in Link.cmake (_gst_resolve_and_link_libraries);
 #   - GStreamer_EXTRA_DEPS is not supported;
 #   - plugin targets are only created for static layouts, the only ones that link them.
@@ -59,23 +59,15 @@ function(_qgc_gst_set_link_options target)
     set_target_properties(${target} PROPERTIES INTERFACE_LINK_OPTIONS "${_options}")
 endfunction()
 
-# _qgc_gst_create_component_target(<name> <pc_module> <static> <found_var> [QUIET])
-# Creates GStreamer::<name> from pkg-config module <pc_module>; <found_var> tells whether it exists.
-function(_qgc_gst_create_component_target name pc_module static found_var)
+# _qgc_gst_create_component_target(<name> <pc_module> <static> [QUIET])
+# Creates GStreamer::<name> from pkg-config module <pc_module>, when it exists, and links it into GStreamer::GStreamer.
+function(_qgc_gst_create_component_target name pc_module static)
     if(TARGET GStreamer::${name})
-        set(${found_var}
-            TRUE
-            PARENT_SCOPE
-        )
         return()
     endif()
 
     set(_pc PC_GStreamer_${name})
     pkg_check_modules(${_pc} ${ARGN} "${pc_module}")
-    set(${found_var}
-        "${${_pc}_FOUND}"
-        PARENT_SCOPE
-    )
     if(NOT ${_pc}_FOUND)
         if(GStreamer_DEBUG)
             message(STATUS "[GstTargets] Component ${name} (${pc_module}): NOT FOUND")
@@ -123,6 +115,7 @@ function(_qgc_gst_create_component_target name pc_module static found_var)
                                                             INTERFACE_LINK_LIBRARIES "${${_pc}_LINK_LIBRARIES}"
         )
     endif()
+    target_link_libraries(GStreamer::GStreamer INTERFACE GStreamer::${name})
 endfunction()
 
 # _qgc_gst_create_core_targets(<minimum_version> <static> <version_var>)
@@ -149,10 +142,6 @@ function(_qgc_gst_create_core_targets minimum_version static version_var)
         message(STATUS "[GstTargets] PC_GStreamer_STATIC_LIBRARIES = ${PC_GStreamer_STATIC_LIBRARIES}")
         message(STATUS "[GstTargets] PC_GStreamer_STATIC_LIBRARY_DIRS = ${PC_GStreamer_STATIC_LIBRARY_DIRS}")
     endif()
-    if(TARGET GStreamer::GStreamer)
-        return()
-    endif()
-
     add_library(GStreamer::GStreamer INTERFACE IMPORTED GLOBAL)
     add_library(GStreamer::deps INTERFACE IMPORTED GLOBAL)
     if(static)
@@ -187,73 +176,73 @@ function(_qgc_gst_create_core_targets minimum_version static version_var)
     target_link_libraries(GStreamer::GStreamer INTERFACE GStreamer::deps)
 endfunction()
 
-# qgc_gst_create_pkgconfig_targets(ROOT <sdk_root> VERSION <minimum> APIS <api>... [PLUGINS <plugin>...]
-#                                  [STATIC] [FRAMEWORK_PATH <dir>])
-# Creates INTERFACE IMPORTED targets from pkg-config, which must already be set up for the SDK
-# (<sdk_root> and FRAMEWORK_PATH are only added to the search paths of this call):
-#   GStreamer::GStreamer  gstreamer-1.0 >= <minimum>, linking GStreamer::deps and every target below;
+# _qgc_gst_create_sdk_targets()
+# Creates INTERFACE IMPORTED targets from the pkg-config view discovery set up for the SDK at GStreamer_ROOT_DIR:
+#   GStreamer::GStreamer  gstreamer-1.0 >= QGC_GST_REQUESTED_VERSION, linking GStreamer::deps and every target below;
 #   GStreamer::deps       the core's link dependencies;
-#   GStreamer::<api>      gstreamer-<api>-1.0 for each api_<api> found (api_gl_prototypes ->
+#   GStreamer::<api>      gstreamer-<api>-1.0 for each GSTREAMER_APIS entry found (api_gl_prototypes ->
 #                         gstreamer-gl-prototypes-1.0);
-#   GStreamer::<plugin>   gst<plugin> for each plugin found, STATIC only (shared layouts load plugins at
-#                         runtime and never link them).
-# Sets GStreamer_VERSION and GStreamer_<api|plugin>_FOUND for each module probed in the caller's scope.
-function(qgc_gst_create_pkgconfig_targets)
-    cmake_parse_arguments(PARSE_ARGV 0 ARG "STATIC" "ROOT;VERSION;FRAMEWORK_PATH" "APIS;PLUGINS")
-    if(ARG_KEYWORDS_MISSING_VALUES)
-        message(FATAL_ERROR "qgc_gst_create_pkgconfig_targets: missing values for: ${ARG_KEYWORDS_MISSING_VALUES}")
-    endif()
-    if(ARG_UNPARSED_ARGUMENTS)
-        message(FATAL_ERROR "qgc_gst_create_pkgconfig_targets: unknown arguments: ${ARG_UNPARSED_ARGUMENTS}")
-    endif()
-    if(NOT ARG_ROOT OR NOT EXISTS "${ARG_ROOT}")
-        message(FATAL_ERROR "qgc_gst_create_pkgconfig_targets: ROOT must be an existing directory "
-                            "(current value: '${ARG_ROOT}')"
+#   GStreamer::<plugin>   gst<plugin> for each GSTREAMER_PLUGINS entry found, static layouts only (shared layouts load
+#                         plugins at runtime and never link them).
+# Then applies the macOS framework overlay or builds the Android mobile target. Sets GStreamer_VERSION, on static
+# layouts appends --static to PKG_CONFIG_ARGN and, on Android, sets GSTREAMER_STATIC_PLUGINS, all in the caller's scope.
+# cmakelang 0.6.13 predates return(PROPAGATE).
+# cmake-lint: disable=C0103,E1121
+function(_qgc_gst_create_sdk_targets)
+    # MACOS is set out-of-band by cmake/Toolchain.cmake; the overlay below gates on
+    # it, so warn loudly if it's unset rather than silently no-op the overlay.
+    if(APPLE
+       AND NOT IOS
+       AND NOT DEFINED MACOS
+    )
+        message(WARNING "GStreamer: MACOS is undefined on an Apple host — cmake/Toolchain.cmake "
+                        "must run before _qgc_gst_create_sdk_targets or the macOS framework "
+                        "overlay will be skipped."
         )
     endif()
-    if(NOT ARG_VERSION)
-        message(FATAL_ERROR "qgc_gst_create_pkgconfig_targets: VERSION is required")
+
+    set(_outputs GStreamer_VERSION)
+    # Normal variable: the GStreamer subtree's later pkg-config probes (HwBuffers) need the same flags.
+    if(GStreamer_USE_STATIC_LIBS AND NOT "--static" IN_LIST PKG_CONFIG_ARGN)
+        list(APPEND PKG_CONFIG_ARGN "--static")
+        list(APPEND _outputs PKG_CONFIG_ARGN)
     endif()
-    if(ARG_STATIC)
+    if(GStreamer_USE_STATIC_LIBS)
         set(_static TRUE)
-        set(_plugins ${ARG_PLUGINS})
+        set(_plugins ${GSTREAMER_PLUGINS})
     else()
         set(_static FALSE)
         set(_plugins "")
     endif()
 
-    list(PREPEND CMAKE_PREFIX_PATH "${ARG_ROOT}")
-    if(ARG_FRAMEWORK_PATH)
-        list(APPEND CMAKE_FRAMEWORK_PATH "${ARG_FRAMEWORK_PATH}")
+    # The SDK only extends this function's search paths.
+    list(PREPEND CMAKE_PREFIX_PATH "${GStreamer_ROOT_DIR}")
+    if(GStreamer_USE_FRAMEWORK)
+        list(APPEND CMAKE_FRAMEWORK_PATH "${GSTREAMER_FRAMEWORK_PATH}")
     endif()
 
-    find_package(PkgConfig REQUIRED QUIET)
-    _qgc_gst_create_core_targets("${ARG_VERSION}" ${_static} _version)
-    set(GStreamer_VERSION
-        "${_version}"
-        PARENT_SCOPE
-    )
-
-    foreach(_api IN LISTS ARG_APIS)
+    # QGC_GST_REQUESTED_VERSION is the per-platform floor chosen by Orchestrator.cmake — Linux honors the distro
+    # minimum (1.20), bundled-SDK platforms enforce ≥1.28 so a downgraded SDK fails configure loudly.
+    _qgc_gst_create_core_targets("${QGC_GST_REQUESTED_VERSION}" ${_static} GStreamer_VERSION)
+    foreach(_api IN LISTS GSTREAMER_APIS)
         string(REGEX REPLACE "^api_" "" _pc_module "${_api}")
         string(REPLACE "_" "-" _pc_module "${_pc_module}")
-        _qgc_gst_create_component_target(${_api} "gstreamer-${_pc_module}-1.0" ${_static} _found)
-        set(GStreamer_${_api}_FOUND
-            "${_found}"
-            PARENT_SCOPE
-        )
-        if(_found)
-            target_link_libraries(GStreamer::GStreamer INTERFACE GStreamer::${_api})
-        endif()
+        _qgc_gst_create_component_target(${_api} "gstreamer-${_pc_module}-1.0" ${_static})
     endforeach()
     foreach(_plugin IN LISTS _plugins)
-        _qgc_gst_create_component_target(${_plugin} "gst${_plugin}" TRUE _found QUIET)
-        set(GStreamer_${_plugin}_FOUND
-            "${_found}"
-            PARENT_SCOPE
-        )
-        if(_found)
-            target_link_libraries(GStreamer::GStreamer INTERFACE GStreamer::${_plugin})
-        endif()
+        _qgc_gst_create_component_target(${_plugin} "gst${_plugin}" TRUE QUIET)
     endforeach()
+
+    # Apple framework overlay — defined in platform/MacOS.cmake; iOS uses xcframework.
+    if(MACOS AND GStreamer_USE_FRAMEWORK)
+        _qgc_gst_apply_macos_framework_overlay()
+    endif()
+
+    # Android mobile-target setup: bundle plugins + optional fonts/CA assets into the
+    # GStreamerMobile target. iOS uses the xcframework path upstream, so this is Android-only.
+    if(ANDROID)
+        _qgc_gst_create_android_mobile_target()
+        list(APPEND _outputs GSTREAMER_STATIC_PLUGINS)
+    endif()
+    return(PROPAGATE ${_outputs})
 endfunction()

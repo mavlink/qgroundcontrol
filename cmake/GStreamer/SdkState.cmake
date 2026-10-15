@@ -81,9 +81,7 @@ function(_qgc_gst_refresh_sdk_cache fingerprint)
     set(_stale_regex
         "^(__pkg_config_(checked|arguments)_PC_GStreamer|PC_GStreamer|pkgcfg_lib_PC_GStreamer|_gst_|GStreamer_FW_"
     )
-    string(APPEND _stale_regex
-           "|QGC_GST_HAS_|GST_D3D|QGC_GST_VULKAN|_GST_.*_PROG$|GStreamer_(UBUNTU_R_TTF|FONTS_CONF|CA_BUNDLE)$|_xcfw_)"
-    )
+    string(APPEND _stale_regex "|QGC_GST_HAS_|GST_D3D|QGC_GST_VULKAN|_GST_.*_PROG$|_xcfw_)")
     get_cmake_property(_cache_vars CACHE_VARIABLES)
     set(_purged 0)
     foreach(_var IN LISTS _cache_vars)

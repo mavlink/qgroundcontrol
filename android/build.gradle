@@ -35,13 +35,6 @@ def resolveCpmJavaSourceDir = {
     return cpmDir.exists() ? cpmDir : null
 }
 
-def resolveExtraAssetsDir = {
-    // CMake stages GStreamer's fonts and CA bundle into <CMAKE_BINARY_DIR>/extra_assets,
-    // the sibling 'extra_assets' of the Gradle project dir (see resolveCpmJavaSourceDir).
-    final File assetsDir = new File(project.projectDir.parentFile, 'extra_assets')
-    return assetsDir.exists() ? assetsDir : null
-}
-
 android {
     /*******************************************************
      * The following variables:
@@ -80,12 +73,9 @@ android {
             res.srcDirs = [qtAndroidDir + '/res', 'res']
             resources.srcDirs = ['resources']
             renderscript.srcDirs = ['src']
-            assets.srcDirs = ['assets'].tap {
-                def extraAssets = resolveExtraAssetsDir()
-                if (extraAssets != null) {
-                    it.add(extraAssets.absolutePath)
-                }
-            }
+            // CMake stages GStreamer's fonts and CA bundle into <CMAKE_BINARY_DIR>/extra_assets, the sibling of the
+            // Gradle project dir (see resolveCpmJavaSourceDir); missing asset dirs are ignored.
+            assets.srcDirs = ['assets', '../extra_assets']
             jniLibs.srcDirs = ['libs']
         }
         test {

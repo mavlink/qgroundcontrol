@@ -89,8 +89,6 @@ function(_qgc_gst_discover_android_sdk)
             ${_gst_android_abi_DIR}
             EXTRACT_FUNCTION
             _qgc_gst_android_extract
-            EXTRACT_ARGS
-            ${_gst_android_abi_DIR}
             CONTENT_DIR_OUT
             _gst_android_sdk
         )
@@ -140,7 +138,7 @@ function(_qgc_gst_android_find_plugin_archives out_var)
     _gst_save_find_suffixes()
     set(_found "")
     foreach(_p IN LISTS _plugins)
-        if(GStreamer_${_p}_FOUND)
+        if(TARGET GStreamer::${_p})
             find_library(
                 _gst_plugin_lib_${CMAKE_ANDROID_ARCH_ABI}_${_p} gst${_p}
                 HINTS "${GStreamer_ROOT_DIR}/lib/gstreamer-1.0"
@@ -188,66 +186,6 @@ function(_qgc_gst_android_whole_archive_plugins)
         endforeach()
         set_target_properties(GStreamer::${_plugin} PROPERTIES INTERFACE_LINK_LIBRARIES "${_kept_libraries}")
     endforeach()
-endfunction()
-
-# _qgc_gst_android_stage_files(JAVA <source>|<relative path>... ASSETS <source>|<relative path>...)
-# Copies the plugin Java sources under QGC_ANDROID_EXTRA_JAVA_SOURCES_DIR and the assets under
-# QGC_ANDROID_EXTRA_ASSETS_DIR when the app builds; android/build.gradle adds both build-directory trees to the APK
-# (androiddeployqt deletes files written into android-build/ itself). Earlier builds copied these files into
-# QGC_ANDROID_PACKAGE_SOURCE_DIR, where they would now duplicate the staged copies, so those copies are removed.
-# cmake-lint: disable=C0113
-function(_qgc_gst_android_stage_files)
-    cmake_parse_arguments(PARSE_ARGV 0 ARG "" "" "JAVA;ASSETS")
-    if(NOT QGC_ANDROID_EXTRA_JAVA_SOURCES_DIR OR NOT QGC_ANDROID_EXTRA_ASSETS_DIR)
-        message(FATAL_ERROR "GStreamer: QGC_ANDROID_EXTRA_JAVA_SOURCES_DIR and QGC_ANDROID_EXTRA_ASSETS_DIR must be "
-                            "set (cmake/platform/Android.cmake) before GStreamer is configured."
-        )
-    endif()
-    set(_outputs "")
-    set(_legacy_copies "")
-    foreach(_kind IN ITEMS JAVA ASSETS)
-        if(_kind STREQUAL "JAVA")
-            set(_root "${QGC_ANDROID_EXTRA_JAVA_SOURCES_DIR}")
-            set(_legacy_root "${QGC_ANDROID_PACKAGE_SOURCE_DIR}/src")
-        else()
-            set(_root "${QGC_ANDROID_EXTRA_ASSETS_DIR}")
-            set(_legacy_root "${QGC_ANDROID_PACKAGE_SOURCE_DIR}/assets")
-        endif()
-        foreach(_entry IN LISTS ARG_${_kind})
-            string(REPLACE "|" ";" _entry "${_entry}")
-            list(GET _entry 0 _source)
-            list(GET _entry 1 _relative)
-            set(_output "${_root}/${_relative}")
-            cmake_path(GET _output PARENT_PATH _output_dir)
-            add_custom_command(
-                OUTPUT "${_output}"
-                COMMAND "${CMAKE_COMMAND}" -E make_directory "${_output_dir}"
-                COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${_source}" "${_output}"
-                DEPENDS "${_source}"
-                COMMENT "Staging GStreamer ${_relative}"
-                VERBATIM
-            )
-            list(APPEND _outputs "${_output}")
-            if(QGC_ANDROID_PACKAGE_SOURCE_DIR AND EXISTS "${_legacy_root}/${_relative}")
-                list(APPEND _legacy_copies "${_legacy_root}/${_relative}")
-            endif()
-        endforeach()
-    endforeach()
-
-    if(_legacy_copies)
-        message(STATUS "GStreamer: removing files earlier builds copied into the Android package sources: "
-                       "${_legacy_copies}"
-        )
-        file(REMOVE ${_legacy_copies})
-    endif()
-    if(NOT _outputs)
-        return()
-    endif()
-    add_custom_target(gstreamer_android_files_${CMAKE_ANDROID_ARCH_ABI} DEPENDS ${_outputs})
-    # INTERFACE GStreamer::mobile cannot carry build dependencies; attach the staging to the app.
-    if(TARGET ${CMAKE_PROJECT_NAME})
-        add_dependencies(${CMAKE_PROJECT_NAME} gstreamer_android_files_${CMAKE_ANDROID_ARCH_ABI})
-    endif()
 endfunction()
 
 # _qgc_gst_android_link_gio_modules(<target>)
@@ -310,48 +248,82 @@ function(_qgc_gst_android_link_gio_modules target)
 endfunction()
 
 # _qgc_gst_android_stage_sdk_files(<ndk_build_dir> <plugin>...)
-# Stages the Java sources of the <plugin>s and the SDK's fonts and CA bundle (_qgc_gst_android_stage_files).
+# Copies the <plugin>s' Java sources under QGC_ANDROID_EXTRA_JAVA_SOURCES_DIR and the SDK's fonts and CA bundle under
+# QGC_ANDROID_EXTRA_ASSETS_DIR when the app builds; android/build.gradle adds both build-directory trees to the APK
+# (androiddeployqt deletes files written into android-build/ itself). Earlier builds copied these files into
+# QGC_ANDROID_PACKAGE_SOURCE_DIR, where they would now duplicate the staged copies, so those copies are removed.
+# cmake-lint: disable=C0113
 function(_qgc_gst_android_stage_sdk_files ndk_build)
-    set(_gst_staged_java)
-    foreach(_gst_java_plugin IN LISTS ARGN)
-        file(
-            GLOB_RECURSE _gst_java_files FOLLOW_SYMLINKS CONFIGURE_DEPENDS
-            RELATIVE "${ndk_build}"
-            "${ndk_build}/${_gst_java_plugin}/*.java"
+    if(NOT QGC_ANDROID_EXTRA_JAVA_SOURCES_DIR OR NOT QGC_ANDROID_EXTRA_ASSETS_DIR)
+        message(FATAL_ERROR "GStreamer: QGC_ANDROID_EXTRA_JAVA_SOURCES_DIR and QGC_ANDROID_EXTRA_ASSETS_DIR must be "
+                            "set (cmake/platform/Android.cmake) before GStreamer is configured."
         )
-        foreach(_gst_java_file IN LISTS _gst_java_files)
-            list(APPEND _gst_staged_java "${ndk_build}/${_gst_java_file}|org/freedesktop/gstreamer/${_gst_java_file}")
+    endif()
+
+    # <source>|<staging directory>|<directory under QGC_ANDROID_PACKAGE_SOURCE_DIR>|<path under both>
+    set(_java_dirs "${QGC_ANDROID_EXTRA_JAVA_SOURCES_DIR}|src")
+    set(_asset_dirs "${QGC_ANDROID_EXTRA_ASSETS_DIR}|assets")
+    set(_files "")
+    foreach(_plugin IN LISTS ARGN)
+        file(
+            GLOB_RECURSE _java_files FOLLOW_SYMLINKS CONFIGURE_DEPENDS
+            RELATIVE "${ndk_build}"
+            "${ndk_build}/${_plugin}/*.java"
+        )
+        foreach(_java_file IN LISTS _java_files)
+            list(APPEND _files "${ndk_build}/${_java_file}|${_java_dirs}|org/freedesktop/gstreamer/${_java_file}")
         endforeach()
     endforeach()
-
-    set(_gst_staged_assets)
-    if(EXISTS "${ndk_build}/fontconfig")
-        set(GStreamer_UBUNTU_R_TTF
-            "${ndk_build}/fontconfig/fonts/Ubuntu-R.ttf"
-            CACHE FILEPATH "Path to Ubuntu-R.ttf"
+    set(_fonts "${ndk_build}/fontconfig")
+    if(EXISTS "${_fonts}/fonts/Ubuntu-R.ttf" AND EXISTS "${_fonts}/fonts.conf")
+        list(APPEND _files "${_fonts}/fonts/Ubuntu-R.ttf|${_asset_dirs}|fontconfig/fonts/truetype/Ubuntu-R.ttf"
+             "${_fonts}/fonts.conf|${_asset_dirs}|fontconfig/fonts.conf"
         )
-        set(GStreamer_FONTS_CONF
-            "${ndk_build}/fontconfig/fonts.conf"
-            CACHE FILEPATH "Path to fonts.conf"
-        )
-        if(EXISTS "${GStreamer_UBUNTU_R_TTF}" AND EXISTS "${GStreamer_FONTS_CONF}")
-            list(APPEND _gst_staged_assets "${GStreamer_UBUNTU_R_TTF}|fontconfig/fonts/truetype/Ubuntu-R.ttf"
-                 "${GStreamer_FONTS_CONF}|fontconfig/fonts.conf"
-            )
-        endif()
+    endif()
+    set(_ca_bundle "${GStreamer_ROOT_DIR}/etc/ssl/certs/ca-certificates.crt")
+    if(EXISTS "${_ca_bundle}")
+        list(APPEND _files "${_ca_bundle}|${_asset_dirs}|ssl/certs/ca-certificates.crt")
     endif()
 
-    if(EXISTS "${GStreamer_ROOT_DIR}/etc/ssl/certs/ca-certificates.crt")
-        set(GStreamer_CA_BUNDLE
-            "${GStreamer_ROOT_DIR}/etc/ssl/certs/ca-certificates.crt"
-            CACHE FILEPATH "Path to ca-certificates bundle"
+    set(_outputs "")
+    set(_legacy_copies "")
+    foreach(_file IN LISTS _files)
+        string(REPLACE "|" ";" _file "${_file}")
+        list(GET _file 0 _source)
+        list(GET _file 1 _staging_dir)
+        list(GET _file 2 _package_dir)
+        list(GET _file 3 _relative)
+        set(_output "${_staging_dir}/${_relative}")
+        cmake_path(GET _output PARENT_PATH _output_dir)
+        add_custom_command(
+            OUTPUT "${_output}"
+            COMMAND "${CMAKE_COMMAND}" -E make_directory "${_output_dir}"
+            COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${_source}" "${_output}"
+            DEPENDS "${_source}"
+            COMMENT "Staging GStreamer ${_relative}"
+            VERBATIM
         )
-        if(EXISTS "${GStreamer_CA_BUNDLE}")
-            list(APPEND _gst_staged_assets "${GStreamer_CA_BUNDLE}|ssl/certs/ca-certificates.crt")
+        list(APPEND _outputs "${_output}")
+        set(_legacy_copy "${QGC_ANDROID_PACKAGE_SOURCE_DIR}/${_package_dir}/${_relative}")
+        if(QGC_ANDROID_PACKAGE_SOURCE_DIR AND EXISTS "${_legacy_copy}")
+            list(APPEND _legacy_copies "${_legacy_copy}")
         endif()
-    endif()
+    endforeach()
 
-    _qgc_gst_android_stage_files(JAVA ${_gst_staged_java} ASSETS ${_gst_staged_assets})
+    if(_legacy_copies)
+        message(STATUS "GStreamer: removing files earlier builds copied into the Android package sources: "
+                       "${_legacy_copies}"
+        )
+        file(REMOVE ${_legacy_copies})
+    endif()
+    if(NOT _outputs)
+        return()
+    endif()
+    add_custom_target(gstreamer_android_files_${CMAKE_ANDROID_ARCH_ABI} DEPENDS ${_outputs})
+    # INTERFACE GStreamer::mobile cannot carry build dependencies; attach the staging to the app.
+    if(TARGET ${CMAKE_PROJECT_NAME})
+        add_dependencies(${CMAKE_PROJECT_NAME} gstreamer_android_files_${CMAKE_ANDROID_ARCH_ABI})
+    endif()
 endfunction()
 
 # _qgc_gst_create_android_mobile_target()
@@ -361,11 +333,6 @@ endfunction()
 function(_qgc_gst_create_android_mobile_target)
     if(NOT GStreamer_USE_STATIC_LIBS)
         message(FATAL_ERROR "Shared library GStreamer is not supported on mobile platforms")
-    endif()
-    if(NOT TARGET GStreamer::GStreamer)
-        message(FATAL_ERROR "qgc_gst_create_pkgconfig_targets() must run before "
-                            "_qgc_gst_create_android_mobile_target()."
-        )
     endif()
     set(_ndk_build "${GStreamer_ROOT_DIR}/share/gst-android/ndk-build")
     # GStreamer.java is not consumed (init runs in C++); used only as a stable
@@ -386,7 +353,6 @@ function(_qgc_gst_create_android_mobile_target)
     # Single-core model: GStreamer::mobile is an INTERFACE target that whole-archives the plugin .a's +
     # helpers + GIO modules into the app, which carries the one static core (GStreamer::GStreamer). A
     # separate .so would carry a duplicate GstElement core and fail g_type_is_a for every plugin.
-    # Do NOT re-link the core here — that produced the duplicate-GstElement-core failure.
     add_library(GStreamerMobile INTERFACE IMPORTED GLOBAL)
     add_library(GStreamer::mobile ALIAS GStreamerMobile)
     target_include_directories(GStreamerMobile

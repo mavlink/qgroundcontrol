@@ -52,7 +52,6 @@ set(_stale
     GST_D3D11_LIB
     QGC_GST_VULKAN_LIB
     _GST_gst_plugin_scanner_PROG
-    GStreamer_CA_BUNDLE
     _xcfw_foundation
 )
 set(_kept __pkg_config_checked_LIBURING PC_LibUSB_FOUND PKG_CONFIG_EXECUTABLE GStreamer_ROOT_DIR QGC_GST_RESOLVED_ROOT)

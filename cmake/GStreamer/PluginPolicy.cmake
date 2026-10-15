@@ -106,85 +106,10 @@ function(gstreamer_runtime_required_plugins out_var)
     )
 endfunction()
 
-# gstreamer_plugin_satisfy_sets(PLUGIN <name> OUT_VAR <var>)
-# Returns the alternate-satisfaction sets for <name>: a ";"-list where each entry
-# is a "+"-joined set of plugin basenames that together satisfy <name>. If <name>
-# belongs to an alternate group, returns that group's alternatives; otherwise just
-# "<name>". Lets the install verifier accept videoconvert+videoscale (1.20) in
-# place of the fused videoconvertscale (1.22+) instead of failing the build.
-function(gstreamer_plugin_satisfy_sets)
-    cmake_parse_arguments(PARSE_ARGV 0 ARG "" "PLUGIN;OUT_VAR" "")
-    if(ARG_KEYWORDS_MISSING_VALUES)
-        message(FATAL_ERROR "gstreamer_plugin_satisfy_sets: missing values for: ${ARG_KEYWORDS_MISSING_VALUES}")
-    endif()
-    if(ARG_UNPARSED_ARGUMENTS)
-        message(FATAL_ERROR "gstreamer_plugin_satisfy_sets: unknown arguments: ${ARG_UNPARSED_ARGUMENTS}")
-    endif()
-    if(NOT ARG_PLUGIN)
-        message(FATAL_ERROR "gstreamer_plugin_satisfy_sets: PLUGIN is required")
-    endif()
-    if(NOT ARG_OUT_VAR)
-        message(FATAL_ERROR "gstreamer_plugin_satisfy_sets: OUT_VAR is required")
-    endif()
-    foreach(_group IN LISTS GSTREAMER_PLUGIN_ALTERNATES)
-        string(REPLACE "|" ";" _alts "${_group}")
-        foreach(_alt IN LISTS _alts)
-            string(REPLACE "+" ";" _members "${_alt}")
-            if(ARG_PLUGIN IN_LIST _members)
-                set(${ARG_OUT_VAR}
-                    "${_alts}"
-                    PARENT_SCOPE
-                )
-                return()
-            endif()
-        endforeach()
-    endforeach()
-    set(${ARG_OUT_VAR}
-        "${ARG_PLUGIN}"
-        PARENT_SCOPE
-    )
-endfunction()
-
-# gstreamer_plugin_satisfied(PLUGIN <name> AVAILABLE <plugin>... OUT_VAR <var>)
-# Sets <var> to TRUE when <name> is in AVAILABLE or one of its alternate sets
-# (gstreamer_plugin_satisfy_sets) is entirely in AVAILABLE, else FALSE.
-function(gstreamer_plugin_satisfied)
-    cmake_parse_arguments(PARSE_ARGV 0 ARG "" "PLUGIN;OUT_VAR" "AVAILABLE")
-    if(ARG_UNPARSED_ARGUMENTS)
-        message(FATAL_ERROR "gstreamer_plugin_satisfied: unknown arguments: ${ARG_UNPARSED_ARGUMENTS}")
-    endif()
-    if(NOT ARG_PLUGIN OR NOT ARG_OUT_VAR)
-        message(FATAL_ERROR "gstreamer_plugin_satisfied: PLUGIN and OUT_VAR are required")
-    endif()
-    set(_satisfied FALSE)
-    if(ARG_PLUGIN IN_LIST ARG_AVAILABLE)
-        set(_satisfied TRUE)
-    else()
-        gstreamer_plugin_satisfy_sets(PLUGIN "${ARG_PLUGIN}" OUT_VAR _sets)
-        foreach(_set IN LISTS _sets)
-            string(REPLACE "+" ";" _members "${_set}")
-            set(_set_available TRUE)
-            foreach(_member IN LISTS _members)
-                if(NOT _member IN_LIST ARG_AVAILABLE)
-                    set(_set_available FALSE)
-                    break()
-                endif()
-            endforeach()
-            if(_set_available)
-                set(_satisfied TRUE)
-                break()
-            endif()
-        endforeach()
-    endif()
-    set(${ARG_OUT_VAR}
-        ${_satisfied}
-        PARENT_SCOPE
-    )
-endfunction()
-
 # gstreamer_missing_required(REQUIRED <plugin>... AVAILABLE <plugin>... OUT_VAR <var>)
-# Sets <var> to the REQUIRED plugins, in order, that gstreamer_plugin_satisfied
-# rejects against AVAILABLE.
+# Sets <var> to the REQUIRED plugins, in order, that are not AVAILABLE. A member of a GSTREAMER_PLUGIN_ALTERNATES group
+# is also satisfied by any alternate of its group whose plugins are all AVAILABLE, so the install verifier accepts
+# videoconvert+videoscale (1.20) in place of the fused videoconvertscale (1.22+).
 function(gstreamer_missing_required)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "" "OUT_VAR" "REQUIRED;AVAILABLE")
     if(ARG_UNPARSED_ARGUMENTS)
@@ -195,7 +120,27 @@ function(gstreamer_missing_required)
     endif()
     set(_missing "")
     foreach(_plugin IN LISTS ARG_REQUIRED)
-        gstreamer_plugin_satisfied(PLUGIN "${_plugin}" AVAILABLE ${ARG_AVAILABLE} OUT_VAR _satisfied)
+        set(_alternates "${_plugin}")
+        foreach(_group IN LISTS GSTREAMER_PLUGIN_ALTERNATES)
+            string(REGEX REPLACE "[|+]" ";" _group_plugins "${_group}")
+            if(_plugin IN_LIST _group_plugins)
+                string(REPLACE "|" ";" _alternates "${_plugin}|${_group}")
+                break()
+            endif()
+        endforeach()
+        set(_satisfied FALSE)
+        foreach(_alternate IN LISTS _alternates)
+            string(REPLACE "+" ";" _alternate_plugins "${_alternate}")
+            set(_satisfied TRUE)
+            foreach(_alternate_plugin IN LISTS _alternate_plugins)
+                if(NOT _alternate_plugin IN_LIST ARG_AVAILABLE)
+                    set(_satisfied FALSE)
+                endif()
+            endforeach()
+            if(_satisfied)
+                break()
+            endif()
+        endforeach()
         if(NOT _satisfied)
             list(APPEND _missing "${_plugin}")
         endif()

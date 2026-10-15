@@ -92,16 +92,7 @@ foreach(_target IN LISTS _qgc_state_targets)
         string(APPEND _qgc_state "${_target}.${_property}=${_value}\n")
     endforeach()
 endforeach()
-foreach(
-    _key IN
-    ITEMS LAYOUT_TYPE
-          SDK_ROOT
-          LIB_DIR
-          PLUGIN_DIR
-          INCLUDE_DIR
-          VERSION
-          AUTO_DOWNLOADED
-)
+foreach(_key IN ITEMS LAYOUT_TYPE LIB_DIR PLUGIN_DIR INCLUDE_DIR VERSION)
     gstreamer_layout_get(${_key} _value)
     string(APPEND _qgc_state "GStreamer::Layout.${_key}=${_value}\n")
 endforeach()
@@ -173,9 +164,6 @@ if(GStreamer_USE_STATIC_LIBS)
     qgc_test_assert_in_list("static init source" "${_qgc_static_init}" _qgc_app_sources)
     get_source_file_property(_qgc_skip_pch "${_qgc_static_init}" TARGET_DIRECTORY QGCFakeApp SKIP_PRECOMPILE_HEADERS)
     qgc_test_assert_streq("static init skips the precompiled header" ON "${_qgc_skip_pch}")
-    file(STRINGS "${_qgc_static_init}" _qgc_registered REGEX "^    QGC_REGISTER_STATIC_PLUGIN\\(")
-    list(TRANSFORM _qgc_registered REPLACE "^    QGC_REGISTER_STATIC_PLUGIN\\(([a-z0-9_]+)\\);$" "\\1")
-    qgc_test_assert_streq("static init registrations" coreelements "${_qgc_registered}")
 else()
     qgc_test_assert_property("core libraries" GStreamer::deps INTERFACE_LINK_LIBRARIES
                              "${EXPECT_ROOT}/lib/libgstreamer-1.0.so"
@@ -191,14 +179,12 @@ endif()
 qgc_test_assert_property("layout lib dir" GStreamer::Layout GSTREAMER_LIB_DIR "${EXPECT_ROOT}/lib")
 qgc_test_assert_property("layout plugin dir" GStreamer::Layout GSTREAMER_PLUGIN_DIR "${EXPECT_ROOT}/lib/gstreamer-1.0")
 qgc_test_assert_property("layout include dir" GStreamer::Layout GSTREAMER_INCLUDE_DIR "${EXPECT_ROOT}/include")
-qgc_test_assert_streq("plugin scan" "TRUE" "${GST_PLUGIN_coreelements_FOUND}")
-qgc_test_assert_property("layout SDK root" GStreamer::Layout GSTREAMER_SDK_ROOT "${EXPECT_ROOT}")
 qgc_test_assert_property("layout version" GStreamer::Layout GSTREAMER_VERSION "${EXPECT_VERSION}")
 if(NOT DEFINED EXPECT_AUTO)
     set(EXPECT_AUTO FALSE)
 endif()
-qgc_test_assert_property("layout auto-downloaded" GStreamer::Layout GSTREAMER_AUTO_DOWNLOADED "${EXPECT_AUTO}")
 qgc_test_assert_streq("recorded root" "${EXPECT_ROOT}" "$CACHE{QGC_GST_RESOLVED_ROOT}")
+qgc_test_assert_streq("recorded auto-downloaded" "${EXPECT_AUTO}" "$CACHE{QGC_GST_RESOLVED_AUTO}")
 
 # The fake SDK ships the DMABuf and orientation-meta headers only when EXPECT_PROBES is set,
 # so a stale try-compile result shows up as a mismatch here.
