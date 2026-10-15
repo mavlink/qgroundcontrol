@@ -6,11 +6,11 @@
 #include "Fact.h"
 #include "Fixtures/RAIIFixtures.h"
 #include "GStreamer.h"
-#include "GStreamerFrameMap.h"
 #include "GStreamerHelpers.h"
 #include "GStreamerLogging.h"
 #include "GstHwPathTelemetry.h"
 #include "GstHwVideoBufferFactory.h"
+#include "GstQgcFrameMap.h"
 #include "GstSourceFactory.h"
 #include "GstVideoReceiver.h"
 #include "HwBuffers/dmabuf/GstDmaDrmCaps.h"
@@ -1553,7 +1553,7 @@ void GStreamerTest::_testQgcQVideoSinkProposesVideoMetaPool()
 void GStreamerTest::_testAllocationQuerySystemMemoryNoPoolStillAdvertisesMetas()
 {
     // When upstream does not need a pool, qgcqvideosink must not force one. It still has to advertise consumed metas
-    // so crop/orientation/video metadata survive into GStreamerFrameMap.
+    // so crop/orientation/video metadata survive into GstQgcFrameMap.
     GstCaps* caps = gst_caps_from_string(
         "video/x-raw, format=(string)BGRA, width=(int)64, height=(int)64, framerate=(fraction)30/1");
     QVERIFY2(caps, "System-memory caps did not parse");

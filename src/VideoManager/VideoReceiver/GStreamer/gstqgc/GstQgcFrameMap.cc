@@ -1,11 +1,12 @@
-#include "GStreamerFrameMap.h"
+#include "GstQgcFrameMap.h"
 
-#include <QtMultimedia/QAbstractVideoBuffer>
-#include <QtMultimedia/QVideoFrame>
 #include <atomic>
 #include <gst/gst.h>
 #include <gst/video/gstvideometa.h>
 #include <gst/video/video-hdr.h>
+
+#include <QtMultimedia/QAbstractVideoBuffer>
+#include <QtMultimedia/QVideoFrame>
 
 #include "GstQgcVideoFormats.h"
 #include "HwBuffers/common/CpuVideoFramePool.h"
@@ -15,7 +16,7 @@
 #include <private/qhwvideobuffer_p.h>
 #endif
 
-QGC_LOGGING_CATEGORY(GStreamerFrameMapLog, "Video.GStreamer.FrameMap")
+QGC_LOGGING_CATEGORY(GstQgcFrameMapLog, "Video.GStreamer.FrameMap")
 
 QVideoFrameFormat::ColorSpace toQtColorSpace(GstVideoColorMatrix matrix)
 {
@@ -132,7 +133,7 @@ void applyOrientationToFrame(QVideoFrame& frame, GstVideoOrientationMethod metho
         default:
             static std::atomic<bool> s_warnedUnhandled{false};
             if (!s_warnedUnhandled.exchange(true, std::memory_order_relaxed)) {
-                qCWarning(GStreamerFrameMapLog)
+                qCWarning(GstQgcFrameMapLog)
                     << "Unhandled GstVideoOrientationMethod" << method << "— treating as identity";
             }
             frame.setRotation(QtVideo::Rotation::None);

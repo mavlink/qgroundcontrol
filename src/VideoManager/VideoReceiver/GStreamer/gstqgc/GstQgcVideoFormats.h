@@ -15,7 +15,7 @@ inline constexpr unsigned kOfferLinearDmaDrm = 1u << 1;
 
 /// Single source of truth linking a GStreamer video format to its Qt pixel format and (optionally) its
 /// negotiation caps token. Every advertised caps format list (GstQgcCaps) and toQtPixelFormat()
-/// (GStreamerFrameMap) derive from this table, so a format can never be advertised without a Qt mapping,
+/// (GstQgcFrameMap) derive from this table, so a format can never be advertised without a Qt mapping,
 /// nor mapped-and-renderable without being offered.
 struct VideoFormatEntry
 {

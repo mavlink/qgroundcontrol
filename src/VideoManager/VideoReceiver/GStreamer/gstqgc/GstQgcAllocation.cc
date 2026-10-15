@@ -17,7 +17,7 @@ namespace {
 // in-flight slot and keeps (with its sample) until that render frame ends.
 constexpr guint kProposedMinBuffers = CpuVideoFramePool::kMaxPinnedFrames + 1;
 
-// Advertise every meta API qgcqvideosink/GStreamerFrameMap consume so upstream keeps them;
+// Advertise every meta API qgcqvideosink/GstQgcFrameMap consume so upstream keeps them;
 // else gst-vaapi/v4l2 strip crop/orientation metas and mapSampleToFrame does a full copy/rotate.
 void addConsumedAllocationMetas(GstQuery* query)
 {

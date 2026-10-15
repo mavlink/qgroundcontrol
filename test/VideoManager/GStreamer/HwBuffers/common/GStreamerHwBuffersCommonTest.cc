@@ -2,37 +2,35 @@
 
 #ifdef QGC_GST_STREAMING
 
+#include <atomic>
+#include <cstring>
+#include <gst/gst.h>
+#include <gst/video/gstvideometa.h>
+#include <iterator>
+#include <memory>
+#include <vector>
+
 #include <QtCore/QDir>
 #include <QtCore/QFileInfo>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QStandardPaths>
-#include <atomic>
-#include <cstring>
-#include <gst/gst.h>
-#include <iterator>
-#include <memory>
-#include <vector>
+#include <QtMultimedia/QVideoFrame>
+#include <QtMultimedia/QVideoSink>
 
-#include "Fixtures/RAIIFixtures.h"
+#include "CpuVideoFramePool.h"
 #include "Fact.h"
+#include "Fixtures/RAIIFixtures.h"
 #include "GStreamer.h"
 #include "GStreamerHelpers.h"
 #include "GStreamerLogging.h"
-#include "GstVideoReceiver.h"
-
-#include <QtMultimedia/QVideoFrame>
-#include <QtMultimedia/QVideoSink>
-#include <gst/video/gstvideometa.h>
-
-#include "GStreamer.h"
-#include "GStreamerFrameMap.h"
-#include "CpuVideoFramePool.h"
 #include "GstHwPathTelemetry.h"
 #include "GstHwVideoBufferFactory.h"
+#include "GstQgcFrameMap.h"
 #include "GstSourceFactory.h"
-#include "QGCQVideoSinkController.h"
+#include "GstVideoReceiver.h"
 #include "HwBuffers/dmabuf/GstDmaDrmCaps.h"
+#include "QGCQVideoSinkController.h"
 #include "gstqgc/GstQgcAllocation.h"
 #include "gstqgc/GstQgcCaps.h"
 #include "gstqgc/GstQgcVideoFormats.h"
@@ -808,7 +806,7 @@ void GStreamerTest::_testHwVideoBufferCpuMapRefusesForeignLayout()
 void GStreamerTest::_testHwBufferCropMatrixFromVideoCropMeta()
 {
     // Regression: GstVideoCropMeta is propagated via QVideoFrameFormat::viewport() in
-    // GStreamerFrameMap::applyCropMeta, NOT via externalTextureMatrix. Verify the format
+    // applyCropMeta (GstQgcFrameMap), NOT via externalTextureMatrix. Verify the format
     // path round-trips a crop rect into viewport().
     GstVideoInfo info;
     GstSample* sample = makeNv12Sample(400, 200, &info, /*addCrop=*/true,

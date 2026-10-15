@@ -10,8 +10,8 @@ target_sources(QGCGStreamer
         gstqgcvideosinkbin.h
         gstqgcqvideosink.cc
         gstqgcqvideosink.h
-        GStreamerFrameMap.cc
-        GStreamerFrameMap.h
+        GstQgcFrameMap.cc
+        GstQgcFrameMap.h
         GstQgcAllocation.cc
         GstQgcAllocation.h
         GstQgcBinChain.h

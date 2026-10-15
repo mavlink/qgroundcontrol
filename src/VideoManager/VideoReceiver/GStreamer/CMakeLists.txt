@@ -78,7 +78,7 @@ target_include_directories(QGCGStreamer
 )
 
 # Qt6::MultimediaQuickPrivate is OPTIONAL at the root find_package; link it when present
-# (GStreamer.cc / GStreamerFrameMap.cc need MultimediaQuick) rather than failing configure.
+# (GStreamer.cc / GstQgcFrameMap.cc need MultimediaQuick) rather than failing configure.
 if(TARGET Qt6::MultimediaQuickPrivate)
     target_link_libraries(QGCGStreamer PUBLIC Qt6::MultimediaQuickPrivate)
 else()

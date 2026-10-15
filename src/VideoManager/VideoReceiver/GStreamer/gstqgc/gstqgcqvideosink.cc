@@ -14,8 +14,8 @@
 #include <QtMultimedia/QVideoFrameFormat>
 #include <QtMultimedia/QVideoSink>
 
-#include "GStreamerFrameMap.h"
 #include "GstQgcAllocation.h"
+#include "GstQgcFrameMap.h"
 #include "HwBuffers/common/GstHwVideoInfo.h"
 #include "HwBuffers/common/HwBuffers.h"
 #include "QGCLoggingCategory.h"
