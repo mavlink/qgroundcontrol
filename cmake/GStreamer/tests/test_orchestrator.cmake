@@ -271,10 +271,28 @@ elseif(SCENARIO STREQUAL "android-mobile")
     include("${CMAKE_CURRENT_LIST_DIR}/../PluginPolicy.cmake")
     gstreamer_runtime_required_plugins(_plugins)
     list(REMOVE_ITEM _plugins udp)
+    list(APPEND _plugins androidmedia)
     string(REPLACE ";" "," _requested "${_plugins};udp")
-    set(_android -DQGC_TEST_ANDROID_ABI=arm64-v8a "-DQGC_TEST_PLUGINS=${_requested}")
+    set(_package "${WORK_DIR}/android-package")
+    set(_android -DQGC_TEST_ANDROID_ABI=arm64-v8a "-DQGC_TEST_PLUGINS=${_requested}"
+                 "-DQGC_ANDROID_PACKAGE_SOURCE_DIR=${_package}"
+    )
     _qgc_write_fake_sdk("${_sdk_a}" 1.24.0 PLUGINS ${_plugins})
-    file(WRITE "${_sdk_a}/share/gst-android/ndk-build/GStreamer.java" "")
+    # source|path staged under the build directory
+    set(_ndk_build "${_sdk_a}/share/gst-android/ndk-build")
+    set(_java androidmedia/GstAhcCallback.java)
+    set(_staged
+        "${_ndk_build}/${_java}|extra_java_sources/org/freedesktop/gstreamer/${_java}"
+        "${_ndk_build}/fontconfig/fonts.conf|extra_assets/fontconfig/fonts.conf"
+        "${_ndk_build}/fontconfig/fonts/Ubuntu-R.ttf|extra_assets/fontconfig/fonts/truetype/Ubuntu-R.ttf"
+        "${_sdk_a}/etc/ssl/certs/ca-certificates.crt|extra_assets/ssl/certs/ca-certificates.crt"
+    )
+    foreach(_entry IN LISTS _staged)
+        string(REPLACE "|" ";" _entry "${_entry}")
+        list(GET _entry 0 _source)
+        file(WRITE "${_source}" "${_source}\n")
+    endforeach()
+    file(WRITE "${_ndk_build}/GStreamer.java" "")
     file(WRITE "${_sdk_a}/lib/gio/modules/libgioopenssl.a" "")
     foreach(_library IN ITEMS ssl crypto gio-2.0)
         file(WRITE "${_sdk_a}/lib/lib${_library}.a" "")
@@ -290,8 +308,50 @@ elseif(SCENARIO STREQUAL "android-mobile")
     file(READ "${_sdk_a}/lib/pkgconfig/gstcoreelements.pc" _pc)
     string(REPLACE "coreelements" "udp" _pc "${_pc}")
     file(WRITE "${_sdk_a}/lib/pkgconfig/gstudp.pc" "${_pc}")
+    # Copies earlier builds wrote into the package sources would duplicate the staged files; other files stay.
+    set(_legacy_copies "${_package}/src/org/freedesktop/gstreamer/androidmedia/GstAhcCallback.java"
+                       "${_package}/assets/fontconfig/fonts.conf"
+    )
+    foreach(
+        _file IN
+        LISTS _legacy_copies
+        ITEMS "${_package}/assets/keep.txt"
+    )
+        file(WRITE "${_file}" "")
+    endforeach()
     _qgc_configure_ok("Android mobile target" --fresh "-DGStreamer_ROOT_DIR=${_sdk_a}" ${_android})
     _qgc_link_line(_link)
+
+    # Plugin Java sources and fonts/CA assets are staged into the build directory, never the package sources.
+    execute_process(
+        COMMAND "${CMAKE_COMMAND}" --build "${_binary_dir}" --target gstreamer_android_files_arm64-v8a
+        RESULT_VARIABLE _result
+        OUTPUT_VARIABLE _output
+        ERROR_VARIABLE _output
+    )
+    qgc_test_assert_streq("staging build: ${_output}" 0 "${_result}")
+    foreach(_entry IN LISTS _staged)
+        string(REPLACE "|" ";" _entry "${_entry}")
+        list(GET _entry 0 _source)
+        list(GET _entry 1 _path)
+        execute_process(COMMAND "${CMAKE_COMMAND}" -E compare_files "${_source}" "${_binary_dir}/${_path}"
+                        RESULT_VARIABLE _different
+        )
+        qgc_test_assert_streq("staged ${_path}" 0 "${_different}")
+    endforeach()
+    file(
+        GLOB_RECURSE _package_files
+        RELATIVE "${_package}"
+        "${_package}/*"
+    )
+    qgc_test_assert_streq("package sources" assets/keep.txt "${_package_files}")
+    if(GENERATOR MATCHES "Ninja")
+        file(READ "${_binary_dir}/build.ninja" _ninja)
+        set(_app_order_dependencies "build cmake_object_order_depends_target_QGCGStreamerFakeSdk: phony [^\n]*")
+        if(NOT _ninja MATCHES "${_app_order_dependencies}gstreamer_android_files_arm64-v8a")
+            message(FATAL_ERROR "ASSERT [staging dependency]: the app does not depend on the staged files")
+        endif()
+    endif()
 
     # The plugin archive is linked once, whole-archived; a plain occurrence ahead of it would load members twice.
     string(REGEX MATCHALL "[^ ]*libgstcoreelements\\.a" _plugin_archives "${_link}")
@@ -310,6 +370,72 @@ elseif(SCENARIO STREQUAL "android-mobile")
                                                                      "--exclude-libs,libgstreamer-1\\.0\\.a"
     )
         message(FATAL_ERROR "ASSERT [hidden core dependencies]: missing archive or --exclude-libs:\n${_link}")
+    endif()
+elseif(SCENARIO STREQUAL "install-macos")
+    # The macOS bundle installers run on any host: everything must land under DESTDIR and the --prefix given at
+    # install time, and nothing under the prefix known at configure time.
+    _qgc_write_fake_sdk("${_sdk_a}" 1.24.0)
+    foreach(
+        _file IN
+        ITEMS lib/libgstreamer-1.0.dylib lib/gstreamer-1.0/libgstcoreelements.dylib lib/gio/modules/libgioopenssl.dylib
+              libexec/gstreamer-1.0/gst-plugin-scanner etc/ssl/certs/ca-certificates.crt
+    )
+        file(WRITE "${_sdk_a}/${_file}" "")
+    endforeach()
+    set(_framework "${WORK_DIR}/GStreamer.framework")
+    foreach(_file IN ITEMS GStreamer lib/gstreamer-1.0/libgstcoreelements.dylib Resources/Info.plist)
+        file(WRITE "${_framework}/Versions/1.0/${_file}" "")
+    endforeach()
+    set(_configured_prefix "-DCMAKE_INSTALL_PREFIX=${WORK_DIR}/configured-prefix")
+    set(_bundle "${WORK_DIR}/stage/opt/qgc/QGCFake.app/Contents")
+
+    _qgc_configure_ok("macOS framework install rules" --fresh "-DGStreamer_ROOT_DIR=${_sdk_a}" ${_configured_prefix}
+                      "-DQGC_TEST_INSTALL_MACOS_FRAMEWORK=${_framework}"
+    )
+    _qgc_install()
+    if(NOT _qgc_result EQUAL 0)
+        message(FATAL_ERROR "ASSERT [framework install]: install failed\n${_qgc_output}")
+    endif()
+    set(_fw "${_bundle}/Frameworks/GStreamer.framework")
+    foreach(_file IN ITEMS Versions/1.0/GStreamer Versions/1.0/lib/gstreamer-1.0/libgstcoreelements.dylib)
+        if(NOT EXISTS "${_fw}/${_file}")
+            message(FATAL_ERROR "ASSERT [framework install]: ${_file} is not under DESTDIR/prefix\n${_qgc_output}")
+        endif()
+    endforeach()
+    foreach(_link IN ITEMS "Versions/Current|1.0" "GStreamer|Versions/Current/GStreamer"
+                           "Resources|Versions/Current/Resources"
+    )
+        string(REPLACE "|" ";" _link "${_link}")
+        list(GET _link 0 _name)
+        list(GET _link 1 _target)
+        file(READ_SYMLINK "${_fw}/${_name}" _actual)
+        qgc_test_assert_streq("framework symlink ${_name}" "${_target}" "${_actual}")
+    endforeach()
+
+    _qgc_configure_ok("macOS flat install rules" --fresh "-DGStreamer_ROOT_DIR=${_sdk_a}" ${_configured_prefix}
+                      -DQGC_TEST_INSTALL_MACOS_FLAT=ON
+    )
+    _qgc_install()
+    if(NOT _qgc_result EQUAL 0)
+        message(FATAL_ERROR "ASSERT [flat install]: install failed\n${_qgc_output}")
+    endif()
+    foreach(
+        _file IN
+        ITEMS Frameworks/libgstreamer-1.0.dylib lib/gstreamer-1.0/libgstcoreelements.dylib
+              lib/gio/modules/libgioopenssl.dylib libexec/gstreamer-1.0/gst-plugin-scanner
+              Resources/etc/ssl/certs/ca-certificates.crt
+    )
+        if(NOT EXISTS "${_bundle}/${_file}")
+            message(FATAL_ERROR "ASSERT [flat install]: ${_file} is not under DESTDIR/prefix\n${_qgc_output}")
+        endif()
+    endforeach()
+    # The rpath fixup visits the installed copies; without otool on this host it warns about each one.
+    string(REGEX REPLACE "[ \t\r\n]+" " " _normalized "${_qgc_output}")
+    if(NOT _normalized MATCHES "otool -l failed for ${_bundle}/lib/gstreamer-1.0/libgstcoreelements.dylib")
+        message(FATAL_ERROR "ASSERT [rpath fixup]: the installed plugins were not visited\n${_qgc_output}")
+    endif()
+    if(EXISTS "${WORK_DIR}/configured-prefix" OR EXISTS "${WORK_DIR}/stage${WORK_DIR}/configured-prefix")
+        message(FATAL_ERROR "ASSERT [install prefix]: files were installed under the configure-time prefix")
     endif()
 elseif(SCENARIO STREQUAL "install")
     # videoconvert+videoscale stand in for the fused videoconvertscale the verifier requires.

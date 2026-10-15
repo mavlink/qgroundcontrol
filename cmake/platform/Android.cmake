@@ -80,12 +80,16 @@ set(ANDROID_VERSION_CODE "${ANDROID_BITNESS_CODE}${CMAKE_PROJECT_VERSION_MAJOR}$
 message(STATUS "QGC: Android version code: ${ANDROID_VERSION_CODE}")
 
 # ----------------------------------------------------------------------------
-# Extra Java Sources (CPM-deployed dependencies)
+# Extra Java Sources and Assets (CPM-deployed dependencies, GStreamer)
 # ----------------------------------------------------------------------------
-# CPM Java dependencies are copied into this directory by src/Android/CMakeLists.txt
-# and picked up by android/build.gradle as a supplementary source set. Gradle
-# derives the same location as the sibling 'extra_java_sources' of its project dir.
+# CPM Java dependencies (src/Android/CMakeLists.txt) and GStreamer plugin Java sources
+# (cmake/GStreamer/platform/Android.cmake) are copied into this directory and picked
+# up by android/build.gradle as a supplementary source set. Gradle derives the same
+# location as the sibling 'extra_java_sources' of its project dir.
 set(QGC_ANDROID_EXTRA_JAVA_SOURCES_DIR "${CMAKE_BINARY_DIR}/extra_java_sources")
+# GStreamer's fonts and CA bundle are staged here; android/build.gradle adds the
+# sibling 'extra_assets' of its project dir to the APK assets.
+set(QGC_ANDROID_EXTRA_ASSETS_DIR "${CMAKE_BINARY_DIR}/extra_assets")
 
 set_target_properties(${CMAKE_PROJECT_NAME}
     PROPERTIES

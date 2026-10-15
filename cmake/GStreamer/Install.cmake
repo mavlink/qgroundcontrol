@@ -323,12 +323,10 @@ function(gstreamer_install_macos_framework_sdk PROJECT_NAME)
         message(FATAL_ERROR "gstreamer_install_macos_framework_sdk: FRAMEWORK_BUNDLE not set on GStreamer::Layout")
     endif()
     get_filename_component(_gst_framework_real "${_gst_framework_bundle}" REALPATH)
-    set(_gst_fw_dest "${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app/Contents/Frameworks/GStreamer.framework")
+    # Relative to the install prefix; install(CODE) prepends $ENV{DESTDIR}${CMAKE_INSTALL_PREFIX} at install time.
+    set(_gst_fw_dest "${PROJECT_NAME}.app/Contents/Frameworks/GStreamer.framework")
 
-    if(NOT _gst_fw_dest MATCHES "\\.app/Contents/Frameworks/GStreamer\\.framework$")
-        message(FATAL_ERROR "gstreamer_install_macos_framework_sdk: refusing REMOVE_RECURSE on unexpected dest '${_gst_fw_dest}'")
-    endif()
-    install(CODE "file(REMOVE_RECURSE \"${_gst_fw_dest}\")")
+    install(CODE "file(REMOVE_RECURSE \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${_gst_fw_dest}\")")
     install(
         DIRECTORY "${_gst_framework_real}/Versions/1.0/"
         DESTINATION "${_gst_fw_dest}/Versions/1.0"
@@ -354,14 +352,14 @@ function(gstreamer_install_macos_framework_sdk PROJECT_NAME)
     )
 
     install(CODE "
-        set(_fw \"${_gst_fw_dest}\")
+        set(_fw \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${_gst_fw_dest}\")
         if(NOT EXISTS \"\${_fw}/Versions/1.0/GStreamer\")
             message(FATAL_ERROR \"GStreamer framework: Versions/1.0/GStreamer not found — SDK layout may have changed\")
         endif()
-        execute_process(COMMAND \${CMAKE_COMMAND} -E create_symlink 1.0 \"\${_fw}/Versions/Current\")
-        execute_process(COMMAND \${CMAKE_COMMAND} -E create_symlink Versions/Current/GStreamer \"\${_fw}/GStreamer\")
+        file(CREATE_LINK 1.0 \"\${_fw}/Versions/Current\" SYMBOLIC)
+        file(CREATE_LINK Versions/Current/GStreamer \"\${_fw}/GStreamer\" SYMBOLIC)
         if(IS_DIRECTORY \"\${_fw}/Versions/1.0/Resources\")
-            execute_process(COMMAND \${CMAKE_COMMAND} -E create_symlink Versions/Current/Resources \"\${_fw}/Resources\")
+            file(CREATE_LINK Versions/Current/Resources \"\${_fw}/Resources\" SYMBOLIC)
         endif()
     ")
 
@@ -376,9 +374,10 @@ endfunction()
 # Stage flat-layout dylibs/plugins/gio modules + rpath fixups + helpers + CA
 # bundle. Used for Homebrew/CPM-downloaded macOS GStreamer (no framework wrapper).
 function(gstreamer_install_macos_flat_sdk PROJECT_NAME)
-    set(_mac_fw_dest "${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app/Contents/Frameworks")
-    set(_mac_lib_dest "${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app/Contents/lib")
-    set(_mac_libexec_dest "${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app/Contents/libexec/gstreamer-1.0")
+    # Relative to the install prefix; install(CODE) prepends $ENV{DESTDIR}${CMAKE_INSTALL_PREFIX} at install time.
+    set(_mac_fw_dest "${PROJECT_NAME}.app/Contents/Frameworks")
+    set(_mac_lib_dest "${PROJECT_NAME}.app/Contents/lib")
+    set(_mac_libexec_dest "${PROJECT_NAME}.app/Contents/libexec/gstreamer-1.0")
 
     if(GStreamer_AUTO_DOWNLOADED)
         gstreamer_install_libs(
@@ -450,7 +449,7 @@ function(gstreamer_install_macos_flat_sdk PROJECT_NAME)
         list(GET _parts 1 _rpath)
         list(GET _parts 2 _glob)
         install(CODE "
-            file(GLOB _libs \"${_dir}/${_glob}\")
+            file(GLOB _libs \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${_dir}/${_glob}\")
             foreach(_lib \${_libs})
                 if(IS_DIRECTORY \"\${_lib}\")
                     continue()
@@ -486,9 +485,8 @@ function(gstreamer_install_macos_flat_sdk PROJECT_NAME)
     # path doesn't exist on a user's machine; ship the bundle so the
     # SSL_CERT_FILE wiring at startup can point gioopenssl at it.
     if(EXISTS "${GStreamer_ROOT_DIR}/etc/ssl/certs/ca-certificates.crt")
-        install(
-            FILES "${GStreamer_ROOT_DIR}/etc/ssl/certs/ca-certificates.crt"
-            DESTINATION "${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app/Contents/Resources/etc/ssl/certs"
+        install(FILES "${GStreamer_ROOT_DIR}/etc/ssl/certs/ca-certificates.crt"
+                DESTINATION "${PROJECT_NAME}.app/Contents/Resources/etc/ssl/certs"
         )
     endif()
 endfunction()

@@ -190,18 +190,15 @@ if(ANDROID)
     set(G_IO_MODULES openssl)
     set(G_IO_MODULES_PATH "${GStreamer_ROOT_DIR}/lib/gio/modules")
     set(GStreamer_NDK_BUILD_PATH "${GStreamer_ROOT_DIR}/share/gst-android/ndk-build")
-    if(QT_IS_ANDROID_MULTI_ABI_EXTERNAL_PROJECT AND DEFINED QT_INTERNAL_ANDROID_MULTI_ABI_BINARY_DIR)
-        set(_gst_android_build_base "${QT_INTERNAL_ANDROID_MULTI_ABI_BINARY_DIR}")
-    else()
-        set(_gst_android_build_base "${CMAKE_BINARY_DIR}")
+    # Plugin Java sources and fonts/CA assets are staged in these build-directory trees, which android/build.gradle
+    # adds to the APK; androiddeployqt deletes files written into android-build/ itself.
+    if(NOT QGC_ANDROID_EXTRA_JAVA_SOURCES_DIR OR NOT QGC_ANDROID_EXTRA_ASSETS_DIR)
+        message(FATAL_ERROR "GStreamer: QGC_ANDROID_EXTRA_JAVA_SOURCES_DIR and QGC_ANDROID_EXTRA_ASSETS_DIR must be "
+                            "set (cmake/platform/Android.cmake) before GStreamer is configured."
+        )
     endif()
-    if(QT_USE_TARGET_ANDROID_BUILD_DIR)
-        set(_gst_android_build_dir "${_gst_android_build_base}/android-build-${CMAKE_PROJECT_NAME}")
-    else()
-        set(_gst_android_build_dir "${_gst_android_build_base}/android-build")
-    endif()
-    set(GStreamer_JAVA_SRC_DIR "${_gst_android_build_dir}/src")
-    set(GStreamer_ASSETS_DIR "${_gst_android_build_dir}/assets")
+    set(GStreamer_JAVA_SRC_DIR "${QGC_ANDROID_EXTRA_JAVA_SOURCES_DIR}")
+    set(GStreamer_ASSETS_DIR "${QGC_ANDROID_EXTRA_ASSETS_DIR}")
 elseif(IOS)
     # The merged archive also carries the static GIO modules.
     set(GStreamer_Mobile_MODULE_NAME gstreamer_mobile)

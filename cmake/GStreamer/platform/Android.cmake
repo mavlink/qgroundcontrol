@@ -9,6 +9,8 @@
 #   - the plugin archives are linked into the application, which carries the only GStreamer core, instead of into a
 #     separate libgstreamer_android.so, and the static-plugin registration source is generated on the application;
 #   - plugins without a static library are left out, failing configure when a runtime-required one is missing;
+#   - the plugin Java sources and the fonts/CA assets are staged in the build directory for Gradle, not copied into
+#     the source tree;
 #   - SDK discovery and extraction (above the mobile target) are QGC's own.
 
 include_guard(GLOBAL)
@@ -203,6 +205,60 @@ function(_qgc_android_whole_archive_plugins)
     endforeach()
 endfunction()
 
+# _qgc_android_stage_files(JAVA <source>|<relative path>... ASSETS <source>|<relative path>...)
+# Copies the plugin Java sources under GStreamer_JAVA_SRC_DIR and the assets under GStreamer_ASSETS_DIR when the app
+# builds; android/build.gradle adds both build-directory trees to the APK. Earlier builds copied these files into
+# QGC_ANDROID_PACKAGE_SOURCE_DIR, where they would now duplicate the staged copies, so those copies are removed.
+# cmake-lint: disable=C0113
+function(_qgc_android_stage_files)
+    cmake_parse_arguments(PARSE_ARGV 0 ARG "" "" "JAVA;ASSETS")
+    set(_outputs "")
+    set(_legacy_copies "")
+    foreach(_kind IN ITEMS JAVA ASSETS)
+        if(_kind STREQUAL "JAVA")
+            set(_root "${GStreamer_JAVA_SRC_DIR}")
+            set(_legacy_root "${QGC_ANDROID_PACKAGE_SOURCE_DIR}/src")
+        else()
+            set(_root "${GStreamer_ASSETS_DIR}")
+            set(_legacy_root "${QGC_ANDROID_PACKAGE_SOURCE_DIR}/assets")
+        endif()
+        foreach(_entry IN LISTS ARG_${_kind})
+            string(REPLACE "|" ";" _entry "${_entry}")
+            list(GET _entry 0 _source)
+            list(GET _entry 1 _relative)
+            set(_output "${_root}/${_relative}")
+            cmake_path(GET _output PARENT_PATH _output_dir)
+            add_custom_command(
+                OUTPUT "${_output}"
+                COMMAND "${CMAKE_COMMAND}" -E make_directory "${_output_dir}"
+                COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${_source}" "${_output}"
+                DEPENDS "${_source}"
+                COMMENT "Staging GStreamer ${_relative}"
+                VERBATIM
+            )
+            list(APPEND _outputs "${_output}")
+            if(QGC_ANDROID_PACKAGE_SOURCE_DIR AND EXISTS "${_legacy_root}/${_relative}")
+                list(APPEND _legacy_copies "${_legacy_root}/${_relative}")
+            endif()
+        endforeach()
+    endforeach()
+
+    if(_legacy_copies)
+        message(STATUS "GStreamer: removing files earlier builds copied into the Android package sources: "
+                       "${_legacy_copies}"
+        )
+        file(REMOVE ${_legacy_copies})
+    endif()
+    if(NOT _outputs)
+        return()
+    endif()
+    add_custom_target(gstreamer_android_files_${CMAKE_ANDROID_ARCH_ABI} DEPENDS ${_outputs})
+    # INTERFACE GStreamer::mobile cannot carry build dependencies; attach the staging to the app.
+    if(TARGET ${CMAKE_PROJECT_NAME})
+        add_dependencies(${CMAKE_PROJECT_NAME} gstreamer_android_files_${CMAKE_ANDROID_ARCH_ABI})
+    endif()
+endfunction()
+
 macro(_qgc_create_android_mobile_target)
 
 if(NOT GSTREAMER_LIB_PATH)
@@ -311,49 +367,21 @@ if(GSTREAMER_IS_MOBILE AND TARGET GStreamerMobile)
             $<TARGET_PROPERTY:GStreamer::GStreamer,INTERFACE_INCLUDE_DIRECTORIES>
     )
 
-    if (ANDROID)
-        set(GSTREAMER_PLUGINS_CLASSES)
-        foreach(LOCAL_PLUGIN IN LISTS _gst_mobile_plugins)
-            file(GLOB_RECURSE
-                LOCAL_PLUGIN_CLASS
-                FOLLOW_SYMLINKS
-                CONFIGURE_DEPENDS
-                RELATIVE "${GStreamer_NDK_BUILD_PATH}"
-                "${GStreamer_NDK_BUILD_PATH}/${LOCAL_PLUGIN}/*.java"
+    set(_gst_staged_java)
+    foreach(_gst_java_plugin IN LISTS _gst_mobile_plugins)
+        file(GLOB_RECURSE
+            _gst_java_files
+            FOLLOW_SYMLINKS
+            CONFIGURE_DEPENDS
+            RELATIVE "${GStreamer_NDK_BUILD_PATH}"
+            "${GStreamer_NDK_BUILD_PATH}/${_gst_java_plugin}/*.java"
+        )
+        foreach(_gst_java_file IN LISTS _gst_java_files)
+            list(APPEND _gst_staged_java
+                 "${GStreamer_NDK_BUILD_PATH}/${_gst_java_file}|org/freedesktop/gstreamer/${_gst_java_file}"
             )
-            list(APPEND GSTREAMER_PLUGINS_CLASSES ${LOCAL_PLUGIN_CLASS})
         endforeach()
-
-        # androiddeployqt mirrors the package source dir into android-build/src at deploy, deleting
-        # anything else there — so plugin java must land in the package source dir, not the build dir.
-        if(QGC_ANDROID_PACKAGE_SOURCE_DIR)
-            set(_gst_java_dest_dir "${QGC_ANDROID_PACKAGE_SOURCE_DIR}/src")
-        else()
-            set(_gst_java_dest_dir "${GStreamer_JAVA_SRC_DIR}")
-        endif()
-
-        add_custom_target("copyjavasource_${CMAKE_ANDROID_ARCH_ABI}")
-
-        foreach(LOCAL_FILE IN LISTS GSTREAMER_PLUGINS_CLASSES)
-            cmake_path(GET LOCAL_FILE FILENAME _java_filename)
-            cmake_path(GET LOCAL_FILE PARENT_PATH _java_subdir)
-            string(MAKE_C_IDENTIFIER "cp_${LOCAL_FILE}" COPYJAVASOURCE_TGT)
-            add_custom_target(
-                ${COPYJAVASOURCE_TGT}
-                COMMAND
-                    "${CMAKE_COMMAND}" -E make_directory
-                    "${_gst_java_dest_dir}/org/freedesktop/gstreamer/${_java_subdir}"
-                COMMAND
-                    "${CMAKE_COMMAND}" -E copy_if_different
-                    "${GStreamer_NDK_BUILD_PATH}/${LOCAL_FILE}"
-                    "${_gst_java_dest_dir}/org/freedesktop/gstreamer/${_java_subdir}/"
-                BYPRODUCTS
-                    "${_gst_java_dest_dir}/org/freedesktop/gstreamer/${_java_subdir}/${_java_filename}"
-                VERBATIM
-            )
-            add_dependencies(copyjavasource_${CMAKE_ANDROID_ARCH_ABI} ${COPYJAVASOURCE_TGT})
-        endforeach()
-    endif()
+    endforeach()
 
     if (NOT G_IO_MODULES_PATH)
         pkg_get_variable(G_IO_MODULES_PATH gio-2.0 giomoduledir)
@@ -413,15 +441,7 @@ endif()
 
 set(GStreamerMobile_FIND_COMPONENTS ${_gst_validate_components})
 
-# Same clobber rule as copyjavasource: androiddeployqt mirrors the package source dir into
-# android-build/assets at deploy, deleting anything else there — so fonts/CA assets must land in
-# the package source dir's assets/, not the build dir, or they never reach the APK.
-if(QGC_ANDROID_PACKAGE_SOURCE_DIR)
-    set(_gst_assets_dest_dir "${QGC_ANDROID_PACKAGE_SOURCE_DIR}/assets")
-else()
-    set(_gst_assets_dest_dir "${GStreamer_ASSETS_DIR}")
-endif()
-
+set(_gst_staged_assets)
 if(fonts IN_LIST GStreamerMobile_FIND_COMPONENTS)
     set(GStreamer_UBUNTU_R_TTF "${GStreamer_NDK_BUILD_PATH}/fontconfig/fonts/Ubuntu-R.ttf"
         CACHE FILEPATH "Path to Ubuntu-R.ttf")
@@ -429,28 +449,10 @@ if(fonts IN_LIST GStreamerMobile_FIND_COMPONENTS)
         CACHE FILEPATH "Path to fonts.conf")
     if(EXISTS "${GStreamer_UBUNTU_R_TTF}" AND EXISTS "${GStreamer_FONTS_CONF}")
         set(GStreamerMobile_fonts_FOUND ON)
-        add_custom_target(
-            copyfontsres_${CMAKE_ANDROID_ARCH_ABI}
-            COMMAND
-                "${CMAKE_COMMAND}" -E make_directory
-                "${_gst_assets_dest_dir}/fontconfig/fonts/truetype/"
-            COMMAND
-                "${CMAKE_COMMAND}" -E copy_if_different
-                "${GStreamer_UBUNTU_R_TTF}"
-                "${_gst_assets_dest_dir}/fontconfig/fonts/truetype/"
-            COMMAND
-                "${CMAKE_COMMAND}" -E copy_if_different
-                "${GStreamer_FONTS_CONF}"
-                "${_gst_assets_dest_dir}/fontconfig/"
-            BYPRODUCTS
-                "${_gst_assets_dest_dir}/fontconfig/fonts/truetype/Ubuntu-R.ttf"
-                "${_gst_assets_dest_dir}/fontconfig/fonts.conf"
-            VERBATIM
+        list(APPEND _gst_staged_assets
+            "${GStreamer_UBUNTU_R_TTF}|fontconfig/fonts/truetype/Ubuntu-R.ttf"
+            "${GStreamer_FONTS_CONF}|fontconfig/fonts.conf"
         )
-        # INTERFACE GStreamer::mobile can't carry build deps; attach asset copy to the app.
-        if(TARGET ${CMAKE_PROJECT_NAME})
-            add_dependencies(${CMAKE_PROJECT_NAME} copyfontsres_${CMAKE_ANDROID_ARCH_ABI})
-        endif()
     else()
         set(GStreamerMobile_fonts_FOUND OFF)
     endif()
@@ -461,29 +463,13 @@ if(ca_certificates IN_LIST GStreamerMobile_FIND_COMPONENTS)
         CACHE FILEPATH "Path to ca-certificates bundle")
     if(EXISTS "${GStreamer_CA_BUNDLE}")
         set(GStreamerMobile_ca_certificates_FOUND ON)
-        add_custom_target(
-            copycacertificatesres_${CMAKE_ANDROID_ARCH_ABI}
-            COMMAND
-                "${CMAKE_COMMAND}" -E make_directory
-                "${_gst_assets_dest_dir}/ssl/certs/"
-            COMMAND
-                "${CMAKE_COMMAND}" -E copy_if_different
-                "${GStreamer_CA_BUNDLE}"
-                "${_gst_assets_dest_dir}/ssl/certs/"
-            BYPRODUCTS "${_gst_assets_dest_dir}/ssl/certs/ca-certificates.crt"
-            VERBATIM
-        )
-        if(TARGET ${CMAKE_PROJECT_NAME})
-            add_dependencies(${CMAKE_PROJECT_NAME} copycacertificatesres_${CMAKE_ANDROID_ARCH_ABI})
-        endif()
+        list(APPEND _gst_staged_assets "${GStreamer_CA_BUNDLE}|ssl/certs/ca-certificates.crt")
     else()
         set(GStreamerMobile_ca_certificates_FOUND OFF)
     endif()
 endif()
 
-if(TARGET ${CMAKE_PROJECT_NAME} AND TARGET copyjavasource_${CMAKE_ANDROID_ARCH_ABI})
-    add_dependencies(${CMAKE_PROJECT_NAME} copyjavasource_${CMAKE_ANDROID_ARCH_ABI})
-endif()
+_qgc_android_stage_files(JAVA ${_gst_staged_java} ASSETS ${_gst_staged_assets})
 
 include(FindPackageHandleStandardArgs)
 set(_gst_plugins ${GStreamerMobile_FIND_COMPONENTS})

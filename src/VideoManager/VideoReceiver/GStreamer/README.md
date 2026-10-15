@@ -109,6 +109,8 @@ Configure never overwrites `GStreamer_ROOT_DIR`: the SDK it selected is recorded
 
 Auto-downloaded during CMake configure. No manual setup required. Each ABI build extracts only its own tree from the universal SDK tarball.
 
+The plugins' Java sources and GStreamer's fonts and CA bundle are staged in the build directory (`extra_java_sources/`, `extra_assets/`), which [`android/build.gradle`](../../../../android/build.gradle) adds to the APK. Earlier builds copied them into `android/`; configure deletes those copies, which would otherwise duplicate the staged files.
+
 > **Windows users building for Android**: Enable Developer Mode (Settings > System > For developers) to support symbolic links during the build.
 
 ### Caching downloaded SDKs

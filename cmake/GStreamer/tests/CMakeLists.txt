@@ -128,6 +128,7 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
               missing-mandatory
               missing-gl
               install
+              install-macos
               android-mobile
     )
         add_test(

@@ -130,7 +130,8 @@ endif()
 if(MACOS AND _qgc_gst_framework_bundle)
     install(
         CODE "
-        set(_binary \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_PROJECT_NAME}.app/Contents/MacOS/${CMAKE_PROJECT_NAME}\")
+        set(_bundle \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${CMAKE_PROJECT_NAME}.app\")
+        set(_binary \"\${_bundle}/Contents/MacOS/${CMAKE_PROJECT_NAME}\")
         if(EXISTS \"\${_binary}\")
             execute_process(
                 COMMAND install_name_tool -add_rpath
