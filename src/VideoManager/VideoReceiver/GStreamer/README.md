@@ -36,6 +36,11 @@ Per-platform zero-copy import of decoded GPU frames, all sharing `GstHwFrameText
 - **`GstContextBridgeRegistry`** fans `GstBus` sync messages out to every compiled context bridge for cross-thread GPU-context handoff.
 - **`GstHwPathTelemetry`** tracks per-format/per-path counters (map failures, reuse hits, sync waits) for fallback diagnostics.
 - **`CpuVideoFramePool`** recycles CPU-backed `QVideoFrame` storage (WebRTC-style slab) for the software-fallback path, avoiding per-frame allocation.
+- **Build options**: `HwBuffers/CMakeLists.txt` probes one table row per path; each compiled path can be dropped with
+  `QGC_GST_ENABLE_<PATH>=OFF` (`DMABUF`, `CUDA`, `GLMEMORY`, `IOSURFACE`, `D3D11`, `D3D12`, `AHARDWAREBUFFER`, `VULKAN`;
+  all `ON` by default). Configure lists compiled paths that the sink can't reach at runtime: the glupload bin (Linux and
+  Android with gst-gl) offers only GLMemory caps, and no bin advertises CUDAMemory or VulkanImage caps. On Linux,
+  `QGC_GST_ENABLE_GLMEMORY=OFF` switches the bin to direct DMABuf import.
 
 ## Build Configuration
 
