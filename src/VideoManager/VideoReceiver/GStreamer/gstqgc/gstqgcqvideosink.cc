@@ -57,7 +57,6 @@ struct PrivState
     QVideoFrameFormat format;
     // Written by start() under GST_OBJECT_LOCK and snapshotted by show_frame.
     HwVideoBufferContext hw_context = {};
-    std::atomic<quint64> cpu_frames{0};
     std::atomic<int64_t> last_pts_ns{-1};
     std::atomic<quint64> input_frames{0};
     std::atomic<quint64> dropped_frames{0};
@@ -65,6 +64,9 @@ struct PrivState
     // Per-element render counter (read via `frames-delivered`) so multi-receiver setups
     // don't see a shared process-global total.
     std::atomic<quint64> delivered_frames{0};
+    GstHwPathTelemetry::SinkCounters path_counters;
+    // One stream demotion per caps epoch; reset with the path cache.
+    bool demotion_recorded = false;
     // Live zero-copy CPU frames pinning this sink's decoder buffers; shared because Qt may hold frames past finalize.
     CpuVideoFramePool::PinnedFrameCounter pinned_cpu_frames = std::make_shared<std::atomic<int>>(0);
     // Replaced (under GST_OBJECT_LOCK) whenever `qvideosink` changes: an invoke queued to a destroyed QVideoSink is
@@ -100,6 +102,23 @@ bool snapshot_sink(GstQgcQVideoSink* self, HwVideoBufferContext& hwOut)
     hwOut = priv_of(self)->hw_context;
     GST_OBJECT_UNLOCK(self);
     return hasSink;
+}
+
+/// The "stats" property value (transfer-full).
+GstStructure* make_stats(const PrivState& p)
+{
+    GstStructure* const stats = gst_structure_new_empty("qgc-video-sink-stats");
+    const std::pair<const char*, const std::atomic<quint64>*> totals[] = {
+        {"frames-input", &p.input_frames},
+        {"frames-dropped", &p.dropped_frames},
+        {"frames-delivered", &p.delivered_frames},
+    };
+    for (const auto& [field, counter] : totals) {
+        gst_structure_set(stats, field, G_TYPE_UINT64, static_cast<guint64>(counter->load(std::memory_order_relaxed)),
+                          nullptr);
+    }
+    GstHwPathTelemetry::appendSinkCounters(stats, p.path_counters);
+    return stats;
 }
 
 /// Releases an undelivered frame (and the decoder buffer it pins); a queued invoke then finds the slot empty.
@@ -167,6 +186,7 @@ enum
     PROP_FRAMES_INPUT,
     PROP_FRAMES_DROPPED,
     PROP_FRAMES_DELIVERED,
+    PROP_STATS,
 };
 
 G_DEFINE_FINAL_TYPE(GstQgcQVideoSink, gst_qgc_q_video_sink, GST_TYPE_VIDEO_SINK)
@@ -258,6 +278,9 @@ static void gst_qgc_q_video_sink_get_property(GObject* obj, guint id, GValue* va
         case PROP_FRAMES_DELIVERED:
             g_value_set_uint64(val, priv_of(self)->delivered_frames.load(std::memory_order_relaxed));
             break;
+        case PROP_STATS:
+            g_value_take_boxed(val, make_stats(*priv_of(self)));
+            break;
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID(obj, id, pspec);
             break;
@@ -305,6 +328,7 @@ static gboolean gst_qgc_q_video_sink_set_caps(GstBaseSink* bsink, GstCaps* caps)
     // negotiated fields the downstream frame mapping relies on.
     p->cached_caps = gst_caps_ref(caps);
     p->resolved_path_cache = HwResolvedPathCache{};
+    p->demotion_recorded = false;
     // New caps = new segment; clear PTS history so a restart/format change that resumes at a
     // lower PTS isn't wedged by the monotonic-PTS guard in show_frame.
     p->last_pts_ns.store(-1, std::memory_order_relaxed);
@@ -412,35 +436,30 @@ static GstFlowReturn gst_qgc_q_video_sink_show_frame(GstVideoSink* vsink, GstBuf
         return GST_FLOW_OK;  // QVideoSink unbound while mapping
     }
 
-    // Telemetry — process-global `GstHwPathTelemetry` accumulator. Per-element render
-    // counts live in `delivered_frames` (read by the controller via `frames-delivered`).
-    if (mapped.source == MappedFrame::Source::Cpu) {
-        p->cpu_frames.fetch_add(1, std::memory_order_relaxed);
-        GstHwPathTelemetry::recordDelivered(HwVideoBufferPath::None);
-#if defined(QGC_HAS_ANY_GPU_PATH)
-        // Stream started HW-capable but this frame fell back to CPU — record the demotion once per epoch.
-        if (mapped.demoted && !p->resolved_path_cache.demotionRecorded) {
-            p->resolved_path_cache.demotionRecorded = true;
+    // Per-sink counters back the "stats" property; the process-global ones still feed HwBuffers::formatPathStats().
+    const HwVideoBufferPath deliveredPath =
+        (mapped.source == MappedFrame::Source::Gpu) ? mapped.gpuPath : HwVideoBufferPath::None;
+    p->path_counters.delivered[static_cast<std::size_t>(deliveredPath)].fetch_add(1, std::memory_order_relaxed);
+    GstHwPathTelemetry::recordDelivered(deliveredPath);
+    if (mapped.demoted) {
+        p->path_counters.gpuFallbacks.fetch_add(1, std::memory_order_relaxed);
+        if (!std::exchange(p->demotion_recorded, true)) {
+            p->path_counters.streamDemotions.fetch_add(1, std::memory_order_relaxed);
             GstHwPathTelemetry::recordStreamDemotion(mapped.gpuPath);
         }
-#endif
     }
-#if defined(QGC_HAS_ANY_GPU_PATH)
-    else {
-        GstHwPathTelemetry::recordDelivered(mapped.gpuPath);
-    }
-#endif
 
     const quint64 delivered = p->delivered_frames.fetch_add(1, std::memory_order_relaxed) + 1;
     if (delivered == 1) {
         qCInfo(GstQgcQVideoSinkLog).noquote() << "first frame delivered via" << describeMappedPath(mapped) << "path"
                                               << QStringLiteral("%1x%2").arg(frameSize.width()).arg(frameSize.height());
     } else if ((delivered % 300) == 0) {
+        const auto& cpuFrames = p->path_counters.delivered[static_cast<std::size_t>(HwVideoBufferPath::None)];
         qCDebug(GstQgcQVideoSinkLog).noquote()
             << "frame flow:" << describeMappedPath(mapped) << "delivered=" << delivered
             << "input=" << p->input_frames.load(std::memory_order_relaxed)
             << "dropped=" << p->dropped_frames.load(std::memory_order_relaxed)
-            << "cpuFrames=" << p->cpu_frames.load(std::memory_order_relaxed);
+            << "cpuFrames=" << cpuFrames.load(std::memory_order_relaxed);
     }
     if (hasPts) {
         p->last_pts_ns.store(pts, std::memory_order_release);
@@ -490,6 +509,7 @@ static gboolean gst_qgc_q_video_sink_stop(GstBaseSink* bsink)
     p->caps_valid.store(false, std::memory_order_release);
     gst_clear_caps(&p->cached_caps);
     p->resolved_path_cache = HwResolvedPathCache{};
+    p->demotion_recorded = false;
     p->last_pts_ns.store(-1, std::memory_order_release);
     p->consecutive_map_failures.store(0, std::memory_order_relaxed);
     drop_pending_frame(self);
@@ -574,6 +594,16 @@ static void gst_qgc_q_video_sink_class_init(GstQgcQVideoSinkClass* klass)
                             "only the latest frame, so frames superseded before the GUI thread ran are counted too. "
                             "Per-element — the GUI controller reads this for the QML frameCount.",
                             0, G_MAXUINT64, 0, (GParamFlags) (G_PARAM_READABLE | G_PARAM_STATIC_STRINGS)));
+
+    g_object_class_install_property(
+        gobject_class, PROP_STATS,
+        g_param_spec_boxed("stats", "Statistics",
+                           "This sink's own frame accounting, as a qgc-video-sink-stats structure of guint64 fields: "
+                           "frames-input, frames-dropped and frames-delivered as above; frames-<path> per delivery "
+                           "path (frames-cpu, frames-dmabuf, frames-gl, frames-d3d11, frames-d3d12, frames-iosurface, "
+                           "frames-ahwbuf, frames-vulkan); gpu-fallbacks (frames a GPU path was tried for but the CPU "
+                           "delivered) and stream-demotions (caps epochs that fell back from a GPU path).",
+                           GST_TYPE_STRUCTURE, (GParamFlags) (G_PARAM_READABLE | G_PARAM_STATIC_STRINGS)));
 
     gst_element_class_set_static_metadata(element_class, "QGC QVideoSink", "Sink/Video",
                                           "Pushes decoded GstVideoFrames into a Qt QVideoSink",

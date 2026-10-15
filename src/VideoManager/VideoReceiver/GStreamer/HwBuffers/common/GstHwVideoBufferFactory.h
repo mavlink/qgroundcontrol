@@ -17,7 +17,6 @@ struct HwResolvedPathCache
 {
     HwVideoBufferPath path = HwVideoBufferPath::None;
     bool validated = false;        // path resolved by a prior validated sample this epoch
-    bool demotionRecorded = false; // one-shot guard for recordStreamDemotion() per epoch
 };
 
 /// Selects the zero-copy QHwVideoBuffer for a GstSample; returns nullptr when no GPU path matches (CPU memcpy

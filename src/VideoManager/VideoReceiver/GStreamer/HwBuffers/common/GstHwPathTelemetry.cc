@@ -1,7 +1,6 @@
 #include "GstHwPathTelemetry.h"
 
-#include <array>
-#include <atomic>
+#include <QtCore/QByteArray>
 
 namespace GstHwPathTelemetry {
 
@@ -180,6 +179,34 @@ void recordStreamDemotion(HwVideoBufferPath negotiated) noexcept
 quint64 takeStreamDemotions(HwVideoBufferPath negotiated) noexcept
 {
     return slot(negotiated).streamDemotions.exchange(0, std::memory_order_relaxed);
+}
+
+const char* sinkFramesField(HwVideoBufferPath path) noexcept
+{
+    static const std::array<QByteArray, GstHw::kPathCount> s_fields = [] {
+        std::array<QByteArray, GstHw::kPathCount> fields;
+        for (std::size_t i = 0; i < fields.size(); ++i) {
+            fields[i] = QByteArray("frames-") + QByteArray(GstHw::toString(HwVideoBufferPath(i))).toLower();
+        }
+        return fields;
+    }();
+    const auto index = static_cast<std::size_t>(path);
+    return (index < s_fields.size()) ? s_fields[index].constData() : nullptr;
+}
+
+void appendSinkCounters(GstStructure* stats, const SinkCounters& counters) noexcept
+{
+    if (!stats) {
+        return;
+    }
+    for (std::size_t i = 0; i < GstHw::kPathCount; ++i) {
+        gst_structure_set(stats, sinkFramesField(HwVideoBufferPath(i)), G_TYPE_UINT64,
+                          static_cast<guint64>(counters.delivered[i].load(std::memory_order_relaxed)), nullptr);
+    }
+    gst_structure_set(stats, "gpu-fallbacks", G_TYPE_UINT64,
+                      static_cast<guint64>(counters.gpuFallbacks.load(std::memory_order_relaxed)), "stream-demotions",
+                      G_TYPE_UINT64, static_cast<guint64>(counters.streamDemotions.load(std::memory_order_relaxed)),
+                      nullptr);
 }
 
 }  // namespace GstHwPathTelemetry

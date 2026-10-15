@@ -72,6 +72,10 @@ struct PathStats
 
 PathStats formatPathStats(bool reset) noexcept;
 
+/// formatPathStats() for a single qgcqvideosink, from its "stats" structure: the per-path counts it has delivered,
+/// plus its GPU fallbacks and demotions. totalDelivered counts GPU-path frames, as in formatPathStats().
+PathStats formatSinkStats(const GstStructure* stats) noexcept;
+
 /// Path-specific extras after formatPathStats (GL reuse/sync waits); reads-and-clears, teardown only.
 QString takeExtraPathStats() noexcept;
 

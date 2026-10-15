@@ -73,6 +73,19 @@ guint64 framesDelivered(GstElement* qvideosink)
     return delivered;
 }
 
+/// A guint64 field of the sink's "stats" structure; -1 if the field is missing.
+qint64 sinkStat(GstElement* qvideosink, const char* field)
+{
+    GstStructure* stats = nullptr;
+    g_object_get(qvideosink, "stats", &stats, nullptr);
+    guint64 value = 0;
+    const bool found = stats && gst_structure_get_uint64(stats, field, &value);
+    if (stats) {
+        gst_structure_free(stats);
+    }
+    return found ? static_cast<qint64>(value) : -1;
+}
+
 /// Drives a standalone qgcqvideosink from the test thread through a linked source pad. show_frame runs inside
 /// pushFrame(), so element counters are exact, and GUI-thread delivery happens only when the test pumps events.
 class QgcQVideoSinkHarness
@@ -1847,6 +1860,35 @@ void GStreamerTest::_testQgcQVideoSinkShowsPrerollBufferOnce()
     g_object_get(harness.element(), "frames-input", &input, nullptr);
     QCOMPARE(input, guint64(1));
     QCOMPARE(harness.delivered(), guint64(1));
+}
+
+void GStreamerTest::_testQgcQVideoSinkStatsArePerSink()
+{
+    QVERIFY2(GStreamer::completeInit(), "completeInit failed");
+
+    QVideoSink videoSinkA;
+    QVideoSink videoSinkB;
+    QgcQVideoSinkHarness harnessA(&videoSinkA);
+    QgcQVideoSinkHarness harnessB(&videoSinkB);
+    QVERIFY(harnessA.isReady() && harnessB.isReady());
+    QVERIFY(harnessA.start() && harnessB.start());
+
+    QCOMPARE(harnessA.pushFrame(GST_SECOND), GST_FLOW_OK);
+    QCOMPARE(harnessA.pushFrame(2 * GST_SECOND), GST_FLOW_OK);
+    QCOMPARE(harnessB.pushFrame(GST_SECOND), GST_FLOW_OK);
+
+    const char* const cpuField = GstHwPathTelemetry::sinkFramesField(HwVideoBufferPath::None);
+    QCOMPARE(sinkStat(harnessA.element(), cpuField), qint64(2));
+    QCOMPARE(sinkStat(harnessB.element(), cpuField), qint64(1));
+    QCOMPARE(sinkStat(harnessB.element(), "frames-delivered"), qint64(1));
+
+    GstStructure* stats = nullptr;
+    g_object_get(harnessA.element(), "stats", &stats, nullptr);
+    QVERIFY(stats);
+    const HwBuffers::PathStats formatted = HwBuffers::formatSinkStats(stats);
+    gst_structure_free(stats);
+    QCOMPARE(formatted.line, QStringLiteral(" CPU:2"));
+    QCOMPARE(formatted.totalDelivered, quint64(0));
 }
 
 void GStreamerTest::_testQgcQVideoSinkDropsUndeliveredFrame_data()

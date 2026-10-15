@@ -386,6 +386,31 @@ PathStats formatPathStats(bool reset) noexcept
     return out;
 }
 
+PathStats formatSinkStats(const GstStructure* stats) noexcept
+{
+    PathStats out;
+    if (!stats) {
+        return out;
+    }
+    for (std::size_t i = 0; i < GstHw::kPathCount; ++i) {
+        const auto path = HwVideoBufferPath(i);
+        guint64 frames = 0;
+        if (gst_structure_get_uint64(stats, GstHwPathTelemetry::sinkFramesField(path), &frames) && (frames > 0)) {
+            out.line += QStringLiteral(" %1:%2").arg(QLatin1String(GstHw::toString(path))).arg(frames);
+            if (path != HwVideoBufferPath::None) {
+                out.totalDelivered += frames;
+            }
+        }
+    }
+    for (const char* const field : {"gpu-fallbacks", "stream-demotions"}) {
+        guint64 count = 0;
+        if (gst_structure_get_uint64(stats, field, &count) && (count > 0)) {
+            out.line += QStringLiteral(" %1:%2").arg(QLatin1String(field)).arg(count);
+        }
+    }
+    return out;
+}
+
 QString takeExtraPathStats() noexcept
 {
     QString out;
@@ -428,6 +453,11 @@ QString takeExtraPathStats() noexcept
         const quint64 demotions = GstHwPathTelemetry::takeStreamDemotions(path);
         if (demotions > 0) {
             out += QStringLiteral(" %1-demotions:%2").arg(pathLabel).arg(demotions);
+        }
+        const quint64 cacheHits = GstHwPathTelemetry::takeImageCacheHits(path);
+        const quint64 cacheMisses = GstHwPathTelemetry::takeImageCacheMisses(path);
+        if ((cacheHits > 0) || (cacheMisses > 0)) {
+            out += QStringLiteral(" %1-image-cache[hit/miss]:%2/%3").arg(pathLabel).arg(cacheHits).arg(cacheMisses);
         }
         QString reasonBreakdown;
         for (const auto& [reason, label] : kReasons) {

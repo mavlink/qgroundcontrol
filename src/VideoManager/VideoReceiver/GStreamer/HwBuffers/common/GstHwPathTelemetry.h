@@ -1,5 +1,9 @@
 #pragma once
 
+#include <array>
+#include <atomic>
+#include <gst/gst.h>
+
 #include <QtCore/QElapsedTimer>
 #include <QtCore/qglobal.h>
 
@@ -89,5 +93,20 @@ quint64 takeFallbackReason(HwVideoBufferPath attemptedPath, HwFallbackReason rea
 /// One-shot-per-epoch event: a stream that negotiated a HW path demoted to CPU. Distinct from per-frame CPU counts.
 void recordStreamDemotion(HwVideoBufferPath negotiated) noexcept;
 quint64 takeStreamDemotions(HwVideoBufferPath negotiated) noexcept;
+
+/// Frame accounting for one sink. The process-wide counters above mix every stream; these let each receiver report
+/// only its own frames. qgcqvideosink exposes them through its "stats" property.
+struct SinkCounters
+{
+    std::array<std::atomic<quint64>, GstHw::kPathCount> delivered{};  ///< per path; None counts CPU frames
+    std::atomic<quint64> gpuFallbacks{0};     ///< frames a GPU path was tried for but delivered through the CPU
+    std::atomic<quint64> streamDemotions{0};  ///< caps epochs that started on a GPU path and fell back to the CPU
+};
+
+/// guint64 stats field holding the frames @p path delivered: "frames-" plus the lower-cased GstHw::toString(path).
+const char* sinkFramesField(HwVideoBufferPath path) noexcept;
+
+/// Adds @p counters to @p stats: sinkFramesField() for every path, plus "gpu-fallbacks" and "stream-demotions".
+void appendSinkCounters(GstStructure* stats, const SinkCounters& counters) noexcept;
 
 }  // namespace GstHwPathTelemetry
