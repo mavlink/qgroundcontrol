@@ -14,7 +14,6 @@ entry point for normal builds.
 | `platform/` | Android, Apple, Linux, and Windows configuration |
 | `presets/` | Platform configure, build, test, package, and workflow presets |
 | `tests/` | Configure-time contracts for shared CMake helpers |
-| `find-modules/` | CMake find modules for optional dependencies |
 
 ## Conventions
 

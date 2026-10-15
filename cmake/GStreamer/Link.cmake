@@ -4,7 +4,7 @@
 include_guard(GLOBAL)
 
 # Shared list of system libraries that should be linked by name, not resolved via find_library.
-# Used by both FindGStreamer.cmake and the Android mobile-target macro.
+# Used by both Targets.cmake and the Android mobile-target macro.
 if(NOT DEFINED _gst_IGNORED_SYSTEM_LIBRARIES)
     set(_gst_IGNORED_SYSTEM_LIBRARIES c c++ unwind m dl atomic)
     if(ANDROID)
@@ -146,7 +146,7 @@ function(_gst_strip_macos_absent_link_libs _gsmal_VAR)
 endfunction()
 
 # Save/restore macros for CMAKE_FIND_LIBRARY_SUFFIXES/PREFIXES.
-# Used by FindGStreamer.cmake and the Android mobile-target macro when resolving static libs.
+# Used by Targets.cmake and the Android mobile-target macro when resolving static libs.
 macro(_gst_save_find_suffixes)
     set(_gst_saved_suffixes ${CMAKE_FIND_LIBRARY_SUFFIXES})
     set(_gst_saved_prefixes ${CMAKE_FIND_LIBRARY_PREFIXES})

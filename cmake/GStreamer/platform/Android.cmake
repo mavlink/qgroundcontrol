@@ -309,11 +309,10 @@ if (GSTREAMER_IS_MOBILE)
     endif()
 endif()
 
-# Pre-condition: find_package(GStreamer) must have run before any computation
-# that reads GStreamer_*_FOUND or creates targets.
-if (NOT GStreamer_FOUND)
-    message(FATAL_ERROR "find_package(GStreamer) must complete before _qgc_create_android_mobile_target(). "
-        "Ensure find_package(GStreamer) has completed successfully.")
+# Pre-condition: the pkg-config targets (and GStreamer_*_FOUND) must exist before
+# any computation that reads them.
+if(NOT TARGET GStreamer::GStreamer)
+    message(FATAL_ERROR "qgc_gst_create_pkgconfig_targets() must run before _qgc_create_android_mobile_target().")
 endif()
 
 # ── Computation phase (function to avoid variable leakage) ───────────────────

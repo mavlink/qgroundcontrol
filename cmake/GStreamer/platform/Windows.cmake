@@ -193,9 +193,6 @@ macro(_qgc_discover_windows_sdk)
         SDK_ROOT "${GStreamer_ROOT_DIR}"
         TYPE FLAT
     )
-    # Strip any prior define-variable entries (from a cached PKG_CONFIG_ARGN on
-    # reconfigure) before re-deriving them, so values can't double-apply or go stale.
-    list(FILTER PKG_CONFIG_ARGN EXCLUDE REGEX "^--define-variable=(prefix|libdir|includedir)=")
     list(APPEND PKG_CONFIG_ARGN
         "--define-variable=prefix=${GStreamer_ROOT_DIR}"
         "--define-variable=libdir=${GSTREAMER_LIB_PATH}"

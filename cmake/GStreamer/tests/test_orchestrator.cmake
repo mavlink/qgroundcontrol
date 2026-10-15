@@ -27,11 +27,18 @@ set(ENV{PKG_CONFIG_LIBDIR} "${WORK_DIR}/no-system-pkgconfig")
 
 # _qgc_write_fake_sdk(<root> <version> [WITH_PROBE_HEADERS] [OMIT <pc-module>...])
 # WITH_PROBE_HEADERS adds the DMABuf and GstVideoOrientationMeta headers the Orchestrator probes for.
+# Every library ships as .so and .a, and the coreelements plugin has a .pc file like in the
+# static SDKs.
 function(_qgc_write_fake_sdk root version)
     cmake_parse_arguments(PARSE_ARGV 2 ARG "WITH_PROBE_HEADERS" "" "OMIT")
     file(REMOVE_RECURSE "${root}")
     file(MAKE_DIRECTORY "${root}/include/gstreamer-1.0/gst")
     file(WRITE "${root}/lib/gstreamer-1.0/libgstcoreelements.so" "")
+    file(WRITE "${root}/lib/gstreamer-1.0/libgstcoreelements.a" "")
+    file(WRITE "${root}/lib/pkgconfig/gstcoreelements.pc"
+         "prefix=${root}\n" "libdir=\${prefix}/lib/gstreamer-1.0\n\n" "Name: gstcoreelements\n"
+         "Description: QGC fake GStreamer plugin\n" "Version: ${version}\n" "Libs: -L\${libdir} -lgstcoreelements\n"
+    )
     # pkg-config module|library
     set(_modules
         "gstreamer-1.0|gstreamer-1.0"
@@ -51,6 +58,7 @@ function(_qgc_write_fake_sdk root version)
             continue()
         endif()
         file(WRITE "${root}/lib/lib${_lib}.so" "")
+        file(WRITE "${root}/lib/lib${_lib}.a" "")
         file(
             WRITE "${root}/lib/pkgconfig/${_pc}.pc"
             "prefix=${root}\n"
@@ -133,6 +141,32 @@ if(SCENARIO STREQUAL "targets")
     _qgc_write_fake_sdk("${_sdk_a}" 1.24.0)
     _qgc_expect(_expect "${_sdk_a}" 1.24.0 OFF)
     _qgc_configure_ok("targets" --fresh "-DGStreamer_ROOT_DIR=${_sdk_a}" ${_expect})
+    if(_qgc_output MATCHES "gstcoreelements")
+        message(FATAL_ERROR "ASSERT [shared plugins]: a shared layout probed plugin pkg-config modules\n${_qgc_output}")
+    endif()
+elseif(SCENARIO STREQUAL "static-targets")
+    _qgc_write_fake_sdk("${_sdk_a}" 1.24.0)
+    _qgc_expect(_expect "${_sdk_a}" 1.24.0 OFF)
+    _qgc_configure_ok("static targets" --fresh "-DGStreamer_ROOT_DIR=${_sdk_a}" -DGStreamer_USE_STATIC_LIBS=ON
+                      ${_expect}
+    )
+elseif(SCENARIO STREQUAL "legacy-pkg-config-args")
+    # Older configures FORCE-cached the derived flags; a stale prefix would point pkg-config at the
+    # wrong SDK, so only the user's own flags may survive.
+    _qgc_write_fake_sdk("${_sdk_a}" 1.24.0)
+    _qgc_expect(_expect "${_sdk_a}" 1.24.0 OFF)
+    file(WRITE "${WORK_DIR}/legacy-cache.cmake"
+         "set(PKG_CONFIG_ARGN \"--short-errors;--static;--define-variable=prefix=${_sdk_b}\" CACHE STRING \"\")\n"
+    )
+    _qgc_configure_ok(
+        "legacy cached flags"
+        --fresh
+        -C
+        "${WORK_DIR}/legacy-cache.cmake"
+        "-DGStreamer_ROOT_DIR=${_sdk_a}"
+        -DEXPECT_CACHED_PKG_CONFIG_ARGN=--short-errors
+        ${_expect}
+    )
 elseif(SCENARIO STREQUAL "idempotent")
     _qgc_write_fake_sdk("${_sdk_a}" 1.24.0)
     _qgc_configure_ok("first configure" --fresh "-DGStreamer_ROOT_DIR=${_sdk_a}")

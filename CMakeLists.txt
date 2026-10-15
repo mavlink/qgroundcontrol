@@ -11,7 +11,6 @@ list(
     APPEND
     CMAKE_MODULE_PATH
     "${CMAKE_SOURCE_DIR}/cmake"
-    "${CMAKE_SOURCE_DIR}/cmake/find-modules"
     "${CMAKE_SOURCE_DIR}/cmake/install"
     "${CMAKE_SOURCE_DIR}/cmake/install/CPack"
     "${CMAKE_SOURCE_DIR}/cmake/modules"

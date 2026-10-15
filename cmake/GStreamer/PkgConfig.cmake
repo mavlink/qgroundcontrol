@@ -1,15 +1,37 @@
 # Unified pkg-config env management for GStreamer discovery — single mutator
-# for PKG_CONFIG_PATH / PKG_CONFIG_LIBDIR / PKG_CONFIG_DONT_DEFINE_PREFIX,
-# used by FindGStreamer.cmake (SDK fallback), platform/Linux.cmake
-# (system-augment), and platform/PkgConfigTargets.cmake (SDK lock-in for
-# Windows/macOS/Android).
+# for PKG_CONFIG_PATH / PKG_CONFIG_LIBDIR / --dont-define-prefix, used by the
+# platform discovery macros: platform/Linux.cmake (system-augment) and
+# platform/{Windows,MacOS,Android}.cmake (SDK lock-in).
+#
+# The pkg-config state discovery derives is scoped to the GStreamer subtree, whose
+# later probes (HwBuffers' gstreamer-{cuda,vulkan,d3d*}-1.0) need the same SDK view:
+# PKG_CONFIG_EXECUTABLE and the derived PKG_CONFIG_ARGN flags are normal variables of
+# the calling directory, never written to the cache, and the environment is restored
+# by qgc_gst_restore_pkgconfig_env once that subtree is configured.
 
 include_guard(GLOBAL)
+
+# _qgc_gst_save_pkgconfig_env()
+# Records the PKG_CONFIG_PATH / PKG_CONFIG_LIBDIR environment before discovery first changes it.
+function(_qgc_gst_save_pkgconfig_env)
+    get_property(_saved GLOBAL PROPERTY _QGC_GST_PKG_CONFIG_ENV_SAVED)
+    if(_saved)
+        return()
+    endif()
+    foreach(_name IN ITEMS PKG_CONFIG_PATH PKG_CONFIG_LIBDIR)
+        if(DEFINED ENV{${_name}})
+            set_property(GLOBAL PROPERTY _QGC_GST_SAVED_${_name} "$ENV{${_name}}")
+        else()
+            set_property(GLOBAL PROPERTY _QGC_GST_SAVED_${_name} "<unset>")
+        endif()
+    endforeach()
+    set_property(GLOBAL PROPERTY _QGC_GST_PKG_CONFIG_ENV_SAVED TRUE)
+endfunction()
 
 # gstreamer_apply_pkgconfig_env(
 #     MODE <SDK|SYSTEM_AUGMENT>
 #     LIBDIR <dir>...                 # one or more pkgconfig dirs (semicolon list)
-#     [PKG_CONFIG_EXE <path>]         # optional explicit pkg-config binary
+#     [PKG_CONFIG_EXE <path>]         # optional explicit pkg-config binary (PKG_CONFIG_EXECUTABLE)
 #     [DONT_DEFINE_PREFIX]            # appends --dont-define-prefix to PKG_CONFIG_ARGN
 # )
 #
@@ -18,6 +40,7 @@ include_guard(GLOBAL)
 # MODE SYSTEM_AUGMENT  — prepend <libdirs> to PKG_CONFIG_PATH so SDK .pc files
 #                        win but system glib/gobject .pc files stay discoverable.
 #                        Used by Linux distro-installed GStreamer.
+# PKG_CONFIG_EXECUTABLE / PKG_CONFIG_ARGN are set as normal variables in the caller's scope.
 function(gstreamer_apply_pkgconfig_env)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "DONT_DEFINE_PREFIX" "MODE;PKG_CONFIG_EXE" "LIBDIR")
     if(ARG_KEYWORDS_MISSING_VALUES)
@@ -35,9 +58,12 @@ function(gstreamer_apply_pkgconfig_env)
         message(FATAL_ERROR "gstreamer_apply_pkgconfig_env: LIBDIR is required")
     endif()
 
+    _qgc_gst_save_pkgconfig_env()
     if(ARG_PKG_CONFIG_EXE)
-        set(ENV{PKG_CONFIG} "${ARG_PKG_CONFIG_EXE}")
-        set(PKG_CONFIG_EXECUTABLE "${ARG_PKG_CONFIG_EXE}" CACHE FILEPATH "pkg-config executable" FORCE)
+        set(PKG_CONFIG_EXECUTABLE
+            "${ARG_PKG_CONFIG_EXE}"
+            PARENT_SCOPE
+        )
     endif()
 
     if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
@@ -67,4 +93,24 @@ function(gstreamer_apply_pkgconfig_env)
         list(APPEND PKG_CONFIG_ARGN --dont-define-prefix)
         set(PKG_CONFIG_ARGN "${PKG_CONFIG_ARGN}" PARENT_SCOPE)
     endif()
+endfunction()
+
+# qgc_gst_restore_pkgconfig_env()
+# Restores the PKG_CONFIG_PATH / PKG_CONFIG_LIBDIR environment gstreamer_apply_pkgconfig_env found.
+# cmakelang reads set(ENV{<name>}) as a variable name.
+# cmake-lint: disable=C0103
+function(qgc_gst_restore_pkgconfig_env)
+    get_property(_saved GLOBAL PROPERTY _QGC_GST_PKG_CONFIG_ENV_SAVED)
+    if(NOT _saved)
+        return()
+    endif()
+    foreach(_name IN ITEMS PKG_CONFIG_PATH PKG_CONFIG_LIBDIR)
+        get_property(_value GLOBAL PROPERTY _QGC_GST_SAVED_${_name})
+        if(_value STREQUAL "<unset>")
+            unset(ENV{${_name}})
+        else()
+            set(ENV{${_name}} "${_value}")
+        endif()
+    endforeach()
+    set_property(GLOBAL PROPERTY _QGC_GST_PKG_CONFIG_ENV_SAVED FALSE)
 endfunction()

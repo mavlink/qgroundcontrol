@@ -463,11 +463,10 @@ function(_qgc_create_xcframework_targets)
 
     # Per-API alias targets — load-bearing for the optional-component FOUND
     # check in Orchestrator.cmake (`if(TARGET GStreamer::${_api})`). On the
-    # pkg-config flow, FindGStreamer creates these targets directly; on the
+    # pkg-config flow, qgc_gst_create_pkgconfig_targets creates these targets directly; on the
     # xcframework flow the entire library lives in one .a, so we synthesize
     # empty INTERFACE shims that link back to GStreamer::GStreamer. Iterating
-    # GSTREAMER_APIS keeps a future find_package(... COMPONENTS NewOne) call
-    # working without editing this file.
+    # GSTREAMER_APIS keeps a newly requested component working without editing this file.
     foreach(_xcfw_comp IN LISTS GSTREAMER_APIS GSTREAMER_PLUGINS)
         if(NOT TARGET GStreamer::${_xcfw_comp})
             add_library(GStreamer::${_xcfw_comp} INTERFACE IMPORTED GLOBAL)

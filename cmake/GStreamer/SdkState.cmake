@@ -100,3 +100,15 @@ function(_qgc_gst_refresh_sdk_cache fingerprint)
         CACHE INTERNAL "GStreamer SDK identity the cached probe results belong to"
     )
 endfunction()
+
+# _qgc_gst_drop_legacy_pkg_config_args()
+# Configures before the derived pkg-config flags became a normal variable FORCE-cached them into
+# PKG_CONFIG_ARGN, where they would outlive the SDK they describe (a stale --define-variable=prefix
+# after a version bump); strip exactly those flags from the cached value.
+function(_qgc_gst_drop_legacy_pkg_config_args)
+    set(_args "$CACHE{PKG_CONFIG_ARGN}")
+    list(FILTER _args EXCLUDE REGEX "^--(static|dont-define-prefix|define-variable=(prefix|libdir|includedir)=.*)$")
+    if(NOT "${_args}" STREQUAL "$CACHE{PKG_CONFIG_ARGN}")
+        set_property(CACHE PKG_CONFIG_ARGN PROPERTY VALUE "${_args}")
+    endif()
+endfunction()

@@ -63,8 +63,9 @@ if(NOT DEFINED GStreamer_USE_XCFRAMEWORK)
     set(GStreamer_USE_XCFRAMEWORK OFF)
 endif()
 
-# User-supplied PKG_CONFIG_ARGN must survive reconfigures; only seed an empty default.
+# The cached PKG_CONFIG_ARGN is user input; discovery derives its flags into a normal variable.
 set(PKG_CONFIG_ARGN "" CACHE STRING "Extra arguments for pkg-config")
+_qgc_gst_drop_legacy_pkg_config_args()
 # Empty GStreamer_ROOT_DIR from here on means "discover or download"; platform discovery
 # fills it in and sets GStreamer_AUTO_DOWNLOADED when it downloads.
 _qgc_gst_select_sdk_root(GStreamer_ROOT_DIR GStreamer_AUTO_DOWNLOADED "${_qgc_gst_user_root}"
@@ -198,10 +199,6 @@ elseif(IOS)
     # xcframework bundles GIO modules and assets into libGStreamer.a — no separate paths needed.
     set(GStreamer_Mobile_MODULE_NAME gstreamer_mobile)
     set(GStreamer_ASSETS_DIR "${CMAKE_BINARY_DIR}/assets")
-endif()
-
-if(GStreamer_USE_FRAMEWORK)
-    list(APPEND CMAKE_FRAMEWORK_PATH "${GSTREAMER_FRAMEWORK_PATH}")
 endif()
 
 # Cached pkg-config, find_library and try-compile results describe one SDK: drop them when the

@@ -28,8 +28,9 @@ gstreamer_apply_pkgconfig_env(
     PKG_CONFIG_EXE "/opt/sdk/bin/pkg-config"
     LIBDIR "/sdk/lib/pkgconfig"
 )
-qgc_test_assert_streq("PKG_CONFIG env" "/opt/sdk/bin/pkg-config" "$ENV{PKG_CONFIG}")
-qgc_test_assert_streq("PKG_CONFIG_EXECUTABLE cache" "/opt/sdk/bin/pkg-config" "${PKG_CONFIG_EXECUTABLE}")
+qgc_test_assert_streq("PKG_CONFIG_EXECUTABLE" "/opt/sdk/bin/pkg-config" "${PKG_CONFIG_EXECUTABLE}")
+qgc_test_assert_streq("PKG_CONFIG_EXECUTABLE not cached" "" "$CACHE{PKG_CONFIG_EXECUTABLE}")
+qgc_test_assert_streq("PKG_CONFIG env untouched" "" "$ENV{PKG_CONFIG}")
 qgc_test_pass("PKG_CONFIG_EXE forwarding")
 
 set(ENV{PKG_CONFIG_PATH} "/system/lib/pkgconfig")
@@ -77,6 +78,15 @@ gstreamer_apply_pkgconfig_env(
 list(LENGTH PKG_CONFIG_ARGN _n_after_second)
 qgc_test_assert_streq("ARGN idempotent" "2" "${_n_after_second}")
 qgc_test_pass("DONT_DEFINE_PREFIX idempotent")
+
+# Restoring brings back the environment from before the first change; the first case ran with
+# PKG_CONFIG_PATH=/system/lib/pkgconfig and an unset PKG_CONFIG_LIBDIR.
+qgc_gst_restore_pkgconfig_env()
+qgc_test_assert_streq("restored PATH" "/system/lib/pkgconfig" "$ENV{PKG_CONFIG_PATH}")
+if(DEFINED ENV{PKG_CONFIG_LIBDIR})
+    message(FATAL_ERROR "ASSERT [restored LIBDIR]: expected unset, got '$ENV{PKG_CONFIG_LIBDIR}'")
+endif()
+qgc_test_pass("environment restored")
 
 set(ENV{PKG_CONFIG_PATH} "")
 set(ENV{PKG_CONFIG_LIBDIR} "")

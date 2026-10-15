@@ -4,7 +4,7 @@ project(QGCGStreamerFakeSdk LANGUAGES CXX)
 if(NOT QGC_MODULE_DIR)
     message(FATAL_ERROR "QGC_MODULE_DIR is required")
 endif()
-list(APPEND CMAKE_MODULE_PATH "${QGC_MODULE_DIR}" "${QGC_MODULE_DIR}/find-modules")
+list(APPEND CMAKE_MODULE_PATH "${QGC_MODULE_DIR}")
 include("${QGC_MODULE_DIR}/GStreamer/tests/_assert.cmake")
 
 # Stand-ins for BuildConfig.cmake, which reads build-config.json from the top-level source dir.
@@ -23,7 +23,24 @@ set(QGCGStreamer_FIND_COMPONENTS
     Rtsp
     Allocators
 )
+set(_qgc_prefix_path_before "${CMAKE_PREFIX_PATH}")
+set(_qgc_pkg_config_path_before "$ENV{PKG_CONFIG_PATH}")
+set(_qgc_pkg_config_libdir_before "$ENV{PKG_CONFIG_LIBDIR}")
 include(GStreamer/Orchestrator)
+
+# Discovery state stays out of the cache and the global search paths; the derived pkg-config flags
+# remain visible to the rest of the GStreamer directory and the environment is restored afterwards.
+if(NOT DEFINED EXPECT_CACHED_PKG_CONFIG_ARGN)
+    set(EXPECT_CACHED_PKG_CONFIG_ARGN "")
+endif()
+qgc_test_assert_streq("cached PKG_CONFIG_ARGN" "${EXPECT_CACHED_PKG_CONFIG_ARGN}" "$CACHE{PKG_CONFIG_ARGN}")
+if(GStreamer_USE_STATIC_LIBS)
+    qgc_test_assert_in_list("derived pkg-config flags" --static PKG_CONFIG_ARGN)
+endif()
+qgc_test_assert_streq("CMAKE_PREFIX_PATH" "${_qgc_prefix_path_before}" "${CMAKE_PREFIX_PATH}")
+qgc_gst_restore_pkgconfig_env()
+qgc_test_assert_streq("restored PKG_CONFIG_PATH" "${_qgc_pkg_config_path_before}" "$ENV{PKG_CONFIG_PATH}")
+qgc_test_assert_streq("restored PKG_CONFIG_LIBDIR" "${_qgc_pkg_config_libdir_before}" "$ENV{PKG_CONFIG_LIBDIR}")
 
 set(_qgc_state_targets
     GStreamer::GStreamer
@@ -88,15 +105,33 @@ qgc_test_assert_streq("version" "${EXPECT_VERSION}" "${GStreamer_VERSION}")
 qgc_test_assert_property("core include dirs" GStreamer::GStreamer INTERFACE_INCLUDE_DIRECTORIES
                          "${EXPECT_ROOT}/include/gstreamer-1.0"
 )
-qgc_test_assert_property("core libraries" GStreamer::deps INTERFACE_LINK_LIBRARIES
-                         "${EXPECT_ROOT}/lib/libgstreamer-1.0.so"
-)
 qgc_test_assert_property("video include dirs" GStreamer::api_video INTERFACE_INCLUDE_DIRECTORIES
                          "${EXPECT_ROOT}/include/gstreamer-1.0"
 )
-qgc_test_assert_property("video libraries" GStreamer::api_video INTERFACE_LINK_LIBRARIES
-                         "${EXPECT_ROOT}/lib/libgstvideo-1.0.so"
-)
+get_target_property(_qgc_core_libs GStreamer::GStreamer INTERFACE_LINK_LIBRARIES)
+qgc_test_assert_in_list("core links video" GStreamer::api_video _qgc_core_libs)
+if(GStreamer_USE_STATIC_LIBS)
+    # Static layouts resolve archives and link a target per plugin that has a .pc file.
+    qgc_test_assert_in_list("core archive" "${EXPECT_ROOT}/lib/libgstreamer-1.0.a" _qgc_core_libs)
+    qgc_test_assert_in_list("core links plugin" GStreamer::coreelements _qgc_core_libs)
+    qgc_test_assert_property("video libraries" GStreamer::api_video INTERFACE_LINK_LIBRARIES
+                             "${EXPECT_ROOT}/lib/libgstvideo-1.0.a"
+    )
+    qgc_test_assert_property("plugin libraries" GStreamer::coreelements INTERFACE_LINK_LIBRARIES
+                             "${EXPECT_ROOT}/lib/gstreamer-1.0/libgstcoreelements.a"
+    )
+else()
+    qgc_test_assert_property("core libraries" GStreamer::deps INTERFACE_LINK_LIBRARIES
+                             "${EXPECT_ROOT}/lib/libgstreamer-1.0.so"
+    )
+    qgc_test_assert_property("video libraries" GStreamer::api_video INTERFACE_LINK_LIBRARIES
+                             "${EXPECT_ROOT}/lib/libgstvideo-1.0.so"
+    )
+    # Shared layouts load plugins at runtime, so no plugin target is created.
+    if(TARGET GStreamer::coreelements)
+        message(FATAL_ERROR "ASSERT [shared plugins]: GStreamer::coreelements was created")
+    endif()
+endif()
 qgc_test_assert_property("layout lib dir" GStreamer::Layout GSTREAMER_LIB_DIR "${EXPECT_ROOT}/lib")
 qgc_test_assert_property("layout plugin dir" GStreamer::Layout GSTREAMER_PLUGIN_DIR "${EXPECT_ROOT}/lib/gstreamer-1.0")
 qgc_test_assert_property("layout include dir" GStreamer::Layout GSTREAMER_INCLUDE_DIR "${EXPECT_ROOT}/include")

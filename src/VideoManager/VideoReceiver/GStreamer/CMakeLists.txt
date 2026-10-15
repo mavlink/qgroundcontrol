@@ -87,6 +87,8 @@ endif()
 
 add_subdirectory(HwBuffers)
 add_subdirectory(gstqgc)
+# HwBuffers' gstreamer-*-1.0 probes were the last to need the SDK's pkg-config environment.
+qgc_gst_restore_pkgconfig_env()
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGStreamer)
 
