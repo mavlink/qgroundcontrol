@@ -112,4 +112,31 @@ void PX4RepositionTest::_changeAltitudeAfterPauseSendsCommandInt()
     _verifyRepositionCommandInt(qQNaN(), static_cast<float>(expectedAltitude));
 }
 
+void PX4RepositionTest::_pauseBeforePx4_1_12SendsCommandLong()
+{
+    QVERIFY(vehicle());
+
+    // PX4 1.11 advertises COMMAND_INT, but would read the INT32_MAX latitude/longitude as a position
+    vehicle()->setFirmwareVersion(1, 11, 3);
+
+    mockLink()->clearReceivedMavCommandCounts();
+    mockLink()->clearReceivedMavlinkMessageCounts();
+    // MockLink only accepts DO_REPOSITION as COMMAND_INT
+    expectAppMessage(QRegularExpression(QStringLiteral("MAV_CMD_DO_REPOSITION.*not supported")));
+    vehicle()->pauseVehicle();
+    QVERIFY_TRUE_WAIT(mockLink()->receivedMavCommandCount(MAV_CMD_DO_REPOSITION) == 1, TestTimeout::longMs());
+    QVERIFY_TRUE_WAIT(!vehicle()->isMavCommandPending(vehicle()->defaultComponentId(), MAV_CMD_DO_REPOSITION),
+                      TestTimeout::longMs());
+    verifyExpectedLogMessage();
+    QCOMPARE(mockLink()->receivedMavlinkMessageCount(MAVLINK_MSG_ID_COMMAND_INT), 0);
+
+    mavlink_message_t message{};
+    QVERIFY(mockLink()->lastReceivedMavlinkMessage(MAVLINK_MSG_ID_COMMAND_LONG, message));
+    mavlink_command_long_t command{};
+    mavlink_msg_command_long_decode(&message, &command);
+    QCOMPARE(command.command, static_cast<uint16_t>(MAV_CMD_DO_REPOSITION));
+    QVERIFY(qIsNaN(command.param5));
+    QVERIFY(qIsNaN(command.param6));
+}
+
 UT_REGISTER_TEST(PX4RepositionTest, TestLabel::Integration, TestLabel::Vehicle)

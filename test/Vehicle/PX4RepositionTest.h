@@ -4,7 +4,7 @@
 
 /// Verifies how MAV_CMD_DO_REPOSITION is sent to PX4 as COMMAND_INT (MockLink advertises
 /// MAV_PROTOCOL_CAPABILITY_COMMAND_INT), including the INT32_MAX encoding of "no change" for
-/// latitude/longitude.
+/// latitude/longitude, and as COMMAND_LONG to PX4 before 1.12.
 class PX4RepositionTest : public VehicleTest
 {
     Q_OBJECT
@@ -20,6 +20,7 @@ private slots:
     void _changeHeadingSendsCommandInt();
     void _changeAltitudeSendsCommandInt();
     void _changeAltitudeAfterPauseSendsCommandInt();
+    void _pauseBeforePx4_1_12SendsCommandLong();
 
 private:
     /// Checks the last COMMAND_INT is a DO_REPOSITION to Hold that keeps the current latitude/longitude

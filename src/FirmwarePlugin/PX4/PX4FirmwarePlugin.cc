@@ -284,8 +284,12 @@ void sendRepositionKeepLatLon(Vehicle* vehicle, float yaw, float amslAltitude,
     const int compId = vehicle->defaultComponentId();
     const float groundSpeed = -1.0f;  // no change
     const float flags = MAV_DO_REPOSITION_FLAGS_CHANGE_MODE;
+    // PX4 before 1.12 advertises COMMAND_INT but reads the INT32_MAX "no change" latitude/longitude as
+    // 214.7483647 degrees
+    const bool commandInt =
+        (vehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_COMMAND_INT) && (vehicle->versionCompare(1, 12, 0) >= 0);
 
-    if (vehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_COMMAND_INT) {
+    if (commandInt) {
         if (ackHandlerInfo) {
             vehicle->sendMavCommandIntWithHandler(ackHandlerInfo, compId, MAV_CMD_DO_REPOSITION, MAV_FRAME_GLOBAL,
                                                   groundSpeed, flags, 0.0f, yaw, NAN, NAN, amslAltitude);
