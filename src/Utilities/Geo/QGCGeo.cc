@@ -10,6 +10,8 @@
 #include "QGCGeo.h"
 #include "QGCLoggingCategory.h"
 
+#include <QtCore/QLocale>
+#include <QtCore/QRegularExpression>
 #include <QtCore/QString>
 
 #include <cmath>
@@ -220,6 +222,112 @@ bool convertMGRSToGeo(const QString &mgrs, QGeoCoordinate &coord)
         qCDebug(QGCGeoLog) << e.what();
         return false;
     }
+}
+
+// ============================================================================
+// DMS (Degrees Minutes Seconds)
+// ============================================================================
+
+QString convertDegreesToDMS(double value, bool isLatitude)
+{
+    const QChar hemisphere = isLatitude ? ((value < 0) ? QLatin1Char('S') : QLatin1Char('N'))
+                                        : ((value < 0) ? QLatin1Char('W') : QLatin1Char('E'));
+
+    // Round once in hundredths of a second so seconds never display as 60.00
+    const qint64 hundredths = std::llround(std::abs(value) * 360000.0);
+    const qint64 degrees = hundredths / 360000;
+    const qint64 minutes = (hundredths % 360000) / 6000;
+    const double seconds = static_cast<double>(hundredths % 6000) / 100.0;
+
+    return QStringLiteral("%1° %2' %3\" %4").arg(degrees).arg(minutes).arg(seconds, 0, 'f', 2).arg(hemisphere);
+}
+
+double convertDMSToDegrees(const QString &text, bool isLatitude, bool *ok)
+{
+    if (ok) {
+        *ok = false;
+    }
+
+    QString s = text.trimmed().toUpper();
+    if (s.isEmpty()) {
+        return 0.0;
+    }
+
+    // Optional hemisphere letter, leading or trailing
+    const QChar positive = isLatitude ? QLatin1Char('N') : QLatin1Char('E');
+    const QChar negative = isLatitude ? QLatin1Char('S') : QLatin1Char('W');
+    QChar hemisphere;
+    if (s.back().isLetter()) {
+        hemisphere = s.back();
+        s.chop(1);
+    } else if (s.front().isLetter()) {
+        hemisphere = s.front();
+        s.remove(0, 1);
+    }
+    if (!hemisphere.isNull() && (hemisphere != positive) && (hemisphere != negative)) {
+        return 0.0;
+    }
+
+    // Degree/minute/second marks (ASCII and typographic) act as separators
+    static const QRegularExpression marks(QStringLiteral("[°º'\"′″]"));
+    s.replace(marks, QStringLiteral(" "));
+    static const QRegularExpression whitespace(QStringLiteral("\\s+"));
+    const QStringList fields = s.split(whitespace, Qt::SkipEmptyParts);
+    if (fields.isEmpty() || (fields.size() > 3)) {
+        return 0.0;
+    }
+
+    double values[3] = {0.0, 0.0, 0.0};
+    for (qsizetype i = 0; i < fields.size(); i++) {
+        bool fieldOk = false;
+        values[i] = QLocale::c().toDouble(fields.at(i), &fieldOk);
+        if (!fieldOk || !std::isfinite(values[i])) {
+            return 0.0;
+        }
+    }
+
+    const bool negativeDegrees = fields.at(0).startsWith(QLatin1Char('-'));
+    const double minutes = values[1];
+    const double seconds = values[2];
+    if ((minutes < 0) || (minutes >= 60) || (seconds < 0) || (seconds >= 60)) {
+        return 0.0;
+    }
+    // Only whole degrees may be followed by minutes, and only whole minutes by seconds
+    if (((fields.size() > 1) && (values[0] != std::trunc(values[0]))) || ((fields.size() > 2) && (minutes != std::trunc(minutes)))) {
+        return 0.0;
+    }
+    // A '-' together with a hemisphere letter is ambiguous
+    if (negativeDegrees && !hemisphere.isNull()) {
+        return 0.0;
+    }
+
+    double degrees = std::abs(values[0]) + (minutes / 60.0) + (seconds / 3600.0);
+    if (negativeDegrees || (hemisphere == negative)) {
+        degrees = -degrees;
+    }
+    if (std::abs(degrees) > (isLatitude ? 90.0 : 180.0)) {
+        return 0.0;
+    }
+
+    if (ok) {
+        *ok = true;
+    }
+    return degrees;
+}
+
+bool convertDMSToGeo(const QString &latitude, const QString &longitude, QGeoCoordinate &coord)
+{
+    bool latOk = false;
+    bool lonOk = false;
+    const double lat = convertDMSToDegrees(latitude, true, &latOk);
+    const double lon = convertDMSToDegrees(longitude, false, &lonOk);
+    if (!latOk || !lonOk) {
+        return false;
+    }
+
+    coord.setLatitude(lat);
+    coord.setLongitude(lon);
+    return true;
 }
 
 // ============================================================================

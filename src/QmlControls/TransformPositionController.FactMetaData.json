@@ -22,6 +22,16 @@
     "decimalPlaces":    7
 },
 {
+    "name":             "LatitudeDMS",
+    "shortDesc":        "Latitude of item position in degrees, minutes, seconds",
+    "type":             "string"
+},
+{
+    "name":             "LongitudeDMS",
+    "shortDesc":        "Longitude of item position in degrees, minutes, seconds",
+    "type":             "string"
+},
+{
     "name":             "Easting",
     "shortDesc": "Easting of item position",
     "type":             "double",

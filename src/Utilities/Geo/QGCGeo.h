@@ -129,6 +129,34 @@ QString convertGeoToMGRS(const QGeoCoordinate &coord);
 bool convertMGRSToGeo(const QString &mgrs, QGeoCoordinate &coord);
 
 // ============================================================================
+// DMS (Degrees Minutes Seconds)
+// ============================================================================
+
+/// Format a latitude or longitude as degrees, minutes, seconds with hemisphere.
+/// @param value Angle in decimal degrees (negative = south/west).
+/// @param isLatitude True for latitude (N/S), false for longitude (E/W).
+/// @return String such as "34° 44' 17.60\" N". Seconds are rounded to 0.01.
+QString convertDegreesToDMS(double value, bool isLatitude);
+
+/// Parse a latitude or longitude typed in any common notation.
+/// Accepts degrees-minutes-seconds ("34 44 17.6 N", "34°44'17.6\"N"), degrees-decimal-minutes
+/// ("34 44.293 N") and decimal degrees ("34.7382", "-86.6017"). The hemisphere letter (N/S for
+/// latitude, E/W for longitude, either case) may lead or trail; without one a leading '-' means S/W.
+/// @param text Text to parse.
+/// @param isLatitude True for latitude (N/S, +/-90), false for longitude (E/W, +/-180).
+/// @param[out] ok Set to false for malformed input, a hemisphere letter of the other axis, '-' together
+///             with a hemisphere letter, minutes/seconds >= 60, or an out of range value.
+/// @return Signed decimal degrees, or 0 on failure.
+double convertDMSToDegrees(const QString &text, bool isLatitude, bool *ok = nullptr);
+
+/// Convert a latitude/longitude pair in any notation accepted by convertDMSToDegrees() to a coordinate.
+/// @param latitude Latitude text.
+/// @param longitude Longitude text.
+/// @param[out] coord Latitude and longitude are set on success; altitude is left unchanged.
+/// @return True on success, false if either value fails to parse.
+bool convertDMSToGeo(const QString &latitude, const QString &longitude, QGeoCoordinate &coord);
+
+// ============================================================================
 // Geodesic Calculations (Great Circle on Ellipsoid)
 // ============================================================================
 

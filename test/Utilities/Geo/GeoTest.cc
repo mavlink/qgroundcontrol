@@ -1,6 +1,7 @@
 #include "GeoTest.h"
 
 #include <QtGui/QVector3D>
+#include <QtTest/QTest>
 
 #include "Benchmarking.h"
 #include "PropertyTesting.h"
@@ -112,6 +113,93 @@ void GeoTest::_convertMGRSToGeo_test()
     QVERIFY(compareDoubles(coord.latitude(), m_origin.latitude()));
     QVERIFY(compareDoubles(coord.longitude(), m_origin.longitude()));
     QVERIFY(compareDoubles(coord.altitude(), m_origin.altitude()));
+}
+
+void GeoTest::_convertDegreesToDMS_test()
+{
+    QCOMPARE(QGCGeo::convertDegreesToDMS(m_origin.latitude(), true), QStringLiteral("47° 22' 35.04\" N"));
+    QCOMPARE(QGCGeo::convertDegreesToDMS(m_origin.longitude(), false), QStringLiteral("8° 32' 53.16\" E"));
+    QCOMPARE(QGCGeo::convertDegreesToDMS(-33.8568, true), QStringLiteral("33° 51' 24.48\" S"));
+    QCOMPARE(QGCGeo::convertDegreesToDMS(-151.2153, false), QStringLiteral("151° 12' 55.08\" W"));
+    // Seconds that round up to 60 carry into minutes and degrees
+    QCOMPARE(QGCGeo::convertDegreesToDMS(9.9999999, true), QStringLiteral("10° 0' 0.00\" N"));
+}
+
+void GeoTest::_convertDMSToDegrees_test_data()
+{
+    QTest::addColumn<QString>("text");
+    QTest::addColumn<bool>("isLatitude");
+    QTest::addColumn<bool>("expectedOk");
+    QTest::addColumn<double>("expected");
+
+    const double lat = 47.0 + (22.0 / 60.0) + (35.04 / 3600.0);
+    const double lon = 8.0 + (32.0 / 60.0) + (53.16 / 3600.0);
+
+    QTest::newRow("dms symbols")            << QStringLiteral("47°22'35.04\"N")      << true  << true  << lat;
+    QTest::newRow("dms typographic")        << QStringLiteral("47° 22′ 35.04″ N")    << true  << true  << lat;
+    QTest::newRow("dms spaces")             << QStringLiteral("47 22 35.04 N")        << true  << true  << lat;
+    QTest::newRow("dms leading hemisphere") << QStringLiteral("E 8 32 53.16")         << false << true  << lon;
+    QTest::newRow("dms lowercase")          << QStringLiteral("8 32 53.16 e")         << false << true  << lon;
+    QTest::newRow("dms south")              << QStringLiteral("47 22 35.04 S")        << true  << true  << -lat;
+    QTest::newRow("dms west")               << QStringLiteral("W8 32 53.16")          << false << true  << -lon;
+    QTest::newRow("dms negative")           << QStringLiteral("-8 32 53.16")          << false << true  << -lon;
+    QTest::newRow("ddm")                    << QStringLiteral("47 22.584 N")          << true  << true  << lat;
+    QTest::newRow("decimal")                << QStringLiteral("47.3764")              << true  << true  << 47.3764;
+    QTest::newRow("decimal negative")       << QStringLiteral("-8.5481")              << false << true  << -8.5481;
+    QTest::newRow("negative zero degrees")  << QStringLiteral("-0 30 0")              << true  << true  << -0.5;
+    QTest::newRow("latitude limit")         << QStringLiteral("90 0 0 S")             << true  << true  << -90.0;
+    QTest::newRow("longitude limit")        << QStringLiteral("180 W")                << false << true  << -180.0;
+
+    QTest::newRow("empty")                  << QString()                              << true  << false << 0.0;
+    QTest::newRow("garbage")                << QStringLiteral("abc")                  << true  << false << 0.0;
+    QTest::newRow("wrong axis letter")      << QStringLiteral("47 22 35 E")           << true  << false << 0.0;
+    QTest::newRow("minus with letter")      << QStringLiteral("-47 22 35 N")          << true  << false << 0.0;
+    QTest::newRow("minutes 60")             << QStringLiteral("47 60 0 N")            << true  << false << 0.0;
+    QTest::newRow("seconds 60")             << QStringLiteral("47 22 60 N")           << true  << false << 0.0;
+    QTest::newRow("latitude out of range")  << QStringLiteral("91 N")                 << true  << false << 0.0;
+    QTest::newRow("longitude out of range") << QStringLiteral("180 0 1 E")            << false << false << 0.0;
+    QTest::newRow("too many fields")        << QStringLiteral("47 22 35 1 N")         << true  << false << 0.0;
+    QTest::newRow("fractional degrees")     << QStringLiteral("47.5 22 N")            << true  << false << 0.0;
+    QTest::newRow("fractional minutes")     << QStringLiteral("47 22.5 35 N")         << true  << false << 0.0;
+}
+
+void GeoTest::_convertDMSToDegrees_test()
+{
+    QFETCH(QString, text);
+    QFETCH(bool, isLatitude);
+    QFETCH(bool, expectedOk);
+    QFETCH(double, expected);
+
+    bool ok = !expectedOk;
+    const double result = QGCGeo::convertDMSToDegrees(text, isLatitude, &ok);
+    QCOMPARE(ok, expectedOk);
+    QVERIFY2(compareDoubles(result, expected, 1e-9), qPrintable(QString::number(result, 'f', 10)));
+}
+
+void GeoTest::_convertDMSToGeo_test()
+{
+    QGeoCoordinate coord(0, 0, 123.0);
+    QVERIFY(QGCGeo::convertDMSToGeo(QStringLiteral("47 22 35.04 N"), QStringLiteral("8 32 53.16 E"), coord));
+    QVERIFY(compareDoubles(coord.latitude(), m_origin.latitude()));
+    QVERIFY(compareDoubles(coord.longitude(), m_origin.longitude()));
+    QVERIFY(compareDoubles(coord.altitude(), 123.0));
+
+    // A failed parse leaves the coordinate untouched
+    const QGeoCoordinate before = coord;
+    QVERIFY(!QGCGeo::convertDMSToGeo(QStringLiteral("47 22 35.04 N"), QStringLiteral("8 32 53.16 N"), coord));
+    QCOMPARE(coord, before);
+}
+
+void GeoTest::_dmsRoundTrip_test()
+{
+    // 0.01" of arc is ~0.3 m, so the round trip is exact to ~3e-6 degrees
+    const QList<QGeoCoordinate> coords = {m_origin, QGeoCoordinate(-33.8568, 151.2153), QGeoCoordinate(0.0, 0.0), QGeoCoordinate(-89.99999, -179.99999)};
+    for (const QGeoCoordinate &coord : coords) {
+        QGeoCoordinate result;
+        QVERIFY(QGCGeo::convertDMSToGeo(QGCGeo::convertDegreesToDMS(coord.latitude(), true), QGCGeo::convertDegreesToDMS(coord.longitude(), false), result));
+        QVERIFY(compareDoubles(result.latitude(), coord.latitude(), 3e-6));
+        QVERIFY(compareDoubles(result.longitude(), coord.longitude(), 3e-6));
+    }
 }
 
 void GeoTest::_convertGeodeticToEcef_test()
