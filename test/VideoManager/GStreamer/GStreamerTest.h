@@ -49,6 +49,8 @@ private slots:
     void _testDmaBufTiledImportAvoidsTexStorage();
     void _testVulkanDispatchDemotesToCpu();
     void _testVulkanOwnedFrameTexturesReleaseOnDestroy();
+    void _testVulkanImportRequiresProducerSync_data();
+    void _testVulkanImportRequiresProducerSync();
     void _testCapsCacheInvalidation();
     void _testGpuZeroCopyFallback();
     void _testWindowsGpuSinkPreservesSoftwarePixels();

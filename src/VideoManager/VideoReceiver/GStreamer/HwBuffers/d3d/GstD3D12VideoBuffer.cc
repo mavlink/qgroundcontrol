@@ -12,7 +12,6 @@
 
 #include "GstContextBridgeRegistry.h"
 #include "GstD3D12ContextBridge.h"
-#include "GstD3DContextBridgeCommon.h"
 #include "GstD3DVideoBufferCommon.h"
 #include "GstHwImportCache.h"
 #include "GstHwPathTelemetry.h"
@@ -302,6 +301,130 @@ ID3D12Resource* copySliceToStaging(ID3D12Resource* resource, guint subIdx, int p
     return stagingResource;
 }
 
+using PlaneLeases = std::array<std::shared_ptr<StagingSlotLease>, kMaxPlanes>;
+
+/// D3D12 pieces of GstD3DVideoBufferCommon::resolvePlanes(). Staged planes share one copy queue, resolved on the first
+/// staged plane (constant per device); finish() does a single fence wait on the highest submitted value. An early
+/// return still waits for submitted copies (destructor) before the slot leases are released.
+class D3D12PlaneResolver
+{
+public:
+    using Handle = ID3D12Resource;
+    using Memory = GstD3D12Memory;
+    using Device = GstD3D12Device;
+
+    static constexpr const char* kMemoryName = "GstD3D12Memory";
+
+    D3D12PlaneResolver() = default;
+    D3D12PlaneResolver(const D3D12PlaneResolver&) = delete;
+    D3D12PlaneResolver& operator=(const D3D12PlaneResolver&) = delete;
+
+    ~D3D12PlaneResolver()
+    {
+        (void) waitForCopies();
+        if (_queue) {
+            gst_object_unref(_queue);
+        }
+    }
+
+    static const QLoggingCategory& log() { return GstD3D12Log(); }
+
+    static bool isMemory(GstMemory* mem) { return gst_is_d3d12_memory(mem); }
+
+    static Device* bridgeDevice() { return GstD3D12ContextBridge::currentDevice(); }
+
+    // Compare the underlying device, not the wrapper: each bridge prime creates a new GstD3D12Device.
+    static bool sameDevice(Device* a, Device* b) { return gst_d3d12_device_is_equal(a, b); }
+
+    static Handle* resource(Memory* mem) { return gst_d3d12_memory_get_resource_handle(mem); }
+
+    static guint subresource(Memory* mem, int plane)
+    {
+        guint subIdx = 0;
+        gst_d3d12_memory_get_subresource_index(mem, guint(plane), &subIdx);
+        return subIdx;
+    }
+
+    static bool isArraySlice(Handle* resource, guint subIdx)
+    {
+        return subIdx > 0 || resource->GetDesc().DepthOrArraySize > 1;
+    }
+
+    // Block on the decoder's fence before reading, else QRhi samples mid-write while the decoder is still writing this
+    // resource.
+    static bool prepare(Memory* mem, int plane)
+    {
+        if (!gst_d3d12_memory_sync(mem)) {
+            QGC_HW_WARN_ONCE(GstD3D12Log, s_diag.loggedNullResource,
+                             "resolve: gst_d3d12_memory_sync failed for plane" << plane);
+            return false;
+        }
+        return true;
+    }
+
+    Handle* copySlice(Handle* resource, guint subIdx, int plane, Memory* mem)
+    {
+        ID3D12Device* d3dDev = gst_d3d12_device_get_device_handle(mem->device);
+        if (!_queue) {
+            _queueType = D3D12_COMMAND_LIST_TYPE_COPY;
+            GstD3D12CmdQueue* q = gst_d3d12_device_get_cmd_queue(mem->device, _queueType);
+            if (!q) {
+                _queueType = D3D12_COMMAND_LIST_TYPE_DIRECT;
+                q = gst_d3d12_device_get_cmd_queue(mem->device, _queueType);
+            }
+            if (q) {
+                // Hold a ref for the whole resolve so it serializes against gst-d3d12's queue lock like the
+                // decoder-thread submits do.
+                _queue = static_cast<GstD3D12CmdQueue*>(gst_object_ref(q));
+            }
+        }
+        if (!d3dDev || !_queue) {
+            QGC_HW_WARN_ONCE(GstD3D12Log, s_diag.loggedTextureCreateFail,
+                             "mapTextures: could not obtain D3D12 device/queue for slice copy (plane=" << plane << ")");
+            return nullptr;
+        }
+        Handle* staging = copySliceToStaging(resource, subIdx, plane, resource->GetDesc(), d3dDev, _queue, _queueType,
+                                             _maxFenceValue, _leases[plane]);
+        if (staging) {
+            _anyCopy = true;
+        }
+        return staging;
+    }
+
+    // One fence wait on the highest value covers every plane (same queue, in order) and guarantees the pooled
+    // allocators are idle before the next frame resets them.
+    bool finish() { return waitForCopies(); }
+
+    /// Slot leases of the staged planes; null when nothing was staged.
+    std::shared_ptr<void> takeLeases()
+    {
+        return _anyCopy ? std::make_shared<PlaneLeases>(std::move(_leases)) : nullptr;
+    }
+
+private:
+    bool waitForCopies()
+    {
+        if (!_anyCopy || !_queue || _waited) {
+            return true;
+        }
+        _waited = true;
+        GstHwPathTelemetry::recordSyncWait(HwVideoBufferPath::D3D12, /*gpuSide=*/false);
+        if (FAILED(gst_d3d12_cmd_queue_fence_wait(_queue, _maxFenceValue))) {
+            QGC_HW_WARN_ONCE(GstD3D12Log, s_diag.loggedTextureCreateFail,
+                             "resolve: gst_d3d12_cmd_queue_fence_wait failed");
+            return false;
+        }
+        return true;
+    }
+
+    PlaneLeases _leases;
+    GstD3D12CmdQueue* _queue = nullptr;
+    D3D12_COMMAND_LIST_TYPE _queueType = D3D12_COMMAND_LIST_TYPE_COPY;
+    guint64 _maxFenceValue = 0;
+    bool _anyCopy = false;
+    bool _waited = false;
+};
+
 }  // namespace
 
 void GstD3D12VideoBuffer::resetCachedState() noexcept
@@ -355,157 +478,18 @@ void GstD3D12VideoBuffer::resolvePlaneResources()
     if (!buffer)
         return;
 
-    const int memCount = (std::min)(int(gst_buffer_n_memory(buffer)), kMaxPlanes);
     GstD3DVideoBufferCommon::PlaneResourceGuard<ID3D12Resource> guard;
-    // Declared before the copy wait below so an early return releases the slots only after their copies completed.
-    using PlaneLeases = std::array<std::shared_ptr<StagingSlotLease>, kMaxPlanes>;
-    PlaneLeases stagingLeases;
-
-    // Shared copy state: the queue is resolved lazily on the first staged plane (constant per device) and all planes
-    // submit to it, then a single fence wait covers every submit. The guard unrefs the held queue ref on any early
-    // return path.
-    struct CmdQueueRef
-    {
-        GstD3D12CmdQueue* q = nullptr;
-
-        ~CmdQueueRef()
-        {
-            if (q)
-                gst_object_unref(q);
-        }
-    } queueRef;
-
-    D3D12_COMMAND_LIST_TYPE queueType = D3D12_COMMAND_LIST_TYPE_COPY;
-    guint64 maxFenceValue = 0;
-    bool anyCopy = false;
-    struct SubmittedCopyWait
-    {
-        GstD3D12CmdQueue*& queue;
-        guint64& maxFenceValue;
-        bool& anyCopy;
-        bool armed = true;
-
-        ~SubmittedCopyWait()
-        {
-            if (armed)
-                wait();
-        }
-
-        bool waitAndDisarm()
-        {
-            armed = false;
-            return wait();
-        }
-
-        bool wait()
-        {
-            if (!anyCopy || !queue) {
-                return true;
-            }
-            GstHwPathTelemetry::recordSyncWait(HwVideoBufferPath::D3D12, /*gpuSide=*/false);
-            if (FAILED(gst_d3d12_cmd_queue_fence_wait(queue, maxFenceValue))) {
-                QGC_HW_WARN_ONCE(GstD3D12Log, s_diag.loggedTextureCreateFail,
-                                 "resolve: gst_d3d12_cmd_queue_fence_wait failed");
-                return false;
-            }
-            return true;
-        }
-    } submittedCopyWait{queueRef.q, maxFenceValue, anyCopy};
-
-    for (int i = 0; i < memCount; ++i) {
-        GstMemory* mem = gst_buffer_peek_memory(buffer, i);
-        if (!mem || !gst_is_d3d12_memory(mem)) {
-            QGC_HW_WARN_ONCE(GstD3D12Log, s_diag.loggedNonD3DMemory,
-                             "resolve: plane" << i << "memory is not GstD3D12Memory (allocator="
-                                              << (mem && mem->allocator ? mem->allocator->mem_type : "null") << ")");
-            return;
-        }
-        GstD3D12Memory* d3dmem = GST_D3D12_MEMORY_CAST(mem);
-        // Device guard (plane 0): gst-d3d12 may land on an isolated device when NEED_CONTEXT was preempted, and
-        // importing a foreign-device resource into QRhi corrupts.
-        if (i == 0) {
-            // currentDevice() is transfer-full — unref both branches to avoid UAF after reset().
-            GstD3D12Device* bridgeDev = GstD3D12ContextBridge::currentDevice();
-            // Compare the underlying device, not the wrapper: each bridge prime creates a new GstD3D12Device.
-            if (bridgeDev && !gst_d3d12_device_is_equal(d3dmem->device, bridgeDev)) {
-                const gint64 bridgeLuid = GstD3DContextBridgeCommon::readAdapterLuid(bridgeDev);
-                const gint64 bufLuid = GstD3DContextBridgeCommon::readAdapterLuid(d3dmem->device);
-                gst_object_unref(bridgeDev);
-                QGC_HW_WARN_ONCE(GstD3D12Log, s_diag.loggedDeviceMismatch,
-                                 "resolve: GstD3D12Memory on foreign device (bridge LUID="
-                                     << bridgeLuid << "buffer LUID=" << bufLuid
-                                     << "); bridge missed NEED_CONTEXT race — rejecting frame");
-                return;
-            }
-            if (bridgeDev)
-                gst_object_unref(bridgeDev);
-        }
-        // Block on the decoder's fence before reading, else QRhi samples mid-write while the decoder is still writing
-        // this resource.
-        if (!gst_d3d12_memory_sync(d3dmem)) {
-            QGC_HW_WARN_ONCE(GstD3D12Log, s_diag.loggedNullResource,
-                             "resolve: gst_d3d12_memory_sync failed for plane" << i);
-            return;
-        }
-        ID3D12Resource* resource = gst_d3d12_memory_get_resource_handle(d3dmem);
-        if (!resource) {
-            QGC_HW_WARN_ONCE(GstD3D12Log, s_diag.loggedNullResource,
-                             "resolve: gst_d3d12_memory_get_resource_handle returned null for plane" << i);
-            return;
-        }
-        // QRhi::createFrom has no subresource parameter — copy the slice (with its blocking fence wait) here, not in
-        // mapTextures.
-        guint subIdx = 0;
-        gst_d3d12_memory_get_subresource_index(d3dmem, guint(i), &subIdx);
-        D3D12_RESOURCE_DESC srcDesc = resource->GetDesc();
-        if (subIdx > 0 || srcDesc.DepthOrArraySize > 1) {
-            ID3D12Device* d3dDev = gst_d3d12_device_get_device_handle(d3dmem->device);
-            if (!queueRef.q) {
-                queueType = D3D12_COMMAND_LIST_TYPE_COPY;
-                GstD3D12CmdQueue* q = gst_d3d12_device_get_cmd_queue(d3dmem->device, queueType);
-                if (!q) {
-                    queueType = D3D12_COMMAND_LIST_TYPE_DIRECT;
-                    q = gst_d3d12_device_get_cmd_queue(d3dmem->device, queueType);
-                }
-                if (q) {
-                    // Hold a ref for the whole loop so it serializes against gst-d3d12's queue lock like the
-                    // decoder-thread submits do.
-                    gst_object_ref(q);
-                    queueRef.q = q;
-                }
-            }
-            if (!d3dDev || !queueRef.q) {
-                QGC_HW_WARN_ONCE(GstD3D12Log, s_diag.loggedTextureCreateFail,
-                                 "mapTextures: could not obtain D3D12 device/queue for slice copy (plane=" << i << ")");
-                return;
-            }
-            ID3D12Resource* stagingResource = copySliceToStaging(resource, subIdx, i, srcDesc, d3dDev, queueRef.q,
-                                                                 queueType, maxFenceValue, stagingLeases[i]);
-            if (!stagingResource) {
-                return;
-            }
-            anyCopy = true;
-            guard.handles[i] = stagingResource;
-        } else {
-            resource->AddRef();
-            guard.handles[i] = resource;
-        }
-        guard.owned = i + 1;
-    }
-
-    // One fence wait on the highest value covers every plane (same queue, in order) and guarantees the pooled
-    // allocators are idle before the next frame resets them.
-    if (!submittedCopyWait.waitAndDisarm()) {
+    D3D12PlaneResolver resolver;
+    const int resolvedCount = GstD3DVideoBufferCommon::resolvePlanes(buffer, resolver, s_diag, guard);
+    if (resolvedCount == 0) {
         return;
     }
 
     _resources = guard.handles;
-    _resolvedCount = memCount;
+    _resolvedCount = resolvedCount;
     _resolved = true;
     guard.commit();
-    if (anyCopy) {
-        _stagingLeases = std::make_shared<PlaneLeases>(std::move(stagingLeases));
-    }
+    _stagingLeases = resolver.takeLeases();
 }
 
 QVideoFrameTexturesUPtr GstD3D12VideoBuffer::mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& old)

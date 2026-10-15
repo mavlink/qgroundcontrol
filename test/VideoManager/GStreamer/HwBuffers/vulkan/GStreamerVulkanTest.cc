@@ -69,6 +69,9 @@
 #include <rhi/qrhi.h>
 
 #include "GstVulkanFrameTextures.h"
+#include "GstVulkanImport.h"
+
+Q_LOGGING_CATEGORY(VulkanImportTestLog, "Video.GStreamer.Test.VulkanImport")
 #endif
 
 void GStreamerTest::_testVulkanDispatchDemotesToCpu()
@@ -259,4 +262,50 @@ void GStreamerTest::_testVulkanOwnedFrameTexturesReleaseOnDestroy()
 #endif
 }
 
+void GStreamerTest::_testVulkanImportRequiresProducerSync_data()
+{
+    QTest::addColumn<int>("path");
+    QTest::addColumn<bool>("writesComplete");
+
+    QTest::newRow("DMABuf, writes complete") << int(HwVideoBufferPath::DmaBuf) << true;
+    QTest::newRow("DMABuf, barrier failed") << int(HwVideoBufferPath::DmaBuf) << false;
+    QTest::newRow("gst-vulkan, no decoder sync") << int(HwVideoBufferPath::Vulkan) << false;
+}
+
+void GStreamerTest::_testVulkanImportRequiresProducerSync()
+{
+#if !defined(QGC_HAS_GST_VULKAN_GPU_PATH) || !QT_CONFIG(vulkan)
+    QSKIP("Vulkan imports not compiled in this build");
+#else
+    QFETCH(int, path);
+    QFETCH(bool, writesComplete);
+    const auto hwPath = static_cast<HwVideoBufferPath>(path);
+    using GstHwPathTelemetry::HwFallbackReason;
+    const quint64 noSyncBefore = GstHwPathTelemetry::peekFallbackReason(hwPath, HwFallbackReason::VulkanNoSync);
+
+    std::atomic<bool> warned{false};
+    if (!writesComplete) {
+        expectLogMessage("Video.GStreamer.Test.VulkanImport", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("producer writes not known complete")));
+    }
+    const bool admitted = GstVulkanImport::admitImport(hwPath, writesComplete, VulkanImportTestLog(), warned);
+    if (!writesComplete) {
+        verifyExpectedLogMessage();
+    }
+
+    QCOMPARE(admitted, writesComplete);
+    QCOMPARE(GstHwPathTelemetry::peekFallbackReason(hwPath, HwFallbackReason::VulkanNoSync),
+             noSyncBefore + (writesComplete ? 0 : 1));
+#endif
+}
+
+#endif
+
+#ifndef QGC_GST_STREAMING
+void GStreamerTest::_testVulkanImportRequiresProducerSync_data() {}
+
+void GStreamerTest::_testVulkanImportRequiresProducerSync()
+{
+    QSKIP("GStreamer not enabled");
+}
 #endif

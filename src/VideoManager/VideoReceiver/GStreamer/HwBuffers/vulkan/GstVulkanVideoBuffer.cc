@@ -5,6 +5,7 @@
 #include "GstHwPathTelemetry.h"
 #include "GstHwVideoBuffer.h"
 #include "GstVulkanFrameTextures.h"
+#include "GstVulkanImport.h"
 
 #if defined(QGC_HAS_GST_VULKAN_GPU_PATH) && QT_CONFIG(vulkan)
 
@@ -86,16 +87,11 @@ QVideoFrameTexturesUPtr GstVulkanVideoBuffer::mapTextures(QRhi& rhi, QVideoFrame
     }
 
     // No decoder->QRhi sync wired: real zero-copy needs a shared timeline semaphore (GstVulkanOperation); the only
-    // correct alternative — a per-frame vkDeviceWaitIdle — would stall the whole UI. Handing QRhi an unsynchronized
-    // VkImage would tear, so demote to CPU until sync lands: flip kVulkanSyncImplemented and add the semaphore wait
-    // here. Unreachable on gst-vulkan 1.24.2 (the device-match guard above fails first); reachable once a same-VkDevice
-    // wrap exists.
-    constexpr bool kVulkanSyncImplemented = false;
-    if constexpr (!kVulkanSyncImplemented) {
-        GstHwPathTelemetry::recordFallbackReason(HwVideoBufferPath::Vulkan,
-                                                 GstHwPathTelemetry::HwFallbackReason::VulkanNoSync);
-        QGC_HW_WARN_ONCE(GstVulkanBufLog, s_loggedSyncFallback,
-                         "Vulkan import: decoder sync unimplemented (no timeline semaphore) — CPU fallback");
+    // correct alternative — a per-frame vkDeviceWaitIdle — would stall the whole UI. Unreachable on gst-vulkan 1.24.2
+    // (the device-match guard above fails first); reachable once a same-VkDevice wrap exists.
+    constexpr bool kDecoderSyncImplemented = false;
+    if (!GstVulkanImport::admitImport(HwVideoBufferPath::Vulkan, kDecoderSyncImplemented, GstVulkanBufLog(),
+                                      s_loggedSyncFallback)) {
         return GstHwPathTelemetry::fail(HwVideoBufferPath::Vulkan);
     }
 

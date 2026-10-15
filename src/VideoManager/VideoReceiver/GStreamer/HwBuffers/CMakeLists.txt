@@ -335,6 +335,8 @@ if(LINUX OR WIN32 OR MACOS OR ANDROID)
                     ${CMAKE_CURRENT_SOURCE_DIR}/vulkan/GstVulkanVideoBuffer.h
                     ${CMAKE_CURRENT_SOURCE_DIR}/vulkan/GstVulkanContextBridge.cc
                     ${CMAKE_CURRENT_SOURCE_DIR}/vulkan/GstVulkanContextBridge.h
+                    ${CMAKE_CURRENT_SOURCE_DIR}/vulkan/GstVulkanImport.cc
+                    ${CMAKE_CURRENT_SOURCE_DIR}/vulkan/GstVulkanImport.h
                 LIBS   ${PC_GStreamer_Vulkan_LIBRARIES} ${_qgc_vulkan_loader_libs}
                 DEFINE QGC_HAS_GST_VULKAN_GPU_PATH
                 LOG    "Vulkan zero-copy GPU path enabled")

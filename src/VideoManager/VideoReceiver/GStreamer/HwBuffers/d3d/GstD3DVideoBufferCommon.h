@@ -20,6 +20,7 @@
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoFrameFormat>
 
+#include "GstD3DContextBridgeCommon.h"
 #include "GstHwFrameTexturesBase.h"
 #include "GstHwPathTelemetry.h"
 #include "GstHwVideoBuffer.h"
@@ -98,6 +99,76 @@ struct PlaneResourceGuard
     /// alone.
     void commit() noexcept { owned = 0; }
 };
+
+/// Streaming-thread resolve shared by D3D11 and D3D12, run once per buffer from the GstD3D1xVideoBuffer ctor. For each
+/// memory: type check, native-device guard (plane 0) against the bridge's shared device, decoder sync, resource lookup,
+/// and either a slice copy into staging (QRhi::createFrom has no subresource selector) or an AddRef of the decoder's
+/// resource. Fills @p guard and returns the resolved plane count; 0 after warning the cause once.
+///
+/// @p Api supplies the API-specific pieces:
+///   types Handle, Memory, Device; static kMemoryName, log(), isMemory(GstMemory*), bridgeDevice() (transfer-full),
+///   sameDevice(Device*, Device*), resource(Memory*), subresource(Memory*, int plane), isArraySlice(Handle*, guint);
+///   members prepare(Memory*, int plane) (decoder sync), copySlice(Handle*, guint subresource, int plane, Memory*)
+///   (returns an AddRef'd staging handle), finish() (flush/fence-wait the submitted copies).
+template <class Api>
+int resolvePlanes(GstBuffer* buffer, Api& api, MapDiagnostics& diag, PlaneResourceGuard<typename Api::Handle>& guard)
+{
+    using Memory = typename Api::Memory;
+    using Device = typename Api::Device;
+
+    const int memCount = (std::min) (int(gst_buffer_n_memory(buffer)), kMaxPlanes);
+    for (int i = 0; i < memCount; ++i) {
+        GstMemory* mem = gst_buffer_peek_memory(buffer, guint(i));
+        if (!mem || !Api::isMemory(mem)) {
+            QGC_HW_WARN_ONCE(Api::log, diag.loggedNonD3DMemory,
+                             "resolve: plane" << i << "memory is not" << Api::kMemoryName << "(allocator="
+                                              << (mem && mem->allocator ? mem->allocator->mem_type : "null") << ")");
+            return 0;
+        }
+        auto* d3dmem = reinterpret_cast<Memory*>(mem);
+        // gst-d3d may land on an isolated device when NEED_CONTEXT was preempted; sampling a foreign-device resource
+        // from QRhi corrupts silently.
+        if (i == 0) {
+            // currentDevice() is transfer-full — unref on every branch to avoid UAF after reset().
+            Device* bridgeDev = Api::bridgeDevice();
+            if (bridgeDev && !Api::sameDevice(d3dmem->device, bridgeDev)) {
+                const gint64 bridgeLuid = GstD3DContextBridgeCommon::readAdapterLuid(bridgeDev);
+                const gint64 bufLuid = GstD3DContextBridgeCommon::readAdapterLuid(d3dmem->device);
+                gst_object_unref(bridgeDev);
+                QGC_HW_WARN_ONCE(Api::log, diag.loggedDeviceMismatch,
+                                 "resolve:" << Api::kMemoryName << "on foreign device (bridge LUID=" << bridgeLuid
+                                            << "buffer LUID=" << bufLuid
+                                            << "); bridge missed NEED_CONTEXT race — rejecting frame");
+                return 0;
+            }
+            if (bridgeDev) {
+                gst_object_unref(bridgeDev);
+            }
+        }
+        if (!api.prepare(d3dmem, i)) {
+            return 0;
+        }
+        auto* resource = Api::resource(d3dmem);
+        if (!resource) {
+            QGC_HW_WARN_ONCE(Api::log, diag.loggedNullResource,
+                             "resolve:" << Api::kMemoryName << "has no resource handle for plane" << i);
+            return 0;
+        }
+        const guint subIdx = Api::subresource(d3dmem, i);
+        if (Api::isArraySlice(resource, subIdx)) {
+            auto* staging = api.copySlice(resource, subIdx, i, d3dmem);
+            if (!staging) {
+                return 0;
+            }
+            guard.handles[i] = staging;
+        } else {
+            resource->AddRef();
+            guard.handles[i] = resource;
+        }
+        guard.owned = i + 1;
+    }
+    return api.finish() ? memCount : 0;
+}
 
 /// Wraps an array of D3D native handles (ID3D11Texture2D*/ID3D12Resource*) as QRhi-importable textures; releases them
 /// in the dtor, so the caller must own a fresh ref before constructing.

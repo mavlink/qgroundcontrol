@@ -6,6 +6,14 @@
 
 namespace GstHw {
 
+PlaneLayout planeLayout(const GstVideoInfo& info, const GstVideoMeta* vmeta, int plane) noexcept
+{
+    if (vmeta) {
+        return {vmeta->offset[plane], vmeta->stride[plane]};
+    }
+    return {GST_VIDEO_INFO_PLANE_OFFSET(&info, plane), GST_VIDEO_INFO_PLANE_STRIDE(&info, plane)};
+}
+
 int drmFourccForPlane(const GstVideoInfo& info, int plane)
 {
     const GstVideoFormat fmt = GST_VIDEO_INFO_FORMAT(&info);

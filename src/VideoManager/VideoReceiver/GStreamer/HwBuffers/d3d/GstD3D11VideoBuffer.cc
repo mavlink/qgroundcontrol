@@ -11,7 +11,6 @@
 
 #include "GstContextBridgeRegistry.h"
 #include "GstD3D11ContextBridge.h"
-#include "GstD3DContextBridgeCommon.h"
 #include "GstD3DVideoBufferCommon.h"
 #include "GstHwImportCache.h"
 #include "GstHwPathTelemetry.h"
@@ -128,6 +127,71 @@ ID3D11Texture2D* copySliceToStaging(ID3D11Texture2D* tex, guint subIdx, int plan
     return stagingTex;
 }
 
+/// D3D11 pieces of GstD3DVideoBufferCommon::resolvePlanes().
+class D3D11PlaneResolver
+{
+public:
+    using Handle = ID3D11Texture2D;
+    using Memory = GstD3D11Memory;
+    using Device = GstD3D11Device;
+
+    static constexpr const char* kMemoryName = "GstD3D11Memory";
+
+    static const QLoggingCategory& log() { return GstD3D11Log(); }
+
+    static bool isMemory(GstMemory* mem) { return gst_is_d3d11_memory(mem); }
+
+    static Device* bridgeDevice() { return GstD3D11ContextBridge::currentDevice(); }
+
+    // Compare the wrapped ID3D11Device, not the wrapper: each bridge prime wraps QRhi's device anew.
+    static bool sameDevice(Device* a, Device* b)
+    {
+        return gst_d3d11_device_get_device_handle(a) == gst_d3d11_device_get_device_handle(b);
+    }
+
+    static Handle* resource(Memory* mem)
+    {
+        return reinterpret_cast<ID3D11Texture2D*>(gst_d3d11_memory_get_resource_handle(mem));
+    }
+
+    static guint subresource(Memory* mem, int /*plane*/) { return gst_d3d11_memory_get_subresource_index(mem); }
+
+    static bool isArraySlice(Handle* tex, guint subIdx)
+    {
+        D3D11_TEXTURE2D_DESC desc = {};
+        tex->GetDesc(&desc);
+        return subIdx > 0 || desc.ArraySize > 1;
+    }
+
+    static bool prepare(Memory* /*mem*/, int /*plane*/) { return true; }
+
+    Handle* copySlice(Handle* tex, guint subIdx, int plane, Memory* mem)
+    {
+        D3D11_TEXTURE2D_DESC srcDesc = {};
+        tex->GetDesc(&srcDesc);
+        Handle* staging = copySliceToStaging(tex, subIdx, plane, srcDesc, mem);
+        if (staging) {
+            _copyDevice = mem->device;
+        }
+        return staging;
+    }
+
+    // Single flush for every staged slice instead of one per plane: QRhi must see the copies in the immediate queue.
+    bool finish()
+    {
+        if (_copyDevice) {
+            ID3D11DeviceContext* d3dCtx = gst_d3d11_device_get_device_context_handle(_copyDevice);
+            gst_d3d11_device_lock(_copyDevice);
+            d3dCtx->Flush();
+            gst_d3d11_device_unlock(_copyDevice);
+        }
+        return true;
+    }
+
+private:
+    GstD3D11Device* _copyDevice = nullptr;
+};
+
 }  // namespace
 
 void GstD3D11VideoBuffer::resetCachedState() noexcept
@@ -182,74 +246,15 @@ void GstD3D11VideoBuffer::resolvePlaneResources()
     if (!buffer)
         return;
 
-    const int memCount = (std::min)(int(gst_buffer_n_memory(buffer)), kMaxPlanes);
     GstD3DVideoBufferCommon::PlaneResourceGuard<ID3D11Texture2D> guard;
-    GstD3D11Device* copyDevice = nullptr;
-
-    for (int i = 0; i < memCount; ++i) {
-        GstMemory* mem = gst_buffer_peek_memory(buffer, i);
-        if (!mem || !gst_is_d3d11_memory(mem)) {
-            QGC_HW_WARN_ONCE(GstD3D11Log, s_diag.loggedNonD3DMemory,
-                             "resolve: plane" << i << "memory is not GstD3D11Memory (allocator="
-                                              << (mem && mem->allocator ? mem->allocator->mem_type : "null") << ")");
-            return;
-        }
-        // Device guard on plane 0: gst-d3d11 may land on an isolated device when NEED_CONTEXT was preempted; sampling a
-        // foreign-device texture from QRhi corrupts silently.
-        if (i == 0) {
-            // currentDevice() is transfer-full — unref both branches to avoid UAF after reset().
-            GstD3D11Device* bridgeDev = GstD3D11ContextBridge::currentDevice();
-            GstD3D11Device* bufDev = GST_D3D11_MEMORY_CAST(mem)->device;
-            // Compare the wrapped ID3D11Device, not the wrapper: each bridge prime wraps QRhi's device anew.
-            if (bridgeDev &&
-                gst_d3d11_device_get_device_handle(bufDev) != gst_d3d11_device_get_device_handle(bridgeDev)) {
-                const gint64 bridgeLuid = GstD3DContextBridgeCommon::readAdapterLuid(bridgeDev);
-                const gint64 bufLuid = GstD3DContextBridgeCommon::readAdapterLuid(bufDev);
-                gst_object_unref(bridgeDev);
-                QGC_HW_WARN_ONCE(GstD3D11Log, s_diag.loggedDeviceMismatch,
-                                 "resolve: GstD3D11Memory on foreign device (bridge LUID="
-                                     << bridgeLuid << "buffer LUID=" << bufLuid
-                                     << "); bridge missed NEED_CONTEXT race — rejecting frame");
-                return;
-            }
-            if (bridgeDev)
-                gst_object_unref(bridgeDev);
-        }
-        ID3D11Texture2D* tex =
-            reinterpret_cast<ID3D11Texture2D*>(gst_d3d11_memory_get_resource_handle(GST_D3D11_MEMORY_CAST(mem)));
-        if (!tex) {
-            QGC_HW_WARN_ONCE(GstD3D11Log, s_diag.loggedNullResource,
-                             "resolve: gst_d3d11_memory_get_resource_handle returned null for plane" << i);
-            return;
-        }
-        // QRhi::createFrom has no subresource selector — copy array slices here on the streaming thread.
-        const guint subIdx = gst_d3d11_memory_get_subresource_index(GST_D3D11_MEMORY_CAST(mem));
-        D3D11_TEXTURE2D_DESC srcDesc = {};
-        tex->GetDesc(&srcDesc);
-        if (subIdx > 0 || srcDesc.ArraySize > 1) {
-            ID3D11Texture2D* stagingTex = copySliceToStaging(tex, subIdx, i, srcDesc, GST_D3D11_MEMORY_CAST(mem));
-            if (!stagingTex) {
-                return;
-            }
-            copyDevice = GST_D3D11_MEMORY_CAST(mem)->device;
-            guard.handles[i] = stagingTex;
-        } else {
-            tex->AddRef();
-            guard.handles[i] = tex;
-        }
-        guard.owned = i + 1;
-    }
-
-    // Single flush for every staged slice instead of one per plane: QRhi must see the copies in the immediate queue.
-    if (copyDevice) {
-        ID3D11DeviceContext* d3dCtx = gst_d3d11_device_get_device_context_handle(copyDevice);
-        gst_d3d11_device_lock(copyDevice);
-        d3dCtx->Flush();
-        gst_d3d11_device_unlock(copyDevice);
+    D3D11PlaneResolver resolver;
+    const int resolvedCount = GstD3DVideoBufferCommon::resolvePlanes(buffer, resolver, s_diag, guard);
+    if (resolvedCount == 0) {
+        return;
     }
 
     _textures = guard.handles;
-    _resolvedCount = memCount;
+    _resolvedCount = resolvedCount;
     _resolved = true;
     guard.commit();
 }
