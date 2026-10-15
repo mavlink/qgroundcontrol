@@ -11,8 +11,8 @@
 
 class QRhi;
 
-/// \brief Zero-copy QVideoFrame backing for GStreamer DMABuf samples; imports per-plane fds into EGLImages on demand in
-/// mapTextures() (render thread, current GL context).
+/// \brief Zero-copy QVideoFrame backing for GStreamer DMABuf samples; mapTextures() (render thread) imports the dma-buf
+/// fds as EGLImages under a GL QRhi or as a VkImage under a Vulkan QRhi.
 class GstDmaBufVideoBuffer final : public GstHwVideoBuffer
 {
 public:
@@ -30,7 +30,7 @@ public:
 
 #ifdef QGC_GST_BUILD_TESTING
     static bool singleFdImportEnabledForTest() noexcept;
-    static bool directGlImportAllowedForTest(bool hasModifiersExt, guint64 drmModifier) noexcept;
+    static bool directGlImportAllowedForTest(guint64 drmModifier) noexcept;
     static bool texStorageImportAllowedForTest(bool contextIsOpenGles, bool hasTexStorageExt,
                                                guint64 drmModifier) noexcept;
     /// Feeds an eglCreateImage EGL_BAD_MATCH into the import latches, as the single-fd or per-plane import would.

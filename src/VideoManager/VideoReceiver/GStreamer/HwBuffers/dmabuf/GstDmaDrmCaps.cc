@@ -78,13 +78,16 @@ std::string buildSupportedDmaDrmCaps(const char* gstFormatList)
     if (allowed.isEmpty())
         return std::string();
 
-    // Built on the GstVideo worker thread with no current GL context, so the share-context display is
-    // EGL_NO_DISPLAY; fall back to the default display (modifiers are GPU-global). Never eglTerminate'd.
+    // Prefer the display of Qt's EGL share context: Qt initialized it and owns its lifetime. Without one (GLX, or no
+    // share context yet) this worker thread has no current display either, so initialize the default display
+    // ourselves; modifiers are GPU-global. That one is never eglTerminate'd.
     EGLDisplay dpy = GstEglHelpers::resolveEglDisplay(QOpenGLContext::globalShareContext());
-    if (dpy == EGL_NO_DISPLAY)
+    if (dpy == EGL_NO_DISPLAY) {
         dpy = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-    if (dpy != EGL_NO_DISPLAY)
-        eglInitialize(dpy, nullptr, nullptr);
+        if (dpy != EGL_NO_DISPLAY && eglInitialize(dpy, nullptr, nullptr) != EGL_TRUE) {
+            dpy = EGL_NO_DISPLAY;
+        }
+    }
     if (dpy == EGL_NO_DISPLAY || !GstEglHelpers::displaySupportsExtension(dpy, kModifiersExt)) {
         qCDebug(GstDmaDrmCapsLog) << "DMA_DRM modifier query unavailable (no EGL display or "
                                      "EGL_EXT_image_dma_buf_import_modifiers); offering no DMA_DRM caps";

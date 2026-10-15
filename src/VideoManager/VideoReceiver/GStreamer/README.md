@@ -87,6 +87,10 @@ importer fails with `EGL_BAD_MATCH`. It disables DMABuf zero-copy for the
 session only when per-plane import fails the same way, or when a tiled buffer
 (which has no per-plane fallback) does.
 
+`QGC_GST_DMABUF_CACHE=1` keeps each pooled buffer's EGLImages across frames
+instead of importing them every frame. It is off by default because no test or
+CI host exercises the direct DMABuf importer.
+
 ### macOS / Windows / iOS
 
 GStreamer SDKs are auto-downloaded during CMake configure. To use a local installation instead, set `GStreamer_ROOT_DIR`.

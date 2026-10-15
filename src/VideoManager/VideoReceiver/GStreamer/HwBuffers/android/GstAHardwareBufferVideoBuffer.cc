@@ -144,8 +144,8 @@ public:
 
     HwVideoBufferPath sourcePath() const override { return HwVideoBufferPath::AHardwareBuffer; }
 
-    // Reuse eligibility: same rhi+size+format and identical GL texture name (AhbCache returns the same name on AHB
-    // recycle).
+    // Reuse eligibility: same rhi+size+format and identical GL texture name (the import cache returns the same name on
+    // AHB recycle).
     bool matches(QRhi* rhi, QSize size, QVideoFrameFormat::PixelFormat pixelFormat, GLuint name) const noexcept
     {
         return _rhi == rhi && _size == size && _pixelFormat == pixelFormat && _name == name && _name != 0 &&

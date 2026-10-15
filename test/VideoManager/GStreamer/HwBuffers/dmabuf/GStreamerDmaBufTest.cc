@@ -331,12 +331,9 @@ void GStreamerTest::_testDmaBufRejectsNonLinearDirectImport()
     constexpr guint64 kLinearModifier = 0;
     constexpr guint64 kIntelTileYModifier = 0x0100000000000009ULL;
 
-    QVERIFY(GstDmaBufVideoBuffer::directGlImportAllowedForTest(false, kLinearModifier));
-    QVERIFY(GstDmaBufVideoBuffer::directGlImportAllowedForTest(true, kLinearModifier));
-    QVERIFY2(!GstDmaBufVideoBuffer::directGlImportAllowedForTest(false, kIntelTileYModifier),
-             "Non-LINEAR DMABuf cannot be imported without EGL_EXT_image_dma_buf_import_modifiers");
-    QVERIFY2(!GstDmaBufVideoBuffer::directGlImportAllowedForTest(true, kIntelTileYModifier),
-             "Direct QGC DMABuf must reject tiled VA modifiers even when EGL advertises modifier support; binding "
+    QVERIFY(GstDmaBufVideoBuffer::directGlImportAllowedForTest(kLinearModifier));
+    QVERIFY2(!GstDmaBufVideoBuffer::directGlImportAllowedForTest(kIntelTileYModifier),
+             "Direct QGC DMABuf must reject tiled VA modifiers whether or not EGL advertises modifier support; binding "
              "the resulting EGLImage can segfault in Mesa/Gallium");
 #else
     QSKIP("DMABuf unavailable in this build");

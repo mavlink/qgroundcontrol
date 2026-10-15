@@ -71,7 +71,8 @@ using GstHw::kMaxPlanes;
 
 GstHw::MapDiagnostics s_diag;
 
-// EGL_BAD_MATCH from eglCreateImage = broken EGL/VA-API combo (QTBUG-112312); short-circuits mapTextures on first hit.
+// EGL_BAD_MATCH from eglCreateImage = broken EGL/VA-API combo (QTBUG-112312); set once no import layout is left (see
+// handleEglBadMatch), then short-circuits mapTextures and validatePlaneHandles.
 std::atomic<bool> s_permanentlyDisabled{false};
 // A LINEAR single-fd BAD_MATCH only rules out the single-EGLImage import; later frames go straight to per-plane.
 std::atomic<bool> s_singleFdBroken{false};
@@ -118,9 +119,9 @@ constexpr const char* kModifiersExt = "EGL_EXT_image_dma_buf_import_modifiers";
 
 constexpr const char* kNativeFenceExt = "EGL_ANDROID_native_fence_sync";
 
-// EGLImage cache (DEFAULT OFF, QGC_GST_DMABUF_CACHE=1): fd/GstMemory ABA means a recycled pool buffer can serve a
-// stale image, so we key on fd plus the full EGL layout and evict from the GstMemory's finalize before the fd is
-// reused.
+// EGLImage cache (QGC_GST_DMABUF_CACHE=1). Keyed on fd plus the full EGL layout and evicted when the GstMemory
+// finalizes, so a reused fd number never hits a dead buffer's image. Off by default: nothing exercises it at runtime
+// (the glupload bin bypasses this importer and CI has no DMABuf producer with a GL QRhi).
 bool imageCacheEnabled() noexcept
 {
     return HwBuffers::hwBufferEnvConfig().dmaBufCache;
@@ -131,9 +132,9 @@ bool texStorageImportAllowed(bool contextIsOpenGles, bool hasTexStorageExt, guin
     return drmModifier == 0 && !contextIsOpenGles && hasTexStorageExt;
 }
 
-bool directGlImportAllowed(bool hasModifiersExt, guint64 drmModifier) noexcept
+// LINEAR only, even with EGL_EXT_image_dma_buf_import_modifiers: binding a tiled VA EGLImage can segfault Mesa/Gallium.
+bool directGlImportAllowed(guint64 drmModifier) noexcept
 {
-    Q_UNUSED(hasModifiersExt);
     return drmModifier == 0;
 }
 
@@ -779,9 +780,9 @@ bool GstDmaBufVideoBuffer::texStorageImportAllowedForTest(bool contextIsOpenGles
     return texStorageImportAllowed(contextIsOpenGles, hasTexStorageExt, drmModifier);
 }
 
-bool GstDmaBufVideoBuffer::directGlImportAllowedForTest(bool hasModifiersExt, guint64 drmModifier) noexcept
+bool GstDmaBufVideoBuffer::directGlImportAllowedForTest(guint64 drmModifier) noexcept
 {
-    return directGlImportAllowed(hasModifiersExt, drmModifier);
+    return directGlImportAllowed(drmModifier);
 }
 
 void GstDmaBufVideoBuffer::recordEglBadMatchForTest(bool singleFd, guint64 drmModifier) noexcept
@@ -894,7 +895,7 @@ QVideoFrameTexturesUPtr GstDmaBufVideoBuffer::mapTextures(QRhi& rhi, QVideoFrame
         return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
     }
     const bool hasModifiersExt = GstEglHelpers::displaySupportsExtension(eglDpy, kModifiersExt);
-    if (!directGlImportAllowed(hasModifiersExt, drmModifier)) {
+    if (!directGlImportAllowed(drmModifier)) {
         // Reaching here means caps/filtering changed between the validate and render threads or an upstream element
         // pushed a modifier layout we do not advertise. Fall back before either GL import path can bind the EGLImage.
         static std::atomic<bool> warnedModifierRejected{false};
@@ -948,8 +949,8 @@ QVideoFrameTexturesUPtr GstDmaBufVideoBuffer::mapTextures(QRhi& rhi, QVideoFrame
         return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
     }
 
-    // No texture reuse: caching QRhiTextures across frames caused periodic green frames on real RTSP H.264, and the
-    // ~us/frame win isn't worth it.
+    // Fresh texture names per frame: each bundle owns and deletes its own, and reusing them across bundles isn't worth
+    // the ~us/frame.
     std::array<GLuint, kMaxPlanes> names{};
     QOpenGLFunctions functions(glContext);
     functions.glGenTextures(planeCount, names.data());
