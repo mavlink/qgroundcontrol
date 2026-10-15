@@ -172,17 +172,17 @@ QGC supports the standard GStreamer observability env vars. Set them before laun
 
 ### Pipeline graph dumps (`.dot` files)
 
-When `GST_DEBUG_DUMP_DOT_DIR` is set, QGC writes the receiver pipeline graph at key transitions (`pipeline-initial`, `pipeline-started`, `pipeline-with-videosink`, `pipeline-error`, `pipeline-watchdog-timeout`, `pipeline-recording-stopped`, …):
+When `GST_DEBUG_DUMP_DOT_DIR` is set, QGC writes each receiver's pipeline graph there at key transitions as `receiver-<stream>-<tag>.dot`. `<stream>` is the receiver's name (`videoContent`, `thermalVideo`), so the two receivers don't overwrite each other's files, and `<tag>` names the transition (`pipeline-initial`, `pipeline-started`, `pipeline-with-videosink`, `pipeline-error`, `pipeline-watchdog-timeout`, `pipeline-recording-stopped`, …). A transition's next dump overwrites its last one.
 
 ```bash
 export GST_DEBUG_DUMP_DOT_DIR=/tmp/qgc-pipeline-dots
 ./QGroundControl
-dot -Tpng /tmp/qgc-pipeline-dots/0.00.00.*-pipeline-started.dot -o pipeline.png
+dot -Tpng /tmp/qgc-pipeline-dots/receiver-videoContent-pipeline-started.dot -o pipeline.png
 ```
 
-When the env var is **unset**, QGC still writes a rotating snapshot (≤10 files) to `<CacheLocation>/qgc-pipeline-dot/<tag>-<ts>.dot` on `ERROR` and on watchdog timeout, so field-bug-report bundles include the topology automatically. The `GstVideoReceiver::dumpPipelineGraph(tag)` slot (callable from QML) writes a snapshot on demand for use from a debug menu.
+When the env var is **unset**, QGC instead writes a snapshot to `<CacheLocation>/qgc-pipeline-dot/receiver-<stream>-<tag>-<UTC timestamp>.dot` on a pipeline `ERROR` and on a watchdog timeout, keeping the 10 newest, so field-bug-report bundles include the topology automatically. The `GstVideoReceiver::dumpPipelineGraph(tag)` slot (callable from QML) writes the same snapshot on demand for use from a debug menu; characters in `tag` other than letters, digits, `-` and `_` become `_`.
 
-Automatic CacheLocation snapshots include topology, caps, media types, and states while omitting element properties that can contain stream credentials. Native dumps explicitly enabled with `GST_DEBUG_DUMP_DOT_DIR` retain GStreamer's full `SHOW_ALL` detail for local debugging and can include credential-bearing source properties; handle those files as sensitive data.
+Every dump shows topology, caps, media types and states, but leaves out element properties, which can hold stream credentials (such as `rtspsrc`'s `user-id` and `user-pw`).
 
 ### Latency tracer
 

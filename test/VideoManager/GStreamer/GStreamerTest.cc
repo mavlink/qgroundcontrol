@@ -513,26 +513,22 @@ void GStreamerTest::_testEnvironmentSetup()
 
 void GStreamerTest::_testWritePipelineDotReturnsEmptyOnWriteFailure()
 {
-    if (QStandardPaths::writableLocation(QStandardPaths::CacheLocation).isEmpty()) {
-        QSKIP("No writable cache location available");
-    }
-
-    const bool hadDumpDir = qEnvironmentVariableIsSet("GST_DEBUG_DUMP_DOT_DIR");
-    const QByteArray oldDumpDir = qgetenv("GST_DEBUG_DUMP_DOT_DIR");
-    qunsetenv("GST_DEBUG_DUMP_DOT_DIR");
-    const auto restoreDumpDir = qScopeGuard([&] {
-        if (hadDumpDir) {
-            qputenv("GST_DEBUG_DUMP_DOT_DIR", oldDumpDir);
-        } else {
-            qunsetenv("GST_DEBUG_DUMP_DOT_DIR");
-        }
-    });
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    // A regular file where the dump directory should go, so the directory can't be created.
+    QFile blocker(tempDir.filePath(QStringLiteral("blocker")));
+    QVERIFY(blocker.open(QIODevice::WriteOnly));
+    blocker.close();
 
     GstElement* pipeline = gst_pipeline_new("dot-write-failure-test");
     QVERIFY(pipeline);
     const auto cleanup = qScopeGuard([&] { gst_object_unref(pipeline); });
 
-    const QString path = GStreamer::writePipelineDot(pipeline, "missing-dir/pipeline");
+    expectLogMessage("Video.GStreamer.GStreamerHelpers", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^Failed to create")));
+    const QString path =
+        GStreamer::writePipelineDot(pipeline, u"pipeline", blocker.fileName() + QStringLiteral("/dots"));
+    verifyExpectedLogMessage();
     QVERIFY2(path.isEmpty(), qPrintable(QStringLiteral("Expected empty path for failed dot write, got %1").arg(path)));
 }
 

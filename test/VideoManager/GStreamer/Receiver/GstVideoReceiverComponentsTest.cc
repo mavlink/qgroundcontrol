@@ -4,9 +4,14 @@
 
 #include <gst/gst.h>
 
+#include <QtCore/QDir>
+#include <QtCore/QFileInfo>
 #include <QtCore/QScopeGuard>
+#include <QtCore/QTemporaryDir>
 
 #include "GStreamer.h"
+#include "GStreamerHelpers.h"
+#include "PipelineDotDumper.h"
 #include "RecordingFinalizer.h"
 #include "StreamWatchdog.h"
 
@@ -196,6 +201,64 @@ void GstVideoReceiverComponentsTest::_testFinalizerKeepsFirstOutcome()
     QCOMPARE(finalizer.outcome(), RecordingFinalizer::Outcome::Pending);
 }
 
+void GstVideoReceiverComponentsTest::_testPipelineDotStaysInDirectory_data()
+{
+    QTest::addColumn<QString>("tag");
+    QTest::addColumn<QString>("fileStem");
+
+    QTest::newRow("plain") << QStringLiteral("pipeline-error") << QStringLiteral("pipeline-error");
+    QTest::newRow("parent traversal") << QStringLiteral("../../escaped") << QStringLiteral("______escaped");
+    QTest::newRow("path separators") << QStringLiteral("a/b\\c") << QStringLiteral("a_b_c");
+    QTest::newRow("non-ASCII letters") << QStringLiteral("d\u00e9faut") << QStringLiteral("d\u00e9faut");
+    QTest::newRow("empty") << QString() << QStringLiteral("graph");
+    QTest::newRow("too long") << QString(100, u'a') << QString(40, u'a');
+}
+
+void GstVideoReceiverComponentsTest::_testPipelineDotStaysInDirectory()
+{
+    QFETCH(QString, tag);
+    QFETCH(QString, fileStem);
+
+    const QString gstError = initGStreamer();
+    if (!gstError.isEmpty()) {
+        QSKIP(qPrintable(QStringLiteral("GStreamer unavailable: %1").arg(gstError)));
+    }
+
+    QTemporaryDir parent;
+    QVERIFY(parent.isValid());
+    const QString directory = parent.filePath(QStringLiteral("a/b/dots"));
+    GstElement* pipeline = GST_ELEMENT(gst_object_ref_sink(gst_pipeline_new("receiver")));
+    const auto cleanup = qScopeGuard([pipeline] { gst_object_unref(pipeline); });
+
+    const QString path = GStreamer::writePipelineDot(pipeline, tag, directory);
+    QVERIFY(!path.isEmpty());
+    const QFileInfo file(path);
+    QCOMPARE(file.absolutePath(), QDir(directory).absolutePath());
+    QVERIFY2(file.fileName().startsWith(fileStem + u'-'), qPrintable(file.fileName()));
+    QVERIFY(file.exists());
+}
+
+void GstVideoReceiverComponentsTest::_testPipelineNamedAfterReceiver_data()
+{
+    QTest::addColumn<QString>("receiverName");
+    QTest::addColumn<QByteArray>("pipelineName");
+
+    QTest::newRow("main stream") << QStringLiteral("videoContent") << QByteArray("receiver-videoContent");
+    QTest::newRow("thermal stream") << QStringLiteral("thermalVideo") << QByteArray("receiver-thermalVideo");
+    QTest::newRow("unnamed") << QString() << QByteArray("receiver");
+    QTest::newRow("unsafe name") << QStringLiteral("../x") << QByteArray("receiver-___x");
+}
+
+void GstVideoReceiverComponentsTest::_testPipelineNamedAfterReceiver()
+{
+    QFETCH(QString, receiverName);
+    QFETCH(QByteArray, pipelineName);
+
+    PipelineDotDumper dumper;
+    dumper.setReceiverName(receiverName);
+    QCOMPARE(dumper.pipelineName(), pipelineName);
+}
+
 #else
 
 void GstVideoReceiverComponentsTest::_testReconnectBackoffSequence()
@@ -228,6 +291,20 @@ void GstVideoReceiverComponentsTest::_testFinalizerSettlesOnlyFromArmedRecording
 }
 
 void GstVideoReceiverComponentsTest::_testFinalizerKeepsFirstOutcome()
+{
+    QSKIP("GStreamer not enabled");
+}
+
+void GstVideoReceiverComponentsTest::_testPipelineDotStaysInDirectory_data() {}
+
+void GstVideoReceiverComponentsTest::_testPipelineDotStaysInDirectory()
+{
+    QSKIP("GStreamer not enabled");
+}
+
+void GstVideoReceiverComponentsTest::_testPipelineNamedAfterReceiver_data() {}
+
+void GstVideoReceiverComponentsTest::_testPipelineNamedAfterReceiver()
 {
     QSKIP("GStreamer not enabled");
 }

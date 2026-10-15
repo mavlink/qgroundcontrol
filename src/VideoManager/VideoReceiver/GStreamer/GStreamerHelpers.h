@@ -9,15 +9,19 @@
 #include "GStreamer.h"  // VideoDecoderOptions
 
 namespace GStreamer {
-/// Automatic field-report graphs omit element properties because source properties can contain credentials.
+/// Every pipeline graph QGC writes omits element properties, because source properties can contain credentials.
 inline constexpr GstDebugGraphDetails kDiagnosticDotGraphDetails = static_cast<GstDebugGraphDetails>(
     GST_DEBUG_GRAPH_SHOW_MEDIA_TYPE | GST_DEBUG_GRAPH_SHOW_CAPS_DETAILS | GST_DEBUG_GRAPH_SHOW_STATES);
 
 bool isValidRtspUri(const gchar* uri_str);
 
-/// Dump @p pipeline's graph as a rotating .dot under CacheLocation/qgc-pipeline-dot/ for field reports.
-/// Returns empty (no-op) when GST_DEBUG_DUMP_DOT_DIR is set or on I/O failure.
-QString writePipelineDot(GstElement* pipeline, const char* tag);
+/// Returns @p tag as a file-name part: letters, digits, '-' and '_' only (anything else becomes '_'), at most 40
+/// characters, never empty. A dump tag can then neither leave its directory nor make the file name too long.
+QString dotFileTag(QStringView tag);
+
+/// Writes @p pipeline's graph (kDiagnosticDotGraphDetails) into @p directory as "<dotFileTag(tag)>-<UTC time>.dot",
+/// keeping at most 10 .dot files there. Returns the file's path, or empty on failure.
+QString writePipelineDot(GstElement* pipeline, QStringView tag, const QString& directory);
 
 bool isHardwareDecoderFactory(GstElementFactory* factory);
 

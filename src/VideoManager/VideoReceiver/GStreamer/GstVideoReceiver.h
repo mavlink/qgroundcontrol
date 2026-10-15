@@ -60,9 +60,9 @@ public slots:
     void stopRecording() override;
     void takeScreenshot(const QString &imageFile) override;
 
-    /// Dump the current pipeline graph to GST_DEBUG_DUMP_DOT_DIR (if set) plus
-    /// CacheLocation/qgc-pipeline-dot for field-bug-report bundles. No-op when
-    /// the pipeline isn't running. Callable from QML for a debug menu.
+    /// Dumps the running pipeline's graph, without element properties, to GST_DEBUG_DUMP_DOT_DIR when that is set,
+    /// else to CacheLocation/qgc-pipeline-dot for bug reports. @p tag becomes part of the file name; anything but
+    /// letters, digits, '-' and '_' is replaced. Callable from QML for a debug menu.
     Q_INVOKABLE void dumpPipelineGraph(const QString &tag = QStringLiteral("manual"));
 
 signals:
@@ -79,6 +79,7 @@ private:
     /// streaming threads never read members the GUI thread writes.
     struct StartConfig
     {
+        QString name;
         QString uri;
         QString redactedUri;
         uint32_t timeoutSec = 0;

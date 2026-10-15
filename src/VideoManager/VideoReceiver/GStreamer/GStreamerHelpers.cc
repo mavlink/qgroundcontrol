@@ -6,7 +6,6 @@
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 #include <QtCore/QLatin1String>
-#include <QtCore/QStandardPaths>
 #include <QtCore/QString>
 #include <QtCore/QStringList>
 #include <QtQuick/QQuickWindow>
@@ -56,20 +55,27 @@ bool isValidRtspUri(const gchar* uri_str)
     return hasHost;
 }
 
-QString writePipelineDot(GstElement* pipeline, const char* tag)
+QString dotFileTag(QStringView tag)
+{
+    // Leaves room in a 255-byte file name for the prefix and timestamp around it, even at 4 UTF-8 bytes a character.
+    constexpr qsizetype kMaxTagLength = 40;
+
+    QString safe;
+    for (const QChar c : tag.left(kMaxTagLength)) {
+        safe.append((c.isLetterOrNumber() || (c == u'-') || (c == u'_')) ? c : u'_');
+    }
+    return safe.isEmpty() ? QStringLiteral("graph") : safe;
+}
+
+QString writePipelineDot(GstElement* pipeline, QStringView tag, const QString& directory)
 {
     // kMaxDotFiles: cap retained .dot pipeline graphs; below 5 makes retro-debugging hard.
     constexpr int kMaxDotFiles = 10;
 
-    if (!pipeline)
-        return {};
-    if (!qgetenv("GST_DEBUG_DUMP_DOT_DIR").isEmpty()) {
+    if (!pipeline || directory.isEmpty()) {
         return {};
     }
-    const QString cacheRoot = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
-    if (cacheRoot.isEmpty())
-        return {};
-    QDir dir(cacheRoot + QStringLiteral("/qgc-pipeline-dot"));
+    QDir dir(directory);
     if (!dir.exists() && !dir.mkpath(QStringLiteral("."))) {
         qCWarning(GStreamerHelpersLog) << "Failed to create" << dir.absolutePath();
         return {};
@@ -83,11 +89,12 @@ QString writePipelineDot(GstElement* pipeline, const char* tag)
     }
 
     gchar* data = gst_debug_bin_to_dot_data(GST_BIN(pipeline), kDiagnosticDotGraphDetails);
-    if (!data)
+    if (!data) {
         return {};
-    const QString fileName = QStringLiteral("%1-%2.dot")
-                                 .arg(QString::fromLatin1(tag),
-                                      QDateTime::currentDateTimeUtc().toString(QStringLiteral("yyyyMMdd-HHmmss-zzz")));
+    }
+    const QString fileName =
+        QStringLiteral("%1-%2.dot")
+            .arg(dotFileTag(tag), QDateTime::currentDateTimeUtc().toString(QStringLiteral("yyyyMMdd-HHmmss-zzz")));
     const QString fullPath = dir.absoluteFilePath(fileName);
     const QByteArray dotData = QByteArray::fromRawData(data, static_cast<qsizetype>(qstrlen(data)));
     bool wrote = false;

@@ -112,6 +112,7 @@ QString GstVideoReceiver::_redactedUri() const
 void GstVideoReceiver::start(uint32_t timeout)
 {
     const StartConfig config{
+        .name = _name,
         .uri = _uri,
         .redactedUri = QGCNetworkHelper::redactedUrlForLogging(_uri),
         .timeoutSec = timeout,
@@ -149,7 +150,8 @@ void GstVideoReceiver::_startPipeline(const StartConfig& config)
     bool running = false;
 
     do {
-        GstElement* pipeline = gst_pipeline_new("receiver");
+        _dotDumper.setReceiverName(_config.name);
+        GstElement* pipeline = gst_pipeline_new(_dotDumper.pipelineName().constData());
         if (!pipeline) {
             qCCritical(GstVideoReceiverLog) << "gst_pipeline_new() failed";
             break;
@@ -390,7 +392,7 @@ void GstVideoReceiver::_onWatchdogTick()
     qCDebug(GstVideoReceiverLog) << (sourceStalled ? "Stream timeout, no frames for"
                                                    : "Video decoder timeout, no frames for")
                                  << result.silentMs << "ms" << _redactedUri();
-    _dotDumper.dump(_pipeline, "pipeline-watchdog-timeout");
+    _dotDumper.snapshot(_pipeline, QStringLiteral("pipeline-watchdog-timeout"));
     emit timeout();
     _onStreamFailure(sourceStalled ? "source watchdog" : "decoder watchdog");
 }

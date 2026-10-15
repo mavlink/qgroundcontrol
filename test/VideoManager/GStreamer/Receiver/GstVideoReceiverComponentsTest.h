@@ -16,4 +16,8 @@ private slots:
     void _testFinalizerSettlesOnlyFromArmedRecording_data();
     void _testFinalizerSettlesOnlyFromArmedRecording();
     void _testFinalizerKeepsFirstOutcome();
+    void _testPipelineDotStaysInDirectory_data();
+    void _testPipelineDotStaysInDirectory();
+    void _testPipelineNamedAfterReceiver_data();
+    void _testPipelineNamedAfterReceiver();
 };
