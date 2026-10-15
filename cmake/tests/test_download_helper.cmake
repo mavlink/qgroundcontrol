@@ -1,11 +1,9 @@
 cmake_minimum_required(VERSION 3.25)
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/../../modules")
-include("${CMAKE_CURRENT_LIST_DIR}/_assert.cmake")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/../modules")
+include("${CMAKE_CURRENT_LIST_DIR}/../GStreamer/tests/_assert.cmake")
 include(Download)
 
-set(_sandbox "${CMAKE_BINARY_DIR}/qgc_download_test")
-file(REMOVE_RECURSE "${_sandbox}")
-file(MAKE_DIRECTORY "${_sandbox}")
+qgc_test_sandbox(_sandbox qgc_download_test)
 
 qgc_parse_expected_hash("SHA256=AbCdEf" _algo _hash)
 qgc_test_assert_streq("algo" "SHA256" "${_algo}")
@@ -96,5 +94,3 @@ qgc_resilient_download(
 )
 qgc_test_assert_streq("ALLOW_FAILURE empty result" "" "${_r3}")
 qgc_test_pass("ALLOW_FAILURE")
-
-file(REMOVE_RECURSE "${_sandbox}")

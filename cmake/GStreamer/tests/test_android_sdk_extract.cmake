@@ -14,8 +14,7 @@ function(_qgc_gst_find_apple_pkg_config out_var)
 
 endfunction()
 
-set(_sandbox "${CMAKE_CURRENT_BINARY_DIR}/android-sdk-extract")
-file(REMOVE_RECURSE "${_sandbox}")
+qgc_test_sandbox(_sandbox android-sdk-extract)
 set(CPM_SOURCE_CACHE "${_sandbox}/cache")
 set(QGC_GST_REQUESTED_VERSION 9.9.2)
 set(_cache_dir "${CPM_SOURCE_CACHE}/gstreamer-android-${QGC_GST_REQUESTED_VERSION}")
@@ -60,5 +59,3 @@ file(
 list(SORT _published)
 qgc_test_assert_streq("published trees" "arm64/.complete;x86/.complete;x86_64/.complete" "${_published}")
 qgc_test_pass("Android SDK extraction per ABI")
-
-file(REMOVE_RECURSE "${_sandbox}")

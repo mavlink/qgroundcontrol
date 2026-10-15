@@ -47,11 +47,11 @@ pre-commit run cmake-lint --files path/to/file.cmake
 
 ## Tests
 
-After configuring a build with tests enabled, run the shared-module and finder tests with:
+After configuring a build with tests enabled, run the shared-module (`tests/`) and GStreamer (`GStreamer/tests/`,
+also labelled `GStreamer`) script and fixture tests with:
 
 ```bash
 ctest --test-dir build --output-on-failure -L CMake
-ctest --test-dir build --output-on-failure -L FindModule
 ```
 
 Use `just configure`, `just build`, and the relevant CTest labels for the final validation described

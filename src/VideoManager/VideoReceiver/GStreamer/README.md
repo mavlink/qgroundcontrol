@@ -78,7 +78,7 @@ Per-platform import of decoded GPU frames without a copy, all sharing `GstHwFram
   - `SdkState.cmake`: the resolved-SDK cache entries and the SDK fingerprint that drops cached probe results when the SDK changes.
   - `Platform.cmake`, `Components.cmake`, `Layout.cmake`, `Link.cmake` and `Probe.cmake`: the target platform, the component registry, the `GStreamer::Layout` target describing the SDK's on-disk layout, library resolution for the targets and the header probes.
   - `Helpers.cmake`: include aggregator for the modules above.
-  - `tests/`: script tests and a fake-SDK configure fixture, run with `ctest -L FindModule`.
+  - `tests/`: script tests and a fake-SDK configure fixture, run with `ctest -L GStreamer` (or `-L CMake`, with the shared-module tests).
 
 ## Runtime Environment Setup
 

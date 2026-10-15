@@ -3,9 +3,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/..")
 include("${CMAKE_CURRENT_LIST_DIR}/_assert.cmake")
 include(Layout)
 
-set(_sandbox "${CMAKE_BINARY_DIR}/qgc_layout_test_sandbox")
-file(REMOVE_RECURSE "${_sandbox}")
-file(MAKE_DIRECTORY "${_sandbox}")
+qgc_test_sandbox(_sandbox qgc_layout_test_sandbox)
 
 set(_flat "${_sandbox}/flat-sdk")
 file(MAKE_DIRECTORY "${_flat}/lib/gstreamer-1.0")
@@ -87,5 +85,3 @@ qgc_test_pass("layout_get script-mode safety")
 
 gstreamer_layout_set(FOO bar)
 qgc_test_pass("layout_set script-mode safety")
-
-file(REMOVE_RECURSE "${_sandbox}")

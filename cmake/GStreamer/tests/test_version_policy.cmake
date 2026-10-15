@@ -1,47 +1,6 @@
 cmake_minimum_required(VERSION 3.25)
 include("${CMAKE_CURRENT_LIST_DIR}/_assert.cmake")
 
-file(READ "${CMAKE_CURRENT_LIST_DIR}/../../../.github/build-config.json" _build_config)
-
-# Sets <out_var> to gstreamer.version.<key> from build-config.json.
-function(_qgc_json_version key out_var)
-    string(
-        JSON
-        _version
-        ERROR_VARIABLE
-        _err
-        GET
-        "${_build_config}"
-        "gstreamer"
-        "version"
-        "${key}"
-    )
-    if(_err OR NOT _version)
-        message(FATAL_ERROR "ASSERT [version.${key}]: missing gstreamer.version.${key}")
-    endif()
-    set(${out_var}
-        "${_version}"
-        PARENT_SCOPE
-    )
-endfunction()
-
-_qgc_json_version(default _version_default)
-foreach(_platform IN ITEMS android ios macos windows)
-    _qgc_json_version(${_platform} _version_platform)
-    if(_version_platform VERSION_LESS "1.28.0")
-        message(FATAL_ERROR "ASSERT [version.${_platform}]: expected >= 1.28.0 actual='${_version_platform}'")
-    endif()
-endforeach()
-
-_qgc_json_version(minimum _version_minimum)
-if(NOT _version_minimum VERSION_LESS "1.28.0")
-    message(
-        FATAL_ERROR
-            "ASSERT [version.minimum]: Linux/system floor should remain older than 1.28 actual='${_version_minimum}'"
-    )
-endif()
-qgc_test_pass("build config platform version floors")
-
 file(READ "${CMAKE_CURRENT_LIST_DIR}/../../../src/VideoManager/VideoReceiver/GStreamer/GstSourceFactory.cc"
      _source_factory
 )

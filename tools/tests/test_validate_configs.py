@@ -56,6 +56,24 @@ def test_inconsistent_versions_are_rejected(mutation):
     assert validate_build_config(config, schema)
 
 
+@pytest.mark.parametrize(
+    "key,version,error",
+    [
+        ("ios", "1.26.0", "gstreamer.version.ios must be at least 1.28.0"),
+        (
+            "minimum",
+            "1.28.0",
+            "gstreamer.version.minimum must stay below 1.28.0 for system GStreamer",
+        ),
+    ],
+)
+def test_gstreamer_version_floors(key, version, error):
+    config, schema = configuration()
+    config = copy.deepcopy(config)
+    config["gstreamer"]["version"][key] = version
+    assert error in validate_build_config(config, schema)
+
+
 def test_archive_preserves_build_and_license_inputs(tmp_path: Path):
     paths = [
         ".github/build-config.json",

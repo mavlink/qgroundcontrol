@@ -2,8 +2,7 @@ cmake_minimum_required(VERSION 3.25)
 include("${CMAKE_CURRENT_LIST_DIR}/_assert.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/../platform/Windows.cmake")
 
-set(_sandbox "${CMAKE_CURRENT_BINARY_DIR}/windows-sdk-root")
-file(REMOVE_RECURSE "${_sandbox}")
+qgc_test_sandbox(_sandbox windows-sdk-root)
 
 # Creates an empty <dir>/bin/pkg-config.exe under the sandbox.
 function(_qgc_test_touch_pkg_config dir)
@@ -59,8 +58,6 @@ foreach(_case IN LISTS _installed_cases)
     qgc_test_assert_streq("installed SDK for ${_case}" "${_expected}" "${_root}")
 endforeach()
 qgc_test_pass("Windows installed SDK lookup by architecture")
-
-file(REMOVE_RECURSE "${_sandbox}")
 
 # compiler architecture id|generator platform|system processor|expected SDK architecture. The first
 # case is Ninja from a vcvarsamd64_arm64 prompt, where only the compiler knows the target is ARM64.

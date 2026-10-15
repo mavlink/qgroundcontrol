@@ -2,8 +2,7 @@ cmake_minimum_required(VERSION 3.25)
 include("${CMAKE_CURRENT_LIST_DIR}/_assert.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/../SdkState.cmake")
 
-set(_sandbox "${CMAKE_CURRENT_BINARY_DIR}/sdk-state")
-file(REMOVE_RECURSE "${_sandbox}")
+qgc_test_sandbox(_sandbox sdk-state)
 file(MAKE_DIRECTORY "${_sandbox}/lib/pkgconfig" "${_sandbox}/auto-root")
 
 file(WRITE "${_sandbox}/lib/pkgconfig/gstreamer-1.0.pc" "prefix=/sdk\nVersion: 1.22.12\n")
@@ -128,5 +127,4 @@ _qgc_test_assert_cache("unchanged fingerprint" "cached")
 _qgc_gst_refresh_sdk_cache("sdk-a|1.26.0")
 _qgc_test_assert_cache("changed fingerprint" "<unset>")
 
-file(REMOVE_RECURSE "${_sandbox}")
 qgc_test_pass("SDK fingerprint invalidates cached probe results")

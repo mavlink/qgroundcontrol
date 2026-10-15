@@ -4,8 +4,7 @@ cmake_minimum_required(VERSION 3.25)
 include("${CMAKE_CURRENT_LIST_DIR}/_assert.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/../StaticInit.cmake")
 
-set(_sandbox "${CMAKE_CURRENT_BINARY_DIR}/static-init")
-file(REMOVE_RECURSE "${_sandbox}")
+qgc_test_sandbox(_sandbox static-init)
 
 # Sets <out_var> to the arguments of every "<indent><macro>(<arg>);" line of <source>, in order.
 function(_qgc_test_macro_args source indent macro out_var)
@@ -60,4 +59,3 @@ if(_qgc_pkg_config AND _qgc_cc)
         qgc_test_pass("static init compiles against the host GStreamer headers")
     endif()
 endif()
-file(REMOVE_RECURSE "${_sandbox}")
