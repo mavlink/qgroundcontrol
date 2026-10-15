@@ -265,6 +265,9 @@ SurveyComplexItem::SurveyComplexItem(PlanMasterController* masterController, boo
     connect(&_surveyAreaPolygon,        &QGCMapPolygon::isValidChanged,             this, &SurveyComplexItem::_updateWizardMode);
     connect(&_surveyAreaPolygon,        &QGCMapPolygon::traceModeChanged,           this, &SurveyComplexItem::_updateWizardMode);
 
+    connect(this, &SurveyComplexItem::lastSequenceNumberChanged, this, &SurveyComplexItem::waypointMarkersChanged);
+    connect(this, &SurveyComplexItem::visualTransectPointsChanged, this, &SurveyComplexItem::waypointMarkersChanged);
+
     if (!flyView) {
         GeoFenceController* fences = masterController->geoFenceController();
         connect(fences->polygons(), &QmlObjectListModel::countChanged, this,
@@ -279,6 +282,22 @@ SurveyComplexItem::SurveyComplexItem(PlanMasterController* masterController, boo
         _surveyAreaPolygon.setDirty(false);
     }
     setDirty(false);
+}
+
+QVariantList SurveyComplexItem::waypointMarkers()
+{
+    QObject missionItemParent;
+    QList<MissionItem*> items;
+    appendMissionItems(items, &missionItemParent);
+
+    QVariantList markers;
+    for (const MissionItem* item : items) {
+        if (item->command() == MAV_CMD_NAV_WAYPOINT || item->command() == MAV_CMD_CONDITION_GATE) {
+            markers.append(QVariantMap{{QStringLiteral("coordinate"), QVariant::fromValue(item->coordinate())},
+                                       {QStringLiteral("sequenceNumber"), item->sequenceNumber()}});
+        }
+    }
+    return markers;
 }
 
 void SurveyComplexItem::save(QJsonArray&  planItems)

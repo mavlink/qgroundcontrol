@@ -20,12 +20,15 @@ public:
     Q_PROPERTY(Fact*            splitConcavePolygons   READ splitConcavePolygons   CONSTANT)
     Q_PROPERTY(QGeoCoordinate   centerCoordinate       READ centerCoordinate       WRITE setCenterCoordinate)
     Q_PROPERTY(QString obstacleError READ obstacleError NOTIFY obstacleErrorChanged)
+    Q_PROPERTY(QVariantList waypointMarkers READ waypointMarkers NOTIFY waypointMarkersChanged)
 
     Fact* gridAngle             (void) { return &_gridAngleFact; }
     Fact* flyAlternateTransects (void) { return &_flyAlternateTransectsFact; }
     Fact* splitConcavePolygons  (void) { return &_splitConcavePolygonsFact; }
 
     QString obstacleError() const { return _obstacleError; }
+
+    QVariantList waypointMarkers();
 
     Q_INVOKABLE void rotateEntryPoint(void);
 
@@ -77,6 +80,7 @@ public:
 signals:
     void refly90DegreesChanged(bool refly90Degrees);
     void obstacleErrorChanged();
+    void waypointMarkersChanged();
 
 protected:
     bool _useConditionGate() const final { return !_obstacleAvoidanceActive; }

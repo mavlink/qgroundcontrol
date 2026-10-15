@@ -18,6 +18,8 @@ Item {
     property bool   hideMapPolygon: false
     property color  transectColor: QGroundControl.globalPalette.mapWidgetBorderLight
     property real   transectLineWidth: ScreenTools.defaultFontPixelWidth / 4
+    property bool   showWaypointNumbers: false
+    property var    waypointMarkers: []
 
     property var    _missionItem:               object
     property var    _mapPolygon:                object.surveyAreaPolygon
@@ -42,6 +44,8 @@ Item {
         var toAdd = [ fullTransectsComponent, entryTransectComponent, exitTransectComponent, entryPointComponent, exitPointComponent,
                      entryArrow1Component, entryArrow2Component, exitArrow1Component, exitArrow2Component ]
         objMgr.createObjects(toAdd, map, true /* parentObjectIsMap */)
+        const waypointView = objMgr.createObject(waypointNumbersComponent, map)
+        map.addMapItemView(waypointView)
     }
 
     function _destroyVisualElements() {
@@ -58,6 +62,37 @@ Item {
 
     QGCDynamicObjectManager {
         id: objMgr
+    }
+
+    Component {
+        id: waypointNumbersComponent
+
+        MapItemView {
+            z: QGroundControl.zOrderMapItems
+            model: _root.showWaypointNumbers && _root._currentItem && !_root._vertexDrag ? _root.waypointMarkers : []
+
+            delegate: MapQuickItem {
+                id: waypointItem
+
+                required property var modelData
+
+                coordinate: modelData.coordinate
+                anchorPoint.x: waypointLabel.anchorPointX
+                anchorPoint.y: waypointLabel.anchorPointY
+                z: QGroundControl.zOrderMapItems
+                opacity: _root.opacity
+
+                sourceItem: MissionItemIndexLabel {
+                    id: waypointLabel
+
+                    index: waypointItem.modelData.sequenceNumber
+                    label: index === 0 ? index.toString() : ""
+                    small: false
+                    medium: true
+                    onClicked: if (_root.interactive) _root.clicked(_root._missionItem.sequenceNumber)
+                }
+            }
+        }
     }
 
     // Area polygon
@@ -120,7 +155,8 @@ Item {
             anchorPoint.y:  sourceItem.anchorPointY
             z:              QGroundControl.zOrderMapItems
             coordinate:     _missionItem.coordinate
-            visible:        _missionItem.exitCoordinate.isValid && !_vertexDrag
+            visible:        _missionItem.exitCoordinate.isValid && !_vertexDrag &&
+                            (!showWaypointNumbers || !_currentItem)
             opacity:        _root.opacity
 
             sourceItem: MissionItemIndexLabel {
@@ -196,7 +232,8 @@ Item {
             anchorPoint.y:  sourceItem.anchorPointY
             z:              QGroundControl.zOrderMapItems
             coordinate:     _missionItem.exitCoordinate
-            visible:        _missionItem.exitCoordinate.isValid && !_vertexDrag
+            visible:        _missionItem.exitCoordinate.isValid && !_vertexDrag &&
+                            (!showWaypointNumbers || !_currentItem)
             opacity:        _root.opacity
 
             sourceItem: MissionItemIndexLabel {

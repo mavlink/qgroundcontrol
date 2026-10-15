@@ -19,6 +19,27 @@
 #include "SurveyComplexItem.h"
 #include "TransectStyleComplexItem.h"
 
+namespace {
+
+void compareWaypointMarkers(SurveyComplexItem* survey, const QList<MissionItem*>& items)
+{
+    QList<const MissionItem*> waypoints;
+    for (const MissionItem* item : items) {
+        if (item->command() == MAV_CMD_NAV_WAYPOINT || item->command() == MAV_CMD_CONDITION_GATE) {
+            waypoints.append(item);
+        }
+    }
+    const QVariantList markers = survey->waypointMarkers();
+    QCOMPARE(markers.count(), waypoints.count());
+    for (int i = 0; i < markers.count(); ++i) {
+        const QVariantMap marker = markers[i].toMap();
+        QCOMPARE(marker.value(QStringLiteral("sequenceNumber")).toInt(), waypoints[i]->sequenceNumber());
+        QCOMPARE(marker.value(QStringLiteral("coordinate")).value<QGeoCoordinate>(), waypoints[i]->coordinate());
+    }
+}
+
+}  // namespace
+
 SurveyComplexItemTest::SurveyComplexItemTest()
 {
     // We use a 100m by 100m square test polygon
@@ -227,6 +248,7 @@ void SurveyComplexItemTest::_testItemGenerationWorker(bool imagesInTurnaround, b
         int expectedCommand = expectedCommands[i];
         QCOMPARE(actualCommand, expectedCommand);
     }
+    compareWaypointMarkers(_surveyItem, items);
 }
 
 void SurveyComplexItemTest::_testItemGeneration()
@@ -494,8 +516,22 @@ void SurveyComplexItemObstacleTest::_testObstacleAvoidance()
     QCOMPARE(_surveyItem->readyForSaveState(), VisualMissionItem::ReadyForSave);
     QVERIFY(_surveyItem->_transectCount() > originalTransects);
     QList<MissionItem*> items;
+    _surveyItem->setSequenceNumber(7);
     _surveyItem->appendMissionItems(items, this);
-    QCOMPARE(items.count() - 1, _surveyItem->lastSequenceNumber());
+    QCOMPARE(_surveyItem->sequenceNumber() + items.count() - 1, _surveyItem->lastSequenceNumber());
+    compareWaypointMarkers(_surveyItem, items);
+    const QVariantList markers = _surveyItem->waypointMarkers();
+    QSignalSpy markerSpy(_surveyItem, &SurveyComplexItem::waypointMarkersChanged);
+    _surveyItem->setSequenceNumber(18);
+    QCOMPARE(markerSpy.count(), 1);
+    const QVariantList renumberedMarkers = _surveyItem->waypointMarkers();
+    QCOMPARE(renumberedMarkers.count(), markers.count());
+    for (int i = 0; i < markers.count(); ++i) {
+        QCOMPARE(renumberedMarkers[i].toMap().value(QStringLiteral("sequenceNumber")).toInt(),
+                 markers[i].toMap().value(QStringLiteral("sequenceNumber")).toInt() + 11);
+        QCOMPARE(renumberedMarkers[i].toMap().value(QStringLiteral("coordinate")),
+                 markers[i].toMap().value(QStringLiteral("coordinate")));
+    }
     QList<QGeoCoordinate> waypoints;
     int captures = 0;
     double lastTriggerDistance = -1;
@@ -639,6 +675,7 @@ void SurveyComplexItemObstacleTest::_testBlockedSurvey()
     QList<MissionItem*> items;
     _surveyItem->appendMissionItems(items, this);
     QVERIFY(items.isEmpty());
+    QVERIFY(_surveyItem->waypointMarkers().isEmpty());
     fences->deletePolygon(0);
     QCOMPARE(_surveyItem->readyForSaveState(), VisualMissionItem::ReadyForSave);
     QVERIFY(_surveyItem->obstacleError().isEmpty());
@@ -651,6 +688,12 @@ void SurveyComplexItemObstacleTest::_testObstacleLoad()
     QJsonArray savedItems;
     _surveyItem->save(savedItems);
     QString error;
+    SurveyComplexItem loaded(planController(), false, QString());
+    QVERIFY2(loaded.load(savedItems.first().toObject(), 19, error), qPrintable(error));
+    QList<MissionItem*> loadedItems;
+    loaded.appendMissionItems(loadedItems, this);
+    compareWaypointMarkers(&loaded, loadedItems);
+    QCOMPARE(loaded.waypointMarkers().first().toMap().value(QStringLiteral("sequenceNumber")).toInt(), 19);
     GeoFenceController* fences = planController()->geoFenceController();
     auto* polygon = new QGCFencePolygon(false, fences);
     polygon->appendVertices(obstacleVertices(_polyVertices.first(), QRectF(30, -65, 35, 30)));
