@@ -718,9 +718,12 @@ bool importPerPlane(const EglImport& ctx, bool sharedFd)
 
 GstDmaBufVideoBuffer::GstDmaBufVideoBuffer(GstSample* sample, const GstVideoInfo& videoInfo,
                                            const QVideoFrameFormat& format, EGLDisplay eglDisplay)
-    : GstHwVideoBuffer(QVideoFrame::RhiTextureHandle, sample, videoInfo, applyEglfsFormatQuirk(format)),
-      _eglDisplay(eglDisplay)
+    : GstHwVideoBuffer(QVideoFrame::RhiTextureHandle, sample, videoInfo, format)
+    , _eglDisplay(eglDisplay)
 {
+    // Advertised for the EGLImage import only; the base class keeps the memory's format, so map() refuses the CPU
+    // upload Qt would otherwise read as RGBA.
+    _format = applyEglfsFormatQuirk(_format);
 #if GST_CHECK_VERSION(1, 24, 0)
     if (GstCaps* caps = gst_sample_get_caps(sample); caps && gst_video_is_dma_drm_caps(caps)) {
         GstVideoInfoDmaDrm drmInfo = {};

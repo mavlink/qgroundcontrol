@@ -525,6 +525,18 @@ public:
     QVideoFrameTexturesUPtr mapTextures(QRhi&, QVideoFrameTexturesUPtr&) override { return {}; }
 };
 
+/// Advertises @p advertised while its memory holds the format it was built with, as the DMABuf eglfs quirk does.
+class AdvertisingHwVideoBuffer final : public TestableHwVideoBuffer
+{
+public:
+    AdvertisingHwVideoBuffer(GstSample* sample, const GstVideoInfo& info, QVideoFrameFormat memoryFormat,
+                             QVideoFrameFormat::PixelFormat advertised)
+        : TestableHwVideoBuffer(sample, info, std::move(memoryFormat))
+    {
+        _format = QVideoFrameFormat(_format.frameSize(), advertised);
+    }
+};
+
 class TestFrameTextures : public GstHwFrameTexturesBase
 {
 public:
@@ -746,6 +758,50 @@ void GStreamerTest::_testHwVideoBufferCpuMapFallback()
     QCOMPARE(frame.planeCount(), 1);
     QCOMPARE(frame.bytesPerLine(0), GST_VIDEO_INFO_PLANE_STRIDE(&info, 0));
     QCOMPARE(QByteArray(reinterpret_cast<const char*>(frame.bits(0)), frame.mappedBytes(0)), pixels);
+#endif
+}
+
+void GStreamerTest::_testHwVideoBufferCpuMapRefusesForeignLayout_data()
+{
+    QTest::addColumn<int>("memoryFormat");
+    QTest::addColumn<int>("advertisedFormat");
+    QTest::addColumn<bool>("expectMapped");
+
+    // The sample is always YUY2: a 4x2 frame holds 8-byte rows, which Qt would read as 16-byte RGBA rows.
+    QTest::newRow("advertises-its-memory")
+        << int(QVideoFrameFormat::Format_YUYV) << int(QVideoFrameFormat::Format_YUYV) << true;
+    QTest::newRow("eglfs-yuyv-as-rgba") << int(QVideoFrameFormat::Format_YUYV)
+                                        << int(QVideoFrameFormat::Format_RGBA8888) << false;
+    QTest::newRow("external-oes") << int(QVideoFrameFormat::Format_SamplerExternalOES)
+                                  << int(QVideoFrameFormat::Format_SamplerExternalOES) << false;
+}
+
+void GStreamerTest::_testHwVideoBufferCpuMapRefusesForeignLayout()
+{
+#if !defined(QGC_HAS_ANY_GPU_PATH)
+    QSKIP("GstHwVideoBuffer not compiled in this build (no GPU path enabled)");
+#else
+    QFETCH(int, memoryFormat);
+    QFETCH(int, advertisedFormat);
+    QFETCH(bool, expectMapped);
+
+    GstVideoInfo info;
+    gst_video_info_set_format(&info, GST_VIDEO_FORMAT_YUY2, 4, 2);
+    GstBuffer* buffer = gst_buffer_new_allocate(nullptr, GST_VIDEO_INFO_SIZE(&info), nullptr);
+    QVERIFY(buffer);
+    GstCaps* caps = gst_video_info_to_caps(&info);
+    GstSample* sample = gst_sample_new(buffer, caps, nullptr, nullptr);
+    gst_caps_unref(caps);
+    gst_buffer_unref(buffer);
+    QVERIFY(sample);
+    const auto sampleGuard = qScopeGuard([sample] { gst_sample_unref(sample); });
+
+    AdvertisingHwVideoBuffer hw(sample, info,
+                                QVideoFrameFormat(QSize(4, 2), QVideoFrameFormat::PixelFormat(memoryFormat)),
+                                QVideoFrameFormat::PixelFormat(advertisedFormat));
+    const QAbstractVideoBuffer::MapData mapped = hw.map(QVideoFrame::ReadOnly);
+    QCOMPARE(mapped.planeCount > 0, expectMapped);
+    hw.unmap();
 #endif
 }
 

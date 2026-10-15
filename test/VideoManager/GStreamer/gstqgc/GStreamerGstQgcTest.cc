@@ -62,6 +62,11 @@
 #include <memory>
 #include <string_view>
 #include <vector>
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+#include <gst/allocators/gstfdmemory.h>
+#include <sys/mman.h>
+#include <unistd.h>
+#endif
 
 namespace {
 
@@ -177,6 +182,29 @@ public:
     }
 
     GstFlowReturn pushBuffer(GstBuffer* buffer) { return gst_pad_push(_src, buffer); }
+
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+    /// A frame in memfd-backed fd memory: not system memory, and no GPU path imports it.
+    static GstBuffer* makeFdFrame(GstClockTime pts)
+    {
+        const int fd = memfd_create("qgc-sink-harness", MFD_CLOEXEC);
+        if (fd < 0) {
+            return nullptr;
+        }
+        if (ftruncate(fd, kFrameBytes) != 0) {
+            close(fd);
+            return nullptr;
+        }
+        GstAllocator* allocator = gst_fd_allocator_new();
+        GstMemory* memory = gst_fd_allocator_alloc(allocator, fd, kFrameBytes, GST_FD_MEMORY_FLAG_NONE);
+        gst_object_unref(allocator);
+        GstBuffer* buffer = gst_buffer_new();
+        gst_buffer_append_memory(buffer, memory);
+        gst_buffer_memset(buffer, 0, 0x80, kFrameBytes);
+        GST_BUFFER_PTS(buffer) = pts;
+        return buffer;
+    }
+#endif
 
     guint64 delivered() const { return framesDelivered(_sink); }
 
@@ -1954,14 +1982,19 @@ void GStreamerTest::_testQgcQVideoSinkGpuPathSelection_data()
 {
     QTest::addColumn<bool>("gpuZeroCopy");
     QTest::addColumn<QString>("memoryFeature");
+    QTest::addColumn<bool>("fdMemory");
     QTest::addColumn<qint64>("expectedGpuFallbacks");
     QTest::addColumn<quint64>("expectedNoPathVerdicts");
 
-    // Every row pushes three system-memory buffers.
-    QTest::newRow("gpu-zerocopy-off") << false << QStringLiteral("memory:DMABuf") << qint64(0) << quint64(0);
-    QTest::newRow("system-memory-caps") << true << QString() << qint64(0) << quint64(0);
-    // GPU caps: the first frame finds no path for the system allocator; the rest reuse that verdict.
-    QTest::newRow("gpu-caps-system-buffers") << true << QStringLiteral("memory:DMABuf") << qint64(3) << quint64(1);
+    // Every row pushes three buffers, in system memory unless fdMemory.
+    QTest::newRow("gpu-zerocopy-off") << false << QStringLiteral("memory:DMABuf") << false << qint64(0) << quint64(0);
+    // Software-decoded frames never enter path selection.
+    QTest::newRow("system-memory-caps") << true << QString() << false << qint64(0) << quint64(0);
+    // Other memory under plain video/x-raw caps (vtdec's CoreVideo buffers, V4L2 dmabuf export) still tries the GPU
+    // paths: the first frame finds no path for this allocator, the rest reuse that verdict.
+    QTest::newRow("system-memory-caps-fd-buffers") << true << QString() << true << qint64(3) << quint64(1);
+    QTest::newRow("gpu-caps-system-buffers")
+        << true << QStringLiteral("memory:DMABuf") << false << qint64(3) << quint64(1);
 }
 
 void GStreamerTest::_testQgcQVideoSinkGpuPathSelection()
@@ -1971,8 +2004,14 @@ void GStreamerTest::_testQgcQVideoSinkGpuPathSelection()
 #else
     QFETCH(bool, gpuZeroCopy);
     QFETCH(QString, memoryFeature);
+    QFETCH(bool, fdMemory);
     QFETCH(qint64, expectedGpuFallbacks);
     QFETCH(quint64, expectedNoPathVerdicts);
+#if !defined(Q_OS_LINUX) || defined(Q_OS_ANDROID)
+    if (fdMemory) {
+        QSKIP("fd-backed test buffers need memfd (desktop Linux)");
+    }
+#endif
     QVERIFY2(GStreamer::completeInit(), "completeInit failed");
 
     QVideoSink videoSink;
@@ -1985,6 +2024,14 @@ void GStreamerTest::_testQgcQVideoSinkGpuPathSelection()
     const quint64 noPathBefore =
         GstHwPathTelemetry::peekFallbackReason(HwVideoBufferPath::None, HwFallbackReason::UnknownMemType);
     for (int i = 1; i <= 3; ++i) {
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+        if (fdMemory) {
+            GstBuffer* const buffer = QgcQVideoSinkHarness::makeFdFrame(i * GST_SECOND);
+            QVERIFY(buffer);
+            QCOMPARE(harness.pushBuffer(buffer), GST_FLOW_OK);
+            continue;
+        }
+#endif
         QCOMPARE(harness.pushFrame(i * GST_SECOND), GST_FLOW_OK);
     }
     const quint64 noPathAfter =

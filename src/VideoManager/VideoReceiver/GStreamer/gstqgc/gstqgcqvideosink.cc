@@ -57,8 +57,8 @@ struct PrivState
     QVideoFrameFormat format;
     // Written by start() under GST_OBJECT_LOCK and snapshotted by show_frame.
     HwVideoBufferContext hw_context = {};
-    // Whether the negotiated caps carry a GPU memory feature; without one every frame is system memory, which no GPU
-    // path imports, so show_frame skips path selection.
+    // Whether the negotiated caps carry a GPU memory feature. Without one, show_frame skips path selection for frames
+    // in plain system memory.
     bool gpu_caps = false;
     std::atomic<int64_t> last_pts_ns{-1};
     std::atomic<quint64> input_frames{0};
@@ -121,6 +121,16 @@ bool caps_carry_gpu_memory(GstCaps* caps)
         }
     }
     return false;
+}
+
+/// True when no GPU path can import @p buf: it has no memory, or its first memory is plain system memory.
+bool nothing_to_import(GstBuffer* buf)
+{
+    if (gst_buffer_n_memory(buf) == 0) {
+        return true;
+    }
+    GstMemory* const mem = gst_buffer_peek_memory(buf, 0);
+    return mem && gst_memory_is_type(mem, GST_ALLOCATOR_SYSMEM);
 }
 
 /// The "stats" property value (transfer-full).
@@ -401,7 +411,9 @@ static GstFlowReturn gst_qgc_q_video_sink_show_frame(GstVideoSink* vsink, GstBuf
         p->dropped_frames.fetch_add(1, std::memory_order_relaxed);
         return GST_FLOW_OK;  // no destination yet; drop
     }
-    hwCtx.gpuEnabled = hwCtx.gpuEnabled && p->gpu_caps;
+    // Software-decoded frames skip GPU selection. Caps alone can't tell: GPU memory also arrives under plain
+    // video/x-raw (vtdec's CoreVideo/IOSurface buffers, V4L2 dmabuf export), so frames in other memory still try it.
+    hwCtx.gpuEnabled = hwCtx.gpuEnabled && (p->gpu_caps || !nothing_to_import(buf));
 
     // PTS regression guard ahead of mapping: a regressed timestamp wedges QVideoOutput's internal
     // advance, and checking first avoids a wasted full-frame map on a buffer we'd drop anyway.

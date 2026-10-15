@@ -62,8 +62,8 @@ endfunction()
 #   3. With LIBNAMES, find_library into the <LIB_VAR> cache entry and link that absolute path: the bare pkg-config name
 #      misses the link path for Windows import libs (LNK1181) and for the macOS framework's gstreamer-vulkan-1.0.pc.
 #      Without LIBNAMES the module's own library names and dirs are used, and the module itself is required.
-# Sets in PARENT_SCOPE: <name>_FOUND, <name>_LIBRARIES, <name>_INCLUDE_DIRS, <name>_LIBRARY_DIRS and, when not found,
-# <name>_REASON.
+# Sets in PARENT_SCOPE: <name>_FOUND, <name>_LIBRARIES, <name>_INCLUDE_DIRS (<INCLUDES> plus the module's),
+# <name>_LIBRARY_DIRS and, when not found, <name>_REASON.
 function(_qgc_probe_gst_lib name)
     cmake_parse_arguments(PARSE_ARGV 1 ARG "" "HAS_VAR;HEADER;SYMBOL;PC_MODULE;LIB_VAR" "LIBNAMES;INCLUDES")
     if(ARG_UNPARSED_ARGUMENTS)
@@ -138,8 +138,10 @@ function(_qgc_probe_gst_lib name)
         "${_libraries}"
         PARENT_SCOPE
     )
+    # <INCLUDES> too: the headers may need them (gst/cuda/gstcuda.h pulls <cuda.h>), not just the probe.
+    set(_include_dirs ${ARG_INCLUDES} ${${_pc}_INCLUDE_DIRS})
     set(${name}_INCLUDE_DIRS
-        "${${_pc}_INCLUDE_DIRS}"
+        "${_include_dirs}"
         PARENT_SCOPE
     )
     set(${name}_LIBRARY_DIRS

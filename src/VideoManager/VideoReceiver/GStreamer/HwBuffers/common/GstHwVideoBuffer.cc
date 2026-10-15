@@ -13,10 +13,11 @@ QVideoFrameTexturesUPtr GstHwPathTelemetry::fail(HwVideoBufferPath path) noexcep
 
 GstHwVideoBuffer::GstHwVideoBuffer(QVideoFrame::HandleType handleType, GstSample* sample, const GstVideoInfo& videoInfo,
                                    QVideoFrameFormat format)
-    : QHwVideoBuffer(handleType),
-      _sample(sample ? gst_sample_ref(sample) : nullptr),
-      _videoInfo(videoInfo),
-      _format(std::move(format))
+    : QHwVideoBuffer(handleType)
+    , _sample(sample ? gst_sample_ref(sample) : nullptr)
+    , _videoInfo(videoInfo)
+    , _format(std::move(format))
+    , _memoryPixelFormat(_format.pixelFormat())
 {
     // Crop is applied by the renderer via QVideoFrameFormat::viewport(); see GStreamerFrameMap::applyCropMeta.
 }
@@ -31,8 +32,11 @@ GstHwVideoBuffer::~GstHwVideoBuffer()
 
 QAbstractVideoBuffer::MapData GstHwVideoBuffer::map(QVideoFrame::MapMode mode)
 {
-    // An external-OES frame has no CPU layout Qt could upload (it would read it as RGBA8).
-    if ((mode != QVideoFrame::ReadOnly) || (_format.pixelFormat() == QVideoFrameFormat::Format_SamplerExternalOES)) {
+    // An external-OES frame has no CPU layout Qt could upload (it would read it as RGBA8), nor does a frame advertising
+    // another format than its memory holds (Qt would read past the end of a narrower layout).
+    const QVideoFrameFormat::PixelFormat advertised = _format.pixelFormat();
+    if ((mode != QVideoFrame::ReadOnly) || (advertised == QVideoFrameFormat::Format_SamplerExternalOES) ||
+        (advertised != _memoryPixelFormat)) {
         return {};
     }
     if (!_cpuMapped) {

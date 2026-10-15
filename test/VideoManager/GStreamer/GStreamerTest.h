@@ -126,6 +126,8 @@ private slots:
     void _testHwBufferCropMatrixIdentityWithoutMeta();
     void _testHwBufferCropMatrixFromVideoCropMeta();
     void _testHwVideoBufferCpuMapFallback();
+    void _testHwVideoBufferCpuMapRefusesForeignLayout_data();
+    void _testHwVideoBufferCpuMapRefusesForeignLayout();
     void _testApplyOrientationToFrameMapping();
     void _testAdapterFlushDropsInFlightSamples();
     void _testSourceFactoryUdpRtpJitterBuffer();

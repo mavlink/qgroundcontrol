@@ -59,7 +59,7 @@ public:
 
     /// CPU view of the sample through gst_video_frame_map (e.g. GL memory downloads, DMABuf mmaps). Qt's
     /// createTextures() uploads this whenever mapTextures() fails, so a failed GPU import still shows the frame.
-    /// ReadOnly only.
+    /// ReadOnly only. Refused when format() isn't the layout of the memory: Qt would upload it in the wrong format.
     MapData map(QVideoFrame::MapMode mode) override;
     void unmap() override;
 
@@ -105,6 +105,9 @@ protected:
     QVideoFrameFormat _format;
 
 private:
+    /// Pixel format of the sample's memory, as constructed. A subclass may advertise another one in _format for its GPU
+    /// import (the DMABuf eglfs YUYV/UYVY-as-RGBA quirk); such frames have no CPU layout matching format().
+    QVideoFrameFormat::PixelFormat _memoryPixelFormat;
     GstVideoFrame _cpuFrame = {};
     bool _cpuMapped = false;
 };
