@@ -4,7 +4,6 @@
 
 #include "GstVideoReceiver.h"
 #include "HwBuffers/common/HwBuffers.h"
-#include "QGCQVideoSinkController.h"
 
 namespace {
 
@@ -193,16 +192,7 @@ void BusMessageRouter::_onStateChanged(GstMessage* message)
 void BusMessageRouter::_onLatency()
 {
     GstVideoReceiver* const receiver = &_receiver;
+    // Recalculation hands the sinks their new latency in a LATENCY event.
     receiver->_runOnWorkerForPipeline(
         [receiver]() { (void) gst_bin_recalculate_latency(GST_BIN(receiver->_pipeline.get())); });
-    // Re-prime sink-side latency tracking after the pipeline recalculation (e.g. RTSP
-    // jitter-buffer reconfigure). Controllers live on the GUI thread; hop there to query.
-    QMetaObject::invokeMethod(
-        receiver,
-        [receiver]() {
-            for (auto* c : QGCQVideoSinkController::controllersOf(receiver)) {
-                c->refreshLatency();
-            }
-        },
-        Qt::QueuedConnection);
 }

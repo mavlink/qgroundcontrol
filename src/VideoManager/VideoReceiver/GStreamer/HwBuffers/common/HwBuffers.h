@@ -68,20 +68,19 @@ bool answerSinkBinContextQuery(GstQuery* query) noexcept;
 bool proposeDeviceBoundPool(GstQuery* query, GstCaps* caps, const GstVideoInfo* vinfo, gsize size,
                             guint minBuffers) noexcept;
 
-/// Formatted per-path counters + delivered total; reset=true reads-and-clears (teardown), false peeks.
+/// Formatted per-path frame counts + the total delivered through GPU paths.
 struct PathStats
 {
     QString line;
     quint64 totalDelivered = 0;
 };
 
-PathStats formatPathStats(bool reset) noexcept;
+/// One qgcqvideosink's frame accounting, from its "stats" structure: the per-path counts it has delivered, plus its
+/// GPU fallbacks and demotions. With @p since (an earlier "stats" value of the same sink), only what changed since.
+PathStats formatSinkStats(const GstStructure* stats, const GstStructure* since = nullptr) noexcept;
 
-/// formatPathStats() for a single qgcqvideosink, from its "stats" structure: the per-path counts it has delivered,
-/// plus its GPU fallbacks and demotions. totalDelivered counts GPU-path frames, as in formatPathStats().
-PathStats formatSinkStats(const GstStructure* stats) noexcept;
-
-/// Path-specific extras after formatPathStats (GL reuse/sync waits); reads-and-clears, teardown only.
+/// Process-wide render-time counters no sink can attribute (map failures, GL reuse/sync waits, fallback reasons, ...);
+/// reads-and-clears, teardown only.
 QString takeExtraPathStats() noexcept;
 
 }  // namespace HwBuffers

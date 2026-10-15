@@ -47,7 +47,8 @@ Per-platform zero-copy import of decoded GPU frames, all sharing `GstHwFrameText
   and the facade loops over the registry for bus messages, context queries, restarts and resets.
 - **`GstContextBridgeBase`**: GL, Vulkan, D3D11 and D3D12 bridges hand Qt's GPU device to GStreamer elements through
   `NEED_CONTEXT` and context queries.
-- **`GstHwPathTelemetry`** tracks per-format/per-path counters (map failures, reuse hits, sync waits) for fallback diagnostics.
+- **`GstHwPathTelemetry`** tracks process-wide render-time counters (map failures, reuse hits, sync waits) for fallback
+  diagnostics. A receiver's `HW path stats` debug line pairs its own sink's `stats` with them.
 - **`CpuVideoFramePool`** recycles CPU-backed `QVideoFrame` storage (WebRTC-style slab) for the software-fallback path, avoiding per-frame allocation.
 - **Build options**: `HwBuffers/CMakeLists.txt` probes one table row per path; each compiled path can be dropped with
   `QGC_GST_ENABLE_<PATH>=OFF` (`DMABUF`, `CUDA`, `GLMEMORY`, `IOSURFACE`, `D3D11`, `D3D12`, `AHARDWAREBUFFER`, `VULKAN`;

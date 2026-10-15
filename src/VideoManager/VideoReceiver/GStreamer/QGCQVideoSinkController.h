@@ -2,7 +2,6 @@
 
 #include <QtCore/QList>
 #include <QtCore/QMetaObject>
-#include <QtCore/QMutex>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
 #include <QtCore/QSize>
@@ -17,6 +16,7 @@ class QVideoSink;
 /// Q_PROPERTYs for QML and owns the 1 Hz timer polling `frames-delivered`. Driven by
 /// GstVideoReceiver's bus pump. Ownership: parent owns the controller; the controller owns one
 /// GstElement ref so deferred QObject teardown can still clear the element binding.
+/// Every member function runs on the controller's (GUI) thread.
 class QGCQVideoSinkController : public QObject
 {
     Q_OBJECT
@@ -49,17 +49,16 @@ public:
     /// binding the element while a replacement controller is installed on it. Idempotent.
     void prepareForRelease();
 
+    /// Clear the bound QVideoSink's current frame, and the GstSample/decoder buffer it pins, but keep the binding for
+    /// the next stream. For pipeline teardown: the element is bound once per receiver, not once per pipeline.
+    void releaseFrame();
+
     const GstElement* element() const noexcept;
     void updateNegotiation(const QString& format, const QSize& resolution);
 
     quint64 frameCount() const noexcept;
     QString negotiatedFormat() const;
     QSize negotiatedResolution() const;
-
-public slots:
-    /// Re-prime sink-side latency after a pipeline latency recalculation (e.g. RTSP
-    /// jitter-buffer reconfigure). Re-queries the element latency and pushes it back.
-    void refreshLatency();
 
 signals:
     void frameCountsChanged();
@@ -76,7 +75,6 @@ private:
     bool _bindingReleased = false;
     QTimer _emitTimer;
 
-    mutable QMutex _stateMutex;
     QString _negotiatedFormat;
     QSize _negotiatedResolution;
     quint64 _lastEmittedFrameTotal = 0;

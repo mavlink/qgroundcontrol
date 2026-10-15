@@ -251,11 +251,14 @@ bool GstVideoReceiver::_stopPipeline()
 
     _recordingBranch.finishForTeardown();
 
+    // Before the teardown releases the video sink.
+    const HwBuffers::PathStats hwStats = _decodingBranch.sinkPathStats();
+
     _resetPipelineState();
 
     qCDebug(GstVideoReceiverLog) << "Stopped" << _redactedUri();
 
-    if (const HwBuffers::PathStats hwStats = HwBuffers::formatPathStats(true); hwStats.totalDelivered > 0) {
+    if (hwStats.totalDelivered > 0) {
         qCDebug(GstVideoReceiverLog).noquote()
             << "HW path stats" << _redactedUri() << hwStats.line + HwBuffers::takeExtraPathStats();
     }
@@ -384,7 +387,7 @@ void GstVideoReceiver::_onWatchdogTick()
 
     if (++_statsTickCounter >= kHwStatsLogIntervalTicks) {
         _statsTickCounter = 0;
-        if (const HwBuffers::PathStats hwStats = HwBuffers::formatPathStats(false); hwStats.totalDelivered > 0) {
+        if (const HwBuffers::PathStats hwStats = _decodingBranch.sinkPathStats(); hwStats.totalDelivered > 0) {
             qCDebug(GstVideoReceiverLog).noquote() << "HW path live" << _redactedUri() << hwStats.line;
         }
     }

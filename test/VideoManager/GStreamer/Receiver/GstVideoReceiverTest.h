@@ -30,5 +30,6 @@ private slots:
     void _testDecoderQosDisabledAndReported();
     void _testVideoSizeFromNegotiatedCaps();
     void _testScreenshotSavesDisplayedFrame();
+    void _testStopReleasesDisplayedFrame();
     void _testBusDoesNotQueueMessages();
 };

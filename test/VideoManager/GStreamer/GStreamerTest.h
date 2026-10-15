@@ -160,6 +160,6 @@ private slots:
     void _testTelemetryMapDurationEwma();
     void _testTelemetryFallbackReasonMatrix();
     void _testTelemetrySyncWaitSplit();
-    void _testTelemetryPathStatsFailuresAreNotDelivered();
+    void _testTelemetryMapFailuresReportedInExtraStats();
     void _testTelemetryDmaBufExtraStatsDrain();
 };

@@ -11,12 +11,17 @@
 
 class GstVideoReceiver;
 
+namespace HwBuffers {
+struct PathStats;
+}
+
 /// \brief The display branch behind GstVideoReceiver's tee: leaky queue ! valve [! decodebin3 ! video sink].
 ///
 /// Holds the caller's video sink until the source streams, then inserts decodebin3 and links its pad to the sink.
 /// The caller keeps its own ref on the sink; the branch takes one more, and the pipeline its own while the sink is
-/// inside. Decoding is reported from the first frame that reaches the sink. Also keeps the name of the decoder
-/// decodebin3 plugged, which the receiver exposes. Reports through the receiver's signals.
+/// inside. Decoding is reported from the first frame that reaches the sink; taking the sink out again clears the frame
+/// its QVideoSink displays. Also keeps the name of the decoder decodebin3 plugged, which the receiver exposes. Reports
+/// through the receiver's signals.
 ///
 /// Threading: the receiver's worker, except the sink probe and the decoder-added callback (streaming threads) and
 /// onBusCapsInfo() (whichever thread posts). decoderName() is thread-safe.
@@ -47,7 +52,12 @@ public:
 
     QString decoderName() const;
 
+    /// The frames the video sink delivered since start() took it, from qgcqvideosink's "stats"; empty for other sinks.
+    HwBuffers::PathStats sinkPathStats() const;
+
 private:
+    /// The qgcqvideosink's "stats" when the video sink is a qgcvideosinkbin.
+    GStreamer::GstStructurePtr _readSinkStats() const;
     /// Puts the video sink into the pipeline and decodebin3 between it and the valve, then opens the valve.
     bool _insertDecoder();
     bool _addDecoder();
@@ -55,6 +65,8 @@ private:
     bool _addVideoSink(GstPad* pad);
     void _onFirstFrame();
     void _shutdown();
+    /// Has the receiver's QVideoSink controllers drop the frame on display, which pins the last decoder buffer.
+    void _releaseDisplayedFrame();
 
     static void _onDecoderElementAdded(GstBin* decodebin, GstBin* subBin, GstElement* element, gpointer data);
     static GstPadProbeReturn _sinkProbe(GstPad* pad, GstPadProbeInfo* info, gpointer user_data);
@@ -66,6 +78,8 @@ private:
     // Our refs, besides the pipeline's while they are inside it.
     GStreamer::GstElementPtr _decoder;
     GStreamer::GstElementPtr _videoSink;
+    // The sink's "stats" when start() took it: the sink outlives sessions and its counters don't restart.
+    GStreamer::GstStructurePtr _sinkStatsAtStart;
     gulong _sinkProbeId = 0;
     std::atomic<bool> _decoding = false;  ///< Read by the receiver's tee probe log.
 

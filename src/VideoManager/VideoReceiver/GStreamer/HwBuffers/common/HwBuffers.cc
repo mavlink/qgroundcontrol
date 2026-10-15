@@ -243,40 +243,24 @@ bool proposeDeviceBoundPool(GstQuery* query, GstCaps* caps, const GstVideoInfo* 
     return false;
 }
 
-PathStats formatPathStats(bool reset) noexcept
-{
-    PathStats out;
-#if defined(QGC_HAS_ANY_GPU_PATH)
-    forEachRegisteredPath([reset, &out](HwVideoBufferPath path) {
-        const QLatin1String label(GstHw::toString(path));
-        const quint64 delivered =
-            reset ? GstHwPathTelemetry::takeDeliveredCount(path) : GstHwPathTelemetry::peekDeliveredCount(path);
-        const quint64 failures =
-            reset ? GstHwPathTelemetry::takeMapFailureCount(path) : GstHwPathTelemetry::peekMapFailureCount(path);
-        // Teardown (reset) uses expanded label so operators can copy the failures field into bug reports.
-        if (reset) {
-            out.line += QStringLiteral(" %1:%2 %1-failures:%3").arg(label).arg(delivered).arg(failures);
-        } else {
-            out.line += QStringLiteral(" %1:%2/%3").arg(label).arg(delivered).arg(failures);
-        }
-        out.totalDelivered += delivered;
-    });
-#else
-    Q_UNUSED(reset);
-#endif
-    return out;
-}
-
-PathStats formatSinkStats(const GstStructure* stats) noexcept
+PathStats formatSinkStats(const GstStructure* stats, const GstStructure* since) noexcept
 {
     PathStats out;
     if (!stats) {
         return out;
     }
+    const auto countOf = [stats, since](const char* field) -> quint64 {
+        guint64 now = 0;
+        guint64 before = 0;
+        (void) gst_structure_get_uint64(stats, field, &now);
+        if (since) {
+            (void) gst_structure_get_uint64(since, field, &before);
+        }
+        return (now > before) ? (now - before) : 0;
+    };
     for (std::size_t i = 0; i < GstHw::kPathCount; ++i) {
         const auto path = HwVideoBufferPath(i);
-        guint64 frames = 0;
-        if (gst_structure_get_uint64(stats, GstHwPathTelemetry::sinkFramesField(path), &frames) && (frames > 0)) {
+        if (const quint64 frames = countOf(GstHwPathTelemetry::sinkFramesField(path)); frames > 0) {
             out.line += QStringLiteral(" %1:%2").arg(QLatin1String(GstHw::toString(path))).arg(frames);
             if (path != HwVideoBufferPath::None) {
                 out.totalDelivered += frames;
@@ -284,8 +268,7 @@ PathStats formatSinkStats(const GstStructure* stats) noexcept
         }
     }
     for (const char* const field : {"gpu-fallbacks", "stream-demotions"}) {
-        guint64 count = 0;
-        if (gst_structure_get_uint64(stats, field, &count) && (count > 0)) {
+        if (const quint64 count = countOf(field); count > 0) {
             out.line += QStringLiteral(" %1:%2").arg(QLatin1String(field)).arg(count);
         }
     }
@@ -327,6 +310,10 @@ QString takeExtraPathStats() noexcept
     };
     forEachRegisteredPath([&out](HwVideoBufferPath path) {
         const QLatin1String pathLabel(GstHw::toString(path));
+        const quint64 mapFailures = GstHwPathTelemetry::takeMapFailureCount(path);
+        if (mapFailures > 0) {
+            out += QStringLiteral(" %1-failures:%2").arg(pathLabel).arg(mapFailures);
+        }
         const quint64 ewmaUs = GstHwPathTelemetry::peekMapDurationUsEwma(path);
         if (ewmaUs > 0) {
             out += QStringLiteral(" %1-map-us:%2").arg(pathLabel).arg(ewmaUs);

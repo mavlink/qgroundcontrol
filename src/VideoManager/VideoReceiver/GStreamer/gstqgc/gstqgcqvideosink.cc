@@ -469,7 +469,7 @@ static GstFlowReturn gst_qgc_q_video_sink_show_frame(GstVideoSink* vsink, GstBuf
         return GST_FLOW_OK;  // QVideoSink unbound while mapping
     }
 
-    // Per-sink counters back the "stats" property; the process-global ones still feed HwBuffers::formatPathStats().
+    // Per-sink counters back the "stats" property; the process-global ones total every sink's deliveries.
     const HwVideoBufferPath deliveredPath =
         (mapped.source == MappedFrame::Source::Gpu) ? mapped.gpuPath : HwVideoBufferPath::None;
     p->path_counters.delivered[static_cast<std::size_t>(deliveredPath)].fetch_add(1, std::memory_order_relaxed);

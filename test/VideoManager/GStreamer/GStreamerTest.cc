@@ -1019,7 +1019,7 @@ QGC_GST_SKIP_TEST(_testAdvertisedFormatListForOffer)
 QGC_GST_SKIP_TEST(_testTelemetryMapDurationEwma)
 QGC_GST_SKIP_TEST(_testTelemetryFallbackReasonMatrix)
 QGC_GST_SKIP_TEST(_testTelemetrySyncWaitSplit)
-QGC_GST_SKIP_TEST(_testTelemetryPathStatsFailuresAreNotDelivered)
+QGC_GST_SKIP_TEST(_testTelemetryMapFailuresReportedInExtraStats)
 QGC_GST_SKIP_TEST(_testTelemetryDmaBufExtraStatsDrain)
 
 #undef QGC_GST_SKIP_TEST

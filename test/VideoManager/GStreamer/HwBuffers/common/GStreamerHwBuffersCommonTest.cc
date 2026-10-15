@@ -894,7 +894,7 @@ void GStreamerTest::_testTelemetrySyncWaitSplit()
     QCOMPARE(GstHwPathTelemetry::takeImageCacheMisses(path), quint64(0));
 }
 
-void GStreamerTest::_testTelemetryPathStatsFailuresAreNotDelivered()
+void GStreamerTest::_testTelemetryMapFailuresReportedInExtraStats()
 {
 #if !defined(QGC_HAS_ANY_GPU_PATH)
     QSKIP("No GPU path compiled in this build");
@@ -915,16 +915,17 @@ void GStreamerTest::_testTelemetryPathStatsFailuresAreNotDelivered()
     constexpr HwVideoBufferPath path = HwVideoBufferPath::Vulkan;
 #endif
 
-    (void) GstHwPathTelemetry::takeDeliveredCount(path);
-    (void) GstHwPathTelemetry::takeMapFailureCount(path);
+    // takeExtraPathStats() reports registered paths only; the qgc plugin registers them when it loads.
+    HwBuffers::initializeOnce();
+    (void) HwBuffers::takeExtraPathStats();
 
     GstHwPathTelemetry::recordMapFailure(path);
 
-    const HwBuffers::PathStats stats = HwBuffers::formatPathStats(/*reset=*/true);
-    QVERIFY2(stats.line.contains(QStringLiteral("failures:1")),
-             qPrintable(QStringLiteral("Expected failure count in stats line, got:%1").arg(stats.line)));
-    QCOMPARE(stats.totalDelivered, quint64(0));
-    QCOMPARE(GstHwPathTelemetry::peekMapFailureCount(path), quint64(0));
+    const QString failures = QStringLiteral(" %1-failures:1").arg(QLatin1String(GstHw::toString(path)));
+    const QString first = HwBuffers::takeExtraPathStats();
+    QVERIFY2(first.contains(failures), qPrintable(first));
+    const QString second = HwBuffers::takeExtraPathStats();
+    QVERIFY2(!second.contains(QStringLiteral("-failures:")), qPrintable(second));
 #endif
 }
 

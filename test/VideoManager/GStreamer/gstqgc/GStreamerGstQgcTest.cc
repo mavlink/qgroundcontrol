@@ -1969,13 +1969,21 @@ void GStreamerTest::_testQgcQVideoSinkStatsArePerSink()
     QCOMPARE(sinkStat(harnessB.element(), cpuField), qint64(1));
     QCOMPARE(sinkStat(harnessB.element(), "frames-delivered"), qint64(1));
 
-    GstStructure* stats = nullptr;
-    g_object_get(harnessA.element(), "stats", &stats, nullptr);
+    GstStructure* rawStats = nullptr;
+    g_object_get(harnessA.element(), "stats", &rawStats, nullptr);
+    const GStreamer::GstStructurePtr stats = GStreamer::adoptStructure(rawStats);
     QVERIFY(stats);
-    const HwBuffers::PathStats formatted = HwBuffers::formatSinkStats(stats);
-    gst_structure_free(stats);
+    const HwBuffers::PathStats formatted = HwBuffers::formatSinkStats(stats.get());
     QCOMPARE(formatted.line, QStringLiteral(" CPU:2"));
     QCOMPARE(formatted.totalDelivered, quint64(0));
+
+    // A receiver reuses its sink across sessions and reports each session from its start.
+    QCOMPARE(harnessA.pushFrame(3 * GST_SECOND), GST_FLOW_OK);
+    GstStructure* rawLater = nullptr;
+    g_object_get(harnessA.element(), "stats", &rawLater, nullptr);
+    const GStreamer::GstStructurePtr later = GStreamer::adoptStructure(rawLater);
+    QVERIFY(later);
+    QCOMPARE(HwBuffers::formatSinkStats(later.get(), stats.get()).line, QStringLiteral(" CPU:1"));
 }
 
 void GStreamerTest::_testQgcQVideoSinkGpuPathSelection_data()

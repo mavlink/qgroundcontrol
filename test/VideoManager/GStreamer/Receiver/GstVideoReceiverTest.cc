@@ -976,6 +976,40 @@ void GstVideoReceiverTest::_testScreenshotSavesDisplayedFrame()
     QCOMPARE(QImage(path).size(), QSize(kFrameWidth, kFrameHeight));
 }
 
+void GstVideoReceiverTest::_testStopReleasesDisplayedFrame()
+{
+    if (!firstMissingFactory({"qgcvideosinkbin"}).isEmpty()) {
+        QVERIFY2(GStreamer::completeInit(), "GStreamer::completeInit() failed");
+    }
+    auto* videoSink = static_cast<GstElement*>(GStreamer::createVideoSink(GStreamer::VideoSinkConfig{}));
+    QVERIFY(videoSink);
+    const auto sinkCleanup = qScopeGuard([videoSink] { GStreamer::releaseVideoSink(videoSink); });
+
+    const quint16 port = freeLoopbackUdpPort();
+    QVERIFY(port != 0);
+    H264RtpSender sender;
+    QVERIFY(sender.start(port));
+
+    QQuickVideoOutput videoOutput;
+    const auto receiver = makeReceiver(loopbackUri(QLatin1StringView("udp"), port), &videoOutput);
+    // Bound once per receiver, as VideoManager does through attachAppSink().
+    QVERIFY(GStreamer::setupQVideoSinkElement(videoSink, videoOutput.videoSink(), receiver.get()));
+    QSignalSpy stopSpy(receiver.get(), &VideoReceiver::onStopComplete);
+
+    receiver->start(kWatchdogTimeoutSec);
+    receiver->startDecoding(videoSink);
+    QVERIFY_TRUE_WAIT(videoOutput.videoSink()->videoFrame().isValid(), TestTimeout::mediumMs());
+
+    receiver->stop();
+    QVERIFY_SIGNAL_COUNT_WAIT(stopSpy, 1, TestTimeout::mediumMs());
+    QVERIFY_TRUE_WAIT(!videoOutput.videoSink()->videoFrame().isValid(), TestTimeout::shortMs());
+
+    // Releasing the frame must not unbind the sink: the next stream is displayed again.
+    receiver->start(kWatchdogTimeoutSec);
+    receiver->startDecoding(videoSink);
+    QVERIFY_TRUE_WAIT(videoOutput.videoSink()->videoFrame().isValid(), TestTimeout::mediumMs());
+}
+
 void GstVideoReceiverTest::_testBusDoesNotQueueMessages()
 {
     const quint16 port = freeLoopbackUdpPort();
@@ -1113,6 +1147,11 @@ void GstVideoReceiverTest::_testVideoSizeFromNegotiatedCaps()
 }
 
 void GstVideoReceiverTest::_testScreenshotSavesDisplayedFrame()
+{
+    QSKIP("GStreamer not enabled");
+}
+
+void GstVideoReceiverTest::_testStopReleasesDisplayedFrame()
 {
     QSKIP("GStreamer not enabled");
 }

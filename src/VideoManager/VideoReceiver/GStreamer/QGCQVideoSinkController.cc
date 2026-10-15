@@ -2,7 +2,6 @@
 
 #include <memory>
 
-#include <QtCore/QMutexLocker>
 #include <QtCore/QThread>
 #include <QtGui/QWindow>
 #include <QtMultimedia/QVideoFrame>
@@ -10,10 +9,20 @@
 #include <QtMultimediaQuick/private/qquickvideooutput_p.h>
 #include <QtQuick/QQuickWindow>
 
-#include "GstScoped.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(QGCQVideoSinkControllerLog, "Video.GStreamer.QGCQVideoSinkController")
+
+namespace {
+
+// Without this the sink's last frame would keep a GstSample (and the decoder buffer behind it) alive after the element
+// stopped feeding it.
+void clearVideoFrame(QVideoSink* sink)
+{
+    QMetaObject::invokeMethod(sink, [sink]() { sink->setVideoFrame(QVideoFrame()); }, Qt::AutoConnection);
+}
+
+}  // namespace
 
 QGCQVideoSinkController::QGCQVideoSinkController(GstElement* element, QObject* parent)
     : QObject(parent), _element(element ? GST_ELEMENT(gst_object_ref(element)) : nullptr)
@@ -84,35 +93,12 @@ void QGCQVideoSinkController::updateNegotiation(const QString& format, const QSi
     }
     if (_bindingReleased)
         return;
-    bool changed = false;
-    {
-        QMutexLocker locker(&_stateMutex);
-        if (format != _negotiatedFormat || resolution != _negotiatedResolution) {
-            _negotiatedFormat = format;
-            _negotiatedResolution = resolution;
-            changed = true;
-        }
-    }
-    if (changed) {
+    if (format != _negotiatedFormat || resolution != _negotiatedResolution) {
+        _negotiatedFormat = format;
+        _negotiatedResolution = resolution;
         qCDebug(QGCQVideoSinkControllerLog).noquote()
             << "Negotiation update: format=" << format << "size=" << resolution;
         emit negotiationChanged();
-    }
-}
-
-void QGCQVideoSinkController::refreshLatency()
-{
-    if (thread() != QThread::currentThread()) {
-        qCCritical(QGCQVideoSinkControllerLog) << "called from wrong thread";
-        return;
-    }
-    if (!_element || _bindingReleased)
-        return;
-    // Pipeline-level latency was recalculated upstream (e.g. RTSP jitter-buffer reconfigure);
-    // re-query the sink so GstBaseSink re-primes its cached latency for the new depth.
-    const GStreamer::GstQueryPtr query = GStreamer::adoptQuery(gst_query_new_latency());
-    if (!gst_element_query(_element, query.get())) {
-        qCDebug(QGCQVideoSinkControllerLog) << "Latency query not handled by sink element";
     }
 }
 
@@ -169,6 +155,17 @@ void QGCQVideoSinkController::prepareForRelease()
     _emitTimer.stop();
 }
 
+void QGCQVideoSinkController::releaseFrame()
+{
+    if (thread() != QThread::currentThread()) {
+        qCCritical(QGCQVideoSinkControllerLog) << "called from wrong thread";
+        return;
+    }
+    if (QVideoSink* const sink = _videoSink.data()) {
+        clearVideoFrame(sink);
+    }
+}
+
 quint64 QGCQVideoSinkController::frameCount() const noexcept
 {
     if (!_element || _bindingReleased)
@@ -180,13 +177,11 @@ quint64 QGCQVideoSinkController::frameCount() const noexcept
 
 QString QGCQVideoSinkController::negotiatedFormat() const
 {
-    QMutexLocker locker(&_stateMutex);
     return _negotiatedFormat;
 }
 
 QSize QGCQVideoSinkController::negotiatedResolution() const
 {
-    QMutexLocker locker(&_stateMutex);
     return _negotiatedResolution;
 }
 
@@ -208,12 +203,9 @@ void QGCQVideoSinkController::_clearVideoSinkFrame()
 {
     QVideoSink* const sink = _videoSink.data();
     _videoSink.clear();
-    if (!sink) {
-        return;
+    if (sink) {
+        clearVideoFrame(sink);
     }
-    // The element no longer feeds this sink; without this its last frame would keep a GstSample (and the decoder
-    // buffer behind it) alive after the pipeline is gone.
-    QMetaObject::invokeMethod(sink, [sink]() { sink->setVideoFrame(QVideoFrame()); }, Qt::AutoConnection);
 }
 
 void QGCQVideoSinkController::_onEmitTimer()
