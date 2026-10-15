@@ -216,6 +216,7 @@ void InitialConnectTest::_rallyFailurePathDoesNotLeakCompletionHandler()
     // Injected rally read failure pops a transfer-failed app message.
     ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
                      QRegularExpression("Rally Point transfer failed"));
+    ignoreLogMessage("Vehicle.Vehicle", QtWarningMsg, QRegularExpression("Rally Point transfer failed"));
     LinkManager::instance()->setConnectionsAllowed();
 
     auto* mvm = MultiVehicleManager::instance();
@@ -344,10 +345,13 @@ void InitialConnectTest::_subsystemFailureFallsThrough()
     if (configFailureMode == static_cast<int>(MockConfiguration::FailParamNoResponseToRequestList)) {
         ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
                          QRegularExpression("did not respond to request for parameters"));
+        ignoreLogMessage("FactSystem.ParameterManager", QtWarningMsg,
+                         QRegularExpression("did not respond to request for parameters"));
     }
     if (blockMissionProtocolImmediately || blockMissionProtocolAfterMissionLoad) {
         ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
                          QRegularExpression("transfer failed"));
+        ignoreLogMessage("Vehicle.Vehicle", QtWarningMsg, QRegularExpression("transfer failed"));
     }
 
     LinkManager::instance()->setConnectionsAllowed();

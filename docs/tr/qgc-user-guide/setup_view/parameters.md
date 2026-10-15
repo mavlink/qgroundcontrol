@@ -21,7 +21,7 @@ Ayrıca _ Search_ alanına bir terim girerek bir parametre için _ arama _ yapab
 To change the value of a parameter click on the parameter row in a group or search list. This will open a side dialog in which you can update the value (this dialog also provides additional detailed information about the parameter - including whether a reboot is required for the change to take effect).
 
 :::info
-**Save** butonuna basıldığında, parametre sessizce ve otomatik olarak bağlı cihaza yüklenir. Parametreye bağlı olarak, değişikliğin etki etmesi için uçuş kontrolcüsünü yeniden başlatmanız gerekebilir.
+**Save** butonuna basıldığında, parametre sessizce ve otomatik olarak bağlı cihaza yüklenir. Parametreye bağlı olarak, değişikliğin etki etmesi için uçuş kontrolcüsünü yeniden başlatmanız gerekebilir. QGroundControl shows a [reboot required indicator](../fly_view/fly_view_toolbar.md#vehicle-reboot-required) in the toolbar until the vehicle is rebooted.
 :::
 
 ## Araçlar

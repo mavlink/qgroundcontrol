@@ -9,6 +9,8 @@ The "Q" icon on the left of the toolbar allows you to select between additional 
 - **Vehicle Configuration:** The various options for the initial configuration of a new vehicle.
 - **Application Settings:** Settings for the QGroundControl application itself.
 
+When a newer stable version of QGroundControl is available, a blue update badge is shown at the top right of the "Q" icon, and the views dropdown shows an **Update** button which opens the download page. A message about the new version is shown once per new version. The check only runs in stable builds.
+
 ## Toolbar Indicators
 
 Next are multiple toolbar indicators for vehicle status. The dropdowns for each toolbar indicator provide additional detail on status. You can also expand the indicators to show additional application and vehicle settings associated with the indicator. Press the ">" button to expand.
@@ -31,6 +33,8 @@ The Flight Status indicator dropdown fills the window and also gives you access 
 - **Disarm** - Disarming a vehicle stops the motors. For aircraft it is only available when the vehicle is on the ground. Generally you do not need to explicitly disarm as vehicles will disarm automatically after landing, or shortly after arming if you do not take off.
 - **Emergency Stop** - Replaces **Disarm** while an aircraft is flying. It is a red button which you must press and hold to confirm. It stops the motors while in the air. For emergency use only, your vehicle will crash! Ground vehicles and submarines keep the normal **Disarm** button.
 - **Force Arm** - Arms the vehicle while bypassing pre-arm checks. Only shown when **Allow Force Arm** is enabled in [Fly View Settings](../settings_view/fly_view.md).
+- **Reboot Vehicle** - Shown at the right when the vehicle needs a reboot (see [Vehicle Reboot Required](#vehicle-reboot-required)).
+- **Firmware update available** - Shown when the vehicle is not running the latest stable firmware (see [Firmware Update Available](#firmware-update-available)).
 - **Vehicle Messages** - The messages sent by the vehicle. Use the trash button to clear them.
 
 In the cases of warnings or not ready state you can click the indicator to display the dropdown which will show the reason(s) why. The toggle on the right expands each error with additional information and possible solutions.
@@ -45,23 +49,46 @@ The Flight Mode indicator shows you the current flight mode. The dropdown allows
 - Set global geo-fence settings
 - Add/Remove flight modes from the displayed list
 
-### Vehicle Messages
+### Flight Status Badges
+
+![Flight Status badges](../../../assets/fly/toolbar/main_status_indicator_badges.png)
+
+Small badges can appear at the top right of the Flight Status indicator: a blue update icon when newer stable vehicle firmware is available, an orange power icon when the vehicle needs a reboot, and a red badge with the count of critical vehicle messages. Click the indicator to open the dropdown and act on them.
+
+#### Vehicle Messages
 
 When the vehicle sends critical messages (error severity or worse) a red badge is shown at the top right of the Flight Status indicator. The badge shows the number of critical messages, or `!` if there are more than 9. Opening the dropdown does not clear the badge, only clearing the message list with the trash button does.
 
+In the dropdown message list, critical messages are shown in red and warnings and notices in orange.
+
 Critical messages are also shown in a **Vehicle Alert** popup below the toolbar. Up to 5 messages are shown at once, fewer if the window is too short to fit them. If more arrive the popup title changes to **Vehicle Alert - Click to see more**, clicking it opens the Flight Status dropdown. The popup closes automatically after 10 seconds, or when you click it.
 
-### GPS / RTK GPS <img src="../../../assets/fly/toolbar/gps_indicator.png" alt="GPS / RTK GPS indicator" style="height: 1.15em; vertical-align: text-bottom;" />
+#### Vehicle Reboot Required
 
-The GPS/RTK GPS indicator shows satellite and GNSS status in the toolbar, and the dropdown provides additional GPS details.
+Some parameter changes and sensor calibrations only take effect after the vehicle reboots. When you make such a change an orange power icon is shown next to the message badge, and stays there until the vehicle is rebooted. You can make several changes and reboot once at the end.
 
-With an active vehicle, the indicator shows vehicle GPS information (for example, satellite count and HDOP), and the expanded page provides access to RTK-related settings.
+When a parameter change needs a reboot, a message also reminds you that the change will not take effect until the vehicle is rebooted. The message is not repeated for further changes made within 2 minutes.
 
-When there is no active vehicle but RTK is connected, the indicator switches to RTK status so you can still monitor the correction link.
+To reboot, open the Flight Status dropdown and press and hold **Reboot Vehicle** on the right. The vehicle can only be rebooted while disarmed. If it is armed, the button is replaced by a reminder to disarm first.
 
-### GPS Resilience
+#### Firmware Update Available
 
-The GPS Resilience indicator appears when the vehicle reports GPS resilience telemetry (authentication, spoofing, or jamming state). The dropdown provides summary status and per-GPS details when available.
+When the vehicle connects, QGroundControl checks whether it is running the latest stable firmware release. The check only applies to official (non-development) firmware. If a newer stable release is available a blue update icon is shown at the top right of the Flight Status indicator, and the dropdown shows the current and latest stable versions.
+
+A message about the out of date firmware is shown once for each new stable release. Press **Acknowledge and Hide** in the dropdown to hide the update icon. It stays hidden, across reconnects and restarts, until a newer stable release is available. The dropdown still shows the version information.
+
+To update the firmware use [Vehicle Configuration > Firmware](../setup_view/firmware.md).
+
+### GPS <img src="../../../assets/fly/toolbar/gps_indicator.png" alt="GPS indicator" style="height: 1.15em; vertical-align: text-bottom;" />
+
+The GPS indicator shows satellite and GNSS status in the toolbar, and the dropdown provides additional GPS details.
+
+While the vehicle reports GPS, the indicator shows its satellite count and HDOP. Otherwise it shows the connected [GNSS receiver](../settings_view/gnss_receiver.md): the satellites it uses and its fix, or the state of a configured base station.
+A vertical _RTK_ label appears while corrections for vehicles are configured or flowing (orange while they are awaited), and _GNSS_ while only a GNSS receiver is connected; the label turns orange when the receiver reports jamming, spoofing or an antenna fault.
+
+When the vehicle reports GPS resilience telemetry (authentication, spoofing, or jamming state), icons next to the indicator show the worse of the vehicle's GPS receivers, and the dropdown lists the state of each receiver that reports it.
+
+The dropdown also shows the GNSS receiver status, the correction stream sent to vehicles, the NTRIP connection with a **Connect** button once a caster is configured, and the ground station position. Expand it for the [GNSS Receiver](../settings_view/gnss_receiver.md#receiver) settings.
 
 ### Battery <img src="../../../assets/fly/toolbar/battery_indicator.png" alt="Battery indicator" style="height: 1.15em; vertical-align: text-bottom;" />
 

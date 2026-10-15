@@ -6,6 +6,9 @@ require 'yaml'
 current_dir    = File.dirname(File.expand_path(__FILE__))
 configfile     = YAML.load_file("#{current_dir}/.vagrantconfig.yml")
 yaml_config    = configfile['configs']['dev']
+# Absolute so the share is correct regardless of the directory vagrant is run from
+# (a relative hostpath resolves against the project root, not this file).
+repo_root      = File.expand_path("../..", current_dir)
 
 # CI uses a writable guest copy; desktop users share the repository directly.
 ci_mode = !ENV.fetch('QGC_CI', '').empty?
@@ -19,10 +22,10 @@ Vagrant.configure(2) do |config|
   if ci_mode
     # rsync (not 9p): the guest needs a writable, vagrant-owned copy — QGC's cmake
     # generates files inside the source tree, impossible on a foreign-uid 9p share.
-    config.vm.synced_folder "../..", "/vagrant", type: "rsync",
+    config.vm.synced_folder repo_root, "/vagrant", type: "rsync",
       rsync__exclude: ["shadow_build/", ".venv/", "build/"]
   else
-    config.vm.synced_folder "../..", "/vagrant"
+    config.vm.synced_folder repo_root, "/vagrant"
   end
   config.vm.provider :docker do |docker, override|
     override.vm.box = "tknerr/baseimage-ubuntu-16.04"

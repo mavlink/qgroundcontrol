@@ -7,6 +7,14 @@
 
 QGC_LOGGING_CATEGORY(StatusTextHandlerLog, "MAVLink.StatusTextHandler")
 
+namespace {
+
+// Placeholders inside the formatted text; _displayText() turns them into <b> for unread messages
+const QString kUnreadStart = QStringLiteral("<#U>");
+const QString kUnreadEnd = QStringLiteral("</#U>");
+
+}  // namespace
+
 StatusText::StatusText(MAV_COMPONENT componentid, MAV_SEVERITY severity, const QString &text)
     : m_compId(componentid)
     , m_severity(severity)
@@ -62,11 +70,19 @@ QString StatusTextHandler::getMessageText(const mavlink_message_t &message)
     return QString(buffer);
 }
 
+QString StatusTextHandler::_displayText(const StatusText& message)
+{
+    QString text = message.getFormattedText();
+    (void) text.replace(kUnreadStart, message.isRead() ? QString() : QStringLiteral("<b>"));
+    (void) text.replace(kUnreadEnd, message.isRead() ? QString() : QStringLiteral("</b>"));
+    return text;
+}
+
 QString StatusTextHandler::formattedMessages() const
 {
     QString result;
     for (const StatusText *message: messages()) {
-        (void) result.prepend(message->getFormattedText());
+        (void) result.prepend(_displayText(*message));
     }
 
     return result;
@@ -74,13 +90,45 @@ QString StatusTextHandler::formattedMessages() const
 
 void StatusTextHandler::clearMessages()
 {
+    const bool hadMessages = !m_messages.isEmpty();
+
     qDeleteAll(m_messages);
     m_messages.clear();
 
-    if (m_criticalMessageCount != 0) {
-        m_criticalMessageCount = 0;
-        emit criticalMessageCountChanged();
+    if (m_unreadCriticalMessageCount != 0) {
+        m_unreadCriticalMessageCount = 0;
+        emit unreadCriticalMessageCountChanged();
     }
+
+    if (m_unreadMessageCount != 0) {
+        m_unreadMessageCount = 0;
+        emit hasUnreadMessagesChanged();
+    }
+
+    if (hadMessages) {
+        emit formattedMessagesChanged();
+    }
+}
+
+void StatusTextHandler::markAllRead()
+{
+    if (m_unreadMessageCount == 0) {
+        return;
+    }
+
+    for (StatusText* message : m_messages) {
+        message->markRead();
+    }
+
+    m_unreadMessageCount = 0;
+    emit hasUnreadMessagesChanged();
+
+    if (m_unreadCriticalMessageCount != 0) {
+        m_unreadCriticalMessageCount = 0;
+        emit unreadCriticalMessageCountChanged();
+    }
+
+    emit formattedMessagesChanged();
 }
 
 void StatusTextHandler::handleHTMLEscapedTextMessage(MAV_COMPONENT compId, MAV_SEVERITY severity, const QString &text, const QString &description)
@@ -175,18 +223,24 @@ void StatusTextHandler::handleHTMLEscapedTextMessage(MAV_COMPONENT compId, MAV_S
 
     const QString dateString = QDateTime::currentDateTime().toString("hh:mm:ss.zzz");
 
-    const QString formatText = QString("<font style=\"%1\">[%2 %3] %4: %5</font><br/>").arg(style, dateString, compString, severityText, htmlText);
+    const QString formatText =
+        QString("<font style=\"%1\">%2[%3 %4] %5: %6%7</font><br/>")
+            .arg(style, kUnreadStart, dateString, compString, severityText, htmlText, kUnreadEnd);
 
     StatusText* const message = new StatusText(compId, severity, text);
     message->setFormatedText(formatText);
 
-    emit newFormattedMessage(formatText);
-
     (void) m_messages.append(message);
 
+    if (m_unreadMessageCount++ == 0) {
+        emit hasUnreadMessagesChanged();
+    }
+
+    emit newFormattedMessage(_displayText(*message));
+
     if (message->severityIsError()) {
-        m_criticalMessageCount++;
-        emit criticalMessageCountChanged();
+        m_unreadCriticalMessageCount++;
+        emit unreadCriticalMessageCountChanged();
         emit newErrorMessage(message->getText());
     }
 }

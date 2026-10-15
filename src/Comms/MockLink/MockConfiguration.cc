@@ -25,6 +25,7 @@ MockConfiguration::MockConfiguration(const MockConfiguration* copy, QObject* par
     , _preloadMission(copy->preloadMission())
     , _stayMavlinkV1(copy->stayMavlinkV1())
     , _sendRadioStatus(copy->sendRadioStatus())
+    , _companionParams(copy->companionParams())
     , _cameraCaptureVideo(copy->cameraCaptureVideo())
     , _cameraCaptureImage(copy->cameraCaptureImage())
     , _cameraHasModes(copy->cameraHasModes())
@@ -96,6 +97,7 @@ void MockConfiguration::copyFrom(const LinkConfiguration *source)
     setPreloadMission(mockLinkSource->preloadMission());
     setStayMavlinkV1(mockLinkSource->stayMavlinkV1());
     setSendRadioStatus(mockLinkSource->sendRadioStatus());
+    setCompanionParams(mockLinkSource->companionParams());
 }
 
 void MockConfiguration::loadSettings(QSettings &settings, const QString &root)

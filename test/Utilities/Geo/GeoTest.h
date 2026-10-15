@@ -19,6 +19,12 @@ private slots:
     void _convertGeoToMGRS_test();
     void _convertMGRSToGeo_test();
 
+    void _convertDegreesToDMS_test();
+    void _convertDMSToDegrees_test_data();
+    void _convertDMSToDegrees_test();
+    void _convertDMSToGeo_test();
+    void _dmsRoundTrip_test();
+
     void _convertGeodeticToEcef_test();
     void _convertEcefToGeodetic_test();
     void _convertGpsToEnu_test();

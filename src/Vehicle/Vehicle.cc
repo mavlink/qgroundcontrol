@@ -1613,19 +1613,19 @@ void Vehicle::sendMessageMultiple(mavlink_message_t message)
 
 void Vehicle::_missionManagerError(int errorCode, const QString& errorMsg)
 {
-    Q_UNUSED(errorCode);
+    qCWarning(VehicleLog) << "Mission transfer failed - errorCode:" << errorCode << "errorMsg:" << errorMsg;
     QGC::showAppMessage(tr("Mission transfer failed. Error: %1").arg(errorMsg));
 }
 
 void Vehicle::_geoFenceManagerError(int errorCode, const QString& errorMsg)
 {
-    Q_UNUSED(errorCode);
+    qCWarning(VehicleLog) << "GeoFence transfer failed - errorCode:" << errorCode << "errorMsg:" << errorMsg;
     QGC::showAppMessage(tr("GeoFence transfer failed. Error: %1").arg(errorMsg));
 }
 
 void Vehicle::_rallyPointManagerError(int errorCode, const QString& errorMsg)
 {
-    Q_UNUSED(errorCode);
+    qCWarning(VehicleLog) << "Rally Point transfer failed - errorCode:" << errorCode << "errorMsg:" << errorMsg;
     QGC::showAppMessage(tr("Rally Point transfer failed. Error: %1").arg(errorMsg));
 }
 
@@ -3475,17 +3475,32 @@ void Vehicle::clearMessages()
     m_statusTextHandler->clearMessages();
 }
 
-int Vehicle::criticalMessageCount() const
+void Vehicle::markMessagesRead()
 {
-    return m_statusTextHandler->criticalMessageCount();
+    m_statusTextHandler->markAllRead();
 }
+
+int Vehicle::unreadCriticalMessageCount() const
+{
+    return m_statusTextHandler->unreadCriticalMessageCount();
+}
+
+bool Vehicle::hasUnreadMessages() const
+{
+    return m_statusTextHandler->hasUnreadMessages();
+}
+
 QString Vehicle::formattedMessages() const { return m_statusTextHandler->formattedMessages(); }
 
 void Vehicle::_createStatusTextHandler()
 {
     m_statusTextHandler = new StatusTextHandler(this);
-    (void) connect(m_statusTextHandler, &StatusTextHandler::criticalMessageCountChanged, this,
-                   &Vehicle::criticalMessageCountChanged);
+    (void) connect(m_statusTextHandler, &StatusTextHandler::unreadCriticalMessageCountChanged, this,
+                   &Vehicle::unreadCriticalMessageCountChanged);
+    (void) connect(m_statusTextHandler, &StatusTextHandler::hasUnreadMessagesChanged, this,
+                   &Vehicle::hasUnreadMessagesChanged);
+    (void) connect(m_statusTextHandler, &StatusTextHandler::formattedMessagesChanged, this,
+                   &Vehicle::formattedMessagesChanged);
     (void) connect(m_statusTextHandler, &StatusTextHandler::newFormattedMessage, this, &Vehicle::newFormattedMessage);
     (void) connect(m_statusTextHandler, &StatusTextHandler::textMessageReceived, this, &Vehicle::_textMessageReceived);
     (void) connect(m_statusTextHandler, &StatusTextHandler::newErrorMessage, this, &Vehicle::_errorMessageReceived);

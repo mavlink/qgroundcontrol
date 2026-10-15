@@ -5,6 +5,8 @@
 #include "MultiVehicleManager.h"
 #include "QGCGeo.h"
 #include "QGCLoggingCategory.h"
+#include "SettingsManager.h"
+#include "UnitsSettings.h"
 #include "Vehicle.h"
 
 QGC_LOGGING_CATEGORY(TransformPositionControllerLog, "QMLControls.TransformPositionController")
@@ -15,6 +17,8 @@ TransformPositionController::TransformPositionController(QObject *parent)
     : QObject(parent)
     , _latitudeFact(new Fact(0, _latitudeFactName, FactMetaData::valueTypeDouble, this))
     , _longitudeFact(new Fact(0, _longitudeFactName, FactMetaData::valueTypeDouble, this))
+    , _latitudeDMSFact(new Fact(0, _latitudeDMSFactName, FactMetaData::valueTypeString, this))
+    , _longitudeDMSFact(new Fact(0, _longitudeDMSFactName, FactMetaData::valueTypeString, this))
     , _zoneFact(new Fact(0, _zoneFactName, FactMetaData::valueTypeUint8, this))
     , _hemisphereFact(new Fact(0, _hemisphereFactName, FactMetaData::valueTypeUint8, this))
     , _eastingFact(new Fact(0, _eastingFactName, FactMetaData::valueTypeDouble, this))
@@ -33,6 +37,8 @@ TransformPositionController::TransformPositionController(QObject *parent)
 
     _latitudeFact->setMetaData(_metaDataMap[_latitudeFactName]);
     _longitudeFact->setMetaData(_metaDataMap[_longitudeFactName]);
+    _latitudeDMSFact->setMetaData(_metaDataMap[_latitudeDMSFactName]);
+    _longitudeDMSFact->setMetaData(_metaDataMap[_longitudeDMSFactName]);
     _zoneFact->setMetaData(_metaDataMap[_zoneFactName]);
     _hemisphereFact->setMetaData(_metaDataMap[_hemisphereFactName]);
     _eastingFact->setMetaData(_metaDataMap[_eastingFactName]);
@@ -78,6 +84,8 @@ void TransformPositionController::initValues()
 
     _latitudeFact->setRawValue(_coordinate.latitude());
     _longitudeFact->setRawValue(_coordinate.longitude());
+    _latitudeDMSFact->setRawValue(QGCGeo::convertDegreesToDMS(_coordinate.latitude(), true));
+    _longitudeDMSFact->setRawValue(QGCGeo::convertDegreesToDMS(_coordinate.longitude(), false));
 
     double easting, northing;
     const int zone = QGCGeo::convertGeoToUTM(_coordinate, easting, northing);
@@ -102,26 +110,42 @@ void TransformPositionController::setFromGeo()
     setCoordinate(newCoordinate);
 }
 
-void TransformPositionController::setFromUTM()
+bool TransformPositionController::setFromDMS()
+{
+    QGeoCoordinate newCoordinate = _coordinate;
+    if (QGCGeo::convertDMSToGeo(_latitudeDMSFact->rawValue().toString(), _longitudeDMSFact->rawValue().toString(), newCoordinate)) {
+        setCoordinate(newCoordinate);
+        return true;
+    }
+
+    initValues();
+    return false;
+}
+
+bool TransformPositionController::setFromUTM()
 {
     qCDebug(TransformPositionControllerLog) << _eastingFact->rawValue().toDouble() << _northingFact->rawValue().toDouble() << _zoneFact->rawValue().toInt() << (_hemisphereFact->rawValue().toInt() == 1);
     QGeoCoordinate newCoordinate;
     if (QGCGeo::convertUTMToGeo(_eastingFact->rawValue().toDouble(), _northingFact->rawValue().toDouble(), _zoneFact->rawValue().toInt(), _hemisphereFact->rawValue().toInt() == 1, newCoordinate)) {
         qCDebug(TransformPositionControllerLog) << _eastingFact->rawValue().toDouble() << _northingFact->rawValue().toDouble() << _zoneFact->rawValue().toInt() << (_hemisphereFact->rawValue().toInt() == 1) << newCoordinate;
         setCoordinate(newCoordinate);
-    } else {
-        initValues();
+        return true;
     }
+
+    initValues();
+    return false;
 }
 
-void TransformPositionController::setFromMGRS()
+bool TransformPositionController::setFromMGRS()
 {
     QGeoCoordinate newCoordinate;
     if (QGCGeo::convertMGRSToGeo(_mgrsFact->rawValue().toString(), newCoordinate)) {
         setCoordinate(newCoordinate);
-    } else {
-        initValues();
+        return true;
     }
+
+    initValues();
+    return false;
 }
 
 void TransformPositionController::setFromVehicle()
@@ -133,4 +157,9 @@ void TransformPositionController::setFromVehicle()
     }
 
     setCoordinate(activeVehicle->coordinate());
+}
+
+int TransformPositionController::defaultCoordinateSystem()
+{
+    return SettingsManager::instance()->unitsSettings()->coordinateFormat()->rawValue().toInt();
 }

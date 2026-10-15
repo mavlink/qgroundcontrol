@@ -85,7 +85,7 @@ void StatusTextHandlerTest::_testHandleErrorMessageAndMultiComponentPrefix()
     statusTextHandler.handleHTMLEscapedTextMessage(MAV_COMP_ID_USER2, MAV_SEVERITY_ERROR, "ErrorMessage", "");
 
     QCOMPARE(statusTextHandler.messages().count(), 2);
-    QCOMPARE(statusTextHandler.criticalMessageCount(), 1);
+    QCOMPARE(statusTextHandler.unreadCriticalMessageCount(), 1);
 
     QCOMPARE(errorSpy.count(), 1);
     QCOMPARE(errorSpy.at(0).at(0).toString(), QStringLiteral("ErrorMessage"));
@@ -95,26 +95,119 @@ void StatusTextHandlerTest::_testHandleErrorMessageAndMultiComponentPrefix()
     QVERIFY(formatted.contains(QStringLiteral("Error")));
 }
 
-void StatusTextHandlerTest::_testCriticalMessageCount()
+void StatusTextHandlerTest::_testUnreadCriticalMessageCount()
 {
     StatusTextHandler statusTextHandler;
 
-    QSignalSpy countSpy(&statusTextHandler, &StatusTextHandler::criticalMessageCountChanged);
+    QSignalSpy countSpy(&statusTextHandler, &StatusTextHandler::unreadCriticalMessageCountChanged);
     QVERIFY(countSpy.isValid());
 
     statusTextHandler.handleHTMLEscapedTextMessage(MAV_COMP_ID_USER1, MAV_SEVERITY_INFO, "InfoMessage", "");
     statusTextHandler.handleHTMLEscapedTextMessage(MAV_COMP_ID_USER1, MAV_SEVERITY_WARNING, "WarningMessage", "");
-    QCOMPARE(statusTextHandler.criticalMessageCount(), 0);
+    QCOMPARE(statusTextHandler.unreadCriticalMessageCount(), 0);
     QCOMPARE(countSpy.count(), 0);
 
     statusTextHandler.handleHTMLEscapedTextMessage(MAV_COMP_ID_USER1, MAV_SEVERITY_ERROR, "ErrorMessage", "");
     statusTextHandler.handleHTMLEscapedTextMessage(MAV_COMP_ID_USER1, MAV_SEVERITY_CRITICAL, "CriticalMessage", "");
-    QCOMPARE(statusTextHandler.criticalMessageCount(), 2);
+    QCOMPARE(statusTextHandler.unreadCriticalMessageCount(), 2);
     QCOMPARE(countSpy.count(), 2);
 
     statusTextHandler.clearMessages();
-    QCOMPARE(statusTextHandler.criticalMessageCount(), 0);
+    QCOMPARE(statusTextHandler.unreadCriticalMessageCount(), 0);
     QCOMPARE(countSpy.count(), 3);
+}
+
+void StatusTextHandlerTest::_testNewMessagesAreUnread()
+{
+    StatusTextHandler statusTextHandler;
+
+    QSignalSpy unreadSpy(&statusTextHandler, &StatusTextHandler::hasUnreadMessagesChanged);
+    QSignalSpy newMessageSpy(&statusTextHandler, &StatusTextHandler::newFormattedMessage);
+    QVERIFY(unreadSpy.isValid());
+    QVERIFY(newMessageSpy.isValid());
+    QVERIFY(!statusTextHandler.hasUnreadMessages());
+
+    statusTextHandler.handleHTMLEscapedTextMessage(MAV_COMP_ID_USER1, MAV_SEVERITY_INFO, "InfoMessage", "");
+    QVERIFY(statusTextHandler.hasUnreadMessages());
+    QCOMPARE(unreadSpy.count(), 1);
+    QVERIFY(statusTextHandler.formattedMessages().contains(QStringLiteral("<b>")));
+    QCOMPARE(newMessageSpy.count(), 1);
+    QVERIFY(newMessageSpy.at(0).at(0).toString().contains(QStringLiteral("<b>")));
+
+    // Already unread, so no further transition
+    statusTextHandler.handleHTMLEscapedTextMessage(MAV_COMP_ID_USER1, MAV_SEVERITY_WARNING, "WarningMessage", "");
+    QCOMPARE(unreadSpy.count(), 1);
+
+    statusTextHandler.clearMessages();
+    QVERIFY(!statusTextHandler.hasUnreadMessages());
+    QCOMPARE(unreadSpy.count(), 2);
+}
+
+void StatusTextHandlerTest::_testMarkAllRead()
+{
+    StatusTextHandler statusTextHandler;
+
+    statusTextHandler.handleHTMLEscapedTextMessage(MAV_COMP_ID_USER1, MAV_SEVERITY_INFO, "InfoMessage", "");
+    statusTextHandler.handleHTMLEscapedTextMessage(MAV_COMP_ID_USER1, MAV_SEVERITY_ERROR, "ErrorMessage", "");
+    QCOMPARE(statusTextHandler.unreadCriticalMessageCount(), 1);
+
+    QSignalSpy countSpy(&statusTextHandler, &StatusTextHandler::unreadCriticalMessageCountChanged);
+    QSignalSpy unreadSpy(&statusTextHandler, &StatusTextHandler::hasUnreadMessagesChanged);
+    QSignalSpy formattedSpy(&statusTextHandler, &StatusTextHandler::formattedMessagesChanged);
+    QVERIFY(countSpy.isValid());
+    QVERIFY(unreadSpy.isValid());
+    QVERIFY(formattedSpy.isValid());
+
+    statusTextHandler.markAllRead();
+
+    QCOMPARE(statusTextHandler.unreadCriticalMessageCount(), 0);
+    QVERIFY(!statusTextHandler.hasUnreadMessages());
+    QCOMPARE(statusTextHandler.messages().count(), 2);
+    QVERIFY(!statusTextHandler.formattedMessages().contains(QStringLiteral("<b>")));
+    QVERIFY(statusTextHandler.formattedMessages().contains(QStringLiteral("ErrorMessage")));
+    QCOMPARE(countSpy.count(), 1);
+    QCOMPARE(unreadSpy.count(), 1);
+    QCOMPARE(formattedSpy.count(), 1);
+
+    // Nothing left to mark, so no further signals
+    statusTextHandler.markAllRead();
+    QCOMPARE(countSpy.count(), 1);
+    QCOMPARE(unreadSpy.count(), 1);
+    QCOMPARE(formattedSpy.count(), 1);
+}
+
+void StatusTextHandlerTest::_testMarkAllReadThenNewMessage()
+{
+    StatusTextHandler statusTextHandler;
+
+    statusTextHandler.handleHTMLEscapedTextMessage(MAV_COMP_ID_USER1, MAV_SEVERITY_ERROR, "OldError", "");
+    statusTextHandler.markAllRead();
+
+    statusTextHandler.handleHTMLEscapedTextMessage(MAV_COMP_ID_USER1, MAV_SEVERITY_ERROR, "NewError", "");
+
+    QCOMPARE(statusTextHandler.unreadCriticalMessageCount(), 1);
+    QVERIFY(statusTextHandler.hasUnreadMessages());
+    // Only the new message is bold
+    QCOMPARE(statusTextHandler.formattedMessages().count(QStringLiteral("<b>")), 1);
+}
+
+void StatusTextHandlerTest::_testClearMessagesEmitsFormattedMessagesChanged()
+{
+    StatusTextHandler statusTextHandler;
+
+    QSignalSpy formattedSpy(&statusTextHandler, &StatusTextHandler::formattedMessagesChanged);
+    QVERIFY(formattedSpy.isValid());
+
+    // Nothing to clear, so no signal
+    statusTextHandler.clearMessages();
+    QCOMPARE(formattedSpy.count(), 0);
+
+    statusTextHandler.handleHTMLEscapedTextMessage(MAV_COMP_ID_USER1, MAV_SEVERITY_INFO, "InfoMessage", "");
+    QCOMPARE(formattedSpy.count(), 0);
+
+    statusTextHandler.clearMessages();
+    QCOMPARE(formattedSpy.count(), 1);
+    QVERIFY(statusTextHandler.formattedMessages().isEmpty());
 }
 
 void StatusTextHandlerTest::_testChunkedStatusTextMissingChunk()
