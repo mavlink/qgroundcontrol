@@ -3,7 +3,8 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/..")
 include("${CMAKE_CURRENT_LIST_DIR}/_assert.cmake")
 include(Json)
 
-set(_json [=[
+set(_json
+    [=[
 {
   "gstreamer": {
     "plugins": {
@@ -13,7 +14,8 @@ set(_json [=[
     "empty_section": {}
   }
 }
-]=])
+]=]
+)
 
 _qgc_gst_json_array_to_list(_common "${_json}" gstreamer plugins common)
 list(LENGTH _common _common_len)

@@ -16,9 +16,7 @@ endif()
 # means satisfied if videoconvertscale is present OR if both videoconvert AND
 # videoscale are present. Plugin basenames must not contain '|' or '+' — those
 # are the group/AND delimiters and are not escapable.
-set(GSTREAMER_PLUGIN_ALTERNATES
-    "videoconvertscale|videoconvert+videoscale"
-)
+set(GSTREAMER_PLUGIN_ALTERNATES "videoconvertscale|videoconvert+videoscale")
 
 # Structural plugins guaranteed to exist post-install — the install verifier
 # fails the build if any are missing; _verifyPlugins() (GStreamer.cc) mirrors this list.
@@ -47,25 +45,21 @@ set(GSTREAMER_RUNTIME_REQUIRED_PLUGINS
 # slice. Registering them would cause unresolved-symbol link failures, so the
 # Orchestrator drops them from the iOS plugin list.
 # x265: gstreamer-ios 1.28.2 ships libgstx265.a but not libx265.a.
-set(GSTREAMER_XCFRAMEWORK_SKIP_PLUGINS
-    x265
-)
+set(GSTREAMER_XCFRAMEWORK_SKIP_PLUGINS x265)
 
 # Encode-side plugins needed only by the Debug-only MockLink test video stream
 # server (MockVideoStreamServer). Statically registered on Android and iOS Debug
 # builds only — desktop builds find them via the full SDK plugin scan, and release
 # builds must not ship them (app size; x264/x265 are GPL).
-set(GSTREAMER_MOCK_SERVER_DEBUG_PLUGINS
-    mpegtsmux videotestsrc x264 x265
-)
+set(GSTREAMER_MOCK_SERVER_DEBUG_PLUGINS mpegtsmux videotestsrc x264 x265)
 
 # Invariant: no plugin may be both runtime-required and xcframework-skipped.
 function(_qgc_gst_assert_policy_consistent)
     foreach(_skip IN LISTS GSTREAMER_XCFRAMEWORK_SKIP_PLUGINS)
         if(_skip IN_LIST GSTREAMER_RUNTIME_REQUIRED_PLUGINS)
-            message(FATAL_ERROR
-                "GStreamer policy: plugin '${_skip}' is in both GSTREAMER_XCFRAMEWORK_SKIP_PLUGINS "
-                "and GSTREAMER_RUNTIME_REQUIRED_PLUGINS — a required plugin cannot be skipped on iOS.")
+            message(FATAL_ERROR "GStreamer policy: plugin '${_skip}' is in both GSTREAMER_XCFRAMEWORK_SKIP_PLUGINS "
+                                "and GSTREAMER_RUNTIME_REQUIRED_PLUGINS — a required plugin cannot be skipped on iOS."
+            )
         endif()
     endforeach()
 endfunction()
@@ -90,19 +84,26 @@ function(gstreamer_plugins_for)
     endif()
     if(NOT DEFINED QGC_BUILD_CONFIG_CONTENT)
         message(FATAL_ERROR "gstreamer_plugins_for: build-config.json not loaded; "
-            "expected QGC_BUILD_CONFIG_CONTENT to be set by BuildConfig.cmake.")
+                            "expected QGC_BUILD_CONFIG_CONTENT to be set by BuildConfig.cmake."
+        )
     endif()
     _qgc_gst_json_array_to_list(_plugins "${QGC_BUILD_CONFIG_CONTENT}" gstreamer plugins common)
     if(ARG_PLATFORM)
         _qgc_gst_json_array_to_list(_extra "${QGC_BUILD_CONFIG_CONTENT}" gstreamer plugins ${ARG_PLATFORM})
         list(APPEND _plugins ${_extra})
     endif()
-    set(${ARG_OUT_VAR} "${_plugins}" PARENT_SCOPE)
+    set(${ARG_OUT_VAR}
+        "${_plugins}"
+        PARENT_SCOPE
+    )
 endfunction()
 
-# gstreamer_runtime_required_plugins(OUT_VAR)
-function(gstreamer_runtime_required_plugins OUT_VAR)
-    set(${OUT_VAR} "${GSTREAMER_RUNTIME_REQUIRED_PLUGINS}" PARENT_SCOPE)
+# gstreamer_runtime_required_plugins(<out_var>)
+function(gstreamer_runtime_required_plugins out_var)
+    set(${out_var}
+        "${GSTREAMER_RUNTIME_REQUIRED_PLUGINS}"
+        PARENT_SCOPE
+    )
 endfunction()
 
 # gstreamer_plugin_satisfy_sets(PLUGIN <name> OUT_VAR <var>)
@@ -114,12 +115,10 @@ endfunction()
 function(gstreamer_plugin_satisfy_sets)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "" "PLUGIN;OUT_VAR" "")
     if(ARG_KEYWORDS_MISSING_VALUES)
-        message(FATAL_ERROR
-            "gstreamer_plugin_satisfy_sets: missing values for: ${ARG_KEYWORDS_MISSING_VALUES}")
+        message(FATAL_ERROR "gstreamer_plugin_satisfy_sets: missing values for: ${ARG_KEYWORDS_MISSING_VALUES}")
     endif()
     if(ARG_UNPARSED_ARGUMENTS)
-        message(FATAL_ERROR
-            "gstreamer_plugin_satisfy_sets: unknown arguments: ${ARG_UNPARSED_ARGUMENTS}")
+        message(FATAL_ERROR "gstreamer_plugin_satisfy_sets: unknown arguments: ${ARG_UNPARSED_ARGUMENTS}")
     endif()
     if(NOT ARG_PLUGIN)
         message(FATAL_ERROR "gstreamer_plugin_satisfy_sets: PLUGIN is required")
@@ -132,12 +131,18 @@ function(gstreamer_plugin_satisfy_sets)
         foreach(_alt IN LISTS _alts)
             string(REPLACE "+" ";" _members "${_alt}")
             if(ARG_PLUGIN IN_LIST _members)
-                set(${ARG_OUT_VAR} "${_alts}" PARENT_SCOPE)
+                set(${ARG_OUT_VAR}
+                    "${_alts}"
+                    PARENT_SCOPE
+                )
                 return()
             endif()
         endforeach()
     endforeach()
-    set(${ARG_OUT_VAR} "${ARG_PLUGIN}" PARENT_SCOPE)
+    set(${ARG_OUT_VAR}
+        "${ARG_PLUGIN}"
+        PARENT_SCOPE
+    )
 endfunction()
 
 # gstreamer_plugin_satisfied(PLUGIN <name> AVAILABLE <plugin>... OUT_VAR <var>)
@@ -201,7 +206,10 @@ function(gstreamer_missing_required)
     )
 endfunction()
 
-# gstreamer_xcfw_skip(OUT_VAR)
-function(gstreamer_xcfw_skip OUT_VAR)
-    set(${OUT_VAR} "${GSTREAMER_XCFRAMEWORK_SKIP_PLUGINS}" PARENT_SCOPE)
+# gstreamer_xcfw_skip(<out_var>)
+function(gstreamer_xcfw_skip out_var)
+    set(${out_var}
+        "${GSTREAMER_XCFRAMEWORK_SKIP_PLUGINS}"
+        PARENT_SCOPE
+    )
 endfunction()

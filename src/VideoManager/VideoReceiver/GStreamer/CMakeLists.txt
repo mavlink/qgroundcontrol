@@ -9,7 +9,15 @@ endif()
 # Debug-only (see Comms/MockLink/CMakeLists.txt) — so only request it in Debug to keep the
 # rtsp-server lib out of release builds. It is also optional: a define is emitted below only
 # when the SDK actually ships it.
-set(_qgc_gst_components Core Base Gl GlPrototypes Video App Rtsp)
+set(_qgc_gst_components
+    Core
+    Base
+    Gl
+    GlPrototypes
+    Video
+    App
+    Rtsp
+)
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     list(APPEND _qgc_gst_components RtspServer)
 endif()
@@ -23,13 +31,7 @@ include(GStreamer/Orchestrator)
 # PUBLIC usage reqs flow to the app via the link below; facade sources stay app-side (need app headers).
 qt_add_library(QGCGStreamer STATIC)
 
-target_link_libraries(QGCGStreamer
-    PUBLIC
-        GStreamer::GStreamer
-        Qt6::Multimedia
-        Qt6::MultimediaPrivate
-        QGCLogging
-)
+target_link_libraries(QGCGStreamer PUBLIC GStreamer::GStreamer Qt6::Multimedia Qt6::MultimediaPrivate QGCLogging)
 
 target_compile_definitions(QGCGStreamer PUBLIC QGC_GST_STREAMING)
 
@@ -47,11 +49,7 @@ endif()
 # MockVideoStreamServer feeds MockLink's synthetic video stream; MockLink is Debug-only
 # (see Comms/MockLink/CMakeLists.txt), so only compile it in Debug to keep it out of release.
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    target_sources(QGCGStreamer
-        PRIVATE
-            MockVideoStreamServer.cc
-            MockVideoStreamServer.h
-    )
+    target_sources(QGCGStreamer PRIVATE MockVideoStreamServer.cc MockVideoStreamServer.h)
 endif()
 
 # The test-only hooks (the *ForTest() helpers, GstHwPathRegistry::ScopedPathsForTest) compile only under this flag.
@@ -60,21 +58,20 @@ if(QGC_BUILD_TESTING)
     target_compile_definitions(QGCGStreamer PUBLIC QGC_GST_BUILD_TESTING)
 endif()
 
-target_include_directories(QGCGStreamer
-    PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/gstqgc
-        ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers
-        ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/common
-        ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/dmabuf
-        ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/gl
-        ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/d3d
-        ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/vulkan
-        ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/apple
-        ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/android
-        ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/cuda
-    PRIVATE
-        ${CMAKE_BINARY_DIR}
+target_include_directories(
+    QGCGStreamer
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
+           ${CMAKE_CURRENT_SOURCE_DIR}/gstqgc
+           ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers
+           ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/common
+           ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/dmabuf
+           ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/gl
+           ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/d3d
+           ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/vulkan
+           ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/apple
+           ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/android
+           ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/cuda
+    PRIVATE ${CMAKE_BINARY_DIR}
 )
 
 # Qt6::MultimediaQuickPrivate is OPTIONAL at the root find_package; link it when present
@@ -82,7 +79,9 @@ target_include_directories(QGCGStreamer
 if(TARGET Qt6::MultimediaQuickPrivate)
     target_link_libraries(QGCGStreamer PUBLIC Qt6::MultimediaQuickPrivate)
 else()
-    message(WARNING "QGCGStreamer: Qt6::MultimediaQuickPrivate not found - GStreamer video sink integration may not build")
+    message(
+        WARNING "QGCGStreamer: Qt6::MultimediaQuickPrivate not found - GStreamer video sink integration may not build"
+    )
 endif()
 
 add_subdirectory(HwBuffers)
@@ -94,44 +93,43 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGStreamer)
 
 # GStreamer:: facade: app-facing API + source/receiver glue. App-coupled, so it stays on the app
 # target and inherits QGCGStreamer's PUBLIC deps/defs/includes via the link above.
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        GStreamer.cc
-        GStreamer.h
-        GStreamerEnvironment.cc
-        GStreamerEnvironment.h
-        GStreamerHelpers.cc
-        GStreamerHelpers.h
-        GStreamerLogging.cc
-        GStreamerLogging.h
-        GstScoped.h
-        GstSourceFactory.cc
-        GstSourceFactory.h
-        GstVideoReceiver.cc
-        GstVideoReceiver.h
-        QGCQVideoSinkController.cc
-        QGCQVideoSinkController.h
-        StreamWatchdog.cc
-        StreamWatchdog.h
-        PipelineDotDumper.cc
-        PipelineDotDumper.h
-        RecordingBranch.cc
-        RecordingBranch.h
-        RecordingFinalizer.cc
-        RecordingFinalizer.h
-        DecodingBranch.cc
-        DecodingBranch.h
-        BusMessageRouter.cc
-        BusMessageRouter.h
+target_sources(
+    ${CMAKE_PROJECT_NAME}
+    PRIVATE GStreamer.cc
+            GStreamer.h
+            GStreamerEnvironment.cc
+            GStreamerEnvironment.h
+            GStreamerHelpers.cc
+            GStreamerHelpers.h
+            GStreamerLogging.cc
+            GStreamerLogging.h
+            GstScoped.h
+            GstSourceFactory.cc
+            GstSourceFactory.h
+            GstVideoReceiver.cc
+            GstVideoReceiver.h
+            QGCQVideoSinkController.cc
+            QGCQVideoSinkController.h
+            StreamWatchdog.cc
+            StreamWatchdog.h
+            PipelineDotDumper.cc
+            PipelineDotDumper.h
+            RecordingBranch.cc
+            RecordingBranch.h
+            RecordingFinalizer.cc
+            RecordingFinalizer.h
+            DecodingBranch.cc
+            DecodingBranch.h
+            BusMessageRouter.cc
+            BusMessageRouter.h
 )
 
 # iOS xcframework ships no CA list / no keychain-via-OpenSSL; bundle a Mozilla NSS extract for
 # libgioopenssl (fetched at configure time, IOS.cmake). On the app target for MACOSX_PACKAGE_LOCATION.
 if(IOS AND GStreamer_IOS_CA_BUNDLE)
     target_sources(${CMAKE_PROJECT_NAME} PRIVATE "${GStreamer_IOS_CA_BUNDLE}")
-    set_source_files_properties("${GStreamer_IOS_CA_BUNDLE}" PROPERTIES
-        MACOSX_PACKAGE_LOCATION "ssl/certs"
-        HEADER_FILE_ONLY TRUE
+    set_source_files_properties("${GStreamer_IOS_CA_BUNDLE}" PROPERTIES MACOSX_PACKAGE_LOCATION "ssl/certs"
+                                                                        HEADER_FILE_ONLY TRUE
     )
 endif()
 
@@ -162,8 +160,11 @@ include(GStreamer/Helpers)
 # Build-time rpath so the unrelocated binary finds component dylibs in the SDK
 # (framework /lib or flat /lib); install-time rpath is set in cmake/install/Install.cmake.
 if(MACOS AND GSTREAMER_LIB_PATH)
-    set_property(TARGET ${CMAKE_PROJECT_NAME} APPEND PROPERTY
-        BUILD_RPATH "${GSTREAMER_LIB_PATH}")
+    set_property(
+        TARGET ${CMAKE_PROJECT_NAME}
+        APPEND
+        PROPERTY BUILD_RPATH "${GSTREAMER_LIB_PATH}"
+    )
 endif()
 
 # Native packages install only the Runtime component. Keep this assignment

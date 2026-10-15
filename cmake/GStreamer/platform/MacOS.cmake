@@ -156,17 +156,14 @@ endfunction()
 # branch only (iOS uses xcframework which bypasses this entirely).
 function(_qgc_gst_apply_macos_framework_overlay)
     if(NOT GSTREAMER_FRAMEWORK_PATH)
-        message(FATAL_ERROR
-            "_qgc_gst_apply_macos_framework_overlay requires GSTREAMER_FRAMEWORK_PATH; "
-            "ensure gstreamer_create_layout_target(TYPE FRAMEWORK FRAMEWORK_BUNDLE ...) ran first.")
+        message(FATAL_ERROR "_qgc_gst_apply_macos_framework_overlay requires GSTREAMER_FRAMEWORK_PATH; "
+                            "ensure gstreamer_create_layout_target(TYPE FRAMEWORK FRAMEWORK_BUNDLE ...) ran first."
+        )
     endif()
     set(CMAKE_FIND_FRAMEWORK ONLY)
     cmake_path(GET GSTREAMER_FRAMEWORK_PATH PARENT_PATH _gst_framework_parent)
-    find_library(_gst_framework_bundle GStreamer
-        PATHS
-            "${_gst_framework_parent}"
-            "${GSTREAMER_FRAMEWORK_PATH}"
-            "/Library/Frameworks"
+    find_library(_gst_framework_bundle GStreamer PATHS "${_gst_framework_parent}" "${GSTREAMER_FRAMEWORK_PATH}"
+                                                       "/Library/Frameworks"
     )
     if(NOT _gst_framework_bundle)
         message(FATAL_ERROR "GStreamer: Could not locate GStreamer.framework")

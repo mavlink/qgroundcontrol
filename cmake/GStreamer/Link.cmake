@@ -8,13 +8,38 @@ include_guard(GLOBAL)
 if(NOT DEFINED _gst_IGNORED_SYSTEM_LIBRARIES)
     set(_gst_IGNORED_SYSTEM_LIBRARIES c c++ unwind m dl atomic)
     if(ANDROID)
-        list(APPEND _gst_IGNORED_SYSTEM_LIBRARIES log GLESv2 EGL OpenSLES android vulkan)
+        list(
+            APPEND
+            _gst_IGNORED_SYSTEM_LIBRARIES
+            log
+            GLESv2
+            EGL
+            OpenSLES
+            android
+            vulkan
+        )
     elseif(APPLE)
         list(APPEND _gst_IGNORED_SYSTEM_LIBRARIES iconv resolv System)
     elseif(WIN32)
-        list(APPEND _gst_IGNORED_SYSTEM_LIBRARIES
-            ws2_32 ole32 oleaut32 winmm shlwapi secur32 iphlpapi dnsapi
-            userenv bcrypt crypt32 advapi32 kernel32 shell32 uuid)
+        list(
+            APPEND
+            _gst_IGNORED_SYSTEM_LIBRARIES
+            ws2_32
+            ole32
+            oleaut32
+            winmm
+            shlwapi
+            secur32
+            iphlpapi
+            dnsapi
+            userenv
+            bcrypt
+            crypt32
+            advapi32
+            kernel32
+            shell32
+            uuid
+        )
     endif()
 endif()
 if(NOT DEFINED _gst_SRT_REGEX_PATCH)
@@ -57,7 +82,10 @@ function(_gst_coalesce_existing_paths _gcep_VAR)
         endif()
         math(EXPR _gcep_i "${_gcep_i} + 1")
     endwhile()
-    set(${_gcep_VAR} "${_gcep_out}" PARENT_SCOPE)
+    set(${_gcep_VAR}
+        "${_gcep_out}"
+        PARENT_SCOPE
+    )
 endfunction()
 
 # Some Windows pkg-config builds split `C:/Program\ Files/...` across different
@@ -65,6 +93,8 @@ endfunction()
 # suffixes land in CFLAGS_OTHER/LDFLAGS_OTHER as `Files/...`. Rebuild paths only
 # when root + suffix exists, then remove the consumed suffixes from options.
 function(_gst_recover_split_pkgconfig_paths _grspp_PREFIX)
+    # One pass rebuilds each path/option pair; splitting it would only pass the pair state around.
+    # cmake-lint: disable=R0915
     set(_grspp_pairs ${ARGN})
     list(LENGTH _grspp_pairs _grspp_len)
     math(EXPR _grspp_remainder "${_grspp_len} % 2")
@@ -118,8 +148,14 @@ function(_gst_recover_split_pkgconfig_paths _grspp_PREFIX)
                 endif()
             endforeach()
 
-            set(${_grspp_path_var} "${_grspp_recovered_paths}" PARENT_SCOPE)
-            set(${_grspp_option_var} "${_grspp_filtered_options}" PARENT_SCOPE)
+            set(${_grspp_path_var}
+                "${_grspp_recovered_paths}"
+                PARENT_SCOPE
+            )
+            set(${_grspp_option_var}
+                "${_grspp_filtered_options}"
+                PARENT_SCOPE
+            )
         endif()
 
         math(EXPR _grspp_i "${_grspp_i} + 2")
@@ -142,7 +178,10 @@ function(_gst_strip_macos_absent_link_libs _gsmal_VAR)
             list(APPEND _gsmal_out "${_gsmal_lib}")
         endif()
     endforeach()
-    set(${_gsmal_VAR} "${_gsmal_out}" PARENT_SCOPE)
+    set(${_gsmal_VAR}
+        "${_gsmal_out}"
+        PARENT_SCOPE
+    )
 endfunction()
 
 # Save/restore macros for CMAKE_FIND_LIBRARY_SUFFIXES/PREFIXES.
@@ -162,6 +201,7 @@ macro(_gst_save_find_suffixes)
     endif()
 endmacro()
 
+# Restores what _gst_save_find_suffixes saved.
 macro(_gst_restore_find_suffixes)
     set(CMAKE_FIND_LIBRARY_SUFFIXES ${_gst_saved_suffixes})
     set(CMAKE_FIND_LIBRARY_PREFIXES ${_gst_saved_prefixes})
@@ -176,10 +216,11 @@ endmacro()
 #                  the library plus --exclude-libs,<name> (ELF)
 #   WARN_MISSING - Warn and skip missing libraries instead of failing
 function(_gst_resolve_and_link_libraries _grll_TARGET _grll_SCOPE _grll_LIBS _grll_HINTS)
+    # Each library goes through one resolve/patch/link decision chain; splitting it would scatter that chain.
+    # cmake-lint: disable=R0912,R0915
     cmake_parse_arguments(PARSE_ARGV 4 _grll "HIDE;WARN_MISSING" "" "")
     if(_grll_UNPARSED_ARGUMENTS)
-        message(FATAL_ERROR
-            "_gst_resolve_and_link_libraries: unknown arguments: ${_grll_UNPARSED_ARGUMENTS}")
+        message(FATAL_ERROR "_gst_resolve_and_link_libraries: unknown arguments: ${_grll_UNPARSED_ARGUMENTS}")
     endif()
     _gst_coalesce_existing_paths(_grll_HINTS)
 
@@ -211,10 +252,19 @@ function(_gst_resolve_and_link_libraries _grll_TARGET _grll_SCOPE _grll_LIBS _gr
         endif()
         if(NOT DEFINED ${_grll_CACHE_VAR} OR "${${_grll_CACHE_VAR}}" MATCHES "NOTFOUND$")
             if(_grll_WARN_MISSING)
-                find_library(${_grll_CACHE_VAR} NAMES ${_grll_LIB} HINTS ${_grll_HINTS} NO_DEFAULT_PATH)
+                find_library(
+                    ${_grll_CACHE_VAR}
+                    NAMES ${_grll_LIB}
+                    HINTS ${_grll_HINTS}
+                    NO_DEFAULT_PATH
+                )
             else()
-                find_library(${_grll_CACHE_VAR} NAMES ${_grll_LIB} HINTS ${_grll_HINTS}
-                    NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH REQUIRED)
+                find_library(
+                    ${_grll_CACHE_VAR}
+                    NAMES ${_grll_LIB}
+                    HINTS ${_grll_HINTS}
+                    NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH REQUIRED
+                )
             endif()
         endif()
 

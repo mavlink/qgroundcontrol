@@ -5,16 +5,11 @@ include(Install)
 
 set(GSTREAMER_PLUGINS video coreelements)
 
-set(_paths
-    /sdk/libgstvideo.so
-    /sdk/libgstvideoconvert.so
-    /sdk/libgstcoreelements.so
-    /sdk/libgstbadplugin.so
-)
+set(_paths /sdk/libgstvideo.so /sdk/libgstvideoconvert.so /sdk/libgstcoreelements.so /sdk/libgstbadplugin.so)
 _qgc_gst_filter_plugin_paths("libgst" "${_paths}" _kept)
 
-qgc_test_assert_in_list("keeps exact video"        "/sdk/libgstvideo.so"        _kept)
-qgc_test_assert_in_list("keeps coreelements"       "/sdk/libgstcoreelements.so" _kept)
+qgc_test_assert_in_list("keeps exact video" "/sdk/libgstvideo.so" _kept)
+qgc_test_assert_in_list("keeps coreelements" "/sdk/libgstcoreelements.so" _kept)
 list(FIND _kept "/sdk/libgstvideoconvert.so" _vc_idx)
 qgc_test_assert_streq("rejects videoconvert (boundary)" "-1" "${_vc_idx}")
 list(FIND _kept "/sdk/libgstbadplugin.so" _bad_idx)

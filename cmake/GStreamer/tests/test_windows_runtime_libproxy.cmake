@@ -11,11 +11,7 @@ file(TOUCH "${_sandbox}/lib/libproxy/pxbackend-1.0.dll")
 
 _qgc_gst_windows_runtime_dependency_dirs("${_sandbox}" _runtime_dirs)
 
-qgc_test_assert_in_list(
-    "includes libproxy backend dll directory"
-    "${_sandbox}/lib/libproxy"
-    _runtime_dirs
-)
+qgc_test_assert_in_list("includes libproxy backend dll directory" "${_sandbox}/lib/libproxy" _runtime_dirs)
 
 file(REMOVE_RECURSE "${_sandbox}")
 qgc_test_pass("windows runtime libproxy dependency dirs")

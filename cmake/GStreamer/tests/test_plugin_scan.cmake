@@ -16,15 +16,16 @@ file(TOUCH "${_sandbox}/${_prefix}coreelements.${_ext}")
 file(TOUCH "${_sandbox}/${_prefix}playback.${_ext}")
 file(TOUCH "${_sandbox}/${_prefix}videoconvertscale.${_ext}")
 file(TOUCH "${_sandbox}/${_prefix}x264.${_ext}")
-file(TOUCH "${_sandbox}/notaplugin.${_ext}")            # Non-plugin file — must be excluded by the plugin glob
-file(TOUCH "${_sandbox}/${_prefix}-helper.${_ext}")     # Dash-prefixed name — alphanumeric regex captures empty group, deduped away
+file(TOUCH "${_sandbox}/notaplugin.${_ext}") # Non-plugin file — must be excluded by the plugin glob
+file(TOUCH "${_sandbox}/${_prefix}-helper.${_ext}"
+)# Dash-prefixed name — alphanumeric regex captures empty group, deduped away
 
 gstreamer_scan_plugin_basenames(_names "${_sandbox}")
 
-qgc_test_assert_in_list("found coreelements"        coreelements        _names)
-qgc_test_assert_in_list("found playback"            playback            _names)
-qgc_test_assert_in_list("found videoconvertscale"   videoconvertscale   _names)
-qgc_test_assert_in_list("found x264"                x264                _names)
+qgc_test_assert_in_list("found coreelements" coreelements _names)
+qgc_test_assert_in_list("found playback" playback _names)
+qgc_test_assert_in_list("found videoconvertscale" videoconvertscale _names)
+qgc_test_assert_in_list("found x264" x264 _names)
 qgc_test_assert_not_in_list("notaplugin not scanned" notaplugin _names)
 qgc_test_pass("scan_plugin_basenames platform")
 

@@ -25,7 +25,8 @@ endif()
 
 if(NOT QGC_GST_REQUESTED_VERSION)
     message(FATAL_ERROR "GStreamer version not configured. Ensure BuildConfig.cmake has been included "
-        "and .github/build-config.json contains the appropriate gstreamer.version.<platform> entry.")
+                        "and .github/build-config.json contains the appropriate gstreamer.version.<platform> entry."
+    )
 endif()
 
 # GStreamer_ROOT_DIR is user input only (never written back), so a later configure can tell a
@@ -43,7 +44,8 @@ if(NOT _qgc_gst_user_root)
 endif()
 if(_qgc_gst_user_root AND NOT EXISTS "${_qgc_gst_user_root}")
     message(FATAL_ERROR "GStreamer: User-provided directory does not exist: ${_qgc_gst_user_root}\n"
-        "Correct the path or unset GStreamer_ROOT_DIR to allow auto-download.")
+                        "Correct the path or unset GStreamer_ROOT_DIR to allow auto-download."
+    )
 endif()
 
 # Layout preferences; discovery overrides them with normal variables for the SDK it finds (a flat macOS SDK is not a
@@ -68,7 +70,10 @@ option(GStreamer_USE_FRAMEWORK "macOS: use the GStreamer SDK as GStreamer.framew
 set(GStreamer_USE_MERGED_STATIC OFF)
 
 # The cached PKG_CONFIG_ARGN is user input; discovery derives its flags into a normal variable.
-set(PKG_CONFIG_ARGN "" CACHE STRING "Extra arguments for pkg-config")
+set(PKG_CONFIG_ARGN
+    ""
+    CACHE STRING "Extra arguments for pkg-config"
+)
 _qgc_gst_drop_legacy_pkg_config_args()
 # Empty GStreamer_ROOT_DIR from here on means "discover or download"; platform discovery
 # fills it in and sets GStreamer_AUTO_DOWNLOADED when it downloads.
@@ -102,10 +107,10 @@ if(GStreamer_USE_STATIC_LIBS)
 endif()
 list(LENGTH _qgc_gst_active_modes _qgc_gst_active_count)
 if(_qgc_gst_active_count GREATER 1)
-    message(FATAL_ERROR
-        "GStreamer: conflicting layout modes — only one of GStreamer_USE_MERGED_STATIC, "
-        "GStreamer_USE_FRAMEWORK, GStreamer_USE_STATIC_LIBS may be ON simultaneously. "
-        "Active: ${_qgc_gst_active_modes}")
+    message(FATAL_ERROR "GStreamer: conflicting layout modes — only one of GStreamer_USE_MERGED_STATIC, "
+                        "GStreamer_USE_FRAMEWORK, GStreamer_USE_STATIC_LIBS may be ON simultaneously. "
+                        "Active: ${_qgc_gst_active_modes}"
+    )
 endif()
 unset(_qgc_gst_active_modes)
 unset(_qgc_gst_active_count)
@@ -132,10 +137,9 @@ if(NOT GStreamer_USE_MERGED_STATIC)
         if(DEFINED GSTREAMER_FRAMEWORK_PATH)
             set(_gst_framework_detail "GSTREAMER_FRAMEWORK_PATH=${GSTREAMER_FRAMEWORK_PATH}\n")
         endif()
-        message(FATAL_ERROR
-            "GStreamer: required directories do not exist on disk:\n  ${_gst_missing_str}\n"
-            "${_gst_framework_detail}"
-            "Check installation or set GStreamer_ROOT_DIR.")
+        message(FATAL_ERROR "GStreamer: required directories do not exist on disk:\n  ${_gst_missing_str}\n"
+                            "${_gst_framework_detail}" "Check installation or set GStreamer_ROOT_DIR."
+        )
     endif()
 
     if(GStreamer_USE_FRAMEWORK)
@@ -256,10 +260,10 @@ foreach(_comp IN LISTS QGC_GST_COMPONENTS)
     elseif(NOT _registry_known AND NOT TARGET GStreamer::${_api})
         # Neither a registry entry nor a target — almost always a typo'd or
         # unsupported component name; surface it loudly.
-        message(WARNING
-            "QGCGStreamer: requested component '${_comp}' is not a known registry "
-            "component and produced no GStreamer::${_api} target — check spelling "
-            "(components are CamelCase, e.g. App, Audio, Pbutils) or platform support.")
+        message(WARNING "QGCGStreamer: requested component '${_comp}' is not a known registry "
+                        "component and produced no GStreamer::${_api} target — check spelling "
+                        "(components are CamelCase, e.g. App, Audio, Pbutils) or platform support."
+        )
     endif()
 endforeach()
 
@@ -282,7 +286,10 @@ endif()
 # link, and Install.cmake verifies desktop installs), plus the GStreamer::<plugin> targets of static layouts.
 set(_gst_available_plugins "")
 set(_gst_plugins_scanned FALSE)
-if(NOT GStreamer_USE_STATIC_LIBS AND NOT GStreamer_USE_MERGED_STATIC AND EXISTS "${GSTREAMER_PLUGIN_PATH}")
+if(NOT GStreamer_USE_STATIC_LIBS
+   AND NOT GStreamer_USE_MERGED_STATIC
+   AND EXISTS "${GSTREAMER_PLUGIN_PATH}"
+)
     gstreamer_scan_plugin_basenames(_gst_available_plugins "${GSTREAMER_PLUGIN_PATH}")
     set(_gst_plugins_scanned TRUE)
 endif()
@@ -341,23 +348,24 @@ if(_gst_plugins_scanned)
     )
     if(_gst_missing_plugins)
         message(WARNING "GStreamer: The following plugins are listed in GSTREAMER_PLUGINS "
-            "but not found in ${GSTREAMER_PLUGIN_PATH}: ${_gst_missing_plugins}\n"
-            "Video features depending on these plugins will not work at runtime.")
+                        "but not found in ${GSTREAMER_PLUGIN_PATH}: ${_gst_missing_plugins}\n"
+                        "Video features depending on these plugins will not work at runtime."
+        )
     endif()
 endif()
 
 # Resolves ALIAS targets and applies INTERFACE compile definitions — the cycle
 # below (and the feature probe further down) need this twice.
 # target_compile_definitions can't be called on ALIAS targets, so unwrap first.
-function(_qgc_gst_apply_def GST_TARGET)
-    if(NOT TARGET ${GST_TARGET})
+function(_qgc_gst_apply_def gst_target)
+    if(NOT TARGET ${gst_target})
         return()
     endif()
-    get_target_property(_aliased ${GST_TARGET} ALIASED_TARGET)
+    get_target_property(_aliased ${gst_target} ALIASED_TARGET)
     if(_aliased)
         target_compile_definitions(${_aliased} INTERFACE ${ARGN})
     else()
-        target_compile_definitions(${GST_TARGET} INTERFACE ${ARGN})
+        target_compile_definitions(${gst_target} INTERFACE ${ARGN})
     endif()
 endfunction()
 
@@ -367,9 +375,8 @@ if(GStreamer_VERSION)
     string(REGEX MATCH "^([0-9]+)\\.([0-9]+)" _gst_ver_match "${GStreamer_VERSION}")
     if(_gst_ver_match)
         foreach(_gst_target IN ITEMS GStreamer::GStreamer GStreamerMobile)
-            _qgc_gst_apply_def(${_gst_target}
-                QGC_GST_BUILD_VERSION_MAJOR=${CMAKE_MATCH_1}
-                QGC_GST_BUILD_VERSION_MINOR=${CMAKE_MATCH_2}
+            _qgc_gst_apply_def(${_gst_target} QGC_GST_BUILD_VERSION_MAJOR=${CMAKE_MATCH_1}
+                               QGC_GST_BUILD_VERSION_MINOR=${CMAKE_MATCH_2}
             )
         endforeach()
     endif()
@@ -422,7 +429,9 @@ else()
         endif()
     endforeach()
 endif()
-message(STATUS "QGCGStreamer: version=${GStreamer_VERSION} path=${_qgc_gst_path} root=${GStreamer_ROOT_DIR} plugins=${_qgc_gst_plugin_count}/${_qgc_gst_plugin_total} auto_downloaded=${GStreamer_AUTO_DOWNLOADED}")
+message(STATUS "QGCGStreamer: version=${GStreamer_VERSION} path=${_qgc_gst_path} root=${GStreamer_ROOT_DIR} "
+               "plugins=${_qgc_gst_plugin_count}/${_qgc_gst_plugin_total} auto_downloaded=${GStreamer_AUTO_DOWNLOADED}"
+)
 
 # Post-configure tooling (.github/scripts/verify_executable.py, the Windows workflow) reads
 # QGC_GST_RESOLVED_ROOT from CMakeCache.txt; PrintSummary reads the GStreamer::Layout properties.

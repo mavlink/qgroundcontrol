@@ -4,7 +4,8 @@ include("${CMAKE_CURRENT_LIST_DIR}/_assert.cmake")
 include(Json)
 include(PluginPolicy)
 
-set(QGC_BUILD_CONFIG_CONTENT [[{
+set(QGC_BUILD_CONFIG_CONTENT
+    [[{
     "gstreamer": {
         "plugins": {
             "common": ["coreelements", "playback", "rtsp"],
@@ -12,18 +13,19 @@ set(QGC_BUILD_CONFIG_CONTENT [[{
             "apple":  ["vtenc", "vtdec"]
         }
     }
-}]])
+}]]
+)
 
 gstreamer_plugins_for(PLATFORM "" OUT_VAR _plugins_common)
 qgc_test_assert_in_list("common has coreelements" coreelements _plugins_common)
-qgc_test_assert_in_list("common has playback"     playback     _plugins_common)
-qgc_test_assert_not_in_list("common excludes va"  va           _plugins_common)
+qgc_test_assert_in_list("common has playback" playback _plugins_common)
+qgc_test_assert_not_in_list("common excludes va" va _plugins_common)
 qgc_test_pass("plugins_for common-only")
 
 gstreamer_plugins_for(PLATFORM linux OUT_VAR _plugins_linux)
 qgc_test_assert_in_list("linux has coreelements" coreelements _plugins_linux)
-qgc_test_assert_in_list("linux has va"           va           _plugins_linux)
-qgc_test_assert_not_in_list("linux excludes vtenc" vtenc      _plugins_linux)
+qgc_test_assert_in_list("linux has va" va _plugins_linux)
+qgc_test_assert_not_in_list("linux excludes vtenc" vtenc _plugins_linux)
 qgc_test_pass("plugins_for linux addenda")
 
 gstreamer_plugins_for(PLATFORM apple OUT_VAR _plugins_apple)
@@ -62,20 +64,22 @@ endforeach()
 qgc_test_pass("missing_required honours alternate sets")
 
 gstreamer_runtime_required_plugins(_required)
-foreach(_p IN ITEMS
-        coreelements
-        isomp4
-        matroska
-        multifile
-        opengl
-        playback
-        rtsp
-        rtp
-        rtpmanager
-        tcp
-        udp
-        videoparsersbad
-        videoconvertscale)
+foreach(
+    _p IN
+    ITEMS coreelements
+          isomp4
+          matroska
+          multifile
+          opengl
+          playback
+          rtsp
+          rtp
+          rtpmanager
+          tcp
+          udp
+          videoparsersbad
+          videoconvertscale
+)
     qgc_test_assert_in_list("runtime required: ${_p}" "${_p}" _required)
 endforeach()
 qgc_test_assert_not_in_list("runtime required: openh264 is optional codec implementation" openh264 _required)

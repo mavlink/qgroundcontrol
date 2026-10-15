@@ -2,31 +2,37 @@
 
 include_guard(GLOBAL)
 
-function(_qgc_gst_windows_sdk_complete ROOT_DIR OUT_VAR)
-    set(_required_paths
-        "bin/pkg-config.exe"
-        "include/gstreamer-1.0"
-        "lib/gstreamer-1.0"
-        "lib/pkgconfig/gstreamer-1.0.pc"
+# Sets <out_var> TRUE when <root_dir> holds a usable MSVC SDK (pkg-config, headers, plugins and gstreamer-1.0.pc).
+function(_qgc_gst_windows_sdk_complete root_dir out_var)
+    set(_required_paths "bin/pkg-config.exe" "include/gstreamer-1.0" "lib/gstreamer-1.0"
+                        "lib/pkgconfig/gstreamer-1.0.pc"
     )
 
     set(_is_complete TRUE)
     foreach(_path IN LISTS _required_paths)
-        if(NOT EXISTS "${ROOT_DIR}/${_path}")
+        if(NOT EXISTS "${root_dir}/${_path}")
             set(_is_complete FALSE)
             break()
         endif()
     endforeach()
 
-    set(${OUT_VAR} "${_is_complete}" PARENT_SCOPE)
+    set(${out_var}
+        "${_is_complete}"
+        PARENT_SCOPE
+    )
 endfunction()
 
-function(_qgc_gst_find_windows_sdk_root EXTRACTED_DIR OUT_VAR)
-    if(EXISTS "${EXTRACTED_DIR}/bin/pkg-config.exe")
-        set(${OUT_VAR} "${EXTRACTED_DIR}" PARENT_SCOPE)
+# Sets <out_var> to the SDK root inside <extracted_dir>, <root>/bin/pkg-config.exe being its shallowest
+# pkg-config.exe, or to "" when there is none.
+function(_qgc_gst_find_windows_sdk_root extracted_dir out_var)
+    if(EXISTS "${extracted_dir}/bin/pkg-config.exe")
+        set(${out_var}
+            "${extracted_dir}"
+            PARENT_SCOPE
+        )
         return()
     endif()
-    file(GLOB_RECURSE _pkg_config_files "${EXTRACTED_DIR}/pkg-config.exe")
+    file(GLOB_RECURSE _pkg_config_files "${extracted_dir}/pkg-config.exe")
     if(_pkg_config_files)
         # A bundled second pkg-config.exe would yield a non-canonical root via
         # element 0 — pick the shortest path so the canonical SDK root wins.
@@ -41,16 +47,23 @@ function(_qgc_gst_find_windows_sdk_root EXTRACTED_DIR OUT_VAR)
             string(TOLOWER "${_first_pkg_config}" _first_pkg_config_lc)
             if(_shortest_depth EQUAL -1
                OR _candidate_depth LESS _shortest_depth
-               OR (_candidate_depth EQUAL _shortest_depth AND _candidate_lc STRLESS "${_first_pkg_config_lc}"))
+               OR (_candidate_depth EQUAL _shortest_depth AND _candidate_lc STRLESS "${_first_pkg_config_lc}")
+            )
                 set(_first_pkg_config "${_candidate}")
                 set(_shortest_depth ${_candidate_depth})
             endif()
         endforeach()
         cmake_path(GET _first_pkg_config PARENT_PATH _bin_dir)
         cmake_path(GET _bin_dir PARENT_PATH _found_root)
-        set(${OUT_VAR} "${_found_root}" PARENT_SCOPE)
+        set(${out_var}
+            "${_found_root}"
+            PARENT_SCOPE
+        )
     else()
-        set(${OUT_VAR} "" PARENT_SCOPE)
+        set(${out_var}
+            ""
+            PARENT_SCOPE
+        )
     endif()
 endfunction()
 
@@ -132,8 +145,9 @@ endfunction()
 # complete and recent enough, else downloads the official MSVC SDK for the target architecture. Points pkg-config at
 # the SDK. Sets GStreamer_ROOT_DIR, GStreamer_AUTO_DOWNLOADED, GSTREAMER_{LIB,PLUGIN,INCLUDE}_PATH and the SDK's
 # PKG_CONFIG_EXECUTABLE and PKG_CONFIG_ARGN.
-# cmakelang 0.6.13 predates return(PROPAGATE).
-# cmake-lint: disable=C0103,E1121
+# cmakelang 0.6.13 predates return(PROPAGATE). Discovery is one ordered fallback chain (root, environment, standard
+# install, download) that fills in the whole layout.
+# cmake-lint: disable=C0103,E1121,R0912,R0915
 function(_qgc_gst_discover_windows_sdk)
     _qgc_gst_windows_sdk_arch(_gst_win_arch)
     if(_gst_win_arch STREQUAL "arm64")

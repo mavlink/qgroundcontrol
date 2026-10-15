@@ -41,15 +41,15 @@ endfunction()
 #                        win but system glib/gobject .pc files stay discoverable.
 #                        Used by Linux distro-installed GStreamer.
 # PKG_CONFIG_EXECUTABLE / PKG_CONFIG_ARGN are set as normal variables in the caller's scope.
+# cmakelang reads set(ENV{<name>}) as a variable name.
+# cmake-lint: disable=C0103
 function(gstreamer_apply_pkgconfig_env)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "DONT_DEFINE_PREFIX" "MODE;PKG_CONFIG_EXE" "LIBDIR")
     if(ARG_KEYWORDS_MISSING_VALUES)
-        message(FATAL_ERROR
-            "gstreamer_apply_pkgconfig_env: missing values for: ${ARG_KEYWORDS_MISSING_VALUES}")
+        message(FATAL_ERROR "gstreamer_apply_pkgconfig_env: missing values for: ${ARG_KEYWORDS_MISSING_VALUES}")
     endif()
     if(ARG_UNPARSED_ARGUMENTS)
-        message(FATAL_ERROR
-            "gstreamer_apply_pkgconfig_env: unknown arguments: ${ARG_UNPARSED_ARGUMENTS}")
+        message(FATAL_ERROR "gstreamer_apply_pkgconfig_env: unknown arguments: ${ARG_UNPARSED_ARGUMENTS}")
     endif()
     if(NOT ARG_MODE)
         message(FATAL_ERROR "gstreamer_apply_pkgconfig_env: MODE is required (SDK or SYSTEM_AUGMENT)")
@@ -86,12 +86,17 @@ function(gstreamer_apply_pkgconfig_env)
         string(REPLACE ";" "${_sep}" _pkg_config_path "${_pkg_config_paths}")
         set(ENV{PKG_CONFIG_PATH} "${_pkg_config_path}")
     else()
-        message(FATAL_ERROR "gstreamer_apply_pkgconfig_env: invalid MODE='${ARG_MODE}' (expected SDK or SYSTEM_AUGMENT)")
+        message(
+            FATAL_ERROR "gstreamer_apply_pkgconfig_env: invalid MODE='${ARG_MODE}' (expected SDK or SYSTEM_AUGMENT)"
+        )
     endif()
 
     if(ARG_DONT_DEFINE_PREFIX AND NOT "--dont-define-prefix" IN_LIST PKG_CONFIG_ARGN)
         list(APPEND PKG_CONFIG_ARGN --dont-define-prefix)
-        set(PKG_CONFIG_ARGN "${PKG_CONFIG_ARGN}" PARENT_SCOPE)
+        set(PKG_CONFIG_ARGN
+            "${PKG_CONFIG_ARGN}"
+            PARENT_SCOPE
+        )
     endif()
 endfunction()
 

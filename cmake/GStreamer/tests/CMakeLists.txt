@@ -31,24 +31,23 @@ foreach(_t IN LISTS _qgc_findmod_tests)
         COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_SOURCE_DIR}/${_t}.cmake"
         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
     )
-    set_tests_properties(FindModule.${_t} PROPERTIES
-        LABELS "Unit;FindModule"
-        TIMEOUT 15
-        FAIL_REGULAR_EXPRESSION "ASSERT|FATAL_ERROR|CMake Error"
+    set_tests_properties(FindModule.${_t} PROPERTIES LABELS "Unit;FindModule" TIMEOUT 15 FAIL_REGULAR_EXPRESSION
+                                                     "ASSERT|FATAL_ERROR|CMake Error"
     )
 endforeach()
 
-if(QGC_ENABLE_GST_VIDEOSTREAMING AND NOT ANDROID AND NOT IOS)
+if(QGC_ENABLE_GST_VIDEOSTREAMING
+   AND NOT ANDROID
+   AND NOT IOS
+)
     add_test(
         NAME FindModule.test_install_component
         COMMAND
             "${CMAKE_COMMAND}"
-            "-DINSTALL_SCRIPT=${PROJECT_BINARY_DIR}/src/VideoManager/VideoReceiver/GStreamer/cmake_install.cmake"
-            -P "${CMAKE_CURRENT_SOURCE_DIR}/test_install_component.cmake"
+            "-DINSTALL_SCRIPT=${PROJECT_BINARY_DIR}/src/VideoManager/VideoReceiver/GStreamer/cmake_install.cmake" -P
+            "${CMAKE_CURRENT_SOURCE_DIR}/test_install_component.cmake"
     )
-    set_tests_properties(
-        FindModule.test_install_component PROPERTIES LABELS "Unit;FindModule" TIMEOUT 15
-    )
+    set_tests_properties(FindModule.test_install_component PROPERTIES LABELS "Unit;FindModule" TIMEOUT 15)
 endif()
 
 # Registers FindModule.<test_name>: runs <script>.cmake (optionally with TEST_CASE) and passes only
