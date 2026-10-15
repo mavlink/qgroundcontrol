@@ -109,37 +109,4 @@ if [ "$XDG_SESSION_TYPE" = "wayland" ]; then
     export QT_QPA_PLATFORM=xcb
 fi
 
-export GST_REGISTRY_REUSE_PLUGIN_SCANNER="no"
-export GST_REGISTRY_FORK="no"
-
-GST_PLUGIN_DIR="${APPDIR}/usr/lib/gstreamer-1.0"
-GST_SCANNER="${APPDIR}/usr/lib/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner"
-GST_PTP="${APPDIR}/usr/lib/gstreamer1.0/gstreamer-1.0/gst-ptp-helper"
-
-if [ -d "${GST_PLUGIN_DIR}" ]; then
-    export GST_PLUGIN_SYSTEM_PATH_1_0="${GST_PLUGIN_DIR}"
-    export GST_PLUGIN_SYSTEM_PATH="${GST_PLUGIN_DIR}"
-    export GST_PLUGIN_PATH_1_0="${GST_PLUGIN_DIR}"
-    export GST_PLUGIN_PATH="${GST_PLUGIN_DIR}"
-else
-    echo "Warning: bundled GStreamer plugin directory missing: ${GST_PLUGIN_DIR}" >&2
-    unset GST_PLUGIN_SYSTEM_PATH_1_0 GST_PLUGIN_SYSTEM_PATH GST_PLUGIN_PATH_1_0 GST_PLUGIN_PATH
-fi
-
-if [ -x "${GST_SCANNER}" ]; then
-    export GST_PLUGIN_SCANNER_1_0="${GST_SCANNER}"
-    export GST_PLUGIN_SCANNER="${GST_SCANNER}"
-else
-    echo "Warning: bundled gst-plugin-scanner missing or not executable: ${GST_SCANNER}" >&2
-    unset GST_PLUGIN_SCANNER_1_0 GST_PLUGIN_SCANNER
-fi
-
-if [ -x "${GST_PTP}" ]; then
-    export GST_PTP_HELPER_1_0="${GST_PTP}"
-    export GST_PTP_HELPER="${GST_PTP}"
-else
-    echo "Warning: bundled gst-ptp-helper missing or not executable: ${GST_PTP}" >&2
-    unset GST_PTP_HELPER_1_0 GST_PTP_HELPER
-fi
-
 exec "$QGC_BINARY" "$@"

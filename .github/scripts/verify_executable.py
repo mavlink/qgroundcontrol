@@ -44,12 +44,8 @@ def _setup_gstreamer_env(build_dir: Path) -> None:
 
     print(f"Setting GStreamer env from build cache: {gst_root}")
     plugin_str = str(plugin_dir)
-    for var in (
-        "GST_PLUGIN_PATH",
-        "GST_PLUGIN_PATH_1_0",
-        "GST_PLUGIN_SYSTEM_PATH",
-        "GST_PLUGIN_SYSTEM_PATH_1_0",
-    ):
+    # SYSTEM_PATH replaces the default plugin dirs; GST_PLUGIN_PATH would only rescan the same dir.
+    for var in ("GST_PLUGIN_SYSTEM_PATH", "GST_PLUGIN_SYSTEM_PATH_1_0"):
         os.environ[var] = plugin_str
 
     scanner = gst_root / "libexec" / "gstreamer-1.0" / "gst-plugin-scanner"

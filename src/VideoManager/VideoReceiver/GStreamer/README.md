@@ -85,7 +85,7 @@ Per-platform import of decoded GPU frames without a copy, all sharing `GstHwFram
 QGC configures GStreamer runtime paths before `gst_init()`:
 
 - **Desktop (Linux/macOS/Windows)**: `GStreamer::prepareEnvironment()` sets plugin paths, scanner/helper paths, and GIO module paths when bundled runtimes are detected.
-- **Linux AppImage**: [`deploy/linux/AppRun`](../../../../deploy/linux/AppRun) exports `GST_PLUGIN_*`, `GST_PLUGIN_SCANNER*`, and `GST_PTP_HELPER*` only when bundled paths are valid.
+- **Linux AppImage**: the same Linux bundle detection applies to the AppImage's `usr/lib`; it is skipped when the user already set a `GST_PLUGIN_PATH*` or `GST_PLUGIN_SYSTEM_PATH*` variable. [`deploy/linux/AppRun`](../../../../deploy/linux/AppRun) only sets the library, GIO and Qt environment.
 - **Environment hygiene**: Python virtualenv/conda variables are cleared for scanner stability (`PYTHONHOME`, `PYTHONPATH`, `VIRTUAL_ENV`, `CONDA_*`), and `PYTHONNOUSERSITE=1` is set.
 - **Plugin search path**: The bundled plugin directory is set as `GST_PLUGIN_SYSTEM_PATH*`, which replaces GStreamer's default system and user plugin directories. `GST_PLUGIN_PATH*` is cleared, because it would only rescan the same directory.
 - **Validation**: A macOS app that ships `GStreamer.framework` without its plugin directory fails initialization with a clear error. A missing or non-executable bundled `gst-plugin-scanner` only logs a warning: QGC sets `GST_REGISTRY_FORK=no`, so GStreamer scans plugins in-process.

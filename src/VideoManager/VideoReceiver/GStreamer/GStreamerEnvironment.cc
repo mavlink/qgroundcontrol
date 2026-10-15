@@ -461,7 +461,7 @@ ValidationResult _setGstEnvVars()
     }
 
 #elif defined(Q_OS_LINUX)
-    // AppRun sets GStreamer env vars before launch; apply fallbacks only with no external override.
+    // An AppImage or other bundle ships its runtime under <prefix>/lib; a plugin path set by the user wins.
     if (!qEnvironmentVariableIsSet("GST_PLUGIN_PATH_1_0") && !qEnvironmentVariableIsSet("GST_PLUGIN_PATH") &&
         !qEnvironmentVariableIsSet("GST_PLUGIN_SYSTEM_PATH_1_0") &&
         !qEnvironmentVariableIsSet("GST_PLUGIN_SYSTEM_PATH")) {
