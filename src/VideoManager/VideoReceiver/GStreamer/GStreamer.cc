@@ -271,8 +271,9 @@ bool initialize(const QStringList& arguments, const Environment::ValidationResul
     return completeInit();
 }
 
-// Video sink refcount protocol: createVideoSink returns floating(1); ref on add to the pipeline,
-// unref on removal; releaseVideoSink drops the last ref. Keep the ref/unref sites balanced.
+// Video sink refcount protocol: createVideoSink returns one owned, non-floating ref, which the caller
+// drops with releaseVideoSink. While decoding, the receiver holds its own ref and the pipeline bin
+// takes another on gst_bin_add (dropped by gst_bin_remove). Keep the ref/unref sites balanced.
 void* createVideoSink(const VideoSinkConfig& config)
 {
     // All bin tunables are construct-only — properties drive behavior, no env-var indirection.
@@ -297,8 +298,10 @@ void* createVideoSink(const VideoSinkConfig& config)
 #endif
     if (!videoSinkBin) {
         qCCritical(GStreamerLog) << "qgcvideosinkbin element creation failed";
+        return nullptr;
     }
-    return videoSinkBin;
+    // Sink the floating ref so adding the sink to a bin never consumes the caller's reference.
+    return gst_object_ref_sink(videoSinkBin);
 }
 
 void releaseVideoSink(void* sink)

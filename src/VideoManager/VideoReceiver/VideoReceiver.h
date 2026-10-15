@@ -114,13 +114,13 @@ protected:
     // Flipped on streaming threads, read cross-thread (e.g. tee probe logging).
     std::atomic<bool> _decoding = false;
     bool _recording = false;
-    bool _streaming = false;
+    std::atomic<bool> _streaming = false;
     bool _lowLatency = false;
     int _rtpJitterLatencyMs = 80;
     // Written live on the GUI thread, read on the receiver worker thread.
     std::atomic<bool> _autoReconnect = true;     ///< RTSP/UDP auto-reconnect with exponential backoff on watchdog/error.
-    bool _resetVideoSink = false;
-    bool _endOfStream = false;
+    std::atomic<bool> _resetVideoSink = false;
+    std::atomic<bool> _endOfStream = false;
     bool _removingDecoder = false;
     bool _removingRecorder = false;
     // buffer:
@@ -128,7 +128,7 @@ protected:
     //      0 - default buffer length
     //      N - buffer length, ms
     int _buffer = 0;
-    // Written on streaming threads (pad probes), read/written by the watchdog on the worker thread.
+    // Monotonic ms. Written on streaming threads (pad probes), read/written by the watchdog on the worker thread.
     std::atomic<qint64> _lastSourceFrameTime = 0;
     std::atomic<qint64> _lastVideoFrameTime = 0;
     int _statsTickCounter = 0;

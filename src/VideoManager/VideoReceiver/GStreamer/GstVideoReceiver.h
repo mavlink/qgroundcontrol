@@ -106,6 +106,13 @@ private:
     bool _unlinkBranch(GstElement *from);
     void _shutdownDecodingBranch();
     void _shutdownRecordingBranch();
+    void _removeSourceEosProbe();
+    /// Tears down the running pipeline (finalizing an active recording first) and resets all
+    /// pipeline state. Returns false when nothing was running.
+    bool _stopPipeline();
+    /// Releases every pipeline-scoped element, probe and flag, emitting the matching change
+    /// signals. Safe on a partially built pipeline (failed start()).
+    void _resetPipelineState();
     void _logDecodebin3SelectedCodec(GstElement *decodebin3);
 
     bool _needDispatch();
@@ -138,14 +145,17 @@ private:
     GstElement *_videoSink = nullptr;
     GstVideoWorker *_worker = nullptr;
     std::atomic<int> _reconnectAttempts = 0;     ///< Written on the streaming thread (_noteTeeFrame) and GUI thread (reconnect lambda); atomic.
-    std::atomic<quint64> _reconnectEpoch = 0;    ///< Bumped on every stop() — pending singleShot lambdas check this before firing, replacing an explicit cancel/pending-flag pair.
+    /// Bumped on every teardown (stop() or failed start()); queued reconnect timers and ERROR handlers
+    /// captured under an older epoch become no-ops.
+    std::atomic<quint64> _reconnectEpoch = 0;
     std::atomic<quint64> _sourceFrameCount =
         0;  ///< Tee-probe frame tally (streaming thread); drives the source-side flow heartbeat log.
     gulong _teeProbeId = 0;
     gulong _videoSinkProbeId = 0;
     gulong _eosProbeId = 0;
-    GstPad *_eosProbePad = nullptr;  // ref-held: probe install pad, kept so removal targets the right pad regardless of _decoder lifecycle
-    gulong _keyframeWatchId = 0;
+    // Ref-held source pad carrying _eosProbeId; released with the pipeline, not the decode branch.
+    GstPad* _eosProbePad = nullptr;
+    std::atomic<gulong> _keyframeWatchId = 0;  // cleared by _keyframeWatch (streaming thread) when it removes itself
     bool _recordingStopRequested = false;
 
     mutable QMutex _decoderNameMutex;  // QString refcount isn't thread-safe across reader/writer threads
