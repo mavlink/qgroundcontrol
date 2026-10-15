@@ -6,7 +6,6 @@
 #include <initializer_list>
 #include <string>
 
-#include "GstQgcAllocation.h"
 #include "GstQgcCaps.h"
 
 #define GST_CAT_DEFAULT gst_qgc_debug
@@ -404,20 +403,10 @@ static void gst_qgc_video_sink_bin_setup(GstQgcVideoSinkBin* self)
 
     // On failure the wire*Path() BinChain rolls the bin back and frees videosink/capsf; self
     // pointers stay NULL so change_state surfaces the construction error.
-    if (!(self->gpu_zerocopy ? wireGpuPath(self, videosink, capsf) : wireCpuPath(self, videosink, capsf))) {
-        return;
-    }
-
-    // Probe the videosink sink pad so ALLOCATION/CONTEXT queries terminate here instead of racing
-    // the bus NEED_CONTEXT fallback. Installed post-commit so a wire failure leaves no orphan probe.
-    if (GstPad* videosinkPad = gst_element_get_static_pad(videosink, "sink")) {
-        const gulong probe_id = gst_pad_add_probe(videosinkPad, GST_PAD_PROBE_TYPE_QUERY_DOWNSTREAM,
-                                                  GstQgc::videosinkQueryProbe, NULL, NULL);
-        if (probe_id == 0) {
-            GST_WARNING_OBJECT(
-                self, "gst_pad_add_probe(QUERY_DOWNSTREAM) returned 0 — qgcqvideosink query interception disabled");
-        }
-        gst_object_unref(videosinkPad);
+    if (self->gpu_zerocopy) {
+        wireGpuPath(self, videosink, capsf);
+    } else {
+        wireCpuPath(self, videosink, capsf);
     }
 }
 

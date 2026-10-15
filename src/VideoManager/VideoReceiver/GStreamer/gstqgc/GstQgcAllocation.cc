@@ -1,12 +1,11 @@
 #include "GstQgcAllocation.h"
 
+#include <gst/video/video.h>
+
 #include <QtCore/qglobal.h>
 
-#include <gst/video/gstvideometa.h>
-#include <gst/video/video-info.h>
-
+#include "HwBuffers/common/CpuVideoFramePool.h"
 #include "HwBuffers/dmabuf/GstDmaDrmCaps.h"
-#include "HwBuffers/common/HwBuffers.h"
 #if GST_CHECK_VERSION(1, 24, 0)
 #include <gst/video/video-info-dma.h>
 #endif
@@ -26,8 +25,9 @@ namespace GstQgc {
 
 namespace {
 
-// VAAPI/H.264 ref-frame queue typically 4–8; min=2 forced fallback allocations.
-constexpr guint kProposedMinBuffers = 4;
+// Downstream holds up to kMaxPinnedFrames decoder buffers (zero-copy CPU and GPU frames alike); one more keeps a
+// fixed-size decoder pool from stalling while all of those are held.
+constexpr guint kProposedMinBuffers = CpuVideoFramePool::kMaxPinnedFrames + 1;
 
 // Advertise every meta API qgcqvideosink/GStreamerFrameMap consume so upstream keeps them;
 // else gst-vaapi/v4l2 strip crop/orientation metas and mapSampleToFrame does a full copy/rotate.
@@ -140,9 +140,11 @@ bool tryProposeDeviceBoundPool(GstQuery* query, GstCaps* caps, const GstVideoInf
     return false;
 }
 
+// A GstVideoBufferPool, unlike a plain GstBufferPool, supports VIDEO_META and attaches GstVideoMeta per buffer, so
+// decoders that check the option (avdec direct rendering) decode straight into it instead of copying.
 bool tryProposeMetaPool(GstQuery* query, GstCaps* caps, gsize size)
 {
-    GstBufferPool* pool = gst_buffer_pool_new();
+    GstBufferPool* pool = gst_video_buffer_pool_new();
     if (!pool) {
         return false;
     }
@@ -195,31 +197,6 @@ void populateAllocationQuery(GstQuery* query)
 
     (void) tryProposeMetaPool(query, caps, size);
     addConsumedAllocationMetas(query);
-}
-
-GstPadProbeReturn videosinkQueryProbe(GstPad* pad, GstPadProbeInfo* info, gpointer user_data)
-{
-    (void) pad;
-    (void) user_data;
-    GstQuery* query = GST_PAD_PROBE_INFO_QUERY(info);
-    if (!query) {
-        return GST_PAD_PROBE_OK;
-    }
-
-    switch (GST_QUERY_TYPE(query)) {
-        case GST_QUERY_ALLOCATION:
-            populateAllocationQuery(query);
-            return GST_PAD_PROBE_HANDLED;
-        case GST_QUERY_CONTEXT:
-            // Synchronous answer for gst.gl.GLDisplay/app_context — bus NEED_CONTEXT fallback races state changes and
-            // can isolate glupload from Qt's RHI context.
-            if (HwBuffers::answerSinkBinContextQuery(query)) {
-                return GST_PAD_PROBE_HANDLED;
-            }
-            return GST_PAD_PROBE_OK;
-        default:
-            return GST_PAD_PROBE_OK;
-    }
 }
 
 }  // namespace GstQgc

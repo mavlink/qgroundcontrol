@@ -1,12 +1,14 @@
 #include "QGCQVideoSinkController.h"
 
+#include <memory>
+
 #include <QtCore/QMutexLocker>
 #include <QtCore/QThread>
 #include <QtGui/QWindow>
+#include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoSink>
 #include <QtMultimediaQuick/private/qquickvideooutput_p.h>
 #include <QtQuick/QQuickWindow>
-#include <memory>
 
 #include "GstScoped.h"
 #include "QGCLoggingCategory.h"
@@ -143,9 +145,14 @@ void QGCQVideoSinkController::setVideoSink(QPointer<QVideoSink> sink)
         // element's snapshot and gate show_frame until a replacement sink is installed.
         g_object_set(_element, "active", FALSE, "qvideosink", static_cast<gpointer>(nullptr), nullptr);
         _bindingReleased = true;
+        _clearVideoSinkFrame();
         return;
     }
     g_object_set(_element, "qvideosink", static_cast<gpointer>(raw), nullptr);
+    if (_videoSink != raw) {
+        _clearVideoSinkFrame();
+    }
+    _videoSink = raw;
     _sinkDestroyedConnection = QObject::connect(raw, &QObject::destroyed, this, [this]() {
         setVideoSink(QPointer<QVideoSink>());
     });
@@ -194,6 +201,19 @@ void QGCQVideoSinkController::_releaseElementBinding() noexcept
     }
     g_object_set(_element, "active", FALSE, "qvideosink", static_cast<gpointer>(nullptr), nullptr);
     _bindingReleased = true;
+    _clearVideoSinkFrame();
+}
+
+void QGCQVideoSinkController::_clearVideoSinkFrame()
+{
+    QVideoSink* const sink = _videoSink.data();
+    _videoSink.clear();
+    if (!sink) {
+        return;
+    }
+    // The element no longer feeds this sink; without this its last frame would keep a GstSample (and the decoder
+    // buffer behind it) alive after the pipeline is gone.
+    QMetaObject::invokeMethod(sink, [sink]() { sink->setVideoFrame(QVideoFrame()); }, Qt::AutoConnection);
 }
 
 void QGCQVideoSinkController::_onEmitTimer()

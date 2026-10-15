@@ -1,11 +1,13 @@
 #pragma once
 
-#include <QtMultimedia/QVideoFrame>
-#include <QtMultimedia/QVideoFrameFormat>
 #include <gst/gst.h>
 #include <gst/video/video-info.h>
 #include <gst/video/video.h>
 
+#include <QtMultimedia/QVideoFrame>
+#include <QtMultimedia/QVideoFrameFormat>
+
+#include "HwBuffers/common/CpuVideoFramePool.h"
 #include "HwBuffers/common/HwBuffers.h"
 
 /// Sample-to-frame helpers for qgcqvideosink's show_frame; pure functions, streaming-thread safe.
@@ -47,4 +49,5 @@ struct MappedFrame
 
 MappedFrame mapSampleToFrame(GstBuffer* buffer, GstCaps* caps, const GstVideoInfo& info,
                              const QVideoFrameFormat& format, const HwVideoBufferContext& hwContext,
+                             const CpuVideoFramePool::PinnedFrameCounter& pinnedCpuFrames,
                              HwResolvedPathCache* pathCache = nullptr) noexcept;

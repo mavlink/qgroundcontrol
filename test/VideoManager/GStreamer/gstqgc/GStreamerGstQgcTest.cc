@@ -63,6 +63,107 @@
 #include <string_view>
 #include <vector>
 
+namespace {
+
+guint64 framesDelivered(GstElement* qvideosink)
+{
+    guint64 delivered = 0;
+    g_object_get(qvideosink, "frames-delivered", &delivered, nullptr);
+    return delivered;
+}
+
+/// Drives a standalone qgcqvideosink from the test thread through a linked source pad. show_frame runs inside
+/// pushFrame(), so element counters are exact, and GUI-thread delivery happens only when the test pumps events.
+class QgcQVideoSinkHarness
+{
+public:
+    static constexpr int kWidth = 4;
+    static constexpr int kHeight = 4;
+    static constexpr gsize kFrameBytes = kWidth * kHeight * 4;
+
+    explicit QgcQVideoSinkHarness(QVideoSink* target)
+        : _sink(gst_element_factory_make("qgcqvideosink", nullptr))
+        , _bus(gst_bus_new())
+        , _src(gst_pad_new("src", GST_PAD_SRC))
+    {
+        if (!_sink) {
+            return;
+        }
+        gst_object_ref_sink(_sink);
+        gst_element_set_bus(_sink, _bus);
+        // GstVideoSink would otherwise show the first buffer after each preroll twice (preroll + render).
+        g_object_set(_sink, "qvideosink", static_cast<gpointer>(target), "show-preroll-frame", FALSE, nullptr);
+        GstPad* sinkPad = gst_element_get_static_pad(_sink, "sink");
+        _ready = sinkPad && (gst_pad_link(_src, sinkPad) == GST_PAD_LINK_OK) && gst_pad_set_active(_src, TRUE) &&
+                 (gst_element_set_state(_sink, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
+        if (sinkPad) {
+            gst_object_unref(sinkPad);
+        }
+    }
+
+    ~QgcQVideoSinkHarness()
+    {
+        if (_sink) {
+            gst_element_set_state(_sink, GST_STATE_NULL);
+        }
+        gst_pad_set_active(_src, FALSE);
+        gst_object_unref(_src);
+        gst_clear_object(&_sink);
+        gst_object_unref(_bus);
+    }
+
+    QgcQVideoSinkHarness(const QgcQVideoSinkHarness&) = delete;
+    QgcQVideoSinkHarness& operator=(const QgcQVideoSinkHarness&) = delete;
+
+    bool isReady() const { return _ready; }
+
+    GstElement* element() const { return _sink; }
+
+    GstBus* bus() const { return _bus; }
+
+    /// stream-start, BGRA caps and a TIME segment, as an upstream element sends before its first buffer.
+    bool start()
+    {
+        GstCaps* caps =
+            gst_caps_new_simple("video/x-raw", "format", G_TYPE_STRING, "BGRA", "width", G_TYPE_INT, kWidth, "height",
+                                G_TYPE_INT, kHeight, "framerate", GST_TYPE_FRACTION, 30, 1, nullptr);
+        const bool ok = pushEvent(gst_event_new_stream_start("qgc-harness")) && pushEvent(gst_event_new_caps(caps)) &&
+                        pushSegment();
+        gst_caps_unref(caps);
+        return ok;
+    }
+
+    bool pushSegment()
+    {
+        GstSegment segment;
+        gst_segment_init(&segment, GST_FORMAT_TIME);
+        return pushEvent(gst_event_new_segment(&segment));
+    }
+
+    bool pushEvent(GstEvent* event) { return gst_pad_push_event(_src, event); }
+
+    /// @p size below kFrameBytes produces a buffer gst_video_frame_map rejects.
+    GstFlowReturn pushFrame(GstClockTime pts, bool discont = false, gsize size = kFrameBytes)
+    {
+        GstBuffer* buffer = gst_buffer_new_allocate(nullptr, size, nullptr);
+        gst_buffer_memset(buffer, 0, 0x80, size);
+        GST_BUFFER_PTS(buffer) = pts;
+        if (discont) {
+            GST_BUFFER_FLAG_SET(buffer, GST_BUFFER_FLAG_DISCONT);
+        }
+        return gst_pad_push(_src, buffer);
+    }
+
+    guint64 delivered() const { return framesDelivered(_sink); }
+
+private:
+    GstElement* _sink = nullptr;
+    GstBus* _bus = nullptr;
+    GstPad* _src = nullptr;
+    bool _ready = false;
+};
+
+}  // namespace
 void GStreamerTest::_testAppsinkFrameDelivery()
 {
     // Ensure the qgc plugin (including qgcvideosinkbin) is registered.
@@ -799,10 +900,14 @@ void GStreamerTest::_testAppsinkTeardownUnderLoad()
         QVERIFY(sinkBin);
         QObject controllerOwner1;
         QVERIFY(GStreamer::setupQVideoSinkElement(sinkBin, &videoSink, &controllerOwner1));
+        GstElement* qvideosink = gst_bin_get_by_name(GST_BIN(sinkBin), "qgcqvideosink");
         gst_object_unref(sinkBin);
+        QVERIFY(qvideosink);
 
         QVERIFY(gst_element_set_state(pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
-        QTest::qWait(150);
+        // Tear down only once frames are actually flowing.
+        QVERIFY_TRUE_WAIT(framesDelivered(qvideosink) > 0, TestTimeout::mediumMs());
+        gst_object_unref(qvideosink);
         // controllerOwner1 goes out of scope here — implicit teardown.
 
         gst_element_set_state(pipeline, GST_STATE_NULL);
@@ -1169,7 +1274,7 @@ void GStreamerTest::_testCpuZeroCopyFrameRejectsWritableMap()
     gst_buffer_unmap(buffer, &mapInfo);
 
     QVideoFrameFormat format(QSize(4, 4), QVideoFrameFormat::Format_BGRA8888);
-    auto wrapped = CpuVideoFramePool::wrapZeroCopy(buffer, info, format);
+    auto wrapped = CpuVideoFramePool::wrapZeroCopy(buffer, info, format, std::make_shared<std::atomic<int>>(0));
     QVERIFY(wrapped);
 
     QVideoFrame frame(std::move(wrapped));
@@ -1180,6 +1285,33 @@ void GStreamerTest::_testCpuZeroCopyFrameRejectsWritableMap()
 
     QVERIFY(!frame.map(QVideoFrame::WriteOnly));
     QVERIFY(!frame.map(QVideoFrame::ReadWrite));
+}
+
+void GStreamerTest::_testCpuZeroCopyPinnedFramesCappedPerSink()
+{
+    GstVideoInfo info;
+    gst_video_info_init(&info);
+    gst_video_info_set_format(&info, GST_VIDEO_FORMAT_BGRA, 4, 4);
+    GstBuffer* buffer = gst_buffer_new_allocate(nullptr, GST_VIDEO_INFO_SIZE(&info), nullptr);
+    QVERIFY(buffer);
+    auto bufferGuard = qScopeGuard([&] { gst_buffer_unref(buffer); });
+    const QVideoFrameFormat format(QSize(4, 4), QVideoFrameFormat::Format_BGRA8888);
+
+    const auto sinkA = std::make_shared<std::atomic<int>>(0);
+    const auto sinkB = std::make_shared<std::atomic<int>>(0);
+    std::vector<std::unique_ptr<QAbstractVideoBuffer>> pinned;
+    for (int i = 0; i < CpuVideoFramePool::kMaxPinnedFrames; ++i) {
+        pinned.push_back(CpuVideoFramePool::wrapZeroCopy(buffer, info, format, sinkA));
+        QVERIFY(pinned.back());
+    }
+
+    // At the cap the caller must copy instead; another sink's budget is independent.
+    QVERIFY(!CpuVideoFramePool::wrapZeroCopy(buffer, info, format, sinkA));
+    QVERIFY(CpuVideoFramePool::wrapZeroCopy(buffer, info, format, sinkB));
+
+    // Releasing a frame (Qt dropping it) frees its slot.
+    pinned.pop_back();
+    QVERIFY(CpuVideoFramePool::wrapZeroCopy(buffer, info, format, sinkA));
 }
 
 void GStreamerTest::_testCpuMemcpyActiveRowStrideHandling()
@@ -1195,8 +1327,12 @@ void GStreamerTest::_testCpuMemcpyActiveRowStrideHandling()
     QObject controllerOwner;
 
     QVideoFrame capturedFrame;
-    QObject::connect(&videoSink, &QVideoSink::videoFrameChanged, &controllerOwner,
-                     [&](const QVideoFrame& f) { capturedFrame = f; });
+    // Controller teardown clears the QVideoSink with an invalid frame; keep the last real one.
+    QObject::connect(&videoSink, &QVideoSink::videoFrameChanged, &controllerOwner, [&](const QVideoFrame& f) {
+        if (f.isValid()) {
+            capturedFrame = f;
+        }
+    });
 
     auto r = runPipelineThroughQVideoSink(videoSink, controller,
                                           "video/x-raw,format=BGRA,width=753,height=432,framerate=30/1",
@@ -1271,7 +1407,8 @@ void GStreamerTest::_testAllocationQueryHwMemoryPoolHint()
     guint size = 0, minBuffers = 0, maxBuffers = 0;
     gst_query_parse_nth_allocation_pool(query, 0, &pool, &size, &minBuffers, &maxBuffers);
     QVERIFY2(pool == nullptr, "HW path must not propose a generic pool for native memory");
-    QVERIFY2(minBuffers > 0, "min-buffer hint must be non-zero");
+    QVERIFY2(minBuffers > guint(CpuVideoFramePool::kMaxPinnedFrames),
+             "min-buffer hint must leave the decoder a buffer beyond those the sink and Qt hold");
     QVERIFY2(gst_query_find_allocation_meta(query, GST_VIDEO_META_API_TYPE, nullptr),
              "VideoMeta not advertised on HW path");
 
@@ -1314,6 +1451,35 @@ void GStreamerTest::_testQgcVideoSinkBinAllocationQueryAdvertisesVideoMeta()
     gst_query_parse_nth_allocation_pool(query, 0, &pool, &size, &minBuffers, &maxBuffers);
     QVERIFY2(pool == nullptr, "qgcvideosinkbin must not propose a generic pool for native memory");
     QVERIFY2(minBuffers > 0, "qgcvideosinkbin min-buffer hint must be non-zero");
+}
+
+void GStreamerTest::_testQgcQVideoSinkProposesVideoMetaPool()
+{
+    QVERIFY2(GStreamer::completeInit(), "completeInit failed");
+
+    GstElement* sink = gst_element_factory_make("qgcqvideosink", nullptr);
+    QVERIFY2(sink, "qgcqvideosink factory not found");
+    gst_object_ref_sink(sink);
+    auto sinkGuard = qScopeGuard([&] { gst_object_unref(sink); });
+    GstPad* sinkPad = gst_element_get_static_pad(sink, "sink");
+    QVERIFY(sinkPad);
+    auto sinkPadGuard = qScopeGuard([&] { gst_object_unref(sinkPad); });
+
+    GstCaps* caps = gst_caps_from_string(
+        "video/x-raw, format=(string)BGRA, width=(int)64, height=(int)64, framerate=(fraction)30/1");
+    QVERIFY2(caps, "System-memory caps did not parse");
+    auto capsGuard = qScopeGuard([&] { gst_caps_unref(caps); });
+    GstQuery* query = gst_query_new_allocation(caps, /*need_pool=*/TRUE);
+    auto queryGuard = qScopeGuard([&] { gst_query_unref(query); });
+
+    QVERIFY2(gst_pad_query(sinkPad, query), "qgcqvideosink did not answer ALLOCATION");
+    QCOMPARE(gst_query_get_n_allocation_pools(query), 1U);
+    GstBufferPool* pool = nullptr;
+    gst_query_parse_nth_allocation_pool(query, 0, &pool, nullptr, nullptr, nullptr);
+    QVERIFY2(pool, "need_pool=TRUE must get a pool proposal");
+    const bool hasVideoMeta = gst_buffer_pool_has_option(pool, GST_BUFFER_POOL_OPTION_VIDEO_META);
+    gst_object_unref(pool);
+    QVERIFY2(hasVideoMeta, "proposed pool must support VIDEO_META so decoders can write into it directly");
 }
 
 void GStreamerTest::_testAllocationQuerySystemMemoryNoPoolStillAdvertisesMetas()
@@ -1512,18 +1678,14 @@ void GStreamerTest::_testApplyOrientationToFrameMapping()
 
 void GStreamerTest::_testAdapterFlushDropsInFlightSamples()
 {
-    // Push GST_EVENT_FLUSH_START upstream of the adapter; verify subsequent buffers don't
-    // surface as QVideoFrames (the new_sample callback short-circuits on _flushing). Then
-    // push FLUSH_STOP and verify delivery resumes.
+    // Push GST_EVENT_FLUSH_START into qgcqvideosink mid-stream; verify no buffer reaches show_frame while flushing and
+    // that, after FLUSH_STOP, every buffer the sink saw is accounted for as delivered or dropped. Counts come from the
+    // element: latest-frame-only delivery coalesces videoFrameChanged emissions, so those are not a frame count.
     GStreamer::redirectGLibLogging();
     QVERIFY2(GStreamer::completeInit(), "completeInit failed");
 
     QVideoSink sink;
     QObject controllerOwner;
-
-    std::atomic<int> deliveredFrames{0};
-    QObject::connect(&sink, &QVideoSink::videoFrameChanged, &controllerOwner,
-                     [&](const QVideoFrame&) { deliveredFrames.fetch_add(1, std::memory_order_relaxed); });
 
     GError* err = nullptr;
     // identity is_live=false to avoid the live-source latency offset; videotestsrc → identity → qgcvideosinkbin.
@@ -1543,9 +1705,12 @@ void GStreamerTest::_testAdapterFlushDropsInFlightSamples()
              "GStreamer::setupQVideoSinkElement() failed");
     gst_object_unref(sinkBin);
 
+    GstElement* vsink = gst_bin_get_by_name(GST_BIN(pipeline), "qgcqvideosink");
+    QVERIFY(vsink);
+
     QVERIFY(gst_element_set_state(pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
     // Wait for a few frames to confirm baseline delivery works.
-    QTRY_VERIFY_WITH_TIMEOUT(deliveredFrames.load() > 0, 3000);
+    QVERIFY_TRUE_WAIT(framesDelivered(vsink) > 0, TestTimeout::mediumMs());
 
     // Send FLUSH_START upstream of qgcqvideosink. identity element forwards events.
     GstElement* id = gst_bin_get_by_name(GST_BIN(pipeline), "id");
@@ -1558,22 +1723,13 @@ void GStreamerTest::_testAdapterFlushDropsInFlightSamples()
     gst_object_unref(flushStartPeer);
     QVERIFY(flushStartSent);
 
-    GstElement* vsink = gst_bin_get_by_name(GST_BIN(pipeline), "qgcqvideosink");
-    QVERIFY(vsink);
+    // Snapshot the accounting just after FLUSH_START. frames-input counts every buffer show_frame saw;
+    // frames-delivered counts those handed to the QVideoSink.
+    guint64 inputBefore = 0, deliveredBefore = 0;
+    g_object_get(vsink, "frames-input", &inputBefore, "frames-delivered", &deliveredBefore, nullptr);
 
-    // Snapshot the in-flight accounting just before the flush window. frames-input counts
-    // every buffer the sink's show_frame saw; frames-delivered counts those queued to the
-    // QVideoSink. The gap (input - delivered - dropped) is the set of buffers currently in
-    // flight inside the base sink that a flush must discard.
-    const int duringFlushBaseline = deliveredFrames.load(std::memory_order_relaxed);
-    guint64 inputBefore = 0, deliveredBefore = 0, droppedBefore = 0;
-    g_object_get(vsink, "frames-input", &inputBefore, "frames-delivered", &deliveredBefore, "frames-dropped",
-                 &droppedBefore, nullptr);
-
-    // During FLUSH_START the base sink rejects buffers before show_frame, so no buffer may
-    // surface as a QVideoFrame and no new buffer may be counted as input. Negative assertion:
-    // hold a bounded window open and confirm the delivered count stays flat while pumping
-    // queued deliveries.
+    // During FLUSH_START the base sink rejects buffers before show_frame, so neither counter may move. Negative
+    // assertion: hold a bounded window open while pumping the event loop.
     {
         QElapsedTimer flushWindow;
         flushWindow.start();
@@ -1581,8 +1737,6 @@ void GStreamerTest::_testAdapterFlushDropsInFlightSamples()
             QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
         }
     }
-    QCOMPARE(deliveredFrames.load(std::memory_order_relaxed), duringFlushBaseline);
-
     guint64 inputDuring = 0, deliveredDuring = 0;
     g_object_get(vsink, "frames-input", &inputDuring, "frames-delivered", &deliveredDuring, nullptr);
     QCOMPARE(deliveredDuring, deliveredBefore);
@@ -1596,22 +1750,188 @@ void GStreamerTest::_testAdapterFlushDropsInFlightSamples()
     gst_object_unref(flushStopPeer);
     QVERIFY(flushStopSent);
 
-    // Drain the Qt event loop so any push_frame_queued lambdas queued before the flush run.
-    QTest::qWait(100);
-
-    // The flush must leave no buffer stuck in flight: every buffer the sink accepted is now
-    // accounted for as either delivered or dropped. A leaked in-flight buffer would make
-    // input strictly exceed delivered+dropped.
-    guint64 inputAfter = 0, deliveredAfter = 0, droppedAfter = 0;
-    g_object_get(vsink, "frames-input", &inputAfter, "frames-delivered", &deliveredAfter, "frames-dropped",
-                 &droppedAfter, nullptr);
-    QCOMPARE(inputAfter, deliveredAfter + droppedAfter);
+    // The flush must leave no buffer stuck in flight: every buffer the sink accepted is accounted for as either
+    // delivered or dropped. A leaked in-flight buffer would keep input strictly above delivered+dropped.
+    const auto accountedFor = [vsink]() {
+        guint64 input = 0, delivered = 0, dropped = 0;
+        g_object_get(vsink, "frames-input", &input, "frames-delivered", &delivered, "frames-dropped", &dropped,
+                     nullptr);
+        return input == delivered + dropped;
+    };
+    QVERIFY_TRUE_WAIT(accountedFor(), TestTimeout::shortMs());
     gst_object_unref(vsink);
 
     gst_object_unref(idSrc);
     gst_object_unref(id);
     gst_element_set_state(pipeline, GST_STATE_NULL);
     gst_object_unref(pipeline);
+}
+
+void GStreamerTest::_testQgcQVideoSinkDeliversLatestFrameOnly()
+{
+    QVERIFY2(GStreamer::completeInit(), "completeInit failed");
+
+    int emissions = 0;
+    qint64 lastStartUs = -1;
+    QVideoSink videoSink;
+    QObject::connect(&videoSink, &QVideoSink::videoFrameChanged, &videoSink, [&](const QVideoFrame& frame) {
+        ++emissions;
+        lastStartUs = frame.startTime();
+    });
+    QgcQVideoSinkHarness harness(&videoSink);
+    QVERIFY(harness.isReady());
+    QVERIFY(harness.start());
+
+    // Three frames while the GUI thread is "stalled": all are handed off, but only the newest is shown.
+    for (int i = 1; i <= 3; ++i) {
+        QCOMPARE(harness.pushFrame(i * GST_SECOND), GST_FLOW_OK);
+    }
+    QCOMPARE(harness.delivered(), guint64(3));
+    QCoreApplication::sendPostedEvents(&videoSink, QEvent::MetaCall);
+    QCOMPARE(emissions, 1);
+    QCOMPARE(lastStartUs, qint64(3 * GST_SECOND / GST_USECOND));
+
+    // Delivery re-arms once the GUI side has taken the frame.
+    QCOMPARE(harness.pushFrame(4 * GST_SECOND), GST_FLOW_OK);
+    QCoreApplication::sendPostedEvents(&videoSink, QEvent::MetaCall);
+    QCOMPARE(emissions, 2);
+    QCOMPARE(lastStartUs, qint64(4 * GST_SECOND / GST_USECOND));
+}
+
+void GStreamerTest::_testQgcQVideoSinkDropsUndeliveredFrame_data()
+{
+    QTest::addColumn<bool>("viaFlush");
+    QTest::newRow("flush-start") << true;
+    QTest::newRow("stop") << false;
+}
+
+void GStreamerTest::_testQgcQVideoSinkDropsUndeliveredFrame()
+{
+    QFETCH(bool, viaFlush);
+    QVERIFY2(GStreamer::completeInit(), "completeInit failed");
+
+    int emissions = 0;
+    QVideoSink videoSink;
+    QObject::connect(&videoSink, &QVideoSink::videoFrameChanged, &videoSink, [&](const QVideoFrame&) { ++emissions; });
+    QgcQVideoSinkHarness harness(&videoSink);
+    QVERIFY(harness.isReady());
+    QVERIFY(harness.start());
+
+    QCOMPARE(harness.pushFrame(GST_SECOND), GST_FLOW_OK);
+    if (viaFlush) {
+        QVERIFY(harness.pushEvent(gst_event_new_flush_start()));
+    } else {
+        QCOMPARE(gst_element_set_state(harness.element(), GST_STATE_NULL), GST_STATE_CHANGE_SUCCESS);
+    }
+    QCoreApplication::sendPostedEvents(&videoSink, QEvent::MetaCall);
+    QCOMPARE(emissions, 0);
+    QVERIFY(!videoSink.videoFrame().isValid());
+}
+
+void GStreamerTest::_testQgcQVideoSinkPtsGuardResync_data()
+{
+    QTest::addColumn<QString>("boundary");
+    QTest::addColumn<bool>("discont");
+    QTest::addColumn<qint64>("nextPtsMs");
+    QTest::addColumn<bool>("expectDelivered");
+
+    // Baseline frame is at 10 s; 9.9 s is a small regression the guard drops unless a timeline boundary resets it.
+    QTest::newRow("small-regression-dropped") << QString() << false << qint64(9900) << false;
+    QTest::newRow("flush-resets") << QStringLiteral("flush") << false << qint64(9900) << true;
+    QTest::newRow("segment-resets") << QStringLiteral("segment") << false << qint64(9900) << true;
+    QTest::newRow("stream-start-resets") << QStringLiteral("stream-start") << false << qint64(9900) << true;
+    QTest::newRow("discont-resyncs") << QString() << true << qint64(9900) << true;
+    QTest::newRow("large-jump-resyncs") << QString() << false << qint64(0) << true;
+}
+
+void GStreamerTest::_testQgcQVideoSinkPtsGuardResync()
+{
+    QFETCH(QString, boundary);
+    QFETCH(bool, discont);
+    QFETCH(qint64, nextPtsMs);
+    QFETCH(bool, expectDelivered);
+    QVERIFY2(GStreamer::completeInit(), "completeInit failed");
+
+    QVideoSink videoSink;
+    QgcQVideoSinkHarness harness(&videoSink);
+    QVERIFY(harness.isReady());
+    QVERIFY(harness.start());
+    QCOMPARE(harness.pushFrame(10 * GST_SECOND), GST_FLOW_OK);
+    QCOMPARE(harness.delivered(), guint64(1));
+
+    // Identical caps throughout, so GstBaseSink never re-runs set_caps.
+    if (boundary == QStringLiteral("flush")) {
+        QVERIFY(harness.pushEvent(gst_event_new_flush_start()));
+        QVERIFY(harness.pushEvent(gst_event_new_flush_stop(/*reset_time=*/TRUE)));
+        QVERIFY(harness.pushSegment());  // data after a flush requires a fresh segment
+    } else if (boundary == QStringLiteral("segment")) {
+        QVERIFY(harness.pushSegment());
+    } else if (boundary == QStringLiteral("stream-start")) {
+        QVERIFY(harness.pushEvent(gst_event_new_stream_start("qgc-harness-restart")));
+    }
+
+    QCOMPARE(harness.pushFrame(static_cast<GstClockTime>(nextPtsMs) * GST_MSECOND, discont), GST_FLOW_OK);
+    QCOMPARE(harness.delivered(), guint64(expectDelivered ? 2 : 1));
+}
+
+void GStreamerTest::_testQgcQVideoSinkMapFailuresPostElementError()
+{
+    QVERIFY2(GStreamer::completeInit(), "completeInit failed");
+
+    QVideoSink videoSink;
+    QgcQVideoSinkHarness harness(&videoSink);
+    QVERIFY(harness.isReady());
+    QVERIFY(harness.start());
+
+    // Periodic per-failure warnings are rate-limited by process-global counters, so their count is not fixed.
+    ignoreLogMessage("Video.GStreamer.HwBuffers.CpuPool", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("gst_video_frame_map failed")));
+    ignoreLogMessage("Video.GStreamer.QgcQVideoSink", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("mapping failed")));
+    expectLogMessage("Video.GStreamer.QgcQVideoSink", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("consecutive map failures")));
+
+    // Undersized buffers can never be mapped; the sink must eventually give up with a descriptive element error.
+    GstFlowReturn ret = GST_FLOW_OK;
+    for (int i = 0; (i < 1000) && (ret == GST_FLOW_OK); ++i) {
+        ret = harness.pushFrame(GST_CLOCK_TIME_NONE, false, /*size=*/4);
+    }
+    verifyExpectedLogMessage();
+    QCOMPARE(ret, GST_FLOW_ERROR);
+
+    GstMessage* msg = gst_bus_pop_filtered(harness.bus(), GST_MESSAGE_ERROR);
+    QVERIFY2(msg, "map-failure escalation must post an element error before returning GST_FLOW_ERROR");
+    GError* error = nullptr;
+    gchar* debug = nullptr;
+    gst_message_parse_error(msg, &error, &debug);
+    const bool streamFailed = g_error_matches(error, GST_STREAM_ERROR, GST_STREAM_ERROR_FAILED);
+    const QString details = QString::fromUtf8(debug ? debug : "");
+    g_clear_error(&error);
+    g_free(debug);
+    gst_message_unref(msg);
+    QVERIFY(streamFailed);
+    QVERIFY2(details.contains(QStringLiteral("consecutive map failures")), qPrintable(details));
+}
+
+void GStreamerTest::_testQVideoSinkControllerReleaseClearsVideoFrame()
+{
+    QVERIFY2(GStreamer::completeInit(), "completeInit failed");
+
+    QVideoSink videoSink;
+    QgcQVideoSinkHarness harness(nullptr);
+    QVERIFY(harness.isReady());
+    QVERIFY(harness.start());
+    QObject controllerOwner;
+    auto* controller = new QGCQVideoSinkController(harness.element(), &controllerOwner);
+    controller->setVideoSink(QPointer<QVideoSink>(&videoSink));
+
+    QCOMPARE(harness.pushFrame(GST_SECOND), GST_FLOW_OK);
+    QCoreApplication::sendPostedEvents(&videoSink, QEvent::MetaCall);
+    QVERIFY(videoSink.videoFrame().isValid());
+
+    // The released sink must not keep the last GstSample-backed frame alive.
+    controller->prepareForRelease();
+    QVERIFY(!videoSink.videoFrame().isValid());
 }
 
 #endif

@@ -40,6 +40,8 @@ public:
 
     // setActive(false) drops frames at the element; setVideoSink swaps the destination under
     // GST_OBJECT_LOCK. QPointer so a caller-thread destruction race is caught here, not in GObject.
+    // Releasing a binding (swap, null, prepareForRelease, destruction) also clears the released QVideoSink's
+    // current frame so it stops pinning a GstSample/decoder buffer.
     void setActive(bool active);
     void setVideoSink(QPointer<QVideoSink> sink);
 
@@ -65,9 +67,11 @@ signals:
 
 private:
     void _releaseElementBinding() noexcept;
+    void _clearVideoSinkFrame();
     void _onEmitTimer();
 
     GstElement* _element = nullptr;  // owned ref
+    QPointer<QVideoSink> _videoSink;
     QMetaObject::Connection _sinkDestroyedConnection;
     bool _bindingReleased = false;
     QTimer _emitTimer;

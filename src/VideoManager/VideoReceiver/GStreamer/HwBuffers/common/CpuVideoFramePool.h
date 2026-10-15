@@ -22,10 +22,21 @@ public:
     /// Returns a pool-backed frame sized to @p info, or freshly allocates on a pool miss; invalid if unsupported.
     QVideoFrame acquireFrame(const QVideoFrameFormat& format, const GstVideoInfo& info);
 
-    /// Zero-copy CPU frame: wraps @p buffer and maps its system memory through to Qt. nullptr if not CPU-mappable
-    /// (caller copies instead). Pins the decoder buffer for the frame's lifetime.
+    /// Upper bound on decoder buffers one sink holds downstream at once, zero-copy CPU and GPU frames alike: the frame
+    /// being mapped in show_frame, one pending GUI delivery (latest-frame-only), the frame Qt displays, and one older
+    /// frame kept alive by Qt's texture bundle for the other in-flight slot (QRhi FramesInFlight is 2 on the common
+    /// backends).
+    static constexpr int kMaxPinnedFrames = 4;
+
+    /// Live zero-copy frames of one sink; shared so frames Qt still holds after the sink is gone can release it.
+    using PinnedFrameCounter = std::shared_ptr<std::atomic<int>>;
+
+    /// Zero-copy CPU frame: wraps @p buffer and maps its system memory through to Qt. nullptr if not CPU-mappable or
+    /// @p pinned already counts kMaxPinnedFrames (caller copies instead). Pins the decoder buffer for the frame's
+    /// lifetime.
     static std::unique_ptr<QAbstractVideoBuffer> wrapZeroCopy(GstBuffer* buffer, const GstVideoInfo& info,
-                                                              const QVideoFrameFormat& format);
+                                                              const QVideoFrameFormat& format,
+                                                              const PinnedFrameCounter& pinned);
 
     /// Telemetry: total acquireFrame() calls satisfied from the pool vs. fresh alloc.
     quint64 hitCount() const noexcept { return _hits.load(std::memory_order_relaxed); }

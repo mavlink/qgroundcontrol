@@ -218,6 +218,7 @@ QVideoFrameFormat applyCropMeta(QVideoFrameFormat format, GstBuffer* buffer)
 
 MappedFrame mapSampleToFrame(GstBuffer* buffer, [[maybe_unused]] GstCaps* caps, const GstVideoInfo& info,
                              const QVideoFrameFormat& format, [[maybe_unused]] const HwVideoBufferContext& hwContext,
+                             const CpuVideoFramePool::PinnedFrameCounter& pinnedCpuFrames,
                              [[maybe_unused]] HwResolvedPathCache* pathCache) noexcept
 {
     MappedFrame out;
@@ -242,7 +243,7 @@ MappedFrame mapSampleToFrame(GstBuffer* buffer, [[maybe_unused]] GstCaps* caps, 
     }
     out.gpuPath = matchedPath;
 #endif
-    if (auto cpuBuf = CpuVideoFramePool::wrapZeroCopy(buffer, info, format)) {
+    if (auto cpuBuf = CpuVideoFramePool::wrapZeroCopy(buffer, info, format, pinnedCpuFrames)) {
         out.frame = QVideoFrame(std::move(cpuBuf));
     } else {
         out.frame = CpuVideoFramePool::copyFromBuffer(buffer, info, format);

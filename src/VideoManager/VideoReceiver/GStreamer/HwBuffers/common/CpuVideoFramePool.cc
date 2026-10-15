@@ -2,7 +2,6 @@
 
 #include <QtCore/QLoggingCategory>
 #include <QtMultimedia/QAbstractVideoBuffer>
-#include <algorithm>
 #include <atomic>
 #include <cstring>
 #include <gst/video/video.h>
@@ -10,9 +9,6 @@
 #include <utility>
 
 #include "QGCLoggingCategory.h"
-#if defined(QGC_HAS_ANY_GPU_PATH)
-#include "QGCRhiCapture.h"
-#endif
 
 QGC_LOGGING_CATEGORY(CpuVideoFramePoolLog, "Video.GStreamer.HwBuffers.CpuPool")
 
@@ -62,37 +58,14 @@ private:
 class MapThroughGstVideoBuffer final : public QAbstractVideoBuffer
 {
 public:
-    // Outstanding zero-copy buffers each pin a decoder buffer; cap how many can be in flight before
-    // wrapZeroCopy falls back to a copy so a compositor stall can't drain the decoder's HW pool. The cap is
-    // derived from the RHI's frames-in-flight.
-    static int maxLive() noexcept
-    {
-        static const int s_max = []() -> int {
-            constexpr int kFloor = 6;
-#if defined(QGC_HAS_ANY_GPU_PATH)
-            // Snapshot populated render-side; never dereference QRhi from this (streaming) thread.
-            int fif = QGCRhiCapture::deviceSnapshot().framesInFlight.load(std::memory_order_acquire);
-            if (fif <= 0) {
-                fif = 2;  // QRhi's typical default before the snapshot exists
-            }
-            return std::clamp(fif * 2, kFloor, 16);
-#else
-            return kFloor;
-#endif
-        }();
-        return s_max;
-    }
-    static std::atomic<int>& liveCount()
-    {
-        static std::atomic<int> s_live{0};
-        return s_live;
-    }
-
-    MapThroughGstVideoBuffer(GstBuffer* buffer, const GstVideoInfo& info, QVideoFrameFormat format)
-        : _buffer(gst_buffer_ref(buffer)), _info(info), _format(std::move(format))
-    {
-        liveCount().fetch_add(1, std::memory_order_relaxed);
-    }
+    /// Takes over a slot the caller already reserved in @p pinned; the slot is released on destruction.
+    MapThroughGstVideoBuffer(GstBuffer* buffer, const GstVideoInfo& info, QVideoFrameFormat format,
+                             CpuVideoFramePool::PinnedFrameCounter pinned)
+        : _buffer(gst_buffer_ref(buffer))
+        , _info(info)
+        , _format(std::move(format))
+        , _pinned(std::move(pinned))
+    {}
 
     ~MapThroughGstVideoBuffer() override
     {
@@ -100,7 +73,7 @@ public:
             gst_video_frame_unmap(&_frame);
         }
         gst_buffer_unref(_buffer);
-        liveCount().fetch_sub(1, std::memory_order_relaxed);
+        _pinned->fetch_sub(1, std::memory_order_relaxed);
     }
 
     MapData map(QVideoFrame::MapMode mode) override
@@ -142,9 +115,22 @@ private:
     GstBuffer* _buffer;
     GstVideoInfo _info;
     QVideoFrameFormat _format;
+    CpuVideoFramePool::PinnedFrameCounter _pinned;
     GstVideoFrame _frame = {};
     bool _mapped = false;
 };
+
+// Check-and-increment in one step so concurrent callers can never overshoot the cap.
+bool tryReservePinnedFrame(std::atomic<int>& pinned) noexcept
+{
+    int live = pinned.load(std::memory_order_relaxed);
+    do {
+        if (live >= CpuVideoFramePool::kMaxPinnedFrames) {
+            return false;
+        }
+    } while (!pinned.compare_exchange_weak(live, live + 1, std::memory_order_relaxed));
+    return true;
+}
 
 }  // namespace
 
@@ -239,15 +225,18 @@ QVideoFrame CpuVideoFramePool::acquireFrame(const QVideoFrameFormat& format, con
 }
 
 std::unique_ptr<QAbstractVideoBuffer> CpuVideoFramePool::wrapZeroCopy(GstBuffer* buffer, const GstVideoInfo& info,
-                                                                      const QVideoFrameFormat& format)
+                                                                      const QVideoFrameFormat& format,
+                                                                      const PinnedFrameCounter& pinned)
 {
-    if (!buffer || !format.isValid()) {
+    if (!buffer || !format.isValid() || !pinned) {
         return nullptr;
     }
-    if (MapThroughGstVideoBuffer::liveCount().load(std::memory_order_relaxed) >= MapThroughGstVideoBuffer::maxLive()) {
+    // Each zero-copy frame pins a decoder buffer; past the cap copy instead so a GUI stall can't drain a fixed-size
+    // decoder pool.
+    if (!tryReservePinnedFrame(*pinned)) {
         return nullptr;
     }
-    auto buf = std::make_unique<MapThroughGstVideoBuffer>(buffer, info, format);
+    auto buf = std::make_unique<MapThroughGstVideoBuffer>(buffer, info, format, pinned);
     // Probe mappability: system memory always maps, GPU memory that slipped past the factory does not (caller copies).
     // Keep the mapping rather than unmapping — the sink's subsequent map() reuses it instead of re-running the map.
     const auto probe = buf->map(QVideoFrame::ReadOnly);
