@@ -67,7 +67,15 @@ function(_qgc_gst_ios_extract staging pkg)
     _qgc_pkgutil_expand_and_validate("${pkg}" "${staging}/expanded" "iOS")
 endfunction()
 
-macro(_qgc_discover_ios_sdk)
+# _qgc_discover_ios_sdk()
+# Uses the GStreamer.xcframework or GStreamer.framework at or under GStreamer_ROOT_DIR, else the system iPhone.sdk,
+# else downloads the official iOS package, and selects its single merged static archive. Sets GStreamer_ROOT_DIR,
+# GStreamer_AUTO_DOWNLOADED, GStreamer_USE_{XCFRAMEWORK,FRAMEWORK,STATIC_LIBS}, GSTREAMER_XCFRAMEWORK_LIB,
+# GStreamer_IOS_INFO_PLIST, GSTREAMER_{LIB,PLUGIN,INCLUDE,XCFRAMEWORK}_PATH and the GStreamer_IOS_CA_BUNDLE cache
+# entry.
+# cmakelang 0.6.13 predates return(PROPAGATE).
+# cmake-lint: disable=C0103,E1121
+function(_qgc_discover_ios_sdk)
     if(NOT CMAKE_HOST_APPLE)
         message(FATAL_ERROR "GStreamer for iOS can only be built on macOS")
     endif()
@@ -279,7 +287,21 @@ macro(_qgc_discover_ios_sdk)
 
     # iOS SDK ships no CA bundle reachable from libgioopenssl; fetch Mozilla NSS.
     _qgc_download_ios_ca_bundle()
-endmacro()
+    return(
+        PROPAGATE
+        GStreamer_ROOT_DIR
+        GStreamer_AUTO_DOWNLOADED
+        GStreamer_USE_XCFRAMEWORK
+        GStreamer_USE_FRAMEWORK
+        GStreamer_USE_STATIC_LIBS
+        GSTREAMER_XCFRAMEWORK_LIB
+        GStreamer_IOS_INFO_PLIST
+        GSTREAMER_LIB_PATH
+        GSTREAMER_PLUGIN_PATH
+        GSTREAMER_INCLUDE_PATH
+        GSTREAMER_XCFRAMEWORK_PATH
+    )
+endfunction()
 
 # Downloads ca-certificates.crt to the iOS SDK cache and sets
 # GStreamer_IOS_CA_BUNDLE (cache var) to its absolute path. Re-uses the same
@@ -364,7 +386,8 @@ endfunction()
 # Build IMPORTED targets directly from the iOS xcframework's fat .a — bypasses
 # pkg-config entirely. Caller must have set GSTREAMER_XCFRAMEWORK_LIB and
 # GSTREAMER_INCLUDE_PATH (done by _qgc_discover_ios_sdk above).
-# Function: exports GStreamer_FOUND / GStreamer_VERSION via PARENT_SCOPE and creates GLOBAL IMPORTED targets.
+# Function: exports GStreamer_VERSION, GSTREAMER_STATIC_PLUGINS and GStreamer_<api|plugin>_FOUND via PARENT_SCOPE and
+# creates GLOBAL IMPORTED targets.
 # ─────────────────────────────────────────────────────────────────────────────
 function(_qgc_create_xcframework_targets)
     # Read the bundle's real version from Info.plist to re-check the floor — the
@@ -606,7 +629,7 @@ function(_qgc_create_xcframework_targets)
         qgc_gst_generate_static_init(TARGET GStreamerMobileXcfw PLUGINS ${_xcfw_registered} GIO_MODULES ${G_IO_MODULES})
         target_link_libraries(GStreamerMobileXcfw PRIVATE GStreamer::GStreamer)
         set_target_properties(GStreamerMobileXcfw PROPERTIES
-            LIBRARY_OUTPUT_NAME ${GStreamer_Mobile_MODULE_NAME}
+            LIBRARY_OUTPUT_NAME gstreamer_mobile
             FRAMEWORK TRUE
             FRAMEWORK_VERSION A
             MACOSX_FRAMEWORK_IDENTIFIER org.gstreamer.GStreamerMobile
@@ -614,9 +637,5 @@ function(_qgc_create_xcframework_targets)
         )
         add_library(GStreamer::mobile ALIAS GStreamerMobileXcfw)
         add_library(GStreamerMobile ALIAS GStreamerMobileXcfw)
-        set(GStreamerMobile_FOUND TRUE PARENT_SCOPE)
-        set(GStreamerMobile_mobile_FOUND TRUE PARENT_SCOPE)
     endif()
-
-    set(GStreamer_FOUND TRUE PARENT_SCOPE)
 endfunction()

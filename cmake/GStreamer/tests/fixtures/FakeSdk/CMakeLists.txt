@@ -131,9 +131,14 @@ endif()
 # QGC_TEST_INSTALL_MACOS_FLAT: install the SDK's .dylib files into a QGCFake.app bundle.
 if(QGC_TEST_INSTALL_MACOS_FRAMEWORK)
     gstreamer_layout_set(FRAMEWORK_BUNDLE "${QGC_TEST_INSTALL_MACOS_FRAMEWORK}")
-    gstreamer_install_macos_framework_sdk(QGCFake)
+    gstreamer_install_macos_sdk(QGCFake _qgc_plugin_dest)
+    qgc_test_assert_streq("framework plugin dir"
+                          "QGCFake.app/Contents/Frameworks/GStreamer.framework/Versions/1.0/lib/gstreamer-1.0"
+                          "${_qgc_plugin_dest}"
+    )
 elseif(QGC_TEST_INSTALL_MACOS_FLAT)
-    gstreamer_install_macos_flat_sdk(QGCFake)
+    gstreamer_install_macos_sdk(QGCFake _qgc_plugin_dest)
+    qgc_test_assert_streq("flat plugin dir" "QGCFake.app/Contents/lib/gstreamer-1.0" "${_qgc_plugin_dest}")
 endif()
 
 if(NOT DEFINED EXPECT_ROOT)

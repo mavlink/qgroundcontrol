@@ -54,9 +54,9 @@ endfunction()
 #     pc_name        - pkg-config module name (gstreamer-base-1.0); empty when no .pc file
 #     mandatory      - "1" if always present in any GStreamer install, "0" otherwise
 #
-# Mandatory entries seed gstreamer_build_apis_and_deps and the always-FOUND
-# iteration in Orchestrator.cmake. Adding a new always-present API requires
-# only an entry here. Gl/GlPrototypes are optional: a sysroot whose x11 .pc files are
+# Mandatory entries seed gstreamer_build_apis and the mandatory-module check
+# in Orchestrator.cmake. Adding a new always-present API requires only an
+# entry here. Gl/GlPrototypes are optional: a sysroot whose x11 .pc files are
 # incomplete fails their pkg-config checks, and only the GL GPU path needs them.
 set(GSTREAMER_COMPONENT_REGISTRY
     "Core:::1"                                                   # umbrella; gstreamer-1.0 is queried directly
@@ -124,8 +124,8 @@ endfunction()
 
 # gstreamer_mandatory_components(<out_names_list> <out_apis_list>)
 # Returns the registry's always-present component names and api_ names. Used
-# to drive the FOUND-loop in Orchestrator.cmake and the api-seed in
-# gstreamer_build_apis_and_deps so neither has to repeat the list.
+# by the mandatory-module check in Orchestrator.cmake and the api-seed in
+# gstreamer_build_apis so neither has to repeat the list.
 function(gstreamer_mandatory_components OUT_NAMES OUT_APIS)
     set(_names "")
     set(_apis "")
@@ -150,13 +150,11 @@ function(gstreamer_component_to_api COMPONENT OUT_VAR)
     set(${OUT_VAR} "api_${_snake}" PARENT_SCOPE)
 endfunction()
 
-# gstreamer_build_apis_and_deps(<apis_out> <deps_out> <component_list>)
-# Builds GSTREAMER_APIS and GSTREAMER_EXTRA_DEPS from a component list plus
-# optional platform extras. The seed of always-present APIs comes from the
-# registry's mandatory rows (no hardcoded list).
-function(gstreamer_build_apis_and_deps APIS_OUT DEPS_OUT)
-    # Add extra apis from caller's component list — resolve via registry first
-    # to handle CamelCase → api_snake mapping for non-mandatory components.
+# gstreamer_build_apis(<apis_out> <component>...)
+# Sets <apis_out> to the api_ names of the registry's mandatory rows plus those of the given components, in registry
+# order (unregistered components last), so the probe and link order doesn't depend on how a caller lists them.
+function(gstreamer_build_apis APIS_OUT)
+    # Resolve via the registry first to map CamelCase components to their api_ names.
     set(_requested "")
     foreach(_comp IN LISTS ARGN)
         if(_comp STREQUAL "Core")
@@ -170,8 +168,6 @@ function(gstreamer_build_apis_and_deps APIS_OUT DEPS_OUT)
         list(APPEND _requested "${_api}")
     endforeach()
 
-    # Registry-mandatory rows plus the requested ones, in registry order (unregistered
-    # components last), so the probe and link order doesn't depend on how callers list them.
     set(_apis "")
     foreach(_entry IN LISTS GSTREAMER_COMPONENT_REGISTRY)
         _gstreamer_registry_split("${_entry}" _name _api _pc _mand)
@@ -185,26 +181,5 @@ function(gstreamer_build_apis_and_deps APIS_OUT DEPS_OUT)
         endif()
     endforeach()
 
-    # Derive pkg-config deps from registry.
-    set(_deps)
-    foreach(_api IN LISTS _apis)
-        gstreamer_resolve_component("${_api}" _ _ _pc _)
-        if(_pc)
-            list(APPEND _deps "${_pc}")
-        endif()
-    endforeach()
-
-    # Platform extra deps — kept here as the single registration point.
-    if(WIN32)
-        list(APPEND _deps graphene-1.0)
-    endif()
-    if(ANDROID OR IOS)
-        list(APPEND _deps gio-2.0)
-    endif()
-    if(ANDROID)
-        list(APPEND _deps gmodule-2.0 zlib)
-    endif()
-
     set(${APIS_OUT} "${_apis}" PARENT_SCOPE)
-    set(${DEPS_OUT} "${_deps}" PARENT_SCOPE)
 endfunction()

@@ -2,7 +2,7 @@
 # binaries, and CA bundles into the install tree. Called from
 # src/VideoManager/VideoReceiver/GStreamer/CMakeLists.txt after the ANDROID/IOS
 # early-return.
-# Depends on: Components.cmake (gstreamer_platform_plugin_attrs),
+# Depends on: Components.cmake (gstreamer_platform_plugin_attrs), Platform.cmake (qgc_gst_platform_descriptor),
 #             PluginPolicy.cmake (gstreamer_runtime_required_plugins; included again by the install-time verifier).
 
 include_guard(GLOBAL)
@@ -231,15 +231,17 @@ function(_gstreamer_is_blocked_lib_copy_source SOURCE_DIR OUT_VAR)
 endfunction()
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Per-platform install helpers. Each function uses variables set by
-# cmake/GStreamer/Orchestrator.cmake (GSTREAMER_*_PATH, GStreamer_ROOT_DIR,
-# GStreamer_AUTO_DOWNLOADED, etc.).
+# Per-platform install helpers, named by qgc_gst_platform_descriptor (Platform.cmake) and called as
+# <helper>(<app_name> <plugin_dest_out>): each sets <plugin_dest_out> to the install-prefix-relative directory it
+# installs the plugins to. They use variables set by cmake/GStreamer/Orchestrator.cmake (GSTREAMER_*_PATH,
+# GStreamer_ROOT_DIR, GStreamer_AUTO_DOWNLOADED, etc.).
 # ─────────────────────────────────────────────────────────────────────────────
 
-function(gstreamer_install_linux_sdk)
+function(gstreamer_install_linux_sdk app_name plugin_dest_out)
+    set(_plugin_dest "lib/gstreamer-1.0")
     gstreamer_install_plugins(
         SOURCE_DIR "${GSTREAMER_PLUGIN_PATH}"
-        DEST_DIR "lib/gstreamer-1.0"
+        DEST_DIR "${_plugin_dest}"
         EXTENSION "so"
         PREFIX "libgst"
     )
@@ -266,9 +268,14 @@ function(gstreamer_install_linux_sdk)
             message(WARNING "gst-plugin-scanner not found; AppImage video may not work")
         endif()
     endforeach()
+    set(${plugin_dest_out}
+        "${_plugin_dest}"
+        PARENT_SCOPE
+    )
 endfunction()
 
-function(gstreamer_install_windows_sdk)
+function(gstreamer_install_windows_sdk app_name plugin_dest_out)
+    set(_plugin_dest "${CMAKE_INSTALL_LIBDIR}/gstreamer-1.0")
     gstreamer_install_libs(
         SOURCE_DIR "${GStreamer_ROOT_DIR}/bin"
         DEST_DIR "${CMAKE_INSTALL_BINDIR}"
@@ -289,7 +296,7 @@ function(gstreamer_install_windows_sdk)
     )
     gstreamer_install_plugins(
         SOURCE_DIR "${GSTREAMER_PLUGIN_PATH}"
-        DEST_DIR "${CMAKE_INSTALL_LIBDIR}/gstreamer-1.0"
+        DEST_DIR "${_plugin_dest}"
         EXTENSION "dll"
         PREFIX "gst"
     )
@@ -312,19 +319,23 @@ function(gstreamer_install_windows_sdk)
             DESTINATION etc/ssl/certs
         )
     endif()
+    set(${plugin_dest_out}
+        "${_plugin_dest}"
+        PARENT_SCOPE
+    )
 endfunction()
 
 # Stage GStreamer.framework into the app bundle's Contents/Frameworks/. Used
 # when the SDK is consumed via the Cerbero macOS framework (Layout target
 # stashed FRAMEWORK_BUNDLE).
-function(gstreamer_install_macos_framework_sdk PROJECT_NAME)
+function(gstreamer_install_macos_framework_sdk app_name plugin_dest_out)
     gstreamer_layout_get(FRAMEWORK_BUNDLE _gst_framework_bundle)
     if(NOT _gst_framework_bundle)
         message(FATAL_ERROR "gstreamer_install_macos_framework_sdk: FRAMEWORK_BUNDLE not set on GStreamer::Layout")
     endif()
     get_filename_component(_gst_framework_real "${_gst_framework_bundle}" REALPATH)
     # Relative to the install prefix; install(CODE) prepends $ENV{DESTDIR}${CMAKE_INSTALL_PREFIX} at install time.
-    set(_gst_fw_dest "${PROJECT_NAME}.app/Contents/Frameworks/GStreamer.framework")
+    set(_gst_fw_dest "${app_name}.app/Contents/Frameworks/GStreamer.framework")
 
     install(CODE "file(REMOVE_RECURSE \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${_gst_fw_dest}\")")
     install(
@@ -363,21 +374,26 @@ function(gstreamer_install_macos_framework_sdk PROJECT_NAME)
         endif()
     ")
 
+    set(_plugin_dest "${_gst_fw_dest}/Versions/1.0/lib/gstreamer-1.0")
     gstreamer_install_plugins(
         SOURCE_DIR "${_gst_framework_real}/Versions/1.0/lib/gstreamer-1.0"
-        DEST_DIR "${_gst_fw_dest}/Versions/1.0/lib/gstreamer-1.0"
+        DEST_DIR "${_plugin_dest}"
         EXTENSION "dylib"
         PREFIX "libgst"
+    )
+    set(${plugin_dest_out}
+        "${_plugin_dest}"
+        PARENT_SCOPE
     )
 endfunction()
 
 # Stage flat-layout dylibs/plugins/gio modules + rpath fixups + helpers + CA
 # bundle. Used for Homebrew/CPM-downloaded macOS GStreamer (no framework wrapper).
-function(gstreamer_install_macos_flat_sdk PROJECT_NAME)
+function(gstreamer_install_macos_flat_sdk app_name plugin_dest_out)
     # Relative to the install prefix; install(CODE) prepends $ENV{DESTDIR}${CMAKE_INSTALL_PREFIX} at install time.
-    set(_mac_fw_dest "${PROJECT_NAME}.app/Contents/Frameworks")
-    set(_mac_lib_dest "${PROJECT_NAME}.app/Contents/lib")
-    set(_mac_libexec_dest "${PROJECT_NAME}.app/Contents/libexec/gstreamer-1.0")
+    set(_mac_fw_dest "${app_name}.app/Contents/Frameworks")
+    set(_mac_lib_dest "${app_name}.app/Contents/lib")
+    set(_mac_libexec_dest "${app_name}.app/Contents/libexec/gstreamer-1.0")
 
     if(GStreamer_AUTO_DOWNLOADED)
         gstreamer_install_libs(
@@ -410,9 +426,10 @@ function(gstreamer_install_macos_flat_sdk PROJECT_NAME)
                 "time before install.")
         endif()
     endif()
+    set(_plugin_dest "${_mac_lib_dest}/gstreamer-1.0")
     gstreamer_install_plugins(
         SOURCE_DIR "${GSTREAMER_PLUGIN_PATH}"
-        DEST_DIR "${_mac_lib_dest}/gstreamer-1.0"
+        DEST_DIR "${_plugin_dest}"
         EXTENSION "dylib"
         PREFIX "libgst"
     )
@@ -440,7 +457,7 @@ function(gstreamer_install_macos_flat_sdk PROJECT_NAME)
 
     # Entry "<dir>:<rpath>:<glob>" — libexec helpers are extensionless, so * not *.dylib.
     foreach(_rpath_dir IN ITEMS
-        "${_mac_lib_dest}/gstreamer-1.0:@loader_path/../../Frameworks:*.dylib"
+        "${_plugin_dest}:@loader_path/../../Frameworks:*.dylib"
         "${_mac_lib_dest}/gio/modules:@loader_path/../../../Frameworks:*.dylib"
         "${_mac_libexec_dest}:@loader_path/../../Frameworks:*"
     )
@@ -486,25 +503,33 @@ function(gstreamer_install_macos_flat_sdk PROJECT_NAME)
     # SSL_CERT_FILE wiring at startup can point gioopenssl at it.
     if(EXISTS "${GStreamer_ROOT_DIR}/etc/ssl/certs/ca-certificates.crt")
         install(FILES "${GStreamer_ROOT_DIR}/etc/ssl/certs/ca-certificates.crt"
-                DESTINATION "${PROJECT_NAME}.app/Contents/Resources/etc/ssl/certs"
+                DESTINATION "${app_name}.app/Contents/Resources/etc/ssl/certs"
         )
     endif()
+    set(${plugin_dest_out}
+        "${_plugin_dest}"
+        PARENT_SCOPE
+    )
 endfunction()
 
 # Dispatch to the framework or flat installer based on whether the Layout
 # target stashed FRAMEWORK_BUNDLE (set when GStreamer.framework is in use).
-function(gstreamer_install_macos_sdk PROJECT_NAME)
+function(gstreamer_install_macos_sdk app_name plugin_dest_out)
     gstreamer_layout_get(FRAMEWORK_BUNDLE _gst_framework_bundle)
     if(_gst_framework_bundle)
-        gstreamer_install_macos_framework_sdk("${PROJECT_NAME}")
+        gstreamer_install_macos_framework_sdk("${app_name}" _plugin_dest)
     else()
-        gstreamer_install_macos_flat_sdk("${PROJECT_NAME}")
+        gstreamer_install_macos_flat_sdk("${app_name}" _plugin_dest)
     endif()
+    set(${plugin_dest_out}
+        "${_plugin_dest}"
+        PARENT_SCOPE
+    )
 endfunction()
 
-# Top-level dispatcher — call this from CMakeLists.txt after the ANDROID/IOS guard.
-# PROJECT_NAME is CMAKE_PROJECT_NAME in the caller; passed explicitly to avoid
-# macro-scope shadowing issues inside functions.
+# Top-level dispatcher — call this from CMakeLists.txt after the ANDROID/IOS guard. Runs the platform's
+# install helper (qgc_gst_platform_descriptor); mobile platforms install nothing.
+# PROJECT_NAME is CMAKE_PROJECT_NAME in the caller.
 # gstreamer_install_platform_sdk(PROJECT_NAME [REQUIRED_PLUGINS <names…>])
 # REQUIRED_PLUGINS: list of plugin basenames (no platform prefix or extension) to
 # verify exist post-install; default is the minimum needed to run any pipeline,
@@ -521,6 +546,11 @@ function(gstreamer_install_platform_sdk PROJECT_NAME)
     if(GIPS_UNPARSED_ARGUMENTS)
         message(FATAL_ERROR
             "gstreamer_install_platform_sdk: unknown arguments: ${GIPS_UNPARSED_ARGUMENTS}")
+    endif()
+    qgc_gst_platform(_gips_platform)
+    qgc_gst_platform_descriptor("${_gips_platform}" _gips_platform)
+    if(NOT _gips_platform_INSTALL)
+        return()
     endif()
     if(NOT GIPS_REQUIRED_PLUGINS)
         gstreamer_runtime_required_plugins(GIPS_REQUIRED_PLUGINS)
@@ -551,34 +581,14 @@ function(gstreamer_install_platform_sdk PROJECT_NAME)
         list(REMOVE_DUPLICATES GIPS_REQUIRED_PLUGINS)
     endif()
 
-    if(LINUX)
-        gstreamer_install_linux_sdk()
-    elseif(WIN32)
-        gstreamer_install_windows_sdk()
-    elseif(MACOS)
-        gstreamer_install_macos_sdk("${PROJECT_NAME}")
-    endif()
+    cmake_language(CALL ${_gips_platform_INSTALL} "${PROJECT_NAME}" _verify_dest)
 
-    # Post-install plugin verification (all desktop platforms).
+    # Post-install plugin verification, against the plugin directory the installer reported.
+    # Checked at install time against $ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}, where CPack stages packages. Install
+    # scripts run with every policy unset, which PluginPolicy.cmake (IN_LIST) cannot use.
     gstreamer_platform_plugin_attrs(_verify_ext _verify_prefix _verify_glob)
-    if(WIN32)
-        set(_verify_dest "${CMAKE_INSTALL_LIBDIR}/gstreamer-1.0")
-    elseif(MACOS)
-        gstreamer_layout_get(FRAMEWORK_BUNDLE _verify_fw)
-        if(_verify_fw)
-            set(_verify_dest "${PROJECT_NAME}.app/Contents/Frameworks/GStreamer.framework/Versions/1.0/lib/gstreamer-1.0")
-        else()
-            set(_verify_dest "${PROJECT_NAME}.app/Contents/lib/gstreamer-1.0")
-        endif()
-    elseif(LINUX)
-        set(_verify_dest "lib/gstreamer-1.0")
-    endif()
-
-    if(_verify_dest)
-        # Checked at install time against $ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}, where CPack stages packages. Install
-        # scripts run with every policy unset, which PluginPolicy.cmake (IN_LIST) cannot use.
-        set(_verify_code
-            [=[
+    set(_verify_code
+        [=[
 cmake_policy(PUSH)
 cmake_policy(VERSION 3.25)
 include("@_policy_file@")
@@ -594,9 +604,8 @@ endif()
 message(STATUS "GStreamer install verification: all required plugins present in @_verify_dest@")
 cmake_policy(POP)
 ]=]
-        )
-        set(_policy_file "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/PluginPolicy.cmake")
-        string(CONFIGURE "${_verify_code}" _verify_code @ONLY)
-        install(CODE "${_verify_code}")
-    endif()
+    )
+    set(_policy_file "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/PluginPolicy.cmake")
+    string(CONFIGURE "${_verify_code}" _verify_code @ONLY)
+    install(CODE "${_verify_code}")
 endfunction()

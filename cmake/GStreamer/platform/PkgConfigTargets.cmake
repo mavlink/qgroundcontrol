@@ -1,16 +1,17 @@
 # Pkg-config target creation — shared by Linux/Windows/macOS/Android
 # (everything except iOS xcframework). Pkg-config env management lives in
 # cmake/GStreamer/PkgConfig.cmake (gstreamer_apply_pkgconfig_env), target creation
-# in cmake/GStreamer/Targets.cmake. Macro form is required so GStreamer_VERSION /
-# GStreamer_<component>_FOUND and the Android mobile-target variables propagate to
-# the caller.
+# in cmake/GStreamer/Targets.cmake.
 
 include_guard(GLOBAL)
 
 # _qgc_create_pkgconfig_targets()
-# Creates the GStreamer:: targets for the discovered SDK, then applies the macOS framework overlay or
-# builds the Android mobile target.
-macro(_qgc_create_pkgconfig_targets)
+# Creates the GStreamer:: targets for the discovered SDK, then applies the macOS framework overlay or builds the Android
+# mobile target. Sets GStreamer_VERSION, on static layouts appends --static to PKG_CONFIG_ARGN and, on Android, sets
+# GSTREAMER_STATIC_PLUGINS, all in the caller's scope.
+# cmakelang 0.6.13 predates return(PROPAGATE).
+# cmake-lint: disable=C0103,E1121
+function(_qgc_create_pkgconfig_targets)
     # MACOS is set out-of-band by cmake/Toolchain.cmake; the overlay below gates on
     # it, so warn loudly if it's unset rather than silently no-op the overlay.
     if(APPLE
@@ -23,9 +24,11 @@ macro(_qgc_create_pkgconfig_targets)
         )
     endif()
 
+    set(_outputs GStreamer_VERSION)
     # Normal variable: the GStreamer subtree's later pkg-config probes (HwBuffers) need the same flags.
     if(GStreamer_USE_STATIC_LIBS AND NOT "--static" IN_LIST PKG_CONFIG_ARGN)
         list(APPEND PKG_CONFIG_ARGN "--static")
+        list(APPEND _outputs PKG_CONFIG_ARGN)
     endif()
 
     set(_qgc_gst_target_args "")
@@ -60,15 +63,8 @@ macro(_qgc_create_pkgconfig_targets)
     # Android mobile-target setup: bundle plugins + optional fonts/CA assets into the
     # GStreamerMobile target. iOS uses the xcframework path upstream, so this is Android-only.
     if(ANDROID)
-        set(_mobile_components ${GSTREAMER_PLUGINS} mobile)
-        if(EXISTS "${GStreamer_ROOT_DIR}/share/gst-android/ndk-build/fontconfig")
-            list(APPEND _mobile_components fonts)
-        endif()
-        if(EXISTS "${GStreamer_ROOT_DIR}/etc/ssl/certs/ca-certificates.crt")
-            list(APPEND _mobile_components ca_certificates)
-        endif()
-        set(GStreamerMobile_FIND_COMPONENTS ${_mobile_components})
         _qgc_create_android_mobile_target()
-        set(GStreamerMobile_FOUND TRUE)
+        list(APPEND _outputs GSTREAMER_STATIC_PLUGINS)
     endif()
-endmacro()
+    return(PROPAGATE ${_outputs})
+endfunction()

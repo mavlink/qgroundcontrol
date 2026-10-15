@@ -53,7 +53,14 @@ function(_qgc_gst_macos_extract staging archives)
     endforeach()
 endfunction()
 
-macro(_qgc_discover_macos_sdk)
+# _qgc_discover_macos_sdk()
+# Uses the SDK under GStreamer_ROOT_DIR, else /Library/Frameworks/GStreamer.framework or Homebrew's gstreamer, else
+# downloads the official runtime and devel packages. Points pkg-config at the SDK. Sets GStreamer_ROOT_DIR,
+# GStreamer_USE_FRAMEWORK, GStreamer_AUTO_DOWNLOADED, GSTREAMER_{LIB,PLUGIN,INCLUDE,FRAMEWORK}_PATH and, for the
+# framework, the SDK's PKG_CONFIG_EXECUTABLE; a flat SDK uses Homebrew's pkg-config (cached PKG_CONFIG_EXECUTABLE).
+# cmakelang 0.6.13 predates return(PROPAGATE).
+# cmake-lint: disable=C0103,E1121
+function(_qgc_discover_macos_sdk)
     if(NOT GStreamer_ROOT_DIR)
         if(EXISTS "/Library/Frameworks/GStreamer.framework")
             set(GStreamer_ROOT_DIR "/Library/Frameworks/GStreamer.framework/Versions/1.0")
@@ -94,8 +101,10 @@ macro(_qgc_discover_macos_sdk)
 
     # User-supplied GStreamer_ROOT_DIR skips detection above; re-derive flat-vs-framework from the layout so a
     # flat (Homebrew/CPM) tree doesn't hit the framework branch and FATAL_ERROR.
-    if(GStreamer_USE_FRAMEWORK AND NOT GStreamer_ROOT_DIR MATCHES "\\.framework"
-       AND EXISTS "${GStreamer_ROOT_DIR}/lib/gstreamer-1.0")
+    if(GStreamer_USE_FRAMEWORK
+       AND NOT GStreamer_ROOT_DIR MATCHES "\\.framework"
+       AND EXISTS "${GStreamer_ROOT_DIR}/lib/gstreamer-1.0"
+    )
         message(STATUS "GStreamer: ${GStreamer_ROOT_DIR} is a flat SDK layout; disabling framework mode")
         set(GStreamer_USE_FRAMEWORK OFF)
     endif()
@@ -106,32 +115,41 @@ macro(_qgc_discover_macos_sdk)
         else()
             set(_gst_mac_fwpath "${GSTREAMER_FRAMEWORK_PATH}")
         endif()
-        gstreamer_create_layout_target(
-            SDK_ROOT         "${GStreamer_ROOT_DIR}"
-            TYPE             FRAMEWORK
-            FRAMEWORK_BUNDLE "${_gst_mac_fwpath}"
+        gstreamer_create_layout_target(SDK_ROOT "${GStreamer_ROOT_DIR}" TYPE FRAMEWORK FRAMEWORK_BUNDLE
+                                       "${_gst_mac_fwpath}"
         )
     else()
-        gstreamer_create_layout_target(
-            SDK_ROOT "${GStreamer_ROOT_DIR}"
-            TYPE     FLAT
-        )
+        gstreamer_create_layout_target(SDK_ROOT "${GStreamer_ROOT_DIR}" TYPE FLAT)
     endif()
 
+    set(_outputs
+        GStreamer_ROOT_DIR
+        GStreamer_USE_FRAMEWORK
+        GStreamer_AUTO_DOWNLOADED
+        GSTREAMER_LIB_PATH
+        GSTREAMER_PLUGIN_PATH
+        GSTREAMER_INCLUDE_PATH
+        GSTREAMER_FRAMEWORK_PATH
+    )
     if(GStreamer_USE_FRAMEWORK)
         gstreamer_apply_pkgconfig_env(
-            MODE SDK
-            PKG_CONFIG_EXE "${GStreamer_ROOT_DIR}/bin/pkg-config"
-            LIBDIR "${GSTREAMER_LIB_PATH}/pkgconfig" "${GSTREAMER_PLUGIN_PATH}/pkgconfig"
+            MODE
+            SDK
+            PKG_CONFIG_EXE
+            "${GStreamer_ROOT_DIR}/bin/pkg-config"
+            LIBDIR
+            "${GSTREAMER_LIB_PATH}/pkgconfig"
+            "${GSTREAMER_PLUGIN_PATH}/pkgconfig"
         )
+        list(APPEND _outputs PKG_CONFIG_EXECUTABLE)
     else()
         _qgc_find_apple_pkg_config(PKG_CONFIG_EXECUTABLE)
-        gstreamer_apply_pkgconfig_env(
-            MODE SDK
-            LIBDIR "${GSTREAMER_LIB_PATH}/pkgconfig" "${GSTREAMER_PLUGIN_PATH}/pkgconfig"
+        gstreamer_apply_pkgconfig_env(MODE SDK LIBDIR "${GSTREAMER_LIB_PATH}/pkgconfig"
+                                      "${GSTREAMER_PLUGIN_PATH}/pkgconfig"
         )
     endif()
-endmacro()
+    return(PROPAGATE ${_outputs})
+endfunction()
 
 # Apple framework overlay — when GStreamer.framework is in use, link the framework
 # directly and add its Headers to the include path. Called from the pkg-config

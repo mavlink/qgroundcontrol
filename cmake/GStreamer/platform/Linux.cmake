@@ -2,9 +2,12 @@
 
 include_guard(GLOBAL)
 
-include(CMakePushCheckState)
-
-macro(_qgc_discover_linux_sdk)
+# _qgc_discover_linux_sdk()
+# Uses the GStreamer under GStreamer_ROOT_DIR, else the system one (/usr, or CMAKE_SYSROOT/usr), and prepends its
+# pkgconfig directory to PKG_CONFIG_PATH. Sets GStreamer_ROOT_DIR and GSTREAMER_{LIB,PLUGIN,INCLUDE}_PATH.
+# cmakelang 0.6.13 predates return(PROPAGATE).
+# cmake-lint: disable=C0103,E1121
+function(_qgc_discover_linux_sdk)
     if(NOT GStreamer_ROOT_DIR)
         if(CMAKE_SYSROOT)
             set(GStreamer_ROOT_DIR "${CMAKE_SYSROOT}/usr")
@@ -23,7 +26,11 @@ macro(_qgc_discover_linux_sdk)
     list(APPEND _gst_linux_triplet_candidates "${CMAKE_SYSTEM_PROCESSOR}-linux-gnu")
     # musl sysroots use a -linux-musl triplet and often leave CMAKE_LIBRARY_ARCHITECTURE unset.
     list(APPEND _gst_linux_triplet_candidates "${CMAKE_SYSTEM_PROCESSOR}-linux-musl")
-    file(GLOB _gst_linux_multiarch_dirs LIST_DIRECTORIES true "${GStreamer_ROOT_DIR}/lib/*-linux-*")
+    file(
+        GLOB _gst_linux_multiarch_dirs
+        LIST_DIRECTORIES true
+        "${GStreamer_ROOT_DIR}/lib/*-linux-*"
+    )
     foreach(_d IN LISTS _gst_linux_multiarch_dirs)
         cmake_path(GET _d FILENAME _d_name)
         list(APPEND _gst_linux_triplet_candidates "${_d_name}")
@@ -43,39 +50,28 @@ macro(_qgc_discover_linux_sdk)
         elseif(EXISTS "${GStreamer_ROOT_DIR}/lib/gstreamer-1.0")
             set(_gst_linux_lib "${GStreamer_ROOT_DIR}/lib")
         else()
-            message(FATAL_ERROR "Could not locate GStreamer libraries - check installation or set environment/cmake variables")
+            message(
+                FATAL_ERROR
+                    "Could not locate GStreamer libraries - check installation or set environment/cmake variables"
+            )
         endif()
     endif()
 
-    gstreamer_create_layout_target(
-        SDK_ROOT "${GStreamer_ROOT_DIR}"
-        TYPE     FLAT
-        LIB_PATH "${_gst_linux_lib}"
-    )
+    gstreamer_create_layout_target(SDK_ROOT "${GStreamer_ROOT_DIR}" TYPE FLAT LIB_PATH "${_gst_linux_lib}")
 
     # Prepend SDK pkgconfig dir so system glib/gobject .pc files remain discoverable.
-    gstreamer_apply_pkgconfig_env(
-        MODE SYSTEM_AUGMENT
-        LIBDIR "${GSTREAMER_LIB_PATH}/pkgconfig"
-    )
-endmacro()
+    gstreamer_apply_pkgconfig_env(MODE SYSTEM_AUGMENT LIBDIR "${GSTREAMER_LIB_PATH}/pkgconfig")
+    return(PROPAGATE GStreamer_ROOT_DIR GSTREAMER_LIB_PATH GSTREAMER_PLUGIN_PATH GSTREAMER_INCLUDE_PATH)
+endfunction()
 
-# Zero-copy DMABuf GPU path probe. Sets QGC_GST_HAS_DMABUF; consumed by
-# HwBuffers/CMakeLists.txt to compile GstDmaBufVideoBuffer when present.
-# Requires gst-allocators (pulled in via the Allocators QGCGStreamer component
-# requested by the Linux-only branch in src/.../GStreamer/CMakeLists.txt).
+# _qgc_detect_dmabuf()
+# Zero-copy DMABuf GPU path probe. Sets QGC_GST_HAS_DMABUF, which HwBuffers/CMakeLists.txt reads to build the DMABuf
+# path. Needs gst-allocators: the Linux branch of src/.../GStreamer/CMakeLists.txt requests the Allocators component.
 # The cached result is dropped when the SDK changes (_qgc_gst_refresh_sdk_cache).
-macro(_qgc_detect_dmabuf)
-    include(CheckCXXSourceCompiles)
-    if(TARGET GStreamer::GStreamer)
-        cmake_push_check_state(RESET)
-        set(CMAKE_REQUIRED_LIBRARIES GStreamer::GStreamer)
-        check_cxx_source_compiles("
-            #include <gst/allocators/gstdmabuf.h>
-            int main() { (void)gst_is_dmabuf_memory; return 0; }
-        " QGC_GST_HAS_DMABUF)
-        cmake_pop_check_state()
-    else()
-        message(STATUS "GStreamer: DMABuf probe skipped — GStreamer::GStreamer target not defined")
-    endif()
-endmacro()
+function(_qgc_detect_dmabuf)
+    qgc_check_gst_header(VAR QGC_GST_HAS_DMABUF HEADER gst/allocators/gstdmabuf.h SYMBOL gst_is_dmabuf_memory)
+    set(QGC_GST_HAS_DMABUF
+        "${QGC_GST_HAS_DMABUF}"
+        PARENT_SCOPE
+    )
+endfunction()

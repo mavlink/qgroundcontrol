@@ -1,6 +1,6 @@
 # Unified pkg-config env management for GStreamer discovery — single mutator
 # for PKG_CONFIG_PATH / PKG_CONFIG_LIBDIR / --dont-define-prefix, used by the
-# platform discovery macros: platform/Linux.cmake (system-augment) and
+# platform discovery functions: platform/Linux.cmake (system-augment) and
 # platform/{Windows,MacOS,Android}.cmake (SDK lock-in).
 #
 # The pkg-config state discovery derives is scoped to the GStreamer subtree, whose

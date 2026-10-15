@@ -127,7 +127,14 @@ function(_qgc_gst_windows_sdk_arch out_var)
     )
 endfunction()
 
-macro(_qgc_discover_windows_sdk)
+# _qgc_discover_windows_sdk()
+# Uses the SDK under GStreamer_ROOT_DIR, the GSTREAMER_1_0_ROOT_* environment or a standard install location when it is
+# complete and recent enough, else downloads the official MSVC SDK for the target architecture. Points pkg-config at
+# the SDK. Sets GStreamer_ROOT_DIR, GStreamer_AUTO_DOWNLOADED, GSTREAMER_{LIB,PLUGIN,INCLUDE}_PATH and the SDK's
+# PKG_CONFIG_EXECUTABLE and PKG_CONFIG_ARGN.
+# cmakelang 0.6.13 predates return(PROPAGATE).
+# cmake-lint: disable=C0103,E1121
+function(_qgc_discover_windows_sdk)
     _qgc_gst_windows_sdk_arch(_gst_win_arch)
     if(_gst_win_arch STREQUAL "arm64")
         set(_gst_win_platform "windows_msvc_arm64")
@@ -139,7 +146,11 @@ macro(_qgc_discover_windows_sdk)
         if(_gst_win_arch STREQUAL "arm64")
             if(DEFINED ENV{GSTREAMER_1_0_ROOT_ARM64} AND EXISTS "$ENV{GSTREAMER_1_0_ROOT_ARM64}")
                 set(GStreamer_ROOT_DIR "$ENV{GSTREAMER_1_0_ROOT_ARM64}")
-            elseif(MSVC AND DEFINED ENV{GSTREAMER_1_0_ROOT_MSVC_ARM64} AND EXISTS "$ENV{GSTREAMER_1_0_ROOT_MSVC_ARM64}")
+            elseif(
+                MSVC
+                AND DEFINED ENV{GSTREAMER_1_0_ROOT_MSVC_ARM64}
+                AND EXISTS "$ENV{GSTREAMER_1_0_ROOT_MSVC_ARM64}"
+            )
                 set(GStreamer_ROOT_DIR "$ENV{GSTREAMER_1_0_ROOT_MSVC_ARM64}")
             elseif(EXISTS "C:/Program Files/gstreamer/1.0/msvc_arm64")
                 set(GStreamer_ROOT_DIR "C:/Program Files/gstreamer/1.0/msvc_arm64")
@@ -149,7 +160,11 @@ macro(_qgc_discover_windows_sdk)
         else()
             if(DEFINED ENV{GSTREAMER_1_0_ROOT_X86_64} AND EXISTS "$ENV{GSTREAMER_1_0_ROOT_X86_64}")
                 set(GStreamer_ROOT_DIR "$ENV{GSTREAMER_1_0_ROOT_X86_64}")
-            elseif(MSVC AND DEFINED ENV{GSTREAMER_1_0_ROOT_MSVC_X86_64} AND EXISTS "$ENV{GSTREAMER_1_0_ROOT_MSVC_X86_64}")
+            elseif(
+                MSVC
+                AND DEFINED ENV{GSTREAMER_1_0_ROOT_MSVC_X86_64}
+                AND EXISTS "$ENV{GSTREAMER_1_0_ROOT_MSVC_X86_64}"
+            )
                 set(GStreamer_ROOT_DIR "$ENV{GSTREAMER_1_0_ROOT_MSVC_X86_64}")
             elseif(EXISTS "C:/Program Files/gstreamer/1.0/msvc_x86_64")
                 set(GStreamer_ROOT_DIR "C:/Program Files/gstreamer/1.0/msvc_x86_64")
@@ -163,17 +178,16 @@ macro(_qgc_discover_windows_sdk)
         _qgc_windows_sdk_complete("${GStreamer_ROOT_DIR}" _gst_win_sdk_complete)
         _qgc_gst_sdk_pc_version("${GStreamer_ROOT_DIR}/lib" _gst_win_sdk_version)
         if(NOT _gst_win_sdk_complete)
-            message(WARNING
-                "Existing GStreamer SDK at ${GStreamer_ROOT_DIR} is incomplete "
-                "(missing devel/runtime artifacts). Falling back to auto-download.")
+            message(WARNING "Existing GStreamer SDK at ${GStreamer_ROOT_DIR} is incomplete "
+                            "(missing devel/runtime artifacts). Falling back to auto-download."
+            )
             unset(GStreamer_ROOT_DIR)
             unset(GStreamer_ROOT_DIR CACHE)
-        elseif(NOT _gst_win_sdk_version
-               OR _gst_win_sdk_version VERSION_LESS GStreamer_FIND_VERSION)
-            message(WARNING
-                "Existing GStreamer SDK at ${GStreamer_ROOT_DIR} has version "
-                "'${_gst_win_sdk_version}', but ${GStreamer_FIND_VERSION}+ is required. "
-                "Falling back to auto-download.")
+        elseif(NOT _gst_win_sdk_version OR _gst_win_sdk_version VERSION_LESS GStreamer_FIND_VERSION)
+            message(WARNING "Existing GStreamer SDK at ${GStreamer_ROOT_DIR} has version "
+                            "'${_gst_win_sdk_version}', but ${GStreamer_FIND_VERSION}+ is required. "
+                            "Falling back to auto-download."
+            )
             unset(GStreamer_ROOT_DIR)
             unset(GStreamer_ROOT_DIR CACHE)
         endif()
@@ -181,11 +195,12 @@ macro(_qgc_discover_windows_sdk)
 
     if(NOT GStreamer_ROOT_DIR OR NOT EXISTS "${GStreamer_ROOT_DIR}")
         if(NOT MSVC OR NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
-            message(FATAL_ERROR
-                "Automatic GStreamer download on Windows requires MSVC 64-bit (x64 or ARM64).\n"
-                "MinGW and Clang/Windows toolchains are NOT supported by the auto-download "
-                "path (the MSVC SDK ABI is incompatible).\n"
-                "Set GStreamer_ROOT_DIR to a complete SDK matching your toolchain/architecture.")
+            message(
+                FATAL_ERROR "Automatic GStreamer download on Windows requires MSVC 64-bit (x64 or ARM64).\n"
+                            "MinGW and Clang/Windows toolchains are NOT supported by the auto-download "
+                            "path (the MSVC SDK ABI is incompatible).\n"
+                            "Set GStreamer_ROOT_DIR to a complete SDK matching your toolchain/architecture."
+            )
         endif()
 
         qgc_gst_acquire_sdk(
@@ -213,20 +228,29 @@ macro(_qgc_discover_windows_sdk)
         set(GStreamer_AUTO_DOWNLOADED TRUE)
     endif()
 
-    gstreamer_create_layout_target(
-        SDK_ROOT "${GStreamer_ROOT_DIR}"
-        TYPE FLAT
-    )
-    list(APPEND PKG_CONFIG_ARGN
-        "--define-variable=prefix=${GStreamer_ROOT_DIR}"
-        "--define-variable=libdir=${GSTREAMER_LIB_PATH}"
-        "--define-variable=includedir=${GSTREAMER_INCLUDE_PATH}"
+    gstreamer_create_layout_target(SDK_ROOT "${GStreamer_ROOT_DIR}" TYPE FLAT)
+    list(APPEND PKG_CONFIG_ARGN "--define-variable=prefix=${GStreamer_ROOT_DIR}"
+         "--define-variable=libdir=${GSTREAMER_LIB_PATH}" "--define-variable=includedir=${GSTREAMER_INCLUDE_PATH}"
     )
 
     gstreamer_apply_pkgconfig_env(
-        MODE SDK
-        PKG_CONFIG_EXE "${GStreamer_ROOT_DIR}/bin/pkg-config.exe"
-        LIBDIR "${GSTREAMER_LIB_PATH}/pkgconfig" "${GSTREAMER_PLUGIN_PATH}/pkgconfig"
+        MODE
+        SDK
+        PKG_CONFIG_EXE
+        "${GStreamer_ROOT_DIR}/bin/pkg-config.exe"
+        LIBDIR
+        "${GSTREAMER_LIB_PATH}/pkgconfig"
+        "${GSTREAMER_PLUGIN_PATH}/pkgconfig"
         DONT_DEFINE_PREFIX
     )
-endmacro()
+    return(
+        PROPAGATE
+        GStreamer_ROOT_DIR
+        GStreamer_AUTO_DOWNLOADED
+        GSTREAMER_LIB_PATH
+        GSTREAMER_PLUGIN_PATH
+        GSTREAMER_INCLUDE_PATH
+        PKG_CONFIG_EXECUTABLE
+        PKG_CONFIG_ARGN
+    )
+endfunction()
