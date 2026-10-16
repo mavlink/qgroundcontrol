@@ -134,16 +134,35 @@ qgc_disable_dependency_warnings(ulog_cpp)
 # valijson (header-only JSON-Schema validator, native Qt-JSON adapter)
 # ============================================================================
 
+include(CPMPatchCache)
+
+set(_valijson_patch "${CMAKE_CURRENT_SOURCE_DIR}/valijson-qtjson-int64.patch")
+qgc_cpm_patch_cache_key(
+    _valijson_cache_key
+    GIT_REPOSITORY
+    "https://github.com/tristanpenman/valijson.git"
+    GIT_TAG
+    v1.1.0
+    PATCHES
+    "${_valijson_patch}"
+)
+# valijson's recursive submodules nest test files 151 characters deep; the full 64-character key
+# pushes those paths past Windows' 260-character limit in CI checkouts.
+string(SUBSTRING "${_valijson_cache_key}" 0 16 _valijson_cache_key)
+
 CPMAddPackage(
     NAME valijson
     GITHUB_REPOSITORY tristanpenman/valijson
     # Pinned to 1.1.0: 1.1.1 calls std::from_chars(double) unguarded, which AppleClang's
     # libc++ (macos-15/ios CI, pre-LLVM 20) lacks — valijson#239, fixed in 1.1.2.
     GIT_TAG v1.1.0
+    # CPM's default source-cache key hashes the patch's absolute path, not its contents, so every
+    # checkout location cloned its own copy.
+    CUSTOM_CACHE_KEY "${_valijson_cache_key}"
     OPTIONS "valijson_BUILD_TESTS OFF" "valijson_BUILD_EXAMPLES OFF" "valijson_INSTALL OFF"
     # QtJsonAdapter isInteger()/getInteger() use 32-bit toInt(), so integral values
     # > INT_MAX (e.g. PX4 uint32 fileCrc) fail "type": "integer" checks or truncate.
-    PATCHES valijson-qtjson-int64.patch
+    PATCHES "${_valijson_patch}"
 )
 
 # Keep header-only Valijson diagnostics outside QGC's warning policy.
