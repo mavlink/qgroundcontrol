@@ -710,6 +710,15 @@ std::vector<uint8_t> makePayloadUint64Uint64(uint64_t a, uint64_t b)
     return buf;
 }
 
+// ULog payload: uint64_t timestamp followed by a nested message (e.g. vehicle_gnss.receiver)
+std::vector<uint8_t> makePayloadTimestampNested(uint64_t ts, const std::vector<uint8_t>& nested)
+{
+    std::vector<uint8_t> buf(8);
+    memcpy(buf.data(), &ts, 8);
+    buf.insert(buf.end(), nested.begin(), nested.end());
+    return buf;
+}
+
 } // anonymous namespace
 
 void LogFileParserTest::_gpsPathULogVehicleGlobalPositionTest()
@@ -803,6 +812,59 @@ void LogFileParserTest::_gpsPathULogVehicleGpsPositionLatDegTest()
     for (int i = 0; i < path.size(); i++) {
         const QVariantMap coord = path[i].toMap();
         QVERIFY(qAbs(coord.value(QStringLiteral("latitude")).toDouble()  - samples[i].lat) < 1e-6);
+        QVERIFY(qAbs(coord.value(QStringLiteral("longitude")).toDouble() - samples[i].lon) < 1e-6);
+    }
+}
+
+void LogFileParserTest::_gpsPathULogVehicleGnssTest()
+{
+    // PX4 logs vehicle_gnss with the selected receiver's sensor_gnss sample nested under 'receiver'.
+    // vehicle_global_position is intentionally absent to confirm fallback.
+    struct Sample
+    {
+        double lat;
+        double lon;
+    };
+
+    static const Sample samples[] = {
+        {47.397742, 8.545594},
+        {47.397800, 8.545700},
+        {47.397900, 8.545800},
+    };
+
+    const QByteArray bytes = buildULog(
+        [](ulog_cpp::Writer& w) {
+            w.messageFormat(ulog_cpp::MessageFormat{
+                "sensor_gnss",
+                {ulog_cpp::Field{"uint64_t", "timestamp"}, ulog_cpp::Field{"double", "latitude"},
+                 ulog_cpp::Field{"double", "longitude"}}});
+            w.messageFormat(ulog_cpp::MessageFormat{
+                "vehicle_gnss",
+                {ulog_cpp::Field{"uint64_t", "timestamp"}, ulog_cpp::Field{"sensor_gnss", "receiver"}}});
+        },
+        [](ulog_cpp::Writer& w) {
+            w.addLoggedMessage(ulog_cpp::AddLoggedMessage{0, 1, "vehicle_gnss"});
+            uint64_t ts = 500000ULL;
+            for (const auto& s : samples) {
+                w.data(ulog_cpp::Data{1, makePayloadTimestampNested(ts, makePayload64DoubleDouble(ts, s.lat, s.lon))});
+                ts += 500000ULL;
+            }
+        });
+
+    QTemporaryFile tmp;
+    tmp.setFileTemplate(QDir::tempPath() + QStringLiteral("/logtest_XXXXXX.ulg"));
+    QVERIFY(writeTempFile(tmp, bytes));
+
+    LogFileParser parser;
+    QVERIFY(parser.parseFile(tmp.fileName()));
+    QVERIFY(parser.parseComplete());
+
+    const QVariantList path = parser.gpsPath();
+    QCOMPARE(path.size(), static_cast<int>(std::size(samples)));
+
+    for (int i = 0; i < path.size(); i++) {
+        const QVariantMap coord = path[i].toMap();
+        QVERIFY(qAbs(coord.value(QStringLiteral("latitude")).toDouble() - samples[i].lat) < 1e-6);
         QVERIFY(qAbs(coord.value(QStringLiteral("longitude")).toDouble() - samples[i].lon) < 1e-6);
     }
 }
@@ -1015,6 +1077,38 @@ void LogFileParserTest::_startTimePX4FromSensorGpsTest()
         [](ulog_cpp::Writer &w) {
             w.addLoggedMessage(ulog_cpp::AddLoggedMessage{0, 1, "sensor_gps"});
             w.data(ulog_cpp::Data{1, makePayloadUint64Uint64(2000000ULL, 1672531202000000ULL)});
+        });
+
+    QTemporaryFile tmp;
+    tmp.setFileTemplate(QDir::tempPath() + QStringLiteral("/logtest_XXXXXX.ulg"));
+    QVERIFY(writeTempFile(tmp, bytes));
+
+    LogFileParser parser;
+    QVERIFY(parser.parseFile(tmp.fileName()));
+
+    const QDateTime startTime = parser.startTime();
+    QVERIFY(!startTime.isNull());
+    const QDateTime expected = QDateTime(QDate(2023, 1, 1), QTime(0, 0, 0), QTimeZone::utc());
+    QCOMPARE(startTime.toMSecsSinceEpoch(), expected.toMSecsSinceEpoch());
+}
+
+void LogFileParserTest::_startTimePX4FromVehicleGnssTest()
+{
+    // vehicle_gnss nests time_utc_usec under 'receiver'. The outer timestamp is the later publish time
+    // from the sensors module, so the start time must use receiver.timestamp.
+    const QByteArray bytes = buildULog(
+        [](ulog_cpp::Writer& w) {
+            w.messageFormat(ulog_cpp::MessageFormat{
+                "sensor_gnss",
+                {ulog_cpp::Field{"uint64_t", "timestamp"}, ulog_cpp::Field{"uint64_t", "time_utc_usec"}}});
+            w.messageFormat(ulog_cpp::MessageFormat{
+                "vehicle_gnss",
+                {ulog_cpp::Field{"uint64_t", "timestamp"}, ulog_cpp::Field{"sensor_gnss", "receiver"}}});
+        },
+        [](ulog_cpp::Writer& w) {
+            w.addLoggedMessage(ulog_cpp::AddLoggedMessage{0, 1, "vehicle_gnss"});
+            w.data(ulog_cpp::Data{
+                1, makePayloadTimestampNested(2005000ULL, makePayloadUint64Uint64(2000000ULL, 1672531202000000ULL))});
         });
 
     QTemporaryFile tmp;
