@@ -34,6 +34,31 @@ void StandardModes::gotMessage(MAV_RESULT result, VehicleTypes::RequestMessageRe
     if (result == MAV_RESULT_ACCEPTED) {
         mavlink_available_modes_t availableModes;
         mavlink_msg_available_modes_decode(&message, &availableModes);
+
+        if (availableModes.seq != 0) {
+            if (_requestSeq == 0) {
+                _requestSeq = availableModes.seq;
+            } else if (_requestSeq != availableModes.seq) {
+                ++_sequenceRestartCount;
+
+                if (_sequenceRestartCount > kMaxSequenceRestarts) {
+                    qCWarning(StandardModesLog) << "AVAILABLE_MODES sequence kept changing; giving up after"
+                                                << kMaxSequenceRestarts << "restarts";
+
+                    _requestSeq = 0;
+                    _modeList.clear();
+                    emit requestCompleted();
+                    return;
+                }
+
+                qCDebug(StandardModesLog) << "AVAILABLE_MODES sequence changed during download, restarting"
+                                          << _sequenceRestartCount << "of" << kMaxSequenceRestarts;
+
+                startRequest();
+                return;
+            }
+        }
+
         bool cannotBeSet = availableModes.properties & MAV_MODE_PROPERTY_NOT_USER_SELECTABLE;
         bool advanced = availableModes.properties & MAV_MODE_PROPERTY_ADVANCED;
         availableModes.mode_name[sizeof(availableModes.mode_name)-1] = '\0';
@@ -125,15 +150,20 @@ void StandardModes::ensureUniqueModeNames()
 void StandardModes::request()
 {
     if (_requestActive) {
-        // If we are in the middle of waiting for a request, wait for the response first
         _wantReset = true;
         return;
     }
 
+    _sequenceRestartCount = 0;
+    startRequest();
+}
+
+void StandardModes::startRequest()
+{
     qCDebug(StandardModesLog) << "Requesting available modes";
-    // Request one at a time. This could be improved by requesting all, but we can't use Vehicle::requestMessage for that
+    _requestSeq = 0;
     _modeList.clear();
-    StandardModes::requestMode(1);
+    requestMode(1);
 }
 
 void StandardModes::requestMode(int modeIndex)

@@ -37,6 +37,7 @@ signals:
 private:
 
     void requestMode(int modeIndex);
+    void startRequest();
     void ensureUniqueModeNames();
 
     Vehicle*const _vehicle;
@@ -45,6 +46,10 @@ private:
     bool _wantReset{false};
 
     int _lastSeq{-1};
+    uint8_t _requestSeq{0};
+    int _sequenceRestartCount{0};
+
+    static constexpr int kMaxSequenceRestarts = 3;
 
     FlightModeList _modeList;
 };
