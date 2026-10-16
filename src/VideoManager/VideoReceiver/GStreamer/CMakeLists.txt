@@ -22,6 +22,9 @@ include(GStreamer/Orchestrator)
 # QGCGStreamer: one static lib for the self-contained HwBuffers + gstqgc leaf layer (no app deps).
 # PUBLIC usage reqs flow to the app via the link below; facade sources stay app-side (need app headers).
 qt_add_library(QGCGStreamer STATIC)
+# Each element and buffer backend keeps file-local GObject property enums and singletons, so they cannot share a
+# unity unit.
+set_target_properties(QGCGStreamer PROPERTIES UNITY_BUILD OFF)
 
 target_link_libraries(QGCGStreamer PUBLIC GStreamer::GStreamer Qt6::Multimedia Qt6::MultimediaPrivate QGCLogging)
 
@@ -120,6 +123,11 @@ target_sources(
             RecordingFinalizer.h
             DecodingBranch.cc
             DecodingBranch.h
+)
+
+# Its file-scope `using namespace GStreamer;` would leak into later sources of a unity unit.
+set_source_files_properties(GstSourceFactory.cc TARGET_DIRECTORY ${CMAKE_PROJECT_NAME}
+                            PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON
 )
 
 # GStreamer.cc fails initialization when a runtime-required plugin (PluginPolicy.cmake) is not registered. Each entry

@@ -192,7 +192,34 @@ function(qgc_configure_target target)
     if(COMMAND qgc_apply_sanitizers_to_target)
         qgc_apply_sanitizers_to_target(${target})
     endif()
+    if(QGC_UNITY_BUILD)
+        _qgc_apply_unity_build(${target})
+    endif()
     set_target_properties(${target} PROPERTIES QGC_PROJECT_TARGET_CONFIGURED TRUE)
+endfunction()
+
+# Unity builds cover QGC targets only: bundled third-party sources are not unity-safe. A target
+# that sets UNITY_BUILD itself keeps its choice.
+function(_qgc_apply_unity_build target)
+    get_target_property(_unity_build ${target} UNITY_BUILD)
+    if(NOT _unity_build MATCHES "-NOTFOUND$")
+        return()
+    endif()
+    set_target_properties(${target} PROPERTIES UNITY_BUILD ON UNITY_BUILD_BATCH_SIZE 16)
+
+    # The moc and QML type registration units already aggregate the whole target; batching them
+    # with sources creates one oversized unit that finishes last.
+    get_target_property(_binary_dir ${target} BINARY_DIR)
+    get_target_property(_autogen_dir ${target} AUTOGEN_BUILD_DIR)
+    if(NOT _autogen_dir)
+        set(_autogen_dir "${_binary_dir}/${target}_autogen")
+    endif()
+    string(TOLOWER "${target}_qmltyperegistrations.cpp" _registrations)
+    set(_aggregates "${_autogen_dir}/mocs_compilation.cpp" "${_binary_dir}/${_registrations}")
+    foreach(_config IN LISTS CMAKE_CONFIGURATION_TYPES)
+        list(APPEND _aggregates "${_autogen_dir}/mocs_compilation_${_config}.cpp")
+    endforeach()
+    set_source_files_properties(${_aggregates} TARGET_DIRECTORY ${target} PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
 endfunction()
 
 function(_qgc_configure_directory_targets directory root_directory)

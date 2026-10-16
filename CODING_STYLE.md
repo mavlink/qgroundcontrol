@@ -323,6 +323,9 @@ Connections {
 4. **Using Q_ASSERT in production** - Use defensive checks instead
 5. **Mixing cookedValue/rawValue** - Understand the difference
 6. **Hardcoded QML sizes/colors** - Use ScreenTools and QGCPalette
+7. **Unity-unsafe `.cc` files** - CI compiles QGC sources in unity batches, so file-local names (anonymous
+   namespace or `static`) must not repeat across files and project namespaces must not be opened with a file-scope
+   `using namespace`; otherwise mark the file `SKIP_UNITY_BUILD_INCLUSION` and reproduce with `-DQGC_UNITY_BUILD=ON`
 
 ### Examples
 

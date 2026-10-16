@@ -259,8 +259,9 @@ jobs:
           testing: 'true'
           coverage: ${{ matrix.mode == 'coverage' && 'true' || 'false' }}
           # Line tables are all gcov and sanitizer stacks need; full -g costs ~17% compile CPU and ~3.5x object size.
+          # Unity builds of QGC targets halve compile CPU; release jobs stay non-unity because they ship artifacts.
           extra-args: >-
-            -DCMAKE_C_FLAGS_DEBUG=-g1 -DCMAKE_CXX_FLAGS_DEBUG=-g1
+            -DCMAKE_C_FLAGS_DEBUG=-g1 -DCMAKE_CXX_FLAGS_DEBUG=-g1 -DQGC_UNITY_BUILD=ON
             ${{ matrix.mode == 'sanitizers' && '-DQGC_ENABLE_ASAN=ON -DQGC_ENABLE_UBSAN=ON -DQGC_TEST_DETECT_LEAKS=ON' || '' }}
 
       - name: Build

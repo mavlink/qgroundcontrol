@@ -289,6 +289,13 @@ own PR caches; a warm default-branch compiler cache is not guaranteed.
 Coverage retains the compiler launcher: ccache stores `.gcno` files alongside objects.
 Linux coverage and sanitizer builds use line-table debug info (`-g1`), all that gcov and
 sanitizer stacks need: it cuts objects by ~70% and compile CPU by ~17% against full `-g`.
+They also build QGC targets as unity builds (`QGC_UNITY_BUILD=ON`), halving compile CPU;
+bundled third-party code, the GPS protocol and GStreamer libraries, and files marked
+`SKIP_UNITY_BUILD_INCLUSION` stay per-file. A redefinition or ambiguity error there means
+two `.cc` files in one batch share file-local names or a file-scope `using namespace`:
+rename them or mark the file, and reproduce with `-DQGC_UNITY_BUILD=ON`. Adding or removing
+a source shifts later batches, so such errors can appear in files a PR did not touch, and
+the shifted batches miss the compiler cache once. Release jobs stay per-file.
 GCC coverage uses atomic counter updates for worker threads. The known GCC negative-counter
 workaround remains enabled and reports any discarded counters.
 CMake routes `Qt6::rcc` through a launcher that pins the file timestamps rcc embeds, so fresh
