@@ -38,7 +38,6 @@ qt_add_qml_module(FlyViewModule
         FlyViewMissionCompleteDialog.qml
         FlyViewOccluders.qml
         FlyViewOccluderViewer.qml
-        FlyViewPreFlightChecklistPopup.qml
         FlyViewToolStrip.qml
         FlyViewToolStripActionList.qml
 
@@ -63,7 +62,6 @@ qt_add_qml_module(FlyViewModule
         OnScreenGimbalController.qml
         PreFlightBatteryCheck.qml
         PreFlightCheckList.qml
-        PreFlightCheckListShowAction.qml
         PreFlightGPSCheck.qml
         PreFlightRCCheck.qml
         PreFlightSensorsHealthCheck.qml

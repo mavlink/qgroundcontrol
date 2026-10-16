@@ -62,6 +62,9 @@ public:
 
     bool hasUnreadMessages() const { return m_unreadMessageCount != 0; }
 
+    /// All unread messages, including critical ones.
+    uint32_t unreadMessageCount() const { return m_unreadMessageCount; }
+
     static QString getMessageText(const mavlink_message_t &message);
 
 signals:
@@ -69,6 +72,7 @@ signals:
     void textMessageReceived(MAV_COMPONENT componentid, MAV_SEVERITY severity, QString text, QString description);
     void unreadCriticalMessageCountChanged();
     void hasUnreadMessagesChanged();
+    void unreadMessageCountChanged();
     void formattedMessagesChanged();
     void newErrorMessage(QString message);
 

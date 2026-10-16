@@ -122,25 +122,42 @@ void StatusTextHandlerTest::_testNewMessagesAreUnread()
     StatusTextHandler statusTextHandler;
 
     QSignalSpy unreadSpy(&statusTextHandler, &StatusTextHandler::hasUnreadMessagesChanged);
+    QSignalSpy unreadCountSpy(&statusTextHandler, &StatusTextHandler::unreadMessageCountChanged);
     QSignalSpy newMessageSpy(&statusTextHandler, &StatusTextHandler::newFormattedMessage);
     QVERIFY(unreadSpy.isValid());
+    QVERIFY(unreadCountSpy.isValid());
     QVERIFY(newMessageSpy.isValid());
     QVERIFY(!statusTextHandler.hasUnreadMessages());
+    QCOMPARE(statusTextHandler.unreadMessageCount(), 0);
 
     statusTextHandler.handleHTMLEscapedTextMessage(MAV_COMP_ID_USER1, MAV_SEVERITY_INFO, "InfoMessage", "");
     QVERIFY(statusTextHandler.hasUnreadMessages());
+    QCOMPARE(statusTextHandler.unreadMessageCount(), 1);
     QCOMPARE(unreadSpy.count(), 1);
+    QCOMPARE(unreadCountSpy.count(), 1);
     QVERIFY(statusTextHandler.formattedMessages().contains(QStringLiteral("<b>")));
     QCOMPARE(newMessageSpy.count(), 1);
     QVERIFY(newMessageSpy.at(0).at(0).toString().contains(QStringLiteral("<b>")));
 
-    // Already unread, so no further transition
+    // Already unread, so no further transition, but the count still changes
     statusTextHandler.handleHTMLEscapedTextMessage(MAV_COMP_ID_USER1, MAV_SEVERITY_WARNING, "WarningMessage", "");
     QCOMPARE(unreadSpy.count(), 1);
+    QCOMPARE(statusTextHandler.unreadMessageCount(), 2);
+    QCOMPARE(unreadCountSpy.count(), 2);
 
+    // The total includes critical messages
+    statusTextHandler.handleHTMLEscapedTextMessage(MAV_COMP_ID_USER1, MAV_SEVERITY_ERROR, "ErrorMessage", "");
+    QCOMPARE(statusTextHandler.unreadMessageCount(), 3);
+    QCOMPARE(statusTextHandler.unreadCriticalMessageCount(), 1);
+
+    statusTextHandler.markAllRead();
+    QCOMPARE(statusTextHandler.unreadMessageCount(), 0);
+
+    statusTextHandler.handleHTMLEscapedTextMessage(MAV_COMP_ID_USER1, MAV_SEVERITY_INFO, "InfoMessage2", "");
     statusTextHandler.clearMessages();
     QVERIFY(!statusTextHandler.hasUnreadMessages());
-    QCOMPARE(unreadSpy.count(), 2);
+    QCOMPARE(statusTextHandler.unreadMessageCount(), 0);
+    QCOMPARE(unreadSpy.count(), 4);
 }
 
 void StatusTextHandlerTest::_testMarkAllRead()

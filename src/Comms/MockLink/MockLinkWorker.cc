@@ -26,17 +26,21 @@ void MockLinkWorker::startWork()
     _timer10Hz = new QTimer(this);
     _timer500Hz = new QTimer(this);
     _timerStatusText = new QTimer(this);
+    _timerBootStatusText = new QTimer(this);
 
     (void) connect(_timer1Hz, &QTimer::timeout, this, &MockLinkWorker::run1HzTasks);
     (void) connect(_timer10Hz, &QTimer::timeout, this, &MockLinkWorker::run10HzTasks);
     (void) connect(_timer500Hz, &QTimer::timeout, this, &MockLinkWorker::run500HzTasks);
     (void) connect(_timerStatusText, &QTimer::timeout, this, &MockLinkWorker::sendStatusTextMessages);
+    (void) connect(_timerBootStatusText, &QTimer::timeout, this, &MockLinkWorker::sendBootStatusTextMessages);
 
     _timer1Hz->start(kTimer1HzIntervalMs);
     _timer10Hz->start(kTimer10HzIntervalMs);
     _timer500Hz->start(kTimer500HzIntervalMs);
 
     if (_mockLink && _mockLink->shouldSendStatusText()) {
+        _timerBootStatusText->setSingleShot(true);
+        _timerBootStatusText->start(kBootStatusTextDelayMs);
         _timerStatusText->setSingleShot(true);
         _timerStatusText->start(kStatusTextDelayMs);
     }
@@ -59,6 +63,9 @@ void MockLinkWorker::stopWork()
     }
     if (_timerStatusText) {
         _timerStatusText->stop();
+    }
+    if (_timerBootStatusText) {
+        _timerBootStatusText->stop();
     }
 }
 
@@ -87,5 +94,12 @@ void MockLinkWorker::sendStatusTextMessages()
 {
     if (_mockLink) {
         _mockLink->sendStatusTextMessages();
+    }
+}
+
+void MockLinkWorker::sendBootStatusTextMessages()
+{
+    if (_mockLink) {
+        _mockLink->sendBootStatusTextMessages();
     }
 }

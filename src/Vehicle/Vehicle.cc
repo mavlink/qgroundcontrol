@@ -3492,6 +3492,11 @@ bool Vehicle::hasUnreadMessages() const
     return m_statusTextHandler->hasUnreadMessages();
 }
 
+int Vehicle::unreadMessageCount() const
+{
+    return m_statusTextHandler->unreadMessageCount();
+}
+
 QString Vehicle::formattedMessages() const { return m_statusTextHandler->formattedMessages(); }
 
 void Vehicle::_createStatusTextHandler()
@@ -3501,6 +3506,8 @@ void Vehicle::_createStatusTextHandler()
                    &Vehicle::unreadCriticalMessageCountChanged);
     (void) connect(m_statusTextHandler, &StatusTextHandler::hasUnreadMessagesChanged, this,
                    &Vehicle::hasUnreadMessagesChanged);
+    (void) connect(m_statusTextHandler, &StatusTextHandler::unreadMessageCountChanged, this,
+                   &Vehicle::unreadMessageCountChanged);
     (void) connect(m_statusTextHandler, &StatusTextHandler::formattedMessagesChanged, this,
                    &Vehicle::formattedMessagesChanged);
     (void) connect(m_statusTextHandler, &StatusTextHandler::newFormattedMessage, this, &Vehicle::newFormattedMessage);
