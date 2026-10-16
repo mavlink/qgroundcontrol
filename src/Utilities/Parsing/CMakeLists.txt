@@ -71,9 +71,15 @@ target_include_directories(
     PRIVATE ${libexif_SOURCE_DIR}/libexif
 )
 
+# file(CONFIGURE) rewrites only on change; an unconditional write recompiled libexif on every configure.
+# cmakelang 0.6.13 does not recognize file(CONFIGURE).
+# cmake-lint: disable=E1126
 set(LIBEXIF_CONFIG_H "${CMAKE_CURRENT_BINARY_DIR}/Exif/config.h")
 file(
-    WRITE ${LIBEXIF_CONFIG_H}
+    CONFIGURE
+    OUTPUT
+    ${LIBEXIF_CONFIG_H}
+    CONTENT
     "
 #pragma once
 #define PACKAGE \"libexif\"
@@ -81,12 +87,16 @@ file(
 #define VERSION \"${QGC_LIBEXIF_VERSION}\"
 #define GETTEXT_PACKAGE \"libexif-12\"
 "
+    @ONLY
 )
 
 set(LIBEXIF_STDINT_DIR "${CMAKE_CURRENT_BINARY_DIR}/Exif/libexif")
 file(MAKE_DIRECTORY ${LIBEXIF_STDINT_DIR})
 file(
-    WRITE "${LIBEXIF_STDINT_DIR}/_stdint.h"
+    CONFIGURE
+    OUTPUT
+    "${LIBEXIF_STDINT_DIR}/_stdint.h"
+    CONTENT
     "
 #pragma once
 #include <stdint.h>
@@ -99,6 +109,7 @@ typedef SSIZE_T ssize_t;
 #include <sys/types.h>
 #endif
 "
+    @ONLY
 )
 target_include_directories(exif PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/Exif)
 
