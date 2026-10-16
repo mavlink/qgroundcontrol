@@ -29,6 +29,7 @@
 #include "GstQgcFrameMap.h"
 #include "GstSourceFactory.h"
 #include "GstVideoReceiver.h"
+#include "HwBuffers/common/HwBuffers.h"
 #include "HwBuffers/dmabuf/GstDmaDrmCaps.h"
 #include "QGCQVideoSinkController.h"
 #include "gstqgc/GstQgcAllocation.h"
@@ -73,14 +74,15 @@ void GStreamerTest::_testDmaBufDispatch()
     GStreamer::redirectGLibLogging();
     QVERIFY2(GStreamer::completeInit(), "GStreamer::completeInit() failed");
 
-#if defined(QGC_GST_BIN_USE_GLUPLOAD)
-    QSKIP("Direct-DMABuf dispatch not exercised when the GPU bin routes through glupload (GLMemory path)");
+#if !defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
+    QSKIP("Direct-DMABuf bin not compiled in this build");
 #endif
+    const HwBuffers::ScopedGpuBinModeForTest directBin(HwBuffers::GpuBinMode::DirectDmaBuf);
 
     for (const char* name : {"vah264enc", "vah264dec", "vapostproc"}) {
         GstElementFactory* f = gst_element_factory_find(name);
         if (!f) {
-            QSKIP(qPrintable(QStringLiteral("VA-API not available: missing %1").arg(QString::fromUtf8(name))));
+            QSKIP(qPrintable(QStringLiteral("No VA-API stack: %1 is not registered").arg(QString::fromUtf8(name))));
         }
         gst_object_unref(f);
     }
@@ -102,7 +104,7 @@ void GStreamerTest::_testDmaBufDispatch()
         return out;
     };
 
-    GstCaps* qgcGpuCaps = gst_caps_from_string(GstQgc::buildGpuCapsString().c_str());
+    GstCaps* qgcGpuCaps = gst_caps_from_string(GstQgc::buildGpuCapsString(HwBuffers::GpuBinMode::DirectDmaBuf).c_str());
     QVERIFY2(qgcGpuCaps, "QGC GPU caps did not parse");
     auto qgcGpuCapsGuard = qScopeGuard([&] { gst_caps_unref(qgcGpuCaps); });
 
@@ -253,6 +255,7 @@ void GStreamerTest::_testDmaBufDispatch()
 
     QString errMsg;
     bool sawError = false;
+    bool notNegotiated = false;
     if (msg && GST_MESSAGE_TYPE(msg) == GST_MESSAGE_ERROR) {
         GError* err = nullptr;
         gchar* debug = nullptr;
@@ -262,6 +265,12 @@ void GStreamerTest::_testDmaBufDispatch()
                      .arg(debug ? QString::fromUtf8(debug) : QString());
         g_clear_error(&err);
         g_free(debug);
+        // GST_ELEMENT_FLOW_ERROR carries the streaming thread's GstFlowReturn as "flow-return".
+        const GstStructure* details = nullptr;
+        gst_message_parse_error_details(msg, &details);
+        gint flowReturn = GST_FLOW_OK;
+        notNegotiated = details && gst_structure_get_int(details, "flow-return", &flowReturn) &&
+                        (flowReturn == GST_FLOW_NOT_NEGOTIATED);
         sawError = true;
     }
     if (msg)
@@ -294,7 +303,15 @@ void GStreamerTest::_testDmaBufDispatch()
     const int dmaBufCount = probe.dmaBufCount.load();
 
     if (sawError) {
-        QSKIP(qPrintable(QStringLiteral("DMABuf pipeline error (likely no VA driver): %1").arg(errMsg)));
+        // The preflight already ran the VA elements. The sink holding the direct bin's DMABuf caps when the source
+        // stops with not-negotiated means the driver couldn't allocate them LINEAR (iHD: "driver set a modifier
+        // different from allowed list").
+        if (notNegotiated && negotiatedStr.contains(QStringLiteral("memory:DMABuf"))) {
+            QSKIP(qPrintable(QStringLiteral("VA driver exports only tiled (non-LINEAR) DMABuf, which the direct DMABuf "
+                                            "bin can't import. Agreed caps: %1")
+                                 .arg(negotiatedStr)));
+        }
+        QSKIP(qPrintable(QStringLiteral("VA pipeline into the direct DMABuf bin failed: %1").arg(errMsg)));
     }
     QVERIFY2(bufferCount > 0, "No buffers reached qgcqvideosink under DMABuf caps");
     if (dmaBufCount == 0 || !negotiatedStr.contains(QStringLiteral("memory:DMABuf"))) {

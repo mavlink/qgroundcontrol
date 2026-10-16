@@ -13,16 +13,17 @@ std::string buildCpuCapsString()
     return std::string("video/x-raw, format=") + advertisedFormatList();
 }
 
-std::string buildGpuCapsString()
+std::string buildGpuCapsString(HwBuffers::GpuBinMode mode)
 {
+    if (mode == HwBuffers::GpuBinMode::GlUpload) {
+        // texture-target=2D is load-bearing: it forces glcolorconvert to convert amcvideodec's external-OES
+        // Surface textures to GL_TEXTURE_2D; the default ANY target passes external-OES through and the Qt
+        // RHI 2D sink samples it black.
+        return "video/x-raw(memory:GLMemory), texture-target=2D, format=" + advertisedFormatList(kOfferGlUpload);
+    }
+
     const std::string kFormats = advertisedFormatList();
     std::string capsStr;
-#if defined(QGC_GST_BIN_USE_GLUPLOAD)
-    // texture-target=2D is load-bearing: it forces glcolorconvert to convert amcvideodec's external-OES
-    // Surface textures to GL_TEXTURE_2D; the default ANY target passes external-OES through and the Qt
-    // RHI 2D sink samples it black.
-    capsStr = "video/x-raw(memory:GLMemory), texture-target=2D, format=" + advertisedFormatList(kOfferGlUpload);
-#else
     // "<media type>, format=<advertised formats>; "
     [[maybe_unused]] const auto offer = [&capsStr, &kFormats](const char* mediaType) {
         capsStr += mediaType;
@@ -52,14 +53,15 @@ std::string buildGpuCapsString()
 #if defined(QGC_HAS_GST_D3D12_GPU_PATH)
     offer("video/x-raw(memory:D3D12Memory)");
 #endif
-#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) && !defined(QGC_GST_BIN_USE_DMABUF)
-    offer("video/x-raw(memory:GLMemory)");
+#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
+    if (mode != HwBuffers::GpuBinMode::DirectDmaBuf) {
+        offer("video/x-raw(memory:GLMemory)");
+    }
 #endif
 #if defined(QGC_HAS_GST_AHARDWAREBUFFER_GPU_PATH)
     offer("video/x-raw(memory:AHardwareBuffer)");
 #endif
     capsStr += "video/x-raw, format=" + kFormats;
-#endif
     return capsStr;
 }
 

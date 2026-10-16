@@ -29,6 +29,7 @@
 #include "GstQgcFrameMap.h"
 #include "GstSourceFactory.h"
 #include "GstVideoReceiver.h"
+#include "HwBuffers/common/HwBuffers.h"
 #include "HwBuffers/dmabuf/GstDmaDrmCaps.h"
 #include "QGCQVideoSinkController.h"
 #include "gstqgc/GstQgcAllocation.h"
@@ -419,6 +420,48 @@ void GStreamerTest::_testHwBufferEnvConfigParsing()
     const HwBuffers::HwBufferEnvConfig config = HwBuffers::readHwBufferEnvConfig();
     QCOMPARE(config.dmaBufCache, expectedDefaultOff);
     QCOMPARE(config.dmaBufSingleEglImage, expectedDefaultOn);
+}
+
+void GStreamerTest::_testGpuBinModeFromEnvironment_data()
+{
+    QTest::addColumn<QByteArray>("value");  // null: variable unset
+    QTest::addColumn<int>("expectedMode");
+    QTest::addColumn<bool>("warns");
+
+    const int glUpload = int(HwBuffers::GpuBinMode::GlUpload);
+    const int directDmaBuf = int(HwBuffers::GpuBinMode::DirectDmaBuf);
+    QTest::newRow("unset") << QByteArray() << glUpload << false;
+    QTest::newRow("empty") << QByteArray("") << glUpload << false;
+    QTest::newRow("glupload") << QByteArray("glupload") << glUpload << false;
+    QTest::newRow("dmabuf-padded-mixed-case") << QByteArray(" DmaBuf ") << directDmaBuf << false;
+    QTest::newRow("unknown") << QByteArray("vulkan") << glUpload << true;
+}
+
+void GStreamerTest::_testGpuBinModeFromEnvironment()
+{
+#if !defined(QGC_GST_BIN_HAS_GLUPLOAD) || !defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
+    QSKIP("QGC_GST_GPU_BIN only selects a bin when both GPU bins are compiled");
+#else
+    QFETCH(QByteArray, value);
+    QFETCH(int, expectedMode);
+    QFETCH(bool, warns);
+
+    const TestFixtures::EnvVarFixture guard("QGC_GST_GPU_BIN");
+    if (value.isNull()) {
+        qunsetenv("QGC_GST_GPU_BIN");
+    } else {
+        qputenv("QGC_GST_GPU_BIN", value);
+    }
+
+    if (warns) {
+        expectLogMessage("Video.GStreamer.HwBuffers.Config", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("Unknown QGC_GST_GPU_BIN value.*default glupload bin")));
+    }
+    QCOMPARE(int(HwBuffers::readGpuBinMode()), expectedMode);
+    if (warns) {
+        verifyExpectedLogMessage();
+    }
+#endif
 }
 
 void GStreamerTest::_testCpuLayoutSizesPlanesByComponent_data()

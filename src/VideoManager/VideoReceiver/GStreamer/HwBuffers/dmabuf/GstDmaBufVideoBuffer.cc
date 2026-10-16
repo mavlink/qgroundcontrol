@@ -106,8 +106,8 @@ constexpr const char* kModifiersExt = "EGL_EXT_image_dma_buf_import_modifiers";
 constexpr const char* kNativeFenceExt = "EGL_ANDROID_native_fence_sync";
 
 // EGLImage cache (QGC_GST_DMABUF_CACHE=1). Keyed on fd plus the full EGL layout and evicted when the GstMemory
-// finalizes, so a reused fd number never hits a dead buffer's image. Off by default: nothing exercises it at runtime
-// (the glupload bin bypasses this importer and CI has no DMABuf producer with a GL QRhi).
+// finalizes, so a reused fd number never hits a dead buffer's image. Off by default: it is untested (only the
+// QGC_GST_GPU_BIN=dmabuf bin reaches this importer, and CI has no DMABuf producer with a GL QRhi).
 bool imageCacheEnabled() noexcept
 {
     return HwBuffers::hwBufferEnvConfig().dmaBufCache;

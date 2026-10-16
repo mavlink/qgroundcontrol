@@ -29,6 +29,7 @@
 #include "GstQgcFrameMap.h"
 #include "GstSourceFactory.h"
 #include "GstVideoReceiver.h"
+#include "HwBuffers/common/HwBuffers.h"
 #include "HwBuffers/dmabuf/GstDmaDrmCaps.h"
 #include "QGCQVideoSinkController.h"
 #include "gstqgc/GstQgcAllocation.h"
@@ -82,6 +83,10 @@ void GStreamerTest::_testGlMemoryDispatch()
 #endif
     GStreamer::redirectGLibLogging();
     QVERIFY2(GStreamer::completeInit(), "GStreamer::completeInit() failed");
+#if defined(QGC_GST_BIN_HAS_GLUPLOAD)
+    // The direct-DMABuf bin doesn't offer GLMemory.
+    const HwBuffers::ScopedGpuBinModeForTest glBin(HwBuffers::GpuBinMode::GlUpload);
+#endif
 
     GstElementFactory* gluploadFactory = gst_element_factory_find("glupload");
     if (!gluploadFactory) {

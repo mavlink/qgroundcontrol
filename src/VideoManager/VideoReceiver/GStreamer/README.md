@@ -53,9 +53,9 @@ Per-platform import of decoded GPU frames without a copy, all sharing `GstHwFram
 - **`CpuVideoFramePool`** recycles CPU-backed `QVideoFrame` storage (WebRTC-style slab) for the software-fallback path, avoiding per-frame allocation.
 - **Build options**: `HwBuffers/CMakeLists.txt` probes one table row per path; the `QGC_GST_ENABLE_<PATH>` switches
   that compile a path out are listed in [`cmake/README.md`](../../../../cmake/README.md#gstreamer). Configure lists
-  compiled paths that the sink can't reach at runtime: the glupload bin (Linux and Android with gst-gl) offers only
-  GLMemory caps, and no bin advertises CUDAMemory or VulkanImage caps. On Linux, `QGC_GST_ENABLE_GLMEMORY=OFF` switches
-  the bin to direct DMABuf import.
+  compiled paths that the sink can't reach at runtime: Android's glupload bin offers only GLMemory caps, and no bin
+  advertises CUDAMemory or VulkanImage caps. Linux builds with gst-gl and DMABuf compile both GPU bins; see
+  [GPU bin selection](#gpu-bin-selection).
 
 ## Build Configuration
 
@@ -88,6 +88,21 @@ Use `python3 -m tools.setup.install_dependencies`, or manually:
 ```bash
 sudo apt-get install libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libgstreamer-plugins-bad1.0-dev python3-gi python3-gst-1.0
 ```
+
+#### GPU bin selection
+
+When gst-gl and DMABuf are both compiled, `qgcvideosinkbin`'s GPU branch comes in two variants. `QGC_GST_GPU_BIN`
+(case-insensitive, read once per process) picks one:
+
+- `glupload` (default): glupload → glcolorconvert → GLMemory. gst-gl imports LINEAR and vendor-tiled DMABuf, at the
+  cost of its own copy/convert.
+- `dmabuf`: DMABuf and DMA_DRM go straight to QGC's EGLImage importer, skipping gst-gl. It binds LINEAR buffers only,
+  so it suits LINEAR producers (V4L2, Mali, V3D); a driver that exports only tiled surfaces, such as Intel iHD, can
+  fail to negotiate.
+
+An unknown value logs a warning and keeps the default. Builds with only one variant ignore the variable: Android
+always uses glupload, Linux without gst-gl always imports DMABuf directly. The choice is logged once under
+`Video.GStreamer.HwBuffers.Config`.
 
 #### DMABuf zero-copy diagnostics
 

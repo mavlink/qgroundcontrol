@@ -13,6 +13,7 @@
 #include "GstQgcFrameMap.h"
 #include "GstSourceFactory.h"
 #include "GstVideoReceiver.h"
+#include "HwBuffers/common/HwBuffers.h"
 #include "HwBuffers/dmabuf/GstDmaDrmCaps.h"
 #include "QGCQVideoSinkController.h"
 #include "gstqgc/GstQgcAllocation.h"
@@ -553,148 +554,149 @@ void GStreamerTest::_testQgcVideoSinkBinGpuZeroCopyProperty()
 
         GstElement* qvideosink = gst_bin_get_by_name(GST_BIN(bin), "qgcqvideosink");
         QVERIFY2(qvideosink, "qgcqvideosink missing from GPU bin");
-
-        GstIterator* it = gst_bin_iterate_elements(GST_BIN(bin));
-        int elementCount = 0;
-#if defined(QGC_GST_BIN_USE_GLUPLOAD) || (defined(Q_OS_LINUX) && defined(QGC_GST_BIN_USE_DMABUF))
-        bool sawGlupload = false;
-        bool sawGlColorConvert = false;
-#endif
-#if defined(Q_OS_WIN) && (defined(QGC_HAS_GST_D3D11_GPU_PATH) || defined(QGC_HAS_GST_D3D12_GPU_PATH))
-        bool sawD3D11Upload = false;
-        bool sawD3D11Convert = false;
-#endif
-        gboolean done = FALSE;
-        GValue val = G_VALUE_INIT;
-        while (!done) {
-            switch (gst_iterator_next(it, &val)) {
-                case GST_ITERATOR_OK: {
-                    ++elementCount;
-                    GstElement* child = GST_ELEMENT(g_value_get_object(&val));
-                    gchar* name = gst_element_get_name(child);
-#if defined(QGC_GST_BIN_USE_GLUPLOAD) || (defined(Q_OS_LINUX) && defined(QGC_GST_BIN_USE_DMABUF))
-                    if (name && QString::fromUtf8(name).startsWith(QStringLiteral("glupload"))) {
-                        sawGlupload = true;
-                    }
-                    if (name && QString::fromUtf8(name).startsWith(QStringLiteral("glcolorconvert"))) {
-                        sawGlColorConvert = true;
-                    }
-#endif
-#if defined(Q_OS_WIN) && (defined(QGC_HAS_GST_D3D11_GPU_PATH) || defined(QGC_HAS_GST_D3D12_GPU_PATH))
-                    if (name && QString::fromUtf8(name).startsWith(QStringLiteral("d3d11upload"))) {
-                        sawD3D11Upload = true;
-                    }
-                    if (name && QString::fromUtf8(name).startsWith(QStringLiteral("d3d11convert"))) {
-                        sawD3D11Convert = true;
-                    }
-#endif
-                    g_free(name);
-                    g_value_reset(&val);
-                    break;
-                }
-                case GST_ITERATOR_RESYNC:
-                    gst_iterator_resync(it);
-                    break;
-                case GST_ITERATOR_ERROR:
-                case GST_ITERATOR_DONE:
-                    done = TRUE;
-                    break;
-            }
-        }
-        g_value_unset(&val);
-        gst_iterator_free(it);
-
-        GstElement* formatFilter = gst_bin_get_by_name(GST_BIN(bin), "qgc-format-filter");
-        QVERIFY2(formatFilter, "GPU bin missing qgc-format-filter");
-        GstCaps* caps = nullptr;
-        g_object_get(formatFilter, "caps", &caps, NULL);
-        QVERIFY2(caps, "GPU bin format capsfilter has null caps");
-#if defined(Q_OS_WIN) && (defined(QGC_HAS_GST_D3D11_GPU_PATH) || defined(QGC_HAS_GST_D3D12_GPU_PATH))
-        bool hasSystemMemoryCaps = false;
-        for (guint i = 0; i < gst_caps_get_size(caps); ++i) {
-            const GstCapsFeatures* features = gst_caps_get_features(caps, i);
-            if (!features || gst_caps_features_is_equal(features, GST_CAPS_FEATURES_MEMORY_SYSTEM_MEMORY)) {
-                hasSystemMemoryCaps = true;
-                break;
-            }
-        }
-#endif
-        gchar* capsStr = gst_caps_to_string(caps);
-        const QString s = QString::fromUtf8(capsStr ? capsStr : "");
-        g_free(capsStr);
-        gst_caps_unref(caps);
-        gst_object_unref(formatFilter);
-
-// Branch on the bin's actual routing selector (QGC_GST_BIN_USE_GLUPLOAD / _DMABUF, set in
-// HwBuffers/CMakeLists.txt), not on path-availability macros: on Linux with both DMABuf and GLMemory
-// paths compiled, the bin routes through glupload, so keying off DMABUF && GLMEMORY picks the wrong arm.
-#if defined(QGC_GST_BIN_USE_GLUPLOAD)
-        QCOMPARE(elementCount, 4);
-        QVERIFY2(sawGlupload, "GPU bin missing glupload");
-        QVERIFY2(sawGlColorConvert, "GPU bin missing glcolorconvert");
-        QVERIFY2(s.contains(QStringLiteral("memory:GLMemory")),
-                 qUtf8Printable(QStringLiteral("GPU bin caps missing memory:GLMemory: ") + s));
-        QVERIFY2(!s.contains(QStringLiteral("NV12")),
-                 qUtf8Printable(QStringLiteral("GLMemory caps must force RGB(A), not multi-plane NV12: ") + s));
-        QVERIFY2(s.contains(QStringLiteral("RGBA")) || s.contains(QStringLiteral("BGRA")),
-                 qUtf8Printable(QStringLiteral("GLMemory caps missing RGB(A) format: ") + s));
-#elif defined(Q_OS_LINUX) && defined(QGC_GST_BIN_USE_DMABUF)
-        QCOMPARE(elementCount, 2);
-        QVERIFY2(!sawGlupload, "Linux DMABuf GPU bin must not insert glupload when direct DMABuf is available");
-        QVERIFY2(!sawGlColorConvert,
-                 "Linux DMABuf GPU bin must not insert glcolorconvert when direct DMABuf is available");
-        QVERIFY2(s.contains(QStringLiteral("memory:DMABuf")),
-                 qUtf8Printable(QStringLiteral("GPU bin caps missing memory:DMABuf: ") + s));
-        QVERIFY2(!s.contains(QStringLiteral("memory:GLMemory")),
-                 qUtf8Printable(QStringLiteral("Direct DMABuf bin caps must not advertise GLMemory first: ") + s));
-#elif defined(Q_OS_WIN) && (defined(QGC_HAS_GST_D3D11_GPU_PATH) || defined(QGC_HAS_GST_D3D12_GPU_PATH))
-        QCOMPARE(elementCount, 2);
-        QVERIFY2(!sawD3D11Upload, "Windows GPU sink must not upload software-decoded frames to D3D11");
-        QVERIFY2(!sawD3D11Convert, "Windows GPU sink must not force software-decoded frames through D3D11 conversion");
-        QVERIFY2(hasSystemMemoryCaps, "Windows GPU sink must retain a system-memory fallback for software decoders");
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
-        QVERIFY2(s.contains(QStringLiteral("memory:D3D11Memory")),
-                 qUtf8Printable(QStringLiteral("GPU bin caps missing memory:D3D11Memory: ") + s));
-#endif
-#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
-        QVERIFY2(s.contains(QStringLiteral("memory:D3D12Memory")),
-                 qUtf8Printable(QStringLiteral("GPU bin caps missing memory:D3D12Memory: ") + s));
-#endif
-#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
-        const qsizetype glIndex = s.indexOf(QStringLiteral("memory:GLMemory"));
-        if (glIndex >= 0) {
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
-            const qsizetype d3d11Index = s.indexOf(QStringLiteral("memory:D3D11Memory"));
-            QVERIFY2(d3d11Index >= 0 && d3d11Index < glIndex,
-                     qUtf8Printable(QStringLiteral("D3D11Memory must be advertised before GLMemory: ") + s));
-#endif
-#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
-            const qsizetype d3d12Index = s.indexOf(QStringLiteral("memory:D3D12Memory"));
-            QVERIFY2(d3d12Index >= 0 && d3d12Index < glIndex,
-                     qUtf8Printable(QStringLiteral("D3D12Memory must be advertised before GLMemory: ") + s));
-#endif
-        }
-#endif
-#else
-        // Native memory passthrough: format_capsfilter → qgcqvideosink (2 children). Caps advertise
-        // whichever GPU memory types are compiled in (e.g. GLMemory on macOS/iOS).
-        QCOMPARE(elementCount, 2);
-#if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
-        QVERIFY2(s.contains(QStringLiteral("memory:DMABuf")),
-                 qUtf8Printable(QStringLiteral("GPU bin caps missing memory:DMABuf: ") + s));
-#endif
-#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
-        QVERIFY2(s.contains(QStringLiteral("memory:GLMemory")),
-                 qUtf8Printable(QStringLiteral("GPU bin caps missing memory:GLMemory: ") + s));
-#endif
-#endif
-
         gst_object_unref(qvideosink);
         gst_object_unref(bin);
     }
 #endif
 
     gst_object_unref(factory);
+}
+
+namespace {
+
+/// Factory names of @p bin's direct children, sorted.
+QStringList childFactoryNames(GstBin* bin)
+{
+    QStringList names;
+    GstIterator* it = gst_bin_iterate_elements(bin);
+    GValue val = G_VALUE_INIT;
+    bool done = false;
+    while (!done) {
+        switch (gst_iterator_next(it, &val)) {
+            case GST_ITERATOR_OK: {
+                GstElementFactory* factory = gst_element_get_factory(GST_ELEMENT(g_value_get_object(&val)));
+                names << QString::fromUtf8(factory ? gst_plugin_feature_get_name(factory) : "?");
+                g_value_reset(&val);
+                break;
+            }
+            case GST_ITERATOR_RESYNC:
+                names.clear();
+                gst_iterator_resync(it);
+                break;
+            case GST_ITERATOR_ERROR:
+            case GST_ITERATOR_DONE:
+                done = true;
+                break;
+        }
+    }
+    g_value_unset(&val);
+    gst_iterator_free(it);
+    names.sort();
+    return names;
+}
+
+/// Memory features of @p caps' structures in order, consecutive duplicates collapsed.
+QStringList capsMemoryFeatures(const GstCaps* caps)
+{
+    QStringList features;
+    for (guint i = 0; i < gst_caps_get_size(caps); ++i) {
+        const GstCapsFeatures* f = gst_caps_get_features(caps, i);
+        const GStreamer::GCharPtr text = GStreamer::adoptGChar(f ? gst_caps_features_to_string(f) : nullptr);
+        const QString feature = QString::fromUtf8(text ? text.get() : GST_CAPS_FEATURE_MEMORY_SYSTEM_MEMORY);
+        if (features.isEmpty() || (features.last() != feature)) {
+            features << feature;
+        }
+    }
+    return features;
+}
+
+}  // namespace
+
+void GStreamerTest::_testQgcVideoSinkBinGpuBinVariant_data()
+{
+    QTest::addColumn<int>("mode");
+    QTest::addColumn<QStringList>("children");
+    QTest::addColumn<QStringList>("memoryFeatures");
+    QTest::addColumn<bool>("singlePlaneRgb2D");
+
+    const QString systemMemory = QStringLiteral("memory:SystemMemory");
+    const QStringList directChildren{QStringLiteral("capsfilter"), QStringLiteral("qgcqvideosink")};
+#if defined(QGC_GST_BIN_HAS_GLUPLOAD)
+    // glcolorconvert turns external-OES into texture-target=2D; Qt samples multi-plane GLMemory as green frames.
+    QTest::newRow("glupload") << int(HwBuffers::GpuBinMode::GlUpload)
+                              << QStringList{QStringLiteral("capsfilter"), QStringLiteral("glcolorconvert"),
+                                             QStringLiteral("glupload"), QStringLiteral("qgcqvideosink")}
+                              << QStringList{QStringLiteral("memory:GLMemory")} << true;
+#endif
+#if defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
+    // DMA_DRM fragments carry memory:DMABuf too; GLMemory stays out so gst-gl can't take the import over.
+    QTest::newRow("direct-dmabuf") << int(HwBuffers::GpuBinMode::DirectDmaBuf) << directChildren
+                                   << QStringList{QStringLiteral("memory:DMABuf"), systemMemory} << false;
+#endif
+#if !defined(QGC_GST_BIN_HAS_GLUPLOAD) && !defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
+    // Every compiled native memory in caps order, D3D ahead of GLMemory, then the software-decoder fallback.
+    QStringList nativeFeatures;
+#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
+    nativeFeatures << QStringLiteral("memory:D3D11Memory");
+#endif
+#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
+    nativeFeatures << QStringLiteral("memory:D3D12Memory");
+#endif
+#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
+    nativeFeatures << QStringLiteral("memory:GLMemory");
+#endif
+#if defined(QGC_HAS_GST_AHARDWAREBUFFER_GPU_PATH)
+    nativeFeatures << QStringLiteral("memory:AHardwareBuffer");
+#endif
+    QTest::newRow("passthrough") << int(HwBuffers::GpuBinMode::Passthrough) << directChildren
+                                 << (nativeFeatures << systemMemory) << false;
+#endif
+}
+
+void GStreamerTest::_testQgcVideoSinkBinGpuBinVariant()
+{
+#if !defined(QGC_HAS_ANY_GPU_PATH)
+    QSKIP("No GPU path compiled in this build");
+#else
+    QFETCH(int, mode);
+    QFETCH(QStringList, children);
+    QFETCH(QStringList, memoryFeatures);
+    QFETCH(bool, singlePlaneRgb2D);
+
+    GStreamer::redirectGLibLogging();
+    QVERIFY2(GStreamer::completeInit(), "GStreamer::completeInit() failed");
+    const HwBuffers::ScopedGpuBinModeForTest binMode(static_cast<HwBuffers::GpuBinMode>(mode));
+
+    GstElement* element = gst_element_factory_make_full("qgcvideosinkbin", "gpu-zerocopy", TRUE, nullptr);
+    QVERIFY2(element, "Failed to create qgcvideosinkbin (GPU branch)");
+    const GStreamer::GstElementPtr bin = GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(element)));
+    QCOMPARE(childFactoryNames(GST_BIN(bin.get())), children);
+
+    const GStreamer::GstElementPtr formatFilter =
+        GStreamer::adoptElement(gst_bin_get_by_name(GST_BIN(bin.get()), "qgc-format-filter"));
+    QVERIFY2(formatFilter, "GPU bin missing qgc-format-filter");
+    GstCaps* rawCaps = nullptr;
+    g_object_get(formatFilter.get(), "caps", &rawCaps, nullptr);
+    const GStreamer::GstCapsPtr caps = GStreamer::adoptCaps(rawCaps);
+    QVERIFY2(caps, "GPU bin format capsfilter has null caps");
+    QCOMPARE(capsMemoryFeatures(caps.get()), memoryFeatures);
+
+    if (!singlePlaneRgb2D) {
+        return;
+    }
+    for (guint i = 0; i < gst_caps_get_size(caps.get()); ++i) {
+        const GstStructure* structure = gst_caps_get_structure(caps.get(), i);
+        QCOMPARE(QString::fromUtf8(gst_structure_get_string(structure, "texture-target")), QStringLiteral("2D"));
+        const GValue* formats = gst_structure_get_value(structure, "format");
+        QVERIFY2(formats && GST_VALUE_HOLDS_LIST(formats), "GLMemory caps format field is not a list");
+        for (guint f = 0; f < gst_value_list_get_size(formats); ++f) {
+            const char* name = g_value_get_string(gst_value_list_get_value(formats, f));
+            const GstVideoFormatInfo* info = gst_video_format_get_info(gst_video_format_from_string(name));
+            QVERIFY2(info && GST_VIDEO_FORMAT_INFO_IS_RGB(info) && (GST_VIDEO_FORMAT_INFO_N_PLANES(info) == 1),
+                     qPrintable(QStringLiteral("GLMemory caps offer non-single-plane-RGB format %1").arg(name)));
+        }
+    }
+#endif
 }
 
 void GStreamerTest::_testQgcVideoSinkBinRejectsFailedAdopt()
@@ -882,10 +884,26 @@ void GStreamerTest::_testCapsCacheInvalidation()
     QCOMPARE(r2.lastPixelFormat, QVideoFrameFormat::Format_RGBA8888);
 }
 
+void GStreamerTest::_testGpuZeroCopyFallback_data()
+{
+    QTest::addColumn<int>("mode");
+#if defined(QGC_GST_BIN_HAS_GLUPLOAD)
+    QTest::newRow("glupload") << int(HwBuffers::GpuBinMode::GlUpload);
+#endif
+#if defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
+    QTest::newRow("direct-dmabuf") << int(HwBuffers::GpuBinMode::DirectDmaBuf);
+#endif
+#if !defined(QGC_GST_BIN_HAS_GLUPLOAD) && !defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
+    QTest::newRow("passthrough") << int(HwBuffers::GpuBinMode::Passthrough);
+#endif
+}
+
 void GStreamerTest::_testGpuZeroCopyFallback()
 {
+    QFETCH(int, mode);
     GStreamer::redirectGLibLogging();
     QVERIFY2(GStreamer::completeInit(), "completeInit failed");
+    const HwBuffers::ScopedGpuBinModeForTest binMode(static_cast<HwBuffers::GpuBinMode>(mode));
 
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
     const quint64 dmabufBefore =
@@ -897,7 +915,7 @@ void GStreamerTest::_testGpuZeroCopyFallback()
     auto r = runPipelineThroughQVideoSink(videoSink, controller,
                                           "video/x-raw,format=BGRA,width=320,height=240,framerate=30/1",
                                           /*numBuffers*/ 5, /*gpuZerocopy*/ true);
-    // The gpu-zerocopy bin inserts glupload on GL builds; a headless runner with no EGL/GL context can't start it.
+    // The glupload bin needs an EGL/GL context, which a headless runner may not have.
     if (!r.eos && (r.errorMessage.contains(QStringLiteral("egl"), Qt::CaseInsensitive) ||
                    r.errorMessage.contains(QStringLiteral("gl context"), Qt::CaseInsensitive))) {
         QSKIP(qPrintable(
@@ -1516,8 +1534,10 @@ void GStreamerTest::_testQgcVideoSinkBinAllocationQueryAdvertisesVideoMeta()
 {
     QVERIFY2(GStreamer::completeInit(), "GStreamer::completeInit() failed");
 
-#if defined(QGC_GST_BIN_USE_GLUPLOAD)
-    QSKIP("Direct-DMABuf ALLOCATION VideoMeta contract does not apply when the GPU bin routes through glupload");
+#if defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
+    const HwBuffers::ScopedGpuBinModeForTest directBin(HwBuffers::GpuBinMode::DirectDmaBuf);
+#elif defined(QGC_GST_BIN_HAS_GLUPLOAD)
+    QSKIP("Direct-DMABuf ALLOCATION VideoMeta contract does not apply to the glupload bin");
 #endif
 
     GstElement* bin = gst_element_factory_make_full("qgcvideosinkbin", "gpu-zerocopy", TRUE, nullptr);

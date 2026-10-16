@@ -5,6 +5,7 @@
 #include "GstQgcBinChain.h"
 #include "GstQgcCaps.h"
 #include "GstScoped.h"
+#include "HwBuffers/common/HwBuffers.h"
 #include "gstqgcelements.h"
 
 #define GST_CAT_DEFAULT gst_qgc_debug
@@ -141,10 +142,10 @@ static GstElement* gst_qgc_video_sink_bin_make_conversion_element(GstQgcVideoSin
     return gst_element_factory_make("videoconvert", NULL);
 }
 
-// Link the adopted format-capsfilter -> qgcqvideosink (optional glupload prefix) and ghost the head.
-static gboolean wireGpuPath(GstQgcVideoSinkBin* self, GstQgc::BinChain& chain, GstElement* videosink, GstElement* capsf)
+// Link glupload -> glcolorconvert -> the adopted format-capsfilter -> qgcqvideosink and ghost glupload.
+static gboolean wireGlUploadPath(GstQgcVideoSinkBin* self, GstQgc::BinChain& chain, GstElement* videosink,
+                                 GstElement* capsf)
 {
-#if defined(QGC_GST_BIN_USE_GLUPLOAD)
     GstElement* glupload = chain.adopt(gst_element_factory_make("glupload", NULL));
     if (!glupload) {
         GST_ERROR_OBJECT(self, "Failed to create glupload element");
@@ -160,7 +161,19 @@ static gboolean wireGpuPath(GstQgcVideoSinkBin* self, GstQgc::BinChain& chain, G
         GST_ERROR_OBJECT(self, "Failed to link/ghost glupload→glcolorconvert→capsfilter→qgcqvideosink GPU path");
         return FALSE;
     }
-#else
+    GST_INFO_OBJECT(self, "Using glupload→qgcqvideosink GPU path (DMABuf→GL EGLImage import)");
+    return TRUE;
+}
+
+// Wire the GPU branch of @p mode: the glupload chain, or the adopted format-capsfilter -> qgcqvideosink with the
+// capsfilter ghosted.
+static gboolean wireGpuPath(GstQgcVideoSinkBin* self, GstQgc::BinChain& chain, GstElement* videosink, GstElement* capsf,
+                            HwBuffers::GpuBinMode mode)
+{
+    if (mode == HwBuffers::GpuBinMode::GlUpload) {
+        return wireGlUploadPath(self, chain, videosink, capsf);
+    }
+
     // Keep advertised native GPU formats direct. Formats outside buildGpuCapsString() must
     // renegotiate upstream; converting here would also upload software frames instead of
     // letting qgcqvideosink use its CPU mapping fallback.
@@ -168,15 +181,11 @@ static gboolean wireGpuPath(GstQgcVideoSinkBin* self, GstQgc::BinChain& chain, G
         GST_ERROR_OBJECT(self, "Failed to link/ghost qgcqvideosink (GPU path)");
         return FALSE;
     }
-#endif
-
-#if defined(QGC_GST_BIN_USE_GLUPLOAD)
-    GST_INFO_OBJECT(self, "Using glupload→qgcqvideosink GPU path (DMABuf→GL EGLImage import)");
-#elif defined(QGC_GST_BIN_USE_DMABUF)
-    GST_INFO_OBJECT(self, "Using qgcqvideosink GPU path (direct DMABuf import, no glupload)");
-#else
-    GST_INFO_OBJECT(self, "Using qgcqvideosink GPU path (native memory passthrough)");
-#endif
+    if (mode == HwBuffers::GpuBinMode::DirectDmaBuf) {
+        GST_INFO_OBJECT(self, "Using qgcqvideosink GPU path (direct DMABuf import, no glupload)");
+    } else {
+        GST_INFO_OBJECT(self, "Using qgcqvideosink GPU path (native memory passthrough)");
+    }
     return TRUE;
 }
 
@@ -252,7 +261,14 @@ static void gst_qgc_video_sink_bin_setup(GstQgcVideoSinkBin* self)
     // The format capsfilter restricts negotiation to Qt-renderable formats: qgcqvideosink's pad template is CAPS_ANY,
     // so without it upstream could pick a format that fails in set_caps. On the CPU path, listing the formats
     // QVideoSink renders natively also keeps videoconvert from forcing BGRA.
-    const std::string capsStr = self->gpu_zerocopy ? GstQgc::buildGpuCapsString() : GstQgc::buildCpuCapsString();
+    HwBuffers::GpuBinMode gpuBin = HwBuffers::GpuBinMode::Passthrough;
+    std::string capsStr;
+    if (self->gpu_zerocopy) {
+        gpuBin = HwBuffers::gpuBinMode();
+        capsStr = GstQgc::buildGpuCapsString(gpuBin);
+    } else {
+        capsStr = GstQgc::buildCpuCapsString();
+    }
     const GStreamer::GstCapsPtr caps = GStreamer::adoptCaps(gst_caps_from_string(capsStr.c_str()));
     if (!caps) {
         GST_ERROR_OBJECT(self, "gst_caps_from_string() returned NULL for %s caps", pathName);
@@ -260,7 +276,8 @@ static void gst_qgc_video_sink_bin_setup(GstQgcVideoSinkBin* self)
     }
     g_object_set(capsf, "caps", caps.get(), NULL);
 
-    if (self->gpu_zerocopy ? wireGpuPath(self, chain, videosink, capsf) : wireCpuPath(self, chain, videosink, capsf)) {
+    if (self->gpu_zerocopy ? wireGpuPath(self, chain, videosink, capsf, gpuBin)
+                           : wireCpuPath(self, chain, videosink, capsf)) {
         chain.commit();
         self->videosink = videosink;
     }

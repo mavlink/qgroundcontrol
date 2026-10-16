@@ -37,6 +37,8 @@ private slots:
     void _testAppsinkYuvPassthrough();
     void _testAppsinkPtsAndColorimetry();
     void _testQgcVideoSinkBinGpuZeroCopyProperty();
+    void _testQgcVideoSinkBinGpuBinVariant_data();
+    void _testQgcVideoSinkBinGpuBinVariant();
     void _testQgcVideoSinkBinRejectsFailedAdopt();
     void _testQgcBinChainFailedAdoptDropsFloatingRefOnce();
     void _testGlMemoryDispatch();
@@ -55,6 +57,7 @@ private slots:
     void _testVulkanDispatchDemotesToCpu();
     void _testVulkanOwnedFrameTexturesReleaseOnDestroy();
     void _testCapsCacheInvalidation();
+    void _testGpuZeroCopyFallback_data();
     void _testGpuZeroCopyFallback();
     void _testWindowsGpuSinkPreservesSoftwarePixels();
     void _testWindowsGpuSinkPreservesDirectD3D11Memory();
@@ -117,6 +120,8 @@ private slots:
     void _testPreflightVerdictsDroppedWithRhi();
     void _testHwBufferEnvConfigParsing_data();
     void _testHwBufferEnvConfigParsing();
+    void _testGpuBinModeFromEnvironment_data();
+    void _testGpuBinModeFromEnvironment();
     void _testColorimetryPixelFormatMapping();
     void _testCpuCapsFormatsRoundTripToQt();
     void _testAllocationQueryHwMemoryPoolHint();

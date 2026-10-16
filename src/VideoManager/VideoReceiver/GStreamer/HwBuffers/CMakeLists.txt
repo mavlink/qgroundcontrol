@@ -259,22 +259,33 @@ if(_qgc_gpu_D3D11 OR _qgc_gpu_D3D12)
     )
 endif()
 
-# glupload heads the bin on Android (GstGLContext handshake amcvideodec needs for Surface output) and Linux (gst-gl
-# imports both LINEAR and Intel-tiled dmabuf to GLMemory; QGC's direct importer binds LINEAR only). Direct DMABuf is the
-# fallback.
+# GPU bin variants; HwBuffers::gpuBinMode() picks one at runtime. glupload is Android's only bin (GstGLContext handshake
+# amcvideodec needs for Surface output) and Linux's default (gst-gl imports both LINEAR and vendor-tiled dmabuf to
+# GLMemory). Direct DMABuf feeds QGC's own importer, which binds LINEAR only. Linux builds with both pick one via
+# QGC_GST_GPU_BIN.
 set(_qgc_unreachable_paths "")
 if((ANDROID OR LINUX) AND _qgc_gpu_GLMemory)
-    target_compile_definitions(QGCGStreamer PUBLIC QGC_GST_BIN_USE_GLUPLOAD=1)
-    message(STATUS "QGCGStreamer: bin will route GPU path through glupload (gst-gl EGLImage import)")
-    # The glupload bin offers only GLMemory caps.
-    foreach(_path IN ITEMS DMABuf AHardwareBuffer)
-        if(_qgc_gpu_${_path})
-            list(APPEND _qgc_unreachable_paths "${_path} (glupload bin)")
-        endif()
-    endforeach()
-elseif(_qgc_gpu_DMABuf)
-    target_compile_definitions(QGCGStreamer PUBLIC QGC_GST_BIN_USE_DMABUF=1)
-    message(STATUS "QGCGStreamer: bin will direct-import DMABuf (no gst-gl/GLMemory available)")
+    target_compile_definitions(QGCGStreamer PUBLIC QGC_GST_BIN_HAS_GLUPLOAD=1)
+endif()
+if(LINUX AND _qgc_gpu_DMABuf)
+    target_compile_definitions(QGCGStreamer PUBLIC QGC_GST_BIN_HAS_DIRECT_DMABUF=1)
+endif()
+if(LINUX
+   AND _qgc_gpu_GLMemory
+   AND _qgc_gpu_DMABuf
+)
+    message(STATUS "QGCGStreamer: GPU bins compiled: glupload (default) and direct DMABuf; QGC_GST_GPU_BIN selects one")
+elseif((ANDROID OR LINUX) AND _qgc_gpu_GLMemory)
+    message(STATUS "QGCGStreamer: GPU bin routes through glupload (gst-gl EGLImage import)")
+elseif(LINUX AND _qgc_gpu_DMABuf)
+    message(STATUS "QGCGStreamer: GPU bin direct-imports DMABuf (no gst-gl/GLMemory available)")
+endif()
+# The glupload bin offers only GLMemory caps.
+if(ANDROID
+   AND _qgc_gpu_GLMemory
+   AND _qgc_gpu_AHardwareBuffer
+)
+    list(APPEND _qgc_unreachable_paths "AHardwareBuffer (glupload bin)")
 endif()
 # The sink never advertises memory:CUDAMemory or memory:VulkanImage caps.
 foreach(_path IN ITEMS CUDA Vulkan)
