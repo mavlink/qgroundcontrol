@@ -3,8 +3,13 @@
 #include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
 #include <QtCore/QStandardPaths>
 #include <QtCore/QUuid>
+
+#ifdef Q_OS_UNIX
+#include <sys/stat.h>
+#endif
 
 #include "AppSettings.h"
 #include "LinkManager.h"
@@ -105,6 +110,13 @@ void MavlinkLogTest::_bootLogDetectionCancel_test()
 
 void MavlinkLogTest::_bootLogDetectionSave_test()
 {
+#ifdef Q_OS_UNIX
+    // QSaveFile otherwise creates files as 0666 & ~umask; with the common 022 umask that already matches
+    // the expected mode, so a restrictive umask proves the explicit permissions are applied.
+    const mode_t previousUmask = ::umask(0077);
+    const auto restoreUmask = qScopeGuard([previousUmask] { (void) ::umask(previousUmask); });
+#endif
+
     // Create a fake mavlink log
     _createTempLogFile(false);
     QCOMPARE(tempMavlinkLogCount(_logFileExtension), 1);
@@ -112,6 +124,18 @@ void MavlinkLogTest::_bootLogDetectionSave_test()
     MAVLinkProtocol::instance()->checkForLostLogFiles();
     QVERIFY_TRUE_WAIT(tempMavlinkLogCount(_logFileExtension) == 0, TestTimeout::mediumMs());
     QVERIFY_TRUE_WAIT(savedTelemetryLogCount() == (initialSavedLogCount + 1), TestTimeout::longMs());
+
+#ifdef Q_OS_UNIX
+    // Windows only emulates these bits, so the mode is checked on Unix.
+    const QDir saveDir(SettingsManager::instance()->appSettings()->telemetrySavePath());
+    const QStringList savedLogs =
+        saveDir.entryList(QStringList(QStringLiteral("*.%1").arg(AppSettings::telemetryFileExtension)), QDir::Files);
+    QCOMPARE(savedLogs.count(), 1);
+    constexpr QFileDevice::Permissions userBits = QFileDevice::ReadUser | QFileDevice::WriteUser | QFileDevice::ExeUser;
+    const QFileDevice::Permissions saved = QFile::permissions(saveDir.filePath(savedLogs.first())) & ~userBits;
+    QCOMPARE(saved, QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ReadGroup | QFileDevice::ReadOther);
+#endif
+
     removeSavedTelemetryLogs();
 }
 

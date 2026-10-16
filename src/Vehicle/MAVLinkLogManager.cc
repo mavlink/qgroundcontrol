@@ -193,8 +193,9 @@ QByteArray MAVLinkLogProcessor::_writeUlogMessage(QByteArray &data)
     // Write ulog data w/o integrity checking, assuming data starts with a
     // valid ulog message. returns the remaining data at the end.
     while (data.length() > 2) {
-        const uint8_t *const ptr = reinterpret_cast<const uint8_t*>(data.constData());
-        const int message_length = ptr[0] + (ptr[1] * 256) + kUlogMessageHeader;
+        // ULog message header: little-endian uint16 payload size, then a uint8 type.
+        const int message_length =
+            static_cast<uint8_t>(data.at(0)) + (static_cast<uint8_t>(data.at(1)) * 256) + kUlogMessageHeader;
         if (message_length > data.length()) {
             break;
         }

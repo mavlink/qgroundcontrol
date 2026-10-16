@@ -12,6 +12,9 @@ inputs:
   version:
     description: Qt Version
     required: true
+  arch:
+    description: Qt iOS target architecture (ios_device, ios_simulator_arm64, or ios_simulator_x86_64)
+    required: true
   modules:
     description: Qt Modules (desktop)
     required: true
@@ -38,6 +41,10 @@ inputs:
     description: "Whether to save cache (auto = save for pushes and same-repo PRs, skip for fork PRs)"
     required: false
     default: "auto"
+  aqt-source:
+    description: Optional isolated uv source for aqtinstall (e.g. git+https://github.com/miurahr/aqtinstall.git@<sha>)
+    required: false
+    default: ""
 runs:
   using: composite
   steps:
@@ -65,6 +72,7 @@ runs:
         target: desktop
         arch: clang_64
         modules: ${{ inputs.modules }}
+        aqt-source: ${{ inputs.aqt-source }}
 
     - name: Install Qt for iOS
       id: qt-target
@@ -73,5 +81,6 @@ runs:
         version: ${{ inputs.version }}
         host: mac
         target: ios
-        arch: ios
+        arch: ${{ inputs.arch }}
         modules: ${{ inputs.ios-modules || inputs.modules }}
+        aqt-source: ${{ inputs.aqt-source }}

@@ -28,7 +28,6 @@ class QGCVideoStreamInfo : public QObject
     Q_PROPERTY(qreal    framerate   READ framerate      NOTIFY infoChanged)
     Q_ENUM(VIDEO_STREAM_TYPE)
     Q_ENUM(VIDEO_STREAM_ENCODING)
-    Q_FLAGS(QVIDEO_STREAM_STATUS_FLAGS)
 
 public:
     explicit QGCVideoStreamInfo(const mavlink_video_stream_information_t &info, QObject *parent = nullptr);

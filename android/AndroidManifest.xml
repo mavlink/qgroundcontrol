@@ -41,7 +41,8 @@
         android:localeConfig="@xml/locales_config"
         android:icon="-- %%INSERT_APP_ICON%% --"
         android:networkSecurityConfig="@xml/network_security_config"
-        android:theme="@style/AppTheme">
+        android:theme="@style/AppTheme"
+        android:enableOnBackInvokedCallback="true">
 
         <activity
             android:name="org.mavlink.qgroundcontrol.QGCActivity"

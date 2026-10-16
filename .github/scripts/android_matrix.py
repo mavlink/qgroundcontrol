@@ -52,7 +52,6 @@ WINDOWS_JOB: Leg = {
     "shell": "pwsh",
     "primary": False,
     "emulator": False,
-    "aqt_source": "git+https://github.com/miurahr/aqtinstall.git@8d961e61720b3c06583517fbc68d57ec0a4e9f95",
     "runson_runner": "windows-x64-builder",
     "fallback_runner": "windows-2022",
 }

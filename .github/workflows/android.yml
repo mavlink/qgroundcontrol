@@ -159,7 +159,6 @@ jobs:
           mode: android
           qt-host: ${{ matrix.qt_host || matrix.host }}
           qt-arch: ${{ matrix.arch }}
-          aqt-source: ${{ matrix.aqt_source || '' }}
           abis: ${{ env.QT_ANDROID_ABIS }}
           build-type: ${{ env.BUILD_TYPE }}
           # matrix.host is unique per leg; linux and linux-emulator otherwise

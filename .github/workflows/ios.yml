@@ -53,10 +53,12 @@ jobs:
             runner: macos-15
             build_type: Release
             preset: iOS
+            qt_arch: ios_device
           - target: simulator
             runner: macos-15-intel
             build_type: Debug
             preset: iOS-debug
+            qt_arch: ios_simulator_x86_64
 
     defaults:
       run:
@@ -89,6 +91,7 @@ jobs:
         uses: ./.github/actions/build-setup
         with:
           mode: ios
+          qt-arch: ${{ matrix.qt_arch }}
           build-type: ${{ matrix.build_type }}
           cache-key-suffix: ${{ matrix.target }}
           cpm-modules: .cache/CPM
