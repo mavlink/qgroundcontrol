@@ -91,6 +91,8 @@ Use `python3 -m tools.setup.install_dependencies`, or manually:
 sudo apt-get install libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libgstreamer-plugins-bad1.0-dev python3-gi python3-gst-1.0
 ```
 
+Debug builds also use `libgstrtspserver-1.0-dev`, when present, for MockLink's RTSP test stream and the RTSP receiver tests.
+
 #### GPU bin selection
 
 When gst-gl and DMABuf are both compiled, `qgcvideosinkbin`'s GPU branch comes in two variants. `QGC_GST_GPU_BIN`
