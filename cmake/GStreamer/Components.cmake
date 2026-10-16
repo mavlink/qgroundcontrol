@@ -31,9 +31,15 @@ function(gstreamer_platform_plugin_attrs ext_out prefix_out glob_out)
     )
 endfunction()
 
+# gstreamer_scan_plugin_basenames(<output_var> <plugin_path> [STATIC])
 # Returns plugin basenames (e.g. "videoconvert", "x264") found in <plugin_path>,
-# stripped of the platform's lib prefix and extension. Empty string if path missing.
+# stripped of the platform's lib prefix and extension, or with STATIC of the static archives' libgst and .a. Empty
+# string if path missing.
 function(gstreamer_scan_plugin_basenames output_var plugin_path)
+    cmake_parse_arguments(PARSE_ARGV 2 ARG "STATIC" "" "")
+    if(ARG_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR "gstreamer_scan_plugin_basenames: unknown arguments: ${ARG_UNPARSED_ARGUMENTS}")
+    endif()
     if(NOT EXISTS "${plugin_path}")
         set(${output_var}
             ""
@@ -41,7 +47,12 @@ function(gstreamer_scan_plugin_basenames output_var plugin_path)
         )
         return()
     endif()
-    gstreamer_platform_plugin_attrs(_ext _prefix _glob)
+    if(ARG_STATIC)
+        set(_prefix "libgst")
+        set(_glob "libgst*.a")
+    else()
+        gstreamer_platform_plugin_attrs(_ext _prefix _glob)
+    endif()
     # Underscore included: a hypothetical libgstvideo_foo.so must not truncate to "video".
     set(_re "^${_prefix}([a-zA-Z0-9_]+)")
     file(GLOB _files "${plugin_path}/${_glob}")

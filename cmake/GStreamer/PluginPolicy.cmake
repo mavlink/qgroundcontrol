@@ -1,5 +1,5 @@
 # Centralised GStreamer plugin policy — single source of truth for plugin
-# alternate groups, runtime-required plugins, and the iOS skip list.
+# alternate groups, runtime-required and optional plugins, and the iOS skip list.
 # Consumed by Orchestrator (build-config plugin loader / alternate-satisfied
 # check), Install (runtime-required verifier), and the iOS plugin list (xcfw skip).
 
@@ -42,6 +42,24 @@ set(GSTREAMER_RUNTIME_REQUIRED_PLUGINS
     udp
     videoparsersbad
     videoconvertscale
+)
+
+# Hardware-specific and alternative decoder plugins: decoding uses whichever of them a host or SDK provides, so the
+# Orchestrator only lists missing ones in a status line. The other allowlisted plugins are warned about.
+set(GSTREAMER_OPTIONAL_PLUGINS
+    androidmedia
+    applemedia
+    d3d
+    d3d11
+    d3d12
+    dav1d
+    libav
+    nvcodec
+    openh264
+    qsv
+    va
+    vpx
+    vulkan
 )
 
 # iOS: plugins whose dependent static libs aren't bundled in the merged
@@ -157,6 +175,53 @@ function(gstreamer_missing_required)
     endforeach()
     set(${ARG_OUT_VAR}
         "${_missing}"
+        PARENT_SCOPE
+    )
+endfunction()
+
+# gstreamer_classify_missing_plugins(REQUESTED <plugin>... AVAILABLE <plugin>... SHIPPED <plugin>...
+#                                    OUT_OPTIONAL <var> OUT_ABSENT <var> OUT_UNUSABLE <var>)
+# Sorts the REQUESTED plugins that are not AVAILABLE to the build (alternate groups count as in
+# gstreamer_missing_required) into GSTREAMER_OPTIONAL_PLUGINS (OUT_OPTIONAL), the others that the SDK or system does not
+# ship at all, i.e. are not in SHIPPED (OUT_ABSENT: misspelled, not built for the platform, or not installed), and the
+# rest, shipped but not usable by this build (OUT_UNUSABLE).
+function(gstreamer_classify_missing_plugins)
+    cmake_parse_arguments(PARSE_ARGV 0 ARG "" "OUT_OPTIONAL;OUT_ABSENT;OUT_UNUSABLE" "REQUESTED;AVAILABLE;SHIPPED")
+    if(ARG_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR "gstreamer_classify_missing_plugins: unknown arguments: ${ARG_UNPARSED_ARGUMENTS}")
+    endif()
+    if(NOT ARG_OUT_OPTIONAL
+       OR NOT ARG_OUT_ABSENT
+       OR NOT ARG_OUT_UNUSABLE
+    )
+        message(
+            FATAL_ERROR "gstreamer_classify_missing_plugins: OUT_OPTIONAL, OUT_ABSENT and OUT_UNUSABLE are required"
+        )
+    endif()
+    gstreamer_missing_required(REQUIRED ${ARG_REQUESTED} AVAILABLE ${ARG_AVAILABLE} OUT_VAR _missing)
+    set(_optional "")
+    set(_absent "")
+    set(_unusable "")
+    foreach(_plugin IN LISTS _missing)
+        gstreamer_missing_required(REQUIRED ${_plugin} AVAILABLE ${ARG_SHIPPED} OUT_VAR _not_shipped)
+        if(_plugin IN_LIST GSTREAMER_OPTIONAL_PLUGINS)
+            list(APPEND _optional "${_plugin}")
+        elseif(_not_shipped)
+            list(APPEND _absent "${_plugin}")
+        else()
+            list(APPEND _unusable "${_plugin}")
+        endif()
+    endforeach()
+    set(${ARG_OUT_OPTIONAL}
+        "${_optional}"
+        PARENT_SCOPE
+    )
+    set(${ARG_OUT_ABSENT}
+        "${_absent}"
+        PARENT_SCOPE
+    )
+    set(${ARG_OUT_UNUSABLE}
+        "${_unusable}"
         PARENT_SCOPE
     )
 endfunction()

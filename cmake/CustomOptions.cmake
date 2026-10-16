@@ -107,7 +107,7 @@ set(QGC_LINK_PARALLEL_LEVEL
     2
     CACHE STRING "Maximum parallel link jobs (prevents OOM during LTO)"
 )
-# ---- GStreamer SDK download / debug ----
+# ---- GStreamer ----
 # GStreamer_USE_STATIC_LIBS / GStreamer_USE_FRAMEWORK depend on the target platform and are declared in
 # cmake/GStreamer/Orchestrator.cmake.
 set(GStreamer_ROOT_DIR
@@ -126,6 +126,10 @@ option(GStreamer_DEBUG "Print GStreamer CMake debug messages" OFF)
 set(QGC_GST_DOWNLOAD_TIMEOUT
     ""
     CACHE STRING "GStreamer SDK download wall-clock timeout (seconds, default 1200)"
+)
+set(QGC_GST_CUDA_STUB_DIR
+    ""
+    CACHE PATH "Linux: directory with a cuda.h for the CUDA GPU path when no CUDA Toolkit is installed"
 )
 
 # Coverage thresholds

@@ -55,8 +55,8 @@ void _registerPlugins()
     static std::once_flag s_pluginsRegistered;
     std::call_once(s_pluginsRegistered, [] {
 #ifdef QGC_GST_STATIC_BUILD
-        // Per-plugin registers in the generated shim are registry-guarded, so plugins the Android SDK
-        // gst_init() already pre-registered aren't re-added here.
+        // The generated shim's registrations are registry-guarded: gst_init() may already have run it
+        // (see cmake/GStreamer/gst_static_plugins.c.in).
         gst_init_static_plugins();
 #endif
         GST_PLUGIN_STATIC_REGISTER(qgc);

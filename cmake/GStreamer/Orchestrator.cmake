@@ -16,6 +16,13 @@ qgc_gst_platform(_qgc_gst_platform)
 # The version asked of the SDK: QGC_GST_VERSION when set, else the platform's gstreamer.version entry in
 # .github/build-config.json (the minimum on Linux; the SDK to download or accept elsewhere).
 if(QGC_GST_VERSION)
+    # The SDK packages and checksum pins are named by the full release version.
+    if(NOT QGC_GST_VERSION MATCHES "^[0-9]+\\.[0-9]+\\.[0-9]+$")
+        message(FATAL_ERROR "GStreamer: QGC_GST_VERSION='${QGC_GST_VERSION}' is not a GStreamer release version. Set "
+                            "it to <major>.<minor>.<micro> (e.g. 1.28.4), or empty to use gstreamer.version in "
+                            ".github/build-config.json."
+        )
+    endif()
     set(QGC_GST_REQUESTED_VERSION "${QGC_GST_VERSION}")
 else()
     qgc_config_read(QGC_GST_REQUESTED_VERSION gstreamer version ${_qgc_gst_platform_VERSION_KEY})
@@ -208,6 +215,7 @@ unset(_qgc_gst_missing_mandatory)
 unset(_qgc_gst_mandatory_apis)
 # User-requested optional components: mark FOUND only if the corresponding
 # api_ target was actually created (Targets.cmake, or the iOS targets).
+set(_qgc_gst_missing_components "")
 foreach(_comp IN LISTS QGC_GST_COMPONENTS)
     gstreamer_resolve_component("${_comp}" _resolved_name _api _ _)
     # A registry match (non-empty resolved name) includes umbrella entries like
@@ -230,8 +238,15 @@ foreach(_comp IN LISTS QGC_GST_COMPONENTS)
                         "component and produced no GStreamer::${_api} target — check spelling "
                         "(components are CamelCase, e.g. App, Audio, Pbutils) or platform support."
         )
+    elseif(_api)
+        list(APPEND _qgc_gst_missing_components "${_comp}")
     endif()
 endforeach()
+# Their pkg-config probes are QUIET (Targets.cmake); the mandatory ones failed configure above.
+if(_qgc_gst_missing_components)
+    list(JOIN _qgc_gst_missing_components ", " _qgc_gst_missing_components)
+    message(STATUS "QGCGStreamer: optional components not found: ${_qgc_gst_missing_components}")
+endif()
 
 if(GStreamer_USE_STATIC_LIBS)
     target_compile_definitions(GStreamer::GStreamer INTERFACE QGC_GST_STATIC_BUILD)
@@ -267,12 +282,47 @@ else()
     gstreamer_scan_plugin_basenames(_gst_available_plugins "${GSTREAMER_PLUGIN_PATH}")
     set(_gst_plugin_source "${GSTREAMER_PLUGIN_PATH}")
 endif()
-gstreamer_missing_required(REQUIRED ${GSTREAMER_PLUGINS} AVAILABLE ${_gst_available_plugins} OUT_VAR
-                           _gst_missing_plugins
+# Every plugin the SDK or system ships, used by this build or not: the plugin archives of static layouts (iOS: the
+# plugins registered from its merged archive), else the plugin files.
+if(GStreamer_USE_STATIC_LIBS)
+    gstreamer_scan_plugin_basenames(_gst_shipped_plugins "${GSTREAMER_PLUGIN_PATH}" STATIC)
+else()
+    set(_gst_shipped_plugins ${_gst_available_plugins})
+endif()
+gstreamer_classify_missing_plugins(
+    REQUESTED
+    ${GSTREAMER_PLUGINS}
+    AVAILABLE
+    ${_gst_available_plugins}
+    SHIPPED
+    ${_gst_shipped_plugins}
+    OUT_OPTIONAL
+    _gst_missing_optional
+    OUT_ABSENT
+    _gst_absent_plugins
+    OUT_UNUSABLE
+    _gst_unusable_plugins
 )
-if(_gst_missing_plugins)
-    message(WARNING "GStreamer: requested plugins missing from ${_gst_plugin_source}: ${_gst_missing_plugins}\n"
-                    "Video features depending on these plugins will not work at runtime."
+if(_gst_absent_plugins)
+    list(JOIN _gst_absent_plugins ", " _gst_absent_plugins)
+    message(
+        WARNING "GStreamer: plugin allowlist names not found as plugins in ${_gst_plugin_source}: "
+                "${_gst_absent_plugins}\nCheck them in gstreamer.plugins of .github/build-config.json (misspelled, or "
+                "not built for this platform) or install the plugins; video features depending on them will not "
+                "work at runtime."
+    )
+endif()
+if(_gst_unusable_plugins)
+    list(JOIN _gst_unusable_plugins ", " _gst_unusable_plugins)
+    message(WARNING "GStreamer: requested plugins in ${_gst_plugin_source} that have no pkg-config module to link "
+                    "them by: ${_gst_unusable_plugins}\nVideo features depending on these plugins will not work at "
+                    "runtime."
+    )
+endif()
+if(_gst_missing_optional)
+    list(JOIN _gst_missing_optional ", " _gst_missing_optional)
+    message(STATUS "GStreamer: optional decoder plugins not in ${_gst_plugin_source}: ${_gst_missing_optional} "
+                   "(hardware-specific or alternatives; decoding uses those present)"
     )
 endif()
 # Mobile apps have no other way to load a plugin at runtime.

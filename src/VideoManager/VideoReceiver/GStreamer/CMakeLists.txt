@@ -143,9 +143,9 @@ endif()
 
 # Static layouts register their plugins in a generated gst_init_static_plugins() (called by
 # GStreamer.cc::_registerPlugins) for GSTREAMER_STATIC_PLUGINS, which Orchestrator.cmake resolves. iOS generates it
-# into GStreamer::mobile (platform/IOS.cmake); Android and desktop static SDKs into the app. The Android SDK's
-# gst_init() does NOT register the bundled plugins (verified on-device: without this, coreelements/tcp/udp/rtp/...
-# stay unregistered).
+# into GStreamer::mobile (platform/IOS.cmake); Android and desktop static SDKs into the app. The Android SDK registers
+# none of its plugins itself (verified on-device: without this, coreelements/tcp/udp/rtp/... stay unregistered);
+# gst_init() only runs the function generated here (see gst_static_plugins.c.in).
 if(ANDROID AND TARGET GStreamer::mobile)
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE GStreamer::mobile)
     qgc_gst_generate_static_init(TARGET ${CMAKE_PROJECT_NAME} PLUGINS ${GSTREAMER_STATIC_PLUGINS} GIO_MODULES

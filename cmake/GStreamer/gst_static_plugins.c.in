@@ -14,8 +14,9 @@
 #define GST_G_IO_MODULE_DECLARE(name) \
 extern void G_PASTE(g_io_, G_PASTE(name, _load)) (gpointer data)
 
-/* Skip the load when the backend GType is already present: the Android SDK gst_init() loads
- * gioopenssl, and re-registering its GType warns. Type name is openssl-specific (QGC's only module). */
+/* Skip the load when the backend GType is already present: gst_init() may already have run this file's
+ * gst_init_static_plugins() (see below), and re-registering the GType warns. Type name is openssl-specific
+ * (QGC's only module). */
 #define GST_G_IO_MODULE_LOAD(name) \
   do { \
     if (g_type_from_name ("GTlsBackendOpenssl") == 0) { \
@@ -23,9 +24,11 @@ extern void G_PASTE(g_io_, G_PASTE(name, _load)) (gpointer data)
     } \
   } while (0)
 
-/* Registry-guard each register: the Android SDK gst_init() pre-registers its bundled static
- * plugins, so an unconditional re-register aborts ("cannot register existing type GstBaseQTMux").
- * Lookup keys on the plugin short name, which matches the GST_PLUGIN_STATIC_REGISTER arg. */
+/* Registry-guard each register: the SDKs register none of their static plugins, but a static gst_init() runs
+ * any gst_init_static_plugins() it can look up at runtime (gst/gst.c init_static_plugins()). On Android it finds
+ * this one, which GStreamer::_registerPlugins() then calls again, and an unconditional re-register aborts
+ * ("cannot register existing type GstBaseQTMux"). Lookup keys on the plugin short name, which matches the
+ * GST_PLUGIN_STATIC_REGISTER arg. */
 #define QGC_REGISTER_STATIC_PLUGIN(name) \
   do { \
     GstPlugin *_qgc_p = gst_registry_find_plugin (gst_registry_get (), G_STRINGIFY (name)); \

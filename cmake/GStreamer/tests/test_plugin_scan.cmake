@@ -26,3 +26,9 @@ qgc_test_assert_in_list("found videoconvertscale" videoconvertscale _names)
 qgc_test_assert_in_list("found x264" x264 _names)
 qgc_test_assert_not_in_list("notaplugin not scanned" notaplugin _names)
 qgc_test_pass("scan_plugin_basenames platform")
+
+# STATIC scans the static archives, whatever the platform's shared library naming.
+file(TOUCH "${_sandbox}/libgstudp.a")
+gstreamer_scan_plugin_basenames(_static_names "${_sandbox}" STATIC)
+qgc_test_assert_streq("static archives" udp "${_static_names}")
+qgc_test_pass("scan_plugin_basenames STATIC")

@@ -62,6 +62,34 @@ foreach(_case IN LISTS _missing_cases)
 endforeach()
 qgc_test_pass("missing_required honours alternate sets")
 
+# Missing optional decoders are only reported; the other missing plugins are absent from the SDK, or shipped but not
+# usable by the build. The fused videoconvertscale is satisfied by the shipped videoconvert+videoscale.
+gstreamer_classify_missing_plugins(
+    REQUESTED
+    coreelements
+    qsv
+    typo
+    udp
+    videoconvertscale
+    AVAILABLE
+    coreelements
+    SHIPPED
+    coreelements
+    udp
+    videoconvert
+    videoscale
+    OUT_OPTIONAL
+    _optional
+    OUT_ABSENT
+    _absent
+    OUT_UNUSABLE
+    _unusable
+)
+qgc_test_assert_streq("optional" qsv "${_optional}")
+qgc_test_assert_streq("absent" typo "${_absent}")
+qgc_test_assert_streq("unusable" "udp;videoconvertscale" "${_unusable}")
+qgc_test_pass("classify_missing_plugins")
+
 # plugin|expected alternatives, "|"-separated
 foreach(_case IN ITEMS "coreelements|coreelements" "videoconvertscale|videoconvertscale|videoconvert+videoscale"
                        "videoscale|videoscale|videoconvertscale|videoconvert+videoscale"

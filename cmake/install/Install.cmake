@@ -122,10 +122,7 @@ endif()
 # Runs after Qt deploy to survive any rpath rewriting by macdeployqt.
 set(_qgc_gst_framework_bundle "")
 if(MACOS AND TARGET GStreamer::Layout)
-    get_target_property(_qgc_gst_framework_bundle GStreamer::Layout GSTREAMER_FRAMEWORK_BUNDLE)
-    if(_qgc_gst_framework_bundle STREQUAL "_qgc_gst_framework_bundle-NOTFOUND")
-        set(_qgc_gst_framework_bundle "")
-    endif()
+    gstreamer_layout_get(FRAMEWORK_BUNDLE _qgc_gst_framework_bundle)
 endif()
 if(MACOS AND _qgc_gst_framework_bundle)
     install(

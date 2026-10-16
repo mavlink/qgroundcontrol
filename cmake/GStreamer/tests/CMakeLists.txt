@@ -112,8 +112,10 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
               reuse-auto-root
               legacy-pkg-config-args
               version-override
+              version-format
               missing-mandatory
               missing-gl
+              plugin-allowlist
               install
               install-macos
               android-mobile

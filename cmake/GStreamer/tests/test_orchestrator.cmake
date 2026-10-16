@@ -281,6 +281,13 @@ elseif(SCENARIO STREQUAL "version-override")
     _qgc_configure_fails("SDK older than QGC_GST_VERSION" "gstreamer-1.0>=1.26.0" --fresh
                          "-DGStreamer_ROOT_DIR=${_sdk_a}" -DQGC_GST_VERSION=1.26.0
     )
+elseif(SCENARIO STREQUAL "version-format")
+    # A partial version would only fail later, as a missing checksum pin or a 404 on the SDK package.
+    _qgc_write_fake_sdk("${_sdk_a}" 1.24.0)
+    _qgc_configure_fails("QGC_GST_VERSION without a micro version"
+                         "QGC_GST_VERSION='1\\.24' is not a GStreamer release" --fresh "-DGStreamer_ROOT_DIR=${_sdk_a}"
+                         -DQGC_GST_VERSION=1.24
+    )
 elseif(SCENARIO STREQUAL "missing-mandatory")
     _qgc_write_fake_sdk("${_sdk_a}" 1.24.0 OMIT gstreamer-rtsp-1.0)
     _qgc_configure_fails("SDK without a mandatory module"
@@ -292,6 +299,26 @@ elseif(SCENARIO STREQUAL "missing-gl")
     _qgc_write_fake_sdk("${_sdk_a}" 1.24.0 OMIT gstreamer-gl-1.0 gstreamer-gl-prototypes-1.0)
     _qgc_expect(_expect "${_sdk_a}" 1.24.0 OFF)
     _qgc_configure_ok("SDK without gst-gl" --fresh "-DGStreamer_ROOT_DIR=${_sdk_a}" ${_expect} -DEXPECT_GL=OFF)
+    # Optional components are probed quietly and summed up in one status line.
+    if(_qgc_output MATCHES "Package 'gstreamer-gl-1\\.0'.* not found")
+        message(FATAL_ERROR "ASSERT [quiet optional probes]: pkg-config reported gst-gl missing\n${_qgc_output}")
+    endif()
+    if(NOT _qgc_output MATCHES "optional components not found: Gl, GlPrototypes\n")
+        message(FATAL_ERROR "ASSERT [optional components summary]: no status line\n${_qgc_output}")
+    endif()
+elseif(SCENARIO STREQUAL "plugin-allowlist")
+    # A misspelled allowlist name warns; a missing hardware-specific decoder only shows in a status line.
+    _qgc_write_fake_sdk("${_sdk_a}" 1.24.0)
+    _qgc_configure_ok("allowlist with a typo and an optional decoder" --fresh "-DGStreamer_ROOT_DIR=${_sdk_a}"
+                      -DQGC_TEST_PLUGINS=coreelements,coreelemnts,qsv
+    )
+    string(REGEX REPLACE "[ \t\r\n]+" " " _normalized "${_qgc_output}")
+    if(NOT _normalized MATCHES "CMake Warning .* allowlist names not found as plugins in [^ ]+: coreelemnts Check")
+        message(FATAL_ERROR "ASSERT [allowlist warning]: coreelemnts is not reported alone\n${_qgc_output}")
+    endif()
+    if(NOT _normalized MATCHES "-- GStreamer: optional decoder plugins not in [^ ]+: qsv \\(")
+        message(FATAL_ERROR "ASSERT [optional status]: qsv is not reported in a status line\n${_qgc_output}")
+    endif()
 elseif(SCENARIO STREQUAL "android-mobile")
     if(NOT GENERATOR MATCHES "Ninja|Makefiles")
         message(STATUS "QGC_TEST_SKIPPED: link lines are only read from Ninja and Makefile builds")
