@@ -1,7 +1,9 @@
 #pragma once
 
-#include <QtCore/QString>
 #include <gst/gstelement.h>
+#include <gst/gstpad.h>
+
+#include <QtCore/QString>
 
 namespace GStreamer::SourceFactory {
 
@@ -33,5 +35,10 @@ struct Config
 ///
 /// Returns the source bin or nullptr on failure.
 GstElement* create(const QString& uri, const Config& config);
+
+/// Holds an RTP H.264/H.265 depayloader's byte-stream output back until a full parameter set (SPS and PPS, plus VPS
+/// for H.265) has arrived, then emits the parameter sets together with the first slice and removes itself. create()
+/// applies it to every depayloader it builds or parsebin plugs; length-prefixed output is left alone.
+void gateOnParameterSets(GstPad* depayloaderSrc, bool h265);
 
 }  // namespace GStreamer::SourceFactory
