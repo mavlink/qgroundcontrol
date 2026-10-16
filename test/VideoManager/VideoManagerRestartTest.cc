@@ -1,5 +1,10 @@
 #include "VideoManagerRestartTest.h"
 
+#include <memory>
+
+#include <QtCore/QCoreApplication>
+#include <QtCore/QPointer>
+#include <QtCore/QThread>
 #include <QtTest/QSignalSpy>
 
 #include "VideoManager.h"
@@ -108,6 +113,31 @@ void VideoManagerRestartTest::_testStopVideoStopsReceiverWaitingToReconnect()
 
     videoManager.stopVideo();
     QCOMPARE(receiver.stops, 1);
+}
+
+void VideoManagerRestartTest::_testCleanupDestroysReceivers()
+{
+    VideoManager videoManager;
+    auto* receiver = new FakeReceiver();
+    receiver->setParent(&videoManager);
+    const QPointer<FakeReceiver> guard(receiver);
+    videoManager._connectReceiverLifecycle(receiver);
+    videoManager._videoReceivers.append(receiver);
+
+    // Completions from a receiver's worker thread are still queued when cleanup() deletes the receiver.
+    int queuedCalls = 0;
+    (void) connect(receiver, &VideoReceiver::onStopComplete, &videoManager, [&queuedCalls]() { ++queuedCalls; });
+    auto worker = std::unique_ptr<QThread>(
+        QThread::create([receiver]() { emit receiver->onStopComplete(VideoReceiver::STATUS_OK); }));
+    worker->start();
+    QVERIFY(worker->wait(TestTimeout::shortMs()));
+
+    videoManager.cleanup();
+    QCoreApplication::sendPostedEvents(&videoManager, QEvent::MetaCall);
+
+    QVERIFY(guard.isNull());
+    QVERIFY(videoManager._videoReceivers.isEmpty());
+    QCOMPARE(queuedCalls, 0);
 }
 
 UT_REGISTER_TEST(VideoManagerRestartTest, TestLabel::Unit)

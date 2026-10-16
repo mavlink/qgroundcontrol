@@ -312,9 +312,19 @@ void VideoManager::_createVideoReceivers()
 
 void VideoManager::cleanup()
 {
-    for (VideoReceiver *receiver : std::as_const(_videoReceivers)) {
-        QGCCorePlugin::instance()->releaseVideoSink(receiver->sink());
+    // Destroy receivers while the application object exists: GstVideoReceiver tears down on a worker thread, and Qt
+    // stops delivering events to worker threads once QCoreApplication is gone.
+    QList<VideoReceiver*> receivers;
+    receivers.swap(_videoReceivers);
+    _pendingRestarts.clear();
+    for (VideoReceiver* receiver : receivers) {
+        const VideoReceiver::VideoSinkHandle sink = receiver->sink();
+        delete receiver;
+        QGCCorePlugin::instance()->releaseVideoSink(sink);
     }
+    // Receiver signals emitted off the GUI thread leave queued calls to lambdas holding the raw receiver pointer, and
+    // later shutdown steps still process events.
+    QCoreApplication::removePostedEvents(this, QEvent::MetaCall);
 }
 
 void VideoManager::_cleanupOldVideos()
