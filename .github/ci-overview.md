@@ -418,7 +418,10 @@ uv run --project tools --group scripts --group test pytest -q tools/tests .githu
   There is no separate Extended Tests workflow. Manual Linux coverage jobs reuse their existing
   binary for `Network|Flaky` tests, after the
   ordinary coverage report. Those tests have separate reports and still fail the job. iOS simulator builds run `--simple-boot-test` and require
-  QGC's success marker. Simulator cold boots have a 600-second deadline and at most two
+  QGC's success marker. The simulator starts booting right after setup (`--start`), so its cold
+  boot overlaps configure and build; the boot test adopts that device (`--device`) for its first
+  attempt. The simulator Debug build uses line-table debug info (`-g1`) so its objects fit the
+  compiler-cache budget. Simulator cold boots have a 600-second deadline and at most two
   fresh-device attempts; installation and application failures are never retried.
   Each attempt retains command output, with simulator state collected before failed-boot cleanup.
   `ios_boot_test.py` accepts `--boot-timeout` (1-900 seconds) and `--boot-attempts` (1-2).

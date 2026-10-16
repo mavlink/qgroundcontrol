@@ -15,6 +15,7 @@ from ios_boot_test import (
     boot_test,
     main,
     select_device,
+    start_simulator,
 )
 
 DEVICES = {
@@ -452,4 +453,105 @@ def test_cli_wires_boot_options():
         patch("ios_boot_test.boot_test") as run,
     ):
         main()
-    assert run.call_args.kwargs == {"timeout": 420, "boot_timeout": 900, "boot_attempts": 1}
+    assert run.call_args.kwargs == {
+        "timeout": 420,
+        "boot_timeout": 900,
+        "boot_attempts": 1,
+        "booted_device": None,
+    }
+
+
+def test_start_boots_without_waiting(tmp_path, simulator, gh_output):
+    process, _ = simulator
+    log = tmp_path / "log"
+    log.write_text("stale previous run")
+    with patch("sys.argv", ["ios_boot_test.py", "--start", "--log", str(log)]):
+        main()
+    assert commands(process) == [
+        ("list", "devices", "available", "--json"),
+        ("create", "QGC CI boot test", "iphone16", next(iter(DEVICES["devices"]))),
+        ("boot", "uuid-1"),
+    ]
+    assert "device=uuid-1" in gh_output.read_text()
+    assert "stale previous run" not in log.read_text()
+    assert "Starting early simulator boot" in log.read_text()
+
+
+@pytest.mark.parametrize(
+    "failure",
+    [
+        subprocess.CalledProcessError(1, "boot", stderr="boot refused"),
+        subprocess.TimeoutExpired("boot", 120, output=b"boot hung"),
+    ],
+)
+def test_start_failure_removes_device(tmp_path, simulator, failure):
+    process, responses = simulator
+    responses[("boot", "uuid-1")] = failure
+    log = tmp_path / "log"
+    with pytest.raises(type(failure)) as raised:
+        start_simulator(log)
+    assert raised.value is failure
+    assert commands(process)[-3:] == [
+        ("list", "devices", "--json"),
+        ("shutdown", "uuid-1"),
+        ("delete", "uuid-1"),
+    ]
+    assert "Simulator state before cleanup of uuid-1" in log.read_text()
+
+
+def test_adopted_device_skips_create_and_boot(app, tmp_path, simulator):
+    process, _ = simulator
+    log = tmp_path / "log"
+    log.write_text("early boot log\n")
+    boot_test(app, log, booted_device="early-1")
+    calls = commands(process)
+    assert not any(command[0] in ("create", "boot") for command in calls)
+    assert ("bootstatus", "early-1", "-b") in calls
+    assert calls[-3:] == [launch_command("early-1"), ("shutdown", "early-1"), ("delete", "early-1")]
+    text = log.read_text()
+    assert text.startswith("early boot log\n")
+    assert "Adopting simulator early-1" in text
+    assert SUCCESS in text
+
+
+def test_adopted_device_boot_failure_retries_on_fresh_device(app, tmp_path, simulator):
+    process, responses = simulator
+    responses[("bootstatus", "early-1", "-b")] = subprocess.TimeoutExpired(
+        "bootstatus", DEFAULT_BOOT_TIMEOUT, output=b"early boot stalled"
+    )
+    log = tmp_path / "log"
+    boot_test(app, log, booted_device="early-1")
+    calls = commands(process)
+    assert ("delete", "early-1") in calls
+    assert [command for command in calls if command[0] == "create"] == [
+        ("create", "QGC CI boot test", "iphone16", next(iter(DEVICES["devices"])))
+    ]
+    assert [command for command in calls if command[0] == "launch"] == [launch_command("uuid-1")]
+    text = log.read_text()
+    assert "early boot stalled" in text
+    assert "Retrying simulator cold boot" in text
+
+
+@pytest.mark.parametrize("device,expected", [("early-1", "early-1"), ("", None)])
+def test_cli_wires_adopted_device(device, expected):
+    with (
+        patch(
+            "sys.argv",
+            ["ios_boot_test.py", "--app", "app", "--log", "log", "--device", device],
+        ),
+        patch("ios_boot_test.boot_test") as run,
+    ):
+        main()
+    assert run.call_args.kwargs["booted_device"] == expected
+
+
+def test_cli_requires_app_without_start(capsys):
+    with (
+        patch("sys.argv", ["ios_boot_test.py", "--log", "log"]),
+        patch("ios_boot_test.subprocess.run") as process,
+        pytest.raises(SystemExit) as raised,
+    ):
+        main()
+    assert raised.value.code == 2
+    assert "--app is required" in capsys.readouterr().err
+    process.assert_not_called()
