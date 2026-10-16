@@ -2,6 +2,8 @@
 
 #include <QtCore/QString>
 
+#include "ArduCopterFirmwarePlugin.h"
+#include "ArduSubFirmwarePlugin.h"
 #include "FirmwarePlugin.h"
 
 void FirmwarePluginTest::_stableFirmwareNotifiedOncePerVersion_data()
@@ -25,6 +27,12 @@ void FirmwarePluginTest::_stableFirmwareNotifiedOncePerVersion()
     QFETCH(bool, expected);
 
     QCOMPARE(FirmwarePlugin::isStableFirmwareVersionUnseen(latest, seen), expected);
+}
+
+void FirmwarePluginTest::_arduSubHasNoRtlFlightMode()
+{
+    QVERIFY(ArduSubFirmwarePlugin().rtlFlightMode().isEmpty());
+    QVERIFY(!ArduCopterFirmwarePlugin().rtlFlightMode().isEmpty());
 }
 
 UT_REGISTER_TEST(FirmwarePluginTest, TestLabel::Unit, TestLabel::Vehicle)
