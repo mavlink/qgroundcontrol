@@ -2,6 +2,8 @@
 
 Parses CMakeCache.txt for CPM_PACKAGES and per-package VERSION/SOURCE_DIR,
 then reads git metadata (remote URL, commit hash) from each source directory.
+Adds the GStreamer the build bundles, from the QGC_GST_RESOLVED_* entries
+cmake/GStreamer records, when video streaming is enabled.
 
 Usage:
     generate_cpm_sbom.py --build-dir DIR [--output FILE] [--require-components]
@@ -76,6 +78,43 @@ def make_purl(name: str, version: str, url: str, commit: str) -> str:
     )
 
 
+def gstreamer_component(cache: dict[str, str]) -> dict | None:
+    """Return the GStreamer the build bundles as a CycloneDX component, or None without video streaming."""
+    version = cache.get("QGC_GST_RESOLVED_SDK_VERSION", "")
+    enabled = cache.get("QGC_ENABLE_GST_VIDEOSTREAMING", "").upper() in {"ON", "TRUE", "1", "YES"}
+    if not enabled or not version:
+        return None
+    purl = f"pkg:generic/gstreamer@{version}"
+    # The official packages an auto-downloaded SDK came from, then the source of that version.
+    references: list[dict] = []
+    for package in cache.get("QGC_GST_RESOLVED_PACKAGES", "").split(";"):
+        url, _, sha256 = package.partition("|")
+        if url and sha256:
+            references.append(
+                {
+                    "type": "distribution",
+                    "url": url,
+                    "hashes": [{"alg": "SHA-256", "content": sha256}],
+                }
+            )
+    references.append(
+        {
+            "type": "vcs",
+            "url": f"https://gitlab.freedesktop.org/gstreamer/gstreamer/-/tree/{version}",
+        }
+    )
+    references.append({"type": "website", "url": "https://gstreamer.freedesktop.org"})
+    return {
+        "type": "framework",
+        "name": "GStreamer",
+        "version": version,
+        "purl": purl,
+        "bom-ref": purl,
+        "licenses": [{"expression": "LGPL-2.1-or-later"}],
+        "externalReferences": references,
+    }
+
+
 def generate_sbom(build_dir: Path) -> dict:
     cache_path = build_dir / "CMakeCache.txt"
     if not cache_path.exists():
@@ -124,6 +163,10 @@ def generate_sbom(build_dir: Path) -> dict:
             component["hashes"] = [{"alg": "SHA-1", "content": commit}]
 
         components.append(component)
+
+    gstreamer = gstreamer_component(cache)
+    if gstreamer:
+        components.append(gstreamer)
 
     sbom = {
         "$schema": "http://cyclonedx.org/schema/bom-1.6.schema.json",
@@ -197,7 +240,7 @@ def generate_spdx(build_dir: Path) -> dict:
             ),
             "filesAnalyzed": False,
             "licenseConcluded": "NOASSERTION",
-            "licenseDeclared": "NOASSERTION",
+            "licenseDeclared": component.get("licenses", [{}])[0].get("expression", "NOASSERTION"),
             "copyrightText": "NOASSERTION",
             "externalRefs": [
                 {

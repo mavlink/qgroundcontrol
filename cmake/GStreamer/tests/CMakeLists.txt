@@ -29,6 +29,7 @@ set(_qgc_gst_tests
     test_static_init
     test_ios_static_plugins
     test_ios_single_core
+    test_notice
 )
 
 foreach(_t IN LISTS _qgc_gst_tests)

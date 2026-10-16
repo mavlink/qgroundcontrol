@@ -140,6 +140,15 @@ if(IOS AND GStreamer_IOS_CA_BUNDLE)
                                                                         HEADER_FILE_ONLY TRUE
     )
 endif()
+# The GStreamer license notice (Orchestrator.cmake); Android stages it with the APK assets, desktop installs it.
+if(IOS)
+    gstreamer_layout_get(NOTICE_DIR _qgc_gst_notice_dir)
+    set(_qgc_gst_notice_files "${_qgc_gst_notice_dir}/NOTICE.txt" "${_qgc_gst_notice_dir}/LGPL-2.1.txt")
+    target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${_qgc_gst_notice_files})
+    set_source_files_properties(${_qgc_gst_notice_files} PROPERTIES MACOSX_PACKAGE_LOCATION "licenses/gstreamer"
+                                                                    HEADER_FILE_ONLY TRUE
+    )
+endif()
 
 # Static layouts register their plugins in a generated gst_init_static_plugins() (called by
 # GStreamer.cc::_registerPlugins) for GSTREAMER_STATIC_PLUGINS, which Orchestrator.cmake resolves. iOS generates it

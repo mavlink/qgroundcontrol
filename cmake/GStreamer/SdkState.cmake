@@ -1,5 +1,5 @@
 # GStreamer SDK state carried across configures. GStreamer_ROOT_DIR is user input only; the
-# SDK discovery picked is recorded in the INTERNAL QGC_GST_RESOLVED_{ROOT,VERSION,AUTO} entries
+# SDK discovery picked is recorded in the INTERNAL QGC_GST_RESOLVED_{ROOT,VERSION,AUTO,SDK_VERSION,PACKAGES} entries
 # (also read from CMakeCache.txt by .github/scripts), and cached probe results are tied to an SDK
 # fingerprint so they are recomputed whenever the SDK changes.
 
@@ -52,8 +52,10 @@ function(_qgc_gst_select_sdk_root out_root out_auto user_root requested_version)
     )
 endfunction()
 
-# _qgc_gst_record_resolved_sdk(<root> <requested_version> <auto_downloaded>)
-function(_qgc_gst_record_resolved_sdk root requested_version auto_downloaded)
+# _qgc_gst_record_resolved_sdk(<root> <requested_version> <auto_downloaded> <version>)
+# <version> is the GStreamer version the SDK holds. Only an auto-downloaded SDK keeps the packages qgc_gst_acquire_sdk
+# recorded in QGC_GST_RESOLVED_PACKAGES, possibly in an earlier configure.
+function(_qgc_gst_record_resolved_sdk root requested_version auto_downloaded version)
     # CI tooling reads these names from CMakeCache.txt, so they keep the public QGC_ prefix.
     # cmake-lint: disable=C0103
     set(QGC_GST_RESOLVED_ROOT
@@ -68,6 +70,16 @@ function(_qgc_gst_record_resolved_sdk root requested_version auto_downloaded)
         "${auto_downloaded}"
         CACHE INTERNAL "Whether the resolved GStreamer SDK was auto-downloaded"
     )
+    set(QGC_GST_RESOLVED_SDK_VERSION
+        "${version}"
+        CACHE INTERNAL "GStreamer version of the resolved SDK"
+    )
+    if(NOT auto_downloaded)
+        set(QGC_GST_RESOLVED_PACKAGES
+            ""
+            CACHE INTERNAL "Upstream packages (<url>|<sha256>) of the auto-downloaded GStreamer SDK"
+        )
+    endif()
 endfunction()
 
 # _qgc_gst_refresh_sdk_cache(<fingerprint>)

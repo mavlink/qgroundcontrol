@@ -33,7 +33,7 @@ with multiple consumers in [`tools/common/`](../../tools/common/README.md).
 | `download_artifacts.py` | Artifacts | Download artifacts from matching completed workflow runs |
 | `find_artifact.py` | Artifacts | Find optional or required build artifacts by glob pattern |
 | `generate_build_results_comment.py` | Reporting | Render the consolidated PR build-results comment |
-| `generate_cpm_sbom.py` | Security | Generate a CycloneDX SBOM from CPM package metadata |
+| `generate_cpm_sbom.py` | Security | Generate a CycloneDX SBOM from CPM package metadata and the bundled GStreamer |
 | `gh_cache_cleanup.py` | Cache | List and optionally delete GitHub Actions caches |
 | `gh_pr_size_label.py` | Reporting | Read and prune pull-request `size/*` labels |
 | `gstreamer_archive.py` | GStreamer | Package GStreamer builds and optionally upload them to S3 |

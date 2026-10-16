@@ -391,6 +391,12 @@ elseif(SCENARIO STREQUAL "android-mobile")
         "${_package}/*"
     )
     qgc_test_assert_streq("package sources" assets/keep.txt "${_package_files}")
+    # So is the license notice of the GStreamer linked into the app.
+    foreach(_file IN ITEMS NOTICE.txt LGPL-2.1.txt)
+        if(NOT EXISTS "${_binary_dir}/extra_assets/licenses/gstreamer/${_file}")
+            message(FATAL_ERROR "ASSERT [license notice]: ${_file} is not staged with the APK assets")
+        endif()
+    endforeach()
 
     # The plugin archive is linked once, whole-archived; a plain occurrence ahead of it would load members twice.
     string(REGEX MATCHALL "[^ ]*libgstcoreelements\\.a" _plugin_archives "${_link}")
@@ -481,9 +487,13 @@ elseif(SCENARIO STREQUAL "install-macos")
     endif()
     foreach(
         _file IN
-        ITEMS Frameworks/libgstreamer-1.0.dylib lib/gstreamer-1.0/libgstcoreelements.dylib
-              lib/gio/modules/libgioopenssl.dylib libexec/gstreamer-1.0/gst-plugin-scanner
+        ITEMS Frameworks/libgstreamer-1.0.dylib
+              lib/gstreamer-1.0/libgstcoreelements.dylib
+              lib/gio/modules/libgioopenssl.dylib
+              libexec/gstreamer-1.0/gst-plugin-scanner
               Resources/etc/ssl/certs/ca-certificates.crt
+              Resources/licenses/gstreamer/NOTICE.txt
+              Resources/licenses/gstreamer/LGPL-2.1.txt
     )
         if(NOT EXISTS "${_bundle}/${_file}")
             message(FATAL_ERROR "ASSERT [flat install]: ${_file} is not under DESTDIR/prefix\n${_qgc_output}")
@@ -516,6 +526,13 @@ elseif(SCENARIO STREQUAL "install")
             message(FATAL_ERROR "ASSERT [staged plugins]: libgst${_plugin}.so is not under DESTDIR/prefix")
         endif()
     endforeach()
+    # The bundled GStreamer's license notice ships with it.
+    file(READ "${WORK_DIR}/stage/opt/qgc/share/licenses/gstreamer/NOTICE.txt" _notice)
+    if(NOT _notice MATCHES "^GStreamer 1\\.24\\.0\n"
+       OR NOT EXISTS "${WORK_DIR}/stage/opt/qgc/share/licenses/gstreamer/LGPL-2.1.txt"
+    )
+        message(FATAL_ERROR "ASSERT [license notice]: NOTICE.txt or LGPL-2.1.txt not installed\n${_notice}")
+    endif()
 
     _qgc_configure_ok("install rules requiring udp" ${_plugins}
                       -DQGC_TEST_INSTALL_REQUIRED_PLUGINS=coreelements,videoconvertscale,udp

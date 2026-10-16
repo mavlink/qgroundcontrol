@@ -264,7 +264,15 @@ endfunction()
 # GStreamer_ROOT_DIR, GStreamer_AUTO_DOWNLOADED, etc.).
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Linux: plugins, GIO modules and the gst-plugin-scanner/gst-ptp-helper binaries.
+# Installs the LGPL text and notice the Orchestrator wrote (GStreamer::Layout NOTICE_DIR) into <dest>.
+function(_qgc_gst_install_notice dest)
+    gstreamer_layout_get(NOTICE_DIR _notice_dir)
+    if(_notice_dir)
+        install(FILES "${_notice_dir}/NOTICE.txt" "${_notice_dir}/LGPL-2.1.txt" DESTINATION "${dest}")
+    endif()
+endfunction()
+
+# Linux: plugins, GIO modules, the gst-plugin-scanner/gst-ptp-helper binaries and the notice.
 function(gstreamer_install_linux_sdk app_name plugin_dest_out)
     set(_plugin_dest "lib/gstreamer-1.0")
     gstreamer_install_plugins(
@@ -298,13 +306,14 @@ function(gstreamer_install_linux_sdk app_name plugin_dest_out)
             message(WARNING "gst-plugin-scanner not found; AppImage video may not work")
         endif()
     endforeach()
+    _qgc_gst_install_notice(share/licenses/gstreamer)
     set(${plugin_dest_out}
         "${_plugin_dest}"
         PARENT_SCOPE
     )
 endfunction()
 
-# Windows: the SDK and libproxy DLLs, GIO modules, plugins, libexec helpers and the CA bundle.
+# Windows: the SDK and libproxy DLLs, GIO modules, plugins, libexec helpers, the CA bundle and the notice.
 function(gstreamer_install_windows_sdk app_name plugin_dest_out)
     set(_plugin_dest "${CMAKE_INSTALL_LIBDIR}/gstreamer-1.0")
     gstreamer_install_libs(SOURCE_DIR "${GStreamer_ROOT_DIR}/bin" DEST_DIR "${CMAKE_INSTALL_BINDIR}" EXTENSION "dll")
@@ -344,6 +353,7 @@ function(gstreamer_install_windows_sdk app_name plugin_dest_out)
     if(EXISTS "${GStreamer_ROOT_DIR}/etc/ssl/certs/ca-certificates.crt")
         install(FILES "${GStreamer_ROOT_DIR}/etc/ssl/certs/ca-certificates.crt" DESTINATION etc/ssl/certs)
     endif()
+    _qgc_gst_install_notice(share/licenses/gstreamer)
     set(${plugin_dest_out}
         "${_plugin_dest}"
         PARENT_SCOPE
@@ -551,7 +561,7 @@ function(gstreamer_install_macos_flat_sdk app_name plugin_dest_out)
 endfunction()
 
 # Dispatch to the framework or flat installer based on whether the Layout
-# target stashed FRAMEWORK_BUNDLE (set when GStreamer.framework is in use).
+# target stashed FRAMEWORK_BUNDLE (set when GStreamer.framework is in use), then install the notice.
 function(gstreamer_install_macos_sdk app_name plugin_dest_out)
     gstreamer_layout_get(FRAMEWORK_BUNDLE _gst_framework_bundle)
     if(_gst_framework_bundle)
@@ -559,6 +569,7 @@ function(gstreamer_install_macos_sdk app_name plugin_dest_out)
     else()
         gstreamer_install_macos_flat_sdk("${app_name}" _plugin_dest)
     endif()
+    _qgc_gst_install_notice("${app_name}.app/Contents/Resources/licenses/gstreamer")
     set(${plugin_dest_out}
         "${_plugin_dest}"
         PARENT_SCOPE

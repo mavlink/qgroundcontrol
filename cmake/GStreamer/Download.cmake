@@ -312,6 +312,28 @@ function(_qgc_gst_download_archives dir platform version paths_out stamp_out)
     )
 endfunction()
 
+# _qgc_gst_record_packages(<platform> <version> <stamp>)
+# Records the upstream packages a completion stamp (see _qgc_gst_extract_once) names, the primary one for <platform>
+# and a second one for <platform>_devel, as "<url>|<sha256>" entries in the INTERNAL cache entry
+# QGC_GST_RESOLVED_PACKAGES, which the SDK's notice (Notice.cmake) and SBOM entry (generate_cpm_sbom.py) name.
+function(_qgc_gst_record_packages platform version stamp)
+    # CI tooling reads the name from CMakeCache.txt, so it keeps the public QGC_ prefix like SdkState.cmake's entries.
+    # cmake-lint: disable=C0103
+    set(_platforms "${platform}" "${platform}_devel")
+    set(_packages "")
+    string(REGEX MATCHALL "=SHA256=[0-9a-fA-F]+" _hashes "${stamp}")
+    foreach(_hash IN LISTS _hashes)
+        list(POP_FRONT _platforms _platform)
+        gstreamer_get_package_url(${_platform} ${version} _url)
+        string(REPLACE "=SHA256=" "" _sha256 "${_hash}")
+        list(APPEND _packages "${_url}|${_sha256}")
+    endforeach()
+    set(QGC_GST_RESOLVED_PACKAGES
+        "${_packages}"
+        CACHE INTERNAL "Upstream packages (<url>|<sha256>) of the auto-downloaded GStreamer SDK"
+    )
+endfunction()
+
 # qgc_gst_acquire_sdk(PLATFORM <platform> VERSION <version> CACHE_SUBDIR <subdir>
 #                     ARCHIVES <primary> [<devel>] CONTENT <name>
 #                     EXTRACT_FUNCTION <command> CONTENT_DIR_OUT <var>)
@@ -323,6 +345,7 @@ endfunction()
 # share it. Concurrent configures are serialized on <cache>/<subdir>/.lock, and the extracted
 # tree is stamped with the archive hashes; see _qgc_gst_extract_once. <command> sees
 # _qgc_gst_archives_pinned TRUE when every archive was verified against its checksum pinned in build-config.json.
+# Records the packages in QGC_GST_RESOLVED_PACKAGES (_qgc_gst_record_packages).
 function(qgc_gst_acquire_sdk)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "" "PLATFORM;VERSION;CACHE_SUBDIR;CONTENT;EXTRACT_FUNCTION;CONTENT_DIR_OUT"
                           "ARCHIVES"
@@ -384,6 +407,7 @@ function(qgc_gst_acquire_sdk)
     if(_pinned_stamp AND EXISTS "${_content_dir}/.complete")
         file(READ "${_content_dir}/.complete" _existing_stamp)
         if(_existing_stamp STREQUAL _pinned_stamp)
+            _qgc_gst_record_packages(${ARG_PLATFORM} ${ARG_VERSION} "${_pinned_stamp}")
             set(${ARG_CONTENT_DIR_OUT}
                 "${_content_dir}"
                 PARENT_SCOPE
@@ -397,6 +421,7 @@ function(qgc_gst_acquire_sdk)
         set(_qgc_gst_archives_pinned TRUE)
     endif()
     _qgc_gst_extract_once("${_content_dir}" "${_stamp}" ${ARG_EXTRACT_FUNCTION} "${_archive_paths}")
+    _qgc_gst_record_packages(${ARG_PLATFORM} ${ARG_VERSION} "${_stamp}")
     set(${ARG_CONTENT_DIR_OUT}
         "${_content_dir}"
         PARENT_SCOPE

@@ -15,7 +15,15 @@ _qgc_gst_sdk_pc_version("${_sandbox}/missing" _version)
 qgc_test_assert_streq("missing .pc file" "" "${_version}")
 qgc_test_pass("SDK .pc version")
 
-_qgc_gst_record_resolved_sdk("${_sandbox}/auto-root" 1.28.4 TRUE)
+# cmake-lint: disable=C0103
+set(QGC_GST_RESOLVED_PACKAGES
+    "https://example.invalid/sdk.tar.xz|0123"
+    CACHE INTERNAL ""
+)
+_qgc_gst_record_resolved_sdk("${_sandbox}/auto-root" 1.28.4 TRUE 1.28.4)
+qgc_test_assert_streq("auto-downloaded SDK keeps its packages" "https://example.invalid/sdk.tar.xz|0123"
+                      "$CACHE{QGC_GST_RESOLVED_PACKAGES}"
+)
 # requested version|user root|expected root|expected auto
 set(_cases "1.28.4|${_sandbox}/user-root|${_sandbox}/user-root|FALSE" "1.28.4||${_sandbox}/auto-root|TRUE"
            "1.28.5|||FALSE"
@@ -35,9 +43,11 @@ file(REMOVE_RECURSE "${_sandbox}/auto-root")
 _qgc_gst_select_sdk_root(_root _auto "" 1.28.4)
 qgc_test_assert_streq("vanished auto root" "" "${_root}")
 
-_qgc_gst_record_resolved_sdk(/usr 1.28.4 FALSE)
+_qgc_gst_record_resolved_sdk(/usr 1.28.4 FALSE 1.24.2)
 _qgc_gst_select_sdk_root(_root _auto "" 1.28.4)
 qgc_test_assert_streq("discovered root is rediscovered" "" "${_root}")
+qgc_test_assert_streq("SDK version" 1.24.2 "$CACHE{QGC_GST_RESOLVED_SDK_VERSION}")
+qgc_test_assert_streq("discovered SDK has no packages" "" "$CACHE{QGC_GST_RESOLVED_PACKAGES}")
 qgc_test_pass("resolved SDK root selection")
 
 set(_stale

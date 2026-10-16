@@ -416,7 +416,20 @@ message(STATUS "QGCGStreamer: version=${GStreamer_VERSION} path=${_qgc_gst_path}
                "plugins=${_qgc_gst_plugin_count}/${_qgc_gst_plugin_total} auto_downloaded=${GStreamer_AUTO_DOWNLOADED}"
 )
 
-# Post-configure tooling (.github/scripts/verify_executable.py) and PrintSummary read
-# QGC_GST_RESOLVED_ROOT / QGC_GST_RESOLVED_AUTO from the cache; PrintSummary reads the version from GStreamer::Layout.
-_qgc_gst_record_resolved_sdk("${GStreamer_ROOT_DIR}" "${QGC_GST_REQUESTED_VERSION}" "${GStreamer_AUTO_DOWNLOADED}")
+# Post-configure tooling (.github/scripts/verify_executable.py, generate_cpm_sbom.py) and PrintSummary read the
+# QGC_GST_RESOLVED_* entries from the cache; PrintSummary reads the version from GStreamer::Layout.
+_qgc_gst_record_resolved_sdk("${GStreamer_ROOT_DIR}" "${QGC_GST_REQUESTED_VERSION}" "${GStreamer_AUTO_DOWNLOADED}"
+                             "${GStreamer_VERSION}"
+)
 gstreamer_layout_set(VERSION "${GStreamer_VERSION}")
+
+# The app ships the LGPL text and a notice naming this GStreamer and its sources: Android stages them as APK assets,
+# iOS as bundle resources (src/VideoManager/VideoReceiver/GStreamer/CMakeLists.txt) and desktop installs copy them from
+# GStreamer::Layout's NOTICE_DIR (Install.cmake).
+if(ANDROID)
+    set(_qgc_gst_notice_dir "${QGC_ANDROID_EXTRA_ASSETS_DIR}/licenses/gstreamer")
+else()
+    set(_qgc_gst_notice_dir "${CMAKE_BINARY_DIR}/gstreamer-notice")
+endif()
+qgc_gst_write_notice("${_qgc_gst_notice_dir}")
+gstreamer_layout_set(NOTICE_DIR "${_qgc_gst_notice_dir}")

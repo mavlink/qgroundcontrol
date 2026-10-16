@@ -12,6 +12,7 @@ from common.cmake import read_cache_dict
 from generate_cpm_sbom import (
     generate_sbom,
     generate_spdx,
+    gstreamer_component,
     make_purl,
     normalize_git_url,
 )
@@ -54,6 +55,42 @@ def test_spdx_snapshot_preserves_dependency_identity_and_relationships(tmp_path:
         }
         for p in dependencies
     ]
+
+
+def test_gstreamer_component_names_the_bundled_sdk_and_its_packages() -> None:
+    cache = {
+        "QGC_ENABLE_GST_VIDEOSTREAMING": "ON",
+        "QGC_GST_RESOLVED_SDK_VERSION": "1.28.4",
+        "QGC_GST_RESOLVED_PACKAGES": "https://example.invalid/runtime.pkg|0a1b;"
+        "https://example.invalid/devel.pkg|2c3d",
+    }
+    component = gstreamer_component(cache)
+    assert component is not None
+    assert component["purl"] == "pkg:generic/gstreamer@1.28.4"
+    assert component["licenses"] == [{"expression": "LGPL-2.1-or-later"}]
+    distributions = [r for r in component["externalReferences"] if r["type"] == "distribution"]
+    assert [(r["url"], r["hashes"][0]["content"]) for r in distributions] == [
+        ("https://example.invalid/runtime.pkg", "0a1b"),
+        ("https://example.invalid/devel.pkg", "2c3d"),
+    ]
+    # A system or user-provided GStreamer has no packages; its source location remains.
+    system = gstreamer_component({**cache, "QGC_GST_RESOLVED_PACKAGES": ""})
+    assert system is not None
+    assert [r["type"] for r in system["externalReferences"]] == ["vcs", "website"]
+    assert gstreamer_component({**cache, "QGC_ENABLE_GST_VIDEOSTREAMING": "OFF"}) is None
+
+
+def test_spdx_declares_the_gstreamer_license(tmp_path: Path) -> None:
+    cache = SAMPLE_CACHE + (
+        "QGC_ENABLE_GST_VIDEOSTREAMING:BOOL=ON\nQGC_GST_RESOLVED_SDK_VERSION:INTERNAL=1.24.2\n"
+    )
+    (tmp_path / "CMakeCache.txt").write_text(cache)
+    with patch("generate_cpm_sbom.git_info", side_effect=_mock_git_info):
+        sbom = generate_spdx(tmp_path)
+    gstreamer = sbom["packages"][-1]
+    assert gstreamer["name"] == "GStreamer"
+    assert gstreamer["licenseDeclared"] == "LGPL-2.1-or-later"
+    assert sbom["packages"][1]["licenseDeclared"] == "NOASSERTION"
 
 
 def test_read_cache_dict(tmp_path: Path) -> None:

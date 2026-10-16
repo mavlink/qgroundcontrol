@@ -207,7 +207,7 @@ Python helpers in `.github/scripts/` invoked by workflows and composite actions.
 | `download_artifacts.py` | Download build artifacts from completed platform workflow runs |
 | `find_artifact.py` | Find build artifacts by glob pattern in a directory |
 | `generate_build_results_comment.py` | Generate consolidated PR build-results comment |
-| `generate_cpm_sbom.py` | Generate a CycloneDX SBOM from a CMake build directory's CPM package metadata |
+| `generate_cpm_sbom.py` | Generate a CycloneDX SBOM from a CMake build directory's CPM package metadata and bundled GStreamer |
 | `gh_cache_cleanup.py` | List and optionally delete GitHub Actions caches via `gh-actions-cache` |
 | `gh_pr_size_label.py` | Read and prune `size/*` labels on a pull request |
 | `gstreamer_archive.py` | Package GStreamer builds and optionally upload to S3 |

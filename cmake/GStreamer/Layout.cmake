@@ -11,6 +11,7 @@
 #   GSTREAMER_FRAMEWORK_BUNDLE- discovered macOS GStreamer.framework path (set by overlay, optional)
 #   GSTREAMER_XCFRAMEWORK_PATH- iOS GStreamer.xcframework or .framework bundle (set when TYPE=MERGED_STATIC)
 #   GSTREAMER_VERSION         - SDK version found (set by Orchestrator.cmake)
+#   GSTREAMER_NOTICE_DIR      - LGPL text and notice for the GStreamer the app bundles (set by Orchestrator.cmake)
 #
 # Use gstreamer_layout_get(<KEY> <OUT_VAR>) / gstreamer_layout_set(<KEY> <VALUE>)
 # to read/write so callers don't replicate the NOTFOUND-handling boilerplate.
