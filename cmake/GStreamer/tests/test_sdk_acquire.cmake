@@ -100,3 +100,11 @@ _qgc_test_seed_archive(second)
 math(EXPR _extractions "${_extractions} + 1")
 _qgc_test_acquire("re-pinned archive" second ${_extractions})
 qgc_test_pass("archive change re-extracts")
+
+# A tree stamped with the pinned checksum is used without its archive, which CI caches leave out.
+function(qgc_resilient_download)
+    message(FATAL_ERROR "ASSERT [pinned tree reused]: tried to download ${ARGV}")
+endfunction()
+file(REMOVE "${_cache_dir}/sdk.tar.xz")
+_qgc_test_acquire("archive not cached" second ${_extractions})
+qgc_test_pass("a pinned tree is used without its archive")

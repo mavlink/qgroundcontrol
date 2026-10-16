@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+import json
 import os
 from unittest.mock import patch
 
-from cpm_helper import compute_cpm_fingerprint, configure_cpm_cache
+from cpm_helper import compute_cpm_fingerprint, compute_gstreamer_fingerprint, configure_cpm_cache
 
 
 class TestFingerprint:
@@ -21,6 +22,20 @@ class TestFingerprint:
         after = compute_cpm_fingerprint(tmp_path)
 
         assert before != after
+
+
+def test_gstreamer_fingerprint_follows_only_the_gstreamer_section(tmp_path):
+    config = tmp_path / ".github/build-config.json"
+    config.parent.mkdir()
+
+    def fingerprint(qt: str, android: str) -> str:
+        sections = {"qt": {"version": qt}, "gstreamer": {"version": {"android": android}}}
+        config.write_text(json.dumps(sections))
+        return compute_gstreamer_fingerprint(tmp_path)
+
+    before = fingerprint("6.10", "1.28.4")
+    assert fingerprint("6.11", "1.28.4") == before
+    assert fingerprint("6.11", "1.28.5") != before
 
 
 class TestConfigureCache:

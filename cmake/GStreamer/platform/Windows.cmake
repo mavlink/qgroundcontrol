@@ -76,15 +76,14 @@ function(_qgc_gst_windows_extract staging installer)
     set(_installer_log "${_cache_dir}/installer.log")
     cmake_path(NATIVE_PATH _installer_log _installer_log_native)
 
-    # The .exe is auto-run with /VERYSILENT below; with checksum verification
-    # off it may be unverified — refuse to silently execute it.
-    if(NOT GStreamer_REQUIRE_CHECKSUM)
+    # The .exe is auto-run with /VERYSILENT below. Only its in-tree pin authenticates it: GStreamer_REQUIRE_CHECKSUM=OFF
+    # also accepts upstream's same-origin .sha256sum sidecar, or no checksum at all.
+    if(NOT _qgc_gst_archives_pinned)
         message(
             FATAL_ERROR "GStreamer: refusing to silently run the downloaded Windows installer "
-                        "'${_installer_native}' because GStreamer_REQUIRE_CHECKSUM is OFF, so its "
-                        "integrity was not verified. Re-enable checksum verification "
-                        "(-DGStreamer_REQUIRE_CHECKSUM=ON) or install the SDK manually and point "
-                        "GStreamer_ROOT_DIR at it."
+                        "'${_installer_native}' because its checksum is not pinned in .github/build-config.json "
+                        "(gstreamer.checksums), so its integrity was not verified. Pin it or install the SDK "
+                        "manually and point GStreamer_ROOT_DIR at it."
         )
     endif()
 

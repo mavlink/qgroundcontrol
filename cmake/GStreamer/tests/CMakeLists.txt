@@ -19,6 +19,7 @@ set(_qgc_gst_tests
     test_sdk_state
     test_install_libs_guard_windows
     test_windows_sdk_root
+    test_windows_installer_guard
     test_platform
     test_checksum_authority
     test_ios_bundle_from_root
@@ -40,6 +41,8 @@ foreach(_t IN LISTS _qgc_gst_tests)
                                                     "ASSERT|FATAL_ERROR|CMake Error"
     )
 endforeach()
+# The stand-in installer is a shell script, which a Windows host cannot run.
+set_tests_properties(GStreamer.test_windows_installer_guard PROPERTIES SKIP_REGULAR_EXPRESSION "QGC_TEST_SKIPPED")
 
 if(QGC_ENABLE_GST_VIDEOSTREAMING
    AND NOT ANDROID
@@ -71,6 +74,7 @@ set(_qgc_gst_failure_cases
     "test_install_libs_guard|||gstreamer_install_libs: refusing to copy from system/shared prefix"
     "test_ios_xcframework_slice|NoMatchingArch|no-matching-arch|no iphoneos slice for architectures 'x86_64'"
     "test_download_win_version_guard|||Windows GStreamer SDK requires version 1.28 or later"
+    "test_windows_installer_guard|Unpinned|unpinned|refusing to silently run the downloaded Windows installer"
 )
 foreach(_qgc_failure_case IN LISTS _qgc_gst_failure_cases)
     string(REPLACE "|" ";" _qgc_failure_parts "${_qgc_failure_case}")

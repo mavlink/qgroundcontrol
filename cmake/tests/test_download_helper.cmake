@@ -94,3 +94,35 @@ qgc_resilient_download(
 )
 qgc_test_assert_streq("ALLOW_FAILURE empty result" "" "${_r3}")
 qgc_test_pass("ALLOW_FAILURE")
+
+# The checksum applies to whichever URL serves the file: a fallback URL is not trusted more than the first one.
+file(WRITE "${_sandbox}/served/good.bin" "good")
+file(WRITE "${_sandbox}/served/bad.bin" "bad")
+file(SHA256 "${_sandbox}/served/good.bin" _good_hash)
+foreach(_case IN ITEMS "good|${_sandbox}/downloads/good.bin" "bad|")
+    string(REPLACE "|" ";" _case "${_case}")
+    list(GET _case 0 _served)
+    list(GET _case 1 _expected)
+    qgc_resilient_download(
+        FILENAME
+        ${_served}.bin
+        DESTINATION_DIR
+        "${_sandbox}/downloads"
+        RESULT_VAR
+        _r4
+        URLS
+        "file://${_sandbox}/served/missing.bin"
+        "file://${_sandbox}/served/${_served}.bin"
+        EXPECTED_HASH
+        "SHA256=${_good_hash}"
+        LOG_TAG
+        test
+        ALLOW_FAILURE
+        RETRIES
+        1
+        RETRY_BACKOFF
+        0
+    )
+    qgc_test_assert_streq("fallback URL serving ${_served} content" "${_expected}" "${_r4}")
+endforeach()
+qgc_test_pass("fallback URL verified against EXPECTED_HASH")

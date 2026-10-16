@@ -26,7 +26,7 @@ with multiple consumers in [`tools/common/`](../../tools/common/README.md).
 | `collect_artifact_sizes.py` | Reporting | Collect artifact sizes from platform workflow runs |
 | `collect_build_status.py` | Reporting | Collect platform and pre-commit status for PR comments |
 | `coverage_comment.py` | Reporting | Build PR coverage comments from Cobertura XML |
-| `cpm_helper.py` | Cache | Fingerprint CPM dependencies, prepare runner seeds, and configure their source cache |
+| `cpm_helper.py` | Cache | Fingerprint CPM dependencies and the GStreamer SDK config, prepare runner seeds, and configure their source cache |
 | `deploy_docs.py` | Release | Deploy generated documentation to an external Pages repository |
 | `detect_changes.py` | Planning | Decide which platform builds a change requires |
 | `docker_helper.py` | Build | Run Docker builds and report compiler identities, timings, and cache statistics |

@@ -200,7 +200,7 @@ Python helpers in `.github/scripts/` invoked by workflows and composite actions.
 | `collect_artifact_sizes.py` | Collect artifact sizes for latest successful platform workflow runs |
 | `collect_build_status.py` | Collect latest platform/pre-commit status for build-results comments |
 | `coverage_comment.py` | Build coverage report comments from Cobertura XML |
-| `cpm_helper.py` | CPM CI helper: dependency fingerprint, source cache configuration |
+| `cpm_helper.py` | CPM CI helper: dependency and GStreamer SDK fingerprints, source cache configuration |
 | `deploy_docs.py` | Deploy built docs to an external GitHub Pages repository |
 | `detect_changes.py` | Detect whether a CI build is needed based on changed files and platform |
 | `docker_helper.py` | Docker build helpers |
@@ -303,10 +303,12 @@ during nested composite post-job cleanup; step outputs do not survive that phase
 Compiler and moc caches use rolling write keys, with a distinct suffix per matrix leg.
 moc save keys include the coverage/sanitizer variant while restore prefixes stay shared.
 CPM uses immutable dependency-fingerprint keys; unchanged snapshots are not saved again.
-GStreamer SDK payloads have separate immutable archives and are excluded from CPM archives.
+GStreamer SDKs have separate immutable caches and are excluded from CPM archives.
 Only Windows, Android, and iOS jobs cache them (desktop Linux and macOS use the system
-GStreamer), keyed on `build-config.json`, `cmake/GStreamer/Download.cmake`, and
-`cmake/GStreamer/platform/*.cmake`.
+GStreamer), keyed on the `gstreamer` section of `build-config.json` (`cpm_helper.py
+gstreamer-fingerprint`), `cmake/GStreamer/Download.cmake`, and `cmake/GStreamer/platform/*.cmake`.
+They hold the extracted SDK trees without the downloaded archives: configure uses a tree stamped
+with the pinned checksums as is.
 Custom Debug can fall back to the ordinary platform's CPM sources. Coverage's 3 GB GitHub
 budget is a targeted trial: compare cache hits, LRU evictions, and transfer time on warm runs.
 macOS explicitly passes the installed ccache binary to CMake so Homebrew discovery

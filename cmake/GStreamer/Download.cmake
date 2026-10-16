@@ -185,7 +185,7 @@ endfunction()
 # _qgc_gst_download_archive(<platform> <version> <filename> <dir> <hash_out>)
 # Downloads the <version> SDK package for <platform> (upstream, else the QGC S3 mirror) to <dir>/<filename>, reusing a
 # cached copy that matches its checksum, and sets <hash_out> to the "SHA256=<hex>" it was verified against, or "" when
-# it is unverified. A failed download fails configure.
+# it is unverified. The mirror's copy is held to the same checksum. A failed download fails configure.
 function(_qgc_gst_download_archive platform version filename dir hash_out)
     gstreamer_get_package_url("${platform}" "${version}" _url)
     gstreamer_get_s3_mirror_url("${platform}" "${version}" _s3_url)
@@ -263,15 +263,66 @@ function(_qgc_gst_extract_once dir stamp extract_function archives)
     message(FATAL_ERROR "GStreamer: could not move ${_staging} to ${dir}: ${_rename_result}")
 endfunction()
 
+# _qgc_gst_pinned_stamp(<platform> <version> <stamp_out> <archive>...)
+# Sets <stamp_out> to the completion stamp (see _qgc_gst_extract_once) of the <archive>s, the primary one for <platform>
+# and a second one for <platform>_devel, when every one is pinned in build-config.json, else to "".
+function(_qgc_gst_pinned_stamp platform version stamp_out)
+    set(_platforms "${platform}" "${platform}_devel")
+    set(_stamp "")
+    foreach(_archive IN LISTS ARGN)
+        list(POP_FRONT _platforms _platform)
+        gstreamer_get_fallback_checksum(${_platform} ${version} _pin)
+        if(NOT _pin)
+            set(_stamp "")
+            break()
+        endif()
+        string(APPEND _stamp "${_archive}=${_pin}\n")
+    endforeach()
+    set(${stamp_out}
+        "${_stamp}"
+        PARENT_SCOPE
+    )
+endfunction()
+
+# _qgc_gst_download_archives(<dir> <platform> <version> <paths_out> <stamp_out> <archive>...)
+# Downloads the <archive>s, the primary one for <platform> and a second one for <platform>_devel, into <dir>; sets
+# <paths_out> to their paths and <stamp_out> to their completion stamp, each archive's line naming the checksum it was
+# verified against, else its own SHA256.
+function(_qgc_gst_download_archives dir platform version paths_out stamp_out)
+    set(_platforms "${platform}" "${platform}_devel")
+    set(_paths "")
+    set(_stamp "")
+    foreach(_archive IN LISTS ARGN)
+        list(POP_FRONT _platforms _platform)
+        _qgc_gst_download_archive(${_platform} ${version} "${_archive}" "${dir}" _hash)
+        if(NOT _hash)
+            file(SHA256 "${dir}/${_archive}" _sha256)
+            set(_hash "SHA256=${_sha256}")
+        endif()
+        list(APPEND _paths "${dir}/${_archive}")
+        string(APPEND _stamp "${_archive}=${_hash}\n")
+    endforeach()
+    set(${paths_out}
+        "${_paths}"
+        PARENT_SCOPE
+    )
+    set(${stamp_out}
+        "${_stamp}"
+        PARENT_SCOPE
+    )
+endfunction()
+
 # qgc_gst_acquire_sdk(PLATFORM <platform> VERSION <version> CACHE_SUBDIR <subdir>
 #                     ARCHIVES <primary> [<devel>] CONTENT <name>
 #                     EXTRACT_FUNCTION <command> CONTENT_DIR_OUT <var>)
 # Downloads the SDK archive(s) for <platform> (the second one as <platform>_devel) into
 # <cache>/<subdir> and extracts them once, with <command>(<staging> <archives> <name>), into
-# <cache>/<subdir>/<name>, returned in CONTENT_DIR_OUT. <subdir> must name the version.
+# <cache>/<subdir>/<name>, returned in CONTENT_DIR_OUT. <subdir> must name the version. When every archive is pinned,
+# a tree already extracted from them is used without downloading them.
 # <cache> is CPM_SOURCE_CACHE, which the top-level CMakeLists.txt always sets, so build directories and CI jobs
 # share it. Concurrent configures are serialized on <cache>/<subdir>/.lock, and the extracted
-# tree is stamped with the archive hashes; see _qgc_gst_extract_once.
+# tree is stamped with the archive hashes; see _qgc_gst_extract_once. <command> sees
+# _qgc_gst_archives_pinned TRUE when every archive was verified against its checksum pinned in build-config.json.
 function(qgc_gst_acquire_sdk)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "" "PLATFORM;VERSION;CACHE_SUBDIR;CONTENT;EXTRACT_FUNCTION;CONTENT_DIR_OUT"
                           "ARCHIVES"
@@ -326,24 +377,28 @@ function(qgc_gst_acquire_sdk)
         endif()
     endif()
 
-    set(_platforms "${ARG_PLATFORM}" "${ARG_PLATFORM}_devel")
-    set(_archive_paths "")
-    set(_stamp "")
-    foreach(_archive IN LISTS ARG_ARCHIVES)
-        list(POP_FRONT _platforms _platform)
-        set(_archive_path "${_cache_dir}/${_archive}")
-        _qgc_gst_download_archive(${_platform} ${ARG_VERSION} "${_archive}" "${_cache_dir}" _archive_hash)
-        if(NOT _archive_hash)
-            file(SHA256 "${_archive_path}" _archive_sha256)
-            set(_archive_hash "SHA256=${_archive_sha256}")
+    # A tree stamped with the pinned checksums is used without hashing, or even having, its archives: CI caches keep
+    # only the tree.
+    _qgc_gst_pinned_stamp(${ARG_PLATFORM} ${ARG_VERSION} _pinned_stamp ${ARG_ARCHIVES})
+    set(_content_dir "${_cache_dir}/${ARG_CONTENT}")
+    if(_pinned_stamp AND EXISTS "${_content_dir}/.complete")
+        file(READ "${_content_dir}/.complete" _existing_stamp)
+        if(_existing_stamp STREQUAL _pinned_stamp)
+            set(${ARG_CONTENT_DIR_OUT}
+                "${_content_dir}"
+                PARENT_SCOPE
+            )
+            return()
         endif()
-        list(APPEND _archive_paths "${_archive_path}")
-        string(APPEND _stamp "${_archive}=${_archive_hash}\n")
-    endforeach()
-
-    _qgc_gst_extract_once("${_cache_dir}/${ARG_CONTENT}" "${_stamp}" ${ARG_EXTRACT_FUNCTION} "${_archive_paths}")
+    endif()
+    _qgc_gst_download_archives("${_cache_dir}" ${ARG_PLATFORM} ${ARG_VERSION} _archive_paths _stamp ${ARG_ARCHIVES})
+    set(_qgc_gst_archives_pinned FALSE)
+    if(_pinned_stamp)
+        set(_qgc_gst_archives_pinned TRUE)
+    endif()
+    _qgc_gst_extract_once("${_content_dir}" "${_stamp}" ${ARG_EXTRACT_FUNCTION} "${_archive_paths}")
     set(${ARG_CONTENT_DIR_OUT}
-        "${_cache_dir}/${ARG_CONTENT}"
+        "${_content_dir}"
         PARENT_SCOPE
     )
 endfunction()
