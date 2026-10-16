@@ -264,12 +264,12 @@ LABELS=Slow EXCLUDE=Flaky just test          # Both at once
 `just test` wraps `ctest --output-on-failure -L "<LABELS>" -LE "<EXCLUDE>"` and matches
 the label filters CI uses by default.
 
-CI runs integration tests with two processes. Settings and temporary directories are
+CI runs integration tests with one process per CPU. Settings and temporary directories are
 isolated per test; local network fixtures allocate ephemeral ports. Existing CTest
 `RESOURCE_LOCK` and `RUN_SERIAL` properties still serialize tests sharing hardware or
 fixed resources. The `test-phase` action accepts `integration-parallel` for constrained
-runners. To match CI locally, run `ctest --test-dir build -L Integration -LE 'Flaky|Network'
---output-on-failure --parallel 2`. Preserve this isolation when adding integration tests.
+runners. CI Linux runners have four CPUs; to match CI locally, run `ctest --test-dir build -L Integration
+-LE 'Flaky|Network' --output-on-failure --parallel 4`. Preserve this isolation when adding integration tests.
 
 ### Via the QGroundControl Binary (unittest build)
 

@@ -405,6 +405,8 @@ uv run --project tools --group scripts --group test pytest -q tools/tests .githu
 - `test-phase` shares Linux/custom unit and integration execution. Call it only after
   a successful build. Failures preserve JUnit, logs and durations and do not suppress
   the other suite. There are no blanket until-pass retries; empty test selections fail.
+  Both suites run one CTest process per CPU by default, including coverage builds: GCC
+  merges `.gcda` counters under file locks.
 - Custom Build uses one shared matrix job. Relevant PRs build only Debug and run the
   custom-plugin unit/integration suites, excluding stock-UI integration tests. Master
   pushes, merge-queue runs, and manual dispatches also build Release without test hooks

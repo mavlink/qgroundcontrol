@@ -277,7 +277,6 @@ jobs:
         with:
           build-dir: ${{ runner.temp }}/build
           suite: linux-${{ matrix.mode }}
-          parallel: ${{ matrix.mode == 'coverage' && '1' || 'auto' }}
           exclude-labels: ${{ matrix.mode == 'sanitizers' && 'Flaky|Network|NoSanitizer' || 'Flaky|Network' }}
           upload-codecov: ${{ vars.CODECOV_TEST_ANALYTICS == 'true' }}
 
