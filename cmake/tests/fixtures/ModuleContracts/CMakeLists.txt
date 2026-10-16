@@ -296,6 +296,40 @@ if(TEST_CASE MATCHES "^helpers-")
         if(NOT _content STREQUAL "second\n")
             message(FATAL_ERROR "Changed content was not written: ${_content}")
         endif()
+    elseif(TEST_CASE STREQUAL "helpers-ccache-pch")
+        if(CMAKE_HOST_WIN32)
+            return()
+        endif()
+        # Stand-in ccache that fails (3) when the compile's output already exists.
+        set(_fake_ccache "${CMAKE_CURRENT_BINARY_DIR}/fake-ccache/ccache")
+        file(WRITE "${_fake_ccache}"
+             "#!/bin/sh\n[ \"$1\" = --version ] && exit 0\n_prev=\n"
+             "for _arg; do [ \"$_prev\" = -o ] && [ -e \"$_arg\" ] && exit 3; _prev=$_arg; done\nexit 0\n"
+        )
+        # cmake-lint: disable=E1126
+        file(CHMOD "${_fake_ccache}" PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE)
+        set(QGC_CACHE_PROGRAM
+            "${_fake_ccache}"
+            CACHE FILEPATH "" FORCE
+        )
+        qgc_config_caching()
+
+        set(_pch "${CMAKE_CURRENT_BINARY_DIR}/stale.hxx.gch")
+        set(_object "${CMAKE_CURRENT_BINARY_DIR}/stale.o")
+        file(WRITE "${_pch}" "stale")
+        file(WRITE "${_object}" "stale")
+        execute_process(COMMAND "${CMAKE_CURRENT_BINARY_DIR}/ccache-launcher" c++ -x c++-header -c in.hxx -o "${_pch}"
+                        RESULT_VARIABLE _result
+        )
+        if(NOT _result EQUAL 0 OR EXISTS "${_pch}")
+            message(FATAL_ERROR "ccache launcher kept the stale PCH (exit ${_result})")
+        endif()
+        execute_process(COMMAND "${CMAKE_CURRENT_BINARY_DIR}/ccache-launcher" c++ -c in.cpp -o "${_object}"
+                        RESULT_VARIABLE _result
+        )
+        if(NOT _result EQUAL 3 OR NOT EXISTS "${_object}")
+            message(FATAL_ERROR "ccache launcher deleted a non-header compile's output (exit ${_result})")
+        endif()
     elseif(TEST_CASE STREQUAL "helpers-cpm-missing")
         qgc_require_cpm_added(Example)
     elseif(TEST_CASE STREQUAL "helpers-cpm-invalid-name")
