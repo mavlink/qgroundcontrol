@@ -68,6 +68,10 @@ lint = [
 [tool.uv]
 default-groups = []
 
+[tool.uv.sources]
+# Qt 6.12's split iOS SDKs and versioned extensions need miurahr/aqtinstall#1048; return to PyPI once released.
+aqtinstall = { git = "https://github.com/miurahr/aqtinstall", rev = "6f0f842da47c744cdc814cd94da9828d934d7bf0" }
+
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
