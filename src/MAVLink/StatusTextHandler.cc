@@ -103,6 +103,7 @@ void StatusTextHandler::clearMessages()
     if (m_unreadMessageCount != 0) {
         m_unreadMessageCount = 0;
         emit hasUnreadMessagesChanged();
+        emit unreadMessageCountChanged();
     }
 
     if (hadMessages) {
@@ -122,6 +123,7 @@ void StatusTextHandler::markAllRead()
 
     m_unreadMessageCount = 0;
     emit hasUnreadMessagesChanged();
+    emit unreadMessageCountChanged();
 
     if (m_unreadCriticalMessageCount != 0) {
         m_unreadCriticalMessageCount = 0;
@@ -235,6 +237,7 @@ void StatusTextHandler::handleHTMLEscapedTextMessage(MAV_COMPONENT compId, MAV_S
     if (m_unreadMessageCount++ == 0) {
         emit hasUnreadMessagesChanged();
     }
+    emit unreadMessageCountChanged();
 
     emit newFormattedMessage(_displayText(*message));
 

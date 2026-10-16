@@ -41,6 +41,7 @@ public:
     void run10HzTasks();
     void run500HzTasks();
     void sendStatusTextMessages();
+    void sendBootStatusTextMessages();
 
     bool shouldSendStatusText() const { return _sendStatusText; }
 

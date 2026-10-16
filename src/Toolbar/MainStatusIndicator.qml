@@ -17,16 +17,49 @@ RowLayout {
     property var    _vehicleInAir:      _activeVehicle ? _activeVehicle.airborne || _activeVehicle.landing : false
     property bool   _vtolInFWDFlight:   _activeVehicle ? _activeVehicle.vtolInFwdFlight : false
     property bool   _rebootRequired:    _activeVehicle ? _activeVehicle.rebootRequired : false
+    property bool   _checklistEnabled:  QGroundControl.settingsManager.appSettings.useChecklist.rawValue &&
+                                        QGroundControl.corePlugin.options.preFlightChecklistUrl.toString().length > 0
+    property bool   _checklistComplete: _activeVehicle ? _activeVehicle.checkListState === Vehicle.CheckListPassed : false
+    property bool   _checklistBlocksArming: _checklistEnabled && QGroundControl.settingsManager.appSettings.enforceChecklist.rawValue && !_checklistComplete
 
-    function dropMainStatusIndicator() {
+    readonly property int tabChecklist: 0
+    readonly property int tabMessages:  1
+    readonly property int tabStatus:    2
+
+    property int _initialTab: -1
+
+    // Raised when the dropdown is already open and should switch tabs
+    signal tabRequested(int tab)
+
+    function dropMainStatusIndicator(showMessages = false) {
+        _initialTab = showMessages ? tabMessages : -1
         let overallStatusComponent = _activeVehicle ? overallStatusIndicatorPage : overallStatusOfflineIndicatorPage
         mainWindow.showIndicatorDrawer(overallStatusComponent, control)
+        if (_initialTab !== -1) {
+            tabRequested(_initialTab)
+        }
     }
 
     QGCPalette { id: qgcPal }
 
+    // Lives here rather than in the dropdown so checklist progress survives the dropdown closing
+    Loader {
+        id:         checklistLoader
+        visible:    false
+        active:     _checklistEnabled && !!_activeVehicle
+        source:     QGroundControl.corePlugin.options.preFlightChecklistUrl
+
+        // The vehicle may still hold the Passed state of the previous checklist, so sync it to the new one
+        onLoaded: {
+            if (_activeVehicle) {
+                _activeVehicle.checkListState = item.allChecksPassed === true ? Vehicle.CheckListPassed : Vehicle.CheckListNotSetup
+            }
+        }
+    }
+
     QGCLabel {
         id:                 mainStatusLabel
+        objectName:         "mainStatusText"
         Layout.fillHeight:  true
         Layout.preferredWidth: Math.max(contentWidth,
                                         criticalMessageBadge.width + rebootRequiredIcon.width +
@@ -72,6 +105,10 @@ RowLayout {
                         return mainStatusLabel._armedText
                     }
                 } else {
+                    if (_checklistBlocksArming) {
+                        _mainStatusBGColor = (_healthAndArmingChecksSupported && !_activeVehicle.healthAndArmingCheckReport.canArm) ? "red" : "yellow"
+                        return mainStatusLabel._notReadyToFlyText
+                    }
                     if (_healthAndArmingChecksSupported) {
                         if (_activeVehicle.healthAndArmingCheckReport.canArm) {
                             if (_activeVehicle.healthAndArmingCheckReport.hasWarningsOrErrors) {
@@ -109,26 +146,14 @@ RowLayout {
             }
         }
 
-        Rectangle {
+        CountBadge {
             id:                 criticalMessageBadge
+            objectName:         "mainStatusCriticalBadge"
             anchors.top:        parent.top
             anchors.topMargin:  ScreenTools.defaultFontPixelHeight * 0.25
             anchors.right:      parent.right
-            width:              ScreenTools.defaultFontPixelHeight
-            height:             width
-            radius:             width / 2
             color:              qgcPal.colorRed
-            visible:            _criticalMessageCount > 0
-
-            property int _criticalMessageCount: _activeVehicle ? _activeVehicle.unreadCriticalMessageCount : 0
-
-            QGCLabel {
-                anchors.centerIn:   parent
-                text:               criticalMessageBadge._criticalMessageCount > 9 ? "!" : criticalMessageBadge._criticalMessageCount.toString()
-                color:              qgcPal.buttonHighlightText
-                font.pointSize:     ScreenTools.smallFontPointSize
-                font.bold:          true
-            }
+            count:              _activeVehicle ? _activeVehicle.unreadCriticalMessageCount : 0
         }
 
         QGCColoredImage {
@@ -204,9 +229,6 @@ RowLayout {
             waitForParameters:  false
             fillWindow:         true
             contentComponent:   mainStatusContentComponent
-
-            Component.onCompleted:   mainWindow.suppressCriticalVehicleMessages = true
-            Component.onDestruction: mainWindow.suppressCriticalVehicleMessages = false
         }
     }
 
@@ -219,8 +241,20 @@ RowLayout {
 
             property bool parametersReady: QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable
 
+            // Only the Messages tab shows critical messages, so only then is the popup redundant
+            Binding {
+                target:     mainWindow
+                property:   "suppressCriticalVehicleMessages"
+                value:      tabBar.currentIndex === control.tabMessages
+            }
+
+            Connections {
+                target: control
+                function onTabRequested(tab) { tabBar.currentIndex = tab }
+            }
+
             RowLayout {
-                Layout.fillWidth:   true
+                Layout.alignment:   Qt.AlignHCenter
                 spacing:            ScreenTools.defaultFontPixelWidth
                 // Stop controls must stay reachable without parameters
                 visible:            parametersReady || _guidedController.showEmergencyStop || _guidedController.showDisarm || _rebootRequired
@@ -292,8 +326,6 @@ RowLayout {
                     }
                 }
 
-                Item { Layout.fillWidth: true }
-
                 QGCLabel {
                     Layout.maximumWidth:    ScreenTools.defaultFontPixelWidth * 16
                     Layout.maximumHeight:   rebootButton.height
@@ -357,22 +389,95 @@ RowLayout {
                 }
             }
 
+            QGCTabBar {
+                id:                 tabBar
+                Layout.fillWidth:   true
+
+                QGCTabButton { objectName: "mainStatusChecklistTab"; text: qsTr("Pre-Flight Checklist"); visible: _checklistEnabled }
+                QGCTabButton {
+                    objectName:     "mainStatusMessagesTab"
+                    text:           qsTr("Vehicle Messages")
+                    // Keeps the centered label clear of the overlaid badges
+                    leftPadding:    ScreenTools.defaultFontPixelHeight + ScreenTools.defaultFontPixelWidth * 1.5
+                    rightPadding:   leftPadding
+
+                    CountBadge {
+                        objectName:             "mainStatusMessagesTabBadge"
+                        anchors.right:          parent.right
+                        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
+                        anchors.verticalCenter: parent.verticalCenter
+                        color:                  qgcPal.colorRed
+                        count:                  _activeVehicle ? _activeVehicle.unreadCriticalMessageCount : 0
+                    }
+
+                    CountBadge {
+                        objectName:             "mainStatusMessagesTabUnreadBadge"
+                        anchors.right:          parent.right
+                        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
+                        anchors.verticalCenter: parent.verticalCenter
+                        color:                  qgcPal.colorBlue
+                        count:                  _activeVehicle ? _activeVehicle.unreadMessageCount : 0
+                        // Critical messages are shown by the red badge instead
+                        visible:                count > 0 && (!_activeVehicle || _activeVehicle.unreadCriticalMessageCount === 0)
+                    }
+                }
+
+                QGCTabButton { objectName: "mainStatusOverallStatusTab"; text: qsTr("Overall Status") }
+
+                Component.onCompleted: {
+                    if (control._initialTab !== -1) {
+                        currentIndex = control._initialTab
+                    } else {
+                        currentIndex = (_checklistEnabled && !_checklistComplete) ? control.tabChecklist : control.tabStatus
+                    }
+                }
+            }
+
+            Item {
+                id:                 checklistHost
+                Layout.fillWidth:   true
+                implicitHeight:     checklistLoader.item ? checklistLoader.item.implicitHeight : 0
+                visible:            _checklistEnabled && tabBar.currentIndex === control.tabChecklist
+
+                function adoptChecklist() {
+                    if (checklistLoader.item) {
+                        checklistLoader.item.parent = checklistHost
+                    }
+                }
+
+                Connections {
+                    target: checklistLoader
+                    function onItemChanged() { checklistHost.adoptChecklist() }
+                }
+
+                Binding {
+                    target:         checklistLoader.item
+                    property:       "width"
+                    value:          checklistHost.width
+                    restoreMode:    Binding.RestoreNone
+                }
+
+                Component.onCompleted: adoptChecklist()
+
+                // The checklist keeps its progress, so hand it back before this page is destroyed
+                Component.onDestruction: {
+                    if (checklistLoader.item) {
+                        checklistLoader.item.parent = checklistLoader
+                    }
+                }
+            }
+
             ColumnLayout {
                 Layout.fillWidth:   true
                 spacing:            ScreenTools.defaultFontPixelHeight / 4
+                visible:            tabBar.currentIndex === control.tabMessages
 
                 RowLayout {
                     Layout.fillWidth:   true
-                    Layout.leftMargin:  ScreenTools.defaultFontPixelHeight / 2
-                    Layout.rightMargin: ScreenTools.defaultFontPixelHeight / 2
                     spacing:            ScreenTools.defaultFontPixelWidth / 2
+                    visible:            !vehicleMessageList.noMessages
 
-                    QGCLabel {
-                        Layout.fillWidth:   true
-                        text:               qsTr("Vehicle Messages")
-                        font.pointSize:     ScreenTools.defaultFontPointSize + 1
-                        font.bold:          true
-                    }
+                    Item { Layout.fillWidth: true }
 
                     QGCButton {
                         objectName:     "vehicleMessagesMarkReadButton"
@@ -394,7 +499,6 @@ RowLayout {
                         rightPadding:   leftPadding
                         text:           qsTr("Clear")
                         pointSize:      ScreenTools.smallFontPointSize
-                        visible:        !vehicleMessageList.noMessages
                         onClicked: {
                             _activeVehicle.clearMessages()
                             mainWindow.closeIndicatorDrawer()
@@ -402,55 +506,54 @@ RowLayout {
                     }
                 }
 
-                SettingsGroupLayout {
+                VehicleMessageList {
+                    id:                 vehicleMessageList
                     Layout.fillWidth:   true
+                    visible:            !noMessages
+                }
 
-                    VehicleMessageList {
-                        id:                 vehicleMessageList
-                        Layout.fillWidth:   true
-                        visible:            !noMessages
-                    }
-
-                    QGCLabel {
-                        text: qsTr("No new vehicle messages")
-                        visible: vehicleMessageList.noMessages
-                    }
+                QGCLabel {
+                    text:       qsTr("No new vehicle messages")
+                    visible:    vehicleMessageList.noMessages
                 }
             }
 
-            SettingsGroupLayout {
-                Layout.fillWidth:   true
-                heading:            qsTr("Sensor Status")
-                visible:            parametersReady && !_healthAndArmingChecksSupported
+            GridLayout {
+                id:             sensorStatusGrid
+                rowSpacing:     _spacing
+                columnSpacing:  _spacing
+                rows:           _activeVehicle.sysStatusSensorInfo.sensorNames.length
+                flow:           GridLayout.TopToBottom
+                visible:        tabBar.currentIndex === control.tabStatus && parametersReady && !_healthAndArmingChecksSupported
 
-                GridLayout {
-                    rowSpacing:     _spacing
-                    columnSpacing:  _spacing
-                    rows:           _activeVehicle.sysStatusSensorInfo.sensorNames.length
-                    flow:           GridLayout.TopToBottom
+                Repeater {
+                    model: _activeVehicle.sysStatusSensorInfo.sensorNames
+                    QGCLabel { text: modelData }
+                }
 
-                    Repeater {
-                        model: _activeVehicle.sysStatusSensorInfo.sensorNames
-                        QGCLabel { text: modelData }
-                    }
-
-                    Repeater {
-                        model: _activeVehicle.sysStatusSensorInfo.sensorStatus
-                        QGCLabel { text: modelData }
-                    }
+                Repeater {
+                    model: _activeVehicle.sysStatusSensorInfo.sensorStatus
+                    QGCLabel { text: modelData }
                 }
             }
 
-            SettingsGroupLayout {
+            ColumnLayout {
+                id:                 overallStatusList
                 Layout.fillWidth:   true
-                heading:            qsTr("Overall Status")
-                visible:            parametersReady && _healthAndArmingChecksSupported && _activeVehicle.healthAndArmingCheckReport.problemsForCurrentMode.count > 0
+                spacing:            _spacing
+                visible:            tabBar.currentIndex === control.tabStatus && parametersReady && _healthAndArmingChecksSupported &&
+                                    _activeVehicle.healthAndArmingCheckReport.problemsForCurrentMode.count > 0
 
                 // List health and arming checks
                 Repeater {
                     model:      _activeVehicle ? _activeVehicle.healthAndArmingCheckReport.problemsForCurrentMode : null
                     delegate:   listdelegate
                 }
+            }
+
+            QGCLabel {
+                text:       parametersReady ? qsTr("No status issues") : qsTr("Waiting for parameters...")
+                visible:    tabBar.currentIndex === control.tabStatus && !sensorStatusGrid.visible && !overallStatusList.visible
             }
 
             Component {

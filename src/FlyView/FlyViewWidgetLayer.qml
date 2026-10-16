@@ -147,13 +147,6 @@ Item {
         z:                      QGroundControl.zOrderWidgets
         maxHeight:              pipViewRect.y - y - _toolsMargin
         visible:                !QGroundControl.videoManager.fullScreen
-
-        onDisplayPreFlightChecklist: {
-            if (!preFlightChecklistLoader.active) {
-                preFlightChecklistLoader.active = true
-            }
-            preFlightChecklistLoader.item.open()
-        }
     }
 
     VehicleWarnings {
@@ -198,17 +191,5 @@ Item {
         controller:         _root.viewer3DCameraController
         autoHide:           true
         visible:            !ScreenTools.isTinyScreen && QGroundControl.corePlugin.options.flyView.showMapScale && QGCViewer3DManager.displayMode === QGCViewer3DManager.View3D && !!_root.viewer3DCameraController
-    }
-
-    Loader {
-        id: preFlightChecklistLoader
-        sourceComponent: preFlightChecklistPopup
-        active: false
-    }
-
-    Component {
-        id: preFlightChecklistPopup
-        FlyViewPreFlightChecklistPopup {
-        }
     }
 }

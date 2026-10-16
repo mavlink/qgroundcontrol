@@ -515,6 +515,12 @@ void MockLink::sendStatusTextMessages()
     _sendStatusTextMessages();
 }
 
+void MockLink::sendBootStatusTextMessages()
+{
+    sendStatusTextMessage(MAV_SEVERITY_INFO, QStringLiteral("Status text boot info"));
+    sendStatusTextMessage(MAV_SEVERITY_NOTICE, QStringLiteral("Status text boot notice"));
+}
+
 bool MockLink::_allocateMavlinkChannel()
 {
     // should only be called by the LinkManager during setup

@@ -7,12 +7,8 @@ import QGroundControl.FlyView
 ToolStrip {
     id: _root
 
-    signal displayPreFlightChecklist
-
     FlyViewToolStripActionList {
         id: flyViewToolStripActionList
-
-        onDisplayPreFlightChecklist: _root.displayPreFlightChecklist()
     }
 
     model: flyViewToolStripActionList.model
