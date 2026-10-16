@@ -119,6 +119,9 @@ An MSVC 2022 C++ toolchain is required. Either of the following works:
 
 #### Build using CMake on CLI {#cmake}
 
+CMake 3.28 or newer is required, and `qt-cmake` runs the `cmake` found on your `PATH`.
+Ubuntu 24.04's packaged CMake is new enough. On older distributions, such as Ubuntu 22.04 or Debian 12, install a newer CMake, for example from _Developer and Designer Tools_ in the Qt Online Installer or with `pip install cmake`.
+
 Example commands to build a default QGC and run it afterwards:
 
 1. Make sure you cloned the repository before, see chapter _Source Code_ above and switch into the repository folder:

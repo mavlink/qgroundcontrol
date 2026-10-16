@@ -2,7 +2,7 @@
 # QGroundControl CMake Build Configuration
 # ============================================================================
 
-cmake_minimum_required(VERSION 3.25)
+cmake_minimum_required(VERSION 3.28)
 
 # ----------------------------------------------------------------------------
 # CMake Module Paths
@@ -35,6 +35,8 @@ endif()
 # ----------------------------------------------------------------------------
 set(CMAKE_REQUIRED_QUIET ON)
 set(CMAKE_POLICY_VERSION_MINIMUM ${CMAKE_MINIMUM_REQUIRED_VERSION})
+# QGC does not use C++20 modules; skip the import scanning CMP0155 enables for C++20 targets.
+set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 
 # ============================================================================
 # Custom Build Configuration

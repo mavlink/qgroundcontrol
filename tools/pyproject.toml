@@ -53,7 +53,7 @@ dev = [
 build = [
   {include-group = "ci"},
   {include-group = "coverage"},
-  "cmake>=3.25,<4",
+  "cmake>=3.28,<4",
 ]
 lint = [
   {include-group = "scripts"},

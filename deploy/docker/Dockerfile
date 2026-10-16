@@ -49,6 +49,8 @@ RUN UV_PROJECT_ENVIRONMENT=/opt/qgc-venv uv sync \
         --no-default-groups --no-install-project --frozen && \
     /opt/qgc-venv/bin/python -c "import jinja2, httpx, defusedxml, lxml, fastcrc" && \
     /opt/qgc-venv/bin/aqt --help >/dev/null
+# Debian's /etc/profile resets PATH for non-root login shells, such as the entrypoint's; keep the locked tools first.
+RUN echo 'export PATH=/opt/qgc-venv/bin:$PATH' > /etc/profile.d/qgc-venv.sh
 
 # Version config only (read_config + _bootstrap import need a dir named "tools").
 # Copied before the slow Qt layer so editing package lists doesn't bust Qt cache.

@@ -1864,7 +1864,7 @@ test = [
 
 [package.metadata.requires-dev]
 build = [
-    { name = "cmake", specifier = ">=3.25,<4" },
+    { name = "cmake", specifier = ">=3.28,<4" },
     { name = "defusedxml", specifier = ">=0.7.1" },
     { name = "fastcrc", specifier = ">=0.3" },
     { name = "gcovr" },
@@ -1902,7 +1902,7 @@ coverage = [
 dev = [
     { name = "aqtinstall", git = "https://github.com/miurahr/aqtinstall?rev=6f0f842da47c744cdc814cd94da9828d934d7bf0" },
     { name = "clang-format", specifier = "==23.1.0" },
-    { name = "cmake", specifier = ">=3.25,<4" },
+    { name = "cmake", specifier = ">=3.28,<4" },
     { name = "defusedxml", specifier = ">=0.7.1" },
     { name = "fastcrc", specifier = ">=0.3" },
     { name = "gcovr" },

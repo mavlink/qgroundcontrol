@@ -21,7 +21,7 @@
     "ios_deployment_target": "18.0"
   },
   "build": {
-    "cmake_minimum_version": "3.25",
+    "cmake_minimum_version": "3.28",
     "platform_workflows": "Linux,Windows,MacOS,Android"
   },
   "gstreamer": {
