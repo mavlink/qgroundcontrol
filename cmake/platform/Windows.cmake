@@ -53,6 +53,9 @@ else()
     message(WARNING "QGC: No Windows resource file found")
 endif()
 
+# Qt embeds a generated application manifest whose assembly identity otherwise is com.yourcompany.<target>.
+set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES QT_WINDOWS_APP_PROJECT_IDENTIFIER "${QGC_PACKAGE_NAME}")
+
 if(MSVC)
     # qt_add_win_app_sdk(${CMAKE_PROJECT_NAME} PRIVATE)
 endif()
