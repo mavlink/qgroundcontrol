@@ -20,6 +20,7 @@
 
 #include <algorithm>
 #include <climits>
+#include <utility>
 
 #include <QtConcurrent/QtConcurrent>
 #include <QtCore/QApplicationStatic>
@@ -312,8 +313,12 @@ void VideoManager::_createVideoReceivers()
 
 void VideoManager::cleanup()
 {
-    for (VideoReceiver *receiver : std::as_const(_videoReceivers)) {
+    // Receivers must die here, not in ~VideoManager: that runs inside ~QCoreApplication, where queued events are no
+    // longer delivered, so a receiver's worker thread never gets its quit task and the destructor waits forever.
+    const QList<VideoReceiver*> receivers = std::exchange(_videoReceivers, {});
+    for (VideoReceiver *receiver : receivers) {
         QGCCorePlugin::instance()->releaseVideoSink(receiver->sink());
+        delete receiver;
     }
 }
 
