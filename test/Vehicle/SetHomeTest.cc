@@ -7,10 +7,11 @@
 
 #include "BaseClasses/TerrainTest.h"
 #include "FlyViewSettings.h"
-#include "GpsTestHelpers.h"
+#include "GPSManager.h"
 #include "MockLink.h"
 #include "PositionManager.h"
 #include "SettingsManager.h"
+#include "Support/GPSTestHelpers.h"
 #include "Vehicle.h"
 
 void SetHomeTest::_verifySetHomeCommandInt(const QGeoCoordinate& coord, double amslAltitude)
@@ -47,18 +48,18 @@ void SetHomeTest::_gcsPositionUpdateSendsCommandInt()
     QVERIFY_TRUE_WAIT(vehicle()->coordinate().isValid(), TestTimeout::shortMs());
 
     Fact* const updateHomePosition = SettingsManager::instance()->flyViewSettings()->updateHomePosition();
-    auto* const positioning = QGCPositionManager::instance();
-    GpsTestHelpers::PositionSource source;
+    auto* const positioning = GPSManager::instance()->positionManager();
+    GPSTest::PositionSource source;
     const QVariant savedUpdateHomePosition = updateHomePosition->rawValue();
-    const auto savedMode = positioning->sourceMode();
+    const auto savedConfiguration = positioning->configuration();
     const auto restore = qScopeGuard([&]() {
         updateHomePosition->setRawValue(savedUpdateHomePosition);
-        positioning->setInternalPositionSource(nullptr, GPSPositionService::SourceStatus::NoSource);
-        positioning->setSourceMode(savedMode);
+        positioning->setInternalPositionSource(nullptr, PositionManager::SourceStatus::NoSource);
+        positioning->setConfiguration(savedConfiguration);
     });
     updateHomePosition->setRawValue(true);
-    positioning->setSourceMode(GPSPositionService::SourceMode::InternalOnly);
-    positioning->setInternalPositionSource(&source, GPSPositionService::SourceStatus::WaitingForFix);
+    positioning->setConfiguration({.sourceMode = PositionManager::SourceMode::InternalOnly});
+    positioning->setInternalPositionSource(&source, PositionManager::SourceStatus::WaitingForFix);
 
     mockLink()->clearReceivedMavCommandCounts();
     const QGeoCoordinate gcsCoord(47.3977419, 8.5455938, 488.0);
