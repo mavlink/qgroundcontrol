@@ -2755,13 +2755,15 @@ void Vehicle::_updateHomepoint()
     if(setHomeCmdSupported && updateHomeActivated){
         QGeoCoordinate gcsPosition = GPSManager::instance()->positionManager()->gcsPosition();
         if (coordinate().isValid() && gcsPosition.isValid()) {
-            sendMavCommand(defaultComponentId(),
-                           MAV_CMD_DO_SET_HOME, false,
-                           0,
-                           0, 0, 0,
-                           static_cast<float>(gcsPosition.latitude()) ,
-                           static_cast<float>(gcsPosition.longitude()),
-                           static_cast<float>(gcsPosition.altitude()));
+            if (capabilityBits() & MAV_PROTOCOL_CAPABILITY_COMMAND_INT) {
+                sendMavCommandInt(defaultComponentId(), MAV_CMD_DO_SET_HOME, MAV_FRAME_GLOBAL, false, 0, 0, 0, 0,
+                                  gcsPosition.latitude(), gcsPosition.longitude(),
+                                  static_cast<float>(gcsPosition.altitude()));
+            } else {
+                sendMavCommand(defaultComponentId(), MAV_CMD_DO_SET_HOME, false, 0, 0, 0, 0,
+                               static_cast<float>(gcsPosition.latitude()), static_cast<float>(gcsPosition.longitude()),
+                               static_cast<float>(gcsPosition.altitude()));
+            }
         }
     }
 }
@@ -3490,6 +3492,11 @@ bool Vehicle::hasUnreadMessages() const
     return m_statusTextHandler->hasUnreadMessages();
 }
 
+int Vehicle::unreadMessageCount() const
+{
+    return m_statusTextHandler->unreadMessageCount();
+}
+
 QString Vehicle::formattedMessages() const { return m_statusTextHandler->formattedMessages(); }
 
 void Vehicle::_createStatusTextHandler()
@@ -3499,6 +3506,8 @@ void Vehicle::_createStatusTextHandler()
                    &Vehicle::unreadCriticalMessageCountChanged);
     (void) connect(m_statusTextHandler, &StatusTextHandler::hasUnreadMessagesChanged, this,
                    &Vehicle::hasUnreadMessagesChanged);
+    (void) connect(m_statusTextHandler, &StatusTextHandler::unreadMessageCountChanged, this,
+                   &Vehicle::unreadMessageCountChanged);
     (void) connect(m_statusTextHandler, &StatusTextHandler::formattedMessagesChanged, this,
                    &Vehicle::formattedMessagesChanged);
     (void) connect(m_statusTextHandler, &StatusTextHandler::newFormattedMessage, this, &Vehicle::newFormattedMessage);

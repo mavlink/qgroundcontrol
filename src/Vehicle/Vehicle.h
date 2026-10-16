@@ -1229,6 +1229,7 @@ signals:
 private:
     Q_PROPERTY(int unreadCriticalMessageCount READ unreadCriticalMessageCount NOTIFY unreadCriticalMessageCountChanged)
     Q_PROPERTY(bool hasUnreadMessages READ hasUnreadMessages NOTIFY hasUnreadMessagesChanged)
+    Q_PROPERTY(int unreadMessageCount READ unreadMessageCount NOTIFY unreadMessageCountChanged)
     Q_PROPERTY(QString formattedMessages READ formattedMessages NOTIFY formattedMessagesChanged)
 
     // Q_PROPERTY(StatusTextHandler *statusTextHandler READ statusTextHandler NOTIFY statusTextHandlerChanged)
@@ -1239,6 +1240,7 @@ public:
 
     int unreadCriticalMessageCount() const;
     bool hasUnreadMessages() const;
+    int unreadMessageCount() const;
     QString formattedMessages() const;
 
     // StatusTextHandler* statusTextHandler() { return m_statusTextHandler; }
@@ -1251,6 +1253,7 @@ signals:
     void messagesLostChanged();
     void unreadCriticalMessageCountChanged();
     void hasUnreadMessagesChanged();
+    void unreadMessageCountChanged();
     void formattedMessagesChanged();
     void newFormattedMessage(QString formattedMessage);
 

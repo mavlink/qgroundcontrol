@@ -23,6 +23,13 @@ Rectangle {
     property var  _expandedPages: ({})  // pageIndex -> bool
     property int  _expandedRevision: 0  // bumped to trigger re-evaluation
     property string _searchQuery: ""
+    property real   _fullListWidth: 0   // Button column width with no search active
+
+    Binding on _fullListWidth {
+        when: settingsView._searchQuery.trim() === ""
+        value: buttonColumn.implicitWidth
+        restoreMode: Binding.RestoreNone
+    }
 
     function _setExpanded(pageIndex, value) {
         _expandedPages[pageIndex] = value
@@ -189,7 +196,7 @@ Rectangle {
 
     ColumnLayout {
         id:                 leftPanel
-        width:              Math.max(buttonColumn.implicitWidth + _horizontalMargin, ScreenTools.defaultFontPixelWidth * 22)
+        width:              Math.max(buttonColumn.implicitWidth, _fullListWidth, ScreenTools.isMobile ? 0 : ScreenTools.defaultFontPixelWidth * 22)
         anchors.topMargin:  _verticalMargin
         anchors.top:        parent.top
         anchors.bottom:     parent.bottom
@@ -323,7 +330,7 @@ Rectangle {
                             id:             sectionBtn
                             Layout.fillWidth: true
                             padding:        ScreenTools.defaultFontPixelWidth * 0.75
-                            leftPadding:    ScreenTools.defaultFontPixelWidth * 3
+                            leftPadding:    ScreenTools.defaultFontPixelWidth
                             hoverEnabled:   !ScreenTools.isMobile
 
                             property int sectionIndex: modelData.index

@@ -60,7 +60,6 @@ ApplicationWindow {
                 nextPromptIdIndex++
             } else {
                 currentDialog = null
-                showPreFlightChecklistIfNeeded()
             }
         }
     }
@@ -100,7 +99,6 @@ ApplicationWindow {
     signal disarmVehicleRequest
     signal vtolTransitionToFwdFlightRequest
     signal vtolTransitionToMRFlightRequest
-    signal showPreFlightChecklistIfNeeded
 
     //-------------------------------------------------------------------------
     //-- Global Scope Functions
@@ -528,7 +526,7 @@ ApplicationWindow {
             close()
             if (additionalCriticalMessagesReceived) {
                 additionalCriticalMessagesReceived = false
-                flyView.dropMainStatusIndicatorTool()
+                flyView.dropMainStatusIndicatorTool(true /* showMessages */)
             }
         }
 

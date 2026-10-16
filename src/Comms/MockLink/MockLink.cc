@@ -518,6 +518,12 @@ void MockLink::sendStatusTextMessages()
     _sendStatusTextMessages();
 }
 
+void MockLink::sendBootStatusTextMessages()
+{
+    sendStatusTextMessage(MAV_SEVERITY_INFO, QStringLiteral("Status text boot info"));
+    sendStatusTextMessage(MAV_SEVERITY_NOTICE, QStringLiteral("Status text boot notice"));
+}
+
 bool MockLink::_allocateMavlinkChannel()
 {
     // should only be called by the LinkManager during setup
@@ -2351,6 +2357,10 @@ void MockLink::_handleCommandInt(const mavlink_message_t &msg)
     switch (request.command) {
     case MAV_CMD_DO_SET_ROI_LOCATION:
         // Unit test support: accept ROI commands so tests can verify Vehicle::guidedModeROI
+        commandResult = MAV_RESULT_ACCEPTED;
+        break;
+    case MAV_CMD_DO_SET_HOME:
+        // Unit test support: accept so tests can verify how Vehicle sends set home
         commandResult = MAV_RESULT_ACCEPTED;
         break;
     case MAV_CMD_DO_SET_MODE:

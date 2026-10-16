@@ -1,5 +1,8 @@
 #pragma once
 
+#include <optional>
+
+#include <QtCore/QByteArray>
 #include <QtCore/QList>
 #include <QtCore/QMap>
 #include <QtCore/QObject>
@@ -59,6 +62,9 @@ public:
 
     bool hasUnreadMessages() const { return m_unreadMessageCount != 0; }
 
+    /// All unread messages, including critical ones.
+    uint32_t unreadMessageCount() const { return m_unreadMessageCount; }
+
     static QString getMessageText(const mavlink_message_t &message);
 
 signals:
@@ -66,6 +72,7 @@ signals:
     void textMessageReceived(MAV_COMPONENT componentid, MAV_SEVERITY severity, QString text, QString description);
     void unreadCriticalMessageCountChanged();
     void hasUnreadMessagesChanged();
+    void unreadMessageCountChanged();
     void formattedMessagesChanged();
     void newErrorMessage(QString message);
 
@@ -89,7 +96,8 @@ private:
     typedef struct __ChunkedStatusTextInfo {
         uint16_t chunkId;
         MAV_SEVERITY severity;
-        QStringList rgMessageChunks;
+        // nullopt marks a chunk that was never received; an empty value is a received NUL-first terminator
+        QList<std::optional<QByteArray>> rgMessageChunks;
     } ChunkedStatusTextInfo_t;
 
     QMap<MAV_COMPONENT, ChunkedStatusTextInfo_t> m_chunkedStatusTextInfoMap;

@@ -20,8 +20,8 @@ Item {
     property real   _leftRightMargin:   ScreenTools.defaultFontPixelWidth * 0.75
     property var    _guidedController:  globals.guidedControllerFlyView
 
-    function dropMainStatusIndicatorTool() {
-        mainStatusIndicator.dropMainStatusIndicator();
+    function dropMainStatusIndicatorTool(showMessages = false) {
+        mainStatusIndicator.dropMainStatusIndicator(showMessages);
     }
 
     QGCPalette { id: qgcPal }

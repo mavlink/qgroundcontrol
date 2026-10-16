@@ -261,6 +261,10 @@ void CriticalVehicleMessageUITest::_testPopupAcknowledgedByClick()
                      "click closed the toast without acknowledging it: additionalCriticalMessagesReceived still set");
             QVERIFY2(findVisibleItem(_rootItem, objName(kIndicatorDrawerObjectName), TestTimeout::mediumMs()),
                      "acknowledging with additional messages pending did not drop the main status indicator tool");
+            QQuickItem* const messagesTab = findVisibleItem(_rootItem, QStringLiteral("mainStatusMessagesTab"), TestTimeout::mediumMs());
+            QVERIFY2(messagesTab, "Vehicle Messages tab not shown in the dropped main status indicator");
+            QVERIFY2(messagesTab->property("checked").toBool(),
+                     "acknowledging with additional messages pending did not open the Vehicle Messages tab");
 
             QTest::keyClick(_window, Qt::Key_Escape);
             QVERIFY2(

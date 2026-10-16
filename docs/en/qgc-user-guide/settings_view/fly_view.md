@@ -4,7 +4,7 @@ Settings that control the behavior and appearance of the [Fly View](../fly_view/
 
 ## General
 
-- **Use preflight checklist** — enable the pre-flight checklist tool in the Fly View
+- **Use preflight checklist** — enable the pre-flight checklist tab in the main status dropdown
 - **Enforce checklist** — prevent arming until all checklist items are complete
 - **Enable multi-vehicle panel** — show the multi-vehicle list when more than one vehicle is connected
 - **Keep Map Centered On Vehicle** — prevent the map from drifting away from the vehicle position

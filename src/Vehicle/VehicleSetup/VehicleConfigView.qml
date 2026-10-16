@@ -39,6 +39,13 @@ Rectangle {
     property var    _expandedComponents:     ({})
     property int    _expandedRevision:       0
     property string _searchQuery:            ""
+    property real   _fullListWidth:          0      // Button column width with no search active
+
+    Binding on _fullListWidth {
+        when: vehicleConfigView._searchQuery.trim() === ""
+        value: buttonColumn.implicitWidth
+        restoreMode: Binding.RestoreNone
+    }
 
     function _setExpanded(compIndex, value) {
         _expandedComponents[compIndex] = value
@@ -348,7 +355,7 @@ Rectangle {
 
     ColumnLayout {
         id:                 leftPanel
-        width:              Math.max(buttonColumn.implicitWidth + _horizontalMargin, ScreenTools.defaultFontPixelWidth * 22)
+        width:              Math.max(buttonColumn.implicitWidth, _fullListWidth, ScreenTools.isMobile ? 0 : ScreenTools.defaultFontPixelWidth * 22)
         anchors.topMargin:  _verticalMargin
         anchors.top:        parent.top
         anchors.bottom:     parent.bottom
@@ -466,7 +473,7 @@ Rectangle {
                                 objectName:     "vehicleConfig_section_" + modelData.replace(/ /g, "")
                                 Layout.fillWidth: true
                                 padding:        ScreenTools.defaultFontPixelWidth * 0.75
-                                leftPadding:    ScreenTools.defaultFontPixelWidth * 3
+                                leftPadding:    ScreenTools.defaultFontPixelWidth
                                 hoverEnabled:   !ScreenTools.isMobile
 
                                 property int sectionIndex: index
