@@ -7,6 +7,7 @@
 #include <QtCore/QMutex>
 #include <QtCore/QStandardPaths>
 #include <QtCore/QStringList>
+#include <QtCore/QSysInfo>
 #include <QtCore/QThread>
 
 #include "QGCLoggingCategory.h"
@@ -72,6 +73,33 @@ void _setGstEnv(const char* name, const QString& value)
             return;
         }
     }
+}
+
+// A bundled runtime's plugins differ from the system GStreamer's, so sharing the default per-user registry would make
+// each invalidate the other's plugin cache; the runtime version in the name keeps upgrades from reusing it too.
+QString _usePrivateRegistry(const QString& cacheDir)
+{
+    if (cacheDir.isEmpty() || qEnvironmentVariableIsSet("GST_REGISTRY_1_0") ||
+        qEnvironmentVariableIsSet("GST_REGISTRY")) {
+        return {};
+    }
+    if (!QDir().mkpath(cacheDir)) {
+        qCWarning(GStreamerEnvLog) << "Cannot create the GStreamer registry directory" << cacheDir;
+        return {};
+    }
+
+    guint major = 0;
+    guint minor = 0;
+    guint micro = 0;
+    guint nano = 0;
+    gst_version(&major, &minor, &micro, &nano);
+    const QString registry = _cleanJoin(cacheDir, QStringLiteral("gstreamer-%1.%2.%3-%4.bin")
+                                                      .arg(major)
+                                                      .arg(minor)
+                                                      .arg(micro)
+                                                      .arg(QSysInfo::buildCpuArchitecture()));
+    _setGstEnv("GST_REGISTRY", registry);
+    return registry;
 }
 
 [[maybe_unused]] void _setTmpDirVars(const QString& dir)
@@ -307,6 +335,7 @@ bool _applyBundleLayout(const QString& platformLabel, const BundleLayout& layout
     _warnIfScannerMissing(platformLabel, scanner);
     _applyGstEnvVars(pluginDirs, _firstExistingPath(layout.gioModuleDirs), scanner,
                      _firstExistingPath(layout.ptpCandidates));
+    (void) _usePrivateRegistry(QStandardPaths::writableLocation(QStandardPaths::CacheLocation));
     return true;
 }
 
@@ -500,6 +529,12 @@ ValidationResult prepareEnvironment()
     return _setGstEnvVars();
 }
 
+QString usePrivateRegistry(const QString& cacheDir)
+{
+    const QMutexLocker setEnvLocker(&s_setEnvVarsMutex);
+    return _usePrivateRegistry(cacheDir);
+}
+
 void logDiagnostics()
 {
     qCCritical(GStreamerEnvLog) << "GStreamer environment diagnostics:";
@@ -511,6 +546,7 @@ void logDiagnostics()
         dumpVar(var);
     }
     dumpVar("GST_REGISTRY_REUSE_PLUGIN_SCANNER");
+    dumpVar("GST_REGISTRY");
 }
 
 }  // namespace GStreamer::Environment
