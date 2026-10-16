@@ -16,6 +16,7 @@
 #include "MultiVehicleManager.h"
 #include "UnitTest.h"
 #include "Vehicle.h"
+#include "VehicleSigningController.h"
 const FTPManagerTest::TestCase_t FTPManagerTest::_rgTestCases[] = {
     {"/general.json"},
 };
