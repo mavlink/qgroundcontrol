@@ -379,6 +379,7 @@ uv run --project tools --group scripts --group test pytest -q tools/tests .githu
   following `CODING_STYLE.md`. New files and unchanged files supplied in a full sweep are checked in full.
   Compiler-aware Clazy and clang-tidy hooks are manual locally; `analysis.yml` generates
   prerequisites and runs one Clazy job and four clang-tidy shards for relevant PRs.
+  Upstream analysis jobs use the 16-vCPU `linux-x64-analyzer` RunsOn pool; forks use GitHub-hosted runners.
   Shards divide the selected compilation units after header dependency expansion; they retain
   every enabled check and report errors independently. This reduces elapsed scan time at the
   cost of three additional runner setups. Only the first shard saves the shared build caches.
