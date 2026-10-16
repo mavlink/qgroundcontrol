@@ -258,7 +258,10 @@ jobs:
           preset: ${{ matrix.mode == 'coverage' && 'Linux-coverage' || 'Linux-debug' }}
           testing: 'true'
           coverage: ${{ matrix.mode == 'coverage' && 'true' || 'false' }}
-          extra-args: ${{ matrix.mode == 'sanitizers' && '-DQGC_ENABLE_ASAN=ON -DQGC_ENABLE_UBSAN=ON -DQGC_TEST_DETECT_LEAKS=ON' || '' }}
+          # Line tables are all gcov and sanitizer stacks need; full -g costs ~17% compile CPU and ~3.5x object size.
+          extra-args: >-
+            -DCMAKE_C_FLAGS_DEBUG=-g1 -DCMAKE_CXX_FLAGS_DEBUG=-g1
+            ${{ matrix.mode == 'sanitizers' && '-DQGC_ENABLE_ASAN=ON -DQGC_ENABLE_UBSAN=ON -DQGC_TEST_DETECT_LEAKS=ON' || '' }}
 
       - name: Build
         id: build

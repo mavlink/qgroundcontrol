@@ -287,6 +287,8 @@ from GitHub storage; matching keys and paths alone cannot bridge the two. There 
 no dedicated cache-warming application builds. Fork builds populate their
 own PR caches; a warm default-branch compiler cache is not guaranteed.
 Coverage retains the compiler launcher: ccache stores `.gcno` files alongside objects.
+Linux coverage and sanitizer builds use line-table debug info (`-g1`), all that gcov and
+sanitizer stacks need: it cuts objects by ~70% and compile CPU by ~17% against full `-g`.
 GCC coverage uses atomic counter updates for worker threads. The known GCC negative-counter
 workaround remains enabled and reports any discarded counters.
 CMake routes `Qt6::rcc` through a launcher that pins the file timestamps rcc embeds, so fresh
