@@ -365,6 +365,96 @@ function(qgc_apply_moccache)
 endfunction()
 
 # ----------------------------------------------------------------------------
+# qgc_config_rcc_launcher
+# Routes Qt6::rcc through a launcher that:
+# - pins the file timestamps rcc embeds in generated resources. Otherwise every
+#   fresh checkout changes each qrc_*.cpp and defeats the compiler cache. An
+#   exported QT_RCC_SOURCE_DATE_OVERRIDE or SOURCE_DATE_EPOCH still takes precedence.
+# - lowers rcc's default zstd level from 19 to 9: about 10x faster for ~2% more
+#   resource data. Options a resource passes itself come later and still win.
+# Must be called after find_package(Qt6).
+# ----------------------------------------------------------------------------
+function(qgc_config_rcc_launcher)
+    # cmakelang 0.6.13 does not recognize file(CHMOD).
+    # cmake-lint: disable=E1126
+    if(NOT TARGET Qt6::rcc)
+        return()
+    endif()
+
+    set(_location_properties IMPORTED_LOCATION)
+    get_target_property(_configs Qt6::rcc IMPORTED_CONFIGURATIONS)
+    if(_configs)
+        foreach(_config IN LISTS _configs)
+            list(APPEND _location_properties IMPORTED_LOCATION_${_config})
+        endforeach()
+    endif()
+
+    if(CMAKE_HOST_WIN32)
+        set(_launcher "${CMAKE_BINARY_DIR}/rcc-launcher.cmd")
+    else()
+        set(_launcher "${CMAKE_BINARY_DIR}/rcc-launcher")
+    endif()
+
+    set(_real_rcc "")
+    foreach(_property IN LISTS _location_properties)
+        get_target_property(_location Qt6::rcc ${_property})
+        if(_location
+           AND NOT _location STREQUAL _launcher
+           AND EXISTS "${_location}"
+        )
+            set(_real_rcc "${_location}")
+            break()
+        endif()
+    endforeach()
+    if(NOT _real_rcc)
+        message(STATUS "QGC: rcc not found - rcc launcher not used")
+        return()
+    endif()
+
+    # rcc treats 0 as unset; any other fixed value keeps its output byte-identical.
+    set(_epoch 1)
+    # Qt passes --no-zstd, which rejects --compress-algo zstd, when the target QtCore lacks zstd.
+    set(_rcc_args "")
+    if(QT_FEATURE_zstd)
+        set(_rcc_args "--compress-algo zstd --compress 9 ")
+    endif()
+    if(CMAKE_HOST_WIN32)
+        set(_wrapper "@echo off\r\nsetlocal\r\n")
+        string(APPEND _wrapper
+               "if not defined QT_RCC_SOURCE_DATE_OVERRIDE set \"QT_RCC_SOURCE_DATE_OVERRIDE=${_epoch}\"\r\n"
+        )
+        # Started through cmd.exe without a console window (as by AUTOGEN's generate-time
+        # `rcc -h` on CI), rcc shows help and errors in a message box and blocks forever.
+        string(APPEND _wrapper "set \"QT_COMMAND_LINE_PARSER_NO_GUI_MESSAGE_BOXES=1\"\r\n")
+        string(APPEND _wrapper "\"${_real_rcc}\" ${_rcc_args}%*\r\n")
+        string(APPEND _wrapper "exit /b %ERRORLEVEL%\r\n")
+        _qgc_write_if_changed("${_launcher}" "${_wrapper}")
+    else()
+        set(_wrapper "#!/bin/sh\n")
+        string(APPEND _wrapper "export QT_RCC_SOURCE_DATE_OVERRIDE=\"\${QT_RCC_SOURCE_DATE_OVERRIDE:-${_epoch}}\"\n")
+        string(APPEND _wrapper "exec \"${_real_rcc}\" ${_rcc_args}\"$@\"\n")
+        _qgc_write_if_changed("${_launcher}" "${_wrapper}")
+        file(
+            CHMOD
+            "${_launcher}"
+            PERMISSIONS
+            OWNER_READ
+            OWNER_WRITE
+            OWNER_EXECUTE
+            GROUP_READ
+            GROUP_EXECUTE
+            WORLD_READ
+            WORLD_EXECUTE
+        )
+    endif()
+
+    foreach(_property IN LISTS _location_properties)
+        set_property(TARGET Qt6::rcc PROPERTY ${_property} "${_launcher}")
+    endforeach()
+    message(STATUS "QGC: Using rcc launcher (${_real_rcc})")
+endfunction()
+
+# ----------------------------------------------------------------------------
 # qgc_set_linker
 # Attempts to use a faster linker (mold, lld, or gold) if available
 # Falls back to the system default linker

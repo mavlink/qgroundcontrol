@@ -296,6 +296,64 @@ if(TEST_CASE MATCHES "^helpers-")
         if(NOT _content STREQUAL "second\n")
             message(FATAL_ERROR "Changed content was not written: ${_content}")
         endif()
+    elseif(TEST_CASE STREQUAL "helpers-rcc-launcher")
+        # CMake stands in for rcc so the launcher can be executed.
+        add_executable(Qt6::rcc IMPORTED)
+        set_target_properties(Qt6::rcc PROPERTIES IMPORTED_CONFIGURATIONS RELEASE IMPORTED_LOCATION_RELEASE
+                                                                                  "${CMAKE_COMMAND}"
+        )
+        set(QT_FEATURE_zstd OFF)
+        qgc_config_rcc_launcher()
+
+        if(CMAKE_HOST_WIN32)
+            set(_launcher "${CMAKE_CURRENT_BINARY_DIR}/rcc-launcher.cmd")
+        else()
+            set(_launcher "${CMAKE_CURRENT_BINARY_DIR}/rcc-launcher")
+        endif()
+        foreach(_property IN ITEMS IMPORTED_LOCATION IMPORTED_LOCATION_RELEASE)
+            get_target_property(_location Qt6::rcc ${_property})
+            if(NOT "${_location}" STREQUAL "${_launcher}")
+                message(FATAL_ERROR "Qt6::rcc ${_property} does not use the launcher: ${_location}")
+            endif()
+        endforeach()
+
+        if(NOT CMAKE_HOST_WIN32)
+            execute_process(
+                COMMAND "${CMAKE_COMMAND}" -E env --unset=QT_RCC_SOURCE_DATE_OVERRIDE "${_launcher}" -E environment
+                RESULT_VARIABLE _result
+                OUTPUT_VARIABLE _environment
+            )
+            if(NOT _result EQUAL 0 OR NOT _environment MATCHES "(^|\n)QT_RCC_SOURCE_DATE_OVERRIDE=1\n")
+                message(FATAL_ERROR "rcc launcher did not pin the timestamp:\n${_environment}")
+            endif()
+            execute_process(
+                COMMAND "${CMAKE_COMMAND}" -E env QT_RCC_SOURCE_DATE_OVERRIDE=42 "${_launcher}" -E environment
+                RESULT_VARIABLE _result
+                OUTPUT_VARIABLE _environment
+            )
+            if(NOT _result EQUAL 0 OR NOT _environment MATCHES "(^|\n)QT_RCC_SOURCE_DATE_OVERRIDE=42\n")
+                message(FATAL_ERROR "rcc launcher replaced an exported timestamp:\n${_environment}")
+            endif()
+
+            # A stand-in rcc that echoes its arguments: the zstd level must come before, so options a
+            # resource passes itself still override it.
+            set(_echo_rcc "${CMAKE_CURRENT_BINARY_DIR}/echo-rcc")
+            file(WRITE "${_echo_rcc}" "#!/bin/sh\necho \"$*\"\n")
+            # cmake-lint: disable=E1126
+            file(CHMOD "${_echo_rcc}" PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE)
+            set_target_properties(Qt6::rcc PROPERTIES IMPORTED_LOCATION "" IMPORTED_LOCATION_RELEASE "${_echo_rcc}")
+            set(QT_FEATURE_zstd ON)
+            qgc_config_rcc_launcher()
+            execute_process(
+                COMMAND "${_launcher}" --no-compress in.qrc
+                RESULT_VARIABLE _result
+                OUTPUT_VARIABLE _arguments
+            )
+            set(_expected "--compress-algo zstd --compress 9 --no-compress in.qrc\n")
+            if(NOT _result EQUAL 0 OR NOT _arguments STREQUAL _expected)
+                message(FATAL_ERROR "rcc launcher arguments with zstd: ${_arguments}")
+            endif()
+        endif()
     elseif(TEST_CASE STREQUAL "helpers-ccache-pch")
         if(CMAKE_HOST_WIN32)
             return()

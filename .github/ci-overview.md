@@ -285,6 +285,10 @@ own PR caches; a warm default-branch compiler cache is not guaranteed.
 Coverage retains the compiler launcher: ccache stores `.gcno` files alongside objects.
 GCC coverage uses atomic counter updates for worker threads. The known GCC negative-counter
 workaround remains enabled and reports any discarded counters.
+CMake routes `Qt6::rcc` through a launcher that pins the file timestamps rcc embeds, so fresh
+checkouts keep generated `qrc_*.cpp` objects cacheable. An exported `QT_RCC_SOURCE_DATE_OVERRIDE`
+or `SOURCE_DATE_EPOCH` still takes precedence. The launcher also lowers rcc's default zstd level
+from 19 to 9 (about 10x faster rcc for ~2% more resource data) when QtCore supports zstd.
 
 Compiler and moc caches save after a successful build or analysis autogen step, before
 packaging, tests, or scanners can fail. Docker also saves after a package failure when
