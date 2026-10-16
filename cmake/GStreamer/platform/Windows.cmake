@@ -261,5 +261,6 @@ function(_qgc_gst_discover_windows_sdk)
         GSTREAMER_INCLUDE_PATH
         PKG_CONFIG_EXECUTABLE
         PKG_CONFIG_ARGN
+        PKG_CONFIG_USE_CMAKE_PREFIX_PATH
     )
 endfunction()

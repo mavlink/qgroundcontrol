@@ -95,7 +95,7 @@ function(_qgc_gst_discover_android_sdk)
     gstreamer_create_layout_target(SDK_ROOT "${GStreamer_ROOT_DIR}" TYPE STATIC_TARBALL)
 
     set(_outputs GStreamer_ROOT_DIR GStreamer_AUTO_DOWNLOADED GSTREAMER_LIB_PATH GSTREAMER_PLUGIN_PATH
-                 GSTREAMER_INCLUDE_PATH
+                 GSTREAMER_INCLUDE_PATH PKG_CONFIG_USE_CMAKE_PREFIX_PATH
     )
     if(CMAKE_HOST_WIN32)
         gstreamer_apply_pkgconfig_env(

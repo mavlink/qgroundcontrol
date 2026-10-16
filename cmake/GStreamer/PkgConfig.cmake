@@ -5,7 +5,7 @@
 #
 # The pkg-config state discovery derives is scoped to the GStreamer subtree, whose
 # later probes (HwBuffers' gstreamer-{cuda,vulkan,d3d*}-1.0) need the same SDK view:
-# PKG_CONFIG_EXECUTABLE and the derived PKG_CONFIG_ARGN flags are normal variables of
+# PKG_CONFIG_EXECUTABLE, PKG_CONFIG_USE_CMAKE_PREFIX_PATH and the derived PKG_CONFIG_ARGN flags are normal variables of
 # the calling directory, never written to the cache, and the environment is restored
 # by qgc_gst_restore_pkgconfig_env once that subtree is configured.
 
@@ -36,11 +36,14 @@ endfunction()
 # )
 #
 # MODE SDK             — lock pkg-config to the SDK: PKG_CONFIG_LIBDIR=<libdirs>,
-#                        PKG_CONFIG_PATH cleared. System .pc files invisible.
+#                        PKG_CONFIG_PATH cleared, and PKG_CONFIG_USE_CMAKE_PREFIX_PATH OFF so that
+#                        FindPkgConfig does not put another GStreamer from CMAKE_PREFIX_PATH (vcpkg,
+#                        Homebrew) ahead of the SDK. System .pc files invisible.
 # MODE SYSTEM_AUGMENT  — prepend <libdirs> to PKG_CONFIG_PATH so SDK .pc files
 #                        win but system glib/gobject .pc files stay discoverable.
 #                        Used by Linux distro-installed GStreamer.
-# PKG_CONFIG_EXECUTABLE / PKG_CONFIG_ARGN are set as normal variables in the caller's scope.
+# PKG_CONFIG_EXECUTABLE / PKG_CONFIG_ARGN / PKG_CONFIG_USE_CMAKE_PREFIX_PATH are set as normal variables in the caller's
+# scope.
 # cmakelang reads set(ENV{<name>}) as a variable name.
 # cmake-lint: disable=C0103
 function(gstreamer_apply_pkgconfig_env)
@@ -76,6 +79,10 @@ function(gstreamer_apply_pkgconfig_env)
     if(ARG_MODE STREQUAL "SDK")
         set(ENV{PKG_CONFIG_PATH} "")
         set(ENV{PKG_CONFIG_LIBDIR} "${_libdir_str}")
+        set(PKG_CONFIG_USE_CMAKE_PREFIX_PATH
+            OFF
+            PARENT_SCOPE
+        )
     elseif(ARG_MODE STREQUAL "SYSTEM_AUGMENT")
         set(_pkg_config_paths ${ARG_LIBDIR})
         if(DEFINED ENV{PKG_CONFIG_PATH} AND NOT "$ENV{PKG_CONFIG_PATH}" STREQUAL "")

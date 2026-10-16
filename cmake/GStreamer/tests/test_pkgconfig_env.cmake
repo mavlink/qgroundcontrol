@@ -16,6 +16,7 @@ qgc_test_assert_streq("SDK clears PATH" "" "$ENV{PKG_CONFIG_PATH}")
 qgc_test_assert_streq("SDK sets LIBDIR" "/sdk/lib/pkgconfig${_sep}/sdk/lib/gstreamer-1.0/pkgconfig"
                       "$ENV{PKG_CONFIG_LIBDIR}"
 )
+qgc_test_assert_streq("SDK ignores CMAKE_PREFIX_PATH" OFF "${PKG_CONFIG_USE_CMAKE_PREFIX_PATH}")
 qgc_test_pass("SDK mode")
 
 set(ENV{PKG_CONFIG} "")

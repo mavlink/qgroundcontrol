@@ -86,6 +86,36 @@ function(_qgc_write_fake_sdk root version)
     endif()
 endfunction()
 
+# _qgc_write_fake_android_sdk(<root> <version> <plugin>...)
+# A fake SDK (see _qgc_write_fake_sdk) with the <plugin>s and what the Android SDK adds: the ndk-build anchor, the
+# static OpenSSL GIO module and the archives it links.
+function(_qgc_write_fake_android_sdk root version)
+    _qgc_write_fake_sdk("${root}" ${version} PLUGINS ${ARGN})
+    file(WRITE "${root}/share/gst-android/ndk-build/GStreamer.java" "")
+    file(WRITE "${root}/lib/gio/modules/libgioopenssl.a" "")
+    foreach(_library IN ITEMS ssl crypto gio-2.0)
+        file(WRITE "${root}/lib/lib${_library}.a" "")
+    endforeach()
+endfunction()
+
+# _qgc_write_fake_probe_lib(<root> <version>)
+# Adds the optional gstreamer-qgcprobe-1.0 library the fixture probes like HwBuffers probes gst-d3d11 or gst-vulkan.
+function(_qgc_write_fake_probe_lib root version)
+    file(WRITE "${root}/include/gstreamer-1.0/gst/qgcprobe.h" "extern \"C\" int qgc_probe;\n")
+    file(WRITE "${root}/lib/libgstqgcprobe-1.0.so" "")
+    file(
+        WRITE "${root}/lib/pkgconfig/gstreamer-qgcprobe-1.0.pc"
+        "prefix=${root}\n"
+        "libdir=\${prefix}/lib\n"
+        "includedir=\${prefix}/include\n\n"
+        "Name: gstreamer-qgcprobe-1.0\n"
+        "Description: QGC fake optional GStreamer library\n"
+        "Version: ${version}\n"
+        "Libs: -L\${libdir} -lgstqgcprobe-1.0\n"
+        "Cflags: -I\${includedir}/gstreamer-1.0\n"
+    )
+endfunction()
+
 # Configures the fixture with the extra <cmake-args>; sets _qgc_result and _qgc_output in the caller.
 function(_qgc_configure)
     set(_command "${CMAKE_COMMAND}" -S "${_fixture_dir}" -B "${_binary_dir}" -G "${GENERATOR}")
@@ -278,7 +308,7 @@ elseif(SCENARIO STREQUAL "android-mobile")
     set(_android -DQGC_TEST_ANDROID_ABI=arm64-v8a "-DQGC_TEST_PLUGINS=${_requested}"
                  "-DQGC_ANDROID_PACKAGE_SOURCE_DIR=${_package}"
     )
-    _qgc_write_fake_sdk("${_sdk_a}" 1.24.0 PLUGINS ${_plugins})
+    _qgc_write_fake_android_sdk("${_sdk_a}" 1.24.0 ${_plugins})
     # source|path staged under the build directory
     set(_ndk_build "${_sdk_a}/share/gst-android/ndk-build")
     set(_java androidmedia/GstAhcCallback.java)
@@ -292,11 +322,6 @@ elseif(SCENARIO STREQUAL "android-mobile")
         string(REPLACE "|" ";" _entry "${_entry}")
         list(GET _entry 0 _source)
         file(WRITE "${_source}" "${_source}\n")
-    endforeach()
-    file(WRITE "${_ndk_build}/GStreamer.java" "")
-    file(WRITE "${_sdk_a}/lib/gio/modules/libgioopenssl.a" "")
-    foreach(_library IN ITEMS ssl crypto gio-2.0)
-        file(WRITE "${_sdk_a}/lib/lib${_library}.a" "")
     endforeach()
     _qgc_configure_fails("Android SDK without udp"
                          "runtime-required plugins are missing from the static SDK .*: udp\\." --fresh
@@ -358,6 +383,27 @@ elseif(SCENARIO STREQUAL "android-mobile")
     )
         message(FATAL_ERROR "ASSERT [hidden core dependencies]: missing archive or --exclude-libs:\n${_link}")
     endif()
+elseif(SCENARIO STREQUAL "sdk-prefix-decoy")
+    # A bundled SDK locks pkg-config to itself: another GStreamer in CMAKE_PREFIX_PATH (vcpkg, Homebrew) must not
+    # shadow it for the core targets or for the optional-library probes HwBuffers runs after discovery.
+    include("${CMAKE_CURRENT_LIST_DIR}/../PluginPolicy.cmake")
+    gstreamer_runtime_required_plugins(_plugins)
+    string(REPLACE ";" "," _requested "${_plugins}")
+    set(_decoy "${WORK_DIR}/decoy")
+    _qgc_write_fake_android_sdk("${_sdk_a}" 1.24.0 ${_plugins})
+    _qgc_write_fake_probe_lib("${_sdk_a}" 1.24.0)
+    _qgc_write_fake_sdk("${_decoy}" 1.22.0)
+    _qgc_write_fake_probe_lib("${_decoy}" 1.22.0)
+    _qgc_configure_ok(
+        "SDK with a decoy prefix"
+        --fresh
+        "-DGStreamer_ROOT_DIR=${_sdk_a}"
+        -DQGC_TEST_ANDROID_ABI=arm64-v8a
+        "-DQGC_TEST_PLUGINS=${_requested}"
+        "-DCMAKE_PREFIX_PATH=${_decoy}"
+        "-DEXPECT_PROBE_ROOT=${_sdk_a}"
+        -DEXPECT_VERSION=1.24.0
+    )
 elseif(SCENARIO STREQUAL "install-macos")
     # The macOS bundle installers run on any host: everything must land under DESTDIR and the --prefix given at
     # install time, and nothing under the prefix known at configure time.

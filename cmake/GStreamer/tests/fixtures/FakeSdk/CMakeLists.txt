@@ -45,6 +45,33 @@ set(_qgc_pkg_config_path_before "$ENV{PKG_CONFIG_PATH}")
 set(_qgc_pkg_config_libdir_before "$ENV{PKG_CONFIG_LIBDIR}")
 include(GStreamer/Orchestrator)
 
+# EXPECT_PROBE_ROOT: probe the optional gstreamer-qgcprobe-1.0 library before the pkg-config environment is restored, as
+# HwBuffers/CMakeLists.txt probes gst-d3d11 or gst-vulkan, and check that it and the core resolved to that SDK.
+if(EXPECT_PROBE_ROOT)
+    _qgc_probe_gst_lib(
+        QGCProbe
+        HAS_VAR
+        QGC_GST_HAS_TEST_PROBE
+        HEADER
+        gst/qgcprobe.h
+        SYMBOL
+        qgc_probe
+        PC_MODULE
+        gstreamer-qgcprobe-1.0
+        LIBNAMES
+        gstqgcprobe-1.0
+        LIB_VAR
+        QGC_GST_TEST_PROBE_LIB
+    )
+    qgc_test_assert_streq("core version" "${EXPECT_VERSION}" "${GStreamer_VERSION}")
+    qgc_test_assert_property("core include dirs" GStreamer::GStreamer INTERFACE_INCLUDE_DIRECTORIES
+                             "${EXPECT_PROBE_ROOT}/include/gstreamer-1.0"
+    )
+    qgc_test_assert_streq("probe found" TRUE "${QGCProbe_FOUND}")
+    qgc_test_assert_streq("probe include dirs" "${EXPECT_PROBE_ROOT}/include/gstreamer-1.0" "${QGCProbe_INCLUDE_DIRS}")
+    qgc_test_assert_streq("probe library" "${EXPECT_PROBE_ROOT}/lib/libgstqgcprobe-1.0.so" "${QGCProbe_LIBRARIES}")
+endif()
+
 # Discovery state stays out of the cache and the global search paths; the derived pkg-config flags
 # remain visible to the rest of the GStreamer directory and the environment is restored afterwards.
 if(NOT DEFINED EXPECT_CACHED_PKG_CONFIG_ARGN)

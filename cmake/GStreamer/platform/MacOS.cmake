@@ -128,6 +128,7 @@ function(_qgc_gst_discover_macos_sdk)
         GSTREAMER_PLUGIN_PATH
         GSTREAMER_INCLUDE_PATH
         GSTREAMER_FRAMEWORK_PATH
+        PKG_CONFIG_USE_CMAKE_PREFIX_PATH
     )
     if(GStreamer_USE_FRAMEWORK)
         gstreamer_apply_pkgconfig_env(

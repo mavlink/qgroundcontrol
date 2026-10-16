@@ -108,10 +108,16 @@ function(_qgc_probe_gst_lib name)
         if(DEFINED ${ARG_LIB_VAR} AND (${ARG_LIB_VAR} MATCHES "NOTFOUND$" OR NOT EXISTS "${${ARG_LIB_VAR}}"))
             unset(${ARG_LIB_VAR} CACHE)
         endif()
+        # A bundled SDK (gstreamer_apply_pkgconfig_env MODE SDK) must not lose to another GStreamer in
+        # CMAKE_PREFIX_PATH, which find_library searches before HINTS.
+        set(_prefix_path_args "")
+        if(DEFINED PKG_CONFIG_USE_CMAKE_PREFIX_PATH AND NOT PKG_CONFIG_USE_CMAKE_PREFIX_PATH)
+            set(_prefix_path_args NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH)
+        endif()
         find_library(
             ${ARG_LIB_VAR}
             NAMES ${ARG_LIBNAMES}
-            HINTS ${${_pc}_LIBRARY_DIRS} "${GSTREAMER_LIB_PATH}"
+            HINTS ${${_pc}_LIBRARY_DIRS} "${GSTREAMER_LIB_PATH}" ${_prefix_path_args}
         )
         if(NOT ${ARG_LIB_VAR})
             list(GET ARG_LIBNAMES 0 _lib)

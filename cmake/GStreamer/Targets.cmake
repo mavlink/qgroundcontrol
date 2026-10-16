@@ -202,8 +202,8 @@ function(_qgc_gst_create_sdk_targets)
         set(_plugins "")
     endif()
 
-    # The SDK only extends this function's search paths.
-    list(PREPEND CMAKE_PREFIX_PATH "${GStreamer_ROOT_DIR}")
+    # The framework lookups below search the SDK's framework too; pkg-config is already locked to the SDK
+    # (gstreamer_apply_pkgconfig_env).
     if(GStreamer_USE_FRAMEWORK)
         list(APPEND CMAKE_FRAMEWORK_PATH "${GSTREAMER_FRAMEWORK_PATH}")
     endif()
