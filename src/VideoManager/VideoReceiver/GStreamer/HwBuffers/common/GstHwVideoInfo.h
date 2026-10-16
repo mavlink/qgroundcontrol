@@ -15,7 +15,8 @@ bool dmaDrmAwareVideoInfo(GstCaps* caps, GstVideoInfo* info);
 int planeWidth(const GstVideoInfo& info, int plane);
 int planeHeight(const GstVideoInfo& info, int plane);
 
-/// Bytes of image data in one row of @p plane, i.e. the stride without its alignment padding.
+/// Bytes of image data in one row of @p plane, i.e. the stride without its alignment padding: up to the last byte of
+/// any component stored in the plane.
 int planeRowBytes(const GstVideoInfo& info, int plane);
 
 }  // namespace GstHw

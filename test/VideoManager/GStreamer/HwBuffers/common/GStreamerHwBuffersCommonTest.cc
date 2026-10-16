@@ -391,6 +391,11 @@ void GStreamerTest::_testCpuCopyOddDimensions_data()
                           << QList<int>{5, 3, 3};
     QTest::newRow("NV12") << int(GST_VIDEO_FORMAT_NV12) << int(QVideoFrameFormat::Format_NV12) << QList<int>{3, 2}
                           << QList<int>{5, 6};
+    // Packed 4:2:2: the last macropixel's chroma ends past the last luma byte (YUY2 V at byte 11, UYVY V at 10).
+    QTest::newRow("YUY2") << int(GST_VIDEO_FORMAT_YUY2) << int(QVideoFrameFormat::Format_YUYV) << QList<int>{3}
+                          << QList<int>{12};
+    QTest::newRow("UYVY") << int(GST_VIDEO_FORMAT_UYVY) << int(QVideoFrameFormat::Format_UYVY) << QList<int>{3}
+                          << QList<int>{11};
 }
 
 void GStreamerTest::_testCpuCopyOddDimensions()

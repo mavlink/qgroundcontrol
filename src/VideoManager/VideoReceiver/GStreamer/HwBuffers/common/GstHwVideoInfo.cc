@@ -1,5 +1,7 @@
 #include "GstHwVideoInfo.h"
 
+#include <algorithm>
+
 #if GST_CHECK_VERSION(1, 24, 0)
 #include <gst/video/video-info-dma.h>
 #endif
@@ -52,11 +54,28 @@ int planeHeight(const GstVideoInfo& info, int plane)
 
 int planeRowBytes(const GstVideoInfo& info, int plane)
 {
-    const int component = firstComponentOf(info, plane);
-    if (component < 0) {
-        return 0;
+    // The furthest byte any component of the plane reaches: packed 4:2:2 (YUY2, UYVY) interleaves half-width chroma
+    // with luma, so an odd-width row ends in a chroma sample past the last luma byte.
+    gint components[GST_VIDEO_MAX_COMPONENTS];
+    gst_video_format_info_component(info.finfo, static_cast<guint>(plane), components);
+    int rowBytes = 0;
+    for (const gint component : components) {
+        if (component < 0) {
+            break;
+        }
+        const int pixelStride = GST_VIDEO_INFO_COMP_PSTRIDE(&info, component);
+        if (pixelStride <= 0) {
+            // Complex packings (e.g. v210) have no per-pixel stride; the whole stride is the safe bound.
+            return GST_VIDEO_INFO_PLANE_STRIDE(&info, plane);
+        }
+        const int sampleBytes = static_cast<int>((GST_VIDEO_FORMAT_INFO_DEPTH(info.finfo, component) +
+                                                  GST_VIDEO_FORMAT_INFO_SHIFT(info.finfo, component) + 7U) /
+                                                 8U);
+        const int end = GST_VIDEO_INFO_COMP_POFFSET(&info, component) +
+                        ((GST_VIDEO_INFO_COMP_WIDTH(&info, component) - 1) * pixelStride) + sampleBytes;
+        rowBytes = std::max(rowBytes, end);
     }
-    return GST_VIDEO_INFO_COMP_WIDTH(&info, component) * GST_VIDEO_INFO_COMP_PSTRIDE(&info, component);
+    return rowBytes;
 }
 
 }  // namespace GstHw
