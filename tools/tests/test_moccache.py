@@ -377,6 +377,63 @@ class TestInvalidation:
 
 
 # ---------------------------------------------------------------------------
+# Result slots (one per include state)
+# ---------------------------------------------------------------------------
+
+
+def _age_slots(harness: Harness) -> None:
+    """Push every slot into the past so the next store or hit is unambiguously newest."""
+    for manifest in harness.cache.glob("??/*/*manifest"):
+        when = manifest.stat().st_mtime - 10
+        os.utime(manifest, (when, when))
+
+
+class TestSlots:
+    def test_reverted_include_edit_hits(self, harness: Harness) -> None:
+        tree = harness.make_tree("build")
+        harness.run(tree, out=tree.out_path("a.cpp"))
+        harness.dep_header.write_text("// dep v2\n")
+        harness.run(tree, out=tree.out_path("b.cpp"))
+        harness.dep_header.write_text("// dep v1\n")
+        out_c = tree.out_path("c.cpp")
+        harness.run(tree, out=out_c)
+        assert harness.stats() == ["miss", "miss", "hit"]
+        assert harness.moc_runs() == 2
+        assert out_c.read_bytes() == tree.out_path("a.cpp").read_bytes()
+
+    def test_least_recently_used_slot_is_dropped(self, harness: Harness) -> None:
+        tree = harness.make_tree("build")
+        for version in range(1, moccache._MAX_SLOTS + 1):
+            harness.dep_header.write_text(f"// dep v{version}\n")
+            harness.run(tree)
+            _age_slots(harness)
+        harness.dep_header.write_text("// dep v1\n")
+        harness.run(tree)  # hit refreshes v1, leaving v2 the least recently used
+        _age_slots(harness)
+        harness.dep_header.write_text("// dep new\n")
+        harness.run(tree)  # stores a slot past the cap
+        assert len(list(harness.cache.glob("??/*/*.manifest"))) == moccache._MAX_SLOTS
+
+        harness.dep_header.write_text("// dep v1\n")
+        harness.run(tree)
+        harness.dep_header.write_text("// dep v2\n")
+        harness.run(tree)
+        assert harness.stats()[-4:] == ["hit", "miss", "hit", "miss"]
+        assert harness.stats_detailed()[-1][0] == "miss-include-changed"
+
+    def test_single_result_entry_from_older_cache_hits(self, harness: Harness) -> None:
+        tree = harness.make_tree("build")
+        harness.run(tree, out=tree.out_path("a.cpp"))
+        (manifest,) = harness.cache.glob("??/*/*.manifest")
+        mdir = manifest.parent
+        manifest.rename(mdir / "manifest")
+        (cached_out,) = mdir.glob("*.cpp")
+        cached_out.rename(mdir / "output.cpp")
+        harness.run(tree, out=tree.out_path("b.cpp"))
+        assert harness.stats() == ["miss", "hit"]
+
+
+# ---------------------------------------------------------------------------
 # Cross-tree sharing (the whole point of the cache)
 # ---------------------------------------------------------------------------
 
@@ -482,7 +539,7 @@ class TestFailureModes:
     def test_corrupted_manifest_recovers(self, harness: Harness) -> None:
         tree = harness.make_tree("build")
         harness.run(tree, out=tree.out_path("a.cpp"))
-        manifest = next(harness.cache.rglob("manifest"))
+        manifest = next(harness.cache.rglob("*.manifest"))
         manifest.write_text("garbage without tabs\nmore garbage\n")
         out_b = tree.out_path("b.cpp")
         assert harness.run(tree, out=out_b) == 0
@@ -492,7 +549,7 @@ class TestFailureModes:
     def test_missing_cached_output_recovers(self, harness: Harness) -> None:
         tree = harness.make_tree("build")
         harness.run(tree, out=tree.out_path("a.cpp"))
-        next(harness.cache.rglob("output.cpp")).unlink()
+        next(harness.cache.rglob("*.cpp")).unlink()
         out_b = tree.out_path("b.cpp")
         assert harness.run(tree, out=out_b) == 0
         assert out_b.is_file()
@@ -944,7 +1001,7 @@ class TestMissReasons:
     def test_unreadable_cached_output_is_not_reported_as_evicted(self, harness: Harness) -> None:
         tree = harness.make_tree("build")
         harness.run(tree)
-        (cached_out,) = harness.cache.glob("??/*/output.cpp")
+        (cached_out,) = harness.cache.glob("??/*/*.cpp")
         real_copyfile = shutil.copyfile
 
         def failing_copyfile(src: object, dst: object, *args: object, **kwargs: object) -> object:
@@ -959,11 +1016,11 @@ class TestMissReasons:
         assert detail == ""
 
     def test_incomplete_cache_entry_is_not_reported_as_evicted(self, harness: Harness) -> None:
-        # A crash between writing output.cpp and the manifest leaves the entry
+        # A crash between writing the output and the manifest leaves the entry
         # dir behind; that is not an eviction and must not point at MAX_SIZE.
         tree = harness.make_tree("build")
         harness.run(tree)
-        (cached_out,) = harness.cache.glob("??/*/output.cpp")
+        (cached_out,) = harness.cache.glob("??/*/*.cpp")
         cached_out.unlink()
         assert harness.run(tree, out=tree.out_path("b.cpp")) == 0
         assert harness.stats_detailed()[-1] == ("miss-cache-unreadable", "entry incomplete")
@@ -973,7 +1030,7 @@ class TestMissReasons:
     ) -> None:
         tree = harness.make_tree("build")
         harness.run(tree)
-        (manifest,) = harness.cache.glob("??/*/manifest")
+        (manifest,) = harness.cache.glob("??/*/*.manifest")
         manifest.write_bytes(b"\xff\xfe not utf-8")
         assert harness.run(tree, out=tree.out_path("b.cpp")) == 0
         assert harness.stats_detailed()[-1] == ("miss-cache-unreadable", "manifest unreadable")
@@ -981,7 +1038,7 @@ class TestMissReasons:
     def test_malformed_manifest_line_is_cache_unreadable(self, harness: Harness) -> None:
         tree = harness.make_tree("build")
         harness.run(tree)
-        (manifest,) = harness.cache.glob("??/*/manifest")
+        (manifest,) = harness.cache.glob("??/*/*.manifest")
         manifest.write_text(f"{harness.dep_header}\n", encoding="utf-8")  # no tab / hash
         assert harness.run(tree, out=tree.out_path("b.cpp")) == 0
         assert harness.stats_detailed()[-1] == ("miss-cache-unreadable", "manifest malformed")

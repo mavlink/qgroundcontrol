@@ -3,7 +3,9 @@
 
 Speeds up clean builds / CI / branch switches by caching moc output keyed on
 moc identity + arguments + input content + all transitive include contents
-(tracked via moc's --output-dep-file, Qt 5.15+).
+(tracked via moc's --output-dep-file, Qt 5.15+). Each key keeps up to
+_MAX_SLOTS results, one per include state, so switching back to a branch or
+reverting an include edit still hits.
 
 Usage (as CMake AUTOMOC executable, via a shim that bakes the real moc path):
     moccache.py --real-moc /path/to/moc [moc args...]
@@ -322,6 +324,67 @@ def _write_dep_file(dst: Path, target: str, deps: list[str]) -> None:
 
 _STAT_FIELD_BREAKERS = str.maketrans({"\t": " ", "\n": " ", "\r": " "})
 _SHA256_HEX = re.compile(r"[0-9a-f]{64}")
+
+# Results kept per key, one per include state, so a branch switch or a reverted include edit
+# hits instead of finding its only result overwritten.
+_MAX_SLOTS = 4
+_MANIFEST_SUFFIX = ".manifest"
+
+
+def _slot_paths(mdir: Path, slot: str) -> tuple[Path, Path, Path]:
+    """(manifest, output, json) of a result slot; slot "" is the single-result layout of older caches."""
+    if not slot:
+        return mdir / "manifest", mdir / "output.cpp", mdir / "output.json"
+    return mdir / f"{slot}{_MANIFEST_SUFFIX}", mdir / f"{slot}.cpp", mdir / f"{slot}.json"
+
+
+def _slots_newest_first(mdir: Path) -> list[str]:
+    """Slot names in mdir, most recently stored or hit first."""
+    slots: list[tuple[int, str]] = []
+    with contextlib.suppress(OSError):
+        for f in mdir.iterdir():
+            if f.name == "manifest":
+                slot = ""
+            elif f.name.endswith(_MANIFEST_SUFFIX):
+                slot = f.name.removesuffix(_MANIFEST_SUFFIX)
+            else:
+                continue
+            with contextlib.suppress(OSError):
+                slots.append((f.stat().st_mtime_ns, slot))
+    return [slot for _, slot in sorted(slots, reverse=True)]
+
+
+def _validate_manifest(
+    manifest: Path, dep_hashes: dict[str, str | None]
+) -> tuple[list[str] | None, tuple[str, str]]:
+    """(deps, _) when every recorded dep still has its hash, else (None, miss reason).
+
+    dep_hashes memoizes dep content hashes (None = missing) across the slots of one lookup.
+    """
+    deps: list[str] = []
+    try:
+        for line in manifest.read_text(encoding="utf-8").splitlines():
+            dep, _, dep_hash = line.partition("\t")
+            if not dep or not _SHA256_HEX.fullmatch(dep_hash):
+                return None, ("miss-cache-unreadable", "manifest malformed")
+            dep = _denormalize_basedir(dep)
+            if dep not in dep_hashes:
+                p = Path(dep)
+                dep_hashes[dep] = _sha256_file(p) if p.is_file() else None
+            if dep_hashes[dep] != dep_hash:
+                return None, ("miss-include-changed", dep)
+            deps.append(dep)
+    except (OSError, UnicodeDecodeError):
+        return None, ("miss-cache-unreadable", "manifest unreadable")
+    return deps, ("", "")
+
+
+def _prune_slots(mdir: Path) -> None:
+    """Drop the least recently used slots beyond _MAX_SLOTS."""
+    for slot in _slots_newest_first(mdir)[_MAX_SLOTS:]:
+        for path in _slot_paths(mdir, slot):
+            with contextlib.suppress(OSError):
+                path.unlink()
 
 
 def _log_stat(cache_dir: Path, what: str, input_file: str, detail: str = "") -> None:
@@ -842,53 +905,42 @@ def main() -> int:
     mkey = h.hexdigest()
     mdir = cache_dir / mkey[:2] / mkey
 
-    manifest = mdir / "manifest"
-    cached_out = mdir / "output.cpp"
-    cached_json = mdir / "output.json"
     out_path = Path(output)
     dep_out = Path(dep_file_path) if dep_file_path else Path(str(out_path) + ".d")
     json_out = Path(str(out_path) + ".json")
 
     # --- Try for a hit ------------------------------------------------------
+    # The newest slot's failure explains a miss; the slots share one hash per dep.
     miss_reason: tuple[str, str] | None = None
-    if manifest.is_file() and cached_out.is_file() and (not wants_json or cached_json.is_file()):
-        hit = True
-        manifest_deps: list[str] = []
+    dep_hashes: dict[str, str | None] = {}
+    slots = _slots_newest_first(mdir)
+    for slot in slots:
+        manifest, cached_out, cached_json = _slot_paths(mdir, slot)
+        if not cached_out.is_file() or (wants_json and not cached_json.is_file()):
+            miss_reason = miss_reason or ("miss-cache-unreadable", "entry incomplete")
+            continue
+        manifest_deps, reason = _validate_manifest(manifest, dep_hashes)
+        if manifest_deps is None:
+            miss_reason = miss_reason or reason
+            continue
         try:
-            for line in manifest.read_text(encoding="utf-8").splitlines():
-                dep, _, dep_hash = line.partition("\t")
-                if not dep or not _SHA256_HEX.fullmatch(dep_hash):
-                    hit = False
-                    miss_reason = ("miss-cache-unreadable", "manifest malformed")
-                    break
-                dep = _denormalize_basedir(dep)
-                p = Path(dep)
-                if not p.is_file() or _sha256_file(p) != dep_hash:
-                    hit = False
-                    miss_reason = ("miss-include-changed", dep)
-                    break
-                manifest_deps.append(dep)
-        except (OSError, UnicodeDecodeError):
-            hit = False
-            miss_reason = ("miss-cache-unreadable", "manifest unreadable")
-        if hit:
-            try:
-                out_path.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copyfile(cached_out, out_path)
-                if wants_dep_file:
-                    # Synthesize for this tree: the cached dep file references
-                    # the originating tree's output and moc_predefs.h paths.
-                    deps = list(dict.fromkeys([input_file, *include_files, *manifest_deps]))
-                    _write_dep_file(dep_out, output, deps)
-                if wants_json:
-                    shutil.copyfile(cached_json, json_out)
-                with contextlib.suppress(OSError):
-                    os.utime(mdir)  # refresh LRU recency
-                _log_stat(cache_dir, "hit", input_file)
-                return 0
-            except OSError:
-                miss_reason = ("miss-cache-unreadable", "")  # fall through to a real run
-    elif mdir.is_dir():
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(cached_out, out_path)
+            if wants_dep_file:
+                # Synthesize for this tree: the cached dep file references
+                # the originating tree's output and moc_predefs.h paths.
+                deps = list(dict.fromkeys([input_file, *include_files, *manifest_deps]))
+                _write_dep_file(dep_out, output, deps)
+            if wants_json:
+                shutil.copyfile(cached_json, json_out)
+            with contextlib.suppress(OSError):
+                os.utime(manifest)  # slot recency, for _prune_slots
+                os.utime(mdir)  # entry recency, for _trim
+            _log_stat(cache_dir, "hit", input_file)
+            return 0
+        except OSError:
+            miss_reason = miss_reason or ("miss-cache-unreadable", "")  # fall through to a real run
+    if not slots and mdir.is_dir():
         miss_reason = ("miss-cache-unreadable", "entry incomplete")
 
     # --- Miss: run real moc with dep-file capture ---------------------------
@@ -926,13 +978,19 @@ def main() -> int:
             p = Path(dep)
             if p.is_file() and os.path.realpath(dep) not in include_reals:
                 lines.append(f"{_normalize_basedir(dep, basedir_prefixes)}\t{_sha256_file(p)}")
+        manifest_text = "\n".join(lines) + "\n"
+        # Content-addressed: rerunning in the same include state rewrites its own slot.
+        manifest, cached_out, cached_json = _slot_paths(
+            mdir, hashlib.sha256(manifest_text.encode()).hexdigest()[:16]
+        )
         try:
             _atomic_copy(out_path, cached_out)
             if wants_json and json_out.is_file():
                 _atomic_copy(json_out, cached_json)
-            _atomic_write(manifest, "\n".join(lines) + "\n")
+            _atomic_write(manifest, manifest_text)  # last: marks the slot complete
             _atomic_write(mdir / "keyinfo", "\n".join(key_parts) + "\n")
             _index_add(index, mkey)
+            _prune_slots(mdir)
         except OSError:
             pass  # cache write failure must not fail the build
         _log_stat(cache_dir, miss_reason[0], input_file, miss_reason[1])
