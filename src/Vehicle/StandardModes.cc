@@ -119,6 +119,10 @@ void StandardModes::gotMessage(MAV_RESULT result, VehicleTypes::RequestMessageRe
 
         if (availableModes.mode_index >= availableModes.number_modes) { // We are done
             qCDebug(StandardModesLog) << "Completed, num modes:" << availableModes.number_modes;
+            if (_requestSeq != 0) {
+                // An AVAILABLE_MODES_MONITOR with this seq then needs no new download
+                _lastSeq = _requestSeq;
+            }
             ensureUniqueModeNames();
             _vehicle->firmwarePlugin()->updateAvailableFlightModes(_modeList);
             emit modesUpdated();
