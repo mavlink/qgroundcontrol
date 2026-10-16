@@ -3,7 +3,8 @@
 # Motor, servo, and actuator configuration and testing
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(
+    ${CMAKE_PROJECT_NAME}
     PRIVATE
         ActuatorActions.cc
         ActuatorActions.h
@@ -34,7 +35,8 @@ set_source_files_properties(
     Mixer.cc
     TARGET_DIRECTORY
     ${CMAKE_PROJECT_NAME}
-    PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON
+    PROPERTIES
+        SKIP_UNITY_BUILD_INCLUSION ON
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

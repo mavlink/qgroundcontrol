@@ -5,21 +5,22 @@
 
 target_sources(
     ${CMAKE_PROJECT_NAME}
-    PRIVATE ImageProtocolManager.cc
-            ImageProtocolManager.h
-            MAVLinkFTP.cc
-            MAVLinkFTP.h
-            MAVLinkLib.h
-            MAVLinkMessageType.h
-            MAVLinkStreamConfig.cc
-            MAVLinkStreamConfig.h
-            QGCMAVLink.cc
-            QGCMAVLink.h
-            QGCMAVLinkTypes.h
-            StatusTextHandler.cc
-            StatusTextHandler.h
-            SysStatusSensorInfo.cc
-            SysStatusSensorInfo.h
+    PRIVATE
+        ImageProtocolManager.cc
+        ImageProtocolManager.h
+        MAVLinkFTP.cc
+        MAVLinkFTP.h
+        MAVLinkLib.h
+        MAVLinkMessageType.h
+        MAVLinkStreamConfig.cc
+        MAVLinkStreamConfig.h
+        QGCMAVLink.cc
+        QGCMAVLink.h
+        QGCMAVLinkTypes.h
+        StatusTextHandler.cc
+        StatusTextHandler.h
+        SysStatusSensorInfo.cc
+        SysStatusSensorInfo.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -35,12 +36,9 @@ include(CPMPatchCache)
 set(_mavlink_patch "${CMAKE_CURRENT_LIST_DIR}/mavlink-deterministic-mavgen.patch")
 qgc_cpm_patch_cache_key(
     _mavlink_cache_key
-    GIT_REPOSITORY
-    "${QGC_MAVLINK_GIT_REPO}"
-    GIT_TAG
-    "${QGC_MAVLINK_GIT_TAG}"
-    PATCHES
-    "${_mavlink_patch}"
+    GIT_REPOSITORY "${QGC_MAVLINK_GIT_REPO}"
+    GIT_TAG "${QGC_MAVLINK_GIT_TAG}"
+    PATCHES "${_mavlink_patch}"
 )
 
 CPMAddPackage(
@@ -49,7 +47,10 @@ CPMAddPackage(
     GIT_TAG ${QGC_MAVLINK_GIT_TAG}
     # CPM's default source-cache key does not hash PATCHES file contents.
     CUSTOM_CACHE_KEY "${_mavlink_cache_key}"
-    OPTIONS "MAVLINK_DIALECT ${QGC_MAVLINK_DIALECT}" "MAVLINK_VERSION ${QGC_MAVLINK_VERSION}" "MAVLINK_ENABLE_CXX OFF"
+    OPTIONS
+        "MAVLINK_DIALECT ${QGC_MAVLINK_DIALECT}"
+        "MAVLINK_VERSION ${QGC_MAVLINK_VERSION}"
+        "MAVLINK_ENABLE_CXX OFF"
     # Use the locked generator environment and make mavgen hashes deterministic.
     PATCHES "${_mavlink_patch}"
 )
@@ -57,8 +58,11 @@ CPMAddPackage(
 qgc_require_cpm_added(mavlink)
 
 add_dependencies(${CMAKE_PROJECT_NAME} mavlink)
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${mavlink_BINARY_DIR}/include/mavlink
-                                                         ${mavlink_BINARY_DIR}/include/mavlink/${QGC_MAVLINK_DIALECT}
+target_include_directories(
+    ${CMAKE_PROJECT_NAME}
+    PRIVATE
+        ${mavlink_BINARY_DIR}/include/mavlink
+        ${mavlink_BINARY_DIR}/include/mavlink/${QGC_MAVLINK_DIALECT}
 )
 
 # Generate lightweight MAVLinkEnums.h (enum typedefs only, no message pack/unpack code)
@@ -90,8 +94,18 @@ set_property(
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE "${CMAKE_BINARY_DIR}")
 
 # Register the QML anchor files so AUTOMOC picks up Q_NAMESPACE + Q_ENUM_NS
-set_source_files_properties("${MAVLINK_ENUMS_QML_H}" "${MAVLINK_ENUMS_QML_CC}" PROPERTIES GENERATED TRUE)
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE "${MAVLINK_ENUMS_QML_H}" "${MAVLINK_ENUMS_QML_CC}")
+set_source_files_properties(
+    "${MAVLINK_ENUMS_QML_H}"
+    "${MAVLINK_ENUMS_QML_CC}"
+    PROPERTIES
+        GENERATED TRUE
+)
+target_sources(
+    ${CMAKE_PROJECT_NAME}
+    PRIVATE
+        "${MAVLINK_ENUMS_QML_H}"
+        "${MAVLINK_ENUMS_QML_CC}"
+)
 
 # Generate MAVLinkInstanceFields.h (message ID → instance field name mapping)
 set(MAVLINK_INSTANCE_FIELDS_H "${CMAKE_BINARY_DIR}/MAVLinkInstanceFields.h")
@@ -127,7 +141,8 @@ qt_add_resources(
     ${CMAKE_PROJECT_NAME} mavlink_component_metadata_schemas
     PREFIX "/json/component_metadata"
     BASE "${MAVLINK_COMPONENT_METADATA_DIR}"
-    FILES ${MAVLINK_SCHEMA_FILES}
+    FILES
+        ${MAVLINK_SCHEMA_FILES}
 )
 
 # ----------------------------------------------------------------------------

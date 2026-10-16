@@ -16,7 +16,11 @@ function(qgc_set_qt_resource_alias)
             continue()
         endif()
         get_filename_component(alias "${resource_file}" NAME)
-        set_source_files_properties("${resource_file}" PROPERTIES QT_RESOURCE_ALIAS "${alias}")
+        set_source_files_properties(
+            "${resource_file}"
+            PROPERTIES
+                QT_RESOURCE_ALIAS "${alias}"
+        )
     endforeach()
 endfunction()
 
@@ -73,8 +77,9 @@ function(qgc_config_caching)
             set(_ccache_conf "${CMAKE_SOURCE_DIR}/tools/configs/ccache.conf")
             if(CMAKE_HOST_WIN32)
                 set(_ccache_wrapper "${CMAKE_BINARY_DIR}/ccache-launcher.cmd")
-                configure_file("${CMAKE_CURRENT_FUNCTION_LIST_DIR}/ccache-launcher.cmd.in" "${_ccache_wrapper}" @ONLY
-                               NEWLINE_STYLE DOS
+                configure_file(
+                    "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/ccache-launcher.cmd.in" "${_ccache_wrapper}" @ONLY
+                    NEWLINE_STYLE DOS
                 )
                 set(_cache_launcher "${_ccache_wrapper}")
                 # Batch launchers have cmd.exe's 8191-character limit, below Ninja's native Windows limit.
@@ -172,8 +177,8 @@ function(_qgc_write_moccache_stats_script python moccache_py out_var)
         string(APPEND _body "[ -n \"\${MOCCACHE_STATS}\" ] || exit 0\n")
         string(APPEND _body "export MOCCACHE_DIR=\"\${MOCCACHE_DIR:-${_default_dir}}\"\n")
         string(APPEND _body "export MOCCACHE_BASEDIR=\"\${MOCCACHE_BASEDIR:-${CMAKE_BINARY_DIR}}\"\n")
-        string(APPEND _body
-               "\"${python}\" \"${moccache_py}\" --show-stats --build-dir \"${CMAKE_BINARY_DIR}\" || true\n"
+        string(
+            APPEND _body "\"${python}\" \"${moccache_py}\" --show-stats --build-dir \"${CMAKE_BINARY_DIR}\" || true\n"
         )
         _qgc_write_if_changed("${_script}" "${_body}")
         # cmakelang 0.6.13 does not recognize file(CHMOD).
@@ -266,8 +271,8 @@ function(qgc_config_moccache)
     if(CMAKE_HOST_WIN32)
         set(_moccache_wrapper "${CMAKE_BINARY_DIR}/moccache-launcher.cmd")
         set(_wrapper "@echo off\r\nsetlocal\r\n")
-        string(APPEND _wrapper
-               "if not defined MOCCACHE_DIR set \"MOCCACHE_DIR=${CMAKE_SOURCE_DIR}/.cache/moccache\"\r\n"
+        string(
+            APPEND _wrapper "if not defined MOCCACHE_DIR set \"MOCCACHE_DIR=${CMAKE_SOURCE_DIR}/.cache/moccache\"\r\n"
         )
         string(APPEND _wrapper "if not defined MOCCACHE_BASEDIR set \"MOCCACHE_BASEDIR=${CMAKE_BINARY_DIR}\"\r\n")
         string(APPEND _wrapper "if not defined MOCCACHE_MAX_SIZE set \"MOCCACHE_MAX_SIZE=256M\"\r\n")
@@ -280,8 +285,8 @@ function(qgc_config_moccache)
         string(APPEND _wrapper "export MOCCACHE_DIR=\"\${MOCCACHE_DIR:-${CMAKE_SOURCE_DIR}/.cache/moccache}\"\n")
         string(APPEND _wrapper "export MOCCACHE_BASEDIR=\"\${MOCCACHE_BASEDIR:-${CMAKE_BINARY_DIR}}\"\n")
         string(APPEND _wrapper "export MOCCACHE_MAX_SIZE=\"\${MOCCACHE_MAX_SIZE:-256M}\"\n")
-        string(APPEND _wrapper
-               "exec \"${QGC_MOCCACHE_PYTHON}\" \"${_moccache_py}\" --real-moc \"${_real_moc}\" \"$@\"\n"
+        string(
+            APPEND _wrapper "exec \"${QGC_MOCCACHE_PYTHON}\" \"${_moccache_py}\" --real-moc \"${_real_moc}\" \"$@\"\n"
         )
         _qgc_write_if_changed("${_moccache_wrapper}" "${_wrapper}")
         file(
@@ -420,8 +425,9 @@ function(qgc_config_rcc_launcher)
     endif()
     if(CMAKE_HOST_WIN32)
         set(_wrapper "@echo off\r\nsetlocal\r\n")
-        string(APPEND _wrapper
-               "if not defined QT_RCC_SOURCE_DATE_OVERRIDE set \"QT_RCC_SOURCE_DATE_OVERRIDE=${_epoch}\"\r\n"
+        string(
+            APPEND _wrapper
+            "if not defined QT_RCC_SOURCE_DATE_OVERRIDE set \"QT_RCC_SOURCE_DATE_OVERRIDE=${_epoch}\"\r\n"
         )
         # Started through cmd.exe without a console window (as by AUTOGEN's generate-time
         # `rcc -h` on CI), rcc shows help and errors in a message box and blocks forever.
@@ -614,9 +620,11 @@ function(qgc_require_cpm_added package_name)
 
     set(_added_variable "${package_name}_ADDED")
     if(NOT DEFINED ${_added_variable} OR NOT "${${_added_variable}}")
-        message(FATAL_ERROR "QGC: ${package_name} (required dependency) was not added by CPM. "
-                            "This package must be vendored from source; if QGC_USE_SYSTEM_LIBS or "
-                            "QGC_SYSTEM_LIBS_ONLY resolved it via find_package(), configure without them."
+        message(
+            FATAL_ERROR
+                "QGC: ${package_name} (required dependency) was not added by CPM. "
+                "This package must be vendored from source; if QGC_USE_SYSTEM_LIBS or "
+                "QGC_SYSTEM_LIBS_ONLY resolved it via find_package(), configure without them."
         )
     endif()
 endfunction()
@@ -663,6 +671,7 @@ function(qgc_add_json_resources name)
     qt_add_resources(
         ${CMAKE_PROJECT_NAME} ${name}
         PREFIX "${ARG_PREFIX}"
-        FILES ${_json}
+        FILES
+            ${_json}
     )
 endfunction()

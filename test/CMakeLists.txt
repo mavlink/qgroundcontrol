@@ -9,7 +9,12 @@ endif()
 # ----------------------------------------------------------------------------
 # Test Framework Sources
 # ----------------------------------------------------------------------------
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE UnitTestList.cc UnitTestList.h)
+target_sources(
+    ${CMAKE_PROJECT_NAME}
+    PRIVATE
+        UnitTestList.cc
+        UnitTestList.h
+)
 
 # ----------------------------------------------------------------------------
 # Test Dependencies
@@ -17,8 +22,11 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE UnitTestList.cc UnitTestList.h)
 find_package(Qt6 REQUIRED COMPONENTS Test)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Test)
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
-                                                         ${CMAKE_CURRENT_SOURCE_DIR}/Portable
+target_include_directories(
+    ${CMAKE_PROJECT_NAME}
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/Portable
 )
 
 # QGC_UNITTEST_BUILD is defined directory-wide from the root CMakeLists.txt when

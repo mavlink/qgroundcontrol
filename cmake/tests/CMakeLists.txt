@@ -33,24 +33,21 @@ qgc_add_cmake_contract_test(QmlCodegenConfigureValid qml-codegen-configure-valid
 qgc_add_cmake_contract_test(QGCTestTimeoutZero qgc-test-timeout-zero)
 
 qgc_add_expected_failure_test(
-    NAME
-    CMake.CustomDirEscape
-    EXPECTED_REGEX
-    "QGC_CUSTOM_DIR must be a non-empty path"
-    LABELS
-    CMake
-    Unit
-    ARGS
-    "-DSOURCE_DIR=${PROJECT_SOURCE_DIR}"
-    "-DBINARY_DIR=${_qgc_cmake_fixture_root}/custom-dir-escape"
-    "-DCONFIGURE_ARGUMENT=-DQGC_CUSTOM_DIR=../outside"
+    NAME CMake.CustomDirEscape
+    EXPECTED_REGEX "QGC_CUSTOM_DIR must be a non-empty path"
+    LABELS CMake Unit
+    ARGS "-DSOURCE_DIR=${PROJECT_SOURCE_DIR}" "-DBINARY_DIR=${_qgc_cmake_fixture_root}/custom-dir-escape"
+         "-DCONFIGURE_ARGUMENT=-DQGC_CUSTOM_DIR=../outside"
 )
 
-add_test(NAME CMake.DownloadHelper COMMAND "${CMAKE_COMMAND}" -P
-                                           "${CMAKE_CURRENT_SOURCE_DIR}/test_download_helper.cmake"
+add_test(
+    NAME CMake.DownloadHelper COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_SOURCE_DIR}/test_download_helper.cmake"
 )
-set_tests_properties(CMake.DownloadHelper PROPERTIES LABELS "CMake;Unit" FAIL_REGULAR_EXPRESSION
-                                                     "ASSERT|FATAL_ERROR|CMake Error"
+set_tests_properties(
+    CMake.DownloadHelper
+    PROPERTIES
+        LABELS "CMake;Unit"
+        FAIL_REGULAR_EXPRESSION "ASSERT|FATAL_ERROR|CMake Error"
 )
 
 set(_qgc_expected_failure_cases
@@ -82,18 +79,11 @@ foreach(qgc_failure_case IN LISTS _qgc_expected_failure_cases)
     list(GET _qgc_failure_parts 1 _qgc_test_case)
     list(GET _qgc_failure_parts 2 _qgc_expected_regex)
     qgc_add_expected_failure_test(
-        NAME
-        "CMake.${_qgc_test_name}"
-        EXPECTED_REGEX
-        "${_qgc_expected_regex}"
-        LABELS
-        CMake
-        Unit
-        ARGS
-        "-DSOURCE_DIR=${_qgc_cmake_fixture_source}"
-        "-DBINARY_DIR=${_qgc_cmake_fixture_root}/${_qgc_test_name}"
-        "-DQGC_MODULE_DIR=${PROJECT_SOURCE_DIR}/cmake"
-        "-DTEST_CASE=${_qgc_test_case}"
+        NAME "CMake.${_qgc_test_name}"
+        EXPECTED_REGEX "${_qgc_expected_regex}"
+        LABELS CMake Unit
+        ARGS "-DSOURCE_DIR=${_qgc_cmake_fixture_source}" "-DBINARY_DIR=${_qgc_cmake_fixture_root}/${_qgc_test_name}"
+             "-DQGC_MODULE_DIR=${PROJECT_SOURCE_DIR}/cmake" "-DTEST_CASE=${_qgc_test_case}"
     )
 endforeach()
 
@@ -115,8 +105,11 @@ add_test(
         "-DFIXTURE_BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}/MoccacheLauncher" -P
         "${CMAKE_CURRENT_SOURCE_DIR}/run_moccache_launcher_test.cmake"
 )
-set_tests_properties(CMake.MoccacheLauncherStable PROPERTIES LABELS "CMake;Unit" SKIP_REGULAR_EXPRESSION
-                                                             "QGC_TEST_SKIPPED"
+set_tests_properties(
+    CMake.MoccacheLauncherStable
+    PROPERTIES
+        LABELS "CMake;Unit"
+        SKIP_REGULAR_EXPRESSION "QGC_TEST_SKIPPED"
 )
 
 add_test(
@@ -127,6 +120,9 @@ add_test(
         "-DWORK_DIR=${CMAKE_CURRENT_BINARY_DIR}/GitConfigureDepends" -P
         "${CMAKE_CURRENT_SOURCE_DIR}/run_git_configure_depends_test.cmake"
 )
-set_tests_properties(CMake.GitConfigureDepends PROPERTIES LABELS "CMake;Unit" SKIP_REGULAR_EXPRESSION
-                                                          "QGC_TEST_SKIPPED"
+set_tests_properties(
+    CMake.GitConfigureDepends
+    PROPERTIES
+        LABELS "CMake;Unit"
+        SKIP_REGULAR_EXPRESSION "QGC_TEST_SKIPPED"
 )

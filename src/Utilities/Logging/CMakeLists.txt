@@ -3,20 +3,23 @@
 
 add_subdirectory(Category)
 
-qt_add_library(QGCLogging STATIC
+qt_add_library(
+    QGCLogging STATIC
     QGCLoggingCategoryManager.cc
     QGCLoggingCategoryManager.h
     LoggingCategoryModel.cc
     LoggingCategoryModel.h
 )
 
-qt_add_qml_module(QGCLogging
+qt_add_qml_module(
+    QGCLogging
     URI QGroundControl.Logging
     VERSION 1.0
     RESOURCE_PREFIX /qml
 )
 
-target_link_libraries(QGCLogging
+target_link_libraries(
+    QGCLogging
     PUBLIC
         QGCLoggingCategory
         Qt6::Core

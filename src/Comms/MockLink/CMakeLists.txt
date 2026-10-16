@@ -2,7 +2,8 @@ if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
     return()
 endif()
 
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(
+    ${CMAKE_PROJECT_NAME}
     PRIVATE
         MockConfiguration.cc
         MockConfiguration.h
@@ -22,11 +23,28 @@ target_sources(${CMAKE_PROJECT_NAME}
         MockLinkPX4Calibration.h
 )
 
-set_source_files_properties(MockLink.General.MetaData.json PROPERTIES QT_RESOURCE_ALIAS General.MetaData.json)
-set_source_files_properties(MockLink.General.MetaData.json.xz PROPERTIES QT_RESOURCE_ALIAS General.MetaData.json.xz)
-set_source_files_properties(MockLink.Parameter.MetaData.json.xz PROPERTIES QT_RESOURCE_ALIAS Parameter.MetaData.json.xz)
-set_source_files_properties(MockLink.Parameter.MetaData.json PROPERTIES QT_RESOURCE_ALIAS Parameter.MetaData.json)
-qt_add_resources(${CMAKE_PROJECT_NAME} mocklink_resources
+set_source_files_properties(
+    MockLink.General.MetaData.json
+    PROPERTIES
+        QT_RESOURCE_ALIAS General.MetaData.json
+)
+set_source_files_properties(
+    MockLink.General.MetaData.json.xz
+    PROPERTIES
+        QT_RESOURCE_ALIAS General.MetaData.json.xz
+)
+set_source_files_properties(
+    MockLink.Parameter.MetaData.json.xz
+    PROPERTIES
+        QT_RESOURCE_ALIAS Parameter.MetaData.json.xz
+)
+set_source_files_properties(
+    MockLink.Parameter.MetaData.json
+    PROPERTIES
+        QT_RESOURCE_ALIAS Parameter.MetaData.json
+)
+qt_add_resources(
+    ${CMAKE_PROJECT_NAME} mocklink_resources
     PREFIX "/MockLink"
     FILES
         GenericMockLink.params

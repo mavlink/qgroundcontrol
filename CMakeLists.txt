@@ -49,8 +49,9 @@ if(NOT QGC_CUSTOM_DIR
    OR IS_ABSOLUTE "${QGC_CUSTOM_DIR}"
    OR QGC_CUSTOM_DIR MATCHES "(^|[/\\\\])[.][.]([/\\\\]|$)"
 )
-    message(FATAL_ERROR "QGC_CUSTOM_DIR must be a non-empty path relative to the source root without '..': "
-                        "'${QGC_CUSTOM_DIR}'"
+    message(
+        FATAL_ERROR "QGC_CUSTOM_DIR must be a non-empty path relative to the source root without '..': "
+                    "'${QGC_CUSTOM_DIR}'"
     )
 endif()
 
@@ -67,8 +68,9 @@ if(IS_DIRECTORY "${CMAKE_SOURCE_DIR}/${QGC_CUSTOM_DIR}")
     message(STATUS "QGC: Custom build directory detected: ${QGC_CUSTOM_DIR}")
     set(_qgc_custom_overrides "${CMAKE_SOURCE_DIR}/${QGC_CUSTOM_DIR}/cmake/CustomOverrides.cmake")
     if(NOT EXISTS "${_qgc_custom_overrides}" OR NOT EXISTS "${CMAKE_SOURCE_DIR}/${QGC_CUSTOM_DIR}/CMakeLists.txt")
-        message(FATAL_ERROR "QGC custom overlay '${QGC_CUSTOM_DIR}' must contain CMakeLists.txt and "
-                            "cmake/CustomOverrides.cmake"
+        message(
+            FATAL_ERROR "QGC custom overlay '${QGC_CUSTOM_DIR}' must contain CMakeLists.txt and "
+                        "cmake/CustomOverrides.cmake"
         )
     endif()
     set(QGC_CUSTOM_BUILD ON)
@@ -242,40 +244,40 @@ set(QT_NO_PRIVATE_MODULE_WARNING ON)
 find_package(Qt6 ${QGC_QT_MINIMUM_VERSION} QUIET COMPONENTS Core)
 if(NOT Qt6_FOUND)
     message(
-        FATAL_ERROR "Qt6 ${QGC_QT_MINIMUM_VERSION}+ not found.\n"
-                    "Set CMAKE_PREFIX_PATH to your Qt installation, e.g.:\n"
-                    "  cmake -DCMAKE_PREFIX_PATH=~/Qt/6.8.3/gcc_64 ..\n"
-                    "  (or use qt-cmake which sets this automatically)\n"
-                    "Searched: ${CMAKE_PREFIX_PATH}"
+        FATAL_ERROR
+            "Qt6 ${QGC_QT_MINIMUM_VERSION}+ not found.\n" "Set CMAKE_PREFIX_PATH to your Qt installation, e.g.:\n"
+            "  cmake -DCMAKE_PREFIX_PATH=~/Qt/6.8.3/gcc_64 ..\n" "  (or use qt-cmake which sets this automatically)\n"
+            "Searched: ${CMAKE_PREFIX_PATH}"
     )
 endif()
 
 find_package(
     Qt6 ${QGC_QT_MINIMUM_VERSION}...${QGC_QT_MAXIMUM_VERSION} REQUIRED
-    COMPONENTS Graphs
-               Concurrent
-               Core
-               Gui
-               HttpServer
-               LinguistTools
-               Location
-               LocationPrivate
-               Multimedia
-               Network
-               Positioning
-               Qml
-               QmlIntegration
-               Quick
-               QuickControls2
-               QuickVectorImage
-               QuickWidgets
-               Sensors
-               Sql
-               Svg
-               TextToSpeech
-               Xml
-               Quick3D
-               StateMachine
+    COMPONENTS
+        Graphs
+        Concurrent
+        Core
+        Gui
+        HttpServer
+        LinguistTools
+        Location
+        LocationPrivate
+        Multimedia
+        Network
+        Positioning
+        Qml
+        QmlIntegration
+        Quick
+        QuickControls2
+        QuickVectorImage
+        QuickWidgets
+        Sensors
+        Sql
+        Svg
+        TextToSpeech
+        Xml
+        Quick3D
+        StateMachine
     OPTIONAL_COMPONENTS Bluetooth MultimediaQuickPrivate OpenGL QuickTest SerialPort Test
 )
 
@@ -289,8 +291,8 @@ endif()
 
 qgc_config_rcc_launcher()
 
-qt_standard_project_setup(REQUIRES ${QGC_QT_MINIMUM_VERSION} SUPPORTS_UP_TO ${QGC_QT_MAXIMUM_VERSION}
-                          I18N_SOURCE_LANGUAGE en
+qt_standard_project_setup(
+    REQUIRES ${QGC_QT_MINIMUM_VERSION} SUPPORTS_UP_TO ${QGC_QT_MAXIMUM_VERSION} I18N_SOURCE_LANGUAGE en
 )
 
 # ----------------------------------------------------------------------------
@@ -342,8 +344,10 @@ set(QGC_APP_RESOURCES
     "${CMAKE_SOURCE_DIR}/resources/icons/qgroundcontrol.ico"
 )
 qgc_set_qt_resource_alias(${QGC_APP_RESOURCES})
-set_source_files_properties("${CMAKE_SOURCE_DIR}/resources/SplashScreen.png" PROPERTIES QT_RESOURCE_ALIAS
-                                                                                        "SplashScreen"
+set_source_files_properties(
+    "${CMAKE_SOURCE_DIR}/resources/SplashScreen.png"
+    PROPERTIES
+        QT_RESOURCE_ALIAS "SplashScreen"
 )
 
 set(QGC_FONT_RESOURCES
@@ -352,17 +356,25 @@ set(QGC_FONT_RESOURCES
     "${CMAKE_SOURCE_DIR}/resources/fonts/NanumGothic-Regular.ttf"
     "${CMAKE_SOURCE_DIR}/resources/fonts/NanumGothic-Bold.ttf"
 )
-set_source_files_properties("${CMAKE_SOURCE_DIR}/resources/fonts/OpenSans-Regular.ttf" PROPERTIES QT_RESOURCE_ALIAS
-                                                                                                  "opensans"
+set_source_files_properties(
+    "${CMAKE_SOURCE_DIR}/resources/fonts/OpenSans-Regular.ttf"
+    PROPERTIES
+        QT_RESOURCE_ALIAS "opensans"
 )
-set_source_files_properties("${CMAKE_SOURCE_DIR}/resources/fonts/OpenSans-Semibold.ttf" PROPERTIES QT_RESOURCE_ALIAS
-                                                                                                   "opensans-demibold"
+set_source_files_properties(
+    "${CMAKE_SOURCE_DIR}/resources/fonts/OpenSans-Semibold.ttf"
+    PROPERTIES
+        QT_RESOURCE_ALIAS "opensans-demibold"
 )
-set_source_files_properties("${CMAKE_SOURCE_DIR}/resources/fonts/NanumGothic-Regular.ttf"
-                            PROPERTIES QT_RESOURCE_ALIAS "NanumGothic-Regular"
+set_source_files_properties(
+    "${CMAKE_SOURCE_DIR}/resources/fonts/NanumGothic-Regular.ttf"
+    PROPERTIES
+        QT_RESOURCE_ALIAS "NanumGothic-Regular"
 )
-set_source_files_properties("${CMAKE_SOURCE_DIR}/resources/fonts/NanumGothic-Bold.ttf" PROPERTIES QT_RESOURCE_ALIAS
-                                                                                                  "NanumGothic-Bold"
+set_source_files_properties(
+    "${CMAKE_SOURCE_DIR}/resources/fonts/NanumGothic-Bold.ttf"
+    PROPERTIES
+        QT_RESOURCE_ALIAS "NanumGothic-Bold"
 )
 
 # ============================================================================
@@ -372,25 +384,32 @@ set_source_files_properties("${CMAKE_SOURCE_DIR}/resources/fonts/NanumGothic-Bol
 include(Hardening)
 qgc_apply_global_hardening()
 
-qt_add_executable(${CMAKE_PROJECT_NAME} WIN32 # Windows GUI application
-                  MACOSX_BUNDLE # macOS application bundle
+qt_add_executable(
+    ${CMAKE_PROJECT_NAME} WIN32 # Windows GUI application
+    MACOSX_BUNDLE # macOS application bundle
 )
 
 qt_add_resources(
     ${CMAKE_PROJECT_NAME} qgc_fonts
     PREFIX "/fonts"
     BASE "${CMAKE_SOURCE_DIR}/resources/fonts"
-    FILES ${QGC_FONT_RESOURCES}
+    FILES
+        ${QGC_FONT_RESOURCES}
 )
 
 qt_add_resources(
     ${CMAKE_PROJECT_NAME} qgc_app_resources
     PREFIX "/res"
     BASE "${CMAKE_SOURCE_DIR}/resources"
-    FILES ${QGC_APP_RESOURCES}
+    FILES
+        ${QGC_APP_RESOURCES}
 )
 
-set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES ADDITIONAL_CLEAN_FILES "${CMAKE_BINARY_DIR}/ccache-launcher")
+set_target_properties(
+    ${CMAKE_PROJECT_NAME}
+    PROPERTIES
+        ADDITIONAL_CLEAN_FILES "${CMAKE_BINARY_DIR}/ccache-launcher"
+)
 
 include(Sanitizers)
 
@@ -428,9 +447,14 @@ qt_add_qml_module(
     URI QGC
     VERSION 1.0
     RESOURCE_PREFIX /qml
-    IMPORTS QtQuick QtQuick.Controls QtQuick.Dialogs QtQuick.Layouts
+    IMPORTS
+        QtQuick
+        QtQuick.Controls
+        QtQuick.Dialogs
+        QtQuick.Layouts
     # Application types expose GPS library types registered by the GPS module.
-    DEPENDENCIES QGroundControl.GPS
+    DEPENDENCIES
+        QGroundControl.GPS
 )
 
 # ----------------------------------------------------------------------------
@@ -527,7 +551,8 @@ qgc_set_qt_resource_alias("${CMAKE_SOURCE_DIR}/resources/qtquickcontrols2.conf")
 qt_add_resources(
     ${CMAKE_PROJECT_NAME} "qgcresources_cmake"
     PREFIX "/"
-    FILES "${CMAKE_SOURCE_DIR}/resources/qtquickcontrols2.conf"
+    FILES
+        "${CMAKE_SOURCE_DIR}/resources/qtquickcontrols2.conf"
 )
 
 # ----------------------------------------------------------------------------
@@ -535,21 +560,19 @@ qt_add_resources(
 # ----------------------------------------------------------------------------
 qt_import_plugins(
     ${CMAKE_PROJECT_NAME}
-    INCLUDE
-    Qt6::QSvgPlugin
-    Qt6::QOffscreenIntegrationPlugin
-    EXCLUDE_BY_TYPE
-    geoservices # Use built-in location plugins
-    INCLUDE_BY_TYPE
-    sqldrivers
-    Qt6::QSQLiteDriverPlugin
+    INCLUDE Qt6::QSvgPlugin Qt6::QOffscreenIntegrationPlugin
+    EXCLUDE_BY_TYPE geoservices # Use built-in location plugins
+    INCLUDE_BY_TYPE sqldrivers Qt6::QSQLiteDriverPlugin
 )
 
 # Linux-specific Qt platform plugins
 if(LINUX)
-    qt_import_plugins(${CMAKE_PROJECT_NAME} INCLUDE Qt6::QWaylandIntegrationPlugin # Wayland support (libqwayland.so)
-                      Qt6::QXcbIntegrationPlugin # X11 support
-                      Qt6::QEglFSIntegrationPlugin # Embedded GL support
+    qt_import_plugins(
+        ${CMAKE_PROJECT_NAME}
+        INCLUDE
+            Qt6::QWaylandIntegrationPlugin # Wayland support (libqwayland.so)
+            Qt6::QXcbIntegrationPlugin # X11 support
+            Qt6::QEglFSIntegrationPlugin # Embedded GL support
     )
 endif()
 

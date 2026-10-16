@@ -37,7 +37,11 @@ if(TEST_CASE STREQUAL "compiler-warnings-project-targets")
     add_executable(${PROJECT_NAME} main.cpp)
     add_library(ProjectLibrary STATIC main.cpp)
     add_library(DependencyLibrary STATIC main.cpp)
-    set_target_properties(ProjectLibrary PROPERTIES AUTOMOC ON)
+    set_target_properties(
+        ProjectLibrary
+        PROPERTIES
+            AUTOMOC ON
+    )
     qgc_disable_dependency_warnings(DependencyLibrary)
 
     qgc_configure_target(${PROJECT_NAME})
@@ -68,7 +72,11 @@ if(TEST_CASE STREQUAL "compiler-warnings-project-targets")
             endif()
         endforeach()
     endif()
-    set_target_properties(ProjectLibrary PROPERTIES AUTOMOC OFF)
+    set_target_properties(
+        ProjectLibrary
+        PROPERTIES
+            AUTOMOC OFF
+    )
     set(_wall_count 0)
     foreach(_option IN LISTS _compile_options)
         if(_option STREQUAL "-Wall")
@@ -90,7 +98,11 @@ if(TEST_CASE STREQUAL "unity-project-targets")
     add_library(ProjectLibrary STATIC main.cpp)
     add_library(OptedOutLibrary STATIC main.cpp)
     add_library(DependencyLibrary STATIC main.cpp)
-    set_target_properties(OptedOutLibrary PROPERTIES UNITY_BUILD OFF)
+    set_target_properties(
+        OptedOutLibrary
+        PROPERTIES
+            UNITY_BUILD OFF
+    )
     qgc_disable_dependency_warnings(DependencyLibrary)
 
     qgc_configure_target(${PROJECT_NAME})
@@ -113,8 +125,9 @@ if(TEST_CASE STREQUAL "unity-project-targets")
     endif()
 
     string(TOLOWER "${PROJECT_NAME}_qmltyperegistrations.cpp" _registrations)
-    foreach(_aggregate IN ITEMS "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_autogen/mocs_compilation.cpp"
-                                "${CMAKE_CURRENT_BINARY_DIR}/${_registrations}"
+    foreach(
+        _aggregate IN ITEMS "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_autogen/mocs_compilation.cpp"
+                            "${CMAKE_CURRENT_BINARY_DIR}/${_registrations}"
     )
         get_source_file_property(_skip "${_aggregate}" TARGET_DIRECTORY ${PROJECT_NAME} SKIP_UNITY_BUILD_INCLUSION)
         if(NOT _skip)
@@ -254,8 +267,9 @@ if(TEST_CASE STREQUAL "coverage-clean")
     file(MAKE_DIRECTORY "${_coverage_dir}/nested")
     file(WRITE "${_coverage_dir}/one.gcda" "data")
     file(WRITE "${_coverage_dir}/nested/two.profraw" "data")
-    execute_process(COMMAND "${CMAKE_COMMAND}" "-DQGC_COVERAGE_BUILD_DIR=${_coverage_dir}" -P
-                            "${QGC_MODULE_DIR}/modules/CleanCoverage.cmake" COMMAND_ERROR_IS_FATAL ANY
+    execute_process(
+        COMMAND "${CMAKE_COMMAND}" "-DQGC_COVERAGE_BUILD_DIR=${_coverage_dir}" -P
+                "${QGC_MODULE_DIR}/modules/CleanCoverage.cmake" COMMAND_ERROR_IS_FATAL ANY
     )
     if(EXISTS "${_coverage_dir}/one.gcda" OR EXISTS "${_coverage_dir}/nested/two.profraw")
         message(FATAL_ERROR "Coverage data was not removed")
@@ -294,7 +308,12 @@ if(TEST_CASE MATCHES "^helpers-")
         add_library(AutomocTarget STATIC main.cpp)
         add_library(CustomMocTarget STATIC main.cpp)
         add_library(PlainTarget STATIC main.cpp)
-        set_target_properties(AutomocTarget CustomMocTarget PROPERTIES AUTOMOC ON)
+        set_target_properties(
+            AutomocTarget
+            CustomMocTarget
+            PROPERTIES
+                AUTOMOC ON
+        )
         set_property(TARGET CustomMocTarget PROPERTY AUTOMOC_EXECUTABLE "${_custom_moc}")
 
         qgc_apply_moccache()
@@ -325,7 +344,12 @@ if(TEST_CASE MATCHES "^helpers-")
         if(_plain_launcher_set)
             message(FATAL_ERROR "Non-AUTOMOC target received moccache")
         endif()
-        set_target_properties(AutomocTarget CustomMocTarget PROPERTIES AUTOMOC OFF)
+        set_target_properties(
+            AutomocTarget
+            CustomMocTarget
+            PROPERTIES
+                AUTOMOC OFF
+        )
     elseif(TEST_CASE STREQUAL "helpers-write-if-changed")
         set(_file "${CMAKE_CURRENT_BINARY_DIR}/write-if-changed.txt")
         file(REMOVE "${_file}")
@@ -345,8 +369,11 @@ if(TEST_CASE MATCHES "^helpers-")
     elseif(TEST_CASE STREQUAL "helpers-rcc-launcher")
         # CMake stands in for rcc so the launcher can be executed.
         add_executable(Qt6::rcc IMPORTED)
-        set_target_properties(Qt6::rcc PROPERTIES IMPORTED_CONFIGURATIONS RELEASE IMPORTED_LOCATION_RELEASE
-                                                                                  "${CMAKE_COMMAND}"
+        set_target_properties(
+            Qt6::rcc
+            PROPERTIES
+                IMPORTED_CONFIGURATIONS RELEASE
+                IMPORTED_LOCATION_RELEASE "${CMAKE_COMMAND}"
         )
         set(QT_FEATURE_zstd OFF)
         qgc_config_rcc_launcher()
@@ -387,7 +414,12 @@ if(TEST_CASE MATCHES "^helpers-")
             file(WRITE "${_echo_rcc}" "#!/bin/sh\necho \"$*\"\n")
             # cmake-lint: disable=E1126
             file(CHMOD "${_echo_rcc}" PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE)
-            set_target_properties(Qt6::rcc PROPERTIES IMPORTED_LOCATION "" IMPORTED_LOCATION_RELEASE "${_echo_rcc}")
+            set_target_properties(
+                Qt6::rcc
+                PROPERTIES
+                    IMPORTED_LOCATION ""
+                    IMPORTED_LOCATION_RELEASE "${_echo_rcc}"
+            )
             set(QT_FEATURE_zstd ON)
             qgc_config_rcc_launcher()
             execute_process(
@@ -422,14 +454,15 @@ if(TEST_CASE MATCHES "^helpers-")
         set(_object "${CMAKE_CURRENT_BINARY_DIR}/stale.o")
         file(WRITE "${_pch}" "stale")
         file(WRITE "${_object}" "stale")
-        execute_process(COMMAND "${CMAKE_CURRENT_BINARY_DIR}/ccache-launcher" c++ -x c++-header -c in.hxx -o "${_pch}"
-                        RESULT_VARIABLE _result
+        execute_process(
+            COMMAND "${CMAKE_CURRENT_BINARY_DIR}/ccache-launcher" c++ -x c++-header -c in.hxx -o "${_pch}"
+            RESULT_VARIABLE _result
         )
         if(NOT _result EQUAL 0 OR EXISTS "${_pch}")
             message(FATAL_ERROR "ccache launcher kept the stale PCH (exit ${_result})")
         endif()
-        execute_process(COMMAND "${CMAKE_CURRENT_BINARY_DIR}/ccache-launcher" c++ -c in.cpp -o "${_object}"
-                        RESULT_VARIABLE _result
+        execute_process(
+            COMMAND "${CMAKE_CURRENT_BINARY_DIR}/ccache-launcher" c++ -c in.cpp -o "${_object}" RESULT_VARIABLE _result
         )
         if(NOT _result EQUAL 3 OR NOT EXISTS "${_object}")
             message(FATAL_ERROR "ccache launcher deleted a non-header compile's output (exit ${_result})")
@@ -479,19 +512,19 @@ if(TEST_CASE MATCHES "^qml-codegen-")
         find_package(Python3 REQUIRED COMPONENTS Interpreter)
     elseif(NOT TEST_CASE STREQUAL "qml-codegen-missing-python")
         add_executable(Python3::Interpreter IMPORTED)
-        set_target_properties(Python3::Interpreter PROPERTIES IMPORTED_LOCATION "${CMAKE_COMMAND}")
+        set_target_properties(
+            Python3::Interpreter
+            PROPERTIES
+                IMPORTED_LOCATION "${CMAKE_COMMAND}"
+        )
     endif()
 
     if(TEST_CASE STREQUAL "qml-codegen-valid")
         qgc_add_qml_codegen(
             generate_qml
-            GENERATOR_MODULE
-            generator.module
-            OUTPUT_DIR
-            "${CMAKE_CURRENT_BINARY_DIR}/generated"
-            QML_NAMES
-            Example.qml
-            Nested/Other.qml
+            GENERATOR_MODULE generator.module
+            OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated"
+            QML_NAMES Example.qml Nested/Other.qml
         )
         if(NOT TARGET generate_qml)
             message(FATAL_ERROR "Code generation target was not created")
@@ -503,88 +536,59 @@ if(TEST_CASE MATCHES "^qml-codegen-")
         endif()
     elseif(TEST_CASE STREQUAL "qml-codegen-configure-valid")
         qgc_add_qml_codegen(
-            generate_qml
-            GENERATE_AT_CONFIGURE
-            GENERATOR_MODULE
-            qml_generator
-            OUTPUT_DIR
-            "${CMAKE_CURRENT_BINARY_DIR}/generated"
-            QML_NAMES
-            Example.qml
-            Nested/Other.qml
-            EXTRA_ARGS
-            --write-output
-            Example.qml
-            --write-output
-            Nested/Other.qml
+            generate_qml GENERATE_AT_CONFIGURE
+            GENERATOR_MODULE qml_generator
+            OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated"
+            QML_NAMES Example.qml Nested/Other.qml
+            EXTRA_ARGS --write-output Example.qml --write-output Nested/Other.qml
         )
     elseif(TEST_CASE STREQUAL "qml-codegen-configure-missing-output")
         qgc_add_qml_codegen(
-            generate_qml
-            GENERATE_AT_CONFIGURE
-            GENERATOR_MODULE
-            qml_generator
-            OUTPUT_DIR
-            "${CMAKE_CURRENT_BINARY_DIR}/generated"
-            QML_NAMES
-            Example.qml
+            generate_qml GENERATE_AT_CONFIGURE
+            GENERATOR_MODULE qml_generator
+            OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated"
+            QML_NAMES Example.qml
         )
     elseif(TEST_CASE STREQUAL "qml-codegen-missing-names")
-        qgc_add_qml_codegen(generate_qml GENERATOR_MODULE generator.module OUTPUT_DIR
-                            "${CMAKE_CURRENT_BINARY_DIR}/generated"
+        qgc_add_qml_codegen(
+            generate_qml
+            GENERATOR_MODULE generator.module
+            OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated"
         )
     elseif(TEST_CASE STREQUAL "qml-codegen-missing-python")
         qgc_add_qml_codegen(
             generate_qml
-            GENERATOR_MODULE
-            generator.module
-            OUTPUT_DIR
-            "${CMAKE_CURRENT_BINARY_DIR}/generated"
-            QML_NAMES
-            Example.qml
+            GENERATOR_MODULE generator.module
+            OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated"
+            QML_NAMES Example.qml
         )
     elseif(TEST_CASE STREQUAL "qml-codegen-unknown-argument")
         qgc_add_qml_codegen(
-            generate_qml
-            TYPO
-            value
-            GENERATOR_MODULE
-            generator.module
-            OUTPUT_DIR
-            "${CMAKE_CURRENT_BINARY_DIR}/generated"
-            QML_NAMES
-            Example.qml
+            generate_qml TYPO value
+            GENERATOR_MODULE generator.module
+            OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated"
+            QML_NAMES Example.qml
         )
     elseif(TEST_CASE STREQUAL "qml-codegen-duplicate-output")
         qgc_add_qml_codegen(
             generate_qml
-            GENERATOR_MODULE
-            generator.module
-            OUTPUT_DIR
-            "${CMAKE_CURRENT_BINARY_DIR}/generated"
-            QML_NAMES
-            Example.qml
-            Example.qml
+            GENERATOR_MODULE generator.module
+            OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated"
+            QML_NAMES Example.qml Example.qml
         )
     elseif(TEST_CASE STREQUAL "qml-codegen-escaped-output")
         qgc_add_qml_codegen(
             generate_qml
-            GENERATOR_MODULE
-            generator.module
-            OUTPUT_DIR
-            "${CMAKE_CURRENT_BINARY_DIR}/generated"
-            QML_NAMES
-            ../Example.qml
+            GENERATOR_MODULE generator.module
+            OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated"
+            QML_NAMES ../Example.qml
         )
     elseif(TEST_CASE STREQUAL "qml-codegen-output-outside-build")
         qgc_add_qml_codegen(
             generate_qml
-            GENERATOR_MODULE
-            generator.module
-            OUTPUT_DIR
-            "${CMAKE_CURRENT_SOURCE_DIR}/generated"
-            QML_NAMES
-            Example.qml
+            GENERATOR_MODULE generator.module
+            OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/generated"
+            QML_NAMES Example.qml
         )
     else()
         message(FATAL_ERROR "Unknown QML codegen TEST_CASE: ${TEST_CASE}")

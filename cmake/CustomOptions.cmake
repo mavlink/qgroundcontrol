@@ -75,8 +75,9 @@ option(QGC_ENABLE_COVERAGE "Enable code coverage instrumentation" OFF)
 unset(_qgc_debug_build)
 option(QGC_ENABLE_CLANG_TIDY "Enable clang-tidy static analysis during build" OFF)
 option(QGC_TIME_TRACE "Emit per-TU Clang -ftime-trace JSON for build profiling (Clang only)" OFF)
-option(QGC_SPLIT_DWARF
-       "Use -gsplit-dwarf + --gdb-index for faster Debug links (Linux/Android ELF only; marginal win with mold)" OFF
+option(
+    QGC_SPLIT_DWARF
+    "Use -gsplit-dwarf + --gdb-index for faster Debug links (Linux/Android ELF only; marginal win with mold)" OFF
 )
 
 # Git options
@@ -131,8 +132,9 @@ set(QGC_GST_CUDA_STUB_DIR
     ""
     CACHE PATH "Linux: directory with a cuda.h for the CUDA GPU path when no CUDA Toolkit is installed"
 )
-option(QGC_GST_BUNDLE_PLUGINS
-       "Linux: install the system's GStreamer plugins and GIO modules with the app (OFF for distribution packages)" ON
+option(
+    QGC_GST_BUNDLE_PLUGINS
+    "Linux: install the system's GStreamer plugins and GIO modules with the app (OFF for distribution packages)" ON
 )
 option(QGC_GST_USE_HOMEBREW "macOS: build against Homebrew's gstreamer (cannot be installed or packaged)" OFF)
 
@@ -293,8 +295,9 @@ elseif(QGC_LINUX_DISTRO_FAMILY STREQUAL "arch")
 endif()
 
 option(QGC_CREATE_APPIMAGE "Create AppImage package after build" ON)
-option(QGC_RUN_APPIMAGELINT "Run the appimagelint distro-compatibility check after AppImage creation"
-       ${_qgc_appimagelint_default}
+option(
+    QGC_RUN_APPIMAGELINT "Run the appimagelint distro-compatibility check after AppImage creation"
+    ${_qgc_appimagelint_default}
 )
 set(QGC_APPIMAGE_ICON_256_PATH
     "${CMAKE_SOURCE_DIR}/deploy/linux/QGroundControl_256.png"

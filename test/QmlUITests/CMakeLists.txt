@@ -2,7 +2,8 @@
 # QML UI Smoke Tests
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(
+    ${CMAKE_PROJECT_NAME}
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/QmlUITestBase.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/QmlUITestBase.h
@@ -65,8 +66,12 @@ target_sources(${CMAKE_PROJECT_NAME}
 )
 
 # Shares file-local constants with FlyViewGeoUITest.cc, so it cannot share a unity unit.
-set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/FlyViewOccluderUITest.cc TARGET_DIRECTORY ${CMAKE_PROJECT_NAME}
-                            PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON
+set_source_files_properties(
+    ${CMAKE_CURRENT_SOURCE_DIR}/FlyViewOccluderUITest.cc
+    TARGET_DIRECTORY
+    ${CMAKE_PROJECT_NAME}
+    PROPERTIES
+        SKIP_UNITY_BUILD_INCLUSION ON
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -104,10 +109,7 @@ add_qgc_test(CriticalVehicleMessageUITest LABELS Integration NoSanitizer TIMEOUT
 # documented View3D fallback warnings instead.
 set(_viewer3d_env_mod "")
 if(LINUX)
-    set(_viewer3d_env_mod ENV_MODIFICATION
-        "QT_QUICK_BACKEND=unset:"
-        "QSG_RHI_BACKEND=set:opengl"
-    )
+    set(_viewer3d_env_mod ENV_MODIFICATION "QT_QUICK_BACKEND=unset:" "QSG_RHI_BACKEND=set:opengl")
 endif()
 add_qgc_test(Viewer3DUITest LABELS Integration NoSanitizer StockUI TIMEOUT 120 ${_viewer3d_env_mod})
 add_qgc_test(FlyViewGeoUITest LABELS Integration NoSanitizer TIMEOUT 120 ${_viewer3d_env_mod})

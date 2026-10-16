@@ -7,8 +7,7 @@ add_subdirectory(Json)
 add_subdirectory(Wire)
 
 qt_add_library(
-    QGCParsing
-    STATIC
+    QGCParsing STATIC
     APMDataFlash/APMDataFlashUtility.cc
     APMDataFlash/APMDataFlashUtility.h
     Exif/ExifUtility.cc
@@ -114,7 +113,12 @@ typedef SSIZE_T ssize_t;
 target_include_directories(exif PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/Exif)
 
 target_compile_definitions(exif PRIVATE HAVE_CONFIG_H)
-set_target_properties(exif PROPERTIES C_STANDARD 99 POSITION_INDEPENDENT_CODE ON)
+set_target_properties(
+    exif
+    PROPERTIES
+        C_STANDARD 99
+        POSITION_INDEPENDENT_CODE ON
+)
 
 qgc_disable_dependency_warnings(exif)
 
@@ -139,12 +143,9 @@ include(CPMPatchCache)
 set(_valijson_patch "${CMAKE_CURRENT_SOURCE_DIR}/valijson-qtjson-int64.patch")
 qgc_cpm_patch_cache_key(
     _valijson_cache_key
-    GIT_REPOSITORY
-    "https://github.com/tristanpenman/valijson.git"
-    GIT_TAG
-    v1.1.0
-    PATCHES
-    "${_valijson_patch}"
+    GIT_REPOSITORY "https://github.com/tristanpenman/valijson.git"
+    GIT_TAG v1.1.0
+    PATCHES "${_valijson_patch}"
 )
 # valijson's recursive submodules nest test files 151 characters deep; the full 64-character key
 # pushes those paths past Windows' 260-character limit in CI checkouts.
@@ -159,19 +160,34 @@ CPMAddPackage(
     # CPM's default source-cache key hashes the patch's absolute path, not its contents, so every
     # checkout location cloned its own copy.
     CUSTOM_CACHE_KEY "${_valijson_cache_key}"
-    OPTIONS "valijson_BUILD_TESTS OFF" "valijson_BUILD_EXAMPLES OFF" "valijson_INSTALL OFF"
+    OPTIONS
+        "valijson_BUILD_TESTS OFF"
+        "valijson_BUILD_EXAMPLES OFF"
+        "valijson_INSTALL OFF"
     # QtJsonAdapter isInteger()/getInteger() use 32-bit toInt(), so integral values
     # > INT_MAX (e.g. PX4 uint32 fileCrc) fail "type": "integer" checks or truncate.
     PATCHES "${_valijson_patch}"
 )
 
 # Keep header-only Valijson diagnostics outside QGC's warning policy.
-set_target_properties(valijson PROPERTIES SYSTEM TRUE)
+set_target_properties(
+    valijson
+    PROPERTIES
+        SYSTEM TRUE
+)
 
 target_link_libraries(
     QGCParsing
-    PUBLIC Qt6::Core QGCJsonValidation exif ulog_cpp::ulog_cpp
-    PRIVATE QGCCompression QGCLogging QGCWire ValiJSON::valijson
+    PUBLIC
+        Qt6::Core
+        QGCJsonValidation
+        exif
+        ulog_cpp::ulog_cpp
+    PRIVATE
+        QGCCompression
+        QGCLogging
+        QGCWire
+        ValiJSON::valijson
 )
 
 # valijson defaults to abort() on malformed schema (it only enables exceptions when building
@@ -191,19 +207,23 @@ endif()
 
 target_include_directories(
     QGCParsing
-    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/APMDataFlash ${CMAKE_CURRENT_SOURCE_DIR}/Exif
-           ${CMAKE_CURRENT_SOURCE_DIR}/Json ${CMAKE_CURRENT_SOURCE_DIR}/PX4ULog
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/APMDataFlash
+        ${CMAKE_CURRENT_SOURCE_DIR}/Exif
+        ${CMAKE_CURRENT_SOURCE_DIR}/Json
+        ${CMAKE_CURRENT_SOURCE_DIR}/PX4ULog
 )
 
 target_precompile_headers(
     QGCParsing
     PRIVATE
-    <QtCore/QObject>
-    <QtCore/QString>
-    <QtCore/QByteArray>
-    <QtCore/QJsonObject>
-    <QtCore/QJsonArray>
-    <QtCore/QJsonDocument>
+        <QtCore/QObject>
+        <QtCore/QString>
+        <QtCore/QByteArray>
+        <QtCore/QJsonObject>
+        <QtCore/QJsonArray>
+        <QtCore/QJsonDocument>
 )
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCParsing)

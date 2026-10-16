@@ -3,25 +3,26 @@
 
 target_sources(
     ${CMAKE_PROJECT_NAME}
-    PRIVATE GStreamerEnvironmentTest.cc
-            GStreamerEnvironmentTest.h
-            GStreamerTest.cc
-            GStreamerTest.h
-            GStreamerTestHelpers.cc
-            GStreamerTestHelpers.h
-            HwBuffers/GStreamerHwFrameTexturesTest.cc
-            HwBuffers/GStreamerHwImportCacheTest.cc
-            HwBuffers/common/GStreamerHwBuffersCommonTest.cc
-            HwBuffers/d3d/GStreamerD3DTest.cc
-            HwBuffers/dmabuf/GStreamerDmaBufTest.cc
-            HwBuffers/gl/GStreamerGlTest.cc
-            HwBuffers/vulkan/GStreamerVulkanTest.cc
-            Receiver/GstVideoReceiverComponentsTest.cc
-            Receiver/GstVideoReceiverComponentsTest.h
-            Receiver/GstVideoReceiverTest.cc
-            Receiver/GstVideoReceiverTest.h
-            SourceFactory/GStreamerSourceFactoryTest.cc
-            gstqgc/GStreamerGstQgcTest.cc
+    PRIVATE
+        GStreamerEnvironmentTest.cc
+        GStreamerEnvironmentTest.h
+        GStreamerTest.cc
+        GStreamerTest.h
+        GStreamerTestHelpers.cc
+        GStreamerTestHelpers.h
+        HwBuffers/GStreamerHwFrameTexturesTest.cc
+        HwBuffers/GStreamerHwImportCacheTest.cc
+        HwBuffers/common/GStreamerHwBuffersCommonTest.cc
+        HwBuffers/d3d/GStreamerD3DTest.cc
+        HwBuffers/dmabuf/GStreamerDmaBufTest.cc
+        HwBuffers/gl/GStreamerGlTest.cc
+        HwBuffers/vulkan/GStreamerVulkanTest.cc
+        Receiver/GstVideoReceiverComponentsTest.cc
+        Receiver/GstVideoReceiverComponentsTest.h
+        Receiver/GstVideoReceiverTest.cc
+        Receiver/GstVideoReceiverTest.h
+        SourceFactory/GStreamerSourceFactoryTest.cc
+        gstqgc/GStreamerGstQgcTest.cc
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
