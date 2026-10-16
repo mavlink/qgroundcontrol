@@ -2,74 +2,42 @@
 
 #ifdef QGC_GST_STREAMING
 
-#include "CpuVideoFramePool.h"
-#include "Fact.h"
-#include "Fixtures/RAIIFixtures.h"
-#include "GStreamer.h"
-#include "GStreamerHelpers.h"
-#include "GStreamerLogging.h"
-#include "GStreamerTestHelpers.h"
-#include "GstHwPathTelemetry.h"
-#include "GstHwVideoBufferFactory.h"
-#include "GstQgcFrameMap.h"
-#include "GstSourceFactory.h"
-#include "GstVideoReceiver.h"
-#include "HwBuffers/common/HwBuffers.h"
-#include "HwBuffers/dmabuf/GstDmaDrmCaps.h"
-#include "QGCQVideoSinkController.h"
-#include "gstqgc/GstQgcAllocation.h"
-#include "gstqgc/GstQgcBinChain.h"
-#include "gstqgc/GstQgcCaps.h"
-#include "gstqgc/GstQgcVideoFormats.h"
-
-#if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
-#include "GstDmaBufVideoBuffer.h"
-#endif
-#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
-#include <gst/gl/gl.h>
-
-#include "GstGlContextBridge.h"
-#endif
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
-#include "GstD3D11ContextBridge.h"
-#endif
-#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
-#include "GstD3D12ContextBridge.h"
-#endif
-#include "GstHwVideoBuffer.h"
-#include "gstqgc/gstqgcqvideosink.h"
-#include "gstqgc/gstqgcvideosinkbin.h"
-#if defined(QGC_HAS_ANY_GPU_PATH)
-#include "QGCRhiCapture.h"
-#endif
-#include <QtCore/QCoreApplication>
-#include <QtCore/QDir>
-#include <QtCore/QElapsedTimer>
-#include <QtCore/QEventLoop>
-#include <QtCore/QFileInfo>
-#include <QtCore/QRegularExpression>
-#include <QtCore/QScopeGuard>
-#include <QtCore/QStandardPaths>
-#include <QtGui/QColor>
-#include <QtGui/QImage>
-#include <QtMultimedia/QVideoFrame>
-#include <QtMultimedia/QVideoSink>
-#include <QtMultimediaQuick/private/qquickvideooutput_p.h>
-#include <QtQuick/QQuickWindow>
-#include <QtTest/QSignalSpy>
+#include <array>
 #include <atomic>
 #include <cstring>
 #include <gst/gst.h>
 #include <gst/video/gstvideometa.h>
-#include <iterator>
 #include <memory>
-#include <string_view>
 #include <vector>
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
 #include <gst/allocators/gstfdmemory.h>
 #include <sys/mman.h>
 #include <unistd.h>
 #endif
+
+#include <QtCore/QCoreApplication>
+#include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
+#include <QtGui/QColor>
+#include <QtGui/QImage>
+#include <QtMultimedia/QVideoFrame>
+#include <QtMultimedia/QVideoSink>
+#include <QtMultimediaQuick/private/qquickvideooutput_p.h>
+#include <QtTest/QSignalSpy>
+
+#include "CpuVideoFramePool.h"
+#include "GStreamer.h"
+#include "GStreamerTestHelpers.h"
+#include "GstHwPathTelemetry.h"
+#include "GstQgcFrameMap.h"
+#include "HwBuffers/common/HwBuffers.h"
+#include "QGCQVideoSinkController.h"
+#include "gstqgc/GstQgcAllocation.h"
+#include "gstqgc/GstQgcBinChain.h"
+#include "gstqgc/GstQgcCaps.h"
+#include "gstqgc/GstQgcVideoFormats.h"
+#include "gstqgc/gstqgcqvideosink.h"
+#include "gstqgc/gstqgcvideosinkbin.h"
 
 namespace {
 
@@ -91,6 +59,8 @@ qint64 sinkStat(GstElement* qvideosink, const char* field)
 
 /// Drives a standalone qgcqvideosink from the test thread through a linked source pad. show_frame runs inside
 /// pushFrame(), so element counters are exact, and GUI-thread delivery happens only when the test pumps events.
+/// Once isReady(), the sink is PLAYING and has had stream-start, BGRA caps (in @p memoryFeature, if given) and a TIME
+/// segment, as an upstream element sends before its first buffer.
 class QgcQVideoSinkHarness
 {
 public:
@@ -98,34 +68,29 @@ public:
     static constexpr int kHeight = 4;
     static constexpr gsize kFrameBytes = kWidth * kHeight * 4;
 
-    explicit QgcQVideoSinkHarness(QVideoSink* target, bool gpuZeroCopy = false)
-        : _sink(gst_element_factory_make_full("qgcqvideosink", "gpu-zerocopy", gpuZeroCopy, nullptr))
-        , _bus(gst_bus_new())
-        , _src(gst_pad_new("src", GST_PAD_SRC))
+    explicit QgcQVideoSinkHarness(QVideoSink* target, bool gpuZeroCopy = false, const char* memoryFeature = nullptr)
+        : _sink(sinkElement(gpuZeroCopy))
+        , _bus(GStreamer::adoptBus(gst_bus_new()))
+        , _src(GStreamer::adoptPad(GST_PAD(gst_object_ref_sink(gst_pad_new("src", GST_PAD_SRC)))))
     {
         if (!_sink) {
             return;
         }
-        gst_object_ref_sink(_sink);
-        gst_element_set_bus(_sink, _bus);
-        g_object_set(_sink, "qvideosink", static_cast<gpointer>(target), nullptr);
-        GstPad* sinkPad = gst_element_get_static_pad(_sink, "sink");
-        _ready = sinkPad && (gst_pad_link(_src, sinkPad) == GST_PAD_LINK_OK) && gst_pad_set_active(_src, TRUE) &&
-                 (gst_element_set_state(_sink, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
-        if (sinkPad) {
-            gst_object_unref(sinkPad);
-        }
+        gst_element_set_bus(_sink.get(), _bus.get());
+        g_object_set(_sink.get(), "qvideosink", static_cast<gpointer>(target), nullptr);
+        const GStreamer::GstPadPtr sinkPad = GStreamer::adoptPad(gst_element_get_static_pad(_sink.get(), "sink"));
+        _ready = sinkPad && (gst_pad_link(_src.get(), sinkPad.get()) == GST_PAD_LINK_OK) &&
+                 gst_pad_set_active(_src.get(), TRUE) &&
+                 (gst_element_set_state(_sink.get(), GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE) &&
+                 start(memoryFeature);
     }
 
     ~QgcQVideoSinkHarness()
     {
         if (_sink) {
-            gst_element_set_state(_sink, GST_STATE_NULL);
+            gst_element_set_state(_sink.get(), GST_STATE_NULL);
         }
-        gst_pad_set_active(_src, FALSE);
-        gst_object_unref(_src);
-        gst_clear_object(&_sink);
-        gst_object_unref(_bus);
+        gst_pad_set_active(_src.get(), FALSE);
     }
 
     QgcQVideoSinkHarness(const QgcQVideoSinkHarness&) = delete;
@@ -133,25 +98,9 @@ public:
 
     bool isReady() const { return _ready; }
 
-    GstElement* element() const { return _sink; }
+    GstElement* element() const { return _sink.get(); }
 
-    GstBus* bus() const { return _bus; }
-
-    /// stream-start, BGRA caps (in @p memoryFeature, if given) and a TIME segment, as an upstream element sends before
-    /// its first buffer.
-    bool start(const char* memoryFeature = nullptr)
-    {
-        GstCaps* caps =
-            gst_caps_new_simple("video/x-raw", "format", G_TYPE_STRING, "BGRA", "width", G_TYPE_INT, kWidth, "height",
-                                G_TYPE_INT, kHeight, "framerate", GST_TYPE_FRACTION, 30, 1, nullptr);
-        if (memoryFeature) {
-            gst_caps_set_features(caps, 0, gst_caps_features_new(memoryFeature, nullptr));
-        }
-        const bool ok = pushEvent(gst_event_new_stream_start("qgc-harness")) && pushEvent(gst_event_new_caps(caps)) &&
-                        pushSegment();
-        gst_caps_unref(caps);
-        return ok;
-    }
+    GstBus* bus() const { return _bus.get(); }
 
     bool pushSegment()
     {
@@ -160,7 +109,7 @@ public:
         return pushEvent(gst_event_new_segment(&segment));
     }
 
-    bool pushEvent(GstEvent* event) { return gst_pad_push_event(_src, event); }
+    bool pushEvent(GstEvent* event) { return gst_pad_push_event(_src.get(), event); }
 
     /// @p size below kFrameBytes produces a buffer gst_video_frame_map rejects.
     static GstBuffer* makeFrame(GstClockTime pts, gsize size = kFrameBytes)
@@ -180,7 +129,7 @@ public:
         return pushBuffer(buffer);
     }
 
-    GstFlowReturn pushBuffer(GstBuffer* buffer) { return gst_pad_push(_src, buffer); }
+    GstFlowReturn pushBuffer(GstBuffer* buffer) { return gst_pad_push(_src.get(), buffer); }
 
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
     /// A frame in memfd-backed fd memory: not system memory, and no GPU path imports it.
@@ -205,14 +154,52 @@ public:
     }
 #endif
 
-    guint64 delivered() const { return framesDelivered(_sink); }
+    guint64 delivered() const { return framesDelivered(_sink.get()); }
 
 private:
-    GstElement* _sink = nullptr;
-    GstBus* _bus = nullptr;
-    GstPad* _src = nullptr;
+    bool start(const char* memoryFeature)
+    {
+        GstCaps* caps =
+            gst_caps_new_simple("video/x-raw", "format", G_TYPE_STRING, "BGRA", "width", G_TYPE_INT, kWidth, "height",
+                                G_TYPE_INT, kHeight, "framerate", GST_TYPE_FRACTION, 30, 1, nullptr);
+        if (memoryFeature) {
+            gst_caps_set_features(caps, 0, gst_caps_features_new(memoryFeature, nullptr));
+        }
+        const bool ok = pushEvent(gst_event_new_stream_start("qgc-harness")) && pushEvent(gst_event_new_caps(caps)) &&
+                        pushSegment();
+        gst_caps_unref(caps);
+        return ok;
+    }
+
+    static GStreamer::GstElementPtr sinkElement(bool gpuZeroCopy)
+    {
+        GstElement* const sink = gst_element_factory_make_full("qgcqvideosink", "gpu-zerocopy", gpuZeroCopy, nullptr);
+        return GStreamer::adoptElement(sink ? GST_ELEMENT(gst_object_ref_sink(sink)) : nullptr);
+    }
+
+    GStreamer::GstElementPtr _sink;
+    GStreamer::GstBusPtr _bus;
+    GStreamer::GstPadPtr _src;
     bool _ready = false;
 };
+
+/// A qgcvideosinkbin and its qgcqvideosink.
+struct SinkBin
+{
+    GStreamer::GstElementPtr bin;
+    GStreamer::GstElementPtr qvideosink;
+};
+
+SinkBin makeSinkBin()
+{
+    GstElement* const bin = gst_element_factory_make("qgcvideosinkbin", nullptr);
+    if (!bin) {
+        return {};
+    }
+    SinkBin made{GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(bin))), nullptr};
+    made.qvideosink = GStreamer::adoptElement(gst_qgc_video_sink_bin_get_qvideosink(GST_QGC_VIDEO_SINK_BIN(bin)));
+    return made;
+}
 
 struct PipelineRunResult
 {
@@ -503,36 +490,32 @@ void GStreamerTest::_testQgcVideoSinkBinGpuBinVariant()
 
 void GStreamerTest::_testQgcVideoSinkBinRejectsFailedAdopt()
 {
-    GstElement* const target = gst_bin_new("qgc-adopt-target");
-    GstElement* const parent = gst_bin_new("qgc-adopt-existing-parent");
+    const GStreamer::GstElementPtr target =
+        GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(gst_bin_new("qgc-adopt-target"))));
+    const GStreamer::GstElementPtr parent =
+        GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(gst_bin_new("qgc-adopt-existing-parent"))));
     GstElement* const element = gst_element_factory_make("identity", "preparented");
-    QVERIFY(target && parent && element);
-    const auto guard = qScopeGuard([&] {
-        gst_object_unref(parent);
-        gst_object_unref(target);
-    });
-    QVERIFY(gst_bin_add(GST_BIN(parent), element));
+    QVERIFY(element);
+    QVERIFY(gst_bin_add(GST_BIN(parent.get()), element));
 
     GstElement* adopted = nullptr;
     {
-        GstQgc::BinChain chain(GST_BIN(target));
+        GstQgc::BinChain chain(GST_BIN(target.get()));
         // adopt() consumes a ref even on failure.
         adopted = chain.adopt(GST_ELEMENT(gst_object_ref(element)));
         chain.commit();
     }
 
     QVERIFY2(!adopted, "BinChain::adopt must reject elements that gst_bin_add() did not accept");
-    GstObject* const currentParent = gst_object_get_parent(GST_OBJECT(element));
-    QCOMPARE(currentParent, GST_OBJECT(parent));
-    gst_object_unref(currentParent);
+    const GStreamer::GstObjectPtr currentParent = GStreamer::adoptObject(gst_object_get_parent(GST_OBJECT(element)));
+    QCOMPARE(currentParent.get(), GST_OBJECT(parent.get()));
 }
 
 void GStreamerTest::_testQgcBinChainFailedAdoptDropsFloatingRefOnce()
 {
-    GstElement* const target = gst_bin_new("qgc-adopt-target");
-    QVERIFY(target);
-    const auto guard = qScopeGuard([target] { gst_object_unref(target); });
-    QVERIFY(gst_bin_add(GST_BIN(target), gst_element_factory_make("identity", "taken")));
+    const GStreamer::GstElementPtr target =
+        GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(gst_bin_new("qgc-adopt-target"))));
+    QVERIFY(gst_bin_add(GST_BIN(target.get()), gst_element_factory_make("identity", "taken")));
 
     // Floating, as from gst_element_factory_make(), plus a plain ref of the test's own.
     GstElement* const duplicate = gst_element_factory_make("identity", "taken");
@@ -543,7 +526,7 @@ void GStreamerTest::_testQgcBinChainFailedAdoptDropsFloatingRefOnce()
         G_OBJECT(duplicate), [](gpointer data, GObject*) { *static_cast<bool*>(data) = true; }, &destroyed);
 
     {
-        GstQgc::BinChain chain(GST_BIN(target));
+        GstQgc::BinChain chain(GST_BIN(target.get()));
         QVERIFY(!chain.adopt(duplicate));
     }
 
@@ -774,35 +757,27 @@ void GStreamerTest::_testInactiveQgcQVideoSinkDropsAndCounts()
 
 void GStreamerTest::_testGetAppsinkAccessor()
 {
-    GstElement* bin = gst_element_factory_make("qgcvideosinkbin", nullptr);
-    QVERIFY2(bin, "qgcvideosinkbin factory not found");
-
     // Construction is synchronous (GObject::constructed runs inside factory_make).
-    GstElement* qvideosink = gst_qgc_video_sink_bin_get_qvideosink(GST_QGC_VIDEO_SINK_BIN(bin));
-    QVERIFY2(qvideosink, "qvideosink accessor returned NULL after factory_make");
-    QVERIFY(GST_IS_ELEMENT(qvideosink));
-    gst_object_unref(qvideosink);
+    const SinkBin sink = makeSinkBin();
+    QVERIFY2(sink.bin, "qgcvideosinkbin factory not found");
+    QVERIFY2(sink.qvideosink, "qvideosink accessor returned NULL after factory_make");
+    QVERIFY(GST_IS_ELEMENT(sink.qvideosink.get()));
 
     // After transitioning to READY the accessor must still return a valid element.
-    GstStateChangeReturn ret = gst_element_set_state(bin, GST_STATE_READY);
-    QVERIFY(ret != GST_STATE_CHANGE_FAILURE);
-
-    GstElement* qvideosink2 = gst_qgc_video_sink_bin_get_qvideosink(GST_QGC_VIDEO_SINK_BIN(bin));
-    QVERIFY2(qvideosink2, "qvideosink accessor returned NULL after READY");
-    QVERIFY(GST_IS_ELEMENT(qvideosink2));
-    gst_object_unref(qvideosink2);
-
-    gst_element_set_state(bin, GST_STATE_NULL);
-    gst_object_unref(bin);
+    const auto stopBin = qScopeGuard([&sink] { (void) gst_element_set_state(sink.bin.get(), GST_STATE_NULL); });
+    QVERIFY(gst_element_set_state(sink.bin.get(), GST_STATE_READY) != GST_STATE_CHANGE_FAILURE);
+    const GStreamer::GstElementPtr afterReady =
+        GStreamer::adoptElement(gst_qgc_video_sink_bin_get_qvideosink(GST_QGC_VIDEO_SINK_BIN(sink.bin.get())));
+    QVERIFY2(afterReady, "qvideosink accessor returned NULL after READY");
+    QVERIFY(GST_IS_ELEMENT(afterReady.get()));
 }
 
 void GStreamerTest::_testQVideoSinkControllerClearsElementOnDestroy()
 {
-    GstElement* bin = gst_element_factory_make("qgcvideosinkbin", nullptr);
-    QVERIFY2(bin, "qgcvideosinkbin factory not found");
-
-    GstElement* qvideosink = gst_qgc_video_sink_bin_get_qvideosink(GST_QGC_VIDEO_SINK_BIN(bin));
-    QVERIFY2(qvideosink, "qvideosink accessor returned NULL after factory_make");
+    const SinkBin sink = makeSinkBin();
+    QVERIFY2(sink.bin && sink.qvideosink, "qgcvideosinkbin or its qvideosink accessor failed");
+    GstElement* const bin = sink.bin.get();
+    GstElement* const qvideosink = sink.qvideosink.get();
 
     QVideoSink videoSink;
     auto controllerOwner = std::make_unique<QObject>();
@@ -822,18 +797,14 @@ void GStreamerTest::_testQVideoSinkControllerClearsElementOnDestroy()
     g_object_get(qvideosink, "qvideosink", &installedSink, "active", &active, nullptr);
     QCOMPARE(installedSink, static_cast<gpointer>(nullptr));
     QCOMPARE(active, FALSE);
-
-    gst_object_unref(qvideosink);
-    gst_object_unref(bin);
 }
 
 void GStreamerTest::_testQVideoSinkControllerClearsElementWhenVideoSinkDestroyed()
 {
-    GstElement* bin = gst_element_factory_make("qgcvideosinkbin", nullptr);
-    QVERIFY2(bin, "qgcvideosinkbin factory not found");
-
-    GstElement* qvideosink = gst_qgc_video_sink_bin_get_qvideosink(GST_QGC_VIDEO_SINK_BIN(bin));
-    QVERIFY2(qvideosink, "qvideosink accessor returned NULL after factory_make");
+    const SinkBin sink = makeSinkBin();
+    QVERIFY2(sink.bin && sink.qvideosink, "qgcvideosinkbin or its qvideosink accessor failed");
+    GstElement* const bin = sink.bin.get();
+    GstElement* const qvideosink = sink.qvideosink.get();
 
     auto videoSink = std::make_unique<QVideoSink>();
     QObject controllerOwner;
@@ -854,18 +825,14 @@ void GStreamerTest::_testQVideoSinkControllerClearsElementWhenVideoSinkDestroyed
     g_object_get(qvideosink, "qvideosink", &installedSink, "active", &active, nullptr);
     QCOMPARE(installedSink, static_cast<gpointer>(nullptr));
     QCOMPARE(active, FALSE);
-
-    gst_object_unref(qvideosink);
-    gst_object_unref(bin);
 }
 
 void GStreamerTest::_testQVideoSinkControllerNullSinkStillDeactivatesOnDestroy()
 {
-    GstElement* bin = gst_element_factory_make("qgcvideosinkbin", nullptr);
-    QVERIFY2(bin, "qgcvideosinkbin factory not found");
-
-    GstElement* qvideosink = gst_qgc_video_sink_bin_get_qvideosink(GST_QGC_VIDEO_SINK_BIN(bin));
-    QVERIFY2(qvideosink, "qvideosink accessor returned NULL after factory_make");
+    const SinkBin sink = makeSinkBin();
+    QVERIFY2(sink.bin && sink.qvideosink, "qgcvideosinkbin or its qvideosink accessor failed");
+    GstElement* const bin = sink.bin.get();
+    GstElement* const qvideosink = sink.qvideosink.get();
 
     QVideoSink videoSink;
     auto controllerOwner = std::make_unique<QObject>();
@@ -888,18 +855,14 @@ void GStreamerTest::_testQVideoSinkControllerNullSinkStillDeactivatesOnDestroy()
     active = FALSE;
     g_object_get(qvideosink, "active", &active, nullptr);
     QCOMPARE(active, FALSE);
-
-    gst_object_unref(qvideosink);
-    gst_object_unref(bin);
 }
 
 void GStreamerTest::_testQVideoSinkControllerRepeatedSetupKeepsNewBindingActive()
 {
-    GstElement* bin = gst_element_factory_make("qgcvideosinkbin", nullptr);
-    QVERIFY2(bin, "qgcvideosinkbin factory not found");
-
-    GstElement* qvideosink = gst_qgc_video_sink_bin_get_qvideosink(GST_QGC_VIDEO_SINK_BIN(bin));
-    QVERIFY2(qvideosink, "qvideosink accessor returned NULL after factory_make");
+    const SinkBin sink = makeSinkBin();
+    QVERIFY2(sink.bin && sink.qvideosink, "qgcvideosinkbin or its qvideosink accessor failed");
+    GstElement* const bin = sink.bin.get();
+    GstElement* const qvideosink = sink.qvideosink.get();
 
     auto firstSink = std::make_unique<QVideoSink>();
     auto secondSink = std::make_unique<QVideoSink>();
@@ -932,18 +895,13 @@ void GStreamerTest::_testQVideoSinkControllerRepeatedSetupKeepsNewBindingActive(
     g_object_get(qvideosink, "qvideosink", &installedSink, "active", &active, nullptr);
     QCOMPARE(installedSink, static_cast<gpointer>(secondSink.get()));
     QCOMPARE(active, TRUE);
-
-    gst_object_unref(qvideosink);
-    gst_object_unref(bin);
 }
 
 void GStreamerTest::_testQVideoSinkControllerNoWindowStartsInactive()
 {
-    GstElement* bin = gst_element_factory_make("qgcvideosinkbin", nullptr);
-    QVERIFY2(bin, "qgcvideosinkbin factory not found");
-
-    GstElement* qvideosink = gst_qgc_video_sink_bin_get_qvideosink(GST_QGC_VIDEO_SINK_BIN(bin));
-    QVERIFY2(qvideosink, "qvideosink accessor returned NULL after factory_make");
+    const SinkBin sink = makeSinkBin();
+    QVERIFY2(sink.bin && sink.qvideosink, "qgcvideosinkbin or its qvideosink accessor failed");
+    GstElement* const qvideosink = sink.qvideosink.get();
 
     QObject controllerOwner;
     QGCQVideoSinkController controller(qvideosink, &controllerOwner);
@@ -956,9 +914,6 @@ void GStreamerTest::_testQVideoSinkControllerNoWindowStartsInactive()
     gboolean active = TRUE;
     g_object_get(qvideosink, "active", &active, nullptr);
     QCOMPARE(active, FALSE);
-
-    gst_object_unref(qvideosink);
-    gst_object_unref(bin);
 }
 
 void GStreamerTest::_testCpuZeroCopyFrameRejectsWritableMap()
@@ -1073,9 +1028,9 @@ void GStreamerTest::_testColorimetryPixelFormatMapping()
 
 void GStreamerTest::_testCpuCapsFormatsRoundTripToQt()
 {
-    GstCaps* caps = gst_caps_from_string(GstQgc::buildCpuCapsString().c_str());
+    const GStreamer::GstCapsPtr caps = GStreamer::adoptCaps(gst_caps_from_string(GstQgc::buildCpuCapsString().c_str()));
     QVERIFY2(caps, "buildCpuCapsString() did not parse");
-    const GstStructure* s = gst_caps_get_structure(caps, 0);
+    const GstStructure* s = gst_caps_get_structure(caps.get(), 0);
     const GValue* fmt = gst_structure_get_value(s, "format");
     QVERIFY2(fmt && GST_VALUE_HOLDS_LIST(fmt), "CPU caps format field is not a list");
     const guint n = gst_value_list_get_size(fmt);
@@ -1088,30 +1043,26 @@ void GStreamerTest::_testCpuCapsFormatsRoundTripToQt()
         QVERIFY2(toQtPixelFormat(gf) != QVideoFrameFormat::Format_Invalid,
                  qPrintable(QStringLiteral("format '%1' advertised but not Qt-renderable").arg(name)));
     }
-    gst_caps_unref(caps);
 }
 
 void GStreamerTest::_testAllocationQueryHwMemoryPoolHint()
 {
-    GstCaps* caps = gst_caps_from_string(
-        "video/x-raw(memory:DMABuf), format=(string)NV12, width=(int)64, height=(int)64, framerate=(fraction)30/1");
+    const GStreamer::GstCapsPtr caps = GStreamer::adoptCaps(gst_caps_from_string(
+        "video/x-raw(memory:DMABuf), format=(string)NV12, width=(int)64, height=(int)64, framerate=(fraction)30/1"));
     QVERIFY2(caps, "HW caps did not parse");
 
-    GstQuery* query = gst_query_new_allocation(caps, TRUE);
-    GstQgc::populateAllocationQuery(query);
+    const GStreamer::GstQueryPtr query = GStreamer::adoptQuery(gst_query_new_allocation(caps.get(), TRUE));
+    GstQgc::populateAllocationQuery(query.get());
 
-    QCOMPARE(gst_query_get_n_allocation_pools(query), 1U);
+    QCOMPARE(gst_query_get_n_allocation_pools(query.get()), 1U);
     GstBufferPool* pool = nullptr;
     guint size = 0, minBuffers = 0, maxBuffers = 0;
-    gst_query_parse_nth_allocation_pool(query, 0, &pool, &size, &minBuffers, &maxBuffers);
+    gst_query_parse_nth_allocation_pool(query.get(), 0, &pool, &size, &minBuffers, &maxBuffers);
     QVERIFY2(pool == nullptr, "GPU path must not propose a generic pool for native memory");
     QVERIFY2(minBuffers > guint(CpuVideoFramePool::kMaxPinnedFrames),
              "min-buffer hint must leave the decoder a buffer beyond those the sink and Qt hold");
-    QVERIFY2(gst_query_find_allocation_meta(query, GST_VIDEO_META_API_TYPE, nullptr),
+    QVERIFY2(gst_query_find_allocation_meta(query.get(), GST_VIDEO_META_API_TYPE, nullptr),
              "VideoMeta not advertised on GPU path");
-
-    gst_query_unref(query);
-    gst_caps_unref(caps);
 }
 
 void GStreamerTest::_testQgcVideoSinkBinAllocationQueryAdvertisesVideoMeta()
@@ -1122,81 +1073,67 @@ void GStreamerTest::_testQgcVideoSinkBinAllocationQueryAdvertisesVideoMeta()
     QSKIP("Direct-DMABuf ALLOCATION VideoMeta contract does not apply to the glupload bin");
 #endif
 
-    GstElement* bin = gst_element_factory_make_full("qgcvideosinkbin", "gpu-zerocopy", TRUE, nullptr);
-    QVERIFY2(bin, "qgcvideosinkbin factory did not create an element");
-    auto binGuard = qScopeGuard([&] { gst_object_unref(bin); });
-
-    GstPad* sinkPad = gst_element_get_static_pad(bin, "sink");
+    GstElement* const element = gst_element_factory_make_full("qgcvideosinkbin", "gpu-zerocopy", TRUE, nullptr);
+    QVERIFY2(element, "qgcvideosinkbin factory did not create an element");
+    const GStreamer::GstElementPtr bin = GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(element)));
+    const GStreamer::GstPadPtr sinkPad = GStreamer::adoptPad(gst_element_get_static_pad(bin.get(), "sink"));
     QVERIFY2(sinkPad, "qgcvideosinkbin has no sink pad");
-    auto sinkPadGuard = qScopeGuard([&] { gst_object_unref(sinkPad); });
-
-    GstCaps* caps = gst_caps_from_string(
-        "video/x-raw(memory:DMABuf), format=(string)NV12, width=(int)64, height=(int)64, framerate=(fraction)30/1");
+    const GStreamer::GstCapsPtr caps = GStreamer::adoptCaps(gst_caps_from_string(
+        "video/x-raw(memory:DMABuf), format=(string)NV12, width=(int)64, height=(int)64, framerate=(fraction)30/1"));
     QVERIFY2(caps, "HW caps did not parse");
-    auto capsGuard = qScopeGuard([&] { gst_caps_unref(caps); });
-
-    GstQuery* query = gst_query_new_allocation(caps, TRUE);
+    const GStreamer::GstQueryPtr query = GStreamer::adoptQuery(gst_query_new_allocation(caps.get(), TRUE));
     QVERIFY2(query, "Could not allocate ALLOCATION query");
-    auto queryGuard = qScopeGuard([&] { gst_query_unref(query); });
 
-    QVERIFY2(gst_pad_query(sinkPad, query), "qgcvideosinkbin did not answer ALLOCATION query");
-    QVERIFY2(gst_query_find_allocation_meta(query, GST_VIDEO_META_API_TYPE, nullptr),
+    QVERIFY2(gst_pad_query(sinkPad.get(), query.get()), "qgcvideosinkbin did not answer ALLOCATION query");
+    QVERIFY2(gst_query_find_allocation_meta(query.get(), GST_VIDEO_META_API_TYPE, nullptr),
              "qgcvideosinkbin ALLOCATION query must advertise VideoMeta for gst-va DMABuf");
 
-    QCOMPARE(gst_query_get_n_allocation_pools(query), 1U);
+    QCOMPARE(gst_query_get_n_allocation_pools(query.get()), 1U);
     GstBufferPool* pool = nullptr;
     guint size = 0, minBuffers = 0, maxBuffers = 0;
-    gst_query_parse_nth_allocation_pool(query, 0, &pool, &size, &minBuffers, &maxBuffers);
+    gst_query_parse_nth_allocation_pool(query.get(), 0, &pool, &size, &minBuffers, &maxBuffers);
     QVERIFY2(pool == nullptr, "qgcvideosinkbin must not propose a generic pool for native memory");
     QVERIFY2(minBuffers > 0, "qgcvideosinkbin min-buffer hint must be non-zero");
 }
 
-void GStreamerTest::_testQgcQVideoSinkProposesVideoMetaPool()
+void GStreamerTest::_testQgcQVideoSinkSystemMemoryAllocation_data()
 {
-    GstElement* sink = gst_element_factory_make("qgcqvideosink", nullptr);
-    QVERIFY2(sink, "qgcqvideosink factory not found");
-    gst_object_ref_sink(sink);
-    auto sinkGuard = qScopeGuard([&] { gst_object_unref(sink); });
-    GstPad* sinkPad = gst_element_get_static_pad(sink, "sink");
-    QVERIFY(sinkPad);
-    auto sinkPadGuard = qScopeGuard([&] { gst_object_unref(sinkPad); });
+    QTest::addColumn<bool>("needPool");
 
-    GstCaps* caps = gst_caps_from_string(
-        "video/x-raw, format=(string)BGRA, width=(int)64, height=(int)64, framerate=(fraction)30/1");
-    QVERIFY2(caps, "System-memory caps did not parse");
-    auto capsGuard = qScopeGuard([&] { gst_caps_unref(caps); });
-    GstQuery* query = gst_query_new_allocation(caps, /*need_pool=*/TRUE);
-    auto queryGuard = qScopeGuard([&] { gst_query_unref(query); });
-
-    QVERIFY2(gst_pad_query(sinkPad, query), "qgcqvideosink did not answer ALLOCATION");
-    QCOMPARE(gst_query_get_n_allocation_pools(query), 1U);
-    GstBufferPool* pool = nullptr;
-    gst_query_parse_nth_allocation_pool(query, 0, &pool, nullptr, nullptr, nullptr);
-    QVERIFY2(pool, "need_pool=TRUE must get a pool proposal");
-    const bool hasVideoMeta = gst_buffer_pool_has_option(pool, GST_BUFFER_POOL_OPTION_VIDEO_META);
-    gst_object_unref(pool);
-    QVERIFY2(hasVideoMeta, "proposed pool must support VIDEO_META so decoders can write into it directly");
+    QTest::newRow("pool needed") << true;
+    // When upstream does not need a pool, the sink must not force one.
+    QTest::newRow("no pool needed") << false;
 }
 
-void GStreamerTest::_testAllocationQuerySystemMemoryNoPoolStillAdvertisesMetas()
+void GStreamerTest::_testQgcQVideoSinkSystemMemoryAllocation()
 {
-    // When upstream does not need a pool, qgcqvideosink must not force one. It still has to advertise consumed metas
-    // so crop/orientation/video metadata survive into GstQgcFrameMap.
-    GstCaps* caps = gst_caps_from_string(
-        "video/x-raw, format=(string)BGRA, width=(int)64, height=(int)64, framerate=(fraction)30/1");
+    QFETCH(bool, needPool);
+
+    GstElement* const element = gst_element_factory_make("qgcqvideosink", nullptr);
+    QVERIFY2(element, "qgcqvideosink factory not found");
+    const GStreamer::GstElementPtr sink = GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(element)));
+    const GStreamer::GstPadPtr sinkPad = GStreamer::adoptPad(gst_element_get_static_pad(sink.get(), "sink"));
+    QVERIFY(sinkPad);
+    const GStreamer::GstCapsPtr caps = GStreamer::adoptCaps(gst_caps_from_string(
+        "video/x-raw, format=(string)BGRA, width=(int)64, height=(int)64, framerate=(fraction)30/1"));
     QVERIFY2(caps, "System-memory caps did not parse");
+    const GStreamer::GstQueryPtr query = GStreamer::adoptQuery(gst_query_new_allocation(caps.get(), needPool));
 
-    GstQuery* query = gst_query_new_allocation(caps, FALSE);
-    GstQgc::populateAllocationQuery(query);
-
-    QCOMPARE(gst_query_get_n_allocation_pools(query), 0U);
-    QVERIFY2(gst_query_find_allocation_meta(query, GST_VIDEO_META_API_TYPE, nullptr),
+    QVERIFY2(gst_pad_query(sinkPad.get(), query.get()), "qgcqvideosink did not answer ALLOCATION");
+    QCOMPARE(gst_query_get_n_allocation_pools(query.get()), needPool ? 1U : 0U);
+    if (needPool) {
+        GstBufferPool* pool = nullptr;
+        gst_query_parse_nth_allocation_pool(query.get(), 0, &pool, nullptr, nullptr, nullptr);
+        const GStreamer::GstObjectPtr ownedPool = GStreamer::adoptObject(GST_OBJECT(pool));
+        QVERIFY2(pool, "need_pool=TRUE must get a pool proposal");
+        QVERIFY2(gst_buffer_pool_has_option(pool, GST_BUFFER_POOL_OPTION_VIDEO_META),
+                 "proposed pool must support VIDEO_META so decoders can write into it directly");
+    }
+    // Crop, orientation and video metadata must survive into GstQgcFrameMap either way.
+    QVERIFY2(gst_query_find_allocation_meta(query.get(), GST_VIDEO_META_API_TYPE, nullptr),
              "VideoMeta not advertised for system-memory caps");
-    QVERIFY2(gst_query_find_allocation_meta(query, GST_VIDEO_CROP_META_API_TYPE, nullptr),
+    QVERIFY2(gst_query_find_allocation_meta(query.get(), GST_VIDEO_CROP_META_API_TYPE, nullptr),
              "VideoCropMeta not advertised for system-memory caps");
-
-    gst_query_unref(query);
-    gst_caps_unref(caps);
 }
 
 void GStreamerTest::_testColorimetryColorSpaceMapping()
@@ -1343,91 +1280,33 @@ void GStreamerTest::_testApplyOrientationToFrameMapping()
 
 void GStreamerTest::_testAdapterFlushDropsInFlightSamples()
 {
-    // Push GST_EVENT_FLUSH_START into qgcqvideosink mid-stream; verify no buffer reaches show_frame while flushing and
-    // that, after FLUSH_STOP, every buffer the sink saw is accounted for as delivered or dropped. Counts come from the
-    // element: latest-frame-only delivery coalesces videoFrameChanged emissions, so those are not a frame count.
-
-    QVideoSink sink;
-    QObject controllerOwner;
-
-    GError* err = nullptr;
-    // identity is_live=false to avoid the live-source latency offset; videotestsrc → identity → qgcvideosinkbin.
-    GstElement* pipeline = gst_parse_launch(
-        "videotestsrc num-buffers=10 ! "
-        "video/x-raw,format=BGRA,width=64,height=48,framerate=30/1 ! "
-        "identity name=id ! "
-        "qgcvideosinkbin name=sink",
-        &err);
-    if (err) {
-        g_clear_error(&err);
-    }
-    QVERIFY2(pipeline, "Pipeline construction failed");
-    GstElement* sinkBin = gst_bin_get_by_name(GST_BIN(pipeline), "sink");
-    QVERIFY(sinkBin);
-    QVERIFY2(GStreamer::setupQVideoSinkElement(sinkBin, &sink, &controllerOwner),
-             "GStreamer::setupQVideoSinkElement() failed");
-    gst_object_unref(sinkBin);
-
-    GstElement* vsink = gst_bin_get_by_name(GST_BIN(pipeline), "qgcqvideosink");
-    QVERIFY(vsink);
-
-    QVERIFY(gst_element_set_state(pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
-    // Wait for a few frames to confirm baseline delivery works.
-    QVERIFY_TRUE_WAIT(framesDelivered(vsink) > 0, TestTimeout::mediumMs());
-
-    // Send FLUSH_START upstream of qgcqvideosink. identity element forwards events.
-    GstElement* id = gst_bin_get_by_name(GST_BIN(pipeline), "id");
-    QVERIFY(id);
-    GstPad* idSrc = gst_element_get_static_pad(id, "src");
-    QVERIFY(idSrc);
-    GstPad* flushStartPeer = gst_pad_get_peer(idSrc);
-    QVERIFY(flushStartPeer);
-    const gboolean flushStartSent = gst_pad_send_event(flushStartPeer, gst_event_new_flush_start());
-    gst_object_unref(flushStartPeer);
-    QVERIFY(flushStartSent);
-
-    // Snapshot the accounting just after FLUSH_START. frames-input counts every buffer show_frame saw;
-    // frames-delivered counts those handed to the QVideoSink.
-    guint64 inputBefore = 0, deliveredBefore = 0;
-    g_object_get(vsink, "frames-input", &inputBefore, "frames-delivered", &deliveredBefore, nullptr);
-
-    // During FLUSH_START the base sink rejects buffers before show_frame, so neither counter may move. Negative
-    // assertion: hold a bounded window open while pumping the event loop.
-    {
-        QElapsedTimer flushWindow;
-        flushWindow.start();
-        while (flushWindow.elapsed() < 150) {
-            QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
-        }
-    }
-    guint64 inputDuring = 0, deliveredDuring = 0;
-    g_object_get(vsink, "frames-input", &inputDuring, "frames-delivered", &deliveredDuring, nullptr);
-    QCOMPARE(deliveredDuring, deliveredBefore);
-    QCOMPARE(inputDuring, inputBefore);
-
-    // Send FLUSH_STOP — restore normal flow. videotestsrc may have emitted EOS by now,
-    // so we don't strictly require new frames, just that the in-flight set was discarded.
-    GstPad* flushStopPeer = gst_pad_get_peer(idSrc);
-    QVERIFY(flushStopPeer);
-    const gboolean flushStopSent = gst_pad_send_event(flushStopPeer, gst_event_new_flush_stop(/*reset_time=*/TRUE));
-    gst_object_unref(flushStopPeer);
-    QVERIFY(flushStopSent);
-
-    // The flush must leave no buffer stuck in flight: every buffer the sink accepted is accounted for as either
-    // delivered or dropped. A leaked in-flight buffer would keep input strictly above delivered+dropped.
-    const auto accountedFor = [vsink]() {
-        guint64 input = 0, delivered = 0, dropped = 0;
-        g_object_get(vsink, "frames-input", &input, "frames-delivered", &delivered, "frames-dropped", &dropped,
-                     nullptr);
-        return input == delivered + dropped;
+    // Counts come from the element: latest-frame-only delivery coalesces videoFrameChanged emissions.
+    const auto counts = [](GstElement* sink) {
+        guint64 input = 0;
+        guint64 delivered = 0;
+        guint64 dropped = 0;
+        g_object_get(sink, "frames-input", &input, "frames-delivered", &delivered, "frames-dropped", &dropped, nullptr);
+        return std::array<guint64, 3>{input, delivered, dropped};
     };
-    QVERIFY_TRUE_WAIT(accountedFor(), TestTimeout::shortMs());
-    gst_object_unref(vsink);
 
-    gst_object_unref(idSrc);
-    gst_object_unref(id);
-    gst_element_set_state(pipeline, GST_STATE_NULL);
-    gst_object_unref(pipeline);
+    QVideoSink videoSink;
+    QgcQVideoSinkHarness harness(&videoSink);
+    QVERIFY(harness.isReady());
+    QCOMPARE(harness.pushFrame(GST_SECOND), GST_FLOW_OK);
+
+    // While flushing, the base sink refuses buffers before show_frame.
+    QVERIFY(harness.pushEvent(gst_event_new_flush_start()));
+    const auto beforeFlushedFrame = counts(harness.element());
+    QCOMPARE(harness.pushFrame(2 * GST_SECOND), GST_FLOW_FLUSHING);
+    QCOMPARE(counts(harness.element()), beforeFlushedFrame);
+
+    // After the flush, every buffer the sink saw is accounted for as delivered or dropped, none left in flight.
+    QVERIFY(harness.pushEvent(gst_event_new_flush_stop(/*reset_time=*/TRUE)));
+    QVERIFY(harness.pushSegment());
+    QCOMPARE(harness.pushFrame(3 * GST_SECOND), GST_FLOW_OK);
+    const auto [input, delivered, dropped] = counts(harness.element());
+    QCOMPARE(input, guint64(2));
+    QCOMPARE(delivered + dropped, input);
 }
 
 void GStreamerTest::_testQgcQVideoSinkDeliversLatestFrameOnly()
@@ -1441,12 +1320,15 @@ void GStreamerTest::_testQgcQVideoSinkDeliversLatestFrameOnly()
     });
     QgcQVideoSinkHarness harness(&videoSink);
     QVERIFY(harness.isReady());
-    QVERIFY(harness.start());
 
-    // Three frames while the GUI thread is "stalled": all are handed off, but only the newest is shown.
+    // Three frames while the GUI thread is "stalled": all are handed off, but only the newest is shown. The first is
+    // also the preroll buffer, which must not be shown twice.
     for (int i = 1; i <= 3; ++i) {
         QCOMPARE(harness.pushFrame(i * GST_SECOND), GST_FLOW_OK);
     }
+    guint64 input = 0;
+    g_object_get(harness.element(), "frames-input", &input, nullptr);
+    QCOMPARE(input, guint64(3));
     QCOMPARE(harness.delivered(), guint64(3));
     QCoreApplication::sendPostedEvents(&videoSink, QEvent::MetaCall);
     QCOMPARE(emissions, 1);
@@ -1459,27 +1341,11 @@ void GStreamerTest::_testQgcQVideoSinkDeliversLatestFrameOnly()
     QCOMPARE(lastStartUs, qint64(4 * GST_SECOND / GST_USECOND));
 }
 
-void GStreamerTest::_testQgcQVideoSinkShowsPrerollBufferOnce()
-{
-    QVideoSink videoSink;
-    QgcQVideoSinkHarness harness(&videoSink);
-    QVERIFY(harness.isReady());
-    QVERIFY(harness.start());
-
-    // The first buffer is both the preroll buffer and the first rendered one.
-    QCOMPARE(harness.pushFrame(GST_SECOND), GST_FLOW_OK);
-    guint64 input = 0;
-    g_object_get(harness.element(), "frames-input", &input, nullptr);
-    QCOMPARE(input, guint64(1));
-    QCOMPARE(harness.delivered(), guint64(1));
-}
-
 void GStreamerTest::_testQgcQVideoSinkRenegotiatesMidStream()
 {
     QVideoSink videoSink;
     QgcQVideoSinkHarness harness(&videoSink);
     QVERIFY(harness.isReady());
-    QVERIFY(harness.start());
     QCOMPARE(harness.pushFrame(GST_SECOND), GST_FLOW_OK);
     QCoreApplication::sendPostedEvents(&videoSink, QEvent::MetaCall);
     QCOMPARE(videoSink.videoFrame().pixelFormat(), QVideoFrameFormat::Format_BGRA8888);
@@ -1502,7 +1368,6 @@ void GStreamerTest::_testQgcQVideoSinkAppliesCropMeta()
     QVideoSink videoSink;
     QgcQVideoSinkHarness harness(&videoSink);
     QVERIFY(harness.isReady());
-    QVERIFY(harness.start());
 
     GstBuffer* const buffer = QgcQVideoSinkHarness::makeFrame(GST_SECOND);
     GstVideoCropMeta* const crop = gst_buffer_add_video_crop_meta(buffer);
@@ -1525,7 +1390,6 @@ void GStreamerTest::_testQgcQVideoSinkStatsArePerSink()
     QgcQVideoSinkHarness harnessA(&videoSinkA);
     QgcQVideoSinkHarness harnessB(&videoSinkB);
     QVERIFY(harnessA.isReady() && harnessB.isReady());
-    QVERIFY(harnessA.start() && harnessB.start());
 
     QCOMPARE(harnessA.pushFrame(GST_SECOND), GST_FLOW_OK);
     QCOMPARE(harnessA.pushFrame(2 * GST_SECOND), GST_FLOW_OK);
@@ -1555,14 +1419,8 @@ void GStreamerTest::_testQgcQVideoSinkKeepsBaseSinkStats()
     QVERIFY(element);
     const GStreamer::GstElementPtr sink = GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(element)));
 
-    // Generic tools read GstBaseSink's "stats"; the sink's own accounting must not replace it.
-    GObjectClass* const klass = G_OBJECT_GET_CLASS(sink.get());
-    const GParamSpec* const baseStats = g_object_class_find_property(klass, "stats");
-    QVERIFY(baseStats);
-    QCOMPARE(baseStats->owner_type, GST_TYPE_BASE_SINK);
-    const GParamSpec* const frameStats = g_object_class_find_property(klass, "frame-stats");
-    QVERIFY(frameStats);
-    QCOMPARE(frameStats->owner_type, G_OBJECT_TYPE(sink.get()));
+    // Generic tools read GstBaseSink's "stats"; the sink's own accounting lives beside it in "frame-stats".
+    QVERIFY(g_object_class_find_property(G_OBJECT_GET_CLASS(sink.get()), "frame-stats"));
 
     GstStructure* rawStats = nullptr;
     g_object_get(sink.get(), "stats", &rawStats, nullptr);
@@ -1607,10 +1465,9 @@ void GStreamerTest::_testQgcQVideoSinkGpuPathSelection()
 #endif
 
     QVideoSink videoSink;
-    QgcQVideoSinkHarness harness(&videoSink, gpuZeroCopy);
-    QVERIFY(harness.isReady());
     const QByteArray feature = memoryFeature.toUtf8();
-    QVERIFY(harness.start(feature.isEmpty() ? nullptr : feature.constData()));
+    QgcQVideoSinkHarness harness(&videoSink, gpuZeroCopy, feature.isEmpty() ? nullptr : feature.constData());
+    QVERIFY(harness.isReady());
 
     using GstHwPathTelemetry::HwFallbackReason;
     const quint64 noPathBefore =
@@ -1652,7 +1509,6 @@ void GStreamerTest::_testQgcQVideoSinkDropsUndeliveredFrame()
     QObject::connect(&videoSink, &QVideoSink::videoFrameChanged, &videoSink, [&](const QVideoFrame&) { ++emissions; });
     QgcQVideoSinkHarness harness(&videoSink);
     QVERIFY(harness.isReady());
-    QVERIFY(harness.start());
 
     QCOMPARE(harness.pushFrame(GST_SECOND), GST_FLOW_OK);
     if (viaFlush) {
@@ -1691,7 +1547,6 @@ void GStreamerTest::_testQgcQVideoSinkPtsGuardResync()
     QVideoSink videoSink;
     QgcQVideoSinkHarness harness(&videoSink);
     QVERIFY(harness.isReady());
-    QVERIFY(harness.start());
     QCOMPARE(harness.pushFrame(10 * GST_SECOND), GST_FLOW_OK);
     QCOMPARE(harness.delivered(), guint64(1));
 
@@ -1715,7 +1570,6 @@ void GStreamerTest::_testQgcQVideoSinkMapFailuresPostElementError()
     QVideoSink videoSink;
     QgcQVideoSinkHarness harness(&videoSink);
     QVERIFY(harness.isReady());
-    QVERIFY(harness.start());
 
     // Periodic per-failure warnings are rate-limited by process-global counters, so their count is not fixed.
     ignoreLogMessage("Video.GStreamer.HwBuffers.CpuPool", QtWarningMsg,
@@ -1733,17 +1587,16 @@ void GStreamerTest::_testQgcQVideoSinkMapFailuresPostElementError()
     verifyExpectedLogMessage();
     QCOMPARE(ret, GST_FLOW_ERROR);
 
-    GstMessage* msg = gst_bus_pop_filtered(harness.bus(), GST_MESSAGE_ERROR);
+    const GStreamer::GstMessagePtr msg =
+        GStreamer::adoptMessage(gst_bus_pop_filtered(harness.bus(), GST_MESSAGE_ERROR));
     QVERIFY2(msg, "map-failure escalation must post an element error before returning GST_FLOW_ERROR");
-    GError* error = nullptr;
-    gchar* debug = nullptr;
-    gst_message_parse_error(msg, &error, &debug);
-    const bool streamFailed = g_error_matches(error, GST_STREAM_ERROR, GST_STREAM_ERROR_FAILED);
-    const QString details = QString::fromUtf8(debug ? debug : "");
-    g_clear_error(&error);
-    g_free(debug);
-    gst_message_unref(msg);
-    QVERIFY(streamFailed);
+    GError* rawError = nullptr;
+    gchar* rawDebug = nullptr;
+    gst_message_parse_error(msg.get(), &rawError, &rawDebug);
+    const GStreamer::GErrorPtr error = GStreamer::adoptError(rawError);
+    const GStreamer::GCharPtr debug = GStreamer::adoptGChar(rawDebug);
+    QVERIFY(g_error_matches(error.get(), GST_STREAM_ERROR, GST_STREAM_ERROR_FAILED));
+    const QString details = QString::fromUtf8(debug ? debug.get() : "");
     QVERIFY2(details.contains(QStringLiteral("consecutive map failures")), qPrintable(details));
 }
 
@@ -1752,7 +1605,6 @@ void GStreamerTest::_testQVideoSinkControllerReleaseClearsVideoFrame()
     QVideoSink videoSink;
     QgcQVideoSinkHarness harness(nullptr);
     QVERIFY(harness.isReady());
-    QVERIFY(harness.start());
     QObject controllerOwner;
     auto* controller = new QGCQVideoSinkController(harness.element(), &controllerOwner);
     controller->setVideoSink(QPointer<QVideoSink>(&videoSink));

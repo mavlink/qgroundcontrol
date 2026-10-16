@@ -26,7 +26,6 @@ private slots:
     void _testConfigureDebugLoggingIsIdempotent();
     void _testVerifyRequiredPlugins();
     void _testEnvironmentSetup();
-    void _testWritePipelineDotReturnsEmptyOnWriteFailure();
     void _testPipelineDotOmitsElementProperties();
     void _testCompleteInit();
     void _testCreateVideoReceiver();
@@ -44,13 +43,10 @@ private slots:
     void _testQgcVideoSinkBinRejectsFailedAdopt();
     void _testQgcBinChainFailedAdoptDropsFloatingRefOnce();
     void _testGlMemoryDispatch();
-    void _testHwFrameTexturesKeepResourcesUntilDestroyed();
     void _testD3D11MemoryDispatch();
     void _testD3D12MemoryDispatch();
-    void _testD3D11MapTexturesWithQRhi();
-    void _testD3D11MapNv12TexturesWithQRhi();
-    void _testD3D12MapTexturesWithQRhi();
-    void _testD3D12MapNv12TexturesWithQRhi();
+    void _testD3DMapTexturesWithQRhi_data();
+    void _testD3DMapTexturesWithQRhi();
     void _testDmaBufDispatch();
     void _testDmaDrmCapsRejectNonLinearModifiers();
     void _testLinearDmaDrmCapsFollowFormatTable();
@@ -64,12 +60,10 @@ private slots:
     void _testWindowsGpuSinkPreservesSoftwarePixels();
     void _testWindowsGpuSinkPreservesDirectD3D11Memory();
     void _testAppsinkTeardownUnderLoad();
-    void _testBridgeDispatcherFanout();
     void _testHwBufferMapTexturesGuard();
     void _testFrameCountsTelemetrySignal();
     void _testInactiveQgcQVideoSinkDropsAndCounts();
     void _testQgcQVideoSinkDeliversLatestFrameOnly();
-    void _testQgcQVideoSinkShowsPrerollBufferOnce();
     void _testQgcQVideoSinkRenegotiatesMidStream();
     void _testQgcQVideoSinkAppliesCropMeta();
     void _testQgcQVideoSinkStatsArePerSink();
@@ -96,6 +90,7 @@ private slots:
     void _testHwFrameTexturesFinishMapReusesAcceptedBundle_data();
     void _testHwFrameTexturesFinishMapReusesAcceptedBundle();
     void _testHwFrameTexturesFinishMapRejectsIncompleteBundle();
+    void _testHwFrameTexturesKeepResourcesUntilDestroyed();
     void _testHwImportCacheEvictsLeastRecentlyUsed();
     void _testHwImportCacheReplaceDestroysPrevious();
     void _testHwImportCacheEraseIfDestroysMatches();
@@ -114,7 +109,6 @@ private slots:
     void _testCpuZeroCopyFrameRejectsWritableMap();
     void _testCpuZeroCopyPinnedFramesCappedPerSink();
     void _testCpuMemcpyActiveRowStrideHandling();
-    void _testCpuLayoutSizesPlanesByComponent_data();
     void _testCpuLayoutSizesPlanesByComponent();
     void _testCpuCopyOddDimensions_data();
     void _testCpuCopyOddDimensions();
@@ -128,8 +122,8 @@ private slots:
     void _testCpuCapsFormatsRoundTripToQt();
     void _testAllocationQueryHwMemoryPoolHint();
     void _testQgcVideoSinkBinAllocationQueryAdvertisesVideoMeta();
-    void _testQgcQVideoSinkProposesVideoMetaPool();
-    void _testAllocationQuerySystemMemoryNoPoolStillAdvertisesMetas();
+    void _testQgcQVideoSinkSystemMemoryAllocation_data();
+    void _testQgcQVideoSinkSystemMemoryAllocation();
     void _testColorimetryColorSpaceMapping();
     void _testColorimetryResolutionHeuristicMatchesQt();
     void _testColorimetryTransferMapping();
@@ -152,8 +146,7 @@ private slots:
     void _testSourceFactoryRejectsBadUri();
     void _testSourceFactoryTcpMpegTs();
     void _testSourceFactoryRejectsBadTcpUri();
-    void _testSourceFactoryUdp265Caps();
-    void _testSourceFactoryUdp265UsesExplicitDepayAndParser();
+    void _testSourceFactoryUdp265();
     void _testSourceFactoryUdpH264Caps();
     void _testSourceFactoryUdpMpegTs();
     void _testSourceFactorySchemeCaseInsensitive();

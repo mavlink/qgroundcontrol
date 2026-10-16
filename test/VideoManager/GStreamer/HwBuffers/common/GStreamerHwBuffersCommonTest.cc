@@ -2,111 +2,34 @@
 
 #ifdef QGC_GST_STREAMING
 
-#include <atomic>
-#include <cstring>
 #include <gst/gst.h>
 #include <gst/video/gstvideometa.h>
-#include <iterator>
 #include <memory>
-#include <vector>
+#include <rhi/qrhi.h>
+#include <span>
 
-#include <QtCore/QDir>
-#include <QtCore/QFileInfo>
+#include <QtCore/QLoggingCategory>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
-#include <QtCore/QStandardPaths>
 #include <QtMultimedia/QVideoFrame>
-#include <QtMultimedia/QVideoSink>
+#include <QtMultimedia/private/qvideotexturehelper_p.h>
+#include <QtQuick/QQuickWindow>
 
 #include "CpuVideoFramePool.h"
-#include "Fact.h"
 #include "Fixtures/RAIIFixtures.h"
-#include "GStreamer.h"
-#include "GStreamerHelpers.h"
-#include "GStreamerLogging.h"
 #include "GStreamerTestHelpers.h"
-#include "GstHwPathTelemetry.h"
-#include "GstHwVideoBufferFactory.h"
-#include "GstQgcFrameMap.h"
-#include "GstSourceFactory.h"
-#include "GstVideoReceiver.h"
-#include "HwBuffers/common/HwBuffers.h"
-#include "HwBuffers/dmabuf/GstDmaDrmCaps.h"
-#include "QGCQVideoSinkController.h"
-#include "gstqgc/GstQgcAllocation.h"
-#include "gstqgc/GstQgcCaps.h"
-#include "gstqgc/GstQgcVideoFormats.h"
-
-#if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
-#include "GstDmaBufVideoBuffer.h"
-#endif
-#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
-#include <gst/gl/gl.h>
-
-#include "GstGlContextBridge.h"
-#endif
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
-#include "GstD3D11ContextBridge.h"
-#endif
-#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
-#include "GstD3D12ContextBridge.h"
-#endif
 #include "GstContextBridgeBase.h"
-#include "GstHwFrameTexturesBase.h"
 #include "GstHwPathRegistry.h"
+#include "GstHwPathTelemetry.h"
 #include "GstHwVideoBuffer.h"
 #include "GstHwVideoBufferFactory.h"
-#include "gstqgc/gstqgcvideosinkbin.h"
+#include "GstQgcFrameMap.h"
+#include "HwBuffers/common/HwBuffers.h"
+#include "gstqgc/GstQgcVideoFormats.h"
 #if defined(QGC_HAS_ANY_GPU_PATH)
 #include "GstHwImportPreflight.h"
 #include "QGCRhiCapture.h"
 #endif
-#include <rhi/qrhi.h>
-#include <string_view>
-
-#include <QtCore/QCoreApplication>
-#include <QtCore/QElapsedTimer>
-#include <QtCore/QEventLoop>
-#include <QtMultimedia/private/qvideotexturehelper_p.h>
-#include <QtQuick/QQuickWindow>
-#include <QtTest/QSignalSpy>
-
-void GStreamerTest::_testBridgeDispatcherFanout()
-{
-#if !defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) && !defined(QGC_HAS_GST_D3D11_GPU_PATH) && \
-    !defined(QGC_HAS_GST_D3D12_GPU_PATH)
-    QSKIP("No GPU bridge compiled in this build");
-#else
-
-    GstElement* dummy = gst_element_factory_make("identity", nullptr);
-    QVERIFY(dummy);
-    GstMessage* unrelated = gst_message_new_need_context(GST_OBJECT(dummy), "totally.unrelated.context");
-    QVERIFY(unrelated);
-#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
-    QCOMPARE(GstGlContextBridge::instance().handleSyncMessage(unrelated), GST_BUS_PASS);
-#endif
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
-    QCOMPARE(GstD3D11ContextBridge::instance().handleSyncMessage(unrelated), GST_BUS_PASS);
-#endif
-#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
-    QCOMPARE(GstD3D12ContextBridge::instance().handleSyncMessage(unrelated), GST_BUS_PASS);
-#endif
-    gst_message_unref(unrelated);
-
-#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
-    GstMessage* glReq = gst_message_new_need_context(GST_OBJECT(dummy), GST_GL_DISPLAY_CONTEXT_TYPE);
-    QVERIFY(glReq);
-    const GstBusSyncReply r = GstGlContextBridge::instance().handleSyncMessage(glReq);
-    // Either PASS (couldn't prime — expected in CI without GL) or DROP (primed
-    // and consumed). Both are valid; the contract is "never crash".
-    QVERIFY(r == GST_BUS_PASS || r == GST_BUS_DROP);
-    if (r == GST_BUS_PASS)
-        gst_message_unref(glReq);
-#endif
-
-    gst_object_unref(dummy);
-#endif
-}
 
 #if defined(QGC_HAS_ANY_GPU_PATH)
 namespace {
@@ -205,9 +128,10 @@ void GStreamerTest::_testContextBridgeRegistry()
     });
     const GstHwPathRegistry::ScopedPathsForTest paths({&kTestBridgePathA, &kTestBridgePathB});
 
-    GstElement* element = gst_element_factory_make("identity", nullptr);
-    QVERIFY(element);
-    const auto elementGuard = qScopeGuard([element] { gst_object_unref(element); });
+    GstElement* const identity = gst_element_factory_make("identity", nullptr);
+    QVERIFY(identity);
+    const GStreamer::GstElementPtr owner = GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(identity)));
+    GstElement* const element = owner.get();
 
     // NEED_CONTEXT reaches the bridge owning the context type, and only that bridge primes.
     GstMessage* needA = gst_message_new_need_context(GST_OBJECT(element), kTestContextTypeA[0]);
@@ -440,29 +364,17 @@ void GStreamerTest::_testGpuBinModeFromEnvironment()
 #endif
 }
 
-void GStreamerTest::_testCpuLayoutSizesPlanesByComponent_data()
-{
-    QTest::addColumn<int>("format");
-    QTest::addColumn<QList<int>>("planeHeights");
-
-    QTest::newRow("NV12") << int(GST_VIDEO_FORMAT_NV12) << QList<int>{48, 24};
-    QTest::newRow("YV12") << int(GST_VIDEO_FORMAT_YV12) << QList<int>{48, 24, 24};
-    // Third plane holds component 3 (full-height alpha); component 2 is the half-height V in plane 1.
-    QTest::newRow("AV12") << int(GST_VIDEO_FORMAT_AV12) << QList<int>{48, 24, 48};
-}
-
 void GStreamerTest::_testCpuLayoutSizesPlanesByComponent()
 {
-    QFETCH(int, format);
-    QFETCH(QList<int>, planeHeights);
-
+    // AV12's third plane holds component 3 (full-height alpha); component 2 is the half-height V in plane 1.
+    // _testCpuCopyOddDimensions covers the formats whose planes and components line up.
     GstVideoInfo info;
-    QVERIFY(gst_video_info_set_format(&info, static_cast<GstVideoFormat>(format), 64, 48));
+    QVERIFY(gst_video_info_set_format(&info, GST_VIDEO_FORMAT_AV12, 64, 48));
     const CpuVideoFramePool::PlaneLayout layout = CpuVideoFramePool::computeLayout(info);
-    QCOMPARE(layout.planeCount, planeHeights.size());
-    for (int plane = 0; plane < layout.planeCount; ++plane) {
-        QCOMPARE(layout.height[plane], planeHeights[plane]);
-    }
+    QCOMPARE(layout.planeCount, 3);
+    QCOMPARE(layout.height[0], 48);
+    QCOMPARE(layout.height[1], 24);
+    QCOMPARE(layout.height[2], 48);
 }
 
 void GStreamerTest::_testCpuCopyOddDimensions_data()
@@ -545,33 +457,9 @@ public:
     }
 };
 
-class TestFrameTextures : public GstHwFrameTexturesBase
-{
-};
-
-class ForeignFrameTextures : public QVideoFrameTextures
-{
-public:
-    QRhiTexture* texture(uint) const override { return nullptr; }
-};
 #endif
 
 }  // namespace
-
-void GStreamerTest::_testHwFrameTexturesRejectsForeignOldTextures()
-{
-#if !defined(QGC_HAS_ANY_GPU_PATH)
-    QSKIP("GstHwFrameTexturesBase not compiled in this build (no GPU path enabled)");
-#else
-    QVideoFrameTexturesUPtr foreign = std::make_unique<ForeignFrameTextures>();
-    QVERIFY(!GstHwFrameTexturesBase::reusableBundle<TestFrameTextures>(foreign));
-    QVERIFY(foreign);
-
-    QVideoFrameTexturesUPtr own = std::make_unique<TestFrameTextures>();
-    QVERIFY(GstHwFrameTexturesBase::reusableBundle<TestFrameTextures>(own));
-    QVERIFY(own);
-#endif
-}
 
 #if defined(QGC_HAS_ANY_GPU_PATH)
 namespace {

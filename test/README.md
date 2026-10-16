@@ -203,12 +203,16 @@ emit readable failure messages that include the signal/condition name and the el
 time:
 
 ```cpp
-QVERIFY_SIGNAL_WAIT(spy, TestTimeout::shortMs());          // spy.count() >= 1
+QVERIFY_SIGNAL_WAIT(spy, TestTimeout::shortMs());          // a new emission (see gotcha below)
 QVERIFY_SIGNAL_COUNT_WAIT(spy, 3, TestTimeout::shortMs()); // spy.count() >= 3
 QVERIFY_NO_SIGNAL_WAIT(spy, 250);                          // see gotcha below
 QVERIFY_TRUE_WAIT(condition, TestTimeout::shortMs());      // QTRY_VERIFY wrapper
 QCOMPARE_TRUE_WAIT(actual, expected, TestTimeout::shortMs());
 ```
+
+**Gotcha — `QVERIFY_SIGNAL_WAIT` waits for a new emission.** It calls `QSignalSpy::wait()`,
+so a signal already in the spy doesn't count. Use `QVERIFY_SIGNAL_COUNT_WAIT(spy, n, …)`
+when the signal may already have fired, e.g. when another thread emits it.
 
 **Gotcha — `QVERIFY_NO_SIGNAL_WAIT` always burns the full timeout.** It has to, because
 proving absence requires waiting the entire window. Keep its timeout as tight as
@@ -496,3 +500,7 @@ QGC_TEST_VERBOSE=1 ./QGroundControl --unittest:MyTest
    (e.g. "SDL didn't expose a second virtual joystick"), cache the probe result in a
    test-class member so subsequent skipping tests don't each burn a full timeout.
    See `JoystickManagerTest::_multiJoysticksSupported()` for the pattern.
+
+7. **Skipping in `init()`**: a `QSKIP` in `init()` also skips `cleanup()`, and `UnitTest`
+   requires `cleanup()` once its `init()` has run. Skip before calling `UnitTest::init()`, or
+   skip inside the test function.

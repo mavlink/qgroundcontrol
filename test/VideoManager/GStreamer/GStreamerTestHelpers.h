@@ -50,6 +50,9 @@ std::vector<GStreamer::GstElementPtr> childElements(GstBin* bin, bool recurse = 
 /// Factory names of @p bin's children, sorted.
 QStringList childFactoryNames(GstBin* bin, bool recurse = false);
 
+/// The first element made by @p factoryName anywhere inside @p bin, or null.
+GStreamer::GstElementPtr findByFactory(GstBin* bin, const char* factoryName);
+
 /// A sample holding one uninitialized @p format frame; the sample owns the only buffer ref, so the buffer is writable.
 GstSample* makeVideoSample(GstVideoFormat format, int width, int height, GstVideoInfo* info = nullptr);
 
@@ -64,7 +67,7 @@ class TestPipeline
 {
 public:
     TestPipeline() = default;
-    /// Takes over @p pipeline, e.g. a gst_pipeline_new() result.
+    /// Takes over the caller's reference to @p pipeline (or any element), floating or not.
     explicit TestPipeline(GstElement* pipeline);
     ~TestPipeline();
 

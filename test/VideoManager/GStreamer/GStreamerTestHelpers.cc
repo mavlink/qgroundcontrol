@@ -101,6 +101,21 @@ QStringList childFactoryNames(GstBin* bin, bool recurse)
     return names;
 }
 
+GStreamer::GstElementPtr findByFactory(GstBin* bin, const char* factoryName)
+{
+    GstIterator* const it = gst_bin_iterate_all_by_element_factory_name(bin, factoryName);
+    GValue item = G_VALUE_INIT;
+    GStreamer::GstElementPtr found;
+    if (it && (gst_iterator_next(it, &item) == GST_ITERATOR_OK)) {
+        found = GStreamer::adoptElement(GST_ELEMENT(g_value_dup_object(&item)));
+    }
+    g_value_unset(&item);
+    if (it) {
+        gst_iterator_free(it);
+    }
+    return found;
+}
+
 GstSample* makeVideoSample(GstVideoFormat format, int width, int height, GstVideoInfo* info)
 {
     GstVideoInfo videoInfo;
@@ -129,7 +144,8 @@ std::unique_ptr<QRhi> makeNullRhi()
 }
 
 TestPipeline::TestPipeline(GstElement* pipeline)
-    : _pipeline(GStreamer::adoptElement(pipeline ? GST_ELEMENT(gst_object_ref_sink(pipeline)) : nullptr))
+    : _pipeline(GStreamer::adoptElement(
+          (pipeline && g_object_is_floating(pipeline)) ? GST_ELEMENT(gst_object_ref_sink(pipeline)) : pipeline))
 {}
 
 TestPipeline::~TestPipeline()

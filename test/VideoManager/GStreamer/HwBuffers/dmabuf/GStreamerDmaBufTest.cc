@@ -3,72 +3,37 @@
 #ifdef QGC_GST_STREAMING
 
 #include <atomic>
-#include <cstring>
 #include <gst/gst.h>
-#include <gst/video/gstvideometa.h>
-#include <iterator>
 #include <memory>
+#include <rhi/qrhi.h>
 #include <vector>
-
-#include <QtCore/QDir>
-#include <QtCore/QFileInfo>
-#include <QtCore/QRegularExpression>
-#include <QtCore/QScopeGuard>
-#include <QtCore/QStandardPaths>
-#include <QtMultimedia/QVideoFrame>
-#include <QtMultimedia/QVideoSink>
-
-#include "CpuVideoFramePool.h"
-#include "Fact.h"
-#include "Fixtures/RAIIFixtures.h"
-#include "GStreamer.h"
-#include "GStreamerHelpers.h"
-#include "GStreamerLogging.h"
-#include "GStreamerTestHelpers.h"
-#include "GstHwPathTelemetry.h"
-#include "GstHwVideoBufferFactory.h"
-#include "GstQgcFrameMap.h"
-#include "GstSourceFactory.h"
-#include "GstVideoReceiver.h"
-#include "HwBuffers/common/HwBuffers.h"
-#include "HwBuffers/dmabuf/GstDmaDrmCaps.h"
-#include "QGCQVideoSinkController.h"
-#include "gstqgc/GstQgcAllocation.h"
-#include "gstqgc/GstQgcCaps.h"
-#include "gstqgc/GstQgcVideoFormats.h"
-
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
 #include <gst/allocators/gstdmabuf.h>
 #include <sys/mman.h>
 #include <unistd.h>
+#endif
 
+#include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
+#include <QtMultimedia/QVideoFrameFormat>
+#include <QtMultimedia/QVideoSink>
+
+#include "Fixtures/RAIIFixtures.h"
+#include "GStreamer.h"
+#include "GStreamerTestHelpers.h"
+#include "GstHwPathTelemetry.h"
+#include "GstHwVideoBufferFactory.h"
+#include "HwBuffers/common/HwBuffers.h"
+#include "HwBuffers/dmabuf/GstDmaDrmCaps.h"
+#include "gstqgc/GstQgcCaps.h"
+#include "gstqgc/GstQgcVideoFormats.h"
+#include "gstqgc/gstqgcqvideosink.h"
+#if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
 #include "GstDmaBufVideoBuffer.h"
 #endif
-#include <rhi/qrhi.h>
-#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
-#include <gst/gl/gl.h>
-
-#include "GstGlContextBridge.h"
-#endif
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
-#include "GstD3D11ContextBridge.h"
-#endif
-#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
-#include "GstD3D12ContextBridge.h"
-#endif
-#include "GstHwVideoBuffer.h"
-#include "GstHwVideoBufferFactory.h"
-#include "gstqgc/gstqgcqvideosink.h"
-#include "gstqgc/gstqgcvideosinkbin.h"
 #if defined(QGC_HAS_ANY_GPU_PATH)
 #include "QGCRhiCapture.h"
 #endif
-#include <QtCore/QCoreApplication>
-#include <QtCore/QElapsedTimer>
-#include <QtCore/QEventLoop>
-#include <QtQuick/QQuickWindow>
-#include <QtTest/QSignalSpy>
-#include <string_view>
 
 void GStreamerTest::_testDmaBufDispatch()
 {
@@ -329,9 +294,8 @@ void GStreamerTest::_testHwBufferFactoryCacheRejectsMemoryTypeChange()
     QVERIFY(buffer);
     const auto bufferGuard = qScopeGuard([&] { gst_buffer_unref(buffer); });
 
-    GstCaps* caps = gst_video_info_to_caps(&info);
+    const GStreamer::GstCapsPtr caps = GStreamer::adoptCaps(gst_video_info_to_caps(&info));
     QVERIFY(caps);
-    const auto capsGuard = qScopeGuard([&] { gst_caps_unref(caps); });
 
     HwVideoBufferContext context;
     context.gpuEnabled = true;
@@ -344,7 +308,7 @@ void GStreamerTest::_testHwBufferFactoryCacheRejectsMemoryTypeChange()
     HwVideoBufferPath path = HwVideoBufferPath::None;
     QVideoFrameFormat format(QSize(4, 4), QVideoFrameFormat::Format_BGRA8888);
 
-    auto hwBuffer = makeHwVideoBuffer(buffer, caps, info, format, context, path, &cache);
+    auto hwBuffer = makeHwVideoBuffer(buffer, caps.get(), info, format, context, path, &cache);
     QVERIFY2(!hwBuffer, "Cached DMABuf path must reject a system-memory buffer and fall back to CPU mapping");
     QCOMPARE(path, HwVideoBufferPath::None);
     QVERIFY(!cache.validated);

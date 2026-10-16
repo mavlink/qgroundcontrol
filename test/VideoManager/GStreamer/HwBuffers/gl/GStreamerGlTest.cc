@@ -3,73 +3,12 @@
 #ifdef QGC_GST_STREAMING
 
 #include <atomic>
-#include <cstring>
 #include <gst/gst.h>
-#include <gst/video/gstvideometa.h>
-#include <iterator>
-#include <memory>
-#include <vector>
 
-#include <QtCore/QDir>
-#include <QtCore/QFileInfo>
 #include <QtCore/QRegularExpression>
-#include <QtCore/QScopeGuard>
-#include <QtCore/QStandardPaths>
-#include <QtMultimedia/QVideoFrame>
-#include <QtMultimedia/QVideoSink>
 
-#include "CpuVideoFramePool.h"
-#include "Fact.h"
-#include "Fixtures/RAIIFixtures.h"
-#include "GStreamer.h"
-#include "GStreamerHelpers.h"
-#include "GStreamerLogging.h"
 #include "GStreamerTestHelpers.h"
-#include "GstHwPathTelemetry.h"
-#include "GstHwVideoBufferFactory.h"
-#include "GstQgcFrameMap.h"
-#include "GstSourceFactory.h"
-#include "GstVideoReceiver.h"
 #include "HwBuffers/common/HwBuffers.h"
-#include "HwBuffers/dmabuf/GstDmaDrmCaps.h"
-#include "QGCQVideoSinkController.h"
-#include "gstqgc/GstQgcAllocation.h"
-#include "gstqgc/GstQgcCaps.h"
-#include "gstqgc/GstQgcVideoFormats.h"
-
-#if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
-#include "GstDmaBufVideoBuffer.h"
-#endif
-#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
-#include <gst/gl/gl.h>
-
-#include "GstGlContextBridge.h"
-#endif
-#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) || defined(QGC_HAS_GST_DMABUF_GPU_PATH)
-#include <array>
-#include <limits>
-#include <rhi/qrhi.h>
-
-#include "GstGlFrameTextures.h"
-#endif
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
-#include "GstD3D11ContextBridge.h"
-#endif
-#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
-#include "GstD3D12ContextBridge.h"
-#endif
-#include "GstHwVideoBuffer.h"
-#include "GstHwVideoBufferFactory.h"
-#include "gstqgc/gstqgcvideosinkbin.h"
-#if defined(QGC_HAS_ANY_GPU_PATH)
-#include "QGCRhiCapture.h"
-#endif
-#include <QtCore/QCoreApplication>
-#include <QtCore/QElapsedTimer>
-#include <QtCore/QEventLoop>
-#include <QtQuick/QQuickWindow>
-#include <QtTest/QSignalSpy>
-#include <string_view>
 
 void GStreamerTest::_testGlMemoryDispatch()
 {
@@ -150,41 +89,6 @@ void GStreamerTest::_testGlMemoryDispatch()
                             .arg(negotiatedStr)));
     QVERIFY2(negotiatedStr.contains(QStringLiteral("memory:GLMemory")),
              qPrintable(QStringLiteral("Appsink negotiated caps lack memory:GLMemory: %1").arg(negotiatedStr)));
-}
-
-void GStreamerTest::_testHwFrameTexturesKeepResourcesUntilDestroyed()
-{
-#if !defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) && !defined(QGC_HAS_GST_DMABUF_GPU_PATH)
-    QSKIP("GL-texture frame bundles not compiled in this build");
-#else
-    const std::unique_ptr<QRhi> rhi = GstTest::makeNullRhi();
-    QVERIFY(rhi);
-
-    GstSample* sample = GstTest::makeVideoSample(GST_VIDEO_FORMAT_NV12, 64, 64);
-    QVERIFY(sample);
-    bool sampleReleased = false;
-    GstTest::watchRelease(GST_MINI_OBJECT(sample), &sampleReleased);
-
-    constexpr int kPlanes = 2;
-    auto bundle = std::make_unique<GstGlFrameTextures>(rhi.get(), QSize(64, 64), QVideoFrameFormat::Format_NV12,
-                                                       std::array<GLuint, GstHw::kMaxPlanes>{11, 12}, kPlanes);
-    bundle->setSourceSample(sample);
-    std::array<QRhiTexture*, kPlanes> planes{bundle->texture(0), bundle->texture(1)};
-    QVERIFY(planes[0] && planes[1]);
-    QVERIFY(!bundle->texture(kPlanes));
-    QVERIFY(!bundle->texture(std::numeric_limits<uint>::max()));
-
-    // Qt re-renders the current bundle and calls onFrameEndInvoked() after every window frame until its slot is reused.
-    for (int frame = 0; frame < 3; ++frame) {
-        bundle->onFrameEndInvoked();
-    }
-    QCOMPARE(bundle->texture(0), planes[0]);
-    QCOMPARE(bundle->texture(1), planes[1]);
-    QVERIFY2(!sampleReleased, "Source sample must stay alive while Qt can still sample the bundle");
-
-    bundle.reset();
-    QVERIFY2(sampleReleased, "Destroying the bundle must release the source sample");
-#endif
 }
 
 #endif

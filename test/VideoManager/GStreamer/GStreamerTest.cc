@@ -15,10 +15,8 @@ QGC_LOGGING_CATEGORY(GStreamerTestLog, "Video.GStreamer.GStreamerTest")
 #include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
-#include <QtCore/QStandardPaths>
 #include <QtCore/QTemporaryDir>
 
 #include "Fact.h"
@@ -213,57 +211,37 @@ void GStreamerTest::_testSetCodecPrioritiesDefaultPrefersMatchingD3DDecoder()
     GstRegistry* registry = gst_registry_get();
     QVERIFY(registry != nullptr);
 
-    auto lookup = [registry](const char* featureName) {
-        return gst_registry_lookup_feature(registry, featureName);
-    };
-
-    GstPluginFeature* software = lookup("avdec_h265");
-    GstPluginFeature* d3d11 = lookup("d3d11h265dec");
-    GstPluginFeature* d3d12 = lookup("d3d12h265dec");
+    const GStreamer::GstFeaturePtr software =
+        GStreamer::adoptFeature(gst_registry_lookup_feature(registry, "avdec_h265"));
+    const GStreamer::GstFeaturePtr d3d11 =
+        GStreamer::adoptFeature(gst_registry_lookup_feature(registry, "d3d11h265dec"));
+    const GStreamer::GstFeaturePtr d3d12 =
+        GStreamer::adoptFeature(gst_registry_lookup_feature(registry, "d3d12h265dec"));
     if (!software || !d3d11 || !d3d12) {
-        if (software) {
-            gst_object_unref(software);
-        }
-        if (d3d11) {
-            gst_object_unref(d3d11);
-        }
-        if (d3d12) {
-            gst_object_unref(d3d12);
-        }
         QSKIP("Required H.265 software/D3D decoder factories are not installed");
     }
 
-    const guint oldSoftwareRank = gst_plugin_feature_get_rank(software);
-    const guint oldD3D11Rank = gst_plugin_feature_get_rank(d3d11);
-    const guint oldD3D12Rank = gst_plugin_feature_get_rank(d3d12);
-    const auto restoreRanks = qScopeGuard([software, d3d11, d3d12, oldSoftwareRank, oldD3D11Rank, oldD3D12Rank]() {
-        gst_plugin_feature_set_rank(software, oldSoftwareRank);
-        gst_plugin_feature_set_rank(d3d11, oldD3D11Rank);
-        gst_plugin_feature_set_rank(d3d12, oldD3D12Rank);
-        gst_object_unref(software);
-        gst_object_unref(d3d11);
-        gst_object_unref(d3d12);
+    const guint oldSoftwareRank = gst_plugin_feature_get_rank(software.get());
+    const guint oldD3D11Rank = gst_plugin_feature_get_rank(d3d11.get());
+    const guint oldD3D12Rank = gst_plugin_feature_get_rank(d3d12.get());
+    const auto restoreRanks = qScopeGuard([&]() {
+        gst_plugin_feature_set_rank(software.get(), oldSoftwareRank);
+        gst_plugin_feature_set_rank(d3d11.get(), oldD3D11Rank);
+        gst_plugin_feature_set_rank(d3d12.get(), oldD3D12Rank);
     });
 
-    const QByteArray oldRhiBackend = qgetenv("QSG_RHI_BACKEND");
+    const TestFixtures::EnvVarFixture rhiBackend("QSG_RHI_BACKEND");
     qputenv("QSG_RHI_BACKEND", QByteArray("d3d11"));
-    const auto restoreRhiEnv = qScopeGuard([oldRhiBackend]() {
-        if (oldRhiBackend.isEmpty()) {
-            qunsetenv("QSG_RHI_BACKEND");
-        } else {
-            qputenv("QSG_RHI_BACKEND", oldRhiBackend);
-        }
-    });
 
-    gst_plugin_feature_set_rank(software, GST_RANK_PRIMARY + 1);
-    gst_plugin_feature_set_rank(d3d11, GST_RANK_MARGINAL);
-    gst_plugin_feature_set_rank(d3d12, GST_RANK_PRIMARY + 2);
+    gst_plugin_feature_set_rank(software.get(), GST_RANK_PRIMARY + 1);
+    gst_plugin_feature_set_rank(d3d11.get(), GST_RANK_MARGINAL);
+    gst_plugin_feature_set_rank(d3d12.get(), GST_RANK_PRIMARY + 2);
 
     GStreamer::setCodecPriorities(GStreamer::ForceVideoDecoderDefault);
 
-    const guint softwareRank = gst_plugin_feature_get_rank(software);
-    const guint d3d11Rank = gst_plugin_feature_get_rank(d3d11);
-    const guint d3d12Rank = gst_plugin_feature_get_rank(d3d12);
+    const guint softwareRank = gst_plugin_feature_get_rank(software.get());
+    const guint d3d11Rank = gst_plugin_feature_get_rank(d3d11.get());
+    const guint d3d12Rank = gst_plugin_feature_get_rank(d3d12.get());
 
     QVERIFY2(d3d11Rank > softwareRank, "Default Windows D3D11 RHI must prefer d3d11h265dec over avdec_h265");
     QCOMPARE(d3d12Rank, static_cast<guint>(GST_RANK_NONE));
@@ -278,11 +256,7 @@ void GStreamerTest::_testSetCodecPrioritiesSkipsAbsentD3DDecoders()
     GstRegistry* registry = gst_registry_get();
     QVERIFY(registry != nullptr);
 
-    const QByteArray oldLoggingRules = qgetenv("QT_LOGGING_RULES");
-    QLoggingCategory::setFilterRules(QStringLiteral("*.debug=false\nVideo.GStreamer.GStreamerHelpers.debug=true"));
-    const auto restoreLoggingRules = qScopeGuard([oldLoggingRules]() {
-        QLoggingCategory::setFilterRules(QString::fromUtf8(oldLoggingRules));
-    });
+    const TestFixtures::LoggingCategoryFixture helpersLog(QStringLiteral("Video.GStreamer.GStreamerHelpers"));
 
     LogManager::clearCapturedMessages();
     QVERIFY(!GStreamer::changeFeatureRank(registry, "__qgc_missing_d3d_decoder_for_test__", GST_RANK_NONE));
@@ -302,15 +276,8 @@ void GStreamerTest::_testD3D12RhiDisablesGpuZeroCopySink()
 #if !defined(Q_OS_WIN) || !defined(QGC_HAS_GST_D3D12_GPU_PATH)
     QSKIP("D3D12 sink policy is Windows D3D12-only");
 #else
-    const QByteArray oldRhiBackend = qgetenv("QSG_RHI_BACKEND");
+    const TestFixtures::EnvVarFixture rhiBackend("QSG_RHI_BACKEND");
     qputenv("QSG_RHI_BACKEND", QByteArray("d3d12"));
-    const auto restoreRhiEnv = qScopeGuard([oldRhiBackend]() {
-        if (oldRhiBackend.isEmpty()) {
-            qunsetenv("QSG_RHI_BACKEND");
-        } else {
-            qputenv("QSG_RHI_BACKEND", oldRhiBackend);
-        }
-    });
 
     QVERIFY2(!VideoBackend::gpuZeroCopyAllowedForCurrentGraphicsApi(false, false),
              "D3D12 RHI must force the CPU sink path because gst-d3d12 cannot wrap Qt's ID3D12Device");
@@ -432,9 +399,7 @@ void GStreamerTest::_testVerifyRequiredPlugins()
     gst_plugin_list_free(plugins);
     QVERIFY2(pluginCount > 0, "GStreamer registry contains no plugins at all");
 
-    GstElementFactory* playbinFactory = gst_element_factory_find("playbin");
-    QVERIFY2(playbinFactory, "Required factory not found: playbin");
-    gst_object_unref(playbinFactory);
+    QVERIFY2(GStreamer::adoptFactory(gst_element_factory_find("playbin")), "Required factory not found: playbin");
 }
 
 void GStreamerTest::_testEnvironmentSetup()
@@ -493,32 +458,10 @@ void GStreamerTest::_testEnvironmentSetup()
     }
 }
 
-void GStreamerTest::_testWritePipelineDotReturnsEmptyOnWriteFailure()
-{
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
-    // A regular file where the dump directory should go, so the directory can't be created.
-    QFile blocker(tempDir.filePath(QStringLiteral("blocker")));
-    QVERIFY(blocker.open(QIODevice::WriteOnly));
-    blocker.close();
-
-    GstElement* pipeline = gst_pipeline_new("dot-write-failure-test");
-    QVERIFY(pipeline);
-    const auto cleanup = qScopeGuard([&] { gst_object_unref(pipeline); });
-
-    expectLogMessage("Utilities.QGCFileHelper", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("failed to create parent directory")));
-    const QString path =
-        PipelineDotDumper::writePipelineDot(pipeline, u"pipeline", blocker.fileName() + QStringLiteral("/dots"));
-    verifyExpectedLogMessage();
-    QVERIFY2(path.isEmpty(), qPrintable(QStringLiteral("Expected empty path for failed dot write, got %1").arg(path)));
-}
-
 void GStreamerTest::_testPipelineDotOmitsElementProperties()
 {
-    GstElement* pipeline = gst_pipeline_new("safe-dot-test");
-    QVERIFY(pipeline);
-    const auto pipelineCleanup = qScopeGuard([&] { gst_object_unref(pipeline); });
+    const GStreamer::GstElementPtr pipeline =
+        GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(gst_pipeline_new("safe-dot-test"))));
 
     GstElement* source = gst_element_factory_make("filesrc", "source");
     GstElement* sink = gst_element_factory_make("fakesink", "sink");
@@ -527,13 +470,13 @@ void GStreamerTest::_testPipelineDotOmitsElementProperties()
 
     constexpr auto kSecretLocation = "/tmp/qgc-dot-secret-token";
     g_object_set(source, "location", kSecretLocation, nullptr);
-    gst_bin_add_many(GST_BIN(pipeline), source, sink, nullptr);
+    gst_bin_add_many(GST_BIN(pipeline.get()), source, sink, nullptr);
     QVERIFY(gst_element_link(source, sink));
 
-    gchar* dotData = gst_debug_bin_to_dot_data(GST_BIN(pipeline), PipelineDotDumper::kDiagnosticDotGraphDetails);
+    const GStreamer::GCharPtr dotData = GStreamer::adoptGChar(
+        gst_debug_bin_to_dot_data(GST_BIN(pipeline.get()), PipelineDotDumper::kDiagnosticDotGraphDetails));
     QVERIFY(dotData);
-    const QByteArray dot(dotData);
-    g_free(dotData);
+    const QByteArray dot(dotData.get());
 
     QVERIFY(dot.contains("source"));
     QVERIFY(dot.contains("sink"));
@@ -552,13 +495,10 @@ void GStreamerTest::_testCompleteInit()
     QVERIFY2(qgcPlugin, "Static plugin 'qgc' not registered after completeInit()");
     gst_clear_object(&qgcPlugin);
 
-    GstElementFactory* sinkFactory = gst_element_factory_find("appsink");
-    QVERIFY2(sinkFactory, "Factory 'appsink' not found after completeInit()");
-    gst_object_unref(sinkFactory);
-
-    GstElementFactory* binFactory = gst_element_factory_find("qgcvideosinkbin");
-    QVERIFY2(binFactory, "Factory 'qgcvideosinkbin' not found after completeInit()");
-    gst_object_unref(binFactory);
+    for (const char* const name : {"appsink", "qgcvideosinkbin"}) {
+        QVERIFY2(GStreamer::adoptFactory(gst_element_factory_find(name)),
+                 qPrintable(QStringLiteral("Factory '%1' not found after completeInit()").arg(QLatin1String(name))));
+    }
 }
 
 void GStreamerTest::_testCreateVideoReceiver()
@@ -600,31 +540,20 @@ void GStreamerTest::_testRecordingSinkAcceptsElementaryStreams()
         QSKIP(qPrintable(QStringLiteral("Required GStreamer factory is unavailable: %1").arg(missing)));
     }
 
-    const QByteArray capsUtf8 = capsString.toUtf8();
-    GstCaps* inputCaps = gst_caps_from_string(capsUtf8.constData());
+    const GStreamer::GstCapsPtr inputCaps = GStreamer::adoptCaps(gst_caps_from_string(capsString.toUtf8().constData()));
     QVERIFY(inputCaps);
 
-    GstElement* source = nullptr;
-    GstElement* sink = nullptr;
-    bool linked = false;
-    const auto cleanup = qScopeGuard([&]() {
-        if (linked) {
-            gst_element_unlink(source, sink);
-        }
-        gst_clear_object(&sink);
-        gst_clear_object(&source);
-        gst_clear_caps(&inputCaps);
-    });
+    GstElement* const capsfilter = gst_element_factory_make("capsfilter", nullptr);
+    QVERIFY(capsfilter);
+    const GStreamer::GstElementPtr source = GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(capsfilter)));
+    g_object_set(source.get(), "caps", inputCaps.get(), nullptr);
 
-    source = gst_element_factory_make("capsfilter", nullptr);
-    QVERIFY(source);
-    g_object_set(source, "caps", inputCaps, nullptr);
-
-    sink = RecordingBranch::makeFileSink(QStringLiteral("recording-test"), fileFormat, inputCaps).release();
+    const GStreamer::GstElementPtr sink =
+        RecordingBranch::makeFileSink(QStringLiteral("recording-test"), fileFormat, inputCaps.get());
     QVERIFY(sink);
 
-    linked = gst_element_link(source, sink);
-    QVERIFY2(linked, qPrintable(QStringLiteral("Recording sink rejected %1").arg(capsString)));
+    QVERIFY2(gst_element_link(source.get(), sink.get()),
+             qPrintable(QStringLiteral("Recording sink rejected %1").arg(capsString)));
 }
 
 void GStreamerTest::_testRecordingSinkFinalizesMidStreamH265Mp4()

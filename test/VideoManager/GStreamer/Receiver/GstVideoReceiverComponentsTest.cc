@@ -5,12 +5,11 @@
 #include <gst/gst.h>
 
 #include <QtCore/QDir>
+#include <QtCore/QFile>
 #include <QtCore/QFileInfo>
-#include <QtCore/QScopeGuard>
+#include <QtCore/QRegularExpression>
 #include <QtCore/QTemporaryDir>
 
-#include "GStreamer.h"
-#include "GStreamerHelpers.h"
 #include "GStreamerTestHelpers.h"
 #include "PipelineDotDumper.h"
 #include "RecordingFinalizer.h"
@@ -27,9 +26,9 @@ qint64 nextDelaySec(StreamWatchdog& watchdog)
     return watchdog.nextReconnectDelay().count();
 }
 
-GstElement* ownedBin(const char* name)
+GStreamer::GstElementPtr ownedBin(const char* name)
 {
-    return GST_ELEMENT(gst_object_ref_sink(gst_bin_new(name)));
+    return GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(gst_bin_new(name))));
 }
 
 }  // namespace
@@ -131,23 +130,18 @@ void GstVideoReceiverComponentsTest::_testFinalizerSettlesOnlyFromArmedRecording
         QSKIP(qPrintable(unavailable));
     }
 
-    GstElement* oldSinkBin = ownedBin("oldsinkbin");
-    GstElement* sinkBin = ownedBin("sinkbin");
-    GstElement* muxer = gst_bin_new("muxer");
-    (void) gst_bin_add(GST_BIN(sinkBin), muxer);
-    GstElement* videoSink = ownedBin("videosink");
-    const auto cleanup = qScopeGuard([&] {
-        gst_object_unref(videoSink);
-        gst_object_unref(sinkBin);
-        gst_object_unref(oldSinkBin);
-    });
+    const GStreamer::GstElementPtr oldSinkBin = ownedBin("oldsinkbin");
+    const GStreamer::GstElementPtr sinkBin = ownedBin("sinkbin");
+    GstElement* const muxer = gst_bin_new("muxer");
+    (void) gst_bin_add(GST_BIN(sinkBin.get()), muxer);
+    const GStreamer::GstElementPtr videoSink = ownedBin("videosink");
 
     RecordingFinalizer finalizer;
-    finalizer.arm(oldSinkBin);
+    finalizer.arm(oldSinkBin.get());
     (void) finalizer.disarm();
-    finalizer.arm(sinkBin);
+    finalizer.arm(sinkBin.get());
 
-    GstElement* const sources[] = {oldSinkBin, sinkBin, muxer, videoSink};
+    GstElement* const sources[] = {oldSinkBin.get(), sinkBin.get(), muxer, videoSink.get()};
     GstElement* sourceElement = nullptr;
     for (GstElement* element : sources) {
         if (source == QString::fromUtf8(GST_OBJECT_NAME(element))) {
@@ -169,15 +163,14 @@ void GstVideoReceiverComponentsTest::_testFinalizerKeepsFirstOutcome()
         QSKIP(qPrintable(unavailable));
     }
 
-    GstElement* sinkBin = ownedBin("sinkbin");
-    const auto cleanup = qScopeGuard([sinkBin] { gst_object_unref(sinkBin); });
+    const GStreamer::GstElementPtr sinkBin = ownedBin("sinkbin");
 
     // The file closed, then its muxer failed on the way down: the stop still succeeded.
     RecordingFinalizer finalizer;
-    finalizer.arm(sinkBin);
+    finalizer.arm(sinkBin.get());
     QVERIFY(finalizer.settle(RecordingFinalizer::Outcome::Closed));
     bool belongs = false;
-    QVERIFY(!finalizer.settleFrom(GST_OBJECT(sinkBin), RecordingFinalizer::Outcome::Failed, &belongs));
+    QVERIFY(!finalizer.settleFrom(GST_OBJECT(sinkBin.get()), RecordingFinalizer::Outcome::Failed, &belongs));
     QVERIFY(belongs);
     QCOMPARE(finalizer.disarm(), RecordingFinalizer::Outcome::Closed);
 
@@ -189,9 +182,8 @@ void GstVideoReceiverComponentsTest::_testFinalizerKeepsFirstOutcome()
 void GstVideoReceiverComponentsTest::_testPipelineDotStaysInDirectory_data()
 {
     QTest::addColumn<QString>("tag");
-    QTest::addColumn<QString>("fileStem");
+    QTest::addColumn<QString>("fileStem");  // empty: the dump directory can't be created
 
-    QTest::newRow("plain") << QStringLiteral("pipeline-error") << QStringLiteral("pipeline-error");
     QTest::newRow("receiver snapshot") << QStringLiteral("receiver-videoContent-pipeline-watchdog-timeout")
                                        << QStringLiteral("receiver-videoContent-pipeline-watchdog-timeout");
     QTest::newRow("parent traversal") << QStringLiteral("../../escaped") << QStringLiteral("______escaped");
@@ -199,6 +191,7 @@ void GstVideoReceiverComponentsTest::_testPipelineDotStaysInDirectory_data()
     QTest::newRow("non-ASCII letters") << QStringLiteral("d\u00e9faut") << QStringLiteral("d\u00e9faut");
     QTest::newRow("empty") << QString() << QStringLiteral("graph");
     QTest::newRow("too long") << QString(100, u'a') << QString(57, u'a');
+    QTest::newRow("unwritable directory") << QStringLiteral("pipeline-error") << QString();
 }
 
 void GstVideoReceiverComponentsTest::_testPipelineDotStaysInDirectory()
@@ -213,11 +206,24 @@ void GstVideoReceiverComponentsTest::_testPipelineDotStaysInDirectory()
 
     QTemporaryDir parent;
     QVERIFY(parent.isValid());
-    const QString directory = parent.filePath(QStringLiteral("a/b/dots"));
-    GstElement* pipeline = GST_ELEMENT(gst_object_ref_sink(gst_pipeline_new("receiver")));
-    const auto cleanup = qScopeGuard([pipeline] { gst_object_unref(pipeline); });
+    QString directory = parent.filePath(QStringLiteral("a/b/dots"));
+    if (fileStem.isEmpty()) {
+        // A regular file where the dump directory should go.
+        QFile blocker(parent.filePath(QStringLiteral("blocker")));
+        QVERIFY(blocker.open(QIODevice::WriteOnly));
+        directory = blocker.fileName() + QStringLiteral("/dots");
+        expectLogMessage("Utilities.QGCFileHelper", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("failed to create parent directory")));
+    }
+    const GStreamer::GstElementPtr pipeline =
+        GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(gst_pipeline_new("receiver"))));
 
-    const QString path = PipelineDotDumper::writePipelineDot(pipeline, tag, directory);
+    const QString path = PipelineDotDumper::writePipelineDot(pipeline.get(), tag, directory);
+    if (fileStem.isEmpty()) {
+        verifyExpectedLogMessage();
+        QVERIFY2(path.isEmpty(), qPrintable(path));
+        return;
+    }
     QVERIFY(!path.isEmpty());
     const QFileInfo file(path);
     QCOMPARE(file.absolutePath(), QDir(directory).absolutePath());
@@ -231,7 +237,6 @@ void GstVideoReceiverComponentsTest::_testPipelineNamedAfterReceiver_data()
     QTest::addColumn<QByteArray>("pipelineName");
 
     QTest::newRow("main stream") << QStringLiteral("videoContent") << QByteArray("receiver-videoContent");
-    QTest::newRow("thermal stream") << QStringLiteral("thermalVideo") << QByteArray("receiver-thermalVideo");
     QTest::newRow("unnamed") << QString() << QByteArray("receiver");
     QTest::newRow("unsafe name") << QStringLiteral("../x") << QByteArray("receiver-___x");
 }

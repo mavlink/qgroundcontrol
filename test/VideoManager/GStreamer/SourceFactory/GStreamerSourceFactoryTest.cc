@@ -6,46 +6,55 @@
 
 #include <QtCore/QHash>
 #include <QtCore/QRegularExpression>
-#include <QtCore/QScopeGuard>
 #include <QtNetwork/QTcpServer>
 #include <QtNetwork/QTcpSocket>
 
+#include "GStreamerTestHelpers.h"
 #include "GstScoped.h"
 #include "GstSourceFactory.h"
 
 namespace {
 
-// Borrowed (bin-owned) first child whose element-factory name matches, or nullptr.
-GstElement* findChildByFactoryName(GstElement* bin, const char* factoryName)
+/// SourceFactory::create() hands out a floating bin; this sinks it.
+GStreamer::GstElementPtr createSource(const QString& uri, const GStreamer::SourceFactory::Config& config)
 {
-    GstIterator* it = gst_bin_iterate_elements(GST_BIN(bin));
-    GValue item = G_VALUE_INIT;
-    GstElement* match = nullptr;
-    bool done = false;
-    while (!done) {
-        switch (gst_iterator_next(it, &item)) {
-            case GST_ITERATOR_OK: {
-                GstElement* child = GST_ELEMENT(g_value_get_object(&item));
-                GstElementFactory* f = gst_element_get_factory(child);
-                if (f && (g_strcmp0(GST_OBJECT_NAME(f), factoryName) == 0)) {
-                    match = child;
-                    done = true;
-                }
-                g_value_reset(&item);
-                break;
-            }
-            case GST_ITERATOR_RESYNC:
-                gst_iterator_resync(it);
-                break;
-            default:
-                done = true;
-                break;
-        }
-    }
-    g_value_unset(&item);
-    gst_iterator_free(it);
-    return match;
+    GstElement* const bin = GStreamer::SourceFactory::create(uri, config);
+    return GStreamer::adoptElement(bin ? GST_ELEMENT(gst_object_ref_sink(bin)) : nullptr);
 }
+
+/// The first element inside @p bin made by @p factoryName, or null.
+GStreamer::GstElementPtr child(GstElement* bin, const char* factoryName)
+{
+    return GstTest::findByFactory(GST_BIN(bin), factoryName);
+}
+
+GstStaticPadTemplate sH264RtpPadTemplate = GST_STATIC_PAD_TEMPLATE(
+    "video_rtp", GST_PAD_SRC, GST_PAD_SOMETIMES,
+    GST_STATIC_CAPS("application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264"));
+
+/// An mpegts:// source bin, whose tsdemux the dynamic-pad tests hand RTP pads to.
+struct MpegTsSource
+{
+    explicit MpegTsSource(const GStreamer::SourceFactory::Config& config)
+        : bin(GStreamer::SourceFactory::create(QStringLiteral("mpegts://127.0.0.1:5600"), config))
+        , demux(bin.get() ? child(bin.get(), "tsdemux") : nullptr)
+        , parserSink(GStreamer::adoptPad(bin.get() ? parserSinkPad(bin.get()) : nullptr))
+    {}
+
+    /// Built, and no pad reaches the parser yet.
+    bool isValid() const { return demux && parserSink && !gst_pad_is_linked(parserSink.get()); }
+
+    GstTest::TestPipeline bin;
+    GStreamer::GstElementPtr demux;
+    GStreamer::GstPadPtr parserSink;
+
+private:
+    static GstPad* parserSinkPad(GstElement* bin)
+    {
+        const GStreamer::GstElementPtr parser = child(bin, "parsebin");
+        return parser ? gst_element_get_static_pad(parser.get(), "sink") : nullptr;
+    }
+};
 
 // Minimal RTSP responder for driving a real rtspsrc without gst-rtsp-server: answers OPTIONS/DESCRIBE with a
 // fixed SDP and records each SETUP URL without answering it, so the client stops right after picking streams.
@@ -115,8 +124,9 @@ private:
 
 void GStreamerTest::_testSourceFactoryUdpRtpJitterBuffer()
 {
-    if (!gst_element_factory_find("udpsrc") || !gst_element_factory_find("rtpjitterbuffer")) {
-        QSKIP("udpsrc/rtpjitterbuffer plugin unavailable");
+    const QString missing = GstTest::firstMissingFactory({"udpsrc", "rtpjitterbuffer"});
+    if (!missing.isEmpty()) {
+        QSKIP(qPrintable(QStringLiteral("%1 plugin unavailable").arg(missing)));
     }
 
     GStreamer::SourceFactory::Config config;
@@ -124,16 +134,15 @@ void GStreamerTest::_testSourceFactoryUdpRtpJitterBuffer()
     config.latencyMs = 80;
     config.doRetransmission = true;
 
-    GstElement* bin = GStreamer::SourceFactory::create(QStringLiteral("udp://127.0.0.1:5600"), config);
+    const GStreamer::GstElementPtr bin = createSource(QStringLiteral("udp://127.0.0.1:5600"), config);
     QVERIFY(bin);
-    const auto cleanup = qScopeGuard([&] { gst_object_unref(bin); });
 
-    GstElement* jb = findChildByFactoryName(bin, "rtpjitterbuffer");
+    const GStreamer::GstElementPtr jb = child(bin.get(), "rtpjitterbuffer");
     QVERIFY2(jb, "static UDP-RTP path must insert an rtpjitterbuffer at NULL state");
 
     guint latency = 0;
     gboolean doLost = FALSE, doRtx = TRUE, dropOnLatency = FALSE;
-    g_object_get(jb, "latency", &latency, "do-lost", &doLost, "do-retransmission", &doRtx, "drop-on-latency",
+    g_object_get(jb.get(), "latency", &latency, "do-lost", &doLost, "do-retransmission", &doRtx, "drop-on-latency",
                  &dropOnLatency, nullptr);
     QCOMPARE(latency, 80u);
     QCOMPARE(doLost, TRUE);
@@ -143,24 +152,22 @@ void GStreamerTest::_testSourceFactoryUdpRtpJitterBuffer()
 
 void GStreamerTest::_testSourceFactoryJitterBufferNone()
 {
-    if (!gst_element_factory_find("udpsrc")) {
+    if (!GstTest::firstMissingFactory({"udpsrc"}).isEmpty()) {
         QSKIP("udpsrc plugin unavailable");
     }
 
     GStreamer::SourceFactory::Config config;
     config.jitterBuffer = GStreamer::SourceFactory::JitterBuffer::None;
 
-    GstElement* bin = GStreamer::SourceFactory::create(QStringLiteral("udp://127.0.0.1:5600"), config);
+    const GStreamer::GstElementPtr bin = createSource(QStringLiteral("udp://127.0.0.1:5600"), config);
     QVERIFY(bin);
-    const auto cleanup = qScopeGuard([&] { gst_object_unref(bin); });
 
-    QVERIFY2(!findChildByFactoryName(bin, "rtpjitterbuffer"),
-             "JitterBuffer::None must link the source straight to the parser");
+    QVERIFY2(!child(bin.get(), "rtpjitterbuffer"), "JitterBuffer::None must link the source straight to the parser");
 }
 
 void GStreamerTest::_testSourceFactoryNoRetransmission()
 {
-    if (!gst_element_factory_find("rtspsrc")) {
+    if (!GstTest::firstMissingFactory({"rtspsrc"}).isEmpty()) {
         QSKIP("rtspsrc plugin unavailable");
     }
 
@@ -168,15 +175,14 @@ void GStreamerTest::_testSourceFactoryNoRetransmission()
     GStreamer::SourceFactory::Config config;
     config.doRetransmission = false;
 
-    GstElement* bin = GStreamer::SourceFactory::create(QStringLiteral("rtsp://127.0.0.1:8554/test"), config);
+    const GStreamer::GstElementPtr bin = createSource(QStringLiteral("rtsp://127.0.0.1:8554/test"), config);
     QVERIFY(bin);
-    const auto cleanup = qScopeGuard([&] { gst_object_unref(bin); });
 
-    GstElement* source = findChildByFactoryName(bin, "rtspsrc");
+    const GStreamer::GstElementPtr source = child(bin.get(), "rtspsrc");
     QVERIFY(source);
 
     gboolean doRtx = TRUE;
-    g_object_get(source, "do-retransmission", &doRtx, nullptr);
+    g_object_get(source.get(), "do-retransmission", &doRtx, nullptr);
     QCOMPARE(doRtx, FALSE);
 }
 
@@ -197,7 +203,7 @@ void GStreamerTest::_testSourceFactoryRtspJitterBufferPolicy_data()
 
 void GStreamerTest::_testSourceFactoryRtspJitterBufferPolicy()
 {
-    if (!gst_element_factory_find("rtspsrc")) {
+    if (!GstTest::firstMissingFactory({"rtspsrc"}).isEmpty()) {
         QSKIP("rtspsrc plugin unavailable");
     }
 
@@ -213,23 +219,22 @@ void GStreamerTest::_testSourceFactoryRtspJitterBufferPolicy()
     config.latencyMs = 80;
     config.doRetransmission = true;
 
-    GstElement* bin = GStreamer::SourceFactory::create(QStringLiteral("rtsp://127.0.0.1:8554/test"), config);
+    const GStreamer::GstElementPtr bin = createSource(QStringLiteral("rtsp://127.0.0.1:8554/test"), config);
     QVERIFY(bin);
-    const auto cleanup = qScopeGuard([&] { gst_object_unref(bin); });
 
-    GstElement* source = findChildByFactoryName(bin, "rtspsrc");
+    const GStreamer::GstElementPtr source = child(bin.get(), "rtspsrc");
     QVERIFY(source);
 
     guint latencyMs = 0;
     gboolean doRetransmission = FALSE;
     gboolean dropOnLatency = FALSE;
-    g_object_get(source, "latency", &latencyMs, "do-retransmission", &doRetransmission, "drop-on-latency",
+    g_object_get(source.get(), "latency", &latencyMs, "do-retransmission", &doRetransmission, "drop-on-latency",
                  &dropOnLatency, nullptr);
     QCOMPARE(latencyMs, expectedLatencyMs);
     QCOMPARE(doRetransmission, expectedRetransmission ? TRUE : FALSE);
     QCOMPARE(dropOnLatency, expectedDropOnLatency ? TRUE : FALSE);
 
-    QVERIFY2(!findChildByFactoryName(bin, "rtpjitterbuffer"),
+    QVERIFY2(!child(bin.get(), "rtpjitterbuffer"),
              "rtspsrc owns its internal jitterbuffer; the factory must not add a second one");
 
     // rtspsrc only creates its rtpbin during SETUP; drive the same signals it emits so the
@@ -239,7 +244,7 @@ void GStreamerTest::_testSourceFactoryRtspJitterBufferPolicy()
         GStreamer::adoptElement(gst_element_factory_make("rtpjitterbuffer", nullptr));
     QVERIFY(manager);
     QVERIFY(internalBuffer);
-    g_signal_emit_by_name(source, "new-manager", manager.get());
+    g_signal_emit_by_name(source.get(), "new-manager", manager.get());
     g_signal_emit_by_name(manager.get(), "new-jitterbuffer", internalBuffer.get(), 0u, 0u);
 
     gint rtxDelay = 0;
@@ -266,7 +271,7 @@ void GStreamerTest::_testSourceFactoryRtspSelectsOnlyVideoStreams_data()
 
 void GStreamerTest::_testSourceFactoryRtspSelectsOnlyVideoStreams()
 {
-    if (!gst_element_factory_find("rtspsrc")) {
+    if (!GstTest::firstMissingFactory({"rtspsrc"}).isEmpty()) {
         QSKIP("rtspsrc plugin unavailable");
     }
 
@@ -275,11 +280,10 @@ void GStreamerTest::_testSourceFactoryRtspSelectsOnlyVideoStreams()
     QFETCH(bool, expectedSelected);
 
     GStreamer::SourceFactory::Config config;
-    GstElement* bin = GStreamer::SourceFactory::create(QStringLiteral("rtsp://127.0.0.1:8554/test"), config);
+    const GStreamer::GstElementPtr bin = createSource(QStringLiteral("rtsp://127.0.0.1:8554/test"), config);
     QVERIFY(bin);
-    const auto cleanup = qScopeGuard([&] { gst_object_unref(bin); });
 
-    GstElement* source = findChildByFactoryName(bin, "rtspsrc");
+    const GStreamer::GstElementPtr source = child(bin.get(), "rtspsrc");
     QVERIFY(source);
 
     const QByteArray capsNameUtf8 = capsName.toUtf8();
@@ -290,13 +294,13 @@ void GStreamerTest::_testSourceFactoryRtspSelectsOnlyVideoStreams()
     QVERIFY(caps);
 
     gboolean selected = expectedSelected ? FALSE : TRUE;
-    g_signal_emit_by_name(source, "select-stream", 0u, caps.get(), &selected);
+    g_signal_emit_by_name(source.get(), "select-stream", 0u, caps.get(), &selected);
     QCOMPARE(selected, expectedSelected ? TRUE : FALSE);
 }
 
 void GStreamerTest::_testSourceFactoryRtspSetsUpOnlyVideoStream()
 {
-    if (!gst_element_factory_find("rtspsrc")) {
+    if (!GstTest::firstMissingFactory({"rtspsrc"}).isEmpty()) {
         QSKIP("rtspsrc plugin unavailable");
     }
 
@@ -317,18 +321,14 @@ void GStreamerTest::_testSourceFactoryRtspSetsUpOnlyVideoStream()
                           "a=control:trackID=1\r\n"));
     QVERIFY(server.listen());
 
-    GstElement* pipeline = gst_pipeline_new("rtsp-select-stream-test");
-    QVERIFY(pipeline);
-    const auto cleanup = qScopeGuard([&] {
-        (void) gst_element_set_state(pipeline, GST_STATE_NULL);
-        gst_object_unref(pipeline);
-    });
+    GstTest::TestPipeline pipeline(gst_pipeline_new("rtsp-select-stream-test"));
+    QVERIFY(pipeline.get());
 
     GStreamer::SourceFactory::Config config;
-    GstElement* bin = GStreamer::SourceFactory::create(server.url(), config);
+    const GStreamer::GstElementPtr bin = createSource(server.url(), config);
     QVERIFY(bin);
-    QVERIFY(gst_bin_add(GST_BIN(pipeline), bin));
-    QVERIFY(gst_element_set_state(pipeline, GST_STATE_PAUSED) != GST_STATE_CHANGE_FAILURE);
+    QVERIFY(gst_bin_add(pipeline.bin(), bin.get()));
+    QVERIFY(gst_element_set_state(pipeline.get(), GST_STATE_PAUSED) != GST_STATE_CHANGE_FAILURE);
 
     QVERIFY_TRUE_WAIT(!server.setupUrls().isEmpty(), TestTimeout::mediumMs());
     QVERIFY2(server.setupUrls().first().endsWith("/trackID=1"),
@@ -343,34 +343,34 @@ void GStreamerTest::_testSourceFactoryRejectsBadUri()
         QRegularExpression(QStringLiteral("URI is not specified|Unsupported URI scheme|Invalid UDP port")));
 
     GStreamer::SourceFactory::Config config;
-    QVERIFY(!GStreamer::SourceFactory::create(QString(), config));
-    QVERIFY(!GStreamer::SourceFactory::create(QStringLiteral("ftp://127.0.0.1/x"), config));
-    QVERIFY(!GStreamer::SourceFactory::create(QStringLiteral("udp://127.0.0.1:0"), config));
-    QVERIFY(!GStreamer::SourceFactory::create(QStringLiteral("udp://127.0.0.1:99999"), config));
+    QVERIFY(!createSource(QString(), config));
+    QVERIFY(!createSource(QStringLiteral("ftp://127.0.0.1/x"), config));
+    QVERIFY(!createSource(QStringLiteral("udp://127.0.0.1:0"), config));
+    QVERIFY(!createSource(QStringLiteral("udp://127.0.0.1:99999"), config));
 }
 
 void GStreamerTest::_testSourceFactoryTcpMpegTs()
 {
-    if (!gst_element_factory_find("tcpclientsrc") || !gst_element_factory_find("tsdemux")) {
-        QSKIP("tcpclientsrc/tsdemux plugin unavailable");
+    const QString missing = GstTest::firstMissingFactory({"tcpclientsrc", "tsdemux"});
+    if (!missing.isEmpty()) {
+        QSKIP(qPrintable(QStringLiteral("%1 plugin unavailable").arg(missing)));
     }
 
     GStreamer::SourceFactory::Config config;
-    GstElement* bin = GStreamer::SourceFactory::create(QStringLiteral("tcp://192.168.1.50:5600"), config);
+    const GStreamer::GstElementPtr bin = createSource(QStringLiteral("tcp://192.168.1.50:5600"), config);
     QVERIFY(bin);
-    const auto cleanup = qScopeGuard([&] { gst_object_unref(bin); });
 
-    GstElement* src = findChildByFactoryName(bin, "tcpclientsrc");
+    const GStreamer::GstElementPtr src = child(bin.get(), "tcpclientsrc");
     QVERIFY2(src, "tcp:// must build a tcpclientsrc");
-    gchar* host = nullptr;
+    gchar* rawHost = nullptr;
     gint port = 0;
-    g_object_get(src, "host", &host, "port", &port, nullptr);
-    const auto hostCleanup = qScopeGuard([&] { g_free(host); });
-    QCOMPARE(QString::fromUtf8(host), QStringLiteral("192.168.1.50"));
+    g_object_get(src.get(), "host", &rawHost, "port", &port, nullptr);
+    const GStreamer::GCharPtr host = GStreamer::adoptGChar(rawHost);
+    QCOMPARE(QString::fromUtf8(host.get()), QStringLiteral("192.168.1.50"));
     QCOMPARE(port, 5600);
 
-    QVERIFY2(findChildByFactoryName(bin, "tsdemux"), "MPEG-TS over TCP must insert tsdemux explicitly");
-    QVERIFY2(!findChildByFactoryName(bin, "rtpjitterbuffer"), "raw MPEG-TS is not RTP; no jitterbuffer");
+    QVERIFY2(child(bin.get(), "tsdemux"), "MPEG-TS over TCP must insert tsdemux explicitly");
+    QVERIFY2(!child(bin.get(), "rtpjitterbuffer"), "raw MPEG-TS is not RTP; no jitterbuffer");
 }
 
 void GStreamerTest::_testSourceFactoryRejectsBadTcpUri()
@@ -379,229 +379,173 @@ void GStreamerTest::_testSourceFactoryRejectsBadTcpUri()
                      QRegularExpression(QStringLiteral("Invalid TCP port|Missing host in TCP URI")));
 
     GStreamer::SourceFactory::Config config;
-    QVERIFY2(!GStreamer::SourceFactory::create(QStringLiteral("tcp://192.168.1.50"), config),
-             "tcp:// without a port must be rejected");
-    QVERIFY2(!GStreamer::SourceFactory::create(QStringLiteral("tcp://:5600"), config),
-             "tcp:// without a host must be rejected");
-    QVERIFY2(!GStreamer::SourceFactory::create(QStringLiteral("tcp://192.168.1.50:0"), config),
-             "tcp:// with port 0 must be rejected");
+    QVERIFY2(!createSource(QStringLiteral("tcp://192.168.1.50"), config), "tcp:// without a port must be rejected");
+    QVERIFY2(!createSource(QStringLiteral("tcp://:5600"), config), "tcp:// without a host must be rejected");
+    QVERIFY2(!createSource(QStringLiteral("tcp://192.168.1.50:0"), config), "tcp:// with port 0 must be rejected");
 }
 
-void GStreamerTest::_testSourceFactoryUdp265Caps()
+void GStreamerTest::_testSourceFactoryUdp265()
 {
-    if (!gst_element_factory_find("udpsrc") || !gst_element_factory_find("rtpjitterbuffer")) {
-        QSKIP("udpsrc/rtpjitterbuffer plugin unavailable");
+    const QString missing = GstTest::firstMissingFactory({"udpsrc", "rtpjitterbuffer", "rtph265depay", "h265parse"});
+    if (!missing.isEmpty()) {
+        QSKIP(qPrintable(QStringLiteral("%1 plugin unavailable").arg(missing)));
     }
 
     GStreamer::SourceFactory::Config config;
-    GstElement* bin = GStreamer::SourceFactory::create(QStringLiteral("udp265://127.0.0.1:5600"), config);
+    const GStreamer::GstElementPtr bin = createSource(QStringLiteral("udp265://127.0.0.1:5600"), config);
     QVERIFY(bin);
-    const auto cleanup = qScopeGuard([&] { gst_object_unref(bin); });
 
-    GstElement* src = findChildByFactoryName(bin, "udpsrc");
+    const GStreamer::GstElementPtr src = child(bin.get(), "udpsrc");
     QVERIFY2(src, "udp265:// must build a udpsrc");
-
-    GstCaps* caps = nullptr;
-    g_object_get(src, "caps", &caps, nullptr);
+    GstCaps* rawCaps = nullptr;
+    g_object_get(src.get(), "caps", &rawCaps, nullptr);
+    const GStreamer::GstCapsPtr caps = GStreamer::adoptCaps(rawCaps);
     QVERIFY2(caps, "udp265:// must set H265 RTP caps on udpsrc");
-    const GstStructure* st = gst_caps_get_structure(caps, 0);
-    const gchar* encName = gst_structure_get_string(st, "encoding-name");
-    QCOMPARE(QString::fromUtf8(encName), QStringLiteral("H265"));
-    gst_caps_unref(caps);
+    QCOMPARE(QString::fromUtf8(gst_structure_get_string(gst_caps_get_structure(caps.get(), 0), "encoding-name")),
+             QStringLiteral("H265"));
 
-    QVERIFY2(findChildByFactoryName(bin, "rtpjitterbuffer"), "udp265 RTP path must insert a jitterbuffer");
-    QVERIFY2(!findChildByFactoryName(bin, "tsdemux"), "udp265 is RTP, not MPEG-TS; no tsdemux");
-}
+    QVERIFY2(child(bin.get(), "rtpjitterbuffer"), "udp265 RTP path must insert a jitterbuffer");
+    QVERIFY2(!child(bin.get(), "tsdemux"), "udp265 is RTP, not MPEG-TS; no tsdemux");
+    QVERIFY2(child(bin.get(), "rtph265depay"), "udp265:// must depayload H265 RTP explicitly");
 
-void GStreamerTest::_testSourceFactoryUdp265UsesExplicitDepayAndParser()
-{
-    if (!gst_element_factory_find("udpsrc") || !gst_element_factory_find("rtph265depay") ||
-        !gst_element_factory_find("h265parse")) {
-        QSKIP("udp265 RTP/H265 plugins unavailable");
-    }
-
-    GStreamer::SourceFactory::Config config;
-    GstElement* bin = GStreamer::SourceFactory::create(QStringLiteral("udp265://127.0.0.1:5600"), config);
-    QVERIFY(bin);
-    const auto cleanup = qScopeGuard([&] { gst_object_unref(bin); });
-
-    QVERIFY2(findChildByFactoryName(bin, "rtph265depay"), "udp265:// must depayload H265 RTP explicitly");
-
-    GstElement* parser = findChildByFactoryName(bin, "h265parse");
+    const GStreamer::GstElementPtr parser = child(bin.get(), "h265parse");
     QVERIFY2(parser, "udp265:// must parse H265 explicitly");
-
     gint configInterval = 0;
-    g_object_get(parser, "config-interval", &configInterval, nullptr);
+    g_object_get(parser.get(), "config-interval", &configInterval, nullptr);
     QCOMPARE(configInterval, -1);
 }
 
 void GStreamerTest::_testSourceFactoryUdpH264Caps()
 {
-    if (!gst_element_factory_find("udpsrc")) {
+    if (!GstTest::firstMissingFactory({"udpsrc"}).isEmpty()) {
         QSKIP("udpsrc plugin unavailable");
     }
 
     GStreamer::SourceFactory::Config config;
-    GstElement* bin = GStreamer::SourceFactory::create(QStringLiteral("udp://127.0.0.1:5600"), config);
+    const GStreamer::GstElementPtr bin = createSource(QStringLiteral("udp://127.0.0.1:5600"), config);
     QVERIFY(bin);
-    const auto cleanup = qScopeGuard([&] { gst_object_unref(bin); });
 
-    GstElement* src = findChildByFactoryName(bin, "udpsrc");
+    const GStreamer::GstElementPtr src = child(bin.get(), "udpsrc");
     QVERIFY(src);
-
-    GstCaps* caps = nullptr;
-    g_object_get(src, "caps", &caps, nullptr);
+    GstCaps* rawCaps = nullptr;
+    g_object_get(src.get(), "caps", &rawCaps, nullptr);
+    const GStreamer::GstCapsPtr caps = GStreamer::adoptCaps(rawCaps);
     QVERIFY2(caps, "udp:// must set H264 RTP caps");
-    const GstStructure* st = gst_caps_get_structure(caps, 0);
-    const gchar* media = gst_structure_get_string(st, "media");
-    const gchar* encName = gst_structure_get_string(st, "encoding-name");
-    QCOMPARE(QString::fromUtf8(media), QStringLiteral("video"));
-    QCOMPARE(QString::fromUtf8(encName), QStringLiteral("H264"));
-    gst_caps_unref(caps);
+    const GstStructure* st = gst_caps_get_structure(caps.get(), 0);
+    QCOMPARE(QString::fromUtf8(gst_structure_get_string(st, "media")), QStringLiteral("video"));
+    QCOMPARE(QString::fromUtf8(gst_structure_get_string(st, "encoding-name")), QStringLiteral("H264"));
 }
 
 void GStreamerTest::_testSourceFactoryUdpMpegTs()
 {
-    if (!gst_element_factory_find("udpsrc") || !gst_element_factory_find("tsdemux")) {
-        QSKIP("udpsrc/tsdemux plugin unavailable");
+    const QString missing = GstTest::firstMissingFactory({"udpsrc", "tsdemux"});
+    if (!missing.isEmpty()) {
+        QSKIP(qPrintable(QStringLiteral("%1 plugin unavailable").arg(missing)));
     }
 
     GStreamer::SourceFactory::Config config;
-    GstElement* bin = GStreamer::SourceFactory::create(QStringLiteral("mpegts://127.0.0.1:5600"), config);
+    const GStreamer::GstElementPtr bin = createSource(QStringLiteral("mpegts://127.0.0.1:5600"), config);
     QVERIFY(bin);
-    const auto cleanup = qScopeGuard([&] { gst_object_unref(bin); });
 
-    GstElement* src = findChildByFactoryName(bin, "udpsrc");
+    const GStreamer::GstElementPtr src = child(bin.get(), "udpsrc");
     QVERIFY2(src, "mpegts:// must build a udpsrc");
+    GstCaps* rawCaps = nullptr;
+    g_object_get(src.get(), "caps", &rawCaps, nullptr);
+    QVERIFY2(!GStreamer::adoptCaps(rawCaps), "raw MPEG-TS over UDP must not force RTP caps on udpsrc");
 
-    GstCaps* caps = nullptr;
-    g_object_get(src, "caps", &caps, nullptr);
-    if (caps) {
-        gst_caps_unref(caps);
-    }
-    QVERIFY2(!caps, "raw MPEG-TS over UDP must not force RTP caps on udpsrc");
-
-    QVERIFY2(findChildByFactoryName(bin, "tsdemux"), "mpegts:// must insert tsdemux");
-    QVERIFY2(!findChildByFactoryName(bin, "rtpjitterbuffer"), "raw MPEG-TS is not RTP; no jitterbuffer");
+    QVERIFY2(child(bin.get(), "tsdemux"), "mpegts:// must insert tsdemux");
+    QVERIFY2(!child(bin.get(), "rtpjitterbuffer"), "raw MPEG-TS is not RTP; no jitterbuffer");
 }
 
 void GStreamerTest::_testSourceFactorySchemeCaseInsensitive()
 {
-    if (!gst_element_factory_find("udpsrc")) {
+    if (!GstTest::firstMissingFactory({"udpsrc"}).isEmpty()) {
         QSKIP("udpsrc plugin unavailable");
     }
 
     GStreamer::SourceFactory::Config config;
-    GstElement* bin = GStreamer::SourceFactory::create(QStringLiteral("UDP://127.0.0.1:5600"), config);
-    QVERIFY2(bin, "uppercase scheme must be accepted (scheme is lower-cased before matching)");
-    gst_object_unref(bin);
+    QVERIFY2(createSource(QStringLiteral("UDP://127.0.0.1:5600"), config),
+             "uppercase scheme must be accepted (scheme is lower-cased before matching)");
 }
 
 void GStreamerTest::_testSourceFactoryNegativeLatencyClamped()
 {
-    if (!gst_element_factory_find("udpsrc") || !gst_element_factory_find("rtpjitterbuffer")) {
-        QSKIP("udpsrc/rtpjitterbuffer plugin unavailable");
+    const QString missing = GstTest::firstMissingFactory({"udpsrc", "rtpjitterbuffer"});
+    if (!missing.isEmpty()) {
+        QSKIP(qPrintable(QStringLiteral("%1 plugin unavailable").arg(missing)));
     }
 
     GStreamer::SourceFactory::Config config;
     config.latencyMs = -100;
-    GstElement* bin = GStreamer::SourceFactory::create(QStringLiteral("udp://127.0.0.1:5600"), config);
+    const GStreamer::GstElementPtr bin = createSource(QStringLiteral("udp://127.0.0.1:5600"), config);
     QVERIFY(bin);
-    const auto cleanup = qScopeGuard([&] { gst_object_unref(bin); });
 
-    GstElement* jb = findChildByFactoryName(bin, "rtpjitterbuffer");
+    const GStreamer::GstElementPtr jb = child(bin.get(), "rtpjitterbuffer");
     QVERIFY(jb);
     guint latency = 99999;
-    g_object_get(jb, "latency", &latency, nullptr);
+    g_object_get(jb.get(), "latency", &latency, nullptr);
     QCOMPARE(latency, 0u);
 }
 
 void GStreamerTest::_testSourceFactoryDynamicRtpLinkFailureCleansJitterBuffer()
 {
-    if (!gst_element_factory_find("udpsrc") || !gst_element_factory_find("tsdemux") ||
-        !gst_element_factory_find("rtpjitterbuffer")) {
-        QSKIP("udpsrc/tsdemux/rtpjitterbuffer plugin unavailable");
+    const QString missing = GstTest::firstMissingFactory({"udpsrc", "tsdemux", "rtpjitterbuffer"});
+    if (!missing.isEmpty()) {
+        QSKIP(qPrintable(QStringLiteral("%1 plugin unavailable").arg(missing)));
     }
 
     GStreamer::SourceFactory::Config config;
     config.jitterBuffer = GStreamer::SourceFactory::JitterBuffer::DropOnLatency;
-    GstElement* bin = GStreamer::SourceFactory::create(QStringLiteral("mpegts://127.0.0.1:5600"), config);
-    QVERIFY(bin);
-    const auto cleanup = qScopeGuard([&] {
-        (void) gst_element_set_state(bin, GST_STATE_NULL);
-        gst_object_unref(bin);
-    });
+    const MpegTsSource source(config);
+    QVERIFY(source.isValid());
 
     // A running bin syncs the temporary jitterbuffer out of NULL, so removing it without a NULL
     // transition raises GStreamer's "disposing element in READY/PLAYING" critical. The source stays
     // locked in NULL so the test doesn't bind the UDP port.
-    GstElement* udpsrc = findChildByFactoryName(bin, "udpsrc");
+    const GStreamer::GstElementPtr udpsrc = child(source.bin.get(), "udpsrc");
     QVERIFY(udpsrc);
-    (void) gst_element_set_locked_state(udpsrc, TRUE);
-    QCOMPARE(gst_element_set_state(bin, GST_STATE_READY), GST_STATE_CHANGE_SUCCESS);
+    (void) gst_element_set_locked_state(udpsrc.get(), TRUE);
+    QCOMPARE(gst_element_set_state(source.bin.get(), GST_STATE_READY), GST_STATE_CHANGE_SUCCESS);
 
-    GstElement* tsdemux = findChildByFactoryName(bin, "tsdemux");
-    QVERIFY(tsdemux);
-    GstElement* parser = findChildByFactoryName(bin, "parsebin");
-    QVERIFY(parser);
-
-    GstPad* parserSink = gst_element_get_static_pad(parser, "sink");
-    QVERIFY(parserSink);
-    const auto parserSinkCleanup = qScopeGuard([&] { gst_object_unref(parserSink); });
-    QVERIFY(!gst_pad_is_linked(parserSink));
-
-    static GstStaticPadTemplate sRtpPadTemplate = GST_STATIC_PAD_TEMPLATE(
-        "stray_rtp", GST_PAD_SRC, GST_PAD_SOMETIMES,
-        GST_STATIC_CAPS("application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264"));
-
-    GstPad* strayPad = gst_pad_new_from_static_template(&sRtpPadTemplate, "stray_rtp");
+    // Not added to tsdemux, so linking it to the jitterbuffer fails.
+    const GStreamer::GstPadPtr strayPad = GStreamer::adoptPad(
+        GST_PAD(gst_object_ref_sink(gst_pad_new_from_static_template(&sH264RtpPadTemplate, "stray_rtp"))));
     QVERIFY(strayPad);
-    const auto padCleanup = qScopeGuard([&] { gst_object_unref(strayPad); });
 
     ignoreLogMessage("Video.GStreamer.GstSourceFactory", QtWarningMsg,
                      QRegularExpression(QStringLiteral("gst_element_link_pads\\(\\) failed")));
-    g_signal_emit_by_name(tsdemux, "pad-added", strayPad);
+    g_signal_emit_by_name(source.demux.get(), "pad-added", strayPad.get());
 
-    QVERIFY2(!gst_pad_is_linked(parserSink),
+    QVERIFY2(!gst_pad_is_linked(source.parserSink.get()),
              "a failed dynamic RTP pad link must leave parsebin available for the next valid pad");
-    QVERIFY2(!findChildByFactoryName(bin, "rtpjitterbuffer"),
+    QVERIFY2(!child(source.bin.get(), "rtpjitterbuffer"),
              "a failed dynamic RTP pad link must remove its temporary jitterbuffer");
 }
 
 void GStreamerTest::_testSourceFactoryDynamicLinkSkipsNonVideoRtp()
 {
-    if (!gst_element_factory_find("udpsrc") || !gst_element_factory_find("tsdemux") ||
-        !gst_element_factory_find("rtpjitterbuffer")) {
-        QSKIP("udpsrc/tsdemux/rtpjitterbuffer plugin unavailable");
+    const QString missing = GstTest::firstMissingFactory({"udpsrc", "tsdemux", "rtpjitterbuffer"});
+    if (!missing.isEmpty()) {
+        QSKIP(qPrintable(QStringLiteral("%1 plugin unavailable").arg(missing)));
     }
 
     GStreamer::SourceFactory::Config config;
-    GstElement* bin = GStreamer::SourceFactory::create(QStringLiteral("mpegts://127.0.0.1:5600"), config);
-    QVERIFY(bin);
-    const auto cleanup = qScopeGuard([&] { gst_object_unref(bin); });
-
-    GstElement* demux = findChildByFactoryName(bin, "tsdemux");
-    QVERIFY(demux);
-    GstElement* parser = findChildByFactoryName(bin, "parsebin");
-    QVERIFY(parser);
-    const GStreamer::GstPadPtr parserSink = GStreamer::adoptPad(gst_element_get_static_pad(parser, "sink"));
-    QVERIFY(parserSink);
+    const MpegTsSource source(config);
+    QVERIFY(source.isValid());
 
     // Mirrors an RTSP SDP listing audio before video: the first RTP pad must not claim the parser.
     static GstStaticPadTemplate sAudioTemplate = GST_STATIC_PAD_TEMPLATE(
         "audio_rtp", GST_PAD_SRC, GST_PAD_SOMETIMES,
         GST_STATIC_CAPS("application/x-rtp, media=(string)audio, clock-rate=(int)48000, encoding-name=(string)OPUS"));
-    static GstStaticPadTemplate sVideoTemplate = GST_STATIC_PAD_TEMPLATE(
-        "video_rtp", GST_PAD_SRC, GST_PAD_SOMETIMES,
-        GST_STATIC_CAPS("application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264"));
 
     // gst_element_add_pad emits pad-added and consumes the floating pad.
-    QVERIFY(gst_element_add_pad(demux, gst_pad_new_from_static_template(&sAudioTemplate, "audio_rtp")));
-    QVERIFY2(!gst_pad_is_linked(parserSink.get()), "an audio RTP pad must not be linked to the video parser");
-    QVERIFY2(!findChildByFactoryName(bin, "rtpjitterbuffer"), "an audio RTP pad must not get a jitterbuffer");
+    QVERIFY(gst_element_add_pad(source.demux.get(), gst_pad_new_from_static_template(&sAudioTemplate, "audio_rtp")));
+    QVERIFY2(!gst_pad_is_linked(source.parserSink.get()), "an audio RTP pad must not be linked to the video parser");
+    QVERIFY2(!child(source.bin.get(), "rtpjitterbuffer"), "an audio RTP pad must not get a jitterbuffer");
 
-    QVERIFY(gst_element_add_pad(demux, gst_pad_new_from_static_template(&sVideoTemplate, "video_rtp")));
-    QVERIFY2(gst_pad_is_linked(parserSink.get()), "the video RTP pad that follows must still reach the parser");
+    QVERIFY(
+        gst_element_add_pad(source.demux.get(), gst_pad_new_from_static_template(&sH264RtpPadTemplate, "video_rtp")));
+    QVERIFY2(gst_pad_is_linked(source.parserSink.get()), "the video RTP pad that follows must still reach the parser");
 }
 
 #endif
