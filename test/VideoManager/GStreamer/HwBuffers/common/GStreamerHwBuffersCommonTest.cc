@@ -24,6 +24,7 @@
 #include "GStreamer.h"
 #include "GStreamerHelpers.h"
 #include "GStreamerLogging.h"
+#include "GStreamerTestHelpers.h"
 #include "GstHwPathTelemetry.h"
 #include "GstHwVideoBufferFactory.h"
 #include "GstQgcFrameMap.h"
@@ -76,8 +77,6 @@ void GStreamerTest::_testBridgeDispatcherFanout()
     !defined(QGC_HAS_GST_D3D12_GPU_PATH)
     QSKIP("No GPU bridge compiled in this build");
 #else
-    GStreamer::redirectGLibLogging();
-    QVERIFY2(GStreamer::completeInit(), "completeInit failed");
 
     GstElement* dummy = gst_element_factory_make("identity", nullptr);
     QVERIFY(dummy);
@@ -197,8 +196,6 @@ void GStreamerTest::_testContextBridgeRegistry()
 #if !defined(QGC_HAS_ANY_GPU_PATH)
     QSKIP("No GPU path compiled in this build");
 #else
-    GStreamer::redirectGLibLogging();
-    QVERIFY2(GStreamer::completeInit(), "completeInit failed");
 
     testBridgeA().restart();
     testBridgeB().restart();
@@ -288,40 +285,20 @@ void GStreamerTest::_testHwBufferFactoryDispatchSystemMemory()
 #if !defined(QGC_HAS_ANY_GPU_PATH)
     QSKIP("HwVideoBuffer factory not compiled in this build (no GPU path enabled)");
 #else
-    GStreamer::redirectGLibLogging();
-    QVERIFY2(GStreamer::completeInit(), "completeInit failed");
 
-    GError* err = nullptr;
     // videotestsrc produces system memory; no GPU path should match.
-    GstElement* pipeline = gst_parse_launch(
-        "videotestsrc num-buffers=1 ! "
-        "video/x-raw,format=BGRA,width=64,height=64,framerate=30/1 ! "
-        "fakesink name=sink enable-last-sample=true sync=false",
-        &err);
-    if (err) {
-        g_clear_error(&err);
-    }
-    QVERIFY2(pipeline, "Pipeline construction failed");
+    GstTest::TestPipeline pipeline;
+    QVERIFY2(pipeline.launch(QStringLiteral("videotestsrc num-buffers=1 ! "
+                                            "video/x-raw,format=BGRA,width=64,height=64,framerate=30/1 ! "
+                                            "fakesink name=sink enable-last-sample=true sync=false")),
+             qPrintable(pipeline.error()));
+    QVERIFY(pipeline.play());
+    const QString failure = pipeline.runToEos();
+    QVERIFY2(failure.isEmpty(), qPrintable(failure));
 
-    QVERIFY(gst_element_set_state(pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
-    GstBus* bus = gst_element_get_bus(pipeline);
-    GstMessage* msg = gst_bus_timed_pop_filtered(bus, 5 * GST_SECOND,
-                                                 static_cast<GstMessageType>(GST_MESSAGE_EOS | GST_MESSAGE_ERROR));
-    gst_object_unref(bus);
-    if (msg)
-        gst_message_unref(msg);
-
-    GstElement* fakesink = gst_bin_get_by_name(GST_BIN(pipeline), "sink");
-    QVERIFY(fakesink);
     GstSample* sample = nullptr;
-    g_object_get(fakesink, "last-sample", &sample, nullptr);
-    gst_object_unref(fakesink);
-
-    gst_element_set_state(pipeline, GST_STATE_NULL);
-    gst_object_unref(pipeline);
-
-    if (!sample)
-        QSKIP("No sample produced (fakesink enable-last-sample may be off)");
+    g_object_get(pipeline.element("sink").get(), "last-sample", &sample, nullptr);
+    QVERIFY2(sample, "fakesink kept no last sample");
 
     GstVideoInfo info;
     GstCaps* caps = gst_sample_get_caps(sample);
@@ -370,8 +347,7 @@ void GStreamerTest::_testPreflightVerdictsDroppedWithRhi()
 #if !defined(QGC_HAS_ANY_GPU_PATH)
     QSKIP("Import preflight not compiled in this build (no GPU path enabled)");
 #else
-    QRhiNullInitParams nullParams;
-    std::unique_ptr<QRhi> rhi(QRhi::create(QRhi::Null, &nullParams));
+    std::unique_ptr<QRhi> rhi = GstTest::makeNullRhi();
     QVERIFY(rhi);
     const QRhi* const address = rhi.get();
     QVERIFY(GstHwImportPreflight::preflightOrRecord(rhi.get(), HwVideoBufferPath::DmaBuf,
@@ -580,28 +556,6 @@ public:
 };
 #endif
 
-// Minimal GstSample factory: NV12 buffer at given size, optionally with a crop meta.
-GstSample* makeNv12Sample(int width, int height, GstVideoInfo* outInfo, bool addCrop, int cx, int cy, int cw, int ch)
-{
-    GstVideoInfo info;
-    gst_video_info_set_format(&info, GST_VIDEO_FORMAT_NV12, width, height);
-    GstCaps* caps = gst_video_info_to_caps(&info);
-    GstBuffer* buf = gst_buffer_new_allocate(nullptr, GST_VIDEO_INFO_SIZE(&info), nullptr);
-    if (addCrop) {
-        GstVideoCropMeta* crop = gst_buffer_add_video_crop_meta(buf);
-        crop->x = cx;
-        crop->y = cy;
-        crop->width = cw;
-        crop->height = ch;
-    }
-    GstSample* sample = gst_sample_new(buf, caps, nullptr, nullptr);
-    gst_buffer_unref(buf);
-    gst_caps_unref(caps);
-    if (outInfo)
-        *outInfo = info;
-    return sample;
-}
-
 }  // namespace
 
 void GStreamerTest::_testHwFrameTexturesRejectsForeignOldTextures()
@@ -696,7 +650,7 @@ void GStreamerTest::_testHwPathRegistrySelection()
     const GstHwPathRegistry::ScopedPathsForTest paths({&kTestSelectPathA, &kTestSelectPathB});
 
     GstVideoInfo info;
-    GstSample* sample = makeNv12Sample(16, 16, &info, false, 0, 0, 0, 0);
+    GstSample* sample = GstTest::makeVideoSample(GST_VIDEO_FORMAT_NV12, 16, 16, &info);
     QVERIFY(sample);
     const auto sampleGuard = qScopeGuard([sample] { gst_sample_unref(sample); });
 
@@ -731,7 +685,7 @@ void GStreamerTest::_testHwBufferCropMatrixIdentityWithoutMeta()
     QSKIP("GstHwVideoBuffer not compiled in this build (no GPU path enabled)");
 #else
     GstVideoInfo info;
-    GstSample* sample = makeNv12Sample(320, 240, &info, /*addCrop=*/false, 0, 0, 0, 0);
+    GstSample* sample = GstTest::makeVideoSample(GST_VIDEO_FORMAT_NV12, 320, 240, &info);
     QVERIFY(sample);
     QVideoFrameFormat fmt(QSize(320, 240), QVideoFrameFormat::Format_NV12);
     TestableHwVideoBuffer hw(sample, info, fmt);
@@ -748,19 +702,13 @@ void GStreamerTest::_testHwVideoBufferCpuMapFallback()
     QSKIP("GstHwVideoBuffer not compiled in this build (no GPU path enabled)");
 #else
     GstVideoInfo info;
-    gst_video_info_set_format(&info, GST_VIDEO_FORMAT_BGRA, 4, 2);
-    GstBuffer* buffer = gst_buffer_new_allocate(nullptr, GST_VIDEO_INFO_SIZE(&info), nullptr);
-    QVERIFY(buffer);
+    GstSample* sample = GstTest::makeVideoSample(GST_VIDEO_FORMAT_BGRA, 4, 2, &info);
+    QVERIFY(sample);
     QByteArray pixels(static_cast<qsizetype>(GST_VIDEO_INFO_SIZE(&info)), Qt::Uninitialized);
     for (qsizetype i = 0; i < pixels.size(); ++i) {
         pixels[i] = static_cast<char>(i);
     }
-    gst_buffer_fill(buffer, 0, pixels.constData(), static_cast<gsize>(pixels.size()));
-    GstCaps* caps = gst_video_info_to_caps(&info);
-    GstSample* sample = gst_sample_new(buffer, caps, nullptr, nullptr);
-    gst_caps_unref(caps);
-    gst_buffer_unref(buffer);
-    QVERIFY(sample);
+    gst_buffer_fill(gst_sample_get_buffer(sample), 0, pixels.constData(), static_cast<gsize>(pixels.size()));
 
     auto hw = std::make_unique<TestableHwVideoBuffer>(
         sample, info, QVideoFrameFormat(QSize(4, 2), QVideoFrameFormat::Format_BGRA8888));
@@ -770,8 +718,7 @@ void GStreamerTest::_testHwVideoBufferCpuMapFallback()
     QVideoFrame frame(std::move(hw));
 
     // Qt's createTextures() falls back to uploading map() when mapTextures() fails.
-    QRhiNullInitParams nullParams;
-    const std::unique_ptr<QRhi> rhi(QRhi::create(QRhi::Null, &nullParams));
+    const std::unique_ptr<QRhi> rhi = GstTest::makeNullRhi();
     QVERIFY(rhi);
     QRhiResourceUpdateBatch* updates = rhi->nextResourceUpdateBatch();
     QVideoFrameTexturesUPtr oldTextures;
@@ -812,13 +759,7 @@ void GStreamerTest::_testHwVideoBufferCpuMapRefusesForeignLayout()
     QFETCH(bool, expectMapped);
 
     GstVideoInfo info;
-    gst_video_info_set_format(&info, GST_VIDEO_FORMAT_YUY2, 4, 2);
-    GstBuffer* buffer = gst_buffer_new_allocate(nullptr, GST_VIDEO_INFO_SIZE(&info), nullptr);
-    QVERIFY(buffer);
-    GstCaps* caps = gst_video_info_to_caps(&info);
-    GstSample* sample = gst_sample_new(buffer, caps, nullptr, nullptr);
-    gst_caps_unref(caps);
-    gst_buffer_unref(buffer);
+    GstSample* sample = GstTest::makeVideoSample(GST_VIDEO_FORMAT_YUY2, 4, 2, &info);
     QVERIFY(sample);
     const auto sampleGuard = qScopeGuard([sample] { gst_sample_unref(sample); });
 
@@ -837,10 +778,14 @@ void GStreamerTest::_testHwBufferCropMatrixFromVideoCropMeta()
     // applyCropMeta (GstQgcFrameMap), NOT via externalTextureMatrix. Verify the format
     // path round-trips a crop rect into viewport().
     GstVideoInfo info;
-    GstSample* sample = makeNv12Sample(400, 200, &info, /*addCrop=*/true,
-                                       /*cx=*/100, /*cy=*/50, /*cw=*/200, /*ch=*/100);
+    GstSample* sample = GstTest::makeVideoSample(GST_VIDEO_FORMAT_NV12, 400, 200, &info);
     QVERIFY(sample);
     GstBuffer* buf = gst_sample_get_buffer(sample);
+    GstVideoCropMeta* crop = gst_buffer_add_video_crop_meta(buf);
+    crop->x = 100;
+    crop->y = 50;
+    crop->width = 200;
+    crop->height = 100;
 
     QVideoFrameFormat in(QSize(400, 200), QVideoFrameFormat::Format_NV12);
     QVideoFrameFormat out = applyCropMeta(in, buf);

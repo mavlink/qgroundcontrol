@@ -8,6 +8,7 @@
 #include "GStreamer.h"
 #include "GStreamerHelpers.h"
 #include "GStreamerLogging.h"
+#include "GStreamerTestHelpers.h"
 #include "GstHwPathTelemetry.h"
 #include "GstHwVideoBufferFactory.h"
 #include "GstQgcFrameMap.h"
@@ -213,387 +214,190 @@ private:
     bool _ready = false;
 };
 
-}  // namespace
-void GStreamerTest::_testAppsinkFrameDelivery()
+struct PipelineRunResult
 {
-    // Ensure the qgc plugin (including qgcvideosinkbin) is registered.
-    // _testCompleteInit runs before this slot, but guard against reorder.
-    GstElementFactory* guardFactory = gst_element_factory_find("qgcvideosinkbin");
-    if (!guardFactory) {
-        GStreamer::completeInit();
-    } else {
-        gst_object_unref(guardFactory);
-    }
-
-    GstElementFactory* factory = gst_element_factory_find("qgcvideosinkbin");
-    QVERIFY2(factory, "qgcvideosinkbin factory not found");
-    gst_object_unref(factory);
-
-    GError* error = nullptr;
-    GstElement* pipeline = gst_parse_launch(
-        "videotestsrc num-buffers=10 ! "
-        "video/x-raw,format=I420,width=320,height=240,framerate=30/1 ! "
-        "videoconvert ! "
-        "video/x-raw,format=BGRA ! "
-        "qgcvideosinkbin name=sink",
-        &error);
-    if (error) {
-        const QString msg = QString::fromUtf8(error->message);
-        g_clear_error(&error);
-        QFAIL(qPrintable(QStringLiteral("Pipeline parse error: %1").arg(msg)));
-    }
-    QVERIFY2(pipeline, "Failed to create appsink test pipeline");
-
-    GstElement* sinkBin = gst_bin_get_by_name(GST_BIN(pipeline), "sink");
-    QVERIFY2(sinkBin, "Could not find 'sink' element in pipeline");
-
-    QVideoSink videoSink;
-    QObject controllerOwner;
-
     int frameCount = 0;
-    QSize lastFrameSize;
-    QObject::connect(&videoSink, &QVideoSink::videoFrameChanged, &controllerOwner, [&](const QVideoFrame& frame) {
-        frameCount++;
-        lastFrameSize = frame.size();
+    QVideoFrameFormat lastFormat;
+    qint64 lastStartTime = -1;
+    QColor centerPixel;
+    bool centerPixelValid = false;
+    bool eos = false;
+    QString errorMessage;
+};
+
+/// Plays "videotestsrc ! @p capsLine ! qgcvideosinkbin" to EOS with the bin bound to @p videoSink, as VideoManager
+/// binds it, and records the frames that reach the QVideoSink.
+PipelineRunResult runPipelineThroughQVideoSink(QVideoSink& videoSink, const char* capsLine, int numBuffers = 5,
+                                               bool gpuZerocopy = false, const char* sourceProperties = "",
+                                               bool captureCenterPixel = false)
+{
+    PipelineRunResult r;
+    const auto owner = std::make_unique<QObject>();
+    // Declared after the binding's owner, so the pipeline stops first.
+    GstTest::TestPipeline pipeline;
+    if (!pipeline.launch(
+            QStringLiteral("videotestsrc %1 num-buffers=%2 ! %3 ! qgcvideosinkbin name=sink gpu-zerocopy=%4")
+                .arg(QString::fromUtf8(sourceProperties))
+                .arg(numBuffers)
+                .arg(QString::fromUtf8(capsLine))
+                .arg(gpuZerocopy ? "true" : "false"))) {
+        r.errorMessage = pipeline.error();
+        return r;
+    }
+    const GStreamer::GstElementPtr sinkBin = pipeline.element("sink");
+    if (!sinkBin || !GStreamer::setupQVideoSinkElement(sinkBin.get(), &videoSink, owner.get())) {
+        r.errorMessage = QStringLiteral("setupQVideoSinkElement() failed");
+        return r;
+    }
+    if (!owner->findChild<QGCQVideoSinkController*>(QString(), Qt::FindDirectChildrenOnly)) {
+        r.errorMessage = QStringLiteral("controller not created by setupQVideoSinkElement()");
+        return r;
+    }
+    QObject::connect(&videoSink, &QVideoSink::videoFrameChanged, owner.get(), [&](const QVideoFrame& f) {
+        ++r.frameCount;
+        r.lastFormat = f.surfaceFormat();
+        r.lastStartTime = f.startTime();
+        if (captureCenterPixel) {
+            const QImage image = f.toImage();
+            if (!image.isNull()) {
+                r.centerPixel = image.pixelColor(image.width() / 2, image.height() / 2);
+                r.centerPixelValid = true;
+            }
+        }
     });
 
-    QVERIFY2(GStreamer::setupQVideoSinkElement(sinkBin, &videoSink, &controllerOwner),
-             "GStreamer::setupQVideoSinkElement() failed");
-    auto* controller = controllerOwner.findChild<QGCQVideoSinkController*>(QString(), Qt::FindDirectChildrenOnly);
-    QVERIFY(controller);
-
-    gst_object_unref(sinkBin);
-
-    GstStateChangeReturn ret = gst_element_set_state(pipeline, GST_STATE_PLAYING);
-    QVERIFY2(ret != GST_STATE_CHANGE_FAILURE, "Pipeline failed to transition to PLAYING");
-
-    GstBus* bus = gst_element_get_bus(pipeline);
-    QVERIFY(bus);
-
-    GstMessage* msg = gst_bus_timed_pop_filtered(bus, 10 * GST_SECOND,
-                                                 static_cast<GstMessageType>(GST_MESSAGE_EOS | GST_MESSAGE_ERROR));
-    QVERIFY2(msg, "Pipeline timed out waiting for EOS or ERROR");
-
-    if (GST_MESSAGE_TYPE(msg) == GST_MESSAGE_ERROR) {
-        GError* err = nullptr;
-        gchar* debug = nullptr;
-        gst_message_parse_error(msg, &err, &debug);
-        const QString errMsg = QStringLiteral("%1 (%2)")
-                                   .arg(err ? QString::fromUtf8(err->message) : QStringLiteral("unknown"))
-                                   .arg(debug ? QString::fromUtf8(debug) : QString());
-        g_clear_error(&err);
-        g_free(debug);
-        gst_message_unref(msg);
-        gst_object_unref(bus);
-        gst_element_set_state(pipeline, GST_STATE_NULL);
-        gst_object_unref(pipeline);
-        QFAIL(qPrintable(QStringLiteral("Pipeline error: %1").arg(errMsg)));
+    if (!pipeline.play()) {
+        r.errorMessage = QStringLiteral("set_state(PLAYING) failed");
+        return r;
     }
+    const GStreamer::GstMessagePtr message = pipeline.waitForEosOrError();
+    r.eos = message && (GST_MESSAGE_TYPE(message.get()) == GST_MESSAGE_EOS);
+    if (!message) {
+        r.errorMessage = QStringLiteral("timeout waiting for EOS");
+    } else if (!r.eos) {
+        r.errorMessage = GstTest::errorText(message.get(), /*withDetails=*/false);
+    }
+    // Frames reach the QVideoSink through queued calls to this thread, and the counting connection dies with owner
+    // on return, so the caller only sees frames delivered before then.
+    if (r.eos) {
+        (void) UnitTest::waitForCondition([&r] { return r.frameCount > 0; }, TestTimeout::mediumDuration(),
+                                          u"frames delivered to the QVideoSink");
+    }
+    return r;
+}
 
-    QCOMPARE(GST_MESSAGE_TYPE(msg), GST_MESSAGE_EOS);
-    gst_message_unref(msg);
-    gst_object_unref(bus);
+}  // namespace
 
-    QTRY_VERIFY_WITH_TIMEOUT(frameCount > 0, TestTimeout::mediumMs());
-    QCOMPARE(lastFrameSize, QSize(320, 240));
-
-    gst_element_set_state(pipeline, GST_STATE_NULL);
-    gst_object_unref(pipeline);
+void GStreamerTest::_testAppsinkFrameDelivery()
+{
+    QVideoSink videoSink;
+    const auto r = runPipelineThroughQVideoSink(videoSink,
+                                                "video/x-raw,format=I420,width=320,height=240,framerate=30/1 ! "
+                                                "videoconvert ! video/x-raw,format=BGRA",
+                                                /*numBuffers=*/10);
+    QVERIFY2(r.eos, qUtf8Printable(r.errorMessage));
+    QVERIFY(r.frameCount > 0);
+    QCOMPARE(r.lastFormat.frameSize(), QSize(320, 240));
 }
 
 void GStreamerTest::_testAppsinkYuvPassthrough()
 {
-    GstElementFactory* guardFactory = gst_element_factory_find("qgcvideosinkbin");
-    if (!guardFactory) {
-        GStreamer::completeInit();
-    } else {
-        gst_object_unref(guardFactory);
-    }
-
-    GError* error = nullptr;
-    GstElement* pipeline = gst_parse_launch(
-        "videotestsrc num-buffers=10 ! "
-        "video/x-raw,format=I420,width=320,height=240,framerate=30/1 ! "
-        "qgcvideosinkbin name=sink",
-        &error);
-    if (error) {
-        const QString msg = QString::fromUtf8(error->message);
-        g_clear_error(&error);
-        QFAIL(qPrintable(QStringLiteral("Pipeline parse error: %1").arg(msg)));
-    }
-    QVERIFY2(pipeline, "Failed to create YUV passthrough pipeline");
-
-    GstElement* sinkBin = gst_bin_get_by_name(GST_BIN(pipeline), "sink");
-    QVERIFY2(sinkBin, "Could not find 'sink' element");
-
     QVideoSink videoSink;
-    QObject controllerOwner;
-
-    int frameCount = 0;
-    QVideoFrameFormat::PixelFormat lastPixelFormat = QVideoFrameFormat::Format_Invalid;
-    QObject::connect(&videoSink, &QVideoSink::videoFrameChanged, &controllerOwner, [&](const QVideoFrame& frame) {
-        frameCount++;
-        lastPixelFormat = frame.pixelFormat();
-    });
-
-    QVERIFY2(GStreamer::setupQVideoSinkElement(sinkBin, &videoSink, &controllerOwner),
-             "GStreamer::setupQVideoSinkElement() failed");
-    gst_object_unref(sinkBin);
-
-    QVERIFY2(gst_element_set_state(pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE, "Pipeline failed to PLAY");
-
-    GstBus* bus = gst_element_get_bus(pipeline);
-    GstMessage* msg = gst_bus_timed_pop_filtered(bus, 10 * GST_SECOND,
-                                                 static_cast<GstMessageType>(GST_MESSAGE_EOS | GST_MESSAGE_ERROR));
-    QVERIFY2(msg, "Pipeline timed out");
-    if (GST_MESSAGE_TYPE(msg) == GST_MESSAGE_ERROR) {
-        gst_message_unref(msg);
-        gst_object_unref(bus);
-        gst_element_set_state(pipeline, GST_STATE_NULL);
-        gst_object_unref(pipeline);
-        QFAIL("YUV passthrough pipeline errored");
-    }
-    QCOMPARE(GST_MESSAGE_TYPE(msg), GST_MESSAGE_EOS);
-    gst_message_unref(msg);
-    gst_object_unref(bus);
-
-    QTRY_VERIFY_WITH_TIMEOUT(frameCount > 0, TestTimeout::mediumMs());
-    QCOMPARE(lastPixelFormat, QVideoFrameFormat::Format_YUV420P);
-
-    gst_element_set_state(pipeline, GST_STATE_NULL);
-    gst_object_unref(pipeline);
+    const auto r = runPipelineThroughQVideoSink(
+        videoSink, "video/x-raw,format=I420,width=320,height=240,framerate=30/1", /*numBuffers=*/10);
+    QVERIFY2(r.eos, qUtf8Printable(r.errorMessage));
+    QVERIFY(r.frameCount > 0);
+    QCOMPARE(r.lastFormat.pixelFormat(), QVideoFrameFormat::Format_YUV420P);
 }
 
 void GStreamerTest::_testAppsinkPtsAndColorimetry()
 {
-    GstElementFactory* guardFactory = gst_element_factory_find("qgcvideosinkbin");
-    if (!guardFactory) {
-        GStreamer::completeInit();
-    } else {
-        gst_object_unref(guardFactory);
-    }
-
-    GError* error = nullptr;
-    GstElement* pipeline = gst_parse_launch(
-        "videotestsrc num-buffers=5 do-timestamp=true ! "
-        "video/x-raw,format=I420,width=64,height=48,framerate=30/1,"
-        "colorimetry=(string)bt709 ! "
-        "qgcvideosinkbin name=sink",
-        &error);
-    if (error) {
-        const QString msg = QString::fromUtf8(error->message);
-        g_clear_error(&error);
-        QFAIL(qPrintable(QStringLiteral("Pipeline parse error: %1").arg(msg)));
-    }
-    QVERIFY2(pipeline, "Failed to create PTS/colorimetry pipeline");
-
-    GstElement* sinkBin = gst_bin_get_by_name(GST_BIN(pipeline), "sink");
-    QVERIFY2(sinkBin, "Could not find 'sink' element");
-
     QVideoSink videoSink;
-    QObject controllerOwner;
-
-    int frameCount = 0;
-    qint64 lastStartTime = -1;
-    QVideoFrameFormat::ColorSpace lastColorSpace = QVideoFrameFormat::ColorSpace_Undefined;
-    QObject::connect(&videoSink, &QVideoSink::videoFrameChanged, &controllerOwner, [&](const QVideoFrame& frame) {
-        frameCount++;
-        lastStartTime = frame.startTime();
-        lastColorSpace = frame.surfaceFormat().colorSpace();
-    });
-
-    QVERIFY2(GStreamer::setupQVideoSinkElement(sinkBin, &videoSink, &controllerOwner),
-             "GStreamer::setupQVideoSinkElement() failed");
-    gst_object_unref(sinkBin);
-
-    QVERIFY2(gst_element_set_state(pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE, "Pipeline failed to PLAY");
-
-    GstBus* bus = gst_element_get_bus(pipeline);
-    GstMessage* msg = gst_bus_timed_pop_filtered(bus, 10 * GST_SECOND,
-                                                 static_cast<GstMessageType>(GST_MESSAGE_EOS | GST_MESSAGE_ERROR));
-    QVERIFY2(msg, "Pipeline timed out");
-    if (GST_MESSAGE_TYPE(msg) == GST_MESSAGE_ERROR) {
-        gst_message_unref(msg);
-        gst_object_unref(bus);
-        gst_element_set_state(pipeline, GST_STATE_NULL);
-        gst_object_unref(pipeline);
-        QFAIL("PTS/colorimetry pipeline errored");
-    }
-    QCOMPARE(GST_MESSAGE_TYPE(msg), GST_MESSAGE_EOS);
-    gst_message_unref(msg);
-    gst_object_unref(bus);
-
-    QTRY_VERIFY_WITH_TIMEOUT(frameCount > 0, TestTimeout::mediumMs());
-    QVERIFY2(lastStartTime >= 0, "GstBuffer PTS not forwarded to QVideoFrame::startTime");
-    QCOMPARE(lastColorSpace, QVideoFrameFormat::ColorSpace_BT709);
-
-    gst_element_set_state(pipeline, GST_STATE_NULL);
-    gst_object_unref(pipeline);
+    const auto r = runPipelineThroughQVideoSink(
+        videoSink, "video/x-raw,format=I420,width=64,height=48,framerate=30/1,colorimetry=(string)bt709",
+        /*numBuffers=*/5, /*gpuZerocopy=*/false, "do-timestamp=true");
+    QVERIFY2(r.eos, qUtf8Printable(r.errorMessage));
+    QVERIFY(r.frameCount > 0);
+    QVERIFY2(r.lastStartTime >= 0, "GstBuffer PTS not forwarded to QVideoFrame::startTime");
+    QCOMPARE(r.lastFormat.colorSpace(), QVideoFrameFormat::ColorSpace_BT709);
 }
 
 void GStreamerTest::_testQgcVideoSinkBinGpuZeroCopyProperty()
 {
-    GStreamer::redirectGLibLogging();
-    QVERIFY2(GStreamer::completeInit(), "GStreamer::completeInit() failed");
-
-    GstElementFactory* factory = gst_element_factory_find("qgcvideosinkbin");
-    QVERIFY2(factory, "qgcvideosinkbin factory not found");
+    const auto makeBin = [](gboolean gpuZeroCopy, gboolean disablePar) {
+        GstElement* const bin = gst_element_factory_make_full("qgcvideosinkbin", "gpu-zerocopy", gpuZeroCopy,
+                                                              "disable-par", disablePar, nullptr);
+        return GStreamer::adoptElement(bin ? GST_ELEMENT(gst_object_ref_sink(bin)) : nullptr);
+    };
 
     {
-        GstElement* bin = gst_element_factory_create_full(factory, "gpu-zerocopy", FALSE, NULL);
+        const GStreamer::GstElementPtr bin = makeBin(FALSE, FALSE);
         QVERIFY2(bin, "Failed to create qgcvideosinkbin (CPU branch)");
 
         gboolean prop = TRUE;
-        g_object_get(bin, "gpu-zerocopy", &prop, NULL);
+        g_object_get(bin.get(), "gpu-zerocopy", &prop, NULL);
         QCOMPARE(prop, FALSE);
 
-        GstElement* qvideosink = gst_bin_get_by_name(GST_BIN(bin), "qgcqvideosink");
+        const GStreamer::GstElementPtr qvideosink =
+            GStreamer::adoptElement(gst_bin_get_by_name(GST_BIN(bin.get()), "qgcqvideosink"));
         QVERIFY2(qvideosink, "qgcqvideosink missing from CPU bin");
 
         gboolean sync = TRUE;
         gboolean qos = TRUE;
         guint64 processingDeadline = 0;
-        g_object_get(bin, "sync", &sync, "qos", &qos, "processing-deadline", &processingDeadline, NULL);
+        g_object_get(bin.get(), "sync", &sync, "qos", &qos, "processing-deadline", &processingDeadline, NULL);
         QCOMPARE(sync, FALSE);
         QCOMPARE(qos, FALSE);
         QCOMPARE(processingDeadline, G_GUINT64_CONSTANT(20000000));
 
-        g_object_get(qvideosink, "sync", &sync, "qos", &qos, "processing-deadline", &processingDeadline, NULL);
+        g_object_get(qvideosink.get(), "sync", &sync, "qos", &qos, "processing-deadline", &processingDeadline, NULL);
         QCOMPARE(sync, FALSE);
         QCOMPARE(qos, FALSE);
         QCOMPARE(processingDeadline, G_GUINT64_CONSTANT(20000000));
 
         constexpr guint64 kUpdatedDeadline = G_GUINT64_CONSTANT(1234567);
-        g_object_set(bin, "sync", TRUE, "qos", TRUE, "processing-deadline", kUpdatedDeadline, NULL);
+        g_object_set(bin.get(), "sync", TRUE, "qos", TRUE, "processing-deadline", kUpdatedDeadline, NULL);
 
-        g_object_get(bin, "sync", &sync, "qos", &qos, "processing-deadline", &processingDeadline, NULL);
+        g_object_get(bin.get(), "sync", &sync, "qos", &qos, "processing-deadline", &processingDeadline, NULL);
         QCOMPARE(sync, TRUE);
         QCOMPARE(qos, TRUE);
         QCOMPARE(processingDeadline, kUpdatedDeadline);
 
-        g_object_get(qvideosink, "sync", &sync, "qos", &qos, "processing-deadline", &processingDeadline, NULL);
+        g_object_get(qvideosink.get(), "sync", &sync, "qos", &qos, "processing-deadline", &processingDeadline, NULL);
         QCOMPARE(sync, TRUE);
         QCOMPARE(qos, TRUE);
         QCOMPARE(processingDeadline, kUpdatedDeadline);
 
-        GstIterator* it = gst_bin_iterate_elements(GST_BIN(bin));
-        int elementCount = 0;
-        bool sawVideoconvert = false;
-        gboolean done = FALSE;
-        GValue val = G_VALUE_INIT;
-        while (!done) {
-            switch (gst_iterator_next(it, &val)) {
-                case GST_ITERATOR_OK: {
-                    ++elementCount;
-                    GstElement* child = GST_ELEMENT(g_value_get_object(&val));
-                    gchar* name = gst_element_get_name(child);
-                    if (name && QString::fromUtf8(name).startsWith(QStringLiteral("videoconvert"))) {
-                        sawVideoconvert = true;
-                    }
-                    g_free(name);
-                    g_value_reset(&val);
-                    break;
-                }
-                case GST_ITERATOR_RESYNC:
-                    gst_iterator_resync(it);
-                    break;
-                case GST_ITERATOR_ERROR:
-                case GST_ITERATOR_DONE:
-                    done = TRUE;
-                    break;
-            }
-        }
-        g_value_unset(&val);
-        gst_iterator_free(it);
-
-        // CPU branch: videoconvert + PAR=1/1 capsfilter + format capsfilter + qgcqvideosink (4 children).
-        QCOMPARE(elementCount, 4);
-        QVERIFY2(sawVideoconvert, "CPU bin missing videoconvert");
-
-        gst_object_unref(qvideosink);
-        gst_object_unref(bin);
+        // CPU branch: videoconvert, the PAR=1/1 and format capsfilters, and qgcqvideosink.
+        QCOMPARE(GstTest::childFactoryNames(GST_BIN(bin.get())),
+                 (QStringList{QStringLiteral("capsfilter"), QStringLiteral("capsfilter"),
+                              QStringLiteral("qgcqvideosink"), QStringLiteral("videoconvert")}));
     }
 
     {
-        // disable-par=TRUE drops the PAR capsfilter (videoconvert + format capsfilter + qgcqvideosink).
-        GstElement* bin = gst_element_factory_create_full(factory, "gpu-zerocopy", FALSE, "disable-par", TRUE, NULL);
+        // disable-par drops the PAR capsfilter.
+        const GStreamer::GstElementPtr bin = makeBin(FALSE, TRUE);
         QVERIFY2(bin, "Failed to create qgcvideosinkbin (CPU branch, disable-par=TRUE)");
-        GstIterator* it = gst_bin_iterate_elements(GST_BIN(bin));
-        int elementCount = 0;
-        gboolean done = FALSE;
-        GValue val = G_VALUE_INIT;
-        while (!done) {
-            switch (gst_iterator_next(it, &val)) {
-                case GST_ITERATOR_OK:
-                    ++elementCount;
-                    g_value_reset(&val);
-                    break;
-                case GST_ITERATOR_RESYNC:
-                    gst_iterator_resync(it);
-                    break;
-                case GST_ITERATOR_ERROR:
-                case GST_ITERATOR_DONE:
-                    done = TRUE;
-                    break;
-            }
-        }
-        g_value_unset(&val);
-        gst_iterator_free(it);
-        QCOMPARE(elementCount, 3);
-        gst_object_unref(bin);
+        QCOMPARE(GstTest::childFactoryNames(GST_BIN(bin.get())),
+                 (QStringList{QStringLiteral("capsfilter"), QStringLiteral("qgcqvideosink"),
+                              QStringLiteral("videoconvert")}));
     }
 
 #if defined(QGC_HAS_ANY_GPU_PATH)
     {
-        GstElement* bin = gst_element_factory_create_full(factory, "gpu-zerocopy", TRUE, NULL);
+        const GStreamer::GstElementPtr bin = makeBin(TRUE, FALSE);
         QVERIFY2(bin, "Failed to create qgcvideosinkbin (GPU branch)");
 
         gboolean prop = FALSE;
-        g_object_get(bin, "gpu-zerocopy", &prop, NULL);
+        g_object_get(bin.get(), "gpu-zerocopy", &prop, NULL);
         QCOMPARE(prop, TRUE);
-
-        GstElement* qvideosink = gst_bin_get_by_name(GST_BIN(bin), "qgcqvideosink");
-        QVERIFY2(qvideosink, "qgcqvideosink missing from GPU bin");
-        gst_object_unref(qvideosink);
-        gst_object_unref(bin);
+        QVERIFY2(GStreamer::adoptElement(gst_bin_get_by_name(GST_BIN(bin.get()), "qgcqvideosink")),
+                 "qgcqvideosink missing from GPU bin");
     }
 #endif
-
-    gst_object_unref(factory);
 }
 
 namespace {
-
-/// Factory names of @p bin's direct children, sorted.
-QStringList childFactoryNames(GstBin* bin)
-{
-    QStringList names;
-    GstIterator* it = gst_bin_iterate_elements(bin);
-    GValue val = G_VALUE_INIT;
-    bool done = false;
-    while (!done) {
-        switch (gst_iterator_next(it, &val)) {
-            case GST_ITERATOR_OK: {
-                GstElementFactory* factory = gst_element_get_factory(GST_ELEMENT(g_value_get_object(&val)));
-                names << QString::fromUtf8(factory ? gst_plugin_feature_get_name(factory) : "?");
-                g_value_reset(&val);
-                break;
-            }
-            case GST_ITERATOR_RESYNC:
-                names.clear();
-                gst_iterator_resync(it);
-                break;
-            case GST_ITERATOR_ERROR:
-            case GST_ITERATOR_DONE:
-                done = true;
-                break;
-        }
-    }
-    g_value_unset(&val);
-    gst_iterator_free(it);
-    names.sort();
-    return names;
-}
 
 /// Memory features of @p caps' structures in order, consecutive duplicates collapsed.
 QStringList capsMemoryFeatures(const GstCaps* caps)
@@ -663,14 +467,12 @@ void GStreamerTest::_testQgcVideoSinkBinGpuBinVariant()
     QFETCH(QStringList, memoryFeatures);
     QFETCH(bool, singlePlaneRgb2D);
 
-    GStreamer::redirectGLibLogging();
-    QVERIFY2(GStreamer::completeInit(), "GStreamer::completeInit() failed");
     const HwBuffers::ScopedGpuBinModeForTest binMode(static_cast<HwBuffers::GpuBinMode>(mode));
 
     GstElement* element = gst_element_factory_make_full("qgcvideosinkbin", "gpu-zerocopy", TRUE, nullptr);
     QVERIFY2(element, "Failed to create qgcvideosinkbin (GPU branch)");
     const GStreamer::GstElementPtr bin = GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(element)));
-    QCOMPARE(childFactoryNames(GST_BIN(bin.get())), children);
+    QCOMPARE(GstTest::childFactoryNames(GST_BIN(bin.get())), children);
 
     const GStreamer::GstElementPtr formatFilter =
         GStreamer::adoptElement(gst_bin_get_by_name(GST_BIN(bin.get()), "qgc-format-filter"));
@@ -701,8 +503,6 @@ void GStreamerTest::_testQgcVideoSinkBinGpuBinVariant()
 
 void GStreamerTest::_testQgcVideoSinkBinRejectsFailedAdopt()
 {
-    QVERIFY2(GStreamer::completeInit(), "GStreamer::completeInit() failed");
-
     GstElement* const target = gst_bin_new("qgc-adopt-target");
     GstElement* const parent = gst_bin_new("qgc-adopt-existing-parent");
     GstElement* const element = gst_element_factory_make("identity", "preparented");
@@ -729,8 +529,6 @@ void GStreamerTest::_testQgcVideoSinkBinRejectsFailedAdopt()
 
 void GStreamerTest::_testQgcBinChainFailedAdoptDropsFloatingRefOnce()
 {
-    QVERIFY2(GStreamer::completeInit(), "GStreamer::completeInit() failed");
-
     GstElement* const target = gst_bin_new("qgc-adopt-target");
     QVERIFY(target);
     const auto guard = qScopeGuard([target] { gst_object_unref(target); });
@@ -754,134 +552,23 @@ void GStreamerTest::_testQgcBinChainFailedAdoptDropsFloatingRefOnce()
     QVERIFY2(destroyed, "a failed BinChain::adopt must consume the floating ref");
 }
 
-namespace {
-
-struct PipelineRunResult
-{
-    int frameCount = 0;
-    QSize lastFrameSize;
-    QVideoFrameFormat::PixelFormat lastPixelFormat = QVideoFrameFormat::Format_Invalid;
-    QColor centerPixel;
-    bool centerPixelValid = false;
-    bool eos = false;
-    QString errorMessage;
-};
-
-PipelineRunResult runPipelineThroughQVideoSink(QVideoSink& videoSink, QGCQVideoSinkController*& outController,
-                                               const char* capsLine, int numBuffers = 5, bool gpuZerocopy = false,
-                                               const char* sourceProperties = "", bool captureCenterPixel = false)
-{
-    PipelineRunResult r;
-    const QString launch =
-        QStringLiteral("videotestsrc %1 num-buffers=%2 ! %3 ! qgcvideosinkbin name=sink gpu-zerocopy=%4")
-            .arg(QString::fromUtf8(sourceProperties))
-            .arg(numBuffers)
-            .arg(QString::fromUtf8(capsLine))
-            .arg(gpuZerocopy ? "true" : "false");
-    GError* err = nullptr;
-    GstElement* pipeline = gst_parse_launch(launch.toUtf8().constData(), &err);
-    if (err) {
-        r.errorMessage = QString::fromUtf8(err->message);
-        g_clear_error(&err);
-        return r;
-    }
-    if (!pipeline) {
-        r.errorMessage = QStringLiteral("Pipeline construction failed");
-        return r;
-    }
-    GstElement* sinkBin = gst_bin_get_by_name(GST_BIN(pipeline), "sink");
-    const std::unique_ptr<QObject> owner = std::make_unique<QObject>();
-    if (!sinkBin || !GStreamer::setupQVideoSinkElement(sinkBin, &videoSink, owner.get())) {
-        r.errorMessage = QStringLiteral("setupQVideoSinkElement() failed");
-        if (sinkBin)
-            gst_object_unref(sinkBin);
-        gst_object_unref(pipeline);
-        return r;
-    }
-    outController = owner->findChild<QGCQVideoSinkController*>(QString(), Qt::FindDirectChildrenOnly);
-    if (!outController) {
-        r.errorMessage = QStringLiteral("controller not created by setupQVideoSinkElement()");
-        gst_object_unref(sinkBin);
-        gst_object_unref(pipeline);
-        return r;
-    }
-    QObject::connect(&videoSink, &QVideoSink::videoFrameChanged, owner.get(), [&](const QVideoFrame& f) {
-        ++r.frameCount;
-        r.lastFrameSize = f.size();
-        r.lastPixelFormat = f.pixelFormat();
-        if (captureCenterPixel) {
-            const QImage image = f.toImage();
-            if (!image.isNull()) {
-                r.centerPixel = image.pixelColor(image.width() / 2, image.height() / 2);
-                r.centerPixelValid = true;
-            }
-        }
-    });
-    gst_object_unref(sinkBin);
-
-    if (gst_element_set_state(pipeline, GST_STATE_PLAYING) == GST_STATE_CHANGE_FAILURE) {
-        r.errorMessage = QStringLiteral("set_state(PLAYING) failed");
-        outController = nullptr;
-        gst_element_set_state(pipeline, GST_STATE_NULL);
-        gst_object_unref(pipeline);
-        return r;
-    }
-    GstBus* bus = gst_element_get_bus(pipeline);
-    GstMessage* msg = gst_bus_timed_pop_filtered(bus, 5 * GST_SECOND,
-                                                 static_cast<GstMessageType>(GST_MESSAGE_EOS | GST_MESSAGE_ERROR));
-    if (msg) {
-        if (GST_MESSAGE_TYPE(msg) == GST_MESSAGE_EOS)
-            r.eos = true;
-        else {
-            GError* e = nullptr;
-            gst_message_parse_error(msg, &e, nullptr);
-            r.errorMessage = e ? QString::fromUtf8(e->message) : QStringLiteral("unknown error");
-            g_clear_error(&e);
-        }
-        gst_message_unref(msg);
-    } else {
-        r.errorMessage = QStringLiteral("timeout waiting for EOS");
-    }
-    gst_object_unref(bus);
-    // Drain any queued videoFrameChanged deliveries (bridged onto this thread) before teardown.
-    // No positive count target here -- frameCount is asserted by the caller via QTRY -- so this
-    // is a bounded settle drain rather than a condition wait.
-    {
-        QElapsedTimer drain;
-        drain.start();
-        while (drain.elapsed() < 50) {
-            QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
-        }
-    }
-    outController = nullptr;
-    gst_element_set_state(pipeline, GST_STATE_NULL);
-    gst_object_unref(pipeline);
-    return r;
-}
-
-}  // namespace
-
 void GStreamerTest::_testCapsCacheInvalidation()
 {
-    GStreamer::redirectGLibLogging();
-    QVERIFY2(GStreamer::completeInit(), "completeInit failed");
-
     QVideoSink videoSink;
-    QGCQVideoSinkController* controller = nullptr;
 
-    auto r1 = runPipelineThroughQVideoSink(videoSink, controller,
+    auto r1 = runPipelineThroughQVideoSink(videoSink,
                                            "video/x-raw,format=I420,width=320,height=240,framerate=30/1 ! "
                                            "videoconvert ! video/x-raw,format=BGRA");
     QVERIFY2(r1.eos, qUtf8Printable(QStringLiteral("Session 1: %1").arg(r1.errorMessage)));
-    QTRY_VERIFY_WITH_TIMEOUT(r1.frameCount > 0, 2000);
-    QCOMPARE(r1.lastPixelFormat, QVideoFrameFormat::Format_BGRA8888);
+    QVERIFY(r1.frameCount > 0);
+    QCOMPARE(r1.lastFormat.pixelFormat(), QVideoFrameFormat::Format_BGRA8888);
 
-    auto r2 = runPipelineThroughQVideoSink(videoSink, controller,
+    auto r2 = runPipelineThroughQVideoSink(videoSink,
                                            "video/x-raw,format=I420,width=320,height=240,framerate=30/1 ! "
                                            "videoconvert ! video/x-raw,format=RGBA");
     QVERIFY2(r2.eos, qUtf8Printable(QStringLiteral("Session 2: %1").arg(r2.errorMessage)));
-    QTRY_VERIFY_WITH_TIMEOUT(r2.frameCount > 0, 2000);
-    QCOMPARE(r2.lastPixelFormat, QVideoFrameFormat::Format_RGBA8888);
+    QVERIFY(r2.frameCount > 0);
+    QCOMPARE(r2.lastFormat.pixelFormat(), QVideoFrameFormat::Format_RGBA8888);
 }
 
 void GStreamerTest::_testGpuZeroCopyFallback_data()
@@ -901,8 +588,6 @@ void GStreamerTest::_testGpuZeroCopyFallback_data()
 void GStreamerTest::_testGpuZeroCopyFallback()
 {
     QFETCH(int, mode);
-    GStreamer::redirectGLibLogging();
-    QVERIFY2(GStreamer::completeInit(), "completeInit failed");
     const HwBuffers::ScopedGpuBinModeForTest binMode(static_cast<HwBuffers::GpuBinMode>(mode));
 
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
@@ -911,9 +596,7 @@ void GStreamerTest::_testGpuZeroCopyFallback()
 #endif
 
     QVideoSink videoSink;
-    QGCQVideoSinkController* controller = nullptr;
-    auto r = runPipelineThroughQVideoSink(videoSink, controller,
-                                          "video/x-raw,format=BGRA,width=320,height=240,framerate=30/1",
+    auto r = runPipelineThroughQVideoSink(videoSink, "video/x-raw,format=BGRA,width=320,height=240,framerate=30/1",
                                           /*numBuffers*/ 5, /*gpuZerocopy*/ true);
     // The glupload bin needs an EGL/GL context, which a headless runner may not have.
     if (!r.eos && (r.errorMessage.contains(QStringLiteral("egl"), Qt::CaseInsensitive) ||
@@ -922,8 +605,8 @@ void GStreamerTest::_testGpuZeroCopyFallback()
             QStringLiteral("gpu-zerocopy pipeline needs a GL context (headless env): %1").arg(r.errorMessage)));
     }
     QVERIFY2(r.eos, qUtf8Printable(QStringLiteral("Pipeline: %1").arg(r.errorMessage)));
-    QTRY_VERIFY_WITH_TIMEOUT(r.frameCount > 0, 2000);
-    QCOMPARE(r.lastPixelFormat, QVideoFrameFormat::Format_BGRA8888);
+    QVERIFY(r.frameCount > 0);
+    QCOMPARE(r.lastFormat.pixelFormat(), QVideoFrameFormat::Format_BGRA8888);
 
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
     QCOMPARE(GstHwPathTelemetry::peek(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::MapFailures),
@@ -934,19 +617,16 @@ void GStreamerTest::_testGpuZeroCopyFallback()
 void GStreamerTest::_testWindowsGpuSinkPreservesSoftwarePixels()
 {
 #if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D11_GPU_PATH)
-    GStreamer::redirectGLibLogging();
-    QVERIFY2(GStreamer::completeInit(), "completeInit failed");
 
     QVideoSink videoSink;
-    QGCQVideoSinkController* controller = nullptr;
-    const auto result = runPipelineThroughQVideoSink(videoSink, controller,
-                                                     "video/x-raw,format=BGRA,width=320,height=240,framerate=30/1",
-                                                     /*numBuffers*/ 5, /*gpuZerocopy*/ true, "pattern=red",
-                                                     /*captureCenterPixel*/ true);
+    const auto result =
+        runPipelineThroughQVideoSink(videoSink, "video/x-raw,format=BGRA,width=320,height=240,framerate=30/1",
+                                     /*numBuffers*/ 5, /*gpuZerocopy*/ true, "pattern=red",
+                                     /*captureCenterPixel*/ true);
 
     QVERIFY2(result.eos, qUtf8Printable(QStringLiteral("Software-frame pipeline: %1").arg(result.errorMessage)));
     QVERIFY(result.frameCount > 0);
-    QCOMPARE(result.lastPixelFormat, QVideoFrameFormat::Format_BGRA8888);
+    QCOMPARE(result.lastFormat.pixelFormat(), QVideoFrameFormat::Format_BGRA8888);
     QVERIFY2(result.centerPixelValid, "System-memory fallback frame could not be mapped for pixel verification");
     QVERIFY2((result.centerPixel.red() > 200) && (result.centerPixel.green() < 50) && (result.centerPixel.blue() < 50),
              qUtf8Printable(QStringLiteral("Expected a red software frame, received RGB(%1,%2,%3)")
@@ -961,8 +641,6 @@ void GStreamerTest::_testWindowsGpuSinkPreservesSoftwarePixels()
 void GStreamerTest::_testWindowsGpuSinkPreservesDirectD3D11Memory()
 {
 #if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D11_GPU_PATH)
-    GStreamer::redirectGLibLogging();
-    QVERIFY2(GStreamer::completeInit(), "completeInit failed");
 
     GstElementFactory* uploadFactory = gst_element_factory_find("d3d11upload");
     if (!uploadFactory) {
@@ -971,9 +649,8 @@ void GStreamerTest::_testWindowsGpuSinkPreservesDirectD3D11Memory()
     gst_object_unref(uploadFactory);
 
     QVideoSink videoSink;
-    QGCQVideoSinkController* controller = nullptr;
     auto result =
-        runPipelineThroughQVideoSink(videoSink, controller,
+        runPipelineThroughQVideoSink(videoSink,
                                      "video/x-raw,format=NV12,width=320,height=240,framerate=30/1 ! d3d11upload ! "
                                      "video/x-raw(memory:D3D11Memory),format=NV12",
                                      /*numBuffers*/ 5, /*gpuZerocopy*/ true);
@@ -983,7 +660,7 @@ void GStreamerTest::_testWindowsGpuSinkPreservesDirectD3D11Memory()
 
     QVERIFY2(result.eos, qUtf8Printable(QStringLiteral("D3D11 pipeline: %1").arg(result.errorMessage)));
     QVERIFY(result.frameCount > 0);
-    QCOMPARE(result.lastPixelFormat, QVideoFrameFormat::Format_NV12);
+    QCOMPARE(result.lastFormat.pixelFormat(), QVideoFrameFormat::Format_NV12);
 #else
     QSKIP("D3D11 GPU sink path is only available in supported Windows builds");
 #endif
@@ -991,54 +668,34 @@ void GStreamerTest::_testWindowsGpuSinkPreservesDirectD3D11Memory()
 
 void GStreamerTest::_testAppsinkTeardownUnderLoad()
 {
-    GStreamer::redirectGLibLogging();
-    QVERIFY2(GStreamer::completeInit(), "completeInit failed");
-
     QVideoSink videoSink;
 
     {
-        GError* err = nullptr;
-        GstElement* pipeline = gst_parse_launch(
-            "videotestsrc is-live=true ! "
-            "video/x-raw,format=BGRA,width=160,height=120,framerate=60/1 ! "
-            "qgcvideosinkbin name=sink",
-            &err);
-        if (err) {
-            g_clear_error(&err);
-        }
-        QVERIFY(pipeline);
-
-        GstElement* sinkBin = gst_bin_get_by_name(GST_BIN(pipeline), "sink");
+        QObject controllerOwner;
+        GstTest::TestPipeline pipeline;
+        QVERIFY2(pipeline.launch(QStringLiteral("videotestsrc is-live=true ! "
+                                                "video/x-raw,format=BGRA,width=160,height=120,framerate=60/1 ! "
+                                                "qgcvideosinkbin name=sink")),
+                 qPrintable(pipeline.error()));
+        const GStreamer::GstElementPtr sinkBin = pipeline.element("sink");
         QVERIFY(sinkBin);
-        QObject controllerOwner1;
-        QVERIFY(GStreamer::setupQVideoSinkElement(sinkBin, &videoSink, &controllerOwner1));
-        GstElement* qvideosink = gst_bin_get_by_name(GST_BIN(sinkBin), "qgcqvideosink");
-        gst_object_unref(sinkBin);
+        QVERIFY(GStreamer::setupQVideoSinkElement(sinkBin.get(), &videoSink, &controllerOwner));
+        const GStreamer::GstElementPtr qvideosink =
+            GStreamer::adoptElement(gst_bin_get_by_name(GST_BIN(sinkBin.get()), "qgcqvideosink"));
         QVERIFY(qvideosink);
 
-        QVERIFY(gst_element_set_state(pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
-        // Tear down only once frames are actually flowing.
-        QVERIFY_TRUE_WAIT(framesDelivered(qvideosink) > 0, TestTimeout::mediumMs());
-        gst_object_unref(qvideosink);
-        // controllerOwner1 goes out of scope here — implicit teardown.
-
-        gst_element_set_state(pipeline, GST_STATE_NULL);
-        gst_object_unref(pipeline);
+        QVERIFY(pipeline.play());
+        QVERIFY_TRUE_WAIT(framesDelivered(qvideosink.get()) > 0, TestTimeout::mediumMs());
     }
 
-    QGCQVideoSinkController* controller = nullptr;
-    auto r = runPipelineThroughQVideoSink(videoSink, controller,
-                                          "video/x-raw,format=RGBA,width=160,height=120,framerate=30/1");
+    auto r = runPipelineThroughQVideoSink(videoSink, "video/x-raw,format=RGBA,width=160,height=120,framerate=30/1");
     QVERIFY2(r.eos, qUtf8Printable(QStringLiteral("Restart: %1").arg(r.errorMessage)));
-    QTRY_VERIFY_WITH_TIMEOUT(r.frameCount > 0, 2000);
-    QCOMPARE(r.lastPixelFormat, QVideoFrameFormat::Format_RGBA8888);
+    QVERIFY(r.frameCount > 0);
+    QCOMPARE(r.lastFormat.pixelFormat(), QVideoFrameFormat::Format_RGBA8888);
 }
 
 void GStreamerTest::_testFrameCountsTelemetrySignal()
 {
-    GStreamer::redirectGLibLogging();
-    QVERIFY2(GStreamer::completeInit(), "completeInit failed");
-
     // Telemetry counters are process-global and leak across tests; drain them so the
     // assertions below measure only this pipeline's contribution.
     for (auto p :
@@ -1049,116 +706,66 @@ void GStreamerTest::_testFrameCountsTelemetrySignal()
 
     QVideoSink videoSink;
     QObject controllerOwner;
+    GstTest::TestPipeline pipeline;
+    QVERIFY2(pipeline.launch(QStringLiteral("videotestsrc is-live=false num-buffers=90 ! "
+                                            "video/x-raw,format=BGRA,width=320,height=240,framerate=30/1 ! "
+                                            "qgcvideosinkbin name=sink")),
+             qPrintable(pipeline.error()));
 
-    GError* err = nullptr;
-    GstElement* pipeline = gst_parse_launch(
-        "videotestsrc is-live=false num-buffers=90 ! "
-        "video/x-raw,format=BGRA,width=320,height=240,framerate=30/1 ! "
-        "qgcvideosinkbin name=sink",
-        &err);
-    if (err) {
-        g_clear_error(&err);
-    }
-    QVERIFY2(pipeline, "Pipeline construction failed");
-
-    GstElement* sinkBin = gst_bin_get_by_name(GST_BIN(pipeline), "sink");
+    const GStreamer::GstElementPtr sinkBin = pipeline.element("sink");
     QVERIFY(sinkBin);
-    QVERIFY(GStreamer::setupQVideoSinkElement(sinkBin, &videoSink, &controllerOwner));
-    GstElement* qvideosink = gst_bin_get_by_name(GST_BIN(sinkBin), "qgcqvideosink");
-    gst_object_unref(sinkBin);
+    QVERIFY(GStreamer::setupQVideoSinkElement(sinkBin.get(), &videoSink, &controllerOwner));
+    const GStreamer::GstElementPtr qvideosink =
+        GStreamer::adoptElement(gst_bin_get_by_name(GST_BIN(sinkBin.get()), "qgcqvideosink"));
     QVERIFY(qvideosink);
-    const auto qvideosinkGuard = qScopeGuard([qvideosink] { gst_object_unref(qvideosink); });
 
     auto* controller = controllerOwner.findChild<QGCQVideoSinkController*>(QString(), Qt::FindDirectChildrenOnly);
     QVERIFY(controller);
     QSignalSpy spy(controller, &QGCQVideoSinkController::frameCountsChanged);
 
-    QVERIFY(gst_element_set_state(pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
+    QVERIFY(pipeline.play());
+    QVERIFY_SIGNAL_COUNT_WAIT(spy, 1, TestTimeout::mediumMs());
 
-    QTRY_VERIFY_WITH_TIMEOUT(spy.size() > 0, 5000);
-
-    QVERIFY(sinkStat(qvideosink, GstQgc::sinkFramesField(HwVideoBufferPath::None)) > 0);
+    QVERIFY(sinkStat(qvideosink.get(), GstQgc::sinkFramesField(HwVideoBufferPath::None)) > 0);
     quint64 gpuFallback = 0;
     for (auto p : {HwVideoBufferPath::DmaBuf, HwVideoBufferPath::GlMemory, HwVideoBufferPath::D3D11,
                    HwVideoBufferPath::D3D12, HwVideoBufferPath::IOSurface, HwVideoBufferPath::AHardwareBuffer}) {
         gpuFallback += GstHwPathTelemetry::peek(p, GstHwPathTelemetry::Counter::MapFailures);
     }
     QCOMPARE(gpuFallback, quint64(0));
-
-    gst_element_set_state(pipeline, GST_STATE_NULL);
-    gst_object_unref(pipeline);
 }
 
 void GStreamerTest::_testInactiveQgcQVideoSinkDropsAndCounts()
 {
-    GStreamer::redirectGLibLogging();
-    QVERIFY2(GStreamer::completeInit(), "completeInit failed");
-
     QVideoSink videoSink;
     QObject controllerOwner;
-    int frameCount = 0;
-    QObject::connect(&videoSink, &QVideoSink::videoFrameChanged, &controllerOwner, [&](const QVideoFrame&) {
-        ++frameCount;
-    });
+    QSignalSpy frameSpy(&videoSink, &QVideoSink::videoFrameChanged);
+    GstTest::TestPipeline pipeline;
+    QVERIFY2(pipeline.launch(QStringLiteral("videotestsrc is-live=false num-buffers=12 ! "
+                                            "video/x-raw,format=BGRA,width=96,height=64,framerate=30/1 ! "
+                                            "qgcvideosinkbin name=sink")),
+             qPrintable(pipeline.error()));
 
-    GError* err = nullptr;
-    GstElement* pipeline = gst_parse_launch(
-        "videotestsrc is-live=false num-buffers=12 ! "
-        "video/x-raw,format=BGRA,width=96,height=64,framerate=30/1 ! "
-        "qgcvideosinkbin name=sink",
-        &err);
-    if (err) {
-        const QString msg = QString::fromUtf8(err->message);
-        g_clear_error(&err);
-        QFAIL(qPrintable(QStringLiteral("Pipeline parse error: %1").arg(msg)));
-    }
-    QVERIFY2(pipeline, "Pipeline construction failed");
-    const auto pipelineGuard = qScopeGuard([&] {
-        gst_element_set_state(pipeline, GST_STATE_NULL);
-        gst_object_unref(pipeline);
-    });
-
-    GstElement* sinkBin = gst_bin_get_by_name(GST_BIN(pipeline), "sink");
+    const GStreamer::GstElementPtr sinkBin = pipeline.element("sink");
     QVERIFY(sinkBin);
-    QVERIFY(GStreamer::setupQVideoSinkElement(sinkBin, &videoSink, &controllerOwner));
-
-    GstElement* qvideosink = gst_bin_get_by_name(GST_BIN(sinkBin), "qgcqvideosink");
-    gst_object_unref(sinkBin);
+    QVERIFY(GStreamer::setupQVideoSinkElement(sinkBin.get(), &videoSink, &controllerOwner));
+    const GStreamer::GstElementPtr qvideosink =
+        GStreamer::adoptElement(gst_bin_get_by_name(GST_BIN(sinkBin.get()), "qgcqvideosink"));
     QVERIFY(qvideosink);
-    const auto sinkGuard = qScopeGuard([&] { gst_object_unref(qvideosink); });
 
-    g_object_set(qvideosink, "active", FALSE, nullptr);
+    g_object_set(qvideosink.get(), "active", FALSE, nullptr);
 
-    QVERIFY(gst_element_set_state(pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
-    GstBus* bus = gst_element_get_bus(pipeline);
-    QVERIFY(bus);
-    GstMessage* msg = gst_bus_timed_pop_filtered(bus, 5 * GST_SECOND,
-                                                 static_cast<GstMessageType>(GST_MESSAGE_EOS | GST_MESSAGE_ERROR));
-    gst_object_unref(bus);
-    QVERIFY2(msg, "Pipeline timed out waiting for EOS or ERROR");
-    const auto msgGuard = qScopeGuard([&] { gst_message_unref(msg); });
+    QVERIFY(pipeline.play());
+    const QString failure = pipeline.runToEos();
+    QVERIFY2(failure.isEmpty(), qPrintable(failure));
 
-    if (GST_MESSAGE_TYPE(msg) == GST_MESSAGE_ERROR) {
-        GError* gstError = nullptr;
-        gchar* debug = nullptr;
-        gst_message_parse_error(msg, &gstError, &debug);
-        const QString errorMessage = QStringLiteral("%1 (%2)")
-                                         .arg(gstError ? QString::fromUtf8(gstError->message)
-                                                       : QStringLiteral("unknown"))
-                                         .arg(debug ? QString::fromUtf8(debug) : QString());
-        g_clear_error(&gstError);
-        g_free(debug);
-        QFAIL(qPrintable(QStringLiteral("Pipeline error: %1").arg(errorMessage)));
-    }
-    QCOMPARE(GST_MESSAGE_TYPE(msg), GST_MESSAGE_EOS);
-
-    QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
-    QCOMPARE(frameCount, 0);
+    // Delivery is queued to this thread, so one pass of its event loop would show a frame; 100 ms is plenty.
+    QVERIFY_NO_SIGNAL_WAIT(frameSpy, 100);
 
     guint64 input = 0;
     guint64 dropped = 0;
     guint64 delivered = 0;
-    g_object_get(qvideosink, "frames-input", &input, "frames-dropped", &dropped, "frames-delivered", &delivered,
+    g_object_get(qvideosink.get(), "frames-input", &input, "frames-dropped", &dropped, "frames-delivered", &delivered,
                  nullptr);
     QVERIFY(input >= guint64(12));
     QCOMPARE(dropped, input);
@@ -1167,9 +774,6 @@ void GStreamerTest::_testInactiveQgcQVideoSinkDropsAndCounts()
 
 void GStreamerTest::_testGetAppsinkAccessor()
 {
-    GStreamer::redirectGLibLogging();
-    QVERIFY2(GStreamer::completeInit(), "completeInit failed");
-
     GstElement* bin = gst_element_factory_make("qgcvideosinkbin", nullptr);
     QVERIFY2(bin, "qgcvideosinkbin factory not found");
 
@@ -1194,9 +798,6 @@ void GStreamerTest::_testGetAppsinkAccessor()
 
 void GStreamerTest::_testQVideoSinkControllerClearsElementOnDestroy()
 {
-    GStreamer::redirectGLibLogging();
-    QVERIFY2(GStreamer::completeInit(), "completeInit failed");
-
     GstElement* bin = gst_element_factory_make("qgcvideosinkbin", nullptr);
     QVERIFY2(bin, "qgcvideosinkbin factory not found");
 
@@ -1228,9 +829,6 @@ void GStreamerTest::_testQVideoSinkControllerClearsElementOnDestroy()
 
 void GStreamerTest::_testQVideoSinkControllerClearsElementWhenVideoSinkDestroyed()
 {
-    GStreamer::redirectGLibLogging();
-    QVERIFY2(GStreamer::completeInit(), "completeInit failed");
-
     GstElement* bin = gst_element_factory_make("qgcvideosinkbin", nullptr);
     QVERIFY2(bin, "qgcvideosinkbin factory not found");
 
@@ -1263,9 +861,6 @@ void GStreamerTest::_testQVideoSinkControllerClearsElementWhenVideoSinkDestroyed
 
 void GStreamerTest::_testQVideoSinkControllerNullSinkStillDeactivatesOnDestroy()
 {
-    GStreamer::redirectGLibLogging();
-    QVERIFY2(GStreamer::completeInit(), "completeInit failed");
-
     GstElement* bin = gst_element_factory_make("qgcvideosinkbin", nullptr);
     QVERIFY2(bin, "qgcvideosinkbin factory not found");
 
@@ -1300,9 +895,6 @@ void GStreamerTest::_testQVideoSinkControllerNullSinkStillDeactivatesOnDestroy()
 
 void GStreamerTest::_testQVideoSinkControllerRepeatedSetupKeepsNewBindingActive()
 {
-    GStreamer::redirectGLibLogging();
-    QVERIFY2(GStreamer::completeInit(), "completeInit failed");
-
     GstElement* bin = gst_element_factory_make("qgcvideosinkbin", nullptr);
     QVERIFY2(bin, "qgcvideosinkbin factory not found");
 
@@ -1347,9 +939,6 @@ void GStreamerTest::_testQVideoSinkControllerRepeatedSetupKeepsNewBindingActive(
 
 void GStreamerTest::_testQVideoSinkControllerNoWindowStartsInactive()
 {
-    GStreamer::redirectGLibLogging();
-    QVERIFY2(GStreamer::completeInit(), "completeInit failed");
-
     GstElement* bin = gst_element_factory_make("qgcvideosinkbin", nullptr);
     QVERIFY2(bin, "qgcvideosinkbin factory not found");
 
@@ -1430,14 +1019,10 @@ void GStreamerTest::_testCpuZeroCopyPinnedFramesCappedPerSink()
 
 void GStreamerTest::_testCpuMemcpyActiveRowStrideHandling()
 {
-    GStreamer::redirectGLibLogging();
-    QVERIFY2(GStreamer::completeInit(), "completeInit failed");
-
     // Width 753 is not 4-byte aligned; GStreamer will pad stride to 756.
     // If the memcpy copies stride bytes instead of active-row bytes, the
     // right-edge pixels of the right-most component will contain padding zeros.
     QVideoSink videoSink;
-    QGCQVideoSinkController* controller = nullptr;
     QObject controllerOwner;
 
     QVideoFrame capturedFrame;
@@ -1448,11 +1033,10 @@ void GStreamerTest::_testCpuMemcpyActiveRowStrideHandling()
         }
     });
 
-    auto r = runPipelineThroughQVideoSink(videoSink, controller,
-                                          "video/x-raw,format=BGRA,width=753,height=432,framerate=30/1",
+    auto r = runPipelineThroughQVideoSink(videoSink, "video/x-raw,format=BGRA,width=753,height=432,framerate=30/1",
                                           /*numBuffers=*/5);
     QVERIFY2(r.eos, qUtf8Printable(QStringLiteral("Pipeline: %1").arg(r.errorMessage)));
-    QTRY_VERIFY_WITH_TIMEOUT(capturedFrame.isValid(), 2000);
+    QVERIFY(capturedFrame.isValid());
 
     QVERIFY(capturedFrame.map(QVideoFrame::ReadOnly));
     const uchar* data = capturedFrame.bits(0);
@@ -1532,8 +1116,6 @@ void GStreamerTest::_testAllocationQueryHwMemoryPoolHint()
 
 void GStreamerTest::_testQgcVideoSinkBinAllocationQueryAdvertisesVideoMeta()
 {
-    QVERIFY2(GStreamer::completeInit(), "GStreamer::completeInit() failed");
-
 #if defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
     const HwBuffers::ScopedGpuBinModeForTest directBin(HwBuffers::GpuBinMode::DirectDmaBuf);
 #elif defined(QGC_GST_BIN_HAS_GLUPLOAD)
@@ -1571,8 +1153,6 @@ void GStreamerTest::_testQgcVideoSinkBinAllocationQueryAdvertisesVideoMeta()
 
 void GStreamerTest::_testQgcQVideoSinkProposesVideoMetaPool()
 {
-    QVERIFY2(GStreamer::completeInit(), "completeInit failed");
-
     GstElement* sink = gst_element_factory_make("qgcqvideosink", nullptr);
     QVERIFY2(sink, "qgcqvideosink factory not found");
     gst_object_ref_sink(sink);
@@ -1716,61 +1296,12 @@ void GStreamerTest::_testAdvertisedFormatListForOffer()
 
 void GStreamerTest::_testColorimetryFrameRatePropagation()
 {
-    // Verify that a 30/1 caps framerate is surfaced on the delivered QVideoFrame.
-    GstElementFactory* guardFactory = gst_element_factory_find("qgcvideosinkbin");
-    if (!guardFactory) {
-        GStreamer::completeInit();
-    } else {
-        gst_object_unref(guardFactory);
-    }
-
-    GError* error = nullptr;
-    GstElement* pipeline = gst_parse_launch(
-        "videotestsrc num-buffers=3 ! "
-        "video/x-raw,format=I420,width=64,height=48,framerate=30/1 ! "
-        "qgcvideosinkbin name=sink",
-        &error);
-    if (error) {
-        const QString msg = QString::fromUtf8(error->message);
-        g_clear_error(&error);
-        QFAIL(qPrintable(QStringLiteral("Pipeline parse error: %1").arg(msg)));
-    }
-    QVERIFY2(pipeline, "Failed to create framerate pipeline");
-
-    GstElement* sinkBin = gst_bin_get_by_name(GST_BIN(pipeline), "sink");
-    QVERIFY2(sinkBin, "Could not find 'sink' element");
-
     QVideoSink videoSink;
-    QObject controllerOwner;
-
-    QVideoFrameFormat lastFormat;
-    QObject::connect(&videoSink, &QVideoSink::videoFrameChanged, &controllerOwner,
-                     [&](const QVideoFrame& frame) { lastFormat = frame.surfaceFormat(); });
-
-    QVERIFY2(GStreamer::setupQVideoSinkElement(sinkBin, &videoSink, &controllerOwner),
-             "GStreamer::setupQVideoSinkElement() failed");
-    gst_object_unref(sinkBin);
-
-    QVERIFY2(gst_element_set_state(pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE, "Pipeline failed to PLAY");
-
-    GstBus* bus = gst_element_get_bus(pipeline);
-    GstMessage* msg = gst_bus_timed_pop_filtered(bus, 10 * GST_SECOND,
-                                                 static_cast<GstMessageType>(GST_MESSAGE_EOS | GST_MESSAGE_ERROR));
-    QVERIFY2(msg, "Pipeline timed out");
-    const bool isError = (GST_MESSAGE_TYPE(msg) == GST_MESSAGE_ERROR);
-    gst_message_unref(msg);
-    gst_object_unref(bus);
-    if (isError) {
-        gst_element_set_state(pipeline, GST_STATE_NULL);
-        gst_object_unref(pipeline);
-        QFAIL("Framerate pipeline errored");
-    }
-
-    QTRY_VERIFY_WITH_TIMEOUT(lastFormat.isValid(), TestTimeout::mediumMs());
-    QCOMPARE(lastFormat.streamFrameRate(), 30.0);
-
-    gst_element_set_state(pipeline, GST_STATE_NULL);
-    gst_object_unref(pipeline);
+    const auto r = runPipelineThroughQVideoSink(videoSink, "video/x-raw,format=I420,width=64,height=48,framerate=30/1",
+                                                /*numBuffers=*/3);
+    QVERIFY2(r.eos, qUtf8Printable(r.errorMessage));
+    QVERIFY(r.frameCount > 0);
+    QCOMPARE(r.lastFormat.streamFrameRate(), 30.0);
 }
 
 void GStreamerTest::_testApplyOrientationToFrameMapping()
@@ -1815,8 +1346,6 @@ void GStreamerTest::_testAdapterFlushDropsInFlightSamples()
     // Push GST_EVENT_FLUSH_START into qgcqvideosink mid-stream; verify no buffer reaches show_frame while flushing and
     // that, after FLUSH_STOP, every buffer the sink saw is accounted for as delivered or dropped. Counts come from the
     // element: latest-frame-only delivery coalesces videoFrameChanged emissions, so those are not a frame count.
-    GStreamer::redirectGLibLogging();
-    QVERIFY2(GStreamer::completeInit(), "completeInit failed");
 
     QVideoSink sink;
     QObject controllerOwner;
@@ -1903,8 +1432,6 @@ void GStreamerTest::_testAdapterFlushDropsInFlightSamples()
 
 void GStreamerTest::_testQgcQVideoSinkDeliversLatestFrameOnly()
 {
-    QVERIFY2(GStreamer::completeInit(), "completeInit failed");
-
     int emissions = 0;
     qint64 lastStartUs = -1;
     QVideoSink videoSink;
@@ -1934,8 +1461,6 @@ void GStreamerTest::_testQgcQVideoSinkDeliversLatestFrameOnly()
 
 void GStreamerTest::_testQgcQVideoSinkShowsPrerollBufferOnce()
 {
-    QVERIFY2(GStreamer::completeInit(), "completeInit failed");
-
     QVideoSink videoSink;
     QgcQVideoSinkHarness harness(&videoSink);
     QVERIFY(harness.isReady());
@@ -1951,8 +1476,6 @@ void GStreamerTest::_testQgcQVideoSinkShowsPrerollBufferOnce()
 
 void GStreamerTest::_testQgcQVideoSinkRenegotiatesMidStream()
 {
-    QVERIFY2(GStreamer::completeInit(), "completeInit failed");
-
     QVideoSink videoSink;
     QgcQVideoSinkHarness harness(&videoSink);
     QVERIFY(harness.isReady());
@@ -1976,8 +1499,6 @@ void GStreamerTest::_testQgcQVideoSinkRenegotiatesMidStream()
 
 void GStreamerTest::_testQgcQVideoSinkAppliesCropMeta()
 {
-    QVERIFY2(GStreamer::completeInit(), "completeInit failed");
-
     QVideoSink videoSink;
     QgcQVideoSinkHarness harness(&videoSink);
     QVERIFY(harness.isReady());
@@ -1999,8 +1520,6 @@ void GStreamerTest::_testQgcQVideoSinkAppliesCropMeta()
 
 void GStreamerTest::_testQgcQVideoSinkStatsArePerSink()
 {
-    QVERIFY2(GStreamer::completeInit(), "completeInit failed");
-
     QVideoSink videoSinkA;
     QVideoSink videoSinkB;
     QgcQVideoSinkHarness harnessA(&videoSinkA);
@@ -2032,7 +1551,6 @@ void GStreamerTest::_testQgcQVideoSinkStatsArePerSink()
 
 void GStreamerTest::_testQgcQVideoSinkKeepsBaseSinkStats()
 {
-    QVERIFY2(GStreamer::completeInit(), "completeInit failed");
     GstElement* const element = gst_element_factory_make("qgcqvideosink", nullptr);
     QVERIFY(element);
     const GStreamer::GstElementPtr sink = GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(element)));
@@ -2087,7 +1605,6 @@ void GStreamerTest::_testQgcQVideoSinkGpuPathSelection()
         QSKIP("fd-backed test buffers need memfd (desktop Linux)");
     }
 #endif
-    QVERIFY2(GStreamer::completeInit(), "completeInit failed");
 
     QVideoSink videoSink;
     QgcQVideoSinkHarness harness(&videoSink, gpuZeroCopy);
@@ -2129,7 +1646,6 @@ void GStreamerTest::_testQgcQVideoSinkDropsUndeliveredFrame_data()
 void GStreamerTest::_testQgcQVideoSinkDropsUndeliveredFrame()
 {
     QFETCH(bool, viaFlush);
-    QVERIFY2(GStreamer::completeInit(), "completeInit failed");
 
     int emissions = 0;
     QVideoSink videoSink;
@@ -2171,7 +1687,6 @@ void GStreamerTest::_testQgcQVideoSinkPtsGuardResync()
     QFETCH(bool, discont);
     QFETCH(qint64, nextPtsMs);
     QFETCH(bool, expectDelivered);
-    QVERIFY2(GStreamer::completeInit(), "completeInit failed");
 
     QVideoSink videoSink;
     QgcQVideoSinkHarness harness(&videoSink);
@@ -2197,8 +1712,6 @@ void GStreamerTest::_testQgcQVideoSinkPtsGuardResync()
 
 void GStreamerTest::_testQgcQVideoSinkMapFailuresPostElementError()
 {
-    QVERIFY2(GStreamer::completeInit(), "completeInit failed");
-
     QVideoSink videoSink;
     QgcQVideoSinkHarness harness(&videoSink);
     QVERIFY(harness.isReady());
@@ -2236,8 +1749,6 @@ void GStreamerTest::_testQgcQVideoSinkMapFailuresPostElementError()
 
 void GStreamerTest::_testQVideoSinkControllerReleaseClearsVideoFrame()
 {
-    QVERIFY2(GStreamer::completeInit(), "completeInit failed");
-
     QVideoSink videoSink;
     QgcQVideoSinkHarness harness(nullptr);
     QVERIFY(harness.isReady());

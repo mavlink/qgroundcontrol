@@ -8,7 +8,7 @@
 namespace {
 
 // VideoManager delays a requested restart by 1 s; a longer window shows that no restart follows.
-constexpr int kNoRestartWindowMs = 1500;
+constexpr int kNoRestartWindowMs = 1200;
 
 enum class Trigger
 {

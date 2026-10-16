@@ -154,9 +154,6 @@ void pullD3DSample(D3DSample& result, const char* inputCaps, const char* uploadE
 
 void testD3DMemoryDispatch(const char* uploadElement, const char* capsFilter, HwVideoBufferPath expectedPath)
 {
-    GStreamer::redirectGLibLogging();
-    QVERIFY2(GStreamer::completeInit(), "GStreamer::completeInit() failed");
-
     D3DSample sample;
     pullD3DSample(sample, "video/x-raw,format=RGBA,width=64,height=64,framerate=30/1", uploadElement, capsFilter);
 
@@ -179,9 +176,6 @@ void testD3DMemoryDispatch(const char* uploadElement, const char* capsFilter, Hw
 void testD3DMapTextures(QRhi& rhi, const char* inputCaps, const char* uploadElement, const char* capsFilter,
                         QVideoFrameFormat::PixelFormat pixelFormat, int expectedPlanes, HwVideoBufferPath expectedPath)
 {
-    GStreamer::redirectGLibLogging();
-    QVERIFY2(GStreamer::completeInit(), "GStreamer::completeInit() failed");
-
     D3DSample sample;
     pullD3DSample(sample, inputCaps, uploadElement, capsFilter, expectedPath);
 

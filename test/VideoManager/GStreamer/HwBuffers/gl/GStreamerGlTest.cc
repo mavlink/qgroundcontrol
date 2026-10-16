@@ -24,6 +24,7 @@
 #include "GStreamer.h"
 #include "GStreamerHelpers.h"
 #include "GStreamerLogging.h"
+#include "GStreamerTestHelpers.h"
 #include "GstHwPathTelemetry.h"
 #include "GstHwVideoBufferFactory.h"
 #include "GstQgcFrameMap.h"
@@ -81,39 +82,30 @@ void GStreamerTest::_testGlMemoryDispatch()
     ignoreLogMessage("Video.GStreamer.GStreamerLogging", QtWarningMsg,
                      QRegularExpression(QStringLiteral("An NSApplication needs to be running")));
 #endif
-    GStreamer::redirectGLibLogging();
-    QVERIFY2(GStreamer::completeInit(), "GStreamer::completeInit() failed");
 #if defined(QGC_GST_BIN_HAS_GLUPLOAD)
     // The direct-DMABuf bin doesn't offer GLMemory.
     const HwBuffers::ScopedGpuBinModeForTest glBin(HwBuffers::GpuBinMode::GlUpload);
 #endif
 
-    GstElementFactory* gluploadFactory = gst_element_factory_find("glupload");
-    if (!gluploadFactory) {
+    if (!GstTest::firstMissingFactory({"glupload"}).isEmpty()) {
         QSKIP("glupload factory unavailable — gst-gl not registered in this build");
     }
-    gst_object_unref(gluploadFactory);
 
-    GError* error = nullptr;
-    GstElement* pipeline = gst_parse_launch(
-        "videotestsrc num-buffers=10 ! "
-        "video/x-raw,format=RGBA,width=320,height=240,framerate=30/1 ! "
-        "glupload ! "
-        "video/x-raw(memory:GLMemory) ! "
-        "qgcvideosinkbin name=sink gpu-zerocopy=true",
-        &error);
-    if (error) {
-        const QString msg = QString::fromUtf8(error->message);
-        g_clear_error(&error);
-        QSKIP(qPrintable(QStringLiteral("GLMemory pipeline parse skipped: %1").arg(msg)));
+    GstTest::TestPipeline pipeline;
+    if (!pipeline.launch(QStringLiteral("videotestsrc num-buffers=10 ! "
+                                        "video/x-raw,format=RGBA,width=320,height=240,framerate=30/1 ! "
+                                        "glupload ! "
+                                        "video/x-raw(memory:GLMemory) ! "
+                                        "qgcvideosinkbin name=sink gpu-zerocopy=true"))) {
+        QSKIP(qPrintable(QStringLiteral("GLMemory pipeline parse skipped: %1").arg(pipeline.error())));
     }
-    QVERIFY2(pipeline, "Failed to create GLMemory test pipeline");
 
-    GstElement* sinkBin = gst_bin_get_by_name(GST_BIN(pipeline), "sink");
+    const GStreamer::GstElementPtr sinkBin = pipeline.element("sink");
     QVERIFY2(sinkBin, "Could not find 'sink' element");
-    GstElement* qvideosink = gst_bin_get_by_name(GST_BIN(sinkBin), "qgcqvideosink");
+    const GStreamer::GstElementPtr qvideosink =
+        GStreamer::adoptElement(gst_bin_get_by_name(GST_BIN(sinkBin.get()), "qgcqvideosink"));
     QVERIFY2(qvideosink, "Could not find 'qgcqvideosink' inside sink bin");
-    GstPad* appsinkPad = gst_element_get_static_pad(qvideosink, "sink");
+    const GStreamer::GstPadPtr appsinkPad = GStreamer::adoptPad(gst_element_get_static_pad(qvideosink.get(), "sink"));
     QVERIFY2(appsinkPad, "qgcqvideosink has no sink pad");
 
     struct ProbeState
@@ -135,62 +127,21 @@ void GStreamerTest::_testGlMemoryDispatch()
         }
         return GST_PAD_PROBE_OK;
     };
-    const gulong probeId = gst_pad_add_probe(appsinkPad, GST_PAD_PROBE_TYPE_BUFFER, probeCb, &probe, nullptr);
-    QVERIFY(probeId);
+    GStreamer::PadProbe bufferProbe;
+    QVERIFY(bufferProbe.add(appsinkPad.get(), GST_PAD_PROBE_TYPE_BUFFER, probeCb, &probe));
 
-    GstStateChangeReturn ret = gst_element_set_state(pipeline, GST_STATE_PLAYING);
-    if (ret == GST_STATE_CHANGE_FAILURE) {
-        gst_pad_remove_probe(appsinkPad, probeId);
-        gst_object_unref(appsinkPad);
-        gst_object_unref(qvideosink);
-        gst_object_unref(sinkBin);
-        gst_element_set_state(pipeline, GST_STATE_NULL);
-        gst_object_unref(pipeline);
+    if (!pipeline.play()) {
         QSKIP("GLMemory pipeline failed to PLAY (no GL context available?)");
     }
 
-    GstBus* bus = gst_element_get_bus(pipeline);
-    GstMessage* msg = gst_bus_timed_pop_filtered(bus, 10 * GST_SECOND,
-                                                 static_cast<GstMessageType>(GST_MESSAGE_EOS | GST_MESSAGE_ERROR));
-
-    QString errMsg;
-    bool sawError = false;
-    if (msg && GST_MESSAGE_TYPE(msg) == GST_MESSAGE_ERROR) {
-        GError* err = nullptr;
-        gchar* debug = nullptr;
-        gst_message_parse_error(msg, &err, &debug);
-        errMsg = QStringLiteral("%1 (%2)")
-                     .arg(err ? QString::fromUtf8(err->message) : QStringLiteral("?"))
-                     .arg(debug ? QString::fromUtf8(debug) : QString());
-        g_clear_error(&err);
-        g_free(debug);
-        sawError = true;
-    }
-    if (msg)
-        gst_message_unref(msg);
-    gst_object_unref(bus);
-
-    GstCaps* negotiated = gst_pad_get_current_caps(appsinkPad);
-    QString negotiatedStr;
-    if (negotiated) {
-        gchar* s = gst_caps_to_string(negotiated);
-        negotiatedStr = QString::fromUtf8(s ? s : "");
-        g_free(s);
-        gst_caps_unref(negotiated);
-    }
-
-    gst_pad_remove_probe(appsinkPad, probeId);
-    gst_object_unref(appsinkPad);
-    gst_object_unref(qvideosink);
-    gst_object_unref(sinkBin);
-    gst_element_set_state(pipeline, GST_STATE_NULL);
-    gst_object_unref(pipeline);
-
-    if (sawError) {
+    const GStreamer::GstMessagePtr msg = pipeline.waitForEosOrError();
+    if (msg && (GST_MESSAGE_TYPE(msg.get()) == GST_MESSAGE_ERROR)) {
         // Common in headless envs without an EGL/GLX-capable display. Treat as
         // skip so the test is informative when GL is available, harmless when not.
-        QSKIP(qPrintable(QStringLiteral("GLMemory pipeline error (likely no GL context): %1").arg(errMsg)));
+        QSKIP(qPrintable(
+            QStringLiteral("GLMemory pipeline error (likely no GL context): %1").arg(GstTest::errorText(msg.get()))));
     }
+    const QString negotiatedStr = GstTest::currentCapsString(appsinkPad.get());
     QVERIFY2(probe.bufferCount.load() > 0, "No buffers reached qgcqvideosink under GLMemory caps");
     QVERIFY2(probe.glMemoryCount.load() > 0,
              qPrintable(QStringLiteral("GLMemory negotiated but buffers carried non-GL allocator. "
@@ -206,23 +157,13 @@ void GStreamerTest::_testHwFrameTexturesKeepResourcesUntilDestroyed()
 #if !defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) && !defined(QGC_HAS_GST_DMABUF_GPU_PATH)
     QSKIP("GL-texture frame bundles not compiled in this build");
 #else
-    QRhiNullInitParams params;
-    std::unique_ptr<QRhi> rhi(QRhi::create(QRhi::Null, &params));
+    const std::unique_ptr<QRhi> rhi = GstTest::makeNullRhi();
     QVERIFY(rhi);
 
-    GstVideoInfo info;
-    gst_video_info_set_format(&info, GST_VIDEO_FORMAT_NV12, 64, 64);
-    GstBuffer* buffer = gst_buffer_new_allocate(nullptr, GST_VIDEO_INFO_SIZE(&info), nullptr);
-    GstCaps* caps = gst_video_info_to_caps(&info);
-    GstSample* sample = gst_sample_new(buffer, caps, nullptr, nullptr);
-    gst_buffer_unref(buffer);
-    gst_caps_unref(caps);
+    GstSample* sample = GstTest::makeVideoSample(GST_VIDEO_FORMAT_NV12, 64, 64);
     QVERIFY(sample);
-
     bool sampleReleased = false;
-    gst_mini_object_weak_ref(
-        GST_MINI_OBJECT(sample), [](gpointer data, GstMiniObject*) { *static_cast<bool*>(data) = true; },
-        &sampleReleased);
+    GstTest::watchRelease(GST_MINI_OBJECT(sample), &sampleReleased);
 
     constexpr int kPlanes = 2;
     auto bundle = std::make_unique<GstGlFrameTextures>(rhi.get(), QSize(64, 64), QVideoFrameFormat::Format_NV12,

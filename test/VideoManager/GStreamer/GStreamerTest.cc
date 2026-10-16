@@ -6,6 +6,12 @@ QGC_LOGGING_CATEGORY(GStreamerTestLog, "Video.GStreamer.GStreamerTest")
 
 #ifdef QGC_GST_STREAMING
 
+#include <atomic>
+#include <gst/app/gstappsrc.h>
+#include <gst/gst.h>
+#include <memory>
+#include <vector>
+
 #include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
@@ -15,32 +21,17 @@ QGC_LOGGING_CATEGORY(GStreamerTestLog, "Video.GStreamer.GStreamerTest")
 #include <QtCore/QStandardPaths>
 #include <QtCore/QTemporaryDir>
 
-#include <atomic>
-#include <gst/app/gstappsrc.h>
-#include <gst/gst.h>
-#include <memory>
-#include <vector>
-
 #include "Fact.h"
 #include "Fixtures/RAIIFixtures.h"
 #include "GStreamer.h"
 #include "GStreamerHelpers.h"
 #include "GStreamerLogging.h"
+#include "GStreamerTestHelpers.h"
 #include "GstVideoReceiver.h"
 #include "LogManager.h"
 #include "VideoBackend.h"
 
 namespace {
-
-constexpr GstClockTime kRecordingTestTimeout = 5 * GST_SECOND;
-
-GstPadProbeReturn countBufferProbe([[maybe_unused]] GstPad* pad, GstPadProbeInfo* info, gpointer userData)
-{
-    if (GST_PAD_PROBE_INFO_TYPE(info) & GST_PAD_PROBE_TYPE_BUFFER) {
-        static_cast<std::atomic<int>*>(userData)->fetch_add(1, std::memory_order_relaxed);
-    }
-    return GST_PAD_PROBE_OK;
-}
 
 struct DemuxPadContext
 {
@@ -79,38 +70,6 @@ void linkH265DemuxPad([[maybe_unused]] GstElement* demux, GstPad* pad, gpointer 
     }
 }
 
-bool waitForPipelineEos(GstElement* pipeline, QString& failure)
-{
-    GstBus* bus = gst_element_get_bus(pipeline);
-    if (!bus) {
-        failure = QStringLiteral("Pipeline has no bus");
-        return false;
-    }
-
-    GstMessage* message = gst_bus_timed_pop_filtered(bus, kRecordingTestTimeout,
-                                                     static_cast<GstMessageType>(GST_MESSAGE_EOS | GST_MESSAGE_ERROR));
-    gst_clear_object(&bus);
-    if (!message) {
-        failure = QStringLiteral("Timed out waiting for EOS");
-        return false;
-    }
-
-    const auto cleanup = qScopeGuard([&] { gst_message_unref(message); });
-    if (GST_MESSAGE_TYPE(message) == GST_MESSAGE_EOS) {
-        return true;
-    }
-
-    GError* error = nullptr;
-    gchar* debug = nullptr;
-    gst_message_parse_error(message, &error, &debug);
-    failure = QStringLiteral("%1 (%2)").arg(
-        error ? QString::fromUtf8(error->message) : QStringLiteral("unknown GStreamer error"),
-        debug ? QString::fromUtf8(debug) : QString());
-    g_clear_error(&error);
-    g_clear_pointer(&debug, g_free);
-    return false;
-}
-
 GstFlowReturn pushAccessUnit(GstElement* appsrc, const QByteArray& bytes, GstClockTime timestamp)
 {
     GstBuffer* buffer = gst_buffer_new_allocate(nullptr, static_cast<gsize>(bytes.size()), nullptr);
@@ -126,11 +85,23 @@ GstFlowReturn pushAccessUnit(GstElement* appsrc, const QByteArray& bytes, GstClo
 
 }  // namespace
 
+void GStreamerTest::initTestCase()
+{
+    UnitTest::initTestCase();
+
+    // Every test runs against a fully initialized runtime, as the app does once VideoBackend is up.
+    GStreamer::redirectGLibLogging();
+    if (GstTest::initGStreamer().isEmpty()) {
+        QVERIFY2(GStreamer::completeInit(), "GStreamer::completeInit() failed");
+    }
+}
+
 void GStreamerTest::init()
 {
-#if defined(__SANITIZE_ADDRESS__) || (defined(__has_feature) && __has_feature(address_sanitizer))
-    QSKIP("GStreamer init deadlocks under AddressSanitizer (bindtextdomain lock)");
-#endif
+    const QString unavailable = GstTest::initGStreamer();
+    if (!unavailable.isEmpty()) {
+        QSKIP(qPrintable(unavailable));
+    }
 
     UnitTest::init();
 
@@ -148,18 +119,6 @@ void GStreamerTest::init()
                      QRegularExpression(QStringLiteral("gpu-zerocopy.*can't be set after construction")));
     ignoreLogMessage("Video.GStreamer.HwBuffers.GstGlBridge", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Qt GL context exposes neither EGL nor GLX")));
-
-    if (!gst_is_initialized()) {
-        GStreamer::prepareEnvironment();
-        GStreamer::redirectGLibLogging();
-
-        GError* error = nullptr;
-        if (!gst_init_check(nullptr, nullptr, &error)) {
-            const QString msg = error ? QString::fromUtf8(error->message) : QStringLiteral("unknown error");
-            g_clear_error(&error);
-            QSKIP(qPrintable(QStringLiteral("GStreamer unavailable: %1").arg(msg)));
-        }
-    }
 }
 
 void GStreamerTest::_testIsValidRtspUri()
@@ -202,12 +161,12 @@ void GStreamerTest::_testIsHardwareDecoderFactory()
         return;
     }
 
-    GstElementFactory* factory = gst_element_factory_find(factoryName.toUtf8().constData());
+    const GStreamer::GstFactoryPtr factory =
+        GStreamer::adoptFactory(gst_element_factory_find(factoryName.toUtf8().constData()));
     if (!factory) {
         QSKIP(qPrintable(QStringLiteral("Decoder factory not installed: %1").arg(factoryName)));
     }
-    const auto cleanup = qScopeGuard([factory] { gst_object_unref(factory); });
-    QCOMPARE(GStreamer::isHardwareDecoderFactory(factory), expectedHardware);
+    QCOMPARE(GStreamer::isHardwareDecoderFactory(factory.get()), expectedHardware);
 }
 
 void GStreamerTest::_testDecoderFamilyForFactory_data()
@@ -584,9 +543,7 @@ void GStreamerTest::_testPipelineDotOmitsElementProperties()
 
 void GStreamerTest::_testCompleteInit()
 {
-    GStreamer::redirectGLibLogging();
-    const bool result = GStreamer::completeInit();
-    QVERIFY2(result, "GStreamer::completeInit() failed");
+    QVERIFY2(GStreamer::completeInit(), "GStreamer::completeInit() failed");
 
     GstRegistry* registry = gst_registry_get();
     QVERIFY(registry);
@@ -638,13 +595,9 @@ void GStreamerTest::_testRecordingSinkAcceptsElementaryStreams()
                                    ? "matroskamux"
                                    : ((fileFormat == VideoReceiver::FILE_FORMAT_MOV) ? "qtmux" : "mp4mux");
 
-    for (const char* factoryName : {"capsfilter", parserFactory, "splitmuxsink", muxerFactory}) {
-        GstElementFactory* factory = gst_element_factory_find(factoryName);
-        if (!factory) {
-            QSKIP(qPrintable(
-                QStringLiteral("Required GStreamer factory is unavailable: %1").arg(QString::fromLatin1(factoryName))));
-        }
-        gst_object_unref(factory);
+    const QString missing = GstTest::firstMissingFactory({"capsfilter", parserFactory, "splitmuxsink", muxerFactory});
+    if (!missing.isEmpty()) {
+        QSKIP(qPrintable(QStringLiteral("Required GStreamer factory is unavailable: %1").arg(missing)));
     }
 
     const QByteArray capsUtf8 = capsString.toUtf8();
@@ -676,14 +629,11 @@ void GStreamerTest::_testRecordingSinkAcceptsElementaryStreams()
 
 void GStreamerTest::_testRecordingSinkFinalizesMidStreamH265Mp4()
 {
-    for (const char* factoryName : {"appsrc", "h265parse", "tee", "queue", "fakesink", "valve", "splitmuxsink",
-                                    "mp4mux", "filesrc", "qtdemux", "avdec_h265"}) {
-        GstElementFactory* factory = gst_element_factory_find(factoryName);
-        if (!factory) {
-            QSKIP(qPrintable(
-                QStringLiteral("Required GStreamer factory is unavailable: %1").arg(QString::fromLatin1(factoryName))));
-        }
-        gst_object_unref(factory);
+    const QString missing =
+        GstTest::firstMissingFactory({"appsrc", "h265parse", "tee", "queue", "fakesink", "valve", "splitmuxsink",
+                                      "mp4mux", "filesrc", "qtdemux", "avdec_h265"});
+    if (!missing.isEmpty()) {
+        QSKIP(qPrintable(QStringLiteral("Required GStreamer factory is unavailable: %1").arg(missing)));
     }
 
     // Synthetic 32x32 Annex-B H.265 access units. Only the first AU contains VPS/SPS/PPS; the
@@ -702,12 +652,8 @@ void GStreamerTest::_testRecordingSinkFinalizesMidStreamH265Mp4()
     QVERIFY(tempDir.isValid());
     const QString outputPath = QDir(tempDir.path()).filePath(QStringLiteral("mid-stream.mp4"));
 
-    GstElement* pipeline = gst_pipeline_new("mid-stream-recording-test");
-    QVERIFY(pipeline);
-    const auto pipelineCleanup = qScopeGuard([&] {
-        (void) gst_element_set_state(pipeline, GST_STATE_NULL);
-        gst_object_unref(pipeline);
-    });
+    GstTest::TestPipeline pipeline(gst_pipeline_new("mid-stream-recording-test"));
+    QVERIFY(pipeline.get());
 
     GstElement* source = gst_element_factory_make("appsrc", nullptr);
     GstElement* upstreamParser = gst_element_factory_make("h265parse", nullptr);
@@ -734,57 +680,46 @@ void GStreamerTest::_testRecordingSinkFinalizesMidStreamH265Mp4()
     g_object_set(recorderValve, "drop", TRUE, nullptr);
     gst_util_set_object_arg(G_OBJECT(recorderValve), "drop-mode", "forward-sticky-events");
 
-    gst_bin_add_many(GST_BIN(pipeline), source, upstreamParser, tee, displayQueue, displaySink, recorderQueue,
+    gst_bin_add_many(pipeline.bin(), source, upstreamParser, tee, displayQueue, displaySink, recorderQueue,
                      recorderValve, nullptr);
     QVERIFY(gst_element_link_many(source, upstreamParser, tee, nullptr));
     QVERIFY(gst_element_link_many(tee, displayQueue, displaySink, nullptr));
     QVERIFY(gst_element_link_many(tee, recorderQueue, recorderValve, nullptr));
 
     std::atomic<int> displayedBuffers{0};
-    GstPad* displayPad = gst_element_get_static_pad(displaySink, "sink");
+    const GStreamer::GstPadPtr displayPad = GStreamer::adoptPad(gst_element_get_static_pad(displaySink, "sink"));
     QVERIFY(displayPad);
-    const gulong displayProbe =
-        gst_pad_add_probe(displayPad, GST_PAD_PROBE_TYPE_BUFFER, countBufferProbe, &displayedBuffers, nullptr);
-    QVERIFY(displayProbe != 0);
-    const auto displayProbeCleanup = qScopeGuard([&] {
-        gst_pad_remove_probe(displayPad, displayProbe);
-        gst_clear_object(&displayPad);
-    });
+    GStreamer::PadProbe displayProbe;
+    QVERIFY(displayProbe.add(displayPad.get(), GST_PAD_PROBE_TYPE_BUFFER, GstTest::countBuffers, &displayedBuffers));
 
-    QVERIFY(gst_element_set_state(pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
+    QVERIFY(pipeline.play());
     QVERIFY(pushAccessUnit(source, initialAu, 0) == GST_FLOW_OK);
-    QTRY_VERIFY_WITH_TIMEOUT(displayedBuffers.load(std::memory_order_relaxed) >= 1, 2000);
+    QTRY_VERIFY_WITH_TIMEOUT(displayedBuffers.load(std::memory_order_relaxed) >= 1, TestTimeout::shortMs());
 
-    GstPad* valveSrcPad = gst_element_get_static_pad(recorderValve, "src");
+    const GStreamer::GstPadPtr valveSrcPad = GStreamer::adoptPad(gst_element_get_static_pad(recorderValve, "src"));
     QVERIFY(valveSrcPad);
-    GstCaps* recordingCaps = gst_pad_get_current_caps(valveSrcPad);
+    const GStreamer::GstCapsPtr recordingCaps = GStreamer::adoptCaps(gst_pad_get_current_caps(valveSrcPad.get()));
     QVERIFY2(recordingCaps, "Closed recording valve did not preserve negotiated caps");
 
     const GStreamer::GstElementPtr fileSink =
-        RecordingBranch::makeFileSink(outputPath, VideoReceiver::FILE_FORMAT_MP4, recordingCaps);
-    gst_clear_caps(&recordingCaps);
+        RecordingBranch::makeFileSink(outputPath, VideoReceiver::FILE_FORMAT_MP4, recordingCaps.get());
     QVERIFY(fileSink);
-    QVERIFY(gst_bin_add(GST_BIN(pipeline), fileSink.get()));
+    QVERIFY(gst_bin_add(pipeline.bin(), fileSink.get()));
     QVERIFY(gst_element_link(recorderValve, fileSink.get()));
     QVERIFY(gst_element_sync_state_with_parent(fileSink.get()));
     g_object_set(recorderValve, "drop", FALSE, nullptr);
-    gst_clear_object(&valveSrcPad);
 
     QVERIFY(pushAccessUnit(source, secondAu, GST_SECOND / 4) == GST_FLOW_OK);
     QVERIFY(pushAccessUnit(source, thirdAu, GST_SECOND / 2) == GST_FLOW_OK);
     QVERIFY(gst_app_src_end_of_stream(GST_APP_SRC(source)) == GST_FLOW_OK);
 
-    QString failure;
-    QVERIFY2(waitForPipelineEos(pipeline, failure), qPrintable(failure));
-    (void) gst_element_set_state(pipeline, GST_STATE_NULL);
+    const QString failure = pipeline.runToEos();
+    QVERIFY2(failure.isEmpty(), qPrintable(failure));
+    (void) gst_element_set_state(pipeline.get(), GST_STATE_NULL);
     QVERIFY2(QFileInfo(outputPath).size() > 0, "Recording did not produce an MP4 file");
 
-    GstElement* verifyPipeline = gst_pipeline_new("verify-mid-stream-recording");
-    QVERIFY(verifyPipeline);
-    const auto verifyCleanup = qScopeGuard([&] {
-        (void) gst_element_set_state(verifyPipeline, GST_STATE_NULL);
-        gst_object_unref(verifyPipeline);
-    });
+    GstTest::TestPipeline verifyPipeline(gst_pipeline_new("verify-mid-stream-recording"));
+    QVERIFY(verifyPipeline.get());
 
     GstElement* fileSource = gst_element_factory_make("filesrc", nullptr);
     GstElement* demux = gst_element_factory_make("qtdemux", nullptr);
@@ -800,7 +735,7 @@ void GStreamerTest::_testRecordingSinkFinalizesMidStreamH265Mp4()
     const QByteArray outputPathBytes = QFile::encodeName(outputPath);
     g_object_set(fileSource, "location", outputPathBytes.constData(), nullptr);
     g_object_set(verifySink, "sync", FALSE, "async", FALSE, nullptr);
-    gst_bin_add_many(GST_BIN(verifyPipeline), fileSource, demux, verifyParser, verifyDecoder, verifySink, nullptr);
+    gst_bin_add_many(verifyPipeline.bin(), fileSource, demux, verifyParser, verifyDecoder, verifySink, nullptr);
     QVERIFY(gst_element_link(fileSource, demux));
     QVERIFY(gst_element_link_many(verifyParser, verifyDecoder, verifySink, nullptr));
 
@@ -811,19 +746,14 @@ void GStreamerTest::_testRecordingSinkFinalizesMidStreamH265Mp4()
     const auto padAddedCleanup = qScopeGuard([&] { g_signal_handler_disconnect(demux, padAddedHandler); });
 
     std::atomic<int> verifiedBuffers{0};
-    GstPad* verifyPad = gst_element_get_static_pad(verifySink, "sink");
+    const GStreamer::GstPadPtr verifyPad = GStreamer::adoptPad(gst_element_get_static_pad(verifySink, "sink"));
     QVERIFY(verifyPad);
-    const gulong verifyProbe =
-        gst_pad_add_probe(verifyPad, GST_PAD_PROBE_TYPE_BUFFER, countBufferProbe, &verifiedBuffers, nullptr);
-    QVERIFY(verifyProbe != 0);
-    const auto verifyProbeCleanup = qScopeGuard([&] {
-        gst_pad_remove_probe(verifyPad, verifyProbe);
-        gst_clear_object(&verifyPad);
-    });
+    GStreamer::PadProbe verifyProbe;
+    QVERIFY(verifyProbe.add(verifyPad.get(), GST_PAD_PROBE_TYPE_BUFFER, GstTest::countBuffers, &verifiedBuffers));
 
-    QVERIFY(gst_element_set_state(verifyPipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
-    failure.clear();
-    QVERIFY2(waitForPipelineEos(verifyPipeline, failure), qPrintable(failure));
+    QVERIFY(verifyPipeline.play());
+    const QString verifyFailure = verifyPipeline.runToEos();
+    QVERIFY2(verifyFailure.isEmpty(), qPrintable(verifyFailure));
     QVERIFY2(demuxContext.linked.load(std::memory_order_relaxed), "MP4 has no H.265 video track");
     QVERIFY2(verifiedBuffers.load(std::memory_order_relaxed) >= 2,
              "Finalized MP4 did not decode the two mid-stream H.265 access units");
@@ -863,174 +793,11 @@ void GStreamerTest::_testRuntimeVersionCheck()
 
 #else
 
-void GStreamerTest::init()
+void GStreamerTest::_testGStreamerDisabled()
 {
-    UnitTest::init();
+    QSKIP("GStreamer not enabled");
 }
 
-#define QGC_GST_SKIP_TEST(fn) \
-    void GStreamerTest::fn()  \
-    {                         \
-        QSKIP("GStreamer not enabled"); \
-    }
-
-QGC_GST_SKIP_TEST(_testIsValidRtspUri)
-QGC_GST_SKIP_TEST(_testIsHardwareDecoderFactory_data)
-QGC_GST_SKIP_TEST(_testIsHardwareDecoderFactory)
-QGC_GST_SKIP_TEST(_testDecoderFamilyForFactory_data)
-QGC_GST_SKIP_TEST(_testDecoderFamilyForFactory)
-QGC_GST_SKIP_TEST(_testSetCodecPrioritiesDefault)
-QGC_GST_SKIP_TEST(_testSetCodecPrioritiesDefaultPrefersMatchingD3DDecoder)
-QGC_GST_SKIP_TEST(_testSetCodecPrioritiesSkipsAbsentD3DDecoders)
-QGC_GST_SKIP_TEST(_testD3D12RhiDisablesGpuZeroCopySink)
-QGC_GST_SKIP_TEST(_testSetCodecPrioritiesSoftware)
-QGC_GST_SKIP_TEST(_testSetCodecPrioritiesHardware)
-QGC_GST_SKIP_TEST(_testRedirectGLibLogging)
-QGC_GST_SKIP_TEST(_testConfigureDebugLoggingIsIdempotent)
-QGC_GST_SKIP_TEST(_testVerifyRequiredPlugins)
-QGC_GST_SKIP_TEST(_testEnvironmentSetup)
-QGC_GST_SKIP_TEST(_testWritePipelineDotReturnsEmptyOnWriteFailure)
-QGC_GST_SKIP_TEST(_testPipelineDotOmitsElementProperties)
-QGC_GST_SKIP_TEST(_testCompleteInit)
-QGC_GST_SKIP_TEST(_testCreateVideoReceiver)
-
-void GStreamerTest::_testRecordingSinkAcceptsElementaryStreams_data()
-{
-    QTest::addColumn<QString>("capsString");
-    QTest::addColumn<int>("format");
-    QTest::newRow("gstreamer-disabled") << QString() << 0;
-}
-
-QGC_GST_SKIP_TEST(_testRecordingSinkAcceptsElementaryStreams)
-QGC_GST_SKIP_TEST(_testRecordingSinkFinalizesMidStreamH265Mp4)
-QGC_GST_SKIP_TEST(_testBindDebugLevelFactRejectsNullContext)
-QGC_GST_SKIP_TEST(_testRuntimeVersionCheck)
-QGC_GST_SKIP_TEST(_testAppsinkFrameDelivery)
-QGC_GST_SKIP_TEST(_testAppsinkYuvPassthrough)
-QGC_GST_SKIP_TEST(_testAppsinkPtsAndColorimetry)
-QGC_GST_SKIP_TEST(_testQgcVideoSinkBinGpuZeroCopyProperty)
-QGC_GST_SKIP_TEST(_testQgcVideoSinkBinGpuBinVariant_data)
-QGC_GST_SKIP_TEST(_testQgcVideoSinkBinGpuBinVariant)
-QGC_GST_SKIP_TEST(_testQgcVideoSinkBinRejectsFailedAdopt)
-QGC_GST_SKIP_TEST(_testQgcBinChainFailedAdoptDropsFloatingRefOnce)
-QGC_GST_SKIP_TEST(_testGlMemoryDispatch)
-QGC_GST_SKIP_TEST(_testHwFrameTexturesKeepResourcesUntilDestroyed)
-QGC_GST_SKIP_TEST(_testD3D11MemoryDispatch)
-QGC_GST_SKIP_TEST(_testD3D12MemoryDispatch)
-QGC_GST_SKIP_TEST(_testD3D11MapTexturesWithQRhi)
-QGC_GST_SKIP_TEST(_testD3D11MapNv12TexturesWithQRhi)
-QGC_GST_SKIP_TEST(_testD3D12MapTexturesWithQRhi)
-QGC_GST_SKIP_TEST(_testD3D12MapNv12TexturesWithQRhi)
-QGC_GST_SKIP_TEST(_testDmaBufDispatch)
-QGC_GST_SKIP_TEST(_testDmaDrmCapsRejectNonLinearModifiers)
-QGC_GST_SKIP_TEST(_testLinearDmaDrmCapsFollowFormatTable)
-QGC_GST_SKIP_TEST(_testDmaBufRejectsNonLinearDirectImport)
-QGC_GST_SKIP_TEST(_testDmaBufTiledImportAvoidsTexStorage)
-QGC_GST_SKIP_TEST(_testVulkanDispatchDemotesToCpu)
-QGC_GST_SKIP_TEST(_testVulkanOwnedFrameTexturesReleaseOnDestroy)
-QGC_GST_SKIP_TEST(_testCapsCacheInvalidation)
-QGC_GST_SKIP_TEST(_testGpuZeroCopyFallback_data)
-QGC_GST_SKIP_TEST(_testGpuZeroCopyFallback)
-QGC_GST_SKIP_TEST(_testWindowsGpuSinkPreservesSoftwarePixels)
-QGC_GST_SKIP_TEST(_testWindowsGpuSinkPreservesDirectD3D11Memory)
-QGC_GST_SKIP_TEST(_testAppsinkTeardownUnderLoad)
-QGC_GST_SKIP_TEST(_testBridgeDispatcherFanout)
-QGC_GST_SKIP_TEST(_testHwBufferMapTexturesGuard)
-QGC_GST_SKIP_TEST(_testFrameCountsTelemetrySignal)
-QGC_GST_SKIP_TEST(_testInactiveQgcQVideoSinkDropsAndCounts)
-QGC_GST_SKIP_TEST(_testQgcQVideoSinkDeliversLatestFrameOnly)
-QGC_GST_SKIP_TEST(_testQgcQVideoSinkShowsPrerollBufferOnce)
-QGC_GST_SKIP_TEST(_testQgcQVideoSinkRenegotiatesMidStream)
-QGC_GST_SKIP_TEST(_testQgcQVideoSinkAppliesCropMeta)
-QGC_GST_SKIP_TEST(_testQgcQVideoSinkStatsArePerSink)
-QGC_GST_SKIP_TEST(_testQgcQVideoSinkKeepsBaseSinkStats)
-QGC_GST_SKIP_TEST(_testQgcQVideoSinkGpuPathSelection_data)
-QGC_GST_SKIP_TEST(_testQgcQVideoSinkGpuPathSelection)
-QGC_GST_SKIP_TEST(_testQgcQVideoSinkDropsUndeliveredFrame_data)
-QGC_GST_SKIP_TEST(_testQgcQVideoSinkDropsUndeliveredFrame)
-QGC_GST_SKIP_TEST(_testQgcQVideoSinkPtsGuardResync_data)
-QGC_GST_SKIP_TEST(_testQgcQVideoSinkPtsGuardResync)
-QGC_GST_SKIP_TEST(_testQgcQVideoSinkMapFailuresPostElementError)
-QGC_GST_SKIP_TEST(_testGetAppsinkAccessor)
-QGC_GST_SKIP_TEST(_testQVideoSinkControllerClearsElementOnDestroy)
-QGC_GST_SKIP_TEST(_testQVideoSinkControllerClearsElementWhenVideoSinkDestroyed)
-QGC_GST_SKIP_TEST(_testQVideoSinkControllerNullSinkStillDeactivatesOnDestroy)
-QGC_GST_SKIP_TEST(_testQVideoSinkControllerRepeatedSetupKeepsNewBindingActive)
-QGC_GST_SKIP_TEST(_testQVideoSinkControllerNoWindowStartsInactive)
-QGC_GST_SKIP_TEST(_testQVideoSinkControllerReleaseClearsVideoFrame)
-QGC_GST_SKIP_TEST(_testContextBridgeRegistry)
-QGC_GST_SKIP_TEST(_testHwBufferLifecycleResetsNativeCaches)
-QGC_GST_SKIP_TEST(_testHwFrameTexturesRejectsForeignOldTextures)
-QGC_GST_SKIP_TEST(_testHwBufferFactoryDispatchSystemMemory)
-QGC_GST_SKIP_TEST(_testHwPathRegistrySelection_data)
-QGC_GST_SKIP_TEST(_testHwPathRegistrySelection)
-QGC_GST_SKIP_TEST(_testHwBufferFactoryCacheRejectsMemoryTypeChange)
-QGC_GST_SKIP_TEST(_testDmaBufSingleFdImportEnvGate)
-QGC_GST_SKIP_TEST(_testDmaBufEglBadMatchLatch_data)
-QGC_GST_SKIP_TEST(_testDmaBufEglBadMatchLatch)
-QGC_GST_SKIP_TEST(_testDmaBufVulkanImportRejectsMultiPlanar_data)
-QGC_GST_SKIP_TEST(_testDmaBufVulkanImportRejectsMultiPlanar)
-QGC_GST_SKIP_TEST(_testCpuZeroCopyFrameRejectsWritableMap)
-QGC_GST_SKIP_TEST(_testCpuZeroCopyPinnedFramesCappedPerSink)
-QGC_GST_SKIP_TEST(_testCpuMemcpyActiveRowStrideHandling)
-QGC_GST_SKIP_TEST(_testCpuLayoutSizesPlanesByComponent_data)
-QGC_GST_SKIP_TEST(_testCpuLayoutSizesPlanesByComponent)
-QGC_GST_SKIP_TEST(_testCpuCopyOddDimensions_data)
-QGC_GST_SKIP_TEST(_testCpuCopyOddDimensions)
-QGC_GST_SKIP_TEST(_testQGCRhiCaptureCacheLifecycle)
-QGC_GST_SKIP_TEST(_testPreflightVerdictsDroppedWithRhi)
-QGC_GST_SKIP_TEST(_testHwBufferEnvConfigParsing_data)
-QGC_GST_SKIP_TEST(_testHwBufferEnvConfigParsing)
-QGC_GST_SKIP_TEST(_testGpuBinModeFromEnvironment_data)
-QGC_GST_SKIP_TEST(_testGpuBinModeFromEnvironment)
-QGC_GST_SKIP_TEST(_testColorimetryPixelFormatMapping)
-QGC_GST_SKIP_TEST(_testCpuCapsFormatsRoundTripToQt)
-QGC_GST_SKIP_TEST(_testAllocationQueryHwMemoryPoolHint)
-QGC_GST_SKIP_TEST(_testQgcVideoSinkBinAllocationQueryAdvertisesVideoMeta)
-QGC_GST_SKIP_TEST(_testQgcQVideoSinkProposesVideoMetaPool)
-QGC_GST_SKIP_TEST(_testAllocationQuerySystemMemoryNoPoolStillAdvertisesMetas)
-QGC_GST_SKIP_TEST(_testColorimetryColorSpaceMapping)
-QGC_GST_SKIP_TEST(_testColorimetryResolutionHeuristicMatchesQt)
-QGC_GST_SKIP_TEST(_testColorimetryTransferMapping)
-QGC_GST_SKIP_TEST(_testColorimetryFrameRatePropagation)
-QGC_GST_SKIP_TEST(_testHwBufferCropMatrixIdentityWithoutMeta)
-QGC_GST_SKIP_TEST(_testHwBufferCropMatrixFromVideoCropMeta)
-QGC_GST_SKIP_TEST(_testHwVideoBufferCpuMapFallback)
-QGC_GST_SKIP_TEST(_testHwVideoBufferCpuMapRefusesForeignLayout_data)
-QGC_GST_SKIP_TEST(_testHwVideoBufferCpuMapRefusesForeignLayout)
-QGC_GST_SKIP_TEST(_testApplyOrientationToFrameMapping)
-QGC_GST_SKIP_TEST(_testAdapterFlushDropsInFlightSamples)
-QGC_GST_SKIP_TEST(_testSourceFactoryUdpRtpJitterBuffer)
-QGC_GST_SKIP_TEST(_testSourceFactoryJitterBufferNone)
-QGC_GST_SKIP_TEST(_testSourceFactoryNoRetransmission)
-QGC_GST_SKIP_TEST(_testSourceFactoryRtspJitterBufferPolicy_data)
-QGC_GST_SKIP_TEST(_testSourceFactoryRtspJitterBufferPolicy)
-QGC_GST_SKIP_TEST(_testSourceFactoryRtspSelectsOnlyVideoStreams_data)
-QGC_GST_SKIP_TEST(_testSourceFactoryRtspSelectsOnlyVideoStreams)
-QGC_GST_SKIP_TEST(_testSourceFactoryRtspSetsUpOnlyVideoStream)
-QGC_GST_SKIP_TEST(_testSourceFactoryRejectsBadUri)
-QGC_GST_SKIP_TEST(_testSourceFactoryTcpMpegTs)
-QGC_GST_SKIP_TEST(_testSourceFactoryRejectsBadTcpUri)
-QGC_GST_SKIP_TEST(_testSourceFactoryUdp265Caps)
-QGC_GST_SKIP_TEST(_testSourceFactoryUdp265UsesExplicitDepayAndParser)
-QGC_GST_SKIP_TEST(_testSourceFactoryUdpH264Caps)
-QGC_GST_SKIP_TEST(_testSourceFactoryUdpMpegTs)
-QGC_GST_SKIP_TEST(_testSourceFactorySchemeCaseInsensitive)
-QGC_GST_SKIP_TEST(_testSourceFactoryNegativeLatencyClamped)
-QGC_GST_SKIP_TEST(_testSourceFactoryDynamicRtpLinkFailureCleansJitterBuffer)
-QGC_GST_SKIP_TEST(_testSourceFactoryDynamicLinkSkipsNonVideoRtp)
-QGC_GST_SKIP_TEST(_testColorimetryColorRangeMapping)
-QGC_GST_SKIP_TEST(_testPixelFormatAcceptedButNotAdvertised)
-QGC_GST_SKIP_TEST(_testAdvertisedFormatListMatchesTable)
-QGC_GST_SKIP_TEST(_testAdvertisedFormatListForOffer_data)
-QGC_GST_SKIP_TEST(_testAdvertisedFormatListForOffer)
-QGC_GST_SKIP_TEST(_testTelemetryMapDurationEwma)
-QGC_GST_SKIP_TEST(_testTelemetryFallbackReasonMatrix)
-QGC_GST_SKIP_TEST(_testTelemetrySyncWaitSplit)
-QGC_GST_SKIP_TEST(_testTelemetryMapFailuresReportedInExtraStats)
-QGC_GST_SKIP_TEST(_testTelemetryDmaBufExtraStatsDrain)
-
-#undef QGC_GST_SKIP_TEST
 #endif
 
 UT_REGISTER_TEST(GStreamerTest, TestLabel::Integration)

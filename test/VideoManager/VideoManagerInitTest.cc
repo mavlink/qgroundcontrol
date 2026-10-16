@@ -103,15 +103,10 @@ void VideoManagerInitTest::_testBackendInitFailure()
 
 #else
 
-// Skipping in init() would skip cleanup() too, which UnitTest requires after its init().
-void VideoManagerInitTest::init()
+void VideoManagerInitTest::_testGStreamerDisabled()
 {
-    UnitTest::init();
+    QSKIP("GStreamer not enabled");
 }
-
-void VideoManagerInitTest::_testQmlReadyBeforeBackendReady() { QSKIP("GStreamer not enabled"); }
-void VideoManagerInitTest::_testBackendReadyBeforeQmlReady() { QSKIP("GStreamer not enabled"); }
-void VideoManagerInitTest::_testBackendInitFailure() { QSKIP("GStreamer not enabled"); }
 
 #endif
 

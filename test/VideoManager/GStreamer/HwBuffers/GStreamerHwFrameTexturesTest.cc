@@ -1,6 +1,8 @@
 #include "GStreamerTest.h"
 
-#if defined(QGC_GST_STREAMING) && defined(QGC_HAS_ANY_GPU_PATH)
+#ifdef QGC_GST_STREAMING
+
+#if defined(QGC_HAS_ANY_GPU_PATH)
 
 #include <array>
 #include <memory>
@@ -10,6 +12,7 @@
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QRegularExpression>
 
+#include "GStreamerTestHelpers.h"
 #include "GstHwFrameTexturesBase.h"
 #include "GstHwPathTelemetry.h"
 #include "GstHwVideoBuffer.h"
@@ -53,23 +56,15 @@ public:
 struct TailFixture
 {
     TailFixture()
-    {
-        gst_video_info_set_format(&info, GST_VIDEO_FORMAT_NV12, kFrameSize.width(), kFrameSize.height());
-        sample = makeSample();
-        QRhiNullInitParams params;
-        rhi.reset(QRhi::create(QRhi::Null, &params));
-    }
+        : sample(makeSample(&info))
+        , rhi(GstTest::makeNullRhi())
+    {}
 
     ~TailFixture() { gst_sample_unref(sample); }
 
-    GstSample* makeSample() const
+    static GstSample* makeSample(GstVideoInfo* info = nullptr)
     {
-        GstBuffer* buffer = gst_buffer_new_allocate(nullptr, GST_VIDEO_INFO_SIZE(&info), nullptr);
-        GstCaps* caps = gst_video_info_to_caps(&info);
-        GstSample* made = gst_sample_new(buffer, caps, nullptr, nullptr);
-        gst_buffer_unref(buffer);
-        gst_caps_unref(caps);
-        return made;
+        return GstTest::makeVideoSample(GST_VIDEO_FORMAT_NV12, kFrameSize.width(), kFrameSize.height(), info);
     }
 
     QVideoFrameTexturesUPtr map(TailTestBuffer& source, QVideoFrameTexturesUPtr& old, bool reuse, bool chromaRejected,
@@ -116,8 +111,7 @@ void GStreamerTest::_testHwFrameTexturesZeroHandleInvalidatesBundle()
     QFETCH(bool, allPlanesValid);
 
     // The Null backend's createFrom() accepts any handle, so only wrapPlanes() can reject a missing plane.
-    QRhiNullInitParams params;
-    const std::unique_ptr<QRhi> rhi(QRhi::create(QRhi::Null, &params));
+    const std::unique_ptr<QRhi> rhi = GstTest::makeNullRhi();
     QVERIFY(rhi);
     const TailTestTextures textures(rhi.get(), {lumaHandle, chromaHandle});
 
@@ -145,11 +139,9 @@ void GStreamerTest::_testHwFrameTexturesFinishMapReusesAcceptedBundle()
     QVideoFrameTextures* const previous = old.get();
     (void) GstHwPathTelemetry::take(HwVideoBufferPath::GlMemory, GstHwPathTelemetry::Counter::TextureReuse);
 
-    GstSample* nextSample = fixture.makeSample();
+    GstSample* nextSample = TailFixture::makeSample();
     bool nextSampleReleased = false;
-    gst_mini_object_weak_ref(
-        GST_MINI_OBJECT(nextSample), [](gpointer data, GstMiniObject*) { *static_cast<bool*>(data) = true; },
-        &nextSampleReleased);
+    GstTest::watchRelease(GST_MINI_OBJECT(nextSample), &nextSampleReleased);
     auto nextFrame = std::make_unique<TailTestBuffer>(nextSample, fixture.info);
     gst_sample_unref(nextSample);
     bool built = false;
@@ -211,5 +203,7 @@ void GStreamerTest::_testHwFrameTexturesFinishMapRejectsIncompleteBundle()
 {
     QSKIP("No GPU path compiled in this build");
 }
+
+#endif
 
 #endif

@@ -8,6 +8,7 @@ class GstVideoReceiverComponentsTest : public UnitTest
     Q_OBJECT
 
 private slots:
+#ifdef QGC_GST_STREAMING
     void _testReconnectBackoffSequence();
     void _testReconnectBackoffRestartsAfterRecovery();
     void _testStallDetection_data();
@@ -20,4 +21,7 @@ private slots:
     void _testPipelineDotStaysInDirectory();
     void _testPipelineNamedAfterReceiver_data();
     void _testPipelineNamedAfterReceiver();
+#else
+    void _testGStreamerDisabled();
+#endif
 };

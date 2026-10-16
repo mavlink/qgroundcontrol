@@ -24,6 +24,7 @@
 #include "GStreamer.h"
 #include "GStreamerHelpers.h"
 #include "GStreamerLogging.h"
+#include "GStreamerTestHelpers.h"
 #include "GstHwPathTelemetry.h"
 #include "GstHwVideoBufferFactory.h"
 #include "GstQgcFrameMap.h"
@@ -71,68 +72,42 @@
 
 void GStreamerTest::_testVulkanDispatchDemotesToCpu()
 {
-    GStreamer::redirectGLibLogging();
-    QVERIFY2(GStreamer::completeInit(), "GStreamer::completeInit() failed");
-
-    GstElementFactory* vkUpload = gst_element_factory_find("vulkanupload");
-    if (!vkUpload) {
+    if (!GstTest::firstMissingFactory({"vulkanupload"}).isEmpty()) {
         QSKIP("vulkanupload factory unavailable — gst-vulkan not registered in this build");
     }
-    gst_object_unref(vkUpload);
 
     QVideoSink videoSink;
     int frameCount = 0;
 
-    GError* error = nullptr;
-    GstElement* pipeline = gst_parse_launch(
-        "videotestsrc num-buffers=10 ! "
-        "video/x-raw,format=RGBA,width=320,height=240,framerate=30/1 ! "
-        "vulkanupload ! "
-        "video/x-raw(memory:VulkanImage) ! "
-        "qgcvideosinkbin name=sink gpu-zerocopy=true",
-        &error);
-    if (error) {
-        const QString msg = QString::fromUtf8(error->message);
-        g_clear_error(&error);
-        QSKIP(qPrintable(QStringLiteral("Vulkan pipeline parse skipped: %1").arg(msg)));
+    GstTest::TestPipeline pipeline;
+    if (!pipeline.launch(QStringLiteral("videotestsrc num-buffers=10 ! "
+                                        "video/x-raw,format=RGBA,width=320,height=240,framerate=30/1 ! "
+                                        "vulkanupload ! "
+                                        "video/x-raw(memory:VulkanImage) ! "
+                                        "qgcvideosinkbin name=sink gpu-zerocopy=true"))) {
+        QSKIP(qPrintable(QStringLiteral("Vulkan pipeline parse skipped: %1").arg(pipeline.error())));
     }
-    QVERIFY2(pipeline, "Failed to create Vulkan test pipeline");
-    auto pipelineGuard = qScopeGuard([&] {
-        gst_element_set_state(pipeline, GST_STATE_NULL);
-        gst_object_unref(pipeline);
-    });
 
-    GstElement* sinkBin = gst_bin_get_by_name(GST_BIN(pipeline), "sink");
+    const GStreamer::GstElementPtr sinkBin = pipeline.element("sink");
     QVERIFY2(sinkBin, "Could not find 'sink' element");
-    auto sinkBinGuard = qScopeGuard([&] { gst_object_unref(sinkBin); });
 
     auto owner = std::make_unique<QObject>();
-    if (!GStreamer::setupQVideoSinkElement(sinkBin, &videoSink, owner.get())) {
+    if (!GStreamer::setupQVideoSinkElement(sinkBin.get(), &videoSink, owner.get())) {
         QSKIP("setupQVideoSinkElement() failed (no GPU context for Vulkan)");
     }
 
     QObject::connect(&videoSink, &QVideoSink::videoFrameChanged, owner.get(),
                      [&frameCount](const QVideoFrame&) { ++frameCount; });
 
-    GstElement* qvideosink = gst_bin_get_by_name(GST_BIN(sinkBin), "qgcqvideosink");
+    const GStreamer::GstElementPtr qvideosink =
+        GStreamer::adoptElement(gst_bin_get_by_name(GST_BIN(sinkBin.get()), "qgcqvideosink"));
     QVERIFY2(qvideosink, "Could not find 'qgcqvideosink' inside sink bin");
-    auto qvideosinkGuard = qScopeGuard([&] { gst_object_unref(qvideosink); });
-
-    GstPad* appsinkPad = gst_element_get_static_pad(qvideosink, "sink");
+    const GStreamer::GstPadPtr appsinkPad = GStreamer::adoptPad(gst_element_get_static_pad(qvideosink.get(), "sink"));
     QVERIFY2(appsinkPad, "qgcqvideosink has no sink pad");
-    auto appsinkPadGuard = qScopeGuard([&] { gst_object_unref(appsinkPad); });
 
     std::atomic<int> bufferCount{0};
-    auto probeCb = +[](GstPad* /*pad*/, GstPadProbeInfo* info, gpointer userData) -> GstPadProbeReturn {
-        auto* c = static_cast<std::atomic<int>*>(userData);
-        if (GST_PAD_PROBE_INFO_BUFFER(info)) {
-            c->fetch_add(1, std::memory_order_relaxed);
-        }
-        return GST_PAD_PROBE_OK;
-    };
-    const gulong probeId = gst_pad_add_probe(appsinkPad, GST_PAD_PROBE_TYPE_BUFFER, probeCb, &bufferCount, nullptr);
-    QVERIFY(probeId);
-    auto probeGuard = qScopeGuard([&] { gst_pad_remove_probe(appsinkPad, probeId); });
+    GStreamer::PadProbe bufferProbe;
+    QVERIFY(bufferProbe.add(appsinkPad.get(), GST_PAD_PROBE_TYPE_BUFFER, GstTest::countBuffers, &bufferCount));
 
     using GstHwPathTelemetry::HwFallbackReason;
     const quint64 noSyncBefore =
@@ -140,63 +115,29 @@ void GStreamerTest::_testVulkanDispatchDemotesToCpu()
     const quint64 noExtBefore =
         GstHwPathTelemetry::peekFallbackReason(HwVideoBufferPath::Vulkan, HwFallbackReason::NoExt);
 
-    GstStateChangeReturn ret = gst_element_set_state(pipeline, GST_STATE_PLAYING);
-    if (ret == GST_STATE_CHANGE_FAILURE) {
+    if (!pipeline.play()) {
         QSKIP("Vulkan pipeline failed to PLAY (no Vulkan device in headless env?)");
     }
 
-    GstBus* bus = gst_element_get_bus(pipeline);
-    GstMessage* msg = gst_bus_timed_pop_filtered(bus, 10 * GST_SECOND,
-                                                 static_cast<GstMessageType>(GST_MESSAGE_EOS | GST_MESSAGE_ERROR));
+    const GStreamer::GstMessagePtr msg = pipeline.waitForEosOrError();
+    const bool sawError = msg && (GST_MESSAGE_TYPE(msg.get()) == GST_MESSAGE_ERROR);
+    const QString errMsg = sawError ? GstTest::errorText(msg.get()) : QString();
 
-    QString errMsg;
-    bool sawError = false;
-    if (msg && GST_MESSAGE_TYPE(msg) == GST_MESSAGE_ERROR) {
-        GError* err = nullptr;
-        gchar* debug = nullptr;
-        gst_message_parse_error(msg, &err, &debug);
-        errMsg = QStringLiteral("%1 (%2)")
-                     .arg(err ? QString::fromUtf8(err->message) : QStringLiteral("?"))
-                     .arg(debug ? QString::fromUtf8(debug) : QString());
-        g_clear_error(&err);
-        g_free(debug);
-        sawError = true;
-    }
-    if (msg)
-        gst_message_unref(msg);
-    gst_object_unref(bus);
+    // Demotion telemetry is recorded on the QRhi render path, which can land after the bus EOS. Headless runs never
+    // record it and skip below, so this waits without UnitTest::waitForCondition()'s timeout warning.
+    const bool demotionSignalled = QTest::qWaitFor(
+        [&] {
+            return (GstHwPathTelemetry::peekFallbackReason(HwVideoBufferPath::Vulkan, HwFallbackReason::VulkanNoSync) >
+                    noSyncBefore) ||
+                   (GstHwPathTelemetry::peekFallbackReason(HwVideoBufferPath::Vulkan, HwFallbackReason::NoExt) >
+                    noExtBefore);
+        },
+        TestTimeout::shortDuration());
 
-    // Demotion telemetry is recorded on the QRhi render path, which can land after the bus EOS; poll up
-    // to 2s (not a fixed window) so a slow demotion is observed rather than spuriously skipped.
-    bool demotionSignalled = false;
-    {
-        QElapsedTimer drain;
-        drain.start();
-        while (drain.elapsed() < 2000) {
-            QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
-            const quint64 noSyncNow =
-                GstHwPathTelemetry::peekFallbackReason(HwVideoBufferPath::Vulkan, HwFallbackReason::VulkanNoSync);
-            const quint64 noExtNow =
-                GstHwPathTelemetry::peekFallbackReason(HwVideoBufferPath::Vulkan, HwFallbackReason::NoExt);
-            if (noSyncNow > noSyncBefore || noExtNow > noExtBefore) {
-                demotionSignalled = true;
-                break;
-            }
-        }
-    }
-
-    GstCaps* negotiated = gst_pad_get_current_caps(appsinkPad);
-    QString negotiatedStr;
-    if (negotiated) {
-        gchar* s = gst_caps_to_string(negotiated);
-        negotiatedStr = QString::fromUtf8(s ? s : "");
-        g_free(s);
-        gst_caps_unref(negotiated);
-    }
-
+    const QString negotiatedStr = GstTest::currentCapsString(appsinkPad.get());
     const int probedBuffers = bufferCount.load();
     guint64 vulkanFrames = 0;
-    if (const GStreamer::GstStructurePtr stats = GstQgc::frameStats(qvideosink)) {
+    if (const GStreamer::GstStructurePtr stats = GstQgc::frameStats(qvideosink.get())) {
         (void) gst_structure_get_uint64(stats.get(), GstQgc::sinkFramesField(HwVideoBufferPath::Vulkan), &vulkanFrames);
     }
 
@@ -230,8 +171,7 @@ void GStreamerTest::_testVulkanOwnedFrameTexturesReleaseOnDestroy()
 #if !defined(QGC_HAS_GST_DMABUF_GPU_PATH) || !defined(QGC_HAS_GST_VULKAN_GPU_PATH)
     QSKIP("DMABuf->Vulkan frame bundles not compiled in this build");
 #else
-    QRhiNullInitParams params;
-    std::unique_ptr<QRhi> rhi(QRhi::create(QRhi::Null, &params));
+    const std::unique_ptr<QRhi> rhi = GstTest::makeNullRhi();
     QVERIFY(rhi);
 
     // Any non-null handle: the Null QRhi wraps it without touching Vulkan, while a null one is left unwrapped.

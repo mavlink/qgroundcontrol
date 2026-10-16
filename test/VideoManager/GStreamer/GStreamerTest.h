@@ -7,6 +7,8 @@ class GStreamerTest : public UnitTest
     Q_OBJECT
 
 private slots:
+#ifdef QGC_GST_STREAMING
+    void initTestCase() override;
     void init() override;
 
     void _testIsValidRtspUri();
@@ -168,4 +170,7 @@ private slots:
     void _testTelemetrySyncWaitSplit();
     void _testTelemetryMapFailuresReportedInExtraStats();
     void _testTelemetryDmaBufExtraStatsDrain();
+#else
+    void _testGStreamerDisabled();
+#endif
 };

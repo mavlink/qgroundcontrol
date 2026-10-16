@@ -11,6 +11,7 @@
 
 #include "GStreamer.h"
 #include "GStreamerHelpers.h"
+#include "GStreamerTestHelpers.h"
 #include "PipelineDotDumper.h"
 #include "RecordingFinalizer.h"
 #include "StreamWatchdog.h"
@@ -24,22 +25,6 @@ constexpr qint64 kNoFrame = -1;
 qint64 nextDelaySec(StreamWatchdog& watchdog)
 {
     return watchdog.nextReconnectDelay().count();
-}
-
-/// Returns an empty string once GStreamer is usable, else why it isn't.
-QString initGStreamer()
-{
-    if (gst_is_initialized()) {
-        return {};
-    }
-    (void) GStreamer::prepareEnvironment();
-    GError* error = nullptr;
-    if (!gst_init_check(nullptr, nullptr, &error)) {
-        const QString message = error ? QString::fromUtf8(error->message) : QStringLiteral("unknown error");
-        g_clear_error(&error);
-        return message;
-    }
-    return {};
 }
 
 GstElement* ownedBin(const char* name)
@@ -141,9 +126,9 @@ void GstVideoReceiverComponentsTest::_testFinalizerSettlesOnlyFromArmedRecording
     QFETCH(QString, source);
     QFETCH(bool, settles);
 
-    const QString gstError = initGStreamer();
-    if (!gstError.isEmpty()) {
-        QSKIP(qPrintable(QStringLiteral("GStreamer unavailable: %1").arg(gstError)));
+    const QString unavailable = GstTest::initGStreamer();
+    if (!unavailable.isEmpty()) {
+        QSKIP(qPrintable(unavailable));
     }
 
     GstElement* oldSinkBin = ownedBin("oldsinkbin");
@@ -179,9 +164,9 @@ void GstVideoReceiverComponentsTest::_testFinalizerSettlesOnlyFromArmedRecording
 
 void GstVideoReceiverComponentsTest::_testFinalizerKeepsFirstOutcome()
 {
-    const QString gstError = initGStreamer();
-    if (!gstError.isEmpty()) {
-        QSKIP(qPrintable(QStringLiteral("GStreamer unavailable: %1").arg(gstError)));
+    const QString unavailable = GstTest::initGStreamer();
+    if (!unavailable.isEmpty()) {
+        QSKIP(qPrintable(unavailable));
     }
 
     GstElement* sinkBin = ownedBin("sinkbin");
@@ -221,9 +206,9 @@ void GstVideoReceiverComponentsTest::_testPipelineDotStaysInDirectory()
     QFETCH(QString, tag);
     QFETCH(QString, fileStem);
 
-    const QString gstError = initGStreamer();
-    if (!gstError.isEmpty()) {
-        QSKIP(qPrintable(QStringLiteral("GStreamer unavailable: %1").arg(gstError)));
+    const QString unavailable = GstTest::initGStreamer();
+    if (!unavailable.isEmpty()) {
+        QSKIP(qPrintable(unavailable));
     }
 
     QTemporaryDir parent;
@@ -263,50 +248,7 @@ void GstVideoReceiverComponentsTest::_testPipelineNamedAfterReceiver()
 
 #else
 
-void GstVideoReceiverComponentsTest::_testReconnectBackoffSequence()
-{
-    QSKIP("GStreamer not enabled");
-}
-
-void GstVideoReceiverComponentsTest::_testReconnectBackoffRestartsAfterRecovery()
-{
-    QSKIP("GStreamer not enabled");
-}
-
-void GstVideoReceiverComponentsTest::_testStallDetection_data() {}
-
-void GstVideoReceiverComponentsTest::_testStallDetection()
-{
-    QSKIP("GStreamer not enabled");
-}
-
-void GstVideoReceiverComponentsTest::_testSourceTimeoutStartsAtFirstCheck()
-{
-    QSKIP("GStreamer not enabled");
-}
-
-void GstVideoReceiverComponentsTest::_testFinalizerSettlesOnlyFromArmedRecording_data() {}
-
-void GstVideoReceiverComponentsTest::_testFinalizerSettlesOnlyFromArmedRecording()
-{
-    QSKIP("GStreamer not enabled");
-}
-
-void GstVideoReceiverComponentsTest::_testFinalizerKeepsFirstOutcome()
-{
-    QSKIP("GStreamer not enabled");
-}
-
-void GstVideoReceiverComponentsTest::_testPipelineDotStaysInDirectory_data() {}
-
-void GstVideoReceiverComponentsTest::_testPipelineDotStaysInDirectory()
-{
-    QSKIP("GStreamer not enabled");
-}
-
-void GstVideoReceiverComponentsTest::_testPipelineNamedAfterReceiver_data() {}
-
-void GstVideoReceiverComponentsTest::_testPipelineNamedAfterReceiver()
+void GstVideoReceiverComponentsTest::_testGStreamerDisabled()
 {
     QSKIP("GStreamer not enabled");
 }

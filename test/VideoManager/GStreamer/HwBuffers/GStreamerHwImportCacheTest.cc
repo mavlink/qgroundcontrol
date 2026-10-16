@@ -142,36 +142,4 @@ void GStreamerTest::_testHwImportCacheDefersDestroyToOwnerThread()
     QCOMPARE(cache.parkedCount(), std::size_t(0));
 }
 
-#else
-
-void GStreamerTest::_testHwImportCacheEvictsLeastRecentlyUsed()
-{
-    QSKIP("GStreamer not enabled");
-}
-
-void GStreamerTest::_testHwImportCacheReplaceDestroysPrevious()
-{
-    QSKIP("GStreamer not enabled");
-}
-
-void GStreamerTest::_testHwImportCacheEraseIfDestroysMatches()
-{
-    QSKIP("GStreamer not enabled");
-}
-
-void GStreamerTest::_testHwImportCachePinnedEntriesOutliveRemoval()
-{
-    QSKIP("GStreamer not enabled");
-}
-
-void GStreamerTest::_testHwImportCacheRejectsInsertWhenAllPinned()
-{
-    QSKIP("GStreamer not enabled");
-}
-
-void GStreamerTest::_testHwImportCacheDefersDestroyToOwnerThread()
-{
-    QSKIP("GStreamer not enabled");
-}
-
 #endif
