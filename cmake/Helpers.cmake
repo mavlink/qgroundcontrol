@@ -92,6 +92,18 @@ function(qgc_config_caching)
                 endif()
                 string(APPEND _wrapper "export CCACHE_DIR=\"\${CCACHE_DIR:-${CMAKE_SOURCE_DIR}/.ccache}\"\n")
                 string(APPEND _wrapper "export CCACHE_BASEDIR=\"\${CCACHE_BASEDIR:-${CMAKE_SOURCE_DIR}}\"\n")
+                # Delete a header compile's output (the PCH) before regenerating it: ccache otherwise hashes the
+                # stale PCH beside the -include'd header as an input, so a regenerated PCH never hits and every
+                # object using it misses.
+                string(
+                    APPEND
+                    _wrapper
+                    [=[
+case " $* " in *" -x c++-header "*|*" -x c-header "*)
+    _prev=; for _arg; do [ "$_prev" = -o ] && rm -f "$_arg"; _prev=$_arg; done ;;
+esac
+]=]
+                )
                 string(APPEND _wrapper "exec \"${QGC_CACHE_PROGRAM}\" \"$@\"\n")
                 _qgc_write_if_changed("${_ccache_wrapper}" "${_wrapper}")
                 # cmakelang 0.6.13 does not recognize file(CHMOD).

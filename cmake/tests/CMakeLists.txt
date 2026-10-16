@@ -22,6 +22,7 @@ qgc_add_cmake_contract_test(CoverageCleanWithoutGcovr coverage-clean-without-gco
 qgc_add_cmake_contract_test(SanitizerProjectTargets sanitizer-project-targets)
 qgc_add_cmake_contract_test(CoverageClean coverage-clean)
 qgc_add_cmake_contract_test(HelpersCpmAdded helpers-cpm-added)
+qgc_add_cmake_contract_test(HelpersCcachePch helpers-ccache-pch)
 qgc_add_cmake_contract_test(HelpersMoccacheTargets helpers-moccache-targets)
 qgc_add_cmake_contract_test(HelpersWriteIfChanged helpers-write-if-changed)
 qgc_add_cmake_contract_test(PythonVenvStaleCache python-venv-stale-cache)
