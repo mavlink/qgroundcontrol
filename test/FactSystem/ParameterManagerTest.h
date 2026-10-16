@@ -2,6 +2,9 @@
 
 #include "BaseClasses/VehicleTestManualConnect.h"
 
+class Fact;
+class ParameterManager;
+
 class ParameterManagerTest : public VehicleTestManualConnect
 {
     Q_OBJECT
@@ -38,16 +41,36 @@ private slots:
     void _bulkRefreshUnknownNameSkipped();
     void _bulkRefreshRetrySucceeds();
     void _bulkRefreshAllRetriesExhausted();
+    void _extParamsDownloaded();
+    void _extParamWrite();
+    void _extParamWriteRejected();
+    void _extParamWriteNoAck();
+    void _extParamWriteInProgress();
+    void _extParamMissingIndexRetry();
+    void _extParamNotInSavedFile();
+    void _extParamClassicNameCollision();
+    void _extParamNeverReceived();
 
 private:
+    /// Connects a camera-enabled MockLink and waits for the ext params to arrive.
+    /// @return The CAM_EXPMODE fact, nullptr on failure
+    Fact* _connectAndWaitForExtParams();
     void _ignoreParamResponseTimeouts();
     void _expectIndexLoadFailureWarning();
+    void _ignoreExtParamAckTimeouts();
     void _noFailureWorker(MockConfiguration::FailureMode_t failureMode);
     Vehicle *_connectAndWaitForVehicle(MockConfiguration::FailureMode_t failureMode);
     static int _readCountForComponent(const QList<QPair<int, int>> &readLog, int componentId);
     /// Waits until an app message matching pattern has been logged. Non-default component failures are reported
     /// after parametersReady, so tests can't rely on the ready signal to sequence them.
     static bool _waitForAppMessage(const QRegularExpression &pattern);
+    /// Waits until a message from the given logging category matching pattern has been logged
+    static bool _waitForLogMessage(const QString& category, const QRegularExpression& pattern);
+    /// Hands the ParameterManager a PARAM_EXT_VALUE as if the component had sent it
+    bool _injectExtParamValue(ParameterManager* paramManager, int componentId, const QString& name, int paramCount,
+                              int paramIndex, int32_t value);
+    /// Feeds a stream which stops short and waits for the resulting never received warning
+    bool _expectExtParamNeverReceived(ParameterManager* paramManager);
     void _setParamWithFailureMode(MockLink::ParamSetFailureMode_t failureMode, bool expectSuccess,
                                   const QString &paramName, MAV_AUTOPILOT autopilot);
 };

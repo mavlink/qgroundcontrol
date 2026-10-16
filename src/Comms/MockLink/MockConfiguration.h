@@ -55,6 +55,7 @@ public:
         OptionFtpCapability       = 1 << 7,
         OptionNoRadioStatus       = 1 << 8,
         OptionCompanionParams = 1 << 9,
+        OptionDropFirstExtParam = 1 << 10,
     };
     Q_DECLARE_FLAGS(Options, Option)
     Q_FLAG(Options)
@@ -227,6 +228,13 @@ public:
     bool sendRadioStatus() const { return _sendRadioStatus; }
     void setSendRadioStatus(bool sendRadioStatus) { _sendRadioStatus = sendRadioStatus; }
 
+    // Test-only: when true, the camera omits the first parameter from the PARAM_EXT_REQUEST_LIST
+    // stream, so it can only be picked up by the indexed re-request. Must be set before the link
+    // starts, since the list is streamed during initial connect. Not persisted.
+    bool dropFirstExtParam() const { return _dropFirstExtParam; }
+
+    void setDropFirstExtParam(bool dropFirstExtParam) { _dropFirstExtParam = dropFirstExtParam; }
+
     // Test-only: when true, an onboard computer component sends its own HEARTBEAT and serves its own params
     // over the parameter protocol only, as companion software does. Not persisted.
     bool companionParams() const { return _companionParams; }
@@ -282,6 +290,7 @@ private:
     bool _ftpCapability = false;
     bool _sendRadioStatus = true;
     bool _companionParams = false;
+    bool _dropFirstExtParam = false;
 
     // Camera capability flags (defaults match current Camera 1 configuration)
     bool _cameraCaptureVideo = true;
