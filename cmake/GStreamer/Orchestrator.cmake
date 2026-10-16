@@ -3,7 +3,8 @@
 # GStreamer:: targets, checks the plugin set and records the resolved SDK (SdkState.cmake, GStreamer::Layout).
 #
 # Input: QGC_GST_COMPONENTS (components beyond the mandatory ones, Components.cmake) and the cache options
-# GStreamer_ROOT_DIR, QGC_GST_VERSION, GStreamer_USE_{STATIC_LIBS,FRAMEWORK} and PKG_CONFIG_ARGN.
+# GStreamer_ROOT_DIR, QGC_GST_VERSION, QGC_GST_USE_HOMEBREW (macOS), GStreamer_USE_{STATIC_LIBS,FRAMEWORK} and
+# PKG_CONFIG_ARGN.
 # Sets, in the including directory, the discovery outputs (Platform.cmake; qgc_gst_restore_pkgconfig_env undoes their
 # pkg-config environment) and GStreamer_VERSION, GStreamer_USE_MERGED_STATIC, GSTREAMER_APIS, GSTREAMER_PLUGINS,
 # GSTREAMER_STATIC_PLUGINS (static layouts), G_IO_MODULES (mobile), GStreamer_<component>_FOUND (optional components)

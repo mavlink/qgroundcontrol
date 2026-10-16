@@ -365,7 +365,7 @@ ValidationResult _setGstEnvVars()
     // Framework builds prefer framework paths over app-relative paths
     const QStringList libDirs = {_cleanJoin(rootDir, "lib"), _cleanJoin(appDir, "../lib")};
 #else
-    // Non-framework (Homebrew) builds prefer app-relative paths
+    // Flat (non-framework) SDK builds prefer app-relative paths
     const QStringList libDirs = {_cleanJoin(appDir, "../lib"), _cleanJoin(rootDir, "lib")};
 #endif
     const QStringList helperDirs = {_cleanJoin(appDir, "../libexec/gstreamer-1.0"),

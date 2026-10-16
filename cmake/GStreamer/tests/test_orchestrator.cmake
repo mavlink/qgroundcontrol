@@ -118,6 +118,84 @@ function(_qgc_write_fake_probe_lib root version)
     )
 endfunction()
 
+# _qgc_write_fake_homebrew(<prefix> [LINKED])
+# A Homebrew prefix with brew, its own pkg-config (the host's, logging each call to <prefix>/pkg-config.log, with
+# Homebrew's macOS shims as its default search path), and Cellar/{gstreamer/1.24.0,glib/2.84.0} kegs whose
+# gstreamer-1.0.pc requires GLib, which requires the shims' libffi. Unlinked, opt/ points at both kegs; LINKED, their
+# .pc files are linked into lib/pkgconfig and opt/ only has gstreamer.
+function(_qgc_write_fake_homebrew prefix)
+    cmake_parse_arguments(PARSE_ARGV 1 ARG "LINKED" "" "")
+    file(REMOVE_RECURSE "${prefix}")
+    set(_keg "${prefix}/Cellar/gstreamer/1.24.0")
+    set(_glib "${prefix}/Cellar/glib/2.84.0")
+    _qgc_write_fake_sdk("${_keg}" 1.24.0)
+    file(WRITE "${_keg}/lib/gstreamer-1.0/libgstcoreelements.dylib" "")
+    file(APPEND "${_keg}/lib/pkgconfig/gstreamer-1.0.pc" "Requires: glib-2.0, gobject-2.0\n")
+    set(_shims "${prefix}/Library/Homebrew/os/mac/pkgconfig/15")
+    file(MAKE_DIRECTORY "${_glib}/include/glib-2.0" "${prefix}/opt" "${prefix}/lib/pkgconfig")
+    file(WRITE "${_shims}/libffi.pc" "Name: libffi\nDescription: QGC fake shim\nVersion: 3.4\n")
+    foreach(_module IN ITEMS glib-2.0 gobject-2.0)
+        file(WRITE "${_glib}/lib/lib${_module}.so" "")
+        file(WRITE "${_glib}/lib/pkgconfig/${_module}.pc"
+             "prefix=${_glib}\n" "Name: ${_module}\n" "Description: QGC fake GLib\n" "Version: 2.84.0\n"
+             "Libs: -L\${prefix}/lib -l${_module}\n" "Cflags: -I\${prefix}/include/glib-2.0\n"
+        )
+    endforeach()
+    file(APPEND "${_glib}/lib/pkgconfig/gobject-2.0.pc" "Requires.private: libffi\n")
+    file(CREATE_LINK ../Cellar/gstreamer/1.24.0 "${prefix}/opt/gstreamer" SYMBOLIC)
+    if(ARG_LINKED)
+        file(GLOB _pc_files "${_keg}/lib/pkgconfig/*.pc" "${_glib}/lib/pkgconfig/*.pc")
+        foreach(_pc IN LISTS _pc_files)
+            cmake_path(GET _pc FILENAME _name)
+            file(CREATE_LINK "${_pc}" "${prefix}/lib/pkgconfig/${_name}" SYMBOLIC)
+        endforeach()
+    else()
+        file(CREATE_LINK ../Cellar/glib/2.84.0 "${prefix}/opt/glib" SYMBOLIC)
+    endif()
+    set(_scripts "${prefix}-scripts")
+    file(WRITE "${_scripts}/brew" "#!/bin/sh\necho \"${prefix}/opt/$2\"\n")
+    file(
+        WRITE "${_scripts}/pkg-config"
+        "#!/bin/sh\necho \"$*\" >> \"${prefix}/pkg-config.log\"\n"
+        "PKG_CONFIG_LIBDIR=\"\${PKG_CONFIG_LIBDIR-${_shims}}\"\n"
+        "export PKG_CONFIG_LIBDIR\nexec \"${_qgc_pkg_config}\" \"$@\"\n"
+    )
+    file(
+        COPY "${_scripts}/brew" "${_scripts}/pkg-config"
+        DESTINATION "${prefix}/bin"
+        FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
+    )
+endfunction()
+
+# Fails the check named <label> unless the fixture resolved the gstreamer, and through it the GLib, of the fake Homebrew
+# <prefix> with that prefix's pkg-config.
+function(_qgc_assert_homebrew label prefix)
+    file(READ "${_binary_dir}/gst-state.txt" _state)
+    string(REGEX MATCH "GStreamer::GStreamer\\.INTERFACE_INCLUDE_DIRECTORIES=[^\n]*" _includes "${_state}")
+    string(REGEX MATCH "GStreamer::deps\\.INTERFACE_LINK_LIBRARIES=[^\n]*" _libraries "${_state}")
+    set(_glib "${prefix}/Cellar/glib/2.84.0")
+    foreach(
+        _case IN
+        ITEMS "_state|GStreamer_ROOT_DIR=${prefix}/opt/gstreamer\n"
+              "_state|GSTREAMER_PLUGIN_PATH=${prefix}/opt/gstreamer/lib/gstreamer-1.0\n"
+              "_includes|${prefix}/Cellar/gstreamer/1.24.0/include/gstreamer-1.0"
+              "_includes|${_glib}/include/glib-2.0"
+              "_libraries|${_glib}/lib/libglib-2.0.so"
+              "_libraries|${_glib}/lib/libgobject-2.0.so"
+    )
+        qgc_test_split("${_case}" _var _expected)
+        string(FIND "${${_var}}" "${_expected}" _at)
+        if(_at EQUAL -1)
+            message(FATAL_ERROR "ASSERT [${label}]: '${_expected}' not in ${_var}:\n${_state}")
+        endif()
+    endforeach()
+    qgc_test_assert_matches("${label} plugins" "version=1\\.24\\.0 path=shared .* plugins=1/1 " "${_qgc_output}")
+    if(NOT EXISTS "${prefix}/pkg-config.log")
+        message(FATAL_ERROR "ASSERT [${label}]: the Homebrew prefix's pkg-config was not used")
+    endif()
+    file(REMOVE "${prefix}/pkg-config.log")
+endfunction()
+
 # Configures the fixture with the extra <cmake-args>; sets _qgc_result and _qgc_output in the caller.
 function(_qgc_configure)
     set(_command "${CMAKE_COMMAND}" -S "${_fixture_dir}" -B "${_binary_dir}" -G "${GENERATOR}")
@@ -495,6 +573,43 @@ elseif(SCENARIO STREQUAL "sdk-prefix-decoy")
         "-DCMAKE_PREFIX_PATH=${_decoy}"
         "-DEXPECT_PROBE_ROOT=${_sdk_a}"
         -DEXPECT_VERSION=1.24.0
+    )
+elseif(SCENARIO STREQUAL "homebrew")
+    # macOS discovery of a Homebrew GStreamer, given as the prefix or opted into with QGC_GST_USE_HOMEBREW (brew found
+    # on PATH): Homebrew's pkg-config, not an SDK lock-in, resolves the GLib and libffi gstreamer-1.0.pc requires.
+    set(_brew "${WORK_DIR}/homebrew")
+    set(_macos -DQGC_TEST_MACOS=ON)
+    unset(ENV{PKG_CONFIG_LIBDIR})
+    file(MAKE_DIRECTORY "${WORK_DIR}/path")
+    file(CREATE_LINK "${_brew}/bin/brew" "${WORK_DIR}/path/brew" SYMBOLIC)
+    set(ENV{PATH} "${WORK_DIR}/path:$ENV{PATH}")
+    _qgc_write_fake_homebrew("${_brew}" LINKED)
+    _qgc_configure_ok("Homebrew prefix as the root" --fresh "-DGStreamer_ROOT_DIR=${_brew}" ${_macos})
+    _qgc_assert_homebrew("linked .pc files" "${_brew}")
+    _qgc_write_fake_homebrew("${_brew}")
+    _qgc_configure_ok("QGC_GST_USE_HOMEBREW" --fresh -DQGC_GST_USE_HOMEBREW=ON ${_macos})
+    _qgc_assert_homebrew("unlinked kegs" "${_brew}")
+
+    # An earlier auto-downloaded SDK stays ahead of Homebrew unless QGC_GST_USE_HOMEBREW is ON.
+    _qgc_write_fake_sdk("${_sdk_a}" 1.24.0)
+    file(WRITE "${_sdk_a}/lib/gstreamer-1.0/libgstcoreelements.dylib" "")
+    set(_cached "-DQGC_GST_RESOLVED_ROOT:INTERNAL=${_sdk_a}" -DQGC_GST_RESOLVED_VERSION:INTERNAL=1.22.0
+                -DQGC_GST_RESOLVED_AUTO:INTERNAL=TRUE
+    )
+    _qgc_configure_ok("cached SDK" --fresh ${_cached} ${_macos})
+    qgc_test_assert_matches("cached SDK" "root=${_sdk_a} .*auto_downloaded=TRUE" "${_qgc_output}")
+    _qgc_configure_ok("QGC_GST_USE_HOMEBREW over the cached SDK" --fresh ${_cached} -DQGC_GST_USE_HOMEBREW=ON ${_macos}
+                      -DQGC_TEST_INSTALL_REQUIRED_PLUGINS=coreelements
+    )
+    _qgc_assert_homebrew("Homebrew over the cached SDK" "${_brew}")
+
+    # Homebrew's libraries load each other by absolute paths, so an install cannot bundle them.
+    _qgc_install()
+    if(_qgc_result EQUAL 0)
+        message(FATAL_ERROR "ASSERT [Homebrew install]: install succeeded\n${_qgc_output}")
+    endif()
+    qgc_test_assert_matches("Homebrew install" "Homebrew's GStreamer \\([^)]*\\), which cannot be bundled"
+                            "${_qgc_output}"
     )
 elseif(SCENARIO STREQUAL "install-macos")
     # The macOS bundle installers run on any host: everything must land under DESTDIR and the --prefix given at

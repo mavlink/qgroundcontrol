@@ -122,6 +122,7 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
               android-mobile
               ios-link
               sdk-prefix-decoy
+              homebrew
     )
         add_test(
             NAME "GStreamer.test_orchestrator.${_qgc_scenario}"

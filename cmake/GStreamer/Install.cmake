@@ -274,7 +274,7 @@ function(gstreamer_install_macos_framework_sdk app_name plugin_dest_out)
 endfunction()
 
 # Stage flat-layout dylibs/plugins/gio modules + rpath fixups + helpers + CA
-# bundle. Used for Homebrew/CPM-downloaded macOS GStreamer (no framework wrapper).
+# bundle. Used for a flat (downloaded or user-supplied) macOS GStreamer, which has no framework wrapper.
 function(gstreamer_install_macos_flat_sdk app_name plugin_dest_out)
     # Relative to the install prefix; install(CODE) prepends $ENV{DESTDIR}${CMAKE_INSTALL_PREFIX} at install time.
     set(_mac_fw_dest "${app_name}.app/Contents/Frameworks")
@@ -431,6 +431,17 @@ function(gstreamer_install_platform_sdk app_name)
        AND NOT QGC_GST_BUNDLE_PLUGINS
     )
         message(STATUS "GStreamer: QGC_GST_BUNDLE_PLUGINS is OFF; the install uses the system's plugins")
+        return()
+    endif()
+    # Homebrew's libraries, plugins and plugin scanner load each other by absolute paths under its prefix (no @rpath),
+    # so copies bundled into the app would not be the ones loaded.
+    gstreamer_layout_get(HOMEBREW_PREFIX _gips_homebrew_prefix)
+    if(_gips_homebrew_prefix)
+        set(_gips_message "GStreamer: this build uses Homebrew's GStreamer (${_gips_homebrew_prefix}), which cannot be")
+        string(APPEND _gips_message " bundled. Configure with the official SDK (QGC_GST_USE_HOMEBREW=OFF and "
+               "GStreamer_ROOT_DIR unset) to install or package."
+        )
+        install(CODE "message(FATAL_ERROR \"${_gips_message}\")")
         return()
     endif()
     if(NOT ARG_REQUIRED_PLUGINS)

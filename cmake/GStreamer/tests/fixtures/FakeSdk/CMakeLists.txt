@@ -14,8 +14,8 @@ if(NOT QGC_TEST_PLUGINS)
 endif()
 string(REPLACE "," "\", \"" _qgc_test_plugins_json "${QGC_TEST_PLUGINS}")
 string(CONCAT QGC_BUILD_CONFIG_CONTENT
-              "{\"gstreamer\": {\"version\": {\"minimum\": \"1.20.0\", \"android\": \"1.20.0\"}, "
-              "\"plugins\": {\"common\": [\"${_qgc_test_plugins_json}\"]}}}"
+              "{\"gstreamer\": {\"version\": {\"minimum\": \"1.20.0\", \"android\": \"1.20.0\", "
+              "\"macos\": \"1.22.0\"}, \"plugins\": {\"common\": [\"${_qgc_test_plugins_json}\"]}}}"
 )
 # The fake SDK's libraries are empty files, so feature probes must compile without linking.
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
@@ -28,6 +28,13 @@ if(QGC_TEST_ANDROID_ABI)
     set(QGC_ANDROID_EXTRA_JAVA_SOURCES_DIR "${CMAKE_BINARY_DIR}/extra_java_sources")
     set(QGC_ANDROID_EXTRA_ASSETS_DIR "${CMAKE_BINARY_DIR}/extra_assets")
     add_library(${PROJECT_NAME} SHARED "${CMAKE_CURRENT_SOURCE_DIR}/fake_app.cpp")
+endif()
+
+# QGC_TEST_MACOS: configure the GStreamer modules as a macOS build (platform/MacOS.cmake).
+if(QGC_TEST_MACOS)
+    set(APPLE TRUE)
+    set(MACOS TRUE)
+    set(LINUX FALSE)
 endif()
 
 set(QGC_GST_COMPONENTS
