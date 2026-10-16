@@ -330,7 +330,9 @@ are scoped to the selected ref; failed deletions and an unreachable size target 
 reported. Cleanup affects GitHub storage, not the RunsOn S3 backend.
 
 Lychee restores and saves `.lycheecache` with a three-day entry lifetime; fork PRs only
-restore. Android emulator tests create a fresh AVD; no AVD snapshots are cached.
+restore. pre-commit restores hook environments keyed on `.pre-commit-config.yaml`, falling back
+to an earlier configuration's environments; pushes prune unused environments and save, while PRs
+only restore. Android emulator tests create a fresh AVD; no AVD snapshots are cached.
 Gradle, Flatpak, iOS target Qt SDK, and GitHub-hosted uv/Python caching remain disabled.
 
 ### Build helpers
