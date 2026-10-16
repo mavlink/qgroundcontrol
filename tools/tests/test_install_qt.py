@@ -92,8 +92,11 @@ class TestResolveArchDir:
     def test_android_arm64_v8a_unchanged(self) -> None:
         assert resolve_arch_dir("android_arm64_v8a") == "android_arm64_v8a"
 
-    def test_ios_unchanged(self) -> None:
-        assert resolve_arch_dir("ios") == "ios"
+    @pytest.mark.parametrize(
+        "arch", ["ios", "ios_device", "ios_simulator_arm64", "ios_simulator_x86_64"]
+    )
+    def test_ios_unchanged(self, arch: str) -> None:
+        assert resolve_arch_dir(arch) == arch
 
 
 class TestComputeCacheDigest:

@@ -139,16 +139,20 @@ def test_ios_workflow_builds_device_and_simulator_targets() -> None:
             "runner": "macos-15",
             "build_type": "Release",
             "preset": "iOS",
+            "qt_arch": "ios_device",
         },
         {
             "target": "simulator",
             "runner": "macos-15-intel",
             "build_type": "Debug",
             "preset": "iOS-debug",
+            "qt_arch": "ios_simulator_x86_64",
         },
     ]
 
     steps = {step["name"]: step for step in job["steps"]}
+    setup = steps["Build Setup (iOS)"]["with"]
+    assert setup["qt-arch"] == "${{ matrix.qt_arch }}"
     configure = steps["Configure"]["with"]
     assert "'iOS-appstore'" in configure["preset"]
     assert "github.ref_type == 'tag'" in configure["preset"]
@@ -198,6 +202,9 @@ def test_ios_qt_action_exports_cross_compile_roots() -> None:
     )
     assert steps["Install Qt (Host macOS)"]["id"] == "qt-host"
     assert steps["Install Qt for iOS"]["id"] == "qt-target"
+    assert steps["Install Qt for iOS"]["with"]["arch"] == "${{ inputs.arch }}"
+    for step_name in ("Install Qt (Host macOS)", "Install Qt for iOS"):
+        assert steps[step_name]["with"]["aqt-source"] == "${{ inputs.aqt-source }}"
 
 
 def test_ios_contract_dependencies_are_sparse_checked_out() -> None:

@@ -11,7 +11,7 @@ inputs:
     required: false
     default: ""
   qt-arch:
-    description: "Qt target architecture. Required for desktop and android modes; ignored for ios."
+    description: "Qt target architecture. Required for all modes (ios: ios_device or ios_simulator_<arch>)."
     required: false
     default: ""
   qt-modules:
@@ -110,14 +110,14 @@ runs:
         QT_HOST: ${{ inputs.qt-host }}
         QT_ARCH: ${{ inputs.qt-arch }}
       run: |
+        missing=()
         if [[ "$MODE" == "desktop" || "$MODE" == "android" ]]; then
-          missing=()
           [[ -z "$QT_HOST" ]] && missing+=(qt-host)
-          [[ -z "$QT_ARCH" ]] && missing+=(qt-arch)
-          if [[ ${#missing[@]} -gt 0 ]]; then
-            echo "::error::build-setup mode=$MODE requires inputs: ${missing[*]}"
-            exit 1
-          fi
+        fi
+        [[ -z "$QT_ARCH" ]] && missing+=(qt-arch)
+        if [[ ${#missing[@]} -gt 0 ]]; then
+          echo "::error::build-setup mode=$MODE requires inputs: ${missing[*]}"
+          exit 1
         fi
 
     - name: Build prerequisites
@@ -231,6 +231,7 @@ runs:
       uses: ./.github/actions/qt-ios
       with:
         version: ${{ inputs.qt-version || steps.prereq.outputs.qt_version }}
+        arch: ${{ inputs.qt-arch }}
         modules: ${{ inputs.qt-modules || steps.prereq.outputs.qt_modules }}
         ios-modules: ${{ inputs.ios-modules || steps.prereq.outputs.qt_modules_ios }}
         cache-key-suffix: ${{ inputs.cache-key-suffix }}
@@ -238,3 +239,4 @@ runs:
         cpm-modules: ${{ inputs.cpm-modules }}
         build-type: ${{ inputs.build-type }}
         save-cache: ${{ inputs.save-cache }}
+        aqt-source: ${{ inputs.aqt-source }}

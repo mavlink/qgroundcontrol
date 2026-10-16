@@ -119,10 +119,11 @@ version numbers) do not match the trigger glob and never start a build.
 
 ### TestFlight releases
 
-`ios.yml` builds a Release device bundle and a Debug x86_64 simulator bundle. Pull-request and
-branch builds remain unsigned. A release tag selects the Xcode App Store preset, imports an Apple
-Distribution certificate and provisioning profile, verifies the signed bundle, packages an IPA,
-and uploads it to TestFlight.
+`ios.yml` builds a Release device bundle and a Debug x86_64 simulator bundle, installing Qt's separate
+`ios_device` and `ios_simulator_x86_64` SDKs. The simulator stays on x86_64 because Qt's bundled FFmpeg
+has no arm64 simulator slice. Pull-request and branch builds remain unsigned. A release tag selects the
+Xcode App Store preset, imports an Apple Distribution certificate and provisioning profile, verifies the
+signed bundle, packages an IPA, and uploads it to TestFlight.
 
 Configure these repository variables before publishing a tag:
 
