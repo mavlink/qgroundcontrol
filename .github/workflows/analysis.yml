@@ -58,7 +58,12 @@ permissions:
 jobs:
   analyze:
     name: ${{ matrix.tool }} Analysis${{ matrix.tool == 'clang-tidy' && github.event_name != 'workflow_dispatch' && format(' ({0}/4)', matrix.shard) || '' }}
-    runs-on: ubuntu-24.04
+    runs-on: >-
+      ${{
+        github.repository_owner == 'mavlink' &&
+        format('runs-on={0}/runner=linux-x64-analyzer', github.run_id) ||
+        'ubuntu-24.04'
+      }}
     timeout-minutes: 120
     strategy:
       fail-fast: false
@@ -78,6 +83,13 @@ jobs:
         uses: step-security/harden-runner@v2
         with:
           egress-policy: audit
+
+      - name: Enable RunsOn magic cache
+        if: github.repository_owner == 'mavlink'
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+          show_costs: summary
 
       - name: Checkout
         uses: actions/checkout@v7
