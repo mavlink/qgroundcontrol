@@ -13,4 +13,9 @@ namespace GraphicsSetup {
 
 void configureMainWindow(QQuickWindow* window);
 
+/// Applies configureMainWindow() to the next QQuickWindow as soon as its native surface is created, before it can be
+/// exposed. Showing a window during QML loading can initialize its scene graph at once (Android exposes synchronously),
+/// so call this before loading the root window.
+void configureMainWindowOnCreation();
+
 }  // namespace GraphicsSetup

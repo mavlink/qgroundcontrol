@@ -5,8 +5,11 @@
 #include <QtCore/QByteArray>
 #include <QtCore/QCoreApplication>
 #include <QtCore/QScopeGuard>
+#include <QtQuick/QQuickGraphicsConfiguration>
+#include <QtQuick/QQuickWindow>
 
 #include "Fixtures/RAIIFixtures.h"
+#include "GraphicsSetup.h"
 #include "Platform.h"
 #include "QGCCommandLineParser.h"
 #include "UnitTest.h"
@@ -97,5 +100,23 @@ void PlatformTest::_testInitializeSwRastRequestsSoftwareDevice()
     QVERIFY(!QCoreApplication::testAttribute(Qt::AA_UseSoftwareOpenGL));
 }
 #endif
+
+void PlatformTest::_testGraphicsSetupConfiguresFirstWindowOnCreation()
+{
+    TestFixtures::EnvVarFixture restoreCache("QGC_RHI_PIPELINE_CACHE");
+    qunsetenv("QGC_RHI_PIPELINE_CACHE");
+
+    // Android shows the root window, initializing its scene graph, while the QML loads; the configuration must land
+    // when the window's surface is created, and only on that first window.
+    GraphicsSetup::configureMainWindowOnCreation();
+    QQuickWindow first;
+    QVERIFY(first.graphicsConfiguration().pipelineCacheSaveFile().isEmpty());
+    first.create();
+    QVERIFY(first.graphicsConfiguration().pipelineCacheSaveFile().endsWith(QStringLiteral("qgc_rhi_pipeline.cache")));
+
+    QQuickWindow second;
+    second.create();
+    QVERIFY(second.graphicsConfiguration().pipelineCacheSaveFile().isEmpty());
+}
 
 UT_REGISTER_TEST(PlatformTest, TestLabel::Unit, TestLabel::Utilities)
