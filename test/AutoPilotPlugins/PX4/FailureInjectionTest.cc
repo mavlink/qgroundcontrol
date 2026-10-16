@@ -1,0 +1,283 @@
+#include "FailureInjectionTest.h"
+
+#include <QtCore/QHash>
+#include <QtTest/QSignalSpy>
+
+#include "FailureInjection.h"
+#include "MAVLinkLib.h"
+#include "VehicleTypes.h"
+
+UT_REGISTER_TEST_LIGHTWEIGHT(FailureInjectionTest, TestLabel::Unit)
+
+void FailureInjectionTest::_catalogPopulatedFromMavlinkEnums()
+{
+    FailureInjection failureInjection;
+
+    const QVariantList units = failureInjection.units();
+    const QVariantList types = failureInjection.types();
+    QVERIFY2(!units.isEmpty(), "FAILURE_UNIT catalog failed to build from the MAVLink dialect");
+    QVERIFY2(!types.isEmpty(), "FAILURE_TYPE catalog failed to build from the MAVLink dialect");
+
+    // One entry per prefix group, so a missing prefix in the strip list shows up as a failure here.
+    struct ExpectedUnit
+    {
+        int unit;
+        const char* name;
+    };
+
+    static const ExpectedUnit expectedUnits[] = {
+        {FAILURE_UNIT_SENSOR_GPS, "GPS"},
+        {FAILURE_UNIT_SYSTEM_BATTERY, "BATTERY"},
+        {FAILURE_UNIT_DATALINK_LTE, "LTE"},
+        {FAILURE_UNIT_DATALINK_WIFI, "WIFI"},
+        {FAILURE_UNIT_DATALINK_TELEM_RADIO, "TELEM_RADIO"},
+        {FAILURE_UNIT_BUS_CAN, "CAN"},
+        {FAILURE_UNIT_BUS_I2C, "I2C"},
+    };
+
+    QHash<int, QString> catalog;
+    for (const QVariant& entry : units) {
+        const QVariantMap map = entry.toMap();
+        catalog.insert(map.value(QStringLiteral("unit")).toInt(), map.value(QStringLiteral("name")).toString());
+    }
+    for (const ExpectedUnit& expected : expectedUnits) {
+        QVERIFY2(catalog.contains(expected.unit),
+                 qPrintable(QStringLiteral("FAILURE_UNIT %1 missing from the units catalog").arg(expected.unit)));
+        QCOMPARE(catalog.value(expected.unit), QString::fromLatin1(expected.name));
+    }
+
+    bool foundOk = false;
+    for (const QVariant& entry : types) {
+        const QVariantMap map = entry.toMap();
+        if (map.value(QStringLiteral("type")).toInt() == static_cast<int>(FAILURE_TYPE_OK)) {
+            QCOMPARE(map.value(QStringLiteral("name")).toString(), QStringLiteral("OK"));
+            foundOk = true;
+        }
+    }
+    QVERIFY2(foundOk, "FAILURE_TYPE_OK missing from the types catalog, or its prefix was not stripped");
+}
+
+void FailureInjectionTest::_logRowAddsPendingEntryWithoutTracking()
+{
+    FailureInjection failureInjection;
+    QSignalSpy activityChangedSpy(&failureInjection, &FailureInjection::activityChanged);
+
+    failureInjection.logRow(QStringLiteral("GPS"), QStringLiteral("Off"), QStringLiteral("1"),
+                            QStringLiteral("12:00:00"));
+
+    QCOMPARE(activityChangedSpy.count(), 1);
+    QCOMPARE(failureInjection.activity().count(), 1);
+    QCOMPARE(failureInjection.activity().first().toMap().value(QStringLiteral("result")).toString(),
+             QStringLiteral("pending"));
+    QVERIFY2(failureInjection.injectedUnits().isEmpty(), "logRow() must not track the unit for Reset");
+}
+
+void FailureInjectionTest::_logInjectionTracksUnitOnce()
+{
+    FailureInjection failureInjection;
+
+    failureInjection.logInjection(QStringLiteral("GPS"), QStringLiteral("Off"), FAILURE_UNIT_SENSOR_GPS,
+                                  QStringLiteral("1"), QStringLiteral("12:00:00"));
+    QCOMPARE(failureInjection.injectedUnits().count(), 1);
+    QCOMPARE(failureInjection.injectedUnits().first().toInt(), static_cast<int>(FAILURE_UNIT_SENSOR_GPS));
+
+    // Injecting the same unit again must not duplicate the tracked entry.
+    failureInjection.logInjection(QStringLiteral("GPS"), QStringLiteral("Stuck"), FAILURE_UNIT_SENSOR_GPS,
+                                  QStringLiteral("2"), QStringLiteral("12:00:01"));
+    QCOMPARE(failureInjection.injectedUnits().count(), 1);
+    QCOMPARE(failureInjection.activity().count(), 2);
+}
+
+void FailureInjectionTest::_resolveResultResolvesOldestPendingRow()
+{
+    FailureInjection failureInjection;
+
+    // Newest is prepended: index 0 holds the second row logged, index 1 the first.
+    failureInjection.logRow(QStringLiteral("GPS"), QStringLiteral("Off"), QStringLiteral("1"),
+                            QStringLiteral("12:00:00"));
+    failureInjection.logRow(QStringLiteral("GYRO"), QStringLiteral("Stuck"), QStringLiteral("2"),
+                            QStringLiteral("12:00:01"));
+
+    failureInjection.resolveResult(MAV_RESULT_ACCEPTED);
+
+    const QVariantList activity = failureInjection.activity();
+    QCOMPARE(activity.at(1).toMap().value(QStringLiteral("result")).toString(),
+             QStringLiteral("accepted"));  // oldest (GPS) resolved first
+    QCOMPARE(activity.at(0).toMap().value(QStringLiteral("result")).toString(),
+             QStringLiteral("pending"));   // newest (GYRO) still pending
+}
+
+void FailureInjectionTest::_resolveResultIgnoresInProgress()
+{
+    FailureInjection failureInjection;
+    failureInjection.logRow(QStringLiteral("GPS"), QStringLiteral("Off"), QStringLiteral("1"),
+                            QStringLiteral("12:00:00"));
+
+    failureInjection.resolveResult(MAV_RESULT_IN_PROGRESS);
+
+    QCOMPARE(failureInjection.activity().first().toMap().value(QStringLiteral("result")).toString(),
+             QStringLiteral("pending"));
+}
+
+void FailureInjectionTest::_resolveResultUnknownCodeFallsBackToMavResultString()
+{
+    FailureInjection failureInjection;
+    failureInjection.logRow(QStringLiteral("GPS"), QStringLiteral("Off"), QStringLiteral("1"),
+                            QStringLiteral("12:00:00"));
+
+    // Not a real MAV_RESULT value on the wire today, but resolveResult() must still produce
+    // *some* readable text for a future/unrecognized code instead of silently leaving it pending.
+    failureInjection.resolveResult(99);
+
+    QCOMPARE(failureInjection.activity().first().toMap().value(QStringLiteral("result")).toString(),
+             QStringLiteral("MAV_RESULT unknown 99"));
+}
+
+void FailureInjectionTest::_resolveResultReportsSendFailureCode()
+{
+    // A send that never reached the vehicle always carries MAV_RESULT_FAILED; only the code says why.
+    struct SendFailure
+    {
+        VehicleTypes::MavCmdResultFailureCode_t failureCode;
+        const char* expectedResult;
+    };
+
+    static const SendFailure sendFailures[] = {
+        {VehicleTypes::MavCmdResultFailureNoResponseToCommand, "No response"},
+        {VehicleTypes::MavCmdResultFailureDuplicateCommand, "Duplicate command"},
+    };
+
+    for (const SendFailure& sendFailure : sendFailures) {
+        FailureInjection failureInjection;
+        failureInjection.logRow(QStringLiteral("GPS"), QStringLiteral("Off"), QStringLiteral("1"),
+                                QStringLiteral("12:00:00"));
+
+        failureInjection.resolveResult(MAV_RESULT_FAILED, sendFailure.failureCode);
+
+        QCOMPARE(failureInjection.activity().first().toMap().value(QStringLiteral("result")).toString(),
+                 QString::fromLatin1(sendFailure.expectedResult));
+    }
+
+    // CommandResultOnly: the ack carries the outcome, so the MAV_RESULT mapping still wins.
+    FailureInjection ackCarriesResult;
+    ackCarriesResult.logRow(QStringLiteral("GPS"), QStringLiteral("Off"), QStringLiteral("1"),
+                            QStringLiteral("12:00:00"));
+    ackCarriesResult.resolveResult(MAV_RESULT_UNSUPPORTED, VehicleTypes::MavCmdResultCommandResultOnly);
+    QCOMPARE(ackCarriesResult.activity().first().toMap().value(QStringLiteral("result")).toString(),
+             QStringLiteral("Unsupported"));
+}
+
+void FailureInjectionTest::_markUnitResetRemovesTrackedUnit()
+{
+    FailureInjection failureInjection;
+    failureInjection.logInjection(QStringLiteral("GPS"), QStringLiteral("Off"), FAILURE_UNIT_SENSOR_GPS,
+                                  QStringLiteral("1"), QStringLiteral("12:00:00"));
+    failureInjection.logInjection(QStringLiteral("GYRO"), QStringLiteral("Off"), FAILURE_UNIT_SENSOR_GYRO,
+                                  QStringLiteral("1"), QStringLiteral("12:00:01"));
+    QCOMPARE(failureInjection.injectedUnits().count(), 2);
+
+    failureInjection.markUnitReset(FAILURE_UNIT_SENSOR_GPS);
+
+    // Only the reset unit is forgotten; the other stays tracked so an interrupted Reset all can retry it.
+    const QVariantList remaining = failureInjection.injectedUnits();
+    QCOMPARE(remaining.count(), 1);
+    QCOMPARE(remaining.first().toInt(), static_cast<int>(FAILURE_UNIT_SENSOR_GYRO));
+    QCOMPARE(failureInjection.activity().count(), 2);  // activity log left intact
+}
+
+void FailureInjectionTest::_resolvePendingInterruptedResolvesStragglers()
+{
+    FailureInjection failureInjection;
+    failureInjection.logRow(QStringLiteral("GPS"), QStringLiteral("Off"), QStringLiteral("1"),
+                            QStringLiteral("12:00:00"));
+    failureInjection.logRow(QStringLiteral("GYRO"), QStringLiteral("Off"), QStringLiteral("1"),
+                            QStringLiteral("12:00:01"));
+    // Resolve the oldest normally; the newest stays pending, as if its ack was lost on navigation.
+    failureInjection.resolveResult(MAV_RESULT_ACCEPTED);
+
+    QSignalSpy activityChangedSpy(&failureInjection, &FailureInjection::activityChanged);
+    failureInjection.resolvePendingInterrupted();
+
+    QCOMPARE(activityChangedSpy.count(), 1);
+    QCOMPARE(failureInjection.activity().count(), 2);  // rows are resolved in place, not dropped
+    for (const QVariant& entry : failureInjection.activity()) {
+        QVERIFY2(entry.toMap().value(QStringLiteral("result")).toString() != QStringLiteral("pending"),
+                 "no row should remain pending after resolvePendingInterrupted()");
+    }
+}
+
+void FailureInjectionTest::_activeVehicleSwitchClearsSession()
+{
+    FailureInjection failureInjection;
+
+    // Establish vehicle 1 and inject a failure into it.
+    failureInjection.notifyActiveVehicle(1);
+    failureInjection.logInjection(QStringLiteral("GPS"), QStringLiteral("Off"), FAILURE_UNIT_SENSOR_GPS,
+                                  QStringLiteral("1"), QStringLiteral("12:00:00"));
+    QCOMPARE(failureInjection.injectedUnits().count(), 1);
+    QCOMPARE(failureInjection.activity().count(), 1);
+
+    // A transient disconnect (id < 0) and the same vehicle reconnecting (e.g. after a reboot) keep the session.
+    failureInjection.notifyActiveVehicle(-1);
+    failureInjection.notifyActiveVehicle(1);
+    QCOMPARE(failureInjection.injectedUnits().count(), 1);
+    QCOMPARE(failureInjection.activity().count(), 1);
+
+    // A genuine switch to a different vehicle clears the session so Reset all can't target the wrong vehicle.
+    QSignalSpy activityChangedSpy(&failureInjection, &FailureInjection::activityChanged);
+    failureInjection.notifyActiveVehicle(2);
+    QCOMPARE(activityChangedSpy.count(), 1);
+    QVERIFY(failureInjection.injectedUnits().isEmpty());
+    QVERIFY(failureInjection.activity().isEmpty());
+}
+
+void FailureInjectionTest::_pendingRebootSurvivesPageReloadAndClearsOnVehicleSwitch()
+{
+    FailureInjection failureInjection;
+    failureInjection.notifyActiveVehicle(1);
+    QVERIFY(!failureInjection.pendingReboot());
+
+    QSignalSpy pendingRebootChangedSpy(&failureInjection, &FailureInjection::pendingRebootChanged);
+
+    // Lives here, not in the page, so navigating away and back still reports the vehicle as unrebooted.
+    failureInjection.setPendingReboot(true);
+    QCOMPARE(pendingRebootChangedSpy.count(), 1);
+    QVERIFY(failureInjection.pendingReboot());
+
+    failureInjection.setPendingReboot(true);  // no-op write must not re-signal
+    QCOMPARE(pendingRebootChangedSpy.count(), 1);
+
+    // Transient disconnect / same vehicle returning keeps it: the reboot still has not happened.
+    failureInjection.notifyActiveVehicle(-1);
+    failureInjection.notifyActiveVehicle(1);
+    QVERIFY(failureInjection.pendingReboot());
+
+    // Switching vehicles drops it with the rest of the session.
+    failureInjection.notifyActiveVehicle(2);
+    QVERIFY(!failureInjection.pendingReboot());
+}
+
+void FailureInjectionTest::_detailParamsMapCombos()
+{
+    FailureInjection failureInjection;
+
+    // BATTERY + WRONG exposes the SYS_FAIL_BAT_LVL detail parameter.
+    const QVariantList batteryWrong = failureInjection.detailParams(FAILURE_UNIT_SYSTEM_BATTERY, FAILURE_TYPE_WRONG);
+    QCOMPARE(batteryWrong.count(), 1);
+    QCOMPARE(batteryWrong.first().toMap().value(QStringLiteral("param")).toString(),
+             QStringLiteral("SYS_FAIL_BAT_LVL"));
+    QVERIFY2(!batteryWrong.first().toMap().value(QStringLiteral("label")).toString().isEmpty(),
+             "detail param must have a display label");
+
+    // GPS + WRONG exposes the SYS_FAIL_GPS_WRG detail parameter.
+    const QVariantList gpsWrong = failureInjection.detailParams(FAILURE_UNIT_SENSOR_GPS, FAILURE_TYPE_WRONG);
+    QCOMPARE(gpsWrong.count(), 1);
+    QCOMPARE(gpsWrong.first().toMap().value(QStringLiteral("param")).toString(), QStringLiteral("SYS_FAIL_GPS_WRG"));
+    QVERIFY2(!gpsWrong.first().toMap().value(QStringLiteral("label")).toString().isEmpty(),
+             "detail param must have a display label");
+
+    // Combos without detail parameters return an empty list: both the unit and the type must match.
+    QVERIFY(failureInjection.detailParams(FAILURE_UNIT_SYSTEM_BATTERY, FAILURE_TYPE_OFF).isEmpty());
+    QVERIFY(failureInjection.detailParams(FAILURE_UNIT_SENSOR_GPS, FAILURE_TYPE_OFF).isEmpty());
+    QVERIFY(failureInjection.detailParams(FAILURE_UNIT_SENSOR_GYRO, FAILURE_TYPE_WRONG).isEmpty());
+}

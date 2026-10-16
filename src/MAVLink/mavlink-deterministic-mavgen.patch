@@ -1,10 +1,9 @@
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -3,17 +3,6 @@
- project(mavlink)
+@@ -4,17 +4,6 @@
 
  find_package(Python COMPONENTS Interpreter REQUIRED)
--
+
 -# We automatically install the pip dependencies locally below.
 -# Therefore, we check whether pip is available here.
 -execute_process(
@@ -15,11 +14,12 @@
 -if (NOT ${EXIT_CODE} EQUAL 0)
 -    message(FATAL_ERROR "Python pip not found, pip is required")
 -endif()
-
+-
  if (NOT MAVLINK_DIALECT)
      set(MAVLINK_DIALECT common)
-@@ -28,9 +17,7 @@
- set(EXAMPLE_HEADER ${CMAKE_CURRENT_BINARY_DIR}/include/mavlink/${MAVLINK_DIALECT}/mavlink.h)
+ endif()
+@@ -43,9 +32,7 @@
+ endif()
 
  add_custom_command(OUTPUT ${EXAMPLE_HEADER}
 -    COMMAND ${Python_EXECUTABLE}
@@ -29,11 +29,11 @@
          -m pymavlink.tools.mavgen
          --lang=C
          --wire-protocol=${MAVLINK_VERSION}
-@@ -38,7 +25,8 @@
-         message_definitions/v1.0/${MAVLINK_DIALECT}.xml
+@@ -54,7 +41,8 @@
+         ${GENERATE_CXX_COMMAND}
          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
      DEPENDS message_definitions/v1.0/${MAVLINK_DIALECT}.xml
--    COMMENT "Generating C headers")
+-    COMMENT "Generating C and C++11 headers")
 +    COMMENT "Generating C headers"
 +    VERBATIM)
 
@@ -41,8 +41,7 @@
  # The only way I could make it work is to add ALL which means it
 --- a/pymavlink/generator/mavgen_c.py
 +++ b/pymavlink/generator/mavgen_c.py
-@@ -24,6 +24,5 @@ def generate_version_h(directory, xml):
- #ifndef MAVLINK_VERSION_H
+@@ -26,5 +26,4 @@
  #define MAVLINK_VERSION_H
 
 -#define MAVLINK_BUILD_DATE "${parse_time}"
