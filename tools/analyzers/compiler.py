@@ -9,12 +9,70 @@ import subprocess
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import ClassVar, TypedDict
+from typing import TYPE_CHECKING, ClassVar, TypedDict
 
 from common.analyzer import AnalysisResult, AnalyzerBase
 from common.proc import run_captured
 
 from .dependencies import header_dependents
+
+if TYPE_CHECKING:
+    from .review import ReviewFindings
+
+
+class ChangedLineFilter:
+    """Filter located, named warnings only; preserve errors and unfamiliar output."""
+
+    _DIAGNOSTIC = re.compile(
+        r"^(?P<file>.+):(?P<line>\d+):\d+: (?P<level>warning|error|fatal error|note): "
+    )
+    _CHECK = re.compile(r"\[[\w.,=-]+\]$")
+    _SOURCE = re.compile(r"^\s*(?:\d+\s*\|.*|\|.*|[\^~]+.*)$")
+
+    def __init__(self, ranges: dict[Path, list[tuple[int, int]]], repo_root: Path) -> None:
+        self.ranges = ranges
+        self.repo_root = repo_root
+        self.suppressed = 0
+
+    def filter(self, output: str, directory: Path) -> str:
+        kept = []
+        suppress = False
+        lines = output.splitlines(keepends=True)
+        for index, line in enumerate(lines):
+            diagnostic = self._DIAGNOSTIC.match(line)
+            if diagnostic:
+                if diagnostic["level"] != "note":
+                    suppress = False
+                    if (
+                        diagnostic["level"] == "warning"
+                        and int(diagnostic["line"]) > 0
+                        and not diagnostic["file"].startswith("<")
+                        and self._CHECK.search(line.rstrip())
+                    ):
+                        path = Path(diagnostic["file"])
+                        candidates = {
+                            (root / path).resolve() for root in (directory, self.repo_root)
+                        }
+                        number = int(diagnostic["line"])
+                        suppress = not any(
+                            start <= number <= end
+                            for candidate in candidates
+                            for start, end in self.ranges.get(candidate, [])
+                        )
+                        self.suppressed += int(suppress)
+                if suppress:
+                    continue
+            elif suppress:
+                if self._SOURCE.match(line) or (
+                    line.startswith((" ", "\t"))
+                    and index + 1 < len(lines)
+                    and re.match(r"^\s*[\^~]", lines[index + 1])
+                ):
+                    continue
+                if line.strip():
+                    suppress = False
+            kept.append(line)
+        return "".join(kept)
 
 
 class DiagnosticDeduplicator:
@@ -64,6 +122,9 @@ class CompilerAnalyzer(AnalyzerBase):
         self.jobs = jobs
         self.shard = shard
         self.shard_count = shard_count
+        self.changed_lines: dict[Path, list[tuple[int, int]]] | None = None
+        self.review_findings: ReviewFindings | None = None
+        self._compile_directories: dict[Path, Path] = {}
 
     def _translation_units(self, files: list[Path]) -> list[Path]:
         """Use active compile commands; headers require a conservative project scan."""
@@ -91,6 +152,7 @@ class CompilerAnalyzer(AnalyzerBase):
             ):
                 units.add(source)
                 active_entries.append(entry)
+                self._compile_directories[source] = Path(entry["directory"])
         if headers_changed:
             if not units <= selected:
                 print(
@@ -137,6 +199,8 @@ class CompilerAnalyzer(AnalyzerBase):
         )
         error = compiler_error or (result.returncode != 0 and not findings)
         error_findings = bool(re.search(r"\berror:.*\[[^\]]+\]", output))
+        if self.changed_lines is not None and result.returncode != 0 and not error_findings:
+            error = True
         return self.relative_path(file), output, findings, error, error_findings
 
     def _tool_arguments(self) -> tuple[str, ...]:
@@ -181,6 +245,11 @@ class CompilerAnalyzer(AnalyzerBase):
 
         outputs: list[str] = []
         diagnostics = DiagnosticDeduplicator()
+        changed_filter = (
+            ChangedLineFilter(self.changed_lines, self.repo_root)
+            if self.changed_lines is not None
+            else None
+        )
         raw_path = self.build_dir / f"{self.name}-raw.txt"
         affected: list[str] = []
         errors = False
@@ -199,6 +268,22 @@ class CompilerAnalyzer(AnalyzerBase):
             futures = [pool.submit(self._timed_analysis, file) for file in files]
             for future in as_completed(futures):
                 (name, output, findings, error, fatal_findings), seconds = future.result()
+                if output:
+                    raw_log.write(f"=== {name} ===\n{output}\n")
+                    raw_log.flush()
+                if self.review_findings is not None:
+                    self.review_findings.collect(
+                        output,
+                        self._compile_directories.get(
+                            (self.repo_root / name).resolve(), self.repo_root
+                        ),
+                    )
+                if changed_filter is not None:
+                    directory = self._compile_directories.get(
+                        (self.repo_root / name).resolve(), self.repo_root
+                    )
+                    output = changed_filter.filter(output, directory)
+                    findings = bool(re.search(r"\b(?:warning|error):", output))
                 status = "error" if error else "findings" if findings else "passed"
                 timings.append({"file": name, "seconds": round(seconds, 3), "status": status})
                 progress.write(json.dumps(timings[-1]) + "\n")
@@ -207,8 +292,6 @@ class CompilerAnalyzer(AnalyzerBase):
                     f"[{len(timings)}/{len(files)}] {name}: {status} ({seconds:.2f}s)", flush=True
                 )
                 if output:
-                    raw_log.write(f"=== {name} ===\n{output}\n")
-                    raw_log.flush()
                     unique_output = diagnostics.filter(output)
                     if unique_output:
                         print(unique_output, end="" if unique_output.endswith("\n") else "\n")
@@ -243,6 +326,10 @@ class CompilerAnalyzer(AnalyzerBase):
             f"Suppressed {diagnostics.suppressed} repeated diagnostic blocks; raw output: {raw_path}",
             flush=True,
         )
+        if changed_filter is not None:
+            print(
+                f"Suppressed {changed_filter.suppressed} warnings outside changed lines", flush=True
+            )
         print("Slowest compilation units:", flush=True)
         for row in timings[:10]:
             print(f"  {row['seconds']:.2f}s {row['file']}", flush=True)

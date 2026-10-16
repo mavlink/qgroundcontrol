@@ -8,6 +8,7 @@ with multiple consumers in [`tools/common/`](../../tools/common/README.md).
 
 | Script | Area | Purpose |
 | --- | --- | --- |
+| `analysis_review_poster.py` | Reporting | Validate analysis artifacts and post changed-line COMMENT reviews |
 | `runner_image.py` | Runner Images | Promote smoke-tested runner AMIs and retire expired owned images |
 | `android_boot_test.py` | Android | Run the emulator boot smoke test |
 | `android_build_retry.py` | Android | Retry known transient Android build failures |
