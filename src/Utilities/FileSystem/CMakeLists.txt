@@ -16,12 +16,4 @@ target_link_libraries(QGCFileSystem
         QGCLogging
 )
 
-target_precompile_headers(QGCFileSystem PRIVATE
-    <QtCore/QObject>
-    <QtCore/QString>
-    <QtCore/QByteArray>
-    <QtCore/QFile>
-    <QtCore/QDir>
-)
-
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCFileSystem)

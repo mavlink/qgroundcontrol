@@ -24,7 +24,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 # QGC_UNITTEST_BUILD is defined directory-wide from the root CMakeLists.txt when
 # QGC_BUILD_TESTING is enabled, covering this target and all src/ targets.
 
-target_precompile_headers(${CMAKE_PROJECT_NAME} PRIVATE <QtTest/QTest> <UnitTest.h> <MultiSignalSpy.h>)
+target_precompile_headers(${CMAKE_PROJECT_NAME} PRIVATE <QtTest/QTest>)
 
 # ----------------------------------------------------------------------------
 # CTest Integration (CTest included in root CMakeLists.txt)
