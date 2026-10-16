@@ -148,6 +148,9 @@ private slots:
     void _testSourceFactoryRejectsBadTcpUri();
     void _testSourceFactoryUdp265();
     void _testSourceFactoryUdpH264Caps();
+    void _testSourceFactoryDropsRtpUntilParameterSets();
+    void _testParameterSetGateHoldsUntilCompleteSet();
+    void _testParameterSetGatePassesLengthPrefixedOutput();
     void _testSourceFactoryUdpMpegTs();
     void _testSourceFactorySchemeCaseInsensitive();
     void _testSourceFactoryNegativeLatencyClamped();
