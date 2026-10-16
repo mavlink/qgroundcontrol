@@ -3,23 +3,23 @@
 # Shared shell for .tlog, .bin (DataFlash), and .ulg (PX4 ULog) log workflows
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        APMDataFlash/APMDataFlashLogParser.cc
-        APMDataFlash/APMDataFlashLogParser.h
-        APMDataFlash/LogViewerDataFlashParser.cc
-        APMDataFlash/LogViewerDataFlashParser.h
-        LogFileParser.cc
-        LogFileParser.h
-        LogParseResultPrivate.h
-        LogViewerController.cc
-        LogViewerController.h
-        LogViewerParamMetaData.cc
-        LogViewerParamMetaData.h
-        PX4ULog/ULogFullHandler.cc
-        PX4ULog/ULogFullHandler.h
-        PX4ULog/LogViewerULogParser.cc
-        PX4ULog/LogViewerULogParser.h
+target_sources(
+    ${CMAKE_PROJECT_NAME}
+    PRIVATE APMDataFlash/APMDataFlashLogParser.cc
+            APMDataFlash/APMDataFlashLogParser.h
+            APMDataFlash/LogViewerDataFlashParser.cc
+            APMDataFlash/LogViewerDataFlashParser.h
+            LogFileParser.cc
+            LogFileParser.h
+            LogParseResultPrivate.h
+            LogViewerController.cc
+            LogViewerController.h
+            LogViewerParamMetaData.cc
+            LogViewerParamMetaData.h
+            PX4ULog/ULogFullHandler.cc
+            PX4ULog/ULogFullHandler.h
+            PX4ULog/LogViewerULogParser.cc
+            PX4ULog/LogViewerULogParser.h
 )
 
 # Shares file-local helper names with APMDataFlashLogParser.cc, so it cannot share a unity unit.
@@ -28,10 +28,8 @@ set_source_files_properties(APMDataFlash/LogViewerDataFlashParser.cc TARGET_DIRE
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/APMDataFlash
-        ${CMAKE_CURRENT_SOURCE_DIR}/PX4ULog
+                           PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/APMDataFlash
+                                   ${CMAKE_CURRENT_SOURCE_DIR}/PX4ULog
 )
 
 # ----------------------------------------------------------------------------
@@ -39,18 +37,18 @@ target_include_directories(${CMAKE_PROJECT_NAME}
 # ----------------------------------------------------------------------------
 qt_add_library(LogViewerModule STATIC)
 
-qt_add_qml_module(LogViewerModule
+qt_add_qml_module(
+    LogViewerModule
     URI QGroundControl.LogViewer
     VERSION 1.0
     RESOURCE_PREFIX /qml
-    QML_FILES
-        LogViewerAltChart.qml
-        LogViewerBaseChart.qml
-        LogViewerChart.qml
-        LogViewerCursorPopup.qml
-        LogViewerFieldsPanel.qml
-        LogViewerMessagesTab.qml
-        LogViewerParametersTab.qml
+    QML_FILES LogViewerAltChart.qml
+              LogViewerBaseChart.qml
+              LogViewerChart.qml
+              LogViewerCursorPopup.qml
+              LogViewerFieldsPanel.qml
+              LogViewerMessagesTab.qml
+              LogViewerParametersTab.qml
     NO_PLUGIN
 )
 

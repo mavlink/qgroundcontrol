@@ -9,8 +9,9 @@ include_guard(GLOBAL)
 include(CheckCompilerFlag)
 include(CMakePushCheckState)
 
+# Adds -Wno-<warning> to `target` when the compiler knows -W<warning>.
 function(qgc_add_optional_no_warning target scope warning)
-    if(NOT target OR NOT TARGET ${target})
+    if(NOT TARGET "${target}")
         message(FATAL_ERROR "QGC: qgc_add_optional_no_warning: Target '${target}' does not exist")
     endif()
     string(MAKE_C_IDENTIFIER "QGC_HAVE_W_${warning}" _var)
@@ -26,76 +27,77 @@ endfunction()
 # QGC Warning Flags for Main Source Code
 # ----------------------------------------------------------------------------
 function(qgc_set_warning_flags target)
-    if(NOT target OR NOT TARGET ${target})
+    if(NOT TARGET "${target}")
         message(FATAL_ERROR "QGC: qgc_set_warning_flags: Target '${target}' does not exist")
     endif()
 
     set_target_properties(${target} PROPERTIES COMPILE_WARNING_AS_ERROR ${QGC_ENABLE_WERROR})
 
     if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        target_compile_options(${target} PRIVATE
-            -Wall                       # Enable common warnings
-            -Wextra                     # Enable extra warnings
-            -Wshadow                    # Warn about variable shadowing
-            #-Wnon-virtual-dtor          # Warn about non-virtual destructors
-            #-Wold-style-cast            # Warn about C-style casts
-            #-Wcast-align                # Warn about pointer cast alignment
-            #-Wunused                    # Warn about unused entities
-            #-Woverloaded-virtual        # Warn about overloaded virtual functions
-            #-Wsign-conversion           # Warn about sign conversions
-            #-Wmisleading-indentation    # Warn about misleading indentation
-            #-Wduplicated-cond           # Warn about duplicated conditions (GCC/Clang 14+)
-            #-Wduplicated-branches       # Warn about duplicated branches (GCC/Clang 14+)
-            #-Wnull-dereference          # Warn about null pointer dereferences
-            #-Wformat=2                  # Strict format string checking
-            #-Wconversion                # Warn about implicit conversions
-            #-Wdouble-promotion          # Warn about float to double promotion
-            #-Wswitch-enum               # Warn about missing enum cases in switch
-
-            # The following warnings are temporarily disabled due to known issues in QGC codebase that need to be addressed
-            -Wno-switch
-
-            # Qt-specific warnings to disable
-            -Wno-unknown-warning-option           # Don't error on unknown warning options
+        target_compile_options(
+            ${target}
+            PRIVATE -Wall # Enable common warnings
+                    -Wextra # Enable extra warnings
+                    -Wshadow # Warn about variable shadowing
+                    #-Wnon-virtual-dtor          # Warn about non-virtual destructors
+                    #-Wold-style-cast            # Warn about C-style casts
+                    #-Wcast-align                # Warn about pointer cast alignment
+                    #-Wunused                    # Warn about unused entities
+                    #-Woverloaded-virtual        # Warn about overloaded virtual functions
+                    #-Wsign-conversion           # Warn about sign conversions
+                    #-Wmisleading-indentation    # Warn about misleading indentation
+                    #-Wduplicated-cond           # Warn about duplicated conditions (GCC/Clang 14+)
+                    #-Wduplicated-branches       # Warn about duplicated branches (GCC/Clang 14+)
+                    #-Wnull-dereference          # Warn about null pointer dereferences
+                    #-Wformat=2                  # Strict format string checking
+                    #-Wconversion                # Warn about implicit conversions
+                    #-Wdouble-promotion          # Warn about float to double promotion
+                    #-Wswitch-enum               # Warn about missing enum cases in switch
+                    # The following warnings are temporarily disabled due to known issues in QGC codebase
+                    # that need to be addressed
+                    -Wno-switch
+                    # Qt-specific warnings to disable
+                    -Wno-unknown-warning-option # Don't error on unknown warning options
         )
         qgc_add_optional_no_warning(${target} PRIVATE deprecated-enum-enum-conversion)
 
     elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-        target_compile_options(${target} PRIVATE
-            -Wall                       # Enable common warnings
-            -Wextra                     # Enable extra warnings
-            -Wshadow                    # Warn about variable shadowing
-            #-Wnon-virtual-dtor          # Warn about non-virtual destructors
-            #-Wold-style-cast            # Warn about C-style casts
-            #-Wcast-align                # Warn about pointer cast alignment
-            #-Wunused                    # Warn about unused entities
-            #-Woverloaded-virtual        # Warn about overloaded virtual functions
-            #-Wsign-conversion           # Warn about sign conversions
-            #-Wmisleading-indentation    # Warn about misleading indentation
-            #-Wduplicated-cond           # Warn about duplicated conditions
-            #-Wduplicated-branches       # Warn about duplicated branches
-            #-Wlogical-op                # Warn about logical operations
-            #-Wnull-dereference          # Warn about null pointer dereferences
-            #-Wuseless-cast              # Warn about useless casts
-            #-Wformat=2                  # Strict format string checking
-            #-Wdouble-promotion          # Warn about float to double promotion
-            #-Wconversion                # Warn about implicit conversions
-            #-Wswitch-enum               # Warn about missing enum cases in switch
+        target_compile_options(
+            ${target}
+            PRIVATE -Wall # Enable common warnings
+                    -Wextra # Enable extra warnings
+                    -Wshadow # Warn about variable shadowing
+                    #-Wnon-virtual-dtor          # Warn about non-virtual destructors
+                    #-Wold-style-cast            # Warn about C-style casts
+                    #-Wcast-align                # Warn about pointer cast alignment
+                    #-Wunused                    # Warn about unused entities
+                    #-Woverloaded-virtual        # Warn about overloaded virtual functions
+                    #-Wsign-conversion           # Warn about sign conversions
+                    #-Wmisleading-indentation    # Warn about misleading indentation
+                    #-Wduplicated-cond           # Warn about duplicated conditions
+                    #-Wduplicated-branches       # Warn about duplicated branches
+                    #-Wlogical-op                # Warn about logical operations
+                    #-Wnull-dereference          # Warn about null pointer dereferences
+                    #-Wuseless-cast              # Warn about useless casts
+                    #-Wformat=2                  # Strict format string checking
+                    #-Wdouble-promotion          # Warn about float to double promotion
+                    #-Wconversion                # Warn about implicit conversions
+                    #-Wswitch-enum               # Warn about missing enum cases in switch
         )
 
     elseif(MSVC)
-        target_compile_options(${target} PRIVATE
-            /W2                         # Warning level 2 (ultimate target is level 3)
-
-            # The following warnings are temporarily disabled due to known issues in QGC codebase that need to be addressed
-            /wd4996                     # deprecated functions (strncpy, etc)
-            /wd4389                     # signed/unsigned mismatch
-
-            /wd4068                     # unknown pragma (for clang pragmas)
-            /wd4127                     # conditional expression is constant (Qt macros)
-            /wd4251                     # needs to have dll-interface (Qt classes)
-            /wd4275                     # non dll-interface class used as base (Qt classes)
-            /wd4819                     # character encoding issues (non-issue for UTF-8)
+        target_compile_options(
+            ${target}
+            PRIVATE /W2 # Warning level 2 (ultimate target is level 3)
+                    # The following warnings are temporarily disabled due to known issues in QGC codebase
+                    # that need to be addressed
+                    /wd4996 # deprecated functions (strncpy, etc)
+                    /wd4389 # signed/unsigned mismatch
+                    /wd4068 # unknown pragma (for clang pragmas)
+                    /wd4127 # conditional expression is constant (Qt macros)
+                    /wd4251 # needs to have dll-interface (Qt classes)
+                    /wd4275 # non dll-interface class used as base (Qt classes)
+                    /wd4819 # character encoding issues (non-issue for UTF-8)
         )
     endif()
 endfunction()
@@ -116,7 +118,7 @@ endfunction()
 # warnings within them without affecting QGC source code.
 # ----------------------------------------------------------------------------
 function(qgc_disable_dependency_warnings target)
-    if(NOT target OR NOT TARGET ${target})
+    if(NOT TARGET "${target}")
         message(WARNING "QGC: qgc_disable_dependency_warnings: Target '${target}' does not exist")
         return()
     endif()
@@ -124,49 +126,51 @@ function(qgc_disable_dependency_warnings target)
     get_target_property(_target_type ${target} TYPE)
     if(_target_type STREQUAL "INTERFACE_LIBRARY")
         message(WARNING "QGC: qgc_disable_dependency_warnings: Target '${target}' is an INTERFACE library. "
-            "Warning flags would propagate to all consumers. Use SYSTEM include directories instead.")
+                        "Warning flags would propagate to all consumers. Use SYSTEM include directories instead."
+        )
         return()
     endif()
 
     set(_scope PRIVATE)
 
-    set_target_properties(${target} PROPERTIES
-        COMPILE_WARNING_AS_ERROR OFF
-        QGC_DEPENDENCY_TARGET TRUE
-        SYSTEM TRUE
+    set_target_properties(
+        ${target}
+        PROPERTIES COMPILE_WARNING_AS_ERROR OFF
+                   QGC_DEPENDENCY_TARGET TRUE
+                   SYSTEM TRUE
     )
 
     if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        target_compile_options(${target} ${_scope}
-            -w                          # Suppress all warnings
-            -Wno-error                  # Don't treat warnings as errors
-            -Wno-unknown-warning-option # Don't warn about unknown warning options
+        target_compile_options(${target} ${_scope} -w # Suppress all warnings
+                               -Wno-error # Don't treat warnings as errors
+                               -Wno-unknown-warning-option # Don't warn about unknown warning options
         )
 
     elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-        target_compile_options(${target} ${_scope}
-            -w                          # Suppress all warnings
-            -Wno-error                  # Don't treat warnings as errors
+        target_compile_options(${target} ${_scope} -w # Suppress all warnings
+                               -Wno-error # Don't treat warnings as errors
         )
 
     elseif(MSVC)
-        target_compile_options(${target} ${_scope}
-            /W0                         # Disable all warnings
-            /WX-                        # Don't treat warnings as errors
+        target_compile_options(${target} ${_scope} /W0 # Disable all warnings
+                               /WX- # Don't treat warnings as errors
         )
     endif()
 endfunction()
 
+# Applies QGC warning, coverage, sanitizer and unity policy to a project target, once.
 function(qgc_configure_target target)
-    if(NOT target OR NOT TARGET ${target})
+    if(NOT TARGET "${target}")
         message(FATAL_ERROR "QGC: qgc_configure_target: Target '${target}' does not exist")
     endif()
 
     get_target_property(_imported ${target} IMPORTED)
     get_target_property(_target_type ${target} TYPE)
-    if(_imported OR _target_type STREQUAL "INTERFACE_LIBRARY" OR _target_type STREQUAL "UTILITY")
-        message(FATAL_ERROR
-            "QGC: qgc_configure_target: '${target}' must be a non-imported compiled target")
+    if(_imported
+       OR _target_type STREQUAL "INTERFACE_LIBRARY"
+       OR _target_type STREQUAL "UTILITY"
+    )
+        message(FATAL_ERROR "QGC: qgc_configure_target: '${target}' must be a non-imported compiled target")
     endif()
 
     get_target_property(_configured ${target} QGC_PROJECT_TARGET_CONFIGURED)
@@ -177,14 +181,11 @@ function(qgc_configure_target target)
     qgc_set_warning_flags(${target})
     get_target_property(_automoc ${target} AUTOMOC)
     if(_automoc
-       AND NOT target STREQUAL CMAKE_PROJECT_NAME
+       AND NOT "${target}" STREQUAL "${CMAKE_PROJECT_NAME}"
        AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang"
     )
         # Generated moc parameters can shadow members; stable APIs may retain unused parameters.
-        target_compile_options(${target} PRIVATE
-            -Wno-error=shadow
-            -Wno-error=unused-parameter
-        )
+        target_compile_options(${target} PRIVATE -Wno-error=shadow -Wno-error=unused-parameter)
     endif()
     if(COMMAND qgc_apply_coverage_to_target)
         qgc_apply_coverage_to_target(${target})
@@ -222,21 +223,34 @@ function(_qgc_apply_unity_build target)
     set_source_files_properties(${_aggregates} TARGET_DIRECTORY ${target} PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
 endfunction()
 
+# Recurses through project subdirectories under root_directory, configuring their compiled targets.
 function(_qgc_configure_directory_targets directory root_directory)
-    get_property(_targets DIRECTORY "${directory}" PROPERTY BUILDSYSTEM_TARGETS)
+    get_property(
+        _targets
+        DIRECTORY "${directory}"
+        PROPERTY BUILDSYSTEM_TARGETS
+    )
     foreach(_target IN LISTS _targets)
         get_target_property(_dependency_target ${_target} QGC_DEPENDENCY_TARGET)
         get_target_property(_target_type ${_target} TYPE)
         if(NOT _dependency_target AND _target_type MATCHES
-           "^(EXECUTABLE|STATIC_LIBRARY|SHARED_LIBRARY|MODULE_LIBRARY|OBJECT_LIBRARY)$"
+                                      "^(EXECUTABLE|STATIC_LIBRARY|SHARED_LIBRARY|MODULE_LIBRARY|OBJECT_LIBRARY)$"
         )
             qgc_configure_target(${_target})
         endif()
     endforeach()
 
-    get_property(_subdirectories DIRECTORY "${directory}" PROPERTY SUBDIRECTORIES)
+    get_property(
+        _subdirectories
+        DIRECTORY "${directory}"
+        PROPERTY SUBDIRECTORIES
+    )
     foreach(_subdirectory IN LISTS _subdirectories)
-        get_property(_source_directory DIRECTORY "${_subdirectory}" PROPERTY SOURCE_DIR)
+        get_property(
+            _source_directory
+            DIRECTORY "${_subdirectory}"
+            PROPERTY SOURCE_DIR
+        )
         cmake_path(IS_PREFIX root_directory "${_source_directory}" NORMALIZE _is_project_directory)
         if(_is_project_directory)
             _qgc_configure_directory_targets("${_subdirectory}" "${root_directory}")
@@ -247,14 +261,16 @@ endfunction()
 # External source trees and targets marked as dependencies are excluded.
 function(qgc_configure_directory_targets directory)
     if(NOT IS_ABSOLUTE "${directory}" OR NOT IS_DIRECTORY "${directory}")
-        message(FATAL_ERROR
-            "QGC: qgc_configure_directory_targets: '${directory}' must be an absolute source directory")
+        message(FATAL_ERROR "QGC: qgc_configure_directory_targets: '${directory}' must be an absolute source directory")
     endif()
 
-    get_property(_source_directory DIRECTORY "${directory}" PROPERTY SOURCE_DIR)
+    get_property(
+        _source_directory
+        DIRECTORY "${directory}"
+        PROPERTY SOURCE_DIR
+    )
     if(NOT _source_directory)
-        message(FATAL_ERROR
-            "QGC: qgc_configure_directory_targets: '${directory}' has not been added to the build")
+        message(FATAL_ERROR "QGC: qgc_configure_directory_targets: '${directory}' has not been added to the build")
     endif()
     _qgc_configure_directory_targets("${directory}" "${_source_directory}")
 endfunction()

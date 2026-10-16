@@ -3,18 +3,18 @@
 # MAVLink inspector controller and chart integration
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        MAVLinkChartController.cc
-        MAVLinkChartController.h
-        MAVLinkInspectorController.cc
-        MAVLinkInspectorController.h
-        MAVLinkMessage.cc
-        MAVLinkMessage.h
-        MAVLinkMessageField.cc
-        MAVLinkMessageField.h
-        MAVLinkSystem.cc
-        MAVLinkSystem.h
+target_sources(
+    ${CMAKE_PROJECT_NAME}
+    PRIVATE MAVLinkChartController.cc
+            MAVLinkChartController.h
+            MAVLinkInspectorController.cc
+            MAVLinkInspectorController.h
+            MAVLinkMessage.cc
+            MAVLinkMessage.h
+            MAVLinkMessageField.cc
+            MAVLinkMessageField.h
+            MAVLinkSystem.cc
+            MAVLinkSystem.h
 )
 
 # Shares the file-local kMinDelta with MAVLinkChartController.cc, so it cannot share a unity unit.

@@ -3,16 +3,16 @@
 # Tests for GimbalController / Gimbal against MockLinkGimbal
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        GimbalControllerBasicsTest.cc
-        GimbalControllerBasicsTest.h
-        GimbalControllerDeltaYawTest.cc
-        GimbalControllerDeltaYawTest.h
-        GimbalControllerDiscoveryTest.cc
-        GimbalControllerDiscoveryTest.h
-        GimbalControllerTestBase.cc
-        GimbalControllerTestBase.h
+target_sources(
+    ${CMAKE_PROJECT_NAME}
+    PRIVATE GimbalControllerBasicsTest.cc
+            GimbalControllerBasicsTest.h
+            GimbalControllerDeltaYawTest.cc
+            GimbalControllerDeltaYawTest.h
+            GimbalControllerDiscoveryTest.cc
+            GimbalControllerDiscoveryTest.h
+            GimbalControllerTestBase.cc
+            GimbalControllerTestBase.h
 )
 
 # Shares file-local constants with GimbalControllerBasicsTest.cc, so it cannot share a unity unit.
