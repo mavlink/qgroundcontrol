@@ -20,9 +20,3 @@ target_include_directories(QGCAudio
 )
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCAudio)
-
-target_precompile_headers(QGCAudio PRIVATE
-    <QtCore/QObject>
-    <QtCore/QString>
-    <QtTextToSpeech/QTextToSpeech>
-)

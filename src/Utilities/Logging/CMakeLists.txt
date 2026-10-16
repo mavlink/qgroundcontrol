@@ -26,11 +26,4 @@ target_link_libraries(QGCLogging
 
 target_include_directories(QGCLogging PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_precompile_headers(QGCLogging PRIVATE
-    <QtCore/QObject>
-    <QtCore/QString>
-    <QtCore/QLoggingCategory>
-    <QtQmlIntegration/QtQmlIntegration>
-)
-
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCLogging)

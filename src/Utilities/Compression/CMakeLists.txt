@@ -355,13 +355,4 @@ if(QGC_ENABLE_LZ4)
     target_compile_definitions(QGCCompression PUBLIC QGC_ENABLE_LZ4)
 endif()
 
-target_precompile_headers(QGCCompression PRIVATE
-    <QtCore/QObject>
-    <QtCore/QString>
-    <QtCore/QByteArray>
-    <QtCore/QFile>
-    <QtCore/QIODevice>
-    <QtQmlIntegration/QtQmlIntegration>
-)
-
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCCompression)

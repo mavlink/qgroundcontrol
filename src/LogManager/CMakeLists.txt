@@ -42,14 +42,6 @@ target_link_libraries(QGCLogManager
         QGCLogging
 )
 
-target_precompile_headers(QGCLogManager PRIVATE
-    <QtCore/QObject>
-    <QtCore/QString>
-    <QtCore/QDateTime>
-    <QtCore/QAbstractTableModel>
-    <QtQmlIntegration/QtQmlIntegration>
-)
-
 # AppLogging.qml is loaded via dynamic URL (SettingsPages.json), so the QML
 # import scanner can't see QGroundControl.LogManager. Force-link the plugin
 # so its type registrations end up in the executable.
