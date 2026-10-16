@@ -81,6 +81,49 @@ if(TEST_CASE STREQUAL "compiler-warnings-project-targets")
     return()
 endif()
 
+if(TEST_CASE STREQUAL "unity-project-targets")
+    set(QGC_ENABLE_WERROR OFF)
+    set(QGC_UNITY_BUILD ON)
+    include("${QGC_MODULE_DIR}/CompilerWarnings.cmake")
+
+    add_executable(${PROJECT_NAME} main.cpp)
+    add_library(ProjectLibrary STATIC main.cpp)
+    add_library(OptedOutLibrary STATIC main.cpp)
+    add_library(DependencyLibrary STATIC main.cpp)
+    set_target_properties(OptedOutLibrary PROPERTIES UNITY_BUILD OFF)
+    qgc_disable_dependency_warnings(DependencyLibrary)
+
+    qgc_configure_target(${PROJECT_NAME})
+    qgc_configure_directory_targets("${CMAKE_CURRENT_SOURCE_DIR}")
+
+    foreach(_target IN ITEMS ${PROJECT_NAME} ProjectLibrary)
+        get_target_property(_unity ${_target} UNITY_BUILD)
+        get_target_property(_batch ${_target} UNITY_BUILD_BATCH_SIZE)
+        if(NOT _unity OR NOT _batch EQUAL 16)
+            message(FATAL_ERROR "${_target} is not a unity target: UNITY_BUILD=${_unity} batch=${_batch}")
+        endif()
+    endforeach()
+    get_target_property(_opted_out OptedOutLibrary UNITY_BUILD)
+    if(_opted_out)
+        message(FATAL_ERROR "Unity build overrode a target's own UNITY_BUILD OFF")
+    endif()
+    get_target_property(_dependency_unity DependencyLibrary UNITY_BUILD)
+    if(_dependency_unity)
+        message(FATAL_ERROR "Dependency library was built as a unity target")
+    endif()
+
+    string(TOLOWER "${PROJECT_NAME}_qmltyperegistrations.cpp" _registrations)
+    foreach(_aggregate IN ITEMS "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_autogen/mocs_compilation.cpp"
+                                "${CMAKE_CURRENT_BINARY_DIR}/${_registrations}"
+    )
+        get_source_file_property(_skip "${_aggregate}" TARGET_DIRECTORY ${PROJECT_NAME} SKIP_UNITY_BUILD_INCLUSION)
+        if(NOT _skip)
+            message(FATAL_ERROR "Aggregate unit is batched with sources: ${_aggregate}")
+        endif()
+    endforeach()
+    return()
+endif()
+
 if(TEST_CASE STREQUAL "coverage-project-targets")
     set(CMAKE_BUILD_TYPE
         Debug

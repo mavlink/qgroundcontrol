@@ -57,7 +57,7 @@ option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
 option(QGC_STABLE_BUILD "Stable release build (disables daily build features)" OFF)
 option(QGC_USE_CACHE "Enable compiler caching (ccache/sccache)" ON)
 option(QGC_USE_MOCCACHE "Cache moc output across clean builds" ON)
-option(QGC_UNITY_BUILD "Enable unity builds for faster compilation" OFF)
+option(QGC_UNITY_BUILD "Enable unity builds of QGC targets (third-party sources stay per-file)" OFF)
 option(QGC_BUILD_INSTALLER "Build platform installers/packages" ON)
 option(QGC_ENABLE_WERROR "Treat compiler warnings as errors for QGC source code" ON)
 

@@ -62,6 +62,11 @@ target_sources(${CMAKE_PROJECT_NAME}
         ${CMAKE_CURRENT_SOURCE_DIR}/CriticalVehicleMessageUITest.h
 )
 
+# Shares file-local constants with FlyViewGeoUITest.cc, so it cannot share a unity unit.
+set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/FlyViewOccluderUITest.cc TARGET_DIRECTORY ${CMAKE_PROJECT_NAME}
+                            PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON
+)
+
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_qgc_test(TopLevelViewsTest LABELS Integration NoSanitizer TIMEOUT 120)

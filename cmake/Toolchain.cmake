@@ -54,11 +54,6 @@ if(CMAKE_EXPORT_COMPILE_COMMANDS
     )
 endif()
 
-if(QGC_UNITY_BUILD)
-    set(CMAKE_UNITY_BUILD ON)
-    set(CMAKE_UNITY_BUILD_BATCH_SIZE 16)
-endif()
-
 # ----------------------------------------------------------------------------
 # Static Analysis (clang-tidy)
 # ----------------------------------------------------------------------------

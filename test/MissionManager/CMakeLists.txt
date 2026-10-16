@@ -33,6 +33,18 @@ target_sources(${CMAKE_PROJECT_NAME}
         VisualMissionItemTest.cc VisualMissionItemTest.h
 )
 
+# File-scope `using namespace TestFixtures;` would leak into later sources of a unity unit.
+set_source_files_properties(
+    FWLandingPatternTest.cc
+    LandingComplexItemTest.cc
+    MissionControllerTest.cc
+    MissionControllerTreeTest.cc
+    MissionItemTest.cc
+    TARGET_DIRECTORY
+    ${CMAKE_PROJECT_NAME}
+    PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON
+)
+
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 # ----------------------------------------------------------------------------
