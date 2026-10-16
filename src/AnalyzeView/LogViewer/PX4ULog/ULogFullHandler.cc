@@ -147,15 +147,27 @@ void ULogFullHandler::data(const ulog_cpp::Data &data)
             _lastTimestampSecs = timestampSecs;
         }
 
-        // Extract GPS UTC start time from first valid sensor_gps/vehicle_gps_position sample.
+        // Extract GPS UTC start time from the first GNSS sample that has one.
         // Define QGC_NO_LOG_START_TIME at build time to suppress this for UI testing.
 #ifndef QGC_NO_LOG_START_TIME
         if (_result.startTime.isNull() && timestampSecs >= 0.0) {
-            if ((sub.topicName == "sensor_gps" || sub.topicName == "vehicle_gps_position")
-                    && sub.format->fieldMap().count("time_utc_usec") > 0) {
-                const uint64_t utcUsec = view.at("time_utc_usec").as<uint64_t>();
-                const uint64_t tsUs   = view.at("timestamp").as<uint64_t>();
-                if (utcUsec > 0 && utcUsec >= tsUs) {
+            const auto& fieldMap = sub.format->fieldMap();
+            uint64_t utcUsec = 0;
+            if ((sub.topicName == "sensor_gnss" || sub.topicName == "sensor_gps" ||
+                 sub.topicName == "vehicle_gps_position") &&
+                fieldMap.count("time_utc_usec") > 0) {
+                utcUsec = view.at("time_utc_usec").as<uint64_t>();
+            } else if (sub.topicName == "vehicle_gnss" && fieldMap.count("receiver") > 0) {
+                // vehicle_gnss nests the receiver's sensor_gnss sample
+                const auto& receiver = fieldMap.at("receiver");
+                if (receiver->type().type == ulog_cpp::Field::BasicType::NESTED && receiver->definitionResolved() &&
+                    receiver->nestedFormat()->fieldMap().count("time_utc_usec") > 0) {
+                    utcUsec = view.at(receiver)["time_utc_usec"].as<uint64_t>();
+                }
+            }
+            if (utcUsec > 0) {
+                const uint64_t tsUs = view.at("timestamp").as<uint64_t>();
+                if (utcUsec >= tsUs) {
                     const qint64 startMs = static_cast<qint64>((utcUsec - tsUs) / 1000);
                     _result.startTime = QDateTime::fromMSecsSinceEpoch(startMs, QTimeZone::utc());
                 }

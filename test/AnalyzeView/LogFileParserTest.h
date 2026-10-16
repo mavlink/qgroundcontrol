@@ -22,11 +22,13 @@ private slots:
     void _fieldSamplesFilteredComprehensiveTest();
     void _gpsPathULogVehicleGlobalPositionTest();
     void _gpsPathULogVehicleGpsPositionLatDegTest();
+    void _gpsPathULogVehicleGnssTest();
     void _gpsPathAPMDataFlashPOSTest();
     void _gpsPathAPMDataFlashMultiInstanceTest();
     void _startTimeAPMFromGwkGmsTest();
     void _startTimeAPMInvalidGwkTest();
     void _startTimePX4FromSensorGpsTest();
+    void _startTimePX4FromVehicleGnssTest();
     void _startTimePX4ZeroUtcTest();
     void _startTimeClearedOnResetTest();
     void _parseProgressULogTest();
