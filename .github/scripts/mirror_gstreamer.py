@@ -1,13 +1,11 @@
 """Mirror official upstream GStreamer release artifacts to the QGC S3 bucket.
 
 Downloads the prebuilt SDK packages published at gstreamer.freedesktop.org for a
-given version, verifies each against its upstream ``.sha256sum`` sidecar, then
-uploads them to ``s3://<bucket>/dependencies/gstreamer/<platform>/<filename>`` —
-the layout the build's S3 fallback mirror reads (see
-``cmake/GStreamer/Download.cmake::gstreamer_get_s3_mirror_url``).
-
-The artifact set per platform mirrors ``gstreamer_get_package_url`` exactly so the
-mirror and the primary download can't drift on filename.
+given version, verifies each against its checksum pinned in .github/build-config.json
+(else its upstream ``.sha256sum`` sidecar), then uploads them to
+``s3://<bucket>/dependencies/gstreamer/<platform>/<filename>`` — the layout the
+build's S3 fallback mirror reads. ``common.gstreamer`` holds the package layout
+shared with cmake/GStreamer/Download.cmake and the installers.
 """
 
 from __future__ import annotations
@@ -23,17 +21,18 @@ ensure_tools_dir(__file__)
 
 from common.aws import s3_object_exists, upload_public_file, validate_public_bucket
 from common.gh_actions import write_step_summary
+from common.gstreamer import PLATFORM_PACKAGES, package_platform, package_url, pinned_checksum
 from common.net import download_file, read_url_text
 
-PKG_BASE = "https://gstreamer.freedesktop.org/data/pkg"
-PLATFORMS = ("android", "ios", "macos", "windows")
+PLATFORMS = tuple(PLATFORM_PACKAGES)
 WINDOWS_MIN_VERSION = (1, 28, 0)
 
 
 @dataclass(frozen=True)
 class Artifact:
-    """One mirrored file: its upstream URL and target S3 directory."""
+    """One mirrored file: its build-config package key, upstream URL and target S3 directory."""
 
+    package: str
     url: str
     s3_dir: str
 
@@ -51,40 +50,14 @@ def _version_tuple(version: str) -> tuple[int, ...]:
 
 def artifacts_for(platform: str, version: str) -> list[Artifact]:
     """Return the upstream artifact(s) to mirror for *platform* at *version*."""
-    if platform == "android":
-        return [
-            Artifact(
-                f"{PKG_BASE}/android/{version}/gstreamer-1.0-android-universal-{version}.tar.xz",
-                "android",
-            )
-        ]
-    if platform == "ios":
-        return [
-            Artifact(
-                f"{PKG_BASE}/ios/{version}/gstreamer-1.0-devel-{version}-ios-universal.pkg", "ios"
-            )
-        ]
-    if platform == "macos":
-        return [
-            Artifact(f"{PKG_BASE}/macos/{version}/gstreamer-1.0-{version}-universal.pkg", "macos"),
-            Artifact(
-                f"{PKG_BASE}/macos/{version}/gstreamer-1.0-devel-{version}-universal.pkg", "macos"
-            ),
-        ]
-    if platform == "windows":
-        if _version_tuple(version) < WINDOWS_MIN_VERSION:
-            raise ValueError(f"Windows GStreamer SDK requires version >= 1.28.0 (got {version!r})")
-        return [
-            Artifact(
-                f"{PKG_BASE}/windows/{version}/msvc/gstreamer-1.0-msvc-x86_64-{version}.exe",
-                "windows",
-            ),
-            Artifact(
-                f"{PKG_BASE}/windows/{version}/msvc/gstreamer-1.0-msvc-arm64-{version}.exe",
-                "windows",
-            ),
-        ]
-    raise ValueError(f"Unknown platform: {platform!r}")
+    if platform not in PLATFORM_PACKAGES:
+        raise ValueError(f"Unknown platform: {platform!r}")
+    if platform == "windows" and _version_tuple(version) < WINDOWS_MIN_VERSION:
+        raise ValueError(f"Windows GStreamer SDK requires version >= 1.28.0 (got {version!r})")
+    return [
+        Artifact(package, package_url(package, version), package_platform(package))
+        for package in PLATFORM_PACKAGES[platform]
+    ]
 
 
 def resolve_platforms(value: str) -> list[str]:
@@ -104,12 +77,16 @@ def _download(url: str, dest: Path, expected_sha256: str) -> None:
     download_file(url, dest, expected_sha256=expected_sha256, timeout=120)
 
 
-def _fetch_expected_sha(url: str) -> str:
-    return read_url_text(f"{url}.sha256sum", timeout=60).split()[0].strip().lower()
+def _expected_sha(artifact: Artifact, version: str) -> str:
+    """Return the pinned checksum, which the build treats as authoritative, else the upstream sidecar's."""
+    pinned = pinned_checksum(version, artifact.package)
+    if pinned:
+        return pinned
+    return read_url_text(f"{artifact.url}.sha256sum", timeout=60).split()[0].strip().lower()
 
 
 def mirror_artifact(
-    artifact: Artifact, *, bucket: str, work_dir: Path, dry_run: bool, force: bool
+    artifact: Artifact, *, version: str, bucket: str, work_dir: Path, dry_run: bool, force: bool
 ) -> str:
     """Download, verify, and upload one artifact. Returns a status word for the summary."""
     key = artifact.s3_key()
@@ -119,7 +96,7 @@ def mirror_artifact(
 
     local = work_dir / artifact.filename
     print(f"download: {artifact.url}")
-    expected = _fetch_expected_sha(artifact.url)
+    expected = _expected_sha(artifact, version)
     _download(artifact.url, local, expected)
     print(f"verified sha256: {expected}")
 
@@ -174,6 +151,7 @@ def main(argv: list[str] | None = None) -> int:
         try:
             status = mirror_artifact(
                 artifact,
+                version=args.version,
                 bucket=args.bucket,
                 work_dir=work_dir,
                 dry_run=args.dry_run,

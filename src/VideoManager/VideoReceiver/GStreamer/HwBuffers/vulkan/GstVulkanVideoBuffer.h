@@ -12,15 +12,13 @@
 
 class QRhi;
 
-/// Zero-copy wrapper for vulkanh264dec/vulkanh265dec output: imports the decoder's GstVulkanImageMemory VkImage as a
-/// non-owning QRhiTexture. The VkImage stays owned by GstVulkanImageMemory and is kept alive via the held GstSample;
-/// only valid when QRhi's VkDevice matches the gst-vulkan device (else mapTextures fails -> CPU fallback).
+/// Wrapper for vulkanh264dec/vulkanh265dec output (GstVulkanImageMemory). mapTextures() sends every frame to the CPU
+/// path: QRhi can't sample an image from another VkDevice, and no decoder->QRhi sync exists for a same-device one.
 class GstVulkanVideoBuffer final : public GstHwVideoBuffer
 {
 public:
     GstVulkanVideoBuffer(GstSample* sample, const GstVideoInfo& videoInfo, const QVideoFrameFormat& format);
 
-    const char* storageTag() const override { return "Vulkan"; }
     bool validatePlaneHandles() const override;
     QVideoFrameTexturesUPtr mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& old) override;
 };

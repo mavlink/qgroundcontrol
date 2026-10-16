@@ -1,39 +1,21 @@
-# Feature-test helpers for GStreamer headers/symbols — wraps
-# check_cxx_source_compiles for callers that need to gate features on a header
-# or symbol being present (HwBuffers, Orchestrator, Linux DMABuf probe).
-#
-# Also hosts gst-plugins-bad D3D11/D3D12 SDK shim resolution
-# (`_qgc_probe_gst_d3d_path`) — pkg-config supplies include/lib dirs, then
-# find_library resolves the absolute import lib (the bare pkg-config name doesn't
-# reliably land on the MSVC link path). Probing only: source registration is done
-# by the caller (HwBuffers) so the d3d/ source paths resolve against HwBuffers'
-# CMAKE_CURRENT_SOURCE_DIR, not this module's.
+# Feature-test helpers for GStreamer headers, symbols and optional gst-plugins-bad libraries, used to gate the HwBuffers
+# GPU paths. Probing only: callers register sources so their paths resolve against the caller's
+# CMAKE_CURRENT_SOURCE_DIR. Results are cached under QGC_GST_HAS_*, PC_GStreamer_*, GST_D3D* and QGC_GST_VULKAN* names,
+# which cmake/GStreamer/SdkState.cmake purges whenever the GStreamer SDK changes.
 
 include_guard(GLOBAL)
+include("${CMAKE_CURRENT_LIST_DIR}/Platform.cmake")
 include(CheckCXXSourceCompiles)
 include(CMakePushCheckState)
 
 # qgc_check_gst_header(VAR <out_var> HEADER <header_path> SYMBOL <symbol> [TARGET <gst_target>] [INCLUDES <dirs>])
-# Compile-tests that <header> can be included and <symbol> referenced when
-# linked against <gst_target> (defaults to GStreamer::GStreamer, falling back
-# to GStreamerMobile on Android where that's the primary target).
-# Result is set in OUT_VAR (TRUE/FALSE in PARENT_SCOPE) and cached so the test
-# isn't re-run on incremental reconfigures (check_cxx_source_compiles caches by
-# VAR name). The cache is sticky: a result from a stale toolchain/SDK survives
-# until the CMake cache is cleared — clear it after changing the GStreamer SDK.
+# Compile-tests that <header> can be included and <symbol> referenced when linked against <gst_target> (defaults to
+# GStreamer::GStreamer, falling back to GStreamerMobile on Android where that's the primary target). Result is set in
+# OUT_VAR (TRUE/FALSE in PARENT_SCOPE) and cached under that name, so incremental reconfigures skip the test; an SDK
+# change purges it.
 function(qgc_check_gst_header)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "" "VAR;HEADER;SYMBOL;TARGET" "INCLUDES")
-    if(ARG_KEYWORDS_MISSING_VALUES)
-        message(FATAL_ERROR "qgc_check_gst_header: missing values for: ${ARG_KEYWORDS_MISSING_VALUES}")
-    endif()
-    if(ARG_UNPARSED_ARGUMENTS)
-        message(FATAL_ERROR "qgc_check_gst_header: unknown arguments: ${ARG_UNPARSED_ARGUMENTS}")
-    endif()
-    foreach(_req IN ITEMS VAR HEADER SYMBOL)
-        if(NOT ARG_${_req})
-            message(FATAL_ERROR "qgc_check_gst_header: ${_req} is required")
-        endif()
-    endforeach()
+    _qgc_gst_check_args(qgc_check_gst_header VAR HEADER SYMBOL)
 
     if(NOT ARG_TARGET)
         if(ANDROID AND TARGET GStreamerMobile)
@@ -43,69 +25,128 @@ function(qgc_check_gst_header)
         endif()
     endif()
 
+    # cmake-lint: disable=C0103
     cmake_push_check_state(RESET)
     set(CMAKE_REQUIRED_LIBRARIES ${ARG_TARGET})
     # INCLUDES: extra dirs for headers that pull SDK deps not on the default path (e.g. gst/cuda/gstcuda.h -> cuda.h).
     set(CMAKE_REQUIRED_INCLUDES ${ARG_INCLUDES})
     set(CMAKE_REQUIRED_QUIET TRUE)
-    check_cxx_source_compiles("
+    check_cxx_source_compiles(
+        "
         #include <${ARG_HEADER}>
         int main() { (void)${ARG_SYMBOL}; return 0; }
-    " ${ARG_VAR})
+    "
+        ${ARG_VAR}
+    )
     cmake_pop_check_state()
-    set(${ARG_VAR} "${${ARG_VAR}}" PARENT_SCOPE)
+    set(${ARG_VAR}
+        "${${ARG_VAR}}"
+        PARENT_SCOPE
+    )
 endfunction()
 
-# _qgc_probe_gst_d3d_path(<11|12> <out_prefix>)
-# gst_is_d3d{N}_memory exports live in gstd3d{N}-1.0.lib (gst-plugins-bad shared
-# helper); pkg-config supplies the search dirs, find_library resolves the absolute
-# import lib used for linking. Probing only — on success sets in PARENT_SCOPE:
-#   <out_prefix>_FOUND TRUE, <out_prefix>_LIBS, <out_prefix>_INCLUDE_DIRS,
-#   <out_prefix>_LIBRARY_DIRS.
-# The caller registers the sources (their d3d/ paths must resolve against the
-# caller's CMAKE_CURRENT_SOURCE_DIR, not this module's).
-function(_qgc_probe_gst_d3d_path VERSION OUT)
-    set(${OUT}_FOUND FALSE PARENT_SCOPE)
-    set(_pc_var "PC_GStreamer_D3D${VERSION}")
-    qgc_check_gst_header(
-        VAR    QGC_GST_HAS_D3D${VERSION}
-        HEADER gst/d3d${VERSION}/gstd3d${VERSION}.h
-        SYMBOL gst_is_d3d${VERSION}_memory)
-    set(QGC_GST_HAS_D3D${VERSION} "${QGC_GST_HAS_D3D${VERSION}}" PARENT_SCOPE)
-    if(NOT QGC_GST_HAS_D3D${VERSION} OR NOT TARGET Qt6::MultimediaPrivate OR NOT TARGET Qt6::GuiPrivate)
-        return()
+# _qgc_probe_gst_lib(<name> HAS_VAR <cache_var> HEADER <header> SYMBOL <symbol>
+#                    [PC_MODULE <module>] [LIBNAMES <names>... LIB_VAR <cache_var>] [INCLUDES <dirs>...])
+# Probes one optional GStreamer library:
+#   1. pkg-config <module> into PC_GStreamer_<name>_*, rejoining Windows paths that pkg-config split at spaces.
+#   2. <header>/<symbol> compile test cached as <HAS_VAR>, with <INCLUDES> plus the module's include dirs.
+#   3. With LIBNAMES, find_library into the <LIB_VAR> cache entry and link that absolute path: the bare pkg-config name
+#      misses the link path for Windows import libs (LNK1181) and for the macOS framework's gstreamer-vulkan-1.0.pc.
+#      Without LIBNAMES the module's own library names and dirs are used, and the module itself is required.
+# Sets in PARENT_SCOPE: <name>_FOUND, <name>_LIBRARIES, <name>_INCLUDE_DIRS (<INCLUDES> plus the module's),
+# <name>_LIBRARY_DIRS and, when not found, <name>_REASON.
+function(_qgc_probe_gst_lib name)
+    cmake_parse_arguments(PARSE_ARGV 1 ARG "" "HAS_VAR;HEADER;SYMBOL;PC_MODULE;LIB_VAR" "LIBNAMES;INCLUDES")
+    _qgc_gst_check_args(
+        _qgc_probe_gst_lib
+        HAS_VAR
+        HEADER
+        SYMBOL
+        ALLOW_EMPTY
+        PC_MODULE
+        LIB_VAR
+        LIBNAMES
+        INCLUDES
+    )
+    if(ARG_LIBNAMES AND NOT ARG_LIB_VAR)
+        message(FATAL_ERROR "_qgc_probe_gst_lib(${name}): LIBNAMES requires LIB_VAR")
     endif()
 
-    if(PkgConfig_FOUND)
-        pkg_check_modules(${_pc_var} QUIET gstreamer-d3d${VERSION}-1.0)
-        _gst_recover_split_pkgconfig_paths(${_pc_var}
-            INCLUDE_DIRS CFLAGS_OTHER
-            LIBRARY_DIRS LDFLAGS_OTHER
+    # cmake-lint: disable=C0103
+    set(${name}_FOUND
+        FALSE
+        PARENT_SCOPE
+    )
+    set(_pc PC_GStreamer_${name})
+    if(ARG_PC_MODULE AND PkgConfig_FOUND)
+        pkg_check_modules(${_pc} QUIET ${ARG_PC_MODULE})
+        _gst_recover_split_pkgconfig_paths(${_pc})
+        _gst_coalesce_existing_paths(${_pc}_INCLUDE_DIRS)
+        _gst_coalesce_existing_paths(${_pc}_LIBRARY_DIRS)
+    endif()
+
+    set(_check_args VAR ${ARG_HAS_VAR} HEADER ${ARG_HEADER} SYMBOL ${ARG_SYMBOL})
+    if(ARG_INCLUDES OR ${_pc}_INCLUDE_DIRS)
+        list(APPEND _check_args INCLUDES ${ARG_INCLUDES} ${${_pc}_INCLUDE_DIRS})
+    endif()
+    qgc_check_gst_header(${_check_args})
+    if(NOT ${ARG_HAS_VAR})
+        set(${name}_REASON
+            "${ARG_HEADER} (${ARG_SYMBOL}) not usable"
+            PARENT_SCOPE
         )
-        _gst_coalesce_existing_paths(${_pc_var}_INCLUDE_DIRS)
-        _gst_coalesce_existing_paths(${_pc_var}_LIBRARY_DIRS)
-    endif()
-
-    # Always resolve the absolute import-lib path and link THAT, not the bare
-    # pkg-config name: on Windows the gstreamer-d3d${VERSION}-1.0.pc libdir doesn't put
-    # gstd3d${VERSION}-1.0.lib on the MSVC link path, so the bare `gstd3d${VERSION}-1.0`
-    # fails at link (LNK1181). find_library locates the lib via the .pc's dirs or
-    # GSTREAMER_LIB_PATH; linking the absolute path sidesteps the -L mismatch.
-    if(DEFINED GST_D3D${VERSION}_LIB AND
-       (GST_D3D${VERSION}_LIB MATCHES "NOTFOUND$" OR NOT EXISTS "${GST_D3D${VERSION}_LIB}"))
-        unset(GST_D3D${VERSION}_LIB CACHE)
-    endif()
-    find_library(GST_D3D${VERSION}_LIB NAMES gstd3d${VERSION}-1.0 gstd3d${VERSION}
-        HINTS ${${_pc_var}_LIBRARY_DIRS} "${GSTREAMER_LIB_PATH}")
-    if(NOT GST_D3D${VERSION}_LIB)
-        message(STATUS "QGCGStreamer: gstd3d${VERSION}-1.0 not on link path - D3D${VERSION} GPU path disabled")
         return()
     endif()
-    set(${_pc_var}_LIBRARIES "${GST_D3D${VERSION}_LIB}")
 
-    set(${OUT}_FOUND TRUE PARENT_SCOPE)
-    set(${OUT}_LIBS "d3d${VERSION};${${_pc_var}_LIBRARIES}" PARENT_SCOPE)
-    set(${OUT}_INCLUDE_DIRS "${${_pc_var}_INCLUDE_DIRS}" PARENT_SCOPE)
-    set(${OUT}_LIBRARY_DIRS "${${_pc_var}_LIBRARY_DIRS}" PARENT_SCOPE)
-    set(${OUT}_PC_LIBRARIES "${${_pc_var}_LIBRARIES}" PARENT_SCOPE)
+    set(_libraries ${${_pc}_LIBRARIES})
+    if(ARG_LIBNAMES)
+        if(DEFINED ${ARG_LIB_VAR} AND NOT EXISTS "${${ARG_LIB_VAR}}")
+            unset(${ARG_LIB_VAR} CACHE)
+        endif()
+        # A bundled SDK (gstreamer_apply_pkgconfig_env MODE SDK) must not lose to another GStreamer in
+        # CMAKE_PREFIX_PATH, which find_library searches before HINTS.
+        set(_prefix_path_args "")
+        if(DEFINED PKG_CONFIG_USE_CMAKE_PREFIX_PATH AND NOT PKG_CONFIG_USE_CMAKE_PREFIX_PATH)
+            set(_prefix_path_args NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH)
+        endif()
+        find_library(
+            ${ARG_LIB_VAR}
+            NAMES ${ARG_LIBNAMES}
+            HINTS ${${_pc}_LIBRARY_DIRS} "${GSTREAMER_LIB_PATH}" ${_prefix_path_args}
+        )
+        if(NOT ${ARG_LIB_VAR})
+            list(GET ARG_LIBNAMES 0 _lib)
+            set(${name}_REASON
+                "${_lib} not on the link path"
+                PARENT_SCOPE
+            )
+            return()
+        endif()
+        set(_libraries "${${ARG_LIB_VAR}}")
+    elseif(ARG_PC_MODULE AND NOT ${_pc}_FOUND)
+        set(${name}_REASON
+            "pkg-config module ${ARG_PC_MODULE} not found"
+            PARENT_SCOPE
+        )
+        return()
+    endif()
+
+    set(${name}_FOUND
+        TRUE
+        PARENT_SCOPE
+    )
+    set(${name}_LIBRARIES
+        "${_libraries}"
+        PARENT_SCOPE
+    )
+    # <INCLUDES> too: the headers may need them (gst/cuda/gstcuda.h pulls <cuda.h>), not just the probe.
+    set(_include_dirs ${ARG_INCLUDES} ${${_pc}_INCLUDE_DIRS})
+    set(${name}_INCLUDE_DIRS
+        "${_include_dirs}"
+        PARENT_SCOPE
+    )
+    set(${name}_LIBRARY_DIRS
+        "${${_pc}_LIBRARY_DIRS}"
+        PARENT_SCOPE
+    )
 endfunction()

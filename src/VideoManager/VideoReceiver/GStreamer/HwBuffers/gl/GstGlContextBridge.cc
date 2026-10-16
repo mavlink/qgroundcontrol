@@ -1,17 +1,13 @@
 #include "GstGlContextBridge.h"
 
-#include "GstBridgePrimeRetry.h"
-#include "GstContextBridgeCommon.h"
-
 #if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
 
+#include <gst/gl/gl.h>
+
 #include <QtCore/QLoggingCategory>
-#include <QtCore/QMutex>
-#include <QtCore/QMutexLocker>
 #include <QtGui/QGuiApplication>
 #include <QtGui/QOpenGLContext>
 #include <QtGui/qguiapplication_platform.h>
-#include <gst/gl/gl.h>
 
 #include "QGCLoggingCategory.h"
 // Shared by Linux and Windows-ANGLE (ANGLE ships EGL/egl.h); on Windows it's a fallback behind D3D11/D3D12.
@@ -30,8 +26,8 @@
 #define QGC_GST_BRIDGE_HAS_GLX 1
 #endif
 // Wayland: downstream elements probe GST_IS_GL_DISPLAY_WAYLAND; wl_display must be tagged on GstGLDisplay or zero-copy
-// paths are silently missed.
-#if __has_include(<gst/gl/wayland/gstgldisplay_wayland.h>)
+// paths are silently missed. Only from 1.26, where the EGL display gst derives from it can be marked foreign.
+#if __has_include(<gst/gl/wayland/gstgldisplay_wayland.h>) && GST_CHECK_VERSION(1, 26, 0)
 #include <gst/gl/wayland/gstgldisplay_wayland.h>
 #define QGC_GST_BRIDGE_HAS_WAYLAND 1
 #endif
@@ -39,14 +35,7 @@
 
 QGC_LOGGING_CATEGORY(GstGlBridgeLog, "Video.GStreamer.HwBuffers.GstGlBridge")
 
-namespace GstGlContextBridge {
 namespace {
-
-QMutex s_mutex;
-GstGLDisplay* s_display = nullptr;
-GstGLContext* s_context = nullptr;
-// Bounds globalShareContext retry spam when Qt GL is never initialized.
-GstBridgePrimeRetry::PrimeRetryState s_retry;
 
 #if defined(QGC_GST_BRIDGE_HAS_EGL)
 EGLDisplay qtEglDisplay(QOpenGLContext* qtCtx)
@@ -74,24 +63,37 @@ EGLContext qtEglContext(QOpenGLContext* qtCtx)
 }
 #endif
 
-bool primeLocked()
-{
-    switch (GstBridgePrimeRetry::primeRetryGuard(s_retry)) {
-        case GstBridgePrimeRetry::Decision::AlreadyPrimed:
-            return true;
-        case GstBridgePrimeRetry::Decision::GiveUp:
-            return false;
-        case GstBridgePrimeRetry::Decision::ShouldRetry:
-            break;
-    }
+constexpr char kGlAppContextType[] = "gst.gl.app_context";
+constexpr const char* kContextTypes[] = {GST_GL_DISPLAY_CONTEXT_TYPE, kGlAppContextType};
 
+class GlContextBridge final : public GstContextBridgeBase
+{
+public:
+    constexpr GlContextBridge() noexcept
+        : GstContextBridgeBase("GL", kContextTypes, &GstGlBridgeLog)
+    {}
+
+private:
+    bool primeLocked() override;
+    GstObject* refObject(const char* contextType) override;
+    GstContext* buildContext(const char* contextType, GstObject* object) override;
+    void clearLocked() override;
+
+    GstGLDisplay* _display = nullptr;
+    GstGLContext* _context = nullptr;
+};
+
+constinit GlContextBridge s_bridge;
+
+bool GlContextBridge::primeLocked()
+{
     QOpenGLContext* qtCtx = QOpenGLContext::globalShareContext();
     if (!qtCtx) {
-        if (GstBridgePrimeRetry::rearmRetry(s_retry)) {
+        if (retryWithinBudget()) {
             qCInfo(GstGlBridgeLog) << "globalShareContext() is null — Qt GL not initialized yet"
-                                   << "(attempt" << s_retry.nullCount << "/" << s_retry.maxRetries << ")";
-        } else if (GstBridgePrimeRetry::justGaveUp(s_retry)) {
-            qCWarning(GstGlBridgeLog) << "globalShareContext() still null after" << s_retry.maxRetries
+                                   << "(attempt" << failedPrimes() << "/" << kMaxPrimeRetries << ")";
+        } else if (retriesJustExhausted()) {
+            qCWarning(GstGlBridgeLog) << "globalShareContext() still null after" << kMaxPrimeRetries
                                       << "retries; GL bridge giving up";
         }
         return false;
@@ -101,15 +103,11 @@ bool primeLocked()
     // Try EGL first (Linux: Wayland/eglfs/xcb_egl; Windows: ANGLE-EGL); fall back to GLX (Linux xcb default on Qt 6).
     EGLContext eglCtx = qtEglContext(qtCtx);
     EGLDisplay eglDisp = (eglCtx != EGL_NO_CONTEXT) ? qtEglDisplay(qtCtx) : EGL_NO_DISPLAY;
-    // Reset s_primeAttempted on each bail so a window-recreate or reset() gets a retry.
-    auto bail = [](const char*) -> bool {
-        s_retry.primeAttempted = false;
-        return false;
-    };
     if (eglCtx != EGL_NO_CONTEXT && eglDisp != EGL_NO_DISPLAY) {
 #if defined(QGC_GST_BRIDGE_HAS_WAYLAND)
         // On Wayland, primary display must be GstGLDisplayWayland; derived EGL display is marked foreign so unref
-        // doesn't tear down Qt's EGLDisplay.
+        // doesn't tear down Qt's EGLDisplay. Before 1.26 that derived display can't be marked foreign and its finalize
+        // eglTerminate()s Qt's display, so older GStreamer takes the foreign EGL wrap below instead.
         const QString platformName = QGuiApplication::platformName();
         if (platformName == QLatin1String("wayland") || platformName == QLatin1String("wayland-egl")) {
             struct wl_display* wlDisp = nullptr;
@@ -119,37 +117,35 @@ bool primeLocked()
             if (wlDisp) {
                 GstGLDisplayWayland* displayWl = gst_gl_display_wayland_new_with_display(wlDisp);
                 if (displayWl) {
-                    s_display = GST_GL_DISPLAY(displayWl);
-#if GST_CHECK_VERSION(1, 26, 0)
-                    // set_foreign(TRUE) is mandatory: Qt owns the EGLDisplay; without it gst calls eglTerminate on Qt's
-                    // display.
-                    if (GstGLDisplayEGL* derived = gst_gl_display_egl_from_gl_display(s_display)) {
-                        gst_gl_display_egl_set_foreign(derived, TRUE);
-                        gst_object_unref(derived);
+                    _display = GST_GL_DISPLAY(displayWl);
+                    if (const std::unique_ptr<GstGLDisplayEGL, GStreamer::GstObjectDeleter> derived{
+                            gst_gl_display_egl_from_gl_display(_display)}) {
+                        gst_gl_display_egl_set_foreign(derived.get(), TRUE);
                     }
-#endif
                 }
             }
         }
 #endif
-        if (!s_display) {
+        if (!_display) {
+            // Marked foreign: finalize never eglTerminate()s Qt's EGLDisplay, and gst_gl_display_egl_from_gl_display()
+            // returns this same object rather than deriving a non-foreign one.
             GstGLDisplayEGL* displayEgl = gst_gl_display_egl_new_with_egl_display(eglDisp);
             if (!displayEgl) {
                 qCWarning(GstGlBridgeLog) << "gst_gl_display_egl_new_with_egl_display failed";
-                return bail("displayEgl");
+                return retryLater();
             }
-            s_display = GST_GL_DISPLAY(displayEgl);
+            _display = GST_GL_DISPLAY(displayEgl);
         }
 
-        s_context = gst_gl_context_new_wrapped(s_display, reinterpret_cast<guintptr>(eglCtx), GST_GL_PLATFORM_EGL,
-                                               static_cast<GstGLAPI>(GST_GL_API_GLES2 | GST_GL_API_OPENGL));
-        if (!s_context) {
+        _context = gst_gl_context_new_wrapped(_display, reinterpret_cast<guintptr>(eglCtx), GST_GL_PLATFORM_EGL,
+                                              static_cast<GstGLAPI>(GST_GL_API_GLES2 | GST_GL_API_OPENGL));
+        if (!_context) {
             qCWarning(GstGlBridgeLog) << "gst_gl_context_new_wrapped (EGL) failed";
-            gst_clear_object(&s_display);
-            return bail("ctxEgl");
+            gst_clear_object(&_display);
+            return retryLater();
         }
 #if defined(QGC_GST_BRIDGE_HAS_WAYLAND)
-        const bool isWayland = GST_IS_GL_DISPLAY_WAYLAND(s_display);
+        const bool isWayland = GST_IS_GL_DISPLAY_WAYLAND(_display);
         qCInfo(GstGlBridgeLog) << (isWayland ? "GL bridge primed (Wayland+EGL)" : "GL bridge primed (EGL)");
 #else
         qCInfo(GstGlBridgeLog) << "GL bridge primed (EGL)";
@@ -160,7 +156,7 @@ bool primeLocked()
         auto* glx = qtCtx->nativeInterface<QNativeInterface::QGLXContext>();
         if (!glx) {
             qCWarning(GstGlBridgeLog) << "Qt GL context exposes neither EGL nor GLX; GL bridge disabled";
-            return bail("noGlx");
+            return retryLater();
         }
         Display* xdisp = nullptr;
         if (auto* x11 = qGuiApp->nativeInterface<QNativeInterface::QX11Application>()) {
@@ -168,32 +164,31 @@ bool primeLocked()
         }
         if (!xdisp) {
             qCWarning(GstGlBridgeLog) << "X11 Display unresolvable; GL bridge disabled";
-            return bail("xdisp");
+            return retryLater();
         }
         GstGLDisplayX11* displayX11 = gst_gl_display_x11_new_with_display(xdisp);
         if (!displayX11) {
             qCWarning(GstGlBridgeLog) << "gst_gl_display_x11_new_with_display failed";
-            return bail("displayX11");
+            return retryLater();
         }
-        s_display = GST_GL_DISPLAY(displayX11);
-        s_context = gst_gl_context_new_wrapped(s_display, reinterpret_cast<guintptr>(glx->nativeContext()),
-                                               GST_GL_PLATFORM_GLX, static_cast<GstGLAPI>(GST_GL_API_OPENGL));
-        if (!s_context) {
+        _display = GST_GL_DISPLAY(displayX11);
+        _context = gst_gl_context_new_wrapped(_display, reinterpret_cast<guintptr>(glx->nativeContext()),
+                                              GST_GL_PLATFORM_GLX, static_cast<GstGLAPI>(GST_GL_API_OPENGL));
+        if (!_context) {
             qCWarning(GstGlBridgeLog) << "gst_gl_context_new_wrapped (GLX) failed";
-            gst_clear_object(&s_display);
-            return bail("ctxGlx");
+            gst_clear_object(&_display);
+            return retryLater();
         }
         qCInfo(GstGlBridgeLog) << "GL bridge primed (GLX)";
 #else
         qCWarning(GstGlBridgeLog) << "Qt EGLContext unresolvable and GLX bridge not built; GL bridge disabled";
-        return bail("noEglNoGlx");
+        return retryLater();
 #endif
     }
 
-    s_retry.primed = true;
     // Don't call gst_gl_context_fill_info(): a freshly wrapped context has no active thread yet, and GStreamer fills
     // info lazily on first activation.
-    qCDebug(GstGlBridgeLog) << "GL bridge primed: display=" << s_display << "context=" << s_context;
+    qCDebug(GstGlBridgeLog) << "GL bridge primed: display=" << _display << "context=" << _context;
     return true;
 #else
     // EGL-only by design; Windows uses the D3D11/D3D12 bridge, macOS/iOS use CVPixelBuffer. No WGL/CGL wrap: forcing
@@ -203,37 +198,15 @@ bool primeLocked()
 #endif
 }
 
-}  // namespace
-
-namespace {
-
-constexpr char kGlAppContextType[] = "gst.gl.app_context";
-const char* const kContextTypes[] = {GST_GL_DISPLAY_CONTEXT_TYPE, kGlAppContextType};
-
-const QLoggingCategory& vtCat(void*)
-{
-    return GstGlBridgeLog();
-}
-
-QMutex& vtMutex(void*)
-{
-    return s_mutex;
-}
-
-bool vtPrime(void*)
-{
-    return primeLocked();
-}
-
-GstObject* vtRefObject(void*, const char* contextType)
+GstObject* GlContextBridge::refObject(const char* contextType)
 {
     if (g_strcmp0(contextType, GST_GL_DISPLAY_CONTEXT_TYPE) == 0) {
-        return s_display ? GST_OBJECT(gst_object_ref(s_display)) : nullptr;
+        return _display ? GST_OBJECT(gst_object_ref(_display)) : nullptr;
     }
-    return s_context ? GST_OBJECT(gst_object_ref(s_context)) : nullptr;
+    return _context ? GST_OBJECT(gst_object_ref(_context)) : nullptr;
 }
 
-GstContext* vtBuildContext(void*, const char* contextType, GstObject* object)
+GstContext* GlContextBridge::buildContext(const char* contextType, GstObject* object)
 {
     if (g_strcmp0(contextType, GST_GL_DISPLAY_CONTEXT_TYPE) == 0) {
         GstContext* ctx = gst_context_new(GST_GL_DISPLAY_CONTEXT_TYPE, TRUE);
@@ -246,58 +219,17 @@ GstContext* vtBuildContext(void*, const char* contextType, GstObject* object)
     return ctx;
 }
 
-const GstContextBridge::BridgeVTable s_vtable = {
-    "GL", kContextTypes, 2, &vtCat, &vtMutex, &vtPrime, &vtRefObject, &vtBuildContext, nullptr,
-};
+void GlContextBridge::clearLocked()
+{
+    gst_clear_object(&_context);
+    gst_clear_object(&_display);
+}
 
 }  // namespace
 
-bool prime()
+GstContextBridgeBase& GstGlContextBridge::instance()
 {
-    QMutexLocker lock(&s_mutex);
-    return primeLocked();
+    return s_bridge;
 }
-
-GstBusSyncReply handleSyncMessage(GstMessage* message)
-{
-    return GstContextBridge::handleSyncMessage(s_vtable, nullptr, message);
-}
-
-bool answerContextQuery(GstQuery* query)
-{
-    return GstContextBridge::answerContextQuery(s_vtable, nullptr, query);
-}
-
-void reset()
-{
-    QMutexLocker lock(&s_mutex);
-    gst_clear_object(&s_context);
-    gst_clear_object(&s_display);
-    GstBridgePrimeRetry::resetRetry(s_retry);
-    qCDebug(GstGlBridgeLog) << "GL bridge reset";
-}
-
-void rearm()
-{
-    QMutexLocker lock(&s_mutex);
-    if (GstBridgePrimeRetry::rearmAfterExhaustion(s_retry)) {
-        qCInfo(GstGlBridgeLog) << "GL bridge rearm: clearing exhausted retry latch";
-    }
-}
-
-namespace {
-struct GlBridgeRegistrar
-{
-    GlBridgeRegistrar()
-    {
-        GstContextBridge::registerBridge(GstGlBridgeLog(), "GL", &GstGlContextBridge::handleSyncMessage,
-                                         &GstGlContextBridge::reset);
-    }
-};
-
-static GlBridgeRegistrar s_glBridgeRegistrar;
-}  // anonymous namespace
-
-}  // namespace GstGlContextBridge
 
 #endif  // QGC_HAS_GST_GLMEMORY_GPU_PATH

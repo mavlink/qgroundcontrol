@@ -1,32 +1,34 @@
 #include "GstDmaBufVideoBuffer.h"
 
-#include "GstContextBridgeRegistry.h"
 #include "GstDmaBufVulkanImport.h"
 #include "GstDmaFourcc.h"
 #include "GstEglHelpers.h"
 #include "GstGlFrameTextures.h"
 #include "GstHwImportCache.h"
 #include "GstHwImportPreflight.h"
+#include "GstHwPathRegistry.h"
 #include "GstHwPathTelemetry.h"
 #include "GstHwVideoBuffer.h"
-#include "GstVulkanFrameTextures.h"
+#include "GstHwVideoInfo.h"
 #include "HwBuffers.h"
+#include "QGCRhiCapture.h"
 
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
+
+#include <gst/allocators/gstdmabuf.h>
+#include <gst/video/video.h>
+#include <private/qvideotexturehelper_p.h>
+#include <rhi/qrhi.h>
 
 #include <QtCore/QByteArray>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QMutex>
-#include <QtCore/QScopeGuard>
 #include <QtCore/QSize>
 #include <QtGui/QGuiApplication>
 #include <QtGui/QOpenGLContext>
 #include <QtGui/QOpenGLFunctions>
 #include <QtGui/qopenglcontext_platform.h>
-#include <gst/allocators/gstdmabuf.h>
-#include <gst/video/video.h>
-#include <private/qvideotexturehelper_p.h>
-#include <rhi/qrhi.h>
+#include <qpa/qplatformnativeinterface.h>
 
 #include "QGCLoggingCategory.h"
 #if GST_CHECK_VERSION(1, 24, 0)
@@ -41,8 +43,6 @@
 #include <drm_fourcc.h>
 #include <limits>
 #include <unistd.h>
-#include <utility>
-#include <vector>
 
 // Producer dma-buf fence export: optional. The header exists on Ubuntu 22.04 but predates the
 // EXPORT_SYNC_FILE uAPI (kernel ~6.0), so gate on the ioctl token, not just header presence.
@@ -53,6 +53,10 @@
 #define QGC_HAS_DMABUF_EXPORT_SYNC 1
 #endif
 #endif
+
+#include <cerrno>
+#include <poll.h>
+#include <span>
 
 #ifndef EGL_ANDROID_native_fence_sync
 #define EGL_SYNC_NATIVE_FENCE_ANDROID 0x3144
@@ -66,17 +70,21 @@ namespace {
 
 using GstHw::kMaxPlanes;
 
-std::atomic<bool> s_loggedBadBackend{false};
+GstHw::MapDiagnostics s_diag;
 
-// EGL_BAD_MATCH from eglCreateImage = broken EGL/VA-API combo (QTBUG-112312); short-circuits mapTextures on first hit.
+// EGL_BAD_MATCH from eglCreateImage = broken EGL/VA-API combo (QTBUG-112312); set once no import layout is left (see
+// disableAfterPerPlaneBadMatch), then short-circuits mapTextures and validatePlaneHandles.
 std::atomic<bool> s_permanentlyDisabled{false};
+// A single-fd BAD_MATCH only rules out the single-EGLImage import; later frames go straight to per-plane.
+std::atomic<bool> s_singleFdBroken{false};
 
-void maybePermanentlyDisable(EGLDisplay eglDpy, int plane, const char* pathTag)
+// A per-plane BAD_MATCH leaves no import layout to fall back to, so it disables the path.
+void disableAfterPerPlaneBadMatch(EGLDisplay eglDpy, int plane)
 {
     if (!s_permanentlyDisabled.exchange(true, std::memory_order_relaxed)) {
         GstHwPathTelemetry::recordFallbackReason(HwVideoBufferPath::DmaBuf,
                                                  GstHwPathTelemetry::HwFallbackReason::EglBadMatch);
-        qCWarning(GstDmaBufLog) << "eglCreateImage returned EGL_BAD_MATCH on" << pathTag << "plane" << plane
+        qCWarning(GstDmaBufLog) << "eglCreateImage returned EGL_BAD_MATCH on per-plane plane" << plane
                                 << "— disabling DMABuf zero-copy for this process"
                                 << "(EGL_VENDOR=" << eglQueryString(eglDpy, EGL_VENDOR)
                                 << "EGL_VERSION=" << eglQueryString(eglDpy, EGL_VERSION) << ")";
@@ -86,7 +94,8 @@ void maybePermanentlyDisable(EGLDisplay eglDpy, int plane, const char* pathTag)
 // EGLDisplay is process-stable; cache the value (not a context pointer) to avoid dangling-key hazard.
 std::atomic<EGLDisplay> s_cachedDisplay{EGL_NO_DISPLAY};
 std::atomic<bool> s_loggedSingleFdDisabled{false};
-std::atomic<bool> s_loggedFenceTimeout{false};
+std::atomic<bool> s_loggedProducerWaitTimeout{false};
+std::atomic<bool> s_loggedVulkanSyncRefused{false};
 
 // First-import-per-epoch bind validation: glGetError flushes the pipeline, so steady-state frames skip it.
 std::atomic<bool> s_bindValidated{false};
@@ -94,32 +103,30 @@ std::atomic<bool> s_loggedBindFailed{false};
 
 constexpr const char* kModifiersExt = "EGL_EXT_image_dma_buf_import_modifiers";
 
-constexpr const char* kFenceSyncExt = "EGL_KHR_fence_sync";
-
 constexpr const char* kNativeFenceExt = "EGL_ANDROID_native_fence_sync";
 
-// EGLImage cache (DEFAULT OFF, QGC_GST_DMABUF_CACHE=1): fd/GstMemory ABA means a recycled pool buffer can serve a
-// stale image, so we key on fd plus the full EGL layout and weak-ref the GstMemory to evict before the fd is reused.
+// EGLImage cache (QGC_GST_DMABUF_CACHE=1). Keyed on fd plus the full EGL layout and evicted when the GstMemory
+// finalizes, so a reused fd number never hits a dead buffer's image. Off by default: it is untested (only the
+// QGC_GST_GPU_BIN=dmabuf bin reaches this importer, and CI has no DMABuf producer with a GL QRhi).
 bool imageCacheEnabled() noexcept
 {
     return HwBuffers::hwBufferEnvConfig().dmaBufCache;
 }
 
-bool texStorageImportAllowed(bool contextIsOpenGles, bool hasTexStorageExt, guint64 drmModifier) noexcept
+bool texStorageImportAllowed(bool contextIsOpenGles, bool hasTexStorageExt) noexcept
 {
-    return drmModifier == 0 && !contextIsOpenGles && hasTexStorageExt;
+    return !contextIsOpenGles && hasTexStorageExt;
 }
 
-bool directGlImportAllowed(bool hasModifiersExt, guint64 drmModifier) noexcept
+// LINEAR only, even with EGL_EXT_image_dma_buf_import_modifiers: binding a tiled VA EGLImage can segfault Mesa/Gallium.
+bool directGlImportAllowed(guint64 drmModifier) noexcept
 {
-    Q_UNUSED(hasModifiersExt);
     return drmModifier == 0;
 }
 
 struct DmaImageKey
 {
     int fd = -1;
-    guint64 modifier = 0;
     int width = 0;
     int height = 0;
     int fourcc = 0;
@@ -129,32 +136,8 @@ struct DmaImageKey
 
     bool operator==(const DmaImageKey& o) const noexcept
     {
-        return fd == o.fd && modifier == o.modifier && width == o.width && height == o.height && fourcc == o.fourcc &&
+        return fd == o.fd && width == o.width && height == o.height && fourcc == o.fourcc &&
                planeCount == o.planeCount && offsets == o.offsets && strides == o.strides;
-    }
-};
-
-template <typename T>
-void hashCombine(std::size_t& h, const T& value) noexcept
-{
-    h ^= std::hash<T>{}(value) + 0x9e3779b97f4a7c15ULL + (h << 6) + (h >> 2);
-}
-
-struct DmaImageKeyHash
-{
-    std::size_t operator()(const DmaImageKey& k) const noexcept
-    {
-        std::size_t h = std::hash<int>{}(k.fd);
-        hashCombine(h, k.modifier);
-        hashCombine(h, k.width);
-        hashCombine(h, k.height);
-        hashCombine(h, k.fourcc);
-        hashCombine(h, k.planeCount);
-        for (int p = 0; p < k.planeCount; ++p) {
-            hashCombine(h, k.offsets[p]);
-            hashCombine(h, k.strides[p]);
-        }
-        return h;
     }
 };
 
@@ -162,86 +145,45 @@ struct DmaCachedImage
 {
     EGLDisplay display = EGL_NO_DISPLAY;
     EGLImage image = EGL_NO_IMAGE_KHR;
-    GstMemory* mem = nullptr;  // weak-ref source; never dereferenced after notify
+    GstMemory* mem = nullptr;  // eviction key only; never dereferenced
 };
 
-constexpr int kImageCacheCapacity = 8;
+constexpr std::size_t kImageCacheCapacity = 8;
+
+void destroyCachedDmaImage(DmaCachedImage& entry)
+{
+    if (entry.image != EGL_NO_IMAGE_KHR && entry.display != EGL_NO_DISPLAY) {
+        eglDestroyImage(entry.display, entry.image);
+    }
+}
+
+// EGLImages are destroyed on a render thread with Qt's GL context current; an off-thread finalize notify or reset
+// parks them until the next render-thread drain.
+bool glContextCurrent(const DmaCachedImage&)
+{
+    return QOpenGLContext::currentContext() != nullptr;
+}
+
+using DmaImageCache = GstHw::GstHwImportCache<DmaImageKey, DmaCachedImage, kImageCacheCapacity>;
 
 QMutex s_dmaCacheMutex;
-// EGLImages orphaned by an off-thread weak-notify; destroyed on the render thread (drainOrphanedImagesLocked).
-std::vector<std::pair<EGLDisplay, EGLImage>> s_orphanedImages;
+DmaImageCache s_dmaImageCache{destroyCachedDmaImage, glContextCurrent};
 
-void onSourceMemoryFinalized(gpointer userData, GstMiniObject* finalizedMem);
-
-// Render-thread; caller holds s_dmaCacheMutex with Qt's GL context current.
-void drainOrphanedImagesLocked()
+GQuark cachedMemoryQuark()
 {
-    for (const auto& [display, image] : s_orphanedImages) {
-        if (image != EGL_NO_IMAGE_KHR && display != EGL_NO_DISPLAY) {
-            eglDestroyImage(display, image);
-        }
-    }
-    s_orphanedImages.clear();
+    static const GQuark quark = g_quark_from_static_string("qgc-dmabuf-eglimage-cache");
+    return quark;
 }
 
-// Eviction/erase/clear hook. Render thread (GL context current): destroy the EGLImage and drop the GstMemory weak-ref.
-// Off-thread weak-notify (no GL context): defer the image to s_orphanedImages and leave the weak-ref alone — the notify
-// itself consumes it.
-void destroyCachedDmaImage(const DmaImageKey&, DmaCachedImage& entry)
-{
-    const bool onRenderThread = QOpenGLContext::currentContext() != nullptr;
-    if (entry.image != EGL_NO_IMAGE_KHR && entry.display != EGL_NO_DISPLAY) {
-        if (onRenderThread) {
-            eglDestroyImage(entry.display, entry.image);
-        } else {
-            s_orphanedImages.emplace_back(entry.display, entry.image);
-        }
-    }
-    if (entry.mem && onRenderThread) {
-        gst_mini_object_weak_unref(GST_MINI_OBJECT(entry.mem), onSourceMemoryFinalized, nullptr);
-    }
-}
-
-GstHw::GstHwImportCache<DmaImageKey, DmaCachedImage, DmaImageKeyHash> s_dmaImageCache{kImageCacheCapacity,
-                                                                                      destroyCachedDmaImage};
-
-// Weak-notify on the pool/streaming thread: no GL context, so the stale EGLImage is queued for render-thread
-// destruction (drainOrphanedImagesLocked) rather than destroyed here.
-void onSourceMemoryFinalized(gpointer userData, GstMiniObject* finalizedMem)
+// qdata destroy-notify, run while the GstMemory finalizes on a pool/streaming thread (no GL context): the stale
+// EGLImage is parked for render-thread destruction. Unlike a weak ref, the qdata is never removed from the render
+// thread, which would mutate the notify list gst is iterating during finalize.
+void onSourceMemoryFinalized(gpointer finalizedMem)
 {
     const QMutexLocker lock(&s_dmaCacheMutex);
-    s_dmaImageCache.eraseIf([&](const DmaImageKey&, const DmaCachedImage& e) {
-        return e.mem == reinterpret_cast<GstMemory*>(finalizedMem);
-    });
-    Q_UNUSED(userData);
+    s_dmaImageCache.eraseIf(
+        [&](const DmaImageKey&, const DmaCachedImage& e) { return static_cast<gpointer>(e.mem) == finalizedMem; });
 }
-
-// Render-thread; caller holds s_dmaCacheMutex with Qt's GL context current.
-void clearDmaImageCacheLocked(EGLDisplay eglDpy)
-{
-    s_dmaImageCache.clear();
-    drainOrphanedImagesLocked();
-    Q_UNUSED(eglDpy);
-}
-
-EGLImage cachedDmaImageLocked(const DmaImageKey& key, EGLDisplay eglDpy)
-{
-    if (DmaCachedImage* entry = s_dmaImageCache.find(key);
-        entry && entry->display == eglDpy && entry->image != EGL_NO_IMAGE_KHR) {
-        return entry->image;
-    }
-    return EGL_NO_IMAGE_KHR;
-}
-
-void insertDmaImageLocked(const DmaImageKey& key, EGLDisplay eglDpy, EGLImage image, GstMemory* mem)
-{
-    if (mem) {
-        gst_mini_object_weak_ref(GST_MINI_OBJECT(mem), onSourceMemoryFinalized, nullptr);
-    }
-    s_dmaImageCache.insert(key, DmaCachedImage{eglDpy, image, mem});
-}
-
-std::atomic<bool> s_dmaCacheResetPending{false};
 
 bool singleFdImportEnabled() noexcept
 {
@@ -279,41 +221,110 @@ static constexpr EGLint kPlModHi[4] = {
     EGL_DMA_BUF_PLANE2_MODIFIER_HI_EXT,
     EGL_DMA_BUF_PLANE3_MODIFIER_HI_EXT,
 };
+constexpr EGLAttrib kLinearModifierLo = static_cast<EGLAttrib>(DRM_FORMAT_MOD_LINEAR & 0xFFFFFFFFu);
+constexpr EGLAttrib kLinearModifierHi = static_cast<EGLAttrib>((DRM_FORMAT_MOD_LINEAR >> 32) & 0xFFFFFFFFu);
+
+/// Fixed-capacity, EGL_NONE-terminated eglCreateImage attribute list; sized for the single-fd worst case (3 header
+/// keys plus FD/OFFSET/PITCH/MODIFIER_LO/MODIFIER_HI for every plane).
+class EglAttribList
+{
+public:
+    void push(EGLAttrib key, EGLAttrib value) noexcept
+    {
+        if (_size + 2 >= _attribs.size()) {
+            _overflowed = true;
+            return;
+        }
+        _attribs[_size++] = key;
+        _attribs[_size++] = value;
+    }
+
+    /// Terminates the list; false when a push() did not fit.
+    bool finish() noexcept
+    {
+        _attribs[_size] = EGL_NONE;
+        return !_overflowed;
+    }
+
+    const EGLAttrib* data() const noexcept { return _attribs.data(); }
+
+private:
+    std::array<EGLAttrib, 2 * (3 + kMaxPlanes * 5) + 1> _attribs{};
+    std::size_t _size = 0;
+    bool _overflowed = false;
+};
+
+/// An EGLImage held across one bind: pinned in the image cache when it came from there, else owned by the caller.
+struct AcquiredImage
+{
+    EGLImage image = EGL_NO_IMAGE_KHR;
+    DmaImageCache::EntryId cacheEntry = 0;
+};
+
+/// Cached image for @p key (pinned so a concurrent reset can't destroy it mid-bind) or a fresh import; image is
+/// EGL_NO_IMAGE_KHR when eglCreateImage failed.
+AcquiredImage acquireImage(EGLDisplay eglDpy, const DmaImageKey& key, const EglAttribList& attribs)
+{
+    const bool cacheOn = imageCacheEnabled();
+    if (cacheOn) {
+        const QMutexLocker lock(&s_dmaCacheMutex);
+        if (const auto hit = s_dmaImageCache.find(key); hit && hit.resource->display == eglDpy) {
+            s_dmaImageCache.pin(hit.id);
+            GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::ImageCacheHits);
+            return {hit.resource->image, hit.id};
+        }
+    }
+    const EGLImage image = eglCreateImage(eglDpy, EGL_NO_CONTEXT, EGL_LINUX_DMA_BUF_EXT, nullptr, attribs.data());
+    if (cacheOn) {
+        GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::ImageCacheMisses);
+    }
+    return {image, 0};
+}
+
+/// Ends the bind. A failed bind evicts/destroys the suspect image so it can't serve later frames; otherwise a fresh
+/// image is cached under @p key until @p mem finalizes (or destroyed when caching is off).
+void releaseImage(EGLDisplay eglDpy, const DmaImageKey& key, const AcquiredImage& acquired, GstMemory* mem,
+                  bool bindFailed)
+{
+    if (acquired.cacheEntry != 0) {
+        const QMutexLocker lock(&s_dmaCacheMutex);
+        if (bindFailed) {
+            s_dmaImageCache.eraseIf([&](const DmaImageKey& k, const DmaCachedImage&) { return k == key; });
+        }
+        s_dmaImageCache.unpin(acquired.cacheEntry);
+        s_dmaImageCache.drainDeferred();
+        return;
+    }
+    if (bindFailed || !imageCacheEnabled()) {
+        eglDestroyImage(eglDpy, acquired.image);
+        return;
+    }
+    if (mem && !gst_mini_object_get_qdata(GST_MINI_OBJECT(mem), cachedMemoryQuark())) {
+        gst_mini_object_set_qdata(GST_MINI_OBJECT(mem), cachedMemoryQuark(), mem, onSourceMemoryFinalized);
+    }
+    const QMutexLocker lock(&s_dmaCacheMutex);
+    s_dmaImageCache.insert(key, DmaCachedImage{eglDpy, acquired.image, mem});
+}
 
 class FrameTextures final : public GstGlFrameTextures
 {
 public:
     FrameTextures(QRhi* rhi, QSize size, QVideoFrameFormat::PixelFormat pixelFormat,
                   std::array<GLuint, kMaxPlanes> names, int count)
-        : GstGlFrameTextures(rhi, size, pixelFormat, names, count, FallbackPolicy::Disable)
+        : GstGlFrameTextures(rhi, size, pixelFormat, names, count)
     {}
 
     ~FrameTextures() override
     {
-        releaseGLTextures();  // safety net if onFrameEndInvoked() was never called
-    }
-
-    void onFrameEndInvoked() override
-    {
-        releaseGLTextures();
-        GstHwFrameTexturesBase::onFrameEndInvoked();
-    }
-
-private:
-    void releaseGLTextures()
-    {
-        if (_released || !_rhi || _count == 0)
+        if (!_rhi || _count == 0)
             return;
         // Bind the QRhi GL context so currentContext() returns it (mirrors ~QGstQVideoFrameTextures), avoiding the
         // backend-conditional NativeHandles cast.
         _rhi->makeThreadLocalNativeContextCurrent();
         if (QOpenGLContext* ctx = QOpenGLContext::currentContext()) {
             ctx->functions()->glDeleteTextures(int(_count), _names.data());
-            _released = true;  // only after deletion, so the dtor can retry
         }
     }
-
-    bool _released = false;
 };
 
 // RPi eglfs quirk: V3D EGL implicitly converts YUYV/UYVY DMABuf to RGBA, so declare RGBA8888 to pick Qt's RGB shader
@@ -340,7 +351,7 @@ std::atomic<bool> s_loggedExplicitFence{false};
 
 // Best-effort GPU-side wait on the producer's fence: export a sync_file fd from the dma-buf, import it as an
 // EGL_SYNC_NATIVE_FENCE_ANDROID sync and eglWaitSyncKHR (server wait). Returns true only on a confirmed GPU-side wait
-// that makes the mmap CPU barrier redundant; any failure leaves the caller's existing barrier path untouched.
+// that makes the CPU barrier redundant; any failure leaves the caller's existing barrier path untouched.
 bool tryExplicitFenceWait(EGLDisplay eglDpy, int dmaFd)
 {
 #if defined(QGC_HAS_DMABUF_EXPORT_SYNC)
@@ -379,9 +390,8 @@ bool tryExplicitFenceWait(EGLDisplay eglDpy, int dmaFd)
         return false;
     }
     QGC_HW_WARN_ONCE(GstDmaBufLog, s_loggedExplicitFence,
-                     "DMABuf: using producer dma-buf fence for GPU-side sync (mmap barrier skipped)");
-    GstHwPathTelemetry::recordExplicitFenceWait(HwVideoBufferPath::DmaBuf);
-    GstHwPathTelemetry::recordSyncWait(HwVideoBufferPath::DmaBuf, /*gpuSide=*/true);
+                     "DMABuf: using producer dma-buf fence for GPU-side sync (CPU barrier skipped)");
+    GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::GpuWaits);
     return true;
 #else
     Q_UNUSED(eglDpy);
@@ -390,13 +400,297 @@ bool tryExplicitFenceWait(EGLDisplay eglDpy, int dmaFd)
 #endif
 }
 
+// Bounded so a GPU hang cannot wedge Qt's render thread.
+constexpr int kProducerWaitTimeoutMs = 100;
+
+// CPU-side barrier on the producer's implicit write fences: poll(POLLIN) on a dma-buf fd returns once its write fences
+// signal (the wait linux/dma-buf.h documents). Unlike mmap/DMA_BUF_IOCTL_SYNC it triggers no exporter cache maintenance
+// or buffer migration. False when a wait timed out or failed.
+bool waitForProducerWrites(GstBuffer* buffer)
+{
+    int lastFd = -1;
+    for (guint i = 0; i < gst_buffer_n_memory(buffer); ++i) {
+        GstMemory* mem = gst_buffer_peek_memory(buffer, i);
+        const int fd = (mem && gst_is_dmabuf_memory(mem)) ? gst_dmabuf_memory_get_fd(mem) : -1;
+        if (fd < 0 || fd == lastFd) {
+            continue;
+        }
+        lastFd = fd;
+        pollfd pfd = {fd, POLLIN, 0};
+        int ret = 0;
+        do {
+            ret = ::poll(&pfd, 1, kProducerWaitTimeoutMs);
+        } while (ret < 0 && (errno == EINTR || errno == EAGAIN));
+        if (ret <= 0) {
+            const int pollError = (ret < 0) ? errno : 0;
+            GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::ProducerFenceTimeouts);
+            QGC_HW_WARN_ONCE(GstDmaBufLog, s_loggedProducerWaitTimeout,
+                             "dma-buf producer fence wait" << (ret == 0 ? "timed out" : "failed") << "errno="
+                                                           << pollError << "— no producer barrier for this frame");
+            return false;
+        }
+    }
+    GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::CpuWaits);
+    return true;
+}
+
+// EGLDisplay is process-stable; resolve once per epoch (resetCachedState). First writer wins; racing renders that
+// resolve the same display make this idempotent.
+EGLDisplay resolveRenderDisplay(QOpenGLContext* glContext, EGLDisplay fallback)
+{
+    EGLDisplay eglDpy = s_cachedDisplay.load(std::memory_order_acquire);
+    if (eglDpy != EGL_NO_DISPLAY) {
+        return eglDpy;
+    }
+    eglDpy = GstEglHelpers::renderDisplay(glContext, fallback);
+    if (eglDpy != EGL_NO_DISPLAY) {
+        EGLDisplay expected = EGL_NO_DISPLAY;
+        s_cachedDisplay.compare_exchange_strong(expected, eglDpy, std::memory_order_release);
+    }
+    return eglDpy;
+}
+
+// Prefer a GPU-side wait on the producer's exported fence; otherwise block on its implicit write fences.
+void waitForProducer(EGLDisplay eglDpy, GstBuffer* buffer)
+{
+    if (!tryExplicitFenceWait(eglDpy, gst_dmabuf_memory_get_fd(gst_buffer_peek_memory(buffer, 0)))) {
+        waitForProducerWrites(buffer);
+    }
+}
+
+/// Binds an EGLImage to the GL texture currently bound at a target.
+struct EglImageBinder
+{
+    PFNGLEGLIMAGETARGETTEXTURE2DOESPROC targetTexture2D = nullptr;
+    PFNGLEGLIMAGETARGETTEXSTORAGEEXTPROC targetTexStorage = nullptr;
+
+    void bind(GLenum target, EGLImage image) const
+    {
+        if (targetTexStorage) {
+            targetTexStorage(target, image, nullptr);
+        } else {
+            targetTexture2D(target, image);
+        }
+    }
+};
+
+EglImageBinder eglImageBinder(const QOpenGLContext& ctx)
+{
+    static const auto targetTexStorage =
+        reinterpret_cast<PFNGLEGLIMAGETARGETTEXSTORAGEEXTPROC>(eglGetProcAddress("glEGLImageTargetTexStorageEXT"));
+    // Desktop GL with GL_EXT_EGL_image_storage: bind DMABuf via immutable storage to skip the per-frame texture-storage
+    // realloc the mutable OES path forces (OBS measured ~100x on discrete Intel). GLES keeps the OES path: the storage
+    // ext isn't reliably exposed and the OES bind is the contract there.
+    const bool useTexStorage =
+        texStorageImportAllowed(ctx.isOpenGLES(), ctx.hasExtension(QByteArrayLiteral("GL_EXT_EGL_image_storage")));
+    return {GstEglHelpers::imageTargetTexture2D(), useTexStorage ? targetTexStorage : nullptr};
+}
+
+/// Per-frame state shared by the single-fd and per-plane EGLImage imports. Both import LINEAR buffers only:
+/// mapTextures() rejects any other modifier first.
+struct EglImport
+{
+    EGLDisplay display = EGL_NO_DISPLAY;
+    GstBuffer* buffer = nullptr;
+    const GstVideoInfo* info = nullptr;
+    const GstVideoMeta* vmeta = nullptr;
+    bool hasModifiersExt = false;
+    // Validate binds with glGetError only on the first import per epoch: it flushes the pipeline.
+    bool validateBind = false;
+    QOpenGLFunctions* gl = nullptr;
+    EglImageBinder binder{};
+    std::span<const GLuint> names{};
+
+    int fdOf(int memIdx) const { return gst_dmabuf_memory_get_fd(gst_buffer_peek_memory(buffer, guint(memIdx))); }
+};
+
+enum class ImportResult
+{
+    Ok,
+    TryPerPlane,
+    Fail,
+};
+
+bool plausibleLayout(gsize offset, gint stride)
+{
+    if (stride > 0 && static_cast<quint64>(offset) <= static_cast<quint64>((std::numeric_limits<EGLAttrib>::max)())) {
+        return true;
+    }
+    qCWarning(GstDmaBufLog) << "implausible plane stride/offset (stride=" << stride << "offset=" << offset
+                            << "); CPU fallback";
+    return false;
+}
+
+bool bindPlane(const EglImport& ctx, int plane, EGLImage image, const char* stage)
+{
+    ctx.gl->glBindTexture(GL_TEXTURE_2D, ctx.names[std::size_t(plane)]);
+    ctx.binder.bind(GL_TEXTURE_2D, image);
+    // glGetError forces a pipeline flush — only first import per epoch or when category debug is on.
+    if (Q_LIKELY(!ctx.validateBind && !GstDmaBufLog().isDebugEnabled())) {
+        return true;
+    }
+    const GLenum glErr = ctx.gl->glGetError();
+    if (glErr == GL_NO_ERROR) {
+        return true;
+    }
+    if (ctx.validateBind) {
+        QGC_HW_WARN_ONCE(GstDmaBufLog, s_loggedBindFailed,
+                         stage << "EGLImage bind failed plane" << plane << "glError=" << Qt::hex << glErr
+                               << "eglError=" << eglGetError() << "— CPU fallback");
+        return false;
+    }
+    qCDebug(GstDmaBufLog) << stage << "eglImageTargetTexture2D plane" << plane << "glError=" << Qt::hex << glErr
+                          << "eglError=" << eglGetError();
+    return true;
+}
+
+// Y210/Y410 have no per-plane fallback; warn once that frames will be black.
+void warnUnsupportedPackedFormat([[maybe_unused]] int fourcc)
+{
+#if defined(DRM_FORMAT_Y210)
+    static std::atomic<bool> s_warnedY210{false};
+    if (fourcc == DRM_FORMAT_Y210) {
+        QGC_HW_WARN_ONCE(GstDmaBufLog, s_warnedY210,
+                         "EGL DMABuf import of Y210 unsupported on this driver; frames will be black");
+    }
+#endif
+#if defined(DRM_FORMAT_Y410)
+    static std::atomic<bool> s_warnedY410{false};
+    if (fourcc == DRM_FORMAT_Y410) {
+        QGC_HW_WARN_ONCE(GstDmaBufLog, s_warnedY410,
+                         "EGL DMABuf import of Y410 unsupported on this driver; frames will be black");
+    }
+#endif
+}
+
+/// One EGLImage over every plane of a single-fd buffer, bound to each plane texture (Mesa VA-API NV12 ships one fd;
+/// iHD rejects split-plane R8/GR88 imports).
+ImportResult importSingleFd(const EglImport& ctx, int fourcc)
+{
+    const int planeCount = int(ctx.names.size());
+    const int fd0 = ctx.fdOf(0);
+    DmaImageKey key{.fd = fd0,
+                    .width = GST_VIDEO_INFO_WIDTH(ctx.info),
+                    .height = GST_VIDEO_INFO_HEIGHT(ctx.info),
+                    .fourcc = fourcc,
+                    .planeCount = planeCount};
+    EglAttribList attribs;
+    attribs.push(EGL_WIDTH, key.width);
+    attribs.push(EGL_HEIGHT, key.height);
+    attribs.push(EGL_LINUX_DRM_FOURCC_EXT, fourcc);
+    for (int p = 0; p < planeCount; ++p) {
+        const auto [offset, stride] = GstHw::planeLayout(*ctx.info, ctx.vmeta, p);
+        if (!plausibleLayout(offset, stride)) {
+            return ImportResult::Fail;
+        }
+        key.offsets[p] = offset;
+        key.strides[p] = stride;
+        attribs.push(kPlFd[p], fd0);
+        attribs.push(kPlOffset[p], static_cast<EGLAttrib>(offset));
+        attribs.push(kPlPitch[p], static_cast<EGLAttrib>(stride));
+        if (ctx.hasModifiersExt) {  // interleaved per spec: modifier attribs follow FD/OFFSET/PITCH for same plane
+            attribs.push(kPlModLo[p], kLinearModifierLo);
+            attribs.push(kPlModHi[p], kLinearModifierHi);
+        }
+    }
+    if (!attribs.finish()) {
+        qCWarning(GstDmaBufLog) << "single-fd EGL attrib list overflow; falling back to per-plane";
+        return ImportResult::TryPerPlane;
+    }
+
+    const AcquiredImage acquired = acquireImage(ctx.display, key, attribs);
+    if (acquired.image == EGL_NO_IMAGE_KHR) {
+        warnUnsupportedPackedFormat(fourcc);
+        const EGLint err = eglGetError();
+        qCWarning(GstDmaBufLog) << "single-fd eglCreateImage failed (" << Qt::hex << err
+                                << "); falling back to per-plane";
+        if (err == EGL_BAD_MATCH) {
+            s_singleFdBroken.store(true, std::memory_order_relaxed);
+        }
+        return ImportResult::TryPerPlane;
+    }
+
+    bool bound = true;
+    for (int p = 0; p < planeCount && bound; ++p) {
+        bound = bindPlane(ctx, p, acquired.image, "single-fd");
+    }
+    releaseImage(ctx.display, key, acquired, gst_buffer_peek_memory(ctx.buffer, 0), !bound);
+    return bound ? ImportResult::Ok : ImportResult::Fail;
+}
+
+/// One EGLImage per plane; @p sharedFd when every plane lives in memory 0 at its own offset (single-fd packing).
+bool importPerPlane(const EglImport& ctx, bool sharedFd)
+{
+    for (int i = 0; i < int(ctx.names.size()); ++i) {
+        const int memIdx = sharedFd ? 0 : i;
+        const int fd = ctx.fdOf(memIdx);
+        const auto [planeOffset, stride] = GstHw::planeLayout(*ctx.info, ctx.vmeta, i);
+        // Dedicated-fd planes already start at the plane data; the offset only applies to single-fd packing.
+        const gsize offset = sharedFd ? planeOffset : 0;
+        if (!plausibleLayout(offset, stride)) {
+            return false;
+        }
+        const int fourcc = GstHw::drmFourccForPlane(*ctx.info, i);
+        if (fourcc == -1) {
+            qCWarning(GstDmaBufLog) << "no DRM fourcc for format"
+                                    << gst_video_format_to_string(GST_VIDEO_INFO_FORMAT(ctx.info));
+            return false;
+        }
+
+        // Per-plane key: same fd may back several planes (NV12 single-fd), so include geometry and layout.
+        DmaImageKey key{.fd = fd,
+                        .width = GstHw::planeWidth(*ctx.info, i),
+                        .height = GstHw::planeHeight(*ctx.info, i),
+                        .fourcc = fourcc,
+                        .planeCount = 1};
+        key.offsets[0] = offset;
+        key.strides[0] = stride;
+        EglAttribList attribs;
+        attribs.push(EGL_WIDTH, key.width);
+        attribs.push(EGL_HEIGHT, key.height);
+        attribs.push(EGL_LINUX_DRM_FOURCC_EXT, fourcc);
+        attribs.push(kPlFd[0], fd);
+        attribs.push(kPlOffset[0], static_cast<EGLAttrib>(offset));
+        attribs.push(kPlPitch[0], static_cast<EGLAttrib>(stride));
+        if (ctx.hasModifiersExt) {
+            // Modifier keys index EGLImage plane slots, not source planes; data sits in slot 0 so the modifier goes to
+            // PLANE0 ([i] would push PLANE1+ attribs that AMD RADV rejects).
+            attribs.push(kPlModLo[0], kLinearModifierLo);
+            attribs.push(kPlModHi[0], kLinearModifierHi);
+        }
+        if (!attribs.finish()) {
+            qCWarning(GstDmaBufLog) << "per-plane EGL attrib list overflow; CPU fallback";
+            return false;
+        }
+
+        const AcquiredImage acquired = acquireImage(ctx.display, key, attribs);
+        if (acquired.image == EGL_NO_IMAGE_KHR) {
+            const EGLint err = eglGetError();
+            qCWarning(GstDmaBufLog) << "eglCreateImage failed plane" << i << "err" << Qt::hex << err;
+            if (err == EGL_BAD_MATCH) {
+                disableAfterPerPlaneBadMatch(ctx.display, i);
+            }
+            return false;
+        }
+        const bool bound = bindPlane(ctx, i, acquired.image, "per-plane");
+        releaseImage(ctx.display, key, acquired, gst_buffer_peek_memory(ctx.buffer, guint(memIdx)), !bound);
+        if (!bound) {
+            return false;
+        }
+    }
+    return true;
+}
+
 }  // namespace
 
 GstDmaBufVideoBuffer::GstDmaBufVideoBuffer(GstSample* sample, const GstVideoInfo& videoInfo,
                                            const QVideoFrameFormat& format, EGLDisplay eglDisplay)
-    : GstHwVideoBuffer(QVideoFrame::RhiTextureHandle, sample, videoInfo, applyEglfsFormatQuirk(format)),
-      _eglDisplay(eglDisplay)
+    : GstHwVideoBuffer(QVideoFrame::RhiTextureHandle, sample, videoInfo, format)
+    , _eglDisplay(eglDisplay)
 {
+    // Advertised for the EGLImage import only; the base class keeps the memory's format, so map() refuses the CPU
+    // upload Qt would otherwise read as RGBA.
+    _format = applyEglfsFormatQuirk(_format);
 #if GST_CHECK_VERSION(1, 24, 0)
     if (GstCaps* caps = gst_sample_get_caps(sample); caps && gst_video_is_dma_drm_caps(caps)) {
         GstVideoInfoDmaDrm drmInfo = {};
@@ -414,60 +708,83 @@ void GstDmaBufVideoBuffer::resetCachedState() noexcept
 {
     s_cachedDisplay.store(EGL_NO_DISPLAY, std::memory_order_release);
     s_permanentlyDisabled.store(false, std::memory_order_release);
+    s_singleFdBroken.store(false, std::memory_order_release);
     s_loggedSingleFdDisabled.store(false, std::memory_order_release);
 #if defined(QGC_HAS_GST_VULKAN_GPU_PATH)
-    GstDmaBufVulkan::resetLoggedState();
+    GstDmaBufVulkan::resetCachedState();
 #endif
-    s_loggedBadBackend.store(false, std::memory_order_release);
-    s_loggedFenceTimeout.store(false, std::memory_order_release);
+    s_loggedProducerWaitTimeout.store(false, std::memory_order_release);
     s_bindValidated.store(false, std::memory_order_release);
     s_loggedBindFailed.store(false, std::memory_order_release);
-    if (QOpenGLContext::currentContext()) {
-        // GL context current (render-thread reset, e.g. sceneGraphInvalidated): drain now so cached/orphaned EGLImages
-        // can't leak when no DMABuf frame is ever mapped again.
-        const QMutexLocker lock(&s_dmaCacheMutex);
-        clearDmaImageCacheLocked(EGL_NO_DISPLAY);
-        s_dmaCacheResetPending.store(false, std::memory_order_release);
-    } else {
-        // Defer EGLImage teardown to the next render-thread mapTextures(); eglDestroyImage off the GL thread is
-        // unsafe.
-        s_dmaCacheResetPending.store(true, std::memory_order_release);
-    }
+    // Destroyed now on a render-thread reset (e.g. sceneGraphInvalidated); otherwise parked for the next mapTextures().
+    const QMutexLocker lock(&s_dmaCacheMutex);
+    s_dmaImageCache.clear();
+    s_dmaImageCache.drainDeferred();
 }
 
 namespace {
-struct DmaBufCacheResetRegistrar
-{
-    DmaBufCacheResetRegistrar()
-    {
-        GstContextBridgeRegistry::registerCacheReset(&GstDmaBufVideoBuffer::resetCachedState);
-    }
-};
 
-const DmaBufCacheResetRegistrar s_dmaBufCacheResetRegistrar;
+// Construction-time hint only; render-time mapTextures() prefers eglGetCurrentDisplay() to avoid xcb_egl EGLDisplay
+// mismatches.
+void prepareDmaBufContext(HwVideoBufferContext& context)
+{
+    EGLDisplay dpy = EGL_NO_DISPLAY;
+    const QString platform = QGuiApplication::platformName();
+    if (platform == QLatin1String("wayland") || platform == QLatin1String("wayland-egl")) {
+        if (auto* ni = QGuiApplication::platformNativeInterface()) {
+            dpy = static_cast<EGLDisplay>(ni->nativeResourceForIntegration("egldisplay"));
+        }
+    }
+    if (dpy == EGL_NO_DISPLAY) {
+        dpy = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+    }
+    if (dpy == EGL_NO_DISPLAY) {
+        qCWarning(GstDmaBufLog) << "GPU zero-copy requested but EGLDisplay unavailable on platform" << platform
+                                << "— DMABuf path disabled";
+    } else {
+        qCInfo(GstDmaBufLog) << "DMABuf zero-copy path available on" << platform
+                             << "— actual path chosen at caps negotiation";
+    }
+    context.dmaBufEglDisplay = dpy;
+}
+
 }  // namespace
 
-#ifdef QGC_GST_BUILD_TESTING
-bool GstDmaBufVideoBuffer::singleFdImportEnabledForTest() noexcept
+constinit const HwPathDescriptor GstHwPaths::kDmaBuf = {
+    .path = HwVideoBufferPath::DmaBuf,
+    .matches = [](GstMemory* mem, const HwVideoBufferContext& context) -> bool {
+        return (context.dmaBufEglDisplay != EGL_NO_DISPLAY) && gst_is_dmabuf_memory(mem);
+    },
+    .construct = [](GstSample* sample, const GstVideoInfo& info, QVideoFrameFormat format,
+                    const HwVideoBufferContext& context) -> std::unique_ptr<GstHwVideoBuffer> {
+        return std::make_unique<GstDmaBufVideoBuffer>(sample, info, format, context.dmaBufEglDisplay);
+    },
+    .prepareContext = &prepareDmaBufContext,
+    .resetCaches =
+        [] {
+            GstDmaBufVideoBuffer::resetCachedState();
+            GstEglHelpers::resetExtensionCache();
+        },
+};
+
+#ifdef QGC_UNITTEST_BUILD
+bool GstDmaBufVideoBuffer::texStorageImportAllowedForTest(bool contextIsOpenGles, bool hasTexStorageExt) noexcept
 {
-    // Read live: production singleFdImportEnabled() reads the parse-once env cache, which can't observe
-    // per-case env mutations under test. Mirrors HwBuffers truthy() with default=on.
-    const QByteArray v = qgetenv("QGC_GST_DMABUF_SINGLE_EGLIMAGE").trimmed().toLower();
-    if (v.isEmpty()) {
-        return true;
+    return texStorageImportAllowed(contextIsOpenGles, hasTexStorageExt);
+}
+
+bool GstDmaBufVideoBuffer::directGlImportAllowedForTest(guint64 drmModifier) noexcept
+{
+    return directGlImportAllowed(drmModifier);
+}
+
+void GstDmaBufVideoBuffer::recordEglBadMatchForTest(bool singleFd) noexcept
+{
+    if (singleFd) {
+        s_singleFdBroken.store(true, std::memory_order_relaxed);
+    } else {
+        disableAfterPerPlaneBadMatch(EGL_NO_DISPLAY, 0);
     }
-    return v != "0" && v != "false" && v != "off" && v != "no";
-}
-
-bool GstDmaBufVideoBuffer::texStorageImportAllowedForTest(bool contextIsOpenGles, bool hasTexStorageExt,
-                                                          guint64 drmModifier) noexcept
-{
-    return texStorageImportAllowed(contextIsOpenGles, hasTexStorageExt, drmModifier);
-}
-
-bool GstDmaBufVideoBuffer::directGlImportAllowedForTest(bool hasModifiersExt, guint64 drmModifier) noexcept
-{
-    return directGlImportAllowed(hasModifiersExt, drmModifier);
 }
 #endif
 
@@ -484,6 +801,12 @@ bool GstDmaBufVideoBuffer::validatePlaneHandles() const
     });
     if (!planesOk)
         return false;
+#if defined(QGC_HAS_GST_VULKAN_GPU_PATH)
+    if (QGCRhiCapture::deviceSnapshot().backend.load(std::memory_order_acquire) == static_cast<int>(QRhi::Vulkan) &&
+        !GstDmaBufVulkan::canImport(_videoInfo)) {
+        return false;
+    }
+#endif
     // Reject tiled (non-LINEAR) DMABuf without EGL_EXT_image_dma_buf_import_modifiers — mapTextures() needs the
     // modifier attribs to import tiled layouts.
 #if GST_CHECK_VERSION(1, 24, 0)
@@ -496,15 +819,17 @@ bool GstDmaBufVideoBuffer::validatePlaneHandles() const
     return true;
 }
 
-QVideoFrameTexturesUPtr GstDmaBufVideoBuffer::mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& /*old*/)
+QVideoFrameTexturesUPtr GstDmaBufVideoBuffer::mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& old)
 {
     const GstHwPathTelemetry::ScopedMapTimer mapTimer(HwVideoBufferPath::DmaBuf);
-    // Qt's contract: mapTextures runs on the QRhi (render) thread. Bail rather than crash if ever called off-thread.
-    if (!rhi.thread()->isCurrentThread()) {
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
-    }
-
-    if (!_sample) {
+#if defined(QGC_HAS_GST_VULKAN_GPU_PATH)
+    const bool vulkan = (rhi.backend() == QRhi::Vulkan);
+#else
+    constexpr bool vulkan = false;
+#endif
+    GstBuffer* buffer = nullptr;
+    if (!checkMapPreconditions(rhi, static_cast<int>(vulkan ? QRhi::Vulkan : QRhi::OpenGLES2), GstDmaBufLog(), s_diag,
+                               buffer)) {
         return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
     }
 
@@ -513,31 +838,24 @@ QVideoFrameTexturesUPtr GstDmaBufVideoBuffer::mapTextures(QRhi& rhi, QVideoFrame
         return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
     }
 
-    // Modifier cached from caps in the ctor (0 = LINEAR / non-DRM / normalized INVALID).
-    const guint64 drmModifier = _drmModifier;
-
-    // Sync barrier for Intel iHD legacy LINEAR (no implicit fence). Prefer an EGL fence over a full-frame mmap;
-    // the fence path needs the GL context current, so it runs below. QGC_GST_DMABUF_NO_MMAP_FENCE=1 skips both where
-    // PRIME 2 fence FDs make the barrier redundant.
-    const bool skipLinearFence = HwBuffers::hwBufferEnvConfig().dmaBufNoMmapFence;
-    const bool needLinearFence = (drmModifier == 0 /* DRM_FORMAT_MOD_LINEAR / unknown */ && !skipLinearFence);
-
 #if defined(QGC_HAS_GST_VULKAN_GPU_PATH)
-    if (rhi.backend() == QRhi::Vulkan) {
-        return importVulkan(rhi);
+    if (vulkan) {
+        // Vulkan does not wait on implicit fences of imported dma-buf memory: import only once the poll() barrier
+        // confirms the producer's writes completed.
+        if (!waitForProducerWrites(buffer)) {
+            GstHwPathTelemetry::recordFallbackReason(HwVideoBufferPath::DmaBuf,
+                                                     GstHwPathTelemetry::HwFallbackReason::VulkanNoSync);
+            QGC_HW_WARN_ONCE(GstDmaBufLog, s_loggedVulkanSyncRefused,
+                             "Vulkan import refused: producer writes not known complete — CPU fallback");
+            return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
+        }
+        return importVulkan(rhi, old);
     }
 #endif
-    if (rhi.backend() != QRhi::OpenGLES2) {
-        QGC_HW_WARN_ONCE(GstDmaBufLog, s_loggedBadBackend,
-                         "QRhi backend is not OpenGLES2/Vulkan; zero-copy DMABuf path unsupported");
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
-    }
 
-    // Bind Qt's GL context before any EGL/GL call, else the calls no-op into a foreign/null context (import succeeds
-    // but samples green).
-    rhi.makeThreadLocalNativeContextCurrent();
+    QOpenGLContext* glContext = GstEglHelpers::bindRhiContext(rhi);
 
-    // Mirror Qt 6.10 qgstvideobuffer.cpp:349 — surface latent GL/EGL state from prior frames.
+    // Mirror Qt's QGstVideoBuffer::mapTextures() (logGlAndEglErrors) — surface latent GL/EGL state from prior frames.
     // Qt 6.12 moved its DMABuf gate from eglfs-only to qGstEglCanMapDmaBuf() and added modifier checks; keep this
     // richer QGC path in sync when raising the Qt-private-source baseline.
     if (Q_UNLIKELY(GstDmaBufLog().isDebugEnabled())) {
@@ -548,161 +866,61 @@ QVideoFrameTexturesUPtr GstDmaBufVideoBuffer::mapTextures(QRhi& rhi, QVideoFrame
         }
     }
 
-    const auto* nativeHandles = static_cast<const QRhiGles2NativeHandles*>(rhi.nativeHandles());
-    if (!nativeHandles || !nativeHandles->context) {
+    if (!glContext) {
         qCWarning(GstDmaBufLog) << "QRhi exposes no GL context";
         return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
     }
 
-    // Prefer QEGLContext::display(): EGLImages from one display can't be sampled by a context on another, and
-    // eglGetCurrentDisplay/eglGetDisplay disagree under xcb_egl.
-    EGLDisplay eglDpy = s_cachedDisplay.load(std::memory_order_acquire);
+    const EGLDisplay eglDpy = resolveRenderDisplay(glContext, _eglDisplay);
     if (eglDpy == EGL_NO_DISPLAY) {
-        eglDpy = GstEglHelpers::resolveEglDisplay(nativeHandles->context);
-        if (eglDpy == EGL_NO_DISPLAY)
-            eglDpy = _eglDisplay;
-        if (eglDpy == EGL_NO_DISPLAY) {
-            return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
-        }
-        // First writer wins; racing renders that resolve the same display make this idempotent.
-        EGLDisplay expected = EGL_NO_DISPLAY;
-        s_cachedDisplay.compare_exchange_strong(expected, eglDpy, std::memory_order_release);
+        return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
     }
 
-    // Render thread, GL context current: reap EGLImages orphaned by off-thread weak-notifies, then any pending reset.
+    // Render thread, GL context current: destroy EGLImages parked by off-thread finalize notifies or resets.
     if (imageCacheEnabled()) {
-        const bool resetPending = s_dmaCacheResetPending.exchange(false, std::memory_order_acq_rel);
         const QMutexLocker lock(&s_dmaCacheMutex);
-        if (!s_orphanedImages.empty()) {
-            drainOrphanedImagesLocked();
-        }
-        if (resetPending) {
-            clearDmaImageCacheLocked(eglDpy);
-        }
+        s_dmaImageCache.drainDeferred();
     }
 
-    // LINEAR sync barrier: prefer EGL_KHR_fence_sync (insert+client-wait, a GPU-completion wait) over mmapping the
-    // whole frame. mmap remains the fallback when the fence ext is absent (a CPU-side read barrier).
-    if (needLinearFence) {
-        // Prefer importing the producer's dma-buf fence for a pure GPU-side wait; only if that fails do we fall
-        // back to the EGL-fence-then-mmap barrier below (never removed — just skipped on a confirmed GPU wait).
-        int producerFd = -1;
-        if (GstBuffer* fenceBuf = gst_sample_get_buffer(_sample)) {
-            if (GstMemory* m0 = gst_buffer_peek_memory(fenceBuf, 0); m0 && gst_is_dmabuf_memory(m0)) {
-                producerFd = gst_dmabuf_memory_get_fd(m0);
-            }
-        }
-        const bool producerFenced = tryExplicitFenceWait(eglDpy, producerFd);
-        if (!producerFenced) {
-            static std::pair<EGLDisplay, bool> fenceExtProbe{EGL_NO_DISPLAY, false};
-            if (fenceExtProbe.first != eglDpy) {
-                fenceExtProbe = {eglDpy, GstEglHelpers::displaySupportsExtension(eglDpy, kFenceSyncExt)};
-            }
-            const bool hasFenceExt = fenceExtProbe.second;
-            static const auto createSyncKHR =
-                reinterpret_cast<PFNEGLCREATESYNCKHRPROC>(eglGetProcAddress("eglCreateSyncKHR"));
-            static const auto clientWaitSyncKHR =
-                reinterpret_cast<PFNEGLCLIENTWAITSYNCKHRPROC>(eglGetProcAddress("eglClientWaitSyncKHR"));
-            static const auto destroySyncKHR =
-                reinterpret_cast<PFNEGLDESTROYSYNCKHRPROC>(eglGetProcAddress("eglDestroySyncKHR"));
-            bool fenced = false;
-            if (hasFenceExt && createSyncKHR && clientWaitSyncKHR && destroySyncKHR) {
-                if (EGLSyncKHR sync = createSyncKHR(eglDpy, EGL_SYNC_FENCE_KHR, nullptr); sync != EGL_NO_SYNC_KHR) {
-                    // Bounded wait: this runs on Qt's render thread, so a GPU hang must not block forever — time out
-                    // and fall through to the mmap barrier instead.
-                    const EGLint waitResult = clientWaitSyncKHR(eglDpy, sync, EGL_SYNC_FLUSH_COMMANDS_BIT_KHR,
-                                                                static_cast<EGLTimeKHR>(100000000));
-                    destroySyncKHR(eglDpy, sync);
-                    GstHwPathTelemetry::recordSyncWait(HwVideoBufferPath::DmaBuf, /*gpuSide=*/true);
-                    if (waitResult == EGL_CONDITION_SATISFIED_KHR) {
-                        fenced = true;
-                    } else {
-                        GstHwPathTelemetry::recordFenceTimeout(HwVideoBufferPath::DmaBuf);
-                        GstHwPathTelemetry::recordFallbackReason(HwVideoBufferPath::DmaBuf,
-                                                                 GstHwPathTelemetry::HwFallbackReason::FenceTimeout);
-                        QGC_HW_WARN_ONCE(
-                            GstDmaBufLog, s_loggedFenceTimeout,
-                            "EGL fence wait did not satisfy within 100 ms (GPU stall?) — using mmap barrier");
-                    }
-                }
-            }
-            if (!fenced) {
-                // Fallback: mmap the frame purely as a CPU-side completion barrier (defeats zero-copy for one map
-                // cycle).
-                if (GstBuffer* syncBuf = gst_sample_get_buffer(_sample)) {
-                    GstVideoFrame syncFrame;
-                    if (gst_video_frame_map(&syncFrame, &_videoInfo, syncBuf, GST_MAP_READ)) {
-                        gst_video_frame_unmap(&syncFrame);
-                        GstHwPathTelemetry::recordSyncWait(HwVideoBufferPath::DmaBuf, /*gpuSide=*/false);
-                        GstHwPathTelemetry::recordMmapBarrierHit(HwVideoBufferPath::DmaBuf);
-                    }
-                }
-            }
-        }
-    }
-
-    GstBuffer* buffer = gst_sample_get_buffer(_sample);
-    if (!buffer || !gst_is_dmabuf_memory(gst_buffer_peek_memory(buffer, 0))) {
+    if (!gst_is_dmabuf_memory(gst_buffer_peek_memory(buffer, 0))) {
         return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
     }
     const bool hasModifiersExt = GstEglHelpers::displaySupportsExtension(eglDpy, kModifiersExt);
-    if (!directGlImportAllowed(hasModifiersExt, drmModifier)) {
+    if (!directGlImportAllowed(_drmModifier)) {
         // Reaching here means caps/filtering changed between the validate and render threads or an upstream element
         // pushed a modifier layout we do not advertise. Fall back before either GL import path can bind the EGLImage.
         static std::atomic<bool> warnedModifierRejected{false};
         if (!warnedModifierRejected.exchange(true, std::memory_order_relaxed)) {
-            qCWarning(GstDmaBufLog)
-                << "DMABuf modifier" << Qt::hex << drmModifier
-                << "rejected for direct GL import"
-                << (hasModifiersExt ? "(EGL modifier import present but disabled for safety)"
-                                    : "(EGL_EXT_image_dma_buf_import_modifiers absent)")
-                << "— falling back to CPU";
+            qCWarning(GstDmaBufLog) << "DMABuf modifier" << Qt::hex << _drmModifier << "rejected for direct GL import"
+                                    << (hasModifiersExt ? "(EGL modifier import present but disabled for safety)"
+                                                        : "(EGL_EXT_image_dma_buf_import_modifiers absent)")
+                                    << "— falling back to CPU";
         }
         GstHwPathTelemetry::recordFallbackReason(HwVideoBufferPath::DmaBuf,
                                                  GstHwPathTelemetry::HwFallbackReason::ModifierRejected);
         return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
     }
 
-    static const auto eglImageTargetTexture2D =
-        reinterpret_cast<PFNGLEGLIMAGETARGETTEXTURE2DOESPROC>(eglGetProcAddress("glEGLImageTargetTexture2DOES"));
-    if (!eglImageTargetTexture2D) {
+    // Producer barrier (Intel iHD legacy LINEAR is not implicitly fenced by the EGL import).
+    // QGC_GST_DMABUF_NO_MMAP_FENCE=1 skips it where PRIME 2 fence FDs make it redundant.
+    if (!HwBuffers::hwBufferEnvConfig().dmaBufNoMmapFence) {
+        waitForProducer(eglDpy, buffer);
+    }
+
+    const EglImageBinder binder = eglImageBinder(*glContext);
+    if (!binder.targetTexture2D) {
         qCWarning(GstDmaBufLog) << "glEGLImageTargetTexture2DOES unavailable";
         return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
     }
 
-    // Desktop GL with GL_EXT_EGL_image_storage: bind LINEAR DMABuf via immutable storage to skip the per-frame
-    // texture-storage realloc the mutable OES path forces (OBS measured ~100x on discrete Intel). Tiled DMABuf stays
-    // on glEGLImageTargetTexture2DOES; Mesa/Gallium can segfault when tiled VA images take the tex-storage path.
-    // GLES also keeps the OES path: the storage ext isn't reliably exposed and the OES bind is the contract there.
-    PFNGLEGLIMAGETARGETTEXSTORAGEEXTPROC eglImageTargetTexStorage = nullptr;
-    if (const QOpenGLContext* ctx = QOpenGLContext::currentContext()) {
-        const bool useTexStorage =
-            texStorageImportAllowed(ctx->isOpenGLES(),
-                                    ctx->hasExtension(QByteArrayLiteral("GL_EXT_EGL_image_storage")), drmModifier);
-        eglImageTargetTexStorage = useTexStorage
-                                       ? reinterpret_cast<PFNGLEGLIMAGETARGETTEXSTORAGEEXTPROC>(
-                                             eglGetProcAddress("glEGLImageTargetTexStorageEXT"))
-                                       : nullptr;
-    }
-    const auto bindEglImage = [&](GLenum target, EGLImage img) {
-        if (eglImageTargetTexStorage)
-            eglImageTargetTexStorage(target, img, nullptr);
-        else
-            eglImageTargetTexture2D(target, img);
-    };
-    // Validate binds with glGetError only on the first import per epoch (reset via resetCachedState); steady-state
-    // frames skip the pipeline flush.
-    const bool validateBind = !s_bindValidated.load(std::memory_order_relaxed);
-
     // gst_video_frame_map(GST_MAP_READ) on DMABuf mmaps and defeats zero-copy; read offsets from GstVideoMeta.
     // Qt 6.12's upstream GStreamer path also prefers GstVideoMeta/video-info offsets; preserve this no-mmap behavior when
     // reconciling against newer Qt sources.
-    GstVideoMeta* vmeta = gst_buffer_get_video_meta(buffer);
     const int planeCount = std::clamp(int(GST_VIDEO_INFO_N_PLANES(&_videoInfo)), 1, kMaxPlanes);
     const int memCount = int(gst_buffer_n_memory(buffer));
     // memCount==1: either multi-plane shared fd (NV12) or packed single-plane (YUY2/UYVY/…).
-    const int cachedSingleFourcc = (memCount == 1) ? GstHw::drmFourccForSingleFd(_videoInfo) : -1;
-    bool singleFdPacking = (cachedSingleFourcc != -1);
+    const int singleFdFourcc = (memCount == 1) ? GstHw::drmFourccForSingleFd(_videoInfo) : -1;
+    bool singleFdPacking = (singleFdFourcc != -1);
     if (singleFdPacking && !singleFdImportEnabled()) {
         if (!s_loggedSingleFdDisabled.exchange(true, std::memory_order_relaxed)) {
             qCInfo(GstDmaBufLog) << "Single-EGLImage DMABuf import disabled by"
@@ -722,313 +940,47 @@ QVideoFrameTexturesUPtr GstDmaBufVideoBuffer::mapTextures(QRhi& rhi, QVideoFrame
         return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
     }
 
-    // No texture reuse: caching QRhiTextures across frames caused periodic green frames on real RTSP H.264, and the
-    // ~us/frame win isn't worth it.
+    // Fresh texture names per frame: each bundle owns and deletes its own, and reusing them across bundles isn't worth
+    // the ~us/frame.
     std::array<GLuint, kMaxPlanes> names{};
-    QOpenGLFunctions functions(nativeHandles->context);
+    QOpenGLFunctions functions(glContext);
     functions.glGenTextures(planeCount, names.data());
 
-    // Modifier attribs only with the ext present; otherwise impl assumes LINEAR (matches our rejection above).
-    const EGLAttrib modLo = static_cast<EGLAttrib>(drmModifier & 0xFFFFFFFFu);
-    const EGLAttrib modHi = static_cast<EGLAttrib>((drmModifier >> 32) & 0xFFFFFFFFu);
-
-    bool ok = true;
-
-    // Single-fd fast path: one EGLImage for all planes (Mesa VA-API NV12 ships memCount==1; iHD rejects split-plane
-    // R8/GR88 imports).
-    if (singleFdPacking) {
-        if (planeCount > kMaxPlanes) {
-            qCWarning(GstDmaBufLog) << "single-fd format has" << planeCount << "planes (>" << kMaxPlanes
-                                    << "); falling back to per-plane";
-            goto per_plane_path;
-        }
-        const int singleFourcc = cachedSingleFourcc;
-        if (singleFourcc == -1) {
-            goto per_plane_path;
-        }
-        const int fd0 = gst_dmabuf_memory_get_fd(gst_buffer_peek_memory(buffer, 0));
-        // attribPush writes 2 EGLAttribs/call: 3 header keys + up to 5/plane*kMaxPlanes, *2, +1 EGL_NONE terminator.
-        EGLAttrib attribs[2 * (3 + kMaxPlanes * 5) + 1];
-        int n = 0;
-        bool attribOverflow = false;
-        auto attribPush = [&](EGLAttrib k, EGLAttrib v) {
-            if (n >= int(std::size(attribs)) - 1) {
-                attribOverflow = true;
-                return;
-            }
-            attribs[n++] = k;
-            attribs[n++] = v;
-        };
-        attribPush(EGL_WIDTH, GST_VIDEO_INFO_WIDTH(&_videoInfo));
-        attribPush(EGL_HEIGHT, GST_VIDEO_INFO_HEIGHT(&_videoInfo));
-        attribPush(EGL_LINUX_DRM_FOURCC_EXT, singleFourcc);
-        std::array<gsize, kMaxPlanes> planeOffsets{};
-        std::array<int, kMaxPlanes> planeStrides{};
-        for (int p = 0; p < planeCount; ++p) {
-            const auto off = vmeta ? vmeta->offset[p] : GST_VIDEO_INFO_PLANE_OFFSET(&_videoInfo, p);
-            const auto pitch = vmeta ? vmeta->stride[p] : GST_VIDEO_INFO_PLANE_STRIDE(&_videoInfo, p);
-            if (pitch <= 0 ||
-                static_cast<quint64>(off) > static_cast<quint64>((std::numeric_limits<EGLAttrib>::max)())) {
-                qCWarning(GstDmaBufLog) << "implausible plane stride/offset (stride=" << pitch << "offset=" << off
-                                        << "); CPU fallback";
-                ok = false;
-                goto textures_built;
-            }
-            planeOffsets[p] = off;
-            planeStrides[p] = pitch;
-            attribPush(kPlFd[p], fd0);
-            attribPush(kPlOffset[p], static_cast<EGLAttrib>(off));
-            attribPush(kPlPitch[p], static_cast<EGLAttrib>(pitch));
-            if (hasModifiersExt) {  // interleaved per spec: modifier attribs follow FD/OFFSET/PITCH for same plane
-                attribPush(kPlModLo[p], modLo);
-                attribPush(kPlModHi[p], modHi);
-            }
-        }
-        if (attribOverflow) {
-            qCWarning(GstDmaBufLog) << "single-fd EGL attrib list overflow; falling back to per-plane";
-            goto per_plane_path;
-        }
-        attribs[n++] = EGL_NONE;
-        const bool cacheOn = imageCacheEnabled();
-        const DmaImageKey key{fd0,
-                              drmModifier,
-                              GST_VIDEO_INFO_WIDTH(&_videoInfo),
-                              GST_VIDEO_INFO_HEIGHT(&_videoInfo),
-                              singleFourcc,
-                              planeCount,
-                              planeOffsets,
-                              planeStrides};
-        EGLImage singleImage = EGL_NO_IMAGE_KHR;
-        bool singleImageCached = false;
-        if (cacheOn) {
-            const QMutexLocker lock(&s_dmaCacheMutex);
-            singleImage = cachedDmaImageLocked(key, eglDpy);
-            singleImageCached = (singleImage != EGL_NO_IMAGE_KHR);
-        }
-        if (singleImage == EGL_NO_IMAGE_KHR) {
-            singleImage = eglCreateImage(eglDpy, EGL_NO_CONTEXT, EGL_LINUX_DMA_BUF_EXT, nullptr, attribs);
-            if (cacheOn) {
-                GstHwPathTelemetry::recordImageCacheMiss(HwVideoBufferPath::DmaBuf);
-            }
-        } else if (cacheOn) {
-            GstHwPathTelemetry::recordImageCacheHit(HwVideoBufferPath::DmaBuf);
-        }
-        if (singleImage != EGL_NO_IMAGE_KHR) {
-            bool bindFailed = false;
-            for (int p = 0; p < planeCount; ++p) {
-                functions.glBindTexture(GL_TEXTURE_2D, names[p]);
-                bindEglImage(GL_TEXTURE_2D, singleImage);
-                // glGetError forces a pipeline flush — only first import per epoch or when category debug is on.
-                if (Q_UNLIKELY(validateBind || GstDmaBufLog().isDebugEnabled())) {
-                    if (const GLenum glErr = functions.glGetError(); glErr != GL_NO_ERROR) {
-                        if (validateBind) {
-                            QGC_HW_WARN_ONCE(GstDmaBufLog, s_loggedBindFailed,
-                                             "single-fd EGLImage bind failed plane"
-                                                 << p << "glError=" << Qt::hex << glErr << "eglError=" << eglGetError()
-                                                 << "— CPU fallback");
-                            bindFailed = true;
-                            break;
-                        }
-                        qCDebug(GstDmaBufLog) << "single-fd eglImageTargetTexture2D plane" << p << "glError=" << Qt::hex
-                                              << glErr << "eglError=" << eglGetError();
-                    }
-                }
-            }
-            if (bindFailed) {
-                // Evict/destroy the suspect image so it can't serve later frames.
-                if (cacheOn && singleImageCached) {
-                    const QMutexLocker lock(&s_dmaCacheMutex);
-                    s_dmaImageCache.eraseIf([&](const DmaImageKey& k, const DmaCachedImage&) { return k == key; });
-                } else {
-                    eglDestroyImage(eglDpy, singleImage);
-                }
-                ok = false;
-                goto textures_built;
-            }
-            if (cacheOn && !singleImageCached) {
-                const QMutexLocker lock(&s_dmaCacheMutex);
-                insertDmaImageLocked(key, eglDpy, singleImage, gst_buffer_peek_memory(buffer, 0));
-            } else if (!cacheOn) {
-                eglDestroyImage(eglDpy, singleImage);
-            }
-            goto textures_built;
-        }
-#if defined(DRM_FORMAT_Y210) || defined(DRM_FORMAT_Y410)
-        // Y210/Y410 have no per-plane fallback; warn once that frames will be black.
-        {
-            static std::atomic<bool> s_warnedY210{false};
-            static std::atomic<bool> s_warnedY410{false};
-#if defined(DRM_FORMAT_Y210)
-            if (singleFourcc == DRM_FORMAT_Y210 && !s_warnedY210.exchange(true, std::memory_order_relaxed))
-                qCWarning(GstDmaBufLog) << "EGL DMABuf import of Y210 unsupported on this driver; frames will be black";
-#endif
-#if defined(DRM_FORMAT_Y410)
-            if (singleFourcc == DRM_FORMAT_Y410 && !s_warnedY410.exchange(true, std::memory_order_relaxed))
-                qCWarning(GstDmaBufLog) << "EGL DMABuf import of Y410 unsupported on this driver; frames will be black";
-#endif
-        }
-#endif
-        const EGLint singleFdErr = eglGetError();
-        if (drmModifier != 0) {
-            // No per-plane fallback for tiled: GL_TEXTURE_2D import on tiled memory is unsafe (driver
-            // crash/corruption).
-            qCWarning(GstDmaBufLog) << "single-fd tiled eglCreateImage failed (" << Qt::hex << singleFdErr
-                                    << ") — no per-plane fallback for tiled";
-            if (singleFdErr == EGL_BAD_MATCH) {
-                maybePermanentlyDisable(eglDpy, 0, "single-fd-tiled");
-            }
-            ok = false;
-            goto textures_built;
-        }
-        qCWarning(GstDmaBufLog) << "single-fd eglCreateImage failed (" << Qt::hex << singleFdErr
-                                << "); falling back to per-plane";
-        if (singleFdErr == EGL_BAD_MATCH) {
-            // BAD_MATCH on single-fd is permanent (per-plane hits the same issue); mark disabled but still try
-            // per-plane to surface the second log.
-            maybePermanentlyDisable(eglDpy, 0, "single-fd");
-        }
+    const EglImport import{.display = eglDpy,
+                           .buffer = buffer,
+                           .info = &_videoInfo,
+                           .vmeta = gst_buffer_get_video_meta(buffer),
+                           .hasModifiersExt = hasModifiersExt,
+                           .validateBind = !s_bindValidated.load(std::memory_order_relaxed),
+                           .gl = &functions,
+                           .binder = binder,
+                           .names = std::span<const GLuint>(names.data(), std::size_t(planeCount))};
+    ImportResult result = ImportResult::TryPerPlane;
+    // Skipped once a single-fd import hit EGL_BAD_MATCH.
+    if (singleFdPacking && !s_singleFdBroken.load(std::memory_order_relaxed)) {
+        result = importSingleFd(import, singleFdFourcc);
     }
-
-per_plane_path:
-    for (int i = 0; i < planeCount && ok; ++i) {
-        const int memIdx = singleFdPacking ? 0 : i;
-        const int fd = gst_dmabuf_memory_get_fd(gst_buffer_peek_memory(buffer, memIdx));
-        // Dedicated-fd planes already start at the plane data; the offset only applies to single-fd packing.
-        const auto offset =
-            singleFdPacking ? (vmeta ? vmeta->offset[i] : GST_VIDEO_INFO_PLANE_OFFSET(&_videoInfo, i)) : 0;
-        const auto stride = vmeta ? vmeta->stride[i] : GST_VIDEO_INFO_PLANE_STRIDE(&_videoInfo, i);
-        if (stride <= 0 ||
-            static_cast<quint64>(offset) > static_cast<quint64>((std::numeric_limits<EGLAttrib>::max)())) {
-            qCWarning(GstDmaBufLog) << "implausible plane stride/offset (stride=" << stride << "offset=" << offset
-                                    << "); CPU fallback";
-            ok = false;
-            break;
-        }
-        const int planeWidth = GST_VIDEO_INFO_COMP_WIDTH(&_videoInfo, i);
-        const int planeHeight = GST_VIDEO_INFO_COMP_HEIGHT(&_videoInfo, i);
-        const int fourcc = GstHw::drmFourccForPlane(_videoInfo, i);
-        if (fourcc == -1) {
-            qCWarning(GstDmaBufLog) << "no DRM fourcc for format"
-                                    << gst_video_format_to_string(GST_VIDEO_INFO_FORMAT(&_videoInfo));
-            ok = false;
-            break;
-        }
-
-        // EGL attribute list — sized for the maximum (with modifier ext) and zero-terminated.
-        EGLAttrib attribs[18];
-        int n = 0;
-        bool attribOverflow = false;
-        auto attribPush = [&](EGLAttrib k, EGLAttrib v) {
-            if (n >= int(std::size(attribs)) - 1) {
-                attribOverflow = true;
-                return;
-            }
-            attribs[n++] = k;
-            attribs[n++] = v;
-        };
-        attribPush(EGL_WIDTH, planeWidth);
-        attribPush(EGL_HEIGHT, planeHeight);
-        attribPush(EGL_LINUX_DRM_FOURCC_EXT, fourcc);
-        attribPush(kPlFd[0], fd);
-        attribPush(kPlOffset[0], static_cast<EGLAttrib>(offset));
-        attribPush(kPlPitch[0], static_cast<EGLAttrib>(stride));
-        if (hasModifiersExt) {
-            // Modifier keys index EGLImage plane slots, not source planes; data sits in slot 0 so the modifier goes to
-            // PLANE0 ([i] would push PLANE1+ attribs that AMD RADV rejects).
-            attribPush(kPlModLo[0], modLo);
-            attribPush(kPlModHi[0], modHi);
-        }
-        if (attribOverflow) {
-            qCWarning(GstDmaBufLog) << "per-plane EGL attrib list overflow; CPU fallback";
-            ok = false;
-            break;
-        }
-        attribs[n++] = EGL_NONE;
-        const bool cacheOn = imageCacheEnabled();
-        // Per-plane key: same fd may back several planes (NV12 single-fd), so include geometry and layout.
-        std::array<gsize, kMaxPlanes> planeOffsets{};
-        std::array<int, kMaxPlanes> planeStrides{};
-        planeOffsets[0] = offset;
-        planeStrides[0] = stride;
-        const DmaImageKey key{fd, drmModifier, planeWidth, planeHeight, fourcc, 1, planeOffsets, planeStrides};
-        EGLImage image = EGL_NO_IMAGE_KHR;
-        bool imageCached = false;
-        if (cacheOn) {
-            const QMutexLocker lock(&s_dmaCacheMutex);
-            image = cachedDmaImageLocked(key, eglDpy);
-            imageCached = (image != EGL_NO_IMAGE_KHR);
-        }
-        if (image == EGL_NO_IMAGE_KHR) {
-            image = eglCreateImage(eglDpy, EGL_NO_CONTEXT, EGL_LINUX_DMA_BUF_EXT, nullptr, attribs);
-            if (cacheOn) {
-                GstHwPathTelemetry::recordImageCacheMiss(HwVideoBufferPath::DmaBuf);
-            }
-        } else if (cacheOn) {
-            GstHwPathTelemetry::recordImageCacheHit(HwVideoBufferPath::DmaBuf);
-        }
-        if (image == EGL_NO_IMAGE_KHR) {
-            const EGLint eglErr = eglGetError();
-            qCWarning(GstDmaBufLog) << "eglCreateImage failed plane" << i << "err" << Qt::hex << eglErr;
-            if (eglErr == EGL_BAD_MATCH) {
-                maybePermanentlyDisable(eglDpy, i, "per-plane");
-            }
-            ok = false;
-            break;
-        }
-        functions.glBindTexture(GL_TEXTURE_2D, names[i]);
-        bindEglImage(GL_TEXTURE_2D, image);
-        if (Q_UNLIKELY(validateBind || GstDmaBufLog().isDebugEnabled())) {
-            if (const GLenum glErr = functions.glGetError(); glErr != GL_NO_ERROR) {
-                if (validateBind) {
-                    QGC_HW_WARN_ONCE(GstDmaBufLog, s_loggedBindFailed,
-                                     "per-plane EGLImage bind failed plane"
-                                         << i << "glError=" << Qt::hex << glErr << "eglError=" << eglGetError()
-                                         << "— CPU fallback");
-                    // Evict/destroy the suspect image so it can't serve later frames.
-                    if (cacheOn && imageCached) {
-                        const QMutexLocker lock(&s_dmaCacheMutex);
-                        s_dmaImageCache.eraseIf([&](const DmaImageKey& k, const DmaCachedImage&) { return k == key; });
-                    } else {
-                        eglDestroyImage(eglDpy, image);
-                    }
-                    ok = false;
-                    break;
-                }
-                qCDebug(GstDmaBufLog) << "per-plane eglImageTargetTexture2D plane" << i << "glError=" << Qt::hex
-                                      << glErr << "eglError=" << eglGetError();
-            }
-        }
-        if (cacheOn && !imageCached) {
-            const QMutexLocker lock(&s_dmaCacheMutex);
-            insertDmaImageLocked(key, eglDpy, image, gst_buffer_peek_memory(buffer, memIdx));
-        } else if (!cacheOn) {
-            eglDestroyImage(eglDpy, image);
-        }
+    if (result == ImportResult::TryPerPlane) {
+        result = importPerPlane(import, singleFdPacking) ? ImportResult::Ok : ImportResult::Fail;
     }
-
-textures_built:
-
-    if (ok && validateBind) {
-        s_bindValidated.store(true, std::memory_order_relaxed);
-    }
-    if (!ok) {
+    if (result != ImportResult::Ok) {
         functions.glDeleteTextures(planeCount, names.data());
         return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
     }
-
-    auto frameTextures =
-        std::make_unique<FrameTextures>(&rhi, _format.frameSize(), _format.pixelFormat(), names, planeCount);
-    // FrameTextures null-resets planes createFrom() rejects; a partial bundle renders black without bumping the failure
-    // counter, so bail loudly instead.
-    for (int i = 0; i < planeCount; ++i) {
-        if (!frameTextures->texture(i)) {
-            qCWarning(GstDmaBufLog) << "FrameTextures plane" << i << "createFrom failed — dropping frame";
-            // ~FrameTextures glDeleteTextures via releaseGLTextures() — names are owned now.
-            return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
-        }
+    if (import.validateBind) {
+        s_bindValidated.store(true, std::memory_order_relaxed);
     }
-    frameTextures->setSourceSample(takeSample());
-    return frameTextures;
+
+    // FrameTextures owns the names from here: its dtor deletes them if a plane failed to wrap.
+    const GstHwMapTail tail{.path = HwVideoBufferPath::DmaBuf,
+                            .frameSize = _format.frameSize(),
+                            .pixelFormat = _format.pixelFormat(),
+                            .log = &GstDmaBufLog(),
+                            .diag = &s_diag,
+                            .preflight = false};
+    return GstHwFrameTexturesBase::finishMap<FrameTextures>(*this, rhi, old, tail, nullptr, [&] {
+        return std::make_unique<FrameTextures>(&rhi, tail.frameSize, tail.pixelFormat, names, planeCount);
+    });
 }
 
 #endif  // QGC_HAS_GST_DMABUF_GPU_PATH

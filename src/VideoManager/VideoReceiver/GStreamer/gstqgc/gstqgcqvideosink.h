@@ -1,38 +1,55 @@
 #pragma once
 
 #include <gst/video/gstvideosink.h>
-#include <gst/video/video-info.h>
+
+#include <QtCore/QSize>
+#include <QtCore/QString>
+
+#include "GstScoped.h"
+#include "HwBuffers/common/GstHwTypes.h"
 
 G_BEGIN_DECLS
 
 #define GST_TYPE_QGC_Q_VIDEO_SINK (gst_qgc_q_video_sink_get_type())
-G_DECLARE_FINAL_TYPE(GstQgcQVideoSink, gst_qgc_q_video_sink, GST, QGC_Q_VIDEO_SINK, GstVideoSink)
 
 /// \brief GstVideoSink that pushes decoded frames into a Qt QVideoSink; sole sink in qgcvideosinkbin.
 /// Streaming-thread vfuncs MUST NOT touch QObject members directly (thread-affinity asserts) — hand
 /// off via QMetaObject::invokeMethod / bus messages.
-struct _GstQgcQVideoSink
-{
-    GstVideoSink parent;
-
-    // Properties backed inline; GObject's property system is the cross-thread boundary (GST_OBJECT_LOCK).
-    gpointer qvideosink;  // QVideoSink* (caller-owned; never unref'd by us)
-    gboolean active;
-    gboolean gpu_zerocopy;
-
-    // Cached negotiated state (set_caps writes, show_frame reads, both streaming-thread,
-    // serialised by GstBaseSink). `priv` holds heap C++ non-POD state so this struct stays POD.
-    gboolean caps_valid;
-    GstVideoInfo video_info;
-    gpointer priv;  // owned (new/delete in instance_init / finalize)
-};
+G_DECLARE_FINAL_TYPE(GstQgcQVideoSink, gst_qgc_q_video_sink, GST, QGC_Q_VIDEO_SINK, GstVideoSink)
 
 G_END_DECLS
 
-#ifdef __cplusplus
-struct HwVideoBufferContext;
+namespace GstQgc {
 
-/// Install the GPU zero-copy context; pushed once from the GUI thread under GST_OBJECT_LOCK
-/// so the streaming-thread show_frame snapshot stays race-free.
-void gst_qgc_q_video_sink_set_hw_context(GstQgcQVideoSink* self, const HwVideoBufferContext& ctx);
-#endif
+/// Name of the element message qgcqvideosink posts from set_caps with the negotiated raw caps, which are always fixed.
+inline constexpr char kCapsInfoMessage[] = "qgc-caps-info";
+
+struct CapsInfo
+{
+    QString format;  ///< GStreamer format name, e.g. "NV12".
+    QSize size;
+};
+
+/// The negotiated format and size a kCapsInfoMessage carries.
+CapsInfo parseCapsInfo(GstMessage* message);
+
+/// guint64 "frame-stats" field holding the frames @p path delivered: "frames-" plus the lower-cased
+/// GstHw::toString(path).
+const char* sinkFramesField(HwVideoBufferPath path) noexcept;
+
+/// The "frame-stats" of @p sinkOrBin, a qgcqvideosink or the qgcvideosinkbin around one; null for other elements.
+GStreamer::GstStructurePtr frameStats(GstElement* sinkOrBin);
+
+/// Formatted per-path frame counts + the total delivered through GPU paths.
+struct PathStats
+{
+    QString line;
+    quint64 totalDelivered = 0;
+};
+
+/// One qgcqvideosink's frame accounting, from its "frame-stats" structure: the per-path counts it has delivered, plus
+/// its GPU fallbacks and demotions. With @p since (an earlier "frame-stats" value of the same sink), only what changed
+/// since.
+PathStats formatSinkStats(const GstStructure* stats, const GstStructure* since = nullptr) noexcept;
+
+}  // namespace GstQgc

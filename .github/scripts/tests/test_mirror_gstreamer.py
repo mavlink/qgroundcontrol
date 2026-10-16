@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import mirror_gstreamer
 import pytest
-from mirror_gstreamer import PLATFORMS, Artifact, artifacts_for, resolve_platforms
+from common.gstreamer import pinned_checksum
+from mirror_gstreamer import PLATFORMS, Artifact, _expected_sha, artifacts_for, resolve_platforms
 
 
 def test_android_single_artifact() -> None:
@@ -64,5 +66,25 @@ def test_resolve_platforms_rejects_unknown() -> None:
 
 
 def test_s3_key_uses_url_basename() -> None:
-    art = Artifact("https://example/data/pkg/android/1.28.3/file-1.28.3.tar.xz", "android")
+    art = Artifact(
+        "android", "https://example/data/pkg/android/1.28.3/file-1.28.3.tar.xz", "android"
+    )
     assert art.s3_key() == "dependencies/gstreamer/android/file-1.28.3.tar.xz"
+
+
+def test_pinned_checksum_is_authoritative(monkeypatch) -> None:
+    def no_sidecar(url: str, **_kwargs) -> str:
+        raise AssertionError(f"fetched {url}")
+
+    monkeypatch.setattr(mirror_gstreamer, "read_url_text", no_sidecar)
+    (art,) = artifacts_for("android", "1.28.4")
+    assert _expected_sha(art, "1.28.4") == pinned_checksum("1.28.4", "android")
+
+
+def test_unpinned_version_uses_sidecar(monkeypatch) -> None:
+    sidecar = "AB" * 32
+    monkeypatch.setattr(
+        mirror_gstreamer, "read_url_text", lambda url, **_kwargs: f"{sidecar}  file.tar.xz\n"
+    )
+    (art,) = artifacts_for("android", "0.0.1")
+    assert _expected_sha(art, "0.0.1") == sidecar.lower()

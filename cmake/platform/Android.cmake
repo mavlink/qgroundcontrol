@@ -14,7 +14,9 @@ endif()
 if(DEFINED QGC_CONFIG_NDK_FULL_VERSION)
     string(REGEX MATCH "^([0-9]+\\.[0-9]+)" _ndk_major_minor "${QGC_CONFIG_NDK_FULL_VERSION}")
     if(_ndk_major_minor AND NOT CMAKE_ANDROID_NDK_VERSION VERSION_GREATER_EQUAL "${_ndk_major_minor}")
-        message(FATAL_ERROR "QGC: NDK ${CMAKE_ANDROID_NDK_VERSION} is too old. Qt ${Qt6_VERSION} requires NDK ${_ndk_major_minor}+ (${QGC_CONFIG_NDK_VERSION})")
+        message(FATAL_ERROR "QGC: NDK ${CMAKE_ANDROID_NDK_VERSION} is too old. Qt ${Qt6_VERSION} requires NDK "
+                            "${_ndk_major_minor}+ (${QGC_CONFIG_NDK_VERSION})"
+        )
     endif()
     unset(_ndk_major_minor)
 endif()
@@ -46,7 +48,10 @@ if(CMAKE_ANDROID_ARCH_ABI STREQUAL "armeabi-v7a" OR CMAKE_ANDROID_ARCH_ABI STREQ
 elseif(CMAKE_ANDROID_ARCH_ABI STREQUAL "arm64-v8a" OR CMAKE_ANDROID_ARCH_ABI STREQUAL "x86_64")
     set(ANDROID_BITNESS_CODE 66)
 else()
-    message(FATAL_ERROR "QGC: Unsupported Android ABI: ${CMAKE_ANDROID_ARCH_ABI}. Supported: armeabi-v7a, arm64-v8a, x86, x86_64")
+    message(
+        FATAL_ERROR
+            "QGC: Unsupported Android ABI: ${CMAKE_ANDROID_ARCH_ABI}. Supported: armeabi-v7a, arm64-v8a, x86, x86_64"
+    )
 endif()
 
 # ----------------------------------------------------------------------------
@@ -65,7 +70,9 @@ if(NOT ANDROID_DEV_VERSION MATCHES "^[0-9]+$")
     set(ANDROID_DEV_VERSION 0)
 endif()
 if(ANDROID_DEV_VERSION GREATER 999)
-    message(WARNING "QGC: Android dev version ${ANDROID_DEV_VERSION} exceeds 999; clamping. Cut a release tag to reset the counter.")
+    message(WARNING "QGC: Android dev version ${ANDROID_DEV_VERSION} exceeds 999; clamping. "
+                    "Cut a release tag to reset the counter."
+    )
     set(ANDROID_DEV_VERSION 999)
 endif()
 string(LENGTH "${ANDROID_DEV_VERSION}" _qgc_dev_len)
@@ -76,34 +83,41 @@ elseif(_qgc_dev_len EQUAL 2)
 endif()
 
 # Version code format: BBMIPPDDD (B=Bitness, M=Major, I=Minor, P=Patch, D=Dev)
-set(ANDROID_VERSION_CODE "${ANDROID_BITNESS_CODE}${CMAKE_PROJECT_VERSION_MAJOR}${CMAKE_PROJECT_VERSION_MINOR}${ANDROID_PATCH_VERSION}${ANDROID_DEV_VERSION}")
+string(CONCAT ANDROID_VERSION_CODE
+              "${ANDROID_BITNESS_CODE}${CMAKE_PROJECT_VERSION_MAJOR}${CMAKE_PROJECT_VERSION_MINOR}"
+              "${ANDROID_PATCH_VERSION}${ANDROID_DEV_VERSION}"
+)
 message(STATUS "QGC: Android version code: ${ANDROID_VERSION_CODE}")
 
 # ----------------------------------------------------------------------------
-# Extra Java Sources (CPM-deployed dependencies)
+# Extra Java Sources and Assets (CPM-deployed dependencies, GStreamer)
 # ----------------------------------------------------------------------------
-# CPM Java dependencies are copied into this directory by src/Android/CMakeLists.txt
-# and picked up by android/build.gradle as a supplementary source set. Gradle
-# derives the same location as the sibling 'extra_java_sources' of its project dir.
+# CPM Java dependencies (src/Android/CMakeLists.txt) and GStreamer plugin Java sources
+# (cmake/GStreamer/platform/Android.cmake) are copied into this directory and picked
+# up by android/build.gradle as a supplementary source set. Gradle derives the same
+# location as the sibling 'extra_java_sources' of its project dir.
 set(QGC_ANDROID_EXTRA_JAVA_SOURCES_DIR "${CMAKE_BINARY_DIR}/extra_java_sources")
+# GStreamer's fonts and CA bundle are staged here; android/build.gradle adds the
+# sibling 'extra_assets' of its project dir to the APK assets.
+set(QGC_ANDROID_EXTRA_ASSETS_DIR "${CMAKE_BINARY_DIR}/extra_assets")
 
-set_target_properties(${CMAKE_PROJECT_NAME}
-    PROPERTIES
-        # QT_ANDROID_ABIS ${CMAKE_ANDROID_ARCH_ABI}
-        # QT_ANDROID_SDK_BUILD_TOOLS_REVISION
-        QT_ANDROID_MIN_SDK_VERSION ${QGC_QT_ANDROID_MIN_SDK_VERSION}
-        QT_ANDROID_TARGET_SDK_VERSION ${QGC_QT_ANDROID_TARGET_SDK_VERSION}
-        QT_ANDROID_COMPILE_SDK_VERSION ${QGC_QT_ANDROID_COMPILE_SDK_VERSION}
-        QT_ANDROID_PACKAGE_NAME "${QGC_ANDROID_PACKAGE_NAME}"
-        QT_ANDROID_PACKAGE_SOURCE_DIR "${QGC_ANDROID_PACKAGE_SOURCE_DIR}"
-        QT_ANDROID_VERSION_NAME "${CMAKE_PROJECT_VERSION}"
-        QT_ANDROID_VERSION_CODE ${ANDROID_VERSION_CODE}
-        QT_ANDROID_APP_NAME "${CMAKE_PROJECT_NAME}"
-        QT_ANDROID_APP_ICON "@mipmap/ic_launcher"
-        QT_ANDROID_LEGACY_PACKAGING $<BOOL:${QGC_ENABLE_ASAN}>
-        QT_QML_ROOT_PATH "${CMAKE_SOURCE_DIR}"
-        # QT_QML_IMPORT_PATH
-        # QT_ANDROID_SYSTEM_LIBS_PREFIX
+set_target_properties(
+    ${CMAKE_PROJECT_NAME}
+    PROPERTIES # QT_ANDROID_ABIS ${CMAKE_ANDROID_ARCH_ABI}
+               # QT_ANDROID_SDK_BUILD_TOOLS_REVISION
+               QT_ANDROID_MIN_SDK_VERSION ${QGC_QT_ANDROID_MIN_SDK_VERSION}
+               QT_ANDROID_TARGET_SDK_VERSION ${QGC_QT_ANDROID_TARGET_SDK_VERSION}
+               QT_ANDROID_COMPILE_SDK_VERSION ${QGC_QT_ANDROID_COMPILE_SDK_VERSION}
+               QT_ANDROID_PACKAGE_NAME "${QGC_ANDROID_PACKAGE_NAME}"
+               QT_ANDROID_PACKAGE_SOURCE_DIR "${QGC_ANDROID_PACKAGE_SOURCE_DIR}"
+               QT_ANDROID_VERSION_NAME "${CMAKE_PROJECT_VERSION}"
+               QT_ANDROID_VERSION_CODE ${ANDROID_VERSION_CODE}
+               QT_ANDROID_APP_NAME "${CMAKE_PROJECT_NAME}"
+               QT_ANDROID_APP_ICON "@mipmap/ic_launcher"
+               QT_ANDROID_LEGACY_PACKAGING $<BOOL:${QGC_ENABLE_ASAN}>
+               QT_QML_ROOT_PATH "${CMAKE_SOURCE_DIR}"
+               # QT_QML_IMPORT_PATH
+               # QT_ANDROID_SYSTEM_LIBS_PREFIX
 )
 
 # set(QT_ANDROID_POST_BUILD_GRADLE_CLEANUP ON)
@@ -112,7 +126,8 @@ set_target_properties(${CMAKE_PROJECT_NAME}
 #     set(QT_ANDROID_APPLICATION_ARGUMENTS)
 # endif()
 
-# Forward Python3_EXECUTABLE so per-ABI sub-configures use the same interpreter (jinja2 lives in workspace .venv, not hostedtoolcache python).
+# Forward Python3_EXECUTABLE so per-ABI sub-configures use the same interpreter (jinja2 lives in workspace .venv, not
+# hostedtoolcache python).
 list(APPEND QT_ANDROID_MULTI_ABI_FORWARD_VARS QGC_STABLE_BUILD QT_HOST_PATH Python3_EXECUTABLE)
 
 # ----------------------------------------------------------------------------
@@ -124,62 +139,50 @@ include(AndroidOpenSSL)
 # Android Permissions
 # ----------------------------------------------------------------------------
 
-qt_add_android_permission(${CMAKE_PROJECT_NAME}
-    NAME android.permission.BLUETOOTH_SCAN
+qt_add_android_permission(
+    ${CMAKE_PROJECT_NAME}
+    NAME
+    android.permission.BLUETOOTH_SCAN
     ATTRIBUTES
-        minSdkVersion 31
-        usesPermissionFlags neverForLocation
+    minSdkVersion
+    31
+    usesPermissionFlags
+    neverForLocation
 )
-qt_add_android_permission(${CMAKE_PROJECT_NAME}
-    NAME android.permission.BLUETOOTH_CONNECT
+qt_add_android_permission(
+    ${CMAKE_PROJECT_NAME}
+    NAME
+    android.permission.BLUETOOTH_CONNECT
     ATTRIBUTES
-        minSdkVersion 31
-        usesPermissionFlags neverForLocation
+    minSdkVersion
+    31
+    usesPermissionFlags
+    neverForLocation
 )
 
 # Need MulticastLock to receive broadcast UDP packets
-qt_add_android_permission(${CMAKE_PROJECT_NAME}
-    NAME android.permission.CHANGE_WIFI_MULTICAST_STATE
-)
+qt_add_android_permission(${CMAKE_PROJECT_NAME} NAME android.permission.CHANGE_WIFI_MULTICAST_STATE)
 
 # Needed for read/write to SD Card Path in AppSettings
-qt_add_android_permission(${CMAKE_PROJECT_NAME}
-    NAME android.permission.WRITE_EXTERNAL_STORAGE
-    ATTRIBUTES
-        maxSdkVersion 32
+qt_add_android_permission(${CMAKE_PROJECT_NAME} NAME android.permission.WRITE_EXTERNAL_STORAGE ATTRIBUTES maxSdkVersion
+                          32
 )
-qt_add_android_permission(${CMAKE_PROJECT_NAME}
-    NAME android.permission.READ_EXTERNAL_STORAGE
-    ATTRIBUTES
-        maxSdkVersion 33
+qt_add_android_permission(${CMAKE_PROJECT_NAME} NAME android.permission.READ_EXTERNAL_STORAGE ATTRIBUTES maxSdkVersion
+                          33
 )
 
 # All files access on Android 11+ so the save path can live at the SD card root.
 # Requires Play Store approval via a permissions declaration if distributed there.
-qt_add_android_permission(${CMAKE_PROJECT_NAME}
-    NAME android.permission.MANAGE_EXTERNAL_STORAGE
-)
+qt_add_android_permission(${CMAKE_PROJECT_NAME} NAME android.permission.MANAGE_EXTERNAL_STORAGE)
 
 # Joystick
-qt_add_android_permission(${CMAKE_PROJECT_NAME}
-    NAME android.permission.VIBRATE
-)
+qt_add_android_permission(${CMAKE_PROJECT_NAME} NAME android.permission.VIBRATE)
 
-qt_add_android_permission(${CMAKE_PROJECT_NAME}
-    NAME android.permission.INTERNET
-)
-qt_add_android_permission(${CMAKE_PROJECT_NAME}
-    NAME android.permission.WAKE_LOCK
-)
-qt_add_android_permission(${CMAKE_PROJECT_NAME}
-    NAME android.permission.ACCESS_NETWORK_STATE
-)
+qt_add_android_permission(${CMAKE_PROJECT_NAME} NAME android.permission.INTERNET)
+qt_add_android_permission(${CMAKE_PROJECT_NAME} NAME android.permission.WAKE_LOCK)
+qt_add_android_permission(${CMAKE_PROJECT_NAME} NAME android.permission.ACCESS_NETWORK_STATE)
 
-qt_add_android_permission(${CMAKE_PROJECT_NAME}
-    NAME android.permission.ACCESS_FINE_LOCATION
-)
-qt_add_android_permission(${CMAKE_PROJECT_NAME}
-    NAME android.permission.ACCESS_COARSE_LOCATION
-)
+qt_add_android_permission(${CMAKE_PROJECT_NAME} NAME android.permission.ACCESS_FINE_LOCATION)
+qt_add_android_permission(${CMAKE_PROJECT_NAME} NAME android.permission.ACCESS_COARSE_LOCATION)
 
 message(STATUS "QGC: Android platform configuration applied")

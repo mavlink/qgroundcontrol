@@ -24,6 +24,9 @@ private slots:
     void _testInitializeSetsUnitTestEnvironment();
 #endif
 
+    // GraphicsSetup configures the first QQuickWindow when its native surface is created
+    void _testGraphicsSetupConfiguresFirstWindowOnCreation();
+
 #if defined(QGC_UNITTEST_BUILD) && defined(Q_OS_WIN)
     void _testInitializeSwRastRequestsSoftwareDevice();
 #endif

@@ -1,10 +1,12 @@
 #include "GStreamerLogging.h"
 
-#include <QtCore/QSettings>
-#include <QtCore/QString>
 #include <algorithm>
 #include <atomic>
-#include <memory>
+
+#include <QtCore/QByteArray>
+#include <QtCore/QList>
+#include <QtCore/QSettings>
+#include <QtCore/QString>
 
 #include "AppSettings.h"
 #include "GStreamer.h"
@@ -95,12 +97,7 @@ void qtGstLog(GstDebugCategory* category, GstDebugLevel level, const gchar* file
 
     QMessageLogger log(file, line, function);
 
-    struct GFree
-    {
-        void operator()(gchar* p) const { g_free(p); }
-    };
-
-    const std::unique_ptr<gchar, GFree> object_info(gst_info_strdup_printf("%" GST_PTR_FORMAT, object));
+    const GStreamer::GCharPtr object_info = GStreamer::adoptGChar(gst_info_strdup_printf("%" GST_PTR_FORMAT, object));
 
     switch (level) {
         case GST_LEVEL_ERROR:
@@ -158,50 +155,33 @@ void setDebugLevel(int level)
 
 void logDecoderRanks()
 {
-    GList* factories = gst_element_factory_list_get_elements(
-        static_cast<GstElementFactoryListType>(GST_ELEMENT_FACTORY_TYPE_DECODER | GST_ELEMENT_FACTORY_TYPE_MEDIA_VIDEO),
-        GST_RANK_NONE);
+    struct Decoder
+    {
+        guint rank;
+        QByteArray name;
+        QString description;
+    };
 
-    if (!factories) {
+    QList<Decoder> decoders;
+    GStreamer::forEachVideoDecoderFactory(GST_RANK_NONE, [&decoders](GstElementFactory* factory) {
+        GstPluginFeature* const feature = GST_PLUGIN_FEATURE(factory);
+        decoders.append({gst_plugin_feature_get_rank(feature), QByteArray(gst_plugin_feature_get_name(feature)),
+                         GStreamer::describeDecoderFactory(factory)});
+    });
+
+    if (decoders.isEmpty()) {
         qCDebug(GStreamerDecoderRanksLog) << "No video decoder factories found";
         return;
     }
 
-    factories = g_list_sort(factories, [](gconstpointer lhs, gconstpointer rhs) -> gint {
-        const guint lhsRank = gst_plugin_feature_get_rank(GST_PLUGIN_FEATURE(lhs));
-        const guint rhsRank = gst_plugin_feature_get_rank(GST_PLUGIN_FEATURE(rhs));
-        if (lhsRank != rhsRank) {
-            return (lhsRank > rhsRank) ? -1 : 1;
-        }
-        return g_strcmp0(gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(lhs)),
-                         gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(rhs)));
+    std::ranges::sort(decoders, [](const Decoder& lhs, const Decoder& rhs) {
+        return (lhs.rank != rhs.rank) ? (lhs.rank > rhs.rank) : (lhs.name < rhs.name);
     });
 
     qCDebug(GStreamerDecoderRanksLog) << "Video decoder ranks:";
-    for (GList* node = factories; node != nullptr; node = node->next) {
-        GstElementFactory* factory = GST_ELEMENT_FACTORY(node->data);
-        GstPluginFeature* feature = GST_PLUGIN_FEATURE(factory);
-        const gchar* featureName = gst_plugin_feature_get_name(feature);
-        const guint rank = gst_plugin_feature_get_rank(feature);
-        const gchar* klass = gst_element_factory_get_klass(factory);
-        const bool isHw = GStreamer::isHardwareDecoderFactory(factory);
-
-        GstPlugin* plugin = gst_plugin_feature_get_plugin(feature);
-        const gchar* pluginName = plugin ? gst_plugin_get_name(plugin) : "?";
-
-        qCDebug(GStreamerDecoderRanksLog).noquote()
-            << QStringLiteral("  [%1] %2/%3 rank=%4 (%5)")
-                   .arg(isHw ? QStringLiteral("HW") : QStringLiteral("SW"), QString::fromUtf8(pluginName),
-                        QString::fromUtf8(featureName))
-                   .arg(rank)
-                   .arg(QString::fromUtf8(klass));
-
-        if (plugin) {
-            gst_object_unref(plugin);
-        }
+    for (const Decoder& decoder : std::as_const(decoders)) {
+        qCDebug(GStreamerDecoderRanksLog).noquote() << "  " + decoder.description;
     }
-
-    gst_plugin_feature_list_free(factories);
 }
 
 }  // namespace GStreamer

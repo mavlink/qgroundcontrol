@@ -1,0 +1,41 @@
+cmake_minimum_required(VERSION 3.25)
+# The Orchestrator and the install dispatcher call each platform's helpers by name, and build-config.json must have the
+# platform's version and plugin keys: check every platform, including the ones this host cannot build.
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/..")
+include("${CMAKE_CURRENT_LIST_DIR}/_assert.cmake")
+include(Platform)
+include(Install)
+foreach(_file IN ITEMS Apple Windows Linux Android MacOS IOS)
+    include("${CMAKE_CURRENT_LIST_DIR}/../platform/${_file}.cmake")
+endforeach()
+include("${CMAKE_CURRENT_LIST_DIR}/../../modules/BuildConfigReader.cmake")
+file(READ "${CMAKE_CURRENT_LIST_DIR}/../../../.github/build-config.json" QGC_BUILD_CONFIG_CONTENT)
+
+# platform variable|platform|installs an SDK
+foreach(_case IN ITEMS "ANDROID|android|FALSE" "IOS|ios|FALSE" "WIN32|windows|TRUE" "MACOS|macos|TRUE"
+                       "LINUX|linux|TRUE"
+)
+    qgc_test_split("${_case}" _variable _expected _installs)
+    foreach(_platform_variable IN ITEMS ANDROID IOS WIN32 MACOS LINUX)
+        set(${_platform_variable} FALSE)
+    endforeach()
+    set(${_variable} TRUE)
+
+    qgc_gst_platform(_platform)
+    qgc_test_assert_streq("${_variable} platform" "${_expected}" "${_platform}")
+    if(NOT COMMAND _qgc_gst_discover_${_platform}_sdk)
+        message(FATAL_ERROR "ASSERT [${_platform} discovery]: _qgc_gst_discover_${_platform}_sdk is not defined")
+    endif()
+    if(_installs AND NOT COMMAND gstreamer_install_${_platform}_sdk)
+        message(FATAL_ERROR "ASSERT [${_platform} install]: gstreamer_install_${_platform}_sdk is not defined")
+    endif()
+    qgc_config_read(_version OPTIONAL gstreamer version ${_platform_VERSION_KEY})
+    if(NOT _version)
+        message(FATAL_ERROR "ASSERT [${_platform} version]: no gstreamer.version.${_platform_VERSION_KEY}")
+    endif()
+    qgc_config_read(_plugins LIST OPTIONAL gstreamer plugins ${_platform_PLUGIN_KEY})
+    if(NOT _plugins)
+        message(FATAL_ERROR "ASSERT [${_platform} plugins]: no gstreamer.plugins.${_platform_PLUGIN_KEY}")
+    endif()
+endforeach()
+qgc_test_pass("every platform's helpers, version and plugin keys exist")

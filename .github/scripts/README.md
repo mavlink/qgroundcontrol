@@ -26,14 +26,14 @@ with multiple consumers in [`tools/common/`](../../tools/common/README.md).
 | `collect_artifact_sizes.py` | Reporting | Collect artifact sizes from platform workflow runs |
 | `collect_build_status.py` | Reporting | Collect platform and pre-commit status for PR comments |
 | `coverage_comment.py` | Reporting | Build PR coverage comments from Cobertura XML |
-| `cpm_helper.py` | Cache | Fingerprint CPM dependencies, prepare runner seeds, and configure their source cache |
+| `cpm_helper.py` | Cache | Fingerprint CPM dependencies and the GStreamer SDK config, prepare runner seeds, and configure their source cache |
 | `deploy_docs.py` | Release | Deploy generated documentation to an external Pages repository |
 | `detect_changes.py` | Planning | Decide which platform builds a change requires |
 | `docker_helper.py` | Build | Run Docker builds and report compiler identities, timings, and cache statistics |
 | `download_artifacts.py` | Artifacts | Download artifacts from matching completed workflow runs |
 | `find_artifact.py` | Artifacts | Find optional or required build artifacts by glob pattern |
 | `generate_build_results_comment.py` | Reporting | Render the consolidated PR build-results comment |
-| `generate_cpm_sbom.py` | Security | Generate a CycloneDX SBOM from CPM package metadata |
+| `generate_cpm_sbom.py` | Security | Generate a CycloneDX SBOM from CPM package metadata and the bundled GStreamer |
 | `gh_cache_cleanup.py` | Cache | List and optionally delete GitHub Actions caches |
 | `gh_pr_size_label.py` | Reporting | Read and prune pull-request `size/*` labels |
 | `gstreamer_archive.py` | GStreamer | Package GStreamer builds and optionally upload them to S3 |
@@ -49,7 +49,6 @@ with multiple consumers in [`tools/common/`](../../tools/common/README.md).
 | `release_assets.py` | Release | Validate checksums and enumerate release packages and SBOMs |
 | `release_builds.py` | Release | Dispatch and freeze exact release workflow run identities |
 | `report_context.py` | Reporting | Reject stale PR/default-branch reporting contexts |
-| `resolve_gstreamer_config.py` | GStreamer | Select the platform-specific GStreamer version |
 | `size_analysis.py` | Reporting | Analyze and report binary-size changes |
 | `release_tag_check.py` | Release | Report whether the current tag is a `vX.Y.Z` release tag reachable from a `Stable*` branch |
 | `test_duration_report.py` | Reporting | Report slow tests and duration regressions from JUnit XML |

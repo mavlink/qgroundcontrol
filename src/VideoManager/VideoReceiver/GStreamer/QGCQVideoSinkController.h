@@ -1,22 +1,25 @@
 #pragma once
 
+#include <gst/gst.h>
+
 #include <QtCore/QList>
 #include <QtCore/QMetaObject>
-#include <QtCore/QMutex>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
 #include <QtCore/QSize>
 #include <QtCore/QString>
 #include <QtCore/QTimer>
-#include <gst/gst.h>
+
+#include "GstScoped.h"
 
 class QQuickVideoOutput;
 class QVideoSink;
 
 /// GUI-thread companion for the GstQgcQVideoSink element: mirrors negotiation/telemetry into
-/// Q_PROPERTYs for QML and owns the 1 Hz timer polling `frames-delivered`. Driven by
-/// GstVideoReceiver's bus pump. Ownership: parent owns the controller; the controller owns one
+/// Q_PROPERTYs for QML and owns the 1 Hz timer polling `frames-delivered`. Negotiation is pushed by
+/// DecodingBranch::onBusCapsInfo(). Ownership: parent owns the controller; the controller owns one
 /// GstElement ref so deferred QObject teardown can still clear the element binding.
+/// Every member function runs on the controller's (GUI) thread.
 class QGCQVideoSinkController : public QObject
 {
     Q_OBJECT
@@ -40,12 +43,18 @@ public:
 
     // setActive(false) drops frames at the element; setVideoSink swaps the destination under
     // GST_OBJECT_LOCK. QPointer so a caller-thread destruction race is caught here, not in GObject.
+    // Releasing a binding (swap, null, prepareForRelease, destruction) also clears the released QVideoSink's
+    // current frame so it stops pinning a GstSample/decoder buffer.
     void setActive(bool active);
     void setVideoSink(QPointer<QVideoSink> sink);
 
     /// Stop the poll timer synchronously ahead of deleteLater so a deferred destruction can't keep
     /// binding the element while a replacement controller is installed on it. Idempotent.
     void prepareForRelease();
+
+    /// Clear the bound QVideoSink's current frame, and the GstSample/decoder buffer it pins, but keep the binding for
+    /// the next stream. For pipeline teardown: the element is bound once per receiver, not once per pipeline.
+    void releaseFrame();
 
     const GstElement* element() const noexcept;
     void updateNegotiation(const QString& format, const QSize& resolution);
@@ -54,25 +63,21 @@ public:
     QString negotiatedFormat() const;
     QSize negotiatedResolution() const;
 
-public slots:
-    /// Re-prime sink-side latency after a pipeline latency recalculation (e.g. RTSP
-    /// jitter-buffer reconfigure). Re-queries the element latency and pushes it back.
-    void refreshLatency();
-
 signals:
     void frameCountsChanged();
     void negotiationChanged();
 
 private:
     void _releaseElementBinding() noexcept;
+    void _clearVideoSinkFrame();
     void _onEmitTimer();
 
-    GstElement* _element = nullptr;  // owned ref
+    GStreamer::GstElementPtr _element;
+    QPointer<QVideoSink> _videoSink;
     QMetaObject::Connection _sinkDestroyedConnection;
     bool _bindingReleased = false;
     QTimer _emitTimer;
 
-    mutable QMutex _stateMutex;
     QString _negotiatedFormat;
     QSize _negotiatedResolution;
     quint64 _lastEmittedFrameTotal = 0;

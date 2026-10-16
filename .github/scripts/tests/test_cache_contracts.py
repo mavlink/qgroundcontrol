@@ -311,7 +311,23 @@ def test_dependencies_use_immutable_separate_sdk_archives():
         assert "!${{ env.CPM_CACHE_PATH }}/gstreamer*" in step["with"]["path"]
         assert "cpm_unvaried_scope" in step["with"]["restore-keys"]
         assert "cpm_unvaried_shared" in step["with"]["restore-keys"]
-    assert all(step["with"]["path"] == "${{ env.CPM_CACHE_PATH }}/gstreamer*" for step in sdk)
+    # Only the extracted SDK trees are cached; configure reuses a tree stamped with the pins without its archive.
+    # actions/cache does not expand a matched directory, so the include names the entries the exclusions remove.
+    for step in sdk:
+        assert step["with"]["path"].splitlines() == [
+            "${{ env.CPM_CACHE_PATH }}/gstreamer*/*",
+            "!${{ env.CPM_CACHE_PATH }}/gstreamer*/*.tar.xz",
+            "!${{ env.CPM_CACHE_PATH }}/gstreamer*/*.exe",
+            "!${{ env.CPM_CACHE_PATH }}/gstreamer*/*.pkg",
+        ]
+    # Unrelated GStreamer CMake edits and other build-config.json sections must not invalidate the SDK caches.
+    fingerprint = next(step for step in steps if step.get("id") == "gst-sdk-key")
+    assert "gstreamer-fingerprint" in fingerprint["run"]
+    for step in sdk:
+        assert "cmake/GStreamer/**" not in step["with"]["key"]
+        assert "'cmake/GStreamer/Download.cmake'" in step["with"]["key"]
+        assert "build-config.json" not in step["with"]["key"]
+        assert "steps.gst-sdk-key.outputs.fingerprint" in step["with"]["key"]
 
 
 def test_compiler_caches_save_before_downstream_failures():

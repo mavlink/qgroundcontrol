@@ -23,7 +23,7 @@ from common.gh_actions import gh_error
 
 
 def _setup_gstreamer_env(build_dir: Path) -> None:
-    """Extract GStreamer_ROOT_DIR from CMakeCache and set plugin env vars.
+    """Read the resolved GStreamer SDK root from CMakeCache and set plugin env vars.
 
     For dev builds (before cmake --install), GStreamer plugins haven't been
     copied into the app bundle yet. This lets the runtime find the
@@ -33,7 +33,7 @@ def _setup_gstreamer_env(build_dir: Path) -> None:
     if not cache.is_file():
         return
 
-    value = read_cache_var(str(cache), "GStreamer_ROOT_DIR")
+    value = read_cache_var(str(cache), "QGC_GST_RESOLVED_ROOT")
     if not value:
         return
 
@@ -44,12 +44,8 @@ def _setup_gstreamer_env(build_dir: Path) -> None:
 
     print(f"Setting GStreamer env from build cache: {gst_root}")
     plugin_str = str(plugin_dir)
-    for var in (
-        "GST_PLUGIN_PATH",
-        "GST_PLUGIN_PATH_1_0",
-        "GST_PLUGIN_SYSTEM_PATH",
-        "GST_PLUGIN_SYSTEM_PATH_1_0",
-    ):
+    # SYSTEM_PATH replaces the default plugin dirs; GST_PLUGIN_PATH would only rescan the same dir.
+    for var in ("GST_PLUGIN_SYSTEM_PATH", "GST_PLUGIN_SYSTEM_PATH_1_0"):
         os.environ[var] = plugin_str
 
     scanner = gst_root / "libexec" / "gstreamer-1.0" / "gst-plugin-scanner"

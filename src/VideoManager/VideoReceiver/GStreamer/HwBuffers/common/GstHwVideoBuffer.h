@@ -1,14 +1,18 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
-#include <QtCore/qglobal.h>
-#include <QtMultimedia/QVideoFrame>
-#include <QtMultimedia/QVideoFrameFormat>
 #include <algorithm>
 #include <atomic>
 #include <gst/gst.h>
 #include <gst/video/video-info.h>
 #include <private/qhwvideobuffer_p.h>
+
+#include <QtCore/QLoggingCategory>
+#include <QtCore/qglobal.h>
+#include <QtMultimedia/QVideoFrame>
+#include <QtMultimedia/QVideoFrameFormat>
+
+#include "CpuVideoFramePool.h"
+#include "GstHwTypes.h"
 
 namespace GstHw {
 
@@ -28,6 +32,13 @@ struct MapDiagnostics
 
 }  // namespace GstHw
 
+namespace GstHwPathTelemetry {
+
+/// Records a map failure for @p path and returns the empty bundle mapTextures() reports it with.
+QVideoFrameTexturesUPtr fail(HwVideoBufferPath path) noexcept;
+
+}  // namespace GstHwPathTelemetry
+
 /// Logs once via qCWarning(LOGCAT) the first time @p FLAG flips true; subsequent trips are silent.
 #define QGC_HW_WARN_ONCE(LOGCAT, FLAG, ...)                      \
     do {                                                         \
@@ -46,25 +57,19 @@ public:
 
     QVideoFrameFormat format() const override { return _format; }
 
-    MapData map(QVideoFrame::MapMode /*mode*/) override { return {}; }
+    /// CPU view of the sample through gst_video_frame_map (e.g. GL memory downloads, DMABuf mmaps). Qt's
+    /// createTextures() uploads this whenever mapTextures() fails, so a failed GPU import still shows the frame.
+    /// ReadOnly only. Refused when format() isn't the layout of the memory: Qt would upload it in the wrong format.
+    MapData map(QVideoFrame::MapMode mode) override;
+    void unmap() override;
 
     /// Streaming-thread sanity check on per-plane handles; failure routes to CPU memcpy.
     virtual bool validatePlaneHandles() const { return true; }
 
-    /// Human-readable GPU path identifier (e.g. "DMABuf"); string literal, safe from any thread.
-    virtual const char* storageTag() const { return "Unknown"; }
-
-    /// Transfers GstSample ownership out for early pool-slot release in mapTextures.
-    GstSample* takeSample() noexcept
-    {
-        GstSample* s = _sample;
-        _sample = nullptr;
-        return s;
-    }
-
-    /// One-shot "first zero-copy success" info line; silent after @p flag first flips.
-    static void logFirstSuccess(std::atomic<bool>& flag, const QLoggingCategory& cat, const char* tag, QSize frameSize,
-                                QVideoFrameFormat::PixelFormat pixelFormat, int planes);
+    /// New sample ref for the texture bundle built in mapTextures(). The buffer keeps its own ref so map() and a
+    /// repeated mapTextures() (another window, QRhi re-creation) still find the sample; Qt keeps this frame alive
+    /// alongside the bundle anyway (QVideoFrameTextures::setSourceFrame), so no buffer is held longer.
+    GstSample* refSample() noexcept { return _sample ? gst_sample_ref(_sample) : nullptr; }
 
 protected:
     /// Validate each plane satisfies @p planePred; predicate runs once per plane on the streaming thread.
@@ -94,4 +99,10 @@ protected:
     GstSample* _sample = nullptr;
     GstVideoInfo _videoInfo = {};
     QVideoFrameFormat _format;
+
+private:
+    /// Pixel format of the sample's memory, as constructed. A subclass may advertise another one in _format for its GPU
+    /// import (the DMABuf eglfs YUYV/UYVY-as-RGBA quirk); such frames have no CPU layout matching format().
+    QVideoFrameFormat::PixelFormat _memoryPixelFormat;
+    CpuVideoFramePool::FrameMapping _cpuView;
 };

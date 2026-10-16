@@ -1,59 +1,31 @@
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.25)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/..")
 
-if(TEST_CASE STREQUAL "download-delegates-required")
+if(TEST_CASE STREQUAL "acquire-extractor")
     include(Download)
-    gstreamer_resilient_download(DESTINATION_DIR "${CMAKE_CURRENT_BINARY_DIR}" RESULT_VAR _result URLS
-                                 "https://invalid.example.invalid/archive"
-    )
-elseif(TEST_CASE STREQUAL "download-result-required")
-    include(Download)
-    gstreamer_resilient_download(FILENAME archive DESTINATION_DIR "${CMAKE_CURRENT_BINARY_DIR}" URLS
-                                 "https://invalid.example.invalid/archive"
-    )
-elseif(TEST_CASE STREQUAL "download-unknown")
-    include(Download)
-    gstreamer_resilient_download(UNKNOWN_ARGUMENT value)
-elseif(TEST_CASE STREQUAL "secondary-archive-pair")
-    include(Download)
-    set(GStreamer_FIND_VERSION 1.28.4)
-    gstreamer_resolve_or_download_sdk(
+    qgc_gst_acquire_sdk(
         PLATFORM
         macos
+        VERSION
+        1.28.4
         CACHE_SUBDIR
         gstreamer-test
-        FILENAME_PRIMARY
+        ARCHIVES
         runtime.pkg
-        FILENAME_SECONDARY
-        devel.pkg
-        CACHE_DIR_OUT
-        _cache_dir
-        ARCHIVE_OUT
-        _archive
-    )
-elseif(TEST_CASE STREQUAL "install-unknown")
-    include(Install)
-    gstreamer_install_plugins(
-        SOURCE_DIR
-        "${CMAKE_CURRENT_BINARY_DIR}"
-        DEST_DIR
-        lib
-        EXTENSION
-        so
-        PREFIX
-        libgst
-        UNKNOWN_ARGUMENT
+        CONTENT
+        sdk
+        EXTRACT_FUNCTION
+        _qgc_no_such_extractor
+        CONTENT_DIR_OUT
+        _content_dir
     )
 elseif(TEST_CASE STREQUAL "layout-unknown")
     include(Layout)
-    gstreamer_create_layout_target(SDK_ROOT "${CMAKE_CURRENT_BINARY_DIR}" TYPE FLAT UNKNOWN_ARGUMENT value)
+    gstreamer_create_layout_target(SDK_ROOT "${CMAKE_CURRENT_BINARY_DIR}" UNKNOWN_ARGUMENT value)
 elseif(TEST_CASE STREQUAL "pkgconfig-unknown")
     include(PkgConfig)
     gstreamer_apply_pkgconfig_env(UNKNOWN_ARGUMENT value MODE SDK LIBDIR "${CMAKE_CURRENT_BINARY_DIR}")
-elseif(TEST_CASE STREQUAL "plugin-policy-unknown")
-    include(PluginPolicy)
-    gstreamer_plugin_satisfy_sets(PLUGIN coreelements OUT_VAR _sets UNKNOWN_ARGUMENT)
 elseif(TEST_CASE STREQUAL "probe-unknown")
     include(Probe)
     qgc_check_gst_header(

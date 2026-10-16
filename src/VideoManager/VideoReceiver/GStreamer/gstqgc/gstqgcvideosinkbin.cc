@@ -1,15 +1,33 @@
 #include "gstqgcvideosinkbin.h"
 
-#include "gstqgcelements.h"
-
-#include <array>
-#include <initializer_list>
 #include <string>
 
-#include "GstQgcAllocation.h"
+#include "GstQgcBinChain.h"
 #include "GstQgcCaps.h"
+#include "GstScoped.h"
+#include "HwBuffers/common/HwBuffers.h"
+#include "gstqgcelements.h"
 
 #define GST_CAT_DEFAULT gst_qgc_debug
+
+struct _GstQgcVideoSinkBin
+{
+    GstBin parent;
+    /// qgcqvideosink terminal element; caller-set "qvideosink" property targets a QVideoSink.
+    GstElement* videosink;
+    gboolean gpu_zerocopy;
+    /// Construct-only videoconvert factory override; empty/NULL auto-probes
+    /// (imxvideoconvert_g2d/nvvidconv -> videoconvert).
+    gchar* conversion_element;
+    /// Skips the CPU branch's PAR=1/1 capsfilter (v4l2 drivers without VIDIOC_CROPCAP deadlock when PAR is forced).
+    gboolean disable_par;
+    /// Proxied to the inner basesink's "sync" so callers can configure clock sync on the bin.
+    gboolean sync;
+    /// Proxied to the inner basesink's "qos"; default FALSE (off) preserves the existing no-QoS behavior.
+    gboolean qos;
+    /// Proxied to the inner basesink's "processing-deadline" (ns); default matches the basesink default.
+    guint64 processing_deadline;
+};
 
 enum
 {
@@ -29,130 +47,6 @@ static GParamSpec* properties[PROP_LAST];
 // non-raw links fail at link time (not PAUSED negotiation) without dropping any zero-copy path.
 static GstStaticPadTemplate sink_factory =
     GST_STATIC_PAD_TEMPLATE("sink", GST_PAD_SINK, GST_PAD_ALWAYS, GST_STATIC_CAPS("video/x-raw(ANY)"));
-
-namespace {
-
-// Linked element chain with automatic rollback: adopt() elements (bin takes the floating ref),
-// linkChain() in flow order, ghostSink() the head, commit() on success; ~BinChain unwinds the rest.
-class BinChain
-{
-public:
-    explicit BinChain(GstBin* bin) : m_bin(bin) {}
-
-    ~BinChain()
-    {
-        if (m_committed) {
-            return;
-        }
-        if (m_ghost) {
-            gst_element_remove_pad(GST_ELEMENT(m_bin), m_ghost);
-        }
-        while (m_ownedCount > 0) {
-            gst_bin_remove(m_bin, m_owned[--m_ownedCount]);
-        }
-    }
-
-    BinChain(const BinChain&) = delete;
-    BinChain& operator=(const BinChain&) = delete;
-
-    GstElement* adopt(GstElement* element)
-    {
-        if (!element) {
-            return nullptr;
-        }
-        if (m_ownedCount == m_owned.size()) {
-            gst_object_unref(element);
-            return nullptr;
-        }
-        if (!gst_bin_add(m_bin, element)) {
-            gst_object_unref(element);
-            return nullptr;
-        }
-        m_owned[m_ownedCount++] = element;
-        return element;
-    }
-
-    bool linkChain(std::initializer_list<GstElement*> chain)
-    {
-        GstElement* prev = nullptr;
-        for (GstElement* element : chain) {
-            if (!element) {
-                return false;
-            }
-            if (prev && !gst_element_link(prev, element)) {
-                return false;
-            }
-            prev = element;
-        }
-        return true;
-    }
-
-    bool ghostSink(GstElement* head)
-    {
-        GstPad* sinkpad = gst_element_get_static_pad(head, "sink");
-        if (!sinkpad) {
-            return false;
-        }
-        m_ghost = gst_ghost_pad_new("sink", sinkpad);
-        gst_object_unref(sinkpad);
-        if (!m_ghost) {
-            return false;
-        }
-        if (!gst_element_add_pad(GST_ELEMENT(m_bin), m_ghost)) {
-            gst_object_unref(m_ghost);
-            m_ghost = nullptr;
-            return false;
-        }
-        return true;
-    }
-
-    void commit() { m_committed = true; }
-
-private:
-    GstBin* m_bin;
-    std::array<GstElement*, 5> m_owned{};
-    std::size_t m_ownedCount = 0;
-    GstPad* m_ghost = nullptr;
-    bool m_committed = false;
-};
-
-}  // namespace
-
-#ifdef QGC_GST_BUILD_TESTING
-gboolean gst_qgc_video_sink_bin_rejects_failed_adopt_for_test()
-{
-    GstElement* target = gst_bin_new("qgc-adopt-target");
-    GstElement* parent = gst_bin_new("qgc-adopt-existing-parent");
-    GstElement* element = gst_element_factory_make("identity", "preparented");
-    if (!target || !parent || !element) {
-        gst_clear_object(&element);
-        gst_clear_object(&parent);
-        gst_clear_object(&target);
-        return FALSE;
-    }
-
-    if (!gst_bin_add(GST_BIN(parent), element)) {
-        gst_object_unref(parent);
-        gst_object_unref(target);
-        return FALSE;
-    }
-
-    auto* chain = new BinChain(GST_BIN(target));
-    gst_object_ref(element);
-    GstElement* adopted = chain->adopt(element);
-    chain->commit();
-    delete chain;
-
-    GstObject* currentParent = gst_object_get_parent(GST_OBJECT(element));
-    const gboolean rejected = (adopted == nullptr) && (currentParent == GST_OBJECT(parent));
-    if (currentParent) {
-        gst_object_unref(currentParent);
-    }
-    gst_object_unref(parent);
-    gst_object_unref(target);
-    return rejected;
-}
-#endif
 
 #define gst_qgc_video_sink_bin_parent_class parent_class
 G_DEFINE_FINAL_TYPE(GstQgcVideoSinkBin, gst_qgc_video_sink_bin, GST_TYPE_BIN);
@@ -217,11 +111,7 @@ static void gst_qgc_video_sink_bin_class_init(GstQgcVideoSinkBinClass* klass)
 
 static void gst_qgc_video_sink_bin_init(GstQgcVideoSinkBin* self)
 {
-    self->videoconvert = NULL;
-    self->glupload = NULL;
     self->videosink = NULL;
-    self->format_capsfilter = NULL;
-    self->par_capsfilter = NULL;
     self->gpu_zerocopy = FALSE;
     self->conversion_element = NULL;
     self->disable_par = FALSE;
@@ -252,39 +142,16 @@ static GstElement* gst_qgc_video_sink_bin_make_conversion_element(GstQgcVideoSin
     return gst_element_factory_make("videoconvert", NULL);
 }
 
-// Wire format-capsfilter -> qgcqvideosink (optional glupload prefix); self pointers set only on commit.
-static gboolean wireGpuPath(GstQgcVideoSinkBin* self, GstElement* videosink, GstElement* capsf)
+// Link glupload -> glcolorconvert -> the adopted format-capsfilter -> qgcqvideosink and ghost glupload.
+static gboolean wireGlUploadPath(GstQgcVideoSinkBin* self, GstQgc::BinChain& chain, GstElement* videosink,
+                                 GstElement* capsf)
 {
-    BinChain chain(GST_BIN(self));
-    if (!chain.adopt(videosink)) {
-        gst_object_unref(capsf);
-        GST_ERROR_OBJECT(self, "Failed to add qgcqvideosink GPU sink element to bin");
-        return FALSE;
-    }
-    if (!chain.adopt(capsf)) {
-        GST_ERROR_OBJECT(self, "Failed to add qgcqvideosink GPU capsfilter element to bin");
-        return FALSE;
-    }
-
-    const std::string capsStr = GstQgc::buildGpuCapsString();
-    GstCaps* caps = gst_caps_from_string(capsStr.c_str());
-    if (!caps) {
-        GST_ERROR_OBJECT(self, "gst_caps_from_string() returned NULL for GPU caps");
-        return FALSE;
-    }
-    // format_capsfilter restricts negotiation to Qt-renderable formats; qgcqvideosink's pad
-    // template is CAPS_ANY, so without it upstream could pick a format that fails in set_caps.
-    g_object_set(capsf, "caps", caps, NULL);
-    gst_caps_unref(caps);
-
-#if defined(QGC_GST_BIN_USE_GLUPLOAD)
     GstElement* glupload = chain.adopt(gst_element_factory_make("glupload", NULL));
     if (!glupload) {
         GST_ERROR_OBJECT(self, "Failed to create glupload element");
         return FALSE;
     }
-    // Converts amcvideodec's external-OES Surface textures to GL_TEXTURE_2D (else the Qt RHI 2D sink
-    // samples them black); no-op passthrough when upstream is already 2D (Linux va/DMABuf).
+    // glcolorconvert honours texture-target=2D (GstQgcCaps.cc); a passthrough when upstream is already 2D.
     GstElement* glcolorconvert = chain.adopt(gst_element_factory_make("glcolorconvert", NULL));
     if (!glcolorconvert) {
         GST_ERROR_OBJECT(self, "Failed to create glcolorconvert element");
@@ -294,8 +161,19 @@ static gboolean wireGpuPath(GstQgcVideoSinkBin* self, GstElement* videosink, Gst
         GST_ERROR_OBJECT(self, "Failed to link/ghost glupload→glcolorconvert→capsfilter→qgcqvideosink GPU path");
         return FALSE;
     }
-#else
-    GstElement* glupload = nullptr;
+    GST_INFO_OBJECT(self, "Using glupload→qgcqvideosink GPU path (DMABuf→GL EGLImage import)");
+    return TRUE;
+}
+
+// Wire the GPU branch of @p mode: the glupload chain, or the adopted format-capsfilter -> qgcqvideosink with the
+// capsfilter ghosted.
+static gboolean wireGpuPath(GstQgcVideoSinkBin* self, GstQgc::BinChain& chain, GstElement* videosink, GstElement* capsf,
+                            HwBuffers::GpuBinMode mode)
+{
+    if (mode == HwBuffers::GpuBinMode::GlUpload) {
+        return wireGlUploadPath(self, chain, videosink, capsf);
+    }
+
     // Keep advertised native GPU formats direct. Formats outside buildGpuCapsString() must
     // renegotiate upstream; converting here would also upload software frames instead of
     // letting qgcqvideosink use its CPU mapping fallback.
@@ -303,51 +181,22 @@ static gboolean wireGpuPath(GstQgcVideoSinkBin* self, GstElement* videosink, Gst
         GST_ERROR_OBJECT(self, "Failed to link/ghost qgcqvideosink (GPU path)");
         return FALSE;
     }
-#endif
-
-    chain.commit();
-    self->glupload = glupload;
-    self->format_capsfilter = capsf;
-    self->videosink = videosink;
-
-#if defined(QGC_GST_BIN_USE_GLUPLOAD)
-    GST_INFO_OBJECT(self, "Using glupload→qgcqvideosink GPU path (DMABuf→GL EGLImage import)");
-#elif defined(QGC_GST_BIN_USE_DMABUF)
-    GST_INFO_OBJECT(self, "Using qgcqvideosink GPU path (direct DMABuf import, no glupload)");
-#else
-    GST_INFO_OBJECT(self, "Using qgcqvideosink GPU path (native memory passthrough)");
-#endif
+    if (mode == HwBuffers::GpuBinMode::DirectDmaBuf) {
+        GST_INFO_OBJECT(self, "Using qgcqvideosink GPU path (direct DMABuf import, no glupload)");
+    } else {
+        GST_INFO_OBJECT(self, "Using qgcqvideosink GPU path (native memory passthrough)");
+    }
     return TRUE;
 }
 
-// Wire videoconvert -> (optional PAR=1/1) -> format-capsfilter -> qgcqvideosink; self pointers set only on commit.
-static gboolean wireCpuPath(GstQgcVideoSinkBin* self, GstElement* videosink, GstElement* capsf)
+// Link videoconvert -> (optional PAR=1/1) -> the adopted format-capsfilter -> qgcqvideosink and ghost the head.
+static gboolean wireCpuPath(GstQgcVideoSinkBin* self, GstQgc::BinChain& chain, GstElement* videosink, GstElement* capsf)
 {
-    BinChain chain(GST_BIN(self));
-    if (!chain.adopt(videosink)) {
-        gst_object_unref(capsf);
-        GST_ERROR_OBJECT(self, "Failed to add qgcqvideosink CPU sink element to bin");
-        return FALSE;
-    }
-    if (!chain.adopt(capsf)) {
-        GST_ERROR_OBJECT(self, "Failed to add qgcqvideosink CPU capsfilter element to bin");
-        return FALSE;
-    }
-
     GstElement* videoconvert = chain.adopt(gst_qgc_video_sink_bin_make_conversion_element(self));
     if (!videoconvert) {
         GST_ERROR_OBJECT(self, "Failed to create video conversion element");
         return FALSE;
     }
-
-    // QVideoSink renders these natively; listing them avoids forcing videoconvert to BGRA.
-    GstCaps* caps = gst_caps_from_string(GstQgc::buildCpuCapsString().c_str());
-    if (!caps) {
-        GST_ERROR_OBJECT(self, "gst_caps_from_string() returned NULL for CPU caps");
-        return FALSE;
-    }
-    g_object_set(capsf, "caps", caps, NULL);
-    gst_caps_unref(caps);
 
     // PAR=1/1 capsfilter normalizes non-square pixels; disable-par for v4l2 drivers without
     // VIDIOC_CROPCAP that deadlock negotiation (GStreamer MR #6242).
@@ -357,10 +206,9 @@ static gboolean wireCpuPath(GstQgcVideoSinkBin* self, GstElement* videosink, Gst
         if (!par) {
             GST_WARNING_OBJECT(self, "capsfilter factory missing — PAR normalization disabled");
         } else {
-            GstCaps* parCaps = gst_caps_from_string("video/x-raw, pixel-aspect-ratio=(fraction)1/1");
-            if (parCaps) {
-                g_object_set(par, "caps", parCaps, NULL);
-                gst_caps_unref(parCaps);
+            if (const GStreamer::GstCapsPtr parCaps =
+                    GStreamer::adoptCaps(gst_caps_from_string("video/x-raw, pixel-aspect-ratio=(fraction)1/1"))) {
+                g_object_set(par, "caps", parCaps.get(), NULL);
             }
         }
     }
@@ -371,12 +219,6 @@ static gboolean wireCpuPath(GstQgcVideoSinkBin* self, GstElement* videosink, Gst
         GST_ERROR_OBJECT(self, "Failed to link/ghost CPU path");
         return FALSE;
     }
-
-    chain.commit();
-    self->videoconvert = videoconvert;
-    self->par_capsfilter = par;
-    self->format_capsfilter = capsf;
-    self->videosink = videosink;
 
     GST_INFO_OBJECT(self, "Using qgcqvideosink CPU path (videoconvert%s → caps → qgcqvideosink → QVideoSink)",
                     par ? " → PAR=1/1" : "");
@@ -402,22 +244,42 @@ static void gst_qgc_video_sink_bin_setup(GstQgcVideoSinkBin* self)
         return;
     }
 
-    // On failure the wire*Path() BinChain rolls the bin back and frees videosink/capsf; self
-    // pointers stay NULL so change_state surfaces the construction error.
-    if (!(self->gpu_zerocopy ? wireGpuPath(self, videosink, capsf) : wireCpuPath(self, videosink, capsf))) {
+    // On failure the BinChain rolls the bin back and frees videosink/capsf; self->videosink stays NULL so change_state
+    // surfaces the construction error.
+    const char* const pathName = self->gpu_zerocopy ? "GPU" : "CPU";
+    GstQgc::BinChain chain(GST_BIN(self));
+    if (!chain.adopt(videosink)) {
+        gst_object_unref(capsf);
+        GST_ERROR_OBJECT(self, "Failed to add qgcqvideosink %s sink element to bin", pathName);
+        return;
+    }
+    if (!chain.adopt(capsf)) {
+        GST_ERROR_OBJECT(self, "Failed to add qgcqvideosink %s capsfilter element to bin", pathName);
         return;
     }
 
-    // Probe the videosink sink pad so ALLOCATION/CONTEXT queries terminate here instead of racing
-    // the bus NEED_CONTEXT fallback. Installed post-commit so a wire failure leaves no orphan probe.
-    if (GstPad* videosinkPad = gst_element_get_static_pad(videosink, "sink")) {
-        const gulong probe_id = gst_pad_add_probe(videosinkPad, GST_PAD_PROBE_TYPE_QUERY_DOWNSTREAM,
-                                                  GstQgc::videosinkQueryProbe, NULL, NULL);
-        if (probe_id == 0) {
-            GST_WARNING_OBJECT(
-                self, "gst_pad_add_probe(QUERY_DOWNSTREAM) returned 0 — qgcqvideosink query interception disabled");
-        }
-        gst_object_unref(videosinkPad);
+    // The format capsfilter restricts negotiation to Qt-renderable formats: qgcqvideosink's pad template is CAPS_ANY,
+    // so without it upstream could pick a format that fails in set_caps. On the CPU path, listing the formats
+    // QVideoSink renders natively also keeps videoconvert from forcing BGRA.
+    HwBuffers::GpuBinMode gpuBin = HwBuffers::GpuBinMode::Passthrough;
+    std::string capsStr;
+    if (self->gpu_zerocopy) {
+        gpuBin = HwBuffers::gpuBinMode();
+        capsStr = GstQgc::buildGpuCapsString(gpuBin);
+    } else {
+        capsStr = GstQgc::buildCpuCapsString();
+    }
+    const GStreamer::GstCapsPtr caps = GStreamer::adoptCaps(gst_caps_from_string(capsStr.c_str()));
+    if (!caps) {
+        GST_ERROR_OBJECT(self, "gst_caps_from_string() returned NULL for %s caps", pathName);
+        return;
+    }
+    g_object_set(capsf, "caps", caps.get(), NULL);
+
+    if (self->gpu_zerocopy ? wireGpuPath(self, chain, videosink, capsf, gpuBin)
+                           : wireCpuPath(self, chain, videosink, capsf)) {
+        chain.commit();
+        self->videosink = videosink;
     }
 }
 
@@ -427,16 +289,12 @@ static void gst_qgc_video_sink_bin_constructed(GObject* object)
     gst_qgc_video_sink_bin_setup(GST_QGC_VIDEO_SINK_BIN(object));
 }
 
-// GstBin dispose unrefs children; NULL our cached pointers BEFORE chaining so a concurrent
+// GstBin dispose unrefs children; NULL our cached pointer BEFORE chaining so a concurrent
 // property accessor sees NULL instead of freed memory.
 static void gst_qgc_video_sink_bin_dispose(GObject* object)
 {
     GstQgcVideoSinkBin* self = GST_QGC_VIDEO_SINK_BIN(object);
     self->videosink = NULL;
-    self->videoconvert = NULL;
-    self->par_capsfilter = NULL;
-    self->format_capsfilter = NULL;
-    self->glupload = NULL;
     g_clear_pointer(&self->conversion_element, g_free);
     G_OBJECT_CLASS(gst_qgc_video_sink_bin_parent_class)->dispose(object);
 }
@@ -528,12 +386,4 @@ GstElement* gst_qgc_video_sink_bin_get_qvideosink(GstQgcVideoSinkBin* self)
 {
     g_return_val_if_fail(GST_IS_QGC_VIDEO_SINK_BIN(self), NULL);
     return self->videosink ? GST_ELEMENT(gst_object_ref(self->videosink)) : NULL;
-}
-
-gboolean gst_qgc_video_sink_bin_get_gpu_zerocopy(GstElement* bin)
-{
-    if (!bin || !GST_IS_QGC_VIDEO_SINK_BIN(bin)) {
-        return FALSE;
-    }
-    return GST_QGC_VIDEO_SINK_BIN(bin)->gpu_zerocopy;
 }

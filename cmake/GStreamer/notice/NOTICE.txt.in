@@ -1,0 +1,12 @@
+GStreamer @_version@
+
+QGroundControl includes GStreamer (https://gstreamer.freedesktop.org) libraries and plugins. GStreamer is free
+software, licensed under the GNU Lesser General Public License, version 2.1 or later (LGPL-2.1-or-later); LGPL-2.1.txt
+next to this file holds the license text. Some GStreamer plugins, and the libraries they use, are under other licenses;
+each plugin declares its license, which gst-inspect-1.0 <plugin> shows.
+
+Source code of GStreamer @_version@:
+    https://gitlab.freedesktop.org/gstreamer/gstreamer/-/tree/@_version@
+    https://gstreamer.freedesktop.org/src/
+
+@_binaries@

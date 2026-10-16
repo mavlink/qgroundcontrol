@@ -7,16 +7,12 @@
 #include <QtCore/QMutex>
 #include <QtCore/QStandardPaths>
 #include <QtCore/QStringList>
+#include <QtCore/QSysInfo>
 #include <QtCore/QThread>
 
 #include "QGCLoggingCategory.h"
 
-#ifdef Q_OS_LINUX
-#include <dlfcn.h>
-#endif
-
 #ifdef Q_OS_ANDROID
-#include <QtCore/QCoreApplication>
 #include <QtCore/QJniEnvironment>
 #include <QtCore/QJniObject>
 #include <android/asset_manager.h>
@@ -29,10 +25,9 @@ QGC_LOGGING_CATEGORY(GStreamerEnvLog, "Video.GStreamer.Environment")
 
 namespace {
 
-static bool s_envPathsValid = true;
-static QString s_envPathsError;
+using GStreamer::Environment::ValidationResult;
+
 // Serializes the whole env mutation: qputenv/setenv aren't thread-safe vs gst_init's getenv.
-// Also guards s_envPathsValid/s_envPathsError — every access is under this lock (plain types suffice).
 static QMutex s_setEnvVarsMutex;
 
 // Single source of truth for the managed plugin-path/scanner vars: keeps _clearManagedGstEnvVars
@@ -42,13 +37,6 @@ constexpr const char* kManagedGstPathVars[] = {
     "GST_PLUGIN_SCANNER", "GST_PLUGIN_SCANNER_1_0",
 };
 
-// Caller must hold s_setEnvVarsMutex.
-void _resetEnvValidation()
-{
-    s_envPathsError.clear();
-    s_envPathsValid = true;
-}
-
 QString _cleanJoin(const QString& base, const QString& relative)
 {
     return QDir::cleanPath(QDir(base).filePath(relative));
@@ -56,7 +44,13 @@ QString _cleanJoin(const QString& base, const QString& relative)
 
 void _setGstEnv(const char* name, const QString& value)
 {
+#ifdef Q_OS_WIN
+    // GLib reads the wide environment; qputenv's _putenv_s would decode these UTF-8 bytes in the ANSI
+    // code page and corrupt non-ASCII install paths.
+    (void) g_setenv(name, value.toUtf8().constData(), TRUE);
+#else
     qputenv(name, value.toUtf8());
+#endif
     qCDebug(GStreamerEnvLog) << "  " << name << "=" << value;
 }
 
@@ -79,6 +73,33 @@ void _setGstEnv(const char* name, const QString& value)
             return;
         }
     }
+}
+
+// A bundled runtime's plugins differ from the system GStreamer's, so sharing the default per-user registry would make
+// each invalidate the other's plugin cache; the runtime version in the name keeps upgrades from reusing it too.
+QString _usePrivateRegistry(const QString& cacheDir)
+{
+    if (cacheDir.isEmpty() || qEnvironmentVariableIsSet("GST_REGISTRY_1_0") ||
+        qEnvironmentVariableIsSet("GST_REGISTRY")) {
+        return {};
+    }
+    if (!QDir().mkpath(cacheDir)) {
+        qCWarning(GStreamerEnvLog) << "Cannot create the GStreamer registry directory" << cacheDir;
+        return {};
+    }
+
+    guint major = 0;
+    guint minor = 0;
+    guint micro = 0;
+    guint nano = 0;
+    gst_version(&major, &minor, &micro, &nano);
+    const QString registry = _cleanJoin(cacheDir, QStringLiteral("gstreamer-%1.%2.%3-%4.bin")
+                                                      .arg(major)
+                                                      .arg(minor)
+                                                      .arg(micro)
+                                                      .arg(QSysInfo::buildCpuArchitecture()));
+    _setGstEnv("GST_REGISTRY", registry);
+    return registry;
 }
 
 [[maybe_unused]] void _setTmpDirVars(const QString& dir)
@@ -150,15 +171,9 @@ bool _extractApkAsset(const char* assetPath, const QString& destPath)
 }
 #endif
 
-#if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
-
-// Caller must hold s_setEnvVarsMutex.
-void _setEnvValidationError(const QString& error)
-{
-    s_envPathsError = error;
-    s_envPathsValid = false;
-    qCCritical(GStreamerEnvLog) << error;
-}
+// QGC_GST_SYSTEM_PLUGINS: a Linux build with QGC_GST_BUNDLE_PLUGINS=OFF, packaged with the system's plugins, which it
+// always uses as they are.
+#if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS) && !defined(QGC_GST_SYSTEM_PLUGINS)
 
 void _unsetEnv(const char* name)
 {
@@ -192,7 +207,6 @@ QString _firstExistingPath(const QStringList& paths)
     return {};
 }
 
-#if defined(Q_OS_MACOS)
 QString _joinExistingPaths(const QStringList& paths)
 {
     QStringList existing;
@@ -206,7 +220,16 @@ QString _joinExistingPaths(const QStringList& paths)
 
     return existing.join(QDir::listSeparator());
 }
-#endif
+
+QStringList _cleanJoinAll(const QStringList& bases, const QString& relative)
+{
+    QStringList joined;
+    joined.reserve(bases.size());
+    for (const QString& base : bases) {
+        joined.append(_cleanJoin(base, relative));
+    }
+    return joined;
+}
 
 void _clearManagedGstEnvVars()
 {
@@ -258,42 +281,13 @@ void _applyGstEnvVars(const QString& pluginDir, const QString& gioModDir, const 
     _setGstEnvIfExecutable("GST_PTP_HELPER", ptpPath);
     _setGstEnvIfExecutable("GST_PLUGIN_SCANNER_1_0", scannerPath);
     _setGstEnvIfExecutable("GST_PLUGIN_SCANNER", scannerPath);
+    // SYSTEM_PATH replaces the default system/user plugin dirs. GST_PLUGIN_PATH (cleared above) would
+    // only rescan the same dir, so leaving it unset loads the identical plugin set.
     _setGstEnv("GST_PLUGIN_SYSTEM_PATH_1_0", pluginDir);
     _setGstEnv("GST_PLUGIN_SYSTEM_PATH", pluginDir);
-    _setGstEnv("GST_PLUGIN_PATH_1_0", pluginDir);
-    _setGstEnv("GST_PLUGIN_PATH", pluginDir);
 }
 
 #if defined(Q_OS_LINUX)
-bool _systemGioIsNew()
-{
-    // Bare soname first (ldconfig/LD_LIBRARY_PATH, works on NixOS/Guix non-FHS), then
-    // hardcoded paths where the bare name fails.
-    static constexpr const char* kGioSoPaths[] = {
-        "libgio-2.0.so.0",
-        "/usr/lib/x86_64-linux-gnu/libgio-2.0.so.0",
-        "/usr/lib/aarch64-linux-gnu/libgio-2.0.so.0",
-        "/usr/lib/arm-linux-gnueabihf/libgio-2.0.so.0",
-        "/usr/lib64/libgio-2.0.so.0",
-        "/usr/lib/libgio-2.0.so.0",
-    };
-
-    for (const char* path : kGioSoPaths) {
-        void* handle = dlopen(path, RTLD_LAZY | RTLD_NOLOAD);
-        if (!handle) {
-            handle = dlopen(path, RTLD_LAZY);
-        }
-        if (!handle) {
-            continue;
-        }
-        const bool found = (dlsym(handle, "g_task_set_static_name") != nullptr);
-        dlclose(handle);
-        return found;
-    }
-
-    return false;
-}
-
 void _applyGioCompatOverride(const QString& gioModDir)
 {
     if (gioModDir.isEmpty()) {
@@ -301,7 +295,8 @@ void _applyGioCompatOverride(const QString& gioModDir)
     }
 
     // GIO 2.76+ needs bundled modules via GIO_MODULE_DIR with VFS forced local (AppImage launcher logic).
-    if (_systemGioIsNew()) {
+    // The in-process GLib (the bundled one when present) is the GIO that loads these modules.
+    if (glib_check_version(2, 76, 0) == nullptr) {
         _unsetEnv("GIO_EXTRA_MODULES");
         _setGstEnv("GIO_MODULE_DIR", gioModDir);
         _setGstEnv("GIO_USE_VFS", QStringLiteral("local"));
@@ -320,31 +315,37 @@ void _warnIfScannerMissing(const QString& platformLabel, const QString& scannerP
     }
 }
 
-#if defined(Q_OS_MACOS)
-void _reportMissingMacFrameworkPlugins(const QString& bundleFrameworkRoot)
+// Candidate locations of a desktop bundle's GStreamer runtime, in priority order.
+struct BundleLayout
 {
-    _setEnvValidationError(
-        QStringLiteral("GStreamer: bundled macOS framework found but plugin directory is missing under %1")
-            .arg(bundleFrameworkRoot));
-}
-#endif
+    QStringList pluginDirs;         // every existing entry is searched
+    QStringList gioModuleDirs;      // first existing entry wins
+    QStringList scannerCandidates;  // first existing entry wins
+    QStringList ptpCandidates;      // first existing entry wins
+};
 
-bool _validateBundledDesktopPaths(const QString& platformLabel, const QString& pluginDirs, const QString& scannerPath)
+// Points GStreamer at the bundled runtime. Returns false, leaving the environment untouched, when no
+// bundled plugin directory exists (system GStreamer is used as-is).
+bool _applyBundleLayout(const QString& platformLabel, const BundleLayout& layout)
 {
+    const QString pluginDirs = _joinExistingPaths(layout.pluginDirs);
     if (pluginDirs.isEmpty()) {
-        _setEnvValidationError(QStringLiteral("GStreamer: %1 bundled plugin directory is missing.").arg(platformLabel));
         return false;
     }
 
-    _warnIfScannerMissing(platformLabel, scannerPath);
+    const QString scanner = _firstExistingPath(layout.scannerCandidates);
+    _warnIfScannerMissing(platformLabel, scanner);
+    _applyGstEnvVars(pluginDirs, _firstExistingPath(layout.gioModuleDirs), scanner,
+                     _firstExistingPath(layout.ptpCandidates));
+    (void) _usePrivateRegistry(QStandardPaths::writableLocation(QStandardPaths::CacheLocation));
     return true;
 }
 
-#endif  // !Q_OS_ANDROID && !Q_OS_IOS
+#endif  // !Q_OS_ANDROID && !Q_OS_IOS && !QGC_GST_SYSTEM_PLUGINS
 
-void _setGstEnvVars()
+ValidationResult _setGstEnvVars()
 {
-    _resetEnvValidation();
+    ValidationResult result;
 
     const QString appDir = QCoreApplication::applicationDirPath();
     qCDebug(GStreamerEnvLog) << "App directory:" << appDir;
@@ -362,48 +363,27 @@ void _setGstEnvVars()
 
 #if defined(QGC_GST_MACOS_FRAMEWORK)
     // Framework builds prefer framework paths over app-relative paths
-    const QString pluginDirs = _joinExistingPaths({
-        _cleanJoin(rootDir, "lib/gstreamer-1.0"),
-        _cleanJoin(appDir, "../lib/gstreamer-1.0"),
-    });
-    const QString gioMod = _firstExistingPath({
-        _cleanJoin(rootDir, "lib/gio/modules"),
-        _cleanJoin(appDir, "../lib/gio/modules"),
-    });
+    const QStringList libDirs = {_cleanJoin(rootDir, "lib"), _cleanJoin(appDir, "../lib")};
 #else
-    // Non-framework (Homebrew) builds prefer app-relative paths
-    const QString pluginDirs = _joinExistingPaths({
-        _cleanJoin(appDir, "../lib/gstreamer-1.0"),
-        _cleanJoin(rootDir, "lib/gstreamer-1.0"),
-    });
-    const QString gioMod = _firstExistingPath({
-        _cleanJoin(appDir, "../lib/gio/modules"),
-        _cleanJoin(rootDir, "lib/gio/modules"),
-    });
+    // Flat (non-framework) SDK builds prefer app-relative paths
+    const QStringList libDirs = {_cleanJoin(appDir, "../lib"), _cleanJoin(rootDir, "lib")};
 #endif
-
-    const QString scanner = _firstExistingPath({
-        _cleanJoin(appDir, "../libexec/gstreamer-1.0/gst-plugin-scanner"),
-        _cleanJoin(rootDir, "libexec/gstreamer-1.0/gst-plugin-scanner"),
-    });
-    const QString ptp = _firstExistingPath({
-        _cleanJoin(appDir, "../libexec/gstreamer-1.0/gst-ptp-helper"),
-        _cleanJoin(rootDir, "libexec/gstreamer-1.0/gst-ptp-helper"),
-    });
+    const QStringList helperDirs = {_cleanJoin(appDir, "../libexec/gstreamer-1.0"),
+                                    _cleanJoin(rootDir, "libexec/gstreamer-1.0")};
+    const BundleLayout layout{
+        .pluginDirs = _cleanJoinAll(libDirs, "gstreamer-1.0"),
+        .gioModuleDirs = _cleanJoinAll(libDirs, "gio/modules"),
+        .scannerCandidates = _cleanJoinAll(helperDirs, "gst-plugin-scanner"),
+        .ptpCandidates = _cleanJoinAll(helperDirs, "gst-ptp-helper"),
+    };
     const bool hasBundledFramework = QFileInfo::exists(frameworkDir);
 
-    bool validBundlePaths = true;
-    if (pluginDirs.isEmpty()) {
-        if (hasBundledFramework) {
-            _reportMissingMacFrameworkPlugins(rootDir);
-            validBundlePaths = false;
-        }
-    } else {
-        validBundlePaths = _validateBundledDesktopPaths(QStringLiteral("macOS"), pluginDirs, scanner);
-    }
-
-    if (!pluginDirs.isEmpty() && validBundlePaths) {
-        _applyGstEnvVars(pluginDirs, gioMod, scanner, ptp);
+    if (!_applyBundleLayout(QStringLiteral("macOS"), layout) && hasBundledFramework) {
+        result.ok = false;
+        result.error =
+            QStringLiteral("GStreamer: bundled macOS framework found but plugin directory is missing under %1")
+                .arg(rootDir);
+        qCCritical(GStreamerEnvLog) << result.error;
     }
 
 #if defined(QGC_GST_MACOS_FRAMEWORK)
@@ -421,29 +401,22 @@ void _setGstEnvVars()
 
 #elif defined(Q_OS_WIN)
     const QString libDir = _cleanJoin(appDir, "../lib");
-    const QString pluginDir = _cleanJoin(libDir, "gstreamer-1.0");
-    const QString gioMod = _cleanJoin(libDir, "gio/modules");
-    const QString libexecDir = _cleanJoin(appDir, "../libexec");
-    const QString scanner = _cleanJoin(libexecDir, "gstreamer-1.0/gst-plugin-scanner.exe");
-    const QString ptp = _cleanJoin(libexecDir, "gstreamer-1.0/gst-ptp-helper.exe");
+    const QString helperDir = _cleanJoin(appDir, "../libexec/gstreamer-1.0");
+    const BundleLayout layout{
+        .pluginDirs = {_cleanJoin(libDir, "gstreamer-1.0")},
+        .gioModuleDirs = {_cleanJoin(libDir, "gio/modules")},
+        .scannerCandidates = {_cleanJoin(helperDir, "gst-plugin-scanner.exe")},
+        .ptpCandidates = {_cleanJoin(helperDir, "gst-ptp-helper.exe")},
+    };
 
-    if (QFileInfo::exists(pluginDir) && _validateBundledDesktopPaths(QStringLiteral("Windows"), pluginDir, scanner)) {
-        _applyGstEnvVars(pluginDir, gioMod, scanner, ptp);
-
+    if (_applyBundleLayout(QStringLiteral("Windows"), layout)) {
         // Put the app's bin dir on PATH so child processes (gst-plugin-scanner.exe) can locate
         // GStreamer DLLs installed alongside the main executable.
-        const QByteArray curPath = qgetenv("PATH");
-        const QByteArray binDir = QDir::toNativeSeparators(appDir).toUtf8();
-        bool alreadyOnPath = false;
-        for (const QByteArray &entry : curPath.split(';')) {
-            // Windows paths are case-insensitive; compare accordingly to avoid duplicate prepends.
-            if (entry.compare(binDir, Qt::CaseInsensitive) == 0) {
-                alreadyOnPath = true;
-                break;
-            }
-        }
-        if (!alreadyOnPath) {
-            qputenv("PATH", binDir + ";" + curPath);
+        const QString curPath = qEnvironmentVariable("PATH");
+        const QString binDir = QDir::toNativeSeparators(appDir);
+        // Windows paths are case-insensitive; compare accordingly to avoid duplicate prepends.
+        if (!curPath.split(QDir::listSeparator()).contains(binDir, Qt::CaseInsensitive)) {
+            _setGstEnv("PATH", binDir + QDir::listSeparator() + curPath);
         }
 
         // gioopenssl.dll's compiled-in CA path is relative to the Cerbero SDK root and breaks once
@@ -518,30 +491,29 @@ void _setGstEnvVars()
         _setGstEnv("GST_REGISTRY_REUSE_PLUGIN_SCANNER", QStringLiteral("no"));
     }
 
-#elif defined(Q_OS_LINUX)
-    // AppRun sets GStreamer env vars before launch; apply fallbacks only with no external override.
+#elif defined(Q_OS_LINUX) && !defined(QGC_GST_SYSTEM_PLUGINS)
+    // An AppImage or other bundle ships its runtime under <prefix>/lib; a plugin path set by the user wins.
     if (!qEnvironmentVariableIsSet("GST_PLUGIN_PATH_1_0") && !qEnvironmentVariableIsSet("GST_PLUGIN_PATH") &&
         !qEnvironmentVariableIsSet("GST_PLUGIN_SYSTEM_PATH_1_0") &&
         !qEnvironmentVariableIsSet("GST_PLUGIN_SYSTEM_PATH")) {
         const QString libDir = _cleanJoin(appDir, "../lib");
-        const QString libexecDir = _cleanJoin(appDir, "../libexec");
-        const QString pluginDir = _cleanJoin(libDir, "gstreamer-1.0");
         const QString gioMod = _cleanJoin(libDir, "gio/modules");
-        const QString scanner = _firstExistingPath({
-            _cleanJoin(libDir, "gstreamer1.0/gstreamer-1.0/gst-plugin-scanner"),
-            _cleanJoin(libexecDir, "gstreamer-1.0/gst-plugin-scanner"),
-        });
-        const QString ptp = _firstExistingPath({
-            _cleanJoin(libDir, "gstreamer1.0/gstreamer-1.0/gst-ptp-helper"),
-            _cleanJoin(libexecDir, "gstreamer-1.0/gst-ptp-helper"),
-        });
+        const QStringList helperDirs = {_cleanJoin(libDir, "gstreamer1.0/gstreamer-1.0"),
+                                        _cleanJoin(appDir, "../libexec/gstreamer-1.0")};
+        const BundleLayout layout{
+            .pluginDirs = {_cleanJoin(libDir, "gstreamer-1.0")},
+            .gioModuleDirs = {gioMod},
+            .scannerCandidates = _cleanJoinAll(helperDirs, "gst-plugin-scanner"),
+            .ptpCandidates = _cleanJoinAll(helperDirs, "gst-ptp-helper"),
+        };
 
-        if (QFileInfo::exists(pluginDir) && _validateBundledDesktopPaths(QStringLiteral("Linux"), pluginDir, scanner)) {
-            _applyGstEnvVars(pluginDir, gioMod, scanner, ptp);
+        if (_applyBundleLayout(QStringLiteral("Linux"), layout)) {
             _applyGioCompatOverride(gioMod);
         }
     }
 #endif
+
+    return result;
 }
 
 }  // anonymous namespace
@@ -556,21 +528,17 @@ ValidationResult prepareEnvironment()
         qCWarning(GStreamerEnvLog) << "prepareEnvironment() called off the GUI thread; qputenv is not thread-safe";
     }
     const QMutexLocker setEnvLocker(&s_setEnvVarsMutex);
-    _setGstEnvVars();
-    return {s_envPathsValid, s_envPathsError};
+    return _setGstEnvVars();
+}
+
+QString usePrivateRegistry(const QString& cacheDir)
+{
+    const QMutexLocker setEnvLocker(&s_setEnvVarsMutex);
+    return _usePrivateRegistry(cacheDir);
 }
 
 void logDiagnostics()
 {
-    // Echo GST_PLUGIN_PATH first (most-misconfigured); _1_0-suffixed wins per gstregistry.c lookup order.
-    const QByteArray pluginPath =
-        qEnvironmentVariableIsSet("GST_PLUGIN_PATH_1_0") ? qgetenv("GST_PLUGIN_PATH_1_0") : qgetenv("GST_PLUGIN_PATH");
-    if (!pluginPath.isEmpty()) {
-        qCCritical(GStreamerEnvLog) << "Check GST_PLUGIN_PATH=" << pluginPath;
-    } else {
-        qCCritical(GStreamerEnvLog) << "GST_PLUGIN_PATH is not set";
-    }
-
     qCCritical(GStreamerEnvLog) << "GStreamer environment diagnostics:";
     const auto dumpVar = [](const char* var) {
         const QByteArray val = qgetenv(var);
@@ -580,6 +548,7 @@ void logDiagnostics()
         dumpVar(var);
     }
     dumpVar("GST_REGISTRY_REUSE_PLUGIN_SCANNER");
+    dumpVar("GST_REGISTRY");
 }
 
 }  // namespace GStreamer::Environment

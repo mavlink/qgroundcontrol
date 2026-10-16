@@ -1,27 +1,15 @@
 #include "GStreamerHelpers.h"
 
-#include <QtCore/QByteArray>
-#include <QtCore/QDateTime>
-#include <QtCore/QDir>
-#include <QtCore/QFile>
-#include <QtCore/QFileInfo>
 #include <QtCore/QLatin1String>
-#include <QtCore/QStandardPaths>
 #include <QtCore/QString>
-#include <QtCore/QStringList>
 #include <QtQuick/QQuickWindow>
 #include <QtQuick/QSGRendererInterface>
-#include <array>
 #include <gst/rtsp/gstrtspurl.h>
-#include <span>
 
-#ifdef Q_OS_WIN
-#include <iterator>
-#if defined(QGC_HAS_ANY_GPU_PATH)
+#if defined(Q_OS_WIN) && defined(QGC_HAS_ANY_GPU_PATH)
 #include <rhi/qrhi.h>
 
 #include "HwBuffers/common/QGCRhiCapture.h"
-#endif
 #endif
 
 #include "GStreamer.h"
@@ -56,54 +44,62 @@ bool isValidRtspUri(const gchar* uri_str)
     return hasHost;
 }
 
-QString writePipelineDot(GstElement* pipeline, const char* tag)
+void disposeChild(GstElement* element)
 {
-    // kMaxDotFiles: cap retained .dot pipeline graphs; below 5 makes retro-debugging hard.
-    constexpr int kMaxDotFiles = 10;
-
-    if (!pipeline)
-        return {};
-    if (!qgetenv("GST_DEBUG_DUMP_DOT_DIR").isEmpty()) {
-        return {};
-    }
-    const QString cacheRoot = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
-    if (cacheRoot.isEmpty())
-        return {};
-    QDir dir(cacheRoot + QStringLiteral("/qgc-pipeline-dot"));
-    if (!dir.exists() && !dir.mkpath(QStringLiteral("."))) {
-        qCWarning(GStreamerHelpersLog) << "Failed to create" << dir.absolutePath();
-        return {};
+    const GstObjectPtr parent = element ? adoptObject(gst_object_get_parent(GST_OBJECT(element))) : nullptr;
+    if (!parent) {
+        return;
     }
 
-    // Rotate: remove oldest .dot files until under cap. Sort by mtime ascending.
-    QFileInfoList existing = dir.entryInfoList(QStringList{QStringLiteral("*.dot")},
-                                               QDir::Files, QDir::Time | QDir::Reversed);
-    while (existing.size() >= kMaxDotFiles) {
-        QFile::remove(existing.takeFirst().absoluteFilePath());
-    }
+    // gst_bin_remove drops the bin's ref, which may be the last one, before the element reaches NULL.
+    const GstElementPtr keepAlive = adoptElement(GST_ELEMENT(gst_object_ref(element)));
+    (void) gst_bin_remove(GST_BIN(parent.get()), element);
+    // Synchronous: gst_element_change_state() commits an ASYNC return at once when the target is READY or NULL, so
+    // the streaming threads have stopped when this returns.
+    (void) gst_element_set_state(element, GST_STATE_NULL);
+}
 
-    gchar* data = gst_debug_bin_to_dot_data(GST_BIN(pipeline), kDiagnosticDotGraphDetails);
-    if (!data)
-        return {};
-    const QString fileName = QStringLiteral("%1-%2.dot")
-                                 .arg(QString::fromLatin1(tag),
-                                      QDateTime::currentDateTimeUtc().toString(QStringLiteral("yyyyMMdd-HHmmss-zzz")));
-    const QString fullPath = dir.absoluteFilePath(fileName);
-    const QByteArray dotData = QByteArray::fromRawData(data, static_cast<qsizetype>(qstrlen(data)));
-    bool wrote = false;
-    QFile out(fullPath);
-    if (out.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-        wrote = (out.write(dotData) == static_cast<qint64>(dotData.size()));
-        if (!out.flush()) {
-            wrote = false;
-        }
-        out.close();
-        if (out.error() != QFileDevice::NoError) {
-            wrote = false;
-        }
+GstElement* addToBin(GstElement* bin, GstElementPtr element, const char* what)
+{
+    GstElement* const borrowed = element.release();
+    if (!gst_bin_add(GST_BIN(bin), borrowed)) {
+        qCWarning(GStreamerHelpersLog) << "gst_bin_add() failed for" << what;
+        return nullptr;
     }
-    g_free(data);
-    return wrote ? fullPath : QString{};
+    return borrowed;
+}
+
+TeeBranch addTeeBranch(GstElement* pipeline, GstElement* tee, const char* what)
+{
+    GstElementPtr queue = adoptElement(gst_element_factory_make("queue", nullptr));
+    GstElementPtr valve = adoptElement(gst_element_factory_make("valve", nullptr));
+    if (!queue || !valve) {
+        qCWarning(GStreamerHelpersLog) << "Failed to create the queue and valve of the" << what << "branch";
+        return {};
+    }
+    g_object_set(valve.get(), "drop", TRUE, nullptr);
+
+    const TeeBranch branch{.queue = addToBin(pipeline, std::move(queue), "queue"),
+                           .valve = addToBin(pipeline, std::move(valve), "valve")};
+    if (!branch.queue || !branch.valve || !gst_element_link_many(tee, branch.queue, branch.valve, nullptr)) {
+        qCWarning(GStreamerHelpersLog) << "Unable to link the" << what << "branch";
+        return {};
+    }
+    return branch;
+}
+
+GstPadPtr firstSrcPad(GstElement* element)
+{
+    GstPad* first = nullptr;
+    // Handles iterator resync itself, unlike a bare gst_iterator_next loop.
+    (void) gst_element_foreach_src_pad(
+        element,
+        [](GstElement* /*element*/, GstPad* pad, gpointer userData) -> gboolean {
+            *static_cast<GstPad**>(userData) = GST_PAD(gst_object_ref(pad));
+            return FALSE;
+        },
+        &first);
+    return adoptPad(first);
 }
 
 void forEachPlugin(GstRegistry* registry, const std::function<void(GstPlugin*)>& visitor)
@@ -119,6 +115,70 @@ void forEachPlugin(GstRegistry* registry, const std::function<void(GstPlugin*)>&
     gst_plugin_list_free(plugins);
 }
 
+void forEachVideoDecoderFactory(GstRank minRank, const std::function<void(GstElementFactory*)>& visitor)
+{
+    GList* factories = gst_element_factory_list_get_elements(
+        static_cast<GstElementFactoryListType>(GST_ELEMENT_FACTORY_TYPE_DECODER | GST_ELEMENT_FACTORY_TYPE_MEDIA_VIDEO),
+        minRank);
+    for (GList* node = factories; node != nullptr; node = node->next) {
+        visitor(GST_ELEMENT_FACTORY(node->data));
+    }
+    gst_plugin_feature_list_free(factories);
+}
+
+namespace {
+
+struct DecoderFamilyPrefix
+{
+    const char* prefix;
+    VideoDecoderOptions family;  // ForceVideoDecoderDefault: not a user-selectable family
+    bool isHardware;
+};
+
+// Single name-based decoder classification for the hardware/software split, the ForceVideoDecoder*
+// rank overrides and availableDecoderFamilies(). Prefix (not substring) matching, so e.g. avdec_wnv1
+// isn't taken for an NVIDIA decoder. The first match wins: specific prefixes precede general ones.
+constexpr DecoderFamilyPrefix kDecoderFamilyPrefixes[] = {
+    // Android MediaCodec: Google/Codec2 software wrappers; every other amcviddec is a hardware codec.
+    {"amcviddec-omxgoogle", ForceVideoDecoderDefault, false},
+    {"amcviddec-c2android", ForceVideoDecoderDefault, false},
+    {"amcviddec-", ForceVideoDecoderDefault, true},
+    // Legacy gstreamer-vaapi is demoted on Linux and never bumped by ForceVideoDecoderVAAPI (modern va* only).
+    {"vaapi", ForceVideoDecoderDefault, true},
+    {"va", ForceVideoDecoderVAAPI, true},
+    {"nv", ForceVideoDecoderNVIDIA, true},
+    {"d3d11", ForceVideoDecoderDirectX3D, true},
+    {"d3d12", ForceVideoDecoderDirectX3D, true},
+    {"dxva", ForceVideoDecoderDirectX3D, true},
+    {"vtdec", ForceVideoDecoderVideoToolbox, true},
+    {"qsv", ForceVideoDecoderIntel, true},
+    {"msdk", ForceVideoDecoderIntel, true},
+    {"vulkan", ForceVideoDecoderVulkan, true},
+};
+
+const DecoderFamilyPrefix* findDecoderFamilyPrefix(const char* factoryName)
+{
+    const GCharPtr lowerName = adoptGChar(g_ascii_strdown(factoryName, -1));
+    for (const DecoderFamilyPrefix& entry : kDecoderFamilyPrefixes) {
+        if (g_str_has_prefix(lowerName.get(), entry.prefix)) {
+            return &entry;
+        }
+    }
+    return nullptr;
+}
+
+}  // namespace
+
+VideoDecoderOptions decoderFamilyForFactory(const char* factoryName)
+{
+    if (!factoryName) {
+        return ForceVideoDecoderDefault;
+    }
+
+    const DecoderFamilyPrefix* entry = findDecoderFamilyPrefix(factoryName);
+    return entry ? entry->family : ForceVideoDecoderDefault;
+}
+
 bool isHardwareDecoderFactory(GstElementFactory* factory)
 {
     if (!factory) {
@@ -130,45 +190,44 @@ bool isHardwareDecoderFactory(GstElementFactory* factory)
         return false;
     }
 
-    const QByteArray nameLower = QByteArray::fromRawData(factoryName, qstrlen(factoryName)).toLower();
-
-    // Android MediaCodec: exclude software wrappers, accept remaining as hardware
-    if (nameLower.startsWith("amcviddec-omxgoogle") || nameLower.startsWith("amcviddec-c2android")) {
-        return false;
-    }
-    if (nameLower.startsWith("amcviddec-")) {
-        return true;
+    if (const DecoderFamilyPrefix* entry = findDecoderFamilyPrefix(factoryName)) {
+        return entry->isHardware;
     }
 
     const auto containsHardware = [](const gchar* value) {
-        if (!value)
+        if (!value) {
             return false;
-        gchar* lower = g_ascii_strdown(value, -1);
-        bool found = (g_strrstr(lower, "hardware") != nullptr);
-        g_free(lower);
-        return found;
-    };
-
-    if (containsHardware(gst_element_factory_get_metadata(factory, GST_ELEMENT_METADATA_KLASS))) {
-        return true;
-    }
-
-    if (containsHardware(gst_element_factory_get_metadata(factory, GST_ELEMENT_METADATA_DESCRIPTION))) {
-        return true;
-    }
-
-    static constexpr const char* kHardwareTags[] = {
-        "va", "nv", "qsv", "msdk", "vulkan", "d3d", "dxva", "vtdec", "metal",
-    };
-
-    for (const auto& tag : kHardwareTags) {
-        if (nameLower.contains(tag)) {
-            return true;
         }
-    }
+        const GCharPtr lower = adoptGChar(g_ascii_strdown(value, -1));
+        return g_strrstr(lower.get(), "hardware") != nullptr;
+    };
 
-    return false;
+    return containsHardware(gst_element_factory_get_metadata(factory, GST_ELEMENT_METADATA_KLASS)) ||
+           containsHardware(gst_element_factory_get_metadata(factory, GST_ELEMENT_METADATA_DESCRIPTION));
 }
+
+QString describeDecoderFactory(GstElementFactory* factory)
+{
+    GstPluginFeature* const feature = GST_PLUGIN_FEATURE(factory);
+    const GstObjectPtr plugin = adoptObject(GST_OBJECT(gst_plugin_feature_get_plugin(feature)));
+    return QStringLiteral("[%1] %2/%3 rank=%4 (%5)")
+        .arg(isHardwareDecoderFactory(factory) ? QStringLiteral("HW") : QStringLiteral("SW"),
+             plugin ? QString::fromUtf8(gst_plugin_get_name(GST_PLUGIN(plugin.get()))) : QStringLiteral("?"),
+             QString::fromUtf8(gst_plugin_feature_get_name(feature)))
+        .arg(gst_plugin_feature_get_rank(feature))
+        .arg(QString::fromUtf8(gst_element_factory_get_klass(factory)));
+}
+
+namespace {
+
+void setFeatureRank(GstPluginFeature* feature, uint16_t rank)
+{
+    qCDebug(GStreamerHelpersLog) << "  Changing feature (" << gst_plugin_feature_get_name(feature)
+                                 << ") to use rank:" << rank;
+    gst_plugin_feature_set_rank(feature, rank);
+}
+
+}  // namespace
 
 bool changeFeatureRank(GstRegistry* registry, const char* featureName, uint16_t rank)
 {
@@ -181,108 +240,54 @@ bool changeFeatureRank(GstRegistry* registry, const char* featureName, uint16_t 
         return false;
     }
 
-    qCDebug(GStreamerHelpersLog) << "  Changing feature (" << featureName << ") to use rank:" << rank;
-    gst_plugin_feature_set_rank(feature.get(), rank);
+    setFeatureRank(feature.get(), rank);
     return true;
 }
 
 namespace {
 
-void applyRanks(GstRegistry* registry, std::span<const char* const> features, uint16_t rank)
+// Ranks every installed video decoder that decoderFamilyForFactory() assigns to @p family.
+void applyFamilyRank(VideoDecoderOptions family, uint16_t rank)
 {
-    for (const char* name : features) {
-        changeFeatureRank(registry, name, rank);
-    }
+    forEachVideoDecoderFactory(GST_RANK_NONE, [family, rank](GstElementFactory* factory) {
+        GstPluginFeature* const feature = GST_PLUGIN_FEATURE(factory);
+        if (decoderFamilyForFactory(gst_plugin_feature_get_name(feature)) == family) {
+            setFeatureRank(feature, rank);
+        }
+    });
 }
 
-// Decoder-family rank tables, shared by setCodecPriorities and the zero-copy steering below.
-constexpr std::array<const char* const, 7> kVaDecoders = {"vaav1dec",   "vah264dec", "vah265dec", "vajpegdec",
-                                                          "vampeg2dec", "vavp8dec",  "vavp9dec"};
-constexpr std::array<const char* const, 9> kNvidiaDecoders = {"nvav1dec",       "nvh264dec",       "nvh265dec",
-                                                              "nvjpegdec",      "nvmpeg2videodec", "nvmpeg4videodec",
-                                                              "nvmpegvideodec", "nvvp8dec",        "nvvp9dec"};
-constexpr std::array<const char* const, 18> kDirectX3DDecoders = {
-    "d3d11av1dec",    "d3d11h264dec",    "d3d11h265dec",    "d3d11mpeg2dec",    "d3d11vp8dec",    "d3d11vp9dec",
-    "d3d12av1dec",    "d3d12h264dec",    "d3d12h265dec",    "d3d12mpeg2dec",    "d3d12vp8dec",    "d3d12vp9dec",
-    "dxvaav1decoder", "dxvah264decoder", "dxvah265decoder", "dxvampeg2decoder", "dxvavp8decoder", "dxvavp9decoder"};
-constexpr std::array<const char* const, 2> kVideoToolboxDecoders = {"vtdec_hw", "vtdec"};
-constexpr std::array<const char* const, 12> kIntelDecoders = {
-    "qsvh264dec",  "qsvh265dec",   "qsvjpegdec",   "qsvvp9dec",  "msdkav1dec", "msdkh264dec",
-    "msdkh265dec", "msdkmjpegdec", "msdkmpeg2dec", "msdkvc1dec", "msdkvp8dec", "msdkvp9dec"};
-constexpr std::array<const char* const, 2> kVulkanDecoders = {"vulkanh264dec", "vulkanh265dec"};
-
-void lowerDecoderRanksByClass(GstRegistry* registry, bool lowerHardware)
+void lowerDecoderRanksByClass(bool lowerHardware)
 {
-    static constexpr uint16_t NewRank = GST_RANK_NONE;
-    if (!registry) {
-        qCCritical(GStreamerHelpersLog) << "Invalid registry!";
-        return;
-    }
-
-    GList* decoderFactories = gst_element_factory_list_get_elements(
-        static_cast<GstElementFactoryListType>(GST_ELEMENT_FACTORY_TYPE_DECODER | GST_ELEMENT_FACTORY_TYPE_MEDIA_VIDEO),
-        GST_RANK_MARGINAL);
-
-    for (GList* node = decoderFactories; node != nullptr; node = node->next) {
-        GstElementFactory* factory = GST_ELEMENT_FACTORY(node->data);
-        if (!factory) {
-            continue;
+    forEachVideoDecoderFactory(GST_RANK_MARGINAL, [lowerHardware](GstElementFactory* factory) {
+        if (isHardwareDecoderFactory(factory) != lowerHardware) {
+            return;
         }
-
-        if (GStreamer::isHardwareDecoderFactory(factory) != lowerHardware) {
-            continue;
-        }
-
-        const gchar* name = gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory));
-        if (!name) {
-            continue;
-        }
-
+        GstPluginFeature* const feature = GST_PLUGIN_FEATURE(factory);
         qCDebug(GStreamerHelpersLog) << "Lowering" << (lowerHardware ? "hardware" : "software")
-                                     << "decoder rank:" << name;
-        gst_plugin_feature_set_rank(GST_PLUGIN_FEATURE(factory), NewRank);
-    }
-
-    gst_plugin_feature_list_free(decoderFactories);
+                                     << "decoder rank:" << gst_plugin_feature_get_name(feature);
+        gst_plugin_feature_set_rank(feature, GST_RANK_NONE);
+    });
 }
 
-void prioritizeByHardwareClass(GstRegistry* registry, uint16_t prioritizedRank, bool requireHardware)
+void prioritizeByHardwareClass(uint16_t prioritizedRank, bool requireHardware)
 {
-    if (!registry) {
-        qCCritical(GStreamerHelpersLog) << "Failed to get gstreamer registry.";
-        return;
-    }
+    qCDebug(GStreamerHelpersLog) << "Prioritizing" << (requireHardware ? "hardware" : "software")
+                                 << "video decoders with rank:" << prioritizedRank;
+    int decoderFactories = 0;
+    int matchedFactories = 0;
+    forEachVideoDecoderFactory(GST_RANK_NONE, [&](GstElementFactory* factory) {
+        ++decoderFactories;
+        if (isHardwareDecoderFactory(factory) == requireHardware) {
+            setFeatureRank(GST_PLUGIN_FEATURE(factory), prioritizedRank);
+            ++matchedFactories;
+        }
+    });
 
-    GList* decoderFactories = gst_element_factory_list_get_elements(
-        static_cast<GstElementFactoryListType>(GST_ELEMENT_FACTORY_TYPE_DECODER | GST_ELEMENT_FACTORY_TYPE_MEDIA_VIDEO),
-        GST_RANK_NONE);
-
-    if (!decoderFactories) {
+    if (decoderFactories == 0) {
         qCDebug(GStreamerHelpersLog) << "No decoder factories available while prioritizing"
                                      << (requireHardware ? "hardware" : "software") << "decoders";
         return;
-    }
-
-    qCDebug(GStreamerHelpersLog) << "Prioritizing" << (requireHardware ? "hardware" : "software")
-                                 << "video decoders with rank:" << prioritizedRank;
-    int matchedFactories = 0;
-    for (GList* node = decoderFactories; node != nullptr; node = node->next) {
-        GstElementFactory* factory = GST_ELEMENT_FACTORY(node->data);
-        if (!factory) {
-            continue;
-        }
-
-        if (GStreamer::isHardwareDecoderFactory(factory) != requireHardware) {
-            continue;
-        }
-
-        const gchar* featureName = gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory));
-        if (!featureName) {
-            continue;
-        }
-
-        changeFeatureRank(registry, featureName, prioritizedRank);
-        ++matchedFactories;
     }
 
     if (matchedFactories == 0) {
@@ -291,14 +296,28 @@ void prioritizeByHardwareClass(GstRegistry* registry, uint16_t prioritizedRank, 
     }
 
     qCDebug(GStreamerHelpersLog) << "Lowering" << (requireHardware ? "software" : "hardware") << "decoder ranks.";
-    lowerDecoderRanksByClass(registry, !requireHardware);
-
-    gst_plugin_feature_list_free(decoderFactories);
+    lowerDecoderRanksByClass(!requireHardware);
 }
+
+#if defined(Q_OS_WIN) || defined(Q_OS_LINUX)
+// Above the PRIMARY + 1 the ForceVideoDecoder* options give, so the GPU-memory decoders win autoplug.
+constexpr uint16_t kZeroCopyRank = GST_RANK_PRIMARY + 2;
+
+// Ranks every installed video decoder whose factory name starts with @p prefix.
+void applyPrefixRank(const char* prefix, uint16_t rank)
+{
+    forEachVideoDecoderFactory(GST_RANK_NONE, [prefix, rank](GstElementFactory* factory) {
+        GstPluginFeature* const feature = GST_PLUGIN_FEATURE(factory);
+        if (g_str_has_prefix(gst_plugin_feature_get_name(feature), prefix)) {
+            setFeatureRank(feature, rank);
+        }
+    });
+}
+#endif
 
 #ifdef Q_OS_WIN
 // A decoder whose D3D family mismatches the active QRhi backend can't be sampled zero-copy and drops to a CPU copy.
-void alignD3DDecoderRanksToRhi(GstRegistry* registry, bool promoteMatchedFamily)
+void alignD3DDecoderRanksToRhi(bool promoteMatchedFamily)
 {
     // Prefer the resolved QRhi backend; ranks usually apply before the scene graph resolves, so cachedRhi() is often
     // null here and graphicsApi() Unknown — fall back to QSG_RHI_BACKEND (Qt's D3D11 default) in that Windows case.
@@ -326,48 +345,30 @@ void alignD3DDecoderRanksToRhi(GstRegistry* registry, bool promoteMatchedFamily)
                 break;
         }
     }
-    static constexpr const char* kD3D11Decoders[] = {"d3d11av1dec",   "d3d11h264dec", "d3d11h265dec",
-                                                     "d3d11mpeg2dec", "d3d11vp8dec",  "d3d11vp9dec"};
-    static constexpr const char* kD3D12Decoders[] = {"d3d12av1dec",   "d3d12h264dec", "d3d12h265dec",
-                                                     "d3d12mpeg2dec", "d3d12vp8dec",  "d3d12vp9dec"};
-    const char* const* matched = wantD3D12 ? kD3D12Decoders : kD3D11Decoders;
-    const char* const* mismatched = wantD3D12 ? kD3D11Decoders : kD3D12Decoders;
+    const char* const matched = wantD3D12 ? "d3d12" : "d3d11";
+    const char* const mismatched = wantD3D12 ? "d3d11" : "d3d12";
     qCDebug(GStreamerHelpersLog) << "Aligning D3D decoder ranks to" << (wantD3D12 ? "D3D12" : "D3D11")
                                  << "RHI - demoting the mismatched decoder family";
-    static_assert(std::size(kD3D11Decoders) == std::size(kD3D12Decoders));
     if (promoteMatchedFamily) {
-        static constexpr uint16_t ZeroCopyRank = GST_RANK_PRIMARY + 2;
-        for (size_t i = 0; i < std::size(kD3D11Decoders); ++i) {
-            changeFeatureRank(registry, matched[i], ZeroCopyRank);
-        }
+        applyPrefixRank(matched, kZeroCopyRank);
     }
-    for (size_t i = 0; i < std::size(kD3D11Decoders); ++i) {
-        changeFeatureRank(registry, mismatched[i], GST_RANK_NONE);
-    }
+    applyPrefixRank(mismatched, GST_RANK_NONE);
 }
 #endif  // Q_OS_WIN
 
 #ifdef Q_OS_LINUX
-constexpr std::array<const char* const, 8> kLegacyVaapiDecoders = {"vaapiav1dec",  "vaapih264dec",  "vaapih265dec",
-                                                                   "vaapijpegdec", "vaapimpeg2dec", "vaapivp8dec",
-                                                                   "vaapivp9dec",  "vaapidecodebin"};
-constexpr std::array<const char* const, 6> kV4l2StatelessDecoders = {
-    "v4l2slh264dec", "v4l2slh265dec", "v4l2slvp8dec", "v4l2slvp9dec", "v4l2slav1dec", "v4l2slmpeg2dec"};
-
 // Steer autoplug toward zero-copy GPU-memory decoders (DMABuf/DMA_DRM) over system-memory ones. Rank-only and
 // additive: absent factories no-op, va/v4l2 self-demote at runtime without a device, software fallback untouched.
-void preferZeroCopyDecoders(GstRegistry* registry)
+void preferZeroCopyDecoders()
 {
-    static constexpr uint16_t ZeroCopyRank = GST_RANK_PRIMARY + 2;
-
     // Legacy gstreamer-vaapi negotiates GstVaapiMemory the qgcqvideosink/HwBuffers paths can't import
     // zero-copy; demote it so the modern va plugin (clean DMABuf/DMA_DRM output) wins when both exist.
-    applyRanks(registry, kLegacyVaapiDecoders, GST_RANK_NONE);
+    applyPrefixRank("vaapi", GST_RANK_NONE);
 
     // Modern va decoders (gst-va, supersedes gstreamer-vaapi) emit DMABuf/DMA_DRM, and V4L2 stateless
     // decoders expose DMA_DRM caps on 1.26+; bump both above software so the zero-copy allocator is picked.
-    applyRanks(registry, kVaDecoders, ZeroCopyRank);
-    applyRanks(registry, kV4l2StatelessDecoders, ZeroCopyRank);
+    applyFamilyRank(ForceVideoDecoderVAAPI, kZeroCopyRank);
+    applyPrefixRank("v4l2sl", kZeroCopyRank);
 }
 #endif  // Q_OS_LINUX
 
@@ -385,9 +386,7 @@ void setCodecPriorities(int rawOption)
 
 void setCodecPriorities(VideoDecoderOptions option)
 {
-    GstRegistry* registry = gst_registry_get();
-
-    if (!registry) {
+    if (!gst_registry_get()) {
         qCCritical(GStreamerHelpersLog) << "Failed to get gstreamer registry.";
         return;
     }
@@ -398,35 +397,26 @@ void setCodecPriorities(VideoDecoderOptions option)
         case ForceVideoDecoderDefault:
             // HW-decoder GPU caps (GLMemory/DMABuf/VAMemory) auto-plug to system memory via gldownload/vapostproc.
 #ifdef Q_OS_LINUX
-            preferZeroCopyDecoders(registry);
+            preferZeroCopyDecoders();
 #endif
             break;
         case ForceVideoDecoderSoftware:
-            prioritizeByHardwareClass(registry, PrioritizedRank, false);
+            prioritizeByHardwareClass(PrioritizedRank, false);
             break;
         case ForceVideoDecoderHardware:
-            prioritizeByHardwareClass(registry, PrioritizedRank, true);
-            break;
-        case ForceVideoDecoderVAAPI:
-            applyRanks(registry, kVaDecoders, PrioritizedRank);
-            break;
-        case ForceVideoDecoderNVIDIA:
-            applyRanks(registry, kNvidiaDecoders, PrioritizedRank);
-            break;
-        case ForceVideoDecoderDirectX3D:
-            applyRanks(registry, kDirectX3DDecoders, PrioritizedRank);
-            break;
-        case ForceVideoDecoderVideoToolbox:
-            applyRanks(registry, kVideoToolboxDecoders, PrioritizedRank);
-            break;
-        case ForceVideoDecoderIntel:
-            applyRanks(registry, kIntelDecoders, PrioritizedRank);
+            prioritizeByHardwareClass(PrioritizedRank, true);
             break;
         case ForceVideoDecoderVulkan:
             // Vulkan zero-copy import is dormant: gst-vulkan's own VkDevice fails QGC's device-match guard → CPU copy.
             qCWarning(GStreamerHelpersLog) << "Forcing Vulkan video decoders: zero-copy import is dormant "
                                               "(foreign VkDevice → CPU fallback), so decode will not be zero-copy.";
-            applyRanks(registry, kVulkanDecoders, PrioritizedRank);
+            [[fallthrough]];
+        case ForceVideoDecoderVAAPI:
+        case ForceVideoDecoderNVIDIA:
+        case ForceVideoDecoderDirectX3D:
+        case ForceVideoDecoderVideoToolbox:
+        case ForceVideoDecoderIntel:
+            applyFamilyRank(option, PrioritizedRank);
             break;
     }
 
@@ -435,7 +425,7 @@ void setCodecPriorities(VideoDecoderOptions option)
     // backend so a D3D12 decoder never wins over D3D11 on Qt's default Windows RHI (and vice-versa).
     const bool promoteMatchingD3D = (option == ForceVideoDecoderDefault) || (option == ForceVideoDecoderHardware) ||
                                     (option == ForceVideoDecoderDirectX3D);
-    alignD3DDecoderRanksToRhi(registry, promoteMatchingD3D);
+    alignD3DDecoderRanksToRhi(promoteMatchingD3D);
 #endif
 }
 

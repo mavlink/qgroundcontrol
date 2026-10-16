@@ -90,18 +90,31 @@ elseif(IOS)
             set_target_properties("${target}" PROPERTIES XCODE_EMBED_FRAMEWORKS_CODE_SIGN_ON_COPY YES
                                                          XCODE_EMBED_FRAMEWORKS_REMOVE_HEADERS_ON_COPY YES
             )
-            message(STATUS "QGC: GStreamerMobile will be embedded by Xcode")
+            message(STATUS "QGC: GStreamer::mobile will be embedded by Xcode")
         else()
             add_custom_command(
                 TARGET "${target}"
                 POST_BUILD
                 COMMAND "${CMAKE_COMMAND}" -E copy_directory "$<TARGET_BUNDLE_DIR:GStreamerMobileXcfw>"
                         "$<TARGET_BUNDLE_DIR:${target}>/Frameworks/$<TARGET_BUNDLE_DIR_NAME:GStreamerMobileXcfw>"
-                COMMENT "Embedding GStreamerMobile framework"
+                COMMENT "Embedding the GStreamer::mobile framework"
                 VERBATIM
             )
-            message(STATUS "QGC: GStreamerMobile will be embedded at build time (Ninja)")
+            message(STATUS "QGC: GStreamer::mobile will be embedded at build time (Ninja)")
         endif()
+
+        set(_nm "${CMAKE_NM}")
+        if(NOT _nm)
+            set(_nm nm)
+        endif()
+        add_custom_command(
+            TARGET "${target}"
+            POST_BUILD
+            COMMAND "${CMAKE_COMMAND}" "-DAPP=$<TARGET_FILE:${target}>" "-DNM=${_nm}" -P
+                    "${CMAKE_SOURCE_DIR}/cmake/GStreamer/platform/IOSSingleCoreCheck.cmake"
+            COMMENT "Checking that the app links a single GStreamer core"
+            VERBATIM
+        )
     endfunction()
 
     set(_qgc_ios_asset_catalog "${CMAKE_SOURCE_DIR}/deploy/ios/Images.xcassets")
@@ -196,7 +209,7 @@ elseif(IOS)
             foreach(xcframework IN LISTS _ffmpeg_xcframeworks)
                 cmake_path(GET xcframework STEM _framework_name)
                 set(_xcframework_slice_args XCFRAMEWORK "${xcframework}" PLATFORM "${_qgc_ios_platform}" OUT_VAR
-                                            _framework_source
+                                            _framework_slice
                 )
                 if(CMAKE_OSX_ARCHITECTURES)
                     list(APPEND _xcframework_slice_args ARCHITECTURES ${CMAKE_OSX_ARCHITECTURES})
@@ -205,7 +218,7 @@ elseif(IOS)
                 add_custom_command(
                     TARGET ${CMAKE_PROJECT_NAME}
                     POST_BUILD
-                    COMMAND "${CMAKE_COMMAND}" -E copy_directory "${_framework_source}"
+                    COMMAND "${CMAKE_COMMAND}" -E copy_directory "${_framework_slice}/${_framework_name}.framework"
                             "$<TARGET_BUNDLE_DIR:${CMAKE_PROJECT_NAME}>/Frameworks/${_framework_name}.framework"
                     COMMENT "Embedding ${_framework_name}.framework (${_qgc_ios_platform})"
                     VERBATIM

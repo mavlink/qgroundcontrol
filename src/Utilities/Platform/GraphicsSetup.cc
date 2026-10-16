@@ -1,16 +1,19 @@
 #include "GraphicsSetup.h"
 
+#include <memory>
+#include <rhi/qrhi.h>
+
+#include <QtCore/QCoreApplication>
 #include <QtCore/QDir>
 #include <QtCore/QFileInfo>
 #include <QtCore/QRunnable>
 #include <QtCore/QStandardPaths>
 #include <QtCore/QString>
 #include <QtCore/QStringList>
+#include <QtGui/QPlatformSurfaceEvent>
 #include <QtQuick/QQuickGraphicsConfiguration>
 #include <QtQuick/QQuickGraphicsDevice>
 #include <QtQuick/QQuickWindow>
-#include <memory>
-#include <rhi/qrhi.h>
 
 #include "QGCLoggingCategory.h"
 
@@ -195,6 +198,27 @@ void checkSoftwareDevice(QQuickWindow* window)
     }
 }
 
+/// Configures the first QQuickWindow whose native surface is created, then removes itself.
+class FirstWindowConfigurator final : public QObject
+{
+public:
+    using QObject::QObject;
+
+protected:
+    bool eventFilter(QObject* watched, QEvent* event) override
+    {
+        if ((event->type() == QEvent::PlatformSurface) &&
+            (static_cast<QPlatformSurfaceEvent*>(event)->surfaceEventType() == QPlatformSurfaceEvent::SurfaceCreated)) {
+            if (auto* const window = qobject_cast<QQuickWindow*>(watched)) {
+                QCoreApplication::instance()->removeEventFilter(this);
+                configureMainWindow(window);
+                deleteLater();
+            }
+        }
+        return false;
+    }
+};
+
 }  // namespace
 
 void configureMainWindow(QQuickWindow* window)
@@ -204,7 +228,9 @@ void configureMainWindow(QQuickWindow* window)
         return;
     }
 
-    if (window->isSceneGraphInitialized()) {
+    // The window's own QRhi, not isSceneGraphInitialized(): the basic render loop shares one render context, so a new
+    // window reports an initialized scene graph once any other window has rendered.
+    if (window->rhi()) {
         qCWarning(GraphicsSetupLog)
             << "Scene graph already initialized before configureMainWindow; skipping RHI config";
     } else {
@@ -237,13 +263,22 @@ void configureMainWindow(QQuickWindow* window)
         return;
     }
     QQuickWindow* win = window;
-    if (win->isSceneGraphInitialized()) {
+    if (win->rhi()) {
         win->scheduleRenderJob(QRunnable::create([win]() { probeHdr(win); }), QQuickWindow::BeforeSynchronizingStage);
         win->update();
     } else {
         QObject::connect(
             win, &QQuickWindow::sceneGraphInitialized, win, [win]() { probeHdr(win); }, Qt::DirectConnection);
     }
+}
+
+void configureMainWindowOnCreation()
+{
+    QCoreApplication* const app = QCoreApplication::instance();
+    if (!app) {
+        return;
+    }
+    app->installEventFilter(new FirstWindowConfigurator(app));
 }
 
 }  // namespace GraphicsSetup

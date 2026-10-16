@@ -1,18 +1,16 @@
 #include "CpuVideoFramePool.h"
 
-#include <QtCore/QLoggingCategory>
-#include <QtMultimedia/QAbstractVideoBuffer>
-#include <algorithm>
 #include <atomic>
 #include <cstring>
 #include <gst/video/video.h>
 #include <memory>
 #include <utility>
 
+#include <QtCore/QLoggingCategory>
+#include <QtMultimedia/QAbstractVideoBuffer>
+
+#include "GstHwVideoInfo.h"
 #include "QGCLoggingCategory.h"
-#if defined(QGC_HAS_ANY_GPU_PATH)
-#include "QGCRhiCapture.h"
-#endif
 
 QGC_LOGGING_CATEGORY(CpuVideoFramePoolLog, "Video.GStreamer.HwBuffers.CpuPool")
 
@@ -62,79 +60,28 @@ private:
 class MapThroughGstVideoBuffer final : public QAbstractVideoBuffer
 {
 public:
-    // Outstanding zero-copy buffers each pin a decoder buffer; cap how many can be in flight before
-    // wrapZeroCopy falls back to a copy so a compositor stall can't drain the decoder's HW pool. The cap is
-    // derived from the RHI's frames-in-flight.
-    static int maxLive() noexcept
-    {
-        static const int s_max = []() -> int {
-            constexpr int kFloor = 6;
-#if defined(QGC_HAS_ANY_GPU_PATH)
-            // Snapshot populated render-side; never dereference QRhi from this (streaming) thread.
-            int fif = QGCRhiCapture::deviceSnapshot().framesInFlight.load(std::memory_order_acquire);
-            if (fif <= 0) {
-                fif = 2;  // QRhi's typical default before the snapshot exists
-            }
-            return std::clamp(fif * 2, kFloor, 16);
-#else
-            return kFloor;
-#endif
-        }();
-        return s_max;
-    }
-    static std::atomic<int>& liveCount()
-    {
-        static std::atomic<int> s_live{0};
-        return s_live;
-    }
-
-    MapThroughGstVideoBuffer(GstBuffer* buffer, const GstVideoInfo& info, QVideoFrameFormat format)
-        : _buffer(gst_buffer_ref(buffer)), _info(info), _format(std::move(format))
-    {
-        liveCount().fetch_add(1, std::memory_order_relaxed);
-    }
+    /// Takes over a slot the caller already reserved in @p pinned; the slot is released on destruction.
+    MapThroughGstVideoBuffer(GstBuffer* buffer, const GstVideoInfo& info, QVideoFrameFormat format,
+                             CpuVideoFramePool::PinnedFrameCounter pinned)
+        : _buffer(gst_buffer_ref(buffer))
+        , _info(info)
+        , _format(std::move(format))
+        , _pinned(std::move(pinned))
+    {}
 
     ~MapThroughGstVideoBuffer() override
     {
-        if (_mapped) {
-            gst_video_frame_unmap(&_frame);
-        }
+        _cpuView.unmap();
         gst_buffer_unref(_buffer);
-        liveCount().fetch_sub(1, std::memory_order_relaxed);
+        _pinned->fetch_sub(1, std::memory_order_relaxed);
     }
 
     MapData map(QVideoFrame::MapMode mode) override
     {
-        if (mode == QVideoFrame::NotMapped) {
-            return {};
-        }
-        if (mode != QVideoFrame::ReadOnly) {
-            return {};
-        }
-        if (!_mapped) {
-            if (!gst_video_frame_map(&_frame, &_info, _buffer, GST_MAP_READ)) {
-                return {};
-            }
-            _mapped = true;
-        }
-        MapData data;
-        data.planeCount = GST_VIDEO_FRAME_N_PLANES(&_frame);
-        for (int i = 0; i < data.planeCount; ++i) {
-            data.data[i] = static_cast<uchar*>(GST_VIDEO_FRAME_PLANE_DATA(&_frame, i));
-            data.bytesPerLine[i] = GST_VIDEO_FRAME_PLANE_STRIDE(&_frame, i);
-            data.dataSize[i] = static_cast<qsizetype>(GST_VIDEO_FRAME_PLANE_STRIDE(&_frame, i)) *
-                               GST_VIDEO_FRAME_COMP_HEIGHT(&_frame, i);
-        }
-        return data;
+        return (mode == QVideoFrame::ReadOnly) ? _cpuView.map(_buffer, _info) : MapData{};
     }
 
-    void unmap() override
-    {
-        if (_mapped) {
-            gst_video_frame_unmap(&_frame);
-            _mapped = false;
-        }
-    }
+    void unmap() override { _cpuView.unmap(); }
 
     QVideoFrameFormat format() const override { return _format; }
 
@@ -142,9 +89,21 @@ private:
     GstBuffer* _buffer;
     GstVideoInfo _info;
     QVideoFrameFormat _format;
-    GstVideoFrame _frame = {};
-    bool _mapped = false;
+    CpuVideoFramePool::PinnedFrameCounter _pinned;
+    CpuVideoFramePool::FrameMapping _cpuView;
 };
+
+// Check-and-increment in one step so concurrent callers can never overshoot the cap.
+bool tryReservePinnedFrame(std::atomic<int>& pinned) noexcept
+{
+    int live = pinned.load(std::memory_order_relaxed);
+    do {
+        if (live >= CpuVideoFramePool::kMaxPinnedFrames) {
+            return false;
+        }
+    } while (!pinned.compare_exchange_weak(live, live + 1, std::memory_order_relaxed));
+    return true;
+}
 
 }  // namespace
 
@@ -165,10 +124,47 @@ CpuVideoFramePool::PlaneLayout CpuVideoFramePool::computeLayout(const GstVideoIn
     for (int i = 0; i < n; ++i) {
         L.bytesPerLine[i] = GST_VIDEO_INFO_PLANE_STRIDE(&info, i);
         L.planeOffset[i] = static_cast<qsizetype>(GST_VIDEO_INFO_PLANE_OFFSET(&info, i));
-        L.height[i] = static_cast<int>(GST_VIDEO_INFO_COMP_HEIGHT(&info, i));
+        L.height[i] = GstHw::planeHeight(info, i);
     }
     L.byteSize = static_cast<qsizetype>(GST_VIDEO_INFO_SIZE(&info));
     return L;
+}
+
+QAbstractVideoBuffer::MapData CpuVideoFramePool::mapDataFor(const GstVideoFrame& frame)
+{
+    QAbstractVideoBuffer::MapData data;
+    data.planeCount = static_cast<int>(GST_VIDEO_FRAME_N_PLANES(&frame));
+    for (int i = 0; i < data.planeCount; ++i) {
+        data.data[i] = static_cast<uchar*>(GST_VIDEO_FRAME_PLANE_DATA(&frame, i));
+        data.bytesPerLine[i] = GST_VIDEO_FRAME_PLANE_STRIDE(&frame, i);
+        data.dataSize[i] =
+            static_cast<qsizetype>(GST_VIDEO_FRAME_PLANE_STRIDE(&frame, i)) * GstHw::planeHeight(frame.info, i);
+    }
+    return data;
+}
+
+bool CpuVideoFramePool::FrameMapping::mapFrame(GstBuffer* buffer, const GstVideoInfo& info, GstMapFlags flags)
+{
+    if (!_mapped) {
+        _mapped = buffer && gst_video_frame_map(&_frame, &info, buffer, flags);
+    }
+    return _mapped;
+}
+
+QAbstractVideoBuffer::MapData CpuVideoFramePool::FrameMapping::map(GstBuffer* buffer, const GstVideoInfo& info)
+{
+    if (!mapFrame(buffer, info)) {
+        return {};
+    }
+    return mapDataFor(_frame);
+}
+
+void CpuVideoFramePool::FrameMapping::unmap() noexcept
+{
+    if (_mapped) {
+        gst_video_frame_unmap(&_frame);
+        _mapped = false;
+    }
 }
 
 QByteArray CpuVideoFramePool::acquireBacking(const PlaneLayout& layout, QSize size,
@@ -183,14 +179,12 @@ QByteArray CpuVideoFramePool::acquireBacking(const PlaneLayout& layout, QSize si
             while (slot.availableCount > 0) {
                 QByteArray b = std::move(slot.available[--slot.availableCount]);
                 if (b.size() == layout.byteSize) {
-                    _hits.fetch_add(1, std::memory_order_relaxed);
                     return b;
                 }
             }
             break;
         }
     }
-    _misses.fetch_add(1, std::memory_order_relaxed);
     // Qt::Uninitialized skips the value-init memset; caller overwrites every plane.
     return QByteArray(layout.byteSize, Qt::Uninitialized);
 }
@@ -239,15 +233,18 @@ QVideoFrame CpuVideoFramePool::acquireFrame(const QVideoFrameFormat& format, con
 }
 
 std::unique_ptr<QAbstractVideoBuffer> CpuVideoFramePool::wrapZeroCopy(GstBuffer* buffer, const GstVideoInfo& info,
-                                                                      const QVideoFrameFormat& format)
+                                                                      const QVideoFrameFormat& format,
+                                                                      const PinnedFrameCounter& pinned)
 {
-    if (!buffer || !format.isValid()) {
+    if (!buffer || !format.isValid() || !pinned) {
         return nullptr;
     }
-    if (MapThroughGstVideoBuffer::liveCount().load(std::memory_order_relaxed) >= MapThroughGstVideoBuffer::maxLive()) {
+    // Each zero-copy frame pins a decoder buffer; past the cap copy instead so a GUI stall can't drain a fixed-size
+    // decoder pool.
+    if (!tryReservePinnedFrame(*pinned)) {
         return nullptr;
     }
-    auto buf = std::make_unique<MapThroughGstVideoBuffer>(buffer, info, format);
+    auto buf = std::make_unique<MapThroughGstVideoBuffer>(buffer, info, format, pinned);
     // Probe mappability: system memory always maps, GPU memory that slipped past the factory does not (caller copies).
     // Keep the mapping rather than unmapping — the sink's subsequent map() reuses it instead of re-running the map.
     const auto probe = buf->map(QVideoFrame::ReadOnly);
@@ -264,8 +261,8 @@ QVideoFrame CpuVideoFramePool::copyFromBuffer(GstBuffer* buffer, const GstVideoI
         return {};
     }
 
-    GstVideoFrame gstFrame;
-    if (!gst_video_frame_map(&gstFrame, &videoInfo, buffer, GST_MAP_READ)) {
+    FrameMapping source;
+    if (!source.mapFrame(buffer, videoInfo)) {
         static std::atomic<quint64> s_failCount{0};
         const quint64 count = s_failCount.fetch_add(1, std::memory_order_relaxed) + 1;
         if ((count & 0x3F) == 1) {
@@ -274,9 +271,10 @@ QVideoFrame CpuVideoFramePool::copyFromBuffer(GstBuffer* buffer, const GstVideoI
         return {};
     }
 
+    const GstVideoFrame& gstFrame = source.frame();
+
     QVideoFrame videoFrame = instance().acquireFrame(format, videoInfo);
     if (!videoFrame.isValid() || !videoFrame.map(QVideoFrame::WriteOnly)) {
-        gst_video_frame_unmap(&gstFrame);
         return {};
     }
 
@@ -288,16 +286,14 @@ QVideoFrame CpuVideoFramePool::copyFromBuffer(GstBuffer* buffer, const GstVideoI
                                             << videoFrame.planeCount() << "— dropping frame";
         }
         videoFrame.unmap();
-        gst_video_frame_unmap(&gstFrame);
         return {};
     }
 
     for (int p = 0; p < srcPlanes; ++p) {
         const int dstStride = videoFrame.bytesPerLine(p);
         const int srcStride = GST_VIDEO_FRAME_PLANE_STRIDE(&gstFrame, p);
-        const int planeHeight = GST_VIDEO_FRAME_COMP_HEIGHT(&gstFrame, p);
-        const int activeRowBytes =
-            GST_VIDEO_FRAME_COMP_WIDTH(&gstFrame, p) * GST_VIDEO_FRAME_COMP_PSTRIDE(&gstFrame, p);
+        const int rows = GstHw::planeHeight(gstFrame.info, p);
+        const int activeRowBytes = GstHw::planeRowBytes(gstFrame.info, p);
         // Reject before copy: a dst stride too narrow for a source row would tear the plane.
         if (activeRowBytes > dstStride) {
             static std::atomic<bool> s_warnedStrideOverflow{false};
@@ -306,7 +302,6 @@ QVideoFrame CpuVideoFramePool::copyFromBuffer(GstBuffer* buffer, const GstVideoI
                                                 << "> dstStride" << dstStride << "— dropping frame";
             }
             videoFrame.unmap();
-            gst_video_frame_unmap(&gstFrame);
             return {};
         }
         const uchar* src = static_cast<const uchar*>(GST_VIDEO_FRAME_PLANE_DATA(&gstFrame, p));
@@ -315,15 +310,14 @@ QVideoFrame CpuVideoFramePool::copyFromBuffer(GstBuffer* buffer, const GstVideoI
             continue;
         }
         if (srcStride == dstStride && activeRowBytes == srcStride) {
-            std::memcpy(dst, src, static_cast<size_t>(planeHeight) * srcStride);
+            std::memcpy(dst, src, static_cast<size_t>(rows) * srcStride);
         } else {
-            for (int y = 0; y < planeHeight; ++y) {
+            for (int y = 0; y < rows; ++y) {
                 std::memcpy(dst + y * dstStride, src + y * srcStride, static_cast<size_t>(activeRowBytes));
             }
         }
     }
 
     videoFrame.unmap();
-    gst_video_frame_unmap(&gstFrame);
     return videoFrame;
 }

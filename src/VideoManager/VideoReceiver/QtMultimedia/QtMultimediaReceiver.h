@@ -33,7 +33,6 @@ public slots:
     void stopDecoding() override;
     void startRecording(const QString &videoFile, VideoReceiver::FILE_FORMAT format) override;
     void stopRecording() override;
-    void takeScreenshot(const QString &imageFile) override;
 
 protected:
     QTimer _frameTimer;

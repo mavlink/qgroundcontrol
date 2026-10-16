@@ -6,6 +6,14 @@
 
 namespace GstHw {
 
+PlaneLayout planeLayout(const GstVideoInfo& info, const GstVideoMeta* vmeta, int plane) noexcept
+{
+    if (vmeta) {
+        return {vmeta->offset[plane], vmeta->stride[plane]};
+    }
+    return {GST_VIDEO_INFO_PLANE_OFFSET(&info, plane), GST_VIDEO_INFO_PLANE_STRIDE(&info, plane)};
+}
+
 int drmFourccForPlane(const GstVideoInfo& info, int plane)
 {
     const GstVideoFormat fmt = GST_VIDEO_INFO_FORMAT(&info);
@@ -105,26 +113,6 @@ int drmFourccForSingleFd(const GstVideoInfo& info)
         default:
             return -1;
     }
-}
-
-const char* gstFormatNameForImportableFourcc(uint32_t fourcc) noexcept
-{
-#if G_BYTE_ORDER == G_LITTLE_ENDIAN
-    constexpr uint32_t bgraFourcc = DRM_FORMAT_ARGB8888;
-    constexpr uint32_t rgbaFourcc = DRM_FORMAT_ABGR8888;
-#else
-    constexpr uint32_t bgraFourcc = DRM_FORMAT_BGRA8888;
-    constexpr uint32_t rgbaFourcc = DRM_FORMAT_RGBA8888;
-#endif
-    // Restricted to single-image formats the EGLImage/Vulkan import path consumes; mirrors the env-LINEAR offer set.
-    if (fourcc == static_cast<uint32_t>(DRM_FORMAT_NV12)) return "NV12";
-    if (fourcc == static_cast<uint32_t>(DRM_FORMAT_NV21)) return "NV21";
-    if (fourcc == static_cast<uint32_t>(DRM_FORMAT_YUV420)) return "I420";
-    if (fourcc == static_cast<uint32_t>(DRM_FORMAT_YVU420)) return "YV12";
-    if (fourcc == static_cast<uint32_t>(DRM_FORMAT_P010)) return "P010_10LE";
-    if (fourcc == bgraFourcc) return "BGRA";
-    if (fourcc == rgbaFourcc) return "RGBA";
-    return nullptr;
 }
 
 }  // namespace GstHw

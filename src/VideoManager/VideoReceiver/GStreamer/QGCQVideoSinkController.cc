@@ -1,20 +1,21 @@
 #include "QGCQVideoSinkController.h"
 
-#include <QtCore/QMutexLocker>
+#include <memory>
+
 #include <QtCore/QThread>
 #include <QtGui/QWindow>
+#include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoSink>
 #include <QtMultimediaQuick/private/qquickvideooutput_p.h>
 #include <QtQuick/QQuickWindow>
-#include <memory>
 
-#include "GstScoped.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(QGCQVideoSinkControllerLog, "Video.GStreamer.QGCQVideoSinkController")
 
 QGCQVideoSinkController::QGCQVideoSinkController(GstElement* element, QObject* parent)
-    : QObject(parent), _element(element ? GST_ELEMENT(gst_object_ref(element)) : nullptr)
+    : QObject(parent)
+    , _element(element ? GStreamer::adoptElement(GST_ELEMENT(gst_object_ref(element))) : nullptr)
 {
     _emitTimer.setInterval(1000);
     _emitTimer.setSingleShot(false);
@@ -25,10 +26,6 @@ QGCQVideoSinkController::QGCQVideoSinkController(GstElement* element, QObject* p
 QGCQVideoSinkController::~QGCQVideoSinkController()
 {
     _releaseElementBinding();
-    if (_element) {
-        gst_object_unref(_element);
-        _element = nullptr;
-    }
     _emitTimer.stop();
 }
 
@@ -71,7 +68,7 @@ void QGCQVideoSinkController::syncActiveToWindowVisibility(QObject* receiver, QQ
 
 const GstElement* QGCQVideoSinkController::element() const noexcept
 {
-    return _element;
+    return _element.get();
 }
 
 void QGCQVideoSinkController::updateNegotiation(const QString& format, const QSize& resolution)
@@ -82,35 +79,12 @@ void QGCQVideoSinkController::updateNegotiation(const QString& format, const QSi
     }
     if (_bindingReleased)
         return;
-    bool changed = false;
-    {
-        QMutexLocker locker(&_stateMutex);
-        if (format != _negotiatedFormat || resolution != _negotiatedResolution) {
-            _negotiatedFormat = format;
-            _negotiatedResolution = resolution;
-            changed = true;
-        }
-    }
-    if (changed) {
+    if (format != _negotiatedFormat || resolution != _negotiatedResolution) {
+        _negotiatedFormat = format;
+        _negotiatedResolution = resolution;
         qCDebug(QGCQVideoSinkControllerLog).noquote()
             << "Negotiation update: format=" << format << "size=" << resolution;
         emit negotiationChanged();
-    }
-}
-
-void QGCQVideoSinkController::refreshLatency()
-{
-    if (thread() != QThread::currentThread()) {
-        qCCritical(QGCQVideoSinkControllerLog) << "called from wrong thread";
-        return;
-    }
-    if (!_element || _bindingReleased)
-        return;
-    // Pipeline-level latency was recalculated upstream (e.g. RTSP jitter-buffer reconfigure);
-    // re-query the sink so GstBaseSink re-primes its cached latency for the new depth.
-    const GStreamer::GstQueryPtr query = GStreamer::adoptQuery(gst_query_new_latency());
-    if (!gst_element_query(_element, query.get())) {
-        qCDebug(QGCQVideoSinkControllerLog) << "Latency query not handled by sink element";
     }
 }
 
@@ -122,7 +96,7 @@ void QGCQVideoSinkController::setActive(bool active)
     }
     if (!_element || _bindingReleased)
         return;
-    g_object_set(_element, "active", active ? TRUE : FALSE, nullptr);
+    g_object_set(_element.get(), "active", active ? TRUE : FALSE, nullptr);
 }
 
 void QGCQVideoSinkController::setVideoSink(QPointer<QVideoSink> sink)
@@ -141,11 +115,16 @@ void QGCQVideoSinkController::setVideoSink(QPointer<QVideoSink> sink)
     if (!raw) {
         // Caller's QVideoSink was destroyed between the call site and here — clear the
         // element's snapshot and gate show_frame until a replacement sink is installed.
-        g_object_set(_element, "active", FALSE, "qvideosink", static_cast<gpointer>(nullptr), nullptr);
+        g_object_set(_element.get(), "active", FALSE, "qvideosink", static_cast<gpointer>(nullptr), nullptr);
         _bindingReleased = true;
+        _clearVideoSinkFrame();
         return;
     }
-    g_object_set(_element, "qvideosink", static_cast<gpointer>(raw), nullptr);
+    g_object_set(_element.get(), "qvideosink", static_cast<gpointer>(raw), nullptr);
+    if (_videoSink != raw) {
+        _clearVideoSinkFrame();
+    }
+    _videoSink = raw;
     _sinkDestroyedConnection = QObject::connect(raw, &QObject::destroyed, this, [this]() {
         setVideoSink(QPointer<QVideoSink>());
     });
@@ -162,24 +141,33 @@ void QGCQVideoSinkController::prepareForRelease()
     _emitTimer.stop();
 }
 
+void QGCQVideoSinkController::releaseFrame()
+{
+    if (thread() != QThread::currentThread()) {
+        qCCritical(QGCQVideoSinkControllerLog) << "called from wrong thread";
+        return;
+    }
+    if (_videoSink) {
+        _videoSink->setVideoFrame(QVideoFrame());
+    }
+}
+
 quint64 QGCQVideoSinkController::frameCount() const noexcept
 {
     if (!_element || _bindingReleased)
         return 0;
     guint64 delivered = 0;
-    g_object_get(_element, "frames-delivered", &delivered, nullptr);
+    g_object_get(_element.get(), "frames-delivered", &delivered, nullptr);
     return static_cast<quint64>(delivered);
 }
 
 QString QGCQVideoSinkController::negotiatedFormat() const
 {
-    QMutexLocker locker(&_stateMutex);
     return _negotiatedFormat;
 }
 
 QSize QGCQVideoSinkController::negotiatedResolution() const
 {
-    QMutexLocker locker(&_stateMutex);
     return _negotiatedResolution;
 }
 
@@ -192,8 +180,15 @@ void QGCQVideoSinkController::_releaseElementBinding() noexcept
         QObject::disconnect(_sinkDestroyedConnection);
         _sinkDestroyedConnection = {};
     }
-    g_object_set(_element, "active", FALSE, "qvideosink", static_cast<gpointer>(nullptr), nullptr);
+    g_object_set(_element.get(), "active", FALSE, "qvideosink", static_cast<gpointer>(nullptr), nullptr);
     _bindingReleased = true;
+    _clearVideoSinkFrame();
+}
+
+void QGCQVideoSinkController::_clearVideoSinkFrame()
+{
+    releaseFrame();
+    _videoSink.clear();
 }
 
 void QGCQVideoSinkController::_onEmitTimer()
@@ -201,7 +196,7 @@ void QGCQVideoSinkController::_onEmitTimer()
     if (!_element || _bindingReleased)
         return;
     guint64 delivered = 0;
-    g_object_get(_element, "frames-delivered", &delivered, nullptr);
+    g_object_get(_element.get(), "frames-delivered", &delivered, nullptr);
     if (delivered != _lastEmittedFrameTotal) {
         _lastEmittedFrameTotal = delivered;
         emit frameCountsChanged();

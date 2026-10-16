@@ -107,7 +107,18 @@ set(QGC_LINK_PARALLEL_LEVEL
     2
     CACHE STRING "Maximum parallel link jobs (prevents OOM during LTO)"
 )
-# ---- GStreamer SDK download / debug ----
+# ---- GStreamer ----
+# GStreamer_USE_STATIC_LIBS / GStreamer_USE_FRAMEWORK depend on the target platform and are declared in
+# cmake/GStreamer/Orchestrator.cmake.
+set(GStreamer_ROOT_DIR
+    ""
+    CACHE PATH "GStreamer SDK to use; empty selects the system SDK or an auto-downloaded one"
+)
+set(QGC_GST_VERSION
+    ""
+    CACHE STRING
+          "GStreamer version to require (Linux) or download; empty uses gstreamer.version in .github/build-config.json"
+)
 # Fail closed: only the SDK-download platforms (Android/macOS/iOS/Windows) hit this path;
 # Linux uses system pkg-config and never downloads, so ON is a no-op there.
 option(GStreamer_REQUIRE_CHECKSUM "Fail if an SDK download's checksum cannot be verified (set OFF to bypass)" ON)
@@ -116,10 +127,14 @@ set(QGC_GST_DOWNLOAD_TIMEOUT
     ""
     CACHE STRING "GStreamer SDK download wall-clock timeout (seconds, default 1200)"
 )
-set(QGC_GST_DOWNLOAD_INACTIVITY_TIMEOUT
+set(QGC_GST_CUDA_STUB_DIR
     ""
-    CACHE STRING "GStreamer SDK download inactivity timeout (seconds, default 60)"
+    CACHE PATH "Linux: directory with a cuda.h for the CUDA GPU path when no CUDA Toolkit is installed"
 )
+option(QGC_GST_BUNDLE_PLUGINS
+       "Linux: install the system's GStreamer plugins and GIO modules with the app (OFF for distribution packages)" ON
+)
+option(QGC_GST_USE_HOMEBREW "macOS: build against Homebrew's gstreamer (cannot be installed or packaged)" OFF)
 
 # Coverage thresholds
 set(QGC_COVERAGE_LINE_THRESHOLD

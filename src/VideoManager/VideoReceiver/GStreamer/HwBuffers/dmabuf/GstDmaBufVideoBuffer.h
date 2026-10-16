@@ -11,8 +11,8 @@
 
 class QRhi;
 
-/// \brief Zero-copy QVideoFrame backing for GStreamer DMABuf samples; imports per-plane fds into EGLImages on demand in
-/// mapTextures() (render thread, current GL context).
+/// \brief Zero-copy QVideoFrame backing for GStreamer DMABuf samples; mapTextures() (render thread) imports the dma-buf
+/// fds as EGLImages under a GL QRhi or as a VkImage under a Vulkan QRhi.
 class GstDmaBufVideoBuffer final : public GstHwVideoBuffer
 {
 public:
@@ -24,20 +24,18 @@ public:
     QVideoFrameTexturesUPtr mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& oldTextures) override;
     bool validatePlaneHandles() const override;
 
-    const char* storageTag() const override { return "DMABuf"; }
-
     static void resetCachedState() noexcept;
 
-#ifdef QGC_GST_BUILD_TESTING
-    static bool singleFdImportEnabledForTest() noexcept;
-    static bool directGlImportAllowedForTest(bool hasModifiersExt, guint64 drmModifier) noexcept;
-    static bool texStorageImportAllowedForTest(bool contextIsOpenGles, bool hasTexStorageExt,
-                                               guint64 drmModifier) noexcept;
+#ifdef QGC_UNITTEST_BUILD
+    static bool directGlImportAllowedForTest(guint64 drmModifier) noexcept;
+    static bool texStorageImportAllowedForTest(bool contextIsOpenGles, bool hasTexStorageExt) noexcept;
+    /// Feeds an eglCreateImage EGL_BAD_MATCH into the import latches, as the single-fd or per-plane import would.
+    static void recordEglBadMatchForTest(bool singleFd) noexcept;
 #endif
 
 private:
 #if defined(QGC_HAS_GST_VULKAN_GPU_PATH)
-    QVideoFrameTexturesUPtr importVulkan(QRhi& rhi);
+    QVideoFrameTexturesUPtr importVulkan(QRhi& rhi, QVideoFrameTexturesUPtr& old);
 #endif
 
     EGLDisplay _eglDisplay = EGL_NO_DISPLAY;

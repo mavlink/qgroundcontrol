@@ -2,20 +2,9 @@
 
 #if defined(QGC_HAS_GST_AHARDWAREBUFFER_GPU_PATH)
 
-#include <EGL/eglext.h>
-#include <GLES2/gl2.h>
-#include <GLES2/gl2ext.h>
-#include <QtCore/QLoggingCategory>
-#include <QtCore/QMutex>
-#include <QtCore/QMutexLocker>
-#include <QtCore/QScopeGuard>
-#include <QtCore/QSize>
-#include <QtGui/QOpenGLContext>
-#include <QtGui/QOpenGLFunctions>
 #include <android/hardware_buffer.h>
 #include <array>
 #include <atomic>
-#include <vector>
 #include <gst/android/gstandroid.h>
 #include <gst/gl/gstglsyncmeta.h>
 #include <gst/video/video.h>
@@ -23,261 +12,139 @@
 #include <private/qvideotexturehelper_p.h>
 #include <rhi/qrhi.h>
 #include <rhi/qrhi_platform.h>
+#include <span>
 
-#include "GstContextBridgeRegistry.h"
+#include <QtCore/QLoggingCategory>
+#include <QtCore/QMutex>
+#include <QtCore/QMutexLocker>
+#include <QtCore/QScopeGuard>
+#include <QtCore/QSize>
+#include <QtGui/QOpenGLContext>
+#include <QtGui/QOpenGLFunctions>
+
 #include "GstEglHelpers.h"
 #include "GstHwFrameTexturesBase.h"
-#include "GstHwImportPreflight.h"
+#include "GstHwImportCache.h"
+#include "GstHwPathRegistry.h"
 #include "GstHwPathTelemetry.h"
 #include "GstHwVideoBuffer.h"
 #include "QGCLoggingCategory.h"
+#include <EGL/eglext.h>
+#include <GLES2/gl2.h>
+#include <GLES2/gl2ext.h>
 
 QGC_LOGGING_CATEGORY(GstAHWBufLog, "Video.GStreamer.HwBuffers.GstAHWBuf")
 
 namespace {
 
-using GstHw::kMaxPlanes;
-constexpr int kImageCacheCapacity = 4;
-
-std::atomic<bool> s_loggedBadBackend{false};
+GstHw::MapDiagnostics s_diag;
 
 constexpr const char* kNativeBufferExt = "EGL_ANDROID_image_native_buffer";
 
 std::atomic<bool> s_loggedNoFenceSync{false};
 
-// LRU cache (AHardwareBuffer*, EGLDisplay) -> (EGLImage, GL texture): MediaCodec recycles the same AHB so the import
-// stays valid, saving ~50-200 us/frame on Mali/Adreno.
-struct AhbCacheEntry
+// LRU cache (QRhi, AHardwareBuffer, EGLDisplay) -> (EGLImage, GL texture): MediaCodec recycles the same AHB so the
+// import stays valid, saving ~50-200 us/frame on Mali/Adreno.
+struct AhbCacheKey
 {
     QRhi* rhi = nullptr;
     AHardwareBuffer* ahb = nullptr;
     EGLDisplay display = EGL_NO_DISPLAY;
-    EGLImageKHR image = EGL_NO_IMAGE_KHR;
-    GLuint textureName = 0;
-    quint64 lastUsedTick = 0;
-    int inUse = 0;  // live FrameTextures wrappers referencing this name; never evict while > 0
+
+    bool operator==(const AhbCacheKey&) const noexcept = default;
 };
 
-// Guards s_imageCache, s_deferredImageCache, and s_imageCacheTick.
-QMutex s_imageCacheMutex;
-std::array<AhbCacheEntry, kImageCacheCapacity> s_imageCache{};
-std::vector<AhbCacheEntry> s_deferredImageCache;
-quint64 s_imageCacheTick = 0;
-
-// Set by resetImageCache() from any thread; teardown deferred to the next mapTextures() since glDeleteTextures
-// off-thread leaks and deleting a live-wrapped name is a UAF.
-std::atomic<bool> s_imageCacheResetPending{false};
-
-// Render-thread-only; callers must hold s_imageCacheMutex AND have Qt's GL context current.
-void destroyCacheEntryLocked(AhbCacheEntry& e, PFNEGLDESTROYIMAGEKHRPROC destroyImage, QOpenGLFunctions* gl)
+struct AhbImport
 {
-    if (e.image != EGL_NO_IMAGE_KHR && e.display != EGL_NO_DISPLAY && destroyImage) {
-        destroyImage(e.display, e.image);
+    QOpenGLContext* context = nullptr;  // context the texture name was generated in
+    AHardwareBuffer* ahb = nullptr;     // acquired ref
+    EGLDisplay display = EGL_NO_DISPLAY;
+    EGLImageKHR image = EGL_NO_IMAGE_KHR;
+    GLuint textureName = 0;
+};
+
+void destroyAhbImport(AhbImport& e)
+{
+    if (e.image != EGL_NO_IMAGE_KHR && e.display != EGL_NO_DISPLAY && GstEglHelpers::destroyImageKHR()) {
+        GstEglHelpers::destroyImageKHR()(e.display, e.image);
     }
-    if (e.textureName != 0 && gl) {
-        gl->glDeleteTextures(1, &e.textureName);
+    if (e.textureName != 0) {
+        if (QOpenGLContext* ctx = QOpenGLContext::currentContext()) {
+            ctx->functions()->glDeleteTextures(1, &e.textureName);
+        }
     }
     if (e.ahb) {
         AHardwareBuffer_release(e.ahb);
     }
-    e = AhbCacheEntry{};
 }
 
-void drainDeferredImageCacheLocked(PFNEGLDESTROYIMAGEKHRPROC destroyImage, QOpenGLFunctions* gl, QRhi* rhi = nullptr)
+// glDeleteTextures off the owning context leaks the name (or deletes another context's), so entries removed elsewhere
+// (a reset from a non-render thread) are parked until that context is current again.
+bool ownerContextCurrent(const AhbImport& e)
 {
-    if (!destroyImage || !gl)
-        return;
-
-    for (auto it = s_deferredImageCache.begin(); it != s_deferredImageCache.end();) {
-        if (it->inUse > 0 || (rhi && it->rhi != rhi)) {
-            ++it;
-            continue;
-        }
-
-        destroyCacheEntryLocked(*it, destroyImage, gl);
-        it = s_deferredImageCache.erase(it);
-    }
+    return QOpenGLContext::currentContext() == e.context;
 }
 
-GLuint cachedTextureNameLocked(QRhi* rhi, AHardwareBuffer* ahb, EGLDisplay eglDpy)
-{
-    for (std::size_t i = 0; i < s_imageCache.size(); ++i) {
-        auto& e = s_imageCache[i];
-        if (e.rhi == rhi && e.ahb == ahb && e.display == eglDpy && e.textureName != 0) {
-            e.lastUsedTick = ++s_imageCacheTick;
-            return e.textureName;
-        }
-    }
-    return 0;
-}
+constexpr std::size_t kImageCacheCapacity = 4;
+using AhbImportCache = GstHw::GstHwImportCache<AhbCacheKey, AhbImport, kImageCacheCapacity>;
 
-// Insert into cache (evicts LRU when full), taking ownership of image/textureName; caller holds s_imageCacheMutex with
-// GL current. False (no ownership taken) when every entry is pinned in-use.
-bool insertCacheEntryLocked(QRhi* rhi, AHardwareBuffer* ahb, EGLDisplay eglDpy, EGLImageKHR image, GLuint textureName,
-                            PFNEGLDESTROYIMAGEKHRPROC destroyImage, QOpenGLFunctions* gl)
-{
-    AhbCacheEntry* target = nullptr;
-    for (std::size_t i = 0; i < s_imageCache.size(); ++i) {
-        auto& e = s_imageCache[i];
-        if (e.textureName == 0) {
-            target = &e;
-            break;
-        }
-    }
-    if (!target) {
-        // Evict the LRU entry that no live frame still references; in-use names would UAF on render.
-        for (std::size_t i = 0; i < s_imageCache.size(); ++i) {
-            auto& e = s_imageCache[i];
-            if (e.inUse == 0 && (!target || e.lastUsedTick < target->lastUsedTick))
-                target = &e;
-        }
-        if (!target) {
-            qCWarning(GstAHWBufLog) << "AHB texture cache full and all entries in use; skipping cache insert";
-            return false;
-        }
-        destroyCacheEntryLocked(*target, destroyImage, gl);
-    }
-    AHardwareBuffer_acquire(ahb);
-    target->rhi = rhi;
-    target->ahb = ahb;
-    target->display = eglDpy;
-    target->image = image;
-    target->textureName = textureName;
-    target->lastUsedTick = ++s_imageCacheTick;
-    return true;
-}
+// Live FrameTextures pin the entry whose texture they wrap, so eviction or reset never frees a name still sampled.
+QMutex s_imageCacheMutex;
+AhbImportCache s_imageCache{destroyAhbImport, ownerContextCurrent};
 
-void clearImageCacheLocked(PFNEGLDESTROYIMAGEKHRPROC destroyImage, QOpenGLFunctions* gl)
+// QRhi cleanup callback (runs in ~QRhi on its render thread while its GL context still exists, after Qt destroyed the
+// frame bundles holding pins): drop every entry keyed on @p rhi, so a QRhi later allocated at the same address can
+// never hit a texture name from the dead context.
+void purgeImageCacheForRhi(QRhi* rhi)
 {
-    drainDeferredImageCacheLocked(destroyImage, gl);
-
-    for (std::size_t i = 0; i < s_imageCache.size(); ++i) {
-        auto& entry = s_imageCache[i];
-        if (entry.inUse > 0) {
-            // Live FrameTextures still holds this name; destroy when its pin is released.
-            qCDebug(GstAHWBufLog) << "AHB texture cache reset deferred for in-use texture" << entry.textureName;
-            s_deferredImageCache.push_back(entry);
-            entry = AhbCacheEntry{};
-            continue;
-        }
-        destroyCacheEntryLocked(entry, destroyImage, gl);
-    }
-    drainDeferredImageCacheLocked(destroyImage, gl);
-    s_imageCacheTick = 0;
-}
-
-// Pin a cache entry by texture name so LRU eviction/reset can't free a name a live frame holds; caller holds
-// s_imageCacheMutex. Unmatched names are no-ops.
-void acquireCacheEntryLocked(GLuint name)
-{
-    if (name == 0)
-        return;
-    for (std::size_t i = 0; i < s_imageCache.size(); ++i) {
-        auto& e = s_imageCache[i];
-        if (e.textureName == name) {
-            ++e.inUse;
-            return;
-        }
-    }
-    for (auto& e : s_deferredImageCache) {
-        if (e.textureName == name) {
-            ++e.inUse;
-            return;
-        }
-    }
-}
-
-void releaseCacheEntryLocked(GLuint name)
-{
-    if (name == 0)
-        return;
-    for (std::size_t i = 0; i < s_imageCache.size(); ++i) {
-        auto& e = s_imageCache[i];
-        if (e.textureName == name && e.inUse > 0) {
-            --e.inUse;
-            return;
-        }
-    }
-    for (auto& e : s_deferredImageCache) {
-        if (e.textureName == name && e.inUse > 0) {
-            --e.inUse;
-            return;
-        }
-    }
+    rhi->makeThreadLocalNativeContextCurrent();
+    const QMutexLocker lock(&s_imageCacheMutex);
+    s_imageCache.eraseIf([rhi](const AhbCacheKey& key, const AhbImport&) { return key.rhi == rhi; });
+    s_imageCache.drainDeferred();
 }
 
 class FrameTextures final : public GstHwFrameTexturesBase
 {
 public:
-    // Always single-plane external-OES; the GL texture name is owned by the process-wide AhbCache, not this object
-    // (shared across frames on AHB recycle).
-    FrameTextures(QRhi* rhi, QSize size, QVideoFrameFormat::PixelFormat pixelFormat, GLuint name)
-        : _rhi(rhi), _size(size), _pixelFormat(pixelFormat), _name(name)
+    // Always single-plane external-OES; the GL texture name is owned by the process-wide import cache entry @p entry,
+    // which this bundle pins (shared across frames on AHB recycle).
+    FrameTextures(QRhi* rhi, QSize size, QVideoFrameFormat::PixelFormat pixelFormat, GLuint name,
+                  AhbImportCache::EntryId entry)
+        : _entry(entry)
     {
-        _count = 1;
-        const auto* desc = QVideoTextureHelper::textureDescription(pixelFormat);
-        if (!desc) {
-            qCWarning(GstAHWBufLog) << "no QVideoTextureHelper description for format" << pixelFormat;
-            return;
+        {
+            const QMutexLocker lock(&s_imageCacheMutex);
+            s_imageCache.pin(_entry);
         }
-        const QSize planeSize = desc->rhiPlaneSize(size, 0, rhi);
         // ExternalOES: bind GL_TEXTURE_EXTERNAL_OES + emit SamplerExternalOES, else OES_EGL_image_external samples
         // black on GLES2.
-        _textures[0].reset(rhi->newTexture(
-            desc->rhiTextureFormat(0, rhi, QVideoTextureHelper::TextureDescription::FallbackPolicy::Disable), planeSize,
-            1, QRhiTexture::ExternalOES));
-        if (_textures[0] && !_textures[0]->createFrom({name, 0})) {
-            qCWarning(GstAHWBufLog) << "QRhiTexture::createFrom failed for AHardwareBuffer plane 0";
-            _textures[0].reset();
-        }
-        QMutexLocker lock(&s_imageCacheMutex);
-        acquireCacheEntryLocked(_name);
+        wrapPlanes(rhi, size, pixelFormat, std::span<const GLuint>(&name, 1), 0, QRhiTexture::ExternalOES);
     }
 
     ~FrameTextures() override
     {
-        QOpenGLFunctions* gl = nullptr;
         if (_rhi) {
             _rhi->makeThreadLocalNativeContextCurrent();
-            if (QOpenGLContext* ctx = QOpenGLContext::currentContext()) {
-                gl = ctx->functions();
-            }
         }
-        static const auto eglDestroyImageKHR_ =
-            reinterpret_cast<PFNEGLDESTROYIMAGEKHRPROC>(eglGetProcAddress("eglDestroyImageKHR"));
-
-        QMutexLocker lock(&s_imageCacheMutex);
-        releaseCacheEntryLocked(_name);
-        drainDeferredImageCacheLocked(eglDestroyImageKHR_, gl, _rhi);
-    }
-
-    HwVideoBufferPath sourcePath() const override { return HwVideoBufferPath::AHardwareBuffer; }
-
-    // Reuse eligibility: same rhi+size+format and identical GL texture name (AhbCache returns the same name on AHB
-    // recycle).
-    bool matches(QRhi* rhi, QSize size, QVideoFrameFormat::PixelFormat pixelFormat, GLuint name) const noexcept
-    {
-        return _rhi == rhi && _size == size && _pixelFormat == pixelFormat && _name == name && _name != 0 &&
-               _textures[0];
+        const QMutexLocker lock(&s_imageCacheMutex);
+        s_imageCache.unpin(_entry);
+        s_imageCache.drainDeferred();
     }
 
 private:
-    QRhi* _rhi = nullptr;
-    QSize _size;
-    QVideoFrameFormat::PixelFormat _pixelFormat = QVideoFrameFormat::Format_Invalid;
-    GLuint _name = 0;
+    AhbImportCache::EntryId _entry = 0;
 };
 
 // MediaCodec writes the AHB asynchronously; without a producer-side wait the EGLImage import can sample a half-written,
-// recycled buffer (tearing). Only the buffer's GstGLSyncMeta is a real producer fence — it carries the decoder's
-// GPU-completion point. A consumer-side EGL fence (glFlush + eglCreateSync in the GL context) cannot observe
-// MediaCodec's async write, so it would synchronise nothing while masking the hazard; we deliberately do not use one.
-// When no sync meta is present, warn once and proceed (no bogus barrier).
+// recycled buffer (tearing). MediaCodec AHB buffers carry no GstGLSyncMeta and the gstandroid memory API exposes no
+// acquire fence, so in practice no producer wait happens here; a sync meta is only present when a gst-gl element
+// produced the buffer. A consumer-side EGL fence cannot observe MediaCodec's write, so none is used.
 void waitProducerComplete(GstBuffer* buffer)
 {
     if (GstGLSyncMeta* syncMeta = buffer ? gst_buffer_get_gl_sync_meta(buffer) : nullptr) {
         if (GstGLContext* glObj = syncMeta->context) {
-            gst_gl_sync_meta_wait(syncMeta, glObj);
+            // CPU wait: gst_gl_sync_meta_wait() would only order the producer's own context, not Qt's.
+            gst_gl_sync_meta_wait_cpu(syncMeta, glObj);
             return;
         }
     }
@@ -319,57 +186,31 @@ bool GstAHardwareBufferVideoBuffer::validatePlaneHandles() const
     });
 }
 
-// Teardown deferred to the render thread at a frame boundary — glDeleteTextures off-thread is unsafe.
+// Callable from any thread: entries whose context is not current here are destroyed on its render thread later.
 void GstAHardwareBufferVideoBuffer::resetImageCache() noexcept
 {
-    s_imageCacheResetPending.store(true, std::memory_order_release);
+    const QMutexLocker lock(&s_imageCacheMutex);
+    s_imageCache.clear();
+    s_imageCache.drainDeferred();
 }
-
-namespace {
-struct AhbCacheResetRegistrar
-{
-    AhbCacheResetRegistrar() { GstContextBridgeRegistry::registerCacheReset(&GstAHardwareBufferVideoBuffer::resetImageCache); }
-};
-const AhbCacheResetRegistrar s_ahbCacheResetRegistrar;
-}  // namespace
 
 QVideoFrameTexturesUPtr GstAHardwareBufferVideoBuffer::mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& old)
 {
-    // Qt's contract: mapTextures runs on the QRhi (render) thread. Bail rather than crash if ever called off-thread.
-    if (!rhi.thread()->isCurrentThread()) {
+    GstBuffer* buffer = nullptr;
+    if (!checkMapPreconditions(rhi, static_cast<int>(QRhi::OpenGLES2), GstAHWBufLog(), s_diag, buffer)) {
         return GstHwPathTelemetry::fail(HwVideoBufferPath::AHardwareBuffer);
     }
 
-    if (!_sample) {
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::AHardwareBuffer);
-    }
-    if (rhi.backend() != QRhi::OpenGLES2) {
-        if (!s_loggedBadBackend.exchange(true, std::memory_order_relaxed)) {
-            qCWarning(GstAHWBufLog) << "QRhi backend is not OpenGLES2; AHardwareBuffer path unsupported";
-        }
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::AHardwareBuffer);
-    }
-
-    // Bind Qt's GL context before any EGL/GL call, else the calls silently no-op into a foreign/null context.
-    rhi.makeThreadLocalNativeContextCurrent();
-
-    const auto* nativeHandles = static_cast<const QRhiGles2NativeHandles*>(rhi.nativeHandles());
-    if (!nativeHandles || !nativeHandles->context) {
+    QOpenGLContext* glContext = GstEglHelpers::bindRhiContext(rhi);
+    if (!glContext) {
         qCWarning(GstAHWBufLog) << "QRhi exposes no GL context";
         return GstHwPathTelemetry::fail(HwVideoBufferPath::AHardwareBuffer);
     }
-
-    // Prefer QEGLContext::display() — sampling on a foreign display silently returns black.
-    EGLDisplay eglDpy = GstEglHelpers::resolveEglDisplay(nativeHandles->context);
-    if (eglDpy == EGL_NO_DISPLAY)
-        eglDpy = _eglDisplay;
+    // Sampling an EGLImage created on a foreign display silently returns black.
+    const EGLDisplay eglDpy = GstEglHelpers::renderDisplay(glContext, _eglDisplay);
     if (eglDpy == EGL_NO_DISPLAY) {
         return GstHwPathTelemetry::fail(HwVideoBufferPath::AHardwareBuffer);
     }
-
-    GstBuffer* buffer = gst_sample_get_buffer(_sample);
-    if (!buffer)
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::AHardwareBuffer);
 
     GstMemory* mem0 = gst_buffer_peek_memory(buffer, 0);
     if (!mem0 || !gst_is_ahardware_buffer_memory(mem0)) {
@@ -388,10 +229,8 @@ QVideoFrameTexturesUPtr GstAHardwareBufferVideoBuffer::mapTextures(QRhi& rhi, QV
         reinterpret_cast<PFNEGLGETNATIVECLIENTBUFFERANDROIDPROC>(eglGetProcAddress("eglGetNativeClientBufferANDROID"));
     static const auto eglCreateImageKHR_ =
         reinterpret_cast<PFNEGLCREATEIMAGEKHRPROC>(eglGetProcAddress("eglCreateImageKHR"));
-    static const auto eglDestroyImageKHR_ =
-        reinterpret_cast<PFNEGLDESTROYIMAGEKHRPROC>(eglGetProcAddress("eglDestroyImageKHR"));
-    static const auto glEGLImageTargetTexture2DOES_ =
-        reinterpret_cast<PFNGLEGLIMAGETARGETTEXTURE2DOESPROC>(eglGetProcAddress("glEGLImageTargetTexture2DOES"));
+    const auto eglDestroyImageKHR_ = GstEglHelpers::destroyImageKHR();
+    const auto glEGLImageTargetTexture2DOES_ = GstEglHelpers::imageTargetTexture2D();
 
     if (!eglGetNativeClientBufferANDROID_ || !eglCreateImageKHR_ || !eglDestroyImageKHR_ ||
         !glEGLImageTargetTexture2DOES_) {
@@ -408,28 +247,23 @@ QVideoFrameTexturesUPtr GstAHardwareBufferVideoBuffer::mapTextures(QRhi& rhi, QV
     // Block until the producer's GPU write completes before importing/sampling the recycled AHB.
     waitProducerComplete(buffer);
 
-    QOpenGLFunctions functions(nativeHandles->context);
+    QOpenGLFunctions functions(glContext);
 
-    // Clearing forces a lookup miss so the prior `old` textures aren't reused over freed GL names.
-    {
-        QMutexLocker lock(&s_imageCacheMutex);
-        if (s_imageCacheResetPending.exchange(false, std::memory_order_acq_rel)) {
-            clearImageCacheLocked(eglDestroyImageKHR_, &functions);
-        }
-    }
-
+    const AhbCacheKey key{&rhi, ahwb, eglDpy};
     GLuint name = 0;
+    AhbImportCache::EntryId entry = 0;
     {
-        QMutexLocker lock(&s_imageCacheMutex);
-        name = cachedTextureNameLocked(&rhi, ahwb, eglDpy);
-        if (name != 0) {
-            acquireCacheEntryLocked(name);  // provisional pin: hold the entry across the unlocked gap below
-            GstHwPathTelemetry::recordImageCacheHit(HwVideoBufferPath::AHardwareBuffer);
+        const QMutexLocker lock(&s_imageCacheMutex);
+        if (const auto hit = s_imageCache.find(key)) {
+            name = hit.resource->textureName;
+            entry = hit.id;
+            s_imageCache.pin(entry);  // provisional pin: hold the entry across the unlocked gap below
+            GstHwPathTelemetry::record(HwVideoBufferPath::AHardwareBuffer, GstHwPathTelemetry::Counter::ImageCacheHits);
         }
     }
 
     if (name == 0) {
-        GstHwPathTelemetry::recordImageCacheMiss(HwVideoBufferPath::AHardwareBuffer);
+        GstHwPathTelemetry::record(HwVideoBufferPath::AHardwareBuffer, GstHwPathTelemetry::Counter::ImageCacheMisses);
 
         EGLClientBuffer clientBuffer = eglGetNativeClientBufferANDROID_(ahwb);
         if (!clientBuffer) {
@@ -455,20 +289,28 @@ QVideoFrameTexturesUPtr GstAHardwareBufferVideoBuffer::mapTextures(QRhi& rhi, QV
             }
         }
 
-        QMutexLocker lock(&s_imageCacheMutex);
+        const QMutexLocker lock(&s_imageCacheMutex);
         // Real race: s_imageCache is process-wide and each window's render thread can import the same recycled ahb, so
         // re-check and reuse theirs if present.
-        if (GLuint existing = cachedTextureNameLocked(&rhi, ahwb, eglDpy); existing != 0) {
+        if (const auto existing = s_imageCache.find(key)) {
             eglDestroyImageKHR_(eglDpy, image);
             functions.glDeleteTextures(1, &name);
-            name = existing;
-        } else if (!insertCacheEntryLocked(&rhi, ahwb, eglDpy, image, name, eglDestroyImageKHR_, &functions)) {
-            // Cache full and every entry pinned: insert took no ownership, so free what we made here.
-            eglDestroyImageKHR_(eglDpy, image);
-            functions.glDeleteTextures(1, &name);
-            name = 0;
+            name = existing.resource->textureName;
+            entry = existing.id;
+        } else {
+            AHardwareBuffer_acquire(ahwb);
+            const auto inserted = s_imageCache.insert(key, AhbImport{glContext, ahwb, eglDpy, image, name});
+            if (inserted) {
+                entry = inserted.id;
+                // Keyed: registered once per QRhi however many entries it inserts.
+                rhi.addCleanupCallback(&s_imageCache, purgeImageCacheForRhi);
+            } else {
+                // Every entry is pinned by a live frame; insert() already released this import.
+                qCWarning(GstAHWBufLog) << "AHB texture cache full and all entries in use; skipping frame";
+                name = 0;
+            }
         }
-        acquireCacheEntryLocked(name);  // provisional pin (no-op if name == 0)
+        s_imageCache.pin(entry);  // provisional pin (no-op if entry == 0)
     }
 
     if (name == 0) {
@@ -478,34 +320,73 @@ QVideoFrameTexturesUPtr GstAHardwareBufferVideoBuffer::mapTextures(QRhi& rhi, QV
     // Provisional pin keeps LRU eviction from freeing the name before FrameTextures takes its own pin.
     const auto pinGuard = qScopeGuard([&] {
         const QMutexLocker lock(&s_imageCacheMutex);
-        releaseCacheEntryLocked(name);
-        drainDeferredImageCacheLocked(eglDestroyImageKHR_, &functions, &rhi);
+        s_imageCache.unpin(entry);
+        s_imageCache.drainDeferred();
     });
 
-    if (auto* prev = GstHwFrameTexturesBase::reusableBundle<FrameTextures>(old, HwVideoBufferPath::AHardwareBuffer)) {
-        if (prev->matches(&rhi, _format.frameSize(), QVideoFrameFormat::Format_SamplerExternalOES, name)) {
-            GstHwPathTelemetry::recordTextureReuse(HwVideoBufferPath::AHardwareBuffer);
-            prev->setSourceSample(takeSample());
-            QVideoFrameTexturesUPtr reused = std::move(old);
-            return reused;
-        }
-    }
-
-    // Pre-flight the external-OES RHI format/size before createFrom() so an unsupported import demotes to CPU on a query.
-    if (!GstHwImportPreflight::preflightOrRecord(&rhi, HwVideoBufferPath::AHardwareBuffer,
-                                                 QVideoFrameFormat::Format_SamplerExternalOES, _format.frameSize(),
-                                                 QRhiTexture::ExternalOES)) {
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::AHardwareBuffer);
-    }
-
-    auto textures =
-        std::make_unique<FrameTextures>(&rhi, _format.frameSize(), QVideoFrameFormat::Format_SamplerExternalOES, name);
-    if (!textures->texture(0)) {
-        qCWarning(GstAHWBufLog) << "createFrom failed for plane 0 (SamplerExternalOES)";
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::AHardwareBuffer);
-    }
-    textures->setSourceSample(takeSample());
-    return textures;
+    const GstHwMapTail tail{.path = HwVideoBufferPath::AHardwareBuffer,
+                            .frameSize = _format.frameSize(),
+                            .pixelFormat = QVideoFrameFormat::Format_SamplerExternalOES,
+                            .textureFlags = QRhiTexture::ExternalOES,
+                            .log = &GstAHWBufLog(),
+                            .diag = &s_diag};
+    // The import cache returns the same texture name when MediaCodec recycles an AHB.
+    return GstHwFrameTexturesBase::finishMap<FrameTextures>(
+        *this, rhi, old, tail,
+        [&](const FrameTextures& prev) {
+            return prev.matchesImport(&rhi, tail.frameSize, tail.pixelFormat, std::span<const GLuint>(&name, 1));
+        },
+        [&] { return std::make_unique<FrameTextures>(&rhi, tail.frameSize, tail.pixelFormat, name, entry); });
 }
+
+namespace {
+
+// GL_TEXTURE_EXTERNAL_OES needs the SamplerExternalOES pixel format for Qt's shader path. QVideoFrameFormat has no
+// pixel-format setter, so rebuild the format around it.
+QVideoFrameFormat externalOesFormat(const QVideoFrameFormat& format)
+{
+    QVideoFrameFormat external(format.frameSize(), QVideoFrameFormat::Format_SamplerExternalOES);
+    external.setViewport(format.viewport());
+    external.setScanLineDirection(format.scanLineDirection());
+    external.setStreamFrameRate(format.streamFrameRate());
+    external.setColorSpace(format.colorSpace());
+    external.setColorTransfer(format.colorTransfer());
+    external.setColorRange(format.colorRange());
+    external.setMirrored(format.isMirrored());
+    external.setRotation(format.rotation());
+    external.setMaxLuminance(format.maxLuminance());
+    return external;
+}
+
+void prepareAhbContext(HwVideoBufferContext& context)
+{
+    context.ahbEglDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+    if (context.ahbEglDisplay == EGL_NO_DISPLAY) {
+        qCWarning(GstAHWBufLog) << "AHardwareBuffer path: EGLDisplay unavailable";
+    } else {
+        qCInfo(GstAHWBufLog) << "AHardwareBuffer zero-copy path available"
+                             << "— actual path chosen at caps negotiation";
+    }
+}
+
+}  // namespace
+
+constinit const HwPathDescriptor GstHwPaths::kAHardwareBuffer = {
+    .path = HwVideoBufferPath::AHardwareBuffer,
+    .matches = [](GstMemory* mem, const HwVideoBufferContext& context) -> bool {
+        return (context.ahbEglDisplay != EGL_NO_DISPLAY) && gst_is_ahardware_buffer_memory(mem);
+    },
+    .construct = [](GstSample* sample, const GstVideoInfo& info, QVideoFrameFormat format,
+                    const HwVideoBufferContext& context) -> std::unique_ptr<GstHwVideoBuffer> {
+        return std::make_unique<GstAHardwareBufferVideoBuffer>(sample, info, externalOesFormat(format),
+                                                               context.ahbEglDisplay);
+    },
+    .prepareContext = &prepareAhbContext,
+    .resetCaches =
+        [] {
+            GstAHardwareBufferVideoBuffer::resetImageCache();
+            GstEglHelpers::resetExtensionCache();
+        },
+};
 
 #endif  // QGC_HAS_GST_AHARDWAREBUFFER_GPU_PATH

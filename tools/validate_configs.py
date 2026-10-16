@@ -14,6 +14,7 @@ from jsonschema import Draft7Validator
 from packaging.version import Version
 
 ROOT = Path(__file__).resolve().parents[1]
+GSTREAMER_BUNDLED_MINIMUM = Version("1.28.0")
 
 
 def validate_build_config(config: dict[str, Any], schema: dict[str, Any]) -> list[str]:
@@ -32,6 +33,17 @@ def validate_build_config(config: dict[str, Any], schema: dict[str, Any]) -> lis
     for platform, version in gst["version"].items():
         if Version(version) < Version(gst["version"]["minimum"]):
             errors.append(f"gstreamer.version.{platform} must meet the minimum")
+    # Bundled SDKs are 1.28+ (GStreamerTest's floor; the iOS and Windows downloads need it).
+    # The Linux system floor stays older.
+    for platform in ("android", "ios", "macos", "windows"):
+        if Version(gst["version"][platform]) < GSTREAMER_BUNDLED_MINIMUM:
+            errors.append(
+                f"gstreamer.version.{platform} must be at least {GSTREAMER_BUNDLED_MINIMUM}"
+            )
+    if Version(gst["version"]["minimum"]) >= GSTREAMER_BUNDLED_MINIMUM:
+        errors.append(
+            f"gstreamer.version.minimum must stay below {GSTREAMER_BUNDLED_MINIMUM} for system GStreamer"
+        )
     for platform, artifacts in {
         "android": ("android",),
         "windows": ("windows_msvc_x64", "windows_msvc_arm64"),

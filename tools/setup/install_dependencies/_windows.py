@@ -10,10 +10,6 @@ from pathlib import Path
 
 from . import _common as _c
 
-WINDOWS_GSTREAMER_BASE_URL = (
-    "https://qgroundcontrol.s3.us-west-2.amazonaws.com/dependencies/gstreamer/windows"
-)
-_WINDOWS_GSTREAMER_OFFICIAL_URL = "https://gstreamer.freedesktop.org/data/pkg/windows"
 WINDOWS_GSTREAMER_PREFIX = "C:\\gstreamer\\1.0\\msvc_x86_64"
 WINDOWS_VULKAN_INSTALL_DIR = "C:\\VulkanSDK\\latest"
 WINDOWS_VULKAN_URL = "https://sdk.lunarg.com/sdk/download/latest/windows/vulkan-sdk.exe"
@@ -119,7 +115,7 @@ def install_windows_gstreamer(version: str, dry_run: bool = False) -> bool:
         _c.add_to_path(f"{prefix}\\bin")
         return True
 
-    installer_name = f"gstreamer-1.0-msvc-x86_64-{version}.exe"
+    installer_name = _c.package_filename("windows_msvc_x64", version)
     expected_sha256 = _c.get_gstreamer_checksum(version, "windows_msvc_x64")
     if not expected_sha256:
         _c.log_error(f"Missing GStreamer {version} Windows checksum")
@@ -129,8 +125,8 @@ def install_windows_gstreamer(version: str, dry_run: bool = False) -> bool:
     with tempfile.TemporaryDirectory() as tmpdir:
         installer = Path(tmpdir) / installer_name
         installer_urls = (
-            f"{WINDOWS_GSTREAMER_BASE_URL}/{installer_name}",
-            f"{_WINDOWS_GSTREAMER_OFFICIAL_URL}/{version}/msvc/{installer_name}",
+            _c.mirror_url("windows_msvc_x64", version),
+            _c.package_url("windows_msvc_x64", version),
         )
         if not _c.download_file(
             installer_urls[0],
@@ -240,7 +236,6 @@ def install_windows(
 
 
 __all__ = [
-    "WINDOWS_GSTREAMER_BASE_URL",
     "WINDOWS_GSTREAMER_PREFIX",
     "WINDOWS_VS_BUILDTOOLS_URL",
     "WINDOWS_VULKAN_INSTALL_DIR",

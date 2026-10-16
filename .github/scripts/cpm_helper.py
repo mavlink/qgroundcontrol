@@ -4,6 +4,8 @@ CPM helper for CI: cache configuration and dependency fingerprinting.
 
 Subcommands:
     fingerprint     Hash CMake files that declare CPM/FetchContent dependencies
+    gstreamer-fingerprint
+                    Hash the build-config.json gstreamer section that selects the cached GStreamer SDKs
     configure-cache Configure CPM_SOURCE_CACHE env + GitHub output
     create-seed     Populate a runner image seed through CMake configuration
     seed-cache      Copy a compatible seed into an empty job cache
@@ -73,6 +75,13 @@ def compute_cpm_fingerprint(root: Path) -> str:
         digest.update(content)
         digest.update(b"\0")
     return digest.hexdigest()
+
+
+def compute_gstreamer_fingerprint(root: Path) -> str:
+    """Hash the build-config.json gstreamer section: the SDK versions, checksums and CA bundle."""
+    config = json.loads((root / ".github/build-config.json").read_text(encoding="utf-8"))
+    section = json.dumps(config.get("gstreamer", {}), sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(section.encode("utf-8")).hexdigest()
 
 
 def configure_cpm_cache(path_value: str) -> Path:
@@ -184,6 +193,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     fp = sub.add_parser("fingerprint", help="Compute CPM dependency fingerprint")
     fp.add_argument("--root", type=Path, default=Path("."), help="Repository root")
 
+    gst = sub.add_parser(
+        "gstreamer-fingerprint", help="Hash the build-config.json gstreamer section"
+    )
+    gst.add_argument("--root", type=Path, default=Path("."), help="Repository root")
+
     cfg = sub.add_parser("configure-cache", help="Configure CPM source cache path")
     cfg.add_argument("--path", required=True)
 
@@ -219,6 +233,12 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "fingerprint":
         fingerprint = compute_cpm_fingerprint(args.root.resolve())
+        print(fingerprint)
+        write_github_output({"fingerprint": fingerprint})
+        return 0
+
+    if args.command == "gstreamer-fingerprint":
+        fingerprint = compute_gstreamer_fingerprint(args.root.resolve())
         print(fingerprint)
         write_github_output({"fingerprint": fingerprint})
         return 0

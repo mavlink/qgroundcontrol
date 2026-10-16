@@ -2,14 +2,17 @@
 
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH) || defined(QGC_HAS_GST_AHARDWAREBUFFER_GPU_PATH)
 
+#include <cstring>
+#include <rhi/qrhi.h>
+#include <rhi/qrhi_platform.h>
+#include <utility>
+
 #include <QtCore/QByteArray>
 #include <QtCore/QHash>
 #include <QtCore/QMutex>
 #include <QtCore/QMutexLocker>
 #include <QtGui/QOpenGLContext>
 #include <QtGui/qopenglcontext_platform.h>
-#include <cstring>
-#include <utility>
 
 namespace GstEglHelpers {
 
@@ -23,6 +26,19 @@ EGLDisplay resolveEglDisplay(QOpenGLContext* qtCtx) noexcept
         }
     }
     return eglGetCurrentDisplay();
+}
+
+QOpenGLContext* bindRhiContext(QRhi& rhi)
+{
+    rhi.makeThreadLocalNativeContextCurrent();
+    const auto* handles = static_cast<const QRhiGles2NativeHandles*>(rhi.nativeHandles());
+    return handles ? handles->context : nullptr;
+}
+
+EGLDisplay renderDisplay(QOpenGLContext* qtCtx, EGLDisplay fallback) noexcept
+{
+    const EGLDisplay display = resolveEglDisplay(qtCtx);
+    return display != EGL_NO_DISPLAY ? display : fallback;
 }
 
 namespace {
@@ -68,6 +84,19 @@ void resetExtensionCache()
 {
     QMutexLocker lock(&s_extMutex);
     s_extCache.clear();
+}
+
+PFNGLEGLIMAGETARGETTEXTURE2DOESPROC imageTargetTexture2D() noexcept
+{
+    static const auto fn =
+        reinterpret_cast<PFNGLEGLIMAGETARGETTEXTURE2DOESPROC>(eglGetProcAddress("glEGLImageTargetTexture2DOES"));
+    return fn;
+}
+
+PFNEGLDESTROYIMAGEKHRPROC destroyImageKHR() noexcept
+{
+    static const auto fn = reinterpret_cast<PFNEGLDESTROYIMAGEKHRPROC>(eglGetProcAddress("eglDestroyImageKHR"));
+    return fn;
 }
 
 }  // namespace GstEglHelpers

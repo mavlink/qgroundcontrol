@@ -14,7 +14,6 @@ entry point for normal builds.
 | `platform/` | Android, Apple, Linux, and Windows configuration |
 | `presets/` | Platform configure, build, test, package, and workflow presets |
 | `tests/` | Configure-time contracts for shared CMake helpers |
-| `find-modules/` | CMake find modules for optional dependencies |
 
 ## Conventions
 
@@ -30,6 +29,8 @@ entry point for normal builds.
 - In GStreamer modules with repeated basenames, include the intended file by absolute path.
 - When changing an existing file, format only the edited region. Whole-file formatting is reserved
   for new files or an explicit formatting task.
+- The lint hooks run cmakelang 0.6.13, which predates `return(PROPAGATE)` and `file(ARCHIVE_EXTRACT)`. Silence its
+  findings on those with a `# cmake-lint: disable=` line in the function; no other comment is needed.
 
 `cmake/modules/CPM.cmake` is vendored. Do not modify or reformat it as part of project CMake
 maintenance; the pre-commit CMake hooks intentionally exclude it.
@@ -48,15 +49,25 @@ pre-commit run cmake-lint --files path/to/file.cmake
 
 ## Tests
 
-After configuring a build with tests enabled, run the shared-module and finder tests with:
+After configuring a build with tests enabled, run the shared-module (`tests/`) and GStreamer (`GStreamer/tests/`,
+also labelled `GStreamer`) script and fixture tests with:
 
 ```bash
 ctest --test-dir build --output-on-failure -L CMake
-ctest --test-dir build --output-on-failure -L FindModule
 ```
 
 Use `just configure`, `just build`, and the relevant CTest labels for the final validation described
 in the root [AGENTS.md](../AGENTS.md).
+
+## GStreamer
+
+`GStreamer/` discovers or downloads the GStreamer SDK and creates the `GStreamer::` targets. The GStreamer
+[README](../src/VideoManager/VideoReceiver/GStreamer/README.md#build-configuration) describes its modules and configure
+options.
+
+Each HwBuffers zero-copy GPU path can be compiled out with `QGC_GST_ENABLE_<PATH>=OFF` (DMABUF, CUDA, GLMEMORY,
+IOSURFACE, D3D11, D3D12, AHARDWAREBUFFER, VULKAN; all ON by default). Configure prints which compiled paths the sink
+can't reach at runtime.
 
 ## Presets
 

@@ -27,9 +27,10 @@ dependencies {
 }
 
 def resolveCpmJavaSourceDir = {
-    // CMake copies CPM Java dependencies into <CMAKE_BINARY_DIR>/extra_java_sources.
-    // androiddeployqt copies this build.gradle into <CMAKE_BINARY_DIR>/android-build-*/,
-    // so the CPM sources are the sibling 'extra_java_sources' of the Gradle project dir.
+    // CMake copies CPM Java dependencies and GStreamer plugin Java sources into
+    // <CMAKE_BINARY_DIR>/extra_java_sources. androiddeployqt copies this build.gradle into
+    // <CMAKE_BINARY_DIR>/android-build-*/, so the CPM sources are the sibling
+    // 'extra_java_sources' of the Gradle project dir.
     final File cpmDir = new File(project.projectDir.parentFile, 'extra_java_sources')
     return cpmDir.exists() ? cpmDir : null
 }
@@ -72,7 +73,9 @@ android {
             res.srcDirs = [qtAndroidDir + '/res', 'res']
             resources.srcDirs = ['resources']
             renderscript.srcDirs = ['src']
-            assets.srcDirs = ['assets']
+            // CMake stages GStreamer's fonts and CA bundle into <CMAKE_BINARY_DIR>/extra_assets, the sibling of the
+            // Gradle project dir (see resolveCpmJavaSourceDir); missing asset dirs are ignored.
+            assets.srcDirs = ['assets', '../extra_assets']
             jniLibs.srcDirs = ['libs']
         }
         test {

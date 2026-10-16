@@ -4,7 +4,6 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QSize>
-#include <QtCore/QTimer>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 class QGCVideoStreamInfo;
@@ -88,6 +87,8 @@ signals:
     void widgetChanged(QQuickItem *widget);
 
     void onStartComplete(STATUS status);
+    /// STATUS_FAIL: the receiver stopped on its own after a stream failure. Reconnecting is then its own
+    /// call (GstVideoReceiver retries with backoff while autoReconnect() is set) and shows as onStartComplete.
     void onStopComplete(STATUS status);
     void onStartDecodingComplete(STATUS status);
     void onStopDecodingComplete(STATUS status);
@@ -102,7 +103,9 @@ public slots:
     virtual void stopDecoding() = 0;
     virtual void startRecording(const QString &videoFile, FILE_FORMAT format) = 0;
     virtual void stopRecording() = 0;
-    virtual void takeScreenshot(const QString &imageFile) = 0;
+    /// Saves the frame on display in widget()'s video sink to @p imageFile. Runs on the caller's thread, which must be
+    /// the widget's (the GUI thread).
+    virtual void takeScreenshot(const QString& imageFile);
 
 protected:
     VideoSinkHandle _sink = nullptr;
@@ -111,33 +114,9 @@ protected:
     QString _name;
     QString _uri;
     bool _started = false;
-    // Flipped on streaming threads, read cross-thread (e.g. tee probe logging).
-    std::atomic<bool> _decoding = false;
-    bool _recording = false;
-    bool _streaming = false;
     bool _lowLatency = false;
     int _rtpJitterLatencyMs = 80;
     // Written live on the GUI thread, read on the receiver worker thread.
     std::atomic<bool> _autoReconnect = true;     ///< RTSP/UDP auto-reconnect with exponential backoff on watchdog/error.
-    bool _resetVideoSink = false;
-    bool _endOfStream = false;
-    bool _removingDecoder = false;
-    bool _removingRecorder = false;
-    // buffer:
-    //      -1 - disable buffer and video sync
-    //      0 - default buffer length
-    //      N - buffer length, ms
-    int _buffer = 0;
-    // Written on streaming threads (pad probes), read/written by the watchdog on the worker thread.
-    std::atomic<qint64> _lastSourceFrameTime = 0;
-    std::atomic<qint64> _lastVideoFrameTime = 0;
-    int _statsTickCounter = 0;
-    QTimer _watchdogTimer;
-    uint32_t _timeout = 0;
     QString _recordingOutput;
-
-    // bool _initialized = false;
-    // bool _fullScreen = false;
-    // QSize _videoSize;
-    // QString _imageFile;
 };

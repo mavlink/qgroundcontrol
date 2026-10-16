@@ -1,8 +1,11 @@
 include_guard(GLOBAL)
 # cmake-lint: disable=R0915
 
-# Select the framework directory for an iOS xcframework and target platform.
-# XCFramework library identifiers encode both platform and architectures.
+# qgc_find_ios_xcframework_slice(XCFRAMEWORK <dir> PLATFORM <iphoneos|iphonesimulator> OUT_VAR <var>
+#                                [ARCHITECTURES <arch>...])
+# Sets <var> to the library directory (slice) of the xcframework for the target platform whose identifier names every
+# ARCHITECTURES entry, the first in sorted order when several do; fails configure when none does. A slice holds a
+# <name>.framework or, as in GStreamer's, a static library.
 function(qgc_find_ios_xcframework_slice)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "" "XCFRAMEWORK;PLATFORM;OUT_VAR" "ARCHITECTURES")
     if(ARG_KEYWORDS_MISSING_VALUES OR ARG_UNPARSED_ARGUMENTS)
@@ -32,22 +35,21 @@ function(qgc_find_ios_xcframework_slice)
         file(
             GLOB candidate_paths
             LIST_DIRECTORIES true
-            "${ARG_XCFRAMEWORK}/ios-*-simulator/${framework_name}.framework"
+            "${ARG_XCFRAMEWORK}/ios-*-simulator"
         )
     else()
         file(
             GLOB candidate_paths
             LIST_DIRECTORIES true
-            "${ARG_XCFRAMEWORK}/ios-*/${framework_name}.framework"
+            "${ARG_XCFRAMEWORK}/ios-*"
         )
-        list(FILTER candidate_paths EXCLUDE REGEX "/ios-[^/]*-(simulator|maccatalyst)/")
+        list(FILTER candidate_paths EXCLUDE REGEX "/ios-[^/]*-(simulator|maccatalyst)$")
     endif()
 
     if(ARG_ARCHITECTURES)
         set(architecture_matches "")
         foreach(candidate IN LISTS candidate_paths)
-            cmake_path(GET candidate PARENT_PATH slice_dir)
-            cmake_path(GET slice_dir FILENAME slice_id)
+            cmake_path(GET candidate FILENAME slice_id)
             set(architecture_ok TRUE)
             foreach(architecture IN LISTS ARG_ARCHITECTURES)
                 if(NOT architecture MATCHES "^[A-Za-z0-9_]+$")

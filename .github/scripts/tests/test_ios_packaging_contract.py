@@ -278,15 +278,15 @@ def test_selects_matching_ios_xcframework_slices(tmp_path: Path) -> None:
     script.write_text(
         f'include("{REPO_ROOT}/cmake/modules/AppleXCFramework.cmake")\n'
         f'qgc_find_ios_xcframework_slice(XCFRAMEWORK "{xcframework}" PLATFORM iphoneos '
-        "ARCHITECTURES arm64 OUT_VAR device_framework)\n"
+        "ARCHITECTURES arm64 OUT_VAR device_slice)\n"
         f'qgc_find_ios_xcframework_slice(XCFRAMEWORK "{xcframework}" PLATFORM iphonesimulator '
-        "ARCHITECTURES arm64 x86_64 OUT_VAR simulator_framework)\n"
-        f'file(WRITE "{result_path}" "${{device_framework}}\n${{simulator_framework}}\n")\n'
+        "ARCHITECTURES arm64 x86_64 OUT_VAR simulator_slice)\n"
+        f'file(WRITE "{result_path}" "${{device_slice}}\n${{simulator_slice}}\n")\n'
     )
 
     subprocess.run(["cmake", "-P", str(script)], check=True, capture_output=True, text=True)
 
     assert result_path.read_text().splitlines() == [
-        str(xcframework / "ios-arm64/Video.framework"),
-        str(xcframework / "ios-arm64_x86_64-simulator/Video.framework"),
+        str(xcframework / "ios-arm64"),
+        str(xcframework / "ios-arm64_x86_64-simulator"),
     ]

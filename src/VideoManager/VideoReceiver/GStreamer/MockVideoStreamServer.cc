@@ -187,12 +187,12 @@ void MockVideoStreamServer::stop()
 #ifdef QGC_GST_RTSP_SERVER
 bool MockVideoStreamServer::_startRtsp(const QString &host, quint16 port)
 {
-    Q_UNUSED(host); // RTSP server binds all interfaces; client connects via the advertised host.
-
     _rtspContext = g_main_context_new();
 
     GstRTSPServer *server = gst_rtsp_server_new();
+    const QByteArray address = host.toUtf8();
     const QByteArray service = QByteArray::number(port);
+    gst_rtsp_server_set_address(server, address.constData());
     gst_rtsp_server_set_service(server, service.constData());
 
     GstRTSPMountPoints *mounts = gst_rtsp_server_get_mount_points(server);
@@ -227,7 +227,15 @@ bool MockVideoStreamServer::_startRtsp(const QString &host, quint16 port)
 void MockVideoStreamServer::_stopRtsp()
 {
     if (_rtspLoop) {
-        g_main_loop_quit(_rtspLoop);
+        // Quit from inside the loop's context: g_main_loop_run() sets the running flag on entry, so a quit
+        // issued before the thread enters it would be lost and join() would hang.
+        g_main_context_invoke(
+            _rtspContext,
+            [](gpointer loop) -> gboolean {
+                g_main_loop_quit(static_cast<GMainLoop*>(loop));
+                return G_SOURCE_REMOVE;
+            },
+            _rtspLoop);
     }
     if (_rtspThread.joinable()) {
         _rtspThread.join();

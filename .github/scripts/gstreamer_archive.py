@@ -3,7 +3,7 @@
 Create GStreamer archive and optionally upload to S3.
 
 Usage:
-    gstreamer_archive.py --platform linux --arch x86_64 --version 1.24.0 [--simulator] [--upload-s3]
+    gstreamer_archive.py --platform linux --arch x86_64 [--version 1.24.0] [--simulator] [--upload-s3]
 
 Environment variables for S3 upload:
     AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_DEFAULT_REGION
@@ -26,6 +26,7 @@ from ci_bootstrap import ensure_tools_dir
 ensure_tools_dir(__file__)
 
 from common.aws import upload_public_file, validate_public_bucket
+from common.build_config import get_gstreamer_version
 from common.gh_actions import write_github_output, write_step_summary
 from common.markdown import md_table
 from common.platform import host_arch
@@ -323,8 +324,8 @@ Environment variables for S3 upload:
     )
     parser.add_argument(
         "--version",
-        required=True,
-        help="GStreamer version",
+        default="",
+        help="GStreamer version (default: the platform's in build-config.json)",
     )
     parser.add_argument(
         "--prefix",
@@ -363,7 +364,7 @@ def main() -> int:
         archiver = GStreamerArchiver(
             platform=args.platform,
             arch=args.arch,
-            version=args.version,
+            version=args.version or get_gstreamer_version(args.platform),
             prefix=args.prefix,
             simulator=args.simulator,
             output_dir=args.output_dir,

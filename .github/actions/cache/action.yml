@@ -288,20 +288,48 @@ runs:
         } >> "$GITHUB_ENV"
 
     # SDK payloads change independently of source declarations and are large.
-    # Keep them out of the CPM archive and reuse an immutable SDK archive.
+    # Keep them out of the CPM archive and reuse an immutable SDK cache.
+    # Only Windows, Android and iOS builds download one; desktop Linux and
+    # macOS use the system GStreamer. The key covers what selects, fetches
+    # and extracts the SDK (the build-config.json gstreamer section, not the
+    # whole file), so other GStreamer CMake edits keep it. Only the extracted
+    # trees are cached: configure uses a tree stamped with the pinned
+    # checksums without its downloaded archive. actions/cache archives a
+    # matched directory whole, so the paths match each SDK directory's entries
+    # for the exclusions to apply.
+    - name: Compute GStreamer SDK fingerprint
+      id: gst-sdk-key
+      if: >-
+        inputs.cpm-modules != '' &&
+        (startsWith(inputs.target, 'win') || inputs.target == 'android' || inputs.target == 'ios')
+      shell: bash
+      run: python3 "${GITHUB_WORKSPACE}/.github/scripts/cpm_helper.py" gstreamer-fingerprint --root "${GITHUB_WORKSPACE}"
+
     - name: Cache GStreamer SDK (restore and save)
-      if: inputs.cpm-modules != '' && steps.cache-policy.outputs.save == 'true' && inputs.build-type == 'Release'
+      if: >-
+        inputs.cpm-modules != '' && steps.cache-policy.outputs.save == 'true' && inputs.build-type == 'Release' &&
+        (startsWith(inputs.target, 'win') || inputs.target == 'android' || inputs.target == 'ios')
       uses: actions/cache@v6
       with:
-        path: ${{ env.CPM_CACHE_PATH }}/gstreamer*
-        key: gst-sdk-v1-${{ inputs.host }}-${{ inputs.target }}-${{ hashFiles('.github/build-config.json', 'cmake/GStreamer/**/*.cmake') }}
+        path: |
+          ${{ env.CPM_CACHE_PATH }}/gstreamer*/*
+          !${{ env.CPM_CACHE_PATH }}/gstreamer*/*.tar.xz
+          !${{ env.CPM_CACHE_PATH }}/gstreamer*/*.exe
+          !${{ env.CPM_CACHE_PATH }}/gstreamer*/*.pkg
+        key: gst-sdk-v1-${{ inputs.host }}-${{ inputs.target }}-${{ steps.gst-sdk-key.outputs.fingerprint }}-${{ hashFiles('cmake/GStreamer/Download.cmake', 'cmake/GStreamer/platform/*.cmake') }}
 
     - name: Cache GStreamer SDK (restore only)
-      if: inputs.cpm-modules != '' && (steps.cache-policy.outputs.save != 'true' || inputs.build-type != 'Release')
+      if: >-
+        inputs.cpm-modules != '' && (steps.cache-policy.outputs.save != 'true' || inputs.build-type != 'Release') &&
+        (startsWith(inputs.target, 'win') || inputs.target == 'android' || inputs.target == 'ios')
       uses: actions/cache/restore@v6
       with:
-        path: ${{ env.CPM_CACHE_PATH }}/gstreamer*
-        key: gst-sdk-v1-${{ inputs.host }}-${{ inputs.target }}-${{ hashFiles('.github/build-config.json', 'cmake/GStreamer/**/*.cmake') }}
+        path: |
+          ${{ env.CPM_CACHE_PATH }}/gstreamer*/*
+          !${{ env.CPM_CACHE_PATH }}/gstreamer*/*.tar.xz
+          !${{ env.CPM_CACHE_PATH }}/gstreamer*/*.exe
+          !${{ env.CPM_CACHE_PATH }}/gstreamer*/*.pkg
+        key: gst-sdk-v1-${{ inputs.host }}-${{ inputs.target }}-${{ steps.gst-sdk-key.outputs.fingerprint }}-${{ hashFiles('cmake/GStreamer/Download.cmake', 'cmake/GStreamer/platform/*.cmake') }}
 
     # Release populates immutable dependency snapshots. Debug jobs can also
     # restore the ordinary platform sources when their custom cache is absent.

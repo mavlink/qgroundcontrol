@@ -14,7 +14,7 @@ Usage:
 Options:
     --platform PLATFORM   Target platform (linux, macos, windows, android, ios)
     --arch ARCH           Target architecture (platform-specific, default: native)
-    --version VERSION     GStreamer version (default: from build-config.json)
+    --version VERSION     GStreamer version (default: the platform's in build-config.json)
     --type TYPE           Build type: release or debug (default: release)
     --prefix DIR          Install prefix
     --work-dir DIR        Working directory for source
@@ -46,7 +46,7 @@ from _bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.build_config import get_build_config_value
+from common.build_config import get_gstreamer_version
 from common.gh_actions import write_github_output
 from common.logging import log_error, log_info, log_ok, log_warn
 from qgc_tools.python_env import executable, sync_groups
@@ -604,7 +604,10 @@ def parse_args() -> argparse.Namespace:
         "--arch", "-a", default="", help="Target architecture (default: native or universal)"
     )
     parser.add_argument(
-        "--version", "-v", default="", help="GStreamer version (default: from build-config.json)"
+        "--version",
+        "-v",
+        default="",
+        help="GStreamer version (default: the platform's in build-config.json)",
     )
     parser.add_argument(
         "--type",
@@ -677,9 +680,7 @@ def main() -> int:
     args = parse_args()
 
     # Resolve defaults
-    version = args.version or get_build_config_value(
-        "gstreamer.version.default", start=Path(__file__).resolve()
-    )
+    version = args.version or get_gstreamer_version(args.platform, start=Path(__file__).resolve())
     if not version:
         log_error("GStreamer version is required; pass --version or provide build-config.json")
         return 1

@@ -60,7 +60,6 @@ from ._packages import (
     validate_extra_packages,
 )
 from ._windows import (
-    WINDOWS_GSTREAMER_BASE_URL,
     WINDOWS_GSTREAMER_PREFIX,
     WINDOWS_VULKAN_INSTALL_DIR,
     WINDOWS_VULKAN_URL,
@@ -80,7 +79,6 @@ __all__ = [
     "MACOS_PACKAGES",
     "PACKAGE_NAME_RE",
     "PYTHON_BUILD_TOOLS",
-    "WINDOWS_GSTREAMER_BASE_URL",
     "WINDOWS_GSTREAMER_PREFIX",
     "WINDOWS_VULKAN_INSTALL_DIR",
     "WINDOWS_VULKAN_URL",
