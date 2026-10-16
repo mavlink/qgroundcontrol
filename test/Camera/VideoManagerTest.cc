@@ -3,6 +3,7 @@
 #include <memory>
 
 #include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
 #include <QtCore/QTemporaryDir>
 #include <QtGui/QImage>
 #include <QtMultimedia/QVideoFrame>
@@ -16,6 +17,34 @@
 #include "Fixtures/RAIIFixtures.h"
 #include "QtMultimediaReceiver.h"
 #include "VideoManager.h"
+#include "VideoReceiver.h"
+
+namespace {
+
+/// Records the screenshot paths VideoManager asks it to save.
+class ScreenshotRecordingReceiver : public VideoReceiver
+{
+public:
+    explicit ScreenshotRecordingReceiver(const QString& name) { setName(name); }
+
+    void start(uint32_t /*timeout*/) override {}
+
+    void stop() override {}
+
+    void startDecoding(VideoSinkHandle /*sink*/) override {}
+
+    void stopDecoding() override {}
+
+    void startRecording(const QString& /*videoFile*/, FILE_FORMAT /*format*/) override {}
+
+    void stopRecording() override {}
+
+    void takeScreenshot(const QString& imageFile) override { requested.append(imageFile); }
+
+    QStringList requested;
+};
+
+}  // namespace
 
 void VideoManagerTest::_videoOutputQmlTypeAvailableInUnitTestMode_test()
 {
@@ -68,6 +97,26 @@ void VideoManagerTest::_qtMultimediaScreenshotSavesDisplayedFrame_test()
     QCOMPARE(screenshotSpy.count(), 1);
     QCOMPARE(screenshotSpy.constFirst().constFirst().value<VideoReceiver::STATUS>(), VideoReceiver::STATUS_OK);
     QCOMPARE(QImage(path).size(), displayed.size());
+}
+
+void VideoManagerTest::_screenshotsNameEachStartedStream_test()
+{
+    VideoManager videoManager;
+    ScreenshotRecordingReceiver visible(QStringLiteral("videoContent"));
+    ScreenshotRecordingReceiver thermal(QStringLiteral("thermalVideo"));
+    videoManager._videoReceivers = {&visible, &thermal};
+    const auto detach = qScopeGuard([&videoManager] { videoManager._videoReceivers.clear(); });
+
+    visible.setStarted(true);
+    thermal.setStarted(true);
+    videoManager.grabImage(QStringLiteral("/photos/2026-10-16_01.02.03.004.jpg"));
+    QCOMPARE(visible.requested, QStringList{QStringLiteral("/photos/2026-10-16_01.02.03.004.jpg")});
+    QCOMPARE(thermal.requested, QStringList{QStringLiteral("/photos/2026-10-16_01.02.03.004.thermalVideo.jpg")});
+
+    thermal.setStarted(false);
+    videoManager.grabImage(QStringLiteral("/photos/no-extension"));
+    QCOMPARE(visible.requested.last(), QStringLiteral("/photos/no-extension"));
+    QCOMPARE(thermal.requested.size(), 1);
 }
 
 UT_REGISTER_TEST(VideoManagerTest, TestLabel::Unit)

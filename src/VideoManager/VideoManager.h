@@ -46,6 +46,7 @@ class VideoManager : public QObject
 
     friend class VideoManagerInitTest;
     friend class VideoManagerRestartTest;
+    friend class VideoManagerTest;
 
 public:
     explicit VideoManager(QObject *parent = nullptr);

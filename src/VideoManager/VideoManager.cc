@@ -405,7 +405,21 @@ void VideoManager::grabImage(const QString &imageFile)
     emit imageFileChanged(_imageFile);
 
     for (VideoReceiver *receiver : std::as_const(_videoReceivers)) {
-        receiver->takeScreenshot(_imageFile);
+        if (!receiver->started()) {
+            continue;
+        }
+        // As with recordings, streams other than the main one get their name before the extension.
+        QString streamImageFile = _imageFile;
+        if (receiver->name() != QStringLiteral("videoContent")) {
+            const qsizetype dot = streamImageFile.lastIndexOf(QLatin1Char('.'));
+            const QString tag = QLatin1Char('.') + receiver->name();
+            if (dot > streamImageFile.lastIndexOf(QLatin1Char('/'))) {
+                streamImageFile.insert(dot, tag);
+            } else {
+                streamImageFile.append(tag);
+            }
+        }
+        receiver->takeScreenshot(streamImageFile);
     }
 }
 

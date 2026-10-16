@@ -9,4 +9,5 @@ class VideoManagerTest : public UnitTest
 private slots:
     void _videoOutputQmlTypeAvailableInUnitTestMode_test();
     void _qtMultimediaScreenshotSavesDisplayedFrame_test();
+    void _screenshotsNameEachStartedStream_test();
 };
