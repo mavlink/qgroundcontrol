@@ -9,7 +9,7 @@ gstreamer_scan_plugin_basenames(_empty "${_sandbox}/does-not-exist")
 qgc_test_assert_streq("missing path returns empty" "" "${_empty}")
 qgc_test_pass("missing path")
 
-gstreamer_platform_plugin_attrs(_ext _prefix _glob)
+gstreamer_platform_plugin_attrs(_ext _prefix)
 file(TOUCH "${_sandbox}/${_prefix}coreelements.${_ext}")
 file(TOUCH "${_sandbox}/${_prefix}playback.${_ext}")
 file(TOUCH "${_sandbox}/${_prefix}videoconvertscale.${_ext}")

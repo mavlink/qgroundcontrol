@@ -188,13 +188,10 @@ bool completeInit()
     gst_version(&major, &minor, &micro, &nano);
     qCDebug(GStreamerLog) << "GStreamer initialized:" << major << "." << minor << "." << micro;
 
-#ifdef QGC_GST_BUILD_VERSION_MAJOR
-    if (major != QGC_GST_BUILD_VERSION_MAJOR || minor != QGC_GST_BUILD_VERSION_MINOR) {
-        qCWarning(GStreamerLog) << "GStreamer version mismatch: built against" << QGC_GST_BUILD_VERSION_MAJOR << "."
-                                << QGC_GST_BUILD_VERSION_MINOR << "but runtime is" << major << "." << minor << "."
-                                << micro;
+    if (major != GST_VERSION_MAJOR || minor != GST_VERSION_MINOR) {
+        qCWarning(GStreamerLog) << "GStreamer version mismatch: built against" << GST_VERSION_MAJOR << "."
+                                << GST_VERSION_MINOR << "but runtime is" << major << "." << minor << "." << micro;
     }
-#endif
 
     _registerPlugins();
 

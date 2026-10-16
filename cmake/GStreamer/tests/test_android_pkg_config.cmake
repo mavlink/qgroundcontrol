@@ -15,10 +15,7 @@ set(_cases "sdk|windows|sdk/${_tools}/windows/pkg-config.exe" "sdk|macos|sdk/${_
            "older-sdk|macos|"
 )
 foreach(_case IN LISTS _cases)
-    string(REPLACE "|" ";" _parts "${_case}")
-    list(GET _parts 0 _root)
-    list(GET _parts 1 _host)
-    list(GET _parts 2 _expected)
+    qgc_test_split("${_case}" _root _host _expected)
     if(_expected)
         set(_expected "${_sandbox}/${_expected}")
     endif()

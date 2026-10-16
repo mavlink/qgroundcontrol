@@ -2,14 +2,37 @@
 # requested version, discovers or downloads the target platform's SDK (Platform.cmake, platform/*.cmake), creates the
 # GStreamer:: targets, checks the plugin set and records the resolved SDK (SdkState.cmake, GStreamer::Layout).
 #
-# Input: QGC_GST_COMPONENTS (components beyond the mandatory registry rows, Components.cmake) and the cache options
+# Input: QGC_GST_COMPONENTS (components beyond the mandatory ones, Components.cmake) and the cache options
 # GStreamer_ROOT_DIR, QGC_GST_VERSION, GStreamer_USE_{STATIC_LIBS,FRAMEWORK} and PKG_CONFIG_ARGN.
 # Sets, in the including directory, the discovery outputs (Platform.cmake; qgc_gst_restore_pkgconfig_env undoes their
 # pkg-config environment) and GStreamer_VERSION, GStreamer_USE_MERGED_STATIC, GSTREAMER_APIS, GSTREAMER_PLUGINS,
 # GSTREAMER_STATIC_PLUGINS (static layouts), G_IO_MODULES (mobile), GStreamer_<component>_FOUND (optional components)
 # and QGC_GST_HAS_DMABUF (Linux).
 
-include("${CMAKE_CURRENT_LIST_DIR}/Helpers.cmake")
+# The helper modules, each described in its header, then each platform's discovery (platform/*.cmake).
+foreach(
+    _qgc_gst_module IN
+    ITEMS Platform
+          Components
+          Layout
+          Targets
+          Probe
+          PkgConfig
+          Download
+          PluginPolicy
+          Install
+          Notice
+          StaticInit
+          SdkState
+          platform/Apple
+          platform/Windows
+          platform/Linux
+          platform/Android
+          platform/MacOS
+          platform/IOS
+)
+    include("${CMAKE_CURRENT_LIST_DIR}/${_qgc_gst_module}.cmake")
+endforeach()
 
 qgc_gst_platform(_qgc_gst_platform)
 
@@ -28,8 +51,6 @@ else()
     qgc_config_read(QGC_GST_REQUESTED_VERSION gstreamer version ${_qgc_gst_platform_VERSION_KEY})
 endif()
 
-# GStreamer_ROOT_DIR is user input only (never written back), so a later configure can tell a
-# user-chosen SDK from one discovery picked; see SdkState.cmake.
 if(GStreamer_ROOT_DIR AND NOT EXISTS "${GStreamer_ROOT_DIR}")
     message(FATAL_ERROR "GStreamer: User-provided directory does not exist: ${GStreamer_ROOT_DIR}\n"
                         "Correct the path or unset GStreamer_ROOT_DIR to allow auto-download."
@@ -63,20 +84,9 @@ set(PKG_CONFIG_ARGN
     CACHE STRING "Extra arguments for pkg-config"
 )
 _qgc_gst_drop_legacy_pkg_config_args()
-# Empty GStreamer_ROOT_DIR from here on means "discover or download"; platform discovery
-# fills it in and sets GStreamer_AUTO_DOWNLOADED when it downloads.
 _qgc_gst_select_sdk_root(GStreamer_ROOT_DIR GStreamer_AUTO_DOWNLOADED "${GStreamer_ROOT_DIR}"
                          "${QGC_GST_REQUESTED_VERSION}"
 )
-
-# Per-platform discovery functions, _qgc_gst_discover_<platform>_sdk, whose outputs Platform.cmake lists. Shared
-# Mac+iOS helpers live in platform/Apple.cmake.
-include("${CMAKE_CURRENT_LIST_DIR}/platform/Apple.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/platform/Windows.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/platform/Linux.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/platform/Android.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/platform/MacOS.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/platform/IOS.cmake")
 
 cmake_language(CALL _qgc_gst_discover_${_qgc_gst_platform}_sdk)
 
@@ -101,65 +111,23 @@ endif()
 unset(_qgc_gst_active_modes)
 unset(_qgc_gst_active_count)
 
-# The merged-archive layout sets GSTREAMER_LIB_PATH / GSTREAMER_PLUGIN_PATH to the archive's directory
-# (which has no lib/ subdir), so it checks the archive instead.
-if(NOT GStreamer_USE_MERGED_STATIC)
-    set(_gst_missing_paths)
-    if(NOT EXISTS "${GStreamer_ROOT_DIR}")
-        list(APPEND _gst_missing_paths "GStreamer_ROOT_DIR=${GStreamer_ROOT_DIR}")
-    endif()
-    if(NOT EXISTS "${GSTREAMER_LIB_PATH}")
-        list(APPEND _gst_missing_paths "GSTREAMER_LIB_PATH=${GSTREAMER_LIB_PATH}")
-    endif()
-    if(NOT EXISTS "${GSTREAMER_PLUGIN_PATH}")
-        list(APPEND _gst_missing_paths "GSTREAMER_PLUGIN_PATH=${GSTREAMER_PLUGIN_PATH}")
-    endif()
-    if(NOT EXISTS "${GSTREAMER_INCLUDE_PATH}")
-        list(APPEND _gst_missing_paths "GSTREAMER_INCLUDE_PATH=${GSTREAMER_INCLUDE_PATH}")
-    endif()
-    if(_gst_missing_paths)
-        string(REPLACE ";" "\n  " _gst_missing_str "${_gst_missing_paths}")
-        set(_gst_framework_detail "")
-        if(DEFINED GSTREAMER_FRAMEWORK_PATH)
-            set(_gst_framework_detail "GSTREAMER_FRAMEWORK_PATH=${GSTREAMER_FRAMEWORK_PATH}\n")
-        endif()
-        message(FATAL_ERROR "GStreamer: required directories do not exist on disk:\n  ${_gst_missing_str}\n"
-                            "${_gst_framework_detail}" "Check installation or set GStreamer_ROOT_DIR."
-        )
-    endif()
-
-    if(GStreamer_USE_FRAMEWORK)
-        if(NOT DEFINED GSTREAMER_FRAMEWORK_PATH)
-            message(FATAL_ERROR "GStreamer: framework mode is active but GSTREAMER_FRAMEWORK_PATH is unset")
-        elseif(NOT EXISTS "${GSTREAMER_FRAMEWORK_PATH}")
-            message(FATAL_ERROR "GStreamer: Could not locate framework at ${GSTREAMER_FRAMEWORK_PATH}")
-        endif()
-    endif()
-else()
-    if(NOT EXISTS "${GSTREAMER_XCFRAMEWORK_LIB}")
-        message(FATAL_ERROR "GStreamer: iOS merged archive not found at ${GSTREAMER_XCFRAMEWORK_LIB}")
-    endif()
-endif()
-
-gstreamer_build_apis(GSTREAMER_APIS ${QGC_GST_COMPONENTS})
+gstreamer_select_components(_qgc_gst_components ${QGC_GST_COMPONENTS})
+set(GSTREAMER_APIS "")
+foreach(_qgc_gst_component IN LISTS _qgc_gst_components)
+    gstreamer_component_names(${_qgc_gst_component} _qgc_gst_api _)
+    list(APPEND GSTREAMER_APIS ${_qgc_gst_api})
+endforeach()
 
 # The plugin list lives in .github/build-config.json; the alternate groups of PluginPolicy.cmake (e.g. the 1.22
 # videoconvertscale fusion of videoconvert+videoscale) apply to the missing-plugin check below.
-gstreamer_plugins_for(PLATFORM "${_qgc_gst_platform_PLUGIN_KEY}" OUT_VAR GSTREAMER_PLUGINS)
+gstreamer_plugins_for("${_qgc_gst_platform_PLUGIN_KEY}" GSTREAMER_PLUGINS)
 
-# Mobile builds have no filesystem plugin scan — only statically registered plugins exist at
-# runtime. Add the encode-side plugins the Debug-only MockLink video stream server
-# needs (GSTREAMER_MOCK_SERVER_DEBUG_PLUGINS, PluginPolicy.cmake) in Debug builds.
 if((ANDROID OR IOS) AND CMAKE_BUILD_TYPE STREQUAL "Debug")
     list(APPEND GSTREAMER_PLUGINS ${GSTREAMER_MOCK_SERVER_DEBUG_PLUGINS})
     list(REMOVE_DUPLICATES GSTREAMER_PLUGINS)
 endif()
-# The iOS archive lacks the dependencies of these plugins, so they cannot be linked.
 if(IOS)
-    gstreamer_xcfw_skip(_gst_xcfw_skip)
-    foreach(_gst_plugin IN LISTS _gst_xcfw_skip)
-        list(REMOVE_ITEM GSTREAMER_PLUGINS "${_gst_plugin}")
-    endforeach()
+    list(REMOVE_ITEM GSTREAMER_PLUGINS ${GSTREAMER_XCFRAMEWORK_SKIP_PLUGINS})
 endif()
 
 # Mobile apps register the OpenSSL GIO module (TLS) statically along with their plugins; on iOS the merged
@@ -168,9 +136,8 @@ if(ANDROID OR IOS)
     set(G_IO_MODULES openssl)
 endif()
 
-# Cached pkg-config, find_library and try-compile results describe one SDK: drop them when the
-# root, its version, the linkage or the pkg-config invocation changes. Discovery derives its
-# pkg-config flags from the root and the linkage, so only the user's cached flags are added.
+# Discovery derives its pkg-config flags from the root and the linkage, so only the user's cached flags join the
+# fingerprint (_qgc_gst_refresh_sdk_cache).
 set(_qgc_gst_fingerprint_pkg_config "")
 if(NOT GStreamer_USE_MERGED_STATIC)
     find_package(PkgConfig REQUIRED QUIET)
@@ -181,27 +148,23 @@ if(GStreamer_USE_STATIC_LIBS)
 else()
     set(_qgc_gst_linkage shared)
 endif()
-_qgc_gst_sdk_version("${GSTREAMER_LIB_PATH}" "${GSTREAMER_INCLUDE_PATH}" _qgc_gst_sdk_version)
+_qgc_gst_header_version("${GSTREAMER_INCLUDE_PATH}" _qgc_gst_sdk_version)
 set(_qgc_gst_fingerprint "${GStreamer_ROOT_DIR}|${QGC_GST_REQUESTED_VERSION}|${_qgc_gst_sdk_version}")
 string(APPEND _qgc_gst_fingerprint "|${_qgc_gst_linkage}|${_qgc_gst_fingerprint_pkg_config}")
 _qgc_gst_refresh_sdk_cache("${_qgc_gst_fingerprint}")
 
-# Create GStreamer::* IMPORTED targets via the appropriate platform helper.
 if(GStreamer_USE_MERGED_STATIC)
     _qgc_gst_create_ios_targets()
 else()
     _qgc_gst_create_sdk_targets()
 endif()
 
-# Mandatory registry rows (GSTREAMER_COMPONENT_REGISTRY in cmake/GStreamer/Components.cmake)
-# are hard requirements: the sources include their headers unconditionally, so fail here
-# rather than at compile time when one was not found.
-gstreamer_mandatory_components(_ _qgc_gst_mandatory_apis)
+# The sources include the mandatory components' headers unconditionally, so fail here rather than at compile time.
 set(_qgc_gst_missing_mandatory "")
-foreach(_api IN LISTS _qgc_gst_mandatory_apis)
-    if(NOT TARGET GStreamer::${_api})
-        gstreamer_resolve_component("${_api}" _ _ _qgc_gst_missing_pc _)
-        list(APPEND _qgc_gst_missing_mandatory "${_qgc_gst_missing_pc}")
+foreach(_qgc_gst_component IN LISTS GSTREAMER_MANDATORY_COMPONENTS)
+    gstreamer_component_names(${_qgc_gst_component} _qgc_gst_api _qgc_gst_pc)
+    if(NOT TARGET GStreamer::${_qgc_gst_api})
+        list(APPEND _qgc_gst_missing_mandatory "${_qgc_gst_pc}")
     endif()
 endforeach()
 if(_qgc_gst_missing_mandatory)
@@ -211,38 +174,16 @@ if(_qgc_gst_missing_mandatory)
                         "or point GStreamer_ROOT_DIR at a complete SDK."
     )
 endif()
-unset(_qgc_gst_missing_mandatory)
-unset(_qgc_gst_mandatory_apis)
-# User-requested optional components: mark FOUND only if the corresponding
-# api_ target was actually created (Targets.cmake, or the iOS targets).
+# The requested components found; the optional ones' pkg-config probes are QUIET (Targets.cmake).
 set(_qgc_gst_missing_components "")
-foreach(_comp IN LISTS QGC_GST_COMPONENTS)
-    gstreamer_resolve_component("${_comp}" _resolved_name _api _ _)
-    # A registry match (non-empty resolved name) includes umbrella entries like
-    # Core whose api/pc are intentionally empty; keying off _api alone mis-flags
-    # Core as a typo. Derive a fallback api / flag unknown only when nothing matched.
-    if(_resolved_name OR _api)
-        set(_registry_known TRUE)
+foreach(_qgc_gst_component IN LISTS QGC_GST_COMPONENTS)
+    gstreamer_component_names(${_qgc_gst_component} _qgc_gst_api _)
+    if(TARGET GStreamer::${_qgc_gst_api})
+        set(GStreamer_${_qgc_gst_component}_FOUND TRUE)
     else()
-        set(_registry_known FALSE)
-        gstreamer_component_to_api("${_comp}" _api)
-    endif()
-    # Require the api to be one we actually built, not just any same-named
-    # imported target, before reporting the component FOUND.
-    if(TARGET GStreamer::${_api} AND _api IN_LIST GSTREAMER_APIS)
-        set(GStreamer_${_comp}_FOUND TRUE)
-    elseif(NOT _registry_known AND NOT TARGET GStreamer::${_api})
-        # Neither a registry entry nor a target — almost always a typo'd or
-        # unsupported component name; surface it loudly.
-        message(WARNING "QGCGStreamer: requested component '${_comp}' is not a known registry "
-                        "component and produced no GStreamer::${_api} target — check spelling "
-                        "(components are CamelCase, e.g. App, Audio, Pbutils) or platform support."
-        )
-    elseif(_api)
-        list(APPEND _qgc_gst_missing_components "${_comp}")
+        list(APPEND _qgc_gst_missing_components "${_qgc_gst_component}")
     endif()
 endforeach()
-# Their pkg-config probes are QUIET (Targets.cmake); the mandatory ones failed configure above.
 if(_qgc_gst_missing_components)
     list(JOIN _qgc_gst_missing_components ", " _qgc_gst_missing_components)
     message(STATUS "QGCGStreamer: optional components not found: ${_qgc_gst_missing_components}")
@@ -327,9 +268,8 @@ if(_gst_missing_optional)
 endif()
 # Mobile apps have no other way to load a plugin at runtime.
 if(ANDROID OR IOS)
-    gstreamer_runtime_required_plugins(_gst_required_plugins)
-    gstreamer_missing_required(REQUIRED ${_gst_required_plugins} AVAILABLE ${_gst_available_plugins} OUT_VAR
-                               _gst_missing_required
+    gstreamer_missing_required(REQUIRED ${GSTREAMER_RUNTIME_REQUIRED_PLUGINS} AVAILABLE ${_gst_available_plugins}
+                               OUT_VAR _gst_missing_required
     )
     if(_gst_missing_required)
         list(JOIN _gst_missing_required ", " _gst_missing_required)
@@ -340,39 +280,9 @@ if(ANDROID OR IOS)
     endif()
 endif()
 
-# Resolves ALIAS targets and applies INTERFACE compile definitions — the cycle
-# below (and the feature probe further down) need this twice.
-# target_compile_definitions can't be called on ALIAS targets, so unwrap first.
-function(_qgc_gst_apply_def gst_target)
-    if(NOT TARGET ${gst_target})
-        return()
-    endif()
-    get_target_property(_aliased ${gst_target} ALIASED_TARGET)
-    if(_aliased)
-        target_compile_definitions(${_aliased} INTERFACE ${ARGN})
-    else()
-        target_compile_definitions(${gst_target} INTERFACE ${ARGN})
-    endif()
-endfunction()
-
-# Mobile (iOS/Android) builds consume GStreamer::mobile instead
-# of GStreamer::GStreamer, so propagate version defines and feature-test results to both.
-if(GStreamer_VERSION)
-    string(REGEX MATCH "^([0-9]+)\\.([0-9]+)" _gst_ver_match "${GStreamer_VERSION}")
-    if(_gst_ver_match)
-        foreach(_gst_target IN ITEMS GStreamer::GStreamer GStreamerMobile)
-            _qgc_gst_apply_def(${_gst_target} QGC_GST_BUILD_VERSION_MAJOR=${CMAKE_MATCH_1}
-                               QGC_GST_BUILD_VERSION_MINOR=${CMAKE_MATCH_2}
-            )
-        endforeach()
-    endif()
-endif()
-
-# GstVideoOrientationMeta is officially in 1.26+, but bundled iOS/Android SDKs sometimes
-# strip it. Feature-test the actual header instead of trusting the version number. Only the core is
-# probed: GStreamer::mobile has the same headers, and on iOS it is a framework this project builds, which
-# try_compile cannot link (it takes imported targets only). On iOS GStreamer::GStreamer carries no archive, which this
-# sizeof() probe does not need.
+# GstVideoOrientationMeta is officially in 1.26+, but bundled iOS/Android SDKs sometimes strip it, so test the header.
+# Only GStreamer::GStreamer is probed: on iOS GStreamer::mobile is a framework this project builds, which try_compile
+# cannot link, and the sizeof() probe needs no archive.
 qgc_check_gst_header(
     VAR
     QGC_GST_HAS_VIDEO_ORIENTATION_META
@@ -384,9 +294,7 @@ qgc_check_gst_header(
     GStreamer::GStreamer
 )
 if(QGC_GST_HAS_VIDEO_ORIENTATION_META)
-    foreach(_gst_target IN ITEMS GStreamer::GStreamer GStreamerMobile)
-        _qgc_gst_apply_def(${_gst_target} QGC_HAS_GST_VIDEO_ORIENTATION_META=1)
-    endforeach()
+    target_compile_definitions(GStreamer::GStreamer INTERFACE QGC_HAS_GST_VIDEO_ORIENTATION_META=1)
 endif()
 
 # Zero-copy DMABuf GPU path probe: HwBuffers/CMakeLists.txt builds the DMABuf path when QGC_GST_HAS_DMABUF is set. It
@@ -395,8 +303,6 @@ if(LINUX)
     qgc_check_gst_header(VAR QGC_GST_HAS_DMABUF HEADER gst/allocators/gstdmabuf.h SYMBOL gst_is_dmabuf_memory)
 endif()
 
-# One-line diagnostic — surfaces which discovery path won when CI logs are the
-# only forensics available.
 if(GStreamer_USE_MERGED_STATIC)
     set(_qgc_gst_path "merged-static")
 elseif(GStreamer_USE_FRAMEWORK)
@@ -418,11 +324,10 @@ message(STATUS "QGCGStreamer: version=${GStreamer_VERSION} path=${_qgc_gst_path}
 )
 
 # Post-configure tooling (.github/scripts/verify_executable.py, generate_cpm_sbom.py) and PrintSummary read the
-# QGC_GST_RESOLVED_* entries from the cache; PrintSummary reads the version from GStreamer::Layout.
+# QGC_GST_RESOLVED_* entries from the cache.
 _qgc_gst_record_resolved_sdk("${GStreamer_ROOT_DIR}" "${QGC_GST_REQUESTED_VERSION}" "${GStreamer_AUTO_DOWNLOADED}"
                              "${GStreamer_VERSION}"
 )
-gstreamer_layout_set(VERSION "${GStreamer_VERSION}")
 
 # The app ships the LGPL text and a notice naming this GStreamer and its sources: Android stages them as APK assets,
 # iOS as bundle resources (src/VideoManager/VideoReceiver/GStreamer/CMakeLists.txt) and desktop installs copy them from

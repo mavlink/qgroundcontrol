@@ -2,15 +2,15 @@
 
 include_guard(GLOBAL)
 
+include("${CMAKE_CURRENT_LIST_DIR}/Platform.cmake")
+
 # _qgc_gst_write_static_init(<output> PLUGINS <plugin>... GIO_MODULES <module>...)
 # Writes the gst_static_plugins.c.in registration source to <output>: gst_init_static_plugins() registers each
 # PLUGINS entry (gst_plugin_<plugin>_register) that the registry does not have yet and loads each GIO_MODULES
 # entry (g_io_<module>_load). Either list may be empty.
 function(_qgc_gst_write_static_init output)
     cmake_parse_arguments(PARSE_ARGV 1 ARG "" "" "PLUGINS;GIO_MODULES")
-    if(ARG_UNPARSED_ARGUMENTS)
-        message(FATAL_ERROR "_qgc_gst_write_static_init: unknown arguments: ${ARG_UNPARSED_ARGUMENTS}")
-    endif()
+    _qgc_gst_check_args(_qgc_gst_write_static_init ALLOW_EMPTY PLUGINS GIO_MODULES)
     if(NOT output)
         message(FATAL_ERROR "_qgc_gst_write_static_init: an output path is required")
     endif()
@@ -36,9 +36,7 @@ endfunction()
 # <target>_gst_static_plugins.c and compiles it into <target>.
 function(qgc_gst_generate_static_init)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "" "TARGET" "PLUGINS;GIO_MODULES")
-    if(ARG_UNPARSED_ARGUMENTS)
-        message(FATAL_ERROR "qgc_gst_generate_static_init: unknown arguments: ${ARG_UNPARSED_ARGUMENTS}")
-    endif()
+    _qgc_gst_check_args(qgc_gst_generate_static_init ALLOW_EMPTY PLUGINS GIO_MODULES)
     if(NOT TARGET "${ARG_TARGET}")
         message(FATAL_ERROR "qgc_gst_generate_static_init: TARGET '${ARG_TARGET}' is not a target")
     endif()

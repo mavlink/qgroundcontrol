@@ -10,4 +10,4 @@ else()
     set(_system_lib_ext "so")
 endif()
 
-gstreamer_install_libs(SOURCE_DIR "${_system_lib_dir}" DEST_DIR "x" EXTENSION "${_system_lib_ext}")
+gstreamer_install_libs("${_system_lib_dir}" x "${_system_lib_ext}")

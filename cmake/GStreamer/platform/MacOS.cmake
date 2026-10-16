@@ -57,7 +57,7 @@ endfunction()
 # Uses the SDK under GStreamer_ROOT_DIR, else /Library/Frameworks/GStreamer.framework or Homebrew's gstreamer, else
 # downloads the official runtime and devel packages. Also sets GSTREAMER_FRAMEWORK_PATH. A framework brings its own
 # pkg-config; a flat SDK uses Homebrew's (cached PKG_CONFIG_EXECUTABLE).
-# cmake-lint: disable=C0103,E1121
+# cmake-lint: disable=C0103
 function(_qgc_gst_discover_macos_sdk)
     if(NOT GStreamer_ROOT_DIR)
         if(EXISTS "/Library/Frameworks/GStreamer.framework")
@@ -113,23 +113,11 @@ function(_qgc_gst_discover_macos_sdk)
         else()
             set(_gst_mac_fwpath "${GSTREAMER_FRAMEWORK_PATH}")
         endif()
-        gstreamer_create_layout_target(SDK_ROOT "${GStreamer_ROOT_DIR}" TYPE FRAMEWORK FRAMEWORK_BUNDLE
-                                       "${_gst_mac_fwpath}"
-        )
+        gstreamer_create_layout_target(SDK_ROOT "${GStreamer_ROOT_DIR}" FRAMEWORK_BUNDLE "${_gst_mac_fwpath}")
     else()
-        gstreamer_create_layout_target(SDK_ROOT "${GStreamer_ROOT_DIR}" TYPE FLAT)
+        gstreamer_create_layout_target(SDK_ROOT "${GStreamer_ROOT_DIR}")
     endif()
 
-    set(_outputs
-        GStreamer_ROOT_DIR
-        GStreamer_USE_FRAMEWORK
-        GStreamer_AUTO_DOWNLOADED
-        GSTREAMER_LIB_PATH
-        GSTREAMER_PLUGIN_PATH
-        GSTREAMER_INCLUDE_PATH
-        GSTREAMER_FRAMEWORK_PATH
-        PKG_CONFIG_USE_CMAKE_PREFIX_PATH
-    )
     if(GStreamer_USE_FRAMEWORK)
         gstreamer_apply_pkgconfig_env(
             MODE
@@ -140,14 +128,13 @@ function(_qgc_gst_discover_macos_sdk)
             "${GSTREAMER_LIB_PATH}/pkgconfig"
             "${GSTREAMER_PLUGIN_PATH}/pkgconfig"
         )
-        list(APPEND _outputs PKG_CONFIG_EXECUTABLE)
     else()
         _qgc_gst_find_apple_pkg_config(PKG_CONFIG_EXECUTABLE)
         gstreamer_apply_pkgconfig_env(MODE SDK LIBDIR "${GSTREAMER_LIB_PATH}/pkgconfig"
                                       "${GSTREAMER_PLUGIN_PATH}/pkgconfig"
         )
     endif()
-    return(PROPAGATE ${_outputs})
+    _qgc_gst_return_discovery()
 endfunction()
 
 # Apple framework overlay — when GStreamer.framework is in use, link the framework

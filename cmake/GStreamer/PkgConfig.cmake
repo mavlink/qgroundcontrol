@@ -11,6 +11,8 @@
 
 include_guard(GLOBAL)
 
+include("${CMAKE_CURRENT_LIST_DIR}/Platform.cmake")
+
 # _qgc_gst_save_pkgconfig_env()
 # Records the PKG_CONFIG_PATH / PKG_CONFIG_LIBDIR environment before discovery first changes it.
 function(_qgc_gst_save_pkgconfig_env)
@@ -48,18 +50,7 @@ endfunction()
 # cmake-lint: disable=C0103
 function(gstreamer_apply_pkgconfig_env)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "DONT_DEFINE_PREFIX" "MODE;PKG_CONFIG_EXE" "LIBDIR")
-    if(ARG_KEYWORDS_MISSING_VALUES)
-        message(FATAL_ERROR "gstreamer_apply_pkgconfig_env: missing values for: ${ARG_KEYWORDS_MISSING_VALUES}")
-    endif()
-    if(ARG_UNPARSED_ARGUMENTS)
-        message(FATAL_ERROR "gstreamer_apply_pkgconfig_env: unknown arguments: ${ARG_UNPARSED_ARGUMENTS}")
-    endif()
-    if(NOT ARG_MODE)
-        message(FATAL_ERROR "gstreamer_apply_pkgconfig_env: MODE is required (SDK or SYSTEM_AUGMENT)")
-    endif()
-    if(NOT ARG_LIBDIR)
-        message(FATAL_ERROR "gstreamer_apply_pkgconfig_env: LIBDIR is required")
-    endif()
+    _qgc_gst_check_args(gstreamer_apply_pkgconfig_env MODE LIBDIR)
 
     _qgc_gst_save_pkgconfig_env()
     if(ARG_PKG_CONFIG_EXE)

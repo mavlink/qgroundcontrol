@@ -2,6 +2,8 @@
 
 include_guard(GLOBAL)
 
+include("${CMAKE_CURRENT_LIST_DIR}/Platform.cmake")
+
 # Absolute path disambiguates from this file (also named Download.cmake): when
 # test_download.cmake adds cmake/GStreamer/ to MODULE_PATH, a bare `include(Download)`
 # would resolve to this file and self-recurse.
@@ -46,31 +48,15 @@ function(gstreamer_get_package_url platform version output_var)
 endfunction()
 
 # gstreamer_get_s3_mirror_url(<platform> <version> <output_var>)
-# Sets <output_var> to the QGC S3 mirror of that package, or "" for a platform without a mirror.
+# Sets <output_var> to the QGC S3 mirror of that package: the same file under the mirror's <platform directory>/.
 function(gstreamer_get_s3_mirror_url platform version output_var)
-    set(_s3_base "https://qgroundcontrol.s3.us-west-2.amazonaws.com/dependencies/gstreamer")
-
-    if(platform STREQUAL "android")
-        set(_dir "android")
-    elseif(platform STREQUAL "ios")
-        set(_dir "ios")
-    elseif(platform MATCHES "^macos")
-        set(_dir "macos")
-    elseif(platform MATCHES "^windows_msvc_")
-        set(_dir "windows")
-    else()
-        set(${output_var}
-            ""
-            PARENT_SCOPE
-        )
-        return()
-    endif()
-
-    gstreamer_get_package_url("${platform}" "${version}" _primary_url)
-    cmake_path(GET _primary_url FILENAME _filename)
-
+    gstreamer_get_package_url("${platform}" "${version}" _url)
+    string(REGEX
+           REPLACE "^https://gstreamer\\.freedesktop\\.org/data/pkg/([a-z]+)/.*/([^/]+)$"
+                   "https://qgroundcontrol.s3.us-west-2.amazonaws.com/dependencies/gstreamer/\\1/\\2" _url "${_url}"
+    )
     set(${output_var}
-        "${_s3_base}/${_dir}/${_filename}"
+        "${_url}"
         PARENT_SCOPE
     )
 endfunction()
@@ -115,16 +101,6 @@ function(gstreamer_fetch_checksum platform version output_var)
     endif()
 
     gstreamer_get_package_url(${platform} ${version} _pkg_url)
-
-    string(FIND "${_pkg_url}" "?" _qs_pos)
-    if(NOT _qs_pos EQUAL -1)
-        message(STATUS "GStreamer: Skipping checksum for ${platform} ${version} (URL contains query string)")
-        set(${output_var}
-            ""
-            PARENT_SCOPE
-        )
-        return()
-    endif()
 
     set(_checksum_url "${_pkg_url}.sha256sum")
     string(SHA256 _url_hash "${_checksum_url}")
@@ -350,26 +326,16 @@ function(qgc_gst_acquire_sdk)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "" "PLATFORM;VERSION;CACHE_SUBDIR;CONTENT;EXTRACT_FUNCTION;CONTENT_DIR_OUT"
                           "ARCHIVES"
     )
-    if(ARG_KEYWORDS_MISSING_VALUES)
-        message(FATAL_ERROR "qgc_gst_acquire_sdk: missing values for: ${ARG_KEYWORDS_MISSING_VALUES}")
-    endif()
-    if(ARG_UNPARSED_ARGUMENTS)
-        message(FATAL_ERROR "qgc_gst_acquire_sdk: unknown arguments: ${ARG_UNPARSED_ARGUMENTS}")
-    endif()
-    foreach(
-        _required IN
-        ITEMS PLATFORM
-              VERSION
-              CACHE_SUBDIR
-              ARCHIVES
-              CONTENT
-              EXTRACT_FUNCTION
-              CONTENT_DIR_OUT
+    _qgc_gst_check_args(
+        qgc_gst_acquire_sdk
+        PLATFORM
+        VERSION
+        CACHE_SUBDIR
+        ARCHIVES
+        CONTENT
+        EXTRACT_FUNCTION
+        CONTENT_DIR_OUT
     )
-        if("${ARG_${_required}}" STREQUAL "")
-            message(FATAL_ERROR "qgc_gst_acquire_sdk: ${_required} is required")
-        endif()
-    endforeach()
     list(LENGTH ARG_ARCHIVES _archive_count)
     if(_archive_count GREATER 2)
         message(FATAL_ERROR "qgc_gst_acquire_sdk: ARCHIVES takes a primary and an optional devel archive")

@@ -7,26 +7,22 @@ set(_xcfw "${_sandbox}/xc/GStreamer.xcframework")
 set(_fw "${_sandbox}/fw/GStreamer.framework")
 file(MAKE_DIRECTORY "${_xcfw}/ios-arm64" "${_fw}/Versions/1.0" "${_sandbox}/empty")
 
-# root|expected bundle|expected kind
+# root|expected bundle
 set(_cases
-    "${_xcfw}|${_xcfw}|xcframework"
-    "${_xcfw}/|${_xcfw}|xcframework"
-    "${_sandbox}/xc|${_xcfw}|xcframework"
-    "${_xcfw}/ios-arm64|${_xcfw}|xcframework"
-    "${_fw}|${_fw}|framework"
-    "${_sandbox}/fw|${_fw}|framework"
-    "${_fw}/Versions/1.0|${_fw}|framework"
-    "${_sandbox}/empty||"
-    "${_sandbox}/missing.xcframework||"
+    "${_xcfw}|${_xcfw}"
+    "${_xcfw}/|${_xcfw}"
+    "${_sandbox}/xc|${_xcfw}"
+    "${_xcfw}/ios-arm64|${_xcfw}"
+    "${_fw}|${_fw}"
+    "${_sandbox}/fw|${_fw}"
+    "${_fw}/Versions/1.0|${_fw}"
+    "${_sandbox}/empty|"
+    "${_sandbox}/missing.xcframework|"
 )
 foreach(_case IN LISTS _cases)
-    string(REPLACE "|" ";" _parts "${_case}")
-    list(GET _parts 0 _root)
-    list(GET _parts 1 _expected_bundle)
-    list(GET _parts 2 _expected_kind)
-    _qgc_gst_ios_bundle_from_root("${_root}" _bundle _kind)
+    qgc_test_split("${_case}" _root _expected_bundle)
+    _qgc_gst_ios_bundle_from_root("${_root}" _bundle)
     qgc_test_assert_streq("bundle for ${_root}" "${_expected_bundle}" "${_bundle}")
-    qgc_test_assert_streq("kind for ${_root}" "${_expected_kind}" "${_kind}")
 endforeach()
 
 qgc_test_pass("iOS GStreamer_ROOT_DIR to SDK bundle")

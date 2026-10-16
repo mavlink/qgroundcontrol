@@ -6,8 +6,8 @@
 include_guard(GLOBAL)
 
 # _qgc_gst_header_version(<include_dir> <out_var>)
-# Returns <major>.<minor>.<micro> from the GST_VERSION_MAJOR/MINOR/MICRO defines of gst/gstversion.h under <include_dir>
-# or its gstreamer-1.0 subdirectory, or "" when there is no such header.
+# Returns the SDK's <major>.<minor>.<micro> from the GST_VERSION_MAJOR/MINOR/MICRO defines of gst/gstversion.h under
+# <include_dir> or its gstreamer-1.0 subdirectory, which every SDK has, or "" when there is no such header.
 function(_qgc_gst_header_version include_dir out_var)
     set(_version "")
     foreach(_header IN ITEMS "${include_dir}/gst/gstversion.h" "${include_dir}/gstreamer-1.0/gst/gstversion.h")
@@ -27,29 +27,6 @@ function(_qgc_gst_header_version include_dir out_var)
         endif()
         break()
     endforeach()
-    set(${out_var}
-        "${_version}"
-        PARENT_SCOPE
-    )
-endfunction()
-
-# _qgc_gst_sdk_version(<lib_dir> <include_dir> <out_var>)
-# Returns the SDK's version: the Version: field of <lib_dir>/pkgconfig/gstreamer-1.0.pc, else, for an SDK without
-# pkg-config such as iOS's, the version its gst/gstversion.h under <include_dir> defines, else "".
-function(_qgc_gst_sdk_version lib_dir include_dir out_var)
-    set(_pc_file "${lib_dir}/pkgconfig/gstreamer-1.0.pc")
-    set(_version "")
-    if(EXISTS "${_pc_file}")
-        file(
-            STRINGS "${_pc_file}" _version_line
-            REGEX "^Version:[ \t]*"
-            LIMIT_COUNT 1
-        )
-        string(REGEX REPLACE "^Version:[ \t]*" "" _version "${_version_line}")
-        string(STRIP "${_version}" _version)
-    else()
-        _qgc_gst_header_version("${include_dir}" _version)
-    endif()
     set(${out_var}
         "${_version}"
         PARENT_SCOPE

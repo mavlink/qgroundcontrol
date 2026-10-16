@@ -86,7 +86,7 @@ endfunction()
 # _qgc_gst_discover_android_sdk()
 # Uses the SDK under GStreamer_ROOT_DIR, else extracts the CMAKE_ANDROID_ARCH_ABI tree of the downloaded universal SDK.
 # Windows and macOS hosts use the pkg-config the SDK bundles for them (_qgc_gst_android_sdk_pkg_config).
-# cmake-lint: disable=C0103,E1121
+# cmake-lint: disable=C0103
 function(_qgc_gst_discover_android_sdk)
     if(NOT GStreamer_ROOT_DIR)
         _qgc_gst_android_abi_info("${CMAKE_ANDROID_ARCH_ABI}" _gst_android_abi)
@@ -110,11 +110,8 @@ function(_qgc_gst_discover_android_sdk)
         set(GStreamer_AUTO_DOWNLOADED TRUE)
     endif()
 
-    gstreamer_create_layout_target(SDK_ROOT "${GStreamer_ROOT_DIR}" TYPE STATIC_TARBALL)
+    gstreamer_create_layout_target(SDK_ROOT "${GStreamer_ROOT_DIR}")
 
-    set(_outputs GStreamer_ROOT_DIR GStreamer_AUTO_DOWNLOADED GSTREAMER_LIB_PATH GSTREAMER_PLUGIN_PATH
-                 GSTREAMER_INCLUDE_PATH PKG_CONFIG_USE_CMAKE_PREFIX_PATH
-    )
     if(CMAKE_HOST_WIN32)
         set(_host windows)
     elseif(CMAKE_HOST_APPLE)
@@ -126,52 +123,32 @@ function(_qgc_gst_discover_android_sdk)
     set(_pkg_config_args "")
     if(_sdk_pkg_config)
         list(APPEND _pkg_config_args PKG_CONFIG_EXE "${_sdk_pkg_config}")
-        list(APPEND _outputs PKG_CONFIG_EXECUTABLE)
     elseif(CMAKE_HOST_APPLE)
         _qgc_gst_find_apple_pkg_config(PKG_CONFIG_EXECUTABLE)
     endif()
     # The Windows pkg-config redefines prefix from each .pc file's location by default.
     if(CMAKE_HOST_WIN32)
         list(APPEND _pkg_config_args DONT_DEFINE_PREFIX)
-        list(APPEND _outputs PKG_CONFIG_ARGN)
     endif()
     gstreamer_apply_pkgconfig_env(MODE SDK ${_pkg_config_args} LIBDIR "${GSTREAMER_LIB_PATH}/pkgconfig"
                                   "${GSTREAMER_PLUGIN_PATH}/pkgconfig"
     )
-    return(PROPAGATE ${_outputs})
+    _qgc_gst_return_discovery()
 endfunction()
 
 # _qgc_gst_android_find_plugin_archives(<out_var>)
-# Sets <out_var> to the GSTREAMER_PLUGINS, in order, that have a pkg-config target and a static archive in the SDK; the
-# archive of each is cached as _gst_plugin_lib_<abi>_<plugin>. Orchestrator.cmake reports the requested plugins left
-# out.
+# Sets <out_var> to the GSTREAMER_PLUGINS, in order, that have a pkg-config target and a static archive in the SDK.
+# Orchestrator.cmake reports the requested plugins left out.
 function(_qgc_gst_android_find_plugin_archives out_var)
-    set(_plugins ${GSTREAMER_PLUGINS})
-    list(REMOVE_DUPLICATES _plugins)
-    if(GStreamer_DEBUG)
-        message(STATUS "GStreamer::mobile: Requested plugins: ${_plugins}")
-    endif()
-
-    _gst_set_find_suffixes()
     set(_found "")
-    foreach(_p IN LISTS _plugins)
-        if(TARGET GStreamer::${_p})
-            find_library(
-                _gst_plugin_lib_${CMAKE_ANDROID_ARCH_ABI}_${_p} gst${_p}
-                HINTS "${GStreamer_ROOT_DIR}/lib/gstreamer-1.0"
-                NO_DEFAULT_PATH
-            )
-            if(_gst_plugin_lib_${CMAKE_ANDROID_ARCH_ABI}_${_p})
-                list(APPEND _found ${_p})
-            endif()
+    foreach(_plugin IN LISTS GSTREAMER_PLUGINS)
+        if(TARGET GStreamer::${_plugin} AND EXISTS "${GSTREAMER_PLUGIN_PATH}/libgst${_plugin}.a")
+            list(APPEND _found ${_plugin})
         endif()
     endforeach()
-
+    list(REMOVE_DUPLICATES _found)
     if(GStreamer_DEBUG)
-        message(STATUS "GStreamer::mobile: Found plugins with .a: ${_found}")
-        foreach(_dbg_p IN LISTS _found)
-            message(STATUS "GStreamer::mobile:   ${_dbg_p} -> ${_gst_plugin_lib_${CMAKE_ANDROID_ARCH_ABI}_${_dbg_p}}")
-        endforeach()
+        message(STATUS "GStreamer::mobile: requested plugins ${GSTREAMER_PLUGINS}, with an archive: ${_found}")
     endif()
     set(${out_var}
         "${_found}"
@@ -180,14 +157,14 @@ function(_qgc_gst_android_find_plugin_archives out_var)
 endfunction()
 
 # _qgc_gst_android_whole_archive_plugins(<plugin>...)
-# Links each plugin's static archive (found by _qgc_gst_android_find_plugin_archives) as
+# Links each plugin's static archive in GSTREAMER_PLUGIN_PATH as
 # $<LINK_LIBRARY:WHOLE_ARCHIVE,GStreamer::<plugin>_archive> wherever GStreamer::<plugin> is linked, so every
 # gst_plugin_<plugin>_register() and its GType objects survive the linker's dead-strip and register into the
 # app's single core. GStreamer::<plugin> must not also link the archive by path: a plain occurrence ahead of the
 # whole-archive one would let the linker load some members twice.
 function(_qgc_gst_android_whole_archive_plugins)
     foreach(_plugin IN LISTS ARGN)
-        set(_archive "${_gst_plugin_lib_${CMAKE_ANDROID_ARCH_ABI}_${_plugin}}")
+        set(_archive "${GSTREAMER_PLUGIN_PATH}/libgst${_plugin}.a")
         add_library(GStreamer::${_plugin}_archive STATIC IMPORTED GLOBAL)
         set_target_properties(GStreamer::${_plugin}_archive PROPERTIES IMPORTED_LOCATION "${_archive}")
 
@@ -208,26 +185,16 @@ endfunction()
 # Links the static GIO modules named in G_IO_MODULES, plus OpenSSL for gioopenssl, into <target> through
 # GStreamer::gio_modules.
 function(_qgc_gst_android_link_gio_modules target)
-    list(TRANSFORM G_IO_MODULES PREPEND "gio" OUTPUT_VARIABLE _gio_module_libs)
-    if(NOT _gio_module_libs)
+    if(NOT G_IO_MODULES)
         return()
     endif()
-    set(_gio_modules_path "${GStreamer_ROOT_DIR}/lib/gio/modules")
     add_library(GStreamer::gio_modules INTERFACE IMPORTED)
-
-    _gst_set_find_suffixes()
-    foreach(_gio_lib IN LISTS _gio_module_libs)
-        string(MAKE_C_IDENTIFIER "_gst_${CMAKE_ANDROID_ARCH_ABI}_${_gio_lib}" _gio_cache_var)
-        find_library(
-            ${_gio_cache_var}
-            NAMES ${_gio_lib}
-            HINTS ${_gio_modules_path}
-            NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH
-        )
-        if(${_gio_cache_var})
-            target_link_libraries(GStreamer::gio_modules INTERFACE "${${_gio_cache_var}}")
+    foreach(_module IN LISTS G_IO_MODULES)
+        set(_archive "${GStreamer_ROOT_DIR}/lib/gio/modules/libgio${_module}.a")
+        if(EXISTS "${_archive}")
+            target_link_libraries(GStreamer::gio_modules INTERFACE "${_archive}")
         else()
-            message(WARNING "GStreamer::mobile: GIO module '${_gio_lib}' not found in ${_gio_modules_path}")
+            message(WARNING "GStreamer::mobile: GIO module archive ${_archive} not found")
         endif()
     endforeach()
 
@@ -235,20 +202,10 @@ function(_qgc_gst_android_link_gio_modules target)
         target_link_directories(GStreamer::gio_modules INTERFACE "${GStreamer_ROOT_DIR}/lib"
                                 "${GStreamer_ROOT_DIR}/lib/gstreamer-1.0"
         )
-        set(_ssl _gst_ssl_lib_${CMAKE_ANDROID_ARCH_ABI})
-        set(_crypto _gst_crypto_lib_${CMAKE_ANDROID_ARCH_ABI})
-        find_library(
-            ${_ssl} ssl
-            HINTS "${GStreamer_ROOT_DIR}/lib"
-            NO_DEFAULT_PATH
-        )
-        find_library(
-            ${_crypto} crypto
-            HINTS "${GStreamer_ROOT_DIR}/lib"
-            NO_DEFAULT_PATH
-        )
-        if(${_ssl} AND ${_crypto})
-            target_link_libraries(GStreamer::gio_modules INTERFACE "${${_ssl}}" "${${_crypto}}")
+        if(EXISTS "${GStreamer_ROOT_DIR}/lib/libssl.a" AND EXISTS "${GStreamer_ROOT_DIR}/lib/libcrypto.a")
+            target_link_libraries(GStreamer::gio_modules INTERFACE "${GStreamer_ROOT_DIR}/lib/libssl.a"
+                                                                   "${GStreamer_ROOT_DIR}/lib/libcrypto.a"
+            )
         else()
             message(WARNING "GStreamer::mobile: ssl/crypto not found under ${GStreamer_ROOT_DIR}/lib; "
                             "falling back to NDK sysroot link names (may be wrong/absent)"

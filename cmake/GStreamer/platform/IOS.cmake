@@ -18,58 +18,43 @@ include_guard(GLOBAL)
 
 include("${CMAKE_CURRENT_LIST_DIR}/../../modules/AppleXCFramework.cmake")
 
-# _qgc_gst_ios_bundle_from_root(<root> <out_bundle> <out_kind>)
-# Maps a GStreamer_ROOT_DIR to the SDK bundle (<out_kind> "xcframework" or "framework"). Accepts
-# the bundle itself, a directory containing GStreamer.xcframework/.framework (e.g. iPhone.sdk),
-# an xcframework slice or a framework's Versions/<v> directory; the last two are the roots
-# discovery records. <out_bundle> is empty when <root> matches none of these.
-function(_qgc_gst_ios_bundle_from_root root out_bundle out_kind)
+# _qgc_gst_ios_bundle_from_root(<root> <out_bundle>)
+# Maps a GStreamer_ROOT_DIR to the SDK bundle, a GStreamer.xcframework or GStreamer.framework. Accepts the bundle
+# itself, a directory containing one (e.g. iPhone.sdk), an xcframework slice or a framework's Versions/<v> directory;
+# the last two are the roots discovery records. <out_bundle> is empty when <root> matches none of these.
+function(_qgc_gst_ios_bundle_from_root root out_bundle)
     string(REGEX REPLACE "/+$" "" _root "${root}")
     cmake_path(GET _root PARENT_PATH _parent)
     cmake_path(GET _parent PARENT_PATH _grandparent)
     set(_bundle "")
-    set(_kind "")
-    if(_root MATCHES "\\.xcframework$")
+    if(_root MATCHES "\\.(xc)?framework$")
         set(_bundle "${_root}")
-        set(_kind xcframework)
-    elseif(_root MATCHES "\\.framework$")
-        set(_bundle "${_root}")
-        set(_kind framework)
     elseif(IS_DIRECTORY "${_root}/GStreamer.xcframework")
         set(_bundle "${_root}/GStreamer.xcframework")
-        set(_kind xcframework)
     elseif(IS_DIRECTORY "${_root}/GStreamer.framework")
         set(_bundle "${_root}/GStreamer.framework")
-        set(_kind framework)
     elseif(_parent MATCHES "\\.xcframework$")
         set(_bundle "${_parent}")
-        set(_kind xcframework)
     elseif(_parent MATCHES "/Versions$" AND _grandparent MATCHES "\\.framework$")
         set(_bundle "${_grandparent}")
-        set(_kind framework)
     endif()
     if(NOT IS_DIRECTORY "${_bundle}")
         set(_bundle "")
-        set(_kind "")
     endif()
     set(${out_bundle}
         "${_bundle}"
         PARENT_SCOPE
     )
-    set(${out_kind}
-        "${_kind}"
-        PARENT_SCOPE
-    )
 endfunction()
 
-# _qgc_gst_ios_layout(<bundle> <kind> <prefix>)
-# Locates the merged static archive and Headers of the GStreamer.xcframework (<kind> xcframework: the slice for
-# CMAKE_OSX_SYSROOT and CMAKE_OSX_ARCHITECTURES) or GStreamer.framework (<kind> framework) <bundle>. Sets <prefix>_ROOT
+# _qgc_gst_ios_layout(<bundle> <prefix>)
+# Locates the merged static archive and Headers of the GStreamer.xcframework (the slice for CMAKE_OSX_SYSROOT and
+# CMAKE_OSX_ARCHITECTURES) or GStreamer.framework <bundle>. Sets <prefix>_ROOT
 # (the slice or the framework's Versions/<v> directory), <prefix>_LIB (the archive) and <prefix>_INCLUDE (its headers)
 # in the caller's scope, failing configure when the archive, or a framework's Headers, is missing.
 # cmake-lint: disable=C0103
-function(_qgc_gst_ios_layout bundle kind prefix)
-    if(kind STREQUAL "xcframework")
+function(_qgc_gst_ios_layout bundle prefix)
+    if(bundle MATCHES "\\.xcframework$")
         # Same platform test as cmake/platform/Apple.cmake: CMAKE_OSX_SYSROOT is a name or an SDK path.
         if(CMAKE_OSX_SYSROOT MATCHES "[Ss]imulator")
             set(_platform iphonesimulator)
@@ -163,9 +148,8 @@ endfunction()
 # _qgc_gst_discover_ios_sdk()
 # Uses the GStreamer.xcframework or GStreamer.framework at or under GStreamer_ROOT_DIR, else the system iPhone.sdk,
 # else downloads the official iOS package, and selects its single merged static archive; there is no pkg-config. Also
-# sets GSTREAMER_XCFRAMEWORK_{LIB,PATH} and the GStreamer_IOS_CA_BUNDLE cache entry.
-# Discovery is one ordered fallback chain (xcframework, framework, iPhone.sdk, download) that fills in the whole layout.
-# cmake-lint: disable=C0103,E1121,R0912,R0915
+# sets GSTREAMER_XCFRAMEWORK_LIB and GStreamer_IOS_CA_BUNDLE.
+# cmake-lint: disable=C0103
 function(_qgc_gst_discover_ios_sdk)
     if(NOT CMAKE_HOST_APPLE)
         message(FATAL_ERROR "GStreamer for iOS can only be built on macOS")
@@ -177,14 +161,8 @@ function(_qgc_gst_discover_ios_sdk)
         )
     endif()
 
-    # Resolved below: _gst_ios_bundle (abs path to .xcframework or .framework)
-    # and _gst_ios_bundle_kind ("xcframework" | "framework").
-    set(_gst_ios_bundle "")
-    set(_gst_ios_bundle_kind "")
-
-    # ── User-provided or reused root, else system install ─────────────────────
     if(GStreamer_ROOT_DIR)
-        _qgc_gst_ios_bundle_from_root("${GStreamer_ROOT_DIR}" _gst_ios_bundle _gst_ios_bundle_kind)
+        _qgc_gst_ios_bundle_from_root("${GStreamer_ROOT_DIR}" _gst_ios_bundle)
         if(NOT _gst_ios_bundle)
             message(
                 FATAL_ERROR "GStreamer: GStreamer_ROOT_DIR '${GStreamer_ROOT_DIR}' is not a GStreamer.xcframework or "
@@ -192,16 +170,9 @@ function(_qgc_gst_discover_ios_sdk)
             )
         endif()
     else()
-        if(EXISTS "/Library/Developer/GStreamer/iPhone.sdk/GStreamer.xcframework")
-            set(_gst_ios_bundle "/Library/Developer/GStreamer/iPhone.sdk/GStreamer.xcframework")
-            set(_gst_ios_bundle_kind "xcframework")
-        elseif(EXISTS "/Library/Developer/GStreamer/iPhone.sdk/GStreamer.framework")
-            set(_gst_ios_bundle "/Library/Developer/GStreamer/iPhone.sdk/GStreamer.framework")
-            set(_gst_ios_bundle_kind "framework")
-        endif()
+        _qgc_gst_ios_bundle_from_root("/Library/Developer/GStreamer/iPhone.sdk" _gst_ios_bundle)
     endif()
 
-    # ── Auto-download / expand ────────────────────────────────────────────────
     if(NOT _gst_ios_bundle)
         qgc_gst_acquire_sdk(
             PLATFORM
@@ -219,110 +190,44 @@ function(_qgc_gst_discover_ios_sdk)
             CONTENT_DIR_OUT
             _gst_ios_sdk
         )
-        set(_gst_ios_expanded "${_gst_ios_sdk}/expanded")
-
-        # Prefer xcframework when present (future SDKs); fall back to framework.
+        # The package's bundle, an xcframework when it has one (future SDKs).
         file(
-            GLOB_RECURSE _xcfw_info_plists
-            LIST_DIRECTORIES false
-            "${_gst_ios_expanded}/*/GStreamer.xcframework/Info.plist"
-            "${_gst_ios_expanded}/GStreamer.xcframework/Info.plist"
+            GLOB_RECURSE _gst_ios_bundles
+            LIST_DIRECTORIES true
+            "${_gst_ios_sdk}/expanded/*"
         )
-        if(_xcfw_info_plists)
-            list(GET _xcfw_info_plists 0 _xcfw_info_first)
-            cmake_path(GET _xcfw_info_first PARENT_PATH _gst_ios_bundle)
-            set(_gst_ios_bundle_kind "xcframework")
-        else()
-            file(
-                GLOB_RECURSE _fw_dirs
-                LIST_DIRECTORIES true
-                "${_gst_ios_expanded}/*/GStreamer.framework" "${_gst_ios_expanded}/GStreamer.framework"
-            )
-            foreach(_d IN LISTS _fw_dirs)
-                if(IS_DIRECTORY "${_d}" AND _d MATCHES "/GStreamer\\.framework$")
-                    set(_gst_ios_bundle "${_d}")
-                    set(_gst_ios_bundle_kind "framework")
-                    break()
-                endif()
-            endforeach()
-        endif()
-
-        if(NOT _gst_ios_bundle)
-            file(
-                GLOB _top_entries
-                LIST_DIRECTORIES true
-                "${_gst_ios_expanded}/*"
-            )
-            file(
-                GLOB_RECURSE _all_xcfw
-                LIST_DIRECTORIES true
-                "${_gst_ios_expanded}/*.xcframework"
-            )
-            file(
-                GLOB_RECURSE _all_fw
-                LIST_DIRECTORIES true
-                "${_gst_ios_expanded}/*.framework"
-            )
-            string(REPLACE ";" "\n  " _top_entries_str "${_top_entries}")
-            string(REPLACE ";" "\n  " _all_xcfw_str "${_all_xcfw}")
-            string(REPLACE ";" "\n  " _all_fw_str "${_all_fw}")
-            message(
-                FATAL_ERROR "Could not locate GStreamer.xcframework or GStreamer.framework in expanded iOS SDK at"
-                            " '${_gst_ios_expanded}'. The .pkg layout may have changed.\n"
-                            "Top-level entries:\n  ${_top_entries_str}\n"
-                            "All *.xcframework directories:\n  ${_all_xcfw_str}\n"
-                            "All *.framework directories:\n  ${_all_fw_str}"
+        list(FILTER _gst_ios_bundles INCLUDE REGEX "/GStreamer\\.(xc)?framework$")
+        set(_gst_ios_xcframeworks ${_gst_ios_bundles})
+        list(FILTER _gst_ios_xcframeworks INCLUDE REGEX "xcframework$")
+        list(PREPEND _gst_ios_bundles ${_gst_ios_xcframeworks})
+        if(NOT _gst_ios_bundles)
+            message(FATAL_ERROR "GStreamer: no GStreamer.xcframework or GStreamer.framework in the expanded iOS SDK at "
+                                "${_gst_ios_sdk}/expanded; the .pkg layout may have changed."
             )
         endif()
+        list(GET _gst_ios_bundles 0 _gst_ios_bundle)
         set(GStreamer_AUTO_DOWNLOADED TRUE)
     endif()
 
-    # ── Resolve merged static binary + Headers; force single-archive mode ─────
-    # Both kinds consume one merged archive via _qgc_gst_create_ios_targets.
-    # Keep the three layout-mode flags mutually exclusive (Orchestrator validates).
+    # Both kinds are consumed as one merged static archive (_qgc_gst_create_ios_targets).
     set(GStreamer_USE_MERGED_STATIC ON)
     set(GStreamer_USE_FRAMEWORK OFF)
     set(GStreamer_USE_STATIC_LIBS OFF)
-    _qgc_gst_ios_layout("${_gst_ios_bundle}" ${_gst_ios_bundle_kind} _gst_ios)
+    _qgc_gst_ios_layout("${_gst_ios_bundle}" _gst_ios)
     set(GStreamer_ROOT_DIR "${_gst_ios_ROOT}")
     set(GSTREAMER_XCFRAMEWORK_LIB "${_gst_ios_LIB}")
 
-    # gstreamer_create_layout_target sets GSTREAMER_LIB/PLUGIN/INCLUDE/XCFRAMEWORK_PATH.
-    # TYPE MERGED_STATIC collapses lib/plugin paths to the layout root (no lib/ subdir
-    # in a merged binary). XCFRAMEWORK_BUNDLE = the .xcframework or .framework dir;
-    # Layout.cmake only EXISTS-checks SDK_ROOT and the bundle, both real dirs here.
-    gstreamer_create_layout_target(
-        SDK_ROOT
-        "${_gst_ios_ROOT}"
-        TYPE
-        MERGED_STATIC
-        INCLUDE_PATH
-        "${_gst_ios_INCLUDE}"
-        XCFRAMEWORK_BUNDLE
-        "${_gst_ios_bundle}"
-    )
+    # The merged archive's directory holds the whole SDK: there is no lib/ or plugin directory.
+    set(GSTREAMER_LIB_PATH "${_gst_ios_ROOT}")
+    set(GSTREAMER_PLUGIN_PATH "${_gst_ios_ROOT}")
+    set(GSTREAMER_INCLUDE_PATH "${_gst_ios_INCLUDE}")
 
     # iOS SDK ships no CA bundle reachable from libgioopenssl; fetch Mozilla NSS.
     _qgc_gst_download_ios_ca_bundle()
-    return(
-        PROPAGATE
-        GStreamer_ROOT_DIR
-        GStreamer_AUTO_DOWNLOADED
-        GStreamer_USE_MERGED_STATIC
-        GStreamer_USE_FRAMEWORK
-        GStreamer_USE_STATIC_LIBS
-        GSTREAMER_XCFRAMEWORK_LIB
-        GSTREAMER_LIB_PATH
-        GSTREAMER_PLUGIN_PATH
-        GSTREAMER_INCLUDE_PATH
-        GSTREAMER_XCFRAMEWORK_PATH
-    )
+    _qgc_gst_return_discovery()
 endfunction()
 
-# Downloads ca-certificates.crt to the iOS SDK cache and sets
-# GStreamer_IOS_CA_BUNDLE (cache var) to its absolute path. Re-uses the same
-# CPM_SOURCE_CACHE root the SDK download uses so a `rm -rf build` doesn't
-# re-fetch it.
+# Downloads ca-certificates.crt into CPM_SOURCE_CACHE and sets GStreamer_IOS_CA_BUNDLE to it in the caller's scope.
 function(_qgc_gst_download_ios_ca_bundle)
     set(_ca_dir "${CPM_SOURCE_CACHE}/gstreamer-ios-ca")
     # The bundle becomes the app's TLS trust root, so it is only fetched against its pinned checksum.
@@ -347,7 +252,7 @@ function(_qgc_gst_download_ios_ca_bundle)
 
     set(GStreamer_IOS_CA_BUNDLE
         "${_ca_path}"
-        CACHE FILEPATH "Mozilla CA bundle bundled into iOS app resources at ssl/certs/ca-certificates.crt" FORCE
+        PARENT_SCOPE
     )
 endfunction()
 
@@ -445,15 +350,10 @@ function(_qgc_gst_ios_mobile_framework)
     add_library(GStreamerMobile ALIAS GStreamerMobileXcfw)
 endfunction()
 
-# ─────────────────────────────────────────────────────────────────────────────
-# _qgc_gst_create_ios_targets
-# Build IMPORTED targets directly from the iOS SDK's merged archive — bypasses
-# pkg-config entirely. Caller must have set GSTREAMER_XCFRAMEWORK_LIB and
-# GSTREAMER_INCLUDE_PATH (done by _qgc_gst_discover_ios_sdk above).
-# Function: exports GStreamer_VERSION and GSTREAMER_STATIC_PLUGINS via PARENT_SCOPE and creates GLOBAL IMPORTED
-# targets.
-# ─────────────────────────────────────────────────────────────────────────────
-# Every target comes from the one merged archive, so the steps share its state in one function.
+# _qgc_gst_create_ios_targets()
+# Creates the GStreamer:: targets and GStreamer::mobile from the merged archive GSTREAMER_XCFRAMEWORK_LIB, without
+# pkg-config, and sets GStreamer_VERSION and GSTREAMER_STATIC_PLUGINS in the caller's scope. Every target comes from
+# that one archive, so the steps share its state in one function.
 # cmake-lint: disable=R0912,R0915
 function(_qgc_gst_create_ios_targets)
     _qgc_gst_ios_sdk_version("${GSTREAMER_INCLUDE_PATH}" GStreamer_VERSION)
@@ -462,78 +362,66 @@ function(_qgc_gst_create_ios_targets)
         PARENT_SCOPE
     )
 
-    # ── Create IMPORTED targets directly from the merged archive ───
-    # No pkg-config or .framework; all APIs and plugins live in one archive.
-    if(NOT TARGET GStreamer::GStreamer)
-        _qgc_gst_ios_usage_targets("${GSTREAMER_XCFRAMEWORK_LIB}" "${GSTREAMER_INCLUDE_PATH}")
-        # System frameworks required by GStreamer on iOS.
-        # Note: gstreamer-ios 1.28+ bundles libass (CoreText), MoltenVK (Metal/IOSurface/QuartzCore),
-        # applemedia iosassetsrc (AssetsLibrary), and EAGL/CAMetalLayer (QuartzCore) — all of which
-        # demand additional system frameworks at the *consumer* link step.
-        set(_xcfw_required_frameworks
-            Foundation
-            AVFoundation
-            AudioToolbox
-            VideoToolbox
-            CoreMedia
-            CoreVideo
-            CoreAudio
-            CoreGraphics
-            Security
-            UIKit
-            CoreFoundation
-            CoreText
-            IOSurface
-            Metal
-            QuartzCore
-        )
-        set(_xcfw_resolved_libs)
-        foreach(_fw IN LISTS _xcfw_required_frameworks)
-            string(TOLOWER "_xcfw_${_fw}" _fw_var)
-            find_library(${_fw_var} ${_fw} REQUIRED)
-            list(APPEND _xcfw_resolved_libs "${${_fw_var}}")
-        endforeach()
-        # AssetsLibrary is deprecated since iOS 9 but the headers/lib are still present;
-        # libgstapplemedia iosassetsrc references _OBJC_CLASS_$_ALAssetsLibrary.
-        find_library(GStreamer_xcfw_assetslibrary AssetsLibrary)
-        set(_xcfw_assetslibrary "${GStreamer_xcfw_assetslibrary}")
-        target_link_libraries(GStreamer::GStreamer INTERFACE ${_xcfw_resolved_libs} "-lresolv" "-liconv" "-lz" "-lbz2")
-        if(_xcfw_assetslibrary)
-            target_link_libraries(GStreamer::GStreamer INTERFACE "${_xcfw_assetslibrary}")
-        else()
-            # If AssetsLibrary truly isn't present in the SDK, weak-link by name so dyld
-            # tolerates absence at load time (iosassetsrc is not invoked by QGC).
-            target_link_options(GStreamer::GStreamer INTERFACE "-Wl,-weak_framework,AssetsLibrary")
-        endif()
-        # OpenGLES is absent from pure-Metal SDK slices; weak-link rather than hard-require.
-        find_library(GStreamer_xcfw_opengles OpenGLES)
-        set(_xcfw_opengles "${GStreamer_xcfw_opengles}")
-        if(_xcfw_opengles)
-            target_link_libraries(GStreamer::GStreamer INTERFACE "${_xcfw_opengles}")
-        else()
-            target_link_options(GStreamer::GStreamer INTERFACE "-Wl,-weak_framework,OpenGLES")
-        endif()
-        # gstreamer-ios 1.28 bundles many Rust-built static libs (gst-plugins-rs); each contributes
-        # a `_rust_eh_personality` reference and Mach-O compact unwind can encode only ~4 unique
-        # personalities. Switch to DWARF unwind tables to sidestep the limit. Slightly larger
-        # binary; runtime perf impact is negligible (only used during exception unwinding, and
-        # GStreamer doesn't throw C++ exceptions across its API surface).
-        target_link_options(GStreamer::GStreamer INTERFACE "-Wl,-no_compact_unwind")
-        # Keep the find_library cache entries — re-resolving 17 system frameworks
-        # on every reconfigure is the dominant configure-time cost on iOS.
+    _qgc_gst_ios_usage_targets("${GSTREAMER_XCFRAMEWORK_LIB}" "${GSTREAMER_INCLUDE_PATH}")
+    # System frameworks required by GStreamer on iOS.
+    # Note: gstreamer-ios 1.28+ bundles libass (CoreText), MoltenVK (Metal/IOSurface/QuartzCore),
+    # applemedia iosassetsrc (AssetsLibrary), and EAGL/CAMetalLayer (QuartzCore) — all of which
+    # demand additional system frameworks at the *consumer* link step.
+    set(_xcfw_required_frameworks
+        Foundation
+        AVFoundation
+        AudioToolbox
+        VideoToolbox
+        CoreMedia
+        CoreVideo
+        CoreAudio
+        CoreGraphics
+        Security
+        UIKit
+        CoreFoundation
+        CoreText
+        IOSurface
+        Metal
+        QuartzCore
+    )
+    set(_xcfw_resolved_libs)
+    foreach(_fw IN LISTS _xcfw_required_frameworks)
+        string(TOLOWER "_xcfw_${_fw}" _fw_var)
+        find_library(${_fw_var} ${_fw} REQUIRED)
+        list(APPEND _xcfw_resolved_libs "${${_fw_var}}")
+    endforeach()
+    # AssetsLibrary is deprecated since iOS 9 but the headers/lib are still present;
+    # libgstapplemedia iosassetsrc references _OBJC_CLASS_$_ALAssetsLibrary.
+    find_library(GStreamer_xcfw_assetslibrary AssetsLibrary)
+    set(_xcfw_assetslibrary "${GStreamer_xcfw_assetslibrary}")
+    target_link_libraries(GStreamer::GStreamer INTERFACE ${_xcfw_resolved_libs} "-lresolv" "-liconv" "-lz" "-lbz2")
+    if(_xcfw_assetslibrary)
+        target_link_libraries(GStreamer::GStreamer INTERFACE "${_xcfw_assetslibrary}")
+    else()
+        # If AssetsLibrary truly isn't present in the SDK, weak-link by name so dyld
+        # tolerates absence at load time (iosassetsrc is not invoked by QGC).
+        target_link_options(GStreamer::GStreamer INTERFACE "-Wl,-weak_framework,AssetsLibrary")
     endif()
+    # OpenGLES is absent from pure-Metal SDK slices; weak-link rather than hard-require.
+    find_library(GStreamer_xcfw_opengles OpenGLES)
+    set(_xcfw_opengles "${GStreamer_xcfw_opengles}")
+    if(_xcfw_opengles)
+        target_link_libraries(GStreamer::GStreamer INTERFACE "${_xcfw_opengles}")
+    else()
+        target_link_options(GStreamer::GStreamer INTERFACE "-Wl,-weak_framework,OpenGLES")
+    endif()
+    # The archive's Rust plugins each bring a _rust_eh_personality, more than Mach-O compact unwind can encode; use
+    # DWARF unwind tables instead (cerbero adds the same flag through pkg-config).
+    target_link_options(GStreamer::GStreamer INTERFACE "-Wl,-no_compact_unwind")
 
     # GStreamer 1.28+ compiles every plugin into the merged archive but provides no registration entry point.
     # Enumerate the plugin descriptors in the archive and register the requested ones: registration is what links
     # a plugin's objects in, so the archive's other plugins (some GPL) stay out of the app.
 
-    # Cache the nm-extracted plugin descriptor list — running nm -gjU on the
-    # ~300MB libGStreamer.a costs 2-5s per reconfigure. Key on archive
-    # mtime+size and SDK version so a swapped SDK re-invokes nm.
+    # nm on the ~300 MB archive takes 2-5 s, so its descriptor list is cached, keyed on the SDK version and the
+    # archive's size, mtime and hash (a CI cache restore can keep size and mtime).
     file(SIZE "${GSTREAMER_XCFRAMEWORK_LIB}" _xcfw_lib_size)
     file(TIMESTAMP "${GSTREAMER_XCFRAMEWORK_LIB}" _xcfw_lib_mtime "%s")
-    # Hash the archive so a same-size, mtime-normalized rebuild (CI cache restore)
-    # still re-invokes nm instead of reusing a stale plugin list.
     file(SHA256 "${GSTREAMER_XCFRAMEWORK_LIB}" _xcfw_lib_hash)
     set(_xcfw_cache_key "${GStreamer_VERSION}|${_xcfw_lib_size}|${_xcfw_lib_mtime}|${_xcfw_lib_hash}")
     set(_xcfw_cache_file "${CMAKE_BINARY_DIR}/qgc_xcfw_plugins.cmake")
@@ -570,10 +458,8 @@ function(_qgc_gst_create_ios_targets)
             endforeach()
         endif()
 
-        # Apple's nm (Xcode 26+) exits non-zero on objects it can't parse (e.g. the
-        # Rust gstaws bitcode: "Unknown attribute kind") but still prints symbols for
-        # every object it can read. Extract from whatever it produced; fail only if
-        # that yielded no descriptors, not on a non-zero exit alone.
+        # Apple's nm (Xcode 26+) fails on objects it can't parse (the Rust gstaws bitcode) but still lists every other
+        # object, so only an empty result is fatal.
         string(REGEX MATCHALL "_gst_plugin_[A-Za-z0-9_]+_get_desc" _xcfw_descs "${_xcfw_nm_out}")
         list(REMOVE_DUPLICATES _xcfw_descs)
         if(NOT _xcfw_descs)
@@ -610,10 +496,7 @@ function(_qgc_gst_create_ios_targets)
         PARENT_SCOPE
     )
 
-    # Per-API and per-registered-plugin alias targets — load-bearing for the component checks in Orchestrator.cmake
-    # (`if(TARGET GStreamer::${_api})`). On the pkg-config flow, _qgc_gst_create_sdk_targets creates these
-    # targets directly; here the entire library lives in one archive, so they are empty INTERFACE shims that link
-    # back to GStreamer::GStreamer.
+    # The component checks in Orchestrator.cmake look for GStreamer::<api>; here they are shims over the one archive.
     foreach(_xcfw_comp IN LISTS GSTREAMER_APIS _xcfw_registered)
         if(NOT TARGET GStreamer::${_xcfw_comp})
             add_library(GStreamer::${_xcfw_comp} INTERFACE IMPORTED GLOBAL)
@@ -621,7 +504,5 @@ function(_qgc_gst_create_ios_targets)
         endif()
     endforeach()
 
-    if(NOT TARGET GStreamer::mobile)
-        _qgc_gst_ios_mobile_framework(${_xcfw_registered})
-    endif()
+    _qgc_gst_ios_mobile_framework(${_xcfw_registered})
 endfunction()

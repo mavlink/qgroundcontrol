@@ -9,15 +9,7 @@ endif()
 # Debug-only (see Comms/MockLink/CMakeLists.txt) — so only request it in Debug to keep the
 # rtsp-server lib out of release builds. It is also optional: a define is emitted below only
 # when the SDK actually ships it.
-set(_qgc_gst_components
-    Core
-    Base
-    Gl
-    GlPrototypes
-    Video
-    App
-    Rtsp
-)
+set(_qgc_gst_components Base Gl GlPrototypes Video App Rtsp)
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     list(APPEND _qgc_gst_components RtspServer)
 endif()
@@ -132,9 +124,8 @@ target_sources(
 
 # GStreamer.cc fails initialization when a runtime-required plugin (PluginPolicy.cmake) is not registered. Each entry
 # lists, "|"-separated, the plugin sets that satisfy it, a set's plugins joined by "+".
-gstreamer_runtime_required_plugins(_qgc_gst_required_plugins)
 set(_qgc_gst_required_entries "")
-foreach(_qgc_gst_plugin IN LISTS _qgc_gst_required_plugins)
+foreach(_qgc_gst_plugin IN LISTS GSTREAMER_RUNTIME_REQUIRED_PLUGINS)
     gstreamer_plugin_alternatives("${_qgc_gst_plugin}" _qgc_gst_alternatives)
     list(JOIN _qgc_gst_alternatives "|" _qgc_gst_entry)
     list(APPEND _qgc_gst_required_entries "\"${_qgc_gst_entry}\"")
@@ -185,8 +176,6 @@ endif()
 if(ANDROID OR IOS)
     return()
 endif()
-
-include(GStreamer/Helpers)
 
 # Build-time rpath so the unrelocated binary finds component dylibs in the SDK
 # (framework /lib or flat /lib); install-time rpath is set in cmake/install/Install.cmake.

@@ -6,10 +6,7 @@
 include_guard(GLOBAL)
 
 include("${CMAKE_CURRENT_LIST_DIR}/../modules/BuildConfigReader.cmake")
-
-if(POLICY CMP0174)
-    cmake_policy(SET CMP0174 NEW)
-endif()
+include("${CMAKE_CURRENT_LIST_DIR}/Platform.cmake")
 
 # Plugin alternate groups — within each group, only one member typically ships
 # per SDK (e.g. videoconvertscale is the 1.22 fusion of videoconvert+videoscale).
@@ -74,49 +71,17 @@ set(GSTREAMER_XCFRAMEWORK_SKIP_PLUGINS x265)
 # builds must not ship them (app size; x264/x265 are GPL).
 set(GSTREAMER_MOCK_SERVER_DEBUG_PLUGINS mpegtsmux videotestsrc x264 x265)
 
-# Invariant: no plugin may be both runtime-required and skipped on iOS.
-function(_qgc_gst_assert_policy_consistent)
-    foreach(_skip IN LISTS GSTREAMER_XCFRAMEWORK_SKIP_PLUGINS)
-        if(_skip IN_LIST GSTREAMER_RUNTIME_REQUIRED_PLUGINS)
-            message(FATAL_ERROR "GStreamer policy: plugin '${_skip}' is in both GSTREAMER_XCFRAMEWORK_SKIP_PLUGINS "
-                                "and GSTREAMER_RUNTIME_REQUIRED_PLUGINS — a required plugin cannot be skipped on iOS."
-            )
-        endif()
-    endforeach()
-endfunction()
-_qgc_gst_assert_policy_consistent()
-
-# gstreamer_plugins_for(PLATFORM <key> OUT_VAR <var>)
-# Reads the plugin list for <key> ("android"|"apple"|"windows"|"linux"|"") from
-# build-config.json (gstreamer.plugins.common + gstreamer.plugins.<key>).
-function(gstreamer_plugins_for)
-    cmake_parse_arguments(PARSE_ARGV 0 ARG "" "PLATFORM;OUT_VAR" "")
-    set(_missing_values ${ARG_KEYWORDS_MISSING_VALUES})
-    list(REMOVE_ITEM _missing_values PLATFORM)
-    if(_missing_values)
-        message(FATAL_ERROR "gstreamer_plugins_for: missing values for: ${_missing_values}")
-    endif()
-    if(ARG_UNPARSED_ARGUMENTS)
-        message(FATAL_ERROR "gstreamer_plugins_for: unknown arguments: ${ARG_UNPARSED_ARGUMENTS}")
-    endif()
-    if(NOT ARG_OUT_VAR)
-        message(FATAL_ERROR "gstreamer_plugins_for: OUT_VAR is required")
-    endif()
+# gstreamer_plugins_for(<key> <out_var>)
+# Sets <out_var> to the plugin list of build-config.json for <key> ("android", "apple", "windows", "linux" or ""):
+# gstreamer.plugins.common plus gstreamer.plugins.<key>.
+function(gstreamer_plugins_for key out_var)
     qgc_config_read(_plugins LIST gstreamer plugins common)
-    if(ARG_PLATFORM)
-        qgc_config_read(_extra LIST OPTIONAL gstreamer plugins ${ARG_PLATFORM})
+    if(key)
+        qgc_config_read(_extra LIST OPTIONAL gstreamer plugins ${key})
         list(APPEND _plugins ${_extra})
     endif()
-    set(${ARG_OUT_VAR}
-        "${_plugins}"
-        PARENT_SCOPE
-    )
-endfunction()
-
-# gstreamer_runtime_required_plugins(<out_var>)
-function(gstreamer_runtime_required_plugins out_var)
     set(${out_var}
-        "${GSTREAMER_RUNTIME_REQUIRED_PLUGINS}"
+        "${_plugins}"
         PARENT_SCOPE
     )
 endfunction()
@@ -147,12 +112,7 @@ endfunction()
 # videoconvert+videoscale (1.20) in place of the fused videoconvertscale (1.22+).
 function(gstreamer_missing_required)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "" "OUT_VAR" "REQUIRED;AVAILABLE")
-    if(ARG_UNPARSED_ARGUMENTS)
-        message(FATAL_ERROR "gstreamer_missing_required: unknown arguments: ${ARG_UNPARSED_ARGUMENTS}")
-    endif()
-    if(NOT ARG_OUT_VAR)
-        message(FATAL_ERROR "gstreamer_missing_required: OUT_VAR is required")
-    endif()
+    _qgc_gst_check_args(gstreamer_missing_required OUT_VAR ALLOW_EMPTY REQUIRED AVAILABLE)
     set(_missing "")
     foreach(_plugin IN LISTS ARG_REQUIRED)
         gstreamer_plugin_alternatives("${_plugin}" _alternates)
@@ -187,17 +147,16 @@ endfunction()
 # rest, shipped but not usable by this build (OUT_UNUSABLE).
 function(gstreamer_classify_missing_plugins)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "" "OUT_OPTIONAL;OUT_ABSENT;OUT_UNUSABLE" "REQUESTED;AVAILABLE;SHIPPED")
-    if(ARG_UNPARSED_ARGUMENTS)
-        message(FATAL_ERROR "gstreamer_classify_missing_plugins: unknown arguments: ${ARG_UNPARSED_ARGUMENTS}")
-    endif()
-    if(NOT ARG_OUT_OPTIONAL
-       OR NOT ARG_OUT_ABSENT
-       OR NOT ARG_OUT_UNUSABLE
+    _qgc_gst_check_args(
+        gstreamer_classify_missing_plugins
+        OUT_OPTIONAL
+        OUT_ABSENT
+        OUT_UNUSABLE
+        ALLOW_EMPTY
+        REQUESTED
+        AVAILABLE
+        SHIPPED
     )
-        message(
-            FATAL_ERROR "gstreamer_classify_missing_plugins: OUT_OPTIONAL, OUT_ABSENT and OUT_UNUSABLE are required"
-        )
-    endif()
     gstreamer_missing_required(REQUIRED ${ARG_REQUESTED} AVAILABLE ${ARG_AVAILABLE} OUT_VAR _missing)
     set(_optional "")
     set(_absent "")
@@ -222,14 +181,6 @@ function(gstreamer_classify_missing_plugins)
     )
     set(${ARG_OUT_UNUSABLE}
         "${_unusable}"
-        PARENT_SCOPE
-    )
-endfunction()
-
-# gstreamer_xcfw_skip(<out_var>)
-function(gstreamer_xcfw_skip out_var)
-    set(${out_var}
-        "${GSTREAMER_XCFRAMEWORK_SKIP_PLUGINS}"
         PARENT_SCOPE
     )
 endfunction()

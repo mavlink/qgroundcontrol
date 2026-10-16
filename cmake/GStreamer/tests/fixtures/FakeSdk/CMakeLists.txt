@@ -31,7 +31,6 @@ if(QGC_TEST_ANDROID_ABI)
 endif()
 
 set(QGC_GST_COMPONENTS
-    Core
     Base
     Gl
     GlPrototypes
@@ -120,11 +119,17 @@ foreach(_target IN LISTS _qgc_state_targets)
         string(APPEND _qgc_state "${_target}.${_property}=${_value}\n")
     endforeach()
 endforeach()
-foreach(_key IN ITEMS LAYOUT_TYPE LIB_DIR PLUGIN_DIR INCLUDE_DIR VERSION)
-    gstreamer_layout_get(${_key} _value)
-    string(APPEND _qgc_state "GStreamer::Layout.${_key}=${_value}\n")
-endforeach()
-foreach(_var IN ITEMS GStreamer_VERSION GStreamer_ROOT_DIR GSTREAMER_APIS GSTREAMER_PLUGINS QGC_GST_HAS_DMABUF)
+foreach(
+    _var IN
+    ITEMS GStreamer_VERSION
+          GStreamer_ROOT_DIR
+          GSTREAMER_LIB_PATH
+          GSTREAMER_PLUGIN_PATH
+          GSTREAMER_INCLUDE_PATH
+          GSTREAMER_APIS
+          GSTREAMER_PLUGINS
+          QGC_GST_HAS_DMABUF
+)
     string(APPEND _qgc_state "${_var}=${${_var}}\n")
 endforeach()
 foreach(_var IN ITEMS QGC_GST_RESOLVED_ROOT QGC_GST_RESOLVED_VERSION QGC_GST_RESOLVED_AUTO)
@@ -204,10 +209,8 @@ else()
         message(FATAL_ERROR "ASSERT [shared plugins]: GStreamer::coreelements was created")
     endif()
 endif()
-qgc_test_assert_property("layout lib dir" GStreamer::Layout GSTREAMER_LIB_DIR "${EXPECT_ROOT}/lib")
-qgc_test_assert_property("layout plugin dir" GStreamer::Layout GSTREAMER_PLUGIN_DIR "${EXPECT_ROOT}/lib/gstreamer-1.0")
-qgc_test_assert_property("layout include dir" GStreamer::Layout GSTREAMER_INCLUDE_DIR "${EXPECT_ROOT}/include")
-qgc_test_assert_property("layout version" GStreamer::Layout GSTREAMER_VERSION "${EXPECT_VERSION}")
+qgc_test_assert_streq("plugin dir" "${EXPECT_ROOT}/lib/gstreamer-1.0" "${GSTREAMER_PLUGIN_PATH}")
+qgc_test_assert_streq("recorded version" "${EXPECT_VERSION}" "$CACHE{QGC_GST_RESOLVED_SDK_VERSION}")
 if(NOT DEFINED EXPECT_AUTO)
     set(EXPECT_AUTO FALSE)
 endif()

@@ -4,6 +4,7 @@
 # which cmake/GStreamer/SdkState.cmake purges whenever the GStreamer SDK changes.
 
 include_guard(GLOBAL)
+include("${CMAKE_CURRENT_LIST_DIR}/Platform.cmake")
 include(CheckCXXSourceCompiles)
 include(CMakePushCheckState)
 
@@ -14,17 +15,7 @@ include(CMakePushCheckState)
 # change purges it.
 function(qgc_check_gst_header)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "" "VAR;HEADER;SYMBOL;TARGET" "INCLUDES")
-    if(ARG_KEYWORDS_MISSING_VALUES)
-        message(FATAL_ERROR "qgc_check_gst_header: missing values for: ${ARG_KEYWORDS_MISSING_VALUES}")
-    endif()
-    if(ARG_UNPARSED_ARGUMENTS)
-        message(FATAL_ERROR "qgc_check_gst_header: unknown arguments: ${ARG_UNPARSED_ARGUMENTS}")
-    endif()
-    foreach(_req IN ITEMS VAR HEADER SYMBOL)
-        if(NOT ARG_${_req})
-            message(FATAL_ERROR "qgc_check_gst_header: ${_req} is required")
-        endif()
-    endforeach()
+    _qgc_gst_check_args(qgc_check_gst_header VAR HEADER SYMBOL)
 
     if(NOT ARG_TARGET)
         if(ANDROID AND TARGET GStreamerMobile)
@@ -66,15 +57,19 @@ endfunction()
 # <name>_LIBRARY_DIRS and, when not found, <name>_REASON.
 function(_qgc_probe_gst_lib name)
     cmake_parse_arguments(PARSE_ARGV 1 ARG "" "HAS_VAR;HEADER;SYMBOL;PC_MODULE;LIB_VAR" "LIBNAMES;INCLUDES")
-    if(ARG_UNPARSED_ARGUMENTS)
-        message(FATAL_ERROR "_qgc_probe_gst_lib: unknown arguments: ${ARG_UNPARSED_ARGUMENTS}")
-    endif()
-    if(NOT ARG_HAS_VAR
-       OR NOT ARG_HEADER
-       OR NOT ARG_SYMBOL
-       OR (ARG_LIBNAMES AND NOT ARG_LIB_VAR)
+    _qgc_gst_check_args(
+        _qgc_probe_gst_lib
+        HAS_VAR
+        HEADER
+        SYMBOL
+        ALLOW_EMPTY
+        PC_MODULE
+        LIB_VAR
+        LIBNAMES
+        INCLUDES
     )
-        message(FATAL_ERROR "_qgc_probe_gst_lib(${name}): HAS_VAR, HEADER, SYMBOL (and LIB_VAR with LIBNAMES) required")
+    if(ARG_LIBNAMES AND NOT ARG_LIB_VAR)
+        message(FATAL_ERROR "_qgc_probe_gst_lib(${name}): LIBNAMES requires LIB_VAR")
     endif()
 
     # cmake-lint: disable=C0103
@@ -85,7 +80,7 @@ function(_qgc_probe_gst_lib name)
     set(_pc PC_GStreamer_${name})
     if(ARG_PC_MODULE AND PkgConfig_FOUND)
         pkg_check_modules(${_pc} QUIET ${ARG_PC_MODULE})
-        _gst_recover_split_pkgconfig_paths(${_pc} INCLUDE_DIRS CFLAGS_OTHER LIBRARY_DIRS LDFLAGS_OTHER)
+        _gst_recover_split_pkgconfig_paths(${_pc})
         _gst_coalesce_existing_paths(${_pc}_INCLUDE_DIRS)
         _gst_coalesce_existing_paths(${_pc}_LIBRARY_DIRS)
     endif()
@@ -105,7 +100,7 @@ function(_qgc_probe_gst_lib name)
 
     set(_libraries ${${_pc}_LIBRARIES})
     if(ARG_LIBNAMES)
-        if(DEFINED ${ARG_LIB_VAR} AND (${ARG_LIB_VAR} MATCHES "NOTFOUND$" OR NOT EXISTS "${${ARG_LIB_VAR}}"))
+        if(DEFINED ${ARG_LIB_VAR} AND NOT EXISTS "${${ARG_LIB_VAR}}")
             unset(${ARG_LIB_VAR} CACHE)
         endif()
         # A bundled SDK (gstreamer_apply_pkgconfig_env MODE SDK) must not lose to another GStreamer in

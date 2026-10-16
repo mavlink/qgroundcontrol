@@ -5,7 +5,7 @@ include_guard(GLOBAL)
 # _qgc_gst_discover_linux_sdk()
 # Uses the GStreamer under GStreamer_ROOT_DIR, else the system one (/usr, or CMAKE_SYSROOT/usr), and prepends its
 # pkgconfig directory to PKG_CONFIG_PATH.
-# cmake-lint: disable=C0103,E1121
+# cmake-lint: disable=C0103
 function(_qgc_gst_discover_linux_sdk)
     if(NOT GStreamer_ROOT_DIR)
         if(CMAKE_SYSROOT)
@@ -56,9 +56,9 @@ function(_qgc_gst_discover_linux_sdk)
         endif()
     endif()
 
-    gstreamer_create_layout_target(SDK_ROOT "${GStreamer_ROOT_DIR}" TYPE FLAT LIB_PATH "${_gst_linux_lib}")
+    gstreamer_create_layout_target(SDK_ROOT "${GStreamer_ROOT_DIR}" LIB_PATH "${_gst_linux_lib}")
 
     # Prepend SDK pkgconfig dir so system glib/gobject .pc files remain discoverable.
     gstreamer_apply_pkgconfig_env(MODE SYSTEM_AUGMENT LIBDIR "${GSTREAMER_LIB_PATH}/pkgconfig")
-    return(PROPAGATE GStreamer_ROOT_DIR GSTREAMER_LIB_PATH GSTREAMER_PLUGIN_PATH GSTREAMER_INCLUDE_PATH)
+    _qgc_gst_return_discovery()
 endfunction()

@@ -18,9 +18,7 @@ endfunction()
 
 # plugins|GIO modules, comma-separated.
 foreach(_case IN ITEMS "coreelements,rtp,videoconvertscale|openssl" "coreelements|" "|")
-    string(REPLACE "|" ";" _parts "${_case}")
-    list(GET _parts 0 _plugins)
-    list(GET _parts 1 _gio_modules)
+    qgc_test_split("${_case}" _plugins _gio_modules)
     string(REPLACE "," ";" _plugins "${_plugins}")
     string(REPLACE "," ";" _gio_modules "${_gio_modules}")
     set(_source "${_sandbox}/static_init.c")

@@ -712,12 +712,10 @@ void GStreamerTest::_testRuntimeVersionCheck()
                                          .arg(micro)));
 #endif
 
-#ifdef QGC_GST_BUILD_VERSION_MAJOR
-    if (major != QGC_GST_BUILD_VERSION_MAJOR || minor != QGC_GST_BUILD_VERSION_MINOR) {
-        qCWarning(GStreamerTestLog) << "GStreamer version mismatch: built against" << QGC_GST_BUILD_VERSION_MAJOR << "."
-                                    << QGC_GST_BUILD_VERSION_MINOR << "but runtime is" << major << "." << minor;
+    if (major != GST_VERSION_MAJOR || minor != GST_VERSION_MINOR) {
+        qCWarning(GStreamerTestLog) << "GStreamer version mismatch: built against" << GST_VERSION_MAJOR << "."
+                                    << GST_VERSION_MINOR << "but runtime is" << major << "." << minor;
     }
-#endif
 }
 
 #else

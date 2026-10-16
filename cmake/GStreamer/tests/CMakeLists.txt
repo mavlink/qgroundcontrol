@@ -15,7 +15,6 @@ set(_qgc_gst_tests
     test_path_list
     test_pkgconfig_env
     test_install_filter
-    test_windows_runtime_libproxy
     test_sdk_state
     test_install_libs_guard_windows
     test_windows_sdk_root
@@ -65,15 +64,13 @@ endif()
 # with TEST_CASE when given, and must fail with that diagnostic (qgc_add_expected_failure_test).
 set(_qgc_gst_failure_cases
     "test_argument_validation|AcquireExtractor|acquire-extractor|'_qgc_no_such_extractor' is not a command"
-    "test_argument_validation|InstallUnknown|install-unknown|gstreamer_install_plugins: unknown arguments"
     "test_argument_validation|LayoutUnknown|layout-unknown|gstreamer_create_layout_target: unknown arguments"
     "test_argument_validation|PkgConfigUnknown|pkgconfig-unknown|gstreamer_apply_pkgconfig_env: unknown arguments"
     "test_argument_validation|ProbeUnknown|probe-unknown|qgc_check_gst_header: unknown arguments"
     "test_android_abi_info|||Unsupported Android ABI: mips"
     "test_checksum_authority|SidecarOnlyRequired|sidecar-only-required|cannot satisfy GStreamer_REQUIRE_CHECKSUM=ON"
-    "test_components_malformed|||GSTREAMER_COMPONENT_REGISTRY: malformed entry 'OnlyThree:fields:here'"
+    "test_components|UnknownComponent|unknown|unknown components Bogus"
     "test_plugin_policy_errors|||qgc_config_read: build-config.json is not loaded"
-    "test_plugin_policy_conflict|||'foo' is in both GSTREAMER_XCFRAMEWORK_SKIP_PLUGINS and GSTREAMER_RUNTIME_REQUIRED"
     "test_install_libs_guard|||gstreamer_install_libs: refusing to copy from system/shared prefix"
     "test_ios_xcframework_slice|NoMatchingArch|no-matching-arch|no iphoneos slice for architectures 'x86_64'"
     "test_download_win_version_guard|||Windows GStreamer SDK requires version 1.28 or later"

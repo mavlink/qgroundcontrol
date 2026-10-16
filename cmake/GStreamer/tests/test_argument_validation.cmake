@@ -20,22 +20,9 @@ if(TEST_CASE STREQUAL "acquire-extractor")
         CONTENT_DIR_OUT
         _content_dir
     )
-elseif(TEST_CASE STREQUAL "install-unknown")
-    include(Install)
-    gstreamer_install_plugins(
-        SOURCE_DIR
-        "${CMAKE_CURRENT_BINARY_DIR}"
-        DEST_DIR
-        lib
-        EXTENSION
-        so
-        PREFIX
-        libgst
-        UNKNOWN_ARGUMENT
-    )
 elseif(TEST_CASE STREQUAL "layout-unknown")
     include(Layout)
-    gstreamer_create_layout_target(SDK_ROOT "${CMAKE_CURRENT_BINARY_DIR}" TYPE FLAT UNKNOWN_ARGUMENT value)
+    gstreamer_create_layout_target(SDK_ROOT "${CMAKE_CURRENT_BINARY_DIR}" UNKNOWN_ARGUMENT value)
 elseif(TEST_CASE STREQUAL "pkgconfig-unknown")
     include(PkgConfig)
     gstreamer_apply_pkgconfig_env(UNKNOWN_ARGUMENT value MODE SDK LIBDIR "${CMAKE_CURRENT_BINARY_DIR}")

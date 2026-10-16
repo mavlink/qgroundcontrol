@@ -5,20 +5,13 @@ include("${CMAKE_CURRENT_LIST_DIR}/../SdkState.cmake")
 qgc_test_sandbox(_sandbox sdk-state)
 file(MAKE_DIRECTORY "${_sandbox}/lib/pkgconfig" "${_sandbox}/auto-root")
 
-# The .pc file decides when there is one; gst/gstversion.h only stands in for an SDK without pkg-config.
 file(WRITE "${_sandbox}/include/gstreamer-1.0/gst/gstversion.h"
      "#define GST_VERSION_MAJOR (1)\n#define GST_VERSION_MINOR (24)\n#define GST_VERSION_MICRO (9)\n"
 )
-file(WRITE "${_sandbox}/lib/pkgconfig/gstreamer-1.0.pc" "prefix=/sdk\nVersion: 1.22.12\n")
-_qgc_gst_sdk_version("${_sandbox}/lib" "${_sandbox}/include" _version)
-qgc_test_assert_streq("SDK version" "1.22.12" "${_version}")
-file(WRITE "${_sandbox}/lib/pkgconfig/gstreamer-1.0.pc" "prefix=/invalid\n")
-_qgc_gst_sdk_version("${_sandbox}/lib" "${_sandbox}/include" _version)
-qgc_test_assert_streq("missing Version field" "" "${_version}")
-_qgc_gst_sdk_version("${_sandbox}/missing" "${_sandbox}/include" _version)
-qgc_test_assert_streq("header version without a .pc file" "1.24.9" "${_version}")
-_qgc_gst_sdk_version("${_sandbox}/missing" "${_sandbox}/missing" _version)
-qgc_test_assert_streq("neither .pc file nor header" "" "${_version}")
+_qgc_gst_header_version("${_sandbox}/include" _version)
+qgc_test_assert_streq("header version" "1.24.9" "${_version}")
+_qgc_gst_header_version("${_sandbox}/missing" _version)
+qgc_test_assert_streq("no header" "" "${_version}")
 qgc_test_pass("SDK version")
 
 # cmake-lint: disable=C0103
@@ -35,11 +28,7 @@ set(_cases "1.28.4|${_sandbox}/user-root|${_sandbox}/user-root|FALSE" "1.28.4||$
            "1.28.5|||FALSE"
 )
 foreach(_case IN LISTS _cases)
-    string(REPLACE "|" ";" _parts "${_case}")
-    list(GET _parts 0 _requested)
-    list(GET _parts 1 _user_root)
-    list(GET _parts 2 _expected_root)
-    list(GET _parts 3 _expected_auto)
+    qgc_test_split("${_case}" _requested _user_root _expected_root _expected_auto)
     _qgc_gst_select_sdk_root(_root _auto "${_user_root}" ${_requested})
     qgc_test_assert_streq("root for '${_case}'" "${_expected_root}" "${_root}")
     qgc_test_assert_streq("auto for '${_case}'" "${_expected_auto}" "${_auto}")

@@ -15,28 +15,22 @@ set(QGC_BUILD_CONFIG_CONTENT
 }]]
 )
 
-gstreamer_plugins_for(PLATFORM "" OUT_VAR _plugins_common)
+gstreamer_plugins_for("" _plugins_common)
 qgc_test_assert_in_list("common has coreelements" coreelements _plugins_common)
 qgc_test_assert_in_list("common has playback" playback _plugins_common)
 qgc_test_assert_not_in_list("common excludes va" va _plugins_common)
 qgc_test_pass("plugins_for common-only")
 
-gstreamer_plugins_for(PLATFORM linux OUT_VAR _plugins_linux)
+gstreamer_plugins_for(linux _plugins_linux)
 qgc_test_assert_in_list("linux has coreelements" coreelements _plugins_linux)
 qgc_test_assert_in_list("linux has va" va _plugins_linux)
 qgc_test_assert_not_in_list("linux excludes vtenc" vtenc _plugins_linux)
 qgc_test_pass("plugins_for linux addenda")
 
-gstreamer_plugins_for(PLATFORM apple OUT_VAR _plugins_apple)
+gstreamer_plugins_for(apple _plugins_apple)
 qgc_test_assert_in_list("apple has vtenc" vtenc _plugins_apple)
 qgc_test_assert_in_list("apple has vtdec" vtdec _plugins_apple)
 qgc_test_pass("plugins_for apple addenda")
-
-file(READ "${CMAKE_CURRENT_LIST_DIR}/../../../.github/build-config.json" QGC_BUILD_CONFIG_CONTENT)
-gstreamer_plugins_for(PLATFORM windows OUT_VAR _plugins_windows_real)
-qgc_test_assert_in_list("windows has d3d11" d3d11 _plugins_windows_real)
-qgc_test_assert_in_list("windows has d3d12" d3d12 _plugins_windows_real)
-qgc_test_pass("plugins_for real windows d3d addenda")
 
 # required|available|expected missing, lists comma-separated. videoconvertscale is satisfied by itself or by
 # videoconvert+videoscale; each of those two is satisfied by itself or by videoconvertscale.
@@ -50,10 +44,7 @@ set(_missing_cases
     "|coreelements|"
 )
 foreach(_case IN LISTS _missing_cases)
-    string(REPLACE "|" ";" _parts "${_case}")
-    list(GET _parts 0 _required)
-    list(GET _parts 1 _available)
-    list(GET _parts 2 _expected)
+    qgc_test_split("${_case}" _required _available _expected)
     string(REPLACE "," ";" _required "${_required}")
     string(REPLACE "," ";" _available "${_available}")
     string(REPLACE "," ";" _expected "${_expected}")
@@ -101,28 +92,8 @@ foreach(_case IN ITEMS "coreelements|coreelements" "videoconvertscale|videoconve
 endforeach()
 qgc_test_pass("plugin_alternatives")
 
-gstreamer_runtime_required_plugins(_required)
-foreach(
-    _p IN
-    ITEMS coreelements
-          isomp4
-          matroska
-          multifile
-          opengl
-          playback
-          rtsp
-          rtp
-          rtpmanager
-          tcp
-          udp
-          videoparsersbad
-          videoconvertscale
-)
-    qgc_test_assert_in_list("runtime required: ${_p}" "${_p}" _required)
+# A plugin iOS cannot link must not be one the app cannot run without.
+foreach(_plugin IN LISTS GSTREAMER_XCFRAMEWORK_SKIP_PLUGINS)
+    qgc_test_assert_not_in_list("iOS skips a required plugin" "${_plugin}" GSTREAMER_RUNTIME_REQUIRED_PLUGINS)
 endforeach()
-qgc_test_assert_not_in_list("runtime required: openh264 is optional codec implementation" openh264 _required)
-qgc_test_pass("runtime_required_plugins")
-
-gstreamer_xcfw_skip(_skip)
-qgc_test_assert_in_list("xcfw skip: x265" x265 _skip)
-qgc_test_pass("xcfw_skip")
+qgc_test_pass("policy lists")

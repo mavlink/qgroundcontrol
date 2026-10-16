@@ -13,9 +13,7 @@ set(_cases "rtp,coreelements,vpx,videoconvert,videoconvertscale|rtp,coreelements
            "rtpmanager|rtpmanager" "|"
 )
 foreach(_case IN LISTS _cases)
-    string(REPLACE "|" ";" _parts "${_case}")
-    list(GET _parts 0 _requested)
-    list(GET _parts 1 _expected_registered)
+    qgc_test_split("${_case}" _requested _expected_registered)
     foreach(_var IN ITEMS _requested _expected_registered)
         string(REPLACE "," ";" ${_var} "${${_var}}")
         list(REMOVE_ITEM ${_var} "")

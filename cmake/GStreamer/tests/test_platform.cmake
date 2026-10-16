@@ -15,10 +15,7 @@ file(READ "${CMAKE_CURRENT_LIST_DIR}/../../../.github/build-config.json" QGC_BUI
 foreach(_case IN ITEMS "ANDROID|android|FALSE" "IOS|ios|FALSE" "WIN32|windows|TRUE" "MACOS|macos|TRUE"
                        "LINUX|linux|TRUE"
 )
-    string(REPLACE "|" ";" _parts "${_case}")
-    list(GET _parts 0 _variable)
-    list(GET _parts 1 _expected)
-    list(GET _parts 2 _installs)
+    qgc_test_split("${_case}" _variable _expected _installs)
     foreach(_platform_variable IN ITEMS ANDROID IOS WIN32 MACOS LINUX)
         set(${_platform_variable} FALSE)
     endforeach()

@@ -34,6 +34,22 @@ function(qgc_test_assert_property label tgt prop expected)
     endif()
 endfunction()
 
+# Fails the check named <label> unless <text>, with each run of whitespace collapsed to one space, matches <regex>.
+function(qgc_test_assert_matches label regex text)
+    string(REGEX REPLACE "[ \t\r\n]+" " " _normalized "${text}")
+    if(NOT _normalized MATCHES "${regex}")
+        message(FATAL_ERROR "ASSERT [${label}]: no match for '${regex}' in\n${text}")
+    endif()
+endfunction()
+
+# Fails the check named <label> if <text>, with each run of whitespace collapsed to one space, matches <regex>.
+function(qgc_test_assert_not_matches label regex text)
+    string(REGEX REPLACE "[ \t\r\n]+" " " _normalized "${text}")
+    if(_normalized MATCHES "${regex}")
+        message(FATAL_ERROR "ASSERT [${label}]: unexpected match for '${regex}' in\n${text}")
+    endif()
+endfunction()
+
 # Reports that the checks named <label> passed.
 function(qgc_test_pass label)
     message(STATUS "PASS: ${label}")
@@ -49,4 +65,16 @@ function(qgc_test_sandbox var name)
         "${_dir}"
         PARENT_SCOPE
     )
+endfunction()
+
+# Sets the variables <var>... in the caller to the "|"-separated fields of <case>, in order.
+function(qgc_test_split case)
+    string(REPLACE "|" ";" _fields "${case}")
+    foreach(_var IN LISTS ARGN)
+        list(POP_FRONT _fields _field)
+        set(${_var}
+            "${_field}"
+            PARENT_SCOPE
+        )
+    endforeach()
 endfunction()

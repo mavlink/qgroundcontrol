@@ -31,10 +31,7 @@ set(_cases "iphoneos|arm64|ios-arm64" "iphoneos||ios-arm64" "iphonesimulator|arm
            "iphonesimulator|arm64,x86_64|ios-arm64_x86_64-simulator"
 )
 foreach(_case IN LISTS _cases)
-    string(REPLACE "|" ";" _parts "${_case}")
-    list(GET _parts 0 _platform)
-    list(GET _parts 1 _architectures)
-    list(GET _parts 2 _expected)
+    qgc_test_split("${_case}" _platform _architectures _expected)
     set(_args XCFRAMEWORK "${_xcfw}" PLATFORM ${_platform} OUT_VAR _slice)
     if(_architectures)
         string(REPLACE "," ";" _architectures "${_architectures}")

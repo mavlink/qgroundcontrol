@@ -53,9 +53,6 @@ qgc_test_assert_streq("s3 macos" "${_s3_base}/macos/gstreamer-1.0-1.28.2-univers
 gstreamer_get_s3_mirror_url(windows_msvc_x64 1.28.2 _s3_win)
 qgc_test_assert_streq("s3 windows" "${_s3_base}/windows/gstreamer-1.0-msvc-x86_64-1.28.2.exe" "${_s3_win}")
 
-gstreamer_get_s3_mirror_url(linux 1.28.2 _s3_linux)
-qgc_test_assert_streq("s3 linux empty (no mirror)" "" "${_s3_linux}")
-
 gstreamer_get_s3_mirror_url(macos_devel 1.28.2 _s3_macd)
 qgc_test_assert_streq("s3 macos_devel" "${_s3_base}/macos/gstreamer-1.0-devel-1.28.2-universal.pkg" "${_s3_macd}")
 

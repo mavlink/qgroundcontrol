@@ -5,46 +5,42 @@ include_guard(GLOBAL)
 
 # Shared list of system libraries that should be linked by name, not resolved via find_library.
 # Used by both Targets.cmake and the Android mobile-target macro.
-if(NOT DEFINED _gst_IGNORED_SYSTEM_LIBRARIES)
-    set(_gst_IGNORED_SYSTEM_LIBRARIES c c++ unwind m dl atomic)
-    if(ANDROID)
-        list(
-            APPEND
-            _gst_IGNORED_SYSTEM_LIBRARIES
-            log
-            GLESv2
-            EGL
-            OpenSLES
-            android
-            vulkan
-        )
-    elseif(APPLE)
-        list(APPEND _gst_IGNORED_SYSTEM_LIBRARIES iconv resolv System)
-    elseif(WIN32)
-        list(
-            APPEND
-            _gst_IGNORED_SYSTEM_LIBRARIES
-            ws2_32
-            ole32
-            oleaut32
-            winmm
-            shlwapi
-            secur32
-            iphlpapi
-            dnsapi
-            userenv
-            bcrypt
-            crypt32
-            advapi32
-            kernel32
-            shell32
-            uuid
-        )
-    endif()
+set(_gst_IGNORED_SYSTEM_LIBRARIES c c++ unwind m dl atomic)
+if(ANDROID)
+    list(
+        APPEND
+        _gst_IGNORED_SYSTEM_LIBRARIES
+        log
+        GLESv2
+        EGL
+        OpenSLES
+        android
+        vulkan
+    )
+elseif(APPLE)
+    list(APPEND _gst_IGNORED_SYSTEM_LIBRARIES iconv resolv System)
+elseif(WIN32)
+    list(
+        APPEND
+        _gst_IGNORED_SYSTEM_LIBRARIES
+        ws2_32
+        ole32
+        oleaut32
+        winmm
+        shlwapi
+        secur32
+        iphlpapi
+        dnsapi
+        userenv
+        bcrypt
+        crypt32
+        advapi32
+        kernel32
+        shell32
+        uuid
+    )
 endif()
-if(NOT DEFINED _gst_SRT_REGEX_PATCH)
-    set(_gst_SRT_REGEX_PATCH "^:lib(.+)\\.(a|so|lib|dylib)$")
-endif()
+set(_gst_SRT_REGEX_PATCH "^:lib(.+)\\.(a|so|lib|dylib)$")
 
 # CMake's FindPkgConfig can split pkg-config paths containing escaped spaces
 # (for example `C:/Program\ Files/...`) into multiple list items. Rejoin adjacent
@@ -91,11 +87,19 @@ endfunction()
 # Some Windows pkg-config builds split `C:/Program\ Files/...` across different
 # FindPkgConfig output variables: the path list gets `C:/Program`, while the
 # suffixes land in CFLAGS_OTHER/LDFLAGS_OTHER as `Files/...`. Rebuild paths only
-# when root + suffix exists, then remove the consumed suffixes from options.
+# when root + suffix exists, then remove the consumed suffixes from options. Without pairs, it repairs the include and
+# library directories of the plain and STATIC_ results.
 function(_gst_recover_split_pkgconfig_paths _grspp_PREFIX)
     # One pass rebuilds each path/option pair; splitting it would only pass the pair state around.
     # cmake-lint: disable=R0915
     set(_grspp_pairs ${ARGN})
+    if(NOT _grspp_pairs)
+        foreach(_grspp_kind IN ITEMS "" STATIC_)
+            list(APPEND _grspp_pairs ${_grspp_kind}INCLUDE_DIRS ${_grspp_kind}CFLAGS_OTHER ${_grspp_kind}LIBRARY_DIRS
+                 ${_grspp_kind}LDFLAGS_OTHER
+            )
+        endforeach()
+    endif()
     list(LENGTH _grspp_pairs _grspp_len)
     math(EXPR _grspp_remainder "${_grspp_len} % 2")
     if(_grspp_remainder)
@@ -184,20 +188,6 @@ function(_gst_strip_macos_absent_link_libs _gsmal_VAR)
     )
 endfunction()
 
-# Sets CMAKE_FIND_LIBRARY_SUFFIXES/PREFIXES for the SDK's linkage in the calling function, whose scope ends the change.
-macro(_gst_set_find_suffixes)
-    set(CMAKE_FIND_LIBRARY_PREFIXES "" "lib")
-    if(GStreamer_USE_STATIC_LIBS)
-        set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
-    elseif(APPLE)
-        set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" ".dylib" ".so" ".tbd")
-    elseif(UNIX)
-        set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" ".so")
-    else()
-        set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" ".lib")
-    endif()
-endmacro()
-
 # _gst_resolve_and_link_libraries(<TARGET> <SCOPE> <LIBS> <HINTS> [HIDE] [WARN_MISSING])
 #
 # Resolves a list of library names via find_library and links them to TARGET with the given SCOPE
@@ -208,7 +198,7 @@ endmacro()
 #   WARN_MISSING - Warn and skip missing libraries instead of failing
 function(_gst_resolve_and_link_libraries _grll_TARGET _grll_SCOPE _grll_LIBS _grll_HINTS)
     # Each library goes through one resolve/patch/link decision chain; splitting it would scatter that chain.
-    # cmake-lint: disable=R0912,R0915
+    # cmake-lint: disable=C0103,R0912,R0915
     cmake_parse_arguments(PARSE_ARGV 4 _grll "HIDE;WARN_MISSING" "" "")
     if(_grll_UNPARSED_ARGUMENTS)
         message(FATAL_ERROR "_gst_resolve_and_link_libraries: unknown arguments: ${_grll_UNPARSED_ARGUMENTS}")
@@ -219,7 +209,17 @@ function(_gst_resolve_and_link_libraries _grll_TARGET _grll_SCOPE _grll_LIBS _gr
         target_link_directories(${_grll_TARGET} ${_grll_SCOPE} ${_grll_HINTS})
     endif()
 
-    _gst_set_find_suffixes()
+    # The SDK linkage decides which library files to find; this function's scope ends the change.
+    set(CMAKE_FIND_LIBRARY_PREFIXES "" "lib")
+    if(GStreamer_USE_STATIC_LIBS)
+        set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+    elseif(APPLE)
+        set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" ".dylib" ".so" ".tbd")
+    elseif(UNIX)
+        set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" ".so")
+    else()
+        set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" ".lib")
+    endif()
 
     foreach(_grll_LIB IN LISTS _grll_LIBS)
         if(_grll_LIB MATCHES "${_gst_SRT_REGEX_PATCH}")

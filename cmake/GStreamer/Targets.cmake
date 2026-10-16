@@ -77,17 +77,7 @@ function(_qgc_gst_create_component_target name pc_module static)
     if(GStreamer_DEBUG)
         message(STATUS "[GstTargets] Component ${name} (${pc_module}): FOUND, STATIC_LIBS=${${_pc}_STATIC_LIBRARIES}")
     endif()
-    _gst_recover_split_pkgconfig_paths(
-        ${_pc}
-        INCLUDE_DIRS
-        CFLAGS_OTHER
-        STATIC_INCLUDE_DIRS
-        STATIC_CFLAGS_OTHER
-        LIBRARY_DIRS
-        LDFLAGS_OTHER
-        STATIC_LIBRARY_DIRS
-        STATIC_LDFLAGS_OTHER
-    )
+    _gst_recover_split_pkgconfig_paths(${_pc})
 
     if(static)
         set(_kind STATIC_)
@@ -122,17 +112,7 @@ endfunction()
 # Creates GStreamer::GStreamer and GStreamer::deps from gstreamer-1.0 >= <minimum_version>.
 function(_qgc_gst_create_core_targets minimum_version static version_var)
     pkg_check_modules(PC_GStreamer REQUIRED gstreamer-1.0>=${minimum_version})
-    _gst_recover_split_pkgconfig_paths(
-        PC_GStreamer
-        INCLUDE_DIRS
-        CFLAGS_OTHER
-        STATIC_INCLUDE_DIRS
-        STATIC_CFLAGS_OTHER
-        LIBRARY_DIRS
-        LDFLAGS_OTHER
-        STATIC_LIBRARY_DIRS
-        STATIC_LDFLAGS_OTHER
-    )
+    _gst_recover_split_pkgconfig_paths(PC_GStreamer)
     set(${version_var}
         "${PC_GStreamer_VERSION}"
         PARENT_SCOPE
@@ -211,16 +191,17 @@ function(_qgc_gst_create_sdk_targets)
     # QGC_GST_REQUESTED_VERSION is the per-platform floor chosen by Orchestrator.cmake — Linux honors the distro
     # minimum (1.20), bundled-SDK platforms enforce ≥1.28 so a downgraded SDK fails configure loudly.
     _qgc_gst_create_core_targets("${QGC_GST_REQUESTED_VERSION}" ${_static} GStreamer_VERSION)
-    foreach(_api IN LISTS GSTREAMER_APIS)
-        string(REGEX REPLACE "^api_" "" _pc_module "${_api}")
-        string(REPLACE "_" "-" _pc_module "${_pc_module}")
+    foreach(_component IN LISTS GSTREAMER_COMPONENTS)
+        gstreamer_component_names(${_component} _api _pc)
+        if(NOT _api IN_LIST GSTREAMER_APIS)
+            continue()
+        endif()
         # A missing mandatory module fails configure with its own message (Orchestrator.cmake); the others are optional.
-        gstreamer_resolve_component("${_api}" _ _ _ _mandatory)
         set(_quiet QUIET)
-        if(_mandatory STREQUAL "1")
+        if(_component IN_LIST GSTREAMER_MANDATORY_COMPONENTS)
             set(_quiet "")
         endif()
-        _qgc_gst_create_component_target(${_api} "gstreamer-${_pc_module}-1.0" ${_static} ${_quiet})
+        _qgc_gst_create_component_target(${_api} "${_pc}" ${_static} ${_quiet})
     endforeach()
     foreach(_plugin IN LISTS _plugins)
         _qgc_gst_create_component_target(${_plugin} "gst${_plugin}" TRUE QUIET)

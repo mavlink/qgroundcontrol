@@ -35,7 +35,11 @@ function(_qgc_write_fake_sdk root version)
         set(ARG_PLUGINS coreelements)
     endif()
     file(REMOVE_RECURSE "${root}")
-    file(MAKE_DIRECTORY "${root}/include/gstreamer-1.0/gst")
+    string(REPLACE "." ";" _parts "${version}")
+    list(GET _parts 1 _minor)
+    file(WRITE "${root}/include/gstreamer-1.0/gst/gstversion.h"
+         "#define GST_VERSION_MAJOR (1)\n" "#define GST_VERSION_MINOR (${_minor})\n#define GST_VERSION_MICRO (0)\n"
+    )
     foreach(_plugin IN LISTS ARG_PLUGINS)
         file(WRITE "${root}/lib/gstreamer-1.0/libgst${_plugin}.so" "")
         file(WRITE "${root}/lib/gstreamer-1.0/libgst${_plugin}.a" "")
@@ -56,9 +60,7 @@ function(_qgc_write_fake_sdk root version)
         "gstreamer-allocators-1.0|gstallocators-1.0"
     )
     foreach(_module IN LISTS _modules)
-        string(REPLACE "|" ";" _parts "${_module}")
-        list(GET _parts 0 _pc)
-        list(GET _parts 1 _lib)
+        qgc_test_split("${_module}" _pc _lib)
         if(_pc IN_LIST ARG_OMIT)
             continue()
         endif()
@@ -154,13 +156,10 @@ endfunction()
 # Configures the fixture and fails the test, labelled <label>, unless configure fails with <regex>.
 function(_qgc_configure_fails label regex)
     _qgc_configure(${ARGN})
-    string(REGEX REPLACE "[ \t\r\n]+" " " _normalized "${_qgc_output}")
     if(_qgc_result EQUAL 0)
         message(FATAL_ERROR "ASSERT [${label}]: configure unexpectedly succeeded\n${_qgc_output}")
     endif()
-    if(NOT _normalized MATCHES "${regex}")
-        message(FATAL_ERROR "ASSERT [${label}]: expected '${regex}'\n${_qgc_output}")
-    endif()
+    qgc_test_assert_matches("${label}" "${regex}" "${_qgc_output}")
 endfunction()
 
 # Installs the configured fixture with --prefix /opt/qgc into DESTDIR <WORK_DIR>/stage; sets _qgc_result and
@@ -228,17 +227,13 @@ if(SCENARIO STREQUAL "reconfigure")
     _qgc_write_fake_sdk("${_sdk_a}" 1.24.0)
     _qgc_expect(_expect "${_sdk_a}" 1.24.0 OFF)
     _qgc_configure_ok("SDK A 1.24" --fresh "-DGStreamer_ROOT_DIR=${_sdk_a}" ${_expect})
-    if(_qgc_output MATCHES "gstcoreelements")
-        message(FATAL_ERROR "ASSERT [shared plugins]: a shared layout probed plugin pkg-config modules\n${_qgc_output}")
-    endif()
+    qgc_test_assert_not_matches("shared plugins" "gstcoreelements" "${_qgc_output}")
     file(READ "${_binary_dir}/gst-state.txt" _first_state)
 
     _qgc_configure_ok("unchanged reconfigure")
     file(READ "${_binary_dir}/gst-state.txt" _second_state)
     qgc_test_assert_streq("state after reconfigure" "${_first_state}" "${_second_state}")
-    if(_qgc_output MATCHES "Checking for module 'gstreamer-")
-        message(FATAL_ERROR "ASSERT [cached probes]: unchanged SDK re-ran pkg-config probes\n${_qgc_output}")
-    endif()
+    qgc_test_assert_not_matches("cached probes" "Checking for module 'gstreamer-" "${_qgc_output}")
 
     _qgc_write_fake_sdk("${_sdk_a}" 1.26.0 WITH_PROBE_HEADERS)
     _qgc_expect(_expect "${_sdk_a}" 1.26.0 ON)
@@ -309,25 +304,23 @@ elseif(SCENARIO STREQUAL "missing-gl")
     _qgc_expect(_expect "${_sdk_a}" 1.24.0 OFF)
     _qgc_configure_ok("SDK without gst-gl" --fresh "-DGStreamer_ROOT_DIR=${_sdk_a}" ${_expect} -DEXPECT_GL=OFF)
     # Optional components are probed quietly and summed up in one status line.
-    if(_qgc_output MATCHES "Package 'gstreamer-gl-1\\.0'.* not found")
-        message(FATAL_ERROR "ASSERT [quiet optional probes]: pkg-config reported gst-gl missing\n${_qgc_output}")
-    endif()
-    if(NOT _qgc_output MATCHES "optional components not found: Gl, GlPrototypes\n")
-        message(FATAL_ERROR "ASSERT [optional components summary]: no status line\n${_qgc_output}")
-    endif()
+    qgc_test_assert_not_matches("quiet optional probes" "Package 'gstreamer-gl-1\\.0'.* not found" "${_qgc_output}")
+    qgc_test_assert_matches("optional components summary" "optional components not found: Gl, GlPrototypes( |$)"
+                            "${_qgc_output}"
+    )
 elseif(SCENARIO STREQUAL "plugin-allowlist")
     # A misspelled allowlist name warns; a missing hardware-specific decoder only shows in a status line.
     _qgc_write_fake_sdk("${_sdk_a}" 1.24.0)
     _qgc_configure_ok("allowlist with a typo and an optional decoder" --fresh "-DGStreamer_ROOT_DIR=${_sdk_a}"
                       -DQGC_TEST_PLUGINS=coreelements,coreelemnts,qsv
     )
-    string(REGEX REPLACE "[ \t\r\n]+" " " _normalized "${_qgc_output}")
-    if(NOT _normalized MATCHES "CMake Warning .* allowlist names not found as plugins in [^ ]+: coreelemnts Check")
-        message(FATAL_ERROR "ASSERT [allowlist warning]: coreelemnts is not reported alone\n${_qgc_output}")
-    endif()
-    if(NOT _normalized MATCHES "-- GStreamer: optional decoder plugins not in [^ ]+: qsv \\(")
-        message(FATAL_ERROR "ASSERT [optional status]: qsv is not reported in a status line\n${_qgc_output}")
-    endif()
+    qgc_test_assert_matches("allowlist warning"
+                            "CMake Warning .* allowlist names not found as plugins in [^ ]+: coreelemnts Check"
+                            "${_qgc_output}"
+    )
+    qgc_test_assert_matches("optional status" "-- GStreamer: optional decoder plugins not in [^ ]+: qsv \\("
+                            "${_qgc_output}"
+    )
 elseif(SCENARIO STREQUAL "android-mobile")
     if(NOT GENERATOR MATCHES "Ninja|Makefiles")
         message(STATUS "QGC_TEST_SKIPPED: link lines are only read from Ninja and Makefile builds")
@@ -336,7 +329,7 @@ elseif(SCENARIO STREQUAL "android-mobile")
     # Mobile builds fail configure without the runtime-required plugins, so the SDK ships them; udp is left out
     # first to check that.
     include("${CMAKE_CURRENT_LIST_DIR}/../PluginPolicy.cmake")
-    gstreamer_runtime_required_plugins(_plugins)
+    set(_plugins ${GSTREAMER_RUNTIME_REQUIRED_PLUGINS})
     list(REMOVE_ITEM _plugins udp)
     list(APPEND _plugins androidmedia)
     string(REPLACE ";" "," _requested "${_plugins};udp")
@@ -355,8 +348,7 @@ elseif(SCENARIO STREQUAL "android-mobile")
         "${_sdk_a}/etc/ssl/certs/ca-certificates.crt|extra_assets/ssl/certs/ca-certificates.crt"
     )
     foreach(_entry IN LISTS _staged)
-        string(REPLACE "|" ";" _entry "${_entry}")
-        list(GET _entry 0 _source)
+        qgc_test_split("${_entry}" _source)
         file(WRITE "${_source}" "${_source}\n")
     endforeach()
     _qgc_configure_fails("Android SDK without udp"
@@ -386,9 +378,7 @@ elseif(SCENARIO STREQUAL "android-mobile")
 
     # Configure stages the plugin Java sources and fonts/CA assets into the build directory, never the package sources.
     foreach(_entry IN LISTS _staged)
-        string(REPLACE "|" ";" _entry "${_entry}")
-        list(GET _entry 0 _source)
-        list(GET _entry 1 _path)
+        qgc_test_split("${_entry}" _source _path)
         execute_process(COMMAND "${CMAKE_COMMAND}" -E compare_files "${_source}" "${_binary_dir}/${_path}"
                         RESULT_VARIABLE _different
         )
@@ -412,12 +402,11 @@ elseif(SCENARIO STREQUAL "android-mobile")
     qgc_test_assert_streq("plugin archive on the link line" "${_sdk_a}/lib/gstreamer-1.0/libgstcoreelements.a"
                           "${_plugin_archives}"
     )
-    if(NOT _link MATCHES "--whole-archive +[^ ]*libgstcoreelements\\.a +[^ ]*(--pop-state|--no-whole-archive)")
-        message(FATAL_ERROR "ASSERT [whole-archive]: the plugin archive is not whole-archived:\n${_link}")
-    endif()
-    if(_link MATCHES "--start-group|--end-group")
-        message(FATAL_ERROR "ASSERT [link group]: lld needs no link group:\n${_link}")
-    endif()
+    qgc_test_assert_matches("whole-archive"
+                            "--whole-archive +[^ ]*libgstcoreelements\\.a +[^ ]*(--pop-state|--no-whole-archive)"
+                            "${_link}"
+    )
+    qgc_test_assert_not_matches("link group" "--start-group|--end-group" "${_link}")
 
     # GStreamer::deps links the core's static dependencies with their symbols hidden from the app's exports.
     if(NOT _link MATCHES " ${_sdk_a}/lib/libgstreamer-1\\.0\\.a " OR NOT _link MATCHES
@@ -437,17 +426,9 @@ elseif(SCENARIO STREQUAL "ios-link")
     _qgc_configure_ok("iOS targets")
     _qgc_link_line(_app_link qgc_ios_link_app qgc_ios_link_app)
     _qgc_link_line(_framework_link libgstreamer_mobile.so GStreamerMobileXcfw)
-    if(_app_link MATCHES "libGStreamer\\.a")
-        message(FATAL_ERROR "ASSERT [app link line]: the app links the merged archive:\n${_app_link}")
-    endif()
-    if(NOT _app_link MATCHES "libgstreamer_mobile\\.so")
-        message(FATAL_ERROR "ASSERT [app link line]: the app does not link GStreamer::mobile:\n${_app_link}")
-    endif()
-    if(NOT _framework_link MATCHES " ([^ ]*/)?sdk/libGStreamer\\.a ")
-        message(
-            FATAL_ERROR "ASSERT [framework link line]: GStreamer::mobile does not link the archive:\n${_framework_link}"
-        )
-    endif()
+    qgc_test_assert_not_matches("app link line" "libGStreamer\\.a" "${_app_link}")
+    qgc_test_assert_matches("app link line" "libgstreamer_mobile\\.so" "${_app_link}")
+    qgc_test_assert_matches("framework link line" " ([^ ]*/)?sdk/libGStreamer\\.a " "${_framework_link}")
 
     execute_process(
         COMMAND "${CMAKE_COMMAND}" --build "${_binary_dir}"
@@ -463,9 +444,7 @@ elseif(SCENARIO STREQUAL "ios-link")
 
     _qgc_configure_ok("iOS targets keeping a core function" -DQGC_TEST_CORE_SYMBOLS=gst_debug_bin_to_dot_file)
     _qgc_link_line(_framework_link libgstreamer_mobile.so GStreamerMobileXcfw)
-    if(NOT _framework_link MATCHES "-u,gst_debug_bin_to_dot_file")
-        message(FATAL_ERROR "ASSERT [-u]: QGC_GST_IOS_APP_CORE_SYMBOLS are not kept:\n${_framework_link}")
-    endif()
+    qgc_test_assert_matches("-u" "-u,gst_debug_bin_to_dot_file" "${_framework_link}")
     execute_process(
         COMMAND "${CMAKE_COMMAND}" --build "${_binary_dir}"
         RESULT_VARIABLE _result
@@ -480,9 +459,7 @@ elseif(SCENARIO STREQUAL "ios-link")
         execute_process(COMMAND "${_qgc_nm}" -g --defined-only "${_binary_dir}/qgc_ios_link_app"
                         OUTPUT_VARIABLE _app_symbols COMMAND_ERROR_IS_FATAL ANY
         )
-        if(_app_symbols MATCHES " (gst_[a-z_]+)\n")
-            message(FATAL_ERROR "ASSERT [single core]: the app defines ${CMAKE_MATCH_1}:\n${_app_symbols}")
-        endif()
+        qgc_test_assert_not_matches("single core" " gst_[a-z_]+( |$)" "${_app_symbols}")
     endif()
 
     # Functions of optional libraries (the Debug RTSP server) are kept by name once the framework exists.
@@ -502,7 +479,7 @@ elseif(SCENARIO STREQUAL "sdk-prefix-decoy")
     # A bundled SDK locks pkg-config to itself: another GStreamer in CMAKE_PREFIX_PATH (vcpkg, Homebrew) must not
     # shadow it for the core targets or for the optional-library probes HwBuffers runs after discovery.
     include("${CMAKE_CURRENT_LIST_DIR}/../PluginPolicy.cmake")
-    gstreamer_runtime_required_plugins(_plugins)
+    set(_plugins ${GSTREAMER_RUNTIME_REQUIRED_PLUGINS})
     string(REPLACE ";" "," _requested "${_plugins}")
     set(_decoy "${WORK_DIR}/decoy")
     _qgc_write_fake_android_sdk("${_sdk_a}" 1.24.0 ${_plugins})
@@ -553,9 +530,7 @@ elseif(SCENARIO STREQUAL "install-macos")
     foreach(_link IN ITEMS "Versions/Current|1.0" "GStreamer|Versions/Current/GStreamer"
                            "Resources|Versions/Current/Resources"
     )
-        string(REPLACE "|" ";" _link "${_link}")
-        list(GET _link 0 _name)
-        list(GET _link 1 _target)
+        qgc_test_split("${_link}" _name _target)
         file(READ_SYMLINK "${_fw}/${_name}" _actual)
         qgc_test_assert_streq("framework symlink ${_name}" "${_target}" "${_actual}")
     endforeach()
@@ -582,10 +557,9 @@ elseif(SCENARIO STREQUAL "install-macos")
         endif()
     endforeach()
     # The rpath fixup visits the installed copies; without otool on this host it warns about each one.
-    string(REGEX REPLACE "[ \t\r\n]+" " " _normalized "${_qgc_output}")
-    if(NOT _normalized MATCHES "otool -l failed for ${_bundle}/lib/gstreamer-1.0/libgstcoreelements.dylib")
-        message(FATAL_ERROR "ASSERT [rpath fixup]: the installed plugins were not visited\n${_qgc_output}")
-    endif()
+    qgc_test_assert_matches("rpath fixup" "otool -l failed for ${_bundle}/lib/gstreamer-1.0/libgstcoreelements.dylib"
+                            "${_qgc_output}"
+    )
     if(EXISTS "${WORK_DIR}/configured-prefix" OR EXISTS "${WORK_DIR}/stage${WORK_DIR}/configured-prefix")
         message(FATAL_ERROR "ASSERT [install prefix]: files were installed under the configure-time prefix")
     endif()
@@ -644,9 +618,9 @@ elseif(SCENARIO STREQUAL "install")
 
     # A distribution package (QGC_GST_BUNDLE_PLUGINS=OFF) installs nothing of GStreamer and verifies nothing.
     _qgc_configure_ok("install rules without bundled plugins" ${_plugins} -DQGC_GST_BUNDLE_PLUGINS=OFF)
-    if(NOT _qgc_output MATCHES "QGC_GST_BUNDLE_PLUGINS is OFF; the install uses the system's plugins")
-        message(FATAL_ERROR "ASSERT [system plugins]: configure does not report them\n${_qgc_output}")
-    endif()
+    qgc_test_assert_matches("system plugins" "QGC_GST_BUNDLE_PLUGINS is OFF; the install uses the system's plugins"
+                            "${_qgc_output}"
+    )
     _qgc_install()
     if(NOT _qgc_result EQUAL 0 OR _qgc_output MATCHES "install verification")
         message(FATAL_ERROR "ASSERT [system plugins]: install failed or verified plugins\n${_qgc_output}")
