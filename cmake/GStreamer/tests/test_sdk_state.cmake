@@ -5,15 +5,21 @@ include("${CMAKE_CURRENT_LIST_DIR}/../SdkState.cmake")
 qgc_test_sandbox(_sandbox sdk-state)
 file(MAKE_DIRECTORY "${_sandbox}/lib/pkgconfig" "${_sandbox}/auto-root")
 
+# The .pc file decides when there is one; gst/gstversion.h only stands in for an SDK without pkg-config.
+file(WRITE "${_sandbox}/include/gstreamer-1.0/gst/gstversion.h"
+     "#define GST_VERSION_MAJOR (1)\n#define GST_VERSION_MINOR (24)\n#define GST_VERSION_MICRO (9)\n"
+)
 file(WRITE "${_sandbox}/lib/pkgconfig/gstreamer-1.0.pc" "prefix=/sdk\nVersion: 1.22.12\n")
-_qgc_gst_sdk_pc_version("${_sandbox}/lib" _version)
+_qgc_gst_sdk_version("${_sandbox}/lib" "${_sandbox}/include" _version)
 qgc_test_assert_streq("SDK version" "1.22.12" "${_version}")
 file(WRITE "${_sandbox}/lib/pkgconfig/gstreamer-1.0.pc" "prefix=/invalid\n")
-_qgc_gst_sdk_pc_version("${_sandbox}/lib" _version)
+_qgc_gst_sdk_version("${_sandbox}/lib" "${_sandbox}/include" _version)
 qgc_test_assert_streq("missing Version field" "" "${_version}")
-_qgc_gst_sdk_pc_version("${_sandbox}/missing" _version)
-qgc_test_assert_streq("missing .pc file" "" "${_version}")
-qgc_test_pass("SDK .pc version")
+_qgc_gst_sdk_version("${_sandbox}/missing" "${_sandbox}/include" _version)
+qgc_test_assert_streq("header version without a .pc file" "1.24.9" "${_version}")
+_qgc_gst_sdk_version("${_sandbox}/missing" "${_sandbox}/missing" _version)
+qgc_test_assert_streq("neither .pc file nor header" "" "${_version}")
+qgc_test_pass("SDK version")
 
 # cmake-lint: disable=C0103
 set(QGC_GST_RESOLVED_PACKAGES

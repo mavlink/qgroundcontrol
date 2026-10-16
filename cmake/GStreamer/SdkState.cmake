@@ -5,9 +5,38 @@
 
 include_guard(GLOBAL)
 
-# _qgc_gst_sdk_pc_version(<lib_dir> <out_var>)
-# Returns the Version: field of <lib_dir>/pkgconfig/gstreamer-1.0.pc, or "" when the SDK has none.
-function(_qgc_gst_sdk_pc_version lib_dir out_var)
+# _qgc_gst_header_version(<include_dir> <out_var>)
+# Returns <major>.<minor>.<micro> from the GST_VERSION_MAJOR/MINOR/MICRO defines of gst/gstversion.h under <include_dir>
+# or its gstreamer-1.0 subdirectory, or "" when there is no such header.
+function(_qgc_gst_header_version include_dir out_var)
+    set(_version "")
+    foreach(_header IN ITEMS "${include_dir}/gst/gstversion.h" "${include_dir}/gstreamer-1.0/gst/gstversion.h")
+        if(NOT EXISTS "${_header}")
+            continue()
+        endif()
+        file(STRINGS "${_header}" _defines REGEX "^#define GST_VERSION_(MAJOR|MINOR|MICRO) \\([0-9]+\\)")
+        set(_parts "")
+        foreach(_part IN ITEMS MAJOR MINOR MICRO)
+            if(_defines MATCHES "#define GST_VERSION_${_part} \\(([0-9]+)\\)")
+                list(APPEND _parts "${CMAKE_MATCH_1}")
+            endif()
+        endforeach()
+        list(LENGTH _parts _count)
+        if(_count EQUAL 3)
+            list(JOIN _parts "." _version)
+        endif()
+        break()
+    endforeach()
+    set(${out_var}
+        "${_version}"
+        PARENT_SCOPE
+    )
+endfunction()
+
+# _qgc_gst_sdk_version(<lib_dir> <include_dir> <out_var>)
+# Returns the SDK's version: the Version: field of <lib_dir>/pkgconfig/gstreamer-1.0.pc, else, for an SDK without
+# pkg-config such as iOS's, the version its gst/gstversion.h under <include_dir> defines, else "".
+function(_qgc_gst_sdk_version lib_dir include_dir out_var)
     set(_pc_file "${lib_dir}/pkgconfig/gstreamer-1.0.pc")
     set(_version "")
     if(EXISTS "${_pc_file}")
@@ -18,6 +47,8 @@ function(_qgc_gst_sdk_pc_version lib_dir out_var)
         )
         string(REGEX REPLACE "^Version:[ \t]*" "" _version "${_version_line}")
         string(STRIP "${_version}" _version)
+    else()
+        _qgc_gst_header_version("${include_dir}" _version)
     endif()
     set(${out_var}
         "${_version}"

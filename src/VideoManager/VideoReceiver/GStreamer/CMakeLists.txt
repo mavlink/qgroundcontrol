@@ -40,6 +40,20 @@ target_compile_definitions(QGCGStreamer PUBLIC QGC_GST_STREAMING)
 # when found; just flag availability for MockVideoStreamServer.
 if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND GStreamer_RtspServer_FOUND)
     target_compile_definitions(QGCGStreamer PUBLIC QGC_GST_RTSP_SERVER)
+    if(IOS)
+        # The app links only GStreamer::mobile, so keep the RTSP server functions MockVideoStreamServer calls in it.
+        qgc_gst_ios_keep_symbols(
+            _gst_rtsp_media_factory_new
+            _gst_rtsp_media_factory_set_launch
+            _gst_rtsp_media_factory_set_shared
+            _gst_rtsp_mount_points_add_factory
+            _gst_rtsp_server_attach
+            _gst_rtsp_server_get_mount_points
+            _gst_rtsp_server_new
+            _gst_rtsp_server_set_address
+            _gst_rtsp_server_set_service
+        )
+    endif()
 endif()
 
 if(LINUX AND GStreamer_VERSION VERSION_LESS "1.28.0")
@@ -152,9 +166,10 @@ endif()
 
 # Static layouts register their plugins in a generated gst_init_static_plugins() (called by
 # GStreamer.cc::_registerPlugins) for GSTREAMER_STATIC_PLUGINS, which Orchestrator.cmake resolves. iOS generates it
-# into GStreamer::mobile (platform/IOS.cmake); Android and desktop static SDKs into the app. The Android SDK registers
-# none of its plugins itself (verified on-device: without this, coreelements/tcp/udp/rtp/... stay unregistered);
-# gst_init() only runs the function generated here (see gst_static_plugins.c.in).
+# into GStreamer::mobile (platform/IOS.cmake), the only target that links the merged archive; Android and desktop
+# static SDKs into the app. The Android SDK registers none of its plugins itself (verified on-device: without this,
+# coreelements/tcp/udp/rtp/... stay unregistered); gst_init() only runs the function generated here (see
+# gst_static_plugins.c.in).
 if(ANDROID AND TARGET GStreamer::mobile)
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE GStreamer::mobile)
     qgc_gst_generate_static_init(TARGET ${CMAKE_PROJECT_NAME} PLUGINS ${GSTREAMER_STATIC_PLUGINS} GIO_MODULES

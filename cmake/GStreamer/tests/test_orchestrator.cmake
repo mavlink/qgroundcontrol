@@ -184,11 +184,20 @@ function(_qgc_install)
     )
 endfunction()
 
-# Sets <out_var> to the command line that links the fixture's shared library (Ninja or Makefile generators).
+# _qgc_link_line(<out_var> [<output> <target>])
+# Sets <out_var> to the command line that links <output>, the binary of <target> (default: the FakeSdk fixture's shared
+# library), for Ninja or Makefile generators.
 function(_qgc_link_line out_var)
+    set(_output libQGCGStreamerFakeSdk.so)
+    set(_target QGCGStreamerFakeSdk)
+    if(ARGC EQUAL 3)
+        set(_output "${ARGV1}")
+        set(_target "${ARGV2}")
+    endif()
     if(GENERATOR MATCHES "Ninja")
         file(READ "${_binary_dir}/build.ninja" _ninja)
-        string(REGEX MATCH "\nbuild libQGCGStreamerFakeSdk\\.so: [^\n]*\n(  [^\n]*\n)*" _block "${_ninja}")
+        string(REPLACE "." "\\." _output "${_output}")
+        string(REGEX MATCH "\nbuild ${_output}: [^\n]*\n(  [^\n]*\n)*" _block "${_ninja}")
         set(_link "")
         foreach(_variable IN ITEMS LINK_FLAGS LINK_LIBRARIES)
             if(_block MATCHES "\n  ${_variable} = ([^\n]*)")
@@ -196,7 +205,7 @@ function(_qgc_link_line out_var)
             endif()
         endforeach()
     else()
-        file(READ "${_binary_dir}/CMakeFiles/QGCGStreamerFakeSdk.dir/link.txt" _link)
+        file(READ "${_binary_dir}/CMakeFiles/${_target}.dir/link.txt" _link)
     endif()
     set(${out_var}
         " ${_link} "
@@ -415,6 +424,79 @@ elseif(SCENARIO STREQUAL "android-mobile")
                                                                      "--exclude-libs,libgstreamer-1\\.0\\.a"
     )
         message(FATAL_ERROR "ASSERT [hidden core dependencies]: missing archive or --exclude-libs:\n${_link}")
+    endif()
+elseif(SCENARIO STREQUAL "ios-link")
+    # iOS (platform/IOS.cmake, built here from fixtures/IosLink): only GStreamer::mobile links the merged archive. A
+    # core function QGC calls that the framework does not export fails the app's link, naming it, rather than linking
+    # a second core into the app; QGC_GST_IOS_APP_CORE_SYMBOLS keeps such functions in the framework.
+    if(NOT GENERATOR MATCHES "Ninja|Makefiles")
+        message(STATUS "QGC_TEST_SKIPPED: link lines are only read from Ninja and Makefile builds")
+        return()
+    endif()
+    set(_fixture_dir "${CMAKE_CURRENT_LIST_DIR}/fixtures/IosLink")
+    _qgc_configure_ok("iOS targets")
+    _qgc_link_line(_app_link qgc_ios_link_app qgc_ios_link_app)
+    _qgc_link_line(_framework_link libgstreamer_mobile.so GStreamerMobileXcfw)
+    if(_app_link MATCHES "libGStreamer\\.a")
+        message(FATAL_ERROR "ASSERT [app link line]: the app links the merged archive:\n${_app_link}")
+    endif()
+    if(NOT _app_link MATCHES "libgstreamer_mobile\\.so")
+        message(FATAL_ERROR "ASSERT [app link line]: the app does not link GStreamer::mobile:\n${_app_link}")
+    endif()
+    if(NOT _framework_link MATCHES " ([^ ]*/)?sdk/libGStreamer\\.a ")
+        message(
+            FATAL_ERROR "ASSERT [framework link line]: GStreamer::mobile does not link the archive:\n${_framework_link}"
+        )
+    endif()
+
+    execute_process(
+        COMMAND "${CMAKE_COMMAND}" --build "${_binary_dir}"
+        RESULT_VARIABLE _result
+        OUTPUT_VARIABLE _output
+        ERROR_VARIABLE _output
+    )
+    if(_result EQUAL 0 OR NOT _output MATCHES "undefined (reference to|symbol:) [`']?gst_debug_bin_to_dot_file")
+        message(FATAL_ERROR "ASSERT [unexported core function]: the app link does not fail naming "
+                            "gst_debug_bin_to_dot_file (exit ${_result}):\n${_output}"
+        )
+    endif()
+
+    _qgc_configure_ok("iOS targets keeping a core function" -DQGC_TEST_CORE_SYMBOLS=gst_debug_bin_to_dot_file)
+    _qgc_link_line(_framework_link libgstreamer_mobile.so GStreamerMobileXcfw)
+    if(NOT _framework_link MATCHES "-u,gst_debug_bin_to_dot_file")
+        message(FATAL_ERROR "ASSERT [-u]: QGC_GST_IOS_APP_CORE_SYMBOLS are not kept:\n${_framework_link}")
+    endif()
+    execute_process(
+        COMMAND "${CMAKE_COMMAND}" --build "${_binary_dir}"
+        RESULT_VARIABLE _result
+        OUTPUT_VARIABLE _output
+        ERROR_VARIABLE _output
+    )
+    if(NOT _result EQUAL 0)
+        message(FATAL_ERROR "ASSERT [kept core function]: the app does not link:\n${_output}")
+    endif()
+    find_program(_qgc_nm NAMES nm NO_CACHE)
+    if(_qgc_nm)
+        execute_process(COMMAND "${_qgc_nm}" -g --defined-only "${_binary_dir}/qgc_ios_link_app"
+                        OUTPUT_VARIABLE _app_symbols COMMAND_ERROR_IS_FATAL ANY
+        )
+        if(_app_symbols MATCHES " (gst_[a-z_]+)\n")
+            message(FATAL_ERROR "ASSERT [single core]: the app defines ${CMAKE_MATCH_1}:\n${_app_symbols}")
+        endif()
+    endif()
+
+    # Functions of optional libraries (the Debug RTSP server) are kept by name once the framework exists.
+    _qgc_configure_ok("iOS targets keeping a function by name" -DQGC_TEST_CORE_SYMBOLS=
+                      -DQGC_TEST_KEEP_SYMBOLS=gst_debug_bin_to_dot_file
+    )
+    execute_process(
+        COMMAND "${CMAKE_COMMAND}" --build "${_binary_dir}"
+        RESULT_VARIABLE _result
+        OUTPUT_VARIABLE _output
+        ERROR_VARIABLE _output
+    )
+    if(NOT _result EQUAL 0)
+        message(FATAL_ERROR "ASSERT [qgc_gst_ios_keep_symbols]: the app does not link:\n${_output}")
     endif()
 elseif(SCENARIO STREQUAL "sdk-prefix-decoy")
     # A bundled SDK locks pkg-config to itself: another GStreamer in CMAKE_PREFIX_PATH (vcpkg, Homebrew) must not

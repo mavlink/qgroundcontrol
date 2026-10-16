@@ -65,9 +65,27 @@ function(_qgc_gst_android_extract staging archive abi_dir)
     endif()
 endfunction()
 
+# _qgc_gst_android_sdk_pkg_config(<root> <host> <out_var>)
+# Sets <out_var> to the pkg-config the Android SDK at <root> bundles for the build <host> (windows or macos; cerbero's
+# pkg-config-dist recipe puts them in share/gst-android/ndk-build/tools/<host>/), else to "": a Linux host uses its
+# own, and a macOS host Homebrew's when the SDK has none for it.
+function(_qgc_gst_android_sdk_pkg_config root host out_var)
+    set(_tools "${root}/share/gst-android/ndk-build/tools")
+    set(_pkg_config "")
+    if(host STREQUAL "windows")
+        set(_pkg_config "${_tools}/windows/pkg-config.exe")
+    elseif(host STREQUAL "macos" AND EXISTS "${_tools}/macos/pkg-config")
+        set(_pkg_config "${_tools}/macos/pkg-config")
+    endif()
+    set(${out_var}
+        "${_pkg_config}"
+        PARENT_SCOPE
+    )
+endfunction()
+
 # _qgc_gst_discover_android_sdk()
 # Uses the SDK under GStreamer_ROOT_DIR, else extracts the CMAKE_ANDROID_ARCH_ABI tree of the downloaded universal SDK.
-# A Windows host uses the SDK's pkg-config, a macOS host Homebrew's (cached PKG_CONFIG_EXECUTABLE).
+# Windows and macOS hosts use the pkg-config the SDK bundles for them (_qgc_gst_android_sdk_pkg_config).
 # cmake-lint: disable=C0103,E1121
 function(_qgc_gst_discover_android_sdk)
     if(NOT GStreamer_ROOT_DIR)
@@ -98,25 +116,28 @@ function(_qgc_gst_discover_android_sdk)
                  GSTREAMER_INCLUDE_PATH PKG_CONFIG_USE_CMAKE_PREFIX_PATH
     )
     if(CMAKE_HOST_WIN32)
-        gstreamer_apply_pkgconfig_env(
-            MODE
-            SDK
-            PKG_CONFIG_EXE
-            "${GStreamer_ROOT_DIR}/share/gst-android/ndk-build/tools/windows/pkg-config.exe"
-            LIBDIR
-            "${GSTREAMER_LIB_PATH}/pkgconfig"
-            "${GSTREAMER_PLUGIN_PATH}/pkgconfig"
-            DONT_DEFINE_PREFIX
-        )
-        list(APPEND _outputs PKG_CONFIG_EXECUTABLE PKG_CONFIG_ARGN)
-    elseif(CMAKE_HOST_UNIX)
-        if(CMAKE_HOST_APPLE)
-            _qgc_gst_find_apple_pkg_config(PKG_CONFIG_EXECUTABLE)
-        endif()
-        gstreamer_apply_pkgconfig_env(MODE SDK LIBDIR "${GSTREAMER_LIB_PATH}/pkgconfig"
-                                      "${GSTREAMER_PLUGIN_PATH}/pkgconfig"
-        )
+        set(_host windows)
+    elseif(CMAKE_HOST_APPLE)
+        set(_host macos)
+    else()
+        set(_host linux)
     endif()
+    _qgc_gst_android_sdk_pkg_config("${GStreamer_ROOT_DIR}" ${_host} _sdk_pkg_config)
+    set(_pkg_config_args "")
+    if(_sdk_pkg_config)
+        list(APPEND _pkg_config_args PKG_CONFIG_EXE "${_sdk_pkg_config}")
+        list(APPEND _outputs PKG_CONFIG_EXECUTABLE)
+    elseif(CMAKE_HOST_APPLE)
+        _qgc_gst_find_apple_pkg_config(PKG_CONFIG_EXECUTABLE)
+    endif()
+    # The Windows pkg-config redefines prefix from each .pc file's location by default.
+    if(CMAKE_HOST_WIN32)
+        list(APPEND _pkg_config_args DONT_DEFINE_PREFIX)
+        list(APPEND _outputs PKG_CONFIG_ARGN)
+    endif()
+    gstreamer_apply_pkgconfig_env(MODE SDK ${_pkg_config_args} LIBDIR "${GSTREAMER_LIB_PATH}/pkgconfig"
+                                  "${GSTREAMER_PLUGIN_PATH}/pkgconfig"
+    )
     return(PROPAGATE ${_outputs})
 endfunction()
 

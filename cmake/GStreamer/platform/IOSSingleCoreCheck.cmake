@@ -17,7 +17,7 @@ if(_core_symbols)
     message(
         FATAL_ERROR
             "GStreamer iOS core check: ${APP} defines GStreamer core symbols (${_core_symbols}), so it links a second "
-            "core from the merged archive. A core function QGC calls is missing from GStreamer::mobile: add it to "
-            "QGC_GST_IOS_APP_CORE_SYMBOLS in cmake/GStreamer/platform/IOS.cmake."
+            "core from the merged archive. Only GStreamer::mobile may link GStreamer_static "
+            "(cmake/GStreamer/platform/IOS.cmake); the app takes GStreamer from it."
     )
 endif()

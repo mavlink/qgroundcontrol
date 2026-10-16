@@ -184,7 +184,7 @@ function(_qgc_gst_discover_windows_sdk)
 
     if(GStreamer_ROOT_DIR AND EXISTS "${GStreamer_ROOT_DIR}")
         _qgc_gst_windows_sdk_complete("${GStreamer_ROOT_DIR}" _gst_win_sdk_complete)
-        _qgc_gst_sdk_pc_version("${GStreamer_ROOT_DIR}/lib" _gst_win_sdk_version)
+        _qgc_gst_sdk_version("${GStreamer_ROOT_DIR}/lib" "${GStreamer_ROOT_DIR}/include" _gst_win_sdk_version)
         if(NOT _gst_win_sdk_complete)
             message(WARNING "Existing GStreamer SDK at ${GStreamer_ROOT_DIR} is incomplete "
                             "(missing devel/runtime artifacts). Falling back to auto-download."

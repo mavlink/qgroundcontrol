@@ -169,7 +169,7 @@ if(ANDROID OR IOS)
 endif()
 
 # Cached pkg-config, find_library and try-compile results describe one SDK: drop them when the
-# root, its .pc version, the linkage or the pkg-config invocation changes. Discovery derives its
+# root, its version, the linkage or the pkg-config invocation changes. Discovery derives its
 # pkg-config flags from the root and the linkage, so only the user's cached flags are added.
 set(_qgc_gst_fingerprint_pkg_config "")
 if(NOT GStreamer_USE_MERGED_STATIC)
@@ -181,8 +181,8 @@ if(GStreamer_USE_STATIC_LIBS)
 else()
     set(_qgc_gst_linkage shared)
 endif()
-_qgc_gst_sdk_pc_version("${GSTREAMER_LIB_PATH}" _qgc_gst_pc_version)
-set(_qgc_gst_fingerprint "${GStreamer_ROOT_DIR}|${QGC_GST_REQUESTED_VERSION}|${_qgc_gst_pc_version}")
+_qgc_gst_sdk_version("${GSTREAMER_LIB_PATH}" "${GSTREAMER_INCLUDE_PATH}" _qgc_gst_sdk_version)
+set(_qgc_gst_fingerprint "${GStreamer_ROOT_DIR}|${QGC_GST_REQUESTED_VERSION}|${_qgc_gst_sdk_version}")
 string(APPEND _qgc_gst_fingerprint "|${_qgc_gst_linkage}|${_qgc_gst_fingerprint_pkg_config}")
 _qgc_gst_refresh_sdk_cache("${_qgc_gst_fingerprint}")
 
@@ -371,7 +371,8 @@ endif()
 # GstVideoOrientationMeta is officially in 1.26+, but bundled iOS/Android SDKs sometimes
 # strip it. Feature-test the actual header instead of trusting the version number. Only the core is
 # probed: GStreamer::mobile has the same headers, and on iOS it is a framework this project builds, which
-# try_compile cannot link (it takes imported targets only).
+# try_compile cannot link (it takes imported targets only). On iOS GStreamer::GStreamer carries no archive, which this
+# sizeof() probe does not need.
 qgc_check_gst_header(
     VAR
     QGC_GST_HAS_VIDEO_ORIENTATION_META

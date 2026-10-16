@@ -26,9 +26,11 @@ set(_qgc_gst_tests
     test_ios_xcframework_slice
     test_sdk_acquire
     test_android_sdk_extract
+    test_android_pkg_config
     test_static_init
     test_ios_static_plugins
     test_ios_single_core
+    test_ios_sdk_version
     test_notice
 )
 
@@ -76,6 +78,7 @@ set(_qgc_gst_failure_cases
     "test_ios_xcframework_slice|NoMatchingArch|no-matching-arch|no iphoneos slice for architectures 'x86_64'"
     "test_download_win_version_guard|||Windows GStreamer SDK requires version 1.28 or later"
     "test_windows_installer_guard|Unpinned|unpinned|refusing to silently run the downloaded Windows installer"
+    "test_ios_sdk_version|BelowFloor|below-floor|older than the required 1.28 floor"
 )
 foreach(_qgc_failure_case IN LISTS _qgc_gst_failure_cases)
     string(REPLACE "|" ";" _qgc_failure_parts "${_qgc_failure_case}")
@@ -120,6 +123,7 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
               install
               install-macos
               android-mobile
+              ios-link
               sdk-prefix-decoy
     )
         add_test(
