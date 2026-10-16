@@ -198,6 +198,22 @@ if(MACOS AND GSTREAMER_LIB_PATH)
     )
 endif()
 
+# QGC_GST_BUNDLE_PLUGINS=OFF: the install carries no plugins (Install.cmake), so the app keeps the system plugin path.
+# An AppImage cannot rely on the host's plugins: its bundled GStreamer core and GLib would load them.
+if(LINUX AND NOT QGC_GST_BUNDLE_PLUGINS)
+    if(QGC_CREATE_APPIMAGE)
+        message(
+            FATAL_ERROR "QGC_GST_BUNDLE_PLUGINS=OFF is for distribution packages, whose GStreamer plugins come from "
+                        "the system; an AppImage must bundle them. Set QGC_CREATE_APPIMAGE=OFF."
+        )
+    endif()
+    set_property(
+        SOURCE GStreamerEnvironment.cc TARGET_DIRECTORY ${CMAKE_PROJECT_NAME}
+        APPEND
+        PROPERTY COMPILE_DEFINITIONS QGC_GST_SYSTEM_PLUGINS
+    )
+endif()
+
 # Native packages install only the Runtime component. Keep this assignment
 # scoped here so bundled SDK files are included without packaging dependency
 # development files declared elsewhere in the source tree.

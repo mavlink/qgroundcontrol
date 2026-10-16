@@ -171,7 +171,9 @@ bool _extractApkAsset(const char* assetPath, const QString& destPath)
 }
 #endif
 
-#if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
+// QGC_GST_SYSTEM_PLUGINS: a Linux build with QGC_GST_BUNDLE_PLUGINS=OFF, packaged with the system's plugins, which it
+// always uses as they are.
+#if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS) && !defined(QGC_GST_SYSTEM_PLUGINS)
 
 void _unsetEnv(const char* name)
 {
@@ -339,7 +341,7 @@ bool _applyBundleLayout(const QString& platformLabel, const BundleLayout& layout
     return true;
 }
 
-#endif  // !Q_OS_ANDROID && !Q_OS_IOS
+#endif  // !Q_OS_ANDROID && !Q_OS_IOS && !QGC_GST_SYSTEM_PLUGINS
 
 ValidationResult _setGstEnvVars()
 {
@@ -489,7 +491,7 @@ ValidationResult _setGstEnvVars()
         _setGstEnv("GST_REGISTRY_REUSE_PLUGIN_SCANNER", QStringLiteral("no"));
     }
 
-#elif defined(Q_OS_LINUX)
+#elif defined(Q_OS_LINUX) && !defined(QGC_GST_SYSTEM_PLUGINS)
     // An AppImage or other bundle ships its runtime under <prefix>/lib; a plugin path set by the user wins.
     if (!qEnvironmentVariableIsSet("GST_PLUGIN_PATH_1_0") && !qEnvironmentVariableIsSet("GST_PLUGIN_PATH") &&
         !qEnvironmentVariableIsSet("GST_PLUGIN_SYSTEM_PATH_1_0") &&

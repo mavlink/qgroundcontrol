@@ -63,6 +63,43 @@ def test_linux_native_generators_use_stable_identity_and_finalization() -> None:
     assert "ValidatePackageVersion.cmake" in arch
 
 
+def test_arch_package_depends_on_system_gstreamer_plugins_when_not_bundled(tmp_path) -> None:
+    plugin_packages = {"gst-plugins-good", "gst-plugins-bad-libs", "gst-libav"}
+    for bundle, expected in (("ON", set()), ("OFF", plugin_packages)):
+        source_dir = tmp_path / bundle / "source"
+        build_dir = tmp_path / bundle / "build"
+        (source_dir / "deploy/linux").mkdir(parents=True)
+        (source_dir / "deploy/linux/PKGBUILD.in").write_text(
+            (REPO_ROOT / "deploy/linux/PKGBUILD.in").read_text()
+        )
+        (source_dir / "CMakeLists.txt").write_text(
+            f"""
+cmake_minimum_required(VERSION 3.25)
+project(QGroundControl LANGUAGES NONE HOMEPAGE_URL "https://qgroundcontrol.com")
+add_custom_target(QGroundControl)
+set(QGC_APP_VERSION_STR v5.0.0)
+set(QGC_ENABLE_GST_VIDEOSTREAMING ON)
+set(QGC_GST_BUNDLE_PLUGINS {bundle})
+include("{(REPO_ROOT / "cmake/install/CreateArchPackage.cmake").as_posix()}")
+""".lstrip()
+        )
+
+        result = subprocess.run(
+            ["cmake", "-S", str(source_dir), "-B", str(build_dir)],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 0, result.stderr
+
+        pkgbuild = (build_dir / "arch-pkg/PKGBUILD").read_text()
+        depends = re.search(r"^depends=\((.*)\)$", pkgbuild, re.MULTILINE)
+        assert depends, pkgbuild
+        packages = set(re.findall(r"'([^']+)'", depends.group(1)))
+        assert {"gstreamer", "gst-plugins-base-libs"} <= packages
+        assert packages & plugin_packages == expected, bundle
+
+
 def test_package_version_guard_covers_target_and_cpack_entrypoints() -> None:
     source_dir = REPO_ROOT / "cmake/install"
     common = CPACK_DIR / "CreateCPackCommon.cmake"

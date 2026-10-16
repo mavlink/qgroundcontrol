@@ -131,6 +131,9 @@ set(QGC_GST_CUDA_STUB_DIR
     ""
     CACHE PATH "Linux: directory with a cuda.h for the CUDA GPU path when no CUDA Toolkit is installed"
 )
+option(QGC_GST_BUNDLE_PLUGINS
+       "Linux: install the system's GStreamer plugins and GIO modules with the app (OFF for distribution packages)" ON
+)
 
 # Coverage thresholds
 set(QGC_COVERAGE_LINE_THRESHOLD

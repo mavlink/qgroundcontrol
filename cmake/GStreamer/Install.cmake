@@ -7,14 +7,19 @@
 
 include_guard(GLOBAL)
 
-# Pure (script-testable) plugin-name filter: keep only paths whose basename is
-# <prefix><name>(boundary) where <name> is in GSTREAMER_PLUGINS. The trailing
+# _qgc_gst_filter_plugin_paths(<prefix> <paths> <out_var> [<name>...])
+# Pure (script-testable) name filter: keep only paths whose basename is
+# <prefix><name>(boundary) where <name> is one of the <name>s, by default GSTREAMER_PLUGINS. The trailing
 # boundary stops gstvideo matching gstvideoconvert.
 function(_qgc_gst_filter_plugin_paths prefix paths out_var)
+    set(_names ${ARGN})
+    if(NOT _names)
+        set(_names ${GSTREAMER_PLUGINS})
+    endif()
     set(_filtered "")
     foreach(_path IN LISTS paths)
         get_filename_component(_name "${_path}" NAME)
-        foreach(_allowed IN LISTS GSTREAMER_PLUGINS)
+        foreach(_allowed IN LISTS _names)
             string(REGEX REPLACE "([][.+*?^$()|\\\\])" "\\\\\\1" _allowed_re "${_allowed}")
             if(_name MATCHES "^${prefix}${_allowed_re}([^a-zA-Z0-9]|$)")
                 list(APPEND _filtered "${_path}")
@@ -30,12 +35,14 @@ endfunction()
 
 # Shared install-from-glob helper; <label> prefixes its errors. CALLER must specify GLOB_PATTERN; FILTER_PREFIX
 # (optional) restricts results to files matching ${FILTER_PREFIX}${name}.${EXT} where name
-# is in GSTREAMER_PLUGINS. Used by the public install_* wrappers below.
+# is in FILTER_NAMES, by default GSTREAMER_PLUGINS. Used by the public install_* wrappers below.
 # Invariant: GLOB is evaluated at configure time, so the SDK must already be
 # expanded before any install_* wrapper runs; re-running cmake --install without
 # re-configure reuses this stale list.
 function(_qgc_gst_install_glob label)
-    cmake_parse_arguments(PARSE_ARGV 1 ARG "REQUIRE_NONEMPTY" "SOURCE_DIR;DEST_DIR;GLOB_PATTERN;FILTER_PREFIX" "")
+    cmake_parse_arguments(PARSE_ARGV 1 ARG "REQUIRE_NONEMPTY" "SOURCE_DIR;DEST_DIR;GLOB_PATTERN;FILTER_PREFIX"
+                          "FILTER_NAMES"
+    )
     if(ARG_KEYWORDS_MISSING_VALUES)
         message(FATAL_ERROR "${label}: missing values for: ${ARG_KEYWORDS_MISSING_VALUES}")
     endif()
@@ -53,7 +60,7 @@ function(_qgc_gst_install_glob label)
     endif()
     file(GLOB _matches "${ARG_SOURCE_DIR}/${ARG_GLOB_PATTERN}")
     if(ARG_FILTER_PREFIX)
-        _qgc_gst_filter_plugin_paths("${ARG_FILTER_PREFIX}" "${_matches}" _matches)
+        _qgc_gst_filter_plugin_paths("${ARG_FILTER_PREFIX}" "${_matches}" _matches ${ARG_FILTER_NAMES})
     endif()
     if(_matches)
         install(FILES ${_matches} DESTINATION "${ARG_DEST_DIR}")
@@ -67,10 +74,11 @@ function(_qgc_gst_install_glob label)
     endif()
 endfunction()
 
-# gstreamer_install_gio_modules(SOURCE_DIR <dir> DEST_DIR <dir> EXTENSION <ext>)
-# Installs every *.<ext> GIO module in SOURCE_DIR (warns and installs nothing when it does not exist).
+# gstreamer_install_gio_modules(SOURCE_DIR <dir> DEST_DIR <dir> EXTENSION <ext> [MODULES <name>...])
+# Installs every *.<ext> GIO module in SOURCE_DIR, or with MODULES the lib<name>.<ext> ones it has (warns and installs
+# nothing when SOURCE_DIR does not exist).
 function(gstreamer_install_gio_modules)
-    cmake_parse_arguments(PARSE_ARGV 0 ARG "" "SOURCE_DIR;DEST_DIR;EXTENSION" "")
+    cmake_parse_arguments(PARSE_ARGV 0 ARG "" "SOURCE_DIR;DEST_DIR;EXTENSION" "MODULES")
     if(ARG_KEYWORDS_MISSING_VALUES)
         message(FATAL_ERROR "gstreamer_install_gio_modules: missing values for: ${ARG_KEYWORDS_MISSING_VALUES}")
     endif()
@@ -82,6 +90,10 @@ function(gstreamer_install_gio_modules)
             message(FATAL_ERROR "gstreamer_install_gio_modules: ${_required} is required")
         endif()
     endforeach()
+    set(_filter "")
+    if(ARG_MODULES)
+        set(_filter FILTER_PREFIX lib FILTER_NAMES ${ARG_MODULES})
+    endif()
     _qgc_gst_install_glob(
         "gstreamer_install_gio_modules"
         SOURCE_DIR
@@ -90,6 +102,7 @@ function(gstreamer_install_gio_modules)
         "${ARG_DEST_DIR}"
         GLOB_PATTERN
         "*.${ARG_EXTENSION}"
+        ${_filter}
     )
 endfunction()
 
@@ -272,7 +285,7 @@ function(_qgc_gst_install_notice dest)
     endif()
 endfunction()
 
-# Linux: plugins, GIO modules, the gst-plugin-scanner/gst-ptp-helper binaries and the notice.
+# Linux: plugins, the GIO modules for TLS and proxies, the gst-plugin-scanner/gst-ptp-helper binaries and the notice.
 function(gstreamer_install_linux_sdk app_name plugin_dest_out)
     set(_plugin_dest "lib/gstreamer-1.0")
     gstreamer_install_plugins(
@@ -285,8 +298,21 @@ function(gstreamer_install_linux_sdk app_name plugin_dest_out)
         PREFIX
         "libgst"
     )
-    gstreamer_install_gio_modules(SOURCE_DIR "${GSTREAMER_LIB_PATH}/gio/modules" DEST_DIR "lib/gio/modules" EXTENSION
-                                  "so"
+    # glib-networking's GnuTLS backend and proxy resolvers (libproxy; GNOME's reads its settings through dconf). The
+    # VFS modules (gvfsdbus, remote volume monitor) stay out: the bundle runs GIO with GIO_USE_VFS=local (AppRun, and
+    # GStreamerEnvironment.cc on GLib 2.76+) or alongside the system's modules.
+    gstreamer_install_gio_modules(
+        SOURCE_DIR
+        "${GSTREAMER_LIB_PATH}/gio/modules"
+        DEST_DIR
+        "lib/gio/modules"
+        EXTENSION
+        "so"
+        MODULES
+        giognutls
+        giolibproxy
+        giognomeproxy
+        dconfsettings
     )
     # Helper binary path varies by distro: Debian lib/<multiarch>/gstreamer1.0/,
     # Fedora libexec/gstreamer-1.0/, Arch lib/gstreamer-1.0/.
@@ -595,6 +621,15 @@ function(gstreamer_install_platform_sdk app_name)
         message(FATAL_ERROR "gstreamer_install_platform_sdk: unknown arguments: ${GIPS_UNPARSED_ARGUMENTS}")
     endif()
     qgc_gst_platform(_gips_platform)
+    # QGC_GST_BUNDLE_PLUGINS=OFF (unset means ON): a Linux distribution package depends on the system's plugins, which
+    # the app then uses as they are (GStreamerEnvironment.cc, QGC_GST_SYSTEM_PLUGINS).
+    if(_gips_platform STREQUAL "linux"
+       AND DEFINED QGC_GST_BUNDLE_PLUGINS
+       AND NOT QGC_GST_BUNDLE_PLUGINS
+    )
+        message(STATUS "GStreamer: QGC_GST_BUNDLE_PLUGINS is OFF; the install uses the system's plugins")
+        return()
+    endif()
     if(NOT GIPS_REQUIRED_PLUGINS)
         gstreamer_runtime_required_plugins(GIPS_REQUIRED_PLUGINS)
     endif()

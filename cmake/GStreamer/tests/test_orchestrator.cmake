@@ -595,6 +595,15 @@ elseif(SCENARIO STREQUAL "install")
     foreach(_plugin IN ITEMS videoconvert videoscale)
         file(WRITE "${_sdk_a}/lib/gstreamer-1.0/libgst${_plugin}.so" "")
     endforeach()
+    # A system GIO module directory: the TLS/proxy/dconf modules are bundled, the VFS ones and the cache are not.
+    set(_gio_bundled libgiognutls.so libgiolibproxy.so libgiognomeproxy.so libdconfsettings.so)
+    foreach(
+        _module IN
+        LISTS _gio_bundled
+        ITEMS libgvfsdbus.so libgioremote-volume-monitor.so giomodule.cache
+    )
+        file(WRITE "${_sdk_a}/lib/gio/modules/${_module}" "")
+    endforeach()
     set(_plugins -DQGC_TEST_PLUGINS=coreelements,videoconvert,videoscale)
     _qgc_configure_ok("install rules" --fresh "-DGStreamer_ROOT_DIR=${_sdk_a}" ${_plugins}
                       -DQGC_TEST_INSTALL_REQUIRED_PLUGINS=coreelements,videoconvertscale
@@ -608,6 +617,14 @@ elseif(SCENARIO STREQUAL "install")
             message(FATAL_ERROR "ASSERT [staged plugins]: libgst${_plugin}.so is not under DESTDIR/prefix")
         endif()
     endforeach()
+    file(
+        GLOB _gio_staged
+        RELATIVE "${WORK_DIR}/stage/opt/qgc/lib/gio/modules"
+        "${WORK_DIR}/stage/opt/qgc/lib/gio/modules/*"
+    )
+    list(SORT _gio_staged)
+    list(SORT _gio_bundled)
+    qgc_test_assert_streq("staged GIO modules" "${_gio_bundled}" "${_gio_staged}")
     # The bundled GStreamer's license notice ships with it.
     file(READ "${WORK_DIR}/stage/opt/qgc/share/licenses/gstreamer/NOTICE.txt" _notice)
     if(NOT _notice MATCHES "^GStreamer 1\\.24\\.0\n"
@@ -623,6 +640,20 @@ elseif(SCENARIO STREQUAL "install")
     string(REGEX REPLACE "[ \t\r\n]+" " " _normalized "${_qgc_output}")
     if(_qgc_result EQUAL 0 OR NOT _normalized MATCHES "missing required plugins in lib/gstreamer-1.0: udp ")
         message(FATAL_ERROR "ASSERT [missing plugin]: install did not fail for udp alone\n${_qgc_output}")
+    endif()
+
+    # A distribution package (QGC_GST_BUNDLE_PLUGINS=OFF) installs nothing of GStreamer and verifies nothing.
+    _qgc_configure_ok("install rules without bundled plugins" ${_plugins} -DQGC_GST_BUNDLE_PLUGINS=OFF)
+    if(NOT _qgc_output MATCHES "QGC_GST_BUNDLE_PLUGINS is OFF; the install uses the system's plugins")
+        message(FATAL_ERROR "ASSERT [system plugins]: configure does not report them\n${_qgc_output}")
+    endif()
+    _qgc_install()
+    if(NOT _qgc_result EQUAL 0 OR _qgc_output MATCHES "install verification")
+        message(FATAL_ERROR "ASSERT [system plugins]: install failed or verified plugins\n${_qgc_output}")
+    endif()
+    if(EXISTS "${WORK_DIR}/stage")
+        file(GLOB_RECURSE _staged "${WORK_DIR}/stage/*")
+        qgc_test_assert_streq("nothing installed" "" "${_staged}")
     endif()
 else()
     message(FATAL_ERROR "Unknown SCENARIO: ${SCENARIO}")
