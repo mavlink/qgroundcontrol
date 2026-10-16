@@ -312,8 +312,14 @@ void VideoManager::_createVideoReceivers()
 
 void VideoManager::cleanup()
 {
-    for (VideoReceiver *receiver : std::as_const(_videoReceivers)) {
+    // Receivers must die here, not in ~VideoManager: that runs inside ~QCoreApplication, where queued events are no
+    // longer delivered, so a receiver's worker thread never gets its quit task and the destructor waits forever.
+    const QList<VideoReceiver*> receivers = _videoReceivers;
+    _videoReceivers.clear();
+    _pendingRestarts.clear();
+    for (VideoReceiver* receiver : receivers) {
         QGCCorePlugin::instance()->releaseVideoSink(receiver->sink());
+        delete receiver;
     }
 }
 
@@ -873,7 +879,8 @@ void VideoManager::_connectReceiverLifecycle(VideoReceiver* receiver)
 {
     // Retrying after a failure is the receiver's job (GstVideoReceiver reconnects with backoff while autoReconnect is
     // set); restarting here as well would defeat its backoff and ignore autoReconnect.
-    (void) connect(receiver, &VideoReceiver::onStartComplete, this, [receiver](VideoReceiver::STATUS status) {
+    // The receiver is the context so calls queued from its worker thread are dropped when it is deleted.
+    (void) connect(receiver, &VideoReceiver::onStartComplete, receiver, [receiver](VideoReceiver::STATUS status) {
         qCDebug(VideoManagerLog) << "Video" << receiver->name() << "Start complete, status:" << status;
         if (status == VideoReceiver::STATUS_OK) {
             receiver->setStarted(true);
@@ -883,7 +890,7 @@ void VideoManager::_connectReceiverLifecycle(VideoReceiver* receiver)
         }
     });
 
-    (void) connect(receiver, &VideoReceiver::onStopComplete, this, [this, receiver](VideoReceiver::STATUS status) {
+    (void) connect(receiver, &VideoReceiver::onStopComplete, receiver, [this, receiver](VideoReceiver::STATUS status) {
         qCDebug(VideoManagerLog) << "Stop complete" << receiver->name()
                                  << QGCNetworkHelper::redactedUrlForLogging(receiver->uri()) << ", status:" << status;
         receiver->setStarted(false);
@@ -934,7 +941,8 @@ void VideoManager::_initVideoReceiver(VideoReceiver *receiver, QQuickWindow *win
 
     _connectReceiverLifecycle(receiver);
 
-    (void) connect(receiver, &VideoReceiver::streamingChanged, this, [this, receiver](bool active) {
+    // Receiver context, as in _connectReceiverLifecycle()
+    (void) connect(receiver, &VideoReceiver::streamingChanged, receiver, [this, receiver](bool active) {
         qCDebug(VideoManagerLog) << "Video" << receiver->name() << "streaming changed, active:" << (active ? "yes" : "no");
         if (!receiver->isThermal()) {
             _streaming = active;
@@ -942,7 +950,7 @@ void VideoManager::_initVideoReceiver(VideoReceiver *receiver, QQuickWindow *win
         }
     });
 
-    (void) connect(receiver, &VideoReceiver::decodingChanged, this, [this, receiver](bool active) {
+    (void) connect(receiver, &VideoReceiver::decodingChanged, receiver, [this, receiver](bool active) {
         qCDebug(VideoManagerLog) << "Video" << receiver->name() << "decoding changed, active:" << (active ? "yes" : "no");
         if (!receiver->isThermal()) {
             _decoding = active;
@@ -950,7 +958,7 @@ void VideoManager::_initVideoReceiver(VideoReceiver *receiver, QQuickWindow *win
         }
     });
 
-    (void) connect(receiver, &VideoReceiver::recordingChanged, this, [this, receiver](bool active) {
+    (void) connect(receiver, &VideoReceiver::recordingChanged, receiver, [this, receiver](bool active) {
         qCDebug(VideoManagerLog) << "Video" << receiver->name() << "recording changed, active:" << (active ? "yes" : "no");
         if (!receiver->isThermal()) {
             _recording = active;
@@ -961,14 +969,14 @@ void VideoManager::_initVideoReceiver(VideoReceiver *receiver, QQuickWindow *win
         }
     });
 
-    (void) connect(receiver, &VideoReceiver::recordingStarted, this, [this, receiver](const QString &filename) {
+    (void) connect(receiver, &VideoReceiver::recordingStarted, receiver, [this, receiver](const QString& filename) {
         qCDebug(VideoManagerLog) << "Video" << receiver->name() << "recording started";
         if (!receiver->isThermal()) {
             _subtitleWriter->startCapturingTelemetry(filename, videoSize());
         }
     });
 
-    (void) connect(receiver, &VideoReceiver::videoSizeChanged, this, [this, receiver](QSize size) {
+    (void) connect(receiver, &VideoReceiver::videoSizeChanged, receiver, [this, receiver](QSize size) {
         qCDebug(VideoManagerLog) << "Video" << receiver->name() << "resized. New resolution:" << size.width() << "x" << size.height();
         if (!receiver->isThermal()) {
             _videoSize = size;
@@ -977,15 +985,16 @@ void VideoManager::_initVideoReceiver(VideoReceiver *receiver, QQuickWindow *win
         }
     });
 
-    (void) connect(receiver, &VideoReceiver::onTakeScreenshotComplete, this, [receiver](VideoReceiver::STATUS status) {
-        if (status == VideoReceiver::STATUS_OK) {
-            qCDebug(VideoManagerLog) << "Video" << receiver->name() << "screenshot taken";
-        } else {
-            qCWarning(VideoManagerLog) << "Video" << receiver->name() << "screenshot failed";
-        }
-    });
+    (void) connect(receiver, &VideoReceiver::onTakeScreenshotComplete, receiver,
+                   [receiver](VideoReceiver::STATUS status) {
+                       if (status == VideoReceiver::STATUS_OK) {
+                           qCDebug(VideoManagerLog) << "Video" << receiver->name() << "screenshot taken";
+                       } else {
+                           qCWarning(VideoManagerLog) << "Video" << receiver->name() << "screenshot failed";
+                       }
+                   });
 
-    (void) connect(receiver, &VideoReceiver::videoStreamInfoChanged, this, [this, receiver]() {
+    (void) connect(receiver, &VideoReceiver::videoStreamInfoChanged, receiver, [this, receiver]() {
         const QGCVideoStreamInfo *videoStreamInfo = receiver->videoStreamInfo();
         qCDebug(VideoManagerLog) << "Video" << receiver->name() << "stream info:" << (videoStreamInfo ? "received" : "lost");
 
