@@ -103,6 +103,9 @@ The managed image and Windows warm-pool routes are opt-in repository settings. W
 `RUNS_ON_LINUX_BUILDER` or `RUNS_ON_WINDOWS_POOL`, every affected workflow keeps its existing
 standard RunsOn runner. See the [runner image guide](runner-images/README.md) for AWS prerequisites,
 activation, rebuild cadence, and the organization-level warm-pool example.
+The Windows builder uses RunsOn's `windows25-full-x64` image because `windows22-full-x64` ships
+without Visual Studio. The dependency installer skips Visual Studio Build Tools when one existing
+instance already provides every required MSVC component.
 
 ### Release tags
 
