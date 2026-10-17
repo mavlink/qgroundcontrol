@@ -3,7 +3,6 @@
 #include <QtGui/QColor>
 #include <QtCore/QObject>
 #include <QtCore/QString>
-#include <QtCore/QUrl>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 class QGCOptions;
@@ -74,7 +73,6 @@ class QGCOptions : public QObject
     Q_PROPERTY(const QGCFlyViewOptions *flyView     READ flyViewOptions                 CONSTANT)
     Q_PROPERTY(QString firmwareUpgradeSingleURL     READ firmwareUpgradeSingleURL       CONSTANT)
     Q_PROPERTY(QStringList surveyBuiltInPresetNames READ surveyBuiltInPresetNames       CONSTANT)
-    Q_PROPERTY(QUrl preFlightChecklistUrl           READ preFlightChecklistUrl          CONSTANT)
 
 public:
     explicit QGCOptions(QObject *parent = nullptr);
@@ -91,9 +89,6 @@ public:
     /// Should the mission status indicator (Plan View) be shown?
     /// @return Yes or no
     virtual bool showMissionStatus() const { return true; }
-
-    /// Provides an optional, custom preflight checklist
-    virtual QUrl preFlightChecklistUrl() const { return QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/FlyView/PreFlightCheckList.qml")); }
 
     /// Allows replacing the toolbar Light Theme color
     virtual QColor toolbarBackgroundLight() const { return QColorConstants::White; }

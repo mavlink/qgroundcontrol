@@ -2,7 +2,6 @@
     "version": 1,
     "fileType": "SettingsUI",
     "bindings": {
-        "hasChecklist": "QGroundControl.corePlugin.options.preFlightChecklistUrl.toString().length",
         "useChecklistValue": "QGroundControl.settingsManager.appSettings.useChecklist.value",
         "virtualJoystickOn": "QGroundControl.settingsManager.appSettings.virtualJoystick.rawValue"
     },
@@ -12,12 +11,11 @@
             "keywords": ["checklist", "preflight", "multi vehicle", "center map", "log replay", "camera control", "home position", "mission popup", "geomap", "3d map", "map engine", "debug", "force arm"],
             "controls": [
                 {
-                    "setting": "appSettings.useChecklist",
-                    "showWhen": "hasChecklist"
+                    "setting": "appSettings.useChecklist"
                 },
                 {
                     "setting": "appSettings.enforceChecklist",
-                    "showWhen": "hasChecklist && QGroundControl.settingsManager.appSettings.useChecklist.userVisible",
+                    "showWhen": "QGroundControl.settingsManager.appSettings.useChecklist.userVisible",
                     "enableWhen": "useChecklistValue"
                 },
                 {

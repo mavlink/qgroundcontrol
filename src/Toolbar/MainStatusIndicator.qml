@@ -17,8 +17,7 @@ RowLayout {
     property var    _vehicleInAir:      _activeVehicle ? _activeVehicle.airborne || _activeVehicle.landing : false
     property bool   _vtolInFWDFlight:   _activeVehicle ? _activeVehicle.vtolInFwdFlight : false
     property bool   _rebootRequired:    _activeVehicle ? _activeVehicle.rebootRequired : false
-    property bool   _checklistEnabled:  QGroundControl.settingsManager.appSettings.useChecklist.rawValue &&
-                                        QGroundControl.corePlugin.options.preFlightChecklistUrl.toString().length > 0
+    property bool   _checklistEnabled:  QGroundControl.settingsManager.appSettings.useChecklist.rawValue
     property bool   _checklistComplete: _activeVehicle ? _activeVehicle.checkListState === Vehicle.CheckListPassed : false
     property bool   _checklistBlocksArming: _checklistEnabled && QGroundControl.settingsManager.appSettings.enforceChecklist.rawValue && !_checklistComplete
     property int    _healthErrorCount:      _healthAndArmingChecksSupported ?
@@ -78,7 +77,7 @@ RowLayout {
         id:         checklistLoader
         visible:    false
         active:     _checklistEnabled && !!_activeVehicle
-        source:     QGroundControl.corePlugin.options.preFlightChecklistUrl
+        source:     "qrc:/qml/QGroundControl/FlyView/PreFlightCheckList.qml"
 
         // The vehicle may still hold the Passed state of the previous checklist, so sync it to the new one
         onLoaded: {
