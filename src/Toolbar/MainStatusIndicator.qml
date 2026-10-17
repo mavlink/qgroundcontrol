@@ -21,6 +21,10 @@ RowLayout {
                                         QGroundControl.corePlugin.options.preFlightChecklistUrl.toString().length > 0
     property bool   _checklistComplete: _activeVehicle ? _activeVehicle.checkListState === Vehicle.CheckListPassed : false
     property bool   _checklistBlocksArming: _checklistEnabled && QGroundControl.settingsManager.appSettings.enforceChecklist.rawValue && !_checklistComplete
+    property int    _healthErrorCount:      _healthAndArmingChecksSupported ?
+                                                _activeVehicle.healthAndArmingCheckReport.errorCount : 0
+    property int    _healthWarningCount:    _healthAndArmingChecksSupported ?
+                                                _activeVehicle.healthAndArmingCheckReport.warningCount : 0
 
     readonly property int tabChecklist: 0
     readonly property int tabMessages:  1
@@ -31,50 +35,32 @@ RowLayout {
     // Raised when the dropdown is already open and should switch tabs
     signal tabRequested(int tab)
 
-    // Small colored label right-aligned in a dropdown tab; hidden when text is empty
-    component TabStatusLabel: Rectangle {
-        id: statusLabel
-
-        property string text
-
+    component TabStatusLabel: StatusPill {
         anchors.right:          parent.right
         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
         anchors.verticalCenter: parent.verticalCenter
-        width:                  statusLabelText.implicitWidth + ScreenTools.defaultFontPixelWidth
-        height:                 statusLabelText.implicitHeight
-        radius:                 height / 2
-        visible:                text !== ""
-
-        QGCLabel {
-            id:                 statusLabelText
-            anchors.centerIn:   parent
-            text:               statusLabel.text
-            color:              QGroundControl.globalPalette.indicatorText
-            font.pointSize:     ScreenTools.smallFontPointSize
-            font.bold:          true
-        }
     }
 
-    // Measures a TabStatusLabel's text, for sizing tab padding
+    component TabSeverityBadge: SeverityPill {
+        anchors.right:          parent.right
+        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
+        anchors.verticalCenter: parent.verticalCenter
+    }
+
+    // Measures a StatusPill's text, for reserving its width
     component LabelMetrics: TextMetrics {
         font.family:    ScreenTools.normalFontFamily
         font.pointSize: ScreenTools.smallFontPointSize
         font.bold:      true
     }
 
-    // Tab label showing the most severe level: Error, then Warning, then Info (other unread messages)
-    component TabSeverityBadge: TabStatusLabel {
-        property int errorCount:    0
-        property int warningCount:  0
-        property int unreadCount:   0
+    LabelMetrics { id: errorLabelMetrics;   text: qsTr("Error") }
+    LabelMetrics { id: warningLabelMetrics; text: qsTr("Warning") }
+    LabelMetrics { id: infoLabelMetrics;    text: qsTr("Info") }
 
-        readonly property string severity: errorCount > 0 ? "error" : (warningCount > 0 ? "warning" : (unreadCount > 0 ? "info" : ""))
-
-        text:   severity === "error" ? qsTr("Error") :
-                    (severity === "warning" ? qsTr("Warning") : (severity === "info" ? qsTr("Info") : ""))
-        color:  severity === "error" ? QGroundControl.globalPalette.errorIndicator :
-                    (severity === "warning" ? QGroundControl.globalPalette.warningIndicator : QGroundControl.globalPalette.colorBlue)
-    }
+    readonly property real _severityLabelMaxWidth: Math.max(errorLabelMetrics.advanceWidth,
+                                                            warningLabelMetrics.advanceWidth,
+                                                            infoLabelMetrics.advanceWidth)
 
     function dropMainStatusIndicator(showMessages = false) {
         _initialTab = showMessages ? tabMessages : -1
@@ -106,9 +92,12 @@ RowLayout {
         id:                 mainStatusLabel
         objectName:         "mainStatusText"
         Layout.fillHeight:  true
+        // Reserves room for every badge, visible or not, so neighboring toolbar items don't shift as badges come and go
+        // and the severity label changes width
         Layout.preferredWidth: Math.max(contentWidth,
-                                        criticalMessageBadge.width + rebootRequiredIcon.width +
-                                        firmwareUpdateBadge.width + ScreenTools.defaultFontPixelWidth * 0.5)
+                                        _severityLabelMaxWidth + ScreenTools.defaultFontPixelWidth +
+                                        rebootRequiredIcon.width + firmwareUpdateBadge.width +
+                                        ScreenTools.defaultFontPixelWidth * 0.5)
         verticalAlignment:  Text.AlignVCenter
         text:               mainStatusText()
         color:              qgcPal.text
@@ -191,23 +180,27 @@ RowLayout {
             }
         }
 
-        CountBadge {
-            id:                 criticalMessageBadge
-            objectName:         "mainStatusCriticalBadge"
+        // Worst state across the dropdown tabs: messages, health and arming checks, and the pre-flight checklist
+        SeverityPill {
+            id:                 severityBadge
+            objectName:         "mainStatusSeverityBadge"
             anchors.top:        parent.top
             anchors.topMargin:  ScreenTools.defaultFontPixelHeight * 0.25
             anchors.right:      parent.right
-            color:              qgcPal.errorIndicator
-            count:              _activeVehicle ? _activeVehicle.unreadCriticalMessageCount : 0
+            errorCount:         _activeVehicle ? _activeVehicle.unreadCriticalMessageCount + _healthErrorCount : 0
+            // The checklist is pre-flight, so an unfinished one is not flagged once armed
+            warningCount:       _activeVehicle ? _activeVehicle.unreadWarningMessageCount + _healthWarningCount +
+                                                 (_checklistEnabled && !_checklistComplete && !_armed ? 1 : 0) : 0
+            unreadCount:        _activeVehicle ? _activeVehicle.unreadMessageCount : 0
         }
 
         QGCColoredImage {
             id:                 rebootRequiredIcon
             objectName:         "mainStatusRebootRequiredIcon"
-            anchors.verticalCenter: criticalMessageBadge.verticalCenter
-            anchors.right:      criticalMessageBadge.visible ? criticalMessageBadge.left : parent.right
-            anchors.rightMargin: criticalMessageBadge.visible ? ScreenTools.defaultFontPixelWidth * 0.25 : 0
-            width:              criticalMessageBadge.width * 0.9
+            anchors.verticalCenter: severityBadge.verticalCenter
+            anchors.right:      severityBadge.visible ? severityBadge.left : parent.right
+            anchors.rightMargin: severityBadge.visible ? ScreenTools.defaultFontPixelWidth * 0.25 : 0
+            width:              ScreenTools.defaultFontPixelHeight * 0.9
             height:             width
             source:             "/res/PowerButton.svg"
             color:              qgcPal.colorOrange
@@ -217,10 +210,10 @@ RowLayout {
         Rectangle {
             id:                 firmwareUpdateBadge
             objectName:         "mainStatusFirmwareUpdateBadge"
-            anchors.verticalCenter: criticalMessageBadge.verticalCenter
-            anchors.right:      rebootRequiredIcon.visible ? rebootRequiredIcon.left : (criticalMessageBadge.visible ? criticalMessageBadge.left : parent.right)
-            anchors.rightMargin: (rebootRequiredIcon.visible || criticalMessageBadge.visible) ? ScreenTools.defaultFontPixelWidth * 0.25 : 0
-            width:              criticalMessageBadge.width
+            anchors.verticalCenter: severityBadge.verticalCenter
+            anchors.right:      rebootRequiredIcon.visible ? rebootRequiredIcon.left : (severityBadge.visible ? severityBadge.left : parent.right)
+            anchors.rightMargin: (rebootRequiredIcon.visible || severityBadge.visible) ? ScreenTools.defaultFontPixelWidth * 0.25 : 0
+            width:              ScreenTools.defaultFontPixelHeight
             height:             width
             radius:             width / 2
             color:              Qt.rgba(1, 1, 1, 0.75)
@@ -439,13 +432,9 @@ RowLayout {
                 Layout.fillWidth:   true
 
                 // Keeps the centered tab labels clear of the widest (translated) status label
-                readonly property real badgePadding: Math.max(errorLabelMetrics.advanceWidth, warningLabelMetrics.advanceWidth,
-                                                              infoLabelMetrics.advanceWidth, completeLabelMetrics.advanceWidth,
+                readonly property real badgePadding: Math.max(_severityLabelMaxWidth, completeLabelMetrics.advanceWidth,
                                                               incompleteLabelMetrics.advanceWidth) + ScreenTools.defaultFontPixelWidth * 3
 
-                LabelMetrics { id: errorLabelMetrics;      text: qsTr("Error") }
-                LabelMetrics { id: warningLabelMetrics;    text: qsTr("Warning") }
-                LabelMetrics { id: infoLabelMetrics;       text: qsTr("Info") }
                 LabelMetrics { id: completeLabelMetrics;   text: qsTr("Complete") }
                 LabelMetrics { id: incompleteLabelMetrics; text: qsTr("Incomplete") }
 
@@ -485,8 +474,8 @@ RowLayout {
 
                     TabSeverityBadge {
                         objectName:     "mainStatusOverallStatusTabBadge"
-                        errorCount:     _healthAndArmingChecksSupported ? _activeVehicle.healthAndArmingCheckReport.errorCount : 0
-                        warningCount:   _healthAndArmingChecksSupported ? _activeVehicle.healthAndArmingCheckReport.warningCount : 0
+                        errorCount:     _healthErrorCount
+                        warningCount:   _healthWarningCount
                     }
                 }
 

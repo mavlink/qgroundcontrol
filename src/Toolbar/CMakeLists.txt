@@ -6,7 +6,6 @@ qt_add_qml_module(
     VERSION 1.0
     RESOURCE_PREFIX /qml
     QML_FILES BatteryIndicator.qml
-              CountBadge.qml
               EscIndicator.qml
               EscIndicatorPage.qml
               FlightModeIndicator.qml
@@ -28,7 +27,9 @@ qt_add_qml_module(
               RemoteIDIndicator.qml
               RemoteIDIndicatorPage.qml
               SelectViewDropdown.qml
+              SeverityPill.qml
               SignalStrength.qml
+              StatusPill.qml
               TelemetryRSSIIndicator.qml
               VehicleMessageList.qml
     NO_PLUGIN

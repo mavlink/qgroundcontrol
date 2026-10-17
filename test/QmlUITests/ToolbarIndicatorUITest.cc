@@ -11,6 +11,7 @@
 
 #include "AppSettings.h"
 #include "Fact.h"
+#include "HealthAndArmingCheckReport.h"
 #include "MavlinkSettings.h"
 #include "MockConfiguration.h"
 #include "MockLink.h"
@@ -315,12 +316,29 @@ void ToolbarIndicatorUITest::_testArmRequiresEnforcedChecklist()
                         QVERIFY2(checklistLabel, "Checklist tab label not shown");
                         QCOMPARE(checklistLabel->property("text").toString(), QStringLiteral("Incomplete"));
 
+                        vehicle->clearMessages();
+                        QQuickItem* const toolbarBadge = findVisibleItem(
+                            _rootItem, QStringLiteral("mainStatusSeverityBadge"), TestTimeout::mediumMs());
+                        QVERIFY2(toolbarBadge, "Toolbar severity badge not shown for an incomplete checklist");
+                        QTRY_COMPARE_WITH_TIMEOUT(toolbarBadge->property("severity").toString(),
+                                                  QStringLiteral("warning"), TestTimeout::mediumMs());
+
+                        // The checklist is pre-flight, so arming drops its warning
+                        vehicle->setArmed(true, false /* showError */);
+                        QVERIFY_TRUE_WAIT(vehicle->armed(), TestTimeout::mediumMs());
+                        QTRY_VERIFY_WITH_TIMEOUT(!toolbarBadge->isVisible(), TestTimeout::mediumMs());
+                        vehicle->setArmed(false, false /* showError */);
+                        QVERIFY_TRUE_WAIT(!vehicle->armed(), TestTimeout::mediumMs());
+                        QTRY_COMPARE_WITH_TIMEOUT(toolbarBadge->property("severity").toString(),
+                                                  QStringLiteral("warning"), TestTimeout::mediumMs());
+
                         vehicle->setCheckListState(Vehicle::CheckListPassed);
                         QTRY_VERIFY_WITH_TIMEOUT(armButton->isEnabled(), TestTimeout::mediumMs());
                         QTRY_COMPARE_WITH_TIMEOUT(statusText->property("text").toString(), QStringLiteral("Ready"),
                                                   TestTimeout::mediumMs());
                         QTRY_COMPARE_WITH_TIMEOUT(checklistLabel->property("text").toString(),
                                                   QStringLiteral("Complete"), TestTimeout::mediumMs());
+                        QTRY_VERIFY_WITH_TIMEOUT(!toolbarBadge->isVisible(), TestTimeout::mediumMs());
 
                         // Recreating the checklist must not leave the previous Passed state behind
                         useChecklist->setRawValue(false);
@@ -487,6 +505,10 @@ void ToolbarIndicatorUITest::_testVehicleMessagesMarkReadAndClear()
             QVERIFY2(messagesBadge, "Messages tab badge not shown with unread messages");
             QCOMPARE(messagesBadge->property("severity").toString(), QStringLiteral("info"));
             QCOMPARE(messagesBadge->property("text").toString(), QStringLiteral("Info"));
+            QQuickItem* const toolbarBadge =
+                findVisibleItem(_rootItem, QStringLiteral("mainStatusSeverityBadge"), TestTimeout::mediumMs());
+            QVERIFY2(toolbarBadge, "Toolbar severity badge not shown with unread messages");
+            QCOMPARE(toolbarBadge->property("severity").toString(), QStringLiteral("info"));
 
             vehicle->markMessagesRead();
             QVERIFY_TRUE_WAIT(!vehicle->hasUnreadMessages(), TestTimeout::mediumMs());
@@ -499,6 +521,9 @@ void ToolbarIndicatorUITest::_testVehicleMessagesMarkReadAndClear()
             QTRY_COMPARE_WITH_TIMEOUT(messagesBadge->property("severity").toString(), QStringLiteral("warning"),
                                       TestTimeout::mediumMs());
             QCOMPARE(messagesBadge->property("text").toString(), QStringLiteral("Warning"));
+            QTRY_COMPARE_WITH_TIMEOUT(toolbarBadge->property("severity").toString(), QStringLiteral("warning"),
+                                      TestTimeout::mediumMs());
+            QCOMPARE(toolbarBadge->property("text").toString(), QStringLiteral("Warning"));
 
             // Errors outrank warnings
             mockLink->sendStatusTextMessage(MAV_SEVERITY_ERROR, QStringLiteral("Status text error"));
@@ -509,17 +534,9 @@ void ToolbarIndicatorUITest::_testVehicleMessagesMarkReadAndClear()
             QTRY_COMPARE_WITH_TIMEOUT(messagesBadge->property("severity").toString(), QStringLiteral("error"),
                                       TestTimeout::mediumMs());
             QCOMPARE(messagesBadge->property("text").toString(), QStringLiteral("Error"));
-
-            // The toolbar badge still counts critical messages, capped above 9
-            for (int i = 0; i < 9; i++) {
-                mockLink->sendStatusTextMessage(MAV_SEVERITY_ERROR, QStringLiteral("Status text error"));
-            }
-            QVERIFY_TRUE_WAIT(vehicle->unreadCriticalMessageCount() == 10, TestTimeout::mediumMs());
-            QQuickItem* const toolbarBadge =
-                findVisibleItem(_rootItem, QStringLiteral("mainStatusCriticalBadge"), TestTimeout::mediumMs());
-            QVERIFY2(toolbarBadge, "Toolbar critical badge not shown");
-            QTRY_COMPARE_WITH_TIMEOUT(toolbarBadge->property("countText").toString(), QStringLiteral("9+"),
+            QTRY_COMPARE_WITH_TIMEOUT(toolbarBadge->property("severity").toString(), QStringLiteral("error"),
                                       TestTimeout::mediumMs());
+            QCOMPARE(toolbarBadge->property("text").toString(), QStringLiteral("Error"));
 
             QQuickItem* const markReadButton = findVisibleItem(_rootItem, markReadName, TestTimeout::mediumMs());
             QVERIFY2(markReadButton, "Mark as Read not shown with unread messages");
@@ -539,6 +556,10 @@ void ToolbarIndicatorUITest::_testVehicleMessagesMarkReadAndClear()
                          [&] { return findVisibleItem(_rootItem, QStringLiteral("mainStatusMessagesTabBadge"), 0) == nullptr; },
                          TestTimeout::mediumMs(), QStringLiteral("Messages tab badge hidden")),
                      "Messages tab badge still shown after marking all read");
+            const QString toolbarBadgeName = QStringLiteral("mainStatusSeverityBadge");
+            QVERIFY2(waitForCondition([&] { return findVisibleItem(_rootItem, toolbarBadgeName, 0) == nullptr; },
+                                      TestTimeout::mediumMs(), QStringLiteral("Toolbar severity badge hidden")),
+                     "Toolbar severity badge still shown after marking all read");
 
             // A new message is unread again
             mockLink->sendStatusTextMessage(MAV_SEVERITY_ERROR, QStringLiteral("Status text error 2"));
@@ -581,6 +602,53 @@ void ToolbarIndicatorUITest::_testMockLinkBootStatusTextShowsNonCriticalIndicato
                 findVisibleItem(_rootItem, QStringLiteral("mainStatusMessagesTabBadge"), TestTimeout::mediumMs());
             QVERIFY2(messagesBadge, "Messages tab badge not shown for the MockLink boot status messages");
             QCOMPARE(messagesBadge->property("severity").toString(), QStringLiteral("warning"));
+
+            QQuickItem* const toolbarBadge =
+                findVisibleItem(_rootItem, QStringLiteral("mainStatusSeverityBadge"), TestTimeout::mediumMs());
+            QVERIFY2(toolbarBadge, "Toolbar severity badge not shown for the MockLink boot status messages");
+            QCOMPARE(toolbarBadge->property("severity").toString(), QStringLiteral("warning"));
+        });
+}
+
+void ToolbarIndicatorUITest::_testHealthChecksDriveToolbarSeverity()
+{
+    runWithMockLink(
+        [] { return MockLink::startPX4MockLink(); },
+        [this](QPointer<MockLink> /*mockLink*/, Vehicle* vehicle) {
+            vehicle->clearMessages();
+            HealthAndArmingCheckReport* const report = vehicle->healthAndArmingCheckReport();
+            QVERIFY(report);
+            const QString badgeName = QStringLiteral("mainStatusSeverityBadge");
+
+            report->setProblemsForTest({QStringLiteral("warning")});
+            QQuickItem* const toolbarBadge = findVisibleItem(_rootItem, badgeName, TestTimeout::mediumMs());
+            QVERIFY2(toolbarBadge, "Toolbar severity badge not shown for a health warning");
+            QTRY_COMPARE_WITH_TIMEOUT(toolbarBadge->property("severity").toString(), QStringLiteral("warning"),
+                                      TestTimeout::mediumMs());
+
+            const QString indicatorName = QStringLiteral("toolbar_mainStatusIndicator");
+            QQuickItem* const indicator = findVisibleItem(_rootItem, indicatorName, TestTimeout::mediumMs());
+            QVERIFY2(indicator, "Main status indicator not visible");
+            QVERIFY(_clickItemAt(indicator, 0.5, 0.5, indicatorName));
+            const QString tabBadgeName = QStringLiteral("mainStatusOverallStatusTabBadge");
+            QQuickItem* const tabBadge = findVisibleItem(_rootItem, tabBadgeName, TestTimeout::mediumMs());
+            QVERIFY2(tabBadge, "Overall Status tab badge not shown for a health warning");
+            QCOMPARE(tabBadge->property("severity").toString(), QStringLiteral("warning"));
+
+            // Errors outrank warnings
+            report->setProblemsForTest({QStringLiteral("warning"), QStringLiteral("error")});
+            QTRY_COMPARE_WITH_TIMEOUT(toolbarBadge->property("severity").toString(), QStringLiteral("error"),
+                                      TestTimeout::mediumMs());
+            QTRY_COMPARE_WITH_TIMEOUT(tabBadge->property("severity").toString(), QStringLiteral("error"),
+                                      TestTimeout::mediumMs());
+
+            report->setProblemsForTest({});
+            QVERIFY2(waitForCondition([&] { return findVisibleItem(_rootItem, badgeName, 0) == nullptr; },
+                                      TestTimeout::mediumMs(), QStringLiteral("Toolbar severity badge hidden")),
+                     "Toolbar severity badge still shown with no health problems");
+            QVERIFY2(waitForCondition([&] { return findVisibleItem(_rootItem, tabBadgeName, 0) == nullptr; },
+                                      TestTimeout::mediumMs(), QStringLiteral("Overall Status tab badge hidden")),
+                     "Overall Status tab badge still shown with no health problems");
         });
 }
 
