@@ -191,6 +191,7 @@ Python helpers in `.github/scripts/` invoked by workflows and composite actions.
 
 | Script | Purpose |
 | --- | --- |
+| `analysis_matrix.py` | Plan Code Analysis jobs, scaling clang-tidy shards to the PR's estimated compilation units |
 | `android_boot_test.py` | Android emulator boot smoke test |
 | `android_build_retry.py` | Retry an Android build after a known intermittent Qt deployment-settings failure |
 | `android_collect_diagnostics.py` | Collect emulator failure diagnostics (build, adb dumps, GStreamer error grep, AVD logs) |
@@ -393,11 +394,13 @@ uv run --project tools --group scripts --group test pytest -q tools/tests .githu
   The C++ formatting hook checks modified regions against the PR merge base (or `HEAD` locally),
   following `CODING_STYLE.md`. New files and unchanged files supplied in a full sweep are checked in full.
   Compiler-aware Clazy and clang-tidy hooks are manual locally; `analysis.yml` generates
-  prerequisites and runs one Clazy job and four clang-tidy shards for relevant PRs.
+  prerequisites and runs one Clazy job and one to four clang-tidy shards for relevant PRs.
   Upstream analysis jobs use the 16-vCPU `linux-x64-analyzer` RunsOn pool; forks use GitHub-hosted runners.
   Shards divide the selected compilation units after header dependency expansion; they retain
-  every enabled check and report errors independently. This reduces elapsed scan time at the
-  cost of three additional runner setups. Only the first shard saves the shared build caches.
+  every enabled check and report errors independently. Each shard repeats the runner setup, so a
+  plan job (`analysis_matrix.py`) estimates the units from the PR diff and a textual reverse-include
+  scan of `src/`, allotting one shard per 50 units. Changes that can select a full scan keep all four.
+  Only the first shard saves the shared build caches.
   Manual dispatch runs one job for the selected tool; Code Analysis has no scheduled trigger.
   Compiler analysis uses Ninja,
   disables PCH and autogen's inherited link dependencies, and builds protocol headers

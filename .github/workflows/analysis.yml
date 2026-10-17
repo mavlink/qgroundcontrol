@@ -15,6 +15,7 @@ on:
       - '.qmllint.ini'
       - '.clang-tidy'
       - '.github/build-config.json'
+      - '.github/scripts/analysis_matrix.py'
       - '.github/workflows/analysis.yml'
   workflow_dispatch:
     inputs:
@@ -56,8 +57,44 @@ permissions:
   actions: read
 
 jobs:
+  # Each clang-tidy shard repeats the full setup, so PRs only get the shards their estimated units need.
+  plan:
+    name: Plan Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      include: ${{ steps.plan.outputs.include }}
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: ${{ github.event_name != 'pull_request' && 1 || 0 }}
+          sparse-checkout: |
+            /src/
+            .github/scripts/analysis_matrix.py
+            .github/scripts/ci_bootstrap.py
+            tools/_bootstrap.py
+            tools/common
+            tools/qgc_tools
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Plan analysis jobs
+        id: plan
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          DISPATCH_TOOL: ${{ inputs.tool }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: python3 .github/scripts/analysis_matrix.py
+
   analyze:
-    name: ${{ matrix.tool }} Analysis${{ matrix.tool == 'clang-tidy' && github.event_name != 'workflow_dispatch' && format(' ({0}/4)', matrix.shard) || '' }}
+    name: ${{ matrix.tool }} Analysis${{ matrix.shard_count > 1 && format(' ({0}/{1})', matrix.shard, matrix.shard_count) || '' }}
+    needs: plan
     runs-on: >-
       ${{
         github.repository_owner == 'mavlink' &&
@@ -68,15 +105,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        tool: ${{ github.event_name == 'workflow_dispatch' && fromJSON(format('["{0}"]', inputs.tool)) || fromJSON('["clazy", "clang-tidy"]') }}
-        shard: ${{ fromJSON(github.event_name == 'workflow_dispatch' && '[1]' || '[1,2,3,4]') }}
-        exclude:
-          - tool: clazy
-            shard: 2
-          - tool: clazy
-            shard: 3
-          - tool: clazy
-            shard: 4
+        include: ${{ fromJSON(needs.plan.outputs.include) }}
 
     steps:
       - name: Harden Runner
@@ -260,7 +289,7 @@ jobs:
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           ANALYSIS_TOOL: ${{ matrix.tool }}
           ANALYSIS_SHARD: ${{ matrix.shard }}
-          ANALYSIS_SHARD_COUNT: ${{ matrix.tool == 'clang-tidy' && github.event_name != 'workflow_dispatch' && '4' || '1' }}
+          ANALYSIS_SHARD_COUNT: ${{ matrix.shard_count }}
           PROFILE_CHECKS: ${{ inputs.profile_checks }}
         run: |
           args=(--build-dir "${RUNNER_TEMP}/build" --advisory)
@@ -328,7 +357,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: ${{ matrix.tool }}-output${{ matrix.tool == 'clang-tidy' && github.event_name != 'workflow_dispatch' && format('-{0}', matrix.shard) || '' }}
+          name: ${{ matrix.tool }}-output${{ matrix.shard_count > 1 && format('-{0}', matrix.shard) || '' }}
           path: |
             ${{ runner.temp }}/build/analysis-output.txt
             ${{ runner.temp }}/build/*-timings.json
