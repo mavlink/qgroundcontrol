@@ -335,6 +335,7 @@ set(QGC_APP_RESOURCES
     "${CMAKE_SOURCE_DIR}/resources/takeoff.svg"
     "${CMAKE_SOURCE_DIR}/resources/TrashCan.svg"
     "${CMAKE_SOURCE_DIR}/resources/TrashDelete.svg"
+    "${CMAKE_SOURCE_DIR}/resources/WarningEmergency.svg"
     "${CMAKE_SOURCE_DIR}/resources/XDelete.svg"
     "${CMAKE_SOURCE_DIR}/resources/icons/qgroundcontrol.ico"
 )
