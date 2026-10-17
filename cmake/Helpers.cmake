@@ -140,9 +140,10 @@ esac
         # set(CMAKE_C_LINKER_LAUNCHER "${QGC_CACHE_PROGRAM}" CACHE STRING "C linker cache")
         # set(CMAKE_CXX_LINKER_LAUNCHER "${QGC_CACHE_PROGRAM}" CACHE STRING "CXX linker cache")
 
-        if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-            add_compile_options(-Xclang -fno-pch-timestamp)
-        endif()
+        # This runs before project(), so the compiler is only known at generation time. Without the flag, Clang
+        # records header mtimes in the PCH and ccache rejects it after a fresh checkout or MAVLink regeneration.
+        set(_clang_compile "$<AND:$<COMPILE_LANGUAGE:C,CXX,OBJC,OBJCXX>,$<CXX_COMPILER_ID:AppleClang,Clang>>")
+        add_compile_options("$<${_clang_compile}:SHELL:-Xclang -fno-pch-timestamp>")
     else()
         message(WARNING "QGC: No ccache/sccache found - building without a compiler cache")
     endif()
