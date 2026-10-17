@@ -43,6 +43,7 @@ public:
         FailWriteRequest0ErrorAck,          // Instead of sending MISSION_REQUEST 0, send MISSION_ACK error
         FailWriteRequest1ErrorAck,          // Instead of sending MISSION_REQUEST 1, send MISSION_ACK error
         FailWriteFinalAckNoResponse,        // Don't send the final MISSION_ACK
+        FailWriteFinalAckFirstResponse,     // Don't send the final MISSION_ACK the first time, send it if the last item is sent again
         FailWriteFinalAckErrorAck,          // Send an error as the final MISSION_ACK
         FailWriteFinalAckMissingRequests,   // Send the MISSION_ACK before all items have been requested
     };
@@ -105,5 +106,6 @@ private:
     bool _failReadRequestListFirstResponse = true;
     bool _failReadRequest1FirstResponse = true;
     bool _failWriteMissionCountFirstResponse = true;
+    bool _failWriteFinalAckFirstResponse = true;
     QMap<MAV_MISSION_TYPE, int> _requestListCounts;
 };
