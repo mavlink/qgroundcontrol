@@ -449,6 +449,10 @@ if(TEST_CASE MATCHES "^helpers-")
             CACHE FILEPATH "" FORCE
         )
         qgc_config_caching()
+        get_directory_property(_options COMPILE_OPTIONS)
+        if(NOT _options MATCHES "CXX_COMPILER_ID:AppleClang,Clang>>:SHELL:-Xclang -fno-pch-timestamp>")
+            message(FATAL_ERROR "Clang PCH timestamps are not disabled for cached builds: ${_options}")
+        endif()
 
         set(_pch "${CMAKE_CURRENT_BINARY_DIR}/stale.hxx.gch")
         set(_object "${CMAKE_CURRENT_BINARY_DIR}/stale.o")
