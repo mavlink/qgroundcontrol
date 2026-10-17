@@ -3,84 +3,84 @@
 # Handles mission planning, geofences, rally points, and survey patterns
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        BlankPlanCreator.cc
-        BlankPlanCreator.h
-        CameraCalc.cc
-        CameraCalc.h
-        CameraSection.cc
-        CameraSection.h
-        CameraSpec.cc
-        CameraSpec.h
-        ComplexMissionItem.cc
-        ComplexMissionItem.h
-        CorridorScanComplexItem.cc
-        CorridorScanComplexItem.h
-        CorridorScanPlanCreator.cc
-        CorridorScanPlanCreator.h
-        FixedWingLandingComplexItem.cc
-        FixedWingLandingComplexItem.h
-        GeoFenceController.cc
-        GeoFenceController.h
-        GeoFenceManager.cc
-        GeoFenceManager.h
-        KMLPlanDomDocument.cc
-        KMLPlanDomDocument.h
-        LandingComplexItem.cc
-        LandingComplexItem.h
-        MissionCommandList.cc
-        MissionCommandList.h
-        MissionCommandTree.cc
-        MissionCommandTree.h
-        MissionCommandUIInfo.cc
-        MissionCommandUIInfo.h
-        MissionController.cc
-        MissionController.h
-        MissionFlightStatus.h
-        MissionFlightStatusCalculator.cc
-        MissionFlightStatusCalculator.h
-        MissionItem.cc
-        MissionItem.h
-        MissionManager.cc
-        MissionManager.h
-        MissionSettingsItem.cc
-        MissionSettingsItem.h
-        PlanCreator.cc
-        PlanCreator.h
-        PlanElementController.cc
-        PlanElementController.h
-        PlanManager.cc
-        PlanManager.h
-        PlanMasterController.cc
-        PlanMasterController.h
-        RallyPoint.cc
-        RallyPointController.cc
-        RallyPointController.h
-        RallyPoint.h
-        RallyPointManager.cc
-        RallyPointManager.h
-        Section.h
-        SimpleMissionItem.cc
-        SimpleMissionItem.h
-        SpeedSection.cc
-        SpeedSection.h
-        StructureScanComplexItem.cc
-        StructureScanComplexItem.h
-        StructureScanPlanCreator.cc
-        StructureScanPlanCreator.h
-        SurveyComplexItem.cc
-        SurveyComplexItem.h
-        SurveyPlanCreator.cc
-        SurveyPlanCreator.h
-        TakeoffMissionItem.cc
-        TakeoffMissionItem.h
-        TransectStyleComplexItem.cc
-        TransectStyleComplexItem.h
-        VisualMissionItem.cc
-        VisualMissionItem.h
-        VTOLLandingComplexItem.cc
-        VTOLLandingComplexItem.h
+target_sources(
+    ${CMAKE_PROJECT_NAME}
+    PRIVATE BlankPlanCreator.cc
+            BlankPlanCreator.h
+            CameraCalc.cc
+            CameraCalc.h
+            CameraSection.cc
+            CameraSection.h
+            CameraSpec.cc
+            CameraSpec.h
+            ComplexMissionItem.cc
+            ComplexMissionItem.h
+            CorridorScanComplexItem.cc
+            CorridorScanComplexItem.h
+            CorridorScanPlanCreator.cc
+            CorridorScanPlanCreator.h
+            FixedWingLandingComplexItem.cc
+            FixedWingLandingComplexItem.h
+            GeoFenceController.cc
+            GeoFenceController.h
+            GeoFenceManager.cc
+            GeoFenceManager.h
+            KMLPlanDomDocument.cc
+            KMLPlanDomDocument.h
+            LandingComplexItem.cc
+            LandingComplexItem.h
+            MissionCommandList.cc
+            MissionCommandList.h
+            MissionCommandTree.cc
+            MissionCommandTree.h
+            MissionCommandUIInfo.cc
+            MissionCommandUIInfo.h
+            MissionController.cc
+            MissionController.h
+            MissionFlightStatus.h
+            MissionFlightStatusCalculator.cc
+            MissionFlightStatusCalculator.h
+            MissionItem.cc
+            MissionItem.h
+            MissionManager.cc
+            MissionManager.h
+            MissionSettingsItem.cc
+            MissionSettingsItem.h
+            PlanCreator.cc
+            PlanCreator.h
+            PlanElementController.cc
+            PlanElementController.h
+            PlanManager.cc
+            PlanManager.h
+            PlanMasterController.cc
+            PlanMasterController.h
+            RallyPoint.cc
+            RallyPointController.cc
+            RallyPointController.h
+            RallyPoint.h
+            RallyPointManager.cc
+            RallyPointManager.h
+            Section.h
+            SimpleMissionItem.cc
+            SimpleMissionItem.h
+            SpeedSection.cc
+            SpeedSection.h
+            StructureScanComplexItem.cc
+            StructureScanComplexItem.h
+            StructureScanPlanCreator.cc
+            StructureScanPlanCreator.h
+            SurveyComplexItem.cc
+            SurveyComplexItem.h
+            SurveyPlanCreator.cc
+            SurveyPlanCreator.h
+            TakeoffMissionItem.cc
+            TakeoffMissionItem.h
+            TransectStyleComplexItem.cc
+            TransectStyleComplexItem.h
+            VisualMissionItem.cc
+            VisualMissionItem.h
+            VTOLLandingComplexItem.cc
+            VTOLLandingComplexItem.h
 )
 
 # ----------------------------------------------------------------------------
@@ -88,21 +88,20 @@ target_sources(${CMAKE_PROJECT_NAME}
 # ----------------------------------------------------------------------------
 qgc_add_json_resources(json_mission_manager)
 
-qt_add_resources(${CMAKE_PROJECT_NAME} missionmanager_qmlimages
+qt_add_resources(
+    ${CMAKE_PROJECT_NAME} missionmanager_qmlimages
     PREFIX "/qmlimages"
     BASE "${CMAKE_CURRENT_SOURCE_DIR}"
-    FILES
-        "${CMAKE_CURRENT_SOURCE_DIR}/CogWheel.svg"
+    FILES "${CMAKE_CURRENT_SOURCE_DIR}/CogWheel.svg"
 )
 
-qt_add_resources(${CMAKE_PROJECT_NAME} missionmanager_plancreator_images
+qt_add_resources(
+    ${CMAKE_PROJECT_NAME} missionmanager_plancreator_images
     PREFIX "/qmlimages/PlanCreator"
     BASE "${CMAKE_CURRENT_SOURCE_DIR}"
-    FILES
-        "${CMAKE_CURRENT_SOURCE_DIR}/BlankPlanCreator.png"
-        "${CMAKE_CURRENT_SOURCE_DIR}/CorridorScanPlanCreator.png"
-        "${CMAKE_CURRENT_SOURCE_DIR}/StructureScanPlanCreator.png"
-        "${CMAKE_CURRENT_SOURCE_DIR}/SurveyPlanCreator.png"
+    FILES "${CMAKE_CURRENT_SOURCE_DIR}/BlankPlanCreator.png" "${CMAKE_CURRENT_SOURCE_DIR}/CorridorScanPlanCreator.png"
+          "${CMAKE_CURRENT_SOURCE_DIR}/StructureScanPlanCreator.png"
+          "${CMAKE_CURRENT_SOURCE_DIR}/SurveyPlanCreator.png"
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

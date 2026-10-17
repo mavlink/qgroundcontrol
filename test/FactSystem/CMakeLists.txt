@@ -3,31 +3,31 @@
 # Tests for parameter management and fact metadata
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        APMParameterMetaDataTest.cc
-        APMParameterMetaDataTest.h
-        FactControlsUnitsTest.cc
-        FactControlsUnitsTest.h
-        FactGroupTest.cc
-        FactGroupTest.h
-        FactMetaDataTest.cc
-        FactMetaDataTest.h
-        PX4ParameterMetaDataTest.cc
-        PX4ParameterMetaDataTest.h
-        FactSystemTestBase.cc
-        FactSystemTestBase.h
-        FactSystemTestPX4.cc
-        FactSystemTestPX4.h
-        FactTest.cc
-        FactTest.h
-        HashCheckTest.cc
-        HashCheckTest.h
-        ParameterEditorControllerTest.cc
-        ParameterEditorControllerTest.h
-        ParameterManagerTest.cc
-        ParameterManagerTest.h
-        ParameterMetaDataTestHelper.h
+target_sources(
+    ${CMAKE_PROJECT_NAME}
+    PRIVATE APMParameterMetaDataTest.cc
+            APMParameterMetaDataTest.h
+            FactControlsUnitsTest.cc
+            FactControlsUnitsTest.h
+            FactGroupTest.cc
+            FactGroupTest.h
+            FactMetaDataTest.cc
+            FactMetaDataTest.h
+            PX4ParameterMetaDataTest.cc
+            PX4ParameterMetaDataTest.h
+            FactSystemTestBase.cc
+            FactSystemTestBase.h
+            FactSystemTestPX4.cc
+            FactSystemTestPX4.h
+            FactTest.cc
+            FactTest.h
+            HashCheckTest.cc
+            HashCheckTest.h
+            ParameterEditorControllerTest.cc
+            ParameterEditorControllerTest.h
+            ParameterManagerTest.cc
+            ParameterManagerTest.h
+            ParameterMetaDataTestHelper.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -41,4 +41,12 @@ add_qgc_test(FactSystemTestPX4 LABELS Integration Vehicle)
 add_qgc_test(FactTest LABELS Unit)
 add_qgc_test(HashCheckTest LABELS Integration Vehicle TIMEOUT ${QGC_TEST_TIMEOUT_EXTENDED})
 add_qgc_test(ParameterEditorControllerTest LABELS Integration Vehicle)
-add_qgc_test(ParameterManagerTest LABELS Integration Vehicle TIMEOUT ${QGC_TEST_TIMEOUT_EXTENDED} SERIAL)
+add_qgc_test(
+    ParameterManagerTest
+    LABELS
+    Integration
+    Vehicle
+    TIMEOUT
+    ${QGC_TEST_TIMEOUT_EXTENDED}
+    SERIAL
+)
