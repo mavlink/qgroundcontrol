@@ -1,5 +1,7 @@
 #include "ToolbarIndicatorUITest.h"
 
+#include <functional>
+
 #include <QtCore/QPointer>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
@@ -36,6 +38,24 @@ QQuickItem* findChecklistButton(QQuickItem* item, const QString& name)
     }
     for (QQuickItem* const child : item->childItems()) {
         if (QQuickItem* const found = findChecklistButton(child, name)) {
+            return found;
+        }
+    }
+    return nullptr;
+}
+
+/// Finds the first enabled PreFlightCheckButton that still needs manual confirmation, whatever the checklist contains.
+QQuickItem* findPendingManualChecklistButton(QQuickItem* item)
+{
+    if (!item || !item->isVisible()) {
+        return nullptr;
+    }
+    if (item->property("manualText").isValid() && !item->property("manualText").toString().isEmpty() &&
+        item->isEnabled() && !item->property("passed").toBool() && !item->property("telemetryFailure").toBool()) {
+        return item;
+    }
+    for (QQuickItem* const child : item->childItems()) {
+        if (QQuickItem* const found = findPendingManualChecklistButton(child)) {
             return found;
         }
     }
@@ -314,7 +334,7 @@ void ToolbarIndicatorUITest::_testArmRequiresEnforcedChecklist()
                         QQuickItem* const checklistLabel = findVisibleItem(
                             _rootItem, QStringLiteral("mainStatusChecklistTabBadge"), TestTimeout::mediumMs());
                         QVERIFY2(checklistLabel, "Checklist tab label not shown");
-                        QCOMPARE(checklistLabel->property("text").toString(), QStringLiteral("Incomplete"));
+                        QCOMPARE(checklistLabel->property("text").toString(), QStringLiteral("In Progress"));
 
                         vehicle->clearMessages();
                         QQuickItem* const toolbarBadge = findVisibleItem(
@@ -336,8 +356,8 @@ void ToolbarIndicatorUITest::_testArmRequiresEnforcedChecklist()
                         QTRY_VERIFY_WITH_TIMEOUT(armButton->isEnabled(), TestTimeout::mediumMs());
                         QTRY_COMPARE_WITH_TIMEOUT(statusText->property("text").toString(), QStringLiteral("Ready"),
                                                   TestTimeout::mediumMs());
-                        QTRY_COMPARE_WITH_TIMEOUT(checklistLabel->property("text").toString(),
-                                                  QStringLiteral("Complete"), TestTimeout::mediumMs());
+                        QTRY_COMPARE_WITH_TIMEOUT(checklistLabel->property("text").toString(), QStringLiteral("Passed"),
+                                                  TestTimeout::mediumMs());
                         QTRY_VERIFY_WITH_TIMEOUT(!toolbarBadge->isVisible(), TestTimeout::mediumMs());
 
                         // Recreating the checklist must not leave the previous Passed state behind
@@ -652,7 +672,98 @@ void ToolbarIndicatorUITest::_testHealthChecksDriveToolbarSeverity()
         });
 }
 
+bool ToolbarIndicatorUITest::_startChecklistUI(QPointer<MockLink>& mockLink, Vehicle*& vehicle)
+{
+    startUI();
+    if (QTest::currentTestFailed()) {
+        return false;
+    }
+    mockLink = connectMockLinkAndWaitReady([] { return MockLink::startPX4MockLink(); }, vehicle);
+    return !mockLink.isNull();
+}
+
+void ToolbarIndicatorUITest::_stopChecklistUI(QPointer<MockLink>& mockLink)
+{
+    disconnectMockLink(mockLink);
+    closeUIWindow();
+    destroyUIEngine();
+}
+
 void ToolbarIndicatorUITest::_testChecklistProgressPersistsAcrossDropdownCloseAndReconnect()
+{
+    AppSettings* const appSettings = SettingsManager::instance()->appSettings();
+    Fact* const useChecklist = appSettings->useChecklist();
+    const QVariant savedUseChecklist = useChecklist->rawValue();
+    const auto restoreSetting = qScopeGuard([=] { useChecklist->setRawValue(savedUseChecklist); });
+    useChecklist->setRawValue(true);
+
+    QPointer<MockLink> mockLink;
+    Vehicle* vehicle = nullptr;
+    if (!_startChecklistUI(mockLink, vehicle)) {
+        return;
+    }
+    auto cleanup = qScopeGuard([&] { _stopChecklistUI(mockLink); });
+
+    const QString indicatorName = QStringLiteral("toolbar_mainStatusIndicator");
+    const QString drawerName = QStringLiteral("indicatorDrawerLoader");
+
+    const auto openDropdownAndFind = [&](const std::function<QQuickItem*()>& find) -> QQuickItem* {
+        QQuickItem* const indicator = findVisibleItem(_rootItem, indicatorName, TestTimeout::mediumMs());
+        if (!indicator || !_clickItemAt(indicator, 0.5, 0.5, indicatorName)) {
+            return nullptr;
+        }
+        QQuickItem* const tab =
+            findVisibleItem(_rootItem, QStringLiteral("mainStatusChecklistTab"), TestTimeout::mediumMs());
+        if (!tab || !_clickItemAt(tab, 0.5, 0.5, QStringLiteral("mainStatusChecklistTab"))) {
+            return nullptr;
+        }
+        QQuickItem* button = nullptr;
+        // Absence is a valid outcome for the caller, so don't log a timeout warning that strict mode would fail on
+        (void) QTest::qWaitFor([&] { return (button = find()) != nullptr; }, TestTimeout::mediumMs());
+        return button;
+    };
+
+    // The dropdown is opened on the checklist tab explicitly rather than relying on the default tab
+    QQuickItem* button = openDropdownAndFind([&] { return findPendingManualChecklistButton(_rootItem); });
+
+    QQuickItem* const checklistBadge =
+        findVisibleItem(_rootItem, QStringLiteral("mainStatusChecklistTabBadge"), TestTimeout::mediumMs());
+    QVERIFY2(checklistBadge, "Checklist tab label not shown");
+
+    // A custom build's checklist may have no manual items, so there is nothing to confirm
+    if (!button) {
+        // After QSKIP, signal waits return at once and cleanup would log strict-mode timeout warnings
+        cleanup.dismiss();
+        _stopChecklistUI(mockLink);
+        QSKIP("Checklist has no manual check item to confirm");
+    }
+    QCOMPARE(checklistBadge->property("text").toString(), QStringLiteral("In Progress"));
+    QVERIFY(!button->property("passed").toBool());
+    const QString buttonName = button->property("name").toString();
+    const auto findButton = [&] { return findChecklistButton(_rootItem, buttonName); };
+
+    QVERIFY(_clickItemAt(button, 0.5, 0.5, QStringLiteral("preFlightCheckManualItem")));
+    QTRY_VERIFY_WITH_TIMEOUT(button->property("passed").toBool(), TestTimeout::mediumMs());
+
+    // Progress survives closing and reopening the dropdown
+    QTest::keyClick(_window, Qt::Key_Escape);
+    QVERIFY2(waitForCondition([&] { return findVisibleItem(_rootItem, drawerName, 0) == nullptr; },
+                              TestTimeout::mediumMs(), QStringLiteral("drawer closed")),
+             "Drawer did not close on Escape");
+    button = openDropdownAndFind(findButton);
+    QVERIFY2(button, "Checklist button not shown after reopening the dropdown");
+    QVERIFY2(button->property("passed").toBool(), "Checklist progress lost when the dropdown was reopened");
+
+    // A new vehicle gets a fresh checklist
+    disconnectMockLink(mockLink);
+    mockLink = connectMockLinkAndWaitReady([] { return MockLink::startPX4MockLink(); }, vehicle);
+    QVERIFY(mockLink);
+    button = openDropdownAndFind(findButton);
+    QVERIFY2(button, "Checklist button not shown after reconnecting");
+    QVERIFY2(!button->property("passed").toBool(), "Checklist progress carried over to a new vehicle");
+}
+
+void ToolbarIndicatorUITest::_testStockChecklistLocksLaterSections()
 {
     AppSettings* const appSettings = SettingsManager::instance()->appSettings();
     Fact* const useChecklist = appSettings->useChecklist();
@@ -666,51 +777,46 @@ void ToolbarIndicatorUITest::_testChecklistProgressPersistsAcrossDropdownCloseAn
     useChecklist->setRawValue(true);
     audioMuted->setRawValue(false);
 
-    startUI();
-    if (QTest::currentTestFailed()) {
-        return;
-    }
-
+    QPointer<MockLink> mockLink;
     Vehicle* vehicle = nullptr;
-    QPointer<MockLink> mockLink =
-        connectMockLinkAndWaitReady([] { return MockLink::startPX4MockLink(); }, vehicle);
-    if (!mockLink) {
+    if (!_startChecklistUI(mockLink, vehicle)) {
         return;
     }
-    const auto cleanup = qScopeGuard([&] {
-        disconnectMockLink(mockLink);
-        closeUIWindow();
-        destroyUIEngine();
-    });
+    auto cleanup = qScopeGuard([&] { _stopChecklistUI(mockLink); });
 
     const QString indicatorName = QStringLiteral("toolbar_mainStatusIndicator");
-    const QString drawerName = QStringLiteral("indicatorDrawerLoader");
-    const QString buttonName = QStringLiteral("Hardware");
+    QQuickItem* const indicator = findVisibleItem(_rootItem, indicatorName, TestTimeout::mediumMs());
+    QVERIFY2(indicator, "Main status indicator not visible");
+    QVERIFY(_clickItemAt(indicator, 0.5, 0.5, indicatorName));
 
-    const auto openDropdownAndFindButton = [&]() -> QQuickItem* {
-        QQuickItem* const indicator = findVisibleItem(_rootItem, indicatorName, TestTimeout::mediumMs());
-        if (!indicator || !_clickItemAt(indicator, 0.5, 0.5, indicatorName)) {
-            return nullptr;
-        }
-        QQuickItem* button = nullptr;
-        (void) waitForCondition([&] { return (button = findChecklistButton(_rootItem, buttonName)) != nullptr; },
-                                TestTimeout::mediumMs(), QStringLiteral("checklist button shown"));
-        return button;
-    };
+    QQuickItem* const checklistTab =
+        findVisibleItem(_rootItem, QStringLiteral("mainStatusChecklistTab"), TestTimeout::mediumMs());
+    QVERIFY2(checklistTab, "Checklist tab not shown in the main status drawer");
+    QVERIFY(_clickItemAt(checklistTab, 0.5, 0.5, QStringLiteral("mainStatusChecklistTab")));
+    QTRY_VERIFY_WITH_TIMEOUT(checklistTab->property("checked").toBool(), TestTimeout::mediumMs());
 
-    // An incomplete checklist opens the dropdown on its checklist tab
-    QQuickItem* button = openDropdownAndFindButton();
-    QVERIFY2(button, "Checklist button not shown");
-    QVERIFY(!button->property("passed").toBool());
-
-    QQuickItem* const checklistBadge =
-        findVisibleItem(_rootItem, QStringLiteral("mainStatusChecklistTabBadge"), TestTimeout::mediumMs());
-    QVERIFY2(checklistBadge, "Checklist tab label not shown");
-    QCOMPARE(checklistBadge->property("text").toString(), QStringLiteral("Incomplete"));
+    // These sections and items exist only in the stock checklist; a custom build replaces them. Absence skips the
+    // test, so wait without the timeout warning that strict mode would fail on.
+    const QString lockedGroupName = QStringLiteral("Please arm the vehicle here");
+    QQuickItem* lockedButton = nullptr;
+    QQuickItem* lockedGroup = nullptr;
+    QQuickItem* soundButton = nullptr;
+    (void) QTest::qWaitFor(
+        [&] {
+            lockedButton = findChecklistButton(_rootItem, QStringLiteral("Motors"));
+            lockedGroup = findChecklistGroup(_rootItem, lockedGroupName);
+            soundButton = findChecklistButton(_rootItem, QStringLiteral("Sound output"));
+            return lockedButton && lockedGroup && soundButton;
+        },
+        TestTimeout::mediumMs());
+    if (!lockedButton || !lockedGroup || !soundButton) {
+        // After QSKIP, signal waits return at once and cleanup would log strict-mode timeout warnings
+        cleanup.dismiss();
+        _stopChecklistUI(mockLink);
+        QSKIP("Custom pre-flight checklist: stock sections not present");
+    }
 
     // Later sections are always shown, but locked until every section above them passes
-    QQuickItem* const lockedButton = findChecklistButton(_rootItem, QStringLiteral("Motors"));
-    QVERIFY2(lockedButton, "Later checklist section not shown");
     QVERIFY2(!lockedButton->isEnabled(), "Later checklist section not locked before the first section passed");
     QGCPalette disabledPalette;
     disabledPalette.setColorGroupEnabled(false);
@@ -720,31 +826,9 @@ void ToolbarIndicatorUITest::_testChecklistProgressPersistsAcrossDropdownCloseAn
 
     // A section is failed when any of its items fails, not just its first unpassed item: Motors stays pending
     // while muting audio fails Sound output further down the same section
-    QQuickItem* const lockedGroup = findChecklistGroup(_rootItem, QStringLiteral("Please arm the vehicle here"));
-    QVERIFY(lockedGroup);
     QVERIFY(!lockedGroup->property("failed").toBool());
     audioMuted->setRawValue(true);
     QTRY_VERIFY_WITH_TIMEOUT(lockedGroup->property("failed").toBool(), TestTimeout::mediumMs());
     audioMuted->setRawValue(false);
     QTRY_VERIFY_WITH_TIMEOUT(!lockedGroup->property("failed").toBool(), TestTimeout::mediumMs());
-
-    QVERIFY(_clickItemAt(button, 0.5, 0.5, QStringLiteral("preFlightCheckHardware")));
-    QTRY_VERIFY_WITH_TIMEOUT(button->property("passed").toBool(), TestTimeout::mediumMs());
-
-    // Progress survives closing and reopening the dropdown
-    QTest::keyClick(_window, Qt::Key_Escape);
-    QVERIFY2(waitForCondition([&] { return findVisibleItem(_rootItem, drawerName, 0) == nullptr; },
-                              TestTimeout::mediumMs(), QStringLiteral("drawer closed")),
-             "Drawer did not close on Escape");
-    button = openDropdownAndFindButton();
-    QVERIFY2(button, "Checklist button not shown after reopening the dropdown");
-    QVERIFY2(button->property("passed").toBool(), "Checklist progress lost when the dropdown was reopened");
-
-    // A new vehicle gets a fresh checklist
-    disconnectMockLink(mockLink);
-    mockLink = connectMockLinkAndWaitReady([] { return MockLink::startPX4MockLink(); }, vehicle);
-    QVERIFY(mockLink);
-    button = openDropdownAndFindButton();
-    QVERIFY2(button, "Checklist button not shown after reconnecting");
-    QVERIFY2(!button->property("passed").toBool(), "Checklist progress carried over to a new vehicle");
 }

@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
@@ -9,6 +10,7 @@ Column  {
     property string name
     property bool   passed: false
     readonly property bool failed: failedCount > 0
+    readonly property Item headerItem: groupHeader
 
     readonly property int failedCount: {
         let count = 0
@@ -21,6 +23,10 @@ Column  {
     }
 
     spacing: ScreenTools.defaultFontPixelHeight / 2
+
+    Layout.fillWidth:       true
+    Layout.preferredWidth:  0
+    Layout.minimumWidth:    0
 
     onPassedChanged: parent.groupPassedChanged()
 
@@ -42,6 +48,7 @@ Column  {
     }
 
     SectionHeader {
+        id:             groupHeader
         anchors.left:   parent.left
         anchors.right:  parent.right
         checkable:      false
@@ -54,6 +61,7 @@ Column  {
 
     Column {
         id:         innerColumn
+        width:      parent.width
         spacing:    ScreenTools.defaultFontPixelHeight / 2
 
         function buttonPassedChanged() {
