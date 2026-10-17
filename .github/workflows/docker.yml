@@ -243,8 +243,9 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+      # SBOM generation and vulnerability scans run on pushes and manual runs; PRs skip them.
       - name: Generate CPM dependency SBOM
-        if: steps.artifact.outputs.found == 'true'
+        if: github.event_name != 'pull_request' && steps.artifact.outputs.found == 'true'
         env:
           IMAGE: dronecode/qgroundcontrol:${{ matrix.variant }}
         run: >-
@@ -256,7 +257,7 @@ jobs:
           --build-dir /project/build --require-components > cpm-sbom.cdx.json
 
       - name: Generate CPM dependency snapshot
-        if: matrix.variant == 'linux' && steps.artifact.outputs.found == 'true'
+        if: github.event_name != 'pull_request' && matrix.variant == 'linux' && steps.artifact.outputs.found == 'true'
         env:
           IMAGE: dronecode/qgroundcontrol:${{ matrix.variant }}
         run: >-
@@ -268,7 +269,7 @@ jobs:
           --build-dir /project/build --format spdx --require-components > cpm-sbom.spdx.json
 
       - name: Upload CPM dependency snapshot
-        if: matrix.variant == 'linux' && steps.artifact.outputs.found == 'true'
+        if: github.event_name != 'pull_request' && matrix.variant == 'linux' && steps.artifact.outputs.found == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: cpm-dependency-snapshot
@@ -277,13 +278,13 @@ jobs:
           retention-days: 7
 
       - name: Install Grype
-        if: steps.artifact.outputs.found == 'true'
+        if: github.event_name != 'pull_request' && steps.artifact.outputs.found == 'true'
         id: install-grype
         timeout-minutes: 5
         run: python3 .github/scripts/install_grype.py
 
       - name: Scan SBOM with Grype
-        if: steps.artifact.outputs.found == 'true'
+        if: github.event_name != 'pull_request' && steps.artifact.outputs.found == 'true'
         id: grype
         uses: anchore/scan-action@v7
         with:
@@ -295,14 +296,14 @@ jobs:
           output-format: sarif
 
       - name: Upload Grype results to GitHub Security
-        if: steps.artifact.outputs.found == 'true'
+        if: github.event_name != 'pull_request' && steps.artifact.outputs.found == 'true'
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: ${{ steps.grype.outputs.sarif }}
           category: 'grype-${{ matrix.platform }}'
 
       - name: Generate builder image SBOM
-        if: steps.artifact.outputs.found == 'true'
+        if: github.event_name != 'pull_request' && steps.artifact.outputs.found == 'true'
         uses: anchore/sbom-action@v0
         with:
           image: dronecode/qgroundcontrol:${{ matrix.variant }}
@@ -312,7 +313,7 @@ jobs:
           upload-release-assets: false
 
       - name: Scan builder image
-        if: steps.artifact.outputs.found == 'true'
+        if: github.event_name != 'pull_request' && steps.artifact.outputs.found == 'true'
         id: grype-image
         uses: anchore/scan-action@v7
         with:
@@ -324,7 +325,7 @@ jobs:
           output-format: sarif
 
       - name: Upload image scan to GitHub Security
-        if: steps.artifact.outputs.found == 'true'
+        if: github.event_name != 'pull_request' && steps.artifact.outputs.found == 'true'
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: ${{ steps.grype-image.outputs.sarif }}

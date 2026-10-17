@@ -1,5 +1,8 @@
 #pragma once
 
+// Stable third-party headers only (MAVLinkLib.h wraps generated MAVLink). Editing any header in this
+// closure rebuilds every QGroundControl object.
+
 // STL
 #include <atomic>
 #include <functional>
@@ -46,7 +49,7 @@
 // Qt Qml/Quick - QML integration macros used in ~130 headers.
 // Note: QQuickItem intentionally omitted — pulls full QtQuick (scene graph, GL) everywhere.
 #include <QtQml/QQmlEngine>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 // MAVLink - used in 400+ locations
 #include "MAVLinkLib.h"

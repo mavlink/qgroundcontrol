@@ -2,11 +2,11 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QSet>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
+#include "FactMetaData.h"
 #include "FactPanelController.h"
 #include "QmlObjectListModel.h"
-#include "FactMetaData.h"
 
 class ParameterManager;
 

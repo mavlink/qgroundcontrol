@@ -44,18 +44,48 @@ def install_windows_nsis(dry_run: bool = False) -> bool:
     return True
 
 
+def _vswhere_path() -> Path:
+    program_files_x86 = os.environ.get("PROGRAMFILES(X86)", r"C:\Program Files (x86)")
+    return Path(program_files_x86) / "Microsoft Visual Studio" / "Installer" / "vswhere.exe"
+
+
+def _msvc_components(arm64: bool) -> list[str]:
+    components = ["Microsoft.VisualStudio.Component.VC.Tools.x86.x64"]
+    if arm64:
+        components.append("Microsoft.VisualStudio.Component.VC.Tools.ARM64")
+    return components
+
+
+def _msvc_preinstalled(arm64: bool) -> bool:
+    """Return True when one Visual Studio instance already provides every requested component."""
+    vswhere = _vswhere_path()
+    if not vswhere.exists():
+        return False
+    result = subprocess.run(
+        [
+            str(vswhere),
+            "-products",
+            "*",
+            "-requires",
+            *_msvc_components(arm64),
+            "-property",
+            "installationPath",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    return result.returncode == 0 and bool(result.stdout.strip())
+
+
 def _verify_msvc(arm64: bool) -> bool:
     """Confirm the requested VC Tools components are present via vswhere."""
-    program_files_x86 = os.environ.get("PROGRAMFILES(X86)", r"C:\Program Files (x86)")
-    vswhere = Path(program_files_x86) / "Microsoft Visual Studio" / "Installer" / "vswhere.exe"
+    vswhere = _vswhere_path()
     if not vswhere.exists():
         _c.log_warn(f"vswhere not found at {vswhere}; skipping MSVC verification")
         return True
 
-    components = ["Microsoft.VisualStudio.Component.VC.Tools.x86.x64"]
-    if arm64:
-        components.append("Microsoft.VisualStudio.Component.VC.Tools.ARM64")
-    for component in components:
+    for component in _msvc_components(arm64):
         result = subprocess.run(
             [
                 str(vswhere),
@@ -78,6 +108,9 @@ def _verify_msvc(arm64: bool) -> bool:
 
 def install_windows_msvc(dry_run: bool = False, arm64: bool = False) -> bool:
     """Install Visual Studio 2022 Build Tools with the C++ (VCTools) workload."""
+    if not dry_run and _msvc_preinstalled(arm64):
+        print("\nVisual Studio C++ tools already installed; skipping Build Tools")
+        return True
     print("\nInstalling Visual Studio Build Tools (VCTools)...")
     components = ["--add", "Microsoft.VisualStudio.Workload.VCTools", "--includeRecommended"]
     if arm64:

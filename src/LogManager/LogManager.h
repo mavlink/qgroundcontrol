@@ -7,7 +7,7 @@
 #include <QtCore/QSet>
 #include <QtCore/QString>
 #include <QtCore/QTimer>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 #include "LogEntry.h"
 

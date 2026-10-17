@@ -1,11 +1,13 @@
 #pragma once
 
+#include <QtCore/QMutex>
+#include <QtCore/QTime>
+#include <QtCore/QVersionNumber>
+#include <QtNetwork/QAbstractSocket>
+
 #include "FirmwarePlugin.h"
 #include "FollowMe.h"
 #include "QGCMAVLink.h"
-
-#include <QtCore/QMutex>
-#include <QtNetwork/QAbstractSocket>
 
 struct APMCustomMode
 {

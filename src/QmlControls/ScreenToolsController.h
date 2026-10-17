@@ -1,7 +1,7 @@
 #pragma once
 
 #include <QtCore/QObject>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 /// \brief This Qml control is used to return screen parameters
 ///

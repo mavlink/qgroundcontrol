@@ -1,7 +1,7 @@
 #pragma once
 
 #include <QtCore/QElapsedTimer>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 #include <QtQuick/QQuickItem>
 
 #include "FactPanelController.h"

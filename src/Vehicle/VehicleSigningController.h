@@ -7,7 +7,7 @@
 #include <QtCore/QPointer>
 #include <QtCore/QString>
 #include <QtCore/QTimer>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 #include "LinkInterface.h"
 #include "MAVLinkSigning.h"

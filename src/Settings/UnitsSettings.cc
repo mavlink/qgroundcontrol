@@ -1,5 +1,7 @@
 #include "UnitsSettings.h"
 
+#include <QtCore/QLocale>
+
 DECLARE_SETTINGGROUP(Units, "Units")
 {
 }

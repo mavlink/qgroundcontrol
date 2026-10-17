@@ -1,7 +1,7 @@
 #pragma once
 
-#include <QtCore/QObject>
 #include <QtCore/QHash>
+#include <QtCore/QObject>
 #include <QtCore/QPointF>
 #include <QtCore/QString>
 #include <QtCore/QStringList>
@@ -9,7 +9,7 @@
 #include <QtCore/QVariantList>
 #include <QtCore/QVector>
 #include <QtCore/QtGlobal>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 class APMDataFlashLogParser : public QObject
 {

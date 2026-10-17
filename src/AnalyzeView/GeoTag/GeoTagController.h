@@ -1,6 +1,6 @@
 #pragma once
 
-#include "GeoTagData.h"
+#include <atomic>
 
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QFileInfo>
@@ -12,9 +12,9 @@
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtPositioning/QGeoCoordinate>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
-#include <atomic>
+#include "GeoTagData.h"
 
 class GeoTagImageModel;
 

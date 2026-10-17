@@ -1,5 +1,7 @@
 #pragma once
 
+#include <QtCore/QTime>
+
 #include "MAVLinkLib.h"
 #include "MavlinkCameraControlInterface.h"
 #include "QmlObjectListModel.h"

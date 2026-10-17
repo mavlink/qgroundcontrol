@@ -47,16 +47,7 @@ if(CMAKE_EXPORT_COMPILE_COMMANDS
    AND NOT CMAKE_HOST_WIN32
    AND NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}"
 )
-    file(CREATE_LINK
-        "${CMAKE_BINARY_DIR}/compile_commands.json"
-        "${CMAKE_SOURCE_DIR}/compile_commands.json"
-        SYMBOLIC
-    )
-endif()
-
-if(QGC_UNITY_BUILD)
-    set(CMAKE_UNITY_BUILD ON)
-    set(CMAKE_UNITY_BUILD_BATCH_SIZE 16)
+    file(CREATE_LINK "${CMAKE_BINARY_DIR}/compile_commands.json" "${CMAKE_SOURCE_DIR}/compile_commands.json" SYMBOLIC)
 endif()
 
 # ----------------------------------------------------------------------------
@@ -65,7 +56,10 @@ endif()
 if(QGC_ENABLE_CLANG_TIDY)
     find_program(QGC_CLANG_TIDY_PROGRAM NAMES clang-tidy)
     if(QGC_CLANG_TIDY_PROGRAM)
-        set(CMAKE_CXX_CLANG_TIDY "${QGC_CLANG_TIDY_PROGRAM}" CACHE STRING "clang-tidy executable" FORCE)
+        set(CMAKE_CXX_CLANG_TIDY
+            "${QGC_CLANG_TIDY_PROGRAM}"
+            CACHE STRING "clang-tidy executable" FORCE
+        )
         message(STATUS "QGC: clang-tidy enabled (${QGC_CLANG_TIDY_PROGRAM})")
     else()
         message(WARNING "QGC: QGC_ENABLE_CLANG_TIDY is ON but clang-tidy not found")
@@ -120,8 +114,7 @@ endif()
 # Link Job Pool (Ninja only)
 # ----------------------------------------------------------------------------
 if(NOT QGC_LINK_PARALLEL_LEVEL MATCHES "^[1-9][0-9]*$")
-    message(FATAL_ERROR
-        "QGC_LINK_PARALLEL_LEVEL must be a positive integer, got '${QGC_LINK_PARALLEL_LEVEL}'")
+    message(FATAL_ERROR "QGC_LINK_PARALLEL_LEVEL must be a positive integer, got '${QGC_LINK_PARALLEL_LEVEL}'")
 endif()
 if(CMAKE_GENERATOR MATCHES "Ninja")
     set_property(GLOBAL APPEND PROPERTY JOB_POOLS link_pool=${QGC_LINK_PARALLEL_LEVEL})
@@ -135,10 +128,16 @@ endif()
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     if(LINUX)
         # Linux uses AppDir structure for AppImage packaging
-        set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/AppDir/usr" CACHE PATH "Install path prefix for AppImage" FORCE)
+        set(CMAKE_INSTALL_PREFIX
+            "${CMAKE_BINARY_DIR}/AppDir/usr"
+            CACHE PATH "Install path prefix for AppImage" FORCE
+        )
     else()
         # Other platforms use staging directory
-        set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/staging" CACHE PATH "Install path prefix" FORCE)
+        set(CMAKE_INSTALL_PREFIX
+            "${CMAKE_BINARY_DIR}/staging"
+            CACHE PATH "Install path prefix" FORCE
+        )
     endif()
 endif()
 
@@ -147,7 +146,9 @@ endif()
 # ----------------------------------------------------------------------------
 if(CMAKE_CROSSCOMPILING)
     if(NOT DEFINED QT_HOST_PATH OR QT_HOST_PATH STREQUAL "")
-        message(FATAL_ERROR "QGC: Cross-compilation requires QT_HOST_PATH to be defined and set to a valid Qt host installation path")
+        message(
+            FATAL_ERROR "QGC: Cross-compilation requires QT_HOST_PATH to be set to a valid Qt host installation path"
+        )
     endif()
 
     if(NOT IS_DIRECTORY "${QT_HOST_PATH}")

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <array>
+#include <atomic>
 #include <functional>
 #include <memory>
 
@@ -12,14 +14,10 @@
 #include <QtCore/QTimer>
 #include <QtCore/QVariantList>
 #include <QtPositioning/QGeoCoordinate>
-#include <QtQmlIntegration/QtQmlIntegration>
-
-#include <array>
-#include <atomic>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 #include "QGCMAVLink.h"
 #include "VehicleFactGroup.h"
-#include "VehicleSigningController.h"  // Q_PROPERTY needs the full QObject type for moc/QML metatype registration
 #include "VehicleTypes.h"
 
 class Actuators;
@@ -79,6 +77,7 @@ class TerrainQueryCoordinator;
 class TerrainProtocolHandler;
 class TrajectoryPoints;
 class VehicleObjectAvoidance;
+class VehicleSigningController;
 class VehicleSupports;
 
 class Vehicle : public VehicleFactGroup, public VehicleTypes
@@ -99,6 +98,7 @@ class Vehicle : public VehicleFactGroup, public VehicleTypes
     Q_MOC_INCLUDE("TrajectoryPoints.h")
     Q_MOC_INCLUDE("VehicleLinkManager.h")
     Q_MOC_INCLUDE("VehicleObjectAvoidance.h")
+    Q_MOC_INCLUDE("VehicleSigningController.h")
     Q_MOC_INCLUDE("VehicleSupports.h")
     Q_MOC_INCLUDE("VehicleGPSFactGroup.h")
 

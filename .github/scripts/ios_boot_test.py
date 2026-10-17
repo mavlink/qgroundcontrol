@@ -10,6 +10,12 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+from ci_bootstrap import ensure_tools_dir
+
+ensure_tools_dir(__file__)
+
+from common.gh_actions import write_github_output
+
 DEFAULT_BOOT_TIMEOUT = 600
 MAX_BOOT_TIMEOUT = 900
 MAX_BOOT_ATTEMPTS = 2
@@ -94,6 +100,29 @@ def select_device(devices: dict[str, Any]) -> tuple[str, str]:
     )
 
 
+def _available_device(log: Path) -> tuple[str, str]:
+    return select_device(
+        json.loads(simctl(log, "list", "devices", "available", "--json", stdout_only=True))
+    )
+
+
+def start_simulator(log: Path) -> str:
+    """Create a simulator and start booting it without waiting, so the cold boot overlaps the build."""
+    log.write_text("", encoding="utf-8")
+    runtime, device_type = _available_device(log)
+    _record(log, f"Starting early simulator boot: {runtime} ({device_type})")
+    device = simctl(
+        log, "create", "QGC CI boot test", device_type, runtime, stdout_only=True
+    ).strip()
+    try:
+        simctl(log, "boot", device)
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, OSError):
+        _collect_diagnostics(log, device)
+        _cleanup(log, device)
+        raise
+    return device
+
+
 def boot_test(
     app: Path,
     log: Path,
@@ -101,23 +130,30 @@ def boot_test(
     timeout: int = 300,
     boot_timeout: int = DEFAULT_BOOT_TIMEOUT,
     boot_attempts: int = MAX_BOOT_ATTEMPTS,
+    booted_device: str | None = None,
 ) -> None:
     _validate_options(timeout, boot_timeout, boot_attempts)
     with (app / "Info.plist").open("rb") as stream:
         bundle = plistlib.load(stream)["CFBundleIdentifier"]
-    log.write_text("", encoding="utf-8")
-    runtime, device_type = select_device(
-        json.loads(simctl(log, "list", "devices", "available", "--json", stdout_only=True))
-    )
+    if booted_device is None:
+        log.write_text("", encoding="utf-8")
+    runtime, device_type = _available_device(log)
     for attempt in range(1, boot_attempts + 1):
         _record(log, f"Simulator boot attempt {attempt}/{boot_attempts}: {runtime} ({device_type})")
-        device = simctl(
-            log, "create", "QGC CI boot test", device_type, runtime, stdout_only=True
-        ).strip()
+        if attempt == 1 and booted_device is not None:
+            _record(log, f"Adopting simulator {booted_device}, booted before the build")
+            device = booted_device
+            adopted = True
+        else:
+            device = simctl(
+                log, "create", "QGC CI boot test", device_type, runtime, stdout_only=True
+            ).strip()
+            adopted = False
         ready = False
         failure = None
         try:
-            simctl(log, "boot", device)
+            if not adopted:
+                simctl(log, "boot", device)
             simctl(log, "bootstatus", device, "-b", timeout=boot_timeout)
             ready = True
             simctl(log, "install", device, str(app), timeout=timeout)
@@ -168,8 +204,18 @@ def boot_test(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--app", type=Path, required=True)
+    parser.add_argument(
+        "--start",
+        action="store_true",
+        help="Create a simulator, start its boot, write its UDID to the 'device' step output, and exit",
+    )
+    parser.add_argument("--app", type=Path)
     parser.add_argument("--log", type=Path, required=True)
+    parser.add_argument(
+        "--device",
+        default="",
+        help="Simulator from --start to adopt for the first boot attempt (empty: cold boot)",
+    )
     parser.add_argument(
         "--timeout",
         type=int,
@@ -189,6 +235,11 @@ def main() -> None:
         help=f"Maximum fresh simulator boot attempts (1-{MAX_BOOT_ATTEMPTS}, default: {MAX_BOOT_ATTEMPTS})",
     )
     args = parser.parse_args()
+    if args.start:
+        write_github_output({"device": start_simulator(args.log)})
+        return
+    if args.app is None:
+        parser.error("--app is required unless --start is given")
     try:
         _validate_options(args.timeout, args.boot_timeout, args.boot_attempts)
     except ValueError as exc:
@@ -199,6 +250,7 @@ def main() -> None:
         timeout=args.timeout,
         boot_timeout=args.boot_timeout,
         boot_attempts=args.boot_attempts,
+        booted_device=args.device or None,
     )
 
 

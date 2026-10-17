@@ -1,12 +1,15 @@
 #include "KMLPlanDomDocument.h"
-#include "QGCPalette.h"
+
+#include <QtCore/QCoreApplication>
+
+#include "ComplexMissionItem.h"
+#include "FactMetaData.h"
 #include "MissionCommandTree.h"
 #include "MissionCommandUIInfo.h"
 #include "MissionItem.h"
-#include "FactMetaData.h"
-#include "ComplexMissionItem.h"
-#include "Vehicle.h"
+#include "QGCPalette.h"
 #include "QmlObjectListModel.h"
+#include "Vehicle.h"
 
 KMLPlanDomDocument::KMLPlanDomDocument()
     : KMLDomDocument(QStringLiteral("%1 Plan KML").arg(QCoreApplication::applicationName()))

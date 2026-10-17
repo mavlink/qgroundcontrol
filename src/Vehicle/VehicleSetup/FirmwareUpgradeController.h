@@ -4,7 +4,7 @@
 #include <QtCore/QPointer>
 #include <QtCore/QTimer>
 #include <QtGui/QPixmap>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 #include <QtQuick/QQuickItem>
 
 #include "QGCSerialPortInfo.h"

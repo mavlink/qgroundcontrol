@@ -8,11 +8,9 @@ else()
     return()
 endif()
 
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/QmlTesting.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/QmlTestFileValidator.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/QmlTestFileValidator.h
+target_sources(QGCUnitTests
+               PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/QmlTesting.h ${CMAKE_CURRENT_SOURCE_DIR}/QmlTestFileValidator.cc
+                       ${CMAKE_CURRENT_SOURCE_DIR}/QmlTestFileValidator.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -25,22 +23,11 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_QML_TEST_SOURCE_DIR
 # Dedicated out-of-process Qt Quick Test executable.
 # This runs tst_*.qml files through quick_test_main(), which cannot run
 # in-process inside the standard UnitTest harness.
-add_executable(QGCQmlQuickTests
-    ${CMAKE_CURRENT_SOURCE_DIR}/QmlQuickTestMain.cc
-)
+add_executable(QGCQmlQuickTests ${CMAKE_CURRENT_SOURCE_DIR}/QmlQuickTestMain.cc)
 
-target_link_libraries(QGCQmlQuickTests
-    PRIVATE
-        Qt6::QuickTest
-        Qt6::Qml
-        Qt6::Gui
-        Qt6::Quick
-)
+target_link_libraries(QGCQmlQuickTests PRIVATE Qt6::QuickTest Qt6::Qml Qt6::Gui Qt6::Quick)
 
-target_compile_definitions(QGCQmlQuickTests
-    PRIVATE
-        QUICK_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests"
-)
+target_compile_definitions(QGCQmlQuickTests PRIVATE QUICK_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests")
 
 add_test(
     NAME QmlQuickTests
@@ -48,11 +35,19 @@ add_test(
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 )
 
-set_tests_properties(QmlQuickTests PROPERTIES
-    LABELS "Unit;QML"
-    TIMEOUT ${QGC_TEST_TIMEOUT_UNIT}
-    ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;QT_LOGGING_RULES=*.debug=false;QML2_IMPORT_PATH=${CMAKE_BINARY_DIR}/qml"
-    FAIL_REGULAR_EXPRESSION "FAIL!;QFATAL;Segmentation fault;ASSERT"
+set(_qml_quick_test_environment "QT_QPA_PLATFORM=offscreen" "QT_QUICK_BACKEND=software"
+                                "QT_LOGGING_RULES=*.debug=false" "QML2_IMPORT_PATH=${CMAKE_BINARY_DIR}/qml"
+)
+set_tests_properties(
+    QmlQuickTests
+    PROPERTIES LABELS
+               "Unit;QML"
+               TIMEOUT
+               ${QGC_TEST_TIMEOUT_UNIT}
+               ENVIRONMENT
+               "${_qml_quick_test_environment}"
+               FAIL_REGULAR_EXPRESSION
+               "FAIL!;QFATAL;Segmentation fault;ASSERT"
 )
 
 foreach(_check_target check check-unit check-fast check-ci)

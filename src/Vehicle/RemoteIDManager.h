@@ -1,9 +1,9 @@
 #pragma once
 
-#include <QtCore/QObject>
 #include <QtCore/QDateTime>
+#include <QtCore/QObject>
 #include <QtCore/QTimer>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 #include "MAVLinkMessageType.h"
 

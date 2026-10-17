@@ -2,7 +2,7 @@
 
 #include <QtCore/QAbstractListModel>
 #include <QtPositioning/QGeoCoordinate>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 /// \brief Model for displaying geotagging image status in QML
 ///

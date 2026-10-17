@@ -1,9 +1,9 @@
 #pragma once
 
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
-#include "QGCTileSet.h"
 #include "QGCMapTaskBase.h"
+#include "QGCTileSet.h"
 
 class QGCCachedTileSet;
 class QGCCompressionJob;

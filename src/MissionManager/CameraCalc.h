@@ -1,10 +1,10 @@
 #pragma once
 
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 #include "CameraSpec.h"
-#include "SettingsFact.h"
 #include "QGroundControlQmlGlobal.h"
+#include "SettingsFact.h"
 
 class PlanMasterController;
 

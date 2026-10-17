@@ -157,6 +157,10 @@ void BluetoothLiveAdapterTest::_testLiveScanLifecycle()
     QVERIFY2(!adapterAddress.isEmpty(), "No valid adapter address exposed by BluetoothConfiguration");
     config.selectAdapter(adapterAddress);
 
+    // Hosts that cannot scan (e.g. a powered-off adapter) report an error, which skips below;
+    // BluetoothConfiguration also logs that error.
+    ignoreLogMessage("Comms.Bluetooth.BluetoothConfiguration", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Bluetooth discovery error")));
     config.startScan();
 
     // Exit as soon as the config reports scanning=true OR an error is emitted,

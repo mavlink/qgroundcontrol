@@ -1,12 +1,14 @@
 #include "QGeoFileTileCacheQGC.h"
 
+#include <mutex>
+
 #include <QtCore/QDir>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QStandardPaths>
 
+#include "AppMessages.h"
 #include "AppSettings.h"
 #include "MapsSettings.h"
-#include "AppMessages.h"
 #include "QGCCacheTile.h"
 #include "QGCFileHelper.h"
 #include "QGCLoggingCategory.h"

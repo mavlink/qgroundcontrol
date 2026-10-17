@@ -3,7 +3,7 @@
 #include <QtCore/QList>
 #include <QtCore/QObject>
 #include <QtPositioning/QGeoCoordinate>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 /// \brief Routines for loading polygons or polylines from KML or SHP files.
 ///

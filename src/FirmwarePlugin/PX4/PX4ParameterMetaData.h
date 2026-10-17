@@ -1,5 +1,7 @@
 #pragma once
 
+#include <QtCore/QCoreApplication>
+
 #include "ParameterMetaData.h"
 
 class PX4ParameterMetaData : public ParameterMetaData

@@ -1,6 +1,7 @@
 #pragma once
 
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtCore/QLocale>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 #include "SettingsGroup.h"
 

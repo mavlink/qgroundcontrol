@@ -171,7 +171,7 @@ if(QGC_STABLE_BUILD)
     set(QGC_APP_DATE_VERSION "${QGC_APP_VERSION}")
 else()
     # Daily builds use date of last commit
-    set(QGC_APP_DATE_VERSION "")
+    set(QGC_APP_DATE_VERSION "HEAD")
 endif()
 
 execute_process(

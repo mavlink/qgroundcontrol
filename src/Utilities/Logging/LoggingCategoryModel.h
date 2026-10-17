@@ -1,13 +1,13 @@
 #pragma once
 
+#include <functional>
+
 #include <QtCore/QAbstractItemModel>
 #include <QtCore/QAbstractListModel>
 #include <QtCore/QList>
 #include <QtCore/QObject>
 #include <QtCore/QString>
-#include <QtQmlIntegration/QtQmlIntegration>
-
-#include <functional>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 class QGCLoggingCategoryItem : public QObject
 {

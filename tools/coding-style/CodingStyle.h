@@ -6,14 +6,14 @@
 
 #pragma once
 
-#include <QtCore/QLoggingCategory>
-#include <QtCore/QObject>
-#include <QtCore/QString>
-#include <QtQmlIntegration/QtQmlIntegration>
-
 #include <limits.h>
 #include <span>
 #include <string_view>
+
+#include <QtCore/QLoggingCategory>
+#include <QtCore/QObject>
+#include <QtCore/QString>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 #include "Fact.h"
 #include "Vehicle.h"

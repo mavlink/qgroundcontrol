@@ -2,7 +2,7 @@
 
 #include <QtCore/QPointer>
 #include <QtCore/QString>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 class LogReplayLink;
 

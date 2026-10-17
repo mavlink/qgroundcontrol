@@ -4,7 +4,7 @@
 
 #include <QtCore/QObject>
 #include <QtPositioning/QGeoCoordinate>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 class Viewer3DMapProvider : public QObject
 {

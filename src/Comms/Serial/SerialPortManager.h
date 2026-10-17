@@ -10,7 +10,7 @@
 #include <QtCore/QObject>
 #include <QtCore/QSet>
 #include <QtCore/QStringList>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 #include "QGCSerialPortInfo.h"
 

@@ -1,9 +1,9 @@
 #pragma once
 
 #include <QtCore/QObject>
-#include <QtCore/QVector>
 #include <QtCore/QPointF>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtCore/QVector>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 #include "MAVLinkMessageType.h"
 #include "QGCMAVLinkTypes.h"

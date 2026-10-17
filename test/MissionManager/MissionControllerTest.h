@@ -14,6 +14,7 @@ class MissionControllerTest : public MissionControllerManagerTest
     Q_OBJECT
 
 public:
+    MissionControllerTest();
     ~MissionControllerTest() override;
 
 private slots:

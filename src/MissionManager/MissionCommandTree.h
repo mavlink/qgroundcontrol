@@ -1,11 +1,11 @@
 #pragma once
 
-#include "QGCMAVLink.h"
-
 #include <QtCore/QMap>
 #include <QtCore/QObject>
 #include <QtCore/QVariantList>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
+
+#include "QGCMAVLink.h"
 
 class MissionCommandList;
 class MissionCommandTreeTest;

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <QtCore/QObject>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 class FirmwarePlugin;
 class Vehicle;

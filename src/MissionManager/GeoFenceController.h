@@ -1,11 +1,11 @@
 #pragma once
 
 #include <QtPositioning/QGeoCoordinate>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
+#include "Fact.h"
 #include "PlanElementController.h"
 #include "QmlObjectListModel.h"
-#include "Fact.h"
 
 class GeoFenceManager;
 class QGCFenceCircle;

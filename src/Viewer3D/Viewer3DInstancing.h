@@ -5,7 +5,7 @@
 #include <QtGui/QColor>
 #include <QtGui/QQuaternion>
 #include <QtGui/QVector3D>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 #include <QtQuick3D/QQuick3DInstancing>
 
 class Viewer3DInstancing : public QQuick3DInstancing

@@ -1,15 +1,15 @@
 #pragma once
 
-
-#include "QmlObjectListModel.h"
-#include "VehicleTypes.h"
-#include "MAVLinkMessageType.h"
-#include "MAVLinkEnums.h"
-#include "QGCMAVLinkTypes.h"
-
+#include <QtCore/QElapsedTimer>
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtCore/QTimer>
+
+#include "MAVLinkEnums.h"
+#include "MAVLinkMessageType.h"
+#include "QGCMAVLinkTypes.h"
+#include "QmlObjectListModel.h"
+#include "VehicleTypes.h"
 
 class Vehicle;
 

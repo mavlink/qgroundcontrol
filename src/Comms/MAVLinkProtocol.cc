@@ -1,28 +1,30 @@
 #include "MAVLinkProtocol.h"
 
+#include <cstring>
+
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 #include <QtCore/QMetaType>
+#include <QtCore/QSaveFile>
 #include <QtCore/QSettings>
 #include <QtCore/QStandardPaths>
 #include <QtCore/QTimer>
-#include <cstring>
 
 #include "AppMessages.h"
 #include "AppSettings.h"
+#include "LinkInterface.h"
 #include "LinkManager.h"
 #include "MAVLinkLib.h"
-#include "LinkInterface.h"
 #include "MAVLinkSigning.h"
-#include "SigningController.h"
 #include "MavlinkSettings.h"
 #include "MultiVehicleManager.h"
 #include "QGCFileHelper.h"
 #include "QGCLoggingCategory.h"
 #include "QmlObjectListModel.h"
 #include "SettingsManager.h"
+#include "SigningController.h"
 
 QGC_LOGGING_CATEGORY(MAVLinkProtocolLog, "Comms.MAVLinkProtocol")
 

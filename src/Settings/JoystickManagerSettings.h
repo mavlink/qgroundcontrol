@@ -8,7 +8,7 @@
  ****************************************************************************/
 #pragma once
 
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 #include "SettingsGroup.h"
 

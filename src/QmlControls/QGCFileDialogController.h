@@ -2,7 +2,7 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QUrl>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 class QGCFileDialogController : public QObject
 {

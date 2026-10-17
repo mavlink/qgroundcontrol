@@ -1,5 +1,7 @@
 #include "MavlinkSettings.h"
 
+#include <QtCore/QSettings>
+
 DECLARE_SETTINGGROUP(Mavlink, "")
 {
     // Move deprecated settings to new location/names

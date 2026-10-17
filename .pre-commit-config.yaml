@@ -309,6 +309,19 @@ repos:
         files: ^test/
         pass_filenames: true
 
+      - id: check-no-qt-module-umbrella
+        name: Check for Qt module umbrella includes
+        entry: >-
+          bash -c 'if grep -EnH "#[[:space:]]*include[[:space:]]*<(Qt[A-Za-z0-9]+)/\1>" "$@" 2>/dev/null;
+          then echo "::error::Qt module umbrella header found; it pulls in every header of its dependencies
+          (all of QtCore). Include the specific header instead, e.g. <QtQmlIntegration/qqmlintegration.h>." >&2;
+          exit 1; fi' --
+        language: system
+        types: [c++]
+        # Includes every host Qt header before Q_OS_ANDROID is defined, so it needs the umbrellas.
+        exclude: ^test/GPS/Core/Transport/Android/AndroidHostPlatform\.h$
+        pass_filenames: true
+
       - id: vehicle-null-check
         name: Check vehicle null safety
         entry: python3 tools/analyzers/vehicle_null_check.py

@@ -1,10 +1,10 @@
 #pragma once
 
 #include <QtCore/QElapsedTimer>
-#include <QtCore/QtNumeric>
 #include <QtCore/QObject>
+#include <QtCore/QtNumeric>
 #include <QtPositioning/QGeoCoordinate>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 #include "ADSB.h"
 

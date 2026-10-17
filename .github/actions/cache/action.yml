@@ -200,6 +200,7 @@ runs:
           echo "cpm_key=${cpm_base}-${SCOPE}-${CPM_FINGERPRINT}"
           echo "cpm_scope=${cpm_base}-${SCOPE}-"
           echo "cpm_shared=${cpm_base}-shared-"
+          echo "cpm_shared_key=${cpm_base}-shared-${CPM_FINGERPRINT}"
           echo "cpm_unvaried_scope=cpm-sources-v2-${HOST}-${TARGET}-${SCOPE}-"
           echo "cpm_unvaried_shared=cpm-sources-v2-${HOST}-${TARGET}-shared-"
         } >> "$GITHUB_OUTPUT"
@@ -333,8 +334,26 @@ runs:
 
     # Release populates immutable dependency snapshots. Debug jobs can also
     # restore the ordinary platform sources when their custom cache is absent.
+    # PRs and branches read default-branch caches; when that snapshot already has
+    # this fingerprint, restore it exactly instead of saving a duplicate scoped copy
+    # that would evict shared caches. Scoped restore-keys could match an older
+    # scoped snapshot first, so this step has none.
+    - name: Restore default-branch CPM snapshot
+      id: cpm-shared
+      if: >-
+        inputs.cpm-modules != '' && steps.cache-policy.outputs.save == 'true' && inputs.build-type == 'Release' &&
+        steps.cache-scope.outputs.scope != 'shared'
+      uses: actions/cache/restore@v6
+      with:
+        path: |
+          ${{ env.CPM_CACHE_PATH }}/*
+          !${{ env.CPM_CACHE_PATH }}/gstreamer*
+        key: ${{ steps.cache-keys.outputs.cpm_shared_key }}
+
     - name: Cache CPM Modules (restore and save)
-      if: inputs.cpm-modules != '' && steps.cache-policy.outputs.save == 'true' && inputs.build-type == 'Release'
+      if: >-
+        inputs.cpm-modules != '' && steps.cache-policy.outputs.save == 'true' && inputs.build-type == 'Release' &&
+        steps.cpm-shared.outputs.cache-hit != 'true'
       uses: actions/cache@v6
       with:
         # Nested composite step outputs are unavailable during post-job saves.

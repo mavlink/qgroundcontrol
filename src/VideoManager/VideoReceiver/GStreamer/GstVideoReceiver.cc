@@ -3,6 +3,7 @@
 #include <chrono>
 #include <gst/gst.h>
 
+#include <QtCore/QCoreApplication>
 #include <QtCore/QDeadlineTimer>
 #include <QtCore/QThread>
 #include <QtCore/QTimer>
@@ -131,18 +132,31 @@ GstVideoReceiver::~GstVideoReceiver()
     // Tear down synchronously: queued tasks and pipeline callbacks capture `this`, so the worker
     // must be idle and the pipeline gone before members are destroyed. No onStopComplete here;
     // listeners must not be handed a receiver that is being destroyed.
-    _runOnWorker([this]() {
+    const auto teardown = [this]() {
         _reconnectTimer->stop();
         (void) _stopPipeline();
-        _workerThread->quit();
-    });
+    };
 
-    if (!_workerThread->wait(QDeadlineTimer(kWorkerShutdownTimeout))) {
-        // Destroying a running QThread aborts the process, and queued tasks still reference this receiver.
-        qCWarning(GstVideoReceiverLog) << "Worker still busy after"
-                                       << std::chrono::milliseconds(kWorkerShutdownTimeout).count()
-                                       << "ms; waiting for it to finish";
+    if (!QCoreApplication::instance()) {
+        // Qt delivers no events to worker threads once QCoreApplication is gone, so a queued teardown would never run.
+        // quit() and finished() need no event delivery, and finished() is still emitted on the worker.
+        qCWarning(GstVideoReceiverLog) << "Destroyed after QCoreApplication; tearing down as the worker exits";
+        (void) connect(_workerThread, &QThread::finished, _workerContext, teardown, Qt::DirectConnection);
+        _workerThread->quit();
         (void) _workerThread->wait();
+    } else {
+        _runOnWorker([this, teardown]() {
+            teardown();
+            _workerThread->quit();
+        });
+
+        if (!_workerThread->wait(QDeadlineTimer(kWorkerShutdownTimeout))) {
+            // Destroying a running QThread aborts the process, and queued tasks still reference this receiver.
+            qCWarning(GstVideoReceiverLog)
+                << "Worker still busy after" << std::chrono::milliseconds(kWorkerShutdownTimeout).count()
+                << "ms; waiting for it to finish";
+            (void) _workerThread->wait();
+        }
     }
 
     qCDebug(GstVideoReceiverLog) << this;

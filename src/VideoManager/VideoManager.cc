@@ -1,27 +1,9 @@
 #include "VideoManager.h"
-#include "AppSettings.h"
-#include "MavlinkCameraControlInterface.h"
-#include "MultiVehicleManager.h"
-#include "AppMessages.h"
-#include "QGCApplication.h"
-#include "QGCCameraManager.h"
-#include "QGCCorePlugin.h"
-#include "QGCLoggingCategory.h"
-#include "QGCNetworkHelper.h"
-#include "QGCVideoStreamInfo.h"
-#include "SettingsManager.h"
-#include "SubtitleWriter.h"
-#include "Vehicle.h"
-#include "VehicleLinkManager.h"
-#include "VideoReceiver.h"
-#include "VideoSettings.h"
-#include "UVCReceiver.h"
-#include "VideoBackend.h"
 
 #include <algorithm>
 #include <climits>
 
-#include <QtConcurrent/QtConcurrent>
+#include <QtConcurrent/QtConcurrentRun>
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QCoreApplication>
 #include <QtCore/QDir>
@@ -31,6 +13,25 @@
 #include <QtCore/QTimer>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
+
+#include "AppMessages.h"
+#include "AppSettings.h"
+#include "MavlinkCameraControlInterface.h"
+#include "MultiVehicleManager.h"
+#include "QGCApplication.h"
+#include "QGCCameraManager.h"
+#include "QGCCorePlugin.h"
+#include "QGCLoggingCategory.h"
+#include "QGCNetworkHelper.h"
+#include "QGCVideoStreamInfo.h"
+#include "SettingsManager.h"
+#include "SubtitleWriter.h"
+#include "UVCReceiver.h"
+#include "Vehicle.h"
+#include "VehicleLinkManager.h"
+#include "VideoBackend.h"
+#include "VideoReceiver.h"
+#include "VideoSettings.h"
 
 QGC_LOGGING_CATEGORY(VideoManagerLog, "Video.VideoManager")
 
@@ -312,9 +313,19 @@ void VideoManager::_createVideoReceivers()
 
 void VideoManager::cleanup()
 {
-    for (VideoReceiver *receiver : std::as_const(_videoReceivers)) {
-        QGCCorePlugin::instance()->releaseVideoSink(receiver->sink());
+    // Destroy receivers while the application object exists: GstVideoReceiver tears down on a worker thread, and Qt
+    // stops delivering events to worker threads once QCoreApplication is gone.
+    QList<VideoReceiver*> receivers;
+    receivers.swap(_videoReceivers);
+    _pendingRestarts.clear();
+    for (VideoReceiver* receiver : receivers) {
+        const VideoReceiver::VideoSinkHandle sink = receiver->sink();
+        delete receiver;
+        QGCCorePlugin::instance()->releaseVideoSink(sink);
     }
+    // Receiver signals emitted off the GUI thread leave queued calls to lambdas holding the raw receiver pointer, and
+    // later shutdown steps still process events.
+    QCoreApplication::removePostedEvents(this, QEvent::MetaCall);
 }
 
 void VideoManager::_cleanupOldVideos()

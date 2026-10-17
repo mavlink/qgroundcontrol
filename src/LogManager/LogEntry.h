@@ -2,7 +2,7 @@
 
 #include <QtCore/QDateTime>
 #include <QtCore/QString>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 struct LogEntry
 {

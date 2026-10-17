@@ -3,7 +3,7 @@
 #include <QtCore/QObject>
 #include <QtGui/QVector3D>
 #include <QtPositioning/QGeoCoordinate>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 class Viewer3DGeoCoordinateType : public QObject
 {

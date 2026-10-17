@@ -1,9 +1,9 @@
 #pragma once
 
-#include "MAVLinkEnums.h"
-
 #include <QtCore/QObject>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
+
+#include "MAVLinkEnums.h"
 
 class Vehicle;
 

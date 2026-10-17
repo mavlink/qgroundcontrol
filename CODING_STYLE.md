@@ -84,6 +84,11 @@ over narration.
 #include "Vehicle.h"
 ```
 
+Include the specific Qt header, never a module umbrella such as `<QtQmlIntegration/QtQmlIntegration>` or
+`<QtConcurrent/QtConcurrent>`: umbrellas pull in every header of the module's dependencies, including all of
+QtCore, in each translation unit. `QML_ELEMENT` and the other registration macros need only
+`<QtQmlIntegration/qqmlintegration.h>`. The `check-no-qt-module-umbrella` hook enforces this.
+
 ### Class Declaration Order
 
 ```cpp
@@ -323,6 +328,9 @@ Connections {
 4. **Using Q_ASSERT in production** - Use defensive checks instead
 5. **Mixing cookedValue/rawValue** - Understand the difference
 6. **Hardcoded QML sizes/colors** - Use ScreenTools and QGCPalette
+7. **Unity-unsafe `.cc` files** - CI compiles QGC sources in unity batches, so file-local names (anonymous
+   namespace or `static`) must not repeat across files and project namespaces must not be opened with a file-scope
+   `using namespace`; otherwise mark the file `SKIP_UNITY_BUILD_INCLUSION` and reproduce with `-DQGC_UNITY_BUILD=ON`
 
 ### Examples
 

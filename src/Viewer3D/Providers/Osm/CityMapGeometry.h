@@ -2,7 +2,7 @@
 
 #include <QtCore/QByteArray>
 #include <QtCore/QString>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 #include <QtQuick3D/QQuick3DGeometry>
 
 class OsmParser;

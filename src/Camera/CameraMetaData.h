@@ -1,6 +1,8 @@
 #pragma once
 
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtCore/QObject>
+#include <QtCore/QString>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 /// \brief Set of meta data which describes a camera available on the vehicle
 ///

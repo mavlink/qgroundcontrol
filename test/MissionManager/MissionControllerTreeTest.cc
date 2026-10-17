@@ -13,6 +13,7 @@
 
 using namespace TestFixtures;
 
+MissionControllerTreeTest::MissionControllerTreeTest() = default;
 MissionControllerTreeTest::~MissionControllerTreeTest() = default;
 
 void MissionControllerTreeTest::cleanup()

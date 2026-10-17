@@ -4,7 +4,7 @@
 #include <QtCore/QVariantList>
 #include <QtGui/QVector3D>
 #include <QtPositioning/QGeoCoordinate>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 class Vehicle;
 

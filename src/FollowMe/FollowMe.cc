@@ -1,5 +1,6 @@
 #include "FollowMe.h"
 
+#include <QtCore/QApplicationStatic>
 #include <QtPositioning/QGeoPositionInfo>
 
 #include "AppSettings.h"

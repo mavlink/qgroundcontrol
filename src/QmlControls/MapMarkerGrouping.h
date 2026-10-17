@@ -3,7 +3,7 @@
 #include <QtCore/QList>
 #include <QtCore/QObject>
 #include <QtCore/QPointF>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 /// Groups map markers drawn too close together on screen to click individually,
 /// for the overlapping-marker picker of both map engines (MissionItemIndicatorGroup

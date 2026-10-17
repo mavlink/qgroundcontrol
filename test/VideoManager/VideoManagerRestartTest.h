@@ -10,4 +10,5 @@ private slots:
     void _testRestartsOnlyAfterRequestedStop_data();
     void _testRestartsOnlyAfterRequestedStop();
     void _testStopVideoStopsReceiverWaitingToReconnect();
+    void _testCleanupDestroysReceivers();
 };

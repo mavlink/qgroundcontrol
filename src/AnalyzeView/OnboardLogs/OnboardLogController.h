@@ -4,7 +4,7 @@
 #include <QtCore/QObject>
 #include <QtCore/QQueue>
 #include <QtCore/QStringList>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 struct OnboardLogDownloadData;
 class QGCOnboardLogEntry;

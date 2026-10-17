@@ -197,7 +197,8 @@ is keyed on moc version + arguments + input content + transitive include content
 path relative to the output directory (moc embeds that relative path as an `#include` in its
 output, so build trees laid out at a different depth intentionally don't share entries). Entries
 are otherwise shared across build trees: build-dir paths are rewritten to a token, like ccache's
-`base_dir`.
+`base_dir`. Each key keeps results for up to four include states, so switching back to a branch
+or reverting a header edit still hits.
 
 Cache misses fall through to the real moc and never fail the build; corrupt or stale entries are
 re-validated by content hash on every use.

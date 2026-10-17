@@ -1,13 +1,14 @@
 #pragma once
 
+#include <chrono>
+#include <deque>
+#include <vector>
+
 #include <QtCore/QChronoTimer>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QSet>
 #include <QtCore/QStringList>
-#include <QtQmlIntegration/QtQmlIntegration>
-#include <chrono>
-#include <deque>
-#include <vector>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 #include "LogEntryTableModel.h"
 

@@ -96,6 +96,13 @@ jobs:
           cache-key-suffix: ${{ matrix.target }}
           cpm-modules: .cache/CPM
 
+      # The cold boot overlaps configure and build; the boot test falls back to a fresh device.
+      - name: Start simulator boot
+        id: simulator
+        if: matrix.target == 'simulator'
+        continue-on-error: true
+        run: python3 .github/scripts/ios_boot_test.py --start --log "$RUNNER_TEMP/ios-boot-test.log"
+
       - name: Import App Store signing certificate
         if: matrix.target == 'device' && github.ref_type == 'tag' && startsWith(github.ref_name, 'v')
         uses: apple-actions/import-codesign-certs@v7
@@ -133,8 +140,10 @@ jobs:
             ${{ matrix.target == 'device' && github.ref_type == 'tag' && startsWith(github.ref_name, 'v') && 'iOS-appstore' || matrix.preset }}
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ matrix.build_type }}
+          # Line tables keep simulator crash traces while halving objects, so Debug fits its cache budget.
           extra-args: >-
             ${{ matrix.target == 'simulator' && '-DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_ARCHITECTURES=x86_64' || '' }}
+            ${{ matrix.target == 'simulator' && '-DCMAKE_C_FLAGS_DEBUG=-g1 -DCMAKE_CXX_FLAGS_DEBUG=-g1 -DCMAKE_OBJC_FLAGS_DEBUG=-g1 -DCMAKE_OBJCXX_FLAGS_DEBUG=-g1' || '' }}
             ${{ steps.profile.outputs.cmake_args }}
 
       - name: Build
@@ -153,7 +162,10 @@ jobs:
         if: matrix.target == 'simulator'
         env:
           APP_PATH: ${{ runner.temp }}/build/${{ matrix.build_type }}/${{ env.PACKAGE }}.app
-        run: python3 .github/scripts/ios_boot_test.py --app "$APP_PATH" --log "$RUNNER_TEMP/ios-boot-test.log"
+          SIMULATOR_DEVICE: ${{ steps.simulator.outputs.device }}
+        run: >-
+          python3 .github/scripts/ios_boot_test.py --app "$APP_PATH" --log "$RUNNER_TEMP/ios-boot-test.log"
+          --device "$SIMULATOR_DEVICE"
 
       - name: Upload simulator boot log
         if: ${{ !cancelled() && matrix.target == 'simulator' }}

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <QtCore/QTimer>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 #include "Gimbal.h"
 #include "MAVLinkMessageType.h"

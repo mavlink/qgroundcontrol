@@ -10,7 +10,7 @@
 #pragma once
 
 #include <QtCore/QAbstractItemModel>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 /// \brief Common base for QObject*-based item models (flat lists and trees).
 ///

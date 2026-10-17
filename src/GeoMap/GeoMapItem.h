@@ -12,7 +12,7 @@
 #include <QtCore/QPointF>
 #include <QtGui/QVector3D>
 #include <QtPositioning/QGeoCoordinate>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 #include <QtQuick/QQuickItem>
 
 class GeoMapCamera;

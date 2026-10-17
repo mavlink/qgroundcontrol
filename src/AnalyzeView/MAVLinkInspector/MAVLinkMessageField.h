@@ -1,11 +1,11 @@
 #pragma once
 
+#include <limits>
+
 #include <QtCore/QObject>
 #include <QtCore/QPointF>
 #include <QtCore/QString>
-#include <QtQmlIntegration/QtQmlIntegration>
-
-#include <limits>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 class QGCMAVLinkMessage;
 class MAVLinkChartController;

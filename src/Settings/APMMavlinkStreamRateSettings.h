@@ -1,9 +1,9 @@
 #pragma once
 
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
-#include "SettingsGroup.h"
 #include "MAVLinkEnums.h"
+#include "SettingsGroup.h"
 
 class APMMavlinkStreamRateSettings : public SettingsGroup
 {

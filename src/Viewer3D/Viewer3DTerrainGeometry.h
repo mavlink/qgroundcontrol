@@ -1,12 +1,12 @@
 #pragma once
 
+#include <vector>
+
 #include <QtGui/QVector2D>
 #include <QtGui/QVector3D>
 #include <QtPositioning/QGeoCoordinate>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 #include <QtQuick3D/QQuick3DGeometry>
-
-#include <vector>
 
 class Viewer3DTerrainGeometry : public QQuick3DGeometry
 {

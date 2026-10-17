@@ -1,13 +1,6 @@
 #include "GeoTagController.h"
-#include "DataFlashParser.h"
-#include "ExifParser.h"
-#include "GeoTagImageModel.h"
-#include "QGCCompression.h"
-#include "QGCFileHelper.h"
-#include "QGCLoggingCategory.h"
-#include "ULogParser.h"
 
-#include <QtConcurrent/QtConcurrent>
+#include <QtConcurrent/QtConcurrentMap>
 #include <QtCore/QDir>
 #include <QtCore/QDirIterator>
 #include <QtCore/QFile>
@@ -16,6 +9,14 @@
 #include <QtCore/QMultiMap>
 #include <QtCore/QMutexLocker>
 #include <QtCore/QSet>
+
+#include "DataFlashParser.h"
+#include "ExifParser.h"
+#include "GeoTagImageModel.h"
+#include "QGCCompression.h"
+#include "QGCFileHelper.h"
+#include "QGCLoggingCategory.h"
+#include "ULogParser.h"
 
 QGC_LOGGING_CATEGORY(GeoTagControllerLog, "AnalyzeView.GeoTagController")
 

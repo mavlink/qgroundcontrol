@@ -5,7 +5,7 @@
 #include <QtCore/QRecursiveMutex>
 #include <QtCore/QString>
 #include <QtCore/QVariant>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 #include "FactMetaData.h"
 

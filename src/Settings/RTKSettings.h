@@ -1,9 +1,9 @@
 #pragma once
 
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QObject>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 #include "SettingsGroup.h"
-#include <QObject>
 
 class BaseModeDefinition : public QObject {
     Q_OBJECT

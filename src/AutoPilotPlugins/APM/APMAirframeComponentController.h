@@ -1,10 +1,10 @@
 #pragma once
 
 #include <QtCore/QObject>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
-#include "QmlObjectListModel.h"
 #include "FactPanelController.h"
+#include "QmlObjectListModel.h"
 
 class APMAirframeModel;
 class APMAirframeType;

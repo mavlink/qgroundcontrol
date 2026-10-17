@@ -1,20 +1,20 @@
 #pragma once
 
-#include <QtCore/QHash>
 #include <QtCore/QFile>
+#include <QtCore/QHash>
 #include <QtCore/QPersistentModelIndex>
 #include <QtCore/QVariant>
 #include <QtPositioning/QGeoCoordinate>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
-#include "PlanElementController.h"
-#include "QmlObjectListModel.h"
-#include "QmlObjectTreeModel.h"
-#include "QGCGeoBoundingCube.h"
-#include "QGroundControlQmlGlobal.h"
-#include "QGCMAVLink.h"
 #include "MissionFlightStatus.h"
 #include "MissionFlightStatusCalculator.h"
+#include "PlanElementController.h"
+#include "QGCGeoBoundingCube.h"
+#include "QGCMAVLink.h"
+#include "QGroundControlQmlGlobal.h"
+#include "QmlObjectListModel.h"
+#include "QmlObjectTreeModel.h"
 
 class FlightPathSegment;
 class VisualMissionItem;

@@ -6,7 +6,7 @@
 # ============================================================================
 
 target_sources(
-    ${CMAKE_PROJECT_NAME}
+    QGCUnitTests
     PRIVATE Scenarios/GoldenScenarios.cc
             Scenarios/GoldenScenarios.h
             Scenarios/GoldenScenariosAshtech.cc

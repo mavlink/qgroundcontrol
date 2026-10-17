@@ -1,12 +1,12 @@
 #pragma once
 
+#include <vector>
+
 #include <QtCore/QByteArray>
 #include <QtCore/QString>
 #include <QtGui/QVector2D>
 #include <QtGui/QVector3D>
-#include <QtQmlIntegration/QtQmlIntegration>
-
-#include <vector>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 #include "Viewer3DMapProvider.h"
 

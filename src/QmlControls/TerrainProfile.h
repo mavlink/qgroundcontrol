@@ -1,8 +1,8 @@
 #pragma once
 
-#include <QtQuick/QQuickItem>
-#include <QtQmlIntegration/QtQmlIntegration>
 #include <QtGraphs/QXYSeries>
+#include <QtQmlIntegration/qqmlintegration.h>
+#include <QtQuick/QQuickItem>
 
 class MissionController;
 class QmlObjectListModel;

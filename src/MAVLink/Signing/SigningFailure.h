@@ -1,10 +1,10 @@
 #pragma once
 
+#include <cstdint>
+
 #include <QtCore/QObject>
 #include <QtCore/QString>
-#include <QtQmlIntegration/QtQmlIntegration>
-
-#include <cstdint>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 /// \brief Reason a signing operation failed. Used by SigningController error path and Vehicle::signingFailed.
 ///

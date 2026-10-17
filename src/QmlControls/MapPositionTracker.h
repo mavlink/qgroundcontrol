@@ -16,7 +16,7 @@
 #include <QtCore/QTimer>
 #include <QtCore/QVariantList>
 #include <QtPositioning/QGeoCoordinate>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 Q_DECLARE_LOGGING_CATEGORY(MapPositionTrackerLog)
 

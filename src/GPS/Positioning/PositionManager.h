@@ -10,7 +10,7 @@
 #include <QtCore/QPointer>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtPositioning/QGeoPositionInfoSource>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 #include "GPSSourceHealth.h"
 #include "ScheduledTask.h"

@@ -168,7 +168,7 @@ void RequestMetaDataTypeStateMachineTest::_requestSkipsCompInfoOnHighLatencyLink
     QVERIFY(_vehicle);
 
     QSignalSpy initialConnectCompleteSpy{_vehicle, &Vehicle::initialConnectComplete};
-    QVERIFY(initialConnectCompleteSpy.wait(TestTimeout::longMs()) || _vehicle->isInitialConnectComplete());
+    QVERIFY(_vehicle->isInitialConnectComplete() || initialConnectCompleteSpy.wait(TestTimeout::longMs()));
 
     auto* manager = vehicle()->compInfoManager();
     QVERIFY(manager);

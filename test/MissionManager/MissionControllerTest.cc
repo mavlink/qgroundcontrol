@@ -28,6 +28,7 @@
 
 using namespace TestFixtures;
 
+MissionControllerTest::MissionControllerTest() = default;
 MissionControllerTest::~MissionControllerTest() = default;
 
 namespace {

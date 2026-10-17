@@ -1,8 +1,11 @@
 #include "ActuatorActions.h"
-#include "MAVLinkLib.h"
+
+#include <QtCore/QCoreApplication>
+
 #include "AppMessages.h"
-#include "Vehicle.h"
+#include "MAVLinkLib.h"
 #include "QGCLoggingCategory.h"
+#include "Vehicle.h"
 
 QGC_LOGGING_CATEGORY(ActuatorActionsLog, "Vehicle.Actuators.ActuatorActions")
 

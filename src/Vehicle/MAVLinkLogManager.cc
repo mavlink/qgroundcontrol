@@ -1,18 +1,19 @@
 #include "MAVLinkLogManager.h"
-#include "QGCFileHelper.h"
-#include "QGCLoggingCategory.h"
-#include "QmlObjectListModel.h"
-#include "SettingsManager.h"
-#include "AppSettings.h"
-#include "Vehicle.h"
 
+#include <QtCore/QCoreApplication>
 #include <QtCore/QDirIterator>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 #include <QtCore/QSettings>
 #include <QtNetwork/QNetworkReply>
 
+#include "AppSettings.h"
+#include "QGCFileHelper.h"
+#include "QGCLoggingCategory.h"
 #include "QGCNetworkHelper.h"
+#include "QmlObjectListModel.h"
+#include "SettingsManager.h"
+#include "Vehicle.h"
 
 QGC_LOGGING_CATEGORY(MAVLinkLogManagerLog, "Vehicle.MAVLinkLogManager")
 

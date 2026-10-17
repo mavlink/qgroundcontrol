@@ -3,7 +3,7 @@
 #include <initializer_list>
 #include <optional>
 
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 #include "FactGroup.h"
 #include "GPSReceiverConfig.h"

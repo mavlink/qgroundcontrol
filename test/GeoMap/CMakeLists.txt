@@ -3,48 +3,54 @@
 # Tests for the experimental GeoMap engine backend
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        CheckerboardTextureDataTest.cc
-        CheckerboardTextureDataTest.h
-        ElevationTilePyramidTest.cc
-        ElevationTilePyramidTest.h
-        FenceWallGeometryTest.cc
-        FenceWallGeometryTest.h
-        FlightPathGeometryTest.cc
-        FlightPathGeometryTest.h
-        GeoSceneTest.cc
-        GeoSceneTest.h
-        GeoMapCameraTest.cc
-        GeoMapCameraTest.h
-        GeoMapItemTest.cc
-        GeoMapItemTest.h
-        GeoMapProjectedPathTest.cc
-        GeoMapProjectedPathTest.h
-        HeightFieldTest.cc
-        HeightFieldTest.h
-        HeightSourceTest.cc
-        HeightSourceTest.h
-        PaperPlaneGeometryTest.cc
-        PaperPlaneGeometryTest.h
-        PatchGeometryTest.cc
-        PatchGeometryTest.h
-        PatchTextureDataTest.cc
-        PatchTextureDataTest.h
-        SurfaceAnalysisTest.cc
-        SurfaceAnalysisTest.h
-        SurfaceModelTest.cc
-        SurfaceModelTest.h
-        SurfacePatchImageryTest.cc
-        SurfacePatchImageryTest.h
-        SurfacePatchModelTest.cc
-        SurfacePatchModelTest.h
-        TerrariumTileFetcherTest.cc
-        TerrariumTileFetcherTest.h
-        TileImageSourceTest.cc
-        TileImageSourceTest.h
-        TileMathTest.cc
-        TileMathTest.h
+target_sources(
+    QGCUnitTests
+    PRIVATE CheckerboardTextureDataTest.cc
+            CheckerboardTextureDataTest.h
+            ElevationTilePyramidTest.cc
+            ElevationTilePyramidTest.h
+            FenceWallGeometryTest.cc
+            FenceWallGeometryTest.h
+            FlightPathGeometryTest.cc
+            FlightPathGeometryTest.h
+            GeoSceneTest.cc
+            GeoSceneTest.h
+            GeoMapCameraTest.cc
+            GeoMapCameraTest.h
+            GeoMapItemTest.cc
+            GeoMapItemTest.h
+            GeoMapProjectedPathTest.cc
+            GeoMapProjectedPathTest.h
+            HeightFieldTest.cc
+            HeightFieldTest.h
+            HeightSourceTest.cc
+            HeightSourceTest.h
+            PaperPlaneGeometryTest.cc
+            PaperPlaneGeometryTest.h
+            PatchGeometryTest.cc
+            PatchGeometryTest.h
+            PatchTextureDataTest.cc
+            PatchTextureDataTest.h
+            SurfaceAnalysisTest.cc
+            SurfaceAnalysisTest.h
+            SurfaceModelTest.cc
+            SurfaceModelTest.h
+            SurfacePatchImageryTest.cc
+            SurfacePatchImageryTest.h
+            SurfacePatchModelTest.cc
+            SurfacePatchModelTest.h
+            TerrariumTileFetcherTest.cc
+            TerrariumTileFetcherTest.h
+            TileImageSourceTest.cc
+            TileImageSourceTest.h
+            TileMathTest.cc
+            TileMathTest.h
+)
+
+# The tests reuse file-local helper names (kViewport, kCenter, setupCamera, ...), so they cannot share unity units.
+file(GLOB _geomap_test_sources CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/*.cc")
+set_source_files_properties(${_geomap_test_sources} TARGET_DIRECTORY QGCUnitTests PROPERTIES SKIP_UNITY_BUILD_INCLUSION
+                                                                                             ON
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

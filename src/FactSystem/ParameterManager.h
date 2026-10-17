@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QtCore/QDir>
 #include <QtCore/QList>
 #include <QtCore/QMap>
 #include <QtCore/QObject>
@@ -7,7 +8,7 @@
 #include <QtCore/QSet>
 #include <QtCore/QString>
 #include <QtCore/QTimer>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 #include "Fact.h"
 #include "MAVLinkEnums.h"

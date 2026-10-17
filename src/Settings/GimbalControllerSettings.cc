@@ -1,5 +1,8 @@
 #include "GimbalControllerSettings.h"
 
+#include <QtCore/QSettings>
+#include <QtCore/QString>
+
 DECLARE_SETTINGGROUP(GimbalController, "GimbalController")
 {
     // Setting names were changed from PascalCase to camelCase

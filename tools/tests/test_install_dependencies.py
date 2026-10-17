@@ -630,6 +630,7 @@ def test_install_windows_nsis_missing_after_install(monkeypatch, tmp_path: Path)
 def test_install_windows_msvc_arm64_adds_component() -> None:
     captured: list[list[str]] = []
     with (
+        patch.object(_windows, "_msvc_preinstalled", return_value=False),
         patch.object(_windows._c, "download_file", return_value=True),
         patch.object(
             _windows._c,
@@ -643,8 +644,44 @@ def test_install_windows_msvc_arm64_adds_component() -> None:
     assert "Microsoft.VisualStudio.Component.VC.Tools.ARM64" in captured[0]
 
 
+def test_install_windows_msvc_skips_preinstalled_toolchain() -> None:
+    with (
+        patch.object(_windows, "_msvc_preinstalled", return_value=True) as preinstalled,
+        patch.object(_windows._c, "download_file") as dl,
+    ):
+        assert _windows.install_windows_msvc(dry_run=False, arm64=True) is True
+    preinstalled.assert_called_once_with(True)
+    dl.assert_not_called()
+
+
+@pytest.mark.parametrize(("stdout", "expected"), [("C:\\VS\n", True), ("", False)])
+def test_msvc_preinstalled_requires_all_components_in_one_instance(
+    monkeypatch, tmp_path: Path, stdout: str, expected: bool
+) -> None:
+    vswhere = tmp_path / "Microsoft Visual Studio" / "Installer" / "vswhere.exe"
+    vswhere.parent.mkdir(parents=True)
+    vswhere.write_text("")
+    monkeypatch.setenv("PROGRAMFILES(X86)", str(tmp_path))
+    with patch.object(_windows.subprocess, "run", return_value=completed(stdout)) as run:
+        assert _windows._msvc_preinstalled(arm64=True) is expected
+    args = run.call_args.args[0]
+    requires = args.index("-requires")
+    assert args[requires + 1 : requires + 3] == [
+        "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",
+        "Microsoft.VisualStudio.Component.VC.Tools.ARM64",
+    ]
+
+
+def test_msvc_preinstalled_false_without_vswhere(monkeypatch, tmp_path: Path) -> None:
+    monkeypatch.setenv("PROGRAMFILES(X86)", str(tmp_path))
+    with patch.object(_windows.subprocess, "run") as run:
+        assert _windows._msvc_preinstalled(arm64=False) is False
+    run.assert_not_called()
+
+
 def test_install_windows_msvc_verification_failure() -> None:
     with (
+        patch.object(_windows, "_msvc_preinstalled", return_value=False),
         patch.object(_windows._c, "download_file", return_value=True),
         patch.object(_windows._c, "run_command", return_value=True),
         patch.object(_windows, "_verify_msvc", return_value=False),

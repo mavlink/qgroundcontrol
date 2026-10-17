@@ -1,6 +1,11 @@
 #include "QGCCompressionTest.h"
 
-#include <QtConcurrent/QtConcurrent>
+#include <algorithm>
+#include <atomic>
+#include <initializer_list>
+#include <vector>
+
+#include <QtConcurrent/QtConcurrentRun>
 #include <QtCore/QBuffer>
 #include <QtCore/QCollator>
 #include <QtCore/QCryptographicHash>
@@ -15,11 +20,6 @@
 #include <QtCore/QTimer>
 #include <QtCore/QWaitCondition>
 #include <QtTest/QSignalSpy>
-
-#include <algorithm>
-#include <atomic>
-#include <initializer_list>
-#include <vector>
 
 #include "QGCCompression.h"
 #include "QGCCompressionJob.h"

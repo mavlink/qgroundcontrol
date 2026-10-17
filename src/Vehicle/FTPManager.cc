@@ -1,17 +1,21 @@
 #include "FTPManager.h"
-#include "MAVLinkProtocol.h"
+
+#include <cerrno>
+#include <iterator>
+#include <limits>
+
+#include <QtCore/QDir>
+#include <QtCore/QFile>
+#include <QtCore/QFileInfo>
+#include <QtCore/QRegularExpression>
+#include <QtCore/QRegularExpressionMatch>
+
 #include "AppMessages.h"
+#include "MAVLinkProtocol.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"
 #include "VehicleSigningController.h"
-
-#include <QtCore/QFile>
-#include <QtCore/QFileInfo>
-#include <QtCore/QDir>
-#include <cerrno>
-#include <iterator>
-#include <limits>
 
 QGC_LOGGING_CATEGORY(FTPManagerLog, "Vehicle.FTPManager")
 

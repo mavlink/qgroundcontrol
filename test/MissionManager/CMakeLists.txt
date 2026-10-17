@@ -3,34 +3,72 @@
 # Tests for mission planning, waypoints, and flight plan management
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        CameraCalcTest.cc CameraCalcTest.h
-        CameraSectionTest.cc CameraSectionTest.h
-        CameraSpecTest.cc CameraSpecTest.h
-        CorridorScanComplexItemTest.cc CorridorScanComplexItemTest.h
-        FWLandingPatternTest.cc FWLandingPatternTest.h
-        LandingComplexItemTest.cc LandingComplexItemTest.h
-        MissionCommandTreeEditorTest.cc MissionCommandTreeEditorTest.h
-        MissionCommandTreeTest.cc MissionCommandTreeTest.h
-        MissionControllerManagerTest.cc MissionControllerManagerTest.h
-        MissionControllerTest.cc MissionControllerTest.h
-        MissionControllerTreeTest.cc MissionControllerTreeTest.h
-        MissionItemTest.cc MissionItemTest.h
-        MissionManagerTest.cc MissionManagerTest.h
-        MissionSettingsTest.cc MissionSettingsTest.h
-        PlanMasterControllerTest.cc PlanMasterControllerTest.h
-        QGCMapPolygonTest.cc QGCMapPolygonTest.h
-        QGCMapPolylineTest.cc QGCMapPolylineTest.h
-        RallyPointTest.cc RallyPointTest.h
-        SectionTest.cc SectionTest.h
-        SimpleMissionItemTest.cc SimpleMissionItemTest.h
-        SpeedSectionTest.cc SpeedSectionTest.h
-        StructureScanComplexItemTest.cc StructureScanComplexItemTest.h
-        SurveyComplexItemTest.cc SurveyComplexItemTest.h
-        TransectStyleComplexItemTestBase.cc TransectStyleComplexItemTestBase.h
-        TransectStyleComplexItemTest.cc TransectStyleComplexItemTest.h
-        VisualMissionItemTest.cc VisualMissionItemTest.h
+target_sources(
+    QGCUnitTests
+    PRIVATE CameraCalcTest.cc
+            CameraCalcTest.h
+            CameraSectionTest.cc
+            CameraSectionTest.h
+            CameraSpecTest.cc
+            CameraSpecTest.h
+            CorridorScanComplexItemTest.cc
+            CorridorScanComplexItemTest.h
+            FWLandingPatternTest.cc
+            FWLandingPatternTest.h
+            LandingComplexItemTest.cc
+            LandingComplexItemTest.h
+            MissionCommandTreeEditorTest.cc
+            MissionCommandTreeEditorTest.h
+            MissionCommandTreeTest.cc
+            MissionCommandTreeTest.h
+            MissionControllerManagerTest.cc
+            MissionControllerManagerTest.h
+            MissionControllerTest.cc
+            MissionControllerTest.h
+            MissionControllerTreeTest.cc
+            MissionControllerTreeTest.h
+            MissionItemTest.cc
+            MissionItemTest.h
+            MissionManagerTest.cc
+            MissionManagerTest.h
+            MissionSettingsTest.cc
+            MissionSettingsTest.h
+            PlanMasterControllerTest.cc
+            PlanMasterControllerTest.h
+            QGCMapPolygonTest.cc
+            QGCMapPolygonTest.h
+            QGCMapPolylineTest.cc
+            QGCMapPolylineTest.h
+            RallyPointTest.cc
+            RallyPointTest.h
+            SectionTest.cc
+            SectionTest.h
+            SimpleMissionItemTest.cc
+            SimpleMissionItemTest.h
+            SpeedSectionTest.cc
+            SpeedSectionTest.h
+            StructureScanComplexItemTest.cc
+            StructureScanComplexItemTest.h
+            SurveyComplexItemTest.cc
+            SurveyComplexItemTest.h
+            TransectStyleComplexItemTestBase.cc
+            TransectStyleComplexItemTestBase.h
+            TransectStyleComplexItemTest.cc
+            TransectStyleComplexItemTest.h
+            VisualMissionItemTest.cc
+            VisualMissionItemTest.h
+)
+
+# File-scope `using namespace TestFixtures;` would leak into later sources of a unity unit.
+set_source_files_properties(
+    FWLandingPatternTest.cc
+    LandingComplexItemTest.cc
+    MissionControllerTest.cc
+    MissionControllerTreeTest.cc
+    MissionItemTest.cc
+    TARGET_DIRECTORY
+    QGCUnitTests
+    PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -38,34 +76,35 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 # ----------------------------------------------------------------------------
 # Test Data Resources
 # ----------------------------------------------------------------------------
-qt_add_resources(${CMAKE_PROJECT_NAME} "MissionManagerTest_res"
+qt_add_resources(
+    ${CMAKE_PROJECT_NAME} "MissionManagerTest_res"
     PREFIX "/unittest"
-    FILES
-        MissionPlanner.waypoints
-        MissionPlanner.waypoints.txt
-        PolygonAreaTest.kml
-        PolygonBadCoordinatesNode.kml
-        PolygonBadXml.kml
-        PolygonGood.kml
-        PolygonMissingNode.kml
-        SectionTest.plan
-        UT-MavCmdInfoCommon.json
-        UT-MavCmdInfoFixedWing.json
-        UT-MavCmdInfoMultiRotor.json
-        UT-MavCmdInfoRover.json
-        UT-MavCmdInfoSub.json
-        UT-MavCmdInfoVTOL.json
+    FILES MissionPlanner.waypoints
+          MissionPlanner.waypoints.txt
+          PolygonAreaTest.kml
+          PolygonBadCoordinatesNode.kml
+          PolygonBadXml.kml
+          PolygonGood.kml
+          PolygonMissingNode.kml
+          SectionTest.plan
+          UT-MavCmdInfoCommon.json
+          UT-MavCmdInfoFixedWing.json
+          UT-MavCmdInfoMultiRotor.json
+          UT-MavCmdInfoRover.json
+          UT-MavCmdInfoSub.json
+          UT-MavCmdInfoVTOL.json
 )
 
-qt_add_resources(${CMAKE_PROJECT_NAME} "MissionManagerTest_res1"
+qt_add_resources(
+    ${CMAKE_PROJECT_NAME} "MissionManagerTest_res1"
     PREFIX "/qml"
-    FILES
-        MissionCommandTreeEditorTestWindow.qml
+    FILES MissionCommandTreeEditorTestWindow.qml
 )
 
 set(_manualTestPlansDir "${CMAKE_CURRENT_SOURCE_DIR}/../plans")
 file(GLOB _manualTestPlans CONFIGURE_DEPENDS "${_manualTestPlansDir}/*.plan")
-qt_add_resources(${CMAKE_PROJECT_NAME} "MissionManagerTest_manualTestPlans"
+qt_add_resources(
+    ${CMAKE_PROJECT_NAME} "MissionManagerTest_manualTestPlans"
     PREFIX "/unittest/manualTestPlans"
     BASE "${_manualTestPlansDir}"
     FILES ${_manualTestPlans}

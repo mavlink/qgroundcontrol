@@ -14,6 +14,7 @@ class MissionControllerTreeTest : public MissionControllerManagerTest
     Q_OBJECT
 
 public:
+    MissionControllerTreeTest();
     ~MissionControllerTreeTest() override;
 
 private slots:

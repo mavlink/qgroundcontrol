@@ -9,7 +9,7 @@ Instructions for AI coding agents (Codex, Claude Code, etc.) working on QGroundC
 - [tools/README.md](tools/README.md) — Development scripts and tooling
 - [test/README.md](test/README.md) — Test framework, base classes, CTest labels, MultiSignalSpy, coverage
 - [.github/ci-overview.md](.github/ci-overview.md) — CI workflow/action/script layout and conventions
-- [.pre-commit-config.yaml](.pre-commit-config.yaml) — All enforced linters (clang-format, clang-tidy, ruff, pyright, shellcheck, actionlint, zizmor, qmllint, clazy, vehicle-null-check, check-no-qassert, check-no-qtest-ignore-message)
+- [.pre-commit-config.yaml](.pre-commit-config.yaml) — All enforced linters (clang-format, clang-tidy, ruff, pyright, shellcheck, actionlint, zizmor, qmllint, clazy, vehicle-null-check, check-no-qassert, check-no-qtest-ignore-message, check-no-qt-module-umbrella)
 
 ## Required Preflight
 
@@ -33,6 +33,7 @@ enforced by pre-commit hooks, so ignoring them wastes a build cycle. Full list w
 - **QML Integration** — register types with `QML_ELEMENT`/`QML_SINGLETON`/`QML_UNCREATABLE`; expose state via `Q_PROPERTY`.
 - **No `Q_ASSERT` in production code** — use defensive checks with early returns (`check-no-qassert`).
 - **No `QTest::ignoreMessage`** in tests — use `expectLogMessage`/`ignoreLogMessage` (`check-no-qtest-ignore-message`).
+- **No Qt module umbrella includes** — include `<QtQmlIntegration/qqmlintegration.h>`, not `<QtQmlIntegration/QtQmlIntegration>` (`check-no-qt-module-umbrella`).
 - **No fixed-delay `QTest::qWait(<n>)`** — use `QTRY_*_WITH_TIMEOUT` or `QSignalSpy::wait` (`check-no-fixed-qwait`).
 - **Comments** — prefer self-documenting code; comment only non-obvious intent, constraints, or workarounds.
 

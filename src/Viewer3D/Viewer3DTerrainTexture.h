@@ -1,12 +1,12 @@
 #pragma once
 
+#include <utility>
+
 #include <QtCore/QSize>
 #include <QtCore/QString>
 #include <QtPositioning/QGeoCoordinate>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 #include <QtQuick3D/QQuick3DTextureData>
-
-#include <utility>
 
 class FlightMapSettings;
 class Viewer3DMapProvider;
