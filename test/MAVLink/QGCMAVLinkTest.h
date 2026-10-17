@@ -45,4 +45,10 @@ private slots:
 
     void _testAllFirmwareClasses();
     void _testAllVehicleClasses();
+
+    void _testParamExtRoundTrip_data();
+    void _testParamExtRoundTrip();
+    void _testParamExtCustomTruncatedToBlob();
+    void _testParamExtEncodeInvalidValue();
+    void _testParamExtDecodeUnsupportedType();
 };

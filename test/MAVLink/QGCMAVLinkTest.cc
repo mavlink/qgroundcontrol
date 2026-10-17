@@ -317,4 +317,110 @@ void QGCMAVLinkTest::_testAllVehicleClasses()
     }
 }
 
+// ---------------------------------------------------------------------------
+// PARAM_EXT value conversion
+// ---------------------------------------------------------------------------
+
+void QGCMAVLinkTest::_testParamExtRoundTrip_data()
+{
+    QTest::addColumn<int>("type");
+    QTest::addColumn<QVariant>("value");
+
+    QTest::newRow("uint8") << static_cast<int>(MAV_PARAM_EXT_TYPE_UINT8) << QVariant(200);
+    QTest::newRow("int8") << static_cast<int>(MAV_PARAM_EXT_TYPE_INT8) << QVariant(-5);
+    QTest::newRow("uint16") << static_cast<int>(MAV_PARAM_EXT_TYPE_UINT16) << QVariant(60000);
+    QTest::newRow("int16") << static_cast<int>(MAV_PARAM_EXT_TYPE_INT16) << QVariant(-30000);
+    QTest::newRow("uint32") << static_cast<int>(MAV_PARAM_EXT_TYPE_UINT32) << QVariant(4000000000u);
+    QTest::newRow("int32") << static_cast<int>(MAV_PARAM_EXT_TYPE_INT32) << QVariant(-2000000000);
+    QTest::newRow("uint64") << static_cast<int>(MAV_PARAM_EXT_TYPE_UINT64)
+                            << QVariant(static_cast<quint64>(9223372036854775813ull));
+    QTest::newRow("int64") << static_cast<int>(MAV_PARAM_EXT_TYPE_INT64)
+                           << QVariant(static_cast<qint64>(-4611686018427387904ll));
+    QTest::newRow("real32") << static_cast<int>(MAV_PARAM_EXT_TYPE_REAL32) << QVariant(1.5f);
+    QTest::newRow("real64") << static_cast<int>(MAV_PARAM_EXT_TYPE_REAL64) << QVariant(3.141592653589793);
+    QTest::newRow("custom") << static_cast<int>(MAV_PARAM_EXT_TYPE_CUSTOM) << QVariant(QStringLiteral("MockCam"));
+}
+
+void QGCMAVLinkTest::_testParamExtRoundTrip()
+{
+    QFETCH(int, type);
+    QFETCH(QVariant, value);
+
+    char blob[MAVLINK_MSG_PARAM_EXT_SET_FIELD_PARAM_VALUE_LEN] = {};
+    QVERIFY(QGCMAVLink::variantToParamExtValue(value, static_cast<uint8_t>(type), blob));
+
+    const QVariant decoded = QGCMAVLink::paramExtValueToVariant(blob, static_cast<uint8_t>(type));
+    QVERIFY(decoded.isValid());
+
+    // Compare through the accessor matching the wire type, so a signedness or width mismatch can't pass by
+    // happening to print the same. The unsigned rows use values with the top bit set for that reason.
+    bool decodedOk = false;
+    bool valueOk = false;
+    switch (type) {
+        case MAV_PARAM_EXT_TYPE_UINT8:
+        case MAV_PARAM_EXT_TYPE_UINT16:
+        case MAV_PARAM_EXT_TYPE_UINT32:
+            QCOMPARE(decoded.toUInt(&decodedOk), value.toUInt(&valueOk));
+            break;
+        case MAV_PARAM_EXT_TYPE_INT8:
+        case MAV_PARAM_EXT_TYPE_INT16:
+        case MAV_PARAM_EXT_TYPE_INT32:
+            QCOMPARE(decoded.toInt(&decodedOk), value.toInt(&valueOk));
+            break;
+        case MAV_PARAM_EXT_TYPE_UINT64:
+            QCOMPARE(decoded.toULongLong(&decodedOk), value.toULongLong(&valueOk));
+            break;
+        case MAV_PARAM_EXT_TYPE_INT64:
+            QCOMPARE(decoded.toLongLong(&decodedOk), value.toLongLong(&valueOk));
+            break;
+        case MAV_PARAM_EXT_TYPE_REAL32:
+            QCOMPARE(decoded.toFloat(&decodedOk), value.toFloat(&valueOk));
+            break;
+        case MAV_PARAM_EXT_TYPE_REAL64:
+            QCOMPARE(decoded.toDouble(&decodedOk), value.toDouble(&valueOk));
+            break;
+        case MAV_PARAM_EXT_TYPE_CUSTOM:
+            QCOMPARE(decoded.typeId(), static_cast<int>(QMetaType::QString));
+            QCOMPARE(decoded.toString().toUtf8(), value.toString().toUtf8());
+            decodedOk = true;
+            valueOk = true;
+            break;
+        default:
+            QFAIL("Unexpected MAV_PARAM_EXT_TYPE in test data");
+    }
+    QVERIFY(decodedOk);
+    QVERIFY(valueOk);
+}
+
+// A value longer than the blob must be cut to fit, not run past the end of it
+void QGCMAVLinkTest::_testParamExtCustomTruncatedToBlob()
+{
+    const QString tooLong(MAVLINK_MSG_PARAM_EXT_SET_FIELD_PARAM_VALUE_LEN + 72, QLatin1Char('A'));
+
+    char blob[MAVLINK_MSG_PARAM_EXT_SET_FIELD_PARAM_VALUE_LEN] = {};
+    QVERIFY(QGCMAVLink::variantToParamExtValue(tooLong, MAV_PARAM_EXT_TYPE_CUSTOM, blob));
+
+    const QVariant decoded = QGCMAVLink::paramExtValueToVariant(blob, MAV_PARAM_EXT_TYPE_CUSTOM);
+    QCOMPARE(decoded.toString(), tooLong.left(MAVLINK_MSG_PARAM_EXT_SET_FIELD_PARAM_VALUE_LEN));
+}
+
+void QGCMAVLinkTest::_testParamExtEncodeInvalidValue()
+{
+    char blob[MAVLINK_MSG_PARAM_EXT_SET_FIELD_PARAM_VALUE_LEN] = {};
+
+    expectLogMessage("MAVLink.QGCMAVLink", QtWarningMsg, QRegularExpression(QStringLiteral("Failed to convert value")));
+    QVERIFY(!QGCMAVLink::variantToParamExtValue(QStringLiteral("not a number"), MAV_PARAM_EXT_TYPE_INT32, blob));
+    verifyExpectedLogMessage();
+}
+
+void QGCMAVLinkTest::_testParamExtDecodeUnsupportedType()
+{
+    const char blob[MAVLINK_MSG_PARAM_EXT_SET_FIELD_PARAM_VALUE_LEN] = {};
+
+    expectLogMessage("MAVLink.QGCMAVLink", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Unsupported MAV_PARAM_EXT_TYPE")));
+    QVERIFY(!QGCMAVLink::paramExtValueToVariant(blob, 200).isValid());
+    verifyExpectedLogMessage();
+}
+
 UT_REGISTER_TEST(QGCMAVLinkTest, TestLabel::Unit)

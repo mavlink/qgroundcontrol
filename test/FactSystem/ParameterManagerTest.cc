@@ -6,16 +6,25 @@
 
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QTextStream>
 #include <QtTest/QSignalSpy>
 
 #include "BulkRefreshJob.h"
 #include "LogManager.h"
+#include "MockLinkCamera.h"
 #include "MockLinkFTP.h"
 #include "MultiVehicleManager.h"
 #include "ParameterManager.h"
 #include "QGCApplication.h"
+#include "QGCMAVLink.h"
 #include "QGCMath.h"
 #include "Vehicle.h"
+
+namespace {
+/// Int typed ext param served by MockLinkCamera on MAV_COMP_ID_CAMERA
+const QString kExtIntParam = QStringLiteral("CAM_EXPMODE");
+const QString kExtCustomParam = QStringLiteral("CAM_MODEL");
+}  // namespace
 
 // Call from tests that deliberately let PARAM_SET / PARAM_REQUEST_READ waits time out.
 void ParameterManagerTest::_ignoreParamResponseTimeouts()
@@ -54,12 +63,67 @@ int ParameterManagerTest::_readCountForComponent(const QList<QPair<int, int>> &r
 
 bool ParameterManagerTest::_waitForAppMessage(const QRegularExpression &pattern)
 {
-    return UnitTest::waitForCondition([&pattern]() {
-        const auto messages = LogManager::capturedMessages();
-        return std::any_of(messages.cbegin(), messages.cend(), [&pattern](const LogEntry &entry) {
-            return (entry.category == QLatin1String("API.QGCApplication.AppMessage")) && pattern.match(entry.message).hasMatch();
-        });
-    }, TestTimeout::longMs(), QStringLiteral("app message"));
+    return _waitForLogMessage(QStringLiteral("API.QGCApplication.AppMessage"), pattern);
+}
+
+bool ParameterManagerTest::_waitForLogMessage(const QString& category, const QRegularExpression& pattern)
+{
+    return UnitTest::waitForCondition(
+        [&category, &pattern]() {
+            const auto messages = LogManager::capturedMessages();
+            return std::any_of(messages.cbegin(), messages.cend(), [&category, &pattern](const LogEntry& entry) {
+                return (entry.category == category) && pattern.match(entry.message).hasMatch();
+            });
+        },
+        TestTimeout::longMs(), QStringLiteral("log message"));
+}
+
+// Feeds a PARAM_EXT_VALUE straight to the ParameterManager, standing in for a component which no MockLink serves
+bool ParameterManagerTest::_injectExtParamValue(ParameterManager* paramManager, int componentId, const QString& name,
+                                                int paramCount, int paramIndex, int32_t value)
+{
+    mavlink_param_ext_value_t extValue{};
+    const QByteArray nameBytes = name.toLatin1();
+    if (nameBytes.size() > static_cast<qsizetype>(sizeof(extValue.param_id))) {
+        return false;
+    }
+    (void) memcpy(extValue.param_id, nameBytes.constData(), static_cast<size_t>(nameBytes.size()));
+    extValue.param_type = MAV_PARAM_EXT_TYPE_INT32;
+    extValue.param_count = static_cast<uint16_t>(paramCount);
+    extValue.param_index = static_cast<uint16_t>(paramIndex);
+    if (!QGCMAVLink::variantToParamExtValue(value, MAV_PARAM_EXT_TYPE_INT32, &extValue.param_value[0])) {
+        return false;
+    }
+
+    mavlink_message_t message{};
+    (void) mavlink_msg_param_ext_value_encode(_vehicle->id(), static_cast<uint8_t>(componentId), &message, &extValue);
+    paramManager->mavlinkMessageReceived(message);
+
+    return true;
+}
+
+// A PARAM_EXT_VALUE stream which stops short must be reported, and by the same timeout tick which would also
+// report any index left behind by an earlier test step, so a clean pass here covers those as well.
+bool ParameterManagerTest::_expectExtParamNeverReceived(ParameterManager* paramManager)
+{
+    const QRegularExpression pattern(QStringLiteral("Ext param never received - index:\\s*1\\b"));
+    expectLogMessage("FactSystem.ParameterManager", QtWarningMsg, pattern);
+    if (!_injectExtParamValue(paramManager, MAV_COMP_ID_ONBOARD_COMPUTER, QStringLiteral("SENTINEL"), 2, 0, 1)) {
+        return false;
+    }
+    if (!_waitForLogMessage(QStringLiteral("FactSystem.ParameterManager"), pattern)) {
+        return false;
+    }
+    verifyExpectedLogMessage();
+
+    return true;
+}
+
+// Call from tests that deliberately let PARAM_EXT_ACK waits time out.
+void ParameterManagerTest::_ignoreExtParamAckTimeouts()
+{
+    ignoreLogMessage("Utilities.QGCStateMachine", QtWarningMsg,
+                     QRegularExpression("Timeout \".*WaitForMavlinkMessageState.*\""));
 }
 
 void ParameterManagerTest::cleanup()
@@ -935,6 +999,245 @@ void ParameterManagerTest::_bulkRefreshAllRetriesExhausted()
     QVERIFY_SIGNAL_COUNT_WAIT(failureSpy, BulkRefreshJob::kMaxRetryRounds + 1, maxWaitMs);
     QCOMPARE(successSpy.count(), 0);
     verifyExpectedLogMessage();
+
+    _disconnectMockLink();
+}
+
+// MockLinkCamera serves ext params on camera 1 only, so this also covers that components which
+// don't answer PARAM_EXT_REQUEST_LIST are simply left out of the parameter view.
+void ParameterManagerTest::_extParamsDownloaded()
+{
+    _connectMockLink(MAV_AUTOPILOT_PX4, MockConfiguration::FailNone, MockConfiguration::OptionEnableCamera);
+    QVERIFY(_vehicle);
+    ParameterManager* const paramManager = _vehicle->parameterManager();
+    QVERIFY(paramManager);
+
+    QVERIFY_TRUE_WAIT(paramManager->componentIds().contains(MAV_COMP_ID_CAMERA), TestTimeout::longMs());
+    QVERIFY(!paramManager->componentIds().contains(MAV_COMP_ID_CAMERA2));
+
+    const QVector<MockLinkCamera::ExtParam> expectedParams = MockLinkCamera::defaultExtParams();
+    for (const MockLinkCamera::ExtParam& expectedParam : expectedParams) {
+        if (expectedParam.type == MAV_PARAM_EXT_TYPE_CUSTOM) {
+            // Opaque bytes, deliberately not turned into a Fact. The mock serves one so the whole
+            // download still has to cope with it, including not re-requesting its index.
+            continue;
+        }
+        QVERIFY_TRUE_WAIT(paramManager->extParameterExists(MAV_COMP_ID_CAMERA, expectedParam.name),
+                          TestTimeout::mediumMs());
+        Fact* const fact = paramManager->getParameter(MAV_COMP_ID_CAMERA, expectedParam.name);
+        QVERIFY(fact);
+        QCOMPARE(fact->rawValue().toString(), expectedParam.value.toString());
+    }
+
+    QVERIFY(!paramManager->extParameterExists(MAV_COMP_ID_CAMERA, kExtCustomParam));
+
+    // Ext params must not shadow or disturb the autopilot parameters
+    QVERIFY(paramManager->parametersReady());
+    QVERIFY(!paramManager->extParameterExists(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("CAM_EV")));
+
+    _disconnectMockLink();
+}
+
+Fact* ParameterManagerTest::_connectAndWaitForExtParams()
+{
+    _connectMockLink(MAV_AUTOPILOT_PX4, MockConfiguration::FailNone, MockConfiguration::OptionEnableCamera);
+    if (!_vehicle || !_vehicle->parameterManager()) {
+        return nullptr;
+    }
+
+    ParameterManager* const paramManager = _vehicle->parameterManager();
+    if (!UnitTest::waitForCondition(
+            [paramManager]() { return paramManager->extParameterExists(MAV_COMP_ID_CAMERA, kExtIntParam); },
+            TestTimeout::longMs(), QStringLiteral("ext params downloaded"))) {
+        return nullptr;
+    }
+
+    return paramManager->getParameter(MAV_COMP_ID_CAMERA, kExtIntParam);
+}
+
+void ParameterManagerTest::_extParamWrite()
+{
+    Fact* const fact = _connectAndWaitForExtParams();
+    QVERIFY(fact);
+    ParameterManager* const paramManager = _vehicle->parameterManager();
+
+    QSignalSpy successSpy(paramManager, &ParameterManager::_paramSetSuccess);
+    QVERIFY(successSpy.isValid());
+
+    fact->setRawValue(3);
+    QVERIFY_SIGNAL_WAIT(successSpy, TestTimeout::mediumMs());
+    QCOMPARE(_mockLink->mockLinkCamera()->extParamValue(kExtIntParam).toInt(), 3);
+
+    // A re-read must go out over the ext protocol and come back with the value the camera stored
+    fact->containerSetRawValue(0);
+    paramManager->refreshParameter(MAV_COMP_ID_CAMERA, kExtIntParam);
+    QCOMPARE_TRUE_WAIT(fact->rawValue().toInt(), 3, TestTimeout::mediumMs());
+
+    _disconnectMockLink();
+}
+
+// A camera which refuses the value must leave the vehicle value in place and tell the user,
+// rather than leaving the editor showing a value the camera never took.
+void ParameterManagerTest::_extParamWriteRejected()
+{
+    Fact* const fact = _connectAndWaitForExtParams();
+    QVERIFY(fact);
+    ParameterManager* const paramManager = _vehicle->parameterManager();
+
+    const int originalValue = fact->rawValue().toInt();
+    _mockLink->mockLinkCamera()->setExtParamSetFailureMode(MockLinkCamera::FailExtParamSetRejected);
+
+    QSignalSpy failureSpy(paramManager, &ParameterManager::_paramSetFailure);
+    QVERIFY(failureSpy.isValid());
+
+    expectAppMessage(QRegularExpression("Parameter write failed"));
+    fact->setRawValue(originalValue + 1);
+    QVERIFY_SIGNAL_WAIT(failureSpy, TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+
+    QCOMPARE(_mockLink->mockLinkCamera()->extParamValue(kExtIntParam).toInt(), originalValue);
+    QCOMPARE_TRUE_WAIT(fact->rawValue().toInt(), originalValue, TestTimeout::mediumMs());
+
+    _disconnectMockLink();
+}
+
+// Retries must not leave the pending write count stranded, which would keep warning the user
+// about unsaved parameters on app close.
+void ParameterManagerTest::_extParamWriteNoAck()
+{
+    _ignoreExtParamAckTimeouts();
+
+    Fact* const fact = _connectAndWaitForExtParams();
+    QVERIFY(fact);
+    ParameterManager* const paramManager = _vehicle->parameterManager();
+
+    const int originalValue = fact->rawValue().toInt();
+    _mockLink->mockLinkCamera()->setExtParamSetFailureMode(MockLinkCamera::FailExtParamSetNoAck);
+
+    QSignalSpy failureSpy(paramManager, &ParameterManager::_paramSetFailure);
+    QVERIFY(failureSpy.isValid());
+
+    expectAppMessage(QRegularExpression("Parameter write failed"));
+    fact->setRawValue(originalValue + 1);
+
+    const int maxWaitMs = ParameterManager::kWaitForParamValueAckMs * (ParameterManager::kParamSetRetryCount + 1) +
+                          TestTimeout::mediumMs();
+    QVERIFY_SIGNAL_WAIT(failureSpy, maxWaitMs);
+    verifyExpectedLogMessage();
+
+    QVERIFY_TRUE_WAIT(!paramManager->pendingWrites(), TestTimeout::mediumMs());
+
+    _disconnectMockLink();
+}
+
+// PARAM_ACK_IN_PROGRESS must not wedge or abandon the write. The delayed second ack a camera
+// would send cannot be simulated here - the test ack timeout is shorter than the mock's task
+// tick - so this covers the retry that follows instead.
+void ParameterManagerTest::_extParamWriteInProgress()
+{
+    _ignoreExtParamAckTimeouts();
+
+    Fact* const fact = _connectAndWaitForExtParams();
+    QVERIFY(fact);
+    ParameterManager* const paramManager = _vehicle->parameterManager();
+
+    const int newValue = fact->rawValue().toInt() + 1;
+    _mockLink->mockLinkCamera()->setExtParamSetFailureMode(MockLinkCamera::FailExtParamSetInProgress);
+
+    QSignalSpy successSpy(paramManager, &ParameterManager::_paramSetSuccess);
+    QSignalSpy failureSpy(paramManager, &ParameterManager::_paramSetFailure);
+    QVERIFY(successSpy.isValid());
+    QVERIFY(failureSpy.isValid());
+
+    fact->setRawValue(newValue);
+
+    const int maxWaitMs = ParameterManager::kWaitForParamValueAckMs * (ParameterManager::kParamSetRetryCount + 1) +
+                          TestTimeout::mediumMs();
+    QVERIFY_SIGNAL_WAIT(successSpy, maxWaitMs);
+    QCOMPARE(failureSpy.count(), 0);
+    QCOMPARE(_mockLink->mockLinkCamera()->extParamValue(kExtIntParam).toInt(), newValue);
+
+    _disconnectMockLink();
+}
+
+// A value lost from the PARAM_EXT_REQUEST_LIST stream must be picked up by the indexed re-request,
+// otherwise a dropped packet silently hides a parameter from the editor.
+void ParameterManagerTest::_extParamMissingIndexRetry()
+{
+    // The drop has to be configured before the link starts. The list is streamed during initial
+    // connect, which _connectMockLink waits for, so a drop set from the test body would come too
+    // late and the parameter would already be present.
+    _connectMockLink(MAV_AUTOPILOT_PX4, MockConfiguration::FailNone,
+                     MockConfiguration::OptionEnableCamera | MockConfiguration::OptionDropFirstExtParam);
+    QVERIFY(_vehicle);
+    ParameterManager* const paramManager = _vehicle->parameterManager();
+    QVERIFY(paramManager);
+    QVERIFY(_mockLink->mockLinkCamera());
+
+    QCOMPARE(MockLinkCamera::defaultExtParams().at(0).name, kExtIntParam);
+
+    QVERIFY_TRUE_WAIT(paramManager->extParameterExists(MAV_COMP_ID_CAMERA, kExtIntParam), TestTimeout::longMs());
+
+    // Asserting the parameter was absent first would race the retry timer. The indexed read count
+    // proves the same thing without a timing window: the value can only have arrived that way.
+    QVERIFY(_mockLink->mockLinkCamera()->extParamIndexedReadCount() > 0);
+
+    _disconnectMockLink();
+}
+
+// The parameter file format can't tell ext parameters from classic ones, so they are left out of it.
+void ParameterManagerTest::_extParamNotInSavedFile()
+{
+    QVERIFY(_connectAndWaitForExtParams());
+    ParameterManager* const paramManager = _vehicle->parameterManager();
+
+    QString contents;
+    QTextStream stream(&contents);
+    paramManager->writeParametersToStream(stream);
+
+    QVERIFY(contents.contains(QStringLiteral("BAT1_V_CHARGED")));
+    QVERIFY(!contents.contains(kExtIntParam));
+
+    _disconnectMockLink();
+}
+
+// The classic protocol owns a name it already serves. An ext value for it must not shadow the classic fact, and
+// the index it answers must still be book kept so it isn't re-requested and reported as never received.
+void ParameterManagerTest::_extParamClassicNameCollision()
+{
+    _connectMockLink(MAV_AUTOPILOT_PX4);
+    QVERIFY(_vehicle);
+    ParameterManager* const paramManager = _vehicle->parameterManager();
+    QVERIFY(paramManager);
+
+    const QString classicName = QStringLiteral("BAT1_V_CHARGED");
+    Fact* const classicFact = paramManager->getParameter(MAV_COMP_ID_AUTOPILOT1, classicName);
+    QVERIFY(classicFact);
+    const QVariant classicValue = classicFact->rawValue();
+
+    QVERIFY(_injectExtParamValue(paramManager, MAV_COMP_ID_AUTOPILOT1, classicName, 1, 0, 12345));
+
+    QVERIFY(!paramManager->extParameterExists(MAV_COMP_ID_AUTOPILOT1, classicName));
+    QCOMPARE(paramManager->getParameter(MAV_COMP_ID_AUTOPILOT1, classicName), classicFact);
+    QCOMPARE(classicFact->rawValue(), classicValue);
+
+    // Any index left waiting for the autopilot would be reported by the same tick as this one
+    QVERIFY(_expectExtParamNeverReceived(paramManager));
+
+    _disconnectMockLink();
+}
+
+void ParameterManagerTest::_extParamNeverReceived()
+{
+    _connectMockLink(MAV_AUTOPILOT_PX4);
+    QVERIFY(_vehicle);
+    ParameterManager* const paramManager = _vehicle->parameterManager();
+    QVERIFY(paramManager);
+
+    QVERIFY(_expectExtParamNeverReceived(paramManager));
+
+    // The value which did arrive is still usable
+    QVERIFY(paramManager->extParameterExists(MAV_COMP_ID_ONBOARD_COMPUTER, QStringLiteral("SENTINEL")));
 
     _disconnectMockLink();
 }
