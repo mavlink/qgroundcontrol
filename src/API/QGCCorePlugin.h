@@ -2,7 +2,7 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QVariantList>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 #include "QGCPalette.h"
 

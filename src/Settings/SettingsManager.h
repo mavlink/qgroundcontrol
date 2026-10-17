@@ -3,7 +3,7 @@
 #include <QtCore/QJsonObject>
 #include <QtCore/QMap>
 #include <QtQml/QQmlPropertyMap>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 class ADSBVehicleManagerSettings;
 class APMMavlinkStreamRateSettings;

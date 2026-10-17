@@ -1,19 +1,19 @@
 #include "LogFileParser.h"
 
-#include "LogViewerDataFlashParser.h"
-#include "LogParseResultPrivate.h"
-#include "LogViewerParamMetaData.h"
-#include "QGCLoggingCategory.h"
-#include "LogViewerULogParser.h"
+#include <algorithm>
+#include <cmath>
+#include <limits>
 
-#include <QtConcurrent/QtConcurrent>
+#include <QtConcurrent/QtConcurrentRun>
 #include <QtCore/QFileInfo>
 #include <QtCore/QFutureWatcher>
 #include <QtCore/QPointer>
 
-#include <algorithm>
-#include <cmath>
-#include <limits>
+#include "LogParseResultPrivate.h"
+#include "LogViewerDataFlashParser.h"
+#include "LogViewerParamMetaData.h"
+#include "LogViewerULogParser.h"
+#include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(LogFileParserLog, "AnalyzeView.LogFileParser")
 

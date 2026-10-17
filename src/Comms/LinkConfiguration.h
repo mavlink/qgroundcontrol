@@ -4,7 +4,7 @@
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QSettings>
 #include <QtCore/QString>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 class LinkInterface;
 

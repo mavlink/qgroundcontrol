@@ -1,12 +1,13 @@
 #pragma once
 
+#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QReadWriteLock>
 #include <QtCore/QSet>
 #include <QtCore/QSortFilterProxyModel>
 #include <QtCore/QString>
 #include <QtCore/QStringList>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 class QJSEngine;
 class QQmlEngine;

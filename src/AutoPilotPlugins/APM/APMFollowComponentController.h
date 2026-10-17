@@ -1,6 +1,6 @@
 #pragma once
 
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 #include "FactPanelController.h"
 #include "SettingsFact.h"

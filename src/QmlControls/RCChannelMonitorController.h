@@ -1,8 +1,8 @@
 #pragma once
 
-#include "FactPanelController.h"
+#include <QtQmlIntegration/qqmlintegration.h>
 
-#include <QtQmlIntegration/QtQmlIntegration>
+#include "FactPanelController.h"
 
 class RCChannelMonitorController : public FactPanelController
 {

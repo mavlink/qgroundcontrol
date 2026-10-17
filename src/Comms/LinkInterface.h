@@ -1,9 +1,9 @@
 #pragma once
 
-#include <QtCore/QElapsedTimer>
-#include <QtQmlIntegration/QtQmlIntegration>
-
 #include <memory>
+
+#include <QtCore/QElapsedTimer>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 #include "LinkConfiguration.h"
 #include "MAVLinkMessageType.h"

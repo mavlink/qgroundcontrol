@@ -2,7 +2,7 @@
 
 #include <QtCore/QObject>
 #include <QtPositioning/QGeoCoordinate>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 #include "Fact.h"
 

@@ -9,9 +9,9 @@
 
 #pragma once
 
-#include "ObjectItemModelBase.h"
+#include <QtQmlIntegration/qqmlintegration.h>
 
-#include <QtQmlIntegration/QtQmlIntegration>
+#include "ObjectItemModelBase.h"
 
 /// \brief A tree model for QObject* items, usable from both C++ and QML.
 ///

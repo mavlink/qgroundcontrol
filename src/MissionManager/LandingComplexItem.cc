@@ -1,19 +1,22 @@
 #include "LandingComplexItem.h"
+
+#include <QtCore/QMetaMethod>
+
 #include "AppMessages.h"
-#include "QGCApplication.h"
+#include "CameraSection.h"
+#include "Fact.h"
 #include "GeoJsonHelper.h"
 #include "JsonParsing.h"
-#include "MissionController.h"
 #include "MissionCommandTree.h"
 #include "MissionCommandUIInfo.h"
-#include "SimpleMissionItem.h"
-#include "PlanMasterController.h"
-#include "TakeoffMissionItem.h"
+#include "MissionController.h"
 #include "MissionItem.h"
-#include "Fact.h"
-#include "CameraSection.h"
-#include "Vehicle.h"
+#include "PlanMasterController.h"
+#include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
+#include "SimpleMissionItem.h"
+#include "TakeoffMissionItem.h"
+#include "Vehicle.h"
 
 QGC_LOGGING_CATEGORY(LandingComplexItemLog, "Plan.LandingComplexItem")
 

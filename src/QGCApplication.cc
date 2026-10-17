@@ -1,9 +1,13 @@
 #include "QGCApplication.h"
 
+#include <QtCore/QDir>
 #include <QtCore/QEvent>
 #include <QtCore/QFile>
+#include <QtCore/QFileInfo>
+#include <QtCore/QLibraryInfo>
 #include <QtCore/QMetaMethod>
 #include <QtCore/QMetaObject>
+#include <QtCore/QStandardPaths>
 #include <QtCore/private/qthread_p.h>
 #include <QtGui/QFontDatabase>
 #include <QtGui/QIcon>

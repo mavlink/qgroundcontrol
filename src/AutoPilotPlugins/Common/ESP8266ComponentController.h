@@ -1,7 +1,7 @@
 #pragma once
 
 #include <QtCore/QVariant>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 #include "FactPanelController.h"
 #include "MAVLinkEnums.h"

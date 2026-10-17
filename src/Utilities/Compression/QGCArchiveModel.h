@@ -1,11 +1,11 @@
 #pragma once
 
-#include "QGCCompressionTypes.h"
-
 #include <QtCore/QAbstractListModel>
 #include <QtCore/QString>
 #include <QtCore/QUrl>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
+
+#include "QGCCompressionTypes.h"
 
 /// \brief List model for archive contents, suitable for QML ListView binding.
 ///

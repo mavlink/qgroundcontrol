@@ -1,7 +1,9 @@
 #include "APMFirmwarePlugin.h"
 
+#include <QtCore/QFileInfo>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QRegularExpressionMatch>
+#include <QtCore/QThread>
 #include <QtNetwork/QTcpSocket>
 
 #include "APMAutoPilotPlugin.h"

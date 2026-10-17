@@ -1,7 +1,7 @@
 #pragma once
 
 #include <QtPositioning/QGeoCoordinate>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 #include "PlanElementController.h"
 #include "QmlObjectListModel.h"

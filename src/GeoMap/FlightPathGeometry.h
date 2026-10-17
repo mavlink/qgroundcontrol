@@ -14,7 +14,7 @@
 #include <QtCore/QVariant>
 #include <QtGui/QVector3D>
 #include <QtPositioning/QGeoCoordinate>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 #include <QtQuick3D/QQuick3DGeometry>
 
 class GeoScene;

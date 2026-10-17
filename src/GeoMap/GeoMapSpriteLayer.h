@@ -9,13 +9,13 @@
 
 #pragma once
 
+#include <vector>
+
 #include <QtCore/QPointF>
 #include <QtCore/QTimer>
 #include <QtPositioning/QGeoCoordinate>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 #include <QtQuick/QQuickItem>
-
-#include <vector>
 
 class GeoMapCamera;
 class GeoScene;

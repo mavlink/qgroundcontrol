@@ -5,7 +5,7 @@
 #include <QtCore/QVariantMap>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQml/QJSValue>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 #include "QmlUnitsConversion.h"
 

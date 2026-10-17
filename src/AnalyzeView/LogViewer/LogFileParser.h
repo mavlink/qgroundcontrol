@@ -1,5 +1,9 @@
 #pragma once
 
+#include <atomic>
+#include <memory>
+
+#include <QtCore/QDateTime>
 #include <QtCore/QHash>
 #include <QtCore/QObject>
 #include <QtCore/QPointF>
@@ -7,13 +11,9 @@
 #include <QtCore/QStringList>
 #include <QtCore/QVariant>
 #include <QtCore/QVariantList>
-#include <QtCore/QDateTime>
 #include <QtCore/QVector>
 #include <QtCore/QtGlobal>
-#include <QtQmlIntegration/QtQmlIntegration>
-
-#include <atomic>
-#include <memory>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 /// \brief Unified log file parser for both DataFlash (.bin/.log) and PX4 ULog (.ulg) files.
 ///

@@ -1,8 +1,8 @@
 #pragma once
 
 #include <QtCore/QSettings>
+#include <QtQmlIntegration/qqmlintegration.h>
 #include <QtQuick/QQuickItem>
-#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "QGCMAVLinkTypes.h"
 

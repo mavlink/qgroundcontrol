@@ -1,5 +1,8 @@
 #include "MAVLinkSigningKeys.h"
 
+#include <array>
+
+#include <QtCore/QApplicationStatic>
 #include <QtCore/QCoreApplication>
 #include <QtCore/QCryptographicHash>
 #include <QtCore/QRandomGenerator>
@@ -7,7 +10,6 @@
 #include <QtCore/QSettings>
 #include <QtCore/QTimer>
 #include <QtNetwork/QPasswordDigestor>
-#include <array>
 
 #include "LinkInterface.h"
 #include "LinkManager.h"

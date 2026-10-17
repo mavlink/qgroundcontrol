@@ -1,18 +1,17 @@
 #pragma once
 
-#include "QGCMAVLink.h"
+#include <array>
+#include <functional>
 
 #include <QtCore/QObject>
 #include <QtCore/QThread>
 #include <QtCore/QVariantMap>
 #include <QtGui/QVector3D>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
-#include <functional>
-#include <array>
-
-#include "RemoteControlCalibrationController.h"
 #include "JoystickSettings.h"
+#include "QGCMAVLink.h"
+#include "RemoteControlCalibrationController.h"
 
 class MavlinkActionManager;
 class QmlObjectListModel;

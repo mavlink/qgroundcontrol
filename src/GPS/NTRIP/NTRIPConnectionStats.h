@@ -4,7 +4,7 @@
 
 #include <QtCore/QHash>
 #include <QtCore/QObject>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 #include "DataRateTracker.h"
 #include "RTCMMessageCount.h"

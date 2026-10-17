@@ -2,7 +2,7 @@
 
 #include <QtCore/QObject>
 #include <QtGui/QColor>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 /*!
  QGCMapPalette is a variant of QGCPalette which is used to hold colors used for display over

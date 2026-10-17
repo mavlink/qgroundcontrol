@@ -1,7 +1,5 @@
 #pragma once
 
-#include "LinkConfiguration.h"
-
 #include <QtBluetooth/QBluetoothAddress>
 #include <QtBluetooth/QBluetoothDeviceDiscoveryAgent>
 #include <QtBluetooth/QBluetoothDeviceInfo>
@@ -12,7 +10,9 @@
 #include <QtCore/QPointer>
 #include <QtCore/QString>
 #include <QtCore/QVariantList>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
+
+#include "LinkConfiguration.h"
 
 /*===========================================================================*/
 

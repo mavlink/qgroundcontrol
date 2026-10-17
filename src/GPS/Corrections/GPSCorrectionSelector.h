@@ -5,7 +5,7 @@
 #include <optional>
 
 #include <QtCore/QString>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 #include "GPSCorrectionSettings.h"
 

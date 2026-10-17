@@ -2,7 +2,7 @@
 
 #include <QtCore/QObject>
 #include <QtQml/QQmlListProperty>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 class ToolStripActionList : public QObject
 {

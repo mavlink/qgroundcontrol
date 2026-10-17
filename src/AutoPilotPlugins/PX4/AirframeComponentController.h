@@ -2,10 +2,10 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QVariant>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
-#include "QmlObjectListModel.h"
 #include "FactPanelController.h"
+#include "QmlObjectListModel.h"
 
 /// \brief MVC Controller for AirframeComponent.qml.
 ///

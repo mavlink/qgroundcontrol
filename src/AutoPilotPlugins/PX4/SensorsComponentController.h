@@ -1,7 +1,7 @@
 #pragma once
 
+#include <QtQmlIntegration/qqmlintegration.h>
 #include <QtQuick/QQuickItem>
-#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "FactPanelController.h"
 

@@ -1,27 +1,9 @@
 #include "VideoManager.h"
-#include "AppSettings.h"
-#include "MavlinkCameraControlInterface.h"
-#include "MultiVehicleManager.h"
-#include "AppMessages.h"
-#include "QGCApplication.h"
-#include "QGCCameraManager.h"
-#include "QGCCorePlugin.h"
-#include "QGCLoggingCategory.h"
-#include "QGCNetworkHelper.h"
-#include "QGCVideoStreamInfo.h"
-#include "SettingsManager.h"
-#include "SubtitleWriter.h"
-#include "Vehicle.h"
-#include "VehicleLinkManager.h"
-#include "VideoReceiver.h"
-#include "VideoSettings.h"
-#include "UVCReceiver.h"
-#include "VideoBackend.h"
 
 #include <algorithm>
 #include <climits>
 
-#include <QtConcurrent/QtConcurrent>
+#include <QtConcurrent/QtConcurrentRun>
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QCoreApplication>
 #include <QtCore/QDir>
@@ -31,6 +13,25 @@
 #include <QtCore/QTimer>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
+
+#include "AppMessages.h"
+#include "AppSettings.h"
+#include "MavlinkCameraControlInterface.h"
+#include "MultiVehicleManager.h"
+#include "QGCApplication.h"
+#include "QGCCameraManager.h"
+#include "QGCCorePlugin.h"
+#include "QGCLoggingCategory.h"
+#include "QGCNetworkHelper.h"
+#include "QGCVideoStreamInfo.h"
+#include "SettingsManager.h"
+#include "SubtitleWriter.h"
+#include "UVCReceiver.h"
+#include "Vehicle.h"
+#include "VehicleLinkManager.h"
+#include "VideoBackend.h"
+#include "VideoReceiver.h"
+#include "VideoSettings.h"
 
 QGC_LOGGING_CATEGORY(VideoManagerLog, "Video.VideoManager")
 

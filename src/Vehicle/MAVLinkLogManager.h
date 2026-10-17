@@ -3,7 +3,7 @@
 #include <QtCore/QFile>
 #include <QtCore/QObject>
 #include <QtNetwork/QHttpPart>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 class QmlObjectListModel;
 class QNetworkAccessManager;

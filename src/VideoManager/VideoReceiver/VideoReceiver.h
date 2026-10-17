@@ -4,7 +4,7 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QSize>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 class QGCVideoStreamInfo;
 class QQuickItem;

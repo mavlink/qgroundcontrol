@@ -1,9 +1,10 @@
 #include "QGCCompressionJob.h"
+
+#include <QtConcurrent/QtConcurrentRun>
+#include <QtCore/QPromise>
+
 #include "QGCCompression.h"
 #include "QGCLoggingCategory.h"
-
-#include <QtConcurrent/QtConcurrent>
-#include <QtCore/QPromise>
 
 QGC_LOGGING_CATEGORY(QGCCompressionJobLog, "Utilities.QGCCompressionJob")
 

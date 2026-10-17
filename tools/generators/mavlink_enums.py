@@ -138,7 +138,8 @@ def build_qml_header(enum_bodies):
 ///
 /// AUTO-GENERATED. Do not edit manually.
 
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtCore/QObject>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 #include "MAVLinkEnums.h"
 

@@ -4,7 +4,7 @@
 
 #include <QtCore/QPointer>
 #include <QtPositioning/QGeoPositionInfo>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 #include "FactGroup.h"
 #include "ScheduledTask.h"

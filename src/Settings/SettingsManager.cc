@@ -1,6 +1,8 @@
 #include "SettingsManager.h"
 
 #include <QtCore/QApplicationStatic>
+#include <QtCore/QDir>
+#include <QtCore/QFileInfo>
 #include <QtCore/QRegularExpression>
 
 #include "ADSBVehicleManagerSettings.h"

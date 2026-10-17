@@ -7,7 +7,7 @@
 #include <QtCore/QPointer>
 #include <QtCore/QTimer>
 #include <QtCore/QVariantList>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 #include "MAVLinkMessageType.h"
 #include "QmlObjectListModel.h"

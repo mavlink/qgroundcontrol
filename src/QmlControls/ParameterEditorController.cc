@@ -1,11 +1,14 @@
-#include "QmlObjectListModel.h"
 #include "ParameterEditorController.h"
+
+#include <QtCore/QFileInfo>
+
 #include "AppMessages.h"
-#include "ParameterManager.h"
 #include "AppSettings.h"
+#include "ParameterManager.h"
+#include "QGCLoggingCategory.h"
+#include "QmlObjectListModel.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
-#include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(ParameterEditorControllerLog, "QMLControls.ParameterEditorController")
 

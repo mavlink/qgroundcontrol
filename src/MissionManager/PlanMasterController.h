@@ -1,12 +1,12 @@
 #pragma once
 
 #include <QtCore/QObject>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
-#include "MissionController.h"
 #include "GeoFenceController.h"
-#include "RallyPointController.h"
+#include "MissionController.h"
 #include "QGCMAVLinkTypes.h"
+#include "RallyPointController.h"
 
 class QmlObjectListModel;
 class MultiVehicleManager;

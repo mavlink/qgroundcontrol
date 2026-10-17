@@ -1,9 +1,9 @@
 #pragma once
 
+#include <QtCore/QMap>
 #include <QtCore/QObject>
 #include <QtGui/QColor>
-#include <QtCore/QMap>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 #define DECLARE_QGC_COLOR(name, lightDisabled, lightEnabled, darkDisabled, darkEnabled) \
     { \

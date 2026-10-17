@@ -5,7 +5,7 @@
 #include <QtCore/QVariantList>
 #include <QtGui/QColor>
 #include <QtQml/qqml.h>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 class Fact;
 class FactValueGrid;

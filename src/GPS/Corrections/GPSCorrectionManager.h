@@ -5,7 +5,7 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 #include "DataRateTracker.h"
 #include "GPSCorrectionSelector.h"

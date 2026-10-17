@@ -8,7 +8,7 @@
 #include <QtCore/QObject>
 #include <QtCore/QSet>
 #include <QtCore/QSize>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 #ifdef QGC_UNITTEST_BUILD
 #include <functional>

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <array>
+#include <atomic>
 #include <functional>
 #include <memory>
 
@@ -12,10 +14,7 @@
 #include <QtCore/QTimer>
 #include <QtCore/QVariantList>
 #include <QtPositioning/QGeoCoordinate>
-#include <QtQmlIntegration/QtQmlIntegration>
-
-#include <array>
-#include <atomic>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 #include "QGCMAVLink.h"
 #include "VehicleFactGroup.h"

@@ -1,17 +1,17 @@
 #include "APMDataFlashLogParser.h"
 
-#include "APMDataFlashUtility.h"
-#include "QGCLoggingCategory.h"
+#include <algorithm>
+#include <cmath>
+#include <limits>
 
-#include <QtConcurrent/QtConcurrent>
+#include <QtConcurrent/QtConcurrentRun>
 #include <QtCore/QFile>
 #include <QtCore/QFutureWatcher>
 #include <QtCore/QHash>
 #include <QtCore/QSet>
 
-#include <algorithm>
-#include <cmath>
-#include <limits>
+#include "APMDataFlashUtility.h"
+#include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(APMDataFlashLogParserLog, "AnalyzeView.APMDataFlashLogParser")
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QtCore/QLoggingCategory>
 #include <QtCore/QTranslator>
 #include <QtQml/QQmlAbstractUrlInterceptor>
 

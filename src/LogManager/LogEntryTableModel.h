@@ -1,7 +1,7 @@
 #pragma once
 
 #include <QtCore/QAbstractTableModel>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 #include "LogEntry.h"
 

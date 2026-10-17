@@ -84,6 +84,11 @@ over narration.
 #include "Vehicle.h"
 ```
 
+Include the specific Qt header, never a module umbrella such as `<QtQmlIntegration/QtQmlIntegration>` or
+`<QtConcurrent/QtConcurrent>`: umbrellas pull in every header of the module's dependencies, including all of
+QtCore, in each translation unit. `QML_ELEMENT` and the other registration macros need only
+`<QtQmlIntegration/qqmlintegration.h>`. The `check-no-qt-module-umbrella` hook enforces this.
+
 ### Class Declaration Order
 
 ```cpp

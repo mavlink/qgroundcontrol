@@ -18,7 +18,7 @@
 #include <QtCore/QString>
 #include <QtCore/QStringList>
 #include <QtGui/QImage>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 #include "TileMath.h"
 

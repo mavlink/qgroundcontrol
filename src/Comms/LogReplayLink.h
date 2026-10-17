@@ -1,13 +1,13 @@
 #pragma once
 
+#include <atomic>
+
+#include <QtCore/QFile>
+#include <QtQmlIntegration/qqmlintegration.h>
+
 #include "LinkConfiguration.h"
 #include "LinkInterface.h"
 #include "QGCMAVLinkTypes.h"
-
-#include <QtCore/QFile>
-#include <QtQmlIntegration/QtQmlIntegration>
-
-#include <atomic>
 
 class QTimer;
 

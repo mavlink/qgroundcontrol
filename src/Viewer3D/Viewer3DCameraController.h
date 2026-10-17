@@ -9,12 +9,13 @@
 
 #pragma once
 
+#include <optional>
+
 #include <QtCore/QObject>
 #include <QtCore/QPointF>
 #include <QtCore/QSizeF>
 #include <QtGui/QVector3D>
-#include <QtQmlIntegration/QtQmlIntegration>
-#include <optional>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 /// Gazebo-style orbit camera controller for the 3D viewer.
 ///

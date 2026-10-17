@@ -55,7 +55,7 @@ target_precompile_headers(
     <QtCore/QString>
     <QtCore/QJsonObject>
     <QtPositioning/QGeoCoordinate>
-    <QtQmlIntegration/QtQmlIntegration>
+    <QtQmlIntegration/qqmlintegration.h>
 )
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGeoFormats)

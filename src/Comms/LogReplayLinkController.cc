@@ -1,5 +1,7 @@
 #include "LogReplayLinkController.h"
 
+#include <QtCore/QObject>
+
 #include "LogReplayLink.h"
 #include "QGCLoggingCategory.h"
 

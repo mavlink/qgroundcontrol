@@ -1,11 +1,11 @@
 #pragma once
 
 #include <QtCore/QTimer>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
-#include "VehicleTypes.h"
 #include "MAVLinkMessageType.h"
 #include "QGCMAVLinkTypes.h"
+#include "VehicleTypes.h"
 
 class Vehicle;
 

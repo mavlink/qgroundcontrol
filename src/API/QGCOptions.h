@@ -1,10 +1,10 @@
 #pragma once
 
-#include <QtGui/QColor>
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtCore/QUrl>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtGui/QColor>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 class QGCOptions;
 

@@ -1,13 +1,14 @@
 #pragma once
 
+#include <optional>
+
 #include <QtCore/QByteArray>
 #include <QtCore/QByteArrayView>
 #include <QtCore/QHash>
 #include <QtCore/QLatin1StringView>
 #include <QtCore/QObject>
 #include <QtCore/QTimer>
-#include <QtQmlIntegration/QtQmlIntegration>
-#include <optional>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 #include "MAVLinkSigning.h"
 

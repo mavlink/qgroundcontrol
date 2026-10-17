@@ -2,7 +2,7 @@
 
 #include <QtCore/QStringList>
 #include <QtCore/QVariantList>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 #include "FactPanelController.h"
 #include "QGCMAVLinkTypes.h"

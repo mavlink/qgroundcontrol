@@ -108,4 +108,4 @@
 /// 4. Keep tests independent (no shared state)
 /// 5. Mock external dependencies when possible
 
-#include <QtQuickTest/QtQuickTest>
+#include <QtQuickTest/quicktest.h>

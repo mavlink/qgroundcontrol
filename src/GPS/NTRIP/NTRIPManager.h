@@ -9,7 +9,7 @@
 #include <QtCore/QString>
 #include <QtCore/QVector>
 #include <QtPositioning/QGeoCoordinate>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 #include "ExponentialBackoff.h"
 #include "NTRIPConfiguration.h"

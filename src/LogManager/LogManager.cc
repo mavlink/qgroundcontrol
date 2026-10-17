@@ -1,24 +1,28 @@
 #include "LogManager.h"
 
+#include <atomic>
+#include <cstdio>
+#include <cstring>
+
 #include <QtConcurrent/QtConcurrentRun>
 #include <QtCore/QCoreApplication>
+#include <QtCore/QDir>
 #include <QtCore/QElapsedTimer>
+#include <QtCore/QFile>
+#include <QtCore/QFileInfo>
 #include <QtCore/QMutex>
 #include <QtCore/QMutexLocker>
 #include <QtCore/QPointer>
 #include <QtCore/QSaveFile>
 #include <QtCore/QThread>
 #include <QtQml/QJSEngine>
-#include <atomic>
-#include <cstdio>
-#include <cstring>
 
+#include "AppSettings.h"
 #include "LogFormatter.h"
+#include "LogManagerSettings.h"
 #include "LogModel.h"
 #include "QGCFileWriter.h"
 #include "QGCLoggingCategory.h"
-#include "AppSettings.h"
-#include "LogManagerSettings.h"
 #include "SettingsManager.h"
 
 QGC_LOGGING_CATEGORY(LogManagerLog, "Utilities.LogManager")
