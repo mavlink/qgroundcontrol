@@ -24,14 +24,15 @@ set_target_properties(
         AUTOMOC ON
         AUTOUIC OFF
         AUTORCC OFF
-        DISABLE_PRECOMPILE_HEADERS ON
         UNITY_BUILD OFF
 )
 target_compile_features(QGCAndroidSerialTestBackend PRIVATE cxx_std_20)
+# The host-platform prelude includes whole Qt modules, so precompile it once for the backend's sources.
+set(_android_host_platform "${CMAKE_CURRENT_SOURCE_DIR}/AndroidHostPlatform.h")
+target_precompile_headers(QGCAndroidSerialTestBackend PRIVATE ${_android_host_platform})
 target_compile_options(
     QGCAndroidSerialTestBackend PRIVATE
-    -include
-    ${CMAKE_CURRENT_SOURCE_DIR}/AndroidHostPlatform.h
+    "$<$<BOOL:$<TARGET_PROPERTY:DISABLE_PRECOMPILE_HEADERS>>:SHELL:-include \"${_android_host_platform}\">"
 )
 # AUTOMOC receives the same aliases as the compiler, including the meta-object class name.
 target_compile_definitions(
