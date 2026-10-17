@@ -26,6 +26,45 @@ void StandardModesTest::_monitorSequenceBumpTriggersRequery()
         TestTimeout::longMs());
 }
 
+void StandardModesTest::_monitorWithDownloadedSequenceDoesNotRequery()
+{
+    QVERIFY(_mockLink);
+    QVERIFY(_mockLink->_worker);
+
+    // Deliver AVAILABLE_MODES_MONITOR from the test instead of the 1Hz telemetry.
+    QVERIFY(QMetaObject::invokeMethod(_mockLink->_worker, &MockLinkWorker::stopWork, Qt::BlockingQueuedConnection));
+
+    auto* connectedVehicle = vehicle();
+    QVERIFY(connectedVehicle);
+
+    auto* standardModes = connectedVehicle->findChild<StandardModes*>();
+    QVERIFY(standardModes);
+
+    // AVAILABLE_MODES now reports seq 1; MAVLink specifies that seq == 0 is ignored.
+    _mockLink->bumpAvailableModesMonitorSequence();
+
+    _mockLink->clearReceivedRequestMessageCounts();
+
+    QSignalSpy completedSpy(standardModes, &StandardModes::requestCompleted);
+    standardModes->request();
+
+    QVERIFY(completedSpy.wait(TestTimeout::longMs()));
+
+    const int enumerationRequests = _mockLink->receivedRequestMessageCount(MAVLINK_MSG_ID_AVAILABLE_MODES);
+
+    QVERIFY(enumerationRequests >= 3);
+
+    // A monitor with the downloaded seq must not start another download. If it does, the request below
+    // restarts it and the enumeration takes more requests.
+    _mockLink->clearReceivedRequestMessageCounts();
+    standardModes->availableModesMonitorReceived(1);
+    standardModes->request();
+
+    QVERIFY(completedSpy.wait(TestTimeout::longMs()));
+
+    QCOMPARE(_mockLink->receivedRequestMessageCount(MAVLINK_MSG_ID_AVAILABLE_MODES), enumerationRequests);
+}
+
 void StandardModesTest::_sequenceChangeDuringDownloadRestartsRequest()
 {
     QVERIFY(_mockLink);
