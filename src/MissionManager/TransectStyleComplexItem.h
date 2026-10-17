@@ -129,6 +129,8 @@ protected:
     virtual void _rebuildTransectsPhase1    (void) = 0; ///< Rebuilds the _transects array
     virtual void _recalcCameraShots         (void) = 0;
 
+    virtual bool _useConditionGate() const { return true; }
+
     void    _save                           (QJsonObject& saveObject);
     bool    _load                           (const QJsonObject& complexObject, bool forPresets, QString& errorString);
     void    _setExitCoordinate              (const QGeoCoordinate& coordinate);

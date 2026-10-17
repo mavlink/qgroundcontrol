@@ -5,6 +5,7 @@
 
 class PlanMasterController;
 class MissionItem;
+class QPainterPath;
 
 class SurveyComplexItem : public TransectStyleComplexItem
 {
@@ -19,10 +20,16 @@ public:
     Q_PROPERTY(Fact*            flyAlternateTransects  READ flyAlternateTransects  CONSTANT)
     Q_PROPERTY(Fact*            splitConcavePolygons   READ splitConcavePolygons   CONSTANT)
     Q_PROPERTY(QGeoCoordinate   centerCoordinate       READ centerCoordinate       WRITE setCenterCoordinate)
+    Q_PROPERTY(QString obstacleError READ obstacleError NOTIFY obstacleErrorChanged)
+    Q_PROPERTY(QVariantList waypointMarkers READ waypointMarkers NOTIFY waypointMarkersChanged)
 
     Fact* gridAngle             (void) { return &_gridAngleFact; }
     Fact* flyAlternateTransects (void) { return &_flyAlternateTransectsFact; }
     Fact* splitConcavePolygons  (void) { return &_splitConcavePolygonsFact; }
+
+    QString obstacleError() const { return _obstacleError; }
+
+    QVariantList waypointMarkers();
 
     Q_INVOKABLE void rotateEntryPoint(void);
 
@@ -73,9 +80,18 @@ public:
 
 signals:
     void refly90DegreesChanged(bool refly90Degrees);
+    void obstacleErrorChanged();
+    void waypointMarkersChanged();
+
+protected:
+    bool _useConditionGate() const final { return !_obstacleAvoidanceActive; }
 
 private slots:
     void _updateWizardMode              (void);
+    void _updateObstacleConnections();
+    void _updateTransitionConnections();
+    void _updateTransitionCoordinates();
+    void _obstaclesChanged();
 
     // Overrides from TransectStyleComplexItem
     void _rebuildTransectsPhase1        (void) final;
@@ -113,6 +129,11 @@ private:
     bool _loadV4V5(const QJsonObject& complexObject, int sequenceNumber, QString& errorString, int version, bool forPresets);
     void _saveCommon(QJsonObject& complexObject);
     void _rebuildTransectsPhase1WorkerSinglePolygon(bool refly);
+    void _avoidObstacles();
+    void _avoidObstacleTransitions();
+    QPainterPath _exclusionAreas(const QGeoCoordinate& origin) const;
+    bool _refreshTransitionCoordinates();
+    bool _hasExclusionFences() const;
 
     QMap<QString, FactMetaData*> _metaDataMap;
 
@@ -120,6 +141,16 @@ private:
     SettingsFact    _flyAlternateTransectsFact;
     SettingsFact    _splitConcavePolygonsFact;
     int             _entryPoint;
+    QList<QMetaObject::Connection> _obstacleConnections;
+    QList<QMetaObject::Connection> _transitionConnections;
+    QGeoCoordinate _surveyEntryCoordinate;
+    QGeoCoordinate _surveyExitCoordinate;
+    QGeoCoordinate _transitionStart;
+    QGeoCoordinate _transitionEnd;
+    double _transitionDistance = 0;
+    bool _transitionEndIsReturn = false;
+    QString _obstacleError;
+    bool _obstacleAvoidanceActive = false;
 
     static constexpr const char* _jsonGridAngleKey =          "angle";
     static constexpr const char* _jsonEntryPointKey =         "entryLocation";
