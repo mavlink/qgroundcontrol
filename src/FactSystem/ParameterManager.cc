@@ -545,8 +545,9 @@ void ParameterManager::_factRawValueUpdated(const QVariant &rawValue)
 
     if (fact->vehicleRebootRequired()) {
         _vehicle->setRebootRequired();
-        QGC::showRebootAppMessage(tr(
-            "Vehicle reboot required for changes to take effect. Use the power indicator in the toolbar to reboot."));
+        QGC::showRebootAppMessage(
+            tr("Vehicle reboot required for changes to take effect. "
+               "Use the main status indicator in the toolbar to reboot."));
     }
 
     _mavlinkParamSet(fact->componentId(), fact->name(), fact->type(), rawValue);
