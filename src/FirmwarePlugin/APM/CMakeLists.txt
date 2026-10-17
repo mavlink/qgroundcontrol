@@ -116,7 +116,7 @@ if(_apm_param_skipped)
     )
 endif()
 
-qt_add_resources(
+qgc_add_big_resources(
     ${CMAKE_PROJECT_NAME} "qgcresources_apm_params"
     PREFIX "/"
     FILES

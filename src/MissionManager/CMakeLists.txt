@@ -97,7 +97,7 @@ qt_add_resources(
         "${CMAKE_CURRENT_SOURCE_DIR}/CogWheel.svg"
 )
 
-qt_add_resources(
+qgc_add_big_resources(
     ${CMAKE_PROJECT_NAME} missionmanager_plancreator_images
     PREFIX "/qmlimages/PlanCreator"
     BASE "${CMAKE_CURRENT_SOURCE_DIR}"

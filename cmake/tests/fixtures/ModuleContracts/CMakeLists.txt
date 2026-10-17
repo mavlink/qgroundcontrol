@@ -432,6 +432,37 @@ if(TEST_CASE MATCHES "^helpers-")
                 message(FATAL_ERROR "rcc launcher arguments with zstd: ${_arguments}")
             endif()
         endif()
+    elseif(TEST_CASE STREQUAL "helpers-big-resources")
+        # Stand-in for Qt: two-pass resources create a pass-1 object library unless Qt falls back (Xcode for iOS).
+        function(qt_add_resources target resource_name)
+            if(NOT resource_name STREQUAL "fallback")
+                add_library(${target}_${resource_name}_obj OBJECT main.cpp)
+            endif()
+        endfunction()
+        # Per-configuration IPO properties are only initialized for the configured build type.
+        set(CMAKE_BUILD_TYPE Release)
+        set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
+        add_executable(${PROJECT_NAME} main.cpp)
+        qgc_add_big_resources(
+            ${PROJECT_NAME} payload
+            PREFIX "/"
+            FILES
+                main.cpp
+        )
+        qgc_add_big_resources(
+            ${PROJECT_NAME} fallback
+            PREFIX "/"
+            FILES
+                main.cpp
+        )
+
+        set(_object_library ${PROJECT_NAME}_payload_obj)
+        foreach(_property INTERPROCEDURAL_OPTIMIZATION INTERPROCEDURAL_OPTIMIZATION_RELEASE UNITY_BUILD)
+            get_target_property(_value ${_object_library} ${_property})
+            if(_value)
+                message(FATAL_ERROR "rcc pass-1 object library keeps ${_property}=${_value}")
+            endif()
+        endforeach()
     elseif(TEST_CASE STREQUAL "helpers-ccache-pch")
         if(CMAKE_HOST_WIN32)
             return()

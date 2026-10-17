@@ -80,6 +80,18 @@ qt_add_qml_module(
         Viewer3DQml/Images/city_3d_map_icon.svg
         Viewer3DQml/Models3D/Shaders/earthMaterial.frag
         Viewer3DQml/Models3D/Shaders/earthMaterial.vert
+    IMPORTS
+        QtPositioning
+        QtQuick
+        QtQuick3D
+        QtQuick3D.Helpers
+)
+
+# The drone meshes are most of this module's resource data; keep their QML module paths.
+qgc_add_big_resources(
+    Viewer3DModule viewer3d_meshes
+    PREFIX "/qml/QGroundControl/Viewer3D"
+    FILES
         Viewer3DQml/Drones/Djif450/DroneModel_arm_1/node.mesh
         Viewer3DQml/Drones/Djif450/DroneModel_arm_2/node.mesh
         Viewer3DQml/Drones/Djif450/DroneModel_arm_3/node.mesh
@@ -94,11 +106,6 @@ qt_add_qml_module(
         Viewer3DQml/Drones/Djif450/DroneModel_propeller22_2/node.mesh
         Viewer3DQml/Drones/Djif450/DroneModel_Base_bottom_1/node.mesh
         Viewer3DQml/Drones/Djif450/DroneModel_Base_Top_1/node.mesh
-    IMPORTS
-        QtPositioning
-        QtQuick
-        QtQuick3D
-        QtQuick3D.Helpers
 )
 
 target_link_libraries(

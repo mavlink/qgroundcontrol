@@ -462,6 +462,45 @@ function(qgc_config_rcc_launcher)
 endfunction()
 
 # ----------------------------------------------------------------------------
+# qgc_add_big_resources
+# Embeds large files with rcc's two-pass mode: rcc writes the payload straight
+# into a compiled object instead of the compiler parsing a multi-megabyte byte
+# array. Arguments after the resource name are forwarded to qt_add_resources().
+# ----------------------------------------------------------------------------
+function(qgc_add_big_resources target resource_name)
+    qt_add_resources(${target} ${resource_name} BIG_RESOURCES ${ARGN})
+
+    # Qt falls back to ordinary resources where two-pass mode is unsupported (Xcode for iOS).
+    set(_object_library ${target}_${resource_name}_obj)
+    if(NOT TARGET ${_object_library})
+        return()
+    endif()
+
+    # rcc patches the payload into the pass-1 object; LTO objects hold compiler IR instead of that placeholder.
+    set(_properties INTERPROCEDURAL_OPTIMIZATION)
+    foreach(_config IN LISTS CMAKE_CONFIGURATION_TYPES CMAKE_BUILD_TYPE)
+        string(TOUPPER "${_config}" _config)
+        list(APPEND _properties INTERPROCEDURAL_OPTIMIZATION_${_config})
+    endforeach()
+    foreach(_property IN LISTS _properties)
+        set_property(TARGET ${_object_library} PROPERTY ${_property} OFF)
+    endforeach()
+    set_property(TARGET ${_object_library} PROPERTY UNITY_BUILD OFF)
+
+    # Only targets in this directory see the rule for the patched object; Qt adds that link for static libraries.
+    get_target_property(_target_type ${target} TYPE)
+    get_target_property(_target_directory ${target} SOURCE_DIR)
+    if(NOT _target_type STREQUAL "STATIC_LIBRARY" AND NOT _target_directory STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+        add_custom_target(
+            ${target}_${resource_name}_pass2
+            DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/.qt/rcc/qrc_${resource_name}${CMAKE_CXX_OUTPUT_EXTENSION}"
+            COMMENT "Embedding resource ${resource_name}"
+        )
+        add_dependencies(${target} ${target}_${resource_name}_pass2)
+    endif()
+endfunction()
+
+# ----------------------------------------------------------------------------
 # qgc_set_linker
 # Attempts to use a faster linker (mold, lld, or gold) if available
 # Falls back to the system default linker
