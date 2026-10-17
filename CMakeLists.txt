@@ -375,11 +375,15 @@ qt_add_executable(${CMAKE_PROJECT_NAME} WIN32 # Windows GUI application
                   MACOSX_BUNDLE # macOS application bundle
 )
 
-qt_add_resources(
-    ${CMAKE_PROJECT_NAME} qgc_fonts
-    PREFIX "/fonts"
-    BASE "${CMAKE_SOURCE_DIR}/resources/fonts"
-    FILES ${QGC_FONT_RESOURCES}
+qgc_add_big_resources(
+    ${CMAKE_PROJECT_NAME}
+    qgc_fonts
+    PREFIX
+    "/fonts"
+    BASE
+    "${CMAKE_SOURCE_DIR}/resources/fonts"
+    FILES
+    ${QGC_FONT_RESOURCES}
 )
 
 qt_add_resources(
@@ -509,14 +513,34 @@ endif()
 
 set(QT_NO_MISSING_CATALOG_LANGUAGE_WARNING ON)
 
+# Embed the catalogs as big resources at the same :/i18n/ paths. Qt's own embedding stays for Xcode,
+# which needs its lrelease ordering workaround and cannot use two-pass resources for iOS.
+if(CMAKE_GENERATOR STREQUAL "Xcode")
+    set(_qgc_translation_embedding RESOURCE_PREFIX "/")
+else()
+    set(_qgc_translation_embedding QM_FILES_OUTPUT_VARIABLE _qgc_qm_files)
+endif()
+
 qt_add_translations(
     ${CMAKE_PROJECT_NAME}
-    TS_FILES ${TS_SOURCES}
-    RESOURCE_PREFIX "/"
+    TS_FILES ${TS_SOURCES} ${_qgc_translation_embedding}
     LUPDATE_OPTIONS -no-obsolete
     TS_FILE_DIR "${CMAKE_SOURCE_DIR}/translations"
     TS_FILE_BASE ${CMAKE_PROJECT_NAME} QM_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/i18n" MERGE_QT_TRANSLATIONS
 )
+
+if(_qgc_qm_files)
+    qgc_add_big_resources(
+        ${CMAKE_PROJECT_NAME}
+        ${CMAKE_PROJECT_NAME}_translations
+        PREFIX
+        "/"
+        BASE
+        "${CMAKE_BINARY_DIR}"
+        FILES
+        ${_qgc_qm_files}
+    )
+endif()
 
 # ----------------------------------------------------------------------------
 # Qt Quick Controls Configuration

@@ -104,11 +104,7 @@ if(_apm_param_skipped)
     )
 endif()
 
-qt_add_resources(
-    ${CMAKE_PROJECT_NAME} "qgcresources_apm_params"
-    PREFIX "/"
-    FILES ${_apm_param_resources}
-)
+qgc_add_big_resources(${CMAKE_PROJECT_NAME} "qgcresources_apm_params" PREFIX "/" FILES ${_apm_param_resources})
 
 qt_add_library(APMFirmwareModule STATIC)
 

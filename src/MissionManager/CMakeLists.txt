@@ -95,13 +95,18 @@ qt_add_resources(
     FILES "${CMAKE_CURRENT_SOURCE_DIR}/CogWheel.svg"
 )
 
-qt_add_resources(
-    ${CMAKE_PROJECT_NAME} missionmanager_plancreator_images
-    PREFIX "/qmlimages/PlanCreator"
-    BASE "${CMAKE_CURRENT_SOURCE_DIR}"
-    FILES "${CMAKE_CURRENT_SOURCE_DIR}/BlankPlanCreator.png" "${CMAKE_CURRENT_SOURCE_DIR}/CorridorScanPlanCreator.png"
-          "${CMAKE_CURRENT_SOURCE_DIR}/StructureScanPlanCreator.png"
-          "${CMAKE_CURRENT_SOURCE_DIR}/SurveyPlanCreator.png"
+qgc_add_big_resources(
+    ${CMAKE_PROJECT_NAME}
+    missionmanager_plancreator_images
+    PREFIX
+    "/qmlimages/PlanCreator"
+    BASE
+    "${CMAKE_CURRENT_SOURCE_DIR}"
+    FILES
+    "${CMAKE_CURRENT_SOURCE_DIR}/BlankPlanCreator.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/CorridorScanPlanCreator.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/StructureScanPlanCreator.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/SurveyPlanCreator.png"
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
