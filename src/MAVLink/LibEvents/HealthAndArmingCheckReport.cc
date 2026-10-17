@@ -96,6 +96,23 @@ void HealthAndArmingCheckReport::setModeGroups(int takeoffModeGroup, int mission
     _missionModeGroup = missionModeGroup;
 }
 
+#ifdef QGC_UNITTEST_BUILD
+void HealthAndArmingCheckReport::setProblemsForTest(const QStringList& severities)
+{
+    _supported = true;
+    _problemsForCurrentMode->clearAndDeleteContents();
+    _hasWarningsOrErrors = false;
+    for (const QString& severity : severities) {
+        _problemsForCurrentMode->append(
+            new HealthAndArmingCheckProblem(QStringLiteral("Test problem"), QString(), severity, this));
+        if (!severity.isEmpty()) {
+            _hasWarningsOrErrors = true;
+        }
+    }
+    emit updated();
+}
+#endif
+
 int HealthAndArmingCheckReport::_countProblems(const QString& severity) const
 {
     int count = 0;

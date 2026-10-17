@@ -32,6 +32,7 @@ private slots:
     void _testIndicatorDrawerClosesOnVehicleDisconnect();
     void _testVehicleMessagesMarkReadAndClear();
     void _testMockLinkBootStatusTextShowsNonCriticalIndicator();
+    void _testHealthChecksDriveToolbarSeverity();
     void _testChecklistProgressPersistsAcrossDropdownCloseAndReconnect();
 
 private:

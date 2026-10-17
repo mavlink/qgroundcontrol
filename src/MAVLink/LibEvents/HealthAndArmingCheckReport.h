@@ -2,6 +2,7 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QString>
+#include <QtCore/QStringList>
 
 class EventHandler;
 class QmlObjectListModel;
@@ -68,6 +69,12 @@ public:
 
     void update(uint8_t compid, const EventHandler &eventHandler, int flightModeGroup);
     void setModeGroups(int takeoffModeGroup, int missionModeGroup);
+
+#ifdef QGC_UNITTEST_BUILD
+    /// Test-only: marks the report supported and replaces its problems with one per given severity
+    /// ("error", "warning" or ""), so UI tests can drive health state without the events protocol.
+    void setProblemsForTest(const QStringList& severities);
+#endif
 
 signals:
     void updated();

@@ -18,9 +18,15 @@ An altitude slider (meters above home, defaulting to 0 = ground level) is shown 
 
 ### Vehicle Messages Read/Unread
 
-Vehicle messages now have a read/unread state. Unread messages are shown in bold in the **Flight Status** indicator's message list, and the red badge on the indicator counts only unread critical messages.
-Press **Mark as Read** to clear the badge while keeping the messages, instead of having to delete them. **Clear** still deletes them.
+Vehicle messages now have a read/unread state. Unread messages are shown in bold in the **Flight Status** indicator's message list.
+Press **Mark as Read** to mark them read while keeping the messages, instead of having to delete them. **Clear** still deletes them.
 See [Vehicle Messages](../fly_view/fly_view_toolbar.md#vehicle-messages) for details.
+
+### Flight Status Severity Label
+
+The red count of critical messages on the **Flight Status** indicator is replaced by a label showing the most severe issue: **Error**, **Warning** or **Info**.
+It combines unread vehicle messages, health and arming checks, and an incomplete pre-flight checklist, so it stays shown until those issues are resolved, not just until messages are marked read.
+See [Flight Status Badges](../fly_view/fly_view_toolbar.md#flight-status-badges) for details.
 
 ## Custom Builds
 
