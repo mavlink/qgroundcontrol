@@ -1228,6 +1228,7 @@ signals:
 /*===========================================================================*/
 private:
     Q_PROPERTY(int unreadCriticalMessageCount READ unreadCriticalMessageCount NOTIFY unreadCriticalMessageCountChanged)
+    Q_PROPERTY(int unreadWarningMessageCount READ unreadWarningMessageCount NOTIFY unreadWarningMessageCountChanged)
     Q_PROPERTY(bool hasUnreadMessages READ hasUnreadMessages NOTIFY hasUnreadMessagesChanged)
     Q_PROPERTY(int unreadMessageCount READ unreadMessageCount NOTIFY unreadMessageCountChanged)
     Q_PROPERTY(QString formattedMessages READ formattedMessages NOTIFY formattedMessagesChanged)
@@ -1239,6 +1240,7 @@ public:
     Q_INVOKABLE void markMessagesRead();
 
     int unreadCriticalMessageCount() const;
+    int unreadWarningMessageCount() const;
     bool hasUnreadMessages() const;
     int unreadMessageCount() const;
     QString formattedMessages() const;
@@ -1252,6 +1254,7 @@ signals:
     void messagesSentChanged();
     void messagesLostChanged();
     void unreadCriticalMessageCountChanged();
+    void unreadWarningMessageCountChanged();
     void hasUnreadMessagesChanged();
     void unreadMessageCountChanged();
     void formattedMessagesChanged();

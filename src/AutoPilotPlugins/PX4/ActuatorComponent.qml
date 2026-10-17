@@ -328,7 +328,7 @@ SetupPage {
                 QGCLabel {
                     text:          qsTr("One or more actuator still needs to be assigned to an output.")
                     visible:       actuators.hasUnsetRequiredFunctions
-                    color:         qgcPal.warningText
+                    color:         qgcPal.errorText
                     bottomPadding: ScreenTools.defaultFontPixelHeight
                 }
 

@@ -45,6 +45,8 @@ class HealthAndArmingCheckReport : public QObject
     Q_PROPERTY(bool canTakeoff                             READ canTakeoff              NOTIFY updated)
     Q_PROPERTY(bool canStartMission                        READ canStartMission         NOTIFY updated)
     Q_PROPERTY(bool hasWarningsOrErrors                    READ hasWarningsOrErrors     NOTIFY updated)
+    Q_PROPERTY(int errorCount READ errorCount NOTIFY updated)
+    Q_PROPERTY(int warningCount READ warningCount NOTIFY updated)
     Q_PROPERTY(QString gpsState                            READ gpsState                NOTIFY updated)
     Q_PROPERTY(QmlObjectListModel* problemsForCurrentMode  READ problemsForCurrentMode  NOTIFY updated)
 
@@ -57,6 +59,10 @@ public:
     bool canTakeoff() const { return _canTakeoff; }
     bool canStartMission() const { return _canStartMission; }
     bool hasWarningsOrErrors() const { return _hasWarningsOrErrors; }
+
+    int errorCount() const { return _countProblems(QStringLiteral("error")); }
+
+    int warningCount() const { return _countProblems(QStringLiteral("warning")); }
     const QString& gpsState() const { return _gpsState; }
     QmlObjectListModel* problemsForCurrentMode() { return _problemsForCurrentMode; }
 
@@ -67,6 +73,8 @@ signals:
     void updated();
 
 private:
+    int _countProblems(const QString& severity) const;
+
     bool _supported{false};
     bool _canArm{true};
     bool _canTakeoff{true};

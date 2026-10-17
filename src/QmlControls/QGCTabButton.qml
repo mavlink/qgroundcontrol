@@ -11,6 +11,8 @@ import QGroundControl.Controls
 Button {
     id: control
     Layout.fillWidth: true
+    // A shared preferred width makes the layout split space equally instead of by text length
+    Layout.preferredWidth: parent && parent._maxTabImplicitWidth !== undefined ? parent._maxTabImplicitWidth : -1
     topPadding: _verticalPadding
     bottomPadding: _verticalPadding
     leftPadding: _horizontalPadding

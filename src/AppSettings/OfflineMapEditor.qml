@@ -635,7 +635,7 @@ FlightMap {
                         QGCLabel {
                             text: qsTr("Too many tiles")
                             visible: _tooManyTiles
-                            color: qgcPal.warningText
+                            color: qgcPal.errorText
                             anchors.horizontalCenter: parent.horizontalCenter
                         }
 
@@ -643,7 +643,7 @@ FlightMap {
                             id: duplicateName
                             text: qsTr("Tile set with this name already exists")
                             visible: false
-                            color: qgcPal.warningText
+                            color: qgcPal.errorText
                             anchors.horizontalCenter: parent.horizontalCenter
                         }
 

@@ -242,7 +242,7 @@ ColumnLayout {
         QGCLabel {
             text:              qsTr("Bluetooth adapter unavailable")
             visible:           !root.hasAdapter
-            color:             root.palette.warningText
+            color:             root.palette.errorText
             Layout.columnSpan: 2
         }
     }

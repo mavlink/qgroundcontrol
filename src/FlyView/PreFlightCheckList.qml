@@ -20,6 +20,7 @@ ColumnLayout {
     property bool allChecksPassed:  false
     property var  vehicleCopy:      globals.activeVehicle
 
+
     onVehicleCopyChanged: {
         if (checkListRepeater.model) {
             checkListRepeater.model.reset()
@@ -34,28 +35,13 @@ ColumnLayout {
         }
     }
 
-    function _handleGroupPassedChanged(index, passed) {
-        if (passed) {
-            // Collapse current group
-            var group = checkListRepeater.itemAt(index)
-            group._checked = false
-            // Expand next group
-            if (index + 1 < checkListRepeater.count) {
-                group = checkListRepeater.itemAt(index + 1)
-                group.enabled = true
-                group._checked = true
-            }
+    function groupPassedChanged() {
+        const model = checkListRepeater.model
+        if (!model) {
+            return
         }
-
-        // Walk the list and check if any group is failing
-        var allPassed = true
-        for (var i=0; i < checkListRepeater.count; i++) {
-            if (!checkListRepeater.itemAt(i).passed) {
-                allPassed = false
-                break
-            }
-        }
-        allChecksPassed = allPassed;
+        model.updateGroupLocks()
+        allChecksPassed = model.isPassed()
     }
 
     //-- Pick a checklist model that matches the current airframe type (if any)
@@ -93,25 +79,6 @@ ColumnLayout {
         }
     }
 
-    // We delay the updates when a group passes so the user can see all items green for a moment prior to hiding
-    Timer {
-        id:         delayedGroupPassed
-        interval:   750
-
-        property int index
-
-        onTriggered: _handleGroupPassedChanged(index, true /* passed */)
-    }
-
-    function groupPassedChanged(index, passed) {
-        if (passed) {
-            delayedGroupPassed.index = index
-            delayedGroupPassed.restart()
-        } else {
-            _handleGroupPassedChanged(index, passed)
-        }
-    }
-
     // Header/title of checklist
     RowLayout {
         Layout.fillWidth:   true
@@ -124,16 +91,15 @@ ColumnLayout {
             font.pointSize:     ScreenTools.mediumFontPointSize
         }
         QGCButton {
-            width:              1.2 * ScreenTools.defaultFontPixelHeight
-            height:             1.2 * ScreenTools.defaultFontPixelHeight
+            objectName:         "preFlightCheckListResetButton"
             Layout.alignment:   Qt.AlignVCenter
+            implicitHeight:     contentItem.implicitHeight + topPadding + bottomPadding
+            heightFactor:       0.2
+            leftPadding:        ScreenTools.defaultFontPixelWidth
+            rightPadding:       leftPadding
+            text:               qsTr("Reset")
+            pointSize:          ScreenTools.smallFontPointSize
             onClicked:          checkListRepeater.model.reset()
-
-            QGCColoredImage {
-                source:         "/qmlimages/MapSyncBlack.svg"
-                color:          qgcPal.buttonText
-                anchors.fill:   parent
-            }
         }
     }
 

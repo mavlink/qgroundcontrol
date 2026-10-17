@@ -42,6 +42,8 @@ void HealthAndArmingCheckReportTest::_testInitialState()
     QVERIFY(report.canStartMission());
 
     QVERIFY(!report.hasWarningsOrErrors());
+    QCOMPARE(report.errorCount(), 0);
+    QCOMPARE(report.warningCount(), 0);
     QCOMPARE(report.gpsState(), QString());
 
     // The problems model is owned by the report and starts empty.
@@ -103,6 +105,35 @@ void HealthAndArmingCheckReportTest::_testSetModeGroups()
     QCOMPARE(report.canArm(),          beforeCanArm);
     QCOMPARE(report.canTakeoff(),      beforeCanTakeoff);
     QCOMPARE(report.canStartMission(), beforeCanMission);
+}
+
+void HealthAndArmingCheckReportTest::_testSeverityCounts_data()
+{
+    QTest::addColumn<QStringList>("severities");
+    QTest::addColumn<int>("expectedErrors");
+    QTest::addColumn<int>("expectedWarnings");
+
+    QTest::newRow("empty") << QStringList{} << 0 << 0;
+    QTest::newRow("errorsOnly") << QStringList{"error", "error"} << 2 << 0;
+    QTest::newRow("warningsOnly") << QStringList{"warning"} << 0 << 1;
+    QTest::newRow("mixed") << QStringList{"warning", "error", "", "warning"} << 1 << 2;
+    QTest::newRow("infoOnly") << QStringList{""} << 0 << 0;
+}
+
+void HealthAndArmingCheckReportTest::_testSeverityCounts()
+{
+    QFETCH(QStringList, severities);
+    QFETCH(int, expectedErrors);
+    QFETCH(int, expectedWarnings);
+
+    HealthAndArmingCheckReport report;
+    for (const QString& severity : severities) {
+        report.problemsForCurrentMode()->append(
+            new HealthAndArmingCheckProblem(QStringLiteral("Problem"), QString(), severity, &report));
+    }
+
+    QCOMPARE(report.errorCount(), expectedErrors);
+    QCOMPARE(report.warningCount(), expectedWarnings);
 }
 
 // ---------------------------------------------------------------------------

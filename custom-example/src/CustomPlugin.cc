@@ -99,11 +99,21 @@ void CustomPlugin::paletteOverride(const QString &colorName, QGCPalette::Palette
         colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupDisabled]  = QColor("#777c89");
         colorInfo[QGCPalette::Light][QGCPalette::ColorGroupEnabled]  = QColor("#212529");
         colorInfo[QGCPalette::Light][QGCPalette::ColorGroupDisabled] = QColor("#9d9d9d");
-    } else if (colorName == QStringLiteral("warningText")) {
-        colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled]   = QColor("#e03131");
-        colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupDisabled]  = QColor("#e03131");
-        colorInfo[QGCPalette::Light][QGCPalette::ColorGroupEnabled]  = QColor("#cc0808");
+    } else if (colorName == QStringLiteral("errorText")) {
+        colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled] = QColor("#ff6b6b");
+        colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupDisabled] = QColor("#ff6b6b");
+        colorInfo[QGCPalette::Light][QGCPalette::ColorGroupEnabled] = QColor("#cc0808");
         colorInfo[QGCPalette::Light][QGCPalette::ColorGroupDisabled] = QColor("#cc0808");
+    } else if (colorName == QStringLiteral("warningText")) {
+        colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled] = QColor("#f7b24a");
+        colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupDisabled] = QColor("#f6921e");
+        colorInfo[QGCPalette::Light][QGCPalette::ColorGroupEnabled] = QColor("#b95604");
+        colorInfo[QGCPalette::Light][QGCPalette::ColorGroupDisabled] = QColor("#b95604");
+    } else if (colorName == QStringLiteral("successText")) {
+        colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled] = QColor("#27bf89");
+        colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupDisabled] = QColor("#0ca678");
+        colorInfo[QGCPalette::Light][QGCPalette::ColorGroupEnabled] = QColor("#006b22");
+        colorInfo[QGCPalette::Light][QGCPalette::ColorGroupDisabled] = QColor("#006b22");
     } else if (colorName == QStringLiteral("button")) {
         colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled]   = QColor("#495057");
         colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupDisabled]  = QColor("#495057");
@@ -144,6 +154,11 @@ void CustomPlugin::paletteOverride(const QString &colorName, QGCPalette::Palette
         colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupDisabled]  = QColor("#777c89");
         colorInfo[QGCPalette::Light][QGCPalette::ColorGroupEnabled]  = QColor("#212529");
         colorInfo[QGCPalette::Light][QGCPalette::ColorGroupDisabled] = QColor("#808080");
+    } else if (colorName == QStringLiteral("textFieldErrorText")) {
+        colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled] = QColor("#ff6b6b");
+        colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupDisabled] = QColor("#ff6b6b");
+        colorInfo[QGCPalette::Light][QGCPalette::ColorGroupEnabled] = QColor("#c92a2a");
+        colorInfo[QGCPalette::Light][QGCPalette::ColorGroupDisabled] = QColor("#c92a2a");
     } else if (colorName == QStringLiteral("mapButton")) {
         colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled]   = QColor("#000000");
         colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupDisabled]  = QColor("#585858");

@@ -20,6 +20,8 @@ private slots:
     void _testUpdateSkipsNonAutopilotCompId();
     void _testUpdateSkipsUninitializedFlightModeGroup();
     void _testSetModeGroups();
+    void _testSeverityCounts_data();
+    void _testSeverityCounts();
 
     void _testProblemConstruction();
     void _testProblemExpandedSignal();

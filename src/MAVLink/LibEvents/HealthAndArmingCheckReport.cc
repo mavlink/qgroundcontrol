@@ -95,3 +95,15 @@ void HealthAndArmingCheckReport::setModeGroups(int takeoffModeGroup, int mission
     _takeoffModeGroup = takeoffModeGroup;
     _missionModeGroup = missionModeGroup;
 }
+
+int HealthAndArmingCheckReport::_countProblems(const QString& severity) const
+{
+    int count = 0;
+    for (int i = 0; i < _problemsForCurrentMode->count(); i++) {
+        const auto* const problem = _problemsForCurrentMode->value<const HealthAndArmingCheckProblem*>(i);
+        if (problem && (problem->severity() == severity)) {
+            count++;
+        }
+    }
+    return count;
+}

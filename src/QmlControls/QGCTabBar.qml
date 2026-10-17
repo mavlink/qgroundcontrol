@@ -16,6 +16,15 @@ RowLayout {
 
     property bool _preventCurrentIndexBindingLoop: false
     property var _buttons: []
+    property real _maxTabImplicitWidth: {
+        let maxWidth = 0
+        for (const button of _buttons) {
+            if (button.visible) {
+                maxWidth = Math.max(maxWidth, button.implicitWidth)
+            }
+        }
+        return maxWidth
+    }
 
     function _updateButtons() {
         let btns = []

@@ -34,7 +34,7 @@ QGCPopupDialog {
             wrapMode:               Text.WordWrap
             visible:                !_batteryFactGroup || _batteryFactGroup.voltage.value === 0
             text:                   qsTr("Vehicle voltage telemetry is not available. Connect to a vehicle with a powered battery to enable automatic calculation.")
-            color:                  qgcPal.warningText
+            color:                  qgcPal.errorText
         }
 
         GridLayout {

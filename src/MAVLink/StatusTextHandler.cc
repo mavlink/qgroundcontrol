@@ -52,6 +52,18 @@ bool StatusText::severityIsError() const
     }
 }
 
+bool StatusText::severityIsWarning() const
+{
+    switch (m_severity) {
+        case MAV_SEVERITY_WARNING:
+        case MAV_SEVERITY_NOTICE:
+            return true;
+
+        default:
+            return false;
+    }
+}
+
 StatusTextHandler::StatusTextHandler(QObject *parent)
     : QObject(parent)
     , m_chunkedStatusTextTimer(new QTimer(this))
@@ -107,10 +119,7 @@ void StatusTextHandler::clearMessages()
     qDeleteAll(m_messages);
     m_messages.clear();
 
-    if (m_unreadCriticalMessageCount != 0) {
-        m_unreadCriticalMessageCount = 0;
-        emit unreadCriticalMessageCountChanged();
-    }
+    _resetUnreadSeverityCounts();
 
     if (m_unreadMessageCount != 0) {
         m_unreadMessageCount = 0;
@@ -137,12 +146,22 @@ void StatusTextHandler::markAllRead()
     emit hasUnreadMessagesChanged();
     emit unreadMessageCountChanged();
 
+    _resetUnreadSeverityCounts();
+
+    emit formattedMessagesChanged();
+}
+
+void StatusTextHandler::_resetUnreadSeverityCounts()
+{
     if (m_unreadCriticalMessageCount != 0) {
         m_unreadCriticalMessageCount = 0;
         emit unreadCriticalMessageCountChanged();
     }
 
-    emit formattedMessagesChanged();
+    if (m_unreadWarningMessageCount != 0) {
+        m_unreadWarningMessageCount = 0;
+        emit unreadWarningMessageCountChanged();
+    }
 }
 
 void StatusTextHandler::handleHTMLEscapedTextMessage(MAV_COMPONENT compId, MAV_SEVERITY severity, const QString &text, const QString &description)
@@ -257,6 +276,9 @@ void StatusTextHandler::handleHTMLEscapedTextMessage(MAV_COMPONENT compId, MAV_S
         m_unreadCriticalMessageCount++;
         emit unreadCriticalMessageCountChanged();
         emit newErrorMessage(message->getText());
+    } else if (message->severityIsWarning()) {
+        m_unreadWarningMessageCount++;
+        emit unreadWarningMessageCountChanged();
     }
 }
 

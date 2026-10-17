@@ -11,32 +11,33 @@ QGCPopupDialog {
     buttons:                Dialog.Ok
     acceptButtonEnabled:    false
 
-    readonly property string _highlightPrefix: "<font color=\"" + qgcPal.warningText + "\">"
-    readonly property string _highlightSuffix: "</font>"
+    readonly property string _errorPrefix:      "<font color=\"" + qgcPal.errorText + "\">"
+    readonly property string _warningPrefix:    "<font color=\"" + qgcPal.warningText + "\">"
+    readonly property string _highlightSuffix:  "</font>"
 
     Connections {
         target: controller
 
         function onOldFirmware() {
-            textLabel.text = _highlightPrefix + qsTr("ESC Calibration failed. ") + _highlightSuffix +
+            textLabel.text = _errorPrefix + qsTr("ESC Calibration failed. ") + _highlightSuffix +
                 qsTr("%1 cannot perform ESC Calibration with this version of firmware. You will need to upgrade to a newer firmware.").arg(QGroundControl.appName)
             escCalibrationDlg.acceptButtonEnabled = true
         }
 
         function onNewerFirmware() {
-            textLabel.text = _highlightPrefix + qsTr("ESC Calibration failed. ") + _highlightSuffix +
+            textLabel.text = _errorPrefix + qsTr("ESC Calibration failed. ") + _highlightSuffix +
                 qsTr("%1 cannot perform ESC Calibration with this version of firmware. You will need to upgrade %1.").arg(QGroundControl.appName)
             escCalibrationDlg.acceptButtonEnabled = true
         }
 
         function onDisconnectBattery() {
-            textLabel.text = _highlightPrefix + qsTr("ESC Calibration failed. ") + _highlightSuffix +
+            textLabel.text = _errorPrefix + qsTr("ESC Calibration failed. ") + _highlightSuffix +
                 qsTr("You must disconnect the battery prior to performing ESC Calibration. Disconnect your battery and try again.")
             escCalibrationDlg.acceptButtonEnabled = true
         }
 
         function onConnectBattery() {
-            textLabel.text = _highlightPrefix + qsTr("WARNING: Props must be removed from vehicle prior to performing ESC calibration.") + _highlightSuffix +
+            textLabel.text = _warningPrefix + qsTr("WARNING: Props must be removed from vehicle prior to performing ESC calibration.") + _highlightSuffix +
                 qsTr(" Connect the battery now and calibration will begin.")
         }
 
@@ -46,7 +47,7 @@ QGCPopupDialog {
 
         function onCalibrationFailed(errorMessage) {
             escCalibrationDlg.acceptButtonEnabled = true
-            textLabel.text = _highlightPrefix + qsTr("ESC Calibration failed. ") + _highlightSuffix + errorMessage
+            textLabel.text = _errorPrefix + qsTr("ESC Calibration failed. ") + _highlightSuffix + errorMessage
         }
 
         function onCalibrationSuccess() {
