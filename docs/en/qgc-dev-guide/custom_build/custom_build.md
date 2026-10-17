@@ -12,7 +12,7 @@ Some possibilities with a custom build
 - Implement your own toolbar, toolbar indicators and UI navigation
 - Implement your own Fly View overlay (and how to hide elements from QGC such as the flight widget)
 - Implement your own, custom QtQuick camera control
-- Implement your own, custom Pre-flight Checklist
+- Implement your own, custom Pre-flight Checklist (resource override `PreFlightCheckList.qml` or the per-airframe `*Checklist.qml` files, or disable it by overriding the `useChecklist` setting)
 - Define your own resources for all of the above
 
 One of the downsides of QGC providing both generic support for any vehicle which supports mavlink as well as providing firmware specific support for both PX4 Pro and ArduPilot is complexity of the user interface. Since QGC doesn't know any information about your vehicle ahead of time it requires UI bits which can get in the way if the vehicle you fly only uses PX4 Pro firmware and is a multi-rotor vehicle. If that is a known thing then the UI can be simplified in various places. Also QGC targets both DIY users who are building their own vehicles from scratch as well as commercial users of off the shelf vehicles. Setting up a DIY drone from scratch requires all sort of functionality which is not needed for users of off the shelf vehicles. So for off the shelf vehicle users all the DIY specific stuff is just extra noise they need to look past. Creating a custom build allows you to specify exact details for your vehicle and hide things which are irrelevant thus creating an even simple user experience for your users than regular generic QGC.
