@@ -96,7 +96,7 @@ SettingsGroupLayout {
                 QGCLabel {
                     visible:    !addKeyDialog.useRawKey && passphraseField.text.length > 0 && passphraseField.text.length < addKeyDialog._minPassphraseLength
                     text:       qsTr("Passphrase too short (%1/%2)").arg(passphraseField.text.length).arg(addKeyDialog._minPassphraseLength)
-                    color:      QGroundControl.globalPalette.warningText
+                    color:      QGroundControl.globalPalette.errorText
                     font.pointSize: ScreenTools.smallFontPointSize
                 }
 
@@ -123,14 +123,14 @@ SettingsGroupLayout {
                 QGCLabel {
                     visible:    addKeyDialog.useRawKey && rawKeyField.text.length > 0 && rawKeyField.text.length !== 64
                     text:       qsTr("%1/64 hex characters").arg(rawKeyField.text.length)
-                    color:      QGroundControl.globalPalette.warningText
+                    color:      QGroundControl.globalPalette.errorText
                     font.pointSize: ScreenTools.smallFontPointSize
                 }
 
                 QGCLabel {
                     id:             errorLabel
                     visible:        text !== ""
-                    color:          QGroundControl.globalPalette.warningText
+                    color:          QGroundControl.globalPalette.errorText
                     font.pointSize: ScreenTools.smallFontPointSize
                     Layout.fillWidth: true
                     wrapMode:       Text.WordWrap

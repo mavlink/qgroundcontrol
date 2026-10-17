@@ -3487,6 +3487,11 @@ int Vehicle::unreadCriticalMessageCount() const
     return m_statusTextHandler->unreadCriticalMessageCount();
 }
 
+int Vehicle::unreadWarningMessageCount() const
+{
+    return m_statusTextHandler->unreadWarningMessageCount();
+}
+
 bool Vehicle::hasUnreadMessages() const
 {
     return m_statusTextHandler->hasUnreadMessages();
@@ -3504,6 +3509,8 @@ void Vehicle::_createStatusTextHandler()
     m_statusTextHandler = new StatusTextHandler(this);
     (void) connect(m_statusTextHandler, &StatusTextHandler::unreadCriticalMessageCountChanged, this,
                    &Vehicle::unreadCriticalMessageCountChanged);
+    (void) connect(m_statusTextHandler, &StatusTextHandler::unreadWarningMessageCountChanged, this,
+                   &Vehicle::unreadWarningMessageCountChanged);
     (void) connect(m_statusTextHandler, &StatusTextHandler::hasUnreadMessagesChanged, this,
                    &Vehicle::hasUnreadMessagesChanged);
     (void) connect(m_statusTextHandler, &StatusTextHandler::unreadMessageCountChanged, this,

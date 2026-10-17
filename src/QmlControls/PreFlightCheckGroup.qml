@@ -1,23 +1,30 @@
 import QtQuick
-import QtQml.Models
 
 import QGroundControl
 import QGroundControl.Controls
 
-/// A PreFlightCheckGroup manages a set of PreFlightCheckButtons as a single entity.
+/// A PreFlightCheckGroup manages a set of PreFlightCheckButtons as a single entity. Groups are always expanded;
+/// PreFlightCheckList disables (locks) a group until every group above it has passed.
 Column  {
     property string name
     property bool   passed: false
-    property bool   failed: false
+    readonly property bool failed: failedCount > 0
+
+    readonly property int failedCount: {
+        let count = 0
+        for (const button of innerColumn.children) {
+            if (button.failed) {
+                count++
+            }
+        }
+        return count
+    }
 
     spacing: ScreenTools.defaultFontPixelHeight / 2
 
-    property alias _checked: header.checked
-
-    onPassedChanged: parent.groupPassedChanged(ObjectModel.index, passed)
+    onPassedChanged: parent.groupPassedChanged()
 
     Component.onCompleted: {
-        enabled = _checked
         var moveList = []
         var i = 0
         for (i = 2; i < children.length; i++) {
@@ -35,27 +42,27 @@ Column  {
     }
 
     SectionHeader {
-        id:             header
         anchors.left:   parent.left
         anchors.right:  parent.right
-        text:           name + (passed ? qsTr(" (passed)") : "")
-        color:          failed ? qgcPal.statusFailedText : (passed ? qgcPal.statusPassedText : qgcPal.statusPendingText)
+        checkable:      false
+        text:           name + (passed ? qsTr(" (passed)") : (enabled ? "" : qsTr(" (locked)")))
+        color:          !enabled ? groupPalette.text :
+                            (failed ? groupPalette.errorText : (passed ? groupPalette.successText : groupPalette.warningText))
     }
+
+    QGCPalette { id: groupPalette; colorGroupEnabled: enabled }
 
     Column {
         id:         innerColumn
         spacing:    ScreenTools.defaultFontPixelHeight / 2
-        visible:    header.checked
 
         function buttonPassedChanged() {
             for (var i=0; i<children.length; i++) {
                 if (!children[i].passed) {
                     passed = false
-                    failed = children[i].failed
                     return
                 }
             }
-            failed = false
             passed = true
         }
     }

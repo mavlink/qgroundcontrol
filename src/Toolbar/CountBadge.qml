@@ -21,7 +21,7 @@ Rectangle {
         // Superscript "+" keeps the capped count inside the circle
         text:               control.count > 9 ? "9<sup>+</sup>" : control.countText
         textFormat:         Text.RichText
-        color:              QGroundControl.globalPalette.buttonHighlightText
+        color:              QGroundControl.globalPalette.indicatorText
         font.pointSize:     ScreenTools.smallFontPointSize
         font.bold:          true
     }

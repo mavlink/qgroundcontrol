@@ -305,7 +305,7 @@ Rectangle {
                         id:                 nameError
                         Layout.fillWidth:   true
                         wrapMode:           Text.WordWrap
-                        color:              QGroundControl.globalPalette.warningText
+                        color:              QGroundControl.globalPalette.errorText
                         visible:            text !== ""
                     }
                 }

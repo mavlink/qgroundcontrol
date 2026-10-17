@@ -31,6 +31,51 @@ RowLayout {
     // Raised when the dropdown is already open and should switch tabs
     signal tabRequested(int tab)
 
+    // Small colored label right-aligned in a dropdown tab; hidden when text is empty
+    component TabStatusLabel: Rectangle {
+        id: statusLabel
+
+        property string text
+
+        anchors.right:          parent.right
+        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
+        anchors.verticalCenter: parent.verticalCenter
+        width:                  statusLabelText.implicitWidth + ScreenTools.defaultFontPixelWidth
+        height:                 statusLabelText.implicitHeight
+        radius:                 height / 2
+        visible:                text !== ""
+
+        QGCLabel {
+            id:                 statusLabelText
+            anchors.centerIn:   parent
+            text:               statusLabel.text
+            color:              QGroundControl.globalPalette.indicatorText
+            font.pointSize:     ScreenTools.smallFontPointSize
+            font.bold:          true
+        }
+    }
+
+    // Measures a TabStatusLabel's text, for sizing tab padding
+    component LabelMetrics: TextMetrics {
+        font.family:    ScreenTools.normalFontFamily
+        font.pointSize: ScreenTools.smallFontPointSize
+        font.bold:      true
+    }
+
+    // Tab label showing the most severe level: Error, then Warning, then Info (other unread messages)
+    component TabSeverityBadge: TabStatusLabel {
+        property int errorCount:    0
+        property int warningCount:  0
+        property int unreadCount:   0
+
+        readonly property string severity: errorCount > 0 ? "error" : (warningCount > 0 ? "warning" : (unreadCount > 0 ? "info" : ""))
+
+        text:   severity === "error" ? qsTr("Error") :
+                    (severity === "warning" ? qsTr("Warning") : (severity === "info" ? qsTr("Info") : ""))
+        color:  severity === "error" ? QGroundControl.globalPalette.errorIndicator :
+                    (severity === "warning" ? QGroundControl.globalPalette.warningIndicator : QGroundControl.globalPalette.colorBlue)
+    }
+
     function dropMainStatusIndicator(showMessages = false) {
         _initialTab = showMessages ? tabMessages : -1
         let overallStatusComponent = _activeVehicle ? overallStatusIndicatorPage : overallStatusOfflineIndicatorPage
@@ -152,7 +197,7 @@ RowLayout {
             anchors.top:        parent.top
             anchors.topMargin:  ScreenTools.defaultFontPixelHeight * 0.25
             anchors.right:      parent.right
-            color:              qgcPal.colorRed
+            color:              qgcPal.errorIndicator
             count:              _activeVehicle ? _activeVehicle.unreadCriticalMessageCount : 0
         }
 
@@ -393,36 +438,57 @@ RowLayout {
                 id:                 tabBar
                 Layout.fillWidth:   true
 
-                QGCTabButton { objectName: "mainStatusChecklistTab"; text: qsTr("Pre-Flight Checklist"); visible: _checklistEnabled }
+                // Keeps the centered tab labels clear of the widest (translated) status label
+                readonly property real badgePadding: Math.max(errorLabelMetrics.advanceWidth, warningLabelMetrics.advanceWidth,
+                                                              infoLabelMetrics.advanceWidth, completeLabelMetrics.advanceWidth,
+                                                              incompleteLabelMetrics.advanceWidth) + ScreenTools.defaultFontPixelWidth * 3
+
+                LabelMetrics { id: errorLabelMetrics;      text: qsTr("Error") }
+                LabelMetrics { id: warningLabelMetrics;    text: qsTr("Warning") }
+                LabelMetrics { id: infoLabelMetrics;       text: qsTr("Info") }
+                LabelMetrics { id: completeLabelMetrics;   text: qsTr("Complete") }
+                LabelMetrics { id: incompleteLabelMetrics; text: qsTr("Incomplete") }
+
                 QGCTabButton {
-                    objectName:     "mainStatusMessagesTab"
-                    text:           qsTr("Vehicle Messages")
-                    // Keeps the centered label clear of the overlaid badges
-                    leftPadding:    ScreenTools.defaultFontPixelHeight + ScreenTools.defaultFontPixelWidth * 1.5
+                    objectName:     "mainStatusChecklistTab"
+                    text:           qsTr("Pre-Flight Checklist")
+                    visible:        _checklistEnabled
+                    leftPadding:    tabBar.badgePadding
                     rightPadding:   leftPadding
 
-                    CountBadge {
-                        objectName:             "mainStatusMessagesTabBadge"
-                        anchors.right:          parent.right
-                        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
-                        anchors.verticalCenter: parent.verticalCenter
-                        color:                  qgcPal.colorRed
-                        count:                  _activeVehicle ? _activeVehicle.unreadCriticalMessageCount : 0
-                    }
-
-                    CountBadge {
-                        objectName:             "mainStatusMessagesTabUnreadBadge"
-                        anchors.right:          parent.right
-                        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
-                        anchors.verticalCenter: parent.verticalCenter
-                        color:                  qgcPal.colorBlue
-                        count:                  _activeVehicle ? _activeVehicle.unreadMessageCount : 0
-                        // Critical messages are shown by the red badge instead
-                        visible:                count > 0 && (!_activeVehicle || _activeVehicle.unreadCriticalMessageCount === 0)
+                    TabStatusLabel {
+                        objectName: "mainStatusChecklistTabBadge"
+                        text:       _checklistComplete ? qsTr("Complete") : qsTr("Incomplete")
+                        color:      _checklistComplete ? QGroundControl.globalPalette.successIndicator : QGroundControl.globalPalette.warningIndicator
                     }
                 }
 
-                QGCTabButton { objectName: "mainStatusOverallStatusTab"; text: qsTr("Overall Status") }
+                QGCTabButton {
+                    objectName:     "mainStatusMessagesTab"
+                    text:           qsTr("Vehicle Messages")
+                    leftPadding:    tabBar.badgePadding
+                    rightPadding:   leftPadding
+
+                    TabSeverityBadge {
+                        objectName:     "mainStatusMessagesTabBadge"
+                        errorCount:     _activeVehicle ? _activeVehicle.unreadCriticalMessageCount : 0
+                        warningCount:   _activeVehicle ? _activeVehicle.unreadWarningMessageCount : 0
+                        unreadCount:    _activeVehicle ? _activeVehicle.unreadMessageCount : 0
+                    }
+                }
+
+                QGCTabButton {
+                    objectName:     "mainStatusOverallStatusTab"
+                    text:           qsTr("Overall Status")
+                    leftPadding:    tabBar.badgePadding
+                    rightPadding:   leftPadding
+
+                    TabSeverityBadge {
+                        objectName:     "mainStatusOverallStatusTabBadge"
+                        errorCount:     _healthAndArmingChecksSupported ? _activeVehicle.healthAndArmingCheckReport.errorCount : 0
+                        warningCount:   _healthAndArmingChecksSupported ? _activeVehicle.healthAndArmingCheckReport.warningCount : 0
+                    }
+                }
 
                 Component.onCompleted: {
                     if (control._initialTab !== -1) {
@@ -575,7 +641,7 @@ RowLayout {
                             text:                   object.message
                             textFormat:             TextEdit.RichText
                             wrapMode:               Text.WordWrap
-                            color:                  object.severity == 'error' ? qgcPal.colorRed : object.severity == 'warning' ? qgcPal.colorOrange : qgcPal.text
+                            color:                  object.severity == 'error' ? qgcPal.errorText : object.severity == 'warning' ? qgcPal.warningText : qgcPal.text
                             MouseArea {
                                 anchors.fill: parent
                                 onClicked: {

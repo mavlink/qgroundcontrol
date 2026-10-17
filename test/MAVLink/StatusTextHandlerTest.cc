@@ -95,26 +95,56 @@ void StatusTextHandlerTest::_testHandleErrorMessageAndMultiComponentPrefix()
     QVERIFY(formatted.contains(QStringLiteral("Error")));
 }
 
-void StatusTextHandlerTest::_testUnreadCriticalMessageCount()
+void StatusTextHandlerTest::_testUnreadCountsBySeverity_data()
 {
+    QTest::addColumn<int>("severity");
+    QTest::addColumn<int>("expectedCritical");
+    QTest::addColumn<int>("expectedWarning");
+
+    QTest::newRow("emergency") << int(MAV_SEVERITY_EMERGENCY) << 1 << 0;
+    QTest::newRow("alert") << int(MAV_SEVERITY_ALERT) << 1 << 0;
+    QTest::newRow("critical") << int(MAV_SEVERITY_CRITICAL) << 1 << 0;
+    QTest::newRow("error") << int(MAV_SEVERITY_ERROR) << 1 << 0;
+    QTest::newRow("warning") << int(MAV_SEVERITY_WARNING) << 0 << 1;
+    QTest::newRow("notice") << int(MAV_SEVERITY_NOTICE) << 0 << 1;
+    QTest::newRow("info") << int(MAV_SEVERITY_INFO) << 0 << 0;
+    QTest::newRow("debug") << int(MAV_SEVERITY_DEBUG) << 0 << 0;
+}
+
+void StatusTextHandlerTest::_testUnreadCountsBySeverity()
+{
+    QFETCH(int, severity);
+    QFETCH(int, expectedCritical);
+    QFETCH(int, expectedWarning);
+
     StatusTextHandler statusTextHandler;
 
-    QSignalSpy countSpy(&statusTextHandler, &StatusTextHandler::unreadCriticalMessageCountChanged);
-    QVERIFY(countSpy.isValid());
+    QSignalSpy criticalSpy(&statusTextHandler, &StatusTextHandler::unreadCriticalMessageCountChanged);
+    QSignalSpy warningSpy(&statusTextHandler, &StatusTextHandler::unreadWarningMessageCountChanged);
+    QVERIFY(criticalSpy.isValid());
+    QVERIFY(warningSpy.isValid());
 
-    statusTextHandler.handleHTMLEscapedTextMessage(MAV_COMP_ID_USER1, MAV_SEVERITY_INFO, "InfoMessage", "");
-    statusTextHandler.handleHTMLEscapedTextMessage(MAV_COMP_ID_USER1, MAV_SEVERITY_WARNING, "WarningMessage", "");
+    statusTextHandler.handleHTMLEscapedTextMessage(MAV_COMP_ID_USER1, static_cast<MAV_SEVERITY>(severity), "Message",
+                                                   "");
+    QCOMPARE(statusTextHandler.unreadCriticalMessageCount(), expectedCritical);
+    QCOMPARE(statusTextHandler.unreadWarningMessageCount(), expectedWarning);
+    QCOMPARE(statusTextHandler.unreadMessageCount(), 1);
+    QCOMPARE(criticalSpy.count(), expectedCritical);
+    QCOMPARE(warningSpy.count(), expectedWarning);
+
+    statusTextHandler.markAllRead();
     QCOMPARE(statusTextHandler.unreadCriticalMessageCount(), 0);
-    QCOMPARE(countSpy.count(), 0);
+    QCOMPARE(statusTextHandler.unreadWarningMessageCount(), 0);
+    QCOMPARE(criticalSpy.count(), expectedCritical * 2);
+    QCOMPARE(warningSpy.count(), expectedWarning * 2);
 
-    statusTextHandler.handleHTMLEscapedTextMessage(MAV_COMP_ID_USER1, MAV_SEVERITY_ERROR, "ErrorMessage", "");
-    statusTextHandler.handleHTMLEscapedTextMessage(MAV_COMP_ID_USER1, MAV_SEVERITY_CRITICAL, "CriticalMessage", "");
-    QCOMPARE(statusTextHandler.unreadCriticalMessageCount(), 2);
-    QCOMPARE(countSpy.count(), 2);
-
+    statusTextHandler.handleHTMLEscapedTextMessage(MAV_COMP_ID_USER1, static_cast<MAV_SEVERITY>(severity), "Message",
+                                                   "");
     statusTextHandler.clearMessages();
     QCOMPARE(statusTextHandler.unreadCriticalMessageCount(), 0);
-    QCOMPARE(countSpy.count(), 3);
+    QCOMPARE(statusTextHandler.unreadWarningMessageCount(), 0);
+    QCOMPARE(criticalSpy.count(), expectedCritical * 4);
+    QCOMPARE(warningSpy.count(), expectedWarning * 4);
 }
 
 void StatusTextHandlerTest::_testNewMessagesAreUnread()

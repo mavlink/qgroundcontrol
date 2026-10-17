@@ -10,7 +10,8 @@ private slots:
     void _testGetMessageText();
     void _testHandleTextMessage();
     void _testHandleErrorMessageAndMultiComponentPrefix();
-    void _testUnreadCriticalMessageCount();
+    void _testUnreadCountsBySeverity_data();
+    void _testUnreadCountsBySeverity();
     void _testNewMessagesAreUnread();
     void _testMarkAllRead();
     void _testMarkAllReadThenNewMessage();

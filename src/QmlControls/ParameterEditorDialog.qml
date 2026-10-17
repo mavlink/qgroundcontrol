@@ -86,7 +86,7 @@ QGCPopupDialog {
             id:                 validationError
             Layout.fillWidth:   true
             wrapMode:           Text.WordWrap
-            color:              qgcPal.warningText
+            color:              qgcPal.errorText
             visible:            text !== ""
         }
 

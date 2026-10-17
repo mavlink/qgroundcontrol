@@ -590,14 +590,14 @@ SetupPage {
                                 id:         northCalLat
                                 visible:    !useGcsPositionCheckbox.checked && !useMapPositionCheckbox.checked && northCalibrationCheckBox.checked
                                 text:       "0.00"
-                                textColor:  isNaN(parseFloat(text)) ? qgcPal.warningText: qgcPal.textFieldText
+                                textColor:  isNaN(parseFloat(text)) ? qgcPal.textFieldErrorText : qgcPal.textFieldText
                                 enabled:    !useGcsPositionCheckbox.checked
                             }
                             FactTextField {
                                 id:         northCalLon
                                 visible:    !useGcsPositionCheckbox.checked && !useMapPositionCheckbox.checked && northCalibrationCheckBox.checked
                                 text:       "0.00"
-                                textColor:  isNaN(parseFloat(text)) ? qgcPal.warningText: qgcPal.textFieldText
+                                textColor:  isNaN(parseFloat(text)) ? qgcPal.textFieldErrorText : qgcPal.textFieldText
                                 enabled:    !useGcsPositionCheckbox.checked
                             }
 

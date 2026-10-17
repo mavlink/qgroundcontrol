@@ -40,7 +40,7 @@ Rectangle {
             QGCLabel {
                 width:			parent.width
                 wrapMode:		Text.WordWrap
-                color:			setupComplete ? qgcPal.text : qgcPal.warningText
+                color:			setupComplete ? qgcPal.text : qgcPal.errorText
                 font.bold:      true
                 horizontalAlignment: Text.AlignHCenter
                 text:           setupComplete ?

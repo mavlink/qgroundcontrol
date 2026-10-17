@@ -33,9 +33,9 @@ QGCButton {
     readonly property int _stateFailed:     1   ///< Telemetry check is failing, user cannot click to make it pass
     readonly property int _statePassed:     2   ///< Check has passed
 
-    readonly property color _passedColor:   "#86cc6a"
-    readonly property color _pendingColor:  "#f7a81f"
-    readonly property color _failedColor:   "#c31818"
+    readonly property color _passedColor:   qgcPal.successText
+    readonly property color _pendingColor:  qgcPal.warningText
+    readonly property color _failedColor:   qgcPal.errorText
 
     property string _text: "<b>" + name +"</b>: " +
                            ((_telemetryState !== _statePassed) ?
@@ -54,6 +54,9 @@ QGCButton {
     bottomPadding:  _verticalPadding
     leftPadding:    (_horizontalPadding * 2) + _stateFlagWidth
     rightPadding:   _horizontalPadding
+
+    // QGCButton's own palette id isn't visible from this file, so locked (disabled) checks need their own
+    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
     background: Rectangle {
         color:          qgcPal.button

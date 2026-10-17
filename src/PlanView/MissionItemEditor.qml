@@ -24,7 +24,7 @@ Rectangle {
     radius:         _radius
     opacity:        _currentItem ? 1.0 : 0.7
     border.width:   _readyForSave ? 0 : 2
-    border.color:   qgcPal.warningText
+    border.color:   qgcPal.errorText
 
     property var    _masterController:          missionItem.masterController
     property var    _missionController:         _masterController.missionController
@@ -113,9 +113,7 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             width:                  _hamburgerSize
             height:                 width
-            border.width:           1
-            border.color:           qgcPal.warningText
-            color:                  "white"
+            color:                  qgcPal.errorIndicator
             radius:                 width / 2
             visible:                !_readyForSave
 
@@ -124,7 +122,7 @@ Rectangle {
                 anchors.centerIn:   parent
                 //: Indicator in Plan view to show mission item is not ready for save/send
                 text:               qsTr("?")
-                color:              qgcPal.warningText
+                color:              qgcPal.indicatorText
                 font.pointSize:     ScreenTools.smallFontPointSize
             }
         }
@@ -339,7 +337,7 @@ Rectangle {
                                     qsTr("Incomplete: Item not fully specified.")
         wrapMode:               Text.WordWrap
         horizontalAlignment:    Text.AlignHCenter
-        color:                  qgcPal.warningText
+        color:                  qgcPal.errorText
     }
 
 */

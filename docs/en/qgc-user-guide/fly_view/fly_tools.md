@@ -14,6 +14,10 @@ The dropdown opens on this tab until the checklist has passed.
 
 Once you have performed each test, select it on the UI to mark it as complete.
 
+All checklist sections are shown at once. A section is locked (marked **(locked)**) until every section above it has passed, but its items still show their current state, so problems detected automatically — such as muted audio or too few GPS satellites — are visible from the start.
+Items are colored by state: red for a failed check that must be fixed, orange for a check that still needs confirming, and green for a passed check.
+The tab shows **Complete** once every check has passed, otherwise **Incomplete**.
+
 ## Takeoff {#takeoff}
 
 :::tip

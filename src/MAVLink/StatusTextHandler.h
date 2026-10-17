@@ -19,6 +19,7 @@ public:
     StatusText(MAV_COMPONENT componentid, MAV_SEVERITY severity, const QString &text);
 
     bool severityIsError() const;
+    bool severityIsWarning() const;
 
     MAV_COMPONENT getComponentID() const { return m_compId; }
     MAV_SEVERITY getSeverity() const { return m_severity; }
@@ -60,6 +61,9 @@ public:
 
     uint32_t unreadCriticalMessageCount() const { return m_unreadCriticalMessageCount; }
 
+    /// Unread Warning and Notice messages.
+    uint32_t unreadWarningMessageCount() const { return m_unreadWarningMessageCount; }
+
     bool hasUnreadMessages() const { return m_unreadMessageCount != 0; }
 
     /// All unread messages, including critical ones.
@@ -71,6 +75,7 @@ signals:
     void newFormattedMessage(QString message);
     void textMessageReceived(MAV_COMPONENT componentid, MAV_SEVERITY severity, QString text, QString description);
     void unreadCriticalMessageCountChanged();
+    void unreadWarningMessageCountChanged();
     void hasUnreadMessagesChanged();
     void unreadMessageCountChanged();
     void formattedMessagesChanged();
@@ -82,6 +87,7 @@ private slots:
 private:
     void _handleStatusText(const mavlink_message_t &message);
     void _chunkedStatusTextCompleted(MAV_COMPONENT compId);
+    void _resetUnreadSeverityCounts();
     static QString _displayText(const StatusText& message);
 
     QTimer *m_chunkedStatusTextTimer = nullptr;
@@ -89,6 +95,7 @@ private:
     bool m_multiComp = false;
     MAV_COMPONENT m_activeComponent = MAV_COMPONENT::MAV_COMPONENT_ENUM_END;
     uint32_t m_unreadCriticalMessageCount = 0;
+    uint32_t m_unreadWarningMessageCount = 0;
     uint32_t m_unreadMessageCount = 0;
 
     QVector<StatusText*> m_messages;
