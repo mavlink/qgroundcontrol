@@ -3,7 +3,7 @@
 # Tests for ADS-B traffic detection and collision avoidance
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE ADSBMapItemUnitsTest.cc ADSBMapItemUnitsTest.h ADSBTest.cc ADSBTest.h)
+target_sources(QGCUnitTests PRIVATE ADSBMapItemUnitsTest.cc ADSBMapItemUnitsTest.h ADSBTest.cc ADSBTest.h)
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 

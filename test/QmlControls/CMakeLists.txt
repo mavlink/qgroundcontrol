@@ -3,7 +3,7 @@
 # ============================================================================
 
 target_sources(
-    ${CMAKE_PROJECT_NAME}
+    QGCUnitTests
     PRIVATE MapMarkerGroupingTest.cc
             MapMarkerGroupingTest.h
             MapPositionTrackerTest.cc

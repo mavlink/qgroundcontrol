@@ -1,5 +1,5 @@
 target_sources(
-    ${CMAKE_PROJECT_NAME}
+    QGCUnitTests
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/VehicleTest.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/VehicleTest.h
             ${CMAKE_CURRENT_SOURCE_DIR}/VehicleTestManualConnect.h

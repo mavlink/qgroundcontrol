@@ -3,7 +3,7 @@
 # ============================================================================
 
 target_sources(
-    ${CMAKE_PROJECT_NAME}
+    QGCUnitTests
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/QmlUITestBase.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/QmlUITestBase.h
             ${CMAKE_CURRENT_SOURCE_DIR}/VehicleConfigUITestBase.cc
@@ -63,7 +63,7 @@ target_sources(
 )
 
 # Shares file-local constants with FlyViewGeoUITest.cc, so it cannot share a unity unit.
-set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/FlyViewOccluderUITest.cc TARGET_DIRECTORY ${CMAKE_PROJECT_NAME}
+set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/FlyViewOccluderUITest.cc TARGET_DIRECTORY QGCUnitTests
                             PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON
 )
 

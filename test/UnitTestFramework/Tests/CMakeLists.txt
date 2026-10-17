@@ -1,5 +1,5 @@
 target_sources(
-    ${CMAKE_PROJECT_NAME}
+    QGCUnitTests
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/AllocationTrackerTest.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/LocalHttpTestServerTest.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/LocalHttpTestServerTest.h
@@ -17,7 +17,7 @@ target_sources(
 )
 
 # File-scope `using namespace TestFixtures;` would leak into later sources of a unity unit.
-set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/TestFixturesTest.cc TARGET_DIRECTORY ${CMAKE_PROJECT_NAME}
+set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/TestFixturesTest.cc TARGET_DIRECTORY QGCUnitTests
                             PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON
 )
 

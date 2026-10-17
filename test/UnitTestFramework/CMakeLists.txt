@@ -1,5 +1,5 @@
 target_sources(
-    ${CMAKE_PROJECT_NAME}
+    QGCUnitTests
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/AllocationTracker.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/AllocationTracker.h
             ${CMAKE_CURRENT_SOURCE_DIR}/MultiSignalSpy.cc
@@ -11,7 +11,7 @@ target_sources(
             ${CMAKE_CURRENT_SOURCE_DIR}/UnitTestTileGenerator.h
 )
 
-set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/AllocationTracker.cc" TARGET_DIRECTORY ${CMAKE_PROJECT_NAME}
+set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/AllocationTracker.cc" TARGET_DIRECTORY QGCUnitTests
                             PROPERTIES SKIP_PRECOMPILE_HEADERS ON SKIP_UNITY_BUILD_INCLUSION ON
 )
 

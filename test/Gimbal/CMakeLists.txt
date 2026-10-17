@@ -4,7 +4,7 @@
 # ============================================================================
 
 target_sources(
-    ${CMAKE_PROJECT_NAME}
+    QGCUnitTests
     PRIVATE GimbalControllerBasicsTest.cc
             GimbalControllerBasicsTest.h
             GimbalControllerDeltaYawTest.cc
@@ -16,7 +16,7 @@ target_sources(
 )
 
 # Shares file-local constants with GimbalControllerBasicsTest.cc, so it cannot share a unity unit.
-set_source_files_properties(GimbalControllerDeltaYawTest.cc TARGET_DIRECTORY ${CMAKE_PROJECT_NAME}
+set_source_files_properties(GimbalControllerDeltaYawTest.cc TARGET_DIRECTORY QGCUnitTests
                             PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON
 )
 

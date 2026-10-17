@@ -4,7 +4,7 @@
 # ============================================================================
 
 target_sources(
-    ${CMAKE_PROJECT_NAME}
+    QGCUnitTests
     PRIVATE AppSettingsTest.cc
             AppSettingsTest.h
             FlyViewSettingsTest.cc

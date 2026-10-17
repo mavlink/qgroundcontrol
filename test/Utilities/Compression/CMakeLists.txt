@@ -3,7 +3,7 @@
 # Tests for QGCCompression (format detection, ZIP, GZIP, XZ)
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(QGCUnitTests
                PRIVATE QGCArchiveModelTest.cc QGCArchiveModelTest.h QGCCompressionTest.cc QGCCompressionTest.h
                        QGCStreamingDecompressionTest.cc QGCStreamingDecompressionTest.h
 )
