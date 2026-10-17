@@ -1612,17 +1612,21 @@ void ParameterManager::_loadOfflineEditingParams()
     QFile paramFile(paramFilename);
     if (!paramFile.open(QFile::ReadOnly)) {
         qCWarning(ParameterManagerLog) << "Unable to open offline editing params file" << paramFilename;
+        return;
     }
 
     QTextStream paramStream(&paramFile);
     while (!paramStream.atEnd()) {
         const QString line = paramStream.readLine();
-        if (line.startsWith("#")) {
+        if (line.trimmed().isEmpty() || line.startsWith("#")) {
             continue;
         }
 
         const QStringList paramData = line.split("\t");
-        Q_ASSERT(paramData.count() == 5);
+        if (paramData.count() != 5) {
+            qCWarning(ParameterManagerLog) << "Skipping malformed offline editing param line" << line;
+            continue;
+        }
 
         const int offlineDefaultComponentId = paramData.at(1).toInt();
         _vehicle->setOfflineEditingDefaultComponentId(offlineDefaultComponentId);
@@ -1658,10 +1662,14 @@ void ParameterManager::_loadOfflineEditingParams()
             break;
         }
 
-        Fact *const fact = new Fact(offlineDefaultComponentId, paramName, mavTypeToFactType(paramType), this);
+        CompInfoParam* const compInfoParam = _vehicle->compInfoManager()->compInfoParam(offlineDefaultComponentId);
+        if (!compInfoParam) {
+            qCWarning(ParameterManagerLog) << "No parameter metadata for component" << offlineDefaultComponentId;
+            continue;
+        }
 
-        FactMetaData *const factMetaData = _vehicle->compInfoManager()->compInfoParam(offlineDefaultComponentId)->factMetaDataForName(paramName, fact->type());
-        fact->setMetaData(factMetaData);
+        Fact* const fact = new Fact(offlineDefaultComponentId, paramName, mavTypeToFactType(paramType), this);
+        fact->setMetaData(compInfoParam->factMetaDataForName(paramName, fact->type()));
 
         _mapCompId2FactMap[defaultComponentId][paramName] = fact;
     }
