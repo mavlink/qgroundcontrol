@@ -11,6 +11,8 @@ ColumnLayout {
     spacing: 0.8 * ScreenTools.defaultFontPixelWidth
 
     property real _verticalMargin: ScreenTools.defaultFontPixelHeight / 2
+    property Item _firstHeader:    null   ///< SectionHeader of the first group
+    readonly property real _headerLineGap: 2
 
     Loader {
         id:     modelContainer
@@ -79,20 +81,17 @@ ColumnLayout {
         }
     }
 
-    // Header/title of checklist
-    RowLayout {
-        Layout.fillWidth:   true
-        height:             1.75 * ScreenTools.defaultFontPixelHeight
-        spacing:            0
+    // Zero-height row so the Reset button floats over the first group header's empty right side
+    Item {
+        Layout.fillWidth:       true
+        Layout.preferredHeight: 0
+        Layout.bottomMargin:    -parent.spacing
+        z:                      1
 
-        QGCLabel {
-            Layout.fillWidth:   true
-            text:               allChecksPassed ? qsTr("(Passed)") : qsTr("In Progress")
-            font.pointSize:     ScreenTools.mediumFontPointSize
-        }
         QGCButton {
             objectName:         "preFlightCheckListResetButton"
-            Layout.alignment:   Qt.AlignVCenter
+            anchors.right:      parent.right
+            y:                  _firstHeader ? Math.max(0, _firstHeader.height - _firstHeader.bottomPadding - height - _headerLineGap) : 0
             implicitHeight:     contentItem.implicitHeight + topPadding + bottomPadding
             heightFactor:       0.2
             leftPadding:        ScreenTools.defaultFontPixelWidth
@@ -107,5 +106,14 @@ ColumnLayout {
     Repeater {
         id:     checkListRepeater
         model:  modelContainer.item.model
+
+        onItemAdded: (index, item) => {
+            if (index === 0 && item.headerItem) {
+                _firstHeader = item.headerItem
+                // Nothing precedes the first group, so drop the header's separation from the tab bar
+                _firstHeader.showSpacer = false
+                _firstHeader.topPadding = 0
+            }
+        }
     }
 }

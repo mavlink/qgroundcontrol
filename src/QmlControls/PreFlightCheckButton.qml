@@ -40,7 +40,7 @@ QGCButton {
     property string _text: "<b>" + name +"</b>: " +
                            ((_telemetryState !== _statePassed) ?
                                telemetryTextFailure :
-                               (_manualState !== _statePassed ? manualText : qsTr("Passed")))
+                               (manualText !== "" ? manualText : qsTr("Passed")))
     property color  _color: _telemetryState === _statePassed && _manualState === _statePassed ?
                                 _passedColor :
                                 (_telemetryState == _stateFailed ?
@@ -49,7 +49,7 @@ QGCButton {
                                           _pendingColor :
                                           _failedColor))
 
-    width:          40 * ScreenTools.defaultFontPixelWidth
+    width:          parent ? parent.width : 0
     topPadding:     _verticalPadding
     bottomPadding:  _verticalPadding
     leftPadding:    (_horizontalPadding * 2) + _stateFlagWidth
@@ -68,6 +68,18 @@ QGCButton {
             anchors.top:    parent.top
             anchors.bottom: parent.bottom
             width:          _stateFlagWidth
+
+            QGCColoredImage {
+                source:             "/qmlimages/checkbox-check.svg"
+                color:              qgcPal.buttonText
+                mipmap:             true
+                fillMode:           Image.PreserveAspectFit
+                width:              Math.min(parent.width, parent.height) * 0.6
+                height:             width
+                sourceSize.height:  height
+                visible:            passed
+                anchors.centerIn:   parent
+            }
         }
     }
 

@@ -431,11 +431,11 @@ RowLayout {
                 Layout.fillWidth:   true
 
                 // Keeps the centered tab labels clear of the widest (translated) status label
-                readonly property real badgePadding: Math.max(_severityLabelMaxWidth, completeLabelMetrics.advanceWidth,
-                                                              incompleteLabelMetrics.advanceWidth) + ScreenTools.defaultFontPixelWidth * 3
+                readonly property real badgePadding: Math.max(_severityLabelMaxWidth, passedLabelMetrics.advanceWidth,
+                                                              inProgressLabelMetrics.advanceWidth) + ScreenTools.defaultFontPixelWidth * 3
 
-                LabelMetrics { id: completeLabelMetrics;   text: qsTr("Complete") }
-                LabelMetrics { id: incompleteLabelMetrics; text: qsTr("Incomplete") }
+                LabelMetrics { id: passedLabelMetrics;     text: qsTr("Passed") }
+                LabelMetrics { id: inProgressLabelMetrics; text: qsTr("In Progress") }
 
                 QGCTabButton {
                     objectName:     "mainStatusChecklistTab"
@@ -446,7 +446,7 @@ RowLayout {
 
                     TabStatusLabel {
                         objectName: "mainStatusChecklistTabBadge"
-                        text:       _checklistComplete ? qsTr("Complete") : qsTr("Incomplete")
+                        text:       _checklistComplete ? qsTr("Passed") : qsTr("In Progress")
                         color:      _checklistComplete ? QGroundControl.globalPalette.successIndicator : QGroundControl.globalPalette.warningIndicator
                     }
                 }
