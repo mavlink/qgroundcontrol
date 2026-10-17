@@ -3,7 +3,8 @@
 # Tests for parameter management and fact metadata
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(
+    ${CMAKE_PROJECT_NAME}
     PRIVATE
         APMParameterMetaDataTest.cc
         APMParameterMetaDataTest.h

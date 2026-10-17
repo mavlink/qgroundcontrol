@@ -2,7 +2,8 @@
 # QmlControls Unit Tests
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(
+    ${CMAKE_PROJECT_NAME}
     PRIVATE
         MapMarkerGroupingTest.cc
         MapMarkerGroupingTest.h

@@ -3,7 +3,8 @@
 # Tests for ADS-B traffic detection and collision avoidance
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(
+    ${CMAKE_PROJECT_NAME}
     PRIVATE
         ADSBMapItemUnitsTest.cc
         ADSBMapItemUnitsTest.h

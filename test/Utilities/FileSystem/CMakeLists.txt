@@ -3,7 +3,8 @@
 # Tests for file download and filesystem operations
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(
+    ${CMAKE_PROJECT_NAME}
     PRIVATE
         QGCArchiveWatcherTest.cc
         QGCArchiveWatcherTest.h

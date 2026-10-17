@@ -3,7 +3,8 @@
 # 3D visualization with terrain and city geometry
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(
+    ${CMAKE_PROJECT_NAME}
     PRIVATE
         Viewer3DManager.cc
         Viewer3DManager.h
@@ -32,12 +33,29 @@ add_subdirectory(Providers/Osm)
 # ----------------------------------------------------------------------------
 qt_add_library(Viewer3DModule STATIC)
 
-set_source_files_properties(Viewer3DQml/Images/city_3d_map_icon.svg PROPERTIES QT_RESOURCE_ALIAS City3DMapIcon.svg)
-set_source_files_properties(Viewer3DQml/Models3D/Shaders/earthMaterial.frag PROPERTIES QT_RESOURCE_ALIAS ShaderFragment/earthMaterial.frag)
-set_source_files_properties(Viewer3DQml/Models3D/Shaders/earthMaterial.vert PROPERTIES QT_RESOURCE_ALIAS ShaderVertex/earthMaterial.vert)
-set_source_files_properties(Viewer3DQml/Models3D/Viewer3DModel.qml PROPERTIES QT_RESOURCE_ALIAS Models3D/Viewer3DModel.qml)
+set_source_files_properties(
+    Viewer3DQml/Images/city_3d_map_icon.svg
+    PROPERTIES
+        QT_RESOURCE_ALIAS City3DMapIcon.svg
+)
+set_source_files_properties(
+    Viewer3DQml/Models3D/Shaders/earthMaterial.frag
+    PROPERTIES
+        QT_RESOURCE_ALIAS ShaderFragment/earthMaterial.frag
+)
+set_source_files_properties(
+    Viewer3DQml/Models3D/Shaders/earthMaterial.vert
+    PROPERTIES
+        QT_RESOURCE_ALIAS ShaderVertex/earthMaterial.vert
+)
+set_source_files_properties(
+    Viewer3DQml/Models3D/Viewer3DModel.qml
+    PROPERTIES
+        QT_RESOURCE_ALIAS Models3D/Viewer3DModel.qml
+)
 
-qt_add_qml_module(Viewer3DModule
+qt_add_qml_module(
+    Viewer3DModule
     URI QGroundControl.Viewer3D
     VERSION 1.0
     RESOURCE_PREFIX /qml
@@ -83,7 +101,8 @@ qt_add_qml_module(Viewer3DModule
         QtQuick3D.Helpers
 )
 
-target_link_libraries(Viewer3DModule
+target_link_libraries(
+    Viewer3DModule
     PRIVATE
         QGCLogging
         QGCGeoMath

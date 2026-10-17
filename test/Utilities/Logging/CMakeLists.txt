@@ -1,4 +1,5 @@
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(
+    ${CMAKE_PROJECT_NAME}
     PRIVATE
         LogEntryTest.cc
         LogEntryTest.h
