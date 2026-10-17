@@ -26,6 +26,8 @@ ensure_tools_dir(__file__)
 from common.io import write_text_if_changed  # noqa: E402
 
 ENUM_DECL_RE = re.compile(r"^\s*typedef\s+enum\s+([A-Z_][A-Z0-9_]*)\b", re.MULTILINE)
+ENUM_VALUE_RE = re.compile(r"=\s*(0[xX][0-9a-fA-F]+|\d+)")
+UINT32_MAX = 0xFFFFFFFF
 
 
 def extract_enum_block(dialect_header_path):
@@ -124,10 +126,21 @@ extern "C" {
     return "".join(parts), enum_bodies
 
 
+def needs_64_bit_type(body):
+    """True if an enum has a literal above 32 bits, which MSVC rejects without an explicit type."""
+    values = (
+        int(value, 16 if value[:2] in ("0x", "0X") else 10) for value in ENUM_VALUE_RE.findall(body)
+    )
+    return any(value > UINT32_MAX for value in values)
+
+
 def build_qml_header(enum_bodies):
     # moc ignores `using ::NAME;`, so the enums must be declared inside the namespace.
     enum_lines = "\n\n".join(
-        indent(f"enum {name}\n{body};\nQ_ENUM_NS({name})", "    ")
+        indent(
+            f"enum {name}{' : quint64' if needs_64_bit_type(body) else ''}\n{body};\nQ_ENUM_NS({name})",
+            "    ",
+        )
         for name, body in enum_bodies.items()
     )
     return f"""\
@@ -138,6 +151,7 @@ def build_qml_header(enum_bodies):
 ///
 /// AUTO-GENERATED. Do not edit manually.
 
+#include <QtCore/QtTypes>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "MAVLinkEnums.h"

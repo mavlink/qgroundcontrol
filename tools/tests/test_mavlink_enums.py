@@ -72,6 +72,24 @@ def test_qml_declares_enums_before_registering_them(dialect_dir):
         assert qml_header.index("QML_NAMED_ELEMENT(MAVLinkEnums)") < qml_header.index(expected)
 
 
+@pytest.mark.parametrize(
+    ("last_value", "underlying_type"),
+    [
+        ("4294967295", ""),
+        ("4294967296", " : quint64"),
+        ("0x100000000", " : quint64"),
+    ],
+)
+def test_qml_header_gives_enums_beyond_32_bits_a_64_bit_type(last_value, underlying_type):
+    body = f"{{\n   WIDE_FLAG_LOW=1,\n   WIDE_FLAG_HIGH={last_value},\n}}"
+
+    qml_header = mavlink_enums.build_qml_header({"WIDE_FLAGS": body, "NARROW": "{\n   A=1,\n}"})
+
+    assert f"enum WIDE_FLAGS{underlying_type}\n" in qml_header
+    assert "enum NARROW\n" in qml_header
+    assert "#include <QtCore/QtTypes>" in qml_header
+
+
 def test_first_dialect_wins_in_both_headers(dialect_dir, capsys):
     dialects = mavlink_enums.find_dialects(dialect_dir)
     enums_header, enum_bodies = mavlink_enums.build_enums_header(dialects)
