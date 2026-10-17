@@ -3,7 +3,11 @@
 #include <QtCore/QMap>
 #include <QtCore/QObject>
 
-#include "MAVLinkLib.h"
+#include "MAVLinkEnums.h"
+
+// Full definition lives in MAVLinkLib.h; kept out of this header so moc doesn't parse all of MAVLink.
+struct __mavlink_sys_status_t;
+typedef struct __mavlink_sys_status_t mavlink_sys_status_t;
 
 /// \brief Class which represents sensor info from the SYS_STATUS mavlink message
 ///

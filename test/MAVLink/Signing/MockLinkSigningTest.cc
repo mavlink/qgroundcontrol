@@ -5,6 +5,7 @@
 
 #include <chrono>
 
+#include "MAVLinkLib.h"
 #include "MAVLinkSigning.h"
 #include "MAVLinkSigningKeys.h"
 #include "MissionItem.h"

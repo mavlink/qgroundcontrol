@@ -3,6 +3,7 @@
 #include <QtPositioning/QGeoCoordinate>
 
 #include "FirmwarePlugin.h"
+#include "MAVLinkLib.h"
 #include "MockLink.h"
 #include "Vehicle.h"
 

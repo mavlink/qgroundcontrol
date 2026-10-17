@@ -7,6 +7,7 @@
 
 #include "Fact.h"
 #include "FlyViewSettings.h"
+#include "MAVLinkLib.h"
 #include "MockLink.h"
 #include "SettingsManager.h"
 #include "UnitsSettings.h"

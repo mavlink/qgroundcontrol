@@ -1,6 +1,8 @@
 #pragma once
 
+#include "MAVLinkEnums.h"
 #include "MAVLinkFTP.h"
+#include "MAVLinkMessageType.h"
 
 #include <QtCore/QObject>
 #include <QtCore/QDir>

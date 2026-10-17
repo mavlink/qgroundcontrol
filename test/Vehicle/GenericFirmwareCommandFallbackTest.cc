@@ -1,5 +1,6 @@
 #include "GenericFirmwareCommandFallbackTest.h"
 
+#include "MAVLinkLib.h"
 #include "MockLink.h"
 #include "Vehicle.h"
 

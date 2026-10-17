@@ -10,6 +10,7 @@
 
 #include "BulkRefreshJob.h"
 #include "LogManager.h"
+#include "MAVLinkLib.h"
 #include "MockLinkFTP.h"
 #include "MultiVehicleManager.h"
 #include "ParameterManager.h"

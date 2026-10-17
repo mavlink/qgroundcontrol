@@ -1,4 +1,5 @@
 #include "SysStatusSensorInfo.h"
+#include "MAVLinkLib.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMAVLink.h"
 

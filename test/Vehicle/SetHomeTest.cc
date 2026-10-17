@@ -8,6 +8,7 @@
 #include "BaseClasses/TerrainTest.h"
 #include "FlyViewSettings.h"
 #include "GPSManager.h"
+#include "MAVLinkLib.h"
 #include "MockLink.h"
 #include "PositionManager.h"
 #include "SettingsManager.h"

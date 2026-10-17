@@ -1,4 +1,5 @@
 #include "FTPManager.h"
+#include "MAVLinkLib.h"
 #include "MAVLinkProtocol.h"
 #include "AppMessages.h"
 #include "QGCLoggingCategory.h"

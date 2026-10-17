@@ -2,6 +2,7 @@
 #include <QtTest/QSignalSpy>
 
 
+#include "MAVLinkLib.h"
 #include "QGCMAVLink.h"
 #include "SysStatusSensorInfo.h"
 
