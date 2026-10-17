@@ -10,6 +10,7 @@ target_sources(${CMAKE_PROJECT_NAME}
         CameraSpecTest.cc CameraSpecTest.h
         CorridorScanComplexItemTest.cc CorridorScanComplexItemTest.h
         FWLandingPatternTest.cc FWLandingPatternTest.h
+        GeoFenceControllerTest.cc GeoFenceControllerTest.h
         LandingComplexItemTest.cc LandingComplexItemTest.h
         MissionCommandTreeEditorTest.cc MissionCommandTreeEditorTest.h
         MissionCommandTreeTest.cc MissionCommandTreeTest.h
@@ -90,6 +91,7 @@ add_qgc_test(CameraSectionTest LABELS Unit MissionManager)
 add_qgc_test(CameraSpecTest LABELS Unit MissionManager)
 add_qgc_test(CorridorScanComplexItemTest LABELS Unit MissionManager RESOURCE_LOCK PlanViewSettings)
 add_qgc_test(FWLandingPatternTest LABELS Unit MissionManager)
+add_qgc_test(GeoFenceControllerTest LABELS Integration MissionManager)
 add_qgc_test(LandingComplexItemTest LABELS Unit MissionManager)
 add_qgc_test(MissionCommandTreeEditorTest LABELS Integration MissionManager TIMEOUT ${QGC_TEST_TIMEOUT_EXTENDED})
 add_qgc_test(MissionCommandTreeTest LABELS Unit MissionManager)

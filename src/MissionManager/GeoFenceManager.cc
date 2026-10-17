@@ -61,13 +61,21 @@ void GeoFenceManager::sendToVehicle(const QGeoCoordinate&   breachReturn,
     for (int i=0; i<_sendCircles.count(); i++) {
         QGCFenceCircle& circle = _sendCircles[i];
 
+        MAV_CMD command = circle.inclusion() ? MAV_CMD_NAV_FENCE_CIRCLE_INCLUSION : MAV_CMD_NAV_FENCE_CIRCLE_EXCLUSION;
+        QGeoCoordinate center = circle.center();
+        if (circle.homeCentered()) {
+            // The vehicle centers this circle on its own home position
+            command = MAV_CMD_NAV_FENCE_HOME_CIRCLE_INCLUSION;
+            center = QGeoCoordinate(0, 0);
+        }
+
         MissionItem* item = new MissionItem(0,
-                                            circle.inclusion() ? MAV_CMD_NAV_FENCE_CIRCLE_INCLUSION : MAV_CMD_NAV_FENCE_CIRCLE_EXCLUSION,
+                                            command,
                                             MAV_FRAME_GLOBAL,
                                             circle.radius()->rawValue().toDouble(),
                                             0, 0, 0,                    // param 2-4 unused
-                                            circle.center().latitude(),
-                                            circle.center().longitude(),
+                                            center.latitude(),
+                                            center.longitude(),
                                             0,                          // param 7 unused
                                             false,                      // autocontinue
                                             false,                      // isCurrentItem
@@ -157,13 +165,15 @@ void GeoFenceManager::_planManagerLoadComplete(bool removeAllRequested)
                 _polygons.append(nextPolygon);
                 nextPolygon.clear();
             }
-        } else if (command == MAV_CMD_NAV_FENCE_CIRCLE_INCLUSION || command == MAV_CMD_NAV_FENCE_CIRCLE_EXCLUSION) {
+        } else if (command == MAV_CMD_NAV_FENCE_CIRCLE_INCLUSION || command == MAV_CMD_NAV_FENCE_CIRCLE_EXCLUSION ||
+                   command == MAV_CMD_NAV_FENCE_HOME_CIRCLE_INCLUSION) {
             if (nextPolygon.count() != 0) {
                 // Incomplete polygon
                 emit error(IncompletePolygonLoad, tr("GeoFence load: Incomplete polygon loaded"));
                 break;
             }
-            QGCFenceCircle circle(QGeoCoordinate(item->param5(), item->param6()), item->param1(), command == MAV_CMD_NAV_FENCE_CIRCLE_INCLUSION /* inclusion */);
+            QGCFenceCircle circle(QGeoCoordinate(item->param5(), item->param6()), item->param1(), command != MAV_CMD_NAV_FENCE_CIRCLE_EXCLUSION /* inclusion */);
+            circle.setHomeCentered(command == MAV_CMD_NAV_FENCE_HOME_CIRCLE_INCLUSION);
             _circles.append(circle);
         } else if (command == MAV_CMD_NAV_FENCE_RETURN_POINT) {
             _breachReturnPoint = QGeoCoordinate(item->param5(), item->param6(), item->param7());
