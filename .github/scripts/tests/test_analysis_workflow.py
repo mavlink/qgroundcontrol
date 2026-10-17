@@ -15,6 +15,7 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
+from analysis_matrix import build_matrix
 from analyze import FileCollector
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -29,7 +30,8 @@ SCRIPT = next(
 def test_each_analysis_job_uses_its_matrix_tool():
     job = WORKFLOW["jobs"]["analyze"]
     assert job["strategy"]["fail-fast"] is False
-    assert 'fromJSON(\'["clazy", "clang-tidy"]\')' in job["strategy"]["matrix"]["tool"]
+    assert job["needs"] == "plan"
+    assert job["strategy"]["matrix"] == {"include": "${{ fromJSON(needs.plan.outputs.include) }}"}
     for step in job["steps"]:
         if "ANALYSIS_TOOL" in step.get("env", {}):
             assert step["env"]["ANALYSIS_TOOL"] == "${{ matrix.tool }}"
@@ -191,19 +193,21 @@ def test_workflow_forwards_shards_and_only_explicit_tidy_profiling(checkout, too
     assert ("--profile-checks" in args) == (tool == "clang-tidy" and profile_checks == "true")
 
 
-def test_automatic_matrix_partitions_only_tidy_and_saves_one_cache():
-    job = WORKFLOW["jobs"]["analyze"]
-    matrix = job["strategy"]["matrix"]
-    assert "'[1,2,3,4]'" in matrix["shard"]
-    assert "github.event_name == 'workflow_dispatch' && '[1]'" in matrix["shard"]
-    legs = [
-        {"tool": tool, "shard": shard}
-        for tool in ("clazy", "clang-tidy")
-        for shard in range(1, 5)
-        if {"tool": tool, "shard": shard} not in matrix["exclude"]
-    ]
+def test_planned_matrix_partitions_only_tidy_and_saves_one_cache():
+    plan = WORKFLOW["jobs"]["plan"]
+    step = next(step for step in plan["steps"] if step.get("id") == "plan")
+    assert step["run"] == "python3 .github/scripts/analysis_matrix.py"
+    assert step["env"]["PR_BASE_SHA"] == "${{ github.event.pull_request.base.sha }}"
+    checkout = next(step for step in plan["steps"] if step["name"] == "Checkout")
+    assert checkout["with"]["fetch-depth"] == "${{ github.event_name != 'pull_request' && 1 || 0 }}"
+    assert plan["outputs"]["include"] == "${{ steps.plan.outputs.include }}"
+    legs = build_matrix("pull_request", "clazy", ROOT, "")
     assert sum(leg["tool"] == "clazy" for leg in legs) == 1
     assert sum(leg["tool"] == "clang-tidy" for leg in legs) == 4
+    job = WORKFLOW["jobs"]["analyze"]
+    analysis = next(step for step in job["steps"] if step["name"] == "Run compiler analysis")
+    assert analysis["env"]["ANALYSIS_SHARD"] == "${{ matrix.shard }}"
+    assert analysis["env"]["ANALYSIS_SHARD_COUNT"] == "${{ matrix.shard_count }}"
     setup = next(step for step in job["steps"] if step["name"] == "Build Setup (clazy/iwyu)")
     assert setup["with"]["save-cache"] == "${{ matrix.shard == 1 }}"
     upload = next(step for step in job["steps"] if step["name"] == "Upload Output")
