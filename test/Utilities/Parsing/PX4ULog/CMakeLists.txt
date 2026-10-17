@@ -4,7 +4,7 @@
 # ============================================================================
 
 target_sources(
-    ${CMAKE_PROJECT_NAME}
+    QGCUnitTests
     PRIVATE
         PX4ULogUtilityTest.cc
         PX4ULogUtilityTest.h

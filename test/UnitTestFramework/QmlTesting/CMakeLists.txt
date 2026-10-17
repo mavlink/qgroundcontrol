@@ -9,7 +9,7 @@ else()
 endif()
 
 target_sources(
-    ${CMAKE_PROJECT_NAME}
+    QGCUnitTests
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/QmlTesting.h
         ${CMAKE_CURRENT_SOURCE_DIR}/QmlTestFileValidator.cc

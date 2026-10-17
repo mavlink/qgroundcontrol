@@ -1,5 +1,5 @@
 target_sources(
-    ${CMAKE_PROJECT_NAME}
+    QGCUnitTests
     PRIVATE
         ExponentialBackoffTest.cc
         ExponentialBackoffTest.h

@@ -1,8 +1,8 @@
-# QGC tests add sources to ${CMAKE_PROJECT_NAME} (test/Vehicle/, test/MissionManager/); keep these tests on the
+# QGC tests add sources to QGCUnitTests (test/Vehicle/, test/MissionManager/); keep these tests on the
 # same target.
 
 target_sources(
-    ${CMAKE_PROJECT_NAME}
+    QGCUnitTests
     PRIVATE
         GStreamerEnvironmentTest.cc
         GStreamerEnvironmentTest.h
@@ -35,7 +35,7 @@ add_qgc_test(GstVideoReceiverComponentsTest LABELS Unit)
 # MockVideoStreamServer is only compiled into single-config Debug builds (see its directory's CMakeLists.txt).
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     set_property(
-        SOURCE Receiver/GstVideoReceiverTest.cc TARGET_DIRECTORY ${CMAKE_PROJECT_NAME}
+        SOURCE Receiver/GstVideoReceiverTest.cc TARGET_DIRECTORY QGCUnitTests
         APPEND
         PROPERTY COMPILE_DEFINITIONS QGC_HAS_MOCK_VIDEO_STREAM_SERVER
     )

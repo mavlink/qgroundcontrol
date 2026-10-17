@@ -4,7 +4,7 @@
 # ============================================================================
 
 target_sources(
-    ${CMAKE_PROJECT_NAME}
+    QGCUnitTests
     PRIVATE
         CameraCalcTest.cc
         CameraCalcTest.h
@@ -68,7 +68,7 @@ set_source_files_properties(
     MissionControllerTreeTest.cc
     MissionItemTest.cc
     TARGET_DIRECTORY
-    ${CMAKE_PROJECT_NAME}
+    QGCUnitTests
     PROPERTIES
         SKIP_UNITY_BUILD_INCLUSION ON
 )

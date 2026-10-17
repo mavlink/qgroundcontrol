@@ -4,7 +4,7 @@
 # ============================================================================
 
 target_sources(
-    ${CMAKE_PROJECT_NAME}
+    QGCUnitTests
     PRIVATE
         GimbalControllerBasicsTest.cc
         GimbalControllerBasicsTest.h
@@ -20,7 +20,7 @@ target_sources(
 set_source_files_properties(
     GimbalControllerDeltaYawTest.cc
     TARGET_DIRECTORY
-    ${CMAKE_PROJECT_NAME}
+    QGCUnitTests
     PROPERTIES
         SKIP_UNITY_BUILD_INCLUSION ON
 )

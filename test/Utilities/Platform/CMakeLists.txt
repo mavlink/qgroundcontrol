@@ -4,7 +4,7 @@
 # ============================================================================
 
 target_sources(
-    ${CMAKE_PROJECT_NAME}
+    QGCUnitTests
     PRIVATE
         PlatformTest.cc
         PlatformTest.h
@@ -13,7 +13,7 @@ target_sources(
 # RunGuard and SignalHandler only available on desktop platforms
 if(NOT ANDROID AND NOT IOS)
     target_sources(
-        ${CMAKE_PROJECT_NAME}
+        QGCUnitTests
         PRIVATE
             RunGuardTest.cc
             RunGuardTest.h

@@ -4,7 +4,7 @@
 # ============================================================================
 
 target_sources(
-    ${CMAKE_PROJECT_NAME}
+    QGCUnitTests
     PRIVATE
         APMAirframeComponentControllerTest.cc
         APMAirframeComponentControllerTest.h
@@ -80,7 +80,7 @@ add_qgc_test(FTPControllerTest LABELS Integration Vehicle RESOURCE_LOCK TempFile
 add_qgc_test(FTPManagerTest LABELS Integration Vehicle)
 if(NOT QGC_NO_SERIAL_LINK)
     target_sources(
-        ${CMAKE_PROJECT_NAME}
+        QGCUnitTests
         PRIVATE
             FirmwareUpgradeControllerTest.cc
             FirmwareUpgradeControllerTest.h

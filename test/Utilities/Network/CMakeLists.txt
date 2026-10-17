@@ -4,7 +4,7 @@
 # ============================================================================
 
 target_sources(
-    ${CMAKE_PROJECT_NAME}
+    QGCUnitTests
     PRIVATE
         QGCNetworkAvailabilityMonitorTest.cc
         QGCNetworkAvailabilityMonitorTest.h

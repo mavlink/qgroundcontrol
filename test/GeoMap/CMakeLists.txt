@@ -4,7 +4,7 @@
 # ============================================================================
 
 target_sources(
-    ${CMAKE_PROJECT_NAME}
+    QGCUnitTests
     PRIVATE
         CheckerboardTextureDataTest.cc
         CheckerboardTextureDataTest.h
@@ -53,7 +53,7 @@ file(GLOB _geomap_test_sources CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/*.
 set_source_files_properties(
     ${_geomap_test_sources}
     TARGET_DIRECTORY
-    ${CMAKE_PROJECT_NAME}
+    QGCUnitTests
     PROPERTIES
         SKIP_UNITY_BUILD_INCLUSION ON
 )

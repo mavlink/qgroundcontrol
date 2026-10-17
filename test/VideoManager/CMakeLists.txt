@@ -5,7 +5,7 @@
 add_subdirectory(GStreamer)
 
 target_sources(
-    ${CMAKE_PROJECT_NAME}
+    QGCUnitTests
     PRIVATE
         VideoManagerInitTest.cc
         VideoManagerInitTest.h

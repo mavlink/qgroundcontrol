@@ -3,7 +3,7 @@
 # ============================================================================
 
 target_sources(
-    ${CMAKE_PROJECT_NAME}
+    QGCUnitTests
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/QmlUITestBase.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/QmlUITestBase.h
@@ -69,7 +69,7 @@ target_sources(
 set_source_files_properties(
     ${CMAKE_CURRENT_SOURCE_DIR}/FlyViewOccluderUITest.cc
     TARGET_DIRECTORY
-    ${CMAKE_PROJECT_NAME}
+    QGCUnitTests
     PROPERTIES
         SKIP_UNITY_BUILD_INCLUSION ON
 )

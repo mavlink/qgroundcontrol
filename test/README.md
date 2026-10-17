@@ -125,7 +125,18 @@ permutation is identified without re-running the whole method. See
 
 ### Register in CMakeLists.txt
 
+Add test sources to the `QGCUnitTests` object library. The application executable links it and runs
+the suite; tests compile with the application's include paths and definitions, and their precompiled
+header adds `<QtTest/QTest>` so application sources do not compile QtTest.
+
 ```cmake
+target_sources(
+    QGCUnitTests
+    PRIVATE
+        MyTest.cc
+        MyTest.h
+)
+
 # Basic unit test
 add_qgc_test(MyTest LABELS Unit)
 

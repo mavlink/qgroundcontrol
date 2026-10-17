@@ -1,5 +1,5 @@
 target_sources(
-    ${CMAKE_PROJECT_NAME}
+    QGCUnitTests
     PRIVATE
         QGCSerialPortInfoTest.cc
         QGCSerialPortInfoTest.h
@@ -16,7 +16,7 @@ add_qgc_test(SerialPortManagerTest LABELS Unit Comms)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     target_sources(
-        ${CMAKE_PROJECT_NAME}
+        QGCUnitTests
         PRIVATE
             SerialWorkerTest.cc
             SerialWorkerTest.h
@@ -25,7 +25,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 endif()
 
 target_sources(
-    ${CMAKE_PROJECT_NAME}
+    QGCUnitTests
     PRIVATE
         SerialSettingsTest.cc
         SerialSettingsTest.h

@@ -18,7 +18,7 @@ add_subdirectory(Timing)
 add_subdirectory(Standalone)
 
 target_sources(
-    ${CMAKE_PROJECT_NAME}
+    QGCUnitTests
     PRIVATE
         DataRateTrackerTest.cc
         DataRateTrackerTest.h
