@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.10"
 resolution-markers = [
     "python_full_version >= '3.13'",
@@ -23,8 +23,8 @@ wheels = [
 
 [[package]]
 name = "aqtinstall"
-version = "3.3.1.dev170"
-source = { git = "https://github.com/miurahr/aqtinstall?rev=6f0f842da47c744cdc814cd94da9828d934d7bf0#6f0f842da47c744cdc814cd94da9828d934d7bf0" }
+version = "3.3.1.dev166"
+source = { git = "https://github.com/miurahr/aqtinstall?rev=076e1659807d0b362a3ed684d54c2e9c775eb9c7#076e1659807d0b362a3ed684d54c2e9c775eb9c7" }
 dependencies = [
     { name = "bs4" },
     { name = "defusedxml" },
@@ -1748,6 +1748,7 @@ wheels = [
 name = "qgc-tools"
 version = "0.0.0"
 source = { virtual = "." }
+default-groups = []
 
 [package.dev-dependencies]
 build = [
@@ -1900,7 +1901,7 @@ coverage = [
     { name = "tomli", marker = "python_full_version < '3.11'", specifier = ">=2.0" },
 ]
 dev = [
-    { name = "aqtinstall", git = "https://github.com/miurahr/aqtinstall?rev=6f0f842da47c744cdc814cd94da9828d934d7bf0" },
+    { name = "aqtinstall", git = "https://github.com/miurahr/aqtinstall?rev=076e1659807d0b362a3ed684d54c2e9c775eb9c7" },
     { name = "clang-format", specifier = "==23.1.0" },
     { name = "cmake", specifier = ">=3.28,<4" },
     { name = "defusedxml", specifier = ">=0.7.1" },
@@ -1942,7 +1943,7 @@ lint = [
 ]
 precommit = [{ name = "pre-commit" }]
 qt = [
-    { name = "aqtinstall", git = "https://github.com/miurahr/aqtinstall?rev=6f0f842da47c744cdc814cd94da9828d934d7bf0" },
+    { name = "aqtinstall", git = "https://github.com/miurahr/aqtinstall?rev=076e1659807d0b362a3ed684d54c2e9c775eb9c7" },
     { name = "defusedxml", specifier = ">=0.7.1" },
     { name = "fastcrc", specifier = ">=0.3" },
     { name = "httpx", specifier = ">=0.28" },
