@@ -322,6 +322,8 @@ during nested composite post-job cleanup; step outputs do not survive that phase
 Compiler and moc caches use rolling write keys, with a distinct suffix per matrix leg.
 moc save keys include the coverage/sanitizer variant while restore prefixes stay shared.
 CPM uses immutable dependency-fingerprint keys; unchanged snapshots are not saved again.
+PR and branch Release jobs first try an exact restore of the default-branch snapshot with the same
+fingerprint; when it exists they skip the scoped copy, so they only save CPM archives for changed dependencies.
 GStreamer SDKs have separate immutable caches and are excluded from CPM archives.
 Only Windows, Android, and iOS jobs cache them (desktop Linux and macOS use the system
 GStreamer), keyed on the `gstreamer` section of `build-config.json` (`cpm_helper.py
