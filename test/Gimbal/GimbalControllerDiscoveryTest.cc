@@ -9,6 +9,7 @@
 #include "Fixtures/RAIIFixtures.h"
 #include "Gimbal.h"
 #include "GimbalController.h"
+#include "MAVLinkLib.h"
 #include "MockConfiguration.h"
 #include "MockLink.h"
 #include "MultiVehicleManager.h"

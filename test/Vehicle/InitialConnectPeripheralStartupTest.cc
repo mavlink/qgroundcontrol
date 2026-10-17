@@ -3,6 +3,7 @@
 #include <QtTest/QSignalSpy>
 
 #include "LinkManager.h"
+#include "MAVLinkLib.h"
 #include "MAVLinkProtocol.h"
 #include "MultiVehicleManager.h"
 #include "UnitTest.h"

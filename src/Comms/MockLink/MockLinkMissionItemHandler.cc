@@ -2,6 +2,7 @@
 
 #include <QtPositioning/QGeoCoordinate>
 
+#include "MAVLinkLib.h"
 #include "MAVLinkProtocol.h"
 #include "MockLink.h"
 #include "QGCLoggingCategory.h"
@@ -22,6 +23,12 @@ MockLinkMissionItemHandler::MockLinkMissionItemHandler(MockLink *mockLink)
 MockLinkMissionItemHandler::~MockLinkMissionItemHandler()
 {
     // qCDebug(MockLinkMissionItemHandlerLog) << Q_FUNC_INFO << this;
+}
+
+void MockLinkMissionItemHandler::reset()
+{
+    _missionItems.clear();
+    _requestListCounts.clear();
 }
 
 void MockLinkMissionItemHandler::_startMissionItemResponseTimer()

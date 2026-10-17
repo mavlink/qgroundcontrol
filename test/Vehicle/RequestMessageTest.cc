@@ -3,6 +3,7 @@
 #include <optional>
 
 #include "Fixtures/RAIIFixtures.h"
+#include "MAVLinkLib.h"
 #include "MavCommandQueue.h"
 #include "MultiVehicleManager.h"
 

@@ -1,4 +1,7 @@
 #include "MAVLinkFTP.h"
+#include "MAVLinkLib.h"
+
+static_assert(MavlinkFTP::kPayloadSize == sizeof(mavlink_file_transfer_protocol_t::payload));
 
 QString MavlinkFTP::opCodeToString(OpCode_t opCode)
 {

@@ -14,6 +14,7 @@
 #include "FactGroup.h"
 #include "FirmwarePlugin.h"
 #include "FTPManager.h"
+#include "MAVLinkLib.h"
 #include "MAVLinkProtocol.h"
 #include "AppMessages.h"
 #include "QGCMath.h"

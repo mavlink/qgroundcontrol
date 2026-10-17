@@ -4,7 +4,12 @@
 #include <QtCore/QObject>
 #include <QtCore/QTimer>
 
-#include "MAVLinkLib.h"
+#include "MAVLinkEnums.h"
+#include "MAVLinkMessageType.h"
+
+// Full definition lives in MAVLinkLib.h; kept out of this header so moc doesn't parse all of MAVLink.
+struct __mavlink_mission_item_int_t;
+typedef struct __mavlink_mission_item_int_t mavlink_mission_item_int_t;
 
 class MockLink;
 
@@ -62,7 +67,7 @@ public:
     void sendUnexpectedMissionRequest();
 
     /// Reset the state of the MissionItemHandler to no items, no transactions in progress.
-    void reset() { _missionItems.clear(); _requestListCounts.clear(); }
+    void reset();
 
     /// Test-only: seeds a simple multirotor mission (takeoff, waypoint, RTL) so that a
     /// connecting GCS will download a non-empty mission.

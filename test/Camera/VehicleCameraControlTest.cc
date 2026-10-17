@@ -3,6 +3,7 @@
 
 
 #include "LinkManager.h"
+#include "MAVLinkLib.h"
 #include "MavlinkCameraControlInterface.h"
 #include "MockConfiguration.h"
 #include "MockLink.h"

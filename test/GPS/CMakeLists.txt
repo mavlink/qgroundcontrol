@@ -29,6 +29,7 @@ target_sources(
             Receiver/Support/GPSReceiverTestSupport.h
             Receiver/Support/ScriptedReceiverWorker.h
             Support/GPSQmlTestHelpers.h
+            Support/GPSTestHelpers.cc
             Support/GPSTestHelpers.h
 )
 

@@ -1,11 +1,16 @@
 #pragma once
 
-#include "MAVLinkLib.h"
+#include "MAVLinkEnums.h"
+#include "MAVLinkMessageType.h"
 
 #include <QtCore/QList>
 #include <QtCore/QMutex>
 
 #include <cmath>
+
+// Full definition lives in MAVLinkLib.h; kept out of this header so moc doesn't parse all of MAVLink.
+struct __mavlink_command_long_t;
+typedef struct __mavlink_command_long_t mavlink_command_long_t;
 
 class MockLink;
 

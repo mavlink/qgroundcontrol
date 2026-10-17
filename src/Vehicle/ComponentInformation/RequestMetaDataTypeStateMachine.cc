@@ -2,6 +2,7 @@
 #include "ComponentInformationManager.h"
 #include "ComponentInformationTranslation.h"
 #include "ComponentInformationCache.h"
+#include "MAVLinkLib.h"
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"
 #include "FTPManager.h"
