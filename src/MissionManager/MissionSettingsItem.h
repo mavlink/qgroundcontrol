@@ -74,6 +74,8 @@ public:
     double          minAMSLAltitude             (void) const final { return amslEntryAlt(); }
     double          maxAMSLAltitude             (void) const final { return amslEntryAlt(); }
 
+    bool usesAltitudeFrame(QGroundControlQmlGlobal::AltitudeFrame altitudeFrame) const final;
+
 signals:
     void specifyMissionFlightSpeedChanged   (bool specifyMissionFlightSpeed);
 

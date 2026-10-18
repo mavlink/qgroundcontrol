@@ -75,6 +75,7 @@ public:
     void                appendMissionItems          (QList<MissionItem*>& items, QObject* missionItemParent) final;
     void                setMissionFlightStatus      (MissionFlightStatus_t& missionFlightStatus) final;
     void                applyNewAltitude            (double newAltitude) final;
+    bool usesAltitudeFrame(QGroundControlQmlGlobal::AltitudeFrame altitudeFrame) const final;
     double              additionalTimeDelay         (void) const final { return 0; }
     ReadyForSaveState   readyForSaveState           (void) const final;
     bool                exitCoordinateSameAsEntry   (void) const final { return true; }

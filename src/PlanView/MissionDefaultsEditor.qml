@@ -89,6 +89,25 @@ Rectangle {
             fact: QGroundControl.settingsManager.appSettings.defaultMissionItemAltitude
         }
 
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: ScreenTools.defaultFontPixelWidth
+            visible: _root.missionController.applyDefaultMissionAltitudeAvailable
+
+            QGCLabel {
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                font.pointSize: ScreenTools.smallFontPointSize
+                text: qsTr("Apply new altitude to all mission items?")
+            }
+
+            QGCButton {
+                small: true
+                text: qsTr("Apply")
+                onClicked: _root.missionController.applyDefaultMissionAltitude()
+            }
+        }
+
         FactTextFieldSlider {
             Layout.fillWidth: true
             label: qsTr("Flight Speed")

@@ -150,6 +150,12 @@ void PerimeterScanComplexItem::applyNewAltitude(double newAltitude)
     _altitudeFact.setRawValue(newAltitude);
 }
 
+bool PerimeterScanComplexItem::usesAltitudeFrame(QGroundControlQmlGlobal::AltitudeFrame altitudeFrame) const
+{
+    // Perimeter altitude is always relative to home
+    return altitudeFrame == QGroundControlQmlGlobal::AltitudeFrameRelative;
+}
+
 void PerimeterScanComplexItem::setMissionFlightStatus(MissionFlightStatus_t &missionFlightStatus)
 {
     ComplexMissionItem::setMissionFlightStatus(missionFlightStatus);

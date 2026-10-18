@@ -96,6 +96,10 @@ public:
     Q_PROPERTY(QGroundControlQmlGlobal::AltitudeFrame globalAltitudeFrame         READ globalAltitudeFrame         WRITE setGlobalAltitudeFrame NOTIFY globalAltitudeFrameChanged)
     Q_PROPERTY(QGroundControlQmlGlobal::AltitudeFrame globalAltitudeFrameDefault  READ globalAltitudeFrameDefault  NOTIFY globalAltitudeFrameChanged)                               ///< Default to use for newly created items
 
+    /// true: Default altitude changed while the mission had items which applyDefaultMissionAltitude can update
+    Q_PROPERTY(bool applyDefaultMissionAltitudeAvailable READ applyDefaultMissionAltitudeAvailable NOTIFY
+                   applyDefaultMissionAltitudeAvailableChanged)
+
     Q_INVOKABLE void removeVisualItem(int viIndex);
 
     /// Returns the visual item index for the given VisualMissionItem object, or -1 if not found
@@ -165,7 +169,7 @@ public:
 
     Q_INVOKABLE void resumeMission(int resumeIndex);
 
-    /// Updates the altitudes of the items in the current mission to the new default altitude
+    /// Updates the altitudes of mission items which use the plan altitude frame to the new default altitude
     Q_INVOKABLE void applyDefaultMissionAltitude(void);
 
     /// Sets a new current mission item (PlanView).
@@ -278,6 +282,8 @@ public:
     double              minAMSLAltitude             (void) const { return _minAMSLAltitude; }
     double              maxAMSLAltitude             (void) const { return _maxAMSLAltitude; }
 
+    bool applyDefaultMissionAltitudeAvailable(void) const { return _applyDefaultMissionAltitudeAvailable; }
+
     int currentMissionIndex         (void) const;
     int resumeMissionIndex          (void) const;
     int currentPlanViewSeqNum       (void) const { return _currentPlanViewSeqNum; }
@@ -344,6 +350,7 @@ signals:
     void _recalcMissionFlightStatusSignal   (void);
     void _recalcFlightPathSegmentsSignal    (void);
     void globalAltitudeFrameChanged          (void);
+    void applyDefaultMissionAltitudeAvailableChanged(void);
 
 private slots:
     void _newMissionItemsAvailableFromVehicle   (bool removeAllRequested);
@@ -361,6 +368,7 @@ private slots:
     void _recalcAll                             (void);
     void _managerVehicleChanged                 (Vehicle* managerVehicle);
     void _recalcPlanViewState                   (void);
+    void _defaultMissionAltitudeChanged(void);
     // Incremental tree model sync slots
     void _syncTreeMissionItemsInserted                (const QModelIndex& parent, int first, int last);
     void _syncTreeMissionItemsAboutToBeRemoved         (const QModelIndex& parent, int first, int last);
@@ -400,6 +408,7 @@ private:
     FlightPathSegment*      _createFlightPathSegmentWorker      (VisualItemPair& pair, bool mavlinkTerrainFrame);
     void                    _allItemsRemoved                    (void);
     void                    _firstItemAdded                     (void);
+    void _setApplyDefaultMissionAltitudeAvailable(bool available);
 
     static double           _normalizeLat                       (double lat);
     static double           _normalizeLon                       (double lon);
@@ -459,6 +468,7 @@ private:
     double                      _minAMSLAltitude =              0;
     double                      _maxAMSLAltitude =              0;
     bool                        _missionStartsInVTOLMulticopterMode = false;
+    bool _applyDefaultMissionAltitudeAvailable = false;
 
     QGroundControlQmlGlobal::AltitudeFrame _globalAltFrame = QGroundControlQmlGlobal::AltitudeFrameRelative;
 

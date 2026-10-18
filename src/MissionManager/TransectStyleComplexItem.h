@@ -73,6 +73,7 @@ public:
     bool                specifiesCoordinate         (void) const override = 0;
     void                appendMissionItems          (QList<MissionItem*>& items, QObject* missionItemParent) final;
     void                applyNewAltitude            (double newAltitude) final;
+    bool usesAltitudeFrame(QGroundControlQmlGlobal::AltitudeFrame altitudeFrame) const final;
     bool                dirty                       (void) const final { return _dirty; }
     bool                isSimpleItem                (void) const final { return false; }
     bool                isStandaloneCoordinate      (void) const final { return false; }
