@@ -307,7 +307,7 @@ void ToolbarIndicatorUITest::_testArmRequiresEnforcedChecklist()
     enforceChecklist->setRawValue(true);
 
     runWithMockLink([] { return MockLink::startPX4MockLink(); },
-                    [this, useChecklist](QPointer<MockLink> /*mockLink*/, Vehicle* vehicle) {
+                    [this, useChecklist](QPointer<MockLink> mockLink, Vehicle* vehicle) {
                         QQuickItem* const indicator = findVisibleItem(
                             _rootItem, QStringLiteral("toolbar_mainStatusIndicator"), TestTimeout::mediumMs());
                         QVERIFY2(indicator, "Main status indicator not visible");
@@ -342,6 +342,16 @@ void ToolbarIndicatorUITest::_testArmRequiresEnforcedChecklist()
                         QVERIFY2(toolbarBadge, "Toolbar severity badge not shown for an incomplete checklist");
                         QTRY_COMPARE_WITH_TIMEOUT(toolbarBadge->property("severity").toString(),
                                                   QStringLiteral("warning"), TestTimeout::mediumMs());
+                        QCOMPARE(toolbarBadge->property("text").toString(), QStringLiteral("Pre-Flight"));
+
+                        // The badge names the checklist only while it is the sole warning
+                        mockLink->sendStatusTextMessage(MAV_SEVERITY_WARNING, QStringLiteral("Status text warning"));
+                        QVERIFY_TRUE_WAIT(vehicle->unreadWarningMessageCount() == 1, TestTimeout::mediumMs());
+                        QTRY_COMPARE_WITH_TIMEOUT(toolbarBadge->property("text").toString(), QStringLiteral("Warning"),
+                                                  TestTimeout::mediumMs());
+                        vehicle->clearMessages();
+                        QTRY_COMPARE_WITH_TIMEOUT(toolbarBadge->property("text").toString(),
+                                                  QStringLiteral("Pre-Flight"), TestTimeout::mediumMs());
 
                         // The checklist is pre-flight, so arming drops its warning
                         vehicle->setArmed(true, false /* showError */);
@@ -661,6 +671,22 @@ void ToolbarIndicatorUITest::_testHealthChecksDriveToolbarSeverity()
                                       TestTimeout::mediumMs());
             QTRY_COMPARE_WITH_TIMEOUT(tabBadge->property("severity").toString(), QStringLiteral("error"),
                                       TestTimeout::mediumMs());
+
+            // Acknowledged warnings no longer count toward the warning state
+            report->setProblemsForTest({QStringLiteral("warning")});
+            QTRY_COMPARE_WITH_TIMEOUT(toolbarBadge->property("severity").toString(), QStringLiteral("warning"),
+                                      TestTimeout::mediumMs());
+            const QString ackButtonName = QStringLiteral("healthChecksAcknowledgeAllButton");
+            QQuickItem* const ackButton = findVisibleItem(_rootItem, ackButtonName, TestTimeout::mediumMs());
+            QVERIFY2(ackButton, "Acknowledge All button not shown for a health warning");
+            QVERIFY(_clickItemAt(ackButton, 0.5, 0.5, ackButtonName));
+            QTRY_COMPARE_WITH_TIMEOUT(report->warningCount(), 0, TestTimeout::mediumMs());
+            QVERIFY2(waitForCondition([&] { return findVisibleItem(_rootItem, badgeName, 0) == nullptr; },
+                                      TestTimeout::mediumMs(), QStringLiteral("Toolbar severity badge hidden")),
+                     "Toolbar severity badge still shown after acknowledging the health warning");
+            QVERIFY2(waitForCondition([&] { return findVisibleItem(_rootItem, ackButtonName, 0) == nullptr; },
+                                      TestTimeout::mediumMs(), QStringLiteral("Acknowledge All button hidden")),
+                     "Acknowledge All button still shown with every warning acknowledged");
 
             report->setProblemsForTest({});
             QVERIFY2(waitForCondition([&] { return findVisibleItem(_rootItem, badgeName, 0) == nullptr; },

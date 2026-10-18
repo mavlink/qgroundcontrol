@@ -136,6 +136,114 @@ void HealthAndArmingCheckReportTest::_testSeverityCounts()
     QCOMPARE(report.warningCount(), expectedWarnings);
 }
 
+void HealthAndArmingCheckReportTest::_testAcknowledgeAllWarnings_data()
+{
+    QTest::addColumn<QStringList>("severities");
+    QTest::addColumn<int>("expectedErrors");
+    QTest::addColumn<bool>("expectedHasWarningsOrErrors");
+
+    QTest::newRow("warningsOnly") << QStringList{"warning", "warning"} << 0 << false;
+    QTest::newRow("errorsNotAcknowledged") << QStringList{"warning", "error"} << 1 << true;
+    QTest::newRow("infoUnaffected") << QStringList{"", "warning"} << 0 << false;
+}
+
+void HealthAndArmingCheckReportTest::_testAcknowledgeAllWarnings()
+{
+    QFETCH(QStringList, severities);
+    QFETCH(int, expectedErrors);
+    QFETCH(bool, expectedHasWarningsOrErrors);
+
+    HealthAndArmingCheckReport report;
+    QList<HealthAndArmingCheckReport::Check> checks;
+    for (const QString& severity : severities) {
+        checks.append({.ackKey = static_cast<quint64>(checks.count()), .severity = severity, .inCurrentMode = true});
+    }
+    report._rebuild(checks);
+    QVERIFY(report.hasWarningsOrErrors());
+
+    QSignalSpy updatedSpy(&report, &HealthAndArmingCheckReport::updated);
+    report.acknowledgeAllWarnings();
+
+    QCOMPARE(updatedSpy.count(), 1);
+    QCOMPARE(report.warningCount(), 0);
+    QCOMPARE(report.errorCount(), expectedErrors);
+    QCOMPARE(report.hasWarningsOrErrors(), expectedHasWarningsOrErrors);
+
+    // Acknowledged warnings stay listed
+    QmlObjectListModel* const problems = report.problemsForCurrentMode();
+    QCOMPARE(problems->count(), severities.count());
+    for (int i = 0; i < problems->count(); i++) {
+        const auto* const problem = problems->value<const HealthAndArmingCheckProblem*>(i);
+        QCOMPARE(problem->acknowledged(), problem->severity() == QStringLiteral("warning"));
+    }
+}
+
+void HealthAndArmingCheckReportTest::_testAcknowledgementLastsWhileStillWarning_data()
+{
+    QTest::addColumn<bool>("nextPresent");
+    QTest::addColumn<QString>("nextMessage");
+    QTest::addColumn<QString>("nextSeverity");
+    QTest::addColumn<bool>("nextInCurrentMode");
+    QTest::addColumn<bool>("acknowledgedOnReturn");
+
+    QTest::newRow("unchanged") << true << QStringLiteral("Wind 10 m/s") << QStringLiteral("warning") << true << true;
+    QTest::newRow("valuesChanged") << true << QStringLiteral("Wind 12 m/s") << QStringLiteral("warning") << true
+                                   << true;
+    QTest::newRow("otherModeOnly") << true << QStringLiteral("Wind 10 m/s") << QStringLiteral("warning") << false
+                                   << true;
+    QTest::newRow("becameError") << true << QStringLiteral("Wind 10 m/s") << QStringLiteral("error") << true << false;
+    QTest::newRow("becameInfo") << true << QStringLiteral("Wind 10 m/s") << QString() << true << false;
+    QTest::newRow("resolved") << false << QString() << QString() << false << false;
+}
+
+void HealthAndArmingCheckReportTest::_testAcknowledgementLastsWhileStillWarning()
+{
+    QFETCH(bool, nextPresent);
+    QFETCH(QString, nextMessage);
+    QFETCH(QString, nextSeverity);
+    QFETCH(bool, nextInCurrentMode);
+    QFETCH(bool, acknowledgedOnReturn);
+
+    constexpr quint64 ackKey = 42;
+    const HealthAndArmingCheckReport::Check warning{.ackKey = ackKey,
+                                                    .message = QStringLiteral("Wind 10 m/s"),
+                                                    .severity = QStringLiteral("warning"),
+                                                    .inCurrentMode = true};
+
+    HealthAndArmingCheckReport report;
+    report._rebuild({warning});
+    report.acknowledgeAllWarnings();
+    QCOMPARE(report.warningCount(), 0);
+
+    QList<HealthAndArmingCheckReport::Check> nextChecks;
+    if (nextPresent) {
+        nextChecks.append(
+            {.ackKey = ackKey, .message = nextMessage, .severity = nextSeverity, .inCurrentMode = nextInCurrentMode});
+    }
+    report._rebuild(nextChecks);
+    report._rebuild({warning});
+
+    QCOMPARE(report.warningCount(), acknowledgedOnReturn ? 0 : 1);
+    QCOMPARE(report.hasWarningsOrErrors(), !acknowledgedOnReturn);
+    QCOMPARE(report.problemsForCurrentMode()->value<const HealthAndArmingCheckProblem*>(0)->acknowledged(),
+             acknowledgedOnReturn);
+}
+
+void HealthAndArmingCheckReportTest::_testNewWarningNotAcknowledged()
+{
+    using Check = HealthAndArmingCheckReport::Check;
+    const Check first{.ackKey = 1, .severity = QStringLiteral("warning"), .inCurrentMode = true};
+    const Check second{.ackKey = 2, .severity = QStringLiteral("warning"), .inCurrentMode = true};
+
+    HealthAndArmingCheckReport report;
+    report._rebuild({first});
+    report.acknowledgeAllWarnings();
+    report._rebuild({first, second});
+
+    QCOMPARE(report.warningCount(), 1);
+    QVERIFY(report.hasWarningsOrErrors());
+}
+
 // ---------------------------------------------------------------------------
 // HealthAndArmingCheckProblem
 // ---------------------------------------------------------------------------

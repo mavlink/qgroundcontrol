@@ -10,6 +10,7 @@ StatusPill {
     property int errorCount: 0
     property int warningCount: 0
     property int unreadCount: 0
+    property string warningLabel: qsTr("Warning")
 
     readonly property string severity: {
         if (errorCount > 0) {
@@ -27,7 +28,7 @@ StatusPill {
     readonly property var _palette: QGroundControl.globalPalette
     readonly property var _styles: ({
         error: { text: qsTr("Error"), color: _palette.errorIndicator },
-        warning: { text: qsTr("Warning"), color: _palette.warningIndicator },
+        warning: { text: warningLabel, color: _palette.warningIndicator },
         info: { text: qsTr("Info"), color: _palette.colorBlue }
     })
     readonly property var _style: _styles[severity]

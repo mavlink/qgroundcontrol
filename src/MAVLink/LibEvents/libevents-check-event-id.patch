@@ -1,0 +1,18 @@
+diff --git a/libs/cpp/parse/health_and_arming_checks.cpp b/libs/cpp/parse/health_and_arming_checks.cpp
+--- a/libs/cpp/parse/health_and_arming_checks.cpp
++++ b/libs/cpp/parse/health_and_arming_checks.cpp
+@@ -82,4 +82,5 @@ bool HealthAndArmingChecks::handleEvent(const events::parser::ParsedEvent& event
+         case Type::Other: {
+             Check check{};
++            check.id = event.id();
+             check.type = event.group() == "health" ? CheckType::Health : CheckType::ArmingCheck;
+             check.message = event.message();
+diff --git a/libs/cpp/parse/health_and_arming_checks.h b/libs/cpp/parse/health_and_arming_checks.h
+--- a/libs/cpp/parse/health_and_arming_checks.h
++++ b/libs/cpp/parse/health_and_arming_checks.h
+@@ -46,4 +46,5 @@ public:
+     enum class CheckType { ArmingCheck, Health };
+     struct Check {
++        uint32_t id{};
+         CheckType type{};
+         std::string message;
