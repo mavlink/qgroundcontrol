@@ -20,6 +20,8 @@ RowLayout {
     property bool   _checklistEnabled:  QGroundControl.settingsManager.appSettings.useChecklist.rawValue
     property bool   _checklistComplete: _activeVehicle ? _activeVehicle.checkListState === Vehicle.CheckListPassed : false
     property bool   _checklistBlocksArming: _checklistEnabled && QGroundControl.settingsManager.appSettings.enforceChecklist.rawValue && !_checklistComplete
+    // The checklist is pre-flight, so an unfinished one is not flagged once armed
+    property bool   _checklistWarning:  _checklistEnabled && !_checklistComplete && !_armed
     property int    _healthErrorCount:      _healthAndArmingChecksSupported ?
                                                 _activeVehicle.healthAndArmingCheckReport.errorCount : 0
     property int    _healthWarningCount:    _healthAndArmingChecksSupported ?
@@ -56,6 +58,7 @@ RowLayout {
     LabelMetrics { id: errorLabelMetrics;   text: qsTr("Error") }
     LabelMetrics { id: warningLabelMetrics; text: qsTr("Warning") }
     LabelMetrics { id: infoLabelMetrics;    text: qsTr("Info") }
+    LabelMetrics { id: preFlightLabelMetrics; text: qsTr("Pre-Flight") }
 
     readonly property real _severityLabelMaxWidth: Math.max(errorLabelMetrics.advanceWidth,
                                                             warningLabelMetrics.advanceWidth,
@@ -94,7 +97,8 @@ RowLayout {
         // Reserves room for every badge, visible or not, so neighboring toolbar items don't shift as badges come and go
         // and the severity label changes width
         Layout.preferredWidth: Math.max(contentWidth,
-                                        _severityLabelMaxWidth + ScreenTools.defaultFontPixelWidth +
+                                        Math.max(_severityLabelMaxWidth, preFlightLabelMetrics.advanceWidth) +
+                                        ScreenTools.defaultFontPixelWidth +
                                         rebootRequiredIcon.width + firmwareUpdateBadge.width +
                                         ScreenTools.defaultFontPixelWidth * 0.5)
         verticalAlignment:  Text.AlignVCenter
@@ -187,10 +191,10 @@ RowLayout {
             anchors.topMargin:  ScreenTools.defaultFontPixelHeight * 0.25
             anchors.right:      parent.right
             errorCount:         _activeVehicle ? _activeVehicle.unreadCriticalMessageCount + _healthErrorCount : 0
-            // The checklist is pre-flight, so an unfinished one is not flagged once armed
             warningCount:       _activeVehicle ? _activeVehicle.unreadWarningMessageCount + _healthWarningCount +
-                                                 (_checklistEnabled && !_checklistComplete && !_armed ? 1 : 0) : 0
+                                                 (_checklistWarning ? 1 : 0) : 0
             unreadCount:        _activeVehicle ? _activeVehicle.unreadMessageCount : 0
+            warningLabel:       (_checklistWarning && warningCount === 1) ? qsTr("Pre-Flight") : qsTr("Warning")
         }
 
         QGCColoredImage {
@@ -586,6 +590,15 @@ RowLayout {
                 visible:            tabBar.currentIndex === control.tabStatus && parametersReady && _healthAndArmingChecksSupported &&
                                     _activeVehicle.healthAndArmingCheckReport.problemsForCurrentMode.count > 0
 
+                QGCButton {
+                    objectName:         "healthChecksAcknowledgeAllButton"
+                    Layout.alignment:   Qt.AlignRight
+                    small:              true
+                    text:               qsTr("Acknowledge All Warnings")
+                    visible:            _healthWarningCount > 0
+                    onClicked:          _activeVehicle.healthAndArmingCheckReport.acknowledgeAllWarnings()
+                }
+
                 // List health and arming checks
                 Repeater {
                     model:      _activeVehicle ? _activeVehicle.healthAndArmingCheckReport.problemsForCurrentMode : null
@@ -612,12 +625,11 @@ RowLayout {
                         QGCLabel {
                             id:                     message
                             Layout.fillWidth:       true
-                            // Rounded up: the layout's whole-pixel width would otherwise wrap a short message
-                            Layout.maximumWidth:    Math.ceil(implicitWidth)
                             text:                   object.message
                             textFormat:             TextEdit.RichText
                             wrapMode:               Text.WordWrap
-                            color:                  object.severity == 'error' ? qgcPal.errorText : object.severity == 'warning' ? qgcPal.warningText : qgcPal.text
+                            color:                  object.severity == 'error' ? qgcPal.errorText : (object.severity == 'warning' && !object.acknowledged) ? qgcPal.warningText : qgcPal.text
+                            opacity:                object.acknowledged ? 0.6 : 1
                             MouseArea {
                                 anchors.fill: parent
                                 onClicked: {
@@ -625,6 +637,14 @@ RowLayout {
                                         object.expanded = !object.expanded
                                 }
                             }
+                        }
+
+                        QGCLabel {
+                            Layout.alignment:       Qt.AlignVCenter
+                            text:                   qsTr("Acknowledged")
+                            font.pointSize:         ScreenTools.smallFontPointSize
+                            opacity:                0.6
+                            visible:                object.acknowledged
                         }
 
                         QGCColoredImage {
