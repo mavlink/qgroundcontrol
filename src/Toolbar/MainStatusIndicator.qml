@@ -415,12 +415,8 @@ RowLayout {
 
                 QGCButton {
                     objectName:     "mainStatusFirmwareUpdateAckButton"
-                    implicitHeight: contentItem.implicitHeight + topPadding + bottomPadding
-                    heightFactor:   0.2
-                    leftPadding:    ScreenTools.defaultFontPixelWidth
-                    rightPadding:   leftPadding
+                    small:          true
                     text:           qsTr("Acknowledge and Hide")
-                    pointSize:      ScreenTools.smallFontPointSize
                     visible:        _activeVehicle && !_activeVehicle.newStableFirmwareVersionAcknowledged
                     onClicked:      _activeVehicle.acknowledgeNewStableFirmwareVersion()
                 }
@@ -535,24 +531,16 @@ RowLayout {
 
                     QGCButton {
                         objectName:     "vehicleMessagesMarkReadButton"
-                        implicitHeight: contentItem.implicitHeight + topPadding + bottomPadding
-                        heightFactor:   0.2
-                        leftPadding:    ScreenTools.defaultFontPixelWidth
-                        rightPadding:   leftPadding
+                        small:          true
                         text:           qsTr("Mark as Read")
-                        pointSize:      ScreenTools.smallFontPointSize
                         visible:        _activeVehicle && _activeVehicle.hasUnreadMessages
                         onClicked:      _activeVehicle.markMessagesRead()
                     }
 
                     QGCButton {
                         objectName:     "vehicleMessagesClearButton"
-                        implicitHeight: contentItem.implicitHeight + topPadding + bottomPadding
-                        heightFactor:   0.2
-                        leftPadding:    ScreenTools.defaultFontPixelWidth
-                        rightPadding:   leftPadding
+                        small:          true
                         text:           qsTr("Clear")
-                        pointSize:      ScreenTools.smallFontPointSize
                         onClicked: {
                             _activeVehicle.clearMessages()
                             mainWindow.closeIndicatorDrawer()
