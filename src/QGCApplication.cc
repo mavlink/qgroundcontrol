@@ -682,15 +682,14 @@ void QGCApplication::shutdown()
             }
         }
 
-        // Remove the app-specific settings directory (parent of ParamCache)
-        QDir settingsAppDir(ParameterManager::parameterCacheDir());
-        settingsAppDir.cdUp();
-        if (settingsAppDir.exists()) {
-            if (settingsAppDir.removeRecursively()) {
-                qCDebug(QGCApplicationLog) << "Removed test run settings directory:" << settingsAppDir.absolutePath();
-            } else {
-                qCWarning(QGCApplicationLog)
-                    << "Failed to remove test run settings directory:" << settingsAppDir.absolutePath();
+        for (const auto location : {QStandardPaths::AppConfigLocation, QStandardPaths::CacheLocation}) {
+            QDir dir(QStandardPaths::writableLocation(location));
+            if (dir.exists()) {
+                if (dir.removeRecursively()) {
+                    qCDebug(QGCApplicationLog) << "Removed test run directory:" << dir.absolutePath();
+                } else {
+                    qCWarning(QGCApplicationLog) << "Failed to remove test run directory:" << dir.absolutePath();
+                }
             }
         }
 
