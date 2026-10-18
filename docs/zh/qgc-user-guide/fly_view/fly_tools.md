@@ -8,9 +8,15 @@ Safety-critical actions (takeoff, land, RTL, etc.) require confirmation before t
 
 飞行前自动核对表可以用来进行标准检查，检查车辆配置正确，可以安全飞行。
 
-查看核对表， 首先通过导航到 [应用设置 > 常规> 飞行视图](../settings_view/general.md) 并选择 **使用预览列表** 复选框来启用工具。然后工具将被添加到 _飞行工具_。按下它以打开检查清单：
+To view the checklist, first enable it by navigating to [Application Settings > General > Fly View](../settings_view/general.md) and selecting the **Use preflight checklist** checkbox.
+The checklist is then available on the **Pre-Flight Checklist** tab of the main status dropdown (click the status text at the left of the toolbar).
+The dropdown opens on this tab until the checklist has passed.
 
 完成每项测试后，在用户界面上选择该项，将其标记为已完成。
+
+All checklist sections are shown at once. A section is locked (marked **(locked)**) until every section above it has passed, but its items still show their current state, so problems detected automatically — such as muted audio or too few GPS satellites — are visible from the start.
+Items are colored by state: red for a failed check that must be fixed, orange for a check that still needs confirming, and green for a passed check.
+The tab shows **Passed** once every check has passed, otherwise **In Progress**.
 
 ## 关闭 {#takeoff}
 

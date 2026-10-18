@@ -1,6 +1,7 @@
 # 计划文件格式
 
-计划文件存储在 JSON 文件格式，包含任务项目和 (可选) 地理栅栏和路点.
+Plan files are stored in JSON file format and contain mission, geofence, and rally point objects.
+The geofence and rally point objects are required, but their lists can be empty.
 下面你可以看到计划文件的顶级格式
 
 :::tip
@@ -27,14 +28,14 @@
 
 主要领域是：
 
-| 键                              | 描述                                  |
-| ------------------------------ | ----------------------------------- |
-| `version`                      | 此文件的版本。当前版本是 1。                     |
-| `fileType`                     | 必须是“计划”。                            |
-| `groundStation`                | 创建此文件的地面站的名称（此处为 _QGroundControl_ ） |
-| [`mission`](#mission)          | 与此飞行计划相关的任务。                        |
-| [`geoFence`](#geofence)        | （可选）此计划的地理围栏信息。                     |
-| [`rallyPoints`](#rally_points) | （可选）此计划的集结点（rally points）信息         |
+| 键                              | 描述                                                                                                     |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| `version`                      | 此文件的版本。当前版本是 1。                                                                                        |
+| `fileType`                     | 必须是“计划”。                                                                                               |
+| `groundStation`                | 创建此文件的地面站的名称（此处为 _QGroundControl_ ）                                                                    |
+| [`mission`](#mission)          | 与此飞行计划相关的任务。                                                                                           |
+| [`geoFence`](#geofence)        | Required geofence object. Its circles and polygons lists may be empty. |
+| [`rallyPoints`](#rally_points) | Required rally point object. Its points list may be empty.             |
 
 ## 使命对象 {#mission}
 
@@ -216,7 +217,7 @@ CorridorScan复杂任务项的对象定义如下。
 
 | 键                                                        | 描述                                                                 |
 | -------------------------------------------------------- | ------------------------------------------------------------------ |
-| `version`                                                | 此CorridorScan定义的版本。 目前的版本是3。 Current version is 3. |
+| `version`                                                | 此CorridorScan定义的版本。 目前的版本是3。 Current version is 2. |
 | `type`                                                   | ComplexItem（这是一个复杂的项目）。                                            |
 | `complexItemType`                                        | `CorridorScan`                                                     |
 | `CorridorWidth`                                          | ?                                                                  |
@@ -311,7 +312,7 @@ StructureScan复杂任务项的对象定义如下。
 | [`CameraCalc`](#CameraCalc)  | ?                                                      |
 | `CameraTriggerInTurnAround	` | ? （布尔值）                                                |
 | `FollowTerrain`              | ? （布尔值）                                                |
-| `HoverAndCapture`            | ? （布尔值）                                                |
+| `HoverAndCapture`            | ? (boolean)                         |
 | `Items`                      | ?                                                      |
 | `Refly90Degrees`             | ? （布尔值）                                                |
 | `TurnAroundDistance`         | 在转向下一个横断面之前飞过多边形边缘的距离。                                 |
@@ -369,7 +370,7 @@ CameraCalc包含用于调查，走廊或结构扫描的摄像机信息。
 
 ## GeoFence (地理围栏) {#geofence}
 
-Geofence information is optional.
+The `geoFence` object is required, but its `circles` and `polygons` lists may be empty.
 The plan can contain an arbitrary number of geofences defined in terms of polygons and circles.
 
 最小定义如下所示。
@@ -395,7 +396,7 @@ The plan can contain an arbitrary number of geofences defined in terms of polygo
 ### Circle Geofence (圆形地理围栏) {#circle_geofence}
 
 Each circular geofence is defined in a separate item, as shown below (multiple comma-separated items can be defined).
-The items define the centre and radius of the circle, and whether or not the specific geofence is activated.
+The items define the centre and radius of the circle, and whether it is an inclusion or exclusion fence.
 
 ```json
 {
@@ -414,7 +415,7 @@ The items define the centre and radius of the circle, and whether or not the spe
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `version`   | The version number for the geofence "circle" plan format. 拉力点计划格式的版本号。 记录的版本是2。                                                                 |
 | `circle`    | 圆的定义。 包括 centre (中心)（纬度，经度）和半径，如上所示。 Includes `centre` (latitude, longitude) and `radisu` as shown above. |
-| `inclusion` | 地理围栏是否已启用（true）或已禁用。                                                                                                                                            |
+| `inclusion` | `true`: inclusion fence; `false`: exclusion fence.                                                              |
 
 ### 多边形地理围栏 {#polygon_geofence}
 
@@ -455,11 +456,11 @@ The geofence includes a set of points defined with a clockwise winding (i.e. the
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `version`   | The version number for the geofence "polygon" plan format. The documented version is 2.                                                        |
 | `polygon`   | A list of points for the polygon. Each point contains a latitude and longitude. The points are ordered in a clockwise winding. |
-| `inclusion` | 地理围栏是否已启用（true）或已禁用。                                                                                                                                                           |
+| `inclusion` | `true`: inclusion fence; `false`: exclusion fence.                                                                             |
 
 ## 团结积分 {#rally_points}
 
-Rally point information is optional.
+The `rallyPoints` object is required, but its `points` list may be empty.
 The plan can contain an arbitrary number of rally points, each of which has a latitude, longitude, and altitude (above home position).
 
 有两点的定义如下所示。

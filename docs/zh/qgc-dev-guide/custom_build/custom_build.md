@@ -12,12 +12,12 @@
 - 实现您自己的工具栏、工具栏指示器和界面导航
 - 实现您自己的 Fly 视图叠加层(和如何隐藏QGC 中的元素，如飞行部件)
 - 实现您自己的 QtQuick 相机控制
-- 实现您自己的自定义飞行前清单
+- Implement your own, custom Pre-flight Checklist (resource override `PreFlightCheckList.qml` or the per-airframe `*Checklist.qml` files, or disable it by overriding the `useChecklist` setting)
 - 为以上所有定义您自己的资源
 
-QGC 既为任何支持 Mavlink 的飞行器提供通用支持，又为 PX4 Pro 和 ArduPilot 提供特定固件支持，其缺点之一是用户界面的复杂性。 由于QGC事先对您的无人机一无所知，因此它需要一些用户界面元素，但如果您所使用的飞行器仅采用PX4 Pro固件且为多旋翼飞行器，这些元素可能会造成不便。 如果这是一件已知的事，那么用户界面就可以在不同地方简化。 此外，QGC的目标用户既包括那些从零开始打造无人机的DIY用户，也包括使用现成飞行器的商业用户。 从零开始设置DIY无人机需要所有类型的功能，而这种功能对于架外车辆的使用者来说是不需要的。 所以对于使用现成飞行器的用户来说，所有针对 DIY 的特定内容只是他们需要忽略的额外干扰信息。 创建自定义构建允许您为您的载具指定准确的详细信息并隐藏不相关的东西，从而为您的用户创建一个甚至简单的用户体验，而不是普通的 QGC。
+QGC 既为任何支持 Mavlink 的飞行器提供通用支持，又为 PX4 Pro 和 ArduPilot 提供特定固件支持，其缺点之一是用户界面的复杂性。由于QGC事先对您的无人机一无所知，因此它需要一些用户界面元素，但如果您所使用的飞行器仅采用PX4 Pro固件且为多旋翼飞行器，这些元素可能会造成不便。如果这是一件已知的事，那么用户界面就可以在不同地方简化。此外，QGC的目标用户既包括那些从零开始打造无人机的DIY用户，也包括使用现成飞行器的商业用户。从零开始设置DIY无人机需要所有类型的功能，而这种功能对于架外车辆的使用者来说是不需要的。所以对于使用现成飞行器的用户来说，所有针对 DIY 的特定内容只是他们需要忽略的额外干扰信息。创建自定义构建允许您为您的载具指定准确的详细信息并隐藏不相关的东西，从而为您的用户创建一个甚至简单的用户体验，而不是普通的 QGC。
 
-QGC 中有一个插件架构允许创建此自定义构建。 它们可以在 QGCCorePlugin.h, FirmwarePlugin.h 和 AutoPilotPlugin.h 关联的类中找到。 要创建一个自定义构建，您要创建标准插件的子类，覆盖适合您使用的一组方法。
+QGC 中有一个插件架构允许创建此自定义构建。它们可以在 QGCCorePlugin.h, FirmwarePlugin.h 和 AutoPilotPlugin.h 关联的类中找到。要创建一个自定义构建，您要创建标准插件的子类，覆盖适合您使用的一组方法。
 
 还有一个允许您覆盖资源的机制，以便您可以更改QGC 中较小的视觉元素。
 
@@ -30,6 +30,6 @@ A custom build can restrict the firmwares QGC exposes to the user by disabling t
 
 All firmware plugin code is always compiled into the build. Disabling a factory only removes the firmware from the set returned by `FirmwarePluginManager::supportedFirmwareClasses()`, and the UI adapts at runtime: firmware-specific settings, pickers and pages are hidden for unsupported firmwares. From QML this is available as `QGroundControl.apmFirmwareSupported` and `QGroundControl.px4ProFirmwareSupported`, which you can use in your own custom UI as well. A custom build which implements its own `FirmwarePluginFactory` (see the custom example's PX4-based factory) determines the supported set through the firmware classes its factory reports from `FirmwarePluginFactory::supportedFirmwareClasses()`.
 
-“高级模式”的概念也是QGC的内部概念。 标准的 QGC 构建总是在高级模式下运行。 自定义构建总是以常规/非高级模式开始。 在构建版本中有一个更简便的开启高级模式的方法，即快速连续点击飞行视图按钮5次。 如果您在自定义构建中进行此操作，您将被警告进入高级模式。 这里的理念是将普通用户不应接触到的内容隐藏在高级模式之后。 例如，商业载具不需要进入面向DIY安装的大多数安装页面。 所以自定义构建可以隐藏它。 自定义示例代码显示了如何做到这一点。
+“高级模式”的概念也是QGC的内部概念。标准的 QGC 构建总是在高级模式下运行。自定义构建总是以常规/非高级模式开始。在构建版本中有一个更简便的开启高级模式的方法，即快速连续点击飞行视图按钮5次。如果您在自定义构建中进行此操作，您将被警告进入高级模式。这里的理念是将普通用户不应接触到的内容隐藏在高级模式之后。例如，商业载具不需要进入面向DIY安装的大多数安装页面。所以自定义构建可以隐藏它。自定义示例代码显示了如何做到这一点。
 
-如果你想要理解这种可能性，第一步是通过那些文件读取可能的文件。 接下来浏览[`custom - example`](https://github.com/mavlink/qgroundcontrol/tree/master/custom-example)的源代码，包括[README](https://github.com/mavlink/qgroundcontrol/blob/master/custom-example/README.md)。
+如果你想要理解这种可能性，第一步是通过那些文件读取可能的文件。接下来浏览[`custom - example`](https://github.com/mavlink/qgroundcontrol/tree/master/custom-example)的源代码，包括[README](https://github.com/mavlink/qgroundcontrol/blob/master/custom-example/README.md)。
