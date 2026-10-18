@@ -94,6 +94,7 @@ public:
     double              specifiedGimbalPitch        (void) final { return std::numeric_limits<double>::quiet_NaN(); }
     void                appendMissionItems          (QList<MissionItem*>& items, QObject* missionItemParent) final;
     void                applyNewAltitude            (double newAltitude) final;
+    bool usesAltitudeFrame(QGroundControlQmlGlobal::AltitudeFrame altitudeFrame) const final;
     double              additionalTimeDelay         (void) const final { return 0; }
     ReadyForSaveState   readyForSaveState           (void) const final;
     bool                exitCoordinateSameAsEntry   (void) const final { return false; }

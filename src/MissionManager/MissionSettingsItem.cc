@@ -168,6 +168,11 @@ double MissionSettingsItem::complexDistance(void) const
     return 0;
 }
 
+bool MissionSettingsItem::usesAltitudeFrame(QGroundControlQmlGlobal::AltitudeFrame /*altitudeFrame*/) const
+{
+    return false;
+}
+
 void MissionSettingsItem::_setDirty(void)
 {
     setDirty(true);

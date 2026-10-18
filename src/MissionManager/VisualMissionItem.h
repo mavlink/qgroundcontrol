@@ -8,6 +8,7 @@
 #include "MissionFlightStatus.h"
 #include "QGCGeoBoundingCube.h"
 #include "QGCMAVLinkTypes.h"
+#include "QGroundControlQmlGlobal.h"
 #include "QmlObjectListModel.h"
 
 class FlightPathSegment;
@@ -196,6 +197,9 @@ public:
 
     /// Adjust the altitude of the item if appropriate to the new altitude.
     virtual void applyNewAltitude(double newAltitude) = 0;
+
+    /// @return true: The altitude set by applyNewAltitude is in the specified altitude frame
+    virtual bool usesAltitudeFrame(QGroundControlQmlGlobal::AltitudeFrame altitudeFrame) const = 0;
 
     /// @return Amount of additional time delay in seconds needed to fly this item
     virtual double additionalTimeDelay(void) const = 0;

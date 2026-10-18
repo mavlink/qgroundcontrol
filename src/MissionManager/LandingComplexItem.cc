@@ -618,6 +618,12 @@ void LandingComplexItem::applyNewAltitude(double newAltitude)
     finalApproachAltitude()->setRawValue(newAltitude);
 }
 
+bool LandingComplexItem::usesAltitudeFrame(QGroundControlQmlGlobal::AltitudeFrame altitudeFrame) const
+{
+    return altitudeFrame == (_altitudesAreRelative ? QGroundControlQmlGlobal::AltitudeFrameRelative
+                                                   : QGroundControlQmlGlobal::AltitudeFrameAbsolute);
+}
+
 LandingComplexItem::ReadyForSaveState LandingComplexItem::readyForSaveState(void) const
 {
     return _landingCoordSet && !_wizardMode ? ReadyForSave : NotReadyForSaveData;

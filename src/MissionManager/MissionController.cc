@@ -55,6 +55,8 @@ MissionController::MissionController(PlanMasterController* masterController, QOb
     connect(this,                                               &MissionController::multipleLandPatternsAllowedChanged, this, &MissionController::_recalcPlanViewState);
     connect(this,                                               &MissionController::homePositionSetChanged,             this, &MissionController::_recalcPlanViewState);
     connect(this,                                               &MissionController::missionPlannedDistanceChanged,      this, &MissionController::recalcTerrainProfile);
+    connect(_appSettings->defaultMissionItemAltitude(), &Fact::rawValueChanged, this,
+            &MissionController::_defaultMissionAltitudeChanged);
 
     // The follow is used to compress multiple recalc calls in a row to into a single call.
     connect(this, &MissionController::_recalcMissionFlightStatusSignal, this, &MissionController::_recalcMissionFlightStatus,   Qt::QueuedConnection);
@@ -567,6 +569,8 @@ void MissionController::removeVisualItem(int viIndex)
 
 void MissionController::_setupNewVisualItems(QmlObjectListModel* newItems)
 {
+    _setApplyDefaultMissionAltitudeAvailable(false);
+
     QmlObjectListModel* oldItems = _visualItems;
 
     if (oldItems) {
@@ -1894,7 +1898,27 @@ void MissionController::applyDefaultMissionAltitude(void)
 
     for (int i=1; i<_visualItems->count(); i++) {
         VisualMissionItem* item = _visualItems->value<VisualMissionItem*>(i);
-        item->applyNewAltitude(defaultAltitude);
+        if (item->usesAltitudeFrame(_globalAltFrame)) {
+            item->applyNewAltitude(defaultAltitude);
+        }
+    }
+
+    _setApplyDefaultMissionAltitudeAvailable(false);
+}
+
+void MissionController::_defaultMissionAltitudeChanged(void)
+{
+    // In mixed mode items keep their own altitude frames, so a single altitude value can't be applied safely
+    if (containsItems() && _globalAltFrame != QGroundControlQmlGlobal::AltitudeFrameMixed) {
+        _setApplyDefaultMissionAltitudeAvailable(true);
+    }
+}
+
+void MissionController::_setApplyDefaultMissionAltitudeAvailable(bool available)
+{
+    if (_applyDefaultMissionAltitudeAvailable != available) {
+        _applyDefaultMissionAltitudeAvailable = available;
+        emit applyDefaultMissionAltitudeAvailableChanged();
     }
 }
 
@@ -2408,6 +2432,8 @@ void MissionController::_recalcPlanViewState(void)
 
 void MissionController::_allItemsRemoved(void)
 {
+    _setApplyDefaultMissionAltitudeAvailable(false);
+
     // When there are no mission items we track changes to firmware/vehicle type. This allows a vehicle connection
     // to adjust these items.
     _controllerVehicle->trackFirmwareVehicleTypeChanges();
@@ -2452,6 +2478,9 @@ void MissionController::setGlobalAltitudeFrame(QGroundControlQmlGlobal::Altitude
 {
     if (_globalAltFrame != altFrame) {
         _globalAltFrame = altFrame;
+        if (_globalAltFrame == QGroundControlQmlGlobal::AltitudeFrameMixed) {
+            _setApplyDefaultMissionAltitudeAvailable(false);
+        }
         emit globalAltitudeFrameChanged();
     }
 }

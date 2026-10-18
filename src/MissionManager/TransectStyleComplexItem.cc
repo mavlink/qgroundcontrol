@@ -1445,6 +1445,11 @@ void TransectStyleComplexItem::applyNewAltitude(double newAltitude)
     _cameraCalc.distanceToSurface()->setRawValue(newAltitude);
 }
 
+bool TransectStyleComplexItem::usesAltitudeFrame(QGroundControlQmlGlobal::AltitudeFrame altitudeFrame) const
+{
+    return altitudeFrame == _cameraCalc.distanceMode();
+}
+
 double TransectStyleComplexItem::minAMSLAltitude(void) const
 {
     // FIXME: What about terrain frame

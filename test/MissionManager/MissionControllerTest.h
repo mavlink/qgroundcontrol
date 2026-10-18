@@ -29,6 +29,7 @@ private slots:
     void _testGimbalRecalc();
     void _testVehicleYawRecalc();
     void _testMissionReposition();
+    void _testMissionOffset_data();
     void _testMissionOffset();
     void _testMissionRotate();
     void _testMissionTransformsInvalidHome();
@@ -48,6 +49,10 @@ private slots:
     void _testVTOLTakeoffJsonRoundTrip();
     void _testUnitsChangeDoesNotDirtyPlan_data();
     void _testUnitsChangeDoesNotDirtyPlan();
+    void _testApplyDefaultMissionAltitudeOfferedOnlyForExistingItems_data();
+    void _testApplyDefaultMissionAltitudeOfferedOnlyForExistingItems();
+    void _testApplyDefaultMissionAltitudeSkipsItemsInOtherFrames_data();
+    void _testApplyDefaultMissionAltitudeSkipsItemsInOtherFrames();
 
     // Parameterized tests - runs once per autopilot type
     UT_PARAMETERIZED_TEST(_testEmptyVehicle);

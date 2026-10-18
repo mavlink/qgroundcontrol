@@ -127,6 +127,7 @@ public:
     bool            terrainAltitudeRequiredInFlyView(void) const final { return _altitudeFrame == QGroundControlQmlGlobal::AltitudeFrameTerrain; }
     void            appendMissionItems          (QList<MissionItem*>& items, QObject* missionItemParent) final;
     void            applyNewAltitude            (double newAltitude) final;
+    bool usesAltitudeFrame(QGroundControlQmlGlobal::AltitudeFrame altitudeFrame) const final;
     void            setMissionFlightStatus      (MissionFlightStatus_t& missionFlightStatus) final;
     ReadyForSaveState readyForSaveState         (void) const final;
     double          additionalTimeDelay         (void) const final;

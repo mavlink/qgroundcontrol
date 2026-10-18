@@ -1058,6 +1058,11 @@ void SimpleMissionItem::applyNewAltitude(double newAltitude)
     }
 }
 
+bool SimpleMissionItem::usesAltitudeFrame(QGroundControlQmlGlobal::AltitudeFrame altitudeFrame) const
+{
+    return altitudeFrame == _altitudeFrame;
+}
+
 void SimpleMissionItem::setMissionFlightStatus(MissionFlightStatus_t& missionFlightStatus)
 {
     VisualMissionItem::setMissionFlightStatus(missionFlightStatus);

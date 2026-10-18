@@ -466,6 +466,12 @@ void StructureScanComplexItem::applyNewAltitude(double newAltitude)
     _entranceAltFact.setRawValue(newAltitude);
 }
 
+bool StructureScanComplexItem::usesAltitudeFrame(QGroundControlQmlGlobal::AltitudeFrame altitudeFrame) const
+{
+    // Entrance altitude is always relative to home
+    return altitudeFrame == QGroundControlQmlGlobal::AltitudeFrameRelative;
+}
+
 void StructureScanComplexItem::setCoordinate(const QGeoCoordinate& coordinate)
 {
     const QGeoCoordinate oldCoordinate = this->coordinate();
