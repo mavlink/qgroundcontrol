@@ -74,6 +74,9 @@ private:
     /// Finalizes initialization once the engine is Ready: applies settings, wires Facts, sets volume.
     void _finishInit();
 
+    /// Returns the QTextToSpeech engine to use; empty selects Qt's default for the platform.
+    static QString _engineName();
+
     static const QHash<QString, QString> _textHash;
     static const QSet<QString> _spelledAcronyms;
 
