@@ -12,10 +12,15 @@ Button {
     property bool primary: false
     property bool showBorder: qgcPal.globalTheme === QGCPalette.Light
     property real backRadius: ScreenTools.defaultBorderRadius
-    property real heightFactor: 0.5
+    property real heightFactor: small ? 0.2 : 0.5
     property string iconSource: ""
     property real fontWeight: Font.Normal // default for qml Text
-    property real pointSize: ScreenTools.defaultFontPointSize
+    property real pointSize: small ? ScreenTools.smallFontPointSize : ScreenTools.defaultFontPointSize
+
+    /// Compact variant for secondary actions in dense areas (indicator drop-downs, list headers).
+    /// Only changes the defaults of heightFactor, pointSize and horizontal padding and drops the minimum button height
+    /// (the minimum width still applies); each default can still be overridden explicitly.
+    property bool small: false
 
     property alias wrapMode: text.wrapMode
     property alias horizontalAlignment: text.horizontalAlignment
@@ -33,7 +38,7 @@ Button {
     text: ""
 
     property bool _showHighlight: enabled && (pressed | checked)
-    property int _horizontalPadding: ScreenTools.defaultFontPixelWidth * 2
+    property int _horizontalPadding: ScreenTools.defaultFontPixelWidth * (small ? 1 : 2)
     property int _verticalPadding: Math.round(ScreenTools.defaultFontPixelHeight * heightFactor) - (iconSource === "" ? 0 : (_iconHeight - ScreenTools.defaultFontPixelHeight)  / 2)
     property real _iconHeight: text.height * 1.5
 
@@ -43,7 +48,7 @@ Button {
         id: backRect
         radius: backRadius
         implicitWidth: ScreenTools.implicitButtonWidth
-        implicitHeight: ScreenTools.implicitButtonHeight
+        implicitHeight: control.small ? control.implicitContentHeight + control.topPadding + control.bottomPadding : ScreenTools.implicitButtonHeight
         border.width: showBorder ? 1 : 0
         border.color: qgcPal.buttonBorder
         color: primary ? qgcPal.primaryButton : qgcPal.button

@@ -90,14 +90,10 @@ ColumnLayout {
 
         QGCButton {
             objectName:         "preFlightCheckListResetButton"
+            small:              true
             anchors.right:      parent.right
             y:                  _firstHeader ? Math.max(0, _firstHeader.height - _firstHeader.bottomPadding - height - _headerLineGap) : 0
-            implicitHeight:     contentItem.implicitHeight + topPadding + bottomPadding
-            heightFactor:       0.2
-            leftPadding:        ScreenTools.defaultFontPixelWidth
-            rightPadding:       leftPadding
             text:               qsTr("Reset")
-            pointSize:          ScreenTools.smallFontPointSize
             onClicked:          checkListRepeater.model.reset()
         }
     }
