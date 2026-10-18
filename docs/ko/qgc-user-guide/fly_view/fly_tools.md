@@ -8,11 +8,15 @@ Safety-critical actions (takeoff, land, RTL, etc.) require confirmation before t
 
 An automated preflight checklist can be used to run through standard checks that the vehicle is configured correctly and it is safe to fly.
 
-To view the checklist, first enable the tool by navigating to [Application Settings > General > Fly View](../settings_view/general.md) and selecting the **Use preflight checklist** checkbox.
-The tool will then be added to the _Flight Tools_.
-Press it to open the checklist:
+To view the checklist, first enable it by navigating to [Application Settings > General > Fly View](../settings_view/general.md) and selecting the **Use preflight checklist** checkbox.
+The checklist is then available on the **Pre-Flight Checklist** tab of the main status dropdown (click the status text at the left of the toolbar).
+The dropdown opens on this tab until the checklist has passed.
 
 Once you have performed each test, select it on the UI to mark it as complete.
+
+All checklist sections are shown at once. A section is locked (marked **(locked)**) until every section above it has passed, but its items still show their current state, so problems detected automatically — such as muted audio or too few GPS satellites — are visible from the start.
+Items are colored by state: red for a failed check that must be fixed, orange for a check that still needs confirming, and green for a passed check.
+The tab shows **Passed** once every check has passed, otherwise **In Progress**.
 
 ## Takeoff {#takeoff}
 

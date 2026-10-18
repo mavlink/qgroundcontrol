@@ -33,7 +33,7 @@ Supported versions: Windows 10 (1809 or later), Windows 11:
 
 ## Mac OS {#macOS}
 
-Supported versions: macOS 13 (Ventura) or later:
+Supported versions: macOS 14.4 (Sonoma) or later:
 
 <!-- match version using https://docs.qgroundcontrol.com/master/en/qgc-dev-guide/getting_started/#native-builds -->
 

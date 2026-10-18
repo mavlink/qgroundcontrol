@@ -1,16 +1,14 @@
 ---
-qt_version: 6.11.1
+qt_version: 6.12.0
 ---
 
 # 从源码开始并构建
 
-本主题说明如何获取 _QGroundControl_ 源代码并在本机或在 _Vagrant_ 环境中构建它。 本主题还提供其他可选功能信息及特定于操作系统的功能信息。
-本主题还提供其他可选功能信息及特定于操作系统的功能信息。
+本主题说明如何获取 _QGroundControl_ 源代码并在本机或在 _Vagrant_ 环境中构建它。 本主题还提供其他可选功能信息及特定于操作系统的功能信息。本主题还提供其他可选功能信息及特定于操作系统的功能信息。
 
 ## 每日构建
 
-如果您只是想测试 (而不是调试) 最近生成的 _QGroundControl_ ，那么请使用[Daily build](../../qgc-user-guide/releases/daily_builds.md)。 官方提供了适用于所有平台的版本。
-官方提供了适用于所有平台的版本。
+如果您只是想测试 (而不是调试) 最近生成的 _QGroundControl_ ，那么请使用[Daily build](../../qgc-user-guide/releases/daily_builds.md)。 官方提供了适用于所有平台的版本。官方提供了适用于所有平台的版本。
 
 ## 源代码
 
@@ -33,15 +31,14 @@ git clone -j8 https://github.com/mavlink/qgroundcontrol.git
 
 ### 原生构建
 
-_QGroundControl_ 支持macos、linux、windows 和 Android 平台的构建。 理论上可以为iOS创建一个 QGC 版本，但不再支持作为标准构建。
+_QGroundControl_ 支持macos、linux、windows 和 Android 平台的构建。理论上可以为iOS创建一个 QGC 版本，但不再支持作为标准构建。
 _QGroundControl_ 使用 [Qt](http://www.qt.io)作为其跨平台支持库。
 
 所需的 Qt 版本为 {{ $frontmatter.qt_version }} **(必须无误)**。
 
 ::: warning
 **请勿使用任何其他版本的 Qt！**
-QGC 已通过指定 Qt 版本（{{ $frontmatter.qt_version }}）的全面测试。
-其它的 Qt 版本很可能会注入影响稳定和安全的 bug (即使QGC 编译通过)。
+QGC 已通过指定 Qt 版本（{{ $frontmatter.qt_version }}）的全面测试。其它的 Qt 版本很可能会注入影响稳定和安全的 bug (即使QGC 编译通过)。
 :::
 
 更多信息请看: [Qt 6 支持平台列表](https://doc.qt.io/qt-6/supported-platforms.html)。
@@ -114,7 +111,7 @@ An MSVC 2022 C++ toolchain is required. Either of the following works:
 
 1. 启动 _Qt Creator_，选择 Open Project 并选择 **CMakeLists.txt** 文件。
 
-2. 在 _Configure Project_ 页面上，它应该默认您刚刚使用上面的说明安装的 Qt 版本。 如果不从列表中选择该套件，然后点击 _Configure Project_。
+2. 在 _Configure Project_ 页面上，它应该默认您刚刚使用上面的说明安装的 Qt 版本。如果不从列表中选择该套件，然后点击 _Configure Project_。
 
    :::tip
    Don't forget to check boxes in case you want to build a Release instead of Debug, or check the other types. To create the installation file go to the "Deploy Settings" Tab, click in the menu button "Add Deploy Step", select "CMake Install" and as argument you must set at least `--config Release`.
@@ -123,6 +120,9 @@ An MSVC 2022 C++ toolchain is required. Either of the following works:
 3. Build using the "hammer" icon. After that, in order to deploy the build, use the "play" icon. Or use the menu Build on top for a detailed alternative.
 
 #### 在CLI（命令行界面）使用 CMake {#cmake} 进行构建
+
+CMake 3.28 or newer is required, and `qt-cmake` runs the `cmake` found on your `PATH`.
+Ubuntu 24.04's packaged CMake is new enough. On older distributions, such as Ubuntu 22.04 or Debian 12, install a newer CMake, for example from _Developer and Designer Tools_ in the Qt Online Installer or with `pip install cmake`.
 
 构建默认的 QGC 示例命令并在此后运行它：
 

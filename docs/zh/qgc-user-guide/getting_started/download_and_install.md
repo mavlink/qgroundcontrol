@@ -29,7 +29,7 @@ Windows 安装程序创建 3 个快捷方式：**QGroundControl**，**GPU 兼容
 
 ## Mac OS {#macOS}
 
-Supported versions: macOS 13 (Ventura) or later:
+Supported versions: macOS 14.4 (Sonoma) or later:
 
 <!-- match version using https://docs.qgroundcontrol.com/master/en/qgc-dev-guide/getting_started/#native-builds -->
 
