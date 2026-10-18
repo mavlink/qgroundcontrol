@@ -38,6 +38,11 @@ coverage = [
   {include-group = "scripts"},
   "gcovr",
 ]
+terrain = [
+  "numpy>=2",
+  "pillow>=11",
+  "rasterio>=1.4",
+]
 dev = [
   {include-group = "test"},
   {include-group = "lint"},
@@ -77,27 +82,27 @@ pythonpath = ["."]
 testpaths = ["tests"]
 
 [tool.importlinter]
-root_packages = ["common", "analyzers", "generators", "qgc_tools", "setup"]
+root_packages = ["common", "analyzers", "generators", "qgc_tools", "setup", "terrain"]
 
 [[tool.importlinter.contracts]]
 name = "common is a dependency-free foundation"
 type = "forbidden"
 source_modules = ["common"]
-forbidden_modules = ["analyzers", "generators", "qgc_tools", "setup"]
+forbidden_modules = ["analyzers", "generators", "qgc_tools", "setup", "terrain"]
 
 [[tool.importlinter.contracts]]
 name = "tool packages are mutually independent"
 type = "independence"
-modules = ["analyzers", "generators"]
+modules = ["analyzers", "generators", "terrain"]
 
 [[tool.importlinter.contracts]]
 name = "shared domains do not import command entrypoints"
 type = "forbidden"
 source_modules = ["qgc_tools"]
-forbidden_modules = ["setup", "analyzers", "generators"]
+forbidden_modules = ["setup", "analyzers", "generators", "terrain"]
 
 [[tool.importlinter.contracts]]
 name = "system setup does not depend on code analysis or generation"
 type = "forbidden"
 source_modules = ["setup"]
-forbidden_modules = ["analyzers", "generators"]
+forbidden_modules = ["analyzers", "generators", "terrain"]

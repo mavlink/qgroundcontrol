@@ -73,6 +73,7 @@ tools/
 ├── pseudo_loc.py             # Generate pseudo-localized .ts files for layout testing
 ├── release.py                # Semantic versioning and release automation
 ├── run_tests.py              # Qt unit test runner
+├── terrain_tiles.py          # Terrarium elevation tiles from Copernicus GLO-30 (GeoMap)
 ├── configs/                 # Tool configuration files
 │   └── ccache.conf          # ccache configuration
 ├── analyzers/                # Static analysis scripts
@@ -92,6 +93,7 @@ tools/
 ├── simulation/                # Vehicle simulators
 │   ├── mock_vehicle.py      # Lightweight MAVLink simulator
 │   └── run_arducopter_sitl.py  # ArduCopter SITL (Docker)
+├── terrain/                   # Terrain tile generation package (see terrain_tiles.py)
 └── translations/              # Translation tools
 ```
 
@@ -316,6 +318,20 @@ python3 ./tools/generate_docs.py --clean  # Clean generated docs
 
 Requires: `doxygen`, `graphviz`
 
+### terrain_tiles.py
+
+Build, validate and upload the terrarium elevation tiles GeoMap renders from
+(`https://terrain.assets.qgroundcontrol.com`), generated from the Copernicus GLO-30 DEM. See
+[terrain/README.md](terrain/README.md) for the pipeline, data conventions, validation and tests.
+
+```bash
+TT="uv run --project tools --group terrain python tools/terrain_tiles.py"
+$TT generate --out build/terrain --area all   # Named validation areas (--bbox, --all)
+$TT validate --out build/terrain              # Nonzero exit on problems
+$TT check --out build/terrain                 # Every tile; required before a production upload
+$TT upload --out build/terrain --prefix validation --data-version 0.1.0 --profile qgc-terrain --dryrun
+```
+
 ## Setup Scripts
 
 Scripts in `setup/` help configure development environments. They read configuration from
@@ -343,7 +359,7 @@ fails. Both sources are verified against the same pinned SHA-256 checksums in
 | `read_config.py`                          | All                   | Read `.github/build-config.json` (Python, cross-platform)                     |
 
 `install_python.py` installs dependency groups defined in `tools/pyproject.toml`:
-`scripts`, `precommit`, `test`, `ci`, `qt`, `coverage`, `build`, `dev` (default), `lint`, `all`.
+`scripts`, `precommit`, `test`, `ci`, `qt`, `coverage`, `build`, `dev` (default), `lint`, `terrain`, `all`.
 Groups compose smaller profiles: `dev` includes the build, Qt, lint, test, and pre-commit tools.
 
 All Python dependencies are resolved in `tools/uv.lock`. Setup requires uv and uses
