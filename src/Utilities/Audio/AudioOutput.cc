@@ -2,6 +2,9 @@
 #include "Fact.h"
 #include "AppMessages.h"
 #include "QGCLoggingCategory.h"
+#ifdef QGC_PIPER_TTS
+#include "PiperTtsEngine.h"
+#endif
 
 #include <QtCore/QRegularExpression>
 #include <QtCore/QApplicationStatic>
@@ -60,13 +63,27 @@ Q_APPLICATION_STATIC(AudioOutput, _audioOutput);
 
 AudioOutput::AudioOutput(QObject *parent)
     : QObject(parent)
-    // Auto-select a real engine, except under unit tests where the "none" backend avoids probing
-    // system plugins (e.g. speechd) that emit critical load errors and trip the strict log check.
-    , _engine(QGC::runningUnitTests()
-                  ? new QTextToSpeech(QStringLiteral("none"), this)
-                  : new QTextToSpeech(this))
+    , _engine(new QTextToSpeech(_engineName(), this))
 {
     // qCDebug(AudioOutputLog) << this;
+}
+
+QString AudioOutput::_engineName()
+{
+    // The "none" backend avoids probing system plugins (e.g. speechd) that emit critical load errors
+    // and trip the strict log check.
+    if (QGC::runningUnitTests()) {
+        return QStringLiteral("none");
+    }
+
+#ifdef QGC_PIPER_TTS
+    // Piper sounds far better than speechd's usual espeak-ng, but is only used if the user installed it.
+    if (PiperTtsEngine::isAvailable()) {
+        return QStringLiteral("piper");
+    }
+#endif
+
+    return QString();
 }
 
 AudioOutput::~AudioOutput()
