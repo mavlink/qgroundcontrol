@@ -2187,6 +2187,11 @@ void MockLink::_handleCommandLong(const mavlink_message_t &msg)
     mavlink_command_long_t request{};
     mavlink_msg_command_long_decode(&msg, &request);
 
+    // Ignore commands for other components: QGC would match an ack from the autopilot to a pending autopilot command
+    if ((request.target_component != _vehicleComponentId) && (request.target_component != MAV_COMP_ID_ALL)) {
+        return;
+    }
+
     uint8_t commandResult = MAV_RESULT_UNSUPPORTED;
 
     switch (request.command) {
@@ -2351,6 +2356,11 @@ void MockLink::_handleCommandInt(const mavlink_message_t &msg)
 {
     mavlink_command_int_t request{};
     mavlink_msg_command_int_decode(&msg, &request);
+
+    // Ignore commands for other components: QGC would match an ack from the autopilot to a pending autopilot command
+    if ((request.target_component != _vehicleComponentId) && (request.target_component != MAV_COMP_ID_ALL)) {
+        return;
+    }
 
     // Unrecognized commands are reported as unsupported (mirroring the COMMAND_LONG default).
     // This lets unit tests exercise "try command, fall back to legacy message" code paths
