@@ -148,7 +148,9 @@ qt_add_qml_module(QGroundControlControlsModule
         QGCFileDialog.qml
         QGCFlickable.qml
         QGCFlickableScrollIndicator.qml
+        QGCGroupBox.js
         QGCGroupBox.qml
+        QGCGroupBoxTab.qml
         QGCLabel.qml
         QGCListView.qml
         QGCMapLabel.qml
@@ -167,8 +169,6 @@ qt_add_qml_module(QGroundControlControlsModule
         QGCSimpleMessageDialog.qml
         QGCSlider.qml
         QGCSwipeView.qml
-        QGCTabBar.qml
-        QGCTabButton.qml
         QGCTextField.qml
         QGCToolBarButton.qml
         QGCVectorImage.qml
@@ -177,7 +177,6 @@ qt_add_qml_module(QGroundControlControlsModule
         SectionHeader.qml
         SelectableControl.qml
         SettingsButton.qml
-        SettingsGroupLayout.qml
         SetupPage.qml
         SidebarDivider.qml
         SliderSwitch.qml

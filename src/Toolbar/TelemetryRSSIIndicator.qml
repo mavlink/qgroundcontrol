@@ -41,7 +41,7 @@ Item {
         ToolIndicatorPage {
             showExpand: false
 
-            contentComponent: SettingsGroupLayout {
+            contentComponent: QGCGroupBox {
                 heading: qsTr("Telemetry RSSI Status")
 
                 LabelledLabel {

@@ -7,7 +7,7 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 
-SettingsGroupLayout {
+QGCGroupBox {
     id: _signingKeyManager
 
     Layout.fillWidth: true

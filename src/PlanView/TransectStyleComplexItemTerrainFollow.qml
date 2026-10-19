@@ -8,7 +8,6 @@ import QGroundControl.FactControls
 
 ColumnLayout {
     spacing: _margin
-    visible: tabBar.currentIndex === 2
 
     property var missionItem
 

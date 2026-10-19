@@ -7,7 +7,7 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FactControls
 
-SettingsGroupLayout {
+QGCGroupBox {
     id: root
     heading: qsTr("GCS Position")
 

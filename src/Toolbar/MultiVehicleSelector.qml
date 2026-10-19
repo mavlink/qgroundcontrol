@@ -76,7 +76,7 @@ RowLayout {
             }
 
             expandedComponent: Component {
-                SettingsGroupLayout {
+                QGCGroupBox {
                     Layout.fillWidth: true
 
                     FactCheckBoxSlider {

@@ -51,7 +51,7 @@ ToolIndicatorPage {
     }
 
     // Only states the receiver reports are listed.
-    component ResilienceGroup: SettingsGroupLayout {
+    component ResilienceGroup: QGCGroupBox {
         id: group
 
         required property VehicleGPSFactGroup facts
@@ -86,7 +86,7 @@ ToolIndicatorPage {
             visible: !root.expanded || !root._compact
             spacing: ScreenTools.defaultFontPixelHeight / 2
 
-            SettingsGroupLayout {
+            QGCGroupBox {
                 Layout.minimumWidth: 0
                 heading: qsTr("Vehicle GPS Status")
                 visible: root._vehicleGps

@@ -4,7 +4,7 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 
-SettingsGroupLayout {
+QGCGroupBox {
     Layout.fillWidth:       true
     Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 35
     heading:                qsTr("MAVLink Actions")

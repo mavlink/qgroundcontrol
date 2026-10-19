@@ -69,21 +69,16 @@ Rectangle {
             visible:                !transectAreaDefinitionComplete || _missionItem.wizardMode
         }
 
-        ColumnLayout {
+        QGCGroupBox {
             Layout.fillWidth:   true
-            spacing:            _margin
+            contentSpacing:     _margin
+            showDividers:       false
             visible:            transectAreaDefinitionComplete && !_missionItem.wizardMode
 
-            TransectStyleComplexItemTabBar {
-                id:                 tabBar
-                Layout.fillWidth:   true
-            }
+            Component.onCompleted: currentIndex = QGroundControl.settingsManager.planViewSettings.displayPresetsTabFirst.rawValue ? 3 : 0
 
-            // Grid tab
-            ColumnLayout {
-                Layout.fillWidth:   true
-                spacing:            _margin
-                visible:            tabBar.currentIndex === 0
+            QGCGroupBoxTab {
+                iconSource: "/qmlimages/PatternGrid.png"
 
                 QGCLabel {
                     Layout.fillWidth:   true
@@ -133,28 +128,29 @@ Rectangle {
                     Layout.fillWidth:   true
                     visible:            statsHeader.checked
                 }
-            } // Grid Column
+            } // Grid Tab
 
-            // Camera Tab
-            CameraCalcCamera {
-                Layout.fillWidth:   true
-                visible:            tabBar.currentIndex === 1
-                cameraCalc:         _missionItem.cameraCalc
+            QGCGroupBoxTab {
+                iconSource: "/qmlimages/PatternCamera.png"
+
+                CameraCalcCamera {
+                    Layout.fillWidth:   true
+                    cameraCalc:         _missionItem.cameraCalc
+                }
             }
 
-            // Terrain Tab
-            TransectStyleComplexItemTerrainFollow {
-                Layout.fillWidth:   true
-                spacing:            _margin
-                visible:            tabBar.currentIndex === 2
-                missionItem:        _missionItem
+            QGCGroupBoxTab {
+                iconSource: "/qmlimages/PatternTerrain.png"
+
+                TransectStyleComplexItemTerrainFollow {
+                    Layout.fillWidth:   true
+                    spacing:            _margin
+                    missionItem:        _missionItem
+                }
             }
 
-            // Presets Tab
-            ColumnLayout {
-                Layout.fillWidth:   true
-                spacing:            _margin
-                visible:            tabBar.currentIndex === 3
+            QGCGroupBoxTab {
+                iconSource: "/qmlimages/PatternPresets.png"
 
                 QGCLabel {
                     Layout.fillWidth:   true

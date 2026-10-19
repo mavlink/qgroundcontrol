@@ -23,7 +23,7 @@ Item {
         ToolIndicatorPage {
             showExpand: false
 
-            contentComponent: SettingsGroupLayout {
+            contentComponent: QGCGroupBox {
                 heading: qsTr("RC RSSI Status")
 
                 LabelledLabel {

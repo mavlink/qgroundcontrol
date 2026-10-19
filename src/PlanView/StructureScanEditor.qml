@@ -67,25 +67,14 @@ Rectangle {
                 visible:        !missionItem.structurePolygon.isValid || missionItem.wizardMode
             }
 
-        ColumnLayout {
+        QGCGroupBox {
             Layout.fillWidth:   true
-            spacing:        _margin
-            visible:        !wizardLabel.visible
+            contentSpacing:     _margin
+            showDividers:       false
+            visible:            !wizardLabel.visible
 
-            QGCTabBar {
-                id:             tabBar
-                Layout.fillWidth:   true
-
-                Component.onCompleted: currentIndex = 0
-
-                QGCTabButton { text: qsTr("Grid") }
-                QGCTabButton { text: qsTr("Camera") }
-            }
-
-            ColumnLayout {
-                Layout.fillWidth:   true
-                spacing:            _margin
-                visible:            tabBar.currentIndex == 0
+            QGCGroupBoxTab {
+                title: qsTr("Grid")
 
                 QGCLabel {
                     Layout.fillWidth:   true
@@ -212,12 +201,10 @@ Rectangle {
                     QGCLabel { text: qsTr("Trigger Distance") }
                     QGCLabel { text: missionItem.cameraCalc.adjustedFootprintSide.valueString + " " + QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString }
                 }
-            } // Grid Column
+            } // Grid Tab
 
-            ColumnLayout {
-                Layout.fillWidth:   true
-                spacing:            _margin
-                visible:            tabBar.currentIndex == 1
+            QGCGroupBoxTab {
+                title: qsTr("Camera")
 
                 CameraCalcCamera {
                     Layout.fillWidth:   true

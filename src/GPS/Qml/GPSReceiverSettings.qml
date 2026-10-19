@@ -8,7 +8,7 @@ import QGroundControl.Controls
 import QGroundControl.FactControls
 import QGroundControl.GPS
 
-SettingsGroupLayout {
+QGCGroupBox {
     id: root
 
     property GPSReceiver receiver: QGroundControl.gpsManager.receiver

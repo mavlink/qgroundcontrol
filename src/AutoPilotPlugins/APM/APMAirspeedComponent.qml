@@ -63,329 +63,327 @@ SetupPage {
             FactPanelController { id: controller }
             QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
-            QGCTabBar {
-                id: tabBar
-                Layout.fillWidth: true
-
-                QGCTabButton {
-                    text: qsTr("Basic")
-                    checked: true
-                }
-                QGCTabButton {
-                    text: qsTr("Advanced")
-                }
-            }
-
-            // ─── Basic Tab ───
-
-            Flow {
+            QGCGroupBox {
                 Layout.maximumWidth: availableWidth
-                spacing: ScreenTools.defaultFontPixelHeight
-                visible: tabBar.currentIndex === 0
+                showDividers: false
 
-                // ─── Shared Basic Sensor Configuration Component ───
+                // ─── Basic Tab ───
 
-                Component {
-                    id: basicSensorSettingsComponent
+                QGCGroupBoxTab {
+                    title: qsTr("Basic")
 
-                    ColumnLayout {
-                        spacing: _margins
+                    Flow {
+                        Layout.fillWidth: true
+                        spacing: ScreenTools.defaultFontPixelHeight
 
-                        LabelledFactComboBox {
-                            label: qsTr("Sensor type")
-                            fact: sensorTypeFact
-                            indexModel: false
-                            comboBoxPreferredWidth: _comboWidth
-                            Layout.fillWidth: true
-                        }
+                        // ─── Shared Basic Sensor Configuration Component ───
 
-                        ColumnLayout {
-                            spacing: _margins
-                            visible: sensorTypeFact.rawValue !== _typeNone
+                        Component {
+                            id: basicSensorSettingsComponent
 
-                            LabelledFactComboBox {
-                                label: qsTr("Use airspeed")
-                                fact: controller.getParameterFact(-1, paramPrefix + "USE", false)
-                                indexModel: false
-                                comboBoxPreferredWidth: _comboWidth
-                                Layout.fillWidth: true
-                                visible: controller.parameterExists(-1, paramPrefix + "USE")
+                            ColumnLayout {
+                                spacing: _margins
+
+                                LabelledFactComboBox {
+                                    label: qsTr("Sensor type")
+                                    fact: sensorTypeFact
+                                    indexModel: false
+                                    comboBoxPreferredWidth: _comboWidth
+                                    Layout.fillWidth: true
+                                }
+
+                                ColumnLayout {
+                                    spacing: _margins
+                                    visible: sensorTypeFact.rawValue !== _typeNone
+
+                                    LabelledFactComboBox {
+                                        label: qsTr("Use airspeed")
+                                        fact: controller.getParameterFact(-1, paramPrefix + "USE", false)
+                                        indexModel: false
+                                        comboBoxPreferredWidth: _comboWidth
+                                        Layout.fillWidth: true
+                                        visible: controller.parameterExists(-1, paramPrefix + "USE")
+                                    }
+
+                                    LabelledFactTextField {
+                                        label: qsTr("Airspeed ratio")
+                                        fact: controller.getParameterFact(-1, paramPrefix + "RATIO", false)
+                                        textFieldPreferredWidth: _textFieldWidth
+                                        textFieldShowUnits: true
+                                        Layout.fillWidth: true
+                                        visible: _isPitot(sensorTypeFact.rawValue) && controller.parameterExists(-1, paramPrefix + "RATIO")
+                                    }
+
+                                    FactCheckBox {
+                                        text: qsTr("Auto calibrate ratio in flight")
+                                        fact: controller.getParameterFact(-1, paramPrefix + "AUTOCAL", false)
+                                        visible: _isPitot(sensorTypeFact.rawValue) && controller.parameterExists(-1, paramPrefix + "AUTOCAL")
+                                    }
+                                }
                             }
+                        }
 
-                            LabelledFactTextField {
-                                label: qsTr("Airspeed ratio")
-                                fact: controller.getParameterFact(-1, paramPrefix + "RATIO", false)
-                                textFieldPreferredWidth: _textFieldWidth
-                                textFieldShowUnits: true
-                                Layout.fillWidth: true
-                                visible: _isPitot(sensorTypeFact.rawValue) && controller.parameterExists(-1, paramPrefix + "RATIO")
-                            }
+                        // ─── Primary Sensor Configuration ───
 
-                            FactCheckBox {
-                                text: qsTr("Auto calibrate ratio in flight")
-                                fact: controller.getParameterFact(-1, paramPrefix + "AUTOCAL", false)
-                                visible: _isPitot(sensorTypeFact.rawValue) && controller.parameterExists(-1, paramPrefix + "AUTOCAL")
+                        QGCGroupBox {
+                            heading: qsTr("Primary Airspeed Sensor")
+                            visible: _arspdTypeAvailable
+
+                            Loader {
+                                sourceComponent: basicSensorSettingsComponent
+                                property string paramPrefix: "ARSPD_"
+                                property Fact sensorTypeFact: _arspdType
                             }
                         }
-                    }
-                }
 
-                // ─── Primary Sensor Configuration ───
+                        // ─── Second Sensor Configuration ───
 
-                QGCGroupBox {
-                    title: qsTr("Primary Airspeed Sensor")
-                    visible: _arspdTypeAvailable
+                        QGCGroupBox {
+                            heading: qsTr("Second Airspeed Sensor")
+                            visible: _arspd2TypeAvailable
 
-                    Loader {
-                        sourceComponent: basicSensorSettingsComponent
-                        property string paramPrefix: "ARSPD_"
-                        property Fact sensorTypeFact: _arspdType
-                    }
-                }
+                            Loader {
+                                sourceComponent: basicSensorSettingsComponent
+                                property string paramPrefix: "ARSPD2_"
+                                property Fact sensorTypeFact: _arspd2Type
+                            }
+                        }
 
-                // ─── Second Sensor Configuration ───
+                        // ─── Multi-Sensor Options ───
 
-                QGCGroupBox {
-                    title: qsTr("Second Airspeed Sensor")
-                    visible: _arspd2TypeAvailable
+                        QGCGroupBox {
+                            heading: qsTr("Multi-Sensor Options")
+                            visible: _sensorEnabled && _sensor2Enabled
 
-                    Loader {
-                        sourceComponent: basicSensorSettingsComponent
-                        property string paramPrefix: "ARSPD2_"
-                        property Fact sensorTypeFact: _arspd2Type
-                    }
-                }
+                            ColumnLayout {
+                                spacing: _margins
 
-                // ─── Multi-Sensor Options ───
+                                LabelledFactComboBox {
+                                    label: qsTr("Primary sensor")
+                                    fact: controller.getParameterFact(-1, "ARSPD_PRIMARY", false)
+                                    indexModel: false
+                                    comboBoxPreferredWidth: _comboWidth
+                                    Layout.fillWidth: true
+                                    visible: controller.parameterExists(-1, "ARSPD_PRIMARY")
+                                }
+                            }
+                        }
 
-                QGCGroupBox {
-                    title: qsTr("Multi-Sensor Options")
-                    visible: _sensorEnabled && _sensor2Enabled
+                        // ─── Airspeed Limits ───
 
-                    ColumnLayout {
-                        spacing: _margins
+                        QGCGroupBox {
+                            heading: qsTr("Airspeed Limits")
+                            visible: _sensorEnabled && controller.parameterExists(-1, "AIRSPEED_CRUISE")
 
-                        LabelledFactComboBox {
-                            label: qsTr("Primary sensor")
-                            fact: controller.getParameterFact(-1, "ARSPD_PRIMARY", false)
-                            indexModel: false
-                            comboBoxPreferredWidth: _comboWidth
-                            Layout.fillWidth: true
-                            visible: controller.parameterExists(-1, "ARSPD_PRIMARY")
+                            ColumnLayout {
+                                spacing: _margins
+
+                                LabelledFactTextField {
+                                    label: qsTr("Cruise airspeed")
+                                    fact: controller.getParameterFact(-1, "AIRSPEED_CRUISE", false)
+                                    textFieldPreferredWidth: _textFieldWidth
+                                    textFieldShowUnits: true
+                                    Layout.fillWidth: true
+                                    visible: controller.parameterExists(-1, "AIRSPEED_CRUISE")
+                                }
+
+                                LabelledFactTextField {
+                                    label: qsTr("Minimum airspeed")
+                                    fact: controller.getParameterFact(-1, "AIRSPEED_MIN", false)
+                                    textFieldPreferredWidth: _textFieldWidth
+                                    textFieldShowUnits: true
+                                    Layout.fillWidth: true
+                                    visible: controller.parameterExists(-1, "AIRSPEED_MIN")
+                                }
+
+                                LabelledFactTextField {
+                                    label: qsTr("Maximum airspeed")
+                                    fact: controller.getParameterFact(-1, "AIRSPEED_MAX", false)
+                                    textFieldPreferredWidth: _textFieldWidth
+                                    textFieldShowUnits: true
+                                    Layout.fillWidth: true
+                                    visible: controller.parameterExists(-1, "AIRSPEED_MAX")
+                                }
+
+                                LabelledFactTextField {
+                                    label: qsTr("Stall airspeed")
+                                    fact: controller.getParameterFact(-1, "AIRSPEED_STALL", false)
+                                    textFieldPreferredWidth: _textFieldWidth
+                                    textFieldShowUnits: true
+                                    Layout.fillWidth: true
+                                    visible: controller.parameterExists(-1, "AIRSPEED_STALL")
+                                }
+                            }
                         }
                     }
                 }
 
-                // ─── Airspeed Limits ───
+                // ─── Advanced Tab ───
 
-                QGCGroupBox {
-                    title: qsTr("Airspeed Limits")
-                    visible: _sensorEnabled && controller.parameterExists(-1, "AIRSPEED_CRUISE")
+                QGCGroupBoxTab {
+                    title: qsTr("Advanced")
 
-                    ColumnLayout {
-                        spacing: _margins
+                    Flow {
+                        Layout.fillWidth: true
+                        spacing: ScreenTools.defaultFontPixelHeight
 
-                        LabelledFactTextField {
-                            label: qsTr("Cruise airspeed")
-                            fact: controller.getParameterFact(-1, "AIRSPEED_CRUISE", false)
-                            textFieldPreferredWidth: _textFieldWidth
-                            textFieldShowUnits: true
-                            Layout.fillWidth: true
-                            visible: controller.parameterExists(-1, "AIRSPEED_CRUISE")
+                        // ─── Shared Advanced Sensor Configuration Component ───
+
+                        Component {
+                            id: advancedSensorSettingsComponent
+
+                            ColumnLayout {
+                                spacing: _margins
+
+                                QGCLabel {
+                                    text: sensorLabel
+                                    font.bold: true
+                                }
+
+                                LabelledFactTextField {
+                                    label: qsTr("Airspeed offset")
+                                    fact: controller.getParameterFact(-1, paramPrefix + "OFFSET", false)
+                                    textFieldPreferredWidth: _textFieldWidth
+                                    textFieldShowUnits: true
+                                    Layout.fillWidth: true
+                                    visible: _isPitot(sensorTypeFact.rawValue) && controller.parameterExists(-1, paramPrefix + "OFFSET")
+                                }
+
+                                LabelledFactComboBox {
+                                    label: qsTr("Skip calibration")
+                                    fact: controller.getParameterFact(-1, paramPrefix + "SKIP_CAL", false)
+                                    indexModel: false
+                                    comboBoxPreferredWidth: _comboWidth
+                                    Layout.fillWidth: true
+                                    visible: _isPitot(sensorTypeFact.rawValue) && controller.parameterExists(-1, paramPrefix + "SKIP_CAL")
+                                }
+
+                                LabelledFactComboBox {
+                                    label: qsTr("Pitot tube order")
+                                    fact: controller.getParameterFact(-1, paramPrefix + "TUBE_ORDR", false)
+                                    indexModel: false
+                                    comboBoxPreferredWidth: _comboWidth
+                                    Layout.fillWidth: true
+                                    visible: _isPitot(sensorTypeFact.rawValue) && controller.parameterExists(-1, paramPrefix + "TUBE_ORDR")
+                                }
+
+                                LabelledFactComboBox {
+                                    label: qsTr("Analog pin")
+                                    fact: controller.getParameterFact(-1, paramPrefix + "PIN", false)
+                                    indexModel: false
+                                    comboBoxPreferredWidth: _comboWidth
+                                    Layout.fillWidth: true
+                                    visible: _isAnalog(sensorTypeFact.rawValue) && controller.parameterExists(-1, paramPrefix + "PIN")
+                                }
+
+                                LabelledFactComboBox {
+                                    label: qsTr("I2C bus")
+                                    fact: controller.getParameterFact(-1, paramPrefix + "BUS", false)
+                                    indexModel: false
+                                    comboBoxPreferredWidth: _comboWidth
+                                    Layout.fillWidth: true
+                                    visible: _isI2C(sensorTypeFact.rawValue) && controller.parameterExists(-1, paramPrefix + "BUS")
+                                }
+
+                                LabelledFactTextField {
+                                    label: qsTr("PSI range")
+                                    fact: controller.getParameterFact(-1, paramPrefix + "PSI_RANGE", false)
+                                    textFieldPreferredWidth: _textFieldWidth
+                                    textFieldShowUnits: true
+                                    Layout.fillWidth: true
+                                    visible: _hasPsiRange(sensorTypeFact.rawValue) && controller.parameterExists(-1, paramPrefix + "PSI_RANGE")
+                                }
+                            }
                         }
 
-                        LabelledFactTextField {
-                            label: qsTr("Minimum airspeed")
-                            fact: controller.getParameterFact(-1, "AIRSPEED_MIN", false)
-                            textFieldPreferredWidth: _textFieldWidth
-                            textFieldShowUnits: true
-                            Layout.fillWidth: true
-                            visible: controller.parameterExists(-1, "AIRSPEED_MIN")
+                        // ─── Sensor Advanced Settings ───
+
+                        QGCGroupBox {
+                            heading: qsTr("Sensor Settings")
+                            visible: _sensorEnabled
+
+                            ColumnLayout {
+                                spacing: _margins
+
+                                Loader {
+                                    sourceComponent: advancedSensorSettingsComponent
+                                    active: _sensorEnabled
+                                    property string paramPrefix: "ARSPD_"
+                                    property Fact sensorTypeFact: _arspdType
+                                    property string sensorLabel: qsTr("Primary Sensor")
+                                }
+
+                                Loader {
+                                    sourceComponent: advancedSensorSettingsComponent
+                                    active: _sensor2Enabled
+                                    property string paramPrefix: "ARSPD2_"
+                                    property Fact sensorTypeFact: _arspd2Type
+                                    property string sensorLabel: qsTr("Second Sensor")
+                                }
+                            }
                         }
 
-                        LabelledFactTextField {
-                            label: qsTr("Maximum airspeed")
-                            fact: controller.getParameterFact(-1, "AIRSPEED_MAX", false)
-                            textFieldPreferredWidth: _textFieldWidth
-                            textFieldShowUnits: true
-                            Layout.fillWidth: true
-                            visible: controller.parameterExists(-1, "AIRSPEED_MAX")
+                        // ─── Health Monitoring ───
+
+                        QGCGroupBox {
+                            heading: qsTr("Health Monitoring")
+                            visible: _sensorEnabled
+
+                            ColumnLayout {
+                                spacing: _margins
+
+                                LabelledFactTextField {
+                                    label: qsTr("Max airspeed/groundspeed difference")
+                                    fact: controller.getParameterFact(-1, "ARSPD_WIND_MAX", false)
+                                    textFieldPreferredWidth: _textFieldWidth
+                                    textFieldShowUnits: true
+                                    Layout.fillWidth: true
+                                    visible: controller.parameterExists(-1, "ARSPD_WIND_MAX")
+                                }
+
+                                LabelledFactTextField {
+                                    label: qsTr("Warning threshold")
+                                    fact: controller.getParameterFact(-1, "ARSPD_WIND_WARN", false)
+                                    textFieldPreferredWidth: _textFieldWidth
+                                    textFieldShowUnits: true
+                                    Layout.fillWidth: true
+                                    visible: controller.parameterExists(-1, "ARSPD_WIND_WARN")
+                                }
+
+                                LabelledFactTextField {
+                                    label: qsTr("Re-enable gate size")
+                                    fact: controller.getParameterFact(-1, "ARSPD_WIND_GATE", false)
+                                    textFieldPreferredWidth: _textFieldWidth
+                                    textFieldShowUnits: true
+                                    Layout.fillWidth: true
+                                    visible: controller.parameterExists(-1, "ARSPD_WIND_GATE")
+                                }
+
+                                LabelledFactTextField {
+                                    label: qsTr("Offset calibration error warning")
+                                    fact: controller.getParameterFact(-1, "ARSPD_OFF_PCNT", false)
+                                    textFieldPreferredWidth: _textFieldWidth
+                                    textFieldShowUnits: true
+                                    Layout.fillWidth: true
+                                    visible: controller.parameterExists(-1, "ARSPD_OFF_PCNT")
+                                }
+                            }
                         }
 
-                        LabelledFactTextField {
-                            label: qsTr("Stall airspeed")
-                            fact: controller.getParameterFact(-1, "AIRSPEED_STALL", false)
-                            textFieldPreferredWidth: _textFieldWidth
-                            textFieldShowUnits: true
-                            Layout.fillWidth: true
-                            visible: controller.parameterExists(-1, "AIRSPEED_STALL")
-                        }
-                    }
-                }
-            }
+                        // ─── Airspeed Options ───
 
-            // ─── Advanced Tab ───
+                        QGCGroupBox {
+                            heading: qsTr("Airspeed Options")
+                            visible: _sensorEnabled && controller.parameterExists(-1, "ARSPD_OPTIONS")
 
-            Flow {
-                Layout.maximumWidth: availableWidth
-                spacing: ScreenTools.defaultFontPixelHeight
-                visible: tabBar.currentIndex === 1
+                            ColumnLayout {
+                                spacing: _margins
 
-                // ─── Shared Advanced Sensor Configuration Component ───
-
-                Component {
-                    id: advancedSensorSettingsComponent
-
-                    ColumnLayout {
-                        spacing: _margins
-
-                        QGCLabel {
-                            text: sensorLabel
-                            font.bold: true
-                        }
-
-                        LabelledFactTextField {
-                            label: qsTr("Airspeed offset")
-                            fact: controller.getParameterFact(-1, paramPrefix + "OFFSET", false)
-                            textFieldPreferredWidth: _textFieldWidth
-                            textFieldShowUnits: true
-                            Layout.fillWidth: true
-                            visible: _isPitot(sensorTypeFact.rawValue) && controller.parameterExists(-1, paramPrefix + "OFFSET")
-                        }
-
-                        LabelledFactComboBox {
-                            label: qsTr("Skip calibration")
-                            fact: controller.getParameterFact(-1, paramPrefix + "SKIP_CAL", false)
-                            indexModel: false
-                            comboBoxPreferredWidth: _comboWidth
-                            Layout.fillWidth: true
-                            visible: _isPitot(sensorTypeFact.rawValue) && controller.parameterExists(-1, paramPrefix + "SKIP_CAL")
-                        }
-
-                        LabelledFactComboBox {
-                            label: qsTr("Pitot tube order")
-                            fact: controller.getParameterFact(-1, paramPrefix + "TUBE_ORDR", false)
-                            indexModel: false
-                            comboBoxPreferredWidth: _comboWidth
-                            Layout.fillWidth: true
-                            visible: _isPitot(sensorTypeFact.rawValue) && controller.parameterExists(-1, paramPrefix + "TUBE_ORDR")
-                        }
-
-                        LabelledFactComboBox {
-                            label: qsTr("Analog pin")
-                            fact: controller.getParameterFact(-1, paramPrefix + "PIN", false)
-                            indexModel: false
-                            comboBoxPreferredWidth: _comboWidth
-                            Layout.fillWidth: true
-                            visible: _isAnalog(sensorTypeFact.rawValue) && controller.parameterExists(-1, paramPrefix + "PIN")
-                        }
-
-                        LabelledFactComboBox {
-                            label: qsTr("I2C bus")
-                            fact: controller.getParameterFact(-1, paramPrefix + "BUS", false)
-                            indexModel: false
-                            comboBoxPreferredWidth: _comboWidth
-                            Layout.fillWidth: true
-                            visible: _isI2C(sensorTypeFact.rawValue) && controller.parameterExists(-1, paramPrefix + "BUS")
-                        }
-
-                        LabelledFactTextField {
-                            label: qsTr("PSI range")
-                            fact: controller.getParameterFact(-1, paramPrefix + "PSI_RANGE", false)
-                            textFieldPreferredWidth: _textFieldWidth
-                            textFieldShowUnits: true
-                            Layout.fillWidth: true
-                            visible: _hasPsiRange(sensorTypeFact.rawValue) && controller.parameterExists(-1, paramPrefix + "PSI_RANGE")
-                        }
-                    }
-                }
-
-                // ─── Sensor Advanced Settings ───
-
-                QGCGroupBox {
-                    title: qsTr("Sensor Settings")
-                    visible: _sensorEnabled
-
-                    ColumnLayout {
-                        spacing: _margins
-
-                        Loader {
-                            sourceComponent: advancedSensorSettingsComponent
-                            active: _sensorEnabled
-                            property string paramPrefix: "ARSPD_"
-                            property Fact sensorTypeFact: _arspdType
-                            property string sensorLabel: qsTr("Primary Sensor")
-                        }
-
-                        Loader {
-                            sourceComponent: advancedSensorSettingsComponent
-                            active: _sensor2Enabled
-                            property string paramPrefix: "ARSPD2_"
-                            property Fact sensorTypeFact: _arspd2Type
-                            property string sensorLabel: qsTr("Second Sensor")
-                        }
-                    }
-                }
-
-                // ─── Health Monitoring ───
-
-                QGCGroupBox {
-                    title: qsTr("Health Monitoring")
-                    visible: _sensorEnabled
-
-                    ColumnLayout {
-                        spacing: _margins
-
-                        LabelledFactTextField {
-                            label: qsTr("Max airspeed/groundspeed difference")
-                            fact: controller.getParameterFact(-1, "ARSPD_WIND_MAX", false)
-                            textFieldPreferredWidth: _textFieldWidth
-                            textFieldShowUnits: true
-                            Layout.fillWidth: true
-                            visible: controller.parameterExists(-1, "ARSPD_WIND_MAX")
-                        }
-
-                        LabelledFactTextField {
-                            label: qsTr("Warning threshold")
-                            fact: controller.getParameterFact(-1, "ARSPD_WIND_WARN", false)
-                            textFieldPreferredWidth: _textFieldWidth
-                            textFieldShowUnits: true
-                            Layout.fillWidth: true
-                            visible: controller.parameterExists(-1, "ARSPD_WIND_WARN")
-                        }
-
-                        LabelledFactTextField {
-                            label: qsTr("Re-enable gate size")
-                            fact: controller.getParameterFact(-1, "ARSPD_WIND_GATE", false)
-                            textFieldPreferredWidth: _textFieldWidth
-                            textFieldShowUnits: true
-                            Layout.fillWidth: true
-                            visible: controller.parameterExists(-1, "ARSPD_WIND_GATE")
-                        }
-
-                        LabelledFactTextField {
-                            label: qsTr("Offset calibration error warning")
-                            fact: controller.getParameterFact(-1, "ARSPD_OFF_PCNT", false)
-                            textFieldPreferredWidth: _textFieldWidth
-                            textFieldShowUnits: true
-                            Layout.fillWidth: true
-                            visible: controller.parameterExists(-1, "ARSPD_OFF_PCNT")
-                        }
-                    }
-                }
-
-                // ─── Airspeed Options ───
-
-                QGCGroupBox {
-                    title: qsTr("Airspeed Options")
-                    visible: _sensorEnabled && controller.parameterExists(-1, "ARSPD_OPTIONS")
-
-                    ColumnLayout {
-                        spacing: _margins
-
-                        FactBitmask {
-                            fact: controller.getParameterFact(-1, "ARSPD_OPTIONS", false)
-                            Layout.preferredWidth: airspeedPage.availableWidth * 0.5
+                                FactBitmask {
+                                    fact: controller.getParameterFact(-1, "ARSPD_OPTIONS", false)
+                                    Layout.preferredWidth: airspeedPage.availableWidth * 0.5
+                                }
+                            }
                         }
                     }
                 }

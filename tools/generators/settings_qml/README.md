@@ -222,7 +222,7 @@ text/traversal matching:
 | Item | objectName |
 | --- | --- |
 | Page root | `settingsPage_<PageName>` (characters outside `[A-Za-z0-9_]` stripped, e.g. `settingsPage_RemoteID`) |
-| Group (`SettingsGroupLayout`, headed groups only) | `settingsGroup_<Heading>` (characters outside `[A-Za-z0-9_]` stripped, e.g. `settingsGroup_EUVehicleInfo`) |
+| Group (`QGCGroupBox`, headed groups only) | `settingsGroup_<Heading>` (characters outside `[A-Za-z0-9_]` stripped, e.g. `settingsGroup_EUVehicleInfo`) |
 | Text field (`LabelledFactTextField`) | `settingsTextField_<factName>` |
 | Checkbox (`FactCheckBoxSlider`) | `settingsCheckBox_<factName>` |
 

@@ -254,274 +254,283 @@ AnalyzePage {
                 QGCLabel { text: replayController.totalTime }
             }
 
-            QGCTabBar {
-                id: mainTabBar
-                Layout.fillWidth: true
-
-                QGCTabButton { text: qsTr("Charting") }
-                QGCTabButton { text: qsTr("Map") }
-                QGCTabButton { text: qsTr("Parameters") }
-                QGCTabButton { text: qsTr("Messages") }
-            }
-
-            StackLayout {
+            QGCGroupBox {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                currentIndex: mainTabBar.currentIndex
+                showDividers: false
+                contentSpacing: 0
 
-                // ---- Tab 0: Charting ----
-                RowLayout {
-                    spacing: ScreenTools.defaultFontPixelWidth
+                QGCGroupBoxTab {
+                    title: qsTr("Charting")
+                    Layout.fillHeight: true
 
-                    // Left panel: stats + fields list
-                    LogViewerFieldsPanel {
-                        id: fieldsPanel
-                        Layout.fillHeight: true
-                        logParser: logParser
-                        logViewerController: logViewerController
-                        onClearSelectedRequested: logViewerChart.refreshBinChart()
-                    }
-
-                    // Right panel: chart + MAVLink inspector
-                    Rectangle {
+                    RowLayout {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
-                        color: qgcPal.windowShadeDark
-                        radius: ScreenTools.defaultFontPixelWidth * 0.5
+                        spacing: ScreenTools.defaultFontPixelWidth
+
+                        // Left panel: stats + fields list
+                        LogViewerFieldsPanel {
+                            id: fieldsPanel
+                            Layout.fillHeight: true
+                            logParser: logParser
+                            logViewerController: logViewerController
+                            onClearSelectedRequested: logViewerChart.refreshBinChart()
+                        }
+
+                        // Right panel: chart + MAVLink inspector
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            color: qgcPal.windowShadeDark
+                            radius: ScreenTools.defaultFontPixelWidth * 0.5
+
+                            ColumnLayout {
+                                anchors.fill: parent
+                                anchors.margins: ScreenTools.defaultFontPixelWidth
+                                spacing: ScreenTools.defaultFontPixelHeight * 0.5
+
+                                LogViewerChart {
+                                    id: logViewerChart
+                                    Layout.fillWidth: true
+                                    Layout.fillHeight: true
+                                    visible: isFirmwareLog
+                                    logParser: logParser
+                                    logViewerController: logViewerController
+                                    xAxisShowLocalTime: _xAxisShowLocalTime
+
+                                    onCursorMoved: (t) => {
+                                        _mapTab._markerVisible = true
+                                        _mapTab._markerCoord   = logParser.gpsCoordAt(t)
+                                        _mapTab._sharedCursorT = t
+                                        if (_altChart.visible) _altChart.setSharedCursor(t)
+                                    }
+                                    onZoomApplied: (minX, maxX) => {
+                                        _mapTab._setSharedZoom(minX, maxX)
+                                        if (_altChart.visible) _altChart.setSharedZoom(minX, maxX)
+                                    }
+                                }
+
+                                Loader {
+                                    Layout.fillWidth: true
+                                    Layout.fillHeight: true
+                                    active: logViewerController.sourceType === LogViewerController.TLog
+                                    source: "qrc:/qml/QGroundControl/AnalyzeView/MAVLinkInspector/MAVLinkInspectorPage.qml"
+                                }
+                            }
+                        }
+                    }
+                }
+
+                QGCGroupBoxTab {
+                    title: qsTr("Map")
+                    Layout.fillHeight: true
+
+                    Item {
+                        id: _mapTab
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+
+                        // GPS path data
+                        readonly property var _gpsPath: logParser.parseComplete ? logParser.gpsPath() : []
+                        readonly property int _pathLen: (_gpsPath && _gpsPath.length) ? _gpsPath.length : 0
+                        readonly property bool _hasPath: _pathLen >= 2
+                        readonly property string _altFieldName: _hasPath ? logParser.gpsAltitudeFieldName() : ""
+                        readonly property bool _hasAltField: _altFieldName.length > 0
+                        readonly property bool _showAltChart: _hasAltField && _hasPath
+
+                        // Shared cursor state (driven by altitude chart, displayed on map)
+                        property bool _markerVisible: false
+                        property var _markerCoord: ({})
+
+                        // Collapsed state for the altitude chart, so the map can use the full tab height
+                        property bool _altChartCollapsed: false
+
+                        // Last shared cursor/zoom from either chart; reapplied when the altitude chart becomes visible.
+                        property real _sharedCursorT: NaN
+                        property real _sharedZoomMinX: NaN
+                        property real _sharedZoomMaxX: NaN
+
+                        function _setSharedZoom(minX, maxX) {
+                            _sharedZoomMinX = minX
+                            _sharedZoomMaxX = maxX
+                            // Mirror LogViewerBaseChart._applyZoomInternal, which recenters an out-of-range cursor
+                            if (!isNaN(_sharedCursorT) && (_sharedCursorT < minX || _sharedCursorT > maxX)) {
+                                _sharedCursorT = (minX + maxX) / 2
+                                _markerCoord = logParser.gpsCoordAt(_sharedCursorT)
+                            }
+                        }
 
                         ColumnLayout {
                             anchors.fill: parent
-                            anchors.margins: ScreenTools.defaultFontPixelWidth
-                            spacing: ScreenTools.defaultFontPixelHeight * 0.5
+                            spacing: 0
 
-                            LogViewerChart {
-                                id: logViewerChart
+                            // ---- Map ----
+                            Item {
                                 Layout.fillWidth: true
                                 Layout.fillHeight: true
-                                visible: isFirmwareLog
+
+                                FlightMap {
+                                    id: _flightMap
+                                    anchors.fill: parent
+                                    mapName: "LogViewerMap"
+                                    allowGCSLocationCenter: true
+
+                                    readonly property var _path: _mapTab._gpsPath
+
+                                    function _fitPath() {
+                                        const p = _mapTab._gpsPath
+                                        if (!_mapTab._hasPath) return
+                                        var minLat = p[0].latitude, maxLat = minLat
+                                        var minLon = p[0].longitude, maxLon = minLon
+                                        for (var i = 1; i < p.length; i++) {
+                                            var c = p[i]
+                                            if (c.latitude  < minLat) minLat = c.latitude
+                                            if (c.latitude  > maxLat) maxLat = c.latitude
+                                            if (c.longitude < minLon) minLon = c.longitude
+                                            if (c.longitude > maxLon) maxLon = c.longitude
+                                        }
+                                        setVisibleRegion(QtPositioning.rectangle(
+                                            QtPositioning.coordinate(maxLat, minLon),
+                                            QtPositioning.coordinate(minLat, maxLon)))
+                                    }
+
+                                    Connections {
+                                        target: logParser
+                                        function onParseCompleteChanged() {
+                                            if (logParser.parseComplete) Qt.callLater(_flightMap._fitPath)
+                                        }
+                                    }
+
+                                    MapPolyline {
+                                        line.width: 3
+                                        line.color: QGroundControl.globalPalette.colorRed
+                                        path: _flightMap._path
+                                    }
+
+                                    // Position dot driven by altitude chart cursor
+                                    MapQuickItem {
+                                        readonly property var _coord: _mapTab._markerCoord
+                                        visible: _mapTab._markerVisible && _mapTab._hasPath
+                                                      && _coord && _coord.latitude !== undefined
+                                        coordinate: (_coord && _coord.latitude !== undefined)
+                                                      ? QtPositioning.coordinate(_coord.latitude, _coord.longitude)
+                                                      : QtPositioning.coordinate(0, 0)
+                                        anchorPoint: Qt.point(_posDot.width / 2, _posDot.height / 2)
+                                        sourceItem: Rectangle {
+                                            id: _posDot
+                                            width: ScreenTools.defaultFontPixelHeight * 1.2
+                                            height: width
+                                            radius: width / 2
+                                            color: QGroundControl.globalPalette.colorYellow
+                                            border.color: "white"
+                                            border.width: 2
+                                        }
+                                    }
+
+                                    MapScale {
+                                        anchors.margins: ScreenTools.defaultFontPixelWidth
+                                        anchors.left: parent.left
+                                        anchors.bottom: parent.bottom
+                                        mapControl: _flightMap
+                                    }
+                                }
+
+                                QGCLabel {
+                                    anchors.centerIn: parent
+                                    visible: logParser.parseComplete && !_mapTab._hasPath
+                                    text: qsTr("No GPS data found in this log")
+                                    font.italic: true
+                                }
+
+                                QGCLabel {
+                                    anchors.centerIn: parent
+                                    visible: !logParser.parseComplete
+                                    text: qsTr("Load a log file to view the flight path")
+                                    font.italic: true
+                                }
+
+                                QGCButton {
+                                    anchors.margins: ScreenTools.defaultFontPixelWidth
+                                    anchors.right: parent.right
+                                    anchors.bottom: parent.bottom
+                                    scale: 0.75
+                                    transformOrigin: Item.BottomRight
+                                    visible: _mapTab._showAltChart
+                                    iconSource: _mapTab._altChartCollapsed ? "/res/chevron-double-up.svg" : "/res/chevron-double-down.svg"
+                                    Accessible.name: _mapTab._altChartCollapsed ? qsTr("Expand altitude chart") : qsTr("Collapse altitude chart")
+                                    ToolTip.text: Accessible.name
+                                    ToolTip.visible: hovered
+                                    onClicked: _mapTab._altChartCollapsed = !_mapTab._altChartCollapsed
+                                }
+                            }
+
+                            // ---- Altitude chart ----
+                            LogViewerAltChart {
+                                id: _altChart
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 14
+                                visible: _mapTab._showAltChart && !_mapTab._altChartCollapsed
                                 logParser: logParser
-                                logViewerController: logViewerController
+                                altFieldName: _mapTab._altFieldName
                                 xAxisShowLocalTime: _xAxisShowLocalTime
 
-                                onCursorMoved: (t) => {
+                                onMarkerChanged: (t) => {
                                     _mapTab._markerVisible = true
                                     _mapTab._markerCoord   = logParser.gpsCoordAt(t)
                                     _mapTab._sharedCursorT = t
-                                    if (_altChart.visible) _altChart.setSharedCursor(t)
+                                    logViewerChart.setSharedCursor(t)
+                                }
+                                onMarkerCleared: {
+                                    _mapTab._markerVisible = false
                                 }
                                 onZoomApplied: (minX, maxX) => {
                                     _mapTab._setSharedZoom(minX, maxX)
-                                    if (_altChart.visible) _altChart.setSharedZoom(minX, maxX)
+                                    logViewerChart.setSharedZoom(minX, maxX)
                                 }
                             }
 
-                            Loader {
-                                Layout.fillWidth: true
-                                Layout.fillHeight: true
-                                active: logViewerController.sourceType === LogViewerController.TLog
-                                source: "qrc:/qml/QGroundControl/AnalyzeView/MAVLinkInspector/MAVLinkInspectorPage.qml"
-                            }
-                        }
-                    }
-                }
-
-                // ---- Tab 1: Map ----
-                Item {
-                    id: _mapTab
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-
-                    // GPS path data
-                    readonly property var _gpsPath: logParser.parseComplete ? logParser.gpsPath() : []
-                    readonly property int _pathLen: (_gpsPath && _gpsPath.length) ? _gpsPath.length : 0
-                    readonly property bool _hasPath: _pathLen >= 2
-                    readonly property string _altFieldName: _hasPath ? logParser.gpsAltitudeFieldName() : ""
-                    readonly property bool _hasAltField: _altFieldName.length > 0
-                    readonly property bool _showAltChart: _hasAltField && _hasPath
-
-                    // Shared cursor state (driven by altitude chart, displayed on map)
-                    property bool _markerVisible: false
-                    property var _markerCoord: ({})
-
-                    // Collapsed state for the altitude chart, so the map can use the full tab height
-                    property bool _altChartCollapsed: false
-
-                    // Last shared cursor/zoom from either chart; reapplied when the altitude chart becomes visible.
-                    property real _sharedCursorT: NaN
-                    property real _sharedZoomMinX: NaN
-                    property real _sharedZoomMaxX: NaN
-
-                    function _setSharedZoom(minX, maxX) {
-                        _sharedZoomMinX = minX
-                        _sharedZoomMaxX = maxX
-                        // Mirror LogViewerBaseChart._applyZoomInternal, which recenters an out-of-range cursor
-                        if (!isNaN(_sharedCursorT) && (_sharedCursorT < minX || _sharedCursorT > maxX)) {
-                            _sharedCursorT = (minX + maxX) / 2
-                            _markerCoord = logParser.gpsCoordAt(_sharedCursorT)
-                        }
-                    }
-
-                    ColumnLayout {
-                        anchors.fill: parent
-                        spacing: 0
-
-                        // ---- Map ----
-                        Item {
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-
-                            FlightMap {
-                                id: _flightMap
-                                anchors.fill: parent
-                                mapName: "LogViewerMap"
-                                allowGCSLocationCenter: true
-
-                                readonly property var _path: _mapTab._gpsPath
-
-                                function _fitPath() {
-                                    const p = _mapTab._gpsPath
-                                    if (!_mapTab._hasPath) return
-                                    var minLat = p[0].latitude, maxLat = minLat
-                                    var minLon = p[0].longitude, maxLon = minLon
-                                    for (var i = 1; i < p.length; i++) {
-                                        var c = p[i]
-                                        if (c.latitude  < minLat) minLat = c.latitude
-                                        if (c.latitude  > maxLat) maxLat = c.latitude
-                                        if (c.longitude < minLon) minLon = c.longitude
-                                        if (c.longitude > maxLon) maxLon = c.longitude
+                            // Catch up on cursor/zoom changes that occurred while this chart was hidden.
+                            Connections {
+                                target: _altChart
+                                function onVisibleChanged() {
+                                    if (!_altChart.visible) {
+                                        return
                                     }
-                                    setVisibleRegion(QtPositioning.rectangle(
-                                        QtPositioning.coordinate(maxLat, minLon),
-                                        QtPositioning.coordinate(minLat, maxLon)))
-                                }
-
-                                Connections {
-                                    target: logParser
-                                    function onParseCompleteChanged() {
-                                        if (logParser.parseComplete) Qt.callLater(_flightMap._fitPath)
+                                    if (!isNaN(_mapTab._sharedZoomMinX)) {
+                                        _altChart.setSharedZoom(_mapTab._sharedZoomMinX, _mapTab._sharedZoomMaxX)
                                     }
-                                }
-
-                                MapPolyline {
-                                    line.width: 3
-                                    line.color: QGroundControl.globalPalette.colorRed
-                                    path: _flightMap._path
-                                }
-
-                                // Position dot driven by altitude chart cursor
-                                MapQuickItem {
-                                    readonly property var _coord: _mapTab._markerCoord
-                                    visible: _mapTab._markerVisible && _mapTab._hasPath
-                                                  && _coord && _coord.latitude !== undefined
-                                    coordinate: (_coord && _coord.latitude !== undefined)
-                                                  ? QtPositioning.coordinate(_coord.latitude, _coord.longitude)
-                                                  : QtPositioning.coordinate(0, 0)
-                                    anchorPoint: Qt.point(_posDot.width / 2, _posDot.height / 2)
-                                    sourceItem: Rectangle {
-                                        id: _posDot
-                                        width: ScreenTools.defaultFontPixelHeight * 1.2
-                                        height: width
-                                        radius: width / 2
-                                        color: QGroundControl.globalPalette.colorYellow
-                                        border.color: "white"
-                                        border.width: 2
+                                    if (!isNaN(_mapTab._sharedCursorT)) {
+                                        _altChart.setSharedCursor(_mapTab._sharedCursorT)
                                     }
-                                }
-
-                                MapScale {
-                                    anchors.margins: ScreenTools.defaultFontPixelWidth
-                                    anchors.left: parent.left
-                                    anchors.bottom: parent.bottom
-                                    mapControl: _flightMap
-                                }
-                            }
-
-                            QGCLabel {
-                                anchors.centerIn: parent
-                                visible: logParser.parseComplete && !_mapTab._hasPath
-                                text: qsTr("No GPS data found in this log")
-                                font.italic: true
-                            }
-
-                            QGCLabel {
-                                anchors.centerIn: parent
-                                visible: !logParser.parseComplete
-                                text: qsTr("Load a log file to view the flight path")
-                                font.italic: true
-                            }
-
-                            QGCButton {
-                                anchors.margins: ScreenTools.defaultFontPixelWidth
-                                anchors.right: parent.right
-                                anchors.bottom: parent.bottom
-                                scale: 0.75
-                                transformOrigin: Item.BottomRight
-                                visible: _mapTab._showAltChart
-                                iconSource: _mapTab._altChartCollapsed ? "/res/chevron-double-up.svg" : "/res/chevron-double-down.svg"
-                                Accessible.name: _mapTab._altChartCollapsed ? qsTr("Expand altitude chart") : qsTr("Collapse altitude chart")
-                                ToolTip.text: Accessible.name
-                                ToolTip.visible: hovered
-                                onClicked: _mapTab._altChartCollapsed = !_mapTab._altChartCollapsed
-                            }
-                        }
-
-                        // ---- Altitude chart ----
-                        LogViewerAltChart {
-                            id: _altChart
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 14
-                            visible: _mapTab._showAltChart && !_mapTab._altChartCollapsed
-                            logParser: logParser
-                            altFieldName: _mapTab._altFieldName
-                            xAxisShowLocalTime: _xAxisShowLocalTime
-
-                            onMarkerChanged: (t) => {
-                                _mapTab._markerVisible = true
-                                _mapTab._markerCoord   = logParser.gpsCoordAt(t)
-                                _mapTab._sharedCursorT = t
-                                logViewerChart.setSharedCursor(t)
-                            }
-                            onMarkerCleared: {
-                                _mapTab._markerVisible = false
-                            }
-                            onZoomApplied: (minX, maxX) => {
-                                _mapTab._setSharedZoom(minX, maxX)
-                                logViewerChart.setSharedZoom(minX, maxX)
-                            }
-                        }
-
-                        // Catch up on cursor/zoom changes that occurred while this chart was hidden.
-                        Connections {
-                            target: _altChart
-                            function onVisibleChanged() {
-                                if (!_altChart.visible) {
-                                    return
-                                }
-                                if (!isNaN(_mapTab._sharedZoomMinX)) {
-                                    _altChart.setSharedZoom(_mapTab._sharedZoomMinX, _mapTab._sharedZoomMaxX)
-                                }
-                                if (!isNaN(_mapTab._sharedCursorT)) {
-                                    _altChart.setSharedCursor(_mapTab._sharedCursorT)
                                 }
                             }
                         }
                     }
                 }
 
-                // ---- Tab 2: Parameters ----
-                LogViewerParametersTab {
-                    id: _parametersTab
-                    Layout.fillWidth: true
+                QGCGroupBoxTab {
+                    title: qsTr("Parameters")
                     Layout.fillHeight: true
-                    logParser: logParser
+
+                    LogViewerParametersTab {
+                        id: _parametersTab
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        logParser: logParser
+                    }
                 }
 
-                // ---- Tab 3: Messages ----
-                LogViewerMessagesTab {
-                    id: _messagesTab
-                    Layout.fillWidth: true
+                QGCGroupBoxTab {
+                    title: qsTr("Messages")
                     Layout.fillHeight: true
-                    logParser: logParser
+
+                    LogViewerMessagesTab {
+                        id: _messagesTab
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        logParser: logParser
+                    }
                 }
             }
 

@@ -68,7 +68,7 @@ ColumnLayout {
         }
     }
 
-    SettingsGroupLayout {
+    QGCGroupBox {
         Layout.fillWidth: true
         heading: qsTr("Advanced Settings")
         visible: advancedSettingsCheckbox.checked

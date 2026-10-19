@@ -136,38 +136,30 @@ SetupPage {
                     Component {
                         id: _additionalSetupComponent
 
-                        ColumnLayout {
-                            spacing: ScreenTools.defaultFontPixelHeight / 2
+                        QGCGroupBox {
+                            contentSpacing: ScreenTools.defaultFontPixelHeight / 2
+                            showDividers: false
                             enabled: !controller.calibrating
 
-                            QGCTabBar {
-                                id: tabBar
-                                Layout.fillWidth: true
+                            QGCGroupBoxTab {
+                                title: qsTr("Buttons")
 
-                                QGCTabButton {
-                                    text: qsTr("Buttons")
-                                    checked: true
-                                }
-
-                                QGCTabButton {
-                                    text: qsTr("Settings")
-                                    checked: false
+                                JoystickComponentButtons {
+                                    id: joystickButtons
+                                    Layout.fillWidth: true
+                                    joystick: _activeJoystick
+                                    controller: _controller
                                 }
                             }
 
-                            JoystickComponentButtons {
-                                id: joystickButtons
-                                Layout.fillWidth: true
-                                joystick: _activeJoystick
-                                controller: _controller
-                                visible: tabBar.currentIndex === 0
-                            }
+                            QGCGroupBoxTab {
+                                title: qsTr("Settings")
 
-                            JoystickComponentSettings {
-                                id: joystickSettings
-                                Layout.fillWidth: true
-                                joystick: _activeJoystick
-                                visible: tabBar.currentIndex === 1
+                                JoystickComponentSettings {
+                                    id: joystickSettings
+                                    Layout.fillWidth: true
+                                    joystick: _activeJoystick
+                                }
                             }
                         }
                     }

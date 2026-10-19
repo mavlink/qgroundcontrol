@@ -659,12 +659,12 @@ def render_factslider(
     enable_when: str = "",
     tr_context: str = "",
 ) -> str:
-    """Render a ``FactSlider`` wrapped in a ``SettingsGroupLayout``."""
+    """Render a ``FactSlider`` wrapped in a ``QGCGroupBox``."""
     lines: list[str] = []
     inner = indent + "    "
 
-    # Wrap in SettingsGroupLayout for consistent bordered look
-    lines.append(f"{indent}SettingsGroupLayout {{")
+    # Wrap in QGCGroupBox for consistent bordered look
+    lines.append(f"{indent}QGCGroupBox {{")
     lines.append(f"{indent}    Layout.fillWidth: true")
     lines.append(f"{indent}    Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 60")
     if label:

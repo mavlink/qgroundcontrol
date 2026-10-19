@@ -334,217 +334,215 @@ SetupPage {
 
 
                 // actuator output selection tabs
-                QGCTabBar {
+                QGCGroupBox {
+                    showDividers:   false
+                    contentSpacing: 0
+
+                    onCurrentIndexChanged: actuators.selectActuatorOutput(currentIndex)
+
                     Repeater {
                         model: actuators.actuatorOutputs
-                        QGCTabButton {
-                            text:      '   ' + object.label + '   '
-                            width:     implicitWidth
-                        }
+                        QGCGroupBoxTab { title: object.label }
                     }
-                    onCurrentIndexChanged: {
-                        actuators.selectActuatorOutput(currentIndex)
-                    }
-                }
 
-                // actuator outputs
-                Rectangle {
-                    id:                             selActuatorOutput
-                    implicitWidth:                  actuatorGroupColumn.width + (_margins * 2)
-                    implicitHeight:                 actuatorGroupColumn.height + (_margins * 2)
-                    color:                          qgcPal.windowShade
+                    // actuator outputs
+                    Item {
+                        id:                             selActuatorOutput
+                        implicitWidth:                  actuatorGroupColumn.width
+                        implicitHeight:                 actuatorGroupColumn.height
 
-                    property var actuatorOutput:    actuators.selectedActuatorOutput
-
-                    Column {
-                        id:               actuatorGroupColumn
-                        spacing:          _margins
-                        anchors.centerIn: parent
-
-                        // Motor assignment
-                        Row {
-                            visible:           actuators.isMultirotor
-                            enabled:           !safetySwitch.checked
-                            anchors.right:     parent.right
-                            spacing:           _margins
-                            QGCButton {
-                                text:          qsTr("Identify & Assign Motors")
-                                visible:       !actuators.motorAssignmentActive && selActuatorOutput.actuatorOutput.groupsVisible
-                                enabled:       actuators.motorAssignmentEnabled
-                                onClicked: {
-                                    var success = actuators.initMotorAssignment()
-                                    if (success) {
-                                        motorAssignmentConfirmDialog.open()
-                                    } else {
-                                        motorAssignmentFailureDialog.open()
-                                    }
-                                }
-                                MessageDialog {
-                                    id:         motorAssignmentConfirmDialog
-                                    visible:    false
-                                    //icon:       StandardIcon.Warning
-                                    buttons:    MessageDialog.Yes | MessageDialog.No
-                                    title:      qsTr("Motor Order Identification and Assignment")
-                                    text:       actuators.motorAssignmentMessage
-                                    onButtonClicked: function (button, role) {
-                                        switch (button) {
-                                        case MessageDialog.Yes:
-                                            actuators.startMotorAssignment()
-                                            break;
-                                        }
-                                    }
-                                }
-                                MessageDialog {
-                                    id:         motorAssignmentFailureDialog
-                                    visible:    false
-                                    //icon:       StandardIcon.Critical
-                                    buttons:    MessageDialog.Ok
-                                    title:      qsTr("Error")
-                                    text:       actuators.motorAssignmentMessage
-                                }
-                            }
-                            QGCButton {
-                                text:          qsTr("Spin Motor Again")
-                                visible:       actuators.motorAssignmentActive
-                                onClicked: {
-                                    actuators.spinCurrentMotor()
-                                }
-                            }
-                            QGCButton {
-                                text:          qsTr("Abort")
-                                visible:       actuators.motorAssignmentActive
-                                onClicked: {
-                                    actuators.abortMotorAssignment()
-                                }
-                            }
-                        }
+                        property var actuatorOutput:    actuators.selectedActuatorOutput
 
                         Column {
-                            enabled:          !safetySwitch.checked && !actuators.motorAssignmentActive
+                            id:               actuatorGroupColumn
                             spacing:          _margins
+                            anchors.centerIn: parent
 
-                            RowLayout {
-                                property var enableParam:     selActuatorOutput.actuatorOutput.enableParam
-                                QGCLabel {
-                                    visible:                  parent.enableParam != null
-                                    text:                     parent.enableParam ? parent.enableParam.label + ":" : ""
+                            // Motor assignment
+                            Row {
+                                visible:           actuators.isMultirotor
+                                enabled:           !safetySwitch.checked
+                                anchors.right:     parent.right
+                                spacing:           _margins
+                                QGCButton {
+                                    text:          qsTr("Identify & Assign Motors")
+                                    visible:       !actuators.motorAssignmentActive && selActuatorOutput.actuatorOutput.groupsVisible
+                                    enabled:       actuators.motorAssignmentEnabled
+                                    onClicked: {
+                                        var success = actuators.initMotorAssignment()
+                                        if (success) {
+                                            motorAssignmentConfirmDialog.open()
+                                        } else {
+                                            motorAssignmentFailureDialog.open()
+                                        }
+                                    }
+                                    MessageDialog {
+                                        id:         motorAssignmentConfirmDialog
+                                        visible:    false
+                                        //icon:       StandardIcon.Warning
+                                        buttons:    MessageDialog.Yes | MessageDialog.No
+                                        title:      qsTr("Motor Order Identification and Assignment")
+                                        text:       actuators.motorAssignmentMessage
+                                        onButtonClicked: function (button, role) {
+                                            switch (button) {
+                                            case MessageDialog.Yes:
+                                                actuators.startMotorAssignment()
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    MessageDialog {
+                                        id:         motorAssignmentFailureDialog
+                                        visible:    false
+                                        //icon:       StandardIcon.Critical
+                                        buttons:    MessageDialog.Ok
+                                        title:      qsTr("Error")
+                                        text:       actuators.motorAssignmentMessage
+                                    }
                                 }
-                                ActuatorFact {
-                                    visible:                  parent.enableParam != null
-                                    fact:                     parent.enableParam ?  parent.enableParam.fact : null
+                                QGCButton {
+                                    text:          qsTr("Spin Motor Again")
+                                    visible:       actuators.motorAssignmentActive
+                                    onClicked: {
+                                        actuators.spinCurrentMotor()
+                                    }
+                                }
+                                QGCButton {
+                                    text:          qsTr("Abort")
+                                    visible:       actuators.motorAssignmentActive
+                                    onClicked: {
+                                        actuators.abortMotorAssignment()
+                                    }
                                 }
                             }
 
+                            Column {
+                                enabled:          !safetySwitch.checked && !actuators.motorAssignmentActive
+                                spacing:          _margins
 
-                            Repeater {
-                                model: selActuatorOutput.actuatorOutput.subgroups
-
-                                ColumnLayout {
-                                    property var subgroup: object
-                                    visible:               selActuatorOutput.actuatorOutput.groupsVisible
-
-                                    RowLayout {
-                                        visible: subgroup.label != ""
-                                        QGCLabel {
-                                            text:                    subgroup.label
-                                            font.bold:               true
-                                            rightPadding:            ScreenTools.defaultFontPixelWidth * 3
-                                        }
-                                        ActuatorFact {
-                                            property var primaryParam: subgroup.primaryParam
-                                            visible:                   primaryParam != null
-                                            fact:                      primaryParam ? primaryParam.fact : null
-                                        }
+                                RowLayout {
+                                    property var enableParam:     selActuatorOutput.actuatorOutput.enableParam
+                                    QGCLabel {
+                                        visible:                  parent.enableParam != null
+                                        text:                     parent.enableParam ? parent.enableParam.label + ":" : ""
                                     }
+                                    ActuatorFact {
+                                        visible:                  parent.enableParam != null
+                                        fact:                     parent.enableParam ?  parent.enableParam.fact : null
+                                    }
+                                }
 
-                                    GridLayout {
-                                        rows:      1 + subgroup.channels.count
-                                        columns:   1 + subgroup.channelConfigs.count
 
-                                        QGCLabel {
-                                            text: ""
-                                        }
+                                Repeater {
+                                    model: selActuatorOutput.actuatorOutput.subgroups
 
-                                        // param config labels
-                                        Repeater {
-                                            model: subgroup.channelConfigs
+                                    ColumnLayout {
+                                        property var subgroup: object
+                                        visible:               selActuatorOutput.actuatorOutput.groupsVisible
+
+                                        RowLayout {
+                                            visible: subgroup.label != ""
                                             QGCLabel {
-                                                text:           object.label
-                                                visible:        object.visible && (_showAdvanced || !object.advanced)
-                                                Layout.row:     0
-                                                Layout.column:  1 + index
+                                                text:                    subgroup.label
+                                                font.bold:               true
+                                                rightPadding:            ScreenTools.defaultFontPixelWidth * 3
+                                            }
+                                            ActuatorFact {
+                                                property var primaryParam: subgroup.primaryParam
+                                                visible:                   primaryParam != null
+                                                fact:                      primaryParam ? primaryParam.fact : null
                                             }
                                         }
-                                        // param instances
-                                        Repeater {
-                                            model: subgroup.channels
+
+                                        GridLayout {
+                                            rows:      1 + subgroup.channels.count
+                                            columns:   1 + subgroup.channelConfigs.count
+
                                             QGCLabel {
-                                                text:            object.label + ":"
-                                                Layout.row:      1 + index
-                                                Layout.column:   0
+                                                text: ""
                                             }
-                                        }
-                                        Repeater {
-                                            model: subgroup.channels
+
+                                            // param config labels
                                             Repeater {
-                                                property var channel:      object
-                                                property var channelIndex: index
-                                                model:                     object.configInstances
-                                                ActuatorFact {
-                                                    fact:           object.fact
-                                                    Layout.row:     1 + channelIndex
+                                                model: subgroup.channelConfigs
+                                                QGCLabel {
+                                                    text:           object.label
+                                                    visible:        object.visible && (_showAdvanced || !object.advanced)
+                                                    Layout.row:     0
                                                     Layout.column:  1 + index
-                                                    visible:        object.config.visible && (_showAdvanced || !object.config.advanced)
+                                                }
+                                            }
+                                            // param instances
+                                            Repeater {
+                                                model: subgroup.channels
+                                                QGCLabel {
+                                                    text:            object.label + ":"
+                                                    Layout.row:      1 + index
+                                                    Layout.column:   0
+                                                }
+                                            }
+                                            Repeater {
+                                                model: subgroup.channels
+                                                Repeater {
+                                                    property var channel:      object
+                                                    property var channelIndex: index
+                                                    model:                     object.configInstances
+                                                    ActuatorFact {
+                                                        fact:           object.fact
+                                                        Layout.row:     1 + channelIndex
+                                                        Layout.column:  1 + index
+                                                        visible:        object.config.visible && (_showAdvanced || !object.config.advanced)
+                                                    }
                                                 }
                                             }
                                         }
-                                    }
 
-                                    // extra subgroup config params
-                                    Repeater {
-                                        model: subgroup.configParams
+                                        // extra subgroup config params
+                                        Repeater {
+                                            model: subgroup.configParams
 
-                                        RowLayout {
-                                            QGCLabel {
-                                                text: object.label + ":"
-                                            }
-                                            ActuatorFact {
-                                                fact: object.fact
+                                            RowLayout {
+                                                QGCLabel {
+                                                    text: object.label + ":"
+                                                }
+                                                ActuatorFact {
+                                                    fact: object.fact
+                                                }
                                             }
                                         }
-                                    }
 
+                                    }
+                                } // subgroup Repeater
+
+                                // extra actuator config params
+                                Repeater {
+                                    model: selActuatorOutput.actuatorOutput.configParams
+
+                                    RowLayout {
+                                        QGCLabel {
+                                            text: object.label + ":"
+                                        }
+                                        ActuatorFact {
+                                            fact: object.fact
+                                        }
+                                    }
                                 }
-                            } // subgroup Repeater
 
-                            // extra actuator config params
-                            Repeater {
-                                model: selActuatorOutput.actuatorOutput.configParams
-
-                                RowLayout {
-                                    QGCLabel {
-                                        text: object.label + ":"
-                                    }
-                                    ActuatorFact {
-                                        fact: object.fact
-                                    }
-                                }
-                            }
-
-                            // notes
-                            Repeater {
-                                model: selActuatorOutput.actuatorOutput.notes
-                                ColumnLayout {
-                                    spacing: ScreenTools.defaultFontPixelHeight
-                                    QGCLabel {
-                                        text:       modelData
-                                        color:      qgcPal.warningText
+                                // notes
+                                Repeater {
+                                    model: selActuatorOutput.actuatorOutput.notes
+                                    ColumnLayout {
+                                        spacing: ScreenTools.defaultFontPixelHeight
+                                        QGCLabel {
+                                            text:       modelData
+                                            color:      qgcPal.warningText
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
-                } // Rectangle
+                    } // Item
+                }
             } // Column
         } // Row
 

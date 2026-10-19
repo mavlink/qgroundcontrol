@@ -6,7 +6,7 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 
-SettingsGroupLayout {
+QGCGroupBox {
     Layout.fillWidth: true
     heading:          qsTr("Saved Log Files")
     visible:          QGroundControl.corePlugin.options.showPX4LogTransferOptions

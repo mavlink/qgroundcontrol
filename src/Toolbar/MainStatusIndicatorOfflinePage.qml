@@ -26,7 +26,7 @@ ToolIndicatorPage {
     }
 
     contentComponent: Component {
-        SettingsGroupLayout {
+        QGCGroupBox {
             heading: qsTr("Select Link to Connect")
 
             QGCLabel {
@@ -57,7 +57,7 @@ ToolIndicatorPage {
         ColumnLayout {
             spacing: ScreenTools.defaultFontPixelHeight / 2
 
-            SettingsGroupLayout {
+            QGCGroupBox {
                 LabelledButton {
                     label:      qsTr("Communication Links")
                     buttonText: qsTr("Configure")
@@ -70,7 +70,7 @@ ToolIndicatorPage {
                 }
             }
 
-            SettingsGroupLayout {
+            QGCGroupBox {
                 heading:        qsTr("AutoConnect")
                 visible:        autoConnectSettings.userVisible
 

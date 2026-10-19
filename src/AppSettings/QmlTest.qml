@@ -691,9 +691,9 @@ Rectangle {
                 width:  1;
             }
 
-            // SettingsGroupLayout Test
+            // QGCGroupBox Test
             GroupBox {
-                title: "SettingsGroupLayout Test"
+                title: "QGCGroupBox Test"
                 anchors.horizontalCenter: parent.horizontalCenter
 
                 background: Rectangle {
@@ -806,8 +806,8 @@ Rectangle {
                         }
                     }
 
-                    // Test SettingsGroupLayout with various content
-                    SettingsGroupLayout {
+                    // Test QGCGroupBox with various content
+                    QGCGroupBox {
                         width: ScreenTools.defaultFontPixelWidth * 60
                         heading: showHeadingCheck.checked ? "Test Settings Group" : ""
                         headingDescription: showDescriptionCheck.checked ? "This is a description of the settings group that explains what these settings are for." : ""
@@ -866,13 +866,13 @@ Rectangle {
                         }
                     }
 
-                    // Nested SettingsGroupLayout test
+                    // Nested QGCGroupBox test
                     QGCLabel {
-                        text: "Nested SettingsGroupLayout:"
+                        text: "Nested QGCGroupBox:"
                         font.bold: true
                     }
 
-                    SettingsGroupLayout {
+                    QGCGroupBox {
                         width: ScreenTools.defaultFontPixelWidth * 60
                         heading: "Outer Group"
                         showBorder: true
@@ -884,7 +884,7 @@ Rectangle {
                             QGCTextField { text: "Value" }
                         }
 
-                        SettingsGroupLayout {
+                        QGCGroupBox {
                             Layout.fillWidth: true
                             heading: "Inner Group"
                             headingDescription: "Nested group inside outer group"
@@ -911,11 +911,11 @@ Rectangle {
 
                     // Test with Repeater
                     QGCLabel {
-                        text: "SettingsGroupLayout with Repeater:"
+                        text: "QGCGroupBox with Repeater:"
                         font.bold: true
                     }
 
-                    SettingsGroupLayout {
+                    QGCGroupBox {
                         width: ScreenTools.defaultFontPixelWidth * 60
                         heading: "Repeater Test"
                         showBorder: true
@@ -944,6 +944,75 @@ Rectangle {
                                     Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 15
                                 }
                             }
+                        }
+                    }
+
+                    // Tabs test
+                    QGCLabel {
+                        text: "QGCGroupBox with tabs:"
+                        font.bold: true
+                    }
+
+                    Row {
+                        spacing: ScreenTools.defaultFontPixelWidth * 2
+
+                        QGCCheckBox {
+                            id: wrapTabsCheck
+                            text: "wrapTabs"
+                            checked: false
+                        }
+
+                        QGCCheckBox {
+                            id: showSecondTabCheck
+                            text: "Second tab"
+                            checked: true
+                        }
+
+                        QGCCheckBox {
+                            id: showTabBadgeCheck
+                            text: "Badge"
+                            checked: true
+                        }
+                    }
+
+                    QGCGroupBox {
+                        width: ScreenTools.defaultFontPixelWidth * 40
+                        headingDescription: showDescriptionCheck.checked ? "Description shown for every tab." : ""
+                        showBorder: showBorderCheck.checked
+                        showDividers: showDividersCheck.checked
+                        wrapTabs: wrapTabsCheck.checked
+
+                        QGCGroupBoxTab {
+                            title: "General"
+
+                            QGCCheckBox { text: "General setting 1" }
+                            QGCCheckBox { text: "General setting 2" }
+                        }
+
+                        QGCGroupBoxTab {
+                            title: "Second Tab With A Long Title"
+                            tabVisible: showSecondTabCheck.checked
+
+                            QGCLabel { text: "Second tab content" }
+                        }
+
+                        QGCGroupBoxTab {
+                            title: "Advanced"
+                            badge: Rectangle {
+                                width: ScreenTools.defaultFontPixelWidth * 2
+                                height: width
+                                radius: width / 2
+                                color: qgcPal.colorRed
+                                visible: showTabBadgeCheck.checked
+                            }
+
+                            QGCLabel { text: "Advanced tab content" }
+                        }
+
+                        QGCGroupBoxTab {
+                            iconSource: "/qmlimages/PatternCamera.png"
+
+                            QGCLabel { text: "Icon only tab content" }
                         }
                     }
                 }

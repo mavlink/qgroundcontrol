@@ -11,7 +11,7 @@ ColumnLayout {
     property Fact batt1Monitor: controller.getParameterFact(-1, "BATT_MONITOR")
     property string disabledString: qsTr("- disabled")
 
-    SettingsGroupLayout {
+    QGCGroupBox {
         Layout.fillWidth:   true
         heading:            qsTr("Low Voltage Failsafe")
         visible:            batt1Monitor.rawValue !== 0
@@ -41,7 +41,7 @@ ColumnLayout {
         }
     }
 
-    SettingsGroupLayout {
+    QGCGroupBox {
         Layout.fillWidth:   true
         heading:            qsTr("Critical Voltage Failsafe")
         visible:            batt1Monitor.rawValue !== 0

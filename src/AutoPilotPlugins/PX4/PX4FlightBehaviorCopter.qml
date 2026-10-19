@@ -34,7 +34,7 @@ SetupPage {
                 Layout.fillWidth:   true
                 visible:            _sys_vehicle_resp
 
-                SettingsGroupLayout {
+                QGCGroupBox {
                     Layout.fillWidth:   true
                     enabled:            responsivenessCheckbox.checked
                     heading:            qsTr("Responsiveness")
@@ -82,7 +82,7 @@ SetupPage {
                 Layout.fillWidth:   true
                 visible:            _mpc_xy_vel_all
 
-                SettingsGroupLayout {
+                QGCGroupBox {
                     Layout.fillWidth:   true
                     enabled:            xyVelCheckbox.checked
                     heading:            qsTr("Horizontal velocity (m/s)")
@@ -123,7 +123,7 @@ SetupPage {
                 Layout.fillWidth:   true
                 visible:            _mpc_z_vel_all
 
-                SettingsGroupLayout {
+                QGCGroupBox {
                     Layout.fillWidth:   true
                     enabled:            zVelCheckbox.checked
                     heading:            qsTr("Vertical velocity (m/s)")
@@ -160,7 +160,7 @@ SetupPage {
                 }
             }
 
-            SettingsGroupLayout {
+            QGCGroupBox {
                 Layout.fillWidth:   true
                 heading:            qsTr("Mission Turning Radius")
                 headingDescription: qsTr("Increasing this leads to rounder turns in missions (corner cutting). Use the minimum value for accurate corner tracking.")

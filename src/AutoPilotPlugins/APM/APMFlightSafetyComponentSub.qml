@@ -51,7 +51,8 @@ SetupPage {
             property real _comboWidth:      ScreenTools.defaultFontPixelWidth * 30
 
             QGCGroupBox {
-                title:              qsTr("Failsafe Actions")
+                Layout.fillWidth:   false
+                heading:            qsTr("Failsafe Actions")
 
                 GridLayout {
                     columns:        2
@@ -227,7 +228,8 @@ SetupPage {
             } // QGCGroupBox - Failsafe Actions
 
             QGCGroupBox {
-                title:              _armingCheck ? qsTr("Arming Checks") : qsTr("Skip Arming Checks")
+                Layout.fillWidth:   false
+                heading:            _armingCheck ? qsTr("Arming Checks") : qsTr("Skip Arming Checks")
 
                 ColumnLayout {
                     spacing:        _margins

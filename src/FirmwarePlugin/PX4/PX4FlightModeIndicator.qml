@@ -22,7 +22,7 @@ ColumnLayout {
 
     FactPanelController { id: controller }
 
-    SettingsGroupLayout {
+    QGCGroupBox {
         Layout.fillWidth: true
 
         FactSlider {
@@ -35,7 +35,7 @@ ColumnLayout {
         }
     }
 
-    SettingsGroupLayout {
+    QGCGroupBox {
         Layout.fillWidth:   true
         heading:            qsTr("GeoFence")
 
