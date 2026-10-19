@@ -43,9 +43,14 @@ void HealthAndArmingCheckReport::update(uint8_t compid, const EventHandler &even
     if (compid != MAV_COMP_ID_AUTOPILOT1) {
         return;
     }
-    if (flightModeGroup == -1) {
-        qCWarning(HealthAndArmingCheckReportLog) << "Flight mode group not set";
-        return;
+
+    // A mode missing from the metadata still gets the report: the mode group results are valid for other modes
+    const bool currentModeKnown = (flightModeGroup >= 0) && (flightModeGroup < MaxModeGroups);
+    if (!currentModeKnown) {
+        flightModeGroup = -1;
+        if (!_supported || (_modeGroupResults.currentModeGroup != -1)) {
+            qCWarning(HealthAndArmingCheckReportLog) << "Flight mode group not set";
+        }
     }
     _supported = true;
 
@@ -66,19 +71,28 @@ void HealthAndArmingCheckReport::update(uint8_t compid, const EventHandler &even
             .message = QString::fromStdString(check.message),
             .description = description.replace("\n", "<br/>"),
             .severity = severity,
-            .inCurrentMode = (check.affected_mode_groups & (1ull << flightModeGroup)) != 0,
+            // Without a current mode every check is listed, since any of them might apply
+            .inCurrentMode = !currentModeKnown || ((check.affected_mode_groups & (1ull << flightModeGroup)) != 0),
         });
     }
     _rebuild(checks);
 
-    _canArm = results.canArm(flightModeGroup);
-    if (_missionModeGroup != -1) {
-        // TODO: use results.canRun(_missionModeGroup) while armed
-        _canStartMission = results.canArm(_missionModeGroup);
+    _modeGroupResults.currentModeGroup = flightModeGroup;
+    _modeGroupResults.canArm = 0;
+    _modeGroupResults.canRun = 0;
+    for (int modeGroup = 0; modeGroup < MaxModeGroups; modeGroup++) {
+        const quint64 modeGroupBit = 1ull << modeGroup;
+        if (results.canArm(modeGroup)) {
+            _modeGroupResults.canArm |= modeGroupBit;
+        }
+        if (results.canRun(modeGroup)) {
+            _modeGroupResults.canRun |= modeGroupBit;
+        }
     }
-    if (_takeoffModeGroup != -1) {
-        _canTakeoff = results.canArm(_takeoffModeGroup);
-    }
+    qCDebug(HealthAndArmingCheckReportLog)
+        << "currentModeGroup:" << flightModeGroup << "canArm:" << Qt::hex << _modeGroupResults.canArm
+        << "canRun:" << _modeGroupResults.canRun << Qt::dec << "checks:" << checks.count()
+        << "currentModeProblems:" << _problemsForCurrentMode->count();
 
     const auto& healthComponents = results.healthComponents().health_components;
 
@@ -96,12 +110,6 @@ void HealthAndArmingCheckReport::update(uint8_t compid, const EventHandler &even
     }
 
     emit updated();
-}
-
-void HealthAndArmingCheckReport::setModeGroups(int takeoffModeGroup, int missionModeGroup)
-{
-    _takeoffModeGroup = takeoffModeGroup;
-    _missionModeGroup = missionModeGroup;
 }
 
 void HealthAndArmingCheckReport::acknowledgeAllWarnings()

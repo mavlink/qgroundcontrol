@@ -1,13 +1,14 @@
 #include "HealthAndArmingCheckReportTest.h"
 
+#include <QtCore/QRegularExpression>
+#include <QtCore/QTemporaryDir>
+#include <QtTest/QSignalSpy>
+
 #include "EventHandler.h"
 #include "HealthAndArmingCheckReport.h"
-#include "QmlObjectListModel.h"
-
+#include "HealthReportFixtures.h"
 #include "LibEvents.h"
-
-#include <QtCore/QRegularExpression>
-#include <QtTest/QSignalSpy>
+#include "QmlObjectListModel.h"
 
 namespace {
 /// Stub EventHandler for update() early-return tests (callbacks are never invoked).
@@ -34,12 +35,10 @@ void HealthAndArmingCheckReportTest::_testInitialState()
     // Fresh report: nothing has been reported by any vehicle yet.
     QVERIFY(!report.supported());
 
-    // Default capability bits are OPEN — the UI assumes arming/takeoff/mission
-    // are allowed until a report explicitly denies them. This keeps a vehicle
-    // that doesn't publish arming checks usable.
-    QVERIFY(report.canArm());
-    QVERIFY(report.canTakeoff());
-    QVERIFY(report.canStartMission());
+    const HealthAndArmingCheckReport::ModeGroupResults& modeGroupResults = report.modeGroupResults();
+    QCOMPARE(modeGroupResults.currentModeGroup, -1);
+    QCOMPARE(modeGroupResults.canArm, 0ull);
+    QCOMPARE(modeGroupResults.canRun, 0ull);
 
     QVERIFY(!report.hasWarningsOrErrors());
     QCOMPARE(report.errorCount(), 0);
@@ -69,42 +68,148 @@ void HealthAndArmingCheckReportTest::_testUpdateSkipsNonAutopilotCompId()
     QCOMPARE(report.problemsForCurrentMode()->count(), 0);
 }
 
-void HealthAndArmingCheckReportTest::_testUpdateSkipsUninitializedFlightModeGroup()
+void HealthAndArmingCheckReportTest::_testFirstReportInUnmappedMode()
 {
+    using namespace TestFixtures::HealthReport;
+
+    QTemporaryDir metadataDir;
+    QVERIFY(metadataDir.isValid());
+    const QString metadataFile = writeMetadata(metadataDir.path(), 10, 20, 30);
+    QVERIFY(!metadataFile.isEmpty());
+
+    EventHandler handler(
+        nullptr, QStringLiteral("dev"), [](auto) {}, [](auto&) {}, 255, MAV_COMP_ID_MISSIONPLANNER, 1,
+        MAV_COMP_ID_AUTOPILOT1);
+    handler.setMetadata(metadataFile);
+    EventStream eventStream(1);
+    const uint32_t canArmModeGroups = modeGroupBit(ManualModeGroup) | modeGroupBit(MissionModeGroup);
+    for (const mavlink_message_t& message : eventStream.report(canArmModeGroups, AllModeGroups)) {
+        handler.handleEvents(message);
+    }
+
+    // A vehicle connecting in a mode missing from the metadata still has its report used
     HealthAndArmingCheckReport report;
-
     QSignalSpy updatedSpy(&report, &HealthAndArmingCheckReport::updated);
-
-    // The report logs a warning and bails when flightModeGroup == -1.
-    expectLogMessage("MAVLink.LibEvents.HealthAndArmingCheckReport", QtWarningMsg, QRegularExpression(QStringLiteral("Flight mode group not set")));
-    EventHandler stubHandler = makeStubEventHandler();
-    report.update(MAV_COMP_ID_AUTOPILOT1, stubHandler, /*flightModeGroup*/ -1);
+    expectLogMessage("MAVLink.LibEvents.HealthAndArmingCheckReport", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Flight mode group not set")));
+    report.update(MAV_COMP_ID_AUTOPILOT1, handler, -1);
     verifyExpectedLogMessage();
 
-    QCOMPARE(updatedSpy.count(), 0);
-    QVERIFY(!report.supported());
-    QCOMPARE(report.problemsForCurrentMode()->count(), 0);
+    QCOMPARE(updatedSpy.count(), 1);
+    QVERIFY(report.supported());
+    QCOMPARE(report.modeGroupResults().currentModeGroup, -1);
+    QCOMPARE(report.modeGroupResults().canArm, quint64(canArmModeGroups));
+    QCOMPARE(report.modeGroupResults().canRun, quint64(AllModeGroups));
+
+    // Without a current mode, checks for every mode are listed
+    QCOMPARE(report.problemsForCurrentMode()->count(), 1);
+    QCOMPARE(report.errorCount(), 1);
 }
 
-void HealthAndArmingCheckReportTest::_testSetModeGroups()
+void HealthAndArmingCheckReportTest::_testUpdateFromHealthReport_data()
 {
-    // setModeGroups() has no public getter, but the behavior it drives is
-    // exercised indirectly by update(): _canTakeoff and _canStartMission are
-    // only re-evaluated when their respective mode groups are != -1.
-    //
-    // We assert the well-formed no-arg case here: setting both mode groups
-    // must not mutate any observable report state on its own.
+    using namespace TestFixtures::HealthReport;
+
+    QTest::addColumn<uint>("canArmModeGroups");
+    QTest::addColumn<uint>("canRunModeGroups");
+    QTest::addColumn<int>("expectedCurrentModeErrors");
+
+    QTest::newRow("allReady") << uint(AllModeGroups) << uint(AllModeGroups) << 0;
+    QTest::newRow("otherModeBlocked") << uint(modeGroupBit(ManualModeGroup) | modeGroupBit(MissionModeGroup))
+                                      << uint(AllModeGroups & ~modeGroupBit(MissionModeGroup)) << 0;
+    QTest::newRow("currentModeBlocked") << uint(modeGroupBit(TakeoffModeGroup)) << uint(AllModeGroups) << 1;
+}
+
+void HealthAndArmingCheckReportTest::_testUpdateFromHealthReport()
+{
+    using namespace TestFixtures::HealthReport;
+
+    QFETCH(uint, canArmModeGroups);
+    QFETCH(uint, canRunModeGroups);
+    QFETCH(int, expectedCurrentModeErrors);
+
+    constexpr uint32_t manualCustomMode = 10;
+    constexpr uint32_t takeoffCustomMode = 20;
+    constexpr uint32_t missionCustomMode = 30;
+
+    QTemporaryDir metadataDir;
+    QVERIFY(metadataDir.isValid());
+    const QString metadataFile =
+        writeMetadata(metadataDir.path(), manualCustomMode, takeoffCustomMode, missionCustomMode);
+    QVERIFY(!metadataFile.isEmpty());
+
+    EventHandler handler(
+        nullptr, QStringLiteral("dev"), [](auto) {}, [](auto&) {}, 255, MAV_COMP_ID_MISSIONPLANNER, 1,
+        MAV_COMP_ID_AUTOPILOT1);
+    handler.setMetadata(metadataFile);
+    QVERIFY(handler.healthAndArmingChecksSupported());
+    QCOMPARE(handler.getModeGroup(manualCustomMode), ManualModeGroup);
+    QCOMPARE(handler.getModeGroup(takeoffCustomMode), TakeoffModeGroup);
+    QCOMPARE(handler.getModeGroup(missionCustomMode), MissionModeGroup);
+
     HealthAndArmingCheckReport report;
 
-    const bool beforeCanArm         = report.canArm();
-    const bool beforeCanTakeoff     = report.canTakeoff();
-    const bool beforeCanMission     = report.canStartMission();
+    QSignalSpy checksUpdatedSpy(&handler, &EventHandler::healthAndArmingChecksUpdated);
+    EventStream eventStream(1);
+    for (const mavlink_message_t& message : eventStream.report(canArmModeGroups, canRunModeGroups)) {
+        handler.handleEvents(message);
+    }
+    QCOMPARE(checksUpdatedSpy.count(), 1);
 
-    report.setModeGroups(/*takeoff*/ 0, /*mission*/ 1);
+    report.update(MAV_COMP_ID_AUTOPILOT1, handler, handler.getModeGroup(manualCustomMode));
 
-    QCOMPARE(report.canArm(),          beforeCanArm);
-    QCOMPARE(report.canTakeoff(),      beforeCanTakeoff);
-    QCOMPARE(report.canStartMission(), beforeCanMission);
+    QVERIFY(report.supported());
+    const HealthAndArmingCheckReport::ModeGroupResults& modeGroupResults = report.modeGroupResults();
+    QCOMPARE(modeGroupResults.currentModeGroup, ManualModeGroup);
+    QCOMPARE(modeGroupResults.canArm, quint64(canArmModeGroups));
+    QCOMPARE(modeGroupResults.canRun, quint64(canRunModeGroups));
+    QCOMPARE(report.errorCount(), expectedCurrentModeErrors);
+}
+
+void HealthAndArmingCheckReportTest::_testUnmappedModeKeepsResultsFresh()
+{
+    using namespace TestFixtures::HealthReport;
+
+    constexpr uint32_t manualCustomMode = 10;
+    QTemporaryDir metadataDir;
+    QVERIFY(metadataDir.isValid());
+    const QString metadataFile = writeMetadata(metadataDir.path(), manualCustomMode, 20, 30);
+    QVERIFY(!metadataFile.isEmpty());
+
+    EventHandler handler(
+        nullptr, QStringLiteral("dev"), [](auto) {}, [](auto&) {}, 255, MAV_COMP_ID_MISSIONPLANNER, 1,
+        MAV_COMP_ID_AUTOPILOT1);
+    handler.setMetadata(metadataFile);
+    EventStream eventStream(1);
+    const auto sendReport = [&handler, &eventStream](uint32_t canArmModeGroups, uint32_t canRunModeGroups) {
+        for (const mavlink_message_t& message : eventStream.report(canArmModeGroups, canRunModeGroups)) {
+            handler.handleEvents(message);
+        }
+    };
+
+    sendReport(AllModeGroups, AllModeGroups);
+    HealthAndArmingCheckReport report;
+    report.update(MAV_COMP_ID_AUTOPILOT1, handler, handler.getModeGroup(manualCustomMode));
+    QCOMPARE(report.modeGroupResults().currentModeGroup, ManualModeGroup);
+
+    // A mode missing from the metadata must not leave the previous mode's group behind
+    QSignalSpy updatedSpy(&report, &HealthAndArmingCheckReport::updated);
+    expectLogMessage("MAVLink.LibEvents.HealthAndArmingCheckReport", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Flight mode group not set")));
+    report.update(MAV_COMP_ID_AUTOPILOT1, handler, -1);
+    verifyExpectedLogMessage();
+    QCOMPARE(updatedSpy.count(), 1);
+    QCOMPARE(report.modeGroupResults().currentModeGroup, -1);
+
+    // Later reports in the same unmapped mode still refresh the results, without warning again
+    const uint32_t canArmModeGroups = modeGroupBit(ManualModeGroup);
+    const uint32_t canRunModeGroups = modeGroupBit(ManualModeGroup) | modeGroupBit(TakeoffModeGroup);
+    sendReport(canArmModeGroups, canRunModeGroups);
+    report.update(MAV_COMP_ID_AUTOPILOT1, handler, -1);
+    QCOMPARE(updatedSpy.count(), 2);
+    QCOMPARE(report.modeGroupResults().currentModeGroup, -1);
+    QCOMPARE(report.modeGroupResults().canArm, quint64(canArmModeGroups));
+    QCOMPARE(report.modeGroupResults().canRun, quint64(canRunModeGroups));
 }
 
 void HealthAndArmingCheckReportTest::_testSeverityCounts_data()

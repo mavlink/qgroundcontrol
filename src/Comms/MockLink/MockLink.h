@@ -228,6 +228,12 @@ public:
     /// status is a MAV_ODID_ARM_STATUS value.
     void setRemoteIDArmStatus(uint8_t status, const QString& error);
 
+    /// Sets the MAV_SYS_STATUS_PREARM_CHECK enabled and health bits in the 1Hz SYS_STATUS
+    void setPrearmCheck(bool enabled, bool passed)
+    {
+        _prearmCheck = (enabled ? _prearmCheckEnabled : 0) | (passed ? _prearmCheckPassed : 0);
+    }
+
     static MockLink *startPX4MockLink(MockConfiguration::Options options = MockConfiguration::OptionNone, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone, MockConfiguration::VideoStreamType videoStreamType = MockConfiguration::VideoStreamNone);
     /// Starts a MockLink from a fully caller-configured MockConfiguration (ownership transfers to LinkManager)
     static MockLink *startMockLink(MockConfiguration *mockConfig) { return _startMockLink(mockConfig); }
@@ -455,6 +461,9 @@ private:
 
     double _vehicleAltitudeAMSL = _defaultVehicleHomeAltitude;
     std::atomic<bool> _commLost = false;
+    static constexpr uint8_t _prearmCheckEnabled = 1 << 0;
+    static constexpr uint8_t _prearmCheckPassed = 1 << 1;
+    std::atomic<uint8_t> _prearmCheck = 0;  ///< One atomic so SYS_STATUS never sees half of a setPrearmCheck() update
     std::atomic<bool> _duplicateResponses = false;
     bool _mavlinkV2Upgraded = false;    ///< True once outgoing traffic has switched from v1 to v2
     bool _signingEnabled = false;

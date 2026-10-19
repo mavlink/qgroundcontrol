@@ -14,12 +14,12 @@ RowLayout {
     property real   _margins:           ScreenTools.defaultFontPixelWidth
     property real   _spacing:           ScreenTools.defaultFontPixelWidth / 2
     property bool   _healthAndArmingChecksSupported: _activeVehicle ? _activeVehicle.healthAndArmingCheckReport.supported : false
+    property var    _readiness:         _activeVehicle ? _activeVehicle.readiness : null
     property var    _vehicleInAir:      _activeVehicle ? _activeVehicle.airborne || _activeVehicle.landing : false
     property bool   _vtolInFWDFlight:   _activeVehicle ? _activeVehicle.vtolInFwdFlight : false
     property bool   _rebootRequired:    _activeVehicle ? _activeVehicle.rebootRequired : false
     property bool   _checklistEnabled:  QGroundControl.settingsManager.appSettings.useChecklist.rawValue
     property bool   _checklistComplete: _activeVehicle ? _activeVehicle.checkListState === Vehicle.CheckListPassed : false
-    property bool   _checklistBlocksArming: _checklistEnabled && QGroundControl.settingsManager.appSettings.enforceChecklist.rawValue && !_checklistComplete
     // The checklist is pre-flight, so an unfinished one is not flagged once armed
     property bool   _checklistWarning:  _checklistEnabled && !_checklistComplete && !_armed
     property int    _healthErrorCount:      _healthAndArmingChecksSupported ?
@@ -103,23 +103,23 @@ RowLayout {
         property string _landingText:       qsTr("Landing")
 
         function mainStatusText() {
-            var statusText
             if (_activeVehicle) {
                 if (_communicationLost) {
                     _mainStatusBGColor = "red"
                     return mainStatusLabel._commLostText
                 }
-                if (_activeVehicle.armed) {
-                    _mainStatusBGColor = "green"
 
-                    if (_healthAndArmingChecksSupported) {
-                        if (_activeVehicle.healthAndArmingCheckReport.canArm) {
-                            if (_activeVehicle.healthAndArmingCheckReport.hasWarningsOrErrors) {
-                                _mainStatusBGColor = "yellow"
-                            }
-                        } else {
-                            _mainStatusBGColor = "red"
-                        }
+                const readinessStatus = _readiness ? _readiness.status : VehicleReadiness.Status.Unknown
+                const healthWarnings = _healthAndArmingChecksSupported &&
+                                       _activeVehicle.healthAndArmingCheckReport.hasWarningsOrErrors
+
+                if (_activeVehicle.armed) {
+                    if (readinessStatus === VehicleReadiness.Status.NotReady) {
+                        _mainStatusBGColor = "red"
+                    } else if (healthWarnings || readinessStatus === VehicleReadiness.Status.Unknown) {
+                        _mainStatusBGColor = "yellow"
+                    } else {
+                        _mainStatusBGColor = "green"
                     }
 
                     if (_activeVehicle.underway) {
@@ -129,42 +129,14 @@ RowLayout {
                     } else {
                         return mainStatusLabel._armedText
                     }
-                } else {
-                    if (_checklistBlocksArming) {
-                        _mainStatusBGColor = (_healthAndArmingChecksSupported && !_activeVehicle.healthAndArmingCheckReport.canArm) ? "red" : "yellow"
-                        return mainStatusLabel._notReadyToFlyText
-                    }
-                    if (_healthAndArmingChecksSupported) {
-                        if (_activeVehicle.healthAndArmingCheckReport.canArm) {
-                            if (_activeVehicle.healthAndArmingCheckReport.hasWarningsOrErrors) {
-                                _mainStatusBGColor = "yellow"
-                            } else {
-                                _mainStatusBGColor = "green"
-                            }
-                            return mainStatusLabel._readyToFlyText
-                        } else {
-                            _mainStatusBGColor = "red"
-                            return mainStatusLabel._notReadyToFlyText
-                        }
-                    } else if (_activeVehicle.readyToFlyAvailable) {
-                        if (_activeVehicle.readyToFly) {
-                            _mainStatusBGColor = "green"
-                            return mainStatusLabel._readyToFlyText
-                        } else {
-                            _mainStatusBGColor = "yellow"
-                            return mainStatusLabel._notReadyToFlyText
-                        }
-                    } else {
-                        // Best we can do is determine readiness based on AutoPilot component setup and health indicators from SYS_STATUS
-                        if (_activeVehicle.allSensorsHealthy && _activeVehicle.autopilotPlugin.setupComplete) {
-                            _mainStatusBGColor = "green"
-                            return mainStatusLabel._readyToFlyText
-                        } else {
-                            _mainStatusBGColor = "yellow"
-                            return mainStatusLabel._notReadyToFlyText
-                        }
-                    }
                 }
+
+                if (readinessStatus === VehicleReadiness.Status.Ready) {
+                    _mainStatusBGColor = healthWarnings ? "yellow" : "green"
+                    return mainStatusLabel._readyToFlyText
+                }
+                _mainStatusBGColor = (readinessStatus === VehicleReadiness.Status.NotReady) ? "red" : "yellow"
+                return mainStatusLabel._notReadyToFlyText
             } else {
                 _mainStatusBGColor = qgcPal.brandPrimary
                 return mainStatusLabel._disconnectedText
@@ -294,7 +266,7 @@ RowLayout {
 
                     QGCDelayButton {
                         objectName: "mainStatusArmButton"
-                        enabled:    _armed || _guidedController.showArm
+                        enabled:    _armed || (_guidedController.showArm && _guidedController.armReady)
                         text:       _armed ? qsTr("Disarm") : qsTr("Arm")
                         visible:    _armed ? _guidedController.showDisarm : parametersReady
 

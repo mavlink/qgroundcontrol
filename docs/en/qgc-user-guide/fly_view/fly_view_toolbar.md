@@ -21,11 +21,14 @@ The Flight Status indicator shows you whether the vehicle is ready to fly or not
 
 - **Ready To Fly** (_green background_) - Vehicle is ready to fly
 - **Ready To Fly** (_yellow background_) - Vehicle is ready to fly in the current flight mode. But there are warnings which may cause problems.
-- **Not Ready** - Vehicle is not ready to fly and will not takeoff.
+- **Not Ready** (_red background_) - Vehicle reports that it would not arm, an enforced [Pre-Flight Checklist](fly_tools.md#preflight_checklist) is incomplete, or, for vehicles which report neither, a sensor is unhealthy or vehicle setup is incomplete.
+- **Not Ready** (_yellow background_) - Waiting for the vehicle's first health and arming check report, or the vehicle's health report does not cover the current flight mode.
 - **Armed** - Vehicle is armed and ready to Takeoff.
 - **Flying** - Vehicle is in the air and flying.
 - **Landing** - Vehicle is in the process of landing.
 - **Communication Lost** - QGroundControl has lost communication with the vehicle.
+
+When the vehicle reports that it would not accept them, **Arm**, **Takeoff** and **Start Mission** are shown disabled. Takeoff and Start Mission are checked against the flight mode they use, so they can be disabled while the vehicle is ready to arm in its current mode.
 
 The Flight Status indicator dropdown fills the window and also gives you access to:
 

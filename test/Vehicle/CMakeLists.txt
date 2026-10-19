@@ -61,6 +61,8 @@ target_sources(
             VehicleGPSFactGroupTest.h
             VehicleLinkManagerTest.cc
             VehicleLinkManagerTest.h
+            VehicleReadinessTest.cc
+            VehicleReadinessTest.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -103,3 +105,6 @@ add_qgc_test(VehicleDistanceSensorFactGroupTest LABELS Integration Vehicle)
 add_qgc_test(VehicleFirmwareUpdateTest LABELS Integration Vehicle)
 add_qgc_test(VehicleGPSFactGroupTest LABELS Unit GPS)
 add_qgc_test(VehicleLinkManagerTest LABELS Integration Vehicle SERIAL)
+add_qgc_test(VehicleReadinessTest LABELS Unit Vehicle)
+add_qgc_test(VehicleReadinessPX4Test LABELS Integration Vehicle)
+add_qgc_test(VehicleReadinessAPMTest LABELS Integration Vehicle)
