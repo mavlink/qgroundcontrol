@@ -10,6 +10,7 @@ private slots:
     void _performTestCases_data();
     void _performTestCases();
     void _boardVendorProductId();
+    void _notCompleteUntilSequenceFinishes();
     void _progressTracking();
     void _highLatencySkipsPlanRequests();
     void _genericAutopilotVersionFailureSkipsUnsupportedPlanTypes();

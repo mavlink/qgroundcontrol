@@ -40,7 +40,7 @@ void ComponentInformationManagerTest::_requestAllComponentInformationCompletes()
     }
 
     QVERIFY(callbackCalled);
-    QVERIFY(!manager->active());
+    QVERIFY(!manager->inProgress());
     QVERIFY(manager->progress() >= 0.99f);
     QVERIFY(progressSpy.count() > 0);
 }
@@ -101,7 +101,7 @@ void ComponentInformationManagerTest::_requestCanRunMultipleTimes()
 
         QVERIFY2(callbackCalled,
                  qPrintable(QStringLiteral("Completion callback not called on iteration %1").arg(i + 1)));
-        QVERIFY(!manager->active());
+        QVERIFY(!manager->inProgress());
         QVERIFY(manager->progress() >= 0.99f);
     }
 }

@@ -711,7 +711,7 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         case MAVLINK_MSG_ID_AVAILABLE_MODES_MONITOR:
     {
         // Avoid duplicate requests during initial connection setup
-        if (!_initialConnectStateMachine || !_initialConnectStateMachine->active()) {
+        if (!_initialConnectStateMachine || !_initialConnectStateMachine->inProgress()) {
             mavlink_available_modes_monitor_t availableModesMonitor;
             mavlink_msg_available_modes_monitor_decode(&message, &availableModesMonitor);
             _standardModes->availableModesMonitorReceived(availableModesMonitor.seq);
@@ -1655,10 +1655,10 @@ void Vehicle::_updateFlightTime()
 
 void Vehicle::_gotProgressUpdate(float progressValue)
 {
-    if (sender() != _initialConnectStateMachine && _initialConnectStateMachine->active()) {
+    if (sender() != _initialConnectStateMachine && _initialConnectStateMachine->inProgress()) {
         return;
     }
-    if (sender() == _initialConnectStateMachine && !_initialConnectStateMachine->active()) {
+    if (sender() == _initialConnectStateMachine && !_initialConnectStateMachine->inProgress()) {
         progressValue = 0.f;
     }
     _loadProgress = progressValue;
@@ -2872,7 +2872,7 @@ QString Vehicle::_formatMavCommand(MAV_CMD command, float param1)
 
 bool Vehicle::isInitialConnectComplete() const
 {
-    return !_initialConnectStateMachine->active();
+    return !_initialConnectStateMachine->inProgress();
 }
 
 void Vehicle::_initializeCsv()

@@ -31,11 +31,16 @@ void RequestMetaDataTypeStateMachineTest::_typeToStringReflectsRequestedType()
     QVERIFY(manager);
 
     RequestMetaDataTypeStateMachine requestMachine(manager, this);
+    QSignalSpy completeSpy(&requestMachine, &RequestMetaDataTypeStateMachine::requestComplete);
+    QVERIFY(completeSpy.isValid());
 
     auto* general = manager->compInfoGeneral(MAV_COMP_ID_AUTOPILOT1);
     QVERIFY(general);
     requestMachine.request(general);
     QCOMPARE(requestMachine.typeToString(), QStringLiteral("COMP_METADATA_TYPE_GENERAL"));
+    if (completeSpy.count() == 0) {
+        QVERIFY(completeSpy.wait(TestTimeout::longMs()));
+    }
 
     auto* param = manager->compInfoParam(MAV_COMP_ID_AUTOPILOT1);
     QVERIFY(param);
@@ -61,7 +66,7 @@ void RequestMetaDataTypeStateMachineTest::_requestCompleteEmittedForGeneral()
     }
 
     QCOMPARE(completeSpy.count(), 1);
-    QVERIFY(!requestMachine.active());
+    QVERIFY(!requestMachine.inProgress());
     QVERIFY2(general->available() || !general->uriMetaDataFallback().isEmpty(),
              "General metadata URI is empty after request");
 }
@@ -84,7 +89,7 @@ void RequestMetaDataTypeStateMachineTest::_requestCompleteEmittedForParameter()
     }
 
     QCOMPARE(completeSpy.count(), 1);
-    QVERIFY(!requestMachine.active());
+    QVERIFY(!requestMachine.inProgress());
 }
 
 void RequestMetaDataTypeStateMachineTest::_sequentialRequestsReuseMachine()
@@ -112,7 +117,7 @@ void RequestMetaDataTypeStateMachineTest::_sequentialRequestsReuseMachine()
     }
 
     QCOMPARE(completeSpy.count(), 2);
-    QVERIFY(!requestMachine.active());
+    QVERIFY(!requestMachine.inProgress());
 }
 
 void RequestMetaDataTypeStateMachineTest::_requestCompletesForArduPilot()
@@ -189,7 +194,7 @@ void RequestMetaDataTypeStateMachineTest::_requestSkipsCompInfoOnHighLatencyLink
 
     QCOMPARE(completeSpy.count(), 1);
     QCOMPARE(_mockLink->receivedMavCommandCount(MAV_CMD_REQUEST_MESSAGE), 0);
-    QVERIFY(!requestMachine.active());
+    QVERIFY(!requestMachine.inProgress());
 
     _disconnectMockLink();
 }
@@ -198,7 +203,7 @@ void RequestMetaDataTypeStateMachineTest::_requestUsesCachedMetadataForParameter
 {
     auto* manager = vehicle()->compInfoManager();
     QVERIFY(manager);
-    QVERIFY_TRUE_WAIT(!manager->isRunning(), TestTimeout::mediumMs());
+    QVERIFY_TRUE_WAIT(!manager->inProgress(), TestTimeout::mediumMs());
 
     auto* param = manager->compInfoParam(MAV_COMP_ID_AUTOPILOT1);
     QVERIFY(param);
@@ -243,7 +248,7 @@ void RequestMetaDataTypeStateMachineTest::_requestUsesCachedMetadataForParameter
              initialCompMetadataRequests);
     QCOMPARE(_mockLink->receivedRequestMessageCount(MAV_COMP_ID_AUTOPILOT1, MAVLINK_MSG_ID_COMPONENT_INFORMATION),
              initialCompInformationRequests);
-    QVERIFY(!requestMachine.active());
+    QVERIFY(!requestMachine.inProgress());
 
     FactMetaData* metadata = param->factMetaDataForName(QStringLiteral("CACHE_HIT_PARAM"), FactMetaData::valueTypeFloat);
     QVERIFY(metadata);
@@ -256,7 +261,7 @@ void RequestMetaDataTypeStateMachineTest::_slowFtpDownloadAbortsEarly()
 {
     auto* manager = vehicle()->compInfoManager();
     QVERIFY(manager);
-    QVERIFY_TRUE_WAIT(!manager->isRunning(), TestTimeout::mediumMs());
+    QVERIFY_TRUE_WAIT(!manager->inProgress(), TestTimeout::mediumMs());
 
     auto* param = manager->compInfoParam(MAV_COMP_ID_AUTOPILOT1);
     QVERIFY(param);
@@ -294,7 +299,7 @@ void RequestMetaDataTypeStateMachineTest::_slowFtpDownloadAbortsEarly()
     // with slack for CI load
     const qint64 maxAbortMs = TestTimeout::isCI() ? 15000 : 10000;
     QVERIFY2(elapsedMs < maxAbortMs, qPrintable(QStringLiteral("Slow download ran %1 ms before aborting").arg(elapsedMs)));
-    QVERIFY(!requestMachine.active());
+    QVERIFY(!requestMachine.inProgress());
 }
 
 UT_REGISTER_TEST(RequestMetaDataTypeStateMachineTest, TestLabel::Integration, TestLabel::Vehicle)

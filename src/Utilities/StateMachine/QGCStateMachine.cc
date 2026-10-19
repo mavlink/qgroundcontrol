@@ -20,16 +20,24 @@ QGCStateMachine::QGCStateMachine(const QString& machineName, Vehicle *vehicle, Q
 
     connect(this, &QGCStateMachine::started, this, [this] () {
         qCDebug(QGCStateMachineLog) << "State machine started:" << objectName();
-        emit runningChanged();
+        if (!_inProgress) {
+            qCCritical(QGCStateMachineLog)
+                << objectName()
+                << "started without QGCStateMachine::start() - QStateMachine::start() or setRunning() was used";
+            _setInProgress(true);
+        }
     });
-    connect(this, &QGCStateMachine::stopped, this, [this] () {
+    // Cleared before anything else reacts to stopped/finished so handlers, including the final progress update,
+    // already see the machine as no longer in progress
+    connect(this, &QGCStateMachine::stopped, this, [this]() {
+        _setInProgress(false);
         qCDebug(QGCStateMachineLog) << "State machine stopped:" << objectName();
-        emit runningChanged();
         if (_deleteOnStop) {
             deleteLater();
         }
     });
-    connect(this, &QGCStateMachine::finished, this, [this] () {
+    connect(this, &QGCStateMachine::finished, this, [this]() {
+        _setInProgress(false);
         qCDebug(QGCStateMachineLog) << "State machine finished:" << objectName();
         if (_progressTotalWeight > 0 && _progressLastEmitted < 1.0f) {
             _progressLastEmitted = 1.0f;
@@ -61,10 +69,27 @@ QString QGCStateMachine::currentStateName() const
 
 void QGCStateMachine::start()
 {
-    if (isRunning()) {
-        qCCritical(QGCStateMachineLog) << objectName() << "start() called but already running - check signal connections";
+    if (_inProgress) {
+        qCCritical(QGCStateMachineLog) << objectName()
+                                       << "start() called but already in progress - check signal connections";
+        return;
     }
+    if ((childMode() == QState::ExclusiveStates) && !initialState()) {
+        qCCritical(QGCStateMachineLog) << objectName() << "start() called without an initial state";
+        return;
+    }
+    _inProgress = true;
     QStateMachine::start();
+    // Emitted after Qt's start so a stop() from a listener is honored
+    emit inProgressChanged();
+}
+
+void QGCStateMachine::_setInProgress(bool inProgress)
+{
+    if (_inProgress != inProgress) {
+        _inProgress = inProgress;
+        emit inProgressChanged();
+    }
 }
 
 void QGCStateMachine::setGlobalErrorState(QAbstractState* errorState)
@@ -330,7 +355,7 @@ bool QGCStateMachine::resetToState(QAbstractState* state)
     qCDebug(QGCStateMachineLog) << objectName() << "resetting to state:" << state->objectName();
 
     // Stop the machine, change initial state, and restart
-    if (isRunning()) {
+    if (inProgress()) {
         auto conn = std::make_shared<QMetaObject::Connection>();
         *conn = connect(this, &QStateMachine::stopped, this, [this, state, conn]() {
             disconnect(*conn);
@@ -377,7 +402,7 @@ bool QGCStateMachine::attemptRecovery()
 
 void QGCStateMachine::ensureRunning()
 {
-    if (!isRunning()) {
+    if (!inProgress()) {
         start();
     }
 }
@@ -390,7 +415,7 @@ void QGCStateMachine::stopMachine(bool deleteOnStop)
 
 void QGCStateMachine::restart()
 {
-    if (isRunning()) {
+    if (inProgress()) {
         // stop() is asynchronous, so connect to stopped signal to start again
         auto conn = std::make_shared<QMetaObject::Connection>();
         *conn = connect(this, &QStateMachine::stopped, this, [this, conn]() {
@@ -490,7 +515,7 @@ QString QGCStateMachine::dumpCurrentState() const
 {
     QString result = objectName() + QStringLiteral(": ");
 
-    if (!isRunning()) {
+    if (!inProgress()) {
         result += QStringLiteral("(not running)");
         return result;
     }
