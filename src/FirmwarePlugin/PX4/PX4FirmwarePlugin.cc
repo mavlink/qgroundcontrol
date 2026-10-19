@@ -6,6 +6,7 @@
 #include "MAVLinkLib.h"
 #include "PX4AutoPilotPlugin.h"
 #include "PX4ParameterMetaData.h"
+#include "PX4VehicleReadiness.h"
 #include "ParameterManager.h"
 #include "ParameterMetaData.h"
 #include "PlanViewSettings.h"
@@ -661,6 +662,11 @@ QString PX4FirmwarePlugin::takeOffFlightMode() const
 QString PX4FirmwarePlugin::stabilizedFlightMode() const
 {
     return _modeEnumToString.value(PX4CustomMode::STABILIZED);
+}
+
+VehicleReadiness* PX4FirmwarePlugin::createVehicleReadiness(Vehicle* vehicle) const
+{
+    return new PX4VehicleReadiness(vehicle);
 }
 
 bool PX4FirmwarePlugin::isGuidedMode(const Vehicle* vehicle) const

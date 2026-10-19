@@ -79,6 +79,7 @@ class TerrainQueryCoordinator;
 class TerrainProtocolHandler;
 class TrajectoryPoints;
 class VehicleObjectAvoidance;
+class VehicleReadiness;
 class VehicleSupports;
 
 class Vehicle : public VehicleFactGroup, public VehicleTypes
@@ -99,6 +100,7 @@ class Vehicle : public VehicleFactGroup, public VehicleTypes
     Q_MOC_INCLUDE("TrajectoryPoints.h")
     Q_MOC_INCLUDE("VehicleLinkManager.h")
     Q_MOC_INCLUDE("VehicleObjectAvoidance.h")
+    Q_MOC_INCLUDE("VehicleReadiness.h")
     Q_MOC_INCLUDE("VehicleSupports.h")
     Q_MOC_INCLUDE("VehicleGPSFactGroup.h")
 
@@ -169,6 +171,7 @@ public:
     Q_PROPERTY(bool                 rover                       READ rover                                                          NOTIFY vehicleTypeChanged)
     Q_PROPERTY(bool                 sub                         READ sub                                                            NOTIFY vehicleTypeChanged)
     Q_PROPERTY(VehicleSupports*     supports                    READ supports                                                       CONSTANT)
+    Q_PROPERTY(VehicleReadiness* readiness READ readiness CONSTANT)
     Q_PROPERTY(QString              prearmError                 READ prearmError                WRITE setPrearmError                NOTIFY prearmErrorChanged)
     Q_PROPERTY(int                  motorCount                  READ motorCount                                                     CONSTANT)
     Q_PROPERTY(bool                 coaxialMotors               READ coaxialMotors                                                  CONSTANT)
@@ -418,6 +421,9 @@ public:
     QString gotoFlightMode          () const;
 
     VehicleSupports* supports() { return _vehicleSupports; }
+
+    /// nullptr for the offline editing vehicle, which has nothing to be ready for
+    VehicleReadiness* readiness() { return _readiness; }
     bool    hasGripper              () const;
     bool haveMRSpeedLimits() const { return _multirotor_speed_limits_available; }
     bool haveFWSpeedLimits() const { return _fixed_wing_airspeed_limits_available; }
@@ -776,6 +782,9 @@ signals:
     void armedPositionChanged();
     void armedChanged                   (bool armed);
     void flightModeChanged              (const QString& flightMode);
+    /// The custom mode used for health and arming check mode groups changed. Unlike flightModeChanged this also fires
+    /// when only CURRENT_MODE's intended mode changes.
+    void effectiveCustomModeChanged();
     void underwayChanged(bool underway);
     void airborneChanged(bool airborne);
     void landingChanged                 (bool landing);
@@ -1005,6 +1014,7 @@ private:
     Autotune*                       _autotune                       = nullptr;
     GimbalController*               _gimbalController               = nullptr;
     VehicleSupports*                _vehicleSupports                = nullptr;
+    VehicleReadiness* _readiness = nullptr;
 
     bool    _armed = false;         ///< true: vehicle is armed
     uint8_t _base_mode = 0;     ///< base_mode from HEARTBEAT
@@ -1341,12 +1351,17 @@ private:
 public:
     HealthAndArmingCheckReport* healthAndArmingCheckReport();
 
+    /// True if the component's events metadata lists the libevents health and arming check protocol
+    bool healthAndArmingChecksSupported(uint8_t compid) const;
+
+    /// Autopilot health and arming check mode group of a custom mode. -1 if unknown.
+    int healthAndArmingCheckModeGroup(uint32_t customMode) const;
+
     void setEventsMetadata(uint8_t compid, const QString& metadataJsonFileName);
 
 private:
     void _createMAVLinkEventManager();
     void _handleEventMessage(const mavlink_message_t& msg);
-    bool _healthAndArmingChecksSupported(uint8_t compid);
 
     std::unique_ptr<MAVLinkEventManager> _eventManager;
 };

@@ -26,6 +26,7 @@
 #include "VehicleCameraControl.h"
 #include "VehicleComponent.h"
 #include "VehicleLinkManager.h"
+#include "VehicleReadiness.h"
 
 QGC_LOGGING_CATEGORY(FirmwarePluginLog, "FirmwarePlugin.FirmwarePlugin")
 
@@ -503,6 +504,11 @@ void FirmwarePlugin::sendGCSMotionReport(Vehicle *vehicle, const FollowMe::GCSMo
 Autotune *FirmwarePlugin::createAutotune(Vehicle *vehicle) const
 {
     return new Autotune(vehicle);
+}
+
+VehicleReadiness* FirmwarePlugin::createVehicleReadiness(Vehicle* vehicle) const
+{
+    return new VehicleReadiness(vehicle);
 }
 
 void FirmwarePlugin::_updateFlightModeList(FlightModeList &flightModeList)

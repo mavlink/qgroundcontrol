@@ -35,9 +35,12 @@ public:
     /// RESPONSE_EVENT_ERROR) to the EventHandler for the source component.
     void handleEventMessage(const mavlink_message_t &message);
 
-    /// Load event metadata JSON for a component, then compute takeoff and
-    /// mission mode groups and publish them to the report.
+    /// Load event metadata JSON for a component.
     void setMetadata(uint8_t compid, const QString &metadataJsonFileName);
+
+    /// Health and arming check mode group of a custom mode, from the component's
+    /// metadata. -1 if the component or mode is unknown.
+    int modeGroup(uint8_t compid, uint32_t customMode) const;
 
     /// True if an EventHandler already exists for this component and it
     /// reports the health_and_arming_check protocol as supported.

@@ -292,6 +292,80 @@ void ToolbarIndicatorUITest::_testEmergencyStopReplacesDisarmInFlight()
         });
 }
 
+void ToolbarIndicatorUITest::_testActionsDisabledWhileVehicleNotReady()
+{
+    if (!apmFirmwareSupported()) {
+        QSKIP("ArduPilot support not registered in this build");
+    }
+
+    runWithMockLink([] { return MockLink::startAPMArduCopterMockLink(); },
+                    [this](QPointer<MockLink> mockLink, Vehicle* vehicle) {
+                        QQuickItem* const statusText =
+                            findVisibleItem(_rootItem, QStringLiteral("mainStatusText"), TestTimeout::mediumMs());
+                        QVERIFY2(statusText, "Main status text not visible");
+                        QQuickItem* const takeoffButton = findVisibleItem(
+                            _rootItem, QStringLiteral("flyToolStrip_takeoffButton"), TestTimeout::mediumMs());
+                        QVERIFY2(takeoffButton, "Takeoff tool strip action not visible");
+
+                        // A failing prearm check disables the actions instead of hiding them
+                        mockLink->setPrearmCheck(true, false);
+                        QVERIFY_TRUE_WAIT(vehicle->readyToFlyAvailable(), TestTimeout::mediumMs());
+                        QTRY_COMPARE_WITH_TIMEOUT(statusText->property("text").toString(), QStringLiteral("Not Ready"),
+                                                  TestTimeout::mediumMs());
+                        QTRY_VERIFY_WITH_TIMEOUT(!takeoffButton->isEnabled(), TestTimeout::mediumMs());
+                        QVERIFY2(takeoffButton->isVisible(), "Takeoff hidden instead of disabled");
+
+                        QQuickItem* const indicator = findVisibleItem(
+                            _rootItem, QStringLiteral("toolbar_mainStatusIndicator"), TestTimeout::mediumMs());
+                        QVERIFY2(indicator, "Main status indicator not visible");
+                        QVERIFY(_clickItemAt(indicator, 0.5, 0.5, QStringLiteral("toolbar_mainStatusIndicator")));
+                        QQuickItem* const armButton =
+                            findVisibleItem(_rootItem, QStringLiteral("mainStatusArmButton"), TestTimeout::mediumMs());
+                        QVERIFY2(armButton, "Arm button not shown in the main status drawer");
+                        QVERIFY2(!armButton->isEnabled(), "Arm enabled while the prearm check fails");
+
+                        mockLink->setPrearmCheck(true, true);
+                        QTRY_COMPARE_WITH_TIMEOUT(statusText->property("text").toString(), QStringLiteral("Ready"),
+                                                  TestTimeout::mediumMs());
+                        QTRY_VERIFY_WITH_TIMEOUT(armButton->isEnabled(), TestTimeout::mediumMs());
+                        QVERIFY(takeoffButton->isEnabled());
+                    });
+}
+
+void ToolbarIndicatorUITest::_testTakeoffLandShareSlot()
+{
+    runWithMockLink(
+        [] { return MockLink::startPX4MockLink(); },
+        [this](QPointer<MockLink> /*mockLink*/, Vehicle* vehicle) {
+            const QString takeoffName = QStringLiteral("flyToolStrip_takeoffButton");
+            const QString landName = QStringLiteral("flyToolStrip_landButton");
+            QQuickItem* const takeoffButton = findVisibleItem(_rootItem, takeoffName, TestTimeout::mediumMs());
+            QVERIFY2(takeoffButton, "Takeoff not shown on the ground");
+            QVERIFY(!findVisibleItem(_rootItem, landName, 0));
+
+            // Armed but still on the ground keeps Takeoff in the slot
+            vehicle->setArmed(true, false /* showError */);
+            QVERIFY_TRUE_WAIT(vehicle->armed(), TestTimeout::mediumMs());
+            QVERIFY2(takeoffButton->isVisible(), "Takeoff replaced while armed on the ground");
+            QVERIFY(takeoffButton->isEnabled());
+            QVERIFY(!findVisibleItem(_rootItem, landName, 0));
+
+            // The airborne transition creates QGCPressure, which warns on hosts without a pressure backend
+            ignoreLogMessage("Utilities.QGCSensors", QtWarningMsg,
+                             QRegularExpression(QStringLiteral("Failed to connect to pressure backend")));
+            ignoreLogMessage("Utilities.QGCSensors", QtWarningMsg,
+                             QRegularExpression(QStringLiteral("Error Initializing Pressure Sensor")));
+            vehicle->sendMavCommand(vehicle->defaultComponentId(), MAV_CMD_NAV_TAKEOFF, false /* showError */, 0.0f,
+                                    0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 10.0f /* altitude */);
+            QVERIFY_TRUE_WAIT(vehicle->underway(), TestTimeout::longMs());
+
+            QQuickItem* const landButton = findVisibleItem(_rootItem, landName, TestTimeout::mediumMs());
+            QVERIFY2(landButton, "Land not shown in the air");
+            QVERIFY(landButton->isEnabled());
+            QVERIFY(!takeoffButton->isVisible());
+        });
+}
+
 void ToolbarIndicatorUITest::_testArmRequiresEnforcedChecklist()
 {
     AppSettings* const appSettings = SettingsManager::instance()->appSettings();

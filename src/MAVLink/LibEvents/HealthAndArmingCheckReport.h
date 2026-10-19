@@ -52,9 +52,6 @@ class HealthAndArmingCheckReport : public QObject
     Q_OBJECT
     Q_MOC_INCLUDE("QmlObjectListModel.h")
     Q_PROPERTY(bool supported                              READ supported               NOTIFY updated)
-    Q_PROPERTY(bool canArm                                 READ canArm                  NOTIFY updated)
-    Q_PROPERTY(bool canTakeoff                             READ canTakeoff              NOTIFY updated)
-    Q_PROPERTY(bool canStartMission                        READ canStartMission         NOTIFY updated)
     Q_PROPERTY(bool hasWarningsOrErrors                    READ hasWarningsOrErrors     NOTIFY updated)
     Q_PROPERTY(int errorCount READ errorCount NOTIFY updated)
     Q_PROPERTY(int warningCount READ warningCount NOTIFY updated)
@@ -65,10 +62,20 @@ public:
     explicit HealthAndArmingCheckReport(QObject *parent = nullptr);
     ~HealthAndArmingCheckReport() override;
 
+    /// Mode group results from the latest report. The current mode group is -1 until a report arrives, and while the
+    /// current mode is not in the vehicle's metadata.
+    struct ModeGroupResults
+    {
+        int currentModeGroup = -1;
+        quint64 canArm = 0;  ///< One bit per mode group: arming in that group would be accepted
+        quint64 canRun = 0;  ///< One bit per mode group: switching into that group while armed would be accepted
+    };
+
+    static constexpr int MaxModeGroups = 64;
+
     bool supported() const { return _supported; }
-    bool canArm() const { return _canArm; }
-    bool canTakeoff() const { return _canTakeoff; }
-    bool canStartMission() const { return _canStartMission; }
+
+    const ModeGroupResults& modeGroupResults() const { return _modeGroupResults; }
 
     bool hasWarningsOrErrors() const { return (errorCount() > 0) || (warningCount() > 0); }
 
@@ -80,7 +87,6 @@ public:
     QmlObjectListModel* problemsForCurrentMode() { return _problemsForCurrentMode; }
 
     void update(uint8_t compid, const EventHandler &eventHandler, int flightModeGroup);
-    void setModeGroups(int takeoffModeGroup, int missionModeGroup);
 
     /// Acknowledges the warnings for the current mode so they no longer count toward the warning state.
     /// An acknowledgement is dropped once its check stops being a warning or is missing from a report.
@@ -113,13 +119,8 @@ private:
     int _countProblems(const QString& severity) const;
 
     bool _supported{false};
-    bool _canArm{true};
-    bool _canTakeoff{true};
-    bool _canStartMission{true};
     QString _gpsState{};
-
-    int _takeoffModeGroup{-1};
-    int _missionModeGroup{-1};
+    ModeGroupResults _modeGroupResults;
 
     QmlObjectListModel* _problemsForCurrentMode = nullptr; ///< list of HealthAndArmingCheckProblem*
     QSet<quint64> _currentModeWarningKeys;

@@ -13,6 +13,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         APMFirmwarePlugin.h
         APMParameterMetaData.cc
         APMParameterMetaData.h
+        APMVehicleReadiness.cc
+        APMVehicleReadiness.h
         ArduCopterFirmwarePlugin.cc
         ArduCopterFirmwarePlugin.h
         ArduPlaneFirmwarePlugin.cc
@@ -25,9 +27,9 @@ target_sources(${CMAKE_PROJECT_NAME}
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-qgc_add_json_resources(json_firmaware_plugin_apm)
+qgc_add_json_resources(json_firmware_plugin_apm)
 
-qt_add_resources(${CMAKE_PROJECT_NAME} firmaware_plugin_apm_resource
+qt_add_resources(${CMAKE_PROJECT_NAME} firmware_plugin_apm_resource
     PREFIX "/FirmwarePlugin/APM"
     FILES
         Copter.OfflineEditing.params

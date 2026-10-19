@@ -114,22 +114,25 @@ Item {
     property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
     property var    _flyViewSettings:           QGroundControl.settingsManager.flyViewSettings
     property var    _unitsConversion:           QGroundControl.unitsConversion
-    property bool   _useChecklist:              QGroundControl.settingsManager.appSettings.useChecklist.rawValue
-    property bool   _enforceChecklist:          _useChecklist && QGroundControl.settingsManager.appSettings.enforceChecklist.rawValue
-    property bool   _checklistPassed:           _activeVehicle ? (_useChecklist ? (_enforceChecklist ? _activeVehicle.checkListState === Vehicle.CheckListPassed : true) : true) : true
-    property bool   _canArm:                    _activeVehicle ? (_checklistPassed && (!_activeVehicle.healthAndArmingCheckReport.supported || _activeVehicle.healthAndArmingCheckReport.canArm)) : false
-    property bool   _canTakeoff:                _activeVehicle ? (_checklistPassed && (!_activeVehicle.healthAndArmingCheckReport.supported || _activeVehicle.healthAndArmingCheckReport.canTakeoff)) : false
-    property bool   _canStartMission:           _activeVehicle ? (_checklistPassed && (!_activeVehicle.healthAndArmingCheckReport.supported || _activeVehicle.healthAndArmingCheckReport.canStartMission)) : false
+    property var    _readiness:                 _activeVehicle ? _activeVehicle.readiness : null
     property bool   _initialConnectComplete:    _activeVehicle ? _activeVehicle.initialConnectComplete : false
 
+    // Whether the vehicle would accept the action. Applicable actions which are not ready are shown disabled.
+    property bool armReady:                 _readiness ? _readiness.canArm : false
+    property bool takeoffReady:             _readiness ? _readiness.canTakeoff : false
+    property bool startMissionReady:        _readiness ? _readiness.canStartMission : false
+
+    // Takeoff and Land share a tool strip slot: Takeoff while on the ground, Land once underway
+    readonly property bool takeoffLandSlotShowsLand: _vehicleUnderway
+
     property bool showEmergencyStop:        !_hideEmergencyStop && _vehicleArmed && _vehicleAirborne
-    property bool showArm:                  _guidedActionsEnabled && !_vehicleArmed && _canArm
+    property bool showArm:                  _guidedActionsEnabled && !_vehicleArmed
     property bool showForceArm:             _guidedActionsEnabled && !_vehicleArmed && _flyViewSettings.allowForceArm.rawValue
     property bool showDisarm:               _vehicleArmed && !_vehicleAirborne
     property bool showRTL:                  _guidedActionsEnabled && _activeVehicle && _vehicleArmed && _activeVehicle.supports.guidedMode && _activeVehicle.rtlFlightMode !== "" && _vehicleUnderway && !_vehicleInRTLMode
-    property bool showTakeoff:              _guidedActionsEnabled && _activeVehicle && (_activeVehicle.supports.guidedTakeoffWithAltitude || _activeVehicle.supports.guidedTakeoffWithoutAltitude) && !_vehicleUnderway && _canTakeoff
+    property bool showTakeoff:              _guidedActionsEnabled && _activeVehicle && (_activeVehicle.supports.guidedTakeoffWithAltitude || _activeVehicle.supports.guidedTakeoffWithoutAltitude) && !_vehicleUnderway
     property bool showLand:                 _guidedActionsEnabled && _activeVehicle && _activeVehicle.supports.guidedMode && _vehicleArmed && !_activeVehicle.fixedWing && !_vehicleInLandMode
-    property bool showStartMission:         _guidedActionsEnabled && _missionAvailable && !_missionActive && !_vehicleUnderway && _canStartMission
+    property bool showStartMission:         _guidedActionsEnabled && _missionAvailable && !_missionActive && !_vehicleUnderway
     property bool showContinueMission:      _guidedActionsEnabled && _missionAvailable && !_missionActive && _vehicleArmed && _vehicleUnderway && (_currentMissionIndex < _visualItemsCount - 1)
     property bool showPause:                _guidedActionsEnabled && _activeVehicle && _vehicleArmed && _activeVehicle.supports.pauseVehicle && _vehicleUnderway && !_vehiclePaused && !_fixedWingOnApproach
     property bool showChangeAlt:            _guidedActionsEnabled && _activeVehicle && _vehicleUnderway && _activeVehicle.supports.guidedMode && _vehicleArmed && !_missionActive
@@ -280,7 +283,12 @@ Item {
             console.log("showStartMission", showStartMission)
         }
         _outputState()
-        if (showStartMission &&
+        _startMissionPopupIfAvailable()
+    }
+    onStartMissionReadyChanged: _startMissionPopupIfAvailable()
+
+    function _startMissionPopupIfAvailable() {
+        if (showStartMission && startMissionReady &&
             _flyViewSettings.enableAutomaticMissionPopups.rawValue) {
             confirmAction(actionStartMission)
         }
@@ -416,7 +424,7 @@ Item {
             }
             confirmDialog.title = armTitle
             confirmDialog.message = armMessage
-            confirmDialog.hideTrigger = Qt.binding(function() { return !showArm })
+            confirmDialog.hideTrigger = Qt.binding(function() { return !showArm || !armReady })
             break;
         case actionMVArm:
             confirmDialog.title = mvArmTitle
@@ -447,14 +455,14 @@ Item {
         case actionTakeoff:
             confirmDialog.title = takeoffTitle
             confirmDialog.message = takeoffMessage
-            confirmDialog.hideTrigger = Qt.binding(function() { return !showTakeoff })
+            confirmDialog.hideTrigger = Qt.binding(function() { return !showTakeoff || !takeoffReady })
             guidedValueSlider.visible = _activeVehicle.supports.guidedTakeoffWithAltitude
             break;
         case actionStartMission:
             showImmediate = false
             confirmDialog.title = startMissionTitle
             confirmDialog.message = startMissionMessage
-            confirmDialog.hideTrigger = Qt.binding(function() { return !showStartMission })
+            confirmDialog.hideTrigger = Qt.binding(function() { return !showStartMission || !startMissionReady })
             break;
         case actionMVStartMission:
             confirmDialog.title = mvStartMissionTitle

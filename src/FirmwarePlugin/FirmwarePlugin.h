@@ -19,6 +19,7 @@ class FactMetaData;
 class MavlinkCameraControlInterface;
 class QGCCameraManager;
 class Autotune;
+class VehicleReadiness;
 class LinkInterface;
 class FactGroup;
 class ParameterMetaData;
@@ -398,6 +399,10 @@ public:
 
     /// Creates Autotune object.
     virtual Autotune *createAutotune(Vehicle *vehicle) const;
+
+    /// Creates the vehicle's guided action readiness. The base readiness does not know which flight modes the guided
+    /// actions use, so firmware with takeoff or mission modes returns a subclass that declares them.
+    virtual VehicleReadiness* createVehicleReadiness(Vehicle* vehicle) const;
 
     /// Update Available flight modes received from vehicle
     virtual void updateAvailableFlightModes(FlightModeList &flightModeList) { _updateFlightModeList(flightModeList); }

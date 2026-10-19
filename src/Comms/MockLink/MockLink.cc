@@ -917,21 +917,24 @@ void MockLink::_sendHighLatency2()
 
 void MockLink::_sendSysStatus()
 {
+    const uint8_t prearmCheck = _prearmCheck;
+    const bool prearmCheckEnabled = (prearmCheck & _prearmCheckEnabled) != 0;
+    const bool prearmCheckPassed = (prearmCheck & _prearmCheckPassed) != 0;
+    const uint32_t prearmCheckBit = prearmCheckEnabled ? static_cast<uint32_t>(MAV_SYS_STATUS_PREARM_CHECK) : 0;
+    const uint32_t sensorsHealth =
+        (prearmCheckEnabled && prearmCheckPassed) ? static_cast<uint32_t>(MAV_SYS_STATUS_PREARM_CHECK) : 0;
+
     mavlink_message_t msg{};
     (void) mavlink_msg_sys_status_pack_chan(
-        _vehicleSystemId,
-        _vehicleComponentId,
-        _outgoingMavlinkChannel,
-        &msg,
-        MAV_SYS_STATUS_SENSOR_GPS,  // onboard_control_sensors_present
-        0,                          // onboard_control_sensors_enabled
-        0,                          // onboard_control_sensors_health
-        250,                        // load
-        4200 * 4,                   // voltage_battery
-        8000,                       // current_battery
-        _battery1PctRemaining,      // battery_remaining
-        0,0,0,0,0,0,0,0,0
-    );
+        _vehicleSystemId, _vehicleComponentId, _outgoingMavlinkChannel, &msg,
+        MAV_SYS_STATUS_SENSOR_GPS | prearmCheckBit,  // onboard_control_sensors_present
+        prearmCheckBit,                              // onboard_control_sensors_enabled
+        sensorsHealth,                               // onboard_control_sensors_health
+        250,                                         // load
+        4200 * 4,                                    // voltage_battery
+        8000,                                        // current_battery
+        _battery1PctRemaining,                       // battery_remaining
+        0, 0, 0, 0, 0, 0, 0, 0, 0);
     respondWithMavlinkMessage(msg);
 }
 

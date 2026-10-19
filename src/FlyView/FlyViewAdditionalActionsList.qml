@@ -17,7 +17,8 @@ QtObject {
             title:      guidedController.startMissionTitle,
             text:       guidedController.startMissionMessage,
             action:     guidedController.actionStartMission,
-            visible:    guidedController.showStartMission
+            visible:    guidedController.showStartMission,
+            enabled:    guidedController.startMissionReady
         },
         {
             title:      guidedController.continueMissionTitle,

@@ -1,7 +1,6 @@
 #include "MAVLinkEventManager.h"
 
 #include "EventHandler.h"
-#include "FirmwarePlugin.h"
 #include "HealthAndArmingCheckReport.h"
 #include "MAVLinkProtocol.h"
 #include "QGCLoggingCategory.h"
@@ -20,9 +19,9 @@ MAVLinkEventManager::MAVLinkEventManager(Vehicle *vehicle)
     , _vehicle(vehicle)
     , _healthAndArmingCheckReport(std::make_unique<HealthAndArmingCheckReport>(vehicle))
 {
-    // Re-evaluate the report whenever the vehicle's flight mode changes so the
-    // "can arm for the current mode" derivation stays fresh.
-    connect(_vehicle, &Vehicle::flightModeChanged, this, [this]() {
+    // Re-evaluate the report whenever the mode used for the current mode group changes. CURRENT_MODE's intended
+    // mode can change after the HEARTBEAT already changed the displayed flight mode.
+    connect(_vehicle, &Vehicle::effectiveCustomModeChanged, this, [this]() {
         for (auto it = _events.begin(); it != _events.end(); ++it) {
             if (it.value()->healthAndArmingCheckResultsValid()) {
                 _updateHealthReport(it.key());
@@ -54,27 +53,16 @@ bool MAVLinkEventManager::healthAndArmingChecksSupported(uint8_t compid) const
 
 void MAVLinkEventManager::setMetadata(uint8_t compid, const QString &metadataJsonFileName)
 {
-    EventHandler &handler = _eventHandlerForCompId(compid);
-    handler.setMetadata(metadataJsonFileName);
+    _eventHandlerForCompId(compid).setMetadata(metadataJsonFileName);
+}
 
-    // Resolve mode groups for the well-known "takeoff" and "mission" flight
-    // modes. These feed the report's canTakeoff / canStartMission derivations.
-    int modeGroups[2]{-1, -1};
-    FirmwarePlugin *firmwarePlugin = _vehicle->firmwarePlugin();
-    const QString modes[2]{firmwarePlugin->takeOffFlightMode(), _vehicle->missionFlightMode()};
-    for (size_t i = 0; i < std::size(modeGroups); ++i) {
-        uint8_t base_mode{};
-        uint32_t custom_mode{};
-        if (firmwarePlugin->setFlightMode(modes[i], &base_mode, &custom_mode)) {
-            modeGroups[i] = handler.getModeGroup(custom_mode);
-            if (modeGroups[i] == -1) {
-                qCDebug(MAVLinkEventManagerLog) << "Failed to get mode group for mode"
-                                                << modes[i]
-                                                << "(Might not be in metadata)";
-            }
-        }
+int MAVLinkEventManager::modeGroup(uint8_t compid, uint32_t customMode) const
+{
+    const auto it = _events.find(compid);
+    if (it == _events.end()) {
+        return -1;
     }
-    _healthAndArmingCheckReport->setModeGroups(modeGroups[0], modeGroups[1]);
+    return it.value()->getModeGroup(static_cast<int32_t>(customMode));
 }
 
 EventHandler &MAVLinkEventManager::_eventHandlerForCompId(uint8_t compid)
