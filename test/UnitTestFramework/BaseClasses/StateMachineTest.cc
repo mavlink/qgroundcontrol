@@ -4,6 +4,8 @@
 #include <QtStateMachine/QStateMachine>
 #include <QtTest/QSignalSpy>
 
+#include "QGCStateMachine.h"
+
 void StateMachineTest::ignoreTimeoutWarnings()
 {
     ignoreLogMessage("Utilities.QGCStateMachine", QtWarningMsg, QRegularExpression(QStringLiteral("^Timeout \"")));
@@ -13,7 +15,11 @@ void StateMachineTest::ignoreTimeoutWarnings()
 bool StateMachineTest::startAndWaitForFinished(QStateMachine* machine, int timeoutMs)
 {
     QSignalSpy finishedSpy(machine, &QStateMachine::finished);
-    machine->start();
+    if (auto* qgcMachine = qobject_cast<QGCStateMachine*>(machine)) {
+        qgcMachine->start();
+    } else {
+        machine->start();
+    }
     return spyTriggered(finishedSpy, timeoutMs);
 }
 

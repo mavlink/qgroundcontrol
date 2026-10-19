@@ -94,6 +94,29 @@ void InitialConnectTest::_boardVendorProductId()
     QTRY_VERIFY_WITH_TIMEOUT(!vehicleRemovedSpy.isEmpty(), TestTimeout::mediumMs());
 }
 
+void InitialConnectTest::_notCompleteUntilSequenceFinishes()
+{
+    // vehicleAdded is emitted from the Vehicle creation call stack, before the queued state machine start runs.
+    std::optional<bool> completeWhenAdded;
+    const QMetaObject::Connection addedConnection = connect(
+        MultiVehicleManager::instance(), &MultiVehicleManager::vehicleAdded, this,
+        [&completeWhenAdded](Vehicle* vehicle) { completeWhenAdded = vehicle->isInitialConnectComplete(); },
+        Qt::DirectConnection);
+    const auto disconnectAdded = qScopeGuard([addedConnection]() { disconnect(addedConnection); });
+
+    _connectMockLink(MAV_AUTOPILOT_PX4);
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    QVERIFY(completeWhenAdded.has_value());
+    QVERIFY(!completeWhenAdded.value());
+    QVERIFY(_vehicle->capabilitiesKnown());
+    QVERIFY(_vehicle->isInitialConnectComplete());
+
+    _disconnectMockLink();
+}
+
 void InitialConnectTest::_progressTracking()
 {
     QList<float> progressValues;

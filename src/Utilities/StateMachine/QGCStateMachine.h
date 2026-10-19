@@ -70,8 +70,8 @@ class QGCStateMachine : public QStateMachine
     /// Current progress from 0.0 to 1.0 (for QML binding)
     Q_PROPERTY(float progress READ progress NOTIFY progressUpdate)
 
-    /// Whether the machine is currently running (for QML binding)
-    Q_PROPERTY(bool running READ isRunning NOTIFY runningChanged)
+    /// Whether the machine is in progress (for QML binding)
+    Q_PROPERTY(bool inProgress READ inProgress NOTIFY inProgressChanged)
 
     /// List of recent state names for history display (for QML binding)
     Q_PROPERTY(QStringList stateHistory READ stateHistory NOTIFY stateHistoryChanged)
@@ -91,9 +91,15 @@ public:
     StateContext& context() { return _context; }
     const StateContext& context() const { return _context; }
 
-    /// @return true if the state machine is currently running
-    /// Compatibility method matching old StateMachine::active()
-    bool active() const { return isRunning(); }
+    /// @return true from start() until the machine emits stopped or finished
+    /// Unlike QStateMachine::isRunning(), this is already true before Qt processes the queued start.
+    bool inProgress() const { return _inProgress; }
+
+    /// Use inProgress() instead: isRunning() is false until Qt processes the queued start
+    bool isRunning() const = delete;
+
+    /// Use start() and stop() instead: setRunning() calls QStateMachine::start() and bypasses start()
+    void setRunning(bool running) = delete;
 
     /// Get the name of the currently active state
     /// @return State name or empty string if not running
@@ -370,7 +376,7 @@ public:
     // Lifecycle Helpers
     // -------------------------------------------------------------------------
 
-    /// Start the machine if not already running
+    /// Start the machine if not already in progress
     void ensureRunning();
 
     /// Stop the machine and optionally delete it
@@ -685,8 +691,8 @@ signals:
     /// Emitted when the current state changes (for QML binding)
     void currentStateNameChanged();
 
-    /// Emitted when the running state changes (for QML binding)
-    void runningChanged();
+    /// Emitted when inProgress() changes (for QML binding)
+    void inProgressChanged();
 
     /// Emitted when the state history changes (for QML binding)
     void stateHistoryChanged();
@@ -705,12 +711,14 @@ protected:
 
 private:
     void _onStateEntered();
+    void _setInProgress(bool inProgress);
     float _calculateProgress() const;
 
     Vehicle* _vehicle = nullptr;
     QAbstractState* _globalErrorState = nullptr;
     QAbstractState* _recoveryState = nullptr;
     bool _deleteOnStop = false;
+    bool _inProgress = false;
     EntryCallback _entryCallback;
     ExitCallback _exitCallback;
     EventHandler _eventHandler;

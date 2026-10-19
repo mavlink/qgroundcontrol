@@ -35,7 +35,7 @@ void SubMachineState::onEntry(QEvent* event)
 
 void SubMachineState::onExit(QEvent* event)
 {
-    if (_childMachine && _childMachine->isRunning()) {
+    if (_childMachine && _childMachine->inProgress()) {
         qCDebug(QGCStateMachineLog) << stateName() << "stopping child machine on exit";
         _childMachine->stop();
     }

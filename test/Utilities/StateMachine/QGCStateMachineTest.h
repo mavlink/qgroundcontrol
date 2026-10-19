@@ -12,6 +12,11 @@ private slots:
     void _testGlobalErrorState();
     void _testGlobalErrorStateWithAbstractState();
     void _testLocalErrorState();
+    void _testInProgressSpansQueuedStart_data();
+    void _testInProgressSpansQueuedStart();
+    void _testStopFromInProgressListenerIsHonored();
+    void _testStartWhileInProgressIsCritical();
+    void _testStartBypassIsCritical();
 
     // Property assignment
     void _testPropertyAssignment();

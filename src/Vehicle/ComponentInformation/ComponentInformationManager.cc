@@ -166,7 +166,7 @@ void ComponentInformationManager::_updateProgress()
 
 float ComponentInformationManager::progress() const
 {
-    if (!isRunning()) {
+    if (!inProgress()) {
         return 1.0f;
     }
     return static_cast<float>(_currentStateIndex) / static_cast<float>(_stateCount);
@@ -181,7 +181,8 @@ void ComponentInformationManager::requestAllComponentInformation(RequestAllCompl
 
     // Guard against double-start: a request while already running just updates the
     // callback pointers; the running machine still emits requestAllComplete at the end.
-    if (!isRunning()) {
+    if (!inProgress()) {
+        _currentStateIndex = 0;
         start();
     }
     emit progressUpdate(progress());

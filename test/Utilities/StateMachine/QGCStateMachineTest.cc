@@ -157,6 +157,138 @@ void QGCStateMachineTest::_testLocalErrorState()
     QVERIFY(localErrorHandled);    // Local error should be called
 }
 
+void QGCStateMachineTest::_testInProgressSpansQueuedStart_data()
+{
+    QTest::addColumn<bool>("hasInitialState");
+    QTest::addColumn<bool>("stopBeforeStartRuns");
+
+    QTest::newRow("runsToFinish") << true << false;
+    QTest::newRow("stoppedBeforeStartRuns") << true << true;
+    QTest::newRow("refusedWithoutInitialState") << false << false;
+}
+
+void QGCStateMachineTest::_testInProgressSpansQueuedStart()
+{
+    QFETCH(bool, hasInitialState);
+    QFETCH(bool, stopBeforeStartRuns);
+
+    QGCStateMachine machine(QStringLiteral("InProgressSpansQueuedStartTest"), nullptr);
+    auto* state = new QGCState(QStringLiteral("State"), &machine);
+    auto* finalState = machine.addFinalState();
+    machine.addEventTransition(state, QStringLiteral("finish"), finalState);
+    QSignalSpy inProgressSpy(&machine, &QGCStateMachine::inProgressChanged);
+
+    if (!hasInitialState) {
+        expectLogMessage("Utilities.QGCStateMachine", QtCriticalMsg,
+                         QRegularExpression(QStringLiteral("start\\(\\) called without an initial state")));
+        machine.start();
+        verifyExpectedLogMessage();
+        QVERIFY(!machine.inProgress());
+        QCOMPARE(inProgressSpy.count(), 0);
+        return;
+    }
+
+    machine.setInitialState(state);
+    QSignalSpy startedSpy(&machine, &QStateMachine::started);
+    QSignalSpy stoppedSpy(&machine, &QStateMachine::stopped);
+    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
+
+    // Listeners must already see the machine as not in progress, e.g. to restart it or treat it as complete
+    int listenerCalls = 0;
+    bool inProgressInListener = true;
+    const auto recordInProgress = [&machine, &listenerCalls, &inProgressInListener]() {
+        listenerCalls++;
+        inProgressInListener = machine.inProgress();
+    };
+    (void) connect(&machine, &QStateMachine::stopped, this, recordInProgress);
+    (void) connect(&machine, &QStateMachine::finished, this, recordInProgress);
+
+    machine.start();
+    QVERIFY(!machine.QStateMachine::isRunning());
+    QVERIFY(machine.inProgress());
+    QCOMPARE(inProgressSpy.count(), 1);
+
+    if (stopBeforeStartRuns) {
+        machine.stop();
+        QVERIFY(machine.inProgress());
+    } else {
+        QVERIFY(spyTriggered(startedSpy));
+        QVERIFY(machine.inProgress());
+        machine.postEvent(QStringLiteral("finish"));
+    }
+
+    QVERIFY(spyTriggered(stopBeforeStartRuns ? stoppedSpy : finishedSpy));
+    QCOMPARE(listenerCalls, 1);
+    QVERIFY(!inProgressInListener);
+    QVERIFY(!machine.inProgress());
+    QCOMPARE(inProgressSpy.count(), 2);
+}
+
+void QGCStateMachineTest::_testStopFromInProgressListenerIsHonored()
+{
+    QGCStateMachine machine(QStringLiteral("StopFromInProgressListenerTest"), nullptr);
+    auto* state = new QGCState(QStringLiteral("State"), &machine);
+    machine.setInitialState(state);
+    QSignalSpy stoppedSpy(&machine, &QStateMachine::stopped);
+
+    (void) connect(&machine, &QGCStateMachine::inProgressChanged, this, [&machine]() {
+        if (machine.inProgress()) {
+            machine.stop();
+        }
+    });
+
+    machine.start();
+
+    QVERIFY(spyTriggered(stoppedSpy));
+    QVERIFY(!machine.inProgress());
+}
+
+void QGCStateMachineTest::_testStartWhileInProgressIsCritical()
+{
+    QGCStateMachine machine(QStringLiteral("StartWhileInProgressTest"), nullptr);
+    auto* state = new QGCState(QStringLiteral("State"), &machine);
+    auto* finalState = machine.addFinalState();
+    machine.addEventTransition(state, QStringLiteral("finish"), finalState);
+    machine.setInitialState(state);
+    QSignalSpy startedSpy(&machine, &QStateMachine::started);
+    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
+
+    machine.start();
+    expectLogMessage("Utilities.QGCStateMachine", QtCriticalMsg,
+                     QRegularExpression(QStringLiteral("already in progress")));
+    machine.start();
+    verifyExpectedLogMessage();
+
+    QVERIFY(spyTriggered(startedSpy));
+    machine.postEvent(QStringLiteral("finish"));
+    QVERIFY(spyTriggered(finishedSpy));
+    QCOMPARE(startedSpy.count(), 1);
+    QVERIFY(!machine.inProgress());
+}
+
+void QGCStateMachineTest::_testStartBypassIsCritical()
+{
+    QGCStateMachine machine(QStringLiteral("StartBypassTest"), nullptr);
+    auto* state = new QGCState(QStringLiteral("State"), &machine);
+    auto* finalState = machine.addFinalState();
+    machine.addEventTransition(state, QStringLiteral("finish"), finalState);
+    machine.setInitialState(state);
+    QSignalSpy startedSpy(&machine, &QStateMachine::started);
+    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
+
+    expectLogMessage("Utilities.QGCStateMachine", QtCriticalMsg,
+                     QRegularExpression(QStringLiteral("started without QGCStateMachine::start\\(\\)")));
+    static_cast<QStateMachine&>(machine).start();
+    QVERIFY(!machine.inProgress());
+    QVERIFY(spyTriggered(startedSpy));
+    verifyExpectedLogMessage();
+    QVERIFY(machine.inProgress());
+
+    machine.postEvent(QStringLiteral("finish"));
+    QVERIFY(spyTriggered(finishedSpy));
+    QVERIFY(!machine.inProgress());
+}
+
 void QGCStateMachineTest::_testPropertyAssignment()
 {
     QGCStateMachine machine(QStringLiteral("PropTest"), nullptr);
