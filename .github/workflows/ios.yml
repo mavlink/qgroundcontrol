@@ -106,7 +106,7 @@ jobs:
       - name: Download App Store provisioning profiles
         id: profiles
         if: matrix.target == 'device' && github.ref_type == 'tag' && startsWith(github.ref_name, 'v')
-        uses: apple-actions/download-provisioning-profiles@v6
+        uses: apple-actions/download-provisioning-profiles@v7
         with:
           bundle-id: ${{ env.APPSTORE_BUNDLE_ID }}
           profile-type: IOS_APP_STORE
