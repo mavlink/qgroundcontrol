@@ -716,9 +716,6 @@ void ParameterManagerTest::_FTPRequestsHeartbeatComponentParams()
 {
     QFETCH(MAV_AUTOPILOT, firmwareType);
     QVERIFY2(!_mockLink, "MockLink already connected");
-    // The AVAILABLE_MODES enumeration started during connect can still be in flight while the companion loads
-    // and fails against MockLink. Timing dependent.
-    ignoreLogMessage("Vehicle.StandardModes", QtWarningMsg, QRegularExpression("Failed to retrieve available modes"));
 
     MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
     QSignalSpy spyVehicle(vehicleMgr, &MultiVehicleManager::activeVehicleAvailableChanged);
