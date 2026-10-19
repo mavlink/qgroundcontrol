@@ -9,7 +9,7 @@ import QGroundControl.GPS
 
 /// NTRIP connection status and control: connection-state row with the
 /// connect/retry action, the disconnect-on-error action, and live stream details.
-SettingsGroupLayout {
+QGCGroupBox {
     id: root
 
     property NTRIPManager ntripManager: QGroundControl.gpsManager.ntrip

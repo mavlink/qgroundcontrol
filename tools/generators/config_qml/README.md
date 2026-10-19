@@ -103,7 +103,7 @@ auto-detects based on fact metadata (bool → checkbox, enum → combobox, etc.)
 | `checkbox` | `FactCheckBoxSlider` | — |
 | `toggleCheckbox` | `QGCCheckBoxSlider` with custom logic | `toggleCheckbox` |
 | `slider` | Slider with optional enable-checkbox and adjacent button | `sliderMin`, `sliderMax`, `enableCheckbox`, `button` |
-| `factslider` | `FactSlider` in a `SettingsGroupLayout` | `sliderFrom`, `sliderTo`, `majorTickStepSize`, `decimalPlaces`, `description`, `linkedParams` |
+| `factslider` | `FactSlider` in a `QGCGroupBox` | `sliderFrom`, `sliderTo`, `majorTickStepSize`, `decimalPlaces`, `description`, `linkedParams` |
 | `radiogroup` | Label + radio buttons | `options`, `raw` |
 | `bitmask` | `FactBitmask` | `firstEntryIsAll` |
 | `bitmaskCheckbox` | `FactBitMaskCheckBoxSlider` | `bitMask` |

@@ -6,7 +6,7 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 
-SettingsGroupLayout {
+QGCGroupBox {
     Layout.fillWidth: true
     heading:          qsTr("MAVLink 2.0 Log Uploads (PX4 Pro Only)")
     visible:          QGroundControl.corePlugin.options.showPX4LogTransferOptions && _isPX4

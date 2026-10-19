@@ -84,7 +84,7 @@ ColumnLayout {
         ColumnLayout {
             spacing: verticalSpacing
 
-            SettingsGroupLayout {
+            QGCGroupBox {
                 heading: qsTr("Neutral Position")
 
                 RowLayout {
@@ -110,7 +110,7 @@ ColumnLayout {
                 }
             }
 
-            SettingsGroupLayout {
+            QGCGroupBox {
                 heading: qsTr("Retracted Position")
 
                 RowLayout {
@@ -136,7 +136,7 @@ ColumnLayout {
                 }
             }
 
-            SettingsGroupLayout {
+            QGCGroupBox {
                 heading: qsTr("Axis Constraints")
 
                 Repeater {
@@ -184,7 +184,7 @@ ColumnLayout {
                 }
             }
 
-            SettingsGroupLayout {
+            QGCGroupBox {
                 heading: qsTr("RC Targetting")
 
                 RowLayout {
@@ -265,7 +265,7 @@ ColumnLayout {
                 }
             }
 
-            SettingsGroupLayout {
+            QGCGroupBox {
                 heading: qsTr("Servo Controlled Gimbal")
                 visible: gimbalParams.typeFact.rawValue === 1
 

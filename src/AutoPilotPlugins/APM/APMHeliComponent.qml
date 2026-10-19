@@ -69,7 +69,7 @@ SetupPage {
             property Fact _hColYaw:         controller.getParameterFact(-1, "H_COLYAW")
 
             QGCGroupBox {
-                title: qsTr("Servo Setup")
+                heading: qsTr("Servo Setup")
 
                 GridLayout {
                     columns: 6
@@ -268,7 +268,7 @@ SetupPage {
             }
 
             QGCGroupBox {
-                title: qsTr("Swashplate Setup")
+                heading: qsTr("Swashplate Setup")
 
                 GridLayout {
                     columns: 2
@@ -327,7 +327,7 @@ SetupPage {
             }
 
             QGCGroupBox {
-                title: qsTr("Throttle Settings")
+                heading: qsTr("Throttle Settings")
 
                 GridLayout {
                     columns: 2
@@ -374,7 +374,7 @@ SetupPage {
             }
 
             QGCGroupBox {
-                title: qsTr("Governor Settings")
+                heading: qsTr("Governor Settings")
 
                 GridLayout {
                     columns: 2
@@ -400,7 +400,7 @@ SetupPage {
             }
 
             QGCGroupBox {
-                title: qsTr("Miscellaneous Settings")
+                heading: qsTr("Miscellaneous Settings")
 
                 GridLayout {
                     columns: 2

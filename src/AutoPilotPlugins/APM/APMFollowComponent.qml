@@ -234,7 +234,8 @@ SetupPage {
                 visible:            _showMainSetup
 
                 QGCGroupBox {
-                    title:            qsTr("Follow Me Settings")
+                    Layout.fillWidth: false
+                    heading:          qsTr("Follow Me Settings")
 
                     GridLayout {
                         columns:        2

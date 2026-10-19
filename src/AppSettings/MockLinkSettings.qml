@@ -161,7 +161,7 @@ ColumnLayout {
         }
     }
 
-    SettingsGroupLayout {
+    QGCGroupBox {
         Layout.fillWidth: true
         heading: qsTr("Camera Capabilities")
         visible: enableCamera.checked
@@ -254,7 +254,7 @@ ColumnLayout {
         }
     }
 
-    SettingsGroupLayout {
+    QGCGroupBox {
         Layout.fillWidth: true
         heading: qsTr("Gimbal Capabilities")
         visible: enableGimbal.checked

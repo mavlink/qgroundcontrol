@@ -396,7 +396,7 @@ RowLayout {
 
                     property int axisIndex: index
 
-                    SettingsGroupLayout {
+                    QGCGroupBox {
                         id:                     tuningGroup
                         heading:                title
                         headingDescription:     description

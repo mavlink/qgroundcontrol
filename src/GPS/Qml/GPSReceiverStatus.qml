@@ -9,7 +9,7 @@ import QGroundControl.FactControls
 import QGroundControl.GPS
 
 /// Live GNSS receiver status, shared by the GPS indicator and the receiver settings page.
-SettingsGroupLayout {
+QGCGroupBox {
     id: root
 
     property GPSReceiver receiver: QGroundControl.gpsManager.receiver

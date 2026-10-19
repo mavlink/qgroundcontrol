@@ -52,7 +52,6 @@ qt_add_qml_module(PlanViewModule
         TerrainStatus.qml
         TransectStyleComplexItemEditor.qml
         TransectStyleComplexItemStats.qml
-        TransectStyleComplexItemTabBar.qml
         TransectStyleComplexItemTerrainFollow.qml
         TransectStyleMapVisuals.qml
         TransformEditor.qml

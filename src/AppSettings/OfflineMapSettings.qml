@@ -28,7 +28,7 @@ Item {
         id:    mainLayout
         width: parent.width
 
-        SettingsGroupLayout {
+        QGCGroupBox {
             Layout.fillWidth:   true
             heading:            qsTr("Offline Maps")
             headingDescription: qsTr("Download map tiles for use when offline")

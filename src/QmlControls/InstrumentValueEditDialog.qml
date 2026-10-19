@@ -38,7 +38,7 @@ QGCPopupDialog {
             ColumnLayout {
                 spacing: ScreenTools.defaultFontPixelHeight / 2
 
-                SettingsGroupLayout {
+                QGCGroupBox {
                     heading: qsTr("Telemetry")
 
                     LabelledComboBox {
@@ -74,7 +74,7 @@ QGCPopupDialog {
                     }
                 }
 
-                SettingsGroupLayout {
+                QGCGroupBox {
                     heading: qsTr("Label")
 
                     ColumnLayout {
@@ -172,7 +172,7 @@ QGCPopupDialog {
                 }
             }
 
-            SettingsGroupLayout {
+            QGCGroupBox {
                 Layout.alignment:   Qt.AlignTop
                 heading:            qsTr("Value range")
 

@@ -13,7 +13,7 @@ SetupPage {
         id: pageComponent
 
         QGCGroupBox {
-            title: qsTr("Remote Support")
+            heading: qsTr("Remote Support")
 
             GridLayout {
                 id:               elementsRow

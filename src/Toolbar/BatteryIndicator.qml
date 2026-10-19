@@ -371,7 +371,7 @@ Item {
             Repeater {
                 model: _activeVehicle ? _activeVehicle.batteries : 0
 
-                SettingsGroupLayout {
+                QGCGroupBox {
                     heading:        qsTr("Battery %1").arg(_activeVehicle.batteries.length === 1 ? qsTr("Status") : object.id.rawValue)
                     contentSpacing: 0
                     showDividers:   false
@@ -440,7 +440,7 @@ Item {
 
             FactPanelController { id: controller }
 
-            SettingsGroupLayout {
+            QGCGroupBox {
                 heading:            qsTr("Battery Display")
                 Layout.fillWidth:   true
 
@@ -555,7 +555,7 @@ Item {
                 source:             _activeVehicle.expandedToolbarIndicatorSource("Battery")
             }
 
-            SettingsGroupLayout {
+            QGCGroupBox {
                 visible: _activeVehicle.autopilotPlugin.knownVehicleComponentAvailable(AutoPilotPlugin.KnownPowerVehicleComponent) &&
                             QGroundControl.corePlugin.showAdvancedUI
 

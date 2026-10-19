@@ -6,7 +6,7 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FactControls
 
-SettingsGroupLayout {
+QGCGroupBox {
     Layout.fillWidth:       true
     heading:                qsTr("Return to Launch")
     visible:                activeVehicle.multiRotor

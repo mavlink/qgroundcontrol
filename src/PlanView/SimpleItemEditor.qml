@@ -83,67 +83,16 @@ Rectangle {
             }
         }
 
-        ColumnLayout {
+        QGCGroupBox {
             width: parent.width
-            spacing: _fieldSpacing
-            visible: !missionItem.wizardMode
+            contentSpacing: _fieldSpacing
+            showDividers: false
+            // Hidden when the item has no basic, camera or advanced values, rather than drawing an empty border
+            visible: !missionItem.wizardMode && currentIndex !== -1
 
-            QGCTabBar {
-                id: tabBar
-                Layout.fillWidth: true
-                visible: _multipleTabsVisible()
-
-                property bool showBasicItems:    tabBar.visible ? tabBar.currentIndex === 0 : _basicItemsAvailable
-                property bool showCameraItems:   tabBar.visible ? tabBar.currentIndex === 1 : _cameraAvailable
-                property bool showAdvancedItems: tabBar.visible ? tabBar.currentIndex === 2 : _advancedItemsAvailable
-
-                property bool _basicItemsAvailable: _specifiesAltitude || missionItem.speedSection.available || missionItem.comboboxFacts.count > 0 || missionItem.textFieldFacts.count > 0 || missionItem.nanFacts.count > 0
-                property bool _advancedItemsAvailable: missionItem.comboboxFactsAdvanced.count > 0 || missionItem.textFieldFactsAdvanced.count > 0 || missionItem.nanFactsAdvanced.count > 0
-                property bool _cameraAvailable: missionItem.cameraSection.available
-
-                function _multipleTabsVisible() {
-                    let visibleCount = 0
-                    if (_basicItemsAvailable) visibleCount++
-                    if (_cameraAvailable) visibleCount++
-                    if (_advancedItemsAvailable) visibleCount++
-                    return visibleCount > 1
-                }
-
-                Component.onCompleted: {
-                    if (_basicItemsAvailable) {
-                        tabBar.currentIndex = 0
-                    } else if (_cameraAvailable) {
-                        tabBar.currentIndex = 1
-                    } else if (_advancedItemsAvailable) {
-                        tabBar.currentIndex = 2
-                    } else {
-                        tabBar.currentIndex = -1
-                    }
-                }
-
-                QGCTabButton {
-                    id: basicItemsTab
-                    icon.source: "/res/PlanSimpleItemBasic.svg"
-                    visible: tabBar._basicItemsAvailable
-                }
-
-                QGCTabButton {
-                    id: cameraTab
-                    icon.source: "/res/PlanSimpleItemCamera.svg"
-                    visible: tabBar._cameraAvailable
-                }
-
-                QGCTabButton {
-                    id: advancedItemsTab
-                    icon.source: "/res/PlanSimpleItemAdvanced.svg"
-                    visible: tabBar._advancedItemsAvailable
-                }
-            }
-
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: _fieldSpacing
-                visible: tabBar.showBasicItems
+            QGCGroupBoxTab {
+                iconSource: "/res/PlanSimpleItemBasic.svg"
+                tabVisible: _specifiesAltitude || missionItem.speedSection.available || missionItem.comboboxFacts.count > 0 || missionItem.textFieldFacts.count > 0 || missionItem.nanFacts.count > 0
 
                 ColumnLayout {
                     Layout.fillWidth: true
@@ -250,19 +199,22 @@ Rectangle {
                 }
             }
 
-            CameraSection {
-                Layout.fillWidth: true
-                showSectionHeader: false
-                missionItem: root.missionItem
-                visible: tabBar.showCameraItems
+            QGCGroupBoxTab {
+                iconSource: "/res/PlanSimpleItemCamera.svg"
+                tabVisible: missionItem.cameraSection.available
 
-                Component.onCompleted: checked = missionItem.cameraSection.settingsSpecified
+                CameraSection {
+                    Layout.fillWidth: true
+                    showSectionHeader: false
+                    missionItem: root.missionItem
+
+                    Component.onCompleted: checked = missionItem.cameraSection.settingsSpecified
+                }
             }
 
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: _fieldSpacing
-                visible: tabBar.showAdvancedItems
+            QGCGroupBoxTab {
+                iconSource: "/res/PlanSimpleItemAdvanced.svg"
+                tabVisible: missionItem.comboboxFactsAdvanced.count > 0 || missionItem.textFieldFactsAdvanced.count > 0 || missionItem.nanFactsAdvanced.count > 0
 
                 ColumnLayout {
                     Layout.fillWidth: true

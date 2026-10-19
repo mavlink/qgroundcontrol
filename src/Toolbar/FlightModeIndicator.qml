@@ -221,7 +221,7 @@ Item {
                 source:             _activeVehicle.expandedToolbarIndicatorSource("FlightMode")
             }
 
-            SettingsGroupLayout {
+            QGCGroupBox {
                 Layout.fillWidth:  true
 
                 FactCheckBoxSlider {

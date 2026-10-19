@@ -7,7 +7,7 @@ import QGroundControl.Controls
 import QGroundControl.GPS
 
 /// The correction stream vehicles receive, shared by the GPS indicator and the RTK Corrections settings page.
-SettingsGroupLayout {
+QGCGroupBox {
     id: root
 
     property GPSCorrectionManager corrections: QGroundControl.gpsManager.corrections

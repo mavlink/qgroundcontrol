@@ -50,7 +50,7 @@ FirstRunPrompt {
     ColumnLayout {
         spacing: ScreenTools.defaultFontPixelHeight
 
-        SettingsGroupLayout {
+        QGCGroupBox {
             Layout.fillWidth: true
             Layout.maximumWidth: _descriptionWidth
             visible: QGroundControl.corePlugin.showInitialSetupVehiclePreferences
@@ -74,7 +74,7 @@ FirstRunPrompt {
             }
         }
 
-        SettingsGroupLayout {
+        QGCGroupBox {
             Layout.fillWidth: true
             Layout.maximumWidth: _descriptionWidth
             visible: QGroundControl.corePlugin.showInitialSetupMeasurementUnits

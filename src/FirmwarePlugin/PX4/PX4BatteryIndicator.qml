@@ -5,7 +5,7 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FactControls
 
-SettingsGroupLayout {
+QGCGroupBox {
     Layout.fillWidth:   true
     heading:            qsTr("Low Battery Failsafe")
 

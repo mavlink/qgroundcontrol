@@ -24,35 +24,28 @@ SetupPage {
     Component {
         id: baseComponent
 
-        ColumnLayout {
-            spacing: _verticalSpacing
+        QGCGroupBox {
+            contentSpacing: _verticalSpacing
+            showDividers: false
 
-            QGCTabBar {
-                id: tabBar
-                width: availableWidth
-                currentIndex: 0
-                visible: gimbalParams.instanceCount > 1
+            QGCGroupBoxTab {
+                title: qsTr("Gimbal 1")
 
-                QGCTabButton {
-                    text: qsTr("Gimbal 1")
-                }
-
-                QGCTabButton {
-                    text: qsTr("Gimbal 2")
+                APMGimbalInstance {
+                    instance: 1
+                    verticalSpacing: _verticalSpacing
+                    horizontalSpacing: _horizontalSpacing
                 }
             }
 
-            APMGimbalInstance {
-                instance: 1
-                verticalSpacing: _verticalSpacing
-                horizontalSpacing: _horizontalSpacing
-                visible: tabBar.currentIndex === 0
-            }
+            QGCGroupBoxTab {
+                title: qsTr("Gimbal 2")
+                tabVisible: gimbalParams.instanceCount > 1
 
-            Loader {
-                id: gimbal2Loader
-                sourceComponent: gimbalParams.instanceCount > 1 ? gimbal2Component : null
-                visible: tabBar.currentIndex === 1
+                Loader {
+                    id: gimbal2Loader
+                    sourceComponent: gimbalParams.instanceCount > 1 ? gimbal2Component : null
+                }
             }
         }
     }

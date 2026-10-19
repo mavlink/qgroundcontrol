@@ -54,7 +54,7 @@ SetupPage {
             }
 
             QGCGroupBox {
-                title: qsTr("Servo Outputs")
+                heading: qsTr("Servo Outputs")
 
                 GridLayout {
                     columns:       7

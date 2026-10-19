@@ -28,7 +28,7 @@ ToolIndicatorPage {
         ColumnLayout {
             spacing: ScreenTools.defaultFontPixelHeight / 4
 
-            SettingsGroupLayout {
+            QGCGroupBox {
                 heading: qsTr("ESC Status Overview")
 
                 GridLayout {
@@ -66,7 +66,7 @@ ToolIndicatorPage {
             Repeater  {
                 model: _escs
 
-                SettingsGroupLayout {
+                QGCGroupBox {
                     heading:            qsTr("Motor %1 %2").arg(object.id.rawValue + 1).arg( _isThisMotorHealthy ? "" : qsTr("- OFFLINE"))
                     headingPointSize:   ScreenTools.defaultFontPointSize * ScreenTools.smallFontPointRatio
                     outerBorderColor:   _isThisMotorHealthy ? QGroundControl.globalPalette.colorGreen : QGroundControl.globalPalette.colorRed

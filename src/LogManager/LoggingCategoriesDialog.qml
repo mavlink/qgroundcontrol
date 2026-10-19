@@ -20,7 +20,7 @@ QGCPopupDialog {
     }
 
     ColumnLayout {
-        SettingsGroupLayout {
+        QGCGroupBox {
             Layout.fillWidth: true
             heading: qsTr("Search")
 
@@ -50,7 +50,7 @@ QGCPopupDialog {
             }
         }
 
-        SettingsGroupLayout {
+        QGCGroupBox {
             Layout.fillWidth: true
             heading: qsTr("Active Categories")
             showDividers: false
@@ -80,7 +80,7 @@ QGCPopupDialog {
         }
 
         // Category list (no search)
-        SettingsGroupLayout {
+        QGCGroupBox {
             Layout.fillWidth: true
             heading: qsTr("Categories")
             visible: searchText.text === ""
@@ -160,7 +160,7 @@ QGCPopupDialog {
         }
 
         // Flat filtered view (with search)
-        SettingsGroupLayout {
+        QGCGroupBox {
             heading: qsTr("Search Results")
             visible: searchText.text !== ""
 

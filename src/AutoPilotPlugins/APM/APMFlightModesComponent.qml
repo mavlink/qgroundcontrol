@@ -39,7 +39,7 @@ SetupPage {
             spacing:     _margins
 
             QGCGroupBox {
-                title: qsTr("Flight Mode Settings") + (_fltmodeChExists ? "" : qsTr(" (Channel 5)"))
+                heading: qsTr("Flight Mode Settings") + (_fltmodeChExists ? "" : qsTr(" (Channel 5)"))
 
                 ColumnLayout {
                     spacing: ScreenTools.defaultFontPixelHeight
@@ -151,7 +151,7 @@ SetupPage {
             } // QGCGroupBox - Flight Modes
 
             QGCGroupBox {
-                title: qsTr("Switch Options")
+                heading: qsTr("Switch Options")
 
                 ColumnLayout {
                     spacing: ScreenTools.defaultFontPixelHeight

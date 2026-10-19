@@ -152,7 +152,7 @@ SetupPage {
                 id: lightSettings
 
                 QGCGroupBox {
-                    title: qsTr("Light Output Channels")
+                    heading: qsTr("Light Output Channels")
 
                     GridLayout {
                         columns:        2

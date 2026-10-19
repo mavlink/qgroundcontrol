@@ -132,7 +132,7 @@ Item {
         ColumnLayout {
             spacing: ScreenTools.defaultFontPixelWidth / 2
 
-            SettingsGroupLayout {
+            QGCGroupBox {
                 heading: qsTr("Active Gimbal")
                 visible: multiGimbalSetup
 
@@ -173,7 +173,7 @@ Item {
                 }
             }
 
-            SettingsGroupLayout {
+            QGCGroupBox {
                 heading:        qsTr("Commands")
                 showDividers:   false
 
@@ -243,7 +243,7 @@ Item {
         ColumnLayout {
             spacing: ScreenTools.defaultFontPixelWidth / 2
 
-            SettingsGroupLayout {
+            QGCGroupBox {
                 heading:        qsTr("On-Screen Control")
                 showDividers:   false
 
@@ -280,7 +280,7 @@ Item {
                 }
             }
 
-            SettingsGroupLayout {
+            QGCGroupBox {
                 heading:        qsTr("Zoom speed")
                 showDividers:   false
 
@@ -296,7 +296,7 @@ Item {
 
             }
 
-            SettingsGroupLayout {
+            QGCGroupBox {
                 LabelledFactTextField {
                     label:      qsTr("Joystick buttons speed:")
                     fact:       _gimbalControllerSettings.joystickButtonsSpeed

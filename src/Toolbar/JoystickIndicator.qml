@@ -23,7 +23,7 @@ Item {
         ToolIndicatorPage {
             showExpand: true
 
-            contentComponent: SettingsGroupLayout {
+            contentComponent: QGCGroupBox {
                 heading: _activeJoystick ? _activeJoystick.name : qsTr("Joystick")
 
                 GridLayout {
@@ -115,7 +115,7 @@ Item {
                 }
             }
 
-            expandedComponent: SettingsGroupLayout {
+            expandedComponent: QGCGroupBox {
                 heading: qsTr("Device Details")
 
                 GridLayout {

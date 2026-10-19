@@ -18,7 +18,7 @@ Item {
         id: forwardingSupportInfoPage
 
         ToolIndicatorPage {
-            contentComponent: SettingsGroupLayout {
+            contentComponent: QGCGroupBox {
                 QGCLabel { text: qsTr("Mavlink traffic is being forwarded to a support server") }
 
                 LabelledLabel {

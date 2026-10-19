@@ -5,8 +5,8 @@ import QGroundControl
 import QGroundControl.Controls
 
 /// Map provider, type, and elevation provider selection.
-/// Wraps a SettingsGroupLayout with cascading comboboxes driven by QGCMapEngineManager.
-SettingsGroupLayout {
+/// Wraps a QGCGroupBox with cascading comboboxes driven by QGCMapEngineManager.
+QGCGroupBox {
     Layout.fillWidth: true
 
     property var _mapEngineManager:     QGroundControl.mapEngineManager

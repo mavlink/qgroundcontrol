@@ -88,7 +88,7 @@ Popup {
         }
     }
 
-    contentItem: SettingsGroupLayout {
+    contentItem: QGCGroupBox {
         Loader {
             sourceComponent: _root.sourceComponent
         }

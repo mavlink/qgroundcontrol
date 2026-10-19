@@ -596,7 +596,7 @@ class TestGeneratePageQml:
         qml = generate_page_qml(page, settings_dir)
         assert "MyInlineWidget {" in qml
         assert "Layout.fillWidth: true" in qml
-        # Should NOT be wrapped in a ColumnLayout (it's inside SettingsGroupLayout)
+        # Should NOT be wrapped in a ColumnLayout (it's inside QGCGroupBox)
         lines = [line.strip() for line in qml.splitlines()]
         idx = lines.index("MyInlineWidget {")
         assert "ColumnLayout {" not in lines[idx - 1]

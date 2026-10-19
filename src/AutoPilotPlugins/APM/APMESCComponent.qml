@@ -56,7 +56,8 @@ SetupPage {
             QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
             QGCGroupBox {
-                title: qsTr("Configuration")
+                Layout.fillWidth: false
+                heading: qsTr("Configuration")
                 visible: _motPwmTypeAvailable
 
                 ColumnLayout {
@@ -129,7 +130,8 @@ SetupPage {
             }
 
             QGCGroupBox {
-                title: qsTr("Calibration")
+                Layout.fillWidth: false
+                heading: qsTr("Calibration")
                 visible: _escCalibrationAvailable
 
                 ColumnLayout {
