@@ -22,7 +22,7 @@ The Flight Status indicator shows you whether the vehicle is ready to fly or not
 - **Ready To Fly** (_green background_) - Vehicle is ready to fly
 - **Ready To Fly** (_yellow background_) - Vehicle is ready to fly in the current flight mode. But there are warnings which may cause problems.
 - **Not Ready** (_red background_) - Vehicle reports that it would not arm, an enforced [Pre-Flight Checklist](fly_tools.md#preflight_checklist) is incomplete, or, for vehicles which report neither, a sensor is unhealthy or vehicle setup is incomplete.
-- **Not Ready** (_yellow background_) - Waiting for the vehicle's first health and arming check report, or the vehicle's health report does not cover the current flight mode.
+- **Not Ready** (_yellow background_) - QGroundControl is still syncing with the vehicle after connecting, waiting for the vehicle's first health and arming check report, or the vehicle's health report does not cover the current flight mode.
 - **Armed** - Vehicle is armed and ready to Takeoff.
 - **Flying** - Vehicle is in the air and flying.
 - **Landing** - Vehicle is in the process of landing.
@@ -63,6 +63,8 @@ The Flight Mode indicator shows you the current flight mode. The dropdown allows
 ![Flight Status badges](../../../assets/fly/toolbar/main_status_indicator_badges.png)
 
 Small badges can appear at the top right of the Flight Status indicator: a blue update icon when newer stable vehicle firmware is available, an orange power icon when the vehicle needs a reboot, and a status label showing the most severe issue across the dropdown tabs. Click the indicator to open the dropdown and act on them.
+
+While QGroundControl is still loading the vehicle's parameters, plan and other information after connecting, a **Vehicle Sync** badge (_yellow_) replaces all of the other badges. Progress is shown as a line along the bottom of the toolbar. **Arm**, **Takeoff** and **Start Mission** are disabled until the sync completes, and joystick **Arm** and **Toggle Arm** buttons will not arm the vehicle. **Force Arm** is not locked out by the sync.
 
 The status label shows the worst of:
 

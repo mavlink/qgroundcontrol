@@ -94,9 +94,7 @@ VehicleReadiness::Result VehicleReadiness::_evaluate(const Inputs& inputs)
         } else {
             result.status = result.canArm ? Status::Ready : Status::NotReady;
         }
-    } else if (!inputs.healthReportWaitExpired &&
-               (inputs.healthAndArmingChecksSupported ||
-                (inputs.healthAndArmingChecksExpected && !inputs.initialConnectComplete))) {
+    } else if (!inputs.healthReportWaitExpired && inputs.healthAndArmingChecksSupported) {
         result.status = Status::Unknown;
     } else if (inputs.prearmCheckAvailable) {
         result.canArm = inputs.prearmCheckPassed;
@@ -115,8 +113,14 @@ VehicleReadiness::Result VehicleReadiness::_evaluate(const Inputs& inputs)
     return result;
 }
 
-void VehicleReadiness::_applyChecklist(Result& result, const Inputs& inputs)
+void VehicleReadiness::_applyLockouts(Result& result, const Inputs& inputs)
 {
+    // Vehicle state is incomplete until initial connect finishes, so nothing pre-flight is allowed yet
+    if (!inputs.initialConnectComplete) {
+        result = Result{.status = Status::Syncing};
+        return;
+    }
+
     // The checklist is pre-flight, so it only blocks a disarmed vehicle
     if (!inputs.armed && inputs.checklistBlocksArming) {
         result.canArm = false;
@@ -139,7 +143,6 @@ VehicleReadiness::Inputs VehicleReadiness::_gatherInputs() const
                                    appSettings->enforceChecklist()->rawValue().toBool() &&
                                    (_vehicle->checkListState() != Vehicle::CheckListPassed);
 
-    inputs.healthAndArmingChecksExpected = _expectsHealthAndArmingChecks();
     inputs.healthAndArmingChecksSupported = _vehicle->healthAndArmingChecksSupported(MAV_COMP_ID_AUTOPILOT1);
     const HealthAndArmingCheckReport* const report = _vehicle->healthAndArmingCheckReport();
     if (report && report->supported()) {
@@ -189,8 +192,8 @@ void VehicleReadiness::update()
     qCDebug(VehicleReadinessLog) << "armed:" << inputs.armed
                                  << "initialConnectComplete:" << inputs.initialConnectComplete
                                  << "checklistBlocksArming:" << inputs.checklistBlocksArming
-                                 << "healthChecks expected/supported/reported:" << inputs.healthAndArmingChecksExpected
-                                 << inputs.healthAndArmingChecksSupported << inputs.healthAndArmingChecksReported
+                                 << "healthChecks supported/reported:" << inputs.healthAndArmingChecksSupported
+                                 << inputs.healthAndArmingChecksReported
                                  << "currentModeGroup:" << inputs.currentModeGroup
                                  << "takeoff arm/target:" << inputs.takeoff.armModeGroup
                                  << inputs.takeoff.targetModeGroup
@@ -206,7 +209,7 @@ void VehicleReadiness::update()
                   .canTakeoff = _canTakeoff(generic.canTakeoff),
                   .canStartMission = _canStartMission(generic.canStartMission),
                   .status = _status(generic.status)};
-    _applyChecklist(result, inputs);
+    _applyLockouts(result, inputs);
 
     if (result == _result) {
         return;

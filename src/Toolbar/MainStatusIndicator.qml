@@ -15,6 +15,7 @@ RowLayout {
     property real   _spacing:           ScreenTools.defaultFontPixelWidth / 2
     property bool   _healthAndArmingChecksSupported: _activeVehicle ? _activeVehicle.healthAndArmingCheckReport.supported : false
     property var    _readiness:         _activeVehicle ? _activeVehicle.readiness : null
+    property bool   _vehicleSyncing:    _readiness ? _readiness.status === VehicleReadiness.Status.Syncing : false
     property var    _vehicleInAir:      _activeVehicle ? _activeVehicle.airborne || _activeVehicle.landing : false
     property bool   _vtolInFWDFlight:   _activeVehicle ? _activeVehicle.vtolInFwdFlight : false
     property bool   _rebootRequired:    _activeVehicle ? _activeVehicle.rebootRequired : false
@@ -47,6 +48,7 @@ RowLayout {
     LabelMetrics { id: warningLabelMetrics; text: qsTr("Warning") }
     LabelMetrics { id: infoLabelMetrics;    text: qsTr("Info") }
     LabelMetrics { id: preFlightLabelMetrics; text: qsTr("Pre-Flight") }
+    LabelMetrics { id: vehicleSyncLabelMetrics; text: vehicleSyncBadge.text }
 
     readonly property real _severityLabelMaxWidth: Math.max(errorLabelMetrics.advanceWidth,
                                                             warningLabelMetrics.advanceWidth,
@@ -85,7 +87,8 @@ RowLayout {
         // Reserves room for every badge, visible or not, so neighboring toolbar items don't shift as badges come and go
         // and the severity label changes width
         Layout.preferredWidth: Math.max(contentWidth,
-                                        Math.max(_severityLabelMaxWidth, preFlightLabelMetrics.advanceWidth) +
+                                        Math.max(_severityLabelMaxWidth, preFlightLabelMetrics.advanceWidth,
+                                                 vehicleSyncLabelMetrics.advanceWidth) +
                                         ScreenTools.defaultFontPixelWidth +
                                         rebootRequiredIcon.width + firmwareUpdateBadge.width +
                                         ScreenTools.defaultFontPixelWidth * 0.5)
@@ -116,7 +119,7 @@ RowLayout {
                 if (_activeVehicle.armed) {
                     if (readinessStatus === VehicleReadiness.Status.NotReady) {
                         _mainStatusBGColor = "red"
-                    } else if (healthWarnings || readinessStatus === VehicleReadiness.Status.Unknown) {
+                    } else if (healthWarnings || readinessStatus === VehicleReadiness.Status.Unknown || _vehicleSyncing) {
                         _mainStatusBGColor = "yellow"
                     } else {
                         _mainStatusBGColor = "green"
@@ -155,6 +158,19 @@ RowLayout {
                                                  (_checklistWarning ? 1 : 0) : 0
             unreadCount:        _activeVehicle ? _activeVehicle.unreadMessageCount : 0
             warningLabel:       (_checklistWarning && warningCount === 1) ? qsTr("Pre-Flight") : qsTr("Warning")
+            visible:            !_vehicleSyncing && text.length > 0
+        }
+
+        // Takes the place of every other badge until initial connect completes
+        StatusPill {
+            id:                 vehicleSyncBadge
+            objectName:         "mainStatusVehicleSyncBadge"
+            anchors.top:        parent.top
+            anchors.topMargin:  ScreenTools.defaultFontPixelHeight * 0.25
+            anchors.right:      parent.right
+            text:               qsTr("Vehicle Sync")
+            color:              qgcPal.warningIndicator
+            visible:            _vehicleSyncing
         }
 
         QGCColoredImage {
@@ -167,7 +183,7 @@ RowLayout {
             height:             width
             source:             "/res/PowerButton.svg"
             color:              qgcPal.colorOrange
-            visible:            _rebootRequired
+            visible:            _rebootRequired && !_vehicleSyncing
         }
 
         Rectangle {
@@ -180,7 +196,7 @@ RowLayout {
             height:             width
             radius:             width / 2
             color:              Qt.rgba(1, 1, 1, 0.75)
-            visible:            _activeVehicle ? _activeVehicle.newStableFirmwareVersion !== "" && !_activeVehicle.newStableFirmwareVersionAcknowledged : false
+            visible:            _activeVehicle && !_vehicleSyncing && _activeVehicle.newStableFirmwareVersion !== "" && !_activeVehicle.newStableFirmwareVersionAcknowledged
 
             QGCColoredImage {
                 anchors.fill:   parent

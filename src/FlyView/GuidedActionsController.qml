@@ -115,7 +115,6 @@ Item {
     property var    _flyViewSettings:           QGroundControl.settingsManager.flyViewSettings
     property var    _unitsConversion:           QGroundControl.unitsConversion
     property var    _readiness:                 _activeVehicle ? _activeVehicle.readiness : null
-    property bool   _initialConnectComplete:    _activeVehicle ? _activeVehicle.initialConnectComplete : false
 
     // Whether the vehicle would accept the action. Applicable actions which are not ready are shown disabled.
     property bool armReady:                 _readiness ? _readiness.canArm : false

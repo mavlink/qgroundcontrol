@@ -15,6 +15,4 @@ public:
 
 protected:
     ActionFlightModes _actionFlightModes(GuidedAction action) const override;
-
-    bool _expectsHealthAndArmingChecks() const override { return true; }
 };

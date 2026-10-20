@@ -12,6 +12,7 @@
 #include "Fact.h"
 #include "FirmwarePlugin.h"
 #include "HealthReportFixtures.h"
+#include "Joystick.h"
 #include "MAVLinkLib.h"
 #include "MockLink.h"
 #include "MultiVehicleManager.h"
@@ -37,7 +38,6 @@ QList<VehicleReadinessTest::EvaluateCase> VehicleReadinessTest::_evaluateCases()
     const auto libEvents = [](quint64 canArmModeGroups, quint64 canRunModeGroups) {
         Inputs inputs;
         inputs.initialConnectComplete = true;
-        inputs.healthAndArmingChecksExpected = true;
         inputs.healthAndArmingChecksSupported = true;
         inputs.healthAndArmingChecksReported = true;
         inputs.currentModeGroup = 0;
@@ -55,6 +55,10 @@ QList<VehicleReadinessTest::EvaluateCase> VehicleReadinessTest::_evaluateCases()
         inputs.checklistBlocksArming = true;
         return inputs;
     };
+    const auto syncing = [](Inputs inputs) {
+        inputs.initialConnectComplete = false;
+        return inputs;
+    };
     const auto modeGroups = [](Inputs inputs, int current, int takeoffGroup, int missionGroup) {
         inputs.currentModeGroup = current;
         inputs.takeoff = {.armModeGroup = takeoffGroup, .targetModeGroup = takeoffGroup};
@@ -66,10 +70,9 @@ QList<VehicleReadinessTest::EvaluateCase> VehicleReadinessTest::_evaluateCases()
         inputs.startMission = {.armModeGroup = 1, .targetModeGroup = 2};
         return inputs;
     };
-    const auto prearmCheck = [](bool passed, bool expected, bool initialConnectComplete) {
+    const auto prearmCheck = [](bool passed) {
         Inputs inputs;
-        inputs.initialConnectComplete = initialConnectComplete;
-        inputs.healthAndArmingChecksExpected = expected;
+        inputs.initialConnectComplete = true;
         inputs.prearmCheckAvailable = true;
         inputs.prearmCheckPassed = passed;
         return inputs;
@@ -85,7 +88,7 @@ QList<VehicleReadinessTest::EvaluateCase> VehicleReadinessTest::_evaluateCases()
         return Result{.canArm = canArm, .canTakeoff = canTakeoff, .canStartMission = canStartMission, .status = status};
     };
 
-    Inputs waitingForSupportedReport = prearmCheck(true, false, true);
+    Inputs waitingForSupportedReport = prearmCheck(true);
     waitingForSupportedReport.healthAndArmingChecksSupported = true;
     Inputs supportedReportWaitExpired = waitingForSupportedReport;
     supportedReportWaitExpired.healthReportWaitExpired = true;
@@ -118,10 +121,8 @@ QList<VehicleReadinessTest::EvaluateCase> VehicleReadinessTest::_evaluateCases()
          result(false, false, true, Status::NotReady)},
         {"waitingForSupportedReport", waitingForSupportedReport, result(false, false, false, Status::Unknown)},
         {"supportedReportWaitExpired", supportedReportWaitExpired, result(true, true, true, Status::Ready)},
-        {"waitingForExpectedReport", prearmCheck(true, true, false), result(false, false, false, Status::Unknown)},
-        {"expectedReportNeverSupported", prearmCheck(true, true, true), result(true, true, true, Status::Ready)},
-        {"prearmCheckPassed", prearmCheck(true, false, false), result(true, true, true, Status::Ready)},
-        {"prearmCheckFailed", prearmCheck(false, false, true), result(false, false, false, Status::NotReady)},
+        {"prearmCheckPassed", prearmCheck(true), result(true, true, true, Status::Ready)},
+        {"prearmCheckFailed", prearmCheck(false), result(false, false, false, Status::NotReady)},
         {"sensorHealthReady", sensorHealth(true, true), result(true, true, true, Status::Ready)},
         {"sensorHealthUnhealthyNeverBlocks", sensorHealth(false, true), result(true, true, true, Status::NotReady)},
         {"sensorHealthSetupIncompleteNeverBlocks", sensorHealth(true, false),
@@ -131,8 +132,13 @@ QList<VehicleReadinessTest::EvaluateCase> VehicleReadinessTest::_evaluateCases()
          result(false, false, false, Status::NotReady)},
         {"checklistIgnoredWhenArmed", checklistBlocking(armed(libEvents(all, all))),
          result(true, true, true, Status::Ready)},
-        {"checklistBlocksWhileWaiting", checklistBlocking(prearmCheck(true, true, false)),
-         result(false, false, false, Status::NotReady)},
+        {"syncingLocksOutReadyVehicle", syncing(libEvents(all, all)), result(false, false, false, Status::Syncing)},
+        {"syncingLocksOutArmedVehicle", syncing(armed(libEvents(all, all))),
+         result(false, false, false, Status::Syncing)},
+        {"syncingLocksOutWithoutHealthReport", syncing(prearmCheck(true)),
+         result(false, false, false, Status::Syncing)},
+        {"syncingOverridesChecklist", checklistBlocking(syncing(prearmCheck(true))),
+         result(false, false, false, Status::Syncing)},
     };
 }
 
@@ -152,7 +158,7 @@ void VehicleReadinessTest::_testEvaluate()
 
     const EvaluateCase evaluateCase = _evaluateCases().at(caseIndex);
     VehicleReadiness::Result result = VehicleReadiness::_evaluate(evaluateCase.inputs);
-    VehicleReadiness::_applyChecklist(result, evaluateCase.inputs);
+    VehicleReadiness::_applyLockouts(result, evaluateCase.inputs);
 
     QCOMPARE(result.canArm, evaluateCase.expected.canArm);
     QCOMPARE(result.canTakeoff, evaluateCase.expected.canTakeoff);
@@ -165,6 +171,28 @@ void VehicleReadinessTest::_testEvaluate()
 // ---------------------------------------------------------------------------
 
 namespace {
+
+/// Joystick without hardware, for driving its button actions directly
+class StubJoystick : public Joystick
+{
+public:
+    StubJoystick()
+        : Joystick(QStringLiteral("VehicleReadinessStubJoystick"), 0, 0, 0)
+    {}
+
+private:
+    bool _open() override { return true; }
+
+    void _close() override {}
+
+    bool _update() override { return true; }
+
+    bool _getButton(int /*i*/) const override { return false; }
+
+    int _getAxisValue(int /*axis*/) const override { return 0; }
+
+    bool _getHat(int /*hat*/, int /*i*/) const override { return false; }
+};
 
 /// Firmware readiness which always allows Arm, can veto Takeoff and always reports not ready
 class OverridingVehicleReadiness : public VehicleReadiness
@@ -314,36 +342,83 @@ void VehicleReadinessPX4Test::_testMissingHealthReportFallsBack()
     QVERIFY_TRUE_WAIT(!readiness->canArm(), TestTimeout::mediumMs());
 }
 
-void VehicleReadinessPX4Test::_testWaitsForHealthReportDuringInitialConnect()
+void VehicleReadinessPX4Test::_testLockedOutDuringInitialConnect()
 {
     _disconnectMockLink();
 
-    // vehicleAdded is emitted from the Vehicle creation call stack, before any health report can arrive
+    // vehicleAdded is emitted from the Vehicle creation call stack, while initial connect is still in progress
     std::optional<VehicleReadiness::Result> resultWhenAdded;
+    std::optional<VehicleReadiness::Result> overriddenResultWhenAdded;
+    const auto readinessResult = [](const VehicleReadiness& readiness) {
+        return VehicleReadiness::Result{.canArm = readiness.canArm(),
+                                        .canTakeoff = readiness.canTakeoff(),
+                                        .canStartMission = readiness.canStartMission(),
+                                        .status = readiness.status()};
+    };
+    // The setArmed values a joystick passes on to the vehicle for a sequence of Arm (true) / Disarm (false) presses
+    const auto joystickArmRequests = [](Vehicle* vehicle, const QList<bool>& presses) {
+        StubJoystick joystick;
+        QSignalSpy setArmedSpy(&joystick, &Joystick::setArmed);
+        joystick._pollingVehicle = vehicle;
+        for (const bool arm : presses) {
+            joystick._requestArmed(arm);
+        }
+        joystick._pollingVehicle = nullptr;
+
+        QList<bool> requests;
+        for (const QList<QVariant>& arguments : setArmedSpy) {
+            requests.append(arguments.at(0).toBool());
+        }
+        return requests;
+    };
+    QList<bool> joystickRequestsWhileSyncing;
     const QMetaObject::Connection addedConnection = connect(
         MultiVehicleManager::instance(), &MultiVehicleManager::vehicleAdded, this,
-        [&resultWhenAdded](Vehicle* vehicle) {
+        [&](Vehicle* vehicle) {
             const VehicleReadiness* const readiness = vehicle->readiness();
             if (readiness) {
-                resultWhenAdded = VehicleReadiness::Result{.canArm = readiness->canArm(),
-                                                           .canTakeoff = readiness->canTakeoff(),
-                                                           .canStartMission = readiness->canStartMission(),
-                                                           .status = readiness->status()};
+                resultWhenAdded = readinessResult(*readiness);
             }
+
+            // Firmware overrides must not unlock actions before initial connect completes
+            OverridingVehicleReadiness overriding(vehicle);
+            overriding.update();
+            overriddenResultWhenAdded = readinessResult(overriding);
+
+            // Nor may joystick buttons arm, though they can still disarm. Repeated presses show the message once,
+            // which strict log checking enforces.
+            joystickRequestsWhileSyncing = joystickArmRequests(vehicle, {true, true, false});
         },
         Qt::DirectConnection);
     const auto disconnectAdded = qScopeGuard([addedConnection]() { disconnect(addedConnection); });
 
+    expectAppMessage(QRegularExpression(QStringLiteral("Arming is not available until vehicle sync completes")));
     _connectMockLink(MAV_AUTOPILOT_PX4);
     if (QTest::currentTestFailed()) {
         return;
     }
+    verifyExpectedLogMessage();
 
     QVERIFY(resultWhenAdded.has_value());
+    QCOMPARE(resultWhenAdded->status, VehicleReadiness::Status::Syncing);
     QVERIFY(!resultWhenAdded->canArm);
     QVERIFY(!resultWhenAdded->canTakeoff);
     QVERIFY(!resultWhenAdded->canStartMission);
-    QCOMPARE(resultWhenAdded->status, VehicleReadiness::Status::Unknown);
+    QVERIFY(overriddenResultWhenAdded.has_value());
+    QCOMPARE(overriddenResultWhenAdded->status, VehicleReadiness::Status::Syncing);
+    QVERIFY(!overriddenResultWhenAdded->canArm);
+    QVERIFY(!overriddenResultWhenAdded->canTakeoff);
+    QVERIFY(!overriddenResultWhenAdded->canStartMission);
+    QCOMPARE(joystickRequestsWhileSyncing, QList<bool>{false});
+
+    // MockLink sends no health reports, so once connected every action is allowed
+    VehicleReadiness* const readiness = vehicle()->readiness();
+    QVERIFY(readiness);
+    QVERIFY(readiness->status() != VehicleReadiness::Status::Syncing);
+    QVERIFY(readiness->canArm());
+    QVERIFY(readiness->canTakeoff());
+    QVERIFY(readiness->canStartMission());
+    QCOMPARE(joystickArmRequests(vehicle(), {true}), QList<bool>{true});
 }
 
 void VehicleReadinessPX4Test::_testFirmwareOverridesActions()

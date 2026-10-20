@@ -16,7 +16,8 @@ Q_DECLARE_LOGGING_CATEGORY(VehicleReadinessLog)
 ///
 /// This is the single source of readiness for both the guided actions and the toolbar status. It is created by
 /// FirmwarePlugin::createVehicleReadiness, since the firmware plugin decides which flight modes each guided action
-/// arms and runs in. Readiness uses the best source available on the vehicle:
+/// arms and runs in. Every action is locked out until initial connect completes. After that readiness uses the best
+/// source available on the vehicle:
 ///   1. libevents health and arming checks (mode aware: arming checks while disarmed, mode
 ///      requirements while armed)
 ///   2. The SYS_STATUS prearm check bit (current mode only)
@@ -41,6 +42,7 @@ public:
         Unknown,  ///< Waiting for a health report the vehicle is expected to send, or the current mode is unknown to it
         NotReady,
         Ready,
+        Syncing,  ///< Initial connect is still in progress, so every action is locked out
     };
     Q_ENUM(Status)
 
@@ -75,13 +77,9 @@ protected:
     /// Firmware returns the modes its plugin uses for the action. Unknown modes fall back to the current mode.
     virtual ActionFlightModes _actionFlightModes(GuidedAction /*action*/) const { return ActionFlightModes{}; }
 
-    /// True if the firmware is known to send libevents health reports. Guided actions are then blocked until the
-    /// first report arrives, unless initial connect completes without the vehicle supporting them.
-    virtual bool _expectsHealthAndArmingChecks() const { return false; }
-
     /// Per action overrides of the generic readiness. Each is given the generic answer, which firmware can keep,
-    /// tighten or replace to match how its plugin performs the action. An enforced pre-flight checklist still
-    /// applies afterwards.
+    /// tighten or replace to match how its plugin performs the action. The initial connect lockout and an enforced
+    /// pre-flight checklist still apply afterwards.
     /// @{
     virtual bool _canArm(bool genericCanArm) const { return genericCanArm; }
 
@@ -113,7 +111,6 @@ private:
         bool initialConnectComplete = false;
         bool healthReportWaitExpired = false;         ///< Stop waiting for a health report which has not arrived
 
-        bool healthAndArmingChecksExpected = false;   ///< Firmware is known to send libevents health reports
         bool healthAndArmingChecksSupported = false;  ///< Vehicle metadata lists the libevents health protocol
         bool healthAndArmingChecksReported = false;   ///< A libevents health report has been received
         int currentModeGroup = -1;
@@ -140,7 +137,9 @@ private:
     };
 
     static Result _evaluate(const Inputs& inputs);
-    static void _applyChecklist(Result& result, const Inputs& inputs);
+    /// Lockouts which firmware overrides cannot lift. The initial connect lockout takes precedence over an enforced
+    /// checklist.
+    static void _applyLockouts(Result& result, const Inputs& inputs);
     Inputs _gatherInputs() const;
     ActionModeGroups _actionModeGroups(GuidedAction action) const;
     int _modeGroup(const QString& flightMode) const;
