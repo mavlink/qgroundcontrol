@@ -20,7 +20,7 @@ Rectangle {
 
     id:             _root
     height:         _currentItem ? (editorLoader.y + editorLoader.height + _innerMargin) : (topRowLayout.y + topRowLayout.height + _margin)
-    color:          _currentItem ? qgcPal.buttonHighlight : qgcPal.windowShade
+    color:          _currentItem ? qgcPal.accent : qgcPal.windowCard
     radius:         _radius
     opacity:        _currentItem ? 1.0 : 0.7
     border.width:   _readyForSave ? 0 : 2
@@ -29,7 +29,7 @@ Rectangle {
     property var    _masterController:          missionItem.masterController
     property var    _missionController:         _masterController.missionController
     property bool   _currentItem:               missionItem.isCurrentItem
-    property color  _outerTextColor:            _currentItem ? qgcPal.buttonHighlightText : qgcPal.text
+    property color  _outerTextColor:            _currentItem ? qgcPal.accentText : qgcPal.textPrimary
     property bool   _noMissionItemsAdded:       _missionController.visualItems ? _missionController.visualItems.count <= 1 : true
     property real   _sectionSpacer:             ScreenTools.defaultFontPixelWidth / 2  // spacing between section headings
     property bool   _singleComplexItem:         _missionController.complexMissionItems.length === 1
@@ -136,7 +136,7 @@ Rectangle {
             fillMode:               Image.PreserveAspectFit
             mipmap:                 true
             smooth:                 true
-            color:                  qgcPal.buttonHighlightText
+            color:                  qgcPal.accentText
             visible:                _currentItem && missionItem.sequenceNumber !== 0
             source:                 "/res/TrashDelete.svg"
 
@@ -168,7 +168,7 @@ Rectangle {
                     fillMode:           Image.PreserveAspectFit
                     smooth:             true
                     antialiasing:       true
-                    color:              qgcPal.text
+                    color:              qgcPal.textPrimary
                     source:             "/qmlimages/arrow-down.png"
                 }
             }
@@ -262,7 +262,7 @@ Rectangle {
                     Rectangle {
                         Layout.fillWidth:       true
                         Layout.preferredHeight: 1
-                        color:                  qgcPal.groupBorder
+                        color:                  qgcPal.borderSubtle
                     }
 
                     QGCCheckBoxSlider {
@@ -286,7 +286,7 @@ Rectangle {
                     Rectangle {
                         Layout.fillWidth:       true
                         Layout.preferredHeight: 1
-                        color:                  qgcPal.groupBorder
+                        color:                  qgcPal.borderSubtle
                     }
 
                     QGCLabel {
@@ -308,7 +308,7 @@ Rectangle {
         sourceSize.height:      _hamburgerSize
         source:                 "qrc:/qmlimages/Hamburger.svg"
         visible:                missionItem.isCurrentItem && missionItem.sequenceNumber !== 0
-        color:                  qgcPal.buttonHighlightText
+        color:                  qgcPal.accentText
 
         QGCMouseArea {
             fillItem:   hamburger

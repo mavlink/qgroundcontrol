@@ -102,7 +102,7 @@ QGCPopupDialog {
                                 Rectangle {
                                     width:      height
                                     height:     changeIconBtn.height
-                                    color:      qgcPal.windowShade
+                                    color:      qgcPal.windowCard
                                     opacity:    iconRadio.checked ? 1 : .3
 
                                     QGCColoredImage {
@@ -115,7 +115,7 @@ QGCPopupDialog {
                                         fillMode:           Image.PreserveAspectFit
                                         mipmap:             true
                                         smooth:             true
-                                        color:              valueIcon.status === Image.Error ? "red" : qgcPal.text
+                                        color:              valueIcon.status === Image.Error ? "red" : qgcPal.textPrimary
                                     }
                                 }
                                 QGCButton {
@@ -296,7 +296,7 @@ QGCPopupDialog {
                                 width:      ScreenTools.implicitTextFieldHeight
                                 height:     width
                                 fillMode:   Image.PreserveAspectFit
-                                color:      QGroundControl.globalPalette.text
+                                color:      QGroundControl.globalPalette.textPrimary
                                 source:     "/res/TrashDelete.svg"
 
                                 QGCMouseArea {
@@ -342,8 +342,8 @@ QGCPopupDialog {
                             Rectangle {
                                 width:          ScreenTools.implicitTextFieldHeight
                                 height:         width
-                                border.color:   qgcPal.text
-                                color:          instrumentValueData.isValidColor(modelData) ? modelData : qgcPal.text
+                                border.color:   qgcPal.textPrimary
+                                color:          instrumentValueData.isValidColor(modelData) ? modelData : qgcPal.textPrimary
 
                                 MouseArea {
                                     anchors.fill: parent
@@ -409,7 +409,7 @@ QGCPopupDialog {
                                 width:      ScreenTools.implicitTextFieldHeight
                                 height:     width
                                 fillMode:   Image.PreserveAspectFit
-                                color:      QGroundControl.globalPalette.text
+                                color:      QGroundControl.globalPalette.textPrimary
                                 source:     "/res/TrashDelete.svg"
 
                                 QGCMouseArea {
@@ -448,7 +448,7 @@ QGCPopupDialog {
                                 fillMode:           Image.PreserveAspectFit
                                 mipmap:             true
                                 smooth:             true
-                                color:              qgcPal.text
+                                color:              qgcPal.textPrimary
 
                                 MouseArea {
                                     anchors.fill:   parent
@@ -514,7 +514,7 @@ QGCPopupDialog {
                                 width:      ScreenTools.implicitTextFieldHeight
                                 height:     width
                                 fillMode:   Image.PreserveAspectFit
-                                color:      QGroundControl.globalPalette.text
+                                color:      QGroundControl.globalPalette.textPrimary
                                 source:     "/res/TrashDelete.svg"
 
                                 QGCMouseArea {
@@ -589,7 +589,7 @@ QGCPopupDialog {
                     Rectangle {
                         height: ScreenTools.minTouchPixels
                         width:  height
-                        color:  currentSelection ? qgcPal.text  : qgcPal.window
+                        color:  currentSelection ? qgcPal.textPrimary  : qgcPal.window
 
                         property bool currentSelection: icon == modelData
 
@@ -602,7 +602,7 @@ QGCPopupDialog {
                             fillMode:           Image.PreserveAspectFit
                             mipmap:             true
                             smooth:             true
-                            color:              currentSelection ? qgcPal.window : qgcPal.text
+                            color:              currentSelection ? qgcPal.window : qgcPal.textPrimary
 
                             MouseArea {
                                 anchors.fill:   parent

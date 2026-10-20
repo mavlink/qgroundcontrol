@@ -590,14 +590,14 @@ SetupPage {
                                 id:         northCalLat
                                 visible:    !useGcsPositionCheckbox.checked && !useMapPositionCheckbox.checked && northCalibrationCheckBox.checked
                                 text:       "0.00"
-                                textColor:  isNaN(parseFloat(text)) ? qgcPal.textFieldErrorText : qgcPal.textFieldText
+                                textColor:  isNaN(parseFloat(text)) ? qgcPal.errorText : qgcPal.textPrimary
                                 enabled:    !useGcsPositionCheckbox.checked
                             }
                             FactTextField {
                                 id:         northCalLon
                                 visible:    !useGcsPositionCheckbox.checked && !useMapPositionCheckbox.checked && northCalibrationCheckBox.checked
                                 text:       "0.00"
-                                textColor:  isNaN(parseFloat(text)) ? qgcPal.textFieldErrorText : qgcPal.textFieldText
+                                textColor:  isNaN(parseFloat(text)) ? qgcPal.errorText : qgcPal.textPrimary
                                 enabled:    !useGcsPositionCheckbox.checked
                             }
 
@@ -817,15 +817,15 @@ SetupPage {
                         anchors.fill:   parent
                         readOnly:       true
                         text:           statusTextAreaDefaultText
-                        color:          qgcPal.text
-                        background:     Rectangle { color: qgcPal.windowShade }
+                        color:          qgcPal.textPrimary
+                        background:     Rectangle { color: qgcPal.windowCard }
                     }
 
                     Rectangle {
                         id:             orientationCalArea
                         anchors.fill:   parent
                         visible:        controller.showOrientationCalArea
-                        color:          qgcPal.windowShade
+                        color:          qgcPal.windowCard
 
                         QGCLabel {
                             id:                 orientationCalAreaHelpText

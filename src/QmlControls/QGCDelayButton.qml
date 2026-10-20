@@ -9,16 +9,16 @@ DelayButton {
     id:             control
     hoverEnabled:   !ScreenTools.isMobile
     topPadding:     _verticalPadding
-    bottomPadding:  _verticalPadding + (alwaysShowHelp ? ScreenTools.defaultFontPixelHeight * 0.25 : 0)
+    bottomPadding:  alwaysShowHelp ? Math.max(_verticalPadding, helpText.implicitHeight) : _verticalPadding
     leftPadding:    _horizontalPadding
     rightPadding:   _horizontalPadding
     focusPolicy:    Qt.ClickFocus
     font.family:    ScreenTools.normalFontFamily
     delay:          defaultDelay
 
-    property bool   showBorder:     qgcPal.globalTheme === QGCPalette.Light
+    property bool   showBorder:     true
     property real   backRadius:     ScreenTools.defaultBorderRadius
-    property real   heightFactor:   0.5
+    property real   heightFactor:   0.3
     property real   fontWeight:     Font.Normal // default for qml Text
     property real   pointSize:      ScreenTools.defaultFontPointSize
     property int    defaultDelay:   500
@@ -36,6 +36,20 @@ DelayButton {
     property bool   _activated:         false
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
+
+    TextMetrics {
+        id:             holdToConfirmMetrics
+        font.pointSize: control.pointSize
+        font.family:    control.font.family
+        font.weight:    control.fontWeight
+        text:           qsTr("Hold to Confirm")
+    }
+
+    TextMetrics {
+        id:             buttonTextMetrics
+        font:           holdToConfirmMetrics.font
+        text:           control.text
+    }
 
     Timer {
         id:         helpTimeout
@@ -64,11 +78,13 @@ DelayButton {
     background: Rectangle {
         id:             backRect
         radius:         backRadius
-        implicitWidth:  Math.max(control._showHelp || control.alwaysShowHelp ? helpText.contentWidth : 0, ScreenTools.implicitButtonWidth)
+        // Wide enough for both the button text and the early-release prompt so the button never resizes when it swaps
+        implicitWidth:  Math.max(Math.ceil(Math.max(holdToConfirmMetrics.advanceWidth, buttonTextMetrics.advanceWidth)) + control.leftPadding + control.rightPadding,
+                                 ScreenTools.implicitButtonWidth)
         implicitHeight: ScreenTools.implicitButtonHeight
         border.width:   showBorder ? 1 : 0
-        border.color:   qgcPal.buttonBorder
-        color:          control._showHighlight ? qgcPal.buttonHighlight : qgcPal.button
+        border.color:   control._showHighlight || (control.enabled && control.hovered) ? qgcPal.accent : qgcPal.borderSubtle
+        color:          control._showHighlight ? qgcPal.accentSubtle : qgcPal.windowCard
 
         QGCColoredImage {
             anchors.topMargin:      _sliderIndicatorMargin
@@ -81,8 +97,8 @@ DelayButton {
             source:                 "qrc:/res/chevron-double-right.svg"
             sourceSize.height:      parent.height
             fillMode:               Image.PreserveAspectFit
-            color:                  control._showHighlight ? qgcPal.buttonHighlightText : qgcPal.buttonText
-            opacity:                control._showHighlight ? 0.75 : 0.2
+            color:                  control._showHighlight ? qgcPal.accent : qgcPal.textPrimary
+            opacity:                control._showHighlight ? 1 : 0.2
 
             property real _sliderIndicatorMargin: ScreenTools.defaultFontPixelWidth * 0.5
         }
@@ -94,17 +110,17 @@ DelayButton {
             anchors.horizontalCenter:   parent.horizontalCenter
             font.pointSize:             ScreenTools.smallFontPointSize
             color:                      control.textColor
-            visible:                    control._showHelp || control.alwaysShowHelp
+            visible:                    control.alwaysShowHelp
         }
     }
 
     contentItem: QGCLabel {
         id:                     text
         horizontalAlignment:    Text.AlignHCenter
-        text:                   control.text
+        text:                   control._showHelp && !control.alwaysShowHelp ? qsTr("Hold to Confirm") : control.text
         font.pointSize:         control.pointSize
         font.family:            control.font.family
         font.weight:            control.fontWeight
-        color:                  control._showHighlight ? qgcPal.buttonHighlightText : qgcPal.buttonText
+        color:                  qgcPal.textPrimary
     }
 }

@@ -125,7 +125,7 @@ Item {
                 context.lineTo(panelX, panelY)                              // top left
 
                 context.closePath()
-                context.fillStyle = qgcPal.windowShade
+                context.fillStyle = qgcPal.windowCard
                 context.fill()
             }
         } // Canvas - arrowCanvas

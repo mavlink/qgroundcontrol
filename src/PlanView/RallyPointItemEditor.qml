@@ -9,14 +9,14 @@ import QGroundControl.FactControls
 Rectangle {
     id: root
     height: _currentItem ? valuesRect.y + valuesRect.height + _innerMargin : titleLayout.y + titleLayout.height + _margin
-    color: _currentItem ? qgcPal.buttonHighlight : qgcPal.windowShade
+    color: _currentItem ? qgcPal.accent : qgcPal.windowCard
     radius: _radius
 
     property var rallyPoint ///< RallyPoint object associated with editor
     property var controller ///< RallyPointController
 
     property bool _currentItem: rallyPoint ? rallyPoint === controller.currentRallyPoint : false
-    property color _outerTextColor: qgcPal.text
+    property color _outerTextColor: qgcPal.textPrimary
 
     readonly property real _margin: ScreenTools.defaultFontPixelWidth / 2
     readonly property real  _innerMargin: 2
@@ -82,7 +82,7 @@ Rectangle {
         anchors.right: parent.right
         anchors.top: titleLayout.bottom
         height: valuesLayout.height + (_margin * 2)
-        color: qgcPal.windowShadeDark
+        color: qgcPal.windowPanel
         visible: _currentItem
         radius: _radius
 

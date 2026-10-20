@@ -27,8 +27,8 @@ Flow {
             implicitWidth:  chipLabel.implicitWidth + ScreenTools.defaultFontPixelWidth * 1.2
             implicitHeight: chipLabel.implicitHeight + ScreenTools.defaultFontPixelHeight * 0.3
             radius:         implicitHeight / 2
-            color:          qgcPal.windowShade
-            border.color:   qgcPal.groupBorder
+            color:          qgcPal.windowCard
+            border.color:   qgcPal.borderSubtle
             border.width:   1
 
             QGCLabel {

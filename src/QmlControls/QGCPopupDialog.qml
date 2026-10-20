@@ -203,10 +203,10 @@ Popup {
         y:              mainLayout.y - _contentMargin
         width:          mainLayout.width + _contentMargin * 2
         height:         mainLayout.height + _contentMargin * 2
-        color:          _qgcPal.windowShade
+        color:          _qgcPal.windowCard
         radius:         root.padding / 2
         border.width:   1
-        border.color:   _qgcPal.windowShadeLight
+        border.color:   _qgcPal.borderSubtle
     }
 
     ColumnLayout {

@@ -76,7 +76,8 @@ Rectangle {
                 Layout.alignment: Qt.AlignHCenter
                 width: ScreenTools.defaultFontPixelWidth * 10
                 height: width / 2
-                color: qgcPal.windowShadeLight
+                color: qgcPal.windowCard
+                border.color: qgcPal.borderSubtle
                 radius: height * 0.5
                 visible: _camera.hasModes
 
@@ -85,10 +86,10 @@ Rectangle {
                     anchors.verticalCenter: parent.verticalCenter
                     width: parent.height
                     height: parent.height
-                    color: _cameraInVideoMode ? qgcPal.window : qgcPal.windowShadeLight
+                    color: _cameraInVideoMode ? qgcPal.window : qgcPal.windowCard
                     radius: height * 0.5
                     anchors.left: parent.left
-                    border.color: qgcPal.text
+                    border.color: qgcPal.textPrimary
                     border.width: _cameraInPhotoMode ? 0 : 1
 
                     QGCColoredImage {
@@ -98,7 +99,7 @@ Rectangle {
                         source: "/qmlimages/camera_video.svg"
                         fillMode: Image.PreserveAspectFit
                         sourceSize.height: height
-                        color: _cameraInVideoMode ? qgcPal.colorGreen : qgcPal.text
+                        color: _cameraInVideoMode ? qgcPal.colorGreen : qgcPal.textPrimary
 
                         MouseArea {
                             anchors.fill: parent
@@ -113,10 +114,10 @@ Rectangle {
                     anchors.verticalCenter: parent.verticalCenter
                     width: parent.height
                     height: parent.height
-                    color: _cameraInPhotoMode ? qgcPal.window : qgcPal.windowShadeLight
+                    color: _cameraInPhotoMode ? qgcPal.window : qgcPal.windowCard
                     radius: height * 0.5
                     anchors.right: parent.right
-                    border.color: qgcPal.text
+                    border.color: qgcPal.textPrimary
                     border.width: _cameraInPhotoMode ? 1 : 0
 
                     QGCColoredImage {
@@ -126,7 +127,7 @@ Rectangle {
                         source: "/qmlimages/camera_photo.svg"
                         fillMode: Image.PreserveAspectFit
                         sourceSize.height: height
-                        color: _cameraInPhotoMode ? qgcPal.colorGreen : qgcPal.text
+                        color: _cameraInPhotoMode ? qgcPal.colorGreen : qgcPal.textPrimary
 
                         MouseArea {
                             anchors.fill: parent
@@ -145,12 +146,12 @@ Rectangle {
                 Rectangle {
                     id: videoCaptureButton
                     Layout.alignment: Qt.AlignHCenter
-                    color: videoCaptureButtonPalette.button
+                    color: videoCaptureButtonPalette.windowCard
                     width: ScreenTools.defaultFontPixelWidth * 6
                     height: width
                     radius: width * 0.5
                     border.width: 1
-                    border.color: videoCaptureButtonPalette.buttonBorder
+                    border.color: videoCaptureButtonPalette.textSecondary
                     visible: (_camera.hasModes && _cameraInVideoMode) || (!_camera.hasModes && _camera.capturesVideo)
                     enabled: _camera.captureVideoState !== MavlinkCameraControlInterface.CaptureVideoStateDisabled
 
@@ -159,7 +160,7 @@ Rectangle {
                     Rectangle {
                         anchors.centerIn: parent
                         anchors.alignWhenCentered: false // Prevents anchors.centerIn from snapping to integer coordinates, which can throw off centering.
-                        color: videoCaptureButtonPalette.buttonBorder
+                        color: videoCaptureButtonPalette.textSecondary
                         width: parent.width * 0.75
                         height: width
                         radius: width * 0.5
@@ -173,7 +174,7 @@ Rectangle {
                         radius: _isCapturing ? ScreenTools.defaultFontPixelWidth * 0.5 : width * 0.5
                         color: videoCaptureButtonPalette.videoCaptureButtonColor
                         border.width: 1
-                        border.color: videoCaptureButtonPalette.buttonBorder
+                        border.color: videoCaptureButtonPalette.textSecondary
 
                         property bool _isCapturing: _camera.captureVideoState === MavlinkCameraControlInterface.CaptureVideoStateCapturing
                     }
@@ -222,12 +223,12 @@ Rectangle {
                     id: photoCaptureButton
                     objectName: "photoVideoControl_photoCaptureButton"
                     Layout.alignment: Qt.AlignHCenter
-                    color: photoCaptureButtonPalette.button
+                    color: photoCaptureButtonPalette.windowCard
                     width: ScreenTools.defaultFontPixelWidth * 6
                     height: width
                     radius: width * 0.5
                     border.width: 1
-                    border.color: photoCaptureButtonPalette.buttonBorder
+                    border.color: photoCaptureButtonPalette.textSecondary
                     visible: (_camera.hasModes && _cameraInPhotoMode) || (!_camera.hasModes && (_camera.hasVideoStream || _camera.capturesPhotos))
                     enabled: _camera.capturePhotosState !== MavlinkCameraControlInterface.CapturePhotosStateDisabled
 
@@ -236,7 +237,7 @@ Rectangle {
                     Rectangle {
                         anchors.centerIn: parent
                         anchors.alignWhenCentered: false // Prevents anchors.centerIn from snapping to integer coordinates, which can throw off centering.
-                        color: photoCaptureButtonPalette.buttonBorder
+                        color: photoCaptureButtonPalette.textSecondary
                         width: parent.width * 0.75
                         height: width
                         radius: width * 0.5
@@ -250,7 +251,7 @@ Rectangle {
                         radius: _isCapturing ? ScreenTools.defaultFontPixelWidth * 0.5 : width * 0.5
                         color: photoCaptureButtonPalette.photoCaptureButtonColor
                         border.width: 1
-                        border.color: photoCaptureButtonPalette.buttonBorder
+                        border.color: photoCaptureButtonPalette.textSecondary
 
                         property bool _isCapturing: _camera.capturePhotosState === MavlinkCameraControlInterface.CapturePhotosStateCapturingSinglePhoto ||
                                                         _camera.capturePhotosState === MavlinkCameraControlInterface.CapturePhotosStateCapturingMultiplePhotos
@@ -326,10 +327,10 @@ Rectangle {
 
                 Rectangle {
                     Layout.alignment: Qt.AlignHCenter
-                    color: _camera.trackingEnabled ? qgcPal.colorRed : qgcPal.windowShadeLight
+                    color: _camera.trackingEnabled ? qgcPal.colorRed : qgcPal.windowCard
                     Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 6
                     Layout.preferredHeight: Layout.preferredWidth
-                    border.color: qgcPal.buttonText
+                    border.color: qgcPal.textPrimary
                     border.width: 3
 
                     QGCColoredImage {
@@ -339,7 +340,7 @@ Rectangle {
                         source: "/qmlimages/TrackingIcon.svg"
                         fillMode: Image.PreserveAspectFit
                         sourceSize.height: height
-                        color: qgcPal.text
+                        color: qgcPal.textPrimary
 
                         MouseArea {
                             anchors.fill: parent
@@ -367,7 +368,7 @@ Rectangle {
                 Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 1.5
                 Layout.preferredWidth: Layout.preferredHeight
                 sourceSize.height: Layout.preferredHeight
-                color: qgcPal.text
+                color: qgcPal.textPrimary
                 fillMode: Image.PreserveAspectFit
 
                 QGCMouseArea {

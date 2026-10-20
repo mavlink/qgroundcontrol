@@ -41,7 +41,7 @@ QGCGroupBox {
         Layout.fillWidth:       true
         Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 14
         color:                  qgcPal.window
-        border.color:           qgcPal.text
+        border.color:           qgcPal.textPrimary
         border.width:           0.5
 
         QGCListView {
@@ -70,13 +70,13 @@ QGCGroupBox {
                     QGCLabel {
                         text:             object.name
                         Layout.fillWidth: true
-                        color:            object.writing ? qgcPal.warningText : qgcPal.text
+                        color:            object.writing ? qgcPal.warningText : qgcPal.textPrimary
                     }
 
                     QGCLabel {
                         text:    Number(object.size).toLocaleString(Qt.locale(), 'f', 0)
                         visible: !object.uploading && !object.uploaded
-                        color:   object.writing ? qgcPal.warningText : qgcPal.text
+                        color:   object.writing ? qgcPal.warningText : qgcPal.textPrimary
                         horizontalAlignment: Text.AlignRight
                         Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 12
                     }

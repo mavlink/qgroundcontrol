@@ -23,7 +23,7 @@ Button {
                 Rectangle {
                     height:         ScreenTools.defaultFontPixelHeight
                     width:          ScreenTools.defaultFontPixelWidth * 0.25
-                    color:          qgcPal.text
+                    color:          qgcPal.textPrimary
                     opacity:        0.75
                 }
             }

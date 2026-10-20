@@ -5,7 +5,7 @@ import QGroundControl
 import QGroundControl.Controls
 
 Item {
-    property color  color:          qgcPal.text
+    property color  color:          qgcPal.textPrimary
     property alias  contentHeight:  _measureText.contentHeight
     property font   font
     property string text:           ""

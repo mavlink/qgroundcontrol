@@ -109,7 +109,7 @@ SetupPage {
                         anchors.margins: ScreenTools.defaultFontPixelWidth * 3
                         width:              parent.width
                         height:             1
-                        color:              qgcPal.text
+                        color:              qgcPal.textPrimary
                     }
 
                     Row {
@@ -247,7 +247,7 @@ SetupPage {
                         TextArea {
                             id: textArea
                             anchors.fill: parent
-                            color:  qgcPal.text
+                            color:  qgcPal.textPrimary
                             text: controller.motorDetectionMessages
                             wrapMode: Text.WordWrap
                             background: Rectangle {

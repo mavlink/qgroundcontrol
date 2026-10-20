@@ -94,7 +94,7 @@ RowLayout {
                                         ScreenTools.defaultFontPixelWidth * 0.5)
         verticalAlignment:  Text.AlignVCenter
         text:               mainStatusText()
-        color:              qgcPal.text
+        color:              qgcPal.textPrimary
         font.pointSize:     ScreenTools.largeFontPointSize
 
         property string _commLostText:      qsTr("Comms Lost")
@@ -216,7 +216,7 @@ RowLayout {
         Layout.fillHeight:  true
         verticalAlignment:  Text.AlignVCenter
         text:               _vtolInFWDFlight ? qsTr("FW(vtol)") : qsTr("MR(vtol)")
-        color:              qgcPal.text
+        color:              qgcPal.textPrimary
         font.pointSize:     _vehicleInAir ? ScreenTools.largeFontPointSize : ScreenTools.defaultFontPointSize
         visible:            _activeVehicle && _activeVehicle.vtol
 
@@ -296,7 +296,7 @@ RowLayout {
                         objectName:         "mainStatusEmergencyStopButton"
                         text:               qsTr("Emergency Stop")
                         backgroundColor:    qgcPal.colorRed
-                        textColor:          qgcPal.buttonHighlightText
+                        textColor:          qgcPal.accentText
                         fontWeight:         Font.Bold
                         visible:            _guidedController.showEmergencyStop
 
@@ -593,7 +593,7 @@ RowLayout {
                             text:                   object.message
                             textFormat:             TextEdit.RichText
                             wrapMode:               Text.WordWrap
-                            color:                  object.severity == 'error' ? qgcPal.errorText : (object.severity == 'warning' && !object.acknowledged) ? qgcPal.warningText : qgcPal.text
+                            color:                  object.severity == 'error' ? qgcPal.errorText : (object.severity == 'warning' && !object.acknowledged) ? qgcPal.warningText : qgcPal.textPrimary
                             opacity:                object.acknowledged ? 0.6 : 1
                             MouseArea {
                                 anchors.fill: parent
@@ -618,7 +618,7 @@ RowLayout {
                             Layout.preferredHeight: 1.5 * ScreenTools.defaultFontPixelWidth
                             Layout.preferredWidth:  Layout.preferredHeight
                             source:                 "/qmlimages/arrow-down.png"
-                            color:                  qgcPal.text
+                            color:                  qgcPal.textPrimary
                             visible:                object.description != ""
                             MouseArea {
                                 anchors.fill:       parent

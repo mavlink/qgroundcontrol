@@ -22,7 +22,7 @@ Canvas {
 
     onPaint: {
         var ctx = getContext("2d")
-        ctx.strokeStyle = simplified ? "#EE3424" : _qgcPal.text
+        ctx.strokeStyle = simplified ? "#EE3424" : _qgcPal.textPrimary
         ctx.fillStyle = "#EE3424"
         ctx.lineWidth = 1
         ctx.beginPath()

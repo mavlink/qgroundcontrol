@@ -18,7 +18,7 @@ Button {
     property var    imageColor:     undefined
     property string imageResource:  "/qmlimages/subMenuButtonImage.png"     ///< Button image
     property bool   largeSize:      false
-    property bool   showHighlight:  control.pressed | control.checked
+    property bool   showHighlight:  control.pressed || control.checked
 
     property size   sourceSize:     Qt.size(ScreenTools.defaultFontPixelHeight * 2, ScreenTools.defaultFontPixelHeight * 2)
 
@@ -37,16 +37,13 @@ Button {
     }
 
     background: Rectangle {
-        id:     innerRect
-        color:  qgcPal.windowShade
+        id:             innerRect
+        color:          showHighlight ? qgcPal.accentSubtle : qgcPal.windowCard
+        border.width:   1
+        border.color:   showHighlight || (control.enabled && control.hovered) ? qgcPal.accent : qgcPal.borderSubtle
+        radius:         ScreenTools.defaultBorderRadius
 
         implicitWidth: titleBar.x + titleBar.contentWidth + ScreenTools.defaultFontPixelWidth
-
-        Rectangle {
-            anchors.fill:   parent
-            color:          qgcPal.buttonHighlight
-            opacity:        showHighlight ? 1 : control.enabled && control.hovered ? .2 : 0
-        }
 
         QGCColoredImage {
             id:                     image
@@ -68,7 +65,7 @@ Button {
             anchors.left:           image.right
             anchors.verticalCenter: parent.verticalCenter
             verticalAlignment:      TextEdit.AlignVCenter
-            color:                  showHighlight ? qgcPal.buttonHighlightText : qgcPal.buttonText
+            color:                  qgcPal.textPrimary
             text:                   control.text
         }
     }

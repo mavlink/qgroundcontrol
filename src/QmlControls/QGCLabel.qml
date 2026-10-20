@@ -7,7 +7,7 @@ import QGroundControl.Controls
 Text {
     font.pointSize: ScreenTools.defaultFontPointSize
     font.family:    ScreenTools.normalFontFamily
-    color:          qgcPal.text
+    color:          qgcPal.textPrimary
     antialiasing:   true
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }

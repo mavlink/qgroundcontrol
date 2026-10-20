@@ -30,7 +30,7 @@ QGCGroupBox {
                 fillMode:               Image.PreserveAspectFit
                 mipmap:                 true
                 smooth:                 true
-                color:                  qgcPalEdit.text
+                color:                  qgcPalEdit.textPrimary
                 source:                 "/res/pencil.svg"
                 enabled:                !object.link
 
@@ -54,7 +54,7 @@ QGCGroupBox {
                 fillMode:               Image.PreserveAspectFit
                 mipmap:                 true
                 smooth:                 true
-                color:                  qgcPalDelete.text
+                color:                  qgcPalDelete.textPrimary
                 source:                 "/res/TrashDelete.svg"
 
                 QGCPalette {

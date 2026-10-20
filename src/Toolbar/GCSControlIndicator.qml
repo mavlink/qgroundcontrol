@@ -66,7 +66,7 @@ Item {
         anchors.centerIn:   parent
         width:              height
         height:             parent.height * 1.4
-        color:              isThisGCSinControl ? qgcPal.colorGreen : qgcPal.text
+        color:              isThisGCSinControl ? qgcPal.colorGreen : qgcPal.textPrimary
         radius:             margins
         opacity:            0.0
 
@@ -138,7 +138,7 @@ Item {
                     id:                     overlayRectangle
                     height:                 ScreenTools.defaultFontPixelWidth
                     width:                  parent.width * requestProgressTracker.progress
-                    color:                  qgcPal.buttonHighlight
+                    color:                  qgcPal.accent
                     Layout.columnSpan:      2
                 }
             }
@@ -237,7 +237,7 @@ Item {
                 QGCLabel {
                     text:                   isThisGCSinControl ? (qsTr("This GCS") + " (" + gcsMain + ")" ) : gcsMain
                     font.bold:              isThisGCSinControl
-                    color:                  isThisGCSinControl ? qgcPal.colorGreen : qgcPal.text
+                    color:                  isThisGCSinControl ? qgcPal.colorGreen : qgcPal.textPrimary
                     Layout.alignment:       Qt.AlignRight
                     Layout.fillWidth:       true
                     horizontalAlignment:    Text.AlignRight
@@ -248,14 +248,14 @@ Item {
                     Layout.alignment:       Qt.AlignRight
                     Layout.fillWidth:       true
                     horizontalAlignment:    Text.AlignRight
-                    color:                  gcsControlStatusFlags_TakeoverAllowed ? qgcPal.colorGreen : qgcPal.text
+                    color:                  gcsControlStatusFlags_TakeoverAllowed ? qgcPal.colorGreen : qgcPal.textPrimary
                 }
                 // Separator
                 Rectangle {
                     Layout.columnSpan:      2
                     Layout.preferredWidth:  parent.width
                     Layout.alignment:       Qt.AlignHCenter
-                    color:                  qgcPal.windowShade
+                    color:                  qgcPal.windowCard
                     height:                 outdoorPalette ? 1 : 2
                 }
                 QGCLabel {
@@ -315,7 +315,7 @@ Item {
                     Layout.columnSpan:      2
                     Layout.preferredWidth:  parent.width
                     Layout.alignment:       Qt.AlignHCenter
-                    color:                  qgcPal.windowShade
+                    color:                  qgcPal.windowCard
                     height:                 outdoorPalette ? 1 : 2
                 }
                 LabelledFactTextField {
@@ -337,7 +337,7 @@ Item {
         source:                  "/gcscontrolIndicator/gcscontrol_line.svg"
         fillMode:                Image.PreserveAspectFit
         sourceSize.height:       height
-        color:                   isThisGCSinControl ? qgcPal.colorGreen : qgcPal.text
+        color:                   isThisGCSinControl ? qgcPal.colorGreen : qgcPal.textPrimary
     }
     QGCColoredImage {
         id:                      controlIndicatorIconAircraft
@@ -347,7 +347,7 @@ Item {
         source:                  "/gcscontrolIndicator/gcscontrol_device.svg"
         fillMode:                Image.PreserveAspectFit
         sourceSize.height:       height
-        color:                   (isThisGCSinControl || gcsControlStatusFlags_TakeoverAllowed) ? qgcPal.colorGreen : qgcPal.text
+        color:                   (isThisGCSinControl || gcsControlStatusFlags_TakeoverAllowed) ? qgcPal.colorGreen : qgcPal.textPrimary
     }
     QGCColoredImage {
         id:                      controlIndicatorIconGCS
@@ -357,7 +357,7 @@ Item {
         source:                  "/gcscontrolIndicator/gcscontrol_gcs.svg"
         fillMode:                Image.PreserveAspectFit
         sourceSize.height:       height
-        color:                   qgcPal.text
+        color:                   qgcPal.textPrimary
 
         // Current GCS in control indicator
         QGCLabel {
@@ -365,7 +365,7 @@ Item {
             text:                   gcsMain
             font.bold:              true
             font.pointSize:         ScreenTools.smallFontPointSize * 1.1
-            color:                  isThisGCSinControl ? qgcPal.colorGreen : qgcPal.text
+            color:                  isThisGCSinControl ? qgcPal.colorGreen : qgcPal.textPrimary
             anchors.bottom:         parent.bottom
             anchors.bottomMargin:   -margins * 0.7
             anchors.right:          parent.right

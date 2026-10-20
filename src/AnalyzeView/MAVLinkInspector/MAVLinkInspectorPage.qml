@@ -160,7 +160,7 @@ AnalyzePage {
                             Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 20
                         }
                         QGCLabel {
-                            color: qgcPal.buttonHighlight
+                            color: qgcPal.accent
                             text: curMessage ? curMessage.name + ' (' + curMessage.id + ')' : ""
                         }
 
@@ -244,7 +244,7 @@ AnalyzePage {
                             Layout.columnSpan:  5
                             Layout.fillWidth:   true
                             height:             1
-                            color:              qgcPal.text
+                            color:              qgcPal.textPrimary
                         }
                         //---------------------------------------------------------
 

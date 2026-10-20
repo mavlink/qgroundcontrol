@@ -12,7 +12,7 @@ Button {
     autoExclusive:  true
     icon.color:     textColor
 
-    property color textColor: checked || pressed ? qgcPal.buttonHighlightText : qgcPal.buttonText
+    property color textColor: qgcPal.textPrimary
     property bool expandable: false
     property bool expanded:   false
 
@@ -24,9 +24,10 @@ Button {
     }
 
     background: Rectangle {
-        color:      qgcPal.buttonHighlight
-        opacity:    checked || pressed ? 1 : enabled && hovered ? .2 : 0
-        radius:     ScreenTools.defaultFontPixelWidth / 2
+        color:          checked || pressed ? qgcPal.accentSubtle : (enabled && hovered ? qgcPal.windowCard : "transparent")
+        border.width:   checked || pressed ? 1 : 0
+        border.color:   qgcPal.accent
+        radius:         ScreenTools.defaultFontPixelWidth / 2
     }
 
     contentItem: RowLayout {

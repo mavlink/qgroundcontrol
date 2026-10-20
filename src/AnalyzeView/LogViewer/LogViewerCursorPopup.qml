@@ -36,8 +36,8 @@ Rectangle {
     // -------------------------------------------------------------------------
     readonly property real _margin: ScreenTools.defaultFontPixelWidth / 2
 
-    color: qgcPal.windowShade
-    border.color: qgcPal.windowShadeDark
+    color: qgcPal.windowCard
+    border.color: qgcPal.borderSubtle
     radius: ScreenTools.defaultFontPixelWidth * 0.3
     implicitWidth: _mainColumn.implicitWidth  + _margin * 2
     implicitHeight: _mainColumn.implicitHeight + _margin * 2

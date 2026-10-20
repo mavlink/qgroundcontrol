@@ -44,7 +44,7 @@ TreeView {
     function _rowFor(modelIndex) { return root.rowAtIndex(modelIndex) }
 
     // QGCFlickableScrollIndicator expects parent to have indicatorColor (provided by QGCFlickable/QGCListView)
-    property color indicatorColor: qgcPal.text
+    property color indicatorColor: qgcPal.textPrimary
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
@@ -341,7 +341,7 @@ TreeView {
             anchors.left: parent.left
             anchors.right: parent.right
             height: 1
-            color: qgcPal.groupBorder
+            color: qgcPal.borderSubtle
             visible: delegateRoot.separator
         }
 
@@ -353,7 +353,7 @@ TreeView {
                 objectName: "planTree_" + delegateRoot.nodeType + "Header"
                 width:  delegateRoot.width
                 height: ScreenTools.implicitComboBoxHeight + ScreenTools.defaultFontPixelWidth
-                color:  qgcPal.windowShade
+                color:  qgcPal.windowCard
 
                 RowLayout {
                     id: groupHeaderRow
@@ -368,7 +368,7 @@ TreeView {
                         Layout.preferredWidth: ScreenTools.defaultFontPixelHeight * 0.75
                         Layout.preferredHeight: Layout.preferredWidth
                         source: "/InstrumentValueIcons/cheveron-right.svg"
-                        color: qgcPal.text
+                        color: qgcPal.textPrimary
                         rotation: delegateRoot.expanded ? 90 : 0
                     }
 
@@ -383,7 +383,7 @@ TreeView {
                         Layout.preferredWidth: ScreenTools.defaultFontPixelHeight * 0.75
                         Layout.preferredHeight: Layout.preferredWidth
                         source: root._groupIcon(delegateRoot.nodeType)
-                        color: qgcPal.text
+                        color: qgcPal.textPrimary
                         visible: source.toString() !== ""
                     }
 

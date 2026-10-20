@@ -70,7 +70,7 @@ Item {
             x:                  size / 2
             width:              1
             height:             ScreenTools.defaultFontPixelHeight * 0.5
-            color:              qgcPal.text
+            color:              qgcPal.textPrimary
             antialiasing:       true
 
             transform: Rotation {
@@ -90,7 +90,7 @@ Item {
             y:                  _margin
             width:              1
             height:             _margin
-            color:              qgcPal.text
+            color:              qgcPal.textPrimary
             antialiasing:       true
 
             property real _margin: ScreenTools.defaultFontPixelHeight * 0.25

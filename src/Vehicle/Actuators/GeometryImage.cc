@@ -248,7 +248,7 @@ QPixmap VehicleGeometryImageProvider::requestPixmap([[maybe_unused]] const QStri
     const float frameWidth{ 6.f };
     const float rotorFontSize{ rotorDiameter * 0.4f };
     const QColor rotorHighlightColor{ frameArrowColor };
-    const QColor fontColor{ _palette.text() };
+    const QColor fontColor{_palette.textPrimary()};
 
     auto iterateMotors = [scale, offsetX, offsetY](const QList<ActuatorGeometry> &actuatorsList,
             std::function<void(const ActuatorGeometry&, QPointF)> draw) {

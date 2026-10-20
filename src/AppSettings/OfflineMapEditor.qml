@@ -505,7 +505,7 @@ FlightMap {
                             anchors.right: parent.right
                             height: zoomColumn.height + ScreenTools.defaultFontPixelHeight * 0.5
                             color: qgcPal.window
-                            border.color: qgcPal.text
+                            border.color: qgcPal.textPrimary
                             radius: ScreenTools.defaultFontPixelWidth * 0.5
 
                             Column {
@@ -552,15 +552,15 @@ FlightMap {
                                         implicitWidth: sliderTouchArea
                                         implicitHeight: sliderTouchArea
                                         radius: sliderTouchArea * 0.5
-                                        color: qgcPal.button
+                                        color: qgcPal.windowCard
                                         border.width: 1
-                                        border.color: qgcPal.buttonText
+                                        border.color: qgcPal.textPrimary
                                         Label {
                                             text: sliderMinZoom.value
                                             anchors.centerIn: parent
                                             font.family: ScreenTools.normalFontFamily
                                             font.pointSize: ScreenTools.smallFontPointSize
-                                            color: qgcPal.buttonText
+                                            color: qgcPal.textPrimary
                                         }
                                     }
                                 } // Slider - min zoom
@@ -595,15 +595,15 @@ FlightMap {
                                         implicitWidth: sliderTouchArea
                                         implicitHeight: sliderTouchArea
                                         radius: sliderTouchArea * 0.5
-                                        color: qgcPal.button
+                                        color: qgcPal.windowCard
                                         border.width: 1
-                                        border.color: qgcPal.buttonText
+                                        border.color: qgcPal.textPrimary
                                         Label {
                                             text: sliderMaxZoom.value
                                             anchors.centerIn: parent
                                             font.family: ScreenTools.normalFontFamily
                                             font.pointSize: ScreenTools.smallFontPointSize
-                                            color: qgcPal.buttonText
+                                            color: qgcPal.textPrimary
                                         }
                                     }
                                 } // Slider - max zoom

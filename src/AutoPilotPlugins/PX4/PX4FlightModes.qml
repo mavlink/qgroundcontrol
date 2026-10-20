@@ -69,7 +69,7 @@ SetupPage {
                                 id:                 flightModeSettings
                                 width:              flightModeColumn.width + (_margins * 2)
                                 height:             flightModeColumn.height + ScreenTools.defaultFontPixelHeight
-                                color:              qgcPal.windowShade
+                                color:              qgcPal.windowCard
 
                                 GridLayout {
                                     id:                 flightModeColumn
@@ -92,7 +92,7 @@ SetupPage {
                                         QGCLabel {
                                             Layout.fillWidth:   true
                                             text:               qsTr("Flight Mode %1").arg(modelData + 1)
-                                            color:              (controller.activeFlightMode - 1) == index ? "yellow" : qgcPal.text
+                                            color:              (controller.activeFlightMode - 1) == index ? "yellow" : qgcPal.textPrimary
                                         }
                                     }
 
@@ -131,7 +131,7 @@ SetupPage {
                                 id:     switchSettingsRect
                                 width:  switchSettingsGrid.width + (_margins * 2)
                                 height: switchSettingsGrid.height + ScreenTools.defaultFontPixelHeight
-                                color:  qgcPal.windowShade
+                                color:  qgcPal.windowCard
 
                                 GridLayout {
                                     id:                 switchSettingsGrid
@@ -163,7 +163,7 @@ SetupPage {
                                             QGCLabel {
                                                 text:               swFact.shortDescription
                                                 Layout.fillWidth:   true
-                                                color:              swActive ? "yellow" : qgcPal.text
+                                                color:              swActive ? "yellow" : qgcPal.textPrimary
                                             }
 
                                             FactComboBox {

@@ -117,13 +117,13 @@ Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
             color: qgcPal.window   // Use QGC palette colors for everything, no hardcoded colors
-            border.color: qgcPal.text
+            border.color: qgcPal.textPrimary
             border.width: 1
 
             QGCLabel {
                 anchors.centerIn: parent
                 text: _debugMode ? qsTr("Debug Mode") : qsTr("Normal Mode")
-                color: qgcPal.text
+                color: qgcPal.textPrimary
             }
         }
 

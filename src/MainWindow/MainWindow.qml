@@ -693,6 +693,7 @@ ApplicationWindow {
                 id:             backgroundRect
                 anchors.fill:   parent
                 color:          QGroundControl.globalPalette.window
+                border.color:   QGroundControl.globalPalette.borderSubtle
                 radius:         indicatorDrawer._margins
                 opacity:        0.85
             }
@@ -704,14 +705,14 @@ ApplicationWindow {
                 width:                      ScreenTools.largeFontPixelHeight
                 height:                     width
                 radius:                     width / 2
-                color:                      QGroundControl.globalPalette.button
-                border.color:               QGroundControl.globalPalette.buttonText
+                color:                      QGroundControl.globalPalette.windowCard
+                border.color:               QGroundControl.globalPalette.textPrimary
                 visible:                    indicatorDrawerLoader.item && indicatorDrawerLoader.item._showExpand && !indicatorDrawer._expanded
 
                 QGCLabel {
                     anchors.centerIn:   parent
                     text:               ">"
-                    color:              QGroundControl.globalPalette.buttonText
+                    color:              QGroundControl.globalPalette.textPrimary
                 }
 
                 QGCMouseArea {

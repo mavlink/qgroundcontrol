@@ -96,7 +96,7 @@ Item {
 
                 Rectangle {
                     Layout.fillWidth:   true
-                    color:              qgcPal.text
+                    color:              qgcPal.textPrimary
                     height:             1
                 }
 

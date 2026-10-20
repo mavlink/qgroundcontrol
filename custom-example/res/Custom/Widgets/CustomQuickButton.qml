@@ -17,14 +17,14 @@ Button {
         width:                  control.width
         height:                 width
         anchors.centerIn:       parent
-        color:                  (mouseArea.pressed || control.checked) ? qgcPal.buttonHighlight : (qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.5) : Qt.rgba(0,0,0,0.5))
+        color:                  (mouseArea.pressed || control.checked) ? qgcPal.accent : (qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.5) : Qt.rgba(0,0,0,0.5))
         radius:                 control.buttonRadius
     }
     contentItem: Item {
         anchors.fill:           control
         QGCColoredImage {
             source:             iconSource
-            color:              (mouseArea.pressed || control.checked) ? qgcPal.buttonHighlightText : qgcPal.buttonText
+            color:              (mouseArea.pressed || control.checked) ? qgcPal.accentText : qgcPal.textPrimary
             width:              control.width * iconRatio
             height:             width
             anchors.centerIn:   parent

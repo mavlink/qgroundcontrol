@@ -282,7 +282,7 @@ AnalyzePage {
                         Rectangle {
                             Layout.fillWidth: true
                             Layout.fillHeight: true
-                            color: qgcPal.windowShadeDark
+                            color: qgcPal.windowPanel
                             radius: ScreenTools.defaultFontPixelWidth * 0.5
 
                             ColumnLayout {

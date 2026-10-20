@@ -112,9 +112,9 @@ AnalyzePage {
                     inputMethodHints: Qt.ImhNoAutoUppercase | Qt.ImhMultiLine
                     text: "> "
                     focus: true
-                    color: qgcPal.text
-                    selectedTextColor: qgcPal.windowShade
-                    selectionColor: qgcPal.text
+                    color: qgcPal.textPrimary
+                    selectedTextColor: qgcPal.windowCard
+                    selectionColor: qgcPal.textPrimary
                     font.pointSize: ScreenTools.defaultFontPointSize
                     font.family: ScreenTools.fixedFontFamily
 
@@ -127,7 +127,7 @@ AnalyzePage {
                         }
                     }
 
-                    background: Rectangle { color: qgcPal.windowShade }
+                    background: Rectangle { color: qgcPal.windowCard }
 
                     Keys.onPressed: (event) => {
                         // ignore tabs

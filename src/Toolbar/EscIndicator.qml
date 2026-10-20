@@ -74,7 +74,7 @@ Item {
             source:             "/qmlimages/EscIndicator.svg"
             fillMode:           Image.PreserveAspectFit
             sourceSize.height:  height
-            color:              qgcPal.text
+            color:              qgcPal.textPrimary
         }
 
         Column {
@@ -84,7 +84,7 @@ Item {
 
             QGCLabel {
                 anchors.horizontalCenter:   parent.horizontalCenter
-                color:                      qgcPal.text
+                color:                      qgcPal.textPrimary
                 text:                       _onlineMotorCount.toString()
                 font.pointSize:             ScreenTools.smallFontPointSize
             }

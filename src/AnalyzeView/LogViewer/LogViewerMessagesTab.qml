@@ -25,7 +25,7 @@ ScrollView {
         delegate: Rectangle {
             width: ListView.view.width
             height: _msgRow.implicitHeight + ScreenTools.defaultFontPixelHeight * 0.4
-            color: index % 2 === 0 ? qgcPal.windowShade : qgcPal.windowShadeDark
+            color: index % 2 === 0 ? qgcPal.windowCard : qgcPal.windowPanel
             radius: 2
 
             RowLayout {
@@ -45,7 +45,7 @@ ScrollView {
                             return Qt.formatDateTime(new Date(st.getTime() + _t * 1000), "yyyy-MM-dd HH:mm:ss.zzz")
                         return _t.toFixed(3) + "s"
                     }
-                    color: Qt.rgba(qgcPal.text.r, qgcPal.text.g, qgcPal.text.b, 0.6)
+                    color: Qt.rgba(qgcPal.textPrimary.r, qgcPal.textPrimary.g, qgcPal.textPrimary.b, 0.6)
                     Layout.preferredWidth: (logParser.startTime && !isNaN(logParser.startTime.getTime()) && logParser.startTime.getTime() > 0)
                         ? ScreenTools.defaultFontPixelWidth * 20
                         : ScreenTools.defaultFontPixelWidth * 10

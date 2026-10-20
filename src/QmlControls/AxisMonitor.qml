@@ -12,7 +12,7 @@ Item {
     property bool   mapped:             false
     property bool   reversed:           false
 
-    property color  __barColor:         qgcPal.windowShade
+    property color  __barColor:         qgcPal.windowCard
 
     // Bar
     Rectangle {
@@ -53,7 +53,7 @@ Item {
         height:                 parent.height * 0.75
         x:                      (reversed ? (parent.width - _indicatorPosition) : _indicatorPosition) - (width / 2)
         radius:                 width / 2
-        color:                  qgcPal.text
+        color:                  qgcPal.textPrimary
         visible:                mapped
 
         property real _percentAxisValue:    ((axisValue + 32768.0) / (32768.0 * 2))

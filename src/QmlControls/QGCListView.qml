@@ -9,7 +9,7 @@ ListView {
     boundsBehavior: Flickable.StopAtBounds
     clip:           true
 
-    property color indicatorColor: qgcPal.text
+    property color indicatorColor: qgcPal.textPrimary
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 

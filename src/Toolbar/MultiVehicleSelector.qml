@@ -31,7 +31,7 @@ RowLayout {
             height:     ScreenTools.defaultFontPixelHeight * 1.33
             fillMode:   Image.PreserveAspectFit
             mipmap:     true
-            color:      qgcPal.text
+            color:      qgcPal.textPrimary
             source:     "/InstrumentValueIcons/airplane.svg"
         }
 

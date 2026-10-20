@@ -279,7 +279,7 @@ Item {
                     implicitWidth:  column === 0 ? ScreenTools.implicitCheckBoxHeight + ScreenTools.defaultFontPixelWidth
                                                  : headerLabel.contentWidth + ScreenTools.defaultFontPixelWidth
                     implicitHeight: headerLabel.contentHeight + ScreenTools.defaultFontPixelHeight * 0.5
-                    color:          qgcPal.windowShade
+                    color:          qgcPal.windowCard
 
                     QGCLabel {
                         id:                     headerLabel
@@ -295,7 +295,7 @@ Item {
                         anchors.top:    parent.top
                         width:          parent.width
                         height:         1
-                        color:          qgcPal.groupBorder
+                        color:          qgcPal.borderSubtle
                     }
 
                     // Left border
@@ -303,7 +303,7 @@ Item {
                         anchors.left:   parent.left
                         height:         parent.height
                         width:          1
-                        color:          qgcPal.groupBorder
+                        color:          qgcPal.borderSubtle
                     }
 
                     // Right border (last column only)
@@ -311,7 +311,7 @@ Item {
                         anchors.right:  parent.right
                         height:         parent.height
                         width:          1
-                        color:          qgcPal.groupBorder
+                        color:          qgcPal.borderSubtle
                         visible:        column == 3
                     }
 
@@ -320,7 +320,7 @@ Item {
                         anchors.bottom: parent.bottom
                         width:          parent.width
                         height:         1
-                        color:          qgcPal.groupBorder
+                        color:          qgcPal.borderSubtle
                     }
                 }
             }
@@ -359,7 +359,7 @@ Item {
                                                  : column === 2 ? ScreenTools.defaultFontPixelWidth * 16
                                                                 : label.contentWidth + ScreenTools.defaultFontPixelWidth
                     implicitHeight: label.contentHeight + ScreenTools.defaultFontPixelHeight * 0.5
-                    color:          row % 2 === 0 ? "transparent" : qgcPal.windowShade
+                    color:          row % 2 === 0 ? "transparent" : qgcPal.windowCard
                     clip:           true
 
                     // Bottom grid line
@@ -367,7 +367,7 @@ Item {
                         anchors.bottom: parent.bottom
                         width:          parent.width
                         height:         1
-                        color:          qgcPal.groupBorder
+                        color:          qgcPal.borderSubtle
                     }
 
                     // Left grid line
@@ -375,7 +375,7 @@ Item {
                         anchors.left:   parent.left
                         height:         parent.height
                         width:          1
-                        color:          qgcPal.groupBorder
+                        color:          qgcPal.borderSubtle
                     }
 
                     // Right grid line (last column only)
@@ -383,7 +383,7 @@ Item {
                         anchors.right:  parent.right
                         height:         parent.height
                         width:          1
-                        color:          qgcPal.groupBorder
+                        color:          qgcPal.borderSubtle
                         visible:        column == 3
                     }
 
@@ -412,7 +412,7 @@ Item {
                             id:                 lockIcon
                             visible:            fact.readOnly
                             source:             "qrc:/InstrumentValueIcons/lock-closed.svg"
-                            color:              qgcPal.text
+                            color:              qgcPal.textPrimary
                             width:              ScreenTools.defaultFontPixelHeight * 0.8
                             height:             width
                             sourceSize.width:   width
@@ -428,7 +428,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         width:              column == 2 ? ScreenTools.defaultFontPixelWidth * 15 : implicitWidth
                         text:               column == 2 ? col1String() : display
-                        color:              column == 2 && fact.defaultValueAvailable && !fact.valueEqualsDefault ? qgcPal.modifiedParamValue : qgcPal.text
+                        color:              column == 2 && fact.defaultValueAvailable && !fact.valueEqualsDefault ? qgcPal.modifiedParamValue : qgcPal.textPrimary
                         font.bold:          column == 2 && fact.defaultValueAvailable && !fact.valueEqualsDefault
                         maximumLineCount:   1
                         elide:              column == 2 ? Text.ElideRight : Text.ElideNone

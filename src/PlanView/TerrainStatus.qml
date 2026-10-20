@@ -63,11 +63,11 @@ Rectangle {
                     backgroundColor:            "transparent"
                     backgroundVisible:          false
                     plotAreaBackgroundColor:     qgcPal.window
-                    grid.mainColor:             applyOpacity(qgcPal.text, 0.5)
-                    grid.subColor:              applyOpacity(qgcPal.text, 0.3)
+                    grid.mainColor:             applyOpacity(qgcPal.textPrimary, 0.5)
+                    grid.subColor:              applyOpacity(qgcPal.textPrimary, 0.3)
                     grid.mainWidth:             1
                     labelBackgroundVisible:     false
-                    labelTextColor:             qgcPal.text
+                    labelTextColor:             qgcPal.textPrimary
                     axisXLabelFont.family:      ScreenTools.fixedFontFamily
                     axisXLabelFont.pointSize:   ScreenTools.smallFontPointSize
                     axisYLabelFont.family:      ScreenTools.fixedFontFamily
@@ -145,7 +145,7 @@ Rectangle {
                             id:         simpleItem
                             height:     terrainProfile.height
                             width:      1
-                            color:      qgcPal.text
+                            color:      qgcPal.textPrimary
                             x:          (object.distanceFromStart * terrainProfile.pixelsPerMeter)
                             visible:    object.isSimpleItem || object.isSingleItem
 
@@ -164,7 +164,7 @@ Rectangle {
                             id:         complexItemEntry
                             height:     terrainProfile.height
                             width:      1
-                            color:      qgcPal.text
+                            color:      qgcPal.textPrimary
                             x:          (object.distanceFromStart * terrainProfile.pixelsPerMeter)
                             visible:    complexItem.visible
 
@@ -182,7 +182,7 @@ Rectangle {
                             id:         complexItemExit
                             height:     terrainProfile.height
                             width:      1
-                            color:      qgcPal.text
+                            color:      qgcPal.textPrimary
                             x:          ((object.distanceFromStart + object.complexDistance) * terrainProfile.pixelsPerMeter)
                             visible:    complexItem.visible
 

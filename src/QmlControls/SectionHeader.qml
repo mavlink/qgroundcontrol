@@ -11,7 +11,7 @@ CheckBox {
     checked:        true
     leftPadding:    0
 
-    property var            color:          qgcPal.text
+    property var            color:          qgcPal.textPrimary
     property bool           showSpacer:     true
     property ButtonGroup    buttonGroup:    null
 
@@ -43,7 +43,7 @@ CheckBox {
                 width:                  parent.height / 2
                 height:                 width
                 source:                 "/qmlimages/arrow-down.png"
-                color:                  qgcPal.text
+                color:                  qgcPal.textPrimary
                 visible:                !control.checked
             }
         }
@@ -51,7 +51,7 @@ CheckBox {
         Rectangle {
             Layout.fillWidth:   true
             height:             1
-            color:              qgcPal.text
+            color:              qgcPal.textPrimary
         }
     }
 

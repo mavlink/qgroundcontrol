@@ -16,6 +16,6 @@ Item {
         anchors.right:          parent.right
         anchors.verticalCenter: parent.verticalCenter
         height:                 1
-        color:                  qgcPal.windowShade
+        color:                  qgcPal.borderSubtle
     }
 }

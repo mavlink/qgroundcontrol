@@ -11,9 +11,10 @@ Button {
 
     background: Rectangle {
         anchors.fill:   parent
-        color:          _showHighlight ? qgcPal.buttonHighlight : qgcPal.button
-        border.width:   _showBorder ? 1: 0
-        border.color:   qgcPal.buttonText
+        color:          _showSelected ? qgcPal.accentSubtle : qgcPal.windowCard
+        border.width:   1
+        border.color:   _showHighlight ? qgcPal.accent : qgcPal.borderSubtle
+        radius:         ScreenTools.defaultBorderRadius
     }
 
     property var    tileSet:    null
@@ -22,8 +23,8 @@ Button {
     property int    tiles:      0
     property string size:       ""
 
-    property bool   _showHighlight: (_pressed | _hovered | checked) && !_forceHoverOff
-    property bool   _showBorder:    qgcPal.globalTheme === QGCPalette.Light
+    property bool   _showHighlight: (_pressed || _hovered || checked) && !_forceHoverOff
+    property bool   _showSelected:  (_pressed || checked) && !_forceHoverOff
 
     property bool   _forceHoverOff:    false
     property int    _lastGlobalMouseX: 0
@@ -37,7 +38,7 @@ Button {
         QGCLabel {
             text:   mapButton.text
             width:  mapButton.width * 0.4
-            color:  _showHighlight ? qgcPal.buttonHighlightText : qgcPal.buttonText
+            color:  qgcPal.textPrimary
             wrapMode: Text.Wrap
             maximumLineCount: 2
             anchors.verticalCenter: parent.verticalCenter
@@ -47,7 +48,7 @@ Button {
             width:  mapButton.width * 0.4
             horizontalAlignment: Text.AlignRight
             anchors.verticalCenter: parent.verticalCenter
-            color:  _showHighlight ? qgcPal.buttonHighlightText : qgcPal.buttonText
+            color:  qgcPal.textPrimary
             text:   mapButton.size + (tiles > 0 ? " (" + tiles + " tiles)" : "")
         }
         Item {
@@ -73,7 +74,7 @@ Button {
             source:     "/res/buttonRight.svg"
             mipmap:     true
             fillMode:   Image.PreserveAspectFit
-            color:      _showHighlight ? qgcPal.buttonHighlightText : qgcPal.buttonText
+            color:      qgcPal.textPrimary
             anchors.verticalCenter: parent.verticalCenter
         }
     }

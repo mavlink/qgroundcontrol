@@ -24,7 +24,7 @@ Item {
     property real   _indicatorDiameter:     ScreenTools.defaultFontPixelWidth * 18
     property real   _indicatorsHeight:      ScreenTools.defaultFontPixelHeight
     property var    _sepColor:              qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.5) : Qt.rgba(1,1,1,0.5)
-    property color  _indicatorsColor:       qgcPal.text
+    property color  _indicatorsColor:       qgcPal.textPrimary
     property bool   _isVehicleGps:          _activeVehicle ? _activeVehicle.gps.count.rawValue > 1 && _activeVehicle.gps.hdop.rawValue < 1.4 : false
     property string _altitude:              _activeVehicle ? (isNaN(_activeVehicle.altitudeRelative.value) ? "0.0" : _activeVehicle.altitudeRelative.value.toFixed(1)) + ' ' + _activeVehicle.altitudeRelative.units : "0.0"
     property string _distanceStr:           isNaN(_distance) ? "0" : _distance.toFixed(0) + ' ' + QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString
@@ -109,13 +109,13 @@ Item {
         id:                         headingIndicator
         height:                     ScreenTools.defaultFontPixelHeight
         width:                      ScreenTools.defaultFontPixelWidth * 4
-        color:                      qgcPal.windowShadeDark
+        color:                      qgcPal.windowPanel
         anchors.top:                compassBar.top
         anchors.topMargin:          -headingIndicator.height / 2
         anchors.horizontalCenter:   parent.horizontalCenter
         QGCLabel {
             text:                   _heading
-            color:                  qgcPal.text
+            color:                  qgcPal.textPrimary
             font.pointSize:         ScreenTools.smallFontPointSize
             anchors.centerIn:       parent
         }
@@ -150,7 +150,7 @@ Item {
             width:                  height
             height:                 parent.height - (northLabelBackground.height / 2) - (headingLabelBackground.height / 2)
             radius:                 height / 2
-            border.color:           qgcPal.text
+            border.color:           qgcPal.textPrimary
             border.width:           1
             color:                  Qt.rgba(0,0,0,0)
         }
@@ -163,13 +163,13 @@ Item {
             width:                      northLabel.contentWidth * 1.5
             height:                     northLabel.contentHeight * 1.5
             radius:                     ScreenTools.defaultFontPixelWidth  * 0.25
-            color:                      qgcPal.windowShade
+            color:                      qgcPal.windowCard
 
             QGCLabel {
                 id:                 northLabel
                 anchors.centerIn:   parent
                 text:               "N"
-                color:              qgcPal.text
+                color:              qgcPal.textPrimary
                 font.pointSize:     ScreenTools.smallFontPointSize
             }
         }
@@ -198,13 +198,13 @@ Item {
             width:                      headingLabel.contentWidth * 1.5
             height:                     headingLabel.contentHeight * 1.5
             radius:                     ScreenTools.defaultFontPixelWidth  * 0.25
-            color:                      qgcPal.windowShade
+            color:                      qgcPal.windowCard
 
             QGCLabel {
                 id:                 headingLabel
                 anchors.centerIn:   parent
                 text:               _heading
-                color:              qgcPal.text
+                color:              qgcPal.textPrimary
                 font.pointSize:     ScreenTools.smallFontPointSize
             }
         }
@@ -219,7 +219,7 @@ Item {
         height:                 ScreenTools.defaultFontPixelHeight * 6
         width:                  height
         radius:                 height * 0.5
-        color:                  qgcPal.windowShade
+        color:                  qgcPal.windowCard
 
         CustomAttitudeWidget {
             size:               parent.height * 0.95

@@ -52,6 +52,6 @@ GridLayout {
         font.pointSize:         ScreenTools.smallFontPointSize
         wrapMode:               Text.WordWrap
         text:                   qsTr("You can enter an IP address (e.g. 192.168.1.1) or hostname (e.g. my-drone.local)")
-        color:                  qgcPal.text
+        color:                  qgcPal.textPrimary
     }
 }

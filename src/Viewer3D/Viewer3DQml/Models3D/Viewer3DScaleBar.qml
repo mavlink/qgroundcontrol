@@ -154,7 +154,7 @@ Item {
         anchors.left: parent.left
         width: 2
         height: ScreenTools.defaultFontPixelHeight
-        color: qgcPal.text
+        color: qgcPal.textPrimary
     }
 
     Rectangle {
@@ -163,7 +163,7 @@ Item {
         anchors.bottom: leftEnd.bottom
         anchors.left: leftEnd.right
         height: 2
-        color: qgcPal.text
+        color: qgcPal.textPrimary
     }
 
     Rectangle {
@@ -172,6 +172,6 @@ Item {
         anchors.left: centerLine.right
         width: 2
         height: ScreenTools.defaultFontPixelHeight
-        color: qgcPal.text
+        color: qgcPal.textPrimary
     }
 }

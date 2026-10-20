@@ -150,7 +150,7 @@ SetupPage {
                         radius: button.backRadius
                         border.width: button.showBorder ? 1 : 0
                         border.color: button.background.border.color
-                        color: qgcPal.buttonHighlight
+                        color: qgcPal.accent
 
                         QGCColoredImage {
                             id: downloadIcon

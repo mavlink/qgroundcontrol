@@ -11,7 +11,7 @@ Rectangle {
     id: root
     width: availableWidth
     height: valuesColumn.height + (_margin * 2)
-    color: qgcPal.windowShadeDark
+    color: qgcPal.windowPanel
     radius: ScreenTools.defaultBorderRadius
 
     required property var missionItem

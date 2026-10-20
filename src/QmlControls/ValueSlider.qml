@@ -195,7 +195,7 @@ Control {
                         id:     majorTickMark
                         width:  1
                         height: _majorTickSize
-                        color:  qgcPal.text
+                        color:  qgcPal.textPrimary
                     }
 
                     QGCLabel {
@@ -215,7 +215,7 @@ Control {
                     x:          _majorTickSpacing / 2 * index +  + _firstTickPixelOffset
                     width:      1
                     height:     _minorTickSize
-                    color:      qgcPal.text
+                    color:      qgcPal.textPrimary
                     opacity:    tickValue < from || tickValue > to ? 0.5 : 1
                     visible:    index % 2 === 1
 
@@ -258,7 +258,7 @@ Control {
 
             onPaint: {
                 var ctx = getContext("2d")
-                ctx.strokeStyle = qgcPal.text
+                ctx.strokeStyle = qgcPal.textPrimary
                 ctx.fillStyle = qgcPal.window
                 ctx.lineWidth = 1
                 ctx.beginPath()

@@ -88,7 +88,7 @@ ColumnLayout {
 
                 QGCLabel {
                     text: modelData.label
-                    color: index < _graphsView.seriesList.length ? _graphsView.seriesList[index].color : qgcPal.text
+                    color: index < _graphsView.seriesList.length ? _graphsView.seriesList[index].color : qgcPal.textPrimary
                     font.pointSize: ScreenTools.smallFontPointSize
                 }
             }
@@ -112,11 +112,11 @@ ColumnLayout {
             backgroundColor: qgcPal.window
             backgroundVisible: true
             plotAreaBackgroundColor: qgcPal.window
-            grid.mainColor: Qt.rgba(qgcPal.text.r, qgcPal.text.g, qgcPal.text.b, 0.3)
-            grid.subColor: Qt.rgba(qgcPal.text.r, qgcPal.text.g, qgcPal.text.b, 0.15)
+            grid.mainColor: Qt.rgba(qgcPal.textPrimary.r, qgcPal.textPrimary.g, qgcPal.textPrimary.b, 0.3)
+            grid.subColor: Qt.rgba(qgcPal.textPrimary.r, qgcPal.textPrimary.g, qgcPal.textPrimary.b, 0.15)
             grid.mainWidth: 1
             labelBackgroundVisible: false
-            labelTextColor: qgcPal.text
+            labelTextColor: qgcPal.textPrimary
             axisXLabelFont.family: ScreenTools.fixedFontFamily
             axisXLabelFont.pointSize: ScreenTools.smallFontPointSize
             axisYLabelFont.family: ScreenTools.fixedFontFamily
@@ -143,7 +143,7 @@ ColumnLayout {
                             var d = new Date(ms)
                             return d.getMinutes().toString().padStart(2, '0') + ":" + d.getSeconds().toString().padStart(2, '0')
                         }
-                        color: qgcPal.text
+                        color: qgcPal.textPrimary
                         font.family: ScreenTools.fixedFontFamily
                         font.pointSize: ScreenTools.smallFontPointSize
                     }

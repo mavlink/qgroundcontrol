@@ -103,7 +103,7 @@ Item {
                     font.bold:                          true
                 }
                 Rectangle {
-                    color:                              qgcPal.windowShade
+                    color:                              qgcPal.windowCard
                     width:                              statusLayout.width  + _margins * 4
                     height:                             settingsRow.height  + _margins * 2
                     Row {
@@ -111,7 +111,7 @@ Item {
                         spacing:                        _margins * 4
                         anchors.centerIn:               parent
                         QGCColoredImage {
-                            color:                      qgcPal.text
+                            color:                      qgcPal.textPrimary
                             width:                      ScreenTools.defaultFontPixelWidth * 12
                             height:                     width * 1.45
                             sourceSize.height:          width * 1.45
@@ -264,7 +264,7 @@ Item {
                     font.bold:                          true
                 }
                 Rectangle {
-                    color:                              qgcPal.windowShade
+                    color:                              qgcPal.windowCard
                     width:                              statusLayout.width  + _margins * 4
                     height:                             statusLayout.height + _margins * 2
                     GridLayout {

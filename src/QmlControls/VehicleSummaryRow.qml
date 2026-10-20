@@ -36,7 +36,7 @@ ColumnLayout {
             Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
             horizontalAlignment: Text.AlignRight
             text: root.valueText
-            color: root.valueColor !== "" ? root.valueColor : QGroundControl.globalPalette.text
+            color: root.valueColor !== "" ? root.valueColor : QGroundControl.globalPalette.textPrimary
             wrapMode: Text.WordWrap
         }
     }
@@ -44,7 +44,7 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         Layout.preferredHeight: 1
-        color: Qt.rgba(QGroundControl.globalPalette.text.r, QGroundControl.globalPalette.text.g, QGroundControl.globalPalette.text.b, 0.08)
+        color: Qt.rgba(QGroundControl.globalPalette.textPrimary.r, QGroundControl.globalPalette.textPrimary.g, QGroundControl.globalPalette.textPrimary.b, 0.08)
         visible: root.showDivider
     }
 }

@@ -166,7 +166,7 @@ SetupPage {
                             anchors.bottom:     parent.bottom
                             anchors.left:       parent.left
                             anchors.right:      parent.right
-                            color:              airframeCheckBox.checked ? qgcPal.buttonHighlight : qgcPal.windowShade
+                            color:              airframeCheckBox.checked ? qgcPal.accent : qgcPal.windowCard
 
                             Image {
                                 id:                 image

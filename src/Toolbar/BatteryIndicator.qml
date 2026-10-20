@@ -220,7 +220,7 @@ Item {
                                 return qgcPal.colorYellow
                             }
                         } else {
-                            return qgcPal.text
+                            return qgcPal.textPrimary
                         }
                     case MAVLinkEnums.MAV_BATTERY_CHARGE_STATE_LOW:
                         return qgcPal.colorOrange
@@ -230,7 +230,7 @@ Item {
                     case MAVLinkEnums.MAV_BATTERY_CHARGE_STATE_UNHEALTHY:
                         return qgcPal.colorRed
                     default:
-                        return qgcPal.text
+                        return qgcPal.textPrimary
                 }
             }
 
@@ -330,7 +330,7 @@ Item {
                 QGCLabel {
                     Layout.alignment:       Qt.AlignHCenter
                     verticalAlignment:      Text.AlignVCenter
-                    color:                  qgcPal.text
+                    color:                  qgcPal.textPrimary
                     text:                   getBatteryPercentageText()
                     font.pointSize:         _showBoth ? ScreenTools.defaultFontPointSize : ScreenTools.mediumFontPointSize
                     visible:                _showBoth || _showPercentage
@@ -339,7 +339,7 @@ Item {
                 QGCLabel {
                     Layout.alignment:       Qt.AlignHCenter
                     font.pointSize:         _showBoth ? ScreenTools.defaultFontPointSize : ScreenTools.mediumFontPointSize
-                    color:                  qgcPal.text
+                    color:                  qgcPal.textPrimary
                     text:                   getBatteryVoltageText()
                     visible:                _showBoth || _showVoltage
                 }
