@@ -97,6 +97,12 @@ cmake --workflow --preset Linux-debug
 cmake --workflow --preset Linux-deb
 ```
 
+`Linux-clang-debug` is `Linux-debug` built with Clang, which loads precompiled headers far faster than
+GCC: a cold build on 24 cores takes about 75 s instead of 205 s. Clang emits a class's debug info only
+where its key function is compiled, so types from libraries without debug symbols (such as Qt without
+its debug files) can show as incomplete in the debugger; add `-fstandalone-debug` to
+`CMAKE_CXX_FLAGS_DEBUG` if that gets in the way.
+
 The `just configure` and `just build` recipes use the matching `default*` configure and build
 presets for `BUILD_TYPE`. `just test` always uses the `default` test preset and passes `BUILD_TYPE`
 through `--build-config`. `tools/configure.py` selects a configure preset by build type and accepts
