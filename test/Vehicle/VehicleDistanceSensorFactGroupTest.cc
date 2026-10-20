@@ -4,6 +4,7 @@
 #include <QtTest/QTest>
 
 #include "FactGroup.h"
+#include "MAVLinkLib.h"
 #include "MultiVehicleManager.h"
 #include "UnitTest.h"
 #include "Vehicle.h"

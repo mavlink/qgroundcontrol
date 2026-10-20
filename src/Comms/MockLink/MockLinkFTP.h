@@ -9,6 +9,7 @@
 #include <QtCore/QStringList>
 
 #include "MAVLinkFTP.h"
+#include "MAVLinkMessageType.h"
 
 class MockLink;
 

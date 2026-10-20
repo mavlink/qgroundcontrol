@@ -18,6 +18,7 @@
 #include "GPSReceiverFactGroup.h"
 #include "GPSSourceHealth.h"
 #include "LinkManager.h"
+#include "MAVLinkLib.h"
 #include "ManualScheduler.h"
 #include "NTRIP/Support/MockNTRIPTransport.h"
 #include "NTRIPManager.h"

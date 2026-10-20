@@ -2,6 +2,7 @@
 
 #include <QtPositioning/QGeoCoordinate>
 
+#include "MAVLinkLib.h"
 #include "MockLink.h"
 #include "Vehicle.h"
 

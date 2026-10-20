@@ -1,4 +1,5 @@
 #include "MockLinkFTP.h"
+#include "MAVLinkLib.h"
 #include "MockLink.h"
 #include "QGCLoggingCategory.h"
 

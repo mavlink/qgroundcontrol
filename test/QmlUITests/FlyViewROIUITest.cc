@@ -10,6 +10,7 @@
 #include "Fact.h"
 #include "FactMetaData.h"
 #include "FlyViewSettings.h"
+#include "MAVLinkLib.h"
 #include "MockLink.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"

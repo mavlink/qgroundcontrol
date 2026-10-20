@@ -1,10 +1,15 @@
 #pragma once
 
+#include <cstddef>
+
 #include <QtCore/QString>
-#include "MAVLinkLib.h"
+#include "MAVLinkMessageType.h"
 
 class MavlinkFTP {
 public:
+    /// Size of mavlink_file_transfer_protocol_t.payload; verified against MAVLink in MAVLinkFTP.cc.
+    static constexpr std::size_t kPayloadSize = 251;
+
     /// This is the fixed length portion of the protocol data.
     /// This needs to be packed, because it's typecasted from mavlink_file_transfer_protocol_t.payload, which starts
     /// at a 3 byte offset, causing an unaligned access to seq_number and offset
@@ -28,7 +33,7 @@ public:
                 union {
                     // The entire Request must fit into the payload member of the mavlink_file_transfer_protocol_t structure. We use as many leftover bytes
                     // after we use up space for the RequestHeader for the data portion of the Request.
-                    uint8_t data[sizeof(((mavlink_file_transfer_protocol_t*)0)->payload) - sizeof(RequestHeader)];
+                    uint8_t data[kPayloadSize - sizeof(RequestHeader)];
 
                     // File length returned by Open command
                     uint32_t openFileLength;

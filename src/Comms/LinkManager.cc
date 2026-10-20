@@ -1,6 +1,7 @@
 #include "LinkManager.h"
 #include "LogReplayLink.h"
 #include "QGCNetworkHelper.h"
+#include "MAVLinkLib.h"
 #include "MAVLinkProtocol.h"
 #include "MultiVehicleManager.h"
 #include "AppMessages.h"

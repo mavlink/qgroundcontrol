@@ -8,6 +8,7 @@
 #include "Fixtures/RAIIFixtures.h"
 #include "GeoFenceManager.h"
 #include "LinkManager.h"
+#include "MAVLinkLib.h"
 #include "MAVLinkProtocol.h"
 #include "MultiVehicleManager.h"
 #include "MockConfiguration.h"

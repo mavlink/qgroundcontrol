@@ -16,6 +16,7 @@
 #include "ComponentInformationManager.h"
 #include "FactMetaData.h"
 #include "LinkManager.h"
+#include "MAVLinkLib.h"
 #include "MockConfiguration.h"
 #include "MockLink.h"
 #include "MockLinkFTP.h"
