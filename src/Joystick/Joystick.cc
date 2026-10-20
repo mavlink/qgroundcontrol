@@ -1,25 +1,29 @@
 #include "Joystick.h"
+
+#include <algorithm>
+#include <cmath>
+
+#include <QtCore/QCoreApplication>
+#include <QtCore/QSet>
+#include <QtCore/QSettings>
+#include <QtCore/QThread>
+
+#include "AppMessages.h"
 #include "Fact.h"
+#include "FirmwarePlugin.h"
+#include "GimbalController.h"
+#include "JoystickManager.h"
 #include "MavlinkAction.h"
 #include "MavlinkActionManager.h"
 #include "MavlinkActionsSettings.h"
-#include "FirmwarePlugin.h"
-#include "GimbalController.h"
+#include "MultiVehicleManager.h"
 #include "QGCCorePlugin.h"
 #include "QGCLoggingCategory.h"
 #include "QmlObjectListModel.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
+#include "VehicleReadiness.h"
 #include "VehicleSupports.h"
-#include "JoystickManager.h"
-#include "MultiVehicleManager.h"
-
-#include <QtCore/QCoreApplication>
-#include <QtCore/QSet>
-#include <algorithm>
-#include <cmath>
-#include <QtCore/QSettings>
-#include <QtCore/QThread>
 
 QGC_LOGGING_CATEGORY(JoystickLog, "Joystick.Joystick")
 QGC_LOGGING_CATEGORY(JoystickVerboseLog, "Joystick.Joystick:verbose")
@@ -1209,6 +1213,7 @@ void Joystick::_startPollingForVehicle(Vehicle &vehicle)
     }
 
     _pollingVehicle = &vehicle;
+    _armLockoutMessageShown = false;
     qCDebug(JoystickLog) << "Started joystick polling for vehicle. Vehicle id:" << _pollingVehicle->id();
 
     _buildAvailableButtonsActionList(_pollingVehicle);
@@ -1654,6 +1659,22 @@ void Joystick::_executeButtonAction(const QString &action, const ButtonEvent_t b
     }
 }
 
+void Joystick::_requestArmed(bool arm)
+{
+    const VehicleReadiness* const readiness = _pollingVehicle ? _pollingVehicle->readiness() : nullptr;
+    const bool vehicleSyncing = readiness && (readiness->status() == VehicleReadiness::Status::Syncing);
+    if (arm && vehicleSyncing) {
+        // Repeated presses would otherwise stack identical modal dialogs
+        if (!_armLockoutMessageShown) {
+            _armLockoutMessageShown = true;
+            QGC::showAppMessage(tr("Arming is not available until vehicle sync completes."));
+        }
+        return;
+    }
+
+    emit setArmed(arm);
+}
+
 bool Joystick::_validAxis(int axis) const
 {
     if ((axis >= 0) && (axis < _axisCount)) {
@@ -1707,12 +1728,11 @@ void Joystick::_buildAvailableButtonsActionList(Vehicle *vehicle)
     _availableActionTitles.clear();
 
     _availableButtonActions->append(new AvailableButtonAction(_buttonActionNone, nullptr));
-    _availableButtonActions->append(new AvailableButtonAction(_buttonActionArm,
-        [this]() { emit setArmed(true); }));
+    _availableButtonActions->append(new AvailableButtonAction(_buttonActionArm, [this]() { _requestArmed(true); }));
     _availableButtonActions->append(new AvailableButtonAction(_buttonActionDisarm,
         [this]() { emit setArmed(false); }));
-    _availableButtonActions->append(new AvailableButtonAction(_buttonActionToggleArm,
-        [this]() { emit setArmed(!_pollingVehicle->armed()); }));
+    _availableButtonActions->append(
+        new AvailableButtonAction(_buttonActionToggleArm, [this]() { _requestArmed(!_pollingVehicle->armed()); }));
     if (vehicle) {
         const QStringList list = vehicle->flightModes();
         for (const QString &mode : list) {

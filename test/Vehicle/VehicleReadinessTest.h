@@ -35,7 +35,7 @@ public:
 
 private slots:
     void _testHealthReportReadiness();
-    void _testWaitsForHealthReportDuringInitialConnect();
+    void _testLockedOutDuringInitialConnect();
     void _testCurrentModeIntentionRefreshesReadiness();
     void _testUnmappedModeMakesReadinessUnknown();
     void _testMissingHealthReportFallsBack();

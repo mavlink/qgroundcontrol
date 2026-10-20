@@ -71,6 +71,7 @@ class Joystick : public QThread
     friend class JoystickConfigController;
 #ifdef QGC_UNITTEST_BUILD
     friend class JoystickTest;
+    friend class VehicleReadinessPX4Test;
 #endif
 
 public:
@@ -422,6 +423,7 @@ private:
     PollingFlags _pollingFlags = PollingNone;
 
     Vehicle* _pollingVehicle = nullptr;
+    bool _armLockoutMessageShown = false;  ///< Reset per polled vehicle, so the message shows once per sync
 
     void _resetFunctionToAxisMap();
     void _resetAxisCalibrationData();
@@ -450,6 +452,9 @@ private:
     bool _validButton(int button) const;
 
     static constexpr bool _axisUpdateDue(qint64 elapsed, int delay) { return elapsed >= delay; }
+
+    /// Arming is locked out until vehicle sync (initial connect) completes. Disarming is always allowed.
+    void _requestArmed(bool arm);
     void _handleAxis();
     void _handleButtons();
     void _buildAvailableButtonsActionList(Vehicle *vehicle);
