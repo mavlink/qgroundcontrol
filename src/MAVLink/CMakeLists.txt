@@ -71,11 +71,14 @@ set(MAVLINK_ENUMS_H "${CMAKE_BINARY_DIR}/MAVLinkEnums.h")
 set(MAVLINK_ENUMS_QML_H "${CMAKE_BINARY_DIR}/MAVLinkEnumsQml.h")
 set(MAVLINK_ENUMS_QML_CC "${CMAKE_BINARY_DIR}/MAVLinkEnumsQml.cc")
 set(MAVLINK_ENUMS_GENERATOR "${CMAKE_SOURCE_DIR}/tools/generators/mavlink_enums.py")
+# The dialect header is a file dependency, not just the mavlink target: commands depend only on files they list
+# (CMAKE_ADD_CUSTOM_COMMAND_DEPENDS_EXPLICIT_ONLY), and a MAVLink update must regenerate these outputs.
+set(MAVLINK_DIALECT_HEADER "${mavlink_BINARY_DIR}/include/mavlink/${QGC_MAVLINK_DIALECT}/mavlink.h")
 add_custom_command(
     OUTPUT "${MAVLINK_ENUMS_H}" "${MAVLINK_ENUMS_QML_H}" "${MAVLINK_ENUMS_QML_CC}"
     COMMAND Python3::Interpreter "${MAVLINK_ENUMS_GENERATOR}" "${mavlink_BINARY_DIR}/include/mavlink"
             "${MAVLINK_ENUMS_H}" "${MAVLINK_ENUMS_QML_H}" "${MAVLINK_ENUMS_QML_CC}"
-    DEPENDS mavlink "${MAVLINK_ENUMS_GENERATOR}" "${CMAKE_SOURCE_DIR}/tools/common/io.py"
+    DEPENDS mavlink "${MAVLINK_DIALECT_HEADER}" "${MAVLINK_ENUMS_GENERATOR}" "${CMAKE_SOURCE_DIR}/tools/common/io.py"
     COMMENT "Generating MAVLinkEnums.h + MAVLinkEnumsQml.{h,cc}"
     VERBATIM
 )
@@ -115,8 +118,8 @@ add_custom_command(
     OUTPUT "${MAVLINK_INSTANCE_FIELDS_H}"
     COMMAND Python3::Interpreter "${MAVLINK_INSTANCE_FIELDS_GENERATOR}" "${MAVLINK_XML_DIR}" "${QGC_MAVLINK_DIALECT}"
             "${MAVLINK_INSTANCE_FIELDS_H}"
-    DEPENDS mavlink "${MAVLINK_INSTANCE_FIELDS_GENERATOR}" "${CMAKE_SOURCE_DIR}/tools/common/io.py"
-            "${CMAKE_SOURCE_DIR}/tools/common/xml.py"
+    DEPENDS mavlink "${MAVLINK_DIALECT_HEADER}" "${MAVLINK_INSTANCE_FIELDS_GENERATOR}"
+            "${CMAKE_SOURCE_DIR}/tools/common/io.py" "${CMAKE_SOURCE_DIR}/tools/common/xml.py"
     COMMENT "Generating MAVLinkInstanceFields.h"
     VERBATIM
 )

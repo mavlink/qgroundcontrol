@@ -134,6 +134,14 @@ project(
     LANGUAGES C CXX
 )
 
+# Ninja otherwise makes each custom command (rcc, Qt metatypes and type registration) wait for every target its
+# target links, which runs the libraries, the tests and the application one after another. Commands must therefore
+# list the files they read in DEPENDS: a target name alone no longer orders them. Android keeps the default: Qt's
+# APK step orders itself after the binary copy only through a utility target, so it would package a partial copy.
+if(NOT ANDROID)
+    set(CMAKE_ADD_CUSTOM_COMMAND_DEPENDS_EXPLICIT_ONLY ON)
+endif()
+
 # ============================================================================
 # CMake & Build System Configuration
 # ============================================================================
