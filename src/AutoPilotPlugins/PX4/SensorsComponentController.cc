@@ -270,7 +270,15 @@ void SensorsComponentController::_handleUASTextMessage(quint32 uasId, int compId
 
                 if (_vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, "CAL_MAG_SIDES")) {
                     // Read the requested calibration directions off the system
-                    sides = _vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, "CAL_MAG_SIDES")->rawValue().toFloat();
+                    Fact* const calMagSides = _vehicle->parameterManager()->getParameter(
+                        ParameterManager::defaultComponentId, "CAL_MAG_SIDES");
+                    if (calMagSides) {
+                        sides = calMagSides->rawValue().toFloat();
+                    } else {
+                        qCWarning(SensorsComponentControllerLog)
+                            << "CAL_MAG_SIDES disappeared while starting calibration";
+                        sides = (1 << 5) | (1 << 4) | (1 << 3) | (1 << 2) | (1 << 1) | (1 << 0);
+                    }
                 } else {
                     // There is no valid setting, default to all six sides
                     sides = (1 << 5) | (1 << 4) | (1 << 3) | (1 << 2) | (1 << 1) | (1 << 0);

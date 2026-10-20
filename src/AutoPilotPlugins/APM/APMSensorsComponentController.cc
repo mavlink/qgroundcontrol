@@ -42,7 +42,10 @@ APMSensorsComponentController::~APMSensorsComponentController()
 
 void APMSensorsComponentController::_appendStatusLog(const QString &text)
 {
-    Q_ASSERT(_statusLog);
+    if (!_statusLog) {
+        qCWarning(APMSensorsComponentControllerLog) << "Status log is not available";
+        return;
+    }
 
     const QString varText = text;
     (void) QMetaObject::invokeMethod(_statusLog, "append", varText);

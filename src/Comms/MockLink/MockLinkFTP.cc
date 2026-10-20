@@ -147,10 +147,6 @@ void MockLinkFTP::_openCommand(quint32 senderSystemId, uint8_t senderComponentId
         return;
     }
 
-    const size_t cchPath = strnlen(reinterpret_cast<char*>(request->data), sizeof(request->data));
-    Q_ASSERT(cchPath != sizeof(request->data));
-    Q_UNUSED(cchPath); // Fix initialized-but-not-referenced warning on release builds
-
     _currentFile.close();
 
     QString tmpFilename;
@@ -298,10 +294,13 @@ void MockLinkFTP::_readCommand(quint32 senderSystemId, uint8_t senderComponentId
     const uint8_t cBytesToRead = static_cast<uint8_t>(qMin(maxRead, _currentFile.size() - readOffset));
     (void) _currentFile.seek(readOffset);
     const QByteArray bytes = _currentFile.read(cBytesToRead);
-    (void) memcpy(response.data, bytes.constData(), cBytesToRead);
-
-    // We should always have written something, otherwise there is something wrong with the code above
-    Q_ASSERT(cBytesToRead);
+    if (cBytesToRead == 0 || bytes.size() != cBytesToRead) {
+        qCWarning(MockLinkFTPLog) << "MockLinkFTP: ReadFile failed to read requested bytes" << cBytesToRead
+                                  << bytes.size();
+        _sendNak(senderSystemId, senderComponentId, MavlinkFTP::kErrFail, outgoingSeqNumber, MavlinkFTP::kCmdReadFile);
+        return;
+    }
+    (void) memcpy(response.data, bytes.constData(), bytes.size());
 
     response.hdr.session = _sessionId;
     response.hdr.size = cBytesToRead;
@@ -382,9 +381,15 @@ void MockLinkFTP::_burstReadCommand(quint32 senderSystemId, uint8_t senderCompon
 
         const uint8_t cBytes = static_cast<uint8_t>(qMin(maxRead, _currentFile.size() - burstOffset));
         const QByteArray bytes = _currentFile.read(cBytes);
-        Q_ASSERT(cBytes); // We should always have written something, otherwise there is something wrong with the code above
+        if (cBytes == 0 || bytes.size() != cBytes) {
+            qCWarning(MockLinkFTPLog) << "MockLinkFTP: BurstReadFile failed to read requested bytes" << cBytes
+                                      << bytes.size();
+            _sendNak(senderSystemId, senderComponentId, MavlinkFTP::kErrFail, outgoingSeqNumber,
+                     MavlinkFTP::kCmdBurstReadFile);
+            return;
+        }
 
-        (void) memcpy(response.data, bytes.constData(), cBytes);
+        (void) memcpy(response.data, bytes.constData(), bytes.size());
 
         response.hdr.session = _sessionId;
         response.hdr.size = cBytes;
