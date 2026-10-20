@@ -28,6 +28,7 @@ PlanManager::PlanManager(Vehicle* vehicle, MAV_MISSION_TYPE planType)
     _ackTimeoutTimer->setSingleShot(true);
 
     connect(_ackTimeoutTimer, &QTimer::timeout, this, &PlanManager::_ackTimeout);
+    connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &PlanManager::_vehiclePlanIdMessageReceived);
 }
 
 PlanManager::~PlanManager()
@@ -326,6 +327,7 @@ void PlanManager::_readTransactionComplete(void)
         _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), message);
     }
 
+    _setPlanId(_readPlanId);
     _finishTransaction(true);
 }
 
@@ -349,6 +351,7 @@ void PlanManager::_handleMissionCount(const mavlink_message_t& message)
     qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionCount %1 count:").arg(_planTypeString()) << missionCount.count;
 
     _retryCount = 0;
+    _readPlanId = missionCount.opaque_id;
 
     if (missionCount.count == 0) {
         _readTransactionComplete();
@@ -636,6 +639,7 @@ void PlanManager::_handleMissionAck(const mavlink_message_t& message)
         if (missionAck.type == MAV_MISSION_ACCEPTED) {
             if (_itemIndicesToWrite.count() == 0) {
                 qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionAck write sequence complete %1").arg(_planTypeString());
+                _setPlanId(missionAck.opaque_id);
                 _finishTransaction(true);
             } else {
                 // FIXME: Protocol error
@@ -654,7 +658,9 @@ void PlanManager::_handleMissionAck(const mavlink_message_t& message)
         break;
     case AckMissionClearAll:
         // MAV_MISSION_ACCEPTED expected
-        if (missionAck.type != MAV_MISSION_ACCEPTED) {
+        if (missionAck.type == MAV_MISSION_ACCEPTED) {
+            _setPlanId(missionAck.opaque_id);
+        } else {
             _sendError(VehicleAckError, tr("Vehicle remove all failed. Error: %1").arg(_missionResultToString((MAV_MISSION_RESULT)missionAck.type)));
         }
         _finishTransaction(missionAck.type == MAV_MISSION_ACCEPTED);
@@ -998,4 +1004,73 @@ void PlanManager::_setTransactionInProgress(TransactionType_t type)
         _transactionInProgress = type;
         emit inProgressChanged(inProgress());
     }
+}
+
+void PlanManager::_setPlanId(uint32_t planId)
+{
+    qCDebug(PlanManagerLog) << _planTypeString() << "planId:" << planId;
+
+    _planId = planId;
+    if (planId != 0) {
+        _vehicleSupportsPlanIds = true;
+    }
+}
+
+void PlanManager::_vehiclePlanIdMessageReceived(const mavlink_message_t& message)
+{
+    if (message.msgid != MAVLINK_MSG_ID_MISSION_CURRENT || message.compid != MAV_COMP_ID_AUTOPILOT1) {
+        return;
+    }
+
+    mavlink_mission_current_t missionCurrent;
+    mavlink_msg_mission_current_decode(&message, &missionCurrent);
+
+    switch (_planType) {
+        case MAV_MISSION_TYPE_MISSION:
+            _checkVehiclePlanId(missionCurrent.mission_id);
+            break;
+        case MAV_MISSION_TYPE_FENCE:
+            _checkVehiclePlanId(missionCurrent.fence_id);
+            break;
+        case MAV_MISSION_TYPE_RALLY:
+            _checkVehiclePlanId(missionCurrent.rally_points_id);
+            break;
+        default:
+            break;
+    }
+}
+
+/// Reloads the plan if the vehicle reports that its plan is no longer the one we hold
+void PlanManager::_checkVehiclePlanId(uint32_t vehiclePlanId)
+{
+    // An id of 0 means either no support or an empty plan, so it is only meaningful once the vehicle has
+    // reported a non-zero id
+    if (vehiclePlanId != 0) {
+        _vehicleSupportsPlanIds = true;
+    }
+    if (!_vehicleSupportsPlanIds || !_planId.has_value() || inProgress()) {
+        return;
+    }
+    const uint32_t planId = _planId.value();
+
+    if (vehiclePlanId == planId) {
+        _reloadPlanId.reset();
+        return;
+    }
+
+    // Reload only once for each vehicle id, so an id which never matches the downloaded plan can't cause a reload loop
+    if (_reloadPlanId == vehiclePlanId) {
+        return;
+    }
+
+    SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
+    if (!sharedLink || sharedLink->linkConfiguration()->isHighLatency()) {
+        return;
+    }
+
+    qCDebug(PlanManagerLog) << QStringLiteral("%1 changed on vehicle, reloading").arg(_planTypeString())
+                            << "planId:" << planId << "vehiclePlanId:" << vehiclePlanId;
+
+    _reloadPlanId = vehiclePlanId;
+    loadFromVehicle();
 }
