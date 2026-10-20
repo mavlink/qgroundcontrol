@@ -464,6 +464,10 @@ void MockLink::run1HzTasks()
     if (_sendRadioStatusEnabled) {
         _sendRadioStatus();
     }
+    if (_planOpaqueIds) {
+        (void) QMetaObject::invokeMethod(_missionItemHandler, &MockLinkMissionItemHandler::sendMissionCurrent,
+                                         Qt::QueuedConnection);
+    }
 
     if (!QGC::runningUnitTests()) {
         // Sending RC Channels during unit test breaks RC tests which does it's own RC simulation
@@ -2939,6 +2943,7 @@ MockLink *MockLink::_startMockLinkWorker(const QString &configName, MAV_AUTOPILO
     mockConfig->setFtpCapability(options.testFlag(MockConfiguration::OptionFtpCapability));
     mockConfig->setSendRadioStatus(!options.testFlag(MockConfiguration::OptionNoRadioStatus));
     mockConfig->setCompanionParams(options.testFlag(MockConfiguration::OptionCompanionParams));
+    mockConfig->setPlanOpaqueIds(options.testFlag(MockConfiguration::OptionPlanOpaqueIds));
     mockConfig->setVideoStreamType(videoStreamType);
     mockConfig->setFailureMode(failureMode);
 

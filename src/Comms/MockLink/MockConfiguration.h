@@ -57,6 +57,7 @@ public:
         OptionFtpCapability       = 1 << 7,
         OptionNoRadioStatus       = 1 << 8,
         OptionCompanionParams = 1 << 9,
+        OptionPlanOpaqueIds = 1 << 10,
     };
     Q_DECLARE_FLAGS(Options, Option)
     Q_FLAG(Options)
@@ -268,6 +269,12 @@ public:
 
     void setCompanionParams(bool companionParams) { _companionParams = companionParams; }
 
+    // Test-only: when true, the vehicle reports opaque plan ids in MISSION_COUNT and MISSION_ACK and streams
+    // them in MISSION_CURRENT. Not persisted.
+    bool planOpaqueIds() const { return _planOpaqueIds; }
+
+    void setPlanOpaqueIds(bool planOpaqueIds) { _planOpaqueIds = planOpaqueIds; }
+
 signals:
     void firmwareChanged();
     void vehicleChanged();
@@ -319,6 +326,7 @@ private:
     bool _ftpCapability = false;
     bool _sendRadioStatus = true;
     bool _companionParams = false;
+    bool _planOpaqueIds = false;
 
     // Camera capability flags (defaults match current Camera 1 configuration)
     bool _cameraCaptureVideo = true;
