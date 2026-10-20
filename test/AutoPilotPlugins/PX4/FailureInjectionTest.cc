@@ -205,8 +205,8 @@ void FailureInjectionTest::_activeVehicleSwitchClearsSession()
     QCOMPARE(failureInjection.injectedUnits().count(), 1);
     QCOMPARE(failureInjection.activity().count(), 1);
 
-    // A transient disconnect (id < 0) and the same vehicle reconnecting (e.g. after a reboot) keep the session.
-    failureInjection.notifyActiveVehicle(-1);
+    // A transient disconnect (id 0) and the same vehicle reconnecting (e.g. after a reboot) keep the session.
+    failureInjection.notifyActiveVehicle(0);
     failureInjection.notifyActiveVehicle(1);
     QCOMPARE(failureInjection.injectedUnits().count(), 1);
     QCOMPARE(failureInjection.activity().count(), 1);
@@ -216,6 +216,25 @@ void FailureInjectionTest::_activeVehicleSwitchClearsSession()
     failureInjection.notifyActiveVehicle(2);
     QCOMPARE(activityChangedSpy.count(), 1);
     QVERIFY(failureInjection.injectedUnits().isEmpty());
+    QVERIFY(failureInjection.activity().isEmpty());
+
+    // 32-bit system ids above INT_MAX are distinct vehicles, not "no vehicle".
+    failureInjection.logInjection(QStringLiteral("GPS"), QStringLiteral("Off"), FAILURE_UNIT_SENSOR_GPS,
+                                  QStringLiteral("1"), QStringLiteral("12:00:01"));
+    activityChangedSpy.clear();
+    failureInjection.notifyActiveVehicle(0x80000000U);
+    QCOMPARE(activityChangedSpy.count(), 1);
+    QVERIFY(failureInjection.activity().isEmpty());
+
+    failureInjection.logInjection(QStringLiteral("GPS"), QStringLiteral("Off"), FAILURE_UNIT_SENSOR_GPS,
+                                  QStringLiteral("1"), QStringLiteral("12:00:02"));
+    activityChangedSpy.clear();
+    failureInjection.notifyActiveVehicle(0x80000000U);
+    QCOMPARE(activityChangedSpy.count(), 0);
+    QCOMPARE(failureInjection.activity().count(), 1);
+
+    failureInjection.notifyActiveVehicle(0xffffffffU);
+    QCOMPARE(activityChangedSpy.count(), 1);
     QVERIFY(failureInjection.activity().isEmpty());
 }
 

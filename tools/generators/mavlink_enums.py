@@ -128,7 +128,8 @@ def qml_enum_base(body):
     # mavgen emits literal values. MSVC otherwise truncates enums wider than 32 bits.
     body = re.sub(r"/\*.*?\*/|//[^\n]*", "", body, flags=re.DOTALL)
     values = [
-        int(value, 0) for value in re.findall(r"=\s*(-?(?:0[xX][0-9a-fA-F]+|[0-9]+))\s*,", body)
+        int(value, 0)
+        for value in re.findall(r"=\s*(-?(?:0[xX][0-9a-fA-F]+|[0-9]+))\s*(?:,|}|$)", body)
     ]
     signed = any(value < 0 for value in values)
     limit = 1 << (31 if signed else 32)

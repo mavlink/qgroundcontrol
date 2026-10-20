@@ -39,4 +39,5 @@ Message payload structs keep their existing wire layout. Use generated `pack`
 functions with full-width target IDs, and `mavlink_msg_get_target_sysid` when receiving
 messages. A decoded payload's 8-bit target field cannot represent a wide header
 target. Other system references embedded in payloads, such as gimbal control
-ownership fields, retain their protocol-defined width.
+ownership fields, retain their protocol-defined width. For this reason QGC refuses
+gimbal control, and tells the user why, when its GCS system ID is above 255.

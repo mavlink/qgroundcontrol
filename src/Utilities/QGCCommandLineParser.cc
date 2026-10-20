@@ -1,10 +1,12 @@
 #include "QGCCommandLineParser.h"
-#include "qgc_version.h"
+
+#include <limits>
 
 #include <QtCore/QCommandLineOption>
 #include <QtCore/QCoreApplication>
 
 #include "QGCLoggingCategory.h"
+#include "qgc_version.h"
 
 QGC_LOGGING_CATEGORY(QGCCommandLineParserLog, "Utilities.QGCCommandLineParser")
 
@@ -315,9 +317,8 @@ CommandLineParseResult parseCommandLine()
     // --- Parse core options ---
     if (parser.isSet(systemIdOpt)) {
         const QString systemIdStr = parser.value(systemIdOpt);
-        bool ok = false;
-        const uint systemId = systemIdStr.toUInt(&ok);
-        if (!ok || (systemId < 1)) {
+        const std::optional<quint32> systemId = parseSystemId(systemIdStr);
+        if (!systemId) {
             out.statusCode = CommandLineParseResult::Status::Error;
             out.errorString =
                 QCoreApplication::translate("main", "Invalid System ID (must be 1-4294967295): %1").arg(systemIdStr);
@@ -325,7 +326,7 @@ CommandLineParseResult parseCommandLine()
             return out;
         }
         out.systemId = systemId;
-        qCDebug(QGCCommandLineParserLog) << "System ID:" << systemId;
+        qCDebug(QGCCommandLineParserLog) << "System ID:" << *systemId;
     }
 
     out.clearSettingsOptions = parser.isSet(clearSettingsOpt);
@@ -458,6 +459,16 @@ AppMode determineAppMode(const CommandLineParseResult& args)
         return AppMode::BootTest;
     }
     return AppMode::Gui;
+}
+
+std::optional<quint32> parseSystemId(const QString& value)
+{
+    bool ok = false;
+    const qulonglong systemId = value.toULongLong(&ok);
+    if (!ok || (systemId < 1) || (systemId > std::numeric_limits<quint32>::max())) {
+        return std::nullopt;
+    }
+    return static_cast<quint32>(systemId);
 }
 
 #ifdef QGC_UNITTEST_BUILD

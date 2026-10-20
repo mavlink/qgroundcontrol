@@ -174,9 +174,9 @@ void FailureInjection::resolvePendingInterrupted(void)
     }
 }
 
-void FailureInjection::notifyActiveVehicle(int vehicleId)
+void FailureInjection::notifyActiveVehicle(quint32 vehicleId)
 {
-    if ((vehicleId < 0) || (vehicleId == _currentVehicleId)) {
+    if ((vehicleId == 0) || (vehicleId == _currentVehicleId)) {
         // No vehicle / transient disconnect, or the same vehicle (e.g. after a reboot) — keep the session.
         return;
     }

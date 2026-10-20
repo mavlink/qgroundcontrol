@@ -10,6 +10,7 @@
 ///   - CommandLineParseResult default-initialisation (ABI guard)
 ///   - determineAppMode() — pure struct→enum mapping with #ifdef branches
 ///   - handleParseResult() — returns early-exit codes for Help/Version, nullopt for Ok
+///   - parseSystemId() — --system-id range validation
 ///
 /// Error-path handling is not covered because handleParseResult() calls
 /// QCommandLineParser::showMessageAndExit() on Status::Error which terminates
@@ -32,4 +33,6 @@ private slots:
     void _testNormalizeArgs_UnittestBare();
     void _testNormalizeArgs_UnittestBareFollowedByOption();
     void _testNormalizeArgs_ColonOptionValuePreserved();
+    void _testParseSystemId_data();
+    void _testParseSystemId();
 };

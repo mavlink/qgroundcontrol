@@ -89,6 +89,10 @@ enum class AppMode {
 /// @return The mode the application should run in
 AppMode determineAppMode(const CommandLineParseResult& args);
 
+/// @brief Validate a --system-id value
+/// @return The MAVLink system id (1-4294967295), or std::nullopt if the value is invalid
+std::optional<quint32> parseSystemId(const QString& value);
+
 #ifdef QGC_UNITTEST_BUILD
 QStringList normalizeArgs(const QStringList &args);
 

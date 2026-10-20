@@ -107,6 +107,8 @@ private:
     void _checkComplete(Gimbal &gimbal, GimbalPairId pairId);
     bool _tryGetGimbalControl();
     bool _yawInVehicleFrame(uint32_t flags);
+    static bool _gcsSystemIdSupportsGimbalControl();
+    static void _showGcsSystemIdUnsupportedMessage();
 
     void _sendGimbalAttitudeRates(float pitch_rate_deg_s, float yaw_rate_deg_s);
 
@@ -124,6 +126,7 @@ private:
     QMap<GimbalPairId, Gimbal*> _potentialGimbals;
     QmlObjectListModel *_gimbals = nullptr;
     bool _initialConnectComplete = false;
+    bool _gcsSystemIdUnsupportedMessageShown = false;  ///< Rate commands retry continuously; warn only once
 
     static constexpr const char *_gimbalFactGroupNamePrefix = "gimbal";
 };

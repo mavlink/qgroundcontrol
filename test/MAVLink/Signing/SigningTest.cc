@@ -645,11 +645,12 @@ void SigningTest::_testStripSignatureForRetransmitProducesValidCrc_data()
 {
     QTest::addColumn<quint32>("sourceId");
     QTest::addColumn<quint32>("targetId");
-    QTest::newRow("legacy") << quint32(1) << quint32(0);
+    QTest::newRow("legacy") << quint32(1) << quint32(1);
     QTest::newRow("wide-source") << quint32(0xffffffff) << quint32(0);
     QTest::newRow("wide-target") << quint32(1) << quint32(0x800001ff);
     QTest::newRow("both-wide") << quint32(0xffffffff) << quint32(0x800001ff);
     QTest::newRow("small-target") << quint32(1) << quint32(255);
+    QTest::newRow("first-wide-target") << quint32(1) << quint32(256);
     QTest::newRow("broadcast") << quint32(1) << quint32(0);
 }
 

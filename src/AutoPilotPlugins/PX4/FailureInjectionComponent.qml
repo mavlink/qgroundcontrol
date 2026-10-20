@@ -191,7 +191,7 @@ SetupPage {
             // On (re)load: clear the session if the vehicle changed while the page was unloaded, then
             // resolve any row left "pending" when a prior page instance was destroyed mid-send.
             Component.onCompleted: {
-                FailureInjection.notifyActiveVehicle(_vehicle ? _vehicle.id : -1)
+                FailureInjection.notifyActiveVehicle(_vehicle ? _vehicle.id : 0)
                 FailureInjection.resolvePendingInterrupted()
             }
 
