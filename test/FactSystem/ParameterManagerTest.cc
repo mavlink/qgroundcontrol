@@ -464,8 +464,18 @@ void ParameterManagerTest::_paramWriteParamError()
     verifyExpectedLogMessage();
 }
 
+void ParameterManagerTest::_paramReadParamError_data()
+{
+    QTest::addColumn<bool>("notifyFailure");
+
+    QTest::newRow("notify") << true;
+    QTest::newRow("silent") << false;
+}
+
 void ParameterManagerTest::_paramReadParamError()
 {
+    QFETCH(bool, notifyFailure);
+
     QVERIFY2(!_mockLink, "MockLink already connected");
     _connectMockLink();
     QVERIFY(_mockLink);
@@ -479,14 +489,18 @@ void ParameterManagerTest::_paramReadParamError()
     QSignalSpy paramReadFailureSpy(paramManager, &ParameterManager::_paramRequestReadFailure);
     QVERIFY(vehicleUpdatedSpy.isValid());
     QVERIFY(paramReadFailureSpy.isValid());
-    expectAppMessage(QRegularExpression("Parameter read failed"));
-    paramManager->refreshParameter(MAV_COMP_ID_AUTOPILOT1, fact->name());
+    if (notifyFailure) {
+        expectAppMessage(QRegularExpression("Parameter read failed"));
+    }
+    paramManager->refreshParameter(MAV_COMP_ID_AUTOPILOT1, fact->name(), notifyFailure);
     // PARAM_ERROR should cause immediate failure - no retries needed, so wait just one ack interval plus buffer
     const int maxWaitTimeMs = ParameterManager::kWaitForParamValueAckMs + TestTimeout::shortMs();
     QVERIFY_SIGNAL_WAIT(paramReadFailureSpy, maxWaitTimeMs);
     QCOMPARE(paramReadFailureSpy.count(), 1);
     QCOMPARE(vehicleUpdatedSpy.count(), 0);
-    verifyExpectedLogMessage();
+    if (notifyFailure) {
+        verifyExpectedLogMessage();
+    }
     _disconnectMockLink();
 }
 
@@ -622,8 +636,25 @@ void ParameterManagerTest::_setParamWithFailureMode(MockLink::ParamSetFailureMod
     _disconnectMockLink();
 }
 
-void ParameterManagerTest::_rebootRequiredNoticeDebounced()
+void ParameterManagerTest::_rebootRequiredNotice_data()
 {
+    QTest::addColumn<int>("suppressCalls");
+    QTest::addColumn<int>("unsuppressCalls");
+    QTest::addColumn<bool>("expectNotice");
+
+    QTest::newRow("notify") << 0 << 0 << true;
+    QTest::newRow("suppressed") << 1 << 0 << false;
+    QTest::newRow("nestedStillSuppressed") << 2 << 1 << false;
+    QTest::newRow("balancedNotifies") << 2 << 2 << true;
+    QTest::newRow("extraUnsuppressIgnored") << 0 << 1 << true;
+}
+
+void ParameterManagerTest::_rebootRequiredNotice()
+{
+    QFETCH(int, suppressCalls);
+    QFETCH(int, unsuppressCalls);
+    QFETCH(bool, expectNotice);
+
     _connectMockLink(MAV_AUTOPILOT_PX4);
     QVERIFY(_vehicle);
     ParameterManager* const paramManager = _vehicle->parameterManager();
@@ -637,20 +668,45 @@ void ParameterManagerTest::_rebootRequiredNoticeDebounced()
     QSignalSpy pendingSpy(paramManager, &ParameterManager::pendingWritesChanged);
     QVERIFY(pendingSpy.isValid());
 
+    for (int i = 0; i < suppressCalls; i++) {
+        paramManager->suppressRebootMessage();
+    }
+    for (int i = 0; i < unsuppressCalls; i++) {
+        const bool unbalanced = i >= suppressCalls;
+        if (unbalanced) {
+            expectLogMessage("FactSystem.ParameterManager", QtWarningMsg,
+                             QRegularExpression("unsuppressRebootMessage without matching suppressRebootMessage"));
+        }
+        paramManager->unsuppressRebootMessage();
+        if (unbalanced) {
+            verifyExpectedLogMessage();
+        }
+    }
+
     const QRegularExpression notice("Vehicle reboot required for changes to take effect");
     const double originalValue = fact->rawValue().toDouble();
-    expectAppMessage(notice);
-    fact->setRawValue(originalValue + 0.1);
-    verifyExpectedLogMessage();
+    const auto writeValue = [&](double value, bool notifies) {
+        if (notifies) {
+            expectAppMessage(notice);
+        }
+        fact->setRawValue(value);
+        if (notifies) {
+            verifyExpectedLogMessage();
+        }
+    };
+
+    writeValue(originalValue + 0.1, expectNotice);
 
     // A change right after the first one is debounced
-    fact->setRawValue(originalValue + 0.2);
+    writeValue(originalValue + 0.2, false);
 
     // Once the debounce window has passed, a later change notifies again
     qgcApp()->resetRebootMessageDebounce();
-    expectAppMessage(notice);
-    fact->setRawValue(originalValue + 0.3);
-    verifyExpectedLogMessage();
+    writeValue(originalValue + 0.3, expectNotice);
+
+    for (int i = unsuppressCalls; i < suppressCalls; i++) {
+        paramManager->unsuppressRebootMessage();
+    }
 
     QVERIFY(_vehicle->rebootRequired());
     QCOMPARE(rebootRequiredSpy.count(), 1);

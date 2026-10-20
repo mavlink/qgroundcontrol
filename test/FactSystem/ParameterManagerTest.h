@@ -27,8 +27,10 @@ private slots:
     void _paramReadFirstAttemptNoResponseRetry();
     void _paramReadNoResponse();
     void _paramWriteParamError();
+    void _paramReadParamError_data();
     void _paramReadParamError();
-    void _rebootRequiredNoticeDebounced();
+    void _rebootRequiredNotice_data();
+    void _rebootRequiredNotice();
     void _FTPnoFailure();
     void _FTPChangeParam();
     void _FTPRequestsHeartbeatComponentParams_data();

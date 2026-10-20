@@ -21,7 +21,7 @@ The set of pages shown and the contents of each page may differ based on whether
 **Summary**
 <br>An overview of all the important configuration options for your vehicle. Summary blocks show a red indicator when settings are not fully configured.
 
-**PX4-specific pages:** [Actuators / Motors](px4/actuators.md), [Airframe](airframe_px4.md), [Flight Modes](flight_modes_px4.md), [PID Tuning](tuning_px4.md), [Power](power.md), [Radio](radio.md), [Safety](safety.md), [Sensors](sensors_px4.md)
+**PX4-specific pages:** [Actuators / Motors](px4/actuators.md), [Airframe](airframe_px4.md), [Flight Modes](flight_modes_px4.md), [PID Tuning](tuning_px4.md), [Ports](px4/ports.md), [Power](power.md), [Radio](radio.md), [Safety](safety.md), [Sensors](sensors_px4.md)
 
 **ArduPilot-specific pages:** [ESC](ardupilot/esc.md), [Failsafes](ardupilot/failsafes.md), [Flight Modes](flight_modes_ardupilot.md), [Flight Safety](ardupilot/flight_safety.md), [Frame](airframe_ardupilot.md), [Gimbal](camera.md), [Logging](logging_ardupilot.md), [Motors](motors.md), [Power](power.md), [Radio](radio.md), [Remote Support](ardupilot/remote_support.md), [Scripting](ardupilot/scripting.md), [Sensors](sensors_ardupilot.md), [Servo Outputs](ardupilot/servo_outputs.md), [Tuning](tuning_ardupilot.md), [Vehicle-Specific](ardupilot/vehicle_specific.md)
 

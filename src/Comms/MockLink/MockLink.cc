@@ -39,6 +39,20 @@ QGC_LOGGING_CATEGORY(MockLinkVerboseLog, "Comms.MockLink.MockLink:verbose")
 
 std::atomic<int> MockLink::_nextVehicleSystemId{128};
 
+namespace {
+
+// Serial port settings PX4 hasn't looked up because no function uses them (see PX4MockLink.params for the ones in use)
+constexpr std::pair<const char*, int32_t> kPX4UnusedParams[] = {
+    {"GPS_2_PROTOCOL", 1},     {"MAV_0_BROADCAST", 1},   {"MAV_0_REMOTE_PRT", 14550}, {"MAV_0_UDP_PRT", 14556},
+    {"MAV_1_BROADCAST", 0},    {"MAV_1_FLOW_CTRL", 2},   {"MAV_1_FORWARD", 0},        {"MAV_1_MODE", 2},
+    {"MAV_1_RADIO_CTL", 1},    {"MAV_1_RATE", 0},        {"MAV_1_REMOTE_PRT", 0},     {"MAV_1_UDP_PRT", 0},
+    {"SER_EXT2_BAUD", 57600},  {"SER_GPS2_BAUD", 0},     {"SER_GPS3_BAUD", 0},        {"SER_RC_BAUD", 0},
+    {"SER_TEL2_BAUD", 921600}, {"SER_TEL3_BAUD", 57600}, {"SER_TEL4_BAUD", 57600},    {"SER_URT6_BAUD", 57600},
+    {"SER_WIFI_BAUD", 1},
+};
+
+}  // namespace
+
 QList<MockLink::FlightMode_t> MockLink::_availableFlightModes = {
     // Mode Name                Standard Mode               Custom Mode                         CanBeSet    adv
     { "Manual",                 0,                          PX4CustomMode::MANUAL,              true,       true },
@@ -694,6 +708,12 @@ void MockLink::_loadParams()
         for (const char* name : {"CMP_ENABLE", "CMP_PORT", "CMP_RATE"}) {
             _mapParamName2Value[_companionComponentId][QLatin1StringView(name)] = QVariant(static_cast<qint32>(1));
             _mapParamName2MavParamType[_companionComponentId][QLatin1StringView(name)] = MAV_PARAM_TYPE_INT32;
+        }
+    }
+
+    if (_firmwareType == MAV_AUTOPILOT_PX4) {
+        for (const auto& [name, value] : kPX4UnusedParams) {
+            _px4UnusedParams[QLatin1StringView(name)] = value;
         }
     }
 
@@ -1921,14 +1941,19 @@ void MockLink::_handleParamSet(const mavlink_message_t &msg)
         _sendParamError(componentId, paramId, -1, MAV_PARAM_ERROR_COMPONENT_NOT_FOUND);
         return;
     }
-    if (!_mapParamName2Value[componentId].contains(paramId)) {
+    const QString paramName = QString::fromLatin1(paramId);
+    const bool px4UnusedParam = !_mapParamName2Value[componentId].contains(paramId) &&
+                                (componentId == MAV_COMP_ID_AUTOPILOT1) && _px4UnusedParams.contains(paramName);
+    if (!px4UnusedParam && !_mapParamName2Value[componentId].contains(paramId)) {
         qCDebug(MockLinkLog) << "_handleParamSet unknown param, rejecting with PARAM_ERROR - componentId:" << componentId << "param:" << paramId;
         _sendParamError(componentId, paramId, -1, MAV_PARAM_ERROR_DOES_NOT_EXIST);
         return;
     }
-    if (request.param_type != _mapParamName2MavParamType[componentId][paramId]) {
+    const MAV_PARAM_TYPE paramType =
+        px4UnusedParam ? MAV_PARAM_TYPE_INT32 : _mapParamName2MavParamType[componentId][paramId];
+    if (request.param_type != paramType) {
         qCDebug(MockLinkLog) << "_handleParamSet type mismatch, rejecting with PARAM_ERROR - param:" << paramId
-                             << "requested type:" << request.param_type << "actual type:" << _mapParamName2MavParamType[componentId][paramId];
+                             << "requested type:" << request.param_type << "actual type:" << paramType;
         _sendParamError(componentId, paramId, -1, MAV_PARAM_ERROR_TYPE_MISMATCH);
         return;
     }
@@ -1950,6 +1975,14 @@ void MockLink::_handleParamSet(const mavlink_message_t &msg)
         _sendParamError(componentId, paramId,
                         _mapParamName2Value[componentId].keys().indexOf(paramId),
                         MAV_PARAM_ERROR_VALUE_OUT_OF_RANGE);
+        return;
+    }
+
+    if (px4UnusedParam) {
+        mavlink_param_union_t valueUnion{};
+        valueUnion.param_float = request.param_value;
+        _px4UnusedParams[paramName] = valueUnion.param_int32;
+        _sendPX4UnusedParamValue(paramName);
         return;
     }
 
@@ -2044,7 +2077,11 @@ void MockLink::_handleParamRequestRead(const mavlink_message_t &msg)
         _paramRequestReadIndexLog.append(qMakePair(componentId, static_cast<int>(request.param_index)));
     }
 
-    if (!_mapParamName2Value[componentId].contains(paramId) || !_mapParamName2MavParamType[componentId].contains(paramId)) {
+    // By-name requests only, where paramName is the requested name
+    const bool px4UnusedParam =
+        (request.param_index == -1) && (componentId == MAV_COMP_ID_AUTOPILOT1) && _px4UnusedParams.contains(paramName);
+    if (!px4UnusedParam && (!_mapParamName2Value[componentId].contains(paramId) ||
+                            !_mapParamName2MavParamType[componentId].contains(paramId))) {
         // Real firmware rejects a read of a parameter it doesn't know about (e.g. QGC
         // refreshing a param after a failed PARAM_SET for a param not on the vehicle)
         qCDebug(MockLinkLog) << "_handleParamRequestRead unknown param, rejecting with PARAM_ERROR - componentId:" << componentId << "param:" << paramId;
@@ -2075,6 +2112,11 @@ void MockLink::_handleParamRequestRead(const mavlink_message_t &msg)
         return;
     }
 
+    if (px4UnusedParam) {
+        _sendPX4UnusedParamValue(paramName);
+        return;
+    }
+
     (void) mavlink_msg_param_value_pack_chan(
         _vehicleSystemId,
         componentId,                                               // component id
@@ -2087,6 +2129,30 @@ void MockLink::_handleParamRequestRead(const mavlink_message_t &msg)
         _mapParamName2Value[componentId].keys().indexOf(paramId)   // Index of this parameter
     );
     respondWithMavlinkMessage(responseMsg);
+}
+
+void MockLink::_sendPX4UnusedParamValue(const QString& paramName)
+{
+    mavlink_param_union_t valueUnion{};
+    valueUnion.param_int32 = _px4UnusedParams.value(paramName);
+
+    char paramId[MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1]{};
+    (void) strncpy(paramId, paramName.toLatin1().constData(), MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN);
+
+    // Like PX4, an unused parameter has no index in the parameter list
+    mavlink_message_t responseMsg{};
+    (void) mavlink_msg_param_value_pack_chan(_vehicleSystemId, MAV_COMP_ID_AUTOPILOT1, _outgoingMavlinkChannel,
+                                             &responseMsg, paramId, valueUnion.param_float, MAV_PARAM_TYPE_INT32,
+                                             _mapParamName2Value[MAV_COMP_ID_AUTOPILOT1].count(), -1);
+    respondWithMavlinkMessage(responseMsg);
+}
+
+QVariant MockLink::paramValue(int componentId, const QString& paramName) const
+{
+    if ((componentId == MAV_COMP_ID_AUTOPILOT1) && _px4UnusedParams.contains(paramName)) {
+        return QVariant::fromValue(_px4UnusedParams.value(paramName));
+    }
+    return _mapParamName2Value.value(componentId).value(paramName);
 }
 
 void MockLink::_sendParamError(int componentId, const char *paramId, int16_t paramIndex, uint8_t errorCode)

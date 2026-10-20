@@ -545,9 +545,11 @@ void ParameterManager::_factRawValueUpdated(const QVariant &rawValue)
 
     if (fact->vehicleRebootRequired()) {
         _vehicle->setRebootRequired();
-        QGC::showRebootAppMessage(
-            tr("Vehicle reboot required for changes to take effect. "
-               "Use the main status indicator in the toolbar to reboot."));
+        if (_rebootMessageSuppressCount == 0) {
+            QGC::showRebootAppMessage(
+                tr("Vehicle reboot required for changes to take effect. "
+                   "Use the main status indicator in the toolbar to reboot."));
+        }
     }
 
     _mavlinkParamSet(fact->componentId(), fact->name(), fact->type(), rawValue);
@@ -777,19 +779,33 @@ int ParameterManager::_actualComponentId(int componentId) const
     return componentId;
 }
 
-void ParameterManager::refreshParameter(int componentId, const QString &paramName)
+void ParameterManager::refreshParameter(int componentId, const QString& paramName, bool notifyFailure)
 {
     componentId = _actualComponentId(componentId);
 
-    qCDebug(ParameterManagerLog) << _logVehiclePrefix(componentId) << "refreshParameter - name:" << paramName << ")";
+    qCDebug(ParameterManagerLog) << _logVehiclePrefix(componentId) << "refreshParameter - name:" << paramName;
 
-    _mavlinkParamRequestRead(componentId, paramName, -1, true /* notifyFailure */);
+    _mavlinkParamRequestRead(componentId, paramName, -1, notifyFailure);
+}
+
+void ParameterManager::suppressRebootMessage()
+{
+    _rebootMessageSuppressCount++;
+}
+
+void ParameterManager::unsuppressRebootMessage()
+{
+    if (_rebootMessageSuppressCount == 0) {
+        qCWarning(ParameterManagerLog) << "unsuppressRebootMessage without matching suppressRebootMessage";
+        return;
+    }
+    _rebootMessageSuppressCount--;
 }
 
 void ParameterManager::refreshParametersPrefix(int componentId, const QString &namePrefix)
 {
     componentId = _actualComponentId(componentId);
-    qCDebug(ParameterManagerLog) << _logVehiclePrefix(componentId) << "refreshParametersPrefix - name:" << namePrefix << ")";
+    qCDebug(ParameterManagerLog) << _logVehiclePrefix(componentId) << "refreshParametersPrefix - name:" << namePrefix;
 
     if (!_mapCompId2FactMap.contains(componentId)) {
         return;

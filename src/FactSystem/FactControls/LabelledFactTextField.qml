@@ -5,7 +5,7 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FactControls
 
-RowLayout {
+GridLayout {
     property string label:                   fact ? fact.shortDescription : ""
     property alias  fact:                    _factTextField.fact
     property real   textFieldPreferredWidth: -1
@@ -13,11 +13,14 @@ RowLayout {
     property alias  textFieldShowUnits:      _factTextField.showUnits
     property alias  textFieldShowHelp:       _factTextField.showHelp
     property alias  textField:               _factTextField
+    property bool   vertical:                false  ///< true: label above the text field
 
-    spacing: ScreenTools.defaultFontPixelWidth * 2
+    columns:        vertical ? 1 : 2
+    columnSpacing:  ScreenTools.defaultFontPixelWidth * 2
+    rowSpacing:     0
 
     QGCLabel {
-        Layout.fillWidth:    true
+        Layout.fillWidth:    !vertical
         Layout.minimumWidth: implicitWidth
         text:                label
         visible:             label !== ""
