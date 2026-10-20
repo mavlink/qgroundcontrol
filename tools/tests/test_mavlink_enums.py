@@ -131,6 +131,8 @@ def test_unterminated_enum_is_rejected(tmp_path):
         ("LOW=-2147483649, HIGH=1,", " : qint64"),
         ("LOW=-1, HIGH=4294967296,", " : qint64"),
         ("LOW=0, /* example HIGH=4294967296, */ HIGH=1,", ""),
+        ("LOW=0, HIGH=4294967296", " : quint64"),
+        ("LOW=-1, HIGH=4294967296", " : qint64"),
     ],
 )
 def test_qml_wide_enums_have_explicit_underlying_type(values, base):

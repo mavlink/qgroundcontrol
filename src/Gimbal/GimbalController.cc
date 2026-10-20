@@ -3,6 +3,7 @@
 #include <cmath>
 #include <cstring>
 
+#include "AppMessages.h"
 #include "Gimbal.h"
 #include "GimbalControllerSettings.h"
 #include "MAVLinkLib.h"
@@ -482,6 +483,14 @@ bool GimbalController::_tryGetGimbalControl()
         return false;
     }
 
+    if (!_gcsSystemIdSupportsGimbalControl()) {
+        if (!_gcsSystemIdUnsupportedMessageShown) {
+            _gcsSystemIdUnsupportedMessageShown = true;
+            _showGcsSystemIdUnsupportedMessage();
+        }
+        return false;
+    }
+
     if (_activeGimbal->gimbalOthersHaveControl()) {
         qCDebug(GimbalControllerLog) << "Others in control, showing popup for user to confirm control..";
         emit showAcquireGimbalControlPopup();
@@ -492,6 +501,21 @@ bool GimbalController::_tryGetGimbalControl()
     }
 
     return true;
+}
+
+bool GimbalController::_gcsSystemIdSupportsGimbalControl()
+{
+    // GIMBAL_MANAGER_STATUS reports the controlling system in an 8-bit field, so a wider GCS id can never own
+    // the gimbal.
+    return MAVLinkProtocol::instance()->getSystemId() <= UINT8_MAX;
+}
+
+void GimbalController::_showGcsSystemIdUnsupportedMessage()
+{
+    QGC::showAppMessage(tr("Gimbal control unavailable. The gimbal can only identify a ground station with a system "
+                           "ID from 1 to 255, but this one uses ID %1. Change MAVLink System ID in Application "
+                           "Settings > Telemetry to 255 or lower to control the gimbal.")
+                            .arg(MAVLinkProtocol::instance()->getSystemId()));
 }
 
 bool GimbalController::_yawInVehicleFrame(uint32_t flags)
@@ -806,6 +830,11 @@ void GimbalController::acquireGimbalControl()
 {
     if (!_activeGimbal) {
         qCCritical(GimbalControllerLog) << "acquireGimbalControl: active gimbal is nullptr, returning";
+        return;
+    }
+
+    if (!_gcsSystemIdSupportsGimbalControl()) {
+        _showGcsSystemIdUnsupportedMessage();
         return;
     }
 

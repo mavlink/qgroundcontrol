@@ -47,8 +47,8 @@ public:
     /// ack was lost when the previous page instance was destroyed mid-send.
     Q_INVOKABLE void resolvePendingInterrupted(void);
     /// Note the active vehicle's system id; a switch to a different vehicle clears the session so Reset all
-    /// can't target the wrong vehicle. A negative id (transient disconnect/reboot) is ignored.
-    Q_INVOKABLE void notifyActiveVehicle(int vehicleId);
+    /// can't target the wrong vehicle. Id 0 (no vehicle: transient disconnect/reboot) is ignored.
+    Q_INVOKABLE void notifyActiveVehicle(quint32 vehicleId);
     /// Vehicle parameters that refine how a (unit, type) failure manifests, e.g. BATTERY+WRONG ->
     /// SYS_FAIL_BAT_LVL. Returns [{ param, label }]; empty when the combo has no detail parameters.
     Q_INVOKABLE QVariantList detailParams(int unitEnum, int typeEnum) const;
@@ -61,5 +61,5 @@ private:
     QVariantList _types;
     QVariantList _activity;
     QList<int> _injectedUnits;
-    int _currentVehicleId = -1;  ///< MAVLink system id the session belongs to; -1 until the first vehicle is known
+    quint32 _currentVehicleId = 0;  ///< MAVLink system id the session belongs to; 0 until the first vehicle is known
 };

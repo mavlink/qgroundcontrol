@@ -11,6 +11,7 @@ private slots:
     void _testDiscovery();
     void _testCapabilityFlags();
     void _testControlArbitration();
+    void _testWideGcsSystemIdBlocksControl();
     void _testYawLockRoundTrip();
     void _testOnScreenControlBodyFrame_data();
     void _testOnScreenControlBodyFrame();

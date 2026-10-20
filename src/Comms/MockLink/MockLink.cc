@@ -1402,8 +1402,9 @@ void MockLink::_handleSetMode(const mavlink_message_t &msg)
     mavlink_set_mode_t request{};
     mavlink_msg_set_mode_decode(&msg, &request);
 
-    if (mavlink_msg_get_target_sysid(&msg, mavlink_get_msg_entry(msg.msgid)) != _vehicleSystemId) {
-        qCDebug(MockLinkLog) << "Ignoring SET_MODE for system" << request.target_system;
+    const quint32 targetSystem = mavlink_msg_get_target_sysid(&msg, mavlink_get_msg_entry(msg.msgid));
+    if (targetSystem != _vehicleSystemId) {
+        qCDebug(MockLinkLog) << "Ignoring SET_MODE for system" << targetSystem;
         return;
     }
 
@@ -1761,8 +1762,9 @@ void MockLink::_handleParamRequestList(const mavlink_message_t &msg)
     mavlink_param_request_list_t request{};
     mavlink_msg_param_request_list_decode(&msg, &request);
 
-    if (mavlink_msg_get_target_sysid(&msg, mavlink_get_msg_entry(msg.msgid)) != _vehicleSystemId) {
-        qCDebug(MockLinkLog) << "Ignoring PARAM_REQUEST_LIST for system" << request.target_system;
+    const quint32 targetSystem = mavlink_msg_get_target_sysid(&msg, mavlink_get_msg_entry(msg.msgid));
+    if (targetSystem != _vehicleSystemId) {
+        qCDebug(MockLinkLog) << "Ignoring PARAM_REQUEST_LIST for system" << targetSystem;
         return;
     }
     _paramRequestListTargetLog.append(request.target_component);
@@ -1905,8 +1907,9 @@ void MockLink::_handleParamSet(const mavlink_message_t &msg)
     mavlink_param_set_t request{};
     mavlink_msg_param_set_decode(&msg, &request);
 
-    if (mavlink_msg_get_target_sysid(&msg, mavlink_get_msg_entry(msg.msgid)) != _vehicleSystemId) {
-        qCDebug(MockLinkLog) << "Ignoring PARAM_SET for system" << request.target_system;
+    const quint32 targetSystem = mavlink_msg_get_target_sysid(&msg, mavlink_get_msg_entry(msg.msgid));
+    if (targetSystem != _vehicleSystemId) {
+        qCDebug(MockLinkLog) << "Ignoring PARAM_SET for system" << targetSystem;
         return;
     }
     const int componentId = request.target_component;
@@ -2049,8 +2052,9 @@ void MockLink::_handleParamRequestRead(const mavlink_message_t &msg)
     char paramId[MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN + 1]{};
     paramId[0] = 0;
 
-    if (mavlink_msg_get_target_sysid(&msg, mavlink_get_msg_entry(msg.msgid)) != _vehicleSystemId) {
-        qCDebug(MockLinkLog) << "Ignoring PARAM_REQUEST_READ for system" << request.target_system;
+    const quint32 targetSystem = mavlink_msg_get_target_sysid(&msg, mavlink_get_msg_entry(msg.msgid));
+    if (targetSystem != _vehicleSystemId) {
+        qCDebug(MockLinkLog) << "Ignoring PARAM_REQUEST_READ for system" << targetSystem;
         return;
     }
 
