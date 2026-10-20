@@ -1185,11 +1185,7 @@ void ParameterManager::_writeLocalParamCache(quint32 vehicleId, int componentId)
 
 QDir ParameterManager::parameterCacheDir()
 {
-    // Use application-specific subdirectory to isolate parallel test runs
-    const QFileInfo settingsFile(QSettings().fileName());
-    const QString basePath = settingsFile.dir().absolutePath();
-    const QString appName = settingsFile.completeBaseName();
-    return QDir(basePath + QDir::separator() + appName + QDir::separator() + QStringLiteral("ParamCache"));
+    return QDir(QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QStringLiteral("/ParamCache"));
 }
 
 QString ParameterManager::parameterCacheFile(quint32 vehicleId, int componentId)
