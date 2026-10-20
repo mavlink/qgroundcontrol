@@ -3,13 +3,11 @@
 #include <QtGui/QPainter>
 #include <QtGui/QFont>
 
-QGCImageProvider::QGCImageProvider(QQmlImageProviderBase::ImageType imageType)
-    : QQuickImageProvider(imageType)
+QGCImageProvider::QGCImageProvider()
+    : QQuickImageProvider(QQmlImageProviderBase::ImageType::Image)
     , _dummy(320, 240, QImage::Format_RGBA8888)
 {
     // qCDebug(ImageProtocolManagerLog) << Q_FUNC_INFO << this;
-
-    Q_ASSERT(imageType == QQmlImageProviderBase::ImageType::Image);
 
     // Dummy temporary image until something comes along
     _dummy.fill(Qt::black);

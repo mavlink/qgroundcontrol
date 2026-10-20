@@ -14,7 +14,10 @@ MockLinkMissionItemHandler::MockLinkMissionItemHandler(MockLink *mockLink)
 {
     // qCDebug(MockLinkMissionItemHandlerLog) << Q_FUNC_INFO << this;
 
-    Q_ASSERT(mockLink);
+    if (!_mockLink) {
+        qCCritical(MockLinkMissionItemHandlerLog) << "MockLink is null";
+        return;
+    }
 
     (void) connect(&_missionItemResponseTimer, &QTimer::timeout, this, &MockLinkMissionItemHandler::_missionItemResponseTimeout);
 }
@@ -122,7 +125,9 @@ void MockLinkMissionItemHandler::_handleMissionClearAll(const mavlink_message_t 
         _rallyItems.clear();
         break;
     default:
-        Q_ASSERT(false);
+        qCWarning(MockLinkMissionItemHandlerLog) << "Unsupported mission type" << _requestType;
+        _sendAck(MAV_MISSION_UNSUPPORTED);
+        return;
     }
 
     _sendAck(MAV_MISSION_ACCEPTED);
@@ -173,7 +178,9 @@ void MockLinkMissionItemHandler::_handleMissionRequestList(const mavlink_message
         itemCount = _rallyItems.count();
         break;
     default:
-        Q_ASSERT(false);
+        qCWarning(MockLinkMissionItemHandlerLog) << "Unsupported mission type" << _requestType;
+        _sendAck(MAV_MISSION_UNSUPPORTED);
+        return;
     }
 
     mavlink_message_t responseMsg{};
@@ -255,7 +262,9 @@ void MockLinkMissionItemHandler::_handleMissionRequest(const mavlink_message_t &
         missionItemInt = _rallyItems[request.seq];
         break;
     default:
-        Q_ASSERT(false);
+        qCWarning(MockLinkMissionItemHandlerLog) << "Unsupported mission type" << request.mission_type;
+        _sendAck(MAV_MISSION_UNSUPPORTED);
+        return;
     }
 
     mavlink_message_t responseMsg{};
@@ -290,7 +299,6 @@ void MockLinkMissionItemHandler::_handleMissionCount(const mavlink_message_t &ms
 
     _requestType = (MAV_MISSION_TYPE)missionCount.mission_type;
     _writeSequenceCount = missionCount.count;
-    Q_ASSERT(_writeSequenceCount >= 0);
 
     qCDebug(MockLinkMissionItemHandlerLog) << "_handleMissionCount write sequence _writeSequenceCount:" << _writeSequenceCount;
 
@@ -444,7 +452,6 @@ void MockLinkMissionItemHandler::_handleMissionItem(const mavlink_message_t &msg
 void MockLinkMissionItemHandler::_missionItemResponseTimeout()
 {
     qCWarning(MockLinkMissionItemHandlerLog) << "Timeout waiting for next MISSION_ITEM_INT";
-    Q_ASSERT(false);
 }
 
 void MockLinkMissionItemHandler::sendUnexpectedMissionAck(MAV_MISSION_RESULT ackType)
@@ -454,14 +461,12 @@ void MockLinkMissionItemHandler::sendUnexpectedMissionAck(MAV_MISSION_RESULT ack
 
 void MockLinkMissionItemHandler::sendUnexpectedMissionItem()
 {
-    // FIXME: NYI
-    Q_ASSERT(false);
+    qCWarning(MockLinkMissionItemHandlerLog) << "Sending an unexpected mission item is not implemented";
 }
 
 void MockLinkMissionItemHandler::sendUnexpectedMissionRequest()
 {
-    // FIXME: NYI
-    Q_ASSERT(false);
+    qCWarning(MockLinkMissionItemHandlerLog) << "Sending an unexpected mission request is not implemented";
 }
 
 void MockLinkMissionItemHandler::setFailureMode(FailureMode_t failureMode, MAV_MISSION_RESULT failureAckResult)

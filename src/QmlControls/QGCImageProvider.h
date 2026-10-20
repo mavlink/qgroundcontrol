@@ -9,7 +9,7 @@
 class QGCImageProvider : public QQuickImageProvider
 {
 public:
-    QGCImageProvider(QQmlImageProviderBase::ImageType type = QQmlImageProviderBase::ImageType::Image);
+    QGCImageProvider();
     ~QGCImageProvider();
 
     QImage requestImage(const QString& id, QSize* size, const QSize& requestedSize) final;
