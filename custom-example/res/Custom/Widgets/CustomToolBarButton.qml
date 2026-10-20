@@ -9,7 +9,7 @@ Button {
 
     background: Rectangle {
         anchors.fill:               parent
-        color:                      qgcPal.buttonHighlight
+        color:                      qgcPal.accent
         visible:                    (mouseArea.pressed || button.checked)
     }
 
@@ -28,7 +28,7 @@ Button {
             width:                  height
             sourceSize.height:      parent.height
             fillMode:               Image.PreserveAspectFit
-            color:                  qgcPal.buttonText
+            color:                  qgcPal.textPrimary
             source:                 button.icon.source
             anchors.verticalCenter: parent.verticalCenter
         }
@@ -36,7 +36,7 @@ Button {
             id:                     _label
             visible:                text !== ""
             text:                   button.text
-            color:                  qgcPal.buttonText
+            color:                  qgcPal.textPrimary
             anchors.verticalCenter: parent.verticalCenter
         }
     }

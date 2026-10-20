@@ -591,10 +591,10 @@ SetupPage {
                 font.pointSize:     ScreenTools.defaultFontPointSize
                 textFormat:         TextEdit.RichText
                 text:               _singleFirmwareMode ? welcomeTextSingle : welcomeText
-                color:              qgcPal.text
+                color:              qgcPal.textPrimary
 
                 background: Rectangle {
-                    color: qgcPal.windowShade
+                    color: qgcPal.windowCard
                 }
             }
 

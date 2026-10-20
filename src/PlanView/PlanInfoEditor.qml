@@ -25,7 +25,7 @@ Rectangle {
 
     width:  parent ? parent.width : 0
     height: mainColumn.height + ScreenTools.defaultFontPixelHeight
-    color:  qgcPal.windowShadeDark
+    color:  qgcPal.windowPanel
 
     QGCPalette { id: qgcPal; colorGroupEnabled: _root.enabled }
 

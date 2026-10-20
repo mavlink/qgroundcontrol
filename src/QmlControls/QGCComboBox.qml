@@ -12,6 +12,8 @@ T.ComboBox {
 
     id: control
     padding: ScreenTools.comboBoxPadding
+    topPadding: ScreenTools.controlVerticalPadding
+    bottomPadding: ScreenTools.controlVerticalPadding
     spacing: ScreenTools.defaultFontPixelWidth
     font.pointSize: ScreenTools.defaultFontPointSize
     font.family: ScreenTools.normalFontFamily
@@ -26,8 +28,7 @@ T.ComboBox {
     property real _popupWidth: width
     property real _largestTextWidth: 0
     property bool _onCompleted: false
-    property bool _showBorder: qgcPal.globalTheme === QGCPalette.Light
-    property bool _showHighlight: enabled && pressed
+    property bool _showHighlight: enabled && (pressed || hovered || popup.visible)
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
@@ -81,12 +82,14 @@ T.ComboBox {
         contentItem: Text {
             text: _text
             font: control.font
-            color: control.currentIndex === index ? qgcPal.buttonHighlightText : qgcPal.buttonText
+            color: qgcPal.textPrimary
             verticalAlignment: Text.AlignVCenter
         }
 
         background: Rectangle {
-            color: control.currentIndex === index ? qgcPal.buttonHighlight : qgcPal.button
+            color: control.currentIndex === index ? qgcPal.accentSubtle : (highlighted ? qgcPal.windowCard : qgcPal.windowPanel)
+            border.width: control.currentIndex === index ? 1 : 0
+            border.color: qgcPal.accent
         }
 
         highlighted: control.highlightedIndex === index
@@ -99,7 +102,7 @@ T.ComboBox {
         height: ScreenTools.defaultFontPixelWidth
         width: height
         source: "/qmlimages/arrow-down.png"
-        color: qgcPal.buttonText
+        color: qgcPal.textPrimary
     }
 
     // The label of the button
@@ -107,22 +110,15 @@ T.ComboBox {
         id: text
         text: control.alternateText === "" ? control.currentText : control.alternateText
         font: control.font
-        color: qgcPal.buttonText
+        color: qgcPal.textPrimary
         elide: Text.ElideRight
     }
 
     background: Rectangle {
-        color: qgcPal.button
-        border.color: qgcPal.buttonBorder
-        border.width: _showBorder ? 1 : 0
+        color: qgcPal.windowInset
+        border.color: _showHighlight ? qgcPal.accent : qgcPal.borderSubtle
+        border.width: 1
         radius: ScreenTools.defaultBorderRadius
-
-        Rectangle {
-            anchors.fill: parent
-            color: qgcPal.buttonHighlight
-            opacity: _showHighlight ? 1 : control.enabled && control.hovered ? .2 : 0
-            radius: parent.radius
-        }
     }
 
     popup: T.Popup {
@@ -150,14 +146,14 @@ T.ComboBox {
                 width: parent.width
                 height: parent.height
                 color: "transparent"
-                border.color: qgcPal.text
+                border.color: qgcPal.borderSubtle
             }
 
             T.ScrollIndicator.vertical: ScrollIndicator { }
         }
 
         background: Rectangle {
-            color: qgcPal.window
+            color: qgcPal.windowPanel
         }
     }
 }

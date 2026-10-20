@@ -193,11 +193,11 @@ RowLayout {
             theme: GraphsTheme {
                 colorScheme:            qgcPal.globalTheme === QGCPalette.Light ? GraphsTheme.ColorScheme.Light : GraphsTheme.ColorScheme.Dark
                 plotAreaBackgroundColor: qgcPal.window
-                grid.mainColor:         Qt.rgba(qgcPal.text.r, qgcPal.text.g, qgcPal.text.b, 0.5)
-                grid.subColor:          Qt.rgba(qgcPal.text.r, qgcPal.text.g, qgcPal.text.b, 0.3)
+                grid.mainColor:         Qt.rgba(qgcPal.textPrimary.r, qgcPal.textPrimary.g, qgcPal.textPrimary.b, 0.5)
+                grid.subColor:          Qt.rgba(qgcPal.textPrimary.r, qgcPal.textPrimary.g, qgcPal.textPrimary.b, 0.3)
                 grid.mainWidth:         1
                 labelBackgroundVisible: false
-                labelTextColor:         qgcPal.text
+                labelTextColor:         qgcPal.textPrimary
             }
 
             axisX: ValueAxis {

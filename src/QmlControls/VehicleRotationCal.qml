@@ -24,14 +24,14 @@ Rectangle {
     // Image source
     property var imageSource: ""
 
-    color: qgcPal.text
+    color: qgcPal.textPrimary
 
     states: [
         State {
             name: "idle"
             when: root.calState === VehicleRotationCal.CalState.Idle
             PropertyChanges {
-                root.color: qgcPal.text
+                root.color: qgcPal.textPrimary
                 statusLabel.text: ""
             }
         },
@@ -70,7 +70,7 @@ Rectangle {
         y:      inset
         width:  parent.width - (inset * 2)
         height: parent.height - (inset * 2)
-        color: qgcPal.windowShade
+        color: qgcPal.windowCard
 
         Image {
             width:      parent.width

@@ -34,7 +34,7 @@ SetupPage {
             Rectangle {
                 width:  parent.width
                 height: radioGrid.height + ScreenTools.defaultFontPixelHeight
-                color:  qgcPal.windowShade
+                color:  qgcPal.windowCard
 
                 GridLayout {
                     id:                 radioGrid

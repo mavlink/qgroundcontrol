@@ -152,7 +152,7 @@ ColumnLayout {
                 id: stickDisplayContainer
                 implicitWidth: stickDisplayLayout.width + _margins * 2
                 implicitHeight: stickDisplayLayout.height + _margins * 2
-                border.color: qgcPal.text
+                border.color: qgcPal.textPrimary
                 border.width: 1
                 color: qgcPal.window
                 radius: ScreenTools.defaultBorderRadius
@@ -197,7 +197,7 @@ ColumnLayout {
                         Layout.fillWidth: true
                         spacing: stickDisplayContainer._margins * 2
 
-                        property color stickColor: controller.calibrating ? stickPal.buttonHighlight : stickPal.text
+                        property color stickColor: controller.calibrating ? stickPal.accent : stickPal.textPrimary
 
                         QGCPalette { id: stickPal; colorGroupEnabled: controller.calibrating }
 
@@ -306,7 +306,7 @@ ColumnLayout {
         id: separator
         Layout.fillWidth: true
         implicitHeight: 1
-        color: qgcPal.text
+        color: qgcPal.textPrimary
     }
 
     // Additional Setup + Channel Monitor

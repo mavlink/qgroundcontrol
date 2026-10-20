@@ -48,13 +48,13 @@ AnalyzePage {
                         Layout.alignment:   Qt.AlignHCenter
                         color:              "transparent"
                         border.width:       1
-                        border.color:       qgcPal.text
+                        border.color:       qgcPal.textPrimary
 
                         Rectangle {
                             anchors.bottom: parent.bottom
                             width:          parent.width
                             height:         parent.height * (Math.min(_barMaximum, _xValue) / (_barMaximum - _barMinimum))
-                            color:          qgcPal.text
+                            color:          qgcPal.textPrimary
                         }
 
                         // Max vibe indication line at 60
@@ -93,13 +93,13 @@ AnalyzePage {
                         Layout.alignment:   Qt.AlignHCenter
                         color:              "transparent"
                         border.width:       1
-                        border.color:       qgcPal.text
+                        border.color:       qgcPal.textPrimary
 
                         Rectangle {
                             anchors.bottom: parent.bottom
                             width:          parent.width
                             height:         parent.height * (Math.min(_barMaximum, _yValue) / (_barMaximum - _barMinimum))
-                            color:          qgcPal.text
+                            color:          qgcPal.textPrimary
                         }
 
                         // Max vibe indication line at 60
@@ -138,13 +138,13 @@ AnalyzePage {
                         Layout.alignment:   Qt.AlignHCenter
                         color:              "transparent"
                         border.width:       1
-                        border.color:       qgcPal.text
+                        border.color:       qgcPal.textPrimary
 
                         Rectangle {
                             anchors.bottom: parent.bottom
                             width:          parent.width
                             height:         parent.height * (Math.min(_barMaximum, _zValue) / (_barMaximum - _barMinimum))
-                            color:          qgcPal.text
+                            color:          qgcPal.textPrimary
                         }
 
                         // Max vibe indication line at 60

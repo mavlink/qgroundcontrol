@@ -125,7 +125,7 @@ Item {
             height:             ScreenTools.defaultFontPixelHeight * 0.5
             source:             "/res/XDelete.svg"
             fillMode:           Image.PreserveAspectFit
-            color:              qgcPal.text
+            color:              qgcPal.textPrimary
 
             QGCMouseArea {
                 fillItem:   parent

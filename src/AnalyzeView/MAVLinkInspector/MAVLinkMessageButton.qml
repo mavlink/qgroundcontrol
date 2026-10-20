@@ -17,7 +17,7 @@ Button {
 
     background: Rectangle {
         anchors.fill:   parent
-        color:          checked ? qgcPal.buttonHighlight : qgcPal.button
+        color:          checked ? qgcPal.accent : qgcPal.windowCard
     }
 
     property double messageHz:  0
@@ -29,7 +29,7 @@ Button {
 
         QGCLabel {
             text:                   control.compID
-            color:                  checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
+            color:                  checked ? qgcPal.accentText : qgcPal.textPrimary
             verticalAlignment:      Text.AlignVCenter
             Layout.minimumHeight:   ScreenTools.isMobile ? (ScreenTools.defaultFontPixelHeight * 2) : (ScreenTools.defaultFontPixelHeight * 1.5)
             Layout.minimumWidth:    _compIDWidth
@@ -37,12 +37,12 @@ Button {
         QGCLabel {
             id:                     nameLabel
             text:                   control.text
-            color:                  checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
+            color:                  checked ? qgcPal.accentText : qgcPal.textPrimary
             Layout.fillWidth:       true
             Layout.alignment:       Qt.AlignVCenter
         }
         QGCLabel {
-            color:                  checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
+            color:                  checked ? qgcPal.accentText : qgcPal.textPrimary
             text:                   messageHz.toFixed(1) + 'Hz'
             horizontalAlignment:    Text.AlignRight
             Layout.minimumWidth:    _hzWidth

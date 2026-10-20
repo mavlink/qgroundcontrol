@@ -53,7 +53,7 @@ Column  {
         anchors.right:  parent.right
         checkable:      false
         text:           name + (passed ? qsTr(" (passed)") : (enabled ? "" : qsTr(" (locked)")))
-        color:          !enabled ? groupPalette.text :
+        color:          !enabled ? groupPalette.textPrimary :
                             (failed ? groupPalette.errorText : (passed ? groupPalette.successText : groupPalette.warningText))
     }
 

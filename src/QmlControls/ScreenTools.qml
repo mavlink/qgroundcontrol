@@ -111,6 +111,7 @@ Item {
     property real implicitComboBoxHeight:           implicitButtonHeight
     property real implicitComboBoxWidth:            implicitButtonWidth
     property real comboBoxPadding:                  defaultFontPixelWidth
+    property real controlVerticalPadding:           Math.round(defaultFontPixelHeight * 0.3)
     property real implicitSliderHeight:             defaultFontPixelHeight
     property real defaultBorderRadius:              defaultFontPixelWidth / 2
 

@@ -136,7 +136,7 @@ QGCPopupDialog {
                         id: expandArrow
                         Layout.preferredWidth: ScreenTools.defaultFontPixelHeight * 0.5
                         Layout.preferredHeight: Layout.preferredWidth
-                        color: qgcPal.text
+                        color: qgcPal.textPrimary
                         fillMode: Image.PreserveAspectFit
                         rotation: treeViewRowLayout.expanded ? 0 : -90
                         source: "/qmlimages/arrow-down.png"

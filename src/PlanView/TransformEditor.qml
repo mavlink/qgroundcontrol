@@ -13,7 +13,7 @@ Rectangle {
 
     width:  parent ? parent.width : 0
     height: mainColumn.height + (_margins * 2)
-    color:  QGroundControl.globalPalette.windowShadeDark
+    color:  QGroundControl.globalPalette.windowPanel
 
     property real _margins:        ScreenTools.defaultFontPixelWidth / 2
     property real _textFieldWidth: ScreenTools.defaultFontPixelWidth * 20

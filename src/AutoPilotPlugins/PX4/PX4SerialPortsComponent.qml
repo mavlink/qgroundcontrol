@@ -132,7 +132,7 @@ SetupPage {
                         Layout.columnSpan:  4
                         Layout.fillWidth:   true
                         implicitHeight:     1
-                        color:              qgcPal.groupBorder
+                        color:              qgcPal.borderSubtle
 
                         required property int index
                     }

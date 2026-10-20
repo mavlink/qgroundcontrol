@@ -59,7 +59,7 @@ Item {
                 id:                 toggleButtonLabel
                 anchors.centerIn:   parent
                 text:               panelOpenCloseButton._expanded ? ">" : "<"
-                color:              qgcPal.buttonText
+                color:              qgcPal.textPrimary
             }
 
         }

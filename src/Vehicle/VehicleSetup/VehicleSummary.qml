@@ -40,7 +40,7 @@ Rectangle {
             QGCLabel {
                 width:			parent.width
                 wrapMode:		Text.WordWrap
-                color:			setupComplete ? qgcPal.text : qgcPal.errorText
+                color:			setupComplete ? qgcPal.textPrimary : qgcPal.errorText
                 font.bold:      true
                 horizontalAlignment: Text.AlignHCenter
                 text:           setupComplete ?
@@ -67,10 +67,10 @@ Rectangle {
                         implicitWidth: _minSummaryW
                         implicitHeight: mainLayout.implicitHeight + (_margins * 2)
                         radius: ScreenTools.defaultFontPixelHeight / 4
-                        color: qgcPal.windowShade
+                        color: qgcPal.windowCard
                         visible: modelData.summaryQmlSource.toString() !== ""
                         border.width: 1
-                        border.color: Qt.rgba(qgcPal.text.r, qgcPal.text.g, qgcPal.text.b, 0.1)
+                        border.color: Qt.rgba(qgcPal.textPrimary.r, qgcPal.textPrimary.g, qgcPal.textPrimary.b, 0.1)
 
                         readonly property real titleHeight: ScreenTools.defaultFontPixelHeight * 2
 

@@ -33,6 +33,8 @@ RowLayout {
         QGCButton {
             Layout.preferredWidth:  height
             height:                 valueLabel.height * 1.5
+            leftPadding:            0
+            rightPadding:           0
             text:                   "-"
             onClicked: {
                 if (root.fact.value > root.fact.min) {
@@ -50,6 +52,8 @@ RowLayout {
         QGCButton {
             Layout.preferredWidth:  height
             height:                 valueLabel.height * 1.5
+            leftPadding:            0
+            rightPadding:           0
             text:                   "+"
             onClicked: {
                 if (root.fact.value < root.fact.max) {

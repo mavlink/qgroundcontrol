@@ -30,6 +30,6 @@ Item {
         fillMode:           Image.PreserveAspectFit
         anchors.fill:       parent
         sourceSize.height:  size
-        color:              qgcPal.text
+        color:              qgcPal.textPrimary
     }
 }

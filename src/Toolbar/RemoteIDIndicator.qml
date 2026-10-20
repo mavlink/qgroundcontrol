@@ -103,7 +103,7 @@ Item {
             sourceSize.height:  height
             source:             "/qmlimages/RidIconText.svg"
             fillMode:           Image.PreserveAspectFit
-            color:              qgcPal.text
+            color:              qgcPal.textPrimary
         }
     }
 

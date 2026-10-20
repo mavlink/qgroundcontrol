@@ -129,7 +129,7 @@ Rectangle {
             color:          qgcPal.window
             radius:         ScreenTools.defaultFontPixelHeight * 0.5
             border.width:   1
-            border.color:   qgcPal.text
+            border.color:   qgcPal.textPrimary
         }
         Column {
             id:             impCol
@@ -677,11 +677,11 @@ Rectangle {
                     sourceComponent: arbBox
                 }
                 Loader {
-                    property color backgroundColor: qgcPal.windowShade
+                    property color backgroundColor: qgcPal.windowCard
                     sourceComponent: arbBox
                 }
                 Loader {
-                    property color backgroundColor: qgcPal.windowShadeDark
+                    property color backgroundColor: qgcPal.windowPanel
                     sourceComponent: arbBox
                 }
             }
@@ -698,7 +698,7 @@ Rectangle {
 
                 background: Rectangle {
                     color: qgcPal.window
-                    border.color: qgcPal.text
+                    border.color: qgcPal.textPrimary
                     border.width: 1
                 }
 
@@ -1044,7 +1044,7 @@ Rectangle {
             width:  arbGrid.width  * 1.5
             height: arbGrid.height * 1.5
             color:  backgroundColor
-            border.color: qgcPal.text
+            border.color: qgcPal.textPrimary
             border.width: 1
             anchors.horizontalCenter: parent.horizontalCenter
             GridLayout {

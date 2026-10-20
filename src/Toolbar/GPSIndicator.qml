@@ -80,7 +80,7 @@ Item {
                 rotation:               90
                 text:                   control._showRtk ? qsTr("RTK") : qsTr("GNSS")
                 color:                  control._receiverWarning || control._correctionState === GPSCorrectionManager.Waiting
-                                        ? qgcPal.colorOrange : qgcPal.text
+                                        ? qgcPal.colorOrange : qgcPal.textPrimary
                 anchors.verticalCenter: parent.verticalCenter
                 visible:                control._receiverConnected || control._showRtk
             }
@@ -95,7 +95,7 @@ Item {
                 sourceSize.height:  height
                 opacity:            (control._vehicleGps ? control._gps.count.value > 0
                                                          : control._receiverConnected && control._receiverSatellites > 0) ? 1 : 0.5
-                color:              qgcPal.text
+                color:              qgcPal.textPrimary
             }
         }
 
@@ -109,7 +109,7 @@ Item {
             QGCLabel {
                 objectName:                 "gpsSatelliteCount"
                 anchors.horizontalCenter:   gpsDetail.horizontalCenter
-                color:                      qgcPal.text
+                color:                      qgcPal.textPrimary
                 text:                       control._vehicleGps ? control._gps.count.valueString
                                             : control._receiverSatellites >= 0 ? String(control._receiverSatellites) : "–"
             }
@@ -117,7 +117,7 @@ Item {
             QGCLabel {
                 id:         gpsDetail
                 objectName: "gpsDetail"
-                color:      qgcPal.text
+                color:      qgcPal.textPrimary
                 text:       control._vehicleGps ? control._gps.hdop.valueString : control._receiverDetail
             }
         }

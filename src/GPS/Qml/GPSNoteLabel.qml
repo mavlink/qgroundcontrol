@@ -16,7 +16,7 @@ QGCLabel {
     Layout.preferredWidth: 0
     wrapMode: Text.Wrap
     textFormat: Text.PlainText
-    color: warning ? notePalette.warningText : notePalette.text
+    color: warning ? notePalette.warningText : notePalette.textPrimary
 
     QGCPalette { id: notePalette; colorGroupEnabled: control.enabled }
 }

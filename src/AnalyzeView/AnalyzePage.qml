@@ -69,7 +69,7 @@ Item {
         sourceSize.width:       width
         source:                 "/qmlimages/FloatingWindow.svg"
         fillMode:               Image.PreserveAspectFit
-        color:                  qgcPal.text
+        color:                  qgcPal.textPrimary
         visible:                allowPopout && !popped && !ScreenTools.isMobile
         QGCMouseArea {
             fillItem:       floatIcon

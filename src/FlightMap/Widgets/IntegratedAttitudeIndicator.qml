@@ -60,7 +60,7 @@ Item {
             var centerY = height / 2
             var ctx = getContext("2d")
             ctx.reset()
-            ctx.strokeStyle = qgcPal.primaryButton
+            ctx.strokeStyle = qgcPal.accent
             ctx.lineWidth = attitudeSize
             ctx.beginPath()
             ctx.arc(centerX, centerY, _attitudeRadius, startRollRadiansOrdered, endRollRadiansOrdered)
@@ -77,7 +77,7 @@ Item {
             var centerY = height / 2
             var ctx = getContext("2d")
             ctx.reset()
-            ctx.strokeStyle = qgcPal.text
+            ctx.strokeStyle = qgcPal.textPrimary
             ctx.lineWidth = 2
             ctx.beginPath()
             ctx.moveTo(centerX, 0)

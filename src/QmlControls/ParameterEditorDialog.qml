@@ -78,7 +78,7 @@ QGCPopupDialog {
             text:               forceEdit.checked
                                     ? qsTr("Warning: This parameter is read-only. Force edit is enabled.")
                                     : qsTr("This parameter is read-only and cannot be modified.")
-            color:              forceEdit.checked ? qgcPal.warningText : qgcPal.text
+            color:              forceEdit.checked ? qgcPal.warningText : qgcPal.textPrimary
             visible:            fact.readOnly
         }
 

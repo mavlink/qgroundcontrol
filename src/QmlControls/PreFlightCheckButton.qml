@@ -59,8 +59,8 @@ QGCButton {
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
     background: Rectangle {
-        color:          qgcPal.button
-        border.color:   qgcPal.button;
+        color:          qgcPal.windowCard
+        border.color:   qgcPal.borderSubtle
 
         Rectangle {
             color:          _color
@@ -71,7 +71,7 @@ QGCButton {
 
             QGCColoredImage {
                 source:             "/qmlimages/checkbox-check.svg"
-                color:              qgcPal.buttonText
+                color:              qgcPal.textPrimary
                 mipmap:             true
                 fillMode:           Image.PreserveAspectFit
                 width:              Math.min(parent.width, parent.height) * 0.6
@@ -86,7 +86,7 @@ QGCButton {
     contentItem: QGCLabel {
         wrapMode:               Text.WordWrap
         horizontalAlignment:    Text.AlignHCenter
-        color:                  qgcPal.buttonText
+        color:                  qgcPal.textPrimary
         text:                   _text
     }
 

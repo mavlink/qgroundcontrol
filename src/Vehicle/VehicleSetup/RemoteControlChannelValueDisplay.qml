@@ -44,7 +44,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         width: parent.width
         height: parent.height / 2
-        color: qgcPal.windowShade
+        color: qgcPal.windowCard
     }
 
     Rectangle {
@@ -54,7 +54,7 @@ Item {
         width: _deadbandWidth
         x: _deadbandOffset
         radius: ScreenTools.defaultFontPixelHeight / 4
-        color: qgcPal.buttonHighlight
+        color: qgcPal.accent
         opacity: 0.35
         visible: control.deadbandEnabled && control.deadbandValue > 0
         readonly property real _rangeSpan: Math.max(1, control.channelValueMax - control.channelValueMin)
@@ -89,7 +89,7 @@ Item {
             return (normalized * parent.width) - (width / 2)
         }
         radius: width / 2
-        color: qgcPal.text
+        color: qgcPal.textPrimary
         visible: control.mode === RemoteControlChannelValueDisplay.RawValue || control.channelMapped
     }
 }

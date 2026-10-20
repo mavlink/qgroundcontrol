@@ -18,7 +18,7 @@ Item {
 
     property real   _centerXY:              width / 2
     property bool   _processTouchPoints:    false
-    property color  _fgColor:               QGroundControl.globalPalette.text
+    property color  _fgColor:               QGroundControl.globalPalette.textPrimary
     property color  _bgColor:               QGroundControl.globalPalette.window
     property real   _hatWidth:              ScreenTools.defaultFontPixelHeight
     property real   _hatWidthHalf:          _hatWidth / 2

@@ -133,7 +133,7 @@ SetupPage {
                                 color:   _trackColor
                                 opacity: 0.45
                                 border.width: 1
-                                border.color: qgcPal.text
+                                border.color: qgcPal.textPrimary
                                 radius: ScreenTools.defaultBorderRadius
                             }
 
@@ -154,7 +154,7 @@ SetupPage {
                                 verticalAlignment:   Text.AlignVCenter
                                 text: _hasValidValue ? Math.round(_rawValue) : "-"
                                 font.bold: true
-                                color: qgcPal.text
+                                color: qgcPal.textPrimary
                                 width: parent.width
                             }
                         }

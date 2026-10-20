@@ -8,8 +8,8 @@ import QGroundControl.Controls
 Rectangle {
     implicitWidth:  ScreenTools.implicitButtonWidth
     implicitHeight: ScreenTools.implicitButtonHeight
-    color:          highlight ? qgcPal.buttonHighlight : qgcPal.button
-    border.color:   highlight ? qgcPal.buttonHighlightText : qgcPal.buttonText
+    color:          highlight ? qgcPal.accent : qgcPal.windowCard
+    border.color:   highlight ? qgcPal.accentText : qgcPal.textPrimary
 
     property alias  text:       label.text
     property bool   highlight:  false
@@ -30,7 +30,7 @@ Rectangle {
         anchors.bottom:         parent.bottom
         verticalAlignment:      Text.AlignVCenter
         horizontalAlignment:    Text.AlignHCenter
-        color:                  highlight ? qgcPal.buttonHighlightText : qgcPal.buttonText
+        color:                  highlight ? qgcPal.accentText : qgcPal.textPrimary
         elide:                  Text.ElideRight
     }
 
@@ -43,7 +43,7 @@ Rectangle {
         height:                 _hamburgerSize
         sourceSize.height:      _hamburgerSize
         source:                 "qrc:/qmlimages/Hamburger.svg"
-        color:                  highlight ? qgcPal.buttonHighlightText : qgcPal.buttonText
+        color:                  highlight ? qgcPal.accentText : qgcPal.textPrimary
 
         property real _hamburgerSize: parent.height * 0.75
     }

@@ -56,7 +56,7 @@ SetupPage {
                 Rectangle {
                     Layout.fillWidth: true
                     implicitHeight: 1
-                    color: qgcPal.text
+                    color: qgcPal.textPrimary
                 }
 
                 RowLayout {

@@ -32,7 +32,7 @@ RowLayout {
             height:     ScreenTools.defaultFontPixelHeight * 0.75
             fillMode:   Image.PreserveAspectFit
             mipmap:     true
-            color:      qgcPal.text
+            color:      qgcPal.textPrimary
             source:     "/qmlimages/FlightModesComponentIcon.png"
             Layout.alignment:   Qt.AlignVCenter
         }

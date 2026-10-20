@@ -32,7 +32,7 @@ Item {
 
             property int            __lastRcValue:      1500
             readonly property int   __rcValueMaxJitter: 2
-            property color          __barColor:         qgcPal.windowShade
+            property color          __barColor:         qgcPal.windowCard
 
             // Bar
             Rectangle {
@@ -58,7 +58,7 @@ Item {
                 height:                 width
                 x:                      (((reversed ? _pwmMax - rcValue : rcValue - _pwmMin) / _pwmRange) * parent.width) - (width / 2)
                 radius:                 width / 2
-                color:                  qgcPal.text
+                color:                  qgcPal.textPrimary
                 visible:                mapped
             }
 

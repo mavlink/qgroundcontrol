@@ -63,8 +63,7 @@ ColumnLayout {
         QGCTextField {
             id: _parameterSearchField
             Layout.fillWidth: true
-            textColor: qgcPal.textFieldText
-            placeholderTextColor: Qt.rgba(qgcPal.textFieldText.r, qgcPal.textFieldText.g, qgcPal.textFieldText.b, 0.7)
+            textColor: qgcPal.textPrimary
             placeholderText: qsTr("Search parameters")
 
             onTextChanged: {
@@ -109,7 +108,7 @@ ColumnLayout {
             delegate: Rectangle {
                 width: ListView.view.width
                 height: _paramRow.implicitHeight + ScreenTools.defaultFontPixelHeight * 0.4
-                color: index % 2 === 0 ? qgcPal.windowShade : qgcPal.windowShadeDark
+                color: index % 2 === 0 ? qgcPal.windowCard : qgcPal.windowPanel
                 radius: 2
 
                 // Format value: use metadata decimalPlaces when available,
@@ -199,14 +198,14 @@ ColumnLayout {
 
                     QGCLabel {
                         text: _defaultText
-                        color: Qt.rgba(qgcPal.text.r, qgcPal.text.g, qgcPal.text.b, 0.6)
+                        color: Qt.rgba(qgcPal.textPrimary.r, qgcPal.textPrimary.g, qgcPal.textPrimary.b, 0.6)
                         Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 16
                         elide: Text.ElideRight
                     }
 
                     QGCLabel {
                         text: modelData.shortDescription ? String(modelData.shortDescription) : ""
-                        color: Qt.rgba(qgcPal.text.r, qgcPal.text.g, qgcPal.text.b, 0.6)
+                        color: Qt.rgba(qgcPal.textPrimary.r, qgcPal.textPrimary.g, qgcPal.textPrimary.b, 0.6)
                         Layout.fillWidth: true
                         elide: Text.ElideRight
                     }

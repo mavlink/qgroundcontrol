@@ -11,7 +11,7 @@ Rectangle {
     implicitWidth:  label.contentWidth + (_diameter * 2.5) + (_border * 4)
     implicitHeight: label.height * 2.5
     radius:         height /2
-    color:          qgcPal.windowShade
+    color:          qgcPal.windowCard
 
     signal accept   ///< Action confirmed
 
@@ -50,7 +50,7 @@ Rectangle {
         anchors.verticalCenter:     parent.verticalCenter
         horizontalAlignment:        Text.AlignHCenter
         text:                       confirmText
-        color:                      qgcPal.buttonText
+        color:                      qgcPal.textPrimary
     }
 
     Rectangle {
@@ -60,7 +60,7 @@ Rectangle {
         height:     _diameter
         width:      _diameter
         radius:     _diameter / 2
-        color:      qgcPal.primaryButton
+        color:      qgcPal.accent
 
         QGCColoredImage {
             anchors.centerIn:       parent
@@ -70,7 +70,7 @@ Rectangle {
             fillMode:               Image.PreserveAspectFit
             smooth:                 false
             mipmap:                 false
-            color:                  qgcPal.buttonText
+            color:                  qgcPal.textPrimary
             cache:                  false
             source:                 "/res/ArrowRight.svg"
         }

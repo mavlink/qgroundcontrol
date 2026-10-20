@@ -117,7 +117,7 @@ SetupPage {
                             anchors.bottom:     parent.bottom
                             anchors.left:       parent.left
                             anchors.right:      parent.right
-                            color:              airframeCheckBox.checked ? qgcPal.buttonHighlight : qgcPal.windowShade
+                            color:              airframeCheckBox.checked ? qgcPal.accent : qgcPal.windowCard
                             opacity:            combo.valid ? 1.0 : 0.5
 
                             ColumnLayout {
@@ -153,7 +153,7 @@ SetupPage {
                                 QGCLabel {
                                     text:           qsTr("Frame Type")
                                     font.pointSize: ScreenTools.smallFontPointSize
-                                    color:          qgcPal.buttonHighlightText
+                                    color:          qgcPal.accentText
                                     visible:        airframeCheckBox.checked && object.frameTypeSupported
                                 }
 

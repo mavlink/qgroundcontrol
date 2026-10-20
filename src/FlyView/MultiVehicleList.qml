@@ -116,10 +116,10 @@ Item {
         delegate: Rectangle {
             width:          vehicleList.width
             height:         innerColumn.height + _margin * 2
-            color:          QGroundControl.multiVehicleManager.activeVehicle == _vehicle ? _activeVehicleColor : qgcPal.button
+            color:          QGroundControl.multiVehicleManager.activeVehicle == _vehicle ? _activeVehicleColor : qgcPal.windowCard
             radius:         _margin
             border.width:   _vehicle && vehicleSelected(_vehicle.id) ? 2 : 0
-            border.color:   qgcPal.text
+            border.color:   qgcPal.textPrimary
 
             property var    _vehicle:   object
 
@@ -151,21 +151,21 @@ Item {
                     QGCLabel {
                         text: " | "
                         font.pointSize:       ScreenTools.largeFontPointSize
-                        color:                qgcPal.text
+                        color:                qgcPal.textPrimary
                         Layout.alignment:     Qt.AlignHCenter
                     }
 
                     QGCLabel {
                         text:                 _vehicle ? _vehicle.id : ""
                         font.pointSize:       ScreenTools.largeFontPointSize
-                        color:                qgcPal.text
+                        color:                qgcPal.textPrimary
                         Layout.alignment:     Qt.AlignHCenter
                     }
 
                     QGCLabel {
                         text: " | "
                         font.pointSize:       ScreenTools.largeFontPointSize
-                        color:                qgcPal.text
+                        color:                qgcPal.textPrimary
                         Layout.alignment:     Qt.AlignHCenter
                     }
 
@@ -177,14 +177,14 @@ Item {
                         FlightModeMenu {
                             Layout.alignment:     Qt.AlignHCenter
                             font.pointSize:       ScreenTools.largeFontPointSize
-                            color:                qgcPal.text
+                            color:                qgcPal.textPrimary
                             currentVehicle:       _vehicle
                         }
 
                         QGCLabel {
                             Layout.alignment:     Qt.AlignHCenter
                             text:                 _vehicle && _vehicle.armed ? qsTr("Armed") : qsTr("Disarmed")
-                            color:                qgcPal.text
+                            color:                qgcPal.textPrimary
                         }
                     }
                 }

@@ -177,8 +177,8 @@ QGCGroupBox {
             font.pointSize:   ScreenTools.defaultFontPointSize
             text:             _mavlinkLogManager ? _mavlinkLogManager.feedback : ""
             enabled:          !_disableDataPersistence
-            color:            qgcPal.textFieldText
-            background:       Rectangle { color: qgcPal.textField }
+            color:            qgcPal.textPrimary
+            background:       Rectangle { color: qgcPal.windowInset }
         }
     }
 

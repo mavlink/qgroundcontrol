@@ -17,11 +17,11 @@ Item {
     function _levelColor(lvl) {
         switch (lvl) {
         case LogEntry.Debug:    return qgcPal.colorGrey
-        case LogEntry.Info:     return qgcPal.text
+        case LogEntry.Info:     return qgcPal.textPrimary
         case LogEntry.Warning:  return qgcPal.colorOrange
         case LogEntry.Critical: return qgcPal.colorRed
         case LogEntry.Fatal:    return qgcPal.colorRed
-        default:                return qgcPal.text
+        default:                return qgcPal.textPrimary
         }
     }
 
@@ -46,7 +46,7 @@ Item {
             delegate: Rectangle {
                 required property var display
 
-                color: qgcPal.windowShade
+                color: qgcPal.windowCard
                 implicitHeight: headerLabel.contentHeight + ScreenTools.defaultFontPixelHeight * 0.4
                 implicitWidth: headerLabel.contentWidth + ScreenTools.defaultFontPixelWidth * 2
 
@@ -64,14 +64,14 @@ Item {
 
                 Rectangle {
                     anchors.bottom: parent.bottom
-                    color: qgcPal.groupBorder
+                    color: qgcPal.borderSubtle
                     height: 1
                     width: parent.width
                 }
 
                 Rectangle {
                     anchors.right: parent.right
-                    color: qgcPal.groupBorder
+                    color: qgcPal.borderSubtle
                     height: parent.height
                     width: 1
                 }
@@ -165,7 +165,7 @@ Item {
                 required property int level
                 required property int row
 
-                color: row % 2 === 0 ? qgcPal.window : qgcPal.windowShade
+                color: row % 2 === 0 ? qgcPal.window : qgcPal.windowCard
                 implicitHeight: _rowHeight
 
                 Rectangle {
@@ -224,14 +224,14 @@ Item {
         Rectangle {
             Layout.fillWidth: true
             Layout.preferredHeight: 1
-            color: qgcPal.groupBorder
+            color: qgcPal.borderSubtle
         }
 
         // ── Filter bar ────────────────────────────────────────────
         Rectangle {
             Layout.fillWidth: true
             Layout.preferredHeight: filterRow.implicitHeight + _margin
-            color: qgcPal.windowShade
+            color: qgcPal.windowCard
 
             QGCFlickable {
                 id: filterFlickable

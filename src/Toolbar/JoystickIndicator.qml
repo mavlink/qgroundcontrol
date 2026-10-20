@@ -39,8 +39,8 @@ Item {
                         }
                         color: {
                             if (!globals.activeVehicle)
-                                return qgcPal.buttonText
-                            return _joystickEnabled ? qgcPal.buttonText : "orange"
+                                return qgcPal.textPrimary
+                            return _joystickEnabled ? qgcPal.textPrimary : "orange"
                         }
                     }
 
@@ -80,7 +80,7 @@ Item {
                             if (_activeJoystick.powerState) batteryText += " (" + _activeJoystick.powerState + ")"
                             return batteryText
                         }
-                        color:   _activeJoystick && _activeJoystick.batteryPercent < 20 ? "red" : qgcPal.buttonText
+                        color:   _activeJoystick && _activeJoystick.batteryPercent < 20 ? "red" : qgcPal.textPrimary
                         visible: _activeJoystick && _activeJoystick.batteryPercent >= 0
                     }
 
@@ -255,10 +255,10 @@ Item {
         fillMode:           Image.PreserveAspectFit
         color: {
             if (!globals.activeVehicle) {
-                return qgcPal.buttonText
+                return qgcPal.textPrimary
             }
             if (_joystickEnabled) {
-                return qgcPal.buttonText
+                return qgcPal.textPrimary
             }
             return "orange"
         }

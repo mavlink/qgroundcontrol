@@ -71,7 +71,7 @@ QGCPopupDialog {
 
                 background: Rectangle {
                     radius: ScreenTools.defaultFontPixelHeight / 2
-                    color:  pressed | hovered | checked ? QGroundControl.globalPalette.buttonHighlight: QGroundControl.globalPalette.button
+                    color:  pressed || hovered || checked ? QGroundControl.globalPalette.accent: QGroundControl.globalPalette.windowCard
                 }
 
                 contentItem: Column {
@@ -80,7 +80,7 @@ QGCPopupDialog {
                     QGCLabel {
                         id:     modeNameLabel
                         text:   modeName
-                        color:  pressed | hovered | checked ? QGroundControl.globalPalette.buttonHighlightText: QGroundControl.globalPalette.buttonText
+                        color:  pressed || hovered || checked ? QGroundControl.globalPalette.accentText: QGroundControl.globalPalette.textPrimary
                     }
 
                     QGCLabel {

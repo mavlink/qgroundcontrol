@@ -59,7 +59,7 @@ Item {
                 source:                  "/res/CameraGimbal.png"
                 fillMode:                Image.PreserveAspectFit
                 sourceSize.height:       height
-                color:                   qgcPal.text
+                color:                   qgcPal.textPrimary
 
             }
 
@@ -68,7 +68,7 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 font.pointSize:         ScreenTools.smallFontPointSize
                 text:                   control.gimbalName(activeGimbal)
-                color:                  qgcPal.text
+                color:                  qgcPal.textPrimary
                 visible:                multiGimbalSetup
             }
         }
@@ -87,7 +87,7 @@ Item {
                 text:                   activeGimbal && activeGimbal.retracted ?
                                             qsTr("Retracted") :
                                             (activeGimbal && activeGimbal.yawLock ? qsTr("Yaw locked") : qsTr("Yaw follow"))
-                color:                  qgcPal.text
+                color:                  qgcPal.textPrimary
                 Layout.columnSpan:      2
                 Layout.alignment:       Qt.AlignHCenter
             }
@@ -95,7 +95,7 @@ Item {
                 id:             pitchLabel
                 font.pointSize: ScreenTools.smallFontPointSize
                 text:           activeGimbal ? qsTr("P: ") + activeGimbal.absolutePitch.valueString : ""
-                color:          qgcPal.text
+                color:          qgcPal.textPrimary
             }
             QGCLabel {
                 id:             panLabel
@@ -105,7 +105,7 @@ Item {
                                         (qsTr("Az: ") + activeGimbal.absoluteYaw.valueString) :
                                         (qsTr("Y: ") + activeGimbal.bodyYaw.valueString)) :
                                     ""
-                color:          qgcPal.text
+                color:          qgcPal.textPrimary
             }
         }
     }

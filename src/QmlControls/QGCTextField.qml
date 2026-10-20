@@ -7,9 +7,10 @@ import QGroundControl.Controls
 
 TextField {
     id:                 control
-    color:              qgcPal.textFieldText
-    selectionColor:     qgcPal.textFieldText
-    selectedTextColor:  qgcPal.textField
+    color:              qgcPal.textPrimary
+    placeholderTextColor: qgcPal.textSecondary
+    selectionColor:     qgcPal.accent
+    selectedTextColor:  qgcPal.accentText
     activeFocusOnPress: true
     antialiasing:       true
     font.pointSize:     ScreenTools.defaultFontPointSize
@@ -19,8 +20,8 @@ TextField {
                             Qt.ImhNone                   // iOS numeric keyboard has no done button, we can't use it.
     leftPadding:        _marginPadding
     rightPadding:       _marginPadding + unitsHelpLayout.width
-    topPadding:         _marginPadding
-    bottomPadding:      _marginPadding
+    topPadding:         ScreenTools.controlVerticalPadding
+    bottomPadding:      ScreenTools.controlVerticalPadding
     EnterKey.type:      Qt.EnterKeyDone
 
     property bool   showUnits:          false
@@ -83,10 +84,10 @@ TextField {
     }
 
     background: Rectangle {
-        border.width:   control.validationError ? 2 : (qgcPal.globalTheme === QGCPalette.Light ? 1 : 0)
-        border.color:   control.validationError ? qgcPal.colorRed : qgcPal.buttonBorder
+        border.width:   control.validationError ? 2 : 1
+        border.color:   control.validationError ? qgcPal.colorRed : (control.activeFocus ? qgcPal.accent : qgcPal.borderSubtle)
         radius:         ScreenTools.defaultBorderRadius
-        color:          qgcPal.textField
+        color:          qgcPal.windowInset
         implicitWidth:  ScreenTools.implicitTextFieldWidth
         implicitHeight: ScreenTools.implicitTextFieldHeight
 
@@ -117,7 +118,7 @@ TextField {
                 QGCLabel {
                     id:                 helpLabel
                     anchors.centerIn:   parent
-                    color:              qgcPal.textField
+                    color:              qgcPal.windowInset
                     text:               qsTr("?")
                 }
 
@@ -130,7 +131,7 @@ TextField {
                 font.pointSize:     ScreenTools.smallFontPointSize
                 font.family:        ScreenTools.normalFontFamily
                 antialiasing:       true
-                color:              control.color
+                color:              qgcPal.textSecondary
                 visible:            control.showUnits && text !== ""
             }
 
@@ -141,7 +142,7 @@ TextField {
                 font.pointSize:     control.activeFocus ? ScreenTools.smallFontPointSize : ScreenTools.defaultFontPointSize
                 font.family:        ScreenTools.normalFontFamily
                 antialiasing:       true
-                color:              control.color
+                color:              qgcPal.textSecondary
                 visible:            control.showUnits && text !== ""
             }
         }

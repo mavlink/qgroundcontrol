@@ -14,7 +14,7 @@ Rectangle {
     id: root
     width: availableWidth
     height: editorColumn.height + (_margin * 2)
-    color: qgcPal.windowShadeDark
+    color: qgcPal.windowPanel
     radius: _radius
 
 

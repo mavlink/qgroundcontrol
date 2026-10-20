@@ -12,7 +12,7 @@ Rectangle {
     id:         _root
     height:     childrenRect.y + childrenRect.height + _margin
     width:      availableWidth
-    color:      qgcPal.windowShadeDark
+    color:      qgcPal.windowPanel
     radius:     _radius
 
     required property var missionItem

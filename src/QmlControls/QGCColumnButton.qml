@@ -14,10 +14,10 @@ QGCButton {
         height:         control.height
         radius:         backRadius
         border.width:   showBorder ? 1 : 0
-        border.color:   qgcPal.buttonText
+        border.color:   qgcPal.textPrimary
         color:          _showHighlight ?
-                            qgcPal.buttonHighlight :
-                            (primary ? qgcPal.primaryButton : qgcPal.button)
+                            qgcPal.accent :
+                            (primary ? qgcPal.accent : qgcPal.windowCard)
     }
 
     contentItem: Item {
@@ -33,7 +33,7 @@ QGCButton {
                 Layout.maximumHeight:   parent.height - textLabelContainer.height
                 Layout.alignment:       control.text !== "" ? Qt.AlignTop : Qt.AlignHCenter | Qt.AlignVCenter
                 source:                 control.iconSource
-                color:                  qgcPal.text
+                color:                  qgcPal.textPrimary
                 fillMode:               Image.PreserveAspectFit
                 sourceSize.height:      height
                 sourceSize.width:       width
@@ -51,7 +51,7 @@ QGCButton {
                     text:                       control.text
                     font.family:                control.font.family
                     font.pointSize:             control.font.pointSize
-                    color:                      _showHighlight ? qgcPal.buttonHighlightText : (primary ? qgcPal.primaryButtonText : qgcPal.buttonText)
+                    color:                      _showHighlight ? qgcPal.accentText : (primary ? qgcPal.accentText : qgcPal.textPrimary)
                     anchors.baseline:           iconSource !== "" ? parent.bottom : undefined
                     anchors.centerIn:           iconSource === "" ? parent : undefined
                     anchors.horizontalCenter:   parent.horizontalCenter

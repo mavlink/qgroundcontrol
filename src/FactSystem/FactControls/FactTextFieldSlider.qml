@@ -29,13 +29,15 @@ Rectangle {
     signal enableCheckboxClicked
 
     id:             control
-    implicitHeight: mainLayout.implicitHeight
+    implicitHeight: mainLayout.implicitHeight + _padding * 2
     color:          backgroundColor
+    border.color:   qgcPal.borderSubtle
     radius:         ScreenTools.defaultBorderRadius
 
     property bool _loadComplete:            false
     property bool _showSlider:              _sliderMin !== undefined && _sliderMax !== undefined
-    property color _ftfsBackgroundColor:    Qt.rgba(qgcPal.windowShadeLight.r, qgcPal.windowShadeLight.g, qgcPal.windowShadeLight.b, 0.2)
+    property color _ftfsBackgroundColor:    qgcPal.windowCard
+    property real _padding:                 ScreenTools.defaultFontPixelWidth
     property var  _sliderMin:               sliderMin !== undefined ? sliderMin : (fact.userMin !== undefined ? fact.userMin : (allowUsingMinMax ? fact.min : undefined))
     property var  _sliderMax:               sliderMax !== undefined ? sliderMax : (fact.userMax !== undefined ? fact.userMax : (allowUsingMinMax ? fact.max : undefined))
 
@@ -70,7 +72,9 @@ Rectangle {
 
     ColumnLayout {
         id:         mainLayout
-        width:      parent.width
+        x:          control._padding
+        y:          control._padding
+        width:      parent.width - control._padding * 2
         spacing:    0
 
         RowLayout {

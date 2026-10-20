@@ -108,7 +108,7 @@ Item {
         anchors.fill:   parent
         radius:         width / 2
         color:          Qt.rgba(0,0,0,0)
-        border.color:   qgcPal.text
+        border.color:   qgcPal.textPrimary
         border.width:   1
     }
 

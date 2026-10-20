@@ -27,7 +27,7 @@ ColumnLayout {
         implicitWidth: _contentRow.implicitWidth + _margins * 2
         implicitHeight: _contentRow.implicitHeight + _margins * 2
         Layout.fillWidth: true
-        color: qgcPal.windowShade
+        color: qgcPal.windowCard
         radius: ScreenTools.defaultFontPixelHeight / 4
 
         RowLayout {
@@ -43,7 +43,7 @@ ColumnLayout {
                 Layout.preferredWidth: ScreenTools.defaultFontPixelHeight * 3
                 Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 1.5
                 source: control.iconSource
-                color: qgcPal.text
+                color: qgcPal.textPrimary
                 fillMode: Image.PreserveAspectFit
                 visible: control.iconSource !== ""
             }

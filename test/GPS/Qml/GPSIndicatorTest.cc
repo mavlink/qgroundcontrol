@@ -419,7 +419,7 @@ void GPSIndicatorTest::_receiverAntennaWarning()
     harness.workers.current()->ready();
     // A receiver without antenna supervision shows no row.
     QVERIFY(!antenna->property("visible").toBool());
-    QCOMPARE(colorOf(label), palette.text());
+    QCOMPARE(colorOf(label), palette.textPrimary());
     for (const auto& [state, text, warning] :
          {std::tuple{GPSIntegrityReport::AntennaState::Ok, QStringLiteral("OK"), false},
           std::tuple{GPSIntegrityReport::AntennaState::Open, QStringLiteral("Open"), true},
@@ -428,11 +428,11 @@ void GPSIndicatorTest::_receiverAntennaWarning()
         QVERIFY(antenna->property("visible").toBool());
         QCOMPARE(antenna->property("labelText").toString(), text);
         // A fault colours the indicator as jamming does.
-        QCOMPARE(colorOf(label), warning ? palette.colorOrange() : palette.text());
+        QCOMPARE(colorOf(label), warning ? palette.colorOrange() : palette.textPrimary());
     }
     receiver.disconnectReceiver();
     QVERIFY(!antenna->property("visible").toBool());
-    QCOMPARE(colorOf(label), palette.text());
+    QCOMPARE(colorOf(label), palette.textPrimary());
 }
 
 UT_REGISTER_TEST(GPSIndicatorTest, TestLabel::Unit)

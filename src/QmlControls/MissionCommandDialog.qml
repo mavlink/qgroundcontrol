@@ -50,10 +50,10 @@ QGCPopupDialog {
             delegate: Rectangle {
                 width:  parent.width
                 height: commandColumn.height + ScreenTools.defaultFontPixelHeight
-                color:  QGroundControl.globalPalette.button
+                color:  QGroundControl.globalPalette.windowCard
 
                 property var    mavCmdInfo: modelData
-                property color  textColor:  QGroundControl.globalPalette.buttonText
+                property color  textColor:  QGroundControl.globalPalette.textPrimary
 
                 Column {
                     id:                 commandColumn

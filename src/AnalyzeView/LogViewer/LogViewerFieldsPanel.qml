@@ -17,7 +17,7 @@ Rectangle {
 
     property bool xAxisShowLocalTime: QGroundControl.settingsManager.logViewerSettings.xAxisShowLocalTime.rawValue
 
-    color: qgcPal.windowShade
+    color: qgcPal.windowCard
     radius: ScreenTools.defaultFontPixelWidth * 0.5
     Layout.preferredWidth: mainLayout.implicitWidth + (mainLayout.anchors.margins * 2)
 
@@ -137,7 +137,7 @@ Rectangle {
                     Layout.preferredWidth: _groupLabel.height * 0.5
                     Layout.preferredHeight: _groupLabel.height * 0.5
                     source: "/qmlimages/arrow-down.png"
-                    color: qgcPal.text
+                    color: qgcPal.textPrimary
                     fillMode: Image.PreserveAspectFit
                     rotation: (String(control._fieldSearchText).trim().length > 0 || control._isGroupExpanded(rowData.group)) ? 0 : -90
                 }
@@ -223,8 +223,7 @@ Rectangle {
             QGCTextField {
                 id: _fieldSearchField
                 Layout.fillWidth: true
-                textColor: qgcPal.textFieldText
-                placeholderTextColor: Qt.rgba(qgcPal.textFieldText.r, qgcPal.textFieldText.g, qgcPal.textFieldText.b, 0.7)
+                textColor: qgcPal.textPrimary
                 placeholderText: qsTr("Search fields")
 
                 onTextChanged: {

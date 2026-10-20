@@ -34,7 +34,7 @@ Button {
 
     background: Rectangle {
         anchors.fill:               parent
-        color:                      button.checked ? qgcPal.buttonHighlight : qgcPal.button
+        color:                      button.checked ? qgcPal.accent : qgcPal.windowCard
         radius:                     ScreenTools.defaultFontPixelWidth * 0.5
     }
 
@@ -48,7 +48,7 @@ Button {
 //            width:                  height
 //            sourceSize.height:      parent.height
 //            fillMode:               Image.PreserveAspectFit
-//            color:                  button.checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
+//            color:                  button.checked ? qgcPal.accentText : qgcPal.textPrimary
 //            source:                 "/qmlimages/PaperPlane.svg"
 //            anchors.verticalCenter: parent.verticalCenter
 //        }
@@ -58,13 +58,13 @@ Button {
             QGCLabel {
                 text:               qsTr("Vehicle ") + (vehicle ? vehicle.id : qsTr("None"))
                 font.bold:          true
-                color:              button.checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
+                color:              button.checked ? qgcPal.accentText : qgcPal.textPrimary
             }
             Row {
                 spacing:            ScreenTools.defaultFontPixelWidth
                 QGCLabel {
                     text:           vehicle ? vehicle.flightMode : qsTr("None")
-                    color:          button.checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
+                    color:          button.checked ? qgcPal.accentText : qgcPal.textPrimary
                 }
                 Rectangle {
                     height:         ScreenTools.defaultFontPixelHeight * 0.5

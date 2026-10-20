@@ -44,7 +44,7 @@ ColumnLayout {
                 height:     ScreenTools.defaultFontPixelHeight / 2
                 width:      height
                 source:     "/res/DropArrow.svg"
-                color:      qgcPal.text
+                color:      qgcPal.textPrimary
             }
         }
     }

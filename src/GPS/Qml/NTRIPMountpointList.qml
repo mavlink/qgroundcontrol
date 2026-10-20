@@ -34,8 +34,8 @@ QGCListView {
         width:      ListView.view.width
         height:     mountRow.height + ScreenTools.defaultFontPixelHeight * 0.5
         radius:     ScreenTools.defaultFontPixelHeight * 0.25
-        color:      entry.selected ? qgcPal.buttonHighlight
-                               : entry.index % 2 === 0 ? qgcPal.windowShade : qgcPal.window
+        color:      entry.selected ? qgcPal.accent
+                               : entry.index % 2 === 0 ? qgcPal.windowCard : qgcPal.window
 
         RowLayout {
             id:             mountRow
@@ -57,13 +57,13 @@ QGCListView {
                         text:       entry.mountpoint
                         textFormat: Text.PlainText
                         font.bold:  true
-                        color:      entry.selected ? qgcPal.buttonHighlightText : qgcPal.text
+                        color:      entry.selected ? qgcPal.accentText : qgcPal.textPrimary
                     }
                     QGCLabel {
                         visible:    entry.selected
                         text:       qsTr("(selected)")
                         font.pointSize: ScreenTools.smallFontPointSize
-                        color:      qgcPal.buttonHighlightText
+                        color:      qgcPal.accentText
                     }
                 }
 
@@ -74,7 +74,7 @@ QGCListView {
                     textFormat: Text.PlainText
                     text: entry.details
                     font.pointSize: ScreenTools.smallFontPointSize
-                    color:  entry.selected ? qgcPal.buttonHighlightText : qgcPal.colorGrey
+                    color:  entry.selected ? qgcPal.accentText : qgcPal.colorGrey
                 }
             }
 

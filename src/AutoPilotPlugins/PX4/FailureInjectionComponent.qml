@@ -207,7 +207,7 @@ SetupPage {
             Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: gateCol.height + (ScreenTools.defaultFontPixelHeight * 1.2)
-                color: qgcPal.windowShade
+                color: qgcPal.windowCard
                 radius: ScreenTools.defaultFontPixelWidth * 0.5
 
                 ColumnLayout {
@@ -244,7 +244,7 @@ SetupPage {
             Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: builderCol.height + (ScreenTools.defaultFontPixelHeight * 1.2)
-                color: qgcPal.windowShade
+                color: qgcPal.windowCard
                 radius: ScreenTools.defaultFontPixelWidth * 0.5
                 enabled: _failureInjectionEnabled
                 opacity: _failureInjectionEnabled ? 1.0 : 0.4
@@ -338,7 +338,7 @@ SetupPage {
                         Rectangle {
                             width: 1
                             height: ScreenTools.defaultFontPixelHeight * 1.5
-                            color: qgcPal.text
+                            color: qgcPal.textPrimary
                             opacity: 0.3
                         }
                         QGCCheckBox {
@@ -390,37 +390,37 @@ SetupPage {
                 QGCLabel {
                     Layout.preferredWidth: _colTimeWidth
                     font.family: ScreenTools.fixedFontFamily
-                    color: qgcPal.text
+                    color: qgcPal.textPrimary
                     text: qsTr("Time")
                 }
                 QGCLabel {
                     Layout.preferredWidth: _colUnitWidth
                     font.family: ScreenTools.fixedFontFamily
-                    color: qgcPal.text
+                    color: qgcPal.textPrimary
                     text: qsTr("Component")
                 }
                 QGCLabel {
                     Layout.preferredWidth: _colTypeWidth
                     font.family: ScreenTools.fixedFontFamily
-                    color: qgcPal.text
+                    color: qgcPal.textPrimary
                     text: qsTr("Failure")
                 }
                 QGCLabel {
                     Layout.fillWidth: true
                     font.family: ScreenTools.fixedFontFamily
-                    color: qgcPal.text
+                    color: qgcPal.textPrimary
                     text: qsTr("Instances")
                 }
                 QGCLabel {
                     font.family: ScreenTools.fixedFontFamily
-                    color: qgcPal.text
+                    color: qgcPal.textPrimary
                     text: qsTr("Result")
                 }
             }
             Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 12
-                color: qgcPal.windowShadeDark
+                color: qgcPal.windowPanel
                 radius: ScreenTools.defaultFontPixelWidth * 0.5
 
                 QGCListView {

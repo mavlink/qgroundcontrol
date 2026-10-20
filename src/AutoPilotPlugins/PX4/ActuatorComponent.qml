@@ -52,7 +52,7 @@ SetupPage {
                 Rectangle {
                     implicitWidth:          _leftColumnWidth
                     implicitHeight:         mixerUi.height + (_margins * 2)
-                    color:                  qgcPal.windowShade
+                    color:                  qgcPal.windowCard
                     visible:                actuators.mixer.groups.count > 0
 
                     Column {
@@ -183,7 +183,7 @@ SetupPage {
                 Rectangle {
                     implicitWidth:            _leftColumnWidth
                     implicitHeight:           actuatorTesting.height + (_margins * 2)
-                    color:                    qgcPal.windowShade
+                    color:                    qgcPal.windowCard
 
                     Column {
                         id:                   actuatorTesting

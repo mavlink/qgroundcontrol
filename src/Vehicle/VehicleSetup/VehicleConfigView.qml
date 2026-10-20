@@ -271,7 +271,7 @@ Rectangle {
     Component {
         id: noComponentsVehicleSummaryComponent
         Rectangle {
-            color: qgcPal.windowShade
+            color: qgcPal.windowCard
             QGCLabel {
                 anchors.margins:        _defaultTextWidth * 2
                 anchors.fill:           parent
@@ -289,7 +289,7 @@ Rectangle {
         id: disconnectedVehicleAndParamsSummaryComponent
         Rectangle {
             id: disconnectedRect
-            color: qgcPal.windowShade
+            color: qgcPal.windowCard
             Column {
                 anchors.centerIn:   parent
                 spacing:            ScreenTools.defaultFontPixelHeight
@@ -320,7 +320,7 @@ Rectangle {
         id: missingParametersVehicleSummaryComponent
 
         Rectangle {
-            color: qgcPal.windowShade
+            color: qgcPal.windowCard
 
             QGCLabel {
                 anchors.margins:        _defaultTextWidth * 2
@@ -353,13 +353,22 @@ Rectangle {
         }
     }
 
+    Rectangle {
+        anchors.fill:       leftPanel
+        anchors.margins:    -_horizontalMargin * 2
+        color:              qgcPal.windowPanel
+        border.color:       qgcPal.borderSubtle
+        radius:             ScreenTools.defaultBorderRadius
+    }
+
     ColumnLayout {
         id:                 leftPanel
         width:              Math.max(buttonColumn.implicitWidth, _fullListWidth, ScreenTools.isMobile ? 0 : ScreenTools.defaultFontPixelWidth * 22)
-        anchors.topMargin:  _verticalMargin
+        anchors.topMargin:  _verticalMargin * 1.5
+        anchors.bottomMargin: _verticalMargin * 1.5
         anchors.top:        parent.top
         anchors.bottom:     parent.bottom
-        anchors.leftMargin: _horizontalMargin
+        anchors.leftMargin: _horizontalMargin * 3
         anchors.left:       parent.left
         spacing:            _verticalMargin / 2
 
@@ -500,13 +509,14 @@ Rectangle {
                                     if (typeof panelLoader.item.sectionVisible !== "function") return true
                                     return panelLoader.item.sectionVisible(modelData)
                                 }
-                                property color textColor: sectionChecked || pressed ? qgcPal.buttonHighlightText : qgcPal.buttonText
+                                property color textColor: qgcPal.textPrimary
                                 visible: sectionMatchesSearch && sectionContentVisible
 
                                 background: Rectangle {
-                                    color:   qgcPal.buttonHighlight
-                                    opacity: sectionBtn.sectionChecked || sectionBtn.pressed ? 1 : sectionBtn.enabled && sectionBtn.hovered ? 0.2 : 0
-                                    radius:  ScreenTools.defaultFontPixelWidth / 2
+                                    color:          sectionBtn.sectionChecked || sectionBtn.pressed ? qgcPal.accentSubtle : (sectionBtn.enabled && sectionBtn.hovered ? qgcPal.windowCard : "transparent")
+                                    border.width:   sectionBtn.sectionChecked || sectionBtn.pressed ? 1 : 0
+                                    border.color:   qgcPal.accent
+                                    radius:         ScreenTools.defaultFontPixelWidth / 2
                                 }
 
                                 contentItem: RowLayout {
@@ -583,26 +593,14 @@ Rectangle {
         }
     }
 
-    Rectangle {
-        id:                     divider
-        anchors.topMargin:      _verticalMargin
-        anchors.bottomMargin:   _verticalMargin
-        anchors.leftMargin:     _horizontalMargin
-        anchors.left:           leftPanel.right
-        anchors.top:            parent.top
-        anchors.bottom:         parent.bottom
-        width:                  1
-        color:                  qgcPal.windowShade
-    }
-
     Loader {
         id:                     panelLoader
         objectName:             "vehicleConfig_panelLoader"
         anchors.topMargin:      _verticalMargin
         anchors.bottomMargin:   _verticalMargin
-        anchors.leftMargin:     _horizontalMargin
+        anchors.leftMargin:     _horizontalMargin * 4
         anchors.rightMargin:    _horizontalMargin
-        anchors.left:           divider.right
+        anchors.left:           leftPanel.right
         anchors.right:          parent.right
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom

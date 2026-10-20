@@ -10,11 +10,11 @@ Slider {
     property bool showBoundaryValues: false ///< true: Show min/max values at slider ends
 
     id: control
-    implicitHeight: ScreenTools.implicitSliderHeight + (showBoundaryValues ? minLabel.contentHeight : 0)
+    implicitHeight: ScreenTools.implicitSliderHeight + bottomPadding
     leftPadding: 0
     rightPadding: 0
     topPadding: 0
-    bottomPadding: 0
+    bottomPadding: showBoundaryValues ? minLabel.contentHeight : 0
     wheelEnabled: false
 
     property real _implicitBarLength: Math.round(ScreenTools.defaultFontPixelWidth * 20)
@@ -30,9 +30,17 @@ Slider {
         width: control.horizontal ? control.availableWidth : implicitWidth
         height: control.horizontal ? implicitHeight : control.availableHeight
         radius: control._barHeight / 2
-        color: qgcPal.button
+        color: qgcPal.windowInset
         border.width: 1
-        border.color: qgcPal.buttonText
+        border.color: qgcPal.borderSubtle
+
+        Rectangle {
+            width: control.horizontal ? Math.max(0, Math.min(control.handle.x - control.leftPadding + control.handle.width / 2, parent.width)) : parent.width
+            height: control.horizontal ? parent.height : Math.max(0, Math.min(parent.height - (control.handle.y - control.topPadding + control.handle.height / 2), parent.height))
+            y: control.horizontal ? 0 : parent.height - height
+            radius: parent.radius
+            color: qgcPal.accent
+        }
     }
 
     handle: Rectangle {
@@ -44,9 +52,7 @@ Slider {
                control.topPadding + control.visualPosition * (control.availableHeight - height)
         implicitWidth: _radius * 2
         implicitHeight: _radius * 2
-        color: qgcPal.button
-        border.color: qgcPal.buttonText
-        border.width: 1
+        color: qgcPal.accent
         radius: _radius
 
         property real _radius: ScreenTools.defaultFontPixelHeight / 2
@@ -57,7 +63,7 @@ Slider {
             anchors.centerIn: parent
             font.family: ScreenTools.normalFontFamily
             font.pointSize: ScreenTools.smallFontPointSize
-            color: qgcPal.buttonText
+            color: qgcPal.accentText
         }
     }
 
@@ -68,7 +74,7 @@ Slider {
         anchors.bottom: parent.bottom
         text: control.from.toFixed(1)
         font.pointSize: ScreenTools.smallFontPointSize
-        color: qgcPal.buttonText
+        color: qgcPal.textSecondary
         visible: control.showBoundaryValues
     }
 
@@ -79,7 +85,7 @@ Slider {
         anchors.bottom: parent.bottom
         text: control.to.toFixed(1)
         font.pointSize: ScreenTools.smallFontPointSize
-        color: qgcPal.buttonText
+        color: qgcPal.textSecondary
         visible: control.showBoundaryValues
     }
 }

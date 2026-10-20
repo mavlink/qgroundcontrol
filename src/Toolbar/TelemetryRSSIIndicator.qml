@@ -27,7 +27,7 @@ Item {
         sourceSize.height:  height
         source:             "/qmlimages/TelemRSSI.svg"
         fillMode:           Image.PreserveAspectFit
-        color:              qgcPal.buttonText
+        color:              qgcPal.textPrimary
     }
 
     MouseArea {

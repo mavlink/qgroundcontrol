@@ -9,7 +9,7 @@ RadioButton {
     font.family:    ScreenTools.normalFontFamily
     font.pointSize: ScreenTools.defaultFontPointSize
 
-    property color  textColor:  qgcPal.text
+    property color  textColor:  qgcPal.textPrimary
     property int    wrapMode:   Text.NoWrap
     property bool   _noText:    text === ""
 
@@ -19,14 +19,14 @@ RadioButton {
         implicitWidth:          ScreenTools.radioButtonIndicatorSize
         implicitHeight:         width
         color:                  control.enabled ? "white" : "transparent"
-        border.color:           qgcPal.buttonBorder
+        border.color:           control.enabled ? qgcPal.textSecondary : qgcPal.borderSubtle
         radius:                 height / 2
         x:                      control.leftPadding
         y:                      parent.height / 2 - height / 2
 
         Rectangle {
             anchors.fill:   parent
-            color:          qgcPal.buttonHighlight
+            color:          qgcPal.accent
             opacity:        control.hovered ? .2 : 0
             radius:         parent.radius
         }
@@ -38,7 +38,7 @@ RadioButton {
             height:             width
             antialiasing:       true
             radius:             height * 0.5
-            color:              qgcPal.buttonHighlight
+            color:              qgcPal.accent
             visible:            control.checked
         }
     }

@@ -8,8 +8,8 @@ Rectangle {
     id:     _root
     height: Math.round(ScreenTools.defaultFontPixelHeight * 2)
     width:  ScreenTools.defaultFontPixelWidth  * 10
-    color:  qgcPal.button
-    border.color: qgcPal.windowShade
+    color:  qgcPal.windowCard
+    border.color: qgcPal.borderSubtle
     border.width: 0
 
     property bool checked: true
@@ -21,28 +21,28 @@ Rectangle {
     Rectangle {
         width:      parent.width  * 0.5
         height:     parent.height
-        color:      checked ? qgcPal.button : qgcPal.buttonHighlight
-        border.color: qgcPal.text
+        color:      checked ? qgcPal.windowCard : qgcPal.accent
+        border.color: qgcPal.textPrimary
         border.width: 0
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
         QGCLabel {
             text: qsTr("Off")
             anchors.centerIn: parent
-            color:      qgcPal.text
+            color:      qgcPal.textPrimary
         }
     }
     Rectangle {
         width:      parent.width  * 0.5
         height:     parent.height
-        color:      checked ? qgcPal.buttonHighlight : qgcPal.button
-        border.color: qgcPal.text
+        color:      checked ? qgcPal.accent : qgcPal.windowCard
+        border.color: qgcPal.textPrimary
         border.width: 0
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
         QGCLabel {
             text:       qsTr("On")
-            color:      qgcPal.buttonHighlightText
+            color:      qgcPal.accentText
             anchors.centerIn: parent
         }
     }

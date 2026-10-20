@@ -922,7 +922,7 @@ void ToolbarIndicatorUITest::_testStockChecklistLocksLaterSections()
     disabledPalette.setColorGroupEnabled(false);
     auto* const lockedLabel = lockedButton->property("contentItem").value<QQuickItem*>();
     QVERIFY(lockedLabel);
-    QCOMPARE(lockedLabel->property("color").value<QColor>(), disabledPalette.buttonText());
+    QCOMPARE(lockedLabel->property("color").value<QColor>(), disabledPalette.textPrimary());
 
     // A section is failed when any of its items fails, not just its first unpassed item: Motors stays pending
     // while muting audio fails Sound output further down the same section

@@ -236,7 +236,7 @@ ColumnLayout {
             Layout.preferredWidth: root._secondColumnWidth
             text:                  root.subEditConfig ? root.subEditConfig.hostMode : ""
             visible:               root.hasAdapter
-            color:                 root.adapterOn ? root.palette.text : root.palette.warningText
+            color:                 root.adapterOn ? root.palette.textPrimary : root.palette.warningText
         }
 
         QGCLabel {
@@ -372,7 +372,7 @@ ColumnLayout {
                         Rectangle {
                             width:  parent.width
                             height: root.screenTools.defaultFontPixelHeight * (0.4 + rssiBarDelegate.index * 0.2)
-                            color:  rssiBarDelegate.index < rssiDisplay.signalLevel ? root.palette.text : root.palette.buttonText
+                            color:  root.palette.textPrimary
                             opacity: rssiBarDelegate.index < rssiDisplay.signalLevel ? 1.0 : 0.3
                             anchors.bottom: parent.bottom
                         }
@@ -382,13 +382,13 @@ ColumnLayout {
 
             QGCLabel {
                 text: rssiDisplay.rssi + " dBm"
-                color: rssiDisplay.hasConnected ? root.palette.text : root.palette.buttonText
+                color: rssiDisplay.hasConnected ? root.palette.textPrimary : root.palette.textSecondary
             }
 
             QGCLabel {
                 text: rssiDisplay.hasConnected ? qsTr("(Connected)") : qsTr("(Last Scan)")
                 font.pointSize: root.screenTools.smallFontPointSize
-                color: root.palette.buttonText
+                color: root.palette.textSecondary
             }
         }
     }
@@ -444,7 +444,7 @@ ColumnLayout {
         wrapMode:         Text.WordWrap
         Layout.fillWidth: true
         font.pointSize:   root.screenTools.smallFontPointSize
-        color:            root.palette.buttonText
+        color:            root.palette.textSecondary
     }
 
     //==========================================================================
@@ -498,7 +498,7 @@ ColumnLayout {
 
         QGCLabel {
             text:  qsTr("Scanning for devices...")
-            color: root.palette.text
+            color: root.palette.textPrimary
         }
     }
 
@@ -561,7 +561,7 @@ ColumnLayout {
                                     Rectangle {
                                         width:  parent.width
                                         height: root.screenTools.defaultFontPixelHeight * (0.3 + deviceSignalBarDelegate.index * 0.2)
-                                        color:  deviceSignalBarDelegate.index < deviceBtn.signalLevel ? root.palette.text : root.palette.buttonText
+                                        color:  root.palette.textPrimary
                                         opacity: deviceSignalBarDelegate.index < deviceBtn.signalLevel ? 1.0 : 0.3
                                         anchors.bottom: parent.bottom
                                     }
@@ -573,21 +573,21 @@ ColumnLayout {
                             text:             deviceBtn.deviceName || deviceBtn.deviceAddress || qsTr("Unknown")
                             Layout.fillWidth: true
                             elide:            Text.ElideRight
-                            color:            deviceBtn.checked ? root.palette.buttonHighlightText : root.palette.buttonText
+                            color:            root.palette.textPrimary
                         }
 
                         QGCLabel {
                             visible:        deviceBtn.isPaired
                             text:           qsTr("Paired")
                             font.pointSize: root.screenTools.smallFontPointSize
-                            color:          root.palette.buttonText
+                            color:          root.palette.textSecondary
                         }
 
                         QGCLabel {
                             visible:        deviceBtn.hasRssi
                             text:           deviceBtn.rssiVal + " dBm"
                             font.pointSize: root.screenTools.smallFontPointSize
-                            color:          root.palette.buttonText
+                            color:          root.palette.textSecondary
                         }
                     }
 
@@ -621,7 +621,7 @@ ColumnLayout {
             horizontalAlignment: Text.AlignHCenter
             wrapMode:            Text.WordWrap
             font.pointSize:      root.screenTools.smallFontPointSize
-            color:               root.palette.buttonText
+            color:               root.palette.textSecondary
         }
     }
 

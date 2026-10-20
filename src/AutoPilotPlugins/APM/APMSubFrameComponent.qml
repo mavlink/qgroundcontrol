@@ -145,7 +145,7 @@ SetupPage {
                             anchors.bottom:     parent.bottom
                             anchors.left:       parent.left
                             anchors.right:      parent.right
-                            color:              subFrameModel.get(index).paramValue == _frameConfig.value ? qgcPal.buttonHighlight: qgcPal.windowShade
+                            color:              subFrameModel.get(index).paramValue == _frameConfig.value ? qgcPal.accent: qgcPal.windowCard
 
                             Image {
                                 anchors.margins:    ScreenTools.defaultFontPixelWidth

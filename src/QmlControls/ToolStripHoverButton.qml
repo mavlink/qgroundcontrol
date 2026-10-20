@@ -28,8 +28,8 @@ Button {
     property real imageScale:        forceImageScale11 && (text == "") ? 0.8 : 0.6
     property real contentMargins:    innerText.height * 0.1
 
-    property color _currentContentColor:  (checked || pressed) ? qgcPal.buttonHighlightText : qgcPal.text
-    property color _currentContentColorSecondary:  (checked || pressed) ? qgcPal.text : qgcPal.buttonHighlight
+    property color _currentContentColor:  (checked || pressed) ? qgcPal.accentText : qgcPal.textPrimary
+    property color _currentContentColorSecondary:  (checked || pressed) ? qgcPal.textPrimary : qgcPal.accent
 
     signal dropped(int index)
 
@@ -122,7 +122,7 @@ Button {
     background: Rectangle {
         id:     buttonBkRect
         color:  (control.checked || control.pressed) ?
-                    qgcPal.buttonHighlight :
+                    qgcPal.accent :
                     ((control.enabled && control.hovered) ? qgcPal.toolStripHoverColor : "transparent")
     }
 }

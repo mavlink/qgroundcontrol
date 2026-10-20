@@ -9,7 +9,7 @@ Rectangle {
     height: size
     radius: width / 2
     color:  qgcPal.window
-    border.color:   qgcPal.text
+    border.color:   qgcPal.textPrimary
     border.width:   usedByMultipleVehicleList ? 1 : 0
     opacity:        vehicle && usedByMultipleVehicleList && !vehicle.armed ? 0.5 : 1
 
@@ -106,7 +106,7 @@ Rectangle {
                 id:                 label
                 text:               qsTr("L")
                 font.bold:          true
-                color:              qgcPal.text
+                color:              qgcPal.textPrimary
                 anchors.centerIn:   parent
                 rotation:           _lockNoseUpCompass ? _heading : 0
             }

@@ -27,7 +27,8 @@ Item {
     property string heading
     property string headingDescription
     property real headingPointSize: ScreenTools.defaultFontPointSize
-    property color outerBorderColor: QGroundControl.globalPalette.groupBorder
+    property color outerBorderColor: QGroundControl.globalPalette.borderSubtle
+    property color fillColor: showBorder ? QGroundControl.globalPalette.windowPanel : "transparent"
     property bool showBorder: true
     property bool showDividers: true
     property bool wrapTabs: false ///< Wrap tab buttons onto multiple rows instead of eliding them to fit on one row
@@ -91,7 +92,7 @@ Item {
         }
         return right
     }
-    property color _dividerColor: QGroundControl.globalPalette.groupBorder
+    property color _dividerColor: QGroundControl.globalPalette.borderSubtle
     property var _dividerItemStates: _ySortedChildren.map(function(item) {
         return item ? { visible: item.visible, isRepeater: _isRepeater(item) } : null
     })
@@ -146,12 +147,11 @@ Item {
 
         // A lone heading or tab is a title rather than a choice, so it is drawn as a quiet outlined label
         property bool _isTabChoice: interactive && groupBox !== null && groupBox._shownHeaderButtonCount > 1
-        // Only the selected tab is filled so a group box has at most one strong color block. Disabled buttons are
-        // never filled since the disabled highlight colors have too little contrast, and solid fills would not match
-        // translucent backgrounds. A disabled selected tab is marked with a heavier border instead.
-        property bool _filled: _isTabChoice && checked && enabled
+        // Disabled buttons are never marked as selected with the accent since the disabled accent colors have too
+        // little contrast. A disabled selected tab is marked with a heavier border instead.
+        property bool _selected: _isTabChoice && checked && enabled
         property bool _disabledSelected: _isTabChoice && checked && !enabled
-        property color _textColor: _filled ? buttonPal.buttonHighlightText : buttonPal.text
+        property color _textColor: buttonPal.textPrimary
         property Item _adoptedBadge: null
 
         // Moves the badge into the header button, releasing a previously adopted badge which has been replaced
@@ -169,23 +169,24 @@ Item {
 
         background: Rectangle {
             radius: ScreenTools.defaultBorderRadius
-            color: headerButton._filled ? buttonPal.buttonHighlight : "transparent"
+            color: {
+                if (headerButton._selected) {
+                    return buttonPal.accentSubtle
+                }
+                return headerButton.groupBox ? headerButton.groupBox.fillColor : "transparent"
+            }
             border.width: headerButton._disabledSelected ? 2 : 1
             border.color: {
-                if (headerButton._filled) {
-                    return buttonPal.buttonHighlight
+                if (headerButton._selected) {
+                    return buttonPal.accent
                 }
                 if (headerButton._disabledSelected) {
-                    return buttonPal.text
+                    return buttonPal.textPrimary
                 }
-                return headerButton.groupBox ? headerButton.groupBox.outerBorderColor : buttonPal.groupBorder
-            }
-
-            Rectangle {
-                anchors.fill: parent
-                radius: parent.radius
-                color: buttonPal.buttonHighlight
-                opacity: headerButton.enabled && headerButton._isTabChoice && !headerButton.checked && (headerButton.hovered || headerButton.pressed) ? 0.2 : 0
+                if (headerButton.enabled && headerButton._isTabChoice && (headerButton.hovered || headerButton.pressed)) {
+                    return buttonPal.accent
+                }
+                return headerButton.groupBox ? headerButton.groupBox.outerBorderColor : buttonPal.borderSubtle
             }
         }
 
@@ -234,8 +235,8 @@ Item {
         font.pointSize: control.headingPointSize
     }
 
-    // The border is drawn in pieces so the top edge stops either side of the header buttons, which lets the header
-    // buttons stay transparent over whatever background the group box is on.
+    // The border is drawn in pieces so the top edge stops either side of the header buttons, which are filled with
+    // fillColor so they read as tabs sitting on the edge of the panel.
     Item {
         id: outline
         y: _header.visible ? control._headerButtonHeight / 2 : 0
@@ -247,6 +248,12 @@ Item {
         property var _topSegments: GroupBox.topBorderSegments(width, _radius,
                                                               _header.visible ? _header.x - control._headerButtonSpacing : _radius,
                                                               _header.visible ? _header.x + control._headerFirstRowRight + control._headerButtonSpacing : _radius)
+
+        Rectangle {
+            anchors.fill: parent
+            radius: outline._radius
+            color: control.fillColor
+        }
 
         // Sides and bottom, then the top left and top right corners
         Repeater {
@@ -341,6 +348,7 @@ Item {
             text: control.headingDescription
             wrapMode: Text.WordWrap
             font.pointSize: ScreenTools.smallFontPointSize
+            color: QGroundControl.globalPalette.textSecondary
             visible: text !== ""
         }
 

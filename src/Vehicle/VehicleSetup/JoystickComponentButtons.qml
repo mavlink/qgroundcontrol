@@ -146,13 +146,13 @@ ColumnLayout {
                     width: ScreenTools.defaultFontPixelHeight * 1.5
                     height: width
                     border.width: 1
-                    border.color: qgcPal.text
-                    color: pressed ? qgcPal.buttonHighlight : qgcPal.button
+                    border.color: qgcPal.textPrimary
+                    color: pressed ? qgcPal.accent : qgcPal.windowCard
 
 
                     QGCLabel {
                         anchors.fill: parent
-                        color: pressed ? qgcPal.buttonHighlightText : qgcPal.buttonText
+                        color: pressed ? qgcPal.accentText : qgcPal.textPrimary
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
                         text: modelData

@@ -39,7 +39,7 @@ Item {
                 width:              ScreenTools.minTouchPixels * 0.75
                 height:             width
                 sourceSize.width:   width
-                color:              qgcPal.text
+                color:              qgcPal.textPrimary
                 fillMode:           Image.PreserveAspectFit
 
                 QGCMouseArea {

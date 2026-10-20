@@ -460,15 +460,15 @@ Item {
                 readOnly:       true
                 visible:        !orientationCalArea.visible
                 text:           statusTextAreaDefaultText
-                color:          qgcPal.text
-                background: Rectangle { color: qgcPal.windowShade }
+                color:          qgcPal.textPrimary
+                background: Rectangle { color: qgcPal.windowCard }
             }
 
             Rectangle {
                 id:         orientationCalArea
                 anchors.fill: parent
                 visible:    controller.showOrientationCalArea || _showOrientationPreview
-                color:      qgcPal.windowShade
+                color:      qgcPal.windowCard
 
                 QGCLabel {
                     id:                 orientationCalAreaHelpText
