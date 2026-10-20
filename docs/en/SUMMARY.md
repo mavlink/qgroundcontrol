@@ -33,6 +33,7 @@
     - [Airframe](qgc-user-guide/setup_view/airframe_px4.md)
     - [Flight Modes](qgc-user-guide/setup_view/flight_modes_px4.md)
     - [PID Tuning](qgc-user-guide/setup_view/tuning_px4.md)
+    - [Ports](qgc-user-guide/setup_view/px4/ports.md)
     - [Power](qgc-user-guide/setup_view/power.md)
     - [Radio](qgc-user-guide/setup_view/radio.md)
     - [Safety](qgc-user-guide/setup_view/safety.md)

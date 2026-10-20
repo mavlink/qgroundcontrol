@@ -1,21 +1,22 @@
 #pragma once
 
-#include "AutoPilotPlugin.h"
 #include "ActuatorComponent.h"
-#include "PX4AirframeLoader.h"
 #include "AirframeComponent.h"
-#include "PX4RadioComponent.h"
+#include "AutoPilotPlugin.h"
 #include "ESP8266Component.h"
 #include "FailureInjectionComponent.h"
 #include "FlightModesComponent.h"
-#include "SensorsComponent.h"
-#include "SafetyComponent.h"
-#include "PowerComponent.h"
-#include "MotorComponent.h"
-#include "PX4TuningComponent.h"
-#include "PX4FlightBehavior.h"
-#include "SyslinkComponent.h"
 #include "JoystickComponent.h"
+#include "MotorComponent.h"
+#include "PX4AirframeLoader.h"
+#include "PX4FlightBehavior.h"
+#include "PX4RadioComponent.h"
+#include "PX4SerialPortsComponent.h"
+#include "PX4TuningComponent.h"
+#include "PowerComponent.h"
+#include "SafetyComponent.h"
+#include "SensorsComponent.h"
+#include "SyslinkComponent.h"
 
 class Vehicle;
 
@@ -42,6 +43,7 @@ protected:
     FlightModesComponent*   _flightModesComponent;
     SensorsComponent*       _sensorsComponent;
     SafetyComponent*        _safetyComponent;
+    PX4SerialPortsComponent* _serialPortsComponent;
     PowerComponent*         _powerComponent;
     MotorComponent*         _motorComponent;
     ActuatorComponent*      _actuatorComponent;
