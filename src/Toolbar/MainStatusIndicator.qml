@@ -37,23 +37,6 @@ RowLayout {
     // Raised when the dropdown is already open and should switch tabs
     signal tabRequested(int tab)
 
-    // Measures a StatusPill's text, for reserving its width
-    component LabelMetrics: TextMetrics {
-        font.family:    ScreenTools.normalFontFamily
-        font.pointSize: ScreenTools.smallFontPointSize
-        font.bold:      true
-    }
-
-    LabelMetrics { id: errorLabelMetrics;   text: qsTr("Error") }
-    LabelMetrics { id: warningLabelMetrics; text: qsTr("Warning") }
-    LabelMetrics { id: infoLabelMetrics;    text: qsTr("Info") }
-    LabelMetrics { id: preFlightLabelMetrics; text: qsTr("Pre-Flight") }
-    LabelMetrics { id: vehicleSyncLabelMetrics; text: vehicleSyncBadge.text }
-
-    readonly property real _severityLabelMaxWidth: Math.max(errorLabelMetrics.advanceWidth,
-                                                            warningLabelMetrics.advanceWidth,
-                                                            infoLabelMetrics.advanceWidth)
-
     function dropMainStatusIndicator(showMessages = false) {
         _initialTab = showMessages ? tabMessages : -1
         let overallStatusComponent = _activeVehicle ? overallStatusIndicatorPage : overallStatusOfflineIndicatorPage
@@ -81,21 +64,17 @@ RowLayout {
     }
 
     QGCLabel {
-        id:                 mainStatusLabel
-        objectName:         "mainStatusText"
-        Layout.fillHeight:  true
-        // Reserves room for every badge, visible or not, so neighboring toolbar items don't shift as badges come and go
-        // and the severity label changes width
-        Layout.preferredWidth: Math.max(contentWidth,
-                                        Math.max(_severityLabelMaxWidth, preFlightLabelMetrics.advanceWidth,
-                                                 vehicleSyncLabelMetrics.advanceWidth) +
-                                        ScreenTools.defaultFontPixelWidth +
-                                        rebootRequiredIcon.width + firmwareUpdateBadge.width +
-                                        ScreenTools.defaultFontPixelWidth * 0.5)
-        verticalAlignment:  Text.AlignVCenter
-        text:               mainStatusText()
-        color:              qgcPal.textPrimary
-        font.pointSize:     ScreenTools.largeFontPointSize
+        id:                     mainStatusLabel
+        objectName:             "mainStatusText"
+        Layout.fillHeight:      true
+        Layout.preferredWidth:  Math.max(contentWidth + leftPadding + rightPadding, badgeRow.width)
+        leftPadding:            ScreenTools.defaultFontPixelWidth / 2
+        rightPadding:           ScreenTools.defaultFontPixelWidth / 2
+        horizontalAlignment:    Text.AlignRight
+        verticalAlignment:      Text.AlignVCenter
+        text:                   mainStatusText()
+        color:                  qgcPal.textPrimary
+        font.pointSize:         ScreenTools.largeFontPointSize
 
         property string _commLostText:      qsTr("Comms Lost")
         property string _readyToFlyText:    qsTr("Ready")
@@ -146,62 +125,55 @@ RowLayout {
             }
         }
 
-        // Worst state across the dropdown tabs: messages, health and arming checks, and the pre-flight checklist
-        SeverityPill {
-            id:                 severityBadge
-            objectName:         "mainStatusSeverityBadge"
+        Row {
+            id:                 badgeRow
             anchors.top:        parent.top
-            anchors.topMargin:  ScreenTools.defaultFontPixelHeight * 0.25
+            anchors.topMargin:  2
             anchors.right:      parent.right
-            errorCount:         _activeVehicle ? _activeVehicle.unreadCriticalMessageCount + _healthErrorCount : 0
-            warningCount:       _activeVehicle ? _activeVehicle.unreadWarningMessageCount + _healthWarningCount +
-                                                 (_checklistWarning ? 1 : 0) : 0
-            unreadCount:        _activeVehicle ? _activeVehicle.unreadMessageCount : 0
-            warningLabel:       (_checklistWarning && warningCount === 1) ? qsTr("Pre-Flight") : qsTr("Warning")
-            visible:            !_vehicleSyncing && text.length > 0
-        }
+            spacing:            ScreenTools.defaultFontPixelWidth * 0.25
 
-        // Takes the place of every other badge until initial connect completes
-        StatusPill {
-            id:                 vehicleSyncBadge
-            objectName:         "mainStatusVehicleSyncBadge"
-            anchors.top:        parent.top
-            anchors.topMargin:  ScreenTools.defaultFontPixelHeight * 0.25
-            anchors.right:      parent.right
-            text:               qsTr("Vehicle Sync")
-            color:              qgcPal.warningIndicator
-            visible:            _vehicleSyncing
-        }
+            Rectangle {
+                id:                 firmwareUpdateBadge
+                objectName:         "mainStatusFirmwareUpdateBadge"
+                width:              height
+                height:             severityBadge.height
+                radius:             width / 2
+                color:              Qt.rgba(1, 1, 1, 0.75)
+                visible:            _activeVehicle && !_vehicleSyncing && _activeVehicle.newStableFirmwareVersion !== "" && !_activeVehicle.newStableFirmwareVersionAcknowledged
 
-        QGCColoredImage {
-            id:                 rebootRequiredIcon
-            objectName:         "mainStatusRebootRequiredIcon"
-            anchors.verticalCenter: severityBadge.verticalCenter
-            anchors.right:      severityBadge.visible ? severityBadge.left : parent.right
-            anchors.rightMargin: severityBadge.visible ? ScreenTools.defaultFontPixelWidth * 0.25 : 0
-            width:              ScreenTools.defaultFontPixelHeight * 0.9
-            height:             width
-            source:             "/res/PowerButton.svg"
-            color:              qgcPal.colorOrange
-            visible:            _rebootRequired && !_vehicleSyncing
-        }
+                QGCColoredImage {
+                    anchors.fill:   parent
+                    source:         "/res/UpdateAvailable.svg"
+                    color:          qgcPal.colorBlue
+                }
+            }
 
-        Rectangle {
-            id:                 firmwareUpdateBadge
-            objectName:         "mainStatusFirmwareUpdateBadge"
-            anchors.verticalCenter: severityBadge.verticalCenter
-            anchors.right:      rebootRequiredIcon.visible ? rebootRequiredIcon.left : (severityBadge.visible ? severityBadge.left : parent.right)
-            anchors.rightMargin: (rebootRequiredIcon.visible || severityBadge.visible) ? ScreenTools.defaultFontPixelWidth * 0.25 : 0
-            width:              ScreenTools.defaultFontPixelHeight
-            height:             width
-            radius:             width / 2
-            color:              Qt.rgba(1, 1, 1, 0.75)
-            visible:            _activeVehicle && !_vehicleSyncing && _activeVehicle.newStableFirmwareVersion !== "" && !_activeVehicle.newStableFirmwareVersionAcknowledged
+            StatusPill {
+                objectName:         "mainStatusRebootBadge"
+                text:               qsTr("Reboot")
+                color:              qgcPal.colorOrange
+                visible:            _rebootRequired && !_vehicleSyncing
+            }
 
-            QGCColoredImage {
-                anchors.fill:   parent
-                source:         "/res/UpdateAvailable.svg"
-                color:          qgcPal.colorBlue
+            // Worst state across the dropdown tabs: messages, health and arming checks, and the pre-flight checklist
+            SeverityPill {
+                id:                 severityBadge
+                objectName:         "mainStatusSeverityBadge"
+                errorCount:         _activeVehicle ? _activeVehicle.unreadCriticalMessageCount + _healthErrorCount : 0
+                warningCount:       _activeVehicle ? _activeVehicle.unreadWarningMessageCount + _healthWarningCount +
+                                                     (_checklistWarning ? 1 : 0) : 0
+                unreadCount:        _activeVehicle ? _activeVehicle.unreadMessageCount : 0
+                warningLabel:       (_checklistWarning && warningCount === 1) ? qsTr("Pre-Flight") : qsTr("Warning")
+                visible:            !_vehicleSyncing && text.length > 0
+            }
+
+            // Takes the place of every other badge until initial connect completes
+            StatusPill {
+                id:                 vehicleSyncBadge
+                objectName:         "mainStatusVehicleSyncBadge"
+                text:               qsTr("Vehicle Sync")
+                color:              qgcPal.warningIndicator
+                visible:            _vehicleSyncing
             }
         }
 

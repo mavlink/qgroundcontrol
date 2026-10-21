@@ -519,11 +519,11 @@ void ToolbarIndicatorUITest::_testRebootRequiredIndicator()
     runWithMockLink(
         [] { return MockLink::startPX4MockLink(); },
         [&](QPointer<MockLink> /*mockLink*/, Vehicle* vehicle) {
-            const QString iconName = QStringLiteral("mainStatusRebootRequiredIcon");
-            QVERIFY2(!findVisibleItem(_rootItem, iconName, 0),
-                     "Reboot-required icon shown before a reboot was required");
+            const QString badgeName = QStringLiteral("mainStatusRebootBadge");
+            QVERIFY2(!findVisibleItem(_rootItem, badgeName, 0),
+                     "Reboot-required badge shown before a reboot was required");
             vehicle->setRebootRequired();
-            QVERIFY2(findVisibleItem(_rootItem, iconName, TestTimeout::mediumMs()), "Reboot-required icon not shown");
+            QVERIFY2(findVisibleItem(_rootItem, badgeName, TestTimeout::mediumMs()), "Reboot-required badge not shown");
 
             if (armed) {
                 vehicle->setArmed(true, false /* showError */);
