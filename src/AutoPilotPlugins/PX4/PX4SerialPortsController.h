@@ -34,6 +34,10 @@ class PX4SerialPortRow : public QObject
     /// Parallel to functionLabels: true if that function is on the port. Used for shared ports.
     Q_PROPERTY(QVariantList functionEnabled READ functionEnabled NOTIFY functionEnabledChanged)
     Q_PROPERTY(QString conflictText READ conflictText NOTIFY conflictTextChanged)
+    /// Each function parameter that puts a function on the port, as "NAME = value"
+    Q_PROPERTY(QStringList assignments READ assignments NOTIFY assignmentsChanged)
+    /// true: a function which always runs on this port unless it is assigned elsewhere is on it
+    Q_PROPERTY(bool defaultFunctionOnPort READ defaultFunctionOnPort NOTIFY defaultFunctionOnPortChanged)
     Q_PROPERTY(Fact* baudFact READ baudFact NOTIFY baudFactChanged)
     /// true: the baud rate parameter is being read from the vehicle
     Q_PROPERTY(bool baudLoading READ baudLoading NOTIFY baudLoadingChanged)
@@ -60,6 +64,10 @@ public:
 
     QString conflictText() const { return _conflictText; }
 
+    QStringList assignments() const { return _assignments; }
+
+    bool defaultFunctionOnPort() const { return !_noneAvailable; }
+
     Fact* baudFact() const { return _baudFact; }
 
     bool baudLoading() const { return _baudLoading; }
@@ -78,6 +86,7 @@ public:
     void setFunctionIndex(int functionIndex);
     void setFunctionEnabled(const QVariantList& functionEnabled);
     void setConflictText(const QString& conflictText);
+    void setAssignments(const QStringList& assignments);
     void setBaudFact(Fact* baudFact);
     void setBaudLoading(bool baudLoading);
     void setOptionFacts(const QVariantList& optionFacts);
@@ -86,9 +95,11 @@ public:
 
 signals:
     void functionLabelsChanged();
+    void defaultFunctionOnPortChanged();
     void functionIndexChanged();
     void functionEnabledChanged();
     void conflictTextChanged();
+    void assignmentsChanged();
     void baudFactChanged();
     void baudLoadingChanged();
     void optionFactsChanged();
@@ -105,6 +116,7 @@ private:
     int _functionIndex = 0;
     QVariantList _functionEnabled;
     QString _conflictText;
+    QStringList _assignments;
     Fact* _baudFact = nullptr;
     bool _baudLoading = false;
     QVariantList _optionFacts;

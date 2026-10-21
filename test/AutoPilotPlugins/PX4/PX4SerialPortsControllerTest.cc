@@ -85,14 +85,17 @@ void PX4SerialPortsControllerTest::_rowsShowVehicleAssignments()
     QCOMPARE(_optionNames(telem1), (QStringList{QStringLiteral("MAV_0_MODE"), QStringLiteral("MAV_0_RATE"),
                                                 QStringLiteral("MAV_0_FORWARD"), QStringLiteral("MAV_0_FLOW_CTRL")}));
     QVERIFY(telem1->conflictText().isEmpty());
+    QCOMPARE(telem1->assignments(), QStringList{QStringLiteral("MAV_0_CONFIG = 101")});
 
     const PX4SerialPortRow* const gps1 = _row(controller, kGps1);
     QVERIFY(gps1);
     QCOMPARE(gps1->functionLabels().value(gps1->functionIndex()), QStringLiteral("Main GPS"));
+    QCOMPARE(gps1->assignments(), QStringList{QStringLiteral("GPS_1_CONFIG = 201")});
 
     const PX4SerialPortRow* const telem2 = _row(controller, kTelem2);
     QVERIFY(telem2);
     QCOMPARE(telem2->functionIndex(), 0);
+    QVERIFY(telem2->assignments().isEmpty());
 
     const PX4SerialPortRow* const ethernet = _row(controller, kEthernet);
     QVERIFY(ethernet);
@@ -308,6 +311,8 @@ void PX4SerialPortsControllerTest::_rcInputDriverStaysOnDefaultPort()
     QVERIFY(_waitForMockValue(QStringLiteral("RC_PORT_CONFIG"), 0));
     QCOMPARE(rc->functionLabels().value(rc->functionIndex()), QStringLiteral("RC Input Driver"));
     QVERIFY(!rc->functionLabels().contains(QStringLiteral("None")));
+    QVERIFY(rc->defaultFunctionOnPort());
+    QCOMPARE(rc->assignments(), QStringList{QStringLiteral("RC_PORT_CONFIG = 0 (default port)")});
 
     const int mavlink1Index = static_cast<int>(rc->functionLabels().indexOf(QStringLiteral("MAVLink (instance 1)")));
     QVERIFY(mavlink1Index > 0);
@@ -323,7 +328,9 @@ void PX4SerialPortsControllerTest::_rcInputDriverStaysOnDefaultPort()
                                static_cast<int>(telem2->functionLabels().indexOf(QStringLiteral("RC Input Driver"))));
     QVERIFY(_waitForMockValue(QStringLiteral("RC_PORT_CONFIG"), kTelem2));
     QVERIFY(rc->functionLabels().contains(QStringLiteral("None")));
+    QVERIFY(!rc->defaultFunctionOnPort());
     QVERIFY(rc->conflictText().isEmpty());
+    QCOMPARE(rc->assignments(), QStringList{QStringLiteral("MAV_1_CONFIG = 300")});
 
     QVERIFY(_waitForRowsLoaded(controller));
     QVERIFY_TRUE_WAIT(!vehicle()->parameterManager()->pendingWrites(), TestTimeout::mediumMs());
