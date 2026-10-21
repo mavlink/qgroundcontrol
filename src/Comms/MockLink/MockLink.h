@@ -216,6 +216,10 @@ public:
     /// instead of starting the compass cal simulation.
     void setAPMMagCalStartFailureMode(bool fail) { _apmMagCalStartFailureMode = fail; }
 
+    /// When enabled, MAV_CMD_NAV_TAKEOFF is rejected with MAV_RESULT_TEMPORARILY_REJECTED, as PX4 does
+    /// when it cannot switch to Takeoff mode.
+    void setTakeoffFailureMode(bool fail) { _takeoffFailureMode = fail; }
+
     /// Change an int32 parameter value directly on MockLink. Used to simulate the
     /// firmware storing calibration results (e.g. CAL_MAG0_ID).
     void setInt32ParamValue(int componentId, const QString &paramName, int32_t value) { _mapParamName2Value[componentId][paramName] = QVariant::fromValue(value); }
@@ -466,6 +470,7 @@ private:
     static constexpr uint8_t _prearmCheckPassed = 1 << 1;
     std::atomic<uint8_t> _prearmCheck = 0;  ///< One atomic so SYS_STATUS never sees half of a setPrearmCheck() update
     std::atomic<bool> _duplicateResponses = false;
+    std::atomic<bool> _takeoffFailureMode = false;
     bool _mavlinkV2Upgraded = false;    ///< True once outgoing traffic has switched from v1 to v2
     bool _signingEnabled = false;
     bool _highLatencyTransmissionEnabled = true;
