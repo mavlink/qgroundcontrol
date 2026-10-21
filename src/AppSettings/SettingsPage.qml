@@ -21,8 +21,9 @@ Item {
 
         ColumnLayout {
             id:         mainLayout
+            objectName: "settingsPageLayout"
             x:          Math.max(0, root.width / 2 - width / 2)
-            width:      Math.max(implicitWidth, ScreenTools.defaultFontPixelWidth * 50)
+            width:      Math.min(Math.max(implicitWidth, ScreenTools.defaultFontPixelWidth * 50), root.width)
             spacing:    ScreenTools.defaultFontPixelHeight
         }
     }

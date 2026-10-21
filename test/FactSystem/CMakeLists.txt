@@ -23,6 +23,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         FactTest.h
         HashCheckTest.cc
         HashCheckTest.h
+        LabelledFactBrowseTest.cc
+        LabelledFactBrowseTest.h
         ParameterEditorControllerTest.cc
         ParameterEditorControllerTest.h
         ParameterManagerTest.cc
@@ -40,5 +42,6 @@ add_qgc_test(PX4ParameterMetaDataTest LABELS Unit RESOURCE_LOCK TempFiles)
 add_qgc_test(FactSystemTestPX4 LABELS Integration Vehicle)
 add_qgc_test(FactTest LABELS Unit)
 add_qgc_test(HashCheckTest LABELS Integration Vehicle TIMEOUT ${QGC_TEST_TIMEOUT_EXTENDED})
+add_qgc_test(LabelledFactBrowseTest LABELS Unit)
 add_qgc_test(ParameterEditorControllerTest LABELS Integration Vehicle)
 add_qgc_test(ParameterManagerTest LABELS Integration Vehicle TIMEOUT ${QGC_TEST_TIMEOUT_EXTENDED} SERIAL)

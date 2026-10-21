@@ -30,7 +30,7 @@ RowLayout {
 
     ColumnLayout {
         Layout.fillWidth:    true
-        Layout.minimumWidth: implicitWidth
+        Layout.minimumWidth: 0
         spacing:             0
 
         QGCLabel {
