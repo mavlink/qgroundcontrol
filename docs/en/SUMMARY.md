@@ -31,6 +31,7 @@
   - [PX4](qgc-user-guide/setup_view/px4/index.md)
     - [Actuators / Motors](qgc-user-guide/setup_view/px4/actuators.md)
     - [Airframe](qgc-user-guide/setup_view/airframe_px4.md)
+    - [Failsafes](qgc-user-guide/setup_view/px4/failsafes.md)
     - [Flight Modes](qgc-user-guide/setup_view/flight_modes_px4.md)
     - [PID Tuning](qgc-user-guide/setup_view/tuning_px4.md)
     - [Ports](qgc-user-guide/setup_view/px4/ports.md)

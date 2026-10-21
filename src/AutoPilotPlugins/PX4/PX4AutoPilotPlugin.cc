@@ -29,6 +29,7 @@ PX4AutoPilotPlugin::PX4AutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     , _flightModesComponent(nullptr)
     , _sensorsComponent(nullptr)
     , _safetyComponent(nullptr)
+    , _failsafesComponent(nullptr)
     , _serialPortsComponent(nullptr)
     , _powerComponent(nullptr)
     , _motorComponent(nullptr)
@@ -117,6 +118,10 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
                 _safetyComponent = new SafetyComponent(_vehicle, this, this);
                 _safetyComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_safetyComponent)));
+
+                _failsafesComponent = new PX4FailsafesComponent(_vehicle, this, this);
+                _failsafesComponent->setupTriggerSignals();
+                _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_failsafesComponent)));
 
                 if (!PX4SerialPortsComponent::functionFacts(_vehicle->parameterManager()).isEmpty()) {
                     _serialPortsComponent = new PX4SerialPortsComponent(_vehicle, this, this);

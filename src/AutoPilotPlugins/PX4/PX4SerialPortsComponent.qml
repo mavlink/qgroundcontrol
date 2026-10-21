@@ -58,69 +58,6 @@ SetupPage {
         id: qgcPal
     }
 
-    component CaptionLabel: QGCLabel {
-        font.pointSize:         ScreenTools.smallFontPointSize
-        font.bold:              true
-        font.capitalization:    Font.AllUppercase
-        font.letterSpacing:     ScreenTools.defaultFontPixelWidth * 0.15
-        color:                  captionPal.textSecondary
-
-        QGCPalette {
-            id: captionPal
-        }
-    }
-
-    component PortCell: Rectangle {
-        default property alias cellData: cellLayout.data
-        property alias caption: captionLabel.text
-
-        readonly property real _padding: ScreenTools.defaultFontPixelWidth * 1.5
-
-        implicitWidth:  cellLayout.implicitWidth + _padding * 2
-        implicitHeight: cellLayout.implicitHeight + _padding * 2
-        color:          cellPal.windowCard
-        border.color:   cellPal.borderSubtle
-        radius:         ScreenTools.defaultBorderRadius * 2
-
-        QGCPalette {
-            id: cellPal
-        }
-
-        ColumnLayout {
-            id:                 cellLayout
-            anchors.fill:       parent
-            anchors.margins:    parent._padding
-            spacing:            ScreenTools.defaultFontPixelHeight * 0.25
-
-            CaptionLabel {
-                id:         captionLabel
-                visible:    text !== ""
-            }
-        }
-    }
-
-    component Chip: Rectangle {
-        property alias text: chipLabel.text
-        property color textColor: chipPal.textSecondary
-
-        implicitWidth:  chipLabel.implicitWidth + ScreenTools.defaultFontPixelWidth * 2
-        implicitHeight: chipLabel.implicitHeight + ScreenTools.defaultFontPixelHeight * 0.2
-        radius:         height / 2
-        color:          "transparent"
-        border.color:   textColor
-
-        QGCPalette {
-            id: chipPal
-        }
-
-        QGCLabel {
-            id:                 chipLabel
-            anchors.centerIn:   parent
-            font.pointSize:     ScreenTools.smallFontPointSize
-            color:              parent.textColor
-        }
-    }
-
     Component {
         id: pageComponent
 
@@ -282,12 +219,12 @@ SetupPage {
                                     spacing:    ScreenTools.defaultFontPixelWidth / 2
                                     visible:    object.shared || object.rebootRequired
 
-                                    Chip {
+                                    QGCChip {
                                         text:       qsTr("Shared")
                                         visible:    object.shared
                                     }
 
-                                    Chip {
+                                    QGCChip {
                                         text:       qsTr("Reboot required")
                                         textColor:  qgcPal.warningText
                                         visible:    object.rebootRequired
@@ -299,7 +236,7 @@ SetupPage {
                         Repeater {
                             model: controller.ports
 
-                            PortCell {
+                            QGCCaptionCell {
                                 id:                 functionCell
                                 Layout.row:         1 + index * _rowsPerPort
                                 Layout.column:      1
@@ -366,7 +303,7 @@ SetupPage {
                         Repeater {
                             model: controller.ports
 
-                            PortCell {
+                            QGCCaptionCell {
                                 id:                 baudCell
                                 Layout.row:         1 + index * _rowsPerPort
                                 Layout.column:      2
@@ -429,7 +366,7 @@ SetupPage {
                                 Repeater {
                                     model: optionsFlow.object.optionFacts
 
-                                    PortCell {
+                                    QGCCaptionCell {
                                         caption: _optionLabel(modelData.name, optionsFlow.object.shared)
 
                                         required property var modelData
