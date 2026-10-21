@@ -92,6 +92,29 @@ TestCase {
         compare(dataLink.params, ["NAV_DLL_ACT"])
     }
 
+    function test_visibleRows_firmwareParameterSets_data() {
+        return [
+            { tag: "motorFailureThresholdsBeforeMotfail", row: "motorFailure",
+              names: ["FD_ACT_EN", "COM_ACT_FAIL_ACT", "FD_ACT_MOT_THR", "FD_ACT_MOT_C2T", "FD_ACT_MOT_TOUT"],
+              params: ["FD_ACT_EN", "COM_ACT_FAIL_ACT", "FD_ACT_MOT_THR", "FD_ACT_MOT_C2T", "FD_ACT_MOT_TOUT"] },
+            { tag: "motorFailureThresholdsWithMotfail", row: "motorFailure",
+              names: ["FD_ACT_EN", "COM_ACT_FAIL_ACT", "MOTFAIL_C2T", "MOTFAIL_OFF", "MOTFAIL_TIME"],
+              params: ["FD_ACT_EN", "COM_ACT_FAIL_ACT", "MOTFAIL_C2T", "MOTFAIL_OFF", "MOTFAIL_TIME"] },
+            { tag: "escArmingUsesOwnSwitchWhenPresent", row: "escArming",
+              names: ["FD_ESCS_EN", "FD_ACT_EN"], params: ["FD_ESCS_EN"] },
+            { tag: "escArmingFallsBackToMotorSwitch", row: "escArming",
+              names: ["FD_ACT_EN"], params: ["FD_ACT_EN"] },
+        ]
+    }
+
+    function test_visibleRows_firmwareParameterSets(data) {
+        var names = {}
+        data.names.forEach(function(name) { names[name] = true })
+        var row = _rowById(Rows.visibleRows(Rows.failsafeRows(), _multiRotor, _exists(names)), data.row)
+        verify(row, data.row + " is hidden")
+        compare(row.params, data.params)
+    }
+
     function test_visibleRows_allParametersShowsEveryRowForVtol() {
         var all = Rows.failsafeRows()
         var rows = Rows.visibleRows(all, _vtol, _exists(_allParams))
@@ -110,6 +133,9 @@ TestCase {
             { tag: "fixedWingGpsOnVtol",       row: "fixedWingGps",  multiRotor: false, fixedWing: false, vtol: true,  shown: true },
             { tag: "motorFailureOnMultiRotor", row: "motorFailure",  multiRotor: true,  fixedWing: false, vtol: false, shown: true },
             { tag: "motorFailureNotOnFixed",   row: "motorFailure",  multiRotor: false, fixedWing: true,  vtol: false, shown: false },
+            { tag: "altitudeLossOnMultiRotor", row: "altitudeLoss",  multiRotor: true,  fixedWing: false, vtol: false, shown: true },
+            { tag: "altitudeLossOnVtol",       row: "altitudeLoss",  multiRotor: false, fixedWing: false, vtol: true,  shown: true },
+            { tag: "altitudeLossNotOnFixed",   row: "altitudeLoss",  multiRotor: false, fixedWing: true,  vtol: false, shown: false },
             { tag: "positionEstimateOnFixedWing", row: "positionEstimate", multiRotor: false, fixedWing: true, vtol: false, shown: true },
             { tag: "positionEstimateOnMultiRotor", row: "positionEstimate", multiRotor: true, fixedWing: false, vtol: false, shown: true },
             { tag: "batteryOnEveryVehicle",    row: "battery",       multiRotor: false, fixedWing: true,  vtol: false, shown: true },
@@ -137,6 +163,14 @@ TestCase {
         verify(!withLoiterRadius(_multiRotor))
         verify(withLoiterRadius(_fixedWing))
         verify(withLoiterRadius(_vtol))
+
+        var withLandSpeed = function(vehicle) {
+            var row = _rowById(Rows.visibleRows(Rows.failsafeRows(), vehicle, _exists(_allParams)), "returnMode")
+            return row.params.indexOf("MPC_LAND_SPEED") >= 0
+        }
+        verify(withLandSpeed(_multiRotor))
+        verify(withLandSpeed(_vtol))
+        verify(!withLandSpeed(_fixedWing))
     }
 
     function test_visibleRows_fixedCellOnlyWhenActionParamMissing() {
@@ -187,6 +221,10 @@ TestCase {
             { tag: "imbalancedDisabledAction", row: "imbalancedPropeller", values: { FD_IMB_PROP_THR: 30, COM_IMB_PROP_ACT: -1 }, active: false },
             { tag: "imbalancedWarning",      row: "imbalancedPropeller", values: { FD_IMB_PROP_THR: 30, COM_IMB_PROP_ACT: 0 },  active: true },
             { tag: "imbalancedActionParamMissing", row: "imbalancedPropeller", values: { FD_IMB_PROP_THR: 30 }, active: true },
+            { tag: "escArmingOwnSwitchOff",   row: "escArming",    values: { FD_ESCS_EN: 0, FD_ACT_EN: 1 },       active: false },
+            { tag: "escArmingOwnSwitchOn",    row: "escArming",    values: { FD_ESCS_EN: 1, FD_ACT_EN: 0 },       active: true },
+            { tag: "escArmingMotorSwitchOff",  row: "escArming",    values: { FD_ACT_EN: 0 },                      active: false },
+            { tag: "escArmingMotorSwitchOn",   row: "escArming",    values: { FD_ACT_EN: 1 },                      active: true },
             { tag: "manualControlSourceParamMissing", row: "manualControl", values: {}, active: true },
             { tag: "alwaysActiveRow",        row: "battery",      values: {},                                        active: true },
         ]
