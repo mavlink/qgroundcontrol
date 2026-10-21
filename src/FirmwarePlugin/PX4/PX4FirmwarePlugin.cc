@@ -327,7 +327,8 @@ void PX4FirmwarePlugin::guidedModeLand(Vehicle* vehicle) const
 
 void PX4FirmwarePlugin::_mavCommandResult(quint32 vehicleId, int component, int command, int result, int failureCode)
 {
-    Q_UNUSED(vehicleId); Q_UNUSED(component); Q_UNUSED(failureCode);
+    Q_UNUSED(vehicleId);
+    Q_UNUSED(component);
 
     auto* vehicle = qobject_cast<Vehicle*>(sender());
     if (!vehicle) {
@@ -335,14 +336,19 @@ void PX4FirmwarePlugin::_mavCommandResult(quint32 vehicleId, int component, int 
         return;
     }
 
-    if (command == MAV_CMD_NAV_TAKEOFF && result == MAV_RESULT_ACCEPTED) {
+    // A duplicate failure belongs to a repeated takeoff request. The first request is still waiting for its ack.
+    if (command != MAV_CMD_NAV_TAKEOFF || failureCode == Vehicle::MavCmdResultFailureDuplicateCommand) {
+        return;
+    }
+
+    // Disconnect on any result, so a later NAV_TAKEOFF sent by another code path does not arm the vehicle
+    disconnect(vehicle, &Vehicle::mavCommandResult, this, &PX4FirmwarePlugin::_mavCommandResult);
+
+    if (result == MAV_RESULT_ACCEPTED && !vehicle->armed()) {
         // Now that we are in takeoff mode we can arm the vehicle which will cause it to takeoff.
         // We specifically don't retry arming if it fails. This way we don't fight with the user if
         // They are trying to disarm.
-        disconnect(vehicle, &Vehicle::mavCommandResult, this, &PX4FirmwarePlugin::_mavCommandResult);
-        if (!vehicle->armed()) {
-            vehicle->setArmedShowError(true);
-        }
+        vehicle->setArmedShowError(true);
     }
 }
 
@@ -356,7 +362,7 @@ void PX4FirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double takeoffAltRel
 
     double takeoffAltAMSL = takeoffAltRel + vehicleAltitudeAMSL;
 
-    connect(vehicle, &Vehicle::mavCommandResult, this, &PX4FirmwarePlugin::_mavCommandResult);
+    connect(vehicle, &Vehicle::mavCommandResult, this, &PX4FirmwarePlugin::_mavCommandResult, Qt::UniqueConnection);
     vehicle->sendMavCommand(
         vehicle->defaultComponentId(),
         MAV_CMD_NAV_TAKEOFF,

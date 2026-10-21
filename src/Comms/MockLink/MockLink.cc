@@ -2351,8 +2351,12 @@ void MockLink::_handleCommandLong(const mavlink_message_t &msg)
         break;
     }
     case MAV_CMD_NAV_TAKEOFF:
-        _handleTakeoff(request);
-        commandResult = MAV_RESULT_ACCEPTED;
+        if (_takeoffFailureMode) {
+            commandResult = MAV_RESULT_TEMPORARILY_REJECTED;
+        } else {
+            _handleTakeoff(request);
+            commandResult = MAV_RESULT_ACCEPTED;
+        }
         break;
     case MAV_CMD_MOCKLINK_ALWAYS_RESULT_ACCEPTED:
         // Test command which always returns MAV_RESULT_ACCEPTED
