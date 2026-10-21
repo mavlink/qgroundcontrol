@@ -40,7 +40,7 @@ qt_add_resources(
     PREFIX "/res"
     BASE "${CMAKE_SOURCE_DIR}/resources"
     FILES "${CMAKE_SOURCE_DIR}/resources/FlyingPaperPlane.svg" "${CMAKE_SOURCE_DIR}/resources/GearWithPaperPlane.svg"
-          "${CMAKE_SOURCE_DIR}/resources/OpenDoor.svg" "${CMAKE_SOURCE_DIR}/resources/PowerButton.svg"
+          "${CMAKE_SOURCE_DIR}/resources/OpenDoor.svg"
 )
 
 qt_add_resources(
