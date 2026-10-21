@@ -16,10 +16,11 @@ Each row shows:
 - **Function** — what runs on the port. The functions normally used on that kind of port are listed first.
   Any function can run on any serial port, so the list also includes the others.
 - **Baud** — the port's baud rate (`SER_<port>_BAUD`). Ethernet has no baud rate.
-- **Options** — extra settings for the selected function: mode, rate, forwarding and flow control for MAVLink, and protocol for GPS.
+- **Options** — extra settings for the selected function: mode, send rate, forwarding and flow control for MAVLink, and protocol for GPS.
+  A send rate (`MAV_<n>_RATE`) of `0` makes PX4 use half the link's bandwidth: baud rate / 20 bytes/s, or 100000 bytes/s over Ethernet.
 
 Selecting a function for a serial port removes any other function from that port.
-Several functions can use Ethernet at the same time, so the Ethernet row shows a checkbox for each one instead.
+Several functions can use Ethernet at the same time, so the Ethernet row shows a switch for each one instead.
 
 The page opens on **In Use** when any port has a function, showing only the ports that have a function or a change waiting for a reboot.
 Select **All Ports** to show every port.
