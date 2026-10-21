@@ -50,6 +50,7 @@ void PX4SerialPortRow::setNoneAvailable(bool noneAvailable)
     if (noneAvailable != _noneAvailable) {
         _noneAvailable = noneAvailable;
         emit functionLabelsChanged();
+        emit defaultFunctionOnPortChanged();
     }
 }
 
@@ -74,6 +75,14 @@ void PX4SerialPortRow::setConflictText(const QString& conflictText)
     if (conflictText != _conflictText) {
         _conflictText = conflictText;
         emit conflictTextChanged();
+    }
+}
+
+void PX4SerialPortRow::setAssignments(const QStringList& assignments)
+{
+    if (assignments != _assignments) {
+        _assignments = assignments;
+        emit assignmentsChanged();
     }
 }
 
@@ -232,6 +241,16 @@ void PX4SerialPortsController::_update()
             functionEnabled.append(paramName.isEmpty() ? onPort.isEmpty() : onPort.contains(paramName));
         }
         row->setFunctionEnabled(functionEnabled);
+
+        QStringList assignments;
+        for (const QString& paramName : onPort) {
+            const Fact* const fact = _fact(paramName);
+            const int value = fact ? fact->rawValue().toInt() : portId;
+            assignments.append((value == PX4SerialPortConfig::kDisabledPortId)
+                                   ? tr("%1 = %2 (default port)").arg(paramName).arg(value)
+                                   : QStringLiteral("%1 = %2").arg(paramName).arg(value));
+        }
+        row->setAssignments(assignments);
 
         QString conflictText;
         if ((onPort.count() > 1) && !row->shared()) {
