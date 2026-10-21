@@ -27,6 +27,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         PX4AirframeLoader.h
         PX4AutoPilotPlugin.cc
         PX4AutoPilotPlugin.h
+        PX4FailsafesComponent.cc
+        PX4FailsafesComponent.h
         PX4FlightBehavior.cc
         PX4FlightBehavior.h
         PX4RadioComponent.cc
@@ -125,6 +127,8 @@ qt_add_qml_module(AutoPilotPluginsPX4Module
         FailureInjectionInstances.js
         FlightModesComponentSummary.qml
         PowerComponentSummary.qml
+        PX4FailsafeRows.js
+        PX4FailsafesComponent.qml
         PX4FlightBehaviorCopter.qml
         PX4FlightModes.qml
         PX4RadioComponentSummary.qml
