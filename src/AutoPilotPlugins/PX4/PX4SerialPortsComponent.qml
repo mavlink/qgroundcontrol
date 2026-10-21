@@ -31,7 +31,7 @@ SetupPage {
     function _optionLabel(paramName, shared) {
         const labels = {
             "MODE":         qsTr("Mode"),
-            "RATE":         qsTr("Rate"),
+            "RATE":         qsTr("Send rate"),
             "FORWARD":      qsTr("Forwarding"),
             "FLOW_CTRL":    qsTr("Flow control"),
             "UDP_PRT":      qsTr("UDP port"),
@@ -43,6 +43,15 @@ SetupPage {
         const label = labels[suffix] !== undefined ? labels[suffix] : paramName
         const instance = paramName.match(/^[A-Z]+_(\d)_/)
         return (shared && instance) ? qsTr("%1 (instance %2)").arg(label).arg(instance[1]) : label
+    }
+
+    // Ethernet is the only shared port. PX4 has no baud rate there, so a rate of 0 is a fixed value.
+    function _optionNote(paramName, ethernet) {
+        const notes = {
+            "RATE": ethernet ? qsTr("0 uses 100000 bytes/s.") : qsTr("0 uses half the link bandwidth.")
+        }
+        const note = notes[paramName.replace(/^[A-Z]+_\d_/, "")]
+        return note !== undefined ? note : ""
     }
 
     // A port whose function was just removed stays shown until the change is reverted or applied
@@ -273,9 +282,10 @@ SetupPage {
                                     // Skip "None", which is index 0
                                     model: functionCell.object.shared ? functionCell.object.functionLabels.length - 1 : 0
 
-                                    QGCCheckBox {
-                                        text:       functionCell.object.functionLabels[functionIndex]
-                                        checked:    functionCell.object.functionEnabled[functionIndex] === true
+                                    QGCCheckBoxSlider {
+                                        Layout.fillWidth:   true
+                                        text:               functionCell.object.functionLabels[functionIndex]
+                                        checked:            functionCell.object.functionEnabled[functionIndex] === true
 
                                         required property int index
                                         readonly property int functionIndex: index + 1
@@ -383,6 +393,16 @@ SetupPage {
                                             Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 12
                                             fact:                   modelData
                                             visible:                modelData.enumStrings.length === 0
+                                        }
+
+                                        QGCLabel {
+                                            Layout.fillWidth:       true
+                                            Layout.preferredWidth:  Math.min(implicitWidth, ScreenTools.defaultFontPixelWidth * 20)
+                                            wrapMode:               Text.WordWrap
+                                            font.pointSize:         ScreenTools.smallFontPointSize
+                                            color:                  qgcPal.textSecondary
+                                            text:                   _optionNote(modelData.name, optionsFlow.object.shared)
+                                            visible:                text !== ""
                                         }
                                     }
                                 }

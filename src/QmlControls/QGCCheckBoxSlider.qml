@@ -12,22 +12,28 @@ AbstractButton   {
 
     property int  _sliderInset:     2
     property bool _showHighlight:   enabled && (pressed || checked)
+    property real _labelSpacing:    ScreenTools.defaultFontPixelWidth
 
     QGCPalette { id: qgcPal; colorGroupEnabled: control.enabled }
 
+    // The label wraps only when the control is narrower than its single-line width
     contentItem: Item {
-        implicitWidth:  (label.visible ? label.contentWidth + ScreenTools.defaultFontPixelWidth : 0) + indicator.width
+        implicitWidth:  (label.visible ? label.implicitWidth + control._labelSpacing : 0) + indicator.width
         implicitHeight: label.contentHeight
 
         QGCLabel {
             id:             label
+            objectName:     "checkBoxSlider_label"
             anchors.left:   parent.left
+            width:          Math.max(0, parent.width - indicator.width - control._labelSpacing)
             text:           visible ? control.text : "X"
+            wrapMode:       Text.WordWrap
             visible:        control.text !== ""
         }
 
         Rectangle {
             id:                     indicator
+            objectName:             "checkBoxSlider_indicator"
             anchors.right:          parent.right
             anchors.verticalCenter: parent.verticalCenter
             height:                 ScreenTools.defaultFontPixelHeight

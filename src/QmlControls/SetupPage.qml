@@ -51,6 +51,7 @@ Item {
     }
 
     QGCFlickable {
+        objectName:     "setupPage_flickable"
         anchors.fill:   parent
         contentWidth:   Math.max(availableWidth, pageLoader.x + pageLoader.item.width)
         contentHeight:  Math.max(availableHeight, pageLoader.y + pageLoader.item.height)

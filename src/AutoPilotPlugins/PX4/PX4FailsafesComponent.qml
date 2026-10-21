@@ -13,6 +13,8 @@ SetupPage {
 
     property real _cellPadding:     ScreenTools.defaultFontPixelWidth * 1.5
     property bool _showActiveOnly:  false
+    // Parameter values when the page first showed them, so a reboot is only flagged after a change
+    property var _initialValues:    Object.create(null)
 
     readonly property var _vehicle: controller.vehicle
     readonly property var _rows: FailsafeRows.visibleRows(
@@ -371,6 +373,20 @@ SetupPage {
                                                     readonly property bool _isBitmask:  _fact ? _fact.bitmaskStrings.length > 0 : false
                                                     readonly property bool _isEnum:     _fact ? !_isBitmask && _fact.enumStrings.length > 0 : false
                                                     readonly property bool _isNumber:   _fact ? !_isBitmask && !_isEnum : false
+                                                    readonly property bool _rebootPending: _fact !== null && _fact.vehicleRebootRequired &&
+                                                                                           _initialValue !== undefined && _fact.rawValue !== _initialValue
+
+                                                    property var _initialValue: undefined
+
+                                                    Component.onCompleted: {
+                                                        if (!_fact) {
+                                                            return
+                                                        }
+                                                        if (!(modelData.param in failsafesPage._initialValues)) {
+                                                            failsafesPage._initialValues[modelData.param] = _fact.rawValue
+                                                        }
+                                                        _initialValue = failsafesPage._initialValues[modelData.param]
+                                                    }
 
                                                     RowLayout {
                                                         spacing:    ScreenTools.defaultFontPixelWidth
@@ -399,22 +415,15 @@ SetupPage {
                                                         Repeater {
                                                             model: cell._isBitmask ? cell._fact.bitmaskStrings : []
 
-                                                            QGCCheckBox {
+                                                            FactBitMaskCheckBoxSlider {
+                                                                objectName:         "failsafes_bit_" + cell._fact.name + "_" + index
                                                                 Layout.fillWidth:   true
                                                                 text:               modelData
-                                                                wrapMode:           Text.WordWrap
-                                                                checked:            cell._fact.value & cell._fact.bitmaskValues[index]
+                                                                fact:               cell._fact
+                                                                bitMask:            cell._fact.bitmaskValues[index]
 
                                                                 required property int index
                                                                 required property string modelData
-
-                                                                onClicked: {
-                                                                    if (checked) {
-                                                                        cell._fact.value |= cell._fact.bitmaskValues[index]
-                                                                    } else {
-                                                                        cell._fact.value &= ~cell._fact.bitmaskValues[index]
-                                                                    }
-                                                                }
                                                             }
                                                         }
                                                     }
@@ -448,14 +457,15 @@ SetupPage {
                                                     }
 
                                                     QGCChip {
-                                                        text:       qsTr("Reboot required")
-                                                        textColor:  qgcPal.warningText
+                                                        objectName: "failsafes_rebootChip_" + (modelData.param !== undefined ? modelData.param : "")
+                                                        text:       cell._rebootPending ? qsTr("Reboot required") : qsTr("Applies after reboot")
+                                                        textColor:  cell._rebootPending ? qgcPal.warningText : qgcPal.textSecondary
                                                         visible:    cell._fact ? cell._fact.vehicleRebootRequired : false
                                                     }
 
                                                     QGCLabel {
                                                         Layout.fillWidth:       true
-                                                        Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 20
+                                                        Layout.preferredWidth:  Math.min(implicitWidth, ScreenTools.defaultFontPixelWidth * 20)
                                                         wrapMode:               Text.WordWrap
                                                         font.pointSize:         ScreenTools.smallFontPointSize
                                                         color:                  qgcPal.textSecondary
