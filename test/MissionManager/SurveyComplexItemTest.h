@@ -44,3 +44,41 @@ private:
 
     static const int _expectedTransectCount = 2;
 };
+
+class SurveyComplexItemObstacleTest : public TransectStyleComplexItemTestBase
+{
+    Q_OBJECT
+
+protected:
+    void init() final;
+    void cleanup() final;
+
+private slots:
+    void _testObstacleAvoidance_data();
+    void _testObstacleAvoidance();
+    void _testObstacleRouteEfficiency_data();
+    void _testObstacleRouteEfficiency();
+    void _testIgnoredObstacles_data();
+    void _testIgnoredObstacles();
+    void _testObstacleSegmentLimit();
+    void _testHoverCaptureDelay_data();
+    void _testHoverCaptureDelay();
+    void _testObstacleTransitions_data();
+    void _testObstacleTransitions();
+    void _testBlockedObstacleTransitions_data();
+    void _testBlockedObstacleTransitions();
+    void _testObstacleTransitionChanges();
+    void _testObstacleTransitionLoad();
+    void _testSurveyTransitionLink();
+    void _testClearObstacleTransitions();
+    void _testObstacleChanges();
+    void _testBlockedSurvey_data();
+    void _testBlockedSurvey();
+    void _testObstacleLoad();
+
+private:
+    bool _insertSurveyInMission();
+
+    SurveyComplexItem* _surveyItem = nullptr;
+    QList<QGeoCoordinate> _polyVertices;
+};

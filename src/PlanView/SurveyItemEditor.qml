@@ -27,6 +27,14 @@ TransectStyleComplexItemEditor {
             rowSpacing:         _margin
             columns:            2
 
+            QGCLabel {
+                Layout.columnSpan:  2
+                Layout.fillWidth:   true
+                visible:            !forPresets && missionItem.obstacleError.length > 0
+                text:               missionItem.obstacleError
+                wrapMode:           Text.WordWrap
+            }
+
             QGCLabel { text: qsTr("Angle") }
             FactTextField {
                 fact:                   missionItem.gridAngle
