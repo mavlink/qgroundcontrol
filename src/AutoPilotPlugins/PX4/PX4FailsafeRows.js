@@ -6,7 +6,8 @@
 // Row:  { id, group, title, description, vehicles?, warnOnly?, activeWhen?, activeWhenAny?, cells }
 // Cell: { label, param? | thresholdBar? | fixed?, severity?, note?, vehicles?, onlyIfMissing? }
 //   vehicles        "multiRotor" | "fixedWing" | "vtol" names, any one matching shows the row or cell
-//   activeWhen      [{ param, op: "gt" | "ne", value }], all must hold. Omitted means always active.
+//   activeWhen      [{ param, op: "gt" | "ne", value, onlyIfMissing? }], all must hold. Omitted means always active.
+//                   A condition with onlyIfMissing is ignored when that parameter is on the vehicle.
 //   activeWhenAny   [[condition, ...], ...], at least one list must fully hold. Combines with activeWhen.
 //                   A list only counts when at least one of its parameters is on the vehicle.
 //   severity        marks an action. A string for a fixed action, or a map of the parameter's raw values to a
@@ -29,6 +30,7 @@ function failsafeRows() {
                 { param: "RTL_DESCEND_ALT", label: qsTr("Loiter altitude") },
                 { param: "RTL_LAND_DELAY", label: qsTr("Loiter time before landing"),
                   note: qsTr("-1 loiters and does not land.") },
+                { param: "MPC_LAND_SPEED", label: qsTr("Landing descent rate"), vehicles: ["multiRotor", "vtol"] },
                 { param: "RTL_MIN_DIST", label: qsTr("Cone: special rules within") },
                 { param: "RTL_CONE_ANG", label: qsTr("Altitude cone half-angle") },
                 { param: "RTL_LOITER_RAD", label: qsTr("Loiter radius"), vehicles: ["fixedWing", "vtol"] },
@@ -246,7 +248,7 @@ function failsafeRows() {
         },
         {
             id: "motorFailure", group: qsTr("Vehicle Health"), title: qsTr("Motor / actuator failure"),
-            description: qsTr("Motor draws too little current for its throttle (stuck or lost rotor)."),
+            description: qsTr("Motor current does not match its throttle (stuck or lost rotor)."),
             vehicles: ["multiRotor", "vtol"],
             activeWhen: [{ param: "FD_ACT_EN", op: "gt", value: 0 }],
             cells: [
@@ -255,7 +257,10 @@ function failsafeRows() {
                   severity: { "0": "warning", "1": "hold", "2": "land", "3": "return", "4": "terminate" } },
                 { param: "FD_ACT_MOT_THR", label: qsTr("Throttle above"), note: qsTr("100% disables.") },
                 { param: "FD_ACT_MOT_C2T", label: qsTr("Current / throttle below") },
-                { param: "FD_ACT_MOT_TOUT", label: qsTr("For longer than") }
+                { param: "FD_ACT_MOT_TOUT", label: qsTr("For longer than") },
+                { param: "MOTFAIL_C2T", label: qsTr("Expected current per throttle") },
+                { param: "MOTFAIL_OFF", label: qsTr("Allowed current deviation") },
+                { param: "MOTFAIL_TIME", label: qsTr("For longer than") }
             ]
         },
         {
@@ -273,9 +278,11 @@ function failsafeRows() {
         {
             id: "escArming", group: qsTr("Vehicle Health"), title: qsTr("ESC arming failure"),
             description: qsTr("An ESC does not report armed after arming. Disarms."),
-            activeWhen: [{ param: "FD_ESCS_EN", op: "gt", value: 0 }],
+            activeWhen: [{ param: "FD_ESCS_EN", op: "gt", value: 0 },
+                         { param: "FD_ACT_EN", op: "gt", value: 0, onlyIfMissing: "FD_ESCS_EN" }],
             cells: [
                 { param: "FD_ESCS_EN", label: qsTr("Detection") },
+                { param: "FD_ACT_EN", label: qsTr("Detection"), onlyIfMissing: "FD_ESCS_EN" },
                 { fixed: qsTr("Disarm"), label: qsTr("Action"), severity: "terminate" }
             ]
         },
@@ -290,6 +297,7 @@ function failsafeRows() {
         {
             id: "altitudeLoss", group: qsTr("Vehicle Health"), title: qsTr("Altitude loss"),
             description: qsTr("Altitude falls below the setpoint by more than the limit. Terminates and deploys the parachute."),
+            vehicles: ["multiRotor", "vtol"],
             activeWhen: [{ param: "FD_ALT_LOSS", op: "gt", value: 0 }],
             cells: [
                 { param: "FD_ALT_LOSS", label: qsTr("Max loss"), note: qsTr("0 disables.") },
@@ -400,6 +408,9 @@ function _conditionsHold(conditions, rawValueOf, requireAvailable) {
 
     for (var i = 0; i < conditions.length; i++) {
         var condition = conditions[i]
+        if (condition.onlyIfMissing && rawValueOf(condition.onlyIfMissing) !== undefined) {
+            continue
+        }
         var value = rawValueOf(condition.param)
         // Nothing can turn the failsafe off through a parameter the vehicle lacks
         if (value === undefined) {
