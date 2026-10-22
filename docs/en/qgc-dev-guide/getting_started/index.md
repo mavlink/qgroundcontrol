@@ -207,7 +207,7 @@ Environment variables (set by the launcher, overridable at build time):
 | Variable            | Default                  | Purpose                                                   |
 | ------------------- | ------------------------ | --------------------------------------------------------- |
 | `MOCCACHE_DIR`      | `<repo>/.cache/moccache` | Cache location (persisted by CI, like ccache)             |
-| `MOCCACHE_MAX_SIZE` | `256M`                   | LRU auto-trim threshold (trims after misses)              |
+| `MOCCACHE_MAX_SIZE` | `1G`                     | LRU auto-trim threshold (trims after misses)              |
 | `MOCCACHE_DISABLE`  | unset                    | Pass through to real moc (no caching)                     |
 | `MOCCACHE_STATS`    | unset                    | Log hits/misses; print this build's stats after linking   |
 
@@ -215,7 +215,7 @@ Environment variables (set by the launcher, overridable at build time):
 MOCCACHE_STATS=1 just build                             # This build's hit/miss stats print after linking
 MOCCACHE_BASEDIR=$PWD/build/Debug python3 ./tools/moccache.py --show-stats --build-dir build/Debug --verbose  # Per-miss reasons for the last build
 python3 ./tools/moccache.py --zero-stats                # Reset the stats log
-python3 ./tools/moccache.py --trim --max-size 256M      # Explicitly trim the cache (LRU)
+python3 ./tools/moccache.py --trim --max-size 1G        # Explicitly trim the cache (LRU)
 MOCCACHE_DISABLE=1 just build                           # Bypass the cache for one build
 ```
 

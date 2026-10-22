@@ -10,7 +10,7 @@ Usage (as CMake AUTOMOC executable, via a shim that bakes the real moc path):
 or set MOCCACHE_MOC=/path/to/moc and invoke:
     moccache.py [moc args...]
 or trim the cache to a size limit (LRU eviction):
-    moccache.py --trim [--max-size 256M]
+    moccache.py --trim [--max-size 1G]
 or report / reset recorded stats (requires MOCCACHE_STATS during the build):
     moccache.py --show-stats --build-dir DIR [--verbose]
     moccache.py --zero-stats
