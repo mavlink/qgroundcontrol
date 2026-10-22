@@ -1089,6 +1089,28 @@ class TestStatsCli:
         out = capsys.readouterr().out
         assert "no stats recorded" in out
 
+    def test_show_stats_markdown_reports_tables(
+        self, harness: Harness, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        tree = harness.make_tree("build")
+        harness.run(tree, out=tree.out_path("a.cpp"))
+        harness.run(tree, out=tree.out_path("b.cpp"))
+        harness.run(tree, out=tree.out_path("c.cpp"))
+        harness.monkeypatch.setenv("MOCCACHE_MAX_SIZE", "1G")
+        assert show_stats(harness, "--markdown") == 0
+        out = capsys.readouterr().out
+        assert out.startswith("### Moc Cache Statistics\n")
+        assert "| Cache hits | 2 / 3 (66.7%) |" in out
+        assert "| Misses | 1 |" in out
+        assert re.search(r"\| Cache size \| \d+ MiB / 1\.0 GiB \|", out)
+        assert "| `miss-first-seen` | 1 | first time this header was moc'd |" in out
+
+    def test_show_stats_markdown_without_log_prints_nothing(
+        self, harness: Harness, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        assert show_stats(harness, "--markdown") == 0
+        assert capsys.readouterr().out == ""
+
     def test_zero_stats_removes_log(self, harness: Harness) -> None:
         tree = harness.make_tree("build")
         harness.run(tree)

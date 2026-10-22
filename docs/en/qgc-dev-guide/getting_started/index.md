@@ -225,7 +225,8 @@ expected misses from cache problems: `miss-first-seen`, `miss-header-changed`,
 cache is too small (raise `MOCCACHE_MAX_SIZE`); `miss-args-changed` and
 `miss-output-depth-differs` mean build trees differ in a way that defeats sharing and are worth
 investigating (`--verbose` shows the first differing argument per miss). See the docstring at the
-top of `tools/moccache.py` for the full list.
+top of `tools/moccache.py` for the full list. `--markdown` prints the same report as tables, with
+the cache size; CI build jobs add it to the job summary.
 
 ## Building QGC Installation Files
 

@@ -112,4 +112,9 @@ runs:
       env:
         MOCCACHE_DIR: ${{ github.workspace }}/.cache/moccache
         BUILD_DIR: ${{ inputs.build-dir }}
-      run: python3 "${GITHUB_WORKSPACE}/tools/moccache.py" --show-stats --build-dir "$BUILD_DIR"
+      run: |
+        python3 "${GITHUB_WORKSPACE}/tools/moccache.py" --show-stats --build-dir "$BUILD_DIR"
+        if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
+          python3 "${GITHUB_WORKSPACE}/tools/moccache.py" --show-stats --build-dir "$BUILD_DIR" --markdown \
+            >> "$GITHUB_STEP_SUMMARY"
+        fi

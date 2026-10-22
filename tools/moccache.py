@@ -12,7 +12,7 @@ or set MOCCACHE_MOC=/path/to/moc and invoke:
 or trim the cache to a size limit (LRU eviction):
     moccache.py --trim [--max-size 1G]
 or report / reset recorded stats (requires MOCCACHE_STATS during the build):
-    moccache.py --show-stats --build-dir DIR [--verbose]
+    moccache.py --show-stats --build-dir DIR [--verbose | --markdown]
     moccache.py --zero-stats
 
 Environment:
@@ -36,7 +36,8 @@ Environment:
                       the build start cannot be derived it reports everything).
                       The log is always capped at _STATS_LOG_MAX_LINES. The
                       CMake-generated moccache-stats post-build script runs it
-                      after linking.
+                      after linking. --markdown prints the same report as
+                      tables (with the cache size) for CI job summaries.
 
 Stats kinds. Misses carry a reason so legitimate misses can be told apart
 from cache-design problems (a per-input index of recent keys under
@@ -476,15 +477,9 @@ def _parse_size(s: str) -> int:
     return int(t) * factor
 
 
-def _trim(cache_dir: Path, max_bytes: int) -> int:
-    """LRU-evict cache entries until total size <= 80% of max_bytes.
-
-    Entry recency is the entry directory's mtime (refreshed on hits).
-    Returns the number of entries removed. Never raises: a concurrently
-    written or vanished entry is skipped.
-    """
-    entries = []  # (mtime, size, path)
-    total = 0
+def _scan_entries(cache_dir: Path) -> list[tuple[float, int, Path]]:
+    """Every cache entry as (mtime, size in bytes, path); vanished entries are skipped."""
+    entries = []
     for shard in cache_dir.glob("??"):
         if not shard.is_dir():
             continue
@@ -493,7 +488,18 @@ def _trim(cache_dir: Path, max_bytes: int) -> int:
                 mtime = mdir.stat().st_mtime
                 size = sum(f.stat().st_size for f in mdir.iterdir() if f.is_file())
                 entries.append((mtime, size, mdir))
-                total += size
+    return entries
+
+
+def _trim(cache_dir: Path, max_bytes: int) -> int:
+    """LRU-evict cache entries until total size <= 80% of max_bytes.
+
+    Entry recency is the entry directory's mtime (refreshed on hits).
+    Returns the number of entries removed. Never raises: a concurrently
+    written or vanished entry is skipped.
+    """
+    entries = _scan_entries(cache_dir)
+    total = sum(size for _, size, _ in entries)
     if total <= max_bytes:
         return 0
     target = int(max_bytes * _TRIM_LOW_WATER)
@@ -678,9 +684,46 @@ def _stat_time(fields: list[str]) -> float | None:
 _STATS_LOG_MAX_LINES = 50_000
 
 
+def _format_bytes(n: int) -> str:
+    return f"{n / 1024**3:.1f} GiB" if n >= 1024**3 else f"{n / 1024**2:.0f} MiB"
+
+
+def _stats_markdown(
+    note: str, hits: int, misses: int, counts: dict[str, int], cache_dir: Path
+) -> str:
+    """The --show-stats report as GitHub-flavoured markdown, e.g. for a CI job summary."""
+    total = hits + misses
+    if total == 0 and not counts:
+        return ""
+    rate = f" ({100.0 * hits / total:.1f}%)" if total else ""
+    size = _format_bytes(sum(size for _, size, _ in _scan_entries(cache_dir)))
+    limit = os.environ.get("MOCCACHE_MAX_SIZE", "")
+    if limit:
+        with contextlib.suppress(ValueError):
+            size += f" / {_format_bytes(_parse_size(limit))}"
+    lines = ["### Moc Cache Statistics", ""]
+    if note:
+        lines += [f"_{note.strip()}_", ""]
+    lines += [
+        "| Metric | Value |",
+        "| --- | --- |",
+        f"| Cache hits | {hits} / {total}{rate} |",
+        f"| Misses | {misses} |",
+        f"| Cache size | {size} |",
+    ]
+    if counts:
+        lines += ["", "| Event | Count | Meaning |", "| --- | ---: | --- |"]
+        lines += [
+            f"| `{what}` | {counts[what]} | {_KIND_DESCRIPTIONS.get(what, '')} |"
+            for what in sorted(counts)
+        ]
+    return "\n".join(lines) + "\n"
+
+
 def _show_stats_main(argv: list[str]) -> int:
     build_dir: Path | None = None
     verbose = False
+    markdown = False
     i = 0
     while i < len(argv):
         if argv[i] == "--build-dir":
@@ -691,6 +734,9 @@ def _show_stats_main(argv: list[str]) -> int:
             i += 2
         elif argv[i] == "--verbose":
             verbose = True
+            i += 1
+        elif argv[i] == "--markdown":
+            markdown = True
             i += 1
         else:
             print(f"moccache: --show-stats: unknown argument: {argv[i]}", file=sys.stderr)
@@ -756,6 +802,9 @@ def _show_stats_main(argv: list[str]) -> int:
     # Pre-reason logs used a bare "miss"; fold it in with the miss-* reasons.
     misses = counts.pop("miss", 0) + sum(n for k, n in counts.items() if k.startswith("miss-"))
     total = hits + misses
+    if markdown:
+        print(_stats_markdown(note, hits, misses, counts, cache_dir), end="")
+        return 0
     print(f"moccache stats ({scope}, {cache_dir}):")
     if note:
         print(note)
