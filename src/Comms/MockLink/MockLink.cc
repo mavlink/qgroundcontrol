@@ -1682,14 +1682,15 @@ uint32_t MockLink::_computeParamHash(int componentId) const
     }();
 
     uint32_t crc = 0;
-    const auto &params = _mapParamName2Value[componentId];
+    const QMap<QString, QVariant> params = _mapParamName2Value.value(componentId);
+    const QMap<QString, MAV_PARAM_TYPE> paramTypes = _mapParamName2MavParamType.value(componentId);
     for (auto it = params.constBegin(); it != params.constEnd(); ++it) {
         const QString &name = it.key();
         if (volatileParams.contains(name)) {
             continue;
         }
         const QVariant &value = it.value();
-        const MAV_PARAM_TYPE mavType = _mapParamName2MavParamType[componentId][name];
+        const MAV_PARAM_TYPE mavType = paramTypes.value(name);
         const FactMetaData::ValueType_t factType = ParameterManager::mavTypeToFactType(mavType);
 
         crc = QGC::crc32(reinterpret_cast<const uint8_t *>(qPrintable(name)), name.length(), crc);
@@ -3407,9 +3408,41 @@ void MockLink::_sendGeneralMetaData()
 
 void MockLink::setRemoteIDArmStatus(uint8_t status, const QString& error)
 {
-    QMutexLocker locker(&_remoteIDArmStatusMutex);
-    _remoteIDArmStatus = status;
-    _remoteIDArmStatusError = error;
+    {
+        QMutexLocker locker(&_remoteIDArmStatusMutex);
+        _remoteIDArmStatus = status;
+        _remoteIDArmStatusError = error;
+    }
+
+    _runOnWorkerWhenConnected([this] {
+        if (_vehicleType != MAV_TYPE_SUBMARINE) {
+            _sendRemoteIDArmStatus();
+        }
+    });
+}
+
+void MockLink::setPrearmCheck(bool enabled, bool passed)
+{
+    _prearmCheck = (enabled ? _prearmCheckEnabled : 0) | (passed ? _prearmCheckPassed : 0);
+    _runOnWorkerWhenConnected([this] { _sendSysStatus(); });
+}
+
+void MockLink::_runOnWorkerWhenConnected(const std::function<void()>& send)
+{
+    // disconnect() stops the worker thread, whose finished signal deletes _worker
+    if (!_connected || !_workerThread || !_workerThread->isRunning()) {
+        return;
+    }
+
+    // Runs on the worker thread like the 1Hz tasks that normally send these messages
+    (void) QMetaObject::invokeMethod(
+        _worker,
+        [this, send] {
+            if (_connected && mavlinkChannelIsSet() && !linkConfiguration()->isHighLatency()) {
+                send();
+            }
+        },
+        Qt::QueuedConnection);
 }
 
 void MockLink::_sendRemoteIDArmStatus()
