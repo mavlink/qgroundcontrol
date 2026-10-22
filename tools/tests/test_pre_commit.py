@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import fnmatch
 import json
 import os
@@ -15,6 +16,7 @@ from pre_commit import (
     DOCS_FULL_SCAN_PATHSPECS,
     DOCS_HOOKS,
     build_precommit_args,
+    changed_refs,
     extract_hook_lines,
     file_selection_args,
     parse_args,
@@ -163,6 +165,33 @@ def test_docs_selection_ignores_deleted_pages(
 
     monkeypatch.chdir(git_repo)
     assert select_docs_files((base, "HEAD")) == []
+
+
+def test_changed_refs_diff_a_pr_merge_checkout_against_its_base_tip(
+    git_repo: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _write(git_repo, "a.txt", "base\n")
+    git(git_repo, "add", ".")
+    git(git_repo, "commit", "-qm", "Fork point")
+    fork_point = git(git_repo, "rev-parse", "HEAD")
+    git(git_repo, "checkout", "-qb", "pr")
+    _write(git_repo, "pr.txt", "pr\n")
+    git(git_repo, "add", ".")
+    git(git_repo, "commit", "-qm", "PR change")
+    pr_head = git(git_repo, "rev-parse", "HEAD")
+    git(git_repo, "checkout", "-q", "master")
+    _write(git_repo, "a.txt", "newer base\n")
+    git(git_repo, "commit", "-qam", "Newer base")
+    base_tip = git(git_repo, "rev-parse", "HEAD")
+    git(git_repo, "merge", "-q", "--no-ff", "-m", "Merge PR", pr_head)
+
+    monkeypatch.chdir(git_repo)
+    monkeypatch.setenv("PR_BASE_SHA", fork_point)
+    monkeypatch.setenv("PR_HEAD_SHA", pr_head)
+    assert changed_refs(argparse.Namespace(changed=True)) == (base_tip, "HEAD")
+
+    git(git_repo, "checkout", "-q", pr_head)
+    assert changed_refs(argparse.Namespace(changed=True)) == (fork_point, pr_head)
 
 
 @pytest.fixture

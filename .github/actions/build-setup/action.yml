@@ -214,6 +214,9 @@ runs:
         cache-disabled: ${{ env.QGC_ACTIONS_CACHE_BACKEND != 's3' }}
         cache-provider: basic
         cache-read-only: ${{ github.event_name == 'pull_request_target' }}
+        # The restored CPM cache under .cache/ contains SDL3's own (unlisted) Gradle wrapper jar.
+        # QGC's wrapper is validated on every PR by gradle/actions/wrapper-validation in dependency-review.yml.
+        validate-wrappers: false
 
     - name: Install Qt for Android
       if: inputs.mode == 'android'

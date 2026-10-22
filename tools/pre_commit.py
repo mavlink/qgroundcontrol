@@ -113,9 +113,24 @@ def changed_refs(args: argparse.Namespace) -> tuple[str, str] | None:
     if not ref:
         log_warn("Default branch not available, running on all files")
         return None
+    head = os.environ.get("PR_HEAD_SHA") or "HEAD"
+    if merge_base_tip := _merge_checkout_base(head):
+        # The checkout is GitHub's merge of the PR head into the current base tip, which can be newer than
+        # PR_BASE_SHA; diffing against that tip keeps newer base-branch changes out of the checked regions.
+        ref, head = merge_base_tip, "HEAD"
     log_info(f"Running on files changed vs {ref}...")
-    # The PR merge checkout can include newer base-branch changes.
-    return ref, os.environ.get("PR_HEAD_SHA") or "HEAD"
+    return ref, head
+
+
+def _merge_checkout_base(head: str) -> str | None:
+    """Return HEAD's first parent when HEAD merges *head* into it (a pull_request checkout), else None."""
+    if head == "HEAD":
+        return None
+    parents = run_captured(["git", "rev-list", "--parents", "-n", "1", "HEAD"]).stdout.split()
+    resolved = run_captured(["git", "rev-parse", "--verify", f"{head}^{{commit}}"]).stdout.strip()
+    if len(parents) == 3 and resolved and parents[2] == resolved:
+        return parents[1]
+    return None
 
 
 def _git_paths(*args: str) -> list[str]:
