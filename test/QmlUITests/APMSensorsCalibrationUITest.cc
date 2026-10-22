@@ -170,9 +170,9 @@ void APMSensorsCalibrationUITest::_testCompassCalibrationIgnoresStaleFailedRepor
     QVERIFY2(QTest::qWaitFor([&] { return !mockLink->apmStaleFailedMagCalReportStreamingActive(); }, 5000),
              "Stale failed MAG_CAL_REPORT stream was never cancelled");
 
-    // Calibration must still be running (not instantly completed/failed by a stale report):
-    // give the stale stream time to have been (mis)processed, then check cancel still enabled.
-    QVERIFY2(!QTest::qWaitFor([&] { return !cancelBtn->property("enabled").toBool(); }, 2000),
+    // Calibration must still be running (not instantly completed/failed by a stale report). With the
+    // stream cancelled, any report still in flight is processed within a few event-loop turns.
+    QVERIFY2(!QTest::qWaitFor([&] { return !cancelBtn->property("enabled").toBool(); }, 500),
              "Compass cal terminated prematurely - stale MAG_CAL_REPORT was processed");
 
     // Now let the normal MockLink progress simulation complete the calibration
