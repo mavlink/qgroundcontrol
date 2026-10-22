@@ -87,7 +87,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
     qgc_enable_split_dwarf()
 
     # Build profiling: -ftime-trace emits per-TU Chrome-tracing JSON next to each .o.
-    # Aggregate with ClangBuildAnalyzer; see docs in tools/README.md.
+    # Summarize with tools/build_profile.py (see tools/README.md).
     if(QGC_TIME_TRACE)
         if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
             add_compile_options(-ftime-trace -ftime-trace-granularity=100)
@@ -108,6 +108,8 @@ elseif(MSVC)
     # /Z7 not /Zi — /Zi's absolute PDB paths break ccache hashing (ccache#1040); linker still emits a sidecar PDB.
     set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "Embedded")
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+    # Runs after qgc_enable_ipo(), whose /GL objects lld-link cannot link.
+    qgc_set_msvc_linker()
 endif()
 
 # ----------------------------------------------------------------------------

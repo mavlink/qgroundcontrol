@@ -168,7 +168,6 @@ optionoutput("Warnings as errors                    " QGC_ENABLE_WERROR)
 optionoutput("Security hardening                    " QGC_ENABLE_HARDENING)
 optionoutput("Reproducible build paths              " QGC_REPRODUCIBLE_BUILD)
 optionoutput("Verbose configure output              " QGC_VERBOSE_CONFIGURE)
-optionoutput("Git submodule update                  " GIT_SUBMODULE)
 
 # External Dependencies
 message(STATUS "")

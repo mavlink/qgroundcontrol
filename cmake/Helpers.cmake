@@ -45,6 +45,7 @@ endfunction()
 # Configures compiler caching using ccache or sccache if available
 # ----------------------------------------------------------------------------
 function(qgc_config_caching)
+    # cmake-lint: disable=R0915,E1126
     # Reject unusable cache executables found on PATH.
     function(_qgc_verify_cache_tool _ok _path)
         execute_process(
@@ -111,8 +112,7 @@ esac
                 )
                 string(APPEND _wrapper "exec \"${QGC_CACHE_PROGRAM}\" \"$@\"\n")
                 _qgc_write_if_changed("${_ccache_wrapper}" "${_wrapper}")
-                # cmakelang 0.6.13 does not recognize file(CHMOD).
-                # cmake-lint: disable=E1126
+                # cmakelang 0.6.13 does not recognize file(CHMOD) (E1126, disabled for this function).
                 file(
                     CHMOD
                     "${_ccache_wrapper}"
@@ -129,6 +129,16 @@ esac
             endif()
         elseif(_cache_tool STREQUAL "sccache")
             set(_cache_launcher "${QGC_CACHE_PROGRAM}")
+            # sccache keys a GCC precompiled header by its preprocessed text, which omits macro definitions, so a
+            # changed header can reuse a stale PCH (mozilla/sccache#2562); it cannot cache MSVC PCH users at all.
+            # Configure with -DCMAKE_DISABLE_PRECOMPILE_HEADERS=OFF to keep them anyway.
+            if(NOT DEFINED CMAKE_DISABLE_PRECOMPILE_HEADERS)
+                set(CMAKE_DISABLE_PRECOMPILE_HEADERS
+                    ON
+                    PARENT_SCOPE
+                )
+                message(STATUS "QGC: Precompiled headers disabled for sccache")
+            endif()
         else()
             return()
         endif()
@@ -269,6 +279,8 @@ function(qgc_config_moccache)
         return()
     endif()
 
+    # Importing moccache from a stub lets Python reuse its cached bytecode on every moc run
+    set(_launcher_py "${CMAKE_SOURCE_DIR}/tools/moccache_launcher.py")
     if(CMAKE_HOST_WIN32)
         set(_moccache_wrapper "${CMAKE_BINARY_DIR}/moccache-launcher.cmd")
         set(_wrapper "@echo off\r\nsetlocal\r\n")
@@ -277,7 +289,7 @@ function(qgc_config_moccache)
         )
         string(APPEND _wrapper "if not defined MOCCACHE_BASEDIR set \"MOCCACHE_BASEDIR=${CMAKE_BINARY_DIR}\"\r\n")
         string(APPEND _wrapper "if not defined MOCCACHE_MAX_SIZE set \"MOCCACHE_MAX_SIZE=1G\"\r\n")
-        string(APPEND _wrapper "\"${QGC_MOCCACHE_PYTHON}\" \"${_moccache_py}\" --real-moc \"${_real_moc}\" %*\r\n")
+        string(APPEND _wrapper "\"${QGC_MOCCACHE_PYTHON}\" \"${_launcher_py}\" --real-moc \"${_real_moc}\" %*\r\n")
         string(APPEND _wrapper "exit /b %ERRORLEVEL%\r\n")
         _qgc_write_if_changed("${_moccache_wrapper}" "${_wrapper}")
     else()
@@ -287,7 +299,7 @@ function(qgc_config_moccache)
         string(APPEND _wrapper "export MOCCACHE_BASEDIR=\"\${MOCCACHE_BASEDIR:-${CMAKE_BINARY_DIR}}\"\n")
         string(APPEND _wrapper "export MOCCACHE_MAX_SIZE=\"\${MOCCACHE_MAX_SIZE:-1G}\"\n")
         string(
-            APPEND _wrapper "exec \"${QGC_MOCCACHE_PYTHON}\" \"${_moccache_py}\" --real-moc \"${_real_moc}\" \"$@\"\n"
+            APPEND _wrapper "exec \"${QGC_MOCCACHE_PYTHON}\" \"${_launcher_py}\" --real-moc \"${_real_moc}\" \"$@\"\n"
         )
         _qgc_write_if_changed("${_moccache_wrapper}" "${_wrapper}")
         file(
@@ -535,6 +547,40 @@ function(qgc_set_linker)
     cmake_pop_check_state()
 
     message(STATUS "QGC: No alternative linker (mold/lld/gold) found - using system default")
+endfunction()
+
+# ----------------------------------------------------------------------------
+# qgc_set_msvc_linker
+# Links MSVC builds with lld-link when QGC_USE_LLD_LINK is ON (CMake 3.29+ LINKER_TYPE).
+# lld-link cannot link /GL objects, so IPO (Release) builds keep link.exe.
+# ----------------------------------------------------------------------------
+function(qgc_set_msvc_linker)
+    if(NOT QGC_USE_LLD_LINK OR NOT CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+        return()
+    endif()
+    if(CMAKE_VERSION VERSION_LESS 3.29)
+        message(STATUS "QGC: QGC_USE_LLD_LINK needs CMake 3.29 or newer - using link.exe")
+        return()
+    endif()
+    if(CMAKE_INTERPROCEDURAL_OPTIMIZATION OR CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE)
+        message(STATUS "QGC: lld-link cannot link IPO (/GL) objects - using link.exe")
+        return()
+    endif()
+    # Use CMake's own lld-link lookup (made at the first configure) so try_compile checks link with the same tool.
+    if(NOT IS_ABSOLUTE "${CMAKE_LINKER_LLD}" OR NOT EXISTS "${CMAKE_LINKER_LLD}")
+        message(STATUS "QGC: lld-link not found on PATH or in CMAKE_LINKER_LLD - using link.exe")
+        return()
+    endif()
+
+    set(CMAKE_LINKER_TYPE
+        LLD
+        PARENT_SCOPE
+    )
+    set(QGC_LINKER
+        lld-link
+        PARENT_SCOPE
+    )
+    message(STATUS "QGC: Using lld-link (${CMAKE_LINKER_LLD})")
 endfunction()
 
 # ----------------------------------------------------------------------------

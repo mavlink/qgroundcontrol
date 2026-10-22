@@ -9,7 +9,11 @@ function(qgc_check_library_headers target)
         message(FATAL_ERROR "qgc_check_library_headers: unknown target '${target}'")
     endif()
 
-    set_target_properties(${target} PROPERTIES VERIFY_INTERFACE_HEADER_SETS ON)
+    set_target_properties(
+        ${target}
+        PROPERTIES
+            VERIFY_INTERFACE_HEADER_SETS ON
+    )
     if(NOT TARGET "${target}HeaderChecks")
         add_custom_target(
             ${target}HeaderChecks ALL
@@ -41,11 +45,17 @@ function(qgc_add_library_consumer target)
     add_executable(${target}Consumer "${ARG_SOURCE}")
     set_target_properties(
         ${target}Consumer
-        PROPERTIES AUTOMOC OFF
-                   AUTOUIC OFF
-                   AUTORCC OFF
+        PROPERTIES
+            AUTOMOC OFF
+            AUTOUIC OFF
+            AUTORCC OFF
     )
     target_link_libraries(${target}Consumer PRIVATE ${target})
     add_test(NAME ${target}Consumer COMMAND ${target}Consumer)
-    set_tests_properties(${target}Consumer PROPERTIES LABELS "${ARG_LABELS}" TIMEOUT "${ARG_TIMEOUT}")
+    set_tests_properties(
+        ${target}Consumer
+        PROPERTIES
+            LABELS "${ARG_LABELS}"
+            TIMEOUT "${ARG_TIMEOUT}"
+    )
 endfunction()

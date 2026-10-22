@@ -335,7 +335,7 @@ message(
            "plugins=${_qgc_gst_plugin_count}/${_qgc_gst_plugin_total} auto_downloaded=${GStreamer_AUTO_DOWNLOADED}"
 )
 
-# Post-configure tooling (.github/scripts/verify_executable.py, generate_cpm_sbom.py) and PrintSummary read the
+# Post-configure tooling (tools/ci/packaging/verify_executable.py, generate_cpm_sbom.py) and PrintSummary read the
 # QGC_GST_RESOLVED_* entries from the cache.
 _qgc_gst_record_resolved_sdk(
     "${GStreamer_ROOT_DIR}" "${QGC_GST_REQUESTED_VERSION}" "${GStreamer_AUTO_DOWNLOADED}" "${GStreamer_VERSION}"
