@@ -39,6 +39,10 @@ Vehicle *ParameterManagerTest::_connectAndWaitForVehicle(MockConfiguration::Fail
         qWarning() << "MockLink already connected";
         return nullptr;
     }
+    // On a slow runner the PARAM_VALUE stream can delay a COMMAND_ACK past the ack timeout. A stray
+    // UNSUPPORTED ack from the retried GIMBAL_MANAGER_INFORMATION probe (which MockLink rejects) can
+    // then be credited to the post-connect AVAILABLE_MODES request, which is unrelated to these tests.
+    ignoreLogMessage("Vehicle.StandardModes", QtWarningMsg, QRegularExpression("Failed to retrieve available modes"));
     _mockLink = MockLink::startPX4MockLink(MockConfiguration::OptionNone, failureMode);
     _mockLink->mockLinkFTP()->setParamPckEnabled(false);
     MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
