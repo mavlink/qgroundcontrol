@@ -174,12 +174,10 @@ GPSReceiverCapabilities gpsReceiverCapabilities(GPSType type)
 namespace {
 GPSReceiverPresentation buildPresentation(int manufacturer)
 {
+    const bool automatic = manufacturer == GPS_AUTOMATIC_MANUFACTURER;
     const auto* selected = gpsReceiverDescriptorForManufacturer(manufacturer);
     GPSReceiverPresentation presentation;
-    for (const auto& descriptor : DESCRIPTORS) {
-        if (manufacturer != GPS_AUTOMATIC_MANUFACTURER && &descriptor != selected) {
-            continue;
-        }
+    const auto include = [&presentation](const GPSReceiverDescriptor& descriptor) {
         presentation.rtkBase |= descriptor.capabilities.rtkBase;
         presentation.surveyIn |= descriptor.capabilities.surveyIn;
         presentation.receiverAveraging |= descriptor.capabilities.receiverAveraging;
@@ -192,10 +190,17 @@ GPSReceiverPresentation buildPresentation(int manufacturer)
         presentation.persistentConfiguration |= descriptor.capabilities.persistentConfiguration;
         presentation.restartOnConnect |= descriptor.restartOnConnect;
         presentation.surveyMaySavePosition |= descriptor.surveyMaySavePosition;
+    };
+    if (automatic) {
+        for (const auto& descriptor : DESCRIPTORS) {
+            include(descriptor);
+        }
+    } else if (selected) {
+        include(*selected);
     }
     // Labels and live status describe one family, which Automatic only knows once connected.
     presentation.specificReceiver = selected != nullptr;
-    presentation.automatic = manufacturer == GPS_AUTOMATIC_MANUFACTURER;
+    presentation.automatic = automatic;
     presentation.passive = selected && selected->capabilities.passive;
     presentation.observationAccuracyFilter = selected && selected->surveyAccuracy == Accuracy::ObservationFilter;
     presentation.acceptedObservationTime = selected && selected->surveyDuration == Duration::AcceptedObservations;
