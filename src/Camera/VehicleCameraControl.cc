@@ -112,7 +112,7 @@ QString VehicleCameraControl::boundedNameField(const uint8_t* raw, size_t maxLen
 
     const char* chars = reinterpret_cast<const char*>(raw);
     const qsizetype length = static_cast<qsizetype>(qstrnlen(chars, maxLen));
-    return QString::fromLatin1(chars, length);
+    return QString::fromUtf8(chars, length);
 }
 
 QString VehicleCameraControl::pathSafeNameToken(const QString& name)
