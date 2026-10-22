@@ -178,7 +178,7 @@ void PlanManager::_ackTimeout(void)
         break;
     case AckMissionCount:
         // MISSION_COUNT message expected
-        if (_retryCount > _maxRetryCount) {
+        if (_retryCount >= _maxRetryCount) {
             _sendError(MaxRetryExceeded, tr("Mission request list failed, maximum retries exceeded."));
             _finishTransaction(false);
         } else {
@@ -189,7 +189,7 @@ void PlanManager::_ackTimeout(void)
         break;
     case AckMissionItem:
         // MISSION_ITEM expected
-        if (_retryCount > _maxRetryCount) {
+        if (_retryCount >= _maxRetryCount) {
             _sendError(MaxRetryExceeded, tr("Mission read failed, maximum retries exceeded."));
             _finishTransaction(false);
         } else {
@@ -201,12 +201,25 @@ void PlanManager::_ackTimeout(void)
     case AckMissionRequest:
         // MISSION_REQUEST is expected, or MISSION_ACK to end sequence
         if (_itemIndicesToWrite.count() == 0) {
-            // Vehicle did not send final MISSION_ACK at end of sequence
-            _sendError(ProtocolError, tr("Mission write failed, vehicle failed to send final ack."));
-            _finishTransaction(false);
+            if (_writeMissionItems.isEmpty() || _planType != MAV_MISSION_TYPE_MISSION) {
+                // Nothing to resend for an empty mission. For fence and rally PX4 can answer a resent last item
+                // with a success ack even though storing the plan failed, so don't recover those.
+                _sendError(ProtocolError, tr("Mission write failed, vehicle failed to send final ack."));
+                _finishTransaction(false);
+            } else if (_retryCount >= _maxRetryCount) {
+                _sendError(MaxRetryExceeded, tr("Mission write failed, maximum retries exceeded waiting for final ack."));
+                _finishTransaction(false);
+            } else {
+                // The vehicle may have stored the mission and only the ack was lost. PX4 answers a resent last
+                // item with another ack. The vehicle only recognizes the last item as the duplicate, so resend
+                // that one rather than the last item it happened to request.
+                _retryCount++;
+                qCDebug(PlanManagerLog) << QStringLiteral("Retrying %1 final ack by resending last item, retry Count").arg(_planTypeString()) << _retryCount;
+                _sendMissionItem(_writeMissionItems.count() - 1);
+            }
         } else if (_itemIndicesToWrite[0] == 0) {
             // Vehicle did not respond to MISSION_COUNT, try again
-            if (_retryCount > _maxRetryCount) {
+            if (_retryCount >= _maxRetryCount) {
                 _sendError(MaxRetryExceeded, tr("Mission write mission count failed, maximum retries exceeded."));
                 _finishTransaction(false);
             } else {
@@ -223,7 +236,7 @@ void PlanManager::_ackTimeout(void)
         break;
     case AckMissionClearAll:
         // MISSION_ACK expected
-        if (_retryCount > _maxRetryCount) {
+        if (_retryCount >= _maxRetryCount) {
             _sendError(MaxRetryExceeded, tr("Mission remove all, maximum retries exceeded."));
             _finishTransaction(false);
         } else {
@@ -519,6 +532,9 @@ void PlanManager::_handleMissionRequest(const mavlink_message_t& message)
 
     emit progressPctChanged((double)missionRequestSeq / (double)_writeMissionItems.count());
 
+    // The vehicle is requesting items, so retries spent on MISSION_COUNT must not count against the final ack.
+    _retryCount = 0;
+
     _lastMissionRequest = missionRequestSeq;
     if (!_itemIndicesToWrite.contains(missionRequestSeq)) {
         qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionRequest %1 sequence number requested which has already been sent, sending again:").arg(_planTypeString()) << missionRequestSeq;
@@ -526,8 +542,16 @@ void PlanManager::_handleMissionRequest(const mavlink_message_t& message)
         _itemIndicesToWrite.removeOne(missionRequestSeq);
     }
 
-    MissionItem* item = _writeMissionItems[missionRequestSeq];
-    qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionRequest %1 sequenceNumber:command").arg(_planTypeString()) << missionRequestSeq << item->command();
+    _sendMissionItem(missionRequestSeq);
+}
+
+/// Sends a single mission item to the vehicle as part of a write transaction and (re-)starts the ack timeout.
+/// Used both for the initial send in response to MISSION_REQUEST(_INT), and to resend the last item if the
+/// final MISSION_ACK times out (the vehicle may have stored it but the ack got dropped on the way back).
+void PlanManager::_sendMissionItem(int seq)
+{
+    MissionItem* item = _writeMissionItems[seq];
+    qCDebug(PlanManagerLog) << QStringLiteral("_sendMissionItem %1 sequenceNumber:command").arg(_planTypeString()) << seq << item->command();
 
     SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
     if (sharedLink) {
@@ -539,10 +563,10 @@ void PlanManager::_handleMissionRequest(const mavlink_message_t& message)
                                                &messageOut,
                                                _vehicle->id(),
                                                MAV_COMP_ID_AUTOPILOT1,
-                                               missionRequestSeq,
+                                               seq,
                                                item->frame(),
                                                item->command(),
-                                               missionRequestSeq == 0,
+                                               seq == 0,
                                                item->autoContinue(),
                                                item->param1(),
                                                item->param2(),
@@ -618,6 +642,11 @@ void PlanManager::_handleMissionAck(const mavlink_message_t& message)
                 _sendError(VehicleAckError, _missionResultToString((MAV_MISSION_RESULT)missionAck.type));
                 _finishTransaction(false);
             }
+        } else if (_itemIndicesToWrite.count() == 0 && _retryCount > 0 && missionAck.type == MAV_MISSION_ERROR) {
+            // ArduPilot rejects the resent last item once its upload is complete, so this error says nothing
+            // about the mission itself, which may well have been stored.
+            _sendError(ProtocolError, tr("Mission write could not be confirmed, the vehicle never acknowledged the final item. The mission may have been uploaded, load it from the vehicle to verify."));
+            _finishTransaction(false);
         } else {
             _sendError(VehicleAckError, _missionResultToString((MAV_MISSION_RESULT)missionAck.type));
             _finishTransaction(false);
