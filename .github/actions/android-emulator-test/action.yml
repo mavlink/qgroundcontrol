@@ -32,8 +32,12 @@ runs:
         sudo udevadm control --reload-rules
         sudo udevadm trigger --name-match=kvm
 
+    # The runner executes each script line through sh -c, so inputs reach it as environment variables
     - name: Emulator Boot Test
       uses: reactivecircus/android-emulator-runner@v2
+      env:
+        APK_PATH: ${{ inputs.apk-path }}
+        APP_PACKAGE: ${{ inputs.package }}
       with:
         api-level: ${{ inputs.android-platform }}
         system-image-api-level: ${{ inputs.android-platform }}
@@ -54,9 +58,9 @@ runs:
 
           timeout 180s adb wait-for-device || (echo "::error::adb wait-for-device timed out before boot test." && exit 1)
 
-          python3 .github/scripts/android_boot_test.py --apk "${{ inputs.apk-path }}" --package ${{ inputs.package }}
+          python3 .github/scripts/android_boot_test.py --apk "$APK_PATH" --package "$APP_PACKAGE"
           --timeout 120 --stability-window 20 --adb-ready-timeout 180 --install-retries 4 --install-retry-delay 5
-          --launch-retries 2 --log-output /tmp/qgc_emulator_boot.log
+          --launch-retries 2 --log-output "$RUNNER_TEMP/qgc_emulator_boot.log"
 
     - name: Collect Emulator Diagnostics
       if: failure()
@@ -67,7 +71,7 @@ runs:
         python3 "${GITHUB_WORKSPACE}/.github/scripts/android_collect_diagnostics.py" \
           --out-dir "${RUNNER_TEMP}/emulator-diagnostics" \
           --build-dir "${BUILD_DIR}" \
-          --boot-log /tmp/qgc_emulator_boot.log
+          --boot-log "${RUNNER_TEMP}/qgc_emulator_boot.log"
         ls -la "${RUNNER_TEMP}/emulator-diagnostics" || true
 
     - name: Upload Emulator Diagnostics
