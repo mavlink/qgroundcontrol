@@ -106,7 +106,9 @@ standard RunsOn runner. See the [runner image guide](runner-images/README.md) fo
 activation, rebuild cadence, and the organization-level warm-pool example.
 The Windows builder uses RunsOn's `windows25-full-x64` image because `windows22-full-x64` ships
 without Visual Studio. The dependency installer skips Visual Studio Build Tools when one existing
-instance already provides every required MSVC component.
+instance already provides every required MSVC component. That image itself takes about 75 GB, so
+the builder's volume is 150 GB. `windows.yml` repeats the volume as a job label, because RunsOn reads
+`.github/runs-on.yml` only from the default branch.
 
 ### Release tags
 

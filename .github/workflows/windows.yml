@@ -59,13 +59,15 @@ jobs:
       matrix:
         build_type: ['${{ inputs.build_type || ''Release'' }}']
         variant: [amd64, arm64, arm64-cross]
+        # volume repeats .github/runs-on.yml's windows-x64-builder volume: RunsOn reads that file from
+        # master only, so a PR changing it would otherwise build on the old disk. Pools ignore the label.
         include:
           - variant: amd64
             runs_on: >-
               ${{ github.repository_owner == 'mavlink' &&
                   format('runs-on={0}/{1}', github.run_id,
                     vars.RUNS_ON_WINDOWS_POOL != '' && format('pool={0}', vars.RUNS_ON_WINDOWS_POOL) ||
-                    'runner=windows-x64-builder') || 'windows-2022' }}
+                    'runner=windows-x64-builder/volume=150gb') || 'windows-2022' }}
             host: windows
             arch: win64_msvc2022_64
             preset: Windows
@@ -85,7 +87,7 @@ jobs:
               ${{ github.repository_owner == 'mavlink' &&
                   format('runs-on={0}/{1}', github.run_id,
                     vars.RUNS_ON_WINDOWS_POOL != '' && format('pool={0}', vars.RUNS_ON_WINDOWS_POOL) ||
-                    'runner=windows-x64-builder') || 'windows-2022' }}
+                    'runner=windows-x64-builder/volume=150gb') || 'windows-2022' }}
             host: windows
             arch: win64_msvc2022_arm64_cross_compiled
             preset: Windows-arm64

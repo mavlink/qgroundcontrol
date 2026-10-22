@@ -84,4 +84,6 @@ runners:
     spot: false
     image: windows25-full-x64
     extras: s3-cache
-    volume: 100gb
+    # The image itself uses about 75 GB; this leaves room for the Release build.
+    # windows.yml repeats the volume as a job label, because public repositories only read this file from master.
+    volume: 150gb

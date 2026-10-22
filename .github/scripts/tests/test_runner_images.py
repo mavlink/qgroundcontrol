@@ -129,8 +129,12 @@ def test_vagrant_cleanup_requires_attempted_startup_and_surfaces_errors() -> Non
 def test_workflows_use_central_runner_definitions(workflow: str) -> None:
     text = _read(f".github/workflows/{workflow}")
     assert "runner=" in text
-    assert not re.search(r"/(?:family|cpu|ram|spot|image|volume|extras|nested-virt)=", text)
     configured = _load_yaml(".github/runs-on.yml")["runners"]
+    if workflow == "windows.yml":
+        # RunsOn reads runs-on.yml from the default branch only, so the Windows builder repeats its
+        # volume as a label to apply in PRs; any other value or shape label still fails below.
+        text = text.replace(f"/volume={configured['windows-x64-builder']['volume']}", "")
+    assert not re.search(r"/(?:family|cpu|ram|spot|image|volume|extras|nested-virt)=", text)
     references = re.findall(r"(?:linux|windows)-(?:x64|arm64)-[\w-]+", text)
     for pool in references:
         assert pool in configured
