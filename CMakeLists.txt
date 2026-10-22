@@ -214,10 +214,11 @@ set(CMAKE_POLICY_DEFAULT_CMP0141 NEW)
 cmake_policy(SET CMP0075 NEW)
 set(CMAKE_POLICY_DEFAULT_CMP0075 NEW)
 
-# CMP0194: MSVC is not an assembler for language ASM (zstd)
+# CMP0194: zstd enables ASM unconditionally but adds no assembler sources under MSVC; OLD lets cl
+# stand in instead of failing on runner images without a GNU assembler on PATH
 if(POLICY CMP0194)
-    cmake_policy(SET CMP0194 NEW)
-    set(CMAKE_POLICY_DEFAULT_CMP0194 NEW)
+    cmake_policy(SET CMP0194 OLD)
+    set(CMAKE_POLICY_DEFAULT_CMP0194 OLD)
 endif()
 
 # ============================================================================
