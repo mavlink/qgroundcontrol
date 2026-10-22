@@ -171,9 +171,9 @@ bool ToolbarIndicatorUITest::_exerciseIndicator(QQuickItem *indicatorItem, const
     }
 
     // 1. Click the indicator — verify the drawer opens
-    const QPointF indicatorCenter = indicatorItem->mapToScene(
-        QPointF(indicatorItem->width() / 2.0, indicatorItem->height() / 2.0));
-    QTest::mouseClick(_window, Qt::LeftButton, Qt::NoModifier, indicatorCenter.toPoint());
+    if (!_clickItemAt(indicatorItem, 0.5, 0.5, indicatorName)) {
+        return false;
+    }
 
     if (!findVisibleItem(_rootItem, QStringLiteral("indicatorDrawerLoader"), 2000)) {
         qWarning() << indicatorName << ": drawer did not open after clicking indicator";
@@ -190,9 +190,9 @@ bool ToolbarIndicatorUITest::_exerciseIndicator(QQuickItem *indicatorItem, const
             qWarning() << indicatorName << ": expand button not found but was expected";
             return false;
         }
-        const QPointF expandCenter = expandBtn->mapToScene(
-            QPointF(expandBtn->width() / 2.0, expandBtn->height() / 2.0));
-        QTest::mouseClick(_window, Qt::LeftButton, Qt::NoModifier, expandCenter.toPoint());
+        if (!_clickItemAt(expandBtn, 0.5, 0.5, QStringLiteral("indicatorDrawerExpandButton"))) {
+            return false;
+        }
         QTest::qWait(_pageDelay);
 
         if (!findVisibleItem(_rootItem, QStringLiteral("indicatorExpandedLoader"), 2000)) {
