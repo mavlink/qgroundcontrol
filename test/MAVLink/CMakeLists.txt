@@ -4,21 +4,22 @@
 # ============================================================================
 
 target_sources(
-    ${CMAKE_PROJECT_NAME}
-    PRIVATE HealthAndArmingCheckReportTest.cc
-            HealthAndArmingCheckReportTest.h
-            ImageProtocolManagerTest.cc
-            ImageProtocolManagerTest.h
-            MAVLinkEnumsQmlTest.cc
-            MAVLinkEnumsQmlTest.h
-            MAVLinkStreamConfigTest.cc
-            MAVLinkStreamConfigTest.h
-            QGCMAVLinkTest.cc
-            QGCMAVLinkTest.h
-            StatusTextHandlerTest.cc
-            StatusTextHandlerTest.h
-            SysStatusSensorInfoTest.cc
-            SysStatusSensorInfoTest.h
+    QGCUnitTests
+    PRIVATE
+        HealthAndArmingCheckReportTest.cc
+        HealthAndArmingCheckReportTest.h
+        ImageProtocolManagerTest.cc
+        ImageProtocolManagerTest.h
+        MAVLinkEnumsQmlTest.cc
+        MAVLinkEnumsQmlTest.h
+        MAVLinkStreamConfigTest.cc
+        MAVLinkStreamConfigTest.h
+        QGCMAVLinkTest.cc
+        QGCMAVLinkTest.h
+        StatusTextHandlerTest.cc
+        StatusTextHandlerTest.h
+        SysStatusSensorInfoTest.cc
+        SysStatusSensorInfoTest.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

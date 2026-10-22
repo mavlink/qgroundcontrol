@@ -3,20 +3,23 @@
 
 add_subdirectory(Category)
 
-qt_add_library(QGCLogging STATIC
+qt_add_library(
+    QGCLogging STATIC
     QGCLoggingCategoryManager.cc
     QGCLoggingCategoryManager.h
     LoggingCategoryModel.cc
     LoggingCategoryModel.h
 )
 
-qt_add_qml_module(QGCLogging
+qt_add_qml_module(
+    QGCLogging
     URI QGroundControl.Logging
     VERSION 1.0
     RESOURCE_PREFIX /qml
 )
 
-target_link_libraries(QGCLogging
+target_link_libraries(
+    QGCLogging
     PUBLIC
         QGCLoggingCategory
         Qt6::Core
@@ -25,12 +28,5 @@ target_link_libraries(QGCLogging
 )
 
 target_include_directories(QGCLogging PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-
-target_precompile_headers(QGCLogging PRIVATE
-    <QtCore/QObject>
-    <QtCore/QString>
-    <QtCore/QLoggingCategory>
-    <QtQmlIntegration/QtQmlIntegration>
-)
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCLogging)

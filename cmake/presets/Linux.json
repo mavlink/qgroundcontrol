@@ -27,6 +27,16 @@
       "binaryDir": "${sourceDir}/build/Linux-debug"
     },
     {
+      "name": "Linux-clang-debug",
+      "displayName": "Linux Debug (Clang)",
+      "inherits": ["debug", "linux-base"],
+      "binaryDir": "${sourceDir}/build/Linux-clang-debug",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++"
+      }
+    },
+    {
       "name": "Linux-relwithdebinfo",
       "displayName": "Linux RelWithDebInfo",
       "inherits": ["relwithdebinfo", "linux-base"],
@@ -78,6 +88,7 @@
   "buildPresets": [
     { "name": "Linux", "configurePreset": "Linux", "inherits": ["build-defaults"] },
     { "name": "Linux-debug", "configurePreset": "Linux-debug", "inherits": ["build-defaults"] },
+    { "name": "Linux-clang-debug", "configurePreset": "Linux-clang-debug", "inherits": ["build-defaults"] },
     { "name": "Linux-relwithdebinfo", "configurePreset": "Linux-relwithdebinfo", "inherits": ["build-defaults"] },
     { "name": "Linux-coverage", "configurePreset": "Linux-coverage", "inherits": ["build-defaults"] },
     { "name": "Linux-arm64", "configurePreset": "Linux-arm64", "inherits": ["build-defaults"] },
@@ -87,6 +98,7 @@
   ],
   "testPresets": [
     { "name": "Linux-debug", "configurePreset": "Linux-debug", "inherits": ["test-defaults"] },
+    { "name": "Linux-clang-debug", "configurePreset": "Linux-clang-debug", "inherits": ["test-defaults"] },
     { "name": "Linux-coverage", "configurePreset": "Linux-coverage", "inherits": ["test-defaults"] }
   ],
   "packagePresets": [
@@ -136,6 +148,14 @@
         { "type": "configure", "name": "Linux-debug" },
         { "type": "build", "name": "Linux-debug" },
         { "type": "test", "name": "Linux-debug" }
+      ]
+    },
+    {
+      "name": "Linux-clang-debug",
+      "steps": [
+        { "type": "configure", "name": "Linux-clang-debug" },
+        { "type": "build", "name": "Linux-clang-debug" },
+        { "type": "test", "name": "Linux-clang-debug" }
       ]
     },
     {

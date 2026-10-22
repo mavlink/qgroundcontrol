@@ -3,7 +3,8 @@
 # Tests for tile cache database operations
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(
+    QGCUnitTests
     PRIVATE
         MapProviderTest.cc
         MapProviderTest.h

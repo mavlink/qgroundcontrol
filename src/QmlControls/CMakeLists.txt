@@ -3,7 +3,8 @@
 # Reusable QML UI controls and controllers
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(
+    ${CMAKE_PROJECT_NAME}
     PRIVATE
         ColoredSvgImageProvider.cc
         ColoredSvgImageProvider.h
@@ -77,6 +78,15 @@ target_sources(${CMAKE_PROJECT_NAME}
         ServoOutputMonitorController.h
 )
 
+# Shares file-local helper names with QmlObjectListModel.cc, so it cannot share a unity unit.
+set_source_files_properties(
+    QmlObjectTreeModel.cc
+    TARGET_DIRECTORY
+    ${CMAKE_PROJECT_NAME}
+    PROPERTIES
+        SKIP_UNITY_BUILD_INCLUSION ON
+)
+
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 # ----------------------------------------------------------------------------
@@ -84,11 +94,14 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 # ----------------------------------------------------------------------------
 qt_add_library(QGroundControlControlsModule STATIC)
 
-set_source_files_properties(ScreenTools.qml PROPERTIES
-    QT_QML_SINGLETON_TYPE TRUE
+set_source_files_properties(
+    ScreenTools.qml
+    PROPERTIES
+        QT_QML_SINGLETON_TYPE TRUE
 )
 
-qt_add_qml_module(QGroundControlControlsModule
+qt_add_qml_module(
+    QGroundControlControlsModule
     URI QGroundControl.Controls
     VERSION 1.0
     RESOURCE_PREFIX /qml
@@ -193,13 +206,11 @@ qt_add_qml_module(QGroundControlControlsModule
         ValueSlider.qml
         VehicleRotationCal.qml
         VehicleSummaryRow.qml
-
-# NOTE: ScreenTools.qml is declared here because CMake's
-# set_source_files_properties() has directory scope. The QT_QML_SINGLETON_TYPE
-# property must be visible in the same CMakeLists.txt that calls
-# qt_add_qml_module(). On Windows this cross-directory property propagation
-# fails, so this file is kept in this module until a better solution is available.
-
+        # NOTE: ScreenTools.qml is declared here because CMake's
+        # set_source_files_properties() has directory scope. The QT_QML_SINGLETON_TYPE
+        # property must be visible in the same CMakeLists.txt that calls
+        # qt_add_qml_module(). On Windows this cross-directory property propagation
+        # fails, so this file is kept in this module until a better solution is available.
         ScreenTools.qml
     NO_PLUGIN
 )
@@ -209,7 +220,8 @@ qt_add_qml_module(QGroundControlControlsModule
 # ----------------------------------------------------------------------------
 qgc_add_json_resources(json_controls)
 
-qt_add_resources(QGroundControlControlsModule qmlcontrols_resources
+qt_add_resources(
+    QGroundControlControlsModule qmlcontrols_resources
     PREFIX "/res"
     BASE "${CMAKE_SOURCE_DIR}/resources"
     FILES
@@ -224,10 +236,14 @@ qt_add_resources(QGroundControlControlsModule qmlcontrols_resources
 )
 
 # subMenuButtonImage.png aliases the shared CogWheels.png at the repo root.
-set_source_files_properties("${CMAKE_SOURCE_DIR}/resources/CogWheels.png"
-    PROPERTIES QT_RESOURCE_ALIAS "subMenuButtonImage.png")
+set_source_files_properties(
+    "${CMAKE_SOURCE_DIR}/resources/CogWheels.png"
+    PROPERTIES
+        QT_RESOURCE_ALIAS "subMenuButtonImage.png"
+)
 
-qt_add_resources(QGroundControlControlsModule qmlcontrols_qmlimages
+qt_add_resources(
+    QGroundControlControlsModule qmlcontrols_qmlimages
     PREFIX "/qmlimages"
     BASE "${CMAKE_CURRENT_SOURCE_DIR}"
     FILES
@@ -238,11 +254,11 @@ qt_add_resources(QGroundControlControlsModule qmlcontrols_qmlimages
 
 # Globbed because FactValueGrid enumerates :/InstrumentValueIcons/ at runtime
 # to build the icon picker — every SVG in the directory must be embedded.
-file(GLOB INSTRUMENT_VALUE_ICONS CONFIGURE_DEPENDS
-    "${CMAKE_SOURCE_DIR}/resources/InstrumentValueIcons/*.svg"
-)
-qt_add_resources(QGroundControlControlsModule instrument_value_icons
+file(GLOB INSTRUMENT_VALUE_ICONS CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/resources/InstrumentValueIcons/*.svg")
+qt_add_resources(
+    QGroundControlControlsModule instrument_value_icons
     PREFIX "/InstrumentValueIcons"
     BASE "${CMAKE_SOURCE_DIR}/resources/InstrumentValueIcons"
-    FILES ${INSTRUMENT_VALUE_ICONS}
+    FILES
+        ${INSTRUMENT_VALUE_ICONS}
 )

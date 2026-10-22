@@ -57,7 +57,7 @@ option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
 option(QGC_STABLE_BUILD "Stable release build (disables daily build features)" OFF)
 option(QGC_USE_CACHE "Enable compiler caching (ccache/sccache)" ON)
 option(QGC_USE_MOCCACHE "Cache moc output across clean builds" ON)
-option(QGC_UNITY_BUILD "Enable unity builds for faster compilation" OFF)
+option(QGC_UNITY_BUILD "Enable unity builds of QGC targets (third-party sources stay per-file)" OFF)
 option(QGC_BUILD_INSTALLER "Build platform installers/packages" ON)
 option(QGC_ENABLE_WERROR "Treat compiler warnings as errors for QGC source code" ON)
 
@@ -75,8 +75,9 @@ option(QGC_ENABLE_COVERAGE "Enable code coverage instrumentation" OFF)
 unset(_qgc_debug_build)
 option(QGC_ENABLE_CLANG_TIDY "Enable clang-tidy static analysis during build" OFF)
 option(QGC_TIME_TRACE "Emit per-TU Clang -ftime-trace JSON for build profiling (Clang only)" OFF)
-option(QGC_SPLIT_DWARF
-       "Use -gsplit-dwarf + --gdb-index for faster Debug links (Linux/Android ELF only; marginal win with mold)" OFF
+option(
+    QGC_SPLIT_DWARF
+    "Use -gsplit-dwarf + --gdb-index for faster Debug links (Linux/Android ELF only; marginal win with mold)" OFF
 )
 
 # Git options
@@ -131,8 +132,9 @@ set(QGC_GST_CUDA_STUB_DIR
     ""
     CACHE PATH "Linux: directory with a cuda.h for the CUDA GPU path when no CUDA Toolkit is installed"
 )
-option(QGC_GST_BUNDLE_PLUGINS
-       "Linux: install the system's GStreamer plugins and GIO modules with the app (OFF for distribution packages)" ON
+option(
+    QGC_GST_BUNDLE_PLUGINS
+    "Linux: install the system's GStreamer plugins and GIO modules with the app (OFF for distribution packages)" ON
 )
 option(QGC_GST_USE_HOMEBREW "macOS: build against Homebrew's gstreamer (cannot be installed or packaged)" OFF)
 
@@ -293,8 +295,9 @@ elseif(QGC_LINUX_DISTRO_FAMILY STREQUAL "arch")
 endif()
 
 option(QGC_CREATE_APPIMAGE "Create AppImage package after build" ON)
-option(QGC_RUN_APPIMAGELINT "Run the appimagelint distro-compatibility check after AppImage creation"
-       ${_qgc_appimagelint_default}
+option(
+    QGC_RUN_APPIMAGELINT "Run the appimagelint distro-compatibility check after AppImage creation"
+    ${_qgc_appimagelint_default}
 )
 set(QGC_APPIMAGE_ICON_256_PATH
     "${CMAKE_SOURCE_DIR}/deploy/linux/QGroundControl_256.png"

@@ -3,7 +3,8 @@
 # Tests for ExifUtility (metadata reading/writing using libexif)
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(
+    QGCUnitTests
     PRIVATE
         ExifUtilityTest.cc
         ExifUtilityTest.h

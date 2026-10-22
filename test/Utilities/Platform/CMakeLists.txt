@@ -3,7 +3,8 @@
 # Tests for platform safety checks and environment setup
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(
+    QGCUnitTests
     PRIVATE
         PlatformTest.cc
         PlatformTest.h
@@ -11,7 +12,8 @@ target_sources(${CMAKE_PROJECT_NAME}
 
 # RunGuard and SignalHandler only available on desktop platforms
 if(NOT ANDROID AND NOT IOS)
-    target_sources(${CMAKE_PROJECT_NAME}
+    target_sources(
+        QGCUnitTests
         PRIVATE
             RunGuardTest.cc
             RunGuardTest.h

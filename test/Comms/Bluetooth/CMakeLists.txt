@@ -3,7 +3,8 @@
 # Hardware-backed and unit tests for Bluetooth configuration/workers
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(
+    QGCUnitTests
     PRIVATE
         BluetoothConfigurationTest.cc
         BluetoothConfigurationTest.h

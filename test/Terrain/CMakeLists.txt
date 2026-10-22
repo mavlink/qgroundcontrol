@@ -3,7 +3,8 @@
 # Tests for terrain elevation data and tile management
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(
+    QGCUnitTests
     PRIVATE
         TerrainQueryTest.cc
         TerrainQueryTest.h

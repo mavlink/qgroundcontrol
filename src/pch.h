@@ -1,5 +1,8 @@
 #pragma once
 
+// Stable third-party headers only (MAVLinkLib.h wraps generated MAVLink). Editing any header in this
+// closure rebuilds every QGroundControl object.
+
 // STL
 #include <atomic>
 #include <functional>

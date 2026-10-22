@@ -6,7 +6,8 @@
 # ----------------------------------------------------------------------------
 # Root-level tests
 # ----------------------------------------------------------------------------
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(
+    QGCUnitTests
     PRIVATE
         QGCStateMachineTest.cc
         QGCStateMachineTest.h
@@ -17,7 +18,8 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 # ----------------------------------------------------------------------------
 # Helper Tests
 # ----------------------------------------------------------------------------
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(
+    QGCUnitTests
     PRIVATE
         Helpers/ErrorRecoveryBuilderTest.cc
         Helpers/ErrorRecoveryBuilderTest.h
@@ -32,7 +34,8 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 # ----------------------------------------------------------------------------
 # State Tests
 # ----------------------------------------------------------------------------
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(
+    QGCUnitTests
     PRIVATE
         states/StateTestCommon.h
         states/FunctionStateTest.cc
@@ -84,7 +87,8 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 # ----------------------------------------------------------------------------
 # Transition Tests
 # ----------------------------------------------------------------------------
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(
+    QGCUnitTests
     PRIVATE
         transitions/TransitionTestCommon.cc
         transitions/TransitionTestCommon.h

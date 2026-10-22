@@ -3,7 +3,8 @@
 # Tests for JsonParsing validation and file parsing helpers
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(
+    QGCUnitTests
     PRIVATE
         JsonHelperTest.cc
         JsonHelperTest.h

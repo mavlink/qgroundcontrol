@@ -3,7 +3,8 @@
 # Tests for DataFlashUtility (general-purpose DataFlash parsing)
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(
+    QGCUnitTests
     PRIVATE
         APMDataFlashUtilityTest.cc
         APMDataFlashUtilityTest.h

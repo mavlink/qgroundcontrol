@@ -3,7 +3,8 @@
 # Tests for PX4ULogUtility (PX4 ULog parsing)
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(
+    QGCUnitTests
     PRIVATE
         PX4ULogUtilityTest.cc
         PX4ULogUtilityTest.h

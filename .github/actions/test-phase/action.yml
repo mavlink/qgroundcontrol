@@ -12,7 +12,7 @@ inputs:
     description: Unit test parallelism
   integration-parallel:
     default: '2'
-    description: Integration test parallelism; CTest resource locks remain enforced
+    description: Integration test parallelism (auto uses one process per CPU); CTest resource locks remain enforced
   exclude-labels:
     default: 'Flaky|Network'
     description: Excluded CTest labels

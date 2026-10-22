@@ -16,7 +16,11 @@ function(qgc_set_qt_resource_alias)
             continue()
         endif()
         get_filename_component(alias "${resource_file}" NAME)
-        set_source_files_properties("${resource_file}" PROPERTIES QT_RESOURCE_ALIAS "${alias}")
+        set_source_files_properties(
+            "${resource_file}"
+            PROPERTIES
+                QT_RESOURCE_ALIAS "${alias}"
+        )
     endforeach()
 endfunction()
 
@@ -73,8 +77,9 @@ function(qgc_config_caching)
             set(_ccache_conf "${CMAKE_SOURCE_DIR}/tools/configs/ccache.conf")
             if(CMAKE_HOST_WIN32)
                 set(_ccache_wrapper "${CMAKE_BINARY_DIR}/ccache-launcher.cmd")
-                configure_file("${CMAKE_CURRENT_FUNCTION_LIST_DIR}/ccache-launcher.cmd.in" "${_ccache_wrapper}" @ONLY
-                               NEWLINE_STYLE DOS
+                configure_file(
+                    "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/ccache-launcher.cmd.in" "${_ccache_wrapper}" @ONLY
+                    NEWLINE_STYLE DOS
                 )
                 set(_cache_launcher "${_ccache_wrapper}")
                 # Batch launchers have cmd.exe's 8191-character limit, below Ninja's native Windows limit.
@@ -92,6 +97,18 @@ function(qgc_config_caching)
                 endif()
                 string(APPEND _wrapper "export CCACHE_DIR=\"\${CCACHE_DIR:-${CMAKE_SOURCE_DIR}/.ccache}\"\n")
                 string(APPEND _wrapper "export CCACHE_BASEDIR=\"\${CCACHE_BASEDIR:-${CMAKE_SOURCE_DIR}}\"\n")
+                # Delete a header compile's output (the PCH) before regenerating it: ccache otherwise hashes the
+                # stale PCH beside the -include'd header as an input, so a regenerated PCH never hits and every
+                # object using it misses.
+                string(
+                    APPEND
+                    _wrapper
+                    [=[
+case " $* " in *" -x c++-header "*|*" -x c-header "*)
+    _prev=; for _arg; do [ "$_prev" = -o ] && rm -f "$_arg"; _prev=$_arg; done ;;
+esac
+]=]
+                )
                 string(APPEND _wrapper "exec \"${QGC_CACHE_PROGRAM}\" \"$@\"\n")
                 _qgc_write_if_changed("${_ccache_wrapper}" "${_wrapper}")
                 # cmakelang 0.6.13 does not recognize file(CHMOD).
@@ -128,9 +145,10 @@ function(qgc_config_caching)
         # set(CMAKE_C_LINKER_LAUNCHER "${QGC_CACHE_PROGRAM}" CACHE STRING "C linker cache")
         # set(CMAKE_CXX_LINKER_LAUNCHER "${QGC_CACHE_PROGRAM}" CACHE STRING "CXX linker cache")
 
-        if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-            add_compile_options(-Xclang -fno-pch-timestamp)
-        endif()
+        # This runs before project(), so the compiler is only known at generation time. Without the flag, Clang
+        # records header mtimes in the PCH and ccache rejects it after a fresh checkout or MAVLink regeneration.
+        set(_clang_compile "$<AND:$<COMPILE_LANGUAGE:C,CXX,OBJC,OBJCXX>,$<CXX_COMPILER_ID:AppleClang,Clang>>")
+        add_compile_options("$<${_clang_compile}:SHELL:-Xclang -fno-pch-timestamp>")
     else()
         message(WARNING "QGC: No ccache/sccache found - building without a compiler cache")
     endif()
@@ -160,8 +178,8 @@ function(_qgc_write_moccache_stats_script python moccache_py out_var)
         string(APPEND _body "[ -n \"\${MOCCACHE_STATS}\" ] || exit 0\n")
         string(APPEND _body "export MOCCACHE_DIR=\"\${MOCCACHE_DIR:-${_default_dir}}\"\n")
         string(APPEND _body "export MOCCACHE_BASEDIR=\"\${MOCCACHE_BASEDIR:-${CMAKE_BINARY_DIR}}\"\n")
-        string(APPEND _body
-               "\"${python}\" \"${moccache_py}\" --show-stats --build-dir \"${CMAKE_BINARY_DIR}\" || true\n"
+        string(
+            APPEND _body "\"${python}\" \"${moccache_py}\" --show-stats --build-dir \"${CMAKE_BINARY_DIR}\" || true\n"
         )
         _qgc_write_if_changed("${_script}" "${_body}")
         # cmakelang 0.6.13 does not recognize file(CHMOD).
@@ -254,8 +272,8 @@ function(qgc_config_moccache)
     if(CMAKE_HOST_WIN32)
         set(_moccache_wrapper "${CMAKE_BINARY_DIR}/moccache-launcher.cmd")
         set(_wrapper "@echo off\r\nsetlocal\r\n")
-        string(APPEND _wrapper
-               "if not defined MOCCACHE_DIR set \"MOCCACHE_DIR=${CMAKE_SOURCE_DIR}/.cache/moccache\"\r\n"
+        string(
+            APPEND _wrapper "if not defined MOCCACHE_DIR set \"MOCCACHE_DIR=${CMAKE_SOURCE_DIR}/.cache/moccache\"\r\n"
         )
         string(APPEND _wrapper "if not defined MOCCACHE_BASEDIR set \"MOCCACHE_BASEDIR=${CMAKE_BINARY_DIR}\"\r\n")
         string(APPEND _wrapper "if not defined MOCCACHE_MAX_SIZE set \"MOCCACHE_MAX_SIZE=256M\"\r\n")
@@ -268,8 +286,8 @@ function(qgc_config_moccache)
         string(APPEND _wrapper "export MOCCACHE_DIR=\"\${MOCCACHE_DIR:-${CMAKE_SOURCE_DIR}/.cache/moccache}\"\n")
         string(APPEND _wrapper "export MOCCACHE_BASEDIR=\"\${MOCCACHE_BASEDIR:-${CMAKE_BINARY_DIR}}\"\n")
         string(APPEND _wrapper "export MOCCACHE_MAX_SIZE=\"\${MOCCACHE_MAX_SIZE:-256M}\"\n")
-        string(APPEND _wrapper
-               "exec \"${QGC_MOCCACHE_PYTHON}\" \"${_moccache_py}\" --real-moc \"${_real_moc}\" \"$@\"\n"
+        string(
+            APPEND _wrapper "exec \"${QGC_MOCCACHE_PYTHON}\" \"${_moccache_py}\" --real-moc \"${_real_moc}\" \"$@\"\n"
         )
         _qgc_write_if_changed("${_moccache_wrapper}" "${_wrapper}")
         file(
@@ -349,6 +367,136 @@ function(qgc_apply_moccache)
             COMMENT "moccache stats"
             VERBATIM
         )
+    endif()
+endfunction()
+
+# ----------------------------------------------------------------------------
+# qgc_config_rcc_launcher
+# Routes Qt6::rcc through a launcher that:
+# - pins the file timestamps rcc embeds in generated resources. Otherwise every
+#   fresh checkout changes each qrc_*.cpp and defeats the compiler cache. An
+#   exported QT_RCC_SOURCE_DATE_OVERRIDE or SOURCE_DATE_EPOCH still takes precedence.
+# - lowers rcc's default zstd level from 19 to 9: about 10x faster for ~2% more
+#   resource data. Options a resource passes itself come later and still win.
+# Must be called after find_package(Qt6).
+# ----------------------------------------------------------------------------
+function(qgc_config_rcc_launcher)
+    # cmakelang 0.6.13 does not recognize file(CHMOD).
+    # cmake-lint: disable=E1126
+    if(NOT TARGET Qt6::rcc)
+        return()
+    endif()
+
+    set(_location_properties IMPORTED_LOCATION)
+    get_target_property(_configs Qt6::rcc IMPORTED_CONFIGURATIONS)
+    if(_configs)
+        foreach(_config IN LISTS _configs)
+            list(APPEND _location_properties IMPORTED_LOCATION_${_config})
+        endforeach()
+    endif()
+
+    if(CMAKE_HOST_WIN32)
+        set(_launcher "${CMAKE_BINARY_DIR}/rcc-launcher.cmd")
+    else()
+        set(_launcher "${CMAKE_BINARY_DIR}/rcc-launcher")
+    endif()
+
+    set(_real_rcc "")
+    foreach(_property IN LISTS _location_properties)
+        get_target_property(_location Qt6::rcc ${_property})
+        if(_location
+           AND NOT _location STREQUAL _launcher
+           AND EXISTS "${_location}"
+        )
+            set(_real_rcc "${_location}")
+            break()
+        endif()
+    endforeach()
+    if(NOT _real_rcc)
+        message(STATUS "QGC: rcc not found - rcc launcher not used")
+        return()
+    endif()
+
+    # rcc treats 0 as unset; any other fixed value keeps its output byte-identical.
+    set(_epoch 1)
+    # Qt passes --no-zstd, which rejects --compress-algo zstd, when the target QtCore lacks zstd.
+    set(_rcc_args "")
+    if(QT_FEATURE_zstd)
+        set(_rcc_args "--compress-algo zstd --compress 9 ")
+    endif()
+    if(CMAKE_HOST_WIN32)
+        set(_wrapper "@echo off\r\nsetlocal\r\n")
+        string(
+            APPEND _wrapper
+            "if not defined QT_RCC_SOURCE_DATE_OVERRIDE set \"QT_RCC_SOURCE_DATE_OVERRIDE=${_epoch}\"\r\n"
+        )
+        # Started through cmd.exe without a console window (as by AUTOGEN's generate-time
+        # `rcc -h` on CI), rcc shows help and errors in a message box and blocks forever.
+        string(APPEND _wrapper "set \"QT_COMMAND_LINE_PARSER_NO_GUI_MESSAGE_BOXES=1\"\r\n")
+        string(APPEND _wrapper "\"${_real_rcc}\" ${_rcc_args}%*\r\n")
+        string(APPEND _wrapper "exit /b %ERRORLEVEL%\r\n")
+        _qgc_write_if_changed("${_launcher}" "${_wrapper}")
+    else()
+        set(_wrapper "#!/bin/sh\n")
+        string(APPEND _wrapper "export QT_RCC_SOURCE_DATE_OVERRIDE=\"\${QT_RCC_SOURCE_DATE_OVERRIDE:-${_epoch}}\"\n")
+        string(APPEND _wrapper "exec \"${_real_rcc}\" ${_rcc_args}\"$@\"\n")
+        _qgc_write_if_changed("${_launcher}" "${_wrapper}")
+        file(
+            CHMOD
+            "${_launcher}"
+            PERMISSIONS
+            OWNER_READ
+            OWNER_WRITE
+            OWNER_EXECUTE
+            GROUP_READ
+            GROUP_EXECUTE
+            WORLD_READ
+            WORLD_EXECUTE
+        )
+    endif()
+
+    foreach(_property IN LISTS _location_properties)
+        set_property(TARGET Qt6::rcc PROPERTY ${_property} "${_launcher}")
+    endforeach()
+    message(STATUS "QGC: Using rcc launcher (${_real_rcc})")
+endfunction()
+
+# ----------------------------------------------------------------------------
+# qgc_add_big_resources
+# Embeds large files with rcc's two-pass mode: rcc writes the payload straight
+# into a compiled object instead of the compiler parsing a multi-megabyte byte
+# array. Arguments after the resource name are forwarded to qt_add_resources().
+# ----------------------------------------------------------------------------
+function(qgc_add_big_resources target resource_name)
+    qt_add_resources(${target} ${resource_name} BIG_RESOURCES ${ARGN})
+
+    # Qt falls back to ordinary resources where two-pass mode is unsupported (Xcode for iOS).
+    set(_object_library ${target}_${resource_name}_obj)
+    if(NOT TARGET ${_object_library})
+        return()
+    endif()
+
+    # rcc patches the payload into the pass-1 object; LTO objects hold compiler IR instead of that placeholder.
+    set(_properties INTERPROCEDURAL_OPTIMIZATION)
+    foreach(_config IN LISTS CMAKE_CONFIGURATION_TYPES CMAKE_BUILD_TYPE)
+        string(TOUPPER "${_config}" _config)
+        list(APPEND _properties INTERPROCEDURAL_OPTIMIZATION_${_config})
+    endforeach()
+    foreach(_property IN LISTS _properties)
+        set_property(TARGET ${_object_library} PROPERTY ${_property} OFF)
+    endforeach()
+    set_property(TARGET ${_object_library} PROPERTY UNITY_BUILD OFF)
+
+    # Only targets in this directory see the rule for the patched object; Qt adds that link for static libraries.
+    get_target_property(_target_type ${target} TYPE)
+    get_target_property(_target_directory ${target} SOURCE_DIR)
+    if(NOT _target_type STREQUAL "STATIC_LIBRARY" AND NOT _target_directory STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+        add_custom_target(
+            ${target}_${resource_name}_pass2
+            DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/.qt/rcc/qrc_${resource_name}${CMAKE_CXX_OUTPUT_EXTENSION}"
+            COMMENT "Embedding resource ${resource_name}"
+        )
+        add_dependencies(${target} ${target}_${resource_name}_pass2)
     endif()
 endfunction()
 
@@ -512,9 +660,11 @@ function(qgc_require_cpm_added package_name)
 
     set(_added_variable "${package_name}_ADDED")
     if(NOT DEFINED ${_added_variable} OR NOT "${${_added_variable}}")
-        message(FATAL_ERROR "QGC: ${package_name} (required dependency) was not added by CPM. "
-                            "This package must be vendored from source; if QGC_USE_SYSTEM_LIBS or "
-                            "QGC_SYSTEM_LIBS_ONLY resolved it via find_package(), configure without them."
+        message(
+            FATAL_ERROR
+                "QGC: ${package_name} (required dependency) was not added by CPM. "
+                "This package must be vendored from source; if QGC_USE_SYSTEM_LIBS or "
+                "QGC_SYSTEM_LIBS_ONLY resolved it via find_package(), configure without them."
         )
     endif()
 endfunction()
@@ -561,6 +711,7 @@ function(qgc_add_json_resources name)
     qt_add_resources(
         ${CMAKE_PROJECT_NAME} ${name}
         PREFIX "${ARG_PREFIX}"
-        FILES ${_json}
+        FILES
+            ${_json}
     )
 endfunction()

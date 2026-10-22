@@ -22,8 +22,22 @@ include(GStreamer/Orchestrator)
 # QGCGStreamer: one static lib for the self-contained HwBuffers + gstqgc leaf layer (no app deps).
 # PUBLIC usage reqs flow to the app via the link below; facade sources stay app-side (need app headers).
 qt_add_library(QGCGStreamer STATIC)
+# Each element and buffer backend keeps file-local GObject property enums and singletons, so they cannot share a
+# unity unit.
+set_target_properties(
+    QGCGStreamer
+    PROPERTIES
+        UNITY_BUILD OFF
+)
 
-target_link_libraries(QGCGStreamer PUBLIC GStreamer::GStreamer Qt6::Multimedia Qt6::MultimediaPrivate QGCLogging)
+target_link_libraries(
+    QGCGStreamer
+    PUBLIC
+        GStreamer::GStreamer
+        Qt6::Multimedia
+        Qt6::MultimediaPrivate
+        QGCLogging
+)
 
 target_compile_definitions(QGCGStreamer PUBLIC QGC_GST_STREAMING)
 
@@ -55,22 +69,28 @@ endif()
 # MockVideoStreamServer feeds MockLink's synthetic video stream; MockLink is Debug-only
 # (see Comms/MockLink/CMakeLists.txt), so only compile it in Debug to keep it out of release.
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    target_sources(QGCGStreamer PRIVATE MockVideoStreamServer.cc MockVideoStreamServer.h)
+    target_sources(
+        QGCGStreamer
+        PRIVATE
+            MockVideoStreamServer.cc
+            MockVideoStreamServer.h
+    )
 endif()
 
 target_include_directories(
     QGCGStreamer
-    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
-           ${CMAKE_CURRENT_SOURCE_DIR}/gstqgc
-           ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers
-           ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/common
-           ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/dmabuf
-           ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/gl
-           ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/d3d
-           ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/vulkan
-           ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/apple
-           ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/android
-           ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/cuda
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/gstqgc
+        ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers
+        ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/common
+        ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/dmabuf
+        ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/gl
+        ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/d3d
+        ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/vulkan
+        ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/apple
+        ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/android
+        ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/cuda
     PRIVATE ${CMAKE_BINARY_DIR}
 )
 
@@ -95,31 +115,41 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGStreamer)
 # target and inherits QGCGStreamer's PUBLIC deps/defs/includes via the link above.
 target_sources(
     ${CMAKE_PROJECT_NAME}
-    PRIVATE GStreamer.cc
-            GStreamer.h
-            GStreamerEnvironment.cc
-            GStreamerEnvironment.h
-            GStreamerHelpers.cc
-            GStreamerHelpers.h
-            GStreamerLogging.cc
-            GStreamerLogging.h
-            GstScoped.h
-            GstSourceFactory.cc
-            GstSourceFactory.h
-            GstVideoReceiver.cc
-            GstVideoReceiver.h
-            QGCQVideoSinkController.cc
-            QGCQVideoSinkController.h
-            StreamWatchdog.cc
-            StreamWatchdog.h
-            PipelineDotDumper.cc
-            PipelineDotDumper.h
-            RecordingBranch.cc
-            RecordingBranch.h
-            RecordingFinalizer.cc
-            RecordingFinalizer.h
-            DecodingBranch.cc
-            DecodingBranch.h
+    PRIVATE
+        GStreamer.cc
+        GStreamer.h
+        GStreamerEnvironment.cc
+        GStreamerEnvironment.h
+        GStreamerHelpers.cc
+        GStreamerHelpers.h
+        GStreamerLogging.cc
+        GStreamerLogging.h
+        GstScoped.h
+        GstSourceFactory.cc
+        GstSourceFactory.h
+        GstVideoReceiver.cc
+        GstVideoReceiver.h
+        QGCQVideoSinkController.cc
+        QGCQVideoSinkController.h
+        StreamWatchdog.cc
+        StreamWatchdog.h
+        PipelineDotDumper.cc
+        PipelineDotDumper.h
+        RecordingBranch.cc
+        RecordingBranch.h
+        RecordingFinalizer.cc
+        RecordingFinalizer.h
+        DecodingBranch.cc
+        DecodingBranch.h
+)
+
+# Its file-scope `using namespace GStreamer;` would leak into later sources of a unity unit.
+set_source_files_properties(
+    GstSourceFactory.cc
+    TARGET_DIRECTORY
+    ${CMAKE_PROJECT_NAME}
+    PROPERTIES
+        SKIP_UNITY_BUILD_INCLUSION ON
 )
 
 # GStreamer.cc fails initialization when a runtime-required plugin (PluginPolicy.cmake) is not registered. Each entry
@@ -140,18 +170,32 @@ set_property(
 # The iOS SDK ships no CA list / no keychain-via-OpenSSL; bundle a Mozilla NSS extract for
 # libgioopenssl (fetched at configure time, IOS.cmake). On the app target for MACOSX_PACKAGE_LOCATION.
 if(IOS AND GStreamer_IOS_CA_BUNDLE)
-    target_sources(${CMAKE_PROJECT_NAME} PRIVATE "${GStreamer_IOS_CA_BUNDLE}")
-    set_source_files_properties("${GStreamer_IOS_CA_BUNDLE}" PROPERTIES MACOSX_PACKAGE_LOCATION "ssl/certs"
-                                                                        HEADER_FILE_ONLY TRUE
+    target_sources(
+        ${CMAKE_PROJECT_NAME}
+        PRIVATE
+            "${GStreamer_IOS_CA_BUNDLE}"
+    )
+    set_source_files_properties(
+        "${GStreamer_IOS_CA_BUNDLE}"
+        PROPERTIES
+            MACOSX_PACKAGE_LOCATION "ssl/certs"
+            HEADER_FILE_ONLY TRUE
     )
 endif()
 # The GStreamer license notice (Orchestrator.cmake); Android stages it with the APK assets, desktop installs it.
 if(IOS)
     gstreamer_layout_get(NOTICE_DIR _qgc_gst_notice_dir)
     set(_qgc_gst_notice_files "${_qgc_gst_notice_dir}/NOTICE.txt" "${_qgc_gst_notice_dir}/LGPL-2.1.txt")
-    target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${_qgc_gst_notice_files})
-    set_source_files_properties(${_qgc_gst_notice_files} PROPERTIES MACOSX_PACKAGE_LOCATION "licenses/gstreamer"
-                                                                    HEADER_FILE_ONLY TRUE
+    target_sources(
+        ${CMAKE_PROJECT_NAME}
+        PRIVATE
+            ${_qgc_gst_notice_files}
+    )
+    set_source_files_properties(
+        ${_qgc_gst_notice_files}
+        PROPERTIES
+            MACOSX_PACKAGE_LOCATION "licenses/gstreamer"
+            HEADER_FILE_ONLY TRUE
     )
 endif()
 
@@ -163,8 +207,10 @@ endif()
 # gst_static_plugins.c.in).
 if(ANDROID AND TARGET GStreamer::mobile)
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE GStreamer::mobile)
-    qgc_gst_generate_static_init(TARGET ${CMAKE_PROJECT_NAME} PLUGINS ${GSTREAMER_STATIC_PLUGINS} GIO_MODULES
-                                 ${G_IO_MODULES}
+    qgc_gst_generate_static_init(
+        TARGET ${CMAKE_PROJECT_NAME}
+        PLUGINS ${GSTREAMER_STATIC_PLUGINS}
+        GIO_MODULES ${G_IO_MODULES}
     )
 elseif(IOS AND TARGET GStreamer::mobile)
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE GStreamer::mobile)

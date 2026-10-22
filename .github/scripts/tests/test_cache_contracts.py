@@ -77,6 +77,7 @@ def test_pr_keys_restore_matching_master_matrix_cache(tmp_path, suffix) -> None:
     for family in ("ccache", "moccache", "cpm"):
         assert master[f"{family}_key"].startswith(pr[f"{family}_shared"])
         assert not pr[f"{family}_key"].startswith(master[f"{family}_shared"])
+    assert pr["cpm_shared_key"] == master["cpm_key"] == master["cpm_shared_key"]
 
 
 def test_moccache_is_cross_platform_and_content_versioned() -> None:
@@ -124,7 +125,7 @@ def test_nested_cache_save_inputs_survive_post_job_cleanup() -> None:
     action = _read(".github/actions/cache/action.yml")
     python = _read(".github/actions/setup-python/action.yml")
 
-    assert action.count("          ${{ env.CPM_CACHE_PATH }}/*") == 2
+    assert action.count("          ${{ env.CPM_CACHE_PATH }}/*") == 3
     assert "path: ${{ steps.cpm-cache.outputs.path }}" not in action
     assert "enable-cache: ${{ env.QGC_ACTIONS_CACHE_BACKEND == 's3' }}" in python
     assert "steps.cache-policy.outputs" not in python
@@ -288,6 +289,33 @@ def test_docker_cache_setup_uses_image_identity_and_shared_policy():
     )
     assert "!cancelled()" in report["if"]
     assert "outcome == 'success'" not in report["if"]
+
+
+def test_scoped_runs_do_not_resave_the_default_branch_cpm_snapshot():
+    steps = yaml.safe_load(_read(".github/actions/cache/action.yml"))["runs"]["steps"]
+    shared = next(step for step in steps if step.get("id") == "cpm-shared")
+    save, restore = (
+        next(step for step in steps if step.get("name") == f"Cache CPM Modules ({kind})")
+        for kind in ("restore and save", "restore only")
+    )
+    # Matching paths keep the cache version equal to the default branch's saved archive.
+    assert shared["uses"] == "actions/cache/restore@v6"
+    assert shared["with"]["path"] == save["with"]["path"] == restore["with"]["path"]
+    # GitHub searches every key in the PR scope before the default branch, so a scoped
+    # restore-key could select an older PR snapshot instead of the exact default-branch one.
+    assert shared["with"]["key"] == "${{ steps.cache-keys.outputs.cpm_shared_key }}"
+    assert "restore-keys" not in shared["with"]
+    assert "lookup-only" not in shared["with"]
+    assert "steps.cache-scope.outputs.scope != 'shared'" in shared["if"]
+    assert "steps.cache-policy.outputs.save == 'true'" in shared["if"]
+    assert "inputs.build-type == 'Release'" in shared["if"]
+    assert "steps.cpm-shared.outputs.cache-hit != 'true'" in save["if"]
+    # The restore-only branch excludes exactly the save policy the shared restore requires.
+    assert (
+        "steps.cache-policy.outputs.save != 'true' || inputs.build-type != 'Release'"
+        in restore["if"]
+    )
+    assert steps.index(shared) < steps.index(save)
 
 
 def test_preinstalled_cpm_seed_runs_after_archive_restore():

@@ -11,8 +11,9 @@ Set the repository variable `CODECOV_TEST_ANALYTICS=true` to opt into JUnit uplo
 and custom-build test jobs. Uploads use Codecov OIDC authentication and remain informational;
 JUnit artifacts and existing test reporters remain available with the variable unset.
 
-Docker scans builder-image CycloneDX SBOMs on PRs and pushes alongside its existing CPM
-reports. Trusted upstream push jobs attach provenance and SBOM attestations to the published image
+Docker scans builder-image CycloneDX SBOMs on pushes and manual runs alongside its existing CPM
+reports; pull requests skip SBOM generation and vulnerability scans. Trusted upstream push jobs
+attach provenance and SBOM attestations to the published image
 digest; pull requests cannot run those publishing jobs. Master pushes also submit the Ubuntu
 builder's CPM SPDX snapshot to the dependency graph. CPM metadata is read inside the builder so
 container-local dependency paths resolve to the correct repositories.
@@ -103,6 +104,9 @@ The managed image and Windows warm-pool routes are opt-in repository settings. W
 `RUNS_ON_LINUX_BUILDER` or `RUNS_ON_WINDOWS_POOL`, every affected workflow keeps its existing
 standard RunsOn runner. See the [runner image guide](runner-images/README.md) for AWS prerequisites,
 activation, rebuild cadence, and the organization-level warm-pool example.
+The Windows builder uses RunsOn's `windows25-full-x64` image because `windows22-full-x64` ships
+without Visual Studio. The dependency installer skips Visual Studio Build Tools when one existing
+instance already provides every required MSVC component.
 
 ### Release tags
 
@@ -187,6 +191,7 @@ Python helpers in `.github/scripts/` invoked by workflows and composite actions.
 
 | Script | Purpose |
 | --- | --- |
+| `analysis_matrix.py` | Plan Code Analysis jobs, scaling clang-tidy shards to the PR's estimated compilation units |
 | `android_boot_test.py` | Android emulator boot smoke test |
 | `android_build_retry.py` | Retry an Android build after a known intermittent Qt deployment-settings failure |
 | `android_collect_diagnostics.py` | Collect emulator failure diagnostics (build, adb dumps, GStreamer error grep, AVD logs) |
@@ -283,8 +288,21 @@ from GitHub storage; matching keys and paths alone cannot bridge the two. There 
 no dedicated cache-warming application builds. Fork builds populate their
 own PR caches; a warm default-branch compiler cache is not guaranteed.
 Coverage retains the compiler launcher: ccache stores `.gcno` files alongside objects.
+Linux coverage and sanitizer builds use line-table debug info (`-g1`), all that gcov and
+sanitizer stacks need: it cuts objects by ~70% and compile CPU by ~17% against full `-g`.
+They also build QGC targets as unity builds (`QGC_UNITY_BUILD=ON`), halving compile CPU;
+bundled third-party code, the GPS protocol and GStreamer libraries, and files marked
+`SKIP_UNITY_BUILD_INCLUSION` stay per-file. A redefinition or ambiguity error there means
+two `.cc` files in one batch share file-local names or a file-scope `using namespace`:
+rename them or mark the file, and reproduce with `-DQGC_UNITY_BUILD=ON`. Adding or removing
+a source shifts later batches, so such errors can appear in files a PR did not touch, and
+the shifted batches miss the compiler cache once. Release jobs stay per-file.
 GCC coverage uses atomic counter updates for worker threads. The known GCC negative-counter
 workaround remains enabled and reports any discarded counters.
+CMake routes `Qt6::rcc` through a launcher that pins the file timestamps rcc embeds, so fresh
+checkouts keep generated `qrc_*.cpp` objects cacheable. An exported `QT_RCC_SOURCE_DATE_OVERRIDE`
+or `SOURCE_DATE_EPOCH` still takes precedence. The launcher also lowers rcc's default zstd level
+from 19 to 9 (about 10x faster rcc for ~2% more resource data) when QtCore supports zstd.
 
 Compiler and moc caches save after a successful build or analysis autogen step, before
 packaging, tests, or scanners can fail. Docker also saves after a package failure when
@@ -304,6 +322,8 @@ during nested composite post-job cleanup; step outputs do not survive that phase
 Compiler and moc caches use rolling write keys, with a distinct suffix per matrix leg.
 moc save keys include the coverage/sanitizer variant while restore prefixes stay shared.
 CPM uses immutable dependency-fingerprint keys; unchanged snapshots are not saved again.
+PR and branch Release jobs first try an exact restore of the default-branch snapshot with the same
+fingerprint; when it exists they skip the scoped copy, so they only save CPM archives for changed dependencies.
 GStreamer SDKs have separate immutable caches and are excluded from CPM archives.
 Only Windows, Android, and iOS jobs cache them (desktop Linux and macOS use the system
 GStreamer), keyed on the `gstreamer` section of `build-config.json` (`cpm_helper.py
@@ -326,7 +346,9 @@ are scoped to the selected ref; failed deletions and an unreachable size target 
 reported. Cleanup affects GitHub storage, not the RunsOn S3 backend.
 
 Lychee restores and saves `.lycheecache` with a three-day entry lifetime; fork PRs only
-restore. Android emulator tests create a fresh AVD; no AVD snapshots are cached.
+restore. pre-commit restores hook environments keyed on `.pre-commit-config.yaml`, falling back
+to an earlier configuration's environments; pushes prune unused environments and save, while PRs
+only restore. Android emulator tests create a fresh AVD; no AVD snapshots are cached.
 Gradle, Flatpak, iOS target Qt SDK, and GitHub-hosted uv/Python caching remain disabled.
 
 ### Build helpers
@@ -374,10 +396,13 @@ uv run --project tools --group scripts --group test pytest -q tools/tests .githu
   The C++ formatting hook checks modified regions against the PR merge base (or `HEAD` locally),
   following `CODING_STYLE.md`. New files and unchanged files supplied in a full sweep are checked in full.
   Compiler-aware Clazy and clang-tidy hooks are manual locally; `analysis.yml` generates
-  prerequisites and runs one Clazy job and four clang-tidy shards for relevant PRs.
+  prerequisites and runs one Clazy job and one to four clang-tidy shards for relevant PRs.
+  Upstream analysis jobs use the 16-vCPU `linux-x64-analyzer` RunsOn pool; forks use GitHub-hosted runners.
   Shards divide the selected compilation units after header dependency expansion; they retain
-  every enabled check and report errors independently. This reduces elapsed scan time at the
-  cost of three additional runner setups. Only the first shard saves the shared build caches.
+  every enabled check and report errors independently. Each shard repeats the runner setup, so a
+  plan job (`analysis_matrix.py`) estimates the units from the PR diff and a textual reverse-include
+  scan of `src/`, allotting one shard per 50 units. Changes that can select a full scan keep all four.
+  Only the first shard saves the shared build caches.
   Manual dispatch runs one job for the selected tool; Code Analysis has no scheduled trigger.
   Compiler analysis uses Ninja,
   disables PCH and autogen's inherited link dependencies, and builds protocol headers
@@ -401,6 +426,9 @@ uv run --project tools --group scripts --group test pytest -q tools/tests .githu
 - `test-phase` shares Linux/custom unit and integration execution. Call it only after
   a successful build. Failures preserve JUnit, logs and durations and do not suppress
   the other suite. There are no blanket until-pass retries; empty test selections fail.
+  Linux runs both suites with one CTest process per CPU, including coverage unit tests: GCC
+  merges `.gcda` counters under file locks. Coverage integration tests keep two processes, as
+  do other callers by default, because instrumented integration tests otherwise hit their timeouts.
 - Custom Build uses one shared matrix job. Relevant PRs build only Debug and run the
   custom-plugin unit/integration suites, excluding stock-UI integration tests. Master
   pushes, merge-queue runs, and manual dispatches also build Release without test hooks
@@ -412,7 +440,8 @@ uv run --project tools --group scripts --group test pytest -q tools/tests .githu
   There is no separate Extended Tests workflow. Manual Linux coverage jobs reuse their existing
   binary for `Network|Flaky` tests, after the
   ordinary coverage report. Those tests have separate reports and still fail the job. iOS simulator builds run `--simple-boot-test` and require
-  QGC's success marker. Simulator cold boots have a 600-second deadline and at most two
+  QGC's success marker. The simulator Debug build uses line-table debug info (`-g1`) so its
+  objects fit the compiler-cache budget. Simulator cold boots have a 600-second deadline and at most two
   fresh-device attempts; installation and application failures are never retried.
   Each attempt retains command output, with simulator state collected before failed-boot cleanup.
   `ios_boot_test.py` accepts `--boot-timeout` (1-900 seconds) and `--boot-attempts` (1-2).

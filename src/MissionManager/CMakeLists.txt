@@ -3,7 +3,8 @@
 # Handles mission planning, geofences, rally points, and survey patterns
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(
+    ${CMAKE_PROJECT_NAME}
     PRIVATE
         BlankPlanCreator.cc
         BlankPlanCreator.h
@@ -88,14 +89,16 @@ target_sources(${CMAKE_PROJECT_NAME}
 # ----------------------------------------------------------------------------
 qgc_add_json_resources(json_mission_manager)
 
-qt_add_resources(${CMAKE_PROJECT_NAME} missionmanager_qmlimages
+qt_add_resources(
+    ${CMAKE_PROJECT_NAME} missionmanager_qmlimages
     PREFIX "/qmlimages"
     BASE "${CMAKE_CURRENT_SOURCE_DIR}"
     FILES
         "${CMAKE_CURRENT_SOURCE_DIR}/CogWheel.svg"
 )
 
-qt_add_resources(${CMAKE_PROJECT_NAME} missionmanager_plancreator_images
+qgc_add_big_resources(
+    ${CMAKE_PROJECT_NAME} missionmanager_plancreator_images
     PREFIX "/qmlimages/PlanCreator"
     BASE "${CMAKE_CURRENT_SOURCE_DIR}"
     FILES

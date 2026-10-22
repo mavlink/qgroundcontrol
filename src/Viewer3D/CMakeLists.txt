@@ -3,7 +3,8 @@
 # 3D visualization with terrain and city geometry
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(
+    ${CMAKE_PROJECT_NAME}
     PRIVATE
         Viewer3DManager.cc
         Viewer3DManager.h
@@ -32,12 +33,29 @@ add_subdirectory(Providers/Osm)
 # ----------------------------------------------------------------------------
 qt_add_library(Viewer3DModule STATIC)
 
-set_source_files_properties(Viewer3DQml/Images/city_3d_map_icon.svg PROPERTIES QT_RESOURCE_ALIAS City3DMapIcon.svg)
-set_source_files_properties(Viewer3DQml/Models3D/Shaders/earthMaterial.frag PROPERTIES QT_RESOURCE_ALIAS ShaderFragment/earthMaterial.frag)
-set_source_files_properties(Viewer3DQml/Models3D/Shaders/earthMaterial.vert PROPERTIES QT_RESOURCE_ALIAS ShaderVertex/earthMaterial.vert)
-set_source_files_properties(Viewer3DQml/Models3D/Viewer3DModel.qml PROPERTIES QT_RESOURCE_ALIAS Models3D/Viewer3DModel.qml)
+set_source_files_properties(
+    Viewer3DQml/Images/city_3d_map_icon.svg
+    PROPERTIES
+        QT_RESOURCE_ALIAS City3DMapIcon.svg
+)
+set_source_files_properties(
+    Viewer3DQml/Models3D/Shaders/earthMaterial.frag
+    PROPERTIES
+        QT_RESOURCE_ALIAS ShaderFragment/earthMaterial.frag
+)
+set_source_files_properties(
+    Viewer3DQml/Models3D/Shaders/earthMaterial.vert
+    PROPERTIES
+        QT_RESOURCE_ALIAS ShaderVertex/earthMaterial.vert
+)
+set_source_files_properties(
+    Viewer3DQml/Models3D/Viewer3DModel.qml
+    PROPERTIES
+        QT_RESOURCE_ALIAS Models3D/Viewer3DModel.qml
+)
 
-qt_add_qml_module(Viewer3DModule
+qt_add_qml_module(
+    Viewer3DModule
     URI QGroundControl.Viewer3D
     VERSION 1.0
     RESOURCE_PREFIX /qml
@@ -62,6 +80,18 @@ qt_add_qml_module(Viewer3DModule
         Viewer3DQml/Images/city_3d_map_icon.svg
         Viewer3DQml/Models3D/Shaders/earthMaterial.frag
         Viewer3DQml/Models3D/Shaders/earthMaterial.vert
+    IMPORTS
+        QtPositioning
+        QtQuick
+        QtQuick3D
+        QtQuick3D.Helpers
+)
+
+# The drone meshes are most of this module's resource data; keep their QML module paths.
+qgc_add_big_resources(
+    Viewer3DModule viewer3d_meshes
+    PREFIX "/qml/QGroundControl/Viewer3D"
+    FILES
         Viewer3DQml/Drones/Djif450/DroneModel_arm_1/node.mesh
         Viewer3DQml/Drones/Djif450/DroneModel_arm_2/node.mesh
         Viewer3DQml/Drones/Djif450/DroneModel_arm_3/node.mesh
@@ -76,14 +106,10 @@ qt_add_qml_module(Viewer3DModule
         Viewer3DQml/Drones/Djif450/DroneModel_propeller22_2/node.mesh
         Viewer3DQml/Drones/Djif450/DroneModel_Base_bottom_1/node.mesh
         Viewer3DQml/Drones/Djif450/DroneModel_Base_Top_1/node.mesh
-    IMPORTS
-        QtPositioning
-        QtQuick
-        QtQuick3D
-        QtQuick3D.Helpers
 )
 
-target_link_libraries(Viewer3DModule
+target_link_libraries(
+    Viewer3DModule
     PRIVATE
         QGCLogging
         QGCGeoMath

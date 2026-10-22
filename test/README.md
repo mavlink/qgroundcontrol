@@ -125,7 +125,18 @@ permutation is identified without re-running the whole method. See
 
 ### Register in CMakeLists.txt
 
+Add test sources to the `QGCUnitTests` object library. The application executable links it and runs
+the suite; tests compile with the application's include paths and definitions, and their precompiled
+header adds `<QtTest/QTest>` so application sources do not compile QtTest.
+
 ```cmake
+target_sources(
+    QGCUnitTests
+    PRIVATE
+        MyTest.cc
+        MyTest.h
+)
+
 # Basic unit test
 add_qgc_test(MyTest LABELS Unit)
 
@@ -264,12 +275,12 @@ LABELS=Slow EXCLUDE=Flaky just test          # Both at once
 `just test` wraps `ctest --output-on-failure -L "<LABELS>" -LE "<EXCLUDE>"` and matches
 the label filters CI uses by default.
 
-CI runs integration tests with two processes. Settings and temporary directories are
+Linux CI runs integration tests with one process per CPU (two in coverage builds). Settings and temporary directories are
 isolated per test; local network fixtures allocate ephemeral ports. Existing CTest
 `RESOURCE_LOCK` and `RUN_SERIAL` properties still serialize tests sharing hardware or
 fixed resources. The `test-phase` action accepts `integration-parallel` for constrained
-runners. To match CI locally, run `ctest --test-dir build -L Integration -LE 'Flaky|Network'
---output-on-failure --parallel 2`. Preserve this isolation when adding integration tests.
+runners. CI Linux runners have four CPUs; to match CI locally, run `ctest --test-dir build -L Integration
+-LE 'Flaky|Network' --output-on-failure --parallel 4`. Preserve this isolation when adding integration tests.
 
 ### Via the QGroundControl Binary (unittest build)
 

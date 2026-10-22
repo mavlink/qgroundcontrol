@@ -1,4 +1,5 @@
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(
+    QGCUnitTests
     PRIVATE
         LogEntryTest.cc
         LogEntryTest.h

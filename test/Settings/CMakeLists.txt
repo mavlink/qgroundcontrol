@@ -4,21 +4,22 @@
 # ============================================================================
 
 target_sources(
-    ${CMAKE_PROJECT_NAME}
-    PRIVATE AppSettingsTest.cc
-            AppSettingsTest.h
-            FlyViewSettingsTest.cc
-            FlyViewSettingsTest.h
-            GPSCorrectionSettingsTest.cc
-            GPSCorrectionSettingsTest.h
-            MavlinkSettingsTest.cc
-            MavlinkSettingsTest.h
-            RemoteIDSettingsTest.cc
-            RemoteIDSettingsTest.h
-            RTKSettingsTest.cc
-            RTKSettingsTest.h
-            SettingsManagerTest.cc
-            SettingsManagerTest.h
+    QGCUnitTests
+    PRIVATE
+        AppSettingsTest.cc
+        AppSettingsTest.h
+        FlyViewSettingsTest.cc
+        FlyViewSettingsTest.h
+        GPSCorrectionSettingsTest.cc
+        GPSCorrectionSettingsTest.h
+        MavlinkSettingsTest.cc
+        MavlinkSettingsTest.h
+        RemoteIDSettingsTest.cc
+        RemoteIDSettingsTest.h
+        RTKSettingsTest.cc
+        RTKSettingsTest.h
+        SettingsManagerTest.cc
+        SettingsManagerTest.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

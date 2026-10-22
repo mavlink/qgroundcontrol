@@ -7,7 +7,7 @@ runners:
     cpu: [4]
     ram: [16]
     spot: false
-    image: windows22-full-x64
+    image: windows25-full-x64
     extras: s3-cache
     volume: 100gb
 

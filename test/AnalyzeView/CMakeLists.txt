@@ -5,7 +5,8 @@
 
 add_subdirectory(GeoTag)
 
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(
+    QGCUnitTests
     PRIVATE
         MAVLinkChartControllerTest.cc
         MAVLinkChartControllerTest.h

@@ -7,9 +7,25 @@ if(NOT QGC_BUILD_TESTING)
 endif()
 
 # ----------------------------------------------------------------------------
-# Test Framework Sources
+# Test Target
 # ----------------------------------------------------------------------------
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE UnitTestList.cc UnitTestList.h)
+# Tests build in their own object library so only they carry QtTest in a precompiled header;
+# the application executable still links every test object and runs the suite.
+add_library(QGCUnitTests OBJECT UnitTestList.cc UnitTestList.h)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCUnitTests)
+
+# Tests compile against everything the application does, including what its libraries propagate.
+target_include_directories(QGCUnitTests PRIVATE $<TARGET_PROPERTY:${CMAKE_PROJECT_NAME},INCLUDE_DIRECTORIES>)
+target_compile_definitions(QGCUnitTests PRIVATE $<TARGET_PROPERTY:${CMAKE_PROJECT_NAME},COMPILE_DEFINITIONS>)
+target_compile_options(QGCUnitTests PRIVATE $<TARGET_PROPERTY:${CMAKE_PROJECT_NAME},COMPILE_OPTIONS>)
+target_precompile_headers(
+    QGCUnitTests
+    PRIVATE
+        "${CMAKE_SOURCE_DIR}/src/pch.h"
+        <QtTest/QTest>
+)
+# Tests include generated protocol headers, so order them after the generators.
+add_dependencies(QGCUnitTests qgc-analysis-headers)
 
 # ----------------------------------------------------------------------------
 # Test Dependencies
@@ -17,14 +33,15 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE UnitTestList.cc UnitTestList.h)
 find_package(Qt6 REQUIRED COMPONENTS Test)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Test)
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
-                                                         ${CMAKE_CURRENT_SOURCE_DIR}/Portable
+target_include_directories(
+    ${CMAKE_PROJECT_NAME}
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/Portable
 )
 
 # QGC_UNITTEST_BUILD is defined directory-wide from the root CMakeLists.txt when
 # QGC_BUILD_TESTING is enabled, covering this target and all src/ targets.
-
-target_precompile_headers(${CMAKE_PROJECT_NAME} PRIVATE <QtTest/QTest> <UnitTest.h> <MultiSignalSpy.h>)
 
 # ----------------------------------------------------------------------------
 # CTest Integration (CTest included in root CMakeLists.txt)
@@ -89,3 +106,30 @@ add_subdirectory(Utilities)
 add_subdirectory(Viewer3D)
 add_subdirectory(Vehicle)
 add_subdirectory(QmlUITests)
+
+# ----------------------------------------------------------------------------
+# Test Target Dependencies
+# ----------------------------------------------------------------------------
+# Tests use the application's dependencies, whose usage requirements also mark third-party
+# headers as system headers. Only targets visible here can be named; the executable still
+# links every dependency itself, so this adds no objects or archives to the link.
+get_target_property(_qgc_application_links ${CMAKE_PROJECT_NAME} LINK_LIBRARIES)
+foreach(_qgc_link IN LISTS _qgc_application_links)
+    if(TARGET "${_qgc_link}" AND NOT _qgc_link STREQUAL "QGCUnitTests")
+        set_property(
+            TARGET QGCUnitTests
+            APPEND
+            PROPERTY LINK_LIBRARIES "${_qgc_link}"
+        )
+    endif()
+endforeach()
+
+# Match the application: moc waits for generated protocol headers, not for linked libraries.
+if(NOT QGC_CUSTOM_BUILD)
+    set_target_properties(
+        QGCUnitTests
+        PROPERTIES
+            AUTOGEN_ORIGIN_DEPENDS OFF
+            AUTOGEN_TARGET_DEPENDS qgc-analysis-headers
+    )
+endif()

@@ -12,7 +12,8 @@ format:
   use_tabchars: false
 
   # Indentation
-  max_prefix_chars: 40
+  # Wrapped statements and keyword groups nest: arguments start on the next line, one indent in.
+  max_prefix_chars: 6
   min_prefix_chars: 4
 
   # Line wrapping
@@ -27,7 +28,48 @@ format:
   # Spacing
   separate_ctrl_name_with_space: false
   separate_fn_name_with_space: false
-  always_wrap: []
+  # Property commands list their files or targets, then one property per line. always_wrap matches node paths and each
+  # enclosing block (if, foreach, function, ...) adds a FlowControlNode/ prefix, so list them for up to 8 nested blocks.
+  always_wrap:
+    - set_source_files_properties/PargGroupNode[0]
+    - set_source_files_properties/PROPERTIES
+    - set_target_properties/PargGroupNode[0]
+    - set_target_properties/PROPERTIES
+    - FlowControlNode/set_source_files_properties/PargGroupNode[0]
+    - FlowControlNode/set_source_files_properties/PROPERTIES
+    - FlowControlNode/set_target_properties/PargGroupNode[0]
+    - FlowControlNode/set_target_properties/PROPERTIES
+    - FlowControlNode/FlowControlNode/set_source_files_properties/PargGroupNode[0]
+    - FlowControlNode/FlowControlNode/set_source_files_properties/PROPERTIES
+    - FlowControlNode/FlowControlNode/set_target_properties/PargGroupNode[0]
+    - FlowControlNode/FlowControlNode/set_target_properties/PROPERTIES
+    - FlowControlNode/FlowControlNode/FlowControlNode/set_source_files_properties/PargGroupNode[0]
+    - FlowControlNode/FlowControlNode/FlowControlNode/set_source_files_properties/PROPERTIES
+    - FlowControlNode/FlowControlNode/FlowControlNode/set_target_properties/PargGroupNode[0]
+    - FlowControlNode/FlowControlNode/FlowControlNode/set_target_properties/PROPERTIES
+    - FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/set_source_files_properties/PargGroupNode[0]
+    - FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/set_source_files_properties/PROPERTIES
+    - FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/set_target_properties/PargGroupNode[0]
+    - FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/set_target_properties/PROPERTIES
+    - FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/set_source_files_properties/PargGroupNode[0]
+    - FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/set_source_files_properties/PROPERTIES
+    - FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/set_target_properties/PargGroupNode[0]
+    - FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/set_target_properties/PROPERTIES
+    - FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/set_source_files_properties/PargGroupNode[0]
+    - FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/set_source_files_properties/PROPERTIES
+    - FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/set_target_properties/PargGroupNode[0]
+    - FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/set_target_properties/PROPERTIES
+    - FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/set_source_files_properties/PargGroupNode[0]
+    - FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/set_source_files_properties/PROPERTIES
+    - FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/set_target_properties/PargGroupNode[0]
+    - FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/set_target_properties/PROPERTIES
+    - FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/set_source_files_properties/PargGroupNode[0]
+    - FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/set_source_files_properties/PROPERTIES
+    - FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/set_target_properties/PargGroupNode[0]
+    - FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/FlowControlNode/set_target_properties/PROPERTIES
+  # Let a keyword group nest (keyword on its own line) as soon as its arguments wrap, not only as a last resort.
+  layout_passes:
+    KwargGroupNode: [[0, false], [1, true], [2, true], [3, true], [4, true], [5, true]]
 
   # Case
   command_case: canonical
@@ -38,6 +80,295 @@ format:
 # -----------------------------------------------------------------------------
 parse:
   additional_commands:
+    # -------------------------------------------------------------------------
+    # Built-in commands with QGC layout preferences
+    # -------------------------------------------------------------------------
+    # max_pargs_hwrap 0 lists every source on its own line; FILE_SET keeps its keywords.
+    target_sources:
+      pargs: '1+'
+      kwargs:
+        INTERFACE: &target_sources_scope
+          pargs: {nargs: '*', max_pargs_hwrap: 0}
+          kwargs:
+            FILE_SET: 1
+            TYPE: 1
+            BASE_DIRS: &each_on_own_line {pargs: {nargs: '+', max_pargs_hwrap: 0}}
+            FILES: *each_on_own_line
+        PUBLIC: *target_sources_scope
+        PRIVATE: *target_sources_scope
+
+    # Lists put each item on its own line once they hold more than one.
+    target_link_libraries:
+      pargs: '1+'
+      kwargs: &scoped_lists
+        INTERFACE: &one_per_line
+          pargs: {nargs: '+', max_pargs_hwrap: 1}
+        PUBLIC: *one_per_line
+        PRIVATE: *one_per_line
+
+    target_include_directories:
+      pargs: {nargs: '1+', flags: [SYSTEM, AFTER, BEFORE]}
+      kwargs: *scoped_lists
+
+    target_compile_definitions:
+      pargs: '1+'
+      kwargs: *scoped_lists
+
+    # The target and scope share a line and each option follows on its own, so trailing comments line up.
+    target_compile_options:
+      pargs: [[2, {flags: [BEFORE]}], ['*', {max_pargs_hwrap: 1}]]
+      kwargs: *scoped_lists
+
+    target_link_options:
+      pargs: {nargs: '1+', flags: [BEFORE]}
+      kwargs: *scoped_lists
+
+    target_link_directories:
+      pargs: {nargs: '1+', flags: [BEFORE]}
+      kwargs: *scoped_lists
+
+    # One test property per line once there are several; the keywords are CMake's test properties.
+    set_tests_properties:
+      pargs: '+'
+      kwargs:
+        DIRECTORY: 1
+        PROPERTIES:
+          max_subgroups_hwrap: 1
+          kwargs:
+            ATTACHED_FILES: +
+            ATTACHED_FILES_ON_FAIL: +
+            COST: 1
+            DEPENDS: +
+            DISABLED: 1
+            ENVIRONMENT: +
+            ENVIRONMENT_MODIFICATION: +
+            FAIL_REGULAR_EXPRESSION: +
+            FIXTURES_CLEANUP: +
+            FIXTURES_REQUIRED: +
+            FIXTURES_SETUP: +
+            LABELS: +
+            MEASUREMENT: +
+            PASS_REGULAR_EXPRESSION: +
+            PROCESSOR_AFFINITY: 1
+            PROCESSORS: 1
+            REQUIRED_FILES: +
+            RESOURCE_GROUPS: +
+            RESOURCE_LOCK: +
+            RUN_SERIAL: 1
+            SKIP_REGULAR_EXPRESSION: +
+            SKIP_RETURN_CODE: 1
+            TIMEOUT: 1
+            TIMEOUT_AFTER_MATCH: +
+            TIMEOUT_SIGNAL_GRACE_PERIOD: 1
+            TIMEOUT_SIGNAL_NAME: 1
+            WILL_FAIL: 1
+            WORKING_DIRECTORY: 1
+
+    target_precompile_headers:
+      pargs: '1+'
+      kwargs:
+        REUSE_FROM: 1
+        INTERFACE: *one_per_line
+        PUBLIC: *one_per_line
+        PRIVATE: *one_per_line
+
+    # -------------------------------------------------------------------------
+    # QGC Commands
+    # -------------------------------------------------------------------------
+    qgc_add_big_resources:
+      pargs: 2
+      kwargs:
+        PREFIX: 1
+        BASE: 1
+        OUTPUT_TARGETS: 1
+        FILES: *each_on_own_line
+
+    add_qgc_test:
+      pargs:
+        nargs: '1+'
+        flags: [SERIAL]
+      max_subgroups_hwrap: 4
+      kwargs:
+        TIMEOUT: '?'
+        LABELS: +
+        RESOURCE_LOCK: +
+        SKIP_REGEX: +
+        ENV_MODIFICATION: +
+
+    # Keywords mirror each function's cmake_parse_arguments() call, so calls are not split one token per line.
+    _gst_resolve_and_link_libraries:
+      pargs: {nargs: '4+', flags: [HIDE, WARN_MISSING]}
+
+    _qgc_add_gpu_path:
+      pargs: {nargs: '1+', flags: [UNSTABLE_API]}
+      kwargs:
+        DEFINE: '?'
+        EGL: '?'
+        PLATFORMS: '*'
+        REQUIRES: '*'
+        PROBE: '*'
+        SOURCES: '*'
+        LIBS: '*'
+
+    _qgc_gst_check_args:
+      pargs: {nargs: '1+'}
+      kwargs:
+        ALLOW_EMPTY: '*'
+
+    _qgc_gst_write_static_init:
+      pargs: {nargs: '1+'}
+      kwargs:
+        PLUGINS: '*'
+        GIO_MODULES: '*'
+
+    _qgc_probe_gst_lib:
+      pargs: {nargs: '1+'}
+      kwargs:
+        HAS_VAR: '?'
+        HEADER: '?'
+        SYMBOL: '?'
+        PC_MODULE: '?'
+        LIB_VAR: '?'
+        LIBNAMES: '*'
+        INCLUDES: '*'
+
+    _qgc_write_fake_homebrew:
+      pargs: {nargs: '1+', flags: [LINKED]}
+
+    _qgc_write_fake_sdk:
+      pargs: {nargs: '2+', flags: [WITH_PROBE_HEADERS]}
+      kwargs:
+        OMIT: '*'
+        PLUGINS: '*'
+
+    download_tool:
+      pargs: {nargs: '2+'}
+      kwargs:
+        EXPECTED_HASH: '?'
+
+    gstreamer_apply_pkgconfig_env:
+      pargs: {nargs: '*', flags: [DONT_DEFINE_PREFIX]}
+      kwargs:
+        MODE: '?'
+        PKG_CONFIG_EXE: '?'
+        LIBDIR: '*'
+
+    gstreamer_classify_missing_plugins:
+      pargs: {nargs: '*'}
+      kwargs:
+        OUT_OPTIONAL: '?'
+        OUT_ABSENT: '?'
+        OUT_UNUSABLE: '?'
+        REQUESTED: '*'
+        AVAILABLE: '*'
+        SHIPPED: '*'
+
+    gstreamer_create_layout_target:
+      pargs: {nargs: '*'}
+      kwargs:
+        SDK_ROOT: '?'
+        LIB_PATH: '?'
+        FRAMEWORK_BUNDLE: '?'
+
+    gstreamer_install_platform_sdk:
+      pargs: {nargs: '1+'}
+      kwargs:
+        REQUIRED_PLUGINS: '*'
+
+    gstreamer_missing_required:
+      pargs: {nargs: '*'}
+      kwargs:
+        OUT_VAR: '?'
+        REQUIRED: '*'
+        AVAILABLE: '*'
+
+    gstreamer_scan_plugin_basenames:
+      pargs: {nargs: '2+', flags: [STATIC]}
+
+    qgc_add_expected_failure_test:
+      pargs: {nargs: '*'}
+      kwargs:
+        NAME: '?'
+        EXPECTED_REGEX: '?'
+        TIMEOUT: '?'
+        LABELS: '*'
+        ARGS: '*'
+
+    qgc_add_json_resources:
+      pargs: {nargs: '1+', flags: [NO_RECURSE]}
+      kwargs:
+        PREFIX: '?'
+        PATTERN: '?'
+
+    qgc_add_library_consumer:
+      pargs: {nargs: '1+'}
+      kwargs:
+        SOURCE: '?'
+        TIMEOUT: '?'
+        LABELS: '*'
+
+    qgc_add_qml_codegen:
+      pargs: {nargs: '1+', flags: [GENERATE_AT_CONFIGURE]}
+      kwargs:
+        GENERATOR_MODULE: '?'
+        OUTPUT_DIR: '?'
+        COMMENT: '?'
+        QML_NAMES: '*'
+        EXTRA_ARGS: '*'
+        DEPENDS: '*'
+
+    qgc_check_gst_header:
+      pargs: {nargs: '*'}
+      kwargs:
+        VAR: '?'
+        HEADER: '?'
+        SYMBOL: '?'
+        TARGET: '?'
+        INCLUDES: '*'
+
+    qgc_config_read:
+      pargs: {nargs: '1+', flags: [LIST, OPTIONAL]}
+
+    qgc_cpm_patch_cache_key:
+      pargs: {nargs: '1+'}
+      kwargs:
+        GIT_REPOSITORY: '?'
+        GIT_TAG: '?'
+        PATCHES: '*'
+
+    qgc_find_ios_xcframework_slice:
+      pargs: {nargs: '*'}
+      kwargs:
+        XCFRAMEWORK: '?'
+        PLATFORM: '?'
+        OUT_VAR: '?'
+        ARCHITECTURES: '*'
+
+    qgc_gst_acquire_sdk:
+      pargs: {nargs: '*'}
+      kwargs:
+        PLATFORM: '?'
+        VERSION: '?'
+        CACHE_SUBDIR: '?'
+        CONTENT: '?'
+        EXTRACT_FUNCTION: '?'
+        CONTENT_DIR_OUT: '?'
+        ARCHIVES: '*'
+
+    qgc_gst_generate_static_init:
+      pargs: {nargs: '*'}
+      kwargs:
+        TARGET: '?'
+        PLUGINS: '*'
+        GIO_MODULES: '*'
+
+    qgc_track_git_head:
+      pargs: {nargs: '*', flags: [OFFLINE_OK]}
+      kwargs:
+        REPO_PATH: '?'
+        GIT_REF: '?'
+        INTERVAL: '?'
+
     # -------------------------------------------------------------------------
     # CPM Package Manager (https://github.com/cpm-cmake/CPM.cmake)
     # -------------------------------------------------------------------------
@@ -75,8 +406,8 @@ parse:
         DOWNLOAD_NO_EXTRACT: 1
         HTTP_USERNAME: 1
         HTTP_PASSWORD: 1
-        PATCHES: +
-        OPTIONS: +
+        PATCHES: *one_per_line
+        OPTIONS: *one_per_line
 
     cpmfindpackage:
       pargs:
@@ -110,15 +441,14 @@ parse:
         nargs: '1+'
         flags: [WIN32, MACOSX_BUNDLE, MANUAL_FINALIZATION]
       kwargs:
-        SOURCES: +
+        SOURCES: *one_per_line
         OUTPUT_DIRECTORY: 1
 
+    # The name and library type share a line; the sources follow one per line once there are several.
     qt_add_library:
-      pargs:
-        nargs: '1+'
-        flags: [STATIC, SHARED, MODULE, INTERFACE, MANUAL_FINALIZATION]
+      pargs: [[2], ['*', {max_pargs_hwrap: 1}]]
       kwargs:
-        SOURCES: +
+        SOURCES: *one_per_line
         OUTPUT_DIRECTORY: 1
 
     qt_add_qml_module:
@@ -134,12 +464,12 @@ parse:
         RESOURCE_PREFIX: 1
         IMPORT_PATH: 1
         TYPEINFO: 1
-        QML_FILES: +
-        SOURCES: +
-        RESOURCES: +
-        IMPORTS: +
-        OPTIONAL_IMPORTS: +
-        DEPENDENCIES: +
+        QML_FILES: *each_on_own_line
+        SOURCES: *each_on_own_line
+        RESOURCES: *each_on_own_line
+        IMPORTS: *each_on_own_line
+        OPTIONAL_IMPORTS: *each_on_own_line
+        DEPENDENCIES: *each_on_own_line
         PAST_MAJOR_VERSIONS: +
 
     qt_add_resources:
@@ -150,25 +480,34 @@ parse:
         PREFIX: 1
         BASE: 1
         OUTPUT_TARGETS: 1
-        FILES: +
+        FILES: *each_on_own_line
 
     qt_add_translations:
       pargs:
         nargs: '1+'
         flags: [IMMEDIATE_CALL]
       kwargs:
-        TS_FILES: +
+        TS_FILES: *one_per_line
         TS_FILE_BASE: 1
         TS_FILE_DIR: 1
         PLURALS_TS_FILE: 1
         RESOURCE_PREFIX: 1
         OUTPUT_TARGETS: 1
         QM_FILES_OUTPUT_VARIABLE: 1
-        SOURCES: +
-        SOURCE_TARGETS: +
-        INCLUDE_DIRECTORIES: +
+        SOURCES: *one_per_line
+        SOURCE_TARGETS: *one_per_line
+        INCLUDE_DIRECTORIES: *one_per_line
         LUPDATE_OPTIONS: +
         LRELEASE_OPTIONS: +
+
+    # Each keyword keeps its plugins on its line, as hand-written; commented plugin lists still go one per line.
+    qt_import_plugins:
+      pargs: {nargs: 1, flags: [NO_DEFAULT]}
+      kwargs:
+        INCLUDE: +
+        EXCLUDE: +
+        INCLUDE_BY_TYPE: +
+        EXCLUDE_BY_TYPE: +
 
     qt_standard_project_setup:
       pargs:

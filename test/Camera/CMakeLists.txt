@@ -3,7 +3,8 @@
 # Tests for camera management and control
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(
+    QGCUnitTests
     PRIVATE
         QGCCameraManagerTest.cc
         QGCCameraManagerTest.h

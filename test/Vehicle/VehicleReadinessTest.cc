@@ -5,6 +5,7 @@
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QTemporaryDir>
+#include <QtTest/QSignalSpy>
 
 #include "APMFirmwarePlugin.h"
 #include "APMVehicleReadiness.h"

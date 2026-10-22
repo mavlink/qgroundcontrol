@@ -1,2 +1,7 @@
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE ChecksumsTest.cc ChecksumsTest.h)
+target_sources(
+    QGCUnitTests
+    PRIVATE
+        ChecksumsTest.cc
+        ChecksumsTest.h
+)
 add_qgc_test(ChecksumsTest LABELS Unit Utilities)

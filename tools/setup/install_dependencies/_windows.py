@@ -44,18 +44,74 @@ def install_windows_nsis(dry_run: bool = False) -> bool:
     return True
 
 
+def _vswhere_path() -> Path:
+    program_files_x86 = os.environ.get("PROGRAMFILES(X86)", r"C:\Program Files (x86)")
+    return Path(program_files_x86) / "Microsoft Visual Studio" / "Installer" / "vswhere.exe"
+
+
+def _msvc_components(arm64: bool) -> list[str]:
+    components = ["Microsoft.VisualStudio.Component.VC.Tools.x86.x64"]
+    if arm64:
+        components.append("Microsoft.VisualStudio.Component.VC.Tools.ARM64")
+    return components
+
+
+def _msvc_preinstalled(arm64: bool) -> bool:
+    """Return True when one Visual Studio instance already provides every requested component."""
+    vswhere = _vswhere_path()
+    if not vswhere.exists():
+        return False
+    result = subprocess.run(
+        [
+            str(vswhere),
+            "-products",
+            "*",
+            # Visual Studio 2022 or newer: 2017 and 2019 use the same VC Tools component IDs.
+            "-version",
+            "[17.0,",
+            "-requires",
+            *_msvc_components(arm64),
+            "-property",
+            "installationPath",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    return result.returncode == 0 and bool(result.stdout.strip())
+
+
+def _windows_sdk_installed(arm64: bool) -> bool:
+    """Return True when one Windows 10/11 SDK provides headers, the resource compiler and libraries for each target.
+
+    Visual Studio can provide the VC Tools without an SDK; the Build Tools install supplies one through
+    --includeRecommended, so a compiler-only instance must not skip it.
+    """
+    program_files_x86 = os.environ.get("PROGRAMFILES(X86)", r"C:\Program Files (x86)")
+    kits = Path(program_files_x86) / "Windows Kits" / "10"
+    targets = ["x64", "arm64"] if arm64 else ["x64"]
+    for include in sorted((kits / "Include").glob("10.0.*"), reverse=True):
+        version = include.name
+        if (
+            (include / "um" / "Windows.h").is_file()
+            and (kits / "bin" / version / "x64" / "rc.exe").is_file()
+            and all(
+                (kits / "Lib" / version / "um" / target / "kernel32.Lib").is_file()
+                for target in targets
+            )
+        ):
+            return True
+    return False
+
+
 def _verify_msvc(arm64: bool) -> bool:
     """Confirm the requested VC Tools components are present via vswhere."""
-    program_files_x86 = os.environ.get("PROGRAMFILES(X86)", r"C:\Program Files (x86)")
-    vswhere = Path(program_files_x86) / "Microsoft Visual Studio" / "Installer" / "vswhere.exe"
+    vswhere = _vswhere_path()
     if not vswhere.exists():
         _c.log_warn(f"vswhere not found at {vswhere}; skipping MSVC verification")
         return True
 
-    components = ["Microsoft.VisualStudio.Component.VC.Tools.x86.x64"]
-    if arm64:
-        components.append("Microsoft.VisualStudio.Component.VC.Tools.ARM64")
-    for component in components:
+    for component in _msvc_components(arm64):
         result = subprocess.run(
             [
                 str(vswhere),
@@ -78,6 +134,9 @@ def _verify_msvc(arm64: bool) -> bool:
 
 def install_windows_msvc(dry_run: bool = False, arm64: bool = False) -> bool:
     """Install Visual Studio 2022 Build Tools with the C++ (VCTools) workload."""
+    if not dry_run and _msvc_preinstalled(arm64) and _windows_sdk_installed(arm64):
+        print("\nVisual Studio C++ tools and a Windows SDK already installed; skipping Build Tools")
+        return True
     print("\nInstalling Visual Studio Build Tools (VCTools)...")
     components = ["--add", "Microsoft.VisualStudio.Workload.VCTools", "--includeRecommended"]
     if arm64:

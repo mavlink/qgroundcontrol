@@ -1,4 +1,5 @@
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(
+    QGCUnitTests
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/VehicleTest.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/VehicleTest.h

@@ -77,10 +77,11 @@ runners:
     volume: 80gb
     nested-virt: true
   windows-x64-builder:
+    # windows22-full-x64 ships without Visual Studio; this image includes the MSVC toolchain.
     family: ["m8i.xlarge"]
     cpu: [4]
     ram: [16]
     spot: false
-    image: windows22-full-x64
+    image: windows25-full-x64
     extras: s3-cache
     volume: 100gb

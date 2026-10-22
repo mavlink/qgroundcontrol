@@ -4,7 +4,11 @@
 # Optional formats: LZ4, BZip2 (controlled by QGC_ENABLE_LZ4, QGC_ENABLE_BZIP2)
 # ============================================================================
 
-qt_add_library(QGCCompression STATIC
+# Variables handed to the bundled libraries keep the names their find modules expect.
+# cmake-lint: disable=C0103
+
+qt_add_library(
+    QGCCompression STATIC
     QGCCompression.cc
     QGCCompression.h
     QGCCompressionTypes.h
@@ -24,13 +28,14 @@ qt_add_library(QGCCompression STATIC
     QGCArchiveFile.h
 )
 
-qt_add_qml_module(QGCCompression
+qt_add_qml_module(
+    QGCCompression
     URI QGroundControl.Compression
     VERSION 1.0
     RESOURCE_PREFIX /qml
 )
 
-# Package NAMEs match the builtin CMake Find modules (ZLIB, LibLZMA, BZip2, LibArchive, ...)
+# Package names match the builtin CMake Find modules (ZLIB, LibLZMA, BZip2, LibArchive, ...)
 # so QGC_USE_SYSTEM_LIBS resolves them via find_package (CPM checks ${NAME}_FOUND).
 # <name>_ADDED = CPM built the static lib; otherwise a system copy provides the imported target.
 
@@ -40,9 +45,7 @@ qt_add_qml_module(QGCCompression
 
 set(ZLIB_EXTRA_OPTIONS)
 if(WIN32)
-    set(ZLIB_EXTRA_OPTIONS
-        "ZLIB_INSTALL_COMPAT_DLL OFF"
-    )
+    set(ZLIB_EXTRA_OPTIONS "ZLIB_INSTALL_COMPAT_DLL OFF")
 endif()
 
 CPMAddPackage(
@@ -61,10 +64,22 @@ CPMAddPackage(
 
 if(ZLIB_ADDED)
     qgc_disable_dependency_warnings(zlibstatic)
-    set(ZLIB_INCLUDE_DIR "${ZLIB_SOURCE_DIR};${ZLIB_BINARY_DIR}" CACHE PATH "" FORCE)
-    set(ZLIB_LIBRARY "zlibstatic" CACHE STRING "" FORCE)
-    set(ZLIB_LIBRARIES "zlibstatic" CACHE STRING "" FORCE)
-    set(ZLIB_FOUND TRUE CACHE BOOL "" FORCE)
+    set(ZLIB_INCLUDE_DIR
+        "${ZLIB_SOURCE_DIR};${ZLIB_BINARY_DIR}"
+        CACHE PATH "" FORCE
+    )
+    set(ZLIB_LIBRARY
+        "zlibstatic"
+        CACHE STRING "" FORCE
+    )
+    set(ZLIB_LIBRARIES
+        "zlibstatic"
+        CACHE STRING "" FORCE
+    )
+    set(ZLIB_FOUND
+        TRUE
+        CACHE BOOL "" FORCE
+    )
     if(NOT TARGET ZLIB::ZLIB)
         add_library(ZLIB::ZLIB ALIAS zlibstatic)
     endif()
@@ -105,18 +120,48 @@ if(LibLZMA_ADDED)
         message(FATAL_ERROR "liblzma target not found")
     endif()
     qgc_disable_dependency_warnings(liblzma)
-    set(LIBLZMA_INCLUDE_DIR "${LibLZMA_SOURCE_DIR}/src/liblzma/api" CACHE PATH "" FORCE)
-    set(LIBLZMA_INCLUDE_DIRS "${LibLZMA_SOURCE_DIR}/src/liblzma/api" CACHE PATH "" FORCE)
-    set(LIBLZMA_LIBRARY "liblzma" CACHE STRING "" FORCE)
-    set(LIBLZMA_FOUND TRUE CACHE BOOL "" FORCE)
-    set(LIBLZMA_LIBRARIES "liblzma" CACHE STRING "" FORCE)
-    set(LIBLZMA_HAS_AUTO_DECODER TRUE CACHE BOOL "" FORCE)
-    set(LIBLZMA_HAS_EASY_ENCODER TRUE CACHE BOOL "" FORCE)
-    set(LIBLZMA_HAS_LZMA_PRESET TRUE CACHE BOOL "" FORCE)
-    set(LibLZMA_FOUND TRUE CACHE BOOL "" FORCE)
+    set(LIBLZMA_INCLUDE_DIR
+        "${LibLZMA_SOURCE_DIR}/src/liblzma/api"
+        CACHE PATH "" FORCE
+    )
+    set(LIBLZMA_INCLUDE_DIRS
+        "${LibLZMA_SOURCE_DIR}/src/liblzma/api"
+        CACHE PATH "" FORCE
+    )
+    set(LIBLZMA_LIBRARY
+        "liblzma"
+        CACHE STRING "" FORCE
+    )
+    set(LIBLZMA_FOUND
+        TRUE
+        CACHE BOOL "" FORCE
+    )
+    set(LIBLZMA_LIBRARIES
+        "liblzma"
+        CACHE STRING "" FORCE
+    )
+    set(LIBLZMA_HAS_AUTO_DECODER
+        TRUE
+        CACHE BOOL "" FORCE
+    )
+    set(LIBLZMA_HAS_EASY_ENCODER
+        TRUE
+        CACHE BOOL "" FORCE
+    )
+    set(LIBLZMA_HAS_LZMA_PRESET
+        TRUE
+        CACHE BOOL "" FORCE
+    )
+    set(LibLZMA_FOUND
+        TRUE
+        CACHE BOOL "" FORCE
+    )
     # LZMA_API_STATIC tells lzma.h to drop the dllimport decoration; only correct
     # for the CPM static build, never for a system shared liblzma.
-    set(LZMA_API_STATIC 1 CACHE INTERNAL "liblzma is static")
+    set(LZMA_API_STATIC
+        1
+        CACHE INTERNAL "liblzma is static"
+    )
     if(NOT TARGET LibLZMA::LibLZMA)
         add_library(LibLZMA::LibLZMA ALIAS liblzma)
     endif()
@@ -124,7 +169,10 @@ elseif(NOT LibLZMA_FOUND)
     message(FATAL_ERROR "QGC: LibLZMA (required dependency) was not resolved")
 endif()
 
-set(HAVE_LZMA_STREAM_ENCODER_MT 0 CACHE INTERNAL "Encoder disabled in our build")
+set(HAVE_LZMA_STREAM_ENCODER_MT
+    0
+    CACHE INTERNAL "Encoder disabled in our build"
+)
 message(STATUS "liblzma support enabled")
 
 # ============================================================================
@@ -155,11 +203,26 @@ if(zstd_ADDED)
         message(FATAL_ERROR "libzstd_static target not found")
     endif()
     qgc_disable_dependency_warnings(libzstd_static)
-    set(ZSTD_INCLUDE_DIR "${zstd_SOURCE_DIR}/lib" CACHE PATH "" FORCE)
-    set(ZSTD_LIBRARY "libzstd_static" CACHE STRING "" FORCE)
-    set(ZSTD_LIBRARIES "libzstd_static" CACHE STRING "" FORCE)
-    set(ZSTD_FOUND TRUE CACHE BOOL "" FORCE)
-    set(Zstd_FOUND TRUE CACHE BOOL "" FORCE)
+    set(ZSTD_INCLUDE_DIR
+        "${zstd_SOURCE_DIR}/lib"
+        CACHE PATH "" FORCE
+    )
+    set(ZSTD_LIBRARY
+        "libzstd_static"
+        CACHE STRING "" FORCE
+    )
+    set(ZSTD_LIBRARIES
+        "libzstd_static"
+        CACHE STRING "" FORCE
+    )
+    set(ZSTD_FOUND
+        TRUE
+        CACHE BOOL "" FORCE
+    )
+    set(Zstd_FOUND
+        TRUE
+        CACHE BOOL "" FORCE
+    )
     if(NOT TARGET Zstd::Zstd)
         add_library(Zstd::Zstd ALIAS libzstd_static)
     endif()
@@ -178,9 +241,18 @@ else()
     message(FATAL_ERROR "QGC: zstd (required dependency) was not resolved")
 endif()
 
-set(HAVE_LIBZSTD 1 CACHE INTERNAL "zstd decompression available")
-set(HAVE_ZSTD_compressStream 0 CACHE INTERNAL "Compression disabled in our build")
-set(HAVE_ZSTD_minCLevel 0 CACHE INTERNAL "Compression disabled in our build")
+set(HAVE_LIBZSTD
+    1
+    CACHE INTERNAL "zstd decompression available"
+)
+set(HAVE_ZSTD_compressStream
+    0
+    CACHE INTERNAL "Compression disabled in our build"
+)
+set(HAVE_ZSTD_minCLevel
+    0
+    CACHE INTERNAL "Compression disabled in our build"
+)
 message(STATUS "Zstandard support enabled")
 
 # ============================================================================
@@ -204,10 +276,22 @@ if(QGC_ENABLE_LZ4)
     # find_package(lz4) (config mode) may export LZ4::lz4.
     if(lz4_ADDED)
         qgc_disable_dependency_warnings(lz4_static)
-        set(LZ4_INCLUDE_DIR "${lz4_SOURCE_DIR}/lib" CACHE PATH "" FORCE)
-        set(LZ4_LIBRARY "lz4_static" CACHE STRING "" FORCE)
-        set(LZ4_LIBRARIES "lz4_static" CACHE STRING "" FORCE)
-        set(LZ4_FOUND TRUE CACHE BOOL "" FORCE)
+        set(LZ4_INCLUDE_DIR
+            "${lz4_SOURCE_DIR}/lib"
+            CACHE PATH "" FORCE
+        )
+        set(LZ4_LIBRARY
+            "lz4_static"
+            CACHE STRING "" FORCE
+        )
+        set(LZ4_LIBRARIES
+            "lz4_static"
+            CACHE STRING "" FORCE
+        )
+        set(LZ4_FOUND
+            TRUE
+            CACHE BOOL "" FORCE
+        )
         if(NOT TARGET LZ4::LZ4)
             add_library(LZ4::LZ4 ALIAS lz4_static)
         endif()
@@ -246,10 +330,22 @@ if(QGC_ENABLE_BZIP2)
             message(FATAL_ERROR "bz2_static target not found")
         endif()
         qgc_disable_dependency_warnings(bz2_static)
-        set(BZIP2_INCLUDE_DIR "${BZip2_SOURCE_DIR}" CACHE PATH "" FORCE)
-        set(BZIP2_LIBRARY "bz2_static" CACHE STRING "" FORCE)
-        set(BZIP2_FOUND TRUE CACHE BOOL "" FORCE)
-        set(BZIP2_LIBRARIES "bz2_static" CACHE STRING "" FORCE)
+        set(BZIP2_INCLUDE_DIR
+            "${BZip2_SOURCE_DIR}"
+            CACHE PATH "" FORCE
+        )
+        set(BZIP2_LIBRARY
+            "bz2_static"
+            CACHE STRING "" FORCE
+        )
+        set(BZIP2_FOUND
+            TRUE
+            CACHE BOOL "" FORCE
+        )
+        set(BZIP2_LIBRARIES
+            "bz2_static"
+            CACHE STRING "" FORCE
+        )
         if(NOT TARGET BZip2::BZip2)
             add_library(BZip2::BZip2 ALIAS bz2_static)
         endif()
@@ -324,7 +420,8 @@ elseif(NOT LibArchive_FOUND)
 endif()
 message(STATUS "libarchive support enabled")
 
-target_link_libraries(QGCCompression
+target_link_libraries(
+    QGCCompression
     PUBLIC
         Qt6::Core
         Qt6::Qml
@@ -354,14 +451,5 @@ endif()
 if(QGC_ENABLE_LZ4)
     target_compile_definitions(QGCCompression PUBLIC QGC_ENABLE_LZ4)
 endif()
-
-target_precompile_headers(QGCCompression PRIVATE
-    <QtCore/QObject>
-    <QtCore/QString>
-    <QtCore/QByteArray>
-    <QtCore/QFile>
-    <QtCore/QIODevice>
-    <QtQmlIntegration/QtQmlIntegration>
-)
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCCompression)

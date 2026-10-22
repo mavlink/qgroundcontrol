@@ -3,7 +3,8 @@
 # Tests for Follow Me mode and vehicle tracking
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(
+    QGCUnitTests
     PRIVATE
         FollowMeTest.cc
         FollowMeTest.h

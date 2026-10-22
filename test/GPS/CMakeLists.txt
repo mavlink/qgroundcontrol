@@ -11,25 +11,31 @@
 function(qgc_add_gps_suites labels)
     foreach(_suite IN LISTS ARGN)
         get_filename_component(_suite_name "${_suite}" NAME)
-        target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${_suite}.cc ${_suite}.h)
-        set_property(SOURCE ${_suite}.cc TARGET_DIRECTORY ${CMAKE_PROJECT_NAME} PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)
+        target_sources(
+            QGCUnitTests
+            PRIVATE
+                ${_suite}.cc
+                ${_suite}.h
+        )
+        set_property(SOURCE ${_suite}.cc TARGET_DIRECTORY QGCUnitTests PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)
         add_qgc_test(${_suite_name} LABELS ${labels} GPS)
     endforeach()
 endfunction()
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_sources(
-    ${CMAKE_PROJECT_NAME}
-    PRIVATE NTRIP/Support/CasterSession.h
-            NTRIP/Support/MockNTRIPTransport.h
-            NTRIP/Support/NTRIPTestHelpers.h
-            NTRIP/Support/NTRIPTlsTestFixtures.h
-            NTRIP/Support/ScriptedNTRIPCaster.h
-            Qml/Support/GPSPanelFixtures.h
-            Receiver/Support/GPSReceiverTestSupport.h
-            Receiver/Support/ScriptedReceiverWorker.h
-            Support/GPSQmlTestHelpers.h
-            Support/GPSTestHelpers.h
+    QGCUnitTests
+    PRIVATE
+        NTRIP/Support/CasterSession.h
+        NTRIP/Support/MockNTRIPTransport.h
+        NTRIP/Support/NTRIPTestHelpers.h
+        NTRIP/Support/NTRIPTlsTestFixtures.h
+        NTRIP/Support/ScriptedNTRIPCaster.h
+        Qml/Support/GPSPanelFixtures.h
+        Receiver/Support/GPSReceiverTestSupport.h
+        Receiver/Support/ScriptedReceiverWorker.h
+        Support/GPSQmlTestHelpers.h
+        Support/GPSTestHelpers.h
 )
 
 set(_qgc_gps_suites

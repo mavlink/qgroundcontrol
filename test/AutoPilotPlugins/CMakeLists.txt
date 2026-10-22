@@ -2,7 +2,8 @@
 # AutoPilot Plugins Unit Tests
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(
+    QGCUnitTests
     PRIVATE
         APM/APMFreshFlashParamsTest.cc
         APM/APMFreshFlashParamsTest.h

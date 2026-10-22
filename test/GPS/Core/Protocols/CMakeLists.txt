@@ -6,23 +6,24 @@
 # ============================================================================
 
 target_sources(
-    ${CMAKE_PROJECT_NAME}
-    PRIVATE Scenarios/GoldenScenarios.cc
-            Scenarios/GoldenScenarios.h
-            Scenarios/GoldenScenariosAshtech.cc
-            Scenarios/GoldenScenariosAutomatic.cc
-            Scenarios/GoldenScenariosFemto.cc
-            Scenarios/GoldenScenariosPassive.cc
-            Scenarios/GoldenScenariosQuectel.cc
-            Scenarios/GoldenScenariosSBF.cc
-            Scenarios/GoldenScenariosUBX.cc
-            Scenarios/GoldenScenariosUnicore.cc
-            Support/GoldenFormat.cc
-            Support/GoldenFormat.h
-            Support/GoldenTranscript.cc
-            Support/GoldenTranscript.h
-            Support/GPSProtocolTestBase.cc
-            Support/GPSProtocolTestBase.h
+    QGCUnitTests
+    PRIVATE
+        Scenarios/GoldenScenarios.cc
+        Scenarios/GoldenScenarios.h
+        Scenarios/GoldenScenariosAshtech.cc
+        Scenarios/GoldenScenariosAutomatic.cc
+        Scenarios/GoldenScenariosFemto.cc
+        Scenarios/GoldenScenariosPassive.cc
+        Scenarios/GoldenScenariosQuectel.cc
+        Scenarios/GoldenScenariosSBF.cc
+        Scenarios/GoldenScenariosUBX.cc
+        Scenarios/GoldenScenariosUnicore.cc
+        Support/GoldenFormat.cc
+        Support/GoldenFormat.h
+        Support/GoldenTranscript.cc
+        Support/GoldenTranscript.h
+        Support/GPSProtocolTestBase.cc
+        Support/GPSProtocolTestBase.h
 )
 
 # Linux test builds, including CI, keep the receiver qualification runner compiling and exercised. The runner opens a

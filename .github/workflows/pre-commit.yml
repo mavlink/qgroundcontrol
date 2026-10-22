@@ -55,6 +55,16 @@ jobs:
           modules: ''
           archives: qtbase qtdeclarative icu
 
+      # Hook environments are reused across config changes; pre-commit reinstalls unhealthy ones.
+      - name: Restore pre-commit environments
+        id: pre-commit-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.pre-commit-config.yaml') }}
+          restore-keys: |
+            pre-commit-v1-${{ runner.os }}-${{ runner.arch }}-
+
       - name: Run pre-commit
         id: pre-commit
         continue-on-error: true
@@ -63,6 +73,23 @@ jobs:
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: python3 ./tools/pre_commit.py --ci --changed
+
+      # Pull requests restore the base branch's environments without adding cache entries.
+      - name: Prune unused pre-commit environments
+        if: >-
+          !cancelled() && github.event_name == 'push' &&
+          steps.pre-commit-cache.outputs.cache-hit != 'true'
+        continue-on-error: true
+        run: pre-commit gc
+
+      - name: Save pre-commit environments
+        if: >-
+          !cancelled() && github.event_name == 'push' &&
+          steps.pre-commit-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: ~/.cache/pre-commit
+          key: ${{ steps.pre-commit-cache.outputs.cache-primary-key }}
 
       - name: Prepare pre-commit results artifact
         if: github.event_name == 'pull_request' && always()

@@ -3,7 +3,8 @@
 # Tests for 3D viewer geometry, parsing, and coordinate utilities
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(
+    QGCUnitTests
     PRIVATE
         GeoCoordinateTypeTest.cc
         GeoCoordinateTypeTest.h
@@ -34,7 +35,8 @@ target_sources(${CMAKE_PROJECT_NAME}
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/Providers/Osm)
 
-qt_add_resources(${CMAKE_PROJECT_NAME} "Viewer3DTest_res"
+qt_add_resources(
+    ${CMAKE_PROJECT_NAME} "Viewer3DTest_res"
     PREFIX "/unittest"
     BASE Providers/Osm
     FILES

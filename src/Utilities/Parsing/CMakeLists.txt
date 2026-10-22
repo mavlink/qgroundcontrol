@@ -7,8 +7,7 @@ add_subdirectory(Json)
 add_subdirectory(Wire)
 
 qt_add_library(
-    QGCParsing
-    STATIC
+    QGCParsing STATIC
     APMDataFlash/APMDataFlashUtility.cc
     APMDataFlash/APMDataFlashUtility.h
     Exif/ExifUtility.cc
@@ -71,9 +70,15 @@ target_include_directories(
     PRIVATE ${libexif_SOURCE_DIR}/libexif
 )
 
+# file(CONFIGURE) rewrites only on change; an unconditional write recompiled libexif on every configure.
+# cmakelang 0.6.13 does not recognize file(CONFIGURE).
+# cmake-lint: disable=E1126
 set(LIBEXIF_CONFIG_H "${CMAKE_CURRENT_BINARY_DIR}/Exif/config.h")
 file(
-    WRITE ${LIBEXIF_CONFIG_H}
+    CONFIGURE
+    OUTPUT
+    ${LIBEXIF_CONFIG_H}
+    CONTENT
     "
 #pragma once
 #define PACKAGE \"libexif\"
@@ -81,12 +86,16 @@ file(
 #define VERSION \"${QGC_LIBEXIF_VERSION}\"
 #define GETTEXT_PACKAGE \"libexif-12\"
 "
+    @ONLY
 )
 
 set(LIBEXIF_STDINT_DIR "${CMAKE_CURRENT_BINARY_DIR}/Exif/libexif")
 file(MAKE_DIRECTORY ${LIBEXIF_STDINT_DIR})
 file(
-    WRITE "${LIBEXIF_STDINT_DIR}/_stdint.h"
+    CONFIGURE
+    OUTPUT
+    "${LIBEXIF_STDINT_DIR}/_stdint.h"
+    CONTENT
     "
 #pragma once
 #include <stdint.h>
@@ -99,11 +108,17 @@ typedef SSIZE_T ssize_t;
 #include <sys/types.h>
 #endif
 "
+    @ONLY
 )
 target_include_directories(exif PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/Exif)
 
 target_compile_definitions(exif PRIVATE HAVE_CONFIG_H)
-set_target_properties(exif PROPERTIES C_STANDARD 99 POSITION_INDEPENDENT_CODE ON)
+set_target_properties(
+    exif
+    PROPERTIES
+        C_STANDARD 99
+        POSITION_INDEPENDENT_CODE ON
+)
 
 qgc_disable_dependency_warnings(exif)
 
@@ -123,25 +138,56 @@ qgc_disable_dependency_warnings(ulog_cpp)
 # valijson (header-only JSON-Schema validator, native Qt-JSON adapter)
 # ============================================================================
 
+include(CPMPatchCache)
+
+set(_valijson_patch "${CMAKE_CURRENT_SOURCE_DIR}/valijson-qtjson-int64.patch")
+qgc_cpm_patch_cache_key(
+    _valijson_cache_key
+    GIT_REPOSITORY "https://github.com/tristanpenman/valijson.git"
+    GIT_TAG v1.1.0
+    PATCHES "${_valijson_patch}"
+)
+# valijson's recursive submodules nest test files 151 characters deep; the full 64-character key
+# pushes those paths past Windows' 260-character limit in CI checkouts.
+string(SUBSTRING "${_valijson_cache_key}" 0 16 _valijson_cache_key)
+
 CPMAddPackage(
     NAME valijson
     GITHUB_REPOSITORY tristanpenman/valijson
     # Pinned to 1.1.0: 1.1.1 calls std::from_chars(double) unguarded, which AppleClang's
     # libc++ (macos-15/ios CI, pre-LLVM 20) lacks — valijson#239, fixed in 1.1.2.
     GIT_TAG v1.1.0
-    OPTIONS "valijson_BUILD_TESTS OFF" "valijson_BUILD_EXAMPLES OFF" "valijson_INSTALL OFF"
+    # CPM's default source-cache key hashes the patch's absolute path, not its contents, so every
+    # checkout location cloned its own copy.
+    CUSTOM_CACHE_KEY "${_valijson_cache_key}"
+    OPTIONS
+        "valijson_BUILD_TESTS OFF"
+        "valijson_BUILD_EXAMPLES OFF"
+        "valijson_INSTALL OFF"
     # QtJsonAdapter isInteger()/getInteger() use 32-bit toInt(), so integral values
     # > INT_MAX (e.g. PX4 uint32 fileCrc) fail "type": "integer" checks or truncate.
-    PATCHES valijson-qtjson-int64.patch
+    PATCHES "${_valijson_patch}"
 )
 
 # Keep header-only Valijson diagnostics outside QGC's warning policy.
-set_target_properties(valijson PROPERTIES SYSTEM TRUE)
+set_target_properties(
+    valijson
+    PROPERTIES
+        SYSTEM TRUE
+)
 
 target_link_libraries(
     QGCParsing
-    PUBLIC Qt6::Core QGCJsonValidation exif ulog_cpp::ulog_cpp
-    PRIVATE QGCCompression QGCLogging QGCWire ValiJSON::valijson
+    PUBLIC
+        Qt6::Core
+        QGCJsonValidation
+        exif
+        ulog_cpp::ulog_cpp
+    PRIVATE
+        QGCCompression
+        QGCLogging
+        QGCWire
+        ValiJSON::valijson
 )
 
 # valijson defaults to abort() on malformed schema (it only enables exceptions when building
@@ -161,19 +207,23 @@ endif()
 
 target_include_directories(
     QGCParsing
-    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/APMDataFlash ${CMAKE_CURRENT_SOURCE_DIR}/Exif
-           ${CMAKE_CURRENT_SOURCE_DIR}/Json ${CMAKE_CURRENT_SOURCE_DIR}/PX4ULog
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/APMDataFlash
+        ${CMAKE_CURRENT_SOURCE_DIR}/Exif
+        ${CMAKE_CURRENT_SOURCE_DIR}/Json
+        ${CMAKE_CURRENT_SOURCE_DIR}/PX4ULog
 )
 
 target_precompile_headers(
     QGCParsing
     PRIVATE
-    <QtCore/QObject>
-    <QtCore/QString>
-    <QtCore/QByteArray>
-    <QtCore/QJsonObject>
-    <QtCore/QJsonArray>
-    <QtCore/QJsonDocument>
+        <QtCore/QObject>
+        <QtCore/QString>
+        <QtCore/QByteArray>
+        <QtCore/QJsonObject>
+        <QtCore/QJsonArray>
+        <QtCore/QJsonDocument>
 )
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCParsing)

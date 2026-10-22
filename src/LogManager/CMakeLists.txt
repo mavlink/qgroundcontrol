@@ -1,4 +1,5 @@
-qt_add_library(QGCLogManager STATIC
+qt_add_library(
+    QGCLogManager STATIC
     LogEntry.cc
     LogEntry.h
     LogEntryTableModel.cc
@@ -11,7 +12,8 @@ qt_add_library(QGCLogManager STATIC
     LogManager.h
 )
 
-qt_add_qml_module(QGCLogManager
+qt_add_qml_module(
+    QGCLogManager
     URI QGroundControl.LogManager
     VERSION 1.0
     RESOURCE_PREFIX /qml
@@ -22,15 +24,16 @@ qt_add_qml_module(QGCLogManager
         LoggingCategoriesDialog.qml
 )
 
-target_include_directories(QGCLogManager
-    PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}
+target_include_directories(
+    QGCLogManager
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
     PRIVATE
         ${CMAKE_SOURCE_DIR}/src/Settings
         ${CMAKE_SOURCE_DIR}/src/FactSystem
 )
 
-target_link_libraries(QGCLogManager
+target_link_libraries(
+    QGCLogManager
     PUBLIC
         Qt6::Core
         Qt6::Qml
@@ -42,15 +45,12 @@ target_link_libraries(QGCLogManager
         QGCLogging
 )
 
-target_precompile_headers(QGCLogManager PRIVATE
-    <QtCore/QObject>
-    <QtCore/QString>
-    <QtCore/QDateTime>
-    <QtCore/QAbstractTableModel>
-    <QtQmlIntegration/QtQmlIntegration>
-)
-
 # AppLogging.qml is loaded via dynamic URL (SettingsPages.json), so the QML
 # import scanner can't see QGroundControl.LogManager. Force-link the plugin
 # so its type registrations end up in the executable.
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCLogManager QGCLogManagerplugin)
+target_link_libraries(
+    ${CMAKE_PROJECT_NAME}
+    PRIVATE
+        QGCLogManager
+        QGCLogManagerplugin
+)

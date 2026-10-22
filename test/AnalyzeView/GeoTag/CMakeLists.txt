@@ -3,7 +3,8 @@
 # Tests for geotagging, EXIF parsing, and log parsing
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(
+    QGCUnitTests
     PRIVATE
         DataFlashParserTest.cc
         DataFlashParserTest.h
@@ -29,7 +30,8 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 # Test Data Resources
 # ----------------------------------------------------------------------------
 # EXIF test sample from https://github.com/ianare/exif-samples
-qt_add_resources(${CMAKE_PROJECT_NAME} "GeoTagTest_res"
+qt_add_resources(
+    ${CMAKE_PROJECT_NAME} "GeoTagTest_res"
     PREFIX "/unittest"
     FILES
         DSCN0010.jpg

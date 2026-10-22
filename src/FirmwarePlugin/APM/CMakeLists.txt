@@ -1,12 +1,14 @@
 if(NOT QGC_DISABLE_APM_PLUGIN_FACTORY)
-    target_sources(${CMAKE_PROJECT_NAME}
+    target_sources(
+        ${CMAKE_PROJECT_NAME}
         PRIVATE
             APMFirmwarePluginFactory.cc
             APMFirmwarePluginFactory.h
     )
 endif()
 
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(
+    ${CMAKE_PROJECT_NAME}
     PRIVATE
         APM.h
         APMFirmwarePlugin.cc
@@ -29,7 +31,8 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 
 qgc_add_json_resources(json_firmware_plugin_apm)
 
-qt_add_resources(${CMAKE_PROJECT_NAME} firmware_plugin_apm_resource
+qt_add_resources(
+    ${CMAKE_PROJECT_NAME} firmware_plugin_apm_resource
     PREFIX "/FirmwarePlugin/APM"
     FILES
         Copter.OfflineEditing.params
@@ -41,29 +44,25 @@ qt_add_resources(${CMAKE_PROJECT_NAME} firmware_plugin_apm_resource
 #===========================================================================#
 
 CPMAddPackage(
-    NAME              ArduPilotParams
+    NAME ArduPilotParams
     GITHUB_REPOSITORY ArduPilot/ParameterRepository
-    GIT_TAG           main
-    GIT_SHALLOW       TRUE
-    DOWNLOAD_ONLY     TRUE
+    GIT_TAG main
+    GIT_SHALLOW TRUE
+    DOWNLOAD_ONLY TRUE
 )
 qgc_track_git_head(
     REPO_PATH "${ArduPilotParams_SOURCE_DIR}"
-    GIT_REF   main
-    INTERVAL  3600
+    GIT_REF main
+    INTERVAL 3600
     OFFLINE_OK
 )
 
 # Filters applied to discovered ArduPilot parameter dirs (e.g. "Copter-4.7").
 # Regex (CMake syntax) — match against the dir name; matches are dropped.
 set(QGC_APM_PARAMS_EXCLUDE
-    "AP_Periph-.*"
-    "Blimp-.*"
-    "^Copter-3[.]"
-    "^Plane-3[.]"
-    "^Rover-3[.]"
-    CACHE STRING
-    "Regex patterns matched against ArduPilot param dir names to exclude from the embedded resource")
+    "AP_Periph-.*" "Blimp-.*" "^Copter-3[.]" "^Plane-3[.]" "^Rover-3[.]"
+    CACHE STRING "Regex patterns matched against ArduPilot param dir names to exclude from the embedded resource"
+)
 
 # Dynamically discover all parameter definition files.
 # Directory layout: {Vehicle}-{Major}.{Minor}/apm.pdef.json
@@ -99,7 +98,11 @@ foreach(_pdef IN LISTS _apm_pdef_files)
     string(REPLACE "-" "." _version_dots "${_version}")
 
     set(_alias "FirmwarePlugin/APM/APMParameterFactMetaData.${_vehicle}.${_version_dots}.json")
-    set_source_files_properties("${_pdef}" PROPERTIES QT_RESOURCE_ALIAS "${_alias}")
+    set_source_files_properties(
+        "${_pdef}"
+        PROPERTIES
+            QT_RESOURCE_ALIAS "${_alias}"
+    )
     list(APPEND _apm_param_resources "${_pdef}")
 endforeach()
 
@@ -107,17 +110,23 @@ list(LENGTH _apm_param_resources _apm_param_count)
 message(STATUS "APM: Found ${_apm_param_count} parameter definition files")
 if(_apm_param_skipped)
     list(LENGTH _apm_param_skipped _apm_param_skipped_count)
-    message(STATUS "APM: Excluded ${_apm_param_skipped_count} parameter dirs by QGC_APM_PARAMS_EXCLUDE: ${_apm_param_skipped}")
+    message(
+        STATUS
+            "APM: Excluded ${_apm_param_skipped_count} parameter dirs by QGC_APM_PARAMS_EXCLUDE: ${_apm_param_skipped}"
+    )
 endif()
 
-qt_add_resources(${CMAKE_PROJECT_NAME} "qgcresources_apm_params"
+qgc_add_big_resources(
+    ${CMAKE_PROJECT_NAME} "qgcresources_apm_params"
     PREFIX "/"
-    FILES ${_apm_param_resources}
+    FILES
+        ${_apm_param_resources}
 )
 
 qt_add_library(APMFirmwareModule STATIC)
 
-qt_add_qml_module(APMFirmwareModule
+qt_add_qml_module(
+    APMFirmwareModule
     URI QGroundControl.FirmwarePlugin.APM
     VERSION 1.0
     RESOURCE_PREFIX /qml

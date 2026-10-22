@@ -31,9 +31,10 @@ endforeach()
 message(STATUS "Code coverage instrumentation enabled")
 
 # ccache preserves .gcno alongside objects; keep the configured compiler launcher.
+# gcov needs no debug info, so CMAKE_<LANG>_FLAGS_DEBUG keeps control of it (CI uses -g1).
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     # Qt worker threads share counters; non-atomic updates can corrupt branch counts.
-    set(_qgc_coverage_compile_options --coverage -fprofile-update=atomic -O0 -g)
+    set(_qgc_coverage_compile_options --coverage -fprofile-update=atomic -O0)
     set(_qgc_coverage_link_options --coverage)
     string(REGEX MATCH "^[0-9]+" _qgc_gcc_major "${CMAKE_CXX_COMPILER_VERSION}")
     find_program(_qgc_gcov_executable NAMES "gcov-${_qgc_gcc_major}" gcov NO_CACHE)
@@ -44,7 +45,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
 
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     message(STATUS "Using Clang gcov-style coverage (llvm-cov gcov)")
-    set(_qgc_coverage_compile_options --coverage -O0 -g)
+    set(_qgc_coverage_compile_options --coverage -O0)
     set(_qgc_coverage_link_options --coverage)
 
     set(_qgc_llvm_cov_hints)

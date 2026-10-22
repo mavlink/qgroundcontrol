@@ -2,7 +2,8 @@
 # MAVLink Signing Unit Tests
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(
+    QGCUnitTests
     PRIVATE
         MockLinkSigningTest.cc
         MockLinkSigningTest.h

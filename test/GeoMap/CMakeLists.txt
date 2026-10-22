@@ -3,7 +3,8 @@
 # Tests for the experimental GeoMap engine backend
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(
+    QGCUnitTests
     PRIVATE
         CheckerboardTextureDataTest.cc
         CheckerboardTextureDataTest.h
@@ -45,6 +46,16 @@ target_sources(${CMAKE_PROJECT_NAME}
         TileImageSourceTest.h
         TileMathTest.cc
         TileMathTest.h
+)
+
+# The tests reuse file-local helper names (kViewport, kCenter, setupCamera, ...), so they cannot share unity units.
+file(GLOB _geomap_test_sources CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/*.cc")
+set_source_files_properties(
+    ${_geomap_test_sources}
+    TARGET_DIRECTORY
+    QGCUnitTests
+    PROPERTIES
+        SKIP_UNITY_BUILD_INCLUSION ON
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

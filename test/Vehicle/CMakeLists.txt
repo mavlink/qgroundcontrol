@@ -4,65 +4,66 @@
 # ============================================================================
 
 target_sources(
-    ${CMAKE_PROJECT_NAME}
-    PRIVATE APMAirframeComponentControllerTest.cc
-            APMAirframeComponentControllerTest.h
-            APMStartMissionTest.cc
-            APMStartMissionTest.h
-            FirmwarePluginTest.cc
-            FirmwarePluginTest.h
-            FTPManagerTest.cc
-            FTPManagerTest.h
-            FTPControllerTest.cc
-            FTPControllerTest.h
-            GenericFirmwareCommandFallbackTest.cc
-            GenericFirmwareCommandFallbackTest.h
-            GuidedModeROITest.cc
-            GuidedModeROITest.h
-            InitialConnectTest.cc
-            InitialConnectTest.h
-            InitialConnectPeripheralStartupTest.cc
-            InitialConnectPeripheralStartupTest.h
-            MAVLinkLogManagerTest.cc
-            MAVLinkLogManagerTest.h
-            MavCommandQueueReentrancyTest.cc
-            MavCommandQueueReentrancyTest.h
-            MultiVehicleManagerTest.cc
-            MultiVehicleManagerTest.h
-            PX4ExternalFlightModesTest.cc
-            PX4ExternalFlightModesTest.h
-            PX4HasGripperTest.cc
-            PX4HasGripperTest.h
-            PX4RepositionTest.cc
-            PX4RepositionTest.h
-            RemoteIDManagerTest.cc
-            RemoteIDManagerTest.h
-            RequestMessageTest.cc
-            RequestMessageTest.h
-            SendMavCommandWithHandlerTest.cc
-            SendMavCommandWithHandlerTest.h
-            SendMavCommandWithSignallingTest.cc
-            SendMavCommandWithSignallingTest.h
-            SetEstimatorOriginTest.cc
-            SetEstimatorOriginTest.h
-            SetHomeTest.cc
-            SetHomeTest.h
-            StandardModesTest.cc
-            StandardModesTest.h
-            TrajectoryPointsTest.cc
-            TrajectoryPointsTest.h
-            VehicleAirborneTest.cc
-            VehicleAirborneTest.h
-            VehicleDistanceSensorFactGroupTest.cc
-            VehicleDistanceSensorFactGroupTest.h
-            VehicleFirmwareUpdateTest.cc
-            VehicleFirmwareUpdateTest.h
-            VehicleGPSFactGroupTest.cc
-            VehicleGPSFactGroupTest.h
-            VehicleLinkManagerTest.cc
-            VehicleLinkManagerTest.h
-            VehicleReadinessTest.cc
-            VehicleReadinessTest.h
+    QGCUnitTests
+    PRIVATE
+        APMAirframeComponentControllerTest.cc
+        APMAirframeComponentControllerTest.h
+        APMStartMissionTest.cc
+        APMStartMissionTest.h
+        FirmwarePluginTest.cc
+        FirmwarePluginTest.h
+        FTPManagerTest.cc
+        FTPManagerTest.h
+        FTPControllerTest.cc
+        FTPControllerTest.h
+        GenericFirmwareCommandFallbackTest.cc
+        GenericFirmwareCommandFallbackTest.h
+        GuidedModeROITest.cc
+        GuidedModeROITest.h
+        InitialConnectTest.cc
+        InitialConnectTest.h
+        InitialConnectPeripheralStartupTest.cc
+        InitialConnectPeripheralStartupTest.h
+        MAVLinkLogManagerTest.cc
+        MAVLinkLogManagerTest.h
+        MavCommandQueueReentrancyTest.cc
+        MavCommandQueueReentrancyTest.h
+        MultiVehicleManagerTest.cc
+        MultiVehicleManagerTest.h
+        PX4ExternalFlightModesTest.cc
+        PX4ExternalFlightModesTest.h
+        PX4HasGripperTest.cc
+        PX4HasGripperTest.h
+        PX4RepositionTest.cc
+        PX4RepositionTest.h
+        RemoteIDManagerTest.cc
+        RemoteIDManagerTest.h
+        RequestMessageTest.cc
+        RequestMessageTest.h
+        SendMavCommandWithHandlerTest.cc
+        SendMavCommandWithHandlerTest.h
+        SendMavCommandWithSignallingTest.cc
+        SendMavCommandWithSignallingTest.h
+        SetEstimatorOriginTest.cc
+        SetEstimatorOriginTest.h
+        SetHomeTest.cc
+        SetHomeTest.h
+        StandardModesTest.cc
+        StandardModesTest.h
+        TrajectoryPointsTest.cc
+        TrajectoryPointsTest.h
+        VehicleAirborneTest.cc
+        VehicleAirborneTest.h
+        VehicleDistanceSensorFactGroupTest.cc
+        VehicleDistanceSensorFactGroupTest.h
+        VehicleFirmwareUpdateTest.cc
+        VehicleFirmwareUpdateTest.h
+        VehicleGPSFactGroupTest.cc
+        VehicleGPSFactGroupTest.h
+        VehicleLinkManagerTest.cc
+        VehicleLinkManagerTest.h
+        VehicleReadinessTest.cc
+        VehicleReadinessTest.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -78,7 +79,12 @@ add_qgc_test(FirmwarePluginTest LABELS Unit Vehicle)
 add_qgc_test(FTPControllerTest LABELS Integration Vehicle RESOURCE_LOCK TempFiles)
 add_qgc_test(FTPManagerTest LABELS Integration Vehicle)
 if(NOT QGC_NO_SERIAL_LINK)
-    target_sources(${CMAKE_PROJECT_NAME} PRIVATE FirmwareUpgradeControllerTest.cc FirmwareUpgradeControllerTest.h)
+    target_sources(
+        QGCUnitTests
+        PRIVATE
+            FirmwareUpgradeControllerTest.cc
+            FirmwareUpgradeControllerTest.h
+    )
     add_qgc_test(FirmwareUpgradeControllerTest LABELS Unit Vehicle)
 endif()
 add_qgc_test(GenericFirmwareCommandFallbackTest LABELS Integration Vehicle)
