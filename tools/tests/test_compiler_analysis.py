@@ -11,6 +11,20 @@ import pytest
 from analyze import FileCollector
 from analyzers.clang_tidy import ClangTidyAnalyzer
 from analyzers.clazy import ClazyAnalyzer
+from analyzers.dependencies import DependencyScanError
+
+
+def _scan_including(header: Path, dependents: set[Path]):
+    """Fake dependency scan in which only the given dependents include the header."""
+
+    def scan(entries, jobs):
+        sources = {(Path(entry["directory"]) / entry["file"]).resolve() for entry in entries}
+        return {
+            source: frozenset({source, header} if source in dependents else {source})
+            for source in sources
+        }
+
+    return scan
 
 
 @pytest.fixture(autouse=True)
@@ -122,7 +136,9 @@ def test_headers_select_active_project_units_once(tmp_path, analyzer_type):
     )
     analyzer = analyzer_type(tmp_path, tmp_path)
     with (
-        patch("analyzers.compiler.header_dependents", return_value=None),
+        patch(
+            "analyzers.compiler.scan_dependencies", side_effect=DependencyScanError("unavailable")
+        ),
         patch.object(analyzer, "require_tool", return_value=True),
         patch(
             "analyzers.compiler.run_captured", return_value=CompletedProcess([], 0, "", "")
@@ -144,7 +160,10 @@ def test_header_selection_keeps_changed_sources_and_records_timings(tmp_path):
     analyzer = ClazyAnalyzer(tmp_path, tmp_path)
     with (
         patch.object(analyzer, "require_tool", return_value=True),
-        patch("analyzers.compiler.header_dependents", return_value={tmp_path / "src/dependent.cc"}),
+        patch(
+            "analyzers.compiler.scan_dependencies",
+            side_effect=_scan_including(tmp_path / "src/header.h", {tmp_path / "src/dependent.cc"}),
+        ),
         patch("analyzers.compiler.run_captured", return_value=CompletedProcess([], 0, "", "")),
     ):
         result = analyzer.run([tmp_path / "src/header.h", tmp_path / "src/changed.cc"])
@@ -296,7 +315,10 @@ def test_shards_cover_each_selected_dependency_once_and_preserve_errors(tmp_path
         analyzer = ClangTidyAnalyzer(tmp_path, tmp_path, shard=shard, shard_count=shard_count)
         with (
             patch.object(analyzer, "require_tool", return_value=True),
-            patch("analyzers.compiler.header_dependents", return_value=dependents),
+            patch(
+                "analyzers.compiler.scan_dependencies",
+                side_effect=_scan_including(tmp_path / "src/header.h", dependents),
+            ),
             patch("analyzers.compiler.run_captured", side_effect=run),
         ):
             result = analyzer.run([tmp_path / "src/header.h", tmp_path / "src/changed.cc"])

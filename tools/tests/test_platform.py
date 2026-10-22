@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Tests for tools/common/platform.py."""
 
 from __future__ import annotations
@@ -12,6 +11,8 @@ from common.platform import (
     is_windows,
     normalize_arch,
 )
+
+pytestmark = pytest.mark.windows
 
 
 def test_is_windows(monkeypatch: pytest.MonkeyPatch) -> None:

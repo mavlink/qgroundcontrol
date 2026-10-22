@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+import re
 import reprlib
+
+# "noremap." is ParameterManager's prefix for bypassing firmware-version name remapping
+_PARAM_NAME_RE = re.compile(r"(?:noremap\.)?[A-Za-z0-9_]+")
 
 # Clamp offending-value reprs so a huge JSON fragment can't balloon the error message
 _repr = reprlib.Repr()
@@ -56,11 +60,10 @@ def require_dict(value: object, context: str, source: object) -> dict:
 
 
 def require_qml_safe_string(value: object, context: str, source: object) -> str:
-    """Reject strings that would break out of a generated QML string literal.
+    """Reject quote, backslash, and newline characters in plain-text UI strings.
 
-    These strings are embedded verbatim inside "..." in generated QML and also
-    serve as untranslated section IDs, so quote/backslash/newline are banned
-    rather than escaped.
+    Generated QML escapes these strings, but titles and headings also serve as
+    untranslated section IDs, so the characters are banned rather than escaped.
     """
     if not isinstance(value, str):
         raise ValueError(
@@ -70,5 +73,19 @@ def require_qml_safe_string(value: object, context: str, source: object) -> str:
         raise ValueError(
             f"{source}: {context} must not contain double-quote, backslash, or "
             f"newline characters: {clamped_repr(value)}"
+        )
+    return value
+
+
+def require_param_name(value: object, context: str, source: object) -> str:
+    """Require a vehicle parameter name or name fragment; an empty string means unset."""
+    if not isinstance(value, str):
+        raise ValueError(
+            f"{source}: {context} must be a string, got {type(value).__name__}: {_repr.repr(value)}"
+        )
+    if value and not _PARAM_NAME_RE.fullmatch(value):
+        raise ValueError(
+            f"{source}: {context} must contain only letters, digits, and underscores "
+            f"(optionally prefixed with 'noremap.'): {clamped_repr(value)}"
         )
     return value

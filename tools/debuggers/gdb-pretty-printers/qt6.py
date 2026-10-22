@@ -4,12 +4,12 @@ GDB Pretty Printers for Qt 6 Types
 This module provides human-readable display of Qt types in GDB.
 
 Usage in GDB:
-    source /path/to/qgroundcontrol/tools/gdb-pretty-printers/qt6.py
+    source /path/to/qgroundcontrol/tools/debuggers/gdb-pretty-printers/qt6.py
 
 Usage in .gdbinit:
     python
     import sys
-    sys.path.insert(0, '/path/to/qgroundcontrol/tools/gdb-pretty-printers')
+    sys.path.insert(0, '/path/to/qgroundcontrol/tools/debuggers/gdb-pretty-printers')
     from qt6 import register_qt_printers
     register_qt_printers(None)
     end

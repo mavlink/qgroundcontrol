@@ -4,44 +4,36 @@
 from __future__ import annotations
 
 import argparse
-import re
+import os
 import shutil
 import subprocess
 import sys
 from pathlib import Path
 
-from _bootstrap import ensure_tools_dir
-
-ensure_tools_dir(__file__)
-
+import _bootstrap as _bootstrap
+from common.coverage_summary import SUMMARY_FILENAME, CoverageSummaryError, read_gcovr_summary
 from common.file_traversal import find_repo_root
 from common.gh_actions import write_step_summary
 from common.logging import log_error, log_info, log_ok
+from common.markdown import md_table
 from common.opener import open_in_default_app
 from common.proc import run_captured
-from configure import CMakeConfig, configure
+from qgc_tools.cmake_configure import CMakeConfig, configure
 
-LINE_COVERAGE_RE = re.compile(r"lines:\s*(.+)")
-BRANCH_COVERAGE_RE = re.compile(r"branches:\s*(.+)")
+COVERAGE_PRESET = "Linux-coverage"
+DEFAULT_BUILD_DIR = Path("build") / COVERAGE_PRESET
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     """Parse command-line arguments."""
     parser = argparse.ArgumentParser(description="Build and report test coverage.")
     parser.add_argument(
-        "--mode",
-        choices=["full", "report-only"],
-        default="full",
-        help="Coverage generation mode (default: full)",
+        "-r", "--report", action="store_true", help="Generate a report from existing coverage data"
     )
-    parser.add_argument("-r", "--report", action="store_true", help="Generate report only")
     parser.add_argument(
         "-o", "--open", dest="open_report", action="store_true", help="Open HTML report"
     )
     parser.add_argument("-c", "--clean", action="store_true", help="Clean coverage data")
-    parser.add_argument(
-        "--xml", action="store_true", help="Generate coverage report and highlight XML output path"
-    )
     parser.add_argument("--log-file", default="", help="Write coverage target output to a file")
     parser.add_argument(
         "--step-summary",
@@ -51,17 +43,18 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "-b",
         "--build-dir",
-        default="build-coverage",
-        help="Coverage build directory (default: build-coverage)",
+        default=str(DEFAULT_BUILD_DIR),
+        help=f"Coverage build directory (default: {DEFAULT_BUILD_DIR.as_posix()})",
     )
     return parser.parse_args(argv)
 
 
 def check_dependencies() -> None:
     """Ensure required tooling is installed."""
-    from common.deps import require_tool
-
-    require_tool("gcovr", hint="Install with: python tools/setup/install_python.py coverage")
+    if shutil.which("gcovr") is None:
+        raise RuntimeError(
+            "gcovr not found. Install with: python tools/setup/install_python.py coverage"
+        )
 
 
 def clean_coverage(build_dir: Path) -> None:
@@ -82,16 +75,10 @@ def configure_build(repo_root: Path, build_dir: Path) -> None:
 
     log_info("Configuring build with coverage...")
     return_code = configure(
-        CMakeConfig(
-            source_dir=repo_root,
-            build_dir=build_dir,
-            build_type="Debug",
-            coverage=True,
-            preset="Linux-coverage",
-        )
+        CMakeConfig(source_dir=repo_root, build_dir=build_dir, preset=COVERAGE_PRESET)
     )
     if return_code:
-        raise subprocess.CalledProcessError(return_code, ["cmake", "--preset", "Linux-coverage"])
+        raise subprocess.CalledProcessError(return_code, ["cmake", "--preset", COVERAGE_PRESET])
     log_ok("Build configured")
 
 
@@ -103,45 +90,54 @@ def build_project(build_dir: Path) -> None:
 
 
 def run_tests(build_dir: Path) -> None:
-    """Run tests and fail if any test fails."""
+    """Run the CI test selection and fail if any test fails."""
     log_info("Running tests...")
     subprocess.run(
-        ["ctest", "--test-dir", str(build_dir), "--output-on-failure", "--timeout", "300"],
+        [
+            "ctest",
+            "--test-dir",
+            str(build_dir),
+            "--output-on-failure",
+            "--timeout",
+            "300",
+            "--label-regex",
+            "Unit|Integration",
+            "--label-exclude",
+            "Flaky|Network",
+            "--parallel",
+            str(os.cpu_count() or 1),
+        ],
         check=True,
         text=True,
     )
 
 
-def build_step_summary(log_text: str, mode: str) -> str:
-    """Build a GitHub Step Summary section from gcovr output."""
-    lines = ["## Code Coverage", "", f"Mode: `{mode}`", ""]
-    line_match = LINE_COVERAGE_RE.search(log_text)
-    branch_match = BRANCH_COVERAGE_RE.search(log_text)
-    if line_match:
-        lines.extend(
-            [
-                "| Metric | Coverage |",
-                "|--------|----------|",
-                f"| Lines | {line_match.group(1).strip()} |",
-                f"| Branches | {(branch_match.group(1).strip() if branch_match else 'N/A')} |",
-                "",
-                "[View detailed report](coverage.html)",
-            ]
-        )
-    else:
-        lines.append("Coverage data not available")
+def build_step_summary(summary_json: Path) -> str:
+    """Build a GitHub Step Summary section from the gcovr JSON summary."""
+    lines = ["## Code Coverage", ""]
+    try:
+        summary = read_gcovr_summary(summary_json)
+    except CoverageSummaryError as exc:
+        lines.append(f"Coverage data not available: {exc}")
+        return "\n".join(lines) + "\n"
+    branches = (
+        f"{summary.branch_percent:.1f}% ({summary.branch_covered} of {summary.branch_total})"
+        if summary.branch_total
+        else "N/A"
+    )
+    rows = [
+        (
+            "Lines",
+            f"{summary.line_percent:.1f}% ({summary.line_covered} of {summary.line_total})",
+        ),
+        ("Branches", branches),
+    ]
+    lines.append(md_table(["Metric", "Coverage"], rows))
     return "\n".join(lines) + "\n"
 
 
-def maybe_write_step_summary(log_text: str, mode: str) -> None:
-    """Append coverage markdown to GITHUB_STEP_SUMMARY when requested."""
-    write_step_summary(build_step_summary(log_text, mode))
-
-
-def generate_report(
-    build_dir: Path, *, xml_only: bool, log_file: Path | None = None, mode: str = "full"
-) -> str:
-    """Generate coverage artifacts from existing coverage data."""
+def generate_report(build_dir: Path, *, log_file: Path | None = None) -> None:
+    """Generate XML, JSON summary and HTML coverage reports from existing coverage data."""
     log_info("Generating coverage report...")
     result = run_captured(
         ["cmake", "--build", str(build_dir), "--target", "coverage-report"],
@@ -158,9 +154,8 @@ def generate_report(
     print()
     log_ok("Coverage report generated")
     log_info(f"  XML:  {build_dir / 'coverage.xml'}")
-    if not xml_only:
-        log_info(f"  HTML: {build_dir / 'coverage.html'}")
-    return (result.stdout or "") + (result.stderr or "")
+    log_info(f"  JSON: {build_dir / SUMMARY_FILENAME}")
+    log_info(f"  HTML: {build_dir / 'coverage.html'}")
 
 
 def open_report(build_dir: Path) -> None:
@@ -179,7 +174,6 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     repo_root = find_repo_root(Path(__file__))
     build_dir = Path(args.build_dir)
-    mode = "report-only" if args.report else args.mode
     if not build_dir.is_absolute():
         build_dir = repo_root / build_dir
     log_file = Path(args.log_file) if args.log_file else None
@@ -187,27 +181,21 @@ def main(argv: list[str] | None = None) -> int:
         log_file = repo_root / log_file
 
     try:
-        check_dependencies()
         if args.clean:
             clean_coverage(build_dir)
             return 0
 
-        if mode == "report-only":
-            report_output = generate_report(
-                build_dir, xml_only=args.xml, log_file=log_file, mode=mode
-            )
-        else:
+        check_dependencies()
+        if not args.report:
             configure_build(repo_root, build_dir)
             build_project(build_dir)
             run_tests(build_dir)
-            report_output = generate_report(
-                build_dir, xml_only=args.xml, log_file=log_file, mode=mode
-            )
+        generate_report(build_dir, log_file=log_file)
 
         if args.open_report:
             open_report(build_dir)
         if args.step_summary:
-            maybe_write_step_summary(report_output, mode)
+            write_step_summary(build_step_summary(build_dir / SUMMARY_FILENAME))
         return 0
     except (RuntimeError, FileNotFoundError, subprocess.CalledProcessError) as exc:
         log_error(str(exc))

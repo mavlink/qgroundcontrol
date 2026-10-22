@@ -15,15 +15,10 @@ import sys
 from pathlib import Path
 from textwrap import indent
 
-_tools_dir = Path(__file__).resolve().parents[1]
-if str(_tools_dir) not in sys.path:
-    sys.path.insert(0, str(_tools_dir))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from _bootstrap import ensure_tools_dir  # noqa: E402
-
-ensure_tools_dir(__file__)
-
-from common.io import write_text_if_changed  # noqa: E402
+import _bootstrap as _bootstrap
+from common.io import write_text_if_changed
 
 ENUM_DECL_RE = re.compile(r"^\s*typedef\s+enum\s+([A-Z_][A-Z0-9_]*)\b", re.MULTILINE)
 

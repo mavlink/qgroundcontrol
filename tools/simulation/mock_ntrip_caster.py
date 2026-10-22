@@ -7,7 +7,8 @@ corrections. Useful for testing the QGC NTRIP client without a real caster
 or internet connection.
 
 Usage:
-    ./mock_ntrip_caster.py                          # Default: localhost:2101
+    ./mock_ntrip_caster.py                          # Default: 127.0.0.1:2101
+    ./mock_ntrip_caster.py --host 0.0.0.0           # Accept connections from other machines
     ./mock_ntrip_caster.py --port 2102              # Custom port
     ./mock_ntrip_caster.py --auth user:pass          # Require basic auth
     ./mock_ntrip_caster.py --rate 5                  # 5 RTCM messages/sec
@@ -29,11 +30,6 @@ import struct
 import threading
 import time
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    datefmt="%H:%M:%S",
-)
 log = logging.getLogger("mock-ntrip")
 
 # ---------------------------------------------------------------------------
@@ -329,9 +325,13 @@ def run_server(args):
         srv.close()
 
 
-def main():
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Mock NTRIP caster for QGroundControl testing")
-    parser.add_argument("--host", default="0.0.0.0", help="Bind address (default: 0.0.0.0)")
+    parser.add_argument(
+        "--host",
+        default="127.0.0.1",
+        help="Bind address (default: 127.0.0.1; use 0.0.0.0 for other machines)",
+    )
     parser.add_argument("--port", type=int, default=2101, help="Port (default: 2101)")
     parser.add_argument("--auth", metavar="USER:PASS", help="Require basic auth (e.g. user:pass)")
     parser.add_argument("--rate", type=float, default=1.0, help="Messages per second (default: 1)")
@@ -340,8 +340,16 @@ def main():
         choices=["bad_crc", "drop", "http_401", "http_500"],
         help="Inject errors: bad_crc (every 10th), drop (after 10), http_401, http_500",
     )
-    args = parser.parse_args()
-    run_server(args)
+    return parser.parse_args(argv)
+
+
+def main():
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(message)s",
+        datefmt="%H:%M:%S",
+    )
+    run_server(parse_args())
 
 
 if __name__ == "__main__":

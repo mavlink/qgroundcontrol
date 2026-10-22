@@ -14,9 +14,9 @@ import numpy as np
 import rasterio
 from rasterio.dtypes import dtype_rev, typename_fwd
 from rasterio.fill import fillnodata
-from rasterio.merge import merge
-from rasterio.transform import from_bounds
+from rasterio.transform import from_bounds, from_origin
 from rasterio.warp import Resampling, reproject
+from rasterio.windows import Window
 from rasterio.windows import from_bounds as from_bounds_window
 
 from . import terrarium
@@ -48,6 +48,8 @@ VOID_FILL_PIXELS = 100
 # Covers each grid's padding at the coarsest source pixel: the void-fill radius plus four kernel pixels.
 CELL_BUFFER_DEG = (VOID_FILL_PIXELS + 4) * COARSEST_PIXEL_DEG
 _MERCATOR_RADIUS = MERCATOR_HALF_EXTENT / math.pi
+# Pixels: float error in a cell's offset on its group's lattice, far below any real misalignment.
+_LATTICE_TOLERANCE = 1e-6
 
 GDAL_ENV: dict[str, Any] = {
     "GDAL_DISABLE_READDIR_ON_OPEN": "EMPTY_DIR",
@@ -126,17 +128,34 @@ def _merge_same_resolution(
 ) -> tuple[np.ndarray, Affine]:
     """Exact pixel copy: cells sharing a resolution share one pixel lattice.
 
+    Each cell is pasted at whole-pixel offsets from a whole-pixel window, the first cell
+    winning any overlap. rasterio.merge derives its source windows from float bounds, which
+    come out a hair off whole pixels and send GDAL down its far slower resampling read for the
+    same pixels.
+
     Never merge mixed resolutions directly: rasterio rounds the coarser source windows to
     whole pixels, shifting that data by up to a pixel (~23 m at 60 degrees north).
     """
-    merged, transform = merge(
-        datasets,
-        bounds=lattice_bounds(*bounds, *res),
-        res=res,
-        nodata=np.nan,
-        dtype="float32",
-    )
-    heights = merged[0]
+    west, south, east, north = lattice_bounds(*bounds, *res)
+    width, height = round((east - west) / res[0]), round((north - south) / res[1])
+    transform = from_origin(west, north, *res)
+    heights = np.full((height, width), np.nan, dtype=np.float32)
+    for dataset in datasets:
+        col_offset = (dataset.transform.c - west) / res[0]
+        row_offset = (north - dataset.transform.f) / res[1]
+        col, row = round(col_offset), round(row_offset)
+        if max(abs(col_offset - col), abs(row_offset - row)) > _LATTICE_TOLERANCE:
+            raise ValueError(f"{dataset.name} is not on the {res} source lattice")
+        col0, row0 = max(col, 0), max(row, 0)
+        col1, row1 = min(col + dataset.width, width), min(row + dataset.height, height)
+        if col0 >= col1 or row0 >= row1:
+            continue
+        # rasterio's attrs Window leaves its fields unannotated, so pyright infers no parameters.
+        window = Window(col0 - col, row0 - row, col1 - col0, row1 - row0)  # pyright: ignore[reportCallIssue]
+        data = dataset.read(1, window=window, masked=True)
+        region = heights[row0:row1, col0:col1]
+        fill = np.isnan(region) & ~np.ma.getmaskarray(data)
+        region[fill] = data.data[fill]
     heights[heights < MIN_VALID_HEIGHT] = np.nan
     return heights, transform
 

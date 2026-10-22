@@ -7,7 +7,7 @@ import json
 import zipfile
 from concurrent.futures import Executor, Future, ThreadPoolExecutor
 from concurrent.futures.process import BrokenProcessPool
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ParamSpec, TypeVar
 
 import pytest
 
@@ -16,7 +16,10 @@ pytest.importorskip("PIL")
 pytest.importorskip("rasterio")
 
 import rasterio  # noqa: E402
+import rasterio.io  # noqa: E402
+import rasterio.windows  # noqa: E402
 from PIL import Image  # noqa: E402
+from rasterio.merge import merge  # noqa: E402
 from rasterio.transform import from_origin  # noqa: E402
 from terrain import (  # noqa: E402
     ardupilot,
@@ -289,6 +292,72 @@ def test_lattice_bounds_land_on_pixel_edges() -> None:
     assert 7.0001 - west < res and east - 7.9999 < res
 
 
+def _whole_pixels(window: rasterio.windows.Window) -> bool:
+    return all(
+        float(value).is_integer()
+        for value in (window.col_off, window.row_off, window.width, window.height)
+    )
+
+
+def test_same_resolution_merge_reads_whole_pixel_windows(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Regression: rasterio.merge derived source windows a hair off whole pixels from float
+    # bounds like these, so GDAL took its resampling read path: ~45 s per real job, not 0.2 s.
+    cells = alps_cells(tmp_path, skip=(45, 8), void_in_45_7=(slice(18, 21), slice(85, 88)))
+    res = (0.01, 0.01)
+    west, south, east, north = tilemath.lonlat_bounds(ALPS_JOB)
+    pad = (4 + generate.VOID_FILL_PIXELS) * res[0]
+    bounds = (west - pad, south - pad, east + pad, north + pad)
+    windows = []
+    read = rasterio.io.DatasetReader.read
+
+    def recording_read(self, *args, **kwargs):
+        windows.append(kwargs["window"])
+        return read(self, *args, **kwargs)
+
+    monkeypatch.setattr(rasterio.io.DatasetReader, "read", recording_read)
+    datasets = [rasterio.open(url) for url in cells.values()]
+    try:
+        reference, reference_transform = merge(
+            datasets,
+            bounds=generate.lattice_bounds(*bounds, *res),
+            res=res,
+            nodata=np.nan,
+            dtype="float32",
+        )
+        assert not all(_whole_pixels(window) for window in windows)
+        windows.clear()
+        heights, transform = generate._merge_same_resolution(datasets, bounds, res)
+    finally:
+        for dataset in datasets:
+            dataset.close()
+    assert len(windows) == len(cells)
+    assert all(_whole_pixels(window) for window in windows)
+    expected = reference[0]
+    expected[expected < copernicus.MIN_VALID_HEIGHT] = np.nan
+    assert transform == reference_transform
+    assert np.array_equal(heights, expected, equal_nan=True)
+
+
+def test_same_resolution_merge_rejects_a_cell_off_the_lattice(tmp_path: Path) -> None:
+    path = tmp_path / "half_pixel_off.tif"
+    with rasterio.open(
+        path,
+        "w",
+        driver="GTiff",
+        width=100,
+        height=100,
+        count=1,
+        dtype="float32",
+        crs="EPSG:4326",
+        transform=from_origin(7.0, 47.0, 0.01, 0.01),
+    ) as dataset:
+        dataset.write(np.zeros((100, 100), dtype=np.float32), 1)
+    with rasterio.open(path) as dataset, pytest.raises(ValueError, match="source lattice"):
+        generate._merge_same_resolution([dataset], (7.2, 46.2, 7.8, 46.8), (0.01, 0.01))
+
+
 def test_job_matches_source_exactly_across_cell_borders(tmp_path: Path) -> None:
     cells = alps_cells(tmp_path)
     heights, voids = generate.warp_job(ALPS_JOB, generate.job_cells(ALPS_JOB, cells))
@@ -522,17 +591,21 @@ def test_source_check_reports_no_samples_instead_of_failing(tmp_path: Path) -> N
     assert result.samples == 0
 
 
+_P = ParamSpec("_P")
+_T = TypeVar("_T")
+
+
 class _BrokenPool(Executor):
     """Stands in for a process pool whose workers died: queued jobs fail, then submit raises."""
 
     def __init__(self, max_workers: int) -> None:
         self.submitted = 0
 
-    def submit(self, fn: Callable[..., object], /, *args: object, **kwargs: object) -> Future:
+    def submit(self, fn: Callable[_P, _T], /, *args: _P.args, **kwargs: _P.kwargs) -> Future[_T]:
         self.submitted += 1
         if self.submitted > 2:
             raise BrokenProcessPool("a worker died")
-        future: Future[object] = Future()
+        future: Future[_T] = Future()
         future.set_exception(BrokenProcessPool("a worker died"))
         return future
 

@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-import json
 import re
 from pathlib import Path
 
 from .._jinja import make_env
 from ..common.controls import (
+    qml_string,
     qml_tr,
     render_checkbox,
     render_combobox,
@@ -150,7 +150,7 @@ def _qml_control(
         return _wrap_with_description(control_qml, fact_ref, _vis_expr(), indent)
 
     fact_type = get_fact_type(ctrl.setting, settings_dirs)
-    extra: list[str] = [f'objectName: "settingsTextField_{ctrl.fact_name}"']
+    extra: list[str] = [f"objectName: {qml_string(f'settingsTextField_{ctrl.fact_name}')}"]
     if fact_type == "string":
         extra.append("textFieldPreferredWidth: _stringFieldWidth")
     control_qml = render_textfield(
@@ -210,10 +210,6 @@ def _group_visibility_parts(grp) -> list[str]:
     return vis_parts
 
 
-def _qml_translate(context: str, text: str) -> str:
-    return f"qsTranslate({json.dumps(context)}, {json.dumps(text)})"
-
-
 def generate_page_qml(
     page: PageDef,
     settings_dirs: Path | tuple[Path, ...],
@@ -221,12 +217,6 @@ def generate_page_qml(
     page_name: str = "",
 ) -> str:
     """Generate a complete QML settings page from a page definition."""
-    _tr = (
-        (lambda s: f'qsTranslate("{json_context}", "{s}")')
-        if json_context
-        else (lambda s: f'qsTr("{s}")')
-    )
-
     bindings = [
         {"type": _binding_qml_type(expr), "name": name, "expr": expr}
         for name, expr in page.bindings.items()
@@ -276,7 +266,7 @@ def generate_page_qml(
         group_blocks.append(
             _env.get_template("group_settings.qml.j2").render(
                 object_name=group_object_name,
-                heading=_tr(grp.heading) if grp.heading else None,
+                heading=qml_tr(grp.heading, json_context) if grp.heading else None,
                 heading_description=grp.headingDescription,
                 visible=visible_expr,
                 enable_when=grp.enableWhen,
@@ -357,16 +347,16 @@ def generate_pages_model_qml(pages_json_path: Path, custom_pages_dir: Path | Non
                     terms_parts.extend(c.label.lower() for c in grp.controls if c.label)
                     tr_parts: list[str] = [section_name, *grp.keywords]
                     tr_parts.extend(c.label for c in grp.controls if c.label)
-                    search_terms = [json.dumps(" ".join(dict.fromkeys(terms_parts)))]
+                    search_terms = [qml_string(" ".join(dict.fromkeys(terms_parts)))]
                     search_terms.extend(
-                        f"{_qml_translate(page_def_name, term)}.toLowerCase()"
+                        f"{qml_tr(term, page_def_name)}.toLowerCase()"
                         for term in dict.fromkeys(tr_parts)
                     )
 
                     sections.append(
                         {
                             "index": grp_idx,
-                            "name": _qml_translate(page_def_name, section_name),
+                            "name": qml_tr(section_name, page_def_name),
                             "search_terms": f"[{', '.join(search_terms)}]",
                             "visible": visible,
                         }

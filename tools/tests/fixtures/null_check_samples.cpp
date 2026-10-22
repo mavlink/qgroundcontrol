@@ -18,13 +18,15 @@ void unsafeVariableUse() {
     vehicle->arm();
 }
 
-// Pattern: unsafe_get_parameter
-void unsafeParameterAccess() {
-    Vehicle *vehicle = getVehicle();
-    if (vehicle) {
-        // DETECT: getParameter result used directly
-        int value = vehicle->parameterManager()->getParameter(-1, "PARAM")->rawValue().toInt();
+// Pattern: unsafe_active_vehicle_use (a check of another variable is not a guard)
+void unsafeUseNearUnrelatedCheck(QObject* other)
+{
+    if (!other) {
+        return;
     }
+    Vehicle* vehicle = MultiVehicleManager::instance()->activeVehicle();
+    // DETECT: Used without null check on next line
+    vehicle->arm();
 }
 
 // =============================================================================
@@ -61,6 +63,12 @@ void safeWithPositiveCheck() {
 void safeWithTernary() {
     Vehicle *vehicle = MultiVehicleManager::instance()->activeVehicle();
     QString name = vehicle ? vehicle->name() : "No vehicle";  // OK - ternary
+}
+
+// Safe: getParameter() never returns null (a missing parameter yields a default Fact)
+void safeWithGetParameterChain()
+{
+    int value = vehicle->parameterManager()->getParameter(-1, "PARAM")->rawValue().toInt();
 }
 
 // Safe: Parameter stored and checked

@@ -13,10 +13,9 @@ import subprocess
 import sys
 from pathlib import Path
 
-_tools = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(_tools))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from qgc_tools.python_env import executable, sync_groups  # noqa: E402
+from qgc_tools.python_env import executable, sync_groups
 
 if __name__ == "__main__":
     if not any(
@@ -27,7 +26,6 @@ if __name__ == "__main__":
             "--list",
             "--dry-run",
             "--print-packages",
-            "--print-available-packages",
             "--validate-extra-packages",
         )
     ):

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Generate QML vehicle config pages from VehicleConfig.json definitions.
 
 Usage:
@@ -16,13 +15,12 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from _bootstrap import ensure_tools_dir
 
-ensure_tools_dir(__file__)
-
+import _bootstrap as _bootstrap
 from common.io import write_text_if_changed
 
-from generators.config_qml.page_generator import generate_config_page_qml, load_page_def
+from generators.config_qml.emit import generate_config_page_qml
+from generators.config_qml.model import load_page_def
 
 
 def _output_name(json_name: str) -> str:

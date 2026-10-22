@@ -5,8 +5,9 @@ QGC uses the standard Qt Linguist mechanism for string translation, sourced thro
 
 ## Crowdin integration
 
-Crowdin synchronizes `qgc.ts` once a day, picking up new changes automatically and opening a pull
-request with the resulting translations.
+Crowdin's GitHub integration ([`crowdin.yml`](../../crowdin.yml)) synchronizes `qgc.ts` and
+`qgc-json.ts` once a day, picking up new changes automatically and opening a pull request with the
+resulting translations.
 
 ### Adding a new language
 
@@ -18,8 +19,12 @@ The `lupdate.yml` workflow runs every Sunday to regenerate the `.ts` source file
 any changes. Trigger it manually from the Actions tab, or run it locally from the repo root:
 
 ```bash
-python3 tools/translations/qgc_lupdate.py
+just translations   # Runs tools/translations/qgc_lupdate.py
 ```
+
+`qgc_lupdate.py` runs Qt's `lupdate` (from `QT_ROOT_DIR`, a standard Qt install, or `PATH`), then
+the JSON string extractor (`qgc_lupdate_json.py`), then `pseudo_loc.py`, which writes the
+pseudo-localized `eo` catalogs used for layout testing.
 
 Crowdin picks these up and submits translations back as they become available.
 
@@ -78,9 +83,9 @@ Use the standard Qt `tr()` (C++) and `qsTr()` (QML) mechanisms.
 ## Translating strings in JSON files
 
 QGC stores metadata in JSON files that also need translation. The
-[JSON parser](https://github.com/mavlink/qgroundcontrol/blob/master/tools/translations/qgc_lupdate_json.py)
-finds every JSON file in the source tree, extracts translatable strings, and emits a Qt `.ts`
-localization file. To mark which strings to translate, add keys at the root object level.
+[JSON parser](qgc_lupdate_json.py) finds every JSON file in the source tree, extracts translatable
+strings, and emits a Qt `.ts` localization file. To mark which strings to translate, add keys at the
+root object level.
 
 > **Important:** JSON files may not share a name — the filename is the translation-lookup context and
 > must be unique (duplicates raise a parser error). The root filename must also match the Qt resource

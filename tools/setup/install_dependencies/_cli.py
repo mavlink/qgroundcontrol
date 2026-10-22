@@ -14,6 +14,7 @@ from ._packages import (
     DEBIAN_PACKAGES,
     MACOS_PACKAGES,
     PYTHON_BUILD_TOOLS,
+    debian_jdk_package,
     get_arch_packages,
     get_debian_packages,
     get_fedora_packages,
@@ -21,8 +22,6 @@ from ._packages import (
     validate_extra_packages,
 )
 from ._windows import install_windows
-
-LINUX_PLATFORMS = ("debian", "fedora", "arch")
 
 
 def print_packages(platform: str, category: str | None = None) -> None:
@@ -51,6 +50,7 @@ def list_packages(platform: str | None = None) -> None:
             print(f"\n{category} ({len(packages)} packages):")
             for pkg in packages:
                 print(f"  - {pkg}")
+        print(f"\nandroid: core + {debian_jdk_package()}")
         print("\nLocked Python build tools:")
         for pkg in PYTHON_BUILD_TOOLS:
             print(f"  - {pkg}")
@@ -84,6 +84,7 @@ Categories (Linux only):
   sdl         SDL/USB libraries
   audio       Audio libraries
   misc        Vulkan, PipeWire
+  android     core plus the JDK for Gradle (Debian only)
 
 Examples:
   %(prog)s                      # Auto-detect and install all
@@ -141,11 +142,6 @@ Examples:
         help="Install NSIS / makensis for the installer build (Windows only)",
     )
     parser.add_argument(
-        "--print-available-packages",
-        action="store_true",
-        help="Print available apt packages in the selected Debian category",
-    )
-    parser.add_argument(
         "--validate-extra-packages",
         nargs="*",
         default=None,
@@ -167,16 +163,6 @@ def main() -> int:
 
     if args.print_packages:
         print_packages(platform or "debian", args.category)
-        return 0
-
-    if args.print_available_packages:
-        if (platform or "debian") != "debian":
-            _c.log_error("--print-available-packages is only supported for debian")
-            return 1
-        if not args.category:
-            _c.log_error("--category is required with --print-available-packages")
-            return 1
-        print(" ".join(_c.get_available_debian_packages(args.category)))
         return 0
 
     if args.validate_extra_packages is not None:

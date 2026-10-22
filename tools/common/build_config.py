@@ -140,8 +140,6 @@ def derive_ios_qt_modules(qt_modules: str) -> str:
     return " ".join(modules)
 
 
-_EXPORT_KEY_ALIASES: dict[str, str] = {}
-
 _GSTREAMER_VERSION_ENV_NAMES: dict[str, str] = {
     "gstreamer.version.default": "GSTREAMER_VERSION",
     "gstreamer.version.minimum": "GSTREAMER_MINIMUM_VERSION",
@@ -164,9 +162,6 @@ def export_build_config_values(
         if value is not None:
             primary = _GSTREAMER_VERSION_ENV_NAMES.get(key, key.replace(".", "_").upper())
             exported[primary] = str(value)
-            alias = _EXPORT_KEY_ALIASES.get(key)
-            if alias:
-                exported[alias] = str(value)
     return exported
 
 

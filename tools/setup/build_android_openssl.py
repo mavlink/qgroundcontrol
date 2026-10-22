@@ -27,15 +27,10 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-_tools_dir = Path(__file__).resolve().parents[1]
-if str(_tools_dir) not in sys.path:
-    sys.path.insert(0, str(_tools_dir))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from _bootstrap import ensure_tools_dir  # noqa: E402
-
-ensure_tools_dir(__file__)
-
-from common.logging import log_error, log_info, log_ok  # noqa: E402
+import _bootstrap as _bootstrap
+from common.logging import log_error, log_info, log_ok
 
 _QT_ABI = {"arm64": "arm64-v8a", "arm": "armeabi-v7a"}
 _NEEDS_16K = {"arm64", "x86_64"}

@@ -61,7 +61,7 @@ def install_macos(dry_run: bool = False) -> bool:
     if not _c.run_command(_c.get_brew_install_command(packages), dry_run):
         return False
 
-    gst_version = _c.get_config_value("gstreamer.version.macos")
+    gst_version = _c.get_build_config_value("gstreamer.version.macos")
     macos_gst_root = Path("/Library/Frameworks/GStreamer.framework")
     if not gst_version:
         print()
@@ -72,8 +72,8 @@ def install_macos(dry_run: bool = False) -> bool:
     else:
         print(f"\nInstalling GStreamer {gst_version}...")
         runtime_url, devel_url = get_gstreamer_macos_urls(gst_version)
-        runtime_sha256 = _c.get_gstreamer_checksum(gst_version, "macos")
-        devel_sha256 = _c.get_gstreamer_checksum(gst_version, "macos_devel")
+        runtime_sha256 = _c.pinned_checksum(gst_version, "macos")
+        devel_sha256 = _c.pinned_checksum(gst_version, "macos_devel")
         if not runtime_sha256 or not devel_sha256:
             _c.log_error(f"Missing GStreamer {gst_version} macOS checksums")
             return False

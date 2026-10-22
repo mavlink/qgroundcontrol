@@ -7,6 +7,7 @@ from pathlib import Path
 
 from .._jinja import make_env
 from ..common.controls import (
+    qml_string,
     qml_tr,
     render_action_button,
     render_bitmask,
@@ -36,13 +37,12 @@ def _fact_ref(ctrl: ControlDef, indexed: bool = False) -> str:
     """
     if ctrl.setting:
         return f"QGroundControl.settingsManager.{ctrl.setting}"
+    name = qml_string(ctrl.param)
     if indexed:
-        if ctrl.optional:
-            return f'controller.getParameterFact(-1, _fullParamName("{ctrl.param}"), false)'
-        return f'controller.getParameterFact(-1, _fullParamName("{ctrl.param}"))'
+        name = f"_fullParamName({name})"
     if ctrl.optional:
-        return f'controller.getParameterFact(-1, "{ctrl.param}", false)'
-    return f'controller.getParameterFact(-1, "{ctrl.param}")'
+        return f"controller.getParameterFact(-1, {name}, false)"
+    return f"controller.getParameterFact(-1, {name})"
 
 
 def _inject_prop(qml: str, prop_line: str) -> str:
@@ -90,7 +90,9 @@ def _render_dialog_button(
 
     if ctrl.param:
         comp_id = f"{factory_id}Component"
-        params_js = ", ".join(f'"{k}": {v}' for k, v in ctrl.dialogButton.dialogParams.items())
+        params_js = ", ".join(
+            f"{qml_string(k)}: {v}" for k, v in ctrl.dialogButton.dialogParams.items()
+        )
         open_arg = f"{{ {params_js} }}" if params_js else ""
         ri = indent + "    "
 

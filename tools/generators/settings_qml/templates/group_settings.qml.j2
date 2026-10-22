@@ -1,6 +1,6 @@
     QGCGroupBox {
 {% if object_name %}
-        objectName: "{{ object_name }}"
+        objectName: {{ object_name|qml_string }}
 {% endif %}
         Layout.fillWidth: true
 {% if heading %}

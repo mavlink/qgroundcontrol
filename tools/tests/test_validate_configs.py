@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 import copy
-import io
 import json
-import subprocess
 import tarfile
 from typing import TYPE_CHECKING
 
@@ -14,6 +12,8 @@ if TYPE_CHECKING:
 
 import pytest
 from validate_configs import ROOT, validate_build_config
+
+from ._helpers import git, load_action, load_workflow
 
 
 def configuration():
@@ -74,26 +74,23 @@ def test_gstreamer_version_floors(key, version, error):
     assert error in validate_build_config(config, schema)
 
 
-def test_archive_preserves_build_and_license_inputs(tmp_path: Path):
+def test_archive_preserves_build_and_license_inputs(git_repo: Path):
     paths = [
         ".github/build-config.json",
         ".github/build-config.schema.json",
         ".github/COPYING.md",
         "test/CMakeLists.txt",
     ]
-    (tmp_path / ".gitattributes").write_text((ROOT / ".gitattributes").read_text())
+    (git_repo / ".gitattributes").write_text((ROOT / ".gitattributes").read_text())
     for name in [*paths, ".github/workflows/private.yml"]:
-        path = tmp_path / name
+        path = git_repo / name
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("fixture\n")
 
-    def git(*args):
-        return subprocess.run(["git", "-C", str(tmp_path), *args], check=True, capture_output=True)
-
-    git("init", "-q")
-    git("add", ".")
-    git("-c", "user.name=Test", "-c", "user.email=test@example.invalid", "commit", "-qm", "fixture")
-    with tarfile.open(fileobj=io.BytesIO(git("archive", "HEAD").stdout)) as archive:
+    git(git_repo, "add", ".")
+    git(git_repo, "commit", "-qm", "fixture")
+    git(git_repo, "archive", "--output", "source.tar", "HEAD")
+    with tarfile.open(git_repo / "source.tar") as archive:
         names = archive.getnames()
     assert set(paths) <= set(names)
     assert ".github/workflows/private.yml" not in names
@@ -110,7 +107,47 @@ def test_link_exceptions_expire():
     assert validate_exception_dates("no expiry", date(2026, 12, 1))
 
 
-def test_quality_tool_pins_agree():
-    from validate_configs import validate_tool_pins
+def _uv_pin_tree(tmp_path: Path, required: str, image: str) -> Path:
+    (tmp_path / "tools").mkdir()
+    (tmp_path / "tools/pyproject.toml").write_text(f'[tool.uv]\nrequired-version = "{required}"\n')
+    (tmp_path / "deploy/docker").mkdir(parents=True)
+    (tmp_path / "deploy/docker/Dockerfile").write_text(
+        f"COPY --from=ghcr.io/astral-sh/uv:{image} /uv /usr/local/bin/uv\n"
+    )
+    return tmp_path
 
-    assert validate_tool_pins(ROOT) == []
+
+def test_uv_version_has_one_source():
+    from validate_configs import validate_uv_pins
+
+    assert validate_uv_pins(ROOT) == []
+    action = load_action("setup-python")
+    (setup_uv,) = (
+        step
+        for step in action["runs"]["steps"]
+        if step.get("uses", "").startswith("astral-sh/setup-uv@")
+    )
+    assert "version" not in setup_uv["with"]
+    assert setup_uv["with"]["version-file"] == "tools/pyproject.toml"
+    assert setup_uv["with"]["resolution-strategy"] == "lowest"
+
+
+@pytest.mark.parametrize(
+    "required,image,error",
+    [
+        (">=0.12.8", "0.13.1", "Dockerfile must copy uv 0.12.8"),
+        (">=0.12", "0.12.8", "required-version to '>=X.Y.Z'"),
+    ],
+)
+def test_uv_version_drift_is_rejected(tmp_path: Path, required, image, error):
+    from validate_configs import validate_uv_pins
+
+    errors = validate_uv_pins(_uv_pin_tree(tmp_path, required, image))
+    assert any(error in message for message in errors), errors
+
+
+def test_docs_build_triggers_on_its_build_config_input():
+    assert "../../.github/build-config.json" in (ROOT / "docs/.vitepress/config.mjs").read_text()
+    workflow = load_workflow("docs.yml")
+    for event in ("push", "pull_request"):
+        assert ".github/build-config.json" in workflow["on"][event]["paths"]

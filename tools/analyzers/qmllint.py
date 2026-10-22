@@ -6,9 +6,10 @@ import re
 import shutil
 from typing import TYPE_CHECKING, ClassVar
 
-from common.analyzer import AnalysisResult, AnalyzerBase
 from common.logging import log_info, log_warn
 from common.proc import run_captured
+
+from analyzers.base import AnalysisResult, AnalyzerBase
 
 if TYPE_CHECKING:
     from pathlib import Path

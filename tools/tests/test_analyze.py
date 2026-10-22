@@ -2,10 +2,15 @@
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import analyze
+import pytest
 from analyze import FileCollector, get_analyzer, validate_path
+
+from ._helpers import git
 
 
 class TestFileCollector:
@@ -53,6 +58,25 @@ class TestFileCollector:
         assert "bar.h" in names
         assert "readme.txt" not in names
 
+    def test_changed_files_include_worktree_and_untracked(self, git_repo: Path) -> None:
+        for name in ("base.cc", "edited.cc", "deleted.cc", "committed.cc"):
+            (git_repo / name).write_text("int x;\n")
+        (git_repo / ".gitignore").write_text("ignored.cc\n")
+        git(git_repo, "add", ".")
+        git(git_repo, "commit", "-q", "-m", "base")
+        git(git_repo, "checkout", "-q", "-b", "feature")
+        (git_repo / "committed.cc").write_text("int y;\n")
+        git(git_repo, "commit", "-q", "-am", "feature")
+        (git_repo / "edited.cc").write_text("int z;\n")
+        (git_repo / "deleted.cc").unlink()
+        (git_repo / "untracked.cc").write_text("int u;\n")
+        (git_repo / "ignored.cc").write_text("int i;\n")
+        (git_repo / "notes.txt").write_text("skip\n")
+
+        files = FileCollector(git_repo)._get_changed_files((".cc",), "master")
+
+        assert [f.name for f in files] == ["committed.cc", "edited.cc", "untracked.cc"]
+
 
 class TestValidatePath:
     def test_valid_relative_path(self, tmp_path: Path) -> None:
@@ -61,13 +85,11 @@ class TestValidatePath:
         assert result == Path("src")
 
     def test_rejects_parent_traversal(self, tmp_path: Path) -> None:
-        import pytest
 
         with pytest.raises(ValueError, match="must not contain"):
             validate_path("../etc/passwd", tmp_path)
 
     def test_rejects_absolute_path(self, tmp_path: Path) -> None:
-        import pytest
 
         with pytest.raises(ValueError, match="must be relative"):
             validate_path("/etc/passwd", tmp_path)
@@ -84,31 +106,10 @@ class TestGetAnalyzer:
         assert analyzer.name == "clazy"
         assert analyzer.jobs == 2  # type: ignore[attr-defined]
 
-    def test_returns_cppcheck(self, tmp_path: Path) -> None:
-        analyzer = get_analyzer("cppcheck", tmp_path, tmp_path / "build")
-        assert analyzer.name == "cppcheck"
-
     def test_unknown_tool_raises(self, tmp_path: Path) -> None:
-        import pytest
 
         with pytest.raises(ValueError, match="Unknown tool"):
             get_analyzer("nonexistent", tmp_path, tmp_path / "build")
-
-
-def test_format_execution_failure_is_not_success(tmp_path):
-    import subprocess
-    from unittest.mock import patch
-
-    from analyzers.clang_format import ClangFormatAnalyzer
-
-    failure = subprocess.CompletedProcess([], 1, "", "permission denied")
-    with (
-        patch("analyzers.clang_format.run_captured", return_value=failure),
-        patch("analyzers.clang_format.run_git", return_value=failure),
-    ):
-        result = ClangFormatAnalyzer(tmp_path, tmp_path)._run_fix([tmp_path / "file.cc"])
-    assert not result.passed
-    assert result.execution_error
 
 
 def test_missing_qmllint_is_execution_failure(tmp_path):
@@ -123,10 +124,8 @@ def test_missing_qmllint_is_execution_failure(tmp_path):
 
 
 def test_advisory_preserves_error_findings(tmp_path, monkeypatch):
-    import sys
 
-    import analyze
-    from common.analyzer import AnalysisResult
+    from analyzers.base import AnalysisResult
 
     monkeypatch.setattr(sys, "argv", ["analyze.py", "--tool", "clazy", "--advisory"])
     monkeypatch.setattr(analyze, "find_repo_root", lambda: tmp_path)
@@ -179,3 +178,15 @@ def test_build_aware_qml_requires_generated_types(tmp_path, monkeypatch):
     analyzer.build_aware = True
     monkeypatch.setattr("analyzers.qmllint.shutil.which", lambda _: "/qt/bin/qmllint")
     assert analyzer.run([tmp_path / "fixture.qml"]).execution_error
+
+
+def test_missing_repo_root_is_reported(monkeypatch):
+
+    def no_root():
+        raise RuntimeError("Could not find the QGroundControl repository root above /x")
+
+    monkeypatch.setattr(sys, "argv", ["analyze.py", "--tool", "clang-format"])
+    monkeypatch.setattr(analyze, "find_repo_root", no_root)
+    with patch.object(analyze, "log_error") as log_error:
+        assert analyze.main() == 1
+    log_error.assert_called_once_with("Could not find the QGroundControl repository root above /x")

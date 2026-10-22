@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import re
@@ -12,7 +13,7 @@ from typing import TYPE_CHECKING, Any
 from .proc import run_captured, run_with_retry
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Iterator, Sequence
 
 
 _TRANSIENT_GH_ERRORS = (
@@ -60,6 +61,10 @@ def _gh_api_method(args: Sequence[str]) -> str | None:
     return "POST" if any(arg in {"-f", "-F", "--raw-field", "--field"} for arg in args) else "GET"
 
 
+# Bounds calls that set no timeout; long transfers such as `gh run download` pass their own.
+DEFAULT_GH_TIMEOUT_SECONDS = 120.0
+
+
 def gh(
     *args: str,
     check: bool = True,
@@ -71,7 +76,11 @@ def gh(
     """Run gh, optionally retrying transient failures for read-only operations."""
     command = ["gh", *args]
     if not retry_transient:
-        return run_captured(command, check=check, timeout=timeout)
+        return run_captured(
+            command,
+            check=check,
+            timeout=timeout if timeout is not None else DEFAULT_GH_TIMEOUT_SECONDS,
+        )
     method = _gh_api_method(args)
     if method != "GET":
         raise ValueError("retry_transient is only valid for read-only GitHub API GET calls")
@@ -88,6 +97,11 @@ def gh(
         encoding="utf-8",
         errors="replace",
     )
+
+
+def gh_api_json(path: str) -> Any:
+    """GET a GitHub REST API path, retrying transient failures, and return the parsed JSON."""
+    return json.loads(gh("api", path, retry_transient=True).stdout)
 
 
 def _paginate_items(path: str, item_key: str, params: dict[str, str]) -> list[dict[str, Any]]:
@@ -141,28 +155,6 @@ def require_repository() -> str:
             return repo
     gh_error("GH_REPO or GITHUB_REPOSITORY must be set")
     raise SystemExit(1)
-
-
-def is_fork_pr() -> bool:
-    """Check if the current event is a PR from a fork repository."""
-    event = os.environ.get("EVENT_NAME", os.environ.get("GITHUB_EVENT_NAME", ""))
-    if event != "pull_request":
-        return False
-    pr_repo = os.environ.get("PR_REPO", "").strip()
-    this_repo = os.environ.get("THIS_REPO", os.environ.get("GITHUB_REPOSITORY", "")).strip()
-    return bool(pr_repo and this_repo and pr_repo != this_repo)
-
-
-def resolve_cache_policy(requested: str) -> str:
-    """Resolve cache save policy.
-
-    Pull-request saves are isolated by GitHub to the PR merge ref, including
-    forks. pull_request_target uses the base ref and must remain read-only.
-    """
-    if requested != "auto":
-        return requested
-    event = os.environ.get("EVENT_NAME", os.environ.get("GITHUB_EVENT_NAME", ""))
-    return "false" if event == "pull_request_target" else "true"
 
 
 def github_cache_path(path: Path) -> str:
@@ -237,6 +229,25 @@ def parse_bool(value: str | None) -> bool:
     return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
+def is_ci() -> bool:
+    """True when running in any CI environment (``CI`` or ``GITHUB_ACTIONS`` is truthy)."""
+    return parse_bool(os.environ.get("CI")) or parse_bool(os.environ.get("GITHUB_ACTIONS"))
+
+
+def env_default(name: str, default: str = "") -> str:
+    """Return environment variable ``name``, or ``default`` when it is unset or empty.
+
+    Lets argparse defaults come from a workflow step's ``env:`` instead of shell flag assembly.
+    """
+    return os.environ.get(name) or default
+
+
+def env_flag(name: str, default: bool = False) -> bool:
+    """Return parse_bool of environment variable ``name``, or ``default`` when unset or empty."""
+    value = os.environ.get(name)
+    return parse_bool(value) if value else default
+
+
 def _escape_annotation(message: str) -> str:
     # Workflow commands are newline-delimited; literal CR/LF truncates the
     # annotation, so percent-encode them (and bare % to keep decoding unambiguous).
@@ -265,3 +276,13 @@ def gh_warning(message: str) -> None:
 def gh_notice(message: str) -> None:
     """Emit a GitHub Actions notice annotation."""
     annotate("notice", message)
+
+
+@contextlib.contextmanager
+def gh_group(title: str) -> Iterator[None]:
+    """Fold output printed inside the block into a collapsible GitHub Actions log group."""
+    print(f"::group::{_escape_annotation(title)}", flush=True)
+    try:
+        yield
+    finally:
+        print("::endgroup::", flush=True)

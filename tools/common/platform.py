@@ -1,8 +1,8 @@
 """Platform detection helpers.
 
 Replaces ad-hoc ``sys.platform == "win32"`` / ``platform.system().lower()``
-checks scattered through ``configure.py``, ``run_tests.py``,
-``setup/install_dependencies/`` package, ``setup/install_python.py`` and others.
+checks scattered through ``configure.py``, the ``setup/install_dependencies/``
+package, ``setup/install_python.py`` and others.
 """
 
 from __future__ import annotations

@@ -12,7 +12,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from . import _common as _c
-from ._packages import DEBIAN_PACKAGES, get_debian_packages
+from ._packages import get_debian_packages
 
 
 def _just_version() -> str:
@@ -220,17 +220,10 @@ def install_debian(
         print(f"\nInstalling {len(packages)} packages...")
         if not _c.run_apt_install_with_retry(packages, dry_run, sudo=True):
             return False
-
-        for pkg in DEBIAN_PACKAGES.get("gstreamer_optional", []):
-            if _c.check_apt_package_available(pkg):
-                print(f"\nInstalling optional package: {pkg}")
-                _c.run_apt_install_with_retry([pkg], dry_run, sudo=True)
-            else:
-                print(f"\nSkipping optional package (not available): {pkg}")
     else:
         print("\nSkipping apt package installation (--skip-system-packages)")
 
-    if not category or category == "core":
+    if not category or category in ("core", "android"):
         if not _c.install_build_tools(dry_run):
             return False
 

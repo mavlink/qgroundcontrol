@@ -5,14 +5,27 @@ from __future__ import annotations
 import subprocess
 import sys
 from typing import TYPE_CHECKING
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock
 
 import pytest
 from common import proc
-from common.proc import run_captured, run_tee, run_text, run_with_retry
+from common.proc import output_text, run_captured, run_tee, run_with_retry
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+    from pytest_subprocess import FakeProcess
+    from pytest_subprocess.fake_popen import FakePopen
+
+pytestmark = pytest.mark.windows
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [(None, ""), (b"caf\xc3\xa9 \xff", "caf\u00e9 \ufffd"), ("already text", "already text")],
+)
+def test_output_text_accepts_bytes_str_or_none(value: str | bytes | None, expected: str) -> None:
+    assert output_text(value) == expected
 
 
 def test_run_captured_returns_completed_process() -> None:
@@ -46,27 +59,44 @@ def test_run_captured_input() -> None:
     assert result.stdout == "payload\n"
 
 
-def test_run_with_retry_uses_linear_backoff_and_cleanup_callback() -> None:
-    command = ["uv", "sync"]
-    cleanup = MagicMock()
-    with (
-        patch.object(
-            proc.subprocess,
-            "run",
-            side_effect=[
-                subprocess.CalledProcessError(1, command),
-                subprocess.CalledProcessError(1, command),
-                subprocess.CompletedProcess(command, 0),
-            ],
-        ) as mock_run,
-        patch.object(proc.time, "sleep") as mock_sleep,
-    ):
-        result = run_with_retry(command, retry_backoff_seconds=2, before_retry=cleanup)
+@pytest.fixture
+def sleeps(monkeypatch: pytest.MonkeyPatch) -> list[float]:
+    """Backoff delays requested by run_with_retry, which then returns without sleeping."""
+    delays: list[float] = []
+    monkeypatch.setattr(proc.time, "sleep", delays.append)
+    return delays
 
-    assert result.returncode == 0
-    assert mock_run.call_count == 3
-    assert mock_sleep.call_args_list == [call(2), call(4)]
+
+def test_run_with_retry_uses_linear_backoff_and_cleanup_callback(
+    fp: FakeProcess, sleeps: list[float], tmp_path: Path
+) -> None:
+    command = ["uv", "sync"]
+    attempts = [
+        fp.register(command, returncode=1),
+        fp.register(command, returncode=1),
+        fp.register(command, stdout="synced\n"),
+    ]
+    cleanup = MagicMock()
+
+    result = run_with_retry(
+        command,
+        cwd=tmp_path,
+        env={"UV_FROZEN": "1"},
+        retry_backoff_seconds=2,
+        before_retry=cleanup,
+        capture_output=True,
+        text=True,
+    )
+
+    assert (result.returncode, result.stdout) == (0, "synced\n")
+    assert sleeps == [2, 4]
     assert cleanup.call_count == 2
+    for attempt in attempts:
+        (process,) = attempt.calls
+        assert process.args == command
+        assert process.kwargs is not None
+        assert process.kwargs["cwd"] == tmp_path
+        assert process.kwargs["env"] == {"UV_FROZEN": "1"}
 
 
 @pytest.mark.parametrize(
@@ -86,61 +116,72 @@ def test_run_with_retry_rejects_empty_command() -> None:
         run_with_retry([])
 
 
-def test_run_with_retry_exhausts_attempts_and_preserves_check() -> None:
+def test_run_with_retry_exhausts_attempts_and_preserves_check(
+    fp: FakeProcess, sleeps: list[float]
+) -> None:
     command = ["uv", "sync"]
-    failure = subprocess.CalledProcessError(7, command)
-    with (
-        patch.object(proc.subprocess, "run", side_effect=failure) as run,
-        patch.object(proc.time, "sleep"),
-        pytest.raises(subprocess.CalledProcessError) as raised,
-    ):
+    fp.register(command, returncode=7, occurrences=2)
+    with pytest.raises(subprocess.CalledProcessError) as raised:
         run_with_retry(command, max_attempts=2)
     assert raised.value.returncode == 7
-    assert run.call_count == 2
-    assert all(invocation.kwargs["check"] is True for invocation in run.call_args_list)
+    assert fp.call_count(command) == 2
+    assert sleeps == [5]
 
 
-def test_run_with_retry_retries_timeout() -> None:
+def test_run_with_retry_retries_timeout(
+    fp: FakeProcess, sleeps: list[float], monkeypatch: pytest.MonkeyPatch
+) -> None:
     command = ["uv", "sync"]
-    timeout = subprocess.TimeoutExpired(command, 10)
-    success = subprocess.CompletedProcess(command, 0)
-    with (
-        patch.object(proc.subprocess, "run", side_effect=[timeout, success]) as run,
-        patch.object(proc.time, "sleep"),
-    ):
-        assert run_with_retry(command, timeout=10).returncode == 0
-    assert run.call_count == 2
-    assert all(invocation.kwargs["timeout"] == 10 for invocation in run.call_args_list)
+
+    def time_out(process: FakePopen) -> None:
+        raise subprocess.TimeoutExpired(process.args, 10)
+
+    fp.register(command, callback=time_out)
+    fp.register(command)
+    # The fake process never sees run()'s timeout, so check that it is forwarded on every attempt.
+    run = MagicMock(wraps=subprocess.run)
+    monkeypatch.setattr(proc.subprocess, "run", run)
+
+    assert run_with_retry(command, timeout=10).returncode == 0
+    assert fp.call_count(command) == 2
+    assert [invocation.kwargs["timeout"] for invocation in run.call_args_list] == [10, 10]
+    assert sleeps == [5]
 
 
-def test_run_with_retry_supports_unchecked_result_filter() -> None:
+def test_run_with_retry_supports_unchecked_result_filter(
+    fp: FakeProcess, sleeps: list[float]
+) -> None:
     command = ["gh", "api", "rate_limit"]
-    transient = subprocess.CompletedProcess(command, 1)
-    success = subprocess.CompletedProcess(command, 0)
-    with (
-        patch.object(proc.subprocess, "run", side_effect=[transient, success]) as run,
-        patch.object(proc.time, "sleep"),
-    ):
-        result = run_with_retry(
-            command,
-            check=False,
-            retry_result_if=lambda completed: completed.returncode != 0,
-        )
-    assert result.returncode == 0
-    assert run.call_count == 2
-    assert all(invocation.kwargs["check"] is False for invocation in run.call_args_list)
+    fp.register(command, returncode=1, stderr="HTTP 503")
+    fp.register(command, stdout="{}")
+    result = run_with_retry(
+        command,
+        check=False,
+        capture_output=True,
+        text=True,
+        retry_result_if=lambda completed: completed.returncode != 0,
+    )
+    assert (result.returncode, result.stdout) == (0, "{}")
+    assert fp.call_count(command) == 2
+    assert sleeps == [5]
 
 
-def test_run_text_returns_stdout() -> None:
-    assert run_text([sys.executable, "-c", "print('hi')"]) == "hi"
-
-
-def test_run_text_default_on_missing_binary() -> None:
-    assert run_text(["this-binary-does-not-exist"], default="fallback") == "fallback"
-
-
-def test_run_text_default_on_nonzero_exit() -> None:
-    assert run_text([sys.executable, "-c", "raise SystemExit(1)"], default="fb") == "fb"
+def test_run_with_retry_returns_last_unchecked_failure(
+    fp: FakeProcess, sleeps: list[float]
+) -> None:
+    command = ["gh", "api", "rate_limit"]
+    fp.register(command, returncode=1, stderr="HTTP 503", occurrences=2)
+    result = run_with_retry(
+        command,
+        max_attempts=2,
+        check=False,
+        capture_output=True,
+        text=True,
+        retry_result_if=lambda completed: completed.returncode != 0,
+    )
+    assert (result.returncode, result.stderr) == (1, "HTTP 503")
+    assert fp.call_count(command) == 2
+    assert sleeps == [5]
 
 
 def test_run_tee_streams_output_and_returns_exit_code(tmp_path: Path) -> None:
@@ -154,6 +195,16 @@ def test_run_tee_falls_back_without_bash(tmp_path: Path, monkeypatch: pytest.Mon
     monkeypatch.setattr("common.proc.shutil.which", lambda _name: None)
     assert run_tee([sys.executable, "-c", "print('fallback')"], output) == 0
     assert output.read_text(encoding="utf-8").strip() == "fallback"
+
+
+def test_run_tee_fallback_decodes_utf8_and_replaces_invalid_bytes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    output = tmp_path / "fallback.log"
+    monkeypatch.setattr("common.proc.shutil.which", lambda _name: None)
+    script = "import sys; sys.stdout.buffer.write('\\u2713 '.encode() + b'\\x9d\\n')"
+    assert run_tee([sys.executable, "-c", script], output) == 0
+    assert output.read_text(encoding="utf-8") == "\N{CHECK MARK} \N{REPLACEMENT CHARACTER}\n"
 
 
 def test_run_tee_resolves_relative_output_before_changing_cwd(

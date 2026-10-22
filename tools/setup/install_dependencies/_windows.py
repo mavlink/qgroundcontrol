@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import os
-import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -73,7 +72,7 @@ def _msvc_preinstalled(arm64: bool) -> bool:
     vswhere = _vswhere_path()
     if not vswhere.exists():
         return False
-    result = subprocess.run(
+    result = _c.run_captured(
         [
             str(vswhere),
             "-products",
@@ -85,10 +84,7 @@ def _msvc_preinstalled(arm64: bool) -> bool:
             *_msvc_components(arm64),
             "-property",
             "installationPath",
-        ],
-        capture_output=True,
-        text=True,
-        check=False,
+        ]
     )
     return result.returncode == 0 and bool(result.stdout.strip())
 
@@ -124,7 +120,7 @@ def _verify_msvc(arm64: bool) -> bool:
         return True
 
     for component in _msvc_components(arm64):
-        result = subprocess.run(
+        result = _c.run_captured(
             [
                 str(vswhere),
                 "-products",
@@ -133,10 +129,7 @@ def _verify_msvc(arm64: bool) -> bool:
                 component,
                 "-property",
                 "installationPath",
-            ],
-            capture_output=True,
-            text=True,
-            check=False,
+            ]
         )
         if result.returncode != 0 or not result.stdout.strip():
             _c.log_error(f"MSVC verification failed: component {component} not installed")
@@ -187,7 +180,7 @@ def install_windows_gstreamer(version: str, dry_run: bool = False) -> bool:
         return True
 
     installer_name = _c.package_filename("windows_msvc_x64", version)
-    expected_sha256 = _c.get_gstreamer_checksum(version, "windows_msvc_x64")
+    expected_sha256 = _c.pinned_checksum(version, "windows_msvc_x64")
     if not expected_sha256:
         _c.log_error(f"Missing GStreamer {version} Windows checksum")
         return False
@@ -290,7 +283,7 @@ def install_windows(
         return False
 
     if not skip_gstreamer:
-        version = gstreamer_version or _c.get_config_value("gstreamer.version.windows")
+        version = gstreamer_version or _c.get_build_config_value("gstreamer.version.windows")
         if not version:
             print(
                 "Error: GStreamer version not found. "

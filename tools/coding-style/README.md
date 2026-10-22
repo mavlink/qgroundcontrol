@@ -21,9 +21,9 @@ files are worked examples of it.
 ## Formatting & Static Analysis
 
 ```bash
-./tools/analyze.py --tool clang-format --fix        # Format changed files
-./tools/analyze.py --tool clang-format              # Check formatting (CI mode)
-./tools/analyze.py --tool clang-format --fix --all  # Format all files
+./tools/analyze.py --tool clang-format --fix        # Format lines changed since the default branch
+./tools/analyze.py --tool clang-format              # Check changed lines (same rule as the pre-commit hook)
+./tools/analyze.py --tool clang-format --fix --all  # Reformat whole files (dedicated formatting change only)
 ./tools/analyze.py                                   # clang-tidy on changed files
 ./tools/analyze.py --all                             # clang-tidy on all files
 ```

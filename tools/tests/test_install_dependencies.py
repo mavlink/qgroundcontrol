@@ -9,40 +9,44 @@ from unittest.mock import call, patch
 from urllib.error import HTTPError
 
 import pytest
-from setup.install_dependencies import (
+from setup.install_dependencies import _arch, _debian, _fedora, _macos, _windows
+from setup.install_dependencies import _common as install_common
+from setup.install_dependencies._cli import parse_args
+from setup.install_dependencies._common import (
+    detect_platform,
+    download_file,
+    get_apt_install_command,
+    get_apt_update_command,
+    get_brew_install_command,
+    run_apt_install_with_retry,
+)
+from setup.install_dependencies._debian import (
+    JUST_MIN_VERSION,
+    _detect_just_version,
+    install_just_debian,
+    resolve_package_alternatives,
+)
+from setup.install_dependencies._packages import (
     ARCH_PACKAGES,
     DEBIAN_PACKAGES,
     FEDORA_PACKAGES,
-    JUST_MIN_VERSION,
     MACOS_PACKAGES,
     PACKAGE_NAME_RE,
     PYTHON_BUILD_TOOLS,
-    _arch,
-    _detect_just_version,
-    _fedora,
-    _macos,
-    _windows,
-    detect_platform,
-    get_apt_install_command,
-    get_apt_update_command,
+    debian_jdk_package,
     get_arch_packages,
-    get_available_debian_packages,
-    get_brew_install_command,
     get_debian_packages,
     get_fedora_packages,
     get_macos_packages,
-    install_just_debian,
-    parse_args,
-    resolve_package_alternatives,
-    run_apt_install_with_retry,
     validate_extra_packages,
 )
-from setup.install_dependencies import _common as install_common
 
-from ._helpers import REPO_ROOT, completed
+from ._helpers import completed
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+pytestmark = pytest.mark.windows
 
 
 def test_debian_packages_not_empty() -> None:
@@ -64,11 +68,35 @@ def test_pipx_packages_not_empty() -> None:
     assert PYTHON_BUILD_TOOLS
 
 
-def test_get_debian_packages_all_returns_no_optional() -> None:
-    pkgs = get_debian_packages()
-    assert "gstreamer1.0-qt6" not in pkgs, (
-        "Optional gstreamer pkg should be excluded from default list"
-    )
+def test_get_debian_packages_android_is_core_plus_the_build_config_jdk() -> None:
+    from common.build_config import get_build_config_value
+
+    jdk = f"openjdk-{get_build_config_value('android.java_version')}-jdk"
+    assert debian_jdk_package() == jdk
+    assert get_debian_packages("android") == [*DEBIAN_PACKAGES["core"], jdk]
+    assert jdk not in get_debian_packages()
+
+
+def test_debian_jdk_package_rejects_a_missing_java_version() -> None:
+    with (
+        patch("common.build_config.get_build_config_value", return_value=""),
+        pytest.raises(ValueError, match="java_version"),
+    ):
+        debian_jdk_package()
+
+
+def test_install_debian_android_installs_core_and_jdk_with_build_tools() -> None:
+    with (
+        patch.object(_debian._c, "run_command", return_value=True) as run_command,
+        patch.object(_debian._c, "run_apt_install_with_retry", return_value=True) as apt,
+        patch.object(_debian._c, "install_build_tools", return_value=True) as build_tools,
+        patch.object(_debian, "install_just_debian", return_value=True) as just,
+    ):
+        assert _debian.install_debian(dry_run=False, category="android") is True
+    apt.assert_called_once_with(get_debian_packages("android"), False, sudo=True)
+    run_command.assert_called_once_with(_debian._c.get_apt_update_command(), False, sudo=True)
+    build_tools.assert_called_once_with(False)
+    just.assert_called_once_with(False)
 
 
 def test_get_debian_packages_category_core() -> None:
@@ -94,27 +122,9 @@ def test_cross_arm64_excluded_from_aggregate() -> None:
     assert not (set(cross) & aggregate & {"libc6", "libstdc++6", "libgcc-s1"})
 
 
-def test_sysroot_script_single_sources_cross_arm64() -> None:
-    script = (REPO_ROOT / "deploy" / "docker" / "install_sysroot_aarch64.py").read_text()
-    assert '"--category",' in script
-    assert '"cross_arm64",' in script
-    for pkg in ("libxcb1-dev", "libgstreamer1.0-dev", "libssl-dev"):
-        assert f"{pkg}:arm64" not in script, (
-            f"{pkg} should be sourced from cross_arm64, not hardcoded"
-        )
-
-
 def test_get_debian_packages_no_duplicates() -> None:
     pkgs = get_debian_packages()
     assert len(pkgs) == len(set(pkgs))
-
-
-def test_get_available_debian_packages_filters_unavailable() -> None:
-    with patch(
-        "setup.install_dependencies._common.check_apt_package_available",
-        side_effect=lambda pkg: pkg == "cmake",
-    ):
-        assert get_available_debian_packages("core") == ["cmake"]
 
 
 def test_resolve_package_alternatives_keeps_available_primary() -> None:
@@ -311,8 +321,6 @@ def test_validate_extra_packages_rejects_invalid_names() -> None:
 
 
 def test_download_file_dry_run(tmp_path: Path) -> None:
-    from setup.install_dependencies import download_file
-
     dest = tmp_path / "test.bin"
     result = download_file("https://example.com/test.bin", dest, dry_run=True)
     assert result is True
@@ -321,8 +329,6 @@ def test_download_file_dry_run(tmp_path: Path) -> None:
 
 @pytest.mark.parametrize("warn_on_failure", [False, True])
 def test_download_file_network_error(tmp_path: Path, warn_on_failure: bool) -> None:
-    from setup.install_dependencies import download_file
-
     dest = tmp_path / "test.bin"
     with (
         patch("urllib.request.urlopen", side_effect=OSError("unreachable")) as request,
@@ -342,15 +348,12 @@ def test_download_file_network_error(tmp_path: Path, warn_on_failure: bool) -> N
 
 
 @pytest.mark.parametrize("recover", [False, True])
-def test_download_file_http_error_without_httpx(tmp_path: Path, recover: bool) -> None:
-    from setup.install_dependencies import download_file
-
+def test_download_file_retries_http_error(tmp_path: Path, recover: bool) -> None:
     url = "https://example.com/just.tar.gz"
     dest = tmp_path / "just.tar.gz"
     failure = HTTPError(url, 500, "Internal Server Error", Message(), None)
     response = io.BytesIO(b"archive") if recover else failure
     with (
-        patch.dict("sys.modules", {"httpx": None}),
         patch("urllib.request.urlopen", side_effect=[failure, response]) as request,
         patch("common.net.time.sleep") as sleep,
     ):
@@ -386,6 +389,32 @@ def test_run_apt_install_with_retry_refreshes_index_then_retries() -> None:
             call(get_apt_install_command(["cmake"]), False, sudo=True),
         ]
     )
+
+
+@pytest.mark.parametrize(
+    ("install", "refresh", "message"),
+    [
+        (
+            install_common.run_dnf_install_with_retry,
+            ["dnf", "makecache"],
+            "  dnf install failed (attempt 1/2); retrying...",
+        ),
+        (
+            install_common.run_pacman_install_with_retry,
+            ["pacman", "-Syy", "--noconfirm"],
+            "  pacman install failed (attempt 1/2); refreshing...",
+        ),
+    ],
+)
+def test_install_with_retry_stops_when_refresh_fails(install, refresh, message, capsys) -> None:
+    with patch(
+        "setup.install_dependencies._common.run_command", side_effect=[False, False]
+    ) as mock_run:
+        assert install(["cmake"], dry_run=False, sudo=True) is False
+
+    assert mock_run.call_count == 2
+    assert mock_run.call_args_list[1] == call(refresh, False, sudo=True)
+    assert capsys.readouterr().out.splitlines() == [message]
 
 
 def test_install_build_tools_uses_locked_profile(tmp_path: Path) -> None:
@@ -568,9 +597,9 @@ def test_install_macos_gstreamer_fallback(
         patch.object(_macos._c, "is_ci", return_value=True),
         patch.object(_macos._c, "run_command", return_value=True),
         patch.object(_macos._c, "get_brew_install_command", return_value=["brew", "install"]),
-        patch.object(_macos._c, "get_config_value", return_value=version),
+        patch.object(_macos._c, "get_build_config_value", return_value=version),
         patch.object(
-            _macos._c, "get_gstreamer_checksum", side_effect=lambda _, artifact: checksums[artifact]
+            _macos._c, "pinned_checksum", side_effect=lambda _, artifact: checksums[artifact]
         ),
         patch.object(_macos.Path, "exists", return_value=False),
         patch.object(_macos._c, "download_file", side_effect=download) as dl,
@@ -653,7 +682,7 @@ def test_install_windows_gstreamer(monkeypatch, tmp_path: Path) -> None:
             "gstreamer-1.0-msvc-x86_64-1.28.4.exe"
         ),
     ]
-    expected_sha256 = _windows._c.get_gstreamer_checksum("1.28.4", "windows_msvc_x64")
+    expected_sha256 = _windows._c.pinned_checksum("1.28.4", "windows_msvc_x64")
     assert dl.call_args_list[0].kwargs == {
         "warn_on_failure": True,
         "expected_sha256": expected_sha256,
@@ -770,7 +799,7 @@ def test_msvc_preinstalled_requires_all_components_in_one_instance(
     vswhere.parent.mkdir(parents=True)
     vswhere.write_text("")
     monkeypatch.setenv("PROGRAMFILES(X86)", str(tmp_path))
-    with patch.object(_windows.subprocess, "run", return_value=completed(stdout)) as run:
+    with patch.object(_windows._c, "run_captured", return_value=completed(stdout)) as run:
         assert _windows._msvc_preinstalled(arm64=True) is expected
     args = run.call_args.args[0]
     version = args.index("-version")
@@ -784,7 +813,7 @@ def test_msvc_preinstalled_requires_all_components_in_one_instance(
 
 def test_msvc_preinstalled_false_without_vswhere(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.setenv("PROGRAMFILES(X86)", str(tmp_path))
-    with patch.object(_windows.subprocess, "run") as run:
+    with patch.object(_windows._c, "run_captured") as run:
         assert _windows._msvc_preinstalled(arm64=False) is False
     run.assert_not_called()
 
@@ -809,11 +838,7 @@ def test_verify_msvc_fails_when_component_missing(monkeypatch, tmp_path: Path) -
     vswhere.parent.mkdir(parents=True)
     vswhere.write_text("")
     monkeypatch.setenv("PROGRAMFILES(X86)", str(tmp_path))
-    with patch.object(
-        _windows.subprocess,
-        "run",
-        return_value=completed(),
-    ):
+    with patch.object(_windows._c, "run_captured", return_value=completed()):
         assert _windows._verify_msvc(arm64=False) is False
 
 

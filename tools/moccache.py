@@ -67,15 +67,13 @@ import functools
 import hashlib
 import os
 import re
-import shutil
 import stat
 import sys
-import tempfile
 import time
 from pathlib import Path
 
-# subprocess is imported where a process is spawned: a hit spawns none, and
-# the import is a measurable share of a hit's runtime.
+# subprocess, shutil and tempfile are imported where they are needed: a hit
+# never needs them, and the imports are a measurable share of a hit's runtime.
 
 # Options whose value is a separate following argument.
 _VALUE_OPTS = {
@@ -293,6 +291,9 @@ def _parse_dep_file(text: str) -> list[str]:
 
 
 def _atomic_copy(src: Path, dst: Path) -> None:
+    import shutil
+    import tempfile
+
     dst.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp = tempfile.mkstemp(dir=str(dst.parent), prefix=".moccache-")
     os.close(fd)
@@ -308,7 +309,10 @@ def _atomic_copy(src: Path, dst: Path) -> None:
 def _atomic_write(dst: Path, data: str) -> None:
     """Replace dst with data as UTF-8/LF, independent of the platform locale."""
     dst.parent.mkdir(parents=True, exist_ok=True)
-    fd, tmp = tempfile.mkstemp(dir=str(dst.parent), prefix=".moccache-")
+    # A pid-unique name instead of tempfile.mkstemp keeps tempfile off the hit path
+    tmp = str(dst.parent / f".moccache-{os.getpid()}-{dst.name}")
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_BINARY", 0)
+    fd = os.open(tmp, flags, 0o600)
     try:
         with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as f:
             f.write(data)
@@ -614,6 +618,8 @@ def _trim(cache_dir: Path, max_bytes: int) -> int:
     Returns the number of entries removed. Never raises: a concurrently
     written or vanished entry is skipped.
     """
+    import shutil
+
     entries = _scan_entries(cache_dir)
     total = sum(size for _, size, _ in entries)
     if total <= max_bytes:
@@ -1045,14 +1051,14 @@ def main() -> int:
         if hit:
             try:
                 out_path.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copyfile(cached_out, out_path)
+                out_path.write_bytes(cached_out.read_bytes())
                 if wants_dep_file:
                     # Synthesize for this tree: the cached dep file references
                     # the originating tree's output and moc_predefs.h paths.
                     deps = list(dict.fromkeys([input_file, *include_files, *manifest_deps]))
                     _write_dep_file(dep_out, output, deps)
                 if wants_json:
-                    shutil.copyfile(cached_json, json_out)
+                    json_out.write_bytes(cached_json.read_bytes())
                 with contextlib.suppress(OSError):
                     os.utime(mdir)  # refresh LRU recency
                 _log_stat(cache_dir, "hit", input_file)
@@ -1073,6 +1079,8 @@ def main() -> int:
     tmp_dep = None
     cmd = [str(real_moc), *argv]
     if not wants_dep_file:
+        import tempfile
+
         fd, tmp_dep = tempfile.mkstemp(suffix=".d", prefix="moccache-")
         os.close(fd)
         cmd += ["--output-dep-file", "--dep-file-path", tmp_dep]

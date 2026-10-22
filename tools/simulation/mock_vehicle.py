@@ -231,39 +231,6 @@ class MockVehicle:
             self.state.climb_rate,
         )
 
-    def send_battery_status(self):
-        """Send battery status."""
-        voltages = [int(self.state.battery_voltage * 1000)] + [65535] * 9
-        self.connection.mav.battery_status_send(
-            0,  # id
-            mavlink.MAV_BATTERY_FUNCTION_ALL,
-            mavlink.MAV_BATTERY_TYPE_LIPO,
-            25,  # temperature (0.1 C)
-            voltages,
-            -1,  # current
-            -1,  # current consumed
-            -1,  # energy consumed
-            int(self.state.battery_remaining),
-        )
-
-    def send_home_position(self):
-        """Send home position."""
-        lat = int(self.state.lat * 1e7)
-        lon = int(self.state.lon * 1e7)
-
-        self.connection.mav.home_position_send(
-            lat,
-            lon,
-            0,  # home position
-            0,
-            0,
-            0,  # local position
-            [1, 0, 0, 0],  # quaternion
-            0,
-            0,
-            0,  # approach
-        )
-
     def update_simulation(self, dt):
         """Update simulated vehicle state."""
         # Simulate slow position drift

@@ -8,11 +8,11 @@ label first for a named marker, e.g. "start idle"). Ctrl+C stops the capture.
 Markers require a POSIX terminal (no-op on Windows); capture itself works
 everywhere adb does. Originally written for the GeoMap go/no-go (issue #14880).
 
-    python3 tools/android_mem_capture.py --label geomap --interval 10
+    python3 tools/debuggers/android_mem_capture.py --label geomap --interval 10
 
 Compare two runs (e.g. QtLocation vs GeoMap):
 
-    python3 tools/android_mem_capture.py --compare mem-qtlocation-*.csv mem-geomap-*.csv
+    python3 tools/debuggers/android_mem_capture.py --compare mem-qtlocation-*.csv mem-geomap-*.csv
 """
 
 from __future__ import annotations

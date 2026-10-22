@@ -11,10 +11,7 @@ from __future__ import annotations
 
 import sys
 
-from _bootstrap import ensure_tools_dir
-
-ensure_tools_dir(__file__)
-
+import _bootstrap as _bootstrap
 from terrain.cli import main
 
 if __name__ == "__main__":

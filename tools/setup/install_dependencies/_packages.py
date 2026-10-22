@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from pathlib import Path
 
 PACKAGE_NAME_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9.+-]*$")
 
@@ -16,7 +17,6 @@ DEBIAN_PACKAGES: dict[str, list[str]] = {
         "build-essential",
         "ccache",
         "cmake",
-        "cppcheck",
         "file",
         "gdb",
         "gettext",
@@ -98,9 +98,6 @@ DEBIAN_PACKAGES: dict[str, list[str]] = {
         "libopenblas0",
         "python3-gi",
         "python3-gst-1.0",
-    ],
-    "gstreamer_optional": [
-        "gstreamer1.0-qt6",
     ],
     "sdl": [
         "libusb-1.0-0-dev",
@@ -196,7 +193,6 @@ FEDORA_PACKAGES: dict[str, list[str]] = {
         "make",
         "ccache",
         "cmake",
-        "cppcheck",
         "file",
         "gdb",
         "gettext",
@@ -281,7 +277,6 @@ ARCH_PACKAGES: dict[str, list[str]] = {
         "appstream",
         "ccache",
         "cmake",
-        "cppcheck",
         "file",
         "gdb",
         "gettext",
@@ -369,33 +364,38 @@ PYTHON_BUILD_TOOLS: list[str] = [
 ]
 
 
-def get_debian_packages(
-    category: str | None = None,
-    include_optional: bool = False,
-) -> list[str]:
-    """Get Debian packages, optionally filtered by category."""
-    if category:
-        return list(DEBIAN_PACKAGES.get(category, []))
+def debian_jdk_package() -> str:
+    """OpenJDK package for Gradle, at build-config's android.java_version."""
+    from common.build_config import get_build_config_value
 
-    packages = []
-    for cat, pkgs in DEBIAN_PACKAGES.items():
-        if cat.startswith("cross_"):
-            continue  # target-arch sysroot libs, not for the native host
-        if cat.endswith("_optional") and not include_optional:
-            continue
-        packages.extend(pkgs)
-    return list(dict.fromkeys(packages))  # Remove duplicates, preserve order
+    # Docker builders copy build-config.json next to setup/ instead of under .github/.
+    beside_setup = Path(__file__).resolve().parents[1] / "build-config.json"
+    version = get_build_config_value("android.java_version", extra_candidates=[beside_setup])
+    if not version.isdigit():
+        raise ValueError(f"android.java_version must be a JDK major version, got {version!r}")
+    return f"openjdk-{version}-jdk"
+
+
+def get_debian_packages(category: str | None = None) -> list[str]:
+    """Get Debian packages, optionally filtered by category.
+
+    "android" is core plus Gradle's JDK. Qt's Android host tools link only QtCore, QtQml and
+    QtNetwork, so the desktop Qt, GStreamer and audio libraries are not needed.
+    """
+    if category == "android":
+        return [*DEBIAN_PACKAGES["core"], debian_jdk_package()]
+    return _get_categorized_packages(DEBIAN_PACKAGES, category)
 
 
 def _get_categorized_packages(
     table: dict[str, list[str]], category: str | None = None
 ) -> list[str]:
-    """Flatten a category->packages table, skipping cross_/optional categories."""
+    """Flatten a category->packages table, skipping cross_ (target sysroot) categories."""
     if category:
         return list(table.get(category, []))
     packages: list[str] = []
     for cat, pkgs in table.items():
-        if cat.startswith("cross_") or cat.endswith("_optional"):
+        if cat.startswith("cross_"):
             continue
         packages.extend(pkgs)
     return list(dict.fromkeys(packages))
@@ -433,6 +433,7 @@ __all__ = [
     "MACOS_PACKAGES",
     "PACKAGE_NAME_RE",
     "PYTHON_BUILD_TOOLS",
+    "debian_jdk_package",
     "get_arch_packages",
     "get_debian_packages",
     "get_fedora_packages",

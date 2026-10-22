@@ -5,17 +5,20 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
-from pathlib import Path
+from typing import TYPE_CHECKING
 from xml.sax.saxutils import escape
 
 import pytest
-import yaml
 from common.git import run_git
 from common.xml import XMLParseError
 
 from translations import check_placeholders as checker
 
-ROOT = Path(__file__).resolve().parents[2]
+from ._helpers import REPO_ROOT, git, load_workflow, load_yaml
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
 SOURCE = "Switches to '%1' when you click Stop."
 CATALOG = "translations/with spaces.ts"
 
@@ -58,25 +61,17 @@ def write_catalog(repo: Path, content: str, name: str = CATALOG) -> Path:
     return path
 
 
-def git(repo: Path, *args: str) -> str:
-    return run_git(*args, cwd=repo, check=True).stdout.strip()
-
-
 def commit_fixture(repo: Path) -> str:
     git(repo, "add", ".")
-    git(repo, "-c", "core.hooksPath=/dev/null", "commit", "-qm", "Fixture")
+    git(repo, "commit", "-qm", "Fixture")
     return git(repo, "rev-parse", "HEAD")
 
 
 @pytest.fixture
-def repo(tmp_path: Path) -> Path:
-    git(tmp_path, "init", "-q")
-    git(tmp_path, "config", "user.name", "Test")
-    git(tmp_path, "config", "user.email", "test@example.invalid")
-    git(tmp_path, "config", "commit.gpgsign", "false")
-    write_catalog(tmp_path, catalog(message("Legacy %2", "historical defect"), message()))
-    commit_fixture(tmp_path)
-    return tmp_path
+def repo(git_repo: Path) -> Path:
+    write_catalog(git_repo, catalog(message("Legacy %2", "historical defect"), message()))
+    commit_fixture(git_repo)
+    return git_repo
 
 
 def check_xml(tmp_path: Path, content: str) -> list[str]:
@@ -337,9 +332,7 @@ def test_base_is_exact_not_merge_base(repo: Path) -> None:
     write_catalog(repo, catalog(message(translation="bad")))
     base = commit_fixture(repo)
     tree = git(repo, "rev-parse", "HEAD^{tree}")
-    sibling = run_git(
-        "commit-tree", tree, "-p", ancestor, "-m", "Sibling fixture", cwd=repo, check=True
-    ).stdout.strip()
+    sibling = git(repo, "commit-tree", tree, "-p", ancestor, "-m", "Sibling fixture")
     git(repo, "update-ref", "HEAD", sibling)
     assert checker.validate(repo, base, [CATALOG]) == ([], 1, 0)
     assert checker.validate(repo, ancestor, [CATALOG])[0]
@@ -351,12 +344,11 @@ def test_empty_baseline_checks_all_messages(repo: Path) -> None:
     assert errors
 
 
-def test_unborn_head_requires_explicit_empty_baseline(tmp_path: Path) -> None:
-    git(tmp_path, "init", "-q")
-    write_catalog(tmp_path, catalog(message()))
+def test_unborn_head_requires_explicit_empty_baseline(git_repo: Path) -> None:
+    write_catalog(git_repo, catalog(message()))
     with pytest.raises(subprocess.CalledProcessError):
-        checker.validate(tmp_path, "HEAD", [])
-    assert checker.validate(tmp_path, "EMPTY", []) == ([], 1, 1)
+        checker.validate(git_repo, "HEAD", [])
+    assert checker.validate(git_repo, "EMPTY", []) == ([], 1, 1)
 
 
 def test_missing_ref_fails_even_with_no_changes(repo: Path) -> None:
@@ -470,7 +462,7 @@ def test_cli_outside_git_fails(tmp_path: Path, monkeypatch, capsys) -> None:
 
 def test_module_entrypoint_and_default_head(repo: Path) -> None:
     env = {key: value for key, value in os.environ.items() if not key.startswith("PRE_COMMIT_")}
-    env["PYTHONPATH"] = str(ROOT / "tools")
+    env["PYTHONPATH"] = str(REPO_ROOT / "tools")
     write_catalog(repo, catalog(message(translation="bad")))
     result = subprocess.run(
         [sys.executable, "-m", "translations.check_placeholders"],
@@ -485,8 +477,8 @@ def test_module_entrypoint_and_default_head(repo: Path) -> None:
 
 
 def test_workflow_runs_for_translation_only_prs_with_real_base() -> None:
-    workflow = yaml.safe_load((ROOT / ".github/workflows/translation-validation.yml").read_text())
-    events = workflow["on"] if "on" in workflow else workflow[True]
+    workflow = load_workflow("translation-validation.yml")
+    events = workflow["on"]
     assert set(events) == {"pull_request", "push"}
     for event in events.values():
         assert "translations/**/*.ts" in event["paths"]
@@ -499,8 +491,8 @@ def test_workflow_runs_for_translation_only_prs_with_real_base() -> None:
     assert checkout["with"]["fetch-depth"] == 0
     assert checkout["with"]["persist-credentials"] is False
     assert "ref" not in checkout["with"]
-    setup = next(step for step in steps if step.get("uses") == "./.github/actions/setup-python")
-    assert setup["with"]["groups"] == "scripts,test"
+    setup = next(step for step in steps if step.get("uses") == "$/.github/actions/setup-python")
+    assert setup["with"]["groups"] == "scripts"
     validation = steps[-1]
     assert validation["working-directory"] == "tools"
     assert validation["env"]["BASE_REF"] == (
@@ -514,7 +506,7 @@ def test_workflow_runs_for_translation_only_prs_with_real_base() -> None:
 
 
 def test_pre_commit_hook_uses_catalog_filter_and_existing_runner() -> None:
-    config = yaml.safe_load((ROOT / ".pre-commit-config.yaml").read_text())
+    config = load_yaml(".pre-commit-config.yaml")
     hook = next(
         hook
         for repo in config["repos"]

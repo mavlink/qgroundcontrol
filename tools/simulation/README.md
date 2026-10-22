@@ -1,32 +1,30 @@
 # QGC Simulation Tools
 
-Tools for testing QGroundControl without physical hardware.
+Tools for testing QGroundControl without physical hardware. Run them from the repository root.
 
 ## Quick Start
 
 | Tool | Use Case | Setup |
 | --- | --- | --- |
-| `mock_vehicle.py` | UI testing, quick checks | `python tools/setup/install_python.py dev` |
+| `mock_vehicle.py` | UI testing, quick checks | `python tools/setup/install_python.py dev` (pymavlink), then activate `tools/.venv` |
 | `run_arducopter_sitl.py` | Full simulation, mission testing | Docker required |
 | `rc_transmitter.py` | RC transmitter for PX4 SITL: flight modes, switches, RC loss | `python tools/setup/install_python.py dev` |
+| `mock_ntrip_caster.py` | NTRIP/RTK client testing | Python standard library only |
 
 ## Mock Vehicle (Lightweight)
 
 A minimal MAVLink simulator for UI testing. Does not simulate flight dynamics.
 
 ```bash
-# Install
-python tools/setup/install_python.py dev
-
 # Run (QGC connects to UDP 14550)
-./mock_vehicle.py
+python tools/simulation/mock_vehicle.py
 
 # Multiple vehicles
-./mock_vehicle.py --system-id 1 --port 14550 &
-./mock_vehicle.py --system-id 2 --port 14551 &
+python tools/simulation/mock_vehicle.py --system-id 1 --port 14550 &
+python tools/simulation/mock_vehicle.py --system-id 2 --port 14551 &
 
 # TCP mode (SITL-style)
-./mock_vehicle.py --tcp --port 5760
+python tools/simulation/mock_vehicle.py --tcp --port 5760
 ```
 
 **Features:**
@@ -46,8 +44,11 @@ python tools/setup/install_python.py dev
 | `--system-id` | 1 | MAVLink system ID |
 | `--rate` | 10 | Telemetry rate (Hz) |
 | `--sitl` | off | SITL-compatible mode (TCP:5760) |
+| `--lat`, `--lon`, `--alt` | `MOCK_VEHICLE_LAT`/`_LON`/`_ALT`, else 47.3977, 8.5456, 100 m | Initial position |
 
 **Limitations:** No flight dynamics, no mission execution, limited MAVLink support.
+
+Mock Vehicle auto-connects over UDP 14550.
 
 ## ArduCopter SITL (Full Simulation)
 
@@ -55,13 +56,22 @@ Full ArduPilot simulation via Docker. Supports missions, geofences, all commands
 
 ```bash
 # Run (builds image on first run, ~10-15 min)
-./run_arducopter_sitl.py
+python tools/simulation/run_arducopter_sitl.py
 
 # With simulated network latency (Herelink-like)
-./run_arducopter_sitl.py --with-latency
+python tools/simulation/run_arducopter_sitl.py --with-latency
 
 # Connect QGC to: tcp://localhost:5760
 ```
+
+`--name` sets the container name (default `arducopter-sitl`) and `--timeout` the seconds to wait
+for the TCP listener (default 60). The launcher binds TCP port 5760 to localhost and waits for the
+guest listener without consuming its first client connection. It replaces only containers carrying
+its ownership label; remove a container created by the previous shell launcher explicitly before
+using the same name.
+
+Add a TCP comm link in QGC (**Application Settings → Comm Links → Add**, Host `localhost`,
+Port `5760`).
 
 **Docker Commands:**
 
@@ -71,10 +81,30 @@ docker stop arducopter-sitl      # Stop simulation
 docker rm arducopter-sitl        # Remove container
 ```
 
-**Requirements:** Docker
+## Mock NTRIP Caster
 
-Mock Vehicle auto-connects over UDP 14550. For SITL, add a TCP comm link in QGC
-(**Application Settings → Comm Links → Add**, Host `localhost`, Port `5760`).
+Serves an NTRIP source table and streams RTCM3 1005/1077 frames with valid CRC-24Q, for testing
+QGC's RTK corrections client without a real caster.
+
+```bash
+python tools/simulation/mock_ntrip_caster.py                 # Listen on 127.0.0.1:2101
+python tools/simulation/mock_ntrip_caster.py --host 0.0.0.0  # Accept LAN connections
+```
+
+In QGC, open **Application Settings → RTK Corrections → NTRIP Server**, set host `127.0.0.1`, port
+`2101`, and mount point `MOCK1`, then enable **Connect to NTRIP server**.
+
+`MOCK1` and `MOCK2` stream data. `MOCK_AUTH` is listed as requiring Basic auth, but authentication
+is only enforced with `--auth USER:PASS`, and then for every request. Unknown mount points return
+404.
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `--host` | 127.0.0.1 | Bind address |
+| `--port` | 2101 | Port number |
+| `--auth` | off | Require Basic auth (`USER:PASS`) |
+| `--rate` | 1 | Messages per second |
+| `--error` | off | `bad_crc` corrupts every 10th frame, `drop` closes after 10 frames, `http_401`/`http_500` reject every request |
 
 ## Virtual RC Transmitter (PX4 SITL)
 
@@ -135,7 +165,3 @@ For more advanced simulation:
 - [ArduPilot SITL](https://ardupilot.org/dev/docs/sitl-simulator-software-in-the-loop.html) - Native install
 - [PX4 SITL](https://docs.px4.io/main/en/simulation/) - PX4 simulation
 - [Gazebo](https://gazebosim.org/) - 3D physics simulation
-
-The SITL launcher binds TCP port 5760 to localhost and waits for the guest listener without
-consuming its first client connection. It replaces only containers carrying its ownership label.
-Remove a container created by the previous shell launcher explicitly before using the same name.

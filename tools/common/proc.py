@@ -4,7 +4,6 @@ Centralizes the ``capture_output=True, text=True, check=False`` ritual that
 gets repeated in nearly every tool, plus a couple of convenience entry points.
 
 Use ``run_captured`` whenever you need stdout/stderr to make a decision.
-Use ``run_text`` when you only care about stdout and want it as a string.
 """
 
 from __future__ import annotations
@@ -20,7 +19,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping, Sequence
 
-__all__ = ["run_bytes", "run_captured", "run_tee", "run_text", "run_with_retry"]
+__all__ = ["output_text", "run_bytes", "run_captured", "run_tee", "run_with_retry"]
 
 
 def run_with_retry(
@@ -94,7 +93,7 @@ def run_bytes(
     """Like ``run_captured`` but returns raw bytes — for outputs that may not be valid UTF-8.
 
     Use this for tools whose stdout/stderr can contain undecodable bytes (e.g. adb
-    logcat under a native crash). Decode at call sites with ``errors="replace"``.
+    logcat under a native crash). Decode at call sites with :func:`output_text`.
     """
     return subprocess.run(
         list(cmd),
@@ -104,6 +103,16 @@ def run_bytes(
         timeout=timeout,
         check=check,
     )
+
+
+def output_text(output: str | bytes | None) -> str:
+    """Decode captured output, replacing invalid UTF-8; None becomes an empty string.
+
+    Bytes-mode results are bytes, and ``TimeoutExpired`` output is bytes on POSIX even in text mode.
+    """
+    if isinstance(output, bytes):
+        return output.decode("utf-8", errors="replace")
+    return output or ""
 
 
 def run_captured(
@@ -169,6 +178,8 @@ def run_tee(
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
+            encoding="utf-8",
+            errors="replace",
         )
         assert process.stdout is not None
         for line in process.stdout:
@@ -176,20 +187,3 @@ def run_tee(
             log.write(line)
         process.wait()
         return process.returncode
-
-
-def run_text(
-    cmd: Sequence[str],
-    *,
-    cwd: Path | str | None = None,
-    timeout: float | None = None,
-    default: str = "",
-) -> str:
-    """Run *cmd* and return its stdout (stripped). Returns *default* on failure."""
-    try:
-        result = run_captured(cmd, cwd=cwd, timeout=timeout)
-    except (subprocess.TimeoutExpired, FileNotFoundError):
-        return default
-    if result.returncode != 0:
-        return default
-    return result.stdout.strip()

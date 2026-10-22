@@ -34,12 +34,11 @@ from pathlib import Path
 from typing import ClassVar
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from _bootstrap import ensure_tools_dir
 
-ensure_tools_dir(__file__)
-
-from common.analyzer import AnalysisResult, AnalyzerBase
+import _bootstrap as _bootstrap
 from common.file_traversal import find_cpp_files
+
+from analyzers.base import AnalysisResult, AnalyzerBase
 
 
 @dataclass

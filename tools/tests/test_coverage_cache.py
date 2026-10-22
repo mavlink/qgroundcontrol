@@ -8,6 +8,12 @@ import subprocess
 from pathlib import Path
 
 import pytest
+from common.tool_version import probe_version
+
+from ._helpers import REPO_ROOT
+
+# Coverage.cmake compiles with -fprofile-update=atomic, which older ccache rejects as unsupported.
+MIN_COVERAGE_CCACHE = (4, 10)
 
 
 def test_coverage_report_after_cached_rebuild(tmp_path: Path) -> None:
@@ -15,15 +21,18 @@ def test_coverage_report_after_cached_rebuild(tmp_path: Path) -> None:
     compiler = shutil.which("g++", path="/usr/bin:/bin")
     if not ccache or not compiler or not shutil.which("ninja"):
         pytest.skip("GCC, ccache and Ninja are required")
+    ccache_version = probe_version(ccache)
+    if ccache_version is None or ccache_version < MIN_COVERAGE_CCACHE:
+        found = ".".join(map(str, ccache_version)) if ccache_version else "unknown"
+        pytest.skip(f"ccache {found} cannot cache -fprofile-update compiles (needs 4.10+)")
     major = subprocess.check_output([compiler, "-dumpversion"], text=True).strip().split(".")[0]
     gcov = shutil.which(f"gcov-{major}")
     if not gcov:
         pytest.skip("Matching gcov is required")
-    repo = Path(__file__).resolve().parents[2]
     env = {key: value for key, value in os.environ.items() if not key.startswith("CCACHE_")}
     env.update(
         CCACHE_DIR=str(tmp_path / "cache"),
-        CCACHE_CONFIGPATH=str(repo / "tools/configs/ccache.conf"),
+        CCACHE_CONFIGPATH=str(REPO_ROOT / "tools/configs/ccache.conf"),
         CCACHE_BASEDIR=str(tmp_path),
     )
     source = tmp_path / "source"
@@ -61,7 +70,7 @@ find_package(Threads REQUIRED)
 set(QGC_ENABLE_COVERAGE ON)
 set(QGC_COVERAGE_LINE_THRESHOLD 30)
 set(QGC_COVERAGE_BRANCH_THRESHOLD 20)
-include("{repo.as_posix()}/cmake/modules/Coverage.cmake")
+include("{REPO_ROOT.as_posix()}/cmake/modules/Coverage.cmake")
 add_library(probe STATIC library.cpp)
 add_executable(CoverageProbe main.cpp)
 target_link_libraries(CoverageProbe PRIVATE probe Threads::Threads)

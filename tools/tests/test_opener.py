@@ -5,12 +5,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 
+import pytest
 from common.opener import open_in_default_app
 
 if TYPE_CHECKING:
     from pathlib import Path
 
-    import pytest
+pytestmark = pytest.mark.windows
 
 
 def test_open_macos_uses_open(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

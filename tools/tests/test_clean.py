@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Tests for tools/clean.py."""
 
 from __future__ import annotations
@@ -103,3 +102,24 @@ def test_main_dry_run_exits_zero(
     monkeypatch.setattr("clean.repo_root", lambda: tmp_path)
     assert main(flag.split()) == 0
     assert (tmp_path / "build").exists()  # dry-run preserves
+
+
+def test_clean_generated_skips_vcs_installed_packages_and_venvs(tmp_path: Path) -> None:
+    owned = tmp_path / "tools" / "__pycache__"
+    owned.mkdir(parents=True)
+    protected = [
+        tmp_path / ".git" / "hooks" / "__pycache__",
+        tmp_path / "docs" / "node_modules" / "pkg" / "__pycache__",
+        tmp_path / "tools" / ".venv" / "lib" / "site" / "__pycache__",
+        tmp_path / "custom-env" / "lib" / "__pycache__",
+    ]
+    for path in protected:
+        path.mkdir(parents=True)
+        (path / "m.pyc").write_text("", encoding="utf-8")
+    for venv in (tmp_path / "tools" / ".venv", tmp_path / "custom-env"):
+        (venv / "pyvenv.cfg").write_text("home = /usr/bin\n", encoding="utf-8")
+
+    clean_generated(tmp_path, dry_run=False)
+
+    assert not owned.exists()
+    assert all(path.exists() for path in protected)

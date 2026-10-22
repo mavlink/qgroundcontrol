@@ -1,10 +1,12 @@
-#!/usr/bin/env python3
 """
 Vehicle Null-Check Analyzer for QGroundControl
 
 Detects unsafe patterns:
 1. activeVehicle()->method() without null check
-2. getParameter() result used without null validation
+2. A variable assigned from activeVehicle() dereferenced without null check
+
+ParameterManager::getParameter() is not checked: it never returns null and
+returns a default Fact (after reporting the missing parameter) instead.
 
 Usage:
     python3 vehicle_null_check.py [files...]
@@ -26,18 +28,28 @@ from pathlib import Path
 from typing import ClassVar
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from _bootstrap import ensure_tools_dir
 
-ensure_tools_dir(__file__)
-
-from common.analyzer import AnalysisResult, AnalyzerBase
+import _bootstrap as _bootstrap
 from common.file_traversal import find_cpp_files
-from common.patterns import (
-    ACTIVE_VEHICLE_ASSIGN_PATTERN,
-    ACTIVE_VEHICLE_DIRECT_PATTERN,
-    GET_PARAMETER_DIRECT_PATTERN,
-    NULL_CHECK_PATTERNS,
+
+from analyzers.base import AnalysisResult, AnalyzerBase
+
+# Captures the method called on activeVehicle()
+ACTIVE_VEHICLE_DIRECT_PATTERN = re.compile(r"activeVehicle\(\)\s*->\s*(\w+)\s*\(")
+
+# Captures the variable assigned from activeVehicle()
+ACTIVE_VEHICLE_ASSIGN_PATTERN = re.compile(
+    r"(\w+)\s*=\s*(?:MultiVehicleManager::instance\(\)->)?activeVehicle\(\)"
 )
+
+# \w+ is replaced by the variable name when checking a specific variable
+NULL_CHECK_PATTERNS = [
+    r"if\s*\(\s*!\s*\w+\s*\)",  # if (!var)
+    r"if\s*\(\s*\w+\s*==\s*nullptr\s*\)",  # if (var == nullptr)
+    r"if\s*\(\s*\w+\s*!=\s*nullptr\s*\)",  # if (var != nullptr)
+    r"if\s*\(\s*\w+\s*\)",  # if (var)
+    r"\?\s*:",  # ternary operator
+]
 
 
 @dataclass
@@ -53,19 +65,25 @@ class Violation:
 
 
 def has_null_check_before(lines: list[str], current_line: int, var_name: str | None = None) -> bool:
-    """Check if there's a null check in the preceding lines (within same function scope)."""
+    """Check for a null check in the preceding lines or, for var_name, earlier on its use line."""
     start = max(0, current_line - 10)
     context = "\n".join(lines[start:current_line])
 
-    for pattern in NULL_CHECK_PATTERNS:
-        if var_name:
-            specific_pattern = pattern.replace(r"\w+", re.escape(var_name))
-            if re.search(specific_pattern, context):
-                return True
-        if re.search(pattern, context):
-            return True
+    if not var_name:
+        return any(re.search(pattern, context) for pattern in NULL_CHECK_PATTERNS)
 
-    return bool(var_name and re.search(rf"if\s*\([^)]*{re.escape(var_name)}[^)]*\)\s*\{{", context))
+    # Generic patterns would accept a check of any unrelated variable nearby
+    var = re.escape(var_name)
+    use = re.search(rf"\b{var}\s*->", lines[current_line])
+    guard = rf"\b{var}\s*(?:\?|&&)|!\s*{var}\s*\|\|"
+    if use and re.search(guard, lines[current_line][: use.start()]):
+        return True
+    specific_patterns = [p.replace(r"\w+", var) for p in NULL_CHECK_PATTERNS if r"\w+" in p]
+    specific_patterns += [
+        rf"if\s*\([^)]*\b{var}\b[^)]*\)\s*\{{",
+        rf"QVERIFY2?\s*\(\s*{var}\s*[,)]",
+    ]
+    return any(re.search(pattern, context) for pattern in specific_patterns)
 
 
 def analyze_file(file_path: Path) -> Generator[Violation, None, None]:
@@ -120,24 +138,9 @@ def analyze_file(file_path: Path) -> Generator[Violation, None, None]:
                         )
                     break
 
-        # Check for getParameter() result used directly
-        for match in GET_PARAMETER_DIRECT_PATTERN.finditer(line):
-            yield Violation(
-                file=str(file_path),
-                line=line_num + 1,
-                column=match.start() + 1,
-                pattern="unsafe_get_parameter",
-                code=stripped,
-                suggestion=(
-                    "getParameter() can return nullptr. Store result and check:\n"
-                    "  Fact *param = vehicle->parameterManager()->getParameter(...);\n"
-                    '  if (!param) { qCWarning(...) << "Parameter not found"; return; }'
-                ),
-            )
-
 
 class VehicleNullCheckAnalyzer(AnalyzerBase):
-    """Detect unsafe activeVehicle() / getParameter() patterns."""
+    """Detect unsafe activeVehicle() patterns."""
 
     name: ClassVar[str] = "vehicle-null-check"
     install_hint: ClassVar[str] = ""

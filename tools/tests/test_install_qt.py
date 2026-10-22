@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import subprocess
 from typing import TYPE_CHECKING
@@ -11,16 +12,17 @@ from setup import install_qt
 from setup.install_qt import (
     _run_aqt_with_retries,
     compute_cache_digest,
-    resolve_android_qt_root,
+    plan_install,
     resolve_arch_dir,
     resolve_preinstalled_qt,
     resolve_qt_root,
     resolve_windows_host_arch,
-    validate_aqt_source,
 )
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+pytestmark = pytest.mark.windows
 
 
 def test_configured_container_install_reuses_qt_policy(monkeypatch, tmp_path):
@@ -100,16 +102,9 @@ class TestResolveArchDir:
 
 
 class TestComputeCacheDigest:
-    def test_cache_metadata_uses_relative_workspace_path(self, monkeypatch, tmp_path):
-        output = tmp_path / "output.txt"
-        monkeypatch.setenv("GITHUB_WORKSPACE", str(tmp_path))
-        monkeypatch.setenv("GITHUB_OUTPUT", str(output))
-        result = install_qt.main(
-            ["cache-key", "--arch", "win64_msvc2022_64", "--cache-dir", str(tmp_path / ".qt")]
-        )
-        assert result == 0
-        assert "cache_dir=.qt\n" in output.read_text()
-        assert "arch_dir=msvc2022_64\n" in output.read_text()
+    def test_digest_formula_keeps_existing_cache_keys(self) -> None:
+        expected = hashlib.sha256(b"qtgraphs qtlocation\nqtbase icu").hexdigest()
+        assert compute_cache_digest("qtgraphs qtlocation", "qtbase icu") == expected
 
     def test_deterministic(self) -> None:
         a = compute_cache_digest("qtgraphs qtlocation", "")
@@ -174,69 +169,121 @@ class TestResolvePreinstalledQt:
         assert resolve_preinstalled_qt(tmp_path, "6.8.3", "gcc_64") is None
 
 
-class TestResolveAndroidQtRoot:
-    def test_arm64_preferred(self) -> None:
-        roots = {"arm64": "/qt/arm64", "armv7": "/qt/armv7"}
-        assert resolve_android_qt_root("arm64-v8a;armeabi-v7a", roots) == "/qt/arm64"
+def _github_files(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> dict[str, Path]:
+    files = {
+        name: tmp_path / f"{name.lower()}.txt"
+        for name in ("GITHUB_OUTPUT", "GITHUB_ENV", "GITHUB_PATH")
+    }
+    for name, path in files.items():
+        monkeypatch.setenv(name, str(path))
+        path.write_text("")
+    return files
 
-    def test_armv7_fallback(self) -> None:
-        roots = {"arm64": "", "armv7": "/qt/armv7"}
-        assert resolve_android_qt_root("arm64-v8a;armeabi-v7a", roots) == "/qt/armv7"
 
-    def test_x86_64_only(self) -> None:
-        roots = {"x86_64": "/qt/x86_64"}
-        assert resolve_android_qt_root("x86_64", roots) == "/qt/x86_64"
+class TestPlan:
+    def test_outputs_unchanged_cache_inputs(self, monkeypatch, tmp_path) -> None:
+        monkeypatch.setenv("GITHUB_WORKSPACE", str(tmp_path))
+        files = _github_files(monkeypatch, tmp_path)
+        args = ["--version", "6.8.3", "--arch", "win64_msvc2022_64", "--modules", "qtgraphs"]
+        outdir = tmp_path / ".qt" / "Qt"
+        assert install_qt.main(["plan", "--outdir", str(outdir), *args]) == 0
 
-    def test_x86_only(self) -> None:
-        roots = {"x86": "/qt/x86"}
-        assert resolve_android_qt_root("x86", roots) == "/qt/x86"
+        # Matches the former `${cache_dir}/Qt/${version}/${arch_dir}` path and digest exactly.
+        assert files["GITHUB_OUTPUT"].read_text().splitlines() == [
+            f"digest={compute_cache_digest('qtgraphs', '')}",
+            "cache_path=.qt/Qt/6.8.3/msvc2022_64",
+            "preinstalled_root=",
+        ]
 
-    def test_no_match_exits(self) -> None:
+    def test_reports_compatible_preinstalled_sdk(self, tmp_path) -> None:
+        prefix = tmp_path / "sdk"
+        qt_root = TestResolvePreinstalledQt._create_sdk(prefix)
+
+        plan = plan_install(
+            tmp_path / ".qt/Qt", "6.8.3", "linux_gcc_64", "qtlocation", "", str(prefix)
+        )
+
+        assert plan["preinstalled_root"] == str(qt_root)
+        assert plan_install(tmp_path / ".qt/Qt", "6.8.3", "linux_gcc_64")["preinstalled_root"] == ""
+
+
+class TestEnsure:
+    @staticmethod
+    def _ensure(tmp_path: Path, *extra: str) -> int:
+        return install_qt.main(
+            [
+                "ensure",
+                "--outdir",
+                str(tmp_path / "Qt"),
+                "--version",
+                "6.8.3",
+                "--host",
+                "linux",
+                "--arch",
+                "linux_gcc_64",
+                *extra,
+            ]
+        )
+
+    @pytest.fixture
+    def aqt_calls(self, monkeypatch: pytest.MonkeyPatch) -> list[list[str]]:
+        calls: list[list[str]] = []
+        monkeypatch.setattr(install_qt, "tool_command", lambda *args, **kwargs: ["aqt"])
+        monkeypatch.setattr(install_qt, "_run_aqt_with_retries", calls.append)
+        return calls
+
+    def test_preinstalled_sdk_is_exported_without_install(
+        self, monkeypatch, tmp_path, aqt_calls
+    ) -> None:
+        files = _github_files(monkeypatch, tmp_path)
+        qt_root = tmp_path / "sdk/Qt/6.8.3/gcc_64"
+
+        assert self._ensure(tmp_path, "--preinstalled-root", str(qt_root), "--cache-hit", "") == 0
+
+        assert aqt_calls == []
+        assert files["GITHUB_OUTPUT"].read_text() == f"qt_root_dir={qt_root}\n"
+        assert files["GITHUB_ENV"].read_text() == f"QT_ROOT_DIR={qt_root}\n"
+        assert files["GITHUB_PATH"].read_text() == f"{qt_root / 'bin'}\n"
+
+    def test_cache_hit_reuses_restored_tree(self, monkeypatch, tmp_path, aqt_calls) -> None:
+        files = _github_files(monkeypatch, tmp_path)
+        qt_root = tmp_path / "Qt/6.8.3/gcc_64"
+        qt_root.mkdir(parents=True)
+
+        assert self._ensure(tmp_path, "--cache-hit", "true") == 0
+
+        assert aqt_calls == []
+        assert files["GITHUB_OUTPUT"].read_text() == f"qt_root_dir={qt_root}\n"
+
+    def test_cache_hit_without_tree_fails(self, monkeypatch, tmp_path, aqt_calls) -> None:
+        _github_files(monkeypatch, tmp_path)
+
         with pytest.raises(SystemExit):
-            resolve_android_qt_root("mips", {})
+            self._ensure(tmp_path, "--cache-hit", "true")
+        assert aqt_calls == []
 
-    def test_empty_root_skipped(self) -> None:
-        roots = {"arm64": "", "x86_64": "/qt/x86_64"}
-        assert resolve_android_qt_root("arm64-v8a;x86_64", roots) == "/qt/x86_64"
+    def test_cache_miss_installs_without_exporting(self, monkeypatch, tmp_path, aqt_calls) -> None:
+        files = _github_files(monkeypatch, tmp_path)
+        qt_root = tmp_path / "Qt/6.8.3/gcc_64"
+        qt_root.mkdir(parents=True)
 
-    def test_semicolon_parsing(self) -> None:
-        roots = {"armv7": "/qt/armv7"}
-        assert resolve_android_qt_root("armeabi-v7a", roots) == "/qt/armv7"
+        assert self._ensure(tmp_path, "--cache-hit", "false", "--export-env", "false") == 0
 
-
-class TestValidateAqtSource:
-    def test_empty_passes(self) -> None:
-        assert validate_aqt_source("") == ""
-
-    def test_bare_pypi_name(self) -> None:
-        assert validate_aqt_source("aqtinstall") == "aqtinstall"
-
-    def test_pinned_pypi_version(self) -> None:
-        assert validate_aqt_source("aqtinstall==3.3.0") == "aqtinstall==3.3.0"
-
-    def test_upstream_git_sha(self) -> None:
-        spec = "git+https://github.com/miurahr/aqtinstall@" + "a" * 40
-        assert validate_aqt_source(spec) == spec
-
-    def test_upstream_git_with_dot_git(self) -> None:
-        spec = "git+https://github.com/miurahr/aqtinstall.git@" + "f" * 40
-        assert validate_aqt_source(spec) == spec
-
-    def test_extra_index_url_rejected(self) -> None:
-        with pytest.raises(SystemExit):
-            validate_aqt_source("--extra-index-url https://evil aqtinstall")
-
-    def test_attacker_git_host_rejected(self) -> None:
-        with pytest.raises(SystemExit):
-            validate_aqt_source("git+https://attacker.example.com/evil@main")
-
-    def test_unpinned_git_tag_rejected(self) -> None:
-        with pytest.raises(SystemExit):
-            validate_aqt_source("git+https://github.com/miurahr/aqtinstall@main")
-
-    def test_different_package_rejected(self) -> None:
-        with pytest.raises(SystemExit):
-            validate_aqt_source("evil-package")
+        assert aqt_calls == [
+            [
+                "aqt",
+                "install-qt",
+                "linux",
+                "desktop",
+                "6.8.3",
+                "linux_gcc_64",
+                "--outputdir",
+                str(tmp_path / "Qt"),
+            ]
+        ]
+        assert files["GITHUB_OUTPUT"].read_text() == f"qt_root_dir={qt_root}\n"
+        assert files["GITHUB_ENV"].read_text() == ""
+        assert files["GITHUB_PATH"].read_text() == ""
 
 
 class TestRunAqtWithRetries:

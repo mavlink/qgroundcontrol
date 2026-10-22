@@ -1,24 +1,14 @@
-#!/usr/bin/env python3
-"""Tests for tools/setup/build-gstreamer.py."""
+"""Tests for tools/setup/build_gstreamer.py."""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import tempfile
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-
-from ._helpers import load_script_module
-
-if TYPE_CHECKING:
-    from pathlib import Path
-
-_mod = load_script_module("setup/build-gstreamer.py", "build_gstreamer")
-
-BuildConfig = _mod.BuildConfig
-MesonBuilder = _mod.MesonBuilder
-detect_host_arch = _mod.detect_host_arch
-detect_jobs = _mod.detect_jobs
+from setup import build_gstreamer
+from setup.build_gstreamer import BuildConfig, MesonBuilder, detect_host_arch, detect_jobs
 
 
 def test_detect_jobs_with_override() -> None:
@@ -64,14 +54,13 @@ def test_build_config_custom_prefix(tmp_path: Path) -> None:
     assert cfg.prefix == custom
 
 
-def test_build_config_archive_name() -> None:
-    cfg = BuildConfig(platform="linux", arch="x86_64", version="1.24.0")
-    assert cfg.archive_name == "gstreamer-1.0-linux-x86_64-1.24.0"
-
-
-def test_build_config_archive_name_simulator() -> None:
-    cfg = BuildConfig(platform="ios", arch="arm64", version="1.24.0", simulator=True)
-    assert cfg.archive_name == "gstreamer-1.0-ios-arm64-1.24.0-simulator"
+@pytest.mark.parametrize("work_dir_args", [[], ["--work-dir", ""]])
+def test_main_without_work_dir_uses_system_temp(work_dir_args: list[str]) -> None:
+    argv = ["build_gstreamer.py", "--platform", "linux", "--version", "1.24.0", *work_dir_args]
+    with patch("sys.argv", argv), patch.object(build_gstreamer, "MesonBuilder") as builder:
+        assert build_gstreamer.main() == 0
+    builder.return_value.run.assert_called_once_with()
+    assert builder.call_args.args[0].work_dir == Path(tempfile.gettempdir())
 
 
 def test_get_meson_args_contains_prefix(tmp_path: Path) -> None:

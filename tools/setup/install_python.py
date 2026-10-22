@@ -8,12 +8,12 @@ import subprocess
 import sys
 from pathlib import Path
 
-_tools_dir = Path(__file__).resolve().parents[1]
-if str(_tools_dir) not in sys.path:
-    sys.path.insert(0, str(_tools_dir))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from common.gh_actions import append_github_path, is_ci
 from qgc_tools.python_env import (
     check_requirements,
+    executable,
     package_groups,
     requirements_for,
     sync_groups,
@@ -55,6 +55,8 @@ def main(argv: list[str] | None = None) -> int:
                 "Scripts/activate.bat" if sys.platform == "win32" else "bin/activate"
             )
             print(f"Python environment: {target}\nActivate with: {activate}")
+            if is_ci():
+                append_github_path(str(executable("python", target).parent))
         return 0
     except (OSError, ValueError, subprocess.CalledProcessError) as error:
         print(f"Python setup failed: {error}", file=sys.stderr)

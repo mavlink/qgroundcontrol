@@ -43,11 +43,11 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     app_args = args.args[1:] if args.args[:1] == ["--"] else args.args
     build = (
-        args.build_dir or REPO / ("build-sanitize" if args.mode == "sanitize" else "build")
+        args.build_dir or REPO / ("build/sanitize" if args.mode == "sanitize" else "build")
     ).resolve()
     try:
         if args.mode == "sanitize":
-            flags = "-fsanitize=address,undefined -fno-omit-frame-pointer"
+            # The QGC options instrument only QGC targets, as CI's Linux-sanitizers preset does.
             subprocess.run(
                 [
                     sys.executable,
@@ -58,9 +58,8 @@ def main(argv: list[str] | None = None) -> int:
                     str(REPO),
                     "--debug",
                     "--",
-                    f"-DCMAKE_C_FLAGS={flags}",
-                    f"-DCMAKE_CXX_FLAGS={flags}",
-                    "-DCMAKE_EXE_LINKER_FLAGS=-fsanitize=address,undefined",
+                    "-DQGC_ENABLE_ASAN=ON",
+                    "-DQGC_ENABLE_UBSAN=ON",
                 ],
                 check=True,
             )

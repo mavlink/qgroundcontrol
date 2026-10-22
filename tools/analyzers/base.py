@@ -1,9 +1,4 @@
-"""Base class and result shape for QGC code analyzers.
-
-Lives in ``common/`` so both ``analyze.py`` (the dispatcher) and individual
-analyzer modules under ``analyzers/`` can import it without a circular
-dependency.
-"""
+"""Base class and result shape for ``analyze.py`` analyzer backends."""
 
 from __future__ import annotations
 
@@ -12,7 +7,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, ClassVar
 
-from .logging import log_error, log_info
+from common.logging import log_error, log_info
 
 if TYPE_CHECKING:
     from pathlib import Path

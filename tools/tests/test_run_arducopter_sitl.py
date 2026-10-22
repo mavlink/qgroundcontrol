@@ -1,22 +1,15 @@
 """SITL readiness and container ownership without starting Docker."""
 
-import importlib.util
 import json
 import subprocess
-from pathlib import Path
 
 import pytest
+from simulation import run_arducopter_sitl
 
 
 @pytest.fixture
 def sitl():
-    spec = importlib.util.spec_from_file_location(
-        "sitl", Path(__file__).parents[1] / "simulation/run_arducopter_sitl.py"
-    )
-    assert spec and spec.loader
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+    return run_arducopter_sitl
 
 
 def test_existing_unowned_container_is_untouched(sitl, monkeypatch):

@@ -7,9 +7,9 @@ Builds GStreamer with plugins needed for QGC video streaming across all platform
 - Android, iOS: Cerbero-based builds
 
 Usage:
-    ./build-gstreamer.py --platform linux [OPTIONS]
-    ./build-gstreamer.py --platform macos --arch universal [OPTIONS]
-    ./build-gstreamer.py --platform android --arch arm64 [OPTIONS]
+    ./build_gstreamer.py --platform linux [OPTIONS]
+    ./build_gstreamer.py --platform macos --arch universal [OPTIONS]
+    ./build_gstreamer.py --platform android --arch arm64 [OPTIONS]
 
 Options:
     --platform PLATFORM   Target platform (linux, macos, windows, android, ios)
@@ -17,7 +17,7 @@ Options:
     --version VERSION     GStreamer version (default: the platform's in build-config.json)
     --type TYPE           Build type: release or debug (default: release)
     --prefix DIR          Install prefix
-    --work-dir DIR        Working directory for source
+    --work-dir DIR        Working directory for source (default: system temp)
     --qt-prefix DIR       Qt installation path (added to PKG_CONFIG_PATH)
     --jobs N              Parallel jobs (default: auto)
     --clean               Clean build directory before building
@@ -38,16 +38,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import ClassVar
 
-_tools_dir = Path(__file__).resolve().parents[1]
-if str(_tools_dir) not in sys.path:
-    sys.path.insert(0, str(_tools_dir))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from _bootstrap import ensure_tools_dir
-
-ensure_tools_dir(__file__)
-
+import _bootstrap as _bootstrap
 from common.build_config import get_gstreamer_version
-from common.gh_actions import write_github_output
 from common.logging import log_error, log_info, log_ok, log_warn
 from qgc_tools.python_env import executable, sync_groups
 
@@ -196,13 +190,6 @@ class BuildConfig:
             self.prefix = self.work_dir / f"gst-{self.platform}-{self.arch}"
         self.source_dir = self.work_dir / "gstreamer"
         self.build_dir = self.source_dir / "builddir"
-
-    @property
-    def archive_name(self) -> str:
-        name = f"gstreamer-1.0-{self.platform}-{self.arch}-{self.version}"
-        if self.simulator:
-            name += "-simulator"
-        return name
 
 
 # ============================================================================
@@ -425,16 +412,6 @@ class MesonBuilder:
 
         log_ok(f"GStreamer {self.config.version} installed to {self.config.prefix}")
 
-        # Output for CI
-        write_github_output(
-            {
-                "gstreamer_prefix": str(self.config.prefix),
-                "gstreamer_version": self.config.version,
-                "gstreamer_arch": self.config.arch,
-                "archive_name": self.config.archive_name,
-            }
-        )
-
 
 # ============================================================================
 # Cerbero Builder (Android, iOS)
@@ -570,16 +547,6 @@ class CerberoBuilder:
 
         log_ok(f"GStreamer {self.config.version} built for {self.config.platform}")
 
-        # Output for CI
-        write_github_output(
-            {
-                "gstreamer_prefix": str(self.config.prefix),
-                "gstreamer_version": self.config.version,
-                "gstreamer_arch": self.config.arch,
-                "archive_name": self.config.archive_name,
-            }
-        )
-
 
 # ============================================================================
 # Main Entry Point
@@ -619,10 +586,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--prefix", default="", help="Install prefix")
     parser.add_argument(
-        "--work-dir",
-        "-w",
-        default=tempfile.gettempdir(),
-        help="Working directory (default: system temp)",
+        "--work-dir", "-w", default="", help="Working directory (default: system temp)"
     )
     parser.add_argument("--qt-prefix", "-q", default="", help="Qt installation path")
     parser.add_argument("--jobs", "-j", type=int, default=0, help="Parallel jobs (default: auto)")
@@ -686,7 +650,7 @@ def main() -> int:
         return 1
     arch = args.arch or get_default_arch(args.platform)
     prefix = Path(args.prefix) if args.prefix else None
-    work_dir = Path(args.work_dir)
+    work_dir = Path(args.work_dir or tempfile.gettempdir())
     qt_prefix = Path(args.qt_prefix) if args.qt_prefix else None
     jobs = args.jobs if args.jobs > 0 else None
 

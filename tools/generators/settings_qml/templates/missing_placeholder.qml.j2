@@ -1,6 +1,6 @@
         QGCLabel {
             Layout.fillWidth: true
-            text: qsTr("TODO: {{ description }}")
+            text: qsTr({{ ("TODO: " ~ description)|qml_string }})
             font.italic: true
             opacity: 0.6
         }

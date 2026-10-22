@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Tests for tools/translations/qgc_lupdate_json.py."""
 
 from __future__ import annotations
@@ -7,12 +6,10 @@ from typing import TYPE_CHECKING, Any
 
 import pytest
 
-from ._helpers import load_script_module
+from translations import qgc_lupdate_json as mod
 
 if TYPE_CHECKING:
     from pathlib import Path
-
-mod = load_script_module("translations/qgc_lupdate_json.py", "qgc_lupdate_json")
 
 
 def test_add_loc_keys_injects_factmetadata_defaults() -> None:

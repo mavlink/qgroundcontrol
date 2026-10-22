@@ -1,7 +1,6 @@
 """Open a file or URL in the user's default app.
 
-Wraps the ``xdg-open`` (Linux) / ``open`` (macOS) / ``start`` (Windows)
-dispatch that was duplicated in ``coverage.py`` and ``generate_docs.py``.
+Wraps the ``xdg-open`` (Linux) / ``open`` (macOS) / ``start`` (Windows) dispatch.
 """
 
 from __future__ import annotations

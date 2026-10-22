@@ -11,16 +11,14 @@ Examples:
 from __future__ import annotations
 
 import argparse
+import os
 import shutil
 import subprocess
 import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from _bootstrap import ensure_tools_dir
-
-ensure_tools_dir(__file__)
-
+import _bootstrap as _bootstrap
 from common.file_traversal import find_repo_root
 from common.io import chdir
 from common.logging import log_info, log_ok, log_warn
@@ -36,6 +34,9 @@ CACHE_TARGETS: tuple[tuple[str, str], ...] = (
     (".ccache", "ccache directory"),
     (".clangd", "clangd index"),
 )
+
+# Never descend into VCS metadata, installed packages, or virtual environments (pyvenv.cfg).
+BYTECODE_SKIPPED_DIRS = frozenset({".git", "node_modules"})
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -97,11 +98,27 @@ def clean_cache(root: Path, *, dry_run: bool) -> None:
             run_captured(["ccache", "--zero-stats"])
 
 
+def find_bytecode(root: Path) -> list[Path]:
+    """Return ``__pycache__`` directories and stray ``.pyc`` files owned by the checkout."""
+    found: list[Path] = []
+    for directory, dirnames, filenames in os.walk(root):
+        current = Path(directory)
+        descend: list[str] = []
+        for name in dirnames:
+            path = current / name
+            if name == "__pycache__":
+                found.append(path)
+            elif name not in BYTECODE_SKIPPED_DIRS and not (path / "pyvenv.cfg").is_file():
+                descend.append(name)
+        dirnames[:] = descend
+        found.extend(current / name for name in filenames if name.endswith(".pyc"))
+    return sorted(found)
+
+
 def clean_generated(root: Path, *, dry_run: bool) -> None:
-    for cache_dir in sorted(root.rglob("__pycache__")):
-        remove_path(cache_dir, f"Python cache: {cache_dir.relative_to(root)}", dry_run=dry_run)
-    for pyc in sorted(root.rglob("*.pyc")):
-        remove_path(pyc, f"Python bytecode: {pyc.relative_to(root)}", dry_run=dry_run)
+    for path in find_bytecode(root):
+        kind = "Python cache" if path.name == "__pycache__" else "Python bytecode"
+        remove_path(path, f"{kind}: {path.relative_to(root)}", dry_run=dry_run)
 
 
 def report_disk_usage(root: Path) -> None:

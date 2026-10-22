@@ -14,6 +14,8 @@ from setup.install_python import main
 if TYPE_CHECKING:
     from pathlib import Path
 
+pytestmark = pytest.mark.windows
+
 
 def test_requirements_honor_markers_and_versions() -> None:
     assert python_env.check_requirements(["absent-package; python_version < '2'"]) == 0
@@ -40,19 +42,6 @@ def test_missing_uv_never_falls_back_to_system_install() -> None:
         pytest.raises(FileNotFoundError, match="uv is required"),
     ):
         python_env.sync_groups("scripts")
-
-
-def test_explicit_override_is_isolated() -> None:
-    with patch("qgc_tools.python_env.require_uv", return_value="uv"):
-        assert python_env.tool_command("aqt", "qt", source="aqtinstall==3.3.0") == [
-            "uv",
-            "tool",
-            "run",
-            "--isolated",
-            "--from",
-            "aqtinstall==3.3.0",
-            "aqt",
-        ]
 
 
 def test_tool_uses_resolved_environment_not_path(tmp_path: Path) -> None:
@@ -108,6 +97,22 @@ def test_fresh_environment_and_repeated_setup_preserve_tools(tmp_path: Path) -> 
     assert result.returncode == 0
 
 
+@pytest.mark.parametrize("github_actions", ["true", ""])
+def test_ci_setup_adds_environment_commands_to_path(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, github_actions: str
+) -> None:
+    github_path = tmp_path / "github_path.txt"
+    github_path.write_text("")
+    monkeypatch.setenv("GITHUB_PATH", str(github_path))
+    monkeypatch.delenv("CI", raising=False)
+    monkeypatch.setenv("GITHUB_ACTIONS", github_actions)
+    environment = tmp_path / "venv"
+    with patch("setup.install_python.sync_groups", return_value=environment):
+        assert main(["scripts"]) == 0
+    commands = python_env.executable("python", environment).parent
+    assert github_path.read_text() == (f"{commands}\n" if github_actions else "")
+
+
 def test_check_does_not_mutate_environment() -> None:
     with patch("setup.install_python.sync_groups") as sync:
         assert main(["scripts", "--check"]) == 0
@@ -125,7 +130,6 @@ def test_system_setup_queries_do_not_install_site_packages(tmp_path: Path, flag:
     }
     command = [
         sys.executable,
-        "-S",
         str(python_env.project_path() / "setup/install_dependencies"),
         flag,
         "--platform",

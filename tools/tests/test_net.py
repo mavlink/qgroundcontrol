@@ -11,6 +11,8 @@ from urllib.error import URLError
 import pytest
 from common.net import download_file, read_url_text
 
+pytestmark = pytest.mark.windows
+
 
 def _response(content: bytes, *, content_length: int | None = None) -> MagicMock:
     response = MagicMock()

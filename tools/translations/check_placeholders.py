@@ -15,13 +15,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from _bootstrap import ensure_tools_dir
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-ensure_tools_dir(__file__)
-
-from common.git import run_git  # noqa: E402
-from common.proc import run_bytes  # noqa: E402
-from common.xml import XMLParseError, xml_parse  # noqa: E402
+import _bootstrap as _bootstrap
+from common.git import run_git
+from common.proc import output_text, run_bytes
+from common.xml import XMLParseError, xml_parse
 
 if TYPE_CHECKING:
     from xml.etree.ElementTree import Element
@@ -292,10 +291,8 @@ def main(argv: list[str] | None = None) -> int:
         repo = Path(run_git("rev-parse", "--show-toplevel", check=True).stdout.strip()).resolve()
         errors, files, messages = validate(repo, args.base_ref, args.files)
     except subprocess.CalledProcessError as error:
-        stderr = error.stderr
-        if isinstance(stderr, bytes):
-            stderr = stderr.decode("utf-8", errors="replace")
-        print(f"Translation validation failed: {error}: {(stderr or '').strip()}", file=sys.stderr)
+        stderr = output_text(error.stderr).strip()
+        print(f"Translation validation failed: {error}: {stderr}", file=sys.stderr)
         return 1
     except (OSError, UnicodeError, XMLParseError, ValueError) as error:
         print(f"Translation validation failed: {error}", file=sys.stderr)

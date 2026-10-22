@@ -178,6 +178,9 @@ globe and run in a process pool. Per job ([`generate.py`](generate.py)):
    - Cells sharing a resolution are merged by exact pixel copy (same lattice), which keeps
      bilinear interpolation continuous across 1° cell edges instead of clamping at each file's
      edge.
+   - Each cell is pasted from a whole-pixel window read; a cell off its group's lattice fails the
+     job. `rasterio.merge` computed windows a hair off whole pixels, so GDAL resampled every read
+     (about 45 s of a real Alps job, now about 0.2 s).
    - Different lattices are never merged directly: rasterio rounds coarser source windows to
      whole pixels, shifting that data by up to a pixel (~23 m at 60°N).
    - A group's missing nodes (the neighboring band or GLO-90 cell) are resampled from the other
@@ -478,6 +481,8 @@ field exactly, so every generated pixel must equal the analytic ramp at its cent
 mosaic, lattice alignment, warp and Mercator math together, with no network. Cases:
 
 - Same-resolution cells: exact across 1° borders.
+- Same-resolution merge: reads only whole-pixel windows and matches `rasterio.merge` bit for bit
+  on bounds where its windows are fractional; a cell off the lattice is rejected.
 - Cells in two longitude bands: exact across the band boundary, and a job's heights do not
   change when the cells it buffers include another lattice (checked on a nonlinear field, which
   a ramp cannot do).

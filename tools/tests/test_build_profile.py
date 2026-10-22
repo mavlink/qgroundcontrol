@@ -1,11 +1,13 @@
-"""Tests for tools/build_profile.py."""
+"""Tests for qgc_tools/build_profile.py and the tools/build_profile.py CLI."""
 
 from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from build_profile import (
+import build_profile as build_profile_cli
+from qgc_tools.build_profile import (
     BuildEdge,
     TimeTrace,
     build_report,
@@ -16,6 +18,9 @@ from build_profile import (
     summarize_ninja_log,
     write_snapshot,
 )
+
+if TYPE_CHECKING:
+    import pytest
 
 
 def test_parse_ninja_log_reads_edges_and_skips_header(tmp_path: Path) -> None:
@@ -183,3 +188,17 @@ def test_snapshot_handles_ninja_log_compaction(tmp_path):
     report = json.loads((tmp_path / "profile/report.json").read_text())
     assert report["edge_count"] == 1
     assert report["slowest_edges"][0]["output"] == "new.o"
+
+
+def test_cli_reports_json_and_skips_snapshot_without_ninja_log(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    (tmp_path / ".ninja_log").write_text("# ninja log v5\n0\t40\t0\ta.o\th\n", encoding="utf-8")
+    assert build_profile_cli.main(["-B", str(tmp_path), "--json"]) == 0
+    assert json.loads(capsys.readouterr().out)["edge_count"] == 1
+
+    empty = tmp_path / "empty"
+    empty.mkdir()
+    assert build_profile_cli.main(["-B", str(empty), "--output-dir", str(tmp_path / "out")]) == 0
+    assert "No Ninja log" in capsys.readouterr().out
+    assert not (tmp_path / "out").exists()

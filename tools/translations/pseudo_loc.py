@@ -3,7 +3,7 @@
 Generate pseudo-localized Qt .ts files for UI layout/translation testing.
 
 Usage:
-    python3 tools/pseudo_loc.py
+    python3 tools/translations/pseudo_loc.py
 
 Reads translations/qgc.ts and translations/qgc-json.ts, writes
 translations/qgc_source_eo.ts and translations/qgc_json_eo.ts
@@ -22,11 +22,10 @@ import sys
 import xml.etree.ElementTree as ET  # for Element/SubElement/indent/tostring construction
 from pathlib import Path
 
-from _bootstrap import ensure_tools_dir
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-ensure_tools_dir(__file__)
-
-from common.xml import xml_parse  # noqa: E402
+import _bootstrap as _bootstrap
+from common.xml import xml_parse
 
 # ---------------------------------------------------------------------------
 # Character substitution table
@@ -173,7 +172,7 @@ def process_ts(src_path: Path, dst_path: Path, language: str) -> int:
 
 
 def main() -> None:
-    repo = Path(__file__).parent.parent
+    repo = Path(__file__).resolve().parents[2]
     translations = repo / "translations"
 
     pairs = [

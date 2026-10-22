@@ -8,13 +8,14 @@ Usage:
     ./tools/analyze.py src/Vehicle/       # Analyze specific directory
     ./tools/analyze.py --tool clang-tidy  # Use specific tool
     ./tools/analyze.py --tool clang-format --fix  # Apply formatting
+    ./tools/analyze.py --tool clang-tidy --fix    # Apply clang-tidy fixes (local only)
 
 Tools:
-    clang-format - Code formatting (use --fix to apply changes)
-    clang-tidy   - Clang static analyzer (requires compile_commands.json)
-    cppcheck     - Cppcheck static analyzer
+    clang-format - Changed-line formatting; whole files with --all or paths (--fix applies)
+    clang-tidy   - Clang static analyzer (requires compile_commands.json; --fix applies)
     clazy        - Qt-specific static analyzer (requires compile_commands.json)
     qmllint      - QML file linter
+    qmlformat    - Report QML files that qmlformat would change (check only)
 """
 
 from __future__ import annotations
@@ -26,11 +27,12 @@ from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar
 
 from common.file_traversal import find_repo_root
+from common.gh_actions import is_ci
 from common.git import get_default_branch_ref, run_git
 from common.logging import log_error, log_ok, log_warn
 
 if TYPE_CHECKING:
-    from common.analyzer import AnalyzerBase
+    from analyzers.base import AnalyzerBase
 
 
 class FileCollector:
@@ -41,6 +43,8 @@ class FileCollector:
 
     def __init__(self, repo_root: Path) -> None:
         self.repo_root = repo_root
+        # Merge base of the changed-file selection; None when whole files were selected.
+        self.diff_base: str | None = None
 
     def get_compare_ref(self) -> str | None:
         """Get the best available ref to compare against."""
@@ -96,23 +100,24 @@ class FileCollector:
         return sorted(files)
 
     def _get_changed_files(self, extensions: tuple[str, ...], compare_ref: str) -> list[Path]:
-        """Get files changed compared to an available upstream ref."""
+        """Get committed, uncommitted, and untracked files changed since the merge base."""
         patterns = [f"*{ext}" for ext in extensions]
-        result = run_git(
-            "diff", "--name-only", f"{compare_ref}...", "--", *patterns, cwd=self.repo_root
-        )
+        merge_base = run_git("merge-base", compare_ref, "HEAD", cwd=self.repo_root)
+        if merge_base.returncode != 0:
+            raise RuntimeError(f"Unable to determine changed files: {merge_base.stderr}")
+        self.diff_base = merge_base.stdout.strip()
 
-        if result.returncode != 0:
-            raise RuntimeError(f"Unable to determine changed files: {result.stderr}")
+        names: set[str] = set()
+        for git_args in (
+            ("diff", "--name-only", self.diff_base),
+            ("ls-files", "--others", "--exclude-standard"),
+        ):
+            result = run_git(*git_args, "--", *patterns, cwd=self.repo_root)
+            if result.returncode != 0:
+                raise RuntimeError(f"Unable to determine changed files: {result.stderr}")
+            names.update(line for line in result.stdout.splitlines() if line)
 
-        files: list[Path] = []
-        for line in result.stdout.strip().splitlines():
-            if not line:
-                continue
-            full_path = self.repo_root / line
-            if full_path.is_file():
-                files.append(full_path)
-        return sorted(files)
+        return sorted(full_path for name in names if (full_path := self.repo_root / name).is_file())
 
 
 def validate_path(path_str: str, repo_root: Path) -> Path:
@@ -160,14 +165,14 @@ def get_analyzer(
             from analyzers.clang_format import ClangFormatAnalyzer
 
             return ClangFormatAnalyzer(repo_root, build_dir)
-        case "cppcheck":
-            from analyzers.cppcheck import CppcheckAnalyzer
-
-            return CppcheckAnalyzer(repo_root, build_dir)
         case "qmllint":
             from analyzers.qmllint import QmlLintAnalyzer
 
             return QmlLintAnalyzer(repo_root, build_dir)
+        case "qmlformat":
+            from analyzers.qmlformat import QmlFormatAnalyzer
+
+            return QmlFormatAnalyzer(repo_root, build_dir)
         case "vehicle-null-check":
             from analyzers.vehicle_null_check import VehicleNullCheckAnalyzer
 
@@ -177,7 +182,10 @@ def get_analyzer(
 
             return QtTranslateNoopAnalyzer(repo_root, build_dir)
         case _:
-            available = "clang-format, clang-tidy, cppcheck, clazy, qmllint, vehicle-null-check, qt-translate-noop-check"
+            available = (
+                "clang-format, clang-tidy, clazy, qmllint, qmlformat, vehicle-null-check, "
+                "qt-translate-noop-check"
+            )
             raise ValueError(f"Unknown tool: {tool}. Available tools: {available}")
 
 
@@ -188,12 +196,12 @@ def parse_args() -> argparse.Namespace:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Tools:
-  clang-format  Code formatting (use --fix to apply changes)
-  clang-tidy    Clang static analyzer (requires compile_commands.json)
-  cppcheck      Cppcheck static analyzer
+  clang-format  Changed-line formatting; whole files with --all or paths (--fix applies)
+  clang-tidy    Clang static analyzer (requires compile_commands.json; --fix applies, local only)
   clazy         Qt-specific static analyzer (requires compile_commands.json)
   qmllint       QML file linter
-  vehicle-null-check       Detect unsafe activeVehicle()/getParameter() patterns
+  qmlformat     Report QML files that qmlformat would change (check only)
+  vehicle-null-check       Detect unsafe activeVehicle() patterns
   qt-translate-noop-check  Detect always-wrong runtime use of QT_TRANSLATE_NOOP
 
 Examples:
@@ -202,6 +210,7 @@ Examples:
   %(prog)s src/Vehicle/              Analyze specific directory
   %(prog)s --tool clang-tidy         Use specific tool
   %(prog)s --tool clang-format --fix Apply formatting
+  %(prog)s --tool clang-tidy --fix   Apply clang-tidy fixes (never in CI)
 """,
     )
 
@@ -213,17 +222,19 @@ Examples:
     parser.add_argument(
         "-t",
         "--tool",
-        default="clang-tidy",
+        dest="tools",
+        action="append",
         choices=[
             "clang-format",
             "clang-tidy",
-            "cppcheck",
             "clazy",
             "qmllint",
+            "qmlformat",
             "vehicle-null-check",
             "qt-translate-noop-check",
         ],
-        help="Analysis tool to use (default: clang-tidy)",
+        help="Analysis tool to use (default: clang-tidy); repeat to run clang-tidy and clazy "
+        "over one selection and dependency scan",
     )
     parser.add_argument(
         "-a",
@@ -235,7 +246,8 @@ Examples:
         "-f",
         "--fix",
         action="store_true",
-        help="Apply fixes (only for clang-format)",
+        help="Apply fixes: clang-format formats; clang-tidy applies its exported fixes with "
+        "clang-apply-replacements, bypassing --cache-dir (local only, refused in CI)",
     )
     parser.add_argument(
         "-b",
@@ -263,9 +275,10 @@ Examples:
         help="Record clang-tidy per-check profiles (adds significant runtime overhead)",
     )
     parser.add_argument(
-        "--no-color",
-        action="store_true",
-        help="Disable colored output",
+        "--cache-dir",
+        type=Path,
+        help="Replay clang-tidy/clazy results whose tool, configuration, compile command and "
+        "preprocessed inputs are unchanged, storing new completed results here",
     )
 
     parser.add_argument(
@@ -278,38 +291,30 @@ Examples:
         help="Report warnings without failing; errors still fail",
     )
 
-    parser.add_argument(
-        "--check-deps",
-        action="store_true",
-        help="Check that required external tools are available, then exit",
-    )
-
     args = parser.parse_args()
+    args.tools = list(dict.fromkeys(args.tools or ["clang-tidy"]))
+    args.tool = args.tools[0]
+    compiler_tools = set(args.tools) <= {"clang-tidy", "clazy"}
+    if len(args.tools) > 1 and not compiler_tools:
+        parser.error("Only clang-tidy and clazy can run together")
     if not 1 <= args.shard <= args.shard_count:
         parser.error("--shard must be between 1 and --shard-count")
-    if args.shard_count > 1 and args.tool not in {"clang-tidy", "clazy"}:
+    if args.shard_count > 1 and not compiler_tools:
         parser.error("Sharding requires --tool clang-tidy or clazy")
-    if args.profile_checks and args.tool != "clang-tidy":
+    if args.profile_checks and "clang-tidy" not in args.tools:
         parser.error("--profile-checks requires --tool clang-tidy")
+    if args.cache_dir is not None and not compiler_tools:
+        parser.error("--cache-dir requires --tool clang-tidy or clazy")
+    if args.fix and not set(args.tools) <= {"clang-format", "clang-tidy"}:
+        parser.error("--fix requires --tool clang-format or clang-tidy")
+    if args.fix and "clang-tidy" in args.tools and is_ci():
+        parser.error("clang-tidy --fix rewrites sources and runs only locally, never in CI")
     return args
 
 
 def main() -> int:
     """Main entry point."""
     args = parse_args()
-
-    if args.check_deps:
-        from common.deps import check_and_report
-
-        tool_map = {
-            "clang-format": ["clang-format"],
-            "clang-tidy": ["clang-tidy"],
-            "cppcheck": ["cppcheck"],
-            "clazy": ["clazy-standalone"],
-            "qmllint": ["qmllint"],
-        }
-        check_and_report(tool_map.get(args.tool, [args.tool]))
-        return 0
 
     try:
         repo_root = find_repo_root()
@@ -327,23 +332,35 @@ def main() -> int:
 
     try:
         jobs = args.jobs if args.jobs > 0 else os.cpu_count() or 1
-        analyzer = get_analyzer(
-            args.tool,
-            repo_root,
-            build_dir,
-            jobs=jobs,
-            shard=args.shard,
-            shard_count=args.shard_count,
-        )
+        analyzers = [
+            get_analyzer(
+                tool,
+                repo_root,
+                build_dir,
+                jobs=jobs,
+                shard=args.shard,
+                shard_count=args.shard_count,
+            )
+            for tool in args.tools
+        ]
     except ValueError as e:
         log_error(str(e))
         return 1
+    analyzer = analyzers[0]
 
-    if args.profile_checks:
+    if args.tools[0] in {"clang-tidy", "clazy"}:
         from analyzers.clang_tidy import ClangTidyAnalyzer
+        from analyzers.compiler import CompilerAnalyzer
+        from analyzers.result_cache import ResultCache
 
-        if isinstance(analyzer, ClangTidyAnalyzer):
-            analyzer.profile_checks = True
+        dependencies: dict[Path, frozenset[Path]] = {}
+        cache = ResultCache(repo_root / args.cache_dir) if args.cache_dir else None
+        for compiler in analyzers:
+            if isinstance(compiler, CompilerAnalyzer):
+                compiler.dependencies = dependencies
+                compiler.result_cache = cache
+            if args.profile_checks and isinstance(compiler, ClangTidyAnalyzer):
+                compiler.profile_checks = True
 
     if args.qml_build:
         from analyzers.qmllint import QmlLintAnalyzer
@@ -355,7 +372,8 @@ def main() -> int:
 
     collector = FileCollector(repo_root)
 
-    collect = collector.get_qml_files if args.tool == "qmllint" else collector.get_cpp_files
+    qml_tool = args.tool in {"qmllint", "qmlformat"}
+    collect = collector.get_qml_files if qml_tool else collector.get_cpp_files
     try:
         files = (
             sorted({file for target in targets for file in collect(target)})
@@ -366,16 +384,23 @@ def main() -> int:
         log_error(str(e))
         return 2
 
-    result = analyzer.run(files, fix=args.fix)
+    if args.tool == "clang-format":
+        from analyzers.clang_format import ClangFormatAnalyzer
 
-    print(f"{result.tool}: {result.status} ({result.files_checked} files)")
-    if result.execution_error or result.error_findings:
-        return 2
-    if result.passed or args.advisory:
+        if isinstance(analyzer, ClangFormatAnalyzer):
+            analyzer.diff_base = collector.diff_base
+
+    status = 0
+    for selected in analyzers:
+        result = selected.run(files, fix=args.fix)
+        print(f"{result.tool}: {result.status} ({result.files_checked} files)")
+        if result.execution_error or result.error_findings:
+            status = 2
+        elif not (result.passed or args.advisory):
+            status = max(status, 1)
+    if status == 0:
         log_ok("Analysis complete")
-        return 0
-    else:
-        return 1
+    return status
 
 
 if __name__ == "__main__":

@@ -26,22 +26,17 @@ import sys
 from pathlib import Path
 from typing import Any
 
-_tools_dir = Path(__file__).resolve().parents[1]
-if str(_tools_dir) not in sys.path:
-    sys.path.insert(0, str(_tools_dir))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from _bootstrap import ensure_tools_dir  # noqa: E402
-
-ensure_tools_dir(__file__)
-
-from common.build_config import (  # noqa: E402
+import _bootstrap as _bootstrap
+from common.build_config import (
     export_build_config_values,
     find_build_config,
     github_output_values,
     load_build_config,
     lookup_dotted,
 )
-from common.gh_actions import append_github_env, write_github_output  # noqa: E402
+from common.gh_actions import append_github_env, write_github_output
 
 
 def find_config_file() -> Path:

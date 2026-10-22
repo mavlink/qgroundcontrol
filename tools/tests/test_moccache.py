@@ -22,6 +22,8 @@ from pathlib import Path
 import moccache
 import pytest
 
+pytestmark = pytest.mark.windows
+
 # Realistic epoch base so build-start plausibility checks behave as in production.
 _T0 = 1_700_000_000.0
 
@@ -290,6 +292,61 @@ class TestBasicCaching:
         runs_after_miss = harness.moc_runs()
         harness.run(tree, out=tree.out_path("b.cpp"))
         assert harness.moc_runs() == runs_after_miss
+
+    def test_hit_skips_spawn_and_copy_imports(self, harness: Harness) -> None:
+        tree = harness.make_tree("build")
+        harness.run(tree, out=tree.out_path("a.cpp"))
+        out = tree.out_path("b.cpp")
+        argv = ["--real-moc", str(harness.fake_moc), "--include", str(tree.predefs)]
+        argv += ["-I" + str(harness.src), str(harness.input), "-o", str(out)]
+        # Baseline after moccache's own top-level stdlib imports, so a Python whose
+        # pathlib or hashlib pulls in shutil does not fail this test
+        probe = (
+            "import sys\n"
+            "import contextlib, functools, hashlib, os, re, stat, time, pathlib\n"
+            "before = set(sys.modules)\n"
+            "import moccache\n"
+            "sys.argv = ['moccache.py', *sys.argv[1:]]\n"
+            "rc = moccache.main()\n"
+            "new = set(sys.modules) - before\n"
+            "print(rc, sorted(new & {'shutil', 'subprocess', 'tempfile'}))\n"
+        )
+        result = subprocess.run(
+            [sys.executable, "-c", probe, *argv],
+            env={
+                **os.environ,
+                "PYTHONPATH": str(Path(moccache.__file__).parent),
+                "MOCCACHE_BASEDIR": str(tree.build),
+            },
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        assert result.stdout.split() == ["0", "[]"]
+        assert harness.stats() == ["miss", "hit"]
+
+    def test_launcher_stub_runs_main(self, harness: Harness) -> None:
+        tree = harness.make_tree("build")
+        out = tree.out_path("a.cpp")
+        stub = Path(moccache.__file__).with_name("moccache_launcher.py")
+        rc = subprocess.run(
+            [
+                sys.executable,
+                str(stub),
+                "--real-moc",
+                str(harness.fake_moc),
+                "--include",
+                str(tree.predefs),
+                str(harness.input),
+                "-o",
+                str(out),
+            ],
+            env={**os.environ, "MOCCACHE_BASEDIR": str(tree.build)},
+            check=False,
+        ).returncode
+        assert rc == 0
+        assert out.is_file()
+        assert harness.stats() == ["miss"]
 
     def test_stats_log_records_input(self, harness: Harness) -> None:
         tree = harness.make_tree("build")
@@ -1031,6 +1088,25 @@ class TestDepFileWriting:
         assert moccache._parse_dep_file(dep.read_text()) == deps
 
 
+class TestAtomicWrite:
+    def test_replaces_with_utf8_lf_and_leaves_no_temp(self, tmp_path: Path) -> None:
+        dst = tmp_path / "sub" / "manifest"
+        moccache._atomic_write(dst, "old\n")
+        moccache._atomic_write(dst, "caf\u00e9\n")
+        assert dst.read_bytes() == "caf\u00e9\n".encode()
+        assert [p.name for p in dst.parent.iterdir()] == ["manifest"]
+
+    def test_existing_temp_name_fails_without_touching_destination(self, tmp_path: Path) -> None:
+        dst = tmp_path / "manifest"
+        dst.write_text("keep\n")
+        stale = tmp_path / f".moccache-{os.getpid()}-manifest"
+        stale.write_text("other writer\n")
+        with pytest.raises(FileExistsError):
+            moccache._atomic_write(dst, "new\n")
+        assert dst.read_text() == "keep\n"
+        assert stale.read_text() == "other writer\n"
+
+
 # ---------------------------------------------------------------------------
 # Trimming / eviction
 # ---------------------------------------------------------------------------
@@ -1100,7 +1176,7 @@ class TestTrim:
         # on-disk total reaches the target.
         real_rmtree = shutil.rmtree
         monkeypatch.setattr(
-            moccache.shutil,
+            shutil,
             "rmtree",
             lambda p, **kw: None if p == old else real_rmtree(p, **kw),
         )
@@ -1279,14 +1355,14 @@ class TestMissReasons:
         tree = harness.make_tree("build")
         harness.run(tree)
         (cached_out,) = harness.cache.glob("??/*/output.cpp")
-        real_copyfile = shutil.copyfile
+        real_read_bytes = Path.read_bytes
 
-        def failing_copyfile(src: object, dst: object, *args: object, **kwargs: object) -> object:
-            if Path(str(src)) == cached_out:
+        def failing_read_bytes(path: Path) -> bytes:
+            if path == cached_out:
                 raise OSError("cached output unreadable")
-            return real_copyfile(src, dst, *args, **kwargs)  # type: ignore[arg-type]
+            return real_read_bytes(path)
 
-        harness.monkeypatch.setattr(moccache.shutil, "copyfile", failing_copyfile)
+        harness.monkeypatch.setattr(Path, "read_bytes", failing_read_bytes)
         assert harness.run(tree, out=tree.out_path("b.cpp")) == 0
         kind, detail = harness.stats_detailed()[-1]
         assert kind == "miss-cache-unreadable"

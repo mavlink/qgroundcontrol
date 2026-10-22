@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Tests for vehicle_null_check.py analyzer."""
 
 from __future__ import annotations
@@ -9,6 +8,7 @@ import sys
 from pathlib import Path
 
 import pytest
+from analyzers.vehicle_null_check import analyze_file
 
 from ._helpers import TOOLS_DIR
 
@@ -38,8 +38,13 @@ def test_detects_unsafe_variable_use(sample_violations: list[dict]) -> None:
     assert [v for v in sample_violations if v["pattern"] == "unsafe_active_vehicle_use"]
 
 
-def test_detects_unsafe_get_parameter(sample_violations: list[dict]) -> None:
-    assert [v for v in sample_violations if v["pattern"] == "unsafe_get_parameter"]
+def test_fixture_reports_exactly_the_unsafe_samples(sample_violations: list[dict]) -> None:
+    assert [(v["line"], v["pattern"]) for v in sample_violations] == [
+        (11, "unsafe_active_vehicle_direct"),
+        (18, "unsafe_active_vehicle_use"),
+        (29, "unsafe_active_vehicle_use"),
+        (96, "unsafe_active_vehicle_direct"),  # string literals are not parsed
+    ]
 
 
 def test_ignores_safe_patterns(sample_violations: list[dict]) -> None:
@@ -94,3 +99,63 @@ def test_multiple_files(tmp_path: Path) -> None:
     result = run_analyzer(f1, f2, json_output=True)
     violations = json.loads(result.stdout)
     assert len({v["file"] for v in violations}) == 2
+
+
+def _use_violations(tmp_path: Path, body: str) -> list[tuple[int, str]]:
+    source = tmp_path / "sample.cc"
+    source.write_text(body)
+    return [(v.line, v.pattern) for v in analyze_file(source)]
+
+
+def test_unrelated_null_check_does_not_hide_unchecked_use(tmp_path: Path) -> None:
+    body = (
+        "void f(QObject *other) {\n"
+        "    if (!other) {\n"
+        "        return;\n"
+        "    }\n"
+        "    Vehicle *vehicle = MultiVehicleManager::instance()->activeVehicle();\n"
+        "    vehicle->arm();\n"
+        "}\n"
+    )
+    assert _use_violations(tmp_path, body) == [(6, "unsafe_active_vehicle_use")]
+
+
+def test_check_of_longer_name_is_not_a_guard(tmp_path: Path) -> None:
+    body = (
+        "void f() {\n"
+        "    if (vehicleCount) {\n"
+        "    }\n"
+        "    Vehicle *v = MultiVehicleManager::instance()->activeVehicle();\n"
+        "    v->arm();\n"
+        "}\n"
+    )
+    assert _use_violations(tmp_path, body) == [(5, "unsafe_active_vehicle_use")]
+
+
+@pytest.mark.parametrize(
+    "guard_and_use",
+    [
+        "    QString name = vehicle ? vehicle->name() : QString();\n",
+        "    const bool armed = vehicle && vehicle->armed();\n",
+        "    if (!vehicle || vehicle->armed()) {\n        return;\n    }\n",
+        "    QVERIFY(vehicle);\n    vehicle->arm();\n",
+        '    QVERIFY2(vehicle, "no vehicle");\n    vehicle->arm();\n',
+    ],
+)
+def test_guards_of_the_assigned_variable_are_accepted(tmp_path: Path, guard_and_use: str) -> None:
+    body = (
+        "void f() {\n"
+        "    Vehicle *vehicle = MultiVehicleManager::instance()->activeVehicle();\n"
+        f"{guard_and_use}"
+        "}\n"
+    )
+    assert _use_violations(tmp_path, body) == []
+
+
+def test_direct_get_parameter_use_is_not_reported(tmp_path: Path) -> None:
+    body = (
+        "void f(Vehicle *vehicle) {\n"
+        '    vehicle->parameterManager()->getParameter(-1, "P")->setRawValue(1);\n'
+        "}\n"
+    )
+    assert _use_violations(tmp_path, body) == []

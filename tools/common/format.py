@@ -1,11 +1,4 @@
-"""Human-readable formatters for byte counts and deltas.
-
-Replaces the three near-identical helpers that lived in
-``.github/scripts/collect_artifact_sizes.py``,
-``.github/scripts/generate_build_results_comment.py`` and ad-hoc
-``size / 1024 / 1024`` divisions in ``download_artifacts.py`` and
-``gstreamer_archive.py``.
-"""
+"""Human-readable formatters for byte counts and deltas."""
 
 from __future__ import annotations
 

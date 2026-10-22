@@ -68,4 +68,19 @@ def test_sanitizer_finds_configuration_binary(tmp_path, monkeypatch):
     assert module.main(["--sanitize", "-b", str(tmp_path), "--", "one argument"]) == 0
     assert calls[-1][0] == [str(binary), "one argument"]
     assert "ASAN_OPTIONS" in calls[-1][1]["env"]
-    assert "-DCMAKE_CXX_FLAGS=-fsanitize=address,undefined -fno-omit-frame-pointer" in calls[0][0]
+    configure = calls[0][0]
+    assert configure[-2:] == ["-DQGC_ENABLE_ASAN=ON", "-DQGC_ENABLE_UBSAN=ON"]
+    assert not any("-fsanitize" in argument for argument in configure)
+
+
+def test_sanitizer_default_build_dir_is_under_build(monkeypatch):
+    module = load()
+    calls = []
+
+    def run(command, **kwargs):
+        calls.append(command)
+        raise subprocess.CalledProcessError(1, command)
+
+    monkeypatch.setattr(module.subprocess, "run", run)
+    assert module.main(["--sanitize"]) != 0
+    assert calls[0][calls[0].index("-B") + 1] == str(module.REPO / "build" / "sanitize")
