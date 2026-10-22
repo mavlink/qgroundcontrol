@@ -151,7 +151,15 @@ add_qgc_test(MyExclusiveTest LABELS Integration SERIAL)
 
 # Test with specific resource lock
 add_qgc_test(MyTest LABELS Unit RESOURCE_LOCK TempFiles)
+
+# Long test class split across CTest entries MyUITest.1 .. MyUITest.3 that run in parallel
+add_qgc_test(MyUITest LABELS Integration SHARDS 3)
 ```
+
+`SHARDS <count>` gives each entry every count-th test function in declaration order
+(`--unittest-shard:<index>/<count>`), so new functions are picked up automatically. Data rows of
+one function stay in the same shard; a shard that selects no functions fails, so lower `SHARDS`
+when a class loses functions.
 
 ### CTest Labels & Timeouts
 
@@ -290,8 +298,10 @@ runners. CI Linux runners have four CPUs; to match CI locally, run `ctest --test
 ./QGroundControl --unittest:MyTest                     # Run one test suite
 ./QGroundControl --unittest                            # Run all tests
 ./QGroundControl --unittest --label=Unit               # Run by label filter (comma-sep)
-./QGroundControl --unittest:MyTest --unittest-output:results.xml  # JUnit XML
+./QGroundControl --unittest:MyTest --unittest-output:results.xml  # JUnit XML in results-MyTest.xml
 ./QGroundControl --unittest:MyTest --unittest-stress:50           # Stress: 50 iterations
+./QGroundControl --unittest:MyTest --unittest-shard:2/3           # Every 3rd test function, starting at the 2nd
+                                                                  # (results-MyTest.2.xml with --unittest-output)
 ```
 
 ### Convenience Targets

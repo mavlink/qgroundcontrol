@@ -190,6 +190,7 @@ parse:
       max_subgroups_hwrap: 4
       kwargs:
         TIMEOUT: '?'
+        SHARDS: '?'
         LABELS: +
         RESOURCE_LOCK: +
         SKIP_REGEX: +

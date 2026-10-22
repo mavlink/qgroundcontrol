@@ -32,6 +32,7 @@ qgc_add_cmake_contract_test(PythonVenvStaleCache python-venv-stale-cache)
 qgc_add_cmake_contract_test(QmlCodegenValid qml-codegen-valid)
 qgc_add_cmake_contract_test(QmlCodegenConfigureValid qml-codegen-configure-valid)
 qgc_add_cmake_contract_test(QGCTestTimeoutZero qgc-test-timeout-zero)
+qgc_add_cmake_contract_test(QGCTestShards qgc-test-shards)
 
 qgc_add_expected_failure_test(
     NAME CMake.CustomDirEscape
@@ -63,6 +64,7 @@ set(_qgc_expected_failure_cases
     "QGCTestConflictingSerialization|qgc-test-conflicting-serialization|SERIAL and RESOURCE_LOCK are mutually exclusive"
     "QGCTestMissingTimeout|qgc-test-missing-timeout|missing values for"
     "QGCTestUnsafeName|qgc-test-unsafe-name|test name contains unsafe characters"
+    "QGCTestInvalidShards|qgc-test-invalid-shards|SHARDS must be an integer greater than 1"
     "QGCTestInvalidParallelLevel|qgc-test-invalid-parallel-level|QGC_TEST_PARALLEL_LEVEL must be a positive integer"
     "CoverageInvalidThreshold|coverage-invalid-threshold|must be an integer from 0 through 100"
     "CoverageReleaseRequest|coverage-release-request|Code coverage requires a Debug build"

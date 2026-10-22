@@ -77,6 +77,10 @@ QGCApplication::QGCApplication(int& argc, char* argv[], const QGCCommandLinePars
         // Include test name or PID to prevent settings file conflicts when tests run in parallel
         if (!cli.unitTests.isEmpty()) {
             applicationName = QStringLiteral("%1_unittest_%2").arg(QGC_APP_NAME, cli.unitTests.first());
+            if (cli.unitTestShardIndex > 0) {
+                // Shards of one test also run in parallel
+                applicationName += QStringLiteral("_%1").arg(cli.unitTestShardIndex);
+            }
         } else {
             applicationName =
                 QStringLiteral("%1_unittest_%2").arg(QGC_APP_NAME).arg(QCoreApplication::applicationPid());

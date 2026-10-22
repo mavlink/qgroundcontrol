@@ -30,6 +30,8 @@ void QGCCommandLineParserTest::_testDefaultResult()
     QCOMPARE(result.stressUnitTests,      false);
     QCOMPARE(result.stressUnitTestsCount, 0u);
     QVERIFY(!result.unitTestOutput.has_value());
+    QCOMPARE(result.unitTestShardIndex, 0u);
+    QCOMPARE(result.unitTestShardCount, 0u);
     QVERIFY(!result.labelFilter.has_value());
     QCOMPARE(result.listTests,            false);
 
@@ -171,6 +173,40 @@ void QGCCommandLineParserTest::_testParseSystemId()
     QCOMPARE(systemId.has_value(), valid);
     if (valid) {
         QCOMPARE(*systemId, expected);
+    }
+}
+
+void QGCCommandLineParserTest::_testParseUnitTestShard_data()
+{
+    QTest::addColumn<QString>("value");
+    QTest::addColumn<bool>("valid");
+    QTest::addColumn<uint>("index");
+    QTest::addColumn<uint>("count");
+
+    QTest::newRow("first") << QStringLiteral("1/3") << true << 1u << 3u;
+    QTest::newRow("last") << QStringLiteral("3/3") << true << 3u << 3u;
+    QTest::newRow("single") << QStringLiteral("1/1") << true << 1u << 1u;
+    QTest::newRow("zero-index") << QStringLiteral("0/3") << false << 0u << 0u;
+    QTest::newRow("index-past-count") << QStringLiteral("4/3") << false << 0u << 0u;
+    QTest::newRow("missing-count") << QStringLiteral("1") << false << 0u << 0u;
+    QTest::newRow("extra-part") << QStringLiteral("1/2/3") << false << 0u << 0u;
+    QTest::newRow("negative") << QStringLiteral("-1/3") << false << 0u << 0u;
+    QTest::newRow("not-a-number") << QStringLiteral("a/b") << false << 0u << 0u;
+    QTest::newRow("empty") << QString() << false << 0u << 0u;
+}
+
+void QGCCommandLineParserTest::_testParseUnitTestShard()
+{
+    QFETCH(QString, value);
+    QFETCH(bool, valid);
+    QFETCH(uint, index);
+    QFETCH(uint, count);
+
+    const std::optional<std::pair<uint, uint>> shard = QGCCommandLineParser::parseUnitTestShard(value);
+    QCOMPARE(shard.has_value(), valid);
+    if (valid) {
+        QCOMPARE(shard->first, index);
+        QCOMPARE(shard->second, count);
     }
 }
 

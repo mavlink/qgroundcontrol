@@ -35,4 +35,6 @@ private slots:
     void _testNormalizeArgs_ColonOptionValuePreserved();
     void _testParseSystemId_data();
     void _testParseSystemId();
+    void _testParseUnitTestShard_data();
+    void _testParseUnitTestShard();
 };
