@@ -134,6 +134,7 @@ private:
     QGCMapPolygon   _structurePolygon;
     QGCMapPolygon   _flightPolygon;
     int             _entryVertex;       // Polygon vertex which is used as the mission entry point
+    bool _flightPolygonOffsetFailed = false;
     bool            _ignoreRecalc;
     double          _scanDistance;
     int             _cameraShots;

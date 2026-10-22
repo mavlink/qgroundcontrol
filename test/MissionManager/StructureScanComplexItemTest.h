@@ -22,6 +22,8 @@ private slots:
     void _testDirty();
     void _testSaveLoad();
     void _testItemCount();
+    void _testLargeStandoffFlightPolygon();
+    void _testFlightPolygonOffsetFailure();
 
 private:
     void _initItem();

@@ -1,5 +1,7 @@
 #include "StructureScanComplexItemTest.h"
 
+#include <numbers>
+
 #include <QtCore/QJsonArray>
 #include <QtCore/QRegularExpression>
 
@@ -113,6 +115,56 @@ void StructureScanComplexItemTest::_testItemCount()
     _initItem();
     _structureScanItem->appendMissionItems(items, this);
     QCOMPARE(items.count() - 1, _structureScanItem->lastSequenceNumber());
+}
+
+void StructureScanComplexItemTest::_testLargeStandoffFlightPolygon()
+{
+    // A 1m structure scanned from 50m away, well beyond the structure's own extent
+    const QGeoCoordinate origin = TestFixtures::Coord::missionTestOrigin();
+    const QGeoCoordinate north = origin.atDistanceAndAzimuth(1.0, 0.0);
+    const QList<QGeoCoordinate> structure = {
+        origin,
+        north,
+        north.atDistanceAndAzimuth(1.0, 90.0),
+        origin.atDistanceAndAzimuth(1.0, 90.0),
+    };
+    _structureScanItem->cameraCalc()->distanceToSurface()->setRawValue(50.0);
+    _structureScanItem->structurePolygon()->appendVertices(structure);
+
+    QGCMapPolygon* flightPolygon = _structureScanItem->flightPolygon();
+    QCOMPARE(flightPolygon->count(), structure.count());
+    for (const QGeoCoordinate& vertex : structure) {
+        QVERIFY(flightPolygon->containsCoordinate(vertex));
+    }
+    QVERIFY(qAbs(flightPolygon->vertexCoordinate(0).distanceTo(origin) - (50.0 * std::numbers::sqrt2)) < 0.5);
+
+    // Clockwise winding keeps the camera yawed towards the structure
+    const QList<QGeoCoordinate> flightCoordinates = flightPolygon->coordinateList();
+    flightPolygon->verifyClockwiseWinding();
+    QCOMPARE(flightPolygon->coordinateList(), flightCoordinates);
+    QCOMPARE(_structureScanItem->readyForSaveState(), VisualMissionItem::ReadyForSave);
+}
+
+void StructureScanComplexItemTest::_testFlightPolygonOffsetFailure()
+{
+    // Coincident vertices form a three vertex structure polygon which cannot be offset
+    const QGeoCoordinate origin = TestFixtures::Coord::missionTestOrigin();
+    ignoreLogMessage("QMLControls.QGCMapPolygon", QtWarningMsg, QRegularExpression("Polygon offset"));
+    expectAppMessage(QRegularExpression("Unable to calculate a flight path"));
+    _structureScanItem->structurePolygon()->appendVertices({origin, origin, origin});
+    verifyExpectedLogMessage();
+
+    QCOMPARE(_structureScanItem->flightPolygon()->count(), 0);
+    QCOMPARE(_structureScanItem->readyForSaveState(), VisualMissionItem::NotReadyForSaveData);
+
+    // Rebuilding while still failing does not repeat the message
+    Fact* distanceToSurface = _structureScanItem->cameraCalc()->distanceToSurface();
+    distanceToSurface->setRawValue(distanceToSurface->rawValue().toDouble() + 1.0);
+    QCOMPARE(_structureScanItem->flightPolygon()->count(), 0);
+
+    _structureScanItem->structurePolygon()->setPath(_polyPoints);
+    QCOMPARE(_structureScanItem->flightPolygon()->count(), _polyPoints.count());
+    QCOMPARE(_structureScanItem->readyForSaveState(), VisualMissionItem::ReadyForSave);
 }
 
 UT_REGISTER_TEST(StructureScanComplexItemTest, TestLabel::Unit, TestLabel::MissionManager)

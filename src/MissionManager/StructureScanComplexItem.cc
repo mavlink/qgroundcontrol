@@ -1,15 +1,17 @@
 #include "StructureScanComplexItem.h"
-#include "JsonParsing.h"
-#include "MissionController.h"
-#include "QGCApplication.h"
-#include "SettingsManager.h"
-#include "AppSettings.h"
-#include "PlanMasterController.h"
-#include "FlightPathSegment.h"
-#include "QGCMath.h"
-#include "QGCLoggingCategory.h"
 
 #include <QtCore/QJsonArray>
+
+#include "AppMessages.h"
+#include "AppSettings.h"
+#include "FlightPathSegment.h"
+#include "JsonParsing.h"
+#include "MissionController.h"
+#include "PlanMasterController.h"
+#include "QGCApplication.h"
+#include "QGCLoggingCategory.h"
+#include "QGCMath.h"
+#include "SettingsManager.h"
 
 QGC_LOGGING_CATEGORY(StructureScanComplexItemLog, "Plan.StructureScanComplexItem")
 
@@ -58,6 +60,8 @@ StructureScanComplexItem::StructureScanComplexItem(PlanMasterController* masterC
     connect(&_layersFact,       &Fact::valueChanged,            this, &StructureScanComplexItem::_updateLastSequenceNumber);
 
     connect(&_flightPolygon,    &QGCMapPolygon::pathChanged,    this, &StructureScanComplexItem::_flightPathChanged);
+    connect(&_flightPolygon, &QGCMapPolygon::countChanged, this, &StructureScanComplexItem::_updateLastSequenceNumber);
+    connect(&_flightPolygon, &QGCMapPolygon::isValidChanged, this, &StructureScanComplexItem::readyForSaveStateChanged);
 
     connect(_cameraCalc.distanceToSurface(),    &Fact::rawValueChanged,             this, &StructureScanComplexItem::_rebuildFlightPolygon);
 
@@ -536,7 +540,18 @@ void StructureScanComplexItem::_rebuildFlightPolygon(void)
     _entryVertex = 0;
 
     _flightPolygon = _structurePolygon;
-    _flightPolygon.offset(_cameraCalc.distanceToSurface()->rawValue().toDouble());
+    const bool offsetSucceeded = _flightPolygon.offset(_cameraCalc.distanceToSurface()->rawValue().toDouble());
+    if (!offsetSucceeded) {
+        // Never leave the structure outline itself as the flight path
+        _flightPolygon.clear();
+    }
+
+    const bool offsetFailed = !offsetSucceeded && _structurePolygon.isValid();
+    if (offsetFailed && !_flightPolygonOffsetFailed) {
+        QGC::showAppMessage(
+            tr("Structure Scan: Unable to calculate a flight path at the specified distance from the structure."));
+    }
+    _flightPolygonOffsetFailed = offsetFailed;
 
     if (savedEntryVertex >= _flightPolygon.count()) {
         _entryVertex = 0;
@@ -653,7 +668,7 @@ void StructureScanComplexItem::_recalcScanDistance()
 
 StructureScanComplexItem::ReadyForSaveState StructureScanComplexItem::readyForSaveState(void) const
 {
-    return _structurePolygon.isValid() && !_wizardMode ? ReadyForSave : NotReadyForSaveData;
+    return _structurePolygon.isValid() && _flightPolygon.isValid() && !_wizardMode ? ReadyForSave : NotReadyForSaveData;
 }
 
 void StructureScanComplexItem::_updateWizardMode(void)
