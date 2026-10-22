@@ -78,6 +78,8 @@ signals:
     void sendComplete               (bool error);
     void resumeMissionReady         (void);
     void resumeMissionUploadFail    (void);
+    /// A plan changed on the vehicle has been downloaded. Signalled just before newMissionItemsAvailable.
+    void vehiclePlanChanged(void);
 
 private slots:
     void _mavlinkMessageReceived(const mavlink_message_t& message);
@@ -156,5 +158,6 @@ private:
     std::optional<uint32_t> _planId;        ///< Id of the plan in _missionItems, once a transaction completes
     uint32_t _readPlanId = 0;               ///< Id from MISSION_COUNT of the read in progress
     std::optional<uint32_t> _reloadPlanId;  ///< Vehicle plan id that triggered the last automatic reload
+    bool _vehiclePlanChangeRead = false;    ///< The read in progress is an automatic reload
     bool _vehicleSupportsPlanIds = false;
 };

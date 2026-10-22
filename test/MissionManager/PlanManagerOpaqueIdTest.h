@@ -15,9 +15,13 @@ private slots:
     void _vehicleChangeReloads();
     void _ownUploadDoesNotReload_data();
     void _ownUploadDoesNotReload();
+    void _flyViewFollowsVehicleChange_data();
+    void _flyViewFollowsVehicleChange();
+    void _planViewOffersVehicleChange_data();
+    void _planViewOffersVehicleChange();
 
 private:
     static void _addPlanTypeRows();
-    void _connect(MAV_AUTOPILOT autopilot);
+    void _connect(MAV_AUTOPILOT autopilot, MockConfiguration::Options options = MockConfiguration::OptionNone);
     PlanManager* _planManager(MAV_MISSION_TYPE planType) const;
 };

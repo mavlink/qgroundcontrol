@@ -5,11 +5,16 @@
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
+#include "GeoFenceController.h"
 #include "GeoFenceManager.h"
+#include "MissionController.h"
 #include "MissionItem.h"
 #include "MissionManager.h"
 #include "MockLink.h"
+#include "PlanMasterController.h"
+#include "RallyPointController.h"
 #include "RallyPointManager.h"
+#include "SimpleMissionItem.h"
 #include "Vehicle.h"
 
 UT_REGISTER_TEST(PlanManagerOpaqueIdTest, TestLabel::Integration, TestLabel::MissionManager)
@@ -36,6 +41,28 @@ bool holdsAppendedItem(PlanManager* planManager, MAV_MISSION_TYPE planType)
                        [planType](const MissionItem* item) { return item->command() == appendedCommand(planType); });
 }
 
+/// Number of items in the plan editor of the kind the vehicle appends
+int editorAppendedItemCount(PlanMasterController& planController, MAV_MISSION_TYPE planType)
+{
+    switch (planType) {
+        case MAV_MISSION_TYPE_FENCE:
+            return planController.geoFenceController()->circles()->count();
+        case MAV_MISSION_TYPE_RALLY:
+            return planController.rallyPointController()->points()->count();
+        default: {
+            QmlObjectListModel* const visualItems = planController.missionController()->visualItems();
+            int count = 0;
+            for (int i = 0; i < visualItems->count(); i++) {
+                const SimpleMissionItem* const item = visualItems->value<SimpleMissionItem*>(i);
+                if (item && (item->command() == static_cast<int>(appendedCommand(planType)))) {
+                    count++;
+                }
+            }
+            return count;
+        }
+    }
+}
+
 }  // namespace
 
 void PlanManagerOpaqueIdTest::_addPlanTypeRows()
@@ -51,13 +78,13 @@ void PlanManagerOpaqueIdTest::_addPlanTypeRows()
     }
 }
 
-void PlanManagerOpaqueIdTest::_connect(MAV_AUTOPILOT autopilot)
+void PlanManagerOpaqueIdTest::_connect(MAV_AUTOPILOT autopilot, MockConfiguration::Options options)
 {
     if ((autopilot == MAV_AUTOPILOT_ARDUPILOTMEGA) && !apmFirmwareSupported()) {
         QSKIP("ArduPilot support not registered in this build");
     }
 
-    _connectMockLink(autopilot, MockConfiguration::FailNone, MockConfiguration::OptionPlanOpaqueIds);
+    _connectMockLink(autopilot, MockConfiguration::FailNone, options | MockConfiguration::OptionPlanOpaqueIds);
 }
 
 PlanManager* PlanManagerOpaqueIdTest::_planManager(MAV_MISSION_TYPE planType) const
@@ -155,4 +182,112 @@ void PlanManagerOpaqueIdTest::_ownUploadDoesNotReload()
 
     QVERIFY(!planManager->inProgress());
     QCOMPARE(mockLink()->receivedMissionRequestListCount(planType), 0);
+}
+
+void PlanManagerOpaqueIdTest::_flyViewFollowsVehicleChange_data()
+{
+    QTest::addColumn<MAV_AUTOPILOT>("autopilot");
+
+    QTest::newRow("PX4") << MAV_AUTOPILOT_PX4;
+    QTest::newRow("ArduPilot") << MAV_AUTOPILOT_ARDUPILOTMEGA;
+}
+
+void PlanManagerOpaqueIdTest::_flyViewFollowsVehicleChange()
+{
+    QFETCH(MAV_AUTOPILOT, autopilot);
+
+    _connect(autopilot, MockConfiguration::OptionPreloadMission);
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    PlanMasterController flyController;
+    flyController.setFlyView(true);
+    flyController.start();
+    MissionController* const flyMission = flyController.missionController();
+    QVERIFY_TRUE_WAIT(flyMission->visualItems()->count() > 1, TestTimeout::mediumMs());
+
+    // Plan View holding a plan the user is editing must not be replaced
+    PlanMasterController planController;
+    planController.setFlyView(false);
+    planController.start();
+    MissionController* const planMission = planController.missionController();
+    QVERIFY_TRUE_WAIT(planMission->visualItems()->count() > 1, TestTimeout::mediumMs());
+    QVERIFY(planMission->insertSimpleMissionItem(mockLink()->homeCoordinate().atDistanceAndAzimuth(100.0, 0.0),
+                                                 planMission->visualItems()->count()));
+    const int planCount = planMission->visualItems()->count();
+
+    const int flyCount = flyMission->visualItems()->count();
+    QSignalSpy spyFly(flyMission, &MissionController::newItemsFromVehicle);
+    QVERIFY(spyFly.isValid());
+
+    mockLink()->appendPlanItemOnVehicle(MAV_MISSION_TYPE_MISSION);
+
+    QVERIFY(spyFly.wait(TestTimeout::longMs()));
+    QCOMPARE(flyMission->visualItems()->count(), flyCount + 1);
+    const SimpleMissionItem* const lastItem = flyMission->visualItems()->value<SimpleMissionItem*>(flyCount);
+    QVERIFY(lastItem);
+    QCOMPARE(lastItem->command(), static_cast<int>(MAV_CMD_NAV_LOITER_UNLIM));
+    QCOMPARE(planMission->visualItems()->count(), planCount);
+}
+
+void PlanManagerOpaqueIdTest::_planViewOffersVehicleChange_data()
+{
+    _addPlanTypeRows();
+}
+
+void PlanManagerOpaqueIdTest::_planViewOffersVehicleChange()
+{
+    QFETCH(MAV_AUTOPILOT, autopilot);
+    QFETCH(MAV_MISSION_TYPE, planType);
+
+    _connect(autopilot, MockConfiguration::OptionPreloadMission);
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    PlanMasterController planController;
+    planController.setFlyView(false);
+    planController.start();
+
+    // Give the editor a plan of its own
+    const QGeoCoordinate home = mockLink()->homeCoordinate();
+    switch (planType) {
+        case MAV_MISSION_TYPE_FENCE:
+            planController.geoFenceController()->addInclusionCircle(home.atDistanceAndAzimuth(300.0, 315.0),
+                                                                    home.atDistanceAndAzimuth(300.0, 135.0));
+            break;
+        case MAV_MISSION_TYPE_RALLY:
+            planController.rallyPointController()->addPoint(home.atDistanceAndAzimuth(100.0, 90.0));
+            break;
+        default:
+            QVERIFY_TRUE_WAIT(planController.missionController()->visualItems()->count() > 1, TestTimeout::mediumMs());
+            QVERIFY(planController.missionController()->insertSimpleMissionItem(
+                home.atDistanceAndAzimuth(100.0, 0.0), planController.missionController()->visualItems()->count()));
+            break;
+    }
+    const int editorCount = editorAppendedItemCount(planController, planType);
+
+    QSignalSpy spyChanges(&planController, &PlanMasterController::vehiclePlanChangesChanged);
+    QVERIFY(spyChanges.isValid());
+
+    // A change on the vehicle is offered without replacing the plan being edited
+    mockLink()->appendPlanItemOnVehicle(planType);
+    QVERIFY(spyChanges.wait(TestTimeout::longMs()));
+    QCOMPARE(planController.vehiclePlanChanges().count(), 1);
+    QVERIFY(planController.dirtyForUpload());
+    QCOMPARE(editorAppendedItemCount(planController, planType), editorCount);
+
+    planController.ignoreVehiclePlanChanges();
+    QVERIFY(planController.vehiclePlanChanges().isEmpty());
+
+    // Downloading after another change replaces the editor's plan with the vehicle's
+    spyChanges.clear();
+    mockLink()->appendPlanItemOnVehicle(planType);
+    QVERIFY(spyChanges.wait(TestTimeout::longMs()));
+    QCOMPARE(planController.vehiclePlanChanges().count(), 1);
+    planController.loadFromVehicle();
+    QVERIFY_TRUE_WAIT(!planController.syncInProgress() && planController.vehiclePlanChanges().isEmpty(),
+                      TestTimeout::longMs());
+    QCOMPARE(editorAppendedItemCount(planController, planType), 2);
 }

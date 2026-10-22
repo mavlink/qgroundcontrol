@@ -859,6 +859,10 @@ void PlanManager::_finishTransaction(bool success, bool apmGuidedItemWrite)
             // Read from vehicle failed, clear partial list
             _clearAndDeleteMissionItems();
         }
+        if (success && _vehiclePlanChangeRead) {
+            emit vehiclePlanChanged();
+        }
+        _vehiclePlanChangeRead = false;
         emit newMissionItemsAvailable(false);
         break;
     case TransactionWrite:
@@ -1072,5 +1076,6 @@ void PlanManager::_checkVehiclePlanId(uint32_t vehiclePlanId)
                             << "planId:" << planId << "vehiclePlanId:" << vehiclePlanId;
 
     _reloadPlanId = vehiclePlanId;
+    _vehiclePlanChangeRead = true;
     loadFromVehicle();
 }

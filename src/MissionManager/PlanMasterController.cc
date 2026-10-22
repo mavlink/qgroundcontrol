@@ -116,6 +116,7 @@ void PlanMasterController::_activeVehicleChanged(Vehicle* activeVehicle)
         _loadSequence = SyncSequence::Idle;
         _sendSequence = SyncSequence::Idle;
     }
+    _clearVehiclePlanChanges();
 
     bool newOffline = false;
     if (activeVehicle == nullptr) {
@@ -139,6 +140,12 @@ void PlanMasterController::_activeVehicleChanged(Vehicle* activeVehicle)
         connect(_managerVehicle->missionManager(),      &MissionManager::sendComplete,              this, &PlanMasterController::_sendMissionComplete);
         connect(_managerVehicle->geoFenceManager(),     &GeoFenceManager::sendComplete,             this, &PlanMasterController::_sendGeoFenceComplete);
         connect(_managerVehicle->rallyPointManager(),   &RallyPointManager::sendComplete,           this, &PlanMasterController::_sendRallyPointsComplete);
+        connect(_managerVehicle->missionManager(), &PlanManager::vehiclePlanChanged, this,
+                [this]() { _vehiclePlanChanged(MAV_MISSION_TYPE_MISSION); });
+        connect(_managerVehicle->geoFenceManager(), &PlanManager::vehiclePlanChanged, this,
+                [this]() { _vehiclePlanChanged(MAV_MISSION_TYPE_FENCE); });
+        connect(_managerVehicle->rallyPointManager(), &PlanManager::vehiclePlanChanged, this,
+                [this]() { _vehiclePlanChanged(MAV_MISSION_TYPE_RALLY); });
     }
 
     _offline = newOffline;
@@ -273,6 +280,7 @@ void PlanMasterController::_loadRallyPointsComplete(void)
     // file association no longer describes the editor contents.
     _clearCurrentPlanFile();
     _setDirtyStates(false /* dirtyForSave */, false /* dirtyForUpload */);
+    _clearVehiclePlanChanges();
 }
 
 void PlanMasterController::_sendMissionComplete(void)
@@ -313,6 +321,7 @@ void PlanMasterController::_sendRallyPointsComplete(void)
     _sendSequence = SyncSequence::Idle;
     qCDebug(PlanMasterControllerLog) << "PlanMasterController::sendToVehicle Rally Point send complete";
     _setDirtyForUpload(false);
+    _clearVehiclePlanChanges();
     if (_deleteWhenSendCompleted) {
         this->deleteLater();
     }
@@ -541,10 +550,75 @@ void PlanMasterController::removeAllFromVehicle(void)
         }
         _setDirtyForUpload(false);
         _clearCurrentPlanFile();
+        _clearVehiclePlanChanges();
     } else {
         qCCritical(PlanMasterControllerLog) << "PlanMasterController::removeAllFromVehicle called while offline";
     }
     setUserSelectedManualCreation(false);
+}
+
+void PlanMasterController::_vehiclePlanChanged(MAV_MISSION_TYPE planType)
+{
+    if (_flyView) {
+        return;
+    }
+
+    bool editorEmpty = true;
+    switch (planType) {
+        case MAV_MISSION_TYPE_MISSION:
+            editorEmpty = _missionController.isEmpty();
+            break;
+        case MAV_MISSION_TYPE_FENCE:
+            editorEmpty = _geoFenceController.isEmpty();
+            break;
+        case MAV_MISSION_TYPE_RALLY:
+            editorEmpty = _rallyPointController.isEmpty();
+            break;
+        default:
+            return;
+    }
+
+    // An empty editor takes the changed plan, as it does any download
+    if (editorEmpty) {
+        return;
+    }
+
+    qCDebug(PlanMasterControllerLog) << "plan changed on vehicle while editing, type:" << planType;
+
+    // The editor's plan no longer matches the vehicle
+    _setDirtyForUpload(true);
+    if (!_vehiclePlanChanges.contains(planType)) {
+        _vehiclePlanChanges.insert(planType);
+        emit vehiclePlanChangesChanged();
+    }
+}
+
+void PlanMasterController::_clearVehiclePlanChanges()
+{
+    if (!_vehiclePlanChanges.isEmpty()) {
+        _vehiclePlanChanges.clear();
+        emit vehiclePlanChangesChanged();
+    }
+}
+
+void PlanMasterController::ignoreVehiclePlanChanges(void)
+{
+    _clearVehiclePlanChanges();
+}
+
+QStringList PlanMasterController::vehiclePlanChanges(void) const
+{
+    QStringList changes;
+    if (_vehiclePlanChanges.contains(MAV_MISSION_TYPE_MISSION)) {
+        changes.append(tr("Mission"));
+    }
+    if (_vehiclePlanChanges.contains(MAV_MISSION_TYPE_FENCE)) {
+        changes.append(tr("GeoFence"));
+    }
+    if (_vehiclePlanChanges.contains(MAV_MISSION_TYPE_RALLY)) {
+        changes.append(tr("Rally Points"));
+    }
+    return changes;
 }
 
 bool PlanMasterController::containsItems(void) const
