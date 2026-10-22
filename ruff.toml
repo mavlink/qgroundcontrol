@@ -4,16 +4,8 @@
 target-version = "py310"
 line-length = 100
 
-# Exclude build artifacts and external dependencies
-exclude = [
-    "build",
-    ".git",
-    "__pycache__",
-    "*.egg-info",
-    ".venv",
-    "**/.venv",
-    "tools/skills",
-]
+# Build artifacts and vendored skills, on top of Ruff's default excludes
+extend-exclude = ["build", "tools/skills"]
 
 [lint]
 select = [
@@ -35,30 +27,9 @@ ignore = [
     "SIM108", # Use ternary operator (can reduce readability)
 ]
 
-[lint.isort]
-known-first-party = ["qgc"]
-
 [lint.per-file-ignores]
-"test/**/*.py" = ["B011"]  # Allow assert in tests
-# Bootstrap scripts manipulate sys.path before importing project modules.
-"tools/check_deps.py" = ["E402"]
-"tools/clean.py" = ["E402"]
-"tools/configure.py" = ["E402"]
-"tools/coverage.py" = ["E402"]
-"tools/generate_docs.py" = ["E402"]
-"tools/pre_commit.py" = ["E402"]
-"tools/release.py" = ["E402"]
-"tools/terrain_tiles.py" = ["E402"]
-"tools/analyzers/*.py" = ["E402"]
-"tools/generators/config_qml/generate_pages.py" = ["E402"]
-"tools/setup/build-gstreamer.py" = ["E402"]
-"tools/setup/install_python.py" = ["E402"]
-"tools/setup/install_qt.py" = ["E402"]
-".github/scripts/*.py" = ["E402"]
-"deploy/docker/install_sysroot_aarch64.py" = ["E402"]
-".github/scripts/tests/*.py" = ["E402"]
 # pseudo_loc.py deliberately uses look-alike characters for pseudo-localization.
-"tools/pseudo_loc.py" = ["RUF001"]
+"tools/translations/pseudo_loc.py" = ["RUF001"]
 # settings_qml/model.py's regex must match fullwidth + enumeration commas that translators use.
 "tools/generators/settings_qml/model.py" = ["RUF001", "RUF003"]
 

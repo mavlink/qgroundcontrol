@@ -9,25 +9,13 @@
 format:
   line_width: 120
   tab_size: 4
-  use_tabchars: false
 
   # Indentation
   # Wrapped statements and keyword groups nest: arguments start on the next line, one indent in.
   max_prefix_chars: 6
-  min_prefix_chars: 4
 
-  # Line wrapping
-  max_subgroups_hwrap: 2
-  max_pargs_hwrap: 6
-  max_rows_cmdline: 2
-
-  # Parentheses
   dangle_parens: true
-  dangle_align: prefix
 
-  # Spacing
-  separate_ctrl_name_with_space: false
-  separate_fn_name_with_space: false
   # Property commands list their files or targets, then one property per line. always_wrap matches node paths and each
   # enclosing block (if, foreach, function, ...) adds a FlowControlNode/ prefix, so list them for up to 8 nested blocks.
   always_wrap:
@@ -71,8 +59,6 @@ format:
   layout_passes:
     KwargGroupNode: [[0, false], [1, true], [2, true], [3, true], [4, true], [5, true]]
 
-  # Case
-  command_case: canonical
   keyword_case: upper
 
 # -----------------------------------------------------------------------------
@@ -379,7 +365,7 @@ parse:
         nargs: '*'
         flags: []
       spelling: CPMAddPackage
-      kwargs: &cpm_kwargs
+      kwargs:
         NAME: 1
         FORCE: 1
         VERSION: 1
@@ -410,30 +396,6 @@ parse:
         HTTP_PASSWORD: 1
         PATCHES: *one_per_line
         OPTIONS: *one_per_line
-
-    cpmfindpackage:
-      pargs:
-        nargs: '*'
-        flags: []
-      spelling: CPMFindPackage
-      kwargs: *cpm_kwargs
-
-    cpmdeclarepackage:
-      pargs:
-        nargs: '*'
-        flags: []
-      spelling: CPMDeclarePackage
-      kwargs: *cpm_kwargs
-
-    cpmgetpackageversion:
-      pargs:
-        nargs: 2
-      spelling: CPMGetPackageVersion
-
-    cpmusepackagelock:
-      pargs:
-        nargs: 1
-      spelling: CPMUsePackageLock
 
     # -------------------------------------------------------------------------
     # Qt6 Commands
@@ -519,70 +481,10 @@ parse:
         I18N_SOURCE_LANGUAGE: 1
         I18N_TRANSLATED_LANGUAGES: +
 
-    qt_finalize_executable:
-      pargs:
-        nargs: 1
-
-    qt_finalize_target:
-      pargs:
-        nargs: 1
-
     qt_policy:
       pargs:
         nargs: '1+'
         flags: [SET, OLD, NEW]
-
-    qt_extract_metatypes:
-      pargs:
-        nargs: 1
-      kwargs:
-        OUTPUT_FILES: 1
-
-    qt_deploy_runtime_dependencies:
-      pargs:
-        nargs: 0
-      kwargs:
-        EXECUTABLE: 1
-        GENERATE_QT_CONF: 1
-        BIN_DIR: 1
-        LIB_DIR: 1
-        PLUGINS_DIR: 1
-        QML_DIR: 1
-
-    # -------------------------------------------------------------------------
-    # Common Third-Party
-    # -------------------------------------------------------------------------
-    fetchcontent_declare:
-      pargs:
-        nargs: 1
-        flags: [SYSTEM, OVERRIDE_FIND_PACKAGE]
-      spelling: FetchContent_Declare
-      kwargs:
-        URL: 1
-        URL_HASH: 1
-        GIT_REPOSITORY: 1
-        GIT_TAG: 1
-        GIT_SHALLOW: 1
-        SOURCE_DIR: 1
-        BINARY_DIR: 1
-        SOURCE_SUBDIR: 1
-        DOWNLOAD_COMMAND: +
-        PATCH_COMMAND: +
-        FIND_PACKAGE_ARGS: +
-
-    fetchcontent_makeavailable:
-      pargs:
-        nargs: '+'
-      spelling: FetchContent_MakeAvailable
-
-    fetchcontent_getproperties:
-      pargs:
-        nargs: 1
-      spelling: FetchContent_GetProperties
-      kwargs:
-        SOURCE_DIR: 1
-        BINARY_DIR: 1
-        POPULATED: 1
 
 # -----------------------------------------------------------------------------
 # Markup (Comments)
@@ -590,31 +492,11 @@ parse:
 markup:
   enable_markup: false
   first_comment_is_literal: true
-  literal_comment_pattern: null
-  fence_pattern: '^\s*([`~]{3}[`~]*)(.*)$'
-  ruler_pattern: '^\s*[^\w\s]{3}.*[^\w\s]{3}$'
-  hashruler_min_length: 10
 
 # -----------------------------------------------------------------------------
 # Linting
 # -----------------------------------------------------------------------------
 lint:
-  disabled_codes: []
-  function_pattern: '[0-9a-z_]+'
-  macro_pattern: '[0-9A-Z_]+'
-  global_var_pattern: '[A-Z][0-9A-Z_]+'
-  internal_var_pattern: '_[A-Z][0-9A-Z_]+'
   # Helpers use private snake_case locals and cmake_parse_arguments uses ARG_*.
   local_var_pattern: '(_?[a-z][a-z0-9_]*|ARG_[A-Z][0-9A-Z_]*)'
   argument_var_pattern: '_?[a-z][a-z0-9_]*'
-  private_var_pattern: '_[0-9a-z_]+'
-  public_var_pattern: '[A-Z][0-9A-Z_]+'
-  keyword_pattern: '[A-Z][0-9A-Z_]+'
-  max_conditionals_custom_parser: 2
-  min_statement_spacing: 1
-  max_statement_spacing: 2
-  max_returns: 6
-  max_branches: 12
-  max_arguments: 5
-  max_localvars: 15
-  max_statements: 50

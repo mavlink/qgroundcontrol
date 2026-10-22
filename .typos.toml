@@ -13,72 +13,22 @@ extend-ignore-identifiers-re = [
     "\\bQ_INVOKABLE\\b",
 ]
 
+# Only words the typos dictionary flags; keys match case-insensitively.
 [default.extend-words]
-# Project-specific terms
-QGroundControl = "QGroundControl"
-MAVLink = "MAVLink"
-ArduPilot = "ArduPilot"
-PX4 = "PX4"
-
-# Common abbreviations in codebase
-Ack = "Ack"
-ack = "ack"
-Nack = "Nack"
-nack = "nack"
-Navit = "Navit"
-Ser = "Ser"
-ser = "ser"
-TELEM = "TELEM"
-telem = "telem"
-RSSI = "RSSI"
-rssi = "rssi"
-VTOL = "VTOL"
-vtol = "vtol"
-ADSB = "ADSB"
-adsb = "adsb"
-RTK = "RTK"
-rtk = "rtk"
-RTL = "RTL"
-rtl = "rtl"
-SITL = "SITL"
-sitl = "sitl"
-HSV = "HSV"
 NED = "NED"
-ENU = "ENU"
-FTP = "FTP"
-ftp = "ftp"
-ULog = "ULog"
-ulog = "ulog"
-
-# Parameter names that look like typos
-Slew = "Slew"
-slew = "slew"
-
+SER = "SER"
+SITL = "SITL"
 # Throttle abbreviations (common in parameter names like THR_MIN, Q_THR_MIN_PWM)
 THR = "THR"
-Thr = "Thr"
-thr = "thr"
-
-# Geographic/organizational acronyms
 LINZ = "LINZ"  # Land Information New Zealand
-
-# Graphics terms
 LOD = "LOD"  # level of detail
 PN = "PN"  # typos splits "PNGs" into "PN" + "Gs"
 
 [files]
 extend-exclude = [
-    "build/",
     # Skills vendored from Qt (downloaded, not authored here) — held to their own standards.
     "tools/skills/",
     "translations/",
-    "*.ts",
-    "libs/",
-    "*.geojson",
-    # JSON files with auto-generated or external content
-    "package-lock.json",
-    "*.FactMetaData.json",
-    "*.SettingsGroup.json",
     # Foreign language documentation (avoid false positives)
     "docs/ko/",
     "docs/tr/",

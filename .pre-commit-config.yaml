@@ -1,7 +1,12 @@
 # QGroundControl Pre-Commit Configuration
-# Install: pre-commit install
-# Run: pre-commit run --all-files
-# Update: pre-commit autoupdate
+# Runner: prek (tools/pyproject.toml `precommit` group); stock pre-commit reads the same file.
+# Install: prek install
+# Run: prek run --all-files (just lint)
+# Update: prek update
+
+# `prek install` also installs the commit-msg hook; hooks without `stages` skip commit-msg.
+default_install_hook_types: [pre-commit, commit-msg]
+default_stages: [pre-commit, manual]
 
 repos:
   - repo: local
@@ -10,7 +15,15 @@ repos:
         name: Validate configuration relationships
         entry: uv run --frozen --project tools --group lint python tools/validate_configs.py
         language: system
-        files: ^(\.github/build-config.*\.json|\.lychee\.toml|\.pre-commit-config\.yaml|tools/(validate_configs\.py|uv\.lock|pyproject\.toml))$
+        files: ^(\.github/build-config.*\.json|\.lychee\.toml|deploy/docker/Dockerfile|tools/(validate_configs\.py|pyproject\.toml))$
+        pass_filenames: false
+
+      # Works offline: the schema ships with the build group's locked cmake package.
+      - id: cmake-presets-schema
+        name: Validate CMake presets against CMake's schema
+        entry: uv run --frozen --project tools --group lint --group build python tools/validate_cmake_presets.py
+        language: system
+        files: ^(CMakePresets\.json|cmake/presets/.*\.json|tools/validate_cmake_presets\.py)$
         pass_filenames: false
 
       - id: qt-translation-placeholders
@@ -19,12 +32,18 @@ repos:
         language: system
         files: ^translations/.*\.ts$
 
+      # Types match .releaserc.json and the PR title check, plus Renovate's `deps`.
+      - id: conventional-commit-msg
+        name: Conventional Commits message
+        language: pygrep
+        entry: '\A(?!(feat|fix|perf|revert|docs|style|chore|refactor|test|build|ci|deps)(\([^)\n]+\))?!?: \S|(fixup|squash|amend)! |Merge |Revert ")'
+        args: [--multiline]
+        stages: [commit-msg]
+
   # Basic file checks
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
-      - id: check-yaml
-        args: [--allow-multiple-documents, --unsafe]
       - id: check-json
       - id: check-toml
       - id: pretty-format-json
@@ -39,14 +58,23 @@ repos:
       - id: check-case-conflict
       - id: check-shebang-scripts-are-executable
       - id: check-executables-have-shebangs
+      # syrupy snapshots (*.ambr) keep generated whitespace byte-for-byte.
       - id: trailing-whitespace
         args: ['--markdown-linebreak-ext=md']
-        exclude: ^(translations/|src/MAVLink/.*\.patch$|test/GPS/Core/Protocols/(corpus|fixtures)/.*\.(bin|gps|nmea|sbf|ubx)$)
+        exclude: ^(translations/|src/MAVLink/.*\.patch$|.*\.ambr$|test/GPS/Core/Protocols/(corpus|fixtures)/.*\.(bin|gps|nmea|sbf|ubx)$)
       - id: end-of-file-fixer
-        exclude: ^(src/MAVLink/.*\.patch$|translations/.*\.ts|.*\.(png|jpg|jpeg|gif|svg|ico|bin|dat)|test/GPS/Core/Protocols/(corpus|fixtures)/.*\.(gps|nmea|sbf|ubx))$
+        exclude: ^(src/MAVLink/.*\.patch$|translations/.*\.ts|.*\.(ambr|png|jpg|jpeg|gif|svg|ico|bin|dat)|test/GPS/Core/Protocols/(corpus|fixtures)/.*\.(gps|nmea|sbf|ubx))$
       - id: mixed-line-ending
         args: ['--fix=lf']
-        exclude: (\.(bat|ps1)$|^test/GPS/Core/Protocols/(corpus|fixtures)/.*\.(bin|gps|nmea|sbf|ubx)$)
+        exclude: (\.(ambr|bat|ps1)$|^test/GPS/Core/Protocols/(corpus|fixtures)/.*\.(bin|gps|nmea|sbf|ubx)$)
+
+  # Enforces .editorconfig. .editorconfig-checker.json skips binary, generated, and legacy files that
+  # predate the hook, and disables indent_size (continuation lines align to their opening token) and
+  # max_line_length (clang-format and ruff own line length).
+  - repo: https://github.com/editorconfig-checker/editorconfig-checker
+    rev: v4.0.2
+    hooks:
+      - id: editorconfig-checker
 
   # Secret detection
   - repo: https://github.com/trufflesecurity/trufflehog
@@ -55,50 +83,58 @@ repos:
       - id: trufflehog
         args: ['--only-verified', '--exclude-paths=tools/configs/trufflehog-exclude.txt']
 
-  # Check changed C++ regions, matching CODING_STYLE.md; new files are checked in full.
-  # Note: Install matching clang-format version locally to avoid formatting differences
-  - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: v23.1.0
-    hooks:
-      - id: clang-format
-        entry: python tools/check_clang_format.py
-        args: []
-        types_or: [c++, c]
-        exclude: ^(build/|libs/)
-
-  # Python formatting (report-only)
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.16.5
-    hooks:
-      - id: ruff
-      - id: ruff-format
-        args: [--check]
-
-  # Python type checking
-  - repo: https://github.com/RobertCraigie/pyright-python
-    rev: v1.1.411
-    hooks:
-      - id: pyright
-        # Same paths as pyrightconfig.json's include
-        files: ^(tools|test|deploy|\.github/(scripts|runner-images)|\.clusterfuzzlite)/.*\.py$
-
+  # Lint tools run from the locked `lint` group, so hooks, CI, and tools/.venv share one version.
   - repo: local
     hooks:
+      # Check changed C++ regions, matching CODING_STYLE.md; new files are checked in full.
+      - id: clang-format
+        name: clang-format
+        entry: uv run --frozen --project tools --group lint python tools/analyzers/clang_format.py
+        language: system
+        types_or: [c++, c]
+
+      # Python linting and formatting (report-only)
+      - id: ruff-check
+        alias: ruff
+        name: ruff check
+        entry: uv run --frozen --project tools --group lint ruff check --force-exclude
+        language: system
+        types_or: [python, pyi, jupyter]
+        require_serial: true
+
+      - id: ruff-format
+        name: ruff format
+        entry: uv run --frozen --project tools --group lint ruff format --force-exclude
+        language: system
+        args: [--check]
+        types_or: [python, pyi, jupyter, markdown]
+        require_serial: true
+
+      # Python type checking
+      - id: pyright
+        name: pyright
+        # terrain lets pyright resolve numpy and rasterio types in tools/terrain.
+        entry: uv run --frozen --project tools --group lint --group terrain pyright
+        language: system
+        types_or: [python, pyi]
+        require_serial: true
+        # Same paths as pyrightconfig.json's include
+        files: ^(tools|test|deploy|\.github/runner-images|\.clusterfuzzlite)/.*\.py$
+
       - id: import-linter
-        name: import-linter (tools layering)
-        entry: bash -c 'cd tools && PYTHONPATH=. lint-imports --config pyproject.toml'
-        language: python
-        additional_dependencies: ['import-linter>=2.0']
+        name: import-linter (tools contracts)
+        entry: uv run --frozen --directory tools --group lint lint-imports
+        language: system
         files: ^tools/.*\.py$
         pass_filenames: false
 
-  # uv lockfile sync (keeps tools/uv.lock current with tools/pyproject.toml)
-  - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.12.8
-    hooks:
+      # Keeps tools/uv.lock current with tools/pyproject.toml
       - id: uv-lock
+        name: uv-lock
+        entry: uv lock --project tools
+        language: system
         files: ^tools/(pyproject\.toml|uv\.lock)$
-        args: ['--project', 'tools']
+        pass_filenames: false
 
   # Shell scripts
   - repo: https://github.com/shellcheck-py/shellcheck-py
@@ -124,15 +160,12 @@ repos:
       - id: actionlint
 
   # GitHub Actions security scanning
-  - repo: local
+  - repo: https://github.com/zizmorcore/zizmor-pre-commit
+    rev: v1.30.1
     hooks:
       - id: zizmor
         name: zizmor (GitHub Actions security)
-        entry: zizmor
-        language: python
-        additional_dependencies: ['zizmor>=1.25.2']
         files: ^\.github/(workflows|actions)/.*\.ya?ml$
-        types: [yaml]
 
   # YAML validation
   - repo: https://github.com/adrienverge/yamllint
@@ -140,52 +173,25 @@ repos:
     hooks:
       - id: yamllint
 
-  # JSON Schema validation for build-config.json
+  # Vendor config schema validation (validate-configs checks .github/build-config.json)
   - repo: https://github.com/python-jsonschema/check-jsonschema
     rev: 0.38.0
     hooks:
-      - id: check-jsonschema
-        name: Validate .github/build-config.json
-        files: ^\.github/build-config(?:\.schema)?\.json$
-        args: ['--schemafile', '.github/build-config.schema.json', '.github/build-config.json']
-        pass_filenames: false
+      - id: check-dependabot
+      - id: check-codecov
+      - id: check-github-issue-config
+      - id: check-github-issue-forms
+      - id: check-compose-spec
+      - id: check-renovate
 
-      - id: check-jsonschema
-        alias: validate-dependabot-config
-        name: Validate Dependabot config
-        files: ^\.github/dependabot\.ya?ml$
-        args: ['--builtin-schema', 'vendor.dependabot']
-
-      - id: check-jsonschema
-        alias: validate-codecov-config
-        name: Validate Codecov config
-        files: ^\.github/codecov\.ya?ml$
-        args: ['--builtin-schema', 'vendor.codecov']
-
-      - id: check-jsonschema
-        alias: validate-issue-template-config
-        name: Validate GitHub issue template config
-        files: ^\.github/ISSUE_TEMPLATE/config\.ya?ml$
-        args: ['--builtin-schema', 'vendor.github-issue-config']
-
-      - id: check-jsonschema
-        alias: validate-issue-forms
-        name: Validate GitHub issue forms
-        files: ^\.github/ISSUE_TEMPLATE/(?!config\.ya?ml$).*\.ya?ml$
-        args: ['--builtin-schema', 'vendor.github-issue-forms']
-
-      - id: check-jsonschema
-        alias: validate-compose-config
-        name: Validate Docker Compose config
-        files: ^deploy/docker/(?:docker-)?compose\.ya?ml$
-        args: ['--builtin-schema', 'vendor.compose-spec']
-
-  # Renovate config validation (schema-checks the active renovate.json)
+  # Renovate's own validator installs Renovate from npm, so it runs only on demand and in the
+  # CI Scripts workflow when renovate.json or this file changes.
   - repo: https://github.com/renovatebot/pre-commit-hooks
     rev: 44.56.1
     hooks:
       - id: renovate-config-validator
         files: ^\.github/renovate\.json$
+        stages: [manual]
 
   # Markdown linting (report-only, doesn't auto-fix)
   - repo: https://github.com/igorshubovych/markdownlint-cli
@@ -195,27 +201,23 @@ repos:
         exclude: ^(translations/|tools/skills/|docs/(zh|ko|tr|ru|ja|de|es|fa|fr|he|uk)/|CHANGELOG\.md)
 
   # Prose linting (documentation quality)
-  # vale-sync downloads the Packages declared in .vale.ini into the gitignored
+  # The sync hook downloads the Packages declared in .vale.ini into the gitignored
   # .github/styles/ before vale runs; without it vale has no styles and no-ops.
-  - repo: local
-    hooks:
-      - id: vale-sync
-        name: vale sync (download styles)
-        language: golang
-        # The vale module root carries no Go package (the binary lives under cmd/vale), so a go
-        # install of the bare module fails and aborts the whole pre-commit run before any hook
-        # fires.
-        additional_dependencies:
-          - 'github.com/errata-ai/vale/v3/cmd/vale@v3.19.0'
-        entry: vale sync
-        files: ^(docs/en/|\.vale\.ini$)
-        pass_filenames: false
+  # Both hooks share one built environment and the `vale` id, so `prek run vale`
+  # syncs then lints; the `vale-sync` alias selects or skips only the sync.
   - repo: https://github.com/errata-ai/vale
     rev: v3.19.0
     hooks:
       - id: vale
+        alias: vale-sync
+        name: vale sync (download styles)
+        entry: vale sync
+        files: ^(docs/en/|\.vale\.ini$)
+        pass_filenames: false
+      - id: vale
         files: ^docs/en/
         args: ['--no-exit']  # Don't fail on warnings, just report
+        verbose: true  # Findings exit 0, and pre-commit hides passing hooks' output
 
   # Spell checking (report-only, doesn't auto-fix)
   - repo: https://github.com/crate-ci/typos
@@ -225,6 +227,23 @@ repos:
         args: ['--force-exclude']  # Honor .typos.toml exclusions for explicit pre-commit paths
         files: \.(md|markdown|txt|rst)$|^docs/
 
+  # Formatter trials: manual-stage checks that never rewrite files.
+  # Run with `prek run <id> --hook-stage manual --files <paths>`.
+  - repo: https://github.com/BlankSpruce/gersemi-pre-commit
+    rev: 0.29.2
+    hooks:
+      - id: gersemi
+        args: [--check, --diff]  # Configured by .gersemirc
+        exclude: ^cmake/modules/CPM\.cmake$
+        stages: [manual]
+
+  - repo: https://github.com/google/yamlfmt
+    rev: v0.21.0
+    hooks:
+      - id: yamlfmt
+        args: [-lint]  # Configured by .yamlfmt
+        stages: [manual]
+
   - repo: local
     hooks:
       - id: qmllint
@@ -232,8 +251,14 @@ repos:
         entry: python3 ./tools/analyze.py --tool qmllint
         language: system
         files: \.qml$
-        exclude: ^build/
         pass_filenames: true
+
+      - id: qmlformat
+        name: qmlformat (check)
+        entry: python3 ./tools/analyzers/qmlformat.py
+        language: system
+        files: \.qml$
+        stages: [manual]
 
       - id: clang-tidy
         name: Clang-Tidy static analysis
@@ -241,7 +266,7 @@ repos:
         stages: [manual]
         language: system
         types_or: [c++, c]
-        exclude: ^(build/|libs/|test/)
+        exclude: ^test/
         pass_filenames: true
 
       - id: cmake-format
@@ -250,7 +275,7 @@ repos:
         language: python
         additional_dependencies: ['cmakelang==0.6.13', 'pyyaml==6.0.3']
         files: (CMakeLists\.txt|\.cmake)$
-        exclude: ^(build/|libs/|cmake/modules/CPM\.cmake$)
+        exclude: ^cmake/modules/CPM\.cmake$
 
       - id: cmake-lint
         name: cmake-lint
@@ -258,7 +283,7 @@ repos:
         language: python
         additional_dependencies: ['cmakelang==0.6.13', 'pyyaml==6.0.3']
         files: (CMakeLists\.txt|\.cmake)$
-        exclude: ^(build/|libs/|cmake/modules/CPM\.cmake$)
+        exclude: ^cmake/modules/CPM\.cmake$
 
       - id: clazy
         name: Qt static analysis (clazy)
@@ -266,7 +291,7 @@ repos:
         stages: [manual]
         language: system
         types: [c++]
-        exclude: ^(build/|libs/|test/)
+        exclude: ^test/
         pass_filenames: true
 
       - id: check-no-qassert
@@ -316,7 +341,7 @@ repos:
         entry: python3 tools/analyzers/vehicle_null_check.py
         language: system
         types: [c++]
-        exclude: ^(build/|libs/|test/)
+        exclude: ^(test/|tools/tests/fixtures/)
         pass_filenames: true
 
       - id: qt-translate-noop-check
@@ -324,7 +349,7 @@ repos:
         entry: python3 tools/analyzers/qt_translate_noop_check.py
         language: system
         types: [c++]
-        exclude: ^(build/|libs/|test/)
+        exclude: ^test/
         pass_filenames: true
 
 exclude: ^build/

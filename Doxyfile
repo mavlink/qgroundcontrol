@@ -10,7 +10,7 @@ INPUT                  = src
 INPUT_ENCODING         = UTF-8
 FILE_PATTERNS          = *.h *.cc *.cpp *.hpp *.qml *.md
 RECURSIVE              = YES
-EXCLUDE_PATTERNS       = */test/* */libs/* */_deps/* */build/*
+EXCLUDE_PATTERNS       = */test/* */_deps/* */build/*
 
 # Output formats
 GENERATE_HTML          = YES
