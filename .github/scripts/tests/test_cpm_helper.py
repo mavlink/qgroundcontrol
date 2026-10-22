@@ -78,6 +78,25 @@ def test_fingerprint_includes_dependency_defaults_and_patches(tmp_path):
     assert changed != compute_cpm_fingerprint(tmp_path)
 
 
+def test_fingerprint_ignores_build_scripts_without_dependency_declarations(tmp_path):
+    (tmp_path / "cmake").mkdir()
+    (tmp_path / "src/Lib").mkdir(parents=True)
+    helpers = tmp_path / "cmake/Helpers.cmake"
+    sources = tmp_path / "src/CMakeLists.txt"
+    declaring = tmp_path / "src/Lib/Lib.cmake"
+    helpers.write_text("# Call after CPMAddPackage() with the target name\n")
+    sources.write_text("target_sources(QGC PRIVATE a.cc)\n")
+    declaring.write_text("CPMAddPackage(NAME lib VERSION 1)\n")
+    before = compute_cpm_fingerprint(tmp_path)
+
+    helpers.write_text("# Call after CPMAddPackage() with the library target name\n")
+    sources.write_text("target_sources(QGC PRIVATE a.cc b.cc)\n")
+    assert compute_cpm_fingerprint(tmp_path) == before
+
+    declaring.write_text("CPMAddPackage(NAME lib VERSION 2)\n")
+    assert compute_cpm_fingerprint(tmp_path) != before
+
+
 def _seed(tmp_path):
     import json
 

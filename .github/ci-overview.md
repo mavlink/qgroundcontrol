@@ -333,6 +333,9 @@ The shared moc cache holds every variant's entries, so the launcher's default
 so the saved archive stays small. Build jobs add the moc and compiler cache statistics to the
 job summary; `miss-cache-evicted` there means the limit is too small.
 CPM uses immutable dependency-fingerprint keys; unchanged snapshots are not saved again.
+The fingerprint covers CMake files that declare a dependency (`CPMAddPackage`, `CPMDeclarePackage`,
+`CPMFindPackage`, `FetchContent_Declare`), option defaults, presets, `build-config.json`, the CPM
+modules and patches, so ordinary build-script edits reuse the default branch's snapshot.
 PR and branch Release jobs first try an exact restore of the default-branch snapshot with the same
 fingerprint; when it exists they skip the scoped copy, so they only save CPM archives for changed dependencies.
 GStreamer SDKs have separate immutable caches and are excluded from CPM archives.

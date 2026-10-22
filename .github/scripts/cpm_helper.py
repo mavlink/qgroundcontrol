@@ -17,6 +17,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -31,31 +32,50 @@ ensure_tools_dir(__file__)
 from common.gh_actions import append_github_env, github_cache_path, write_github_output
 from common.io import write_json
 
+# A dependency declaration outside a comment
+_DEPENDENCY_DECLARATION = re.compile(
+    rb"^[^#\n]*\b(?:CPMAddPackage|CPMDeclarePackage|CPMFindPackage|FetchContent_Declare)\s*\(",
+    re.MULTILINE,
+)
+
+
+def _declares_dependency(path: Path) -> bool:
+    try:
+        return _DEPENDENCY_DECLARATION.search(path.read_bytes()) is not None
+    except OSError:
+        return False
+
 
 def compute_cpm_fingerprint(root: Path) -> str:
-    """Hash dependency declarations, option defaults, and source patches."""
+    """Hash dependency declarations, option defaults, and source patches.
+
+    Only CMake files that declare a dependency take part, so ordinary build-script
+    edits keep the fingerprint and reuse the default branch's source snapshot.
+    """
     candidates: list[Path] = []
     for exact in [
         root / "CMakeLists.txt",
         root / "CMakePresets.json",
+        root / "cmake/CustomOptions.cmake",
         root / "cmake/modules/CPM.cmake",
+        root / "cmake/modules/CPMPatchCache.cmake",
         root / ".github/build-config.json",
     ]:
         if exact.exists():
             candidates.append(exact)
 
-    for directory in ("cmake",):
-        base = root / directory
-        if base.exists():
-            candidates.extend(base.rglob("*.cmake"))
-            candidates.extend(base.rglob("*.patch"))
-            candidates.extend((base / "presets").glob("*.json"))
+    presets = root / "cmake/presets"
+    if presets.exists():
+        candidates.extend(presets.glob("*.json"))
 
-    for directory in ("src", "test"):
+    for directory in ("cmake", "src", "test"):
         base = root / directory
         if base.exists():
-            candidates.extend(base.rglob("CMakeLists.txt"))
             candidates.extend(base.rglob("*.patch"))
+            for pattern in ("CMakeLists.txt", "*.cmake"):
+                candidates.extend(
+                    path for path in base.rglob(pattern) if _declares_dependency(path)
+                )
 
     dep_files = [path for path in candidates if path.is_file()]
 
