@@ -16,7 +16,7 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
 permissions:
   contents: read
@@ -24,7 +24,7 @@ permissions:
 
 jobs:
   changes:
-    uses: ./.github/workflows/_detect-changes.yml
+    uses: $/.github/workflows/_detect-changes.yml
     with:
       platform: custom-build
 
@@ -39,9 +39,12 @@ jobs:
     runs-on: >-
       ${{
         github.repository_owner == 'mavlink' &&
-        format('runs-on={0}/runner={1}', github.run_id,
+        format('runs-on={0}-build-{1}-{2}/runner={3}{4}',
+          github.run_id, github.run_attempt, strategy.job-index,
           matrix.build-type == 'Debug' && 'linux-x64-tester' ||
-          vars.RUNS_ON_LINUX_BUILDER || 'linux-x64-builder-60gb') ||
+          vars.RUNS_ON_LINUX_BUILDER || 'linux-x64-builder-60gb',
+          github.event_name == 'pull_request' && (vars.RUNS_ON_SPOT_POOLS == 'true' && '-spot' ||
+            '/spot=cop/family=m8i.xlarge+r8i.xlarge+m7i.xlarge') || '') ||
         'ubuntu-24.04'
       }}
     timeout-minutes: 120
@@ -56,7 +59,9 @@ jobs:
         shell: bash
 
     steps:
+      # The Harden-Runner community tier audits GitHub-hosted runners only, not RunsOn.
       - name: Harden Runner
+        if: runner.environment == 'github-hosted'
         uses: step-security/harden-runner@v2
         with:
           egress-policy: audit
@@ -68,10 +73,8 @@ jobs:
           show-waiting-runner: true
 
       - name: Enable RunsOn magic cache
-        if: github.repository_owner == 'mavlink'
         uses: runs-on/action@v2
         with:
-          metrics: cpu,network,memory,disk,io
           show_costs: summary
 
       - name: Checkout
@@ -81,7 +84,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Build Environment
-        uses: ./.github/actions/build-setup
+        uses: $/.github/actions/build-setup
         with:
           qt-host: linux
           qt-arch: linux_gcc_64
@@ -90,10 +93,10 @@ jobs:
           cache-key-suffix: ${{ matrix.build-type == 'Debug' && 'custom-debug' || 'custom-release' }}
 
       - name: Install Dependencies
-        uses: ./.github/actions/install-dependencies
+        uses: $/.github/actions/install-dependencies
 
       - name: Configure
-        uses: ./.github/actions/cmake-configure
+        uses: $/.github/actions/cmake-configure
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ matrix.build-type }}
@@ -103,21 +106,19 @@ jobs:
 
       - name: Build
         id: build
-        uses: ./.github/actions/cmake-build
+        uses: $/.github/actions/cmake-build
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ matrix.build-type }}
 
       - name: Create AppImage
         if: matrix.build-type == 'Release'
-        uses: ./.github/actions/cmake-install
-        with:
-          build-dir: ${{ runner.temp }}/build
-          build-type: ${{ matrix.build-type }}
+        working-directory: ${{ runner.temp }}/build
+        run: cmake --install . --config Release
 
       - name: Verify Custom AppImage
         if: matrix.build-type == 'Release'
-        uses: ./.github/actions/verify-executable
+        uses: $/.github/actions/verify-executable
         with:
           binary-path: Custom-QGroundControl-x86_64.AppImage
           type: appimage
@@ -125,7 +126,7 @@ jobs:
 
       - name: Run and report tests
         if: ${{ !cancelled() && matrix.build-type == 'Debug' && steps.build.outcome == 'success' }}
-        uses: ./.github/actions/test-phase
+        uses: $/.github/actions/test-phase
         with:
           build-dir: ${{ runner.temp }}/build
           suite: custom
@@ -133,6 +134,27 @@ jobs:
           upload-codecov: ${{ vars.CODECOV_TEST_ANALYTICS == 'true' }}
 
       - name: Debug failed runner
-        if: ${{ failure() && !cancelled() && github.event_name == 'workflow_dispatch' && inputs.debug_runner && github.ref_type == 'branch' }}
+        if: ${{ failure() && !cancelled() && inputs.debug_runner && github.ref_type == 'branch' }}
         timeout-minutes: 15
-        uses: ./.github/actions/debug-runner
+        uses: $/.github/actions/debug-runner
+
+  # The required status check: a skipped matrix job reports an unexpanded name, so branch
+  # protection requires this stable name instead. always(): a skipped gate would count as passing.
+  custom-build-ok:
+    name: Custom Build
+    if: always()
+    needs: [changes, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Require every leg to pass
+        uses: re-actors/alls-green@v1.3.0
+        with:
+          allowed-skips: build
+          jobs: ${{ toJSON(needs) }}

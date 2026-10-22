@@ -5,17 +5,14 @@ on:
     branches:
       - master
       - 'Stable*'
-    paths:
+    paths: &docs-paths
       - 'docs/**'
       - 'package*.json'
       - '.nvmrc'
+      - '.github/build-config.json'
       - '.github/workflows/docs.yml'
   pull_request:
-    paths:
-      - 'docs/**'
-      - 'package*.json'
-      - '.nvmrc'
-      - '.github/workflows/docs.yml'
+    paths: *docs-paths
   workflow_dispatch:
 
 concurrency:
@@ -24,9 +21,6 @@ concurrency:
 
 permissions:
   contents: read
-
-env:
-  BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
 
 jobs:
   build:
@@ -81,17 +75,16 @@ jobs:
         with:
           sparse-checkout: |
             .github/actions
-            .github/scripts
+            tools/ci/publish
             tools/common
             tools/qgc_tools
           persist-credentials: false
 
       - name: Deploy docs
-        uses: ./.github/actions/deploy-docs
+        uses: $/.github/actions/deploy-docs
         with:
           artifact-name: qgc_docs_build
           target-repo: mavlink/docs.qgroundcontrol.com
           target-branch: master
           deploy-token: ${{ secrets.PX4BUILDBOT_ACCESSTOKEN }}
-          source-branch: ${{ env.BRANCH_NAME }}
           commit-message: 'QGC docs build update'

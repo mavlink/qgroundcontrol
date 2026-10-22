@@ -22,7 +22,34 @@
     "pep621",
     "pre-commit",
     "gradle",
-    "nvm"
+    "nvm",
+    "custom.regex"
+  ],
+  "customManagers": [
+    {
+      "description": "Docker variant base images; docker-compose.yml is generated from variants.json, so both update together",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^deploy/docker/variants\\.json$/",
+        "/^deploy/docker/docker-compose\\.yml$/"
+      ],
+      "matchStrings": [
+        "BASE_REF\"?: \"(?<depName>[^:\"]+):(?<currentValue>[^@\"]+)@(?<currentDigest>sha256:[a-f0-9]{64})\""
+      ],
+      "datasourceTemplate": "docker"
+    },
+    {
+      "description": "The uv required-version floor tracks the Dockerfile's uv image tag; tools/validate_configs.py requires them to match",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^tools/pyproject\\.toml$/"
+      ],
+      "matchStrings": [
+        "required-version = \">=(?<currentValue>[^\"]+)\""
+      ],
+      "depNameTemplate": "ghcr.io/astral-sh/uv",
+      "datasourceTemplate": "docker"
+    }
   ],
   "packageRules": [
     {
@@ -38,7 +65,7 @@
       "automerge": true
     },
     {
-      "description": "Combine every update except Android into one weekly PR; formatter and lint tool pins such as clang-format, ruff and pyright stay in step because they land together",
+      "description": "Combine every update except Android into one weekly PR, so coupled pins such as the uv required-version floor and the Dockerfile's uv image land together",
       "groupName": "all dependencies",
       "matchManagers": [
         "npm",
@@ -47,7 +74,8 @@
         "github-actions",
         "devcontainer",
         "dockerfile",
-        "nvm"
+        "nvm",
+        "custom.regex"
       ],
       "schedule": [
         "before 6am on monday"

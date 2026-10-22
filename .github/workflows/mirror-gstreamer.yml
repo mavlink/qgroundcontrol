@@ -60,11 +60,11 @@ jobs:
 
       - name: Build Config
         id: buildconfig
-        uses: ./.github/actions/build-config
+        uses: $/.github/actions/build-config
 
       - name: Configure AWS Credentials
         if: ${{ !inputs.dry_run }}
-        uses: ./.github/actions/aws-credentials
+        uses: $/.github/actions/aws-credentials
         with:
           aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
           aws-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -75,17 +75,9 @@ jobs:
         env:
           VERSION: ${{ inputs.version || steps.buildconfig.outputs.gstreamer_version }}
           PLATFORMS: ${{ inputs.platforms }}
-          DRY_RUN: ${{ inputs.dry_run && 'true' || 'false' }}
-          FORCE: ${{ inputs.force && 'true' || 'false' }}
-          WORK_DIR: ${{ runner.temp }}
+          DRY_RUN: ${{ inputs.dry_run && 'true' || '' }}
+          FORCE: ${{ inputs.force && 'true' || '' }}
           AWS_DEFAULT_REGION: us-west-2
         run: |
-          set -euo pipefail
-          args=(
-            --version "$VERSION"
-            --platforms "$PLATFORMS"
-            --work-dir "$WORK_DIR"
-          )
-          [[ "$DRY_RUN" == "true" ]] && args+=(--dry-run)
-          [[ "$FORCE" == "true" ]] && args+=(--force)
-          python3 "${GITHUB_WORKSPACE}/.github/scripts/mirror_gstreamer.py" "${args[@]}"
+          python3 "${GITHUB_WORKSPACE}/tools/ci/gstreamer/mirror_gstreamer.py" --version "$VERSION" \
+            --platforms "$PLATFORMS" --work-dir "$RUNNER_TEMP" ${DRY_RUN:+--dry-run} ${FORCE:+--force}

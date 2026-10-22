@@ -27,10 +27,7 @@ runs:
   steps:
     - name: Enable KVM
       shell: bash
-      run: |
-        echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-        sudo udevadm control --reload-rules
-        sudo udevadm trigger --name-match=kvm
+      run: python3 tools/ci/runner/enable_kvm.py
 
     # The runner executes each script line through sh -c, so inputs reach it as environment variables
     - name: Emulator Boot Test
@@ -58,7 +55,7 @@ runs:
 
           timeout 180s adb wait-for-device || (echo "::error::adb wait-for-device timed out before boot test." && exit 1)
 
-          python3 .github/scripts/android_boot_test.py --apk "$APK_PATH" --package "$APP_PACKAGE"
+          python3 tools/ci/android/android_boot_test.py --apk "$APK_PATH" --package "$APP_PACKAGE"
           --timeout 120 --stability-window 20 --adb-ready-timeout 180 --install-retries 4 --install-retry-delay 5
           --launch-retries 2 --log-output "$RUNNER_TEMP/qgc_emulator_boot.log"
 
@@ -68,7 +65,7 @@ runs:
       env:
         BUILD_DIR: ${{ inputs.build-dir }}
       run: |
-        python3 "${GITHUB_WORKSPACE}/.github/scripts/android_collect_diagnostics.py" \
+        python3 "${GITHUB_WORKSPACE}/tools/ci/android/android_collect_diagnostics.py" \
           --out-dir "${RUNNER_TEMP}/emulator-diagnostics" \
           --build-dir "${BUILD_DIR}" \
           --boot-log "${RUNNER_TEMP}/qgc_emulator_boot.log"

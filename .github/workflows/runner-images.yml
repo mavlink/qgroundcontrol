@@ -49,11 +49,10 @@ jobs:
           persist-credentials: false
           sparse-checkout: |
             .github/actions/aws-credentials
+            .github/actions/build-config
             .github/build-config.json
             .github/runner-images
-            .github/scripts/runner_image.py
-            .github/scripts/aws_upload.py
-            .github/scripts/ci_bootstrap.py
+            tools/ci/runner/runner_image.py
             tools/_bootstrap.py
             tools/common
             tools/qgc_tools
@@ -72,7 +71,7 @@ jobs:
           fi
 
       - name: Configure AWS Credentials
-        uses: ./.github/actions/aws-credentials
+        uses: $/.github/actions/aws-credentials
         with:
           aws-role-arn: ${{ secrets.RUNS_ON_AMI_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION || 'us-west-2' }}
@@ -84,12 +83,7 @@ jobs:
 
       - name: Resolve build configuration
         id: build-config
-        shell: bash
-        run: |
-          {
-            echo "qt_version=$(python3 tools/setup/read_config.py --get qt.version)"
-            echo "qt_modules=$(python3 tools/setup/read_config.py --get qt.modules)"
-          } >> "${GITHUB_OUTPUT}"
+        uses: $/.github/actions/build-config
 
       - name: Build runner image
         working-directory: .github/runner-images
@@ -111,7 +105,7 @@ jobs:
         env:
           REGION: ${{ vars.AWS_REGION || 'us-west-2' }}
         run: |
-          image=$(python3 .github/scripts/runner_image.py manifest --region "$REGION" --manifest .github/runner-images/packer-manifest.json)
+          image=$(python3 tools/ci/runner/runner_image.py manifest --region "$REGION" --manifest .github/runner-images/packer-manifest.json)
           echo "image=$image" >> "$GITHUB_OUTPUT"
 
       - name: Upload Packer manifest
@@ -125,41 +119,20 @@ jobs:
   smoke-test:
     name: Smoke Test Ubuntu 24 x64
     needs: ubuntu24-x64
-    if: github.repository_owner == 'mavlink'
-    runs-on: >-
-      ${{
-        github.repository_owner == 'mavlink' &&
-        (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) &&
-        format('runs-on={0}/runner=linux-x64-builder-prebaked/ami={1}', github.run_id, needs.ubuntu24-x64.outputs.image) ||
-        'ubuntu-24.04'
-      }}
+    runs-on: ${{ format('runs-on={0}/runner=linux-x64-builder-prebaked/ami={1}', github.run_id, needs.ubuntu24-x64.outputs.image) }}
     timeout-minutes: 10
 
     steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@v2
+      - name: Checkout
+        uses: actions/checkout@v7
         with:
-          egress-policy: audit
+          fetch-depth: 1
+          persist-credentials: false
+          sparse-checkout: tools/ci/runner/runner_image.py
+          sparse-checkout-cone-mode: false
 
       - name: Verify runner image
-        shell: bash
-        run: |
-          shopt -s nullglob
-          qt_roots=(/opt/qgc-sdk/Qt/*/gcc_64)
-          if (( ${#qt_roots[@]} != 1 )); then
-            echo "::error::Expected exactly one preinstalled Qt SDK, found ${#qt_roots[@]}"
-            exit 1
-          fi
-
-          qt_root="${qt_roots[0]}"
-          test -x "${qt_root}/bin/qt-cmake"
-          test -f "${qt_root}/.qgc-modules"
-          test -s /opt/qgc-sdk/cpm/manifest.json
-          test -d /opt/qgc-sdk/cpm/sources
-          "${qt_root}/bin/qt-cmake" --version
-          cmake --version
-          ninja --version
-          dpkg-query -W libgstreamer1.0-dev libxcb-cursor-dev patchelf
+        run: python3 tools/ci/runner/runner_image.py verify
 
   promote:
     name: Promote verified runner image
@@ -178,7 +151,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Configure AWS Credentials
-        uses: ./.github/actions/aws-credentials
+        uses: $/.github/actions/aws-credentials
         with:
           aws-role-arn: ${{ secrets.RUNS_ON_AMI_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION || 'us-west-2' }}
@@ -187,5 +160,5 @@ jobs:
           REGION: ${{ vars.AWS_REGION || 'us-west-2' }}
           CANDIDATE_IMAGE: ${{ needs.ubuntu24-x64.outputs.image }}
         run: |
-          python3 .github/scripts/runner_image.py promote --region "$REGION" --image "$CANDIDATE_IMAGE" --commit "$GITHUB_SHA"
-          python3 .github/scripts/runner_image.py cleanup --region "$REGION"
+          python3 tools/ci/runner/runner_image.py promote --region "$REGION" --image "$CANDIDATE_IMAGE" --commit "$GITHUB_SHA"
+          python3 tools/ci/runner/runner_image.py cleanup --region "$REGION"

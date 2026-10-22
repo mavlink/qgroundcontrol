@@ -88,10 +88,6 @@ jobs:
           sparse-checkout-cone-mode: false
           persist-credentials: false
 
-      - name: Build Config
-        id: buildconfig
-        uses: ./.github/actions/build-config
-
       - name: Install dependencies (Linux)
         if: inputs.platform == 'linux'
         run: |
@@ -125,7 +121,7 @@ jobs:
       # for the Qt SDK, Python environment, and compiler toolchain.
       - name: Build Setup
         if: inputs.platform == 'linux' || inputs.platform == 'macos' || inputs.platform == 'windows'
-        uses: ./.github/actions/build-setup
+        uses: $/.github/actions/build-setup
         with:
           qt-host: >-
             ${{
@@ -141,51 +137,37 @@ jobs:
               (inputs.platform == 'windows' && inputs.arch == 'arm64' && 'win64_msvc2022_arm64') ||
               (inputs.platform == 'windows' && 'win64_msvc2022_64')
             }}
-          qt-version: ${{ steps.buildconfig.outputs.qt_version }}
 
+      # Resolves the arch and install prefix once; the archive step reads them from this step's outputs.
       - name: Build GStreamer
+        id: build
         shell: bash
         env:
           PLATFORM: ${{ inputs.platform }}
           ARCH: ${{ inputs.arch }}
           VERSION: ${{ inputs.version }}
           BUILD_TYPE: ${{ inputs.build_type }}
-          SIMULATOR: ${{ inputs.simulator && 'true' || 'false' }}
-          QT_PREFIX: ${{ env.QT_ROOT_DIR }}
-          WORK_DIR: ${{ runner.temp }}
+          QT_PREFIX: ${{ (inputs.platform == 'macos' || inputs.platform == 'windows') && env.QT_ROOT_DIR || '' }}
+          WORK_DIR: ${{ inputs.platform == 'windows' && runner.temp || '' }}
+          SIMULATOR: ${{ inputs.platform == 'ios' && inputs.simulator && 'true' || '' }}
         run: |
           set -euo pipefail
           arch="$ARCH"
-          # Windows toolchain uses 'x64' / 'arm64' naming; map x86_64 here.
-          if [[ "$PLATFORM" == 'windows' && "$arch" == 'x86_64' ]]; then
-            arch='x64'
-          fi
-
+          prefix="$RUNNER_TEMP/gstreamer"
           if [[ "$PLATFORM" == 'windows' ]]; then
+            # The Windows toolchain names x86_64 'x64'.
+            arch="${arch/#x86_64/x64}"
             prefix="C:\\gstreamer-$arch"
-          else
-            prefix="$WORK_DIR/gstreamer"
           fi
+          printf 'arch=%s\nprefix=%s\n' "$arch" "$prefix" >> "$GITHUB_OUTPUT"
 
-          args=(
-            --platform "$PLATFORM"
-            --version "$VERSION"
-            --type "$BUILD_TYPE"
-            --prefix "$prefix"
-            --clean
-            --verify
-          )
-          # Linux build defaults to the host arch; the other platforms need --arch.
-          [[ "$PLATFORM" != 'linux' ]] && args+=(--arch "$arch")
-          [[ "$PLATFORM" =~ ^(macos|windows)$ ]] && args+=(--qt-prefix "$QT_PREFIX")
-          [[ "$PLATFORM" == 'windows' ]] && args+=(--work-dir "$WORK_DIR")
-          [[ "$PLATFORM" == 'ios' && "$SIMULATOR" == 'true' ]] && args+=(--simulator)
-
-          python3 ./tools/setup/build-gstreamer.py "${args[@]}"
+          python3 ./tools/setup/build_gstreamer.py --platform "$PLATFORM" --arch "$arch" \
+            --version "$VERSION" --type "$BUILD_TYPE" --prefix "$prefix" --qt-prefix "$QT_PREFIX" \
+            --work-dir "$WORK_DIR" ${SIMULATOR:+--simulator} --clean --verify
 
       - name: Configure AWS Credentials
         if: inputs.upload_s3
-        uses: ./.github/actions/aws-credentials
+        uses: $/.github/actions/aws-credentials
         with:
           aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
           aws-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -196,25 +178,16 @@ jobs:
         shell: bash
         env:
           PLATFORM: ${{ inputs.platform }}
-          ARCH: ${{ inputs.arch }}
+          ARCH: ${{ steps.build.outputs.arch }}
+          PREFIX: ${{ steps.build.outputs.prefix }}
           VERSION: ${{ inputs.version }}
-          OUTPUT_DIR: ${{ runner.temp }}
-          SIMULATOR: ${{ inputs.simulator && 'true' || 'false' }}
-          UPLOAD_S3: ${{ inputs.upload_s3 && 'true' || 'false' }}
-          WORKSPACE: ${{ github.workspace }}
+          SIMULATOR: ${{ inputs.platform == 'ios' && inputs.simulator && 'true' || '' }}
+          UPLOAD_S3: ${{ inputs.upload_s3 && 'true' || '' }}
           AWS_DEFAULT_REGION: us-west-2
         run: |
-          set -euo pipefail
-          args=(
-            --platform "$PLATFORM"
-            --arch "$ARCH"
-            --version "$VERSION"
-            --output-dir "$OUTPUT_DIR"
-          )
-          [[ "$SIMULATOR" == "true" ]] && args+=(--simulator)
-          [[ "$UPLOAD_S3" == "true" ]] && args+=(--upload-s3)
-
-          python3 "${WORKSPACE}/.github/scripts/gstreamer_archive.py" "${args[@]}"
+          python3 ./tools/ci/gstreamer/gstreamer_archive.py --platform "$PLATFORM" --arch "$ARCH" \
+            --version "$VERSION" --prefix "$PREFIX" --output-dir "$RUNNER_TEMP" \
+            ${SIMULATOR:+--simulator} ${UPLOAD_S3:+--upload-s3}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7

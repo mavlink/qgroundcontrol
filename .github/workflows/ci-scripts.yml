@@ -10,6 +10,7 @@ on:
       - '.clang*'
       - '.gitattributes'
       - '.editorconfig'
+      - '.editorconfig-checker.json'
       - '.releaserc.json'
       - '.nvmrc'
       - '.pre-commit-config.yaml'
@@ -61,7 +62,7 @@ jobs:
         with:
           fetch-depth: 1
           sparse-checkout: |
-            .github/.actionlint.yml
+            .github/actionlint.yml
             .github/workflows
             .github/actions
           sparse-checkout-cone-mode: false
@@ -70,7 +71,6 @@ jobs:
       - name: Run actionlint
         uses: reviewdog/action-actionlint@v1
         with:
-          actionlint_flags: -config-file .github/.actionlint.yml
           reporter: github-pr-check
           filter_mode: added
           fail_level: error
@@ -112,6 +112,120 @@ jobs:
           packer init qgc-ubuntu24-x64.pkr.hcl
           packer validate qgc-ubuntu24-x64.pkr.hcl
 
+  validate-runson-config:
+    name: Validate RunsOn Config
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          sparse-checkout: |
+            .github/runs-on.yml
+            .github/runner-images/windows-warm-pool.example.yml
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      # runs-on/cli's setup action has no checksum check and runs the binary before any verification.
+      - name: Install RunsOn CLI
+        env:
+          ROC_VERSION: v3.5.0
+          ROC_SHA256: c3bffa3ab059464c757e40ceec04550628e42b46d12ee4ce873742c4022bfdc5
+        run: |
+          curl --fail --silent --show-error --location --retry 3 --output "${RUNNER_TEMP}/roc" \
+            "https://github.com/runs-on/cli/releases/download/${ROC_VERSION}/roc_${ROC_VERSION}_linux_amd64"
+          echo "${ROC_SHA256}  ${RUNNER_TEMP}/roc" | sha256sum --check --strict
+          chmod +x "${RUNNER_TEMP}/roc"
+
+      - name: Lint RunsOn config
+        run: |
+          "${RUNNER_TEMP}/roc" lint .github/runs-on.yml
+          "${RUNNER_TEMP}/roc" lint .github/runner-images/windows-warm-pool.example.yml
+
+  validate-renovate-config:
+    name: Validate Renovate Config
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          sparse-checkout: |
+            .github/actions/setup-python
+            .github/renovate.json
+            .pre-commit-config.yaml
+            tools
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      # Renovate's validator installs Renovate from npm, so it runs only when its config or hook pin
+      # changes. Without a base commit (manual runs, new branches) it always runs.
+      - name: Detect Renovate config changes
+        id: changes
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          changed=true
+          if [[ -n "${BASE_SHA}" && "${BASE_SHA}" != 0000000000000000000000000000000000000000 ]] &&
+            git fetch --no-tags --depth=1 origin "${BASE_SHA}" &&
+            git diff --quiet "${BASE_SHA}" HEAD -- .github/renovate.json .pre-commit-config.yaml; then
+            changed=false
+          fi
+          echo "changed=${changed}" >> "${GITHUB_OUTPUT}"
+
+      - name: Setup Python
+        if: steps.changes.outputs.changed == 'true'
+        uses: $/.github/actions/setup-python
+        with:
+          groups: precommit
+
+      - name: Restore prek environment
+        if: steps.changes.outputs.changed == 'true'
+        id: pre-commit-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            ~/.cache/prek
+            !~/.cache/prek/cache
+          key: prek-renovate-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.pre-commit-config.yaml') }}
+          restore-keys: |
+            prek-renovate-v1-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Validate Renovate config
+        if: steps.changes.outputs.changed == 'true'
+        run: prek run renovate-config-validator --hook-stage manual --files .github/renovate.json
+
+      # Drops environments for older Renovate pins restored through restore-keys.
+      - name: Prune unused prek environments
+        if: >-
+          steps.changes.outputs.changed == 'true' && github.event_name == 'push' &&
+          steps.pre-commit-cache.outputs.cache-hit != 'true'
+        continue-on-error: true
+        run: prek cache gc
+
+      - name: Save prek environment
+        if: >-
+          steps.changes.outputs.changed == 'true' && github.event_name == 'push' &&
+          steps.pre-commit-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            ~/.cache/prek
+            !~/.cache/prek/cache
+          key: ${{ steps.pre-commit-cache.outputs.cache-primary-key }}
+
   test-ci-scripts:
     name: Test CI Scripts (py${{ matrix.python-version }})
     runs-on: ubuntu-latest
@@ -119,7 +233,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.10', '3.12']
+        include:
+          - python-version: '3.10'
+            groups: test
+          # One leg installs numpy and rasterio so test_terrain_pipeline.py runs instead of skipping.
+          - python-version: '3.12'
+            groups: test,terrain
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@v2
@@ -132,14 +251,17 @@ jobs:
           fetch-depth: 1
           sparse-checkout: |
             .clusterfuzzlite
+            .clang-tidy
             .github
             .vscode
+            .editorconfig-checker.json
             .gitattributes
             .releaserc.json
             .pre-commit-config.yaml
             CMakeLists.txt
             CMakePresets.json
             cmake
+            docs/.vitepress/config.mjs
             justfile
             src/AppSettings/pages
             src/Settings
@@ -150,16 +272,16 @@ jobs:
           persist-credentials: false
 
       - name: Setup Python
-        uses: ./.github/actions/setup-python
+        uses: $/.github/actions/setup-python
         with:
-          groups: scripts,test
+          groups: ${{ matrix.groups }}
           python-version: ${{ matrix.python-version }}
 
       - name: Python syntax smoke test
-        run: python3 -m compileall .github/scripts tools/*.py tools/setup tools/common tools/qgc_tools tools/generators tools/analyzers tools/simulation tools/translations
+        run: python3 -m compileall tools/*.py tools/ci tools/setup tools/common tools/qgc_tools tools/generators tools/analyzers tools/debuggers tools/simulation tools/terrain tools/translations
 
       - name: Run CI script tests
-        run: pytest -q tools/tests .github/scripts/tests
+        run: pytest -q -n auto tools/tests
 
   test-tools-windows:
     name: Test Python Tools (Windows)
@@ -176,7 +298,7 @@ jobs:
         with:
           fetch-depth: 1
           sparse-checkout: |
-            .github/actions/setup-python
+            .github
             cmake/Helpers.cmake
             cmake/ccache-launcher.cmd.in
             tools
@@ -184,17 +306,14 @@ jobs:
           persist-credentials: false
 
       - name: Setup Python
-        uses: ./.github/actions/setup-python
+        uses: $/.github/actions/setup-python
         with:
           groups: test
           python-version: '3.12'
 
-      - name: Run environment, process, download, and cache tests
-        run: >-
-          pytest -q tools/tests/test_moccache.py tools/tests/test_install_python.py
-          tools/tests/test_deps.py tools/tests/test_tool_version.py tools/tests/test_net.py
-          tools/tests/test_proc.py tools/tests/test_install_qt.py tools/tests/test_ccache_launcher.py
-          tools/tests/test_gh_actions.py
+      # Collection imports every test module, so contract tests need .github in the checkout.
+      - name: Run Windows-marked tests
+        run: pytest -q -m windows tools/tests
 
   lint-python:
     name: Lint Python
@@ -210,7 +329,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup Python
-        uses: ./.github/actions/setup-python
+        uses: $/.github/actions/setup-python
         with:
           groups: dev
           python-version: '3.10'
@@ -226,10 +345,10 @@ jobs:
           npm test --prefix tools/release
       - name: Ruff
         run: |
-          ruff check tools .github/scripts .github/runner-images .clusterfuzzlite deploy test/ADSB/ADSB_Simulator.py
-          ruff format --check tools .github/scripts .github/runner-images .clusterfuzzlite deploy test/ADSB/ADSB_Simulator.py
+          ruff check tools .github/runner-images .clusterfuzzlite deploy test/ADSB/ADSB_Simulator.py
+          ruff format --check tools .github/runner-images .clusterfuzzlite deploy test/ADSB/ADSB_Simulator.py
       - name: Pyright
         run: pyright
       - name: Import boundaries
         working-directory: tools
-        run: lint-imports --config pyproject.toml
+        run: lint-imports

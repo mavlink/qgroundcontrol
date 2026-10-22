@@ -5,16 +5,13 @@ on:
     # GitHub requires literal workflow names here (no expressions). Keep this
     # list in sync with build-config.json's `platform_workflows` plus any
     # non-platform triggers (pre-commit). Drift is enforced by
-    # .github/scripts/tests/test_platform_workflow_names.py.
+    # tools/tests/ci/contracts/test_platform_workflow_names.py.
     workflows: [Linux, Windows, MacOS, Android, pre-commit]
     types: [completed]
 
 permissions:
   contents: read
   actions: read
-
-env:
-  QGC_GH_API_MODE: http
 
 jobs:
   load-config:
@@ -28,6 +25,7 @@ jobs:
     outputs:
       platform_workflows: ${{ steps.read.outputs.platform_workflows }}
       pr: ${{ steps.context.outputs.pr }}
+      base_sha: ${{ steps.context.outputs.base_sha }}
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@v2
@@ -37,8 +35,7 @@ jobs:
         with:
           sparse-checkout: |
             .github/build-config.json
-            .github/scripts/report_context.py
-            .github/scripts/ci_bootstrap.py
+            tools/ci/reporting/report_context.py
             tools/_bootstrap.py
             tools/setup/read_config.py
             tools/common
@@ -50,17 +47,13 @@ jobs:
         id: read
         run: |
           value=$(python3 tools/setup/read_config.py --get build.platform_workflows)
-          if [[ -z "$value" || "$value" == "null" ]]; then
-            echo "::error::platform_workflows missing from build-config.json"
-            exit 1
-          fi
-          echo "platform_workflows=${value}" >> "$GITHUB_OUTPUT"
+          echo "platform_workflows=${value:?platform_workflows is empty in build-config.json}" >> "$GITHUB_OUTPUT"
 
       - name: Resolve report context
         id: context
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python3 .github/scripts/report_context.py
+        run: python3 tools/ci/reporting/report_context.py
 
   post-pr-comment:
     name: Post Build Results
@@ -85,44 +78,34 @@ jobs:
         with:
           egress-policy: audit
 
-      - name: Checkout local actions
+      # The job's only checkout. collect_build_status.py needs only the standard library, so it
+      # gates the job before Python dependencies are installed.
+      - &checkout-build-results
+        name: Checkout build-results scripts
         uses: actions/checkout@v7
         with:
           sparse-checkout: |
-            .github/actions/gate-platform-workflows
-            .github/actions/build-results-bootstrap
-            .github/scripts/check_baseline_ready.py
-            .github/scripts/report_context.py
-            .github/scripts/ci_bootstrap.py
+            .github/actions/download-all-artifacts
+            .github/actions/setup-python
+            tools/ci/__init__.py
+            tools/ci/reporting/__init__.py
+            tools/ci/reporting/collect_build_status.py
+            tools/ci/reporting/download_artifacts.py
+            tools/ci/reporting/generate_build_results_comment.py
+            tools/ci/reporting/report_context.py
+            tools/ci/reporting/templates/build_results.md.j2
+            tools/ci/reporting/workflow_runs.py
             tools/_bootstrap.py
             tools/common
             tools/qgc_tools
+            tools/pyproject.toml
+            tools/uv.lock
+            tools/setup/install_python.py
           sparse-checkout-cone-mode: false
           fetch-depth: 1
           persist-credentials: false
 
-      - name: Get PR number
-        id: pr
-        env:
-          PR_NUMBER: ${{ needs.load-config.outputs.pr }}
-        run: echo "result=$PR_NUMBER" >> "$GITHUB_OUTPUT"
-
-      - name: Check if all platform workflows are complete
-        id: gate
-        if: steps.pr.outputs.result != ''
-        uses: ./.github/actions/gate-platform-workflows
-        with:
-          platform-workflows: ${{ needs.load-config.outputs.platform_workflows }}
-          head-sha: ${{ github.event.workflow_run.head_sha }}
-          event: pull_request
-          runs-cache-path: ${{ runner.temp }}/workflow-runs-cache.json
-
-      - name: Bootstrap (checkout + Python deps)
-        if: steps.pr.outputs.result != '' && steps.gate.outputs.ready == 'true'
-        uses: ./.github/actions/build-results-bootstrap
-
       - name: Collect build status
-        if: steps.pr.outputs.result != '' && steps.gate.outputs.ready == 'true'
         id: builds
         env:
           PLATFORM_WORKFLOWS: ${{ needs.load-config.outputs.platform_workflows }}
@@ -131,19 +114,22 @@ jobs:
           HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
           RUNS_CACHE: ${{ runner.temp }}/workflow-runs-cache.json
         run: |
-          python3 "${GITHUB_WORKSPACE}/.github/scripts/collect_build_status.py" \
+          python3 "${GITHUB_WORKSPACE}/tools/ci/reporting/collect_build_status.py" \
             --repo "$REPO" \
             --head-sha "$HEAD_SHA" \
             --platform-workflows "${PLATFORM_WORKFLOWS}" \
             --event pull_request \
-            --runs-input "${RUNS_CACHE}" \
             --runs-cache "$RUNS_CACHE"
 
+      - name: Install Python dependencies
+        if: steps.builds.outputs.ready == 'true'
+        uses: $/.github/actions/setup-python
+        with:
+          groups: scripts
+
       - name: Download artifacts from all platform workflows
-        id: download
-        if: steps.pr.outputs.result != '' && steps.builds.outputs.all_complete == 'true'
-        continue-on-error: true
-        uses: ./.github/actions/download-all-artifacts
+        if: steps.builds.outputs.ready == 'true'
+        uses: $/.github/actions/download-all-artifacts
         with:
           include-failed: 'true'
           allow-missing: 'true'
@@ -152,29 +138,11 @@ jobs:
           event: pull_request
           runs-file: ${{ runner.temp }}/workflow-runs-cache.json
           artifact-prefixes: coverage-report,test-results-
-          artifact-metadata-file: workflow-artifacts.json
-
-      - name: Stop if artifact download failed
-        if: steps.pr.outputs.result != '' && steps.download.outcome == 'failure'
-        run: |
-          echo "::error::Artifact download failed; skipping combined report generation."
-          exit 1
-
-      - name: Collect artifact sizes
-        if: steps.pr.outputs.result != '' && steps.builds.outputs.all_complete == 'true'
-        uses: ./.github/actions/collect-artifact-sizes
-        with:
-          head-sha: ${{ github.event.workflow_run.head_sha }}
-          workflows: ${{ needs.load-config.outputs.platform_workflows }}
-          event: pull_request
-          output-file: pr-sizes.json
-          runs-file: ${{ runner.temp }}/workflow-runs-cache.json
-          artifacts-file: workflow-artifacts.json
+          sizes-file: pr-sizes.json
 
       - name: Download pre-commit results artifact
         if: >-
-          steps.pr.outputs.result != '' &&
-          steps.builds.outputs.all_complete == 'true' &&
+          steps.builds.outputs.ready == 'true' &&
           steps.builds.outputs.precommit_run_id != ''
         continue-on-error: true
         uses: actions/download-artifact@v8
@@ -184,100 +152,54 @@ jobs:
           name: pre-commit-results
           path: artifacts/pre-commit-results
 
-      - name: Resolve baseline revision
-        id: baseline
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-          PR_NUMBER: ${{ steps.pr.outputs.result }}
-        run: |
-          sha=$(gh api "repos/$GH_REPO/pulls/$PR_NUMBER" --jq .base.sha)
-          echo "sha=$sha" >> "$GITHUB_OUTPUT"
-
       - name: Restore baseline snapshot
-        if: steps.builds.outputs.all_complete == 'true'
+        if: steps.builds.outputs.ready == 'true'
         uses: actions/cache/restore@v6
         continue-on-error: true
         with:
           path: |
             baseline-sizes.json
-            baseline-coverage.xml
-            baseline-context.json
-          key: build-baseline-v2-${{ steps.baseline.outputs.sha }}
+            baseline-coverage-summary.json
+          key: build-baseline-v2-${{ needs.load-config.outputs.base_sha }}
           restore-keys: |
-            build-baseline-v2-${{ steps.baseline.outputs.sha }}-
+            build-baseline-v2-${{ needs.load-config.outputs.base_sha }}-
             build-baseline-v2-
 
       - name: Generate combined report
-        if: steps.pr.outputs.result != '' && steps.gate.outputs.ready == 'true'
+        if: steps.builds.outputs.ready == 'true'
         env:
           BUILD_TABLE: ${{ steps.builds.outputs.table }}
           BUILD_SUMMARY: ${{ steps.builds.outputs.summary }}
           PRECOMMIT_STATUS: ${{ steps.builds.outputs.precommit_status }}
           PRECOMMIT_URL: ${{ steps.builds.outputs.precommit_url }}
           PRECOMMIT_RESULTS_PATH: artifacts/pre-commit-results/pre-commit-results.json
-          TEST_RESULTS_GLOB: artifacts/test-results-*/test-output*.txt
-          COVERAGE_XML: artifacts/coverage-report/coverage.xml
-          BASELINE_COVERAGE_XML: baseline-coverage.xml
+          COVERAGE_SUMMARY: artifacts/coverage-report/coverage-summary.json
+          BASELINE_COVERAGE_SUMMARY: baseline-coverage-summary.json
           PR_SIZES_JSON: pr-sizes.json
           BASELINE_SIZES_JSON: baseline-sizes.json
-          BASELINE_SHA: ${{ steps.baseline.outputs.sha }}
+          BASELINE_SHA: ${{ needs.load-config.outputs.base_sha }}
           TRIGGERED_BY: ${{ github.event.workflow_run.name }}
           COMMIT_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
-          python3 "${GITHUB_WORKSPACE}/.github/scripts/generate_build_results_comment.py" \
+          python3 "${GITHUB_WORKSPACE}/tools/ci/reporting/generate_build_results_comment.py" \
             --base-dir "${GITHUB_WORKSPACE}" \
             --output comment.md
           cat comment.md
 
       - name: Recheck PR head before publishing
         id: current
-        if: steps.gate.outputs.ready == 'true'
+        if: steps.builds.outputs.ready == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python3 .github/scripts/report_context.py
-
-      - name: Deduplicate prior build-results comments
-        if: steps.current.outputs.current == 'true'
-        uses: actions/github-script@v9
-        env:
-          PR_NUMBER: ${{ steps.pr.outputs.result }}
-        with:
-          script: |
-            const issue_number = Number(process.env.PR_NUMBER);
-            if (!Number.isInteger(issue_number) || issue_number <= 0) {
-              return;
-            }
-
-            const marker = 'thollander/actions-comment-pull-request "build-results"';
-            const comments = await github.paginate(
-              github.rest.issues.listComments,
-              {
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number,
-                per_page: 100
-              }
-            );
-
-            const tagged = comments
-              .filter(c => c.user?.type === 'Bot' && c.body?.includes(marker))
-              .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-            for (const comment of tagged.slice(1)) {
-              await github.rest.issues.deleteComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: comment.id
-              });
-            }
+        run: python3 tools/ci/reporting/report_context.py
 
       - name: Post combined comment
         if: steps.current.outputs.current == 'true'
         uses: thollander/actions-comment-pull-request@v3
         with:
-          pr-number: ${{ steps.pr.outputs.result }}
+          pr-number: ${{ needs.load-config.outputs.pr }}
           comment-tag: build-results
+          mode: upsert
           file-path: comment.md
 
   save-baselines:
@@ -292,9 +214,6 @@ jobs:
       group: save-baselines
       cancel-in-progress: false
     timeout-minutes: 10
-    permissions:
-      actions: read
-      contents: read
 
     steps:
       - name: Harden Runner
@@ -302,77 +221,53 @@ jobs:
         with:
           egress-policy: audit
 
-      - name: Checkout local actions
-        uses: actions/checkout@v7
-        with:
-          sparse-checkout: |
-            .github/actions/gate-platform-workflows
-            .github/actions/build-results-bootstrap
-            .github/scripts/check_baseline_ready.py
-            .github/scripts/report_context.py
-            .github/scripts/ci_bootstrap.py
-            tools/_bootstrap.py
-            tools/common
-            tools/qgc_tools
-          sparse-checkout-cone-mode: false
-          fetch-depth: 1
-          persist-credentials: false
+      - *checkout-build-results
 
       - name: Check if all platform workflows succeeded
         id: gate
-        uses: ./.github/actions/gate-platform-workflows
-        with:
-          platform-workflows: ${{ needs.load-config.outputs.platform_workflows }}
-          head-sha: ${{ github.event.workflow_run.head_sha }}
-          event: push
-          require-success: 'true'
-          runs-cache-path: ${{ runner.temp }}/workflow-runs-cache.json
+        env:
+          PLATFORM_WORKFLOWS: ${{ needs.load-config.outputs.platform_workflows }}
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          RUNS_CACHE: ${{ runner.temp }}/workflow-runs-cache.json
+        run: |
+          python3 "${GITHUB_WORKSPACE}/tools/ci/reporting/collect_build_status.py" \
+            --repo "$REPO" \
+            --head-sha "$HEAD_SHA" \
+            --platform-workflows "${PLATFORM_WORKFLOWS}" \
+            --event push \
+            --require-success \
+            --runs-cache "$RUNS_CACHE"
 
-      - name: Bootstrap (checkout + Python deps)
-        if: steps.gate.outputs.ready == 'true'
-        uses: ./.github/actions/build-results-bootstrap
-
+      # Every script in this job uses only the standard library, so it installs no Python
+      # dependencies. An empty size list writes no baseline-sizes.json, so the next step fails.
       - name: Download artifacts from all platform workflows
         if: steps.gate.outputs.ready == 'true'
         continue-on-error: true
-        uses: ./.github/actions/download-all-artifacts
+        uses: $/.github/actions/download-all-artifacts
         with:
           head-sha: ${{ github.event.workflow_run.head_sha }}
           workflows: ${{ needs.load-config.outputs.platform_workflows }}
           event: push
           runs-file: ${{ runner.temp }}/workflow-runs-cache.json
           artifact-prefixes: coverage-report,test-results-
-          artifact-metadata-file: workflow-artifacts.json
-
-      - name: Collect artifact sizes
-        if: steps.gate.outputs.ready == 'true'
-        uses: ./.github/actions/collect-artifact-sizes
-        with:
-          head-sha: ${{ github.event.workflow_run.head_sha }}
-          workflows: ${{ needs.load-config.outputs.platform_workflows }}
-          event: push
-          output-file: baseline-sizes.json
-          require-artifacts: 'true'
-          runs-file: ${{ runner.temp }}/workflow-runs-cache.json
-          artifacts-file: workflow-artifacts.json
+          sizes-file: baseline-sizes.json
+          require-sizes: 'true'
 
       - name: Prepare immutable baseline
         if: steps.gate.outputs.ready == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           test -f baseline-sizes.json
-          test -f artifacts/coverage-report/coverage.xml
-          cp artifacts/coverage-report/coverage.xml baseline-coverage.xml
-          cp "$RUNNER_TEMP/workflow-runs-cache.json" baseline-context.json
+          test -f artifacts/coverage-report/coverage-summary.json
+          cp artifacts/coverage-report/coverage-summary.json baseline-coverage-summary.json
 
       - name: Recheck default branch before publishing
         id: current
         if: steps.gate.outputs.ready == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python3 .github/scripts/report_context.py
+        run: python3 tools/ci/reporting/report_context.py
 
       - name: Publish immutable baseline
         if: steps.current.outputs.current == 'true'
@@ -380,6 +275,5 @@ jobs:
         with:
           path: |
             baseline-sizes.json
-            baseline-coverage.xml
-            baseline-context.json
+            baseline-coverage-summary.json
           key: build-baseline-v2-${{ github.event.workflow_run.head_sha }}-${{ github.run_id }}-${{ github.run_attempt }}

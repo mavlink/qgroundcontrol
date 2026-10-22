@@ -31,221 +31,64 @@ inputs:
     description: "Whether to save cache (auto = save including PR merge refs; skip pull_request_target)"
     required: false
     default: 'auto'
+  pr-save-min-misses:
+    description: >-
+      Pull requests skip saving the compiler or moc cache when the build missed it fewer
+      times than this, since each save uploads the whole archive (0 = always save).
+      Other events always save.
+    required: false
+    default: '20'
 runs:
   using: composite
   steps:
-    - name: Resolve save-cache
-      id: cache-policy
+    # One process resolves the save policy, cache scope, keys and cache environment; the
+    # steps below only install tools and restore or save what it selected. It also picks
+    # the compiler cache: the job's QGC_COMPILER_CACHE=sccache selects the RunsOn sccache
+    # pilot when runs-on/action exported its S3 bucket (QGC_COMPILER_CACHE_TOOL).
+    - name: Plan caches
+      id: plan
       shell: bash
       env:
-        EVENT_NAME: ${{ github.event_name }}
-        PR_REPO: ${{ github.event.pull_request.head.repo.full_name }}
-        THIS_REPO: ${{ github.repository }}
-        REQUESTED: ${{ inputs.save-cache }}
-      run: python3 "${GITHUB_WORKSPACE}/.github/scripts/cache_policy.py" --requested "${REQUESTED}"
-
-    - name: Determine cache scope
-      id: cache-scope
-      shell: bash
-      env:
-        EVENT_NAME: ${{ github.event_name }}
-        REF_NAME: ${{ github.ref_name }}
+        INPUT_HOST: ${{ inputs.host }}
+        INPUT_TARGET: ${{ inputs.target }}
+        INPUT_BUILD_TYPE: ${{ inputs.build-type }}
+        INPUT_VARIANT: ${{ inputs.variant }}
+        INPUT_KEY_SUFFIX: ${{ inputs.key-suffix }}
+        INPUT_CPM_MODULES: ${{ inputs.cpm-modules }}
+        INPUT_SAVE_CACHE: ${{ inputs.save-cache }}
+        INPUT_PR_SAVE_MIN_MISSES: ${{ inputs.pr-save-min-misses }}
         PR_NUMBER: ${{ github.event.pull_request.number }}
-      run: python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" scope --event-name "${EVENT_NAME}" --ref-name "${REF_NAME}" --pr-number "${PR_NUMBER:-}"
+        COMPILER_CACHE_HASH: ${{ hashFiles('.github/build-config.json', 'tools/configs/ccache.conf') }}
+        MOC_CACHE_HASH: ${{ hashFiles('.github/build-config.json', 'cmake/Helpers.cmake', 'tools/moccache.py') }}
+        GST_SDK_FILES_HASH: ${{ hashFiles('cmake/GStreamer/Download.cmake', 'cmake/GStreamer/platform/*.cmake') }}
+      run: python3 "${GITHUB_WORKSPACE}/tools/ci/cache/cache_plan.py"
 
-    - name: Get ccache config
-      id: ccache-config
+    # Pinned ccache for the runner's OS and architecture, plus mold on Linux and, for the
+    # sccache pilot, sccache as the compiler launcher; macOS and Windows install under
+    # RUNNER_TEMP and add it to PATH.
+    - name: Install compiler tools
+      if: inputs.install-tools == 'true'
       shell: bash
-      run: |
-        python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" config \
-          --target "${INPUTS_TARGET}" \
-          --conf "${GITHUB_WORKSPACE}/tools/configs/ccache.conf"
-      env:
-        INPUTS_TARGET: ${{ inputs.target }}
-
-    - name: Install ccache (Linux)
-      if: inputs.install-tools == 'true' && runner.os == 'Linux'
-      shell: bash
-      run: |
-        python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" install \
-          --version "${STEPS_CCACHE_CONFIG_OUTPUTS_VERSION}" \
-          --arch "${STEPS_CCACHE_CONFIG_OUTPUTS_ARCH}"
-      env:
-        STEPS_CCACHE_CONFIG_OUTPUTS_VERSION: ${{ steps.ccache-config.outputs.version }}
-        STEPS_CCACHE_CONFIG_OUTPUTS_ARCH: ${{ steps.ccache-config.outputs.arch }}
-
-    - name: Install mold (Linux)
-      if: inputs.install-tools == 'true' && runner.os == 'Linux'
-      shell: bash
-      run: |
-        python3 "${GITHUB_WORKSPACE}/.github/scripts/mold_helper.py" install \
-          --arch "${STEPS_CCACHE_CONFIG_OUTPUTS_ARCH}"
-      env:
-        STEPS_CCACHE_CONFIG_OUTPUTS_ARCH: ${{ steps.ccache-config.outputs.arch }}
-
-    - name: Resolve macOS ccache SHA256
-      if: inputs.install-tools == 'true' && runner.os == 'macOS'
-      id: mac-ccache
-      shell: bash
-      run: python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" macos-config
-
-    - name: Install ccache (macOS)
-      if: inputs.install-tools == 'true' && runner.os == 'macOS'
-      shell: bash
-      env:
-        CCACHE_VERSION: ${{ steps.ccache-config.outputs.version }}
-        CCACHE_MAC_SHA256: ${{ steps.mac-ccache.outputs.sha256 }}
-      run: | # zizmor: ignore[github-env] writes a fixed RUNNER_TEMP path; not attacker-controllable
-        # A dedicated prefix keeps /usr/local/bin (system python3) from shadowing tools/.venv on PATH.
-        prefix="${RUNNER_TEMP}/ccache"
-        python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" install-macos \
-          --version "${CCACHE_VERSION}" \
-          --sha256 "${CCACHE_MAC_SHA256}" \
-          --prefix "${prefix}"
-        "${prefix}/bin/ccache" --version
-        echo "${prefix}/bin" >> "$GITHUB_PATH"
-        echo "QGC_CACHE_PROGRAM=${prefix}/bin/ccache" >> "$GITHUB_ENV"
-
-    - name: Determine Windows ccache arch
-      if: inputs.install-tools == 'true' && runner.os == 'Windows'
-      id: win-ccache
-      shell: bash
-      run: python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" windows-config --host "${INPUTS_HOST}" --target "${INPUTS_TARGET}"
-      env:
-        INPUTS_HOST: ${{ inputs.host }}
-        INPUTS_TARGET: ${{ inputs.target }}
-
-    - name: Install ccache (Windows)
-      if: inputs.install-tools == 'true' && runner.os == 'Windows'
-      shell: bash
-      env:
-        CCACHE_VERSION: ${{ steps.ccache-config.outputs.version }}
-        CCACHE_ARCH: ${{ steps.win-ccache.outputs.arch }}
-        CCACHE_WIN_SHA256: ${{ steps.win-ccache.outputs.sha256 }}
-      run: |
-        python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" install-windows \
-          --version "${CCACHE_VERSION}" \
-          --arch "${CCACHE_ARCH}" \
-          --sha256 "${CCACHE_WIN_SHA256}" \
-          --runner-temp "${RUNNER_TEMP//\\//}"
-
-    - name: Add ccache to PATH (Windows)
-      if: inputs.install-tools == 'true' && runner.os == 'Windows'
-      shell: bash
-      env:
-        CCACHE_VERSION: ${{ steps.ccache-config.outputs.version }}
-        CCACHE_ARCH: ${{ steps.win-ccache.outputs.arch }}
-      run: python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" add-windows-path --version "${CCACHE_VERSION}" --arch "${CCACHE_ARCH}" --runner-temp "${RUNNER_TEMP//\\//}"
-
-    - name: Configure ccache environment
-      shell: bash
-      env:
-        CONFIGURED_MAX_SIZE: ${{ steps.ccache-config.outputs.max_size }}
-        HOST: ${{ inputs.host }}
-        BUILD_TYPE: ${{ inputs.build-type }}
-        VARIANT: ${{ inputs.variant }}
-      run: |
-        python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" configure-env \
-          --workspace "${GITHUB_WORKSPACE//\\//}" \
-          --max-size "${CONFIGURED_MAX_SIZE}" \
-          --backend "${QGC_ACTIONS_CACHE_BACKEND:-github}" \
-          --host "$HOST" --build-type "$BUILD_TYPE" --variant "$VARIANT"
-
-    - name: Configure CPM source cache
-      if: inputs.cpm-modules != ''
-      id: cpm-cache
-      shell: bash
-      env:
-        CPM_MODULES_INPUT: ${{ inputs.cpm-modules }}
-      run: python3 "${GITHUB_WORKSPACE}/.github/scripts/cpm_helper.py" configure-cache --path "${CPM_MODULES_INPUT}"
-
-    - name: Compute CPM dependency fingerprint
-      if: inputs.cpm-modules != ''
-      id: cpm-key
-      shell: bash
-      run: python3 "${GITHUB_WORKSPACE}/.github/scripts/cpm_helper.py" fingerprint --root "${GITHUB_WORKSPACE}"
-
-    - name: Build cache key prefixes
-      id: cache-keys
-      shell: bash
-      env:
-        HOST: ${{ inputs.host }}
-        TARGET: ${{ inputs.target }}
-        BUILD_TYPE: ${{ inputs.build-type }}
-        VARIANT: ${{ inputs.variant }}
-        KEY_SUFFIX: ${{ inputs.key-suffix }}
-        SCOPE: ${{ steps.cache-scope.outputs.scope }}
-        CCACHE_HASH: ${{ hashFiles('.github/build-config.json', 'tools/configs/ccache.conf') }}
-        MOCCACHE_HASH: ${{ hashFiles('.github/build-config.json', 'cmake/Helpers.cmake', 'tools/moccache.py') }}
-        CPM_FINGERPRINT: ${{ steps.cpm-key.outputs.fingerprint }}
-      run: |
-        variant_suffix="${VARIANT:+-${VARIANT}}"
-        key_suffix="${KEY_SUFFIX:+-${KEY_SUFFIX}}"
-        ccache_base="ccache-${HOST}-${TARGET}-${BUILD_TYPE}${variant_suffix}"
-        moccache_base="moccache-${HOST}-${TARGET}-${SCOPE}"
-        cpm_base="cpm-sources-v2-${HOST}-${TARGET}${key_suffix}"
-        {
-          echo "ccache_key=${ccache_base}${key_suffix}-${SCOPE}-${CCACHE_HASH}"
-          echo "ccache_scope=${ccache_base}${key_suffix}-${SCOPE}-"
-          echo "ccache_legacy_scope=${ccache_base}-${SCOPE}-"
-          echo "ccache_shared=${ccache_base}${key_suffix}-shared-"
-          echo "ccache_legacy_shared=${ccache_base}-shared-"
-          echo "ccache_unvaried_shared=${VARIANT:+ccache-${HOST}-${TARGET}-${BUILD_TYPE}-shared-}"
-          echo "moccache_key=${moccache_base}-${MOCCACHE_HASH}-${BUILD_TYPE}${variant_suffix}${key_suffix}"
-          echo "moccache_hash=${moccache_base}-${MOCCACHE_HASH}-"
-          echo "moccache_scope=${moccache_base}-"
-          echo "moccache_shared=moccache-${HOST}-${TARGET}-shared-"
-          # Artifact snapshots are found by exact name, so names leave out the config hashes that
-          # the dependency-cache keys carry; ccache and moccache entries are content-addressed.
-          echo "artifact_ccache=${ccache_base}${key_suffix}-${SCOPE}"
-          echo "artifact_moccache=${moccache_base}-${BUILD_TYPE}${variant_suffix}${key_suffix}"
-          echo "artifact_ccache_shared=${ccache_base}${key_suffix}-shared"
-          echo "artifact_moccache_shared=moccache-${HOST}-${TARGET}-shared-${BUILD_TYPE}${variant_suffix}${key_suffix}"
-          echo "cpm_key=${cpm_base}-${SCOPE}-${CPM_FINGERPRINT}"
-          echo "cpm_scope=${cpm_base}-${SCOPE}-"
-          echo "cpm_shared=${cpm_base}-shared-"
-          echo "cpm_shared_key=${cpm_base}-shared-${CPM_FINGERPRINT}"
-          echo "cpm_unvaried_scope=cpm-sources-v2-${HOST}-${TARGET}-${SCOPE}-"
-          echo "cpm_unvaried_shared=cpm-sources-v2-${HOST}-${TARGET}-shared-"
-        } >> "$GITHUB_OUTPUT"
-
-    - name: Select compiler cache storage
-      shell: bash
-      env:
-        COMPILER_KEY: ${{ steps.cache-keys.outputs.artifact_ccache }}
-        MOC_KEY: ${{ steps.cache-keys.outputs.artifact_moccache }}
-        COMPILER_SHARED_KEY: ${{ steps.cache-keys.outputs.artifact_ccache_shared }}
-        MOC_SHARED_KEY: ${{ steps.cache-keys.outputs.artifact_moccache_shared }}
-      run: python3 .github/scripts/build_cache_artifact.py configure
+      run: python3 "${GITHUB_WORKSPACE}/tools/ci/cache/ccache_helper.py" install
 
     - name: Restore compiler cache artifact
       id: artifact-cache
       if: env.QGC_BUILD_CACHE_ARTIFACT == 'true'
+      continue-on-error: true
       shell: bash
       env:
         GH_TOKEN: ${{ github.token }}
-      run: python3 .github/scripts/build_cache_artifact.py restore
+      run: python3 tools/ci/cache/build_cache_artifact.py restore
 
     # The dependency cache remains a migration/default-branch fallback. RunsOn
     # redirects these actions to S3 and keeps using its existing storage route.
     - name: Restore Build Cache (ccache)
-      if: steps.artifact-cache.outputs.restored != 'true'
+      if: steps.artifact-cache.outputs.restored != 'true' && env.QGC_COMPILER_CACHE_TOOL == 'ccache'
       uses: actions/cache/restore@v6
       with:
         path: .ccache
-        key: ${{ steps.cache-keys.outputs.ccache_key }}-${{ github.run_id }}-${{ github.run_attempt }}
-        restore-keys: |
-          ${{ steps.cache-keys.outputs.ccache_key }}-
-          ${{ steps.cache-keys.outputs.ccache_scope }}
-          ${{ steps.cache-keys.outputs.ccache_legacy_scope }}
-          ${{ steps.cache-keys.outputs.ccache_shared }}
-          ${{ steps.cache-keys.outputs.ccache_legacy_shared }}
-          ${{ steps.cache-keys.outputs.ccache_unvaried_shared }}
-
-    - name: Initialize ccache stats
-      if: inputs.install-tools == 'true'
-      shell: bash
-      run: ccache -z
+        key: ${{ steps.plan.outputs.ccache_key }}
+        restore-keys: ${{ steps.plan.outputs.ccache_restore_keys }}
 
     # moccache entries are content-addressed and basedir-normalized, so they
     # are safe to share across build types and branches; keys exist only for
@@ -263,34 +106,22 @@ runs:
       uses: actions/cache/restore@v6
       with:
         path: .cache/moccache
-        key: ${{ steps.cache-keys.outputs.moccache_key }}-${{ github.run_id }}-${{ github.run_attempt }}
-        restore-keys: |
-          ${{ steps.cache-keys.outputs.moccache_hash }}
-          ${{ steps.cache-keys.outputs.moccache_scope }}
-          ${{ steps.cache-keys.outputs.moccache_shared }}
+        key: ${{ steps.plan.outputs.moccache_key }}
+        restore-keys: ${{ steps.plan.outputs.moccache_restore_keys }}
 
-    # Record per-run moc hit/miss stats; a restored cache may carry the
-    # previous run's stats.log, so reset it for accurate numbers.
-    - name: Enable moccache stats
+    # Restored caches carry the previous run's statistics; reset them so the
+    # build summary and the PR save gate count this job's hits and misses. The
+    # sccache server starts with the first compile, and with empty statistics.
+    - name: Reset cache statistics
       shell: bash
       env:
+        RESET_CCACHE: ${{ inputs.install-tools == 'true' && env.QGC_COMPILER_CACHE_TOOL == 'ccache' }}
         MOCCACHE_DIR: ${{ github.workspace }}/.cache/moccache
       run: |
-        echo "MOCCACHE_STATS=1" >> "$GITHUB_ENV"
+        if [[ "${RESET_CCACHE}" == true ]]; then
+          ccache -z
+        fi
         python3 "${GITHUB_WORKSPACE}/tools/moccache.py" --zero-stats
-
-    - name: Export compiler cache save keys
-      shell: bash
-      env:
-        SAVE_CACHE: ${{ steps.cache-policy.outputs.scoped_save }}
-        CCACHE_KEY: ${{ steps.cache-keys.outputs.ccache_key }}-${{ github.run_id }}-${{ github.run_attempt }}
-        MOCCACHE_KEY: ${{ steps.cache-keys.outputs.moccache_key }}-${{ github.run_id }}-${{ github.run_attempt }}
-      run: |
-        {
-          echo "QGC_SAVE_BUILD_CACHE=$SAVE_CACHE"
-          echo "QGC_CCACHE_KEY=$CCACHE_KEY"
-          echo "QGC_MOCCACHE_KEY=$MOCCACHE_KEY"
-        } >> "$GITHUB_ENV"
 
     # SDK payloads change independently of source declarations and are large.
     # Keep them out of the CPM archive and reuse an immutable SDK cache.
@@ -302,18 +133,8 @@ runs:
     # checksums without its downloaded archive. actions/cache archives a
     # matched directory whole, so the paths match each SDK directory's entries
     # for the exclusions to apply.
-    - name: Compute GStreamer SDK fingerprint
-      id: gst-sdk-key
-      if: >-
-        inputs.cpm-modules != '' &&
-        (startsWith(inputs.target, 'win') || inputs.target == 'android' || inputs.target == 'ios')
-      shell: bash
-      run: python3 "${GITHUB_WORKSPACE}/.github/scripts/cpm_helper.py" gstreamer-fingerprint --root "${GITHUB_WORKSPACE}"
-
     - name: Cache GStreamer SDK (restore and save)
-      if: >-
-        inputs.cpm-modules != '' && steps.cache-policy.outputs.save == 'true' && inputs.build-type == 'Release' &&
-        (startsWith(inputs.target, 'win') || inputs.target == 'android' || inputs.target == 'ios')
+      if: steps.plan.outputs.gst_mode == 'save'
       uses: actions/cache@v6
       with:
         path: |
@@ -321,12 +142,10 @@ runs:
           !${{ env.CPM_CACHE_PATH }}/gstreamer*/*.tar.xz
           !${{ env.CPM_CACHE_PATH }}/gstreamer*/*.exe
           !${{ env.CPM_CACHE_PATH }}/gstreamer*/*.pkg
-        key: gst-sdk-v1-${{ inputs.host }}-${{ inputs.target }}-${{ steps.gst-sdk-key.outputs.fingerprint }}-${{ hashFiles('cmake/GStreamer/Download.cmake', 'cmake/GStreamer/platform/*.cmake') }}
+        key: ${{ steps.plan.outputs.gst_key }}
 
     - name: Cache GStreamer SDK (restore only)
-      if: >-
-        inputs.cpm-modules != '' && (steps.cache-policy.outputs.save != 'true' || inputs.build-type != 'Release') &&
-        (startsWith(inputs.target, 'win') || inputs.target == 'android' || inputs.target == 'ios')
+      if: steps.plan.outputs.gst_mode == 'restore'
       uses: actions/cache/restore@v6
       with:
         path: |
@@ -334,7 +153,7 @@ runs:
           !${{ env.CPM_CACHE_PATH }}/gstreamer*/*.tar.xz
           !${{ env.CPM_CACHE_PATH }}/gstreamer*/*.exe
           !${{ env.CPM_CACHE_PATH }}/gstreamer*/*.pkg
-        key: gst-sdk-v1-${{ inputs.host }}-${{ inputs.target }}-${{ steps.gst-sdk-key.outputs.fingerprint }}-${{ hashFiles('cmake/GStreamer/Download.cmake', 'cmake/GStreamer/platform/*.cmake') }}
+        key: ${{ steps.plan.outputs.gst_key }}
 
     # Release populates immutable dependency snapshots. Debug jobs can also
     # restore the ordinary platform sources when their custom cache is absent.
@@ -342,56 +161,42 @@ runs:
     # this fingerprint, restore it exactly instead of saving a duplicate scoped copy
     # that would evict shared caches. Scoped restore-keys could match an older
     # scoped snapshot first, so this step has none. PRs on GitHub storage never save
-    # a scoped copy (scoped_save) and fall back to the newest default-branch snapshot.
+    # a scoped copy (cpm_mode is restore) and fall back to the newest default-branch snapshot.
     - name: Restore default-branch CPM snapshot
       id: cpm-shared
-      if: >-
-        inputs.cpm-modules != '' && steps.cache-policy.outputs.save == 'true' && inputs.build-type == 'Release' &&
-        steps.cache-scope.outputs.scope != 'shared'
+      if: steps.plan.outputs.cpm_shared_probe == 'true'
       uses: actions/cache/restore@v6
       with:
         path: |
           ${{ env.CPM_CACHE_PATH }}/*
           !${{ env.CPM_CACHE_PATH }}/gstreamer*
-        key: ${{ steps.cache-keys.outputs.cpm_shared_key }}
+        key: ${{ steps.plan.outputs.cpm_shared_key }}
 
     - name: Cache CPM Modules (restore and save)
-      if: >-
-        inputs.cpm-modules != '' && steps.cache-policy.outputs.scoped_save == 'true' && inputs.build-type == 'Release' &&
-        steps.cpm-shared.outputs.cache-hit != 'true'
+      if: steps.plan.outputs.cpm_mode == 'save' && steps.cpm-shared.outputs.cache-hit != 'true'
       uses: actions/cache@v6
       with:
         # Nested composite step outputs are unavailable during post-job saves.
         path: |
           ${{ env.CPM_CACHE_PATH }}/*
           !${{ env.CPM_CACHE_PATH }}/gstreamer*
-        key: ${{ steps.cache-keys.outputs.cpm_key }}
-        restore-keys: |
-          ${{ steps.cache-keys.outputs.cpm_scope }}
-          ${{ steps.cache-keys.outputs.cpm_shared }}
-          ${{ steps.cache-keys.outputs.cpm_unvaried_scope }}
-          ${{ steps.cache-keys.outputs.cpm_unvaried_shared }}
+        key: ${{ steps.plan.outputs.cpm_key }}
+        restore-keys: ${{ steps.plan.outputs.cpm_restore_keys }}
 
     - name: Cache CPM Modules (restore only)
-      if: >-
-        inputs.cpm-modules != '' && (steps.cache-policy.outputs.scoped_save != 'true' || inputs.build-type != 'Release') &&
-        steps.cpm-shared.outputs.cache-hit != 'true'
+      if: steps.plan.outputs.cpm_mode == 'restore' && steps.cpm-shared.outputs.cache-hit != 'true'
       uses: actions/cache/restore@v6
       with:
         path: |
           ${{ env.CPM_CACHE_PATH }}/*
           !${{ env.CPM_CACHE_PATH }}/gstreamer*
-        key: ${{ steps.cache-keys.outputs.cpm_key }}
-        restore-keys: |
-          ${{ steps.cache-keys.outputs.cpm_scope }}
-          ${{ steps.cache-keys.outputs.cpm_shared }}
-          ${{ steps.cache-keys.outputs.cpm_unvaried_scope }}
-          ${{ steps.cache-keys.outputs.cpm_unvaried_shared }}
+        key: ${{ steps.plan.outputs.cpm_key }}
+        restore-keys: ${{ steps.plan.outputs.cpm_restore_keys }}
 
     - name: Seed an empty CPM cache from the runner image
-      if: inputs.cpm-modules != '' && env.QGC_PREINSTALLED_CPM_DIR != ''
+      if: steps.plan.outputs.cpm_mode != '' && env.QGC_PREINSTALLED_CPM_DIR != ''
       shell: bash
       run: >-
-        python3 "${GITHUB_WORKSPACE}/.github/scripts/cpm_helper.py" seed-cache
+        python3 "${GITHUB_WORKSPACE}/tools/ci/cache/cpm_helper.py" seed-cache
         --root "${GITHUB_WORKSPACE}" --path "${CPM_SOURCE_CACHE}"
         --seed "${QGC_PREINSTALLED_CPM_DIR}"

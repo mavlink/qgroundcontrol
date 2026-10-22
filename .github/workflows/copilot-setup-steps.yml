@@ -1,0 +1,66 @@
+name: Copilot Setup Steps
+
+# Prepares the Copilot cloud agent's environment the way AGENTS.md expects (`just configure`,
+# `just build`, `just test`, `just lint`). Runs on changes to this file so failures show up in review.
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+
+permissions:
+  contents: read
+
+jobs:
+  # Copilot only picks up a job with exactly this name, and ignores job settings other than
+  # steps, permissions, runs-on, services, snapshot and timeout-minutes (59 at most).
+  copilot-setup-steps:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 59
+
+    permissions:
+      contents: read
+      # build-setup's cache action reads the default branch's compiler snapshot artifacts when this
+      # workflow checks itself on push/PR; Copilot sessions (event "dynamic") restore only Qt and CPM.
+      actions: read
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Build Setup
+        uses: $/.github/actions/build-setup
+        with:
+          qt-host: linux
+          qt-arch: linux_gcc_64
+          build-type: Debug
+          save-cache: 'false'
+          python-groups: dev
+
+      - name: Install Dependencies
+        uses: $/.github/actions/install-dependencies
+
+      - name: Restore prek environments
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            ~/.cache/prek
+            !~/.cache/prek/cache
+          key: prek-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.pre-commit-config.yaml') }}
+          restore-keys: |
+            prek-v1-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Configure
+        run: just configure

@@ -14,9 +14,6 @@ outputs:
   gstreamer_version:
     description: GStreamer version (generic/minimum)
     value: ${{ steps.read.outputs.gstreamer_version }}
-  android_ndk_version:
-    description: Android NDK version (short form)
-    value: ${{ steps.read.outputs.android_ndk_version }}
   android_ndk_full_version:
     description: Android NDK version (full form for sdkmanager)
     value: ${{ steps.read.outputs.android_ndk_full_version }}
@@ -41,15 +38,6 @@ outputs:
   apple_xcode_ios_version:
     description: Xcode version (iOS)
     value: ${{ steps.read.outputs.apple_xcode_ios_version }}
-  apple_macos_deployment_target:
-    description: macOS deployment target version
-    value: ${{ steps.read.outputs.apple_macos_deployment_target }}
-  apple_ios_deployment_target:
-    description: iOS deployment target version
-    value: ${{ steps.read.outputs.apple_ios_deployment_target }}
-  build_platform_workflows:
-    description: Comma-separated platform workflow names
-    value: ${{ steps.read.outputs.build_platform_workflows }}
 
 runs:
   using: composite

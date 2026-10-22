@@ -28,16 +28,10 @@ permissions:
   actions: read
 
 jobs:
-  changes:
-    uses: ./.github/workflows/_detect-changes.yml
-    with:
-      platform: docker-linux docker-android
-
+  # Change detection and the release-tag gate run in-process (detect_changes.py).
   plan-builds:
     name: Plan Docker Builds
     runs-on: ubuntu-latest
-    needs: changes
-    if: always() && !cancelled()
     timeout-minutes: 5
     outputs:
       matrix: ${{ steps.plan.outputs.matrix }}
@@ -48,17 +42,20 @@ jobs:
         with:
           egress-policy: audit
 
+      # PR diffs fetch their base and head commits on demand. Tags need full
+      # history and branch refs for the Stable* release-tag check.
       - name: Checkout planner
         uses: actions/checkout@v7
         with:
-          fetch-depth: 0
+          fetch-depth: ${{ github.ref_type != 'tag' && 1 || 0 }}
           sparse-checkout: |
-            .github/scripts/plan_docker_builds.py
-            .github/scripts/detect_changes.py
-            .github/scripts/ci_bootstrap.py
             deploy/docker/variants.json
             deploy/docker/_variants.py
             tools/_bootstrap.py
+            tools/ci/__init__.py
+            tools/ci/planning/__init__.py
+            tools/ci/planning/detect_changes.py
+            tools/ci/planning/plan_docker_builds.py
             tools/common
             tools/qgc_tools
           sparse-checkout-cone-mode: false
@@ -70,22 +67,22 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          LINUX: ${{ needs.changes.outputs.docker_linux }}
-          ANDROID: ${{ needs.changes.outputs.docker_android }}
-          SHOULD_BUILD: ${{ needs.changes.outputs.should_build }}
-        run: python3 "${GITHUB_WORKSPACE}/.github/scripts/plan_docker_builds.py"
+        run: python3 "${GITHUB_WORKSPACE}/tools/ci/planning/plan_docker_builds.py"
 
   build:
     name: Docker ${{ matrix.platform }}
     runs-on: >-
       ${{
         github.repository_owner == 'mavlink' &&
-        format('runs-on={0}/runner={1}', github.run_id,
-          vars.RUNS_ON_LINUX_BUILDER || 'linux-x64-builder') ||
+        format('runs-on={0}-build-{1}-{2}/runner={3}{4}',
+          github.run_id, github.run_attempt, strategy.job-index,
+          vars.RUNS_ON_LINUX_BUILDER || 'linux-x64-builder',
+          github.event_name == 'pull_request' && (vars.RUNS_ON_SPOT_POOLS == 'true' && '-spot' ||
+            '/spot=cop/family=c8i.xlarge+m8i.xlarge+c7i.xlarge+m7i.xlarge') || '') ||
         'ubuntu-latest'
       }}
-    needs: [changes, plan-builds]
-    if: always() && !cancelled() && needs.plan-builds.outputs.has_jobs == 'true'
+    needs: plan-builds
+    if: needs.plan-builds.outputs.has_jobs == 'true'
     timeout-minutes: 120
     permissions:
       actions: read
@@ -102,7 +99,9 @@ jobs:
         shell: bash
 
     steps:
+      # The Harden-Runner community tier audits GitHub-hosted runners only, not RunsOn.
       - name: Harden Runner
+        if: runner.environment == 'github-hosted'
         uses: step-security/harden-runner@v2
         with:
           egress-policy: audit
@@ -114,10 +113,8 @@ jobs:
           show-waiting-runner: true
 
       - name: Enable RunsOn magic cache
-        if: github.repository_owner == 'mavlink'
         uses: runs-on/action@v2
         with:
-          metrics: cpu,network,memory,disk,io
           show_costs: summary
 
       - name: Checkout
@@ -128,7 +125,7 @@ jobs:
           persist-credentials: false
 
       - name: Free Disk Space
-        uses: ./.github/actions/free-disk-space
+        uses: $/.github/actions/free-disk-space
 
       - name: Resolve push target
         id: push-target
@@ -138,29 +135,29 @@ jobs:
           REPO: ${{ github.repository }}
           REF: ${{ github.ref }}
         run: >-
-          python3 "${GITHUB_WORKSPACE}/.github/scripts/docker_helper.py" resolve-push-target
+          python3 "${GITHUB_WORKSPACE}/tools/ci/compile/docker_helper.py" resolve-push-target
           --event-name "${EVENT_NAME}"
           --repo "${REPO}"
           --ref "${REF}"
 
       - name: Build with Docker
         id: docker-build
-        uses: ./.github/actions/docker
+        uses: $/.github/actions/docker
         with:
           target: ${{ matrix.target }}
           variant: ${{ matrix.variant }}
           build-args: ${{ matrix.build_args }}
           fuse: ${{ matrix.fuse }}
-          docker-username: ${{ secrets.DOCKERHUB_USERNAME }}
-          docker-token: ${{ secrets.DOCKERHUB_TOKEN }}
+          # PR builds run PR-controlled Dockerfiles and dependencies; keep the Docker Hub token off them.
+          docker-username: ${{ github.event_name != 'pull_request' && secrets.DOCKERHUB_USERNAME || '' }}
+          docker-token: ${{ github.event_name != 'pull_request' && secrets.DOCKERHUB_TOKEN || '' }}
           push-image: ${{ steps.push-target.outputs.ref }}
 
       - name: Find build artifact
         id: artifact
         run: >-
-          python3 "${GITHUB_WORKSPACE}/.github/scripts/find_artifact.py"
+          python3 "${GITHUB_WORKSPACE}/tools/ci/packaging/find_artifact.py"
           --build-dir "${{ github.workspace }}/build"
-          --required
           --pattern "${MATRIX_ARTIFACT_PATTERN}"
         env:
           MATRIX_ARTIFACT_PATTERN: ${{ matrix.artifact_pattern }}
@@ -168,7 +165,6 @@ jobs:
       # Per-distro artifact: `variant` keys the name so the parallel matrix entries
       # (linux, linux-debian, linux-fedora, linux-arch, ...) don't collide.
       - name: Upload build artifact
-        if: steps.artifact.outputs.found == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: qgroundcontrol-${{ matrix.variant }}
@@ -184,16 +180,15 @@ jobs:
         id: package
         if: matrix.package_pattern != ''
         run: >-
-          python3 "${GITHUB_WORKSPACE}/.github/scripts/find_artifact.py"
+          python3 "${GITHUB_WORKSPACE}/tools/ci/packaging/find_artifact.py"
           --build-dir "${{ github.workspace }}/build"
           --top-level
-          --required
           --pattern "${MATRIX_PACKAGE_PATTERN}"
         env:
           MATRIX_PACKAGE_PATTERN: ${{ matrix.package_pattern }}
 
       - name: Validate native package lifecycle
-        if: matrix.package_pattern != '' && steps.package.outputs.found == 'true'
+        if: matrix.package_pattern != ''
         shell: bash
         env:
           IMAGE: dronecode/qgroundcontrol:${{ matrix.variant }}
@@ -205,47 +200,34 @@ jobs:
             -v "${GITHUB_WORKSPACE}:/project/source:ro" \
             -v "${package_dir}:/packages:ro" \
             "${IMAGE}" \
-            /project/source/deploy/docker/validate_native_package.py "/packages/${package_name}"
+            /project/source/tools/ci/packaging/validate_native_package.py --install "/packages/${package_name}"
 
       - name: Verify native package checksum
         id: package-checksum
-        if: matrix.package_pattern != '' && steps.package.outputs.found == 'true'
+        if: matrix.package_pattern != ''
         shell: bash
         env:
           PACKAGE_PATH: ${{ steps.package.outputs.path }}
         run: |
-          set -euo pipefail
-          package_dir=$(dirname "${PACKAGE_PATH}")
-          package_name=$(basename "${PACKAGE_PATH}")
-          checksum_path="${PACKAGE_PATH}.sha256"
-          checksum_name="${package_name}.sha256"
-
-          # CPack must emit DEB/RPM checksums. Arch's makepkg has no equivalent,
-          # so produce the same sidecar before verifying and publishing it.
-          if [[ ! -f "${checksum_path}" ]]; then
-            if [[ "${package_name}" != *.pkg.tar.zst ]]; then
-              echo "::error::Native package checksum is missing: ${checksum_path}"
-              exit 1
-            fi
-            (cd "${package_dir}" && sha256sum "${package_name}" > "${checksum_name}")
-          fi
-          (cd "${package_dir}" && sha256sum --check "${checksum_name}")
-          echo "path=${checksum_path}" >> "${GITHUB_OUTPUT}"
+          args=(--source-path "${PACKAGE_PATH}")
+          # CPack must emit DEB/RPM checksums; Arch's makepkg has no equivalent, so its sidecar is written here.
+          [[ "${PACKAGE_PATH}" == *.pkg.tar.zst ]] || args+=(--require-existing)
+          python3 "${GITHUB_WORKSPACE}/tools/ci/publish/attest_helper.py" checksum "${args[@]}"
 
       - name: Upload native package
-        if: matrix.package_pattern != '' && steps.package.outputs.found == 'true'
+        if: matrix.package_pattern != ''
         uses: actions/upload-artifact@v7
         with:
           name: qgroundcontrol-${{ matrix.variant }}-package
           path: |
             ${{ steps.package.outputs.path }}
-            ${{ steps.package-checksum.outputs.path }}
+            ${{ steps.package-checksum.outputs.checksum }}
           if-no-files-found: error
           retention-days: 14
 
       # SBOM generation and vulnerability scans run on pushes and manual runs; PRs skip them.
       - name: Generate CPM dependency SBOM
-        if: github.event_name != 'pull_request' && steps.artifact.outputs.found == 'true'
+        if: github.event_name != 'pull_request'
         env:
           IMAGE: dronecode/qgroundcontrol:${{ matrix.variant }}
         run: >-
@@ -253,11 +235,11 @@ jobs:
           --entrypoint /opt/qgc-venv/bin/python
           -v "${GITHUB_WORKSPACE}:/project/source:ro"
           -v "${GITHUB_WORKSPACE}/build:/project/build:ro"
-          "${IMAGE}" /project/source/.github/scripts/generate_cpm_sbom.py
+          "${IMAGE}" /project/source/tools/ci/security/generate_cpm_sbom.py
           --build-dir /project/build --require-components > cpm-sbom.cdx.json
 
       - name: Generate CPM dependency snapshot
-        if: github.event_name != 'pull_request' && matrix.variant == 'linux' && steps.artifact.outputs.found == 'true'
+        if: github.event_name != 'pull_request' && matrix.variant == 'linux'
         env:
           IMAGE: dronecode/qgroundcontrol:${{ matrix.variant }}
         run: >-
@@ -265,11 +247,11 @@ jobs:
           --entrypoint /opt/qgc-venv/bin/python
           -v "${GITHUB_WORKSPACE}:/project/source:ro"
           -v "${GITHUB_WORKSPACE}/build:/project/build:ro"
-          "${IMAGE}" /project/source/.github/scripts/generate_cpm_sbom.py
+          "${IMAGE}" /project/source/tools/ci/security/generate_cpm_sbom.py
           --build-dir /project/build --format spdx --require-components > cpm-sbom.spdx.json
 
       - name: Upload CPM dependency snapshot
-        if: github.event_name != 'pull_request' && matrix.variant == 'linux' && steps.artifact.outputs.found == 'true'
+        if: github.event_name != 'pull_request' && matrix.variant == 'linux'
         uses: actions/upload-artifact@v7
         with:
           name: cpm-dependency-snapshot
@@ -278,13 +260,13 @@ jobs:
           retention-days: 7
 
       - name: Install Grype
-        if: github.event_name != 'pull_request' && steps.artifact.outputs.found == 'true'
+        if: github.event_name != 'pull_request'
         id: install-grype
         timeout-minutes: 5
-        run: python3 .github/scripts/install_grype.py
+        run: python3 tools/ci/security/install_grype.py
 
       - name: Scan SBOM with Grype
-        if: github.event_name != 'pull_request' && steps.artifact.outputs.found == 'true'
+        if: github.event_name != 'pull_request'
         id: grype
         uses: anchore/scan-action@v7
         with:
@@ -296,14 +278,14 @@ jobs:
           output-format: sarif
 
       - name: Upload Grype results to GitHub Security
-        if: github.event_name != 'pull_request' && steps.artifact.outputs.found == 'true'
+        if: github.event_name != 'pull_request'
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: ${{ steps.grype.outputs.sarif }}
           category: 'grype-${{ matrix.platform }}'
 
       - name: Generate builder image SBOM
-        if: github.event_name != 'pull_request' && steps.artifact.outputs.found == 'true'
+        if: github.event_name != 'pull_request'
         uses: anchore/sbom-action@v0
         with:
           image: dronecode/qgroundcontrol:${{ matrix.variant }}
@@ -313,7 +295,7 @@ jobs:
           upload-release-assets: false
 
       - name: Scan builder image
-        if: github.event_name != 'pull_request' && steps.artifact.outputs.found == 'true'
+        if: github.event_name != 'pull_request'
         id: grype-image
         uses: anchore/scan-action@v7
         with:
@@ -325,7 +307,7 @@ jobs:
           output-format: sarif
 
       - name: Upload image scan to GitHub Security
-        if: github.event_name != 'pull_request' && steps.artifact.outputs.found == 'true'
+        if: github.event_name != 'pull_request'
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: ${{ steps.grype-image.outputs.sarif }}
@@ -352,9 +334,9 @@ jobs:
           retention-days: 7
 
       - name: Debug failed runner
-        if: ${{ failure() && !cancelled() && github.event_name == 'workflow_dispatch' && inputs.debug_runner && github.ref_type == 'branch' }}
+        if: ${{ failure() && !cancelled() && inputs.debug_runner && github.ref_type == 'branch' }}
         timeout-minutes: 15
-        uses: ./.github/actions/debug-runner
+        uses: $/.github/actions/debug-runner
 
   attest-images:
     name: Attest ${{ matrix.platform }} Image

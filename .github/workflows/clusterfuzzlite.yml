@@ -4,17 +4,13 @@ on:
   push:
     branches:
       - master
-    paths:
+    paths: &fuzz-paths
       - '.clusterfuzzlite/**'
       - '.github/workflows/clusterfuzzlite.yml'
       - 'cmake/CustomOptions.cmake'
       - 'test/Fuzz/**'
   pull_request:
-    paths:
-      - '.clusterfuzzlite/**'
-      - '.github/workflows/clusterfuzzlite.yml'
-      - 'cmake/CustomOptions.cmake'
-      - 'test/Fuzz/**'
+    paths: *fuzz-paths
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

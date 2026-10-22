@@ -12,12 +12,10 @@ on:
 permissions:
   contents: read
 
-env:
-  BRANCH_NAME: ${{ github.ref_name }}
-
+# Deploying runs share one queue; each PR gets its own group so PRs never displace each other.
 concurrency:
-  group: doxygen-deploy
-  cancel-in-progress: false
+  group: ${{ github.event_name == 'pull_request' && format('doxygen-{0}', github.ref) || 'doxygen-deploy' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
@@ -36,7 +34,7 @@ jobs:
 
       - name: Install Doxygen and Graphviz
         run: |
-          python3 .github/scripts/apt_install_retry.py \
+          python3 tools/ci/runner/apt_install_retry.py \
             --update \
             --no-install-recommends \
             --install-timeout 300 \
@@ -70,8 +68,7 @@ jobs:
         with:
           sparse-checkout: |
             .github/actions/deploy-docs
-            .github/scripts/ci_bootstrap.py
-            .github/scripts/deploy_docs.py
+            tools/ci/publish/deploy_docs.py
             tools/_bootstrap.py
             tools/common
             tools/qgc_tools
@@ -79,11 +76,10 @@ jobs:
           persist-credentials: false
 
       - name: Deploy docs
-        uses: ./.github/actions/deploy-docs
+        uses: $/.github/actions/deploy-docs
         with:
           artifact-name: doxygen_build
           target-repo: mavlink/api.qgroundcontrol.com
           target-branch: main
           deploy-token: ${{ secrets.PX4BUILDBOT_ACCESSTOKEN }}
-          source-branch: ${{ env.BRANCH_NAME }}
           commit-message: 'QGC Doxygen API docs update'

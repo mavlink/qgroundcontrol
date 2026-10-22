@@ -6,7 +6,7 @@ inputs:
     description: "Path to executable or package to verify"
     required: true
   type:
-    description: "Type of executable (binary, appimage, dmg, exe) - currently informational"
+    description: "Type of executable (binary, appimage, dmg, exe); dmg attaches the image, verifies its app bundle, and detaches it"
     required: false
     default: "binary"
   working-dir:
@@ -17,10 +17,6 @@ inputs:
     description: "CMake build directory (used to locate auto-downloaded GStreamer SDK for dev builds)"
     required: false
     default: ""
-  timeout:
-    description: "Timeout in seconds"
-    required: false
-    default: "60"
   expect-archs:
     description: "Space-separated Mach-O architectures the binary must contain exactly (macOS only)"
     required: false
@@ -36,12 +32,11 @@ runs:
     - name: Verify executable
       shell: bash
       run: |
-        python3 "${GITHUB_WORKSPACE}/.github/scripts/verify_executable.py" \
+        python3 "${GITHUB_WORKSPACE}/tools/ci/packaging/verify_executable.py" \
           --binary-path "${INPUTS_BINARY_PATH}" \
           --type "${INPUTS_TYPE}" \
           --working-dir "${INPUTS_WORKING_DIR}" \
           --build-dir "${INPUTS_BUILD_DIR}" \
-          --timeout "${INPUTS_TIMEOUT}" \
           --expect-archs "${INPUTS_EXPECT_ARCHS}" \
           --expected-appimage-update-information "${INPUTS_EXPECTED_APPIMAGE_UPDATE_INFORMATION}"
       env:
@@ -49,6 +44,5 @@ runs:
         INPUTS_TYPE: ${{ inputs.type }}
         INPUTS_WORKING_DIR: ${{ inputs.working-dir }}
         INPUTS_BUILD_DIR: ${{ inputs.build-dir }}
-        INPUTS_TIMEOUT: ${{ inputs.timeout }}
         INPUTS_EXPECT_ARCHS: ${{ inputs.expect-archs }}
         INPUTS_EXPECTED_APPIMAGE_UPDATE_INFORMATION: ${{ inputs.expected-appimage-update-information }}

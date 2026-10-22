@@ -19,10 +19,6 @@ inputs:
     description: Newline-separated KEY=VALUE docker build args (e.g. BASE_REF=...)
     required: false
     default: ''
-  build-type:
-    description: CMake build type (Release or Debug)
-    required: false
-    default: 'Release'
   fuse:
     description: Enable FUSE support for AppImageLint target mounting
     required: false
@@ -43,11 +39,7 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Set up QEMU
-      uses: docker/setup-qemu-action@v4
-      with:
-        cache-image: false
-
+    # No QEMU: every target builds natively for the x86_64 runner (aarch64 is a cross-compile).
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v4
 
@@ -66,16 +58,6 @@ runs:
         username: ${{ github.actor }}
         password: ${{ github.token }}
 
-    - name: Validate inputs
-      shell: bash
-      env:
-        TARGET: ${{ inputs.target }}
-        BUILD_TYPE: ${{ inputs.build-type }}
-      run: |
-        python3 "${GITHUB_WORKSPACE}/.github/scripts/docker_helper.py" validate \
-          --target "${TARGET}" \
-          --build-type "${BUILD_TYPE}"
-
     - name: Docker metadata (tags + OCI labels)
       id: meta
       uses: docker/metadata-action@v6
@@ -88,7 +70,6 @@ runs:
 
     - name: Build Docker image
       id: build
-      if: contains(fromJSON('["linux", "linux-cross", "android"]'), inputs.target)
       uses: docker/build-push-action@v7
       with:
         context: .
@@ -117,7 +98,7 @@ runs:
       run: docker tag "${PUSH_IMAGE}:${VARIANT}" "dronecode/qgroundcontrol:${VARIANT}"
 
     - name: Set up cache tooling
-      uses: ./.github/actions/setup-python
+      uses: $/.github/actions/setup-python
       with:
         groups: scripts
 
@@ -126,40 +107,40 @@ runs:
       shell: bash
       env:
         IMAGE: dronecode/qgroundcontrol:${{ inputs.variant }}
-      run: python3 .github/scripts/docker_helper.py cache-key --image "$IMAGE"
+      run: python3 tools/ci/compile/docker_helper.py cache-key --image "$IMAGE"
 
     - name: Restore application build caches
-      uses: ./.github/actions/cache
+      uses: $/.github/actions/cache
       with:
         host: linux
         target: docker-${{ inputs.variant }}
-        build-type: ${{ inputs.build-type }}
+        build-type: Release
         key-suffix: ${{ steps.compilers.outputs.fingerprint }}
         cpm-modules: .cache/CPM
         install-tools: 'false'
 
     - name: Run Docker build
       id: application-build
-      if: contains(fromJSON('["Release", "Debug"]'), inputs.build-type)
       shell: bash
       env:
         ENABLE_FUSE: ${{ inputs.fuse }}
         IMAGE: dronecode/qgroundcontrol:${{ inputs.variant }}
-        BUILD_TYPE: ${{ inputs.build-type }}
       run: |
-        ARGS=(run --image "$IMAGE" --build-type "$BUILD_TYPE")
+        ARGS=(run --image "$IMAGE" --build-type Release)
         [[ "$ENABLE_FUSE" == "true" ]] && ARGS+=(--fuse)
-        python3 "${GITHUB_WORKSPACE}/.github/scripts/docker_helper.py" "${ARGS[@]}"
+        python3 "${GITHUB_WORKSPACE}/tools/ci/compile/docker_helper.py" "${ARGS[@]}"
 
     - name: Report application build performance
       id: performance
       if: ${{ !cancelled() && steps.application-build.outcome != '' && steps.application-build.outcome != 'skipped' }}
       shell: bash
-      run: python3 .github/scripts/docker_helper.py summary --build-dir build
+      run: python3 tools/ci/compile/docker_helper.py summary --build-dir build
 
     - name: Save successful compilation caches
       if: ${{ !cancelled() && steps.performance.outputs.build_success == 'true' }}
-      uses: ./.github/actions/save-build-cache
+      uses: $/.github/actions/save-build-cache
+      with:
+        docker-report: build/docker-build-report.json
 
     - name: Report Ninja build timings
       if: ${{ !cancelled() && steps.application-build.outcome != '' && steps.application-build.outcome != 'skipped' }}
@@ -170,7 +151,7 @@ runs:
       if: ${{ !cancelled() && steps.application-build.outcome != '' && steps.application-build.outcome != 'skipped' }}
       uses: actions/upload-artifact@v7
       with:
-        name: docker-performance-${{ inputs.variant }}-${{ inputs.build-type }}
+        name: docker-performance-${{ inputs.variant }}
         path: |
           build/docker-build-report.json
           build/build-profile/

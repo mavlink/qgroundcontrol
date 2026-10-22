@@ -9,6 +9,7 @@ on:
       - '.markdownlint*'
       - '.typos.toml'
       - '.github/workflows/docs-lint.yml'
+      - 'tools/pre_commit.py'
   workflow_dispatch:
 
 concurrency:
@@ -32,24 +33,12 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - name: Setup Python
-        uses: ./.github/actions/setup-python
+        uses: $/.github/actions/setup-python
         with:
           groups: precommit
+      # Manual runs have no base revision and check every English page.
       - name: Lint English documentation
         env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: |
-          if [[ -n "$BASE_SHA" ]] && git diff --quiet "$BASE_SHA" HEAD -- \
-            '.pre-commit-config.yaml' '.vale.ini' '.markdownlint*' '.typos.toml' \
-            '.github/workflows/docs-lint.yml'; then
-            mapfile -d '' files < <(git diff --name-only -z --diff-filter=ACMR "$BASE_SHA" HEAD -- 'docs/en/*.md' 'docs/en/**/*.md')
-          else
-            mapfile -d '' files < <(git ls-files -z 'docs/en/*.md' 'docs/en/**/*.md')
-          fi
-          if (( ${#files[@]} == 0 )); then
-            echo 'No changed English Markdown files'
-            exit 0
-          fi
-          for hook in markdownlint typos vale-sync vale; do
-            pre-commit run "$hook" --files "${files[@]}"
-          done
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: python3 ./tools/pre_commit.py --ci --docs ${PR_BASE_SHA:+--changed}

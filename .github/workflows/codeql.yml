@@ -33,13 +33,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - language: actions
-            build-mode: none
-          - language: java-kotlin
-            build-mode: none
-          - language: python
-            build-mode: none
+        language: [actions, java-kotlin, python]
 
     steps:
       - name: Harden Runner
@@ -57,7 +51,7 @@ jobs:
         uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
-          build-mode: ${{ matrix.build-mode }}
+          build-mode: none
           config-file: ./.github/codeql/codeql-config.yml
           trap-caching: false
           dependency-caching: false

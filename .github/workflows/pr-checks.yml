@@ -2,7 +2,7 @@ name: PR Checks
 
 on:
   pull_request_target:  # zizmor: ignore[dangerous-triggers] reads PR metadata, posts comments/labels; only checks out trusted base ref
-    types: [opened, edited, synchronize, reopened, closed]
+    types: [opened, edited, synchronize, reopened]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
@@ -15,7 +15,6 @@ jobs:
   title:
     name: Validate PR Title
     runs-on: ubuntu-latest
-    if: github.event.action != 'closed'
     timeout-minutes: 5
 
     # pull-requests: write scoped here: the title check sets a pending status on [WIP] titles.
@@ -47,19 +46,19 @@ jobs:
             ci
             chore
             revert
+            deps
           requireScope: false
           subjectPattern: ^.{1,80}$
           subjectPatternError: PR title must be 80 characters or less.
           wip: true
           validateSingleCommit: false
 
-  size:
-    name: Label PR Size
+  label:
+    name: Label PR
     runs-on: ubuntu-latest
-    if: github.event.action != 'closed'
     timeout-minutes: 5
 
-    # pull-requests: write scoped here: this job applies PR size labels.
+    # pull-requests: write scoped here: this job applies PR size and path-based labels.
     permissions:
       contents: read
       pull-requests: write
@@ -73,8 +72,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           sparse-checkout: |
-            .github/scripts/gh_pr_size_label.py
-            .github/scripts/ci_bootstrap.py
+            tools/ci/reporting/gh_pr_size_label.py
             tools/_bootstrap.py
             tools/common
             tools/qgc_tools
@@ -82,71 +80,16 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
 
-      - name: Get current size label
-        id: current
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          GH_REPO: ${{ github.repository }}
-        run: python3 .github/scripts/gh_pr_size_label.py current
-
+      # Non-blocking, like the title check: labels and the XL notice are advisory.
       - name: Label PR by size
         continue-on-error: true
-        uses: codelytv/pr-size-labeler@v1
-        with:
-          GITHUB_TOKEN: ${{ github.token }}
-          xs_label: 'size/XS'
-          xs_max_size: 150
-          s_label: 'size/S'
-          s_max_size: 500
-          m_label: 'size/M'
-          m_max_size: 1000
-          l_label: 'size/L'
-          l_max_size: 1500
-          xl_label: 'size/XL'
-          fail_if_xl: false
-          message_if_xl: |
-            ## Large PR Warning
-
-            This PR has **more than 1500 lines** changed, which can be difficult to review thoroughly.
-
-            Consider:
-            - Splitting into smaller, focused PRs
-            - Separating refactoring from feature changes
-            - Breaking out unrelated changes into separate PRs
-
-            Smaller PRs get reviewed faster and reduce the risk of bugs slipping through.
-          files_to_ignore: |
-            package-lock.json
-            *.lock
-            translations/*
-
-      - name: Remove outdated size labels
-        continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-          OLD_LABEL: ${{ steps.current.outputs.label }}
           GH_REPO: ${{ github.repository }}
-        run: python3 .github/scripts/gh_pr_size_label.py prune
+        run: python3 tools/ci/reporting/gh_pr_size_label.py apply
 
-  label:
-    name: Label PR by Files
-    runs-on: ubuntu-latest
-    if: github.event.action != 'closed'
-    timeout-minutes: 5
-
-    # pull-requests: write scoped here: actions/labeler applies path-based labels.
-    permissions:
-      contents: read
-      pull-requests: write
-
-    steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@v2
-        with:
-          egress-policy: audit
-
+      # Reads .github/labeler.yml from the base commit through the API; the sparse checkout omits it.
       - name: Label PR by changed files
         uses: actions/labeler@v7
         with:

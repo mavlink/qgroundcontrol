@@ -7,7 +7,7 @@ Docs:
 
 github_actions:
   - changed-files:
-      - any-glob-to-any-file: '.github/**'
+      - any-glob-to-any-file: ['.github/**', 'tools/ci/**', 'tools/tests/ci/**']
 
 "Platform: Android":
   - changed-files:
@@ -43,7 +43,7 @@ github_actions:
 
 Tests:
   - changed-files:
-      - any-glob-to-any-file: ['test/**', 'tools/tests/**', '.github/scripts/tests/**']
+      - any-glob-to-any-file: ['test/**', 'tools/tests/**']
 
 CMake:
   - changed-files:

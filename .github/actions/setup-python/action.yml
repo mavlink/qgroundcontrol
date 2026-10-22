@@ -3,7 +3,7 @@ description: Setup Python with uv for fast dependency installation
 
 inputs:
   groups:
-    description: 'Dependency groups to install (comma-separated: scripts, precommit, test, ci, qt, coverage, build, lint, dev, all)'
+    description: 'Dependency groups to install (comma-separated: scripts, precommit, test, qt, coverage, build, lint, terrain, dev, all)'
     required: false
     default: 'scripts'
   python-version:
@@ -53,25 +53,14 @@ runs:
         cache-python: ${{ env.QGC_ACTIONS_CACHE_BACKEND == 's3' }}
         cache-dependency-glob: tools/uv.lock
         python-version: ${{ inputs.python-version }}
+        # Installs exactly the required-version floor, matching install_uv.py and the Docker image.
+        version-file: tools/pyproject.toml
+        resolution-strategy: lowest
 
+    # install_python.py also adds the environment's bin/Scripts directory to GITHUB_PATH.
     - name: Install dependencies
       shell: bash
       env:
         GROUPS: ${{ inputs.groups }}
       run: |
         uv run --no-project python tools/setup/install_python.py "$GROUPS"
-
-    - name: Add venv to PATH
-      shell: bash
-      run: | # zizmor: ignore[github-env] writes fixed runner workspace .venv path to PATH; not attacker-controllable
-        if [[ "$RUNNER_OS" == "Windows" ]]; then
-          echo "$GITHUB_WORKSPACE/tools/.venv/Scripts" >> "$GITHUB_PATH"
-        else
-          echo "$GITHUB_WORKSPACE/tools/.venv/bin" >> "$GITHUB_PATH"
-        fi
-
-    # Mirrors step-debug toggle; tools/_bootstrap.py picks this up and enables faulthandler + ::error:: hooks.
-    - name: Enable QGC_CI_DEBUG when runner debug logging is on
-      if: runner.debug == '1'
-      shell: bash
-      run: echo "QGC_CI_DEBUG=1" >> "$GITHUB_ENV"

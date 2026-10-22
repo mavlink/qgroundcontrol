@@ -17,7 +17,8 @@ inputs:
     required: true
   source-branch:
     description: 'Source branch name (used as subdirectory in target repo)'
-    required: true
+    required: false
+    default: ${{ github.ref_name }}
   commit-message:
     description: 'Commit message prefix'
     required: false
@@ -43,7 +44,7 @@ runs:
     - name: Deploy docs
       shell: bash
       run: |
-        python3 "${GITHUB_WORKSPACE}/.github/scripts/deploy_docs.py" \
+        python3 "${GITHUB_WORKSPACE}/tools/ci/publish/deploy_docs.py" \
           --source-dir ~/_docs_build \
           --target-dir _deploy_target \
           --branch "${INPUTS_SOURCE_BRANCH}" \

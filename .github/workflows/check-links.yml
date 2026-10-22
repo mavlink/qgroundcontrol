@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - master
-    paths:
+    paths: &link-paths
       - '**.md'
       - '.lychee.toml'
       - '.github/workflows/check-links.yml'
@@ -12,13 +12,7 @@ on:
       - '!docs/tr/**'
       - '!docs/zh/**'
   pull_request:
-    paths:
-      - '**.md'
-      - '.lychee.toml'
-      - '.github/workflows/check-links.yml'
-      - '!docs/ko/**'
-      - '!docs/tr/**'
-      - '!docs/zh/**'
+    paths: *link-paths
   schedule:
     - cron: '41 5 * * 1'
   workflow_dispatch:
@@ -48,9 +42,9 @@ jobs:
           persist-credentials: false
 
       - name: Setup configuration validation
-        uses: ./.github/actions/setup-python
+        uses: $/.github/actions/setup-python
         with:
-          groups: lint
+          groups: test
       - name: Validate link exception deadlines
         run: python3 tools/validate_configs.py
 

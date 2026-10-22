@@ -3,9 +3,9 @@
 # from this repository.
 runners:
   windows-x64-builder:
-    family: ["m8i.xlarge"]
+    family: ["m8i.xlarge", "r8i.xlarge", "m7i.xlarge"]
     cpu: [4]
-    ram: [16]
+    ram: [16, 32]
     spot: false
     image: windows25-full-x64
     extras: s3-cache

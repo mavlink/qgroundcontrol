@@ -1,13 +1,31 @@
 name: Save build caches
 description: Preserve successful compilation before packaging, tests, or scanners can fail
+inputs:
+  docker-report:
+    description: Docker build report holding the container's ccache statistics
+    required: false
+    default: ''
 runs:
   using: composite
   steps:
+    # Pull requests skip a cache whose build added fewer entries than the cache action's
+    # pr-save-min-misses; a failed decision leaves the outputs empty, which saves.
+    - name: Skip pull-request saves of barely changed caches
+      id: gate
+      if: env.QGC_SAVE_BUILD_CACHE == 'true' && env.QGC_BUILD_CACHE_SAVED != 'true'
+      continue-on-error: true
+      shell: bash
+      env:
+        DOCKER_REPORT: ${{ inputs.docker-report }}
+      run: python3 tools/ci/cache/ccache_helper.py save-gate ${DOCKER_REPORT:+--docker-report "$DOCKER_REPORT"}
+
     - name: Pack compiler cache snapshot
       id: pack
-      if: env.QGC_BUILD_CACHE_ARTIFACT == 'true' && env.QGC_SAVE_BUILD_CACHE == 'true' && env.QGC_BUILD_CACHE_SAVED != 'true'
+      if: >-
+        env.QGC_BUILD_CACHE_ARTIFACT == 'true' && env.QGC_SAVE_BUILD_CACHE == 'true' && env.QGC_BUILD_CACHE_SAVED != 'true' &&
+        (steps.gate.outputs.ccache != 'false' || steps.gate.outputs.moccache != 'false')
       shell: bash
-      run: python3 .github/scripts/build_cache_artifact.py pack
+      run: python3 tools/ci/cache/build_cache_artifact.py pack
 
     - name: Retain compiler cache snapshot
       id: artifact
@@ -22,15 +40,20 @@ runs:
         overwrite: true
         if-no-files-found: error
 
+    # The sccache pilot leaves QGC_CCACHE_KEY empty: sccache writes to S3 as it compiles.
     - name: Save compiler cache
-      if: steps.artifact.outcome != 'success' && env.QGC_SAVE_BUILD_CACHE == 'true' && env.QGC_CCACHE_KEY != '' && env.QGC_BUILD_CACHE_SAVED != 'true'
+      if: >-
+        steps.artifact.outcome != 'success' && env.QGC_SAVE_BUILD_CACHE == 'true' && env.QGC_CCACHE_KEY != '' &&
+        env.QGC_BUILD_CACHE_SAVED != 'true' && steps.gate.outputs.ccache != 'false'
       uses: actions/cache/save@v6
       with:
         path: .ccache
         key: ${{ env.QGC_CCACHE_KEY }}
 
     - name: Save moc cache
-      if: steps.artifact.outcome != 'success' && env.QGC_SAVE_BUILD_CACHE == 'true' && env.QGC_MOCCACHE_KEY != '' && env.QGC_BUILD_CACHE_SAVED != 'true'
+      if: >-
+        steps.artifact.outcome != 'success' && env.QGC_SAVE_BUILD_CACHE == 'true' && env.QGC_MOCCACHE_KEY != '' &&
+        env.QGC_BUILD_CACHE_SAVED != 'true' && steps.gate.outputs.moccache != 'false'
       uses: actions/cache/save@v6
       with:
         path: .cache/moccache

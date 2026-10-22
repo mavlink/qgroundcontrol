@@ -36,7 +36,7 @@ permissions:
 
 jobs:
   changes:
-    uses: ./.github/workflows/_detect-changes.yml
+    uses: $/.github/workflows/_detect-changes.yml
     with:
       platform: windows
 
@@ -44,7 +44,20 @@ jobs:
     name: Build ${{ matrix.arch }} ${{ matrix.build_type }}
     needs: changes
     if: needs.changes.outputs.should_build == 'true'
-    runs-on: ${{ matrix.runs_on }}
+    # Native arm64 stays on GitHub's windows-11-arm. The volume label repeats .github/runs-on.yml's
+    # windows-x64-builder volume: RunsOn reads that file from master only, so a PR changing it would
+    # otherwise build on the old disk. Pools ignore the label.
+    runs-on: >-
+      ${{
+        github.repository_owner == 'mavlink' && matrix.variant != 'arm64' &&
+        format('runs-on={0}-build-{1}-{2}/{3}',
+          github.run_id, github.run_attempt, strategy.job-index,
+          vars.RUNS_ON_WINDOWS_POOL != '' && format('pool={0}', vars.RUNS_ON_WINDOWS_POOL) ||
+          format('runner=windows-x64-builder{0}/volume=150gb',
+            github.event_name == 'pull_request' && (vars.RUNS_ON_SPOT_POOLS == 'true' && '-spot' ||
+              '/spot=cop/family=m8i.xlarge+r8i.xlarge+m7i.xlarge') || '')) ||
+        matrix.hosted_runner
+      }}
     timeout-minutes: 120
 
     # id-token/attestations scoped here: only the attestation upload step needs them.
@@ -59,15 +72,9 @@ jobs:
       matrix:
         build_type: ['${{ inputs.build_type || ''Release'' }}']
         variant: [amd64, arm64, arm64-cross]
-        # volume repeats .github/runs-on.yml's windows-x64-builder volume: RunsOn reads that file from
-        # master only, so a PR changing it would otherwise build on the old disk. Pools ignore the label.
         include:
           - variant: amd64
-            runs_on: >-
-              ${{ github.repository_owner == 'mavlink' &&
-                  format('runs-on={0}/{1}', github.run_id,
-                    vars.RUNS_ON_WINDOWS_POOL != '' && format('pool={0}', vars.RUNS_ON_WINDOWS_POOL) ||
-                    'runner=windows-x64-builder/volume=150gb') || 'windows-2022' }}
+            hosted_runner: windows-2022
             host: windows
             arch: win64_msvc2022_64
             preset: Windows
@@ -75,7 +82,7 @@ jobs:
             gstreamer: true
 
           - variant: arm64
-            runs_on: windows-11-arm
+            hosted_runner: windows-11-arm
             host: windows_arm64
             arch: win64_msvc2022_arm64
             preset: Windows-arm64
@@ -83,11 +90,7 @@ jobs:
             gstreamer: true
 
           - variant: arm64-cross
-            runs_on: >-
-              ${{ github.repository_owner == 'mavlink' &&
-                  format('runs-on={0}/{1}', github.run_id,
-                    vars.RUNS_ON_WINDOWS_POOL != '' && format('pool={0}', vars.RUNS_ON_WINDOWS_POOL) ||
-                    'runner=windows-x64-builder/volume=150gb') || 'windows-2022' }}
+            hosted_runner: windows-2022
             host: windows
             arch: win64_msvc2022_arm64_cross_compiled
             preset: Windows-arm64
@@ -99,7 +102,9 @@ jobs:
         shell: cmd
 
     steps:
+      # The Harden-Runner community tier audits GitHub-hosted runners only, not RunsOn.
       - name: Harden Runner
+        if: runner.environment == 'github-hosted'
         uses: step-security/harden-runner@v2
         with:
           egress-policy: audit
@@ -111,10 +116,8 @@ jobs:
           show-waiting-runner: true
 
       - name: Enable RunsOn magic cache
-        if: github.repository_owner == 'mavlink' && matrix.variant != 'arm64'
         uses: runs-on/action@v2
         with:
-          metrics: cpu,network,memory,disk,io
           show_costs: summary
 
       - name: Checkout repo
@@ -125,8 +128,8 @@ jobs:
           persist-credentials: false
 
       - name: Install Visual Studio Build Tools
-        if: github.repository_owner == 'mavlink' && matrix.variant != 'arm64'
-        uses: ./.github/actions/install-dependencies
+        if: runner.environment != 'github-hosted'
+        uses: $/.github/actions/install-dependencies
         with:
           gstreamer: 'false'
           msvc: 'true'
@@ -135,14 +138,14 @@ jobs:
 
       - name: Build Setup
         id: build-setup
-        uses: ./.github/actions/build-setup
+        uses: $/.github/actions/build-setup
         with:
           qt-host: ${{ matrix.host }}
           qt-arch: ${{ matrix.arch }}
           build-type: ${{ matrix.build_type }}
 
       - name: Configure
-        uses: ./.github/actions/cmake-configure
+        uses: $/.github/actions/cmake-configure
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ matrix.build_type }}
@@ -151,11 +154,12 @@ jobs:
             -DQGC_BUILD_PORTABLE_TESTS=${{ matrix.variant == 'amd64' && 'ON' || 'OFF' }}
             -DQGC_ENABLE_GST_VIDEOSTREAMING=${{ matrix.gstreamer && 'ON' || 'OFF' }}
             -DQGC_CPACK_GENERATOR=NSIS
+            -DQGC_USE_LLD_LINK=${{ matrix.build_type == 'Debug' && 'ON' || 'OFF' }}
             ${{ matrix.variant == 'arm64-cross' && format('-DQT_HOST_PATH={0}', steps.build-setup.outputs.host_qt_root_dir) || '' }}
 
       - name: Build
         id: build
-        uses: ./.github/actions/cmake-build
+        uses: $/.github/actions/cmake-build
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ matrix.build_type }}
@@ -163,87 +167,37 @@ jobs:
       - name: Run portable tests
         id: portable
         if: ${{ !cancelled() && steps.build.outcome == 'success' && matrix.variant == 'amd64' }}
-        uses: ./.github/actions/run-unit-tests
+        uses: $/.github/actions/run-unit-tests
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ matrix.build_type }}
           include-labels: Portable
           junit-output: junit-portable.xml
           ctest-output: portable-output.txt
-
-      - name: Report portable tests
-        if: ${{ !cancelled() && steps.portable.outcome != 'skipped' && steps.portable.outcome != '' }}
-        uses: ./.github/actions/test-report
-        with:
-          name: Portable tests (windows)
-          build-dir: ${{ runner.temp }}/build
-          junit-file: junit-portable.xml
-          output-file: portable-output.txt
+          report-name: Portable tests (windows)
           artifact-name: test-results-portable-windows
 
       - name: Verify Executable
         if: matrix.build_type == 'Release' && matrix.variant != 'arm64-cross'
-        uses: ./.github/actions/verify-executable
+        uses: $/.github/actions/verify-executable
         with:
           binary-path: ${{ runner.temp }}/build/${{ matrix.build_type }}/QGroundControl.exe
           type: exe
           build-dir: ${{ runner.temp }}/build
 
       - name: Create Installer
-        uses: ./.github/actions/cmake-build
+        uses: $/.github/actions/cmake-build
         with:
           build-dir: ${{ runner.temp }}\build
           build-type: ${{ matrix.build_type }}
           target: qgc-package
           parallel: 'false'
 
-      - name: Verify installer checksum
-        id: installer
-        if: matrix.build_type == 'Release'
-        shell: pwsh
-        env:
-          INSTALLER_PATH: ${{ runner.temp }}\build\${{ matrix.package }}.exe
-        run: |
-          $installerPath = $env:INSTALLER_PATH
-          $checksumPath = "$installerPath.sha256"
-          if (-not (Test-Path -LiteralPath $installerPath -PathType Leaf)) {
-            Write-Error "Installer not found: $installerPath"
-            exit 1
-          }
-          if (-not (Test-Path -LiteralPath $checksumPath -PathType Leaf)) {
-            Write-Error "Installer checksum not found: $checksumPath"
-            exit 1
-          }
-
-          $checksumLine = (Get-Content -LiteralPath $checksumPath -Raw).Trim()
-          $checksumFields = @($checksumLine -split '\s+', 2)
-          if ($checksumFields.Count -ne 2 -or $checksumFields[0] -notmatch '^[0-9A-Fa-f]{64}$') {
-            Write-Error "Invalid SHA-256 checksum file: $checksumPath"
-            exit 1
-          }
-
-          $installerName = [System.IO.Path]::GetFileName($installerPath)
-          $checksumInstallerName = $checksumFields[1]
-          if ($checksumInstallerName -cne $installerName) {
-            Write-Error "Checksum filename mismatch: expected $installerName, got $checksumInstallerName"
-            exit 1
-          }
-
-          $expectedHash = $checksumFields[0]
-          $actualHash = (Get-FileHash -LiteralPath $installerPath -Algorithm SHA256).Hash
-          if ($actualHash -ne $expectedHash) {
-            Write-Error "Installer checksum mismatch: expected $expectedHash, got $actualHash"
-            exit 1
-          }
-
-          "path=$installerPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-          "checksum_path=$checksumPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-
       - name: Install, upgrade, and verify installer
         if: matrix.build_type == 'Release' && matrix.variant != 'arm64-cross'
         shell: pwsh
         env:
-          INSTALLER_PATH: ${{ steps.installer.outputs.path }}
+          INSTALLER_PATH: ${{ runner.temp }}\build\${{ matrix.package }}.exe
           OLD_INSTALL_DIR: ${{ runner.temp }}\qgc-install-old
           INSTALL_DIR: ${{ runner.temp }}\qgc-install-test
           EXPECT_GSTREAMER: ${{ matrix.gstreamer }}
@@ -251,7 +205,7 @@ jobs:
 
       - name: Verify installed executable
         if: matrix.build_type == 'Release' && matrix.variant != 'arm64-cross'
-        uses: ./.github/actions/verify-executable
+        uses: $/.github/actions/verify-executable
         with:
           binary-path: ${{ env.QGC_INSTALL_TEST_BINARY }}
           type: exe
@@ -263,12 +217,11 @@ jobs:
 
       - name: Attest and Upload
         if: matrix.build_type == 'Release'
-        uses: ./.github/actions/attest-and-upload
+        uses: $/.github/actions/attest-and-upload
         with:
           artifact-name: ${{ matrix.package }}.exe
           package-name: ${{ matrix.package }}
           subject-name: ${{ matrix.package }}-windows
-          artifact-source-path: ${{ steps.installer.outputs.path }}
           aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
           aws-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -276,6 +229,27 @@ jobs:
           upload-aws: ${{ matrix.variant == 'arm64-cross' && 'false' || 'true' }}
 
       - name: Debug failed runner
-        if: ${{ failure() && !cancelled() && github.event_name == 'workflow_dispatch' && inputs.debug_runner && github.ref_type == 'branch' }}
+        if: ${{ failure() && !cancelled() && inputs.debug_runner && github.ref_type == 'branch' }}
         timeout-minutes: 15
-        uses: ./.github/actions/debug-runner
+        uses: $/.github/actions/debug-runner
+
+  # The required status check: a skipped matrix job reports an unexpanded name, so branch
+  # protection requires this stable name instead. always(): a skipped gate would count as passing.
+  windows-ok:
+    name: Windows
+    if: always()
+    needs: [changes, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Require every leg to pass
+        uses: re-actors/alls-green@v1.3.0
+        with:
+          allowed-skips: build
+          jobs: ${{ toJSON(needs) }}

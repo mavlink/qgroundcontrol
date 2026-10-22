@@ -2,10 +2,6 @@ name: Download All Platform Artifacts
 description: Download artifacts from all completed platform workflow runs for the same commit
 
 inputs:
-  github-token:
-    description: Optional GitHub token for API access (defaults to github.token)
-    required: false
-    default: ''
   head-sha:
     description: Commit SHA to fetch workflow artifacts from
     required: true
@@ -35,45 +31,42 @@ inputs:
     description: Allow absent diagnostic artifacts selected by prefix, but not download failures or strict release runs
     default: 'false'
   artifact-prefixes:
-    description: Comma-separated artifact name prefixes to download (optional)
+    description: Comma-separated artifact name prefixes to download
+    required: true
+  sizes-file:
+    description: Optional JSON path for the distributable artifact sizes of each workflow's latest successful run
     required: false
     default: ''
-  artifact-metadata-file:
-    description: Optional JSON path to write run artifact metadata (name + size_in_bytes)
-    required: false
-    default: ''
+  require-sizes:
+    description: Fail and remove sizes-file when no distributable artifact is found
+    default: 'false'
 
 runs:
   using: composite
   steps:
     - name: Download artifacts from all platform workflows
       shell: bash
+      # download_artifacts.py reads the optional INPUT_* variables as argument defaults and
+      # uses runs-file only when that file exists.
       env:
-        GH_TOKEN: ${{ inputs.github-token || github.token }}
-        QGC_GH_API_MODE: http
-        RUNS_FILE: ${{ inputs.runs-file }}
+        GH_TOKEN: ${{ github.token }}
         INPUT_REPO: ${{ github.repository }}
         INPUT_HEAD_SHA: ${{ inputs.head-sha }}
         INPUT_OUTPUT_DIR: ${{ inputs.output-dir }}
         INPUT_WORKFLOWS: ${{ inputs.workflows }}
-        INCLUDE_FAILED: ${{ inputs.include-failed }}
-        STRICT_RUNS: ${{ inputs.strict-runs }}
-        ALLOW_MISSING: ${{ inputs.allow-missing }}
         INPUT_EVENT: ${{ inputs.event }}
         INPUT_ARTIFACT_PREFIXES: ${{ inputs.artifact-prefixes }}
-        INPUT_ARTIFACT_METADATA_FILE: ${{ inputs.artifact-metadata-file }}
+        INPUT_RUNS_FILE: ${{ inputs.runs-file }}
+        INPUT_INCLUDE_FAILED: ${{ inputs.include-failed }}
+        INPUT_STRICT_RUNS: ${{ inputs.strict-runs }}
+        INPUT_ALLOW_MISSING: ${{ inputs.allow-missing }}
+        INPUT_SIZES_FILE: ${{ inputs.sizes-file }}
+        INPUT_REQUIRE_SIZES: ${{ inputs.require-sizes }}
       run: |
-        set -euo pipefail
-        cmd=(python3 "${GITHUB_WORKSPACE}/.github/scripts/download_artifacts.py"
-             --repo "$INPUT_REPO"
-             --head-sha "$INPUT_HEAD_SHA"
-             --output-dir "$INPUT_OUTPUT_DIR"
-             --workflows "$INPUT_WORKFLOWS")
-        [[ "$INCLUDE_FAILED" == "true" ]] && cmd+=(--include-failed)
-        [[ "$STRICT_RUNS" == "true" ]] && cmd+=(--strict-runs)
-        [[ "$ALLOW_MISSING" == "true" ]] && cmd+=(--allow-missing)
-        [[ -n "$INPUT_EVENT" ]] && cmd+=(--event "$INPUT_EVENT")
-        [[ -n "$RUNS_FILE" && -f "$RUNS_FILE" ]] && cmd+=(--runs-file "$RUNS_FILE")
-        [[ -n "$INPUT_ARTIFACT_PREFIXES" ]] && cmd+=(--artifact-prefixes "$INPUT_ARTIFACT_PREFIXES")
-        [[ -n "$INPUT_ARTIFACT_METADATA_FILE" ]] && cmd+=(--artifact-metadata-out "$INPUT_ARTIFACT_METADATA_FILE")
-        "${cmd[@]}"
+        python3 "${GITHUB_WORKSPACE}/tools/ci/reporting/download_artifacts.py" \
+          --repo "$INPUT_REPO" \
+          --head-sha "$INPUT_HEAD_SHA" \
+          --output-dir "$INPUT_OUTPUT_DIR" \
+          --workflows "$INPUT_WORKFLOWS" \
+          --event "$INPUT_EVENT" \
+          --artifact-prefixes "$INPUT_ARTIFACT_PREFIXES"

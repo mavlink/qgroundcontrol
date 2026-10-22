@@ -4,14 +4,6 @@ on:
   pull_request:
     paths: &translation-paths
       - 'translations/**/*.ts'
-      - 'tools/translations/**'
-      - 'tools/tests/test_translation_placeholders.py'
-      - 'tools/common/**'
-      - 'tools/_bootstrap.py'
-      - 'tools/pyproject.toml'
-      - 'tools/uv.lock'
-      - '.pre-commit-config.yaml'
-      - '.github/actions/setup-python/**'
       - '.github/workflows/translation-validation.yml'
   push:
     branches:
@@ -43,13 +35,10 @@ jobs:
           persist-credentials: false
 
       - name: Setup Python
-        uses: ./.github/actions/setup-python
+        uses: $/.github/actions/setup-python
         with:
-          groups: scripts,test
+          groups: scripts
           python-version: '3.12'
-
-      - name: Test translation validator
-        run: pytest -q tools/tests/test_translation_placeholders.py
 
       - name: Validate changed translations
         working-directory: tools

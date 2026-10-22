@@ -26,10 +26,6 @@ inputs:
     description: 'File to capture build output (optional)'
     required: false
     default: ''
-  continue-on-error:
-    description: 'Continue even if build fails'
-    required: false
-    default: 'false'
   reviewdog:
     description: 'Enable reviewdog to annotate compiler warnings on PRs'
     required: false
@@ -46,28 +42,19 @@ runs:
       id: compile
       shell: bash
       working-directory: ${{ inputs.build-dir }}
+      # cmake_helper.py reads the INPUT_* variables as argument defaults.
       env:
-        BUILD_TYPE: ${{ inputs.build-type }}
-        TARGET: ${{ inputs.target }}
-        PARALLEL: ${{ inputs.parallel }}
-        PARALLEL_JOBS: ${{ inputs.parallel-jobs }}
-        OUTPUT_FILE: ${{ inputs.output-file }}
-        CONTINUE: ${{ inputs.continue-on-error }}
-        REVIEWDOG: ${{ inputs.reviewdog }}
-      run: |
-        ARGS=(build)
-        [[ -n "$TARGET" ]] && ARGS+=(--target "$TARGET")
-        [[ -n "$BUILD_TYPE" ]] && ARGS+=(--build-type "$BUILD_TYPE")
-        [[ "$PARALLEL" == "true" ]] && ARGS+=(--parallel)
-        [[ -n "$PARALLEL_JOBS" ]] && ARGS+=(--parallel-jobs "$PARALLEL_JOBS")
-        [[ -n "$OUTPUT_FILE" ]] && ARGS+=(--output-file "$OUTPUT_FILE")
-        [[ "$CONTINUE" == "true" ]] && ARGS+=(--continue-on-error)
-        [[ "$REVIEWDOG" == "true" ]] && ARGS+=(--reviewdog)
-        python3 "${GITHUB_WORKSPACE}/.github/scripts/cmake_helper.py" "${ARGS[@]}"
+        INPUT_BUILD_TYPE: ${{ inputs.build-type }}
+        INPUT_TARGET: ${{ inputs.target }}
+        INPUT_PARALLEL: ${{ inputs.parallel }}
+        INPUT_PARALLEL_JOBS: ${{ inputs.parallel-jobs }}
+        INPUT_OUTPUT_FILE: ${{ inputs.output-file }}
+        INPUT_REVIEWDOG: ${{ inputs.reviewdog }}
+      run: python3 "${GITHUB_WORKSPACE}/tools/ci/compile/cmake_helper.py" build
 
     - name: Save successful build caches
       if: steps.compile.outputs.build_success == 'true' && (inputs.target == 'all' || inputs.target == 'autogen')
-      uses: ./.github/actions/save-build-cache
+      uses: $/.github/actions/save-build-cache
 
     - name: Upload build timings
       if: always() && steps.compile.outputs.profile_path != ''
@@ -103,7 +90,7 @@ runs:
       shell: bash
       run: |
         if command -v ccache >/dev/null 2>&1; then
-          python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" summary
+          python3 "${GITHUB_WORKSPACE}/tools/ci/cache/ccache_helper.py" summary
         fi
 
     - name: Moc Cache Stats

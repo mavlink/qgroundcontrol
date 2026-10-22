@@ -288,7 +288,9 @@
       "required": [
         "llvm_version",
         "clazy_revision",
-        "clazy_sha256"
+        "clazy_sha256",
+        "clang_tidy_version",
+        "clang_tidy_sha256"
       ],
       "properties": {
         "llvm_version": {
@@ -300,6 +302,16 @@
           "pattern": "^[a-f0-9]{40}$"
         },
         "clazy_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "clang_tidy_version": {
+          "description": "PyPI clang-tidy wheel version; clazy and clang-scan-deps stay on llvm_version",
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(\\.[0-9]+)?$"
+        },
+        "clang_tidy_sha256": {
+          "description": "SHA-256 of the clang-tidy manylinux x86_64 wheel",
           "type": "string",
           "pattern": "^[a-f0-9]{64}$"
         }

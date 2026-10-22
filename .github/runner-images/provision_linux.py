@@ -50,7 +50,7 @@ def provision() -> None:
     subprocess.run(
         [
             python,
-            str(source / ".github/scripts/cpm_helper.py"),
+            str(source / "tools/ci/cache/cpm_helper.py"),
             "create-seed",
             "--root",
             str(source),

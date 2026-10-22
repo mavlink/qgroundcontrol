@@ -38,76 +38,62 @@ jobs:
 
       - name: Get build config
         id: config
-        uses: ./.github/actions/build-config
+        uses: $/.github/actions/build-config
 
       - name: Setup Python
-        uses: ./.github/actions/setup-python
+        uses: $/.github/actions/setup-python
         with:
           groups: dev
           python-version: '3.12'
 
       - name: Install Qt (for qmllint)
-        uses: ./.github/actions/qt-install
+        uses: $/.github/actions/qt-install
         with:
           version: ${{ steps.config.outputs.qt_version }}
           host: linux
           arch: linux_gcc_64
-          modules: ''
           archives: qtbase qtdeclarative icu
 
-      # Hook environments are reused across config changes; pre-commit reinstalls unhealthy ones.
-      - name: Restore pre-commit environments
+      # Hook environments are reused across config changes; prek reinstalls unhealthy ones. Its
+      # download and build caches (Go modules, uv, npm) are only needed while installing hooks.
+      - name: Restore prek environments
         id: pre-commit-cache
         uses: actions/cache/restore@v6
         with:
-          path: ~/.cache/pre-commit
-          key: pre-commit-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.pre-commit-config.yaml') }}
+          path: |
+            ~/.cache/prek
+            !~/.cache/prek/cache
+          key: prek-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.pre-commit-config.yaml') }}
           restore-keys: |
-            pre-commit-v1-${{ runner.os }}-${{ runner.arch }}-
+            prek-v1-${{ runner.os }}-${{ runner.arch }}-
 
+      # Later steps run after hook failures through their !cancelled()/always() conditions.
       - name: Run pre-commit
-        id: pre-commit
-        continue-on-error: true
         env:
-          PRE_COMMIT_OUTPUT: pre-commit-output.txt
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: python3 ./tools/pre_commit.py --ci --changed
+          # TruffleHog runs only as a local commit hook.
+          SKIP: trufflehog
+        run: python3 ./tools/pre_commit.py --ci --changed --results-dir pre-commit-results
 
       # Pull requests restore the base branch's environments without adding cache entries.
-      - name: Prune unused pre-commit environments
+      - name: Prune unused prek environments
         if: >-
           !cancelled() && github.event_name == 'push' &&
           steps.pre-commit-cache.outputs.cache-hit != 'true'
         continue-on-error: true
-        run: pre-commit gc
+        run: prek cache gc
 
-      - name: Save pre-commit environments
+      - name: Save prek environments
         if: >-
           !cancelled() && github.event_name == 'push' &&
           steps.pre-commit-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v6
         with:
-          path: ~/.cache/pre-commit
+          path: |
+            ~/.cache/prek
+            !~/.cache/prek/cache
           key: ${{ steps.pre-commit-cache.outputs.cache-primary-key }}
-
-      - name: Prepare pre-commit results artifact
-        if: github.event_name == 'pull_request' && always()
-        env:
-          EXIT_CODE: ${{ steps.pre-commit.outputs.exit_code }}
-          PASSED: ${{ steps.pre-commit.outputs.passed }}
-          FAILED: ${{ steps.pre-commit.outputs.failed }}
-          SKIPPED: ${{ steps.pre-commit.outputs.skipped }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        run: |
-          python3 "${GITHUB_WORKSPACE}/.github/scripts/precommit_results.py" \
-            --output-dir pre-commit-results \
-            --exit-code "${EXIT_CODE:-1}" \
-            --passed "${PASSED:-0}" \
-            --failed "${FAILED:-0}" \
-            --skipped "${SKIPPED:-0}" \
-            --run-url "${RUN_URL}" \
-            --output-file pre-commit-output.txt
 
       - name: Upload pre-commit results artifact
         if: github.event_name == 'pull_request' && always()
@@ -116,9 +102,3 @@ jobs:
           name: pre-commit-results
           path: pre-commit-results
           retention-days: 7
-
-      - name: Enforce hook results
-        if: always() && steps.pre-commit.outcome != 'success'
-        run: |
-          echo "::error::Required pre-commit checks failed or did not run."
-          exit 1

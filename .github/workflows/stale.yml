@@ -12,8 +12,8 @@ concurrency:
 permissions: {}
 
 jobs:
-  stale-issues:
-    name: Stale Issues (non-feature)
+  stale:
+    name: Stale Issues
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -50,21 +50,6 @@ jobs:
             to a version of QGroundControl that is no longer current. If it is still relevant on the
             latest Stable or Daily build, please reopen or file a new issue including the QGC version,
             firmware (PX4/ArduPilot) and version, platform, and steps to reproduce.
-
-  stale-features:
-    name: Stale Feature Requests
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    needs: stale-issues
-    permissions:
-      issues: write
-      actions: write
-
-    steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@v2
-        with:
-          egress-policy: audit
 
       - name: Mark and close stale feature requests
         uses: actions/stale@v11
