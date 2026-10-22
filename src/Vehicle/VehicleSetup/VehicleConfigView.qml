@@ -453,9 +453,11 @@ Rectangle {
                             checked:            compColumn.isSelected && vehicleConfigView._selectedSectionIndex === -1
 
                             onClicked: {
+                                // Only a click on the already-selected component collapses it
+                                const wasSelected = compColumn.isSelected
                                 vehicleConfigView._navigateToComponent(compColumn.index, -1)
                                 if (compColumn.hasSections) {
-                                    if (compColumn.isSelected && compColumn.isExpanded) {
+                                    if (wasSelected && compColumn.isExpanded) {
                                         vehicleConfigView._setExpanded(compColumn.index, false)
                                     } else if (!compColumn.isExpanded) {
                                         vehicleConfigView._setExpanded(compColumn.index, true)
