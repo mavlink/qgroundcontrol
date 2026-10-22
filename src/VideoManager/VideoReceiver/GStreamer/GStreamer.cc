@@ -1,6 +1,7 @@
 #include "GStreamer.h"
 
 #include <algorithm>
+#include <gst/base/gstbasesrc.h>
 #include <mutex>
 
 #include <QtCore/QByteArrayList>
@@ -131,6 +132,58 @@ bool _verifyPlugins()
     return result;
 }
 
+using BaseSrcUnlockFunc = gboolean (*)(GstBaseSrc*);
+
+BaseSrcUnlockFunc s_udpSrcUnlock = nullptr;
+BaseSrcUnlockFunc s_udpSrcUnlockStop = nullptr;
+// Not the object lock: a distro build that backported the upstream fix already takes it inside these calls.
+std::mutex s_udpSrcUnlockMutex;
+
+gboolean _udpSrcUnlockSerialized(GstBaseSrc* src)
+{
+    const std::lock_guard lock(s_udpSrcUnlockMutex);
+    return s_udpSrcUnlock(src);
+}
+
+gboolean _udpSrcUnlockStopSerialized(GstBaseSrc* src)
+{
+    const std::lock_guard lock(s_udpSrcUnlockMutex);
+    return s_udpSrcUnlockStop(src);
+}
+
+// Before gst-plugins-good 1.24.10, udpsrc's unlock_stop() replaces its GCancellable on the streaming thread (basesrc
+// defers it to the first create() after PLAYING) while unlock() cancels it from the thread leaving PLAYING. A pipeline
+// stopped right after it started then cancels a freed GCancellable and corrupts the heap. Serialize the two, as the
+// upstream fix does (gstreamer!7897).
+void _serializeUdpSrcUnlock()
+{
+    static std::once_flag s_serialized;
+    std::call_once(s_serialized, [] {
+        const GstFactoryPtr factory = adoptFactory(gst_element_factory_find("udpsrc"));
+        if (!factory || gst_plugin_feature_check_version(GST_PLUGIN_FEATURE(factory.get()), 1, 24, 10)) {
+            return;
+        }
+
+        const GstFeaturePtr loaded = adoptFeature(gst_plugin_feature_load(GST_PLUGIN_FEATURE(factory.get())));
+        const GType type =
+            loaded ? gst_element_factory_get_element_type(GST_ELEMENT_FACTORY(loaded.get())) : G_TYPE_INVALID;
+        if (!g_type_is_a(type, GST_TYPE_BASE_SRC)) {
+            qCWarning(GStreamerLog) << "udpsrc failed to load; stopping a UDP stream right after it starts may crash";
+            return;
+        }
+
+        // Never released, so the patched class outlives every udpsrc.
+        auto* const klass = static_cast<GstBaseSrcClass*>(g_type_class_ref(type));
+        s_udpSrcUnlock = klass->unlock;
+        s_udpSrcUnlockStop = klass->unlock_stop;
+        if (s_udpSrcUnlock && s_udpSrcUnlockStop) {
+            klass->unlock = _udpSrcUnlockSerialized;
+            klass->unlock_stop = _udpSrcUnlockStopSerialized;
+            qCDebug(GStreamerLog) << "Serialized udpsrc unlock/unlock_stop (gst-plugins-good before 1.24.10)";
+        }
+    });
+}
+
 }  // anonymous namespace
 
 Environment::ValidationResult prepareEnvironment()
@@ -207,6 +260,8 @@ bool completeInit()
         qCCritical(GStreamerLog) << "Plugin verification failed";
         return false;
     }
+
+    _serializeUdpSrcUnlock();
 
     GStreamer::logDecoderRanks();
 

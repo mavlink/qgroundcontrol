@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <chrono>
 
 #include <QtCore/QString>
@@ -40,8 +41,8 @@ public:
 
     void start(const QString& videoFile, VideoReceiver::FILE_FORMAT format);
     void stop();
-    /// Before the pipeline is torn down: drains an active recording into its file, then waits up to
-    /// kFinalizeTimeout for the file (or one stop() is finalizing) to be closed.
+    /// Before the pipeline is torn down: drains an active recording into its file, then waits up to kFinalizeTimeout
+    /// for the file (or one stop() is finalizing) to be closed. A recording that has no frame yet is dropped instead.
     void finishForTeardown();
 
     /// Pipeline EOS: every branch drained, the recorder included.
@@ -77,5 +78,7 @@ private:
     GStreamer::GstElementPtr _fileSink;
     State _state = State::Idle;
     GStreamer::PadProbe _keyframeWatch;
+    /// Set by the keyframe probe on the recorder's streaming thread once the file got its first frame.
+    std::atomic<bool> _fileStarted = false;
     RecordingFinalizer _finalizer;
 };
