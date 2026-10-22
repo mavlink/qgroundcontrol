@@ -52,7 +52,7 @@ QGCPopupDialog {
                     return
                 }
                 var newAmpsPerVolt = (measuredCurrentValue * batParams.battAmpsPerVolt.value) / _batteryFactGroup.current.value
-                if (newAmpsPerVolt != 0) {
+                if (newAmpsPerVolt > 0) {
                     batParams.battAmpsPerVolt.value = newAmpsPerVolt
                 }
             }

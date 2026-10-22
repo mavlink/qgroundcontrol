@@ -28,6 +28,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         ${CMAKE_CURRENT_SOURCE_DIR}/APMFreshFlashUITest.h
         ${CMAKE_CURRENT_SOURCE_DIR}/PX4AirframeSetupUITest.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/PX4AirframeSetupUITest.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/PX4BatteryUITest.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/PX4BatteryUITest.h
         ${CMAKE_CURRENT_SOURCE_DIR}/PX4FailsafesUITest.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/PX4FailsafesUITest.h
         ${CMAKE_CURRENT_SOURCE_DIR}/FailureInjectionUITest.cc
@@ -81,6 +83,7 @@ add_qgc_test(PX4SensorsCalibrationUITest LABELS Integration NoSanitizer TIMEOUT 
 add_qgc_test(APMSensorsCalibrationUITest LABELS Integration NoSanitizer TIMEOUT 240)
 add_qgc_test(APMFreshFlashUITest LABELS Integration NoSanitizer TIMEOUT 180)
 add_qgc_test(PX4AirframeSetupUITest LABELS Integration NoSanitizer StockUI TIMEOUT 120)
+add_qgc_test(PX4BatteryUITest LABELS Integration NoSanitizer StockUI TIMEOUT 120)
 add_qgc_test(PX4FailsafesUITest LABELS Integration NoSanitizer StockUI TIMEOUT 120)
 add_qgc_test(FailureInjectionUITest LABELS Integration NoSanitizer StockUI TIMEOUT 120)
 add_qgc_test(AppCloseWarningUITest LABELS Integration NoSanitizer TIMEOUT 120)

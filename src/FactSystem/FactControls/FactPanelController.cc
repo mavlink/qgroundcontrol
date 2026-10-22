@@ -28,6 +28,34 @@ FactPanelController::FactPanelController(QObject *parent)
 FactPanelController::~FactPanelController()
 {
     // qCDebug(FactPanelControllerLog) << Q_FUNC_INFO << this;
+
+    if (_rebootMessageSuppressedBy) {
+        _rebootMessageSuppressedBy->unsuppressRebootMessage();
+    }
+}
+
+void FactPanelController::setSuppressRebootMessage(bool suppress)
+{
+    if (suppress == suppressRebootMessage()) {
+        return;
+    }
+
+    if (suppress) {
+        if (!_vehicle || !_vehicle->parameterManager()) {
+            return;
+        }
+        _rebootMessageSuppressedBy = _vehicle->parameterManager();
+        _rebootMessageSuppressedBy->suppressRebootMessage();
+        // The suppression ends with the vehicle's parameter manager
+        (void) connect(_rebootMessageSuppressedBy, &QObject::destroyed, this,
+                       &FactPanelController::suppressRebootMessageChanged);
+    } else {
+        (void) disconnect(_rebootMessageSuppressedBy, &QObject::destroyed, this,
+                          &FactPanelController::suppressRebootMessageChanged);
+        _rebootMessageSuppressedBy->unsuppressRebootMessage();
+        _rebootMessageSuppressedBy = nullptr;
+    }
+    emit suppressRebootMessageChanged();
 }
 
 void FactPanelController::_reportMissingParameter(int componentId, const QString &name) const

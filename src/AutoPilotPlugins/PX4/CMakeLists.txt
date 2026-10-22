@@ -27,6 +27,10 @@ target_sources(${CMAKE_PROJECT_NAME}
         PX4AirframeLoader.h
         PX4AutoPilotPlugin.cc
         PX4AutoPilotPlugin.h
+        PX4BatteryComponent.cc
+        PX4BatteryComponent.h
+        PX4BatteryController.cc
+        PX4BatteryController.h
         PX4FailsafesComponent.cc
         PX4FailsafesComponent.h
         PX4FlightBehavior.cc
@@ -120,6 +124,7 @@ qt_add_qml_module(AutoPilotPluginsPX4Module
         AirframeComponent.qml
         AirframeComponentSummary.qml
         BatteryParams.qml
+        BatteryThresholdBar.qml
         CalcAmpsPerVoltDialog.qml
         CalcVoltageDividerDialog.qml
         ESCCalibrationDialog.qml
@@ -127,6 +132,8 @@ qt_add_qml_module(AutoPilotPluginsPX4Module
         FailureInjectionInstances.js
         FlightModesComponentSummary.qml
         PowerComponentSummary.qml
+        PX4BatteryComponent.qml
+        PX4BatteryRows.js
         PX4FailsafeRows.js
         PX4FailsafesComponent.qml
         PX4FlightBehaviorCopter.qml

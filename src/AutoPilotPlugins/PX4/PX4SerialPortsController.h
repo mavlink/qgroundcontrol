@@ -136,7 +136,6 @@ class PX4SerialPortsController : public FactPanelController
 
 public:
     explicit PX4SerialPortsController(QObject* parent = nullptr);
-    ~PX4SerialPortsController() override;
 
     QmlObjectListModel* ports() const { return _ports; }
 
