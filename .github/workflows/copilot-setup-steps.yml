@@ -41,7 +41,7 @@ jobs:
           persist-credentials: false
 
       - name: Build Setup
-        uses: $/.github/actions/build-setup
+        uses: ./.github/actions/build-setup
         with:
           qt-host: linux
           qt-arch: linux_gcc_64
@@ -50,7 +50,7 @@ jobs:
           python-groups: dev
 
       - name: Install Dependencies
-        uses: $/.github/actions/install-dependencies
+        uses: ./.github/actions/install-dependencies
 
       - name: Restore prek environments
         uses: actions/cache/restore@v6

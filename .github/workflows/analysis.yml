@@ -162,7 +162,7 @@ jobs:
           persist-credentials: false
 
       - name: Build Setup
-        uses: $/.github/actions/build-setup
+        uses: ./.github/actions/build-setup
         with:
           qt-host: linux
           qt-arch: linux_gcc_64
@@ -173,7 +173,7 @@ jobs:
       # The planner adds clang and clang-tools (clang-scan-deps) for the analysis LLVM, plus IWYU.
       # Clazy's LLVM development packages install only to rebuild it.
       - name: Install dependencies
-        uses: $/.github/actions/install-dependencies
+        uses: ./.github/actions/install-dependencies
         with:
           extra-packages: ${{ matrix.extra_packages }}
 
@@ -223,7 +223,7 @@ jobs:
 
       - name: Configure (analysis)
         if: matrix.family != 'tsan'
-        uses: $/.github/actions/cmake-configure
+        uses: ./.github/actions/cmake-configure
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: Debug
@@ -241,7 +241,7 @@ jobs:
       # Pull requests already run ASan and UBSan in linux.yml; ThreadSanitizer is manual only.
       - name: Configure (tsan)
         if: matrix.family == 'tsan'
-        uses: $/.github/actions/cmake-configure
+        uses: ./.github/actions/cmake-configure
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: Debug
@@ -251,7 +251,7 @@ jobs:
 
       - name: Generate protocol headers
         if: matrix.family == 'compiler' || matrix.family == 'iwyu'
-        uses: $/.github/actions/cmake-build
+        uses: ./.github/actions/cmake-build
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: Debug
@@ -261,7 +261,7 @@ jobs:
       # results, so clang-tidy and Clazy skip Qt's autogen target.
       - name: Generate Qt analysis prerequisites
         if: matrix.family == 'iwyu'
-        uses: $/.github/actions/cmake-build
+        uses: ./.github/actions/cmake-build
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: Debug
@@ -269,7 +269,7 @@ jobs:
 
       - name: Build runtime analysis prerequisites
         if: matrix.family == 'qml' || matrix.family == 'tsan'
-        uses: $/.github/actions/cmake-build
+        uses: ./.github/actions/cmake-build
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: Debug
@@ -313,7 +313,7 @@ jobs:
 
       - name: Run Sanitizer Tests
         if: matrix.family == 'tsan'
-        uses: $/.github/actions/run-unit-tests
+        uses: ./.github/actions/run-unit-tests
         with:
           build-dir: ${{ runner.temp }}/build
           junit-output: junit-results-analysis-${{ matrix.tool }}.xml

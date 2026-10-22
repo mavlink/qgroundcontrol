@@ -60,11 +60,11 @@ jobs:
 
       - name: Build Config
         id: buildconfig
-        uses: $/.github/actions/build-config
+        uses: ./.github/actions/build-config
 
       - name: Configure AWS Credentials
         if: ${{ !inputs.dry_run }}
-        uses: $/.github/actions/aws-credentials
+        uses: ./.github/actions/aws-credentials
         with:
           aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
           aws-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}

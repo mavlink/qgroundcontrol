@@ -76,7 +76,7 @@ jobs:
           persist-credentials: false
 
       - name: Deploy docs
-        uses: $/.github/actions/deploy-docs
+        uses: ./.github/actions/deploy-docs
         with:
           artifact-name: doxygen_build
           target-repo: mavlink/api.qgroundcontrol.com

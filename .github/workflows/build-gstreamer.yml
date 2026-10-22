@@ -121,7 +121,7 @@ jobs:
       # for the Qt SDK, Python environment, and compiler toolchain.
       - name: Build Setup
         if: inputs.platform == 'linux' || inputs.platform == 'macos' || inputs.platform == 'windows'
-        uses: $/.github/actions/build-setup
+        uses: ./.github/actions/build-setup
         with:
           qt-host: >-
             ${{
@@ -167,7 +167,7 @@ jobs:
 
       - name: Configure AWS Credentials
         if: inputs.upload_s3
-        uses: $/.github/actions/aws-credentials
+        uses: ./.github/actions/aws-credentials
         with:
           aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
           aws-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}

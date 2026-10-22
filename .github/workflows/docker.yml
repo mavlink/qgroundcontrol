@@ -125,7 +125,7 @@ jobs:
           persist-credentials: false
 
       - name: Free Disk Space
-        uses: $/.github/actions/free-disk-space
+        uses: ./.github/actions/free-disk-space
 
       - name: Resolve push target
         id: push-target
@@ -142,7 +142,7 @@ jobs:
 
       - name: Build with Docker
         id: docker-build
-        uses: $/.github/actions/docker
+        uses: ./.github/actions/docker
         with:
           target: ${{ matrix.target }}
           variant: ${{ matrix.variant }}
@@ -336,7 +336,7 @@ jobs:
       - name: Debug failed runner
         if: ${{ failure() && !cancelled() && inputs.debug_runner && github.ref_type == 'branch' }}
         timeout-minutes: 15
-        uses: $/.github/actions/debug-runner
+        uses: ./.github/actions/debug-runner
 
   attest-images:
     name: Attest ${{ matrix.platform }} Image

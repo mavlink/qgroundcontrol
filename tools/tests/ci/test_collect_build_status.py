@@ -203,4 +203,4 @@ def test_save_baselines_skips_setup_python() -> None:
     # tools/tests/test_stdlib_only.py checks that its scripts import with the standard library only.
     workflow = load_workflow("build-results.yml")
     steps = workflow["jobs"]["save-baselines"]["steps"]
-    assert not any(step.get("uses") == "$/.github/actions/setup-python" for step in steps)
+    assert not any(step.get("uses") == "./.github/actions/setup-python" for step in steps)

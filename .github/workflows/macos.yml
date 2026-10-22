@@ -28,7 +28,7 @@ permissions:
 
 jobs:
   changes:
-    uses: $/.github/workflows/_detect-changes.yml
+    uses: ./.github/workflows/_detect-changes.yml
     with:
       platform: macos
 
@@ -74,17 +74,17 @@ jobs:
           persist-credentials: false
 
       - name: Build Setup
-        uses: $/.github/actions/build-setup
+        uses: ./.github/actions/build-setup
         with:
           qt-host: mac
           qt-arch: clang_64
           build-type: ${{ matrix.build_type }}
 
       - name: Install Dependencies
-        uses: $/.github/actions/install-dependencies
+        uses: ./.github/actions/install-dependencies
 
       - name: CMake configure
-        uses: $/.github/actions/cmake-configure
+        uses: ./.github/actions/cmake-configure
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ matrix.build_type }}
@@ -99,7 +99,7 @@ jobs:
 
       - name: Build
         id: build
-        uses: $/.github/actions/cmake-build
+        uses: ./.github/actions/cmake-build
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ matrix.build_type }}
@@ -107,7 +107,7 @@ jobs:
       - name: Run portable tests
         id: portable
         if: ${{ !cancelled() && steps.build.outcome == 'success' && matrix.build_type == 'Release' }}
-        uses: $/.github/actions/run-unit-tests
+        uses: ./.github/actions/run-unit-tests
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ matrix.build_type }}
@@ -119,13 +119,13 @@ jobs:
 
       - name: Run and report tests
         if: ${{ !cancelled() && steps.build.outcome == 'success' && matrix.build_type == 'Debug' }}
-        uses: $/.github/actions/test-phase
+        uses: ./.github/actions/test-phase
         with:
           build-dir: ${{ runner.temp }}/build
           suite: macos
 
       - name: Verify dev build executable
-        uses: $/.github/actions/verify-executable
+        uses: ./.github/actions/verify-executable
         with:
           binary-path: ${{ runner.temp }}/build/${{ matrix.build_type }}/QGroundControl.app/Contents/MacOS/QGroundControl
           build-dir: ${{ runner.temp }}/build
@@ -152,7 +152,7 @@ jobs:
 
       - name: Verify DMG executable
         if: matrix.build_type == 'Release'
-        uses: $/.github/actions/verify-executable
+        uses: ./.github/actions/verify-executable
         with:
           binary-path: ${{ runner.temp }}/build/QGroundControl.dmg
           type: dmg
@@ -160,7 +160,7 @@ jobs:
 
       - name: Attest and Upload
         if: matrix.build_type == 'Release'
-        uses: $/.github/actions/attest-and-upload
+        uses: ./.github/actions/attest-and-upload
         with:
           artifact-name: QGroundControl.dmg
           package-name: QGroundControl
@@ -173,7 +173,7 @@ jobs:
       - name: Debug failed runner
         if: ${{ failure() && !cancelled() && inputs.debug_runner && github.ref_type == 'branch' }}
         timeout-minutes: 15
-        uses: $/.github/actions/debug-runner
+        uses: ./.github/actions/debug-runner
 
   # The required status check: a skipped matrix job reports an unexpanded name, so branch
   # protection requires this stable name instead. always(): a skipped gate would count as passing.

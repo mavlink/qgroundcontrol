@@ -27,7 +27,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 WORKFLOWS_DIR = REPO_ROOT / ".github" / "workflows"
-REUSABLE_DETECTION = "$/.github/workflows/_detect-changes.yml"
+REUSABLE_DETECTION = "./.github/workflows/_detect-changes.yml"
 _EVENT_VARS = (
     "EVENT_NAME",
     "PR_BASE_SHA",
@@ -231,7 +231,7 @@ def test_reusable_workflow_runs_one_unconditional_detection() -> None:
     assert "--platform" in run["run"]
     assert "if" not in _checkout(steps)
     assert "if" not in run
-    assert not any(str(s.get("uses", "")).startswith(("./", "$/")) for s in steps)
+    assert not any(str(s.get("uses", "")).startswith("./") for s in steps)
 
 
 @pytest.mark.parametrize(

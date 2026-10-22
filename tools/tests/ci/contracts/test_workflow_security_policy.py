@@ -172,7 +172,7 @@ def test_external_actions_use_versioned_refs() -> None:
     for path in [*WORKFLOWS, *COMPOSITE_ACTIONS]:
         document = _load_yaml_mapping(path)
         for uses in _uses_values(document):
-            if uses.startswith("$/"):
+            if uses.startswith("./"):
                 continue
             action, separator, ref = uses.rpartition("@")
             assert separator and action, f"{path}: external action must include a ref: {uses}"

@@ -81,7 +81,7 @@ jobs:
           persist-credentials: false
 
       - name: Deploy docs
-        uses: $/.github/actions/deploy-docs
+        uses: ./.github/actions/deploy-docs
         with:
           artifact-name: qgc_docs_build
           target-repo: mavlink/docs.qgroundcontrol.com

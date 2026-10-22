@@ -212,7 +212,7 @@ def test_release_uses_platform_sboms_without_reattesting() -> None:
     steps = {step["name"]: step for step in upload["steps"]}
 
     assert upload["permissions"] == {"actions": "read", "contents": "write"}
-    assert steps["Download artifacts"]["uses"] == "$/.github/actions/download-all-artifacts"
+    assert steps["Download artifacts"]["uses"] == "./.github/actions/download-all-artifacts"
     assert steps["Download artifacts"]["with"] == {
         "head-sha": "${{ github.sha }}",
         "workflows": "Linux,Windows,MacOS,Android,iOS",
@@ -266,7 +266,7 @@ def test_attestation_actions_publish_checksum_and_resolved_sbom_output() -> None
     )
     assert save["with"]["compression-level"] == 0
 
-    assert credentials["uses"] == "$/.github/actions/aws-credentials"
+    assert credentials["uses"] == "./.github/actions/aws-credentials"
     assert " ".join(credentials["if"].split()) == (
         "fromJSON(inputs.upload-aws) && "
         "(github.event_name == 'push' || "

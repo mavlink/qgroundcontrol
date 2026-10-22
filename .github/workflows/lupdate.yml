@@ -31,16 +31,16 @@ jobs:
 
       - name: Get build config
         id: config
-        uses: $/.github/actions/build-config
+        uses: ./.github/actions/build-config
 
       - name: Setup Python
-        uses: $/.github/actions/setup-python
+        uses: ./.github/actions/setup-python
         with:
           groups: qt
 
       # lupdate ships in qttools and links QtQml, QtNetwork and ICU.
       - name: Install Qt for Linux
-        uses: $/.github/actions/qt-install
+        uses: ./.github/actions/qt-install
         with:
           version: ${{ steps.config.outputs.qt_version }}
           host: linux

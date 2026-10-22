@@ -28,7 +28,7 @@ permissions:
 
 jobs:
   changes:
-    uses: $/.github/workflows/_detect-changes.yml
+    uses: ./.github/workflows/_detect-changes.yml
     with:
       platform: linux
 
@@ -113,17 +113,17 @@ jobs:
           persist-credentials: false
 
       - name: Build Setup
-        uses: $/.github/actions/build-setup
+        uses: ./.github/actions/build-setup
         with:
           qt-host: ${{ matrix.host }}
           qt-arch: ${{ matrix.arch }}
           build-type: Release
 
       - name: Install Dependencies
-        uses: $/.github/actions/install-dependencies
+        uses: ./.github/actions/install-dependencies
 
       - name: Configure
-        uses: $/.github/actions/cmake-configure
+        uses: ./.github/actions/cmake-configure
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: Release
@@ -132,7 +132,7 @@ jobs:
 
       - name: Build
         id: build
-        uses: $/.github/actions/cmake-build
+        uses: ./.github/actions/cmake-build
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: Release
@@ -140,7 +140,7 @@ jobs:
           reviewdog-token: ${{ github.token }}
 
       - name: Verify Executable
-        uses: $/.github/actions/verify-executable
+        uses: ./.github/actions/verify-executable
         with:
           binary-path: ${{ runner.temp }}/build/Release/QGroundControl
 
@@ -155,14 +155,14 @@ jobs:
         run: cmake --install . --config Release
 
       - name: Verify AppImage
-        uses: $/.github/actions/verify-executable
+        uses: ./.github/actions/verify-executable
         with:
           binary-path: ${{ runner.temp }}/build/${{ matrix.package }}.AppImage
           type: appimage
           expected-appimage-update-information: ${{ env.QGC_APPIMAGE_UPDATE_INFORMATION }}
 
       - name: Attest and Upload
-        uses: $/.github/actions/attest-and-upload
+        uses: ./.github/actions/attest-and-upload
         with:
           artifact-name: ${{ matrix.package }}.AppImage
           package-name: ${{ matrix.package }}
@@ -177,7 +177,7 @@ jobs:
       - name: Debug failed runner
         if: ${{ failure() && !cancelled() && inputs.debug_runner && github.ref_type == 'branch' }}
         timeout-minutes: 15
-        uses: $/.github/actions/debug-runner
+        uses: ./.github/actions/debug-runner
 
   debug-validation:
     name: ${{ matrix.mode == 'coverage' && 'Test + Coverage linux_gcc_64 Debug' || 'Sanitizers linux_gcc_64 Debug (ASan+UBSan)' }}
@@ -233,7 +233,7 @@ jobs:
           persist-credentials: false
 
       - name: Build Setup
-        uses: $/.github/actions/build-setup
+        uses: ./.github/actions/build-setup
         with:
           qt-host: linux
           qt-arch: linux_gcc_64
@@ -242,10 +242,10 @@ jobs:
           python-groups: ${{ matrix.mode == 'coverage' && 'scripts,coverage' || 'scripts' }}
 
       - name: Install Dependencies
-        uses: $/.github/actions/install-dependencies
+        uses: ./.github/actions/install-dependencies
 
       - name: Configure
-        uses: $/.github/actions/cmake-configure
+        uses: ./.github/actions/cmake-configure
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: Debug
@@ -256,14 +256,14 @@ jobs:
 
       - name: Build
         id: build
-        uses: $/.github/actions/cmake-build
+        uses: ./.github/actions/cmake-build
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: Debug
 
       - name: Run and report tests
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
-        uses: $/.github/actions/test-phase
+        uses: ./.github/actions/test-phase
         # Sanitizer runtime options come from CTest (cmake/QGCTest.cmake), as in local runs.
         with:
           build-dir: ${{ runner.temp }}/build
@@ -325,7 +325,7 @@ jobs:
       - name: Run normally excluded tests
         id: excluded
         if: ${{ !cancelled() && steps.build.outcome == 'success' && matrix.mode == 'coverage' && github.event_name == 'workflow_dispatch' }}
-        uses: $/.github/actions/run-unit-tests
+        uses: ./.github/actions/run-unit-tests
         with:
           build-dir: ${{ runner.temp }}/build
           include-labels: 'Network|Flaky'
@@ -339,7 +339,7 @@ jobs:
       - name: Debug failed runner
         if: ${{ failure() && !cancelled() && inputs.debug_runner && github.ref_type == 'branch' }}
         timeout-minutes: 15
-        uses: $/.github/actions/debug-runner
+        uses: ./.github/actions/debug-runner
 
   # The required status check: a skipped matrix job reports an unexpanded name, so branch
   # protection requires this stable name instead. always(): a skipped gate would count as passing.

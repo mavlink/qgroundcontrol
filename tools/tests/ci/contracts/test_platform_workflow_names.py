@@ -122,7 +122,7 @@ def test_only_pr_reporting_allows_missing_diagnostic_artifacts() -> None:
         download = next(
             step
             for step in doc["jobs"][job]["steps"]
-            if step.get("uses") == "$/.github/actions/download-all-artifacts"
+            if step.get("uses") == "./.github/actions/download-all-artifacts"
         )
         assert download["with"].get("allow-missing", "false") == allows_missing
         if job == "post-pr-comment":

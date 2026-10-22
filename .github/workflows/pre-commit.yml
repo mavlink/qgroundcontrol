@@ -38,16 +38,16 @@ jobs:
 
       - name: Get build config
         id: config
-        uses: $/.github/actions/build-config
+        uses: ./.github/actions/build-config
 
       - name: Setup Python
-        uses: $/.github/actions/setup-python
+        uses: ./.github/actions/setup-python
         with:
           groups: dev
           python-version: '3.12'
 
       - name: Install Qt (for qmllint)
-        uses: $/.github/actions/qt-install
+        uses: ./.github/actions/qt-install
         with:
           version: ${{ steps.config.outputs.qt_version }}
           host: linux

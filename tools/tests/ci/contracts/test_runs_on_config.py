@@ -297,7 +297,7 @@ def test_runner_image_workflow_smoke_tests_the_managed_image() -> None:
 
     build_steps = {step["name"]: step for step in workflow["jobs"]["ubuntu24-x64"]["steps"]}
     assert ".github/actions/build-config" in build_steps["Checkout"]["with"]["sparse-checkout"]
-    assert build_steps["Resolve build configuration"]["uses"] == "$/.github/actions/build-config"
+    assert build_steps["Resolve build configuration"]["uses"] == "./.github/actions/build-config"
     packer_env = build_steps["Build runner image"]["env"]
     assert packer_env["PKR_VAR_qt_version"] == "${{ steps.build-config.outputs.qt_version }}"
     assert packer_env["PKR_VAR_qt_modules"] == "${{ steps.build-config.outputs.qt_modules }}"

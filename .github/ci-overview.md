@@ -195,8 +195,8 @@ Dependency updates are split between two bots to avoid overlapping PRs:
   session after its normal reporting steps; connect with the SSH command in the step log and a key
   registered to the dispatching account, and run `touch continue` in the checkout to finish.
   Setup and session share a 15-minute step timeout, bounded by the remaining job timeout.
-- Successful builds, PRs, tag runs, and cancelled jobs never open a session. The action loads
-  through `$/` even when checkout fails; post-job cleanup failures and exhausted job timeouts
+- Successful builds, PRs, tag runs, and cancelled jobs never open a session. A checkout failure can
+  prevent the local action from loading; post-job cleanup failures and exhausted job timeouts
   cannot be inspected. Windows installs MSYS2 and tmate only when a session opens.
 
 ## Change Detection and Release Gating

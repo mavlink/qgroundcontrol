@@ -53,7 +53,7 @@ jobs:
           persist-credentials: false
 
       - name: Build Setup
-        uses: $/.github/actions/build-setup
+        uses: ./.github/actions/build-setup
         with:
           qt-host: linux
           qt-arch: linux_gcc_64
@@ -61,7 +61,7 @@ jobs:
           save-cache: 'false'
 
       - name: Install Dependencies
-        uses: $/.github/actions/install-dependencies
+        uses: ./.github/actions/install-dependencies
         with:
           extra-packages: clang
 
@@ -75,7 +75,7 @@ jobs:
           test -x /tmp/ClangBuildAnalyzer
 
       - name: Configure
-        uses: $/.github/actions/cmake-configure
+        uses: ./.github/actions/cmake-configure
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ inputs.build_type }}
@@ -87,7 +87,7 @@ jobs:
         run: /tmp/ClangBuildAnalyzer --start .
 
       - name: Build
-        uses: $/.github/actions/cmake-build
+        uses: ./.github/actions/cmake-build
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ inputs.build_type }}

@@ -54,7 +54,7 @@ runs:
 
     - name: Save successful build caches
       if: steps.compile.outputs.build_success == 'true' && (inputs.target == 'all' || inputs.target == 'autogen')
-      uses: $/.github/actions/save-build-cache
+      uses: ./.github/actions/save-build-cache
 
     - name: Upload build timings
       if: always() && steps.compile.outputs.profile_path != ''

@@ -205,7 +205,7 @@ def test_nested_cache_save_inputs_survive_post_job_cleanup() -> None:
 def test_ios_matrix_forwards_distinct_cache_write_suffixes() -> None:
     workflow = _read(".github/workflows/ios.yml")
     steps = get_steps(load_action("build-setup"))
-    (cache,) = (step for step in steps if step.get("uses") == "$/.github/actions/cache")
+    (cache,) = (step for step in steps if step.get("uses") == "./.github/actions/cache")
 
     assert "cache-key-suffix: ${{ matrix.target }}" in workflow
     # One cache setup serves every mode; iOS keeps its former mac/ios cache identity.
@@ -292,7 +292,7 @@ def test_manual_linux_reuses_coverage_build_for_excluded_tests() -> None:
     assert excluded["with"]["exclude-labels"] == ""
     assert "steps.build.outcome == 'success'" in excluded["if"]
     assert "github.event_name == 'workflow_dispatch'" in excluded["if"]
-    assert sum(step.get("uses") == "$/.github/actions/cmake-build" for step in steps) == 1
+    assert sum(step.get("uses") == "./.github/actions/cmake-build" for step in steps) == 1
 
 
 @pytest.mark.parametrize("platform", ["docker", "linux"])
@@ -374,7 +374,7 @@ def test_docker_build_enables_magic_cache_on_upstream_aws_runners() -> None:
         index for index, step in enumerate(steps) if step.get("uses") == "runs-on/action@v2"
     )
     build = next(
-        index for index, step in enumerate(steps) if step.get("uses") == "$/.github/actions/docker"
+        index for index, step in enumerate(steps) if step.get("uses") == "./.github/actions/docker"
     )
     assert magic < build
     config = load_yaml(".github/runs-on.yml")
@@ -385,10 +385,10 @@ def test_docker_build_enables_magic_cache_on_upstream_aws_runners() -> None:
 def test_docker_cache_setup_uses_image_identity_and_shared_policy():
     docker = get_steps(load_action("docker"))
     setup_index = next(
-        i for i, step in enumerate(docker) if step.get("uses") == "$/.github/actions/setup-python"
+        i for i, step in enumerate(docker) if step.get("uses") == "./.github/actions/setup-python"
     )
     cache_index = next(
-        i for i, step in enumerate(docker) if step.get("uses") == "$/.github/actions/cache"
+        i for i, step in enumerate(docker) if step.get("uses") == "./.github/actions/cache"
     )
     build_index = next(i for i, step in enumerate(docker) if step.get("id") == "application-build")
     assert setup_index < cache_index < build_index
@@ -523,11 +523,11 @@ def test_compiler_caches_save_before_downstream_failures():
         if step.get("with", {}).get("path") in {".ccache", ".cache/moccache"}:
             assert step["uses"] == "actions/cache/restore@v6"
     build = get_steps(load_action("cmake-build"))
-    save = next(step for step in build if step.get("uses") == "$/.github/actions/save-build-cache")
+    save = next(step for step in build if step.get("uses") == "./.github/actions/save-build-cache")
     assert "steps.compile.outputs.build_success == 'true'" in save["if"]
     assert "inputs.target == 'autogen'" in save["if"]
     docker = get_steps(load_action("docker"))
-    save = next(step for step in docker if step.get("uses") == "$/.github/actions/save-build-cache")
+    save = next(step for step in docker if step.get("uses") == "./.github/actions/save-build-cache")
     assert "!cancelled()" in save["if"]
     assert "steps.performance.outputs.build_success == 'true'" in save["if"]
 
@@ -580,14 +580,14 @@ def test_build_setup_python_groups_default_to_scripts_and_linux_coverage_adds_co
     (python,) = (
         step
         for step in action["runs"]["steps"]
-        if step.get("uses") == "$/.github/actions/setup-python"
+        if step.get("uses") == "./.github/actions/setup-python"
     )
     assert action["inputs"]["python-groups"]["default"] == "scripts"
     assert python["with"]["groups"] == "${{ inputs.python-groups }}"
 
     job = load_workflow("linux.yml")["jobs"]["debug-validation"]
     (setup,) = (
-        step for step in job["steps"] if step.get("uses") == "$/.github/actions/build-setup"
+        step for step in job["steps"] if step.get("uses") == "./.github/actions/build-setup"
     )
     assert setup["with"]["python-groups"] == (
         "${{ matrix.mode == 'coverage' && 'scripts,coverage' || 'scripts' }}"

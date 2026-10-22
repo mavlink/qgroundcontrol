@@ -28,7 +28,7 @@ permissions:
 
 jobs:
   changes:
-    uses: $/.github/workflows/_detect-changes.yml
+    uses: ./.github/workflows/_detect-changes.yml
     with:
       platform: ios
 
@@ -92,7 +92,7 @@ jobs:
 
       - name: Build Setup (iOS)
         id: setup
-        uses: $/.github/actions/build-setup
+        uses: ./.github/actions/build-setup
         with:
           mode: ios
           qt-arch: ${{ matrix.qt_arch }}
@@ -128,7 +128,7 @@ jobs:
         run: python3 tools/ci/ios/ios_package.py select-profile
 
       - name: Configure
-        uses: $/.github/actions/cmake-configure
+        uses: ./.github/actions/cmake-configure
         env:
           QT_HOST_PATH: ${{ steps.setup.outputs.host_qt_root_dir }}
         with:
@@ -139,7 +139,7 @@ jobs:
           extra-args: ${{ steps.profile.outputs.cmake_args }}
 
       - name: Build
-        uses: $/.github/actions/cmake-build
+        uses: ./.github/actions/cmake-build
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ matrix.build_type }}
@@ -170,7 +170,7 @@ jobs:
 
       - name: Attest and Upload
         if: matrix.target == 'device'
-        uses: $/.github/actions/attest-and-upload
+        uses: ./.github/actions/attest-and-upload
         with:
           artifact-name: ${{ env.PACKAGE }}.ipa
           artifact-source-path: ${{ runner.temp }}/build/${{ matrix.build_type }}/${{ env.PACKAGE }}.ipa
@@ -190,7 +190,7 @@ jobs:
       - name: Debug failed runner
         if: ${{ failure() && !cancelled() && inputs.debug_runner && github.ref_type == 'branch' }}
         timeout-minutes: 15
-        uses: $/.github/actions/debug-runner
+        uses: ./.github/actions/debug-runner
 
   # The required status check: a skipped matrix job reports an unexpanded name, so branch
   # protection requires this stable name instead. always(): a skipped gate would count as passing.

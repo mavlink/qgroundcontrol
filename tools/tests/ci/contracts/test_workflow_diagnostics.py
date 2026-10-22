@@ -31,7 +31,7 @@ def test_build_diagnostics_are_informational_and_debugging_is_opt_in(platform, j
     assert timeline["continue-on-error"] is True
     assert timeline["with"] == {"show-waiting-runner": True}
     debug = steps[-1]
-    assert debug["uses"] == "$/.github/actions/debug-runner"
+    assert debug["uses"] == "./.github/actions/debug-runner"
     assert debug["timeout-minutes"] == 15
     condition = debug["if"].removeprefix("${{ ").removesuffix(" }}")
     assert set(condition.split(" && ")) == {

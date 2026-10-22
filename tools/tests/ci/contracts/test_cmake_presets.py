@@ -410,7 +410,7 @@ def test_windows_qt_architectures_use_one_msvc_generation() -> None:
 def test_ci_configure_steps_select_platform_presets() -> None:
     def visit(value: Any, workflow: str) -> None:
         if isinstance(value, dict):
-            if value.get("uses") == "$/.github/actions/cmake-configure":
+            if value.get("uses") == "./.github/actions/cmake-configure":
                 assert value.get("with", {}).get("preset"), f"{workflow} omits configure preset"
                 use_qt_cmake = value.get("with", {}).get("use-qt-cmake", "true")
                 if workflow == "android.yml":
@@ -445,7 +445,7 @@ def test_portable_tests_share_the_platform_build(platform: str) -> None:
     workflow = load_workflow(f"{platform}.yml")
     steps = workflow["jobs"]["build"]["steps"]
     configure = next(
-        step for step in steps if step.get("uses") == "$/.github/actions/cmake-configure"
+        step for step in steps if step.get("uses") == "./.github/actions/cmake-configure"
     )
     assert "QGC_BUILD_PORTABLE_TESTS=" in configure["with"]["extra-args"]
     portable = next(step for step in steps if step.get("id") == "portable")
@@ -483,7 +483,7 @@ def test_developer_debug_presets_keep_full_debug_info_and_per_file_builds() -> N
 def test_ci_validation_jobs_take_cmake_settings_from_presets() -> None:
     def configure_inputs(steps: list[dict[str, Any]]) -> dict[str, str]:
         return next(
-            step for step in steps if step.get("uses") == "$/.github/actions/cmake-configure"
+            step for step in steps if step.get("uses") == "./.github/actions/cmake-configure"
         )["with"]
 
     linux = load_workflow("linux.yml")
@@ -493,7 +493,7 @@ def test_ci_validation_jobs_take_cmake_settings_from_presets() -> None:
         "${{ matrix.mode == 'coverage' && 'Linux-coverage' || 'Linux-sanitizers' }}"
     )
     assert "extra-args" not in configure
-    tests = next(step for step in steps if step.get("uses") == "$/.github/actions/test-phase")
+    tests = next(step for step in steps if step.get("uses") == "./.github/actions/test-phase")
     assert not [name for name in tests.get("env", {}) if name.endswith("SAN_OPTIONS")]
     sanitizer_exclusions = _load_preset_graph()["test"]["Linux-sanitizers"]["filter"]["exclude"]
     assert f"'{sanitizer_exclusions['label']}'" in tests["with"]["exclude-labels"]

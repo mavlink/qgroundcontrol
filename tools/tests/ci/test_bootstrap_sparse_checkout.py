@@ -286,9 +286,9 @@ def test_build_results_jobs_check_out_once_before_local_actions(job: str) -> Non
     assert not _missing_paths(set(EXPECTED_BUILD_RESULTS_PATHS), actual)
 
     local_actions = {
-        index: step["uses"].removeprefix("$/")
+        index: step["uses"].removeprefix("./")
         for index, step in enumerate(steps)
-        if str(step.get("uses", "")).startswith("$/")
+        if str(step.get("uses", "")).startswith("./")
     }
     assert local_actions
     assert min(local_actions) > checkouts[0]

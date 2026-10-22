@@ -4,10 +4,10 @@ This directory contains the local composite actions shared by QGroundControl wor
 [`../ci-overview.md`](../ci-overview.md) for workflow layout and CI conventions and
 [`tools/ci/README.md`](../../tools/ci/README.md) for the Python helpers the actions call.
 
-Workflows and actions reference these actions and reusable workflows with the self-repository
-syntax (`uses: $/.github/actions/<name>`), which loads them from the running commit without a
-checkout (runner 2.336 or newer). zizmor's `self-repository` audit rejects `./` references. Steps
-that run `tools/ci/` helpers still need a checkout containing those scripts.
+Workflows reference these actions with `uses: ./.github/actions/<name>`, so a job must check out
+the action directories (and the `tools/` helpers they run) before using them; sparse checkouts list
+them explicitly. The `$/` self-repository syntax is not used: on pull requests from forks the runner
+cannot load actions from the PR merge commit (zizmor's `self-repository` audit is disabled for this).
 
 ## Action Index
 

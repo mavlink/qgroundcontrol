@@ -151,7 +151,7 @@ jobs:
 
       - name: Build Setup (Android)
         id: setup
-        uses: $/.github/actions/build-setup
+        uses: ./.github/actions/build-setup
         with:
           mode: android
           qt-host: ${{ matrix.qt_host || matrix.host }}
@@ -165,7 +165,7 @@ jobs:
 
       - name: Install host build dependencies
         if: runner.os == 'Linux'
-        uses: $/.github/actions/install-dependencies
+        uses: ./.github/actions/install-dependencies
         with:
           # setup-java provides the JDK; Qt's host tools need none of the desktop libraries.
           category: core
@@ -176,7 +176,7 @@ jobs:
         run: python3 "${GITHUB_WORKSPACE}/tools/ci/android/android_sdk_helper.py" debug-keystore
 
       - name: Configure
-        uses: $/.github/actions/cmake-configure
+        uses: ./.github/actions/cmake-configure
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ env.BUILD_TYPE }}
@@ -198,7 +198,7 @@ jobs:
         # Disable Gradle daemon on CI — Windows runners hang for 30+ min after BUILD SUCCESSFUL waiting for daemon shutdown.
         env:
           GRADLE_OPTS: -Dorg.gradle.daemon=false
-        uses: $/.github/actions/cmake-build
+        uses: ./.github/actions/cmake-build
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ env.BUILD_TYPE }}
@@ -216,7 +216,7 @@ jobs:
 
       - name: Save recovered build caches
         if: steps.build-retry.outcome == 'success'
-        uses: $/.github/actions/save-build-cache
+        uses: ./.github/actions/save-build-cache
 
       # `failure()` is required: build's continue-on-error makes outcome alone insufficient.
       - name: Annotate emulator build retry failure
@@ -274,7 +274,7 @@ jobs:
 
       - name: Emulator Boot Test
         if: ${{ matrix.emulator }}
-        uses: $/.github/actions/android-emulator-test
+        uses: ./.github/actions/android-emulator-test
         with:
           apk-path: ${{ runner.temp }}/build/${{ env.PACKAGE }}.apk
           package: org.mavlink.qgroundcontrol
@@ -283,7 +283,7 @@ jobs:
 
       - name: Attest and Upload
         if: ${{ !matrix.emulator }}
-        uses: $/.github/actions/attest-and-upload
+        uses: ./.github/actions/attest-and-upload
         with:
           artifact-name: ${{ env.PACKAGE }}.apk
           package-name: ${{ format('{0}-{1}-{2}', env.PACKAGE, matrix.host, matrix.artifact_abi_suffix) }}
@@ -296,7 +296,7 @@ jobs:
 
       - name: Attest and Upload App Bundle
         if: ${{ steps.aab.outcome == 'success' }}
-        uses: $/.github/actions/attest-and-upload
+        uses: ./.github/actions/attest-and-upload
         with:
           artifact-name: ${{ env.PACKAGE }}.aab
           package-name: ${{ format('{0}-{1}-{2}-aab', env.PACKAGE, matrix.host, matrix.artifact_abi_suffix) }}
@@ -319,7 +319,7 @@ jobs:
       - name: Debug failed runner
         if: ${{ failure() && !cancelled() && inputs.debug_runner && github.ref_type == 'branch' }}
         timeout-minutes: 15
-        uses: $/.github/actions/debug-runner
+        uses: ./.github/actions/debug-runner
 
   # The required status check. Matrix legs differ by event, and a skipped matrix job reports an
   # unexpanded name, so branch protection requires this stable name instead. always(): a skipped

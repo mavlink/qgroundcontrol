@@ -32,7 +32,7 @@ runs:
   steps:
     - name: Setup Python (Windows)
       if: runner.os == 'Windows'
-      uses: $/.github/actions/setup-python
+      uses: ./.github/actions/setup-python
 
     - name: Install dependencies (Windows)
       if: runner.os == 'Windows'

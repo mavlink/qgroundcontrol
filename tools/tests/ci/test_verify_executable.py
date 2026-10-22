@@ -400,7 +400,7 @@ def test_macos_release_verifies_the_packaged_dmg_in_one_step():
     steps = workflow["jobs"]["build"]["steps"]
     assert "hdiutil" not in str(steps)
     (dmg,) = (step for step in steps if step.get("name") == "Verify DMG executable")
-    assert dmg["uses"] == "$/.github/actions/verify-executable"
+    assert dmg["uses"] == "./.github/actions/verify-executable"
     assert dmg["with"] == {
         "binary-path": "${{ runner.temp }}/build/QGroundControl.dmg",
         "type": "dmg",

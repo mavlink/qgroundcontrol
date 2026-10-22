@@ -71,7 +71,7 @@ jobs:
           fi
 
       - name: Configure AWS Credentials
-        uses: $/.github/actions/aws-credentials
+        uses: ./.github/actions/aws-credentials
         with:
           aws-role-arn: ${{ secrets.RUNS_ON_AMI_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION || 'us-west-2' }}
@@ -83,7 +83,7 @@ jobs:
 
       - name: Resolve build configuration
         id: build-config
-        uses: $/.github/actions/build-config
+        uses: ./.github/actions/build-config
 
       - name: Build runner image
         working-directory: .github/runner-images
@@ -151,7 +151,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Configure AWS Credentials
-        uses: $/.github/actions/aws-credentials
+        uses: ./.github/actions/aws-credentials
         with:
           aws-role-arn: ${{ secrets.RUNS_ON_AMI_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION || 'us-west-2' }}

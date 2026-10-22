@@ -98,7 +98,7 @@ runs:
       run: docker tag "${PUSH_IMAGE}:${VARIANT}" "dronecode/qgroundcontrol:${VARIANT}"
 
     - name: Set up cache tooling
-      uses: $/.github/actions/setup-python
+      uses: ./.github/actions/setup-python
       with:
         groups: scripts
 
@@ -110,7 +110,7 @@ runs:
       run: python3 tools/ci/compile/docker_helper.py cache-key --image "$IMAGE"
 
     - name: Restore application build caches
-      uses: $/.github/actions/cache
+      uses: ./.github/actions/cache
       with:
         host: linux
         target: docker-${{ inputs.variant }}
@@ -138,7 +138,7 @@ runs:
 
     - name: Save successful compilation caches
       if: ${{ !cancelled() && steps.performance.outputs.build_success == 'true' }}
-      uses: $/.github/actions/save-build-cache
+      uses: ./.github/actions/save-build-cache
       with:
         docker-report: build/docker-build-report.json
 

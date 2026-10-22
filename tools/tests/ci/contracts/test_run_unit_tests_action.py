@@ -47,7 +47,7 @@ def test_codecov_upload_tolerates_missing_junit_without_a_probe() -> None:
 
 def test_test_phase_reports_each_suite_from_its_own_run() -> None:
     steps = _steps("test-phase")
-    runs = [step for step in steps if step.get("uses") == "$/.github/actions/run-unit-tests"]
+    runs = [step for step in steps if step.get("uses") == "./.github/actions/run-unit-tests"]
     assert [step["with"]["include-labels"] for step in runs] == ["Unit", "Integration"]
     declared = set(load_action("run-unit-tests")["inputs"])
     assert all(set(step["with"]) <= declared for step in runs)

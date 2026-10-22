@@ -491,7 +491,7 @@ def test_workflow_runs_for_translation_only_prs_with_real_base() -> None:
     assert checkout["with"]["fetch-depth"] == 0
     assert checkout["with"]["persist-credentials"] is False
     assert "ref" not in checkout["with"]
-    setup = next(step for step in steps if step.get("uses") == "$/.github/actions/setup-python")
+    setup = next(step for step in steps if step.get("uses") == "./.github/actions/setup-python")
     assert setup["with"]["groups"] == "scripts"
     validation = steps[-1]
     assert validation["working-directory"] == "tools"

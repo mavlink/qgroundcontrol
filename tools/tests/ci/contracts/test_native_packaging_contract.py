@@ -169,7 +169,7 @@ def test_windows_installer_uses_only_the_cpack_nsis_path() -> None:
     # artifact path, which is the installer the install test runs.
     steps = get_steps(load_workflow("windows.yml"), "build")
     install = next(s for s in steps if s.get("name") == "Install, upgrade, and verify installer")
-    attest = next(s for s in steps if s.get("uses") == "$/.github/actions/attest-and-upload")
+    attest = next(s for s in steps if s.get("uses") == "./.github/actions/attest-and-upload")
     assert (
         install["env"]["INSTALLER_PATH"] == "${{ runner.temp }}\\build\\${{ matrix.package }}.exe"
     )

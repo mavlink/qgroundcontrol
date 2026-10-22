@@ -187,7 +187,7 @@ jobs:
 
       - name: Setup Python
         if: steps.changes.outputs.changed == 'true'
-        uses: $/.github/actions/setup-python
+        uses: ./.github/actions/setup-python
         with:
           groups: precommit
 
@@ -272,7 +272,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Python
-        uses: $/.github/actions/setup-python
+        uses: ./.github/actions/setup-python
         with:
           groups: ${{ matrix.groups }}
           python-version: ${{ matrix.python-version }}
@@ -306,7 +306,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Python
-        uses: $/.github/actions/setup-python
+        uses: ./.github/actions/setup-python
         with:
           groups: test
           python-version: '3.12'
@@ -329,7 +329,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup Python
-        uses: $/.github/actions/setup-python
+        uses: ./.github/actions/setup-python
         with:
           groups: dev
           python-version: '3.10'

@@ -83,7 +83,7 @@ runs:
 
     - name: Get build config
       id: config
-      uses: $/.github/actions/build-config
+      uses: ./.github/actions/build-config
 
     - name: Export preset environment
       if: inputs.mode == 'android'
@@ -95,7 +95,7 @@ runs:
 
     - name: Free disk space (Linux)
       if: runner.os == 'Linux'
-      uses: $/.github/actions/free-disk-space
+      uses: ./.github/actions/free-disk-space
       with:
         remove-android: ${{ inputs.mode != 'android' }}
 
@@ -119,12 +119,12 @@ runs:
         useCloudCache: true
         useLocalCache: false
 
-    - uses: $/.github/actions/setup-python
+    - uses: ./.github/actions/setup-python
       with:
         groups: ${{ inputs.python-groups }}
 
     - name: Setup caching
-      uses: $/.github/actions/cache
+      uses: ./.github/actions/cache
       with:
         host: ${{ inputs.mode == 'ios' && 'mac' || inputs.qt-host }}
         target: ${{ inputs.mode == 'desktop' && inputs.qt-arch || inputs.mode }}
@@ -144,7 +144,7 @@ runs:
     # The desktop target Qt, or the desktop Qt whose host tools mobile builds run.
     - name: Install Qt
       id: qt
-      uses: $/.github/actions/qt-install
+      uses: ./.github/actions/qt-install
       with:
         version: ${{ steps.config.outputs.qt_version }}
         host: ${{ inputs.mode == 'ios' && 'mac' || inputs.qt-host }}
@@ -163,7 +163,7 @@ runs:
     - name: Install host Qt (Windows ARM64 cross-compile)
       if: inputs.mode == 'desktop' && endsWith(inputs.qt-arch, '_arm64_cross_compiled')
       id: qt-desktop-host
-      uses: $/.github/actions/qt-install
+      uses: ./.github/actions/qt-install
       with:
         version: ${{ steps.config.outputs.qt_version }}
         host: windows
@@ -175,7 +175,7 @@ runs:
     - name: Install Qt for iOS
       if: inputs.mode == 'ios'
       id: qt-ios
-      uses: $/.github/actions/qt-install
+      uses: ./.github/actions/qt-install
       with:
         version: ${{ steps.config.outputs.qt_version }}
         host: mac
@@ -218,7 +218,7 @@ runs:
     - name: Install Qt for Android
       if: inputs.mode == 'android'
       id: qt-android
-      uses: $/.github/actions/qt-android
+      uses: ./.github/actions/qt-android
       with:
         host: ${{ inputs.qt-host }}
         version: ${{ steps.config.outputs.qt_version }}

@@ -42,7 +42,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup configuration validation
-        uses: $/.github/actions/setup-python
+        uses: ./.github/actions/setup-python
         with:
           groups: test
       - name: Validate link exception deadlines

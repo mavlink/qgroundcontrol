@@ -116,7 +116,7 @@ runs:
         (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.ref_type == 'tag')) &&
         github.repository_owner == 'mavlink' &&
         (inputs.aws-role-arn != '' || (inputs.aws-key-id != '' && inputs.aws-secret-access-key != ''))
-      uses: $/.github/actions/aws-credentials
+      uses: ./.github/actions/aws-credentials
       with:
         aws-role-arn: ${{ inputs.aws-role-arn }}
         aws-key-id: ${{ inputs.aws-key-id }}

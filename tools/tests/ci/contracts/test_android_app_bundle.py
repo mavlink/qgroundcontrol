@@ -32,7 +32,7 @@ def test_app_bundle_is_attested_and_uploaded_separately_from_the_apk() -> None:
     steps = _build_steps()
     upload = steps["Attest and Upload App Bundle"]
     assert upload["if"] == "${{ steps.aab.outcome == 'success' }}"
-    assert upload["uses"] == "$/.github/actions/attest-and-upload"
+    assert upload["uses"] == "./.github/actions/attest-and-upload"
     assert upload["with"]["artifact-name"] == "${{ env.PACKAGE }}.aab"
     # Distinct names keep its GitHub artifact, SBOM artifact and sidecars apart from the APK's.
     assert upload["with"]["subject-name"] != steps["Attest and Upload"]["with"]["subject-name"]

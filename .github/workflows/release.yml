@@ -133,7 +133,7 @@ jobs:
           name: release-build-runs
 
       - name: Download artifacts
-        uses: $/.github/actions/download-all-artifacts
+        uses: ./.github/actions/download-all-artifacts
         with:
           head-sha: ${{ github.sha }}
           workflows: Linux,Windows,MacOS,Android,iOS

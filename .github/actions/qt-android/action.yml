@@ -75,7 +75,7 @@ runs:
     - name: Install Qt for Android (arm64_v8a)
       if: contains(format(';{0};', inputs.abis), ';arm64-v8a;')
       id: qt-android-arm64
-      uses: $/.github/actions/qt-install
+      uses: ./.github/actions/qt-install
       with:
         version: ${{ inputs.version }}
         host: ${{ inputs.host }}
@@ -87,7 +87,7 @@ runs:
     - name: Install Qt for Android (armv7)
       if: contains(format(';{0};', inputs.abis), ';armeabi-v7a;')
       id: qt-android-armv7
-      uses: $/.github/actions/qt-install
+      uses: ./.github/actions/qt-install
       with:
         version: ${{ inputs.version }}
         host: ${{ inputs.host }}
@@ -99,7 +99,7 @@ runs:
     - name: Install Qt for Android (x86_64)
       if: contains(format(';{0};', inputs.abis), ';x86_64;')
       id: qt-android-x86_64
-      uses: $/.github/actions/qt-install
+      uses: ./.github/actions/qt-install
       with:
         version: ${{ inputs.version }}
         host: ${{ inputs.host }}

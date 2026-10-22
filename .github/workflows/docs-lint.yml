@@ -33,7 +33,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - name: Setup Python
-        uses: $/.github/actions/setup-python
+        uses: ./.github/actions/setup-python
         with:
           groups: precommit
       # Manual runs have no base revision and check every English page.

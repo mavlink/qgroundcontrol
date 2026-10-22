@@ -123,13 +123,13 @@ jobs:
 
       - name: Install Python dependencies
         if: steps.builds.outputs.ready == 'true'
-        uses: $/.github/actions/setup-python
+        uses: ./.github/actions/setup-python
         with:
           groups: scripts
 
       - name: Download artifacts from all platform workflows
         if: steps.builds.outputs.ready == 'true'
-        uses: $/.github/actions/download-all-artifacts
+        uses: ./.github/actions/download-all-artifacts
         with:
           include-failed: 'true'
           allow-missing: 'true'
@@ -245,7 +245,7 @@ jobs:
       - name: Download artifacts from all platform workflows
         if: steps.gate.outputs.ready == 'true'
         continue-on-error: true
-        uses: $/.github/actions/download-all-artifacts
+        uses: ./.github/actions/download-all-artifacts
         with:
           head-sha: ${{ github.event.workflow_run.head_sha }}
           workflows: ${{ needs.load-config.outputs.platform_workflows }}

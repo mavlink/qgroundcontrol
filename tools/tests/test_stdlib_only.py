@@ -59,7 +59,7 @@ _PROBE = (
 )
 
 _SCRIPT_RE = re.compile(r"(?<![\w-])(?:tools|deploy)/[\w./-]+")
-_LOCAL_ACTION_PREFIXES = ("$/.github/actions/", "./.github/actions/")
+_LOCAL_ACTION_PREFIXES = ("./.github/actions/", "./.github/actions/")
 
 
 @pytest.mark.parametrize("script", PRE_SETUP_PYTHON_SCRIPTS)

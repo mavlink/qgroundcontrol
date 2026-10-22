@@ -23,7 +23,7 @@ runs:
   using: composite
   steps:
     - name: Run Unit Tests (parallel)
-      uses: $/.github/actions/run-unit-tests
+      uses: ./.github/actions/run-unit-tests
       with:
         build-dir: ${{ inputs.build-dir }}
         junit-output: junit-results-${{ inputs.suite }}-unit.xml
@@ -39,7 +39,7 @@ runs:
 
     - name: Run Integration Tests
       if: ${{ !cancelled() }}
-      uses: $/.github/actions/run-unit-tests
+      uses: ./.github/actions/run-unit-tests
       with:
         build-dir: ${{ inputs.build-dir }}
         junit-output: junit-results-${{ inputs.suite }}-integration.xml
