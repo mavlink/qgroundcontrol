@@ -441,7 +441,15 @@ bool UnitTest::waitForSignalCount(QSignalSpy& spy, int expectedCount, std::chron
     QElapsedTimer waitTimer;
     waitTimer.start();
 
-    if (QTest::qWaitFor([&spy, expectedCount]() { return spy.count() >= expectedCount; }, timeout)) {
+    // QSignalSpy::wait spins an event loop; QTest::qWaitFor sleeps 10 ms between event passes,
+    // which throttles multi-message exchanges such as MockLink FTP transfers.
+    while (spy.count() < expectedCount) {
+        const std::chrono::milliseconds remaining = timeout - std::chrono::milliseconds(waitTimer.elapsed());
+        if ((remaining <= std::chrono::milliseconds::zero()) || !spy.wait(remaining)) {
+            break;
+        }
+    }
+    if (spy.count() >= expectedCount) {
         return true;
     }
 

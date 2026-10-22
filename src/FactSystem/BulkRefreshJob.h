@@ -14,6 +14,8 @@ class ParameterManager;
 /// Owned by ParameterManager (as QObject parent); self-deletes on completion.
 class BulkRefreshJob : public QObject
 {
+    Q_OBJECT
+
 public:
     BulkRefreshJob(ParameterManager *mgr, int componentId, const QStringList &resolvedNames,
                    bool notifyFailure, std::function<void(const QString &)> requestFn,
