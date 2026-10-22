@@ -116,7 +116,6 @@ runs:
       if: >-
         steps.qt-preinstalled.outputs.available != 'true' &&
         steps.qt-cache.outputs.cache-hit != 'true' &&
-        inputs.target != 'ios' &&
         (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
       uses: actions/cache/restore@v6
       continue-on-error: true
@@ -130,7 +129,6 @@ runs:
         steps.qt-preinstalled.outputs.available != 'true' &&
         steps.qt-cache.outputs.cache-hit != 'true' &&
         steps.qt-presave.outputs.cache-hit != 'true' &&
-        inputs.target != 'ios' &&
         (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
       uses: actions/cache/save@v6
       with:

@@ -365,7 +365,8 @@ Lychee restores and saves `.lycheecache` with a three-day entry lifetime; fork P
 restore. pre-commit restores hook environments keyed on `.pre-commit-config.yaml`, falling back
 to an earlier configuration's environments; pushes prune unused environments and save, while PRs
 only restore. Android emulator tests create a fresh AVD; no AVD snapshots are cached.
-Gradle, Flatpak, iOS target Qt SDK, and GitHub-hosted uv/Python caching remain disabled.
+Gradle, Flatpak, and GitHub-hosted uv/Python caching remain disabled. Qt SDKs, including the iOS
+target SDKs, are cached by version and module digest.
 
 ### Build helpers
 
