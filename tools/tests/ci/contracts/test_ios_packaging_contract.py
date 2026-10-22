@@ -1,0 +1,301 @@
+"""Contracts for iOS bundle preparation and release packaging."""
+
+from __future__ import annotations
+
+import json
+import os
+import plistlib
+import struct
+import subprocess
+import sys
+from typing import TYPE_CHECKING
+
+import pytest
+
+from ..._helpers import REPO_ROOT, load_action, load_workflow
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+IOS_DIR = REPO_ROOT / "deploy/ios"
+PREPARE_BUNDLE = IOS_DIR / "prepare_bundle.py"
+
+
+def _write_executable(path: Path, contents: str) -> None:
+    path.write_text(contents)
+    path.chmod(0o755)
+
+
+def _png_metadata(path: Path) -> tuple[int, int, int]:
+    data = path.read_bytes()
+    assert data[:8] == b"\x89PNG\r\n\x1a\n"
+    assert data[12:16] == b"IHDR"
+    width, height, _bit_depth, color_type, _compression, _filter, _interlace = struct.unpack(
+        ">IIBBBBB", data[16:29]
+    )
+    return width, height, color_type
+
+
+@pytest.mark.parametrize("binary", [False, True])
+def test_prepares_ninja_ios_bundle(tmp_path: Path, binary: bool) -> None:
+    bundle = tmp_path / "QGroundControl.app"
+    bundle.mkdir()
+    (bundle / "Info.plist").write_bytes(
+        plistlib.dumps(
+            {"CFBundleIdentifier": "org.test.qgc", "CFBundleIcons": {"Existing": True}},
+            fmt=plistlib.FMT_BINARY if binary else plistlib.FMT_XML,
+        )
+    )
+    (bundle / "QGCLaunchScreen.storyboard").write_text("uncompiled\n")
+
+    calls = tmp_path / "calls.log"
+    xcrun = tmp_path / "xcrun"
+    _write_executable(
+        xcrun,
+        """#!/usr/bin/env bash
+set -euo pipefail
+printf '%s\\n' "$*" >> "$CALLS_LOG"
+tool=$1
+shift
+case "$tool" in
+    actool)
+        while (( $# )); do
+            case "$1" in
+                --output-partial-info-plist)
+                    partial_plist=$2
+                    shift 2
+                    ;;
+                --compile)
+                    bundle_path=$2
+                    shift 2
+                    ;;
+                *) shift ;;
+            esac
+        done
+        touch "$bundle_path/Assets.car"
+        printf "<?xml version='1.0'?><plist><dict><key>CFBundleIcons</key><dict><key>Generated</key><true/></dict></dict></plist>\\n" > "$partial_plist"
+        ;;
+    ibtool)
+        while (( $# )); do
+            if [[ $1 == --compile ]]; then
+                mkdir -p "$2"
+                break
+            fi
+            shift
+        done
+        ;;
+esac
+""",
+    )
+
+    env = os.environ | {
+        "CALLS_LOG": str(calls),
+        "XCRUN": str(xcrun),
+    }
+    subprocess.run(
+        [sys.executable, str(PREPARE_BUNDLE), str(bundle), "17.0", "iphoneos"],
+        check=True,
+        env=env,
+    )
+
+    assert (bundle / "Assets.car").is_file()
+    assert (bundle / "QGCLaunchScreen.storyboardc").is_dir()
+    assert not (bundle / "QGCLaunchScreen.storyboard").exists()
+    log = calls.read_text()
+    assert "actool --app-icon AppIcon" in log
+    assert "--platform iphoneos" in log
+    assert "ibtool --errors --warnings --notices" in log
+    metadata = plistlib.loads((bundle / "Info.plist").read_bytes())
+    assert metadata["CFBundleIdentifier"] == "org.test.qgc"
+    assert metadata["CFBundleIcons"] == {"Existing": True, "Generated": True}
+    assert (bundle / "Info.plist").read_bytes().startswith(b"bplist") == binary
+    assert not list(bundle.glob(".qgc-ios-assets-*"))
+
+
+def test_rejects_unsupported_ios_platform(tmp_path: Path) -> None:
+    result = subprocess.run(
+        [sys.executable, str(PREPARE_BUNDLE), str(tmp_path), "17.0", "macosx"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 2
+    assert "invalid choice" in result.stderr
+    assert "macosx" in result.stderr
+
+
+def test_ios_workflow_builds_device_and_simulator_targets() -> None:
+    workflow = load_workflow("ios.yml")
+    job = workflow["jobs"]["build"]
+
+    assert job["runs-on"] == "${{ matrix.runner }}"
+    assert job["strategy"]["matrix"]["include"] == [
+        {
+            "target": "device",
+            "runner": "macos-15",
+            "build_type": "Release",
+            "preset": "iOS",
+            "qt_arch": "ios_device",
+        },
+        {
+            "target": "simulator",
+            "runner": "macos-15-intel",
+            "build_type": "Debug",
+            "preset": "iOS-simulator",
+            "qt_arch": "ios_simulator_x86_64",
+        },
+    ]
+
+    steps = {step["name"]: step for step in job["steps"]}
+    setup = steps["Build Setup (iOS)"]["with"]
+    assert setup["qt-arch"] == "${{ matrix.qt_arch }}"
+    # Only the device target has the Release build type, so target checks imply Release.
+    assert [leg["target"] for leg in job["strategy"]["matrix"]["include"]] == [
+        "device",
+        "simulator",
+    ]
+    assert job["env"]["APPSTORE_RELEASE"] == (
+        "${{ matrix.target == 'device' && github.ref_type == 'tag' && "
+        "startsWith(github.ref_name, 'v') }}"
+    )
+    configure = steps["Configure"]["with"]
+    assert configure["preset"] == (
+        "${{ env.APPSTORE_RELEASE == 'true' && 'iOS-appstore' || matrix.preset }}"
+    )
+    assert configure["extra-args"] == "${{ steps.profile.outputs.cmake_args }}"
+    simulator_verification = steps["Verify Simulator Bundle"]["run"]
+    assert 'ios_package.py verify --app "$APP_PATH" --arch x86_64' in simulator_verification
+    package = steps["Package IPA"]["run"]
+    assert 'ios_package.py" package' in package
+    assert "ios_package.py select-profile" in steps["Select App Store provisioning profile"]["run"]
+
+    for step_name in ("Package IPA", "Attest and Upload"):
+        assert steps[step_name]["if"] == "matrix.target == 'device'"
+
+    for step_name in (
+        "Import App Store signing certificate",
+        "Download App Store provisioning profiles",
+        "Select App Store provisioning profile",
+        "Upload to TestFlight",
+    ):
+        assert steps[step_name]["if"] == "env.APPSTORE_RELEASE == 'true'"
+
+    attest = steps["Attest and Upload"]["with"]
+    assert attest["package-name"] == "${{ env.PACKAGE }}-ios"
+    assert attest["subject-name"] == "${{ env.PACKAGE }}-ios"
+
+
+def test_ios_setup_exports_cross_compile_roots() -> None:
+    action = load_action("build-setup")
+    steps = {step["name"]: step for step in action["runs"]["steps"] if "name" in step}
+
+    assert "steps.qt.outputs.qt_root_dir" in action["outputs"]["host_qt_root_dir"]["value"]
+    assert "steps.qt-ios.outputs.qt_root_dir" in action["outputs"]["target_qt_root_dir"]["value"]
+    host = steps["Install Qt"]
+    assert host["id"] == "qt"
+    assert "if" not in host
+    assert host["with"]["host"] == "${{ inputs.mode == 'ios' && 'mac' || inputs.qt-host }}"
+    assert host["with"]["arch"] == "${{ inputs.mode == 'ios' && 'clang_64' || inputs.qt-arch }}"
+    target = steps["Install Qt for iOS"]
+    assert target["id"] == "qt-ios"
+    assert target["if"] == "inputs.mode == 'ios'"
+    assert target["with"]["arch"] == "${{ inputs.qt-arch }}"
+    assert target["with"]["modules"] == "${{ steps.config.outputs.qt_modules_ios }}"
+    # The iOS SDK installs last so its QT_ROOT_DIR and qt-cmake win.
+    names = list(steps)
+    assert names.index("Install Qt") < names.index("Install Qt for iOS")
+    xcode = steps["Setup Xcode"]["with"]["xcode-version"]
+    assert "inputs.mode == 'ios' && steps.config.outputs.apple_xcode_ios_version" in xcode
+
+
+def test_ios_contract_dependencies_are_sparse_checked_out() -> None:
+    workflow = load_workflow("ci-scripts.yml")
+    steps = workflow["jobs"]["test-ci-scripts"]["steps"]
+    checkout = next(step for step in steps if step["name"] == "Checkout")
+    sparse_checkout = set(checkout["with"]["sparse-checkout"].splitlines())
+
+    assert {
+        ".github/actions/build-setup",
+        "cmake/modules/AppleXCFramework.cmake",
+        "cmake/platform/Apple.cmake",
+        "deploy/ios",
+    } <= sparse_checkout or {".github", "cmake", "deploy"} <= sparse_checkout
+
+
+def test_ios_packaging_uses_consolidated_bundle_sources() -> None:
+    for obsolete in (
+        "AppStoreIcon_1024x1024.png",
+        "iOS-Info.plist",
+        "iOSForAppStore-Info-Source.plist",
+        "QGCLaunchScreen.xib",
+        "qgroundcontrol.xcconfig",
+        "qgroundcontrol_appstore.xcconfig",
+    ):
+        assert not (IOS_DIR / obsolete).exists()
+
+    plist_text = (IOS_DIR / "Info.plist.app.in").read_text()
+    plist = plistlib.loads(plist_text.encode())
+    apple = (REPO_ROOT / "cmake/platform/Apple.cmake").read_text()
+    presets = json.loads((REPO_ROOT / "cmake/presets/iOS.json").read_text())
+
+    assert plist["CFBundleIdentifier"] == "${MACOSX_BUNDLE_GUI_IDENTIFIER}"
+    assert plist["UILaunchStoryboardName"] == "QGCLaunchScreen"
+    assert "NSBluetoothAlwaysUsageDescription" in plist
+    assert "NSLocalNetworkUsageDescription" in plist
+    assert "QGCLaunchScreen.storyboard" in apple
+    assert "qgc_find_ios_xcframework_slice" in apple
+    assert "QGC_IOS_APP_STORE_BUILD requires the Xcode generator" in apple
+    assert "XCODE_EMBED_FRAMEWORKS GStreamerMobileXcfw" in apple
+    assert "XCODE_EMBED_FRAMEWORKS_CODE_SIGN_ON_COPY YES" in apple
+    assert "IOSPipe2Compat.c" in apple
+    assert "TARGET_BUNDLE_DIR_NAME:GStreamerMobileXcfw" in apple
+    assert "${GStreamer_Mobile_MODULE_NAME}.framework" not in apple
+    assert "GStreamer_VERSION VERSION_" not in apple
+    assert any(
+        preset["name"] == "iOS-appstore" and preset["generator"] == "Xcode"
+        for preset in presets["configurePresets"]
+    )
+    assert 'XCODE_ATTRIBUTE_MARKETING_VERSION "${CMAKE_PROJECT_VERSION}"' in apple
+
+
+def test_ios_asset_catalog_references_valid_icons() -> None:
+    app_icon_dir = IOS_DIR / "Images.xcassets/AppIcon.appiconset"
+    catalog = json.loads((app_icon_dir / "Contents.json").read_text())
+
+    for image in catalog["images"]:
+        filename = image.get("filename")
+        if not filename:
+            continue
+
+        width, height, color_type = _png_metadata(app_icon_dir / filename)
+        expected_size = round(
+            float(image["size"].split("x", 1)[0]) * int(image["scale"].removesuffix("x"))
+        )
+        assert (width, height) == (expected_size, expected_size)
+        if image["idiom"] == "ios-marketing":
+            assert color_type not in (4, 6)
+
+
+def test_selects_matching_ios_xcframework_slices(tmp_path: Path) -> None:
+    xcframework = tmp_path / "Video.xcframework"
+    for slice_name in ("ios-arm64", "ios-arm64_x86_64-simulator", "ios-arm64-maccatalyst"):
+        (xcframework / slice_name / "Video.framework").mkdir(parents=True)
+
+    result_path = tmp_path / "selected.txt"
+    script = tmp_path / "select-xcframework.cmake"
+    script.write_text(
+        f'include("{REPO_ROOT}/cmake/modules/AppleXCFramework.cmake")\n'
+        f'qgc_find_ios_xcframework_slice(XCFRAMEWORK "{xcframework}" PLATFORM iphoneos '
+        "ARCHITECTURES arm64 OUT_VAR device_slice)\n"
+        f'qgc_find_ios_xcframework_slice(XCFRAMEWORK "{xcframework}" PLATFORM iphonesimulator '
+        "ARCHITECTURES arm64 x86_64 OUT_VAR simulator_slice)\n"
+        f'file(WRITE "{result_path}" "${{device_slice}}\n${{simulator_slice}}\n")\n'
+    )
+
+    subprocess.run(["cmake", "-P", str(script)], check=True, capture_output=True, text=True)
+
+    assert result_path.read_text().splitlines() == [
+        str(xcframework / "ios-arm64"),
+        str(xcframework / "ios-arm64_x86_64-simulator"),
+    ]

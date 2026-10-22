@@ -1,0 +1,80 @@
+# serializer version: 1
+# name: test_rendered_comment_matches_snapshot[all-passed]
+  '''
+  ## Build Results
+  
+  ### Platform Status
+  
+  | Platform | Status | Details |
+  |----------|--------|--------|
+  | Linux | Passed | [View](https://example.test/linux) |
+  
+  **All builds passed.**
+  
+  ### Pre-commit
+  
+  | Check | Status | Details |
+  |-------|--------|---------|
+  | pre-commit | Passed | [View](https://example.test/precommit) |
+  
+  
+  ---
+  <sub>Updated: 2026-02-17 12:00:00 UTC • Triggered by: Linux</sub>
+  
+  '''
+# ---
+# name: test_rendered_comment_matches_snapshot[full-report]
+  '''
+  ## Build Results
+  
+  ### Platform Status
+  
+  | Platform | Status | Details |
+  |----------|--------|--------|
+  | Linux | Failed | [View](https://example.test/linux) |
+  | MacOS | Passed | [View](https://example.test/macos) |
+  
+  **Some builds failed.**
+  
+  ### Pre-commit
+  
+  | Check | Status | Details |
+  |-------|--------|---------|
+  | pre-commit | Failed | [View](https://example.test/precommit) |
+  
+  Pre-commit hooks: 40 passed, 2 failed, 3 skipped.
+  
+  ### Test Results
+  
+  **linux_gcc_64**: 1 passed, 1 failed, 1 skipped
+  
+  <details><summary>Failed tests</summary>
+  
+  ```
+  2/3 Test #2: BetaTest ... ***Failed
+  ```
+  </details>
+  
+  **Total: 1 passed, 1 failed, 1 skipped**
+  
+  ### Code Coverage
+  
+  | Coverage | Baseline | Change |
+  |----------|----------|--------|
+  | 75.0% | 70.0% | +5.0% |
+  
+  ### Artifact Sizes
+  
+  | Artifact | Size | Δ from PR base |
+  |----------|------|---------------|
+  | QGroundControl.dmg | 10.00 MB | +1.00 MB (increase) |
+  
+  *Baseline: PR base `aaaaaaa`. Only matching artifact variants are compared.*
+  
+  **Total size increased by 1.00 MB**
+  
+  ---
+  <sub>Updated: 2026-02-17 12:00:00 UTC • Triggered by: MacOS</sub>
+  
+  '''
+# ---

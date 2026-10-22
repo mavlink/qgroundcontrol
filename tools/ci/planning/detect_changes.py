@@ -1,0 +1,235 @@
+#!/usr/bin/env python3
+"""Decide whether the current GitHub event builds a platform.
+
+Pull requests build a platform only when its inputs changed (or the diff is
+unknown). Tag refs build only release tags reachable from a Stable* branch;
+every other event (push, merge_group, workflow_dispatch) builds everything.
+The Docker and Android planners call detect_builds() in-process.
+
+Usage:
+    python3 tools/ci/planning/detect_changes.py --platform linux
+"""
+
+from __future__ import annotations
+
+import argparse
+import os
+import re
+import sys
+from dataclasses import dataclass
+from pathlib import Path
+from typing import TYPE_CHECKING
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+import _bootstrap as _bootstrap
+from common.gh_actions import gh_error, gh_warning, write_github_output
+from common.git import run_git
+from common.proc import run_captured
+from qgc_tools.release_tag_check import GitQueryError, check_release_tag
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+PLATFORMS = (
+    "linux",
+    "windows",
+    "macos",
+    "ios",
+    "android",
+    "custom-build",
+    "docker-linux",
+    "docker-android",
+)
+
+# Patterns that trigger a build for ANY platform
+_COMMON_PATTERNS: list[str] = [
+    r"^src/",
+    r"^CMakeLists\.txt$",
+    r"^CMakePresets\.json$",
+    r"^cmake/",
+    r"^libs/",
+    r"^resources/",
+    r"^translations/",
+    r"^.*\.qrc$",
+    r"^test/",
+    r"^\.github/actions/",
+    r"^tools/ci/",
+    r"^\.github/build-config\.json$",
+    r"^\.github/workflows/_detect-changes\.yml$",
+    r"^tools/(?!setup/|tests/)",
+    r"^tools/setup/(install_qt\.py|install_python\.py|read_config\.py|install_dependencies/)",
+]
+
+# Per-platform additional patterns
+_PLATFORM_PATTERNS: dict[str, list[str]] = {
+    "android": [r"^android/"],
+    "custom-build": [r"^custom-example/"],
+    "docker-linux": [
+        # Single multi-stage Dockerfile builds every variant; any change rebuilds.
+        r"^deploy/docker/Dockerfile$",
+        r"^deploy/docker/entrypoint\.(sh|py)$",
+        r"^deploy/docker/install_sysroot_aarch64\.py$",
+        r"^deploy/docker/run-docker\.sh$",
+        r"^deploy/docker/run_docker\.py$",
+        r"^deploy/docker/lib/",
+        r"^deploy/linux/",
+    ],
+    "docker-android": [
+        r"^deploy/docker/Dockerfile$",
+        r"^deploy/docker/entrypoint\.(sh|py)$",
+        r"^deploy/docker/run_docker\.py$",
+        r"^deploy/docker/run-docker\.sh$",
+        r"^deploy/docker/lib/",
+        r"^android/",
+        r"^deploy/android/",
+    ],
+}
+
+_SETUP_PATTERNS: dict[str, list[str]] = {
+    "linux": [r"^tools/setup/.*debian", r"^tools/setup/install_dependencies/"],
+    "windows": [r"^tools/setup/.*windows"],
+    "macos": [r"^tools/setup/.*macos"],
+    "android": [r"^tools/setup/"],
+    "ios": [r"^tools/setup/.*ios", r"^tools/setup/.*macos"],
+    "docker-linux": [r"^tools/setup/"],
+    "docker-android": [r"^tools/setup/"],
+}
+
+
+def workflow_name_for_platform(platform: str) -> str:
+    """Map a platform to its workflow YAML filename (without extension)."""
+    if platform.startswith("docker-"):
+        return "docker"
+    if platform == "custom-build":
+        return "custom-build"
+    return platform
+
+
+def build_patterns(platform: str) -> list[re.Pattern[str]]:
+    """Build the list of compiled regex patterns for a platform."""
+    wf = workflow_name_for_platform(platform)
+    raw: list[str] = list(_COMMON_PATTERNS)
+    raw.append(rf"^deploy/{re.escape(platform)}/")
+    raw.append(rf"^\.github/workflows/{re.escape(wf)}\.yml$")
+    raw.extend(_PLATFORM_PATTERNS.get(platform, []))
+    raw.extend(_SETUP_PATTERNS.get(platform, []))
+    if platform.startswith("docker-"):
+        raw.append(
+            r"^deploy/docker/(_variants\.py|run_docker\.py|variants\.json|docker_helper\.py)$"
+        )
+    return [re.compile(p) for p in raw]
+
+
+def has_relevant_changes(files: Sequence[str], platform: str) -> bool:
+    """Check if any changed file matches the platform's patterns."""
+    patterns = build_patterns(platform)
+    for f in files:
+        if not f:
+            continue
+        for p in patterns:
+            if p.search(f):
+                return True
+    return False
+
+
+# ---------------------------------------------------------------------------
+# Git helpers — these call out to git as subprocesses
+# ---------------------------------------------------------------------------
+
+
+def _has_commit(sha: str) -> bool:
+    # Sparse checkouts are blobless partial clones, where looking up a missing commit would
+    # lazily fetch its whole history (~100k objects); git >= 2.44 can opt out.
+    env = {**os.environ, "GIT_NO_LAZY_FETCH": "1"}
+    return run_captured(["git", "cat-file", "-e", f"{sha}^{{commit}}"], env=env).returncode == 0
+
+
+def _ensure_commit(sha: str) -> bool:
+    """Ensure a commit exists locally; fetch it shallowly if needed."""
+    if not sha:
+        return True
+    if _has_commit(sha):
+        return True
+    run_git("fetch", "--no-tags", "--depth=1", "origin", sha)
+    return _has_commit(sha)
+
+
+def _diff_names(sha_a: str, sha_b: str) -> list[str] | None:
+    """Return changed file names between two commits, or None on failure.
+
+    Renames are listed as both paths: with rename detection a file moved out
+    of a watched directory would only report its new, possibly unwatched, path.
+    """
+    r = run_git("diff", "--no-renames", "--name-only", sha_a, sha_b)
+    if r.returncode != 0:
+        return None
+    return r.stdout.strip().splitlines()
+
+
+def get_changed_files() -> list[str] | None:
+    """Return the pull request's changed files (``PR_BASE_SHA``..``PR_HEAD_SHA``).
+
+    Returns None if the diff cannot be computed reliably (caller should force build).
+    """
+    base = os.environ.get("PR_BASE_SHA", "")
+    head = os.environ.get("PR_HEAD_SHA", "")
+    if not _ensure_commit(base) or not _ensure_commit(head):
+        return None
+    return _diff_names(base, head)
+
+
+@dataclass(frozen=True)
+class Detection:
+    builds: dict[str, bool]
+    # The pull-request diff; None for other events or when it can't be computed.
+    changed_files: list[str] | None = None
+
+
+def detect_builds(platforms: Sequence[str]) -> Detection:
+    """Decide which *platforms* the current event (``EVENT_NAME``) builds.
+
+    Raises GitQueryError when git cannot tell whether a tag is on a Stable* branch.
+    """
+    if os.environ.get("EVENT_NAME") == "pull_request":
+        changed = get_changed_files()
+        if changed is None:
+            gh_warning("Unable to compute changed files reliably; forcing build for safety.")
+            return Detection(dict.fromkeys(platforms, True))
+        print("Changed files:")
+        for path in changed:
+            print(f"  {path}")
+        return Detection({p: has_relevant_changes(changed, p) for p in platforms}, changed)
+
+    # Release tags are cut on Stable* branches only; any other tag must not reach the release
+    # pipeline (stable builds, S3 latest upload, store and registry pushes).
+    if os.environ.get("GITHUB_REF_TYPE") == "tag":
+        release_tag = check_release_tag(os.environ.get("GITHUB_REF_NAME", "HEAD"), "skipping build")
+        return Detection(dict.fromkeys(platforms, release_tag))
+    return Detection(dict.fromkeys(platforms, True))
+
+
+def report_tag_query_error(exc: GitQueryError) -> int:
+    gh_error(f"Cannot determine whether tag is on a Stable* branch: {exc}")
+    return 1
+
+
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--platform", required=True, choices=PLATFORMS)
+    return parser.parse_args(argv)
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = parse_args(argv)
+    try:
+        should_build = detect_builds([args.platform]).builds[args.platform]
+    except GitQueryError as exc:
+        return report_tag_query_error(exc)
+    print(f"{args.platform}: should_build={should_build}")
+    write_github_output({"should_build": "true" if should_build else "false"})
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
