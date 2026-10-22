@@ -76,15 +76,18 @@ set(CONFIG_QML_GENERATOR_DIR "${CMAKE_SOURCE_DIR}/tools/generators/config_qml")
 set(CONFIG_PAGES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/VehicleConfig")
 set(CONFIG_QML_GEN_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
 
-# Generator source files (changes here trigger regeneration)
-file(
-    GLOB
+# Generator inputs: the config_qml package, its templates, and the shared modules it imports
+file(GLOB _config_generator_sources CONFIGURE_DEPENDS "${CONFIG_QML_GENERATOR_DIR}/*.py"
+     "${CONFIG_QML_GENERATOR_DIR}/templates/*.j2" "${CMAKE_SOURCE_DIR}/tools/generators/common/*.py"
+)
+list(
+    APPEND
     _config_generator_sources
-    CONFIGURE_DEPENDS
-    "${CONFIG_QML_GENERATOR_DIR}/*.py"
-    "${CONFIG_QML_GENERATOR_DIR}/templates/*.j2"
-    "${CMAKE_SOURCE_DIR}/tools/generators/common/*.py"
-    "${CMAKE_SOURCE_DIR}/tools/generators/*.py"
+    "${CMAKE_SOURCE_DIR}/tools/_bootstrap.py"
+    "${CMAKE_SOURCE_DIR}/tools/common/__init__.py"
+    "${CMAKE_SOURCE_DIR}/tools/common/io.py"
+    "${CMAKE_SOURCE_DIR}/tools/generators/__init__.py"
+    "${CMAKE_SOURCE_DIR}/tools/generators/_jinja.py"
 )
 
 # JSON inputs

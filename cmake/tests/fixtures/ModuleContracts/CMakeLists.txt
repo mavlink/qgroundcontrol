@@ -576,7 +576,19 @@ if(TEST_CASE MATCHES "^qml-codegen-")
             OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated"
             QML_NAMES Example.qml Nested/Other.qml
             EXTRA_ARGS --write-output Example.qml --write-output Nested/Other.qml
+            DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/qml_generator.py"
+            BUILD_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/main.cpp"
         )
+        get_property(
+            _configure_depends
+            DIRECTORY
+            PROPERTY CMAKE_CONFIGURE_DEPENDS
+        )
+        if(NOT "${CMAKE_CURRENT_SOURCE_DIR}/qml_generator.py" IN_LIST _configure_depends
+           OR "${CMAKE_CURRENT_SOURCE_DIR}/main.cpp" IN_LIST _configure_depends
+        )
+            message(FATAL_ERROR "Only DEPENDS should be configure dependencies: ${_configure_depends}")
+        endif()
     elseif(TEST_CASE STREQUAL "qml-codegen-configure-missing-output")
         qgc_add_qml_codegen(
             generate_qml GENERATE_AT_CONFIGURE
@@ -624,6 +636,15 @@ if(TEST_CASE MATCHES "^qml-codegen-")
             GENERATOR_MODULE generator.module
             OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/generated"
             QML_NAMES Example.qml
+        )
+    elseif(TEST_CASE STREQUAL "qml-codegen-build-depends-overlap")
+        qgc_add_qml_codegen(
+            generate_qml
+            GENERATOR_MODULE generator.module
+            OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated"
+            QML_NAMES Example.qml
+            DEPENDS input.json
+            BUILD_DEPENDS input.json
         )
     else()
         message(FATAL_ERROR "Unknown QML codegen TEST_CASE: ${TEST_CASE}")

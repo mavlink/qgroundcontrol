@@ -317,6 +317,7 @@ parse:
         QML_NAMES: '*'
         EXTRA_ARGS: '*'
         DEPENDS: '*'
+        BUILD_DEPENDS: '*'
 
     qgc_check_gst_header:
       pargs: {nargs: '*'}

@@ -12,6 +12,7 @@ include_guard(GLOBAL)
 #   QML_NAMES name...     - Generated files, relative to OUTPUT_DIR
 #   EXTRA_ARGS arg...     - Extra generator arguments
 #   DEPENDS file...       - Generator inputs; with GENERATE_AT_CONFIGURE they also re-run configure
+#   BUILD_DEPENDS file... - Inputs that only re-run the generator at build time
 #   COMMENT text          - Build-time comment
 #   GENERATE_AT_CONFIGURE - Also generate during configure, so the outputs exist before qt_add_qml_module
 #
@@ -28,7 +29,8 @@ function(qgc_add_qml_codegen target)
     endif()
 
     cmake_parse_arguments(
-        PARSE_ARGV 1 ARG "GENERATE_AT_CONFIGURE" "GENERATOR_MODULE;OUTPUT_DIR;COMMENT" "QML_NAMES;EXTRA_ARGS;DEPENDS"
+        PARSE_ARGV 1 ARG "GENERATE_AT_CONFIGURE" "GENERATOR_MODULE;OUTPUT_DIR;COMMENT"
+        "QML_NAMES;EXTRA_ARGS;DEPENDS;BUILD_DEPENDS"
     )
 
     if(ARG_KEYWORDS_MISSING_VALUES)
@@ -72,6 +74,13 @@ function(qgc_add_qml_codegen target)
             message(FATAL_ERROR "qgc_add_qml_codegen(${target}): QML_NAMES must stay under OUTPUT_DIR: ${_name}")
         endif()
     endforeach()
+    foreach(_dependency IN LISTS ARG_BUILD_DEPENDS)
+        if(_dependency IN_LIST ARG_DEPENDS)
+            message(
+                FATAL_ERROR "qgc_add_qml_codegen(${target}): BUILD_DEPENDS entry is also in DEPENDS: ${_dependency}"
+            )
+        endif()
+    endforeach()
 
     list(TRANSFORM ARG_QML_NAMES PREPEND "${_output_dir}/" OUTPUT_VARIABLE _outputs)
 
@@ -79,6 +88,7 @@ function(qgc_add_qml_codegen target)
         if(NOT Python3_EXECUTABLE OR NOT EXISTS "${Python3_EXECUTABLE}")
             message(FATAL_ERROR "qgc_add_qml_codegen(${target}): GENERATE_AT_CONFIGURE requires Python3_EXECUTABLE")
         endif()
+        # BUILD_DEPENDS stay out of this so editing them re-runs only the build-time command, not configure
         set_property(
             DIRECTORY
             APPEND
@@ -110,7 +120,7 @@ function(qgc_add_qml_codegen target)
     add_custom_command(
         OUTPUT ${_outputs}
         COMMAND Python3::Interpreter -m ${ARG_GENERATOR_MODULE} --output-dir "${_output_dir}" ${ARG_EXTRA_ARGS}
-        DEPENDS ${ARG_DEPENDS}
+        DEPENDS ${ARG_DEPENDS} ${ARG_BUILD_DEPENDS}
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
         COMMENT "${ARG_COMMENT}"
         VERBATIM

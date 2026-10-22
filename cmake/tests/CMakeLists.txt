@@ -60,6 +60,7 @@ set(_qgc_expected_failure_cases
     "QmlCodegenEscapedOutput|qml-codegen-escaped-output|must stay under OUTPUT_DIR"
     "QmlCodegenOutputOutsideBuild|qml-codegen-output-outside-build|OUTPUT_DIR must stay under CMAKE_BINARY_DIR"
     "QmlCodegenConfigureMissingOutput|qml-codegen-configure-missing-output|did not produce declared output"
+    "QmlCodegenBuildDependsOverlap|qml-codegen-build-depends-overlap|BUILD_DEPENDS entry is also in DEPENDS"
     "QGCTestUnknownArgument|qgc-test-unknown-argument|unknown arguments"
     "QGCTestConflictingSerialization|qgc-test-conflicting-serialization|SERIAL and RESOURCE_LOCK are mutually exclusive"
     "QGCTestMissingTimeout|qgc-test-missing-timeout|missing values for"

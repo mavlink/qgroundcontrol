@@ -7,20 +7,28 @@ set(SETTINGS_PAGES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/pages")
 set(SETTINGS_METADATA_DIR "${CMAKE_SOURCE_DIR}/src/Settings")
 set(SETTINGS_QML_GEN_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
 
-# Generator source files (changes here should trigger regeneration)
-file(
-    GLOB
+# Generator inputs: the settings_qml package, its templates, and the shared modules it imports
+file(GLOB _generator_sources CONFIGURE_DEPENDS "${SETTINGS_QML_GENERATOR_DIR}/*.py"
+     "${SETTINGS_QML_GENERATOR_DIR}/templates/*.j2" "${CMAKE_SOURCE_DIR}/tools/generators/common/*.py"
+)
+list(
+    APPEND
     _generator_sources
-    CONFIGURE_DEPENDS
-    "${SETTINGS_QML_GENERATOR_DIR}/*.py"
-    "${SETTINGS_QML_GENERATOR_DIR}/templates/*.j2"
-    "${CMAKE_SOURCE_DIR}/tools/generators/common/*.py"
-    "${CMAKE_SOURCE_DIR}/tools/generators/*.py"
+    "${CMAKE_SOURCE_DIR}/tools/_bootstrap.py"
+    "${CMAKE_SOURCE_DIR}/tools/common/__init__.py"
+    "${CMAKE_SOURCE_DIR}/tools/common/io.py"
+    "${CMAKE_SOURCE_DIR}/tools/generators/__init__.py"
+    "${CMAKE_SOURCE_DIR}/tools/generators/_jinja.py"
 )
 
 # JSON inputs: page definitions + settings metadata
 file(GLOB _page_definitions CONFIGURE_DEPENDS "${SETTINGS_PAGES_DIR}/*.json")
 file(GLOB _settings_metadata CONFIGURE_DEPENDS "${SETTINGS_METADATA_DIR}/*.SettingsGroup.json")
+
+# C++ inputs scanned for accessors and C++-defined facts. They are build-only dependencies: editing a Settings source
+# regenerates the pages without re-running CMake configure.
+file(GLOB _settings_cpp_sources CONFIGURE_DEPENDS "${SETTINGS_METADATA_DIR}/*.cc")
+list(APPEND _settings_cpp_sources "${SETTINGS_METADATA_DIR}/SettingsManager.h")
 
 # Custom builds may overlay the page list (SettingsPages.json), add/shadow page
 # definitions, and add custom SettingsGroup.json fact metadata.
@@ -36,6 +44,8 @@ if(QGC_CUSTOM_BUILD AND IS_DIRECTORY "${CUSTOM_SETTINGS_METADATA_DIR}")
     list(APPEND _custom_codegen_args --custom-settings-dir "${CUSTOM_SETTINGS_METADATA_DIR}")
     file(GLOB _custom_settings_metadata CONFIGURE_DEPENDS "${CUSTOM_SETTINGS_METADATA_DIR}/*.SettingsGroup.json")
     list(APPEND _settings_metadata ${_custom_settings_metadata})
+    file(GLOB _custom_settings_cpp_sources CONFIGURE_DEPENDS "${CUSTOM_SETTINGS_METADATA_DIR}/*.cc")
+    list(APPEND _settings_cpp_sources ${_custom_settings_cpp_sources})
 endif()
 
 if(_custom_codegen_args)
@@ -88,6 +98,7 @@ qgc_add_qml_codegen(
     OUTPUT_DIR "${SETTINGS_QML_GEN_DIR}"
     QML_NAMES ${_generated_qml_names} ${_custom_extra_args_keyword}
     DEPENDS ${_generator_sources} ${_page_definitions} ${_settings_metadata}
+    BUILD_DEPENDS ${_settings_cpp_sources}
     COMMENT "Generating QML settings pages from JSON definitions"
 )
 set(_generated_qml ${GenerateSettingsQml_OUTPUTS})
