@@ -331,6 +331,7 @@ void MockLinkMissionItemHandler::_handleMissionCount(const mavlink_message_t &ms
     }
 
     _failWriteMissionCountFirstResponse = true;
+    _failWriteFinalAckFirstResponse = true;
     _writeSequenceIndex = 0;
     _requestNextMissionItem(_writeSequenceIndex);
 }
@@ -438,10 +439,24 @@ void MockLinkMissionItemHandler::_handleMissionItem(const mavlink_message_t &msg
         return;
     }
 
+    if ((_failureMode == FailWriteFinalAckFirstResponse || _failureMode == FailWriteFinalAckErrorOnResend) &&
+        _failWriteFinalAckFirstResponse) {
+        _failWriteFinalAckFirstResponse = false;
+        qCDebug(MockLinkMissionItemHandlerLog) << "not sending final ack due to failure mode" << _failureMode << ", first response";
+        return;
+    }
+
+    if ((_failureMode == FailWriteFinalAckFirstResponse || _failureMode == FailWriteFinalAckErrorOnResend) &&
+        seq != _writeSequenceCount - 1) {
+        // Like PX4, only re-ack the final item of a completed upload
+        _sendAck(MAV_MISSION_ERROR);
+        return;
+    }
+
     if (_failureMode != FailWriteFinalAckNoResponse) {
         MAV_MISSION_RESULT ack = MAV_MISSION_ACCEPTED;
 
-        if (_failureMode == FailWriteFinalAckErrorAck) {
+        if (_failureMode == FailWriteFinalAckErrorAck || _failureMode == FailWriteFinalAckErrorOnResend) {
             ack = MAV_MISSION_ERROR;
         }
 

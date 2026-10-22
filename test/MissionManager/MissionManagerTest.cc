@@ -44,7 +44,7 @@ void MissionManagerTest::init()
 }
 
 void MissionManagerTest::_writeItems(MockLinkMissionItemHandler::FailureMode_t failureMode,
-                                     MAV_MISSION_RESULT failureAckResult, bool shouldFail)
+                                     MAV_MISSION_RESULT failureAckResult, bool shouldFail, int expectedErrorCode)
 {
     _mockLink->setMissionItemFailureMode(failureMode, failureAckResult);
     // Setup our test case data
@@ -87,6 +87,9 @@ void MissionManagerTest::_writeItems(MockLinkMissionItemHandler::FailureMode_t f
         QSignalSpy* spy = _multiSpyMissionManager->spy("error");
         QList<QVariant> signalArgs = spy->takeFirst();
         QCOMPARE(signalArgs.count(), 2);
+        if (expectedErrorCode >= 0) {
+            QCOMPARE(signalArgs[0].toInt(), expectedErrorCode);
+        }
         qCDebug(UnitTestLog) << signalArgs[1].toString();
     } else {
         // This should be clean run
@@ -95,6 +98,10 @@ void MissionManagerTest::_writeItems(MockLinkMissionItemHandler::FailureMode_t f
         //      sendComplete signal
         QVERIFY_WAIT_SIGNAL((*_multiSpyMissionManager), "sendComplete", _missionManagerSignalWaitTime);
         QVERIFY(_multiSpyMissionManager->emitted("inProgressChanged", "sendComplete"));
+        // sendComplete is also emitted on failure, with its error argument set
+        QVERIFY(_multiSpyMissionManager->notEmitted("error"));
+        QSignalSpy* sendCompleteSpy = _multiSpyMissionManager->spy("sendComplete");
+        QCOMPARE(sendCompleteSpy->takeFirst().at(0).toBool(), false);
         // Validate inProgressChanged signal value
         _checkInProgressValues(false);
         // Validate item count in mission manager
@@ -193,6 +200,8 @@ void MissionManagerTest::_testWriteFailureHandlingWorker()
         const char* failureText;
         MockLinkMissionItemHandler::FailureMode_t failureMode;
         bool shouldFail;
+        int expectedErrorCode = -1;
+        bool px4Only = false;
     };
 
     static const WriteTestCase_t rgTestCases[] = {
@@ -204,14 +213,23 @@ void MissionManagerTest::_testWriteFailureHandlingWorker()
         {"FailWriteRequest1IncorrectSequence", MockLinkMissionItemHandler::FailWriteRequest1IncorrectSequence, true},
         {"FailWriteRequest0ErrorAck", MockLinkMissionItemHandler::FailWriteRequest0ErrorAck, true},
         {"FailWriteRequest1ErrorAck", MockLinkMissionItemHandler::FailWriteRequest1ErrorAck, true},
-        {"FailWriteFinalAckNoResponse", MockLinkMissionItemHandler::FailWriteFinalAckNoResponse, true},
+        {"FailWriteFinalAckNoResponse", MockLinkMissionItemHandler::FailWriteFinalAckNoResponse, true,
+         PlanManager::MaxRetryExceeded},
+        {"FailWriteFinalAckFirstResponse", MockLinkMissionItemHandler::FailWriteFinalAckFirstResponse, false, -1,
+         true},
+        {"FailWriteFinalAckErrorOnResend", MockLinkMissionItemHandler::FailWriteFinalAckErrorOnResend, true,
+         PlanManager::ProtocolError},
         {"FailWriteFinalAckErrorAck", MockLinkMissionItemHandler::FailWriteFinalAckErrorAck, true},
         {"FailWriteFinalAckMissingRequests", MockLinkMissionItemHandler::FailWriteFinalAckMissingRequests, true},
     };
     for (size_t i = 0; i < std::size(rgTestCases); i++) {
         const WriteTestCase_t* pCase = &rgTestCases[i];
+        if (pCase->px4Only && _mockLink->getFirmwareType() != MAV_AUTOPILOT_PX4) {
+            // ArduPilot rejects the resent last item instead of re-acking it, see FailWriteFinalAckErrorOnResend
+            continue;
+        }
         qCDebug(UnitTestLog) << "TEST CASE _testWriteFailureHandlingWorker" << pCase->failureText;
-        _writeItems(pCase->failureMode, MAV_MISSION_ERROR, pCase->shouldFail);
+        _writeItems(pCase->failureMode, MAV_MISSION_ERROR, pCase->shouldFail, pCase->expectedErrorCode);
         _mockLink->resetMissionItemHandler();
     }
 }

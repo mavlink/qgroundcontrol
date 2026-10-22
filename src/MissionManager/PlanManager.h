@@ -105,6 +105,7 @@ protected:
     void _handleMissionRequest(const mavlink_message_t& message);
     void _handleMissionAck(const mavlink_message_t& message);
     void _requestNextMissionItem(void);
+    void _sendMissionItem(int seq);
     void _clearMissionItems(void);
     void _sendError(ErrorCode_t errorCode, const QString& errorMsg);
     QString _ackTypeToString(AckType_t ackType);
