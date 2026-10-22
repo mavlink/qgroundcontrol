@@ -85,6 +85,9 @@ The configurable options are:
 - **Hover and capture image** - Hover to capture images (multicopter only).
 - **Refly at 90 degree offset** - Check to refly the whole mission at a 90 degree offset.
 - **Images in turnarounds** - Check to take images when turning
+- **Split concave polygons** - Check to split transects where they cross a concave part of the survey area, so each transect stops at the polygon boundary.
+  The vehicle still flies straight across the gap to the next part of the transect, and turnarounds are only added at the ends of each pass.
+  Images are not taken over the gap unless _Images in turnarounds_ is checked.
 - **Relative altitude** - Check to make specified altitudes relative to home (if unchecked they are AMSL).
 
 ### Terrain
