@@ -41,7 +41,7 @@ def test_pr_keys_restore_matching_master_matrix_cache(tmp_path, suffix) -> None:
     steps = yaml.safe_load(_read(".github/actions/cache/action.yml"))["runs"]["steps"]
     script = next(step["run"] for step in steps if step.get("id") == "cache-keys")
 
-    def keys(scope, build_type="Debug", variant="portable-tests", key_suffix=suffix):
+    def keys(scope, build_type="Debug", variant="portable-tests", key_suffix=suffix, config="a"):
         output = tmp_path / f"{scope}-{build_type}-{variant}"
         env = dict(
             os.environ,
@@ -51,8 +51,8 @@ def test_pr_keys_restore_matching_master_matrix_cache(tmp_path, suffix) -> None:
             VARIANT=variant,
             KEY_SUFFIX=key_suffix,
             SCOPE=scope,
-            CCACHE_HASH="a" * 64,
-            MOCCACHE_HASH="b" * 64,
+            CCACHE_HASH=config * 64,
+            MOCCACHE_HASH=chr(ord(config) + 1) * 64,
             CPM_FINGERPRINT="c" * 64,
             GITHUB_OUTPUT=str(output),
         )
@@ -66,8 +66,20 @@ def test_pr_keys_restore_matching_master_matrix_cache(tmp_path, suffix) -> None:
 
     master = keys("shared")
     pr = keys("pr-42")
-    assert pr["artifact_ccache_shared"] == master["ccache_key"]
-    assert pr["artifact_moccache_shared"] == master["moccache_key"]
+    assert pr["artifact_ccache_shared"] == master["artifact_ccache"]
+    assert pr["artifact_moccache_shared"] == master["artifact_moccache"]
+    # Exact-name artifact lookups must survive build-config, ccache.conf and moccache edits
+    reconfigured_pr = keys("pr-42", config="d")
+    assert reconfigured_pr["ccache_key"] != pr["ccache_key"]
+    for name in (
+        "artifact_ccache",
+        "artifact_moccache",
+        "artifact_ccache_shared",
+        "artifact_moccache_shared",
+    ):
+        assert reconfigured_pr[name] == pr[name]
+    assert keys("shared", key_suffix="other")["artifact_ccache"] != master["artifact_ccache"]
+    assert keys("shared", variant="sanitizers")["artifact_moccache"] != master["artifact_moccache"]
     release = keys("shared", "Release")
     sanitizer = keys("shared", variant="sanitizers")
     assert sanitizer["moccache_key"] != master["moccache_key"]

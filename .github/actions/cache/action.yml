@@ -195,8 +195,12 @@ runs:
           echo "moccache_hash=${moccache_base}-${MOCCACHE_HASH}-"
           echo "moccache_scope=${moccache_base}-"
           echo "moccache_shared=moccache-${HOST}-${TARGET}-shared-"
-          echo "artifact_ccache_shared=${ccache_base}${key_suffix}-shared-${CCACHE_HASH}"
-          echo "artifact_moccache_shared=moccache-${HOST}-${TARGET}-shared-${MOCCACHE_HASH}-${BUILD_TYPE}${variant_suffix}${key_suffix}"
+          # Artifact snapshots are found by exact name, so names leave out the config hashes that
+          # the dependency-cache keys carry; ccache and moccache entries are content-addressed.
+          echo "artifact_ccache=${ccache_base}${key_suffix}-${SCOPE}"
+          echo "artifact_moccache=${moccache_base}-${BUILD_TYPE}${variant_suffix}${key_suffix}"
+          echo "artifact_ccache_shared=${ccache_base}${key_suffix}-shared"
+          echo "artifact_moccache_shared=moccache-${HOST}-${TARGET}-shared-${BUILD_TYPE}${variant_suffix}${key_suffix}"
           echo "cpm_key=${cpm_base}-${SCOPE}-${CPM_FINGERPRINT}"
           echo "cpm_scope=${cpm_base}-${SCOPE}-"
           echo "cpm_shared=${cpm_base}-shared-"
@@ -208,8 +212,8 @@ runs:
     - name: Select compiler cache storage
       shell: bash
       env:
-        COMPILER_KEY: ${{ steps.cache-keys.outputs.ccache_key }}
-        MOC_KEY: ${{ steps.cache-keys.outputs.moccache_key }}
+        COMPILER_KEY: ${{ steps.cache-keys.outputs.artifact_ccache }}
+        MOC_KEY: ${{ steps.cache-keys.outputs.artifact_moccache }}
         COMPILER_SHARED_KEY: ${{ steps.cache-keys.outputs.artifact_ccache_shared }}
         MOC_SHARED_KEY: ${{ steps.cache-keys.outputs.artifact_moccache_shared }}
       run: python3 .github/scripts/build_cache_artifact.py configure

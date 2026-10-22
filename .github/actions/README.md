@@ -35,8 +35,10 @@ only after verified success; Docker uses the compilation status in its performan
 GitHub-backed compiler/moc snapshots use uncompressed tar artifacts with one-day retention,
 so concurrent SDK and dependency cache writes cannot evict a just-completed build's objects.
 Restore accepts the same workflow, source repository, branch, and event class; new branches
-can also use a trusted default-branch snapshot. Names include configuration/compiler keys
-and branch scope. Snapshot failures fall back to the dependency cache. RunsOn/S3 retains
+can also use a trusted default-branch snapshot. Names include platform, build type, variant,
+key suffix and branch scope, but not the `build-config.json`/`ccache.conf`/moccache hashes in
+the dependency-cache keys: lookups are by exact name, and the content-addressed entries stay
+valid across those edits. Snapshot failures fall back to the dependency cache. RunsOn/S3 retains
 its existing cache/save route. Artifacts use artifact storage rather than the dependency-cache
 quota; one-day expiry bounds retention, and a cold build remains possible after expiry.
 
