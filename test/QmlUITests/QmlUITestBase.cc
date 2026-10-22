@@ -33,6 +33,34 @@
 // self-pumps), so we drain events for a fixed, minimal interval instead.
 static constexpr int kSettleDrainMs = 100;
 
+namespace {
+
+class QmlFileOverrideInterceptor : public QQmlAbstractUrlInterceptor
+{
+public:
+    explicit QmlFileOverrideInterceptor(QHash<QUrl, QUrl> overrides)
+        : _overrides(std::move(overrides))
+    {}
+
+    QUrl intercept(const QUrl& url, DataType type) override
+    {
+        if (type != QmlFile) {
+            return url;
+        }
+        return _overrides.value(url, url);
+    }
+
+private:
+    const QHash<QUrl, QUrl> _overrides;
+};
+
+}  // namespace
+
+void QmlUITestBase::overrideQmlFile(const QUrl& original, const QUrl& replacement)
+{
+    _qmlUrlOverrides.insert(original, replacement);
+}
+
 static QQuickItem* findVisibleItemImmediate(QQuickItem* root, const QString& objectName)
 {
     if (!root || !root->isVisible()) {
@@ -139,6 +167,11 @@ void QmlUITestBase::startUI()
     _engine = QGCCorePlugin::instance()->createQmlApplicationEngine(this);
     QVERIFY(_engine);
 
+    if (!_qmlUrlOverrides.isEmpty()) {
+        _qmlUrlInterceptor = std::make_unique<QmlFileOverrideInterceptor>(_qmlUrlOverrides);
+        _engine->addUrlInterceptor(_qmlUrlInterceptor.get());
+    }
+
     _engine->addImageProvider(QStringLiteral("QGCImages"), new QGCImageProvider());
     _engine->addImageProvider(QLatin1String(ColoredSvgImageProvider::ProviderId), new ColoredSvgImageProvider());
 
@@ -219,7 +252,11 @@ void QmlUITestBase::destroyUIEngine()
         QCoreApplication::processEvents();
     }
     qgcApp()->setQmlAppEngine(nullptr);
+    if (_engine && _qmlUrlInterceptor) {
+        _engine->removeUrlInterceptor(_qmlUrlInterceptor.get());
+    }
     QGCCorePlugin::instance()->destroyQmlApplicationEngine(_engine);
+    _qmlUrlInterceptor.reset();
     _engine   = nullptr;
     _window   = nullptr;
     _rootItem = nullptr;

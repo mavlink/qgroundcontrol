@@ -4,6 +4,9 @@ import QtQml.Models
 ObjectModel {
     id: _root
     property bool enforceOrder: true    ///< true: a group stays locked until every group above it has passed
+    property bool prerequisitesPassed: true ///< false: locks every group until checks outside this model have passed
+
+    onPrerequisitesPassedChanged: updateGroupLocks()
 
     function reset() {
         for (var i=0; i<_root.count; i++) {
@@ -16,7 +19,7 @@ ObjectModel {
         let previousGroupsPassed = true
         for (let i = 0; i < _root.count; i++) {
             const group = _root.get(i)
-            group.enabled = !enforceOrder || previousGroupsPassed
+            group.enabled = prerequisitesPassed && (!enforceOrder || previousGroupsPassed)
             previousGroupsPassed = previousGroupsPassed && group.passed
         }
     }

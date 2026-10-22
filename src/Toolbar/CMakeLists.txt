@@ -17,6 +17,7 @@ qt_add_qml_module(
               GPSIndicator.qml
               GPSIndicatorPage.qml
               JoystickIndicator.qml
+              MainStatusChecklistHost.qml
               MainStatusIndicator.qml
               MainStatusIndicatorOfflinePage.qml
               ModeIndicator.qml

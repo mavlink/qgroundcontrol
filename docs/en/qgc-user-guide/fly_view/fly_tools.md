@@ -18,6 +18,15 @@ All checklist sections are shown at once. A section is locked (marked **(locked)
 Items are colored by state: red for a failed check that must be fixed, orange for a check that still needs confirming, and green for a passed check.
 The tab shows **Passed** once every check has passed, otherwise **In Progress**.
 
+Custom builds can add pre-vehicle checks, which can be completed before a vehicle is connected.
+While disconnected, the checklist tab shows only these checks. They keep their progress when a vehicle connects or disconnects, and the vehicle checks stay locked until they have passed.
+Pre-vehicle checks, and the vehicle checks with them, are reset after each flight.
+
+:::warning
+Pre-vehicle checks are designed for a single connected vehicle.
+With multiple vehicles connected, a flight is only noticed while its vehicle is the active vehicle, so switching vehicles during a flight can leave the pre-vehicle checks passed for the next flight.
+:::
+
 ## Takeoff {#takeoff}
 
 :::tip

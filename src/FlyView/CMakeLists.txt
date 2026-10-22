@@ -66,6 +66,8 @@ qt_add_qml_module(FlyViewModule
         PreFlightRCCheck.qml
         PreFlightSensorsHealthCheck.qml
         PreFlightSoundCheck.qml
+        PreVehicleCheckList.qml
+        PreVehicleChecks.qml
         ProximityRadarValues.qml
         ProximityRadarVideoView.qml
         RoverChecklist.qml

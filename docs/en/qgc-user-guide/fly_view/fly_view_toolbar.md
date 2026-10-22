@@ -69,7 +69,7 @@ While QGroundControl is still loading the vehicle's parameters, plan and other i
 The status label shows the worst of:
 
 - **Error** (_red_) - Unread critical vehicle messages, or health and arming check errors.
-- **Warning** (_orange_) - Unread warning or notice messages, health and arming check warnings, or an incomplete [Pre-Flight Checklist](fly_tools.md#preflight_checklist) while the vehicle is disarmed. When the incomplete checklist is the only warning, the label reads **Pre-Flight** instead.
+- **Warning** (_orange_) - Unread warning or notice messages, health and arming check warnings, or an incomplete [Pre-Flight Checklist](fly_tools.md#preflight_checklist) while the vehicle is disarmed. When the incomplete checklist is the only warning, the label reads **Pre-Flight** instead. Otherwise a separate **Pre-Flight** label is shown beside the **Warning** or **Error** label.
 - **Info** (_blue_) - Other unread vehicle messages.
 
 #### Vehicle Messages
