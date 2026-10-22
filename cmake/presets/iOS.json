@@ -1,5 +1,6 @@
 {
-  "version": 6,
+  "$schema": "https://cmake.org/cmake/help/latest/_downloads/3e2d73bff478d88a7de0de736ba5e361/schema.json",
+  "version": 8,
   "include": ["common.json"],
   "configurePresets": [
     {
@@ -34,6 +35,18 @@
       "displayName": "iOS Debug",
       "inherits": ["debug-no-tests", "ios-base"],
       "binaryDir": "${sourceDir}/build/iOS-debug"
+    },
+    {
+      "name": "iOS-simulator",
+      "displayName": "iOS Simulator Debug (x86_64)",
+      "inherits": ["debug-no-tests", "lean-debug", "ios-base"],
+      "binaryDir": "${sourceDir}/build/iOS-simulator",
+      "cacheVariables": {
+        "CMAKE_OSX_ARCHITECTURES": "x86_64",
+        "CMAKE_OSX_SYSROOT": "iphonesimulator",
+        "CMAKE_OBJC_FLAGS_DEBUG": "-g1",
+        "CMAKE_OBJCXX_FLAGS_DEBUG": "-g1"
+      }
     }
   ],
   "buildPresets": [
@@ -44,7 +57,13 @@
       "configuration": "Release",
       "inherits": ["build-defaults"]
     },
-    { "name": "iOS-debug", "configurePreset": "iOS-debug", "configuration": "Debug", "inherits": ["build-defaults"] }
+    { "name": "iOS-debug", "configurePreset": "iOS-debug", "configuration": "Debug", "inherits": ["build-defaults"] },
+    {
+      "name": "iOS-simulator",
+      "configurePreset": "iOS-simulator",
+      "configuration": "Debug",
+      "inherits": ["build-defaults"]
+    }
   ],
   "workflowPresets": [
     {
@@ -59,6 +78,13 @@
       "steps": [
         { "type": "configure", "name": "iOS-debug" },
         { "type": "build", "name": "iOS-debug" }
+      ]
+    },
+    {
+      "name": "iOS-simulator",
+      "steps": [
+        { "type": "configure", "name": "iOS-simulator" },
+        { "type": "build", "name": "iOS-simulator" }
       ]
     },
     {

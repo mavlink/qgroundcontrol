@@ -1,5 +1,6 @@
 {
-  "version": 6,
+  "$schema": "https://cmake.org/cmake/help/latest/_downloads/3e2d73bff478d88a7de0de736ba5e361/schema.json",
+  "version": 8,
   "configurePresets": [
     {
       "name": "default",
@@ -105,6 +106,16 @@
         "CMAKE_BUILD_TYPE": "Debug",
         "QGC_BUILD_TESTING": "ON",
         "QGC_ENABLE_COVERAGE": "ON"
+      }
+    },
+    {
+      "name": "lean-debug",
+      "hidden": true,
+      "description": "Line-table debug info (-g1), all gcov and sanitizer stacks need, and unity builds of QGC targets",
+      "cacheVariables": {
+        "CMAKE_C_FLAGS_DEBUG": "-g1",
+        "CMAKE_CXX_FLAGS_DEBUG": "-g1",
+        "QGC_UNITY_BUILD": "ON"
       }
     }
   ],
