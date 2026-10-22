@@ -5,6 +5,12 @@ Speeds up clean builds / CI / branch switches by caching moc output keyed on
 moc identity + arguments + input content + all transitive include contents
 (tracked via moc's --output-dep-file, Qt 5.15+).
 
+A hit re-validates every include recorded in the entry's manifest by content
+hash, skipping the hash while the file's mtime, ctime and size still match the
+ones recorded next to it. moc's --version is memoized in
+$MOCCACHE_DIR/moc-versions per moc binary (resolved path, mtime, size), so a
+hit spawns no process.
+
 Usage (as CMake AUTOMOC executable, via a shim that bakes the real moc path):
     moccache.py --real-moc /path/to/moc [moc args...]
 or set MOCCACHE_MOC=/path/to/moc and invoke:
@@ -62,11 +68,14 @@ import hashlib
 import os
 import re
 import shutil
-import subprocess
+import stat
 import sys
 import tempfile
 import time
 from pathlib import Path
+
+# subprocess is imported where a process is spawned: a hit spawns none, and
+# the import is a measurable share of a hit's runtime.
 
 # Options whose value is a separate following argument.
 _VALUE_OPTS = {
@@ -103,11 +112,17 @@ def _expand_response_files(argv: list[str]) -> list[str]:
 
 
 def _sha256_file(path: Path) -> str:
+    return _sha256_file_stat(path)[0]
+
+
+def _sha256_file_stat(path: Path) -> tuple[str, os.stat_result]:
+    """Hash path and fstat the same open file, so both describe one version of it."""
     h = hashlib.sha256()
     with path.open("rb") as f:
+        st = os.fstat(f.fileno())
         for chunk in iter(lambda: f.read(1 << 20), b""):
             h.update(chunk)
-    return h.hexdigest()
+    return h.hexdigest(), st
 
 
 def _sha256_file_normalized(path: Path, prefixes: list[str]) -> str:
@@ -127,17 +142,64 @@ def _sha256_file_normalized(path: Path, prefixes: list[str]) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
-def _moc_identity(moc: Path) -> str:
+# `moc --version` memo, beside the ?? entry shards (the only things trimming
+# and size accounting ever walk). Bounded because a few Qt installs may share
+# one cache dir.
+_MOC_VERSIONS_FILE = "moc-versions"
+_MOC_VERSIONS_MAX = 8
+
+
+def _read_moc_versions(path: Path) -> dict[str, tuple[int, int, str]]:
+    """{resolved moc path: (mtime_ns, size, version)}; empty if missing or unreadable."""
     try:
-        out = subprocess.run(
+        lines = path.read_text(encoding="utf-8").split("\n")
+    except (OSError, UnicodeDecodeError):
+        return {}
+    versions: dict[str, tuple[int, int, str]] = {}
+    for line in lines[:-1]:  # the last element is "" or an unterminated, partial line
+        fields = line.split("\t")
+        if len(fields) != 4 or not fields[3]:
+            continue
+        try:
+            versions[fields[0]] = (int(fields[1]), int(fields[2]), fields[3])
+        except ValueError:
+            continue
+    return versions
+
+
+def _moc_identity(moc: Path, cache_dir: Path) -> str:
+    """moc's --version output (else its mtime:size), memoized per moc binary.
+
+    moc is only asked again when its resolved path, mtime or size differ from
+    the memo's. The memo is best effort: when missing, corrupt or unwritable,
+    moc is asked; concurrent updates may drop an entry, costing one more ask.
+    """
+    st = moc.stat()
+    resolved = os.path.realpath(moc)
+    memo = cache_dir / _MOC_VERSIONS_FILE
+    versions = _read_moc_versions(memo)
+    known = versions.get(resolved)
+    if known is not None and known[:2] == (st.st_mtime_ns, st.st_size):
+        return known[2]
+    import subprocess
+
+    try:
+        version = subprocess.run(
             [str(moc), "--version"], capture_output=True, text=True, check=True
         ).stdout.strip()
-        if out:
-            return out
     except (OSError, subprocess.CalledProcessError):
-        pass
-    st = moc.stat()
-    return f"{st.st_mtime_ns}:{st.st_size}"
+        version = ""
+    if not version:
+        # Not memoized, so a transient failure doesn't stick.
+        return f"{st.st_mtime_ns}:{st.st_size}"
+    # Tabs, newlines or undecodable path bytes would corrupt the memo's format.
+    if resolved.isprintable() and version.isprintable():
+        versions.pop(resolved, None)
+        versions[resolved] = (st.st_mtime_ns, st.st_size, version)
+        recent = list(versions.items())[-_MOC_VERSIONS_MAX:]
+        with contextlib.suppress(OSError):
+            _atomic_write(memo, "".join(f"{p}\t{m}\t{s}\t{v}\n" for p, (m, s, v) in recent))
+    return version
 
 
 def _parse_args(argv: list[str]):
@@ -312,8 +374,62 @@ def _normalize_basedir(s: str, prefixes: list[str]) -> str:
 
 
 def _denormalize_basedir(s: str) -> str:
+    if _BASEDIR_TOKEN not in s:
+        return s
     raw = os.environ.get("MOCCACHE_BASEDIR", "").rstrip("/\\")
     return s.replace(_BASEDIR_TOKEN, raw) if raw else s
+
+
+# A dependency's stat is recorded in the manifest only when the file's mtime
+# and ctime are both at least this old when the manifest is written:
+# rewritten again within one (possibly coarse) timestamp tick, a file can keep
+# its whole stat while its content changes (git's "racy" case).
+_STAT_RACY_WINDOW_NS = 2_000_000_000
+
+
+def _stat_fields(st: os.stat_result) -> list[str]:
+    """The stat recorded next to a dependency's hash.
+
+    ctime catches content rewritten with its old mtime restored (archive
+    re-extraction, cp -p), since no tool can set it. On Windows st_ctime_ns
+    is the creation time instead, leaving mtime and size to catch writes.
+    """
+    return [str(st.st_mtime_ns), str(st.st_ctime_ns), str(st.st_size)]
+
+
+def _manifest_line(dep: str, basedir_prefixes: list[str], racy_after_ns: int) -> str:
+    """dep's manifest record: path, content hash and, when trustworthy, _stat_fields.
+
+    The stat is left out for build-dir (tokenized) and relative paths, which
+    name a different file in each build tree sharing the entry, and for files
+    modified or changed at or after racy_after_ns.
+    """
+    digest, st = _sha256_file_stat(Path(dep))
+    path = _normalize_basedir(dep, basedir_prefixes)
+    if (
+        path != dep
+        or not os.path.isabs(dep)
+        or max(st.st_mtime_ns, st.st_ctime_ns) >= racy_after_ns
+    ):
+        return f"{path}\t{digest}"
+    return "\t".join([path, digest, *_stat_fields(st)])
+
+
+def _dep_unchanged(dep: str, dep_hash: str, recorded_stat: list[str]) -> bool:
+    """Whether dep still has the content hashed into the manifest.
+
+    Re-hashing is skipped while dep's _stat_fields equal the recorded ones
+    (empty for old-format or untrusted lines, which never match).
+    """
+    try:
+        st = os.stat(dep)
+    except (OSError, ValueError):
+        return False
+    if not stat.S_ISREG(st.st_mode):
+        return False
+    if recorded_stat == _stat_fields(st):
+        return True
+    return _sha256_file(Path(dep)) == dep_hash
 
 
 def _write_dep_file(dst: Path, target: str, deps: list[str]) -> None:
@@ -858,6 +974,8 @@ def main() -> int:
         return 2
 
     def passthrough() -> int:
+        import subprocess
+
         return subprocess.run([str(real_moc), *argv]).returncode
 
     if os.environ.get("MOCCACHE_DISABLE"):
@@ -879,7 +997,7 @@ def main() -> int:
     # yield the same relpath and still share. Build-dir paths in the args are
     # rewritten to a token so different build trees produce the same key.
     key_parts = [
-        _moc_identity(real_moc),
+        _moc_identity(real_moc, cache_dir),
         *(_normalize_basedir(a, basedir_prefixes) for a in hashable),
         _sha256_file(Path(input_file)),
         os.path.relpath(input_file, os.path.dirname(os.path.abspath(output)) or "."),
@@ -905,14 +1023,18 @@ def main() -> int:
         manifest_deps: list[str] = []
         try:
             for line in manifest.read_text(encoding="utf-8").splitlines():
-                dep, _, dep_hash = line.partition("\t")
-                if not dep or not _SHA256_HEX.fullmatch(dep_hash):
+                # path<TAB>sha256, optionally followed by <TAB>mtime_ns<TAB>ctime_ns<TAB>size.
+                fields = line.split("\t")
+                if (
+                    len(fields) not in (2, 5)
+                    or not fields[0]
+                    or not _SHA256_HEX.fullmatch(fields[1])
+                ):
                     hit = False
                     miss_reason = ("miss-cache-unreadable", "manifest malformed")
                     break
-                dep = _denormalize_basedir(dep)
-                p = Path(dep)
-                if not p.is_file() or _sha256_file(p) != dep_hash:
+                dep = _denormalize_basedir(fields[0])
+                if not _dep_unchanged(dep, fields[1], fields[2:]):
                     hit = False
                     miss_reason = ("miss-include-changed", dep)
                     break
@@ -954,6 +1076,8 @@ def main() -> int:
         fd, tmp_dep = tempfile.mkstemp(suffix=".d", prefix="moccache-")
         os.close(fd)
         cmd += ["--output-dep-file", "--dep-file-path", tmp_dep]
+    import subprocess
+
     try:
         rc = subprocess.run(cmd).returncode
         if rc != 0:
@@ -970,11 +1094,11 @@ def main() -> int:
         # specific) paths must stay out of the manifest. Build-dir dep paths
         # are stored token-relative so other trees can validate them.
         include_reals = {os.path.realpath(f) for f in include_files}
+        racy_after_ns = time.time_ns() - _STAT_RACY_WINDOW_NS
         lines = []
         for dep in _parse_dep_file(dep_text):
-            p = Path(dep)
-            if p.is_file() and os.path.realpath(dep) not in include_reals:
-                lines.append(f"{_normalize_basedir(dep, basedir_prefixes)}\t{_sha256_file(p)}")
+            if Path(dep).is_file() and os.path.realpath(dep) not in include_reals:
+                lines.append(_manifest_line(dep, basedir_prefixes, racy_after_ns))
         try:
             _atomic_copy(out_path, cached_out)
             if wants_json and json_out.is_file():

@@ -13,6 +13,7 @@ import os
 import re
 import shutil
 import stat
+import subprocess
 import sys
 import time
 from dataclasses import dataclass
@@ -51,6 +52,10 @@ def expand_response_files(argv):
 def main() -> int:
     argv = expand_response_files(sys.argv[1:])
     if argv == ["--version"]:
+        version_log = os.environ.get("FAKEMOC_VERSION_LOG")
+        if version_log:
+            with open(version_log, "a") as f:
+                f.write("--version\\n")
         print("fake-moc " + os.environ.get("FAKEMOC_VERSION", "1.0"))
         return 0
     out = None
@@ -156,11 +161,13 @@ class Harness:
             self.fake_moc = fake_moc_script
             self.fake_moc.chmod(0o755)
         self.moc_log = root / "moc-invocations.log"
+        self.version_log = root / "moc-version-queries.log"
         for var in ("MOCCACHE_DISABLE", "MOCCACHE_MOC", "MOCCACHE_BASEDIR"):
             monkeypatch.delenv(var, raising=False)
         monkeypatch.setenv("MOCCACHE_DIR", str(self.cache))
         monkeypatch.setenv("MOCCACHE_STATS", "1")
         monkeypatch.setenv("FAKEMOC_LOG", str(self.moc_log))
+        monkeypatch.setenv("FAKEMOC_VERSION_LOG", str(self.version_log))
 
     def make_tree(self, name: str, root: Path | None = None) -> Tree:
         build = (root or self.root / "repo") / name
@@ -215,6 +222,22 @@ class Harness:
         if not self.moc_log.is_file():
             return 0
         return len(self.moc_log.read_text().splitlines())
+
+    def version_queries(self) -> int:
+        """How many times `moc --version` was spawned."""
+        if not self.version_log.is_file():
+            return 0
+        return len(self.version_log.read_text().splitlines())
+
+    def upgrade_moc(self, version: str) -> None:
+        """Swap in a different moc: new --version output and a new binary mtime."""
+        self.monkeypatch.setenv("FAKEMOC_VERSION", version)
+        st = self.fake_moc.stat()
+        os.utime(self.fake_moc, ns=(st.st_atime_ns, st.st_mtime_ns + 1_000_000_000))
+
+    def manifest(self) -> Path:
+        (manifest,) = self.cache.glob("??/*/manifest")
+        return manifest
 
 
 @pytest.fixture
@@ -371,7 +394,7 @@ class TestInvalidation:
     def test_moc_version_change_invalidates(self, harness: Harness) -> None:
         tree = harness.make_tree("build")
         harness.run(tree, out=tree.out_path("a.cpp"))
-        harness.monkeypatch.setenv("FAKEMOC_VERSION", "2.0")
+        harness.upgrade_moc("2.0")
         harness.run(tree, out=tree.out_path("b.cpp"))
         assert harness.stats() == ["miss", "miss"]
 
@@ -544,8 +567,6 @@ class TestParallel:
         outs = [tree.out_path(f"p{i}.cpp") for i in range(8)]
 
         def one(out: Path) -> int:
-            import subprocess
-
             return subprocess.run(
                 [
                     sys.executable,
@@ -571,9 +592,322 @@ class TestParallel:
             assert all(rc == 0 for rc in pool.map(one, outs))
         contents = {o.read_bytes() for o in outs}
         assert len(contents) == 1
+        # Racing version-memo writers leave one complete memo and no temp files.
+        memo = moccache._read_moc_versions(harness.cache / moccache._MOC_VERSIONS_FILE)
+        assert memo[os.path.realpath(harness.fake_moc)][2] == "fake-moc 1.0"
+        assert not list(harness.cache.glob(".moccache-*"))
         # Warm run afterwards must hit.
         harness.run(tree, out=tree.out_path("warm.cpp"))
         assert harness.stats()[-1] == "hit"
+
+
+# ---------------------------------------------------------------------------
+# Hits skip re-hashing deps whose stat matches the manifest
+# ---------------------------------------------------------------------------
+
+
+def _settle(harness: Harness) -> None:
+    """Write manifests as if long after every file last changed, past the racy window.
+
+    ctime cannot be backdated, so the manifest writer's clock is advanced instead.
+    """
+    real_time_ns = time.time_ns
+    harness.monkeypatch.setattr(moccache.time, "time_ns", lambda: real_time_ns() + 3600 * 10**9)
+
+
+def _manifest_fields(harness: Harness) -> dict[str, list[str]]:
+    """Manifest lines keyed by their (possibly tokenized) path."""
+    lines = harness.manifest().read_text(encoding="utf-8").splitlines()
+    return {line.split("\t")[0]: line.split("\t")[1:] for line in lines}
+
+
+class TestDepStatShortcut:
+    @staticmethod
+    def _record_hashes(harness: Harness) -> list[Path]:
+        hashed: list[Path] = []
+        real = moccache._sha256_file
+
+        def recording(path: Path) -> str:
+            hashed.append(Path(path))
+            return real(path)
+
+        harness.monkeypatch.setattr(moccache, "_sha256_file", recording)
+        return hashed
+
+    def test_manifest_records_stat_of_settled_deps(self, harness: Harness) -> None:
+        _settle(harness)
+        harness.run(harness.make_tree("build"))
+        st = harness.dep_header.stat()
+        assert _manifest_fields(harness)[str(harness.dep_header)] == [
+            moccache._sha256_file(harness.dep_header),
+            str(st.st_mtime_ns),
+            str(st.st_ctime_ns),
+            str(st.st_size),
+        ]
+
+    def test_stat_match_skips_hashing(self, harness: Harness) -> None:
+        _settle(harness)
+        tree = harness.make_tree("build")
+        harness.run(tree, out=tree.out_path("a.cpp"))
+        hashed = self._record_hashes(harness)
+        harness.run(tree, out=tree.out_path("b.cpp"))
+        assert harness.stats() == ["miss", "hit"]
+        assert hashed == [harness.input]  # for the cache key only
+
+    def test_same_size_edit_with_new_mtime_is_rehashed_and_detected(self, harness: Harness) -> None:
+        _settle(harness)
+        tree = harness.make_tree("build")
+        harness.run(tree, out=tree.out_path("a.cpp"))
+        before = harness.dep_header.stat()
+        harness.dep_header.write_text("// dep v2\n")
+        assert harness.dep_header.stat().st_size == before.st_size
+        # Still well in the past, as when an older copy is restored with its mtime.
+        os.utime(harness.dep_header, ns=(before.st_atime_ns, before.st_mtime_ns + 1_000_000_000))
+        hashed = self._record_hashes(harness)
+        harness.run(tree, out=tree.out_path("b.cpp"))
+        assert harness.dep_header in hashed
+        assert harness.stats_detailed()[-1] == ("miss-include-changed", str(harness.dep_header))
+
+    @pytest.mark.skipif(sys.platform == "win32", reason="st_ctime_ns is the creation time")
+    def test_rewrite_with_restored_mtime_and_size_is_caught_by_ctime(
+        self, harness: Harness
+    ) -> None:
+        # E.g. an archive re-extracted over the tree: new content, old mtime.
+        _settle(harness)
+        tree = harness.make_tree("build")
+        harness.run(tree, out=tree.out_path("a.cpp"))
+        _, mtime_ns, ctime_ns, size = _manifest_fields(harness)[str(harness.dep_header)]
+        before = harness.dep_header.stat()
+        harness.dep_header.write_text("// dep v2\n")
+        os.utime(harness.dep_header, ns=(before.st_atime_ns, int(mtime_ns)))
+        after = harness.dep_header.stat()
+        assert (str(after.st_mtime_ns), str(after.st_size)) == (mtime_ns, size)
+        assert str(after.st_ctime_ns) != ctime_ns
+        hashed = self._record_hashes(harness)
+        harness.run(tree, out=tree.out_path("b.cpp"))
+        assert harness.dep_header in hashed
+        assert harness.stats_detailed()[-1] == ("miss-include-changed", str(harness.dep_header))
+
+    def test_racy_dep_is_rehashed(self, harness: Harness) -> None:
+        # Changed just before the manifest was written: an edit within the
+        # same timestamp tick can keep its whole stat, so none is recorded.
+        tree = harness.make_tree("build")
+        harness.run(tree, out=tree.out_path("a.cpp"))
+        assert len(_manifest_fields(harness)[str(harness.dep_header)]) == 1
+        hashed = self._record_hashes(harness)
+        harness.run(tree, out=tree.out_path("b.cpp"))
+        assert harness.stats() == ["miss", "hit"]
+        assert harness.dep_header in hashed
+        before = harness.dep_header.stat()
+        harness.dep_header.write_text("// dep v2\n")
+        os.utime(harness.dep_header, ns=(before.st_atime_ns, before.st_mtime_ns))
+        assert harness.dep_header.stat().st_size == before.st_size
+        harness.run(tree, out=tree.out_path("c.cpp"))
+        assert harness.stats_detailed()[-1] == ("miss-include-changed", str(harness.dep_header))
+
+    def test_stat_recorded_only_for_absolute_settled_paths(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        dep = tmp_path / "Dep.h"
+        dep.write_text("// dep\n")
+        old = time.time() - 3600
+        os.utime(dep, (old, old))  # extracted with an old mtime; ctime is now
+        st = dep.stat()
+        assert st.st_ctime_ns > st.st_mtime_ns
+        assert len(moccache._manifest_line(str(dep), [], st.st_ctime_ns + 1).split("\t")) == 5
+        assert len(moccache._manifest_line(str(dep), [], st.st_ctime_ns).split("\t")) == 2
+        # A relative path names a different file in each working directory.
+        monkeypatch.chdir(tmp_path)
+        assert len(moccache._manifest_line("Dep.h", [], st.st_ctime_ns + 1).split("\t")) == 2
+
+    def test_old_format_manifest_still_hits(self, harness: Harness) -> None:
+        _settle(harness)
+        tree = harness.make_tree("build")
+        harness.run(tree, out=tree.out_path("a.cpp"))
+        manifest = harness.manifest()
+        old_format = "".join(
+            "\t".join(line.split("\t")[:2]) + "\n"
+            for line in manifest.read_text(encoding="utf-8").splitlines()
+        )
+        manifest.write_text(old_format, encoding="utf-8")
+        hashed = self._record_hashes(harness)
+        harness.run(tree, out=tree.out_path("b.cpp"))
+        assert harness.stats() == ["miss", "hit"]
+        assert harness.dep_header in hashed
+
+    def test_unparsable_stat_fields_fall_back_to_hashing(self, harness: Harness) -> None:
+        _settle(harness)
+        tree = harness.make_tree("build")
+        harness.run(tree, out=tree.out_path("a.cpp"))
+        manifest = harness.manifest()
+        junk = "".join(
+            "\t".join([*line.split("\t")[:2], "soon", "-", "?"]) + "\n"
+            for line in manifest.read_text(encoding="utf-8").splitlines()
+        )
+        manifest.write_text(junk, encoding="utf-8")
+        hashed = self._record_hashes(harness)
+        harness.run(tree, out=tree.out_path("b.cpp"))
+        assert harness.stats() == ["miss", "hit"]
+        assert harness.dep_header in hashed
+
+    def test_mtime_size_only_line_is_malformed(self, harness: Harness) -> None:
+        _settle(harness)
+        tree = harness.make_tree("build")
+        harness.run(tree, out=tree.out_path("a.cpp"))
+        manifest = harness.manifest()
+        records = [line.split("\t") for line in manifest.read_text(encoding="utf-8").splitlines()]
+        assert all(len(fields) == 5 for fields in records)
+        no_ctime = "".join("\t".join([*fields[:3], fields[4]]) + "\n" for fields in records)
+        manifest.write_text(no_ctime, encoding="utf-8")
+        harness.run(tree, out=tree.out_path("b.cpp"))
+        assert harness.stats_detailed()[-1] == ("miss-cache-unreadable", "manifest malformed")
+
+    def test_build_dir_dep_stat_never_vouches_across_trees(self, harness: Harness) -> None:
+        # Sibling trees share entries through the basedir token, so a build-dir
+        # header's stat describes another tree's file; even a matching stat
+        # must not stand in for its content.
+        tree_a = harness.make_tree("build")
+        tree_b = harness.make_tree("build2")
+        gen_a = tree_a.build / "gen" / "Gen.h"
+        gen_b = tree_b.build / "gen" / "Gen.h"
+        for gen, value in ((gen_a, 1), (gen_b, 0)):
+            gen.parent.mkdir()
+            gen.write_text(f"#define FEATURE {value}\n")
+        st = gen_a.stat()
+        os.utime(gen_b, ns=(st.st_atime_ns, st.st_mtime_ns))
+        _settle(harness)
+        deps_list = harness.src / "Foo.h.deps"
+        deps_list.write_text(f"{harness.dep_header}\n{gen_a}\n")
+        harness.run(tree_a)
+        fields = _manifest_fields(harness)
+        gen_entry = moccache._normalize_basedir(str(gen_a), moccache._basedir_prefixes())
+        assert gen_entry.startswith(moccache._BASEDIR_TOKEN)
+        assert len(fields[gen_entry]) == 1
+        assert len(fields[str(harness.dep_header)]) == 4
+        deps_list.write_text(f"{harness.dep_header}\n{gen_b}\n")
+        harness.run(tree_b)
+        assert harness.stats_detailed()[-1] == ("miss-include-changed", str(gen_b))
+
+
+# ---------------------------------------------------------------------------
+# moc --version memo
+# ---------------------------------------------------------------------------
+
+
+class TestMocVersionMemo:
+    @staticmethod
+    def _identity(harness: Harness, moc: Path | None = None) -> str:
+        return moccache._moc_identity(moc or harness.fake_moc, harness.cache)
+
+    def test_hits_reuse_memoized_version(self, harness: Harness) -> None:
+        tree = harness.make_tree("build")
+        harness.run(tree, out=tree.out_path("a.cpp"))
+        harness.run(tree, out=tree.out_path("b.cpp"))
+        assert harness.stats() == ["miss", "hit"]
+        assert harness.version_queries() == 1
+        assert (harness.cache / moccache._MOC_VERSIONS_FILE).is_file()
+
+    def test_memo_reused_while_moc_stat_unchanged(self, harness: Harness) -> None:
+        assert self._identity(harness) == "fake-moc 1.0"
+        harness.monkeypatch.setenv("FAKEMOC_VERSION", "2.0")  # binary itself untouched
+        assert self._identity(harness) == "fake-moc 1.0"
+        assert harness.version_queries() == 1
+
+    def test_memo_refreshed_when_moc_mtime_changes(self, harness: Harness) -> None:
+        assert self._identity(harness) == "fake-moc 1.0"
+        harness.upgrade_moc("2.0")
+        assert self._identity(harness) == "fake-moc 2.0"
+        assert self._identity(harness) == "fake-moc 2.0"
+        assert harness.version_queries() == 2
+
+    def test_memo_refreshed_when_moc_size_changes(self, harness: Harness) -> None:
+        assert self._identity(harness) == "fake-moc 1.0"
+        harness.monkeypatch.setenv("FAKEMOC_VERSION", "2.0")
+        before = harness.fake_moc.stat()
+        comment = "rem padding\r\n" if harness.fake_moc.suffix == ".cmd" else "# padding\n"
+        with harness.fake_moc.open("a", encoding="utf-8") as f:
+            f.write(comment)
+        os.utime(harness.fake_moc, ns=(before.st_atime_ns, before.st_mtime_ns))
+        assert self._identity(harness) == "fake-moc 2.0"
+        assert harness.version_queries() == 2
+
+    def test_missing_memo_asks_moc_again(self, harness: Harness) -> None:
+        assert self._identity(harness) == "fake-moc 1.0"
+        (harness.cache / moccache._MOC_VERSIONS_FILE).unlink()
+        assert self._identity(harness) == "fake-moc 1.0"
+        assert harness.version_queries() == 2
+
+    @pytest.mark.parametrize(
+        "memo",
+        [
+            pytest.param(b"\xff\xfe not utf-8", id="not-utf8"),
+            pytest.param(b"", id="empty"),
+            pytest.param(b"garbage\n", id="garbage"),
+            pytest.param("{path}\tsoon\t{size}\tfake-moc 9.9\n", id="bad-number"),
+            pytest.param("{path}\t{mtime}\t{size}\t\n", id="empty-version"),
+            pytest.param("{path}\t{mtime}\t{size}\tfake-moc 9.9", id="unterminated"),
+        ],
+    )
+    def test_corrupt_memo_falls_back_to_moc_and_is_repaired(
+        self, harness: Harness, memo: bytes | str
+    ) -> None:
+        if isinstance(memo, str):
+            st = harness.fake_moc.stat()
+            memo = memo.format(
+                path=os.path.realpath(harness.fake_moc), mtime=st.st_mtime_ns, size=st.st_size
+            ).encode()
+        harness.cache.mkdir(parents=True)
+        (harness.cache / moccache._MOC_VERSIONS_FILE).write_bytes(memo)
+        assert self._identity(harness) == "fake-moc 1.0"
+        assert self._identity(harness) == "fake-moc 1.0"
+        assert harness.version_queries() == 1
+
+    def test_unusable_memo_path_does_not_fail_build(self, harness: Harness) -> None:
+        (harness.cache / moccache._MOC_VERSIONS_FILE).mkdir(parents=True)
+        tree = harness.make_tree("build")
+        assert harness.run(tree, out=tree.out_path("a.cpp")) == 0
+        assert harness.run(tree, out=tree.out_path("b.cpp")) == 0
+        assert harness.stats() == ["miss", "hit"]
+        assert harness.version_queries() == 2
+
+    def test_failed_version_query_is_not_memoized(self, harness: Harness) -> None:
+        def no_spawn(*args: object, **kwargs: object) -> object:
+            raise OSError("cannot spawn")
+
+        harness.monkeypatch.setattr(subprocess, "run", no_spawn)
+        st = harness.fake_moc.stat()
+        assert self._identity(harness) == f"{st.st_mtime_ns}:{st.st_size}"
+        assert not (harness.cache / moccache._MOC_VERSIONS_FILE).exists()
+
+    def test_memo_keeps_most_recent_mocs(self, harness: Harness) -> None:
+        harness.monkeypatch.setattr(moccache, "_MOC_VERSIONS_MAX", 2)
+        mocs = []
+        for i in range(3):
+            moc = harness.root / f"moc{i}{harness.fake_moc.suffix}"
+            shutil.copy2(harness.fake_moc, moc)
+            mocs.append(moc)
+            self._identity(harness, moc)
+        memo = moccache._read_moc_versions(harness.cache / moccache._MOC_VERSIONS_FILE)
+        assert list(memo) == [os.path.realpath(m) for m in mocs[1:]]
+
+    def test_memo_is_not_a_cache_entry(
+        self, harness: Harness, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        tree = harness.make_tree("build")
+        harness.run(tree)
+        memo = harness.cache / moccache._MOC_VERSIONS_FILE
+        assert memo.is_file()
+        entries = moccache._scan_entries(harness.cache)
+        assert [p.parent.parent for _, _, p in entries] == [harness.cache]
+        assert show_stats(harness) == 0
+        monkeypatch.setattr(sys, "argv", ["moccache.py", "--trim", "--max-size", "1"])
+        assert moccache.main() == 0
+        assert moccache._scan_entries(harness.cache) == []
+        monkeypatch.setattr(sys, "argv", ["moccache.py", "--zero-stats"])
+        assert moccache.main() == 0
+        assert memo.is_file()
+        harness.run(tree, out=tree.out_path("b.cpp"))
+        assert harness.version_queries() == 1
 
 
 # ---------------------------------------------------------------------------
@@ -921,7 +1255,7 @@ class TestMissReasons:
     def test_changed_moc_is_miss_moc(self, harness: Harness) -> None:
         tree = harness.make_tree("build")
         harness.run(tree)
-        harness.monkeypatch.setenv("FAKEMOC_VERSION", "2.0")
+        harness.upgrade_moc("2.0")
         harness.run(tree, out=tree.out_path("b.cpp"))
         assert harness.stats_detailed()[-1][0] == "miss-moc-version-changed"
 
@@ -996,7 +1330,7 @@ class TestMissReasons:
 
     def test_uncacheable_miss_is_logged_on_fresh_cache(self, harness: Harness) -> None:
         # Nothing else has created MOCCACHE_DIR yet when moc yields no dep file.
-        real_run = moccache.subprocess.run
+        real_run = subprocess.run
 
         def run_and_drop_dep_file(cmd: list[str], *args: object, **kwargs: object) -> object:
             result = real_run(cmd, *args, **kwargs)  # type: ignore[arg-type]
@@ -1004,7 +1338,7 @@ class TestMissReasons:
                 Path(cmd[cmd.index("--dep-file-path") + 1]).unlink()
             return result
 
-        harness.monkeypatch.setattr(moccache.subprocess, "run", run_and_drop_dep_file)
+        harness.monkeypatch.setattr(subprocess, "run", run_and_drop_dep_file)
         tree = harness.make_tree("build")
         assert not harness.cache.exists()
         assert harness.run(tree) == 0

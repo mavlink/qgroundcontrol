@@ -200,7 +200,8 @@ are otherwise shared across build trees: build-dir paths are rewritten to a toke
 `base_dir`.
 
 Cache misses fall through to the real moc and never fail the build; corrupt or stale entries are
-re-validated by content hash on every use.
+caught on every use, when each recorded include is re-validated by content hash unless its mtime,
+ctime and size still match the values recorded with that hash.
 
 Environment variables (set by the launcher, overridable at build time):
 
