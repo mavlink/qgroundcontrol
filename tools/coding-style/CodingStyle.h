@@ -6,23 +6,22 @@
 
 #pragma once
 
+#include <climits>
+#include <span>
+#include <string_view>
+
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-#include <limits.h>
-#include <span>
-#include <string_view>
-
 #include "Fact.h"
-#include "Vehicle.h"
 
-// Note how the Qt headers, System headers and the QGroundControl headers above are kept in separate groups
-// with blank lines between them. Within each group, headers are sorted alphabetically.
+// Note how the System headers, Qt headers and the QGroundControl headers above are kept in separate groups,
+// in that order, with blank lines between them. Within each group, headers are sorted alphabetically.
 // Use full paths for Qt headers (e.g., QtCore/QObject not QObject).
 
-// Forward declarations for classes that are only used as pointers/references
+// Forward declarations for classes that are only used as pointers/references; the .cc includes Vehicle.h
 class Vehicle;
 
 // If you are going to use a logging category for a class it should have the same name as the class

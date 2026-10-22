@@ -204,7 +204,7 @@ Clean build artifacts and caches. Underlies `just clean` and `just distclean`.
 ```bash
 ./tools/clean.py              # Clean build directory
 ./tools/clean.py --all        # Clean everything (build, caches, generated files)
-./tools/clean.py --cache      # Clean only caches (ccache, pip, etc.)
+./tools/clean.py --cache      # Clean only repo-local caches (.cache, .ccache, .clangd); zero ccache stats
 ./tools/clean.py --dry-run    # Show what would be removed
 ```
 

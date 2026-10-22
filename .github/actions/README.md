@@ -25,7 +25,8 @@ not require `checks: write` (Codecov upload separately requires `id-token: write
 `download-all-artifacts` supports failed-build diagnostics and strict frozen release
 snapshots. PR reporting allows absent diagnostic artifacts when tests did not run, but
 download failures still fail reporting. Release and baseline downloads remain strict about
-missing artifacts. `build-action` is retained for consumers needing the combined build flow.
+missing artifacts. `build-action` checks out another repository and runs its npm build; no
+workflow currently uses it.
 
 `cache` restores compiler/moc archives and immutable CPM/SDK snapshots.
 `save-build-cache` checkpoints compiler/moc archives once per job after successful

@@ -274,7 +274,8 @@ repos:
         entry: bash -c 'if grep -nH "Q_ASSERT" "$@" 2>/dev/null; then echo "::error::Q_ASSERT found in production code. Use defensive checks with early returns instead." >&2; exit 1; fi' --
         language: system
         types: [c++]
-        exclude: ^test/
+        # The coding-style example names Q_ASSERT to teach the rule
+        exclude: ^(test|tools/coding-style)/
         pass_filenames: true
 
       - id: check-categorized-logging
