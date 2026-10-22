@@ -83,21 +83,12 @@ if(_custom_codegen_args)
 endif()
 
 qgc_add_qml_codegen(
-    GenerateSettingsQml
-    GENERATE_AT_CONFIGURE
-    GENERATOR_MODULE
-    tools.generators.settings_qml.generate_pages
-    OUTPUT_DIR
-    "${SETTINGS_QML_GEN_DIR}"
-    QML_NAMES
-    ${_generated_qml_names}
-    ${_custom_extra_args_keyword}
-    DEPENDS
-    ${_generator_sources}
-    ${_page_definitions}
-    ${_settings_metadata}
-    COMMENT
-    "Generating QML settings pages from JSON definitions"
+    GenerateSettingsQml GENERATE_AT_CONFIGURE
+    GENERATOR_MODULE tools.generators.settings_qml.generate_pages
+    OUTPUT_DIR "${SETTINGS_QML_GEN_DIR}"
+    QML_NAMES ${_generated_qml_names} ${_custom_extra_args_keyword}
+    DEPENDS ${_generator_sources} ${_page_definitions} ${_settings_metadata}
+    COMMENT "Generating QML settings pages from JSON definitions"
 )
 set(_generated_qml ${GenerateSettingsQml_OUTPUTS})
 
@@ -115,33 +106,36 @@ qt_add_qml_module(
     URI QGroundControl.AppSettings
     VERSION 1.0
     RESOURCE_PREFIX /qml
-    DEPENDENCIES QGroundControl.Controls QGroundControl.LogManager
-    QML_FILES # Generated from SettingsUI.json definitions (output in build tree)
-              ${_generated_qml}
-              # Hand-coded pages and components
-              AppLogging.qml
-              BluetoothSettings.qml
-              DebugWindow.qml
-              HelpSettings.qml
-              LinkConfigurationManager.qml
-              LogReplaySettings.qml
-              MapProviderSettings.qml
-              MavlinkActionSettings.qml
-              MavlinkLinkStatus.qml
-              SigningKeyManager.qml
-              MockLink.qml
-              MockLinkSettings.qml
-              OfflineMapEditor.qml
-              OfflineMapInfo.qml
-              OfflineMapSettings.qml
-              PX4LogControl.qml
-              PX4LogFileManager.qml
-              PX4LogUploadSettings.qml
-              QmlTest.qml
-              SerialSettings.qml
-              SettingsPage.qml
-              TcpSettings.qml
-              UdpSettings.qml
+    DEPENDENCIES
+        QGroundControl.Controls
+        QGroundControl.LogManager
+    QML_FILES
+        # Generated from SettingsUI.json definitions (output in build tree)
+        ${_generated_qml}
+        # Hand-coded pages and components
+        AppLogging.qml
+        BluetoothSettings.qml
+        DebugWindow.qml
+        HelpSettings.qml
+        LinkConfigurationManager.qml
+        LogReplaySettings.qml
+        MapProviderSettings.qml
+        MavlinkActionSettings.qml
+        MavlinkLinkStatus.qml
+        SigningKeyManager.qml
+        MockLink.qml
+        MockLinkSettings.qml
+        OfflineMapEditor.qml
+        OfflineMapInfo.qml
+        OfflineMapSettings.qml
+        PX4LogControl.qml
+        PX4LogFileManager.qml
+        PX4LogUploadSettings.qml
+        QmlTest.qml
+        SerialSettings.qml
+        SettingsPage.qml
+        TcpSettings.qml
+        UdpSettings.qml
     NO_PLUGIN
 )
 
@@ -149,5 +143,6 @@ qt_add_resources(
     ${CMAKE_PROJECT_NAME} appsettings_resources
     PREFIX "/res"
     BASE "${CMAKE_SOURCE_DIR}/resources"
-    FILES "${CMAKE_SOURCE_DIR}/resources/pencil.svg"
+    FILES
+        "${CMAKE_SOURCE_DIR}/resources/pencil.svg"
 )

@@ -1,21 +1,38 @@
 include_guard(GLOBAL)
 
+# ----------------------------------------------------------------------------
+# qgc_add_qml_codegen()
+# ----------------------------------------------------------------------------
+# Generates QML files with a Python generator module and adds a custom target for them.
+#
+# Arguments:
+#   target                - Name of the custom target to create
+#   GENERATOR_MODULE mod  - Python module run with `python -m` from the source root
+#   OUTPUT_DIR dir        - Absolute output directory under CMAKE_BINARY_DIR
+#   QML_NAMES name...     - Generated files, relative to OUTPUT_DIR
+#   EXTRA_ARGS arg...     - Extra generator arguments
+#   DEPENDS file...       - Generator inputs; with GENERATE_AT_CONFIGURE they also re-run configure
+#   COMMENT text          - Build-time comment
+#   GENERATE_AT_CONFIGURE - Also generate during configure, so the outputs exist before qt_add_qml_module
+#
+# Sets <target>_OUTPUTS in the parent scope to the absolute generated paths.
 function(qgc_add_qml_codegen target)
-    if(NOT target)
+    # Argument validation keeps this entry point long; <target>_OUTPUTS is the documented result
+    # variable, and the custom target is only an aggregate of the generated outputs.
+    # cmake-lint: disable=R0912,R0915,C0103,C0113
+    if("${target}" STREQUAL "")
         message(FATAL_ERROR "qgc_add_qml_codegen: target name is required")
     endif()
-    if(NOT target MATCHES "^[A-Za-z0-9_][A-Za-z0-9_.+-]*$")
+    if(NOT "${target}" MATCHES "^[A-Za-z0-9_][A-Za-z0-9_.+-]*$")
         message(FATAL_ERROR "qgc_add_qml_codegen: invalid target name '${target}'")
     endif()
 
-    cmake_parse_arguments(PARSE_ARGV 1 ARG
-        "GENERATE_AT_CONFIGURE"
-        "GENERATOR_MODULE;OUTPUT_DIR;COMMENT"
-        "QML_NAMES;EXTRA_ARGS;DEPENDS")
+    cmake_parse_arguments(
+        PARSE_ARGV 1 ARG "GENERATE_AT_CONFIGURE" "GENERATOR_MODULE;OUTPUT_DIR;COMMENT" "QML_NAMES;EXTRA_ARGS;DEPENDS"
+    )
 
     if(ARG_KEYWORDS_MISSING_VALUES)
-        message(FATAL_ERROR
-            "qgc_add_qml_codegen(${target}): missing values for: ${ARG_KEYWORDS_MISSING_VALUES}")
+        message(FATAL_ERROR "qgc_add_qml_codegen(${target}): missing values for: ${ARG_KEYWORDS_MISSING_VALUES}")
     endif()
     if(ARG_UNPARSED_ARGUMENTS)
         message(FATAL_ERROR "qgc_add_qml_codegen(${target}): unknown arguments: ${ARG_UNPARSED_ARGUMENTS}")
@@ -31,11 +48,8 @@ function(qgc_add_qml_codegen target)
     if(NOT TARGET Python3::Interpreter)
         message(FATAL_ERROR "qgc_add_qml_codegen(${target}): Python3::Interpreter target is required")
     endif()
-    if(NOT ARG_GENERATOR_MODULE MATCHES
-       "^[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z_][A-Za-z0-9_]*)*$"
-    )
-        message(FATAL_ERROR
-            "qgc_add_qml_codegen(${target}): invalid Python module '${ARG_GENERATOR_MODULE}'")
+    if(NOT ARG_GENERATOR_MODULE MATCHES "^[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z_][A-Za-z0-9_]*)*$")
+        message(FATAL_ERROR "qgc_add_qml_codegen(${target}): invalid Python module '${ARG_GENERATOR_MODULE}'")
     endif()
     if(NOT IS_ABSOLUTE "${ARG_OUTPUT_DIR}")
         message(FATAL_ERROR "qgc_add_qml_codegen(${target}): OUTPUT_DIR must be absolute")
@@ -43,8 +57,7 @@ function(qgc_add_qml_codegen target)
     cmake_path(NORMAL_PATH ARG_OUTPUT_DIR OUTPUT_VARIABLE _output_dir)
     cmake_path(IS_PREFIX CMAKE_BINARY_DIR "${_output_dir}" NORMALIZE _output_in_build_tree)
     if(NOT _output_in_build_tree)
-        message(FATAL_ERROR
-            "qgc_add_qml_codegen(${target}): OUTPUT_DIR must stay under CMAKE_BINARY_DIR")
+        message(FATAL_ERROR "qgc_add_qml_codegen(${target}): OUTPUT_DIR must stay under CMAKE_BINARY_DIR")
     endif()
 
     set(_unique_qml_names ${ARG_QML_NAMES})
@@ -64,36 +77,39 @@ function(qgc_add_qml_codegen target)
 
     if(ARG_GENERATE_AT_CONFIGURE)
         if(NOT Python3_EXECUTABLE OR NOT EXISTS "${Python3_EXECUTABLE}")
-            message(FATAL_ERROR
-                "qgc_add_qml_codegen(${target}): GENERATE_AT_CONFIGURE requires Python3_EXECUTABLE")
+            message(FATAL_ERROR "qgc_add_qml_codegen(${target}): GENERATE_AT_CONFIGURE requires Python3_EXECUTABLE")
         endif()
-        set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${ARG_DEPENDS})
+        set_property(
+            DIRECTORY
+            APPEND
+            PROPERTY CMAKE_CONFIGURE_DEPENDS ${ARG_DEPENDS}
+        )
         execute_process(
-            COMMAND "${Python3_EXECUTABLE}" -m "${ARG_GENERATOR_MODULE}"
-                    --output-dir "${_output_dir}" ${ARG_EXTRA_ARGS}
+            COMMAND "${Python3_EXECUTABLE}" -m "${ARG_GENERATOR_MODULE}" --output-dir "${_output_dir}" ${ARG_EXTRA_ARGS}
             WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
             RESULT_VARIABLE _generate_result
             OUTPUT_VARIABLE _generate_output
             ERROR_VARIABLE _generate_output
         )
         if(NOT _generate_result EQUAL 0)
-            message(FATAL_ERROR
-                "qgc_add_qml_codegen(${target}): configure-time generation failed "
-                "(exit ${_generate_result}):\n${_generate_output}")
+            message(
+                FATAL_ERROR "qgc_add_qml_codegen(${target}): configure-time generation failed "
+                            "(exit ${_generate_result}):\n${_generate_output}"
+            )
         endif()
         foreach(_output IN LISTS _outputs)
             if(NOT EXISTS "${_output}")
-                message(FATAL_ERROR
-                    "qgc_add_qml_codegen(${target}): configure-time generator did not produce "
-                    "declared output '${_output}'")
+                message(
+                    FATAL_ERROR "qgc_add_qml_codegen(${target}): configure-time generator did not produce "
+                                "declared output '${_output}'"
+                )
             endif()
         endforeach()
     endif()
 
     add_custom_command(
-        OUTPUT  ${_outputs}
-        COMMAND Python3::Interpreter -m ${ARG_GENERATOR_MODULE}
-                --output-dir "${_output_dir}" ${ARG_EXTRA_ARGS}
+        OUTPUT ${_outputs}
+        COMMAND Python3::Interpreter -m ${ARG_GENERATOR_MODULE} --output-dir "${_output_dir}" ${ARG_EXTRA_ARGS}
         DEPENDS ${ARG_DEPENDS}
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
         COMMENT "${ARG_COMMENT}"
@@ -102,11 +118,21 @@ function(qgc_add_qml_codegen target)
 
     add_custom_target(${target} DEPENDS ${_outputs})
 
-    set_source_files_properties(${_outputs} PROPERTIES GENERATED TRUE)
+    set_source_files_properties(
+        ${_outputs}
+        PROPERTIES
+            GENERATED TRUE
+    )
     foreach(_name IN LISTS ARG_QML_NAMES)
-        set_source_files_properties("${_output_dir}/${_name}"
-            PROPERTIES QT_RESOURCE_ALIAS "${_name}")
+        set_source_files_properties(
+            "${_output_dir}/${_name}"
+            PROPERTIES
+                QT_RESOURCE_ALIAS "${_name}"
+        )
     endforeach()
 
-    set(${target}_OUTPUTS ${_outputs} PARENT_SCOPE)
+    set(${target}_OUTPUTS
+        ${_outputs}
+        PARENT_SCOPE
+    )
 endfunction()
