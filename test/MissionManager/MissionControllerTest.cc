@@ -3,6 +3,7 @@
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QTemporaryDir>
+#include <QtMath>
 
 #include "AppSettings.h"
 #include "CameraCalc.h"
@@ -496,6 +497,35 @@ void MissionControllerTest::_testVehicleYawRecalc()
             expectedVehicleYaw += wpAngleInc;
         }
     }
+}
+
+void MissionControllerTest::_testLoiterTurnsDistance()
+{
+    _initForVehicleType(MAV_AUTOPILOT_PX4, MAV_TYPE_FIXED_WING);
+
+    const QGeoCoordinate coordinate = Coord::zurich();
+    _missionController->setHomePosition(coordinate);
+    SimpleMissionItem* loiterItem =
+        qobject_cast<SimpleMissionItem*>(_missionController->insertSimpleMissionItem(coordinate, 1));
+    QVERIFY(loiterItem);
+
+    loiterItem->setCommand(MAV_CMD_NAV_LOITER_TURNS);
+    const double initialDistance =
+        2.0 * M_PI * qAbs(loiterItem->loiterRadius()) * qAbs(loiterItem->missionItem().param1());
+    QCOMPARE_TRUE_WAIT(_missionController->missionTotalDistance(), initialDistance, TestTimeout::mediumMs());
+
+    loiterItem->missionItem().setParam1(2.5);
+    const double turnsDistance = 2.0 * M_PI * qAbs(loiterItem->loiterRadius()) * 2.5;
+    QCOMPARE_TRUE_WAIT(_missionController->missionTotalDistance(), turnsDistance, TestTimeout::mediumMs());
+
+    loiterItem->missionItem().setParam3(-25.0);
+
+    const double expectedDistance = 2.0 * M_PI * 25.0 * 2.5;
+    QCOMPARE_TRUE_WAIT(_missionController->missionTotalDistance(), expectedDistance, TestTimeout::mediumMs());
+    QCOMPARE(_missionController->missionPlannedDistance(), expectedDistance);
+    QCOMPARE(_missionController->missionCruiseDistance(), expectedDistance);
+    QCOMPARE(_missionController->missionTime(),
+             expectedDistance / _masterController->controllerVehicle()->defaultCruiseSpeed());
 }
 
 void MissionControllerTest::_testMissionReposition()

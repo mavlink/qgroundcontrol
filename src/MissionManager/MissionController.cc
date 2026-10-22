@@ -1610,6 +1610,8 @@ void MissionController::_initVisualItem(VisualMissionItem* visualItem)
         SimpleMissionItem* simpleItem = qobject_cast<SimpleMissionItem*>(visualItem);
         if (simpleItem) {
             connect(&simpleItem->missionItem()._commandFact, &Fact::valueChanged, this, &MissionController::_itemCommandChanged);
+            connect(simpleItem, &SimpleMissionItem::loiterDistanceChanged, this,
+                    &MissionController::_recalcMissionFlightStatusSignal, Qt::QueuedConnection);
             // The altitude frame drives segmentTypeForPair, and segment type is immutable once created
             connect(simpleItem, &SimpleMissionItem::altitudeFrameChanged, this,
                     &MissionController::_recalcFlightPathSegmentsSignal, Qt::QueuedConnection);
