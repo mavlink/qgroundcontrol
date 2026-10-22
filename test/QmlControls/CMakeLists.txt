@@ -13,6 +13,8 @@ target_sources(
         ObjectItemModelBaseTest.h
         ObjectListModelBaseTest.cc
         ObjectListModelBaseTest.h
+        PreFlightCheckModelTest.cc
+        PreFlightCheckModelTest.h
         QGCCheckBoxSliderTest.cc
         QGCCheckBoxSliderTest.h
         QmlObjectListModelTest.cc
@@ -32,6 +34,7 @@ add_qgc_test(MapMarkerGroupingTest LABELS Unit)
 add_qgc_test(MapPositionTrackerTest LABELS Unit)
 add_qgc_test(ObjectItemModelBaseTest LABELS Unit)
 add_qgc_test(ObjectListModelBaseTest LABELS Unit)
+add_qgc_test(PreFlightCheckModelTest LABELS Unit)
 add_qgc_test(QGCCheckBoxSliderTest LABELS Unit)
 add_qgc_test(QmlObjectListModelTest LABELS Unit)
 add_qgc_test(QmlObjectTreeModelTest LABELS Unit)

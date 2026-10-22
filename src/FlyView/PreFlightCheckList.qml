@@ -8,6 +8,7 @@ import QGroundControl.Controls
 import QGroundControl.FlyView
 
 ColumnLayout {
+    objectName: "preFlightCheckList"
     spacing: 0.8 * ScreenTools.defaultFontPixelWidth
 
     property real _verticalMargin: ScreenTools.defaultFontPixelHeight / 2
@@ -20,8 +21,10 @@ ColumnLayout {
     }
 
     property bool allChecksPassed:  false
+    property bool prerequisitesPassed: true ///< Checks which must pass before this list's, such as the pre-vehicle checks
     property var  vehicleCopy:      globals.activeVehicle
 
+    readonly property bool checklistPassed: allChecksPassed && prerequisitesPassed
 
     onVehicleCopyChanged: {
         if (checkListRepeater.model) {
@@ -29,11 +32,24 @@ ColumnLayout {
         }
     }
 
-    onAllChecksPassedChanged: {
-        if (allChecksPassed) {
+    onChecklistPassedChanged: {
+        if (checklistPassed) {
             globals.activeVehicle.checkListState = Vehicle.CheckListPassed
         } else {
             globals.activeVehicle.checkListState = Vehicle.CheckListFailed
+        }
+    }
+
+    Binding {
+        target:     checkListRepeater.model
+        property:   "prerequisitesPassed"
+        value:      prerequisitesPassed
+        when:       !!checkListRepeater.model
+    }
+
+    function reset() {
+        if (checkListRepeater.model) {
+            checkListRepeater.model.reset()
         }
     }
 
@@ -94,7 +110,7 @@ ColumnLayout {
             anchors.right:      parent.right
             y:                  _firstHeader ? Math.max(0, _firstHeader.height - _firstHeader.bottomPadding - height - _headerLineGap) : 0
             text:               qsTr("Reset")
-            onClicked:          checkListRepeater.model.reset()
+            onClicked:          reset()
         }
     }
 
