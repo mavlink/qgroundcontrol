@@ -36,6 +36,19 @@ DEBIAN_PACKAGE_ALTERNATIVES: dict[str, list[str]] = {
 }
 
 
+def _just_asset_sha256(sums: Path, asset: str) -> str | None:
+    """SHA-256 for asset from a release SHA256SUMS file ("<hash>  <name>" lines)."""
+    for line in sums.read_text(encoding="utf-8").splitlines():
+        parts = line.split()
+        if (
+            len(parts) == 2
+            and parts[1].lstrip("*") == asset
+            and re.fullmatch(r"[0-9a-f]{64}", parts[0])
+        ):
+            return parts[0]
+    return None
+
+
 def resolve_package_alternatives(packages: list[str]) -> list[str]:
     """Swap each alternative-mapped package to its first available candidate, dropping it if none exist.
 
@@ -127,14 +140,20 @@ def install_just_debian(dry_run: bool = False) -> bool:
         return True
 
     version = _just_version()
-    url = (
-        f"https://github.com/casey/just/releases/download/{version}/just-{version}-{target}.tar.gz"
-    )
+    release = f"https://github.com/casey/just/releases/download/{version}"
+    asset = f"just-{version}-{target}.tar.gz"
     print(f"\nInstalling just {version} (prebuilt: {target})...")
 
     with tempfile.TemporaryDirectory() as tmp:
+        sums = Path(tmp) / "SHA256SUMS"
+        if not _c.download_file(f"{release}/SHA256SUMS", sums):
+            return False
+        expected_sha256 = _just_asset_sha256(sums, asset)
+        if expected_sha256 is None:
+            _c.log_error(f"{asset} is not listed in the release's SHA256SUMS")
+            return False
         archive = Path(tmp) / "just.tar.gz"
-        if not _c.download_file(url, archive):
+        if not _c.download_file(f"{release}/{asset}", archive, expected_sha256=expected_sha256):
             return False
         just_bin = Path(tmp) / "just"
         try:

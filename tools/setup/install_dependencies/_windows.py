@@ -12,13 +12,23 @@ from . import _common as _c
 
 WINDOWS_GSTREAMER_PREFIX = "C:\\gstreamer\\1.0\\msvc_x86_64"
 WINDOWS_VULKAN_INSTALL_DIR = "C:\\VulkanSDK\\latest"
-WINDOWS_VULKAN_URL = "https://sdk.lunarg.com/sdk/download/latest/windows/vulkan-sdk.exe"
+WINDOWS_VULKAN_VERSION = "1.4.363.0"
+WINDOWS_VULKAN_URL = (
+    f"https://sdk.lunarg.com/sdk/download/{WINDOWS_VULKAN_VERSION}/windows/"
+    f"vulkansdk-windows-X64-{WINDOWS_VULKAN_VERSION}.exe"
+)
+# Published at https://sdk.lunarg.com/sdk/sha/<version>/windows/vulkan_sdk.exe.json
+WINDOWS_VULKAN_SHA256 = "94a82d378f7a5e3e54c9db7d2fb7016af136e14ac0a18dbf0f2f67a36352d141"
+# The bootstrapper floats with each Visual Studio servicing release, so it cannot be pinned;
+# it downloads and verifies its own signed payloads.
 WINDOWS_VS_BUILDTOOLS_URL = "https://aka.ms/vs/17/release/vs_BuildTools.exe"
 WINDOWS_NSIS_VERSION = "3.11"
 WINDOWS_NSIS_URL = (
     f"https://downloads.sourceforge.net/project/nsis/NSIS%203/{WINDOWS_NSIS_VERSION}/"
     f"nsis-{WINDOWS_NSIS_VERSION}-setup.exe"
 )
+# Matches the MD5 that SourceForge publishes for this file
+WINDOWS_NSIS_SHA256 = "38d49f8fe09b1c332b01d0940e57b7258f4447733643273a01c59959ad9d3b0a"
 
 
 def install_windows_nsis(dry_run: bool = False) -> bool:
@@ -32,7 +42,9 @@ def install_windows_nsis(dry_run: bool = False) -> bool:
     print(f"\nInstalling NSIS {WINDOWS_NSIS_VERSION}...")
     with tempfile.TemporaryDirectory() as tmpdir:
         installer = Path(tmpdir) / "nsis-setup.exe"
-        if not _c.download_file(WINDOWS_NSIS_URL, installer, dry_run):
+        if not _c.download_file(
+            WINDOWS_NSIS_URL, installer, dry_run, expected_sha256=WINDOWS_NSIS_SHA256
+        ):
             return False
         if not _c.run_command([str(installer), "/S"], dry_run):
             return False
@@ -224,11 +236,13 @@ def install_windows_gstreamer(version: str, dry_run: bool = False) -> bool:
 
 def install_windows_vulkan(dry_run: bool = False) -> bool:
     """Install Vulkan SDK on Windows."""
-    print("\nInstalling Vulkan SDK...")
+    print(f"\nInstalling Vulkan SDK {WINDOWS_VULKAN_VERSION}...")
     install_dir = WINDOWS_VULKAN_INSTALL_DIR
     with tempfile.TemporaryDirectory() as tmpdir:
         installer = Path(tmpdir) / "vulkan-sdk.exe"
-        if not _c.download_file(WINDOWS_VULKAN_URL, installer, dry_run):
+        if not _c.download_file(
+            WINDOWS_VULKAN_URL, installer, dry_run, expected_sha256=WINDOWS_VULKAN_SHA256
+        ):
             return False
 
         if not _c.run_command(

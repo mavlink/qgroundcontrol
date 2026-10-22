@@ -500,6 +500,52 @@ def test_install_just_debian_falls_back_when_apt_version_too_old() -> None:
     mock_dl.assert_called_once()
 
 
+def test_just_asset_sha256_reads_the_matching_release_line(tmp_path: Path) -> None:
+    from setup.install_dependencies._debian import _just_asset_sha256
+
+    sums = tmp_path / "SHA256SUMS"
+    sums.write_text(
+        f"{'a' * 64}  just-1.0.0-aarch64-unknown-linux-musl.tar.gz\n"
+        f"{'b' * 64} *just-1.0.0-x86_64-unknown-linux-musl.tar.gz\n"
+        "not-a-hash  just-1.0.0-x86_64-unknown-linux-gnu.tar.gz\n",
+        encoding="utf-8",
+    )
+    assert _just_asset_sha256(sums, "just-1.0.0-x86_64-unknown-linux-musl.tar.gz") == "b" * 64
+    assert _just_asset_sha256(sums, "just-1.0.0-x86_64-unknown-linux-gnu.tar.gz") is None
+    assert _just_asset_sha256(sums, "just-1.0.0-armv7-unknown-linux-musleabihf.tar.gz") is None
+
+
+@pytest.mark.parametrize("listed", [True, False])
+def test_install_just_debian_verifies_archive_against_release_sums(listed: bool) -> None:
+    calls: list[tuple[str, str | None]] = []
+
+    def download(url: str, dest: Path, *args, expected_sha256: str | None = None, **kwargs) -> bool:
+        calls.append((url, expected_sha256))
+        if url.endswith("/SHA256SUMS"):
+            name = "just-9.9.9-x86_64-unknown-linux-musl.tar.gz" if listed else "other.tar.gz"
+            dest.write_text(f"{'c' * 64}  {name}\n", encoding="utf-8")
+            return True
+        return False
+
+    with (
+        patch("setup.install_dependencies._debian._detect_just_version", return_value=None),
+        patch("setup.install_dependencies._common.check_apt_package_available", return_value=False),
+        patch("setup.install_dependencies._debian.platform.machine", return_value="x86_64"),
+        patch("setup.install_dependencies._debian._just_version", return_value="9.9.9"),
+        patch("setup.install_dependencies._common.download_file", side_effect=download),
+    ):
+        assert install_just_debian() is False
+    assert calls[0] == ("https://github.com/casey/just/releases/download/9.9.9/SHA256SUMS", None)
+    if listed:
+        assert calls[1] == (
+            "https://github.com/casey/just/releases/download/9.9.9/"
+            "just-9.9.9-x86_64-unknown-linux-musl.tar.gz",
+            "c" * 64,
+        )
+    else:
+        assert len(calls) == 1
+
+
 @pytest.mark.parametrize(
     ("fallback_package", "mirror_succeeds"),
     [(None, True), ("runtime", True), ("devel", True), ("runtime", False), ("devel", False)],
@@ -566,6 +612,22 @@ def test_install_windows_nsis_dry_run() -> None:
         assert _windows.install_windows_nsis(dry_run=True) is True
     dl.assert_called_once()
     rc.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    ("install", "url", "sha256"),
+    [
+        ("install_windows_nsis", "WINDOWS_NSIS_URL", "WINDOWS_NSIS_SHA256"),
+        ("install_windows_vulkan", "WINDOWS_VULKAN_URL", "WINDOWS_VULKAN_SHA256"),
+    ],
+)
+def test_windows_installers_are_pinned_and_verified(install: str, url: str, sha256: str) -> None:
+    pinned_url = getattr(_windows, url)
+    assert "latest" not in pinned_url
+    with patch.object(_windows._c, "download_file", return_value=False) as dl:
+        assert getattr(_windows, install)() is False
+    assert dl.call_args.args[0] == pinned_url
+    assert dl.call_args.kwargs["expected_sha256"] == getattr(_windows, sha256)
 
 
 def test_install_windows_gstreamer(monkeypatch, tmp_path: Path) -> None:
