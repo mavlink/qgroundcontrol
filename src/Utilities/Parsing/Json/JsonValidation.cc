@@ -1,7 +1,11 @@
 #include "JsonValidation.h"
 
+#include <algorithm>
+#include <optional>
+
 #include <QtCore/QObject>
-#include <QtCore/QSet>
+#include <QtCore/QUtf8StringView>
+#include <QtCore/QVarLengthArray>
 
 namespace {
 
@@ -38,16 +42,77 @@ bool validateMissingKeys(const QStringList& missingKeys, QString& errorString)
     return false;
 }
 
-bool validateValueType(const QString& key, QJsonValue::Type actual, QJsonValue::Type expected, QString& errorString)
+bool valueTypeMatches(QJsonValue::Type actual, QJsonValue::Type expected)
 {
     // Undefined accepts any type; Null allows a double or a JSON null representing NaN.
-    if (expected == QJsonValue::Undefined || actual == expected ||
-        (actual == QJsonValue::Double && expected == QJsonValue::Null)) {
+    return expected == QJsonValue::Undefined || actual == expected ||
+           (actual == QJsonValue::Double && expected == QJsonValue::Null);
+}
+
+bool validateValueType(const QString& key, QJsonValue::Type actual, QJsonValue::Type expected, QString& errorString)
+{
+    if (valueTypeMatches(actual, expected)) {
         return true;
     }
     errorString = QObject::tr("Incorrect value type - key:type:expected %1:%2:%3")
                       .arg(key, jsonValueTypeToString(actual), jsonValueTypeToString(expected));
     return false;
+}
+
+using PresentKeyTypes = QVarLengthArray<std::optional<QJsonValue::Type>, 32>;
+using KnownJsonKeys = QVarLengthArray<bool, 32>;
+
+/// Finds a UTF-8 key without allocating in the common ASCII case; firmware parameter metadata
+/// validates thousands of objects while loading.
+QJsonObject::const_iterator findKey(const QJsonObject& jsonObject, const char* key)
+{
+    const QUtf8StringView utf8Key(key);
+    const bool ascii =
+        std::all_of(utf8Key.cbegin(), utf8Key.cend(), [](char c) { return static_cast<uchar>(c) < 0x80; });
+    if (ascii) {
+        return jsonObject.constFind(QLatin1StringView(utf8Key.data(), utf8Key.size()));
+    }
+    return jsonObject.constFind(utf8Key.toString());
+}
+
+/// Returns the value type of each keyInfo entry present in jsonObject and, when requested,
+/// marks the JSON entries that keyInfo describes.
+PresentKeyTypes findPresentKeyTypes(const QJsonObject& jsonObject, const QList<JsonParsing::KeyValidateInfo>& keyInfo,
+                                    KnownJsonKeys* knownJsonKeys = nullptr)
+{
+    PresentKeyTypes presentTypes(keyInfo.size(), std::nullopt);
+    for (qsizetype i = 0; i < keyInfo.size(); ++i) {
+        const auto value = findKey(jsonObject, keyInfo[i].key);
+        if (value == jsonObject.constEnd()) {
+            continue;
+        }
+        presentTypes[i] = value->type();
+        if (knownJsonKeys) {
+            (*knownJsonKeys)[value - jsonObject.constBegin()] = true;
+        }
+    }
+    return presentTypes;
+}
+
+bool validatePresentKeys(const QList<JsonParsing::KeyValidateInfo>& keyInfo, const PresentKeyTypes& presentTypes,
+                         QString& errorString)
+{
+    QStringList missingKeys;
+    for (qsizetype i = 0; i < keyInfo.size(); ++i) {
+        if (keyInfo[i].required && !presentTypes[i]) {
+            missingKeys.append(QString::fromUtf8(keyInfo[i].key));
+        }
+    }
+    if (!validateMissingKeys(missingKeys, errorString)) {
+        return false;
+    }
+    for (qsizetype i = 0; i < keyInfo.size(); ++i) {
+        const std::optional<QJsonValue::Type>& actual = presentTypes[i];
+        if (actual && !valueTypeMatches(*actual, keyInfo[i].type)) {
+            return validateValueType(QString::fromUtf8(keyInfo[i].key), *actual, keyInfo[i].type, errorString);
+        }
+    }
+    return true;
 }
 
 }  // namespace
@@ -85,43 +150,21 @@ bool validateKeyTypes(const QJsonObject& jsonObject, const QStringList& keys, co
 
 bool validateKeys(const QJsonObject& jsonObject, const QList<KeyValidateInfo>& keyInfo, QString& errorString)
 {
-    QStringList missingKeys;
-    for (const KeyValidateInfo& info : keyInfo) {
-        const QString key = QString::fromUtf8(info.key);
-        if (info.required && !jsonObject.contains(key)) {
-            missingKeys.append(key);
-        }
-    }
-    if (!validateMissingKeys(missingKeys, errorString)) {
-        return false;
-    }
-    for (const KeyValidateInfo& info : keyInfo) {
-        const QString key = QString::fromUtf8(info.key);
-        const auto value = jsonObject.constFind(key);
-        if (value != jsonObject.constEnd() && !validateValueType(key, value->type(), info.type, errorString)) {
-            return false;
-        }
-    }
-    return true;
+    return validatePresentKeys(keyInfo, findPresentKeyTypes(jsonObject, keyInfo), errorString);
 }
 
 bool validateKeysStrict(const QJsonObject& jsonObject, const QList<KeyValidateInfo>& keyInfo, QString& errorString)
 {
-    if (!validateKeys(jsonObject, keyInfo, errorString)) {
+    KnownJsonKeys knownJsonKeys(jsonObject.size(), false);
+    if (!validatePresentKeys(keyInfo, findPresentKeyTypes(jsonObject, keyInfo, &knownJsonKeys), errorString)) {
         return false;
     }
 
-    QSet<QString> expectedKeys;
-    expectedKeys.reserve(keyInfo.size());
-    for (const KeyValidateInfo& info : keyInfo) {
-        expectedKeys.insert(QString::fromUtf8(info.key));
-    }
-
-    for (auto it = jsonObject.constBegin(); it != jsonObject.constEnd(); ++it) {
-        if (!expectedKeys.contains(it.key())) {
-            errorString = QObject::tr("Unknown key: %1").arg(it.key());
-            return false;
-        }
+    const auto unknown = std::find(knownJsonKeys.cbegin(), knownJsonKeys.cend(), false);
+    if (unknown != knownJsonKeys.cend()) {
+        const auto value = jsonObject.constBegin() + (unknown - knownJsonKeys.cbegin());
+        errorString = QObject::tr("Unknown key: %1").arg(value.key());
+        return false;
     }
 
     return true;
