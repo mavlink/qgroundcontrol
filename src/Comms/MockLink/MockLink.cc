@@ -452,10 +452,6 @@ void MockLink::run1HzTasks()
         _sendCompanionHeartBeat();
     }
 
-    if (_enableCamera) {
-        _mockLinkCamera->sendCameraHeartbeats();
-    }
-
     if (!QGC::runningUnitTests()) {
         // Sending RC Channels during unit test breaks RC tests which does it's own RC simulation
         _sendRCChannels();
@@ -498,6 +494,8 @@ void MockLink::run10HzTasks()
         _mockLinkPX4Calibration->run10HzTasks();
 
         if (_enableCamera) {
+            // Same rate as the autopilot heartbeat, so camera discovery starts right after initial connect
+            _mockLinkCamera->sendCameraHeartbeats();
             _mockLinkCamera->run10HzTasks();
         }
     }

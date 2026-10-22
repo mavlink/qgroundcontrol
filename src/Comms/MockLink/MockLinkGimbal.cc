@@ -88,6 +88,8 @@ bool MockLinkGimbal::handleMavlinkMessage(const mavlink_message_t &msg)
     case MAV_CMD_SET_MESSAGE_INTERVAL:
         if (_handleSetMessageInterval(request)) {
             _sendCommandAck(request.command, MAV_RESULT_ACCEPTED, request.target_component);
+            // Like a real autopilot, start a newly enabled stream now rather than on the next 1Hz tick
+            run1HzTasks();
             return true;
         }
         return false;
@@ -131,6 +133,7 @@ bool MockLinkGimbal::handleMavlinkMessage(const mavlink_message_t &msg)
     case MAV_CMD_DO_GIMBAL_MANAGER_CONFIGURE:
         if (_handleGimbalManagerConfigure(request, msg.sysid, msg.compid)) {
             _sendCommandAck(request.command, MAV_RESULT_ACCEPTED, request.target_component);
+            _sendStreamedManagerStatusNow();
             return true;
         }
         _sendCommandAck(request.command, MAV_RESULT_DENIED, request.target_component);
@@ -426,6 +429,15 @@ void MockLinkGimbal::sendGimbalManagerStatusNow()
 {
     QMutexLocker locker(&_stateMutex);
     _sendGimbalManagerStatus();
+}
+
+void MockLinkGimbal::_sendStreamedManagerStatusNow()
+{
+    QMutexLocker locker(&_stateMutex);
+    if (_managerStatusIntervalUs > 0) {
+        _sendGimbalManagerStatus();
+        _managerStatusLastSentMs = QDateTime::currentMSecsSinceEpoch();
+    }
 }
 
 void MockLinkGimbal::sendGimbalManagerInformationWithDeviceId(uint8_t deviceIdField)
