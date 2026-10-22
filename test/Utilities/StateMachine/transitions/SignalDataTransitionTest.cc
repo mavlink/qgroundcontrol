@@ -49,10 +49,8 @@ void SignalDataTransitionTest::_testSignalDataTransition()
     // This should trigger
     emitter.emitValueChanged(QStringLiteral("trigger"));
 
-    // Give time for event processing
-    if (!finishedSpy.wait(TestTimeout::shortMs())) {
-        qCDebug(UnitTestLog) << "finishedSpy wait failed. guardCalled:" << guardCalled << "actionCalled:" << actionCalled;
-    }
+    // The machine processes signal transitions directly, so it may already have finished inside the emit
+    QVERIFY_SIGNAL_COUNT_WAIT(finishedSpy, 1, TestTimeout::shortMs());
     QVERIFY(guardCalled);
     QVERIFY(actionCalled);
     QCOMPARE(receivedValue, QStringLiteral("trigger"));

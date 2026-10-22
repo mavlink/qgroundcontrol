@@ -1,6 +1,7 @@
 #include "QmlUITestBase.h"
 
 #include <QtCore/QCoreApplication>
+#include <QtCore/QDeadlineTimer>
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QEventLoop>
 #include <QtCore/QRegularExpression>
@@ -97,19 +98,18 @@ QQuickItem* QmlUITestBase::findItem(QQuickItem* root, const QString& objectName)
 
 QQuickItem* QmlUITestBase::findVisibleItem(QQuickItem* root, const QString& objectName, int timeoutMs)
 {
-    constexpr int pollIntervalMs = 50;
-    int elapsed = 0;
-    while (elapsed <= timeoutMs) {
+    // Each poll walks the whole item tree, so poll less often than QTest::qWaitFor would
+    constexpr qint64 pollIntervalMs = 50;
+    const QDeadlineTimer deadline(qMax(timeoutMs, 0));
+    while (true) {
         if (auto* item = findVisibleItemImmediate(root, objectName)) {
             return item;
         }
-        if (elapsed >= timeoutMs) {
-            break;
+        if (deadline.hasExpired()) {
+            return nullptr;
         }
-        QTest::qWait(pollIntervalMs);
-        elapsed += pollIntervalMs;
+        QTest::qWait(static_cast<int>(qMin(pollIntervalMs, deadline.remainingTime())));
     }
-    return nullptr;
 }
 
 void QmlUITestBase::startUI()
@@ -196,7 +196,10 @@ void QmlUITestBase::startUI()
 void QmlUITestBase::closeUIWindow()
 {
     if (_window) {
-        _window->close();
+        if (!_window->close()) {
+            // MainWindow vetoed the close to prompt about unsaved work; the prompt is irrelevant to teardown
+            _window->hide();
+        }
         (void) QTest::qWaitFor([this] { return !_window->isVisible(); }, TestTimeout::shortMs());
         // No observable post-close condition: this is a bounded render/deferred-delete settle
         // drain (offscreen render loop never self-pumps). Drain real-time so queued
@@ -368,15 +371,15 @@ bool QmlUITestBase::clickItemFraction(const QString& objectName, qreal fractionX
 
 QQuickItem* QmlUITestBase::findVisibleItemScrolled(const QString& objectName, const QString& flickableObjectName)
 {
-    // Fast path: delegate already instantiated somewhere in the visual tree
-    QQuickItem* item = findVisibleItem(_rootItem, objectName, 500);
-    if (item) {
-        return scrollIntoView(item, flickableObjectName) ? item : nullptr;
-    }
-
     QQuickItem* flickable = findVisibleItem(_rootItem, flickableObjectName);
     if (!flickable) {
         return nullptr;
+    }
+
+    // Fast path: delegate already instantiated somewhere in the visual tree
+    QQuickItem* item = findVisibleItemImmediate(_rootItem, objectName);
+    if (item) {
+        return scrollIntoView(item, flickableObjectName) ? item : nullptr;
     }
 
     // Virtualized delegates only exist for rows near the viewport. Step the
@@ -712,11 +715,11 @@ void QmlUITestBase::disconnectMockLink(QPointer<MockLink> mockLink)
     if (!mockLink)
         return;
 
-    QSignalSpy spyDisconnect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged);
     mockLink->disconnect();
-    if (spyDisconnect.isValid()) {
-        (void) waitForSignal(spyDisconnect, 5000, QStringLiteral("activeVehicleChanged"));
-    }
+    // QSignalSpy::wait returns immediately once the test has failed, so poll
+    MultiVehicleManager* const vehicleMgr = MultiVehicleManager::instance();
+    QVERIFY2(QTest::qWaitFor([vehicleMgr] { return !vehicleMgr->activeVehicle(); }, TestTimeout::mediumMs()),
+             "Timeout waiting for vehicle disconnection");
 }
 
 QPointer<MockLink> QmlUITestBase::connectMockLinkAndWaitReady(const std::function<MockLink*()>& factory,

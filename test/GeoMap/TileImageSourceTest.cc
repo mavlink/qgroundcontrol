@@ -402,9 +402,9 @@ void TileImageSourceTest::_cancelAbortsNetworkFetch()
     QCOMPARE(source.pendingCount(), 0);
     source.cancelRequest(requestId);  // double cancel is a no-op
 
-    // The aborted reply's late finished emission must stay silent
+    // The aborted reply's late finished emission must stay silent; the source handles it synchronously
     nam.replies.at(0)->finishNow();
-    QVERIFY_NO_SIGNAL_WAIT(readySpy, TestTimeout::shortMs());
+    QVERIFY(readySpy.isEmpty());
     QVERIFY(failedSpy.isEmpty());
 }
 

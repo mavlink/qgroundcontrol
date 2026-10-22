@@ -1,12 +1,13 @@
 #pragma once
 
 #include "MAVLinkMessageType.h"
-#include "MockLink.h"
+#include "MockConfiguration.h"
 #include "UnitTest.h"
 
 class Vehicle;
 class LinkInterface;
 class MissionItem;
+class MockLink;
 
 // ============================================================================
 // Parameterized Test Data Providers (Vehicle-related)

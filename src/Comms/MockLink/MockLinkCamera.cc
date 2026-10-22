@@ -1,14 +1,16 @@
 #include "MockLinkCamera.h"
-#include "MAVLinkLib.h"
-#include "MockLink.h"
-#include "MissionManager/MissionCommandTree.h"
-#include "QGCLoggingCategory.h"
+
+#include <algorithm>
 
 #include <QtCore/QDateTime>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QtMath>
 
-#include <algorithm>
+#include "MAVLinkLib.h"
+#include "MAVLinkMessageInfo.h"
+#include "MissionManager/MissionCommandTree.h"
+#include "MockLink.h"
+#include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(MockLinkCameraLog, "Comms.MockLink.MockLinkCamera")
 
@@ -879,7 +881,7 @@ void MockLinkCamera::_sendCommandAck(uint8_t compId, uint16_t command, uint8_t r
                         .arg(compId).arg(commandName).arg(result);
 
     if (command == MAV_CMD_REQUEST_MESSAGE && requestedMsgId >= 0) {
-        const mavlink_message_info_t* info = mavlink_get_message_info_by_id(static_cast<uint32_t>(requestedMsgId));
+        const mavlink_message_info_t* info = MAVLinkMessageInfo::byId(static_cast<uint32_t>(requestedMsgId));
         QString msgName = info ? info->name : QString::number(requestedMsgId);
         logMsg += QStringLiteral(" requestedMsg: %1").arg(msgName);
     }

@@ -46,11 +46,9 @@ set(QGC_TEST_TIMEOUT_DEFAULT
 
 option(QGC_TEST_ONSCREEN "Run tests with native display instead of offscreen" OFF)
 
-# When OFF (default) the per-test ASAN_OPTIONS forces detect_leaks=0 to avoid
-# LSan's ptrace tracer tripping Yama (ptrace_scope>=1) on most dev/CI hosts.
-# Turn ON where ptrace is permitted (CI sanitizer lane passes
-# -DQGC_TEST_DETECT_LEAKS=ON) to let the job-level ASAN_OPTIONS=detect_leaks=1
-# take effect instead of being clobbered by a per-test override.
+# LSan's tracer process needs ptrace, which Yama (ptrace_scope>=1) and containers
+# often block, failing tests with "Tracer caught signal 11" at exit. Tests therefore
+# run with detect_leaks=0 unless this is ON, as in the Linux-sanitizers preset.
 option(QGC_TEST_DETECT_LEAKS "Allow LSan leak detection under ASan (requires ptrace permission)" OFF)
 
 foreach(_qgc_positive_setting IN ITEMS QGC_TEST_PARALLEL_LEVEL)
@@ -170,7 +168,9 @@ endforeach()
 #   LABELS label...     - Test labels for filtering (Unit, Integration, Slow, etc.)
 #   TIMEOUT seconds     - Override default timeout
 #   RESOURCE_LOCK res.. - Resources that prevent parallel execution
-#   SERIAL              - Run this test alone (sets CTest RUN_SERIAL)
+#   SERIAL              - Run this test alone (CTest RUN_SERIAL) in sanitizer and coverage builds, whose CPU
+#                         starvation delays these timing-sensitive tests past their timeouts; elsewhere it
+#                         reserves two CTest processors instead
 #   SHARDS count        - Split the test functions across count CTest entries
 #                         (<test_name>.1 .. <test_name>.<count>) that can run in parallel
 #
@@ -235,15 +235,6 @@ function(add_qgc_test test_name)
         list(PREPEND _base_test_env "QT_QPA_PLATFORM=offscreen" "QT_QUICK_BACKEND=software" "LIBGL_ALWAYS_SOFTWARE=1")
     endif()
 
-    # LSan's tracer process needs ptrace, which Yama (ptrace_scope>=1) blocks on
-    # most dev/CI hosts — disable leak detection under ASan to avoid spurious
-    # "Tracer caught signal 11" failures at process exit. Opt back in with
-    # QGC_TEST_DETECT_LEAKS=ON where ptrace is permitted; that path injects no
-    # per-test override so the job-level ASAN_OPTIONS=detect_leaks=1 wins.
-    if(QGC_ENABLE_ASAN AND NOT QGC_TEST_DETECT_LEAKS)
-        list(APPEND _base_test_env "ASAN_OPTIONS=detect_leaks=0")
-    endif()
-
     # Shard index 0 registers the unsharded test
     set(_shard_indices 0)
     if(DEFINED ARG_SHARDS)
@@ -302,7 +293,16 @@ function(add_qgc_test test_name)
 
         # Resource locking for tests that can't run in parallel
         if(ARG_SERIAL)
-            set_tests_properties(${_ctest_name} PROPERTIES RUN_SERIAL TRUE)
+            if(QGC_ENABLE_ASAN
+               OR QGC_ENABLE_UBSAN
+               OR QGC_ENABLE_TSAN
+               OR QGC_ENABLE_MSAN
+               OR QGC_ENABLE_COVERAGE
+            )
+                set_tests_properties(${_ctest_name} PROPERTIES RUN_SERIAL TRUE)
+            else()
+                set_tests_properties(${_ctest_name} PROPERTIES PROCESSORS 2)
+            endif()
         elseif(ARG_RESOURCE_LOCK)
             # TempFiles is now handled by per-test isolated TMPDIR above; strip it so
             # those tests parallelize. Genuinely serial locks (MockLink, Joystick,
@@ -316,3 +316,70 @@ function(add_qgc_test test_name)
     endforeach()
 
 endfunction()
+
+# ----------------------------------------------------------------------------
+# Sanitizer Runtime Options
+# ----------------------------------------------------------------------------
+# Every test halts on its first sanitizer report so findings fail it, as in CI. These replace any
+# *SAN_OPTIONS in the caller's environment; run a test executable directly to try other options.
+
+# Appends test_environment to the ENVIRONMENT of every test in directory and its subdirectories.
+function(_qgc_append_test_environment directory test_environment)
+    get_property(
+        _tests
+        DIRECTORY "${directory}"
+        PROPERTY TESTS
+    )
+    if(_tests)
+        set_property(
+            TEST ${_tests}
+            DIRECTORY "${directory}"
+            APPEND
+            PROPERTY ENVIRONMENT "${test_environment}"
+        )
+    endif()
+    get_property(
+        _subdirectories
+        DIRECTORY "${directory}"
+        PROPERTY SUBDIRECTORIES
+    )
+    foreach(_subdirectory IN LISTS _subdirectories)
+        _qgc_append_test_environment("${_subdirectory}" "${test_environment}")
+    endforeach()
+endfunction()
+
+# Sets the enabled sanitizers' runtime options for every test in the tree.
+function(_qgc_apply_sanitizer_test_environment)
+    set(_dir "${CMAKE_BINARY_DIR}")
+    set(_options)
+    if(QGC_ENABLE_ASAN)
+        if(QGC_TEST_DETECT_LEAKS)
+            set(_detect_leaks 1)
+        else()
+            set(_detect_leaks 0)
+        endif()
+        list(APPEND _options "ASAN_OPTIONS=detect_leaks=${_detect_leaks}:halt_on_error=1:check_initialization_order=1"
+             "LSAN_OPTIONS=suppressions=${_dir}/asan_suppressions.txt"
+        )
+    endif()
+    if(QGC_ENABLE_UBSAN)
+        list(APPEND _options
+             "UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1:suppressions=${_dir}/ubsan_suppressions.txt"
+        )
+    endif()
+    if(QGC_ENABLE_TSAN)
+        list(APPEND _options
+             "TSAN_OPTIONS=second_deadlock_stack=1:halt_on_error=1:suppressions=${_dir}/tsan_suppressions.txt"
+        )
+    endif()
+    if(QGC_ENABLE_MSAN)
+        list(APPEND _options "MSAN_OPTIONS=halt_on_error=1")
+    endif()
+    if(_options)
+        _qgc_append_test_environment("${CMAKE_CURRENT_SOURCE_DIR}" "${_options}")
+    endif()
+endfunction()
+
+# Runs once the whole tree is configured, so tests registered with add_test(), such as the standalone
+# library and portable tests, get the same options.
+cmake_language(DEFER DIRECTORY "${CMAKE_SOURCE_DIR}" CALL _qgc_apply_sanitizer_test_environment)

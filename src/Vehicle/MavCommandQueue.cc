@@ -2,11 +2,12 @@
 
 #include <QtCore/QTimer>
 
+#include "AppMessages.h"
 #include "FirmwarePlugin.h"
 #include "MAVLinkLib.h"
+#include "MAVLinkMessageInfo.h"
 #include "MAVLinkProtocol.h"
 #include "MissionCommandTree.h"
-#include "AppMessages.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"
@@ -290,7 +291,7 @@ QString MavCommandQueue::_formatCommand(MAV_CMD command, float param1)
     QString commandStr = friendlyName.isEmpty() ? rawName : QStringLiteral("%1 (%2)").arg(friendlyName, rawName);
 
     if (command == MAV_CMD_REQUEST_MESSAGE || command == MAV_CMD_SET_MESSAGE_INTERVAL) {
-        const mavlink_message_info_t* info = mavlink_get_message_info_by_id(static_cast<int>(param1));
+        const mavlink_message_info_t* info = MAVLinkMessageInfo::byId(static_cast<int>(param1));
         if (info) {
             commandStr += QStringLiteral(" [%1]").arg(info->name);
         }
@@ -392,7 +393,7 @@ void MavCommandQueue::_sendFromList(int index)
         // These commands identify their target message in param1.
         if (commandEntry.command == MAV_CMD_REQUEST_MESSAGE || commandEntry.command == MAV_CMD_SET_MESSAGE_INTERVAL) {
             int requestedMsgId = static_cast<int>(commandEntry.rgParam1);
-            const mavlink_message_info_t *info = mavlink_get_message_info_by_id(requestedMsgId);
+            const mavlink_message_info_t* info = MAVLinkMessageInfo::byId(requestedMsgId);
             logMsg += QStringLiteral(" message: %1").arg(info ? info->name : QString::number(requestedMsgId));
         }
 
@@ -427,7 +428,7 @@ void MavCommandQueue::_sendFromList(int index)
         return;
     }
 
-    mavlink_message_t msg;
+    mavlink_message_t msg{};
 
     if (commandEntry.useCommandInt) {
         mavlink_command_int_t cmd;

@@ -2,6 +2,7 @@
 
 #include "AutoPilotPlugin.h"
 #include "Fact.h"
+#include "MockLink.h"
 #include "PX4SerialPortsController.h"
 #include "ParameterManager.h"
 #include "QmlObjectListModel.h"

@@ -1,6 +1,7 @@
 #include "PX4HasGripperTest.h"
 
 #include "Fact.h"
+#include "MockLink.h"
 #include "ParameterManager.h"
 #include "QGCMAVLink.h"
 #include "Vehicle.h"

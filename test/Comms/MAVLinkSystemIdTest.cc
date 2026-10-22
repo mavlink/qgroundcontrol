@@ -14,6 +14,7 @@
 #include "MAVLinkProtocol.h"
 #include "MAVLinkSystem.h"
 #include "MavlinkSettings.h"
+#include "MockLink.h"
 #include "MultiVehicleManager.h"
 #include "ParameterManager.h"
 #include "QmlObjectListModel.h"

@@ -184,23 +184,27 @@ void ParameterDiffDialogUITest::_testDiffDialogCases()
                 if (QTest::currentTestFailed())
                     return;
 
-                // Dismiss the app message dialog(s) so the next case can use the menus.
+                // Dismiss the app message dialog(s) so the next case can use the menus. The write failure already
+                // queued the first one; any others would show as soon as it closes.
                 // Bounded so a runaway popup loop fails loudly instead of hitting the ctest timeout.
                 int dismissAttempts = 0;
-                while (findVisibleItem(_rootItem, QStringLiteral("popupDialog_acceptButton"), 1000)) {
+                int popupTimeoutMs = TestTimeout::shortMs();
+                while (findVisibleItem(_rootItem, QStringLiteral("popupDialog_acceptButton"), popupTimeoutMs)) {
                     QVERIFY2(++dismissAttempts <= 5, "App message dialogs keep re-appearing - runaway popup loop");
                     QVERIFY2(clickButton(QStringLiteral("popupDialog_acceptButton")),
                              "Failed to dismiss app message dialog");
+                    popupTimeoutMs = 0;
                 }
 
-                // The dismiss loop above idled for at least a second after the last
-                // dialog - long enough for a (buggy) post-failure refresh to have
-                // produced its "Parameter read failed" popup. Verify it never appeared.
-                const auto msgs = LogManager::capturedMessages();
-                const bool readFailed = std::any_of(msgs.cbegin(), msgs.cend(), [](const LogEntry& entry) {
-                    return entry.message.contains(QStringLiteral("Parameter read failed: param: NO_SUCH_PARAM"));
-                });
-                QVERIFY2(!readFailed,
+                // A (buggy) post-failure refresh would report "Parameter read failed" after its retries, a few
+                // 50 ms test-mode ack timeouts. Verify it never appears.
+                const auto readFailedCaptured = []() {
+                    const auto msgs = LogManager::capturedMessages();
+                    return std::any_of(msgs.cbegin(), msgs.cend(), [](const LogEntry& entry) {
+                        return entry.message.contains(QStringLiteral("Parameter read failed: param: NO_SUCH_PARAM"));
+                    });
+                };
+                QVERIFY2(!QTest::qWaitFor(readFailedCaptured, 250),
                          "Unexpected redundant 'Parameter read failed' after DOES_NOT_EXIST write rejection");
             }
 

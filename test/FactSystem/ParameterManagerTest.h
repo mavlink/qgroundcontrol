@@ -1,6 +1,7 @@
 #pragma once
 
 #include "BaseClasses/VehicleTestManualConnect.h"
+#include "MockLink.h"
 
 class ParameterManagerTest : public VehicleTestManualConnect
 {

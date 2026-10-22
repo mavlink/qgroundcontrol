@@ -296,6 +296,22 @@ bool MockLink::_connect()
 
         _startVideoStreamServer();
 
+        // The worker's first tick may have run before the link connected, so send a heartbeat now and let the vehicle
+        // appear without waiting a tick. QGC drops v1 telemetry, so the 1 Hz batch waits for the v2 upgrade unless
+        // traffic already starts as v2.
+        if (_workerThread && _workerThread->isRunning()) {
+            const bool sendTelemetry = _mavlinkV2Upgraded;
+            (void) QMetaObject::invokeMethod(
+                _worker,
+                [this, sendTelemetry] {
+                    run10HzTasks();
+                    if (sendTelemetry) {
+                        run1HzTasks();
+                    }
+                },
+                Qt::QueuedConnection);
+        }
+
         emit connected();
     }
 
@@ -448,9 +464,6 @@ void MockLink::run1HzTasks()
     if (_sendRadioStatusEnabled) {
         _sendRadioStatus();
     }
-    if (_companionParams) {
-        _sendCompanionHeartBeat();
-    }
 
     if (!QGC::runningUnitTests()) {
         // Sending RC Channels during unit test breaks RC tests which does it's own RC simulation
@@ -473,6 +486,9 @@ void MockLink::run10HzTasks()
 
     if (_mavlinkStarted && _connected && mavlinkChannelIsSet()) {
         _sendHeartBeat();
+        if (_companionParams) {
+            _sendCompanionHeartBeat();
+        }
         const bool gpsDelayExpired = (_sendGPSPositionDelayCount == 0);
         if (_sendGPSPositionDelayCount > 0) {
             // We delay gps position for better testing
@@ -1220,6 +1236,8 @@ void MockLink::_handleIncomingMavlinkBytes(const uint8_t *bytes, int cBytes)
             mavlink_status_t *const outgoingStatus = mavlink_get_channel_status(_outgoingMavlinkChannel);
             outgoingStatus->flags &= ~MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
             qCDebug(MockLinkLog) << "Received MAVLink v2 message from GCS, upgrading outgoing traffic to v2";
+            // Earlier v1 telemetry was dropped by QGC: send the 1 Hz batch now rather than up to a second later
+            _runOnWorkerWhenConnected([this] { run1HzTasks(); });
         }
         lock.unlock();
         _handleIncomingMavlinkMsg(msg);

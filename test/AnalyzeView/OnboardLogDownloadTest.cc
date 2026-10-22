@@ -7,12 +7,13 @@
 #include <QtCore/QTimer>
 
 #include "FTPManager.h"
-#include "OnboardLogController.h"
-#include "OnboardLogEntry.h"
 #include "MAVLinkProtocol.h"
+#include "MockLink.h"
 #include "MockLinkFTP.h"
 #include "MultiSignalSpy.h"
 #include "MultiVehicleManager.h"
+#include "OnboardLogController.h"
+#include "OnboardLogEntry.h"
 #include "QmlObjectListModel.h"
 #include "Vehicle.h"
 

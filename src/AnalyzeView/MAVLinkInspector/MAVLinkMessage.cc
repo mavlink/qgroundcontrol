@@ -1,11 +1,13 @@
 #include "MAVLinkMessage.h"
+
+#include <QtCore/QTimeZone>
+
 #include "MAVLinkInstanceFields.h"
 #include "MAVLinkLib.h"
 #include "MAVLinkMessageField.h"
+#include "MAVLinkMessageInfo.h"
 #include "QGCLoggingCategory.h"
 #include "QmlObjectListModel.h"
-
-#include <QtCore/QTimeZone>
 
 QGC_LOGGING_CATEGORY(MAVLinkMessageLog, "AnalyzeView.MAVLinkMessage")
 
@@ -17,7 +19,7 @@ QGCMAVLinkMessage::QGCMAVLinkMessage(const mavlink_message_t &message, const QSt
 {
     qCDebug(MAVLinkMessageLog) << this;
 
-    const mavlink_message_info_t *const msgInfo = mavlink_get_message_info(&message);
+    const mavlink_message_info_t* const msgInfo = MAVLinkMessageInfo::byId(message.msgid);
     if (!msgInfo) {
         qCWarning(MAVLinkMessageLog) << QStringLiteral("QGCMAVLinkMessage NULL msgInfo msgid(%1)").arg(message.msgid);
         return;
@@ -82,7 +84,7 @@ QString QGCMAVLinkMessage::extractInstanceValue(const mavlink_message_t &message
         return _extractDebugInstanceValue(message);
     }
 
-    const mavlink_message_info_t *const msgInfo = mavlink_get_message_info(&message);
+    const mavlink_message_info_t* const msgInfo = MAVLinkMessageInfo::byId(message.msgid);
     if (!msgInfo) {
         return QString();
     }
@@ -238,7 +240,7 @@ void QGCMAVLinkMessage::update(const mavlink_message_t &message)
 
 void QGCMAVLinkMessage::_updateFields()
 {
-    const mavlink_message_info_t *msgInfo = mavlink_get_message_info(&_message);
+    const mavlink_message_info_t* msgInfo = MAVLinkMessageInfo::byId(_message.msgid);
     if (!msgInfo) {
         qCWarning(MAVLinkMessageLog) << "QGCMAVLinkMessage::update NULL msgInfo msgid" << _message.msgid;
         return;

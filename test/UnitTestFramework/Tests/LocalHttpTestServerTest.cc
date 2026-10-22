@@ -24,7 +24,8 @@ void LocalHttpTestServerTest::_testFragmentedRequestHeader()
         QByteArrayLiteral("GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n");
     QCOMPARE(client.write(firstRequestFragment), firstRequestFragment.size());
     QVERIFY(client.waitForBytesWritten(TestTimeout::mediumMs()));
-    QVERIFY(!readyReadSpy.wait(TestTimeout::shortMs()));
+    // Negative window: the in-process server reads a loopback fragment well within 250 ms
+    QVERIFY(!readyReadSpy.wait(250));
     QCOMPARE(client.state(), QAbstractSocket::ConnectedState);
 
     const QByteArray finalRequestFragment = QByteArrayLiteral("\r\n");

@@ -1,13 +1,15 @@
 #include "MockLinkGimbal.h"
-#include "MAVLinkLib.h"
-#include "MockLink.h"
-#include "MissionCommandTree.h"
-#include "QGCLoggingCategory.h"
+
+#include <cmath>
 
 #include <QtCore/QDateTime>
 #include <QtMath>
 
-#include <cmath>
+#include "MAVLinkLib.h"
+#include "MAVLinkMessageInfo.h"
+#include "MissionCommandTree.h"
+#include "MockLink.h"
+#include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(MockLinkGimbalLog, "Comms.MockLink.MockLinkGimbal")
 
@@ -196,7 +198,7 @@ bool MockLinkGimbal::_handleSetMessageInterval(const mavlink_command_long_t &req
 {
     const int msgId = static_cast<int>(request.param1);
     const int intervalUs = static_cast<int>(request.param2);
-    const mavlink_message_info_t* info = mavlink_get_message_info_by_id(static_cast<uint32_t>(msgId));
+    const mavlink_message_info_t* info = MAVLinkMessageInfo::byId(static_cast<uint32_t>(msgId));
     QString msgName = info ? info->name : QString::number(msgId);
 
     qCDebug(MockLinkGimbalLog) << "SET_MESSAGE_INTERVAL -" << QString("%1(%2)").arg(msgName).arg(msgId) << "intervalUs:" << intervalUs;
@@ -237,7 +239,7 @@ bool MockLinkGimbal::_handleSetMessageInterval(const mavlink_command_long_t &req
 bool MockLinkGimbal::_handleRequestMessage(const mavlink_command_long_t &request)
 {
     const int msgId = static_cast<int>(request.param1);
-    const mavlink_message_info_t* info = mavlink_get_message_info_by_id(static_cast<uint32_t>(msgId));
+    const mavlink_message_info_t* info = MAVLinkMessageInfo::byId(static_cast<uint32_t>(msgId));
     QString msgName = info ? info->name : QString::number(msgId);
 
     if (msgId == MAVLINK_MSG_ID_GIMBAL_MANAGER_INFORMATION) {

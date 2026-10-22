@@ -4,6 +4,7 @@
 #include <QtTest/QSignalSpy>
 
 #include "MAVLinkLib.h"
+#include "MockLink.h"
 #include "MockLinkWorker.h"
 #include "QGCMAVLink.h"
 #include "StandardModes.h"

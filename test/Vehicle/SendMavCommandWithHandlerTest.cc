@@ -2,11 +2,12 @@
 
 #include <optional>
 
+#include <QtCore/QRegularExpression>
+
 #include "Fixtures/RAIIFixtures.h"
 #include "MavCommandQueue.h"
+#include "MockLink.h"
 #include "MultiVehicleManager.h"
-
-#include <QtCore/QRegularExpression>
 
 SendMavCommandWithHandlerTest::TestCase_t SendMavCommandWithHandlerTest::_rgTestCases[] = {
     {MockLink::MAV_CMD_MOCKLINK_ALWAYS_RESULT_ACCEPTED, MAV_RESULT_ACCEPTED, false,

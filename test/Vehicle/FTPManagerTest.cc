@@ -12,6 +12,7 @@
 #include "MAVLinkLib.h"
 #include "MAVLinkProtocol.h"
 #include "MAVLinkSigningKeys.h"
+#include "MockLink.h"
 #include "MockLinkFTP.h"
 #include "MultiVehicleManager.h"
 #include "UnitTest.h"
@@ -368,6 +369,7 @@ void FTPManagerTest::_testCancelDownloadBeforeOpen()
 
     FTPManager* ftpManager = _vehicle->ftpManager();
     QSignalSpy spyComplete(ftpManager, &FTPManager::downloadComplete);
+    QSignalSpy spyReset(mockFtp, &MockLinkFTP::resetCommandReceived);
     const QString filename = QStringLiteral("%1%2").arg(MockLinkFTP::sizeFilenamePrefix).arg(3 * 1024);
     QVERIFY(ftpManager->download(MAV_COMP_ID_AUTOPILOT1, filename,
                                  QStandardPaths::writableLocation(QStandardPaths::TempLocation)));
@@ -375,8 +377,12 @@ void FTPManagerTest::_testCancelDownloadBeforeOpen()
     ftpManager->cancelDownload();
     QCOMPARE(spyComplete.count(), 1);
     QCOMPARE(spyComplete.takeFirst()[1].toString(), QStringLiteral("Aborted"));
-    // Nothing should proceed past the cancel
-    QVERIFY_NO_SIGNAL_WAIT(spyComplete, TestTimeout::shortMs());
+    // The clear-stale reset, then the one releasing the abandoned session
+    QVERIFY_SIGNAL_COUNT_WAIT(spyReset, 2, TestTimeout::mediumMs());
+    // Nothing should proceed past the cancel: a live state machine would resend the unanswered reset every
+    // kTestAckTimeoutMs (100 ms)
+    QVERIFY_NO_SIGNAL_WAIT(spyReset, 250);
+    QVERIFY(spyComplete.isEmpty());
     QCOMPARE(mockFtp->openFileROCount(), 0);
 
     mockFtp->setIgnoreResetSessions(false);

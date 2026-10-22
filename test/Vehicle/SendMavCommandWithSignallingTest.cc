@@ -8,6 +8,7 @@
 
 #include "Fixtures/RAIIFixtures.h"
 #include "MavCommandQueue.h"
+#include "MockLink.h"
 #include "MultiVehicleManager.h"
 
 namespace {
