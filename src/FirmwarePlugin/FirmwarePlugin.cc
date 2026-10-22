@@ -575,6 +575,12 @@ QString FirmwarePlugin::_cachedParameterMetaDataFile(const Vehicle *vehicle) con
     }
 
     const QString internalFile = _internalParameterMetaDataFile(vehicle);
+    // Tests always use the bundled file; resolving its version parses the whole file.
+    if (QGC::runningUnitTests()) {
+        qCDebug(FirmwarePluginLog) << "Using internal parameter metadata:" << internalFile;
+        return internalFile;
+    }
+
     QVersionNumber internalVersion = ParameterMetaData::versionFromFileName(internalFile);
     if (internalVersion.isNull()) {
         internalVersion = ParameterMetaData::versionFromMetaDataFile(internalFile);
@@ -582,7 +588,7 @@ QString FirmwarePlugin::_cachedParameterMetaDataFile(const Vehicle *vehicle) con
 
     // Without a known internal version we can't safely compare against
     // cache — use the bundled file to avoid stale overrides.
-    if (internalVersion.isNull() || QGC::runningUnitTests()) {
+    if (internalVersion.isNull()) {
         qCDebug(FirmwarePluginLog) << "Using internal parameter metadata:" << internalFile;
         return internalFile;
     }

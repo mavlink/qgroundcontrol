@@ -62,15 +62,20 @@ void CompInfoParam::setJson(const QString &metadataJsonFileName)
             return;
         }
 
-        FactMetaData *newMetaData = FactMetaData::createFromJsonObject(parameterValue.toObject(), ParameterMetaData::kEmptyDefines, this);
-
-        if (newMetaData->name().contains(kIndexedNameTag)) {
-            QString regexPattern = QRegularExpression::escape(newMetaData->name());
-            regexPattern.replace(escapedTag, QStringLiteral("(\\d+)"));
-            _indexedNameMetaDataList.append({QRegularExpression(QStringLiteral("^%1$").arg(regexPattern)), newMetaData});
-        } else {
-            _nameToMetaDataMap[newMetaData->name()] = newMetaData;
+        const QJsonObject parameterJson = parameterValue.toObject();
+        const QString name = parameterJson.value(u"name").toString();
+        if (!name.contains(kIndexedNameTag)) {
+            // Replacement metadata must win over an entry resolved earlier; Facts keep the old object
+            (void) _nameToMetaDataMap.remove(name);
+            _paramJsonByName.insert(name, parameterJson);
+            continue;
         }
+
+        FactMetaData* newMetaData =
+            FactMetaData::createFromJsonObject(parameterJson, ParameterMetaData::kEmptyDefines, this);
+        QString regexPattern = QRegularExpression::escape(newMetaData->name());
+        regexPattern.replace(escapedTag, QStringLiteral("(\\d+)"));
+        _indexedNameMetaDataList.append({QRegularExpression(QStringLiteral("^%1$").arg(regexPattern)), newMetaData});
     }
 }
 
@@ -113,6 +118,16 @@ FactMetaData *CompInfoParam::_resolveMetaData(const QString &name, FactMetaData:
 
 FactMetaData *CompInfoParam::_lookupJsonMetaData(const QString &name)
 {
+    const QJsonObject parameterJson = _paramJsonByName.take(name);
+    if (!parameterJson.isEmpty()) {
+        FactMetaData* factMetaData =
+            FactMetaData::createFromJsonObject(parameterJson, ParameterMetaData::kEmptyDefines, this);
+        if (!factMetaData->name().isEmpty()) {
+            return factMetaData;
+        }
+        delete factMetaData;
+    }
+
     // Try indexed name patterns (e.g. "CAL_GYRO{n}_ID" matches "CAL_GYRO0_ID")
     for (const auto &[regex, templateMeta] : _indexedNameMetaDataList) {
         const QRegularExpressionMatch match = regex.match(name);

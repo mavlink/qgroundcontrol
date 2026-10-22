@@ -1,6 +1,8 @@
 #include "ComponentInformationManagerTest.h"
 
+#include <QtCore/QFile>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QTemporaryDir>
 #include <QtStateMachine/QStateMachine>
 #include <QtTest/QSignalSpy>
 
@@ -133,6 +135,45 @@ void ComponentInformationManagerTest::_compInfoAccessorsReturnValidObjects()
     QVERIFY(callbackCalled);
     // Metadata population timing is exercised in dedicated request-flow tests.
     // This accessor test only verifies manager/object stability across requests.
+}
+
+void ComponentInformationManagerTest::_replacementJsonReplacesResolvedMetaData()
+{
+    auto* manager = vehicle()->compInfoManager();
+    QVERIFY(manager);
+    CompInfoParam* const param = manager->compInfoParam(43);
+    QVERIFY(param);
+
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const auto writeMetaData = [&tempDir](const QString& fileName, const QByteArray& shortDesc) {
+        const QString path = tempDir.filePath(fileName);
+        QFile file(path);
+        if (!file.open(QIODevice::WriteOnly)) {
+            return QString();
+        }
+        (void) file.write(R"({"version":1,"parameters":[{"name":"REPLACED_PARAM","type":"Float","shortDesc":")" +
+                          shortDesc + R"("}]})");
+        return path;
+    };
+    const QString firstPath = writeMetaData(QStringLiteral("first.json"), "First");
+    const QString secondPath = writeMetaData(QStringLiteral("second.json"), "Second");
+    QVERIFY(!firstPath.isEmpty());
+    QVERIFY(!secondPath.isEmpty());
+
+    param->setJson(firstPath);
+    FactMetaData* const first =
+        param->factMetaDataForName(QStringLiteral("REPLACED_PARAM"), FactMetaData::valueTypeFloat);
+    QVERIFY(first);
+    QCOMPARE(first->shortDescription(), QStringLiteral("First"));
+
+    param->setJson(secondPath);
+    FactMetaData* const second =
+        param->factMetaDataForName(QStringLiteral("REPLACED_PARAM"), FactMetaData::valueTypeFloat);
+    QVERIFY(second);
+    QCOMPARE(second->shortDescription(), QStringLiteral("Second"));
+    // Facts created before the replacement still reference the original metadata
+    QCOMPARE(first->shortDescription(), QStringLiteral("First"));
 }
 
 void ComponentInformationManagerTest::_requestCompletesForArduPilot()
