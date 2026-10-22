@@ -22,12 +22,27 @@ cmake_host_system_information(RESULT _num_cores QUERY NUMBER_OF_LOGICAL_CORES)
 if(NOT _num_cores MATCHES "^[1-9][0-9]*$")
     set(_num_cores 1)
 endif()
-set(QGC_TEST_PARALLEL_LEVEL ${_num_cores} CACHE STRING "Number of parallel test jobs")
+set(QGC_TEST_PARALLEL_LEVEL
+    ${_num_cores}
+    CACHE STRING "Number of parallel test jobs"
+)
 
-set(QGC_TEST_TIMEOUT_UNIT 60 CACHE STRING "Timeout for unit tests (seconds)")
-set(QGC_TEST_TIMEOUT_INTEGRATION 120 CACHE STRING "Timeout for integration tests (seconds)")
-set(QGC_TEST_TIMEOUT_SLOW 180 CACHE STRING "Timeout for slow tests (seconds)")
-set(QGC_TEST_TIMEOUT_DEFAULT 90 CACHE STRING "Default test timeout (seconds)")
+set(QGC_TEST_TIMEOUT_UNIT
+    60
+    CACHE STRING "Timeout for unit tests (seconds)"
+)
+set(QGC_TEST_TIMEOUT_INTEGRATION
+    120
+    CACHE STRING "Timeout for integration tests (seconds)"
+)
+set(QGC_TEST_TIMEOUT_SLOW
+    180
+    CACHE STRING "Timeout for slow tests (seconds)"
+)
+set(QGC_TEST_TIMEOUT_DEFAULT
+    90
+    CACHE STRING "Default test timeout (seconds)"
+)
 
 option(QGC_TEST_ONSCREEN "Run tests with native display instead of offscreen" OFF)
 
@@ -44,11 +59,9 @@ foreach(_qgc_positive_setting IN ITEMS QGC_TEST_PARALLEL_LEVEL)
     endif()
 endforeach()
 
-foreach(_qgc_timeout_setting IN ITEMS
-        QGC_TEST_TIMEOUT_UNIT
-        QGC_TEST_TIMEOUT_INTEGRATION
-        QGC_TEST_TIMEOUT_SLOW
-        QGC_TEST_TIMEOUT_DEFAULT
+foreach(
+    _qgc_timeout_setting IN ITEMS QGC_TEST_TIMEOUT_UNIT QGC_TEST_TIMEOUT_INTEGRATION QGC_TEST_TIMEOUT_SLOW
+                                  QGC_TEST_TIMEOUT_DEFAULT
 )
     if(NOT "${${_qgc_timeout_setting}}" MATCHES "^[0-9]+$")
         message(FATAL_ERROR "${_qgc_timeout_setting} must be a non-negative integer")
@@ -59,48 +72,63 @@ endforeach()
 # Convenience Targets
 # ----------------------------------------------------------------------------
 
-add_custom_target(check
-    COMMAND "${CMAKE_CTEST_COMMAND}" --build-config "$<CONFIG>" --no-tests=error --output-on-failure --parallel ${QGC_TEST_PARALLEL_LEVEL}
+add_custom_target(
+    check
+    COMMAND "${CMAKE_CTEST_COMMAND}" --build-config "$<CONFIG>" --no-tests=error --output-on-failure --parallel
+            ${QGC_TEST_PARALLEL_LEVEL}
     USES_TERMINAL
     COMMENT "Running all tests"
     VERBATIM
 )
 
-add_custom_target(check-unit
-    COMMAND "${CMAKE_CTEST_COMMAND}" --build-config "$<CONFIG>" -L Unit --no-tests=error --output-on-failure --parallel ${QGC_TEST_PARALLEL_LEVEL}
+add_custom_target(
+    check-unit
+    COMMAND "${CMAKE_CTEST_COMMAND}" --build-config "$<CONFIG>" -L Unit --no-tests=error --output-on-failure --parallel
+            ${QGC_TEST_PARALLEL_LEVEL}
     USES_TERMINAL
     COMMENT "Running unit tests"
     VERBATIM
 )
 
-add_custom_target(check-integration
-    COMMAND "${CMAKE_CTEST_COMMAND}" --build-config "$<CONFIG>" -L Integration --no-tests=error --output-on-failure --parallel 1
+add_custom_target(
+    check-integration
+    COMMAND "${CMAKE_CTEST_COMMAND}" --build-config "$<CONFIG>" -L Integration --no-tests=error --output-on-failure
+            --parallel 1
     USES_TERMINAL
     COMMENT "Running integration tests"
     VERBATIM
 )
 
-add_custom_target(check-fast
-    COMMAND "${CMAKE_CTEST_COMMAND}" --build-config "$<CONFIG>" -LE Slow --no-tests=error --output-on-failure --parallel ${QGC_TEST_PARALLEL_LEVEL}
+add_custom_target(
+    check-fast
+    COMMAND "${CMAKE_CTEST_COMMAND}" --build-config "$<CONFIG>" -LE Slow --no-tests=error --output-on-failure --parallel
+            ${QGC_TEST_PARALLEL_LEVEL}
     USES_TERMINAL
     COMMENT "Running fast tests (excluding Slow)"
     VERBATIM
 )
 
-add_custom_target(check-ci
-    COMMAND "${CMAKE_CTEST_COMMAND}" --build-config "$<CONFIG>" -LE "Flaky|Network" --no-tests=error --output-on-failure --parallel ${QGC_TEST_PARALLEL_LEVEL}
+add_custom_target(
+    check-ci
+    COMMAND "${CMAKE_CTEST_COMMAND}" --build-config "$<CONFIG>" -LE "Flaky|Network" --no-tests=error --output-on-failure
+            --parallel ${QGC_TEST_PARALLEL_LEVEL}
     USES_TERMINAL
     COMMENT "Running CI-safe tests"
     VERBATIM
 )
 
-set(QGC_TEST_FLAKY_REPEAT 3 CACHE STRING "Repeat count for the check-flaky target")
+set(QGC_TEST_FLAKY_REPEAT
+    3
+    CACHE STRING "Repeat count for the check-flaky target"
+)
 if(NOT QGC_TEST_FLAKY_REPEAT MATCHES "^[1-9][0-9]*$")
     message(FATAL_ERROR "QGC_TEST_FLAKY_REPEAT must be a positive integer")
 endif()
-add_custom_target(check-flaky
-    COMMAND "${CMAKE_CTEST_COMMAND}" --build-config "$<CONFIG>" -LE "Network" --repeat until-fail:${QGC_TEST_FLAKY_REPEAT}
-            --no-tests=error --output-on-failure --parallel ${QGC_TEST_PARALLEL_LEVEL}
+add_custom_target(
+    check-flaky
+    COMMAND
+        "${CMAKE_CTEST_COMMAND}" --build-config "$<CONFIG>" -LE "Network" --repeat until-fail:${QGC_TEST_FLAKY_REPEAT}
+        --no-tests=error --output-on-failure --parallel ${QGC_TEST_PARALLEL_LEVEL}
     USES_TERMINAL
     COMMENT "Running tests ${QGC_TEST_FLAKY_REPEAT}x (until-fail) to surface flaky failures"
     VERBATIM
@@ -110,8 +138,10 @@ add_custom_target(check-flaky
 set(_qgc_test_categories MissionManager Vehicle Utilities MAVLink Comms)
 foreach(_category IN LISTS _qgc_test_categories)
     string(TOLOWER ${_category} _target_suffix)
-    add_custom_target(check-${_target_suffix}
-        COMMAND "${CMAKE_CTEST_COMMAND}" --build-config "$<CONFIG>" -L ${_category} --no-tests=error --output-on-failure --parallel ${QGC_TEST_PARALLEL_LEVEL}
+    add_custom_target(
+        check-${_target_suffix}
+        COMMAND "${CMAKE_CTEST_COMMAND}" --build-config "$<CONFIG>" -L ${_category} --no-tests=error --output-on-failure
+                --parallel ${QGC_TEST_PARALLEL_LEVEL}
         USES_TERMINAL
         COMMENT "Running ${_category} tests"
         VERBATIM
@@ -154,8 +184,9 @@ endforeach()
 #
 # Example:
 #   add_qgc_test(ParameterManagerTest LABELS Integration Vehicle SERIAL)
-
 function(add_qgc_test test_name)
+    # Argument validation and per-shard registration keep this public entry point long.
+    # cmake-lint: disable=R0912,R0915
     cmake_parse_arguments(PARSE_ARGV 1 ARG "SERIAL" "TIMEOUT;SHARDS" "LABELS;RESOURCE_LOCK;SKIP_REGEX;ENV_MODIFICATION")
 
     if(NOT test_name)
@@ -165,8 +196,7 @@ function(add_qgc_test test_name)
         message(FATAL_ERROR "add_qgc_test(${test_name}): test name contains unsafe characters")
     endif()
     if(ARG_KEYWORDS_MISSING_VALUES)
-        message(FATAL_ERROR
-            "add_qgc_test(${test_name}): missing values for: ${ARG_KEYWORDS_MISSING_VALUES}")
+        message(FATAL_ERROR "add_qgc_test(${test_name}): missing values for: ${ARG_KEYWORDS_MISSING_VALUES}")
     endif()
     if(ARG_UNPARSED_ARGUMENTS)
         message(FATAL_ERROR "add_qgc_test(${test_name}): unknown arguments: ${ARG_UNPARSED_ARGUMENTS}")
@@ -202,8 +232,7 @@ function(add_qgc_test test_name)
     if(NOT QGC_TEST_ONSCREEN)
         # Offscreen plugin + software Quick backend; LIBGL_ALWAYS_SOFTWARE forces the
         # GLX path (under xvfb, see cmake_helper.py) onto Mesa llvmpipe, no GPU needed.
-        list(PREPEND _base_test_env "QT_QPA_PLATFORM=offscreen" "QT_QUICK_BACKEND=software"
-             "LIBGL_ALWAYS_SOFTWARE=1")
+        list(PREPEND _base_test_env "QT_QPA_PLATFORM=offscreen" "QT_QUICK_BACKEND=software" "LIBGL_ALWAYS_SOFTWARE=1")
     endif()
 
     # LSan's tracer process needs ptrace, which Yama (ptrace_scope>=1) blocks on
@@ -251,10 +280,12 @@ function(add_qgc_test test_name)
             list(APPEND _test_env "TMP=${_test_tmpdir}" "TEMP=${_test_tmpdir}")
         endif()
 
-        set_tests_properties(${_ctest_name} PROPERTIES
-            TIMEOUT ${_timeout}
-            ENVIRONMENT "${_test_env}"
-            FAIL_REGULAR_EXPRESSION "FAIL!;Segmentation fault"
+        set_tests_properties(
+            ${_ctest_name}
+            PROPERTIES
+                TIMEOUT ${_timeout}
+                ENVIRONMENT "${_test_env}"
+                FAIL_REGULAR_EXPRESSION "FAIL!;Segmentation fault"
         )
 
         if(ARG_LABELS)
