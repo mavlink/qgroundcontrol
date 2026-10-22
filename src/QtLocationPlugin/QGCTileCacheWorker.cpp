@@ -66,6 +66,8 @@ bool QGCCacheWorker::enqueueTask(QGCMapTask *task)
     if (isRunning()) {
         _waitc.wakeAll();
     } else {
+        // Reset before starting: clearing it in run() could discard a stop() issued before the thread runs
+        _stopRequested = false;
         start(QThread::NormalPriority);
     }
 
@@ -74,7 +76,6 @@ bool QGCCacheWorker::enqueueTask(QGCMapTask *task)
 
 void QGCCacheWorker::run()
 {
-    _stopRequested = false;
     _database = std::make_unique<QGCTileCacheDatabase>(_databasePath);
 
     if (!_database->init()) {
