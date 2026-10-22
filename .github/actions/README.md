@@ -38,7 +38,8 @@ Restore accepts the same workflow, source repository, branch, and event class; n
 can also use a trusted default-branch snapshot. Names include platform, build type, variant,
 key suffix and branch scope, but not the `build-config.json`/`ccache.conf`/moccache hashes in
 the dependency-cache keys: lookups are by exact name, and the content-addressed entries stay
-valid across those edits. Snapshot failures fall back to the dependency cache. RunsOn/S3 retains
+valid across those edits. Pull requests on GitHub storage restore the default branch's snapshot
+without publishing their own. Snapshot failures fall back to the dependency cache. RunsOn/S3 retains
 its existing cache/save route. Artifacts use artifact storage rather than the dependency-cache
 quota; one-day expiry bounds retention, and a cold build remains possible after expiry.
 

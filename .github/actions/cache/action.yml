@@ -282,7 +282,7 @@ runs:
     - name: Export compiler cache save keys
       shell: bash
       env:
-        SAVE_CACHE: ${{ steps.cache-policy.outputs.save }}
+        SAVE_CACHE: ${{ steps.cache-policy.outputs.scoped_save }}
         CCACHE_KEY: ${{ steps.cache-keys.outputs.ccache_key }}-${{ github.run_id }}-${{ github.run_attempt }}
         MOCCACHE_KEY: ${{ steps.cache-keys.outputs.moccache_key }}-${{ github.run_id }}-${{ github.run_attempt }}
       run: |
@@ -341,7 +341,8 @@ runs:
     # PRs and branches read default-branch caches; when that snapshot already has
     # this fingerprint, restore it exactly instead of saving a duplicate scoped copy
     # that would evict shared caches. Scoped restore-keys could match an older
-    # scoped snapshot first, so this step has none.
+    # scoped snapshot first, so this step has none. PRs on GitHub storage never save
+    # a scoped copy (scoped_save) and fall back to the newest default-branch snapshot.
     - name: Restore default-branch CPM snapshot
       id: cpm-shared
       if: >-
@@ -356,7 +357,7 @@ runs:
 
     - name: Cache CPM Modules (restore and save)
       if: >-
-        inputs.cpm-modules != '' && steps.cache-policy.outputs.save == 'true' && inputs.build-type == 'Release' &&
+        inputs.cpm-modules != '' && steps.cache-policy.outputs.scoped_save == 'true' && inputs.build-type == 'Release' &&
         steps.cpm-shared.outputs.cache-hit != 'true'
       uses: actions/cache@v6
       with:
@@ -372,7 +373,9 @@ runs:
           ${{ steps.cache-keys.outputs.cpm_unvaried_shared }}
 
     - name: Cache CPM Modules (restore only)
-      if: inputs.cpm-modules != '' && (steps.cache-policy.outputs.save != 'true' || inputs.build-type != 'Release')
+      if: >-
+        inputs.cpm-modules != '' && (steps.cache-policy.outputs.scoped_save != 'true' || inputs.build-type != 'Release') &&
+        steps.cpm-shared.outputs.cache-hit != 'true'
       uses: actions/cache/restore@v6
       with:
         path: |

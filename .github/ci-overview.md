@@ -287,8 +287,8 @@ Default-branch pushes, schedules, and manual builds all populate the `shared` sc
 RunsOn's
 [S3 cache backend](https://runs-on.com/docs/performance/caching/actions/) is separate
 from GitHub storage; matching keys and paths alone cannot bridge the two. There are
-no dedicated cache-warming application builds. Fork builds populate their
-own PR caches; a warm default-branch compiler cache is not guaranteed.
+no dedicated cache-warming application builds. PRs on S3 backends, forks included, populate
+their own PR caches; a warm default-branch compiler cache is not guaranteed.
 Coverage retains the compiler launcher: ccache stores `.gcno` files alongside objects.
 Linux coverage and sanitizer builds use line-table debug info (`-g1`), all that gcov and
 sanitizer stacks need: it cuts objects by ~70% and compile CPU by ~17% against full `-g`.
@@ -308,8 +308,11 @@ from 19 to 9 (about 10x faster rcc for ~2% more resource data) when QtCore suppo
 
 Compiler and moc caches save after a successful build or analysis autogen step, before
 packaging, tests, or scanners can fail. Docker also saves after a package failure when
-its report confirms successful compilation. This includes fork PRs; GitHub isolates
-these archives to the PR merge ref. `pull_request_target` remains read-only with the
+its report confirms successful compilation. On S3 backends this includes fork PRs, whose
+archives are isolated to the PR merge ref. Pull requests on GitHub storage restore the
+default branch's compiler, moc and CPM caches but save none of their own (`scoped_save` from
+`cache_policy.py`): those copies cost upload time and, for CPM, evicted shared entries from
+GitHub's size-limited cache. `pull_request_target` remains read-only with the
 default `auto` policy. GitHub compiler-cache budgets are 3 GB for Windows, coverage, and sanitizer
 builds, 2 GB for other Debug/macOS builds, and 1 GB for remaining Release builds.
 Confirmed S3 backends use the configured `ccache.conf` ceiling, including PRs.

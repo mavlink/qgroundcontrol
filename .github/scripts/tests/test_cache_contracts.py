@@ -322,11 +322,13 @@ def test_scoped_runs_do_not_resave_the_default_branch_cpm_snapshot():
     assert "steps.cache-policy.outputs.save == 'true'" in shared["if"]
     assert "inputs.build-type == 'Release'" in shared["if"]
     assert "steps.cpm-shared.outputs.cache-hit != 'true'" in save["if"]
-    # The restore-only branch excludes exactly the save policy the shared restore requires.
+    assert "steps.cache-policy.outputs.scoped_save == 'true'" in save["if"]
+    # The restore-only branch excludes exactly the scoped save policy, and an exact shared hit.
     assert (
-        "steps.cache-policy.outputs.save != 'true' || inputs.build-type != 'Release'"
+        "steps.cache-policy.outputs.scoped_save != 'true' || inputs.build-type != 'Release'"
         in restore["if"]
     )
+    assert "steps.cpm-shared.outputs.cache-hit != 'true'" in restore["if"]
     assert steps.index(shared) < steps.index(save)
 
 

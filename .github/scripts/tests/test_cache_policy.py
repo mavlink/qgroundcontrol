@@ -68,3 +68,26 @@ def test_explicit_read_only_overrides_pr_default(monkeypatch, gh_output) -> None
     monkeypatch.setenv("EVENT_NAME", "pull_request")
     assert mod.main(["--requested", "false"]) == 0
     assert "save=false\n" in gh_output.read_text()
+
+
+@pytest.mark.parametrize(
+    ("event", "backend", "requested", "scoped_save"),
+    [
+        ("pull_request", "github", "auto", "false"),
+        ("pull_request", None, "auto", "false"),
+        ("pull_request", "s3", "auto", "true"),
+        ("push", "github", "auto", "true"),
+        ("pull_request", "github", "true", "true"),
+        ("pull_request_target", "s3", "auto", "false"),
+    ],
+)
+def test_scoped_caches_are_restore_only_for_prs_on_github_storage(
+    monkeypatch, gh_output, event, backend, requested, scoped_save
+) -> None:
+    monkeypatch.setenv("EVENT_NAME", event)
+    if backend is None:
+        monkeypatch.delenv("QGC_ACTIONS_CACHE_BACKEND", raising=False)
+    else:
+        monkeypatch.setenv("QGC_ACTIONS_CACHE_BACKEND", backend)
+    assert mod.main(["--requested", requested]) == 0
+    assert f"scoped_save={scoped_save}\n" in gh_output.read_text()
