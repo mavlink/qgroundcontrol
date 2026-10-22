@@ -20,6 +20,7 @@ private slots:
     void _addPoint_test();
     void _addLineString_test();
     void _addPolygon_test();
+    void _addPolygonWithHoles_test();
     void _addStyle_test();
     void _addLineStyle_test();
     void _addPolyStyle_test();

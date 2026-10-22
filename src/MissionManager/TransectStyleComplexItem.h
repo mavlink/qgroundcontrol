@@ -129,6 +129,8 @@ protected slots:
 protected:
     virtual void _rebuildTransectsPhase1    (void) = 0; ///< Rebuilds the _transects array
     virtual void _recalcCameraShots         (void) = 0;
+    /// Survey area boundaries for export, outer boundary first followed by any holes
+    virtual QList<QList<QGeoCoordinate>> _surveyAreaBoundaries(void) const;
 
     void    _save                           (QJsonObject& saveObject);
     bool    _load                           (const QJsonObject& complexObject, bool forPresets, QString& errorString);

@@ -1,13 +1,16 @@
 #include "CorridorScanComplexItem.h"
-#include "JsonParsing.h"
-#include "SettingsManager.h"
-#include "AppSettings.h"
-#include "PlanMasterController.h"
-#include "AppMessages.h"
-#include "QGCApplication.h"
-#include "QGCLoggingCategory.h"
 
 #include <QtCore/QJsonArray>
+
+#include "AppMessages.h"
+#include "AppSettings.h"
+#include "JsonParsing.h"
+#include "PlanMasterController.h"
+#include "QGCApplication.h"
+#include "QGCGeo.h"
+#include "QGCLoggingCategory.h"
+#include "QGCPlanarGeometry.h"
+#include "SettingsManager.h"
 
 QGC_LOGGING_CATEGORY(CorridorScanComplexItemLog, "Plan.CorridorScanComplexItem")
 
@@ -226,26 +229,76 @@ void CorridorScanComplexItem::rotateEntryPoint(void)
 
 void CorridorScanComplexItem::_rebuildCorridorPolygon(void)
 {
+    _surveyAreaPolygon.clear();
+    _corridorBoundaryRings.clear();
+    _corridorBoundaryPaths.clear();
+    _buildCorridorArea();
+    emit corridorBoundariesChanged();
+}
+
+void CorridorScanComplexItem::_buildCorridorArea(void)
+{
     if (_corridorPolyline.count() < 2) {
-        _surveyAreaPolygon.clear();
         return;
     }
 
-    double halfWidth = _corridorWidthFact.rawValue().toDouble() / 2.0;
-
-    QList<QGeoCoordinate> firstSideVertices = _corridorPolyline.offsetPolyline(halfWidth);
-    QList<QGeoCoordinate> secondSideVertices = _corridorPolyline.offsetPolyline(-halfWidth);
-
-    _surveyAreaPolygon.clear();
-
-    QList<QGeoCoordinate> rgCoord;
-    for (const QGeoCoordinate& vertex: firstSideVertices) {
-        rgCoord.append(vertex);
+    const double halfWidth = _corridorWidthFact.rawValue().toDouble() / 2.0;
+    if (halfWidth < 0.0) {
+        return;
     }
-    for (int i=secondSideVertices.count() - 1; i >= 0; i--) {
-        rgCoord.append(secondSideVertices[i]);
+    if (qFuzzyIsNull(halfWidth)) {
+        // Single pass corridor: the area is the path out and back, which keeps the polygon valid for save
+        QList<QGeoCoordinate> coordinates = _corridorPolyline.coordinateList();
+        QVariantList path;
+        for (const QGeoCoordinate& coordinate : coordinates) {
+            path.append(QVariant::fromValue(coordinate));
+        }
+        _corridorBoundaryPaths.append(QVariant(path));
+
+        const QList<QGeoCoordinate> returnPath(coordinates.crbegin(), coordinates.crend());
+        coordinates.append(returnPath);
+        _surveyAreaPolygon.appendVertices(coordinates);
+        return;
     }
-    _surveyAreaPolygon.appendVertices(rgCoord);
+
+    const QList<QPolygonF> contours = QGCPlanarGeometry::bufferPolyline(_corridorPolyline.nedPolyline(), halfWidth);
+    if (contours.isEmpty()) {
+        qCWarning(CorridorScanComplexItemLog) << "Unable to build corridor buffer";
+        return;
+    }
+
+    const QGeoCoordinate tangentOrigin = _corridorPolyline.vertexCoordinate(0);
+    const auto toGeo = [&tangentOrigin](const QPolygonF& planar) {
+        QList<QGeoCoordinate> coordinates;
+        coordinates.reserve(planar.size());
+        for (const QPointF& point : planar) {
+            QGeoCoordinate coordinate;
+            QGCGeo::convertNedToGeo(point.y(), point.x(), 0.0, tangentOrigin, coordinate);
+            coordinates.append(coordinate);
+        }
+        return coordinates;
+    };
+
+    for (const QPolygonF& contour : contours) {
+        const QList<QGeoCoordinate> ring = toGeo(contour);
+        _corridorBoundaryRings.append(ring);
+
+        QVariantList path;
+        for (const QGeoCoordinate& coordinate : ring) {
+            path.append(QVariant::fromValue(coordinate));
+        }
+        path.append(QVariant::fromValue(ring.first()));
+        _corridorBoundaryPaths.append(QVariant(path));
+    }
+
+    // Holes are joined into the outer boundary with zero-width bridges so the area polygon fills correctly
+    _surveyAreaPolygon.appendVertices(toGeo(QGCPlanarGeometry::joinContours(contours)));
+}
+
+QList<QList<QGeoCoordinate>> CorridorScanComplexItem::_surveyAreaBoundaries(void) const
+{
+    return _corridorBoundaryRings.isEmpty() ? TransectStyleComplexItem::_surveyAreaBoundaries()
+                                            : _corridorBoundaryRings;
 }
 
 void CorridorScanComplexItem::_rebuildTransectsPhase1(void)
@@ -284,6 +337,11 @@ void CorridorScanComplexItem::_rebuildTransectsPhase1(void)
             // Turn transect into CoordInfo transect
             QList<TransectStyleComplexItem::CoordInfo_t> transect;
             QList<QGeoCoordinate> transectCoords = _corridorPolyline.offsetPolyline(offsetDistance);
+            if (transectCoords.count() < 2) {
+                qCWarning(CorridorScanComplexItemLog) << "Unable to offset corridor transect";
+                normalizedTransectPosition += transectSpacing;
+                continue;
+            }
             for (int j=1; j<transectCoords.count() - 1; j++) {
                 TransectStyleComplexItem::CoordInfo_t coordInfo = { transectCoords[j], CoordTypeInterior };
                 transect.append(coordInfo);
@@ -391,6 +449,16 @@ void CorridorScanComplexItem::_rebuildTransectsPhase1(void)
             _transects[i] = transectVertices;
         }
     }
+
+    // A corridor whose transects all fail to generate would otherwise save and upload without any scan
+    const bool noTransects = (_corridorPolyline.count() >= 2) && _transects.isEmpty();
+    if (noTransects != _noTransects) {
+        _noTransects = noTransects;
+        if (_noTransects) {
+            QGC::showAppMessage(tr("Corridor Scan: Unable to calculate transects for the corridor path."));
+        }
+        emit readyForSaveStateChanged();
+    }
 }
 
 void CorridorScanComplexItem::_recalcCameraShots(void)
@@ -411,7 +479,7 @@ void CorridorScanComplexItem::_recalcCameraShots(void)
 
 CorridorScanComplexItem::ReadyForSaveState CorridorScanComplexItem::readyForSaveState(void) const
 {
-    return TransectStyleComplexItem::readyForSaveState();
+    return _noTransects ? NotReadyForSaveData : TransectStyleComplexItem::readyForSaveState();
 }
 
 double CorridorScanComplexItem::timeBetweenShots(void)

@@ -214,6 +214,35 @@ void KMLDomDocumentTest::_addPolygon_test()
     QVERIFY(!coordsElem.isNull());
     // Polygon closes the ring: 3 coords + 1 closing = 4 newlines
     QCOMPARE(coordsElem.text().count('\n'), 4);
+    QVERIFY(polygon.firstChildElement(QStringLiteral("innerBoundaryIs")).isNull());
+}
+
+void KMLDomDocumentTest::_addPolygonWithHoles_test()
+{
+    KMLDomDocument doc(QStringLiteral("Test"));
+    QDomElement placemark = doc.addPlacemark(QStringLiteral("Poly"), true);
+
+    const QList<QGeoCoordinate> outer = {QGeoCoordinate(47.0, -122.0), QGeoCoordinate(47.1, -122.0),
+                                         QGeoCoordinate(47.1, -122.1), QGeoCoordinate(47.0, -122.1)};
+    const QList<QList<QGeoCoordinate>> holes = {
+        {QGeoCoordinate(47.02, -122.02), QGeoCoordinate(47.08, -122.02), QGeoCoordinate(47.08, -122.08)},
+        {QGeoCoordinate(47.03, -122.09), QGeoCoordinate(47.04, -122.09), QGeoCoordinate(47.04, -122.085)}};
+
+    const QDomElement polygon = doc.addPolygon(placemark, outer, holes);
+    QCOMPARE(polygon.firstChildElement(QStringLiteral("altitudeMode")).text(), QStringLiteral("clampToGround"));
+
+    const QDomElement outerRing =
+        polygon.firstChildElement(QStringLiteral("outerBoundaryIs")).firstChildElement(QStringLiteral("LinearRing"));
+    QCOMPARE(outerRing.firstChildElement(QStringLiteral("coordinates")).text().count('\n'), 5);
+
+    int holeCount = 0;
+    for (QDomElement inner = polygon.firstChildElement(QStringLiteral("innerBoundaryIs")); !inner.isNull();
+         inner = inner.nextSiblingElement(QStringLiteral("innerBoundaryIs"))) {
+        const QDomElement holeRing = inner.firstChildElement(QStringLiteral("LinearRing"));
+        QCOMPARE(holeRing.firstChildElement(QStringLiteral("coordinates")).text().count('\n'), 4);
+        holeCount++;
+    }
+    QCOMPARE(holeCount, holes.size());
 }
 
 // ---- Style ----

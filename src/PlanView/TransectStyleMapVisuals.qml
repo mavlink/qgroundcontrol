@@ -16,6 +16,7 @@ Item {
     property bool   interactive: true
     property var    vehicle
     property bool   hideMapPolygon: false
+    property real   polygonBorderWidth: 1
 
     property var    _missionItem:               object
     property var    _mapPolygon:                object.surveyAreaPolygon
@@ -64,7 +65,7 @@ Item {
         mapControl:         map
         mapPolygon:         _mapPolygon
         interactive:        polygonInteractive && _missionItem.isCurrentItem && _root.interactive
-        borderWidth:        1
+        borderWidth:        polygonBorderWidth
         borderColor:        "black"
         interiorColor:      QGroundControl.globalPalette.surveyPolygonInterior
         altColor:           QGroundControl.globalPalette.surveyPolygonTerrainCollision

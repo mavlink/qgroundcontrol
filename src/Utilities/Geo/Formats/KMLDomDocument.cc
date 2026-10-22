@@ -155,24 +155,39 @@ QDomElement KMLDomDocument::addLineString(QDomElement &parent, const QList<QGeoC
 QDomElement KMLDomDocument::addPolygon(QDomElement &parent, const QList<QGeoCoordinate> &coords,
                                        const QString &altitudeMode)
 {
+    return addPolygon(parent, coords, {}, altitudeMode);
+}
+
+QDomElement KMLDomDocument::addPolygon(QDomElement& parent, const QList<QGeoCoordinate>& coords,
+                                       const QList<QList<QGeoCoordinate>>& holes, const QString& altitudeMode)
+{
     QDomElement polygonElement = createElement("Polygon");
     addTextElement(polygonElement, "altitudeMode", altitudeMode);
 
-    QDomElement outerBoundaryIs = createElement("outerBoundaryIs");
-    QDomElement linearRing = createElement("LinearRing");
+    const auto appendBoundary = [this, &polygonElement](const QString& boundaryName,
+                                                        const QList<QGeoCoordinate>& ringCoords) {
+        QDomElement boundary = createElement(boundaryName);
+        QDomElement linearRing = createElement("LinearRing");
 
-    QString coordString;
-    for (const QGeoCoordinate &coord : coords) {
-        coordString += QStringLiteral("%1\n").arg(kmlCoordString(coord));
-    }
-    // Close the ring by repeating the first coordinate
-    if (!coords.isEmpty()) {
-        coordString += QStringLiteral("%1\n").arg(kmlCoordString(coords.first()));
-    }
-    addTextElement(linearRing, "coordinates", coordString);
+        QString coordString;
+        for (const QGeoCoordinate& coord : ringCoords) {
+            coordString += QStringLiteral("%1\n").arg(kmlCoordString(coord));
+        }
+        // Close the ring by repeating the first coordinate
+        if (!ringCoords.isEmpty()) {
+            coordString += QStringLiteral("%1\n").arg(kmlCoordString(ringCoords.first()));
+        }
+        addTextElement(linearRing, "coordinates", coordString);
 
-    (void) outerBoundaryIs.appendChild(linearRing);
-    (void) polygonElement.appendChild(outerBoundaryIs);
+        (void) boundary.appendChild(linearRing);
+        (void) polygonElement.appendChild(boundary);
+    };
+
+    appendBoundary(QStringLiteral("outerBoundaryIs"), coords);
+    for (const QList<QGeoCoordinate>& hole : holes) {
+        appendBoundary(QStringLiteral("innerBoundaryIs"), hole);
+    }
+
     (void) parent.appendChild(polygonElement);
     return polygonElement;
 }

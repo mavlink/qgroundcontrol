@@ -62,8 +62,9 @@ public:
     /// Returns true if the specified coordinate is within the polygon
     Q_INVOKABLE bool containsCoordinate(const QGeoCoordinate& coordinate) const;
 
-    /// Offsets the current polygon edges by the specified distance in meters
-    Q_INVOKABLE void offset(double distance);
+    /// Offsets the current polygon edges by the specified distance in meters. Positive distances expand the polygon.
+    /// @return false if no single offset polygon could be produced; the polygon is left unchanged
+    Q_INVOKABLE bool offset(double distance);
 
     /// Loads a polygon from a KML/SHP file
     /// @return true: success

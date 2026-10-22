@@ -27,6 +27,9 @@ private slots:
     void _testItemGeneration();
     void _testItemCount();
     void _testMaxTransectCount();
+    void _testClosedAndCrossingCorridors();
+    void _testNoTransects();
+    void _testZeroWidthCorridor();
 
 private:
     void _waitForReadyForSave();

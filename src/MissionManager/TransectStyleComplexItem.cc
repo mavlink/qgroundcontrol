@@ -1322,14 +1322,22 @@ void TransectStyleComplexItem::_appendLoadedMissionItems(QList<MissionItem*>& it
     }
 }
 
+QList<QList<QGeoCoordinate>> TransectStyleComplexItem::_surveyAreaBoundaries(void) const
+{
+    return {_surveyAreaPolygon.coordinateList()};
+}
+
 void TransectStyleComplexItem::addKMLVisuals(KMLPlanDomDocument& domDocument)
 {
     // We add the survey area polygon as a Placemark
 
-    QDomElement placemarkElement = domDocument.addPlacemark(QStringLiteral("Survey Area"), true);
-    QDomElement polygonElement = _surveyAreaPolygon.kmlPolygonElement(domDocument);
+    const QList<QList<QGeoCoordinate>> boundaries = _surveyAreaBoundaries();
+    if (boundaries.isEmpty() || boundaries.first().isEmpty()) {
+        return;
+    }
 
-    placemarkElement.appendChild(polygonElement);
+    QDomElement placemarkElement = domDocument.addPlacemark(QStringLiteral("Survey Area"), true);
+    domDocument.addPolygon(placemarkElement, boundaries.first(), boundaries.mid(1));
     domDocument.addTextElement(placemarkElement, "styleUrl", QStringLiteral("#%1").arg(domDocument.surveyPolygonStyleName));
     domDocument.appendChildToRoot(placemarkElement);
 }
