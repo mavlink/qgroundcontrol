@@ -65,7 +65,10 @@ def test_backend_uses_javascript_action_environment(runner, bucket, endpoint, or
         check=True,
     )
     observed = json.loads(result.stdout)
-    assert observed["outputs"] == {"QGC_ACTIONS_CACHE_BACKEND": expected}
+    expected_outputs = {"QGC_ACTIONS_CACHE_BACKEND": expected}
+    if expected == "s3":
+        expected_outputs["UV_PYTHON_PREFERENCE"] = "only-managed"
+    assert observed["outputs"] == expected_outputs
     assert bool(observed["warnings"]) == bool(runner and bucket and expected == "github")
     assert steps[1]["uses"].startswith("astral-sh/setup-uv@")
 

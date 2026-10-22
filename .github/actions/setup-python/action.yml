@@ -39,6 +39,11 @@ runs:
           }
           core.exportVariable('QGC_ACTIONS_CACHE_BACKEND', backend);
           core.info(`Actions cache backend: ${backend}`);
+          if (backend === 's3') {
+            // Full runner images ship a system Python that uv would otherwise
+            // prefer, leaving cache-python without a managed install to save.
+            core.exportVariable('UV_PYTHON_PREFERENCE', 'only-managed');
+          }
 
     - name: Setup uv and Python ${{ inputs.python-version }}
       uses: astral-sh/setup-uv@v10.2.0

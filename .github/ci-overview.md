@@ -316,6 +316,8 @@ the cache URLs actually used by cache actions. A configured RunsOn bucket alone
 does not enable the larger compiler limit or uv/Python caching: the runtime must
 also expose the RunsOn proxy and its original GitHub endpoint. Older Windows stacks
 (before RunsOn 3.1) therefore use the GitHub budgets and disable uv/Python caching.
+Confirmed S3 backends also export `UV_PYTHON_PREFERENCE=only-managed`, so uv installs and
+caches standalone CPython instead of using the system Python shipped by full runner images.
 
 CPM saves and uv/Python cache enablement use environment values that remain available
 during nested composite post-job cleanup; step outputs do not survive that phase.
