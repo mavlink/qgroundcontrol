@@ -9,7 +9,9 @@
 # ---------- base: shared bootstrap for every variant ----------
 # Digest-pinned for reproducibility (re-resolve via `docker buildx imagetools
 # inspect` when bumping); BASE_REF/SETUP_BASE overridden for non-Ubuntu distros.
-ARG BASE_REF=ubuntu:24.04@sha256:534baea6a22c03a63003dbc8dbe78fe34bc0d7e595d9a9dc9834884ff530eb55
+# Official images come from their ECR Public mirror (same digests as Docker Hub),
+# so anonymous pulls are not held to Docker Hub's anonymous pull limit.
+ARG BASE_REF=public.ecr.aws/docker/library/ubuntu:24.04@sha256:534baea6a22c03a63003dbc8dbe78fe34bc0d7e595d9a9dc9834884ff530eb55
 FROM ${BASE_REF} AS base
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -41,18 +43,18 @@ RUN if [ -n "${CC_PIN}" ]; then \
     fi
 
 # Locked Python environment for generators, Qt installation, and build tools.
-COPY --from=ghcr.io/astral-sh/uv:0.13.1 /uv /usr/local/bin/uv
+COPY --from=ghcr.io/astral-sh/uv:0.12.8 /uv /usr/local/bin/uv
 COPY tools/pyproject.toml tools/uv.lock /opt/qgc-tools/
 RUN UV_PROJECT_ENVIRONMENT=/opt/qgc-venv uv sync \
         --project /opt/qgc-tools --python python3 \
         --group scripts --group qt --group build \
         --no-default-groups --no-install-project --frozen && \
-    /opt/qgc-venv/bin/python -c "import jinja2, httpx, defusedxml, lxml, fastcrc" && \
+    /opt/qgc-venv/bin/python -c "import jinja2, defusedxml, lxml, fastcrc" && \
     /opt/qgc-venv/bin/aqt --help >/dev/null
 # Debian's /etc/profile resets PATH for non-root login shells, such as the entrypoint's; keep the locked tools first.
 RUN echo 'export PATH=/opt/qgc-venv/bin:$PATH' > /etc/profile.d/qgc-venv.sh
 
-# Version config only (read_config + _bootstrap import need a dir named "tools").
+# Version config only (read_config + install_qt import _bootstrap, common and qgc_tools from /tmp/tools).
 # Copied before the slow Qt layer so editing package lists doesn't bust Qt cache.
 COPY .github/build-config.json /tmp/tools/setup/
 COPY tools/setup/read_config.py tools/setup/install_qt.py /tmp/tools/setup/
@@ -140,13 +142,9 @@ CMD ["Release"]
 # ---------- android: Android APK build (SDK/NDK + Qt android target) ----------
 FROM base AS android
 COPY tools/setup/install_dependencies/ /tmp/tools/setup/install_dependencies/
-# The Java version is centralized in build-config and package revisions vary by base image.
-# hadolint ignore=DL3008
-RUN python3 /tmp/tools/setup/install_dependencies --platform debian && \
+# Core build tools plus the build-config JDK; Qt's host tools need no desktop libraries.
+RUN python3 /tmp/tools/setup/install_dependencies --platform debian --category android && \
     python3 /tmp/tools/setup/read_config.py --export bash > /etc/profile.d/qgc.sh && \
-    . /etc/profile.d/qgc.sh && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends openjdk-${ANDROID_JAVA_VERSION}-jdk && \
     rm -rf /var/lib/apt/lists/*
 
 ENV ANDROID_SDK_ROOT=/opt/android-sdk

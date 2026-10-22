@@ -117,16 +117,6 @@ def install() -> None:
         retry_backoff_seconds=10,
     )
     wanted = [f"{package}:arm64" for package in packages]
-    if (
-        subprocess.run(
-            ["apt-cache", "show", "gstreamer1.0-qt6:arm64"],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            check=False,
-        ).returncode
-        == 0
-    ):
-        wanted.append("gstreamer1.0-qt6:arm64")
     output = subprocess.run(
         [
             "apt-cache",

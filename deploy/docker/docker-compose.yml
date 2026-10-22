@@ -30,7 +30,7 @@ services:
       dockerfile: deploy/docker/Dockerfile
       target: linux
       args:
-        BASE_REF: "ubuntu:22.04@sha256:4f838adc7181d9039ac795a7d0aba05a9bd9ecd480d294483169c5def983b64d"
+        BASE_REF: "public.ecr.aws/docker/library/ubuntu:22.04@sha256:4f838adc7181d9039ac795a7d0aba05a9bd9ecd480d294483169c5def983b64d"
         APT_EXTRA: "gcc-12 g++-12"
         CC_PIN: "gcc-12"
         CXX_PIN: "g++-12"
@@ -52,7 +52,7 @@ services:
       dockerfile: deploy/docker/Dockerfile
       target: linux
       args:
-        BASE_REF: "ubuntu:26.04@sha256:f3d28607ddd78734bb7f71f117f3c6706c666b8b76cbff7c9ff6e5718d46ff64"
+        BASE_REF: "public.ecr.aws/docker/library/ubuntu:26.04@sha256:f3d28607ddd78734bb7f71f117f3c6706c666b8b76cbff7c9ff6e5718d46ff64"
     image: qgc-ubuntu-2604-docker
     user: "${QGC_UID:-1000}:${QGC_GID:-1000}"
     environment:
@@ -71,7 +71,7 @@ services:
       dockerfile: deploy/docker/Dockerfile
       target: linux
       args:
-        BASE_REF: "debian:bookworm-slim@sha256:96e378d7e6531ac9a15ad505478fcc2e69f371b10f5cdf87857c4b8188404716"
+        BASE_REF: "public.ecr.aws/docker/library/debian:bookworm-slim@sha256:96e378d7e6531ac9a15ad505478fcc2e69f371b10f5cdf87857c4b8188404716"
     image: qgc-debian-docker
     user: "${QGC_UID:-1000}:${QGC_GID:-1000}"
     environment:
@@ -90,7 +90,7 @@ services:
       dockerfile: deploy/docker/Dockerfile
       target: linux
       args:
-        BASE_REF: "fedora:41@sha256:f1a3fab47bcb3c3ddf3135d5ee7ba8b7b25f2e809a47440936212a3a50957f3d"
+        BASE_REF: "public.ecr.aws/docker/library/fedora:41@sha256:f1a3fab47bcb3c3ddf3135d5ee7ba8b7b25f2e809a47440936212a3a50957f3d"
         SETUP_BASE: "setup-base-dnf.sh"
         DEP_PLATFORM: "fedora"
     image: qgc-fedora-docker
@@ -108,7 +108,7 @@ services:
       dockerfile: deploy/docker/Dockerfile
       target: linux
       args:
-        BASE_REF: "archlinux:base@sha256:ff410a88e200b133e577f5730b7bfa324e26a333075ee056bf45e911c6ac5671"
+        BASE_REF: "public.ecr.aws/docker/library/archlinux:base@sha256:ff410a88e200b133e577f5730b7bfa324e26a333075ee056bf45e911c6ac5671"
         SETUP_BASE: "setup-base-pacman.sh"
         DEP_PLATFORM: "arch"
     image: qgc-arch-docker

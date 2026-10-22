@@ -1,5 +1,5 @@
 {
-  "_comment": "Single source of truth for QGC Docker build variants. Consumed by .github/scripts/plan_docker_builds.py (CI matrix), deploy/docker/run_docker.py (local builds), and deploy/docker/gen_compose.py (docker-compose.yml). Edit variants here only; docker-compose.yml is generated. Base-image digests: re-resolve with `docker buildx imagetools inspect <ref>` when bumping. build_args key order is preserved into the generated --build-arg list.",
+  "_comment": "Single source of truth for QGC Docker build variants. Consumed by tools/ci/planning/plan_docker_builds.py (CI matrix), deploy/docker/run_docker.py (local builds), and deploy/docker/gen_compose.py (docker-compose.yml). Edit variants here only; docker-compose.yml is generated. Base images come from the ECR Public mirror of the Docker official images (public.ecr.aws/docker/library, same digests as Docker Hub, no Docker Hub anonymous pull limit). Base-image digests: re-resolve with `docker buildx imagetools inspect <ref>` when bumping. build_args key order is preserved into the generated --build-arg list.",
   "variants": [
     {
       "id": "ubuntu",
@@ -24,7 +24,7 @@
       "artifact_pattern": "QGroundControl-*.AppImage",
       "package_pattern": "*.deb",
       "build_args": {
-        "BASE_REF": "ubuntu:22.04@sha256:4f838adc7181d9039ac795a7d0aba05a9bd9ecd480d294483169c5def983b64d",
+        "BASE_REF": "public.ecr.aws/docker/library/ubuntu:22.04@sha256:4f838adc7181d9039ac795a7d0aba05a9bd9ecd480d294483169c5def983b64d",
         "APT_EXTRA": "gcc-12 g++-12",
         "CC_PIN": "gcc-12",
         "CXX_PIN": "g++-12"
@@ -41,7 +41,7 @@
       "artifact_pattern": "QGroundControl-*.AppImage",
       "package_pattern": "*.deb",
       "build_args": {
-        "BASE_REF": "ubuntu:26.04@sha256:f3d28607ddd78734bb7f71f117f3c6706c666b8b76cbff7c9ff6e5718d46ff64"
+        "BASE_REF": "public.ecr.aws/docker/library/ubuntu:26.04@sha256:f3d28607ddd78734bb7f71f117f3c6706c666b8b76cbff7c9ff6e5718d46ff64"
       }
     },
     {
@@ -55,7 +55,7 @@
       "artifact_pattern": "QGroundControl-*.AppImage",
       "package_pattern": "*.deb",
       "build_args": {
-        "BASE_REF": "debian:bookworm-slim@sha256:96e378d7e6531ac9a15ad505478fcc2e69f371b10f5cdf87857c4b8188404716"
+        "BASE_REF": "public.ecr.aws/docker/library/debian:bookworm-slim@sha256:96e378d7e6531ac9a15ad505478fcc2e69f371b10f5cdf87857c4b8188404716"
       }
     },
     {
@@ -69,7 +69,7 @@
       "artifact_pattern": "QGroundControl-*.AppImage",
       "package_pattern": "*.rpm",
       "build_args": {
-        "BASE_REF": "fedora:41@sha256:f1a3fab47bcb3c3ddf3135d5ee7ba8b7b25f2e809a47440936212a3a50957f3d",
+        "BASE_REF": "public.ecr.aws/docker/library/fedora:41@sha256:f1a3fab47bcb3c3ddf3135d5ee7ba8b7b25f2e809a47440936212a3a50957f3d",
         "SETUP_BASE": "setup-base-dnf.sh",
         "DEP_PLATFORM": "fedora"
       }
@@ -85,7 +85,7 @@
       "artifact_pattern": "QGroundControl-*.AppImage",
       "package_pattern": "*.pkg.tar.zst",
       "build_args": {
-        "BASE_REF": "archlinux:base@sha256:ff410a88e200b133e577f5730b7bfa324e26a333075ee056bf45e911c6ac5671",
+        "BASE_REF": "public.ecr.aws/docker/library/archlinux:base@sha256:ff410a88e200b133e577f5730b7bfa324e26a333075ee056bf45e911c6ac5671",
         "SETUP_BASE": "setup-base-pacman.sh",
         "DEP_PLATFORM": "arch"
       }

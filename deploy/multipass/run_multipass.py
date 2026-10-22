@@ -43,6 +43,10 @@ def main() -> int:
                 os.environ.get("MP_MEM", "8G"),
                 "--disk",
                 os.environ.get("MP_DISK", "25G"),
+                # Multipass waits 5 minutes by default; image download plus first boot under
+                # nested virtualization can take longer.
+                "--timeout",
+                os.environ.get("MP_TIMEOUT", "900"),
             ],
             check=True,
         )
@@ -83,7 +87,6 @@ def main() -> int:
                     "clone",
                     "https://github.com/mavlink/qgroundcontrol.git",
                     guest_repo,
-                    "--recurse-submodules",
                 ],
                 check=True,
             )
