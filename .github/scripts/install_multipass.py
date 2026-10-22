@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Install Multipass on an ephemeral Linux CI runner and wait for its daemon."""
+"""Install Multipass on an ephemeral Linux CI runner and wait for its daemon.
+
+CI runs the Multipass client as root. A job process lives in the runner's own systemd
+service cgroup with no user session, so for any other user `snap run` cannot move the
+client into a snap scope and snap-confine refuses to start it (Multipass >= 1.17).
+"""
 
 from __future__ import annotations
 
@@ -32,12 +37,11 @@ def install() -> None:
         if attempt == SOCKET_ATTEMPTS - 1:
             raise TimeoutError(f"Multipass socket did not appear: {SOCKET}")
         time.sleep(2)
-    subprocess.run(["sudo", "chmod", "a+rw", str(SOCKET)], check=True)
-    subprocess.run(["multipass", "version"], check=True, timeout=30)
+    subprocess.run(["sudo", "multipass", "version"], check=True, timeout=30)
     for attempt in range(CATALOG_ATTEMPTS):
         try:
             result = subprocess.run(
-                ["multipass", "find"],
+                ["sudo", "multipass", "find"],
                 check=False,
                 timeout=15,
                 stdout=subprocess.DEVNULL,

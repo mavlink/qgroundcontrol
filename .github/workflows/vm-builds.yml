@@ -93,9 +93,11 @@ jobs:
           MP_MEM: '12G'
           MP_DISK: '30G'
           OUTPUT_DIR: ${{ github.workspace }}/artifacts
+        # As root, like every Multipass client call in CI (see install_multipass.py).
         run: |
           mkdir -p "${OUTPUT_DIR}"
-          python3 deploy/multipass/run_multipass.py
+          sudo --preserve-env=QGC_SOURCE_DIR,MP_IMAGE,MP_CPUS,MP_MEM,MP_DISK,OUTPUT_DIR \
+            python3 deploy/multipass/run_multipass.py
 
       - name: Upload AppImage
         if: success()

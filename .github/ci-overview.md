@@ -373,7 +373,9 @@ Gradle, Flatpak, iOS target Qt SDK, and GitHub-hosted uv/Python caching remain d
   use Python entrypoints. Shell remains for installing Python itself and loading container
   login profiles. Docker Qt installation uses `tools/setup/install_qt.py install --from-config`
   and the shared Python retry policy. Native package smoke-test failures still uninstall
-  the package, and Multipass cleanup only deletes successfully created instances.
+  the package, and Multipass cleanup only deletes successfully created instances. CI runs the
+  Multipass client as root: the job has no user session, so only root's `snap run` can place the
+  client in the snap cgroup that snap-confine requires.
   Vagrant teardown requires an attempted VM startup and surfaces cleanup failures.
 - **CMake entrypoint**: Platform workflows configure through `cmake-configure`, which requires
   `qt-cmake` by default. Android is the explicit exception and supplies its target Qt toolchain and
