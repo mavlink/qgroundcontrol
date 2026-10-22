@@ -7,6 +7,7 @@ import json
 import os
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote
 
 from ci_bootstrap import ensure_tools_dir
 
@@ -25,6 +26,12 @@ def resolve_context(repo: str, run: dict[str, Any]) -> dict[str, str]:
     result = {"pr": "", "current": "false", "sha": sha}
     if run.get("event") == "pull_request":
         candidates = run.get("pull_requests", [])
+        owner = (run.get("head_repository") or {}).get("owner", {}).get("login")
+        if not candidates and owner and run.get("head_branch"):
+            # Fork PRs leave pull_requests empty, and the base repository's commit lookup does not
+            # see commits that exist only in the fork.
+            head = f"{quote(owner, safe='')}:{quote(run['head_branch'], safe='')}"
+            candidates = api(f"repos/{repo}/pulls?state=open&head={head}")
         if not candidates:
             candidates = api(f"repos/{repo}/commits/{sha}/pulls")
         for candidate in candidates:

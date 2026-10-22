@@ -20,6 +20,36 @@ def test_pr_reports_ignore_closed_or_superseded_heads(state, sha, current):
     assert result["pr"] == ("42" if current == "true" else "")
 
 
+def test_fork_run_resolves_pr_via_head_branch():
+    run = {
+        "head_sha": "new",
+        "event": "pull_request",
+        "head_branch": "feature/a b",
+        "head_repository": {"owner": {"login": "fork"}},
+    }
+    with patch(
+        "report_context.api",
+        side_effect=[[{"number": 42}], {"number": 42, "state": "open", "head": {"sha": "new"}}],
+    ) as api:
+        assert resolve_context("o/r", run)["pr"] == "42"
+    assert api.call_args_list[0].args == ("repos/o/r/pulls?state=open&head=fork:feature%2Fa%20b",)
+
+
+def test_fork_run_without_head_match_falls_back_to_commit():
+    run = {
+        "head_sha": "new",
+        "event": "pull_request",
+        "head_branch": "feature",
+        "head_repository": {"owner": {"login": "fork"}},
+    }
+    with patch(
+        "report_context.api",
+        side_effect=[[], [{"number": 42}], {"number": 42, "state": "open", "head": {"sha": "new"}}],
+    ) as api:
+        assert resolve_context("o/r", run)["pr"] == "42"
+    assert api.call_args_list[1].args == ("repos/o/r/commits/new/pulls",)
+
+
 def test_fork_run_resolves_pr_via_commit():
     with patch(
         "report_context.api",
