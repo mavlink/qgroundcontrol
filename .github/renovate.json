@@ -38,31 +38,19 @@
       "automerge": true
     },
     {
-      "description": "Combine npm, python, and pre-commit updates into a single PR",
+      "description": "Combine every update except Android into one weekly PR; formatter and lint tool pins such as clang-format, ruff and pyright stay in step because they land together",
       "groupName": "all dependencies",
       "matchManagers": [
         "npm",
         "pep621",
-        "pre-commit"
-      ],
-      "schedule": [
-        "before 6am on monday"
-      ]
-    },
-    {
-      "description": "Group composite GitHub Action updates not covered by Dependabot",
-      "groupName": "composite action dependencies",
-      "matchManagers": [
-        "github-actions"
-      ]
-    },
-    {
-      "description": "Group development environment and build bootstrap updates",
-      "groupName": "development environment dependencies",
-      "matchManagers": [
+        "pre-commit",
+        "github-actions",
         "devcontainer",
         "dockerfile",
         "nvm"
+      ],
+      "schedule": [
+        "before 6am on monday"
       ]
     },
     {
@@ -72,18 +60,6 @@
         "gradle",
         "gradle-wrapper"
       ]
-    },
-    {
-      "description": "Keep formatter and Python lint tool pins synchronized",
-      "matchPackageNames": [
-        "clang-format",
-        "pre-commit/mirrors-clang-format",
-        "ruff",
-        "astral-sh/ruff-pre-commit",
-        "pyright",
-        "RobertCraigie/pyright-python"
-      ],
-      "groupName": "code quality tools"
     },
     {
       "description": "Keep lock file maintenance in one PR instead of one per group",
