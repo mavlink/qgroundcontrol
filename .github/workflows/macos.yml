@@ -90,10 +90,12 @@ jobs:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ matrix.build_type }}
           preset: ${{ matrix.build_type == 'Debug' && 'macOS-debug' || 'macOS' }}
+          # Unity builds of QGC targets halve Debug compile CPU; the shipped Release build stays per-file.
           extra-args: >-
             -DQGC_BUILD_PORTABLE_TESTS=${{ matrix.build_type == 'Release' && 'ON' || 'OFF' }}
             -DQGC_MACOS_SIGN_WITH_IDENTITY=${{ github.event_name != 'pull_request' && matrix.build_type == 'Release' && 'ON' || 'OFF' }}
             -DQGC_MACOS_UNIVERSAL_BUILD=ON
+            -DQGC_UNITY_BUILD=${{ matrix.build_type == 'Debug' && 'ON' || 'OFF' }}
 
       - name: Build
         id: build

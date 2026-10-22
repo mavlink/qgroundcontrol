@@ -134,9 +134,11 @@ jobs:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ matrix.build_type }}
           # Line tables keep simulator crash traces while halving objects, so Debug fits its cache budget.
+          # Unity builds of QGC targets halve the simulator's compile CPU; the shipped device build stays per-file.
           extra-args: >-
             ${{ matrix.target == 'simulator' && '-DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_ARCHITECTURES=x86_64' || '' }}
             ${{ matrix.target == 'simulator' && '-DCMAKE_C_FLAGS_DEBUG=-g1 -DCMAKE_CXX_FLAGS_DEBUG=-g1 -DCMAKE_OBJC_FLAGS_DEBUG=-g1 -DCMAKE_OBJCXX_FLAGS_DEBUG=-g1' || '' }}
+            ${{ matrix.target == 'simulator' && '-DQGC_UNITY_BUILD=ON' || '' }}
             ${{ steps.profile.outputs.cmake_args }}
 
       - name: Build
