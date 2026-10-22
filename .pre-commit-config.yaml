@@ -79,7 +79,8 @@ repos:
     rev: v1.1.411
     hooks:
       - id: pyright
-        files: ^(tools|test|\.github/scripts)/.*\.py$
+        # Same paths as pyrightconfig.json's include
+        files: ^(tools|test|deploy|\.github/(scripts|runner-images)|\.clusterfuzzlite)/.*\.py$
 
   - repo: local
     hooks:
