@@ -29,7 +29,7 @@ Development questions can be raised in the [QGroundControl Developer](http://dis
 
 ## Contribution
 
-Information about contributing, including coding styles, testing and licenses can be found in [Code Submissions](contribute/index.md).
+Information about contributing, including coding styles, testing, licenses and editing this guide, can be found in [Code Submission](contribute/index.md).
 
 :::tip
 We expect all contributors to adhere to the [QGroundControl code of conduct](https://github.com/mavlink/qgroundcontrol/blob/master/.github/CODE_OF_CONDUCT.md).

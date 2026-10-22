@@ -9,7 +9,7 @@ For the complete JSON schema reference see [tools/generators/config_qml/README.m
 The generation pipeline is:
 
 1. **JSON page definitions** in `src/AutoPilotPlugins/{APM,PX4}/VehicleConfig/*.VehicleConfig.json`
-2. **Python generator** in `tools/generators/config_qml/page_generator.py`
+2. **Python generator** in `tools/generators/config_qml/` (`model.py` loads the JSON, `emit.py` renders QML)
 3. **Generated QML** in `build/src/AutoPilotPlugins/{APM,PX4}/generated/`
 4. **C++ component class** (e.g. `APMPowerComponent`) loads the generated QML via `setupSource()`
 
@@ -31,7 +31,7 @@ python -m tools.generators.config_qml.generate_pages \
     --output-dir <build_gen_dir>
 ```
 
-The generator entry point is `tools/generators/config_qml/generate_pages.py`, with most logic in `tools/generators/config_qml/page_generator.py`.
+The generator entry point is `tools/generators/config_qml/generate_pages.py`; `model.py` loads and validates page definitions and `emit.py` renders the QML.
 
 ## Base Class: VehicleComponent
 

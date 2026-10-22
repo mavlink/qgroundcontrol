@@ -30,7 +30,7 @@ Generation is configured in [src/AppSettings/CMakeLists.txt](https://github.com/
   - Generated page QML files (e.g. `GeneralSettings.qml`, `FlyViewSettings.qml`)
   - `SettingsPagesModel.qml`
 
-The generator entry point is [tools/generators/settings_qml/generate_pages.py](https://github.com/mavlink/qgroundcontrol/blob/master/tools/generators/settings_qml/generate_pages.py), with most logic in [tools/generators/settings_qml/page_generator.py](https://github.com/mavlink/qgroundcontrol/blob/master/tools/generators/settings_qml/page_generator.py).
+The generator entry point is [tools/generators/settings_qml/generate_pages.py](https://github.com/mavlink/qgroundcontrol/blob/master/tools/generators/settings_qml/generate_pages.py); `model.py` loads page definitions, `metadata.py` discovers fact metadata, and `emit.py` renders QML.
 
 ## How Controls Are Chosen
 

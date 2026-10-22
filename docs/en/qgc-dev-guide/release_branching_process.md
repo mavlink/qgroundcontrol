@@ -75,7 +75,7 @@ A proposed strategy for branching on custom builds is described in [Custom Build
 1. Create an annotated tag on the newly created Stable branch named `vX.Y.0` with the correct major/minor version number. Example: `git tag -a v4.2.0 -m "QGroundControl v4.2.0"`. Pushing this tag to the repo will start a build. CI only publishes a release tag to the S3 `latest/` folder when the tagged commit is reachable from a `Stable*` branch; a `vX.Y.Z` tag pushed anywhere else is ignored.
 1. Once the build completes verify the builds are pushed up to S3 correctly and sanity check that they at least boot correctly. Location on S3 will be `https://qgroundcontrol.s3.us-west-2.amazonaws.com/latest/...`.
 1. Update the `https://qgroundcontrol.s3.us-west-2.amazonaws.com/latest/QGC.version.txt` text file to the latest Stable version. This will notify users that there is a new Stable available the next time they launch QGC.
-1. Note that the cached cloudfront downloads will take up to 24h to refresh. If they need to update earlier, the caches would need to be manually invalidated.
+1. CI invalidates the CloudFront cache for the release files it uploads to `latest/`. Other files you update by hand, such as `QGC.version.txt`, can take up to 24 hours to refresh unless you invalidate their cached copies manually.
 
 ### Patch Version
 

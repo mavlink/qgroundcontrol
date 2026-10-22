@@ -1,5 +1,6 @@
 const getSidebar = require("./get_sidebar.js");
 import { defineConfig } from "vitepress";
+import buildConfig from "../../.github/build-config.json";
 import navbarData from "./navbar.json";
 
 const checkEnglish = process.env.QGC_DOCS_CHECK_ENGLISH === "1";
@@ -27,6 +28,11 @@ export default defineConfig({
   ignoreDeadLinks: checkEnglish ? false : translationLinkExceptions,
   srcExclude: checkEnglish ? ["ko/**", "tr/**", "zh/**"] : [],
   base: process.env.BRANCH_NAME ? "/" + process.env.BRANCH_NAME + "/" : "",
+
+  // Pages read {{ $frontmatter.qt_version }}; default it to the build configuration's Qt version.
+  transformPageData(pageData) {
+    pageData.frontmatter.qt_version ??= buildConfig.qt.version;
+  },
 
   head: [
     [
