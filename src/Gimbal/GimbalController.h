@@ -26,6 +26,13 @@ public:
     GimbalController(Vehicle *vehicle);
     ~GimbalController();
 
+    // These are public for creating unit tests
+    static constexpr int kRateResendIntervalMs = 500;     ///< Rate command resend period while an axis is moving
+    static constexpr int kTestRateResendIntervalMs = 50;  ///< Shortened rate resend period in unit tests
+    /// Minimum time between GIMBAL_MANAGER_STATUS interval requests, per gimbal
+    static constexpr int kStatusRequestSpacingMs = 1000;
+    static constexpr int kTestStatusRequestSpacingMs = 50;  ///< Shortened status request spacing in unit tests
+
     Gimbal *activeGimbal() const { return _activeGimbal; }
     QmlObjectListModel *gimbals() const { return _gimbals; }
 
