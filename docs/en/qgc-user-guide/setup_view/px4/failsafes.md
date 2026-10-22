@@ -20,6 +20,7 @@ Each row shows:
   A colored marker next to an action shows how severe it is: warning, hold, mode fallback, return, land, or terminate/disarm.
   Settings that only take effect after the vehicle reboots are marked _Applies after reboot_.
   Once one is changed from the value it had when the page opened, the mark becomes a _Reboot required_ warning.
+  The page shows these marks instead of the reboot notice that QGroundControl shows elsewhere. Reboot from the main status indicator in the toolbar.
 
 Some failsafes have an action that PX4 does not let you change, such as the _Maximum flight time_ failsafe which always returns.
 These show the action as fixed text.

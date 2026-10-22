@@ -17,6 +17,6 @@ private:
     /// Navigates from the Fly view to the Failsafes page of the Configure view
     void _navigateToFailsafes();
 
-    /// Sets \a fact, which needs a vehicle reboot, and dismisses the reboot-required notice
+    /// Sets \a fact, which needs a vehicle reboot, and waits for the vehicle to accept it
     void _setRebootRequiredFact(Fact* fact, const QVariant& rawValue);
 };

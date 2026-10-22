@@ -26,15 +26,14 @@ void PX4FailsafesUITest::_setRebootRequiredFact(Fact* fact, const QVariant& rawV
 {
     QSignalSpy ackSpy(fact, &Fact::vehicleUpdated);
     QVERIFY(ackSpy.isValid());
+    // The page marks the setting itself, so strict log checking fails the test if the reboot notice is shown
     qgcApp()->resetRebootMessageDebounce();
-    expectAppMessage(QRegularExpression(QStringLiteral("Vehicle reboot required for changes to take effect")));
     fact->setRawValue(rawValue);
     QVERIFY(ackSpy.wait(5000));
-    QVERIFY2(acceptDialog(5000), "Reboot-required notice never shown");
-    verifyExpectedLogMessage();
 }
 
-// A reboot-required setting is a muted hint until it changes from its value when the page opened
+// A reboot-required setting is a muted hint until it changes from its value when the page opened. The page shows
+// this instead of the vehicle reboot notice.
 void PX4FailsafesUITest::_testRebootChip()
 {
     runWithMockLink([] { return MockLink::startPX4MockLink(); },

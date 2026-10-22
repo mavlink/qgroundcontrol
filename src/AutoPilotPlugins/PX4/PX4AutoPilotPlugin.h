@@ -9,6 +9,7 @@
 #include "JoystickComponent.h"
 #include "MotorComponent.h"
 #include "PX4AirframeLoader.h"
+#include "PX4BatteryComponent.h"
 #include "PX4FailsafesComponent.h"
 #include "PX4FlightBehavior.h"
 #include "PX4RadioComponent.h"
@@ -47,6 +48,7 @@ protected:
     PX4FailsafesComponent* _failsafesComponent;
     PX4SerialPortsComponent* _serialPortsComponent;
     PowerComponent*         _powerComponent;
+    PX4BatteryComponent* _batteryComponent;
     MotorComponent*         _motorComponent;
     ActuatorComponent*      _actuatorComponent;
     PX4TuningComponent*     _tuningComponent;

@@ -17,8 +17,9 @@ SetupPage {
     property var _initialValues:    Object.create(null)
 
     readonly property var _vehicle: controller.vehicle
+    readonly property var _allRows: FailsafeRows.failsafeRows()
     readonly property var _rows: FailsafeRows.visibleRows(
-        FailsafeRows.failsafeRows(),
+        _allRows,
         {
             "multiRotor":   _vehicle ? _vehicle.multiRotor : false,
             "fixedWing":    _vehicle ? _vehicle.fixedWing : false,
@@ -74,7 +75,9 @@ SetupPage {
     }
 
     FactPanelController {
-        id: controller
+        id:                     controller
+        // Reboot-required settings are marked on the page instead
+        suppressRebootMessage:  true
     }
 
     QGCPalette {
@@ -101,49 +104,6 @@ SetupPage {
 
         QGCPalette {
             id: dotPal
-        }
-    }
-
-    component ThresholdBar: ColumnLayout {
-        property real emergency:    0
-        property real critical:     0
-        property real low:          0
-
-        spacing: ScreenTools.defaultFontPixelHeight * 0.25
-
-        QGCPalette {
-            id: barPal
-        }
-
-        Row {
-            Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 28
-            Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 0.75
-
-            Repeater {
-                model: [
-                    { "from": 0,                "to": emergency,    "color": barPal.colorRed },
-                    { "from": emergency,        "to": critical,     "color": barPal.colorOrange },
-                    { "from": critical,         "to": low,          "color": barPal.colorYellow },
-                    { "from": low,              "to": 1,            "color": barPal.colorGreen }
-                ]
-
-                Rectangle {
-                    width:  Math.max(0, (modelData.to - modelData.from)) * parent.width
-                    height: parent.height
-                    color:  modelData.color
-
-                    required property var modelData
-                }
-            }
-        }
-
-        QGCLabel {
-            font.pointSize: ScreenTools.smallFontPointSize
-            color:          barPal.textSecondary
-            text:           qsTr("Emergency %1%, critical %2%, warn %3%")
-                                .arg(Math.round(emergency * 100))
-                                .arg(Math.round(critical * 100))
-                                .arg(Math.round(low * 100))
         }
     }
 
@@ -448,7 +408,7 @@ SetupPage {
                                                         }
                                                     }
 
-                                                    ThresholdBar {
+                                                    BatteryThresholdBar {
                                                         // visibleRows only keeps this cell when all three parameters exist
                                                         visible:    modelData.thresholdBar !== undefined
                                                         emergency:  modelData.thresholdBar ? failsafesPage._fact(modelData.thresholdBar[0]).rawValue : 0

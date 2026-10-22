@@ -41,14 +41,15 @@ std::atomic<int> MockLink::_nextVehicleSystemId{128};
 
 namespace {
 
-// Serial port settings PX4 hasn't looked up because no function uses them (see PX4MockLink.params for the ones in use)
+// Parameters PX4 hasn't looked up because nothing uses them: serial port settings no function uses (see
+// PX4MockLink.params for the ones in use) and a second battery the board has no power input for
 constexpr std::pair<const char*, int32_t> kPX4UnusedParams[] = {
-    {"GPS_2_PROTOCOL", 1},     {"MAV_0_BROADCAST", 1},   {"MAV_0_REMOTE_PRT", 14550}, {"MAV_0_UDP_PRT", 14556},
-    {"MAV_1_BROADCAST", 0},    {"MAV_1_FLOW_CTRL", 2},   {"MAV_1_FORWARD", 0},        {"MAV_1_MODE", 2},
-    {"MAV_1_RADIO_CTL", 1},    {"MAV_1_RATE", 0},        {"MAV_1_REMOTE_PRT", 0},     {"MAV_1_UDP_PRT", 0},
-    {"SER_EXT2_BAUD", 57600},  {"SER_GPS2_BAUD", 0},     {"SER_GPS3_BAUD", 0},        {"SER_RC_BAUD", 0},
-    {"SER_TEL2_BAUD", 921600}, {"SER_TEL3_BAUD", 57600}, {"SER_TEL4_BAUD", 57600},    {"SER_URT6_BAUD", 57600},
-    {"SER_WIFI_BAUD", 1},
+    {"BAT2_SOURCE", 1},       {"GPS_2_PROTOCOL", 1},     {"MAV_0_BROADCAST", 1},   {"MAV_0_REMOTE_PRT", 14550},
+    {"MAV_0_UDP_PRT", 14556}, {"MAV_1_BROADCAST", 0},    {"MAV_1_FLOW_CTRL", 2},   {"MAV_1_FORWARD", 0},
+    {"MAV_1_MODE", 2},        {"MAV_1_RADIO_CTL", 1},    {"MAV_1_RATE", 0},        {"MAV_1_REMOTE_PRT", 0},
+    {"MAV_1_UDP_PRT", 0},     {"SER_EXT2_BAUD", 57600},  {"SER_GPS2_BAUD", 0},     {"SER_GPS3_BAUD", 0},
+    {"SER_RC_BAUD", 0},       {"SER_TEL2_BAUD", 921600}, {"SER_TEL3_BAUD", 57600}, {"SER_TEL4_BAUD", 57600},
+    {"SER_URT6_BAUD", 57600}, {"SER_WIFI_BAUD", 1},
 };
 
 }  // namespace

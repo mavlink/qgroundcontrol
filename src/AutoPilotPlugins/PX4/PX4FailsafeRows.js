@@ -6,7 +6,7 @@
 // Row:  { id, group, title, description, vehicles?, warnOnly?, activeWhen?, activeWhenAny?, cells }
 // Cell: { label, param? | thresholdBar? | fixed?, severity?, note?, vehicles?, onlyIfMissing? }
 //   vehicles        "multiRotor" | "fixedWing" | "vtol" names, any one matching shows the row or cell
-//   activeWhen      [{ param, op: "gt" | "ne", value, onlyIfMissing? }], all must hold. Omitted means always active.
+//   activeWhen      [{ param, op: "gt" | "ne" | "eq", value, onlyIfMissing? }], all must hold. Omitted means always active.
 //                   A condition with onlyIfMissing is ignored when that parameter is on the vehicle.
 //   activeWhenAny   [[condition, ...], ...], at least one list must fully hold. Combines with activeWhen.
 //                   A list only counts when at least one of its parameters is on the vehicle.
@@ -47,7 +47,7 @@ function failsafeRows() {
                 { thresholdBar: ["BAT_EMERGEN_THR", "BAT_CRIT_THR", "BAT_LOW_THR"], label: qsTr("Thresholds") },
                 { param: "COM_LOW_BAT_ACT", label: qsTr("Action"),
                   severity: { "0": "warning", "1": "return", "2": "land", "3": "return" } },
-                { param: "BAT_LOW_THR", label: qsTr("Warn level") },
+                { param: "BAT_LOW_THR", label: qsTr("Low level") },
                 { param: "BAT_CRIT_THR", label: qsTr("Critical level") },
                 { param: "BAT_EMERGEN_THR", label: qsTr("Emergency level") },
                 { param: "COM_ARM_BAT_MIN", label: qsTr("Min. battery to arm"),
@@ -345,7 +345,7 @@ function _allExist(names, paramExists) {
     return true
 }
 
-/// Returns the rows to show for a vehicle. Each returned row is a new object holding only the cells the vehicle
+/// Returns the rows to show for a vehicle. Each returned row is a copy of the row holding only the cells the vehicle
 /// supports (the cell objects are shared with `rows`), plus `params`, the parameter names those cells use.
 /// Rows with no parameter on the vehicle are left out.
 function visibleRows(rows, vehicle, paramExists) {
@@ -386,18 +386,7 @@ function visibleRows(rows, vehicle, paramExists) {
             continue
         }
 
-        visible.push({
-            id: row.id,
-            group: row.group,
-            title: row.title,
-            description: row.description,
-            warnOnly: row.warnOnly === true,
-            vehicles: row.vehicles,
-            activeWhen: row.activeWhen,
-            activeWhenAny: row.activeWhenAny,
-            cells: cells,
-            params: params
-        })
+        visible.push(Object.assign({}, row, { warnOnly: row.warnOnly === true, cells: cells, params: params }))
     }
 
     return visible
@@ -421,6 +410,9 @@ function _conditionsHold(conditions, rawValueOf, requireAvailable) {
             return false
         }
         if (condition.op === "ne" && value === condition.value) {
+            return false
+        }
+        if (condition.op === "eq" && value !== condition.value) {
             return false
         }
     }

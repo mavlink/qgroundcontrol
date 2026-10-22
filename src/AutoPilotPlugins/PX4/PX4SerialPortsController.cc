@@ -138,7 +138,7 @@ PX4SerialPortsController::PX4SerialPortsController(QObject* parent)
         return;
     }
 
-    _parameterManager->suppressRebootMessage();
+    setSuppressRebootMessage(true);
     (void) connect(_parameterManager, &ParameterManager::factAdded, this, &PX4SerialPortsController::_factAdded);
     (void) connect(_parameterManager, &ParameterManager::_paramRequestReadFailure, this,
                    &PX4SerialPortsController::_parameterReadFailed);
@@ -161,13 +161,6 @@ PX4SerialPortsController::PX4SerialPortsController(QObject* parent)
     }
 
     _update();
-}
-
-PX4SerialPortsController::~PX4SerialPortsController()
-{
-    if (_parameterManager) {
-        _parameterManager->unsuppressRebootMessage();
-    }
 }
 
 void PX4SerialPortsController::setPortFunction(int portId, int functionIndex)

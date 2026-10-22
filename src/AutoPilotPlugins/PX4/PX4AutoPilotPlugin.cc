@@ -32,6 +32,7 @@ PX4AutoPilotPlugin::PX4AutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     , _failsafesComponent(nullptr)
     , _serialPortsComponent(nullptr)
     , _powerComponent(nullptr)
+    , _batteryComponent(nullptr)
     , _motorComponent(nullptr)
     , _actuatorComponent(nullptr)
     , _tuningComponent(nullptr)
@@ -81,6 +82,13 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
                 _powerComponent = new PowerComponent(_vehicle, this, this);
                 _powerComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_powerComponent)));
+
+                if (_vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId,
+                                                                  "BAT1_SOURCE")) {
+                    _batteryComponent = new PX4BatteryComponent(_vehicle, this, this);
+                    _batteryComponent->setupTriggerSignals();
+                    _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_batteryComponent)));
+                }
 
                 if (_vehicle->actuators()) {
                     _vehicle->actuators()->init(); // At this point params are loaded, so we can init the actuators
