@@ -139,11 +139,13 @@ void SimpleMissionItem::_connectSignals(void)
     connect(&_missionItem._param6Fact,          &Fact::valueChanged,                        this, &SimpleMissionItem::_sendCoordinateChanged);
 
     connect(&_missionItem._param1Fact,          &Fact::valueChanged,                        this, &SimpleMissionItem::_possibleAdditionalTimeDelayChanged);
+    connect(&_missionItem._param1Fact, &Fact::valueChanged, this, &SimpleMissionItem::_possibleLoiterDistanceChanged);
     connect(&_missionItem._param4Fact,          &Fact::valueChanged,                        this, &SimpleMissionItem::_possibleVehicleYawChanged);
 
     // For NAV_LOITER_X commands, they must emit a radiusChanged signal
     connect(&_missionItem._param2Fact,          &Fact::valueChanged,                        this, &SimpleMissionItem::_possibleRadiusChanged);
     connect(&_missionItem._param3Fact,          &Fact::valueChanged,                        this, &SimpleMissionItem::_possibleRadiusChanged);
+    connect(&_missionItem._param3Fact, &Fact::valueChanged, this, &SimpleMissionItem::_possibleLoiterDistanceChanged);
 
     // Exit coordinate is the same as entrance coordinate
     connect(this,                               &SimpleMissionItem::coordinateChanged,      this, &SimpleMissionItem::entryCoordinateChanged);
@@ -1167,5 +1169,12 @@ void SimpleMissionItem::_possibleRadiusChanged(void)
 {
     if (isLoiterItem()) {
         emit loiterRadiusChanged(loiterRadius());
+    }
+}
+
+void SimpleMissionItem::_possibleLoiterDistanceChanged(void)
+{
+    if (mavCommand() == MAV_CMD_NAV_LOITER_TURNS) {
+        emit loiterDistanceChanged();
     }
 }

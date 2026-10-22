@@ -29,6 +29,7 @@ private slots:
     void _testSplitSegmentNotOnLegFromHome();
     void _testGimbalRecalc();
     void _testVehicleYawRecalc();
+    void _testLoiterTurnsDistance();
     void _testMissionReposition();
     void _testMissionOffset_data();
     void _testMissionOffset();
