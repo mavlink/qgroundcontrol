@@ -7,7 +7,6 @@ from pathlib import Path
 
 import pytest
 from common.qt import find_qt_tool, qt_version_key
-from packaging.version import Version
 
 pytestmark = pytest.mark.windows
 
@@ -29,13 +28,13 @@ def _isolate(monkeypatch: pytest.MonkeyPatch, home: Path) -> None:
 
 def test_qt_version_key_parses_install_paths() -> None:
     cases = {
-        "/home/user/Qt/6.8.0/gcc_64/bin/qt-cmake": "6.8.0",
-        "/home/user/Qt/6.10.1/gcc_64/bin": "6.10.1",
-        r"C:\Qt\6.11.1\msvc2022_64\bin\qt-cmake.bat": "6.11.1",
-        "/usr/bin/qt-cmake": "0",
+        "/home/user/Qt/6.8.0/gcc_64/bin/qt-cmake": (6, 8, 0),
+        "/home/user/Qt/6.10.1/gcc_64/bin": (6, 10, 1),
+        r"C:\Qt\6.11.1\msvc2022_64\bin\qt-cmake.bat": (6, 11, 1),
+        "/usr/bin/qt-cmake": (0,),
     }
     for path, expected in cases.items():
-        assert qt_version_key(Path(path)) == Version(expected)
+        assert qt_version_key(Path(path)) == expected
     assert qt_version_key(Path("/opt/Qt/6.10.0/gcc_64")) > qt_version_key(
         Path("/opt/Qt/6.9.3/gcc_64")
     )

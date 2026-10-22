@@ -769,7 +769,8 @@ class TestDepStatShortcut:
         dep.write_text("// dep\n")
         old = time.time() - 3600
         os.utime(dep, (old, old))  # extracted with an old mtime; ctime is now
-        st = dep.stat()
+        # The same fstat _manifest_line reads: on Windows os.stat and os.fstat can report different ctimes.
+        st = moccache._sha256_file_stat(dep)[1]
         assert st.st_ctime_ns > st.st_mtime_ns
         assert len(moccache._manifest_line(str(dep), [], st.st_ctime_ns + 1).split("\t")) == 5
         assert len(moccache._manifest_line(str(dep), [], st.st_ctime_ns).split("\t")) == 2

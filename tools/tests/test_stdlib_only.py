@@ -48,6 +48,12 @@ PRE_SETUP_PYTHON_SCRIPTS: tuple[str, ...] = (
     "tools/setup/install_dependencies/__main__.py",
     "tools/setup/install_python.py",  # setup-python's own installer
     "tools/setup/install_uv.py",  # VM and runner-image provisioning
+    # Run as `python3` from actions' bash steps, which on Windows resolves to the runner's interpreter
+    # rather than tools/.venv (the venv only provides python.exe).
+    "tools/ci/android/android_sdk_helper.py",
+    "tools/ci/cache/ccache_helper.py",
+    "tools/ci/compile/cmake_helper.py",
+    "tools/moccache.py",
 )
 
 # Runs the script's module body without its __main__ block, with the script directory on

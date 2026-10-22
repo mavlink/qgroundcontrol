@@ -7,8 +7,6 @@ import re
 from glob import glob
 from pathlib import Path
 
-from packaging.version import Version
-
 from .platform import host_arch, is_linux, is_macos, is_windows
 
 __all__ = ["find_qt_tool", "qt_version_key"]
@@ -16,10 +14,13 @@ __all__ = ["find_qt_tool", "qt_version_key"]
 _VERSION_IN_PATH = re.compile(r"[\\/](\d+\.\d+\.\d+)[\\/]")
 
 
-def qt_version_key(path: Path) -> Version:
-    """Return the Qt version in an install path such as ``~/Qt/6.10.1/gcc_64/bin``."""
+def qt_version_key(path: Path) -> tuple[int, ...]:
+    """Return the Qt version in an install path such as ``~/Qt/6.10.1/gcc_64/bin`` (``(0,)`` if none).
+
+    Stdlib-only: CI runs cmake_helper.py through `python3`, which on Windows is the runner's interpreter.
+    """
     match = _VERSION_IN_PATH.search(f"{path}/")
-    return Version(match.group(1) if match else "0")
+    return tuple(int(part) for part in match.group(1).split(".")) if match else (0,)
 
 
 def _kit_bin_patterns(version: str) -> list[Path]:

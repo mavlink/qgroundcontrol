@@ -14,8 +14,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-from packaging.version import InvalidVersion, Version
-
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import _bootstrap as _bootstrap
@@ -23,11 +21,13 @@ from common.gh_actions import append_github_env, gh_error
 from common.proc import run_with_retry
 
 
-def _cmdline_tools_version(sdkmanager: Path) -> Version:
-    try:
-        return Version(sdkmanager.parent.parent.name)
-    except InvalidVersion:
-        return Version("0")
+def _cmdline_tools_version(sdkmanager: Path) -> tuple[int, ...]:
+    """Version of a cmdline-tools/<version> directory; names that aren't versions sort last.
+
+    Stdlib-only: this Windows-only helper runs as `python3`, the runner's interpreter there.
+    """
+    parts = sdkmanager.parent.parent.name.split(".")
+    return tuple(int(part) for part in parts) if all(part.isdigit() for part in parts) else (-1,)
 
 
 def _find_sdkmanager(sdk_root: str) -> str:
