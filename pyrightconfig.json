@@ -5,8 +5,7 @@
     "build",
     "**/__pycache__",
     "**/.venv",
-    "**/node_modules",
-    "tools/skills"
+    "**/node_modules"
   ],
   "include": [
     "tools/**/*.py",

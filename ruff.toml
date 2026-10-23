@@ -3,9 +3,10 @@
 
 target-version = "py310"
 line-length = 100
+cache-dir = ".cache/ruff"
 
-# Build artifacts and vendored skills, on top of Ruff's default excludes
-extend-exclude = ["build", "tools/skills"]
+# Build artifacts, on top of Ruff's default excludes
+extend-exclude = ["build"]
 
 [lint]
 select = [

@@ -1,0 +1,38 @@
+# gersemi trial: the manual-stage `gersemi` hook passes this file with --config; cmake-format and
+# cmake-lint remain the enforced CMake hooks. Settings approximate .cmake-format.yaml.
+# Files and directories defining QGC commands, so gersemi derives their keywords; gersemi resolves
+# them relative to this file. The remaining cmake/tests and cmake/GStreamer/tests files are left
+# out: their stubs redefine some of these commands.
+definitions:
+  - ../../cmake/CompilerWarnings.cmake
+  - ../../cmake/GStreamer/Components.cmake
+  - ../../cmake/GStreamer/Download.cmake
+  - ../../cmake/GStreamer/Install.cmake
+  - ../../cmake/GStreamer/Layout.cmake
+  - ../../cmake/GStreamer/Link.cmake
+  - ../../cmake/GStreamer/Notice.cmake
+  - ../../cmake/GStreamer/PkgConfig.cmake
+  - ../../cmake/GStreamer/Platform.cmake
+  - ../../cmake/GStreamer/PluginPolicy.cmake
+  - ../../cmake/GStreamer/Probe.cmake
+  - ../../cmake/GStreamer/SdkState.cmake
+  - ../../cmake/GStreamer/StaticInit.cmake
+  - ../../cmake/GStreamer/Targets.cmake
+  - ../../cmake/GStreamer/platform
+  - ../../cmake/GStreamer/tests/_assert.cmake
+  - ../../cmake/Helpers.cmake
+  - ../../cmake/PrintSummary.cmake
+  - ../../cmake/QGCTest.cmake
+  - ../../cmake/install
+  - ../../cmake/modules
+  - ../../cmake/platform
+  - ../../cmake/tests/CMakeLists.txt
+  - ../../cmake/tests/ExpectedFailureTest.cmake
+  - ../../src/VideoManager/VideoReceiver/GStreamer/HwBuffers/CMakeLists.txt
+  - ../../test/CMakeLists.txt
+  - ../../test/GPS/CMakeLists.txt
+  - ../../test/Portable/CMakeLists.txt
+indent: 4
+line_length: 120
+# Qt's commands (qt_add_*) and file-local test helpers are unknown; gersemi keeps their argument layout.
+warn_about_unknown_commands: false

@@ -1,8 +1,11 @@
 # QGroundControl Development Commands
-# Install (requires just >=1.27 for shell()):
+# Install (requires just >=1.48 for `set lazy`):
 #   python tools/setup/install_python.py dev   (recommended; pulls rust-just into tools/.venv)
 #   brew install just / cargo install just
 # `apt install just` on Ubuntu ships 1.21 which is too old.
+
+# Evaluate the shell() assignments only in recipes that use them (`info`).
+set lazy
 
 host_os := os()
 python := "uv run --frozen --project tools --group scripts python"
@@ -82,11 +85,11 @@ lint-docs *ARGS:
 
 # Check clang-format on lines changed since the default branch (no changes)
 format:
-    {{ python }} ./tools/analyze.py --tool clang-format
+    uv run --frozen --project tools --group lint python ./tools/analyze.py --tool clang-format
 
 # Apply clang-format to lines changed since the default branch
 format-fix:
-    {{ python }} ./tools/analyze.py --tool clang-format --fix
+    uv run --frozen --project tools --group lint python ./tools/analyze.py --tool clang-format --fix
 
 # Run static analysis
 analyze:
@@ -94,7 +97,7 @@ analyze:
 
 # Generate coverage report
 coverage:
-    {{ build_tool }} python ./tools/coverage.py
+    {{ build_tool }} python ./tools/coverage_report.py
 
 # Run all Python tooling tests in parallel, in random order (pass pytest options, e.g. --randomly-seed=N)
 test-python *ARGS:
@@ -112,6 +115,7 @@ run:
     "{{ app_path }}"
 
 # Build documentation
+[working-directory: 'docs']
 docs:
     npm run docs:build
 
@@ -145,14 +149,17 @@ check-gstreamer:
 translations:
     {{ python }} ./tools/translations/qgc_lupdate.py
 
-# Clean build, caches, and generated files
+# Clean build, caches, generated files, and node_modules
 distclean:
     {{ python }} ./tools/clean.py --all
-    {{ python }} -c "import shutil; shutil.rmtree('node_modules', ignore_errors=True)"
 
 # Validate schema and cross-field build settings
 validate-configs:
     uv run --frozen --project tools --group lint python tools/validate_configs.py
+
+# Print draft release notes for a vX.Y.Z tag (an untagged version drafts the commits since the last release)
+release-notes TAG:
+    uv run --frozen --project tools --group release python tools/ci/publish/release_notes.py "{{ TAG }}"
 
 # Lint QML with generated module type information (requires a build)
 lint-qml-build:

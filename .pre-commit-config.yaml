@@ -15,7 +15,7 @@ repos:
         name: Validate configuration relationships
         entry: uv run --frozen --project tools --group lint python tools/validate_configs.py
         language: system
-        files: ^(\.github/build-config.*\.json|\.lychee\.toml|deploy/docker/Dockerfile|tools/(validate_configs\.py|pyproject\.toml))$
+        files: ^(\.github/build-config.*\.json|deploy/docker/Dockerfile|tools/(configs/lychee\.toml|validate_configs\.py|pyproject\.toml))$
         pass_filenames: false
 
       # Works offline: the schema ships with the build group's locked cmake package.
@@ -32,7 +32,7 @@ repos:
         language: system
         files: ^translations/.*\.ts$
 
-      # Types match .releaserc.json and the PR title check, plus Renovate's `deps`.
+      # Types match the release-notes parsers in tools/configs/cliff.toml and the PR title check.
       - id: conventional-commit-msg
         name: Conventional Commits message
         language: pygrep
@@ -68,13 +68,14 @@ repos:
         args: ['--fix=lf']
         exclude: (\.(ambr|bat|ps1)$|^test/GPS/Core/Protocols/(corpus|fixtures)/.*\.(bin|gps|nmea|sbf|ubx)$)
 
-  # Enforces .editorconfig. .editorconfig-checker.json skips binary, generated, and legacy files that
-  # predate the hook, and disables indent_size (continuation lines align to their opening token) and
-  # max_line_length (clang-format and ruff own line length).
+  # Enforces .editorconfig. tools/configs/editorconfig-checker.json skips binary, generated, and
+  # legacy files that predate the hook, and disables indent_size (continuation lines align to their
+  # opening token) and max_line_length (clang-format and ruff own line length).
   - repo: https://github.com/editorconfig-checker/editorconfig-checker
     rev: v4.0.2
     hooks:
       - id: editorconfig-checker
+        args: [-config, tools/configs/editorconfig-checker.json]
 
   # Secret detection
   - repo: https://github.com/trufflesecurity/trufflehog
@@ -92,6 +93,16 @@ repos:
         entry: uv run --frozen --project tools --group lint python tools/analyzers/clang_format.py
         language: system
         types_or: [c++, c]
+
+      # The style reference must stay fully formatted when the style or the pinned clang-format changes.
+      - id: clang-format-coding-style
+        name: clang-format (coding-style reference)
+        entry: >-
+          uv run --frozen --project tools --group lint clang-format --dry-run --Werror
+          tools/coding-style/CodingStyle.h tools/coding-style/CodingStyle.cc
+        language: system
+        files: ^(\.clang-format|tools/uv\.lock|tools/coding-style/.*\.(h|cc))$
+        pass_filenames: false
 
       # Python linting and formatting (report-only)
       - id: ruff-check
@@ -113,8 +124,8 @@ repos:
       # Python type checking
       - id: pyright
         name: pyright
-        # terrain lets pyright resolve numpy and rasterio types in tools/terrain.
-        entry: uv run --frozen --project tools --group lint --group terrain pyright
+        # terrain and simulation let pyright resolve numpy/rasterio and pymavlink types.
+        entry: uv run --frozen --project tools --group lint --group terrain --group simulation pyright
         language: system
         types_or: [python, pyi]
         require_serial: true
@@ -123,7 +134,7 @@ repos:
 
       - id: import-linter
         name: import-linter (tools contracts)
-        entry: uv run --frozen --directory tools --group lint lint-imports
+        entry: uv run --frozen --directory tools --group lint lint-imports --cache-dir ../.cache/import-linter
         language: system
         files: ^tools/.*\.py$
         pass_filenames: false
@@ -198,7 +209,7 @@ repos:
     rev: v0.49.1
     hooks:
       - id: markdownlint
-        exclude: ^(translations/|tools/skills/|docs/(zh|ko|tr|ru|ja|de|es|fa|fr|he|uk)/|CHANGELOG\.md)
+        exclude: ^(translations/|docs/(zh|ko|tr|ru|ja|de|es|fa|fr|he|uk)/|CHANGELOG\.md)
 
   # Prose linting (documentation quality)
   # The sync hook downloads the Packages declared in .vale.ini into the gitignored
@@ -233,7 +244,7 @@ repos:
     rev: 0.29.2
     hooks:
       - id: gersemi
-        args: [--check, --diff]  # Configured by .gersemirc
+        args: [--config, tools/configs/gersemirc.yaml, --check, --diff]
         exclude: ^cmake/modules/CPM\.cmake$
         stages: [manual]
 
@@ -241,28 +252,28 @@ repos:
     rev: v0.21.0
     hooks:
       - id: yamlfmt
-        args: [-lint]  # Configured by .yamlfmt
+        args: [-conf, tools/configs/yamlfmt.yaml, -lint]
         stages: [manual]
 
   - repo: local
     hooks:
       - id: qmllint
         name: Lint QML files
-        entry: python3 ./tools/analyze.py --tool qmllint
+        entry: uv run --frozen --project tools --group scripts python ./tools/analyze.py --tool qmllint
         language: system
         files: \.qml$
         pass_filenames: true
 
       - id: qmlformat
         name: qmlformat (check)
-        entry: python3 ./tools/analyzers/qmlformat.py
+        entry: uv run --frozen --project tools --group scripts python ./tools/analyzers/qmlformat.py
         language: system
         files: \.qml$
         stages: [manual]
 
       - id: clang-tidy
         name: Clang-Tidy static analysis
-        entry: python3 ./tools/analyze.py --tool clang-tidy
+        entry: uv run --frozen --project tools --group scripts python ./tools/analyze.py --tool clang-tidy
         stages: [manual]
         language: system
         types_or: [c++, c]
@@ -287,7 +298,7 @@ repos:
 
       - id: clazy
         name: Qt static analysis (clazy)
-        entry: python3 ./tools/analyze.py --tool clazy
+        entry: uv run --frozen --project tools --group scripts python ./tools/analyze.py --tool clazy
         stages: [manual]
         language: system
         types: [c++]
@@ -338,7 +349,7 @@ repos:
 
       - id: vehicle-null-check
         name: Check vehicle null safety
-        entry: python3 tools/analyzers/vehicle_null_check.py
+        entry: uv run --frozen --project tools --group scripts python tools/analyzers/vehicle_null_check.py
         language: system
         types: [c++]
         exclude: ^(test/|tools/tests/fixtures/)
@@ -346,7 +357,7 @@ repos:
 
       - id: qt-translate-noop-check
         name: Check QT_TRANSLATE_NOOP misuse
-        entry: python3 tools/analyzers/qt_translate_noop_check.py
+        entry: uv run --frozen --project tools --group scripts python tools/analyzers/qt_translate_noop_check.py
         language: system
         types: [c++]
         exclude: ^test/

@@ -26,8 +26,6 @@ PN = "PN"  # typos splits "PNGs" into "PN" + "Gs"
 
 [files]
 extend-exclude = [
-    # Skills vendored from Qt (downloaded, not authored here) — held to their own standards.
-    "tools/skills/",
     "translations/",
     # Foreign language documentation (avoid false positives)
     "docs/ko/",

@@ -39,10 +39,6 @@ CMakeUserPresets.json
 *~
 tags
 
-# Node.js (docs build)
-node_modules/
-package-lock.json
-
 # Python
 *.pyc
 __pycache__/

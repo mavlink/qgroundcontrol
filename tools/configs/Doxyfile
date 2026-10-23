@@ -1,4 +1,6 @@
 # Doxyfile for QGroundControl
+# Run from the repository root (`doxygen tools/configs/Doxyfile`): Doxygen resolves relative paths
+# against the working directory, not this file.
 
 PROJECT_NAME           = "QGroundControl"
 PROJECT_BRIEF          = "Ground Control Station for MAVLink Drones"
