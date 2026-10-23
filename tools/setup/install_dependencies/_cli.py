@@ -81,6 +81,7 @@ Categories (Linux only):
   misc        Vulkan, PipeWire
   android     core plus the JDK for Gradle (Debian only)
   gstreamer_build  build_gstreamer.py's Linux source-build dependencies (Debian only)
+  gstreamer_build_android  build_gstreamer.py's Android (Cerbero) build dependencies (Debian only)
 
 Examples:
   %(prog)s                      # Auto-detect and install all

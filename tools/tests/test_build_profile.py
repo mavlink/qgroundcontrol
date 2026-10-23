@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 import build_profile as build_profile_cli
 import pytest
+from common.build_config import load_build_config
 from qgc_tools.build_profile import (
     BuildEdge,
     TimeTrace,
@@ -18,6 +20,8 @@ from qgc_tools.build_profile import (
     summarize_ninja_log,
     write_snapshot,
 )
+
+from ._helpers import get_step, get_steps, load_workflow
 
 
 def test_parse_ninja_log_reads_edges_and_skips_header(tmp_path: Path) -> None:
@@ -236,3 +240,123 @@ def test_cli_rejects_json_options_with_snapshot(tmp_path: Path) -> None:
     for option in (["--json"], ["--json-out", str(tmp_path / "r.json")]):
         with pytest.raises(SystemExit):
             build_profile_cli.parse_args(["--output-dir", str(tmp_path), *option])
+
+
+def test_cli_step_summary_collapses_the_report_and_extra_reports(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+    gh_summary: Path,
+) -> None:
+    (tmp_path / ".ninja_log").write_text("# ninja log v5\n0\t40\t0\ta.o\th\n", encoding="utf-8")
+    (tmp_path / "CMakeCache.txt").write_text(
+        "CMAKE_BUILD_TYPE:STRING=Release\nCMAKE_CXX_COMPILER:FILEPATH=/usr/bin/clang++\n",
+        encoding="utf-8",
+    )
+    trace_report = tmp_path / "trace.txt"
+    trace_report.write_text("**** Expensive headers:\n```\nQObject\n", encoding="utf-8")
+    monkeypatch.setenv("GITHUB_SHA", "0123abc")
+    compilers: list[str] = []
+    monkeypatch.setattr(
+        build_profile_cli,
+        "_compiler_version",
+        lambda compiler: compilers.append(compiler) or "Ubuntu clang version 14.0.0",
+    )
+
+    argv = ["-B", str(tmp_path), "--step-summary", "--extra-report", f"Headers={trace_report}"]
+    assert build_profile_cli.main(argv) == 0
+
+    report = capsys.readouterr().out
+    summary = gh_summary.read_text(encoding="utf-8")
+    assert summary.startswith("### Build profile\n\n| Item | Value |")
+    assert "| Build type | Release |" in summary
+    assert "| Commit | `0123abc` |" in summary
+    assert "| Compiler | `Ubuntu clang version 14.0.0` |" in summary
+    assert compilers == ["/usr/bin/clang++"]
+    assert (
+        "<details><summary>Ninja and per-TU hotspots (tools/build_profile.py)</summary>\n\n```\n"
+        + report.rstrip()
+        + "\n```\n\n</details>"
+    ) in summary
+    # The fence outgrows the report's own backtick runs.
+    assert (
+        "<details><summary>Headers</summary>\n\n````\n**** Expensive headers:\n```\nQObject\n````"
+    ) in summary
+
+
+def test_cli_extra_report_title_ends_at_the_first_equals_sign(tmp_path: Path) -> None:
+    args = build_profile_cli.parse_args(
+        ["--step-summary", "--extra-report", f"Headers (ClangBuildAnalyzer)={tmp_path}/a=b.txt"]
+    )
+    assert args.extra_reports == [("Headers (ClangBuildAnalyzer)", tmp_path / "a=b.txt")]
+
+
+@pytest.mark.parametrize(
+    "argv",
+    [
+        ["--extra-report", "Title=file.txt"],
+        ["--step-summary", "--extra-report", "file.txt"],
+        ["--step-summary", "--extra-report", "=file.txt"],
+        ["--step-summary", "--output-dir", "out"],
+    ],
+)
+def test_cli_rejects_invalid_summary_options(argv: list[str]) -> None:
+    with pytest.raises(SystemExit):
+        build_profile_cli.parse_args(argv)
+
+
+def test_install_clang_build_analyzer_downloads_the_pinned_binary(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    pin = load_build_config()["tools"]["clang_build_analyzer"]
+    downloads: list[tuple[str, Path, str | None]] = []
+
+    def fake_download(url: str, dest: Path, *, expected_sha256: str | None = None) -> None:
+        downloads.append((url, dest, expected_sha256))
+        dest.write_bytes(b"\x7fELF")
+
+    monkeypatch.setattr(build_profile_cli, "download_file", fake_download)
+    monkeypatch.setattr(build_profile_cli, "is_linux", lambda: True)
+    monkeypatch.setattr(build_profile_cli, "host_arch", lambda: "x86_64")
+    binary = tmp_path / "bin" / "ClangBuildAnalyzer"
+
+    assert build_profile_cli.main(["--install-clang-build-analyzer", str(binary)]) == 0
+
+    assert downloads == [
+        (
+            f"https://github.com/aras-p/ClangBuildAnalyzer/releases/download/v{pin['version']}/"
+            "ClangBuildAnalyzer-linux",
+            binary,
+            pin["sha256"]["linux-x86_64"],
+        )
+    ]
+    assert os.access(binary, os.X_OK)
+
+
+def test_install_clang_build_analyzer_needs_linux_x86_64(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(build_profile_cli, "is_linux", lambda: True)
+    monkeypatch.setattr(build_profile_cli, "host_arch", lambda: "aarch64")
+    with pytest.raises(SystemExit):
+        build_profile_cli.parse_args(["--install-clang-build-analyzer", str(tmp_path / "cba")])
+
+
+def test_build_profile_workflow_summarizes_through_the_cli() -> None:
+    steps = get_steps(load_workflow("build-profile.yml"), "profile")
+    runs = "\n".join(step.get("run", "") for step in steps)
+    assert "GITHUB_STEP_SUMMARY" not in runs
+    assert "curl " not in runs
+    assert "/tmp/" not in runs
+    install = get_step(steps, "Install ClangBuildAnalyzer")["run"]
+    assert "--install-clang-build-analyzer" in install
+    profile = get_step(steps, "Run tools/build_profile.py (ninja + per-TU)")["run"]
+    assert "--step-summary" in profile
+    assert (
+        '--extra-report "Headers, templates, and functions (ClangBuildAnalyzer)='
+        'qgc-trace-report.txt"' in profile
+    )
+    names = [step.get("name") for step in steps]
+    assert names.index("Analyze ClangBuildAnalyzer capture") < names.index(
+        "Run tools/build_profile.py (ninja + per-TU)"
+    )

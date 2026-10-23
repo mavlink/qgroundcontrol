@@ -167,6 +167,12 @@ def test_gstreamer_build_excluded_from_aggregate() -> None:
     assert not only_gstreamer_build & set(get_debian_packages())
 
 
+def test_gstreamer_build_android_is_opt_in() -> None:
+    android = set(get_debian_packages("gstreamer_build_android"))
+    assert {"python3-venv", "bison", "flex", "autoconf", "automake"} <= android
+    assert not {"python3-venv", "bison", "flex"} & set(get_debian_packages())
+
+
 @pytest.mark.parametrize("available", [True, False])
 def test_unavailable_optional_packages_are_dropped(available: bool) -> None:
     # Debian 12 has no libgstreamer-plugins-good1.0-dev; an unknown name makes apt abort the install.

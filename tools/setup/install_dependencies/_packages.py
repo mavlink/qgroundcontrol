@@ -134,6 +134,21 @@ DEBIAN_PACKAGES: dict[str, list[str]] = {
         "nasm",
         "yasm",
     ],
+    # Cerbero's Android GStreamer builds (build_gstreamer.py --platform android, build-gstreamer.yml);
+    # Cerbero bootstraps the NDK and target toolchain itself. Excluded from the aggregate set too.
+    "gstreamer_build_android": [
+        "python3-venv",
+        "git",
+        "autoconf",
+        "automake",
+        "libtool",
+        "pkg-config",
+        "gettext",
+        "bison",
+        "flex",
+        "cmake",
+        "ninja-build",
+    ],
     # Target-side libraries for the aarch64 cross sysroot. Single source for
     # deploy/docker/install_sysroot_aarch64.py, which apt-installs these with an
     # :arm64 tag. Excluded from the aggregate (native) set by get_packages.
@@ -388,7 +403,8 @@ PACKAGE_TABLES: dict[str, dict[str, list[str]]] = {
     "windows": {},
 }
 
-# Categories outside the default (native desktop) set: target sysroot and GStreamer source-build deps.
+# Categories outside the default (native desktop) set: target sysroots and GStreamer source-build
+# deps (gstreamer_build and gstreamer_build_android).
 _OPT_IN_CATEGORIES = ("cross_", "gstreamer_build")
 
 

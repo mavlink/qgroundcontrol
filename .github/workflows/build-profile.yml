@@ -65,14 +65,11 @@ jobs:
         with:
           extra-packages: clang
 
+      # The SHA-256-verified release pinned in build-config.json's tools.clang_build_analyzer.
       - name: Install ClangBuildAnalyzer
         run: |
-          set -euo pipefail
-          curl -fsSL --retry 5 --retry-delay 2 --retry-all-errors --max-time 300 \
-            https://github.com/aras-p/ClangBuildAnalyzer/releases/download/v1.6.0/ClangBuildAnalyzer-linux-x64 \
-            -o /tmp/ClangBuildAnalyzer
-          chmod +x /tmp/ClangBuildAnalyzer
-          test -x /tmp/ClangBuildAnalyzer
+          python3 "${GITHUB_WORKSPACE}/tools/build_profile.py" \
+            --install-clang-build-analyzer "${RUNNER_TEMP}/ClangBuildAnalyzer"
 
       - name: Configure
         uses: ./.github/actions/cmake-configure
@@ -82,19 +79,23 @@ jobs:
 
       - name: Start ClangBuildAnalyzer capture
         working-directory: ${{ runner.temp }}/build
-        run: /tmp/ClangBuildAnalyzer --start .
+        run: |
+          "${RUNNER_TEMP}/ClangBuildAnalyzer" --start .
 
       - name: Build
         uses: ./.github/actions/cmake-build
 
       - name: Stop ClangBuildAnalyzer capture
         working-directory: ${{ runner.temp }}/build
-        run: /tmp/ClangBuildAnalyzer --stop . qgc-trace.bin
+        run: |
+          "${RUNNER_TEMP}/ClangBuildAnalyzer" --stop . qgc-trace.bin
 
       - name: Analyze ClangBuildAnalyzer capture
         working-directory: ${{ runner.temp }}/build
-        run: /tmp/ClangBuildAnalyzer --analyze qgc-trace.bin > qgc-trace-report.txt
+        run: |
+          "${RUNNER_TEMP}/ClangBuildAnalyzer" --analyze qgc-trace.bin > qgc-trace-report.txt
 
+      # Also writes the job summary: build type, commit, compiler, and both reports collapsed.
       - name: Run tools/build_profile.py (ninja + per-TU)
         working-directory: ${{ runner.temp }}/build
         env:
@@ -105,27 +106,9 @@ jobs:
             --build-dir . \
             --limit "$LIMIT" \
             --json-out qgc-tu-report.json \
+            --step-summary \
+            --extra-report "Headers, templates, and functions (ClangBuildAnalyzer)=qgc-trace-report.txt" \
             > qgc-tu-report.txt
-
-      # Same layout as the other job summaries: a facts table, then collapsed reports.
-      - name: Post summary
-        working-directory: ${{ runner.temp }}/build
-        env:
-          BUILD_TYPE: ${{ inputs.build_type }}
-        run: |
-          details() {
-            printf '<details><summary>%s</summary>\n\n````\n' "$1"
-            cat "$2"
-            printf '````\n\n</details>\n\n'
-          }
-          {
-            printf '### Build profile\n\n| Item | Value |\n| --- | --- |\n'
-            printf '| Build type | %s |\n' "$BUILD_TYPE"
-            printf '| Commit | %s |\n' "\`${GITHUB_SHA}\`"
-            printf '| Compiler | %s |\n\n' "\`$("$CXX" --version | head -n1)\`"
-            details "Ninja and per-TU hotspots (tools/build_profile.py)" qgc-tu-report.txt
-            details "Headers, templates, and functions (ClangBuildAnalyzer)" qgc-trace-report.txt
-          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload profile artifacts
         if: always()

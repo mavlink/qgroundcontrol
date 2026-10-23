@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from setup.gstreamer.ci_plan import APT_CATEGORIES, DESKTOP_QT, PLATFORMS
 from setup.install_dependencies._packages import get_debian_packages
 
 from ..._helpers import get_step, get_steps, load_action, load_workflow
@@ -14,10 +15,38 @@ def _steps() -> list[dict[str, Any]]:
     return get_steps(load_workflow("build-gstreamer.yml"), "build")
 
 
-def test_linux_dependencies_come_from_an_install_dependencies_package_set() -> None:
-    step = get_step(_steps(), "Install dependencies (Linux)")
+def test_plan_runs_first_and_drives_the_setup_steps() -> None:
+    steps = _steps()
+    plan = get_step(steps, "plan")
+    assert " ".join(plan["run"].replace("\\\n", " ").split()) == (
+        'python3 ./tools/setup/gstreamer/ci_plan.py --platform "$PLATFORM" --arch "$ARCH" '
+        '--simulator "$SIMULATOR"'
+    )
+    assert plan["env"] == {
+        "PLATFORM": "${{ inputs.platform }}",
+        "ARCH": "${{ inputs.arch }}",
+        "SIMULATOR": "${{ inputs.simulator }}",
+    }
+    names = [step.get("id") or step["name"] for step in steps]
+    assert names.index("plan") < names.index("Install dependencies (apt)")
+    assert names.index("plan") < names.index("Build Setup") < names.index("build")
+    setup = get_step(steps, "Build Setup")
+    assert setup["if"] == "steps.plan.outputs.qt-host != ''"
+    assert setup["with"]["qt-host"] == "${{ steps.plan.outputs.qt-host }}"
+    assert setup["with"]["qt-arch"] == "${{ steps.plan.outputs.qt-arch }}"
+    for step_id in ("build", "archive"):
+        assert get_step(steps, step_id)["env"]["SIMULATOR"] == "${{ steps.plan.outputs.simulator }}"
+    # build_gstreamer.py resolves the Windows work directory and the macOS/Windows Qt prefix itself.
+    assert {"QT_PREFIX", "WORK_DIR"}.isdisjoint(get_step(steps, "build")["env"])
+
+
+def test_apt_dependencies_come_from_an_install_dependencies_package_set() -> None:
+    step = get_step(_steps(), "Install dependencies (apt)")
     assert step["uses"] == "./.github/actions/install-dependencies"
-    assert get_debian_packages(step["with"]["category"])
+    assert step["if"] == "steps.plan.outputs.apt-category != ''"
+    assert step["with"]["category"] == "${{ steps.plan.outputs.apt-category }}"
+    assert all(get_debian_packages(category) for category in APT_CATEGORIES.values())
+    assert not any("apt-get" in step.get("run", "") for step in _steps())
 
 
 def test_build_step_outputs_the_arch_and_prefix_the_archive_step_reads() -> None:
@@ -41,8 +70,14 @@ def test_sparse_checkout_covers_every_script_the_job_runs() -> None:
     assert all(any(script.startswith(f"{root}/") for root in roots) for script in scripts)
 
 
-def test_arm64_builds_install_qt_from_the_matching_host_repository() -> None:
-    """Qt's linux_x64 and windows_x86 repositories have no native ARM64 desktop packages."""
-    qt_host = " ".join(get_step(_steps(), "Build Setup")["with"]["qt-host"].split())
-    assert "inputs.arch == 'aarch64' && 'linux_arm64'" in qt_host
-    assert "inputs.arch == 'arm64' && 'windows_arm64'" in qt_host
+def test_runs_on_picks_the_arm64_runners_the_plan_accepts() -> None:
+    """ci_plan.py accepts Linux aarch64 and Windows arm64, which need native arm64 runners."""
+    runs_on = " ".join(load_workflow("build-gstreamer.yml")["jobs"]["build"]["runs-on"].split())
+    assert (
+        "inputs.platform == 'linux' && (inputs.arch == 'aarch64' && 'ubuntu-24.04-arm'" in runs_on
+    )
+    assert "inputs.platform == 'windows' && (inputs.arch == 'arm64' && 'windows-11-arm'" in runs_on
+    assert set(DESKTOP_QT["linux"]) == {"x86_64", "aarch64"}
+    assert set(DESKTOP_QT["windows"]) == {"x64", "arm64"}
+    inputs = load_workflow("build-gstreamer.yml")["on"]["workflow_dispatch"]["inputs"]
+    assert inputs["platform"]["options"] == list(PLATFORMS)

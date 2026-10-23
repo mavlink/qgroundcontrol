@@ -82,6 +82,7 @@ def test_schema_requires_the_pins_and_renovate_tracks_them() -> None:
         "anchore/grype",
         "hashicorp/packer",
         "runs-on/cli",
+        "aras-p/ClangBuildAnalyzer",
     }
     # A version bump needs new digests, so it must not join the weekly group PR unapproved.
     rules = renovate["packageRules"]
@@ -126,7 +127,8 @@ def test_macos_and_windows_install_through_the_retrying_ci_helper(runner_os: str
 
 def test_jobs_installing_dependencies_get_the_pinned_tools_first() -> None:
     """The helper skips the distro CMake, Ninja, ccache and mold; build-setup and its cache install them."""
-    # Windows installs MSVC before build-setup; build-gstreamer's category lists none of these tools.
+    # Windows installs MSVC before build-setup. build-gstreamer installs before build-setup, and its
+    # Android leg skips it and uses the runner image's CMake and Ninja.
     exempt = {"windows.yml", "build-gstreamer.yml"}
     checked = 0
     for workflow in workflow_names():

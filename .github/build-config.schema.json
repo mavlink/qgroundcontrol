@@ -346,7 +346,7 @@
     },
     "tools": {
       "type": "object",
-      "description": "Prebuilt tools that tools/ci scripts download and verify",
+      "description": "Prebuilt tools that tools/ci scripts and build_profile.py download and verify",
       "required": [
         "ccache",
         "mold",
@@ -354,6 +354,7 @@
         "grype",
         "packer",
         "roc",
+        "clang_build_analyzer",
         "bloaty"
       ],
       "additionalProperties": false,
@@ -590,6 +591,37 @@
                   "$ref": "#/definitions/sha256"
                 },
                 "darwin-aarch64": {
+                  "$ref": "#/definitions/sha256"
+                }
+              }
+            }
+          }
+        },
+        "clang_build_analyzer": {
+          "type": "object",
+          "description": "ClangBuildAnalyzer release that build_profile.py installs for build-profile.yml",
+          "required": [
+            "repository",
+            "version",
+            "sha256"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "repository": {
+              "$ref": "#/definitions/github_repository"
+            },
+            "version": {
+              "$ref": "#/definitions/release_version"
+            },
+            "sha256": {
+              "type": "object",
+              "description": "SHA-256 of the ClangBuildAnalyzer-linux (x86_64) release binary, which ships no digests; update together with version",
+              "required": [
+                "linux-x86_64"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "linux-x86_64": {
                   "$ref": "#/definitions/sha256"
                 }
               }

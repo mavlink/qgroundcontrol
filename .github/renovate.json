@@ -77,7 +77,7 @@
       "extractVersionTemplate": "^v(?<version>\\d+\\.\\d+\\.\\d+)$"
     },
     {
-      "description": "Prebuilt CI tools in build-config.json's tools section (ccache, mold, sccache, Grype, Packer, RunsOn CLI), tracked by their GitHub releases",
+      "description": "Prebuilt CI tools in build-config.json's tools section (ccache, mold, sccache, Grype, Packer, RunsOn CLI, ClangBuildAnalyzer), tracked by their GitHub releases",
       "customType": "regex",
       "managerFilePatterns": [
         "/^\\.github/build-config\\.json$/"
@@ -149,7 +149,7 @@
       "minimumReleaseAge": "30 days"
     },
     {
-      "description": "A tools pin bump also needs the release's SHA-256 digests in build-config.json (mold publishes none), so each opens its own PR only after approval on the Dependency Dashboard",
+      "description": "A tools pin bump also needs the release's SHA-256 digests in build-config.json (mold and ClangBuildAnalyzer publish none), so each opens its own PR only after approval on the Dependency Dashboard",
       "matchManagers": [
         "custom.regex"
       ],
@@ -159,7 +159,8 @@
         "mozilla/sccache",
         "anchore/grype",
         "hashicorp/packer",
-        "runs-on/cli"
+        "runs-on/cli",
+        "aras-p/ClangBuildAnalyzer"
       ],
       "groupName": null,
       "dependencyDashboardApproval": true

@@ -281,13 +281,18 @@ python tools/build_profile.py -B build --limit 25      # Show more rows per sect
 python tools/build_profile.py -B build --json          # Machine-readable output
 python tools/build_profile.py -B build --json-out r.json > r.txt  # Text and JSON from one scan
 python tools/build_profile.py -B build --output-dir build/profile  # Ninja-only snapshot
+python tools/build_profile.py -B build --step-summary --extra-report "Title=other.txt"  # Plus a job-summary section
+python tools/build_profile.py --install-clang-build-analyzer .cache/ClangBuildAnalyzer  # Pinned binary (Linux x86_64)
 ```
 
 For per-translation-unit trace details, configure with `-DQGC_TIME_TRACE=ON`, rebuild, then rerun
 the report — it scans the build dir for Clang `-ftime-trace` JSON and highlights the slowest events.
 
 Ordinary CI builds upload Ninja-only snapshots with separate link and generated-code rankings.
-Task totals overlap because commands run in parallel; they are not elapsed build time.
+Task totals overlap because commands run in parallel; they are not elapsed build time. The manual
+Build Profile workflow installs the ClangBuildAnalyzer release pinned (with its SHA-256) in
+`.github/build-config.json`'s `tools.clang_build_analyzer`, and `--step-summary` writes its job
+summary: build type, commit, and compiler, with this report and each `--extra-report` collapsed.
 
 ### moccache/
 
@@ -390,7 +395,9 @@ Scripts in `setup/` configure development environments and read versions from
 (`tools/setup/install_dependencies/`) run through its `__main__.py`; without `--platform` it
 detects the host. `build_gstreamer.py` is the entry for the `setup/gstreamer/` package: `config`
 (build settings, Meson options and plugins), `host` (commands, host arch and jobs), `meson` (Linux,
-macOS, Windows), `cerbero` (Android, iOS) and `cli` (arguments, CI arch/prefix outputs).
+macOS, Windows), `cerbero` (Android, iOS) and `cli` (arguments, CI defaults and arch/prefix
+outputs). The Build GStreamer workflow first runs `setup/gstreamer/ci_plan.py`, which rejects an
+architecture the dispatch's runner cannot build and outputs the runner's Qt and apt category.
 
 | Script                                    | Platform              | Description                                                                            |
 | ----------------------------------------- | --------------------- | -------------------------------------------------------------------------------------- |
@@ -411,8 +418,9 @@ macOS, Windows), `cerbero` (Android, iOS) and `cli` (arguments, CI arch/prefix o
 Linux `--category` limits the install to `core`, `qt`, `gstreamer`, `sdl`, `audio` or `misc`.
 On Debian, `android` is `core` plus the OpenJDK for `android.java_version` in `build-config.json`;
 the Docker Android image uses it, while CI's Android jobs install `core` and get the JDK from
-`setup-java`. Debian's `gstreamer_build`, outside the full set, holds what `build_gstreamer.py`
-needs for a Linux source build; the Build GStreamer workflow installs it.
+`setup-java`. Debian's `gstreamer_build` and `gstreamer_build_android`, outside the full set, hold
+what `build_gstreamer.py` needs for a Linux source build and an Android (Cerbero) build; the Build
+GStreamer workflow installs them.
 `--list [--platform NAME]` lists each platform's packages by category and
 `--print-packages [--category NAME]` prints one list on a single line; neither installs anything.
 Locally, the Linux installers also sync the locked `build` group (CMake, Ninja, `just`, ...) into

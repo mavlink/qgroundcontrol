@@ -91,9 +91,9 @@
   `deploy_docs.py`, `collect_build_status.py`, `download_artifacts.py`, `gh_pr_size_label.py`,
   `report_context.py`, `apt_install_retry.py`, `enable_kvm.py`, `install_multipass.py`, and
   `runner_image.py`. Steps ahead of a later or conditional `setup-python` also run
-  `release_branch_check.py` (release tag check),
-  `gstreamer_archive.py` and `build_gstreamer.py` (Android/iOS
-  GStreamer builds), `install_dependencies_helper.py` and `tools/setup/install_dependencies`
+  `release_branch_check.py` (release tag check), `gstreamer/ci_plan.py` (Build GStreamer's
+  plan), `gstreamer_archive.py` and `build_gstreamer.py` (Android/iOS GStreamer builds),
+  `install_dependencies_helper.py` and `tools/setup/install_dependencies`
   (`install-dependencies`), `build-setup`'s `build_setup.py` planner,
   `setup-python`'s own `cache_backend.py` probe, plus the
   `install_python.py` and `install_uv.py` installers.
@@ -109,8 +109,9 @@
 
 - **`build-config.json`** centralizes versions and settings (Qt, Android, Apple/Xcode, CMake
   minimum and platform workflow list, GStreamer, analysis toolchain pins, and in `tools` the
-  ccache, mold, sccache, and Grype releases with their SHA-256 digests and the Bloaty commit that
-  `tools/ci` scripts install), validated against `build-config.schema.json`
+  ccache, mold, sccache, Grype, Packer, RunsOn CLI, and ClangBuildAnalyzer releases with their
+  SHA-256 digests and the Bloaty commit that `tools/ci` scripts and `build_profile.py` install),
+  validated against `build-config.schema.json`
   (`just validate-configs`).
 - **CMake and Ninja**: every CI build job runs the `build.cmake_version` and `build.ninja_version`
   that `build-setup` installs with `lukka/get-cmake`, after `setup-python` so they precede any CMake

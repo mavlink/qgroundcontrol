@@ -160,6 +160,13 @@
         "darwin-aarch64": "9c26b071fbdfb2f4d8fa77fa30875b6ee1b5687c11bf30b5fe6148b80206a0df"
       }
     },
+    "clang_build_analyzer": {
+      "repository": "aras-p/ClangBuildAnalyzer",
+      "version": "1.6.0",
+      "sha256": {
+        "linux-x86_64": "afbb05054712228bfde56ed388f634706e123c2be39290f0c86c1e336a31fa12"
+      }
+    },
     "bloaty": {
       "revision": "87082741b1cc0a97cd84bd17cd4ee41d70a42fc6"
     }
