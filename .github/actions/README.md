@@ -27,7 +27,7 @@ cannot load actions from the PR merge commit (zizmor's `self-repository` audit i
 | `docker` | Build a QGC builder image with Buildx and run the containerized application build |
 | `free-disk-space` | Wrap `endersonmenezes/free-disk-space` with QGC's shared defaults |
 | `install-dependencies` | Install platform build dependencies (Linux apt packages, macOS Homebrew and GStreamer, Windows MSVC and NSIS) but not the CMake, Ninja, ccache, and mold that `build-setup` pins; on Linux, `category` installs a single `install_dependencies` category |
-| `qt-install` | Reuse a compatible preinstalled Qt SDK or install Qt with QGC's installer or aqtinstall (`installer`, empty for `install_qt.py`'s per-host default), with caching; `version` defaults to `build-config.json`'s; outputs the version, installer, and source |
+| `qt-install` | Reuse a compatible preinstalled Qt SDK or install `build-config.json`'s Qt version with QGC's installer or aqtinstall (`QGC_QT_INSTALLER`, else QGC's), with caching; outputs the version, installer, and source |
 | `run-unit-tests` | Run CTest, then summarize the JUnit results (counts, failures, slowest tests) and annotate failed tests, upload artifacts, and Codecov test analytics even after failures |
 | `save-build-cache` | Save compiler and moc caches once per job after successful compilation |
 | `setup-python` | Detect the cache backend, set up uv and Python, and sync `tools/uv.lock` groups into `tools/.venv` |
@@ -63,6 +63,9 @@ an additional security problem.
   cache target, Xcode and MSVC selections, the Android ABIs to install, and the `build-config.json`
   versions that later steps and their `if:` conditions read; Android jobs also get
   `ANDROID_MIN_SDK` and, off macOS, an SDK root under `$RUNNER_TEMP`.
+- **`qt-install`**: `install_qt.py plan` resolves the request once and outputs the cache key,
+  whether to save (never for a reused preinstalled SDK or a pull request from a fork), and the
+  request as JSON; `ensure --plan` reuses or installs exactly that request and reports its source.
 - **`cache` / `save-build-cache`**: `cache` restores compiler/moc archives and immutable
   CPM/SDK snapshots and exports the save policy; `save-build-cache` checkpoints compiler/moc
   archives once per job after verified success (`cmake-build` calls it for full and `autogen`

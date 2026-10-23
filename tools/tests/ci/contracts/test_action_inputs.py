@@ -56,16 +56,10 @@ def test_presets_select_the_build_type_and_testing() -> None:
         assert "build-type" not in load_action(name)["inputs"]
 
 
-def test_qt_install_defaults_to_the_build_config_version() -> None:
+def test_qt_install_takes_the_build_config_version() -> None:
+    # install_qt.py plan defaults --version to build-config.json's qt.version.
     action = load_action("qt-install")
-    version = action["inputs"]["version"]
-    assert version["required"] is False
-    assert version["default"] == ""
-    steps = get_steps(action)
-    plan = next(step for step in steps if step.get("id") == "plan")
-    ensure = next(step for step in steps if step.get("id") == "qt")
-    assert plan["env"]["QT_VERSION"] == "${{ inputs.version }}"
-    assert ensure["env"]["QT_VERSION"] == "${{ steps.plan.outputs.version }}"
-    callers = [options for _, name, options in _local_action_steps() if name == "qt-install"]
-    assert callers
-    assert not [options for options in callers if "qt_version" in str(options.get("version"))]
+    assert "version" not in action["inputs"]
+    plan = next(step for step in get_steps(action) if step.get("id") == "plan")
+    assert "--version" not in plan["run"]
+    assert [name for _, name, _ in _local_action_steps()].count("qt-install") >= 3

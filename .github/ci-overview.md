@@ -124,9 +124,9 @@
   `qt-install` reads the Qt version itself, so its callers pass none.
 - **Qt installer**: `qt-install` runs `install_qt.py`, which installs Qt with QGC's installer
   (`tools/setup/qt_installer`, standard library plus `cmake -E tar`); aqtinstall stays as the
-  fallback through the action's `installer` input or `QGC_QT_INSTALLER`. Every job reaching
-  `qt-install` has CMake: `build-setup` installs it first, `pre-commit.yml` syncs the `dev` group,
-  and `lupdate.yml` uses the GitHub-hosted image's ([tools/README.md](../tools/README.md#qt-installer)).
+  fallback through `QGC_QT_INSTALLER`. Every job reaching `qt-install` has CMake: `build-setup`
+  installs it first, `pre-commit.yml` syncs the `dev` group, and `lupdate.yml` uses the
+  GitHub-hosted image's ([tools/README.md](../tools/README.md#qt-installer)).
 
 ## Dependency Management
 

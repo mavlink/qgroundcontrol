@@ -7,11 +7,14 @@ import json
 import shutil
 import subprocess
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
+from common.build_config import derive_ios_qt_modules, load_build_config
 from setup import install_qt
 from setup.install_qt import (
+    QtPlan,
     _run_aqt_with_retries,
     compute_cache_digest,
     plan_install,
@@ -19,9 +22,8 @@ from setup.install_qt import (
     resolve_installer,
     resolve_preinstalled_qt,
     resolve_qt_root,
-    resolve_windows_host_arch,
 )
-from setup.qt_installer.repo import QtRequest
+from setup.qt_installer.repo import QtRequest, resolve_windows_host_arch
 
 from ._helpers import TOOLS_DIR, read_github_file, write_files
 
@@ -269,27 +271,32 @@ class TestPlan:
         )
 
         # aqt keeps the former `${cache_dir}/Qt/${version}/${arch_dir}` path and digest exactly.
+        plan = QtPlan("windows", "desktop", "6.8.3", "win64_msvc2022_64", str(outdir), "qtgraphs")
+        digest = hashlib.sha256(b"qtgraphs\n").hexdigest()
         assert gh_output.read_text().splitlines() == [
             "version=6.8.3",
-            f"digest={compute_cache_digest('qtgraphs', '')}",
+            "installer=aqt",
+            f"key=qt-windows-desktop-win64_msvc2022_64-6.8.3-{digest}",
             "cache_path=.qt/Qt/6.8.3/msvc2022_64",
             "preinstalled_root=",
-            "installer=aqt",
+            "save=false",
+            f"plan={plan.to_json()}",
         ]
 
     def test_qgc_installs_get_their_own_digest(self, monkeypatch, tmp_path, gh_output) -> None:
         monkeypatch.setenv("GITHUB_WORKSPACE", str(tmp_path))
         argv = ["plan", "--outdir", str(tmp_path / ".qt/Qt"), "--version", "6.12.0"]
         argv += ["--host", "linux", "--target", "android", "--arch", "android_arm64_v8a"]
+        prefix = "qt-linux-android-android_arm64_v8a-6.12.0-"
 
         assert install_qt.main([*argv, "--archives", "qtbase"]) == 0
         outputs = read_github_file(gh_output)
         assert outputs["installer"] == "qgc"
-        assert outputs["digest"] == compute_cache_digest("", "qtbase", "qgc")
+        assert outputs["key"] == prefix + compute_cache_digest("", "qtbase", "qgc")
 
         gh_output.write_text("")
         assert install_qt.main([*argv, "--archives", "qtbase", "--installer", "aqt"]) == 0
-        assert read_github_file(gh_output)["digest"] == compute_cache_digest("", "qtbase")
+        assert read_github_file(gh_output)["key"] == prefix + compute_cache_digest("", "qtbase")
 
     def test_version_defaults_to_build_config(self, monkeypatch, tmp_path, gh_output) -> None:
         config = tmp_path / "build-config.json"
@@ -303,41 +310,113 @@ class TestPlan:
         outputs = gh_output.read_text().splitlines()
         assert outputs[0] == "version=6.9.1"
         assert "cache_path=.qt/Qt/6.9.1/gcc_64" in outputs
-        # An empty --version (the qt-install default) also selects the configured version.
+        # An empty --version also selects the configured version.
         gh_output.write_text("")
         argv = ["plan", "--outdir", str(outdir), "--arch", "linux_gcc_64", "--version", ""]
         assert install_qt.main(argv) == 0
         assert gh_output.read_text().splitlines()[0] == "version=6.9.1"
 
-    def test_reports_compatible_preinstalled_sdk(self, tmp_path) -> None:
+    def test_reports_compatible_preinstalled_sdk_and_saves_only_fresh_installs(
+        self, tmp_path
+    ) -> None:
         prefix = tmp_path / "sdk"
         qt_root = TestResolvePreinstalledQt._create_sdk(prefix)
+        request = QtPlan("linux", "desktop", "6.8.3", "linux_gcc_64", str(tmp_path / ".qt/Qt"))
 
-        plan = plan_install(
-            tmp_path / ".qt/Qt", "6.8.3", "linux_gcc_64", "qtlocation", "", str(prefix)
-        )
+        plan = plan_install(replace(request, modules="qtlocation"), str(prefix), save_allowed=True)
 
         assert plan["preinstalled_root"] == str(qt_root)
-        assert plan_install(tmp_path / ".qt/Qt", "6.8.3", "linux_gcc_64")["preinstalled_root"] == ""
+        assert plan["save"] == "false"
+        assert QtPlan.from_json(plan["plan"]).preinstalled_root == str(qt_root)
+        fresh = plan_install(request, save_allowed=True)
+        assert (fresh["preinstalled_root"], fresh["save"]) == ("", "true")
+        assert plan_install(request)["save"] == "false"
+
+    @pytest.mark.parametrize("value", ["true", "false", ""])
+    def test_save_follows_the_workflow_permission(self, tmp_path, gh_output, value) -> None:
+        argv = ["plan", "--outdir", str(tmp_path), "--version", "6.12.0", "--arch", "clang_64"]
+        assert install_qt.main([*argv, "--host", "mac", "--save-allowed", value]) == 0
+        assert read_github_file(gh_output)["save"] == (value or "false")
+
+
+def _former_cache_key(host: str, target: str, arch: str, version: str, digest: str) -> str:
+    """Render the key template qt-install's restore step used before `plan` computed the key."""
+    template = (
+        "qt-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.arch }}-"
+        "${{ steps.plan.outputs.version }}-${{ steps.plan.outputs.digest }}"
+    )
+    values = {
+        "inputs.host": host,
+        "inputs.target": target,
+        "inputs.arch": arch,
+        "steps.plan.outputs.version": version,
+        "steps.plan.outputs.digest": digest,
+    }
+    for name, value in values.items():
+        template = template.replace(f"${{{{ {name} }}}}", value)
+    return template
+
+
+def _former_digest(modules: str, archives: str, installer: str) -> str:
+    content = f"{modules}\n{archives}" + ("" if installer == "aqt" else f"\ninstaller={installer}")
+    return hashlib.sha256(content.encode()).hexdigest()
+
+
+_CONFIG_QT = load_build_config()["qt"]
+_DESKTOP_MODULES = _CONFIG_QT["modules"]
+_IOS_MODULES = derive_ios_qt_modules(_DESKTOP_MODULES)
+# Every request qt-install receives: build-setup's desktop, Windows ARM64 host, iOS and Android Qt
+# (android.yml builds on Linux, macOS and Windows hosts), and pre-commit's and lupdate's subsets.
+_QT_REQUESTS = [
+    *(
+        (host, "desktop", arch, _DESKTOP_MODULES, "")
+        for host, arch in (
+            ("linux", "linux_gcc_64"),
+            ("linux_arm64", "linux_gcc_arm64"),
+            ("mac", "clang_64"),
+            ("windows", "win64_msvc2022_64"),
+            ("windows_arm64", "win64_msvc2022_arm64"),
+            ("windows", "win64_msvc2022_arm64_cross_compiled"),
+        )
+    ),
+    *(("mac", "ios", arch, _IOS_MODULES, "") for arch in ("ios_device", "ios_simulator_x86_64")),
+    *(
+        (host, "android", arch, _DESKTOP_MODULES, "")
+        for host in ("linux", "mac", "windows")
+        for arch in ("android_arm64_v8a", "android_armv7", "android_x86_64")
+    ),
+    ("linux", "desktop", "linux_gcc_64", "", "qtbase qtdeclarative icu"),
+    ("linux", "desktop", "linux_gcc_64", "", "qtbase qttools qtdeclarative icu"),
+]
+
+
+@pytest.mark.parametrize("installer", ["qgc", "aqt"])
+@pytest.mark.parametrize(("host", "target", "arch", "modules", "archives"), _QT_REQUESTS)
+def test_cache_key_is_byte_identical_to_the_former_action_key(
+    monkeypatch, tmp_path, gh_output, installer, host, target, arch, modules, archives
+) -> None:
+    monkeypatch.setenv("QGC_QT_INSTALLER", installer)
+    argv = ["plan", "--outdir", str(tmp_path), "--host", host, "--target", target]
+    argv += ["--arch", arch, "--modules", modules, "--archives", archives]
+
+    assert install_qt.main(argv) == 0
+
+    version = _CONFIG_QT["version"]
+    expected = _former_cache_key(
+        host, target, arch, version, _former_digest(modules, archives, installer)
+    )
+    assert read_github_file(gh_output)["key"] == expected
 
 
 class TestEnsure:
     @staticmethod
-    def _ensure(tmp_path: Path, *extra: str) -> int:
-        return install_qt.main(
-            [
-                "ensure",
-                "--outdir",
-                str(tmp_path / "Qt"),
-                "--version",
-                "6.8.3",
-                "--host",
-                "linux",
-                "--arch",
-                "linux_gcc_64",
-                *extra,
-            ]
-        )
+    def _plan(tmp_path: Path, **changes: str) -> QtPlan:
+        plan = QtPlan("linux", "desktop", "6.8.3", "linux_gcc_64", str(tmp_path / "Qt"))
+        return replace(plan, **changes)
+
+    @staticmethod
+    def _ensure(plan: QtPlan, *extra: str) -> int:
+        return install_qt.main(["ensure", "--plan", plan.to_json(), *extra])
 
     @pytest.fixture
     def aqt_calls(self, monkeypatch: pytest.MonkeyPatch) -> list[list[str]]:
@@ -350,11 +429,12 @@ class TestEnsure:
         self, tmp_path, aqt_calls, gh_output, gh_env, gh_path
     ) -> None:
         qt_root = tmp_path / "sdk/Qt/6.8.3/gcc_64"
+        plan = self._plan(tmp_path, preinstalled_root=str(qt_root))
 
-        assert self._ensure(tmp_path, "--preinstalled-root", str(qt_root), "--cache-hit", "") == 0
+        assert self._ensure(plan, "--cache-hit", "") == 0
 
         assert aqt_calls == []
-        assert gh_output.read_text() == f"qt_root_dir={qt_root}\n"
+        assert gh_output.read_text() == f"qt_root_dir={qt_root}\nsource=preinstalled\n"
         assert gh_env.read_text() == f"QT_ROOT_DIR={qt_root}\n"
         assert gh_path.read_text() == f"{qt_root / 'bin'}\n"
 
@@ -362,15 +442,15 @@ class TestEnsure:
         qt_root = tmp_path / "Qt/6.8.3/gcc_64"
         qt_root.mkdir(parents=True)
 
-        assert self._ensure(tmp_path, "--cache-hit", "true") == 0
+        assert self._ensure(self._plan(tmp_path), "--cache-hit", "true") == 0
 
         assert aqt_calls == []
-        assert gh_output.read_text() == f"qt_root_dir={qt_root}\n"
+        assert gh_output.read_text() == f"qt_root_dir={qt_root}\nsource=cache\n"
 
     @pytest.mark.usefixtures("gh_output", "gh_env", "gh_path")
     def test_cache_hit_without_tree_fails(self, tmp_path, aqt_calls) -> None:
         with pytest.raises(SystemExit):
-            self._ensure(tmp_path, "--cache-hit", "true")
+            self._ensure(self._plan(tmp_path), "--cache-hit", "true")
         assert aqt_calls == []
 
     def test_cache_miss_installs_without_exporting(
@@ -379,8 +459,8 @@ class TestEnsure:
         qt_root = tmp_path / "Qt/6.8.3/gcc_64"
         qt_root.mkdir(parents=True)
 
-        argv = ["--cache-hit", "false", "--export-env", "false", "--installer", "aqt"]
-        assert self._ensure(tmp_path, *argv) == 0
+        argv = ["--cache-hit", "false", "--export-env", "false"]
+        assert self._ensure(self._plan(tmp_path, installer="aqt"), *argv) == 0
 
         assert aqt_calls == [
             [
@@ -394,17 +474,31 @@ class TestEnsure:
                 str(tmp_path / "Qt"),
             ]
         ]
-        assert gh_output.read_text() == f"qt_root_dir={qt_root}\n"
+        assert gh_output.read_text() == f"qt_root_dir={qt_root}\nsource=installed\n"
         assert gh_env.read_text() == ""
         assert gh_path.read_text() == ""
 
-    def test_cache_miss_uses_the_planned_installer(self, tmp_path, gh_output, qgc_installs) -> None:
-        argv = ["--cache-hit", "false", "--export-env", "false", "--installer", "qgc"]
-        assert self._ensure(tmp_path, *argv, "--modules", "qtgraphs") == 0
+    def test_cache_miss_uses_the_planned_request(
+        self, monkeypatch, tmp_path, gh_output, qgc_installs
+    ) -> None:
+        # The installer override applies once, when planning: the cache digest covers it.
+        monkeypatch.setenv("QGC_QT_INSTALLER", "qgc")
+        argv = ["plan", "--outdir", str(tmp_path / "Qt"), "--version", "6.8.3", "--host", "mac"]
+        argv += ["--target", "ios", "--arch", "ios_device", "--modules", "qtgraphs"]
+        argv += ["--archives", "qtbase"]
+        assert install_qt.main(argv) == 0
+        plan = read_github_file(gh_output)["plan"]
+        monkeypatch.setenv("QGC_QT_INSTALLER", "aqt")
+        gh_output.write_text("")
 
-        request = QtRequest("linux", "desktop", "6.8.3", "linux_gcc_64", ("qtgraphs",))
+        assert install_qt.main(["ensure", "--plan", plan, "--export-env", "false"]) == 0
+
+        request = QtRequest("mac", "ios", "6.8.3", "ios_device", ("qtgraphs",), ("qtbase",))
         assert qgc_installs == [("install", request)]
-        assert gh_output.read_text() == f"qt_root_dir={tmp_path / 'Qt/6.8.3/gcc_64'}\n"
+        assert read_github_file(gh_output) == {
+            "qt_root_dir": str(tmp_path / "Qt/6.8.3/ios_device"),
+            "source": "installed",
+        }
 
 
 class TestCompare:

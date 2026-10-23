@@ -178,10 +178,8 @@ def test_qt_cache_stores_only_architecture_tree() -> None:
     # install_qt.py plan reports `.qt/Qt/<version>/<arch dir>` relative to the workspace.
     assert '--outdir "${GITHUB_WORKSPACE}/.qt/Qt"' in plan["run"]
     assert [step["with"]["path"] for step in cached] == ["${{ steps.plan.outputs.cache_path }}"] * 3
-    assert cached[0]["with"]["key"] == (
-        "qt-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.arch }}-"
-        "${{ steps.plan.outputs.version }}-${{ steps.plan.outputs.digest }}"
-    )
+    # install_qt.py plan computes the key (test_install_qt.py pins it to the former expression).
+    assert [step["with"]["key"] for step in cached] == ["${{ steps.plan.outputs.key }}"] * 3
 
 
 def test_qt_install_prefers_compatible_preinstalled_sdk() -> None:
@@ -193,12 +191,15 @@ def test_qt_install_prefers_compatible_preinstalled_sdk() -> None:
     # Plan, cache restore, reuse-or-install, and the pre-save lookup and save.
     assert len(steps) == 5
     assert "--preinstalled-prefix" in plan["run"]
-    assert "--preinstalled-root" in ensure["run"]
+    # The plan carries the preinstalled root to ensure.
+    assert '--plan "${PLAN}"' in ensure["run"]
     assert "if" not in ensure
     assert action["outputs"]["qt_root_dir"]["value"] == "${{ steps.qt.outputs.qt_root_dir }}"
-    for step in steps:
-        if step.get("uses", "").startswith("actions/cache/"):
-            assert "steps.plan.outputs.preinstalled_root == ''" in step["if"]
+    restore, *saves = (step for step in steps if step.get("uses", "").startswith("actions/cache/"))
+    assert restore["if"] == "steps.plan.outputs.preinstalled_root == ''"
+    # `save` is false when a preinstalled SDK is reused (test_install_qt.py).
+    for step in saves:
+        assert step["if"].startswith("steps.plan.outputs.save == 'true' && ")
 
 
 def test_dependency_caches_use_shared_backend() -> None:

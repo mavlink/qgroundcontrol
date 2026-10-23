@@ -12,14 +12,8 @@ outputs:
     value: ${{ steps.plan.outputs.installer }}
   source:
     description: Where Qt came from (preinstalled, cache, or installed)
-    value: >-
-      ${{ steps.plan.outputs.preinstalled_root != '' && 'preinstalled' ||
-          steps.qt-cache.outputs.cache-hit == 'true' && 'cache' || 'installed' }}
+    value: ${{ steps.qt.outputs.source }}
 inputs:
-  version:
-    description: Qt version to install (defaults to qt.version in .github/build-config.json)
-    required: false
-    default: ''
   host:
     description: Host platform (linux, mac, windows, etc.)
     required: true
@@ -31,16 +25,11 @@ inputs:
     description: Architecture (linux_gcc_64, clang_64, win64_msvc2022_64, etc.)
     required: true
   modules:
-    description: Qt modules to install (use build-config.outputs.qt_modules)
+    description: Qt modules to install (build-setup passes build-config.json's qt.modules)
     required: false
     default: ''
   archives:
     description: Optional Qt archives subset to install (space-separated)
-    required: false
-    default: ''
-  installer:
-    description: >-
-      Qt installer, qgc or aqt; empty uses QGC_QT_INSTALLER, else qgc
     required: false
     default: ''
   export-env:
@@ -50,32 +39,29 @@ inputs:
 runs:
   using: composite
   steps:
-    # Outputs the resolved Qt version and installer, the cache digest (which covers the installer),
-    # the workspace-relative arch tree to cache, and a compatible preinstalled SDK root (empty when
-    # the runner image has none).
+    # Resolves build-config.json's Qt version and the installer (QGC_QT_INSTALLER, else qgc), and
+    # outputs the cache key (whose digest covers the installer) and the workspace-relative arch
+    # tree to cache, a compatible preinstalled SDK root (empty when the runner image has none),
+    # whether to save a fresh install, and the resolved request for `ensure`.
     - name: Plan Qt install
       id: plan
       shell: bash
       env:
         PREINSTALLED_DIR: ${{ env.QGC_PREINSTALLED_QT_DIR || '/opt/qgc-sdk' }}
-        QT_VERSION: ${{ inputs.version }}
         QT_HOST: ${{ inputs.host }}
         QT_TARGET: ${{ inputs.target }}
         QT_ARCH: ${{ inputs.arch }}
         QT_MODULES: ${{ inputs.modules }}
         QT_ARCHIVES: ${{ inputs.archives }}
-        QT_INSTALLER: ${{ inputs.installer }}
-      run: |
-        python3 "${GITHUB_WORKSPACE}/tools/setup/install_qt.py" plan \
-          --preinstalled-prefix "${PREINSTALLED_DIR}" \
-          --outdir "${GITHUB_WORKSPACE}/.qt/Qt" \
-          --version "${QT_VERSION}" \
-          --host "${QT_HOST}" \
-          --target "${QT_TARGET}" \
-          --arch "${QT_ARCH}" \
-          --modules "${QT_MODULES}" \
-          --archives "${QT_ARCHIVES}" \
-          --installer "${QT_INSTALLER}"
+        # Pull requests from forks cannot write the base repository's cache.
+        SAVE_ALLOWED: >-
+          ${{ github.event_name != 'pull_request' ||
+              github.event.pull_request.head.repo.full_name == github.repository }}
+      run: >-
+        python3 "${GITHUB_WORKSPACE}/tools/setup/install_qt.py" plan
+        --outdir "${GITHUB_WORKSPACE}/.qt/Qt" --preinstalled-prefix "${PREINSTALLED_DIR}"
+        --host "${QT_HOST}" --target "${QT_TARGET}" --arch "${QT_ARCH}"
+        --modules "${QT_MODULES}" --archives "${QT_ARCHIVES}" --save-allowed "${SAVE_ALLOWED}"
 
     # Cache-service failures should degrade to a Qt reinstall.
     - name: Restore Qt cache
@@ -85,57 +71,34 @@ runs:
       continue-on-error: true
       with:
         path: ${{ steps.plan.outputs.cache_path }}
-        # `runner.os` is implied by `inputs.host` (linux/mac/windows...) so it's omitted.
-        key: qt-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.arch }}-${{ steps.plan.outputs.version }}-${{ steps.plan.outputs.digest }}
+        key: ${{ steps.plan.outputs.key }}
 
     - name: Install Qt
       id: qt
       shell: bash
       env:
-        QT_VERSION: ${{ steps.plan.outputs.version }}
-        QT_HOST: ${{ inputs.host }}
-        QT_TARGET: ${{ inputs.target }}
-        QT_ARCH: ${{ inputs.arch }}
-        QT_MODULES: ${{ inputs.modules }}
-        QT_ARCHIVES: ${{ inputs.archives }}
-        QT_INSTALLER: ${{ steps.plan.outputs.installer }}
-        PREINSTALLED_ROOT: ${{ steps.plan.outputs.preinstalled_root }}
+        PLAN: ${{ steps.plan.outputs.plan }}
         CACHE_HIT: ${{ steps.qt-cache.outputs.cache-hit }}
         EXPORT_ENV: ${{ inputs.export-env }}
-      run: |
-        python3 "${GITHUB_WORKSPACE}/tools/setup/install_qt.py" ensure \
-          --preinstalled-root "${PREINSTALLED_ROOT}" \
-          --cache-hit "${CACHE_HIT}" \
-          --export-env "${EXPORT_ENV}" \
-          --outdir "${GITHUB_WORKSPACE}/.qt/Qt" \
-          --version "${QT_VERSION}" \
-          --host "${QT_HOST}" \
-          --target "${QT_TARGET}" \
-          --arch "${QT_ARCH}" \
-          --modules "${QT_MODULES}" \
-          --archives "${QT_ARCHIVES}" \
-          --installer "${QT_INSTALLER}"
+      run: >-
+        python3 "${GITHUB_WORKSPACE}/tools/setup/install_qt.py" ensure --plan "${PLAN}"
+        --cache-hit "${CACHE_HIT}" --export-env "${EXPORT_ENV}"
 
     - name: Re-check Qt cache before save
       id: qt-presave
-      if: >-
-        steps.plan.outputs.preinstalled_root == '' &&
-        steps.qt-cache.outputs.cache-hit != 'true' &&
-        (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+      if: steps.plan.outputs.save == 'true' && steps.qt-cache.outputs.cache-hit != 'true'
       uses: actions/cache/restore@v6
       continue-on-error: true
       with:
         path: ${{ steps.plan.outputs.cache_path }}
-        key: ${{ steps.qt-cache.outputs.cache-primary-key }}
+        key: ${{ steps.plan.outputs.key }}
         lookup-only: true
 
     - name: Save Qt cache
       if: >-
-        steps.plan.outputs.preinstalled_root == '' &&
-        steps.qt-cache.outputs.cache-hit != 'true' &&
-        steps.qt-presave.outputs.cache-hit != 'true' &&
-        (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        steps.plan.outputs.save == 'true' && steps.qt-cache.outputs.cache-hit != 'true' &&
+        steps.qt-presave.outputs.cache-hit != 'true'
       uses: actions/cache/save@v6
       with:
         path: ${{ steps.plan.outputs.cache_path }}
-        key: ${{ steps.qt-cache.outputs.cache-primary-key }}
+        key: ${{ steps.plan.outputs.key }}

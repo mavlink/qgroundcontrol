@@ -449,7 +449,7 @@ lines (aqt leaves them unpatched on `linux_arm64`); `install_qt.py compare` chec
 combination. Android built on a Windows host differs on purpose: `qgc` pairs it with the
 `msvc2022_64` host Qt, while aqt names a `mingw_64` one that QGC never installs; builds pass
 `QT_HOST_PATH` either way. Like aqt, `qgc` reports but does not install addon dependencies missing from
-`--modules`, such as `qtquick3d`'s `qtquicktimeline`. The `plan` cache digest includes a non-aqt
+`--modules`, such as `qtquick3d`'s `qtquicktimeline`. The `plan` cache key's digest includes a non-aqt
 installer, so neither tool restores the other's tree.
 
 ## Python Environment

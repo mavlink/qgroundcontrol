@@ -1,25 +1,49 @@
-"""Contracts for the qt-install action's installer choice."""
+"""Contracts for the qt-install action: one plan step resolves the request, key, and save policy."""
 
 from __future__ import annotations
 
 from ..._helpers import get_steps, load_action
 
+REQUEST_INPUTS = ("host", "target", "arch", "modules", "archives")
 
-def test_qt_install_plans_the_installer_once_and_reuses_it() -> None:
+
+def _steps() -> dict[str, dict]:
+    return {step.get("id") or step["name"]: step for step in get_steps(load_action("qt-install"))}
+
+
+def test_qt_install_plans_the_request_once_and_ensure_reuses_it() -> None:
     action = load_action("qt-install")
-    assert action["inputs"]["installer"]["default"] == ""
-    steps = get_steps(action)
-    plan = next(step for step in steps if step.get("id") == "plan")
-    ensure = next(step for step in steps if step.get("id") == "qt")
-    assert plan["env"]["QT_INSTALLER"] == "${{ inputs.installer }}"
-    assert plan["env"]["QT_HOST"] == "${{ inputs.host }}"
-    assert plan["env"]["QT_TARGET"] == "${{ inputs.target }}"
-    for option in (
-        '--host "${QT_HOST}"',
-        '--target "${QT_TARGET}"',
-        '--installer "${QT_INSTALLER}"',
-    ):
-        assert option in plan["run"]
-    # The cache digest covers the installer, so ensure must install with the planned one.
-    assert ensure["env"]["QT_INSTALLER"] == "${{ steps.plan.outputs.installer }}"
-    assert '--installer "${QT_INSTALLER}"' in ensure["run"]
+    # The Qt version comes from build-config.json and the installer from QGC_QT_INSTALLER.
+    assert set(action["inputs"]) == {*REQUEST_INPUTS, "export-env"}
+    steps = _steps()
+    plan, ensure = steps["plan"], steps["qt"]
+    for name in REQUEST_INPUTS:
+        variable = f"QT_{name.upper()}"
+        assert plan["env"][variable] == f"${{{{ inputs.{name} }}}}"
+        assert f'--{name} "${{{variable}}}"' in plan["run"]
+    # The cache digest covers the installer, so ensure installs exactly the planned request.
+    assert ensure["env"] == {
+        "PLAN": "${{ steps.plan.outputs.plan }}",
+        "CACHE_HIT": "${{ steps.qt-cache.outputs.cache-hit }}",
+        "EXPORT_ENV": "${{ inputs.export-env }}",
+    }
+    assert '--plan "${PLAN}"' in ensure["run"]
+    assert action["outputs"]["source"]["value"] == "${{ steps.qt.outputs.source }}"
+
+
+def test_only_runs_that_may_write_the_cache_save_a_fresh_install() -> None:
+    steps = _steps()
+    plan = steps["plan"]
+    assert " ".join(plan["env"]["SAVE_ALLOWED"].split()) == (
+        "${{ github.event_name != 'pull_request' || "
+        "github.event.pull_request.head.repo.full_name == github.repository }}"
+    )
+    assert '--save-allowed "${SAVE_ALLOWED}"' in plan["run"]
+    fresh = "steps.plan.outputs.save == 'true' && steps.qt-cache.outputs.cache-hit != 'true'"
+    assert steps["qt-presave"]["if"] == fresh
+    save = steps["Save Qt cache"]
+    assert (
+        " ".join(save["if"].split()) == f"{fresh} && steps.qt-presave.outputs.cache-hit != 'true'"
+    )
+    for step in (steps["qt-cache"], steps["qt-presave"], save):
+        assert step["with"]["key"] == "${{ steps.plan.outputs.key }}"
