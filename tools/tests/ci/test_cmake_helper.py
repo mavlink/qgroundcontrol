@@ -9,7 +9,14 @@ from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import pytest
-from ci.compile.cmake_helper import _maybe_wrap_xvfb, detect_jobs, main
+from ci.compile.cmake_helper import (
+    INCLUDE_PATH_VARIABLES,
+    PACKAGE_INVENTORIES,
+    _maybe_wrap_xvfb,
+    detect_jobs,
+    main,
+    system_header_digest,
+)
 
 from .._helpers import REPO_ROOT
 
@@ -67,7 +74,13 @@ def venv_python(tmp_path: Path) -> Path:
 
 @pytest.fixture(autouse=True)
 def _clear_action_inputs(monkeypatch: pytest.MonkeyPatch) -> None:
-    for name in [*CONFIGURE_INPUTS, *BUILD_INPUTS, "QGC_CACHE_PROGRAM"]:
+    for name in [
+        *CONFIGURE_INPUTS,
+        *BUILD_INPUTS,
+        "QGC_CACHE_PROGRAM",
+        "QGC_CHECK_RESULT_CACHE_DIR",
+        "QGC_CHECK_RESULT_CACHE_SALT",
+    ]:
         monkeypatch.delenv(name, raising=False)
 
 
@@ -126,6 +139,70 @@ def test_configure_reads_action_inputs_and_appends_ci_cache_arguments(
     if cache_program:
         expected.append(f"-DQGC_CACHE_PROGRAM:FILEPATH={cache_program}")
     assert config.extra_args == expected
+
+
+def test_configure_reuses_check_results_from_the_cache_plan(
+    monkeypatch: pytest.MonkeyPatch, venv_python: Path
+) -> None:
+    monkeypatch.setenv("QGC_CHECK_RESULT_CACHE_DIR", "/work/.cache/ccache/qgc-configure-checks")
+    monkeypatch.setenv("QGC_CHECK_RESULT_CACHE_SALT", "cpm=abc,image=ubuntu24-20261019.1")
+    monkeypatch.setattr("ci.compile.cmake_helper.system_header_digest", lambda: "0123abcd")
+
+    config = _run_configure(monkeypatch, venv_python, "--preset", "Linux")
+
+    assert config.extra_args[-2:] == [
+        "-DQGC_CHECK_RESULT_CACHE_DIR:PATH=/work/.cache/ccache/qgc-configure-checks",
+        "-DQGC_CHECK_RESULT_CACHE_SALT:STRING=cpm=abc,image=ubuntu24-20261019.1,system=0123abcd",
+    ]
+
+
+class _FakeInventory:
+    """Stands in for the package manager that system_header_digest queries."""
+
+    def __init__(self, monkeypatch: pytest.MonkeyPatch, tool: str | None, stdout: str = "") -> None:
+        self.stdout = stdout
+        self.commands: list[tuple[str, ...]] = []
+        monkeypatch.setattr(
+            "ci.compile.cmake_helper.shutil.which", lambda name: name if name == tool else None
+        )
+        monkeypatch.setattr("ci.compile.cmake_helper.subprocess.run", self.run)
+        monkeypatch.setattr("ci.compile.cmake_helper.HOMEBREW_CELLARS", ())
+        for name in INCLUDE_PATH_VARIABLES:
+            monkeypatch.delenv(name, raising=False)
+
+    def run(self, command, **_kwargs) -> subprocess.CompletedProcess[str]:
+        self.commands.append(tuple(command))
+        return subprocess.CompletedProcess(command, 0, self.stdout, "")
+
+
+def test_system_header_digest_tracks_installed_packages(monkeypatch: pytest.MonkeyPatch) -> None:
+    inventory = _FakeInventory(monkeypatch, "dpkg-query", "libc6-dev=2.39\nlibudev-dev=255\n")
+    with_udev = system_header_digest()
+    assert inventory.commands == [PACKAGE_INVENTORIES[0]]
+
+    inventory.stdout = "libudev-dev=255\nlibc6-dev=2.39\n"
+    assert system_header_digest() == with_udev, "package order must not matter"
+
+    inventory.stdout = "libc6-dev=2.39\n"
+    assert system_header_digest() != with_udev
+
+
+def test_system_header_digest_tracks_include_paths_and_homebrew(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    _FakeInventory(monkeypatch, None)
+    baseline = system_header_digest()
+
+    monkeypatch.setenv(
+        "INCLUDE", r"C:\Program Files (x86)\Windows Kits\10\include\10.0.26100.0\ucrt"
+    )
+    windows_sdk = system_header_digest()
+    assert windows_sdk != baseline
+
+    cellar = tmp_path / "Cellar"
+    (cellar / "libusb/1.0.29").mkdir(parents=True)
+    monkeypatch.setattr("ci.compile.cmake_helper.HOMEBREW_CELLARS", (cellar,))
+    assert system_header_digest() != windows_sdk
 
 
 @pytest.mark.parametrize(

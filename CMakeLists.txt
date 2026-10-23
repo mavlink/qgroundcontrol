@@ -478,6 +478,10 @@ if(QGC_BUILD_TESTING)
     add_compile_definitions(QGC_UNITTEST_BUILD)
 endif()
 
+# Global flags are final here, and the dependencies under src/ run most configure checks.
+include(CheckResultCache)
+qgc_restore_check_results()
+
 add_subdirectory(src)
 
 if(QGC_BUILD_TESTING)

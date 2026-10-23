@@ -42,6 +42,9 @@ PULL_REQUEST_EVENTS = frozenset({"pull_request", "pull_request_target"})
 CCACHE_CONF = Path("tools/configs/ccache.conf")
 DEFAULT_CCACHE_MAX_SIZE = "2G"
 CPM_MODULES = ".cache/CPM"
+# Configure-check results ride inside the ccache directory, which every leg already restores and
+# saves; ccache's cleanup only manages its own hashed subdirectories.
+CHECK_RESULT_CACHE_SUBDIR = "qgc-configure-checks"
 # Pull requests skip saving a compiler or moc cache their build missed fewer times than this:
 # each save uploads the whole archive. Other events always save.
 PR_SAVE_MIN_MISSES = "20"
@@ -69,6 +72,7 @@ class CacheInputs:
     compiler_cache: str = ""
     sccache_bucket: str = ""
     runner_temp: str = ""
+    runner_image: str = ""
 
     @classmethod
     def from_env(cls, env: Mapping[str, str]) -> CacheInputs:
@@ -91,6 +95,12 @@ class CacheInputs:
             compiler_cache=env.get("QGC_COMPILER_CACHE", ""),
             sccache_bucket=env.get("SCCACHE_BUCKET", ""),
             runner_temp=env.get("RUNNER_TEMP", ""),
+            # GitHub-hosted images export ImageOS/ImageVersion; RunsOn exports its AMI.
+            runner_image="-".join(
+                value
+                for name in ("ImageOS", "ImageVersion", "RUNS_ON_AMI_ID")
+                if (value := env.get(name, ""))
+            ),
         )
 
 
@@ -182,6 +192,21 @@ def ccache_environment(workspace: Path, max_size: str) -> dict[str, str]:
         "CCACHE_CONFIGPATH": (workspace_path / CCACHE_CONF).as_posix(),
         "CCACHE_MAXSIZE": max_size,
         "CCACHE_NOFILECLONE": "1",
+    }
+
+
+def check_result_cache_environment(
+    ccache_dir: str, cpm_fingerprint: str, runner_image: str
+) -> dict[str, str]:
+    """Return the settings that let a fresh configure reuse saved configure-check results.
+
+    CMake fingerprints the toolchain and flags itself. Dependency declarations and the runner
+    image's system headers can change a check's outcome without changing either, so they salt it;
+    cmake_helper.py adds the installed packages once they are in place.
+    """
+    return {
+        "QGC_CHECK_RESULT_CACHE_DIR": f"{ccache_dir}/{CHECK_RESULT_CACHE_SUBDIR}",
+        "QGC_CHECK_RESULT_CACHE_SALT": f"cpm={cpm_fingerprint},image={runner_image}",
     }
 
 
@@ -282,6 +307,12 @@ def plan_caches(inputs: CacheInputs, workspace: Path) -> CachePlan:
     root = workspace.resolve()
     environment.update(prepare_cpm_cache(CPM_MODULES, workspace))
     fingerprint = compute_cpm_fingerprint(root)
+    if tool == "ccache":
+        environment.update(
+            check_result_cache_environment(
+                environment["CCACHE_DIR"], fingerprint, inputs.runner_image
+            )
+        )
     cpm_base = f"cpm-sources-v2-{host}-{target}{key_suffix}"
     outputs["cpm_mode"] = dependency_mode
     # PRs and branches restore an identical default-branch snapshot instead of saving a copy.

@@ -119,6 +119,8 @@ def test_pull_request_keys_match_the_previous_action(workspace) -> None:
         "QGC_MOCCACHE_KEY": f"{moc}-pr-42-{MOC_HASH}-Release-7-1",
         "QGC_PR_CACHE_SAVE_MIN_MISSES": "20",
         "QGC_COMPILER_CACHE_TOOL": "ccache",
+        "QGC_CHECK_RESULT_CACHE_DIR": f"{workspace.as_posix()}/.cache/ccache/qgc-configure-checks",
+        "QGC_CHECK_RESULT_CACHE_SALT": f"cpm={fingerprint},image=",
     }
     assert (workspace / ".cache/ccache").is_dir()
     assert cpm_cache.is_dir()
@@ -359,6 +361,8 @@ def test_sccache_pilot_replaces_the_ccache_archive(workspace, tmp_path) -> None:
     for name in ("moccache_key", "moccache_restore_keys", "cpm_mode", "cpm_key"):
         assert result.outputs[name] == ccache.outputs[name]
     assert not [name for name in result.env if name.startswith("CCACHE_")]
+    # Check results ride in the ccache archive, which the pilot neither restores nor saves.
+    assert not [name for name in result.env if name.startswith("QGC_CHECK_RESULT_CACHE_")]
     assert {
         "QGC_COMPILER_CACHE_TOOL": "sccache",
         "QGC_CCACHE_KEY": "",
@@ -373,6 +377,22 @@ def test_sccache_pilot_replaces_the_ccache_archive(workspace, tmp_path) -> None:
         "SCCACHE_S3_RW_MODE": "READ_WRITE",
     }.items() <= result.env.items()
     assert ccache.env["QGC_COMPILER_CACHE_TOOL"] == "ccache"
+
+
+@pytest.mark.parametrize(
+    ("env", "image"),
+    [
+        ({"ImageOS": "macos15", "ImageVersion": "20260907.0337"}, "macos15-20260907.0337"),
+        ({"RUNS_ON_AMI_ID": "ami-0314e14b251e7b7ab"}, "ami-0314e14b251e7b7ab"),
+        ({}, ""),
+    ],
+)
+def test_runner_image_salts_reused_check_results(workspace, env, image) -> None:
+    inputs = CacheInputs.from_env(env)
+    assert inputs.runner_image == image
+
+    salt = plan(workspace, runner_image=image).env["QGC_CHECK_RESULT_CACHE_SALT"]
+    assert salt == f"cpm={compute_cpm_fingerprint(workspace.resolve())},image={image}"
 
 
 @pytest.mark.parametrize(

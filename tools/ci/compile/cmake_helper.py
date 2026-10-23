@@ -12,6 +12,7 @@ Subcommands:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import os
 import re
 import shutil
@@ -223,6 +224,33 @@ def stable_build_ref() -> bool:
     return os.environ.get("GITHUB_REF_TYPE") == "tag" or ref.startswith("refs/heads/Stable")
 
 
+INCLUDE_PATH_VARIABLES = ("INCLUDE", "CPATH", "C_INCLUDE_PATH", "CPLUS_INCLUDE_PATH")
+PACKAGE_INVENTORIES = (
+    ("dpkg-query", "-W", "-f=${binary:Package}=${Version}\n"),
+    ("rpm", "-qa"),
+)
+HOMEBREW_CELLARS = (Path("/opt/homebrew/Cellar"), Path("/usr/local/Cellar"))
+
+
+def system_header_digest() -> str:
+    """Hash what decides which system headers configure checks find, beyond the toolchain.
+
+    Dependencies probe some headers unconditionally (SDL3's libudev.h, libarchive's sys/acl.h),
+    so a package installed after the cache plan ran must not reuse results measured without it.
+    Windows SDK and MSVC headers come from INCLUDE.
+    """
+    parts = [f"{name}={os.environ.get(name, '')}" for name in INCLUDE_PATH_VARIABLES]
+    for command in PACKAGE_INVENTORIES:
+        if shutil.which(command[0]):
+            result = subprocess.run(command, capture_output=True, text=True, check=False)
+            parts += [f"{command[0]} exit={result.returncode}", *sorted(result.stdout.splitlines())]
+            break
+    for cellar in HOMEBREW_CELLARS:
+        if cellar.is_dir():
+            parts += sorted(path.relative_to(cellar).as_posix() for path in cellar.glob("*/*"))
+    return hashlib.sha256("\n".join(parts).encode()).hexdigest()[:16]
+
+
 def cmd_configure(args: argparse.Namespace) -> int:
     """Configure the checkout from a preset with the shared configure library and CI defaults."""
     if not args.preset:
@@ -239,6 +267,13 @@ def cmd_configure(args: argparse.Namespace) -> int:
         )
     if cache_program := os.environ.get("QGC_CACHE_PROGRAM"):
         extra_args.append(f"-DQGC_CACHE_PROGRAM:FILEPATH={cache_program}")
+    # The cache action points this into the restored compiler cache (CheckResultCache.cmake).
+    if check_results := os.environ.get("QGC_CHECK_RESULT_CACHE_DIR"):
+        salt = os.environ.get("QGC_CHECK_RESULT_CACHE_SALT", "")
+        extra_args += [
+            f"-DQGC_CHECK_RESULT_CACHE_DIR:PATH={check_results}",
+            f"-DQGC_CHECK_RESULT_CACHE_SALT:STRING={salt},system={system_header_digest()}",
+        ]
 
     config = CMakeConfig(
         source_dir=find_repo_root(Path(__file__)),

@@ -106,6 +106,16 @@ add_test(
 set_tests_properties(CMake.QGCTestMultiConfig PROPERTIES LABELS "CMake;Unit")
 
 add_test(
+    NAME CMake.CheckResultCache
+    COMMAND
+        "${CMAKE_COMMAND}" "-DQGC_MODULE_DIR=${PROJECT_SOURCE_DIR}/cmake" "-DGENERATOR=${CMAKE_GENERATOR}"
+        "-DFIXTURE_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/CheckResultCache"
+        "-DFIXTURE_BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}/CheckResultCache" -P
+        "${CMAKE_CURRENT_SOURCE_DIR}/run_check_result_cache_test.cmake"
+)
+set_tests_properties(CMake.CheckResultCache PROPERTIES LABELS "CMake;Unit")
+
+add_test(
     NAME CMake.MoccacheLauncherStable
     COMMAND
         "${CMAKE_COMMAND}" "-DQGC_MODULE_DIR=${PROJECT_SOURCE_DIR}/cmake"

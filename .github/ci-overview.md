@@ -367,6 +367,15 @@ signed or notarized, and PR Docker builds do not log in to Docker Hub. Publishin
   `miss-cache-evicted` row in its collapsed moc cache events means the limit is too small.
 - Coverage keeps the compiler launcher (ccache stores `.gcno` files alongside objects). macOS passes
   the installed ccache binary to CMake so Homebrew discovery cannot select another version.
+- Configure-check results (`check_include_file`, `check_symbol_exists`, and similar; about 650
+  `try_compile` runs, mostly libarchive and SDL3) ride in the ccache archive under
+  `qgc-configure-checks/`. `cmake/modules/CheckResultCache.cmake` seeds a fresh configure with the
+  results saved for the same toolchain, flags, and QGC options, salted with the CPM dependency
+  fingerprint and runner image (`QGC_CHECK_RESULT_CACHE_SALT`) plus, at configure time, the
+  installed system packages and include paths (`system_header_digest` in `cmake_helper.py`:
+  SDL3 and libarchive probe headers such as `libudev.h` unconditionally), and saves them after a
+  successful configure; a local fresh configure dropped from 29 s to 7 s with byte-identical
+  generated config headers. sccache pilot legs run the checks.
 
 ### sccache pilot
 
