@@ -13,8 +13,6 @@ on:
       - '!docs/zh/**'
   pull_request:
     paths: *link-paths
-  schedule:
-    - cron: '41 5 * * 1'
   workflow_dispatch:
 
 concurrency:

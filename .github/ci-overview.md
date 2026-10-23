@@ -702,7 +702,7 @@ when a PR closes, and on demand:
   directory `deploy-docs` publishes to. VitePress is pinned to a 2.0
   prerelease because the stable 1.x dependency chain prevents patched Vite updates; its native theme
   navigation replaces `vp-dynamic-nav`, and `npm run docs:build` runs its Node regression test first.
-- Check Links runs lychee on PRs, `master` pushes, and weekly; exact legacy URL exceptions in
+- Check Links runs lychee on PRs, `master` pushes, and manual dispatch; exact legacy URL exceptions in
   `tools/configs/lychee.toml` expire on their recorded review date (checked by `tools/validate_configs.py`).
 - Translation Validation checks new or changed TS messages against the PR merge's first parent or
   the push baseline without installing Qt. Unchanged legacy placeholder defects do not block unrelated imports;
