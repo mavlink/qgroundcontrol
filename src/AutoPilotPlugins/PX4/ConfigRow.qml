@@ -26,6 +26,7 @@ ColumnLayout {
     QGCPalette { id: qgcPal }
 
     Rectangle {
+        objectName:         "configRowSeparator"
         Layout.fillWidth:   true
         implicitHeight:     1
         color:              qgcPal.borderSubtle

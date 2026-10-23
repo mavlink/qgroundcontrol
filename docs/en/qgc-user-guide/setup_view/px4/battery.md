@@ -22,9 +22,9 @@ PX4 supports up to three batteries. Each row shows:
 - **Cells** — one captioned cell per setting.
   Only the settings the selected source uses are shown:
   - _Power Module_ (an analog power module or an I2C power monitor) uses the cell count, voltages, capacity and internal resistance, and the analog calibration: voltage divider, amps per volt, ADC channels and filters.
-  - _ESCs_ uses the cell count, voltages, capacity and internal resistance from ESC telemetry. PX4 only reads ESC telemetry into battery 1.
+  - _ESCs_ uses the cell count, voltages, capacity and internal resistance from ESC telemetry.
   - _External_ uses data reported over MAVLink, DroneCAN or by a driver, which estimates the charge itself.
-    With the DroneCAN battery data set to _Filter data_, PX4 runs its own estimate and the cell, voltage and capacity settings are shown.
+    With the DroneCAN battery data set to _Filter data_, the cell, voltage and capacity settings are shown too.
 
 Settings that only take effect after the vehicle reboots are marked _Applies after reboot_.
 Once one is changed from the value it had when the page opened, the mark becomes a _Reboot required_ warning.
@@ -35,6 +35,12 @@ Measure the battery voltage or current with an external meter and enter it to ca
 The button is available while the vehicle is reporting that battery and the value is set.
 It scales the current value, so it can't start from -1, which uses the board's default.
 
+## DroneCAN
+
+The **DroneCAN battery** row turns DroneCAN on and chooses how PX4 uses its battery data.
+See the PX4 documentation for what each option does.
+Use the _External_ battery source for a DroneCAN battery.
+
 ## All Batteries
 
 - **Charge levels** — the remaining charge at which every battery is reported low, critical and emergency.
@@ -44,13 +50,13 @@ It scales the current value, so it can't start from -1, which uses the board's d
 
 ## Other Reported Batteries
 
-Lists every battery the vehicle reports that isn't linked to a battery row above, with its ID and live voltage, charge and current.
-DroneCAN batteries report their node ID minus one, and MAVLink batteries report 255.
+Lists every battery the vehicle reports that the page can't match to a battery row above, with its ID and live voltage, charge and current.
+A battery set to _External_ can report under any ID, so it appears here.
 
 ## Power Monitors
 
-The INA226, INA228, INA238 and INA220 I2C power monitors, the VOXL power module and DroneCAN batteries each have a row with their driver and shunt settings.
-These report as a _Power Module_ battery source, except DroneCAN which uses _External_.
+The INA226, INA228, INA238 and INA220 I2C power monitors and the VOXL power module each have a row with their driver and shunt settings.
+These report as a _Power Module_ battery source.
 
 Select **In Use** to hide disabled batteries and power monitors.
 The page opens on **In Use** when any battery or power monitor is in use, once the settings have loaded.

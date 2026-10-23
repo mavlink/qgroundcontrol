@@ -185,3 +185,19 @@ function groupRows(rows) {
     }
     return groups
 }
+
+/// True when a row before `row` in `rowsInGroup` is shown, so `row` needs a rule above it. The first shown row has none,
+/// or its rule would double the group heading's. shown(row) says whether a row is shown. Rows are matched by id, since
+/// a delegate's row is a copy of the one in the group. False when `row` is not in the group.
+function hasShownRowAbove(rowsInGroup, row, shown) {
+    var shownAbove = false
+    for (var r = 0; r < rowsInGroup.length; r++) {
+        if (rowsInGroup[r].id === row.id) {
+            return shownAbove
+        }
+        if (shown(rowsInGroup[r])) {
+            shownAbove = true
+        }
+    }
+    return false
+}

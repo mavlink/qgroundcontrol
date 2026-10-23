@@ -64,6 +64,23 @@ TestCase {
         }
     }
 
+    function test_rowDefinitions_droneCanHasItsOwnGroupAfterTheBatteries() {
+        var rows = Rows.batteryRows()
+        for (var instance = 1; instance <= Rows.maxBatteries; instance++) {
+            compare(rows[instance - 1].id, "battery" + instance)
+        }
+        compare(rows[Rows.maxBatteries].id, "droneCan")
+        compare(rows[Rows.maxBatteries + 1].id, "levels")
+
+        // A group of its own, so the page shows a separate DroneCAN section
+        var droneCanGroup = rows[Rows.maxBatteries].group
+        var neighbours = ["battery1", "levels", "ina226"]
+        for (var i = 0; i < neighbours.length; i++) {
+            verify(_rowById(rows, neighbours[i]).group !== droneCanGroup,
+                   neighbours[i] + " shares the DroneCAN group")
+        }
+    }
+
     function test_rowDefinitions_batteryRowsMatchTheirInstance() {
         for (var instance = 1; instance <= Rows.maxBatteries; instance++) {
             var row = _rowById(Rows.batteryRows(), "battery" + instance)

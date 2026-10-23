@@ -80,6 +80,15 @@ function batteryRows() {
 
     rows.push(
         {
+            id: "droneCan", group: qsTr("DroneCAN"), title: qsTr("DroneCAN battery"),
+            description: qsTr("Smart batteries and power monitors on the CAN bus. Use the External battery source."),
+            activeWhen: [{ param: "UAVCAN_ENABLE", op: "gt", value: 0 }, { param: "UAVCAN_SUB_BAT", op: "gt", value: 0 }],
+            cells: [
+                { param: "UAVCAN_ENABLE", label: qsTr("DroneCAN") },
+                { param: "UAVCAN_SUB_BAT", label: qsTr("Battery data") }
+            ]
+        },
+        {
             id: "levels", group: qsTr("All Batteries"), shared: true, title: qsTr("Charge levels"),
             description: qsTr("Remaining charge at which each battery is reported low, critical and emergency. The action is set on the Failsafes page."),
             cells: [
@@ -125,15 +134,6 @@ function batteryRows() {
             cells: [
                 { param: "VOXLPM_SHUNT_BAT", label: qsTr("Battery shunt resistance") },
                 { param: "VOXLPM_SHUNT_REG", label: qsTr("Regulator shunt resistance") }
-            ]
-        },
-        {
-            id: "droneCan", group: qsTr("Power Monitors"), title: qsTr("DroneCAN battery"),
-            description: qsTr("Smart batteries and power monitors on the CAN bus. Use the External battery source. Filter data runs the cell and voltage settings of every battery, whatever its source."),
-            activeWhen: [{ param: "UAVCAN_ENABLE", op: "gt", value: 0 }, { param: "UAVCAN_SUB_BAT", op: "gt", value: 0 }],
-            cells: [
-                { param: "UAVCAN_ENABLE", label: qsTr("DroneCAN") },
-                { param: "UAVCAN_SUB_BAT", label: qsTr("Battery data") }
             ]
         }
     )
