@@ -769,7 +769,9 @@ actions after these sections.
   Unchanged legacy placeholder defects do not block unrelated imports; malformed XML and newly
   introduced placeholder mismatches fail. `ci-scripts.yml` runs the validator's tests.
 - CodeQL scans Actions, Java/Kotlin, and Python (including `tools/`, `deploy/`, tests, and CI
-  scripts); C++ is not scanned by CodeQL.
+  scripts); C++ is not scanned by CodeQL. It runs on `ubuntu-latest` with a 10-minute timeout: on
+  `ubuntu-22.04` about one PR run in seven failed checkout and then hung in harden-runner's post step
+  until the 30-minute timeout cancelled the check.
 
 ## Tests
 
