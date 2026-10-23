@@ -2,10 +2,9 @@
 """Docker build helpers for CI.
 
 Subcommands:
-    run                   Run docker build with retry logic
-    resolve-push-target   Resolve the GHCR/Docker Hub push target for the current ref
-    cache-key             Print the builder image's compiler fingerprint for cache keys
-    summary               Write the Docker build section of the job summary
+    run         Run docker build with retry logic
+    cache-key   Print the builder image's compiler fingerprint for cache keys
+    summary     Write the Docker build section of the job summary
 """
 
 from __future__ import annotations
@@ -28,29 +27,6 @@ from qgc_tools.build_profile import snapshot_summary
 
 BUILD_ATTEMPTS = 2
 BUILD_RETRY_DELAY_SECONDS = 30
-
-
-def resolve_push_target(event_name: str, repo: str, ref: str) -> str:
-    """Registry to push the builder image to, or '' for no push.
-
-    Pushes happen only from the upstream repo on a push event: GHCR for
-    master/Stable branches, Docker Hub (dronecode/qgroundcontrol) for v* release
-    tags. Forks, PRs, and any other repo always resolve to '' (no push).
-    """
-    if event_name != "push" or repo != "mavlink/qgroundcontrol":
-        return ""
-    if ref == "refs/heads/master" or ref.startswith("refs/heads/Stable"):
-        return "ghcr.io/mavlink/qgroundcontrol"
-    if ref.startswith("refs/tags/v"):
-        return "dronecode/qgroundcontrol"
-    return ""
-
-
-def cmd_resolve_push_target(args: argparse.Namespace) -> int:
-    target = resolve_push_target(args.event_name, args.repo, args.ref)
-    write_github_output({"ref": target})
-    print(f"push target: {target or '(none)'}")
-    return 0
 
 
 def cmd_run(args: argparse.Namespace) -> int:
@@ -155,11 +131,6 @@ def main(argv: list[str] | None = None) -> int:
     p_run.add_argument("--build-type", required=True)
     p_run.add_argument("--fuse", action="store_true", default=False)
 
-    p_target = sub.add_parser("resolve-push-target")
-    p_target.add_argument("--event-name", required=True)
-    p_target.add_argument("--repo", required=True)
-    p_target.add_argument("--ref", required=True)
-
     cache_key = sub.add_parser("cache-key", help="Identify the compilers inside a builder image")
     cache_key.add_argument("--image", required=True)
     summary = sub.add_parser("summary", help="Report container timings and cache statistics")
@@ -168,7 +139,6 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     return {
         "run": cmd_run,
-        "resolve-push-target": cmd_resolve_push_target,
         "cache-key": cmd_cache_key,
         "summary": cmd_summary,
     }[args.command](args)

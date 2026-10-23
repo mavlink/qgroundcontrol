@@ -2,25 +2,16 @@
 
 from __future__ import annotations
 
-import json
-from typing import TYPE_CHECKING
-
 import pytest
-from ci.planning import detect_changes
 from ci.planning.android_matrix import (
     LINUX_EMULATOR_JOB,
     LINUX_JOB,
     MAC_JOB,
     WINDOWS_JOB,
     build_matrix,
-    main,
 )
-from qgc_tools import release_tag_check
 
-from .._helpers import load_workflow, read_github_file
-
-if TYPE_CHECKING:
-    from pathlib import Path
+from .._helpers import load_workflow
 
 
 @pytest.mark.parametrize(
@@ -86,16 +77,10 @@ def test_workflow_upload_identity_tracks_configured_abis_without_renaming_payloa
     assert steps["Deploy to Play Store"]["with"]["releaseFiles"] == (
         "${{ runner.temp }}/build/${{ env.PACKAGE }}.apk"
     )
-    matrix_steps = workflow["jobs"]["build-matrix"]["steps"]
-    generate = next(step for step in matrix_steps if step.get("id") == "build")
-    assert generate["env"]["EVENT_NAME"] == "${{ github.event_name }}"
-    assert generate["run"] == "python3 tools/ci/planning/android_matrix.py"
-    assert workflow["jobs"]["build-matrix"]["outputs"]["has_jobs"] == (
-        "${{ steps.build.outputs.has_jobs }}"
-    )
-    assert build["if"] == "needs.build-matrix.outputs.has_jobs == 'true'"
+    assert workflow["jobs"]["changes"]["with"] == {"platform": "android"}
+    assert build["if"] == "needs.changes.outputs.should_build == 'true'"
     assert build["strategy"]["matrix"]["include"] == (
-        "${{ fromJSON(needs.build-matrix.outputs.include) }}"
+        "${{ fromJSON(needs.changes.outputs.matrix) }}"
     )
 
     names = [
@@ -117,83 +102,3 @@ def test_legs_carry_runner_fields() -> None:
     for leg in build_matrix(is_pr=False):
         assert "runson_runner" in leg
         assert leg["fallback_runner"]
-
-
-@pytest.fixture
-def event(monkeypatch: pytest.MonkeyPatch, gh_output: Path) -> pytest.MonkeyPatch:
-    monkeypatch.setenv("GITHUB_REF_TYPE", "branch")
-    monkeypatch.setattr(detect_changes, "get_changed_files", lambda: ["src/Vehicle.cc"])
-    return monkeypatch
-
-
-def test_main_writes_github_output_for_pr(
-    event: pytest.MonkeyPatch, gh_output: Path, capsys: pytest.CaptureFixture[str]
-) -> None:
-    event.setenv("EVENT_NAME", "pull_request")
-
-    assert main([]) == 0
-
-    outputs = read_github_file(gh_output)
-    assert json.loads(outputs["include"]) == build_matrix(is_pr=True)
-    assert outputs["has_jobs"] == "true"
-    assert "include=" in capsys.readouterr().out
-
-
-@pytest.mark.parametrize("event_name", ["push", "merge_group", "workflow_dispatch"])
-def test_main_non_pr_includes_windows(
-    event: pytest.MonkeyPatch, gh_output: Path, event_name: str
-) -> None:
-    event.setenv("EVENT_NAME", event_name)
-
-    assert main([]) == 0
-
-    assert json.loads(read_github_file(gh_output)["include"]) == build_matrix(is_pr=False)
-
-
-def test_main_skips_pull_requests_without_android_changes(
-    event: pytest.MonkeyPatch, gh_output: Path
-) -> None:
-    event.setenv("EVENT_NAME", "pull_request")
-    event.setattr(detect_changes, "get_changed_files", lambda: ["docs/index.md"])
-
-    assert main([]) == 0
-
-    assert read_github_file(gh_output) == {"include": "[]", "has_jobs": "false"}
-
-
-@pytest.mark.parametrize(("release_tag", "has_jobs"), [(True, "true"), (False, "false")])
-def test_main_builds_tags_only_for_stable_releases(
-    event: pytest.MonkeyPatch, gh_output: Path, release_tag: bool, has_jobs: str
-) -> None:
-    event.setenv("EVENT_NAME", "push")
-    event.setenv("GITHUB_REF_TYPE", "tag")
-    event.setattr(detect_changes, "check_release_tag", lambda *_: release_tag)
-
-    assert main([]) == 0
-
-    assert read_github_file(gh_output)["has_jobs"] == has_jobs
-
-
-def test_main_fails_when_tag_branches_are_unknown(
-    event: pytest.MonkeyPatch, gh_output: Path
-) -> None:
-    def fail(*_: str) -> bool:
-        raise release_tag_check.GitQueryError("no history")
-
-    event.setenv("EVENT_NAME", "push")
-    event.setenv("GITHUB_REF_TYPE", "tag")
-    event.setattr(detect_changes, "check_release_tag", fail)
-
-    assert main([]) == 1
-    assert gh_output.read_text() == ""
-
-
-def test_main_output_uses_compact_json_separators(
-    event: pytest.MonkeyPatch, gh_output: Path
-) -> None:
-    """Compact JSON in $GITHUB_OUTPUT keeps log lines short and avoids ambiguity."""
-    event.setenv("EVENT_NAME", "push")
-    main([])
-    serialized = read_github_file(gh_output)["include"]
-    assert ", " not in serialized
-    assert ": " not in serialized

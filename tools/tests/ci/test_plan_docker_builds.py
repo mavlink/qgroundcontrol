@@ -7,11 +7,15 @@ import sys
 from typing import TYPE_CHECKING
 
 import pytest
-from ci.planning import detect_changes
-from ci.planning.plan_docker_builds import build_args_str, load_variants, main, plan_builds
-from qgc_tools import release_tag_check
+from ci.planning.plan_docker_builds import (
+    build_args_str,
+    load_variants,
+    needs_full_matrix,
+    plan_builds,
+)
+from qgc_tools.docker_variants import resolve_push_target
 
-from .._helpers import REPO_ROOT, commit_files, git, read_github_file
+from .._helpers import REPO_ROOT
 
 _DOCKER_DIR = REPO_ROOT / "deploy" / "docker"
 
@@ -76,9 +80,9 @@ _LINUX_ARCH_BUILD_ARGS = "\n".join(
 
 
 def test_plan_builds_pull_request_filters_by_changes():
-    plan = plan_builds("pull_request", linux_changed=True, android_changed=False, full_matrix=True)
-    assert plan["has_jobs"] is True
-    assert plan["matrix"]["include"] == [
+    assert plan_builds(
+        "pull_request", linux_changed=True, android_changed=False, full_matrix=True
+    ) == [
         {
             "platform": "Linux-Ubuntu-24.04",
             "target": "linux",
@@ -87,6 +91,7 @@ def test_plan_builds_pull_request_filters_by_changes():
             "fuse": True,
             "artifact_pattern": "QGroundControl-*.AppImage",
             "package_pattern": "*.deb",
+            "push_target": "",
         },
         {
             "platform": "Linux-Ubuntu-22.04",
@@ -96,6 +101,7 @@ def test_plan_builds_pull_request_filters_by_changes():
             "fuse": True,
             "artifact_pattern": "QGroundControl-*.AppImage",
             "package_pattern": "*.deb",
+            "push_target": "",
         },
         {
             "platform": "Linux-Ubuntu-26.04",
@@ -105,6 +111,7 @@ def test_plan_builds_pull_request_filters_by_changes():
             "fuse": True,
             "artifact_pattern": "QGroundControl-*.AppImage",
             "package_pattern": "*.deb",
+            "push_target": "",
         },
         {
             "platform": "Linux-Debian",
@@ -114,6 +121,7 @@ def test_plan_builds_pull_request_filters_by_changes():
             "fuse": True,
             "artifact_pattern": "QGroundControl-*.AppImage",
             "package_pattern": "*.deb",
+            "push_target": "",
         },
         {
             "platform": "Linux-Fedora",
@@ -123,6 +131,7 @@ def test_plan_builds_pull_request_filters_by_changes():
             "fuse": False,
             "artifact_pattern": "QGroundControl-*.AppImage",
             "package_pattern": "*.rpm",
+            "push_target": "",
         },
         {
             "platform": "Linux-Arch",
@@ -132,6 +141,7 @@ def test_plan_builds_pull_request_filters_by_changes():
             "fuse": False,
             "artifact_pattern": "QGroundControl-*.AppImage",
             "package_pattern": "*.pkg.tar.zst",
+            "push_target": "",
         },
         {
             "platform": "Linux-aarch64",
@@ -141,12 +151,13 @@ def test_plan_builds_pull_request_filters_by_changes():
             "fuse": False,
             "artifact_pattern": "Release/QGroundControl",
             "package_pattern": "",
+            "push_target": "",
         },
     ]
 
 
 def test_native_package_patterns_per_distro():
-    include = plan_builds("push", linux_changed=False, android_changed=False)["matrix"]["include"]
+    include = plan_builds("push", linux_changed=False, android_changed=False)
     pkg = {e["platform"]: e["package_pattern"] for e in include}
     assert pkg["Linux-Ubuntu-24.04"] == "*.deb"
     assert pkg["Linux-Ubuntu-22.04"] == "*.deb"
@@ -159,7 +170,7 @@ def test_native_package_patterns_per_distro():
 
 
 def test_artifact_patterns_exclude_packaging_tools_and_staging_copies():
-    include = plan_builds("push", linux_changed=False, android_changed=False)["matrix"]["include"]
+    include = plan_builds("push", linux_changed=False, android_changed=False)
     artifact = {entry["platform"]: entry["artifact_pattern"] for entry in include}
 
     native_linux = {
@@ -176,7 +187,7 @@ def test_artifact_patterns_exclude_packaging_tools_and_staging_copies():
 
 
 def test_2204_reuses_linux_target_with_distinct_cache_variant():
-    include = plan_builds("push", linux_changed=False, android_changed=False)["matrix"]["include"]
+    include = plan_builds("push", linux_changed=False, android_changed=False)
     by_platform = {e["platform"]: e for e in include}
     u2404, u2204 = by_platform["Linux-Ubuntu-24.04"], by_platform["Linux-Ubuntu-22.04"]
     assert u2404["target"] == u2204["target"]
@@ -186,7 +197,7 @@ def test_2204_reuses_linux_target_with_distinct_cache_variant():
 
 
 def test_non_ubuntu_linux_variants_reuse_linux_target():
-    include = plan_builds("push", linux_changed=False, android_changed=False)["matrix"]["include"]
+    include = plan_builds("push", linux_changed=False, android_changed=False)
     by_platform = {e["platform"]: e for e in include}
     for name in ("Linux-Debian", "Linux-Fedora", "Linux-Arch"):
         assert by_platform[name]["target"] == "linux"
@@ -198,25 +209,21 @@ def test_non_ubuntu_linux_variants_reuse_linux_target():
 
 def test_plan_builds_pull_request_android_only_excludes_linux():
     plan = plan_builds("pull_request", linux_changed=False, android_changed=True)
-    assert [e["target"] for e in plan["matrix"]["include"]] == ["android"]
+    assert [e["target"] for e in plan] == ["android"]
 
 
 def test_plan_builds_pull_request_no_changes_yields_empty_matrix():
-    plan = plan_builds("pull_request", linux_changed=False, android_changed=False)
-    assert plan["has_jobs"] is False
-    assert plan["matrix"]["include"] == []
+    assert plan_builds("pull_request", linux_changed=False, android_changed=False) == []
 
 
 def test_plan_builds_push_respects_should_build_false():
-    plan = plan_builds("push", linux_changed=True, android_changed=True, should_build=False)
-    assert plan["has_jobs"] is False
-    assert plan["matrix"]["include"] == []
+    assert plan_builds("push", linux_changed=True, android_changed=True, should_build=False) == []
 
 
 def test_plan_builds_push_includes_all():
     plan = plan_builds("push", linux_changed=False, android_changed=False)
-    assert len(plan["matrix"]["include"]) == 8
-    assert [e["platform"] for e in plan["matrix"]["include"]] == [
+    assert len(plan) == 8
+    assert [e["platform"] for e in plan] == [
         "Linux-Ubuntu-24.04",
         "Linux-Ubuntu-22.04",
         "Linux-Ubuntu-26.04",
@@ -273,7 +280,7 @@ def test_build_args_str_preserves_order():
 
 def test_application_pr_uses_representative_docker_variants():
     plan = plan_builds("pull_request", True, True)
-    assert [row["platform"] for row in plan["matrix"]["include"]] == [
+    assert [row["platform"] for row in plan] == [
         "Linux-Ubuntu-24.04",
         "Android",
     ]
@@ -294,8 +301,6 @@ def test_application_pr_uses_representative_docker_variants():
     ],
 )
 def test_toolchain_and_unknown_diffs_use_full_matrix(files):
-    from ci.planning.plan_docker_builds import needs_full_matrix
-
     assert needs_full_matrix(files)
 
 
@@ -311,109 +316,44 @@ def test_toolchain_and_unknown_diffs_use_full_matrix(files):
     ],
 )
 def test_unrelated_changes_do_not_require_full_matrix(path):
-    from ci.planning.plan_docker_builds import needs_full_matrix
-
     assert not needs_full_matrix([path])
 
 
-def test_rename_out_of_docker_inputs_uses_full_matrix(
-    monkeypatch: pytest.MonkeyPatch, git_repo: Path, gh_output: Path
-) -> None:
-    base = commit_files(git_repo, {"deploy/docker/Dockerfile": "FROM scratch\n" * 20}, "base")
-    (git_repo / "docs").mkdir()
-    git(git_repo, "mv", "deploy/docker/Dockerfile", "docs/Dockerfile")
-    git(git_repo, "commit", "-qm", "move")
-
-    monkeypatch.chdir(git_repo)
-    monkeypatch.setenv("EVENT_NAME", "pull_request")
-    monkeypatch.setenv("PR_BASE_SHA", base)
-    monkeypatch.setenv("PR_HEAD_SHA", git(git_repo, "rev-parse", "HEAD"))
-    assert main([]) == 0
-
-    outputs = read_github_file(gh_output)
-    assert len(json.loads(outputs["matrix"])["include"]) == len(load_variants())
+def test_every_leg_carries_the_push_target():
+    plan = plan_builds("push", False, False, push_target="ghcr.io/mavlink/qgroundcontrol")
+    assert {leg["push_target"] for leg in plan} == {"ghcr.io/mavlink/qgroundcontrol"}
+    # docker.yml's attest-images job reads the target from the serialized matrix.
+    serialized = json.dumps(plan, separators=(",", ":"))
+    assert '"push_target":""' not in serialized
+    assert '"push_target":""' in json.dumps(
+        plan_builds("push", False, False), separators=(",", ":")
+    )
 
 
-_ALL_PLATFORMS = [
-    "Linux-Ubuntu-24.04",
-    "Linux-Ubuntu-22.04",
-    "Linux-Ubuntu-26.04",
-    "Linux-Debian",
-    "Linux-Fedora",
-    "Linux-Arch",
-    "Linux-aarch64",
-    "Android",
-]
-
-
-@pytest.fixture
-def event(monkeypatch: pytest.MonkeyPatch, gh_output: Path) -> pytest.MonkeyPatch:
-    monkeypatch.setenv("GITHUB_REF_TYPE", "branch")
-    return monkeypatch
-
-
-def _planned(gh_output: Path) -> tuple[list[str], str]:
-    outputs = read_github_file(gh_output)
-    platforms = [row["platform"] for row in json.loads(outputs["matrix"])["include"]]
-    return platforms, outputs["has_jobs"]
+UPSTREAM = "mavlink/qgroundcontrol"
 
 
 @pytest.mark.parametrize(
-    ("changed", "expected"),
+    ("ref", "target"),
     [
-        (["docs/index.md"], []),
-        (["src/Vehicle/Vehicle.cc"], ["Linux-Ubuntu-24.04", "Android"]),
-        (["android/AndroidManifest.xml"], ["Android"]),
-        (["deploy/linux/AppImage.sh"], _ALL_PLATFORMS[:-1]),
-        (None, _ALL_PLATFORMS),
+        ("refs/tags/v5.0.0", "dronecode/qgroundcontrol"),
+        ("refs/heads/master", "ghcr.io/mavlink/qgroundcontrol"),
+        ("refs/heads/Stable_V4.4", "ghcr.io/mavlink/qgroundcontrol"),
+        ("refs/heads/feature-x", ""),
     ],
 )
-def test_main_plans_pull_requests_from_their_diff(
-    event: pytest.MonkeyPatch, gh_output: Path, changed: list[str] | None, expected: list[str]
+def test_upstream_pushes_publish_branches_to_ghcr_and_release_tags_to_docker_hub(
+    ref: str, target: str
 ) -> None:
-    event.setenv("EVENT_NAME", "pull_request")
-    event.setattr(detect_changes, "get_changed_files", lambda: changed)
-    assert main([]) == 0
-    assert _planned(gh_output) == (expected, "true" if expected else "false")
+    assert resolve_push_target("push", UPSTREAM, ref) == target
 
 
-@pytest.mark.parametrize("event_name", ["push", "workflow_dispatch"])
-def test_main_builds_every_variant_outside_pull_requests(
-    event: pytest.MonkeyPatch, gh_output: Path, event_name: str
-) -> None:
-    def unexpected() -> None:
-        raise AssertionError("non-PR events must not diff")
-
-    event.setenv("EVENT_NAME", event_name)
-    event.setattr(detect_changes, "get_changed_files", unexpected)
-    assert main([]) == 0
-    assert _planned(gh_output) == (_ALL_PLATFORMS, "true")
+@pytest.mark.parametrize("ref", ["refs/tags/v5.0.0", "refs/heads/master", "refs/heads/Stable_V4.4"])
+def test_forks_never_push(ref: str) -> None:
+    assert resolve_push_target("push", "someuser/qgroundcontrol", ref) == ""
 
 
-@pytest.mark.parametrize(
-    ("release_tag", "expected"), [(True, (_ALL_PLATFORMS, "true")), (False, ([], "false"))]
-)
-def test_main_builds_tags_only_for_stable_releases(
-    event: pytest.MonkeyPatch,
-    gh_output: Path,
-    release_tag: bool,
-    expected: tuple[list[str], str],
-) -> None:
-    event.setenv("EVENT_NAME", "push")
-    event.setenv("GITHUB_REF_TYPE", "tag")
-    event.setattr(detect_changes, "check_release_tag", lambda *_: release_tag)
-    assert main([]) == 0
-    assert _planned(gh_output) == expected
-
-
-def test_main_fails_when_tag_branches_are_unknown(
-    event: pytest.MonkeyPatch, gh_output: Path
-) -> None:
-    def fail(*_: str) -> bool:
-        raise release_tag_check.GitQueryError("no history")
-
-    event.setenv("EVENT_NAME", "push")
-    event.setenv("GITHUB_REF_TYPE", "tag")
-    event.setattr(detect_changes, "check_release_tag", fail)
-    assert main([]) == 1
-    assert gh_output.read_text() == ""
+@pytest.mark.parametrize("event_name", ["pull_request", "workflow_dispatch", "merge_group"])
+def test_other_events_never_push(event_name: str) -> None:
+    for ref in ("refs/tags/v5.0.0", "refs/heads/master"):
+        assert resolve_push_target(event_name, UPSTREAM, ref) == ""

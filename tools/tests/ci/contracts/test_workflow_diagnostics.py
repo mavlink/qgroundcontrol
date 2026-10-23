@@ -79,8 +79,15 @@ def test_unified_attestation_preserves_separate_provenance_and_sbom_subjects():
     assert provenance["env"]["NODE_OPTIONS"] == "--max-http-header-size=32768"
 
     job = load_workflow("docker.yml")["jobs"]["attest-images"]
+    # plan_platform.py gives every leg the same push target (test_plan_platform.py checks that
+    # this matches pushes to the upstream repository).
+    assert job["needs"] == ["changes", "build"]
+    assert job["if"] == '${{ !contains(needs.changes.outputs.matrix, \'"push_target":""\') }}'
+    assert job["strategy"]["matrix"] == {"include": "${{ fromJSON(needs.changes.outputs.matrix) }}"}
+    steps = {step["name"]: step for step in job["steps"]}
+    assert steps["Login to GHCR"]["if"] == "startsWith(matrix.push_target, 'ghcr.io/')"
     assert (
-        job["if"] == "github.repository == 'mavlink/qgroundcontrol' && github.event_name == 'push'"
+        steps["Login to Docker Hub"]["if"] == "${{ !startsWith(matrix.push_target, 'ghcr.io/') }}"
     )
     provenance, sbom = [s for s in job["steps"] if s.get("uses") == "actions/attest@v4"]
     assert "sbom-path" not in provenance["with"]
@@ -88,8 +95,16 @@ def test_unified_attestation_preserves_separate_provenance_and_sbom_subjects():
     assert sbom["with"]["sbom-path"] == "image-sbom.cdx.json"
     for key in ("subject-name", "subject-digest", "push-to-registry"):
         assert provenance["with"][key] == sbom["with"][key]
+    assert provenance["with"]["subject-name"] == "${{ matrix.push_target }}"
     assert provenance["with"]["subject-digest"] == "${{ steps.image.outputs.digest }}"
     assert provenance["with"]["push-to-registry"] is True
+
+    build = {
+        step.get("name"): step for step in load_workflow("docker.yml")["jobs"]["build"]["steps"]
+    }
+    assert build["Build with Docker"]["with"]["push-image"] == "${{ matrix.push_target }}"
+    for name in ("Save published image digest", "Upload image security evidence"):
+        assert build[name]["if"] == "matrix.push_target != ''"
 
 
 def test_attestation_actions_publish_checksum_and_resolved_sbom_output() -> None:

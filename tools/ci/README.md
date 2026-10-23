@@ -29,9 +29,10 @@ and Ruff skips `build` directories.
 | Script | Purpose |
 | --- | --- |
 | `planning/analysis_matrix.py` | Plan Code Analysis jobs (configure and analyzer arguments per tool family): PR shards and scan scope, one cache-seeding job for master pushes, none when nothing compiled changed |
-| `planning/android_matrix.py` | Emit the Android build matrix, running change detection and the release-tag gate in-process |
-| `planning/detect_changes.py` | Decide which platform builds an event requires, including the release-tag gate |
-| `planning/plan_docker_builds.py` | Generate Docker build matrices, running change detection and the release-tag gate in-process |
+| `planning/android_matrix.py` | Library: the Android build legs (hosts, runners, ABIs) for `plan_platform.py` |
+| `planning/detect_changes.py` | Library: decide which platforms an event builds, including the release-tag gate |
+| `planning/plan_docker_builds.py` | Library: select the Docker variants an event builds, each with the image push target |
+| `planning/plan_platform.py` | `_detect-changes.yml`'s planner: change detection and the release-tag gate once, then the Android or Docker matrix |
 | `cache/build_cache_artifact.py` | Retain compiler/moc snapshots as short-lived workflow artifacts and restore them |
 | `cache/cache_backend.py` | Detect whether RunsOn's S3 proxy serves the Actions cache and export `QGC_ACTIONS_CACHE_BACKEND` for `setup-python` |
 | `cache/cache_plan.py` | Resolve the cache action's save policy, scope, keys, ccache budget, compiler/moc/CPM environment, and the sccache pilot's selection |

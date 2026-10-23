@@ -13,11 +13,11 @@ from ci.planning.detect_changes import (
     detect_builds,
     get_changed_files,
     has_relevant_changes,
-    main,
     workflow_name_for_platform,
 )
 from hypothesis import given
 from hypothesis import strategies as st
+from qgc_tools.release_tag_check import GitQueryError
 
 from .._helpers import (
     REPO_ROOT,
@@ -60,7 +60,7 @@ def test_rename_out_of_watched_dir_is_relevant(
 
 
 @pytest.fixture
-def event(monkeypatch: pytest.MonkeyPatch, gh_output: Path, git_repo: Path) -> pytest.MonkeyPatch:
+def event(monkeypatch: pytest.MonkeyPatch, git_repo: Path) -> pytest.MonkeyPatch:
     """Clear the workflow's event inputs and run inside a one-commit repository."""
     for name in _EVENT_VARS:
         monkeypatch.delenv(name, raising=False)
@@ -69,26 +69,24 @@ def event(monkeypatch: pytest.MonkeyPatch, gh_output: Path, git_repo: Path) -> p
     return monkeypatch
 
 
-def _should_build(gh_output: Path) -> str:
-    assert main(["--platform", "linux"]) == 0
-    (line,) = gh_output.read_text().splitlines()
-    return line.removeprefix("should_build=")
+def _should_build() -> bool:
+    return detect_builds(["linux"]).builds["linux"]
 
 
-@pytest.mark.parametrize(("path", "expected"), [("src/Vehicle.cc", "true"), ("docs/a.md", "false")])
+@pytest.mark.parametrize(("path", "expected"), [("src/Vehicle.cc", True), ("docs/a.md", False)])
 def test_pull_request_builds_only_relevant_changes(
-    event: pytest.MonkeyPatch, tmp_path: Path, gh_output: Path, path: str, expected: str
+    event: pytest.MonkeyPatch, tmp_path: Path, path: str, expected: bool
 ) -> None:
     event.setenv("EVENT_NAME", "pull_request")
     event.setenv("GITHUB_REF_TYPE", "branch")
     event.setenv("PR_BASE_SHA", git(tmp_path, "rev-parse", "HEAD"))
     event.setenv("PR_HEAD_SHA", commit_files(tmp_path, {path: path}, path))
-    assert _should_build(gh_output) == expected
+    assert _should_build() is expected
 
 
 @pytest.mark.parametrize("clone", ["full", "shallow"])
 def test_pull_request_behind_its_base_detects_only_its_own_changes(
-    event: pytest.MonkeyPatch, tmp_path: Path, gh_output: Path, clone: str
+    event: pytest.MonkeyPatch, tmp_path: Path, clone: str
 ) -> None:
     pr = pr_merge_checkout(
         tmp_path / "pr",
@@ -103,22 +101,22 @@ def test_pull_request_behind_its_base_detects_only_its_own_changes(
     event.setenv("PR_BASE_SHA", pr.base_tip)
     event.setenv("PR_HEAD_SHA", pr.pr_head)
     assert get_changed_files() == ["docs/index.md"]
-    assert _should_build(gh_output) == "false"
+    assert _should_build() is False
 
 
 def test_pull_request_with_unknown_diff_builds(
-    event: pytest.MonkeyPatch, gh_output: Path, capsys: pytest.CaptureFixture[str]
+    event: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     event.setenv("EVENT_NAME", "pull_request")
     event.setenv("PR_BASE_SHA", "f" * 40)
     event.setenv("PR_HEAD_SHA", "e" * 40)
-    assert _should_build(gh_output) == "true"
+    assert _should_build() is True
     assert "::warning::Unable to compute changed files" in capsys.readouterr().out
 
 
 @pytest.mark.parametrize("event_name", ["push", "merge_group", "workflow_dispatch"])
 def test_other_branch_events_build_without_diffing(
-    event: pytest.MonkeyPatch, gh_output: Path, event_name: str
+    event: pytest.MonkeyPatch, event_name: str
 ) -> None:
     event.setenv("EVENT_NAME", event_name)
     event.setenv("GITHUB_REF_TYPE", "branch")
@@ -127,26 +125,25 @@ def test_other_branch_events_build_without_diffing(
         raise AssertionError("non-PR events must not diff")
 
     event.setattr(detect_changes, "get_changed_files", unexpected)
-    assert _should_build(gh_output) == "true"
+    assert _should_build() is True
 
 
 @pytest.mark.parametrize("event_name", ["push", "workflow_dispatch"])
 @pytest.mark.parametrize(
     ("ref_name", "stable_branch", "expected"),
     [
-        ("v5.1.4", True, "true"),
-        ("v5.1.4", False, "false"),
-        ("v5.2.0-dev", True, "false"),
+        ("v5.1.4", True, True),
+        ("v5.1.4", False, False),
+        ("v5.2.0-dev", True, False),
     ],
 )
 def test_tags_build_only_release_tags_on_stable_branches(
     event: pytest.MonkeyPatch,
     tmp_path: Path,
-    gh_output: Path,
     event_name: str,
     ref_name: str,
     stable_branch: bool,
-    expected: str,
+    expected: bool,
 ) -> None:
     head = commit_files(tmp_path, {"src/Vehicle.cc": "change"}, "change")
     git(tmp_path, "update-ref", "refs/remotes/origin/master", head)
@@ -155,12 +152,10 @@ def test_tags_build_only_release_tags_on_stable_branches(
     event.setenv("EVENT_NAME", event_name)
     event.setenv("GITHUB_REF_TYPE", "tag")
     event.setenv("GITHUB_REF_NAME", ref_name)
-    assert _should_build(gh_output) == expected
+    assert _should_build() is expected
 
 
-def test_tag_fails_when_git_cannot_answer(
-    event: pytest.MonkeyPatch, tmp_path: Path, gh_output: Path, capsys: pytest.CaptureFixture[str]
-) -> None:
+def test_tag_fails_when_git_cannot_answer(event: pytest.MonkeyPatch, tmp_path: Path) -> None:
     outside = tmp_path / "outside"
     outside.mkdir()
     event.chdir(outside)
@@ -168,9 +163,8 @@ def test_tag_fails_when_git_cannot_answer(
     event.setenv("EVENT_NAME", "push")
     event.setenv("GITHUB_REF_TYPE", "tag")
     event.setenv("GITHUB_REF_NAME", "v5.1.4")
-    assert main(["--platform", "linux"]) == 1
-    assert gh_output.read_text() == ""
-    assert "::error::Cannot determine whether tag is on a Stable* branch" in capsys.readouterr().out
+    with pytest.raises(GitQueryError):
+        _should_build()
 
 
 def test_detect_builds_returns_pull_request_diff_per_platform(
@@ -186,11 +180,6 @@ def test_detect_builds_returns_pull_request_diff_per_platform(
     assert detection.changed_files == ["android/AndroidManifest.xml"]
 
 
-def test_platform_must_be_known() -> None:
-    with pytest.raises(SystemExit):
-        main(["--platform", "docker-linux docker-android"])
-
-
 def _single(steps: list[dict], predicate) -> dict:
     (step,) = [s for s in steps if predicate(s)]
     return step
@@ -202,33 +191,31 @@ def _checkout(steps: list[dict]) -> dict:
 
 def test_reusable_workflow_runs_one_unconditional_detection() -> None:
     workflow = load_workflow("_detect-changes.yml")
-    assert set(workflow["on"]["workflow_call"]["outputs"]) == {"should_build"}
+    assert set(workflow["on"]["workflow_call"]["outputs"]) == {"should_build", "matrix"}
     job = workflow["jobs"]["detect"]
-    assert job["outputs"] == {"should_build": "${{ steps.detect.outputs.should_build }}"}
+    assert job["outputs"] == {
+        "should_build": "${{ steps.detect.outputs.should_build }}",
+        "matrix": "${{ steps.detect.outputs.matrix }}",
+    }
     steps = job["steps"]
     run = _single(steps, lambda s: "run" in s)
     assert run["id"] == "detect"
-    assert "--platform" in run["run"]
+    assert 'plan_platform.py" --platform' in run["run"]
     assert "if" not in _checkout(steps)
     assert "if" not in run
     assert not any(str(s.get("uses", "")).startswith("./") for s in steps)
 
 
-@pytest.mark.parametrize(
-    ("workflow", "job"),
-    [
-        ("_detect-changes.yml", "detect"),
-        ("android.yml", "build-matrix"),
-        ("docker.yml", "plan-builds"),
-    ],
-)
-def test_detection_jobs_check_out_and_pass_what_detect_builds_reads(
-    workflow: str, job: str
-) -> None:
-    steps = load_workflow(workflow)["jobs"][job]["steps"]
+def test_detection_job_checks_out_and_passes_what_detect_builds_reads() -> None:
+    steps = load_workflow("_detect-changes.yml")["jobs"]["detect"]["steps"]
     checkout = _checkout(steps)["with"]
     entries = set(checkout["sparse-checkout"].split())
-    assert {"tools/ci/planning/detect_changes.py", "tools/qgc_tools"} <= entries
+    assert {
+        "deploy/docker/variants.json",
+        "tools/ci/planning/detect_changes.py",
+        "tools/ci/planning/plan_platform.py",
+        "tools/qgc_tools",
+    } <= entries
     # Pull requests diff the merge commit against its first parent; tags need full history.
     assert checkout["fetch-depth"] == (
         "${{ github.event_name == 'pull_request' && 2 || github.ref_type != 'tag' && 1 || 0 }}"
@@ -239,25 +226,37 @@ def test_detection_jobs_check_out_and_pass_what_detect_builds_reads(
     assert env["PR_HEAD_SHA"] == "${{ github.event.pull_request.head.sha }}"
 
 
-def test_reusable_detection_callers_consume_only_should_build() -> None:
+# Workflows whose build legs come from the planner's matrix output.
+MATRIX_WORKFLOWS = {"android.yml", "docker.yml"}
+
+
+def test_reusable_detection_callers_consume_should_build_and_planned_matrices() -> None:
+    callers = set()
     for workflow in workflow_names():
         jobs = load_workflow(workflow).get("jobs") or {}
         text = (WORKFLOWS_DIR / workflow).read_text(encoding="utf-8")
         for name, job in jobs.items():
             if job.get("uses") == REUSABLE_DETECTION:
+                callers.add(workflow)
                 consumed = set(re.findall(rf"needs\.{re.escape(name)}\.outputs\.(\w+)", text))
-                assert consumed == {"should_build"}, workflow
+                expected = (
+                    {"should_build", "matrix"} if workflow in MATRIX_WORKFLOWS else {"should_build"}
+                )
+                assert consumed == expected, workflow
+    assert {"linux.yml", "windows.yml", "macos.yml", "ios.yml", *MATRIX_WORKFLOWS} <= callers
 
 
 @pytest.mark.parametrize(
-    ("workflow", "planner"), [("android.yml", "build-matrix"), ("docker.yml", "plan-builds")]
+    ("workflow", "platform"), [("android.yml", "android"), ("docker.yml", "docker")]
 )
-def test_planner_workflows_detect_changes_in_process(workflow: str, planner: str) -> None:
+def test_matrix_workflows_build_the_planned_legs(workflow: str, platform: str) -> None:
     jobs = load_workflow(workflow)["jobs"]
-    assert not any(job.get("uses") == REUSABLE_DETECTION for job in jobs.values())
-    assert "needs" not in jobs[planner]
-    assert jobs["build"]["needs"] == planner
-    assert jobs["build"]["if"] == f"needs.{planner}.outputs.has_jobs == 'true'"
+    assert jobs["changes"] == {"uses": REUSABLE_DETECTION, "with": {"platform": platform}}
+    assert jobs["build"]["needs"] == "changes"
+    assert jobs["build"]["if"] == "needs.changes.outputs.should_build == 'true'"
+    assert jobs["build"]["strategy"]["matrix"] == {
+        "include": "${{ fromJSON(needs.changes.outputs.matrix) }}"
+    }
 
 
 @pytest.mark.parametrize(

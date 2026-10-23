@@ -1,31 +1,20 @@
-#!/usr/bin/env python3
-"""Decide whether the current GitHub event builds a platform.
+"""Decide which platforms the current GitHub event builds, for plan_platform.py.
 
 Pull requests build a platform only when its inputs changed (or the diff is
 unknown). Tag refs build only release tags reachable from a Stable* branch;
 every other event (push, merge_group, workflow_dispatch) builds everything.
-The Docker and Android planners call detect_builds() in-process.
-
-Usage:
-    python3 tools/ci/planning/detect_changes.py --platform linux
 """
 
 from __future__ import annotations
 
-import argparse
 import os
 import re
-import sys
 from dataclasses import dataclass
-from pathlib import Path
 from typing import TYPE_CHECKING
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-
-import _bootstrap as _bootstrap
-from common.gh_actions import gh_error, gh_warning, write_github_output
+from common.gh_actions import gh_warning
 from common.git import pr_diff_refs, run_git
-from qgc_tools.release_tag_check import GitQueryError, check_release_tag
+from qgc_tools.release_tag_check import check_release_tag
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -181,29 +170,3 @@ def detect_builds(platforms: Sequence[str]) -> Detection:
         release_tag = check_release_tag(os.environ.get("GITHUB_REF_NAME", "HEAD"), "skipping build")
         return Detection(dict.fromkeys(platforms, release_tag))
     return Detection(dict.fromkeys(platforms, True))
-
-
-def report_tag_query_error(exc: GitQueryError) -> int:
-    gh_error(f"Cannot determine whether tag is on a Stable* branch: {exc}")
-    return 1
-
-
-def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--platform", required=True, choices=PLATFORMS)
-    return parser.parse_args(argv)
-
-
-def main(argv: list[str] | None = None) -> int:
-    args = parse_args(argv)
-    try:
-        should_build = detect_builds([args.platform]).builds[args.platform]
-    except GitQueryError as exc:
-        return report_tag_query_error(exc)
-    print(f"{args.platform}: should_build={should_build}")
-    write_github_output({"should_build": "true" if should_build else "false"})
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())

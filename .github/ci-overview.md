@@ -44,7 +44,7 @@
 | `docker.yml` | Builder images and containerized Linux/Android builds |
 | `vm-builds.yml` | Builds inside the Multipass and Vagrant developer VMs |
 | `flatpak.yml` | Manual Flatpak build |
-| `_detect-changes.yml` | Reusable: decide whether a platform builds (`should_build`) |
+| `_detect-changes.yml` | Reusable: decide whether a platform builds (`should_build`) and plan Android's and Docker's build legs (`matrix`) |
 | `build-results.yml` | PR build-results comment and master baselines (`workflow_run` trigger) |
 | `release.yml` | Draft a GitHub Release with git-cliff notes for a pushed `vX.Y.Z` tag (assets are uploaded by hand) |
 | `analysis.yml` | Code Analysis: clang-tidy and Clazy; manual IWYU, qmllint, and ThreadSanitizer |
@@ -87,11 +87,11 @@
   `tools/common`, `tools/qgc_tools`, and shared `tools/ci` library modules such as
   `reporting/workflow_runs.py`. Jobs without `setup-python` run `run_multipass.py`,
   `run_vagrant.py`, `read_config.py`, and `tools/ci`'s `gh_cache_cleanup.py`,
-  `mirror_gstreamer.py`, the four `planning/` scripts, `deploy_docs.py`,
+  `mirror_gstreamer.py`, `analysis_matrix.py`, `plan_platform.py`, `deploy_docs.py`,
   `collect_build_status.py`, `download_artifacts.py`, `gh_pr_size_label.py`,
   `report_context.py`, `apt_install_retry.py`, `enable_kvm.py`, `install_multipass.py`, and
   `runner_image.py`. Steps ahead of a later or conditional `setup-python` also run
-  `docker_helper.py` (push target), `release_branch_check.py` (release tag check),
+  `release_branch_check.py` (release tag check),
   `gstreamer_archive.py` and `build_gstreamer.py` (Android/iOS
   GStreamer builds), `install_dependencies_helper.py` and `tools/setup/install_dependencies`
   (`install-dependencies`), `build-setup`'s `build_setup.py` planner,
@@ -226,10 +226,12 @@ Dependency updates are split between two bots to avoid overlapping PRs:
 
 ### Change detection
 
-- Platform workflows (Linux, macOS, Windows, iOS) call `_detect-changes.yml`: one
-  sparse checkout and one `detect_changes.py --platform <name>` call that outputs `should_build`.
-  The Android (`android_matrix.py`) and Docker (`plan_docker_builds.py`) planners call
-  `detect_changes.detect_builds()` in-process and output `has_jobs`.
+- Platform workflows (Linux, macOS, Windows, iOS, Android, Docker) call `_detect-changes.yml`
+  (job `changes / Detect Changes`): one sparse checkout and one `plan_platform.py --platform <name>`
+  call that runs `detect_changes.detect_builds()` once and outputs `should_build` and `matrix`.
+  For Android (`android_matrix.py`) and Docker (`plan_docker_builds.py`), `matrix` is the JSON
+  include-list of build legs and `should_build` is whether it has any; other platforms get `[]`
+  and define their own matrices.
 - Pull requests build a platform only when its inputs changed (patterns in `detect_changes.py`);
   pushes, merge queues, and dispatches build everything; tags follow [Release tags](#release-tags).
 - PR files come from `common.git.pr_diff_refs`, like the [lint checks](#lint-docs-and-security-checks):
@@ -248,8 +250,8 @@ Dependency updates are split between two bots to avoid overlapping PRs:
 ### Required checks
 
 - Linux, Windows, MacOS, Android, and iOS end with an `if: always()` gate job named
-  after the workflow (`re-actors/alls-green`) that fails if change detection, the planner, or any
-  build leg fails or is cancelled; builds may be skipped only by change detection. Branch protection
+  after the workflow (`re-actors/alls-green`) that fails if change detection or any build leg
+  fails or is cancelled; builds may be skipped only by change detection. Branch protection
   should require these six names, not build jobs: a skipped matrix job reports its unexpanded name
   (for example `Release ${{ matrix.arch }}`), and Android's legs differ by event.
   `tools/tests/ci/contracts/test_required_check_gates.py` pins the names and checks that each gate
@@ -266,8 +268,8 @@ Dependency updates are split between two bots to avoid overlapping PRs:
 ### Release tags
 
 Platform workflows trigger on `push` of tags matching `v[0-9]+.[0-9]+.[0-9]+` only. Release tags
-are cut on `Stable_V*` branches. Change detection (`_detect-changes.yml` and the Android and Docker
-planners) skips every build for a tag ref that is not an exact `vX.Y.Z` name reachable from an
+are cut on `Stable_V*` branches. Change detection (`_detect-changes.yml`, which also plans the
+Android and Docker legs) skips every build for a tag ref that is not an exact `vX.Y.Z` name reachable from an
 `origin/Stable*` branch (the name check also covers `workflow_dispatch` on a tag, which bypasses
 the `push.tags` glob), so nothing is built, signed, or pushed (TestFlight, Play Store, Docker Hub).
 `aws_upload.py publish` independently refuses to publish such a tag to the S3 `latest/` folder or
@@ -600,9 +602,13 @@ when a PR closes, and on demand:
   `attest_helper.py checksum` verifies CPack's `.deb`/`.rpm` checksum sidecar and writes Arch's.
 - Pushes and manual runs generate CycloneDX SBOMs for CPM dependencies and the builder image and
   scan them with Grype (SARIF to code scanning); PRs skip SBOMs and scans. CPM metadata is read
-  inside the builder so container-local dependency paths resolve. Trusted upstream pushes attest
-  provenance and SBOM for the published image digest, and master pushes submit the Ubuntu
+  inside the builder so container-local dependency paths resolve. Master pushes submit the Ubuntu
   builder's CPM SPDX snapshot to the dependency graph.
+- The planner gives every leg the builder image's push target (`resolve_push_target()` in
+  `qgc_tools/docker_variants.py`): upstream pushes publish master and `Stable*` builds to GHCR and
+  release tags to Docker Hub; pull requests, forks, and manual runs push nothing. The build,
+  registry logins, and the `attest-images` job, which attests provenance and SBOM for each
+  published image digest, follow `matrix.push_target`.
 
 ### VM builds
 

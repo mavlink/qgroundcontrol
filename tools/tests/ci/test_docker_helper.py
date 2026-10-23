@@ -5,44 +5,6 @@ from __future__ import annotations
 import argparse
 
 import pytest
-from ci.compile.docker_helper import resolve_push_target
-
-
-class TestResolvePushTarget:
-    UPSTREAM = "mavlink/qgroundcontrol"
-
-    def test_upstream_release_tag_pushes_dockerhub(self) -> None:
-        assert (
-            resolve_push_target("push", self.UPSTREAM, "refs/tags/v5.0.0")
-            == "dronecode/qgroundcontrol"
-        )
-
-    def test_upstream_master_pushes_ghcr_not_dockerhub(self) -> None:
-        assert (
-            resolve_push_target("push", self.UPSTREAM, "refs/heads/master")
-            == "ghcr.io/mavlink/qgroundcontrol"
-        )
-
-    def test_upstream_stable_pushes_ghcr_not_dockerhub(self) -> None:
-        assert (
-            resolve_push_target("push", self.UPSTREAM, "refs/heads/Stable_V4.4")
-            == "ghcr.io/mavlink/qgroundcontrol"
-        )
-
-    def test_upstream_feature_branch_no_push(self) -> None:
-        assert resolve_push_target("push", self.UPSTREAM, "refs/heads/feature-x") == ""
-
-    @pytest.mark.parametrize(
-        "ref", ["refs/tags/v5.0.0", "refs/heads/master", "refs/heads/Stable_V4.4"]
-    )
-    def test_fork_never_pushes(self, ref: str) -> None:
-        assert resolve_push_target("push", "someuser/qgroundcontrol", ref) == ""
-
-    def test_pull_request_never_pushes(self) -> None:
-        assert resolve_push_target("pull_request", self.UPSTREAM, "refs/tags/v5.0.0") == ""
-
-    def test_workflow_dispatch_never_pushes(self) -> None:
-        assert resolve_push_target("workflow_dispatch", self.UPSTREAM, "refs/heads/master") == ""
 
 
 def test_cache_key_runs_inside_the_login_environment(monkeypatch):

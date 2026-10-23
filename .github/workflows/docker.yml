@@ -28,46 +28,10 @@ permissions:
   actions: read
 
 jobs:
-  # Change detection and the release-tag gate run in-process (detect_changes.py).
-  plan-builds:
-    name: Plan Docker Builds
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    outputs:
-      matrix: ${{ steps.plan.outputs.matrix }}
-      has_jobs: ${{ steps.plan.outputs.has_jobs }}
-    steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@v2
-        with:
-          egress-policy: audit
-
-      # A pull request's merge commit and its two parents hold the PR diff. Tags need
-      # full history and branch refs for the Stable* release-tag check.
-      - name: Checkout planner
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: ${{ github.event_name == 'pull_request' && 2 || github.ref_type != 'tag' && 1 || 0 }}
-          sparse-checkout: |
-            deploy/docker/variants.json
-            deploy/docker/_variants.py
-            tools/_bootstrap.py
-            tools/ci/__init__.py
-            tools/ci/planning/__init__.py
-            tools/ci/planning/detect_changes.py
-            tools/ci/planning/plan_docker_builds.py
-            tools/common
-            tools/qgc_tools
-          sparse-checkout-cone-mode: false
-          persist-credentials: false
-
-      - name: Plan matrix
-        id: plan
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: python3 "${GITHUB_WORKSPACE}/tools/ci/planning/plan_docker_builds.py"
+  changes:
+    uses: ./.github/workflows/_detect-changes.yml
+    with:
+      platform: docker
 
   build:
     name: Docker ${{ matrix.platform }}
@@ -81,8 +45,8 @@ jobs:
             '/spot=cop/family=c8i.xlarge+m8i.xlarge+c7i.xlarge+m7i.xlarge') || '') ||
         'ubuntu-latest'
       }}
-    needs: plan-builds
-    if: needs.plan-builds.outputs.has_jobs == 'true'
+    needs: changes
+    if: needs.changes.outputs.should_build == 'true'
     timeout-minutes: 120
     permissions:
       actions: read
@@ -92,7 +56,8 @@ jobs:
 
     strategy:
       fail-fast: false
-      matrix: ${{ fromJSON(needs.plan-builds.outputs.matrix) }}
+      matrix:
+        include: ${{ fromJSON(needs.changes.outputs.matrix) }}
 
     defaults:
       run:
@@ -127,19 +92,6 @@ jobs:
       - name: Free Disk Space
         uses: ./.github/actions/free-disk-space
 
-      - name: Resolve push target
-        id: push-target
-        shell: bash
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          REPO: ${{ github.repository }}
-          REF: ${{ github.ref }}
-        run: >-
-          python3 "${GITHUB_WORKSPACE}/tools/ci/compile/docker_helper.py" resolve-push-target
-          --event-name "${EVENT_NAME}"
-          --repo "${REPO}"
-          --ref "${REF}"
-
       - name: Build with Docker
         id: docker-build
         uses: ./.github/actions/docker
@@ -151,7 +103,7 @@ jobs:
           # PR builds run PR-controlled Dockerfiles and dependencies; keep the Docker Hub token off them.
           docker-username: ${{ github.event_name != 'pull_request' && secrets.DOCKERHUB_USERNAME || '' }}
           docker-token: ${{ github.event_name != 'pull_request' && secrets.DOCKERHUB_TOKEN || '' }}
-          push-image: ${{ steps.push-target.outputs.ref }}
+          push-image: ${{ matrix.push_target }}
 
       - name: Find build artifact
         id: artifact
@@ -314,7 +266,7 @@ jobs:
           category: grype-image-${{ matrix.variant }}
 
       - name: Save published image digest
-        if: steps.push-target.outputs.ref != ''
+        if: matrix.push_target != ''
         shell: bash
         env:
           IMAGE_DIGEST: ${{ steps.docker-build.outputs.image-digest }}
@@ -323,7 +275,7 @@ jobs:
           printf '%s\n' "${IMAGE_DIGEST}" > image-digest.txt
 
       - name: Upload image security evidence
-        if: steps.push-target.outputs.ref != ''
+        if: matrix.push_target != ''
         uses: actions/upload-artifact@v7
         with:
           name: qgc-builder-security-${{ matrix.variant }}
@@ -340,8 +292,9 @@ jobs:
 
   attest-images:
     name: Attest ${{ matrix.platform }} Image
-    needs: [plan-builds, build]
-    if: github.repository == 'mavlink/qgroundcontrol' && github.event_name == 'push'
+    needs: [changes, build]
+    # Every leg carries the planner's push target; '' means the builder images were not pushed.
+    if: ${{ !contains(needs.changes.outputs.matrix, '"push_target":""') }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -353,7 +306,8 @@ jobs:
 
     strategy:
       fail-fast: false
-      matrix: ${{ fromJSON(needs.plan-builds.outputs.matrix) }}
+      matrix:
+        include: ${{ fromJSON(needs.changes.outputs.matrix) }}
 
     steps:
       - name: Harden Runner
@@ -375,7 +329,7 @@ jobs:
           printf 'digest=%s\n' "${digest}" >> "${GITHUB_OUTPUT}"
 
       - name: Login to GHCR
-        if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+        if: startsWith(matrix.push_target, 'ghcr.io/')
         uses: docker/login-action@v4
         with:
           registry: ghcr.io
@@ -383,7 +337,7 @@ jobs:
           password: ${{ github.token }}
 
       - name: Login to Docker Hub
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: ${{ !startsWith(matrix.push_target, 'ghcr.io/') }}
         uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -394,26 +348,26 @@ jobs:
         env:
           NODE_OPTIONS: --max-http-header-size=32768
         with:
-          subject-name: ${{ startsWith(github.ref, 'refs/tags/v') && 'dronecode/qgroundcontrol' || 'ghcr.io/mavlink/qgroundcontrol' }}
+          subject-name: ${{ matrix.push_target }}
           subject-digest: ${{ steps.image.outputs.digest }}
           push-to-registry: true
 
       - name: Attest image SBOM
         uses: actions/attest@v4
         with:
-          subject-name: ${{ startsWith(github.ref, 'refs/tags/v') && 'dronecode/qgroundcontrol' || 'ghcr.io/mavlink/qgroundcontrol' }}
+          subject-name: ${{ matrix.push_target }}
           subject-digest: ${{ steps.image.outputs.digest }}
           sbom-path: image-sbom.cdx.json
           push-to-registry: true
 
   submit-cpm-dependencies:
     name: Submit CPM Dependencies
-    needs: [plan-builds, build]
+    needs: [changes, build]
     if: >-
       github.repository == 'mavlink/qgroundcontrol' &&
       github.event_name == 'push' &&
       github.ref == 'refs/heads/master' &&
-      contains(needs.plan-builds.outputs.matrix, '"variant":"linux"')
+      contains(needs.changes.outputs.matrix, '"variant":"linux"')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

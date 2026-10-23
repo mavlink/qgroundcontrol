@@ -7,7 +7,8 @@ Reusable repository policy lives here; CLI and platform entrypoints call it.
 - `compiler_cache.py`: ccache and sccache statistics for build summaries and cache-save gates.
 - `cmake_configure.py`: configure-preset selection and `qt-cmake` invocation for `configure.py` and CI.
 - `python_env.py`: locked dependency profiles, environment and executable resolution.
-- `docker_variants.py`: Docker variant manifest and validation shared by CI and deployment.
+- `docker_variants.py`: Docker variant manifest and validation shared by CI and deployment, and
+  the builder image's registry push target for an event.
 - `release_tag_check.py`: whether a tag is a `vX.Y.Z` release tag reachable from a `Stable*` branch,
   shared by change detection, build planning, and publishing.
 

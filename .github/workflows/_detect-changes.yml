@@ -4,13 +4,16 @@ on:
   workflow_call:
     inputs:
       platform:
-        description: 'Platform to detect changes for (detect_changes.py --platform)'
+        description: 'Platform to plan (plan_platform.py --platform)'
         required: true
         type: string
     outputs:
       should_build:
         description: 'Whether the caller should build: relevant PR changes, a Stable* release tag, or any other event'
         value: ${{ jobs.detect.outputs.should_build }}
+      matrix:
+        description: 'Android and Docker build legs as a JSON include-list (empty for other platforms)'
+        value: ${{ jobs.detect.outputs.matrix }}
 
 permissions:
   contents: read
@@ -22,6 +25,7 @@ jobs:
     timeout-minutes: 5
     outputs:
       should_build: ${{ steps.detect.outputs.should_build }}
+      matrix: ${{ steps.detect.outputs.matrix }}
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@v2
@@ -30,14 +34,19 @@ jobs:
 
       # A pull request's merge commit and its two parents hold the PR diff. Tags need
       # full history and branch refs for the Stable* release-tag check.
-      - name: Checkout detection scripts
+      - name: Checkout planning scripts
         uses: actions/checkout@v7
         with:
           fetch-depth: ${{ github.event_name == 'pull_request' && 2 || github.ref_type != 'tag' && 1 || 0 }}
           sparse-checkout: |
+            deploy/docker/variants.json
             tools/_bootstrap.py
             tools/ci/__init__.py
+            tools/ci/planning/__init__.py
+            tools/ci/planning/android_matrix.py
             tools/ci/planning/detect_changes.py
+            tools/ci/planning/plan_docker_builds.py
+            tools/ci/planning/plan_platform.py
             tools/common
             tools/qgc_tools
           sparse-checkout-cone-mode: false
@@ -51,4 +60,4 @@ jobs:
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           PLATFORM: ${{ inputs.platform }}
-        run: python3 "${GITHUB_WORKSPACE}/tools/ci/planning/detect_changes.py" --platform "${PLATFORM}"
+        run: python3 "${GITHUB_WORKSPACE}/tools/ci/planning/plan_platform.py" --platform "${PLATFORM}"

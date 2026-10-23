@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-"""Plan Docker build matrix entries for the Docker workflow.
+"""Select the Docker workflow's build legs for plan_platform.py.
 
 The variant set (base images, build args, artifact patterns) is defined once in
 deploy/docker/variants.json and shared with run_docker.py and gen_compose.py, so
@@ -8,22 +7,10 @@ this planner stays a thin selector over that source.
 
 from __future__ import annotations
 
-import argparse
 import fnmatch
-import json
-import os
-import sys
-from pathlib import Path
 from typing import Any
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-
-import _bootstrap as _bootstrap
-from common.gh_actions import write_github_output
 from qgc_tools.docker_variants import load_variants
-from qgc_tools.release_tag_check import GitQueryError
-
-from ci.planning.detect_changes import detect_builds, report_tag_query_error
 
 
 def build_args_str(build_args: dict[str, str]) -> str:
@@ -38,25 +25,22 @@ def plan_builds(
     *,
     full_matrix: bool = False,
     should_build: bool = True,
-) -> dict[str, Any]:
-    """Return workflow matrix and a has_jobs flag.
+    push_target: str = "",
+) -> list[dict[str, Any]]:
+    """Return the matrix include-list; empty when nothing builds.
 
-    Returns {"matrix": {"include": [...]}, "has_jobs": bool}. Typed as
-    dict[str, Any] so callers can subscript matrix["include"] without
-    pyright complaining about object indexing.
-
-    ``should_build`` False (a tag that is not a Stable* release tag) yields an
-    empty matrix regardless of event.
+    ``should_build`` False (a tag that is not a Stable* release tag) yields no legs regardless
+    of event. Every leg carries the same ``push_target`` registry ('' for no push).
     """
     if not should_build:
-        return {"matrix": {"include": []}, "has_jobs": False}
+        return []
 
     selected = {
         "linux": event_name != "pull_request" or linux_changed,
         "android": event_name != "pull_request" or android_changed,
     }
 
-    include: list[dict[str, Any]] = [
+    return [
         {
             "platform": v["platform"],
             "target": v["target"],
@@ -65,13 +49,12 @@ def plan_builds(
             "fuse": v["fuse"],
             "artifact_pattern": v["artifact_pattern"],
             "package_pattern": v["package_pattern"],
+            "push_target": push_target,
         }
         for v in load_variants()
         if selected.get(v["selector"], False)
         and (event_name != "pull_request" or full_matrix or v["id"] in {"ubuntu", "android"})
     ]
-
-    return {"matrix": {"include": include}, "has_jobs": bool(include)}
 
 
 def needs_full_matrix(files: list[str] | None) -> bool:
@@ -83,7 +66,10 @@ def needs_full_matrix(files: list[str] | None) -> bool:
         ".github/actions/free-disk-space/**",
         "tools/ci/compile/docker_helper.py",
         "tools/ci/planning/plan_docker_builds.py",
+        "tools/ci/planning/plan_platform.py",
         "tools/ci/planning/detect_changes.py",
+        ".github/workflows/_detect-changes.yml",
+        "tools/ci/publish/attest_helper.py",
         "tools/ci/packaging/validate_native_package.py",
         "tools/ci/security/generate_cpm_sbom.py",
         "tools/ci/packaging/find_artifact.py",
@@ -111,37 +97,3 @@ def needs_full_matrix(files: list[str] | None) -> bool:
     return files is None or any(
         fnmatch.fnmatchcase(path, pattern) for path in files for pattern in patterns
     )
-
-
-def main(argv: list[str] | None = None) -> int:
-    """Compute the Docker build matrix for the current event and emit outputs."""
-    argparse.ArgumentParser(description=__doc__).parse_args(argv)
-    try:
-        detection = detect_builds(("docker-linux", "docker-android"))
-    except GitQueryError as exc:
-        return report_tag_query_error(exc)
-
-    event_name = os.environ.get("EVENT_NAME", "")
-    is_pr = event_name == "pull_request"
-    plan = plan_builds(
-        event_name,
-        detection.builds["docker-linux"],
-        detection.builds["docker-android"],
-        full_matrix=not is_pr or needs_full_matrix(detection.changed_files),
-        # Pull requests select each platform above; elsewhere every verdict is the release-tag gate.
-        should_build=is_pr or all(detection.builds.values()),
-    )
-    matrix_json = json.dumps(plan["matrix"], separators=(",", ":"))
-    print(matrix_json)
-
-    write_github_output(
-        {
-            "matrix": matrix_json,
-            "has_jobs": "true" if plan["has_jobs"] else "false",
-        }
-    )
-    return 0
-
-
-if __name__ == "__main__":
-    sys.exit(main())

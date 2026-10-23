@@ -1,8 +1,4 @@
-#!/usr/bin/env python3
-"""Emit the android.yml build matrix as a JSON 'include' list.
-
-detect_changes.py decides whether the event builds Android at all; when it
-doesn't, the list is empty and `has_jobs` is false.
+"""The Android workflow's build legs, for plan_platform.py.
 
 The windows leg is skipped on pull requests: it is the PR long pole by a
 decent amount, and an Android/Windows host build adds little PR signal beyond
@@ -15,20 +11,6 @@ combined by the job's `runs-on` expression.
 """
 
 from __future__ import annotations
-
-import argparse
-import json
-import os
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-
-import _bootstrap as _bootstrap
-from common.gh_actions import write_github_output
-from qgc_tools.release_tag_check import GitQueryError
-
-from ci.planning.detect_changes import detect_builds, report_tag_query_error
 
 Leg = dict[str, str | bool]
 
@@ -95,21 +77,3 @@ def build_matrix(is_pr: bool) -> list[Leg]:
             }
         )
     return matrix
-
-
-def main(argv: list[str] | None = None) -> int:
-    argparse.ArgumentParser(description=__doc__).parse_args(argv)
-    try:
-        should_build = detect_builds(["android"]).builds["android"]
-    except GitQueryError as exc:
-        return report_tag_query_error(exc)
-
-    include = build_matrix(os.environ.get("EVENT_NAME") == "pull_request") if should_build else []
-    serialized = json.dumps(include, separators=(",", ":"))
-    write_github_output({"include": serialized, "has_jobs": "true" if include else "false"})
-    print(f"include={serialized}")
-    return 0
-
-
-if __name__ == "__main__":
-    sys.exit(main())

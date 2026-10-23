@@ -1,4 +1,4 @@
-"""Validated loader for the shared QGC Docker variant manifest."""
+"""Validated loader for the shared QGC Docker variant manifest, and the builder image push target."""
 
 from __future__ import annotations
 
@@ -80,3 +80,19 @@ def load_variants(path: Path = VARIANTS_JSON) -> list[DockerVariant]:
         seen_ci_variants.add(ci_variant)
         variants.append(cast("DockerVariant", value))
     return variants
+
+
+def resolve_push_target(event_name: str, repo: str, ref: str) -> str:
+    """Registry to push the builder image to, or '' for no push.
+
+    Pushes happen only from the upstream repo on a push event: GHCR for
+    master/Stable branches, Docker Hub (dronecode/qgroundcontrol) for v* release
+    tags. Forks, PRs, and any other repo always resolve to '' (no push).
+    """
+    if event_name != "push" or repo != "mavlink/qgroundcontrol":
+        return ""
+    if ref == "refs/heads/master" or ref.startswith("refs/heads/Stable"):
+        return "ghcr.io/mavlink/qgroundcontrol"
+    if ref.startswith("refs/tags/v"):
+        return "dronecode/qgroundcontrol"
+    return ""

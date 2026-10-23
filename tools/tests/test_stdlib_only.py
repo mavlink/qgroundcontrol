@@ -32,9 +32,7 @@ PRE_SETUP_PYTHON_SCRIPTS: tuple[str, ...] = (
     "tools/ci/cache/gh_cache_cleanup.py",
     "tools/ci/gstreamer/mirror_gstreamer.py",
     "tools/ci/planning/analysis_matrix.py",
-    "tools/ci/planning/android_matrix.py",
-    "tools/ci/planning/detect_changes.py",
-    "tools/ci/planning/plan_docker_builds.py",
+    "tools/ci/planning/plan_platform.py",
     "tools/ci/publish/deploy_docs.py",
     "tools/ci/reporting/collect_build_status.py",
     "tools/ci/reporting/download_artifacts.py",
@@ -46,7 +44,6 @@ PRE_SETUP_PYTHON_SCRIPTS: tuple[str, ...] = (
     "tools/ci/runner/runner_image.py",
     "tools/setup/read_config.py",
     # Run before a later or conditional setup-python.
-    "tools/ci/compile/docker_helper.py",  # docker.yml resolves the push target first
     "tools/ci/publish/release_branch_check.py",  # release.yml checks the tag before installing
     "tools/ci/gstreamer/gstreamer_archive.py",  # Android and iOS GStreamer builds skip build-setup
     "tools/setup/build_gstreamer.py",
