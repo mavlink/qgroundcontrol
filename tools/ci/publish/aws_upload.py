@@ -10,6 +10,7 @@ AWS credentials come from the environment, never from the command line.
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import subprocess
 import sys
@@ -124,8 +125,11 @@ def main(argv: list[str] | None = None) -> int:
         type=parse_artifact,
         metavar="PATH:NAME",
     )
-    p_publish.add_argument("--ref-name", required=True)
-    p_publish.add_argument("--ref-type", required=True)
+    for option, variable in (("--ref-name", "GITHUB_REF_NAME"), ("--ref-type", "GITHUB_REF_TYPE")):
+        value = os.environ.get(variable)
+        p_publish.add_argument(
+            option, default=value, required=not value, help=f"(default: ${variable})"
+        )
     p_publish.add_argument("--distribution-id", default="")
 
     args = parser.parse_args(argv)

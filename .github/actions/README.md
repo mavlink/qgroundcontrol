@@ -93,4 +93,6 @@ an additional security problem.
   `iOS-appstore`), taking the preset's `CMAKE_BUILD_TYPE` from `CMakeCache.txt`.
 - **`attest-and-upload`** finds the artifact at `$RUNNER_TEMP/build/<artifact-name>` unless
   `artifact-source-path` overrides it. Pull requests skip the SBOM scan and attestations but
-  still upload the checksum, dependency SBOM, and build identity.
+  still upload the checksum, dependency SBOM, and build identity. `attest_helper.py prepare`
+  resolves the attestation subject (`subject-name`, defaulting to `package-name`) and whether to
+  publish to AWS (`upload-aws`, credentials present, and a push or tag dispatch in `mavlink`).

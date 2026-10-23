@@ -24,8 +24,13 @@ CPM_PACKAGE_zlib_VERSION:INTERNAL=1.3.2
 
 def _prepare(*extra: str) -> None:
     artifact = ["--artifact-name", "QGroundControl.AppImage"]
-    subject = ["--subject-name", "QGroundControl-linux"]
-    assert attest_helper.main(["prepare", *artifact, *subject, *extra]) == 0
+    names = [
+        "--package-name",
+        "QGroundControl-linux-x86_64",
+        "--subject-name",
+        "QGroundControl-linux",
+    ]
+    assert attest_helper.main(["prepare", *artifact, *names, *extra]) == 0
 
 
 @pytest.fixture
@@ -54,9 +59,58 @@ def test_prepare_emits_every_path_the_action_consumes(
         "dependency-sbom": str(build / "QGroundControl-linux.dependencies.cdx.json"),
         "metadata": str(build / "QGroundControl.AppImage.build.json"),
         "sbom-path": str(tmp_path / "QGroundControl-linux.sbom.spdx.json"),
+        "subject-name": "QGroundControl-linux",
+        "publish-aws": "false",
     }
     sidecar = build / "QGroundControl.AppImage.sha256"
     assert sidecar.read_bytes().endswith(b"  QGroundControl.AppImage\n")
+
+
+def test_subject_defaults_to_the_package_name(build: Path, gh_output: Path) -> None:
+    artifact = ["--artifact-name", "QGroundControl.AppImage"]
+    assert (
+        attest_helper.main(["prepare", *artifact, "--package-name", "QGC", "--subject-name", ""])
+        == 0
+    )
+
+    outputs = read_github_file(gh_output)
+    assert outputs["subject-name"] == "QGC"
+    assert outputs["dependency-sbom"] == str(build / "QGC.dependencies.cdx.json")
+
+
+RELEASE_ENV = {
+    "GITHUB_EVENT_NAME": "push",
+    "GITHUB_REF_TYPE": "branch",
+    "GITHUB_REPOSITORY_OWNER": "mavlink",
+    "UPLOAD_AWS": "true",
+    "HAS_AWS_CREDENTIALS": "true",
+}
+
+
+@pytest.mark.parametrize(
+    ("change", "publish"),
+    [
+        ({}, "true"),
+        ({"GITHUB_REF_TYPE": "tag"}, "true"),
+        ({"GITHUB_EVENT_NAME": "workflow_dispatch", "GITHUB_REF_TYPE": "tag"}, "true"),
+        ({"GITHUB_EVENT_NAME": "workflow_dispatch"}, "false"),
+        ({"GITHUB_EVENT_NAME": "pull_request"}, "false"),
+        ({"GITHUB_EVENT_NAME": "merge_group"}, "false"),
+        ({"GITHUB_REPOSITORY_OWNER": "someone"}, "false"),
+        ({"UPLOAD_AWS": "false"}, "false"),
+        ({"HAS_AWS_CREDENTIALS": "false"}, "false"),
+        ({"UPLOAD_AWS": ""}, "false"),
+    ],
+)
+def test_prepare_publishes_to_aws_only_for_credentialed_upstream_releases(
+    build: Path, gh_output: Path, monkeypatch: pytest.MonkeyPatch, change: dict, publish: str
+) -> None:
+    for name, value in (RELEASE_ENV | change).items():
+        monkeypatch.setenv(name, value)
+
+    _prepare()
+
+    assert read_github_file(gh_output)["publish-aws"] == publish
 
 
 def test_prepare_adds_an_artifact_section_to_the_job_summary(

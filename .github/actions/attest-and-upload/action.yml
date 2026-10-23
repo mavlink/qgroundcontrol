@@ -53,11 +53,16 @@ runs:
       env:
         ARTIFACT_NAME: ${{ inputs.artifact-name }}
         OVERRIDE: ${{ inputs.artifact-source-path }}
-        SUBJECT_NAME: ${{ inputs.subject-name || inputs.package-name }}
+        PACKAGE_NAME: ${{ inputs.package-name }}
+        SUBJECT_NAME: ${{ inputs.subject-name }}
+        UPLOAD_AWS: ${{ inputs.upload-aws }}
+        # Only whether credentials were passed; the secrets stay out of the script.
+        HAS_AWS_CREDENTIALS: ${{ inputs.aws-role-arn != '' || (inputs.aws-key-id != '' && inputs.aws-secret-access-key != '') }}
       run: |
         python3 "${GITHUB_WORKSPACE}/tools/ci/publish/attest_helper.py" prepare \
           --artifact-name "${ARTIFACT_NAME}" \
           --override "${OVERRIDE}" \
+          --package-name "${PACKAGE_NAME}" \
           --subject-name "${SUBJECT_NAME}"
 
     # Pull request builds aren't released: they skip the SBOM scan and Sigstore attestations.
@@ -70,7 +75,7 @@ runs:
         output-file: ${{ steps.prepare.outputs.sbom-path }}
         upload-artifact: true
         upload-artifact-retention: 30
-        artifact-name: sbom-${{ inputs.subject-name || inputs.package-name }}
+        artifact-name: sbom-${{ steps.prepare.outputs.subject-name }}
 
     - name: Attest Build Provenance
       if: github.event_name != 'pull_request'
@@ -109,11 +114,7 @@ runs:
 
     - name: Configure AWS credentials
       id: aws-credentials
-      if: >-
-        fromJSON(inputs.upload-aws) &&
-        (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.ref_type == 'tag')) &&
-        github.repository_owner == 'mavlink' &&
-        (inputs.aws-role-arn != '' || (inputs.aws-key-id != '' && inputs.aws-secret-access-key != ''))
+      if: steps.prepare.outputs.publish-aws == 'true'
       uses: ./.github/actions/aws-credentials
       with:
         aws-role-arn: ${{ inputs.aws-role-arn }}
@@ -132,6 +133,4 @@ runs:
         python3 "${GITHUB_WORKSPACE}/tools/ci/publish/aws_upload.py" publish \
           --artifact "${ARTIFACT_PATH}:${ARTIFACT_NAME}" \
           --artifact "${CHECKSUM_PATH}:${ARTIFACT_NAME}.sha256" \
-          --ref-name "${GITHUB_REF_NAME}" \
-          --ref-type "${GITHUB_REF_TYPE}" \
           --distribution-id "${DISTRIBUTION_ID}"

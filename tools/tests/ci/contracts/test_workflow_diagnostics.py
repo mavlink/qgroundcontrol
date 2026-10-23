@@ -68,7 +68,7 @@ def test_unified_attestation_preserves_separate_provenance_and_sbom_subjects():
         "output-file": "${{ steps.prepare.outputs.sbom-path }}",
         "upload-artifact": True,
         "upload-artifact-retention": 30,
-        "artifact-name": "sbom-${{ inputs.subject-name || inputs.package-name }}",
+        "artifact-name": "sbom-${{ steps.prepare.outputs.subject-name }}",
     }
     assert provenance["with"] == {"subject-path": "${{ steps.prepare.outputs.path }}"}
     assert sbom["with"] == {
@@ -124,7 +124,15 @@ def test_attestation_actions_publish_checksum_and_resolved_sbom_output() -> None
 
     assert 'attest_helper.py" prepare' in prepare["run"]
     assert prepare["env"]["ARTIFACT_NAME"] == "${{ inputs.artifact-name }}"
-    assert prepare["env"]["SUBJECT_NAME"] == "${{ inputs.subject-name || inputs.package-name }}"
+    assert prepare["env"]["PACKAGE_NAME"] == "${{ inputs.package-name }}"
+    assert prepare["env"]["SUBJECT_NAME"] == "${{ inputs.subject-name }}"
+    assert prepare["env"]["UPLOAD_AWS"] == "${{ inputs.upload-aws }}"
+    # attest_helper.py adds the release policy; only credential presence reaches it.
+    assert prepare["env"]["HAS_AWS_CREDENTIALS"] == (
+        "${{ inputs.aws-role-arn != '' || "
+        "(inputs.aws-key-id != '' && inputs.aws-secret-access-key != '') }}"
+    )
+    assert "secret" not in prepare["run"].lower()
     assert dependency_attestation["uses"] == "actions/attest@v4"
     assert dependency_attestation["if"] == "github.event_name != 'pull_request'"
     assert dependency_attestation["with"] == {
@@ -139,16 +147,11 @@ def test_attestation_actions_publish_checksum_and_resolved_sbom_output() -> None
     assert save["with"]["compression-level"] == 0
 
     assert credentials["uses"] == "./.github/actions/aws-credentials"
-    assert " ".join(credentials["if"].split()) == (
-        "fromJSON(inputs.upload-aws) && "
-        "(github.event_name == 'push' || "
-        "(github.event_name == 'workflow_dispatch' && github.ref_type == 'tag')) && "
-        "github.repository_owner == 'mavlink' && "
-        "(inputs.aws-role-arn != '' || "
-        "(inputs.aws-key-id != '' && inputs.aws-secret-access-key != ''))"
-    )
+    assert credentials["if"] == "steps.prepare.outputs.publish-aws == 'true'"
     assert publish["if"] == "steps.aws-credentials.outcome == 'success'"
     assert publish["env"]["CHECKSUM_PATH"] == "${{ steps.prepare.outputs.checksum }}"
     assert '--artifact "${ARTIFACT_PATH}:${ARTIFACT_NAME}"' in publish["run"]
     assert '--artifact "${CHECKSUM_PATH}:${ARTIFACT_NAME}.sha256"' in publish["run"]
+    # aws_upload.py reads the ref from the runner's GITHUB_REF_NAME and GITHUB_REF_TYPE.
+    assert "--ref-" not in publish["run"]
     assert "secret" not in str(publish).lower()

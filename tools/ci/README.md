@@ -58,8 +58,8 @@ and Ruff skips `build` directories.
 | `android/android_sdk_helper.py` | Install the `build-config.json` Android SDK/NDK packages with retries, configure tool paths, and create the PR debug keystore |
 | `ios/ios_boot_test.py` | Run the QGC smoke test in a disposable iOS simulator |
 | `ios/ios_package.py` | Select signing profiles and validate/package iOS bundles |
-| `publish/attest_helper.py` | Prepare artifacts for attestation (checksum sidecar, CPM dependency SBOM, build manifest); verify or write standalone checksums |
-| `publish/aws_upload.py` | Publish artifacts to S3 `builds/<ref>/`, plus `latest/` and one CloudFront invalidation for release tags |
+| `publish/attest_helper.py` | Prepare artifacts for attestation (checksum sidecar, CPM dependency SBOM, build manifest) and decide the AWS publish; verify or write standalone checksums |
+| `publish/aws_upload.py` | Publish artifacts to S3 `builds/<ref>/` (the runner's ref by default), plus `latest/` and one CloudFront invalidation for release tags |
 | `publish/deploy_docs.py` | Deploy generated documentation to an external Pages repository |
 | `publish/release_branch_check.py` | Stop `release.yml` before it drafts a release for a tag that no `origin/Stable*` branch contains |
 | `publish/release_notes.py` | Draft a tag's release notes with git-cliff (`tools/configs/cliff.toml`) and create its draft GitHub Release unless one exists |

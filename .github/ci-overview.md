@@ -690,9 +690,11 @@ when a PR closes, and on demand:
   sidecar and writes the CPM dependency SBOM and a `.build.json` manifest with producer identity,
   checksum, and selected CMake configuration), scans an SPDX SBOM, attests provenance and SBOM with
   `actions/attest` (separate invocations), and uploads the GitHub artifact.
-- On pushes and tag dispatches in `mavlink` repositories it then configures AWS credentials once and
-  runs one `aws_upload.py publish`: artifacts go to `builds/<ref>/`, and release tags also go to
-  `latest/` with one CloudFront invalidation. Credentials come only from the environment.
+- `prepare` also outputs `publish-aws`: true on pushes and tag dispatches in `mavlink` repositories
+  when the caller keeps `upload-aws` and passes credentials (the action passes only whether it
+  has them). The action then configures AWS credentials once and runs one `aws_upload.py publish`:
+  artifacts go to `builds/<ref>/` (the runner's ref), and release tags also go to `latest/` with
+  one CloudFront invalidation. Credentials come only from the environment.
 
 ### Build results
 

@@ -312,6 +312,25 @@ class TestPublish:
             main(["publish", "--ref-name", "master", "--ref-type", "branch"])
         assert excinfo.value.code == 2
 
+    def test_ref_defaults_to_the_runners_ref(self, monkeypatch, files) -> None:
+        artifact, _ = files
+        aws = AwsRecorder(monkeypatch, stable_branches="origin/Stable_V5.1\n")
+        monkeypatch.setenv("GITHUB_REF_NAME", "v5.1.4")
+        monkeypatch.setenv("GITHUB_REF_TYPE", "tag")
+
+        assert main(["publish", "--artifact", f"{artifact}:{ARTIFACT}"]) == 0
+
+        assert aws.aws == [
+            _cp(artifact, f"builds/v5.1.4/{ARTIFACT}"),
+            _cp(artifact, f"latest/{ARTIFACT}"),
+        ]
+
+    def test_requires_a_ref_outside_actions(self, files) -> None:
+        artifact, _ = files
+        with pytest.raises(SystemExit) as excinfo:
+            main(["publish", "--artifact", f"{artifact}:{ARTIFACT}", "--ref-type", "branch"])
+        assert excinfo.value.code == 2
+
 
 def test_aws_credentials_selects_oidc_or_static_keys_in_one_step() -> None:
     action = load_action("aws-credentials")
