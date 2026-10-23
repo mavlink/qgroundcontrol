@@ -86,9 +86,9 @@
 - Scripts that can run before `setup-python` use only the standard library and stdlib-only
   `tools/common`, `tools/qgc_tools`, and shared `tools/ci` library modules such as
   `reporting/workflow_runs.py`. Jobs without `setup-python` run `run_multipass.py`,
-  `run_vagrant.py`, `read_config.py`, and `tools/ci`'s `gh_cache_cleanup.py`,
-  `mirror_gstreamer.py`, `analysis_matrix.py`, `plan_platform.py`, `deploy_docs.py`,
-  `collect_build_status.py`, `download_artifacts.py`, `gh_pr_size_label.py`,
+  `run_vagrant.py`, `read_config.py`, `update_px4_metadata.py`, and `tools/ci`'s
+  `gh_cache_cleanup.py`, `mirror_gstreamer.py`, `analysis_matrix.py`, `plan_platform.py`,
+  `deploy_docs.py`, `collect_build_status.py`, `download_artifacts.py`, `gh_pr_size_label.py`,
   `report_context.py`, `apt_install_retry.py`, `enable_kvm.py`, `install_multipass.py`, and
   `runner_image.py`. Steps ahead of a later or conditional `setup-python` also run
   `release_branch_check.py` (release tag check),
@@ -452,8 +452,9 @@ step leaves it out.
 - **pre-commit** restores prek's hook environments (`prek-v1-*`: `~/.cache/prek` without its download
   and build caches) keyed on `.pre-commit-config.yaml`, falling back to an earlier configuration's
   environments. prek installs only the environments of hooks that run, so a push that misses the
-  key first prepares every hook (`prek prepare-hooks`, except TruffleHog and the Renovate
-  validator), then prunes unused environments (`prek cache gc`) and saves; PRs only restore. Docs
+  key first runs `pre_commit.py --prepare-cache`, which prepares every hook (`prek prepare-hooks`,
+  except TruffleHog and the Renovate validator) and then prunes unused environments
+  (`prek cache gc`, which only warns on failure), and saves; PRs only restore. Docs
   Lint and Copilot Setup Steps restore the same entry read-only.
 - **lychee** restores and saves `.lycheecache` with a three-day entry lifetime; fork PRs only restore.
 - **Docker BuildKit** layers use `type=gha,version=2`, scoped by variant and target. On RunsOn,
@@ -465,14 +466,16 @@ step leaves it out.
 ### Cleanup
 
 `cache-cleanup.yml` (`gh_cache_cleanup.py`, built-in `gh cache` commands) runs every six hours,
-when a PR closes, and on demand:
+when a PR closes, and on demand; the script reads each trigger's settings from the event:
 
 - Scheduled cleanup removes superseded PR build-cache generations even below the storage threshold,
   keeping the newest run/attempt per PR and matrix cache family. Above the threshold it evicts least
   recently used archives first, so newly populated larger caches survive, while protecting the
   latest default-branch generation of each build and dependency cache family (including the latest
   `build-baseline-v2` snapshot), the prek hook environments, and the lychee link cache.
-- Closing a PR removes that PR's merge-ref caches.
+- Closing a PR removes that PR's merge-ref caches, without a job summary.
+- Manual runs default to a dry-run prune; `dry-run: false` deletes, and `mode: wipe` lists (or
+  deletes) every cache of the selected branch, or of all branches.
 - Deletions are scoped to the selected ref; failed deletions and an unreachable size target are
   reported. Cleanup affects GitHub storage, not the RunsOn S3 backend.
 
@@ -627,7 +630,9 @@ when a PR closes, and on demand:
   minutes (`MP_TIMEOUT`) instead of the 5-minute default, which image download and first boot under
   nested virtualization can exceed. The confined client cannot access the workspace or `/tmp`, so
   the source archive and the built AppImage pass through a temporary directory under root's home.
-  Cleanup only deletes instances it created. The job stays `continue-on-error`.
+  `install_multipass.py --allow-bridge-forwarding` resets the iptables `FORWARD` policy that Docker
+  sets to `DROP`, which would leave the guest without network (libvirt adds its own rules for
+  Vagrant). Cleanup only deletes instances it created. The job stays `continue-on-error`.
 - **Vagrant** runs `deploy/vagrant/run_vagrant.py` (`install`, then `build`): `vagrant up` stops
   after 150 minutes (`QGC_VM_UP_TIMEOUT`), the VM is destroyed only after an attempted startup, and a
   failed destroy fails the job; Vagrant failures fail the workflow. Reproduce locally with
@@ -774,7 +779,7 @@ actions after these sections.
   build-results comment. The C++ formatting hook checks modified regions against the PR merge base
   (or `HEAD` locally), following `CODING_STYLE.md`; new files and unchanged files supplied in a full
   sweep are checked in full. Compiler-aware Clazy and clang-tidy hooks are manual locally; CI runs
-  them in `analysis.yml`. TruffleHog runs only as a local commit hook (`SKIP=trufflehog` in CI). Qt is installed only when the selection includes QML for qmllint
+  them in `analysis.yml`. TruffleHog runs only as a local commit hook (`--ci` defaults `SKIP` to `trufflehog`). Qt is installed only when the selection includes QML for qmllint
   (`pre_commit.py --needs-qt`).
   `check-renovate` schema-checks `.github/renovate.json` in every run. `pre_commit.py --ci` also
   runs the manual-stage validators that download pinned tools, each only when its own files change:

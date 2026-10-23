@@ -3,17 +3,23 @@
 
 With --summary, appends a Cache cleanup section (pool size, candidates, deletion
 totals or a dry-run notice, and a collapsed cache table) to GITHUB_STEP_SUMMARY.
-cache-cleanup.yml sets the branch and flags through CLEANUP_* environment variables.
+
+In cache-cleanup.yml the branch and flags follow the triggering event (GITHUB_EVENT_NAME and the
+GITHUB_EVENT_PATH payload): a schedule prunes and deletes with a summary; a closed pull request
+deletes only its merge ref's caches, without a summary; a dispatch takes its branch, dry-run and
+mode inputs. CLEANUP_BRANCH, CLEANUP_DELETE, CLEANUP_SUMMARY and CLEANUP_PRUNE override them.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
@@ -24,9 +30,11 @@ from common.gh_actions import (
     env_flag,
     gh,
     gh_warning,
+    parse_bool,
     require_repository,
     write_step_summary,
 )
+from common.io import read_json
 from common.markdown import code_span, md_table, more_items, summary_section
 
 DEFAULT_PROTECT = (
@@ -39,6 +47,49 @@ _PR_BUILD_CACHE_RE = re.compile(r"^(ccache|moccache)-.*-(\d+)-(\d+)$")
 _DIGEST_RE = re.compile(r"(?<=-)[0-9a-f]{64}(?=-|$)")
 _APT_GENERATION_RE = re.compile(r"^(apt-debs-.+)-\d{4}-\d{2}-<digest>$")
 _MIB = 1024 * 1024
+
+
+@dataclass(frozen=True)
+class CleanupDefaults:
+    branch: str = ""
+    delete: bool = False
+    summary: bool = False
+    prune: bool = False
+    default_branch: str = "master"
+
+
+# cache-cleanup.yml's workflow_dispatch input defaults, for dispatches that omit an input.
+DISPATCH_INPUT_DEFAULTS = {"branch": "", "dry-run": True, "mode": "prune"}
+
+
+def event_defaults(event_name: str, event: dict[str, Any]) -> CleanupDefaults:
+    """Return the cleanup settings for a cache-cleanup.yml trigger and its event payload.
+
+    Other events, and runs outside GitHub Actions, list caches without deleting them.
+    """
+    default_branch = (event.get("repository") or {}).get("default_branch") or "master"
+    if event_name == "schedule":
+        return CleanupDefaults(delete=True, summary=True, prune=True, default_branch=default_branch)
+    if event_name == "pull_request_target":
+        number = int(event["pull_request"]["number"])
+        return CleanupDefaults(
+            branch=f"refs/pull/{number}/merge", delete=True, default_branch=default_branch
+        )
+    if event_name == "workflow_dispatch":
+        inputs = {**DISPATCH_INPUT_DEFAULTS, **(event.get("inputs") or {})}
+        return CleanupDefaults(
+            branch=str(inputs["branch"] or ""),
+            delete=not parse_bool(str(inputs["dry-run"])),
+            summary=True,
+            prune=inputs["mode"] == "prune",
+            default_branch=default_branch,
+        )
+    return CleanupDefaults(default_branch=default_branch)
+
+
+def _event_payload() -> dict[str, Any]:
+    path = os.environ.get("GITHUB_EVENT_PATH")
+    return read_json(Path(path)) if path else {}
 
 
 @dataclass(frozen=True)
@@ -292,31 +343,33 @@ _DRY_RUN_NOTICE = "**Dry run**: no caches were deleted. Set `dry-run: false` to 
 
 
 def main(argv: list[str] | None = None) -> int:
+    defaults = event_defaults(os.environ.get("GITHUB_EVENT_NAME", ""), _event_payload())
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--branch",
-        default=env_default("CLEANUP_BRANCH"),
-        help="Branch filter (default: $CLEANUP_BRANCH; empty = all)",
+        default=env_default("CLEANUP_BRANCH", defaults.branch),
+        help="Branch filter (default: $CLEANUP_BRANCH, else the event's; empty = all)",
     )
     parser.add_argument(
         "--delete",
         action="store_true",
-        default=env_flag("CLEANUP_DELETE"),
-        help="Delete listed caches (default: $CLEANUP_DELETE, else list only)",
+        default=env_flag("CLEANUP_DELETE", defaults.delete),
+        help="Delete listed caches (default: $CLEANUP_DELETE, else the event's, else list only)",
     )
     parser.add_argument(
         "--summary",
         action="store_true",
-        default=env_flag("CLEANUP_SUMMARY"),
-        help="Append markdown summary to $GITHUB_STEP_SUMMARY (default: $CLEANUP_SUMMARY)",
+        default=env_flag("CLEANUP_SUMMARY", defaults.summary),
+        help="Append markdown summary to $GITHUB_STEP_SUMMARY "
+        "(default: $CLEANUP_SUMMARY, else the event's)",
     )
     parser.add_argument("--limit", type=int, default=500, help="Maximum cache entries to inspect")
     parser.add_argument(
         "--prune",
         action="store_true",
-        default=env_flag("CLEANUP_PRUNE"),
+        default=env_flag("CLEANUP_PRUNE", defaults.prune),
         help="GC mode: evict stale and non-protected caches above --high-water-mb "
-        "(default: $CLEANUP_PRUNE)",
+        "(default: $CLEANUP_PRUNE, else the event's)",
     )
     parser.add_argument(
         "--high-water-mb",
@@ -335,7 +388,9 @@ def main(argv: list[str] | None = None) -> int:
         default=DEFAULT_PROTECT,
         help="Regex of default-branch cache families whose newest entry is retained",
     )
-    parser.add_argument("--default-branch", default=env_default("DEFAULT_BRANCH", "master"))
+    parser.add_argument(
+        "--default-branch", default=env_default("DEFAULT_BRANCH", defaults.default_branch)
+    )
     args = parser.parse_args(argv)
 
     repo = require_repository()

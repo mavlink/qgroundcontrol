@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING
 
 import _bootstrap as _bootstrap
 from common.file_traversal import find_repo_root
-from common.gh_actions import gh_error, write_github_output
+from common.gh_actions import gh_error, gh_warning, write_github_output
 from common.gh_actions import write_step_summary as _write_step_summary
 from common.git import pr_diff_refs
 from common.io import chdir, write_json
@@ -44,6 +44,11 @@ DOCS_FULL_SCAN_PATHSPECS = (
 # Manual-stage validators that download pinned tools; --ci runs them on the selected files, so each runs only when
 # its own inputs change.
 CI_MANUAL_HOOKS = ("renovate-config-validator", "packer-validate", "runs-on-lint")
+# TruffleHog runs only as a local commit hook; --ci skips it unless SKIP is already set.
+CI_SKIPPED_HOOKS = ("trufflehog",)
+# Hooks whose environments --prepare-cache leaves out of the CI cache: the CI-skipped hooks and the
+# Renovate validator, which installs Renovate only on the rare runs that change its config.
+CACHE_SKIPPED_HOOKS = (*CI_SKIPPED_HOOKS, "renovate-config-validator")
 # The files of the only hook that needs Qt (qmllint).
 QT_PATHSPECS = ("*.qml",)
 # Runs .pre-commit-config.yaml; the config stays compatible with stock pre-commit.
@@ -85,6 +90,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         action="store_true",
         help="Only report whether the selected files include QML, which qmllint checks with Qt, "
         "and set the needs-qt step output",
+    )
+    parser.add_argument(
+        "--prepare-cache",
+        action="store_true",
+        help="Only install every hook environment the CI cache keeps (all hooks but "
+        f"{', '.join(CACHE_SKIPPED_HOOKS)}), then prune unused environments",
     )
     return parser.parse_args(argv)
 
@@ -293,6 +304,21 @@ def describe_selection(selection: list[str]) -> str:
     return f"{len(selection) - 1} selected files"
 
 
+def prepare_cache() -> int:
+    """Install the hook environments that the CI cache saves, then prune unused ones.
+
+    A failed install fails, so the workflow never saves a partial set; a failed prune only warns.
+    """
+    skips = [arg for hook in CACHE_SKIPPED_HOOKS for arg in ("--skip", hook)]
+    returncode = subprocess.run([RUNNER, "prepare-hooks", *skips], check=False).returncode
+    if returncode != 0:
+        log_error(f"{RUNNER} prepare-hooks failed")
+        return returncode
+    if subprocess.run([RUNNER, "cache", "gc"], check=False).returncode != 0:
+        gh_warning(f"{RUNNER} cache gc failed; unused hook environments stay in the cache")
+    return 0
+
+
 def handle_install() -> int:
     log_info(f"Installing {RUNNER} and Git hooks...")
     from qgc_tools.python_env import tool_command
@@ -327,6 +353,12 @@ def main(argv: list[str] | None = None) -> int:
                 log_info("Install with: python tools/setup/install_python.py precommit")
                 log_info("Or run: python3 ./tools/pre_commit.py --install")
                 return 1
+
+            if args.prepare_cache:
+                return prepare_cache()
+
+            if args.ci:
+                os.environ.setdefault("SKIP", ",".join(CI_SKIPPED_HOOKS))
 
             selection = file_selection_args(args)
             if selection is None:

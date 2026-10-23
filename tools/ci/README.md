@@ -38,13 +38,13 @@ and Ruff skips `build` directories.
 | `cache/cache_plan.py` | Resolve the cache action's save policy, scope, keys, ccache budget, compiler/moc/CPM environment, and the sccache pilot's selection |
 | `cache/ccache_helper.py` | Install the pinned, checksum-verified ccache (and mold, plus sccache for the [sccache pilot](../../.github/ci-overview.md#sccache-pilot), on Linux) and plan `save-build-cache`: gate PR saves, pack the snapshot artifact, and choose the cache keys |
 | `cache/cpm_helper.py` | Fingerprint CPM dependencies and the GStreamer SDK config for `cache_plan.py`, and create and apply runner-image CPM seeds |
-| `cache/gh_cache_cleanup.py` | List and optionally delete GitHub Actions caches (`cache-cleanup.yml` sets its flags through `CLEANUP_*` variables) |
+| `cache/gh_cache_cleanup.py` | List and optionally delete GitHub Actions caches, taking the branch and mode from `cache-cleanup.yml`'s triggering event (`CLEANUP_*` variables override them) |
 | `runner/analysis_tools.py` | Install the clang-tidy wheel hash-pinned in `build-config.json`, verify `.clang-tidy`, and put LLVM, clang-tidy, and Clazy on `PATH` for `analysis.yml` |
 | `runner/apt_install_retry.py` | Install apt packages with bounded retries, RunsOn's in-region EC2 mirror, and a runner-owned download cache |
 | `runner/build_setup.py` | Validate `build-setup`'s inputs and resolve the values its steps read: Qt hosts, architectures and modules, cache target, Xcode and MSVC selections, Windows ARM64 cross builds' host Qt, Android ABIs and SDK environment, and the `build-config.json` tool versions |
 | `runner/enable_kvm.py` | Open `/dev/kvm` to every user on a nested-virtualization runner |
 | `runner/install_dependencies_helper.py` | `install-dependencies` entry points: plan the Linux apt cache key, install the apt packages or the macOS Homebrew packages and GStreamer (both without the tools CI pins elsewhere), and install Windows MSVC and NSIS (macOS and Windows in three timed attempts that kill a hung attempt's process tree) |
-| `runner/install_multipass.py` | Install Multipass and wait for daemon readiness |
+| `runner/install_multipass.py` | Install Multipass and wait for daemon readiness; with `--allow-bridge-forwarding`, undo Docker's iptables `FORWARD` drop policy so guests reach the network |
 | `runner/runner_image.py` | Check `runner-images.yml`'s branch and AWS settings, then output, verify, promote, and retire QGC runner AMIs |
 | `runner/validate_runner_configs.py` | `packer-validate` and `runs-on-lint` hooks: validate the runner image Packer template and lint the RunsOn configuration with the Packer and RunsOn CLI pinned in `build-config.json` |
 | `compile/cmake_helper.py` | Run CI configure, build, and CTest steps with standard arguments and timing, and write the job summary's Build section (result, duration, toolchain, compiler and moc cache hit rates, slowest build steps) |

@@ -8,6 +8,7 @@ import sys
 from typing import TYPE_CHECKING
 from xml.sax.saxutils import escape
 
+import pre_commit
 import pytest
 from common.git import run_git
 from common.xml import XMLParseError
@@ -504,7 +505,8 @@ def test_pre_commit_workflow_checks_translation_only_changes() -> None:
     steps = workflow["jobs"]["pre-commit"]["steps"]
     run = next(step for step in steps if step.get("name") == "Run pre-commit")
     assert "--changed" in run["run"]
-    assert "qt-translation-placeholders" not in run["env"].get("SKIP", "")
+    assert "qt-translation-placeholders" not in run.get("env", {}).get("SKIP", "")
+    assert "qt-translation-placeholders" not in pre_commit.CI_SKIPPED_HOOKS
 
 
 def test_pre_commit_hook_uses_catalog_filter_and_existing_runner() -> None:

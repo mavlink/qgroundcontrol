@@ -56,16 +56,9 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
 
-      # PR close cleans only its merge ref, without a summary; only dispatch can dry-run or skip pruning.
+      # The script takes the branch, deletion, summary, and prune mode from the triggering event.
       - name: List and clean caches
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
-          CLEANUP_BRANCH: >-
-            ${{ github.event_name == 'pull_request_target' &&
-                format('refs/pull/{0}/merge', github.event.pull_request.number) || inputs.branch }}
-          CLEANUP_DELETE: ${{ !(github.event_name == 'workflow_dispatch' && inputs.dry-run) }}
-          CLEANUP_SUMMARY: ${{ github.event_name != 'pull_request_target' }}
-          CLEANUP_PRUNE: ${{ github.event_name == 'schedule' || inputs.mode == 'prune' }}
         run: python3 tools/ci/cache/gh_cache_cleanup.py

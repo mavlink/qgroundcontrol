@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import subprocess
 from typing import TYPE_CHECKING, Any
 
@@ -200,6 +201,170 @@ def test_main_prunes_with_summary_from_environment(monkeypatch, gh_summary: Path
     assert mod.main([]) == 0
     assert "| Mode | prune (dry run) |" in gh_summary.read_text()
     assert "Dry run" in gh_summary.read_text()
+
+
+def _trigger(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, event_name: str, payload: dict[str, Any]
+) -> None:
+    event = tmp_path / "event.json"
+    event.write_text(json.dumps({"repository": {"default_branch": "main"}, **payload}))
+    monkeypatch.setenv("GITHUB_EVENT_NAME", event_name)
+    monkeypatch.setenv("GITHUB_EVENT_PATH", str(event))
+    monkeypatch.setenv("GH_REPO", "owner/repo")
+
+
+def _record_gh(
+    monkeypatch: pytest.MonkeyPatch, caches: list[Any]
+) -> tuple[list[str], list[tuple[str, list[str]]]]:
+    listed: list[str] = []
+    deleted: list[tuple[str, list[str]]] = []
+    monkeypatch.setattr(
+        mod, "list_caches", lambda _repo, branch, _limit: listed.append(branch) or caches
+    )
+    monkeypatch.setattr(
+        mod, "delete_caches", lambda _repo, branch, keys: deleted.append((branch, keys)) or (1, 0)
+    )
+    return listed, deleted
+
+
+def _stale_caches() -> list[Any]:
+    """10000 MiB on a feature branch: above the high-water mark, with nothing protected."""
+    return [
+        _usage("stale-a", 6000, ref="refs/heads/feature", accessed="2026-01-02"),
+        _usage("stale-b", 4000, ref="refs/heads/feature", accessed="2026-01-01"),
+    ]
+
+
+def test_schedule_prunes_every_branch_and_deletes_with_a_summary(
+    monkeypatch, tmp_path: Path, gh_summary: Path
+) -> None:
+    _trigger(monkeypatch, tmp_path, "schedule", {"schedule": "17 */6 * * *"})
+    listed, deleted = _record_gh(monkeypatch, _stale_caches())
+
+    assert mod.main([]) == 0
+
+    assert listed == [""]
+    # Least recently used first, down to the 6500 MiB target.
+    assert deleted == [("refs/heads/feature", ["stale-b"])]
+    assert "| Mode | prune |" in gh_summary.read_text()
+
+
+def test_closed_pull_request_deletes_only_its_merge_ref_without_a_summary(
+    monkeypatch, tmp_path: Path, gh_summary: Path
+) -> None:
+    _trigger(
+        monkeypatch,
+        tmp_path,
+        "pull_request_target",
+        {"action": "closed", "pull_request": {"number": 42}, "inputs": {"mode": "prune"}},
+    )
+    listed, deleted = _record_gh(monkeypatch, [_usage("ccache-pr", 1, ref="refs/pull/42/merge")])
+
+    assert mod.main([]) == 0
+
+    assert listed == ["refs/pull/42/merge"]
+    assert deleted == [("refs/pull/42/merge", ["ccache-pr"])]
+    assert gh_summary.read_text() == ""
+
+
+@pytest.mark.parametrize(
+    ("inputs", "mode", "deletes"),
+    [
+        # Dispatch defaults: a dry-run prune.
+        ({}, "prune (dry run)", False),
+        ({"branch": "", "dry-run": "true", "mode": "prune"}, "prune (dry run)", False),
+        ({"branch": "", "dry-run": "false", "mode": "prune"}, "prune", True),
+        ({"branch": "", "dry-run": False, "mode": "prune"}, "prune", True),
+    ],
+)
+def test_dispatch_prune_honors_dry_run(
+    monkeypatch,
+    tmp_path: Path,
+    gh_summary: Path,
+    inputs: dict[str, Any],
+    mode: str,
+    deletes: bool,
+) -> None:
+    _trigger(monkeypatch, tmp_path, "workflow_dispatch", {"inputs": inputs})
+    listed, deleted = _record_gh(monkeypatch, _stale_caches())
+
+    assert mod.main([]) == 0
+
+    assert listed == [""]
+    assert bool(deleted) is deletes
+    assert f"| Mode | {mode} |" in gh_summary.read_text()
+
+
+@pytest.mark.parametrize(
+    ("inputs", "mode", "deletes"),
+    [
+        ({"branch": "feature-x", "dry-run": "true", "mode": "wipe"}, "list (dry run)", False),
+        ({"branch": "feature-x", "dry-run": "false", "mode": "wipe"}, "delete", True),
+    ],
+)
+def test_dispatch_wipe_lists_or_deletes_the_selected_branch(
+    monkeypatch,
+    tmp_path: Path,
+    gh_summary: Path,
+    inputs: dict[str, Any],
+    mode: str,
+    deletes: bool,
+) -> None:
+    _trigger(monkeypatch, tmp_path, "workflow_dispatch", {"inputs": inputs})
+    listed, deleted = _record_gh(monkeypatch, [_usage("k1", 1, ref="refs/heads/feature-x")])
+
+    assert mod.main([]) == 0
+
+    assert listed == ["feature-x"]
+    assert deleted == ([("feature-x", ["k1"])] if deletes else [])
+    summary = gh_summary.read_text()
+    assert f"| Mode | {mode} |" in summary
+    assert "| Branch | `feature-x` |" in summary
+
+
+def test_dispatch_wipe_of_every_branch(monkeypatch, tmp_path: Path, gh_summary: Path) -> None:
+    _trigger(
+        monkeypatch,
+        tmp_path,
+        "workflow_dispatch",
+        {"inputs": {"branch": "", "dry-run": "false", "mode": "wipe"}},
+    )
+    listed, deleted = _record_gh(monkeypatch, [_usage("k1", 1)])
+
+    assert mod.main([]) == 0
+
+    assert listed == [""]
+    assert deleted == [("", ["k1"])]
+    assert "| Branch | all |" in gh_summary.read_text()
+
+
+def test_prune_protects_the_repository_default_branch() -> None:
+    schedule = mod.event_defaults("schedule", {"repository": {"default_branch": "main"}})
+    assert schedule.default_branch == "main"
+    assert mod.event_defaults("schedule", {}).default_branch == "master"
+
+
+def test_environment_overrides_the_event(monkeypatch, tmp_path: Path, gh_summary: Path) -> None:
+    _trigger(monkeypatch, tmp_path, "schedule", {})
+    for name, value in {
+        "CLEANUP_BRANCH": "refs/pull/7/merge",
+        "CLEANUP_DELETE": "false",
+        "CLEANUP_SUMMARY": "false",
+        "CLEANUP_PRUNE": "false",
+    }.items():
+        monkeypatch.setenv(name, value)
+    listed, deleted = _record_gh(monkeypatch, [_usage("k1", 1)])
+
+    assert mod.main([]) == 0
+
+    assert listed == ["refs/pull/7/merge"]
+    assert deleted == []
+    assert gh_summary.read_text() == ""
+
+
+def test_without_an_event_caches_are_only_listed() -> None:
+    assert mod.event_defaults("", {}) == mod.CleanupDefaults()
+    assert mod.event_defaults("push", {}) == mod.CleanupDefaults()
 
 
 def test_main_requires_repo(monkeypatch) -> None:

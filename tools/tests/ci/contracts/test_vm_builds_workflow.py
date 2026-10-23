@@ -67,3 +67,18 @@ def test_vagrant_job_delegates_lifecycle_to_run_vagrant() -> None:
         run = step.get("run", "")
         assert "vagrant destroy" not in run
         assert "/tmp/" not in run
+
+
+def test_only_the_multipass_job_opens_bridge_forwarding() -> None:
+    # Docker's FORWARD DROP policy blocks the Multipass bridge NAT; libvirt adds its own rules.
+    jobs = load_workflow("vm-builds.yml")["jobs"]
+    install = get_step(
+        jobs["multipass-build"]["steps"], "Install Multipass and allow VM bridge networking"
+    )
+    assert (
+        install["run"] == "python3 tools/ci/runner/install_multipass.py --allow-bridge-forwarding"
+    )
+    for job in jobs.values():
+        for step in job["steps"]:
+            assert "iptables" not in step.get("run", "")
+            assert "sysctl" not in step.get("run", "")

@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import json
+import os
 import re
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 import pre_commit
@@ -11,7 +13,9 @@ import pytest
 from common.git import ZERO_SHA
 from common.io import read_toml
 from pre_commit import (
+    CACHE_SKIPPED_HOOKS,
     CI_MANUAL_HOOKS,
+    CI_SKIPPED_HOOKS,
     DOCS_HOOKS,
     QT_PATHSPECS,
     build_precommit_args,
@@ -541,8 +545,9 @@ def test_precommit_workflow_relies_on_step_failure_and_uploads_results() -> None
     assert run["run"] == (
         "python3 ./tools/pre_commit.py --ci --changed --results-dir pre-commit-results"
     )
-    # The prose linter runs here too; only TruffleHog is a local-only hook.
-    assert run["env"] == {"SKIP": "trufflehog"}
+    # --ci supplies the SKIP default; the prose linter runs here too.
+    assert "env" not in run
+    assert CI_SKIPPED_HOOKS == ("trufflehog",)
     assert "vale" in DOCS_HOOKS
     assert by_name["Upload pre-commit results artifact"]["with"]["path"] == "pre-commit-results"
     after_run = steps[steps.index(run) + 1 :]
@@ -666,10 +671,10 @@ def test_workflows_cache_prek_environments(workflow: str, job: str, prefix: str)
     (restore,) = (step for step in caches if "restore" in step["uses"])
     assert restore["with"]["key"].startswith(prefix)
     assert restore["with"]["restore-keys"].startswith(prefix)
+    # Hook environments are prepared and pruned only through pre_commit.py --prepare-cache.
     for step in steps:
         assert "pre-commit gc" not in step.get("run", "")
-        if "gc" in step.get("run", ""):
-            assert step["run"] == "prek cache gc"
+        assert "prek " not in step.get("run", "")
 
 
 def test_copilot_setup_restores_prek_environments_read_only() -> None:
@@ -687,21 +692,100 @@ def test_pushes_prepare_every_hook_environment_before_saving() -> None:
     steps = get_steps(load_workflow("pre-commit.yml"), "pre-commit")
     run = get_step(steps, "Run pre-commit")
     prepare = get_step(steps, "prepare-hooks")
-    prune = get_step(steps, "Prune unused prek environments")
     save = get_step(steps, "Save prek environments")
-    assert steps.index(run) < steps.index(prepare) < steps.index(prune) < steps.index(save)
-    assert prepare["if"] == prune["if"]
+    assert steps.index(run) < steps.index(prepare) < steps.index(save)
+    assert prepare["run"] == "python3 ./tools/pre_commit.py --prepare-cache"
     assert "github.event_name == 'push'" in prepare["if"]
+    assert "steps.pre-commit-cache.outputs.cache-hit != 'true'" in prepare["if"]
     assert prepare["continue-on-error"] is True
     assert save["if"].startswith(prepare["if"])
     assert "steps.prepare-hooks.outcome == 'success'" in save["if"]
-    command = prepare["run"].split()
-    assert command[:2] == ["prek", "prepare-hooks"]
-    skipped = set(command[3::2])
-    assert command[2::2] == ["--skip"] * len(skipped)
     # TruffleHog runs only locally; the Renovate validator installs Renovate only when its config changes.
-    assert skipped == {"trufflehog", "renovate-config-validator"}
-    assert skipped <= set(_hooks_by_id())
+    assert set(CACHE_SKIPPED_HOOKS) == {"trufflehog", "renovate-config-validator"}
+    assert set(CACHE_SKIPPED_HOOKS) <= set(_hooks_by_id())
+
+
+@dataclass
+class FakePrek:
+    commands: list[list[str]] = field(default_factory=list)
+    # Exit code by prek subcommand; others succeed.
+    returncodes: dict[str, int] = field(default_factory=dict)
+
+
+@pytest.fixture
+def fake_prek(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> FakePrek:
+    """Record the prek commands that pre_commit.py runs through subprocess.run."""
+    prek = FakePrek()
+
+    def fake_run(command: list[str], **_kwargs: object) -> subprocess.CompletedProcess:
+        prek.commands.append(command)
+        return completed(returncode=prek.returncodes.get(command[1], 0))
+
+    monkeypatch.setattr(pre_commit, "repo_root", lambda: tmp_path)
+    monkeypatch.setattr(pre_commit, "ensure_precommit_available", lambda: True)
+    monkeypatch.setattr(pre_commit.subprocess, "run", fake_run)
+    monkeypatch.setattr(pre_commit, "run_tee", lambda *_a, **_kw: pytest.fail("ran hooks"))
+    return prek
+
+
+def test_prepare_cache_installs_every_kept_environment_then_prunes(
+    fake_prek: FakePrek, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert pre_commit.main(["--prepare-cache"]) == 0
+
+    skips = [arg for hook in CACHE_SKIPPED_HOOKS for arg in ("--skip", hook)]
+    assert fake_prek.commands == [["prek", "prepare-hooks", *skips], ["prek", "cache", "gc"]]
+    assert "::warning::" not in capsys.readouterr().out
+
+
+def test_prepare_cache_fails_without_pruning_when_an_install_fails(fake_prek: FakePrek) -> None:
+    fake_prek.returncodes["prepare-hooks"] = 2
+
+    assert pre_commit.main(["--prepare-cache"]) == 2
+    assert [command[1] for command in fake_prek.commands] == ["prepare-hooks"]
+
+
+def test_prepare_cache_only_warns_when_pruning_fails(
+    fake_prek: FakePrek, capsys: pytest.CaptureFixture[str]
+) -> None:
+    fake_prek.returncodes["cache"] = 1
+
+    assert pre_commit.main(["--prepare-cache"]) == 0
+    assert "::warning::prek cache gc failed" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize(
+    ("argv", "preset", "expected"),
+    [
+        (["--ci", "--changed"], None, "trufflehog"),
+        (["--ci", "--changed"], "trufflehog,vale", "trufflehog,vale"),
+        (["--changed"], None, None),
+    ],
+)
+def test_ci_skips_local_only_hooks_unless_skip_is_set(
+    fake_precommit: list[list[str]],
+    monkeypatch: pytest.MonkeyPatch,
+    gh_summary: Path,
+    argv: list[str],
+    preset: str | None,
+    expected: str | None,
+) -> None:
+    monkeypatch.delenv("SKIP", raising=False)
+    if preset is not None:
+        monkeypatch.setenv("SKIP", preset)
+    monkeypatch.setattr(pre_commit, "changed_refs", lambda args: ("base", "HEAD"))
+    monkeypatch.setattr(pre_commit, "docs_config_changed", lambda refs: False)
+    seen: list[str | None] = []
+    monkeypatch.setattr(
+        pre_commit,
+        "run_tee",
+        lambda command, output_file, **_kw: (
+            seen.append(os.environ.get("SKIP")) or output_file.write_text("", encoding="utf-8") or 0
+        ),
+    )
+
+    assert pre_commit.main(argv) == 0
+    assert seen and set(seen) == {expected}
 
 
 def test_whitespace_hooks_leave_syrupy_snapshots_alone() -> None:

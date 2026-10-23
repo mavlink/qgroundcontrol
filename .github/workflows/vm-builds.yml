@@ -85,15 +85,8 @@ jobs:
       - name: Enable KVM
         run: python3 tools/ci/runner/enable_kvm.py
 
-      - name: Install Multipass
-        run: python3 tools/ci/runner/install_multipass.py
-
-      - name: Allow VM bridge networking
-        run: |
-          # Docker sets the iptables FORWARD policy to DROP, blocking the multipass bridge NAT
-          # (guest has no outbound network). libvirt adds its own rules, so Vagrant is unaffected.
-          sudo iptables -P FORWARD ACCEPT
-          sudo sysctl -w net.ipv4.ip_forward=1
+      - name: Install Multipass and allow VM bridge networking
+        run: python3 tools/ci/runner/install_multipass.py --allow-bridge-forwarding
 
       - name: Build QGC in Multipass VM
         env:

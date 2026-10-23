@@ -43,6 +43,7 @@ PRE_SETUP_PYTHON_SCRIPTS: tuple[str, ...] = (
     "tools/ci/runner/install_multipass.py",
     "tools/ci/runner/runner_image.py",
     "tools/setup/read_config.py",
+    "tools/update_px4_metadata.py",
     # Run before a later or conditional setup-python.
     "tools/ci/publish/release_branch_check.py",  # release.yml checks the tag before installing
     "tools/ci/gstreamer/gstreamer_archive.py",  # Android and iOS GStreamer builds skip build-setup

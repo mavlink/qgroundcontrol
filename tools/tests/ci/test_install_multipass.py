@@ -47,3 +47,40 @@ def test_bad_secondary_remote_is_bounded_and_warns(calls, monkeypatch, capsys):
     assert install_multipass.main([]) == 0
     assert calls.count(["sudo", "multipass", "find"]) == install_multipass.CATALOG_ATTEMPTS
     assert "::warning::" in capsys.readouterr().out
+
+
+FORWARDING = [
+    ["sudo", "iptables", "-P", "FORWARD", "ACCEPT"],
+    ["sudo", "sysctl", "-w", "net.ipv4.ip_forward=1"],
+]
+
+
+@pytest.mark.parametrize(
+    ("argv", "forwarding"), [([], []), (["--allow-bridge-forwarding"], FORWARDING)]
+)
+def test_bridge_forwarding_is_opened_only_on_request_after_install(
+    calls, monkeypatch, argv, forwarding
+):
+    monkeypatch.setattr(Path, "is_socket", lambda _: True)
+    assert install_multipass.main(argv) == 0
+    assert [call for call in calls if call in FORWARDING] == forwarding
+    if forwarding:
+        assert calls[-2:] == FORWARDING
+        assert calls.index(["sudo", "snap", "install", "multipass"]) < calls.index(FORWARDING[0])
+
+
+def test_bridge_forwarding_failure_fails_the_install(calls, monkeypatch):
+    monkeypatch.setattr(Path, "is_socket", lambda _: True)
+
+    def run(command, **kwargs):
+        calls.append(command)
+        return subprocess.CompletedProcess(command, 0)
+
+    def failing_iptables(command, **kwargs):
+        if command[:2] == ["sudo", "iptables"]:
+            raise subprocess.CalledProcessError(4, command)
+        return run(command, **kwargs)
+
+    monkeypatch.setattr(install_multipass.subprocess, "run", failing_iptables)
+    assert install_multipass.main(["--allow-bridge-forwarding"]) == 1
+    assert ["sudo", "sysctl", "-w", "net.ipv4.ip_forward=1"] not in calls

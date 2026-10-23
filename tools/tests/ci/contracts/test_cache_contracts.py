@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+from ci.cache import gh_cache_cleanup
 from ci.cache.cache_plan import CacheInputs, plan_caches
 from ci.runner.build_setup import SetupInputs, plan_setup
 from common.build_config import load_build_config
@@ -377,19 +378,20 @@ def test_cache_cleanup_handles_every_trigger_in_one_job() -> None:
     assert "ref" not in checkout["with"]
     (cleanup,) = (step for step in job["steps"] if "gh_cache_cleanup.py" in step.get("run", ""))
     assert cleanup["run"] == "python3 tools/ci/cache/gh_cache_cleanup.py"
-    env = cleanup["env"]
-    # PR close cleans only the merge ref, without a summary; only dispatch can dry-run or skip pruning.
-    assert " ".join(env["CLEANUP_BRANCH"].split()) == (
-        "${{ github.event_name == 'pull_request_target' && "
-        "format('refs/pull/{0}/merge', github.event.pull_request.number) || inputs.branch }}"
+    # gh_cache_cleanup.event_defaults() reads every trigger's settings from the event itself
+    # (behavior tests in test_gh_cache_cleanup.py); the job passes only the repository and token.
+    assert cleanup["env"] == {
+        "GH_TOKEN": "${{ github.token }}",
+        "GH_REPO": "${{ github.repository }}",
+    }
+
+
+def test_cache_cleanup_dispatch_defaults_match_the_script() -> None:
+    inputs = load_workflow("cache-cleanup.yml")["on"]["workflow_dispatch"]["inputs"]
+    assert {name: spec.get("default", "") for name, spec in inputs.items()} == (
+        gh_cache_cleanup.DISPATCH_INPUT_DEFAULTS
     )
-    assert env["CLEANUP_DELETE"] == (
-        "${{ !(github.event_name == 'workflow_dispatch' && inputs.dry-run) }}"
-    )
-    assert env["CLEANUP_SUMMARY"] == "${{ github.event_name != 'pull_request_target' }}"
-    assert (
-        env["CLEANUP_PRUNE"] == "${{ github.event_name == 'schedule' || inputs.mode == 'prune' }}"
-    )
+    assert inputs["mode"]["options"] == ["prune", "wipe"]
 
 
 def test_disk_cleanup_avoids_bulk_package_removal() -> None:

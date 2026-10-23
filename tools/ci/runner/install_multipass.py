@@ -4,6 +4,10 @@
 CI runs the Multipass client as root. A job process lives in the runner's own systemd
 service cgroup with no user session, so for any other user `snap run` cannot move the
 client into a snap scope and snap-confine refuses to start it (Multipass >= 1.17).
+
+--allow-bridge-forwarding then lets guests reach the network: Docker sets the iptables FORWARD
+policy to DROP, which blocks the Multipass bridge's NAT. (libvirt adds its own rules, so the
+Vagrant job does not need it.)
 """
 
 from __future__ import annotations
@@ -62,10 +66,26 @@ def install() -> None:
     )
 
 
+def allow_bridge_forwarding() -> None:
+    """Accept forwarded packets and enable IPv4 forwarding on this host."""
+    print("Allowing forwarded traffic for the Multipass bridge")
+    subprocess.run(["sudo", "iptables", "-P", "FORWARD", "ACCEPT"], check=True, timeout=60)
+    subprocess.run(["sudo", "sysctl", "-w", "net.ipv4.ip_forward=1"], check=True, timeout=60)
+
+
 def main(argv: list[str] | None = None) -> int:
-    argparse.ArgumentParser(description=__doc__).parse_args(argv)
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--allow-bridge-forwarding",
+        action="store_true",
+        help="After installing, set the iptables FORWARD policy to ACCEPT and enable IPv4 "
+        "forwarding (changes the host firewall; for ephemeral runners)",
+    )
+    args = parser.parse_args(argv)
     try:
         install()
+        if args.allow_bridge_forwarding:
+            allow_bridge_forwarding()
         return 0
     except (OSError, subprocess.SubprocessError) as error:
         print(f"Multipass installation failed: {error}", file=sys.stderr)

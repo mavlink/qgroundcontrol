@@ -60,6 +60,7 @@ tools/
 ├── moccache_launcher.py     # moccache entry point: the CMake AUTOMOC launcher and the stats/trim CLI
 ├── pre_commit.py            # Pre-commit runner with CI summaries
 ├── terrain_tiles.py         # Terrarium elevation tiles from Copernicus GLO-30 (GeoMap)
+├── update_px4_metadata.py   # Refresh the bundled PX4 airframe and parameter metadata
 ├── validate_cmake_presets.py # CMake presets against the locked cmake package's schema (hook)
 ├── validate_configs.py      # Cross-field checks for build-config.json and link exceptions
 ├── pyproject.toml, uv.lock  # Locked Python tooling groups
@@ -234,10 +235,15 @@ python tools/pre_commit.py --changed --hook ruff --hook pyright  # Only these ho
 python tools/pre_commit.py --docs --changed                      # English docs with only the docs hooks (just lint-docs)
 python tools/pre_commit.py --changed --needs-qt                  # Whether the selection has QML (qmllint needs Qt)
 python tools/pre_commit.py --install                             # Install the pre-commit and commit-msg hooks
+python tools/pre_commit.py --prepare-cache                       # Install the hook environments CI caches, prune the rest
 ```
 
 The selected hooks run in one `prek run` call; its output streams to the console and, with
-`--results-dir`, into `pre-commit-output.txt`.
+`--results-dir`, into `pre-commit-output.txt`. `--ci` skips the local-only `trufflehog` hook unless
+`SKIP` is already set. `--prepare-cache` installs every hook environment except
+`CACHE_SKIPPED_HOOKS` (TruffleHog and the Renovate validator) and then runs `prek cache gc`; the
+pre-commit workflow runs it on pushes that miss the prek cache, and saves the cache only when the
+install succeeded.
 
 The `precommit` group pins prek, which also accepts pre-commit's commands and options
 (`prek run <id> --hook-stage manual --files <paths>`, `SKIP=<id>`). The configuration stays
@@ -363,6 +369,17 @@ lists the unreleased commits since the last release reachable from `HEAD`.
 ```bash
 just release-notes v5.1.5                                # Notes for an existing tag
 python tools/ci/publish/release_notes.py v5.2.0          # Same script; v5.2.0 not tagged yet
+```
+
+### PX4 metadata
+
+`px4-metadata.yml` runs `update_px4_metadata.py` daily and opens a pull request when the bundled PX4
+airframe (`AirframeFactMetaData.xml`) or parameter (`PX4ParameterFactMetaData.json`) metadata
+changes upstream. It retries both downloads from artifacts.px4.io and replaces neither file unless
+both are valid: well-formed airframe XML without a DTD, and xz-compressed JSON that lists parameters.
+
+```bash
+python3 tools/update_px4_metadata.py
 ```
 
 ## Setup Scripts
