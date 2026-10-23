@@ -34,7 +34,6 @@ CI_PLATFORM_WORKFLOWS = (
     "analysis.yml",
     "android.yml",
     "build-profile.yml",
-    "custom-build.yml",
     "ios.yml",
     "linux.yml",
     "macos.yml",

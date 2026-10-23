@@ -16,7 +16,6 @@ GATES = [
     ("macos.yml", "macos-ok", "MacOS"),
     ("android.yml", "android-ok", "Android"),
     ("ios.yml", "ios-ok", "iOS"),
-    ("custom-build.yml", "custom-build-ok", "Custom Build"),
 ]
 
 

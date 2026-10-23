@@ -328,10 +328,129 @@ jobs:
 
   # The required status check: a skipped matrix job reports an unexpanded name, so branch
   # protection requires this stable name instead. always(): a skipped gate would count as passing.
+  # The custom-example overlay changes the app name and feature set, global compile definitions, so it is its own
+  # build. Pull requests unit-test and boot the Debug variant (the stock legs run the integration suites); pushes also
+  # package and boot the Release AppImage.
+  custom-plugin:
+    name: ${{ matrix.build-type == 'Debug' && 'Custom Plugin Test Debug' || 'Custom Plugin Build' }}
+    needs: changes
+    if: needs.changes.outputs.should_build == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        build-type: ${{ fromJSON(github.event_name == 'pull_request' && '["Debug"]' || '["Debug", "Release"]') }}
+    runs-on: >-
+      ${{
+        github.repository_owner == 'mavlink' &&
+        format('runs-on={0}-custom-plugin-{1}-{2}/runner={3}{4}',
+          github.run_id, github.run_attempt, strategy.job-index,
+          matrix.build-type == 'Debug' && 'linux-x64-tester' ||
+          vars.RUNS_ON_LINUX_BUILDER || 'linux-x64-builder-60gb',
+          github.event_name == 'pull_request' && (vars.RUNS_ON_SPOT_POOLS == 'true' && '-spot' ||
+            '/spot=cop/family=m8i.xlarge+r8i.xlarge+m7i.xlarge') || '') ||
+        'ubuntu-24.04'
+      }}
+    timeout-minutes: 120
+
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      # The Harden-Runner community tier audits GitHub-hosted runners only, not RunsOn.
+      - name: Harden Runner
+        if: runner.environment == 'github-hosted'
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Record build timeline
+        uses: Kesin11/actions-timeline@v3
+        continue-on-error: true
+        with:
+          show-waiting-runner: true
+
+      - name: Enable RunsOn magic cache
+        uses: runs-on/action@v2
+        with:
+          show_costs: summary
+
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Setup Build Environment
+        uses: ./.github/actions/build-setup
+        with:
+          qt-host: linux
+          qt-arch: linux_gcc_64
+          build-type: ${{ matrix.build-type }}
+          cache-variant: custom
+
+      - name: Install Dependencies
+        uses: ./.github/actions/install-dependencies
+
+      - name: Configure
+        uses: ./.github/actions/cmake-configure
+        with:
+          preset: ${{ matrix.build-type == 'Debug' && 'Linux-debug' || 'Linux' }}
+          extra-args: -DQGC_CUSTOM_DIR=custom-example
+
+      - name: Build
+        id: build
+        uses: ./.github/actions/cmake-build
+
+      - name: Create AppImage
+        if: matrix.build-type == 'Release'
+        working-directory: ${{ runner.temp }}/build
+        run: cmake --install . --config Release
+
+      - name: Verify Custom AppImage
+        if: matrix.build-type == 'Release'
+        uses: ./.github/actions/verify-executable
+        with:
+          binary-path: Custom-QGroundControl-x86_64.AppImage
+          type: appimage
+          working-dir: ${{ runner.temp }}/build
+
+      - name: Run unit tests
+        if: ${{ !cancelled() && matrix.build-type == 'Debug' && steps.build.outcome == 'success' }}
+        uses: ./.github/actions/run-unit-tests
+        with:
+          junit-output: junit-results-custom-unit.xml
+          ctest-output: test-output-custom-unit.txt
+          include-labels: 'Unit'
+          exclude-labels: 'Flaky|Network|StockUI'
+          report-name: Unit Tests (custom)
+          artifact-name: test-results-custom-unit
+          retention-days: 7
+          duration-report: 'true'
+          upload-codecov: ${{ vars.CODECOV_TEST_ANALYTICS == 'true' }}
+          codecov-flags: custom-unit
+
+      - name: Verify custom executable
+        if: ${{ !cancelled() && matrix.build-type == 'Debug' && steps.build.outcome == 'success' }}
+        uses: ./.github/actions/verify-executable
+        with:
+          binary-path: ${{ runner.temp }}/build/Debug/Custom-QGroundControl
+          build-dir: ${{ runner.temp }}/build
+
+      - name: Debug failed runner
+        if: ${{ failure() && !cancelled() && inputs.debug_runner && github.ref_type == 'branch' }}
+        timeout-minutes: 15
+        uses: ./.github/actions/debug-runner
+
   linux-ok:
     name: Linux
     if: always()
-    needs: [changes, build, debug-validation]
+    needs: [changes, build, debug-validation, custom-plugin]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions: {}
@@ -344,5 +463,5 @@ jobs:
       - name: Require every leg to pass
         uses: re-actors/alls-green@v1.3.0
         with:
-          allowed-skips: build, debug-validation
+          allowed-skips: build, debug-validation, custom-plugin
           jobs: ${{ toJSON(needs) }}

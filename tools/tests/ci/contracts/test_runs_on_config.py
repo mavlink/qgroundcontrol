@@ -20,7 +20,6 @@ if TYPE_CHECKING:
 RUNSON_WORKFLOWS = [
     "analysis.yml",
     "android.yml",
-    "custom-build.yml",
     "docker.yml",
     "linux.yml",
     "vm-builds.yml",
@@ -184,7 +183,6 @@ def test_vm_builds_do_not_use_the_smaller_android_emulator_pool() -> None:
     "workflow",
     [
         "linux.yml",
-        "custom-build.yml",
         "docker.yml",
         "android.yml",
         "windows.yml",
@@ -380,7 +378,7 @@ def test_linux_image_uses_repository_setup_helpers_and_module_manifest(
 
 
 def test_managed_runner_routes_are_opt_in() -> None:
-    for workflow in ("linux.yml", "custom-build.yml", "docker.yml", "android.yml"):
+    for workflow in ("linux.yml", "docker.yml", "android.yml"):
         assert "vars.RUNS_ON_LINUX_BUILDER" in _read(f".github/workflows/{workflow}")
 
     for workflow in ("windows.yml", "android.yml"):

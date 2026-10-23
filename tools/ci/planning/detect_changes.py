@@ -36,7 +36,6 @@ PLATFORMS = (
     "macos",
     "ios",
     "android",
-    "custom-build",
     "docker-linux",
     "docker-android",
 )
@@ -64,7 +63,8 @@ _COMMON_PATTERNS: list[str] = [
 # Per-platform additional patterns
 _PLATFORM_PATTERNS: dict[str, list[str]] = {
     "android": [r"^android/"],
-    "custom-build": [r"^custom-example/"],
+    # linux.yml's custom-plugin job builds the custom-example overlay.
+    "linux": [r"^custom-example/"],
     "docker-linux": [
         # Single multi-stage Dockerfile builds every variant; any change rebuilds.
         r"^deploy/docker/Dockerfile$",
@@ -101,8 +101,6 @@ def workflow_name_for_platform(platform: str) -> str:
     """Map a platform to its workflow YAML filename (without extension)."""
     if platform.startswith("docker-"):
         return "docker"
-    if platform == "custom-build":
-        return "custom-build"
     return platform
 
 

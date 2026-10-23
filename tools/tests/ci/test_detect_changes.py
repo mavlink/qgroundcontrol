@@ -268,7 +268,6 @@ def test_planner_workflows_detect_changes_in_process(workflow: str, planner: str
         "macos",
         "ios",
         "android",
-        "custom-build",
         "docker-linux",
         "docker-android",
     ],

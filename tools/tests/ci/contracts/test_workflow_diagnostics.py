@@ -12,7 +12,7 @@ BUILD_JOBS = [
     ("android", "build"),
     ("ios", "build"),
     ("docker", "build"),
-    ("custom-build", "build"),
+    ("linux", "custom-plugin"),
 ]
 
 

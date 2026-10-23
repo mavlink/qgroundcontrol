@@ -39,9 +39,8 @@
 
 | Workflow | Purpose |
 | --- | --- |
-| `linux.yml`, `macos.yml`, `windows.yml` | Desktop builds, tests, and packages |
+| `linux.yml`, `macos.yml`, `windows.yml` | Desktop builds, tests, and packages (`linux.yml` also builds the `custom-example` plugin) |
 | `android.yml`, `ios.yml` | Mobile builds, emulator/simulator smoke tests, and store uploads |
-| `custom-build.yml` | Build and test the `custom-example` plugin |
 | `docker.yml` | Builder images and containerized Linux/Android builds |
 | `vm-builds.yml` | Builds inside the Multipass and Vagrant developer VMs |
 | `flatpak.yml` | Manual Flatpak build |
@@ -207,7 +206,7 @@ Dependency updates are split between two bots to avoid overlapping PRs:
 
 ### Build timelines and runner debugging
 
-- Linux, Windows, macOS, Android, iOS, Docker, and Custom Build jobs register
+- Linux (including its custom-plugin job), Windows, macOS, Android, iOS, and Docker jobs register
   `Kesin11/actions-timeline` before checkout, adding runner queueing and step timing to the job
   summary. Each timeline is a snapshot at that job's completion; matrix siblings may still be
   running, and nested composite steps stay collapsed.
@@ -224,7 +223,7 @@ Dependency updates are split between two bots to avoid overlapping PRs:
 
 ### Change detection
 
-- Platform workflows (Linux, macOS, Windows, iOS, Custom Build) call `_detect-changes.yml`: one
+- Platform workflows (Linux, macOS, Windows, iOS) call `_detect-changes.yml`: one
   sparse checkout and one `detect_changes.py --platform <name>` call that outputs `should_build`.
   The Android (`android_matrix.py`) and Docker (`plan_docker_builds.py`) planners call
   `detect_changes.detect_builds()` in-process and output `has_jobs`.
@@ -245,7 +244,7 @@ Dependency updates are split between two bots to avoid overlapping PRs:
 
 ### Required checks
 
-- Linux, Windows, MacOS, Android, iOS, and Custom Build end with an `if: always()` gate job named
+- Linux, Windows, MacOS, Android, and iOS end with an `if: always()` gate job named
   after the workflow (`re-actors/alls-green`) that fails if change detection, the planner, or any
   build leg fails or is cancelled; builds may be skipped only by change detection. Branch protection
   should require these six names, not build jobs: a skipped matrix job reports its unexpanded name
@@ -409,7 +408,7 @@ step leaves it out.
   patches, so ordinary build-script edits reuse the default branch's snapshot. Only Release jobs
   save; PR and branch Release jobs first try an exact restore of the default-branch snapshot and
   skip their scoped copy when it exists. Unchanged snapshots are not saved again. Keys follow host
-  and target, so Debug legs (the iOS simulator, Custom Build) restore their platform's Release
+  and target, so Debug legs (the iOS simulator, Linux's custom plugin) restore their platform's Release
   snapshot; a `cache-key-suffix` splits them (Android legs), and suffixed legs fall back to the
   unsuffixed platform's sources. A managed runner image's CPM seed fills an empty cache when its
   fingerprint matches.
@@ -490,8 +489,8 @@ when a PR closes, and on demand:
 
 ### Unit and integration tests
 
-- `test-phase` runs the Unit and Integration suites for Linux Debug (coverage and sanitizers),
-  macOS Debug, and Custom Build Debug. Call it only after a successful build. Failures keep JUnit,
+- `test-phase` runs the Unit and Integration suites for Linux Debug (coverage and sanitizers) and
+  macOS Debug. Call it only after a successful build. Failures keep JUnit,
   logs, and each suite's job-summary section (`junit_report.py`: counts, failures with their first
   report lines, slowest tests; failed tests also become error annotations) and do not suppress the
   other suite. There are no blanket until-pass retries, and empty test selections fail. See
@@ -499,8 +498,8 @@ when a PR closes, and on demand:
 - Unit tests run one CTest process per CPU, including coverage (GCC merges `.gcda` counters under
   file locks). Integration tests use two processes by default and for coverage, where instrumented
   tests otherwise hit their timeouts; Linux sanitizers use one per CPU.
-- Set the repository variable `CODECOV_TEST_ANALYTICS=true` to upload JUnit results from Linux and
-  Custom Build test jobs to Codecov test analytics (OIDC, informational). JUnit artifacts and job
+- Set the repository variable `CODECOV_TEST_ANALYTICS=true` to upload JUnit results from the Linux test
+  jobs (including the custom plugin's) to Codecov test analytics (OIDC, informational). JUnit artifacts and job
   summary reports are produced either way.
 - **Sanitizers**: `Linux-sanitizers` (ASan + UBSan, leak detection on) excludes the `NoSanitizer`
   label. Runtime options come from CTest: `cmake/QGCTest.cmake` sets `*SAN_OPTIONS`
@@ -550,10 +549,12 @@ when a PR closes, and on demand:
   multi-ABI App Bundle on the primary leg (`--target aab`), uploaded as its own attested GitHub
   artifact (`QGroundControl-linux-<abis>-aab`) but not to AWS or the Play Store. Tags start a
   staged Play Store production rollout; master pushes complete a beta release.
-- **Custom Build**: one matrix job. Relevant PRs build only Debug and run the custom-plugin
-  unit/integration suites, excluding `StockUI` integration tests. Master pushes, merge-queue runs,
-  and manual dispatches also build Release without test hooks and verify its AppImage. Debug and
-  Release keep separate compiler caches.
+- **Custom plugin** (`linux.yml`'s `custom-plugin` job, behind the Linux gate): the `custom-example`
+  overlay changes the app name and feature set, global compile definitions, so it is its own build.
+  Relevant PRs build only Debug, run the Unit suite (excluding `StockUI`), and boot the build tree;
+  the stock Linux legs run the integration suites. Master pushes, merge-queue runs, and manual
+  dispatches also build Release without test hooks and verify its AppImage. Debug and Release keep
+  separate compiler caches. `custom-example/` changes trigger the Linux workflow.
 - **ClusterFuzzLite**: PR runs use the bundled seed corpus without querying historical artifacts
   (`NO_CLUSTERFUZZ_DEPLOYMENT=true`), which also disables previous-build crash comparison:
   reproducible crashes fail the PR whether or not they predate it. Crash files and SARIF

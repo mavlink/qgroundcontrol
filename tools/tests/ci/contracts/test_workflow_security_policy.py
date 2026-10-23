@@ -149,11 +149,10 @@ def test_runson_selection_keeps_independent_forks_on_hosted_runners() -> None:
 @pytest.mark.parametrize(
     ("workflow", "route_count"),
     [
-        ("linux.yml", 2),
+        ("linux.yml", 3),
         ("windows.yml", 1),
         ("android.yml", 1),
         ("docker.yml", 1),
-        ("custom-build.yml", 1),
         ("vm-builds.yml", 2),
         ("analysis.yml", 1),
     ],
