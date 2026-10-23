@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import os
-import sys
 import tempfile
 from pathlib import Path
 
@@ -188,22 +187,12 @@ def install_windows_gstreamer(version: str, dry_run: bool = False) -> bool:
     print(f"\nInstalling GStreamer {version}...")
     with tempfile.TemporaryDirectory() as tmpdir:
         installer = Path(tmpdir) / installer_name
+        # QGC's mirror first, then upstream.
         installer_urls = (
             _c.mirror_url("windows_msvc_x64", version),
             _c.package_url("windows_msvc_x64", version),
         )
-        if not _c.download_file(
-            installer_urls[0],
-            installer,
-            dry_run,
-            warn_on_failure=True,
-            expected_sha256=expected_sha256,
-        ) and not _c.download_file(
-            installer_urls[1],
-            installer,
-            dry_run,
-            expected_sha256=expected_sha256,
-        ):
+        if not _c.download_first(installer_urls, installer, expected_sha256, dry_run):
             return False
         if not _c.run_command(
             [
@@ -264,7 +253,6 @@ def install_windows_vulkan(dry_run: bool = False) -> bool:
 
 def install_windows(
     dry_run: bool = False,
-    gstreamer_version: str | None = None,
     skip_gstreamer: bool = False,
     vulkan: bool = False,
     msvc: bool = False,
@@ -283,13 +271,9 @@ def install_windows(
         return False
 
     if not skip_gstreamer:
-        version = gstreamer_version or _c.get_build_config_value("gstreamer.version.windows")
+        version = _c.get_build_config_value("gstreamer.version.windows")
         if not version:
-            print(
-                "Error: GStreamer version not found. "
-                "Use --gstreamer-version or check build-config.json",
-                file=sys.stderr,
-            )
+            _c.log_error("gstreamer.version.windows not found in build-config.json")
             return False
         if not install_windows_gstreamer(version, dry_run):
             return False

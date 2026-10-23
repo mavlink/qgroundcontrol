@@ -54,10 +54,13 @@ RUN UV_PROJECT_ENVIRONMENT=/opt/qgc-venv uv sync \
 # Debian's /etc/profile resets PATH for non-root login shells, such as the entrypoint's; keep the locked tools first.
 RUN echo 'export PATH=/opt/qgc-venv/bin:$PATH' > /etc/profile.d/qgc-venv.sh
 
-# Version config only (read_config + install_qt import _bootstrap, common and qgc_tools from /tmp/tools).
-# Copied before the slow Qt layer so editing package lists doesn't bust Qt cache.
-COPY .github/build-config.json /tmp/tools/setup/
+# Version config and the Qt installer (read_config + install_qt import _bootstrap, common, qgc_tools and
+# setup.qt_installer from /tmp/tools; it extracts with the venv's CMake).
+# Copied before the slow Qt layer so editing package lists doesn't bust Qt cache. /tmp/.github mirrors
+# the repository layout, so the tools find build-config.json by their usual parent-directory search.
+COPY .github/build-config.json /tmp/.github/
 COPY tools/setup/read_config.py tools/setup/install_qt.py /tmp/tools/setup/
+COPY tools/setup/qt_installer/ /tmp/tools/setup/qt_installer/
 COPY tools/_bootstrap.py /tmp/tools/
 COPY tools/common/ /tmp/tools/common/
 COPY tools/qgc_tools/ /tmp/tools/qgc_tools/
@@ -83,7 +86,7 @@ RUN python3 /tmp/tools/setup/install_qt.py install --from-config --host linux --
       echo 'export PATH=$QT_ROOT_DIR/bin:$PATH'; } > /etc/profile.d/qt.sh
 COPY tools/setup/install_dependencies/ /tmp/tools/setup/install_dependencies/
 RUN python3 /tmp/tools/setup/install_dependencies --platform "${DEP_PLATFORM}" && \
-    rm -rf /var/lib/apt/lists/* /var/cache/dnf /var/cache/pacman/pkg /tmp/tools
+    rm -rf /var/lib/apt/lists/* /var/cache/dnf /var/cache/pacman/pkg /tmp/tools /tmp/.github
 COPY deploy/docker/entrypoint.sh deploy/docker/entrypoint.py /
 ENTRYPOINT ["/bin/bash", "-l", "/entrypoint.sh"]
 CMD ["Release"]
@@ -134,7 +137,7 @@ RUN python3 /tmp/tools/setup/install_qt.py install --from-config --host linux --
     { echo "export QT_HOST_PATH=/opt/Qt/${QT_VERSION}/gcc_64"; \
       echo "export QT_ROOT_DIR=/opt/Qt/${QT_VERSION}/gcc_arm64"; \
       echo 'export PATH=$QT_HOST_PATH/bin:$PATH'; } > /etc/profile.d/qt-cross.sh && \
-    rm -rf /tmp/tools
+    rm -rf /tmp/tools /tmp/.github
 COPY deploy/docker/entrypoint.sh deploy/docker/entrypoint.py /
 ENTRYPOINT ["/bin/bash", "-l", "/entrypoint.sh"]
 CMD ["Release"]
@@ -188,7 +191,7 @@ RUN . /etc/profile.d/qgc.sh && \
     echo "export JAVA_HOME=${JAVA_HOME}" >> /etc/profile.d/qgc.sh
 RUN echo 'export PATH=$JAVA_HOME/bin:/usr/lib/ccache:$QT_HOST_PATH/bin:$QT_ROOT_DIR_ARM64/bin:$PATH:$ANDROID_SDK_ROOT/tools:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_BUILD_TOOLS_DIR:$ANDROID_NDK_ROOT' >> /etc/profile.d/qgc.sh
 
-RUN rm -rf /tmp/tools
+RUN rm -rf /tmp/tools /tmp/.github
 COPY deploy/docker/entrypoint.sh deploy/docker/entrypoint.py /
 ENTRYPOINT ["/bin/bash", "-l", "/entrypoint.sh"]
 CMD ["Release"]

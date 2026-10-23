@@ -34,6 +34,8 @@ def test_bootstrap_preserves_security_environment_and_cleanup(monkeypatch, failu
                 ("--proto", "=https"),
                 ("--proto-redir", "=https"),
                 ("--retry", "3"),
+                ("--connect-timeout", "30"),
+                ("--max-time", "120"),
             ):
                 assert command[command.index(flag) + 1] == value
             assert {"--fail", "--location", "--tlsv1.2"}.issubset(command)

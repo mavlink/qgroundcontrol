@@ -13,9 +13,14 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from common.build_config import get_build_config_value  # re-exported for submodules
-from common.gh_actions import append_github_env, is_ci  # re-exported for submodules
+from common.gh_actions import (  # re-exported for submodules
+    append_github_env,
+    append_github_path,
+    is_ci,
+)
 from common.gstreamer import (  # URL helpers re-exported for submodules
     mirror_url,
     package_filename,
@@ -26,6 +31,9 @@ from common.logging import log_error, log_info, log_warn  # re-exported for subm
 from common.net import download_file as atomic_download_file
 from common.platform import is_linux, is_macos, is_windows
 from common.proc import run_captured  # re-exported for submodules
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 APT_BASE_OPTIONS: list[str] = [
     "-o",
@@ -191,8 +199,7 @@ def run_pacman_install_with_retry(
 
 
 def install_build_tools(dry_run: bool = False) -> bool:
-    """Install the shared locked build profile and expose its executable directory."""
-    from common.gh_actions import append_github_path
+    """Install the locked build group (CMake, Ninja, just, ...) and expose its executables."""
     from qgc_tools.python_env import executable, sync_groups
 
     try:
@@ -200,11 +207,15 @@ def install_build_tools(dry_run: bool = False) -> bool:
     except (OSError, ValueError, subprocess.CalledProcessError) as error:
         log_error(f"Could not install build tools: {error}")
         return False
-    if not dry_run:
-        scripts = str(executable("cmake", environment).parent)
-        os.environ["PATH"] = f"{scripts}{os.pathsep}{os.environ.get('PATH', '')}"
-        if is_ci():
-            append_github_path(scripts)
+    if dry_run:
+        return True
+    scripts = str(executable("cmake", environment).parent)
+    path = os.environ.get("PATH", "")
+    if is_ci():
+        append_github_path(scripts)
+    elif scripts not in path.split(os.pathsep):
+        log_info(f"CMake, Ninja and just are in {scripts}; activate it with . {scripts}/activate")
+    os.environ["PATH"] = f"{scripts}{os.pathsep}{path}"
     return True
 
 
@@ -300,10 +311,7 @@ def set_env_var(name: str, value: str) -> None:
 def add_to_path(path_entry: str) -> None:
     """Add a directory to the system PATH (CI or local)."""
     if is_ci():
-        github_path = os.environ.get("GITHUB_PATH", "")
-        if github_path:
-            with open(github_path, "a", encoding="utf-8") as f:
-                f.write(f"{path_entry}\n")
+        append_github_path(path_entry)
     else:
         if sys.platform != "win32":
             raise RuntimeError("Local PATH persistence is only supported on Windows")
@@ -351,6 +359,21 @@ def download_file(
         return False
 
 
+def download_first(
+    urls: Sequence[str], dest: Path, expected_sha256: str, dry_run: bool = False
+) -> bool:
+    """Download dest from the first of urls that succeeds, warning before each fallback."""
+    for index, url in enumerate(urls):
+        fallback = index + 1 < len(urls)
+        if download_file(
+            url, dest, dry_run, warn_on_failure=fallback, expected_sha256=expected_sha256
+        ):
+            return True
+        if fallback:
+            log_warn(f"Retrying from {urls[index + 1]}")
+    return False
+
+
 __all__ = [
     "APT_BASE_OPTIONS",
     "_set_env_var_ci",
@@ -360,6 +383,7 @@ __all__ = [
     "check_apt_package_available",
     "detect_platform",
     "download_file",
+    "download_first",
     "get_apt_install_command",
     "get_apt_update_command",
     "get_brew_install_command",

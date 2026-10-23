@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import re
-from pathlib import Path
 
 PACKAGE_NAME_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9.+-]*$")
 
@@ -112,9 +111,32 @@ DEBIAN_PACKAGES: dict[str, list[str]] = {
         "libvulkan-dev",
         "libpipewire-0.3-dev",
     ],
+    # GStreamer source builds (build_gstreamer.py, build-gstreamer.yml): the toolchain plus the X11,
+    # Wayland, GL, VA and audio headers its Linux Meson options enable. Excluded from the aggregate
+    # (desktop) set by get_packages.
+    "gstreamer_build": [
+        "build-essential",
+        "pkg-config",
+        "git",
+        "libx11-dev",
+        "libxext-dev",
+        "libxv-dev",
+        "libwayland-dev",
+        "wayland-protocols",
+        "libegl1-mesa-dev",
+        "libgles2-mesa-dev",
+        "libgl1-mesa-dev",
+        "libdrm-dev",
+        "libgbm-dev",
+        "libasound2-dev",
+        "libpulse-dev",
+        "libva-dev",
+        "nasm",
+        "yasm",
+    ],
     # Target-side libraries for the aarch64 cross sysroot. Single source for
     # deploy/docker/install_sysroot_aarch64.py, which apt-installs these with an
-    # :arm64 tag. Excluded from the aggregate (native) set by get_debian_packages.
+    # :arm64 tag. Excluded from the aggregate (native) set by get_packages.
     "cross_arm64": [
         "libc6",
         "libstdc++6",
@@ -179,6 +201,10 @@ DEBIAN_PACKAGES: dict[str, list[str]] = {
     ],
 }
 
+# Installed only where the release packages them: apt-get aborts the whole install on an unknown
+# name, and Debian 12/13 have no libgstreamer-plugins-good1.0-dev.
+OPTIONAL_DEBIAN_PACKAGES: frozenset[str] = frozenset({"libgstreamer-plugins-good1.0-dev"})
+
 # Fedora/RHEL (dnf), mirrors DEBIAN_PACKAGES. gstreamer ugly/libav come from RPM
 # Fusion; installer uses --skip-unavailable so a missing optional plugin is OK.
 FEDORA_PACKAGES: dict[str, list[str]] = {
@@ -197,7 +223,6 @@ FEDORA_PACKAGES: dict[str, list[str]] = {
         "gdb",
         "gettext",
         "git",
-        "just",
         "fuse-libs",
         "fuse3",
         "libtool",
@@ -281,7 +306,6 @@ ARCH_PACKAGES: dict[str, list[str]] = {
         "gdb",
         "gettext",
         "git",
-        "just",
         "fuse2",
         "fuse3",
         "mold",
@@ -350,70 +374,58 @@ MACOS_PACKAGES: list[str] = [
     "ninja",
     "ccache",
     "git",
-    "just",
     "pkgconf",
     "create-dmg",
-    "mold",
     "nasm",
 ]
 
-PYTHON_BUILD_TOOLS: list[str] = [
-    "cmake",
-    "ninja",
-    "gcovr",
-]
+# --platform's packages by category; macOS has one uncategorized Homebrew list, Windows none.
+PACKAGE_TABLES: dict[str, dict[str, list[str]]] = {
+    "debian": DEBIAN_PACKAGES,
+    "fedora": FEDORA_PACKAGES,
+    "arch": ARCH_PACKAGES,
+    "macos": {"homebrew": MACOS_PACKAGES},
+    "windows": {},
+}
+
+# Categories outside the default (native desktop) set: target sysroot and GStreamer source-build deps.
+_OPT_IN_CATEGORIES = ("cross_", "gstreamer_build")
 
 
 def debian_jdk_package() -> str:
     """OpenJDK package for Gradle, at build-config's android.java_version."""
     from common.build_config import get_build_config_value
 
-    # Docker builders copy build-config.json next to setup/ instead of under .github/.
-    beside_setup = Path(__file__).resolve().parents[1] / "build-config.json"
-    version = get_build_config_value("android.java_version", extra_candidates=[beside_setup])
+    version = get_build_config_value("android.java_version")
     if not version.isdigit():
         raise ValueError(f"android.java_version must be a JDK major version, got {version!r}")
     return f"openjdk-{version}-jdk"
 
 
-def get_debian_packages(category: str | None = None) -> list[str]:
-    """Get Debian packages, optionally filtered by category.
+def get_packages(platform: str, category: str | None = None) -> list[str]:
+    """Return platform's packages for category, or its default set without a category.
 
-    "android" is core plus Gradle's JDK. Qt's Android host tools link only QtCore, QtQml and
-    QtNetwork, so the desktop Qt, GStreamer and audio libraries are not needed.
+    Debian's "android" is core plus Gradle's JDK. Qt's Android host tools link only QtCore, QtQml
+    and QtNetwork, so the desktop Qt, GStreamer and audio libraries are not needed.
     """
-    if category == "android":
+    if platform == "debian" and category == "android":
         return [*DEBIAN_PACKAGES["core"], debian_jdk_package()]
-    return _get_categorized_packages(DEBIAN_PACKAGES, category)
-
-
-def _get_categorized_packages(
-    table: dict[str, list[str]], category: str | None = None
-) -> list[str]:
-    """Flatten a category->packages table, skipping cross_ (target sysroot) categories."""
+    table = PACKAGE_TABLES[platform]
     if category:
         return list(table.get(category, []))
-    packages: list[str] = []
-    for cat, pkgs in table.items():
-        if cat.startswith("cross_"):
-            continue
-        packages.extend(pkgs)
-    return list(dict.fromkeys(packages))
+    return list(
+        dict.fromkeys(
+            package
+            for name, packages in table.items()
+            if not name.startswith(_OPT_IN_CATEGORIES)
+            for package in packages
+        )
+    )
 
 
-def get_fedora_packages(category: str | None = None) -> list[str]:
-    """Get Fedora/RHEL dnf packages, optionally filtered by category."""
-    return _get_categorized_packages(FEDORA_PACKAGES, category)
-
-
-def get_arch_packages(category: str | None = None) -> list[str]:
-    """Get Arch pacman packages, optionally filtered by category."""
-    return _get_categorized_packages(ARCH_PACKAGES, category)
-
-
-def get_macos_packages() -> list[str]:
-    """Get macOS Homebrew packages."""
-    return list(MACOS_PACKAGES)
+def get_debian_packages(category: str | None = None) -> list[str]:
+    """Return get_packages("debian", category)."""
+    return get_packages("debian", category)
 
 
 def validate_extra_packages(packages: list[str]) -> list[str]:
@@ -431,12 +443,11 @@ __all__ = [
     "DEBIAN_PACKAGES",
     "FEDORA_PACKAGES",
     "MACOS_PACKAGES",
+    "OPTIONAL_DEBIAN_PACKAGES",
     "PACKAGE_NAME_RE",
-    "PYTHON_BUILD_TOOLS",
+    "PACKAGE_TABLES",
     "debian_jdk_package",
-    "get_arch_packages",
     "get_debian_packages",
-    "get_fedora_packages",
-    "get_macos_packages",
+    "get_packages",
     "validate_extra_packages",
 ]

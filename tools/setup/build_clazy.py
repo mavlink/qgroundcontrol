@@ -35,9 +35,10 @@ from common.build_config import load_build_config
 from common.io import extract_tar_data
 from common.logging import log_error, log_info, log_ok
 from common.net import download_file
+from common.paths import REPO_ROOT
 
 ARCHIVE_URL = "https://github.com/KDE/clazy/archive/{revision}.tar.gz"
-DEFAULT_PREFIX = Path(__file__).resolve().parents[2] / ".cache" / "clazy"
+DEFAULT_PREFIX = REPO_ROOT / ".cache" / "clazy"
 
 
 @dataclass(frozen=True)
@@ -136,7 +137,7 @@ def main(argv: list[str] | None = None) -> int:
         else:
             with tempfile.TemporaryDirectory(prefix="clazy-") as work_dir:
                 binary = build_clazy(pin, prefix, Path(work_dir), args.jobs)
-    except (FileNotFoundError, RuntimeError, subprocess.CalledProcessError) as error:
+    except (OSError, RuntimeError, subprocess.CalledProcessError) as error:
         log_error(str(error))
         return 1
     log_ok(f"Built {binary} (Clazy {pin.revision[:12]}, LLVM {pin.llvm_version})")

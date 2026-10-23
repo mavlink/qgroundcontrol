@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import argparse
+import filecmp
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -18,6 +20,22 @@ from qgc_tools.python_env import (
     requirements_for,
     sync_groups,
 )
+
+
+def add_python3_alias(environment: Path) -> Path:
+    """Copy a Windows environment's Scripts/python.exe to python3.exe, like POSIX bin/python3.
+
+    Bash steps run `python3`, which Git Bash resolves to python3.exe; without one in the venv they
+    fall through to the runner's interpreter. The venv's python.exe (CPython's venv launcher, or
+    the interpreter itself beside its DLLs) finds pyvenv.cfg relative to its own path, so a copy in
+    the same directory starts the same environment.
+    """
+    scripts = environment / "Scripts"
+    python, alias = scripts / "python.exe", scripts / "python3.exe"
+    # A rebuilt environment can replace python.exe; an identical copy may be the running process.
+    if not alias.is_file() or not filecmp.cmp(python, alias, shallow=False):
+        shutil.copy2(python, alias)
+    return alias
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -51,6 +69,8 @@ def main(argv: list[str] | None = None) -> int:
             python=args.python,
         )
         if not args.dry_run:
+            if sys.platform == "win32":
+                add_python3_alias(target)
             activate = target / (
                 "Scripts/activate.bat" if sys.platform == "win32" else "bin/activate"
             )
