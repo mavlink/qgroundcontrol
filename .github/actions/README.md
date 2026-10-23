@@ -31,7 +31,7 @@ cannot load actions from the PR merge commit (zizmor's `self-repository` audit i
 | `save-build-cache` | Save compiler and moc caches once per job after successful compilation |
 | `setup-python` | Detect the cache backend, set up uv and Python, and sync `tools/uv.lock` groups into `tools/.venv` |
 | `test-phase` | Run the Unit and Integration suites through `run-unit-tests`, one job-summary section each |
-| `verify-executable` | Boot-test a built binary, AppImage, DMG, or Windows executable |
+| `verify-executable` | Boot-test a built binary, AppImage, DMG, or Windows executable from its directory |
 
 ## External Action Reference Policy
 

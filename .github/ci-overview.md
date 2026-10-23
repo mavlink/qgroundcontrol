@@ -524,7 +524,8 @@ when a PR closes, and on demand:
 - **Coverage**: GCC uses atomic counter updates for worker threads; gcovr tolerates the known GCC
   negative-counter bug and reports discarded counters. Codecov receives the Cobertura
   `coverage.xml`; the step summary, threshold check, and build-results comment read gcovr's
-  `coverage-summary.json`. `verify_coverage_thresholds.py --build-dir` reads thresholds from
+  `coverage-summary.json`. `coverage_report.py` fails before generating them when the tests wrote no
+  `.gcda` counters. `verify_coverage_thresholds.py --build-dir` reads thresholds from
   `CMakeCache.txt` and compares exact covered/total counts, not gcovr's rounded percentages. Manual
   Linux coverage dispatches also run the normally excluded `Network|Flaky` tests serially against
   the same build after the coverage report; they have separate reports and still fail the job.
@@ -633,7 +634,8 @@ when a PR closes, and on demand:
   `&analysis-paths` anchor: compiled `src/` files plus `analysis_matrix.FULL_SCAN_INPUTS`); there is
   no schedule. Manual dispatch runs one job for the selected tool (`clazy`, `clang-tidy`, `iwyu`,
   `qmllint`, or `tsan`).
-- `analysis_matrix.py` emits each job's `family`, packages, and `tools/analyze.py` arguments. For a
+- `analysis_matrix.py` emits each job's `family`, packages, CMake configure arguments, and
+  `tools/analyze.py` arguments, so one Configure step serves every family. For a
   PR it estimates the compilation units from the diff and a textual reverse-include scan of `src/`
   and allots one shard per 50 units, up to four; it plans none when nothing compiled changed, and
   full-scan inputs keep all four. Each shard runs clang-tidy then Clazy over one selection and one
@@ -646,10 +648,10 @@ when a PR closes, and on demand:
   timeouts, and crashes are never stored; entries unused for 14 days or beyond 256 MiB are pruned.
   To force a full recompute, bump the `analysis-results-v1` cache key.
 - clang-tidy comes from the PyPI wheel pinned by version and SHA-256 in `analysis.clang_tidy_*`
-  (`build-config.json`); `tools/ci/runner/analysis_tools.py` installs it, verifies `.clang-tidy`,
-  and puts it ahead of LLVM's own on `PATH`. Clazy and `clang-scan-deps` stay on `llvm_version`;
-  Clazy is built from the pinned source revision by `tools/setup/build_clazy.py` and cached, and
-  LLVM `-dev` packages install only to rebuild it.
+  (`build-config.json`); `tools/ci/runner/analysis_tools.py` reads those pins, installs it, verifies
+  `.clang-tidy`, and puts it ahead of LLVM's own on `PATH`. Clazy and `clang-scan-deps` stay on
+  `llvm_version`; Clazy is built from the pinned source revision by `tools/setup/build_clazy.py` and
+  cached, and LLVM `-dev` packages install only to rebuild it.
 - Compiler analysis uses Ninja, disables PCH and autogen's inherited link dependencies, and builds
   only `qgc-analysis-headers`; it does not compile or link QGC (`autogen` runs only for IWYU).
   qmllint and ThreadSanitizer keep full builds; ASan and UBSan run in `linux.yml`.

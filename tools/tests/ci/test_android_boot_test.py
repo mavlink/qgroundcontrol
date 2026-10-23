@@ -4,10 +4,13 @@ from __future__ import annotations
 
 import re
 import subprocess
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 from ci.android import android_boot_test as mod
+
+from .._helpers import get_step, get_steps, load_action
 
 
 def _cp(stdout: bytes, returncode: int = 0) -> subprocess.CompletedProcess[bytes]:
@@ -42,8 +45,7 @@ def test_logcat_poller_only_emits_new_lines_for_repeated_timestamp_window() -> N
     )
     observed_cmds: list[list[str]] = []
 
-    def fake_run_command(cmd: list[str], check: bool = False) -> subprocess.CompletedProcess[bytes]:
-        del check
+    def fake_run_command(cmd: list[str], **_kwargs: object) -> subprocess.CompletedProcess[bytes]:
         observed_cmds.append(cmd)
         return next(responses)
 
@@ -71,8 +73,7 @@ def _make_run_command(
     canned: dict[tuple[str, ...], subprocess.CompletedProcess[bytes]],
     default: subprocess.CompletedProcess[bytes] | None = None,
 ):
-    def fake(cmd: list[str], check: bool = False) -> subprocess.CompletedProcess[bytes]:
-        del check
+    def fake(cmd: list[str], **_kwargs: object) -> subprocess.CompletedProcess[bytes]:
         key = tuple(cmd)
         for k, resp in canned.items():
             if key[: len(k)] == k:
@@ -103,6 +104,62 @@ class TestWaitForAdbReady:
             patch.object(mod.time, "monotonic", side_effect=lambda: next(clock)),
         ):
             assert mod.wait_for_adb_ready(timeout=5) is False
+
+    def test_probes_time_out_and_count_as_not_ready(self) -> None:
+        calls: list[tuple[list[str], object]] = []
+
+        def hung(cmd: list[str], **kwargs: object) -> subprocess.CompletedProcess[bytes]:
+            calls.append((cmd, kwargs.get("timeout")))
+            raise subprocess.TimeoutExpired(cmd, mod.ADB_PROBE_TIMEOUT_SECONDS)
+
+        with patch.object(mod, "run_command", side_effect=hung):
+            assert mod.adb_ready() is False
+        assert calls == [(["adb", "get-state"], mod.ADB_PROBE_TIMEOUT_SECONDS)]
+
+    def test_starts_the_adb_server_before_polling(self, capsys: pytest.CaptureFixture[str]) -> None:
+        calls: list[tuple[list[str], object]] = []
+        ready = _make_run_command(
+            {
+                ("adb", "get-state"): _cp(b"device\n"),
+                ("adb", "shell", "getprop", "sys.boot_completed"): _cp(b"1\n"),
+            }
+        )
+
+        def fake(cmd: list[str], **kwargs: object) -> subprocess.CompletedProcess[bytes]:
+            calls.append((cmd, kwargs.get("timeout")))
+            if cmd == ["adb", "start-server"]:
+                raise subprocess.TimeoutExpired(cmd, mod.ADB_PROBE_TIMEOUT_SECONDS)
+            return ready(cmd)
+
+        with patch.object(mod, "run_command", side_effect=fake):
+            assert mod.wait_for_adb_ready(timeout=5) is True
+        assert [cmd for cmd, _ in calls][:2] == [["adb", "start-server"], ["adb", "get-state"]]
+        assert {timeout for _, timeout in calls} == {mod.ADB_PROBE_TIMEOUT_SECONDS}
+        assert "::warning::adb start-server timed out" in capsys.readouterr().out
+
+
+def test_defaults_are_the_emulator_actions_settings(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("RUNNER_TEMP", "/runner/temp")
+    args = mod.parse_args(["--apk", "qgc.apk"])
+    assert args.log_output == Path("/runner/temp/qgc_emulator_boot.log")
+    assert (args.timeout, args.stability_window, args.launch_retries) == (120, 20, 2)
+    assert (args.install_retries, args.install_retry_delay) == (4, 5)
+    # The former `timeout 180s adb wait-for-device` plus --adb-ready-timeout 180.
+    assert args.adb_ready_timeout == 360
+    action = get_step(get_steps(load_action("android-emulator-test")), "Emulator Boot Test")
+    assert action["with"]["script"] == (
+        'python3 tools/ci/android/android_boot_test.py --apk "$APK_PATH" --package "$APP_PACKAGE"'
+    )
+
+
+def test_failure_report_tolerates_a_hung_logcat(capsys: pytest.CaptureFixture[str]) -> None:
+    def hung(cmd: list[str], **kwargs: object) -> subprocess.CompletedProcess[bytes]:
+        assert kwargs["timeout"] == mod.LOGCAT_TIMEOUT_SECONDS
+        raise subprocess.TimeoutExpired(cmd, mod.LOGCAT_TIMEOUT_SECONDS)
+
+    with patch.object(mod, "run_command", side_effect=hung):
+        assert mod.read_logcat() == ""
+    assert "::warning::adb logcat timed out" in capsys.readouterr().out
 
 
 class TestRunBootAttempt:

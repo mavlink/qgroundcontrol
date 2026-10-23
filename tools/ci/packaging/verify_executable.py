@@ -27,7 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 import _bootstrap as _bootstrap
 from common.cmake import read_cache_var
 from common.format import format_bytes, format_duration
-from common.gh_actions import gh_error, gh_group, gh_warning, write_step_summary
+from common.gh_actions import env_default, gh_error, gh_group, gh_warning, write_step_summary
 from common.markdown import code_span, summary_section
 from common.proc import output_text, run_captured
 
@@ -280,8 +280,8 @@ def _boot_test(binary: Path, *, cwd: Path, timeout: int, headless: bool) -> int:
 
 
 def _verify(binary_path: Path, args: argparse.Namespace) -> int:
-    """Boot-test binary_path and return the boot test exit code."""
-    work_dir = Path(args.working_dir) if args.working_dir else binary_path.parent
+    """Boot-test binary_path from its directory and return the boot test exit code."""
+    work_dir = binary_path.parent
 
     if not work_dir.is_dir():
         gh_error(f"Working directory not found: {work_dir}")
@@ -297,18 +297,13 @@ def _verify(binary_path: Path, args: argparse.Namespace) -> int:
             gh_error(str(error))
             return 1
 
-    binary_name = binary_path.name
-    headless = True
-
     # AppImages typically don't ship the "offscreen" Qt platform plugin.
-    if args.exe_type == "appimage" or binary_name.endswith(".AppImage"):
-        headless = False
+    headless = args.exe_type != "appimage" and not binary_path.name.endswith(".AppImage")
 
-    exe = work_dir / binary_name
     if os.name != "nt":
         with contextlib.suppress(OSError):
-            exe.chmod(exe.stat().st_mode | stat.S_IEXEC)
-    run_binary = exe.resolve()
+            binary_path.chmod(binary_path.stat().st_mode | stat.S_IEXEC)
+    run_binary = binary_path.resolve()
 
     if args.expected_appimage_update_information:
         try:
@@ -324,14 +319,27 @@ def _verify(binary_path: Path, args: argparse.Namespace) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--binary-path", required=True, help="Executable, AppImage, or DMG")
-    parser.add_argument("--working-dir", default="")
-    parser.add_argument("--build-dir", default="")
-    parser.add_argument("--type", choices=EXE_TYPES, default="binary", dest="exe_type")
+    # Defaults come from the verify-executable action's INPUT_* step environment.
+    parser.add_argument(
+        "--binary-path",
+        default=env_default("INPUT_BINARY_PATH"),
+        help="Executable, AppImage, or DMG; the boot test runs in its directory",
+    )
+    parser.add_argument("--build-dir", default=env_default("INPUT_BUILD_DIR"))
+    parser.add_argument(
+        "--type", choices=EXE_TYPES, default=env_default("INPUT_TYPE", "binary"), dest="exe_type"
+    )
     parser.add_argument("--timeout", type=int, default=60)
-    parser.add_argument("--expect-archs", default="")
-    parser.add_argument("--expected-appimage-update-information", default="")
+    parser.add_argument("--expect-archs", default=env_default("INPUT_EXPECT_ARCHS"))
+    parser.add_argument(
+        "--expected-appimage-update-information",
+        default=env_default("INPUT_EXPECTED_APPIMAGE_UPDATE_INFORMATION"),
+    )
     args = parser.parse_args(argv)
+    if not args.binary_path:
+        parser.error("--binary-path (or INPUT_BINARY_PATH) is required")
+    if args.exe_type not in EXE_TYPES:
+        parser.error(f"invalid INPUT_TYPE {args.exe_type!r}; choose from {', '.join(EXE_TYPES)}")
 
     package = Path(args.binary_path)
     start = time.monotonic()

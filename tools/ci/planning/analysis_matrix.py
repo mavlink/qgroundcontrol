@@ -11,8 +11,9 @@ master pushes keeps unchanged units cheap.
 tools/analyze.py still selects the exact units after configure.
 
 Each leg carries what its steps need: a `family` that selects the steps, the
-packages to install, and either the tools/analyze.py arguments or the IWYU path.
-Dispatch paths are validated here and reach commands only as single arguments.
+packages to install, the CMake configure arguments, and either the
+tools/analyze.py arguments or the IWYU path. Dispatch paths are validated here
+and reach commands only as single arguments.
 """
 
 from __future__ import annotations
@@ -188,6 +189,27 @@ def analysis_packages(family: str, llvm_version: str) -> str:
     return " ".join(packages)
 
 
+def configure_args(family: str, llvm_version: str) -> list[str]:
+    """Return the Linux-debug configure arguments for a family; tsan keeps the default compiler.
+
+    Compiler analysis builds only generated headers (IWYU also autogen), so it skips PCH,
+    unity batches, and autogen's inherited link dependencies; qmllint keeps the full build.
+    """
+    if family == "tsan":
+        return ["-DQGC_ENABLE_COVERAGE=OFF", "-DQGC_ENABLE_TSAN=ON"]
+    args = [
+        "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+        "-DQGC_BUILD_TESTING=OFF",
+        "-DQGC_ENABLE_WERROR=OFF",
+        f"-DCMAKE_C_COMPILER=clang-{llvm_version}",
+        f"-DCMAKE_CXX_COMPILER=clang++-{llvm_version}",
+        "-DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON",
+    ]
+    if family != "qml":
+        args += ["-DCMAKE_AUTOGEN_ORIGIN_DEPENDS=OFF", "-DCMAKE_GLOBAL_AUTOGEN_TARGET=ON"]
+    return [*args, "-DQGC_UNITY_BUILD=OFF"]
+
+
 def compiler_args(
     tools: list[str], shard: int, shard_count: int, scope_args: list[str], *, profile: bool = False
 ) -> list[str]:
@@ -211,6 +233,7 @@ def compiler_legs(count: int, scan: str, llvm_version: str) -> list[Leg]:
             "shard_count": count,
             "scan": scan,
             "extra_packages": analysis_packages("compiler", llvm_version),
+            "configure_args": configure_args("compiler", llvm_version),
             "analyze_args": compiler_args(COMPILER_TOOLS, shard, count, scope_args),
         }
         for shard in range(1, count + 1)
@@ -234,6 +257,7 @@ def dispatch_leg(
         "shard": 1,
         "shard_count": 1,
         "extra_packages": analysis_packages(family, llvm_version),
+        "configure_args": configure_args(family, llvm_version),
     }
     if family == "compiler":
         leg["scan"], scope_args = scope(analyze_all, path)

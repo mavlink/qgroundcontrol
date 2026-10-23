@@ -22,7 +22,7 @@ from ci.packaging.verify_executable import (
     _verify_appimage_update_information,
 )
 
-from .._helpers import load_workflow
+from .._helpers import load_action, load_workflow
 
 pytestmark = pytest.mark.windows
 
@@ -314,7 +314,7 @@ class TestBootTest:
     ("exe_type", "name", "headless"),
     [("binary", "QGroundControl", True), ("appimage", "QGroundControl-x86_64.AppImage", False)],
 )
-def test_verify_boot_tests_executable_in_working_dir(
+def test_verify_boot_tests_executable_in_its_directory(
     tmp_path, monkeypatch, exe_type, name, headless
 ):
     work_dir = tmp_path / "work"
@@ -327,7 +327,6 @@ def test_verify_boot_tests_executable_in_working_dir(
         verify_executable, "_boot_test", lambda *args, **kwargs: calls.append((args, kwargs)) or 0
     )
     args = argparse.Namespace(
-        working_dir=str(work_dir),
         build_dir="",
         expect_archs="",
         exe_type=exe_type,
@@ -335,11 +334,71 @@ def test_verify_boot_tests_executable_in_working_dir(
         timeout=60,
     )
 
-    assert _verify(tmp_path / "elsewhere" / name, args) == 0
+    assert _verify(binary, args) == 0
 
     assert calls == [((binary.resolve(),), {"cwd": work_dir, "timeout": 60, "headless": headless})]
     if os.name != "nt":
         assert os.access(binary, os.X_OK)
+
+
+def test_action_inputs_are_argument_defaults(tmp_path, monkeypatch, gh_summary):
+    binary = tmp_path / "QGroundControl-x86_64.AppImage"
+    binary.write_text("binary")
+    inputs = {
+        "INPUT_BINARY_PATH": str(binary),
+        "INPUT_TYPE": "appimage",
+        "INPUT_BUILD_DIR": str(tmp_path / "build"),
+        "INPUT_EXPECT_ARCHS": "arm64",
+        "INPUT_EXPECTED_APPIMAGE_UPDATE_INFORMATION": "zsync|https://example.test/latest.zsync",
+    }
+    for name, value in inputs.items():
+        monkeypatch.setenv(name, value)
+    verified = []
+    monkeypatch.setattr(verify_executable, "_verify", lambda path, args: verified.append(args) or 0)
+
+    assert verify_executable.main([]) == 0
+
+    (args,) = verified
+    assert (args.binary_path, args.exe_type, args.build_dir) == (
+        str(binary),
+        "appimage",
+        inputs["INPUT_BUILD_DIR"],
+    )
+    assert args.expect_archs == "arm64"
+    assert (
+        args.expected_appimage_update_information
+        == inputs["INPUT_EXPECTED_APPIMAGE_UPDATE_INFORMATION"]
+    )
+    assert "| Package | `QGroundControl-x86_64.AppImage` |" in gh_summary.read_text(
+        encoding="utf-8"
+    )
+
+
+@pytest.mark.parametrize(
+    ("inputs", "message"),
+    [
+        ({}, "--binary-path (or INPUT_BINARY_PATH) is required"),
+        ({"INPUT_BINARY_PATH": "QGC", "INPUT_TYPE": "apk"}, "invalid INPUT_TYPE 'apk'"),
+    ],
+)
+def test_missing_or_invalid_action_inputs_fail(monkeypatch, capsys, inputs, message):
+    for name, value in inputs.items():
+        monkeypatch.setenv(name, value)
+    with pytest.raises(SystemExit) as exc:
+        verify_executable.main([])
+    assert exc.value.code == 2
+    assert message in capsys.readouterr().err
+
+
+def test_callers_pass_only_declared_inputs():
+    """The boot test runs in the binary's directory, so no caller passes a working directory."""
+    inputs = set(load_action("verify-executable")["inputs"])
+    assert "working-dir" not in inputs
+    for workflow in ("linux.yml", "macos.yml", "windows.yml"):
+        for job in load_workflow(workflow)["jobs"].values():
+            for step in job.get("steps", []):
+                if step.get("uses") == "./.github/actions/verify-executable":
+                    assert set(step["with"]) <= inputs, step["name"]
 
 
 class FakeDmgTools:

@@ -1,28 +1,38 @@
 #!/usr/bin/env python3
-"""Run Android emulator boot smoke test for QGroundControl."""
+"""Run Android emulator boot smoke test for QGroundControl.
+
+The defaults are android-emulator-test's settings; it passes only the APK and package.
+"""
 
 from __future__ import annotations
 
 import argparse
 import re
+import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import _bootstrap as _bootstrap
-from common.gh_actions import gh_error, gh_group, gh_notice, gh_warning
+from common.gh_actions import env_default, gh_error, gh_group, gh_notice, gh_warning
 from common.proc import output_text, run_bytes, wait_until
 
-if TYPE_CHECKING:
-    import subprocess
+# Bounds each readiness probe, so an unresponsive adb server or device cannot outlast the deadline.
+ADB_PROBE_TIMEOUT_SECONDS = 20
+# Covers both waits of the former shell guards: 180 s for the device, then 180 s for boot.
+ADB_READY_TIMEOUT_SECONDS = 360
+# Failure reports read logcat even when the device never became ready.
+LOGCAT_TIMEOUT_SECONDS = 60
 
 
-def run_command(cmd: list[str], check: bool = False) -> subprocess.CompletedProcess[bytes]:
+def run_command(
+    cmd: list[str], check: bool = False, timeout: float | None = None
+) -> subprocess.CompletedProcess[bytes]:
     """Bytes-mode adb wrapper — logcat can contain non-UTF8 on native crashes."""
-    result = run_bytes(cmd)
+    result = run_bytes(cmd, timeout=timeout)
     if check and result.returncode != 0:
         stdout = output_text(result.stdout)
         stderr = output_text(result.stderr)
@@ -35,14 +45,25 @@ def run_command(cmd: list[str], check: bool = False) -> subprocess.CompletedProc
 
 
 def adb_ready() -> bool:
-    state = run_command(["adb", "get-state"])
-    if state.returncode != 0 or output_text(state.stdout).strip() != "device":
+    """Report whether adb sees the device and it has finished booting; a hung probe is not ready."""
+    try:
+        state = run_command(["adb", "get-state"], timeout=ADB_PROBE_TIMEOUT_SECONDS)
+        if state.returncode != 0 or output_text(state.stdout).strip() != "device":
+            return False
+        boot_completed = run_command(
+            ["adb", "shell", "getprop", "sys.boot_completed"], timeout=ADB_PROBE_TIMEOUT_SECONDS
+        )
+    except subprocess.TimeoutExpired:
         return False
-    boot_completed = run_command(["adb", "shell", "getprop", "sys.boot_completed"])
     return boot_completed.returncode == 0 and output_text(boot_completed.stdout).strip() == "1"
 
 
 def wait_for_adb_ready(timeout: int) -> bool:
+    """Start the adb server if needed, then poll until the device is ready or timeout passes."""
+    try:
+        run_command(["adb", "start-server"], timeout=ADB_PROBE_TIMEOUT_SECONDS)
+    except subprocess.TimeoutExpired:
+        gh_warning(f"adb start-server timed out after {ADB_PROBE_TIMEOUT_SECONDS}s")
     try:
         return wait_until(adb_ready, timeout=timeout, interval=2, description="emulator boot")
     except TimeoutError:
@@ -66,7 +87,11 @@ def install_with_retries(apk_path: Path, retries: int, retry_delay: int) -> bool
 
 
 def read_logcat() -> str:
-    result = run_command(["adb", "logcat", "-d"])
+    try:
+        result = run_command(["adb", "logcat", "-d"], timeout=LOGCAT_TIMEOUT_SECONDS)
+    except subprocess.TimeoutExpired:
+        gh_warning(f"adb logcat timed out after {LOGCAT_TIMEOUT_SECONDS}s")
+        return ""
     if result.returncode != 0:
         return ""
     return output_text(result.stdout)
@@ -211,7 +236,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default="org.mavlink.qgroundcontrol",
         help="Android package name",
     )
-    parser.add_argument("--timeout", type=int, default=90, help="Timeout in seconds")
+    parser.add_argument("--timeout", type=int, default=120, help="Timeout in seconds")
     parser.add_argument(
         "--stability-window",
         type=int,
@@ -221,25 +246,25 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--log-output",
         type=Path,
-        default=Path("/tmp/qgc_emulator_boot.log"),
-        help="Path to store full logcat output",
+        default=Path(env_default("RUNNER_TEMP") or tempfile.gettempdir()) / "qgc_emulator_boot.log",
+        help="Path to store full logcat output (default: $RUNNER_TEMP/qgc_emulator_boot.log)",
     )
     parser.add_argument(
         "--adb-ready-timeout",
         type=int,
-        default=120,
+        default=ADB_READY_TIMEOUT_SECONDS,
         help="Timeout in seconds for adb device and boot readiness",
     )
     parser.add_argument(
         "--install-retries",
         type=int,
-        default=3,
+        default=4,
         help="Number of retries for adb install",
     )
     parser.add_argument(
         "--install-retry-delay",
         type=int,
-        default=4,
+        default=5,
         help="Delay in seconds between adb install retries",
     )
     parser.add_argument(

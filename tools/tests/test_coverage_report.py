@@ -10,7 +10,7 @@ from unittest.mock import patch
 import pytest
 from coverage_report import DEFAULT_BUILD_DIR, build_step_summary, main, parse_args, run_tests
 
-from ._helpers import REPO_ROOT
+from ._helpers import REPO_ROOT, get_step, load_workflow
 
 
 def test_build_step_summary_reads_gcovr_summary(tmp_path: Path) -> None:
@@ -54,6 +54,52 @@ def test_report_only_skips_build_and_writes_summary(tmp_path: Path, gh_summary: 
     configure_build.assert_not_called()
     generate_report.assert_called_once_with(tmp_path, log_file=None)
     assert "### Coverage" in gh_summary.read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize("ci", [False, True])
+def test_report_fails_without_gcda_files(tmp_path, monkeypatch, capsys, ci) -> None:
+    """Tests that wrote no counters fail the report instead of publishing zero coverage."""
+    if ci:
+        monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src" / "Vehicle.gcno").touch()
+    with (
+        patch("coverage_report.shutil.which", return_value="/usr/bin/gcovr"),
+        patch("coverage_report.run_captured") as run_captured,
+    ):
+        assert main(["--report", "--build-dir", str(tmp_path)]) == 1
+    run_captured.assert_not_called()
+    out, err = capsys.readouterr()
+    message = "No .gcda files were produced by test execution"
+    if ci:
+        assert f"::error::{message}" in out
+    else:
+        assert message in err
+
+
+def test_report_runs_the_coverage_target_when_gcda_files_exist(tmp_path, capsys) -> None:
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src" / "Vehicle.gcda").touch()
+    with (
+        patch("coverage_report.shutil.which", return_value="/usr/bin/gcovr"),
+        patch(
+            "coverage_report.run_captured",
+            return_value=CompletedProcess([], 0, stdout="", stderr=""),
+        ) as run_captured,
+    ):
+        assert main(["--report", "--build-dir", str(tmp_path)]) == 0
+    run_captured.assert_called_once_with(
+        ["cmake", "--build", str(tmp_path), "--target", "coverage-report"], check=False
+    )
+    assert "Detected 1 .gcda files" in capsys.readouterr().out
+
+
+def test_coverage_job_relies_on_the_report_for_missing_gcda_files() -> None:
+    steps = load_workflow("linux.yml")["jobs"]["debug-validation"]["steps"]
+    assert ".gcda" not in str([step.get("run", "") for step in steps])
+    report = get_step(steps, "Generate Coverage Report")
+    assert "tools/coverage_report.py" in report["run"]
+    assert "--report" in report["run"]
 
 
 def test_missing_gcovr_is_reported_once(tmp_path, capsys) -> None:

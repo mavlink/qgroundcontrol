@@ -90,8 +90,6 @@ jobs:
       include: ${{ steps.plan.outputs.include }}
       llvm_version: ${{ steps.plan.outputs.llvm_version }}
       clazy_sha256: ${{ steps.plan.outputs.clazy_sha256 }}
-      clang_tidy_version: ${{ steps.plan.outputs.clang_tidy_version }}
-      clang_tidy_sha256: ${{ steps.plan.outputs.clang_tidy_sha256 }}
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@v2
@@ -200,39 +198,22 @@ jobs:
             "llvm-$LLVM_VERSION-dev" "libclang-$LLVM_VERSION-dev" "libclang-cpp$LLVM_VERSION-dev"
           python3 tools/setup/build_clazy.py --prefix .cache/clazy --work-dir "$RUNNER_TEMP/clazy"
 
-      # clang-tidy comes from a hash-pinned PyPI wheel, ahead of LLVM's own on PATH; Clazy and
-      # clang-scan-deps stay on the compiler's LLVM.
+      # clang-tidy comes from the PyPI wheel hash-pinned in build-config.json, ahead of LLVM's own on
+      # PATH; Clazy and clang-scan-deps stay on the compiler's LLVM.
       - name: Select analysis executables
         if: matrix.family != 'tsan'
         env:
-          LLVM_VERSION: ${{ needs.plan.outputs.llvm_version }}
-          CLANG_TIDY_VERSION: ${{ needs.plan.outputs.clang_tidy_version }}
-          CLANG_TIDY_SHA256: ${{ needs.plan.outputs.clang_tidy_sha256 }}
           ANALYSIS_TOOLS: ${{ join(matrix.tools, ' ') }}
         run: python3 tools/ci/runner/analysis_tools.py
 
-      - name: Configure (analysis)
-        if: matrix.family != 'tsan'
+      # analysis_matrix.py plans each family's arguments: compiler analysis uses the pinned LLVM
+      # without PCH or unity batches; ThreadSanitizer (manual only, as linux.yml runs ASan and
+      # UBSan) keeps the default compiler.
+      - name: Configure
         uses: ./.github/actions/cmake-configure
         with:
           preset: Linux-debug
-          extra-args: >-
-            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-            -DQGC_BUILD_TESTING=OFF
-            -DQGC_ENABLE_WERROR=OFF
-            -DCMAKE_C_COMPILER=clang-${{ needs.plan.outputs.llvm_version }}
-            -DCMAKE_CXX_COMPILER=clang++-${{ needs.plan.outputs.llvm_version }}
-            -DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON
-            ${{ matrix.family != 'qml' && '-DCMAKE_AUTOGEN_ORIGIN_DEPENDS=OFF -DCMAKE_GLOBAL_AUTOGEN_TARGET=ON' || '' }}
-            -DQGC_UNITY_BUILD=OFF
-
-      # Pull requests already run ASan and UBSan in linux.yml; ThreadSanitizer is manual only.
-      - name: Configure (tsan)
-        if: matrix.family == 'tsan'
-        uses: ./.github/actions/cmake-configure
-        with:
-          preset: Linux-debug
-          extra-args: -DQGC_ENABLE_COVERAGE=OFF -DQGC_ENABLE_TSAN=ON
+          extra-args: ${{ join(matrix.configure_args, ' ') }}
 
       - name: Generate protocol headers
         if: matrix.family == 'compiler' || matrix.family == 'iwyu'

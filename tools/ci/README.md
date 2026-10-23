@@ -28,7 +28,7 @@ and Ruff skips `build` directories.
 
 | Script | Purpose |
 | --- | --- |
-| `planning/analysis_matrix.py` | Plan Code Analysis jobs: PR shards and scan scope, one cache-seeding job for master pushes, none when nothing compiled changed |
+| `planning/analysis_matrix.py` | Plan Code Analysis jobs (configure and analyzer arguments per tool family): PR shards and scan scope, one cache-seeding job for master pushes, none when nothing compiled changed |
 | `planning/android_matrix.py` | Emit the Android build matrix, running change detection and the release-tag gate in-process |
 | `planning/detect_changes.py` | Decide which platform builds an event requires, including the release-tag gate |
 | `planning/plan_docker_builds.py` | Generate Docker build matrices, running change detection and the release-tag gate in-process |
@@ -38,7 +38,7 @@ and Ruff skips `build` directories.
 | `cache/ccache_helper.py` | Install the pinned, checksum-verified ccache (and mold, plus sccache for the [sccache pilot](../../.github/ci-overview.md#sccache-pilot), on Linux) and plan `save-build-cache`: gate PR saves, pack the snapshot artifact, and choose the cache keys |
 | `cache/cpm_helper.py` | Fingerprint CPM dependencies and the GStreamer SDK config for `cache_plan.py`, and create and apply runner-image CPM seeds |
 | `cache/gh_cache_cleanup.py` | List and optionally delete GitHub Actions caches (`cache-cleanup.yml` sets its flags through `CLEANUP_*` variables) |
-| `runner/analysis_tools.py` | Install the hash-pinned clang-tidy wheel, verify `.clang-tidy`, and put LLVM, clang-tidy, and Clazy on `PATH` for `analysis.yml` |
+| `runner/analysis_tools.py` | Install the clang-tidy wheel hash-pinned in `build-config.json`, verify `.clang-tidy`, and put LLVM, clang-tidy, and Clazy on `PATH` for `analysis.yml` |
 | `runner/apt_install_retry.py` | Install apt packages with bounded retries, RunsOn's in-region EC2 mirror, and a runner-owned download cache |
 | `runner/build_setup.py` | Validate `build-setup`'s inputs and resolve the values its steps read: Qt hosts, architectures and modules, cache target, Xcode and MSVC selections, Windows ARM64 cross builds' host Qt, Android ABIs and SDK environment, and the `build-config.json` tool versions |
 | `runner/enable_kvm.py` | Open `/dev/kvm` to every user on a nested-virtualization runner |

@@ -15,7 +15,7 @@ import _bootstrap as _bootstrap
 from common.coverage_summary import SUMMARY_FILENAME, CoverageSummaryError, read_gcovr_summary
 from common.file_traversal import find_repo_root
 from common.format import format_count, format_percent
-from common.gh_actions import write_step_summary
+from common.gh_actions import gh_error, is_ci, write_step_summary
 from common.logging import log_error, log_info, log_ok
 from common.markdown import code_span, summary_section
 from common.proc import require_tools, run_captured
@@ -153,7 +153,14 @@ def build_step_summary(summary_json: Path) -> str:
 
 
 def generate_report(build_dir: Path, *, log_file: Path | None = None) -> None:
-    """Generate XML, JSON summary and HTML coverage reports from existing coverage data."""
+    """Generate XML, JSON summary and HTML coverage reports from existing coverage data.
+
+    Fails when the tests produced no .gcda counters, which would otherwise report zero coverage.
+    """
+    gcda_count = sum(1 for _ in build_dir.rglob("*.gcda"))
+    log_info(f"Detected {gcda_count} .gcda files")
+    if not gcda_count:
+        raise RuntimeError("No .gcda files were produced by test execution")
     log_info("Generating coverage report...")
     result = run_captured(
         ["cmake", "--build", str(build_dir), "--target", "coverage-report"],
@@ -214,7 +221,7 @@ def main(argv: list[str] | None = None) -> int:
             write_step_summary(build_step_summary(build_dir / SUMMARY_FILENAME))
         return 0
     except (RuntimeError, FileNotFoundError, subprocess.CalledProcessError) as exc:
-        log_error(str(exc))
+        (gh_error if is_ci() else log_error)(str(exc))
         return 1
 
 

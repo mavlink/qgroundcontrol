@@ -87,12 +87,56 @@ def test_analysis_findings_fail_the_job_and_iwyu_stays_advisory():
 
 
 def test_toolchain_comes_from_the_planner():
-    for key in ("llvm_version", "clazy_sha256", "clang_tidy_version", "clang_tidy_sha256"):
+    # Only the Clazy cache and build read the toolchain from the plan job; analysis_tools.py
+    # reads build-config.json from the full checkout.
+    assert set(PLAN["outputs"]) == {"include", "llvm_version", "clazy_sha256"}
+    for key in ("llvm_version", "clazy_sha256"):
         assert PLAN["outputs"][key] == f"${{{{ steps.plan.outputs.{key} }}}}"
     checkout = next(step for step in PLAN["steps"] if step["name"] == "Checkout")
     assert ".github/build-config.json" in checkout["with"]["sparse-checkout"].split()
-    assert "needs.plan.outputs.llvm_version" in STEPS["Configure (analysis)"]["with"]["extra-args"]
+    assert "sparse-checkout" not in STEPS["Checkout"]["with"]
+    assert STEPS["Configure"]["with"] == {
+        "preset": "Linux-debug",
+        "extra-args": "${{ join(matrix.configure_args, ' ') }}",
+    }
+    assert "if" not in STEPS["Configure"]
     assert "read_config" not in WORKFLOW_TEXT
+
+
+ANALYSIS_CONFIGURE = [
+    "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+    "-DQGC_BUILD_TESTING=OFF",
+    "-DQGC_ENABLE_WERROR=OFF",
+    f"-DCMAKE_C_COMPILER=clang-{LLVM_VERSION}",
+    f"-DCMAKE_CXX_COMPILER=clang++-{LLVM_VERSION}",
+    "-DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON",
+]
+AUTOGEN_TARGET = ["-DCMAKE_AUTOGEN_ORIGIN_DEPENDS=OFF", "-DCMAKE_GLOBAL_AUTOGEN_TARGET=ON"]
+
+
+@pytest.mark.parametrize(
+    ("leg", "expected"),
+    [
+        (
+            {"event": "pull_request"},
+            [*ANALYSIS_CONFIGURE, *AUTOGEN_TARGET, "-DQGC_UNITY_BUILD=OFF"],
+        ),
+        ({"event": "push"}, [*ANALYSIS_CONFIGURE, *AUTOGEN_TARGET, "-DQGC_UNITY_BUILD=OFF"]),
+        ({"tool": "clazy"}, [*ANALYSIS_CONFIGURE, *AUTOGEN_TARGET, "-DQGC_UNITY_BUILD=OFF"]),
+        ({"tool": "clang-tidy"}, [*ANALYSIS_CONFIGURE, *AUTOGEN_TARGET, "-DQGC_UNITY_BUILD=OFF"]),
+        ({"tool": "iwyu"}, [*ANALYSIS_CONFIGURE, *AUTOGEN_TARGET, "-DQGC_UNITY_BUILD=OFF"]),
+        ({"tool": "qmllint"}, [*ANALYSIS_CONFIGURE, "-DQGC_UNITY_BUILD=OFF"]),
+        ({"tool": "tsan"}, ["-DQGC_ENABLE_COVERAGE=OFF", "-DQGC_ENABLE_TSAN=ON"]),
+    ],
+)
+def test_every_family_gets_its_configure_arguments(leg, expected):
+    event = leg.pop("event", "workflow_dispatch")
+    for planned in build_matrix(event, REPO_ROOT, "", llvm_version=LLVM_VERSION, **leg):
+        args = planned["configure_args"]
+        assert isinstance(args, list)
+        assert args == expected
+        # cmake_helper.py splits extra-args on whitespace, so each argument must be one word.
+        assert all(arg.split() == [arg] for arg in args)
 
 
 def test_clang_tidy_and_clazy_skip_autogen_and_llvm_development_packages():
@@ -112,12 +156,8 @@ def test_clang_tidy_comes_from_the_hash_pinned_wheel_ahead_of_llvm():
     assert TOOLCHAIN["clang_tidy_version"].startswith(("22.", "23."))
     step = STEPS["Select analysis executables"]
     assert step["run"] == "python3 tools/ci/runner/analysis_tools.py"
-    assert step["env"] == {
-        "LLVM_VERSION": "${{ needs.plan.outputs.llvm_version }}",
-        "CLANG_TIDY_VERSION": "${{ needs.plan.outputs.clang_tidy_version }}",
-        "CLANG_TIDY_SHA256": "${{ needs.plan.outputs.clang_tidy_sha256 }}",
-        "ANALYSIS_TOOLS": "${{ join(matrix.tools, ' ') }}",
-    }
+    # The LLVM and clang-tidy pins come from build-config.json (common.build_config).
+    assert step["env"] == {"ANALYSIS_TOOLS": "${{ join(matrix.tools, ' ') }}"}
     names = [each["name"] for each in JOB["steps"]]
     # Build Setup provides tools/.venv and uv; the Clazy build provides clazy-standalone.
     assert names.index("Build Setup") < names.index("Select analysis executables")
@@ -128,7 +168,7 @@ def test_pull_requests_get_asan_and_ubsan_from_linux_and_tsan_stays_manual():
     options = ON["workflow_dispatch"]["inputs"]["tool"]["options"]
     assert set(options) == set(DISPATCH_FAMILIES)
     assert not re.search(r"QGC_ENABLE_[AU]B?SAN|[ALU]B?SAN_OPTIONS|'[au]b?san'", WORKFLOW_TEXT)
-    assert STEPS["Configure (tsan)"]["with"]["extra-args"].split() == [
+    assert _dispatch("tsan")["configure_args"] == [
         "-DQGC_ENABLE_COVERAGE=OFF",
         "-DQGC_ENABLE_TSAN=ON",
     ]

@@ -305,7 +305,8 @@ Coverage compiles pass `-fprofile-update=atomic`, which ccache caches only from 
 distro ccache (Ubuntu 24.04 ships 4.9.1) gets no cache hits in coverage builds.
 Reports are Cobertura `coverage.xml` (uploaded to Codecov), gcovr's JSON `coverage-summary.json`
 (read by the step summary, `verify_coverage_thresholds.py`, and the PR build-results comment), and
-HTML `coverage.html`.
+HTML `coverage.html`. Reporting fails when the build directory holds no `.gcda` counters, so tests
+that wrote no coverage data cannot publish a zero-coverage report.
 
 ```bash
 python tools/coverage_report.py              # Build with coverage, run tests like CI, generate XML, JSON + HTML

@@ -259,17 +259,7 @@ jobs:
           exclude-labels: ${{ matrix.mode == 'sanitizers' && 'Flaky|Network|NoSanitizer' || 'Flaky|Network' }}
           upload-codecov: ${{ vars.CODECOV_TEST_ANALYTICS == 'true' }}
 
-      - name: Verify coverage data files exist
-        if: matrix.mode == 'coverage'
-        working-directory: ${{ runner.temp }}/build
-        run: |
-          gcda_count=$(find . -name '*.gcda' | wc -l | tr -d '[:space:]')
-          echo "Detected ${gcda_count} .gcda files"
-          if [ "${gcda_count}" -eq 0 ]; then
-            echo "::error::No .gcda files were produced by test execution"
-            exit 1
-          fi
-
+      # coverage_report.py fails when the tests produced no .gcda files.
       - name: Generate Coverage Report
         if: matrix.mode == 'coverage'
         run: |
@@ -416,9 +406,8 @@ jobs:
         if: matrix.build-type == 'Release'
         uses: ./.github/actions/verify-executable
         with:
-          binary-path: Custom-QGroundControl-x86_64.AppImage
+          binary-path: ${{ runner.temp }}/build/Custom-QGroundControl-x86_64.AppImage
           type: appimage
-          working-dir: ${{ runner.temp }}/build
 
       - name: Run unit tests
         if: ${{ !cancelled() && matrix.build-type == 'Debug' && steps.build.outcome == 'success' }}

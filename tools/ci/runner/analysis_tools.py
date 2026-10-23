@@ -4,8 +4,8 @@
 LLVM's bin directory goes on PATH first. clang-tidy installs from the PyPI wheel pinned by
 version and SHA-256 and goes ahead of it, after verifying .clang-tidy; Clazy comes from the
 tools/setup/build_clazy.py prefix. Clazy and clang-scan-deps stay on the compiler's LLVM.
-Inputs default to the step environment: LLVM_VERSION, ANALYSIS_TOOLS (space-separated),
-CLANG_TIDY_VERSION and CLANG_TIDY_SHA256.
+The LLVM version and clang-tidy pins default to build-config.json's `analysis` section and the
+tools to the step's ANALYSIS_TOOLS (space-separated).
 """
 
 from __future__ import annotations
@@ -19,6 +19,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import _bootstrap as _bootstrap
+from common.build_config import get_build_config_value
 from common.gh_actions import append_github_path, env_default, gh_error
 
 CLAZY_PREFIX = Path(".cache/clazy")
@@ -77,18 +78,22 @@ def select_tools(
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--llvm-version", default=env_default("LLVM_VERSION"))
+    parser.add_argument("--llvm-version", default=get_build_config_value("analysis.llvm_version"))
     parser.add_argument("--tools", default=env_default("ANALYSIS_TOOLS"))
-    parser.add_argument("--clang-tidy-version", default=env_default("CLANG_TIDY_VERSION"))
-    parser.add_argument("--clang-tidy-sha256", default=env_default("CLANG_TIDY_SHA256"))
+    parser.add_argument(
+        "--clang-tidy-version", default=get_build_config_value("analysis.clang_tidy_version")
+    )
+    parser.add_argument(
+        "--clang-tidy-sha256", default=get_build_config_value("analysis.clang_tidy_sha256")
+    )
     args = parser.parse_args(argv)
 
     tools = args.tools.split()
-    required = {"LLVM_VERSION": args.llvm_version}
+    required = {"analysis.llvm_version": args.llvm_version}
     if "clang-tidy" in tools:
         required |= {
-            "CLANG_TIDY_VERSION": args.clang_tidy_version,
-            "CLANG_TIDY_SHA256": args.clang_tidy_sha256,
+            "analysis.clang_tidy_version": args.clang_tidy_version,
+            "analysis.clang_tidy_sha256": args.clang_tidy_sha256,
         }
     missing = [name for name, value in required.items() if not value]
     if missing:

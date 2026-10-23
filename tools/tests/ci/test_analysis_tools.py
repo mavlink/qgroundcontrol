@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from typing import TYPE_CHECKING
 
 import pytest
@@ -13,6 +14,13 @@ if TYPE_CHECKING:
     from pytest_subprocess import FakeProcess
 
 SHA256 = "a" * 64
+TOOLCHAIN = {"llvm_version": "21", "clang_tidy_version": "22.1.0", "clang_tidy_sha256": SHA256}
+
+
+def _pin_toolchain(monkeypatch: pytest.MonkeyPatch, path: Path, **toolchain: str) -> None:
+    """Point common.build_config at a build-config.json holding only this analysis section."""
+    path.write_text(json.dumps({"analysis": toolchain}), encoding="utf-8")
+    monkeypatch.setenv("CONFIG_FILE", str(path))
 
 
 @pytest.fixture
@@ -25,9 +33,7 @@ def ci_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict[str, Path]:
     paths["RUNNER_TEMP"].mkdir()
     for name, path in paths.items():
         monkeypatch.setenv(name, str(path))
-    monkeypatch.setenv("LLVM_VERSION", "21")
-    monkeypatch.setenv("CLANG_TIDY_VERSION", "22.1.0")
-    monkeypatch.setenv("CLANG_TIDY_SHA256", SHA256)
+    _pin_toolchain(monkeypatch, tmp_path / "build-config.json", **TOOLCHAIN)
     return paths
 
 
@@ -83,11 +89,10 @@ def test_pinned_clang_tidy_goes_ahead_of_llvm_and_clazy_after_it(
 
 
 def test_clazy_alone_needs_no_clang_tidy_pin(
-    ci_env: dict[str, Path], fp: FakeProcess, monkeypatch: pytest.MonkeyPatch
+    ci_env: dict[str, Path], fp: FakeProcess, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     monkeypatch.setenv("ANALYSIS_TOOLS", "clazy")
-    monkeypatch.delenv("CLANG_TIDY_VERSION")
-    monkeypatch.delenv("CLANG_TIDY_SHA256")
+    _pin_toolchain(monkeypatch, tmp_path / "llvm-only.json", llvm_version="21")
     fp.register(_commands(ci_env)["clazy_version"])
 
     assert analysis_tools.main([]) == 0
@@ -118,19 +123,23 @@ def test_invalid_clang_tidy_config_fails_before_clang_tidy_reaches_path(
     ]
 
 
-@pytest.mark.parametrize("missing", ["LLVM_VERSION", "CLANG_TIDY_VERSION", "CLANG_TIDY_SHA256"])
-def test_missing_toolchain_inputs_fail_before_installing(
+@pytest.mark.parametrize("missing", list(TOOLCHAIN))
+def test_missing_toolchain_pins_fail_before_installing(
     ci_env: dict[str, Path],
     fp: FakeProcess,
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
     missing: str,
 ) -> None:
     monkeypatch.setenv("ANALYSIS_TOOLS", "clang-tidy clazy")
-    monkeypatch.setenv(missing, "")
+    pins = {key: value for key, value in TOOLCHAIN.items() if key != missing}
+    _pin_toolchain(monkeypatch, tmp_path / "partial.json", **pins)
 
     assert analysis_tools.main([]) == 1
 
-    assert f"::error::Missing analysis toolchain inputs: {missing}" in capsys.readouterr().out
+    assert f"::error::Missing analysis toolchain inputs: analysis.{missing}" in (
+        capsys.readouterr().out
+    )
     assert not list(fp.calls)
     assert not ci_env["GITHUB_PATH"].exists()
