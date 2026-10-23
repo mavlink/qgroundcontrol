@@ -9,7 +9,15 @@ from unittest.mock import MagicMock
 
 import pytest
 from common import proc
-from common.proc import output_text, run_captured, run_tee, run_with_retry
+from common.proc import (
+    MissingToolError,
+    output_text,
+    require_tools,
+    run_captured,
+    run_tee,
+    run_with_retry,
+    wait_until,
+)
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -219,3 +227,110 @@ def test_run_tee_resolves_relative_output_before_changing_cwd(
     assert run_tee([sys.executable, "-c", "print('relative')"], "command.log", cwd=working_dir) == 0
     assert (invocation_dir / "command.log").read_text(encoding="utf-8").strip() == "relative"
     assert not (working_dir / "command.log").exists()
+
+
+def test_require_tools_returns_each_tool_path(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("common.proc.shutil.which", lambda name: f"/usr/bin/{name}")
+    assert require_tools("git", "cmake") == {"git": "/usr/bin/git", "cmake": "/usr/bin/cmake"}
+
+
+def test_require_tools_names_every_missing_tool_and_the_hint(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        "common.proc.shutil.which", lambda name: "/usr/bin/git" if name == "git" else None
+    )
+    with pytest.raises(MissingToolError) as raised:
+        require_tools("cmake", "git", "ninja", hint="Install the build group")
+    assert str(raised.value) == "cmake, ninja not found on PATH. Install the build group"
+    assert isinstance(raised.value, FileNotFoundError)
+
+
+def test_require_tools_without_hint(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("common.proc.shutil.which", lambda _name: None)
+    with pytest.raises(MissingToolError) as raised:
+        require_tools("gcovr")
+    assert str(raised.value) == "gcovr not found on PATH"
+
+
+class FakeClock:
+    """Monotonic clock that advances only when the code under test sleeps."""
+
+    def __init__(self) -> None:
+        self.now = 100.0
+        self.sleeps: list[float] = []
+
+    def __call__(self) -> float:
+        return self.now
+
+    def sleep(self, seconds: float) -> None:
+        self.sleeps.append(seconds)
+        self.now += seconds
+
+
+def test_wait_until_returns_the_first_truthy_result() -> None:
+    clock = FakeClock()
+    results = iter([None, "", "ready"])
+    result = wait_until(
+        lambda: next(results), timeout=10, interval=2, sleep=clock.sleep, clock=clock
+    )
+    assert result == "ready"
+    assert clock.sleeps == [2, 2]
+
+
+def test_wait_until_polls_at_the_deadline_before_timing_out() -> None:
+    clock = FakeClock()
+    polls: list[float] = []
+
+    def never() -> bool:
+        polls.append(clock.now)
+        return False
+
+    with pytest.raises(TimeoutError, match=r"^Timed out after 5s waiting for emulator boot$"):
+        wait_until(
+            never,
+            timeout=5,
+            interval=2,
+            description="emulator boot",
+            sleep=clock.sleep,
+            clock=clock,
+        )
+    assert clock.sleeps == [2, 2, 1]
+    assert polls == [100, 102, 104, 105]
+
+
+def test_wait_until_with_zero_timeout_polls_once() -> None:
+    clock = FakeClock()
+    polls: list[float] = []
+    with pytest.raises(TimeoutError, match="condition"):
+        wait_until(
+            lambda: polls.append(clock.now), timeout=0, interval=1, sleep=clock.sleep, clock=clock
+        )
+    assert polls == [100]
+    assert clock.sleeps == []
+
+
+def test_wait_until_propagates_predicate_errors() -> None:
+    clock = FakeClock()
+
+    def stopped() -> bool:
+        raise RuntimeError("stopped")
+
+    with pytest.raises(RuntimeError, match="stopped"):
+        wait_until(stopped, timeout=5, interval=1, sleep=clock.sleep, clock=clock)
+    assert clock.sleeps == []
+
+
+def test_wait_until_resolves_time_functions_at_call_time(monkeypatch: pytest.MonkeyPatch) -> None:
+    clock = FakeClock()
+    monkeypatch.setattr(proc.time, "monotonic", clock)
+    monkeypatch.setattr(proc.time, "sleep", clock.sleep)
+    results = iter([False, True])
+    assert wait_until(lambda: next(results), timeout=1, interval=0.25) is True
+    assert clock.sleeps == [0.25]
+
+
+@pytest.mark.parametrize(("timeout", "interval"), [(-1, 1), (1, 0), (1, -1)])
+def test_wait_until_rejects_invalid_limits(timeout: float, interval: float) -> None:
+    with pytest.raises(ValueError, match="timeout must be non-negative and interval positive"):
+        wait_until(lambda: True, timeout=timeout, interval=interval)

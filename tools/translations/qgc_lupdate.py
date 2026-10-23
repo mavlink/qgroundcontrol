@@ -18,11 +18,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from common.build_config import get_build_config_value
+from common.paths import REPO_ROOT
 from common.qt import find_qt_tool
 
 from translations import pseudo_loc, qgc_lupdate_json
-
-REPO_ROOT = Path(__file__).resolve().parents[2]
 
 _TR_NO_CONTEXT_MARKER = "tr() cannot be called without context"
 _NO_QOBJECT_MARKER = "lacks Q_OBJECT macro"

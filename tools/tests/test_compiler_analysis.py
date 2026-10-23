@@ -1,7 +1,6 @@
 """Compiler analyzer regressions: diagnostics, invocation errors, and file selection."""
 
 import json
-import sys
 from pathlib import Path
 from subprocess import CompletedProcess, TimeoutExpired
 from unittest.mock import patch
@@ -97,7 +96,6 @@ def test_advisory_cli_rejects_driver_errors_but_allows_warnings(
         else "file.cc:1:1: warning: inefficient copy [performance-copy]\n"
     )
     with (
-        patch.object(sys, "argv", ["analyze.py", "--tool", analyzer.name, "--advisory", "file.cc"]),
         patch.object(analyze, "find_repo_root", return_value=tmp_path),
         patch.object(analyze, "get_analyzer", return_value=analyzer),
         patch.object(analyzer, "require_compile_commands", return_value=True),
@@ -107,7 +105,8 @@ def test_advisory_cli_rejects_driver_errors_but_allows_warnings(
             return_value=CompletedProcess([], int(driver_error), "", diagnostic),
         ),
     ):
-        assert analyze.main() == (2 if driver_error else 0)
+        argv = ["--tool", analyzer.name, "--advisory", "file.cc"]
+        assert analyze.main(argv) == (2 if driver_error else 0)
 
 
 def test_no_files_is_explicitly_skipped(tmp_path):
@@ -337,10 +336,9 @@ def test_shards_cover_each_selected_dependency_once_and_preserve_errors(tmp_path
 @pytest.mark.parametrize("profile_checks", [False, True])
 def test_cli_check_profiling_is_opt_in(tmp_path, monkeypatch, profile_checks):
     (tmp_path / "file.cc").touch()
-    args = ["analyze.py", "--tool", "clang-tidy", "-b", ".", "--advisory", "file.cc"]
+    args = ["--tool", "clang-tidy", "-b", ".", "--advisory", "file.cc"]
     if profile_checks:
         args.append("--profile-checks")
-    monkeypatch.setattr(sys, "argv", args)
     monkeypatch.setattr(analyze, "find_repo_root", lambda: tmp_path)
     with (
         patch.object(ClangTidyAnalyzer, "require_tool", return_value=True),
@@ -348,7 +346,7 @@ def test_cli_check_profiling_is_opt_in(tmp_path, monkeypatch, profile_checks):
             "analyzers.compiler.run_captured", return_value=CompletedProcess([], 0, "", "")
         ) as run,
     ):
-        assert analyze.main() == 0
+        assert analyze.main(args) == 0
     assert ("--enable-check-profile" in run.call_args.args[0]) == profile_checks
 
 
@@ -362,8 +360,7 @@ def test_cli_check_profiling_is_opt_in(tmp_path, monkeypatch, profile_checks):
         ["--tool", "clazy", "--profile-checks"],
     ],
 )
-def test_invalid_analysis_modes_are_rejected(monkeypatch, arguments):
-    monkeypatch.setattr(sys, "argv", ["analyze.py", *arguments])
+def test_invalid_analysis_modes_are_rejected(arguments):
     with pytest.raises(SystemExit) as exc:
-        analyze.parse_args()
+        analyze.parse_args(arguments)
     assert exc.value.code == 2

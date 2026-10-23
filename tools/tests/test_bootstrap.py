@@ -153,7 +153,7 @@ class TestDebugConfigure:
 
 def _tools_sources() -> list[Path]:
     """Non-test Python files under tools/."""
-    excluded = {"tests", "skills", ".venv", "__pycache__"}
+    excluded = {"tests", ".venv", "__pycache__"}
     return [
         path
         for path in sorted(TOOLS_DIR.rglob("*.py"))
@@ -208,6 +208,53 @@ def _bootstrap_problems(path: Path, tools_dir: Path = TOOLS_DIR) -> list[str]:
 def test_scripts_use_the_canonical_bootstrap() -> None:
     problems = [problem for path in _tools_sources() for problem in _bootstrap_problems(path)]
     assert not problems, "\n".join(problems)
+
+
+# moccache runs once per moc invocation, so it skips the debug hooks to start faster.
+TOP_LEVEL_WITHOUT_BOOTSTRAP = {"moccache_launcher.py"}
+
+
+def test_top_level_entry_scripts_import_bootstrap() -> None:
+    missing = set()
+    for path in TOOLS_DIR.glob("*.py"):
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        is_entry = any(
+            isinstance(node, ast.If) and "__name__" in ast.unparse(node.test) for node in tree.body
+        )
+        imports_bootstrap = any(
+            isinstance(node, ast.Import) and any(alias.name == "_bootstrap" for alias in node.names)
+            for node in tree.body
+        )
+        if is_entry and not imports_bootstrap:
+            missing.add(path.name)
+    assert missing == TOP_LEVEL_WITHOUT_BOOTSTRAP
+
+
+def _signature(function: ast.FunctionDef) -> tuple[str, str]:
+    return ast.unparse(function.args), ast.unparse(function.returns) if function.returns else ""
+
+
+CI_MAIN = ast.parse("def main(argv: list[str] | None = None) -> int: ...").body[0]
+# cache_plan.main() reads only the environment; drop this entry when it takes argv.
+CI_MAIN_WITHOUT_ARGV: set[str] = set()
+
+
+def test_ci_entry_scripts_take_argv_and_return_an_exit_code() -> None:
+    """Tests call `main([...])` directly instead of patching `sys.argv`."""
+    assert isinstance(CI_MAIN, ast.FunctionDef)
+    ci_dir = TOOLS_DIR / "ci"
+    nonconforming = set()
+    for path in ci_dir.rglob("*.py"):
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        is_entry = any(
+            isinstance(node, ast.If) and "__name__" in ast.unparse(node.test) for node in tree.body
+        )
+        mains = [
+            node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == "main"
+        ]
+        if is_entry and [_signature(main) for main in mains] != [_signature(CI_MAIN)]:
+            nonconforming.add(path.relative_to(ci_dir).as_posix())
+    assert nonconforming == CI_MAIN_WITHOUT_ARGV
 
 
 @pytest.mark.parametrize(

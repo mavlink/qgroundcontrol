@@ -131,8 +131,8 @@ vehicle->doSomething();  // OK - analyzer sees the check above
 `qt_translate_noop_check.py` reports `QT_TRANSLATE_NOOP`/`QT_TR_NOOP` results that are returned
 or used as runtime strings (for example in `.arg()` or `QString(...)`). These macros only mark
 strings for extraction; translate at the call site with `QCoreApplication::translate()` or `tr()`.
-It runs as the `qt-translate-noop-check` pre-commit hook and accepts files or directories like the
-null-check analyzer.
+It runs as the `qt-translate-noop-check` pre-commit hook and, like the null-check analyzer, takes
+files or directories and `--json`.
 
 ## qmlformat Check
 
@@ -143,16 +143,18 @@ It backs `analyze.py --tool qmlformat` and the manual-stage `qmlformat` hook
 
 ## Shared Utilities
 
-`base.py` defines `AnalysisResult` and `AnalyzerBase` for `analyze.py` backends. The analyzers
-also use `file_traversal.py` from [`tools/common/`](../common/README.md) for file discovery with
-proper filtering.
+`base.py` defines `AnalysisResult` and `AnalyzerBase` for `analyze.py` backends, and
+`run_line_check_cli()`, the shared command line (paths and `--json`) of the two line-based checks.
+File discovery uses `file_traversal.py` from [`tools/common/`](../common/README.md).
 
 ## Adding New Analyzers
 
 1. Create a new Python script in `tools/analyzers/` and bootstrap imports as
    `vehicle_null_check.py` does (see [Bootstrapping Imports](../common/README.md#bootstrapping-imports))
 2. Use `find_cpp_files()` from `common.file_traversal`
-3. For an `analyze.py --tool`, subclass `analyzers.base.AnalyzerBase` and register it in
-   `get_analyzer()` and the `--tool` choices in `tools/analyze.py`
-4. Support `--json` output for editor integration
-5. Add tests under `tools/tests/`, and add to `.pre-commit-config.yaml` if appropriate
+3. For an `analyze.py --tool`, subclass `analyzers.base.AnalyzerBase` and add one entry to
+   `ANALYZERS` in `tools/analyze.py`
+4. For a line-based check, fill `AnalysisResult.findings` and define
+   `main(argv)` as `run_line_check_cli(YourAnalyzer, argv)`
+5. Add tests under `tools/tests/`, and add to `.pre-commit-config.yaml` if appropriate, running it
+   through `uv run --frozen --project tools --group scripts python` like the other hooks

@@ -18,6 +18,8 @@ import time
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
+from common.io import read_json
+
 if TYPE_CHECKING:
     from collections.abc import Iterable, Mapping, Sequence
     from pathlib import Path
@@ -120,7 +122,7 @@ class ResultCache:
     def load(self, key: str) -> CachedResult | None:
         path = self._path(key)
         try:
-            data = json.loads(path.read_text(encoding="utf-8"))
+            data = read_json(path)
             if data["version"] != FORMAT_VERSION:
                 return None
             result = CachedResult(str(data["stdout"]), str(data["stderr"]), int(data["returncode"]))

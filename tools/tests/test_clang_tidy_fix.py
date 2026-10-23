@@ -176,22 +176,17 @@ def test_fix_header_filter_anchors_the_configured_header_filter() -> None:
         ["--tool", "qmllint", "--fix"],
     ],
 )
-def test_fix_is_limited_to_clang_format_and_clang_tidy(monkeypatch, arguments) -> None:
-    monkeypatch.setattr(sys, "argv", ["analyze.py", *arguments])
+def test_fix_is_limited_to_clang_format_and_clang_tidy(arguments) -> None:
     with pytest.raises(SystemExit) as exc:
-        analyze.parse_args()
+        analyze.parse_args(arguments)
     assert exc.value.code == 2
 
 
 @pytest.mark.parametrize("variable", ["CI", "GITHUB_ACTIONS"])
 def test_clang_tidy_fix_is_refused_in_ci(monkeypatch, variable: str) -> None:
-    monkeypatch.delenv("CI", raising=False)
-    monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
-    monkeypatch.setattr(sys, "argv", ["analyze.py", "--tool", "clang-tidy", "--fix"])
-    assert analyze.parse_args().fix
+    assert analyze.parse_args(["--tool", "clang-tidy", "--fix"]).fix
     monkeypatch.setenv(variable, "true")
     with pytest.raises(SystemExit) as exc:
-        analyze.parse_args()
+        analyze.parse_args(["--tool", "clang-tidy", "--fix"])
     assert exc.value.code == 2
-    monkeypatch.setattr(sys, "argv", ["analyze.py", "--tool", "clang-format", "--fix"])
-    assert analyze.parse_args().fix
+    assert analyze.parse_args(["--tool", "clang-format", "--fix"]).fix

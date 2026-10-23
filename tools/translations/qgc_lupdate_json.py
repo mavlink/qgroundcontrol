@@ -4,9 +4,15 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+import _bootstrap as _bootstrap
+from common.paths import REPO_ROOT
 
 QGC_FILE_TYPE_KEY = "fileType"
 TRANSLATE_KEYS_KEY = "translateKeys"
@@ -108,7 +114,7 @@ def parse_json(json_path: Path, loc_dict: dict[str, list[str]]) -> None:
 
 
 def walk_directory_tree_for_json_files(directory: Path, multi_file_loc_array: list[list]) -> None:
-    for path in directory.iterdir():
+    for path in sorted(directory.iterdir(), key=lambda p: p.name):
         if path.is_file() and path.suffix == ".json":
             single_file_loc_dict: dict[str, list[str]] = {}
             parse_json(path, single_file_loc_dict)
@@ -117,7 +123,7 @@ def walk_directory_tree_for_json_files(directory: Path, multi_file_loc_array: li
                     if entry[0] == path.name:
                         print(f"Error: Duplicate filenames: {path.name} paths: {path} {entry[1]}")
                         sys.exit(1)
-                multi_file_loc_array.append([path.name, str(path), single_file_loc_dict])
+                multi_file_loc_array.append([path.name, path, single_file_loc_dict])
         elif path.is_dir():
             walk_directory_tree_for_json_files(path, multi_file_loc_array)
 
@@ -138,6 +144,8 @@ def write_json_ts_file(output_path: Path, multi_file_loc_array: list[list]) -> N
     ts_root = ET.Element("TS", version="2.1")
 
     for context_name, file_path, single_file_loc_dict in multi_file_loc_array:
+        # Relative to the .ts file, like lupdate's qgc.ts, so output doesn't depend on the checkout path.
+        location = Path(os.path.relpath(file_path, output_path.parent)).as_posix()
         context = ET.SubElement(ts_root, "context")
         ET.SubElement(context, "name").text = context_name
 
@@ -155,7 +163,7 @@ def write_json_ts_file(output_path: Path, multi_file_loc_array: list[list]) -> N
                     message, "translatorcomment"
                 ).text = "Only use english comma ',' to separate strings"
 
-            ET.SubElement(message, "location", filename=file_path)
+            ET.SubElement(message, "location", filename=location)
             ET.SubElement(message, "source").text = source_str
             ET.SubElement(message, "translation", type="unfinished")
 
@@ -168,10 +176,9 @@ def write_json_ts_file(output_path: Path, multi_file_loc_array: list[list]) -> N
 
 
 def main() -> int:
-    repo_root = Path(__file__).resolve().parents[2]
     multi_file_loc_array: list[list] = []
-    walk_directory_tree_for_json_files(repo_root / "src", multi_file_loc_array)
-    write_json_ts_file(repo_root / "translations" / "qgc-json.ts", multi_file_loc_array)
+    walk_directory_tree_for_json_files(REPO_ROOT / "src", multi_file_loc_array)
+    write_json_ts_file(REPO_ROOT / "translations" / "qgc-json.ts", multi_file_loc_array)
     return 0
 
 

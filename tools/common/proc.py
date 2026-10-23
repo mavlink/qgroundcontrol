@@ -1,4 +1,4 @@
-"""Subprocess wrappers used across QGC dev tools.
+"""Subprocess wrappers, required-tool lookup, and polling used across QGC dev tools.
 
 Centralizes the ``capture_output=True, text=True, check=False`` ritual that
 gets repeated in nearly every tool, plus a couple of convenience entry points.
@@ -14,12 +14,72 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, TypeVar
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping, Sequence
 
-__all__ = ["output_text", "run_bytes", "run_captured", "run_tee", "run_with_retry"]
+__all__ = [
+    "MissingToolError",
+    "output_text",
+    "require_tools",
+    "run_bytes",
+    "run_captured",
+    "run_tee",
+    "run_with_retry",
+    "wait_until",
+]
+
+_T = TypeVar("_T")
+
+
+class MissingToolError(FileNotFoundError):
+    """A required executable is not on ``PATH``."""
+
+
+def require_tools(*names: str, hint: str = "") -> dict[str, str]:
+    """Return the ``PATH`` location of each tool in *names*.
+
+    Raises :class:`MissingToolError` naming every missing tool, followed by *hint*.
+    """
+    found: dict[str, str] = {}
+    missing: list[str] = []
+    for name in names:
+        if path := shutil.which(name):
+            found[name] = path
+        else:
+            missing.append(name)
+    if missing:
+        message = f"{', '.join(missing)} not found on PATH"
+        raise MissingToolError(f"{message}. {hint}" if hint else message)
+    return found
+
+
+def wait_until(
+    predicate: Callable[[], _T],
+    *,
+    timeout: float,
+    interval: float,
+    description: str = "condition",
+    sleep: Callable[[float], object] | None = None,
+    clock: Callable[[], float] | None = None,
+) -> _T:
+    """Poll *predicate* every *interval* seconds and return its first truthy result.
+
+    The last poll runs at the deadline; :class:`TimeoutError` follows if that one fails too.
+    *sleep* and *clock* default to ``time.sleep`` and ``time.monotonic`` at call time.
+    """
+    if timeout < 0 or interval <= 0:
+        raise ValueError("timeout must be non-negative and interval positive")
+    sleep = sleep or time.sleep
+    clock = clock or time.monotonic
+    deadline = clock() + timeout
+    while not (result := predicate()):
+        remaining = deadline - clock()
+        if remaining <= 0:
+            raise TimeoutError(f"Timed out after {timeout:g}s waiting for {description}")
+        sleep(min(interval, remaining))
+    return result
 
 
 def run_with_retry(

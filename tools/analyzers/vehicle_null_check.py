@@ -9,17 +9,15 @@ ParameterManager::getParameter() is not checked: it never returns null and
 returns a default Fact (after reporting the missing parameter) instead.
 
 Usage:
-    python3 vehicle_null_check.py [files...]
+    python3 vehicle_null_check.py FILE...
     python3 vehicle_null_check.py src/          # Analyze directory
     python3 vehicle_null_check.py --json src/   # JSON output
-    python3 vehicle_null_check.py               # Analyze stdin (for pre-commit)
 
 Exit codes:
     0 - No issues found
     1 - Issues found
 """
 
-import json
 import re
 import sys
 from collections.abc import Generator
@@ -30,9 +28,8 @@ from typing import ClassVar
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import _bootstrap as _bootstrap
-from common.file_traversal import find_cpp_files
 
-from analyzers.base import AnalysisResult, AnalyzerBase
+from analyzers.base import AnalysisResult, AnalyzerBase, run_line_check_cli
 
 # Captures the method called on activeVehicle()
 ACTIVE_VEHICLE_DIRECT_PATTERN = re.compile(r"activeVehicle\(\)\s*->\s*(\w+)\s*\(")
@@ -148,15 +145,14 @@ class VehicleNullCheckAnalyzer(AnalyzerBase):
     def run(self, files: list[Path], fix: bool = False) -> AnalysisResult:
         del fix
         violations = [v for f in files for v in analyze_file(f)]
-        output_lines = [format_violation(v) for v in violations]
-        files_with_issues = sorted({v.file for v in violations})
         return AnalysisResult(
             tool=self.name,
             passed=not violations,
             issues=len(violations),
-            output="".join(output_lines),
+            output="\n".join(format_violation(v) for v in violations),
             files_checked=len(files),
-            files_with_issues=files_with_issues,
+            files_with_issues=sorted({v.file for v in violations}),
+            findings=[asdict(v) for v in violations],
         )
 
 
@@ -169,40 +165,9 @@ def format_violation(v: Violation) -> str:
     )
 
 
-def main() -> int:
-    """Main entry point."""
-    json_output = False
-    args = sys.argv[1:]
-
-    if "--json" in args:
-        json_output = True
-        args.remove("--json")
-
-    if "-h" in args or "--help" in args:
-        print(__doc__)
-        return 0
-
-    if args:
-        paths = [Path(arg) for arg in args]
-    else:
-        paths = [Path(line.strip()) for line in sys.stdin if line.strip()]
-
-    if not paths:
-        print("Usage: vehicle_null_check.py [--json] [files or directories...]", file=sys.stderr)
-        return 0
-
-    violations = [v for file_path in find_cpp_files(paths) for v in analyze_file(file_path)]
-
-    if json_output:
-        print(json.dumps([asdict(v) for v in violations], indent=2))
-    else:
-        for v in violations:
-            print(format_violation(v))
-        if violations:
-            print(f"\nFound {len(violations)} potential null-safety issue(s).", file=sys.stderr)
-
-    return 1 if violations else 0
+def main(argv: list[str] | None = None) -> int:
+    return run_line_check_cli(VehicleNullCheckAnalyzer, argv)
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    raise SystemExit(main())

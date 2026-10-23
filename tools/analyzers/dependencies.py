@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import json
-import shutil
 import subprocess
 import tempfile
 from pathlib import Path
 from typing import Any
 
-from common.proc import run_captured
+from common.io import write_json
+from common.proc import require_tools, run_captured
 
 
 class DependencyScanError(RuntimeError):
@@ -18,14 +18,12 @@ class DependencyScanError(RuntimeError):
 
 def scan_dependencies(entries: list[dict[str, Any]], jobs: int) -> dict[Path, frozenset[Path]]:
     """Return every file each source's preprocessing reads, merged across its compile commands."""
-    scanner = shutil.which("clang-scan-deps")
-    if scanner is None:
-        raise DependencyScanError("clang-scan-deps unavailable")
     expected = {(Path(entry["directory"]) / entry["file"]).resolve() for entry in entries}
     try:
+        scanner = require_tools("clang-scan-deps")["clang-scan-deps"]
         with tempfile.TemporaryDirectory(prefix="qgc-analysis-deps-") as temp:
             database = Path(temp) / "compile_commands.json"
-            database.write_text(json.dumps(entries), encoding="utf-8")
+            write_json(database, entries, indent=None)
             scan = run_captured(
                 [
                     scanner,

@@ -2,29 +2,40 @@
 
 from __future__ import annotations
 
-import argparse
 import fnmatch
 import json
-import os
 import re
 from typing import TYPE_CHECKING
-from unittest.mock import patch
 
 import pre_commit
 import pytest
+from common.git import ZERO_SHA
+from common.io import read_toml
 from pre_commit import (
     DOCS_FULL_SCAN_PATHSPECS,
     DOCS_HOOKS,
+    QT_PATHSPECS,
     build_precommit_args,
     changed_refs,
     extract_hook_lines,
     file_selection_args,
+    needs_qt,
     parse_args,
     select_docs_files,
     summarize_output,
 )
 
-from ._helpers import REPO_ROOT, completed, get_steps, git, load_workflow, load_yaml
+from ._helpers import (
+    REPO_ROOT,
+    commit_files,
+    completed,
+    get_step,
+    get_steps,
+    git,
+    load_workflow,
+    load_yaml,
+    pr_merge_checkout,
+)
 
 if TYPE_CHECKING:
     import subprocess
@@ -46,9 +57,7 @@ def test_extract_hook_lines_strips_ansi() -> None:
 
 
 def test_build_precommit_args_all_files() -> None:
-    args = parse_args([])
-    with patch("pre_commit.get_default_branch_ref", return_value="master"):
-        assert file_selection_args(args) == ["--all-files"]
+    assert file_selection_args(parse_args([])) == ["--all-files"]
     assert build_precommit_args(["--all-files"]) == [
         "prek",
         "run",
@@ -58,10 +67,11 @@ def test_build_precommit_args_all_files() -> None:
     ]
 
 
-def test_build_precommit_args_places_hook_before_options() -> None:
-    assert build_precommit_args(["--files", "a.md"], "vale") == [
+def test_build_precommit_args_places_hooks_before_options() -> None:
+    assert build_precommit_args(["--files", "a.md"], ["typos", "vale"]) == [
         "prek",
         "run",
+        "typos",
         "vale",
         "--show-diff-on-failure",
         "--color=always",
@@ -70,33 +80,29 @@ def test_build_precommit_args_places_hook_before_options() -> None:
     ]
 
 
-def test_build_precommit_args_changed_mode() -> None:
-    args = parse_args(["--changed"])
-    with patch("pre_commit.get_default_branch_ref", return_value="master"):
-        assert file_selection_args(args) == ["--from-ref", "master", "--to-ref", "HEAD"]
+@pytest.mark.parametrize(
+    ("branch", "selection"),
+    [
+        ("master", ["--from-ref", "master", "--to-ref", "HEAD"]),
+        ("main", ["--from-ref", "main", "--to-ref", "HEAD"]),
+        ("trunk", ["--all-files"]),
+    ],
+)
+def test_changed_mode_diffs_against_the_default_branch(
+    git_repo: Path, monkeypatch: pytest.MonkeyPatch, branch: str, selection: list[str]
+) -> None:
+    commit_files(git_repo, {"a.txt": "a\n"}, "Base")
+    git(git_repo, "branch", "-m", branch)
+    git(git_repo, "checkout", "-qb", "topic")
+    monkeypatch.chdir(git_repo)
+    monkeypatch.delenv("PR_BASE_SHA", raising=False)
+    monkeypatch.delenv("PR_HEAD_SHA", raising=False)
+    assert file_selection_args(parse_args(["--changed"])) == selection
 
 
-def test_build_precommit_args_changed_main_branch() -> None:
-    args = parse_args(["--changed"])
-    with patch("pre_commit.get_default_branch_ref", return_value="main"):
-        assert file_selection_args(args) == ["--from-ref", "main", "--to-ref", "HEAD"]
-
-
-def test_build_precommit_args_changed_no_ref() -> None:
-    args = parse_args(["--changed"])
-    with patch("pre_commit.get_default_branch_ref", return_value=None):
-        assert file_selection_args(args) == ["--all-files"]
-
-
-def test_new_branch_push_checks_all_files() -> None:
-    with patch.dict(os.environ, {"PR_BASE_SHA": "0" * 40}):
-        assert file_selection_args(parse_args(["--changed"])) == ["--all-files"]
-
-
-def test_changed_files_use_pr_head_instead_of_merge_checkout() -> None:
-    with patch.dict(os.environ, {"PR_BASE_SHA": "base-sha", "PR_HEAD_SHA": "head-sha"}):
-        selection = file_selection_args(parse_args(["--changed"]))
-    assert selection == ["--from-ref", "base-sha", "--to-ref", "head-sha"]
+def test_new_branch_push_checks_all_files(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("PR_BASE_SHA", ZERO_SHA)
+    assert file_selection_args(parse_args(["--changed"])) == ["--all-files"]
 
 
 def test_summary_counts_colored_hook_results_and_ignores_diagnostics():
@@ -107,12 +113,6 @@ def test_summary_counts_colored_hook_results_and_ignores_diagnostics():
         "Failed to load a file\n"
     )
     assert summarize_output(output) == (1, 1, 1)
-
-
-def _write(repo: Path, path: str, content: str) -> None:
-    target = repo / path
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(content, encoding="utf-8")
 
 
 ENGLISH_PAGES = ["docs/en/guide/new page.md", "docs/en/index.md"]
@@ -138,15 +138,11 @@ ENGLISH_PAGES = ["docs/en/guide/new page.md", "docs/en/index.md"]
 def test_docs_selection_rechecks_every_page_after_config_changes(
     git_repo: Path, monkeypatch: pytest.MonkeyPatch, changed: str | None, expected: list[str]
 ) -> None:
-    for path in [*ENGLISH_PAGES, "docs/fr/index.md"]:
-        _write(git_repo, path, "# Original\n")
-    git(git_repo, "add", ".")
-    git(git_repo, "commit", "-qm", "Base")
-    base = git(git_repo, "rev-parse", "HEAD")
+    base = commit_files(
+        git_repo, dict.fromkeys([*ENGLISH_PAGES, "docs/fr/index.md"], "# Original\n"), "Base"
+    )
     if changed:
-        _write(git_repo, changed, "# Changed\n")
-        git(git_repo, "add", ".")
-        git(git_repo, "commit", "-qm", "Change")
+        commit_files(git_repo, {changed: "# Changed\n"}, "Change")
 
     monkeypatch.chdir(git_repo)
     assert select_docs_files((base, "HEAD") if changed else None) == expected
@@ -155,11 +151,7 @@ def test_docs_selection_rechecks_every_page_after_config_changes(
 def test_docs_selection_ignores_deleted_pages(
     git_repo: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    for path in ENGLISH_PAGES:
-        _write(git_repo, path, "# Original\n")
-    git(git_repo, "add", ".")
-    git(git_repo, "commit", "-qm", "Base")
-    base = git(git_repo, "rev-parse", "HEAD")
+    base = commit_files(git_repo, dict.fromkeys(ENGLISH_PAGES, "# Original\n"), "Base")
     git(git_repo, "rm", "-q", "docs/en/index.md")
     git(git_repo, "commit", "-qm", "Delete")
 
@@ -167,60 +159,88 @@ def test_docs_selection_ignores_deleted_pages(
     assert select_docs_files((base, "HEAD")) == []
 
 
+@pytest.mark.parametrize("clone", ["full", "shallow"])
 def test_changed_refs_diff_a_pr_merge_checkout_against_its_base_tip(
-    git_repo: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, isolated_git: None, monkeypatch: pytest.MonkeyPatch, clone: str
 ) -> None:
-    _write(git_repo, "a.txt", "base\n")
-    git(git_repo, "add", ".")
-    git(git_repo, "commit", "-qm", "Fork point")
-    fork_point = git(git_repo, "rev-parse", "HEAD")
-    git(git_repo, "checkout", "-qb", "pr")
-    _write(git_repo, "pr.txt", "pr\n")
-    git(git_repo, "add", ".")
-    git(git_repo, "commit", "-qm", "PR change")
-    pr_head = git(git_repo, "rev-parse", "HEAD")
-    git(git_repo, "checkout", "-q", "master")
-    _write(git_repo, "a.txt", "newer base\n")
-    git(git_repo, "commit", "-qam", "Newer base")
-    base_tip = git(git_repo, "rev-parse", "HEAD")
-    git(git_repo, "merge", "-q", "--no-ff", "-m", "Merge PR", pr_head)
+    pr = pr_merge_checkout(
+        tmp_path,
+        base={"docs/en/index.md": "# Original\n"},
+        newer_base={"docs/en/base.md": "# Base\n", "src/Base.qml": "Item {}\n"},
+        pr={"docs/en/pr.md": "# PR\n"},
+    )
+    monkeypatch.chdir(getattr(pr, clone))
+    monkeypatch.setenv("PR_BASE_SHA", pr.fork_point)
+    monkeypatch.setenv("PR_HEAD_SHA", pr.pr_head)
 
-    monkeypatch.chdir(git_repo)
-    monkeypatch.setenv("PR_BASE_SHA", fork_point)
-    monkeypatch.setenv("PR_HEAD_SHA", pr_head)
-    assert changed_refs(argparse.Namespace(changed=True)) == (base_tip, "HEAD")
+    refs = changed_refs(parse_args(["--changed"]))
+    assert refs == (pr.base_tip, "HEAD")
+    assert file_selection_args(parse_args(["--changed"])) == [
+        *("--from-ref", pr.base_tip, "--to-ref", "HEAD")
+    ]
+    assert select_docs_files(refs) == ["docs/en/pr.md"]
+    assert not needs_qt(refs)
 
-    git(git_repo, "checkout", "-q", pr_head)
-    assert changed_refs(argparse.Namespace(changed=True)) == (fork_point, pr_head)
+
+@pytest.mark.parametrize(
+    ("pr_files", "expected"),
+    [({"src/Pr.qml": "Item {}\n"}, "true"), ({"src/pr.cc": "int x;\n"}, "false")],
+)
+def test_needs_qt_reports_whether_qml_is_selected(
+    tmp_path: Path,
+    isolated_git: None,
+    monkeypatch: pytest.MonkeyPatch,
+    gh_output: Path,
+    pr_files: dict[str, str],
+    expected: str,
+) -> None:
+    pr = pr_merge_checkout(
+        tmp_path / "repo",
+        base={"src/Old.qml": "Item {}\n"},
+        newer_base={"src/Old.qml": "Rectangle {}\n"},
+        pr=pr_files,
+    )
+    monkeypatch.setattr(pre_commit, "repo_root", lambda: pr.shallow)
+    monkeypatch.setenv("PR_BASE_SHA", pr.fork_point)
+    monkeypatch.setenv("PR_HEAD_SHA", pr.pr_head)
+
+    assert pre_commit.main(["--changed", "--needs-qt"]) == 0
+    assert gh_output.read_text(encoding="utf-8") == f"needs-qt={expected}\n"
+
+
+def test_full_runs_need_qt() -> None:
+    assert needs_qt(None)
 
 
 @pytest.fixture
 def fake_precommit(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> list[list[str]]:
-    """Run main() against tmp_path, recording prek invocations."""
+    """Run main() against tmp_path, recording prek invocations; selecting typos fails."""
     commands: list[list[str]] = []
+
+    def fake_tee(command: list[str], output_file: Path, **_kwargs: object) -> int:
+        commands.append(command)
+        failed = "typos" in command
+        output_file.write_text(HOOK_OUTPUT if failed else "", encoding="utf-8")
+        return int(failed)
 
     def fake_run(command: list[str], **_kwargs: object) -> subprocess.CompletedProcess:
         commands.append(command)
-        if command[:2] == ["prek", "run"]:
-            failed = len(command) > 2 and command[2] == "typos"
-            return completed(HOOK_OUTPUT if failed else "", returncode=int(failed))
         return completed()
 
     monkeypatch.setattr(pre_commit, "repo_root", lambda: tmp_path)
     monkeypatch.setattr(pre_commit, "ensure_precommit_available", lambda: True)
+    monkeypatch.setattr(pre_commit, "run_tee", fake_tee)
     monkeypatch.setattr(pre_commit, "run_captured", fake_run)
     return commands
 
 
-def test_docs_runs_each_hook_on_selected_pages(
+def test_docs_runs_the_docs_hooks_on_selected_pages_in_one_call(
     fake_precommit: list[list[str]], monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setattr(pre_commit, "select_docs_files", lambda refs: ["docs/en/a.md"])
 
     assert pre_commit.main(["--docs"]) == 1
-    assert fake_precommit == [
-        build_precommit_args(["--files", "docs/en/a.md"], hook) for hook in DOCS_HOOKS
-    ]
+    assert fake_precommit == [build_precommit_args(["--files", "docs/en/a.md"], DOCS_HOOKS)]
 
 
 def test_docs_hooks_exist_and_vale_syncs_before_linting() -> None:
@@ -302,19 +322,20 @@ def test_conventional_commit_msg_hook(message: str, valid: bool) -> None:
     assert (pattern.search(message) is None) == valid
 
 
-def test_conventional_commit_types_match_release_rules() -> None:
+def test_conventional_commit_types_match_release_notes_sections() -> None:
     hook = _commit_msg_hook()
     match = re.search(r"\(\?!\(([a-z|]+)\)", hook["entry"])
     assert match
-    release = json.loads((REPO_ROOT / ".releaserc.json").read_text(encoding="utf-8"))
-    analyzer = next(
-        plugin[1]
-        for plugin in release["plugins"]
-        if plugin[0] == "@semantic-release/commit-analyzer"
-    )
-    release_types = {rule["type"] for rule in analyzer["releaseRules"] if "type" in rule}
-    # Renovate commits use `deps` (.github/renovate.json :semanticCommitTypeAll(deps)).
-    assert set(match.group(1).split("|")) == release_types | {"deps"}
+    parsers = read_toml(REPO_ROOT / "tools/configs/cliff.toml")["git"]["commit_parsers"]
+    # Each type either opens a release-notes section or is skipped; Renovate commits use `deps`
+    # (.github/renovate.json :semanticCommitTypeAll(deps)).
+    notes_types = {
+        name
+        for parser in parsers
+        if (types := re.match(r"\^\(?([a-z|]+)", parser.get("message", "")))
+        for name in types.group(1).split("|")
+    }
+    assert set(match.group(1).split("|")) == notes_types
 
 
 def test_renovate_validator_runs_in_ci_when_its_inputs_change() -> None:
@@ -339,7 +360,7 @@ def test_explicit_hooks_override_docs_hooks(
     monkeypatch.setattr(pre_commit, "select_docs_files", lambda refs: ["docs/en/a.md"])
 
     assert pre_commit.main(["--docs", "--hook", "vale"]) == 0
-    assert fake_precommit == [build_precommit_args(["--files", "docs/en/a.md"], "vale")]
+    assert fake_precommit == [build_precommit_args(["--files", "docs/en/a.md"], ["vale"])]
 
 
 def test_docs_without_selected_pages_skips_hooks(
@@ -393,34 +414,41 @@ def test_results_dir_records_failure_when_precommit_is_missing(
     assert results["exit_code"] == "1"
 
 
-def test_ci_failure_writes_summary_outputs_and_annotation(
+def test_ci_failure_writes_summary_and_annotation(
     fake_precommit: list[list[str]],
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
+    gh_output: Path,
+    gh_summary: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    summary = tmp_path / "summary.md"
-    output = tmp_path / "output.txt"
-    monkeypatch.setenv("GITHUB_STEP_SUMMARY", str(summary))
-    monkeypatch.setenv("GITHUB_OUTPUT", str(output))
-
     assert pre_commit.main(["--ci", "--hook", "typos"]) == 1
 
-    assert "**Some checks failed**" in summary.read_text(encoding="utf-8")
-    outputs = output.read_text(encoding="utf-8").splitlines()
-    assert {"exit_code=1", "passed=1", "failed=1"} <= set(outputs)
+    # Without --results-dir the streamed output is read back from a temporary copy.
+    assert "**Some checks failed**" in gh_summary.read_text(encoding="utf-8")
+    assert "lint........................Failed" in gh_summary.read_text(encoding="utf-8")
+    # No workflow step reads outputs; the summary and results artifact carry the counts.
+    assert gh_output.read_text(encoding="utf-8") == ""
     assert "::error::Required pre-commit checks failed" in capsys.readouterr().out
 
 
 def test_precommit_workflow_relies_on_step_failure_and_uploads_results() -> None:
-    steps = get_steps(load_workflow("pre-commit.yml"), "pre-commit")
+    job = load_workflow("pre-commit.yml")["jobs"]["pre-commit"]
+    assert job["env"] == {
+        "PR_BASE_SHA": "${{ github.event.pull_request.base.sha || github.event.before }}",
+        "PR_HEAD_SHA": "${{ github.event.pull_request.head.sha || github.sha }}",
+    }
+    steps = job["steps"]
     by_name = {step.get("name"): step for step in steps}
+    checkout = by_name["Checkout"]["with"]
+    # A merge checkout and its parents name a PR's diff; pushes diff against `before`.
+    assert checkout["fetch-depth"] == "${{ github.event_name == 'pull_request' && 2 || 0 }}"
     run = by_name["Run pre-commit"]
     assert "continue-on-error" not in run
     assert run["run"] == (
         "python3 ./tools/pre_commit.py --ci --changed --results-dir pre-commit-results"
     )
-    assert run["env"]["SKIP"] == "trufflehog"
+    # Docs Lint owns the prose linter; `vale` also selects the `vale-sync` alias.
+    assert run["env"] == {"SKIP": "trufflehog,vale"}
+    assert "vale" in DOCS_HOOKS
     assert by_name["Upload pre-commit results artifact"]["with"]["path"] == "pre-commit-results"
     after_run = steps[steps.index(run) + 1 :]
     assert after_run
@@ -428,11 +456,36 @@ def test_precommit_workflow_relies_on_step_failure_and_uploads_results() -> None
         assert "always()" in step["if"] or "!cancelled()" in step["if"]
 
 
+def test_precommit_installs_qt_only_when_qml_is_checked() -> None:
+    steps = get_steps(load_workflow("pre-commit.yml"), "pre-commit")
+    query = get_step(steps, "qml")
+    assert query["run"] == "python3 ./tools/pre_commit.py --changed --needs-qt"
+    install = get_step(steps, "Install Qt (for qmllint)")
+    assert install["if"] == "steps.qml.outputs.needs-qt == 'true'"
+    assert steps.index(get_step(steps, "Setup Python")) < steps.index(query) < steps.index(install)
+    # qmllint is the only automatic hook that runs a Qt tool, and only on QML_PATHSPECS files.
+    qt_hooks = {
+        hook_id
+        for hook_id, hook in _hooks_by_id().items()
+        if "qml" in hook.get("entry", "") and hook.get("stages") != ["manual"]
+    }
+    assert qt_hooks == {"qmllint"}
+    assert _hooks_by_id()["qmllint"]["files"] == r"\.qml$"
+    assert QT_PATHSPECS == ("*.qml",)
+
+
 def test_docs_lint_workflow_triggers_on_every_full_scan_input() -> None:
     workflow = load_workflow("docs-lint.yml")
     triggers = workflow["on"]["pull_request"]["paths"]
     assert set(DOCS_FULL_SCAN_PATHSPECS) <= set(triggers)
     assert any(fnmatch.fnmatchcase("docs/en/guide/page.md", pattern) for pattern in triggers)
+    (checkout,) = (
+        step
+        for step in workflow["jobs"]["lint"]["steps"]
+        if step.get("uses", "").startswith("actions/checkout@")
+    )
+    # Pull request merge checkouts diff against their first parent; manual runs check every page.
+    assert checkout["with"]["fetch-depth"] == 2
     (lint,) = (
         step
         for step in workflow["jobs"]["lint"]["steps"]
@@ -448,11 +501,29 @@ def _hooks_by_id() -> dict[str, dict]:
     return {hook["id"]: hook for repo in _precommit_config()["repos"] for hook in repo["hooks"]}
 
 
+EDITORCONFIG_CHECKER_CONFIG = REPO_ROOT / "tools/configs/editorconfig-checker.json"
+
+
 def test_editorconfig_checker_relaxes_only_alignment_checks() -> None:
     hook = _hooks_by_id()["editorconfig-checker"]
     assert "stages" not in hook
-    config = json.loads((REPO_ROOT / ".editorconfig-checker.json").read_text(encoding="utf-8"))
+    config = json.loads(EDITORCONFIG_CHECKER_CONFIG.read_text(encoding="utf-8"))
     assert config["Disable"] == {"IndentSize": True, "MaxLineLength": True}
+
+
+@pytest.mark.parametrize(
+    ("hook_id", "flag", "config"),
+    [
+        ("editorconfig-checker", "-config", "tools/configs/editorconfig-checker.json"),
+        ("gersemi", "--config", "tools/configs/gersemirc.yaml"),
+        ("yamlfmt", "-conf", "tools/configs/yamlfmt.yaml"),
+    ],
+)
+def test_hooks_pass_configs_their_tools_do_not_discover(hook_id: str, flag: str, config: str):
+    # Each tool only looks for its configuration in the working directory or the file's parents.
+    args = _hooks_by_id()[hook_id]["args"]
+    assert args[args.index(flag) + 1] == config
+    assert (REPO_ROOT / config).is_file()
 
 
 @pytest.mark.parametrize(
@@ -465,7 +536,27 @@ def test_trial_formatters_only_check_on_the_manual_stage(hook_id: str, check_arg
     if check_arg:
         assert check_arg in hook["args"]
     else:
-        assert hook["entry"] == "python3 ./tools/analyzers/qmlformat.py"
+        assert hook["entry"].endswith(" python ./tools/analyzers/qmlformat.py")
+
+
+def test_local_python_hooks_run_in_the_locked_environment() -> None:
+    # A git hook's bare python3 may be a system interpreter older than the tools' 3.10 floor.
+    scripts = {
+        hook_id: hook["entry"]
+        for hook_id, hook in _hooks_by_id().items()
+        if hook.get("language") == "system" and ".py" in hook["entry"]
+    }
+    hooks = {
+        "qmllint",
+        "qmlformat",
+        "clang-tidy",
+        "clazy",
+        "vehicle-null-check",
+        "qt-translate-noop-check",
+    }
+    assert hooks <= set(scripts)
+    for hook_id, entry in scripts.items():
+        assert entry.startswith("uv run --frozen "), hook_id
 
 
 def test_prek_is_pinned_and_runs_lint() -> None:
@@ -483,6 +574,7 @@ PREK_CACHE_PATH = "~/.cache/prek\n!~/.cache/prek/cache\n"
     [
         ("pre-commit.yml", "pre-commit", "prek-v1-"),
         ("copilot-setup-steps.yml", "copilot-setup-steps", "prek-v1-"),
+        ("docs-lint.yml", "lint", "prek-v1-"),
         ("ci-scripts.yml", "validate-renovate-config", "prek-renovate-v1-"),
     ],
 )
@@ -501,10 +593,46 @@ def test_workflows_cache_prek_environments(workflow: str, job: str, prefix: str)
             assert step["run"] == "prek cache gc"
 
 
+@pytest.mark.parametrize(
+    ("workflow", "job"),
+    [("docs-lint.yml", "lint"), ("copilot-setup-steps.yml", "copilot-setup-steps")],
+)
+def test_other_workflows_restore_prek_environments_read_only(workflow: str, job: str) -> None:
+    steps = get_steps(load_workflow(workflow), job)
+    (cache,) = (step for step in steps if step.get("uses", "").startswith("actions/cache"))
+    assert cache["uses"].startswith("actions/cache/restore@")
+    pre_commit_restore = get_step(
+        get_steps(load_workflow("pre-commit.yml"), "pre-commit"), "pre-commit-cache"
+    )
+    assert cache["with"] == pre_commit_restore["with"]
+
+
+def test_pushes_prepare_every_hook_environment_before_saving() -> None:
+    # prek installs environments only for hooks that run, which would freeze a partial cache.
+    steps = get_steps(load_workflow("pre-commit.yml"), "pre-commit")
+    run = get_step(steps, "Run pre-commit")
+    prepare = get_step(steps, "prepare-hooks")
+    prune = get_step(steps, "Prune unused prek environments")
+    save = get_step(steps, "Save prek environments")
+    assert steps.index(run) < steps.index(prepare) < steps.index(prune) < steps.index(save)
+    assert prepare["if"] == prune["if"]
+    assert "github.event_name == 'push'" in prepare["if"]
+    assert prepare["continue-on-error"] is True
+    assert save["if"].startswith(prepare["if"])
+    assert "steps.prepare-hooks.outcome == 'success'" in save["if"]
+    command = prepare["run"].split()
+    assert command[:2] == ["prek", "prepare-hooks"]
+    skipped = set(command[3::2])
+    assert command[2::2] == ["--skip"] * len(skipped)
+    # Docs Lint restores this cache for vale; TruffleHog and the Renovate validator never use it.
+    assert skipped == {"trufflehog", "renovate-config-validator"}
+    assert skipped <= set(_hooks_by_id())
+
+
 def test_whitespace_hooks_leave_syrupy_snapshots_alone() -> None:
     snapshot = "tools/tests/ci/__snapshots__/test_generate_build_results_comment.ambr"
     hooks = _hooks_by_id()
     for hook_id in ("trailing-whitespace", "end-of-file-fixer", "mixed-line-ending"):
         assert re.search(hooks[hook_id]["exclude"], snapshot), hook_id
-    config = json.loads((REPO_ROOT / ".editorconfig-checker.json").read_text(encoding="utf-8"))
+    config = json.loads(EDITORCONFIG_CHECKER_CONFIG.read_text(encoding="utf-8"))
     assert any(re.search(pattern, snapshot) for pattern in config["Exclude"])

@@ -27,13 +27,13 @@ def fake_qmlformat(monkeypatch: pytest.MonkeyPatch) -> list[list[str]]:
             return CompletedProcess(command, 1, "", "Error: Expected token `}'\n")
         return CompletedProcess(command, 0, FORMATTED, "")
 
-    monkeypatch.setattr("analyzers.base.shutil.which", lambda _: "/qt/bin/qmlformat")
+    monkeypatch.setattr("common.proc.shutil.which", lambda _: "/qt/bin/qmlformat")
     monkeypatch.setattr(qmlformat, "run_captured", run)
     return commands
 
 
 def test_missing_qmlformat_is_execution_failure(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setattr("analyzers.base.shutil.which", lambda _: None)
+    monkeypatch.setattr("common.proc.shutil.which", lambda _: None)
     result = QmlFormatAnalyzer(tmp_path, tmp_path).run([tmp_path / "file.qml"])
     assert result.execution_error
 

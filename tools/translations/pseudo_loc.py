@@ -25,6 +25,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import _bootstrap as _bootstrap
+from common.paths import REPO_ROOT
 from common.xml import xml_parse
 
 # ---------------------------------------------------------------------------
@@ -172,8 +173,7 @@ def process_ts(src_path: Path, dst_path: Path, language: str) -> int:
 
 
 def main() -> None:
-    repo = Path(__file__).resolve().parents[2]
-    translations = repo / "translations"
+    translations = REPO_ROOT / "translations"
 
     pairs = [
         (translations / "qgc.ts", translations / "qgc_source_eo.ts"),

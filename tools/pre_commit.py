@@ -4,23 +4,27 @@
 from __future__ import annotations
 
 import argparse
-import json
+import contextlib
 import os
 import re
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import _bootstrap as _bootstrap
 from common.file_traversal import find_repo_root
-from common.gh_actions import gh_error
-from common.gh_actions import write_github_output as _write_github_output
+from common.gh_actions import gh_error, write_github_output
 from common.gh_actions import write_step_summary as _write_step_summary
-from common.git import get_default_branch_ref
-from common.io import chdir
-from common.logging import log_error, log_info, log_ok, log_warn
-from common.proc import run_captured
+from common.git import pr_diff_refs
+from common.io import chdir, write_json
+from common.logging import log_error, log_info, log_ok
+from common.proc import run_captured, run_tee
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 HOOK_RESULT_RE = re.compile(r"\b(Passed|Failed|Skipped)\b")
 ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-9;]*m")
@@ -36,6 +40,8 @@ DOCS_FULL_SCAN_PATHSPECS = (
     ".github/workflows/docs-lint.yml",
     "tools/pre_commit.py",
 )
+# The files of the only hook that needs Qt (qmllint).
+QT_PATHSPECS = ("*.qml",)
 # Runs .pre-commit-config.yaml; the config stays compatible with stock pre-commit.
 RUNNER = "prek"
 RESULTS_FILE = "pre-commit-results.json"
@@ -50,7 +56,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "-i", "--install", action="store_true", help="Install the pre-commit and commit-msg hooks"
     )
-    parser.add_argument("--ci", action="store_true", help="Enable GitHub Actions outputs")
+    parser.add_argument(
+        "--ci", action="store_true", help="Write the GitHub Actions step summary and annotation"
+    )
     parser.add_argument(
         "--hook", action="append", default=[], metavar="ID", help="Run only this hook (repeatable)"
     )
@@ -64,6 +72,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--results-dir",
         type=Path,
         help=f"Write {RESULTS_FILE} and {OUTPUT_FILE} for the CI results artifact",
+    )
+    parser.add_argument(
+        "--needs-qt",
+        action="store_true",
+        help="Only report whether the selected files include QML, which qmllint checks with Qt, "
+        "and set the needs-qt step output",
     )
     return parser.parse_args(argv)
 
@@ -107,35 +121,25 @@ def changed_refs(args: argparse.Namespace) -> tuple[str, str] | None:
     """Return the (from, to) refs for --changed, or None to check every file."""
     if not args.changed:
         return None
-    ref = os.environ.get("PR_BASE_SHA") or get_default_branch_ref()
-    if ref == "0" * 40:
-        ref = None
-    if not ref:
-        log_warn("Default branch not available, running on all files")
-        return None
-    head = os.environ.get("PR_HEAD_SHA") or "HEAD"
-    if merge_base_tip := _merge_checkout_base(head):
-        # The checkout is GitHub's merge of the PR head into the current base tip, which can be newer than
-        # PR_BASE_SHA; diffing against that tip keeps newer base-branch changes out of the checked regions.
-        ref, head = merge_base_tip, "HEAD"
-    log_info(f"Running on files changed vs {ref}...")
-    return ref, head
-
-
-def _merge_checkout_base(head: str) -> str | None:
-    """Return HEAD's first parent when HEAD merges *head* into it (a pull_request checkout), else None."""
-    if head == "HEAD":
-        return None
-    parents = run_captured(["git", "rev-list", "--parents", "-n", "1", "HEAD"]).stdout.split()
-    resolved = run_captured(["git", "rev-parse", "--verify", f"{head}^{{commit}}"]).stdout.strip()
-    if len(parents) == 3 and resolved and parents[2] == resolved:
-        return parents[1]
-    return None
+    refs = pr_diff_refs(os.environ.get("PR_BASE_SHA"), os.environ.get("PR_HEAD_SHA"))
+    if refs:
+        log_info(f"Running on files changed vs {refs[0]}...")
+    return refs
 
 
 def _git_paths(*args: str) -> list[str]:
     result = run_captured(["git", *args], check=True)
     return [path for path in result.stdout.split("\0") if path]
+
+
+def needs_qt(refs: tuple[str, str] | None) -> bool:
+    """Return whether the runner's selection includes QML files, which qmllint checks with Qt."""
+    if not refs:
+        return True
+    diff_range = f"{refs[0]}...{refs[1]}"
+    return bool(
+        _git_paths("diff", "--name-only", "-z", "--diff-filter=d", diff_range, "--", *QT_PATHSPECS)
+    )
 
 
 def select_docs_files(refs: tuple[str, str] | None) -> list[str]:
@@ -165,9 +169,8 @@ def file_selection_args(args: argparse.Namespace) -> list[str] | None:
     return ["--all-files"]
 
 
-def build_precommit_args(selection: list[str], hook: str | None = None) -> list[str]:
-    hook_args = [hook] if hook else []
-    return [RUNNER, "run", *hook_args, "--show-diff-on-failure", "--color=always", *selection]
+def build_precommit_args(selection: list[str], hooks: Sequence[str] = ()) -> list[str]:
+    return [RUNNER, "run", *hooks, "--show-diff-on-failure", "--color=always", *selection]
 
 
 def write_results(results_dir: Path, exit_code: int, output: str) -> None:
@@ -188,22 +191,8 @@ def write_results(results_dir: Path, exit_code: int, output: str) -> None:
         "run_url": run_url,
     }
     results_dir.mkdir(parents=True, exist_ok=True)
-    (results_dir / RESULTS_FILE).write_text(json.dumps(results, indent=2) + "\n", encoding="utf-8")
+    write_json(results_dir / RESULTS_FILE, results)
     (results_dir / OUTPUT_FILE).write_text(output, encoding="utf-8")
-
-
-def write_github_output(
-    exit_code: int, passed: int, failed: int, skipped: int, summary_lines: list[str]
-) -> None:
-    _write_github_output(
-        {
-            "exit_code": str(exit_code),
-            "passed": str(passed),
-            "failed": str(failed),
-            "skipped": str(skipped),
-            "summary": "\n".join(summary_lines),
-        }
-    )
 
 
 def write_step_summary(exit_code: int, passed: int, failed: int, skipped: int, output: str) -> None:
@@ -247,6 +236,12 @@ def main(argv: list[str] | None = None) -> int:
             if args.install:
                 return handle_install()
 
+            if args.needs_qt:
+                qt = needs_qt(changed_refs(args))
+                log_info(f"Qt {'is' if qt else 'is not'} needed for the selected files")
+                write_github_output({"needs-qt": str(qt).lower()})
+                return 0
+
             if results_dir:
                 # Records a failure unless the run completes.
                 write_results(results_dir, 1, "")
@@ -264,19 +259,16 @@ def main(argv: list[str] | None = None) -> int:
                     write_results(results_dir, 0, "")
                 return 0
 
-            hooks: list[str | None] = list(args.hook or (DOCS_HOOKS if args.docs else [None]))
+            hooks = args.hook or (DOCS_HOOKS if args.docs else ())
             log_info("Running pre-commit checks...")
             print()
-            returncode = 0
-            output = ""
-            for hook in hooks:
-                result = run_captured(build_precommit_args(selection, hook))
-                if result.stdout:
-                    print(result.stdout, end="")
-                if result.stderr:
-                    print(result.stderr, end="", file=sys.stderr)
-                output += result.stdout + result.stderr
-                returncode = returncode or result.returncode
+            with contextlib.ExitStack() as stack:
+                # Stream the hooks live; the summary and results are read back from the copy.
+                output_dir = results_dir or Path(stack.enter_context(tempfile.TemporaryDirectory()))
+                output_file = output_dir / OUTPUT_FILE
+                sys.stdout.flush()
+                returncode = run_tee(build_precommit_args(selection, hooks), output_file)
+                output = output_file.read_text(encoding="utf-8", errors="replace")
             print()
 
             passed, failed, skipped = summarize_output(output)
@@ -289,8 +281,6 @@ def main(argv: list[str] | None = None) -> int:
                 log_error(f"Some checks failed ({passed} passed, {failed} failed)")
 
             if args.ci:
-                summary_lines = extract_hook_lines(output)
-                write_github_output(returncode, passed, failed, skipped, summary_lines)
                 write_step_summary(returncode, passed, failed, skipped, output)
                 if returncode != 0:
                     gh_error("Required pre-commit checks failed; see the job summary.")

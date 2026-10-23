@@ -8,6 +8,7 @@ import os
 import shutil
 import subprocess
 import sys
+import webbrowser
 from pathlib import Path
 
 import _bootstrap as _bootstrap
@@ -16,12 +17,13 @@ from common.file_traversal import find_repo_root
 from common.gh_actions import write_step_summary
 from common.logging import log_error, log_info, log_ok
 from common.markdown import md_table
-from common.opener import open_in_default_app
-from common.proc import run_captured
+from common.proc import require_tools, run_captured
 from qgc_tools.cmake_configure import CMakeConfig, configure
 
 COVERAGE_PRESET = "Linux-coverage"
 DEFAULT_BUILD_DIR = Path("build") / COVERAGE_PRESET
+# Matches CI: instrumented integration tests run slower; at one per CPU MissionControllerTest times out.
+INTEGRATION_JOBS = 2
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -51,10 +53,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 def check_dependencies() -> None:
     """Ensure required tooling is installed."""
-    if shutil.which("gcovr") is None:
-        raise RuntimeError(
-            "gcovr not found. Install with: python tools/setup/install_python.py coverage"
-        )
+    require_tools("gcovr", hint="Install with: python tools/setup/install_python.py coverage")
 
 
 def clean_coverage(build_dir: Path) -> None:
@@ -89,27 +88,36 @@ def build_project(build_dir: Path) -> None:
     log_ok("Build complete")
 
 
-def run_tests(build_dir: Path) -> None:
-    """Run the CI test selection and fail if any test fails."""
-    log_info("Running tests...")
-    subprocess.run(
-        [
-            "ctest",
-            "--test-dir",
-            str(build_dir),
-            "--output-on-failure",
-            "--timeout",
-            "300",
-            "--label-regex",
-            "Unit|Integration",
-            "--label-exclude",
-            "Flaky|Network",
-            "--parallel",
-            str(os.cpu_count() or 1),
-        ],
-        check=True,
-        text=True,
-    )
+def run_tests(repo_root: Path, build_dir: Path) -> None:
+    """Run the Unit, then the Integration phase like CI; fail if either phase fails.
+
+    The coverage test preset supplies the excluded labels; each phase selects its label.
+    """
+    failed: list[str] = []
+    for label, jobs in (("Unit", os.cpu_count() or 1), ("Integration", INTEGRATION_JOBS)):
+        log_info(f"Running {label} tests...")
+        result = subprocess.run(
+            [
+                "ctest",
+                "--preset",
+                COVERAGE_PRESET,
+                "--test-dir",
+                str(build_dir),
+                "--timeout",
+                "300",
+                "--label-regex",
+                label,
+                "--parallel",
+                str(jobs),
+            ],
+            cwd=repo_root,
+            check=False,
+            text=True,
+        )
+        if result.returncode:
+            failed.append(label)
+    if failed:
+        raise RuntimeError(f"{' and '.join(failed)} tests failed")
 
 
 def build_step_summary(summary_json: Path) -> str:
@@ -165,7 +173,7 @@ def open_report(build_dir: Path) -> None:
         raise FileNotFoundError(f"Report not found: {report}")
 
     log_info("Opening coverage report...")
-    if not open_in_default_app(report):
+    if not webbrowser.open(report.resolve().as_uri()):
         raise RuntimeError(f"Could not find a browser opener. Report at: {report}")
 
 
@@ -189,7 +197,7 @@ def main(argv: list[str] | None = None) -> int:
         if not args.report:
             configure_build(repo_root, build_dir)
             build_project(build_dir)
-            run_tests(build_dir)
+            run_tests(repo_root, build_dir)
         generate_report(build_dir, log_file=log_file)
 
         if args.open_report:

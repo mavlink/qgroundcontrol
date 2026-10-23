@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import hashlib
-import json
 import re
 import shutil
 import subprocess
 from pathlib import Path
 from typing import ClassVar
 
+from common.io import read_json
 from common.logging import log_error, log_info, log_ok
 from common.proc import run_captured
 
@@ -130,7 +130,7 @@ class ClangTidyAnalyzer(CompilerAnalyzer):
             identity = _file_identity(file)
             for path in (self.build_dir / "clang-tidy-profiles" / identity).glob("*.json"):
                 try:
-                    profile = json.loads(path.read_text(encoding="utf-8"))["profile"]
+                    profile = read_json(path)["profile"]
                     for name, seconds in profile.items():
                         if name.startswith("time.clang-tidy.") and name.endswith(".wall"):
                             check = name.removeprefix("time.clang-tidy.").removesuffix(".wall")

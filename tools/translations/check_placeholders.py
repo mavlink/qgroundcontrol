@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import _bootstrap as _bootstrap
-from common.git import run_git
+from common.git import merge_checkout_parent, run_git
 from common.proc import output_text, run_bytes
 from common.xml import XMLParseError, xml_parse
 
@@ -285,10 +285,16 @@ def main(argv: list[str] | None = None) -> int:
         default=os.environ.get("PRE_COMMIT_FROM_REF", "HEAD"),
         help="Git baseline (default: PRE_COMMIT_FROM_REF or HEAD); EMPTY checks all messages",
     )
+    parser.add_argument(
+        "--head-sha",
+        help="Pull request head; when HEAD is GitHub's merge of it, the merge's first parent "
+        "(the current base-branch tip) replaces --base-ref",
+    )
     parser.add_argument("files", nargs="*", help="Repository-relative catalog paths")
     args = parser.parse_args(argv)
     try:
         repo = Path(run_git("rev-parse", "--show-toplevel", check=True).stdout.strip()).resolve()
+        args.base_ref = merge_checkout_parent(args.head_sha, cwd=repo) or args.base_ref
         errors, files, messages = validate(repo, args.base_ref, args.files)
     except subprocess.CalledProcessError as error:
         stderr = output_text(error.stderr).strip()

@@ -8,11 +8,16 @@ import sys
 import tempfile
 import time
 import urllib.request
-from http.client import IncompleteRead
+from http.client import HTTPException
 from pathlib import Path
-from urllib.error import URLError
+from urllib.error import HTTPError
 
-__all__ = ["download_file", "read_url_text"]
+from .io import extract_tar_data, extract_zip_safe
+
+__all__ = ["download_file", "fetch_bytes", "fetch_release_member", "read_url_text"]
+
+# Request Timeout and Too Many Requests clear up on their own; other 4xx responses never do.
+_TRANSIENT_CLIENT_ERRORS = frozenset({408, 429})
 
 
 class ChecksumMismatchError(RuntimeError):
@@ -25,6 +30,37 @@ def read_url_text(url: str, *, timeout: int = 60, encoding: str = "utf-8") -> st
         return response.read().decode(encoding)
 
 
+def _is_transient(error: HTTPException | OSError) -> bool:
+    """Connection errors, timeouts, truncated bodies, 5xx, 408 and 429 are worth retrying."""
+    if isinstance(error, HTTPError):
+        return error.code >= 500 or error.code in _TRANSIENT_CLIENT_ERRORS
+    return True
+
+
+def fetch_bytes(
+    url: str, *, timeout: float, attempts: int = 3, backoff_seconds: float = 2.0
+) -> bytes:
+    """GET a small response into memory, retrying like download_file.
+
+    A final HTTP error (e.g. a 404) propagates as ``HTTPError`` at once so callers can tell it
+    apart; transient failures that outlast every attempt raise ``RuntimeError``.
+    """
+    if attempts < 1:
+        raise ValueError("attempts must be positive")
+    last: HTTPException | OSError | None = None
+    for attempt in range(1, attempts + 1):
+        try:
+            with urllib.request.urlopen(urllib.request.Request(url), timeout=timeout) as response:
+                return response.read()
+        except (HTTPException, OSError) as error:
+            if not _is_transient(error):
+                raise
+            last = error
+            if attempt < attempts:
+                time.sleep(backoff_seconds * attempt)
+    raise RuntimeError(f"Failed to fetch {url} after {attempts} attempts: {last}") from last
+
+
 def download_file(
     url: str,
     dest: Path,
@@ -34,7 +70,12 @@ def download_file(
     retry_backoff_seconds: float = 5.0,
     timeout: float = 120,
 ) -> None:
-    """Download and atomically publish a file after optional SHA-256 verification."""
+    """Download and atomically publish a file after optional SHA-256 verification.
+
+    Transient failures are retried with a linear backoff; a final HTTP error (e.g. a 404)
+    propagates as ``HTTPError`` at once, and failures that outlast every attempt raise
+    ``RuntimeError``.
+    """
     if attempts < 1:
         raise ValueError("attempts must be positive")
     if retry_backoff_seconds < 0:
@@ -86,7 +127,9 @@ def download_file(
             return
         except ChecksumMismatchError:
             raise
-        except (IncompleteRead, URLError, OSError) as error:
+        except (HTTPException, OSError) as error:
+            if not _is_transient(error):
+                raise
             last = error
             print(f"Download failed: {error}", file=sys.stderr)
             if attempt < attempts:
@@ -97,3 +140,20 @@ def download_file(
             if staging is not None:
                 staging.unlink(missing_ok=True)
     raise RuntimeError(f"Failed to download {url}: {last}")
+
+
+def fetch_release_member(url: str, sha256: str, member: str, staging: Path) -> Path:
+    """Download a SHA-256-pinned release archive into *staging*, extract it, and return *member*.
+
+    The member must be a regular file; a symlink could point the install outside the archive.
+    """
+    archive = staging / url.rsplit("/", 1)[-1]
+    download_file(url, archive, expected_sha256=sha256)
+    if archive.name.endswith(".zip"):
+        extract_zip_safe(archive, staging)
+    else:
+        extract_tar_data(archive, staging)
+    source = staging / member
+    if source.is_symlink() or not source.is_file():
+        raise RuntimeError(f"No regular file {member} in {archive.name}")
+    return source

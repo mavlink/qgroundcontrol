@@ -49,6 +49,7 @@ class TestShouldSkipPath:
 
     def test_skip_cache(self) -> None:
         assert should_skip_path(Path("/project/.cache/file.cpp"))
+        assert should_skip_path(Path("/project/.cache/ccache/file.cpp"))
         assert should_skip_path(Path("/project/.ccache/file.cpp"))
 
     def test_no_skip_src(self) -> None:

@@ -205,7 +205,7 @@ def test_require_repository_prefers_override_and_requires_value(capsys) -> None:
     assert capsys.readouterr().out == "::error::GH_REPO or GITHUB_REPOSITORY must be set\n"
 
 
-@pytest.mark.parametrize("cache_dir", [".ccache", ".cache/moccache", ".cache/CPM", ".qt"])
+@pytest.mark.parametrize("cache_dir", [".cache/ccache", ".cache/moccache", ".cache/CPM", ".qt"])
 def test_cache_path_survives_runner_workspace_changes(monkeypatch, tmp_path, cache_dir):
     paths = []
     for root in ("actions-runner/_work/qgc/qgc", "a/qgc/qgc"):
@@ -315,22 +315,45 @@ class TestAppendGithubEnv:
         with patch.dict(os.environ, {}, clear=True):
             mod.append_github_env({"FOO": "bar"})
 
+    @pytest.mark.parametrize("value", ["a\nINJECTED=1", "a\rb", "a\r\n"])
+    def test_rejects_line_breaks_before_writing(self, tmp_path, value: str) -> None:
+        out = tmp_path / "env"
+        out.touch()
+        with (
+            patch.dict(os.environ, {"GITHUB_ENV": str(out)}, clear=False),
+            pytest.raises(ValueError, match="BAD must be a single line"),
+        ):
+            mod.append_github_env({"OK": "1", "BAD": value})
+        assert out.read_text() == ""
+
+
+class TestAppendGithubPath:
+    def test_appends_entry(self, tmp_path) -> None:
+        out = tmp_path / "path"
+        with patch.dict(os.environ, {"GITHUB_PATH": str(out)}, clear=False):
+            mod.append_github_path("/opt/tool/bin")
+        assert out.read_text() == "/opt/tool/bin\n"
+
+    def test_rejects_line_breaks(self, tmp_path) -> None:
+        out = tmp_path / "path"
+        with (
+            patch.dict(os.environ, {"GITHUB_PATH": str(out)}, clear=False),
+            pytest.raises(ValueError, match="single line"),
+        ):
+            mod.append_github_path("/opt/tool/bin\n/evil")
+        assert not out.exists()
+
 
 class TestIsCi:
     @pytest.mark.parametrize("name", ["CI", "GITHUB_ACTIONS"])
     @pytest.mark.parametrize("value", ["1", "true", "TRUE", "yes", "on"])
     def test_truthy_ci_variable(self, monkeypatch, name: str, value: str) -> None:
-        monkeypatch.delenv("CI", raising=False)
-        monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
         monkeypatch.setenv(name, value)
         assert mod.is_ci() is True
 
     @pytest.mark.parametrize("value", [None, "0", "false", "no", "off", ""])
     def test_falsy_or_unset(self, monkeypatch, value: str | None) -> None:
-        monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
-        if value is None:
-            monkeypatch.delenv("CI", raising=False)
-        else:
+        if value is not None:
             monkeypatch.setenv("CI", value)
         assert mod.is_ci() is False
 

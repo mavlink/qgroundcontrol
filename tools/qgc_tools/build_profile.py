@@ -8,6 +8,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from common.io import read_json, write_json
+
 
 @dataclass(frozen=True)
 class BuildEdge:
@@ -159,7 +161,7 @@ def summarize_ninja_log(edges: list[BuildEdge], *, limit: int) -> NinjaSummary:
 
 def parse_time_trace(path: Path, *, event_limit: int = 8) -> TimeTrace:
     """Parse one Clang -ftime-trace JSON file."""
-    data = json.loads(path.read_text(encoding="utf-8"))
+    data = read_json(path)
     if not isinstance(data, dict):
         raise ValueError(f"Not a Clang time-trace file: {path}")
     events = data.get("traceEvents")
@@ -345,9 +347,11 @@ def write_snapshot(
     *,
     previous: list[BuildEdge] | None = None,
     wall_seconds: float | None = None,
+    ninja_log: Path | None = None,
+    limit: int = 15,
 ) -> str:
     """Save cheap Ninja timings and raw evidence without scanning the SDK for traces."""
-    log = build_dir / ".ninja_log"
+    log = ninja_log or build_dir / ".ninja_log"
     edges = parse_ninja_log(log)
     if previous is not None:
         if edges[: len(previous)] == previous:
@@ -356,14 +360,14 @@ def write_snapshot(
             # Ninja may compact its accumulated log before starting a build.
             old = set(previous)
             edges = [edge for edge in edges if edge not in old]
-    summary = summarize_ninja_log(edges, limit=15)
-    report = build_report(summary, [], limit=15)
-    payload = build_json(summary, [], limit=15)
+    summary = summarize_ninja_log(edges, limit=limit)
+    report = build_report(summary, [], limit=limit)
+    payload = build_json(summary, [], limit=limit)
     payload["wall_seconds"] = wall_seconds
     output_dir.mkdir(parents=True, exist_ok=True)
     # A non-hidden name is uploaded by actions/upload-artifact without opting
     # into unrelated hidden build files.
     shutil.copyfile(log, output_dir / "ninja.log")
     (output_dir / "report.md").write_text(report, encoding="utf-8")
-    (output_dir / "report.json").write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    write_json(output_dir / "report.json", payload)
     return report

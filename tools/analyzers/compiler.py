@@ -5,14 +5,14 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-import shutil
 import subprocess
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any, ClassVar, NamedTuple, TypedDict
 
-from common.proc import run_captured
+from common.io import read_json, write_json
+from common.proc import require_tools, run_captured
 
 from analyzers.base import AnalysisResult, AnalyzerBase
 
@@ -84,7 +84,7 @@ class CompilerAnalyzer(AnalyzerBase):
 
     def _translation_units(self, files: list[Path]) -> list[Path]:
         """Use active compile commands; headers require a conservative project scan."""
-        database = json.loads(self.compile_commands.read_text(encoding="utf-8"))
+        database = read_json(self.compile_commands)
         if not isinstance(database, list):
             raise ValueError("Compilation database must contain a list")
         selected = {file.resolve() for file in files}
@@ -148,9 +148,7 @@ class CompilerAnalyzer(AnalyzerBase):
 
     def _cache_identity(self) -> tuple[str, ...]:
         """Identify the executable, its arguments and any configuration it reads."""
-        executable = shutil.which(self.executable)
-        if executable is None:
-            raise OSError(f"{self.executable} not found")
+        executable = require_tools(self.executable)[self.executable]
         version = run_captured([executable, "--version"], timeout=60)
         if version.returncode:
             raise OSError(f"{self.executable} --version failed")
@@ -325,25 +323,21 @@ class CompilerAnalyzer(AnalyzerBase):
         wall_seconds = time.perf_counter() - analysis_start
         check_timings = self._check_timings(files)
         cache_report = self._finish_cache(keys, timings)
-        (self.build_dir / f"{self.name}-timings.json").write_text(
-            json.dumps(
-                {
-                    "tool": self.name,
-                    "selection_seconds": round(selection_seconds, 3),
-                    "wall_seconds": round(wall_seconds, 3),
-                    "worker_seconds": round(sum(row["seconds"] for row in timings), 3),
-                    "workers": self.jobs,
-                    "shard": self.shard,
-                    "shard_count": self.shard_count,
-                    "selected_files": total_files,
-                    "checks": check_timings,
-                    "result_cache": cache_report,
-                    "files": timings,
-                },
-                indent=2,
-            )
-            + "\n",
-            encoding="utf-8",
+        write_json(
+            self.build_dir / f"{self.name}-timings.json",
+            {
+                "tool": self.name,
+                "selection_seconds": round(selection_seconds, 3),
+                "wall_seconds": round(wall_seconds, 3),
+                "worker_seconds": round(sum(row["seconds"] for row in timings), 3),
+                "workers": self.jobs,
+                "shard": self.shard,
+                "shard_count": self.shard_count,
+                "selected_files": total_files,
+                "checks": check_timings,
+                "result_cache": cache_report,
+                "files": timings,
+            },
         )
         print(
             f"Suppressed {diagnostics.suppressed} repeated diagnostic blocks; raw output: {raw_path}",

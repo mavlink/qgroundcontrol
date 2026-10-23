@@ -20,15 +20,15 @@ from common.proc import run_captured
 | `file_traversal.py` | Repository-root discovery and filtered C++ file traversal |
 | `format.py` | Human-readable byte and size-delta formatting |
 | `gh_actions.py` | GitHub CLI calls, read-only API retries and JSON reads, annotations, log groups, outputs, summaries, and CI detection |
-| `git.py` | Captured Git commands, default-branch discovery, diff bases, and changed line ranges |
+| `git.py` | Captured Git commands, default-branch discovery, pull request diff refs, diff bases, and changed line ranges |
 | `gstreamer.py` | GStreamer SDK package and mirror URLs and their pinned checksums |
 | `io.py` | JSON/TOML I/O, checksums, atomic writes, and safe archive extraction |
 | `logging.py` | Color-aware terminal logging |
 | `markdown.py` | Escaped GitHub-Flavored Markdown tables |
-| `net.py` | Dependency-free atomic downloads with retries and optional SHA-256 verification |
-| `opener.py` | Cross-platform default-application launching |
+| `net.py` | Dependency-free atomic downloads and small fetches with optional SHA-256 verification; retries only transient failures (connection errors, timeouts, 5xx, 408, 429), so a 404 fails at once; `fetch_release_member` extracts one member from a pinned release archive |
+| `paths.py` | `TOOLS_DIR` and `REPO_ROOT`, resolved from the module location |
 | `platform.py` | OS and CPU architecture normalization |
-| `proc.py` | Captured, tee, and bounded-retry subprocess execution, and bytes-or-text output decoding |
+| `proc.py` | Captured, tee, and bounded-retry subprocess execution, bytes-or-text output decoding, `require_tools` (`MissingToolError` names every tool missing from `PATH`), and deadline polling with `wait_until` |
 | `qt.py` | Qt installer-kit discovery for host tools such as `qt-cmake` and `lupdate` |
 | `tool_version.py` | External-tool and `uv.lock` version lookup |
 | `xml.py` | Safe XML parsing with entity-declaration rejection |
@@ -72,6 +72,3 @@ When a new helper is warranted:
 4. Add focused tests under `tools/tests/`.
 5. Run `just test-python` and `just lint` (Ruff, Pyright, and import-linter run as pre-commit hooks).
 6. Update sparse-checkout lists if the automatic policy test reports a missing module.
-
-Standalone packages under `tools/skills/` are copied and run outside the repository, so their
-reference scripts must not depend on `tools/common/`.

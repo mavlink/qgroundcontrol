@@ -4,8 +4,8 @@ Usage:
     python3 tools/analyzers/clang_format.py [--fix] FILE...
 
 The hook checks (or with --fix, formats) only the lines that differ from the PR merge base
-(PRE_COMMIT_FROM_REF/PRE_COMMIT_TO_REF) or, locally, from HEAD. New and explicitly selected
-unchanged files are checked in full; deletion-only changes are skipped.
+(PRE_COMMIT_FROM_REF/PRE_COMMIT_TO_REF) or, locally, from HEAD. New files, explicitly selected
+unchanged files and the tools/coding-style examples are checked in full; deletion-only changes are skipped.
 """
 
 from __future__ import annotations
@@ -26,6 +26,9 @@ from common.proc import run_captured
 from common.tool_version import probe_version, uv_lock_version
 
 from analyzers.base import AnalysisResult, AnalyzerBase
+
+# Contributors copy these worked examples, so any change to one checks or formats the whole file.
+FULL_FILE_DIRS = ("tools/coding-style/",)
 
 
 def _clang_format_command(file: Path, lines: list[str], *, fix: bool) -> list[str]:
@@ -81,6 +84,9 @@ class ClangFormatAnalyzer(AnalyzerBase):
         """Map each file to its clang-format --lines arguments, dropping deletion-only changes."""
         targets: dict[Path, list[str]] = {}
         for file in files:
+            if Path(self.relative_path(file)).as_posix().startswith(FULL_FILE_DIRS):
+                targets[file] = []
+                continue
             ranges = changed_ranges(file, self.diff_base, cwd=self.repo_root)
             if ranges != []:
                 targets[file] = [f"--lines={start}:{end}" for start, end in ranges or []]

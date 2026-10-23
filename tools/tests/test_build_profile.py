@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import build_profile as build_profile_cli
+import pytest
 from qgc_tools.build_profile import (
     BuildEdge,
     TimeTrace,
@@ -18,9 +18,6 @@ from qgc_tools.build_profile import (
     summarize_ninja_log,
     write_snapshot,
 )
-
-if TYPE_CHECKING:
-    import pytest
 
 
 def test_parse_ninja_log_reads_edges_and_skips_header(tmp_path: Path) -> None:
@@ -202,3 +199,40 @@ def test_cli_reports_json_and_skips_snapshot_without_ninja_log(
     assert build_profile_cli.main(["-B", str(empty), "--output-dir", str(tmp_path / "out")]) == 0
     assert "No Ninja log" in capsys.readouterr().out
     assert not (tmp_path / "out").exists()
+
+
+def test_cli_snapshot_honors_ninja_log_and_limit(tmp_path: Path) -> None:
+    log = tmp_path / "logs" / "custom.ninja_log"
+    log.parent.mkdir()
+    log.write_text("# ninja log v5\n0\t300\t0\ta.o\ta\n0\t200\t0\tb.o\tb\n0\t100\t0\tc.o\tc\n")
+    output = tmp_path / "out"
+    args = ["-B", str(tmp_path / "build"), "--ninja-log", str(log), "--limit", "1"]
+
+    assert build_profile_cli.main([*args, "--output-dir", str(output)]) == 0
+
+    report = json.loads((output / "report.json").read_text(encoding="utf-8"))
+    assert [edge["output"] for edge in report["slowest_edges"]] == ["a.o"]
+    assert (output / "ninja.log").read_text() == log.read_text()
+
+
+def test_cli_json_out_writes_both_reports_from_one_trace_scan(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (tmp_path / ".ninja_log").write_text("# ninja log v5\n0\t40\t0\ta.o\th\n", encoding="utf-8")
+    scans: list[Path] = []
+    monkeypatch.setattr(
+        build_profile_cli, "find_time_traces", lambda root: scans.append(root) or []
+    )
+    json_out = tmp_path / "report.json"
+
+    assert build_profile_cli.main(["-B", str(tmp_path), "--json-out", str(json_out)]) == 0
+
+    assert capsys.readouterr().out.startswith("# Build Profile Report")
+    assert json.loads(json_out.read_text(encoding="utf-8"))["edge_count"] == 1
+    assert scans == [tmp_path.resolve()]
+
+
+def test_cli_rejects_json_options_with_snapshot(tmp_path: Path) -> None:
+    for option in (["--json"], ["--json-out", str(tmp_path / "r.json")]):
+        with pytest.raises(SystemExit):
+            build_profile_cli.parse_args(["--output-dir", str(tmp_path), *option])

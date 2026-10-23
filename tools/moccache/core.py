@@ -1,63 +1,6 @@
-#!/usr/bin/env python3
-"""moccache — a content-addressed cache for Qt's moc.
+"""moccache hot path: cache-key computation, hit validation and the miss path.
 
-Speeds up clean builds / CI / branch switches by caching moc output keyed on
-moc identity + arguments + input content + all transitive include contents
-(tracked via moc's --output-dep-file, Qt 5.15+).
-
-A hit re-validates every include recorded in the entry's manifest by content
-hash, skipping the hash while the file's mtime, ctime and size still match the
-ones recorded next to it. moc's --version is memoized in
-$MOCCACHE_DIR/moc-versions per moc binary (resolved path, mtime, size), so a
-hit spawns no process.
-
-Usage (as CMake AUTOMOC executable, via a shim that bakes the real moc path):
-    moccache.py --real-moc /path/to/moc [moc args...]
-or set MOCCACHE_MOC=/path/to/moc and invoke:
-    moccache.py [moc args...]
-or trim the cache to a size limit (LRU eviction):
-    moccache.py --trim [--max-size 1G]
-or report / reset recorded stats (requires MOCCACHE_STATS during the build):
-    moccache.py --show-stats --build-dir DIR [--verbose | --markdown]
-    moccache.py --zero-stats
-
-Environment:
-    MOCCACHE_MOC      Path to the real moc (if --real-moc not given).
-    MOCCACHE_DIR      Cache directory (default <source tree>/.cache/moccache,
-                      matching the CMake-generated launcher).
-    MOCCACHE_BASEDIR  Build dir root; rewritten to a token in cache keys and
-                      manifests so different build trees share cache entries
-                      (same idea as ccache's base_dir).
-    MOCCACHE_MAX_SIZE Size limit (e.g. 256M, 1G). If set, the cache is
-                      LRU-trimmed opportunistically after misses (at most once
-                      per hour). Unset = unlimited.
-    MOCCACHE_DISABLE  If set, always pass through to real moc.
-    MOCCACHE_STATS    If set, append "<kind>\t<input>\t<epoch>\t<basedir>\t<detail>"
-                      lines to $MOCCACHE_DIR/stats.log. --show-stats reports
-                      only the ninja build in DIR (entries newer than the
-                      build start derived from DIR/.ninja_log, from this
-                      MOCCACHE_BASEDIR) and then prunes that build dir's older
-                      entries, so the log stays about one build long (other
-                      build dirs' entries are left for their own reports; when
-                      the build start cannot be derived it reports everything).
-                      The log is always capped at _STATS_LOG_MAX_LINES. The
-                      CMake-generated moccache-stats post-build script runs it
-                      after linking. --markdown prints the same report as
-                      tables (with the cache size) for CI job summaries.
-
-Stats kinds. Misses carry a reason so legitimate misses can be told apart
-from cache-design problems (a per-input index of recent keys under
-$MOCCACHE_DIR/index makes the comparison possible). --show-stats prints each
-kind's count with the explanation from _KIND_DESCRIPTIONS; in short:
-    expected      miss-first-seen, miss-header-changed, miss-include-changed
-                  (detail = the include), miss-predefs-changed (after a
-                  compiler-flag change), miss-moc-version-changed (Qt upgrade)
-    investigate   miss-args-changed (detail = first differing arg; -I/-D churn
-                  between build trees defeats sharing), miss-output-depth-differs
-    cache size    miss-cache-evicted, miss-history-evicted -> raise MOCCACHE_MAX_SIZE
-    other         miss-uncacheable (moc gave no dep file), miss-cache-unreadable
-                  (entry incomplete or could not be copied out), cache-trimmed
-                  (detail = entries evicted)
+Everything a moc run needs lives here; see the package docstring for usage.
 """
 
 from __future__ import annotations
@@ -72,8 +15,9 @@ import sys
 import time
 from pathlib import Path
 
-# subprocess, shutil and tempfile are imported where they are needed: a hit
-# never needs them, and the imports are a measurable share of a hit's runtime.
+# subprocess, shutil, tempfile and the trim and stats submodules are imported
+# where they are needed: a hit never needs them, and the imports are a
+# measurable share of a hit's runtime.
 
 # Options whose value is a separate following argument.
 _VALUE_OPTS = {
@@ -419,6 +363,18 @@ def _manifest_line(dep: str, basedir_prefixes: list[str], racy_after_ns: int) ->
     return "\t".join([path, digest, *_stat_fields(st)])
 
 
+def _dep_stat(dep: str) -> os.stat_result:
+    """Stat dep the way _sha256_file_stat recorded it.
+
+    On Windows, os.stat by path can report different times than os.fstat on an open handle
+    (Python 3.12 reads cached directory metadata), so the comparison would never match there.
+    """
+    if os.name != "nt":
+        return os.stat(dep)
+    with open(dep, "rb") as f:
+        return os.fstat(f.fileno())
+
+
 def _dep_unchanged(dep: str, dep_hash: str, recorded_stat: list[str]) -> bool:
     """Whether dep still has the content hashed into the manifest.
 
@@ -426,7 +382,7 @@ def _dep_unchanged(dep: str, dep_hash: str, recorded_stat: list[str]) -> bool:
     (empty for old-format or untrusted lines, which never match).
     """
     try:
-        st = os.stat(dep)
+        st = _dep_stat(dep)
     except (OSError, ValueError):
         return False
     if not stat.S_ISREG(st.st_mode):
@@ -463,23 +419,6 @@ def _log_stat(cache_dir: Path, what: str, input_file: str, detail: str = "") -> 
 
 # Per-input index of recent cache keys, used only to explain misses.
 _INDEX_MAX_KEYS = 8
-
-# Shown next to each kind in --show-stats so the report is self-explanatory.
-_KIND_DESCRIPTIONS = {
-    "miss-first-seen": "first time this header was moc'd",
-    "miss-header-changed": "the header itself changed",
-    "miss-include-changed": "a header it includes changed",
-    "miss-predefs-changed": "moc_predefs.h changed: compiler flags or SDK differ",
-    "miss-moc-version-changed": "moc version changed",
-    "miss-args-changed": "moc arguments differ: build trees not sharing, investigate",
-    "miss-output-depth-differs": "autogen output dir depth differs between build trees",
-    "miss-cache-evicted": "entry was trimmed from the cache: raise MOCCACHE_MAX_SIZE",
-    "miss-cache-unreadable": "entry exists but is incomplete or could not be copied out",
-    "miss-history-evicted": "all previous entries trimmed, cannot diff: raise MOCCACHE_MAX_SIZE",
-    "miss-uncacheable": "moc produced no dep file, result not cached",
-    "cache-trimmed": "auto-trim ran, detail = entries evicted",
-    "bad-max-size": "MOCCACHE_MAX_SIZE is not a valid size, detail = the value",
-}
 
 
 def _index_path(cache_dir: Path, input_file: str, basedir_prefixes: list[str]) -> Path:
@@ -578,136 +517,6 @@ def _explain_key_miss(
     return best[1], best[2]
 
 
-_SIZE_SUFFIXES = {"k": 1024, "m": 1024**2, "g": 1024**3, "t": 1024**4}
-_TRIM_INTERVAL_SECONDS = 3600
-_TRIM_LOW_WATER = 0.8  # trim to 80% of the limit so trims aren't back-to-back
-
-
-def _parse_size(s: str) -> int:
-    """Parse a size like '256M', '1G', '2kb', or plain bytes into bytes."""
-    t = s.strip().lower().removesuffix("b")
-    if not t:
-        raise ValueError(f"invalid size: {s!r}")
-    factor = 1
-    if t[-1] in _SIZE_SUFFIXES:
-        factor = _SIZE_SUFFIXES[t[-1]]
-        t = t[:-1]
-    if not t.isdigit():
-        raise ValueError(f"invalid size: {s!r}")
-    return int(t) * factor
-
-
-def _scan_entries(cache_dir: Path) -> list[tuple[float, int, Path]]:
-    """Every cache entry as (mtime, size in bytes, path); vanished entries are skipped."""
-    entries = []
-    for shard in cache_dir.glob("??"):
-        if not shard.is_dir():
-            continue
-        for mdir in shard.iterdir():
-            with contextlib.suppress(OSError):
-                mtime = mdir.stat().st_mtime
-                size = sum(f.stat().st_size for f in mdir.iterdir() if f.is_file())
-                entries.append((mtime, size, mdir))
-    return entries
-
-
-def _trim(cache_dir: Path, max_bytes: int) -> int:
-    """LRU-evict cache entries until total size <= 80% of max_bytes.
-
-    Entry recency is the entry directory's mtime (refreshed on hits).
-    Returns the number of entries removed. Never raises: a concurrently
-    written or vanished entry is skipped.
-    """
-    import shutil
-
-    entries = _scan_entries(cache_dir)
-    total = sum(size for _, size, _ in entries)
-    if total <= max_bytes:
-        return 0
-    target = int(max_bytes * _TRIM_LOW_WATER)
-    removed = 0
-    for _, size, mdir in sorted(entries):
-        if total <= target:
-            break
-        shutil.rmtree(mdir, ignore_errors=True)
-        if mdir.exists():
-            continue  # deletion failed; don't account for it
-        total -= size
-        removed += 1
-    return removed
-
-
-def _maybe_auto_trim(cache_dir: Path) -> None:
-    """Trim after a miss if MOCCACHE_MAX_SIZE is set, at most once per hour.
-
-    The trim slot is claimed atomically (O_EXCL lock file) so concurrent
-    misses don't all walk the cache; a lock left by a crashed holder is
-    reclaimed once it is older than the trim interval.
-    """
-    limit = os.environ.get("MOCCACHE_MAX_SIZE")
-    if not limit:
-        return
-    try:
-        max_bytes = _parse_size(limit)
-    except ValueError:
-        _log_stat(
-            cache_dir, "bad-max-size", "", limit
-        )  # misconfig breadcrumb; cache stays untrimmed
-        return
-    stamp = cache_dir / "trim.stamp"
-    lock = cache_dir / "trim.lock"
-    with contextlib.suppress(OSError):
-        try:
-            fresh = time.time() - stamp.stat().st_mtime < _TRIM_INTERVAL_SECONDS
-        except FileNotFoundError:
-            fresh = False  # no stamp (or it vanished mid-check): proceed to trim
-        if fresh:
-            return
-        try:
-            os.close(os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY))
-        except FileExistsError:
-            # Another process holds the slot. Reclaim it if the holder
-            # crashed long ago; either way, skip this trim.
-            if time.time() - lock.stat().st_mtime > _TRIM_INTERVAL_SECONDS:
-                lock.unlink()
-            return
-        try:
-            removed = _trim(cache_dir, max_bytes)
-            if removed:
-                _log_stat(cache_dir, "cache-trimmed", "", str(removed))
-            stamp.touch()  # only after a completed trim; a crash must not suppress retries
-        finally:
-            with contextlib.suppress(OSError):
-                lock.unlink()
-
-
-def _trim_main(argv: list[str]) -> int:
-    max_size = os.environ.get("MOCCACHE_MAX_SIZE", "")
-    i = 0
-    while i < len(argv):
-        if argv[i] == "--max-size":
-            if i + 1 >= len(argv):
-                print("moccache: --max-size requires a value", file=sys.stderr)
-                return 2
-            max_size = argv[i + 1]
-            i += 2
-        else:
-            print(f"moccache: unknown --trim argument: {argv[i]}", file=sys.stderr)
-            return 2
-    if not max_size:
-        print("moccache: --trim requires --max-size or MOCCACHE_MAX_SIZE", file=sys.stderr)
-        return 2
-    try:
-        max_bytes = _parse_size(max_size)
-    except ValueError as e:
-        print(f"moccache: {e}", file=sys.stderr)
-        return 2
-    cache_dir = _cache_dir()
-    removed = _trim(cache_dir, max_bytes)
-    print(f"moccache: trimmed {removed} entries from {cache_dir}")
-    return 0
-
-
 def _cache_dir() -> Path:
     """Cache directory: $MOCCACHE_DIR, else <source tree>/.cache/moccache.
 
@@ -717,255 +526,23 @@ def _cache_dir() -> Path:
     env = os.environ.get("MOCCACHE_DIR")
     if env:
         return Path(env)
-    return Path(__file__).resolve().parent.parent / ".cache" / "moccache"
-
-
-# Subtracted from the estimated build start so clock/mtime granularity never
-# drops a moc run that happened in the build's first moments.
-_BUILD_START_SLACK_SECONDS = 2.0
-
-# ninja on Windows logs mtimes as FILETIME ticks (100 ns since 1601-01-01)
-# minus its own 12622770400 s rebase (src/disk_interface.cc), which is *not*
-# exactly 400 years; the Unix offset below is that constant minus 1601->1970.
-_NINJA_LOG_MTIME_IS_FILETIME = sys.platform == "win32"
-_NINJA_FILETIME_UNIX_OFFSET = 12_622_770_400 - 11_644_473_600
-
-# A build start further back than this (or in the future) means the log isn't
-# telling us about the current build; report all stats rather than misfilter.
-_BUILD_START_MAX_AGE_SECONDS = 24 * 3600
-_BUILD_START_MAX_FUTURE_SECONDS = 60
-
-# Edges examined for the build start: enough to always include a real compile
-# alongside any restat command that logged a stale output mtime.
-_BUILD_START_EDGES = 32
-
-
-def _ninja_mtime_to_epoch(mtime: int) -> float:
-    if _NINJA_LOG_MTIME_IS_FILETIME:
-        return mtime / 1e7 + _NINJA_FILETIME_UNIX_OFFSET
-    return mtime / 1e9
-
-
-def _build_start(build_dir: Path) -> float | None:
-    """Approximate start of the ninja build running in build_dir, or None.
-
-    .ninja_log records each finished edge as "start_ms end_ms mtime output
-    hash" with the times relative to the build start and mtime absolute, so
-    a recent edge gives start ~= mtime - end. Restat edges whose output was
-    left untouched log a stale mtime that only ever makes that estimate too
-    early, so the max over the last few edges is taken. (.ninja_lock's mtime
-    is unusable: ninja rewrites it as edges complete.)
-    """
-    # Whole-file read is fine: ninja recompacts .ninja_log itself, keeping it
-    # to a few records per edge (well under a few MB even for large trees).
-    try:
-        lines = (
-            (build_dir / ".ninja_log").read_text(encoding="utf-8", errors="replace").splitlines()
-        )
-    except OSError:
-        return None
-    start: float | None = None
-    examined = 0
-    for line in reversed(lines):
-        if examined >= _BUILD_START_EDGES:
-            break
-        fields = line.split("\t")
-        if line.startswith("#") or len(fields) < 4:
-            continue
-        try:
-            end_ms = int(fields[1])
-            mtime = int(fields[2])
-        except ValueError:
-            continue
-        if mtime <= 0:
-            continue
-        examined += 1
-        candidate = _ninja_mtime_to_epoch(mtime) - end_ms / 1000.0
-        if start is None or candidate > start:
-            start = candidate
-    if start is None:
-        return None
-    now = time.time()
-    if start > now + _BUILD_START_MAX_FUTURE_SECONDS or start < now - _BUILD_START_MAX_AGE_SECONDS:
-        return None
-    return start - _BUILD_START_SLACK_SECONDS
-
-
-def _stat_time(fields: list[str]) -> float | None:
-    """Epoch time of a stats line, or None for legacy lines without one."""
-    if len(fields) < 4:
-        return None
-    try:
-        return float(fields[2])
-    except ValueError:
-        return None
-
-
-# Growth cap for stats.log when no build boundary is available to prune at;
-# comfortably more than one full QGC build's worth of moc runs.
-_STATS_LOG_MAX_LINES = 50_000
-
-
-def _format_bytes(n: int) -> str:
-    return f"{n / 1024**3:.1f} GiB" if n >= 1024**3 else f"{n / 1024**2:.0f} MiB"
-
-
-def _stats_markdown(
-    note: str, hits: int, misses: int, counts: dict[str, int], cache_dir: Path
-) -> str:
-    """The --show-stats report as GitHub-flavoured markdown, e.g. for a CI job summary."""
-    total = hits + misses
-    if total == 0 and not counts:
-        return ""
-    rate = f" ({100.0 * hits / total:.1f}%)" if total else ""
-    size = _format_bytes(sum(size for _, size, _ in _scan_entries(cache_dir)))
-    limit = os.environ.get("MOCCACHE_MAX_SIZE", "")
-    if limit:
-        with contextlib.suppress(ValueError):
-            size += f" / {_format_bytes(_parse_size(limit))}"
-    lines = ["### Moc Cache Statistics", ""]
-    if note:
-        lines += [f"_{note.strip()}_", ""]
-    lines += [
-        "| Metric | Value |",
-        "| --- | --- |",
-        f"| Cache hits | {hits} / {total}{rate} |",
-        f"| Misses | {misses} |",
-        f"| Cache size | {size} |",
-    ]
-    if counts:
-        lines += ["", "| Event | Count | Meaning |", "| --- | ---: | --- |"]
-        lines += [
-            f"| `{what}` | {counts[what]} | {_KIND_DESCRIPTIONS.get(what, '')} |"
-            for what in sorted(counts)
-        ]
-    return "\n".join(lines) + "\n"
-
-
-def _show_stats_main(argv: list[str]) -> int:
-    build_dir: Path | None = None
-    verbose = False
-    markdown = False
-    i = 0
-    while i < len(argv):
-        if argv[i] == "--build-dir":
-            if i + 1 >= len(argv):
-                print("moccache: --build-dir requires a path", file=sys.stderr)
-                return 2
-            build_dir = Path(argv[i + 1])
-            i += 2
-        elif argv[i] == "--verbose":
-            verbose = True
-            i += 1
-        elif argv[i] == "--markdown":
-            markdown = True
-            i += 1
-        else:
-            print(f"moccache: --show-stats: unknown argument: {argv[i]}", file=sys.stderr)
-            return 2
-    if build_dir is None:
-        print("moccache: --show-stats requires --build-dir", file=sys.stderr)
-        return 2
-
-    since = _build_start(build_dir)
-    scope = "this build"
-    note = ""
-    if since is None:
-        scope = "all recorded"
-        note = f"  (build start unknown: no usable {build_dir / '.ninja_log'}; showing all recorded stats)"
-    basedir = os.environ.get("MOCCACHE_BASEDIR", "") if since is not None else ""
-    basedir = basedir.translate(_STAT_FIELD_BREAKERS)  # match what _log_stat recorded
-
-    cache_dir = _cache_dir()
-    log = cache_dir / "stats.log"
-    counts: dict[str, int] = {}
-    details: list[tuple[str, str, str]] = []  # (kind, input, detail) for non-hit events
-    keep: list[str] = []  # this build's lines from its start onward, plus every other build dir's
-    try:
-        with log.open(encoding="utf-8", errors="replace") as f:
-            for raw in f:
-                line = raw.rstrip("\n")
-                fields = line.split("\t")
-                if since is not None:
-                    when = _stat_time(fields)
-                    if when is None:
-                        continue  # legacy line: prune
-                    if basedir and fields[3] != basedir:
-                        # Another build dir's record; a still-running sibling
-                        # build may need it, so only its own report prunes it.
-                        keep.append(line)
-                        continue
-                    if when < since:
-                        continue  # older than this build: prune
-                    keep.append(line)
-                else:
-                    keep.append(line)
-                kind = fields[0]
-                counts[kind] = counts.get(kind, 0) + 1
-                if kind != "hit":
-                    details.append(
-                        (
-                            kind,
-                            fields[1] if len(fields) > 1 else "",
-                            fields[4] if len(fields) > 4 else "",
-                        )
-                    )
-    except OSError:
-        pass
-    # Only per-build reports are ever wanted, so this build's older entries are
-    # dead weight; drop them to keep the log about one build long. The cap
-    # bounds records left behind by build dirs that never report again. A
-    # concurrent build appending during this rewrite can lose a few lines;
-    # acceptable for a diagnostics aid.
-    if since is not None or len(keep) > _STATS_LOG_MAX_LINES:
-        with contextlib.suppress(OSError):
-            _atomic_write(log, "".join(line + "\n" for line in keep[-_STATS_LOG_MAX_LINES:]))
-    hits = counts.pop("hit", 0)
-    # Pre-reason logs used a bare "miss"; fold it in with the miss-* reasons.
-    misses = counts.pop("miss", 0) + sum(n for k, n in counts.items() if k.startswith("miss-"))
-    total = hits + misses
-    if markdown:
-        print(_stats_markdown(note, hits, misses, counts, cache_dir), end="")
-        return 0
-    print(f"moccache stats ({scope}, {cache_dir}):")
-    if note:
-        print(note)
-    if total == 0 and not counts:
-        print("  no stats recorded")
-        return 0
-    print(f"  hits     {hits}")
-    print(f"  misses   {misses}")
-    if total:
-        print(f"  hit rate {100.0 * hits / total:.1f}%")
-    width = max((len(k) for k in counts), default=0)
-    for what in sorted(counts):
-        why = _KIND_DESCRIPTIONS.get(what)
-        suffix = f"  ({why})" if why else ""
-        print(f"  {what:<{width}}  {counts[what]:>5}{suffix}")
-    if verbose and details:
-        print("details:")
-        for kind, input_file, detail in details:
-            print(f"  {kind}  {input_file}  {detail}".rstrip())
-    return 0
-
-
-def _zero_stats_main(argv: list[str]) -> int:
-    if argv:
-        print(f"moccache: --zero-stats: unknown argument: {argv[0]}", file=sys.stderr)
-        return 2
-    with contextlib.suppress(OSError):
-        (_cache_dir() / "stats.log").unlink()
-    return 0
+    return Path(__file__).resolve().parents[2] / ".cache" / "moccache"
 
 
 def main() -> int:
     argv = sys.argv[1:]
     if argv and argv[0] == "--trim":
-        return _trim_main(argv[1:])
+        from .trim import trim_main
+
+        return trim_main(argv[1:])
     if argv and argv[0] == "--show-stats":
-        return _show_stats_main(argv[1:])
+        from .stats import show_stats_main
+
+        return show_stats_main(argv[1:])
     if argv and argv[0] == "--zero-stats":
-        return _zero_stats_main(argv[1:])
+        from .stats import zero_stats_main
+
+        return zero_stats_main(argv[1:])
     real_moc = None
     if argv and argv[0] == "--real-moc":
         if len(argv) < 2:
@@ -1117,13 +694,12 @@ def main() -> int:
         except OSError:
             pass  # cache write failure must not fail the build
         _log_stat(cache_dir, miss_reason[0], input_file, miss_reason[1])
-        _maybe_auto_trim(cache_dir)
+        if os.environ.get("MOCCACHE_MAX_SIZE"):
+            from .trim import maybe_auto_trim
+
+            maybe_auto_trim(cache_dir)
         return 0
     finally:
         if tmp_dep:
             with contextlib.suppress(OSError):
                 os.unlink(tmp_dep)
-
-
-if __name__ == "__main__":
-    sys.exit(main())

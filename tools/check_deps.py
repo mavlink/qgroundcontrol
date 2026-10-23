@@ -9,6 +9,7 @@ import re
 import sys
 from http.client import HTTPException
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import _bootstrap as _bootstrap
 from common.build_config import get_build_config_value
@@ -20,6 +21,9 @@ from common.proc import run_captured
 from common.tool_version import probe_version
 from packaging.version import Version
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
 QT_RELEASES_URL = "https://download.qt.io/official_releases/qt/"
 GSTREAMER_PACKAGE_INDEX_URLS = {
     platform: release_index_url(platform) for platform in PLATFORM_PACKAGES
@@ -28,7 +32,7 @@ GSTREAMER_VERSION_PATTERN = re.compile(r'href=["\'](\d+)\.(\d+)\.(\d+)/["\']')
 # Three components so `qmake --version` skips its "QMake version 3.1" line
 FULL_VERSION_PATTERN = re.compile(r"(\d+)\.(\d+)\.(\d+)")
 FETCH_TIMEOUT_SECONDS = 15
-REQ_FILES = [Path("tools/pyproject.toml")]
+PYTHON_MANIFEST = Path("tools/pyproject.toml")
 BUILD_TOOLS = ["cmake", "ninja", "ccache", "clang-format", "clang-tidy"]
 
 
@@ -161,22 +165,13 @@ def check_gstreamer_version() -> None:
         print(f"  Installed: GStreamer {format_version(installed)}")
 
 
-def find_python_manifests(repo_root: Path) -> list[Path]:
-    """Return dependency manifest files present in the repo."""
-    return [path for path in REQ_FILES if (repo_root / path).exists()]
-
-
 def check_python_deps(repo_root: Path) -> None:
     """Check installed Python packages for available updates."""
     log_info("Checking Python dependencies...")
-    manifests = find_python_manifests(repo_root)
-    if not manifests:
-        log_warn("No Python dependency manifests found")
+    if not (repo_root / PYTHON_MANIFEST).is_file():
+        log_warn(f"Python dependency manifest not found: {PYTHON_MANIFEST.as_posix()}")
         return
-
-    print("  Manifests:")
-    for manifest in manifests:
-        print(f"    - {manifest}")
+    print(f"  Manifest: {PYTHON_MANIFEST.as_posix()}")
 
     try:
         result = run_captured(
@@ -218,8 +213,8 @@ def check_build_tools() -> None:
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     """Parse command-line arguments."""
     parser = argparse.ArgumentParser(description="Check dependency versions and tool availability.")
-    parser.add_argument("--qt", action="store_true", help="Check only Qt version")
-    parser.add_argument("--gstreamer", action="store_true", help="Check only GStreamer version")
+    parser.add_argument("--qt", action="store_true", help="Check the Qt version")
+    parser.add_argument("--gstreamer", action="store_true", help="Check the GStreamer version")
     return parser.parse_args(argv)
 
 
@@ -228,20 +223,21 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     repo_root = find_repo_root(Path(__file__))
 
-    if not args.qt and not args.gstreamer:
-        check_qt_version()
+    checks: list[Callable[[], None]] = []
+    if args.qt:
+        checks.append(check_qt_version)
+    if args.gstreamer:
+        checks.append(check_gstreamer_version)
+    if not checks:
+        checks = [
+            check_qt_version,
+            check_gstreamer_version,
+            lambda: check_python_deps(repo_root),
+            check_build_tools,
+        ]
+    for check in checks:
+        check()
         print()
-        check_gstreamer_version()
-        print()
-        check_python_deps(repo_root)
-        print()
-        check_build_tools()
-    elif args.qt:
-        check_qt_version()
-    elif args.gstreamer:
-        check_gstreamer_version()
-
-    print()
     log_ok("Dependency check complete")
     return 0
 

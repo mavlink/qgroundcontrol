@@ -2,32 +2,37 @@
 
 from __future__ import annotations
 
+import contextlib
+import io
 import json
 import subprocess
 import sys
 from pathlib import Path
 
 import pytest
-from analyzers.vehicle_null_check import analyze_file
+from analyzers.vehicle_null_check import analyze_file, main
 
 from ._helpers import TOOLS_DIR
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
+FIXTURE = FIXTURES_DIR / "null_check_samples.cpp"
 ANALYZER = TOOLS_DIR / "analyzers" / "vehicle_null_check.py"
 
 
-def run_analyzer(*args: Path | str, json_output: bool = False) -> subprocess.CompletedProcess:
-    cmd = [sys.executable, str(ANALYZER)]
-    if json_output:
-        cmd.append("--json")
-    cmd.extend(str(a) for a in args)
-    return subprocess.run(cmd, capture_output=True, text=True, check=False)
+def run_analyzer(*args: Path | str) -> tuple[int, str]:
+    stdout = io.StringIO()
+    with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(io.StringIO()):
+        returncode = main([str(arg) for arg in args])
+    return returncode, stdout.getvalue()
+
+
+def json_violations(*args: Path | str) -> list[dict]:
+    return json.loads(run_analyzer("--json", *args)[1])
 
 
 @pytest.fixture(scope="module")
 def sample_violations() -> list[dict]:
-    result = run_analyzer(FIXTURES_DIR / "null_check_samples.cpp", json_output=True)
-    return json.loads(result.stdout)
+    return json_violations(FIXTURE)
 
 
 def test_detects_unsafe_direct_access(sample_violations: list[dict]) -> None:
@@ -61,8 +66,13 @@ def test_json_output_format(sample_violations: list[dict]) -> None:
         assert key in sample_violations[0]
 
 
-def test_exit_code_on_violations() -> None:
-    assert run_analyzer(FIXTURES_DIR / "null_check_samples.cpp").returncode == 1
+def test_hook_script_reports_violations() -> None:
+    result = subprocess.run(
+        [sys.executable, str(ANALYZER), str(FIXTURE)], capture_output=True, text=True, check=False
+    )
+    assert result.returncode == 1
+    assert f"{FIXTURE}:11:5: warning: unsafe_active_vehicle_direct" in result.stdout
+    assert "4 vehicle-null-check finding(s)" in result.stderr
 
 
 def test_exit_code_no_violations(tmp_path: Path) -> None:
@@ -74,18 +84,18 @@ def test_exit_code_no_violations(tmp_path: Path) -> None:
         "    v->doSomething();\n"
         "}\n"
     )
-    assert run_analyzer(safe_file).returncode == 0
+    assert run_analyzer(safe_file) == (0, "")
 
 
-def test_help_flag() -> None:
-    result = run_analyzer("--help")
-    assert result.returncode == 0
-    assert "usage" in result.stdout.lower()
+def test_help_flag(capsys: pytest.CaptureFixture[str]) -> None:
+    with pytest.raises(SystemExit) as exc:
+        main(["--help"])
+    assert exc.value.code == 0
+    assert "usage" in capsys.readouterr().out.lower()
 
 
 def test_analyze_directory_finds_fixture_violations() -> None:
-    result = run_analyzer(FIXTURES_DIR, json_output=True)
-    violations = json.loads(result.stdout)
+    violations = json_violations(FIXTURES_DIR)
     assert violations, "directory scan should surface the known fixture violations"
     assert {Path(v["file"]).name for v in violations} == {"null_check_samples.cpp"}
 
@@ -96,8 +106,7 @@ def test_multiple_files(tmp_path: Path) -> None:
     f1.write_text("void f() { activeVehicle()->test(); }")
     f2.write_text("void g() { activeVehicle()->test(); }")
 
-    result = run_analyzer(f1, f2, json_output=True)
-    violations = json.loads(result.stdout)
+    violations = json_violations(f1, f2)
     assert len({v["file"] for v in violations}) == 2
 
 

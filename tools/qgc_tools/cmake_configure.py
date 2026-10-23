@@ -28,32 +28,20 @@ class CMakeConfig:
     """CMake invocation options."""
 
     source_dir: Path = field(default_factory=lambda: Path("."))
-    build_dir: Path = field(default_factory=lambda: Path("build"))
+    # None keeps the preset's binaryDir, so `cmake --build --preset` finds the tree.
+    build_dir: Path | None = None
     build_type: str = "Debug"
-    generator: str = "Ninja"
     testing: bool = False
-    coverage: bool = False
     preset: str | None = None
-    use_preset: bool = True
     stable: bool = False
     use_qt_cmake: bool = True
     qt_root: Path | None = None
     extra_args: list[str] = field(default_factory=list)
 
 
-def select_preset(config: CMakeConfig) -> str | None:
-    """Select the canonical local preset for a configuration."""
-    if not config.use_preset:
-        return None
-    if config.preset:
-        return config.preset
-    if config.generator != "Ninja":
-        return None
-    if config.coverage:
-        if not sys.platform.startswith("linux"):
-            raise ValueError("Coverage builds require Linux; use --no-preset for a custom setup")
-        return "Linux-coverage"
-    return LOCAL_PRESETS[config.build_type]
+def select_preset(config: CMakeConfig) -> str:
+    """Return the explicit preset, or the canonical local preset for the build type."""
+    return config.preset or LOCAL_PRESETS[config.build_type]
 
 
 def find_qt_cmake(qt_root: Path | None = None) -> Path | None:
@@ -74,25 +62,18 @@ def configure(config: CMakeConfig) -> int:
         print(f"Using: {qt_cmake}")
     cmake_cmd = str(qt_cmake) if qt_cmake else "cmake"
 
-    args = [cmake_cmd]
-    if preset:
-        args += ["--preset", preset]
-    args += ["-S", str(config.source_dir), "-B", str(config.build_dir)]
-    if not preset:
-        args += ["-G", config.generator, f"-DCMAKE_BUILD_TYPE={config.build_type}"]
-
+    args = [cmake_cmd, "--preset", preset, "-S", str(config.source_dir)]
+    if config.build_dir is not None:
+        args += ["-B", str(config.build_dir)]
     if config.testing:
         args.append("-DQGC_BUILD_TESTING=ON")
-    elif not preset:
-        args.append("-DQGC_BUILD_TESTING=OFF")
-    if config.coverage and preset != "Linux-coverage":
-        args.append("-DQGC_ENABLE_COVERAGE=ON")
     if config.stable:
         args.append("-DQGC_STABLE_BUILD=ON")
     args.extend(config.extra_args)
 
-    print(f"Preset: {preset}" if preset else f"Build type: {config.build_type}")
-    print(f"Build dir: {config.build_dir}")
+    build_dir = config.build_dir or "the preset's binaryDir"
+    print(f"Preset: {preset}")
+    print(f"Build dir: {build_dir}")
 
     env = os.environ.copy()
     if qt_cmake:
@@ -103,5 +84,5 @@ def configure(config: CMakeConfig) -> int:
     if result.returncode != 0:
         return result.returncode
 
-    print(f"Configured: {config.build_dir}")
+    print(f"Configured: {build_dir}")
     return 0

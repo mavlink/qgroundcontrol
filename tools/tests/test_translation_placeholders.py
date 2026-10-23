@@ -14,7 +14,7 @@ from common.xml import XMLParseError
 
 from translations import check_placeholders as checker
 
-from ._helpers import REPO_ROOT, git, load_workflow, load_yaml
+from ._helpers import REPO_ROOT, commit_files, git, load_workflow, load_yaml, pr_merge_checkout
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -62,9 +62,7 @@ def write_catalog(repo: Path, content: str, name: str = CATALOG) -> Path:
 
 
 def commit_fixture(repo: Path) -> str:
-    git(repo, "add", ".")
-    git(repo, "commit", "-qm", "Fixture")
-    return git(repo, "rev-parse", "HEAD")
+    return commit_files(repo, {}, "Fixture")
 
 
 @pytest.fixture
@@ -454,6 +452,25 @@ def test_cli_base_environment_and_override(repo: Path, monkeypatch, capsys) -> N
     )
 
 
+@pytest.mark.parametrize("clone", ["full", "shallow"])
+def test_pr_merge_checkout_skips_newer_base_branch_messages(
+    tmp_path: Path, isolated_git: None, monkeypatch, capsys, clone: str
+) -> None:
+    pr = pr_merge_checkout(
+        tmp_path,
+        base={CATALOG: catalog(message()), "translations/other.ts": catalog(message())},
+        newer_base={"translations/other.ts": catalog(message(translation="bad"))},
+        pr={CATALOG: catalog(message(), message("Second %1", "%1"))},
+    )
+    monkeypatch.chdir(getattr(pr, clone))
+    assert checker.main(["--base-ref", pr.fork_point, "--head-sha", pr.pr_head]) == 0
+    expected = f"Checked 1 new/changed message(s) in 1 catalog(s) against {pr.base_tip}."
+    assert expected in capsys.readouterr().out
+    if clone == "full":
+        # The event's older base SHA would blame the PR for the base branch's newer message.
+        assert checker.main(["--base-ref", pr.fork_point]) == 1
+
+
 def test_cli_outside_git_fails(tmp_path: Path, monkeypatch, capsys) -> None:
     monkeypatch.chdir(tmp_path)
     assert checker.main([]) == 1
@@ -488,7 +505,9 @@ def test_workflow_runs_for_translation_only_prs_with_real_base() -> None:
     assert "if" not in job
     steps = job["steps"]
     checkout = next(step for step in steps if step.get("uses", "").startswith("actions/checkout@"))
-    assert checkout["with"]["fetch-depth"] == 0
+    assert checkout["with"]["fetch-depth"] == (
+        "${{ github.event_name == 'pull_request' && 2 || 0 }}"
+    )
     assert checkout["with"]["persist-credentials"] is False
     assert "ref" not in checkout["with"]
     setup = next(step for step in steps if step.get("uses") == "./.github/actions/setup-python")
@@ -498,7 +517,8 @@ def test_workflow_runs_for_translation_only_prs_with_real_base() -> None:
     assert validation["env"]["BASE_REF"] == (
         "${{ github.event.pull_request.base.sha || github.event.before }}"
     )
-    assert '--base-ref "$BASE_REF"' in validation["run"]
+    assert validation["env"]["PR_HEAD_SHA"] == "${{ github.event.pull_request.head.sha }}"
+    assert '--base-ref "$BASE_REF" --head-sha "$PR_HEAD_SHA"' in validation["run"]
     assert "BASE_REF=EMPTY" in validation["run"]
     assert 'git fetch --no-tags --depth=1 origin "$BASE_REF"' in validation["run"]
     assert "HEAD^" not in validation["run"]

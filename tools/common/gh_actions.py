@@ -203,8 +203,19 @@ def write_step_summary(markdown: str) -> None:
         f.write(markdown)
 
 
+def _require_single_line(name: str, value: str) -> None:
+    # The runner reads these files line by line, so a line break would start another entry.
+    if "\n" in value or "\r" in value:
+        raise ValueError(f"{name} must be a single line: {value!r}")
+
+
 def append_github_env(values: dict[str, str]) -> None:
-    """Append environment variables to $GITHUB_ENV."""
+    """Append single-line environment variables to $GITHUB_ENV.
+
+    Raises ValueError, before writing anything, when a value contains CR or LF.
+    """
+    for key, value in values.items():
+        _require_single_line(key, value)
     path = os.environ.get("GITHUB_ENV")
     if not path:
         return
@@ -214,7 +225,8 @@ def append_github_env(values: dict[str, str]) -> None:
 
 
 def append_github_path(path_entry: str) -> None:
-    """Append a path entry to $GITHUB_PATH for subsequent steps."""
+    """Append a path entry to $GITHUB_PATH for subsequent steps; CR/LF raise ValueError."""
+    _require_single_line("GITHUB_PATH entry", path_entry)
     path = os.environ.get("GITHUB_PATH")
     if not path:
         return

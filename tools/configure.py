@@ -4,19 +4,16 @@
 Usage:
     ./tools/configure.py                     # Default Debug build
     ./tools/configure.py --release           # Release build
-    ./tools/configure.py --testing           # With unit tests
-    ./tools/configure.py --coverage          # With coverage
+    ./tools/configure.py --preset Linux-debug  # Configure into the preset's binaryDir
     ./tools/configure.py --qt-root ~/Qt/6.8.0/gcc_64  # Explicit Qt
 
 Environment:
     QT_ROOT_DIR - Qt installation (auto-detected if not set)
-    CMAKE_GENERATOR - Generator (default: Ninja)
 """
 
 from __future__ import annotations
 
 import argparse
-import os
 import sys
 from pathlib import Path
 
@@ -33,10 +30,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         epilog="""
 Environment:
   QT_ROOT_DIR         Qt installation (auto-detected if not set)
-  CMAKE_GENERATOR     Default generator
 
 Examples:
-  %(prog)s --release --testing
+  %(prog)s --release
   %(prog)s -B build-debug --debug
   %(prog)s --preset Linux-debug
   %(prog)s --qt-root ~/Qt/6.8.0/gcc_64 --release
@@ -54,21 +50,14 @@ Examples:
         "-B",
         "--build-dir",
         type=Path,
-        default=Path("build"),
-        help="Build directory (default: build)",
+        help="Build directory (default: the preset's binaryDir)",
     )
     parser.add_argument(
         "-t",
         "--build-type",
         choices=["Debug", "Release", "RelWithDebInfo", "MinSizeRel"],
         default="Debug",
-        help="Build type (default: Debug)",
-    )
-    parser.add_argument(
-        "-G",
-        "--generator",
-        default=os.environ.get("CMAKE_GENERATOR", "Ninja"),
-        help="CMake generator (default: Ninja)",
+        help="Build type selecting the default* preset (default: Debug)",
     )
     parser.add_argument(
         "--release",
@@ -85,29 +74,8 @@ Examples:
         help="Shorthand for --build-type Debug",
     )
     parser.add_argument(
-        "--testing",
-        action="store_true",
-        help="Enable unit tests (QGC_BUILD_TESTING=ON)",
-    )
-    parser.add_argument(
-        "--coverage",
-        action="store_true",
-        help="Enable code coverage (QGC_ENABLE_COVERAGE=ON)",
-    )
-    preset_group = parser.add_mutually_exclusive_group()
-    preset_group.add_argument(
         "--preset",
         help="CMake configure preset (default: matching default* preset)",
-    )
-    preset_group.add_argument(
-        "--no-preset",
-        action="store_true",
-        help="Use legacy command-line configuration for an unsupported custom setup",
-    )
-    parser.add_argument(
-        "--stable",
-        action="store_true",
-        help="Build as stable release (QGC_STABLE_BUILD=ON)",
     )
     parser.add_argument(
         "--qt-root",
@@ -141,12 +109,7 @@ def main(argv: list[str] | None = None) -> int:
         source_dir=source_dir.resolve(),
         build_dir=args.build_dir,
         build_type=args.build_type or "Debug",
-        generator=args.generator,
-        testing=args.testing,
-        coverage=args.coverage,
         preset=args.preset,
-        use_preset=not args.no_preset,
-        stable=args.stable,
         use_qt_cmake=not args.no_qt_cmake,
         qt_root=args.qt_root,
         extra_args=args.extra_args,

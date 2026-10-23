@@ -10,29 +10,70 @@ Usage:
     ./tools/analyze.py --tool clang-format --fix  # Apply formatting
     ./tools/analyze.py --tool clang-tidy --fix    # Apply clang-tidy fixes (local only)
 
-Tools:
-    clang-format - Changed-line formatting; whole files with --all or paths (--fix applies)
-    clang-tidy   - Clang static analyzer (requires compile_commands.json; --fix applies)
-    clazy        - Qt-specific static analyzer (requires compile_commands.json)
-    qmllint      - QML file linter
-    qmlformat    - Report QML files that qmlformat would change (check only)
+Run with --help for the list of tools.
 """
 
 from __future__ import annotations
 
 import argparse
+import importlib
 import os
-import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, NamedTuple
 
+import _bootstrap as _bootstrap
 from common.file_traversal import find_repo_root
 from common.gh_actions import is_ci
-from common.git import get_default_branch_ref, run_git
-from common.logging import log_error, log_ok, log_warn
+from common.git import pr_diff_refs, run_git
+from common.logging import log_error, log_ok
 
 if TYPE_CHECKING:
     from analyzers.base import AnalyzerBase
+
+
+class Tool(NamedTuple):
+    module: str
+    class_name: str
+    help: str
+    compiler: bool = False
+
+
+ANALYZERS: dict[str, Tool] = {
+    "clang-format": Tool(
+        "analyzers.clang_format",
+        "ClangFormatAnalyzer",
+        "Changed-line formatting; whole files with --all or paths (--fix applies)",
+    ),
+    "clang-tidy": Tool(
+        "analyzers.clang_tidy",
+        "ClangTidyAnalyzer",
+        "Clang static analyzer (requires compile_commands.json; --fix applies, local only)",
+        compiler=True,
+    ),
+    "clazy": Tool(
+        "analyzers.clazy",
+        "ClazyAnalyzer",
+        "Qt-specific static analyzer (requires compile_commands.json)",
+        compiler=True,
+    ),
+    "qmllint": Tool("analyzers.qmllint", "QmlLintAnalyzer", "QML file linter"),
+    "qmlformat": Tool(
+        "analyzers.qmlformat",
+        "QmlFormatAnalyzer",
+        "Report QML files that qmlformat would change (check only)",
+    ),
+    "vehicle-null-check": Tool(
+        "analyzers.vehicle_null_check",
+        "VehicleNullCheckAnalyzer",
+        "Detect unsafe activeVehicle() patterns",
+    ),
+    "qt-translate-noop-check": Tool(
+        "analyzers.qt_translate_noop_check",
+        "QtTranslateNoopAnalyzer",
+        "Detect always-wrong runtime use of QT_TRANSLATE_NOOP",
+    ),
+}
+COMPILER_TOOLS = frozenset(name for name, tool in ANALYZERS.items() if tool.compiler)
 
 
 class FileCollector:
@@ -47,8 +88,11 @@ class FileCollector:
         self.diff_base: str | None = None
 
     def get_compare_ref(self) -> str | None:
-        """Get the best available ref to compare against."""
-        return os.environ.get("PR_BASE_SHA") or get_default_branch_ref(self.repo_root)
+        """Return the ref to select changed files against, or None to select every file."""
+        refs = pr_diff_refs(
+            os.environ.get("PR_BASE_SHA"), os.environ.get("PR_HEAD_SHA"), cwd=self.repo_root
+        )
+        return refs[0] if refs else None
 
     def get_cpp_files(
         self,
@@ -82,8 +126,6 @@ class FileCollector:
         compare_ref = self.get_compare_ref()
         if compare_ref:
             return self._get_changed_files(extensions, compare_ref)
-
-        log_warn("Default branch not available, analyzing all files")
         return self._find_files(self.repo_root / "src", extensions)
 
     def _find_files(self, search_path: Path, extensions: tuple[str, ...]) -> list[Path]:
@@ -121,21 +163,12 @@ class FileCollector:
 
 
 def validate_path(path_str: str, repo_root: Path) -> Path:
-    """Validate and sanitize a user-provided path."""
-    if ".." in path_str:
-        raise ValueError(f"Invalid path: {path_str} (must not contain '..')")
-
-    if path_str.startswith("/"):
-        raise ValueError(f"Invalid path: {path_str} (must be relative)")
-
-    target = Path(path_str)
-    full_path = (repo_root / target).resolve()
-    repo_resolved = repo_root.resolve()
-
-    if not full_path.is_relative_to(repo_resolved):
-        raise ValueError("Invalid path: resolves outside repository")
-
-    return target
+    """Return a repository-relative or absolute path relative to the root; reject outside paths."""
+    root = repo_root.resolve()
+    full_path = (root / path_str).resolve()
+    if not full_path.is_relative_to(root):
+        raise ValueError(f"Invalid path: {path_str} resolves outside the repository")
+    return full_path.relative_to(root)
 
 
 def get_analyzer(
@@ -148,61 +181,24 @@ def get_analyzer(
     shard_count: int = 1,
 ) -> AnalyzerBase:
     """Get the appropriate analyzer for the given tool."""
-    match tool:
-        case "clang-tidy":
-            from analyzers.clang_tidy import ClangTidyAnalyzer
-
-            return ClangTidyAnalyzer(
-                repo_root, build_dir, jobs=jobs, shard=shard, shard_count=shard_count
-            )
-        case "clazy":
-            from analyzers.clazy import ClazyAnalyzer
-
-            return ClazyAnalyzer(
-                repo_root, build_dir, jobs=jobs, shard=shard, shard_count=shard_count
-            )
-        case "clang-format":
-            from analyzers.clang_format import ClangFormatAnalyzer
-
-            return ClangFormatAnalyzer(repo_root, build_dir)
-        case "qmllint":
-            from analyzers.qmllint import QmlLintAnalyzer
-
-            return QmlLintAnalyzer(repo_root, build_dir)
-        case "qmlformat":
-            from analyzers.qmlformat import QmlFormatAnalyzer
-
-            return QmlFormatAnalyzer(repo_root, build_dir)
-        case "vehicle-null-check":
-            from analyzers.vehicle_null_check import VehicleNullCheckAnalyzer
-
-            return VehicleNullCheckAnalyzer(repo_root, build_dir)
-        case "qt-translate-noop-check":
-            from analyzers.qt_translate_noop_check import QtTranslateNoopAnalyzer
-
-            return QtTranslateNoopAnalyzer(repo_root, build_dir)
-        case _:
-            available = (
-                "clang-format, clang-tidy, clazy, qmllint, qmlformat, vehicle-null-check, "
-                "qt-translate-noop-check"
-            )
-            raise ValueError(f"Unknown tool: {tool}. Available tools: {available}")
+    entry = ANALYZERS.get(tool)
+    if entry is None:
+        raise ValueError(f"Unknown tool: {tool}. Available tools: {', '.join(ANALYZERS)}")
+    analyzer_cls = getattr(importlib.import_module(entry.module), entry.class_name)
+    if entry.compiler:
+        return analyzer_cls(repo_root, build_dir, jobs=jobs, shard=shard, shard_count=shard_count)
+    return analyzer_cls(repo_root, build_dir)
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     """Parse command line arguments."""
+    tools = "\n".join(f"  {name:<24} {tool.help}" for name, tool in ANALYZERS.items())
     parser = argparse.ArgumentParser(
         description="Run code quality tools on QGroundControl source code",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
+        epilog=f"""
 Tools:
-  clang-format  Changed-line formatting; whole files with --all or paths (--fix applies)
-  clang-tidy    Clang static analyzer (requires compile_commands.json; --fix applies, local only)
-  clazy         Qt-specific static analyzer (requires compile_commands.json)
-  qmllint       QML file linter
-  qmlformat     Report QML files that qmlformat would change (check only)
-  vehicle-null-check       Detect unsafe activeVehicle() patterns
-  qt-translate-noop-check  Detect always-wrong runtime use of QT_TRANSLATE_NOOP
+{tools}
 
 Examples:
   %(prog)s                           Analyze changed files (vs master)
@@ -217,22 +213,14 @@ Examples:
     parser.add_argument(
         "path",
         nargs="*",
-        help="Files or directories to analyze (relative to repo root)",
+        help="Files or directories to analyze (relative to the repository root, or absolute)",
     )
     parser.add_argument(
         "-t",
         "--tool",
         dest="tools",
         action="append",
-        choices=[
-            "clang-format",
-            "clang-tidy",
-            "clazy",
-            "qmllint",
-            "qmlformat",
-            "vehicle-null-check",
-            "qt-translate-noop-check",
-        ],
+        choices=ANALYZERS,
         help="Analysis tool to use (default: clang-tidy); repeat to run clang-tidy and clazy "
         "over one selection and dependency scan",
     )
@@ -291,10 +279,10 @@ Examples:
         help="Report warnings without failing; errors still fail",
     )
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     args.tools = list(dict.fromkeys(args.tools or ["clang-tidy"]))
     args.tool = args.tools[0]
-    compiler_tools = set(args.tools) <= {"clang-tidy", "clazy"}
+    compiler_tools = set(args.tools) <= COMPILER_TOOLS
     if len(args.tools) > 1 and not compiler_tools:
         parser.error("Only clang-tidy and clazy can run together")
     if not 1 <= args.shard <= args.shard_count:
@@ -312,9 +300,9 @@ Examples:
     return args
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     """Main entry point."""
-    args = parse_args()
+    args = parse_args(argv)
 
     try:
         repo_root = find_repo_root()
@@ -348,7 +336,7 @@ def main() -> int:
         return 1
     analyzer = analyzers[0]
 
-    if args.tools[0] in {"clang-tidy", "clazy"}:
+    if args.tool in COMPILER_TOOLS:
         from analyzers.clang_tidy import ClangTidyAnalyzer
         from analyzers.compiler import CompilerAnalyzer
         from analyzers.result_cache import ResultCache
@@ -393,7 +381,8 @@ def main() -> int:
     status = 0
     for selected in analyzers:
         result = selected.run(files, fix=args.fix)
-        print(f"{result.tool}: {result.status} ({result.files_checked} files)")
+        reason = f": {result.output}" if result.execution_error and result.output else ""
+        print(f"{result.tool}: {result.status} ({result.files_checked} files){reason}")
         if result.execution_error or result.error_findings:
             status = 2
         elif not (result.passed or args.advisory):
@@ -404,4 +393,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    raise SystemExit(main())

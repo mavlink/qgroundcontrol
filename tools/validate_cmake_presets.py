@@ -10,16 +10,16 @@ group's cmake package, which tools/uv.lock pins, so the check works offline.
 from __future__ import annotations
 
 import argparse
-import json
 from importlib import metadata
 from pathlib import Path
 from typing import Any
 
 import _bootstrap as _bootstrap
+from common.io import read_json
 from common.logging import log_error, log_ok
+from common.paths import REPO_ROOT
 from jsonschema import validators
 
-ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_SUFFIX = "Help/manual/presets/schema.json"
 
 
@@ -37,7 +37,7 @@ def validate_presets(files: list[Path], schema: dict[str, Any]) -> list[str]:
     validator = validator_class(schema)
     errors: list[str] = []
     for file in files:
-        document = json.loads(file.read_text(encoding="utf-8"))
+        document = read_json(file)
         for error in validator.iter_errors(document):
             location = "/".join(map(str, error.absolute_path)) or "<root>"
             errors.append(f"{file}: {location}: {error.message}")
@@ -51,15 +51,15 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("files", nargs="*", type=Path)
     args = parser.parse_args(argv)
     files = args.files or [
-        ROOT / "CMakePresets.json",
-        *sorted((ROOT / "cmake/presets").glob("*.json")),
+        REPO_ROOT / "CMakePresets.json",
+        *sorted((REPO_ROOT / "cmake/presets").glob("*.json")),
     ]
     try:
         schema_path = presets_schema_path()
     except (metadata.PackageNotFoundError, FileNotFoundError) as error:
         log_error(f"{error}; run with `uv run --frozen --project tools --group lint --group build`")
         return 1
-    errors = validate_presets(files, json.loads(schema_path.read_text(encoding="utf-8")))
+    errors = validate_presets(files, read_json(schema_path))
     for error in errors:
         log_error(error)
     if not errors:

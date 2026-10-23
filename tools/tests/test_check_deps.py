@@ -4,12 +4,15 @@ from __future__ import annotations
 
 import subprocess
 from http.client import IncompleteRead
-from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import patch
 from urllib.error import URLError
 
 import check_deps
 import pytest
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def test_parse_gstreamer_package_versions() -> None:
@@ -113,6 +116,20 @@ def test_main_gstreamer_check_reports_without_failing() -> None:
     qt.assert_not_called()
 
 
+def test_main_runs_each_selected_check() -> None:
+    with (
+        patch.object(check_deps, "check_qt_version") as qt,
+        patch.object(check_deps, "check_gstreamer_version") as gstreamer,
+        patch.object(check_deps, "check_python_deps") as python_deps,
+        patch.object(check_deps, "find_repo_root"),
+    ):
+        assert check_deps.main(["--qt", "--gstreamer"]) == 0
+
+    qt.assert_called_once()
+    gstreamer.assert_called_once()
+    python_deps.assert_not_called()
+
+
 def test_main_runs_every_check_by_default() -> None:
     with (
         patch.object(check_deps, "check_qt_version") as qt,
@@ -176,10 +193,17 @@ def test_check_build_tools_reports_missing_tools(capsys: pytest.CaptureFixture[s
 
 
 def test_check_python_deps_tolerates_missing_uv(tmp_path: Path) -> None:
-    with (
-        patch.object(
-            check_deps, "find_python_manifests", return_value=[Path("tools/pyproject.toml")]
-        ),
-        patch.object(check_deps, "run_captured", side_effect=FileNotFoundError("uv")),
-    ):
+    (tmp_path / "tools").mkdir()
+    (tmp_path / "tools" / "pyproject.toml").touch()
+    with patch.object(check_deps, "run_captured", side_effect=FileNotFoundError("uv")) as run:
         check_deps.check_python_deps(tmp_path)
+    run.assert_called_once()
+
+
+def test_check_python_deps_warns_without_manifest(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    with patch.object(check_deps, "run_captured") as run:
+        check_deps.check_python_deps(tmp_path)
+    run.assert_not_called()
+    assert "manifest not found: tools/pyproject.toml" in capsys.readouterr().out

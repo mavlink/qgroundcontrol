@@ -8,6 +8,7 @@ import json
 from pathlib import Path
 
 import _bootstrap as _bootstrap
+from common.io import write_json
 from qgc_tools.build_profile import (
     build_json,
     build_report,
@@ -26,6 +27,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
   %(prog)s
   %(prog)s --build-dir build-debug --limit 20
   %(prog)s --trace-dir build --json
+  %(prog)s --json-out report.json > report.txt
 
 Enable Clang traces with CMake option QGC_TIME_TRACE=ON, then rebuild.
 """,
@@ -52,9 +54,15 @@ Enable Clang traces with CMake option QGC_TIME_TRACE=ON, then rebuild.
     )
     parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON")
     parser.add_argument(
+        "--json-out", type=Path, help="Also write the JSON report to this file (one scan)"
+    )
+    parser.add_argument(
         "--output-dir", type=Path, help="Write a Ninja-only CI snapshot (no trace scan)"
     )
-    return parser.parse_args(argv)
+    args = parser.parse_args(argv)
+    if args.output_dir and (args.json or args.json_out):
+        parser.error("--output-dir writes report.md and report.json; omit --json/--json-out")
+    return args
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -66,7 +74,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.output_dir:
         if ninja_log.is_file():
-            print(write_snapshot(build_dir, args.output_dir))
+            print(write_snapshot(build_dir, args.output_dir, ninja_log=ninja_log, limit=limit))
         else:
             print(f"No Ninja log at {ninja_log}; this generator has no Ninja timing data.")
         return 0
@@ -75,8 +83,11 @@ def main(argv: list[str] | None = None) -> int:
     summary = summarize_ninja_log(edges, limit=limit)
     traces = find_time_traces(trace_dir)
 
+    payload = build_json(summary, traces, limit=limit)
+    if args.json_out:
+        write_json(args.json_out, payload)
     if args.json:
-        print(json.dumps(build_json(summary, traces, limit=limit), indent=2))
+        print(json.dumps(payload, indent=2))
     else:
         print(build_report(summary, traces, limit=limit))
     return 0

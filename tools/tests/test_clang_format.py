@@ -4,14 +4,13 @@ from __future__ import annotations
 
 import os
 import shutil
-import sys
 from unittest.mock import patch
 
 import analyze
 import pytest
 from analyzers import clang_format
 
-from ._helpers import completed, git
+from ._helpers import commit_files, completed, git
 
 LEGACY = "#include <vector>\n\nint  legacy( ){return 1;}\n"
 LEGACY_PATH = "src/with spaces.cc"
@@ -28,11 +27,7 @@ def _no_pre_commit_refs(monkeypatch) -> None:
 def format_repo(git_repo, monkeypatch):
     if shutil.which("clang-format") is None:
         pytest.skip("clang-format required")
-    (git_repo / ".clang-format").write_text("BasedOnStyle: LLVM\n")
-    (git_repo / "src").mkdir()
-    (git_repo / LEGACY_PATH).write_text(LEGACY)
-    git(git_repo, "add", ".")
-    git(git_repo, "commit", "-q", "-m", "base")
+    commit_files(git_repo, {".clang-format": "BasedOnStyle: LLVM\n", LEGACY_PATH: LEGACY}, "base")
     monkeypatch.chdir(git_repo)
     monkeypatch.setattr(analyze, "find_repo_root", lambda: git_repo)
     monkeypatch.setattr("analyzers.clang_format.probe_version", lambda _: (1, 0))
@@ -42,8 +37,7 @@ def format_repo(git_repo, monkeypatch):
 
 def run_analyze(monkeypatch, *args: str, base: str = "master") -> int:
     monkeypatch.setenv("PR_BASE_SHA", base)
-    monkeypatch.setattr(sys, "argv", ["analyze.py", "--tool", "clang-format", *args])
-    return analyze.main()
+    return analyze.main(["--tool", "clang-format", *args])
 
 
 def run_hook(monkeypatch, *args: str, base: str | None = None) -> int:
@@ -109,6 +103,16 @@ def test_new_file_is_checked_completely(format_repo, check, staged) -> None:
     assert check("src/new.cc") == 0
 
 
+def test_coding_style_example_is_checked_completely(format_repo, check) -> None:
+    example = "tools/coding-style/Example.cc"
+    source = format_repo / example
+    commit_files(format_repo, {example: LEGACY}, "Add example")
+    source.write_text("#include <string>\n" + LEGACY)
+    assert check(example) == 1
+    assert check(example, fix=True) == 0
+    assert "int legacy() { return 1; }" in source.read_text()
+
+
 def test_deletion_only_change_is_skipped(format_repo, check) -> None:
     source = format_repo / LEGACY_PATH
     source.write_text(LEGACY.removeprefix("#include <vector>\n"))
@@ -118,7 +122,9 @@ def test_deletion_only_change_is_skipped(format_repo, check) -> None:
 def test_invalid_base_fails_closed(format_repo, check, capfd) -> None:
     (format_repo / LEGACY_PATH).write_text("#include <string>\n" + LEGACY)
     if check.entry_point == "analyze":
-        assert check(base="missing-ref") == 2
+        # Without a usable base analyze.py checks whole files, including the legacy formatting.
+        assert check(base="missing-ref") == 1
+        assert "checking everything" in capfd.readouterr().err
     else:
         assert check(LEGACY_PATH, base="missing-ref") == 1
         assert "clang-format check failed" in capfd.readouterr().err

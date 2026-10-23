@@ -84,8 +84,10 @@ Use the standard Qt `tr()` (C++) and `qsTr()` (QML) mechanisms.
 
 QGC stores metadata in JSON files that also need translation. The
 [JSON parser](qgc_lupdate_json.py) finds every JSON file in the source tree, extracts translatable
-strings, and emits a Qt `.ts` localization file. To mark which strings to translate, add keys at the
-root object level.
+strings, and emits a Qt `.ts` localization file. It walks `src/` in sorted order and, like `lupdate`,
+records locations relative to the `.ts` file (`../src/...`), so the output does not depend on the
+checkout path or filesystem order. To mark which strings to translate, add keys at the root object
+level.
 
 > **Important:** JSON files may not share a name — the filename is the translation-lookup context and
 > must be unique (duplicates raise a parser error). The root filename must also match the Qt resource

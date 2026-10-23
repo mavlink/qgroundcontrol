@@ -30,9 +30,7 @@ def test_find_qt_cmake_prefers_explicit_root(tmp_path: Path) -> None:
     assert find_qt_cmake(tmp_path / "qt") == qt_cmake
 
 
-def test_select_preset_covers_local_build_types_and_linux_coverage(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_select_preset_maps_build_types_and_honors_explicit_preset() -> None:
     expected = {
         "Debug": "default",
         "Release": "default-release",
@@ -41,14 +39,7 @@ def test_select_preset_covers_local_build_types_and_linux_coverage(
     }
     for build_type, preset in expected.items():
         assert select_preset(CMakeConfig(build_type=build_type)) == preset
-
-    monkeypatch.setattr(f"{MODULE}.sys.platform", "linux")
-    assert select_preset(CMakeConfig(coverage=True)) == "Linux-coverage"
-    assert select_preset(CMakeConfig(preset="Linux-deb")) == "Linux-deb"
-    assert select_preset(CMakeConfig(use_preset=False)) is None
-    assert select_preset(CMakeConfig(generator="Unix Makefiles")) is None
-    assert select_preset(CMakeConfig(generator="Unix Makefiles", coverage=True)) is None
-    assert select_preset(CMakeConfig(generator="Unix Makefiles", preset="default")) == "default"
+    assert select_preset(CMakeConfig(build_type="Release", preset="Linux-deb")) == "Linux-deb"
 
 
 def test_configure_uses_preset_and_exports_qt_root(
@@ -75,35 +66,36 @@ def test_configure_uses_preset_and_exports_qt_root(
 
     args = invocation["args"]
     assert args[:3] == [str(qt_cmake), "--preset", "default-release"]
+    assert args[args.index("-B") + 1] == str(tmp_path / "build")
     assert "-G" not in args
     assert not any(str(arg).startswith("-DCMAKE_BUILD_TYPE=") for arg in args)
     assert not any(str(arg).startswith("-DQGC_BUILD_TESTING=") for arg in args)
     assert invocation["env"]["QT_ROOT_DIR"] == str(qt_root.resolve())
 
 
-def test_configure_legacy_escape_retains_command_line_configuration(
+def test_configure_without_build_dir_keeps_the_preset_binary_dir(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    # An explicit -B would move non-default presets out of build/<preset>, where
+    # `cmake --build --preset` and `ctest --preset` look for the tree.
     invocation: dict[str, Any] = {}
 
     _capture_run(monkeypatch, invocation)
     assert (
         configure(
-            CMakeConfig(
-                source_dir=tmp_path,
-                build_dir=tmp_path / "legacy",
-                use_preset=False,
-                use_qt_cmake=False,
-            )
+            CMakeConfig(source_dir=tmp_path, preset="Linux-debug", testing=True, use_qt_cmake=False)
         )
         == 0
     )
 
-    args = invocation["args"]
-    assert "--preset" not in args
-    assert "-G" in args
-    assert "-DCMAKE_BUILD_TYPE=Debug" in args
-    assert "-DQGC_BUILD_TESTING=OFF" in args
+    assert invocation["args"] == [
+        "cmake",
+        "--preset",
+        "Linux-debug",
+        "-S",
+        str(tmp_path),
+        "-DQGC_BUILD_TESTING=ON",
+    ]
 
 
 def test_configure_exports_root_of_selected_qt_cmake(
@@ -134,33 +126,12 @@ def test_configure_requires_qt_cmake_by_default(
     assert configure(CMakeConfig(source_dir=tmp_path, build_dir=tmp_path / "build")) == 1
 
 
-def test_explicit_noncoverage_preset_can_enable_coverage(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+def test_configure_writes_no_github_output(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, gh_output: Path
 ) -> None:
-    invocation: dict[str, Any] = {}
-
-    _capture_run(monkeypatch, invocation)
-    assert (
-        configure(
-            CMakeConfig(
-                source_dir=tmp_path,
-                build_dir=tmp_path / "coverage",
-                preset="default",
-                coverage=True,
-                use_qt_cmake=False,
-            )
-        )
-        == 0
-    )
-    assert "-DQGC_ENABLE_COVERAGE=ON" in invocation["args"]
-
-
-def test_configure_writes_no_github_output(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    output = tmp_path / "github-output"
-    monkeypatch.setenv("GITHUB_OUTPUT", str(output))
     _capture_run(monkeypatch, {})
     assert configure(CMakeConfig(source_dir=tmp_path, use_qt_cmake=False)) == 0
-    assert not output.exists()
+    assert gh_output.read_text() == ""
 
 
 def test_cli_rejects_raw_unity_flags() -> None:
@@ -168,6 +139,16 @@ def test_cli_rejects_raw_unity_flags() -> None:
     for flag in ("--unity", "--unity-batch=8"):
         with pytest.raises(SystemExit):
             configure_cli.parse_args([flag])
+
+
+def test_cli_preset_without_build_dir_omits_binary_dir_override(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    invocation: dict[str, Any] = {}
+    _capture_run(monkeypatch, invocation)
+    assert configure_cli.main(["--preset", "Linux-debug", "--no-qt-cmake"]) == 0
+    assert invocation["args"][:3] == ["cmake", "--preset", "Linux-debug"]
+    assert "-B" not in invocation["args"]
 
 
 def test_cli_forwards_options_and_extra_cmake_arguments(
@@ -181,7 +162,6 @@ def test_cli_forwards_options_and_extra_cmake_arguments(
                 "-B",
                 str(tmp_path / "out"),
                 "--release",
-                "--stable",
                 "--no-qt-cmake",
                 "--",
                 "-DQGC_UNITY_BUILD=ON",
@@ -192,5 +172,6 @@ def test_cli_forwards_options_and_extra_cmake_arguments(
     args = invocation["args"]
     assert args[:3] == ["cmake", "--preset", "default-release"]
     assert args[args.index("-S") + 1] == str(Path(configure_cli.__file__).resolve().parents[1])
-    assert args[-2:] == ["-DQGC_STABLE_BUILD=ON", "-DQGC_UNITY_BUILD=ON"]
+    assert args[args.index("-B") + 1] == str(tmp_path / "out")
+    assert args[-1] == "-DQGC_UNITY_BUILD=ON"
     assert not any("CMAKE_UNITY_BUILD" in arg for arg in args)

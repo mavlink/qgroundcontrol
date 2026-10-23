@@ -9,6 +9,7 @@ from ._helpers import REPO_ROOT, TOOLS_DIR
 # A recipe header: name, optional parameters, then a colon that does not start `:=`.
 _RECIPE_HEADER = re.compile(r"^([A-Za-z][\w-]*)\b[^:\n]*:(?!=)", re.MULTILINE)
 _TREE_ENTRY = re.compile(r"^[├└]── (.+?)(?:\s+#.*)?$", re.MULTILINE)
+_NESTED_TREE_ENTRY = re.compile(r"^│   [├└]── (\S+)")
 
 
 def _readme_section(readme: str, heading: str) -> str:
@@ -17,12 +18,29 @@ def _readme_section(readme: str, heading: str) -> str:
     return readme[start : end if end != -1 else None]
 
 
-def _documented_tree_entries() -> set[str]:
+def _documented_tree() -> str:
     section = _readme_section(
         (TOOLS_DIR / "README.md").read_text(encoding="utf-8"), "Directory Structure"
     )
-    tree = section.split("```text\n", 1)[1].split("```", 1)[0]
+    return section.split("```text\n", 1)[1].split("```", 1)[0]
+
+
+def _documented_tree_entries() -> set[str]:
+    tree = _documented_tree()
     return {name.strip() for entry in _TREE_ENTRY.findall(tree) for name in entry.split(",")}
+
+
+def _documented_children(directory: str) -> set[str]:
+    lines = _documented_tree().splitlines()
+    header = re.compile(rf"^[├└]── {re.escape(directory)}\s")
+    start = next(index for index, line in enumerate(lines) if header.match(line))
+    children: set[str] = set()
+    for line in lines[start + 1 :]:
+        match = _NESTED_TREE_ENTRY.match(line)
+        if not match:
+            break
+        children.add(match.group(1))
+    return children
 
 
 def test_common_readme_indexes_every_shared_module() -> None:
@@ -63,6 +81,11 @@ def test_tools_readme_tree_lists_top_level_scripts_and_directories() -> None:
     }
     assert {name for name in documented if name.endswith(".py")} == scripts
     assert {name for name in documented if name.endswith("/")} == directories
+
+
+def test_tools_readme_tree_lists_every_config_file() -> None:
+    actual = {path.name for path in (TOOLS_DIR / "configs").iterdir() if path.is_file()}
+    assert _documented_children("configs/") == actual
 
 
 def test_tools_readme_script_paths_exist() -> None:

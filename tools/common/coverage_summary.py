@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
-import json
 import math
 from dataclasses import dataclass
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
+
+from .io import read_json
 
 if TYPE_CHECKING:
     from os import PathLike
@@ -58,8 +60,7 @@ def _percent(summary: dict[str, Any], key: str) -> float:
 def read_gcovr_summary(path: str | PathLike[str]) -> CoverageSummary:
     """Read the project totals from a gcovr JSON summary report."""
     try:
-        with open(path, encoding="utf-8") as stream:
-            summary = json.load(stream)
+        summary = read_json(Path(path))
     except (OSError, UnicodeDecodeError, ValueError) as exc:
         raise CoverageSummaryError(f"failed to parse {path}: {exc}") from exc
     if not isinstance(summary, dict):
