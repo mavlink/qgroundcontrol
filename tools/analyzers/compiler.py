@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 import subprocess
 import time
@@ -40,6 +41,17 @@ class DiagnosticDeduplicator:
                 self.seen.add(digest)
                 kept.append(block)
         return "".join(kept)
+
+
+# A header's diagnostics repeat in every translation unit that includes it.
+_DIAGNOSTIC = re.compile(
+    r"^(?P<path>.+?):(?P<line>\d+):(?P<column>\d+): (?P<severity>warning|error): "
+    r".*?(?: \[(?P<check>[^\]\n]+)\])?$",
+    re.MULTILINE,
+)
+
+Diagnostic = tuple[str, int, int, str, str]
+"""One diagnostic location: file, line, column, severity, and check name."""
 
 
 class FileTiming(TypedDict):
@@ -242,6 +254,40 @@ class CompilerAnalyzer(AnalyzerBase):
     def _tool_arguments(self) -> tuple[str, ...]:
         return self.arguments
 
+    def _diagnostic_file(self, path: str) -> str:
+        """Name a diagnostic's file relative to the checkout, or to the build tree as build/..."""
+        resolved = Path(os.path.normpath(path))
+        for base, prefix in ((self.repo_root, ""), (self.build_dir, "build/")):
+            try:
+                return prefix + resolved.relative_to(base).as_posix()
+            except ValueError:
+                continue
+        return resolved.as_posix()
+
+    def _diagnostics(self, output: str) -> set[Diagnostic]:
+        """Return the output's diagnostics, identified by file, location, severity, and check."""
+        return {
+            (
+                self._diagnostic_file(match["path"]),
+                int(match["line"]),
+                int(match["column"]),
+                match["severity"],
+                match["check"] or "",
+            )
+            for match in _DIAGNOSTIC.finditer(output)
+        }
+
+    def _write_diagnostics(self, diagnostics: set[Diagnostic]) -> None:
+        """Write each unique diagnostic once; reports merge shards by the same identity."""
+        by_file: dict[str, list[list[int | str]]] = {}
+        for file, line, column, severity, check in sorted(diagnostics):
+            by_file.setdefault(file, []).append([line, column, severity, check])
+        write_json(
+            self.build_dir / f"{self.name}-diagnostics.json",
+            {"tool": self.name, "shard": self.shard, "diagnostics": by_file},
+            indent=None,
+        )
+
     def _file_arguments(self, file: Path) -> tuple[str, ...]:
         return ()
 
@@ -282,6 +328,7 @@ class CompilerAnalyzer(AnalyzerBase):
 
         outputs: list[str] = []
         diagnostics = DiagnosticDeduplicator()
+        unique_diagnostics: set[Diagnostic] = set()
         raw_path = self.build_dir / f"{self.name}-raw.txt"
         affected: list[str] = []
         errors = False
@@ -311,6 +358,7 @@ class CompilerAnalyzer(AnalyzerBase):
                 if output:
                     raw_log.write(f"=== {name} ===\n{output}\n")
                     raw_log.flush()
+                    unique_diagnostics |= self._diagnostics(output)
                     unique_output = diagnostics.filter(output)
                     if unique_output:
                         print(unique_output, end="" if unique_output.endswith("\n") else "\n")
@@ -323,6 +371,7 @@ class CompilerAnalyzer(AnalyzerBase):
         wall_seconds = time.perf_counter() - analysis_start
         check_timings = self._check_timings(files)
         cache_report = self._finish_cache(keys, timings)
+        self._write_diagnostics(unique_diagnostics)
         write_json(
             self.build_dir / f"{self.name}-timings.json",
             {
@@ -340,7 +389,8 @@ class CompilerAnalyzer(AnalyzerBase):
             },
         )
         print(
-            f"Suppressed {diagnostics.suppressed} repeated diagnostic blocks; raw output: {raw_path}",
+            f"Suppressed {diagnostics.suppressed} repeated diagnostic blocks "
+            f"({len(unique_diagnostics)} unique diagnostics); raw output: {raw_path}",
             flush=True,
         )
         print("Slowest compilation units:", flush=True)

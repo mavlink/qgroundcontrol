@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     import argparse
     from collections.abc import Callable
 
-DEFAULT_PLATFORM_WORKFLOWS = "Linux,Windows,MacOS,Android"
+DEFAULT_PLATFORM_WORKFLOWS = "Linux,Windows,MacOS,Android,iOS"
 WORKFLOW_EVENTS = ("", "push", "pull_request", "workflow_dispatch", "schedule")
 
 

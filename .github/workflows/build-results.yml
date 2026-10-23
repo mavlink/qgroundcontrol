@@ -6,7 +6,7 @@ on:
     # list in sync with build-config.json's `platform_workflows` plus any
     # non-platform triggers (pre-commit). Drift is enforced by
     # tools/tests/ci/contracts/test_platform_workflow_names.py.
-    workflows: [Linux, Windows, MacOS, Android, pre-commit]
+    workflows: [Linux, Windows, MacOS, Android, iOS, pre-commit]
     types: [completed]
 
 permissions:

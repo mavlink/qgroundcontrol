@@ -13,6 +13,7 @@ import logging
 import os
 import re
 import sys
+from collections import Counter
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -162,6 +163,10 @@ class AnalysisTool:
     files: tuple[str, ...]
     findings: tuple[str, ...]
     errors: tuple[str, ...]
+    # Unique warnings across shards, by file and by check; None without diagnostics files.
+    warnings: int | None = None
+    warning_files: tuple[tuple[str, int], ...] = ()
+    warning_checks: tuple[tuple[str, int], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -366,8 +371,41 @@ def load_precommit(env: Mapping[str, str], base_dir: Path) -> Precommit | None:
     )
 
 
+def _ranked(counts: Counter[str]) -> tuple[tuple[str, int], ...]:
+    return tuple(sorted(counts.items(), key=lambda item: (-item[1], item[0])))
+
+
+def load_analysis_warnings(analysis_dir: Path) -> dict[str, set[tuple[str, int, int, str]]]:
+    """Union every shard's analyze.py *-diagnostics.json warnings by tool.
+
+    A header's warnings appear in each shard that compiles a file including it, so a warning is
+    identified by its location and check.
+    """
+    merged: dict[str, set[tuple[str, int, int, str]]] = {}
+    for path in sorted(analysis_dir.glob("**/*-diagnostics.json")):
+        data = _load_json(path, "analysis diagnostics")
+        if not isinstance(data, dict) or not isinstance(data.get("diagnostics"), dict):
+            continue
+        warnings = merged.setdefault(
+            clip(data.get("tool") or path.name.removesuffix("-diagnostics.json")), set()
+        )
+        for file, rows in data["diagnostics"].items():
+            if not isinstance(rows, list):
+                continue
+            for row in rows:
+                if (
+                    isinstance(row, list)
+                    and len(row) == 4
+                    and isinstance(row[0], int)
+                    and isinstance(row[1], int)
+                    and row[2] == "warning"
+                ):
+                    warnings.add((clip(str(file)), row[0], row[1], clip(str(row[3]))))
+    return merged
+
+
 def load_analysis(analysis_dir: Path) -> list[AnalysisTool]:
-    """Merge every shard's analyze.py *-timings.json by tool."""
+    """Merge every shard's analyze.py *-timings.json by tool, with its unique warnings."""
     merged: dict[str, dict[str, list[str]]] = {}
     for path in sorted(analysis_dir.glob("**/*-timings.json")):
         data = _load_json(path, "analysis timings")
@@ -386,15 +424,22 @@ def load_analysis(analysis_dir: Path) -> list[AnalysisTool]:
                 tool["findings"].append(name)
             elif row.get("status") == "error":
                 tool["errors"].append(name)
-    return [
-        AnalysisTool(
-            name,
-            tuple(sorted(set(rows["files"]))),
-            tuple(sorted(set(rows["findings"]))),
-            tuple(sorted(set(rows["errors"]))),
+    warnings = load_analysis_warnings(analysis_dir)
+    tools = []
+    for name, rows in sorted(merged.items()):
+        tool_warnings = warnings.get(name)
+        tools.append(
+            AnalysisTool(
+                name,
+                tuple(sorted(set(rows["files"]))),
+                tuple(sorted(set(rows["findings"]))),
+                tuple(sorted(set(rows["errors"]))),
+                warnings=None if tool_warnings is None else len(tool_warnings),
+                warning_files=_ranked(Counter(file for file, *_ in tool_warnings or ())),
+                warning_checks=_ranked(Counter(check for *_, check in tool_warnings or ())),
+            )
         )
-        for name, rows in sorted(merged.items())
-    ]
+    return tools
 
 
 def collect_report(env: Mapping[str, str], base_dir: Path, now: datetime) -> Report:
@@ -566,14 +611,21 @@ def render_table(report: Report) -> str:
     if report.analysis_run:
         files = len({name for tool in report.analysis for name in tool.files})
         findings = len({name for tool in report.analysis for name in tool.findings})
+        warnings = _warning_totals(report.analysis)
+        if warnings:
+            results = (
+                f"{format_count(warnings[0])} unique warnings in {format_count(warnings[1])} files"
+            )
+        elif report.analysis:
+            results = f"{format_count(files)} files, {format_count(findings)} with findings"
+        else:
+            results = "—"
         rows.append(
             [
                 "Code Analysis",
                 STATE_LABELS.get(_state(report.analysis_run), "—"),
                 _duration_cell(report.analysis_run),
-                f"{format_count(files)} files, {format_count(findings)} with findings"
-                if report.analysis
-                else "—",
+                results,
                 "—",
                 _run_cell(report.analysis_run),
             ]
@@ -867,6 +919,65 @@ def render_precommit(report: Report) -> str:
     )
 
 
+def _warning_totals(tools: tuple[AnalysisTool, ...]) -> tuple[int, int] | None:
+    """Unique warnings and the files they are in, across tools that wrote diagnostics."""
+    reported = [tool for tool in tools if tool.warnings is not None]
+    if not reported:
+        return None
+    files = {file for tool in reported for file, _ in tool.warning_files}
+    return sum(tool.warnings or 0 for tool in reported), len(files)
+
+
+def _analysis_warning_tables(tools: tuple[AnalysisTool, ...], limit: int) -> list[str]:
+    reported = [tool for tool in tools if tool.warnings is not None]
+    parts = [
+        md_table(
+            ["Tool", "Files analyzed", "Unique warnings", "In files", "Errors"],
+            [
+                [
+                    code_span(tool.tool),
+                    format_count(len(tool.files)),
+                    "—" if tool.warnings is None else format_count(tool.warnings),
+                    "—" if tool.warnings is None else format_count(len(tool.warning_files)),
+                    format_count(len(tool.errors)),
+                ]
+                for tool in tools
+            ],
+            align=["left", "right", "right", "right", "right"],
+            markdown=True,
+        )
+    ]
+    if not limit:
+        return parts
+    checks = sorted(
+        ((check, tool.tool, count) for tool in reported for check, count in tool.warning_checks),
+        key=lambda row: (-row[2], row[0]),
+    )
+    if checks:
+        rows = [
+            [code_span(check), tool, format_count(count)] for check, tool, count in checks[:limit]
+        ]
+        parts.append(
+            "Most frequent checks:\n\n"
+            + md_table(
+                ["Check", "Tool", "Unique warnings"],
+                rows,
+                align=["left", "left", "right"],
+                markdown=True,
+            )
+        )
+    per_file: Counter[str] = Counter()
+    for tool in reported:
+        per_file.update(dict(tool.warning_files))
+    if per_file:
+        rows = [[code_span(file), format_count(count)] for file, count in _ranked(per_file)[:limit]]
+        parts.append(
+            "Files with the most warnings (a header's warnings count once):\n\n"
+            + md_table(["File", "Unique warnings"], rows, align=["left", "right"], markdown=True)
+        )
+    return parts
+
+
 def render_analysis(report: Report, limits: Limits) -> str:
     run = report.analysis_run
     if not run:
@@ -874,7 +985,10 @@ def render_analysis(report: Report, limits: Limits) -> str:
     state = _state(run)
     url = str(run.get("url", ""))
     parts: list[str] = []
-    if report.analysis:
+    warnings = _warning_totals(report.analysis)
+    if warnings:
+        parts += _analysis_warning_tables(report.analysis, limits.analysis_files)
+    elif report.analysis:
         parts.append(
             md_table(
                 ["Tool", "Files analyzed", "With findings", "Errors"],
@@ -908,7 +1022,10 @@ def render_analysis(report: Report, limits: Limits) -> str:
     parts.append(
         f"{_link('Code Analysis run', url)} (diagnostics are in each job's summary and log)."
     )
-    return details(f"Code Analysis: {STATE_LABELS.get(state, state)}", "\n\n".join(parts))
+    title = f"Code Analysis: {STATE_LABELS.get(state, state)}"
+    if warnings:
+        title += f", {format_count(warnings[0])} unique warnings"
+    return details(title, "\n\n".join(parts))
 
 
 def render_footer(report: Report) -> str:

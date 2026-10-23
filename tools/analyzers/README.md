@@ -13,6 +13,9 @@ Compiler analysis (clang-tidy, Clazy) writes these files to the build directory:
   interrupted CI jobs retain partial timing evidence.
 - `<tool>-timings.json` adds selection, elapsed and accumulated worker time, shard coverage,
   result-cache statistics, and (when profiling) per-check costs.
+- `<tool>-diagnostics.json` lists each unique diagnostic once (line, column, severity, and check,
+  by file relative to the checkout, or `build/...` for generated files), so reports can count a
+  header's warnings once across translation units and shards.
 - `<tool>-raw.txt` keeps every translation unit's full output; the console shows each identical
   diagnostic block once.
 

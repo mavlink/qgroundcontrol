@@ -20,7 +20,7 @@ def test_parse_args_defaults() -> None:
     assert args.repo == "owner/repo"
     assert args.head_sha == "abc123"
     assert args.output_dir == Path("artifacts")
-    assert args.workflows == "Linux,Windows,MacOS,Android"
+    assert args.workflows == "Linux,Windows,MacOS,Android,iOS"
     assert args.event == ""
     assert args.artifact_prefixes == "coverage-report"
     assert args.sizes_out is None

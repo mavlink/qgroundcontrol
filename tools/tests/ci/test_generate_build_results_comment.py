@@ -127,12 +127,46 @@ def _timings(tool: str, files: int, findings: list[str], errors: list[str] = ())
     return json.dumps({"tool": tool, "selected_files": len(rows), "files": rows})
 
 
+def _diagnostics(tool: str, by_file: dict[str, list[list[object]]]) -> str:
+    return json.dumps({"tool": tool, "shard": 1, "diagnostics": by_file})
+
+
+# A header warning repeats across shards; error diagnostics and malformed rows are not warnings.
+DIAGNOSTICS = {
+    "analysis-artifacts/clang-tidy-clazy-output-1/clang-tidy-diagnostics.json": _diagnostics(
+        "clang-tidy",
+        {
+            "src/Vehicle/Vehicle.h": [
+                [10, 5, "warning", "modernize-use-nodiscard"],
+                [12, 1, "warning", "readability-identifier-naming"],
+            ],
+            "src/Vehicle/Vehicle.cc": [[40, 3, "warning", "readability-implicit-bool-conversion"]],
+        },
+    ),
+    "analysis-artifacts/clang-tidy-clazy-output-2/clang-tidy-diagnostics.json": _diagnostics(
+        "clang-tidy",
+        {
+            "src/Vehicle/Vehicle.h": [[10, 5, "warning", "modernize-use-nodiscard"]],
+            "src/MissionManager/MissionController.cc": [
+                [7, 1, "warning", "modernize-use-nodiscard"],
+                [9, 2, "error", "clang-diagnostic-error"],
+                ["malformed"],
+            ],
+        },
+    ),
+    "analysis-artifacts/clang-tidy-clazy-output-1/clazy-diagnostics.json": _diagnostics(
+        "clazy", {"src/Vehicle/Vehicle.cc": [[5, 1, "warning", "-Wclazy-non-pod-global-static"]]}
+    ),
+}
+
+
 PR_SIZES = [
     ("QGroundControl-aarch64.AppImage", "Linux", 192_280_813),
     ("QGroundControl-x86_64.AppImage", "Linux", 203_088_195),
     ("QGroundControl-installer-AMD64.exe", "Windows", 102_760_448),
     ("QGroundControl.dmg", "MacOS", 351_272_960),
     ("QGroundControl-linux-arm64-v8a.apk", "Android", 89_128_960),
+    ("QGroundControl.ipa", "iOS", 81_146_176),
 ]
 BASE_SIZES = [
     ("QGroundControl-aarch64.AppImage", "", 192_190_000),
@@ -140,6 +174,7 @@ BASE_SIZES = [
     ("QGroundControl-installer-AMD64.exe", "", 102_700_000),
     ("QGroundControl.dmg", "", 351_400_000),
     ("QGroundControl-linux-arm64-v8a-armeabi-v7a.apk", "", 170_000_000),
+    ("QGroundControl.ipa", "", 81_183_320),
 ]
 MANIFEST = [
     ("test-results-linux-coverage-unit", "Linux"),
@@ -228,6 +263,7 @@ def write_scenario(base: Path, scenario: str) -> dict[str, str]:
         "analysis-artifacts/clang-tidy-clazy-output-2/clazy-timings.json": _timings(
             "clazy", 75, []
         ),
+        **DIAGNOSTICS,
         "pr-sizes.json": _sizes(HEAD, PR_SIZES),
         "baseline-sizes.json": _sizes(BASE, BASE_SIZES),
         "baseline-coverage-summary.json": _coverage(
@@ -239,6 +275,7 @@ def write_scenario(base: Path, scenario: str) -> dict[str, str]:
         _workflow("Windows", "success", 9902, seconds=1862),
         _workflow("MacOS", "success", 9903, seconds=1688),
         _workflow("Android", "success", 9904, seconds=1324),
+        _workflow("iOS", "success", 9907, seconds=2314),
     ]
     precommit = _workflow("pre-commit", "success", 9905, seconds=110)
     analysis = _workflow("Code Analysis", "success", 9906, seconds=372)
@@ -354,6 +391,7 @@ def write_scenario(base: Path, scenario: str) -> dict[str, str]:
                     _job("Android", 9904, 3, seconds=3),
                 ),
             ),
+            _workflow("iOS", "running", 9907),
         ]
         analysis = _workflow("Code Analysis", "running", 9906)
         env["TRIGGERED_BY"] = "MacOS"
@@ -421,13 +459,13 @@ def _verdict(comment: str) -> str:
 def test_verdicts(tmp_path: Path) -> None:
     passed = generate_comment(write_scenario(tmp_path / "a", "all-passed"), tmp_path / "a", NOW)
     assert _verdict(passed).startswith("✅ **All builds passed** · [`0123456`](")
-    assert _verdict(passed).endswith("· 4 of 4 platform workflows done")
+    assert _verdict(passed).endswith("· 5 of 5 platform workflows done")
     failed = generate_comment(write_scenario(tmp_path / "f", "failures"), tmp_path / "f", NOW)
     assert _verdict(failed).startswith("❌ **3 workflows failed**")
     pending = generate_comment(write_scenario(tmp_path / "p", "pending"), tmp_path / "p", NOW)
     assert _verdict(pending).startswith("⏳ **Builds in progress**")
     assert _verdict(pending).endswith(
-        "2 of 4 platform workflows done (1 skipped by change detection, 2 pending)"
+        "2 of 5 platform workflows done (1 skipped by change detection, 3 pending)"
     )
 
 
@@ -607,6 +645,36 @@ def test_size_delta_rejects_stale_or_unidentified_baseline(
     assert "Ignoring size baseline" in caplog.text
     assert "| `QGroundControl` | — | 1.00 MB | — | — |" in out
     assert "No size baseline for `aaaaaaa` yet" in out
+
+
+def test_analysis_counts_each_warning_once_across_shards(tmp_path: Path) -> None:
+    write_files(tmp_path, DIAGNOSTICS)
+    assert mod.load_analysis_warnings(tmp_path) == {
+        "clang-tidy": {
+            ("src/Vehicle/Vehicle.h", 10, 5, "modernize-use-nodiscard"),
+            ("src/Vehicle/Vehicle.h", 12, 1, "readability-identifier-naming"),
+            ("src/Vehicle/Vehicle.cc", 40, 3, "readability-implicit-bool-conversion"),
+            ("src/MissionManager/MissionController.cc", 7, 1, "modernize-use-nodiscard"),
+        },
+        "clazy": {("src/Vehicle/Vehicle.cc", 5, 1, "-Wclazy-non-pod-global-static")},
+    }
+
+    comment = generate_comment(write_scenario(tmp_path, "all-passed"), tmp_path, now_utc=NOW)
+    assert "| 5 unique warnings in 3 files |" in comment
+    assert "| `modernize-use-nodiscard` | clang-tidy | 2 |" in comment
+    assert "| `src/Vehicle/Vehicle.cc` | 2 |" in comment
+
+
+def test_analysis_without_diagnostics_lists_files_with_findings(tmp_path: Path) -> None:
+    env = write_scenario(tmp_path, "all-passed")
+    for path in tmp_path.glob("analysis-artifacts/**/*-diagnostics.json"):
+        path.unlink()
+
+    comment = generate_comment(env, tmp_path, now_utc=NOW)
+
+    assert "| 76 files, 1 with findings |" in comment
+    assert "Files with findings (warnings are advisory):" in comment
+    assert "unique warnings" not in comment
 
 
 def test_malformed_and_empty_size_snapshots(tmp_path: Path) -> None:

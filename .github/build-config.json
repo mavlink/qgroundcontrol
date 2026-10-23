@@ -24,7 +24,7 @@
     "cmake_minimum_version": "3.28",
     "cmake_version": "4.4.2",
     "ninja_version": "1.13.2",
-    "platform_workflows": "Linux,Windows,MacOS,Android"
+    "platform_workflows": "Linux,Windows,MacOS,Android,iOS"
   },
   "gstreamer": {
     "version": {

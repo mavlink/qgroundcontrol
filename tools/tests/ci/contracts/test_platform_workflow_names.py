@@ -30,6 +30,7 @@ PLATFORM_FILES: dict[str, str] = {
     "Windows": "windows.yml",
     "MacOS": "macos.yml",
     "Android": "android.yml",
+    "iOS": "ios.yml",
 }
 
 

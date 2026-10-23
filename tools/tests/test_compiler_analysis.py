@@ -172,6 +172,42 @@ def test_header_selection_keeps_changed_sources_and_records_timings(tmp_path):
     assert all(row["seconds"] >= 0 for row in timings["files"])
 
 
+def test_unique_diagnostics_are_recorded_once_per_location(tmp_path):
+    source = tmp_path / "source"
+    build = tmp_path / "build"
+    build.mkdir()
+    (build / "compile_commands.json").write_text(
+        json.dumps([{"directory": str(source), "file": f"src/{name}"} for name in ("a.cc", "b.cc")])
+    )
+    header = f"{source}/src/shared.h:3:7: warning: shared [modernize-use-nodiscard]\n"
+    outputs = {
+        "a.cc": header + f"{source}/src/a.cc:1:2: warning: own [readability-braces]\n",
+        "b.cc": header
+        + f"{build}/gen/../gen/moc.h:4:1: error: bad [bugprone-macro]\n"
+        + f"{source}/src/b.cc:2:1: fatal error: 'x.h' file not found\n",
+    }
+
+    def run(command, **kwargs):
+        return CompletedProcess(command, 1, outputs[Path(command[-1]).name], "")
+
+    analyzer = ClangTidyAnalyzer(source, build)
+    with (
+        patch.object(analyzer, "require_tool", return_value=True),
+        patch("analyzers.compiler.run_captured", side_effect=run),
+    ):
+        analyzer.run([source / "src/a.cc", source / "src/b.cc"])
+
+    assert json.loads((build / "clang-tidy-diagnostics.json").read_text()) == {
+        "tool": "clang-tidy",
+        "shard": 1,
+        "diagnostics": {
+            "build/gen/moc.h": [[4, 1, "error", "bugprone-macro"]],
+            "src/a.cc": [[1, 2, "warning", "readability-braces"]],
+            "src/shared.h": [[3, 7, "warning", "modernize-use-nodiscard"]],
+        },
+    }
+
+
 def test_source_selection_skips_inactive_platforms(tmp_path):
     analyzer = ClazyAnalyzer(tmp_path, tmp_path)
     with patch.object(analyzer, "require_tool", return_value=True):

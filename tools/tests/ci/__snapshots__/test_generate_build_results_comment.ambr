@@ -3,7 +3,7 @@
   '''
   ## Build Results
   
-  ✅ **All builds passed** · [`0123456`](https://github.com/mavlink/qgroundcontrol/commit/0123456789abcdef0123456789abcdef01234567) · 4 of 4 platform workflows done
+  ✅ **All builds passed** · [`0123456`](https://github.com/mavlink/qgroundcontrol/commit/0123456789abcdef0123456789abcdef01234567) · 5 of 5 platform workflows done
   
   | Workflow | Status | Duration | Results | Artifacts (Δ vs base) | Run |
   | --- | --- | --- | --- | --- | --- |
@@ -11,8 +11,9 @@
   | Windows | ✅ Passed | 31m 02s | 10 passed | 98.00 MB (+0.06 MB) | [#902](https://github.com/mavlink/qgroundcontrol/actions/runs/9902) |
   | MacOS | ✅ Passed | 28m 08s | 439 passed, 1 skipped | 335.00 MB (-0.12 MB) | [#903](https://github.com/mavlink/qgroundcontrol/actions/runs/9903) |
   | Android | ✅ Passed | 22m 04s | — | 85.00 MB | [#904](https://github.com/mavlink/qgroundcontrol/actions/runs/9904) |
+  | iOS | ✅ Passed | 38m 34s | — | 77.39 MB (-0.04 MB) | [#907](https://github.com/mavlink/qgroundcontrol/actions/runs/9907) |
   | pre-commit | ✅ Passed | 1m 50s | hooks: 41 passed, 17 skipped | — | [#905](https://github.com/mavlink/qgroundcontrol/actions/runs/9905) |
-  | Code Analysis | ✅ Passed | 6m 12s | 76 files, 1 with findings | — | [#906](https://github.com/mavlink/qgroundcontrol/actions/runs/9906) |
+  | Code Analysis | ✅ Passed | 6m 12s | 5 unique warnings in 3 files | — | [#906](https://github.com/mavlink/qgroundcontrol/actions/runs/9906) |
   
   <details><summary>Tests: 1,331 passed, 0 failed, 1 skipped in 7 suites</summary>
   
@@ -52,7 +53,7 @@
   
   </details>
   
-  <details><summary>Artifact sizes: 5 artifacts, 895.05 MB, +0.02 MB vs base</summary>
+  <details><summary>Artifact sizes: 6 artifacts, 972.44 MB, -0.01 MB vs base</summary>
   
   | Artifact | Workflow | Size | Change | % |
   | --- | --- | ---: | ---: | ---: |
@@ -61,6 +62,7 @@
   | `QGroundControl-linux-arm64-v8a.apk` | Android | 85.00 MB | — | — |
   | `QGroundControl-x86_64.AppImage` | Linux | 193.68 MB | unchanged | +0.00% |
   | `QGroundControl.dmg` | MacOS | 335.00 MB | -0.12 MB | -0.04% |
+  | `QGroundControl.ipa` | iOS | 77.39 MB | -0.04 MB | -0.05% |
   
   Compared with PR base `aaaaaaa`; only artifacts with the same name are compared (PR Android builds are single-ABI). ⚠️ marks growth above 1% and 1.00 MB.
   
@@ -78,16 +80,29 @@
   
   </details>
   
-  <details><summary>Code Analysis: ✅ Passed</summary>
+  <details><summary>Code Analysis: ✅ Passed, 5 unique warnings</summary>
   
-  | Tool | Files analyzed | With findings | Errors |
-  | --- | ---: | ---: | ---: |
-  | `clang-tidy` | 75 | 0 | 0 |
-  | `clazy` | 76 | 1 | 0 |
+  | Tool | Files analyzed | Unique warnings | In files | Errors |
+  | --- | ---: | ---: | ---: | ---: |
+  | `clang-tidy` | 75 | 4 | 3 | 0 |
+  | `clazy` | 76 | 1 | 1 | 0 |
   
-  Files with findings (warnings are advisory):
+  Most frequent checks:
   
-  - `src/Vehicle/Vehicle.cc`
+  | Check | Tool | Unique warnings |
+  | --- | --- | ---: |
+  | `modernize-use-nodiscard` | clang-tidy | 2 |
+  | `-Wclazy-non-pod-global-static` | clazy | 1 |
+  | `readability-identifier-naming` | clang-tidy | 1 |
+  | `readability-implicit-bool-conversion` | clang-tidy | 1 |
+  
+  Files with the most warnings (a header's warnings count once):
+  
+  | File | Unique warnings |
+  | --- | ---: |
+  | `src/Vehicle/Vehicle.cc` | 2 |
+  | `src/Vehicle/Vehicle.h` | 2 |
+  | `src/MissionManager/MissionController.cc` | 1 |
   
   [Code Analysis run](https://github.com/mavlink/qgroundcontrol/actions/runs/9906) (diagnostics are in each job's summary and log).
   
@@ -103,7 +118,7 @@
   '''
   ## Build Results
   
-  ❌ **3 workflows failed** · [`0123456`](https://github.com/mavlink/qgroundcontrol/commit/0123456789abcdef0123456789abcdef01234567) · 4 of 4 platform workflows done
+  ❌ **3 workflows failed** · [`0123456`](https://github.com/mavlink/qgroundcontrol/commit/0123456789abcdef0123456789abcdef01234567) · 5 of 5 platform workflows done
   
   | Workflow | Status | Duration | Results | Artifacts (Δ vs base) | Run |
   | --- | --- | --- | --- | --- | --- |
@@ -111,8 +126,9 @@
   | Windows | ❌ Failed | 15m 41s | — | — | [#902](https://github.com/mavlink/qgroundcontrol/actions/runs/9902) |
   | MacOS | ✅ Passed | 28m 08s | 439 passed, 1 skipped | 335.00 MB (-0.12 MB) | [#903](https://github.com/mavlink/qgroundcontrol/actions/runs/9903) |
   | Android | ✅ Passed | 22m 04s | — | 85.00 MB | [#904](https://github.com/mavlink/qgroundcontrol/actions/runs/9904) |
+  | iOS | ✅ Passed | 38m 34s | — | — | [#907](https://github.com/mavlink/qgroundcontrol/actions/runs/9907) |
   | pre-commit | ❌ Failed | 2m 11s | hooks: 39 passed, **2 failed**, 17 skipped | — | [#905](https://github.com/mavlink/qgroundcontrol/actions/runs/9905) |
-  | Code Analysis | ✅ Passed | 6m 12s | 76 files, 1 with findings | — | [#906](https://github.com/mavlink/qgroundcontrol/actions/runs/9906) |
+  | Code Analysis | ✅ Passed | 6m 12s | 5 unique warnings in 3 files | — | [#906](https://github.com/mavlink/qgroundcontrol/actions/runs/9906) |
   
   ### ❌ Failures
   
@@ -219,16 +235,29 @@
   
   </details>
   
-  <details><summary>Code Analysis: ✅ Passed</summary>
+  <details><summary>Code Analysis: ✅ Passed, 5 unique warnings</summary>
   
-  | Tool | Files analyzed | With findings | Errors |
-  | --- | ---: | ---: | ---: |
-  | `clang-tidy` | 75 | 0 | 0 |
-  | `clazy` | 76 | 1 | 0 |
+  | Tool | Files analyzed | Unique warnings | In files | Errors |
+  | --- | ---: | ---: | ---: | ---: |
+  | `clang-tidy` | 75 | 4 | 3 | 0 |
+  | `clazy` | 76 | 1 | 1 | 0 |
   
-  Files with findings (warnings are advisory):
+  Most frequent checks:
   
-  - `src/Vehicle/Vehicle.cc`
+  | Check | Tool | Unique warnings |
+  | --- | --- | ---: |
+  | `modernize-use-nodiscard` | clang-tidy | 2 |
+  | `-Wclazy-non-pod-global-static` | clazy | 1 |
+  | `readability-identifier-naming` | clang-tidy | 1 |
+  | `readability-implicit-bool-conversion` | clang-tidy | 1 |
+  
+  Files with the most warnings (a header's warnings count once):
+  
+  | File | Unique warnings |
+  | --- | ---: |
+  | `src/Vehicle/Vehicle.cc` | 2 |
+  | `src/Vehicle/Vehicle.h` | 2 |
+  | `src/MissionManager/MissionController.cc` | 1 |
   
   [Code Analysis run](https://github.com/mavlink/qgroundcontrol/actions/runs/9906) (diagnostics are in each job's summary and log).
   
@@ -244,7 +273,7 @@
   '''
   ## Build Results
   
-  ✅ **All builds passed** · [`0123456`](https://github.com/mavlink/qgroundcontrol/commit/0123456789abcdef0123456789abcdef01234567) · 4 of 4 platform workflows done
+  ✅ **All builds passed** · [`0123456`](https://github.com/mavlink/qgroundcontrol/commit/0123456789abcdef0123456789abcdef01234567) · 5 of 5 platform workflows done
   
   | Workflow | Status | Duration | Results | Artifacts (Δ vs base) | Run |
   | --- | --- | --- | --- | --- | --- |
@@ -252,8 +281,9 @@
   | Windows | ✅ Passed | 31m 02s | 10 passed | 98.00 MB | [#902](https://github.com/mavlink/qgroundcontrol/actions/runs/9902) |
   | MacOS | ✅ Passed | 28m 08s | 439 passed, 1 skipped | 335.00 MB | [#903](https://github.com/mavlink/qgroundcontrol/actions/runs/9903) |
   | Android | ✅ Passed | 22m 04s | — | 85.00 MB | [#904](https://github.com/mavlink/qgroundcontrol/actions/runs/9904) |
+  | iOS | ✅ Passed | 38m 34s | — | 77.39 MB | [#907](https://github.com/mavlink/qgroundcontrol/actions/runs/9907) |
   | pre-commit | ✅ Passed | 1m 50s | hooks: 41 passed, 17 skipped | — | [#905](https://github.com/mavlink/qgroundcontrol/actions/runs/9905) |
-  | Code Analysis | ✅ Passed | 6m 12s | 76 files, 1 with findings | — | [#906](https://github.com/mavlink/qgroundcontrol/actions/runs/9906) |
+  | Code Analysis | ✅ Passed | 6m 12s | 5 unique warnings in 3 files | — | [#906](https://github.com/mavlink/qgroundcontrol/actions/runs/9906) |
   
   <details><summary>Tests: 1,331 passed, 0 failed, 1 skipped in 7 suites</summary>
   
@@ -293,7 +323,7 @@
   
   </details>
   
-  <details><summary>Artifact sizes: 5 artifacts, 895.05 MB</summary>
+  <details><summary>Artifact sizes: 6 artifacts, 972.44 MB</summary>
   
   | Artifact | Workflow | Size | Change | % |
   | --- | --- | ---: | ---: | ---: |
@@ -302,6 +332,7 @@
   | `QGroundControl-linux-arm64-v8a.apk` | Android | 85.00 MB | — | — |
   | `QGroundControl-x86_64.AppImage` | Linux | 193.68 MB | — | — |
   | `QGroundControl.dmg` | MacOS | 335.00 MB | — | — |
+  | `QGroundControl.ipa` | iOS | 77.39 MB | — | — |
   
   No size baseline for `aaaaaaa` yet, so changes are not shown.
   
@@ -319,16 +350,29 @@
   
   </details>
   
-  <details><summary>Code Analysis: ✅ Passed</summary>
+  <details><summary>Code Analysis: ✅ Passed, 5 unique warnings</summary>
   
-  | Tool | Files analyzed | With findings | Errors |
-  | --- | ---: | ---: | ---: |
-  | `clang-tidy` | 75 | 0 | 0 |
-  | `clazy` | 76 | 1 | 0 |
+  | Tool | Files analyzed | Unique warnings | In files | Errors |
+  | --- | ---: | ---: | ---: | ---: |
+  | `clang-tidy` | 75 | 4 | 3 | 0 |
+  | `clazy` | 76 | 1 | 1 | 0 |
   
-  Files with findings (warnings are advisory):
+  Most frequent checks:
   
-  - `src/Vehicle/Vehicle.cc`
+  | Check | Tool | Unique warnings |
+  | --- | --- | ---: |
+  | `modernize-use-nodiscard` | clang-tidy | 2 |
+  | `-Wclazy-non-pod-global-static` | clazy | 1 |
+  | `readability-identifier-naming` | clang-tidy | 1 |
+  | `readability-implicit-bool-conversion` | clang-tidy | 1 |
+  
+  Files with the most warnings (a header's warnings count once):
+  
+  | File | Unique warnings |
+  | --- | ---: |
+  | `src/Vehicle/Vehicle.cc` | 2 |
+  | `src/Vehicle/Vehicle.h` | 2 |
+  | `src/MissionManager/MissionController.cc` | 1 |
   
   [Code Analysis run](https://github.com/mavlink/qgroundcontrol/actions/runs/9906) (diagnostics are in each job's summary and log).
   
@@ -344,7 +388,7 @@
   '''
   ## Build Results
   
-  ⏳ **Builds in progress** · [`0123456`](https://github.com/mavlink/qgroundcontrol/commit/0123456789abcdef0123456789abcdef01234567) · 2 of 4 platform workflows done (1 skipped by change detection, 2 pending)
+  ⏳ **Builds in progress** · [`0123456`](https://github.com/mavlink/qgroundcontrol/commit/0123456789abcdef0123456789abcdef01234567) · 2 of 5 platform workflows done (1 skipped by change detection, 3 pending)
   
   | Workflow | Status | Duration | Results | Artifacts (Δ vs base) | Run |
   | --- | --- | --- | --- | --- | --- |
@@ -352,6 +396,7 @@
   | Windows | ⏳ Pending | — | — | — | — |
   | MacOS | ✅ Passed | 28m 08s | 439 passed, 1 skipped | 335.00 MB | [#903](https://github.com/mavlink/qgroundcontrol/actions/runs/9903) |
   | Android | ⏭️ Skipped (no changes) | 21s | — | — | [#904](https://github.com/mavlink/qgroundcontrol/actions/runs/9904) |
+  | iOS | 🔄 Running | running | — | — | [#907](https://github.com/mavlink/qgroundcontrol/actions/runs/9907) |
   | pre-commit | ✅ Passed | 1m 50s | hooks: 41 passed, 17 skipped | — | [#905](https://github.com/mavlink/qgroundcontrol/actions/runs/9905) |
   | Code Analysis | 🔄 Running | running | — | — | [#906](https://github.com/mavlink/qgroundcontrol/actions/runs/9906) |
   
@@ -416,7 +461,7 @@
   '''
   ## Build Results
   
-  ❌ **1 workflow failed** · [`0123456`](https://github.com/mavlink/qgroundcontrol/commit/0123456789abcdef0123456789abcdef01234567) · 4 of 4 platform workflows done
+  ❌ **1 workflow failed** · [`0123456`](https://github.com/mavlink/qgroundcontrol/commit/0123456789abcdef0123456789abcdef01234567) · 5 of 5 platform workflows done
   
   | Workflow | Status | Duration | Results | Artifacts (Δ vs base) | Run |
   | --- | --- | --- | --- | --- | --- |
@@ -424,8 +469,9 @@
   | Windows | ✅ Passed | 31m 02s | 10 passed | — | [#902](https://github.com/mavlink/qgroundcontrol/actions/runs/9902) |
   | MacOS | ✅ Passed | 28m 08s | 439 passed, 1 skipped | — | [#903](https://github.com/mavlink/qgroundcontrol/actions/runs/9903) |
   | Android | ✅ Passed | 22m 04s | — | — | [#904](https://github.com/mavlink/qgroundcontrol/actions/runs/9904) |
+  | iOS | ✅ Passed | 38m 34s | — | — | [#907](https://github.com/mavlink/qgroundcontrol/actions/runs/9907) |
   | pre-commit | ✅ Passed | 1m 50s | hooks: 41 passed, 17 skipped | — | [#905](https://github.com/mavlink/qgroundcontrol/actions/runs/9905) |
-  | Code Analysis | ✅ Passed | 6m 12s | 76 files, 1 with findings | — | [#906](https://github.com/mavlink/qgroundcontrol/actions/runs/9906) |
+  | Code Analysis | ✅ Passed | 6m 12s | 5 unique warnings in 3 files | — | [#906](https://github.com/mavlink/qgroundcontrol/actions/runs/9906) |
   
   ### ❌ Failures
   
@@ -661,16 +707,29 @@
   
   </details>
   
-  <details><summary>Code Analysis: ✅ Passed</summary>
+  <details><summary>Code Analysis: ✅ Passed, 5 unique warnings</summary>
   
-  | Tool | Files analyzed | With findings | Errors |
-  | --- | ---: | ---: | ---: |
-  | `clang-tidy` | 75 | 0 | 0 |
-  | `clazy` | 76 | 1 | 0 |
+  | Tool | Files analyzed | Unique warnings | In files | Errors |
+  | --- | ---: | ---: | ---: | ---: |
+  | `clang-tidy` | 75 | 4 | 3 | 0 |
+  | `clazy` | 76 | 1 | 1 | 0 |
   
-  Files with findings (warnings are advisory):
+  Most frequent checks:
   
-  - `src/Vehicle/Vehicle.cc`
+  | Check | Tool | Unique warnings |
+  | --- | --- | ---: |
+  | `modernize-use-nodiscard` | clang-tidy | 2 |
+  | `-Wclazy-non-pod-global-static` | clazy | 1 |
+  | `readability-identifier-naming` | clang-tidy | 1 |
+  | `readability-implicit-bool-conversion` | clang-tidy | 1 |
+  
+  Files with the most warnings (a header's warnings count once):
+  
+  | File | Unique warnings |
+  | --- | ---: |
+  | `src/Vehicle/Vehicle.cc` | 2 |
+  | `src/Vehicle/Vehicle.h` | 2 |
+  | `src/MissionManager/MissionController.cc` | 1 |
   
   [Code Analysis run](https://github.com/mavlink/qgroundcontrol/actions/runs/9906) (diagnostics are in each job's summary and log).
   

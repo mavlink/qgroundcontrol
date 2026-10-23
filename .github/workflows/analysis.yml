@@ -314,6 +314,7 @@ jobs:
           path: |
             ${{ runner.temp }}/build/analysis-output.txt
             ${{ runner.temp }}/build/*-timings.json
+            ${{ runner.temp }}/build/*-diagnostics.json
             ${{ runner.temp }}/build/*-progress.jsonl
             ${{ runner.temp }}/build/*-raw.txt
             ${{ runner.temp }}/build/clang-tidy-profiles/

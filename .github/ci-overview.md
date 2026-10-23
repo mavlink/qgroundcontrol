@@ -657,8 +657,9 @@ when a PR closes, and on demand:
   `misc-include-cleaner` is an advisory clang-tidy warning; it leaves
   Qt, MAVLink, GStreamer/GLib, and Qt-generated includes alone (`IgnoreHeaders` in `.clang-tidy`),
   because it would suggest their internal headers. Jobs upload `*-timings.json`,
-  `*-progress.jsonl`, and
-  `*-raw.txt` (every unit's full output; identical diagnostic blocks are shown once in the log).
+  `*-progress.jsonl`, `*-diagnostics.json` (each unique diagnostic's file, line, column,
+  severity, and check), and `*-raw.txt` (every unit's full output; identical diagnostic blocks are
+  shown once in the log).
   Per-check profiling (`profile_checks` dispatch input) is described in
   [`tools/analyzers/README.md`](../tools/analyzers/README.md).
 
@@ -676,8 +677,8 @@ when a PR closes, and on demand:
 
 ### Build results
 
-- `build-results.yml` runs on `workflow_run` completion of Linux, Windows, MacOS, Android, and
-  pre-commit (GitHub runs only the default-branch copy; `test_platform_workflow_names.py` keeps the
+- `build-results.yml` runs on `workflow_run` completion of Linux, Windows, MacOS, Android, iOS,
+  and pre-commit (GitHub runs only the default-branch copy; `test_platform_workflow_names.py` keeps the
   list in sync with `build.platform_workflows`). One `report_context.py` lookup resolves the PR
   number and base SHA, and the PR head (or `master`) is rechecked before posting or saving.
 - Every trigger updates one `build-results`-tagged comment (fork PRs included), so finished
@@ -687,9 +688,9 @@ when a PR closes, and on demand:
   run (`--status-out`), including Code Analysis, which is not a trigger. The job then downloads the
   completed runs' test results, coverage, and artifact sizes (`download_artifacts.py`, one
   directory per artifact plus a manifest naming its workflow), the pre-commit results, and, when
-  Code Analysis has completed, its per-tool `*-timings.json`. Missing diagnostic artifacts are
-  allowed when tests did not run, but platform download failures fail the job. The comment is also
-  the job summary.
+  Code Analysis has completed, its per-tool `*-timings.json` and `*-diagnostics.json`. Missing
+  diagnostic artifacts are allowed when tests did not run, but platform download failures fail the
+  job. The comment is also the job summary.
 - The comment (`generate_build_results_comment.py`) leads with a verdict (✅ passed, ❌ failed,
   ⏳ in progress, 🚫 cancelled, ⏭️ nothing to build), the linked head commit, and how many
   platform workflows are done, pending, or skipped by change detection (every build job skipped).
@@ -699,7 +700,9 @@ when a PR closes, and on demand:
   (QtTest `FAIL!` blocks, sanitizer reports, else the output tail) from the JUnit XML, and failed
   pre-commit hooks. Collapsed sections cover per-suite test results, the slowest tests, coverage
   (lines, functions, branches, with changes in percentage points), artifact sizes (⚠️ above 1%
-  and 1 MiB growth), pre-commit counts, and Code Analysis files with findings. Lists are truncated
+  and 1 MiB growth), pre-commit counts, and Code Analysis unique warnings (a header's warning
+  counts once however many units and shards include it) with the most frequent checks and the files
+  with the most warnings. Lists are truncated
   with "…and N more", and longer reports shrink to stay under GitHub's comment limit. Names from
   pull requests (tests, jobs, hooks, artifacts) are escaped or shown as code.
 - For `master`, once every platform workflow succeeded, `save-baselines` saves an immutable
