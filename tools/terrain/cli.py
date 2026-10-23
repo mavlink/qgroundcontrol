@@ -77,12 +77,12 @@ def _cmd_generate(args: argparse.Namespace) -> int:
 def _cmd_overviews(args: argparse.Namespace) -> int:
     from .generate import build_overviews
 
-    build_overviews(args.out)
+    build_overviews(args.out, args.workers)
     return 0
 
 
 def _cmd_validate(args: argparse.Namespace) -> int:
-    import numpy as np
+    from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 
     from . import validate
     from .ardupilot import HgtCells
@@ -97,90 +97,82 @@ def _cmd_validate(args: argparse.Namespace) -> int:
         raise SystemExit(str(error)) from None
     cells = load_cells(_source_cache(args.out))
     hgt = HgtCells(args.out / "_reference" / "ardupilot")
-    rng = np.random.default_rng(args.seed)
 
-    # One decoded job (~64 MB plus check temporaries) at a time; only result rows are kept.
-    # A check that fails (e.g. network) is recorded as a problem instead of ending the run.
-    problems: list[str] = []
-    sources: list[validate.SourceCheck] = []
-    references: list[tuple[TileKey, validate.ReferenceCheck | None]] = []
-    alignments: list[validate.AlignmentCheck] = []
-    for index, job in enumerate(jobs, start=1):
-        print(f"[{index}/{len(jobs)}] job {job}", file=sys.stderr, flush=True)
-        try:
-            ours = validate.read_job_heights(args.out, job)
-        except Exception as error:
-            problems.append(f"{job}: tiles unreadable: {error}")
-            continue
-        try:
-            sources.append(validate.check_source(job, ours, cells, args.samples, rng))
-        except Exception as error:
-            problems.append(f"{job}: source check failed: {error}")
-        try:
-            references.append((job, validate.check_ardupilot(job, ours, hgt)))
-        except Exception as error:
-            problems.append(f"{job}: ArduPilot check failed: {error}")
-        try:
-            alignments.extend(validate.check_tilezen(job, ours, args.alignment_tiles))
-        except Exception as error:
-            print(f"job {job}: Tilezen check skipped: {error}", file=sys.stderr, flush=True)
-        del ours
+    # A single worker validates in this process, like a serial run; more use one process each.
+    results: dict[TileKey, validate.JobValidation] = {}
+    for index, result in enumerate(
+        validate.validate_jobs(
+            args.out,
+            jobs,
+            cells,
+            hgt,
+            samples=args.samples,
+            alignment_tiles=args.alignment_tiles,
+            seed=args.seed,
+            workers=args.workers,
+            executor_factory=ProcessPoolExecutor if args.workers > 1 else ThreadPoolExecutor,
+        ),
+        start=1,
+    ):
+        print(
+            f"[{index}/{len(jobs)}] job {result.job}: {len(result.problems)} problem(s)",
+            file=sys.stderr,
+            flush=True,
+        )
+        if result.tilezen_error is not None:
+            print(
+                f"job {result.job}: Tilezen check skipped: {result.tilezen_error}",
+                file=sys.stderr,
+                flush=True,
+            )
+        results[result.job] = result
+    ordered = [results[job] for job in jobs]
 
     print(f"Decoded z{MAX_ZOOM} pixels vs point-bilinear Copernicus source (meters)")
     print(f"{'job':<12} {'n':>5} {'mean':>7} {'p95':>7} {'max':>8} {'border n':>9} {'border':>7}")
-    for result in sources:
+    for source in (result.source for result in ordered if result.source is not None):
         print(
-            f"{result.job!s:<12} {result.samples:>5} {result.mean_abs:>7.2f} "
-            f"{result.p95_abs:>7.2f} {result.max_abs:>8.2f} {result.border_samples:>9} "
-            f"{result.border_mean_abs:>7.2f}"
+            f"{source.job!s:<12} {source.samples:>5} {source.mean_abs:>7.2f} "
+            f"{source.p95_abs:>7.2f} {source.max_abs:>8.2f} {source.border_samples:>9} "
+            f"{source.border_mean_abs:>7.2f}"
         )
-        if result.samples == 0:
-            problems.append(f"{result.job}: no source sample could be compared")
-        elif result.max_abs > validate.MAX_SOURCE_ERROR:
-            problems.append(f"{result.job}: {result.max_abs:.1f} m from the source")
 
     print("\nArduPilot AW3D30 (terrain.ardupilot.org SRTM1) on land; diff = ours - ArduPilot")
     print(
         f"{'job':<12} {'land px':>8} {'median':>7} {'med|d|':>7} {'p99|d|':>7} "
         f"{'as sea':>7} {'low>50m*':>8} {'east m':>7} {'north m':>8}"
     )
-    for job, ref in references:
+    for result in ordered:
+        if not result.reference_checked:
+            continue
+        ref = result.reference
         if ref is None:
-            print(f"{job!s:<12} no ArduPilot land")
+            print(f"{result.job!s:<12} no ArduPilot land")
             continue
         print(
-            f"{job!s:<12} {ref.land_pixels:>8} {ref.median_diff:>7.2f} {ref.median_abs:>7.2f} "
-            f"{ref.p99_abs:>7.1f} {ref.land_as_sea:>7} {ref.grossly_low:>8} "
-            f"{_meters(ref.offset_east_m, 7)} {_meters(ref.offset_north_m, 8)}"
+            f"{result.job!s:<12} {ref.land_pixels:>8} {ref.median_diff:>7.2f} "
+            f"{ref.median_abs:>7.2f} {ref.p99_abs:>7.1f} {ref.land_as_sea:>7} "
+            f"{ref.grossly_low:>8} {_meters(ref.offset_east_m, 7)} "
+            f"{_meters(ref.offset_north_m, 8)}"
         )
-        # An unmeasurable offset is NaN, which never exceeds the limit.
-        if math.hypot(ref.offset_east_m, ref.offset_north_m) > validate.MAX_REFERENCE_OFFSET_M:
-            problems.append(
-                f"{job}: ArduPilot offset ({ref.offset_east_m:.1f}, {ref.offset_north_m:.1f}) m"
-            )
-        if ref.land_as_sea > validate.MAX_LAND_AS_SEA_FRACTION * ref.land_pixels:
-            problems.append(f"{job}: {ref.land_as_sea} land as sea pixels of {ref.land_pixels}")
-        if ref.grossly_low > validate.MAX_GROSSLY_LOW_FRACTION * ref.gentle_pixels:
-            problems.append(
-                f"{job}: {ref.grossly_low} grossly low pixels of {ref.gentle_pixels} on gentle slopes"
-            )
     print(f"* on land with slope under {validate.GROSSLY_LOW_MAX_SLOPE}")
 
     print(f"\nTilezen offset relative to ours on rugged z{MAX_ZOOM} tiles (pixels; informational)")
     print(f"{'tile':<16} {'dx':>6} {'dy':>6} {'bias m':>7}")
-    for result in alignments:
+    for alignment in (alignment for result in ordered for alignment in result.alignments):
         print(
-            f"{result.key!s:<16} {result.offset_x:>6.2f} {result.offset_y:>6.2f} "
-            f"{result.bias:>7.1f}"
+            f"{alignment.key!s:<16} {alignment.offset_x:>6.2f} {alignment.offset_y:>6.2f} "
+            f"{alignment.bias:>7.1f}"
         )
 
+    problems = [problem for result in ordered for problem in result.problems]
     print(f"\nValidated {len(jobs)} of {len(completed)} completed jobs")
     print("\n".join(problems) if problems else "No problems found")
     return 1 if problems else 0
 
 
 def _cmd_stats(args: argparse.Namespace) -> int:
-    from .validate import size_report
+    from .stats import size_report
 
     rows = size_report(args.out)
     if not rows:
@@ -238,7 +230,10 @@ def _cmd_diff(args: argparse.Namespace) -> int:
             print(f"{change.key!s:<16} {change_m} {change.changed_pixels:>7}")
     if args.list:
         print(f"\n{report.listed} changed or added tile path(s) written to {args.list}")
-    return 0
+    if report.failed:
+        print("\nNot compared (the counts and any list are incomplete):")
+        print("\n".join(report.failed))
+    return 1 if report.failed else 0
 
 
 def _cmd_upload(args: argparse.Namespace) -> int:
@@ -282,12 +277,13 @@ def build_parser() -> argparse.ArgumentParser:
         "--bbox", action="append", nargs=4, type=float, metavar=("W", "S", "E", "N")
     )
     generate.add_argument("--all", action="store_true", help=f"Every z{JOB_ZOOM} job (full globe)")
-    generate.add_argument("--workers", type=int, default=os.cpu_count() or 1)
+    generate.add_argument("--workers", type=_positive_int, default=os.cpu_count() or 1)
     generate.add_argument("--force", action="store_true", help="Regenerate completed jobs")
 
-    add_command(
+    overviews = add_command(
         "overviews", f"Build z{JOB_ZOOM - 1}..z0 from existing z{JOB_ZOOM} tiles", _cmd_overviews
     )
+    overviews.add_argument("--workers", type=_positive_int, default=os.cpu_count() or 1)
 
     validate = add_command(
         "validate", "Check completed jobs against source and Tilezen", _cmd_validate
@@ -307,6 +303,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     validate.add_argument("--alignment-tiles", type=int, default=3, help="Tilezen tiles per job")
     validate.add_argument("--seed", type=int, default=0)
+    validate.add_argument(
+        "--workers",
+        type=_positive_int,
+        default=1,
+        help="Jobs validated at once, each in its own process holding about 1-1.5 GB",
+    )
 
     add_command("stats", "Report tile counts and sizes per zoom", _cmd_stats)
 
@@ -315,13 +317,13 @@ def build_parser() -> argparse.ArgumentParser:
         "Check every tile (structure, seams, jumps); production uploads require a pass",
         _cmd_check,
     )
-    check.add_argument("--workers", type=int, default=os.cpu_count() or 1)
+    check.add_argument("--workers", type=_positive_int, default=os.cpu_count() or 1)
 
     diff = add_command("diff", "Compare this build (--out) with another, tile by tile", _cmd_diff)
     diff.add_argument("--against", type=Path, required=True, help="The other (older) build")
     diff.add_argument("--top", type=_positive_int, default=20, help="Largest changes to list")
     diff.add_argument("--list", type=Path, help="Write changed and added tile paths to this file")
-    diff.add_argument("--workers", type=int, default=os.cpu_count() or 1)
+    diff.add_argument("--workers", type=_positive_int, default=os.cpu_count() or 1)
 
     upload = add_command(
         "upload",

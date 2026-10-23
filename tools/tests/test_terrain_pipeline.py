@@ -2,12 +2,21 @@
 
 from __future__ import annotations
 
+import dataclasses
 import io
 import json
+import math
+import os
+import shutil
+import subprocess
+import sys
 import zipfile
 from concurrent.futures import Executor, Future, ThreadPoolExecutor
 from concurrent.futures.process import BrokenProcessPool
+from email.message import Message
+from pathlib import Path
 from typing import TYPE_CHECKING, ParamSpec, TypeVar
+from urllib.error import HTTPError
 
 import pytest
 
@@ -30,6 +39,7 @@ from terrain import (  # noqa: E402
     generate,
     jobs,
     metadata,
+    stats,
     terrarium,
     tilemath,
     validate,
@@ -42,8 +52,7 @@ ALPS_JOB = TileKey(generate.JOB_ZOOM, 267, 182)
 OSLO_JOB = TileKey(generate.JOB_ZOOM, 270, 148)
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable
-    from pathlib import Path
+    from collections.abc import Callable
 
 
 def ramp(lon, lat):
@@ -209,7 +218,7 @@ def test_ocean_job_writes_full_pyramid_and_marker(tmp_path: Path) -> None:
     assert generate.run_job(tmp_path, job, {}, force=False) == "ocean"
     tiles = sorted((tmp_path / "terrarium").glob("*/*/*.png"))
     assert len(tiles) == 256 + 64 + 16 + 4 + 1
-    assert generate.tile_path(
+    assert jobs.tile_path(
         tmp_path, TileKey(tilemath.MAX_ZOOM, 10 * 16 + 15, 20 * 16 + 15)
     ).is_file()
     assert jobs.completed_jobs(tmp_path) == {job: "ocean"}
@@ -238,13 +247,13 @@ def test_job_pyramid_places_tiles_by_position(tmp_path: Path) -> None:
     generate.write_job_pyramid(tmp_path, job, heights)
 
     north_east = terrarium.read_heights(
-        generate.tile_path(tmp_path, TileKey(tilemath.MAX_ZOOM, 16 + 15, 32))
+        jobs.tile_path(tmp_path, TileKey(tilemath.MAX_ZOOM, 16 + 15, 32))
     )
     assert np.allclose(north_east, 100.0)
     assert not terrarium.read_heights(
-        generate.tile_path(tmp_path, TileKey(tilemath.MAX_ZOOM, 16, 32))
+        jobs.tile_path(tmp_path, TileKey(tilemath.MAX_ZOOM, 16, 32))
     ).any()
-    job_tile = terrarium.read_heights(generate.tile_path(tmp_path, job))
+    job_tile = terrarium.read_heights(jobs.tile_path(tmp_path, job))
     assert np.allclose(job_tile[:16, -16:], 100.0)
     assert not job_tile[16:, :].any()
 
@@ -255,13 +264,13 @@ def test_build_overviews_fills_missing_children_with_sea(tmp_path: Path) -> None
         TileKey(generate.JOB_ZOOM, 0, 0),
         np.full((TILE_SIZE, TILE_SIZE), 400.0, np.float32),
     )
-    generate.build_overviews(tmp_path)
+    generate.build_overviews(tmp_path, 1, ThreadPoolExecutor)
 
     parent = TileKey(generate.JOB_ZOOM - 1, 0, 0)
-    overview = terrarium.read_heights(generate.tile_path(tmp_path, parent))
+    overview = terrarium.read_heights(jobs.tile_path(tmp_path, parent))
     assert np.allclose(overview[: TILE_SIZE // 2, : TILE_SIZE // 2], 400.0)
     assert not overview[TILE_SIZE // 2 :, :].any()
-    assert generate.tile_path(tmp_path, TileKey(0, 0, 0)).is_file()
+    assert jobs.tile_path(tmp_path, TileKey(0, 0, 0)).is_file()
 
 
 def test_interrupted_overview_rebuild_removes_the_root_tile(
@@ -270,8 +279,8 @@ def test_interrupted_overview_rebuild_removes_the_root_tile(
     generate.write_tile(
         tmp_path, TileKey(generate.JOB_ZOOM, 0, 0), np.zeros((TILE_SIZE, TILE_SIZE), np.float32)
     )
-    generate.build_overviews(tmp_path)
-    root = generate.tile_path(tmp_path, TileKey(0, 0, 0))
+    generate.build_overviews(tmp_path, 1, ThreadPoolExecutor)
+    root = jobs.tile_path(tmp_path, TileKey(0, 0, 0))
     assert root.is_file()
 
     def fail(*_args: object) -> None:
@@ -279,8 +288,24 @@ def test_interrupted_overview_rebuild_removes_the_root_tile(
 
     monkeypatch.setattr(generate, "write_tile", fail)
     with pytest.raises(OSError, match="disk full"):
-        generate.build_overviews(tmp_path)
+        generate.build_overviews(tmp_path, 1, ThreadPoolExecutor)
     assert not root.exists()
+
+
+def test_build_overviews_counts_sea_filled_children_per_zoom(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    for x in (0, 2):
+        generate.write_tile(
+            tmp_path, TileKey(generate.JOB_ZOOM, x, 0), np.zeros((TILE_SIZE, TILE_SIZE), np.float32)
+        )
+    generate.build_overviews(tmp_path, 2, ThreadPoolExecutor)
+    lines = capsys.readouterr().out.splitlines()
+    assert lines[:2] == [
+        f"z{generate.JOB_ZOOM - 1}: 2 tiles (6 missing children filled with sea level)",
+        f"z{generate.JOB_ZOOM - 2}: 1 tiles (2 missing children filled with sea level)",
+    ]
+    assert len(lines) == generate.JOB_ZOOM
 
 
 def test_lattice_bounds_land_on_pixel_edges() -> None:
@@ -701,15 +726,18 @@ def test_hgt_sampling_is_exact_across_row_chunks(tmp_path: Path) -> None:
     assert np.allclose(cells.sample_grid(lons, lats), ramp(lons[None, :], lats[:, None]), atol=1e-2)
 
 
-def test_hgt_cells_keep_a_bounded_lru(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    def archive(name: str) -> bytes:
-        buffer = io.BytesIO()
-        with zipfile.ZipFile(buffer, "w") as bundle:
-            bundle.writestr(f"{name}.hgt", np.zeros((3, 3), dtype=">i2").tobytes())
-        return buffer.getvalue()
+def hgt_archive(name: str, grid=None) -> bytes:
+    """A zipped .hgt cell like terrain.ardupilot.org serves; a 3x3 zero grid by default."""
+    grid = np.zeros((3, 3)) if grid is None else grid
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as bundle:
+        bundle.writestr(f"{name}.hgt", np.asarray(grid, dtype=">i2").tobytes())
+    return buffer.getvalue()
 
+
+def test_hgt_cells_keep_a_bounded_lru(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     cells = ardupilot.HgtCells(tmp_path)
-    monkeypatch.setattr(cells, "_download", archive)
+    monkeypatch.setattr(cells, "_download", hgt_archive)
     keys = [(46, lon) for lon in range(ardupilot.MAX_CACHED_CELLS + 2)]
     for lat, lon in keys[: ardupilot.MAX_CACHED_CELLS]:
         cells.cell(lat, lon)
@@ -797,17 +825,28 @@ def test_steep_limit_never_drops_below_the_absolute_jump_limit() -> None:
     assert check.steep_limit_m(TileKey(2, 1, 1)) > check.STEEP_JUMP_M
 
 
-def ocean_build(out: Path, xs: Iterable[int]) -> list[TileKey]:
-    built = [TileKey(generate.JOB_ZOOM, x, 0) for x in xs]
-    for job in built:
-        generate.run_job(out, job, {}, force=False)
-    generate.build_overviews(out)
-    return built
+def _ocean_build(out: Path, xs: tuple[int, ...]) -> Path:
+    for x in xs:
+        generate.run_job(out, TileKey(generate.JOB_ZOOM, x, 0), {}, force=False)
+    generate.build_overviews(out, 1, ThreadPoolExecutor)
+    return out
+
+
+@pytest.fixture(scope="module")
+def pristine_ocean_build(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    return _ocean_build(tmp_path_factory.mktemp("ocean"), (0, 1))
+
+
+@pytest.fixture
+def ocean_build(pristine_ocean_build: Path, tmp_path: Path) -> Path:
+    """A private copy of ocean jobs 9/0/0 and 9/1/0 with their overviews, built once per module."""
+    out = tmp_path / "build"
+    shutil.copytree(pristine_ocean_build, out)
+    return out
 
 
 def test_check_build_finds_a_seam_across_the_antimeridian(tmp_path: Path) -> None:
-    last_job_x = (1 << generate.JOB_ZOOM) - 1
-    ocean_build(tmp_path, [0, last_job_x])
+    _ocean_build(tmp_path, (0, (1 << generate.JOB_ZOOM) - 1))
     _plant(
         tmp_path,
         TileKey(tilemath.MAX_ZOOM, 0, 0),
@@ -818,10 +857,15 @@ def test_check_build_finds_a_seam_across_the_antimeridian(tmp_path: Path) -> Non
     assert f"13/{last_tile_x}/0: seam with its east neighbor" in problems, problems
 
 
-def test_check_build_passes_a_clean_build_and_marks_it(tmp_path: Path) -> None:
-    ocean_build(tmp_path, range(2))
-    assert check.check_build(tmp_path, workers=1) == []
-    assert jobs.check_passed_marker(tmp_path).is_file()
+def test_check_build_passes_a_clean_build_and_marks_it(ocean_build: Path) -> None:
+    assert check.check_build(ocean_build, workers=1, executor_factory=ThreadPoolExecutor) == []
+    assert jobs.check_passed_marker(ocean_build).is_file()
+
+
+def test_check_build_reports_a_broken_worker_pool(ocean_build: Path) -> None:
+    problems = check.check_build(ocean_build, workers=1, executor_factory=_BrokenPool)
+    assert any("Worker pool broke" in problem for problem in problems), problems
+    assert not jobs.check_passed_marker(ocean_build).exists()
 
 
 def _plant(out: Path, key: TileKey, heights) -> None:
@@ -838,25 +882,24 @@ def _plant(out: Path, key: TileKey, heights) -> None:
         ("missing-parent", "parent"),
     ],
 )
-def test_check_build_finds_planted_faults(tmp_path: Path, fault: str, expected: str) -> None:
-    ocean_build(tmp_path, range(2))
+def test_check_build_finds_planted_faults(ocean_build: Path, fault: str, expected: str) -> None:
     z13 = tilemath.MAX_ZOOM
     if fault == "missing":
-        generate.tile_path(tmp_path, TileKey(z13, 5, 5)).unlink()
+        jobs.tile_path(ocean_build, TileKey(z13, 5, 5)).unlink()
     elif fault == "seam-inside-job":
-        _plant(tmp_path, TileKey(z13, 5, 5), np.full((TILE_SIZE, TILE_SIZE), 500.0, np.float32))
+        _plant(ocean_build, TileKey(z13, 5, 5), np.full((TILE_SIZE, TILE_SIZE), 500.0, np.float32))
     elif fault == "seam-between-jobs":
         # First column of z13 tiles in job x=1, next to job x=0's last column.
-        _plant(tmp_path, TileKey(z13, 16, 3), np.full((TILE_SIZE, TILE_SIZE), 500.0, np.float32))
+        _plant(ocean_build, TileKey(z13, 16, 3), np.full((TILE_SIZE, TILE_SIZE), 500.0, np.float32))
     elif fault == "steep":
         heights = np.zeros((TILE_SIZE, TILE_SIZE), np.float32)
         heights[100:110, 100:110] = 2000.0
-        _plant(tmp_path, TileKey(z13, 5, 5), heights)
+        _plant(ocean_build, TileKey(z13, 5, 5), heights)
     elif fault == "missing-parent":
-        generate.tile_path(tmp_path, TileKey(generate.JOB_ZOOM - 1, 0, 0)).unlink()
-    problems = check.check_build(tmp_path, workers=2, executor_factory=ThreadPoolExecutor)
+        jobs.tile_path(ocean_build, TileKey(generate.JOB_ZOOM - 1, 0, 0)).unlink()
+    problems = check.check_build(ocean_build, workers=2, executor_factory=ThreadPoolExecutor)
     assert any(expected in problem for problem in problems), problems
-    assert not jobs.check_passed_marker(tmp_path).exists()
+    assert not jobs.check_passed_marker(ocean_build).exists()
 
 
 def _plant_below(out: Path, key: TileKey, children: int, deep: bool) -> None:
@@ -892,10 +935,10 @@ def test_size_report_counts_only_true_sea_tiles(tmp_path: Path) -> None:
     # A flattened lake can compress to exactly the sea tile's size.
     lake = np.full((TILE_SIZE, TILE_SIZE), 130.0, np.float32)
     _plant(tmp_path, TileKey(z13, 1, 0), lake)
-    assert generate.tile_path(tmp_path, TileKey(z13, 1, 0)).stat().st_size == sea_size
+    assert jobs.tile_path(tmp_path, TileKey(z13, 1, 0)).stat().st_size == sea_size
     _plant(tmp_path, TileKey(z13, 2, 0), ramp_tile())
 
-    (row,) = validate.size_report(tmp_path)
+    (row,) = stats.size_report(tmp_path)
     assert (row.count, row.sea_count) == (3, 1)
 
 
@@ -910,7 +953,9 @@ def test_compare_builds_reports_identical_changed_added_and_removed(tmp_path: Pa
     _plant(new, TileKey(z13, 3, 0), ramp_tile())
 
     listed = io.StringIO()
-    report = compare.compare_builds(new, old, workers=1, top=5, list_file=listed)
+    report = compare.compare_builds(
+        new, old, workers=1, top=5, list_file=listed, executor_factory=ThreadPoolExecutor
+    )
     (zoom,) = report.zooms
     assert (zoom.zoom, zoom.identical, zoom.changed, zoom.added, zoom.removed) == (z13, 1, 1, 1, 1)
     assert zoom.max_change_m == pytest.approx(3.0)
@@ -923,14 +968,285 @@ def test_compare_builds_reports_unreadable_tiles_instead_of_failing(tmp_path: Pa
     old, new = tmp_path / "old", tmp_path / "new"
     key = TileKey(tilemath.MAX_ZOOM, 0, 0)
     _plant(old, key, ramp_tile())
-    path = generate.tile_path(new, key)
+    path = jobs.tile_path(new, key)
     path.parent.mkdir(parents=True)
     path.write_bytes(b"not a png")
     # A read error (here a directory in place of the file) is unreadable too, not fatal.
     io_error_key = TileKey(key.z, key.x, 1)
     _plant(old, io_error_key, ramp_tile())
-    generate.tile_path(new, io_error_key).mkdir()
-    report = compare.compare_builds(new, old, workers=1, top=5)
+    jobs.tile_path(new, io_error_key).mkdir()
+    report = compare.compare_builds(new, old, workers=1, top=5, executor_factory=ThreadPoolExecutor)
     (zoom,) = report.zooms
     assert (zoom.changed, zoom.unreadable) == (2, 2)
     assert {change.key for change in report.top_changes} == {key, io_error_key}
+
+
+def test_compare_builds_ignores_files_that_are_not_tiles(tmp_path: Path) -> None:
+    old, new = tmp_path / "old", tmp_path / "new"
+    key = TileKey(tilemath.MAX_ZOOM, 0, 0)
+    for out in (old, new):
+        _plant(out, key, ramp_tile())
+    (jobs.tile_path(new, key).parent / "preview.png").write_bytes(b"not a tile")
+    report = compare.compare_builds(new, old, workers=1, top=5, executor_factory=ThreadPoolExecutor)
+    (zoom,) = report.zooms
+    assert (zoom.identical, zoom.added, report.failed) == (1, 0, [])
+
+
+def test_compare_builds_records_columns_it_cannot_compare(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    old, new = tmp_path / "old", tmp_path / "new"
+    for out in (old, new):
+        for x in (0, 1):
+            _plant(out, TileKey(tilemath.MAX_ZOOM, x, 0), ramp_tile())
+    compare_column = compare._compare_column
+
+    def unreadable_column(new: Path, old: Path, z: int, x: int):
+        if x == 1:
+            raise PermissionError("permission denied")
+        return compare_column(new, old, z, x)
+
+    monkeypatch.setattr(compare, "_compare_column", unreadable_column)
+    report = compare.compare_builds(new, old, workers=2, top=5, executor_factory=ThreadPoolExecutor)
+    assert report.failed == ["column 13/1: permission denied"]
+    assert [zoom.identical for zoom in report.zooms] == [1]
+
+
+def test_compare_builds_reports_a_broken_worker_pool(tmp_path: Path) -> None:
+    old, new = tmp_path / "old", tmp_path / "new"
+    for x in range(3):
+        _plant(new, TileKey(tilemath.MAX_ZOOM, x, 0), ramp_tile())
+    report = compare.compare_builds(new, old, workers=1, top=5, executor_factory=_BrokenPool)
+    (failure,) = report.failed
+    assert "Worker pool broke" in failure and "3 column(s) not compared" in failure
+
+
+def test_diff_exits_nonzero_when_columns_were_not_compared(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    report = compare.BuildDiff([], [], 0, ["column 13/1: permission denied"])
+    monkeypatch.setattr(compare, "compare_builds", lambda *_args, **_kwargs: report)
+    status = cli.main(["diff", "--out", str(tmp_path), "--against", str(tmp_path)])
+    assert status == 1
+    assert "column 13/1: permission denied" in capsys.readouterr().out
+
+
+def test_check_stats_and_diff_run_without_rasterio(tmp_path: Path) -> None:
+    _plant(tmp_path, TileKey(0, 0, 0), np.zeros((TILE_SIZE, TILE_SIZE), np.float32))
+    script = """
+import sys
+sys.modules["rasterio"] = None
+from terrain import cli
+out = sys.argv[1]
+for argv in (["stats"], ["check", "--workers", "1"], ["diff", "--against", out, "--workers", "1"]):
+    assert cli.main([*argv, "--out", out]) == 0, argv
+"""
+    tools_dir = Path(__file__).resolve().parents[1]
+    result = subprocess.run(
+        [sys.executable, "-c", script, str(tmp_path)],
+        cwd=tools_dir,
+        env={**os.environ, "PYTHONPATH": str(tools_dir)},
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+
+
+def _http_error(url: str, code: int) -> HTTPError:
+    return HTTPError(url, code, "error", Message(), None)
+
+
+def test_hgt_cells_cache_downloads_and_missing_cells_on_disk(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    requested: list[str] = []
+
+    def urlopen(request, timeout: float) -> io.BytesIO:
+        requested.append(request.full_url)
+        if request.full_url.endswith("/N46E007.hgt.zip"):
+            return io.BytesIO(hgt_archive("N46E007"))
+        raise _http_error(request.full_url, 404)
+
+    monkeypatch.setattr("common.net.urllib.request.urlopen", urlopen)
+    for _ in range(2):
+        # A fresh instance has an empty in-memory cache, so the second round reads the disk.
+        cells = ardupilot.HgtCells(tmp_path)
+        assert cells.cell(46, 7) is not None
+        assert cells.cell(10, -30) is None
+    assert requested == [
+        ardupilot.SRTM1_URL.format(name="N46E007"),
+        ardupilot.SRTM1_URL.format(name="N10W030"),
+    ]
+    assert (tmp_path / "N10W030.missing").is_file()
+
+
+def test_hgt_cells_raise_other_http_errors_without_caching(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def urlopen(request, timeout: float) -> io.BytesIO:
+        raise _http_error(request.full_url, 403)
+
+    monkeypatch.setattr("common.net.urllib.request.urlopen", urlopen)
+    with pytest.raises(HTTPError):
+        ardupilot.HgtCells(tmp_path).cell(46, 7)
+    assert list(tmp_path.iterdir()) == []
+
+
+CLEAN_SOURCE = validate.SourceCheck(ALPS_JOB, 400, 0.06, 0.1, 0.12, 200, 0.06)
+CLEAN_REFERENCE = validate.ReferenceCheck(
+    job=ALPS_JOB,
+    land_pixels=10_000,
+    median_diff=0.0,
+    median_abs=1.0,
+    p99_abs=5.0,
+    land_as_sea=0,
+    gentle_pixels=10_000,
+    grossly_low=0,
+    offset_east_m=math.nan,
+    offset_north_m=math.nan,
+)
+
+
+@pytest.mark.parametrize(
+    ("changes", "problem"),
+    [
+        ({}, None),
+        ({"samples": 0}, "no source sample"),
+        ({"max_abs": validate.MAX_SOURCE_ERROR}, None),
+        ({"max_abs": validate.MAX_SOURCE_ERROR + 0.1}, "m from the source"),
+    ],
+    ids=["clean", "no-samples", "at-limit", "over-limit"],
+)
+def test_source_check_gate(changes: dict, problem: str | None) -> None:
+    problems = validate.source_problems(dataclasses.replace(CLEAN_SOURCE, **changes))
+    if problem is None:
+        assert problems == []
+    else:
+        (found,) = problems
+        assert problem in found
+
+
+@pytest.mark.parametrize(
+    ("changes", "problem"),
+    [
+        ({}, None),
+        ({"land_as_sea": 100}, None),
+        ({"land_as_sea": 101}, "land as sea"),
+        ({"grossly_low": 500}, None),
+        ({"grossly_low": 501}, "grossly low"),
+        ({"offset_east_m": 20.0, "offset_north_m": 20.0}, None),
+        ({"offset_east_m": 30.0, "offset_north_m": -30.0}, "ArduPilot offset"),
+    ],
+    ids=[
+        "clean",
+        "land-as-sea-at-limit",
+        "land-as-sea",
+        "grossly-low-at-limit",
+        "grossly-low",
+        "offset-within-limit",
+        "offset",
+    ],
+)
+def test_ardupilot_check_gate(changes: dict, problem: str | None) -> None:
+    problems = validate.reference_problems(dataclasses.replace(CLEAN_REFERENCE, **changes))
+    if problem is None:
+        assert problems == []
+    else:
+        (found,) = problems
+        assert problem in found
+
+
+@pytest.mark.parametrize("planted_sea", [0, 64], ids=["clean", "land-as-sea"])
+def test_check_ardupilot_counts_land_written_as_sea(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, planted_sea: int
+) -> None:
+    # A coarser job grid keeps the whole-job comparison fast; the check reads JOB_PIXELS.
+    monkeypatch.setattr(validate, "JOB_PIXELS", 256)
+    hgt = ardupilot.HgtCells(tmp_path)
+    offsets = np.arange(101) / 100
+    for lat in (45, 46):
+        for lon in (7, 8):
+            hgt._cells[(lat, lon)] = ramp(lon + offsets[None, :], lat + 1 - offsets[:, None])
+    ours = expected_job_ramp(ALPS_JOB).astype(np.float32)
+    ours[:planted_sea, :planted_sea] = terrarium.SEA_LEVEL
+
+    reference = validate.check_ardupilot(ALPS_JOB, ours, hgt)
+    assert reference is not None
+    assert (reference.land_pixels, reference.land_as_sea) == (256 * 256, planted_sea**2)
+    assert reference.median_abs < 0.01
+    problems = validate.reference_problems(reference)
+    assert any("land as sea" in problem for problem in problems) == bool(planted_sea), problems
+
+
+@pytest.mark.parametrize(
+    ("reference", "status", "expected"),
+    [
+        (CLEAN_REFERENCE, 0, "No problems found"),
+        (dataclasses.replace(CLEAN_REFERENCE, land_as_sea=500), 1, "500 land as sea pixels"),
+    ],
+    ids=["clean", "land-as-sea"],
+)
+def test_validate_exit_status_follows_the_gates(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    reference: validate.ReferenceCheck,
+    status: int,
+    expected: str,
+) -> None:
+    jobs.mark_done(tmp_path, ALPS_JOB, "4 cells")
+    monkeypatch.setattr(cli, "load_cells", lambda _cache: {})
+    monkeypatch.setattr(validate, "read_job_heights", lambda *_args: np.zeros((2, 2), np.float32))
+    monkeypatch.setattr(validate, "check_source", lambda *_args: CLEAN_SOURCE)
+    monkeypatch.setattr(validate, "check_ardupilot", lambda *_args: reference)
+    monkeypatch.setattr(validate, "check_tilezen", lambda *_args: [])
+    assert cli.main(["validate", "--out", str(tmp_path)]) == status
+    assert expected in capsys.readouterr().out
+
+
+def test_validate_jobs_returns_every_job_when_a_worker_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    job_list = [TileKey(generate.JOB_ZOOM, x, 0) for x in range(4)]
+
+    def validate_job(_out: Path, job: TileKey, *_args: object) -> validate.JobValidation:
+        if job.x == 2:
+            raise MemoryError("out of memory")
+        return validate.JobValidation(job)
+
+    monkeypatch.setattr(validate, "validate_job", validate_job)
+    results = validate.validate_jobs(
+        tmp_path,
+        job_list,
+        {},
+        ardupilot.HgtCells(tmp_path),
+        samples=1,
+        alignment_tiles=0,
+        seed=0,
+        workers=2,
+        executor_factory=ThreadPoolExecutor,
+    )
+    problems = {result.job: result.problems for result in results}
+    assert sorted(problems) == job_list
+    assert problems[job_list[2]] == [f"{job_list[2]}: validation failed: out of memory"]
+    assert not any(problems[job] for job in job_list if job.x != 2)
+
+
+def test_validate_jobs_reports_every_job_a_broken_pool_left(tmp_path: Path) -> None:
+    job_list = [TileKey(generate.JOB_ZOOM, x, 0) for x in range(6)]
+    results = list(
+        validate.validate_jobs(
+            tmp_path,
+            job_list,
+            {},
+            ardupilot.HgtCells(tmp_path),
+            samples=1,
+            alignment_tiles=0,
+            seed=0,
+            workers=1,
+            executor_factory=_BrokenPool,
+        )
+    )
+    assert sorted(result.job for result in results) == job_list
+    assert all("worker pool broke" in problem for result in results for problem in result.problems)

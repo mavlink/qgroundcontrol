@@ -3,16 +3,14 @@
 from __future__ import annotations
 
 import functools
-import io
 import os
 import subprocess
 import sys
-import urllib.error
 from concurrent.futures import Future
 from pathlib import Path
 
 import pytest
-from terrain import cli, copernicus, fetch, jobs, metadata, tilemath, upload
+from terrain import cli, copernicus, jobs, metadata, tilemath, upload
 
 TileKey = tilemath.TileKey
 
@@ -450,56 +448,6 @@ def test_published_version_fails_when_the_bucket_cannot_be_read(
         upload.published_version(profile=None)
 
 
-class _Response(io.BytesIO):
-    def __enter__(self) -> _Response:
-        return self
-
-    def __exit__(self, *_args: object) -> None:
-        self.close()
-
-
-def _http_error(code: int) -> urllib.error.HTTPError:
-    return urllib.error.HTTPError("https://example.test", code, "error", {}, None)  # type: ignore[arg-type]
-
-
-@pytest.mark.parametrize(
-    ("outcomes", "calls", "raises"),
-    [
-        ([urllib.error.URLError("reset"), b"tile"], 2, None),
-        ([_http_error(503), TimeoutError(), b"tile"], 3, None),
-        ([_http_error(404)], 1, urllib.error.HTTPError),
-        ([_http_error(503)] * 3, 3, RuntimeError),
-    ],
-)
-def test_fetch_retries_only_transient_failures(
-    monkeypatch: pytest.MonkeyPatch,
-    outcomes: list[object],
-    calls: int,
-    raises: type[Exception] | None,
-) -> None:
-    remaining = iter(outcomes)
-    made: list[str] = []
-
-    def urlopen(url: str, timeout: float) -> _Response:
-        made.append(url)
-        outcome = next(remaining)
-        if isinstance(outcome, Exception):
-            raise outcome
-        assert isinstance(outcome, bytes)
-        return _Response(outcome)
-
-    monkeypatch.setattr(fetch.urllib.request, "urlopen", urlopen)
-    get = functools.partial(
-        fetch.fetch_bytes, "https://example.test", timeout=1, attempts=3, backoff_seconds=0
-    )
-    if raises is None:
-        assert get() == b"tile"
-    else:
-        with pytest.raises(raises):
-            get()
-    assert len(made) == calls
-
-
 def test_notice_severity_needs_notice_text(tmp_path: Path) -> None:
     (tmp_path / "terrarium").mkdir()
     with pytest.raises(SystemExit, match="--notice"):
@@ -519,16 +467,31 @@ def test_notice_severity_needs_notice_text(tmp_path: Path) -> None:
         )
 
 
+@pytest.mark.parametrize(
+    ("argv", "option"),
+    [
+        (["validate", "--samples"], "samples"),
+        (["validate", "--workers"], "workers"),
+        (["overviews", "--workers"], "workers"),
+        (["generate", "--area", "alps", "--workers"], "workers"),
+        (["check", "--workers"], "workers"),
+        (["diff", "--against", "old", "--workers"], "workers"),
+    ],
+)
 @pytest.mark.parametrize(("value", "accepted"), [("1", True), ("0", False), ("-1", False)])
-def test_validate_cli_requires_at_least_one_source_sample(value: str, accepted: bool) -> None:
-    parse = functools.partial(
-        cli.build_parser().parse_args, ["validate", "--out", "out", "--samples", value]
-    )
+def test_cli_counts_must_be_at_least_one(
+    argv: list[str], option: str, value: str, accepted: bool
+) -> None:
+    parse = functools.partial(cli.build_parser().parse_args, [*argv, value, "--out", "out"])
     if accepted:
-        assert parse().samples == int(value)
+        assert getattr(parse(), option) == int(value)
     else:
         with pytest.raises(SystemExit):
             parse()
+
+
+def test_validate_defaults_to_one_worker() -> None:
+    assert cli.build_parser().parse_args(["validate", "--out", "out"]).workers == 1
 
 
 def test_upload_needs_none_of_the_terrain_dependencies(tmp_path: Path) -> None:

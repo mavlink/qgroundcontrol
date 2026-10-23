@@ -1,4 +1,4 @@
-"""Job completion markers, bounded job scheduling and the selection of jobs to validate (stdlib only)."""
+"""Output paths, job markers, bounded job scheduling and validation job selection (stdlib only)."""
 
 from __future__ import annotations
 
@@ -14,6 +14,8 @@ if TYPE_CHECKING:
     from concurrent.futures import Future
     from pathlib import Path
 
+# Tile tree under a build's output directory and the bucket; a new encoding gets a new root.
+TILES_DIR = "terrarium"
 OCEAN_STATUS = "ocean"
 # Tasks queued per pool worker: enough to keep every worker busy while results are collected.
 IN_FLIGHT_PER_WORKER = 4
@@ -22,8 +24,16 @@ T = TypeVar("T")
 R = TypeVar("R")
 
 
+def tile_path(out: Path, key: TileKey) -> Path:
+    return out / TILES_DIR / str(key.z) / str(key.x) / f"{key.y}.png"
+
+
 def done_marker(out: Path, job: TileKey) -> Path:
     return out / "_done" / f"{job.z}_{job.x}_{job.y}"
+
+
+def job_from_marker(marker: Path) -> TileKey:
+    return TileKey(*(int(part) for part in marker.name.split("_")))
 
 
 def mark_done(out: Path, job: TileKey, status: str) -> None:
@@ -44,9 +54,7 @@ def check_passed_marker(out: Path) -> Path:
 def completed_jobs(out: Path) -> dict[TileKey, str]:
     """Completed jobs and the status each was marked with."""
     return {
-        TileKey(*(int(part) for part in marker.name.split("_"))): marker.read_text(
-            encoding="utf-8"
-        ).strip()
+        job_from_marker(marker): marker.read_text(encoding="utf-8").strip()
         for marker in done_markers(out)
     }
 

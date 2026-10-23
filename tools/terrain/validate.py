@@ -1,21 +1,23 @@
-"""Accuracy and size checks for generated tiles."""
+"""Accuracy checks of completed jobs against their source and independent references."""
 
 from __future__ import annotations
 
 import math
 import statistics
-from collections import defaultdict
-from dataclasses import dataclass
+from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures.process import BrokenProcessPool
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 import numpy as np
 import rasterio
+from common.net import fetch_bytes
 from rasterio.windows import Window
 
 from . import terrarium
 from .copernicus import MIN_VALID_HEIGHT, wrap_lon
-from .fetch import fetch_bytes
-from .generate import GDAL_ENV, JOB_PIXELS, tile_path
+from .generate import GDAL_ENV, JOB_PIXELS
+from .jobs import IN_FLIGHT_PER_WORKER, bounded_completion, tile_path
 from .tilemath import (
     MAX_ZOOM,
     TILE_SIZE,
@@ -27,7 +29,8 @@ from .tilemath import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
+    from collections.abc import Callable, Iterator, Mapping, Sequence
+    from concurrent.futures import Executor
     from pathlib import Path
 
     from rasterio.io import DatasetReader
@@ -365,36 +368,117 @@ def check_ardupilot(job: TileKey, ours: np.ndarray, hgt: HgtCells) -> ReferenceC
     )
 
 
-@dataclass
-class SizeStats:
-    zoom: int
-    count: int
-    total_bytes: int
-    mean_bytes: float
-    p95_bytes: float
-    sea_count: int
+def source_problems(result: SourceCheck) -> list[str]:
+    if result.samples == 0:
+        return [f"{result.job}: no source sample could be compared"]
+    if result.max_abs > MAX_SOURCE_ERROR:
+        return [f"{result.job}: {result.max_abs:.1f} m from the source"]
+    return []
 
 
-def size_report(out: Path) -> list[SizeStats]:
-    sizes: dict[int, list[int]] = defaultdict(list)
-    sea_counts: dict[int, int] = defaultdict(int)
-    sea_bytes = terrarium.sea_png_bytes()
-    for path in (out / "terrarium").glob("*/*/*.png"):
-        zoom = int(path.parent.parent.name)
-        size = path.stat().st_size
-        sizes[zoom].append(size)
-        # A flat non-sea tile (e.g. a flattened lake) can compress to the same size, so
-        # only same-size files are read and compared.
-        if size == len(sea_bytes) and path.read_bytes() == sea_bytes:
-            sea_counts[zoom] += 1
-    return [
-        SizeStats(
-            zoom=zoom,
-            count=len(values),
-            total_bytes=sum(values),
-            mean_bytes=statistics.fmean(values),
-            p95_bytes=float(np.percentile(values, 95)),
-            sea_count=sea_counts[zoom],
+def reference_problems(ref: ReferenceCheck) -> list[str]:
+    problems = []
+    # An unmeasurable offset is NaN, which never exceeds the limit.
+    if math.hypot(ref.offset_east_m, ref.offset_north_m) > MAX_REFERENCE_OFFSET_M:
+        problems.append(
+            f"{ref.job}: ArduPilot offset ({ref.offset_east_m:.1f}, {ref.offset_north_m:.1f}) m"
         )
-        for zoom, values in sorted(sizes.items())
-    ]
+    if ref.land_as_sea > MAX_LAND_AS_SEA_FRACTION * ref.land_pixels:
+        problems.append(f"{ref.job}: {ref.land_as_sea} land as sea pixels of {ref.land_pixels}")
+    if ref.grossly_low > MAX_GROSSLY_LOW_FRACTION * ref.gentle_pixels:
+        problems.append(
+            f"{ref.job}: {ref.grossly_low} grossly low pixels of {ref.gentle_pixels} on gentle slopes"
+        )
+    return problems
+
+
+@dataclass
+class JobValidation:
+    """One job's check results and problems; a check that failed outright leaves its result unset."""
+
+    job: TileKey
+    problems: list[str] = field(default_factory=list)
+    source: SourceCheck | None = None
+    reference_checked: bool = False
+    # None after a successful check means the job has no ArduPilot land.
+    reference: ReferenceCheck | None = None
+    alignments: list[AlignmentCheck] = field(default_factory=list)
+    tilezen_error: str | None = None
+
+
+def validate_job(
+    out: Path,
+    job: TileKey,
+    cells: Mapping[tuple[int, int], str],
+    hgt: HgtCells,
+    samples: int,
+    alignment_tiles: int,
+    seed: int,
+) -> JobValidation:
+    """Every check of one completed job. A check that fails (e.g. network) is recorded as a
+    problem instead of ending the run; a failed Tilezen check is only reported."""
+    result = JobValidation(job)
+    try:
+        ours = read_job_heights(out, job)
+    except Exception as error:
+        result.problems.append(f"{job}: tiles unreadable: {error}")
+        return result
+    # Seeded per job, so a job's samples do not depend on the worker count or job order.
+    rng = np.random.default_rng((seed, job.z, job.x, job.y))
+    try:
+        result.source = check_source(job, ours, cells, samples, rng)
+        result.problems += source_problems(result.source)
+    except Exception as error:
+        result.problems.append(f"{job}: source check failed: {error}")
+    try:
+        result.reference = check_ardupilot(job, ours, hgt)
+        result.reference_checked = True
+        if result.reference is not None:
+            result.problems += reference_problems(result.reference)
+    except Exception as error:
+        result.problems.append(f"{job}: ArduPilot check failed: {error}")
+    try:
+        result.alignments = check_tilezen(job, ours, alignment_tiles)
+    except Exception as error:
+        result.tilezen_error = str(error)
+    return result
+
+
+def validate_jobs(
+    out: Path,
+    jobs: Sequence[TileKey],
+    cells: Mapping[tuple[int, int], str],
+    hgt: HgtCells,
+    *,
+    samples: int,
+    alignment_tiles: int,
+    seed: int,
+    workers: int,
+    executor_factory: Callable[..., Executor] = ProcessPoolExecutor,
+) -> Iterator[JobValidation]:
+    """Validate *jobs* in a pool, yielding each result as its job finishes.
+
+    Only result rows are kept, never a decoded job. A job whose worker fails, and every job
+    left when the pool breaks, yields a result holding only that problem.
+    """
+    finished: set[TileKey] = set()
+    with executor_factory(max_workers=workers) as pool:
+        results = bounded_completion(
+            lambda job: pool.submit(
+                validate_job, out, job, cells, hgt, samples, alignment_tiles, seed
+            ),
+            jobs,
+            limit=workers * IN_FLIGHT_PER_WORKER,
+        )
+        try:
+            for job, future in results:
+                finished.add(job)
+                try:
+                    result = future.result()
+                except Exception as error:
+                    result = JobValidation(job, [f"{job}: validation failed: {error}"])
+                yield result
+        except BrokenProcessPool as error:
+            for job in jobs:
+                if job not in finished:
+                    yield JobValidation(job, [f"{job}: not validated, worker pool broke ({error})"])

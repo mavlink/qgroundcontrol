@@ -21,7 +21,15 @@ from rasterio.windows import from_bounds as from_bounds_window
 
 from . import terrarium
 from .copernicus import COARSEST_PIXEL_DEG, MIN_VALID_HEIGHT, cells_for_bounds, wrap_lon
-from .jobs import IN_FLIGHT_PER_WORKER, OCEAN_STATUS, bounded_completion, done_marker, mark_done
+from .jobs import (
+    IN_FLIGHT_PER_WORKER,
+    OCEAN_STATUS,
+    TILES_DIR,
+    bounded_completion,
+    done_marker,
+    mark_done,
+    tile_path,
+)
 from .tilemath import (
     JOB_ZOOM,
     MAX_ZOOM,
@@ -58,14 +66,15 @@ GDAL_ENV: dict[str, Any] = {
     "GDAL_HTTP_MERGE_CONSECUTIVE_RANGES": "YES",
     "GDAL_HTTP_MAX_RETRY": "5",
     "GDAL_HTTP_RETRY_DELAY": "2",
+    # GDAL never times out a stalled /vsicurl read by default, which hangs its worker and the run
+    # forever; abort it instead so the job fails and a rerun retries it.
+    "GDAL_HTTP_CONNECTTIMEOUT": "30",
+    "GDAL_HTTP_LOW_SPEED_TIME": "60",
+    "GDAL_HTTP_LOW_SPEED_LIMIT": "1",
     "VSI_CACHE": "TRUE",
     # MB per process; GDAL's default (5% of physical RAM) multiplies across pool workers.
     "GDAL_CACHEMAX": 512,
 }
-
-
-def tile_path(out: Path, key: TileKey) -> Path:
-    return out / "terrarium" / str(key.z) / str(key.x) / f"{key.y}.png"
 
 
 def job_cells(job: TileKey, cells: Mapping[tuple[int, int], str]) -> dict[tuple[int, int], str]:
@@ -394,27 +403,51 @@ def generate(
     return failures
 
 
-def build_overviews(out: Path) -> None:
-    """Build zooms below JOB_ZOOM from existing tiles; missing children are sea level."""
+def _overview_tile(out: Path, key: TileKey) -> int:
+    """Write one overview tile from its children; returns how many were missing (sea level)."""
+    mosaic = np.zeros((2 * TILE_SIZE, 2 * TILE_SIZE), dtype=np.float32)
+    missing = 0
+    for index, child in enumerate(children(key)):
+        path = tile_path(out, child)
+        if not path.is_file():
+            missing += 1
+            continue
+        row, col = divmod(index, 2)
+        mosaic[row * TILE_SIZE : (row + 1) * TILE_SIZE, col * TILE_SIZE : (col + 1) * TILE_SIZE] = (
+            terrarium.read_heights(path)
+        )
+    write_tile(out, key, terrarium.downsample(mosaic))
+    return missing
+
+
+def build_overviews(
+    out: Path,
+    workers: int,
+    executor_factory: Callable[..., Executor] = ProcessPoolExecutor,
+) -> None:
+    """Build zooms below JOB_ZOOM from existing tiles; missing children are sea level.
+
+    A zoom reads only the one below it, so its tiles are built in parallel and it is finished
+    before the next coarser zoom starts. Any failure stops the build.
+    """
     # Written last on success, so its absence fails the production gate after an interruption.
     tile_path(out, TileKey(0, 0, 0)).unlink(missing_ok=True)
-    for z in range(JOB_ZOOM - 1, -1, -1):
-        child_dir = out / "terrarium" / str(z + 1)
-        parents = {
-            TileKey(z, int(path.parent.name) >> 1, int(path.stem) >> 1)
-            for path in child_dir.glob("*/*.png")
-        }
-        missing = 0
-        for key in sorted(parents):
-            mosaic = np.zeros((2 * TILE_SIZE, 2 * TILE_SIZE), dtype=np.float32)
-            for index, child in enumerate(children(key)):
-                path = tile_path(out, child)
-                if not path.is_file():
-                    missing += 1
-                    continue
-                row, col = divmod(index, 2)
-                mosaic[
-                    row * TILE_SIZE : (row + 1) * TILE_SIZE, col * TILE_SIZE : (col + 1) * TILE_SIZE
-                ] = terrarium.read_heights(path)
-            write_tile(out, key, terrarium.downsample(mosaic))
-        print(f"z{z}: {len(parents)} tiles ({missing} missing children filled with sea level)")
+    with executor_factory(max_workers=workers) as pool:
+        for z in range(JOB_ZOOM - 1, -1, -1):
+            child_dir = out / TILES_DIR / str(z + 1)
+            parents = sorted(
+                {
+                    TileKey(z, int(path.parent.name) >> 1, int(path.stem) >> 1)
+                    for path in child_dir.glob("*/*.png")
+                }
+            )
+            completed = bounded_completion(
+                lambda key: pool.submit(_overview_tile, out, key),
+                parents,
+                limit=workers * IN_FLIGHT_PER_WORKER,
+            )
+            missing = sum(future.result() for _, future in completed)
+            print(
+                f"z{z}: {len(parents)} tiles ({missing} missing children filled with sea level)",
+                flush=True,
+            )

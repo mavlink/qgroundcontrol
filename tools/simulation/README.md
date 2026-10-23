@@ -6,9 +6,9 @@ Tools for testing QGroundControl without physical hardware. Run them from the re
 
 | Tool | Use Case | Setup |
 | --- | --- | --- |
-| `mock_vehicle.py` | UI testing, quick checks | `python tools/setup/install_python.py dev` (pymavlink), then activate `tools/.venv` |
+| `mock_vehicle.py` | UI testing, quick checks | `python3 tools/setup/install_python.py simulation` (pymavlink), then activate `tools/.venv` |
 | `run_arducopter_sitl.py` | Full simulation, mission testing | Docker required |
-| `rc_transmitter.py` | RC transmitter for PX4 SITL: flight modes, switches, RC loss | `python tools/setup/install_python.py dev` |
+| `rc_transmitter.py` | RC transmitter for PX4 SITL: flight modes, switches, RC loss | `python3 tools/setup/install_python.py simulation` (pymavlink), then activate `tools/.venv` |
 | `mock_ntrip_caster.py` | NTRIP/RTK client testing | Python standard library only |
 
 ## Mock Vehicle (Lightweight)
@@ -23,7 +23,7 @@ python tools/simulation/mock_vehicle.py
 python tools/simulation/mock_vehicle.py --system-id 1 --port 14550 &
 python tools/simulation/mock_vehicle.py --system-id 2 --port 14551 &
 
-# TCP mode (SITL-style)
+# TCP mode (SITL-style): listens for QGC's TCP comm link
 python tools/simulation/mock_vehicle.py --tcp --port 5760
 ```
 
@@ -40,15 +40,16 @@ python tools/simulation/mock_vehicle.py --tcp --port 5760
 | --- | --- | --- |
 | `--host` | 127.0.0.1 | Host address |
 | `--port` | 14550 | Port number |
-| `--tcp` | off | Use TCP instead of UDP |
+| `--tcp` | off | Listen on TCP instead of sending UDP |
 | `--system-id` | 1 | MAVLink system ID |
 | `--rate` | 10 | Telemetry rate (Hz) |
-| `--sitl` | off | SITL-compatible mode (TCP:5760) |
+| `--sitl` | off | SITL-compatible mode (listen on TCP 5760) |
 | `--lat`, `--lon`, `--alt` | `MOCK_VEHICLE_LAT`/`_LON`/`_ALT`, else 47.3977, 8.5456, 100 m | Initial position |
 
 **Limitations:** No flight dynamics, no mission execution, limited MAVLink support.
 
-Mock Vehicle auto-connects over UDP 14550.
+Mock Vehicle auto-connects over UDP 14550. In TCP mode, add a TCP comm link in QGC to the host and
+port it listens on.
 
 ## ArduCopter SITL (Full Simulation)
 
@@ -69,6 +70,10 @@ for the TCP listener (default 60). The launcher binds TCP port 5760 to localhost
 guest listener without consuming its first client connection. It replaces only containers carrying
 its ownership label; remove a container created by the previous shell launcher explicitly before
 using the same name.
+
+The image is built from the third-party `radarku/ardupilot-sitl-docker` Dockerfile, pinned to a
+reviewed commit (`BUILD_CONTEXT`). An existing `ardupilot-sitl-4.5.6` image is reused; remove it
+with `docker rmi ardupilot-sitl-4.5.6` to rebuild after the pin changes.
 
 Add a TCP comm link in QGC (**Application Settings → Comm Links → Add**, Host `localhost`,
 Port `5760`).

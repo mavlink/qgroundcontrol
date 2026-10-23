@@ -1,20 +1,14 @@
 """Profiling command and failure contracts without running a real profiler."""
 
-import importlib.util
 import subprocess
-from pathlib import Path
 
 import pytest
 
+from ._helpers import load_script
+
 
 def load():
-    spec = importlib.util.spec_from_file_location(
-        "qgc_profile", Path(__file__).parents[1] / "debuggers/profile.py"
-    )
-    assert spec and spec.loader
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+    return load_script("tools/debuggers/profile.py")
 
 
 @pytest.mark.parametrize("mode", ["perf", "memcheck", "callgrind", "massif", "heaptrack"])
@@ -83,4 +77,16 @@ def test_sanitizer_default_build_dir_is_under_build(monkeypatch):
 
     monkeypatch.setattr(module.subprocess, "run", run)
     assert module.main(["--sanitize"]) != 0
-    assert calls[0][calls[0].index("-B") + 1] == str(module.REPO / "build" / "sanitize")
+    assert calls[0][calls[0].index("-B") + 1] == str(module.REPO_ROOT / "build" / "sanitize")
+
+
+def test_missing_profiler_fails_before_recording(tmp_path, monkeypatch, capsys):
+    module = load()
+    binary = tmp_path / "build/Debug/QGroundControl"
+    binary.parent.mkdir(parents=True)
+    binary.touch()
+    binary.chmod(0o755)
+    monkeypatch.setattr(module.shutil, "which", lambda name: None)
+    monkeypatch.setattr(module.subprocess, "run", pytest.fail)
+    assert module.main(["--heaptrack", "-b", str(binary.parents[1])]) == 1
+    assert "Profiling failed: heaptrack not found on PATH" in capsys.readouterr().err

@@ -52,7 +52,16 @@ $3 = (100, 200)
 
 (gdb) print myRect
 $4 = [(0, 0) - (799, 599)]
+
+(gdb) print myVariant
+$5 = QVariant(int) = 42
+
+(gdb) print myMap
+$6 = std::map with 2 elements = {[1] = 2, [3] = 4}
 ```
+
+QMap prints through GDB's libstdc++ `std::map` printer. QVariant prints the stored value when GDB
+has debug info for its type, and only the type name otherwise; QUrl needs QtCore debug symbols.
 
 ## LLDB Support
 
