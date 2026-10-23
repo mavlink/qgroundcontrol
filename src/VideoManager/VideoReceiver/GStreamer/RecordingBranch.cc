@@ -423,7 +423,7 @@ void RecordingBranch::onBusElement(GstMessage* message)
     }
 }
 
-bool RecordingBranch::onBusError(GstMessage* message, const QString& text)
+bool RecordingBranch::onBusError(GstMessage* message, const QString& text, const char* debug)
 {
     bool fromRecording = false;
     const bool settled =
@@ -435,7 +435,12 @@ bool RecordingBranch::onBusError(GstMessage* message, const QString& text)
     // A recorder failure (disk full, header reservation overrun) ends the recording, not the stream. Closing the
     // valve now, before the failing element returns its flow error, keeps that error out of the tee: the valve
     // reports OK for a push that fails after drop was set.
-    qCWarning(GstVideoReceiverLog) << "Recording error:" << text;
+    // The detail names the cause behind a generic text such as "Could not multiplex stream."
+    if (debug) {
+        qCWarning(GstVideoReceiverLog) << "Recording error:" << text << "-" << debug;
+    } else {
+        qCWarning(GstVideoReceiverLog) << "Recording error:" << text;
+    }
     g_object_set(_valve, "drop", TRUE, nullptr);
     if (settled) {
         _receiver._runOnWorkerForPipeline([this]() { _onRecorderError(); });

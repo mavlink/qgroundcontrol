@@ -48,8 +48,8 @@ public:
     /// Pipeline EOS: every branch drained, the recorder included.
     void onBusEos();
     void onBusElement(GstMessage* message);
-    /// Returns whether the error came from the recording.
-    bool onBusError(GstMessage* message, const QString& text);
+    /// Returns whether the error came from the recording. @p debug is GStreamer's detail for the error, if any.
+    bool onBusError(GstMessage* message, const QString& text, const char* debug);
 
 private:
     enum class State

@@ -585,7 +585,7 @@ void GstVideoReceiver::_onBusError(GstMessage* message)
         return;
     }
 
-    if (_recordingBranch.onBusError(message, text)) {
+    if (_recordingBranch.onBusError(message, text, debug.get())) {
         return;
     }
 
