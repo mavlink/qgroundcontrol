@@ -1,22 +1,10 @@
 name: Copilot Setup Steps
 
 # Prepares the Copilot cloud agent's environment the way AGENTS.md expects (`just configure`,
-# `just build`, `just test`, `just lint`). Runs on changes to this file and to `just configure`'s
-# inputs so failures show up in review.
+# `just build`, `just test`, `just lint`). Copilot runs the job before each session; run the
+# workflow by hand to check the setup after changing it or `just configure`'s inputs.
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - master
-    paths: &copilot-setup-paths
-      - .github/workflows/copilot-setup-steps.yml
-      - justfile
-      - tools/configure.py
-      - tools/qgc_tools/cmake_configure.py
-      - tools/pyproject.toml
-      - tools/uv.lock
-  pull_request:
-    paths: *copilot-setup-paths
 
 permissions:
   contents: read
@@ -30,8 +18,8 @@ jobs:
 
     permissions:
       contents: read
-      # build-setup's cache action reads the default branch's compiler snapshot artifacts when this
-      # workflow checks itself on push/PR; Copilot sessions (event "dynamic") restore only Qt and CPM.
+      # build-setup's cache action reads the default branch's compiler snapshot artifacts on manual
+      # runs; Copilot sessions (event "dynamic") restore only Qt and CPM.
       actions: read
 
     steps:

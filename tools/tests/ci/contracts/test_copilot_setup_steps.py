@@ -7,10 +7,9 @@ import re
 from ..._helpers import REPO_ROOT, get_step, load_workflow
 
 
-def test_runs_when_just_configure_changes() -> None:
+def test_runs_only_on_manual_dispatch_and_configures() -> None:
     workflow = load_workflow("copilot-setup-steps.yml")
-    paths = workflow["on"]["push"]["paths"]
-    assert workflow["on"]["pull_request"]["paths"] == paths
+    assert set(workflow["on"]) == {"workflow_dispatch"}
     assert get_step(workflow["jobs"]["copilot-setup-steps"]["steps"], "Configure")["run"] == (
         "just configure"
     )
@@ -18,11 +17,3 @@ def test_runs_when_just_configure_changes() -> None:
     recipe = re.search(r"^configure:\n((?:[ \t]+.*\n)+)", justfile, re.MULTILINE)
     assert recipe
     assert "./tools/configure.py" in recipe[1]
-    assert {
-        ".github/workflows/copilot-setup-steps.yml",
-        "justfile",
-        "tools/configure.py",
-        "tools/qgc_tools/cmake_configure.py",
-        "tools/pyproject.toml",
-        "tools/uv.lock",
-    } <= set(paths)

@@ -69,7 +69,7 @@
 | `cache-cleanup.yml` | GitHub Actions cache cleanup (scheduled, on PR close, and manual) |
 | `stale.yml` | Stale-issue labeling and closing |
 | `welcome.yml` | New contributor welcome |
-| `copilot-setup-steps.yml` | Copilot cloud agent environment: Qt, system and Python dependencies, restored caches, and `just configure` (runs only from the default branch; PRs changing it or `just configure`'s inputs check it) |
+| `copilot-setup-steps.yml` | Copilot cloud agent environment: Qt, system and Python dependencies, restored caches, and `just configure` (Copilot uses it only from the default branch; run it by hand to check the setup) |
 
 ## Actions and Scripts
 
