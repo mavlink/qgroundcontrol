@@ -29,8 +29,7 @@ inputs:
     default: ''
   installer:
     description: >-
-      Qt installer, qgc or aqt; empty uses QGC_QT_INSTALLER or install_qt.py's default (qgc for
-      Linux desktop and Android, aqt elsewhere)
+      Qt installer, qgc or aqt; empty uses QGC_QT_INSTALLER, else qgc
     required: false
     default: ''
   export-env:

@@ -125,13 +125,11 @@
   `common.build_config.get_build_config_value()`, or the `build-config` action in a workflow.
   `qt-install` reads the Qt version itself, so its callers pass none.
 - **Qt installer**: `qt-install` runs `install_qt.py`, which installs Qt with QGC's installer
-  (`tools/setup/qt_installer`, standard library plus `cmake -E tar`) for Linux desktop and Android
-  and with aqtinstall elsewhere; the action's `installer` input or `QGC_QT_INSTALLER` overrides
-  the choice. Every job reaching `qt-install` has CMake: `build-setup` installs it first,
+  (`tools/setup/qt_installer`, standard library plus `cmake -E tar`); aqtinstall stays as the
+  fallback through the action's `installer` input or `QGC_QT_INSTALLER`. Every job reaching `qt-install` has CMake: `build-setup` installs it first,
   `pre-commit.yml` syncs the `dev` group, and `lupdate.yml` uses the GitHub-hosted image's.
   `qt-installer-parity.yml` installs the same Qt with both tools on every CI platform and fails
-  on tree differences beyond install paths; a platform's default switches to QGC's installer once
-  its leg passes ([tools/README.md](../tools/README.md#qt-installer)).
+  on tree differences beyond install paths ([tools/README.md](../tools/README.md#qt-installer)).
 
 ## Dependency Management
 

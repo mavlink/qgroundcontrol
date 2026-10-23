@@ -43,7 +43,6 @@ from setup.qt_installer.compare import compare_trees, render_markdown
 from setup.qt_installer.install import ensure_host_desktop, install
 from setup.qt_installer.repo import (
     QtRequest,
-    effective_host,
     resolve_arch_dir,
     resolve_windows_host_arch,
 )
@@ -51,16 +50,12 @@ from setup.qt_installer.repo import (
 INSTALLERS = ("qgc", "aqt")
 
 
-def default_installer(host: str, target: str) -> str:
-    """QGC's installer where CI verified parity with aqt (Linux x64 desktop and Android), else aqt."""
-    return "qgc" if effective_host(host) == "linux" and target in ("desktop", "android") else "aqt"
+DEFAULT_INSTALLER = "qgc"
 
 
-def resolve_installer(requested: str, host: str, target: str) -> str:
-    """Return `--installer`, else $QGC_QT_INSTALLER, else the host's default."""
-    installer = (
-        requested or os.environ.get("QGC_QT_INSTALLER", "") or default_installer(host, target)
-    )
+def resolve_installer(requested: str) -> str:
+    """Return `--installer`, else $QGC_QT_INSTALLER, else QGC's installer (aqt stays a fallback)."""
+    installer = requested or os.environ.get("QGC_QT_INSTALLER", "") or DEFAULT_INSTALLER
     if installer not in INSTALLERS:
         raise ValueError(f"Unknown Qt installer {installer!r}; use one of: {', '.join(INSTALLERS)}")
     return installer
@@ -147,7 +142,7 @@ def install_qt(
     Both installers get the absolute output directory, which their patched files embed.
     """
     outdir = outdir.absolute()
-    if resolve_installer(installer, host, target) == "qgc":
+    if resolve_installer(installer) == "qgc":
         request = QtRequest(
             host, target, version, arch, tuple(modules.split()), tuple(archives.split()) or None
         )
@@ -259,7 +254,7 @@ def _add_arch_args(p: argparse.ArgumentParser) -> None:
         "--installer",
         choices=("", *INSTALLERS),
         default="",
-        help="Default: $QGC_QT_INSTALLER, else qgc for Linux desktop and Android, aqt elsewhere",
+        help="Default: $QGC_QT_INSTALLER, else qgc (aqt remains as a fallback)",
     )
 
 
@@ -340,7 +335,7 @@ def main(argv: list[str] | None = None) -> int:
         return compare_installs(args.reference, args.candidate, args.version, args.arch)
 
     try:
-        installer = resolve_installer(args.installer, args.host, args.target)
+        installer = resolve_installer(args.installer)
     except ValueError as error:
         gh_error(str(error))
         return 1

@@ -432,20 +432,20 @@ python3 tools/setup/read_config.py --get qt.version
 
 `install_qt.py` installs Qt with one of two tools, chosen by `--installer` or `QGC_QT_INSTALLER`:
 
-- `qgc`, the default for desktop and Android installs with `--host linux` (or `all_os` on a
-  Linux machine): the standard-library package `setup/qt_installer/`. It reads the combination's `Updates.xml` from
-  download.qt.io, checks it and every archive against the SHA-256 sums that download.qt.io
-  publishes (archives may come from any mirror), extracts the archives in parallel with
+- `qgc`, the default: the standard-library package `setup/qt_installer/`. It reads the
+  combination's `Updates.xml` from download.qt.io, checks it and every archive against the SHA-256
+  sums that download.qt.io publishes (archives may come from any mirror), extracts the archives in parallel with
   `cmake -E tar`, and applies aqtinstall's post-install edits. CMake comes from `PATH`, else from
   the tools environment's `build` group. The Qt root gets `.qgc-qt-manifest.json` (archives,
   checksums, patched files) and, for full installs, the `.qgc-modules` marker that preinstalled-SDK
   reuse reads.
-- `aqt`, the default elsewhere: aqtinstall from the locked `qt` group, which stays as the fallback.
+- `aqt`: aqtinstall from the locked `qt` group, which stays as the fallback.
 
 Both produce the same tree apart from install paths in patched text files and pkg-config `prefix=`
 lines (aqt leaves them unpatched on `linux_arm64`). `install_qt.py compare` checks this and the
-Qt Installer Parity workflow runs it on every CI platform; a platform switches to `qgc` once its
-leg passes. Like aqt, `qgc` reports but does not install addon dependencies missing from
+Qt Installer Parity workflow runs it on every CI platform. Android built on a Windows host differs
+on purpose: `qgc` pairs it with the `msvc2022_64` host Qt, while aqt names a `mingw_64` one that
+QGC never installs; builds pass `QT_HOST_PATH` either way. Like aqt, `qgc` reports but does not install addon dependencies missing from
 `--modules`, such as `qtquick3d`'s `qtquicktimeline`. The `plan` cache digest includes a non-aqt
 installer, so neither tool restores the other's tree.
 

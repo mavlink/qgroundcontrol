@@ -14,7 +14,6 @@ from setup import install_qt
 from setup.install_qt import (
     _run_aqt_with_retries,
     compute_cache_digest,
-    default_installer,
     plan_install,
     resolve_arch_dir,
     resolve_installer,
@@ -127,34 +126,15 @@ def test_qgc_installer_gets_an_absolute_output_directory(
 
 
 class TestInstallerSelection:
-    @pytest.mark.parametrize(
-        ("host", "target", "expected"),
-        [
-            ("linux", "desktop", "qgc"),
-            ("linux", "android", "qgc"),
-            ("linux", "ios", "aqt"),
-            ("linux_arm64", "desktop", "aqt"),
-            ("mac", "desktop", "aqt"),
-            ("mac", "ios", "aqt"),
-            ("mac", "android", "aqt"),
-            ("windows", "desktop", "aqt"),
-            ("windows", "android", "aqt"),
-            ("windows_arm64", "desktop", "aqt"),
-        ],
-    )
-    def test_defaults_to_qgc_where_parity_is_verified(self, host, target, expected) -> None:
-        assert default_installer(host, target) == expected
-
-    @pytest.mark.parametrize(("platform", "expected"), [("linux", "qgc"), ("darwin", "aqt")])
-    def test_all_os_follows_the_running_platform(self, monkeypatch, platform, expected) -> None:
-        monkeypatch.setattr(sys, "platform", platform)
-        assert default_installer("all_os", "android") == expected
+    def test_defaults_to_qgc(self, monkeypatch) -> None:
+        monkeypatch.delenv("QGC_QT_INSTALLER", raising=False)
+        assert resolve_installer("") == "qgc"
 
     def test_option_overrides_environment_overrides_default(self, monkeypatch) -> None:
-        assert resolve_installer("", "linux", "desktop") == "qgc"
+        assert resolve_installer("") == "qgc"
         monkeypatch.setenv("QGC_QT_INSTALLER", "aqt")
-        assert resolve_installer("", "linux", "desktop") == "aqt"
-        assert resolve_installer("qgc", "mac", "ios") == "qgc"
+        assert resolve_installer("") == "aqt"
+        assert resolve_installer("qgc") == "qgc"
 
     def test_unknown_environment_value_fails(self, monkeypatch, tmp_path, capsys) -> None:
         monkeypatch.setenv("QGC_QT_INSTALLER", "7z")
@@ -273,7 +253,19 @@ class TestPlan:
         args = ["--version", "6.8.3", "--host", "windows", "--arch", "win64_msvc2022_64"]
         outdir = tmp_path / ".qt" / "Qt"
         assert (
-            install_qt.main(["plan", "--outdir", str(outdir), *args, "--modules", "qtgraphs"]) == 0
+            install_qt.main(
+                [
+                    "plan",
+                    "--outdir",
+                    str(outdir),
+                    *args,
+                    "--modules",
+                    "qtgraphs",
+                    "--installer",
+                    "aqt",
+                ]
+            )
+            == 0
         )
 
         # aqt keeps the former `${cache_dir}/Qt/${version}/${arch_dir}` path and digest exactly.
