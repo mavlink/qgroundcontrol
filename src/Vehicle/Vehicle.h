@@ -566,6 +566,8 @@ public:
     VehicleSigningController* signingController() { return _signingController; }
     const VehicleSigningController* signingController() const { return _signingController; }
 
+    const StandardModes* standardModes() const { return _standardModes; }
+
     void startCalibration   (QGCMAVLink::CalibrationType calType);
     void stopCalibration    (bool showError);
 

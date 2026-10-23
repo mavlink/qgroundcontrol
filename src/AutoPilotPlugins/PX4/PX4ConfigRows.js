@@ -6,7 +6,7 @@
 // Row:  { id, group, title, description, vehicles?, activeWhen?, activeWhenAny?, cells }
 // Cell: { label, param? | thresholdBar? | fixed?, note?, vehicles?, onlyIfMissing? }
 //   vehicles        "multiRotor" | "fixedWing" | "vtol" names, any one matching shows the row or cell
-//   activeWhen      [{ param, op: "gt" | "ne" | "eq", value, onlyIfMissing? }], all must hold. Omitted means always active.
+//   activeWhen      [{ param, op: "gt" | "ge" | "ne" | "eq", value, onlyIfMissing? }], all must hold. Omitted means always active.
 //                   A condition with onlyIfMissing is ignored when that parameter is on the vehicle.
 //   activeWhenAny   [[condition, ...], ...], at least one list must fully hold. Combines with activeWhen.
 //                   A list only counts when at least one of its parameters is on the vehicle.
@@ -111,6 +111,9 @@ function _conditionsHold(conditions, rawValueOf, requireAvailable) {
         }
         available++
         if (condition.op === "gt" && !(value > condition.value)) {
+            return false
+        }
+        if (condition.op === "ge" && !(value >= condition.value)) {
             return false
         }
         if (condition.op === "ne" && value === condition.value) {

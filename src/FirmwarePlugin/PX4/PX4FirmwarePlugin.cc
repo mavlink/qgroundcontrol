@@ -1,5 +1,7 @@
 #include "PX4FirmwarePlugin.h"
 
+#include <algorithm>
+
 #include <QtCore/QString>
 
 #include "AppMessages.h"
@@ -866,6 +868,33 @@ void PX4FirmwarePlugin::updateAvailableFlightModes(FlightModeList &modeList)
         }
     }
     _updateFlightModeList(modeList);
+}
+
+QString PX4FirmwarePlugin::externalFlightModeName(const FlightModeList& modeList, int externalIndex)
+{
+    static_assert(kExternalFlightModeCount == PX4_CUSTOM_SUB_MODE_EXTERNAL8 - PX4_CUSTOM_SUB_MODE_EXTERNAL1 + 1,
+                  "kExternalFlightModeCount must match the PX4 external sub modes");
+    if ((externalIndex < 1) || (externalIndex > kExternalFlightModeCount)) {
+        return QString();
+    }
+
+    px4_custom_mode customMode{};
+    customMode.main_mode = PX4_CUSTOM_MAIN_MODE_AUTO;
+    customMode.sub_mode = static_cast<uint8_t>(PX4_CUSTOM_SUB_MODE_EXTERNAL1 + externalIndex - 1);
+    const auto mode = std::find_if(modeList.cbegin(), modeList.cend(), [&customMode](const FirmwareFlightMode& entry) {
+        return entry.custom_mode == customMode.data;
+    });
+    if (mode == modeList.cend()) {
+        return QString();
+    }
+    const QString& name = mode->mode_name;
+
+    // PX4 reports external slots with no registered mode under this name (AVAILABLE_MODES.hpp). QGC may have added
+    // " (N)" to keep the names unique.
+    if (name.startsWith(QStringLiteral("(Mode not available)"))) {
+        return QString();
+    }
+    return name;
 }
 
 QVariant PX4FirmwarePlugin::expandedToolbarIndicatorSource(const Vehicle* /*vehicle*/, const QString& indicatorName) const
