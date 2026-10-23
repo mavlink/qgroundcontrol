@@ -47,7 +47,7 @@ def test_header_scan_tracks_transitive_macro_includes_and_updates(tmp_path, monk
 def test_incomplete_dependency_scan_requires_full_analysis(tmp_path, output):
     entries = [{"directory": str(tmp_path), "file": "source.cc"}]
     with (
-        patch("analyzers.dependencies.shutil.which", return_value="clang-scan-deps"),
+        patch("common.proc.shutil.which", return_value="clang-scan-deps"),
         patch(
             "analyzers.dependencies.run_captured", return_value=CompletedProcess([], 0, output, "")
         ),
@@ -58,7 +58,7 @@ def test_incomplete_dependency_scan_requires_full_analysis(tmp_path, output):
 
 def test_missing_scanner_requires_full_analysis():
     with (
-        patch("analyzers.dependencies.shutil.which", return_value=None),
-        pytest.raises(DependencyScanError, match="unavailable"),
+        patch("common.proc.shutil.which", return_value=None),
+        pytest.raises(DependencyScanError, match="clang-scan-deps not found on PATH"),
     ):
         scan_dependencies([], 1)

@@ -25,6 +25,7 @@ CI_CRITICAL_SUBMODULES = [
     "proc",
     "format",
     "io",
+    "paths",
     "tool_version",
     "xml",
 ]

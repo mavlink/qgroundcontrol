@@ -140,7 +140,7 @@ def _analyze(project, analyzer_type, *, runner, cache_dir=None, profile=False):
 
     with (
         patch.object(analyzer, "require_tool", return_value=True),
-        patch("analyzers.compiler.shutil.which", return_value=str(binary)),
+        patch("common.proc.shutil.which", return_value=str(binary)),
         patch(
             "analyzers.compiler.scan_dependencies",
             side_effect=_scan({source: {header} for source in sources}),
@@ -231,7 +231,7 @@ def test_profiling_and_incomplete_scans_bypass_the_cache(project, capsys):
     analyzer.result_cache = ResultCache(root / "cache")
     with (
         patch.object(analyzer, "require_tool", return_value=True),
-        patch("analyzers.compiler.shutil.which", return_value=str(binary)),
+        patch("common.proc.shutil.which", return_value=str(binary)),
         patch("analyzers.compiler.scan_dependencies", side_effect=DependencyScanError("gone")),
         patch(
             "analyzers.compiler.run_captured", side_effect=lambda cmd, **_: _warning(Path(cmd[-1]))
@@ -274,8 +274,7 @@ def test_cli_runs_both_compiler_tools_over_one_dependency_scan(project, monkeypa
         return _warning(Path(command[-1]))
 
     with (
-        patch("analyzers.base.shutil.which", return_value=str(binary)),
-        patch("analyzers.compiler.shutil.which", return_value=str(binary)),
+        patch("common.proc.shutil.which", return_value=str(binary)),
         patch("analyzers.compiler.scan_dependencies", side_effect=counting_scan),
         patch("analyzers.compiler.run_captured", side_effect=run),
     ):
@@ -294,8 +293,7 @@ def test_cli_runs_both_compiler_tools_over_one_dependency_scan(project, monkeypa
         ["--tool", "clazy", "--tool", "clazy", "--profile-checks"],
     ],
 )
-def test_cli_rejects_mixed_or_unsupported_cached_tools(monkeypatch, arguments):
-    monkeypatch.setattr(sys, "argv", ["analyze.py", *arguments])
+def test_cli_rejects_mixed_or_unsupported_cached_tools(arguments):
     with pytest.raises(SystemExit) as exc:
-        analyze.parse_args()
+        analyze.parse_args(arguments)
     assert exc.value.code == 2

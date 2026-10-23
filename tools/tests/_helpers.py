@@ -4,12 +4,17 @@ from __future__ import annotations
 
 import copy
 import functools
+import importlib.util
 import os
 import subprocess
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import yaml
+
+if TYPE_CHECKING:
+    from types import ModuleType
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 TOOLS_DIR = REPO_ROOT / "tools"
@@ -64,6 +69,55 @@ def git(repo: Path, *args: str) -> str:
     ).stdout.strip()
 
 
+def write_files(root: Path, files: dict[str, str]) -> None:
+    """Write each relative path in *files* under *root*, creating directories, with LF endings."""
+    for name, content in files.items():
+        path = root / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8", newline="\n")
+
+
+def commit_files(repo: Path, files: dict[str, str], message: str) -> str:
+    """Write *files* into *repo*, commit every change, and return the new commit's SHA."""
+    write_files(repo, files)
+    git(repo, "add", "-A")
+    git(repo, "commit", "-qm", message)
+    return git(repo, "rev-parse", "HEAD")
+
+
+def read_github_file(path: Path) -> dict[str, str]:
+    """Parse a GITHUB_OUTPUT or GITHUB_ENV file: `name=value` lines and `name<<DELIMITER` blocks."""
+    values: dict[str, str] = {}
+    lines = iter(path.read_text(encoding="utf-8").splitlines())
+    for line in lines:
+        equals, heredoc = line.find("="), line.find("<<")
+        if heredoc > 0 and (equals < 0 or heredoc < equals):
+            delimiter = line[heredoc + 2 :]
+            block = []
+            for body in lines:
+                if body == delimiter:
+                    break
+                block.append(body)
+            else:
+                raise ValueError(f"{path}: {line[:heredoc]} has no closing {delimiter!r}")
+            values[line[:heredoc]] = "\n".join(block)
+        elif equals > 0:
+            values[line[:equals]] = line[equals + 1 :]
+        elif line:
+            raise ValueError(f"{path}: malformed line {line!r}")
+    return values
+
+
+def load_script(path: str | Path) -> ModuleType:
+    """Execute a script outside the tools/ packages (relative to REPO_ROOT) as a fresh module."""
+    path = REPO_ROOT / path
+    spec = importlib.util.spec_from_file_location(path.stem, path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 @functools.cache
 def _parse_yaml(path: Path) -> Any:
     document = yaml.load(path.read_text(encoding="utf-8"), Loader=_YAML_LOADER)
@@ -88,6 +142,16 @@ def load_action(name: str) -> dict[str, Any]:
     return load_yaml(f".github/actions/{name}/action.yml")
 
 
+def workflow_names() -> list[str]:
+    """File names of every workflow in .github/workflows, sorted."""
+    return sorted(path.name for path in (REPO_ROOT / ".github/workflows").glob("*.yml"))
+
+
+def action_names() -> list[str]:
+    """Names of every local action (.github/actions/<name>/action.yml), sorted."""
+    return sorted(path.parent.name for path in (REPO_ROOT / ".github/actions").glob("*/action.yml"))
+
+
 def get_steps(document: dict[str, Any], job: str | None = None) -> list[dict[str, Any]]:
     """Steps of *job* in a workflow, or of a composite action when *job* is None."""
     return document["jobs"][job]["steps"] if job else document["runs"]["steps"]
@@ -97,3 +161,36 @@ def get_step(steps: list[dict[str, Any]], name: str) -> dict[str, Any]:
     """The single step whose name or id is *name*."""
     (match,) = [step for step in steps if name in (step.get("name"), step.get("id"))]
     return match
+
+
+@dataclass(frozen=True)
+class PrMerge:
+    """A repository checked out at GitHub's pull_request merge commit, plus its depth-2 CI clone."""
+
+    full: Path
+    shallow: Path
+    fork_point: str
+    base_tip: str
+    pr_head: str
+
+
+def pr_merge_checkout(
+    root: Path, *, base: dict[str, str], newer_base: dict[str, str], pr: dict[str, str]
+) -> PrMerge:
+    """Fork a PR from *base*, move the base branch on with *newer_base*, then merge the PR into it.
+
+    The merge mirrors a pull_request checkout, whose first parent is newer than the fork point
+    that the event's base SHA may still name; the depth-2 clone has only the merge and its parents.
+    """
+    full = root / "full"
+    full.mkdir(parents=True)
+    git(full, "init", "-q")
+    fork_point = commit_files(full, base, "Fork point")
+    git(full, "checkout", "-qb", "pr")
+    pr_head = commit_files(full, pr, "PR change")
+    git(full, "checkout", "-q", "master")
+    base_tip = commit_files(full, newer_base, "Newer base")
+    git(full, "merge", "-q", "--no-ff", "-m", "Merge PR", pr_head)
+    shallow = root / "shallow"
+    git(root, "clone", "-q", "--depth=2", full.as_uri(), str(shallow))
+    return PrMerge(full, shallow, fork_point, base_tip, pr_head)
