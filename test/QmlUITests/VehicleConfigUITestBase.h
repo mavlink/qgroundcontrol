@@ -61,6 +61,10 @@ protected:
     /// callers must check QTest::currentTestFailed() after calling.
     void waitForParamRefreshQuiet(Vehicle *vehicle);
 
+    /// Counts the items in the window whose objectName starts with \a prefix, leaving out the names in \a excluded.
+    /// Returns {visible, total}, for checking a filtered page's row count.
+    QPair<int, int> countRows(const QString& prefix, const QStringList& excluded = {}) const;
+
     /// Navigate from the Fly view to the APM Sensors page and wait for the
     /// calibration indicator buttons to appear.
     void navigateToAPMSensorsPage();

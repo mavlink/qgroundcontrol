@@ -9,4 +9,5 @@ class PX4BatteryUITest : public VehicleConfigUITestBase
 
 private slots:
     void _lateParamShownAndFilterChosenOnceLoaded();
+    void _filterTogglesUnusedBattery();
 };

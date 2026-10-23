@@ -5,20 +5,20 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FactControls
 
+import "PX4ConfigRows.js" as ConfigRows
 import "PX4FailsafeRows.js" as FailsafeRows
 
 SetupPage {
     id:             failsafesPage
     pageComponent:  pageComponent
 
-    property real _cellPadding:     ScreenTools.defaultFontPixelWidth * 1.5
     property bool _showActiveOnly:  false
     // Parameter values when the page first showed them, so a reboot is only flagged after a change
     property var _initialValues:    Object.create(null)
 
     readonly property var _vehicle: controller.vehicle
     readonly property var _allRows: FailsafeRows.failsafeRows()
-    readonly property var _rows: FailsafeRows.visibleRows(
+    readonly property var _rows: ConfigRows.visibleRows(
         _allRows,
         {
             "multiRotor":   _vehicle ? _vehicle.multiRotor : false,
@@ -26,16 +26,7 @@ SetupPage {
             "vtol":         _vehicle ? _vehicle.vtol : false
         },
         function (name) { return controller.parameterExists(-1, name) })
-    readonly property var _groups: {
-        const groups = []
-        for (const row of _rows) {
-            if (groups.length === 0 || groups[groups.length - 1].name !== row.group) {
-                groups.push({ "name": row.group, "rows": [] })
-            }
-            groups[groups.length - 1].rows.push(row)
-        }
-        return groups
-    }
+    readonly property var _groups: ConfigRows.groupRows(_rows)
     readonly property int _shownCount: {
         let count = 0
         for (const row of _rows) {
@@ -51,7 +42,7 @@ SetupPage {
     }
 
     function _rowActive(row) {
-        return FailsafeRows.isRowActive(row, function (name) {
+        return ConfigRows.isRowActive(row, function (name) {
             const fact = _fact(name)
             return fact ? fact.rawValue : undefined
         })
@@ -63,15 +54,6 @@ SetupPage {
 
     function _groupShown(group) {
         return group.rows.some(row => _rowShown(row))
-    }
-
-    function _vehicleLabel(vehicles) {
-        const labels = {
-            "multiRotor":   qsTr("Multicopter"),
-            "fixedWing":    qsTr("Fixed wing"),
-            "vtol":         qsTr("VTOL")
-        }
-        return vehicles.map(name => labels[name]).join(" / ")
     }
 
     FactPanelController {
@@ -114,327 +96,108 @@ SetupPage {
             width:   Math.max(availableWidth, implicitWidth)
             spacing: _margins
 
-            Rectangle {
-                Layout.fillWidth:   true
-                implicitWidth:      panelLayout.implicitWidth + _margins * 2
-                implicitHeight:     panelLayout.implicitHeight + _margins * 2
-                color:              qgcPal.windowPanel
-                border.color:       qgcPal.borderSubtle
-                radius:             ScreenTools.defaultBorderRadius * 2
+            ConfigRowsPanel {
+                ConfigRowsFilterBar {
+                    objectName:         "failsafes_filter"
+                    filterLabels:       [ qsTr("All Failsafes"), qsTr("Active") ]
+                    filterIndex:        _showActiveOnly ? 1 : 0
+                    summary:            _showActiveOnly ?
+                                            qsTr("Showing %1 of %2 failsafes.").arg(_shownCount).arg(_rows.length) :
+                                            qsTr("Showing all %1 failsafes.").arg(_rows.length)
+                    onFilterActivated:  (index) => { _showActiveOnly = index === 1 }
+                }
 
-                ColumnLayout {
-                    id:                 panelLayout
-                    anchors.fill:       parent
-                    anchors.margins:    _margins
-                    spacing:            _margins
-
-                    RowLayout {
-                        Layout.fillWidth:   true
-                        spacing:            _margins
-
-                        QGCRadioButtonBar {
-                            model:          [ qsTr("All Failsafes"), qsTr("Active") ]
-                            currentIndex:   _showActiveOnly ? 1 : 0
-                            onActivated:    (index) => { _showActiveOnly = index === 1 }
-                        }
-
-                        QGCLabel {
-                            Layout.fillWidth:   true
-                            color:              qgcPal.textSecondary
-                            text:               _showActiveOnly ?
-                                                    qsTr("Showing %1 of %2 failsafes.").arg(_shownCount).arg(_rows.length) :
-                                                    qsTr("Showing all %1 failsafes.").arg(_rows.length)
-                        }
-                    }
-
-                    RowLayout {
-                        spacing: ScreenTools.defaultFontPixelWidth * 2
-
-                        Repeater {
-                            model: [
-                                { "severity": "warning",    "text": qsTr("Warning") },
-                                { "severity": "hold",       "text": qsTr("Hold") },
-                                { "severity": "fallback",   "text": qsTr("Mode fallback") },
-                                { "severity": "return",     "text": qsTr("Return") },
-                                { "severity": "land",       "text": qsTr("Land") },
-                                { "severity": "terminate",  "text": qsTr("Terminate / Disarm") }
-                            ]
-
-                            RowLayout {
-                                spacing: ScreenTools.defaultFontPixelWidth / 2
-
-                                required property var modelData
-
-                                SeverityDot {
-                                    severity: modelData.severity
-                                }
-
-                                QGCLabel {
-                                    text:           modelData.text
-                                    font.pointSize: ScreenTools.smallFontPointSize
-                                    color:          qgcPal.textSecondary
-                                }
-                            }
-                        }
-                    }
+                RowLayout {
+                    spacing: ScreenTools.defaultFontPixelWidth * 2
 
                     Repeater {
-                        model: _groups
+                        model: [
+                            { "severity": "warning",    "text": qsTr("Warning") },
+                            { "severity": "hold",       "text": qsTr("Hold") },
+                            { "severity": "fallback",   "text": qsTr("Mode fallback") },
+                            { "severity": "return",     "text": qsTr("Return") },
+                            { "severity": "land",       "text": qsTr("Land") },
+                            { "severity": "terminate",  "text": qsTr("Terminate / Disarm") }
+                        ]
 
-                        ColumnLayout {
-                            Layout.fillWidth:   true
-                            spacing:            _margins
-                            visible:            _groupShown(group)
+                        RowLayout {
+                            spacing: ScreenTools.defaultFontPixelWidth / 2
 
                             required property var modelData
 
-                            readonly property var group: modelData
-
-                            RowLayout {
-                                Layout.fillWidth:   true
-                                spacing:            _margins
-
-                                QGCCaptionLabel {
-                                    text:           group.name
-                                    color:          qgcPal.textPrimary
-                                }
-
-                                Rectangle {
-                                    Layout.fillWidth:   true
-                                    implicitHeight:     1
-                                    color:              qgcPal.borderSubtle
-                                }
+                            SeverityDot {
+                                severity: modelData.severity
                             }
 
-                            Repeater {
-                                model: group.rows
+                            QGCLabel {
+                                text:           modelData.text
+                                font.pointSize: ScreenTools.smallFontPointSize
+                                color:          qgcPal.textSecondary
+                            }
+                        }
+                    }
+                }
 
-                                ColumnLayout {
-                                    id:                 rowLayout
-                                    Layout.fillWidth:   true
-                                    spacing:            _margins
-                                    visible:            _rowShown(row)
+                ConfigRowGroups {
+                    model:              _groups
+                    groupShown:         failsafesPage._groupShown
+                    objectNamePrefix:   "failsafes"
 
-                                    required property var modelData
-                                    required property int index
+                    rowDelegate: ConfigRow {
+                        id:             rowLayout
+                        objectName:     "failsafes_row_" + row.id
+                        title:          row.title
+                        params:         row.params
+                        active:         _rowActive(row)
+                        showSeparator:  index > 0
+                        visible:        _rowShown(row)
 
-                                    readonly property var row:      modelData
-                                    readonly property bool _active: _rowActive(row)
+                        required property var modelData
+                        required property int index
 
-                                    Rectangle {
-                                        Layout.fillWidth:   true
-                                        implicitHeight:     1
-                                        color:              qgcPal.borderSubtle
-                                        visible:            rowLayout.index > 0
+                        readonly property var row: modelData
+
+                        QGCChip {
+                            text:       qsTr("Warning only")
+                            visible:    rowLayout.row.warnOnly
+                        }
+
+                        ConfigNote {
+                            text: rowLayout.row.description
+                        }
+
+                        cellsData: Repeater {
+                            model: rowLayout.row.cells
+
+                            ConfigParamCell {
+                                id:                 paramCell
+                                cell:               modelData
+                                factFor:            failsafesPage._fact
+                                initialValues:      failsafesPage._initialValues
+                                objectNamePrefix:   "failsafes"
+                                enumLeading:        modelData.severity !== undefined ? severityDotComponent : null
+
+                                required property var modelData
+
+                                Component {
+                                    id: severityDotComponent
+
+                                    SeverityDot {
+                                        severity: FailsafeRows.actionSeverity(paramCell.modelData, paramCell.fact ? paramCell.fact.rawValue : undefined)
+                                    }
+                                }
+
+                                extraData: RowLayout {
+                                    spacing:    ScreenTools.defaultFontPixelWidth
+                                    visible:    paramCell.modelData.fixed !== undefined
+
+                                    SeverityDot {
+                                        severity:   FailsafeRows.actionSeverity(paramCell.modelData)
+                                        visible:    paramCell.modelData.severity !== undefined
                                     }
 
-                                    RowLayout {
-                                        Layout.fillWidth:   true
-                                        spacing:            _margins
-
-                                        ColumnLayout {
-                                            Layout.alignment:       Qt.AlignTop
-                                            Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 30
-                                            Layout.maximumWidth:    Layout.preferredWidth
-                                            Layout.topMargin:       _cellPadding
-                                            spacing:                ScreenTools.defaultFontPixelHeight * 0.25
-
-                                            RowLayout {
-                                                spacing: ScreenTools.defaultFontPixelWidth
-
-                                                Rectangle {
-                                                    implicitWidth:  ScreenTools.defaultFontPixelHeight * 0.5
-                                                    implicitHeight: implicitWidth
-                                                    radius:         implicitWidth / 2
-                                                    color:          rowLayout._active ? qgcPal.colorGreen : "transparent"
-                                                    border.color:   rowLayout._active ? color : qgcPal.textSecondary
-                                                }
-
-                                                QGCLabel {
-                                                    Layout.fillWidth:       true
-                                                    text:                   rowLayout.row.title
-                                                    wrapMode:               Text.WordWrap
-                                                    font.bold:              true
-                                                    font.capitalization:    Font.AllUppercase
-                                                    font.letterSpacing:     ScreenTools.defaultFontPixelWidth * 0.1
-                                                }
-                                            }
-
-                                            Flow {
-                                                Layout.fillWidth:   true
-                                                spacing:            ScreenTools.defaultFontPixelWidth
-
-                                                Repeater {
-                                                    model: rowLayout.row.params
-
-                                                    QGCLabel {
-                                                        text:           modelData
-                                                        font.family:    ScreenTools.fixedFontFamily
-                                                        font.pointSize: ScreenTools.smallFontPointSize
-                                                        color:          qgcPal.textSecondary
-
-                                                        required property string modelData
-                                                    }
-                                                }
-                                            }
-
-                                            RowLayout {
-                                                spacing:    ScreenTools.defaultFontPixelWidth / 2
-                                                visible:    rowLayout.row.warnOnly || rowLayout.row.vehicles !== undefined
-
-                                                QGCChip {
-                                                    text:       qsTr("Warning only")
-                                                    visible:    rowLayout.row.warnOnly
-                                                }
-
-                                                QGCChip {
-                                                    text:       rowLayout.row.vehicles ? _vehicleLabel(rowLayout.row.vehicles) : ""
-                                                    visible:    rowLayout.row.vehicles !== undefined
-                                                }
-                                            }
-
-                                            QGCLabel {
-                                                Layout.fillWidth:   true
-                                                wrapMode:           Text.WordWrap
-                                                font.pointSize:     ScreenTools.smallFontPointSize
-                                                color:              qgcPal.textSecondary
-                                                text:               rowLayout.row.description
-                                            }
-                                        }
-
-                                        // Cells wrap instead of widening the page, so the column only needs its widest single cell
-                                        Flow {
-                                            Layout.alignment:       Qt.AlignTop
-                                            Layout.fillWidth:       true
-                                            Layout.minimumWidth:    _widestChildWidth
-                                            Layout.preferredWidth:  _widestChildWidth
-                                            spacing:                _margins
-
-                                            readonly property real _widestChildWidth: {
-                                                let widest = 0
-                                                for (let i = 0; i < children.length; i++) {
-                                                    if (children[i].visible) {
-                                                        widest = Math.max(widest, children[i].implicitWidth)
-                                                    }
-                                                }
-                                                return widest
-                                            }
-
-                                            Repeater {
-                                                model: rowLayout.row.cells
-
-                                                QGCCaptionCell {
-                                                    id:         cell
-                                                    caption:    modelData.label
-
-                                                    required property var modelData
-
-                                                    readonly property var _fact:        modelData.param ? failsafesPage._fact(modelData.param) : null
-                                                    readonly property bool _isBitmask:  _fact ? _fact.bitmaskStrings.length > 0 : false
-                                                    readonly property bool _isEnum:     _fact ? !_isBitmask && _fact.enumStrings.length > 0 : false
-                                                    readonly property bool _isNumber:   _fact ? !_isBitmask && !_isEnum : false
-                                                    readonly property bool _rebootPending: _fact !== null && _fact.vehicleRebootRequired &&
-                                                                                           _initialValue !== undefined && _fact.rawValue !== _initialValue
-
-                                                    property var _initialValue: undefined
-
-                                                    Component.onCompleted: {
-                                                        if (!_fact) {
-                                                            return
-                                                        }
-                                                        if (!(modelData.param in failsafesPage._initialValues)) {
-                                                            failsafesPage._initialValues[modelData.param] = _fact.rawValue
-                                                        }
-                                                        _initialValue = failsafesPage._initialValues[modelData.param]
-                                                    }
-
-                                                    RowLayout {
-                                                        spacing:    ScreenTools.defaultFontPixelWidth
-                                                        visible:    cell._isEnum
-
-                                                        SeverityDot {
-                                                            severity:   FailsafeRows.actionSeverity(modelData, cell._fact ? cell._fact.rawValue : undefined)
-                                                            visible:    modelData.severity !== undefined
-                                                        }
-
-                                                        FactComboBox {
-                                                            Layout.fillWidth:       true
-                                                            Layout.maximumWidth:    ScreenTools.defaultFontPixelWidth * 50
-                                                            fact:                   cell._fact
-                                                            indexModel:         false
-                                                            sizeToContents:     true
-                                                        }
-                                                    }
-
-                                                    ColumnLayout {
-                                                        Layout.fillWidth:       true
-                                                        Layout.maximumWidth:    ScreenTools.defaultFontPixelWidth * 36
-                                                        spacing:                ScreenTools.defaultFontPixelHeight * 0.25
-                                                        visible:                cell._isBitmask
-
-                                                        Repeater {
-                                                            model: cell._isBitmask ? cell._fact.bitmaskStrings : []
-
-                                                            FactBitMaskCheckBoxSlider {
-                                                                objectName:         "failsafes_bit_" + cell._fact.name + "_" + index
-                                                                Layout.fillWidth:   true
-                                                                text:               modelData
-                                                                fact:               cell._fact
-                                                                bitMask:            cell._fact.bitmaskValues[index]
-
-                                                                required property int index
-                                                                required property string modelData
-                                                            }
-                                                        }
-                                                    }
-
-                                                    FactTextField {
-                                                        Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 14
-                                                        fact:                   cell._fact
-                                                        visible:                cell._isNumber
-                                                    }
-
-                                                    RowLayout {
-                                                        spacing:    ScreenTools.defaultFontPixelWidth
-                                                        visible:    modelData.fixed !== undefined
-
-                                                        SeverityDot {
-                                                            severity:   FailsafeRows.actionSeverity(modelData)
-                                                            visible:    modelData.severity !== undefined
-                                                        }
-
-                                                        QGCLabel {
-                                                            text:   modelData.fixed !== undefined ? modelData.fixed : ""
-                                                        }
-                                                    }
-
-                                                    BatteryThresholdBar {
-                                                        // visibleRows only keeps this cell when all three parameters exist
-                                                        visible:    modelData.thresholdBar !== undefined
-                                                        emergency:  modelData.thresholdBar ? failsafesPage._fact(modelData.thresholdBar[0]).rawValue : 0
-                                                        critical:   modelData.thresholdBar ? failsafesPage._fact(modelData.thresholdBar[1]).rawValue : 0
-                                                        low:        modelData.thresholdBar ? failsafesPage._fact(modelData.thresholdBar[2]).rawValue : 0
-                                                    }
-
-                                                    QGCChip {
-                                                        objectName: "failsafes_rebootChip_" + (modelData.param !== undefined ? modelData.param : "")
-                                                        text:       cell._rebootPending ? qsTr("Reboot required") : qsTr("Applies after reboot")
-                                                        textColor:  cell._rebootPending ? qgcPal.warningText : qgcPal.textSecondary
-                                                        visible:    cell._fact ? cell._fact.vehicleRebootRequired : false
-                                                    }
-
-                                                    QGCLabel {
-                                                        Layout.fillWidth:       true
-                                                        Layout.preferredWidth:  Math.min(implicitWidth, ScreenTools.defaultFontPixelWidth * 20)
-                                                        wrapMode:               Text.WordWrap
-                                                        font.pointSize:         ScreenTools.smallFontPointSize
-                                                        color:                  qgcPal.textSecondary
-                                                        text:                   modelData.note !== undefined ? modelData.note : ""
-                                                        visible:                modelData.note !== undefined
-                                                    }
-                                                }
-                                            }
-                                        }
+                                    QGCLabel {
+                                        text: paramCell.modelData.fixed !== undefined ? paramCell.modelData.fixed : ""
                                     }
                                 }
                             }

@@ -1,5 +1,7 @@
 #include "VehicleConfigUITestBase.h"
 
+#include <functional>
+
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QLocale>
 #include <QtCore/QPointer>
@@ -438,4 +440,24 @@ void VehicleConfigUITestBase::runAPMCompassCal()
     QVERIFY2(vehicle->rebootRequired(), "Compass calibration did not latch rebootRequired");
     QVERIFY2(clickButton(QStringLiteral("popupDialog_acceptButton")),
              "Failed to dismiss post-compass-cal dialog");
+}
+
+QPair<int, int> VehicleConfigUITestBase::countRows(const QString& prefix, const QStringList& excluded) const
+{
+    int visible = 0;
+    int total = 0;
+    const std::function<void(QQuickItem*)> count = [&](QQuickItem* item) {
+        const QString name = item->objectName();
+        if (name.startsWith(prefix) && !excluded.contains(name)) {
+            total++;
+            if (item->isVisible()) {
+                visible++;
+            }
+        }
+        for (QQuickItem* child : item->childItems()) {
+            count(child);
+        }
+    };
+    count(_rootItem);
+    return {visible, total};
 }

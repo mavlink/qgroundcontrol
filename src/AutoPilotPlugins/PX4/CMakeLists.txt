@@ -127,6 +127,14 @@ qt_add_qml_module(AutoPilotPluginsPX4Module
         BatteryThresholdBar.qml
         CalcAmpsPerVoltDialog.qml
         CalcVoltageDividerDialog.qml
+        ConfigChoiceComboBox.qml
+        ConfigGroupHeader.qml
+        ConfigNote.qml
+        ConfigParamCell.qml
+        ConfigRow.qml
+        ConfigRowGroups.qml
+        ConfigRowsFilterBar.qml
+        ConfigRowsPanel.qml
         ESCCalibrationDialog.qml
         FailureInjectionComponent.qml
         FailureInjectionInstances.js
@@ -134,6 +142,7 @@ qt_add_qml_module(AutoPilotPluginsPX4Module
         PowerComponentSummary.qml
         PX4BatteryComponent.qml
         PX4BatteryRows.js
+        PX4ConfigRows.js
         PX4FailsafeRows.js
         PX4FailsafesComponent.qml
         PX4FlightBehaviorCopter.qml
