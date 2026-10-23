@@ -56,6 +56,14 @@
             "min": 100.0,
             "label": "VTOL Transition Distance",
             "keywords": "vtol transition"
+        },
+        {
+            "name": "useNewPlanPanel",
+            "shortDesc": "Use the tabbed Plan View panel instead of the tree view.",
+            "type": "bool",
+            "default": true,
+            "label": "Use tabbed Plan panel (experimental)",
+            "keywords": "plan panel tree tabs experimental"
         }
     ]
 }

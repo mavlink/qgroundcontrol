@@ -107,8 +107,8 @@
         },
         {
             "name": "defaultMissionItemAltitude",
-            "shortDesc": "Default altitude automatically assigned to new waypoints during mission planning.",
-            "longDesc": "This value specifies the default altitude for new items added to a mission.",
+            "shortDesc": "Default altitude automatically assigned to new mission items, survey patterns, rally points and the fence breach return point.",
+            "longDesc": "This value specifies the default altitude for new waypoints, survey, corridor scan and structure scan patterns, rally points and the GeoFence breach return point.",
             "type": "double",
             "default": 50.0,
             "min": 0.0,

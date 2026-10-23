@@ -65,6 +65,7 @@ void PlanViewLayerUITest::_verifyLayerState(const LayerUIState &state, const QSt
 
 void PlanViewLayerUITest::_testEditingLayerSwitching()
 {
+    setUseTabbedPlanPanel(false);
     startUI();
     if (QTest::currentTestFailed()) return;
 

@@ -98,6 +98,7 @@ void PlanViewUITest::_navigateToPlanAndCenterMap()
 
 void PlanViewUITest::_verifyWaypointToolAddsWaypointOnEmptyPlan(bool expectTakeoffButtonVisible)
 {
+    setUseTabbedPlanPanel(false);
     startUI();
     if (QTest::currentTestFailed()) return;
 
@@ -190,6 +191,7 @@ void PlanViewUITest::_testVTOLTakeoffChoices()
     appSettings->offlineEditingFirmwareClass()->setRawValue(QGCMAVLink::FirmwareClassPX4);
     appSettings->offlineEditingVehicleClass()->setRawValue(QGCMAVLink::VehicleClassMultiRotor);
 
+    setUseTabbedPlanPanel(false);
     startUI();
     if (QTest::currentTestFailed()) return;
 
@@ -292,6 +294,7 @@ void PlanViewUITest::_verifyFullState(const PlanUIState &state, const QString &c
 
 void PlanViewUITest::_testPlanViewStates()
 {
+    setUseTabbedPlanPanel(false);
     startUI();
     if (QTest::currentTestFailed()) return;
 
@@ -657,6 +660,7 @@ void PlanViewUITest::_testPlanViewStates()
 // Save as... lives in the hamburger drop panel.
 void PlanViewUITest::_testSaveAsMenu()
 {
+    setUseTabbedPlanPanel(false);
     startUI();
     if (QTest::currentTestFailed()) return;
 

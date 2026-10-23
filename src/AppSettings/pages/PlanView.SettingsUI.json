@@ -22,6 +22,15 @@
                     "setting": "planViewSettings.allowMultipleLandingPatterns"
                 }
             ]
+        },
+        {
+            "heading": "Experimental",
+            "keywords": ["plan panel", "tabs", "tree view"],
+            "controls": [
+                {
+                    "setting": "planViewSettings.useNewPlanPanel"
+                }
+            ]
         }
     ]
 }

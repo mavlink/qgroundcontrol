@@ -53,6 +53,24 @@ TreeView {
 
     property int _lastMissionItemCount: 0
 
+    // The tree can be created mid-session when the tabbed panel setting is turned off, after the last visualItemsReset
+    Component.onCompleted: _resetToDefaultState()
+
+    function _resetToDefaultState() {
+        root.collapseRecursively()
+        if (_missionController.containsItems) {
+            // Non-empty plan: expand mission group
+            root.expand(_rowFor(_missionController.missionGroupIndex))
+        } else {
+            // Empty plan: expand Plan Info and Defaults, scroll to top
+            root.expand(_rowFor(_missionController.planFileGroupIndex))
+            root.expand(_rowFor(_missionController.defaultsGroupIndex))
+            root.contentY = 0
+        }
+        root._lastMissionItemCount = _missionController.visualItems ? _missionController.visualItems.count : 0
+        root.editingLayerChangeRequested(PlanEditLayers.layerMission)
+    }
+
     Connections {
         target: root._missionController.visualItems
         function onCountChanged() {
@@ -80,18 +98,7 @@ TreeView {
     Connections {
         target: root._missionController
         function onVisualItemsReset() {
-            root.collapseRecursively()
-            if (_missionController.containsItems) {
-                // Non-empty plan: expand mission group
-                root.expand(_rowFor(_missionController.missionGroupIndex))
-            } else {
-                // Empty plan: expand Plan Info and Defaults, scroll to top
-                root.expand(_rowFor(_missionController.planFileGroupIndex))
-                root.expand(_rowFor(_missionController.defaultsGroupIndex))
-                root.contentY = 0
-            }
-            root._lastMissionItemCount = _missionController.visualItems ? _missionController.visualItems.count : 0
-            root.editingLayerChangeRequested(PlanEditLayers.layerMission)
+            root._resetToDefaultState()
         }
         function onPlanViewStateChanged() {
             // Current item changed — bring it on-screen if completely off-screen.

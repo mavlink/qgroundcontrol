@@ -19,9 +19,11 @@
 
 #include "AppSettings.h"
 #include "ColoredSvgImageProvider.h"
+#include "Fact.h"
 #include "MAVLinkProtocol.h"
 #include "MockLink.h"
 #include "MultiVehicleManager.h"
+#include "PlanViewSettings.h"
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
 #include "QGCFileDialogController.h"
@@ -60,6 +62,23 @@ private:
 void QmlUITestBase::overrideQmlFile(const QUrl& original, const QUrl& replacement)
 {
     _qmlUrlOverrides.insert(original, replacement);
+}
+
+void QmlUITestBase::setUseTabbedPlanPanel(bool use)
+{
+    Fact* const flag = SettingsManager::instance()->planViewSettings()->useNewPlanPanel();
+    if (!_savedUseTabbedPlanPanel) {
+        _savedUseTabbedPlanPanel = flag->rawValue().toBool();
+    }
+    flag->setRawValue(use);
+}
+
+void QmlUITestBase::_restoreUseTabbedPlanPanel()
+{
+    if (_savedUseTabbedPlanPanel) {
+        SettingsManager::instance()->planViewSettings()->useNewPlanPanel()->setRawValue(*_savedUseTabbedPlanPanel);
+        _savedUseTabbedPlanPanel.reset();
+    }
 }
 
 static QQuickItem* findVisibleItemImmediate(QQuickItem* root, const QString& objectName)

@@ -43,23 +43,6 @@ Rectangle {
     readonly property real  _trashSize:         commandPicker.height * 0.75
     readonly property bool  _waypointsOnlyMode: QGroundControl.corePlugin.options.missionWaypointsOnly
 
-    // setSource() injects missionItem before internal bindings activate
-    function _loadEditor() {
-        if (missionItem.isCurrentItem) {
-            editorLoader.setSource(missionItem.editorQml, {
-                missionItem:    _root.missionItem,
-                availableWidth: _root.width - (editorLoader.anchors.margins * 2)
-            })
-        } else {
-            editorLoader.setSource("")
-        }
-    }
-
-    Connections {
-        target: missionItem
-        function onIsCurrentItemChanged() { _root._loadEditor() }
-    }
-
     QGCPalette {
         id: qgcPal
         colorGroupEnabled: enabled
@@ -80,25 +63,9 @@ Rectangle {
         }
     }
 
-    QGCPopupDialogFactory {
-        id: editPositionDialogFactory
-
-        dialogComponent: editPositionDialog
-    }
-
-    Component {
-        id: editPositionDialog
-
-        EditPositionDialog {
-            property bool _editCenterCoordinate: false
-
-            onCoordinateChanged: {
-                if (_editCenterCoordinate)
-                    missionItem.centerCoordinate = coordinate
-                else
-                    missionItem.coordinate = coordinate
-            }
-        }
+    MissionItemMenu {
+        id:          itemMenu
+        missionItem: _root.missionItem
     }
 
     Row {
@@ -209,95 +176,6 @@ Rectangle {
         }
     }
 
-    Component {
-        id: hamburgerMenuDropPanelComponent
-
-        DropPanel {
-            id: hamburgerMenuDropPanel
-            onClosed: destroy()
-
-            sourceComponent: Component {
-                ColumnLayout {
-                    spacing: ScreenTools.defaultFontPixelHeight / 2
-
-                    QGCButton {
-                        Layout.fillWidth:   true
-                        text:               qsTr("Move to vehicle position")
-                        enabled:            _activeVehicle && missionItem.specifiesCoordinate && _activeVehicle.coordinate.isValid
-
-                        onClicked: {
-                            missionItem.coordinate = _activeVehicle.coordinate
-                            hamburgerMenuDropPanel.close()
-                        }
-
-                        property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
-                    }
-
-                    QGCButton {
-                        Layout.fillWidth:   true
-                        text:               qsTr("Move to previous item position")
-                        enabled:            _missionController.previousCoordinate.isValid
-                        onClicked: {
-                            missionItem.coordinate = _missionController.previousCoordinate
-                            hamburgerMenuDropPanel.close()
-                        }
-                    }
-
-                    QGCButton {
-                        Layout.fillWidth:   true
-                        text:               qsTr("Edit position...")
-                        enabled:            missionItem.specifiesCoordinate
-                        onClicked: {
-                            const editCenterCoordinate = missionItem.isSurveyItem
-                            editPositionDialogFactory.open({
-                                _editCenterCoordinate:   editCenterCoordinate,
-                                coordinate:              editCenterCoordinate ? missionItem.centerCoordinate : missionItem.coordinate,
-                                altitudeFact:            !editCenterCoordinate && missionItem.specifiesAltitude ? missionItem.altitude : null,
-                                altitudeFrame:           !editCenterCoordinate && missionItem.specifiesAltitude ? missionItem.altitudeFrame : QGroundControl.AltitudeFrameNone,
-                            })
-                            hamburgerMenuDropPanel.close()
-                        }
-                    }
-
-                    Rectangle {
-                        Layout.fillWidth:       true
-                        Layout.preferredHeight: 1
-                        color:                  qgcPal.borderSubtle
-                    }
-
-                    QGCCheckBoxSlider {
-                        Layout.fillWidth:   true
-                        text:               qsTr("Show all values")
-                        visible:            QGroundControl.corePlugin.showAdvancedUI
-                        checked:            missionItem.isSimpleItem ? missionItem.rawEdit : false
-                        enabled:            missionItem.isSimpleItem && !_waypointsOnlyMode
-
-                        onClicked: {
-                            missionItem.rawEdit = checked
-                            if (missionItem.rawEdit && !missionItem.friendlyEditAllowed) {
-                                missionItem.rawEdit = false
-                                checked = false
-                                QGroundControl.showMessageDialog(_root, qsTr("Mission Edit"), qsTr("You have made changes to the mission item which cannot be shown in Simple Mode"))
-                            }
-                            hamburgerMenuDropPanel.close()
-                        }
-                    }
-
-                    Rectangle {
-                        Layout.fillWidth:       true
-                        Layout.preferredHeight: 1
-                        color:                  qgcPal.borderSubtle
-                    }
-
-                    QGCLabel {
-                        text:       qsTr("Item #%1").arg(missionItem.sequenceNumber)
-                        enabled:    false
-                    }
-                }
-            }
-        }
-    }
-
     QGCColoredImage {
         id:                     hamburger
         anchors.margins:        _margin
@@ -314,12 +192,7 @@ Rectangle {
             fillItem:   hamburger
             onClicked: (position) => {
                 currentItemScope.focus = true
-                position = Qt.point(position.x, position.y)
-                // For some strange reason using mainWindow in mapToItem doesn't work, so we use globals.parent instead which also gets us mainWindow
-                position = mapToItem(globals.parent, position)
-
-                var dropPanel = hamburgerMenuDropPanelComponent.createObject(mainWindow, { clickRect: Qt.rect(position.x, position.y, 0, 0) })
-                dropPanel.open()
+                itemMenu.openAt(hamburger, position)
             }
         }
     }
@@ -342,19 +215,14 @@ Rectangle {
 
 */
 
-    Loader {
+    MissionItemEditorLoader {
         id:                 editorLoader
         anchors.margins:    _innerMargin
         anchors.left:       parent.left
         anchors.top:        topRowLayout.bottom
-
-        // Deliberately not asynchronous. With asynchronous: true the editor is built
-        // incrementally over later event-loop ticks. If the user switches layers before
-        // that finishes, the TreeView collapses the mission group and destroys this
-        // delegate, and the still-running load then warns "Cannot create a component in
-        // an invalid context". Synchronous loading closes that window: the editor is
-        // fully built before control returns to the event loop.
-        Component.onCompleted: _root._loadEditor()
+        missionItem:        _root.missionItem
+        availableWidth:     _root.width - (anchors.margins * 2)
+        active:             _currentItem
     }
 
     onHeightChanged: {
