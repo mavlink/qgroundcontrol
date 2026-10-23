@@ -136,7 +136,7 @@ void APMFirmwarePlugin::_handleIncomingParamValue(Vehicle *vehicle, mavlink_mess
     Q_UNUSED(vehicle);
 
     mavlink_param_value_t paramValue;
-    mavlink_param_union_t paramUnion;
+    mavlink_param_union_t paramUnion{};
 
     (void) memset(&paramValue, 0, sizeof(paramValue));
 

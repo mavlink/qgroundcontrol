@@ -44,7 +44,7 @@ uint64_t getHeaderTimestamp(const char *data, qint64 size)
     }
 
     const std::span<const uint8_t> header{reinterpret_cast<const uint8_t*>(data), kHeaderSize};
-    return *LittleEndian::read<uint64_t>(header, 8);
+    return LittleEndian::read<uint64_t>(header, 8).value_or(0);
 }
 
 // ============================================================================

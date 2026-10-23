@@ -8,6 +8,8 @@ target_sources(
     PRIVATE
         APMAirframeComponentControllerTest.cc
         APMAirframeComponentControllerTest.h
+        APMParamValueTest.cc
+        APMParamValueTest.h
         APMStartMissionTest.cc
         APMStartMissionTest.h
         FirmwarePluginTest.cc
@@ -74,6 +76,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 add_subdirectory(ComponentInformation)
 
 add_qgc_test(APMAirframeComponentControllerTest LABELS Integration Vehicle)
+add_qgc_test(APMParamValueTest LABELS Integration Vehicle)
 add_qgc_test(APMStartMissionTest LABELS Integration Vehicle)
 add_qgc_test(FirmwarePluginTest LABELS Unit Vehicle)
 add_qgc_test(FTPControllerTest LABELS Integration Vehicle RESOURCE_LOCK TempFiles)
