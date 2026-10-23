@@ -20,7 +20,14 @@ if TYPE_CHECKING:
 UPSTREAM = "mavlink/qgroundcontrol"
 GHCR = "ghcr.io/mavlink/qgroundcontrol"
 DOCKER_HUB = "dronecode/qgroundcontrol"
-ALL_DOCKER_PLATFORMS = [variant["platform"] for variant in load_variants()]
+# Parametrize values for every Docker variant (or all but the last, Android), resolved when a test runs:
+# collection must not read deploy/docker/variants.json, which the Windows job's sparse checkout lacks.
+ALL = "all"
+ALL_BUT_ANDROID = "all-but-android"
+
+
+def _all_docker_platforms() -> list[str]:
+    return [variant["platform"] for variant in load_variants()]
 
 
 @pytest.fixture
@@ -138,13 +145,17 @@ def _docker_platforms(gh_output: Path) -> tuple[str, list[str]]:
         (["docs/index.md"], []),
         (["src/Vehicle/Vehicle.cc"], ["Linux-Ubuntu-24.04", "Android"]),
         (["android/AndroidManifest.xml"], ["Android"]),
-        (["deploy/linux/AppImage.sh"], ALL_DOCKER_PLATFORMS[:-1]),
-        (None, ALL_DOCKER_PLATFORMS),
+        (["deploy/linux/AppImage.sh"], ALL_BUT_ANDROID),
+        (None, ALL),
     ],
 )
 def test_docker_plans_pull_requests_from_their_diff(
-    event: pytest.MonkeyPatch, gh_output: Path, changed: list[str] | None, expected: list[str]
+    event: pytest.MonkeyPatch, gh_output: Path, changed: list[str] | None, expected: list[str] | str
 ) -> None:
+    if expected == ALL:
+        expected = _all_docker_platforms()
+    elif expected == ALL_BUT_ANDROID:
+        expected = _all_docker_platforms()[:-1]
     event.setenv("EVENT_NAME", "pull_request")
     event.setattr(detect_changes, "get_changed_files", lambda: changed)
     assert _docker_platforms(gh_output) == ("true" if expected else "false", expected)
@@ -159,7 +170,7 @@ def test_docker_builds_every_variant_outside_pull_requests(
 
     event.setenv("EVENT_NAME", event_name)
     event.setattr(detect_changes, "get_changed_files", unexpected)
-    assert _docker_platforms(gh_output) == ("true", ALL_DOCKER_PLATFORMS)
+    assert _docker_platforms(gh_output) == ("true", _all_docker_platforms())
 
 
 def test_docker_rename_out_of_docker_inputs_uses_full_matrix(
@@ -174,7 +185,7 @@ def test_docker_rename_out_of_docker_inputs_uses_full_matrix(
     monkeypatch.setenv("EVENT_NAME", "pull_request")
     monkeypatch.setenv("PR_BASE_SHA", base)
     monkeypatch.setenv("PR_HEAD_SHA", git(git_repo, "rev-parse", "HEAD"))
-    assert _docker_platforms(gh_output) == ("true", ALL_DOCKER_PLATFORMS)
+    assert _docker_platforms(gh_output) == ("true", _all_docker_platforms())
 
 
 @pytest.mark.parametrize(
