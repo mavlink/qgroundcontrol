@@ -47,9 +47,16 @@ def test_crowdin_mode_covers_every_trigger() -> None:
         "${{ (github.event_name == 'schedule' || inputs.action == 'download') "
         "&& 'download' || 'upload' }}"
     )
-    conditions = {step["name"]: step.get("if") for step in job["steps"]}
-    assert conditions["Upload sources to Crowdin"] == "env.SYNC_MODE == 'upload'"
-    assert conditions["Download translations from Crowdin"] == "env.SYNC_MODE == 'download'"
+    (sync,) = [step for step in job["steps"] if step.get("uses", "").startswith("crowdin/")]
+    assert "if" not in sync
+    assert sync["name"] == "Sync with Crowdin (${{ env.SYNC_MODE }})"
+    # crowdin/github-action only pushes the localization branch and opens its pull request after
+    # download_translations, so one step serves both modes.
+    assert sync["with"]["upload_sources"] == "${{ env.SYNC_MODE == 'upload' }}"
+    assert sync["with"]["download_translations"] == "${{ env.SYNC_MODE == 'download' }}"
+    assert sync["with"]["upload_translations"] is False
+    assert "download_sources" not in sync["with"]
+    assert "download_bundle" not in sync["with"]
 
 
 def test_codeql_languages_build_without_compilation() -> None:

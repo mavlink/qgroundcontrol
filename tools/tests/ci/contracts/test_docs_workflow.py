@@ -31,3 +31,15 @@ def test_docs_build_runs_the_docs_npm_project() -> None:
     for name in ("Install dependencies", "Build with VitePress"):
         assert get_step(steps, name)["working-directory"] == "docs"
     assert get_step(steps, "Upload artifact")["with"]["path"] == "docs/.vitepress/dist/"
+
+
+def test_doxygen_pull_requests_rebuild_only_for_configuration_changes() -> None:
+    triggers = load_workflow("doxygen.yml")["on"]
+    assert set(triggers) == {"schedule", "pull_request", "workflow_dispatch"}
+    assert triggers["pull_request"] == {
+        "paths": ["tools/configs/Doxyfile", ".github/workflows/doxygen.yml"]
+    }
+    # Source changes cannot fail the build while warnings stay non-fatal; enabling WARN_AS_ERROR
+    # would make a src/** pull request trigger worthwhile again.
+    doxyfile = (REPO_ROOT / "tools/configs/Doxyfile").read_text(encoding="utf-8")
+    assert not re.search(r"^\s*WARN_AS_ERROR\s*=\s*(YES|FAIL_ON_WARNINGS)", doxyfile, re.MULTILINE)

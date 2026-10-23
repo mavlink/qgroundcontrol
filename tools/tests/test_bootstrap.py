@@ -161,6 +161,20 @@ def _tools_sources() -> list[Path]:
     ]
 
 
+def test_tools_sources_compile() -> None:
+    """Every tools/ source compiles on the running interpreter (CI tests the oldest and newest).
+
+    Unlike ast.parse, compiling also rejects symbol-table errors such as a module-level `return`.
+    """
+    errors = []
+    for path in _tools_sources():
+        try:
+            compile(path.read_bytes(), str(path), "exec", dont_inherit=True)
+        except SyntaxError as error:
+            errors.append(f"{path.relative_to(TOOLS_DIR)}:{error.lineno}: {error.msg}")
+    assert not errors, "\n".join(errors)
+
+
 def _is_sys_path_call(node: ast.AST) -> bool:
     return (
         isinstance(node, ast.Call)

@@ -56,7 +56,7 @@
 | `pr-checks.yml` | PR title validation and size/file labels |
 | `dependency-review.yml` | Dependency security review |
 | `scorecard.yml` | OpenSSF Scorecard |
-| `docs.yml`, `doxygen.yml` | User/developer guide and Doxygen API docs build and deployment |
+| `docs.yml`, `doxygen.yml` | User/developer guide and Doxygen API docs build and deployment (Doxygen runs weekly; pull requests only when its configuration changes) |
 | `crowdin.yml`, `lupdate.yml` | Crowdin sync and weekly source-string extraction |
 | `px4-metadata.yml` | Daily PX4 airframe and parameter metadata update PR |
 | `build-gstreamer.yml`, `mirror-gstreamer.yml` | Build GStreamer SDKs; mirror upstream GStreamer releases to the QGC S3 bucket |

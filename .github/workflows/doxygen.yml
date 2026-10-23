@@ -3,10 +3,12 @@ name: Doxygen API Docs
 on:
   schedule:
     - cron: '0 4 * * 0'  # Sunday 04:00 UTC
+  # Without WARN_AS_ERROR in the Doxyfile, source changes do not fail the build: pull requests
+  # rebuild only when the configuration or this workflow changes; the weekly run covers sources.
   pull_request:
     paths:
       - 'tools/configs/Doxyfile'
-      - 'src/**'
+      - '.github/workflows/doxygen.yml'
   workflow_dispatch:
 
 permissions:

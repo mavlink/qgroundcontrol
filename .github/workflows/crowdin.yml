@@ -47,28 +47,15 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Upload sources to Crowdin
-        if: env.SYNC_MODE == 'upload'
+      # Each mode runs one half of the action: with download_translations off it never pushes a
+      # branch or opens a pull request, so the localization settings apply only to downloads.
+      - name: Sync with Crowdin (${{ env.SYNC_MODE }})
         uses: crowdin/github-action@v3
         with:
           config: 'docs/crowdin_docs.yml'
-          upload_sources: true
+          upload_sources: ${{ env.SYNC_MODE == 'upload' }}
           upload_translations: false
-          download_translations: false
-          crowdin_branch_name: master
-        env:
-          GITHUB_TOKEN: ${{ secrets.PX4BUILDBOT_ACCESSTOKEN }}
-          CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_DOCS_PROJECT_ID }}
-          CROWDIN_PERSONAL_TOKEN: ${{ secrets.PX4BUILDBOT_CROWDIN_PERSONAL_TOKEN }}
-
-      - name: Download translations from Crowdin
-        if: env.SYNC_MODE == 'download'
-        uses: crowdin/github-action@v3
-        with:
-          config: 'docs/crowdin_docs.yml'
-          upload_sources: false
-          upload_translations: false
-          download_translations: true
+          download_translations: ${{ env.SYNC_MODE == 'download' }}
           localization_branch_name: l10n_crowdin_docs_translations
           crowdin_branch_name: master
           create_pull_request: true

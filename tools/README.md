@@ -356,6 +356,8 @@ python tools/check_deps.py --gstreamer  # Find latest patch common to all SDK pl
 ### API documentation (Doxygen)
 
 Run Doxygen from the repository root, as the Doxygen workflow does; HTML goes to `docs/api/html/`.
+The workflow builds and deploys weekly; pull requests run it only when they change the Doxyfile or
+the workflow, because warnings do not fail the build.
 
 ```bash
 doxygen tools/configs/Doxyfile
