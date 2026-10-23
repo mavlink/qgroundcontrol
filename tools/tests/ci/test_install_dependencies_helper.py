@@ -3,16 +3,14 @@
 from __future__ import annotations
 
 import re
+import subprocess
 import sys
-from typing import TYPE_CHECKING
+from pathlib import Path
 from unittest.mock import call, patch
 
 import pytest
 from ci.cache import gh_cache_cleanup
 from ci.runner import install_dependencies_helper as helper
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 pytestmark = pytest.mark.windows
 
@@ -140,11 +138,11 @@ class TestInstall:
 @pytest.mark.parametrize(("flag", "arm64"), [("", False), ("true", True), ("false", False)])
 def test_windows_installs_msvc_and_nsis_without_gstreamer(monkeypatch, flag, arm64):
     monkeypatch.setenv("INPUT_MSVC_ARM64", flag)
-    with patch.object(helper.subprocess, "run") as run:
-        run.return_value.returncode = 3
+    with patch.object(helper, "install_with_retries", return_value=3) as install:
         assert helper.main(["windows"]) == 3
 
-    command = run.call_args.args[0]
+    command, timeout = install.call_args.args
+    assert timeout == 20 * 60
     assert command[:2] == [sys.executable, str(helper.INSTALL_DEPENDENCIES)]
     assert command[2:] == [
         "--platform",
@@ -156,11 +154,53 @@ def test_windows_installs_msvc_and_nsis_without_gstreamer(monkeypatch, flag, arm
     ]
 
 
+def test_macos_retries_single_attempts_in_child_processes():
+    with patch.object(helper, "install_with_retries", return_value=0) as install:
+        assert helper.main(["macos"]) == 0
+
+    command, timeout = install.call_args.args
+    assert timeout == 10 * 60
+    assert command == [
+        sys.executable,
+        str(Path(helper.__file__).resolve()),
+        "macos",
+        "--single-attempt",
+    ]
+
+
 @pytest.mark.parametrize(("installed", "status"), [(True, 0), (False, 1)])
 def test_macos_installs_homebrew_packages_ci_does_not_provide(installed, status):
     with patch.object(helper, "install_macos", return_value=installed) as install:
-        assert helper.main(["macos"]) == status
+        assert helper.main(["macos", "--single-attempt"]) == status
 
     packages = install.call_args.kwargs["packages"]
     assert {"create-dmg", "pkgconf"} <= set(packages)
     assert not set(packages) & helper.CI_PROVIDED_TOOLS
+
+
+def test_installs_retry_and_kill_each_hung_attempts_process_tree():
+    """Three attempts, as the action's former nick-fields/retry steps made."""
+    with patch.object(
+        helper, "run_with_retry", return_value=subprocess.CompletedProcess([], 2)
+    ) as run:
+        assert helper.install_with_retries(["installer"], 600) == 2
+
+    run.assert_called_once()
+    kwargs = run.call_args.kwargs
+    assert run.call_args.args == (["installer"],)
+    assert (kwargs["max_attempts"], kwargs["timeout"]) == (3, 600)
+    assert kwargs["kill_tree_on_timeout"] is True
+    assert kwargs["check"] is False
+    retry = kwargs["retry_result_if"]
+    assert retry(subprocess.CompletedProcess([], 1)) and not retry(
+        subprocess.CompletedProcess([], 0)
+    )
+
+
+def test_installs_that_always_time_out_fail(capsys):
+    timeout = subprocess.TimeoutExpired(["installer"], 600)
+    with patch.object(helper, "run_with_retry", side_effect=timeout):
+        assert helper.install_with_retries(["installer"], 600) == 1
+    assert "::error::The last of 3 install attempts timed out after 10 minutes" in (
+        capsys.readouterr().out
+    )

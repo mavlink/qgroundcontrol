@@ -8,8 +8,11 @@ Use ``run_captured`` whenever you need stdout/stderr to make a decision.
 
 from __future__ import annotations
 
+import contextlib
+import os
 import shlex
 import shutil
+import signal
 import subprocess
 import sys
 import time
@@ -21,6 +24,7 @@ if TYPE_CHECKING:
 
 __all__ = [
     "MissingToolError",
+    "kill_process_tree",
     "output_text",
     "require_tools",
     "run_bytes",
@@ -82,6 +86,51 @@ def wait_until(
     return result
 
 
+def kill_process_tree(process: subprocess.Popen[Any]) -> None:
+    """Kill *process* and its descendants.
+
+    POSIX kills the process group, so start *process* with ``start_new_session=True``; Windows
+    runs ``taskkill /T``, which finds descendants through their parent process IDs.
+    """
+    if sys.platform == "win32":
+        with contextlib.suppress(OSError, subprocess.SubprocessError):
+            subprocess.run(
+                ["taskkill", "/T", "/F", "/PID", str(process.pid)],
+                capture_output=True,
+                check=False,
+                timeout=60,
+            )
+    else:
+        with contextlib.suppress(ProcessLookupError, PermissionError):
+            os.killpg(process.pid, signal.SIGKILL)
+    process.kill()
+
+
+def _run_killing_tree(
+    command: list[str],
+    *,
+    capture_output: bool = False,
+    timeout: float | None = None,
+    check: bool = False,
+    **popen_kwargs: Any,
+) -> subprocess.CompletedProcess[Any]:
+    """``subprocess.run`` that kills the whole process tree, not only the child, on timeout."""
+    if capture_output:
+        popen_kwargs["stdout"] = popen_kwargs["stderr"] = subprocess.PIPE
+    with subprocess.Popen(
+        command, start_new_session=sys.platform != "win32", **popen_kwargs
+    ) as process:
+        try:
+            stdout, stderr = process.communicate(timeout=timeout)
+        except BaseException:
+            kill_process_tree(process)
+            raise
+    result = subprocess.CompletedProcess(command, process.returncode, stdout, stderr)
+    if check:
+        result.check_returncode()
+    return result
+
+
 def run_with_retry(
     cmd: Sequence[str],
     *,
@@ -93,13 +142,18 @@ def run_with_retry(
     retry_if: Callable[[Exception], bool] | None = None,
     retry_result_if: Callable[[subprocess.CompletedProcess[Any]], bool] | None = None,
     timeout: float | None = None,
+    kill_tree_on_timeout: bool = False,
     check: bool = True,
     capture_output: bool = False,
     text: bool = False,
     encoding: str | None = None,
     errors: str | None = None,
 ) -> subprocess.CompletedProcess[Any]:
-    """Run a command with bounded retries and linear backoff."""
+    """Run a command with bounded retries and linear backoff.
+
+    A timed-out attempt kills only the command itself unless *kill_tree_on_timeout* is set,
+    which also kills the processes it started (installers that spawn their own workers).
+    """
     command = list(cmd)
     if not command:
         raise ValueError("cmd must not be empty")
@@ -108,9 +162,10 @@ def run_with_retry(
     if retry_backoff_seconds < 0:
         raise ValueError("retry_backoff_seconds must be non-negative")
 
+    run = _run_killing_tree if kill_tree_on_timeout else subprocess.run
     for attempt in range(1, max_attempts + 1):
         try:
-            result = subprocess.run(
+            result = run(
                 command,
                 capture_output=capture_output,
                 text=text,

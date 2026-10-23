@@ -6,6 +6,8 @@
 - macos: the Homebrew packages and the GStreamer framework, through install_dependencies
 - windows: MSVC and NSIS for windows.yml, through install_dependencies
 
+macos and windows make up to three attempts; one that outlasts its timeout is killed with every
+process it started (the Visual Studio installer runs its own workers) before the next attempt.
 CI skips install_dependencies' Python build tools and the distro copies of CI_PROVIDED_TOOLS.
 """
 
@@ -25,6 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 import _bootstrap as _bootstrap
 from common.gh_actions import env_default, env_flag, gh_error, write_github_output
 from common.paths import TOOLS_DIR
+from common.proc import run_with_retry
 from setup.install_dependencies._debian import enable_universe
 from setup.install_dependencies._macos import install_macos
 from setup.install_dependencies._packages import (
@@ -40,6 +43,9 @@ EXTRA_PACKAGES_TIMEOUT = 300
 # build-setup installs the pinned CMake and Ninja and the cache action the pinned ccache (and mold
 # on Linux). Distro copies would only shadow or duplicate them on PATH.
 CI_PROVIDED_TOOLS = frozenset({"ccache", "cmake", "mold", "ninja", "ninja-build"})
+INSTALL_ATTEMPTS = 3
+MACOS_ATTEMPT_TIMEOUT = 10 * 60
+WINDOWS_ATTEMPT_TIMEOUT = 20 * 60
 
 
 def debian_packages(category: str) -> list[str]:
@@ -114,6 +120,25 @@ def install(category: str, extra_packages: list[str]) -> int:
     )
 
 
+def install_with_retries(command: list[str], timeout: int) -> int:
+    """Run an installer command up to INSTALL_ATTEMPTS times; return its last exit code."""
+    try:
+        result = run_with_retry(
+            command,
+            max_attempts=INSTALL_ATTEMPTS,
+            retry_result_if=lambda completed: completed.returncode != 0,
+            timeout=timeout,
+            kill_tree_on_timeout=True,
+            check=False,
+        )
+    except subprocess.TimeoutExpired:
+        gh_error(
+            f"The last of {INSTALL_ATTEMPTS} install attempts timed out after {timeout // 60} minutes"
+        )
+        return 1
+    return result.returncode
+
+
 def install_homebrew() -> int:
     """Install the Homebrew packages CI doesn't provide elsewhere, then the GStreamer framework."""
     packages = [package for package in get_packages("macos") if package not in CI_PROVIDED_TOOLS]
@@ -133,7 +158,7 @@ def install_windows(*, msvc_arm64: bool) -> int:
     ]
     if msvc_arm64:
         command.append("--msvc-arm64")
-    return subprocess.run(command, check=False).returncode
+    return install_with_retries(command, WINDOWS_ATTEMPT_TIMEOUT)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -152,7 +177,12 @@ def main(argv: list[str] | None = None) -> int:
         default=env_default("INPUT_EXTRA_PACKAGES"),
         help="Space-separated additional apt packages",
     )
-    sub.add_parser("macos")
+    macos = sub.add_parser("macos")
+    macos.add_argument(
+        "--single-attempt",
+        action="store_true",
+        help="Install once in this process, without retries or a timeout",
+    )
     windows = sub.add_parser("windows")
     windows.add_argument(
         "--msvc-arm64",
@@ -168,7 +198,11 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "install":
         return install(args.category, args.extra_packages.split())
     if args.command == "macos":
-        return install_homebrew()
+        if args.single_attempt:
+            return install_homebrew()
+        # Each attempt runs in a child process, so a timeout can kill brew and the installers.
+        attempt = [sys.executable, str(Path(__file__).resolve()), "macos", "--single-attempt"]
+        return install_with_retries(attempt, MACOS_ATTEMPT_TIMEOUT)
     return install_windows(msvc_arm64=args.msvc_arm64)
 
 

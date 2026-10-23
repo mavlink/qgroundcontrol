@@ -24,15 +24,14 @@ runs:
       if: runner.os == 'Windows'
       uses: ./.github/actions/setup-python
 
+    # The helper makes three attempts (20 minutes each on Windows, 10 on macOS) and kills a hung
+    # attempt's whole process tree.
     - name: Install MSVC and NSIS (Windows)
       if: runner.os == 'Windows'
-      uses: nick-fields/retry@v4
+      shell: bash
       env:
         INPUT_MSVC_ARM64: ${{ inputs.msvc-arm64 }}
-      with:
-        timeout_minutes: 20
-        max_attempts: 3
-        command: python tools/ci/runner/install_dependencies_helper.py windows
+      run: python3 "${GITHUB_WORKSPACE}/tools/ci/runner/install_dependencies_helper.py" windows
 
     - name: Plan apt packages (Linux)
       if: runner.os == 'Linux'
@@ -64,8 +63,5 @@ runs:
 
     - name: Install dependencies (macOS)
       if: runner.os == 'macOS'
-      uses: nick-fields/retry@v4
-      with:
-        timeout_minutes: 10
-        max_attempts: 3
-        command: python3 tools/ci/runner/install_dependencies_helper.py macos
+      shell: bash
+      run: python3 "${GITHUB_WORKSPACE}/tools/ci/runner/install_dependencies_helper.py" macos

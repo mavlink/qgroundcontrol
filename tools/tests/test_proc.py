@@ -192,6 +192,68 @@ def test_run_with_retry_returns_last_unchecked_failure(
     assert sleeps == [5]
 
 
+def test_run_with_retry_can_kill_each_timed_out_attempts_tree(
+    monkeypatch: pytest.MonkeyPatch, sleeps: list[float]
+) -> None:
+    timeouts: list[object] = []
+
+    def run(command: list[str], **kwargs: object) -> subprocess.CompletedProcess[bytes]:
+        timeouts.append(kwargs["timeout"])
+        if len(timeouts) == 1:
+            raise subprocess.TimeoutExpired(command, 10)
+        return subprocess.CompletedProcess(command, 0)
+
+    monkeypatch.setattr(proc, "_run_killing_tree", run)
+    assert run_with_retry(["installer"], timeout=10, kill_tree_on_timeout=True).returncode == 0
+    assert timeouts == [10, 10]
+    assert sleeps == [5]
+
+
+def test_tree_killing_run_matches_subprocess_run() -> None:
+    script = "import sys; print('out'); print('err', file=sys.stderr); sys.exit(3)"
+    command = [sys.executable, "-c", script]
+    result = proc._run_killing_tree(command, capture_output=True, text=True, timeout=30)
+    assert (result.returncode, result.stdout, result.stderr) == (3, "out\n", "err\n")
+    with pytest.raises(subprocess.CalledProcessError):
+        proc._run_killing_tree(command, capture_output=True, check=True, timeout=30)
+
+
+def _process_gone(pid: int) -> bool:
+    """A process that no longer exists or is only a zombie awaiting its reaper."""
+    state = subprocess.run(["ps", "-o", "stat=", "-p", str(pid)], capture_output=True, text=True)
+    return state.returncode != 0 or state.stdout.strip().startswith("Z")
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX process groups; Windows uses taskkill")
+def test_timeout_kills_grandchildren(tmp_path: Path) -> None:
+    pid_file = tmp_path / "grandchild.pid"
+    sleeper = [sys.executable, "-c", "import time; time.sleep(60)"]
+    script = (
+        "import pathlib, subprocess, sys, time\n"
+        f"child = subprocess.Popen({sleeper!r})\n"
+        f"pathlib.Path({str(pid_file)!r}).write_text(str(child.pid))\n"
+        "time.sleep(60)\n"
+    )
+    with pytest.raises(subprocess.TimeoutExpired):
+        run_with_retry(
+            [sys.executable, "-c", script], max_attempts=1, timeout=3, kill_tree_on_timeout=True
+        )
+    grandchild = int(pid_file.read_text())
+    wait_until(lambda: _process_gone(grandchild), timeout=10, interval=0.1)
+
+
+def test_windows_kills_the_tree_with_taskkill(monkeypatch: pytest.MonkeyPatch) -> None:
+    commands: list[list[str]] = []
+    monkeypatch.setattr(proc.sys, "platform", "win32")
+    monkeypatch.setattr(proc.subprocess, "run", lambda command, **_kwargs: commands.append(command))
+    process = MagicMock(pid=1234)
+
+    proc.kill_process_tree(process)
+
+    assert commands == [["taskkill", "/T", "/F", "/PID", "1234"]]
+    process.kill.assert_called_once_with()
+
+
 def test_run_tee_streams_output_and_returns_exit_code(tmp_path: Path) -> None:
     output = tmp_path / "command.log"
     assert run_tee([sys.executable, "-c", "print('streamed')"], output) == 0

@@ -25,7 +25,7 @@ cannot load actions from the PR merge commit (zizmor's `self-repository` audit i
 | `deploy-docs` | Deploy built documentation to an external GitHub Pages repository |
 | `docker` | Build a QGC builder image with Buildx and run the containerized application build |
 | `free-disk-space` | Wrap `endersonmenezes/free-disk-space` with QGC's shared defaults |
-| `install-dependencies` | Install platform build dependencies (Linux apt packages, macOS Homebrew and GStreamer, Windows MSVC and NSIS) but not the CMake, Ninja, ccache, and mold that `build-setup` pins; on Linux, `category` installs a single `install_dependencies` category |
+| `install-dependencies` | Install platform build dependencies (Linux apt packages, macOS Homebrew and GStreamer, Windows MSVC and NSIS; macOS and Windows make three attempts, killing a hung one's process tree) but not the CMake, Ninja, ccache, and mold that `build-setup` pins; on Linux, `category` installs a single `install_dependencies` category |
 | `qt-install` | Reuse a compatible preinstalled Qt SDK or install `build-config.json`'s Qt version with QGC's installer or aqtinstall (`QGC_QT_INSTALLER`, else QGC's), with caching; outputs the version, installer, and source |
 | `run-unit-tests` | Run CTest, then summarize the JUnit results (counts, failures, slowest tests) and annotate failed tests, upload artifacts, and Codecov test analytics even after failures |
 | `save-build-cache` | Save compiler and moc caches once per job after successful compilation |

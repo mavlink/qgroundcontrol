@@ -6,6 +6,7 @@ import json
 import re
 from typing import Any
 
+import pytest
 from ci.runner.build_setup import SetupInputs, plan_setup
 
 from ..._helpers import REPO_ROOT, get_step, get_steps, load_action, load_workflow, workflow_names
@@ -109,11 +110,18 @@ def test_linux_install_plans_caches_and_installs_without_python_build_tools() ->
     assert commands.count("tools/ci/runner/install_dependencies_helper.py") == 2
 
 
-def test_macos_installs_through_the_ci_helper() -> None:
+@pytest.mark.parametrize("runner_os", ["macOS", "Windows"])
+def test_macos_and_windows_install_through_the_retrying_ci_helper(runner_os: str) -> None:
+    """install_dependencies_helper.py retries and times out each attempt itself."""
     (step,) = [
-        step for step in get_steps(load_action("install-dependencies")) if "macOS" in step["if"]
+        step
+        for step in get_steps(load_action("install-dependencies"))
+        if step["if"] == f"runner.os == '{runner_os}'" and "run" in step
     ]
-    assert step["with"]["command"] == "python3 tools/ci/runner/install_dependencies_helper.py macos"
+    helper = '"${GITHUB_WORKSPACE}/tools/ci/runner/install_dependencies_helper.py"'
+    assert step["run"] == f"python3 {helper} {runner_os.lower()}"
+    assert step["shell"] == "bash"
+    assert "uses" not in step
 
 
 def test_jobs_installing_dependencies_get_the_pinned_tools_first() -> None:

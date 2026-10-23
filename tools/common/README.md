@@ -28,7 +28,7 @@ from common.proc import run_captured
 | `net.py` | Dependency-free atomic downloads and small fetches with optional SHA-256 verification; retries only transient failures (connection errors, timeouts, 5xx, 408, 429), so a 404 fails at once; `fetch_release_member` extracts one member from a pinned release archive |
 | `paths.py` | `TOOLS_DIR` and `REPO_ROOT`, resolved from the module location |
 | `platform.py` | OS and CPU architecture normalization |
-| `proc.py` | Captured, tee, and bounded-retry subprocess execution, bytes-or-text output decoding, `require_tools` (`MissingToolError` names every tool missing from `PATH`), and deadline polling with `wait_until` |
+| `proc.py` | Captured, tee, and bounded-retry subprocess execution (optionally killing a timed-out attempt's whole process tree, `kill_process_tree`), bytes-or-text output decoding, `require_tools` (`MissingToolError` names every tool missing from `PATH`), and deadline polling with `wait_until` |
 | `qt.py` | Qt installer-kit discovery for host tools such as `qt-cmake` and `lupdate` |
 | `tool_version.py` | External-tool and `uv.lock` version lookup |
 | `xml.py` | Safe XML parsing with entity-declaration rejection |
