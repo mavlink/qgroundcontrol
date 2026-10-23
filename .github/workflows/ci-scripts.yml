@@ -10,12 +10,8 @@ on:
       - '.clang*'
       - '.gitattributes'
       - '.editorconfig'
-      - '.editorconfig-checker.json'
-      - '.releaserc.json'
-      - '.nvmrc'
       - '.pre-commit-config.yaml'
       - '.qmllint.ini'
-      - '.lychee.toml'
       - '.vale.ini'
       - 'ruff.toml'
       - 'pyrightconfig.json'
@@ -27,7 +23,9 @@ on:
       - 'deploy/**'
       - 'src/Settings/**'
       - 'src/AppSettings/pages/**'
+      - 'src/**/*.VehicleConfig.json'
       - 'src/Vehicle/FactGroups/VehicleGPSFactGroup.h'
+      - 'docs/.vitepress/config.mjs'
   push:
     branches:
       - master
@@ -234,11 +232,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # release provides git-cliff for test_release_notes.py.
           - python-version: '3.10'
-            groups: test
-          # One leg installs numpy and rasterio so test_terrain_pipeline.py runs instead of skipping.
+            groups: test,release
+          # One leg installs numpy and rasterio (terrain) and pymavlink (simulation) so
+          # test_terrain_pipeline.py and test_mock_vehicle.py run instead of skipping.
           - python-version: '3.12'
-            groups: test,terrain
+            groups: test,terrain,simulation,release
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@v2
@@ -254,9 +254,7 @@ jobs:
             .clang-tidy
             .github
             .vscode
-            .editorconfig-checker.json
             .gitattributes
-            .releaserc.json
             .pre-commit-config.yaml
             CMakeLists.txt
             CMakePresets.json
@@ -265,6 +263,7 @@ jobs:
             justfile
             src/AppSettings/pages
             src/Settings
+            src/**/*.VehicleConfig.json
             src/Vehicle/FactGroups/VehicleGPSFactGroup.h
             tools
             deploy
@@ -301,6 +300,8 @@ jobs:
             .github
             cmake/Helpers.cmake
             cmake/ccache-launcher.cmd.in
+            deploy/docker/Dockerfile
+            src/**/*.VehicleConfig.json
             tools
           sparse-checkout-cone-mode: false
           persist-credentials: false
@@ -311,9 +312,11 @@ jobs:
           groups: test
           python-version: '3.12'
 
-      # Collection imports every test module, so contract tests need .github in the checkout.
+      # Collection imports every test module and expands every parametrization, so the checkout
+      # needs .github and the VehicleConfig pages test_config_qml_generator.py enumerates;
+      # test_read_config.py reads the Dockerfile.
       - name: Run Windows-marked tests
-        run: pytest -q -m windows tools/tests
+        run: pytest -q -n 2 --durations=15 -m windows tools/tests
 
   lint-python:
     name: Lint Python
@@ -328,21 +331,14 @@ jobs:
         uses: actions/checkout@v7
         with:
           persist-credentials: false
+      # simulation lets Pyright resolve pymavlink in tools/simulation.
       - name: Setup Python
         uses: ./.github/actions/setup-python
         with:
-          groups: dev
+          groups: dev,simulation
           python-version: '3.10'
       - name: Validate configuration
         run: python tools/validate_configs.py
-      - name: Setup Node
-        uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-      - name: Validate release rules
-        run: |
-          npm ci --prefix tools/release --ignore-scripts
-          npm test --prefix tools/release
       - name: Ruff
         run: |
           ruff check tools .github/runner-images .clusterfuzzlite deploy test/ADSB/ADSB_Simulator.py

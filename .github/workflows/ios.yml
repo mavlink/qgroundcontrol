@@ -97,7 +97,6 @@ jobs:
           mode: ios
           qt-arch: ${{ matrix.qt_arch }}
           build-type: ${{ matrix.build_type }}
-          cache-key-suffix: ${{ matrix.target }}
 
       - name: Import App Store signing certificate
         if: env.APPSTORE_RELEASE == 'true'
@@ -134,15 +133,10 @@ jobs:
         with:
           preset: >-
             ${{ env.APPSTORE_RELEASE == 'true' && 'iOS-appstore' || matrix.preset }}
-          build-dir: ${{ runner.temp }}/build
-          build-type: ${{ matrix.build_type }}
           extra-args: ${{ steps.profile.outputs.cmake_args }}
 
       - name: Build
         uses: ./.github/actions/cmake-build
-        with:
-          build-dir: ${{ runner.temp }}/build
-          build-type: ${{ matrix.build_type }}
 
       - name: Verify Simulator Bundle
         if: matrix.target == 'simulator'

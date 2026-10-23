@@ -33,7 +33,7 @@ def _below(covered: int, total: int, threshold: float) -> bool:
     return covered * 100 < threshold * total
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--build-dir",
@@ -47,7 +47,7 @@ def main() -> int:
     )
     parser.add_argument("--line-threshold", type=float)
     parser.add_argument("--branch-threshold", type=float)
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     line_threshold = _threshold(args.line_threshold, args.build_dir, "QGC_COVERAGE_LINE_THRESHOLD")
     branch_threshold = _threshold(
         args.branch_threshold, args.build_dir, "QGC_COVERAGE_BRANCH_THRESHOLD"

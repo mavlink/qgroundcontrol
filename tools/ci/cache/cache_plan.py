@@ -14,8 +14,8 @@ has exported its S3 bucket: the ccache archive is neither restored nor saved
 
 from __future__ import annotations
 
+import argparse
 import os
-import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -41,6 +41,10 @@ ARTIFACT_EVENTS = frozenset({"pull_request", "push", "schedule", "workflow_dispa
 PULL_REQUEST_EVENTS = frozenset({"pull_request", "pull_request_target"})
 CCACHE_CONF = Path("tools/configs/ccache.conf")
 DEFAULT_CCACHE_MAX_SIZE = "2G"
+CPM_MODULES = ".cache/CPM"
+# Pull requests skip saving a compiler or moc cache their build missed fewer times than this:
+# each save uploads the whole archive. Other events always save.
+PR_SAVE_MIN_MISSES = "20"
 
 
 @dataclass(frozen=True)
@@ -52,9 +56,7 @@ class CacheInputs:
     build_type: str
     variant: str = ""
     key_suffix: str = ""
-    cpm_modules: str = ""
     save_cache: str = "auto"
-    pr_save_min_misses: str = ""
     event: str = ""
     ref_name: str = ""
     pr_number: str = ""
@@ -76,9 +78,7 @@ class CacheInputs:
             build_type=env.get("INPUT_BUILD_TYPE", ""),
             variant=env.get("INPUT_VARIANT", ""),
             key_suffix=env.get("INPUT_KEY_SUFFIX", ""),
-            cpm_modules=env.get("INPUT_CPM_MODULES", ""),
             save_cache=env.get("INPUT_SAVE_CACHE", "auto"),
-            pr_save_min_misses=env.get("INPUT_PR_SAVE_MIN_MISSES", ""),
             event=env.get("GITHUB_EVENT_NAME", ""),
             ref_name=env.get("GITHUB_REF_NAME", ""),
             pr_number=env.get("PR_NUMBER", ""),
@@ -108,12 +108,16 @@ def save_policy(requested: str, event: str) -> str:
 
 
 def scoped_save_policy(requested: str, save: str, event: str, backend: str) -> str:
-    """Pull requests on GitHub storage restore the default branch's compiler, moc and CPM caches.
+    """Pull requests on GitHub storage and merge queues restore the default branch's caches.
 
-    Saving their own copies cost upload time and, for CPM, evicted shared entries
-    from GitHub's size-limited cache. S3 backends keep saving per-PR copies.
+    This covers the compiler, moc, CPM and GStreamer SDK caches. A pull request's own copies
+    cost upload time and, for CPM, evicted shared entries from GitHub's size-limited cache;
+    S3 backends keep saving per-PR copies. A merge-queue ref is deleted after its run, so
+    nothing could restore what it saved on either backend.
     """
-    if requested == "auto" and save == "true" and event == "pull_request" and backend != "s3":
+    if requested != "auto" or save != "true":
+        return save
+    if event == "merge_group" or (event == "pull_request" and backend != "s3"):
         return "false"
     return save
 
@@ -173,7 +177,7 @@ def ccache_environment(workspace: Path, max_size: str) -> dict[str, str]:
     """Return the standard ccache environment variables for a CI workspace."""
     workspace_path = Path(str(workspace).replace("\\", "/"))
     return {
-        "CCACHE_DIR": (workspace_path / ".ccache").as_posix(),
+        "CCACHE_DIR": (workspace_path / ".cache/ccache").as_posix(),
         "CCACHE_BASEDIR": workspace_path.as_posix(),
         "CCACHE_CONFIGPATH": (workspace_path / CCACHE_CONF).as_posix(),
         "CCACHE_MAXSIZE": max_size,
@@ -220,6 +224,9 @@ def plan_caches(inputs: CacheInputs, workspace: Path) -> CachePlan:
     save = save_policy(inputs.save_cache, inputs.event)
     scoped_save = scoped_save_policy(inputs.save_cache, save, inputs.event, inputs.backend)
     release_save = _same(save, "true") and _same(build_type, "Release")
+    # Only Release jobs populate the immutable CPM and GStreamer SDK snapshots.
+    release_scoped_save = _same(scoped_save, "true") and _same(build_type, "Release")
+    dependency_mode = "save" if release_scoped_save else "restore"
     generation = f"{inputs.run_id}-{inputs.run_attempt}"
 
     variant_suffix = f"-{inputs.variant}" if inputs.variant else ""
@@ -247,8 +254,6 @@ def plan_caches(inputs: CacheInputs, workspace: Path) -> CachePlan:
             f"moccache-{host}-{target}-shared-",
         ),
         "gst_mode": "",
-        "cpm_mode": "",
-        "cpm_shared_probe": "false",
     }
 
     tool = compiler_cache_tool(inputs.compiler_cache, inputs.sccache_bucket)
@@ -274,31 +279,28 @@ def plan_caches(inputs: CacheInputs, workspace: Path) -> CachePlan:
         Path(environment["CCACHE_DIR"]).mkdir(parents=True, exist_ok=True)
     environment["QGC_COMPILER_CACHE_TOOL"] = tool
 
-    if inputs.cpm_modules:
-        root = workspace.resolve()
-        environment.update(prepare_cpm_cache(inputs.cpm_modules, workspace))
-        fingerprint = compute_cpm_fingerprint(root)
-        cpm_base = f"cpm-sources-v2-{host}-{target}{key_suffix}"
-        outputs["cpm_mode"] = (
-            "save" if _same(scoped_save, "true") and _same(build_type, "Release") else "restore"
+    root = workspace.resolve()
+    environment.update(prepare_cpm_cache(CPM_MODULES, workspace))
+    fingerprint = compute_cpm_fingerprint(root)
+    cpm_base = f"cpm-sources-v2-{host}-{target}{key_suffix}"
+    outputs["cpm_mode"] = dependency_mode
+    # PRs and branches restore an identical default-branch snapshot instead of saving a copy.
+    outputs["cpm_shared_probe"] = str(release_save and not _same(scope, "shared")).lower()
+    outputs["cpm_key"] = f"{cpm_base}-{scope}-{fingerprint}"
+    outputs["cpm_shared_key"] = f"{cpm_base}-shared-{fingerprint}"
+    outputs["cpm_restore_keys"] = _restore_keys(
+        f"{cpm_base}-{scope}-",
+        f"{cpm_base}-shared-",
+        f"cpm-sources-v2-{host}-{target}-{scope}-",
+        f"cpm-sources-v2-{host}-{target}-shared-",
+    )
+    # Desktop Linux and macOS builds use the system GStreamer.
+    if target.lower().startswith("win") or _same(target, "android") or _same(target, "ios"):
+        outputs["gst_mode"] = dependency_mode
+        outputs["gst_key"] = (
+            f"gst-sdk-v1-{host}-{target}-{compute_gstreamer_fingerprint(root)}"
+            f"-{inputs.gst_files_hash}"
         )
-        # PRs and branches restore an identical default-branch snapshot instead of saving a copy.
-        outputs["cpm_shared_probe"] = str(release_save and not _same(scope, "shared")).lower()
-        outputs["cpm_key"] = f"{cpm_base}-{scope}-{fingerprint}"
-        outputs["cpm_shared_key"] = f"{cpm_base}-shared-{fingerprint}"
-        outputs["cpm_restore_keys"] = _restore_keys(
-            f"{cpm_base}-{scope}-",
-            f"{cpm_base}-shared-",
-            f"cpm-sources-v2-{host}-{target}-{scope}-",
-            f"cpm-sources-v2-{host}-{target}-shared-",
-        )
-        # Desktop Linux and macOS builds use the system GStreamer.
-        if target.lower().startswith("win") or _same(target, "android") or _same(target, "ios"):
-            outputs["gst_mode"] = "save" if release_save else "restore"
-            outputs["gst_key"] = (
-                f"gst-sdk-v1-{host}-{target}-{compute_gstreamer_fingerprint(root)}"
-                f"-{inputs.gst_files_hash}"
-            )
 
     # Snapshot names leave out the config hashes in the dependency-cache keys: artifacts are
     # found by exact name, and ccache and moccache entries are content-addressed.
@@ -317,18 +319,14 @@ def plan_caches(inputs: CacheInputs, workspace: Path) -> CachePlan:
             "QGC_SAVE_BUILD_CACHE": scoped_save,
             "QGC_CCACHE_KEY": outputs["ccache_key"],
             "QGC_MOCCACHE_KEY": outputs["moccache_key"],
-            "QGC_PR_CACHE_SAVE_MIN_MISSES": inputs.pr_save_min_misses
-            if re.fullmatch(r"[0-9]+", inputs.pr_save_min_misses)
-            else "0",
+            "QGC_PR_CACHE_SAVE_MIN_MISSES": PR_SAVE_MIN_MISSES,
         }
     )
-    for name, value in environment.items():
-        if "\n" in value or "\r" in value:
-            raise ValueError(f"{name} must be a single line: {value!r}")
     return CachePlan(outputs, environment)
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    argparse.ArgumentParser(description=__doc__).parse_args(argv)
     plan = plan_caches(
         CacheInputs.from_env(os.environ), Path(os.environ.get("GITHUB_WORKSPACE", "."))
     )

@@ -2,7 +2,7 @@ name: Test Phase
 description: Run unit and integration suites and preserve results after failures
 inputs:
   build-dir:
-    required: true
+    default: ${{ runner.temp }}/build
     description: Configured and successfully built test directory
   suite:
     required: true
@@ -33,7 +33,7 @@ runs:
         report-name: Unit Tests (${{ inputs.suite }})
         artifact-name: test-results-${{ inputs.suite }}-unit
         retention-days: 7
-        duration-report: test-duration-${{ inputs.suite }}-unit.json
+        duration-report: 'true'
         upload-codecov: ${{ inputs.upload-codecov }}
         codecov-flags: ${{ inputs.suite }}-unit
 
@@ -50,14 +50,6 @@ runs:
         report-name: Integration Tests (${{ inputs.suite }})
         artifact-name: test-results-${{ inputs.suite }}-integration
         retention-days: 7
-        duration-report: test-duration-${{ inputs.suite }}-integration.json
+        duration-report: 'true'
         upload-codecov: ${{ inputs.upload-codecov }}
         codecov-flags: ${{ inputs.suite }}-integration
-
-    - name: Upload test durations
-      if: ${{ !cancelled() }}
-      uses: actions/upload-artifact@v7
-      with:
-        name: test-duration-${{ inputs.suite }}
-        path: ${{ inputs.build-dir }}/test-duration-${{ inputs.suite }}-*.json
-        retention-days: 7

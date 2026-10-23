@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import _bootstrap as _bootstrap
 from common.gh_actions import gh_error, gh_group, gh_notice, gh_warning
-from common.proc import output_text, run_bytes
+from common.proc import output_text, run_bytes, wait_until
 
 if TYPE_CHECKING:
     import subprocess
@@ -34,16 +34,19 @@ def run_command(cmd: list[str], check: bool = False) -> subprocess.CompletedProc
     return result
 
 
+def adb_ready() -> bool:
+    state = run_command(["adb", "get-state"])
+    if state.returncode != 0 or output_text(state.stdout).strip() != "device":
+        return False
+    boot_completed = run_command(["adb", "shell", "getprop", "sys.boot_completed"])
+    return boot_completed.returncode == 0 and output_text(boot_completed.stdout).strip() == "1"
+
+
 def wait_for_adb_ready(timeout: int) -> bool:
-    deadline = time.monotonic() + timeout
-    while time.monotonic() < deadline:
-        state = run_command(["adb", "get-state"])
-        if state.returncode == 0 and output_text(state.stdout).strip() == "device":
-            boot_completed = run_command(["adb", "shell", "getprop", "sys.boot_completed"])
-            if boot_completed.returncode == 0 and output_text(boot_completed.stdout).strip() == "1":
-                return True
-        time.sleep(2)
-    return False
+    try:
+        return wait_until(adb_ready, timeout=timeout, interval=2, description="emulator boot")
+    except TimeoutError:
+        return False
 
 
 def install_with_retries(apk_path: Path, retries: int, retry_delay: int) -> bool:
@@ -198,7 +201,7 @@ def emit_failure(
     return 1
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Run Android emulator boot smoke test for QGroundControl."
     )
@@ -245,7 +248,7 @@ def parse_args() -> argparse.Namespace:
         default=2,
         help="Number of launch attempts before failing the boot test",
     )
-    return parser.parse_args()
+    return parser.parse_args(argv)
 
 
 def run_boot_attempt(
@@ -391,8 +394,8 @@ def run_boot_attempt(
     )
 
 
-def main() -> int:
-    args = parse_args()
+def main(argv: list[str] | None = None) -> int:
+    args = parse_args(argv)
 
     package_escaped = re.escape(args.package)
     app_launch_pattern = re.compile(

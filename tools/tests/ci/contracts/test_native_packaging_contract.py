@@ -9,7 +9,7 @@ import re
 import subprocess
 import sys
 
-from ..._helpers import REPO_ROOT, get_steps, load_workflow
+from ..._helpers import REPO_ROOT, get_step, get_steps, load_action, load_workflow
 
 CPACK_DIR = REPO_ROOT / "cmake/install/CPack"
 
@@ -135,7 +135,7 @@ def test_windows_installer_uses_only_the_cpack_nsis_path() -> None:
     install = (install_dir / "Install.cmake").read_text()
     nsis = (CPACK_DIR / "CreateCPackNSIS.cmake").read_text()
     workflow = (REPO_ROOT / ".github/workflows/windows.yml").read_text()
-    upload_action = (REPO_ROOT / ".github/actions/attest-and-upload/action.yml").read_text()
+    steps = get_steps(load_workflow("windows.yml"), "build")
 
     assert not (install_dir / "CreateWinInstaller.cmake").exists()
     assert not (REPO_ROOT / "deploy/windows/nullsoft_installer.nsi").exists()
@@ -156,31 +156,32 @@ def test_windows_installer_uses_only_the_cpack_nsis_path() -> None:
     assert "GPU Safe Mode" in nsis
     assert "set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL OFF)" in nsis
 
-    assert "fetch-depth: 0" in workflow
-    assert "-DQGC_CPACK_GENERATOR=NSIS" in workflow
-    assert "target: qgc-package" in workflow
-    assert "uses: ./.github/actions/cmake-install" not in workflow
+    assert get_step(steps, "Checkout repo")["with"]["fetch-depth"] == 0
+    assert "-DQGC_CPACK_GENERATOR=NSIS" in get_step(steps, "Configure")["with"]["extra-args"]
+    assert get_step(steps, "Create Installer")["with"]["target"] == "qgc-package"
+    assert "./.github/actions/cmake-install" not in [step.get("uses") for step in steps]
     installer_test = (REPO_ROOT / "deploy/windows/verify-installer.ps1").read_text()
-    assert "Install, upgrade, and verify installer" in workflow
-    assert "Uninstall and verify cleanup" in workflow
+    install = get_step(steps, "Install, upgrade, and verify installer")
+    assert get_step(steps, "Uninstall and verify cleanup")["run"].endswith("-Phase Uninstall")
     assert "[Environment+SpecialFolder]::ApplicationData" in installer_test
     assert "APPDATA: ${{ runner.temp }}\\qgc-appdata" not in workflow
     # attest-and-upload's prepare verifies (or writes) the CPack sidecar at its default
     # artifact path, which is the installer the install test runs.
-    steps = get_steps(load_workflow("windows.yml"), "build")
-    install = next(s for s in steps if s.get("name") == "Install, upgrade, and verify installer")
-    attest = next(s for s in steps if s.get("uses") == "./.github/actions/attest-and-upload")
+    attest = get_step(steps, "Attest and Upload")
     assert (
         install["env"]["INSTALLER_PATH"] == "${{ runner.temp }}\\build\\${{ matrix.package }}.exe"
     )
     assert attest["with"]["artifact-name"] == "${{ matrix.package }}.exe"
     assert "artifact-source-path" not in attest["with"]
-    assert "DEFAULT: ${{ runner.temp }}/build/${{ inputs.artifact-name }}" in upload_action
     assert "Get-FileHash" not in workflow
-    assert "subject-name: ${{ matrix.package }}-windows" in workflow
-    assert 'attest_helper.py" prepare' in upload_action
-    assert "CHECKSUM_PATH: ${{ steps.prepare.outputs.checksum }}" in upload_action
-    assert '--artifact "${CHECKSUM_PATH}:${ARTIFACT_NAME}.sha256"' in upload_action
+    assert attest["with"]["subject-name"] == "${{ matrix.package }}-windows"
+    upload_steps = get_steps(load_action("attest-and-upload"))
+    prepare = get_step(upload_steps, "prepare")
+    assert prepare["env"]["ARTIFACT_NAME"] == "${{ inputs.artifact-name }}"  # in $RUNNER_TEMP/build
+    assert 'attest_helper.py" prepare' in prepare["run"]
+    upload = get_step(upload_steps, "Upload artifact and checksum to AWS")
+    assert upload["env"]["CHECKSUM_PATH"] == "${{ steps.prepare.outputs.checksum }}"
+    assert '--artifact "${CHECKSUM_PATH}:${ARTIFACT_NAME}.sha256"' in upload["run"]
     assert "InstallLocation mismatch" in installer_test
     assert "Windows Error Reporting registry key not found" in installer_test
     assert "QGroundControl (GPU Safe Mode).lnk" in installer_test
@@ -205,7 +206,8 @@ def test_windows_nsis_module_generates_cpack_config(tmp_path) -> None:
         (source_dir / "CMakeLists.txt").write_text(
             f"""
 cmake_minimum_required(VERSION 3.25)
-project(QGroundControl VERSION 5.0.0 DESCRIPTION "QGC" HOMEPAGE_URL "https://qgroundcontrol.com")
+project(QGroundControl VERSION 5.0.0 DESCRIPTION "QGC" HOMEPAGE_URL "https://qgroundcontrol.com"
+        LANGUAGES NONE)
 list(APPEND CMAKE_MODULE_PATH "{CPACK_DIR.as_posix()}")
 set(CMAKE_CROSSCOMPILING {cross_compiling})
 set(CMAKE_HOST_SYSTEM_PROCESSOR {host_processor})
@@ -237,14 +239,19 @@ include(CreateCPackNSIS)
 
 
 def test_docker_workflow_requires_and_validates_native_packages() -> None:
-    workflow = (REPO_ROOT / ".github/workflows/docker.yml").read_text()
+    steps = get_steps(load_workflow("docker.yml"), "build")
 
-    assert "--top-level" in workflow
-    assert workflow.count("find_artifact.py") >= 2
-    assert "validate_native_package.py" in workflow
-    assert "Validate native package lifecycle" in workflow
-    assert "Verify native package checksum" in workflow
-    assert "${{ steps.package-checksum.outputs.checksum }}" in workflow
+    assert "find_artifact.py" in get_step(steps, "artifact")["run"]
+    package = get_step(steps, "package")
+    assert "find_artifact.py" in package["run"]
+    assert "--top-level" in package["run"]
+    lifecycle = get_step(steps, "Validate native package lifecycle")
+    assert lifecycle["env"]["PACKAGE_PATH"] == "${{ steps.package.outputs.path }}"
+    assert "validate_native_package.py --install" in lifecycle["run"]
+    checksum = get_step(steps, "Verify native package checksum")
+    assert checksum["id"] == "package-checksum"
+    upload = get_step(steps, "Upload native package")
+    assert "${{ steps.package-checksum.outputs.checksum }}" in upload["with"]["path"].splitlines()
 
 
 def test_docker_package_validation_invokes_python(tmp_path) -> None:

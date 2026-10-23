@@ -51,9 +51,9 @@ class WorkflowRun:
 
 
 def evaluate_runs(
-    runs: list[dict[str, Any]], platforms: list[str], event: str, *, require_success: bool = True
+    latest: dict[str, dict[str, Any]], platforms: list[str], *, require_success: bool = True
 ) -> tuple[bool, list[str], list[str], list[str]]:
-    latest = select_latest_runs_by_name(runs, set(platforms), event=event)
+    """Classify each platform by its latest run (from ``select_latest_runs_by_name``)."""
     missing = [name for name in platforms if name not in latest]
     incomplete = [
         name for name in platforms if name in latest and latest[name].get("status") != "completed"

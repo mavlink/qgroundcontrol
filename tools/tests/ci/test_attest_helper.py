@@ -10,7 +10,9 @@ from pathlib import Path
 import pytest
 from ci.publish import attest_helper
 
-from .._helpers import REPO_ROOT
+from .._helpers import REPO_ROOT, read_github_file
+
+pytestmark = pytest.mark.windows
 
 CACHE = """\
 CMAKE_BUILD_TYPE:STRING=Release
@@ -20,27 +22,10 @@ CPM_PACKAGE_zlib_VERSION:INTERNAL=1.3.2
 """
 
 
-def _outputs(path: Path) -> dict[str, str]:
-    return dict(
-        line.split("=", 1) for line in path.read_text(encoding="utf-8").splitlines() if line
-    )
-
-
-def _prepare(tmp_path: Path, *extra: str, build_dir: Path | None = None) -> None:
-    attest_helper.main(
-        [
-            "prepare",
-            "--default",
-            str(tmp_path / "build" / "QGroundControl.AppImage"),
-            "--build-dir",
-            str(build_dir or tmp_path / "build"),
-            "--subject-name",
-            "QGroundControl-linux",
-            "--runner-temp",
-            str(tmp_path),
-            *extra,
-        ]
-    )
+def _prepare(*extra: str) -> None:
+    artifact = ["--artifact-name", "QGroundControl.AppImage"]
+    subject = ["--subject-name", "QGroundControl-linux"]
+    assert attest_helper.main(["prepare", *artifact, *subject, *extra]) == 0
 
 
 @pytest.fixture
@@ -49,6 +34,7 @@ def build(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     build_dir.mkdir()
     (build_dir / "CMakeCache.txt").write_text(CACHE, encoding="utf-8")
     (build_dir / "QGroundControl.AppImage").write_bytes(b"artifact")
+    monkeypatch.setenv("RUNNER_TEMP", str(tmp_path))
     monkeypatch.setenv("GITHUB_EVENT_NAME", "push")
     monkeypatch.setenv("GITHUB_SHA", "abc")
     monkeypatch.setenv("GITHUB_RUN_ID", "123")
@@ -59,107 +45,106 @@ def build(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 def test_prepare_emits_every_path_the_action_consumes(
     tmp_path: Path, build: Path, gh_output: Path
 ) -> None:
-    _prepare(tmp_path)
+    _prepare()
 
     artifact = build / "QGroundControl.AppImage"
-    assert _outputs(gh_output) == {
+    assert read_github_file(gh_output) == {
         "path": str(artifact),
-        "parent": str(build),
         "checksum": str(build / "QGroundControl.AppImage.sha256"),
-        "dependency-sbom": f"{build}/QGroundControl-linux.dependencies.cdx.json",
+        "dependency-sbom": str(build / "QGroundControl-linux.dependencies.cdx.json"),
         "metadata": str(build / "QGroundControl.AppImage.build.json"),
-        "skip": "false",
-        "scan-path": str(build),
         "sbom-path": str(tmp_path / "QGroundControl-linux.sbom.spdx.json"),
     }
-    assert (
-        (build / "QGroundControl.AppImage.sha256")
-        .read_text(encoding="utf-8")
-        .endswith("  QGroundControl.AppImage\n")
-    )
+    sidecar = build / "QGroundControl.AppImage.sha256"
+    assert sidecar.read_bytes().endswith(b"  QGroundControl.AppImage\n")
 
 
-def test_prepare_skips_attestation_for_pull_requests(
-    tmp_path: Path, build: Path, gh_output: Path, monkeypatch: pytest.MonkeyPatch
+def test_pull_request_artifacts_keep_checksum_dependency_sbom_and_identity(
+    build: Path, gh_output: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setenv("GITHUB_EVENT_NAME", "pull_request")
 
-    _prepare(tmp_path)
+    _prepare()
 
-    outputs = _outputs(gh_output)
-    assert outputs["skip"] == "true"
-    # PR artifacts still carry the checksum, dependency SBOM and build identity.
+    outputs = read_github_file(gh_output)
     for key in ("checksum", "dependency-sbom", "metadata"):
         assert Path(outputs[key]).is_file()
 
 
-def test_prepare_prefers_override(tmp_path: Path, build: Path, gh_output: Path) -> None:
+def test_prepare_requires_the_runner_temp_directory(
+    build: Path, gh_output: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.delenv("RUNNER_TEMP")
+    with pytest.raises(SystemExit) as excinfo:
+        _prepare()
+    assert excinfo.value.code == 2
+
+    _prepare("--runner-temp", str(build.parent))
+    assert read_github_file(gh_output)["path"] == str(build / "QGroundControl.AppImage")
+
+
+def test_prepare_prefers_override(build: Path, gh_output: Path) -> None:
     override_dir = build / "Release"
     override_dir.mkdir()
     override = override_dir / "QGroundControl.ipa"
     override.write_bytes(b"ipa")
 
-    _prepare(tmp_path, "--override", str(override))
+    _prepare("--override", str(override))
 
-    outputs = _outputs(gh_output)
+    outputs = read_github_file(gh_output)
     assert outputs["path"] == str(override)
-    assert outputs["parent"] == str(override_dir)
-    assert (
-        outputs["dependency-sbom"] == f"{override_dir}/QGroundControl-linux.dependencies.cdx.json"
+    assert outputs["dependency-sbom"] == str(
+        override_dir / "QGroundControl-linux.dependencies.cdx.json"
     )
-    assert outputs["scan-path"] == str(build)
 
 
 def test_prepare_fails_when_artifact_is_missing(
-    tmp_path: Path, build: Path, gh_output: Path, capsys: pytest.CaptureFixture[str]
+    build: Path, gh_output: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     (build / "QGroundControl.AppImage").unlink()
 
     with pytest.raises(SystemExit) as excinfo:
-        _prepare(tmp_path)
+        _prepare()
 
     assert excinfo.value.code == 1
     assert "artifact not found" in capsys.readouterr().out
     assert gh_output.read_text() == ""
 
 
-def test_prepare_rejects_checksum_mismatch(tmp_path: Path, build: Path, gh_output: Path) -> None:
+def test_prepare_rejects_checksum_mismatch(build: Path, gh_output: Path) -> None:
     (build / "QGroundControl.AppImage.sha256").write_text(
         f"{'0' * 64}  QGroundControl.AppImage\n", encoding="utf-8"
     )
 
     with pytest.raises(SystemExit) as excinfo:
-        _prepare(tmp_path)
+        _prepare()
 
     assert excinfo.value.code == 1
     assert gh_output.read_text() == ""
 
 
-def test_prepare_requires_dependency_components(
-    tmp_path: Path, build: Path, gh_output: Path
-) -> None:
+def test_prepare_requires_dependency_components(build: Path, gh_output: Path) -> None:
     (build / "CMakeCache.txt").write_text("CMAKE_BUILD_TYPE:STRING=Release\n", encoding="utf-8")
 
     with pytest.raises(SystemExit) as excinfo:
-        _prepare(tmp_path)
+        _prepare()
 
     assert excinfo.value.code == 1
     assert not (build / "QGroundControl-linux.dependencies.cdx.json").exists()
     assert gh_output.read_text() == ""
 
 
-def test_prepare_requires_cmake_cache(tmp_path: Path, build: Path, gh_output: Path) -> None:
+def test_prepare_requires_cmake_cache(build: Path, gh_output: Path) -> None:
+    (build / "CMakeCache.txt").unlink()
     with pytest.raises(SystemExit) as excinfo:
-        _prepare(tmp_path, build_dir=tmp_path / "missing")
+        _prepare()
 
     assert excinfo.value.code == 1
     assert gh_output.read_text() == ""
 
 
-def test_dependency_sbom_matches_generate_cpm_sbom(
-    tmp_path: Path, build: Path, gh_output: Path
-) -> None:
-    _prepare(tmp_path)
+def test_dependency_sbom_matches_generate_cpm_sbom(build: Path, gh_output: Path) -> None:
+    _prepare()
 
     sbom = json.loads((build / "QGroundControl-linux.dependencies.cdx.json").read_text())
     assert sbom["bomFormat"] == "CycloneDX"
@@ -172,9 +157,9 @@ def test_dependency_sbom_matches_generate_cpm_sbom(
 
 
 def test_package_manifest_records_producer_and_checksum_without_arbitrary_cache_values(
-    tmp_path: Path, build: Path, gh_output: Path
+    build: Path, gh_output: Path
 ) -> None:
-    _prepare(tmp_path)
+    _prepare()
 
     manifest = json.loads((build / "QGroundControl.AppImage.build.json").read_text())
     assert manifest["artifact"] == {
@@ -188,19 +173,17 @@ def test_package_manifest_records_producer_and_checksum_without_arbitrary_cache_
     assert manifest["configuration"] == {"CMAKE_BUILD_TYPE": "Release"}
 
 
-def test_action_consumes_only_outputs_prepare_emits(
-    tmp_path: Path, build: Path, gh_output: Path
-) -> None:
-    _prepare(tmp_path)
+def test_action_consumes_only_outputs_prepare_emits(build: Path, gh_output: Path) -> None:
+    _prepare()
 
     action = (REPO_ROOT / ".github/actions/attest-and-upload/action.yml").read_text()
     consumed = set(re.findall(r"steps\.prepare\.outputs\.([\w-]+)", action))
     assert consumed
-    assert consumed <= set(_outputs(gh_output))
+    assert consumed <= set(read_github_file(gh_output))
 
 
 def _checksum(artifact: Path, *extra: str) -> None:
-    attest_helper.main(["checksum", "--source-path", str(artifact), *extra])
+    assert attest_helper.main(["checksum", "--source-path", str(artifact), *extra]) == 0
 
 
 @pytest.fixture
@@ -214,10 +197,10 @@ def test_checksum_writes_missing_sidecar(package: Path, gh_output: Path) -> None
     _checksum(package)
 
     sidecar = package.with_name(f"{package.name}.sha256")
-    assert sidecar.read_text(encoding="utf-8") == (
-        f"{hashlib.sha256(b'package').hexdigest()}  {package.name}\n"
+    assert sidecar.read_bytes() == (
+        f"{hashlib.sha256(b'package').hexdigest()}  {package.name}\n".encode()
     )
-    assert _outputs(gh_output) == {"checksum": str(sidecar)}
+    assert read_github_file(gh_output) == {"checksum": str(sidecar)}
 
 
 def test_checksum_require_existing_fails_without_sidecar(
@@ -245,14 +228,14 @@ def test_checksum_require_existing_accepts_and_canonicalizes_sidecar(
 ) -> None:
     digest = hashlib.sha256(b"package").hexdigest()
     sidecar = package.with_name(f"{package.name}.sha256")
-    sidecar.write_text(
-        entry.format(digest=digest, upper=digest.upper(), name=package.name), encoding="utf-8"
+    sidecar.write_bytes(
+        entry.format(digest=digest, upper=digest.upper(), name=package.name).encode()
     )
 
     _checksum(package, "--require-existing")
 
-    assert sidecar.read_text(encoding="utf-8") == f"{digest}  {package.name}\n"
-    assert _outputs(gh_output) == {"checksum": str(sidecar)}
+    assert sidecar.read_bytes() == f"{digest}  {package.name}\n".encode()
+    assert read_github_file(gh_output) == {"checksum": str(sidecar)}
 
 
 @pytest.mark.parametrize(

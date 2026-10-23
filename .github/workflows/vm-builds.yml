@@ -1,25 +1,46 @@
 name: VM Builds
 
 # Full QGC builds inside the developer VM provisioners (deploy/multipass, deploy/vagrant)
-# to keep them from bit-rotting. Heavy nested-VM builds: scoped to those dirs + manual dispatch.
-
+# to keep them from bit-rotting. Heavy nested-VM builds: scoped to their inputs + manual dispatch.
+# RunsOn reads .github/runs-on.yml from the default branch only, so a pull request changing it
+# would still build on the old pool; it triggers pushes alone.
 on:
   push:
     branches:
       - master
       - 'Stable*'
-    paths: &vm-build-paths
+    paths:
+      - '.github/runs-on.yml'
       - 'tools/ci/runner/apt_install_retry.py'
       - 'tools/ci/runner/enable_kvm.py'
       - 'tools/ci/runner/install_multipass.py'
+      - 'tools/setup/install_uv.py'
+      - 'tools/setup/install_python.py'
+      - 'tools/setup/install_qt.py'
+      - 'tools/setup/qt_installer/**'
+      - 'tools/setup/install_dependencies/**'
       - 'deploy/multipass/**'
       - 'deploy/vagrant/**'
+      - '.github/build-config.json'
       - '.github/workflows/vm-builds.yml'
-      - '.github/runs-on.yml'
       - 'CMakePresets.json'
       - 'cmake/presets/**'
   pull_request:
-    paths: *vm-build-paths
+    paths:
+      - 'tools/ci/runner/apt_install_retry.py'
+      - 'tools/ci/runner/enable_kvm.py'
+      - 'tools/ci/runner/install_multipass.py'
+      - 'tools/setup/install_uv.py'
+      - 'tools/setup/install_python.py'
+      - 'tools/setup/install_qt.py'
+      - 'tools/setup/qt_installer/**'
+      - 'tools/setup/install_dependencies/**'
+      - 'deploy/multipass/**'
+      - 'deploy/vagrant/**'
+      - '.github/build-config.json'
+      - '.github/workflows/vm-builds.yml'
+      - 'CMakePresets.json'
+      - 'cmake/presets/**'
   workflow_dispatch:
 
 concurrency:

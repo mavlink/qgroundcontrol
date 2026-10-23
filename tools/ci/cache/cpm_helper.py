@@ -27,7 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import _bootstrap as _bootstrap
 from common.gh_actions import github_cache_path
-from common.io import write_json
+from common.io import read_json, write_json
 
 # A dependency declaration outside a comment
 _DEPENDENCY_DECLARATION = re.compile(
@@ -96,7 +96,7 @@ def compute_cpm_fingerprint(root: Path) -> str:
 
 def compute_gstreamer_fingerprint(root: Path) -> str:
     """Hash the build-config.json gstreamer section: the SDK versions, checksums and CA bundle."""
-    config = json.loads((root / ".github/build-config.json").read_text(encoding="utf-8"))
+    config = read_json(root / ".github/build-config.json")
     section = json.dumps(config.get("gstreamer", {}), sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(section.encode("utf-8")).hexdigest()
 
@@ -165,7 +165,7 @@ def seed_cache(root: Path, destination: Path, seed: Path) -> bool:
         return False
     if destination == seed or seed in destination.parents or destination in seed.parents:
         raise ValueError("CPM cache and seed must be separate directories")
-    manifest = json.loads(manifest_path.read_text())
+    manifest = read_json(manifest_path)
     if not isinstance(manifest, dict):
         raise ValueError("Invalid CPM seed manifest")
     if manifest.get("schema") != 1 or manifest.get("fingerprint") != compute_cpm_fingerprint(root):

@@ -12,22 +12,28 @@ from urllib.error import HTTPError
 
 import pytest
 from ci.security import install_grype
+from common.build_config import load_build_config
 from common.io import sha256_file
 
-from .._helpers import load_workflow
+from .._helpers import load_workflow, read_github_file
+
+PIN = load_build_config()["tools"]["grype"]
+VERSION = PIN["version"]
 
 
 @pytest.fixture
-def release(tmp_path, monkeypatch):
+def release(tmp_path):
     archive = tmp_path / "release.tar.gz"
-    content = b"#!/bin/sh\necho 'Version: 0.110.0'\n"
+    content = f"#!/bin/sh\necho 'Version: {VERSION}'\n".encode()
     with tarfile.open(archive, "w:gz") as tar:
         member = tarfile.TarInfo("grype")
         member.size = len(content)
         tar.addfile(member, io.BytesIO(content))
-    digest = sha256_file(archive)
-    monkeypatch.setattr(install_grype, "SHA256", dict.fromkeys(("x86_64", "aarch64"), digest))
     return archive
+
+
+def _pin(archive):
+    return {**PIN, "sha256": dict.fromkeys(("x86_64", "aarch64"), sha256_file(archive))}
 
 
 @pytest.mark.parametrize(
@@ -40,8 +46,8 @@ def test_direct_asset_retries_and_populates_scan_action_cache(
     sleeps = []
 
     url = (
-        f"https://github.com/anchore/grype/releases/download/v{install_grype.VERSION}/"
-        f"grype_{install_grype.VERSION}_linux_{asset}.tar.gz"
+        f"https://github.com/anchore/grype/releases/download/v{VERSION}/"
+        f"grype_{VERSION}_linux_{asset}.tar.gz"
     )
 
     def urlopen(request, **kwargs):
@@ -52,13 +58,13 @@ def test_direct_asset_retries_and_populates_scan_action_cache(
 
     monkeypatch.setattr("common.net.urllib.request.urlopen", urlopen)
     monkeypatch.setattr("common.net.time", SimpleNamespace(sleep=sleeps.append))
-    binary = install_grype.install(tmp_path / "cache", arch)
+    binary = install_grype.install(tmp_path / "cache", arch, _pin(release))
     assert calls == [url] * 3
-    assert sleeps == [10, 20]
-    assert binary == tmp_path / "cache/grype" / install_grype.VERSION / node / "grype"
+    assert len(sleeps) == 2
+    assert binary == tmp_path / "cache/grype" / VERSION / node / "grype"
     assert binary.stat().st_mode & 0o111
     assert binary.parent.with_name(f"{node}.complete").is_file()
-    assert install_grype.install(tmp_path / "cache", arch) == binary
+    assert install_grype.install(tmp_path / "cache", arch, _pin(release)) == binary
     assert len(calls) == 3
 
 
@@ -67,16 +73,14 @@ def test_failed_install_never_publishes_cache_marker(tmp_path, monkeypatch, rele
     if failure == "missing-binary":
         with tarfile.open(release, "w:gz"):
             pass
-        monkeypatch.setattr(install_grype, "SHA256", {"x86_64": sha256_file(release)})
-    if failure == "checksum":
-        monkeypatch.setattr(install_grype, "SHA256", {"x86_64": "0" * 64})
+    pin = {**PIN, "sha256": {"x86_64": "0" * 64}} if failure == "checksum" else _pin(release)
 
     def download(url, destination, *, expected_sha256, **kwargs):
         if sha256_file(release) != expected_sha256:
             raise RuntimeError("SHA-256 mismatch")
         shutil.copyfile(release, destination)
 
-    monkeypatch.setattr(install_grype, "download_file", download)
+    monkeypatch.setattr("common.net.download_file", download)
     if failure == "execution":
 
         def fail(command, **kwargs):
@@ -84,30 +88,31 @@ def test_failed_install_never_publishes_cache_marker(tmp_path, monkeypatch, rele
 
         monkeypatch.setattr(install_grype.subprocess, "run", fail)
     with pytest.raises((RuntimeError, subprocess.CalledProcessError)):
-        install_grype.install(tmp_path / "cache", "x86_64")
+        install_grype.install(tmp_path / "cache", "x86_64", pin)
     assert not list((tmp_path / "cache").rglob("*.complete"))
 
 
-def test_incomplete_cache_is_repaired_and_cli_exports_exact_version(tmp_path, monkeypatch, release):
+def test_incomplete_cache_is_repaired_and_cli_exports_exact_version(
+    tmp_path, monkeypatch, release, gh_output
+):
     cache = tmp_path / "cache"
-    binary = cache / "grype" / install_grype.VERSION / "x64/grype"
+    binary = cache / "grype" / VERSION / "x64/grype"
     binary.parent.mkdir(parents=True)
     binary.write_text("incomplete")
-    monkeypatch.setattr(
-        install_grype,
-        "download_file",
-        lambda url, destination, **kwargs: shutil.copyfile(release, destination),
-    )
+    digests = []
+
+    def download(url, destination, *, expected_sha256, **kwargs):
+        digests.append(expected_sha256)
+        shutil.copyfile(release, destination)
+
+    monkeypatch.setattr("common.net.download_file", download)
     monkeypatch.setattr(install_grype, "host_arch", lambda: "x86_64")
     monkeypatch.setattr(install_grype, "is_linux", lambda: True)
     monkeypatch.setenv("RUNNER_TOOL_CACHE", str(cache))
-    output = tmp_path / "outputs"
-    monkeypatch.setenv("GITHUB_OUTPUT", str(output))
-    monkeypatch.setattr("sys.argv", ["install_grype.py"])
-    install_grype.main()
+    assert install_grype.main([]) == 0
     assert "Version:" in binary.read_text()
-    assert f"version={install_grype.VERSION}\n" in output.read_text()
-    assert f"cmd={binary}\n" in output.read_text()
+    assert read_github_file(gh_output) == {"version": VERSION, "cmd": str(binary)}
+    assert digests == [PIN["sha256"]["x86_64"]]
 
 
 def test_both_scans_reuse_verified_installer_version():

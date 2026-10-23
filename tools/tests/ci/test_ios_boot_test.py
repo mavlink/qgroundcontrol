@@ -421,35 +421,17 @@ def test_boot_timeout_is_independent_of_app_timeout(app, tmp_path, simulator, bo
 )
 def test_invalid_cli_options_fail_before_subprocesses(option, value, capsys):
     with (
-        patch("sys.argv", ["ios_boot_test.py", "--app", "app", "--log", "log", option, value]),
         patch("ci.ios.ios_boot_test.subprocess.run") as process,
         pytest.raises(SystemExit) as raised,
     ):
-        main()
+        main(["--app", "app", "--log", "log", option, value])
     assert raised.value.code == 2
     assert "error:" in capsys.readouterr().err
     process.assert_not_called()
 
 
 def test_cli_wires_boot_options():
-    with (
-        patch(
-            "sys.argv",
-            [
-                "ios_boot_test.py",
-                "--app",
-                "app",
-                "--log",
-                "log",
-                "--timeout",
-                "420",
-                "--boot-timeout",
-                "900",
-                "--boot-attempts",
-                "1",
-            ],
-        ),
-        patch("ci.ios.ios_boot_test.boot_test") as run,
-    ):
-        main()
+    argv = ["--app", "app", "--log", "log", "--timeout", "420"]
+    with patch("ci.ios.ios_boot_test.boot_test") as run:
+        assert main([*argv, "--boot-timeout", "900", "--boot-attempts", "1"]) == 0
     assert run.call_args.kwargs == {"timeout": 420, "boot_timeout": 900, "boot_attempts": 1}

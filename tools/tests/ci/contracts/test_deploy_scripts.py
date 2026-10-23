@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import importlib.util
 import json
 import os
 import subprocess
@@ -11,21 +10,13 @@ from pathlib import Path
 
 import pytest
 
-from ..._helpers import REPO_ROOT, completed
+from ..._helpers import REPO_ROOT, completed, load_script
 
 
 @pytest.fixture
 def module(monkeypatch):
     monkeypatch.syspath_prepend(str(REPO_ROOT / "deploy/docker"))
-
-    def load(path):
-        spec = importlib.util.spec_from_file_location("deployment_test", REPO_ROOT / path)
-        assert spec is not None and spec.loader is not None
-        loaded = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(loaded)
-        return loaded
-
-    return load
+    return load_script
 
 
 @pytest.mark.parametrize("variant", ["ubuntu", "fedora", "aarch64", "android"])
@@ -329,7 +320,7 @@ def test_container_cache_paths_do_not_inherit_host_paths(module, monkeypatch, tm
     monkeypatch.setattr(script.shutil, "which", lambda _: "/usr/bin/ccache")
     monkeypatch.setattr(script.subprocess, "run", lambda command, **kwargs: calls.append(command))
     script.initialize_caches(tmp_path)
-    assert os.environ["CCACHE_DIR"] == str(tmp_path / ".ccache")
+    assert os.environ["CCACHE_DIR"] == str(tmp_path / ".cache/ccache")
     assert os.environ["CPM_SOURCE_CACHE"] == str(tmp_path / ".cache/CPM")
     assert os.environ["MOCCACHE_DIR"] == str(tmp_path / ".cache/moccache")
     assert os.environ["CCACHE_MAXSIZE"] == "3G"

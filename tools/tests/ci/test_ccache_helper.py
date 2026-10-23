@@ -16,23 +16,25 @@ from unittest.mock import patch
 import pytest
 from ci.cache import ccache_helper
 from ci.cache.ccache_helper import (
-    CCACHE_SHA256,
-    CCACHE_VERSION,
-    MOLD_SHA256,
-    MOLD_VERSION,
-    SCCACHE_SHA256,
-    SCCACHE_VERSION,
     build_sccache_summary_markdown,
     build_summary_markdown,
     ccache_misses,
     main,
     moccache_misses,
     parse_min_misses,
+    pinned_release,
     should_save_cache,
 )
+from common.build_config import load_build_config
+
+from .._helpers import read_github_file
 
 pytestmark = pytest.mark.windows
 
+PINS = load_build_config()["tools"]
+CCACHE_VERSION, CCACHE_SHA256 = PINS["ccache"]["version"], PINS["ccache"]["sha256"]
+MOLD_VERSION, MOLD_SHA256 = PINS["mold"]["version"], PINS["mold"]["sha256"]
+SCCACHE_VERSION, SCCACHE_SHA256 = PINS["sccache"]["version"], PINS["sccache"]["sha256"]
 CCACHE_URL = f"https://github.com/ccache/ccache/releases/download/v{CCACHE_VERSION}"
 MOLD_URL = f"https://github.com/rui314/mold/releases/download/v{MOLD_VERSION}"
 SCCACHE_URL = f"https://github.com/mozilla/sccache/releases/download/v{SCCACHE_VERSION}"
@@ -60,6 +62,18 @@ def test_pinned_digests_cover_every_runner_platform(digests, platforms):
     assert set(digests) == platforms
     for platform, digest in digests.items():
         assert re.fullmatch(r"[0-9a-f]{64}", digest), platform
+
+
+def test_pinned_release_reads_the_build_config_tools_section(tmp_path, monkeypatch):
+    config = tmp_path / "build-config.json"
+    pin = {"repository": "rui314/mold", "version": "9.8.7", "sha256": {"x86_64": "a" * 64}}
+    config.write_text(json.dumps({"tools": {"mold": pin}}), encoding="utf-8")
+    monkeypatch.setenv("CONFIG_FILE", str(config))
+    assert pinned_release("mold") == (
+        "9.8.7",
+        {"x86_64": "a" * 64},
+        "https://github.com/rui314/mold/releases/download/v9.8.7",
+    )
 
 
 class TestBuildSummaryMarkdown:
@@ -120,25 +134,30 @@ class TestCLI:
 
     def test_summary_without_ccache(self):
         with (
-            patch("ci.cache.ccache_helper.get_ccache_json_stats", return_value=None),
-            patch("ci.cache.ccache_helper.get_ccache_compression_stats", return_value=None),
-            patch("ci.cache.ccache_helper.get_ccache_verbose_stats", return_value=None),
+            patch("ci.cache.ccache_helper.shutil.which", return_value=None),
         ):
             assert main(["summary"]) == 0
 
-    def test_summary_with_stats(self, tmp_path):
+    def test_summary_with_stats(self, gh_summary):
         stats = {"direct_cache_hit": 10, "preprocessed_cache_hit": 2, "cache_miss": 5}
         verbose = "cache hit (direct): 10\ncache miss: 5"
         compression = "Compression ratio: 4.632 x     (78.4% space savings)"
-        summary_file = tmp_path / "summary.md"
+        outputs = {
+            ("--print-stats", "--format=json"): json.dumps(stats),
+            ("--show-compression",): compression,
+            ("-s", "-vv"): verbose,
+        }
+
+        def run(command):
+            assert command[0] == "/usr/bin/ccache"
+            return subprocess.CompletedProcess(command, 0, f"{outputs[tuple(command[1:])]}\n", "")
+
         with (
-            patch("ci.cache.ccache_helper.get_ccache_json_stats", return_value=stats),
-            patch("ci.cache.ccache_helper.get_ccache_compression_stats", return_value=compression),
-            patch("ci.cache.ccache_helper.get_ccache_verbose_stats", return_value=verbose),
-            patch.dict(os.environ, {"GITHUB_STEP_SUMMARY": str(summary_file)}),
+            patch("ci.cache.ccache_helper.shutil.which", return_value="/usr/bin/ccache"),
+            patch("ci.cache.ccache_helper.run_captured", run),
         ):
             assert main(["summary"]) == 0
-        content = summary_file.read_text()
+        content = gh_summary.read_text()
         assert "12 / 17" in content
         assert "<details>" in content
         assert "cache hit (direct): 10" in content
@@ -179,27 +198,22 @@ class TestSccacheSummary:
         assert "| ⚠ Errors | 3 |" in md
         assert "| Cache hits | 0 / 0 (0.0%) |" in md
 
-    def test_summary_reports_sccache_when_selected(self, tmp_path):
+    def test_summary_reports_sccache_when_selected(self, tmp_path, gh_summary):
         outputs = {
-            ("--show-stats", "--stats-format", "json"): json.dumps(_SCCACHE_REPORT),
-            ("--show-stats",): "Compile requests  2003",
+            ("sccache", "--show-stats", "--stats-format", "json"): json.dumps(_SCCACHE_REPORT),
+            ("sccache", "--show-stats"): "Compile requests  2003",
         }
         error_log = tmp_path / "sccache.log"
         error_log.write_text("".join(f"line {number}\n" for number in range(60)))
-        summary_file = tmp_path / "summary.md"
-        environment = {
-            "QGC_COMPILER_CACHE_TOOL": "sccache",
-            "SCCACHE_ERROR_LOG": str(error_log),
-            "GITHUB_STEP_SUMMARY": str(summary_file),
-        }
+        environment = {"QGC_COMPILER_CACHE_TOOL": "sccache", "SCCACHE_ERROR_LOG": str(error_log)}
         with (
-            patch("ci.cache.ccache_helper._sccache_output", lambda *args: outputs[args]),
+            patch("ci.cache.ccache_helper._tool_output", lambda *command: outputs[command]),
             patch("ci.cache.ccache_helper.get_ccache_json_stats") as ccache_stats,
             patch.dict(os.environ, environment),
         ):
             assert main(["summary"]) == 0
         ccache_stats.assert_not_called()
-        content = summary_file.read_text()
+        content = gh_summary.read_text()
         assert "1900 / 2000 (95.0%)" in content
         assert "Compile requests  2003" in content
         assert "line 59" in content
@@ -208,7 +222,7 @@ class TestSccacheSummary:
     def test_summary_without_sccache_statistics(self, tmp_path, capsys):
         environment = {"QGC_COMPILER_CACHE_TOOL": "sccache", "SCCACHE_ERROR_LOG": ""}
         with (
-            patch("ci.cache.ccache_helper._sccache_output", return_value=None),
+            patch("ci.cache.ccache_helper._tool_output", return_value=None),
             patch.dict(os.environ, environment),
         ):
             assert main(["summary"]) == 0
@@ -219,10 +233,8 @@ class TestInstall:
     """Tests for the per-OS compiler-tool install dispatch."""
 
     @pytest.fixture
-    def runner(self, tmp_path, monkeypatch):
+    def runner(self, monkeypatch, gh_path, gh_env):
         monkeypatch.setenv("RUNNER_ARCH", "ARM64")
-        monkeypatch.setenv("GITHUB_PATH", str(tmp_path / "path.txt"))
-        monkeypatch.setenv("GITHUB_ENV", str(tmp_path / "env.txt"))
         installed = []
 
         def fake_install(url, sha256, member, dest, *, sudo=False):
@@ -249,7 +261,7 @@ class TestInstall:
         return commands
 
     def test_linux_installs_pinned_ccache_and_mold_for_the_runner_arch(
-        self, runner, linux, monkeypatch, tmp_path
+        self, runner, linux, monkeypatch, gh_path, gh_env
     ):
         monkeypatch.setattr("ci.cache.ccache_helper._on_path", lambda tool, version: False)
         assert main(["install"]) == 0
@@ -272,8 +284,7 @@ class TestInstall:
             ),
         ]
         assert linux == [["sudo", "ln", "-sf", "mold", str(Path("/usr/local/bin/ld.mold"))]]
-        assert not (tmp_path / "path.txt").exists()
-        assert not (tmp_path / "env.txt").exists()
+        assert gh_path.read_text() == gh_env.read_text() == ""
 
     @pytest.mark.parametrize(("current", "installed"), [("ccache", "mold"), ("mold", "ccache")])
     def test_linux_skips_a_tool_whose_pinned_version_is_on_path(
@@ -296,7 +307,7 @@ class TestInstall:
         [(["install", "--compiler-cache", "sccache"], ""), (["install"], "sccache")],
     )
     def test_linux_sccache_pilot_installs_and_selects_pinned_sccache(
-        self, runner, linux, monkeypatch, tmp_path, argv, environment
+        self, runner, linux, monkeypatch, gh_env, argv, environment
     ):
         monkeypatch.setenv("QGC_COMPILER_CACHE_TOOL", environment)
         monkeypatch.setattr("ci.cache.ccache_helper._on_path", lambda tool, version: False)
@@ -312,16 +323,16 @@ class TestInstall:
             True,
         )
         expected = f"QGC_CACHE_PROGRAM={Path('/usr/local/bin/sccache')}\n"
-        assert (tmp_path / "env.txt").read_text() == expected
+        assert gh_env.read_text() == expected
 
     def test_linux_selects_a_pinned_sccache_already_on_path(
-        self, runner, linux, monkeypatch, tmp_path
+        self, runner, linux, monkeypatch, gh_env
     ):
         monkeypatch.setattr("ci.cache.ccache_helper._on_path", lambda tool, version: True)
         monkeypatch.setattr("ci.cache.ccache_helper.shutil.which", lambda tool: f"/opt/{tool}")
         assert main(["install", "--compiler-cache", "sccache"]) == 0
         assert runner == []
-        assert (tmp_path / "env.txt").read_text() == f"QGC_CACHE_PROGRAM={Path('/opt/sccache')}\n"
+        assert gh_env.read_text() == f"QGC_CACHE_PROGRAM={Path('/opt/sccache')}\n"
 
     @pytest.mark.parametrize("platform", ["macos", "windows"])
     def test_sccache_pilot_is_linux_only(self, runner, monkeypatch, tmp_path, platform):
@@ -358,7 +369,7 @@ class TestInstall:
             assert ccache_helper._on_path("mold", MOLD_VERSION) is False
 
     def test_macos_installs_under_runner_temp_and_selects_the_binary(
-        self, runner, monkeypatch, tmp_path
+        self, runner, monkeypatch, tmp_path, gh_path, gh_env
     ):
         self._platform(monkeypatch, "macos")
         assert main(["install", "--runner-temp", str(tmp_path)]) == 0
@@ -373,10 +384,12 @@ class TestInstall:
                 False,
             )
         ]
-        assert (tmp_path / "path.txt").read_text() == f"{binary.parent}\n"
-        assert (tmp_path / "env.txt").read_text() == f"QGC_CACHE_PROGRAM={binary}\n"
+        assert gh_path.read_text() == f"{binary.parent}\n"
+        assert gh_env.read_text() == f"QGC_CACHE_PROGRAM={binary}\n"
 
-    def test_windows_installs_the_runner_arch_binary_on_path(self, runner, monkeypatch, tmp_path):
+    def test_windows_installs_the_runner_arch_binary_on_path(
+        self, runner, monkeypatch, tmp_path, gh_path, gh_env
+    ):
         self._platform(monkeypatch, "windows")
         monkeypatch.setenv("RUNNER_TEMP", str(tmp_path))
         assert main(["install"]) == 0
@@ -391,11 +404,13 @@ class TestInstall:
                 False,
             )
         ]
-        assert (tmp_path / "path.txt").read_text() == f"{install_dir}\n"
-        assert not (tmp_path / "env.txt").exists()
+        assert gh_path.read_text() == f"{install_dir}\n"
+        assert gh_env.read_text() == ""
 
     @pytest.mark.parametrize("platform", ["macos", "windows"])
-    def test_unusable_binary_fails_the_install(self, runner, monkeypatch, tmp_path, platform):
+    def test_unusable_binary_fails_the_install(
+        self, runner, monkeypatch, tmp_path, gh_path, gh_env, platform
+    ):
         self._platform(monkeypatch, platform)
 
         def broken(*args, **kwargs):
@@ -404,13 +419,11 @@ class TestInstall:
         monkeypatch.setattr("ci.cache.ccache_helper._install_pinned", broken)
         with pytest.raises(RuntimeError, match="broken"):
             main(["install", "--runner-temp", str(tmp_path)])
-        assert not (tmp_path / "path.txt").exists()
-        assert not (tmp_path / "env.txt").exists()
+        assert gh_path.read_text() == gh_env.read_text() == ""
 
     @pytest.mark.parametrize("platform", ["macos", "windows"])
     def test_runner_temp_is_required_off_linux(self, runner, monkeypatch, platform):
         self._platform(monkeypatch, platform)
-        monkeypatch.delenv("RUNNER_TEMP", raising=False)
         with pytest.raises(RuntimeError, match="RUNNER_TEMP"):
             main(["install"])
         assert runner == []
@@ -434,7 +447,7 @@ class TestInstallPinned:
             commands.append(command)
             return subprocess.CompletedProcess(command, 0, "tool version 1.2.3\n", "")
 
-        monkeypatch.setattr("ci.cache.ccache_helper.download_file", download)
+        monkeypatch.setattr("common.net.download_file", download)
         monkeypatch.setattr("ci.cache.ccache_helper.run_captured", run)
         return assets, downloads, commands
 
@@ -495,7 +508,6 @@ class TestInstallPinned:
         monkeypatch.setattr(
             "ci.cache.ccache_helper._on_path", lambda tool, version: tool != "sccache"
         )
-        monkeypatch.delenv("GITHUB_ENV", raising=False)
 
         ccache_helper.install_compiler_tools(None, "sccache")
 
@@ -507,9 +519,22 @@ class TestInstallPinned:
     def test_missing_member_fails(self, release, tmp_path):
         assets, _, commands = release
         self._tar(assets / "tool.tar.xz", "other/tool")
-        with pytest.raises(FileNotFoundError, match="tool/bin/tool"):
+        with pytest.raises(RuntimeError, match="No regular file tool/bin/tool"):
             ccache_helper._install_pinned(
                 "https://example.test/tool.tar.xz", "c" * 64, "tool/bin/tool", tmp_path / "tool"
+            )
+        assert commands == []
+
+    def test_symlinked_member_is_rejected(self, release, tmp_path):
+        assets, _, commands = release
+        with tarfile.open(assets / "tool.tar.gz", "w:gz") as tar:
+            link = tarfile.TarInfo("tool/tool")
+            link.type = tarfile.SYMTYPE
+            link.linkname = "other"
+            tar.addfile(link)
+        with pytest.raises(RuntimeError, match="No regular file tool/tool"):
+            ccache_helper._install_pinned(
+                "https://example.test/tool.tar.gz", "e" * 64, "tool/tool", tmp_path / "tool"
             )
         assert commands == []
 
@@ -633,8 +658,7 @@ class TestSaveGate:
             patch("ci.cache.ccache_helper.get_ccache_json_stats", return_value={"cache_miss": 6}),
         ):
             assert main(["save-gate", "--moccache-dir", str(tmp_path)]) == 0
-        outputs = dict(line.split("=", 1) for line in gh_output.read_text().splitlines())
-        assert outputs == expected
+        assert read_github_file(gh_output) == expected
 
     def test_cli_saves_when_statistics_are_unavailable(self, tmp_path, gh_output):
         env = {"GITHUB_EVENT_NAME": "pull_request", "QGC_PR_CACHE_SAVE_MIN_MISSES": "20"}

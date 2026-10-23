@@ -1,4 +1,4 @@
-"""Exercise VM ownership without launching or deleting real instances."""
+"""Exercise run_multipass.py with a fake client: VM ownership, launch timeout, and artifact copy."""
 
 from __future__ import annotations
 
@@ -76,3 +76,41 @@ def test_launch_waits_longer_than_multipass_default(tmp_path: Path) -> None:
     )
     launch = next(line for line in log.read_text().splitlines() if line.startswith("launch"))
     assert "--timeout 900" in launch
+
+
+def test_artifact_is_staged_under_home_then_moved_to_output(tmp_path: Path) -> None:
+    # The root snap client may write only under the caller's home, not the runner's workspace.
+    home = tmp_path / "home"
+    home.mkdir()
+    mock = tmp_path / "multipass"
+    mock.write_text(
+        '#!/bin/sh\nprintf "%s\\n" "$*" >> "$CALL_LOG"\n'
+        'case "$1" in\n'
+        "info) exit 1;;\n"
+        'exec) [ "$5" = qgc-appimage-path ] && echo /home/ubuntu/QGC.AppImage; exit 0;;\n'
+        'transfer) printf appimage > "${3%/}/QGC.AppImage";;\n'
+        "esac\n",
+        encoding="utf-8",
+    )
+    mock.chmod(0o755)
+    log = tmp_path / "calls"
+    output = tmp_path / "output"
+    result = subprocess.run(
+        [sys.executable, str(SCRIPT)],
+        env={
+            **os.environ,
+            "PATH": f"{tmp_path}:{os.environ['PATH']}",
+            "CALL_LOG": str(log),
+            "HOME": str(home),
+            "OUTPUT_DIR": str(output),
+            "QGC_SOURCE_DIR": "",
+        },
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    (transfer,) = (line for line in log.read_text().splitlines() if line.startswith("transfer"))
+    assert transfer.split()[-1].startswith(f"{home}/qgc-out-")
+    assert (output / "QGC.AppImage").read_text() == "appimage"
+    assert list(home.iterdir()) == []

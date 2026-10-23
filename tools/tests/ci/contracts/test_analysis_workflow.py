@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import re
-import sys
 from pathlib import Path
 
 import analyze
@@ -13,7 +12,7 @@ import yaml
 from analyze import FileCollector
 from ci.planning.analysis_matrix import DISPATCH_FAMILIES, RESULT_CACHE_DIR, build_matrix
 
-from ..._helpers import REPO_ROOT, git, load_workflow
+from ..._helpers import REPO_ROOT, commit_files, git, load_workflow
 
 WORKFLOW_TEXT = (REPO_ROOT / ".github/workflows/analysis.yml").read_text()
 WORKFLOW = load_workflow("analysis.yml")
@@ -77,6 +76,13 @@ def test_planned_arguments_reach_analyze_py_as_one_word_each():
     assert '"${GITHUB_WORKSPACE}/${ANALYSIS_PATH}"' in STEPS["Run IWYU"]["run"]
 
 
+def test_analysis_findings_fail_the_job_and_iwyu_stays_advisory():
+    # Both scripts pipe into tee; `shell: bash` adds pipefail (test_workflow_shells.py).
+    assert STEPS["Run analysis"]["shell"] == STEPS["Run IWYU"]["shell"] == "bash"
+    assert "continue-on-error" not in STEPS["Run analysis"]
+    assert STEPS["Run IWYU"]["continue-on-error"] is True
+
+
 def test_toolchain_comes_from_the_planner():
     for key in ("llvm_version", "clazy_sha256", "clang_tidy_version", "clang_tidy_sha256"):
         assert PLAN["outputs"][key] == f"${{{{ steps.plan.outputs.{key} }}}}"
@@ -99,11 +105,20 @@ def test_clang_tidy_and_clazy_skip_autogen_and_llvm_development_packages():
 
 
 def test_clang_tidy_comes_from_the_hash_pinned_wheel_ahead_of_llvm():
+    # tools/tests/ci/test_analysis_tools.py covers the pinning and PATH order the script applies.
     assert TOOLCHAIN["clang_tidy_version"].startswith(("22.", "23."))
     step = STEPS["Select analysis executables"]
-    assert "--require-hashes" in step["run"]
-    assert "--hash=sha256:%s" in step["run"]
-    assert step["run"].index("/usr/lib/llvm-") < step["run"].index('echo "$tidy_bin"')
+    assert step["run"] == "python3 tools/ci/runner/analysis_tools.py"
+    assert step["env"] == {
+        "LLVM_VERSION": "${{ needs.plan.outputs.llvm_version }}",
+        "CLANG_TIDY_VERSION": "${{ needs.plan.outputs.clang_tidy_version }}",
+        "CLANG_TIDY_SHA256": "${{ needs.plan.outputs.clang_tidy_sha256 }}",
+        "ANALYSIS_TOOLS": "${{ join(matrix.tools, ' ') }}",
+    }
+    names = [each["name"] for each in JOB["steps"]]
+    # Build Setup provides tools/.venv and uv; the Clazy build provides clazy-standalone.
+    assert names.index("Build Setup") < names.index("Select analysis executables")
+    assert names.index("Build matching Clazy") < names.index("Select analysis executables")
 
 
 def test_pull_requests_get_asan_and_ubsan_from_linux_and_tsan_stays_manual():
@@ -116,8 +131,8 @@ def test_pull_requests_get_asan_and_ubsan_from_linux_and_tsan_stays_manual():
     ]
     # cmake/QGCTest.cmake sets TSAN_OPTIONS on every test; the workflow must not shadow it.
     assert "env" not in STEPS["Run Sanitizer Tests"]
-    linux = (REPO_ROOT / ".github/workflows/linux.yml").read_text()
-    assert "(ASan+UBSan)" in linux
+    # linux.yml's debug-validation job runs ASan+UBSan, so analysis.yml runs only TSan.
+    assert "(ASan+UBSan)" in load_workflow("linux.yml")["jobs"]["debug-validation"]["name"]
 
 
 def test_result_cache_is_restored_everywhere_but_saved_only_by_master_pushes():
@@ -141,9 +156,8 @@ def test_result_cache_is_restored_everywhere_but_saved_only_by_master_pushes():
     assert "github.event_name != 'push'" in concurrency
 
 
-def _parse(monkeypatch: pytest.MonkeyPatch, leg: dict):
-    monkeypatch.setattr(sys, "argv", ["analyze.py", "--build-dir", "build", *leg["analyze_args"]])
-    return analyze.parse_args()
+def _parse(leg: dict):
+    return analyze.parse_args(["--build-dir", "build", *leg["analyze_args"]])
 
 
 @pytest.mark.parametrize(
@@ -169,11 +183,11 @@ def _parse(monkeypatch: pytest.MonkeyPatch, leg: dict):
         ),
     ],
 )
-def test_planned_arguments_are_accepted_by_analyze_py(monkeypatch, leg, expected):
+def test_planned_arguments_are_accepted_by_analyze_py(leg, expected):
     event = leg.pop("event", "workflow_dispatch")
     legs = build_matrix(event, REPO_ROOT, "", llvm_version=LLVM_VERSION, **leg)
     for planned in legs:
-        args = _parse(monkeypatch, planned)
+        args = _parse(planned)
         assert args.advisory
         assert args.build_dir == "build"
         assert {key: getattr(args, key) for key in expected} == expected
@@ -183,18 +197,14 @@ def test_planned_arguments_are_accepted_by_analyze_py(monkeypatch, leg, expected
 
 
 def test_changed_scope_selects_only_the_pull_request_sources(git_repo, monkeypatch):
-    (git_repo / "src").mkdir()
-    (git_repo / "src/changed.cc").write_text("int value = 1;\n")
-    (git_repo / "src/unchanged.cc").write_text("int other = 2;\n")
-    git(git_repo, "add", ".")
-    git(git_repo, "commit", "-qm", "base")
-    base = git(git_repo, "rev-parse", "HEAD")
+    files = {"src/changed.cc": "int value = 1;\n", "src/unchanged.cc": "int other = 2;\n"}
+    base = commit_files(git_repo, files, "base")
     (git_repo / "src/changed.cc").write_text("int value = 3;\n")
     git(git_repo, "commit", "-qam", "change")
 
     (leg,) = build_matrix("pull_request", git_repo, base, llvm_version=LLVM_VERSION)
     assert leg["scan"] == "changed"
-    args = _parse(monkeypatch, leg)
+    args = _parse(leg)
     assert not args.all
     assert args.path == []
     monkeypatch.setenv("PR_BASE_SHA", base)
@@ -205,12 +215,19 @@ def test_changed_scope_selects_only_the_pull_request_sources(git_repo, monkeypat
 def test_planned_matrix_runs_both_tools_on_every_shard_and_saves_one_build_cache():
     plan_step = next(step for step in PLAN["steps"] if step.get("id") == "plan")
     assert plan_step["env"]["PR_BASE_SHA"] == "${{ github.event.pull_request.base.sha }}"
+    assert plan_step["env"]["PR_HEAD_SHA"] == "${{ github.event.pull_request.head.sha }}"
+    # A merge checkout and its parents name a PR's diff; a dispatched "changed" scan needs the
+    # default branch's history.
     checkout = next(step for step in PLAN["steps"] if step["name"] == "Checkout")
-    assert checkout["with"]["fetch-depth"] == "${{ github.event_name != 'pull_request' && 1 || 0 }}"
+    assert checkout["with"]["fetch-depth"] == "${{ github.event_name == 'pull_request' && 2 || 1 }}"
+    assert STEPS["Checkout"]["with"]["fetch-depth"] == (
+        "${{ github.event_name == 'pull_request' && 2 || 0 }}"
+    )
     assert PLAN["outputs"]["include"] == "${{ steps.plan.outputs.include }}"
     legs = build_matrix("pull_request", REPO_ROOT, "", llvm_version=LLVM_VERSION)
     assert len(legs) == 4
     assert all(leg["tools"] == ["clang-tidy", "clazy"] for leg in legs)
-    assert STEPS["Run analysis"]["env"]["PR_BASE_SHA"] == plan_step["env"]["PR_BASE_SHA"]
+    for name in ("PR_BASE_SHA", "PR_HEAD_SHA"):
+        assert STEPS["Run analysis"]["env"][name] == plan_step["env"][name]
     assert STEPS["Build Setup"]["with"]["save-cache"] == "${{ matrix.shard == 1 }}"
     assert "matrix.shard" in STEPS["Upload Output"]["with"]["name"]

@@ -166,7 +166,7 @@ def boot_test(
         )
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--app", type=Path, required=True)
     parser.add_argument("--log", type=Path, required=True)
@@ -188,7 +188,7 @@ def main() -> None:
         default=MAX_BOOT_ATTEMPTS,
         help=f"Maximum fresh simulator boot attempts (1-{MAX_BOOT_ATTEMPTS}, default: {MAX_BOOT_ATTEMPTS})",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     try:
         _validate_options(args.timeout, args.boot_timeout, args.boot_attempts)
     except ValueError as exc:
@@ -200,7 +200,8 @@ def main() -> None:
         boot_timeout=args.boot_timeout,
         boot_attempts=args.boot_attempts,
     )
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

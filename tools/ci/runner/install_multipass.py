@@ -8,6 +8,7 @@ client into a snap scope and snap-confine refuses to start it (Multipass >= 1.17
 
 from __future__ import annotations
 
+import argparse
 import shutil
 import subprocess
 import sys
@@ -61,7 +62,8 @@ def install() -> None:
     )
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    argparse.ArgumentParser(description=__doc__).parse_args(argv)
     try:
         install()
         return 0

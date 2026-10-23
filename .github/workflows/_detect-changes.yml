@@ -28,12 +28,12 @@ jobs:
         with:
           egress-policy: audit
 
-      # PR diffs fetch their base and head commits on demand. Tags need full
-      # history and branch refs for the Stable* release-tag check.
+      # A pull request's merge commit and its two parents hold the PR diff. Tags need
+      # full history and branch refs for the Stable* release-tag check.
       - name: Checkout detection scripts
         uses: actions/checkout@v7
         with:
-          fetch-depth: ${{ github.ref_type != 'tag' && 1 || 0 }}
+          fetch-depth: ${{ github.event_name == 'pull_request' && 2 || github.ref_type != 'tag' && 1 || 0 }}
           sparse-checkout: |
             tools/_bootstrap.py
             tools/ci/__init__.py

@@ -20,6 +20,10 @@ from ci.cache.cache_plan import (
 )
 from ci.cache.cpm_helper import compute_cpm_fingerprint, compute_gstreamer_fingerprint
 
+from .._helpers import read_github_file
+
+pytestmark = pytest.mark.windows
+
 if TYPE_CHECKING:
     from pathlib import Path
 
@@ -32,8 +36,6 @@ BASE = CacheInputs(
     host="linux",
     target="linux_gcc_64",
     build_type="Release",
-    cpm_modules=".cache/CPM",
-    pr_save_min_misses="20",
     event="push",
     ref_name="master",
     run_id="7",
@@ -99,7 +101,7 @@ def test_pull_request_keys_match_the_previous_action(workspace) -> None:
     }
     cpm_cache = (workspace / ".cache/CPM").resolve()
     assert result.env == {
-        "CCACHE_DIR": f"{workspace.as_posix()}/.ccache",
+        "CCACHE_DIR": f"{workspace.as_posix()}/.cache/ccache",
         "CCACHE_BASEDIR": workspace.as_posix(),
         "CCACHE_CONFIGPATH": f"{workspace.as_posix()}/tools/configs/ccache.conf",
         "CCACHE_MAXSIZE": "1G",
@@ -118,7 +120,7 @@ def test_pull_request_keys_match_the_previous_action(workspace) -> None:
         "QGC_PR_CACHE_SAVE_MIN_MISSES": "20",
         "QGC_COMPILER_CACHE_TOOL": "ccache",
     }
-    assert (workspace / ".ccache").is_dir()
+    assert (workspace / ".cache/ccache").is_dir()
     assert cpm_cache.is_dir()
 
 
@@ -201,9 +203,12 @@ def test_save_policy(requested, event, save) -> None:
         ("push", "github", "auto", "true"),
         ("pull_request", "github", "true", "true"),
         ("pull_request_target", "s3", "auto", "false"),
+        ("merge_group", "github", "auto", "false"),
+        ("merge_group", "s3", "auto", "false"),
+        ("merge_group", "s3", "true", "true"),
     ],
 )
-def test_scoped_caches_are_restore_only_for_prs_on_github_storage(
+def test_scoped_caches_are_restore_only_for_github_prs_and_merge_queues(
     event, backend, requested, scoped_save
 ) -> None:
     save = save_policy(requested, event)
@@ -221,14 +226,25 @@ def test_scoped_caches_are_restore_only_for_prs_on_github_storage(
         ({"save_cache": "false", "ref_name": "feature"}, "", "restore", "false"),
         ({"target": "android"}, "save", "save", "false"),
         ({"target": "ios", "build_type": "Debug"}, "restore", "restore", "false"),
-        ({"target": "win64_msvc2022_arm64", "event": "pull_request"}, "save", "restore", "true"),
+        ({"target": "win64_msvc2022_arm64", "event": "pull_request"}, "restore", "restore", "true"),
+        (
+            {"target": "win64_msvc2022_arm64", "event": "pull_request", "backend": "s3"},
+            "save",
+            "save",
+            "true",
+        ),
+        (
+            {"target": "android", "event": "merge_group", "ref_name": "gh-readonly-queue/master"},
+            "restore",
+            "restore",
+            "true",
+        ),
         (
             {"target": "Android", "build_type": "release", "save_cache": "True"},
             "save",
             "save",
             "false",
         ),
-        ({"target": "android", "cpm_modules": ""}, "", "", "false"),
     ],
 )
 def test_dependency_cache_modes(workspace, changes, gst_mode, cpm_mode, probe) -> None:
@@ -242,10 +258,19 @@ def test_dependency_cache_modes(workspace, changes, gst_mode, cpm_mode, probe) -
     assert ("cpm_key" in outputs) == bool(cpm_mode)
 
 
-def test_without_cpm_modules_no_cpm_environment_is_exported(workspace) -> None:
-    result = plan(workspace, cpm_modules="")
-    assert "CPM_SOURCE_CACHE" not in result.env
-    assert not (workspace / ".cache/CPM").exists()
+@pytest.mark.parametrize("backend", ["github", "s3"])
+def test_merge_queue_runs_save_no_caches(workspace, backend) -> None:
+    result = plan(
+        workspace,
+        host="windows",
+        target="win64_msvc2022_64",
+        event="merge_group",
+        ref_name="gh-readonly-queue/master/pr-1-abc",
+        backend=backend,
+    )
+    assert result.env["QGC_SAVE_BUILD_CACHE"] == "false"
+    assert (result.outputs["cpm_mode"], result.outputs["gst_mode"]) == ("restore", "restore")
+    assert result.outputs["cpm_shared_probe"] == "true"
 
 
 @pytest.mark.parametrize(
@@ -308,14 +333,6 @@ def test_cache_scope(event, ref, pr, scope) -> None:
 
 
 @pytest.mark.parametrize(
-    ("value", "exported"), [("20", "20"), ("0", "0"), ("", "0"), ("abc", "0"), ("7\nEVIL=1", "0")]
-)
-def test_pr_save_threshold_is_sanitized(workspace, value, exported) -> None:
-    env = plan(workspace, pr_save_min_misses=value).env
-    assert env["QGC_PR_CACHE_SAVE_MIN_MISSES"] == exported
-
-
-@pytest.mark.parametrize(
     ("backend", "event", "enabled"),
     [
         ("github", "pull_request", "true"),
@@ -335,7 +352,7 @@ SCCACHE = {"compiler_cache": "sccache", "sccache_bucket": "runs-on-cache"}
 
 def test_sccache_pilot_replaces_the_ccache_archive(workspace, tmp_path) -> None:
     result = plan(workspace, backend="github", runner_temp=str(tmp_path / "temp"), **SCCACHE)
-    assert not (workspace / ".ccache").exists()
+    assert not (workspace / ".cache/ccache").exists()
     ccache = plan(workspace, backend="github")
 
     assert result.outputs["ccache_key"] == result.outputs["ccache_restore_keys"] == ""
@@ -396,22 +413,23 @@ def test_sccache_without_its_bucket_keeps_the_ccache_plan(workspace) -> None:
     assert fallback.env["QGC_COMPILER_CACHE_TOOL"] == "ccache"
 
 
-def test_multiline_environment_values_are_rejected(workspace) -> None:
+@pytest.mark.usefixtures("gh_output")
+def test_main_rejects_multiline_environment_values(workspace, monkeypatch, gh_env) -> None:
+    monkeypatch.setenv("INPUT_KEY_SUFFIX", "leg\nQGC_SAVE_BUILD_CACHE=true")
+
     with pytest.raises(ValueError, match="single line"):
-        plan(workspace, key_suffix="leg\nQGC_SAVE_BUILD_CACHE=true")
+        main([])
+
+    assert gh_env.read_text() == ""
 
 
-def test_main_exports_outputs_and_environment(workspace, monkeypatch, gh_output) -> None:
-    github_env = workspace.parent / "github_env"
+def test_main_exports_outputs_and_environment(workspace, monkeypatch, gh_output, gh_env) -> None:
     for name, value in {
-        "GITHUB_ENV": str(github_env),
         "INPUT_HOST": "mac",
         "INPUT_TARGET": "ios",
         "INPUT_BUILD_TYPE": "Debug",
         "INPUT_KEY_SUFFIX": "simulator",
-        "INPUT_CPM_MODULES": ".cache/CPM",
         "INPUT_SAVE_CACHE": "auto",
-        "INPUT_PR_SAVE_MIN_MISSES": "20",
         "PR_NUMBER": "9",
         "GITHUB_EVENT_NAME": "pull_request",
         "GITHUB_REF_NAME": "9/merge",
@@ -424,26 +442,27 @@ def test_main_exports_outputs_and_environment(workspace, monkeypatch, gh_output)
     }.items():
         monkeypatch.setenv(name, value)
 
-    assert main() == 0
+    assert main([]) == 0
 
-    output = gh_output.read_text()
+    outputs = read_github_file(gh_output)
     ccache = "ccache-mac-ios-Debug"
-    assert f"ccache_key={ccache}-simulator-pr-9-{CCACHE_HASH}-11-3\n" in output
-    assert "ccache_restore_keys<<" in output
-    assert f"\n{ccache}-simulator-shared-\n{ccache}-shared-\n" in output
-    assert "gst_mode=restore\n" in output
-    assert "cpm_mode=restore\n" in output
-    exported = dict(line.split("=", 1) for line in github_env.read_text().splitlines())
+    assert outputs["ccache_key"] == f"{ccache}-simulator-pr-9-{CCACHE_HASH}-11-3"
+    assert restore_keys(outputs["ccache_restore_keys"])[-2:] == [
+        f"{ccache}-simulator-shared-",
+        f"{ccache}-shared-",
+    ]
+    assert (outputs["gst_mode"], outputs["cpm_mode"]) == ("restore", "restore")
+    exported = read_github_file(gh_env)
     assert exported["QGC_SAVE_BUILD_CACHE"] == "true"
     assert exported["QGC_CCACHE_KEY"] == f"{ccache}-simulator-pr-9-{CCACHE_HASH}-11-3"
     assert exported["CPM_CACHE_PATH"] == ".cache/CPM"
     assert exported["MOCCACHE_STATS"] == "1"
 
 
-def test_main_selects_sccache_from_the_job_environment(workspace, monkeypatch, gh_output) -> None:
-    github_env = workspace.parent / "github_env"
+def test_main_selects_sccache_from_the_job_environment(
+    workspace, monkeypatch, gh_output, gh_env
+) -> None:
     for name, value in {
-        "GITHUB_ENV": str(github_env),
         "INPUT_HOST": "linux",
         "INPUT_TARGET": "linux_gcc_64",
         "INPUT_BUILD_TYPE": "Release",
@@ -457,10 +476,10 @@ def test_main_selects_sccache_from_the_job_environment(workspace, monkeypatch, g
     }.items():
         monkeypatch.setenv(name, value)
 
-    assert main() == 0
+    assert main([]) == 0
 
-    assert "ccache_key=\n" in gh_output.read_text()
-    exported = dict(line.split("=", 1) for line in github_env.read_text().splitlines())
+    assert read_github_file(gh_output)["ccache_key"] == ""
+    exported = read_github_file(gh_env)
     assert exported["QGC_COMPILER_CACHE_TOOL"] == "sccache"
     assert exported["QGC_CCACHE_KEY"] == ""
     assert exported["SCCACHE_S3_RW_MODE"] == "READ_ONLY"

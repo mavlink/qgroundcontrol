@@ -26,13 +26,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 import _bootstrap as _bootstrap
 from common.cmake import read_cache_var
 from common.gh_actions import gh_error, gh_warning
-from common.proc import output_text
+from common.proc import output_text, run_captured
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
 BOOT_TIMEOUT_EXIT_CODE = 124
 DRAIN_TIMEOUT_SECONDS = 10
+TOOL_TIMEOUT_SECONDS = 120
+EXE_TYPES = ("binary", "appimage", "dmg", "exe")
 
 
 def _setup_gstreamer_env(build_dir: Path) -> None:
@@ -79,36 +81,33 @@ def _setup_gstreamer_env(build_dir: Path) -> None:
         os.environ["PATH"] = f"{bin_dir};{existing}" if existing else bin_dir
 
 
+def _run_tool(cmd: list[str]) -> subprocess.CompletedProcess[str]:
+    """Run a helper command; a hang becomes a failed result instead of blocking the job."""
+    try:
+        return run_captured(cmd, timeout=TOOL_TIMEOUT_SECONDS)
+    except subprocess.TimeoutExpired:
+        message = f"timed out after {TOOL_TIMEOUT_SECONDS}s"
+        return subprocess.CompletedProcess(cmd, BOOT_TIMEOUT_EXIT_CODE, stdout="", stderr=message)
+
+
 def _verify_archs(binary_path: Path, expected: str) -> None:
     """Fail if the Mach-O binary's architectures differ from the expected set."""
-    result = subprocess.run(
-        ["lipo", "-archs", str(binary_path)],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    result = _run_tool(["lipo", "-archs", str(binary_path)])
     if result.returncode != 0:
-        gh_error(f"lipo -archs failed for {binary_path}: {result.stderr.strip()}")
-        sys.exit(1)
+        raise RuntimeError(f"lipo -archs failed for {binary_path}: {result.stderr.strip()}")
     actual = set(result.stdout.split())
     wanted = set(expected.split())
     if actual != wanted:
-        gh_error(
+        raise RuntimeError(
             f"Architecture mismatch for {binary_path}: "
             f"expected {sorted(wanted)}, got {sorted(actual)}"
         )
-        sys.exit(1)
     print(f"Verified architectures: {' '.join(sorted(actual))}")
 
 
 def _verify_appimage_update_information(binary_path: Path, expected: str) -> None:
     """Verify embedded AppImage update metadata and its zsync sidecar."""
-    result = subprocess.run(
-        [str(binary_path), "--appimage-updateinformation"],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    result = _run_tool([str(binary_path), "--appimage-updateinformation"])
     if result.returncode != 0:
         raise RuntimeError(
             f"Failed to read AppImage update information from {binary_path}: "
@@ -134,20 +133,8 @@ def _attached_dmg(dmg_path: Path) -> Iterator[Path]:
     if not dmg_path.is_file():
         raise RuntimeError(f"DMG file not found: {dmg_path}")
     mount_point = Path(tempfile.mkdtemp(prefix="qgc-dmg-", dir=os.environ.get("RUNNER_TEMP")))
-    result = subprocess.run(
-        [
-            "hdiutil",
-            "attach",
-            "-nobrowse",
-            "-readonly",
-            "-mountpoint",
-            str(mount_point),
-            str(dmg_path),
-        ],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    attach = ["hdiutil", "attach", "-nobrowse", "-readonly", "-mountpoint", str(mount_point)]
+    result = _run_tool([*attach, str(dmg_path)])
     if result.returncode != 0:
         mount_point.rmdir()
         raise RuntimeError(f"Failed to mount DMG {dmg_path}: {result.stderr.strip()}")
@@ -162,12 +149,7 @@ def _detach_dmg(mount_point: Path) -> None:
     """Detach a mounted DMG, forcing it when processes still hold it open."""
 
     def detach(*options: str) -> subprocess.CompletedProcess[str]:
-        return subprocess.run(
-            ["hdiutil", "detach", *options, str(mount_point)],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
+        return _run_tool(["hdiutil", "detach", *options, str(mount_point)])
 
     result = detach()
     if result.returncode != 0:
@@ -254,10 +236,10 @@ def _boot_test(binary: Path, *, cwd: Path, timeout: int, headless: bool) -> int:
     print(f"Timeout: {timeout}s")
     cmd, env = _boot_command(binary, headless=headless)
     exit_code, output = _execute(cmd, env, cwd, timeout)
+    print(output)
     if exit_code == BOOT_TIMEOUT_EXIT_CODE:
         gh_error(f"Boot test timed out after {timeout}s")
         return exit_code
-    print(output)
     if exit_code == 0:
         print("Boot test passed")
     else:
@@ -277,7 +259,11 @@ def _verify(binary_path: Path, args: argparse.Namespace) -> int:
         _setup_gstreamer_env(Path(args.build_dir))
 
     if args.expect_archs and platform.system() == "Darwin":
-        _verify_archs(binary_path, args.expect_archs)
+        try:
+            _verify_archs(binary_path, args.expect_archs)
+        except RuntimeError as error:
+            gh_error(str(error))
+            return 1
 
     binary_name = binary_path.name
     headless = True
@@ -304,28 +290,27 @@ def _verify(binary_path: Path, args: argparse.Namespace) -> int:
     return _boot_test(run_binary, cwd=work_dir, timeout=args.timeout, headless=headless)
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--binary-path", required=True, help="Executable, AppImage, or DMG")
     parser.add_argument("--working-dir", default="")
     parser.add_argument("--build-dir", default="")
-    parser.add_argument("--type", default="binary", dest="exe_type")
+    parser.add_argument("--type", choices=EXE_TYPES, default="binary", dest="exe_type")
     parser.add_argument("--timeout", type=int, default=60)
     parser.add_argument("--expect-archs", default="")
     parser.add_argument("--expected-appimage-update-information", default="")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     if args.exe_type != "dmg":
-        sys.exit(_verify(Path(args.binary_path), args))
+        return _verify(Path(args.binary_path), args)
 
     try:
         with _attached_dmg(Path(args.binary_path)) as mount_point:
-            returncode = _verify(_bundle_executable(mount_point), args)
+            return _verify(_bundle_executable(mount_point), args)
     except RuntimeError as error:
         gh_error(str(error))
-        sys.exit(1)
-    sys.exit(returncode)
+        return 1
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

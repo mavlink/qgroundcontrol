@@ -9,6 +9,7 @@ from unittest.mock import patch
 
 from ci.reporting import size_analysis
 from ci.reporting.size_analysis import BinaryAnalyzer
+from common.build_config import load_build_config
 
 
 def test_binary_analyzer_requires_existing_file(tmp_path: Path) -> None:
@@ -84,8 +85,10 @@ def test_source_build_cleans_temporary_directory(tmp_path: Path, monkeypatch) ->
     monkeypatch.setattr(size_analysis.shutil, "which", lambda name: None)
     monkeypatch.setattr(size_analysis, "run_captured", run_captured)
 
-    assert size_analysis.install_bloaty(10)
+    assert size_analysis.install_bloaty()
     assert build_directory is not None
     assert not build_directory.exists()
     assert commands[0][1] == str(size_analysis.APT_INSTALL_RETRY)
     assert "libprotobuf-dev" in commands[0]
+    fetch = next(command for command in commands if "fetch" in command)
+    assert fetch[-1] == load_build_config()["tools"]["bloaty"]["revision"]

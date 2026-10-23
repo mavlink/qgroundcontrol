@@ -116,7 +116,6 @@ runs:
         target: docker-${{ inputs.variant }}
         build-type: Release
         key-suffix: ${{ steps.compilers.outputs.fingerprint }}
-        cpm-modules: .cache/CPM
         install-tools: 'false'
 
     - name: Run Docker build

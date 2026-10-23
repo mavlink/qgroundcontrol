@@ -17,10 +17,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
-    # pull-requests: write scoped here: the title check sets a pending status on [WIP] titles.
+    # The title check reads the pull request's current title through the API.
     permissions:
-      contents: read
-      pull-requests: write
+      pull-requests: read
 
     steps:
       - name: Harden Runner
@@ -50,7 +49,6 @@ jobs:
           requireScope: false
           subjectPattern: ^.{1,80}$
           subjectPatternError: PR title must be 80 characters or less.
-          wip: true
           validateSingleCommit: false
 
   label:

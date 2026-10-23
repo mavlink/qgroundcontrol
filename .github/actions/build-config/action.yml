@@ -14,9 +14,6 @@ outputs:
   gstreamer_version:
     description: GStreamer version (generic/minimum)
     value: ${{ steps.read.outputs.gstreamer_version }}
-  android_ndk_full_version:
-    description: Android NDK version (full form for sdkmanager)
-    value: ${{ steps.read.outputs.android_ndk_full_version }}
   android_java_version:
     description: Java version
     value: ${{ steps.read.outputs.android_java_version }}
@@ -26,9 +23,6 @@ outputs:
   android_min_sdk:
     description: Android minimum API level
     value: ${{ steps.read.outputs.android_min_sdk }}
-  android_build_tools:
-    description: Android build tools version
-    value: ${{ steps.read.outputs.android_build_tools }}
   android_cmdline_tools:
     description: Android command line tools version
     value: ${{ steps.read.outputs.android_cmdline_tools }}
@@ -38,6 +32,12 @@ outputs:
   apple_xcode_ios_version:
     description: Xcode version (iOS)
     value: ${{ steps.read.outputs.apple_xcode_ios_version }}
+  build_cmake_version:
+    description: CMake version that build-setup installs
+    value: ${{ steps.read.outputs.build_cmake_version }}
+  build_ninja_version:
+    description: Ninja version that build-setup installs
+    value: ${{ steps.read.outputs.build_ninja_version }}
 
 runs:
   using: composite
@@ -45,13 +45,4 @@ runs:
     - name: Read build config
       id: read
       shell: bash
-      run: |
-        if command -v python3 >/dev/null 2>&1; then
-          py_cmd="python3"
-        elif command -v python >/dev/null 2>&1; then
-          py_cmd="python"
-        else
-          echo "Error: Python interpreter not found in PATH" >&2
-          exit 1
-        fi
-        "${py_cmd}" ./tools/setup/read_config.py --github-output
+      run: python3 "${GITHUB_WORKSPACE}/tools/setup/read_config.py" --github-output

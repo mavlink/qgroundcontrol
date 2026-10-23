@@ -33,7 +33,7 @@ def find_unique(build_dir: Path, pattern: str, *, recursive: bool = True) -> Pat
     return matches[0] if matches else None
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--build-dir", type=Path, required=True)
     parser.add_argument("--pattern", required=True, help="Glob pattern (e.g. '*.apk')")
@@ -48,7 +48,7 @@ def main() -> int:
         metavar="DEST",
         help="Copy the match to this file path",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     if not args.build_dir.is_dir():
         gh_error(f"Build directory does not exist: {args.build_dir}")

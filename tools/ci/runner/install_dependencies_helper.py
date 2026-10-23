@@ -1,141 +1,176 @@
 #!/usr/bin/env python3
-"""Post-install fixups for CI dependency caching on Linux.
+"""CI entry points for the install-dependencies action.
 
-Handles:
-- Enabling the Ubuntu universe repository
-- Repairing apt alternatives after cache-apt-pkgs-action restore
+- plan: the Linux apt download-cache key and restore keys, as step outputs
+- install: the Linux apt packages and validated extra packages, through apt_install_retry.py
+- macos: the Homebrew packages and the GStreamer framework, through install_dependencies
+- windows: MSVC and NSIS for windows.yml, through install_dependencies
+
+CI skips install_dependencies' Python build tools and the distro copies of CI_PROVIDED_TOOLS.
 """
 
 from __future__ import annotations
 
-import re
+import argparse
+import hashlib
+import os
+import platform
 import subprocess
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import _bootstrap as _bootstrap
-from common.gh_actions import gh_error, gh_warning, write_github_output
-from common.proc import run_captured
-from setup.install_dependencies._packages import get_debian_packages
+from common.gh_actions import env_default, env_flag, gh_error, write_github_output
+from common.paths import TOOLS_DIR
+from setup.install_dependencies._debian import enable_universe
+from setup.install_dependencies._macos import install_macos
+from setup.install_dependencies._packages import (
+    get_debian_packages,
+    get_packages,
+    validate_extra_packages,
+)
 
-APT_OPTS = ["-o", "DPkg::Lock::Timeout=300", "-o", "Acquire::Retries=3"]
+from ci.runner import apt_install_retry
 
-
-def _sudo(cmd: list[str], *, check: bool = True) -> subprocess.CompletedProcess:
-    """Run cmd under sudo, streaming output. Captured callers use run_captured directly."""
-    return subprocess.run(["sudo", *cmd], check=check)
-
-
-def _ldconfig_has_blas() -> bool:
-    result = run_captured(["ldconfig", "-p"])
-    return bool(re.search(r"\blibblas\.so\.3\b", result.stdout))
-
-
-def _get_multiarch() -> str:
-    result = run_captured(["dpkg-architecture", "-qDEB_HOST_MULTIARCH"])
-    return result.stdout.strip() if result.returncode == 0 else ""
+INSTALL_DEPENDENCIES = TOOLS_DIR / "setup" / "install_dependencies"
+EXTRA_PACKAGES_TIMEOUT = 300
+# build-setup installs the pinned CMake and Ninja and the cache action the pinned ccache (and mold
+# on Linux). Distro copies would only shadow or duplicate them on PATH.
+CI_PROVIDED_TOOLS = frozenset({"ccache", "cmake", "mold", "ninja", "ninja-build"})
 
 
-def enable_universe() -> None:
-    """Enable universe; the following bounded install step refreshes package lists."""
-    sources_dirs = [Path("/etc/apt/sources.list"), Path("/etc/apt/sources.list.d")]
-    universe_found = False
-
-    for source in sources_dirs:
-        if not source.exists():
-            continue
-        paths = (
-            [source]
-            if source.is_file()
-            else list(source.glob("*.list")) + list(source.glob("*.sources"))
-        )
-        for p in paths:
-            try:
-                text = p.read_text(errors="replace")
-                if re.search(r"^(deb|Components:).*universe", text, re.MULTILINE):
-                    universe_found = True
-                    break
-            except OSError:
-                continue
-        if universe_found:
-            break
-
-    if not universe_found:
-        _sudo(["apt-get", *APT_OPTS, "install", "-y", "-qq", "software-properties-common"])
-        _sudo(["add-apt-repository", "-y", "universe"])
-
-
-def _package_installed(package: str) -> bool:
-    result = run_captured(["dpkg-query", "-W", "--showformat=${db:Status-Status}", package])
-    return result.returncode == 0 and result.stdout.strip() == "installed"
-
-
-def fix_apt_alternatives() -> None:
-    """Repair apt alternatives and BLAS symlinks after cache restore."""
-    result = _sudo(["dpkg", "--configure", "-a"], check=False)
-    if result.returncode != 0:
-        gh_warning("dpkg --configure -a failed; package state may be inconsistent")
-
-    # Category installs (e.g. Android's core) have no BLAS to repair.
-    if not _package_installed("libblas3") or _ldconfig_has_blas():
-        return
-
-    gh_warning("libblas.so.3 missing from linker cache; attempting repair")
-    _sudo(
-        ["apt-get", *APT_OPTS, "install", "-y", "-qq", "--reinstall", "libblas3", "libopenblas0"],
-        check=False,
-    )
-
-    multiarch = _get_multiarch()
-    if multiarch:
-        _sudo(["update-alternatives", "--auto", f"libblas.so.3-{multiarch}"], check=False)
-
-        blas_link = Path(f"/usr/lib/{multiarch}/libblas.so.3")
-        if not blas_link.exists():
-            candidates = list(Path("/usr/lib").rglob("libblas.so.3"))
-            if candidates:
-                candidate = candidates[0]
-                gh_warning(f"Creating compatibility symlink {blas_link} -> {candidate}")
-                _sudo(["ln", "-sf", str(candidate), str(blas_link)])
-
-    _sudo(["ldconfig"])
-
-    if not _ldconfig_has_blas():
-        gh_error("libblas.so.3 is still missing after repair attempt")
-        sys.exit(1)
-
-
-def print_packages(category: str = "") -> None:
-    """Resolve the debian apt package list and emit it as a GITHUB_OUTPUT value."""
-    packages = " ".join(get_debian_packages(category or None))
+def debian_packages(category: str) -> list[str]:
+    """The apt packages for category (blank: the full desktop set); exit if there are none."""
+    packages = [
+        package
+        for package in get_debian_packages(category or None)
+        if package not in CI_PROVIDED_TOOLS
+    ]
     if not packages:
         gh_error(f"install_dependencies has no Debian packages for category {category!r}")
-        sys.exit(1)
-    write_github_output({"packages": packages})
+        raise SystemExit(1)
+    return packages
 
 
-def main() -> None:
-    import argparse
+def _os_release(path: Path = Path("/etc/os-release")) -> dict[str, str]:
+    fields: dict[str, str] = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        key, sep, value = line.partition("=")
+        if sep:
+            fields[key.strip()] = value.strip().strip("\"'")
+    return fields
 
+
+def plan(category: str, *, os_release: Path = Path("/etc/os-release")) -> None:
+    """Write the .deb cache key: category, distro, and runner architecture, then month, then packages.
+
+    actions/cache never re-saves on an exact key hit, so the month stamp keeps the cache from going
+    stale as -updates bumps package versions. A category's smaller set has its own prefix so it
+    never restores into, or saves as, the full set's cache, and the distro stamp separates runner
+    images whose .debs don't overlap.
+    """
+    packages = debian_packages(category)
+    release = _os_release(os_release)
+    distro = f"{release.get('ID', 'linux')}-{release.get('VERSION_ID', 'rolling')}"
+    arch = os.environ.get("RUNNER_ARCH") or platform.machine()
+    family = "-".join(filter(None, ("apt-debs", category, distro, arch)))
+    month = datetime.now(timezone.utc).strftime("%Y-%m")
+    digest = hashlib.sha256("\n".join(packages).encode()).hexdigest()
+    write_github_output(
+        {
+            "key": f"{family}-{month}-{digest}",
+            "restore-keys": f"{family}-{month}-\n{family}-",
+        }
+    )
+
+
+def install(category: str, extra_packages: list[str]) -> int:
+    """Install the planned packages, then the extras with a shorter timeout."""
+    packages = debian_packages(category)
+    try:
+        extra_packages = validate_extra_packages(extra_packages)
+    except ValueError as error:
+        gh_error(str(error))
+        return 1
+    if not enable_universe():
+        gh_error("Could not enable the universe repository")
+        return 1
+    status = apt_install_retry.main(
+        ["--update", "--no-install-recommends", "--autoclean", *packages]
+    )
+    if status or not extra_packages:
+        return status
+    return apt_install_retry.main(
+        [
+            "--install-timeout",
+            str(EXTRA_PACKAGES_TIMEOUT),
+            "--label",
+            "extra apt packages",
+            *extra_packages,
+        ]
+    )
+
+
+def install_homebrew() -> int:
+    """Install the Homebrew packages CI doesn't provide elsewhere, then the GStreamer framework."""
+    packages = [package for package in get_packages("macos") if package not in CI_PROVIDED_TOOLS]
+    return 0 if install_macos(packages=packages) else 1
+
+
+def install_windows(*, msvc_arm64: bool) -> int:
+    """Install MSVC and NSIS; CMake downloads GStreamer at configure time."""
+    command = [
+        sys.executable,
+        str(INSTALL_DEPENDENCIES),
+        "--platform",
+        "windows",
+        "--skip-gstreamer",
+        "--msvc",
+        "--nsis",
+    ]
+    if msvc_arm64:
+        command.append("--msvc-arm64")
+    return subprocess.run(command, check=False).returncode
+
+
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
-    sub.add_parser("enable-universe")
-    sub.add_parser("fix-apt-alternatives")
-    packages = sub.add_parser("print-packages")
-    packages.add_argument("--category", default="", help="Only this category (default: all)")
+    plan_parser = sub.add_parser("plan")
+    install_parser = sub.add_parser("install")
+    for command in (plan_parser, install_parser):
+        command.add_argument(
+            "--category",
+            default=env_default("INPUT_CATEGORY"),
+            help="Only this install_dependencies category (default: the full desktop set)",
+        )
+    install_parser.add_argument(
+        "--extra-packages",
+        default=env_default("INPUT_EXTRA_PACKAGES"),
+        help="Space-separated additional apt packages",
+    )
+    sub.add_parser("macos")
+    windows = sub.add_parser("windows")
+    windows.add_argument(
+        "--msvc-arm64",
+        action="store_true",
+        default=env_flag("INPUT_MSVC_ARM64"),
+        help="Also add the ARM64 cross compiler component",
+    )
 
-    args = parser.parse_args()
-    if args.command == "print-packages":
-        print_packages(args.category)
-        return
-    commands = {
-        "enable-universe": enable_universe,
-        "fix-apt-alternatives": fix_apt_alternatives,
-    }
-    commands[args.command]()
+    args = parser.parse_args(argv)
+    if args.command == "plan":
+        plan(args.category)
+        return 0
+    if args.command == "install":
+        return install(args.category, args.extra_packages.split())
+    if args.command == "macos":
+        return install_homebrew()
+    return install_windows(msvc_arm64=args.msvc_arm64)
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

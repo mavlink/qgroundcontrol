@@ -20,9 +20,6 @@ inputs:
       matrix legs share the same host/target/build-type.
     required: false
     default: ''
-  cpm-modules:
-    description: Path to CPM Modules
-    required: false
   install-tools:
     description: Install host compiler-cache/linker tools and reset host ccache stats (false for container builds)
     required: false
@@ -31,13 +28,6 @@ inputs:
     description: "Whether to save cache (auto = save including PR merge refs; skip pull_request_target)"
     required: false
     default: 'auto'
-  pr-save-min-misses:
-    description: >-
-      Pull requests skip saving the compiler or moc cache when the build missed it fewer
-      times than this, since each save uploads the whole archive (0 = always save).
-      Other events always save.
-    required: false
-    default: '20'
 runs:
   using: composite
   steps:
@@ -54,12 +44,10 @@ runs:
         INPUT_BUILD_TYPE: ${{ inputs.build-type }}
         INPUT_VARIANT: ${{ inputs.variant }}
         INPUT_KEY_SUFFIX: ${{ inputs.key-suffix }}
-        INPUT_CPM_MODULES: ${{ inputs.cpm-modules }}
         INPUT_SAVE_CACHE: ${{ inputs.save-cache }}
-        INPUT_PR_SAVE_MIN_MISSES: ${{ inputs.pr-save-min-misses }}
         PR_NUMBER: ${{ github.event.pull_request.number }}
         COMPILER_CACHE_HASH: ${{ hashFiles('.github/build-config.json', 'tools/configs/ccache.conf') }}
-        MOC_CACHE_HASH: ${{ hashFiles('.github/build-config.json', 'cmake/Helpers.cmake', 'tools/moccache.py') }}
+        MOC_CACHE_HASH: ${{ hashFiles('.github/build-config.json', 'cmake/Helpers.cmake', 'tools/moccache/*.py', 'tools/moccache_launcher.py') }}
         GST_SDK_FILES_HASH: ${{ hashFiles('cmake/GStreamer/Download.cmake', 'cmake/GStreamer/platform/*.cmake') }}
       run: python3 "${GITHUB_WORKSPACE}/tools/ci/cache/cache_plan.py"
 
@@ -86,7 +74,7 @@ runs:
       if: steps.artifact-cache.outputs.restored != 'true' && env.QGC_COMPILER_CACHE_TOOL == 'ccache'
       uses: actions/cache/restore@v6
       with:
-        path: .ccache
+        path: .cache/ccache
         key: ${{ steps.plan.outputs.ccache_key }}
         restore-keys: ${{ steps.plan.outputs.ccache_restore_keys }}
 
@@ -121,7 +109,7 @@ runs:
         if [[ "${RESET_CCACHE}" == true ]]; then
           ccache -z
         fi
-        python3 "${GITHUB_WORKSPACE}/tools/moccache.py" --zero-stats
+        python3 "${GITHUB_WORKSPACE}/tools/moccache_launcher.py" --zero-stats
 
     # SDK payloads change independently of source declarations and are large.
     # Keep them out of the CPM archive and reuse an immutable SDK cache.
@@ -194,7 +182,7 @@ runs:
         restore-keys: ${{ steps.plan.outputs.cpm_restore_keys }}
 
     - name: Seed an empty CPM cache from the runner image
-      if: steps.plan.outputs.cpm_mode != '' && env.QGC_PREINSTALLED_CPM_DIR != ''
+      if: env.QGC_PREINSTALLED_CPM_DIR != ''
       shell: bash
       run: >-
         python3 "${GITHUB_WORKSPACE}/tools/ci/cache/cpm_helper.py" seed-cache

@@ -35,7 +35,6 @@ from common.gh_actions import (
     env_default,
     env_flag,
     gh,
-    gh_api_json,
     list_run_artifacts,
     list_workflow_runs_for_sha,
 )
@@ -56,7 +55,6 @@ _DISTRIBUTABLE_PREFIXES = (
 
 _EXCLUDED_PREFIXES = (
     "test-results",
-    "test-duration",
     "emulator-diagnostics",
 )
 
@@ -250,16 +248,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Download diagnostics from failed completed builds too",
     )
     parser.add_argument(
-        "--strict-runs",
-        action="store_true",
-        default=env_flag("INPUT_STRICT_RUNS"),
-        help="Require exact successful snapshot identities",
-    )
-    parser.add_argument(
         "--allow-missing",
         action="store_true",
         default=env_flag("INPUT_ALLOW_MISSING"),
-        help="Allow absent diagnostic artifacts selected by prefix (not valid for strict runs)",
+        help="Allow absent diagnostic artifacts selected by prefix",
     )
     return parser.parse_args(argv)
 
@@ -283,40 +275,12 @@ def main(argv: list[str] | None = None) -> int:
     if args.require_sizes and args.sizes_out is None:
         print("Error: --require-sizes requires --sizes-out", file=sys.stderr)
         return 1
-    if args.allow_missing and args.strict_runs:
-        print("Error: --allow-missing cannot be used with --strict-runs", file=sys.stderr)
-        return 1
 
     print(f"Finding completed workflow runs for commit {head_sha}...")
 
     all_runs = resolve_workflow_runs(repo, head_sha, args.runs_file, list_workflow_runs_for_sha)
     if all_runs is None:
         return 1
-    if args.strict_runs:
-        if not args.runs_file:
-            print("Error: strict downloads require a run snapshot", file=sys.stderr)
-            return 1
-        for workflow in workflows:
-            selected = [run for run in all_runs if run.get("name") == workflow]
-            if (
-                len(selected) != 1
-                or selected[0].get("head_sha") != head_sha
-                or selected[0].get("status") != "completed"
-                or selected[0].get("conclusion") != "success"
-                or (event and selected[0].get("event") != event)
-            ):
-                print(f"Error: invalid release snapshot for {workflow}", file=sys.stderr)
-                return 1
-            saved = selected[0]
-            current = gh_api_json(f"repos/{repo}/actions/runs/{saved['id']}")
-            if any(
-                current.get(key) != saved.get(key)
-                for key in ("head_sha", "run_attempt", "status", "conclusion")
-            ):
-                print(
-                    f"Error: release run was rerun after selection: {saved['id']}", file=sys.stderr
-                )
-                return 1
     preloaded_artifacts: dict[int, list[dict[str, Any]]] = {}
     had_successful_runs = bool(select_latest_successful_runs(all_runs, workflows, event=event))
     runs: list[dict[str, Any]] = []
@@ -338,10 +302,6 @@ def main(argv: list[str] | None = None) -> int:
                 runs.append(candidate)
                 run_artifact_names[run_id] = names
                 break
-
-    if args.strict_runs and len(runs) != len(workflows):
-        print("Error: selected release run is missing required artifacts", file=sys.stderr)
-        return 1
 
     if args.sizes_out is not None:
         sizes = collect_artifact_sizes(

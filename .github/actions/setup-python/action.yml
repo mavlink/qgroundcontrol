@@ -3,7 +3,7 @@ description: Setup Python with uv for fast dependency installation
 
 inputs:
   groups:
-    description: 'Dependency groups to install (comma-separated: scripts, precommit, test, qt, coverage, build, lint, terrain, dev, all)'
+    description: 'Dependency groups to install (comma-separated: scripts, precommit, test, qt, coverage, build, lint, terrain, release, dev, all)'
     required: false
     default: 'scripts'
   python-version:
@@ -14,36 +14,13 @@ inputs:
 runs:
   using: composite
   steps:
-    # JavaScript actions receive runner-injected URLs that can override the
-    # shell environment. RunsOn < 3.1 does this on Windows despite the S3 flag.
+    # The runner injects the cache URLs that cache actions use into JavaScript actions only, where
+    # they can override the shell environment (RunsOn < 3.1 on Windows), so the probe runs with a
+    # JavaScript action's environment rather than in a shell step.
     - name: Detect Actions cache backend
       uses: actions/github-script@v9
       with:
-        script: |
-          const env = process.env;
-          let backend = 'github';
-          if (env.RUNS_ON_RUNNER_NAME && env.RUNS_ON_S3_BUCKET_CACHE) {
-            try {
-              const endpoint = new URL(env.ACTIONS_RESULTS_URL);
-              const original = new URL(env.ZCTIONS_RESULTS_URL);
-              if (['http:', 'https:'].includes(endpoint.protocol) &&
-                  original.protocol === 'https:' && endpoint.origin !== original.origin) {
-                backend = 's3';
-              }
-            } catch {
-              // Missing/invalid proxy metadata keeps GitHub's storage limits.
-            }
-            if (backend !== 's3') {
-              core.warning('RunsOn S3 cache routing is inactive; using GitHub cache limits. Windows requires RunsOn >= 3.1.');
-            }
-          }
-          core.exportVariable('QGC_ACTIONS_CACHE_BACKEND', backend);
-          core.info(`Actions cache backend: ${backend}`);
-          if (backend === 's3') {
-            // Full runner images ship a system Python that uv would otherwise
-            // prefer, leaving cache-python without a managed install to save.
-            core.exportVariable('UV_PYTHON_PREFERENCE', 'only-managed');
-          }
+        script: await exec.exec('python3', ['tools/ci/cache/cache_backend.py'])
 
     - name: Setup uv and Python ${{ inputs.python-version }}
       uses: astral-sh/setup-uv@v10.2.0

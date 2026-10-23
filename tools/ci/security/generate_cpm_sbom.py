@@ -28,6 +28,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 import _bootstrap as _bootstrap
 from common.cmake import read_cache_dict
 from common.git import run_git
+from common.io import write_json
 
 
 def git_info(source_dir: Path) -> tuple[str, str]:
@@ -276,7 +277,7 @@ def generate_spdx(build_dir: Path) -> dict:
     }
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--build-dir", type=Path, required=True, help="CMake build directory")
     parser.add_argument("--format", choices=("cyclonedx", "spdx"), default="cyclonedx")
@@ -286,7 +287,7 @@ def main() -> int:
         action="store_true",
         help="Fail when the CMake cache contains no CPM dependencies",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     sbom = generate_spdx(args.build_dir) if args.format == "spdx" else generate_sbom(args.build_dir)
     count = len(sbom["packages"]) - 1 if args.format == "spdx" else len(sbom["components"])
@@ -294,13 +295,11 @@ def main() -> int:
         print("Error: CPM dependency SBOM contains no components", file=sys.stderr)
         return 1
 
-    output = json.dumps(sbom, indent=2)
-
     if args.output:
-        args.output.write_text(output, encoding="utf-8")
+        write_json(args.output, sbom)
         print(f"SBOM written to {args.output} ({count} components)")
     else:
-        print(output)
+        print(json.dumps(sbom, indent=2))
 
     return 0
 

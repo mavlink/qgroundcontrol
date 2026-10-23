@@ -49,10 +49,12 @@ jobs:
             https://artifacts.px4.io/Firmware/_general/parameters.json.xz -o /tmp/parameters.json.xz
           xz -d -c /tmp/parameters.json.xz > src/FirmwarePlugin/PX4/PX4ParameterFactMetaData.json
 
+      # PRs opened with GITHUB_TOKEN start no workflows, so their required checks would never report.
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v8
         with:
           branch: update-px4-metadata
+          token: ${{ secrets.PX4BUILDBOT_ACCESSTOKEN || github.token }}
           title: "chore: update PX4 metadata"
           commit-message: "chore: update PX4 metadata"
           body: |

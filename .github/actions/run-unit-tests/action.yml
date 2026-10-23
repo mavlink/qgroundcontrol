@@ -4,10 +4,8 @@ description: Run tests via CTest, then report and upload their results even when
 inputs:
   build-dir:
     description: Path to CMake build directory
-    required: true
-  build-type:
-    description: CTest configuration for multi-config generators
-    default: ''
+    required: false
+    default: ${{ runner.temp }}/build
   junit-output:
     description: JUnit XML output filename (relative to build-dir)
     required: false
@@ -41,9 +39,9 @@ inputs:
     required: false
     default: '14'
   duration-report:
-    description: Summarize slow tests and write their durations to this JSON file (relative to build-dir); empty skips
+    description: Summarize the slowest tests in the job summary and warn about slow tests
     required: false
-    default: ''
+    default: 'false'
   upload-codecov:
     description: Upload JUnit test analytics to Codecov using OIDC (caller needs id-token write)
     required: false
@@ -64,29 +62,25 @@ runs:
           --junit-output "${INPUTS_JUNIT_OUTPUT}" \
           --ctest-output "${INPUTS_CTEST_OUTPUT}" \
           --jobs "${INPUTS_PARALLEL}" \
-          --build-type "${INPUTS_BUILD_TYPE}" \
           --include-labels "${INPUTS_INCLUDE_LABELS}" \
           --exclude-labels "${INPUTS_EXCLUDE_LABELS}"
       env:
         INPUTS_JUNIT_OUTPUT: ${{ inputs.junit-output }}
         INPUTS_CTEST_OUTPUT: ${{ inputs.ctest-output }}
         INPUTS_PARALLEL: ${{ inputs.parallel }}
-        INPUTS_BUILD_TYPE: ${{ inputs.build-type }}
         INPUTS_INCLUDE_LABELS: ${{ inputs.include-labels }}
         INPUTS_EXCLUDE_LABELS: ${{ inputs.exclude-labels }}
 
     # The steps below also run after test failures; the failed CTest step still fails the action.
     - name: Analyze test durations
-      if: ${{ !cancelled() && inputs.duration-report != '' }}
+      if: ${{ !cancelled() && inputs.duration-report == 'true' }}
       shell: bash
       working-directory: ${{ inputs.build-dir }}
       run: |
         python3 "${GITHUB_WORKSPACE}/tools/ci/reporting/test_duration_report.py" \
-          --junit-path "${INPUTS_JUNIT_OUTPUT}" \
-          --report-json-path "${INPUTS_DURATION_REPORT}"
+          --junit-path "${INPUTS_JUNIT_OUTPUT}"
       env:
         INPUTS_JUNIT_OUTPUT: ${{ inputs.junit-output }}
-        INPUTS_DURATION_REPORT: ${{ inputs.duration-report }}
 
     - name: Upload Codecov test analytics
       if: ${{ !cancelled() && inputs.upload-codecov == 'true' }}

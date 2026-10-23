@@ -16,6 +16,8 @@ import _bootstrap as _bootstrap
 from common.git import run_git
 
 PUSH_ATTEMPTS = 3
+AUTHOR_NAME = "github-actions[bot]"
+AUTHOR_EMAIL = "github-actions[bot]@users.noreply.github.com"
 
 
 def sanitize_branch(name: str) -> str:
@@ -41,8 +43,6 @@ def deploy_branch(
     branch: str,
     target_branch: str,
     commit_message: str,
-    author_email: str,
-    author_name: str,
 ) -> bool:
     """Copy *source_dir* into *target_dir*/<safe(branch)>, commit and push.
 
@@ -52,8 +52,8 @@ def deploy_branch(
     deploy_dir = target_dir / safe_branch
     _copy_tree(source_dir, deploy_dir)
 
-    run_git("config", "user.email", author_email, cwd=target_dir, check=True)
-    run_git("config", "user.name", author_name, cwd=target_dir, check=True)
+    run_git("config", "user.email", AUTHOR_EMAIL, cwd=target_dir, check=True)
+    run_git("config", "user.name", AUTHOR_NAME, cwd=target_dir, check=True)
     run_git("add", safe_branch, cwd=target_dir, check=True)
 
     diff = run_git("diff", "--cached", "--quiet", cwd=target_dir)
@@ -80,16 +80,14 @@ def _push_with_retry(target_dir: Path, target_branch: str) -> None:
     raise RuntimeError(msg)
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source-dir", required=True, help="Path to built docs")
     parser.add_argument("--target-dir", required=True, help="Path to target repo checkout")
     parser.add_argument("--branch", required=True, help="Source branch name (used as subdirectory)")
     parser.add_argument("--target-branch", default="main", help="Branch to push to")
     parser.add_argument("--commit-message", default="Docs update")
-    parser.add_argument("--author-email", default="github-actions[bot]@users.noreply.github.com")
-    parser.add_argument("--author-name", default="github-actions[bot]")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     deploy_branch(
         source_dir=Path(args.source_dir),
@@ -97,10 +95,9 @@ def main() -> None:
         branch=args.branch,
         target_branch=args.target_branch,
         commit_message=args.commit_message,
-        author_email=args.author_email,
-        author_name=args.author_name,
     )
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

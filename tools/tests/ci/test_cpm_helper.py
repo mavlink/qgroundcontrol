@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import sys
 
 import pytest
 from ci.cache.cpm_helper import (
@@ -11,7 +12,9 @@ from ci.cache.cpm_helper import (
     prepare_cpm_cache,
 )
 
-from .._helpers import git
+from .._helpers import commit_files, git
+
+pytestmark = pytest.mark.windows
 
 
 class TestFingerprint:
@@ -167,6 +170,7 @@ def test_interrupted_seed_copy_leaves_no_partial_cache(tmp_path, monkeypatch):
     assert not list(tmp_path.glob(".qgc-cpm-copy-*"))
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="runner images build CPM seeds on Linux")
 @pytest.mark.usefixtures("isolated_git")
 def test_seed_creation_with_real_cmake_configuration(tmp_path):
     import json
@@ -178,14 +182,12 @@ def test_seed_creation_with_real_cmake_configuration(tmp_path):
     root = tmp_path / "repo"
     root.mkdir()
     git(root, "init", "-q")
-    (root / "CMakeLists.txt").write_text(
-        'cmake_minimum_required(VERSION 3.25)\nproject(Seed NONE)\nfile(MAKE_DIRECTORY "$ENV{CPM_SOURCE_CACHE}/package")\nfile(WRITE "$ENV{CPM_SOURCE_CACHE}/package/source" "downloaded source")\n'
-    )
-    (root / "CMakePresets.json").write_text(
-        json.dumps({"version": 6, "configurePresets": [{"name": "Linux", "generator": "Ninja"}]})
-    )
-    git(root, "add", ".")
-    git(root, "commit", "-qm", "fixture")
+    presets = {"version": 6, "configurePresets": [{"name": "Linux", "generator": "Ninja"}]}
+    files = {
+        "CMakeLists.txt": 'cmake_minimum_required(VERSION 3.25)\nproject(Seed NONE)\nfile(MAKE_DIRECTORY "$ENV{CPM_SOURCE_CACHE}/package")\nfile(WRITE "$ENV{CPM_SOURCE_CACHE}/package/source" "downloaded source")\n',
+        "CMakePresets.json": json.dumps(presets),
+    }
+    commit_files(root, files, "fixture")
     qt = tmp_path / "qt"
     (qt / "bin").mkdir(parents=True)
     cmake = shutil.which("cmake")

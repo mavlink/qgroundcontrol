@@ -33,6 +33,7 @@ on:
       - 'tools/analyzers/dependencies.py'
       - 'tools/analyzers/result_cache.py'
       - 'tools/setup/build_clazy.py'
+      - 'tools/ci/runner/analysis_tools.py'
       - 'tools/common/io.py'
       - 'tools/common/xml.py'
       - 'tools/generators/mavlink_enums.py'
@@ -97,10 +98,11 @@ jobs:
         with:
           egress-policy: audit
 
+      # A pull request's merge commit and its two parents hold the PR diff.
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          fetch-depth: ${{ github.event_name != 'pull_request' && 1 || 0 }}
+          fetch-depth: ${{ github.event_name == 'pull_request' && 2 || 1 }}
           sparse-checkout: |
             /src/
             .github/build-config.json
@@ -121,6 +123,7 @@ jobs:
           DISPATCH_ANALYZE_ALL: ${{ inputs.analyze_all }}
           DISPATCH_PROFILE_CHECKS: ${{ inputs.profile_checks }}
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: python3 tools/ci/planning/analysis_matrix.py
 
   analyze:
@@ -155,10 +158,12 @@ jobs:
         with:
           show_costs: summary
 
+      # Pull requests need only the merge commit and its parents; a dispatched "changed" scan
+      # diffs against the default branch.
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          fetch-depth: 0
+          fetch-depth: ${{ github.event_name == 'pull_request' && 2 || 0 }}
           persist-credentials: false
 
       - name: Build Setup
@@ -204,29 +209,12 @@ jobs:
           CLANG_TIDY_VERSION: ${{ needs.plan.outputs.clang_tidy_version }}
           CLANG_TIDY_SHA256: ${{ needs.plan.outputs.clang_tidy_sha256 }}
           ANALYSIS_TOOLS: ${{ join(matrix.tools, ' ') }}
-        run: |
-          echo "/usr/lib/llvm-$LLVM_VERSION/bin" >> "$GITHUB_PATH"
-          if [[ " $ANALYSIS_TOOLS " == *' clang-tidy '* ]]; then
-            printf 'clang-tidy==%s --hash=sha256:%s\n' "$CLANG_TIDY_VERSION" "$CLANG_TIDY_SHA256" \
-              > "$RUNNER_TEMP/clang-tidy-requirements.txt"
-            uv pip install --quiet --require-hashes --no-deps --only-binary :all: \
-              --target "$RUNNER_TEMP/clang-tidy" -r "$RUNNER_TEMP/clang-tidy-requirements.txt"
-            tidy_bin="$RUNNER_TEMP/clang-tidy/clang_tidy/data/bin"
-            "$tidy_bin/clang-tidy" --version
-            "$tidy_bin/clang-tidy" --config-file=.clang-tidy --verify-config
-            echo "$tidy_bin" >> "$GITHUB_PATH"
-          fi
-          if [[ " $ANALYSIS_TOOLS " == *' clazy '* ]]; then
-            echo "$GITHUB_WORKSPACE/.cache/clazy/bin" >> "$GITHUB_PATH"
-            .cache/clazy/bin/clazy-standalone --version
-          fi
+        run: python3 tools/ci/runner/analysis_tools.py
 
       - name: Configure (analysis)
         if: matrix.family != 'tsan'
         uses: ./.github/actions/cmake-configure
         with:
-          build-dir: ${{ runner.temp }}/build
-          build-type: Debug
           preset: Linux-debug
           extra-args: >-
             -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
@@ -243,18 +231,13 @@ jobs:
         if: matrix.family == 'tsan'
         uses: ./.github/actions/cmake-configure
         with:
-          build-dir: ${{ runner.temp }}/build
-          build-type: Debug
           preset: Linux-debug
-          testing: 'true'
           extra-args: -DQGC_ENABLE_COVERAGE=OFF -DQGC_ENABLE_TSAN=ON
 
       - name: Generate protocol headers
         if: matrix.family == 'compiler' || matrix.family == 'iwyu'
         uses: ./.github/actions/cmake-build
         with:
-          build-dir: ${{ runner.temp }}/build
-          build-type: Debug
           target: qgc-analysis-headers
 
       # Analyzed sources include only protocol headers and configure outputs, never moc or uic
@@ -263,16 +246,11 @@ jobs:
         if: matrix.family == 'iwyu'
         uses: ./.github/actions/cmake-build
         with:
-          build-dir: ${{ runner.temp }}/build
-          build-type: Debug
           target: autogen
 
       - name: Build runtime analysis prerequisites
         if: matrix.family == 'qml' || matrix.family == 'tsan'
         uses: ./.github/actions/cmake-build
-        with:
-          build-dir: ${{ runner.temp }}/build
-          build-type: Debug
 
       # Only master pushes save results, as one job; every other run restores the newest copy.
       - name: Restore analysis results
@@ -283,12 +261,15 @@ jobs:
           key: analysis-results-v1-${{ runner.os }}-${{ runner.arch }}-${{ github.run_id }}
           restore-keys: analysis-results-v1-${{ runner.os }}-${{ runner.arch }}-
 
-      # analysis_matrix.py builds the arguments; a "changed" scan diffs against PR_BASE_SHA.
+      # analysis_matrix.py builds the arguments; a "changed" scan diffs a PR's merge checkout
+      # against its first parent. `shell: bash` adds pipefail, so analyze.py's status survives tee.
       - name: Run analysis
         id: analysis
         if: matrix.family == 'compiler' || matrix.family == 'qml'
+        shell: bash
         env:
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           ANALYZE_ARGS: ${{ toJSON(matrix.analyze_args) }}
         run: |
           arg_lines=$(jq -r '.[]' <<< "$ANALYZE_ARGS")
@@ -304,8 +285,12 @@ jobs:
           path: .cache/analysis-results
           key: analysis-results-v1-${{ runner.os }}-${{ runner.arch }}-${{ github.run_id }}-${{ github.run_attempt }}
 
+      # IWYU is advisory: its uploaded report is the result, even when iwyu_tool exits non-zero
+      # because some units failed to compile.
       - name: Run IWYU
         if: matrix.family == 'iwyu'
+        continue-on-error: true
+        shell: bash
         env:
           ANALYSIS_PATH: ${{ matrix.path }}
         run: |
@@ -315,7 +300,6 @@ jobs:
         if: matrix.family == 'tsan'
         uses: ./.github/actions/run-unit-tests
         with:
-          build-dir: ${{ runner.temp }}/build
           junit-output: junit-results-analysis-${{ matrix.tool }}.xml
           ctest-output: sanitizer-output.txt
           include-labels: 'Unit|Integration'

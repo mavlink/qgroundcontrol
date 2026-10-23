@@ -13,6 +13,12 @@ from .._helpers import REPO_ROOT, get_steps, load_action, load_workflow
 if TYPE_CHECKING:
     from pathlib import Path
 
+SDK_ARGS = ["--ndk-version", "27.0.12077973", "--platform", "36", "--build-tools", "36.0.0"]
+
+
+def _argv(tmp_path: Path) -> list[str]:
+    return [*SDK_ARGS, "--workspace", str(tmp_path / "workspace")]
+
 
 def _setup_env(monkeypatch, tmp_path: Path, *, runner_os: str = "Linux") -> tuple[Path, Path]:
     sdk_root = tmp_path / "sdk"
@@ -25,40 +31,12 @@ def _setup_env(monkeypatch, tmp_path: Path, *, runner_os: str = "Linux") -> tupl
     monkeypatch.setenv("ANDROID_SDK_ROOT", str(sdk_root))
     monkeypatch.setenv("GITHUB_ENV", str(gh_env))
     monkeypatch.setenv("RUNNER_OS", runner_os)
-    monkeypatch.setattr(
-        "sys.argv",
-        [
-            "prog",
-            "--ndk-version",
-            "27.0.12077973",
-            "--platform",
-            "36",
-            "--build-tools",
-            "36.0.0",
-            "--workspace",
-            str(workspace),
-        ],
-    )
     return gh_env, sdk_root
 
 
 def test_missing_sdk_root_exits(monkeypatch, capsys) -> None:
     monkeypatch.delenv("ANDROID_SDK_ROOT", raising=False)
-    monkeypatch.setattr(
-        "sys.argv",
-        [
-            "prog",
-            "--ndk-version",
-            "27.0.12077973",
-            "--platform",
-            "36",
-            "--build-tools",
-            "36.0.0",
-        ],
-    )
-    with pytest.raises(SystemExit) as exc:
-        mod.main()
-    assert exc.value.code == 1
+    assert mod.main(SDK_ARGS) == 1
     assert "ANDROID_SDK_ROOT not set" in capsys.readouterr().out
 
 
@@ -68,25 +46,11 @@ def test_missing_ndk_path_exits(monkeypatch, tmp_path: Path, capsys) -> None:
     monkeypatch.setenv("ANDROID_SDK_ROOT", str(sdk_root))
     monkeypatch.setenv("RUNNER_OS", "Linux")
     monkeypatch.setattr(
-        "sys.argv",
-        [
-            "prog",
-            "--ndk-version",
-            "27.0.12077973",
-            "--platform",
-            "36",
-            "--build-tools",
-            "36.0.0",
-        ],
-    )
-    monkeypatch.setattr(
         subprocess,
         "run",
         lambda cmd, **kw: subprocess.CompletedProcess(cmd, 0),
     )
-    with pytest.raises(SystemExit) as exc:
-        mod.main()
-    assert exc.value.code == 1
+    assert mod.main(SDK_ARGS) == 1
     assert "NDK path not found after installation" in capsys.readouterr().out
 
 
@@ -99,7 +63,7 @@ def test_unix_invokes_sdkmanager_and_gradlew(monkeypatch, tmp_path: Path) -> Non
         lambda cmd, **kw: calls.append(list(cmd)) or subprocess.CompletedProcess(cmd, 0),
     )
 
-    mod.main()
+    assert mod.main(_argv(tmp_path)) == 0
     env = gh_env.read_text()
     assert "ANDROID_NDK_ROOT=" in env
     assert "ANDROID_NDK_HOME=" in env
@@ -127,7 +91,7 @@ def test_windows_uses_bat_paths(monkeypatch, tmp_path: Path) -> None:
         lambda cmd, **kw: calls.append(list(cmd)) or subprocess.CompletedProcess(cmd, 0),
     )
 
-    mod.main()
+    assert mod.main(_argv(tmp_path)) == 0
     assert calls[0][0] == str(sdkmanager)
     assert calls[1] == [str(sdkmanager), "ndk;27.0.12077973"]
     assert calls[2][0].endswith("gradlew.bat")
@@ -143,7 +107,7 @@ def test_gradle_probe_retains_timeout(monkeypatch, tmp_path: Path) -> None:
 
     monkeypatch.setattr(mod, "run_with_retry", run_with_retry)
 
-    mod.main()
+    assert mod.main(_argv(tmp_path)) == 0
 
     assert calls[-1][0][-1] == "--version"
     assert calls[-1][1]["timeout"] == 300
@@ -169,7 +133,7 @@ def test_windows_prefers_versioned_when_no_latest(monkeypatch, tmp_path: Path) -
 def test_windows_missing_sdkmanager_exits(monkeypatch, tmp_path: Path, capsys) -> None:
     _setup_env(monkeypatch, tmp_path, runner_os="Windows")
     with pytest.raises(SystemExit) as exc:
-        mod.main()
+        mod.main(_argv(tmp_path))
     assert exc.value.code == 1
     assert "sdkmanager.bat not found" in capsys.readouterr().out
 
@@ -183,7 +147,7 @@ def test_subprocess_failure_propagates(monkeypatch, tmp_path: Path) -> None:
 
     monkeypatch.setattr(subprocess, "run", fake_run)
     with pytest.raises(subprocess.CalledProcessError):
-        mod.main()
+        mod.main(_argv(tmp_path))
 
 
 def test_package_retry_removes_partial_ndk(monkeypatch, tmp_path: Path) -> None:
@@ -227,8 +191,8 @@ def test_ndk_retry_cleanup_failure_propagates(monkeypatch, tmp_path: Path) -> No
         mod._install_ndk("sdkmanager", "27.0.12077973", ndk_path)
 
 
-def test_qt_android_action_targets_first_installed_abi() -> None:
-    action = load_action("qt-android")
+def test_build_setup_targets_first_installed_android_abi() -> None:
+    action = load_action("build-setup")
     installs = [
         step for step in action["runs"]["steps"] if step.get("id", "").startswith("qt-android-")
     ]
@@ -239,19 +203,47 @@ def test_qt_android_action_targets_first_installed_abi() -> None:
         "android_armv7",
         "android_x86_64",
     ]
-    assert action["outputs"]["target_qt_root_dir"]["value"] == (
-        "${{ " + " || ".join(f"steps.{step['id']}.outputs.qt_root_dir" for step in installs) + " }}"
+    roots = ["qt-ios", *(step["id"] for step in installs)]
+    assert " ".join(action["outputs"]["target_qt_root_dir"]["value"].split()) == (
+        "${{ " + " || ".join(f"steps.{root}.outputs.qt_root_dir" for root in roots) + " }}"
     )
     for step in installs:
+        assert step["if"].startswith("inputs.mode == 'android' && ")
         assert step["with"]["export-env"] == "false"
 
 
+@pytest.mark.usefixtures("gh_env")
+def test_sdk_versions_default_to_build_config(monkeypatch, tmp_path: Path) -> None:
+    config = tmp_path / "build-config.json"
+    config.write_text(
+        '{"android": {"ndk_full_version": "27.2.1", "platform": "36", "build_tools": "36.0.0"}}'
+    )
+    monkeypatch.setenv("CONFIG_FILE", str(config))
+    monkeypatch.setenv("ANDROID_SDK_ROOT", str(tmp_path / "sdk"))
+    monkeypatch.setenv("RUNNER_OS", "Linux")
+    calls: list[list[str]] = []
+
+    def run_with_retry(command: list[str], **_kwargs: Any) -> subprocess.CompletedProcess[str]:
+        calls.append(command)
+        (tmp_path / "sdk" / "ndk" / "27.2.1").mkdir(parents=True, exist_ok=True)
+        return subprocess.CompletedProcess(command, 0)
+
+    monkeypatch.setattr(mod, "run_with_retry", run_with_retry)
+    mod.main(["--workspace", str(tmp_path)])
+    assert calls[:2] == [
+        ["sdkmanager", "platform-tools", "platforms;android-36", "build-tools;36.0.0"],
+        ["sdkmanager", "ndk;27.2.1"],
+    ]
+
+    config.write_text('{"android": {}}')
+    with pytest.raises(SystemExit) as exc:
+        mod.main([])
+    assert exc.value.code == 2
+
+
 def test_debug_keystore_signs_with_throwaway_key_and_exports_qt_env(
-    monkeypatch, tmp_path: Path
+    monkeypatch, tmp_path: Path, gh_env: Path
 ) -> None:
-    gh_env = tmp_path / "gh_env"
-    gh_env.write_text("")
-    monkeypatch.setenv("GITHUB_ENV", str(gh_env))
     monkeypatch.setenv("RUNNER_TEMP", str(tmp_path))
     monkeypatch.setattr(mod.shutil, "which", lambda name: f"/jdk/bin/{name}")
     calls: list[list[str]] = []
@@ -285,10 +277,7 @@ def test_debug_keystore_signs_with_throwaway_key_and_exports_qt_env(
     ]
 
 
-def test_debug_keystore_failure_exports_nothing(monkeypatch, tmp_path: Path) -> None:
-    gh_env = tmp_path / "gh_env"
-    gh_env.write_text("")
-    monkeypatch.setenv("GITHUB_ENV", str(gh_env))
+def test_debug_keystore_failure_exports_nothing(monkeypatch, tmp_path: Path, gh_env: Path) -> None:
     monkeypatch.setattr(mod.shutil, "which", lambda name: name)
 
     def fail(cmd: list[str], **kw: Any) -> subprocess.CompletedProcess:
@@ -303,7 +292,6 @@ def test_debug_keystore_failure_exports_nothing(monkeypatch, tmp_path: Path) -> 
 def test_debug_keystore_requires_a_location_and_keytool(
     monkeypatch, tmp_path: Path, capsys
 ) -> None:
-    monkeypatch.delenv("RUNNER_TEMP", raising=False)
     with pytest.raises(SystemExit) as exc:
         mod.main(["debug-keystore"])
     assert exc.value.code == 2
@@ -316,11 +304,13 @@ def test_debug_keystore_requires_a_location_and_keytool(
 
 
 def test_android_build_delegates_sdk_location_signing_and_apk_copy_to_helpers() -> None:
-    action = load_action("qt-android")
-    names = [step["name"] for step in action["runs"]["steps"]]
+    action = load_action("build-setup")
+    names = [step.get("name") for step in action["runs"]["steps"]]
     location = action["runs"]["steps"][names.index("Set Android SDK location")]
     assert names.index("Set Android SDK location") < names.index("Setup Android Environment")
-    assert location["if"] == "runner.os != 'macOS'"
+    assert location["if"] == "inputs.mode == 'android' && runner.os != 'macOS'"
+    install = action["runs"]["steps"][names.index("Install Android SDK / NDK / Tools")]
+    assert install["run"].endswith('android_sdk_helper.py"')
     assert 'ANDROID_SDK_ROOT=${RUNNER_TEMP}/android-sdk" >> "$GITHUB_ENV"' in location["run"]
 
     workflow_text = (REPO_ROOT / ".github/workflows/android.yml").read_text()

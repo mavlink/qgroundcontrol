@@ -101,6 +101,7 @@ jobs:
             tools/pyproject.toml
             tools/uv.lock
             tools/setup/install_python.py
+            tools/ci/cache/cache_backend.py
           sparse-checkout-cone-mode: false
           fetch-depth: 1
           persist-credentials: false

@@ -18,6 +18,8 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
     from pathlib import Path
 
+pytestmark = pytest.mark.windows
+
 
 class TestSanitizeRef:
     def test_simple_branch(self) -> None:
@@ -151,7 +153,7 @@ def _publish(
     for path, name in artifacts:
         argv += ["--artifact", f"{path}:{name}"]
     argv += ["--ref-name", ref_name, "--ref-type", ref_type, "--distribution-id", distribution_id]
-    main(argv)
+    assert main(argv) == 0
 
 
 class TestPublish:

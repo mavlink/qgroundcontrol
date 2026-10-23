@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Prepare a build artifact for attestation and upload.
 
-``prepare`` resolves the artifact, verifies or writes its SHA-256 sidecar, writes the
-CPM dependency SBOM and build-identity manifest beside it, and emits the paths the
-attestation and upload steps consume.
+``prepare`` resolves the artifact (default: $RUNNER_TEMP/build/<artifact name>), verifies or
+writes its SHA-256 sidecar, writes the CPM dependency SBOM and build-identity manifest beside it,
+and emits the paths the attestation and upload steps consume.
 
 ``checksum`` verifies or writes only the SHA-256 sidecar of a package uploaded outside
 attest-and-upload; ``--require-existing`` fails when the packager did not emit one.
@@ -12,7 +12,6 @@ attest-and-upload; ``--require-existing`` fails when the packager did not emit o
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import sys
 from pathlib import Path
@@ -47,7 +46,7 @@ def write_dependency_sbom(build_dir: Path, output: Path) -> None:
     if not count:
         gh_error("attest-and-upload: CPM dependency SBOM contains no components")
         sys.exit(1)
-    output.write_text(json.dumps(sbom, indent=2), encoding="utf-8")
+    write_json(output, sbom)
     print(f"SBOM written to {output} ({count} components)")
 
 
@@ -91,7 +90,8 @@ def write_metadata(source: Path, build_dir: Path) -> Path:
 
 
 def cmd_prepare(args: argparse.Namespace) -> None:
-    artifact = resolve_artifact(args.override, args.default)
+    build_dir = args.runner_temp / "build"
+    artifact = resolve_artifact(args.override, str(build_dir / args.artifact_name))
     source = Path(artifact)
     try:
         checksum = ensure_sha256_sidecar(source)
@@ -99,32 +99,19 @@ def cmd_prepare(args: argparse.Namespace) -> None:
         gh_error(f"attest-and-upload: {exc}")
         sys.exit(1)
 
-    parent = str(source.parent)
-    dependency_sbom = f"{parent}/{args.subject_name}.dependencies.cdx.json"
-    build_dir = Path(args.build_dir)
-    write_dependency_sbom(build_dir, Path(dependency_sbom))
+    dependency_sbom = source.parent / f"{args.subject_name}.dependencies.cdx.json"
+    write_dependency_sbom(build_dir, dependency_sbom)
     metadata = write_metadata(source, build_dir)
-
-    # PR builds aren't released; skip the SBOM scan + Sigstore signing entirely.
-    skip = os.environ.get("GITHUB_EVENT_NAME") == "pull_request"
-    sbom_path = str(Path(args.runner_temp) / f"{args.subject_name}.sbom.spdx.json")
-    if skip:
-        print("Skipping attestation for pull_request build")
-    else:
-        print(f"Will attest: {artifact}")
-        print(f"Scan path: {args.build_dir}")
-        print(f"SBOM path: {sbom_path}")
+    sbom_path = args.runner_temp / f"{args.subject_name}.sbom.spdx.json"
+    print(f"Artifact: {artifact}\nSBOM path: {sbom_path}")
 
     write_github_output(
         {
             "path": artifact,
-            "parent": parent,
             "checksum": str(checksum),
-            "dependency-sbom": dependency_sbom,
+            "dependency-sbom": str(dependency_sbom),
             "metadata": str(metadata),
-            "skip": "true" if skip else "false",
-            "scan-path": args.build_dir,
-            "sbom-path": sbom_path,
+            "sbom-path": str(sbom_path),
         }
     )
 
@@ -144,18 +131,26 @@ def cmd_checksum(args: argparse.Namespace) -> None:
     write_github_output({"checksum": str(checksum)})
 
 
-def main(argv: list[str] | None = None) -> None:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
 
     p_prepare = sub.add_parser(
         "prepare", help="Resolve the artifact and write its checksum, dependency SBOM and metadata"
     )
-    p_prepare.add_argument("--override", default="", help="Artifact path overriding --default")
-    p_prepare.add_argument("--default", required=True, help="Default artifact path")
-    p_prepare.add_argument("--build-dir", required=True, help="CMake build directory to inventory")
+    p_prepare.add_argument(
+        "--artifact-name", required=True, help="Artifact file name in <runner temp>/build"
+    )
+    p_prepare.add_argument("--override", default="", help="Artifact path overriding the default")
     p_prepare.add_argument("--subject-name", required=True, help="Attestation subject name")
-    p_prepare.add_argument("--runner-temp", required=True, help="Directory for the SPDX SBOM")
+    runner_temp = os.environ.get("RUNNER_TEMP")
+    p_prepare.add_argument(
+        "--runner-temp",
+        type=Path,
+        default=runner_temp,
+        required=not runner_temp,
+        help="Holds the build/ directory to inventory and the SPDX SBOM (default: $RUNNER_TEMP)",
+    )
     p_prepare.set_defaults(func=cmd_prepare)
 
     p_checksum = sub.add_parser(
@@ -171,7 +166,8 @@ def main(argv: list[str] | None = None) -> None:
 
     args = parser.parse_args(argv)
     args.func(args)
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

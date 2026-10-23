@@ -40,17 +40,6 @@ def test_detect_truncation_handles_non_utf8_bytes(tmp_path: Path) -> None:
     assert mod.detect_truncation(log) is True
 
 
-def test_clean_settings_json_removes_file(tmp_path: Path) -> None:
-    path = tmp_path / "settings.json"
-    path.write_text("{ truncated")
-    mod.clean_settings_json(path)
-    assert not path.exists()
-
-
-def test_clean_settings_json_noop_when_missing(tmp_path: Path) -> None:
-    mod.clean_settings_json(tmp_path / "absent.json")
-
-
 def test_main_missing_log_returns_error(tmp_path: Path, capsys) -> None:
     rc = mod.main(["--build-dir", str(tmp_path), "--build-type", "Debug"])
     assert rc == 1

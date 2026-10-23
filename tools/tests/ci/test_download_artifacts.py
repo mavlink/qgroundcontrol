@@ -37,7 +37,6 @@ def test_parse_args_reads_optional_action_inputs(
     inputs = {
         "INPUT_RUNS_FILE": str(runs),
         "INPUT_INCLUDE_FAILED": "true",
-        "INPUT_STRICT_RUNS": "true",
         "INPUT_ALLOW_MISSING": "true",
         "INPUT_SIZES_FILE": "sizes.json",
         "INPUT_REQUIRE_SIZES": "true",
@@ -47,17 +46,17 @@ def test_parse_args_reads_optional_action_inputs(
 
     args = mod.parse_args(required)
     assert args.runs_file == str(runs)
-    assert args.include_failed and args.strict_runs and args.allow_missing and args.require_sizes
+    assert args.include_failed and args.allow_missing and args.require_sizes
     assert args.sizes_out == Path("sizes.json")
 
     # The action passes a cache path that an earlier step may not have written.
     monkeypatch.setenv("INPUT_RUNS_FILE", str(tmp_path / "missing.json"))
     monkeypatch.setenv("INPUT_SIZES_FILE", "")
-    for flag in ("INCLUDE_FAILED", "STRICT_RUNS", "ALLOW_MISSING", "REQUIRE_SIZES"):
+    for flag in ("INCLUDE_FAILED", "ALLOW_MISSING", "REQUIRE_SIZES"):
         monkeypatch.setenv(f"INPUT_{flag}", "false")
     args = mod.parse_args(required)
     assert args.runs_file == ""
-    assert not (args.include_failed or args.strict_runs or args.allow_missing or args.require_sizes)
+    assert not (args.include_failed or args.allow_missing or args.require_sizes)
     assert args.sizes_out is None
 
 
@@ -339,14 +338,6 @@ def test_optional_diagnostics_write_empty_sizes_without_runs(tmp_path: Path) -> 
     assert json.loads(sizes_path.read_text()) == {"head_sha": "abc123", "artifacts": []}
 
 
-def test_optional_diagnostics_reject_strict_runs() -> None:
-    options = ["--artifact-prefixes", "coverage-report", "--strict-runs", "--allow-missing"]
-    with patch.object(mod, "list_workflow_runs_for_sha") as query:
-        rc = mod.main(["--repo", "owner/repo", "--head-sha", "abc123", *options])
-    assert rc == 1
-    query.assert_not_called()
-
-
 @pytest.mark.parametrize("allow_missing", [False, True])
 @pytest.mark.parametrize("partial_download", [False, True])
 def test_download_failure_is_not_optional(
@@ -568,86 +559,6 @@ def test_main_writes_sizes_file(tmp_path: Path) -> None:
     }
 
 
-def test_strict_snapshot_rejects_wrong_commit_before_download(tmp_path):
-    import json
-
-    from ci.reporting import download_artifacts
-
-    snapshot = tmp_path / "runs.json"
-    snapshot.write_text(
-        json.dumps(
-            [
-                {
-                    "name": "Linux",
-                    "id": 42,
-                    "head_sha": "old",
-                    "status": "completed",
-                    "conclusion": "success",
-                }
-            ]
-        )
-    )
-    assert (
-        download_artifacts.main(
-            [
-                "--repo",
-                "o/r",
-                "--head-sha",
-                "new",
-                "--workflows",
-                "Linux",
-                "--artifact-prefixes",
-                "QGroundControl",
-                "--runs-file",
-                str(snapshot),
-                "--strict-runs",
-            ]
-        )
-        == 1
-    )
-
-
-def test_strict_snapshot_rejects_changed_run_attempt(tmp_path):
-    import json
-    from unittest.mock import patch
-
-    from ci.reporting import download_artifacts
-
-    saved = {
-        "name": "Linux",
-        "id": 42,
-        "head_sha": "new",
-        "status": "completed",
-        "conclusion": "success",
-        "run_attempt": 1,
-    }
-    snapshot = tmp_path / "runs.json"
-    snapshot.write_text(json.dumps([saved]))
-    with patch(
-        "ci.reporting.download_artifacts.gh_api_json",
-        return_value={**saved, "run_attempt": 2},
-    ) as gh_api_json:
-        assert (
-            download_artifacts.main(
-                [
-                    "--repo",
-                    "o/r",
-                    "--head-sha",
-                    "new",
-                    "--workflows",
-                    "Linux",
-                    "--artifact-prefixes",
-                    "QGroundControl",
-                    "--runs-file",
-                    str(snapshot),
-                    "--strict-runs",
-                ]
-            )
-            == 1
-        )
-    gh_api_json.assert_called_once_with("repos/o/r/actions/runs/42")
-
-
 def _run(
     name: str,
     *,
@@ -696,7 +607,6 @@ def test_sizes_keep_only_distributable_artifacts() -> None:
             {"name": "QGroundControl-x86_64", "size_in_bytes": 1024 * 1024},
             {"name": "QGroundControl.apk", "size_in_bytes": 2048},
             {"name": "test-results-linux", "size_in_bytes": 100},
-            {"name": "test-duration-linux_gcc_64", "size_in_bytes": 100},
             {"name": "coverage-report", "size_in_bytes": 100},
             {"name": "emulator-diagnostics-linux-emulator-1", "size_in_bytes": 100},
             {"name": "random-tool-output", "size_in_bytes": 4096},

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import fnmatch
 from typing import Any
 
 from ..._helpers import get_steps, load_action
@@ -52,10 +51,12 @@ def test_test_phase_reports_each_suite_from_its_own_run() -> None:
     declared = set(load_action("run-unit-tests")["inputs"])
     assert all(set(step["with"]) <= declared for step in runs)
     assert runs[1]["if"] == "${{ !cancelled() }}"
-    durations = steps[-1]
-    assert durations["uses"] == "actions/upload-artifact@v7"
-    assert durations["if"] == "${{ !cancelled() }}"
-    pattern = durations["with"]["path"].removeprefix("${{ inputs.build-dir }}/")
+    # Duration summaries go to the job summary; the JUnit XML in test-results-* holds the timings.
+    assert steps == runs
+    (analyze,) = [
+        step for step in _steps("run-unit-tests") if "test_duration_report" in step.get("run", "")
+    ]
+    assert analyze["if"] == "${{ !cancelled() && inputs.duration-report == 'true' }}"
     for step, kind in zip(runs, ("unit", "integration"), strict=True):
         options = step["with"]
         suite = f"${{{{ inputs.suite }}}}-{kind}"
@@ -65,4 +66,4 @@ def test_test_phase_reports_each_suite_from_its_own_run() -> None:
         assert options["retention-days"] == 7
         assert options["upload-codecov"] == "${{ inputs.upload-codecov }}"
         assert options["codecov-flags"] == suite
-        assert fnmatch.fnmatchcase(options["duration-report"], pattern)
+        assert options["duration-report"] == "true"

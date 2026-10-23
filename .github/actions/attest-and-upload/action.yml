@@ -51,23 +51,21 @@ runs:
       id: prepare
       shell: bash
       env:
+        ARTIFACT_NAME: ${{ inputs.artifact-name }}
         OVERRIDE: ${{ inputs.artifact-source-path }}
-        DEFAULT: ${{ runner.temp }}/build/${{ inputs.artifact-name }}
-        BUILD_DIR: ${{ format('{0}/build', runner.temp) }}
         SUBJECT_NAME: ${{ inputs.subject-name || inputs.package-name }}
       run: |
         python3 "${GITHUB_WORKSPACE}/tools/ci/publish/attest_helper.py" prepare \
+          --artifact-name "${ARTIFACT_NAME}" \
           --override "${OVERRIDE}" \
-          --default "${DEFAULT}" \
-          --build-dir "${BUILD_DIR}" \
-          --subject-name "${SUBJECT_NAME}" \
-          --runner-temp "${RUNNER_TEMP}"
+          --subject-name "${SUBJECT_NAME}"
 
+    # Pull request builds aren't released: they skip the SBOM scan and Sigstore attestations.
     - name: Generate SBOM
-      if: steps.prepare.outputs.skip != 'true'
+      if: github.event_name != 'pull_request'
       uses: anchore/sbom-action@v0
       with:
-        path: ${{ steps.prepare.outputs.scan-path }}
+        path: ${{ runner.temp }}/build
         format: spdx-json
         output-file: ${{ steps.prepare.outputs.sbom-path }}
         upload-artifact: true
@@ -75,7 +73,7 @@ runs:
         artifact-name: sbom-${{ inputs.subject-name || inputs.package-name }}
 
     - name: Attest Build Provenance
-      if: steps.prepare.outputs.skip != 'true'
+      if: github.event_name != 'pull_request'
       uses: actions/attest@v4
       env:
         NODE_OPTIONS: --max-http-header-size=32768
@@ -83,7 +81,7 @@ runs:
         subject-path: ${{ steps.prepare.outputs.path }}
 
     - name: Attest SBOM
-      if: steps.prepare.outputs.skip != 'true'
+      if: github.event_name != 'pull_request'
       uses: actions/attest@v4
       with:
         subject-path: ${{ steps.prepare.outputs.path }}

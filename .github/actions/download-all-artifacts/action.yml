@@ -24,11 +24,8 @@ inputs:
   include-failed:
     description: Include diagnostics from completed failed builds
     default: 'false'
-  strict-runs:
-    description: Require exactly one successful run per requested workflow in the supplied snapshot
-    default: 'false'
   allow-missing:
-    description: Allow absent diagnostic artifacts selected by prefix, but not download failures or strict release runs
+    description: Allow absent diagnostic artifacts selected by prefix, but not download failures
     default: 'false'
   artifact-prefixes:
     description: Comma-separated artifact name prefixes to download
@@ -58,7 +55,6 @@ runs:
         INPUT_ARTIFACT_PREFIXES: ${{ inputs.artifact-prefixes }}
         INPUT_RUNS_FILE: ${{ inputs.runs-file }}
         INPUT_INCLUDE_FAILED: ${{ inputs.include-failed }}
-        INPUT_STRICT_RUNS: ${{ inputs.strict-runs }}
         INPUT_ALLOW_MISSING: ${{ inputs.allow-missing }}
         INPUT_SIZES_FILE: ${{ inputs.sizes-file }}
         INPUT_REQUIRE_SIZES: ${{ inputs.require-sizes }}

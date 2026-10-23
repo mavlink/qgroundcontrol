@@ -11,7 +11,7 @@ from ci.planning import detect_changes
 from ci.planning.plan_docker_builds import build_args_str, load_variants, main, plan_builds
 from qgc_tools import release_tag_check
 
-from .._helpers import REPO_ROOT, git
+from .._helpers import REPO_ROOT, commit_files, git, read_github_file
 
 _DOCKER_DIR = REPO_ROOT / "deploy" / "docker"
 
@@ -287,6 +287,7 @@ def test_application_pr_uses_representative_docker_variants():
         ["cmake/CPack.cmake"],
         [".github/build-config.json"],
         ["tools/setup/install_dependencies/_debian.py"],
+        ["src/CMakeLists.txt"],
         ["src/Vehicle/CMakeLists.txt"],
         [".github/actions/docker/action.yml"],
         ["tools/uv.lock"],
@@ -318,11 +319,7 @@ def test_unrelated_changes_do_not_require_full_matrix(path):
 def test_rename_out_of_docker_inputs_uses_full_matrix(
     monkeypatch: pytest.MonkeyPatch, git_repo: Path, gh_output: Path
 ) -> None:
-    (git_repo / "deploy" / "docker").mkdir(parents=True)
-    (git_repo / "deploy" / "docker" / "Dockerfile").write_text("FROM scratch\n" * 20)
-    git(git_repo, "add", ".")
-    git(git_repo, "commit", "-qm", "base")
-    base = git(git_repo, "rev-parse", "HEAD")
+    base = commit_files(git_repo, {"deploy/docker/Dockerfile": "FROM scratch\n" * 20}, "base")
     (git_repo / "docs").mkdir()
     git(git_repo, "mv", "deploy/docker/Dockerfile", "docs/Dockerfile")
     git(git_repo, "commit", "-qm", "move")
@@ -333,7 +330,7 @@ def test_rename_out_of_docker_inputs_uses_full_matrix(
     monkeypatch.setenv("PR_HEAD_SHA", git(git_repo, "rev-parse", "HEAD"))
     assert main([]) == 0
 
-    outputs = dict(line.split("=", 1) for line in gh_output.read_text().splitlines())
+    outputs = read_github_file(gh_output)
     assert len(json.loads(outputs["matrix"])["include"]) == len(load_variants())
 
 
@@ -356,7 +353,7 @@ def event(monkeypatch: pytest.MonkeyPatch, gh_output: Path) -> pytest.MonkeyPatc
 
 
 def _planned(gh_output: Path) -> tuple[list[str], str]:
-    outputs = dict(line.split("=", 1) for line in gh_output.read_text().splitlines())
+    outputs = read_github_file(gh_output)
     platforms = [row["platform"] for row in json.loads(outputs["matrix"])["include"]]
     return platforms, outputs["has_jobs"]
 

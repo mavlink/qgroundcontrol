@@ -143,16 +143,9 @@ class TestExecute:
     def test_timeout_kills_grandchildren(self, tmp_path: Path) -> None:
         # Mirrors xvfb-run: the boot-tested binary is a grandchild of the launched process
         pid_file = tmp_path / "grandchild.pid"
-        code = (
-            "import subprocess, sys, time\n"
-            "child = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(60)'])\n"
-            "open(sys.argv[1], 'w').write(str(child.pid))\n"
-            "print('started', flush=True)\n"
-            "time.sleep(60)\n"
-        )
-        # Leave room for two interpreter start-ups on a loaded machine before the timeout fires
+        script = 'sleep 60 & echo $! > "$1"; echo started; sleep 60'
         exit_code, output = _execute(
-            [sys.executable, "-c", code, str(pid_file)], dict(os.environ), tmp_path, 3
+            ["sh", "-c", script, "sh", str(pid_file)], dict(os.environ), tmp_path, 3
         )
         assert exit_code == BOOT_TIMEOUT_EXIT_CODE
         assert "started" in output
@@ -161,6 +154,25 @@ class TestExecute:
         while not _process_gone(grandchild) and time.monotonic() < deadline:
             time.sleep(0.05)
         assert _process_gone(grandchild)
+
+
+def test_tool_timeout_becomes_failed_result(monkeypatch):
+    def hang(cmd, **kwargs):
+        assert kwargs["timeout"] == verify_executable.TOOL_TIMEOUT_SECONDS
+        raise subprocess.TimeoutExpired(cmd, kwargs["timeout"])
+
+    monkeypatch.setattr(subprocess, "run", hang)
+    appimage = Path("QGroundControl-x86_64.AppImage")
+
+    with pytest.raises(RuntimeError, match=r"update information .*: timed out after 120s"):
+        _verify_appimage_update_information(appimage, "expected")
+
+
+def test_type_rejects_unknown_values(capsys):
+    with pytest.raises(SystemExit) as exc:
+        verify_executable.main(["--binary-path", "QGC", "--type", "apk"])
+    assert exc.value.code == 2
+    assert "invalid choice: 'apk'" in capsys.readouterr().err
 
 
 BOOT_BINARY = Path("/opt/qgc/QGroundControl")
@@ -230,16 +242,17 @@ class TestBootTest:
         out = capsys.readouterr().out
         assert all(line in out for line in expected)
 
-    def test_timeout_reports_error_without_output(self, tmp_path, monkeypatch, capsys) -> None:
+    def test_timeout_prints_partial_output_before_error(
+        self, tmp_path, monkeypatch, capsys
+    ) -> None:
         binary = tmp_path / "QGroundControl"
         binary.write_text("binary")
         monkeypatch.setattr(
-            verify_executable, "_execute", lambda *args: (BOOT_TIMEOUT_EXIT_CODE, "partial")
+            verify_executable, "_execute", lambda *args: (BOOT_TIMEOUT_EXIT_CODE, "log before hang")
         )
         assert _boot_test(binary, cwd=tmp_path, timeout=5, headless=True) == 124
         out = capsys.readouterr().out
-        assert "::error::Boot test timed out after 5s" in out
-        assert "partial" not in out
+        assert out.index("log before hang") < out.index("::error::Boot test timed out after 5s")
 
 
 @pytest.mark.parametrize(
@@ -325,14 +338,9 @@ def _run_dmg_main(monkeypatch, tmp_path, tools: FakeDmgTools, *, create_dmg=True
     monkeypatch.setattr(subprocess, "run", tools)
     monkeypatch.setattr(verify_executable, "_execute", tools.execute)
     monkeypatch.setattr(verify_executable.platform, "system", lambda: "Darwin")
-    monkeypatch.setattr(
-        sys,
-        "argv",
-        ["prog", "--binary-path", str(dmg), "--type", "dmg", "--expect-archs", "x86_64h arm64"],
+    return verify_executable.main(
+        ["--binary-path", str(dmg), "--type", "dmg", "--expect-archs", "x86_64h arm64"]
     )
-    with pytest.raises(SystemExit) as exc:
-        verify_executable.main()
-    return exc.value.code
 
 
 def test_dmg_verifies_bundle_inside_image_and_detaches(monkeypatch, tmp_path):

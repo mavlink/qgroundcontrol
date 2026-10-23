@@ -7,15 +7,15 @@ from typing import TYPE_CHECKING, Any
 
 import pytest
 
-from ..._helpers import REPO_ROOT, load_yaml
+from ..._helpers import REPO_ROOT, action_names, load_yaml, workflow_names
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
     from pathlib import Path
 
 WORKFLOWS_DIR = REPO_ROOT / ".github" / "workflows"
-WORKFLOWS = sorted(WORKFLOWS_DIR.glob("*.y*ml"))
-COMPOSITE_ACTIONS = sorted((REPO_ROOT / ".github" / "actions").rglob("action.y*ml"))
+WORKFLOWS = [WORKFLOWS_DIR / name for name in workflow_names()]
+COMPOSITE_ACTIONS = [REPO_ROOT / f".github/actions/{name}/action.yml" for name in action_names()]
 CI_SCRIPTS_WORKFLOW = WORKFLOWS_DIR / "ci-scripts.yml"
 DEPENDENCY_REVIEW_WORKFLOW = WORKFLOWS_DIR / "dependency-review.yml"
 BUILD_ACTION = REPO_ROOT / ".github" / "actions" / "build-action" / "action.yml"
@@ -149,7 +149,7 @@ def test_runson_selection_keeps_independent_forks_on_hosted_runners() -> None:
 @pytest.mark.parametrize(
     ("workflow", "route_count"),
     [
-        ("linux.yml", 3),
+        ("linux.yml", 2),
         ("windows.yml", 1),
         ("android.yml", 1),
         ("docker.yml", 1),
@@ -190,6 +190,16 @@ def test_dependency_review_covers_every_pull_request() -> None:
     uses = {step.get("uses") for step in steps}
     assert "actions/dependency-review-action@v5" in uses
     assert "gradle/actions/wrapper-validation@v6" in uses
+
+
+def test_pr_title_check_only_reads_the_pull_request() -> None:
+    # `wip` would post a commit status, which needs statuses: write; its permission error was
+    # raised before the title error, so a bad title went unreported.
+    job = _load_yaml_mapping(WORKFLOWS_DIR / "pr-checks.yml")["jobs"]["title"]
+    assert job["permissions"] == {"pull-requests": "read"}
+    (check,) = (step for step in job["steps"] if step.get("name") == "Check PR title format")
+    assert check["uses"].startswith("amannn/action-semantic-pull-request@")
+    assert "wip" not in check["with"]
 
 
 def test_build_action_uses_lockfile_aware_npm_install() -> None:

@@ -5,7 +5,7 @@ on:
     - cron: '0 4 * * 0'  # Sunday 04:00 UTC
   pull_request:
     paths:
-      - 'Doxyfile'
+      - 'tools/configs/Doxyfile'
       - 'src/**'
   workflow_dispatch:
 
@@ -42,7 +42,7 @@ jobs:
             doxygen graphviz
 
       - name: Build Doxygen docs
-        run: doxygen Doxyfile
+        run: doxygen tools/configs/Doxyfile
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7

@@ -34,17 +34,10 @@ class TestDetectJobs:
         with patch("os.cpu_count", return_value=None):
             assert detect_jobs("auto") == 2
 
-    def test_invalid_exits(self) -> None:
-        with pytest.raises(SystemExit):
-            detect_jobs("abc")
-
-    def test_zero_exits(self) -> None:
-        with pytest.raises(SystemExit):
-            detect_jobs("0")
-
-    def test_negative_exits(self) -> None:
-        with pytest.raises(SystemExit):
-            detect_jobs("-1")
+    @pytest.mark.parametrize("requested", ["abc", "0", "-1"])
+    def test_invalid_raises(self, requested: str) -> None:
+        with pytest.raises(ValueError, match="Invalid parallel job count"):
+            detect_jobs(requested)
 
 
 def _run_configure(
@@ -58,10 +51,7 @@ def _run_configure(
 
     monkeypatch.setattr("ci.compile.cmake_helper.configure", fake_configure)
     monkeypatch.setattr("ci.compile.cmake_helper.python_env.executable", lambda _name: venv_python)
-    monkeypatch.setattr("sys.argv", ["cmake_helper.py", "configure", *arguments])
-    with pytest.raises(SystemExit) as exc:
-        main()
-    assert exc.value.code == 0
+    assert main(["configure", *arguments]) == 0
     (config,) = configs
     return config
 
@@ -82,56 +72,78 @@ def _clear_action_inputs(monkeypatch: pytest.MonkeyPatch) -> None:
 
 CONFIGURE_INPUTS = {
     "INPUT_BUILD_DIR": "out",
-    "INPUT_BUILD_TYPE": "Debug",
     "INPUT_PRESET": "Linux-sanitizers",
-    "INPUT_TESTING": "true",
-    "INPUT_STABLE": "true",
     "INPUT_EXTRA_ARGS": "-DA=1\n-DB=2",
     "INPUT_USE_QT_CMAKE": "false",
 }
 BUILD_INPUTS = {
     "INPUT_TARGET": "autogen",
-    "INPUT_BUILD_TYPE": "Debug",
     "INPUT_PARALLEL": "true",
     "INPUT_PARALLEL_JOBS": "3",
     "INPUT_OUTPUT_FILE": "",
     "INPUT_REVIEWDOG": "false",
 }
+STABLE_REF = {"GITHUB_REF_TYPE": "tag", "GITHUB_REF": "refs/tags/v5.0.0"}
 
 
-def test_configure_defaults_to_release_in_the_checkout(
+def test_configure_defaults_to_the_checkout_and_leaves_testing_to_the_preset(
     monkeypatch: pytest.MonkeyPatch, venv_python: Path
 ) -> None:
-    config = _run_configure(monkeypatch, venv_python)
+    config = _run_configure(monkeypatch, venv_python, "--preset", "Linux")
 
     assert config.source_dir == REPO_ROOT
     assert config.build_dir == Path("build")
-    assert config.build_type == "Release"
-    assert config.preset is None
+    assert config.preset == "Linux"
     assert config.use_qt_cmake
-    assert not (config.testing or config.stable or config.coverage)
+    assert not (config.testing or config.stable)
     assert config.extra_args == [f"-DPython3_EXECUTABLE={venv_python}"]
+
+
+def test_configure_requires_a_preset(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr("ci.compile.cmake_helper.configure", lambda _config: pytest.fail("ran"))
+    assert main(["configure"]) == 1
+    assert "::error::configure needs a CMake preset" in capsys.readouterr().out
 
 
 @pytest.mark.parametrize("cache_program", ["", "/installed tools/bin/ccache"])
 def test_configure_reads_action_inputs_and_appends_ci_cache_arguments(
     monkeypatch: pytest.MonkeyPatch, venv_python: Path, cache_program: str
 ) -> None:
-    for name, value in CONFIGURE_INPUTS.items():
+    for name, value in {**CONFIGURE_INPUTS, **STABLE_REF}.items():
         monkeypatch.setenv(name, value)
     monkeypatch.setenv("QGC_CACHE_PROGRAM", cache_program)
 
     config = _run_configure(monkeypatch, venv_python)
 
     assert config.build_dir == Path("out")
-    assert config.build_type == "Debug"
     assert config.preset == "Linux-sanitizers"
-    assert config.testing and config.stable
+    assert config.stable and not config.testing
     assert not config.use_qt_cmake
     expected = ["-DA=1", "-DB=2", f"-DPython3_EXECUTABLE={venv_python}"]
     if cache_program:
         expected.append(f"-DQGC_CACHE_PROGRAM:FILEPATH={cache_program}")
     assert config.extra_args == expected
+
+
+@pytest.mark.parametrize(
+    ("ref_type", "ref", "stable"),
+    [
+        ("tag", "refs/tags/v5.0.0", True),
+        ("branch", "refs/heads/Stable_V5.0", True),
+        ("branch", "refs/heads/master", False),
+        ("branch", "refs/heads/fix-unstable-test", False),
+        ("branch", "refs/heads/stable-docs", False),
+        ("branch", "refs/pull/7/merge", False),
+    ],
+)
+def test_configure_stable_build_follows_release_refs(
+    monkeypatch: pytest.MonkeyPatch, venv_python: Path, ref_type: str, ref: str, stable: bool
+) -> None:
+    monkeypatch.setenv("GITHUB_REF_TYPE", ref_type)
+    monkeypatch.setenv("GITHUB_REF", ref)
+    assert _run_configure(monkeypatch, venv_python, "--preset", "Linux").stable is stable
 
 
 def test_configure_command_line_overrides_action_inputs(
@@ -147,7 +159,7 @@ def test_configure_warns_without_locked_python(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     missing = tmp_path / "missing" / "python"
-    config = _run_configure(monkeypatch, missing)
+    config = _run_configure(monkeypatch, missing, "--preset", "Linux")
 
     assert config.extra_args == []
     assert f"::warning::venv python not found at {missing}" in capsys.readouterr().out
@@ -155,15 +167,11 @@ def test_configure_warns_without_locked_python(
 
 def test_configure_propagates_failure(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("ci.compile.cmake_helper.configure", lambda _config: 3)
-    monkeypatch.setattr("sys.argv", ["cmake_helper.py", "configure"])
-    with pytest.raises(SystemExit) as exc:
-        main()
-    assert exc.value.code == 3
+    assert main(["configure", "--preset", "Linux"]) == 3
 
 
 def test_build_reads_action_inputs(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.chdir(tmp_path)
-    monkeypatch.delenv("GITHUB_OUTPUT", raising=False)
     for name, value in BUILD_INPUTS.items():
         monkeypatch.setenv(name, value)
     commands: list[list[str]] = []
@@ -173,12 +181,57 @@ def test_build_reads_action_inputs(monkeypatch: pytest.MonkeyPatch, tmp_path: Pa
         return subprocess.CompletedProcess(command, 0)
 
     monkeypatch.setattr("ci.compile.cmake_helper.subprocess.run", fake_run)
-    monkeypatch.setattr("sys.argv", ["cmake_helper.py", "build"])
-    main()
+    assert main(["build"]) == 0
 
-    assert commands == [
-        ["cmake", "--build", ".", "--target", "autogen", "--config", "Debug", "--parallel", "3"]
-    ]
+    assert commands == [["cmake", "--build", ".", "--target", "autogen", "--parallel", "3"]]
+
+
+@pytest.mark.parametrize(
+    ("cache", "explicit", "expected"),
+    [
+        # Xcode (iOS-appstore) and other multi-config trees build the preset's configuration.
+        (
+            "CMAKE_BUILD_TYPE:STRING=Release\nCMAKE_CONFIGURATION_TYPES:STRING=Debug;Release\n",
+            "",
+            "Release",
+        ),
+        # Single-config (Ninja) trees ignore --config and -C, so none is passed.
+        ("CMAKE_BUILD_TYPE:STRING=Release\n", "", None),
+        (None, "", None),
+        (
+            "CMAKE_BUILD_TYPE:STRING=Release\nCMAKE_CONFIGURATION_TYPES:STRING=Debug;Release\n",
+            "Debug",
+            "Debug",
+        ),
+    ],
+)
+def test_build_and_ctest_select_a_multi_config_trees_build_type(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    cache: str | None,
+    explicit: str,
+    expected: str | None,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    if cache is not None:
+        (tmp_path / "CMakeCache.txt").write_text(f"# comment\n{cache}")
+    selection = ["--build-type", explicit] if explicit else []
+    commands: list[list[str]] = []
+
+    def fake_run(command: list[str], **_kwargs: object) -> subprocess.CompletedProcess[list[str]]:
+        commands.append(command)
+        return subprocess.CompletedProcess(command, 0)
+
+    monkeypatch.setattr("ci.compile.cmake_helper.subprocess.run", fake_run)
+    assert main(["build", *selection]) == 0
+    (build,) = commands
+
+    ctest = _run_ctest(monkeypatch, *selection)
+
+    assert build[3:] == (["--config", expected] if expected else [])
+    assert ("-C" in ctest) == bool(expected)
+    if expected:
+        assert ctest[ctest.index("-C") + 1] == expected
 
 
 def _run_ctest(monkeypatch: pytest.MonkeyPatch, *arguments: str, exit_code: int = 0) -> list[str]:
@@ -191,21 +244,8 @@ def _run_ctest(monkeypatch: pytest.MonkeyPatch, *arguments: str, exit_code: int 
 
     monkeypatch.setattr("ci.compile.cmake_helper.run_tee", fake_run_tee)
     monkeypatch.setattr("ci.compile.cmake_helper._maybe_wrap_xvfb", lambda command: command)
-    monkeypatch.setattr(
-        "sys.argv",
-        [
-            "cmake_helper.py",
-            "ctest",
-            "--junit-output",
-            "junit.xml",
-            "--ctest-output",
-            "output.txt",
-            *arguments,
-        ],
-    )
-    with pytest.raises(SystemExit) as exc:
-        main()
-    assert exc.value.code == exit_code
+    ctest = ["ctest", "--junit-output", "junit.xml", "--ctest-output", "output.txt", *arguments]
+    assert main(ctest) == exit_code
     return invocation
 
 
@@ -247,24 +287,13 @@ def test_ctest_defaults_to_auto_jobs_and_propagates_failure(
     assert "-L" not in command
 
 
-def test_ctest_rejects_invalid_jobs_before_running(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_ctest_rejects_invalid_jobs_before_running(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
     monkeypatch.setattr("ci.compile.cmake_helper.run_tee", lambda *_args: pytest.fail("ctest ran"))
-    monkeypatch.setattr(
-        "sys.argv",
-        [
-            "cmake_helper.py",
-            "ctest",
-            "--junit-output",
-            "junit.xml",
-            "--ctest-output",
-            "output.txt",
-            "--jobs",
-            "0",
-        ],
-    )
-    with pytest.raises(SystemExit) as exc:
-        main()
-    assert exc.value.code == 1
+    ctest = ["ctest", "--junit-output", "junit.xml", "--ctest-output", "output.txt", "--jobs", "0"]
+    assert main(ctest) == 1
+    assert "::error::Invalid parallel job count: 0" in capsys.readouterr().out
 
 
 def test_empty_ctest_selection_fails(tmp_path):
@@ -292,26 +321,17 @@ def test_empty_ctest_selection_fails(tmp_path):
 
 
 @pytest.mark.parametrize("exit_code", [0, 1])
-def test_build_checkpoint_reports_actual_compile_result(monkeypatch, tmp_path, exit_code):
-    output = tmp_path / "github-output"
-    monkeypatch.setenv("GITHUB_OUTPUT", str(output))
+def test_build_checkpoint_reports_actual_compile_result(monkeypatch, gh_output, exit_code):
     monkeypatch.setattr(
         "ci.compile.cmake_helper.subprocess.run",
         lambda command, **kwargs: subprocess.CompletedProcess(command, exit_code),
     )
-    monkeypatch.setattr("sys.argv", ["cmake_helper.py", "build"])
-    if exit_code:
-        with pytest.raises(SystemExit):
-            main()
-    else:
-        main()
-    assert f"build_success={str(exit_code == 0).lower()}" in output.read_text()
+    assert main(["build"]) == exit_code
+    assert f"build_success={str(exit_code == 0).lower()}" in gh_output.read_text()
 
 
-def test_failed_build_still_preserves_current_invocation_timings(monkeypatch, tmp_path):
+def test_failed_build_still_preserves_current_invocation_timings(monkeypatch, tmp_path, gh_output):
     monkeypatch.chdir(tmp_path)
-    output = tmp_path / "output"
-    monkeypatch.setenv("GITHUB_OUTPUT", str(output))
     monkeypatch.setenv("RUNNER_TEMP", str(tmp_path))
     log = tmp_path / ".ninja_log"
     old = "# ninja log v5\n0\t100\t1\told.o\ta\n"
@@ -322,17 +342,14 @@ def test_failed_build_still_preserves_current_invocation_timings(monkeypatch, tm
         return subprocess.CompletedProcess(command, 1)
 
     monkeypatch.setattr("ci.compile.cmake_helper.subprocess.run", build)
-    monkeypatch.setattr("sys.argv", ["cmake_helper.py", "build"])
-    with pytest.raises(SystemExit) as error:
-        main()
-    assert error.value.code == 1
+    assert main(["build"]) == 1
     reports = list(tmp_path.glob("build-profile-*/report.json"))
     assert len(reports) == 1
     report = json.loads(reports[0].read_text())
     assert report["edge_count"] == 1
     assert report["slowest_edges"][0]["output"] == "new.o"
-    assert "profile_path=" in output.read_text()
-    assert "build_success=false" in output.read_text()
+    assert "profile_path=" in gh_output.read_text()
+    assert "build_success=false" in gh_output.read_text()
 
 
 @pytest.mark.parametrize(

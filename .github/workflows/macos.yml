@@ -51,6 +51,13 @@ jobs:
         # Release packages and uploads the DMG; Debug has test hooks and runs the Unit and Integration suites.
         build_type: [Release, Debug]
 
+    # Only non-PR Release legs sign: same-repo PRs would still receive the signing secrets.
+    # Independent forks without them build unsigned bundles; upstream still fails if they go missing.
+    env:
+      MACOS_SIGN: >-
+        ${{ github.event_name != 'pull_request' && matrix.build_type == 'Release' &&
+          (github.repository_owner == 'mavlink' || secrets.MACOS_SIGNING_IDENTITY != '') }}
+
     defaults:
       run:
         shell: bash
@@ -86,31 +93,24 @@ jobs:
       - name: CMake configure
         uses: ./.github/actions/cmake-configure
         with:
-          build-dir: ${{ runner.temp }}/build
-          build-type: ${{ matrix.build_type }}
           preset: ${{ matrix.build_type == 'Debug' && 'macOS-debug' || 'macOS' }}
           # Unity builds of QGC targets halve Debug compile CPU; the shipped Release build stays per-file.
           # Only the shipped Release build is universal; the Debug test leg builds for the arm64 runner.
           extra-args: >-
             -DQGC_BUILD_PORTABLE_TESTS=${{ matrix.build_type == 'Release' && 'ON' || 'OFF' }}
-            -DQGC_MACOS_SIGN_WITH_IDENTITY=${{ github.event_name != 'pull_request' && matrix.build_type == 'Release' && 'ON' || 'OFF' }}
+            -DQGC_MACOS_SIGN_WITH_IDENTITY=${{ env.MACOS_SIGN == 'true' && 'ON' || 'OFF' }}
             -DQGC_MACOS_UNIVERSAL_BUILD=${{ matrix.build_type == 'Release' && 'ON' || 'OFF' }}
             -DQGC_UNITY_BUILD=${{ matrix.build_type == 'Debug' && 'ON' || 'OFF' }}
 
       - name: Build
         id: build
         uses: ./.github/actions/cmake-build
-        with:
-          build-dir: ${{ runner.temp }}/build
-          build-type: ${{ matrix.build_type }}
 
       - name: Run portable tests
         id: portable
         if: ${{ !cancelled() && steps.build.outcome == 'success' && matrix.build_type == 'Release' }}
         uses: ./.github/actions/run-unit-tests
         with:
-          build-dir: ${{ runner.temp }}/build
-          build-type: ${{ matrix.build_type }}
           include-labels: Portable
           junit-output: junit-portable.xml
           ctest-output: portable-output.txt
@@ -121,7 +121,6 @@ jobs:
         if: ${{ !cancelled() && steps.build.outcome == 'success' && matrix.build_type == 'Debug' }}
         uses: ./.github/actions/test-phase
         with:
-          build-dir: ${{ runner.temp }}/build
           suite: macos
 
       - name: Verify dev build executable
@@ -132,23 +131,22 @@ jobs:
           expect-archs: ${{ matrix.build_type == 'Release' && 'x86_64h arm64' || 'arm64' }}
 
       - name: Import Code Signing Certificate
-        if: github.event_name != 'pull_request' && matrix.build_type == 'Release'
+        if: env.MACOS_SIGN == 'true'
         uses: apple-actions/import-codesign-certs@v7
         with:
           p12-file-base64: ${{ secrets.MACOS_CERT_P12_BASE64 }}
           p12-password: ${{ secrets.MACOS_CERT_P12_PASSWORD }}
 
-      # PRs configure with QGC_MACOS_SIGN_WITH_IDENTITY=OFF and never need these. Same-repo PRs
-      # would still receive the secrets, so they resolve empty on pull_request events.
+      # Unsigned legs configure with QGC_MACOS_SIGN_WITH_IDENTITY=OFF and never need these.
       - name: Create app bundle
         if: matrix.build_type == 'Release'
         working-directory: ${{ runner.temp }}/build
         run: cmake --install . --config Release
         env:
-          QGC_MACOS_SIGNING_IDENTITY: ${{ github.event_name != 'pull_request' && secrets.MACOS_SIGNING_IDENTITY || '' }}
-          QGC_MACOS_NOTARIZATION_USERNAME: ${{ github.event_name != 'pull_request' && secrets.MACOS_NOTARIZATION_USERNAME || '' }}
-          QGC_MACOS_NOTARIZATION_PASSWORD: ${{ github.event_name != 'pull_request' && secrets.MACOS_NOTARIZATION_PASSWORD || '' }}
-          QGC_MACOS_NOTARIZATION_TEAM_ID: ${{ github.event_name != 'pull_request' && secrets.MACOS_NOTARIZATION_TEAM_ID || '' }}
+          QGC_MACOS_SIGNING_IDENTITY: ${{ env.MACOS_SIGN == 'true' && secrets.MACOS_SIGNING_IDENTITY || '' }}
+          QGC_MACOS_NOTARIZATION_USERNAME: ${{ env.MACOS_SIGN == 'true' && secrets.MACOS_NOTARIZATION_USERNAME || '' }}
+          QGC_MACOS_NOTARIZATION_PASSWORD: ${{ env.MACOS_SIGN == 'true' && secrets.MACOS_NOTARIZATION_PASSWORD || '' }}
+          QGC_MACOS_NOTARIZATION_TEAM_ID: ${{ env.MACOS_SIGN == 'true' && secrets.MACOS_NOTARIZATION_TEAM_ID || '' }}
 
       - name: Verify DMG executable
         if: matrix.build_type == 'Release'

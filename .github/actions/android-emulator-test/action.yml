@@ -17,10 +17,6 @@ inputs:
     description: Suffix for the uploaded emulator-diagnostics artifact name
     required: false
     default: ${{ github.job }}
-  build-dir:
-    description: Build directory (for diagnostics collection)
-    required: false
-    default: ${{ runner.temp }}/build
 
 runs:
   using: composite
@@ -62,12 +58,10 @@ runs:
     - name: Collect Emulator Diagnostics
       if: failure()
       shell: bash
-      env:
-        BUILD_DIR: ${{ inputs.build-dir }}
       run: |
         python3 "${GITHUB_WORKSPACE}/tools/ci/android/android_collect_diagnostics.py" \
           --out-dir "${RUNNER_TEMP}/emulator-diagnostics" \
-          --build-dir "${BUILD_DIR}" \
+          --build-dir "${RUNNER_TEMP}/build" \
           --boot-log "${RUNNER_TEMP}/qgc_emulator_boot.log"
         ls -la "${RUNNER_TEMP}/emulator-diagnostics" || true
 

@@ -41,13 +41,6 @@ _MIB = 1024 * 1024
 
 
 @dataclass(frozen=True)
-class CacheRow:
-    key: str
-    size: str
-    ref: str
-
-
-@dataclass(frozen=True)
 class CacheUsage:
     key: str
     ref: str
@@ -63,8 +56,8 @@ def _ref_args(branch: str) -> list[str]:
     return ["--ref", ref]
 
 
-def list_caches(repo: str, branch: str, limit: int = 100) -> list[CacheRow]:
-    """Return cached entries, newest first, via `gh cache list --json`."""
+def list_caches(repo: str, branch: str, limit: int) -> list[CacheUsage]:
+    """Return cached entries, most recently used first, via `gh cache list --json`."""
     result = gh(
         "cache",
         "list",
@@ -76,13 +69,14 @@ def list_caches(repo: str, branch: str, limit: int = 100) -> list[CacheRow]:
         "--limit",
         str(limit),
         "--json",
-        "key,ref,sizeInBytes",
+        "key,ref,sizeInBytes,lastAccessedAt",
     )
     return [
-        CacheRow(
+        CacheUsage(
             key=row["key"],
-            size=f"{int(row.get('sizeInBytes', 0)) // _MIB} MiB",
             ref=row.get("ref", ""),
+            size_bytes=int(row.get("sizeInBytes", 0)),
+            last_accessed=row.get("lastAccessedAt", ""),
         )
         for row in json.loads(result.stdout or "[]")
         if row.get("key")
@@ -109,31 +103,6 @@ def delete_caches(repo: str, branch: str, keys: list[str]) -> tuple[int, int]:
         else:
             failed += 1
     return deleted, failed
-
-
-def list_caches_usage(repo: str, limit: int = 200) -> list[CacheUsage]:
-    """Return all caches with numeric sizes via built-in `gh cache list --json`."""
-    result = gh(
-        "cache",
-        "list",
-        "-R",
-        repo,
-        "--limit",
-        str(limit),
-        "--json",
-        "key,ref,sizeInBytes,lastAccessedAt",
-    )
-    data = json.loads(result.stdout or "[]")
-    return [
-        CacheUsage(
-            key=row.get("key", ""),
-            ref=row.get("ref", ""),
-            size_bytes=int(row.get("sizeInBytes", 0)),
-            last_accessed=row.get("lastAccessedAt", ""),
-        )
-        for row in data
-        if row.get("key")
-    ]
 
 
 def select_prune_victims(
@@ -212,6 +181,13 @@ def _cache_family(key: str) -> str:
     return _APT_GENERATION_RE.sub(r"\1-<generation>", family)
 
 
+def _cache_table(caches: list[CacheUsage]) -> str:
+    return md_table(
+        ["Key", "Size", "Branch"],
+        [(f"`{c.key[:50]}`", f"{c.size_bytes // _MIB} MiB", c.ref) for c in caches],
+    )
+
+
 def _prune_summary(victims: list[CacheUsage], total: int, projected: int, *, deleted: bool) -> str:
     verb = "Deleted" if deleted else "Selected"
     lines = [
@@ -220,11 +196,7 @@ def _prune_summary(victims: list[CacheUsage], total: int, projected: int, *, del
         f"({verb.lower()} {len(victims)} cache(s))\n",
     ]
     if victims:
-        table = md_table(
-            ["Key", "Size", "Branch"],
-            [(f"`{c.key[:50]}`", f"{c.size_bytes // _MIB} MiB", c.ref) for c in victims],
-        )
-        lines.append(f"\n{table}\n")
+        lines.append(f"\n{_cache_table(victims)}\n")
     else:
         lines.append("\nNo eviction candidates.\n")
     return "".join(lines)
@@ -232,7 +204,7 @@ def _prune_summary(victims: list[CacheUsage], total: int, projected: int, *, del
 
 def run_prune(repo: str, args: argparse.Namespace) -> None:
     """Evict stale cache generations when the pool exceeds the high-water mark."""
-    caches = list_caches_usage(repo, args.limit)
+    caches = list_caches(repo, "", args.limit)
     victims, total, projected = select_prune_victims(
         caches,
         keep_mb=args.keep_mb,
@@ -269,18 +241,14 @@ def run_prune(repo: str, args: argparse.Namespace) -> None:
         write_step_summary(summary)
 
 
-def _list_summary(rows: list[CacheRow], branch: str) -> str:
+def _list_summary(rows: list[CacheUsage], branch: str) -> str:
     lines = ["## Cache Summary\n"]
     if branch:
         lines.append(f"Branch filter: `{branch}`\n")
     if not rows:
         lines.append("\nNo caches found\n")
         return "".join(lines)
-    table = md_table(
-        ["Key", "Size", "Branch"],
-        [(f"`{row.key[:50]}`", row.size, row.ref) for row in rows],
-    )
-    lines.append(f"\n{table}\n")
+    lines.append(f"\n{_cache_table(rows)}\n")
     lines.append(f"\n**Total: {len(rows)} caches**\n")
     return "".join(lines)
 

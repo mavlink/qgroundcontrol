@@ -78,3 +78,27 @@
   
   '''
 # ---
+# name: test_rendered_comment_matches_snapshot[minimal]
+  '''
+  ## Build Results
+  
+  ### Platform Status
+  
+  | Platform | Status | Details |
+  |----------|--------|--------|
+  | Linux | Passed | [View](https://example.test/linux) |
+  
+  **All builds passed.**
+  
+  ### Pre-commit
+  
+  | Check | Status | Details |
+  |-------|--------|---------|
+  | pre-commit | Not Triggered | - |
+  
+  
+  ---
+  <sub>Updated: 2026-02-17 12:00:00 UTC • Triggered by: Linux</sub>
+  
+  '''
+# ---

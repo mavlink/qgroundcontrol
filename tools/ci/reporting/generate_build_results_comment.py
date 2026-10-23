@@ -24,6 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 import _bootstrap as _bootstrap
 from common.coverage_summary import CoverageSummaryError, read_gcovr_summary
 from common.format import format_bytes, format_delta_bytes
+from common.io import read_json
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +53,7 @@ def _parse_precommit_results(path: Path) -> tuple[str | None, str | None, str | 
         return None, None, None
 
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
+        data = read_json(path)
     except (json.JSONDecodeError, OSError):
         logger.warning("Failed to parse pre-commit results from %s", path, exc_info=True)
         return None, None, None
@@ -179,7 +180,7 @@ def _collect_artifact_data(base_dir: Path, env: Mapping[str, str]) -> dict[str, 
         return None
 
     try:
-        pr_data = json.loads(pr_sizes_path.read_text(encoding="utf-8"))
+        pr_data = read_json(pr_sizes_path)
     except (json.JSONDecodeError, OSError):
         logger.warning("Failed to parse PR sizes from %s", pr_sizes_path, exc_info=True)
         return None
@@ -189,7 +190,7 @@ def _collect_artifact_data(base_dir: Path, env: Mapping[str, str]) -> dict[str, 
     baseline: dict[str, int] = {}
     if baseline_path.exists():
         try:
-            baseline_data = json.loads(baseline_path.read_text(encoding="utf-8"))
+            baseline_data = read_json(baseline_path)
             if expected_base_sha and baseline_data.get("head_sha") != expected_base_sha:
                 logger.warning(
                     "Ignoring size baseline for %s; PR base is %s",
@@ -321,7 +322,7 @@ def generate_comment(
     return "\n".join(result).rstrip() + "\n"
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Generate Build Results PR comment markdown.",
     )
@@ -337,11 +338,11 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="Output path for comment markdown (default: $COMMENT_OUTPUT or comment.md)",
     )
-    return parser.parse_args()
+    return parser.parse_args(argv)
 
 
-def main() -> int:
-    args = parse_args()
+def main(argv: list[str] | None = None) -> int:
+    args = parse_args(argv)
     base_dir = args.base_dir
     comment = generate_comment(os.environ, base_dir)
     if args.output:

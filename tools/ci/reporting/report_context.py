@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import sys
@@ -46,7 +47,8 @@ def resolve_context(repo: str, run: dict[str, Any]) -> dict[str, str]:
     return result
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    argparse.ArgumentParser(description=__doc__).parse_args(argv)
     event = read_json(Path(os.environ["GITHUB_EVENT_PATH"]))
     result = resolve_context(require_repository(), event["workflow_run"])
     write_github_output(result)

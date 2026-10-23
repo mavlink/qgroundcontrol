@@ -30,7 +30,7 @@ def ec2(region: str, *args: str) -> dict[str, Any]:
 
 
 def manifest_image(manifest: Path, region: str) -> str:
-    artifact = json.loads(manifest.read_text())["builds"][-1]["artifact_id"]
+    artifact = json.loads(manifest.read_text(encoding="utf-8"))["builds"][-1]["artifact_id"]
     match = re.fullmatch(re.escape(region) + r":(ami-[0-9a-f]+)", artifact)
     if not match:
         raise ValueError(f"Unexpected Packer artifact: {artifact}")
@@ -156,21 +156,21 @@ def verify_image(sdk_root: Path = SDK_ROOT) -> None:
             raise RuntimeError(f"{' '.join(command)} failed: {error}") from error
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("command", choices=["manifest", "promote", "cleanup", "verify"])
     parser.add_argument("--region", help="AWS region (required except for verify)")
     parser.add_argument("--manifest", type=Path)
     parser.add_argument("--image")
     parser.add_argument("--commit")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     if args.command == "verify":
         try:
             verify_image()
         except RuntimeError as error:
             print(f"::error::{error}", flush=True)
-            raise SystemExit(1) from None
-        return
+            return 1
+        return 0
     if not args.region:
         parser.error(f"{args.command} requires --region")
     if args.command == "manifest":
@@ -183,7 +183,8 @@ def main() -> None:
         print(promote(args.region, args.image, args.commit))
     else:
         cleanup(args.region)
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

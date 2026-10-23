@@ -32,6 +32,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 import _bootstrap as _bootstrap
 from common.build_config import find_build_config, load_build_config
 from common.gh_actions import annotate, parse_bool, write_github_output
+from common.git import pr_diff_refs
 
 Leg = dict[str, str | int | list[str]]
 
@@ -68,6 +69,7 @@ FULL_SCAN_INPUTS = (
     "tools/analyzers/dependencies.py",
     "tools/analyzers/result_cache.py",
     "tools/setup/build_clazy.py",
+    "tools/ci/runner/analysis_tools.py",
     # Generators of headers that analyzed sources include.
     "tools/common/io.py",
     "tools/common/xml.py",
@@ -79,10 +81,10 @@ SOURCE_TREE_INPUT_SUFFIXES = frozenset({".cmake", ".in", ".patch"})
 INCLUDE = re.compile(r'^\s*#\s*include\s*[<"]([^>"]+)[>"]', re.MULTILINE)
 
 
-def changed_files(root: Path, base: str) -> list[str]:
+def changed_files(root: Path, refs: tuple[str, str]) -> list[str]:
     """Return paths changed since the merge base; a rename lists both its old and new path."""
     result = subprocess.run(
-        ["git", "diff", "--name-only", "--no-renames", f"{base}...HEAD"],
+        ["git", "diff", "--name-only", "--no-renames", f"{refs[0]}...{refs[1]}"],
         cwd=root,
         capture_output=True,
         text=True,
@@ -134,12 +136,15 @@ def estimate_units(root: Path, changed: list[str]) -> int:
     return len(units)
 
 
-def pull_request_plan(root: Path, base: str) -> tuple[int, str]:
+def pull_request_plan(root: Path, base: str, head: str = "") -> tuple[int, str]:
     """Return the shard count (0 when nothing needs analysis) and scan scope for a PR."""
     if not base:
         print("No pull request base; scanning every active unit")
         return MAX_TIDY_SHARDS, "all"
-    changed = changed_files(root, base)
+    refs = pr_diff_refs(base, head, cwd=root)
+    if not refs:
+        return MAX_TIDY_SHARDS, "all"
+    changed = changed_files(root, refs)
     inputs = [path for path in changed if may_select_full_scan(path)]
     if inputs:
         print(f"Analysis inputs changed ({', '.join(inputs[:5])}); scanning every active unit")
@@ -248,6 +253,7 @@ def build_matrix(
     base: str,
     *,
     llvm_version: str,
+    head: str = "",
     tool: str = "clazy",
     path: str = "",
     analyze_all: bool = True,
@@ -267,7 +273,7 @@ def build_matrix(
     if event == "push":
         # A single job saves one complete result cache for pull requests to restore.
         return compiler_legs(1, "all", llvm_version)
-    return compiler_legs(*pull_request_plan(root, base), llvm_version)
+    return compiler_legs(*pull_request_plan(root, base, head), llvm_version)
 
 
 def analysis_toolchain(root: Path) -> dict[str, str]:
@@ -294,6 +300,7 @@ def main(argv: list[str] | None = None) -> int:
         default=parse_bool(os.environ.get("DISPATCH_PROFILE_CHECKS")),
     )
     parser.add_argument("--base", default=os.environ.get("PR_BASE_SHA", ""))
+    parser.add_argument("--head", default=os.environ.get("PR_HEAD_SHA", ""))
     parser.add_argument("--root", type=Path, default=Path.cwd())
     args = parser.parse_args(argv)
 
@@ -304,6 +311,7 @@ def main(argv: list[str] | None = None) -> int:
             args.root,
             args.base,
             llvm_version=toolchain["llvm_version"],
+            head=args.head,
             tool=args.tool,
             path=args.path,
             analyze_all=args.analyze_all,

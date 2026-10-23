@@ -48,18 +48,7 @@ def platform_status(
 def precommit_status(run: dict[str, Any] | None) -> dict[str, str]:
     if not run:
         return {"status": "Not Triggered", "conclusion": "not_triggered", "url": "", "run_id": ""}
-
-    status = str(run.get("status", "pending"))
-    conclusion = str(run.get("conclusion") or "pending")
-    url = str(run.get("html_url", ""))
-    run_id = str(run.get("id", ""))
-
-    if status == "completed":
-        human = "Passed" if conclusion == "success" else "Failed"
-        return {"status": human, "conclusion": conclusion, "url": url, "run_id": run_id}
-    if status == "in_progress":
-        return {"status": "Running", "conclusion": "in_progress", "url": url, "run_id": run_id}
-    return {"status": "Pending", "conclusion": "pending", "url": url, "run_id": run_id}
+    return {**platform_status(run), "run_id": str(run.get("id", ""))}
 
 
 def render_table(platforms: list[str], states: dict[str, dict[str, str]]) -> str:
@@ -117,7 +106,7 @@ def main(argv: list[str] | None = None) -> int:
     table = render_table(platforms, states)
     platform_conclusions = [states[name]["conclusion"] for name in platforms]
     all_complete, missing, incomplete, failed = evaluate_runs(
-        runs, platforms, args.event, require_success=False
+        latest, platforms, require_success=False
     )
     ready = all_complete and not (args.require_success and failed)
     all_success = all(c == "success" for c in platform_conclusions)

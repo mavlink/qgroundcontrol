@@ -12,6 +12,8 @@ from ci.cache import build_cache_artifact as cache
 
 from .._helpers import completed, get_step, get_steps, load_action
 
+pytestmark = pytest.mark.windows
+
 
 def run(run_id=2, **changes):
     return {
@@ -91,18 +93,20 @@ def test_archive_roundtrip_preserves_both_caches_and_excludes_other_files(tmp_pa
     [
         ("../escape", tarfile.REGTYPE),
         ("/absolute", tarfile.REGTYPE),
-        (".ccache/../../escape", tarfile.REGTYPE),
+        (".cache/ccache/../../escape", tarfile.REGTYPE),
         ("tools/evil.py", tarfile.REGTYPE),
-        (".ccache/link", tarfile.SYMTYPE),
-        (".ccache/hardlink", tarfile.LNKTYPE),
-        (".ccache/C:drive", tarfile.REGTYPE),
-        (".ccache\\escape", tarfile.REGTYPE),
+        (".cache/CPM/evil.cmake", tarfile.REGTYPE),
+        (".ccache/legacy", tarfile.REGTYPE),
+        (".cache/ccache/link", tarfile.SYMTYPE),
+        (".cache/ccache/hardlink", tarfile.LNKTYPE),
+        (".cache/ccache/C:drive", tarfile.REGTYPE),
+        (".cache/ccache\\escape", tarfile.REGTYPE),
     ],
 )
 def test_archive_is_validated_before_any_cache_file_is_written(tmp_path, name, kind):
     archive = tmp_path / "cache.tar"
     with tarfile.open(archive, "w") as tar:
-        good = tarfile.TarInfo(".ccache/good")
+        good = tarfile.TarInfo(".cache/ccache/good")
         good.size = 4
         tar.addfile(good, io.BytesIO(b"good"))
         bad = tarfile.TarInfo(name)
@@ -111,7 +115,7 @@ def test_archive_is_validated_before_any_cache_file_is_written(tmp_path, name, k
         tar.addfile(bad)
     with pytest.raises(ValueError, match="Unexpected compiler cache member"):
         cache.unpack_cache(archive, tmp_path)
-    assert not (tmp_path / ".ccache/good").exists()
+    assert not (tmp_path / ".cache/ccache/good").exists()
 
 
 def test_empty_cache_is_not_published(tmp_path):
@@ -261,6 +265,6 @@ def test_artifact_restore_step_cannot_fail_the_job():
     fallback = "steps.artifact-cache.outputs.restored != 'true'"
     # The sccache pilot restores no ccache archive.
     assert {step["with"]["path"]: step["if"] for step in fallbacks} == {
-        ".ccache": f"{fallback} && env.QGC_COMPILER_CACHE_TOOL == 'ccache'",
+        ".cache/ccache": f"{fallback} && env.QGC_COMPILER_CACHE_TOOL == 'ccache'",
         ".cache/moccache": fallback,
     }

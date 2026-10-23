@@ -9,17 +9,20 @@ Subcommands:
 from __future__ import annotations
 
 import argparse
-import json
 import re
 import subprocess
 import sys
-import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import _bootstrap as _bootstrap
 from common.gh_actions import gh_error, write_github_output, write_step_summary
+from common.io import read_json
+from common.proc import run_with_retry
+
+BUILD_ATTEMPTS = 2
+BUILD_RETRY_DELAY_SECONDS = 30
 
 
 def resolve_push_target(event_name: str, repo: str, ref: str) -> str:
@@ -38,32 +41,29 @@ def resolve_push_target(event_name: str, repo: str, ref: str) -> str:
     return ""
 
 
-def cmd_resolve_push_target(args: argparse.Namespace) -> None:
+def cmd_resolve_push_target(args: argparse.Namespace) -> int:
     target = resolve_push_target(args.event_name, args.repo, args.ref)
     write_github_output({"ref": target})
     print(f"push target: {target or '(none)'}")
+    return 0
 
 
-def cmd_run(args: argparse.Namespace) -> None:
+def cmd_run(args: argparse.Namespace) -> int:
     cmd = [sys.executable, "deploy/docker/run_docker.py", "run"]
     if args.fuse:
         cmd.append("--fuse")
     cmd += [args.image, args.build_type]
-
-    for attempt in range(1, args.max_attempts + 1):
-        result = subprocess.run(cmd, check=False)
-        if result.returncode == 0:
-            return
-        if attempt >= args.max_attempts:
-            gh_error(f"Docker build failed after {attempt} attempt(s).")
-            sys.exit(1)
-        print(
-            f"Docker build failed on attempt {attempt}. Retrying in {args.retry_delay} seconds..."
+    try:
+        run_with_retry(
+            cmd, max_attempts=BUILD_ATTEMPTS, retry_backoff_seconds=BUILD_RETRY_DELAY_SECONDS
         )
-        time.sleep(args.retry_delay)
+    except subprocess.CalledProcessError:
+        gh_error(f"Docker build failed after {BUILD_ATTEMPTS} attempts.")
+        return 1
+    return 0
 
 
-def cmd_cache_key(args: argparse.Namespace) -> None:
+def cmd_cache_key(args: argparse.Namespace) -> int:
     result = subprocess.run(
         [
             "docker",
@@ -83,14 +83,15 @@ def cmd_cache_key(args: argparse.Namespace) -> None:
     if not re.fullmatch(r"[0-9a-f]{64}", fingerprint):
         raise ValueError("Container returned an invalid compiler fingerprint")
     write_github_output({"fingerprint": fingerprint})
+    return 0
 
 
-def cmd_summary(args: argparse.Namespace) -> None:
+def cmd_summary(args: argparse.Namespace) -> int:
     path = args.build_dir / "docker-build-report.json"
     if not path.is_file():
         print("No Docker build performance report was produced")
-        return
-    report = json.loads(path.read_text())
+        return 0
+    report = read_json(path)
     write_github_output({"build_success": str(report.get("build_success", False)).lower()})
     lines = ["### Docker application build", "", "| Phase | Seconds |", "| --- | ---: |"]
     lines.extend(f"| {name} | {seconds:.2f} |" for name, seconds in report["seconds"].items())
@@ -100,9 +101,10 @@ def cmd_summary(args: argparse.Namespace) -> None:
     markdown = "\n".join(lines)
     print(markdown)
     write_step_summary(markdown)
+    return 0
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -110,8 +112,6 @@ def main() -> None:
     p_run.add_argument("--image", default="dronecode/qgroundcontrol:linux")
     p_run.add_argument("--build-type", required=True)
     p_run.add_argument("--fuse", action="store_true", default=False)
-    p_run.add_argument("--max-attempts", type=int, default=2)
-    p_run.add_argument("--retry-delay", type=int, default=30)
 
     p_target = sub.add_parser("resolve-push-target")
     p_target.add_argument("--event-name", required=True)
@@ -123,8 +123,8 @@ def main() -> None:
     summary = sub.add_parser("summary", help="Report container timings and cache statistics")
     summary.add_argument("--build-dir", type=Path, required=True)
 
-    args = parser.parse_args()
-    {
+    args = parser.parse_args(argv)
+    return {
         "run": cmd_run,
         "resolve-push-target": cmd_resolve_push_target,
         "cache-key": cmd_cache_key,
@@ -133,4 +133,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

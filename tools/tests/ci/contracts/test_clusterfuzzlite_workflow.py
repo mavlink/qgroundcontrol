@@ -5,11 +5,14 @@ import sys
 
 import pytest
 
-from ..._helpers import REPO_ROOT, load_workflow
+from ..._helpers import REPO_ROOT, load_script, load_workflow
 
 
 def test_pr_fuzzing_uses_seed_corpus_and_preserves_diagnostics() -> None:
     workflow = load_workflow("clusterfuzzlite.yml")
+    # PR runs never read uploaded builds (NO_CLUSTERFUZZ_DEPLOYMENT), so nothing else publishes any.
+    assert set(workflow["on"]) == {"pull_request"}
+    assert set(workflow["jobs"]) == {"fuzz"}
     job = workflow["jobs"]["fuzz"]
     steps = job["steps"]
     run = next(
@@ -81,17 +84,11 @@ def test_mavlink_defaults_reject_missing_empty_or_ambiguous_values(tmp_path, def
 
 
 def test_python_fuzzer_build_preserves_flags_and_packages_seed(tmp_path, monkeypatch):
-    import importlib.util
     import zipfile
     from pathlib import Path
 
     monkeypatch.syspath_prepend(str(REPO_ROOT / ".clusterfuzzlite"))
-    spec = importlib.util.spec_from_file_location(
-        "fuzzer_build", REPO_ROOT / ".clusterfuzzlite/build.py"
-    )
-    assert spec and spec.loader
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    module = load_script(".clusterfuzzlite/build.py")
     source, work, output = (tmp_path / name for name in ("source tree", "work", "output"))
     for path in (
         source / "qgroundcontrol/cmake",

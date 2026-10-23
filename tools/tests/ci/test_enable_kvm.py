@@ -32,7 +32,7 @@ def test_opens_kvm_and_waits_for_udev(
     kvm = tmp_path / "kvm"
     kvm.touch()
     monkeypatch.setattr(enable_kvm, "KVM", kvm)
-    assert enable_kvm.main() == 0
+    assert enable_kvm.main([]) == 0
     assert [command for command, _ in calls] == [
         ["sudo", "tee", "/etc/udev/rules.d/99-kvm4all.rules"],
         ["sudo", "udevadm", "control", "--reload-rules"],
@@ -51,7 +51,7 @@ def test_missing_kvm_fails_before_sudo(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     monkeypatch.setattr(enable_kvm, "KVM", tmp_path / "kvm")
-    assert enable_kvm.main() == 1
+    assert enable_kvm.main([]) == 1
     assert not calls
     assert "nested virtualization" in capsys.readouterr().err
 
@@ -72,4 +72,4 @@ def test_udev_failure_fails_the_step(
         return subprocess.CompletedProcess(command, 0)
 
     monkeypatch.setattr(enable_kvm.subprocess, "run", run)
-    assert enable_kvm.main() == 1
+    assert enable_kvm.main([]) == 1

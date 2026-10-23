@@ -26,8 +26,7 @@ github_actions:
           - 'deploy/linux/**'
           - 'deploy/docker/**'
           - 'tools/setup/install_dependencies/_debian.py'
-          - 'tools/setup/install_dependencies/_arch.py'
-          - 'tools/setup/install_dependencies/_fedora.py'
+          - 'tools/setup/install_dependencies/_linux.py'
 
 "Platform: Windows":
   - changed-files:

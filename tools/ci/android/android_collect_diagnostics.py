@@ -22,6 +22,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import _bootstrap as _bootstrap
 from common.gh_actions import gh_warning
+from common.io import read_json, write_json
 from common.proc import run_captured
 
 ADB_TIMEOUT_SHORT = 20
@@ -74,8 +75,7 @@ def collect_build_artifacts(out_dir: Path, build_dir: Path, boot_log: Path | Non
     error = out_dir / "android-QGroundControl-deployment-settings.error.txt"
     if settings.exists():
         try:
-            data = json.loads(settings.read_text(encoding="utf-8"))
-            pretty.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+            write_json(pretty, read_json(settings), sort_keys=True)
         except (json.JSONDecodeError, OSError) as e:
             error.write_text(str(e), encoding="utf-8")
 

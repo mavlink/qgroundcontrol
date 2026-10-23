@@ -28,10 +28,11 @@ jobs:
         with:
           egress-policy: audit
 
+      # A pull request's merge commit and its two parents hold the PR diff; pushes diff `before`.
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          fetch-depth: 0
+          fetch-depth: ${{ github.event_name == 'pull_request' && 2 || 0 }}
           persist-credentials: false
 
       - name: Setup Python
@@ -44,10 +45,11 @@ jobs:
         working-directory: tools
         env:
           BASE_REF: ${{ github.event.pull_request.base.sha || github.event.before }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           if [[ "$BASE_REF" == "0000000000000000000000000000000000000000" ]]; then
             BASE_REF=EMPTY
           elif ! git cat-file -e "${BASE_REF}^{commit}"; then
             git fetch --no-tags --depth=1 origin "$BASE_REF"
           fi
-          python -m translations.check_placeholders --base-ref "$BASE_REF"
+          python -m translations.check_placeholders --base-ref "$BASE_REF" --head-sha "$PR_HEAD_SHA"

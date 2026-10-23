@@ -50,8 +50,8 @@ jobs:
         with:
           egress-policy: audit
 
-      # PR diffs fetch their base and head commits on demand. Tags need full
-      # history and branch refs for the Stable* release-tag check.
+      # A pull request's merge commit and its two parents hold the PR diff. Tags need
+      # full history and branch refs for the Stable* release-tag check.
       - uses: actions/checkout@v7
         with:
           sparse-checkout: |
@@ -63,7 +63,7 @@ jobs:
             tools/common
             tools/qgc_tools
           sparse-checkout-cone-mode: false
-          fetch-depth: ${{ github.ref_type != 'tag' && 1 || 0 }}
+          fetch-depth: ${{ github.event_name == 'pull_request' && 2 || github.ref_type != 'tag' && 1 || 0 }}
           persist-credentials: false
       - name: Build matrix
         id: build
@@ -178,8 +178,6 @@ jobs:
       - name: Configure
         uses: ./.github/actions/cmake-configure
         with:
-          build-dir: ${{ runner.temp }}/build
-          build-type: ${{ env.BUILD_TYPE }}
           preset: ${{ env.BUILD_TYPE == 'Debug' && 'Android-debug' || 'Android' }}
           use-qt-cmake: 'false'
           extra-args: >-
@@ -200,8 +198,6 @@ jobs:
           GRADLE_OPTS: -Dorg.gradle.daemon=false
         uses: ./.github/actions/cmake-build
         with:
-          build-dir: ${{ runner.temp }}/build
-          build-type: ${{ env.BUILD_TYPE }}
           parallel-jobs: ${{ matrix.emulator && '2' || '' }}
           output-file: qgc-build.log
 

@@ -5,8 +5,8 @@ Create GStreamer archive and optionally upload to S3.
 Usage:
     gstreamer_archive.py --platform linux --arch x86_64 --prefix DIR [--version 1.24.0] [--simulator] [--upload-s3]
 
-Environment variables for S3 upload:
-    AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_DEFAULT_REGION
+--upload-s3 needs the AWS CLI on PATH and credentials in the environment (AWS_ACCESS_KEY_ID,
+AWS_SECRET_ACCESS_KEY, AWS_DEFAULT_REGION); it fails without them.
 """
 
 from __future__ import annotations
@@ -23,12 +23,13 @@ from typing import ClassVar
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import _bootstrap as _bootstrap
-from common.aws import upload_public_file, validate_public_bucket
+from common.aws import upload_public_file
 from common.build_config import get_gstreamer_version
-from common.gh_actions import write_github_output, write_step_summary
+from common.gh_actions import gh_error, write_github_output, write_step_summary
 from common.markdown import md_table
-from common.platform import host_arch
-from common.proc import run_captured
+from common.proc import MissingToolError, require_tools, run_captured
+
+S3_BUCKET = "qgroundcontrol"
 
 
 @dataclass
@@ -38,27 +39,17 @@ class ArchiveResult:
     extension: str
 
 
-def _curl_cmd(url: str, dest: Path) -> list[str]:
-    return [
-        "curl",
-        "-fsSL",
-        "--retry",
-        "5",
-        "--retry-delay",
-        "2",
-        "--retry-all-errors",
-        "--max-time",
-        "300",
-        "-o",
-        str(dest),
-        url,
-    ]
+def require_s3_upload_tools() -> None:
+    """Fail before archiving when an S3 upload cannot succeed."""
+    require_tools("aws", hint="--upload-s3 requires the AWS CLI")
+    if not os.environ.get("AWS_ACCESS_KEY_ID"):
+        raise RuntimeError("--upload-s3 requires AWS credentials; AWS_ACCESS_KEY_ID is unset")
 
 
 def run_command(cmd: list[str], **kwargs) -> subprocess.CompletedProcess:
     """Run *cmd* via common.proc.run_captured, printing stdout/stderr on failure.
 
-    The verbose error logging exists because tar/curl/aws-cli failures here are
+    The verbose error logging exists because tar failures here are
     debugged from CI logs — a plain CalledProcessError traceback isn't enough.
     """
     result = run_captured(cmd, **kwargs)
@@ -154,100 +145,13 @@ class GStreamerArchiver:
         cmd = ["tar", "-C", str(parent_dir), "-cJf", str(archive_path), folder_name]
         run_command(cmd)
 
-    def upload_to_s3(
-        self,
-        bucket: str,
-        key_id: str | None = None,
-        secret: str | None = None,
-        region: str | None = None,
-    ) -> bool:
-        validate_public_bucket(bucket)
-        key_id = key_id or os.environ.get("AWS_ACCESS_KEY_ID")
-        secret = secret or os.environ.get("AWS_SECRET_ACCESS_KEY")
-        region = region or os.environ.get("AWS_DEFAULT_REGION")
-
-        if not key_id:
-            print("Warning: AWS credentials not set, skipping S3 upload", file=sys.stderr)
-            return False
-
+    def upload_to_s3(self) -> None:
         if not self._archive_result:
             raise RuntimeError("Must call create_archive() before upload_to_s3()")
-
-        self._ensure_aws_cli()
-
-        s3_path = f"s3://{bucket}/dependencies/gstreamer/{self.platform}/{self.version}"
         full_name = f"{self._archive_result.name}.{self._archive_result.extension}"
-
-        env = os.environ.copy()
-        if key_id:
-            env["AWS_ACCESS_KEY_ID"] = key_id
-        if secret:
-            env["AWS_SECRET_ACCESS_KEY"] = secret
-        if region:
-            env["AWS_DEFAULT_REGION"] = region
-
-        upload_public_file(
-            self._archive_result.path,
-            bucket,
-            f"dependencies/gstreamer/{self.platform}/{self.version}/{full_name}",
-            env=env,
-        )
-        print(f"Uploaded to: {s3_path}/{full_name}")
-        return True
-
-    def _ensure_aws_cli(self) -> None:
-        """Ensure AWS CLI is available, installing if necessary."""
-        if shutil.which("aws"):
-            return
-
-        runner_os = os.environ.get("RUNNER_OS", "")
-        print(f"AWS CLI not found, attempting installation for {runner_os or 'local'}...")
-
-        if runner_os == "Windows":
-            self._install_aws_cli_windows()
-        elif runner_os == "Linux":
-            self._install_aws_cli_linux()
-        elif runner_os == "macOS":
-            self._install_aws_cli_macos()
-        else:
-            raise RuntimeError(
-                "AWS CLI not found. Install manually or set RUNNER_OS environment variable."
-            )
-
-    def _install_aws_cli_windows(self) -> None:
-        """Install AWS CLI on Windows via MSI."""
-        installer_path = self.output_dir / "AWSCLIV2.msi"
-        run_command(_curl_cmd("https://awscli.amazonaws.com/AWSCLIV2.msi", installer_path))
-        run_command(["msiexec.exe", "/i", str(installer_path), "/quiet"])
-        aws_path = "/c/Program Files/Amazon/AWSCLIV2"
-        os.environ["PATH"] = f"{aws_path};{os.environ.get('PATH', '')}"
-
-    def _install_aws_cli_linux(self) -> None:
-        """Install AWS CLI on Linux via zip installer."""
-        arch = self._detect_linux_aws_cli_arch()
-        installer_zip = self.output_dir / "awscliv2.zip"
-        installer_dir = self.output_dir / "aws"
-        run_command(
-            _curl_cmd(f"https://awscli.amazonaws.com/awscli-exe-linux-{arch}.zip", installer_zip)
-        )
-        run_command(["unzip", "-q", str(installer_zip), "-d", str(self.output_dir)])
-        run_command(["sudo", str(installer_dir / "install")])
-
-    @staticmethod
-    def _detect_linux_aws_cli_arch() -> str:
-        """Return AWS CLI Linux installer architecture slug."""
-        try:
-            return host_arch()
-        except ValueError as exc:
-            raise RuntimeError(
-                f"Unsupported Linux architecture for AWS CLI install: {exc}"
-            ) from exc
-
-    def _install_aws_cli_macos(self) -> None:
-        """Install AWS CLI on macOS via pkg installer."""
-        installer_pkg = self.output_dir / "AWSCLIV2.pkg"
-        run_command(_curl_cmd("https://awscli.amazonaws.com/AWSCLIV2.pkg", installer_pkg))
-        run_command(["sudo", "installer", "-pkg", str(installer_pkg), "-target", "/"])
+        key = f"dependencies/gstreamer/{self.platform}/{self.version}/{full_name}"
+        upload_public_file(self._archive_result.path, S3_BUCKET, key)
+        print(f"Uploaded to: s3://{S3_BUCKET}/{key}")
 
     def write_github_output(self) -> None:
         if not self._archive_result:
@@ -282,12 +186,12 @@ class GStreamerArchiver:
         write_step_summary(f"## GStreamer {platform_title} Build Complete\n\n{table}\n")
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Create GStreamer archive and optionally upload to S3",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
-Environment variables for S3 upload:
+--upload-s3 requires the AWS CLI and these environment variables:
   AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_DEFAULT_REGION
 """,
     )
@@ -321,7 +225,7 @@ Environment variables for S3 upload:
     parser.add_argument(
         "--upload-s3",
         action="store_true",
-        help="Upload to S3 (requires AWS credentials)",
+        help="Upload to S3 (requires the AWS CLI and credentials)",
     )
     parser.add_argument(
         "--output-dir",
@@ -329,18 +233,15 @@ Environment variables for S3 upload:
         default=None,
         help="Output directory for archive (default: $RUNNER_TEMP or .)",
     )
-    parser.add_argument(
-        "--bucket",
-        default="qgroundcontrol",
-        help="S3 bucket name (default: qgroundcontrol)",
-    )
-    return parser.parse_args()
+    return parser.parse_args(argv)
 
 
-def main() -> int:
-    args = parse_args()
+def main(argv: list[str] | None = None) -> int:
+    args = parse_args(argv)
 
     try:
+        if args.upload_s3:
+            require_s3_upload_tools()
         archiver = GStreamerArchiver(
             platform=args.platform,
             arch=args.arch,
@@ -352,22 +253,12 @@ def main() -> int:
 
         archiver.create_archive()
         archiver.write_github_output()
-
-        uploaded = False
         if args.upload_s3:
-            uploaded = archiver.upload_to_s3(bucket=args.bucket)
-
-        archiver.write_github_summary(uploaded=uploaded)
+            archiver.upload_to_s3()
+        archiver.write_github_summary(uploaded=args.upload_s3)
         return 0
-
-    except ValueError as e:
-        print(f"Error: {e}", file=sys.stderr)
-        return 1
-    except subprocess.CalledProcessError as e:
-        print(f"Command failed: {e}", file=sys.stderr)
-        return 1
-    except RuntimeError as e:
-        print(f"Error: {e}", file=sys.stderr)
+    except (ValueError, RuntimeError, MissingToolError, subprocess.CalledProcessError) as e:
+        gh_error(str(e))
         return 1
 
 

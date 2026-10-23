@@ -27,7 +27,7 @@ SIZE_PREFIX = "size/"
 SIZE_LIMITS = (("size/XS", 150), ("size/S", 500), ("size/M", 1000), ("size/L", 1500))
 XL_LABEL = "size/XL"
 # fnmatch, like the shell patterns this replaced: `*` also matches `/`.
-IGNORED_FILES = ("package-lock.json", "*.lock", "translations/*")
+IGNORED_FILES = ("docs/package-lock.json", "*.lock", "translations/*")
 XL_NOTICE_HEADING = "## Large PR Warning"
 XL_NOTICE = f"""{XL_NOTICE_HEADING}
 

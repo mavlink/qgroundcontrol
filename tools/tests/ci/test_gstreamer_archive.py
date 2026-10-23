@@ -69,22 +69,15 @@ class TestGStreamerArchiver:
         assert _archiver("linux").prefix == PREFIX
 
 
-def test_prefix_is_required(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(
-        "sys.argv", ["gstreamer_archive.py", "--platform", "linux", "--arch", "x86_64"]
-    )
+def test_prefix_is_required() -> None:
     with pytest.raises(SystemExit):
-        gstreamer_archive.parse_args()
+        gstreamer_archive.parse_args(["--platform", "linux", "--arch", "x86_64"])
 
 
-def test_create_archive_writes_name_and_path_outputs(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_create_archive_writes_name_and_path_outputs(tmp_path: Path, gh_output: Path) -> None:
     prefix = tmp_path / "gstreamer"
     (prefix / "bin").mkdir(parents=True)
     (prefix / "bin" / "gst-launch-1.0").write_text("")
-    output = tmp_path / "github_output"
-    monkeypatch.setenv("GITHUB_OUTPUT", str(output))
     archiver = GStreamerArchiver(
         platform="windows", arch="x64", version="1.24.0", prefix=prefix, output_dir=tmp_path
     )
@@ -93,7 +86,7 @@ def test_create_archive_writes_name_and_path_outputs(
     archiver.write_github_output()
 
     assert archive == tmp_path / "gstreamer-1.0-msvc-x64-1.24.0.zip"
-    assert output.read_text(encoding="utf-8").splitlines() == [
+    assert gh_output.read_text(encoding="utf-8").splitlines() == [
         "name=gstreamer-1.0-msvc-x64-1.24.0",
         f"path={archive}",
     ]
@@ -112,3 +105,61 @@ class TestArchiveResult:
         assert result.name == "gstreamer-1.0-linux-x86_64-1.24.0"
         assert result.path == Path("/tmp/archive.tar.xz")
         assert result.extension == "tar.xz"
+
+
+def _main(prefix: Path, output_dir: Path, *args: str) -> int:
+    return gstreamer_archive.main(
+        [
+            "--platform",
+            "windows",
+            "--arch",
+            "x64",
+            "--version",
+            "1.24.0",
+            "--prefix",
+            str(prefix),
+            "--output-dir",
+            str(output_dir),
+            *args,
+        ]
+    )
+
+
+@pytest.mark.parametrize(
+    ("aws", "key_id", "error"),
+    [
+        (None, "AKIA", "::error::aws not found on PATH. --upload-s3 requires the AWS CLI"),
+        ("/usr/bin/aws", "", "::error::--upload-s3 requires AWS credentials"),
+    ],
+    ids=["no-aws-cli", "no-credentials"],
+)
+def test_upload_without_aws_cli_or_credentials_fails_before_archiving(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys, aws, key_id, error
+) -> None:
+    monkeypatch.setattr(gstreamer_archive.shutil, "which", lambda name: aws)
+    monkeypatch.setenv("AWS_ACCESS_KEY_ID", key_id)
+    monkeypatch.setattr(gstreamer_archive, "upload_public_file", pytest.fail)
+
+    assert _main(tmp_path / "gstreamer", tmp_path / "out", "--upload-s3") == 1
+
+    assert error in capsys.readouterr().out
+    assert not (tmp_path / "out").exists()
+
+
+def test_upload_publishes_archive_to_the_versioned_gstreamer_key(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, gh_summary: Path
+) -> None:
+    prefix = tmp_path / "gstreamer"
+    prefix.mkdir()
+    (prefix / "README").write_text("sdk")
+    monkeypatch.setattr(gstreamer_archive.shutil, "which", lambda name: "/usr/bin/aws")
+    monkeypatch.setenv("AWS_ACCESS_KEY_ID", "AKIA")
+    uploads = []
+    monkeypatch.setattr(gstreamer_archive, "upload_public_file", lambda *args: uploads.append(args))
+
+    assert _main(prefix, tmp_path, "--upload-s3") == 0
+
+    archive = tmp_path / "gstreamer-1.0-msvc-x64-1.24.0.zip"
+    key = "dependencies/gstreamer/windows/1.24.0/gstreamer-1.0-msvc-x64-1.24.0.zip"
+    assert uploads == [(archive, "qgroundcontrol", key)]
+    assert "| S3 Path | dependencies/gstreamer/windows/1.24.0/ |" in gh_summary.read_text()

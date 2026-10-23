@@ -59,10 +59,11 @@ def test_unified_attestation_preserves_separate_provenance_and_sbom_subjects():
     steps = get_steps(load_action("attest-and-upload"))
     scan = next(s for s in steps if s.get("uses") == "anchore/sbom-action@v0")
     provenance, sbom, dependency = [s for s in steps if s.get("uses") == "actions/attest@v4"]
-    skip = "steps.prepare.outputs.skip != 'true'"
-    assert scan["if"] == provenance["if"] == sbom["if"] == skip
+    # Pull request builds aren't released: one event condition gates every attestation step.
+    not_pr = "github.event_name != 'pull_request'"
+    assert scan["if"] == provenance["if"] == sbom["if"] == dependency["if"] == not_pr
     assert scan["with"] == {
-        "path": "${{ steps.prepare.outputs.scan-path }}",
+        "path": "${{ runner.temp }}/build",
         "format": "spdx-json",
         "output-file": "${{ steps.prepare.outputs.sbom-path }}",
         "upload-artifact": True,
@@ -89,3 +90,50 @@ def test_unified_attestation_preserves_separate_provenance_and_sbom_subjects():
         assert provenance["with"][key] == sbom["with"][key]
     assert provenance["with"]["subject-digest"] == "${{ steps.image.outputs.digest }}"
     assert provenance["with"]["push-to-registry"] is True
+
+
+def test_attestation_actions_publish_checksum_and_resolved_sbom_output() -> None:
+    ci_workflow = load_workflow("ci-scripts.yml")
+    ci_steps = ci_workflow["jobs"]["test-ci-scripts"]["steps"]
+    checkout = next(step for step in ci_steps if step["name"] == "Checkout")
+    sparse_checkout = set(checkout["with"]["sparse-checkout"].splitlines())
+    assert ".github" in sparse_checkout or ".github/actions/attest-and-upload" in sparse_checkout
+
+    upload_action = load_action("attest-and-upload")
+    upload_steps = {step["name"]: step for step in upload_action["runs"]["steps"]}
+    prepare = upload_steps["Prepare artifact checksum, dependency SBOM and build identity"]
+    dependency_attestation = upload_steps["Attest CPM dependency SBOM"]
+    save = upload_steps["Save artifact"]
+    credentials = upload_steps["Configure AWS credentials"]
+    publish = upload_steps["Upload artifact and checksum to AWS"]
+
+    assert 'attest_helper.py" prepare' in prepare["run"]
+    assert prepare["env"]["ARTIFACT_NAME"] == "${{ inputs.artifact-name }}"
+    assert prepare["env"]["SUBJECT_NAME"] == "${{ inputs.subject-name || inputs.package-name }}"
+    assert dependency_attestation["uses"] == "actions/attest@v4"
+    assert dependency_attestation["if"] == "github.event_name != 'pull_request'"
+    assert dependency_attestation["with"] == {
+        "subject-path": "${{ steps.prepare.outputs.path }}",
+        "sbom-path": "${{ steps.prepare.outputs.dependency-sbom }}",
+    }
+    for output in ("path", "checksum", "metadata", "dependency-sbom"):
+        assert f"${{{{ steps.prepare.outputs.{output} }}}}" in save["with"]["path"]
+    assert save["with"]["retention-days"] == (
+        "${{ github.event_name == 'pull_request' && '7' || '30' }}"
+    )
+    assert save["with"]["compression-level"] == 0
+
+    assert credentials["uses"] == "./.github/actions/aws-credentials"
+    assert " ".join(credentials["if"].split()) == (
+        "fromJSON(inputs.upload-aws) && "
+        "(github.event_name == 'push' || "
+        "(github.event_name == 'workflow_dispatch' && github.ref_type == 'tag')) && "
+        "github.repository_owner == 'mavlink' && "
+        "(inputs.aws-role-arn != '' || "
+        "(inputs.aws-key-id != '' && inputs.aws-secret-access-key != ''))"
+    )
+    assert publish["if"] == "steps.aws-credentials.outcome == 'success'"
+    assert publish["env"]["CHECKSUM_PATH"] == "${{ steps.prepare.outputs.checksum }}"
+    assert '--artifact "${ARTIFACT_PATH}:${ARTIFACT_NAME}"' in publish["run"]
+    assert '--artifact "${CHECKSUM_PATH}:${ARTIFACT_NAME}.sha256"' in publish["run"]
+    assert "secret" not in str(publish).lower()

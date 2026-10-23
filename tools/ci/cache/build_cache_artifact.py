@@ -22,7 +22,7 @@ import _bootstrap as _bootstrap
 from common.gh_actions import gh, gh_api_json, gh_warning, write_github_output
 from common.io import extract_tar_data
 
-CACHE_ROOTS = (".ccache", ".cache/moccache")
+CACHE_ROOTS = (".cache/ccache", ".cache/moccache")
 # Snapshots are several GB; a stalled download falls back to the dependency cache.
 DOWNLOAD_TIMEOUT_SECONDS = 900
 
@@ -30,7 +30,8 @@ DOWNLOAD_TIMEOUT_SECONDS = 900
 def artifact_name(compiler_key: str, moc_key: str) -> str:
     """Keys include platform, configuration, compiler identity, and branch scope."""
     digest = hashlib.sha256(f"{compiler_key}\n{moc_key}".encode()).hexdigest()
-    return f"compiler-cache-v1-{digest}"
+    # Bump the version when CACHE_ROOTS changes: unpack_cache rejects older layouts after download.
+    return f"compiler-cache-v2-{digest}"
 
 
 def _head_repository_id(run: dict[str, Any]) -> Any:

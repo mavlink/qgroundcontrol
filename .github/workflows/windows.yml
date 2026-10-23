@@ -131,10 +131,7 @@ jobs:
         if: runner.environment != 'github-hosted'
         uses: ./.github/actions/install-dependencies
         with:
-          gstreamer: 'false'
-          msvc: 'true'
           msvc-arm64: ${{ matrix.variant == 'arm64-cross' }}
-          nsis: 'true'
 
       - name: Build Setup
         id: build-setup
@@ -147,8 +144,6 @@ jobs:
       - name: Configure
         uses: ./.github/actions/cmake-configure
         with:
-          build-dir: ${{ runner.temp }}/build
-          build-type: ${{ matrix.build_type }}
           preset: ${{ matrix.build_type == 'Debug' && format('{0}-debug', matrix.preset) || matrix.preset }}
           extra-args: >-
             -DQGC_BUILD_PORTABLE_TESTS=${{ matrix.variant == 'amd64' && 'ON' || 'OFF' }}
@@ -160,17 +155,12 @@ jobs:
       - name: Build
         id: build
         uses: ./.github/actions/cmake-build
-        with:
-          build-dir: ${{ runner.temp }}/build
-          build-type: ${{ matrix.build_type }}
 
       - name: Run portable tests
         id: portable
         if: ${{ !cancelled() && steps.build.outcome == 'success' && matrix.variant == 'amd64' }}
         uses: ./.github/actions/run-unit-tests
         with:
-          build-dir: ${{ runner.temp }}/build
-          build-type: ${{ matrix.build_type }}
           include-labels: Portable
           junit-output: junit-portable.xml
           ctest-output: portable-output.txt
@@ -188,8 +178,6 @@ jobs:
       - name: Create Installer
         uses: ./.github/actions/cmake-build
         with:
-          build-dir: ${{ runner.temp }}\build
-          build-type: ${{ matrix.build_type }}
           target: qgc-package
           parallel: 'false'
 

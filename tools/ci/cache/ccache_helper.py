@@ -25,19 +25,21 @@ import shutil
 import sys
 import tempfile
 from pathlib import Path
+from typing import NamedTuple
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import _bootstrap as _bootstrap
+from common.build_config import load_build_config
 from common.gh_actions import (
     append_github_env,
     append_github_path,
     write_github_output,
     write_step_summary,
 )
-from common.io import extract_tar_data, extract_zip_safe
+from common.io import read_json
 from common.markdown import md_table
-from common.net import download_file
+from common.net import fetch_release_member
 from common.platform import host_arch, is_linux, is_macos, is_windows
 from common.proc import run_captured
 from common.tool_version import probe_version, version_prefix_matches
@@ -46,31 +48,20 @@ from common.tool_version import probe_version, version_prefix_matches
 # Install
 # ---------------------------------------------------------------------------
 
-# Digests are bound to their version: bump both together. ccache and sccache publish their release
-# asset digests; mold publishes none, so its digests were computed from the release tarballs.
-CCACHE_VERSION = "4.13.6"
-CCACHE_SHA256 = {
-    "linux-x86_64-glibc": "508b2a1217dc6e04a23e967c7b95a0fb45d8a7e16fde9e180919698f2e2be060",
-    "linux-aarch64-glibc": "9cdd30c768a5b06d27bea8ec28b138735c30910c1e845b66f522687ae950dadc",
-    "windows-x86_64": "3d7cebb05850ad704e197b3f1d3f0f924ab6c9fdfc561578e146184fe9d89380",
-    "windows-aarch64": "bec01846b06d6d87bf35eda50544d7c8bf9b9a4859f218417a7081aa45d7fd47",
-    "darwin": "0274210ec9c9936ed5711d59b0de3167a51216a588ddde35f6bc828f366fe6d9",
-}
-MOLD_VERSION = "2.41.0"
-MOLD_SHA256 = {
-    "x86_64": "a3696680d99e692970590a178bc3a33d78d60d1c6dc9db7a11b557b02b751f5d",
-    "aarch64": "946de2774b06a71346bd59b55fddba610b65b8d93c3a4a1559cc84e103472710",
-}
-SCCACHE_VERSION = "0.18.0"
-SCCACHE_SHA256 = {
-    "x86_64": "45f1447fbe231e3037bde351ef70677dd212216c8d62ae7ca409fecc4d6acc89",
-    "aarch64": "2b3284d5da3b46a47dc4229e75bb7b88ac4aa99c8d754fb7d2f84997e5a4354a",
-}
-
-_CCACHE_RELEASE_URL = f"https://github.com/ccache/ccache/releases/download/v{CCACHE_VERSION}"
-_MOLD_RELEASE_URL = f"https://github.com/rui314/mold/releases/download/v{MOLD_VERSION}"
-_SCCACHE_RELEASE_URL = f"https://github.com/mozilla/sccache/releases/download/v{SCCACHE_VERSION}"
 _LINUX_BIN = Path("/usr/local/bin")
+
+
+class PinnedRelease(NamedTuple):
+    version: str
+    sha256: dict[str, str]
+    url: str
+
+
+def pinned_release(tool: str) -> PinnedRelease:
+    """Return build-config.json's ``tools.<tool>`` version, per-platform digests and asset URL."""
+    pin = load_build_config()["tools"][tool]
+    url = f"https://github.com/{pin['repository']}/releases/download/v{pin['version']}"
+    return PinnedRelease(pin["version"], pin["sha256"], url)
 
 
 def _run(command: list[str]) -> str:
@@ -91,18 +82,8 @@ def _on_path(tool: str, version: str) -> bool:
 
 def _install_pinned(url: str, sha256: str, member: str, dest: Path, *, sudo: bool = False) -> Path:
     """Install the ``member`` binary of a SHA-256-verified release archive as ``dest``."""
-    archive_name = url.rsplit("/", 1)[-1]
     with tempfile.TemporaryDirectory() as temp_dir:
-        temp_path = Path(temp_dir)
-        archive = temp_path / archive_name
-        download_file(url, archive, expected_sha256=sha256)
-        if archive_name.endswith(".zip"):
-            extract_zip_safe(archive, temp_path)
-        else:
-            extract_tar_data(archive, temp_path)
-        source = temp_path / member
-        if not source.is_file():
-            raise FileNotFoundError(f"{member} not found in {archive_name}")
+        source = fetch_release_member(url, sha256, member, Path(temp_dir))
         if sudo:
             _run(["sudo", "install", "-D", "-m", "0755", str(source), str(dest)])
         else:
@@ -124,35 +105,38 @@ def install_compiler_tools(runner_temp: Path | None, compiler_cache: str = "ccac
     if compiler_cache == "sccache" and not is_linux():
         raise RuntimeError(f"the sccache pilot has no pinned binary for {sys.platform}")
     arch = host_arch()
+    ccache = pinned_release("ccache")
     if is_linux():
-        stem = f"ccache-{CCACHE_VERSION}-linux-{arch}-glibc"
-        if not _on_path("ccache", CCACHE_VERSION):
+        stem = f"ccache-{ccache.version}-linux-{arch}-glibc"
+        if not _on_path("ccache", ccache.version):
             _install_pinned(
-                f"{_CCACHE_RELEASE_URL}/{stem}.tar.xz",
-                CCACHE_SHA256[f"linux-{arch}-glibc"],
+                f"{ccache.url}/{stem}.tar.xz",
+                ccache.sha256[f"linux-{arch}-glibc"],
                 f"{stem}/ccache",
                 _LINUX_BIN / "ccache",
                 sudo=True,
             )
-        stem = f"mold-{MOLD_VERSION}-{arch}-linux"
-        if not _on_path("mold", MOLD_VERSION):
+        mold = pinned_release("mold")
+        stem = f"mold-{mold.version}-{arch}-linux"
+        if not _on_path("mold", mold.version):
             _install_pinned(
-                f"{_MOLD_RELEASE_URL}/{stem}.tar.gz",
-                MOLD_SHA256[arch],
+                f"{mold.url}/{stem}.tar.gz",
+                mold.sha256[arch],
                 f"{stem}/bin/mold",
                 _LINUX_BIN / "mold",
                 sudo=True,
             )
             _run(["sudo", "ln", "-sf", "mold", str(_LINUX_BIN / "ld.mold")])
         if compiler_cache == "sccache":
+            sccache = pinned_release("sccache")
             binary = _LINUX_BIN / "sccache"
-            if _on_path("sccache", SCCACHE_VERSION):
+            if _on_path("sccache", sccache.version):
                 binary = Path(shutil.which("sccache") or binary)
             else:
-                stem = f"sccache-v{SCCACHE_VERSION}-{arch}-unknown-linux-musl"
+                stem = f"sccache-v{sccache.version}-{arch}-unknown-linux-musl"
                 _install_pinned(
-                    f"{_SCCACHE_RELEASE_URL}/{stem}.tar.gz",
-                    SCCACHE_SHA256[arch],
+                    f"{sccache.url}/{stem}.tar.gz",
+                    sccache.sha256[arch],
                     f"{stem}/sccache",
                     binary,
                     sudo=True,
@@ -163,20 +147,20 @@ def install_compiler_tools(runner_temp: Path | None, compiler_cache: str = "ccac
     if runner_temp is None:
         raise RuntimeError("RUNNER_TEMP is required to install ccache on macOS and Windows")
     if is_macos():
-        stem = f"ccache-{CCACHE_VERSION}-darwin"
+        stem = f"ccache-{ccache.version}-darwin"
         # A dedicated prefix keeps /usr/local/bin (system python3) from shadowing tools/.venv on PATH.
         binary = _install_pinned(
-            f"{_CCACHE_RELEASE_URL}/{stem}.tar.gz",
-            CCACHE_SHA256["darwin"],
+            f"{ccache.url}/{stem}.tar.gz",
+            ccache.sha256["darwin"],
             f"{stem}/ccache",
             runner_temp / "ccache" / "bin" / "ccache",
         )
         append_github_env({"QGC_CACHE_PROGRAM": str(binary)})
     elif is_windows():
-        stem = f"ccache-{CCACHE_VERSION}-windows-{arch}"
+        stem = f"ccache-{ccache.version}-windows-{arch}"
         binary = _install_pinned(
-            f"{_CCACHE_RELEASE_URL}/{stem}.zip",
-            CCACHE_SHA256[f"windows-{arch}"],
+            f"{ccache.url}/{stem}.zip",
+            ccache.sha256[f"windows-{arch}"],
             f"{stem}/ccache.exe",
             runner_temp / stem / "ccache.exe",
         )
@@ -190,22 +174,25 @@ def install_compiler_tools(runner_temp: Path | None, compiler_cache: str = "ccac
 # ---------------------------------------------------------------------------
 
 
-def get_ccache_json_stats() -> dict | None:
-    """Run ``ccache --print-stats --format=json`` and return parsed dict.
-
-    Returns None when ccache is unavailable or too old (< 4.10).
-    """
-    ccache_bin = shutil.which("ccache")
-    if not ccache_bin:
+def _tool_output(tool: str, *args: str) -> str | None:
+    """Run ``tool <args>`` and return its output, or None when the tool is missing or fails."""
+    binary = shutil.which(tool)
+    if not binary:
         return None
-
     try:
-        result = run_captured([ccache_bin, "--print-stats", "--format=json"])
-        if result.returncode != 0:
-            return None
-        return json.loads(result.stdout)
-    except (OSError, json.JSONDecodeError):
+        result = run_captured([binary, *args])
+    except OSError:
         return None
+    return result.stdout.strip() if result.returncode == 0 else None
+
+
+def get_ccache_json_stats() -> dict | None:
+    """Return ``ccache --print-stats --format=json``; None when ccache is missing or < 4.10."""
+    try:
+        stats = json.loads(_tool_output("ccache", "--print-stats", "--format=json") or "null")
+    except json.JSONDecodeError:
+        return None
+    return stats if isinstance(stats, dict) else None
 
 
 def build_summary_markdown(stats: dict) -> str:
@@ -245,48 +232,6 @@ def build_summary_markdown(stats: dict) -> str:
     return f"### CCache Statistics\n\n{md_table(['Metric', 'Value'], rows)}\n"
 
 
-def get_ccache_verbose_stats() -> str | None:
-    """Run ``ccache -s -vv`` and return its output."""
-    ccache_bin = shutil.which("ccache")
-    if not ccache_bin:
-        return None
-
-    try:
-        result = run_captured([ccache_bin, "-s", "-vv"])
-        if result.returncode != 0:
-            return None
-        return result.stdout.strip()
-    except OSError:
-        return None
-
-
-def get_ccache_compression_stats() -> str | None:
-    """Run ``ccache --show-compression`` (compression ratio + space savings)."""
-    ccache_bin = shutil.which("ccache")
-    if not ccache_bin:
-        return None
-
-    try:
-        result = run_captured([ccache_bin, "--show-compression"])
-        if result.returncode != 0:
-            return None
-        return result.stdout.strip()
-    except OSError:
-        return None
-
-
-def _sccache_output(*args: str) -> str | None:
-    """Run ``sccache <args>`` and return its output, or None when sccache is unavailable."""
-    sccache_bin = shutil.which("sccache")
-    if not sccache_bin:
-        return None
-    try:
-        result = run_captured([sccache_bin, *args])
-    except OSError:
-        return None
-    return result.stdout.strip() if result.returncode == 0 else None
-
-
 def build_sccache_summary_markdown(report: dict) -> str:
     """Build a markdown summary table from ``sccache --show-stats --stats-format json``."""
     stats = report.get("stats") or {}
@@ -318,7 +263,9 @@ def run_sccache_summary(error_log: Path | None) -> int:
     """Write the sccache pilot's statistics, and any server errors, to the job summary."""
     parts: list[str] = []
     try:
-        report = json.loads(_sccache_output("--show-stats", "--stats-format", "json") or "null")
+        report = json.loads(
+            _tool_output("sccache", "--show-stats", "--stats-format", "json") or "null"
+        )
     except json.JSONDecodeError:
         report = None
     if isinstance(report, dict):
@@ -326,7 +273,7 @@ def run_sccache_summary(error_log: Path | None) -> int:
     else:
         print("sccache statistics unavailable", file=sys.stderr)
 
-    text = _sccache_output("--show-stats")
+    text = _tool_output("sccache", "--show-stats")
     if text:
         parts.append(
             f"<details>\n<summary>sccache --show-stats</summary>\n\n```\n{text}\n```\n\n</details>\n"
@@ -363,11 +310,11 @@ def run_summary() -> int:
     else:
         print("ccache JSON stats unavailable (ccache missing or < 4.10)", file=sys.stderr)
 
-    compression = get_ccache_compression_stats()
+    compression = _tool_output("ccache", "--show-compression")
     if compression:
         parts.append(f"### Compression\n\n```\n{compression}\n```\n")
 
-    verbose = get_ccache_verbose_stats()
+    verbose = _tool_output("ccache", "-s", "-vv")
     if verbose:
         parts.append(
             f"<details>\n<summary>Verbose stats</summary>\n\n```\n{verbose}\n```\n\n</details>\n"
@@ -408,7 +355,7 @@ def ccache_misses(docker_report: Path | None = None) -> int | None:
     """
     if docker_report is not None:
         try:
-            text = json.loads(docker_report.read_text(encoding="utf-8")).get("ccache")
+            text = read_json(docker_report).get("ccache")
         except (OSError, ValueError, AttributeError):
             return None
         match = _SHOW_STATS_MISSES.search(text) if isinstance(text, str) else None

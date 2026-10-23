@@ -25,9 +25,9 @@ def test_list_caches_parses_json(monkeypatch) -> None:
         )
 
     monkeypatch.setattr(subprocess, "run", fake_run)
-    rows = mod.list_caches("owner/repo", "")
+    rows = mod.list_caches("owner/repo", "", 500)
     assert [r.key for r in rows] == ["key-1", "key-2"]
-    assert rows[0].size == "100 MiB"
+    assert rows[0].size_bytes == 104857600
     assert rows[1].ref == "refs/pull/1/merge"
     assert calls[0][:3] == ["gh", "cache", "list"]
     assert "--ref" not in calls[0]
@@ -45,7 +45,7 @@ def test_list_caches_passes_ref_filter(monkeypatch, branch: str, ref: str) -> No
         return completed("[]")
 
     monkeypatch.setattr(subprocess, "run", fake_run)
-    assert mod.list_caches("owner/repo", branch) == []
+    assert mod.list_caches("owner/repo", branch, 500) == []
     assert calls[0][calls[0].index("--ref") + 1] == ref
 
 
@@ -102,10 +102,7 @@ def test_main_dry_run_lists_without_deleting(monkeypatch, capsys) -> None:
     monkeypatch.setattr(
         mod,
         "list_caches",
-        lambda *a, **kw: [
-            mod.CacheRow(key="k1", size="1 MiB", ref="refs/heads/main"),
-            mod.CacheRow(key="k2", size="2 MiB", ref="refs/heads/main"),
-        ],
+        lambda *a, **kw: [_usage("k1", 1), _usage("k2", 2)],
     )
 
     called = False
@@ -136,45 +133,36 @@ def test_main_default_limit_covers_rolling_generations(monkeypatch) -> None:
 
 def test_main_delete_invokes_delete(monkeypatch, capsys) -> None:
     monkeypatch.setenv("GH_REPO", "owner/repo")
-    monkeypatch.setattr(
-        mod, "list_caches", lambda *a, **kw: [mod.CacheRow(key="k1", size="1MB", ref="main")]
-    )
+    monkeypatch.setattr(mod, "list_caches", lambda *a, **kw: [_usage("k1", 1)])
     monkeypatch.setattr(mod, "delete_caches", lambda *a, **kw: (1, 0))
     assert mod.main(["--delete"]) == 0
     assert "Deleted 1 cache(s); 0 failed" in capsys.readouterr().out
 
 
-def test_main_summary_includes_dry_run_notice(monkeypatch, tmp_path: Path) -> None:
+def test_main_summary_includes_dry_run_notice(monkeypatch, gh_summary: Path) -> None:
     monkeypatch.setenv("GH_REPO", "owner/repo")
-    summary_file = tmp_path / "step_summary"
-    summary_file.write_text("")
-    monkeypatch.setenv("GITHUB_STEP_SUMMARY", str(summary_file))
-    monkeypatch.setattr(mod, "list_caches", lambda *a, **kw: [mod.CacheRow("k1", "1MB", "main")])
+    monkeypatch.setattr(mod, "list_caches", lambda *a, **kw: [_usage("k1", 1)])
     assert mod.main(["--summary"]) == 0
-    summary = summary_file.read_text()
+    summary = gh_summary.read_text()
     assert "## Cache Summary" in summary
+    assert "| `k1` | 1 MiB | refs/heads/master |" in summary
     assert "Dry run" in summary
 
 
-def test_main_summary_after_delete_shows_results(monkeypatch, tmp_path: Path) -> None:
+def test_main_summary_after_delete_shows_results(monkeypatch, gh_summary: Path) -> None:
     monkeypatch.setenv("GH_REPO", "owner/repo")
-    summary_file = tmp_path / "step_summary"
-    summary_file.write_text("")
-    monkeypatch.setenv("GITHUB_STEP_SUMMARY", str(summary_file))
-    monkeypatch.setattr(mod, "list_caches", lambda *a, **kw: [mod.CacheRow("k1", "1MB", "main")])
+    monkeypatch.setattr(mod, "list_caches", lambda *a, **kw: [_usage("k1", 1)])
     monkeypatch.setattr(mod, "delete_caches", lambda *a, **kw: (1, 0))
     assert mod.main(["--delete", "--summary"]) == 0
-    summary = summary_file.read_text()
+    summary = gh_summary.read_text()
     assert "Deletion Results" in summary
     assert "Deleted: 1" in summary
     assert "Dry run" not in summary
 
 
-def test_main_reads_branch_and_flags_from_environment(monkeypatch, tmp_path: Path) -> None:
-    summary = tmp_path / "summary.md"
+def test_main_reads_branch_and_flags_from_environment(monkeypatch, gh_summary: Path) -> None:
     for name, value in {
         "GH_REPO": "owner/repo",
-        "GITHUB_STEP_SUMMARY": str(summary),
         "CLEANUP_BRANCH": "refs/pull/7/merge",
         "CLEANUP_DELETE": "true",
         "CLEANUP_SUMMARY": "false",
@@ -186,7 +174,7 @@ def test_main_reads_branch_and_flags_from_environment(monkeypatch, tmp_path: Pat
     monkeypatch.setattr(
         mod,
         "list_caches",
-        lambda _repo, branch, _limit: listed.append(branch) or [mod.CacheRow("k1", "1 MiB", "")],
+        lambda _repo, branch, _limit: listed.append(branch) or [_usage("k1", 1)],
     )
     monkeypatch.setattr(
         mod, "delete_caches", lambda _repo, branch, keys: deleted.append((branch, keys)) or (1, 0)
@@ -194,29 +182,26 @@ def test_main_reads_branch_and_flags_from_environment(monkeypatch, tmp_path: Pat
     assert mod.main([]) == 0
     assert listed == ["refs/pull/7/merge"]
     assert deleted == [("refs/pull/7/merge", ["k1"])]
-    assert not summary.exists()
+    assert gh_summary.read_text() == ""
 
 
-def test_main_prunes_with_summary_from_environment(monkeypatch, tmp_path: Path) -> None:
-    summary = tmp_path / "summary.md"
+def test_main_prunes_with_summary_from_environment(monkeypatch, gh_summary: Path) -> None:
     for name, value in {
         "GH_REPO": "owner/repo",
-        "GITHUB_STEP_SUMMARY": str(summary),
         "CLEANUP_DELETE": "false",
         "CLEANUP_SUMMARY": "true",
         "CLEANUP_PRUNE": "true",
     }.items():
         monkeypatch.setenv(name, value)
-    monkeypatch.setattr(mod, "list_caches_usage", lambda *a, **kw: [_usage("avd", 10000)])
+    monkeypatch.setattr(mod, "list_caches", lambda *a, **kw: [_usage("avd", 10000)])
     monkeypatch.setattr(mod, "delete_caches", lambda *a, **kw: pytest.fail("dry run deleted"))
     assert mod.main([]) == 0
-    assert "## Cache GC" in summary.read_text()
-    assert "Dry run" in summary.read_text()
+    assert "## Cache GC" in gh_summary.read_text()
+    assert "Dry run" in gh_summary.read_text()
 
 
 def test_main_requires_repo(monkeypatch) -> None:
     monkeypatch.delenv("GH_REPO", raising=False)
-    monkeypatch.delenv("GITHUB_REPOSITORY", raising=False)
     with pytest.raises(SystemExit):
         mod.main([])
 
@@ -449,18 +434,16 @@ def test_select_prune_victims_keeps_lone_legacy_static_entry() -> None:
     assert projected == 9000 * 1024 * 1024
 
 
-def test_list_caches_usage_parses_json(monkeypatch) -> None:
+def test_list_caches_reads_last_access_for_pruning(monkeypatch) -> None:
     payload = '[{"key":"ccache-x","ref":"refs/heads/master","sizeInBytes":1048576,"lastAccessedAt":"2026-01-01"}]'
     monkeypatch.setattr(subprocess, "run", lambda *a, **kw: completed(payload))
-    rows = mod.list_caches_usage("owner/repo")
-    assert rows[0].key == "ccache-x"
-    assert rows[0].size_bytes == 1048576
+    assert mod.list_caches("owner/repo", "", 500) == [_usage("ccache-x", 1, accessed="2026-01-01")]
 
 
 def test_main_prune_dry_run_does_not_delete(monkeypatch, capsys) -> None:
     monkeypatch.setenv("GH_REPO", "owner/repo")
     monkeypatch.setattr(
-        mod, "list_caches_usage", lambda *a, **kw: [_usage("ccache-x", 9000), _usage("avd", 2000)]
+        mod, "list_caches", lambda *a, **kw: [_usage("ccache-x", 9000), _usage("avd", 2000)]
     )
     called = False
 
@@ -478,7 +461,7 @@ def test_main_prune_dry_run_does_not_delete(monkeypatch, capsys) -> None:
 def test_main_prune_delete_evicts_unprotected(monkeypatch, capsys) -> None:
     monkeypatch.setenv("GH_REPO", "owner/repo")
     monkeypatch.setattr(
-        mod, "list_caches_usage", lambda *a, **kw: [_usage("ccache-x", 9000), _usage("avd", 2000)]
+        mod, "list_caches", lambda *a, **kw: [_usage("ccache-x", 9000), _usage("avd", 2000)]
     )
     seen: list[list[str]] = []
     monkeypatch.setattr(
@@ -490,15 +473,13 @@ def test_main_prune_delete_evicts_unprotected(monkeypatch, capsys) -> None:
 
 
 def test_prune_deletes_only_selected_ref_and_reports_failures(
-    monkeypatch, tmp_path: Path, capsys
+    monkeypatch, capsys, gh_summary: Path
 ) -> None:
     monkeypatch.setenv("GH_REPO", "owner/repo")
-    summary = tmp_path / "summary.md"
-    monkeypatch.setenv("GITHUB_STEP_SUMMARY", str(summary))
     shared = _usage("qt-linux", 4000)
     first_pr = _usage("qt-linux", 4000, ref="refs/pull/42/merge")
     second_pr = _usage("qt-linux", 4000, ref="refs/pull/43/merge")
-    monkeypatch.setattr(mod, "list_caches_usage", lambda *a, **kw: [shared, first_pr, second_pr])
+    monkeypatch.setattr(mod, "list_caches", lambda *a, **kw: [shared, first_pr, second_pr])
     calls = []
 
     def delete(repo, branch, keys):
@@ -513,6 +494,6 @@ def test_prune_deletes_only_selected_ref_and_reports_failures(
     ]
     out = capsys.readouterr().out
     assert "deleted 1; failed 1" in out
-    assert "8000 MiB" in summary.read_text()
-    assert "Failed: 1" in summary.read_text()
+    assert "8000 MiB" in gh_summary.read_text()
+    assert "Failed: 1" in gh_summary.read_text()
     assert "above target" in out

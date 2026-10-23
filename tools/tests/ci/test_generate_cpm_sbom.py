@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import sys
 from typing import TYPE_CHECKING
 from unittest.mock import patch
 
@@ -12,6 +11,7 @@ from ci.security.generate_cpm_sbom import (
     generate_sbom,
     generate_spdx,
     gstreamer_component,
+    main,
     make_purl,
     normalize_git_url,
 )
@@ -191,15 +191,12 @@ def test_generate_sbom_empty_cache(tmp_path: Path) -> None:
     assert sbom["components"] == []
 
 
-def test_main_stdout(tmp_path: Path, monkeypatch, capsys) -> None:
+def test_main_stdout(tmp_path: Path, capsys) -> None:
     cache = tmp_path / "CMakeCache.txt"
     cache.write_text(SAMPLE_CACHE)
-    monkeypatch.setattr("sys.argv", ["prog", "--build-dir", str(tmp_path)])
 
     with patch("ci.security.generate_cpm_sbom.git_info", side_effect=_mock_git_info):
-        from ci.security.generate_cpm_sbom import main
-
-        ret = main()
+        ret = main(["--build-dir", str(tmp_path)])
 
     assert ret == 0
     output = capsys.readouterr().out
@@ -207,69 +204,39 @@ def test_main_stdout(tmp_path: Path, monkeypatch, capsys) -> None:
     assert len(sbom["components"]) == 3
 
 
-def test_main_file_output(tmp_path: Path, monkeypatch) -> None:
+def test_main_file_output(tmp_path: Path) -> None:
     cache = tmp_path / "CMakeCache.txt"
     cache.write_text(SAMPLE_CACHE)
     out_file = tmp_path / "sbom.json"
-    monkeypatch.setattr("sys.argv", ["prog", "--build-dir", str(tmp_path), "-o", str(out_file)])
 
     with patch("ci.security.generate_cpm_sbom.git_info", side_effect=_mock_git_info):
-        from ci.security.generate_cpm_sbom import main
-
-        ret = main()
+        ret = main(["--build-dir", str(tmp_path), "-o", str(out_file)])
 
     assert ret == 0
     sbom = json.loads(out_file.read_text())
     assert len(sbom["components"]) == 3
 
 
-def test_main_requires_components(tmp_path: Path, monkeypatch) -> None:
+def test_main_requires_components(tmp_path: Path) -> None:
     cache = tmp_path / "CMakeCache.txt"
     cache.write_text(SAMPLE_CACHE)
     out_file = tmp_path / "sbom.json"
-    monkeypatch.setattr(
-        "sys.argv",
-        [
-            "prog",
-            "--build-dir",
-            str(tmp_path),
-            "--output",
-            str(out_file),
-            "--require-components",
-        ],
-    )
+    argv = ["--build-dir", str(tmp_path), "--output", str(out_file), "--require-components"]
 
     with patch("ci.security.generate_cpm_sbom.git_info", side_effect=_mock_git_info):
-        from ci.security.generate_cpm_sbom import main
-
-        ret = main()
+        ret = main(argv)
 
     assert ret == 0
     assert len(json.loads(out_file.read_text())["components"]) == 3
 
 
 @pytest.mark.parametrize("format_name", ["cyclonedx", "spdx"])
-def test_main_rejects_empty_required_components(
-    tmp_path: Path, monkeypatch, capsys, format_name: str
-) -> None:
+def test_main_rejects_empty_required_components(tmp_path: Path, capsys, format_name: str) -> None:
     cache = tmp_path / "CMakeCache.txt"
     cache.write_text("CMAKE_BUILD_TYPE:STRING=Release\n")
     out_file = tmp_path / "sbom.json"
-    monkeypatch.setattr(
-        "sys.argv",
-        [
-            "prog",
-            "--build-dir",
-            str(tmp_path),
-            "--output",
-            str(out_file),
-            "--require-components",
-        ],
-    )
+    argv = ["--build-dir", str(tmp_path), "--output", str(out_file), "--require-components"]
 
-    from ci.security.generate_cpm_sbom import main
-
-    monkeypatch.setattr("sys.argv", [*sys.argv, "--format", format_name])
-    assert main() == 1
+    assert main([*argv, "--format", format_name]) == 1
     assert "contains no components" in capsys.readouterr().err
     assert not out_file.exists()

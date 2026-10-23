@@ -1,28 +1,14 @@
 name: CMake Configure
-description: Configure QGroundControl build with common options
+description: Configure QGroundControl from a CMake preset with CI options
 
 inputs:
   build-dir:
     description: 'Build directory'
     required: false
-    default: 'build'
-  build-type:
-    description: 'Build type (Debug, Release, RelWithDebInfo, MinSizeRel); selects a default* preset when preset is empty'
-    required: false
-    default: 'Release'
+    default: ${{ runner.temp }}/build
   preset:
-    description: 'CMake configure preset'
-    required: false
-    default: ''
-  testing:
-    description: 'Enable testing (QGC_BUILD_TESTING)'
-    required: false
-    default: 'false'
-  stable:
-    description: >-
-      Stable build (QGC_STABLE_BUILD). Defaults to true on tag refs and Stable* branches.
-    required: false
-    default: ${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'true' || 'false' }}
+    description: 'CMake configure preset; it sets the build type and QGC_BUILD_TESTING'
+    required: true
   extra-args:
     description: 'Additional CMake arguments'
     required: false
@@ -35,16 +21,14 @@ inputs:
 runs:
   using: composite
   steps:
-    # cmake_helper.py reads the INPUT_* variables as argument defaults and pins Python3_EXECUTABLE
-    # to tools/.venv so CMake-invoked jinja generators see the locked dependencies.
+    # cmake_helper.py reads the INPUT_* variables as argument defaults, enables QGC_STABLE_BUILD for
+    # release tags and Stable* branches, and pins Python3_EXECUTABLE to tools/.venv so CMake-invoked
+    # jinja generators see the locked dependencies.
     - name: Configure
       shell: bash
       run: python3 "${GITHUB_WORKSPACE}/tools/ci/compile/cmake_helper.py" configure
       env:
         INPUT_BUILD_DIR: ${{ inputs.build-dir }}
-        INPUT_BUILD_TYPE: ${{ inputs.build-type }}
         INPUT_PRESET: ${{ inputs.preset }}
-        INPUT_TESTING: ${{ inputs.testing }}
-        INPUT_STABLE: ${{ inputs.stable }}
         INPUT_EXTRA_ARGS: ${{ inputs.extra-args }}
         INPUT_USE_QT_CMAKE: ${{ inputs.use-qt-cmake }}

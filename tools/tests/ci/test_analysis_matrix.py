@@ -20,7 +20,14 @@ from ci.planning.analysis_matrix import (
     validate_path,
 )
 
-from .._helpers import REPO_ROOT, git, load_workflow
+from .._helpers import (
+    REPO_ROOT,
+    commit_files,
+    git,
+    load_workflow,
+    pr_merge_checkout,
+    read_github_file,
+)
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -47,13 +54,9 @@ def repo(tmp_path: Path, isolated_git: None) -> tuple[Path, str]:
         "cmake/Helpers.cmake": "\n",
     }
     files.update({f"src/wide/user{i}.cc": '#include "sub/Middle.h"\n' for i in range(120)})
-    for name, text in files.items():
-        (root / name).parent.mkdir(parents=True, exist_ok=True)
-        (root / name).write_text(text)
+    root.mkdir()
     git(root, "init", "-q")
-    git(root, "add", ".")
-    git(root, "commit", "-qm", "base")
-    return root, git(root, "rev-parse", "HEAD")
+    return root, commit_files(root, files, "base")
 
 
 def _change(root: Path, *paths: str) -> None:
@@ -231,10 +234,25 @@ def test_missing_base_scans_everything(tmp_path: Path) -> None:
     assert _plan(_matrix("pull_request", tmp_path)) == (MAX_TIDY_SHARDS, "all")
 
 
-def test_invalid_base_stops_planning(repo) -> None:
+def test_unusable_base_scans_everything(repo, capsys) -> None:
     root, _ = repo
-    with pytest.raises(RuntimeError, match="Unable to determine changed files"):
-        _matrix("pull_request", root, "missing-ref")
+    assert _plan(_matrix("pull_request", root, "missing-ref")) == (MAX_TIDY_SHARDS, "all")
+    assert "No merge base of missing-ref and HEAD" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("clone", ["full", "shallow"])
+def test_pr_merge_checkout_plans_only_the_pr_changes(
+    tmp_path: Path, isolated_git: None, clone: str
+) -> None:
+    pr = pr_merge_checkout(
+        tmp_path,
+        base={"src/a.cc": "int a;\n", "cmake/Helpers.cmake": "\n"},
+        newer_base={"cmake/Helpers.cmake": "# newer\n"},
+        pr={"src/a.cc": "int a = 1;\n"},
+    )
+    root = getattr(pr, clone)
+    # The event's base SHA predates the base branch's full-scan input change.
+    assert _plan(_matrix("pull_request", root, pr.fork_point, head=pr.pr_head)) == (1, "changed")
 
 
 def _trigger_paths(event: str) -> list[str]:
@@ -282,10 +300,6 @@ def test_source_tree_triggers_skip_files_that_cannot_change_compilation(path, tr
     assert selected == triggers
 
 
-def _outputs(gh_output: Path) -> dict[str, str]:
-    return dict(line.split("=", 1) for line in gh_output.read_text().splitlines())
-
-
 @pytest.fixture
 def build_config(monkeypatch: pytest.MonkeyPatch) -> dict[str, str]:
     monkeypatch.setenv("CONFIG_FILE", str(BUILD_CONFIG))
@@ -296,7 +310,7 @@ def test_main_writes_include_and_toolchain_outputs(repo, gh_output: Path, build_
     root, base = repo
     _change(root, "src/narrow.cc")
     assert main(["--event", "pull_request", "--base", base, "--root", str(root)]) == 0
-    outputs = _outputs(gh_output)
+    outputs = read_github_file(gh_output)
     assert _plan(json.loads(outputs.pop("include"))) == (1, "changed")
     assert outputs == {key: str(value) for key, value in build_config.items()}
 
@@ -307,7 +321,7 @@ def test_main_writes_an_empty_include_when_nothing_needs_analysis(
     root, base = repo
     _change(root, "src/view.qml")
     assert main(["--event", "pull_request", "--base", base, "--root", str(root)]) == 0
-    assert _outputs(gh_output)["include"] == "[]"
+    assert read_github_file(gh_output)["include"] == "[]"
 
 
 def test_main_reads_dispatch_inputs_from_the_environment(
@@ -322,7 +336,7 @@ def test_main_reads_dispatch_inputs_from_the_environment(
     }.items():
         monkeypatch.setenv(name, value)
     assert main(["--root", str(tmp_path)]) == 0
-    (leg,) = json.loads(_outputs(gh_output)["include"])
+    (leg,) = json.loads(read_github_file(gh_output)["include"])
     assert leg["analyze_args"][-2:] == ["--profile-checks", "src/Vehicle/"]
 
 

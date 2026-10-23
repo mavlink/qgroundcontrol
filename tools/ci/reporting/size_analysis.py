@@ -19,19 +19,22 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import _bootstrap as _bootstrap
+from common.build_config import get_build_config_value
 from common.gh_actions import gh_warning, write_step_summary
 from common.markdown import md_table
+from common.paths import TOOLS_DIR
 from common.proc import run_captured
 
-APT_INSTALL_RETRY = Path(__file__).resolve().parents[1] / "runner" / "apt_install_retry.py"
+APT_INSTALL_RETRY = TOOLS_DIR / "ci" / "runner" / "apt_install_retry.py"
+BLOATY_BUILD_TIMEOUT_SECONDS = 120
 
 
-def install_bloaty(timeout: int = 120) -> bool:
+def install_bloaty() -> bool:
     """Ensure bloaty is on PATH, building a pinned commit from source (Ubuntu doesn't package it)."""
     if shutil.which("bloaty"):
         return True
 
-    print(f"Building bloaty from source (timeout: {timeout}s)...")
+    print(f"Building bloaty from source (timeout: {BLOATY_BUILD_TIMEOUT_SECONDS}s)...")
     try:
         run_captured(
             [
@@ -60,7 +63,7 @@ def install_bloaty(timeout: int = 120) -> bool:
                     "--depth",
                     "1",
                     "https://github.com/google/bloaty.git",
-                    "87082741b1cc0a97cd84bd17cd4ee41d70a42fc6",
+                    get_build_config_value("tools.bloaty.revision"),
                 ],
                 timeout=30,
                 check=True,
@@ -85,7 +88,7 @@ def install_bloaty(timeout: int = 120) -> bool:
             )
             run_captured(
                 ["cmake", "--build", f"{bloaty_dir}/build", "--parallel"],
-                timeout=timeout,
+                timeout=BLOATY_BUILD_TIMEOUT_SECONDS,
                 check=True,
             )
             run_captured(
@@ -215,7 +218,7 @@ class BinaryAnalyzer:
         return "\n".join(lines)
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(
         description="Analyze binary size using bloaty and standard tools",
@@ -231,21 +234,15 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Install bloaty from source",
     )
-    parser.add_argument(
-        "--bloaty-timeout",
-        type=int,
-        default=120,
-        help="Timeout for bloaty installation in seconds (default: 120)",
-    )
-    return parser.parse_args()
+    return parser.parse_args(argv)
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     """Main entry point."""
-    args = parse_args()
+    args = parse_args(argv)
 
     if args.install_bloaty:
-        install_bloaty(args.bloaty_timeout)
+        install_bloaty()
 
     try:
         analyzer = BinaryAnalyzer(args.binary)

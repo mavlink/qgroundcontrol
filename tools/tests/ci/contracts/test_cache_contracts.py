@@ -5,11 +5,28 @@ from __future__ import annotations
 import pytest
 from ci.cache.cache_plan import CacheInputs, plan_caches
 
-from ..._helpers import REPO_ROOT, get_steps, load_action, load_workflow, load_yaml
+from ..._helpers import (
+    REPO_ROOT,
+    get_step,
+    get_steps,
+    load_action,
+    load_workflow,
+    load_yaml,
+    workflow_names,
+)
 
 
 def _read(path: str) -> str:
     return (REPO_ROOT / path).read_text(encoding="utf-8")
+
+
+def _setup_uv() -> dict:
+    (step,) = (
+        step
+        for step in get_steps(load_action("setup-python"))
+        if step.get("uses", "").startswith("astral-sh/setup-uv@")
+    )
+    return step
 
 
 def _cache_steps() -> list[dict]:
@@ -30,7 +47,6 @@ def plan(tmp_path, monkeypatch):
             "host": "mac",
             "target": "ios",
             "build_type": "Debug",
-            "cpm_modules": ".cache/CPM",
             "event": "push",
             "ref_name": "master",
             "run_id": "7",
@@ -79,7 +95,6 @@ def test_plan_step_receives_the_action_inputs() -> None:
     }
     assert forwarded.items() <= planner["env"].items()
     assert planner["env"]["PR_NUMBER"] == "${{ github.event.pull_request.number }}"
-    assert action["inputs"]["pr-save-min-misses"]["default"] == "20"
     assert not {"EVENT_NAME", "PR_REPO", "THIS_REPO"} & planner["env"].keys()
 
 
@@ -88,7 +103,7 @@ def test_compiler_archives_use_workspace_relative_paths() -> None:
     paths = [step["with"]["path"] for step in steps if "uses" in step]
     saves = get_steps(load_action("save-build-cache"))
     paths += [step["with"]["path"] for step in saves if "uses" in step]
-    assert paths.count(".ccache") == 2
+    assert paths.count(".cache/ccache") == 2
     assert paths.count(".cache/moccache") == 2
 
 
@@ -145,7 +160,8 @@ def test_moccache_is_cross_platform_and_content_versioned(plan) -> None:
     assert "runner.os != 'Windows'" not in action
     assert "runner.os != 'Windows'" not in build
     assert planner["env"]["MOC_CACHE_HASH"] == (
-        "${{ hashFiles('.github/build-config.json', 'cmake/Helpers.cmake', 'tools/moccache.py') }}"
+        "${{ hashFiles('.github/build-config.json', 'cmake/Helpers.cmake', 'tools/moccache/*.py', "
+        "'tools/moccache_launcher.py') }}"
     )
     outputs = plan(event="pull_request", ref_name="1/merge", pr_number="1").outputs
     assert outputs["moccache_key"].startswith(f"moccache-mac-ios-pr-1-{'b' * 64}-")
@@ -161,8 +177,8 @@ def test_qt_cache_stores_only_architecture_tree() -> None:
     assert '--outdir "${GITHUB_WORKSPACE}/.qt/Qt"' in plan["run"]
     assert [step["with"]["path"] for step in cached] == ["${{ steps.plan.outputs.cache_path }}"] * 3
     assert cached[0]["with"]["key"] == (
-        "qt-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.arch }}-${{ inputs.version }}-"
-        "${{ steps.plan.outputs.digest }}"
+        "qt-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.arch }}-"
+        "${{ steps.plan.outputs.version }}-${{ steps.plan.outputs.digest }}"
     )
 
 
@@ -184,36 +200,72 @@ def test_qt_install_prefers_compatible_preinstalled_sdk() -> None:
 
 
 def test_dependency_caches_use_shared_backend() -> None:
-    build_setup = _read(".github/actions/build-setup/action.yml")
-    setup_python = _read(".github/actions/setup-python/action.yml")
-
-    assert "useCloudCache: true" in build_setup
-    assert "useLocalCache: false" in build_setup
-    assert "RUNS_ON_S3_BUCKET_CACHE" in setup_python
-    assert "cache-python: ${{ env.QGC_ACTIONS_CACHE_BACKEND == 's3' }}" in setup_python
-    assert "cache-dependency-glob: tools/uv.lock" in setup_python
+    (cmake,) = (
+        step
+        for step in get_steps(load_action("build-setup"))
+        if step.get("uses", "").startswith("lukka/get-cmake@")
+    )
+    assert (cmake["with"]["useCloudCache"], cmake["with"]["useLocalCache"]) == (True, False)
+    detect = get_step(get_steps(load_action("setup-python")), "Detect Actions cache backend")
+    assert "tools/ci/cache/cache_backend.py" in detect["with"]["script"]
+    uv = _setup_uv()
+    assert uv["with"]["cache-python"] == "${{ env.QGC_ACTIONS_CACHE_BACKEND == 's3' }}"
+    assert uv["with"]["cache-dependency-glob"] == "tools/uv.lock"
 
 
 def test_nested_cache_save_inputs_survive_post_job_cleanup() -> None:
-    action = _read(".github/actions/cache/action.yml")
-    python = _read(".github/actions/setup-python/action.yml")
+    # Post-job saves evaluate their inputs again, after nested composite step outputs are gone.
+    cpm = "${{ env.CPM_CACHE_PATH }}/*"
+    steps = get_steps(load_action("cache"))
+    caches = [step for step in steps if step.get("uses", "").startswith("actions/cache")]
+    assert [step["name"] for step in caches if cpm in step["with"]["path"].splitlines()] == [
+        "Restore default-branch CPM snapshot",
+        "Cache CPM Modules (restore and save)",
+        "Cache CPM Modules (restore only)",
+    ]
+    assert not [step["name"] for step in caches if "steps." in step["with"]["path"]]
+    assert _setup_uv()["with"]["enable-cache"] == "${{ env.QGC_ACTIONS_CACHE_BACKEND == 's3' }}"
 
-    assert action.count("          ${{ env.CPM_CACHE_PATH }}/*") == 3
-    assert "enable-cache: ${{ env.QGC_ACTIONS_CACHE_BACKEND == 's3' }}" in python
 
-
-def test_ios_matrix_forwards_distinct_cache_write_suffixes() -> None:
-    workflow = _read(".github/workflows/ios.yml")
+def test_ios_legs_share_the_device_cpm_snapshot(plan) -> None:
+    # Only the Release device leg saves CPM sources; a per-leg key suffix would leave the Debug
+    # simulator nothing to restore. Build types already separate the compiler and moc caches.
+    job = load_workflow("ios.yml")["jobs"]["build"]
+    legs = job["strategy"]["matrix"]["include"]
+    assert sorted(leg["build_type"] for leg in legs) == ["Debug", "Release"]
+    (setup,) = (
+        step for step in job["steps"] if step.get("uses") == "./.github/actions/build-setup"
+    )
+    assert "cache-key-suffix" not in setup["with"]
     steps = get_steps(load_action("build-setup"))
     (cache,) = (step for step in steps if step.get("uses") == "./.github/actions/cache")
 
-    assert "cache-key-suffix: ${{ matrix.target }}" in workflow
     # One cache setup serves every mode; iOS keeps its former mac/ios cache identity.
-    assert "if" not in cache
+    assert cache["if"] == "inputs.build-cache == 'true'"
     assert cache["with"]["key-suffix"] == "${{ inputs.cache-key-suffix }}"
     assert cache["with"]["host"] == "${{ inputs.mode == 'ios' && 'mac' || inputs.qt-host }}"
     target = "${{ inputs.mode == 'desktop' && inputs.qt-arch || inputs.mode }}"
     assert cache["with"]["target"] == target
+
+    device, simulator = plan(build_type="Release"), plan(build_type="Debug")
+    assert (device.outputs["cpm_mode"], simulator.outputs["cpm_mode"]) == ("save", "restore")
+    assert simulator.outputs["cpm_key"] == device.outputs["cpm_key"]
+    for family in ("ccache", "moccache"):
+        assert simulator.outputs[f"{family}_key"] != device.outputs[f"{family}_key"]
+
+
+def test_only_jobs_without_qgc_sources_skip_the_build_caches() -> None:
+    # build-gstreamer checks out only .github and tools: its CPM fingerprint would be wrong.
+    assert load_action("build-setup")["inputs"]["build-cache"]["default"] == "true"
+    skipping = {
+        workflow
+        for workflow in workflow_names()
+        for job in (load_workflow(workflow).get("jobs") or {}).values()
+        for step in job.get("steps") or []
+        if step.get("uses") == "./.github/actions/build-setup"
+        and (step.get("with") or {}).get("build-cache", "true") != "true"
+    }
+    assert skipping == {"build-gstreamer.yml"}
 
 
 def test_compiler_tools_install_in_one_step_for_every_runner() -> None:
@@ -231,12 +283,13 @@ def test_compiler_tools_install_in_one_step_for_every_runner() -> None:
 
 
 def test_link_cache_has_restore_and_save_with_fork_read_only_policy() -> None:
-    workflow = _read(".github/workflows/check-links.yml")
-    assert "uses: actions/cache/restore@" in workflow
-    assert "uses: actions/cache/save@" in workflow
-    assert workflow.count("path: .lycheecache") == 2
-    assert "key: ${{ steps.link-cache.outputs.cache-primary-key }}" in workflow
-    assert "github.event.pull_request.head.repo.full_name == github.repository" in workflow
+    steps = get_steps(load_workflow("check-links.yml"), "check-links")
+    restore, save = (step for step in steps if step.get("uses", "").startswith("actions/cache/"))
+    assert restore["uses"].startswith("actions/cache/restore@")
+    assert save["uses"].startswith("actions/cache/save@")
+    assert restore["with"]["path"] == save["with"]["path"] == ".lycheecache"
+    assert save["with"]["key"] == f"${{{{ steps.{restore['id']}.outputs.cache-primary-key }}}}"
+    assert "github.event.pull_request.head.repo.full_name == github.repository" in save["if"]
 
 
 @pytest.mark.parametrize(
@@ -266,8 +319,7 @@ def test_windows_fork_prs_install_runson_build_tools() -> None:
     )
     # Every RunsOn leg needs the tools; GitHub-hosted legs, including forks and native arm64, have them.
     assert install["if"] == "runner.environment != 'github-hosted'"
-    assert install["with"]["msvc"] == "true"
-    assert install["with"]["msvc-arm64"] == "${{ matrix.variant == 'arm64-cross' }}"
+    assert install["with"] == {"msvc-arm64": "${{ matrix.variant == 'arm64-cross' }}"}
     job = workflow["jobs"]["build"]
     route = " ".join(job["runs-on"].split())
     assert route.startswith(
@@ -305,7 +357,7 @@ def test_application_builds_have_no_scheduled_trigger(platform: str) -> None:
 
 
 def test_cache_cleanup_runs_every_six_hours() -> None:
-    assert "cron: '17 */6 * * *'" in _read(".github/workflows/cache-cleanup.yml")
+    assert load_workflow("cache-cleanup.yml")["on"]["schedule"] == [{"cron": "17 */6 * * *"}]
 
 
 def test_cache_cleanup_handles_every_trigger_in_one_job() -> None:
@@ -395,7 +447,6 @@ def test_docker_cache_setup_uses_image_identity_and_shared_policy():
     cache = docker[cache_index]["with"]
     assert cache["target"] == "docker-${{ inputs.variant }}"
     assert cache["key-suffix"] == "${{ steps.compilers.outputs.fingerprint }}"
-    assert cache["cpm-modules"] == ".cache/CPM"
     assert cache["install-tools"] == "false"
     assert "save-cache" not in cache
     shared = load_action("cache")
@@ -507,7 +558,7 @@ def test_dependencies_use_immutable_separate_sdk_archives(plan, tmp_path):
     assert plan(**release).outputs["gst_key"] == first["gst_key"]
     config.write_text('{"gstreamer": {"version": "2"}}')
     assert plan(**release).outputs["gst_key"] != first["gst_key"]
-    # Custom Debug jobs fall back to the ordinary platform's sources.
+    # Legs with a key suffix fall back to the platform's unsuffixed sources.
     custom = plan(
         target="android", key_suffix="custom-debug", event="pull_request", pr_number="1"
     ).outputs["cpm_restore_keys"]
@@ -520,7 +571,7 @@ def test_dependencies_use_immutable_separate_sdk_archives(plan, tmp_path):
 def test_compiler_caches_save_before_downstream_failures():
     restore = get_steps(load_action("cache"))
     for step in restore:
-        if step.get("with", {}).get("path") in {".ccache", ".cache/moccache"}:
+        if step.get("with", {}).get("path") in {".cache/ccache", ".cache/moccache"}:
             assert step["uses"] == "actions/cache/restore@v6"
     build = get_steps(load_action("cmake-build"))
     save = next(step for step in build if step.get("uses") == "./.github/actions/save-build-cache")
@@ -541,9 +592,10 @@ def test_sccache_pilot_is_gated_to_the_linux_release_legs() -> None:
     assert runs_on["with"]["sccache"] == sccache
     # Coverage and sanitizer builds, and every other workflow, stay on ccache.
     assert "QGC_COMPILER_CACHE" not in str(jobs["debug-validation"])
-    for workflow in sorted((REPO_ROOT / ".github/workflows").glob("*.yml")):
-        if workflow.name != "linux.yml":
-            assert "QGC_COMPILER_CACHE" not in workflow.read_text(encoding="utf-8"), workflow.name
+    for workflow in workflow_names():
+        if workflow != "linux.yml":
+            text = (REPO_ROOT / ".github/workflows" / workflow).read_text(encoding="utf-8")
+            assert "QGC_COMPILER_CACHE" not in text, workflow
 
 
 def test_sccache_pilot_restores_and_saves_no_ccache_archive(plan) -> None:

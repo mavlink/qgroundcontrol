@@ -168,13 +168,9 @@ def test_verify_reports_failed_tool_probe(monkeypatch, tmp_path):
 
 def test_verify_cli_needs_no_region_but_aws_commands_do(monkeypatch, capsys):
     monkeypatch.setattr(runner, "verify_image", lambda: (_ for _ in ()).throw(RuntimeError("bad")))
-    monkeypatch.setattr("sys.argv", ["runner_image.py", "verify"])
-    with pytest.raises(SystemExit) as exc:
-        runner.main()
-    assert exc.value.code == 1
+    assert runner.main(["verify"]) == 1
     assert "::error::bad" in capsys.readouterr().out
 
-    monkeypatch.setattr("sys.argv", ["runner_image.py", "cleanup"])
     with pytest.raises(SystemExit) as exc:
-        runner.main()
+        runner.main(["cleanup"])
     assert exc.value.code == 2

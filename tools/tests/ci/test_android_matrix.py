@@ -17,7 +17,7 @@ from ci.planning.android_matrix import (
 )
 from qgc_tools import release_tag_check
 
-from .._helpers import load_workflow
+from .._helpers import load_workflow, read_github_file
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -126,10 +126,6 @@ def event(monkeypatch: pytest.MonkeyPatch, gh_output: Path) -> pytest.MonkeyPatc
     return monkeypatch
 
 
-def _outputs(gh_output: Path) -> dict[str, str]:
-    return dict(line.split("=", 1) for line in gh_output.read_text().splitlines())
-
-
 def test_main_writes_github_output_for_pr(
     event: pytest.MonkeyPatch, gh_output: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
@@ -137,7 +133,7 @@ def test_main_writes_github_output_for_pr(
 
     assert main([]) == 0
 
-    outputs = _outputs(gh_output)
+    outputs = read_github_file(gh_output)
     assert json.loads(outputs["include"]) == build_matrix(is_pr=True)
     assert outputs["has_jobs"] == "true"
     assert "include=" in capsys.readouterr().out
@@ -151,7 +147,7 @@ def test_main_non_pr_includes_windows(
 
     assert main([]) == 0
 
-    assert json.loads(_outputs(gh_output)["include"]) == build_matrix(is_pr=False)
+    assert json.loads(read_github_file(gh_output)["include"]) == build_matrix(is_pr=False)
 
 
 def test_main_skips_pull_requests_without_android_changes(
@@ -162,7 +158,7 @@ def test_main_skips_pull_requests_without_android_changes(
 
     assert main([]) == 0
 
-    assert _outputs(gh_output) == {"include": "[]", "has_jobs": "false"}
+    assert read_github_file(gh_output) == {"include": "[]", "has_jobs": "false"}
 
 
 @pytest.mark.parametrize(("release_tag", "has_jobs"), [(True, "true"), (False, "false")])
@@ -175,7 +171,7 @@ def test_main_builds_tags_only_for_stable_releases(
 
     assert main([]) == 0
 
-    assert _outputs(gh_output)["has_jobs"] == has_jobs
+    assert read_github_file(gh_output)["has_jobs"] == has_jobs
 
 
 def test_main_fails_when_tag_branches_are_unknown(
@@ -198,6 +194,6 @@ def test_main_output_uses_compact_json_separators(
     """Compact JSON in $GITHUB_OUTPUT keeps log lines short and avoids ambiguity."""
     event.setenv("EVENT_NAME", "push")
     main([])
-    serialized = _outputs(gh_output)["include"]
+    serialized = read_github_file(gh_output)["include"]
     assert ", " not in serialized
     assert ": " not in serialized

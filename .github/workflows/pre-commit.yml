@@ -24,21 +24,21 @@ jobs:
   pre-commit:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      PR_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+      PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@v2
         with:
           egress-policy: audit
 
+      # A pull request's merge commit and its two parents hold the PR diff; pushes diff `before`.
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          fetch-depth: 0
+          fetch-depth: ${{ github.event_name == 'pull_request' && 2 || 0 }}
           persist-credentials: false
-
-      - name: Get build config
-        id: config
-        uses: ./.github/actions/build-config
 
       - name: Setup Python
         uses: ./.github/actions/setup-python
@@ -46,10 +46,14 @@ jobs:
           groups: dev
           python-version: '3.12'
 
+      - name: Check for QML changes
+        id: qml
+        run: python3 ./tools/pre_commit.py --changed --needs-qt
+
       - name: Install Qt (for qmllint)
+        if: steps.qml.outputs.needs-qt == 'true'
         uses: ./.github/actions/qt-install
         with:
-          version: ${{ steps.config.outputs.qt_version }}
           host: linux
           arch: linux_gcc_64
           archives: qtbase qtdeclarative icu
@@ -70,13 +74,22 @@ jobs:
       # Later steps run after hook failures through their !cancelled()/always() conditions.
       - name: Run pre-commit
         env:
-          PR_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
-          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-          # TruffleHog runs only as a local commit hook.
-          SKIP: trufflehog
+          # TruffleHog runs only as a local commit hook; Docs Lint runs the prose linter.
+          SKIP: trufflehog,vale
         run: python3 ./tools/pre_commit.py --ci --changed --results-dir pre-commit-results
 
-      # Pull requests restore the base branch's environments without adding cache entries.
+      # Pull requests restore the base branch's environments without adding cache entries. prek
+      # installs only the environments of hooks that run, so a push that misses the cache prepares
+      # every hook first, including Docs Lint's and the manual-stage ones. TruffleHog runs only
+      # locally, and the Renovate validator keeps its own cache in ci-scripts.yml.
+      - name: Prepare all prek environments
+        id: prepare-hooks
+        if: >-
+          !cancelled() && github.event_name == 'push' &&
+          steps.pre-commit-cache.outputs.cache-hit != 'true'
+        continue-on-error: true
+        run: prek prepare-hooks --skip trufflehog --skip renovate-config-validator
+
       - name: Prune unused prek environments
         if: >-
           !cancelled() && github.event_name == 'push' &&
@@ -84,10 +97,12 @@ jobs:
         continue-on-error: true
         run: prek cache gc
 
+      # A partial set would be frozen under this configuration's key; the next push retries.
       - name: Save prek environments
         if: >-
           !cancelled() && github.event_name == 'push' &&
-          steps.pre-commit-cache.outputs.cache-hit != 'true'
+          steps.pre-commit-cache.outputs.cache-hit != 'true' &&
+          steps.prepare-hooks.outcome == 'success'
         uses: actions/cache/save@v6
         with:
           path: |

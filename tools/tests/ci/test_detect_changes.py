@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-import os
 import re
 import string
-import subprocess
 from typing import TYPE_CHECKING
 
 import pytest
@@ -21,7 +19,14 @@ from ci.planning.detect_changes import (
 from hypothesis import given
 from hypothesis import strategies as st
 
-from .._helpers import REPO_ROOT, git, load_workflow, load_yaml
+from .._helpers import (
+    REPO_ROOT,
+    commit_files,
+    git,
+    load_workflow,
+    pr_merge_checkout,
+    workflow_names,
+)
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -32,19 +37,13 @@ _EVENT_VARS = (
     "EVENT_NAME",
     "PR_BASE_SHA",
     "PR_HEAD_SHA",
-    "GITHUB_REF_TYPE",
-    "GITHUB_REF_NAME",
 )
 
 
 def test_rename_out_of_watched_dir_is_relevant(
     monkeypatch: pytest.MonkeyPatch, git_repo: Path
 ) -> None:
-    (git_repo / "src").mkdir()
-    (git_repo / "src" / "Vehicle.cc").write_text("int vehicle = 1;\n" * 20)
-    git(git_repo, "add", ".")
-    git(git_repo, "commit", "-qm", "base")
-    base = git(git_repo, "rev-parse", "HEAD")
+    base = commit_files(git_repo, {"src/Vehicle.cc": "int vehicle = 1;\n" * 20}, "base")
     (git_repo / "docs").mkdir()
     git(git_repo, "mv", "src/Vehicle.cc", "docs/Vehicle.cc")
     git(git_repo, "commit", "-qm", "move")
@@ -62,28 +61,12 @@ def test_rename_out_of_watched_dir_is_relevant(
 
 @pytest.fixture
 def event(monkeypatch: pytest.MonkeyPatch, gh_output: Path, git_repo: Path) -> pytest.MonkeyPatch:
-    """Clear the ambient GitHub context and run inside a one-commit repository."""
+    """Clear the workflow's event inputs and run inside a one-commit repository."""
     for name in _EVENT_VARS:
         monkeypatch.delenv(name, raising=False)
-    (git_repo / "README.md").write_text("base\n")
-    git(git_repo, "add", ".")
-    git(git_repo, "commit", "-qm", "base")
+    commit_files(git_repo, {"README.md": "base\n"}, "base")
     monkeypatch.chdir(git_repo)
     return monkeypatch
-
-
-def _has_local_commit(repo: Path, sha: str) -> bool:
-    env = {**os.environ, "GIT_NO_LAZY_FETCH": "1"}
-    probe = ["git", "-C", str(repo), "cat-file", "-e", f"{sha}^{{commit}}"]
-    return subprocess.run(probe, env=env, capture_output=True).returncode == 0
-
-
-def _commit(repo: Path, path: str) -> str:
-    (repo / path).parent.mkdir(parents=True, exist_ok=True)
-    (repo / path).write_text(path)
-    git(repo, "add", ".")
-    git(repo, "commit", "-qm", path)
-    return git(repo, "rev-parse", "HEAD")
 
 
 def _should_build(gh_output: Path) -> str:
@@ -99,33 +82,28 @@ def test_pull_request_builds_only_relevant_changes(
     event.setenv("EVENT_NAME", "pull_request")
     event.setenv("GITHUB_REF_TYPE", "branch")
     event.setenv("PR_BASE_SHA", git(tmp_path, "rev-parse", "HEAD"))
-    event.setenv("PR_HEAD_SHA", _commit(tmp_path, path))
+    event.setenv("PR_HEAD_SHA", commit_files(tmp_path, {path: path}, path))
     assert _should_build(gh_output) == expected
 
 
-def test_pull_request_diff_in_sparse_checkout_fetches_only_compared_commits(
-    event: pytest.MonkeyPatch, tmp_path: Path
+@pytest.mark.parametrize("clone", ["full", "shallow"])
+def test_pull_request_behind_its_base_detects_only_its_own_changes(
+    event: pytest.MonkeyPatch, tmp_path: Path, gh_output: Path, clone: str
 ) -> None:
-    """Sparse checkouts are blobless partial clones; looking up base must not pull its history."""
-    for key in ("uploadpack.allowFilter", "uploadpack.allowAnySHA1InWant"):
-        git(tmp_path, "config", key, "true")
-    ancestor = _commit(tmp_path, "src/a.cc")
-    base = _commit(tmp_path, "src/b.cc")
-    head = _commit(tmp_path, "src/c.cc")
-    clone = tmp_path / "clone"
-    clone.mkdir()
-    git(clone, "init", "-q")
-    git(clone, "remote", "add", "origin", tmp_path.as_uri())
-    git(clone, "fetch", "-q", "--no-tags", "--filter=blob:none", "--depth=1", "origin", head)
-    event.chdir(clone)
-    if _has_local_commit(clone, ancestor):
-        pytest.skip("this git cannot disable lazy fetches (GIT_NO_LAZY_FETCH)")
-
+    pr = pr_merge_checkout(
+        tmp_path / "pr",
+        base={"docs/index.md": "# Index\n"},
+        newer_base={"src/Vehicle.cc": "int vehicle;\n"},
+        pr={"docs/index.md": "# Changed\n"},
+    )
+    # The depth-2 clone is what the detection jobs check out for a pull request.
+    event.chdir(getattr(pr, clone))
     event.setenv("EVENT_NAME", "pull_request")
-    event.setenv("PR_BASE_SHA", base)
-    event.setenv("PR_HEAD_SHA", head)
-    assert get_changed_files() == ["src/c.cc"]
-    assert not _has_local_commit(clone, ancestor)
+    # A two-dot diff from the event's base SHA would also list the base branch's src/ change.
+    event.setenv("PR_BASE_SHA", pr.base_tip)
+    event.setenv("PR_HEAD_SHA", pr.pr_head)
+    assert get_changed_files() == ["docs/index.md"]
+    assert _should_build(gh_output) == "false"
 
 
 def test_pull_request_with_unknown_diff_builds(
@@ -170,7 +148,7 @@ def test_tags_build_only_release_tags_on_stable_branches(
     stable_branch: bool,
     expected: str,
 ) -> None:
-    head = _commit(tmp_path, "src/Vehicle.cc")
+    head = commit_files(tmp_path, {"src/Vehicle.cc": "change"}, "change")
     git(tmp_path, "update-ref", "refs/remotes/origin/master", head)
     if stable_branch:
         git(tmp_path, "update-ref", "refs/remotes/origin/Stable_V5.1", head)
@@ -200,7 +178,9 @@ def test_detect_builds_returns_pull_request_diff_per_platform(
 ) -> None:
     event.setenv("EVENT_NAME", "pull_request")
     event.setenv("PR_BASE_SHA", git(tmp_path, "rev-parse", "HEAD"))
-    event.setenv("PR_HEAD_SHA", _commit(tmp_path, "android/AndroidManifest.xml"))
+    event.setenv(
+        "PR_HEAD_SHA", commit_files(tmp_path, {"android/AndroidManifest.xml": "change"}, "change")
+    )
     detection = detect_builds(["docker-linux", "docker-android"])
     assert detection.builds == {"docker-linux": False, "docker-android": True}
     assert detection.changed_files == ["android/AndroidManifest.xml"]
@@ -249,7 +229,10 @@ def test_detection_jobs_check_out_and_pass_what_detect_builds_reads(
     checkout = _checkout(steps)["with"]
     entries = set(checkout["sparse-checkout"].split())
     assert {"tools/ci/planning/detect_changes.py", "tools/qgc_tools"} <= entries
-    assert checkout["fetch-depth"] == "${{ github.ref_type != 'tag' && 1 || 0 }}"
+    # Pull requests diff the merge commit against its first parent; tags need full history.
+    assert checkout["fetch-depth"] == (
+        "${{ github.event_name == 'pull_request' && 2 || github.ref_type != 'tag' && 1 || 0 }}"
+    )
     env = _single(steps, lambda s: "run" in s)["env"]
     assert env["EVENT_NAME"] == "${{ github.event_name }}"
     assert env["PR_BASE_SHA"] == "${{ github.event.pull_request.base.sha }}"
@@ -257,13 +240,13 @@ def test_detection_jobs_check_out_and_pass_what_detect_builds_reads(
 
 
 def test_reusable_detection_callers_consume_only_should_build() -> None:
-    for path in sorted(WORKFLOWS_DIR.glob("*.yml")):
-        jobs = (load_yaml(path) or {}).get("jobs") or {}
-        text = path.read_text(encoding="utf-8")
+    for workflow in workflow_names():
+        jobs = load_workflow(workflow).get("jobs") or {}
+        text = (WORKFLOWS_DIR / workflow).read_text(encoding="utf-8")
         for name, job in jobs.items():
             if job.get("uses") == REUSABLE_DETECTION:
                 consumed = set(re.findall(rf"needs\.{re.escape(name)}\.outputs\.(\w+)", text))
-                assert consumed == {"should_build"}, path.name
+                assert consumed == {"should_build"}, workflow
 
 
 @pytest.mark.parametrize(
@@ -295,14 +278,32 @@ def test_planner_workflows_detect_changes_in_process(workflow: str, planner: str
     [
         "CMakePresets.json",
         ".github/workflows/_detect-changes.yml",
-        "tools/moccache.py",
+        "tools/moccache/core.py",
         "tools/common/config.py",
+        "tools/configs/ccache.conf",
         "tools/setup/install_qt.py",
+        "tools/setup/qt_installer/install.py",
         "tools/setup/install_dependencies/_common.py",
     ],
 )
 def test_shared_build_inputs_trigger_all_platforms(platform: str, filename: str) -> None:
     assert has_relevant_changes([filename], platform)
+
+
+@pytest.mark.parametrize("platform", detect_changes.PLATFORMS)
+@pytest.mark.parametrize(
+    "filename",
+    [
+        "Doxyfile",
+        "cliff.toml",
+        "editorconfig-checker.json",
+        "gersemirc.yaml",
+        "lychee.toml",
+        "yamlfmt.yaml",
+    ],
+)
+def test_non_build_configs_do_not_trigger_builds(platform: str, filename: str) -> None:
+    assert not has_relevant_changes([f"tools/configs/{filename}"], platform)
 
 
 @pytest.mark.parametrize(

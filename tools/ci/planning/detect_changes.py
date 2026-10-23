@@ -24,8 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import _bootstrap as _bootstrap
 from common.gh_actions import gh_error, gh_warning, write_github_output
-from common.git import run_git
-from common.proc import run_captured
+from common.git import pr_diff_refs, run_git
 from qgc_tools.release_tag_check import GitQueryError, check_release_tag
 
 if TYPE_CHECKING:
@@ -57,8 +56,9 @@ _COMMON_PATTERNS: list[str] = [
     r"^tools/ci/",
     r"^\.github/build-config\.json$",
     r"^\.github/workflows/_detect-changes\.yml$",
-    r"^tools/(?!setup/|tests/)",
-    r"^tools/setup/(install_qt\.py|install_python\.py|read_config\.py|install_dependencies/)",
+    # tools/configs otherwise holds lint, docs, and release settings that never reach a build.
+    r"^tools/(?!setup/|tests/|configs/(?!ccache\.conf$))",
+    r"^tools/setup/(install_qt\.py|qt_installer/|install_python\.py|read_config\.py|install_dependencies/)",
 ]
 
 # Per-platform additional patterns
@@ -138,45 +138,21 @@ def has_relevant_changes(files: Sequence[str], platform: str) -> bool:
 # ---------------------------------------------------------------------------
 
 
-def _has_commit(sha: str) -> bool:
-    # Sparse checkouts are blobless partial clones, where looking up a missing commit would
-    # lazily fetch its whole history (~100k objects); git >= 2.44 can opt out.
-    env = {**os.environ, "GIT_NO_LAZY_FETCH": "1"}
-    return run_captured(["git", "cat-file", "-e", f"{sha}^{{commit}}"], env=env).returncode == 0
+def get_changed_files() -> list[str] | None:
+    """Return the pull request's changed files, or None when they cannot be computed.
 
-
-def _ensure_commit(sha: str) -> bool:
-    """Ensure a commit exists locally; fetch it shallowly if needed."""
-    if not sha:
-        return True
-    if _has_commit(sha):
-        return True
-    run_git("fetch", "--no-tags", "--depth=1", "origin", sha)
-    return _has_commit(sha)
-
-
-def _diff_names(sha_a: str, sha_b: str) -> list[str] | None:
-    """Return changed file names between two commits, or None on failure.
-
-    Renames are listed as both paths: with rename detection a file moved out
-    of a watched directory would only report its new, possibly unwatched, path.
+    The merge checkout is compared with its first parent (``common.git.pr_diff_refs``), so a PR
+    that is behind its base branch does not count the base branch's newer changes. Renames are
+    listed as both paths: with rename detection a file moved out of a watched directory would
+    only report its new, possibly unwatched, path.
     """
-    r = run_git("diff", "--no-renames", "--name-only", sha_a, sha_b)
+    refs = pr_diff_refs(os.environ.get("PR_BASE_SHA"), os.environ.get("PR_HEAD_SHA"))
+    if refs is None:
+        return None
+    r = run_git("diff", "--no-renames", "--name-only", f"{refs[0]}...{refs[1]}")
     if r.returncode != 0:
         return None
     return r.stdout.strip().splitlines()
-
-
-def get_changed_files() -> list[str] | None:
-    """Return the pull request's changed files (``PR_BASE_SHA``..``PR_HEAD_SHA``).
-
-    Returns None if the diff cannot be computed reliably (caller should force build).
-    """
-    base = os.environ.get("PR_BASE_SHA", "")
-    head = os.environ.get("PR_HEAD_SHA", "")
-    if not _ensure_commit(base) or not _ensure_commit(head):
-        return None
-    return _diff_names(base, head)
 
 
 @dataclass(frozen=True)

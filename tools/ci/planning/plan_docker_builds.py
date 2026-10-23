@@ -92,6 +92,7 @@ def needs_full_matrix(files: list[str] | None) -> bool:
         "CMakeLists.txt",
         "CMakePresets.json",
         "cmake/**",
+        "src/CMakeLists.txt",
         "src/**/CMakeLists.txt",
         "deploy/docker/**",
         "deploy/linux/**",
@@ -102,7 +103,8 @@ def needs_full_matrix(files: list[str] | None) -> bool:
         "tools/pyproject.toml",
         "tools/uv.lock",
         "tools/configs/ccache.conf",
-        "tools/moccache.py",
+        "tools/moccache/**",
+        "tools/moccache_launcher.py",
         "libs/**",
         "android/**",
     )

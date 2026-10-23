@@ -77,8 +77,6 @@ jobs:
       - name: Configure
         uses: ./.github/actions/cmake-configure
         with:
-          build-dir: ${{ runner.temp }}/build
-          build-type: ${{ inputs.build_type }}
           preset: ${{ inputs.build_type == 'Debug' && 'Linux-debug' || inputs.build_type == 'RelWithDebInfo' && 'Linux-relwithdebinfo' || 'Linux' }}
           extra-args: -DQGC_TIME_TRACE=ON -DQGC_USE_CACHE=OFF
 
@@ -88,9 +86,6 @@ jobs:
 
       - name: Build
         uses: ./.github/actions/cmake-build
-        with:
-          build-dir: ${{ runner.temp }}/build
-          build-type: ${{ inputs.build_type }}
 
       - name: Stop ClangBuildAnalyzer capture
         working-directory: ${{ runner.temp }}/build
@@ -109,12 +104,8 @@ jobs:
           python3 "${GITHUB_WORKSPACE}/tools/build_profile.py" \
             --build-dir . \
             --limit "$LIMIT" \
+            --json-out qgc-tu-report.json \
             > qgc-tu-report.txt
-          python3 "${GITHUB_WORKSPACE}/tools/build_profile.py" \
-            --build-dir . \
-            --limit "$LIMIT" \
-            --json \
-            > qgc-tu-report.json
 
       - name: Post summary
         working-directory: ${{ runner.temp }}/build

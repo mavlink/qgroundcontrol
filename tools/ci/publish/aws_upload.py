@@ -23,6 +23,8 @@ from common.gh_actions import gh_error
 from common.proc import run_captured
 from qgc_tools.release_tag_check import GitQueryError, check_release_tag
 
+S3_BUCKET = "qgroundcontrol"
+
 
 def validate_artifact(artifact_path: str, artifact_name: str) -> None:
     """Validate artifact exists and name is safe."""
@@ -58,9 +60,9 @@ def _run_aws(cmd: list[str]) -> None:
         raise
 
 
-def _upload(artifact_path: str, bucket: str, key: str) -> None:
+def _upload(artifact_path: str, key: str) -> None:
     try:
-        upload_public_file(Path(artifact_path), bucket, key)
+        upload_public_file(Path(artifact_path), S3_BUCKET, key)
     except (RuntimeError, ValueError) as error:
         gh_error(str(error))
         raise SystemExit(1) from error
@@ -71,7 +73,6 @@ def publish(
     *,
     ref_name: str,
     ref_type: str,
-    s3_bucket: str,
     distribution_id: str,
 ) -> None:
     for path, name in artifacts:
@@ -79,7 +80,7 @@ def publish(
 
     safe_ref = sanitize_ref(ref_name)
     for path, name in artifacts:
-        _upload(path, s3_bucket, f"builds/{safe_ref}/{name}")
+        _upload(path, f"builds/{safe_ref}/{name}")
 
     # latest/ is the public stable download: only release tags on a Stable* branch may overwrite it.
     if ref_type != "tag":
@@ -93,7 +94,7 @@ def publish(
         return
 
     for path, name in artifacts:
-        _upload(path, s3_bucket, f"latest/{name}")
+        _upload(path, f"latest/{name}")
     if distribution_id:
         _run_aws(
             [
@@ -108,7 +109,7 @@ def publish(
         )
 
 
-def main(argv: list[str] | None = None) -> None:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -125,7 +126,6 @@ def main(argv: list[str] | None = None) -> None:
     )
     p_publish.add_argument("--ref-name", required=True)
     p_publish.add_argument("--ref-type", required=True)
-    p_publish.add_argument("--s3-bucket", default="qgroundcontrol")
     p_publish.add_argument("--distribution-id", default="")
 
     args = parser.parse_args(argv)
@@ -133,10 +133,10 @@ def main(argv: list[str] | None = None) -> None:
         args.artifacts,
         ref_name=args.ref_name,
         ref_type=args.ref_type,
-        s3_bucket=args.s3_bucket,
         distribution_id=args.distribution_id,
     )
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

@@ -86,11 +86,11 @@ def test_count_changed_lines_skips_lock_files_and_translations(
     fake = FakeGitHub(
         files=[
             ("src/Vehicle/Vehicle.cc", 10, 5),
-            ("package-lock.json", 1000, 1000),
+            ("docs/package-lock.json", 1000, 1000),
             ("tools/uv.lock", 1000, 1000),
             ("translations/qgc_de_DE.ts", 1000, 1000),
             ("translations/nested/extra.ts", 1000, 1000),
-            ("docs/package-lock.json", 3, 4),
+            ("tools/vendor/package-lock.json", 3, 4),
         ],
         labels=[],
     )
@@ -217,7 +217,6 @@ def test_apply_reports_write_failures(
 
 def test_main_exits_when_repo_missing(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("GH_REPO", raising=False)
-    monkeypatch.delenv("GITHUB_REPOSITORY", raising=False)
     with pytest.raises(SystemExit):
         mod.main(["apply", "--pr-number", "42"])
 

@@ -29,17 +29,14 @@ def test_custom_matrix_keeps_tests_and_production_packaging_separate():
     actions = {step.get("uses"): step for step in steps}
     configure = actions["./.github/actions/cmake-configure"]["with"]
     assert configure["extra-args"] == "-DQGC_CUSTOM_DIR=custom-example"
-    assert configure["testing"] == "${{ matrix.build-type == 'Debug' }}"
+    # The presets set the build type and QGC_BUILD_TESTING (Linux-debug ON, Linux OFF).
     assert configure["preset"] == "${{ matrix.build-type == 'Debug' && 'Linux-debug' || 'Linux' }}"
-    for action in ("build-setup", "cmake-configure", "cmake-build"):
-        assert actions[f"./.github/actions/{action}"]["with"]["build-type"] == (
-            "${{ matrix.build-type }}"
-        )
+    assert "with" not in actions["./.github/actions/cmake-build"]
     setup = actions["./.github/actions/build-setup"]["with"]
+    assert setup["build-type"] == "${{ matrix.build-type }}"
     assert setup["cache-variant"] == "custom"
-    assert setup["cache-key-suffix"] == (
-        "${{ matrix.build-type == 'Debug' && 'custom-debug' || 'custom-release' }}"
-    )
+    # The variant and build type separate the compiler caches; the CPM sources are Linux's own.
+    assert "cache-key-suffix" not in setup
     tests = actions["./.github/actions/test-phase"]
     assert tests["if"] == (
         "${{ !cancelled() && matrix.build-type == 'Debug' && steps.build.outcome == 'success' }}"

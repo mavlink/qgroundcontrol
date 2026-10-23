@@ -90,16 +90,9 @@ jobs:
 
       - name: Install dependencies (Linux)
         if: inputs.platform == 'linux'
-        run: |
-          sudo apt-get -o Acquire::Retries=3 update -qq
-          sudo apt-get -o Acquire::Retries=3 install -y --no-install-recommends \
-            build-essential pkg-config git \
-            libx11-dev libxext-dev libxv-dev \
-            libwayland-dev wayland-protocols \
-            libegl1-mesa-dev libgles2-mesa-dev libgl1-mesa-dev \
-            libdrm-dev libgbm-dev \
-            libasound2-dev libpulse-dev \
-            libva-dev nasm yasm
+        uses: ./.github/actions/install-dependencies
+        with:
+          category: gstreamer_build
 
       - name: Install dependencies (macOS)
         if: inputs.platform == 'macos' || inputs.platform == 'ios'
@@ -118,15 +111,19 @@ jobs:
             pkg-config gettext bison flex cmake ninja-build
 
       # Android/iOS builds do not link host Qt. Desktop builds use build-setup
-      # for the Qt SDK, Python environment, and compiler toolchain.
+      # for the Qt SDK, Python environment, and compiler toolchain; this checkout
+      # has no QGC sources, so the QGC build caches are skipped.
       - name: Build Setup
         if: inputs.platform == 'linux' || inputs.platform == 'macos' || inputs.platform == 'windows'
         uses: ./.github/actions/build-setup
         with:
+          build-cache: 'false'
           qt-host: >-
             ${{
+              (inputs.platform == 'linux' && inputs.arch == 'aarch64' && 'linux_arm64') ||
               (inputs.platform == 'linux' && 'linux') ||
               (inputs.platform == 'macos' && 'mac') ||
+              (inputs.platform == 'windows' && inputs.arch == 'arm64' && 'windows_arm64') ||
               (inputs.platform == 'windows' && 'windows')
             }}
           qt-arch: >-
@@ -138,7 +135,8 @@ jobs:
               (inputs.platform == 'windows' && 'win64_msvc2022_64')
             }}
 
-      # Resolves the arch and install prefix once; the archive step reads them from this step's outputs.
+      # build_gstreamer.py writes the resolved arch and install prefix to this step's outputs,
+      # which the archive step reads.
       - name: Build GStreamer
         id: build
         shell: bash
@@ -151,18 +149,8 @@ jobs:
           WORK_DIR: ${{ inputs.platform == 'windows' && runner.temp || '' }}
           SIMULATOR: ${{ inputs.platform == 'ios' && inputs.simulator && 'true' || '' }}
         run: |
-          set -euo pipefail
-          arch="$ARCH"
-          prefix="$RUNNER_TEMP/gstreamer"
-          if [[ "$PLATFORM" == 'windows' ]]; then
-            # The Windows toolchain names x86_64 'x64'.
-            arch="${arch/#x86_64/x64}"
-            prefix="C:\\gstreamer-$arch"
-          fi
-          printf 'arch=%s\nprefix=%s\n' "$arch" "$prefix" >> "$GITHUB_OUTPUT"
-
-          python3 ./tools/setup/build_gstreamer.py --platform "$PLATFORM" --arch "$arch" \
-            --version "$VERSION" --type "$BUILD_TYPE" --prefix "$prefix" --qt-prefix "$QT_PREFIX" \
+          python3 ./tools/setup/build_gstreamer.py --platform "$PLATFORM" --arch "$ARCH" \
+            --version "$VERSION" --type "$BUILD_TYPE" --qt-prefix "$QT_PREFIX" \
             --work-dir "$WORK_DIR" ${SIMULATOR:+--simulator} --clean --verify
 
       - name: Configure AWS Credentials

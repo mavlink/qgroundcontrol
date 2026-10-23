@@ -42,6 +42,12 @@ inputs:
     description: Comma-separated tools/uv.lock dependency groups for setup-python (e.g. scripts,coverage)
     required: false
     default: scripts
+  build-cache:
+    description: >-
+      Set up the compiler, moc, CPM, and GStreamer SDK caches; 'false' for jobs that build no
+      QGroundControl sources (they need only Qt, Python, and the compiler toolchain).
+    required: false
+    default: 'true'
 
 outputs:
   host_qt_root_dir:
@@ -49,7 +55,9 @@ outputs:
     value: ${{ steps.qt-desktop-host.outputs.qt_root_dir || steps.qt.outputs.qt_root_dir }}
   target_qt_root_dir:
     description: Target Qt root directory (mobile modes)
-    value: ${{ steps.qt-ios.outputs.qt_root_dir || steps.qt-android.outputs.target_qt_root_dir }}
+    value: >-
+      ${{ steps.qt-ios.outputs.qt_root_dir || steps.qt-android-arm64.outputs.qt_root_dir ||
+          steps.qt-android-armv7.outputs.qt_root_dir || steps.qt-android-x86_64.outputs.qt_root_dir }}
   android_platform:
     description: Android platform/API level
     value: ${{ steps.config.outputs.android_platform }}
@@ -99,31 +107,21 @@ runs:
       with:
         remove-android: ${{ inputs.mode != 'android' }}
 
-    - name: Exclude workspace from Windows Defender
-      if: runner.os == 'Windows'
-      shell: pwsh
-      run: |
-        if (-not (Get-Command Add-MpPreference -ErrorAction SilentlyContinue)) {
-          Write-Host "Windows Defender not present; skipping exclusions"
-          return
-        }
-        try {
-          Add-MpPreference -ExclusionPath "$env:GITHUB_WORKSPACE","$env:RUNNER_TEMP" -ErrorAction Stop
-          Add-MpPreference -ExclusionProcess "cl.exe","clang.exe","clang++.exe","link.exe","ninja.exe","cmake.exe","moc.exe","rcc.exe","qmlcachegen.exe" -ErrorAction Stop
-        } catch {
-          Write-Host "Defender exclusions unavailable on this image ($_); continuing"
-        }
-
-    - uses: lukka/get-cmake@v4.4.2
-      with:
-        useCloudCache: true
-        useLocalCache: false
-
     - uses: ./.github/actions/setup-python
       with:
         groups: ${{ inputs.python-groups }}
 
+    # The one CMake and Ninja for CI builds. After setup-python, so they precede the CMake and
+    # Ninja that the build and dev groups add to tools/.venv (local development keeps those).
+    - uses: lukka/get-cmake@v4.4.2
+      with:
+        cmakeVersion: ${{ steps.config.outputs.build_cmake_version }}
+        ninjaVersion: ${{ steps.config.outputs.build_ninja_version }}
+        useCloudCache: true
+        useLocalCache: false
+
     - name: Setup caching
+      if: inputs.build-cache == 'true'
       uses: ./.github/actions/cache
       with:
         host: ${{ inputs.mode == 'ios' && 'mac' || inputs.qt-host }}
@@ -131,7 +129,6 @@ runs:
         build-type: ${{ inputs.build-type }}
         variant: ${{ inputs.cache-variant }}
         key-suffix: ${{ inputs.cache-key-suffix }}
-        cpm-modules: .cache/CPM
         save-cache: ${{ inputs.save-cache }}
 
     # iOS pins its own Xcode version, which can differ from desktop macOS's.
@@ -146,7 +143,6 @@ runs:
       id: qt
       uses: ./.github/actions/qt-install
       with:
-        version: ${{ steps.config.outputs.qt_version }}
         host: ${{ inputs.mode == 'ios' && 'mac' || inputs.qt-host }}
         arch: ${{ inputs.mode == 'ios' && 'clang_64' || inputs.qt-arch }}
         modules: ${{ steps.config.outputs.qt_modules }}
@@ -165,7 +161,6 @@ runs:
       id: qt-desktop-host
       uses: ./.github/actions/qt-install
       with:
-        version: ${{ steps.config.outputs.qt_version }}
         host: windows
         arch: ${{ steps.qt-desktop-host-meta.outputs.arch }}
         modules: ${{ steps.config.outputs.qt_modules }}
@@ -177,7 +172,6 @@ runs:
       id: qt-ios
       uses: ./.github/actions/qt-install
       with:
-        version: ${{ steps.config.outputs.qt_version }}
         host: mac
         target: ios
         arch: ${{ inputs.qt-arch }}
@@ -203,6 +197,14 @@ runs:
           echo "Renamed Git link.exe to prevent Rust linker conflict"
         fi
 
+    # setup-gradle needs the java executable, which RunsOn's Windows image does not provide.
+    - name: Setup Java Environment
+      if: inputs.mode == 'android'
+      uses: actions/setup-java@v6
+      with:
+        distribution: temurin
+        java-version: ${{ steps.config.outputs.android_java_version }}
+
     # Gradle User Home (wrapper and dependencies) is cached only on RunsOn's S3 backend: in GitHub's
     # size-limited cache it evicted the compiler caches (#14474). `basic` is the MIT actions/cache
     # provider keyed on the Gradle build files; saves match cache_plan.py's auto policy. The post
@@ -218,17 +220,60 @@ runs:
         # QGC's wrapper is validated on every PR by gradle/actions/wrapper-validation in dependency-review.yml.
         validate-wrappers: false
 
-    - name: Install Qt for Android
+    # RunsOn images ship no Android SDK and don't preset ANDROID_SDK_ROOT (unlike GitHub-hosted
+    # images), so setup-android has no install target. Point it at a writable path; macOS legs
+    # stay GitHub-hosted and keep their preinstalled SDK.
+    - name: Set Android SDK location
+      if: inputs.mode == 'android' && runner.os != 'macOS'
+      shell: bash
+      run: | # zizmor: ignore[github-env] fixed path under the runner's temp directory
+        echo "ANDROID_SDK_ROOT=${RUNNER_TEMP}/android-sdk" >> "$GITHUB_ENV"
+        echo "ANDROID_HOME=${RUNNER_TEMP}/android-sdk" >> "$GITHUB_ENV"
+
+    - name: Setup Android Environment
       if: inputs.mode == 'android'
-      id: qt-android
-      uses: ./.github/actions/qt-android
+      uses: android-actions/setup-android@v4
+      with:
+        cmdline-tools-version: ${{ steps.config.outputs.android_cmdline_tools }}
+        packages: ''
+        log-accepted-android-sdk-licenses: false
+
+    # Installs build-config.json's NDK, platform, and build-tools versions.
+    - name: Install Android SDK / NDK / Tools
+      if: inputs.mode == 'android'
+      shell: bash
+      run: python3 "${GITHUB_WORKSPACE}/tools/ci/android/android_sdk_helper.py"
+
+    # The first installed ABI (in this order) supplies target_qt_root_dir.
+    - name: Install Qt for Android (arm64_v8a)
+      if: inputs.mode == 'android' && contains(format(';{0};', inputs.abis), ';arm64-v8a;')
+      id: qt-android-arm64
+      uses: ./.github/actions/qt-install
       with:
         host: ${{ inputs.qt-host }}
-        version: ${{ steps.config.outputs.qt_version }}
+        target: android
+        arch: android_arm64_v8a
         modules: ${{ steps.config.outputs.qt_modules }}
-        abis: ${{ inputs.abis }}
-        ndk-full-version: ${{ steps.config.outputs.android_ndk_full_version }}
-        java-version: ${{ steps.config.outputs.android_java_version }}
-        android-platform: ${{ steps.config.outputs.android_platform }}
-        android-cmdline-tools: ${{ steps.config.outputs.android_cmdline_tools }}
-        android-build-tools: ${{ steps.config.outputs.android_build_tools }}
+        export-env: 'false'
+
+    - name: Install Qt for Android (armv7)
+      if: inputs.mode == 'android' && contains(format(';{0};', inputs.abis), ';armeabi-v7a;')
+      id: qt-android-armv7
+      uses: ./.github/actions/qt-install
+      with:
+        host: ${{ inputs.qt-host }}
+        target: android
+        arch: android_armv7
+        modules: ${{ steps.config.outputs.qt_modules }}
+        export-env: 'false'
+
+    - name: Install Qt for Android (x86_64)
+      if: inputs.mode == 'android' && contains(format(';{0};', inputs.abis), ';x86_64;')
+      id: qt-android-x86_64
+      uses: ./.github/actions/qt-install
+      with:
+        host: ${{ inputs.qt-host }}
+        target: android
+        arch: android_x86_64
+        modules: ${{ steps.config.outputs.qt_modules }}
+        export-env: 'false'

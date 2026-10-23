@@ -9,142 +9,12 @@ from typing import TYPE_CHECKING
 import pytest
 from ci.reporting.generate_build_results_comment import generate_comment
 
+from .._helpers import write_files
+
 if TYPE_CHECKING:
     from pathlib import Path
 
     from syrupy.assertion import SnapshotAssertion
-
-
-def test_generate_comment_minimal(tmp_path: Path) -> None:
-    env = {
-        "BUILD_TABLE": "| Platform | Status | Details |\n|----------|--------|--------|\n| Linux | Passed | [View](https://example.test) |",
-        "BUILD_SUMMARY": "All builds passed.",
-        "PRECOMMIT_STATUS": "Not Triggered",
-        "PRECOMMIT_URL": "",
-        "TRIGGERED_BY": "Linux",
-    }
-
-    out = generate_comment(
-        env, tmp_path, now_utc=datetime(2026, 2, 17, 12, 0, 0, tzinfo=timezone.utc)
-    )
-
-    assert "## Build Results" in out
-    assert "| Linux | Passed | [View](https://example.test) |" in out
-    assert "| Linux | Passed | [View](https://example.test) |\n\n**All builds passed.**" in out
-    assert "| pre-commit | Not Triggered | - |" in out
-    assert "<sub>Updated: 2026-02-17 12:00:00 UTC • Triggered by: Linux</sub>" in out
-
-
-def test_generate_comment_precommit_artifact_overrides_status(tmp_path: Path) -> None:
-    result_path = tmp_path / "artifacts" / "pre-commit-results" / "pre-commit-results.json"
-    result_path.parent.mkdir(parents=True)
-    result_path.write_text(
-        json.dumps(
-            {
-                "exit_code": "1",
-                "passed": "12",
-                "failed": "3",
-                "skipped": "1",
-                "run_url": "https://example.test/precommit",
-            }
-        ),
-        encoding="utf-8",
-    )
-
-    env = {
-        "BUILD_TABLE": "| Platform | Status | Details |\n|----------|--------|--------|",
-        "BUILD_SUMMARY": "Some builds failed.",
-        "PRECOMMIT_STATUS": "Running",
-        "PRECOMMIT_URL": "",
-        "PRECOMMIT_RESULTS_PATH": "artifacts/pre-commit-results/pre-commit-results.json",
-        "TRIGGERED_BY": "Android",
-    }
-
-    out = generate_comment(
-        env, tmp_path, now_utc=datetime(2026, 2, 17, 12, 0, 0, tzinfo=timezone.utc)
-    )
-
-    assert "| pre-commit | Failed | [View](https://example.test/precommit) |" in out
-    assert "Pre-commit hooks: 12 passed, 3 failed, 1 skipped." in out
-
-
-def test_generate_comment_test_coverage_and_sizes(tmp_path: Path) -> None:
-    # test-phase names CTest logs test-output-<suite>-<phase>.txt.
-    test_file = (
-        tmp_path / "artifacts" / "test-results-linux_gcc_64" / "test-output-linux_gcc_64-unit.txt"
-    )
-    test_file.parent.mkdir(parents=True)
-    test_file.write_text(
-        "\n".join(
-            [
-                "1/2 Test #1: AlphaTest ... Passed",
-                "2/2 Test #2: BetaTest ... ***Failed",
-            ]
-        ),
-        encoding="utf-8",
-    )
-
-    coverage_path = tmp_path / "artifacts" / "coverage-report" / "coverage-summary.json"
-    coverage_path.parent.mkdir(parents=True)
-    for path, covered in ((coverage_path, 75), (tmp_path / "baseline-coverage-summary.json", 70)):
-        path.write_text(
-            json.dumps(
-                {
-                    "line_total": 100,
-                    "line_covered": covered,
-                    "line_percent": float(covered),
-                    "branch_total": 0,
-                    "branch_covered": 0,
-                    "branch_percent": 0.0,
-                }
-            ),
-            encoding="utf-8",
-        )
-
-    pr_sizes = tmp_path / "pr-sizes.json"
-    pr_sizes.write_text(
-        json.dumps(
-            {
-                "artifacts": [
-                    {"name": "QGroundControl.dmg", "size_bytes": 10485760, "size_human": "10.00 MB"}
-                ]
-            }
-        ),
-        encoding="utf-8",
-    )
-    baseline_sizes = tmp_path / "baseline-sizes.json"
-    baseline_sizes.write_text(
-        json.dumps(
-            {
-                "artifacts": [
-                    {"name": "QGroundControl.dmg", "size_bytes": 9437184, "size_human": "9.00 MB"}
-                ]
-            }
-        ),
-        encoding="utf-8",
-    )
-
-    env = {
-        "BUILD_TABLE": "| Platform | Status | Details |\n|----------|--------|--------|",
-        "BUILD_SUMMARY": "Some builds failed.",
-        "PRECOMMIT_STATUS": "Not Triggered",
-        "PRECOMMIT_URL": "",
-        "COVERAGE_SUMMARY": "artifacts/coverage-report/coverage-summary.json",
-        "BASELINE_COVERAGE_SUMMARY": "baseline-coverage-summary.json",
-        "PR_SIZES_JSON": "pr-sizes.json",
-        "BASELINE_SIZES_JSON": "baseline-sizes.json",
-        "TRIGGERED_BY": "MacOS",
-    }
-
-    out = generate_comment(
-        env, tmp_path, now_utc=datetime(2026, 2, 17, 12, 0, 0, tzinfo=timezone.utc)
-    )
-
-    assert "### Test Results" in out
-    assert "**linux_gcc_64**: 1 passed, 1 failed, 0 skipped" in out
-    assert "| 75.0% | 70.0% | +5.0% |" in out
-    assert "| QGroundControl.dmg | 10.00 MB | +1.00 MB (increase) |" in out
-    assert "**Total size increased by 1.00 MB**" in out
 
 
 def test_generate_comment_rejects_non_http_precommit_url(tmp_path: Path) -> None:
@@ -322,9 +192,7 @@ def _write_full_report_inputs(base: Path) -> dict[str, str]:
             }
         ),
     }
-    for name, content in files.items():
-        (base / name).parent.mkdir(parents=True, exist_ok=True)
-        (base / name).write_text(content, encoding="utf-8")
+    write_files(base, files)
     return {
         "BUILD_TABLE": "| Platform | Status | Details |\n|----------|--------|--------|\n"
         "| Linux | Failed | [View](https://example.test/linux) |\n"
@@ -341,7 +209,23 @@ def _write_full_report_inputs(base: Path) -> dict[str, str]:
     }
 
 
-@pytest.mark.parametrize("scenario", ["all-passed", "full-report"])
+PASSED_LINUX = {
+    "BUILD_TABLE": "| Platform | Status | Details |\n|----------|--------|--------|\n"
+    "| Linux | Passed | [View](https://example.test/linux) |",
+    "BUILD_SUMMARY": "All builds passed.",
+    "TRIGGERED_BY": "Linux",
+}
+SCENARIOS = {
+    "minimal": {**PASSED_LINUX, "PRECOMMIT_STATUS": "Not Triggered", "PRECOMMIT_URL": ""},
+    "all-passed": {
+        **PASSED_LINUX,
+        "PRECOMMIT_STATUS": "Passed",
+        "PRECOMMIT_URL": "https://example.test/precommit",
+    },
+}
+
+
+@pytest.mark.parametrize("scenario", [*SCENARIOS, "full-report"])
 def test_rendered_comment_matches_snapshot(
     tmp_path: Path, scenario: str, snapshot: SnapshotAssertion
 ) -> None:
@@ -349,13 +233,6 @@ def test_rendered_comment_matches_snapshot(
     if scenario == "full-report":
         env = _write_full_report_inputs(tmp_path)
     else:
-        env = {
-            "BUILD_TABLE": "| Platform | Status | Details |\n|----------|--------|--------|\n"
-            "| Linux | Passed | [View](https://example.test/linux) |",
-            "BUILD_SUMMARY": "All builds passed.",
-            "PRECOMMIT_STATUS": "Passed",
-            "PRECOMMIT_URL": "https://example.test/precommit",
-            "TRIGGERED_BY": "Linux",
-        }
+        env = SCENARIOS[scenario]
     now = datetime(2026, 2, 17, 12, 0, 0, tzinfo=timezone.utc)
     assert generate_comment(env, tmp_path, now_utc=now) == snapshot

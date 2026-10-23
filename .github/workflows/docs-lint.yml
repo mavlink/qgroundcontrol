@@ -28,14 +28,25 @@ jobs:
         uses: step-security/harden-runner@v2
         with:
           egress-policy: audit
+      # A pull request's merge commit and its two parents hold the PR diff.
       - uses: actions/checkout@v7
         with:
-          fetch-depth: 0
+          fetch-depth: 2
           persist-credentials: false
       - name: Setup Python
         uses: ./.github/actions/setup-python
         with:
           groups: precommit
+      # Read-only: pre-commit.yml's master pushes save every hook environment, including vale's.
+      - name: Restore prek environments
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            ~/.cache/prek
+            !~/.cache/prek/cache
+          key: prek-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.pre-commit-config.yaml') }}
+          restore-keys: |
+            prek-v1-${{ runner.os }}-${{ runner.arch }}-
       # Manual runs have no base revision and check every English page.
       - name: Lint English documentation
         env:

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -109,8 +110,14 @@ def main() -> int:
         ).stdout.strip()
         if not artifact.startswith("/") or "\n" in artifact or not artifact.endswith(".AppImage"):
             raise ValueError(f"Invalid VM artifact path: {artifact!r}")
-        subprocess.run(["multipass", "transfer", f"{name}:{artifact}", f"{output}/"], check=True)
-        print(f"Output: {output / Path(artifact).name}")
+        destination = output / Path(artifact).name
+        # Like the source upload: the snap client can write to the caller's home, not OUTPUT_DIR.
+        with tempfile.TemporaryDirectory(prefix="qgc-out-", dir=Path.home()) as staging:
+            subprocess.run(
+                ["multipass", "transfer", f"{name}:{artifact}", f"{staging}/"], check=True
+            )
+            shutil.move(Path(staging) / destination.name, destination)
+        print(f"Output: {destination}")
         return 0
     except subprocess.CalledProcessError as error:
         print(f"VM build failed: {error}", file=sys.stderr)

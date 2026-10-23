@@ -109,3 +109,36 @@ def test_performance_summary_reports_failed_phase(tmp_path, monkeypatch):
     assert "| build | 4.00 |" in summaries[0]
     assert "CPM sources: 1.0 MiB" in summaries[0]
     assert "Hits: 12" in summaries[0]
+
+
+@pytest.mark.parametrize(("failures", "exit_code"), [(1, 0), (2, 1)])
+def test_run_retries_the_build_once(monkeypatch, capsys, failures, exit_code):
+    import subprocess
+    from types import SimpleNamespace
+
+    from ci.compile import docker_helper
+
+    calls = []
+    sleeps = []
+
+    def run(command, **kwargs):
+        calls.append(command)
+        if len(calls) <= failures:
+            raise subprocess.CalledProcessError(1, command)
+        return subprocess.CompletedProcess(command, 0)
+
+    monkeypatch.setattr("common.proc.subprocess.run", run)
+    monkeypatch.setattr("common.proc.time", SimpleNamespace(sleep=sleeps.append))
+    args = argparse.Namespace(fuse=True, image="builder:linux", build_type="Release")
+    assert docker_helper.cmd_run(args) == exit_code
+    if exit_code:
+        assert "::error::Docker build failed after 2 attempts." in capsys.readouterr().out
+    assert len(calls) == 2
+    assert calls[0][1:] == [
+        "deploy/docker/run_docker.py",
+        "run",
+        "--fuse",
+        "builder:linux",
+        "Release",
+    ]
+    assert sleeps == [30]

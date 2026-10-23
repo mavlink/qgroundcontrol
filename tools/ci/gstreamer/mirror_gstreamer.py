@@ -4,7 +4,7 @@
 Downloads the prebuilt SDK packages published at gstreamer.freedesktop.org for a
 given version, verifies each against its checksum pinned in .github/build-config.json
 (else its upstream ``.sha256sum`` sidecar), then uploads them to
-``s3://<bucket>/dependencies/gstreamer/<platform>/<filename>`` — the layout the
+``s3://qgroundcontrol/dependencies/gstreamer/<platform>/<filename>`` — the layout the
 build's S3 fallback mirror reads. ``common.gstreamer`` holds the package layout
 shared with cmake/GStreamer/Download.cmake and the installers.
 """
@@ -19,11 +19,12 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import _bootstrap as _bootstrap
-from common.aws import s3_object_exists, upload_public_file, validate_public_bucket
+from common.aws import s3_object_exists, upload_public_file
 from common.gh_actions import gh_error, write_step_summary
 from common.gstreamer import PLATFORM_PACKAGES, package_platform, package_url, pinned_checksum
 from common.net import download_file, read_url_text
 
+S3_BUCKET = "qgroundcontrol"
 PLATFORMS = tuple(PLATFORM_PACKAGES)
 WINDOWS_MIN_VERSION = (1, 28, 0)
 
@@ -86,11 +87,11 @@ def _expected_sha(artifact: Artifact, version: str) -> str:
 
 
 def mirror_artifact(
-    artifact: Artifact, *, version: str, bucket: str, work_dir: Path, dry_run: bool, force: bool
+    artifact: Artifact, *, version: str, work_dir: Path, dry_run: bool, force: bool
 ) -> str:
     """Download, verify, and upload one artifact. Returns a status word for the summary."""
     key = artifact.s3_key()
-    if not force and not dry_run and s3_object_exists(bucket, key):
+    if not force and not dry_run and s3_object_exists(S3_BUCKET, key):
         print(f"skip (exists): {key}")
         return "skipped"
 
@@ -101,11 +102,11 @@ def mirror_artifact(
     print(f"verified sha256: {expected}")
 
     if dry_run:
-        print(f"dry-run: would upload -> s3://{bucket}/{key}")
+        print(f"dry-run: would upload -> s3://{S3_BUCKET}/{key}")
         return "dry-run"
 
-    upload_public_file(local, bucket, key)
-    print(f"uploaded: s3://{bucket}/{key}")
+    upload_public_file(local, S3_BUCKET, key)
+    print(f"uploaded: s3://{S3_BUCKET}/{key}")
     local.unlink(missing_ok=True)
     return "uploaded"
 
@@ -118,7 +119,6 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--platforms", default="all", help="'all' or comma list: android,ios,macos,windows"
     )
-    parser.add_argument("--bucket", default="qgroundcontrol", help="Target S3 bucket")
     parser.add_argument("--work-dir", default=".", help="Scratch directory for downloads")
     parser.add_argument(
         "--dry-run", action="store_true", help="Download and verify but do not upload"
@@ -131,11 +131,6 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
-    try:
-        validate_public_bucket(args.bucket)
-    except ValueError as exc:
-        gh_error(str(exc))
-        return 1
     try:
         platforms = resolve_platforms(args.platforms)
         artifacts = [a for p in platforms for a in artifacts_for(p, args.version)]
@@ -152,7 +147,6 @@ def main(argv: list[str] | None = None) -> int:
             status = mirror_artifact(
                 artifact,
                 version=args.version,
-                bucket=args.bucket,
                 work_dir=work_dir,
                 dry_run=args.dry_run,
                 force=args.force,
@@ -163,7 +157,7 @@ def main(argv: list[str] | None = None) -> int:
         rows.append(f"| `{artifact.s3_dir}` | `{artifact.filename}` | {status} |")
 
     write_step_summary(
-        f"### GStreamer {args.version} mirror -> `s3://{args.bucket}/dependencies/gstreamer/`\n\n"
+        f"### GStreamer {args.version} mirror -> `s3://{S3_BUCKET}/dependencies/gstreamer/`\n\n"
         "| Platform | File | Status |\n| --- | --- | --- |\n" + "\n".join(rows) + "\n"
     )
     return 0

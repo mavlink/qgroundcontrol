@@ -9,7 +9,7 @@ from unittest.mock import patch
 import pytest
 from ci.publish.deploy_docs import deploy_branch, sanitize_branch
 
-from .._helpers import git
+from .._helpers import commit_files, git
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -34,9 +34,7 @@ class TestSanitizeBranch:
 
 def _git_init(repo: Path) -> None:
     git(repo, "init", "-q")
-    (repo / "seed").write_text("seed")
-    git(repo, "add", "seed")
-    git(repo, "commit", "-q", "-m", "seed")
+    commit_files(repo, {"seed": "seed"}, "seed")
 
 
 @pytest.mark.usefixtures("isolated_git")
@@ -48,8 +46,6 @@ class TestDeployBranch:
             "branch": "feature/docs",
             "target_branch": "main",
             "commit_message": "Docs update",
-            "author_email": "bot@example.test",
-            "author_name": "bot",
         }
 
     def test_copies_files_commits_and_pushes(self, tmp_path: Path) -> None:

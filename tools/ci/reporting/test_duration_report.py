@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-"""Analyze JUnit test durations and emit CI summaries."""
+"""Summarize the slowest JUnit tests in the job summary and warn about slow tests."""
 
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -62,9 +61,7 @@ def analyze_test_durations(
         "total_tests": len(cases),
         "total_seconds": total_seconds,
         "slow_threshold_seconds": slow_threshold,
-        "slow_tests": [{"test": key, "seconds": secs} for key, secs in slow_over_threshold],
         "top_slowest": [{"test": key, "seconds": secs} for key, secs in slowest[:top_n]],
-        "slow_count": len(slow_over_threshold),
         "slow_warnings": slow_over_threshold[:top_n],
     }
 
@@ -107,7 +104,6 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     """Parse command-line arguments."""
     parser = argparse.ArgumentParser(description="Analyze JUnit test durations.")
     parser.add_argument("--junit-path", required=True)
-    parser.add_argument("--report-json-path", default="test-duration-report.json")
     parser.add_argument("--top-n", type=int, default=20)
     parser.add_argument("--slow-threshold-seconds", type=float, default=60.0)
     return parser.parse_args(argv)
@@ -117,7 +113,6 @@ def main(argv: list[str] | None = None) -> int:
     """Run the report generation flow."""
     args = parse_args(argv)
     junit_path = Path(args.junit_path)
-    report_json_path = Path(args.report_json_path)
 
     if not junit_path.exists():
         message = f"JUnit report not found at {junit_path}"
@@ -130,11 +125,6 @@ def main(argv: list[str] | None = None) -> int:
         top_n=args.top_n,
         slow_threshold=args.slow_threshold_seconds,
     )
-    report_json_path.parent.mkdir(parents=True, exist_ok=True)
-    report_json_path.write_text(
-        json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-    )
-
     write_step_summary(build_summary(report))
 
     for key, secs in report["slow_warnings"]:

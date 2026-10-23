@@ -9,20 +9,26 @@ ENABLE_KVM = "python3 tools/ci/runner/enable_kvm.py"
 RUN_VAGRANT = "python3 deploy/vagrant/run_vagrant.py"
 
 
-def test_push_and_pull_request_share_one_paths_list() -> None:
-    text = WORKFLOW.read_text(encoding="utf-8")
-    assert "paths: &vm-build-paths\n" in text
-    assert "paths: *vm-build-paths\n" in text
-    assert "<<:" not in text
+def test_pull_requests_skip_only_the_push_only_runs_on_config() -> None:
     on = load_workflow("vm-builds.yml")["on"]
     paths = on["push"]["paths"]
-    assert on["pull_request"]["paths"] == paths
+    # RunsOn reads runs-on.yml from the default branch, so PR runs would not exercise a change.
+    assert on["pull_request"]["paths"] == [path for path in paths if path != ".github/runs-on.yml"]
+    assert ".github/runs-on.yml" in paths
+    # Everything the VM build runs before CMake (deploy/multipass/build_in_vm.py and
+    # deploy/vagrant/provision.py), plus the CI-side helpers.
     for path in (
         "tools/ci/runner/apt_install_retry.py",
         "tools/ci/runner/enable_kvm.py",
         "tools/ci/runner/install_multipass.py",
+        "tools/setup/install_uv.py",
+        "tools/setup/install_python.py",
+        "tools/setup/install_qt.py",
+        "tools/setup/qt_installer/**",
+        "tools/setup/install_dependencies/**",
         "deploy/multipass/**",
         "deploy/vagrant/**",
+        ".github/build-config.json",
     ):
         assert path in paths
 

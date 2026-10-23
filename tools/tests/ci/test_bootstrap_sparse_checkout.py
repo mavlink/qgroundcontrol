@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from .._helpers import REPO_ROOT, load_workflow, load_yaml
+from .._helpers import REPO_ROOT, action_names, load_workflow, load_yaml, workflow_names
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -172,7 +172,8 @@ def _iter_checkout_steps(doc: dict, source: str) -> Iterator[tuple[str, frozense
 
 def _iter_sparse_checkout_blocks() -> Iterator[tuple[str, frozenset[str]]]:
     """Yield sparse-checkout blocks from every workflow and composite action."""
-    sources = sorted(WORKFLOWS_DIR.glob("*.yml")) + sorted(ACTIONS_DIR.glob("*/action.yml"))
+    sources = [WORKFLOWS_DIR / name for name in workflow_names()]
+    sources += [ACTIONS_DIR / name / "action.yml" for name in action_names()]
     for path in sources:
         doc = load_yaml(path)
         if not isinstance(doc, dict):
@@ -181,9 +182,6 @@ def _iter_sparse_checkout_blocks() -> Iterator[tuple[str, frozenset[str]]]:
 
 
 def test_bootstrap_sparse_checkout_matches_canonical() -> None:
-    if not WORKFLOWS_DIR.is_dir():
-        pytest.skip("workflows dir not in checkout")
-
     drift: list[str] = []
     for context, entries in _iter_sparse_checkout_blocks():
         stale = sorted(
@@ -264,6 +262,7 @@ EXPECTED_BUILD_RESULTS_PATHS: frozenset[str] = frozenset(
         "tools/pyproject.toml",
         "tools/uv.lock",
         "tools/setup/install_python.py",
+        "tools/ci/cache/cache_backend.py",
     }
 )
 
@@ -271,8 +270,6 @@ EXPECTED_BUILD_RESULTS_PATHS: frozenset[str] = frozenset(
 @pytest.mark.parametrize("job", ["post-pr-comment", "save-baselines"])
 def test_build_results_jobs_check_out_once_before_local_actions(job: str) -> None:
     """Each job's only checkout covers its actions, templates, locks and Python import closure."""
-    if not BUILD_RESULTS_YML.exists():
-        pytest.skip("build-results.yml not in checkout")
 
     steps = load_workflow(BUILD_RESULTS_YML.name)["jobs"][job]["steps"]
     checkouts = [

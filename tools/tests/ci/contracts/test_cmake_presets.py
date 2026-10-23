@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Any
 
 import pytest
 
-from ..._helpers import REPO_ROOT, load_action, load_workflow
+from ..._helpers import REPO_ROOT, get_step, get_steps, load_action, load_workflow
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -361,32 +361,34 @@ def test_developer_build_entrypoints_use_presets() -> None:
     justfile = (REPO_ROOT / "justfile").read_text(encoding="utf-8")
     vscode_tasks = (REPO_ROOT / ".vscode/tasks.default.json").read_text(encoding="utf-8")
     vscode_settings = (REPO_ROOT / ".vscode/settings.default.json").read_text(encoding="utf-8")
-    ci_scripts = (REPO_ROOT / ".github/workflows/ci-scripts.yml").read_text(encoding="utf-8")
 
     assert "cmake --build --preset {{ build_preset }}" in justfile
     assert "ctest --preset default" in justfile
     assert "--parallel {{ jobs }} --no-tests=error" in justfile
-    assert "host_os := os()" in justfile
-    assert 'python := "uv run --frozen --project tools --group scripts python"' in justfile
     assert "msvc2022" not in justfile
-    assert 'qt_root_arg := if qt_dir == ""' in justfile
-    assert 'app_path := if host_os == "windows"' in justfile
     assert '"--preset"' in vscode_tasks
     assert '"python.defaultInterpreterPath": "${workspaceFolder}/tools/.venv"' in vscode_settings
-    for path in ("CMakePresets.json", "cmake", "justfile", ".vscode"):
-        assert path in ci_scripts
+    checkout = get_step(get_steps(load_workflow("ci-scripts.yml"), "test-ci-scripts"), "Checkout")
+    assert {"CMakePresets.json", "cmake", "justfile", ".vscode"} <= set(
+        checkout["with"]["sparse-checkout"].split()
+    )
+
+
+def test_justfile_runs_tools_from_the_lock_and_resolves_host_paths() -> None:
+    justfile = (REPO_ROOT / "justfile").read_text(encoding="utf-8")
+    assert 'python := "uv run --frozen --project tools --group scripts python"' in justfile
+    assert "host_os := os()" in justfile
+    assert 'qt_root_arg := if qt_dir == ""' in justfile
+    assert 'app_path := if host_os == "windows"' in justfile
 
     vagrant = REPO_ROOT / "deploy" / "vagrant" / "Vagrantfile"
-    if vagrant.exists():
-        assert "deploy/vagrant/provision.py" in vagrant.read_text(encoding="utf-8")
+    assert "deploy/vagrant/provision.py" in vagrant.read_text(encoding="utf-8")
 
 
 def test_host_tools_use_host_platform_predicates() -> None:
     python_venv = REPO_ROOT / "cmake" / "modules" / "PythonVenv.cmake"
     toolchain = REPO_ROOT / "cmake" / "Toolchain.cmake"
     helpers = REPO_ROOT / "cmake" / "Helpers.cmake"
-    if not all(path.exists() for path in (python_venv, toolchain, helpers)):
-        pytest.skip("host-platform CMake modules not in checkout")
 
     assert "if(CMAKE_HOST_WIN32)" in python_venv.read_text(encoding="utf-8")
     assert "NOT CMAKE_HOST_WIN32" in toolchain.read_text(encoding="utf-8")

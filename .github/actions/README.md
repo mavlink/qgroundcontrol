@@ -18,22 +18,21 @@ cannot load actions from the PR merge commit (zizmor's `self-repository` audit i
 | `aws-credentials` | Configure AWS credentials via OIDC (preferred) or static keys in one step |
 | `build-action` | Build a JavaScript action from source when no release ships a rebuilt `dist/` (kept intentionally; no current callers) |
 | `build-config` | Expose `.github/build-config.json` values as step outputs |
-| `build-setup` | Platform build setup: build config, runner preparation, CMake, Python, caches, Xcode/MSVC, and Qt for desktop, Android, or iOS |
+| `build-setup` | Platform build setup: build config, runner preparation, Python, the CMake and Ninja pinned in `build-config.json`, caches (skipped with `build-cache: 'false'`), Xcode/MSVC, Java and the Android SDK/NDK, and Qt for desktop, Android (each requested ABI), or iOS |
 | `cache` | Plan caches with `cache_plan.py`, install ccache/mold, and restore compiler, moc, CPM, and GStreamer SDK caches |
 | `cmake-build` | Build through `cmake_helper.py`, save build caches after success, upload Ninja reports, and annotate PR warnings |
-| `cmake-configure` | Configure QGroundControl with common options; requires `qt-cmake` unless `use-qt-cmake` is `false` |
+| `cmake-configure` | Configure QGroundControl from a required CMake preset, which sets the build type and testing; requires `qt-cmake` unless `use-qt-cmake` is `false` |
 | `debug-runner` | Open an actor-only SSH session for failed manual runs (callers gate it and set a step timeout) |
 | `deploy-docs` | Deploy built documentation to an external GitHub Pages repository |
 | `docker` | Build a QGC builder image with Buildx and run the containerized application build |
 | `download-all-artifacts` | Download artifacts from every platform workflow run for a commit and optionally record artifact sizes |
 | `free-disk-space` | Wrap `endersonmenezes/free-disk-space` with QGC's shared defaults |
-| `install-dependencies` | Install platform build dependencies; on Linux, `category` installs a single `install_dependencies` category |
-| `qt-android` | Install Java, the Android SDK/NDK, and the Android Qt SDK for each requested ABI |
-| `qt-install` | Reuse a compatible preinstalled Qt SDK or install Qt with aqtinstall, with caching |
-| `run-unit-tests` | Run CTest, then publish JUnit results, upload artifacts, Codecov test analytics, and durations even after failures |
+| `install-dependencies` | Install platform build dependencies (Linux apt packages, macOS Homebrew and GStreamer, Windows MSVC and NSIS) but not the CMake, Ninja, ccache, and mold that `build-setup` pins; on Linux, `category` installs a single `install_dependencies` category |
+| `qt-install` | Reuse a compatible preinstalled Qt SDK or install Qt with QGC's installer or aqtinstall (`installer`, empty for `install_qt.py`'s per-host default), with caching; `version` defaults to `build-config.json`'s |
+| `run-unit-tests` | Run CTest, then publish JUnit results, upload artifacts, Codecov test analytics, and a slow-test summary even after failures |
 | `save-build-cache` | Save compiler and moc caches once per job after successful compilation |
 | `setup-python` | Detect the cache backend, set up uv and Python, and sync `tools/uv.lock` groups into `tools/.venv` |
-| `test-phase` | Run the Unit and Integration suites through `run-unit-tests` and upload their durations |
+| `test-phase` | Run the Unit and Integration suites through `run-unit-tests` and summarize their slowest tests |
 | `verify-executable` | Boot-test a built binary, AppImage, DMG, or Windows executable |
 
 ## External Action Reference Policy
@@ -53,15 +52,16 @@ an additional security problem.
 ## Action Notes
 
 - **`test-phase`** runs the Unit suite, then the Integration suite even if Unit failed, and
-  uploads both duration reports. Callers must gate it on a successful build. Integration tests
-  default to two CTest processes (`integration-parallel`); Unit tests use one per CPU.
+  summarizes each suite's slowest tests in the job summary. Callers must gate it on a successful
+  build. Integration tests default to two CTest processes (`integration-parallel`); Unit tests use
+  one per CPU.
 - **`run-unit-tests`** runs `cmake_helper.py ctest` (`--no-tests=error`, so empty selections
   fail). Reporting steps run after test failures; the failed CTest step still fails the job.
   The job summary report needs no `checks: write`; Codecov test analytics (`upload-codecov`)
   needs `id-token: write`.
-- **`download-all-artifacts`** serves failed-build diagnostics and strict frozen release
-  snapshots. PR reporting allows absent diagnostic artifacts when tests did not run, but
-  download failures still fail the job; release and baseline downloads are strict. Baseline
+- **`download-all-artifacts`** serves the build-results jobs. PR reporting allows absent
+  diagnostic artifacts when tests did not run, but download failures still fail the job;
+  baseline downloads allow neither. Baseline
   downloads pass `require-sizes`, which removes `sizes-file` and fails when no distributable
   artifact exists, so an empty baseline is never published.
 - **`cache` / `save-build-cache`**: `cache` restores compiler/moc archives and immutable
@@ -81,3 +81,11 @@ an additional security problem.
   and `report.md` even after compilation fails. Reports separate moc/code generation and linking,
   deduplicate commands with multiple outputs, and exclude earlier builds in the same directory.
   Docker includes the same reports in its performance artifact; non-Ninja generators skip them.
+- **`cmake-configure`, `cmake-build`, `test-phase`, `run-unit-tests`** default `build-dir` to
+  `${{ runner.temp }}/build`; callers pass it only for another directory. `cmake_helper.py`
+  sets `QGC_STABLE_BUILD` for release tags and `Stable*` branches. Callers pass no build type:
+  `cmake_helper.py` passes `--config`/`-C` only to multi-config build trees (Xcode for
+  `iOS-appstore`), taking the preset's `CMAKE_BUILD_TYPE` from `CMakeCache.txt`.
+- **`attest-and-upload`** finds the artifact at `$RUNNER_TEMP/build/<artifact-name>` unless
+  `artifact-source-path` overrides it. Pull requests skip the SBOM scan and attestations but
+  still upload the checksum, dependency SBOM, and build identity.

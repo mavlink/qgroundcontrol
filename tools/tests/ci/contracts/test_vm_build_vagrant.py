@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import importlib.util
 import os
 import subprocess
 import sys
@@ -12,7 +11,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from ..._helpers import REPO_ROOT
+from ..._helpers import REPO_ROOT, load_script
 
 if TYPE_CHECKING:
     from types import ModuleType
@@ -22,12 +21,7 @@ ARTIFACT = "/home/vagrant/shadow_build/QGroundControl-x86_64.AppImage"
 
 @pytest.fixture
 def script(monkeypatch: pytest.MonkeyPatch) -> ModuleType:
-    spec = importlib.util.spec_from_file_location(
-        "run_vagrant", REPO_ROOT / "deploy/vagrant/run_vagrant.py"
-    )
-    assert spec is not None and spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    module = load_script("deploy/vagrant/run_vagrant.py")
     # main() installs a SIGTERM handler; keep it out of the pytest process.
     monkeypatch.setattr(module.signal, "signal", lambda *_: None)
     return module

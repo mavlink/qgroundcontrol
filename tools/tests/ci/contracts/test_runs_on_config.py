@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import importlib.util
 import os
 import re
 from pathlib import Path
@@ -11,7 +10,7 @@ from typing import TYPE_CHECKING, Any
 import pytest
 from ci.planning.android_matrix import LINUX_EMULATOR_JOB, LINUX_JOB, build_matrix
 
-from ..._helpers import REPO_ROOT, load_yaml
+from ..._helpers import REPO_ROOT, load_script, load_yaml
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -25,11 +24,13 @@ RUNSON_WORKFLOWS = [
     "vm-builds.yml",
     "windows.yml",
 ]
-# Until RUNS_ON_SPOT_POOLS is enabled, PR labels request the `-spot` twin's settings directly.
+# Until RUNS_ON_SPOT_POOLS is enabled, PR labels request the `-spot` twin's settings directly, inline
+# or (linux.yml, whose legs use different pools) from the matrix entry's spot_family.
 PR_SPOT_SUFFIX = re.compile(
     r"github\.event_name == 'pull_request' &&(?: matrix\.host == 'linux' &&)? "
     r"\(vars\.RUNS_ON_SPOT_POOLS == 'true' && '-spot' \|\| "
-    r"'/spot=cop/family=(?P<family>[\w.+-]+)'\) \|\| ''"
+    r"(?:'/spot=cop/family=(?P<family>[\w.+-]+)'"
+    r"|format\('/spot=cop/family=\{0\}', matrix\.spot_family\))\) \|\| ''"
 )
 SPOT_SUFFIX = "-spot"
 
@@ -49,15 +50,12 @@ def _instance_shape(instance_type: str) -> tuple[int, int]:
     return vcpus, vcpus * {"c": 2, "m": 4, "r": 8}[match[1]]
 
 
-def _runson_routes(workflow: str) -> Iterator[tuple[str, str, dict[str, Any] | None]]:
+def _runson_routes(workflow: str) -> Iterator[tuple[str, str]]:
     for job_id, job in load_yaml(f".github/workflows/{workflow}")["jobs"].items():
+        # Matrix values cannot read strategy.job-index, so labels belong in the job's runs-on.
+        assert "runs-on=" not in str(job.get("strategy", {})), f"{workflow}:{job_id}"
         if "runs-on=" in str(job.get("runs-on", "")):
-            yield job_id, job["runs-on"], None
-        matrix = job.get("strategy", {}).get("matrix", {})
-        include = matrix.get("include") if isinstance(matrix, dict) else None
-        for entry in include if isinstance(include, list) else []:
-            if "runs-on=" in str(entry.get("runs_on", "")):
-                yield job_id, entry["runs_on"], entry
+            yield job_id, job["runs-on"]
 
 
 def test_custom_linux_image_is_declared() -> None:
@@ -176,8 +174,8 @@ def test_vm_builds_do_not_use_the_smaller_android_emulator_pool() -> None:
         assert "|| 'ubuntu-latest'" in route
         cache_step = next(step for step in job["steps"] if step.get("uses") == "runs-on/action@v2")
         assert "if" not in cache_step
-    for event in ("push", "pull_request"):
-        assert ".github/runs-on.yml" in workflow["on"][event]["paths"]
+    assert ".github/runs-on.yml" in workflow["on"]["push"]["paths"]
+    assert ".github/runs-on.yml" not in workflow["on"]["pull_request"]["paths"]
 
 
 @pytest.mark.parametrize(
@@ -211,23 +209,15 @@ def test_workflows_use_central_runner_definitions(workflow: str) -> None:
 @pytest.mark.parametrize("workflow", RUNSON_WORKFLOWS)
 def test_runson_labels_are_unique_per_job_attempt_and_matrix_entry(workflow: str) -> None:
     # GitHub may hand a runner to any queued job with the same label, so matrix siblings sharing one
-    # stall while RunsOn replaces stolen runners. github.job is null outside steps, and strategy is
-    # unavailable in matrix values, so labels spell out the job id and a unique matrix value instead.
-    matrix_keys: dict[str, list[str]] = {}
-    for job_id, route, entry in _runson_routes(workflow):
+    # stall while RunsOn replaces stolen runners. github.job is null outside steps, so labels spell
+    # out the job id, and strategy.job-index separates matrix entries.
+    routes = list(_runson_routes(workflow))
+    assert routes
+    for job_id, route in routes:
         label = _normalized(route)
         assert "github.job" not in label
-        if entry is None:
-            assert f"format('runs-on={{0}}-{job_id}-{{1}}-{{2}}/" in label
-            assert "github.run_id, github.run_attempt, strategy.job-index" in label
-        else:
-            match = re.search(rf"format\('runs-on=\{{0\}}-{job_id}-\{{1\}}-([\w-]+)/", label)
-            assert match, f"{workflow}:{job_id} label must include the matrix entry"
-            assert match[1] in entry.values()
-            assert "github.run_id, github.run_attempt" in label
-            matrix_keys.setdefault(job_id, []).append(match[1])
-    for keys in matrix_keys.values():
-        assert len(keys) == len(set(keys))
+        assert f"format('runs-on={{0}}-{job_id}-{{1}}-{{2}}/" in label
+        assert "github.run_id, github.run_attempt, strategy.job-index" in label
 
 
 @pytest.mark.parametrize("workflow", RUNSON_WORKFLOWS)
@@ -235,9 +225,19 @@ def test_only_pull_requests_request_spot_from_intel_or_graviton_types(workflow: 
     # Push, merge-queue, tag, and dispatch builds keep the pools' on-demand capacity. PR labels drop
     # AMD types, whose us-west-2 Spot interruption rates are well above the Intel and Graviton rates.
     text = _normalized(_read(f".github/workflows/{workflow}"))
-    families = [match["family"] for match in PR_SPOT_SUFFIX.finditer(text)]
-    assert len(families) == text.count("/spot=") == text.count("'-spot'")
+    suffixes = list(PR_SPOT_SUFFIX.finditer(text))
+    assert len(suffixes) == text.count("/spot=") == text.count("'-spot'")
     runners = load_yaml(".github/runs-on.yml")["runners"]
+    families = [match["family"] for match in suffixes if match["family"]]
+    for job in load_yaml(f".github/workflows/{workflow}")["jobs"].values():
+        if "matrix.spot_family" not in str(job.get("runs-on", "")):
+            continue
+        # Each leg must request its own pool's twin, not merely some twin.
+        for entry in job["strategy"]["matrix"]["include"]:
+            twin = runners[entry["runson_runner"] + SPOT_SUFFIX]
+            assert entry["spot_family"] == "+".join(twin["family"])
+            families.append(entry["spot_family"])
+    assert len(families) >= len(suffixes)
     for family in families:
         twins = [
             pool
@@ -337,12 +337,7 @@ def test_ci_scripts_lints_runson_config_with_a_verified_cli() -> None:
 def test_linux_image_uses_repository_setup_helpers_and_module_manifest(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    spec = importlib.util.spec_from_file_location(
-        "provision_linux", REPO_ROOT / ".github/runner-images/provision_linux.py"
-    )
-    assert spec is not None and spec.loader is not None
-    provision = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(provision)
+    provision = load_script(".github/runner-images/provision_linux.py")
     calls: list[tuple[list[str], dict[str, Any]]] = []
     written: dict[Path, str] = {}
     monkeypatch.setattr(
