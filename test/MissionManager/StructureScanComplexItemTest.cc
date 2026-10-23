@@ -1,13 +1,19 @@
 #include "StructureScanComplexItemTest.h"
 
+#include <algorithm>
+#include <cmath>
 #include <numbers>
 
 #include <QtCore/QJsonArray>
 #include <QtCore/QRegularExpression>
 
+#include "AppSettings.h"
 #include "CoordFixtures.h"
+#include "MissionItem.h"
 #include "MultiSignalSpy.h"
 #include "PlanMasterController.h"
+#include "QGCMAVLink.h"
+#include "SettingsManager.h"
 #include "StructureScanComplexItem.h"
 
 StructureScanComplexItemTest::StructureScanComplexItemTest()
@@ -187,6 +193,98 @@ void StructureScanComplexItemTest::_testFlightPolygonOffsetFailure()
     _structureScanItem->structurePolygon()->setPath(_polyPoints);
     QCOMPARE(_structureScanItem->flightPolygon()->count(), _polyPoints.count());
     QCOMPARE(_structureScanItem->readyForSaveState(), VisualMissionItem::ReadyForSave);
+}
+
+void StructureScanComplexItemTest::_testSquareOnCameraWithoutWPNextOffset()
+{
+    constexpr int layerCount = 2;
+    constexpr double gimbalPitch = -20.0;
+    _structureScanItem->structurePolygon()->appendVertices(_polyPoints);
+    _structureScanItem->layers()->setCookedValue(layerCount);
+    _structureScanItem->cameraCalc()->setCameraBrand(CameraCalc::canonicalManualCameraName());
+    _structureScanItem->gimbalPitch()->setRawValue(gimbalPitch);
+    QGCMapPolygon* const flightPolygon = _structureScanItem->flightPolygon();
+    const int legCount = flightPolygon->count();
+    QCOMPARE(legCount, _polyPoints.count());
+
+    const auto countCommand = [](const QList<MissionItem*>& items, MAV_CMD command) {
+        return std::count_if(items.cbegin(), items.cend(),
+                             [command](const MissionItem* item) { return item->command() == command; });
+    };
+
+    QList<MissionItem*> px4Items;
+    _structureScanItem->appendMissionItems(px4Items, this);
+    QCOMPARE(countCommand(px4Items, MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET), 1);
+    const int px4LastSequenceNumber = _structureScanItem->lastSequenceNumber();
+
+    Fact* const firmwareClass = SettingsManager::instance()->appSettings()->offlineEditingFirmwareClass();
+
+    // Generic firmware reports no command list, which means every command is supported
+    firmwareClass->setRawValue(QGCMAVLink::firmwareClass(MAV_AUTOPILOT_GENERIC));
+    QCOMPARE(_structureScanItem->lastSequenceNumber(), px4LastSequenceNumber);
+    QList<MissionItem*> genericItems;
+    _structureScanItem->appendMissionItems(genericItems, this);
+    QCOMPARE(countCommand(genericItems, MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET), 1);
+
+    if (!apmFirmwareSupported()) {
+        QSKIP("ArduPilot support not registered in this build");
+    }
+
+    // ArduPilot does not support ROI_WPNEXT_OFFSET (mavlink/qgroundcontrol#15379)
+    _multiSpy->clearAllSignals();
+    firmwareClass->setRawValue(QGCMAVLink::firmwareClass(MAV_AUTOPILOT_ARDUPILOTMEGA));
+    QVERIFY(_multiSpy->emitted("lastSequenceNumberChanged"));
+    QCOMPARE(_structureScanItem->lastSequenceNumber(), px4LastSequenceNumber + 2 * legCount * layerCount);
+
+    // Either winding of the structure polygon keeps the camera facing it
+    QList<QGeoCoordinate> reversedPoints = _polyPoints;
+    std::reverse(reversedPoints.begin(), reversedPoints.end());
+    for (const QList<QGeoCoordinate>& structure : {_polyPoints, reversedPoints}) {
+        _structureScanItem->structurePolygon()->setPath(structure);
+        QList<MissionItem*> apmItems;
+        _structureScanItem->appendMissionItems(apmItems, this);
+        QCOMPARE(apmItems.count() - 1, _structureScanItem->lastSequenceNumber());
+        QCOMPARE(countCommand(apmItems, MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET), 0);
+        QCOMPARE(countCommand(apmItems, MAV_CMD_DO_SET_ROI_NONE), 0);
+        QCOMPARE(countCommand(apmItems, MAV_CMD_CONDITION_YAW), legCount * layerCount);
+        QCOMPARE(countCommand(apmItems, MAV_CMD_DO_MOUNT_CONTROL), legCount * layerCount + 2);
+
+        // The gimbal is pitched before the layers and returned to neutral after them
+        QCOMPARE(apmItems[1]->command(), MAV_CMD_DO_MOUNT_CONTROL);
+        QCOMPARE(apmItems[1]->param1(), gimbalPitch);
+        QCOMPARE(apmItems[apmItems.count() - 2]->command(), MAV_CMD_DO_MOUNT_CONTROL);
+        QCOMPARE(apmItems[apmItems.count() - 2]->param1(), 0.0);
+
+        for (qsizetype i = 0; i < apmItems.count(); i++) {
+            if (apmItems[i]->command() != MAV_CMD_CONDITION_YAW) {
+                continue;
+            }
+
+            // ArduCopter resets the heading after running the first command following a waypoint
+            QCOMPARE(apmItems[i - 1]->command(), MAV_CMD_DO_MOUNT_CONTROL);
+            QCOMPARE(apmItems[i - 1]->param1(), gimbalPitch);
+            QVERIFY(apmItems[i - 2]->command() != MAV_CMD_DO_MOUNT_CONTROL);
+
+            // The heading is square on to the leg, towards the structure
+            const auto previousWaypoint =
+                std::find_if(apmItems.crbegin() + (apmItems.count() - i), apmItems.crend(),
+                             [](const MissionItem* item) { return item->command() == MAV_CMD_NAV_WAYPOINT; });
+            const auto nextWaypoint = std::find_if(apmItems.cbegin() + i, apmItems.cend(), [](const MissionItem* item) {
+                return item->command() == MAV_CMD_NAV_WAYPOINT;
+            });
+            QVERIFY(previousWaypoint != apmItems.crend());
+            QVERIFY(nextWaypoint != apmItems.cend());
+            const QGeoCoordinate legStart((*previousWaypoint)->param5(), (*previousWaypoint)->param6());
+            const QGeoCoordinate legEnd((*nextWaypoint)->param5(), (*nextWaypoint)->param6());
+            const double heading = apmItems[i]->param1();
+            const double offLeg = std::fmod(heading - legStart.azimuthTo(legEnd) + 360.0, 360.0);
+            QVERIFY(qAbs(offLeg - 90.0) < 0.01 || qAbs(offLeg - 270.0) < 0.01);
+            const QGeoCoordinate legMiddle =
+                legStart.atDistanceAndAzimuth(legStart.distanceTo(legEnd) / 2.0, legStart.azimuthTo(legEnd));
+            QVERIFY(flightPolygon->containsCoordinate(legMiddle.atDistanceAndAzimuth(1.0, heading)));
+            QCOMPARE(apmItems[i]->param4(), 0.0);
+        }
+    }
 }
 
 UT_REGISTER_TEST(StructureScanComplexItemTest, TestLabel::Unit, TestLabel::MissionManager)

@@ -127,6 +127,10 @@ private slots:
 private:
     void    _setCameraShots                 (int cameraShots);
     double  _triggerDistance                (void) const;
+    bool _wpNextOffsetROISupported(void) const;
+    MissionItem* _createGimbalPitchItem(int seqNum, double pitch, QObject* missionItemParent) const;
+    void _appendLegCameraItems(QList<MissionItem*>& items, int& seqNum, const QGeoCoordinate& legStart,
+                               const QGeoCoordinate& legEnd, QObject* missionItemParent) const;
 
     QMap<QString, FactMetaData*> _metaDataMap;
 

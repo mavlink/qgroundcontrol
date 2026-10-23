@@ -1,9 +1,12 @@
 #include "StructureScanComplexItem.h"
 
+#include <cmath>
+
 #include <QtCore/QJsonArray>
 
 #include "AppMessages.h"
 #include "AppSettings.h"
+#include "FirmwarePlugin.h"
 #include "FlightPathSegment.h"
 #include "JsonParsing.h"
 #include "MissionController.h"
@@ -12,6 +15,7 @@
 #include "QGCLoggingCategory.h"
 #include "QGCMath.h"
 #include "SettingsManager.h"
+#include "Vehicle.h"
 
 QGC_LOGGING_CATEGORY(StructureScanComplexItemLog, "Plan.StructureScanComplexItem")
 
@@ -58,6 +62,8 @@ StructureScanComplexItem::StructureScanComplexItem(PlanMasterController* masterC
 
     connect(&_structurePolygon, &QGCMapPolygon::countChanged,   this, &StructureScanComplexItem::_updateLastSequenceNumber);
     connect(&_layersFact,       &Fact::valueChanged,            this, &StructureScanComplexItem::_updateLastSequenceNumber);
+    connect(_controllerVehicle, &Vehicle::firmwareTypeChanged, this,
+            &StructureScanComplexItem::_updateLastSequenceNumber);
 
     connect(&_flightPolygon,    &QGCMapPolygon::pathChanged,    this, &StructureScanComplexItem::_flightPathChanged);
     connect(&_flightPolygon, &QGCMapPolygon::countChanged, this, &StructureScanComplexItem::_updateLastSequenceNumber);
@@ -135,19 +141,64 @@ void StructureScanComplexItem::_updateLastSequenceNumber(void)
 
 int StructureScanComplexItem::lastSequenceNumber(void) const
 {
+    const bool wpNextOffsetROI = _wpNextOffsetROISupported();
+
     // Each structure layer contains:
     //  1 waypoint for each polygon vertex + 1 to go back to first polygon vertex for each layer
     //  Two commands for camera trigger start/stop
-    int layerItemCount = _flightPolygon.count() + 1 + 2;
+    //  Gimbal pitch and heading commands for each leg if ROI_WPNEXT_OFFSET is not supported
+    int layerItemCount = _flightPolygon.count() + 1 + 2 + (wpNextOffsetROI ? 0 : 2 * _flightPolygon.count());
 
     // Take into account the number of layers
     int multiLayerItemCount = layerItemCount * _layersFact.rawValue().toInt();
 
-    // +2 for ROI_WPNEXT_OFFSET and ROI_NONE commands
+    // +2 for pointing the camera at the structure and returning it to neutral
     // +2 for entrance/exit waypoints
     int itemCount = multiLayerItemCount + 2 + 2;
 
     return _sequenceNumber + itemCount - 1;
+}
+
+bool StructureScanComplexItem::_wpNextOffsetROISupported(void) const
+{
+    // An empty list means every command is supported
+    const QList<MAV_CMD> supportedCommands =
+        _controllerVehicle->firmwarePlugin()->supportedMissionCommands(QGCMAVLink::VehicleClassGeneric);
+    return supportedCommands.isEmpty() || supportedCommands.contains(MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET);
+}
+
+MissionItem* StructureScanComplexItem::_createGimbalPitchItem(int seqNum, double pitch,
+                                                              QObject* missionItemParent) const
+{
+    return new MissionItem(seqNum, MAV_CMD_DO_MOUNT_CONTROL, MAV_FRAME_MISSION, pitch,
+                           0,        // Roll stays in standard orientation
+                           0,        // Yaw follows the vehicle heading
+                           0, 0, 0,  // param 4-6 not used
+                           MAV_MOUNT_MODE_MAVLINK_TARGETING,
+                           true,     // autoContinue
+                           false,    // isCurrentItem
+                           missionItemParent);
+}
+
+void StructureScanComplexItem::_appendLegCameraItems(QList<MissionItem*>& items, int& seqNum,
+                                                     const QGeoCoordinate& legStart, const QGeoCoordinate& legEnd,
+                                                     QObject* missionItemParent) const
+{
+    // ArduCopter resets the heading when it starts the next waypoint, which happens after it runs the first command
+    // following this waypoint, so the heading must not be that first command
+    items.append(_createGimbalPitchItem(seqNum++, _gimbalPitchFact.rawValue().toDouble(), missionItemParent));
+
+    // Face the structure, which is on the inside of the flight path, square on to the leg
+    const double structureSide = _flightPolygon.isClockwise() ? 90.0 : -90.0;
+    const double heading = std::fmod(legStart.azimuthTo(legEnd) + structureSide + 360.0, 360.0);
+    items.append(new MissionItem(seqNum++, MAV_CMD_CONDITION_YAW, MAV_FRAME_MISSION, heading,
+                                 0,        // Default turn rate
+                                 0,        // Shortest turn
+                                 0,        // Absolute heading
+                                 0, 0, 0,  // param 5-7 not used
+                                 true,     // autoContinue
+                                 false,    // isCurrentItem
+                                 missionItemParent));
 }
 
 void StructureScanComplexItem::setDirty(bool dirty)
@@ -304,6 +355,7 @@ void StructureScanComplexItem::appendMissionItems(QList<MissionItem*>& items, QO
     int     seqNum =        _sequenceNumber;
     bool    startFromTop =  _startFromTopFact.rawValue().toBool();
     double  startAltitude = (startFromTop ? _structureHeightFact.rawValue().toDouble() : _scanBottomAltFact.rawValue().toDouble());
+    const bool wpNextOffsetROI = _wpNextOffsetROISupported();
 
     MissionItem* item = nullptr;
 
@@ -324,18 +376,21 @@ void StructureScanComplexItem::appendMissionItems(QList<MissionItem*>& items, QO
                            missionItemParent);
     items.append(item);
 
-    // Point camera at structure
-    item = new MissionItem(seqNum++,
-                           MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET,
-                           MAV_FRAME_MISSION,
-                           0, 0, 0, 0,                             // param 1-4 not used
-                           _gimbalPitchFact.rawValue().toDouble(),
-                           0,                                      // Roll stays in standard orientation
-                           90,                                     // 90 degreee yaw offset to point to structure
-                           true,                                   // autoContinue
-                           false,                                  // isCurrentItem
-                           missionItemParent);
-    items.append(item);
+    // Point camera at structure. Without ROI_WPNEXT_OFFSET only the gimbal pitch is set here, and each leg
+    // sets the heading.
+    if (wpNextOffsetROI) {
+        item = new MissionItem(seqNum++, MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET, MAV_FRAME_MISSION, 0, 0, 0,
+                               0,      // param 1-4 not used
+                               _gimbalPitchFact.rawValue().toDouble(),
+                               0,      // Roll stays in standard orientation
+                               90,     // 90 degree yaw offset to point to structure
+                               true,   // autoContinue
+                               false,  // isCurrentItem
+                               missionItemParent);
+        items.append(item);
+    } else {
+        items.append(_createGimbalPitchItem(seqNum++, _gimbalPitchFact.rawValue().toDouble(), missionItemParent));
+    }
 
     // Set up for the first layer
     double  layerAltitude = startAltitude;
@@ -395,6 +450,11 @@ void StructureScanComplexItem::appendMissionItems(QList<MissionItem*>& items, QO
             // Have we processed all the vertices
             processedVertices++;
             done = processedVertices == _flightPolygon.count() + 1;
+
+            if (!wpNextOffsetROI && !done) {
+                _appendLegCameraItems(items, seqNum, vertexCoord, _flightPolygon.vertexCoordinate(currentVertex),
+                                      missionItemParent);
+            }
         } while (!done);
 
         // Stop camera triggering after last waypoint in layer
@@ -419,13 +479,15 @@ void StructureScanComplexItem::appendMissionItems(QList<MissionItem*>& items, QO
     }
 
     // Return camera to neutral position
-    item = new MissionItem(seqNum++,
-                           MAV_CMD_DO_SET_ROI_NONE,
-                           MAV_FRAME_MISSION,
-                           0, 0, 0,0, 0, 0, 0,                 // param 1-7 not used
-                           true,                               // autoContinue
-                           false,                              // isCurrentItem
-                           missionItemParent);
+    if (wpNextOffsetROI) {
+        // ROI_NONE takes no parameters
+        item = new MissionItem(seqNum++, MAV_CMD_DO_SET_ROI_NONE, MAV_FRAME_MISSION, 0, 0, 0, 0, 0, 0, 0,
+                               true,   // autoContinue
+                               false,  // isCurrentItem
+                               missionItemParent);
+    } else {
+        item = _createGimbalPitchItem(seqNum++, 0, missionItemParent);
+    }
     items.append(item);
 
     // Exit waypoint

@@ -9,9 +9,10 @@ _Structure Scans_ may be inserted into a mission using the Plan view **Pattern >
 The new version of _Structure Scan_ can't read older _Structure Scan_ plans. They will need to be recreated.
 :::
 
-::: warning
-This feature is not yet supported by ArduPilot firmware.
-It is supported in PX4.
+::: info
+Structure Scans are supported on PX4 and ArduPilot.
+ArduPilot does not support the command PX4 uses to point the camera at the structure, so on ArduPilot the vehicle turns to face the structure on each leg and the gimbal pitch is set separately.
+This adds a few mission items for each corner of the flight path.
 :::
 
 ## Overview

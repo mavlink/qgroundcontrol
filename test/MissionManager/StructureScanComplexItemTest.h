@@ -25,6 +25,7 @@ private slots:
     void _testLargeStandoffFlightPolygon();
     void _testAcuteStructureCorner();
     void _testFlightPolygonOffsetFailure();
+    void _testSquareOnCameraWithoutWPNextOffset();
 
 private:
     void _initItem();

@@ -79,6 +79,8 @@ public:
     /// Adjust polygon winding order to be clockwise (if needed)
     Q_INVOKABLE void verifyClockwiseWinding(void);
 
+    bool isClockwise() const;
+
     Q_INVOKABLE void beginReset (void);
     Q_INVOKABLE void endReset   (void);
 
