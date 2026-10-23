@@ -56,6 +56,21 @@ void QGCMapEngine::shutdown()
     m_initialized = false;
 }
 
+void QGCMapEngine::close()
+{
+    m_closed = true;
+    shutdown();
+}
+
+void QGCMapEngine::closeInstance()
+{
+    // The application static is destroyed only after QCoreApplication, too late for the worker's
+    // database teardown; don't create the engine just to close it.
+    if (_mapEngine.exists()) {
+        _mapEngine()->close();
+    }
+}
+
 QGCMapEngine *QGCMapEngine::instance()
 {
     return _mapEngine();
@@ -63,7 +78,7 @@ QGCMapEngine *QGCMapEngine::instance()
 
 void QGCMapEngine::init(const QString &databasePath)
 {
-    if (m_initialized) {
+    if (m_initialized || m_closed) {
         return;
     }
 

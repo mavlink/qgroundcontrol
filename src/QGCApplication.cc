@@ -33,6 +33,7 @@
 #include "QGCImageProvider.h"
 #include "QGCLoggingCategory.h"
 #include "QGCLoggingCategoryManager.h"
+#include "QGCMapEngine.h"
 #include "QGCNetworkHelper.h"
 #include "QGCVersionCheck.h"
 #include "SettingsManager.h"
@@ -674,6 +675,10 @@ void QGCApplication::shutdown()
     }
 
     QGCCorePlugin::instance()->cleanup();
+
+    // Close the tile cache database while the application object exists (the map engine is otherwise
+    // destroyed after it) and before test runs remove the cache directory holding it.
+    QGCMapEngine::closeInstance();
 
     if (_runningUnitTests || _simpleBootTest) {
         const QSettings settings;

@@ -1,14 +1,16 @@
 #include "QGCCacheWorkerTest.h"
 
+#include <cmath>
+
 #include <QtCore/QTemporaryDir>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtTest/QTest>
-#include <cmath>
 
 #include "BaseClasses/TerrainTest.h"
 #include "ElevationMapProvider.h"
 #include "QGCCacheTile.h"
 #include "QGCCachedTileSet.h"
+#include "QGCMapEngine.h"
 #include "QGCMapTasks.h"
 #include "QGCMapUrlEngine.h"
 #include "QGCTileCacheWorker.h"
@@ -426,6 +428,29 @@ void QGCCacheWorkerTest::_testStopWhileProcessing()
     worker.stop();
     QVERIFY(worker.wait(TestTimeout::mediumMs()));
     QVERIFY(!worker.isRunning());
+}
+
+void QGCCacheWorkerTest::_testMapEngineCloseStopsWorkerAndRefusesInit()
+{
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const QString databasePath = tempDir.filePath(QStringLiteral("engine.db"));
+
+    QGCMapEngine engine;
+    engine.init(databasePath);
+    auto* beforeClose = new QGCFetchTileTask(QStringLiteral("hash"));
+    QVERIFY(engine.addTask(beforeClose));
+
+    engine.close();
+    auto* afterClose = new QGCFetchTileTask(QStringLiteral("hash"));
+    QVERIFY(!engine.addTask(afterClose));
+    afterClose->deleteLater();
+
+    // A map created during application teardown must not restart the worker.
+    engine.init(databasePath);
+    auto* afterReinit = new QGCFetchTileTask(QStringLiteral("hash"));
+    QVERIFY(!engine.addTask(afterReinit));
+    afterReinit->deleteLater();
 }
 
 UT_REGISTER_TEST(QGCCacheWorkerTest, TestLabel::Unit)

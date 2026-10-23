@@ -22,6 +22,13 @@ public:
     /// normal QML map lifecycle (e.g. unit test runs).
     void shutdown();
 
+    /// Final shutdown: shutdown(), then ignore later init() calls, so a map created during teardown
+    /// cannot reopen the database once the application object is gone.
+    void close();
+
+    /// close() on the application's engine, if one was created.
+    static void closeInstance();
+
     static QGCMapEngine *instance();
 
 signals:
@@ -35,6 +42,7 @@ private:
     QGCCacheWorker *m_worker = nullptr;
     bool m_pruning = false;
     std::atomic<bool> m_initialized = false;
+    std::atomic<bool> m_closed = false;
 };
 
 extern QGCMapEngine *getQGCMapEngine();
