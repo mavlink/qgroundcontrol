@@ -8,6 +8,7 @@ Tools for testing QGroundControl without physical hardware. Run them from the re
 | --- | --- | --- |
 | `mock_vehicle.py` | UI testing, quick checks | `python3 tools/setup/install_python.py simulation` (pymavlink), then activate `tools/.venv` |
 | `run_arducopter_sitl.py` | Full simulation, mission testing | Docker required |
+| `fly_plan.py` | Fly a QGC `.plan` in ArduPilot or PX4 SITL and record the track and images | `python3 tools/setup/install_python.py simulation` (pymavlink), then activate `tools/.venv` |
 | `rc_transmitter.py` | RC transmitter for PX4 SITL: flight modes, switches, RC loss | `python3 tools/setup/install_python.py simulation` (pymavlink), then activate `tools/.venv` |
 | `mock_ntrip_caster.py` | NTRIP/RTK client testing | Python standard library only |
 
@@ -85,6 +86,46 @@ docker logs -f arducopter-sitl   # View logs
 docker stop arducopter-sitl      # Stop simulation
 docker rm arducopter-sitl        # Remove container
 ```
+
+## Fly a Plan
+
+`fly_plan.py` checks mission generation against a real autopilot without driving the QGC user
+interface. It uploads a saved `.plan`, flies it in AUTO, and records the flown track and the
+position of every image the autopilot reports.
+
+```bash
+# ArduPilot SITL: a spare serial port, so QGC can stay connected on its own link
+./fly_plan.py survey.plan --connect tcp:127.0.0.1:5762 --svg flight.svg
+
+# PX4 SITL: the offboard link
+./fly_plan.py survey.plan --connect udpin:0.0.0.0:14540 --svg flight.svg
+```
+
+The plan's simple items and the mission items QGC saves for surveys and corridor scans are uploaded
+as QGC would upload them. Structure scans and landing patterns do not save their mission items, so
+upload those plans from QGC. ArduPilot takes off in GUIDED to `--takeoff-alt` before switching to
+AUTO, since it does not arm in AUTO by default; PX4 starts the mission on the ground. Afterwards the
+vehicle returns to launch unless `--no-rtl` is given.
+
+The JSON output has the uploaded mission, the track (position, altitude, heading and current
+mission item), the images, and the vehicle's status messages. `--svg` plots the planned path
+(dashed), the flown track, and the images. The script exits with 1 if the mission does not
+complete within `--timeout`.
+
+Images are only reported with a camera configured:
+
+- ArduPilot: `CAM1_TYPE 1`, then reboot. Images are reported as `CAMERA_FEEDBACK`.
+- PX4: `TRIG_MODE 4` and `TRIG_INTERFACE 3`, then restart or run `camera_trigger start`. Images
+  are reported as `CAMERA_IMAGE_CAPTURED`.
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `--connect` | required | pymavlink connection to the vehicle |
+| `--output` | `flight.json` | JSON output |
+| `--svg` | off | Also plot the planned and flown paths |
+| `--takeoff-alt` | 10 | ArduPilot takeoff altitude before AUTO (m) |
+| `--timeout` | 1800 | Seconds to wait for the mission to complete |
+| `--no-rtl` | off | Do not return to launch afterwards |
 
 ## Mock NTRIP Caster
 

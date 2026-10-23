@@ -46,7 +46,7 @@ terrain = [
   "pillow>=11",
   "rasterio>=1.4",
 ]
-# tools/simulation/mock_vehicle.py; CMake's mavgen uses the mavlink submodule's generator instead.
+# tools/simulation MAVLink tools; CMake's mavgen uses the mavlink submodule's generator instead.
 simulation = [
   "pymavlink",
 ]
