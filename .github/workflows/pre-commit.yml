@@ -1,17 +1,13 @@
 name: pre-commit
 
+# Every path, including docs and translations: the hooks select their own files, and a changed docs lint
+# configuration also rechecks every English page.
 on:
   push:
     branches:
       - master
       - 'Stable*'
-    paths-ignore:
-      - 'docs/**'
-      - 'translations/**'
   pull_request:
-    paths-ignore:
-      - 'docs/**'
-      - 'translations/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -74,13 +70,13 @@ jobs:
       # Later steps run after hook failures through their !cancelled()/always() conditions.
       - name: Run pre-commit
         env:
-          # TruffleHog runs only as a local commit hook; Docs Lint runs the prose linter.
-          SKIP: trufflehog,vale
+          # TruffleHog runs only as a local commit hook.
+          SKIP: trufflehog
         run: python3 ./tools/pre_commit.py --ci --changed --results-dir pre-commit-results
 
       # Pull requests restore the base branch's environments without adding cache entries. prek
       # installs only the environments of hooks that run, so a push that misses the cache prepares
-      # every hook first, including Docs Lint's and the manual-stage ones. TruffleHog runs only
+      # every hook first, including the manual-stage ones. TruffleHog runs only
       # locally, and the Renovate validator keeps its own cache in ci-scripts.yml.
       - name: Prepare all prek environments
         id: prepare-hooks

@@ -31,4 +31,4 @@ This guide is built with [VitePress](https://vitepress.dev/) from the Markdown f
 Only edit the English pages in `docs/en`: the other languages are translated on [Crowdin](../index.md#translations).
 
 - Preview your changes by running `npm ci` and then `npm run docs:dev` in the `docs` directory (use the Node.js version in `docs/.nvmrc`).
-- Lint the pages like the Docs Lint workflow does with `just lint-docs` (add `--changed` to check only the pages changed on your branch).
+- Lint the pages with the docs hooks CI runs with `just lint-docs` (add `--changed` to check only the pages changed on your branch).

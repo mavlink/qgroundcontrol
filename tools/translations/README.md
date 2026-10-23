@@ -68,13 +68,10 @@ without installing Qt or enforcing a locale-specific plural count; it does not v
 quality, accelerator keys, or punctuation.
 
 The `qt-translation-placeholders` pre-commit hook checks passed catalogs against the baseline.
-The dedicated [Translation Validation workflow](../../.github/workflows/translation-validation.yml)
-runs on translation-only/Crowdin PRs and pushes to `master`/`Stable*`, independently of the Qt-heavy
-pre-commit workflow. It uses full Git history and compares the checked-out PR merge result against
-the event's actual PR base SHA, or a push against its `before` SHA. New-branch pushes use `EMPTY`;
-missing base objects are fetched explicitly, and unavailable history fails rather than silently
-skipping validation. The workflow has read-only permissions, no secrets, no privileged event triggers,
-and uses the existing locked Python groups.
+`pre-commit.yml` runs on every path, so translation-only/Crowdin PRs and pushes to
+`master`/`Stable*` get it too, without installing Qt (only QML changes need it). Its `--changed`
+run compares the PR merge result with the merge's first parent, or a push with its `before` SHA,
+and prek hands that baseline to the hook as `PRE_COMMIT_FROM_REF`.
 
 ## C++ and QML code strings
 

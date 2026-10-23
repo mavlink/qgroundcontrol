@@ -51,11 +51,9 @@
 | `analysis.yml` | Code Analysis: clang-tidy and Clazy; manual IWYU, qmllint, and ThreadSanitizer |
 | `codeql.yml` | CodeQL for Actions, Java/Kotlin, and Python |
 | `clusterfuzzlite.yml` | MAVLink parser fuzzing on PRs |
-| `pre-commit.yml` | pre-commit hooks (run by prek) on changed files |
-| `docs-lint.yml` | Markdown, spelling, and prose hooks for changed English docs |
+| `pre-commit.yml` | pre-commit hooks (run by prek) on changed files, including docs prose and translation placeholders |
 | `ci-scripts.yml` | Lints `.github/runs-on.yml`, validates runner images and the Renovate config, and runs the CI Python tests (see [Tests](#tests)); workflow and Python lint run in `pre-commit.yml` |
 | `check-links.yml` | Markdown link validation (lychee) |
-| `translation-validation.yml` | Changed TS message placeholder validation |
 | `pr-checks.yml` | PR title validation and size/file labels |
 | `dependency-review.yml` | Dependency security review |
 | `scorecard.yml` | OpenSSF Scorecard |
@@ -713,25 +711,24 @@ numbers, durations, and sizes from `common.format`. A build job reads top-down:
 | Coverage, Binary size | `coverage_report.py --step-summary`, `size_analysis.py` |
 | Boot test, Artifact | `verify_executable.py` (result, package, size, duration) and `attest_helper.py prepare` (file, size, SHA-256) |
 
-Docker builds write one Docker build section (`docker_helper.py summary`); pre-commit, Docs Lint,
+Docker builds write one Docker build section (`docker_helper.py summary`); pre-commit,
 Code Analysis (`analyze.py --step-summary`), cache cleanup, GStreamer, release-notes, and Build
 Profile jobs use the same layout. RunsOn's cost table and the build timeline come from their own
 actions after these sections.
 
 ## Lint, Docs, and Security Checks
 
-- Pull request diffs in pre-commit, Docs Lint, Translation Validation, and Code Analysis come from
+- Pull request diffs in pre-commit and Code Analysis come from
   `common.git.pr_diff_refs`: GitHub's merge checkout is compared with its first parent, the base tip
   it merged into (`pull_request.base.sha` can be older and would add newer base-branch changes), so
-  these checkouts fetch depth 2. pre-commit and Translation Validation pushes fetch full history to
+  these checkouts fetch depth 2. pre-commit pushes fetch full history to
   diff against `before`; a base with no merge base in the fetched history checks everything.
-- `pre-commit.yml` runs `tools/pre_commit.py --ci --changed` (prek) on the pull request's or push's
-  changed files and uploads `pre-commit-results.json` and `pre-commit-output.txt` for the
+- `pre-commit.yml` runs on every path and `tools/pre_commit.py --ci --changed` (prek) on the pull
+  request's or push's changed files, and uploads `pre-commit-results.json` and `pre-commit-output.txt` for the
   build-results comment. The C++ formatting hook checks modified regions against the PR merge base
   (or `HEAD` locally), following `CODING_STYLE.md`; new files and unchanged files supplied in a full
   sweep are checked in full. Compiler-aware Clazy and clang-tidy hooks are manual locally; CI runs
-  them in `analysis.yml`. TruffleHog runs only as a local commit hook and Docs Lint owns vale
-  (`SKIP=trufflehog,vale` in CI). Qt is installed only when the selection includes QML for qmllint
+  them in `analysis.yml`. TruffleHog runs only as a local commit hook (`SKIP=trufflehog` in CI). Qt is installed only when the selection includes QML for qmllint
   (`pre_commit.py --needs-qt`).
   `check-renovate` schema-checks `.github/renovate.json` in every run; Renovate's own
   `renovate-config-validator` is manual and runs in `ci-scripts.yml` only when
@@ -740,8 +737,11 @@ actions after these sections.
   trials are manual-stage checks ([tools/README.md](../tools/README.md#pre_commitpy)).
   `prek install` also installs a `commit-msg` hook enforcing Conventional Commits;
   `default_stages` keeps the other hooks out of that stage.
-- Docs Lint runs the Markdown, spelling, and prose hooks (`tools/pre_commit.py --docs`) for changed
-  English pages without installing Qt; run `just lint-docs` locally. The Docs workflow checks English
+- English docs get the Markdown, spelling, and prose hooks (markdownlint, typos, vale) through
+  pre-commit like any changed file; when their configuration (`.vale.ini`, `.markdownlint*`,
+  `.typos.toml`, `.pre-commit-config.yaml`, `tools/pre_commit.py`) changes, the same run also checks
+  every English page with those hooks, so new rules reach unchanged pages. `just lint-docs` runs only
+  those hooks locally (`tools/pre_commit.py --docs`). The Docs workflow checks English
   internal links without exemptions before building all locales. Its build sets `BRANCH_NAME` to the
   ref name, which `docs/.vitepress/config.mjs` uses as the site base (`/<branch>/`), matching the
   directory `deploy-docs` publishes to. VitePress is pinned to a 2.0
@@ -749,10 +749,10 @@ actions after these sections.
   navigation replaces `vp-dynamic-nav`, and `npm run docs:build` runs its Node regression test first.
 - Check Links runs lychee on PRs, `master` pushes, and manual dispatch; exact legacy URL exceptions in
   `tools/configs/lychee.toml` expire on their recorded review date (checked by `tools/validate_configs.py`).
-- Translation Validation checks new or changed TS messages against the PR merge's first parent or
-  the push baseline without installing Qt. Unchanged legacy placeholder defects do not block unrelated imports;
-  malformed XML and newly introduced placeholder mismatches fail. It runs only when TS catalogs or
-  its workflow change; `ci-scripts.yml` runs the validator's tests.
+- The `qt-translation-placeholders` hook checks new or changed TS messages against the PR merge's
+  first parent or the push baseline (prek passes it as `PRE_COMMIT_FROM_REF`) without installing Qt.
+  Unchanged legacy placeholder defects do not block unrelated imports; malformed XML and newly
+  introduced placeholder mismatches fail. `ci-scripts.yml` runs the validator's tests.
 - CodeQL scans Actions, Java/Kotlin, and Python (including `tools/`, `deploy/`, tests, and CI
   scripts); C++ is not scanned by CodeQL.
 

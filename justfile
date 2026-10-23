@@ -79,7 +79,7 @@ test labels=env_var_or_default("LABELS", "Unit|Integration") exclude=env_var_or_
 lint *ARGS:
     uv run --frozen --project tools --group precommit prek run --all-files {{ ARGS }}
 
-# Lint English docs like the Docs Lint workflow (every page; pass --changed for branch changes)
+# Lint English docs with only the docs hooks (every page; pass --changed for branch changes)
 lint-docs *ARGS:
     uv run --frozen --project tools --group precommit python ./tools/pre_commit.py --docs {{ ARGS }}
 

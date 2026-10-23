@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import contextlib
 import os
 import re
 import shutil
@@ -40,7 +39,6 @@ DOCS_FULL_SCAN_PATHSPECS = (
     ".vale.ini",
     ".markdownlint*",
     ".typos.toml",
-    ".github/workflows/docs-lint.yml",
     "tools/pre_commit.py",
 )
 # The files of the only hook that needs Qt (qmllint).
@@ -68,7 +66,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--docs",
         action="store_true",
-        help="Check English documentation pages with the Docs Lint hooks; with --changed, "
+        help="Check English documentation pages with only the docs hooks; with --changed, "
         "lint configuration changes select every page",
     )
     parser.add_argument(
@@ -156,20 +154,44 @@ def needs_qt(refs: tuple[str, str] | None) -> bool:
     )
 
 
+def docs_config_changed(refs: tuple[str, str]) -> bool:
+    """Return whether the docs lint configuration changed between refs."""
+    # Same merge-base range as the runner's --from-ref/--to-ref.
+    config = run_captured(
+        ["git", "diff", "--quiet", f"{refs[0]}...{refs[1]}", "--", *DOCS_FULL_SCAN_PATHSPECS]
+    )
+    return config.returncode != 0
+
+
 def select_docs_files(refs: tuple[str, str] | None) -> list[str]:
     """Return English pages changed between refs; every page without refs or after config edits."""
     if refs:
-        # Same merge-base range as the runner's --from-ref/--to-ref.
-        diff_range = f"{refs[0]}...{refs[1]}"
-        config = run_captured(
-            ["git", "diff", "--quiet", diff_range, "--", *DOCS_FULL_SCAN_PATHSPECS]
-        )
-        if config.returncode == 0:
+        if not docs_config_changed(refs):
             return _git_paths(
-                "diff", "--name-only", "-z", "--diff-filter=ACMR", diff_range, "--", *DOCS_PATHSPECS
+                "diff",
+                "--name-only",
+                "-z",
+                "--diff-filter=ACMR",
+                f"{refs[0]}...{refs[1]}",
+                "--",
+                *DOCS_PATHSPECS,
             )
         log_info("Documentation lint configuration changed; checking every page")
     return _git_paths("ls-files", "-z", "--", *DOCS_PATHSPECS)
+
+
+def docs_rescan_selection(args: argparse.Namespace) -> list[str] | None:
+    """Return every English page for the docs hooks when a --changed run's docs lint config changed.
+
+    The changed-files run only lints the pages a branch touches, so new docs rules would otherwise
+    reach unchanged pages only when someone next edits them.
+    """
+    refs = changed_refs(args)
+    if args.docs or args.hook or not refs or not docs_config_changed(refs):
+        return None
+    log_info("Documentation lint configuration changed; also checking every English page")
+    pages = _git_paths("ls-files", "-z", "--", *DOCS_PATHSPECS)
+    return ["--files", *pages] if pages else None
 
 
 def file_selection_args(args: argparse.Namespace) -> list[str] | None:
@@ -296,16 +318,23 @@ def main(argv: list[str] | None = None) -> int:
                     write_results(results_dir, 0, "")
                 return 0
 
-            hooks = args.hook or (DOCS_HOOKS if args.docs else ())
+            runs = [(selection, args.hook or (DOCS_HOOKS if args.docs else ()))]
+            rescan = docs_rescan_selection(args)
+            if rescan:
+                runs.append((rescan, DOCS_HOOKS))
             log_info("Running pre-commit checks...")
             print()
-            with contextlib.ExitStack() as stack:
-                # Stream the hooks live; the summary and results are read back from the copy.
-                output_dir = results_dir or Path(stack.enter_context(tempfile.TemporaryDirectory()))
-                output_file = output_dir / OUTPUT_FILE
-                sys.stdout.flush()
-                returncode = run_tee(build_precommit_args(selection, hooks), output_file)
-                output = output_file.read_text(encoding="utf-8", errors="replace")
+            returncode = 0
+            outputs: list[str] = []
+            with tempfile.TemporaryDirectory() as output_dir:
+                for index, (run_selection, hooks) in enumerate(runs):
+                    # Stream the hooks live; the summary and results are read back from the copy.
+                    output_file = Path(output_dir) / f"{index}-{OUTPUT_FILE}"
+                    sys.stdout.flush()
+                    code = run_tee(build_precommit_args(run_selection, hooks), output_file)
+                    returncode = returncode or code
+                    outputs.append(output_file.read_text(encoding="utf-8", errors="replace"))
+            output = "\n".join(outputs)
             print()
 
             passed, failed, skipped = summarize_output(output)
@@ -325,7 +354,8 @@ def main(argv: list[str] | None = None) -> int:
                     skipped,
                     output,
                     title="Docs lint" if args.docs else "Pre-commit",
-                    selection=describe_selection(selection),
+                    selection=describe_selection(selection)
+                    + ("; every English page for the docs hooks" if rescan else ""),
                 )
                 if returncode != 0:
                     gh_error("Required pre-commit checks failed; see the job summary.")

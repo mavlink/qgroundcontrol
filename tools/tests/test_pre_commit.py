@@ -12,7 +12,6 @@ import pytest
 from common.git import ZERO_SHA
 from common.io import read_toml
 from pre_commit import (
-    DOCS_FULL_SCAN_PATHSPECS,
     DOCS_HOOKS,
     QT_PATHSPECS,
     build_precommit_args,
@@ -149,7 +148,6 @@ ENGLISH_PAGES = ["docs/en/guide/new page.md", "docs/en/index.md"]
         (".markdownlint.yaml", ENGLISH_PAGES),
         (".markdownlintignore", ENGLISH_PAGES),
         (".pre-commit-config.yaml", ENGLISH_PAGES),
-        (".github/workflows/docs-lint.yml", ENGLISH_PAGES),
         ("tools/pre_commit.py", ENGLISH_PAGES),
         ("docs/en/guide/new page.md", ["docs/en/guide/new page.md"]),
         ("docs/en/index.md", ["docs/en/index.md"]),
@@ -264,6 +262,39 @@ def test_docs_runs_the_docs_hooks_on_selected_pages_in_one_call(
 
     assert pre_commit.main(["--docs"]) == 1
     assert fake_precommit == [build_precommit_args(["--files", "docs/en/a.md"], DOCS_HOOKS)]
+
+
+@pytest.mark.parametrize(
+    ("argv", "config_changed", "rescans"),
+    [
+        (["--changed"], True, True),
+        (["--changed"], False, False),
+        (["--changed", "--hook", "ruff"], True, False),
+        (["--changed", "--docs"], True, False),
+    ],
+)
+def test_changed_run_rechecks_every_english_page_after_docs_config_changes(
+    fake_precommit: list[list[str]],
+    monkeypatch: pytest.MonkeyPatch,
+    gh_summary: Path,
+    argv: list[str],
+    config_changed: bool,
+    rescans: bool,
+) -> None:
+    pages = ["docs/en/a.md", "docs/en/b.md"]
+    monkeypatch.setattr(pre_commit, "changed_refs", lambda args: ("base", "HEAD"))
+    monkeypatch.setattr(pre_commit, "docs_config_changed", lambda refs: config_changed)
+    monkeypatch.setattr(pre_commit, "select_docs_files", lambda refs: ["docs/en/a.md"])
+    monkeypatch.setattr(pre_commit, "_git_paths", lambda *args: pages)
+
+    # The fixture fails any run that selects typos, one of the docs hooks.
+    assert pre_commit.main(["--ci", *argv]) == int(rescans or "--docs" in argv)
+    runs = [command for command in fake_precommit if command[0] == pre_commit.RUNNER]
+    rescan = build_precommit_args(["--files", *pages], DOCS_HOOKS)
+    assert (rescan in runs) is rescans
+    assert len(runs) == (2 if rescans else 1)
+    summary = gh_summary.read_text(encoding="utf-8")
+    assert ("every English page for the docs hooks" in summary) is rescans
 
 
 def test_docs_hooks_exist_and_vale_syncs_before_linting() -> None:
@@ -475,8 +506,8 @@ def test_precommit_workflow_relies_on_step_failure_and_uploads_results() -> None
     assert run["run"] == (
         "python3 ./tools/pre_commit.py --ci --changed --results-dir pre-commit-results"
     )
-    # Docs Lint owns the prose linter; `vale` also selects the `vale-sync` alias.
-    assert run["env"] == {"SKIP": "trufflehog,vale"}
+    # The prose linter runs here too; only TruffleHog is a local-only hook.
+    assert run["env"] == {"SKIP": "trufflehog"}
     assert "vale" in DOCS_HOOKS
     assert by_name["Upload pre-commit results artifact"]["with"]["path"] == "pre-commit-results"
     after_run = steps[steps.index(run) + 1 :]
@@ -503,27 +534,13 @@ def test_precommit_installs_qt_only_when_qml_is_checked() -> None:
     assert QT_PATHSPECS == ("*.qml",)
 
 
-def test_docs_lint_workflow_triggers_on_every_full_scan_input() -> None:
-    workflow = load_workflow("docs-lint.yml")
-    triggers = workflow["on"]["pull_request"]["paths"]
-    assert set(DOCS_FULL_SCAN_PATHSPECS) <= set(triggers)
-    assert any(fnmatch.fnmatchcase("docs/en/guide/page.md", pattern) for pattern in triggers)
-    (checkout,) = (
-        step
-        for step in workflow["jobs"]["lint"]["steps"]
-        if step.get("uses", "").startswith("actions/checkout@")
-    )
-    # Pull request merge checkouts diff against their first parent; manual runs check every page.
-    assert checkout["with"]["fetch-depth"] == 2
-    (lint,) = (
-        step
-        for step in workflow["jobs"]["lint"]["steps"]
-        if step.get("name") == "Lint English documentation"
-    )
-    assert lint["env"]["PR_BASE_SHA"] == "${{ github.event.pull_request.base.sha }}"
-    assert lint["env"]["PR_HEAD_SHA"] == "${{ github.event.pull_request.head.sha }}"
-    # Manual dispatch has no base and checks every page.
-    assert lint["run"] == "python3 ./tools/pre_commit.py --ci --docs ${PR_BASE_SHA:+--changed}"
+def test_precommit_workflow_runs_for_docs_and_translations() -> None:
+    # The docs and translation hooks select their own files, so no path filter may skip them.
+    workflow = load_workflow("pre-commit.yml")
+    for event in ("pull_request", "push"):
+        filters = workflow["on"][event] or {}
+        assert "paths" not in filters
+        assert "paths-ignore" not in filters
 
 
 def _hooks_by_id() -> dict[str, dict]:
@@ -603,7 +620,6 @@ PREK_CACHE_PATH = "~/.cache/prek\n!~/.cache/prek/cache\n"
     [
         ("pre-commit.yml", "pre-commit", "prek-v1-"),
         ("copilot-setup-steps.yml", "copilot-setup-steps", "prek-v1-"),
-        ("docs-lint.yml", "lint", "prek-v1-"),
         ("ci-scripts.yml", "validate-renovate-config", "prek-renovate-v1-"),
     ],
 )
@@ -622,12 +638,8 @@ def test_workflows_cache_prek_environments(workflow: str, job: str, prefix: str)
             assert step["run"] == "prek cache gc"
 
 
-@pytest.mark.parametrize(
-    ("workflow", "job"),
-    [("docs-lint.yml", "lint"), ("copilot-setup-steps.yml", "copilot-setup-steps")],
-)
-def test_other_workflows_restore_prek_environments_read_only(workflow: str, job: str) -> None:
-    steps = get_steps(load_workflow(workflow), job)
+def test_copilot_setup_restores_prek_environments_read_only() -> None:
+    steps = get_steps(load_workflow("copilot-setup-steps.yml"), "copilot-setup-steps")
     (cache,) = (step for step in steps if step.get("uses", "").startswith("actions/cache"))
     assert cache["uses"].startswith("actions/cache/restore@")
     pre_commit_restore = get_step(
@@ -653,7 +665,7 @@ def test_pushes_prepare_every_hook_environment_before_saving() -> None:
     assert command[:2] == ["prek", "prepare-hooks"]
     skipped = set(command[3::2])
     assert command[2::2] == ["--skip"] * len(skipped)
-    # Docs Lint restores this cache for vale; TruffleHog and the Renovate validator never use it.
+    # TruffleHog runs only locally, and the Renovate validator keeps its own cache.
     assert skipped == {"trufflehog", "renovate-config-validator"}
     assert skipped <= set(_hooks_by_id())
 

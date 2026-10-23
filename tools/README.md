@@ -120,7 +120,7 @@ versions from `.github/build-config.json` ([Centralized Configuration](#centrali
 | `just test`             | Run application tests via CTest; defaults to labels `Unit`/`Integration`, excluding `Flaky`/`Network` |
 | `just test-python`      | Run the Python tooling tests (`tools/tests`, incl. `tools/tests/ci`) in parallel, in random order     |
 | `just lint [ARGS]`      | Run non-manual hooks on all files with prek (`prek run --all-files`); `ARGS` select hooks/stages      |
-| `just lint-docs [ARGS]` | Lint English docs like the Docs Lint workflow (every page; `--changed` for branch changes)            |
+| `just lint-docs [ARGS]` | Lint English docs with only the docs hooks (every page; `--changed` for branch changes)               |
 | `just format`           | Check clang-format on lines changed since the default branch (no changes)                             |
 | `just format-fix`       | Apply clang-format to lines changed since the default branch                                          |
 | `just analyze`          | Run static analysis (`tools/analyze.py`, default tool clang-tidy)                                     |
@@ -224,13 +224,14 @@ source-only hook keeps its limited checks. `just lint-qml-build` runs it on ever
 ### pre_commit.py
 
 Runs the [`.pre-commit-config.yaml`](../.pre-commit-config.yaml) hooks with
-[prek](https://github.com/j178/prek) and CI-friendly summaries; the pre-commit and Docs Lint
-workflows call it (adding `--ci` and, for pre-commit, `--results-dir`).
+[prek](https://github.com/j178/prek) and CI-friendly summaries; the pre-commit workflow calls it
+with `--ci --changed --results-dir`. A `--changed` run whose docs lint configuration changed also
+runs the docs hooks over every English page.
 
 ```bash
 python tools/pre_commit.py --changed                             # Files changed vs PR_BASE_SHA or the default branch
 python tools/pre_commit.py --changed --hook ruff --hook pyright  # Only these hooks (repeatable)
-python tools/pre_commit.py --docs --changed                      # English docs with the Docs Lint hooks (just lint-docs)
+python tools/pre_commit.py --docs --changed                      # English docs with only the docs hooks (just lint-docs)
 python tools/pre_commit.py --changed --needs-qt                  # Whether the selection has QML (qmllint needs Qt)
 python tools/pre_commit.py --install                             # Install the pre-commit and commit-msg hooks
 ```

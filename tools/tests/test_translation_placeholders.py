@@ -493,36 +493,18 @@ def test_module_entrypoint_and_default_head(repo: Path) -> None:
     assert "missing: '%1'" in result.stderr
 
 
-def test_workflow_runs_for_translation_only_prs_with_real_base() -> None:
-    workflow = load_workflow("translation-validation.yml")
-    events = workflow["on"]
-    assert set(events) == {"pull_request", "push"}
-    for event in events.values():
-        assert "translations/**/*.ts" in event["paths"]
-        assert "paths-ignore" not in event
-    assert workflow["permissions"] == {"contents": "read"}
-    job = workflow["jobs"]["validate"]
-    assert "if" not in job
-    steps = job["steps"]
-    checkout = next(step for step in steps if step.get("uses", "").startswith("actions/checkout@"))
-    assert checkout["with"]["fetch-depth"] == (
-        "${{ github.event_name == 'pull_request' && 2 || 0 }}"
-    )
-    assert checkout["with"]["persist-credentials"] is False
-    assert "ref" not in checkout["with"]
-    setup = next(step for step in steps if step.get("uses") == "./.github/actions/setup-python")
-    assert setup["with"]["groups"] == "scripts"
-    validation = steps[-1]
-    assert validation["working-directory"] == "tools"
-    assert validation["env"]["BASE_REF"] == (
-        "${{ github.event.pull_request.base.sha || github.event.before }}"
-    )
-    assert validation["env"]["PR_HEAD_SHA"] == "${{ github.event.pull_request.head.sha }}"
-    assert '--base-ref "$BASE_REF" --head-sha "$PR_HEAD_SHA"' in validation["run"]
-    assert "BASE_REF=EMPTY" in validation["run"]
-    assert 'git fetch --no-tags --depth=1 origin "$BASE_REF"' in validation["run"]
-    assert "HEAD^" not in validation["run"]
-    assert not any("qt-install" in step.get("uses", "") for step in steps)
+def test_pre_commit_workflow_checks_translation_only_changes() -> None:
+    # pre-commit.yml runs on every path, and its --changed run hands this hook the PR base through
+    # PRE_COMMIT_FROM_REF, so translation-only PRs need no workflow of their own.
+    workflow = load_workflow("pre-commit.yml")
+    for event in ("pull_request", "push"):
+        filters = workflow["on"][event] or {}
+        assert "paths" not in filters
+        assert "paths-ignore" not in filters
+    steps = workflow["jobs"]["pre-commit"]["steps"]
+    run = next(step for step in steps if step.get("name") == "Run pre-commit")
+    assert "--changed" in run["run"]
+    assert "qt-translation-placeholders" not in run["env"].get("SKIP", "")
 
 
 def test_pre_commit_hook_uses_catalog_filter_and_existing_runner() -> None:
