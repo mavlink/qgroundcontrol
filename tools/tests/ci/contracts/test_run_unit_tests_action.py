@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from ..._helpers import get_steps, load_action
+from ..._helpers import action_names, get_steps, load_action, load_workflow, workflow_names
 
 
 def _steps(name: str) -> list[dict[str, Any]]:
@@ -81,3 +81,29 @@ def test_test_phase_reports_each_suite_from_its_own_run() -> None:
         assert options["upload-codecov"] == "${{ inputs.upload-codecov }}"
         assert options["codecov-flags"] == suite
         assert options["duration-report"] == "true"
+
+
+def _codecov_uploads() -> list[tuple[str, dict[str, Any]]]:
+    documents = [(name, load_workflow(name)) for name in workflow_names()]
+    documents += [(f"actions/{name}", load_action(name)) for name in action_names()]
+    uploads = []
+    for source, document in documents:
+        jobs = (document.get("jobs") or {}).values() if "jobs" in document else [document["runs"]]
+        for job in jobs:
+            for step in job.get("steps") or []:
+                if str(step.get("uses", "")).startswith("codecov/codecov-action@"):
+                    uploads.append((source, step))
+    return uploads
+
+
+def test_codecov_uploads_use_oidc_and_only_the_named_reports() -> None:
+    # The CODECOV_TOKEN secret was rejected (404 "Repository not found"), so master coverage never
+    # reached Codecov; the default search also uploaded Qt's and CPM packages' coverage files.
+    uploads = _codecov_uploads()
+    assert {source for source, _ in uploads} >= {"linux.yml", "actions/run-unit-tests"}
+    for source, step in uploads:
+        options = step["with"]
+        assert options["use_oidc"] is True, source
+        assert options["disable_search"] is True, source
+        assert "token" not in options, source
+        assert options["files"], source

@@ -269,14 +269,18 @@ jobs:
             --log-file "${RUNNER_TEMP}/build/coverage-output.txt" \
             --step-summary
 
+      # OIDC (this job has id-token: write), as for test analytics: the CODECOV_TOKEN secret was rejected
+      # with 404 "Repository not found", so master reports never arrived; fork PRs upload tokenless.
+      # Only gcovr's report: the default search also picks up Qt's and CPM packages' coverage files.
       - name: Upload to Codecov
         if: matrix.mode == 'coverage'
         uses: codecov/codecov-action@v7
         with:
           files: ${{ runner.temp }}/build/coverage.xml
+          disable_search: true
           flags: unittests
           name: qgc-coverage
-          token: ${{ secrets.CODECOV_TOKEN }}
+          use_oidc: true
           fail_ci_if_error: false
           verbose: true
 

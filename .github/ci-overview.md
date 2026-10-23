@@ -530,8 +530,8 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   (`halt_on_error=1`) on every test, overriding the shell environment. ThreadSanitizer runs only on
   manual Code Analysis dispatch.
 - **Coverage**: GCC uses atomic counter updates for worker threads; gcovr tolerates the known GCC
-  negative-counter bug and reports discarded counters. Codecov receives the Cobertura
-  `coverage.xml`; the step summary, threshold check, and build-results comment read gcovr's
+  negative-counter bug and reports discarded counters. Codecov receives only the Cobertura
+  `coverage.xml`, over OIDC (fork PRs upload tokenless); the step summary, threshold check, and build-results comment read gcovr's
   `coverage-summary.json`. `coverage_report.py` fails before generating them when the tests wrote no
   `.gcda` counters. `verify_coverage_thresholds.py --build-dir` reads thresholds from
   `CMakeCache.txt` and compares exact covered/total counts, not gcovr's rounded percentages. Manual
