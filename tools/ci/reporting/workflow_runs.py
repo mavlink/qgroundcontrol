@@ -2,21 +2,62 @@
 
 from __future__ import annotations
 
+import argparse
 import json
+import os
 import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from common.build_config import load_build_config, lookup_dotted
 from common.io import read_json
 
 if TYPE_CHECKING:
-    import argparse
-    from collections.abc import Callable
+    from collections.abc import Callable, Mapping
 
-DEFAULT_PLATFORM_WORKFLOWS = "Linux,Windows,MacOS,Android,iOS"
 WORKFLOW_EVENTS = ("", "push", "pull_request", "workflow_dispatch", "schedule")
+PLATFORM_WORKFLOWS_KEY = "build.platform_workflows"
+RUNS_CACHE_NAME = "workflow-runs-cache.json"
+
+
+def triggering_run(env: Mapping[str, str] | None = None) -> dict[str, Any]:
+    """Return the ``workflow_run`` of the event payload at GITHUB_EVENT_PATH, or {} without one."""
+    path = (os.environ if env is None else env).get("GITHUB_EVENT_PATH", "")
+    if not path:
+        return {}
+    event = read_json(Path(path))
+    run = event.get("workflow_run") if isinstance(event, dict) else None
+    return run if isinstance(run, dict) else {}
+
+
+def default_runs_cache() -> str:
+    """Return the job's shared workflow-run snapshot path in RUNNER_TEMP, or '' outside a runner."""
+    runner_temp = os.environ.get("RUNNER_TEMP", "")
+    return str(Path(runner_temp) / RUNS_CACHE_NAME) if runner_temp else ""
+
+
+def configured_platform_workflows() -> str:
+    """Return build-config.json's platform workflow names; raise ValueError when unavailable."""
+    try:
+        value = lookup_dotted(load_build_config(), PLATFORM_WORKFLOWS_KEY, "")
+    except (OSError, ValueError) as exc:
+        raise ValueError(
+            f"cannot read {PLATFORM_WORKFLOWS_KEY} from build-config.json: {exc}"
+        ) from exc
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{PLATFORM_WORKFLOWS_KEY} is missing or empty in build-config.json")
+    return value
+
+
+def _workflow_names(value: str) -> str:
+    if value.strip():
+        return value
+    try:
+        return configured_platform_workflows()
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(str(exc)) from exc
 
 
 @dataclass(frozen=True)
@@ -80,28 +121,48 @@ def add_workflow_run_query_args(
     workflows_dest: str = "platform_workflows",
     restrict_event: bool = False,
 ) -> None:
-    """Add shared repository, SHA, workflow, event, and cached-run arguments."""
-    parser.add_argument("--repo", required=True, help="Repository in owner/repo format")
-    parser.add_argument("--head-sha", required=True, help="Commit SHA to inspect")
+    """Add repository, SHA, workflow, event, and workflow-run snapshot arguments.
+
+    Their defaults come from the runner (GITHUB_REPOSITORY, RUNNER_TEMP), the triggering
+    ``workflow_run`` payload, and build-config.json, so build-results.yml passes none of them.
+    """
+    run = triggering_run()
+    repo = os.environ.get("GITHUB_REPOSITORY", "")
+    head_sha = str(run.get("head_sha") or "")
+    parser.add_argument(
+        "--repo",
+        default=repo,
+        required=not repo,
+        help="Repository in owner/repo format (default: $GITHUB_REPOSITORY)",
+    )
+    parser.add_argument(
+        "--head-sha",
+        default=head_sha,
+        required=not head_sha,
+        help="Commit SHA to inspect (default: the triggering workflow run's)",
+    )
+    # argparse converts a string default through `type` only when the option is absent, so
+    # build-config.json is read, and must be valid, only then.
     parser.add_argument(
         workflows_option,
         dest=workflows_dest,
-        default=DEFAULT_PLATFORM_WORKFLOWS,
-        help="Comma-separated platform workflow names",
+        type=_workflow_names,
+        default="",
+        help=f"Comma-separated workflow names (default: {PLATFORM_WORKFLOWS_KEY})",
     )
     event_kwargs: dict[str, Any] = {}
     if restrict_event:
         event_kwargs["choices"] = WORKFLOW_EVENTS
     parser.add_argument(
         "--event",
-        default=default_event,
-        help="Optional workflow event name to consider",
+        default=str(run.get("event") or default_event),
+        help="Workflow event name to consider (default: the triggering workflow run's)",
         **event_kwargs,
     )
     parser.add_argument(
-        "--runs-file",
-        default="",
-        help="Path to cached workflow runs JSON; skips the API call",
+        "--runs-cache",
+        default=default_runs_cache(),
+        help=f"Run snapshot the reporting steps share (default: $RUNNER_TEMP/{RUNS_CACHE_NAME})",
     )
 
 
@@ -123,14 +184,14 @@ def load_workflow_runs(path: Path) -> list[dict[str, Any]]:
 def resolve_workflow_runs(
     repo: str,
     head_sha: str,
-    runs_file: str,
+    runs_cache: str,
     fetcher: Callable[[str, str], list[dict[str, Any]]],
 ) -> list[dict[str, Any]] | None:
-    """Load cached runs or call *fetcher*, reporting cached-file errors consistently."""
-    if not runs_file:
+    """Load the *runs_cache* snapshot if it exists, else call *fetcher*; report snapshot errors."""
+    if not runs_cache or not Path(runs_cache).is_file():
         return fetcher(repo, head_sha)
     try:
-        return load_workflow_runs(Path(runs_file))
+        return load_workflow_runs(Path(runs_cache))
     except WorkflowRunsFileError as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return None

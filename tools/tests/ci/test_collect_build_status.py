@@ -7,10 +7,12 @@ from typing import TYPE_CHECKING
 
 import pytest
 from ci.reporting import collect_build_status as mod
+from ci.reporting.workflow_runs import configured_platform_workflows
 
 from .._helpers import load_workflow
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from pathlib import Path
 
 
@@ -73,9 +75,56 @@ def test_main_writes_expected_outputs(gh_output: Path, monkeypatch: pytest.Monke
     )
     assert rc == 0
 
-    assert gh_output.read_text(encoding="utf-8") == (
-        "ready=true\nprecommit_run_id=99\nanalysis_complete=false\n"
-    )
+    assert gh_output.read_text(encoding="utf-8") == "ready=true\n"
+
+
+@pytest.mark.parametrize(
+    ("event", "args", "ready"),
+    [
+        ("pull_request", ["--status-out", "status.json"], "true"),
+        ("push", ["--require-success"], "false"),
+    ],
+)
+def test_main_takes_its_query_from_the_triggering_run(
+    event: str,
+    args: list[str],
+    ready: str,
+    tmp_path: Path,
+    gh_output: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    workflow_run_event: Callable[..., Path],
+) -> None:
+    """build-results.yml passes only --status-out (PR comment) or --require-success (baselines)."""
+    workflow_run_event(head_sha="abc123", event=event, name="iOS", conclusion="success")
+    monkeypatch.setenv("GITHUB_REPOSITORY", "owner/repo")
+    monkeypatch.setenv("RUNNER_TEMP", str(tmp_path))
+    monkeypatch.chdir(tmp_path)
+    platforms = configured_platform_workflows().split(",")
+    runs = [
+        *(_run(name, event=event, run_id=index) for index, name in enumerate(platforms, 1)),
+        _run("iOS", event=event, conclusion="failure", created_at="2026-02-24T01:00:00Z"),
+        _run("Linux", event="push" if event == "pull_request" else "pull_request"),
+    ]
+    queries: list[tuple[str, str]] = []
+
+    def list_runs(repo: str, sha: str) -> list[dict[str, object]]:
+        queries.append((repo, sha))
+        return runs
+
+    monkeypatch.setattr(mod, "list_workflow_runs_for_sha", list_runs)
+    monkeypatch.setattr(mod, "list_run_jobs", lambda repo, run_id: [])
+
+    assert mod.main(args) == 0
+
+    assert queries == [("owner/repo", "abc123")]
+    assert gh_output.read_text(encoding="utf-8") == f"ready={ready}\n"
+    snapshot = json.loads((tmp_path / "workflow-runs-cache.json").read_text())
+    assert sorted(run["name"] for run in snapshot) == sorted(platforms)
+    assert all(run["event"] == event for run in snapshot)
+    if event == "pull_request":
+        status = json.loads((tmp_path / "status.json").read_text())
+        assert [entry["name"] for entry in status["platforms"]] == platforms
+        assert (status["repo"], status["head_sha"]) == ("owner/repo", "abc123")
 
 
 PLATFORMS = ["Linux", "Windows", "MacOS", "Android"]
@@ -174,13 +223,17 @@ def test_snapshot_keeps_latest_platform_and_precommit_runs(
     assert json.loads(snapshot.read_text()) == runs[:2]
 
 
+# The scripts take these from the workflow_run payload, build-config.json, and RUNNER_TEMP.
+_DEFAULTED_OPTIONS = ("--repo", "--head-sha", "--event", "--platform-workflows", "--runs-cache")
+
+
 def test_save_baselines_gates_on_one_status_query() -> None:
     steps = load_workflow("build-results.yml")["jobs"]["save-baselines"]["steps"]
     (status,) = (step for step in steps if "collect_build_status.py" in step.get("run", ""))
     assert status["id"] == "gate"
     assert "if" not in status
-    assert "--require-success" in status["run"]
-    assert "--runs-cache" in status["run"]
+    assert status["run"] == "python3 tools/ci/reporting/collect_build_status.py --require-success"
+    assert status["env"] == {"GH_TOKEN": "${{ github.token }}"}
     for step in steps[steps.index(status) + 1 :]:
         assert step["if"] in {
             "steps.gate.outputs.ready == 'true'",
@@ -191,19 +244,29 @@ def test_save_baselines_gates_on_one_status_query() -> None:
 def test_pr_comment_updates_on_every_trigger_from_one_status_query() -> None:
     steps = load_workflow("build-results.yml")["jobs"]["post-pr-comment"]["steps"]
     (status,) = (step for step in steps if "collect_build_status.py" in step.get("run", ""))
-    assert status["id"] == "builds"
-    assert "--require-success" not in status["run"]
-    assert "--runs-cache" in status["run"]
-    assert "--status-out build-status.json" in status["run"]
+    assert status["run"] == (
+        "python3 tools/ci/reporting/collect_build_status.py --status-out build-status.json"
+    )
+    assert status["env"] == {"GH_TOKEN": "${{ github.token }}"}
     later = steps[steps.index(status) + 1 :]
-    # Partial results are posted too: nothing waits for every platform workflow.
-    assert not any("outputs.ready" in step.get("if", "") for step in later)
+    # Partial results are posted too: nothing waits for every platform workflow or reads the
+    # status step's outputs.
+    assert not any("if" in step for step in later[:-1])
     (generate,) = (
         step for step in later if "generate_build_results_comment" in step.get("run", "")
     )
-    assert generate["env"]["BUILD_STATUS_JSON"] == "build-status.json"
     assert generate["env"]["BASELINE_KEY"] == "${{ steps.baseline.outputs.cache-matched-key }}"
     assert later[-1]["if"] == "steps.current.outputs.current == 'true'"
+
+
+@pytest.mark.parametrize("job", ["post-pr-comment", "save-baselines"])
+def test_build_results_scripts_take_the_run_query_from_the_event(job: str) -> None:
+    steps = load_workflow("build-results.yml")["jobs"][job]["steps"]
+    runs = [step["run"] for step in steps if "tools/ci/reporting/" in step.get("run", "")]
+    assert runs
+    for run in runs:
+        assert "${{" not in run
+        assert not any(option in run for option in _DEFAULTED_OPTIONS), run
 
 
 def _job(name: str, conclusion: str, steps: list[tuple[str, str]] = ()) -> dict[str, object]:  # type: ignore[assignment]
@@ -310,7 +373,7 @@ def test_status_out_describes_platforms_precommit_and_analysis(
     assert status["precommit"]["state"] == "failure"
     assert status["precommit"]["jobs"][0]["failed_steps"][0]["name"] == "Run pre-commit"
     assert status["analysis"]["state"] == "running"
-    assert "precommit_run_id=12\nanalysis_complete=false\n" in text
+    assert text == "ready=false\n"
 
 
 def test_status_out_tolerates_job_listing_failures(

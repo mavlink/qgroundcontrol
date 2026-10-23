@@ -2,8 +2,9 @@
 """Generate the Build Results PR comment.
 
 Reads the workflow status that collect_build_status.py wrote (--status-out), the downloaded
-test results, coverage, pre-commit, and Code Analysis artifacts, and the artifact sizes. The
-comment leads with a verdict and a per-workflow table, lists failures, and collapses the rest.
+test results, coverage, pre-commit, and Code Analysis artifacts, and the artifact sizes, from
+the INPUT_PATHS that build-results.yml's steps write. The comment leads with a verdict and a
+per-workflow table, lists failures, and collapses the rest.
 """
 
 from __future__ import annotations
@@ -40,6 +41,7 @@ from common.markdown import code_block, code_span, details, escape_text, md_tabl
 from common.xml import XMLParseError
 
 from ci.reporting.junit_report import JUnitCase, clip, parse_junit
+from ci.reporting.workflow_runs import triggering_run
 
 logger = logging.getLogger(__name__)
 
@@ -63,6 +65,18 @@ STATE_LABELS = {
 _PENDING = {"pending", "running", "action_required"}
 _FAILED_JOB_CONCLUSIONS = {"failure", "timed_out", "startup_failure"}
 _BASELINE_KEY_SHA = re.compile(r"^build-baseline-v\d+-([0-9a-f]{7,40})(?:-|$)")
+# Inputs relative to --base-dir, where build-results.yml's steps write them; an environment
+# variable of the same name overrides each.
+INPUT_PATHS = {
+    "BUILD_STATUS_JSON": "build-status.json",
+    "ARTIFACTS_DIR": "artifacts",
+    "ANALYSIS_ARTIFACTS_DIR": "analysis-artifacts",
+    "PRECOMMIT_RESULTS_PATH": "artifacts/pre-commit-results/pre-commit-results.json",
+    "COVERAGE_SUMMARY": "artifacts/coverage-report/coverage-summary.json",
+    "BASELINE_COVERAGE_SUMMARY": "baseline-coverage-summary.json",
+    "PR_SIZES_JSON": "pr-sizes.json",
+    "BASELINE_SIZES_JSON": "baseline-sizes.json",
+}
 
 
 @dataclass(frozen=True)
@@ -191,6 +205,10 @@ def _env(env: Mapping[str, str], key: str, default: str = "") -> str:
     return str(env.get(key, "") or default).strip()
 
 
+def _input_path(env: Mapping[str, str], base_dir: Path, key: str) -> Path:
+    return base_dir / _env(env, key, INPUT_PATHS[key])
+
+
 def _plural(count: int, noun: str) -> str:
     return f"{format_count(count)} {noun}{'' if count == 1 else 's'}"
 
@@ -281,9 +299,7 @@ def _baseline_sha(key: str) -> str:
 
 
 def load_coverage(env: Mapping[str, str], base_dir: Path) -> Coverage | None:
-    current_path = base_dir / _env(
-        env, "COVERAGE_SUMMARY", "artifacts/coverage-report/coverage-summary.json"
-    )
+    current_path = _input_path(env, base_dir, "COVERAGE_SUMMARY")
     if not current_path.is_file():
         return None
     try:
@@ -293,9 +309,7 @@ def load_coverage(env: Mapping[str, str], base_dir: Path) -> Coverage | None:
         return None
     if current.line_total == 0:
         return None
-    baseline_path = base_dir / _env(
-        env, "BASELINE_COVERAGE_SUMMARY", "baseline-coverage-summary.json"
-    )
+    baseline_path = _input_path(env, base_dir, "BASELINE_COVERAGE_SUMMARY")
     baseline = None
     if baseline_path.is_file():
         try:
@@ -313,15 +327,13 @@ def load_coverage(env: Mapping[str, str], base_dir: Path) -> Coverage | None:
 
 
 def load_sizes(env: Mapping[str, str], base_dir: Path) -> Sizes | None:
-    pr_data = _load_json(base_dir / _env(env, "PR_SIZES_JSON", "pr-sizes.json"), "PR sizes")
+    pr_data = _load_json(_input_path(env, base_dir, "PR_SIZES_JSON"), "PR sizes")
     if not isinstance(pr_data, dict) or not isinstance(pr_data.get("artifacts"), list):
         return None
 
     base_sha = _env(env, "BASELINE_SHA")
     baseline: dict[str, int] = {}
-    baseline_data = _load_json(
-        base_dir / _env(env, "BASELINE_SIZES_JSON", "baseline-sizes.json"), "baseline sizes"
-    )
+    baseline_data = _load_json(_input_path(env, base_dir, "BASELINE_SIZES_JSON"), "baseline sizes")
     if isinstance(baseline_data, dict):
         if base_sha and baseline_data.get("head_sha") != base_sha:
             logger.warning(
@@ -355,10 +367,7 @@ def load_sizes(env: Mapping[str, str], base_dir: Path) -> Sizes | None:
 
 
 def load_precommit(env: Mapping[str, str], base_dir: Path) -> Precommit | None:
-    path = base_dir / _env(
-        env, "PRECOMMIT_RESULTS_PATH", "artifacts/pre-commit-results/pre-commit-results.json"
-    )
-    data = _load_json(path, "pre-commit results")
+    data = _load_json(_input_path(env, base_dir, "PRECOMMIT_RESULTS_PATH"), "pre-commit results")
     if not isinstance(data, dict):
         return None
     hooks = data.get("failed_hooks")
@@ -443,11 +452,11 @@ def load_analysis(analysis_dir: Path) -> list[AnalysisTool]:
 
 
 def collect_report(env: Mapping[str, str], base_dir: Path, now: datetime) -> Report:
-    status = _load_json(base_dir / _env(env, "BUILD_STATUS_JSON", "build-status.json"), "status")
+    status = _load_json(_input_path(env, base_dir, "BUILD_STATUS_JSON"), "status")
     if not isinstance(status, dict):
         status = {}
-    artifacts_dir = base_dir / _env(env, "ARTIFACTS_DIR", "artifacts")
-    analysis_dir = base_dir / _env(env, "ANALYSIS_ARTIFACTS_DIR", "analysis-artifacts")
+    artifacts_dir = _input_path(env, base_dir, "ARTIFACTS_DIR")
+    analysis_dir = _input_path(env, base_dir, "ANALYSIS_ARTIFACTS_DIR")
     platforms = [entry for entry in status.get("platforms") or [] if isinstance(entry, dict)]
     return Report(
         platforms=tuple(platforms),
@@ -464,7 +473,7 @@ def collect_report(env: Mapping[str, str], base_dir: Path, now: datetime) -> Rep
         server_url=_env(env, "SERVER_URL", _env(env, "GITHUB_SERVER_URL", "https://github.com")),
         commit=_env(env, "COMMIT_SHA", str(status.get("head_sha", ""))),
         pr_number=_env(env, "PR_NUMBER"),
-        triggered_by=_env(env, "TRIGGERED_BY", "unknown"),
+        triggered_by=_env(env, "TRIGGERED_BY", str(triggering_run(env).get("name") or "unknown")),
         now=now,
     )
 

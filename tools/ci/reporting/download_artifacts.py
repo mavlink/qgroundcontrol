@@ -9,12 +9,13 @@ and <output-dir>/download-manifest.json maps it to its workflow and run. With
 --sizes-out, it also records the distributable artifact sizes of each workflow's
 latest successful run, reusing the artifact listings it fetched.
 
-Usage:
+The repository, head SHA, and event default to GITHUB_REPOSITORY and the triggering
+workflow_run, the workflows to build-config.json's platform workflows, and the runs to
+the snapshot collect_build_status.py saved in --runs-cache, when it exists. Elsewhere:
     python3 tools/ci/reporting/download_artifacts.py \\
         --repo owner/repo \\
         --head-sha abc123 \\
-        --output-dir artifacts \\
-        --workflows Linux,Windows,MacOS,Android \\
+        --event pull_request \\
         --artifact-prefixes coverage-report,test-results- \\
         --sizes-out pr-sizes.json
 """
@@ -32,13 +33,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import _bootstrap as _bootstrap
 from common.format import format_bytes
-from common.gh_actions import (
-    env_default,
-    env_flag,
-    gh,
-    list_run_artifacts,
-    list_workflow_runs_for_sha,
-)
+from common.gh_actions import gh, list_run_artifacts, list_workflow_runs_for_sha
 from common.io import read_json, write_json
 
 from ci.reporting.workflow_runs import (
@@ -224,14 +219,7 @@ def write_manifest(output_dir: Path, entries: list[dict[str, Any]]) -> None:
     write_json(path, sorted([*kept, *entries], key=lambda entry: str(entry.get("name", ""))))
 
 
-def _cached_runs_file() -> str:
-    """Return the download-all-artifacts action's runs-file input when that file exists."""
-    path = env_default("INPUT_RUNS_FILE")
-    return path if path and Path(path).is_file() else ""
-
-
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    """Parse arguments; optional ones default to the composite action's INPUT_* step environment."""
     parser = argparse.ArgumentParser(
         description="Download build artifacts from completed platform workflow runs.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -244,7 +232,6 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         workflows_dest="workflows",
         restrict_event=True,
     )
-    parser.set_defaults(runs_file=_cached_runs_file())
     parser.add_argument(
         "--output-dir",
         type=Path,
@@ -259,25 +246,22 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--sizes-out",
         type=Path,
-        default=env_default("INPUT_SIZES_FILE") or None,
+        default=None,
         help="Write distributable artifact sizes of each latest successful run to this JSON file",
     )
     parser.add_argument(
         "--require-sizes",
         action="store_true",
-        default=env_flag("INPUT_REQUIRE_SIZES"),
         help="Fail and remove --sizes-out when no distributable artifact is found",
     )
     parser.add_argument(
         "--include-failed",
         action="store_true",
-        default=env_flag("INPUT_INCLUDE_FAILED"),
         help="Download diagnostics from failed completed builds too",
     )
     parser.add_argument(
         "--allow-missing",
         action="store_true",
-        default=env_flag("INPUT_ALLOW_MISSING"),
         help="Allow absent diagnostic artifacts selected by prefix",
     )
     return parser.parse_args(argv)
@@ -305,7 +289,7 @@ def main(argv: list[str] | None = None) -> int:
 
     print(f"Finding completed workflow runs for commit {head_sha}...")
 
-    all_runs = resolve_workflow_runs(repo, head_sha, args.runs_file, list_workflow_runs_for_sha)
+    all_runs = resolve_workflow_runs(repo, head_sha, args.runs_cache, list_workflow_runs_for_sha)
     if all_runs is None:
         return 1
     preloaded_artifacts: dict[int, list[dict[str, Any]]] = {}
@@ -389,17 +373,18 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 print(f"  Failed: {name}")
                 failed += 1
-    write_manifest(
-        output_dir,
-        [
-            {"name": artifact, "workflow": str(run["name"]), "run_id": int(run["id"])}
-            for run in runs
-            for artifact in run_artifact_names[int(run["id"])]
-            if (output_dir / artifact).is_dir()
-        ],
-    )
+    entries = [
+        {"name": artifact, "workflow": str(run["name"]), "run_id": int(run["id"])}
+        for run in runs
+        for artifact in run_artifact_names[int(run["id"])]
+        if (output_dir / artifact).is_dir()
+    ]
+    write_manifest(output_dir, entries)
 
-    files = list_downloaded_files(output_dir)
+    # Earlier invocations may share output_dir; count only this one's artifact directories.
+    files = [
+        path for entry in entries for path in list_downloaded_files(output_dir / entry["name"])
+    ]
     if not files:
         print("No artifact files found after download")
     else:

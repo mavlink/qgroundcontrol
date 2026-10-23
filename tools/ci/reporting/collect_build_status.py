@@ -4,8 +4,11 @@
 Also the build-results gate: `ready` is true once every platform workflow has
 completed (with --require-success, successfully). With --status-out it writes each
 workflow's state, duration, and jobs (failed steps with log links) for the PR
-comment. Uses only the standard library, so it runs before the job installs Python
-dependencies.
+comment. It saves the latest run per workflow to --runs-cache for download_artifacts.py.
+The repository, head SHA, and event default to the triggering workflow_run, the platform
+workflows to build-config.json, and the snapshot path to RUNNER_TEMP (see
+workflow_runs.add_workflow_run_query_args). Uses only the standard library, so it runs
+before the job installs Python dependencies.
 """
 
 from __future__ import annotations
@@ -30,7 +33,7 @@ from common.gh_actions import (
 from common.io import write_json
 
 from ci.reporting.workflow_runs import (
-    DEFAULT_PLATFORM_WORKFLOWS,
+    add_workflow_run_query_args,
     evaluate_runs,
     parse_created_at,
     select_latest_runs_by_name,
@@ -133,21 +136,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Collect build status for PR build-results comment."
     )
-    parser.add_argument("--repo", required=True, help="Repository in owner/repo format")
-    parser.add_argument("--head-sha", required=True, help="Commit SHA to inspect")
-    parser.add_argument(
-        "--platform-workflows",
-        default=DEFAULT_PLATFORM_WORKFLOWS,
-        help="Comma-separated platform workflow names",
-    )
-    parser.add_argument(
-        "--event", default="pull_request", help="Optional workflow event name to consider"
-    )
-    parser.add_argument(
-        "--runs-cache",
-        default="",
-        help="Path to write cached workflow runs JSON for downstream scripts",
-    )
+    add_workflow_run_query_args(parser, default_event="pull_request")
     parser.add_argument(
         "--status-out",
         type=Path,
@@ -198,15 +187,7 @@ def main(argv: list[str] | None = None) -> int:
         }
         write_json(args.status_out, status)
 
-    write_github_output(
-        {
-            "ready": "true" if ready else "false",
-            "precommit_run_id": str(precommit.get("id", "")) if precommit else "",
-            "analysis_complete": "true"
-            if analysis and analysis.get("status") == "completed"
-            else "false",
-        }
-    )
+    write_github_output({"ready": "true" if ready else "false"})
 
     for name in platforms:
         run = latest.get(name)

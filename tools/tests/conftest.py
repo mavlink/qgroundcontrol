@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+import json
 import os
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import pytest
 from hypothesis import settings
@@ -12,7 +13,7 @@ from hypothesis.configuration import set_hypothesis_home_dir
 from ._helpers import GIT_ENV, GIT_REPO_VARS, REPO_ROOT, git
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Callable, Iterator
     from pathlib import Path
 
 # On loaded xdist workers Hypothesis's per-example deadline would cause flaky failures.
@@ -92,6 +93,19 @@ def gh_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 def gh_summary(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     """Point GITHUB_STEP_SUMMARY at a fresh empty file and return its path."""
     return _runner_file("GITHUB_STEP_SUMMARY", tmp_path / "gh_summary", monkeypatch)
+
+
+@pytest.fixture
+def workflow_run_event(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Callable[..., Path]:
+    """Return a writer that points GITHUB_EVENT_PATH at a workflow_run payload with given fields."""
+
+    def write(**run: Any) -> Path:
+        path = tmp_path / "event.json"
+        path.write_text(json.dumps({"workflow_run": run}), encoding="utf-8")
+        monkeypatch.setenv("GITHUB_EVENT_PATH", str(path))
+        return path
+
+    return write
 
 
 @pytest.fixture

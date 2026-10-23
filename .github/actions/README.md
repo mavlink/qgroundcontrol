@@ -25,7 +25,6 @@ cannot load actions from the PR merge commit (zizmor's `self-repository` audit i
 | `debug-runner` | Open an actor-only SSH session for failed manual runs (callers gate it and set a step timeout) |
 | `deploy-docs` | Deploy built documentation to an external GitHub Pages repository |
 | `docker` | Build a QGC builder image with Buildx and run the containerized application build |
-| `download-all-artifacts` | Download artifacts from every platform workflow run for a commit and optionally record artifact sizes |
 | `free-disk-space` | Wrap `endersonmenezes/free-disk-space` with QGC's shared defaults |
 | `install-dependencies` | Install platform build dependencies (Linux apt packages, macOS Homebrew and GStreamer, Windows MSVC and NSIS) but not the CMake, Ninja, ccache, and mold that `build-setup` pins; on Linux, `category` installs a single `install_dependencies` category |
 | `qt-install` | Reuse a compatible preinstalled Qt SDK or install Qt with QGC's installer or aqtinstall (`installer`, empty for `install_qt.py`'s per-host default), with caching; `version` defaults to `build-config.json`'s; outputs the version, installer, and source |
@@ -59,11 +58,6 @@ an additional security problem.
   fail). Reporting steps run after test failures; the failed CTest step still fails the job.
   `junit_report.py` writes the `report-name` section and error annotations for failed tests
   (no `checks: write` needed); Codecov test analytics (`upload-codecov`) needs `id-token: write`.
-- **`download-all-artifacts`** serves the build-results jobs. PR reporting allows absent
-  diagnostic artifacts when tests did not run, but download failures still fail the job;
-  baseline downloads allow neither. Baseline
-  downloads pass `require-sizes`, which removes `sizes-file` and fails when no distributable
-  artifact exists, so an empty baseline is never published.
 - **`cache` / `save-build-cache`**: `cache` restores compiler/moc archives and immutable
   CPM/SDK snapshots and exports the save policy; `save-build-cache` checkpoints compiler/moc
   archives once per job after verified success (`cmake-build` calls it for full and `autogen`

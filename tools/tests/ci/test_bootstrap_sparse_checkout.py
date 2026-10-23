@@ -238,8 +238,9 @@ BUILD_RESULTS_YML = WORKFLOWS_DIR / "build-results.yml"
 
 EXPECTED_BUILD_RESULTS_PATHS: frozenset[str] = frozenset(
     {
-        ".github/actions/download-all-artifacts",
         ".github/actions/setup-python",
+        # The reporting scripts read build.platform_workflows.
+        ".github/build-config.json",
         "tools/ci/reporting/report_context.py",
         "tools/_bootstrap.py",
         "tools/ci/reporting/collect_build_status.py",
@@ -268,8 +269,13 @@ EXPECTED_BUILD_RESULTS_PATHS: frozenset[str] = frozenset(
 )
 
 
-@pytest.mark.parametrize("job", ["post-pr-comment", "save-baselines"])
-def test_build_results_jobs_check_out_once_before_local_actions(job: str) -> None:
+@pytest.mark.parametrize(
+    ("job", "expected_actions"),
+    [("post-pr-comment", {".github/actions/setup-python"}), ("save-baselines", set())],
+)
+def test_build_results_jobs_check_out_once_before_local_actions(
+    job: str, expected_actions: set[str]
+) -> None:
     """Each job's only checkout covers its actions, locks and Python import closure."""
 
     steps = load_workflow(BUILD_RESULTS_YML.name)["jobs"][job]["steps"]
@@ -288,6 +294,6 @@ def test_build_results_jobs_check_out_once_before_local_actions(job: str) -> Non
         for index, step in enumerate(steps)
         if str(step.get("uses", "")).startswith("./")
     }
-    assert local_actions
-    assert min(local_actions) > checkouts[0]
-    assert not _missing_paths(set(local_actions.values()), actual)
+    assert set(local_actions.values()) == expected_actions
+    assert all(index > checkouts[0] for index in local_actions)
+    assert not _missing_paths(expected_actions, actual)

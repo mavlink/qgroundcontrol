@@ -5,12 +5,16 @@ from __future__ import annotations
 import json
 import subprocess
 from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import pytest
 from ci.reporting import download_artifacts as mod
 
 from .._helpers import completed
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 def test_parse_args_defaults() -> None:
@@ -25,39 +29,105 @@ def test_parse_args_defaults() -> None:
     assert args.artifact_prefixes == "coverage-report"
     assert args.sizes_out is None
     assert args.require_sizes is False
+    assert args.include_failed is False
     assert args.allow_missing is False
+    assert args.runs_cache == ""
 
 
-def test_parse_args_reads_optional_action_inputs(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+@pytest.fixture
+def build_results_job(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, workflow_run_event: Callable[..., Path]
+) -> Path:
+    """Run as a build-results.yml step for a PR build; return the job's run snapshot path."""
+    workflow_run_event(head_sha="abc123", event="pull_request", name="Linux")
+    monkeypatch.setenv("GITHUB_REPOSITORY", "owner/repo")
+    monkeypatch.setenv("RUNNER_TEMP", str(tmp_path))
+    return tmp_path / "workflow-runs-cache.json"
+
+
+def test_parse_args_defaults_to_the_triggering_run(build_results_job: Path) -> None:
+    args = mod.parse_args(
+        ["--include-failed", "--allow-missing", "--artifact-prefixes", "x", "--sizes-out", "s.json"]
+    )
+    assert (args.repo, args.head_sha, args.event) == ("owner/repo", "abc123", "pull_request")
+    assert args.runs_cache == str(build_results_job)
+    assert args.include_failed and args.allow_missing and not args.require_sizes
+    assert args.sizes_out == Path("s.json")
+
+
+def test_main_queries_runs_until_the_snapshot_exists(build_results_job: Path) -> None:
+    with patch.object(mod, "list_workflow_runs_for_sha", return_value=[]) as query:
+        assert mod.main(["--artifact-prefixes", "coverage-report", "--allow-missing"]) == 0
+    query.assert_called_once_with("owner/repo", "abc123")
+
+    build_results_job.write_text("[]", encoding="utf-8")
+    with patch.object(mod, "list_workflow_runs_for_sha") as query:
+        assert mod.main(["--artifact-prefixes", "coverage-report", "--allow-missing"]) == 0
+    query.assert_not_called()
+
+
+@pytest.mark.parametrize("status", ["queued", "in_progress", "waiting"])
+def test_optional_downloads_skip_runs_still_in_progress(
+    build_results_job: Path, tmp_path: Path, status: str
 ) -> None:
-    required = ["--repo", "owner/repo", "--head-sha", "abc123", "--artifact-prefixes", "x"]
-    runs = tmp_path / "runs.json"
-    runs.write_text("[]", encoding="utf-8")
-    inputs = {
-        "INPUT_RUNS_FILE": str(runs),
-        "INPUT_INCLUDE_FAILED": "true",
-        "INPUT_ALLOW_MISSING": "true",
-        "INPUT_SIZES_FILE": "sizes.json",
-        "INPUT_REQUIRE_SIZES": "true",
-    }
-    for name, value in inputs.items():
-        monkeypatch.setenv(name, value)
+    # build-results.yml downloads pre-commit and Code Analysis results without first checking
+    # that those runs finished.
+    run = {"id": 7, "name": "Code Analysis", "event": "pull_request", "status": status}
+    build_results_job.write_text(json.dumps([{**run, "conclusion": None}]), encoding="utf-8")
+    with (
+        patch.object(mod, "list_workflow_runs_for_sha") as query,
+        patch.object(mod, "list_run_artifacts") as listing,
+        patch.object(mod, "download_run_artifacts") as download,
+    ):
+        rc = mod.main(
+            [
+                "--include-failed",
+                "--allow-missing",
+                "--workflows",
+                "Code Analysis",
+                "--artifact-prefixes",
+                "clang-tidy-clazy-output",
+                "--output-dir",
+                str(tmp_path / "analysis-artifacts"),
+            ]
+        )
+    assert rc == 0
+    query.assert_not_called()
+    listing.assert_not_called()
+    download.assert_not_called()
 
-    args = mod.parse_args(required)
-    assert args.runs_file == str(runs)
-    assert args.include_failed and args.allow_missing and args.require_sizes
-    assert args.sizes_out == Path("sizes.json")
 
-    # The action passes a cache path that an earlier step may not have written.
-    monkeypatch.setenv("INPUT_RUNS_FILE", str(tmp_path / "missing.json"))
-    monkeypatch.setenv("INPUT_SIZES_FILE", "")
-    for flag in ("INCLUDE_FAILED", "ALLOW_MISSING", "REQUIRE_SIZES"):
-        monkeypatch.setenv(f"INPUT_{flag}", "false")
-    args = mod.parse_args(required)
-    assert args.runs_file == ""
-    assert not (args.include_failed or args.allow_missing or args.require_sizes)
-    assert args.sizes_out is None
+def test_optional_downloads_include_failed_completed_runs(
+    build_results_job: Path, tmp_path: Path
+) -> None:
+    run = {"id": 9, "name": "pre-commit", "event": "pull_request", "status": "completed"}
+    build_results_job.write_text(json.dumps([{**run, "conclusion": "failure"}]), encoding="utf-8")
+    output = tmp_path / "artifacts"
+
+    def download(run_id: int, repo: str, output_dir: Path, names: list[str]) -> bool:
+        (output_dir / names[0]).mkdir(parents=True)
+        (output_dir / names[0] / "pre-commit-results.json").write_text("{}")
+        return True
+
+    with (
+        patch.object(mod, "list_run_artifacts", return_value=[{"name": "pre-commit-results"}]),
+        patch.object(mod, "download_run_artifacts", side_effect=download) as downloader,
+    ):
+        rc = mod.main(
+            [
+                "--include-failed",
+                "--allow-missing",
+                "--workflows",
+                "pre-commit",
+                "--artifact-prefixes",
+                "pre-commit-results",
+                "--output-dir",
+                str(output),
+            ]
+        )
+    assert rc == 0
+    downloader.assert_called_once_with(9, "owner/repo", output, ["pre-commit-results"])
+    assert (output / "pre-commit-results" / "pre-commit-results.json").is_file()
 
 
 def test_artifact_prefixes_are_required() -> None:
@@ -321,7 +391,7 @@ def test_main_returns_one_on_invalid_runs_file(tmp_path: Path) -> None:
             "abc123",
             "--artifact-prefixes",
             "coverage-report",
-            "--runs-file",
+            "--runs-cache",
             str(runs_file),
         ],
     )
@@ -451,6 +521,40 @@ def test_optional_diagnostics_reject_advertised_empty_download(tmp_path: Path) -
     assert rc == 2
 
 
+def test_earlier_downloads_into_the_output_dir_do_not_count(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    earlier = tmp_path / "coverage-report" / "index.html"
+    earlier.parent.mkdir()
+    earlier.write_text("<html/>")
+    runs = [{"id": 9, "name": "pre-commit", "status": "completed", "conclusion": "failure"}]
+    argv = ["--repo", "o/r", "--head-sha", "abc", "--workflows", "pre-commit", "--include-failed"]
+    argv += ["--output-dir", str(tmp_path), "--artifact-prefixes", "pre-commit-results"]
+
+    def download(run_id: int, repo: str, output_dir: Path, names: list[str]) -> bool:
+        (output_dir / names[0]).mkdir()
+        (output_dir / names[0] / "pre-commit-results.json").write_text("{}")
+        return True
+
+    with (
+        patch.object(mod, "list_workflow_runs_for_sha", return_value=runs),
+        patch.object(mod, "list_run_artifacts", return_value=[{"name": "pre-commit-results"}]),
+        patch.object(mod, "download_run_artifacts", return_value=True),
+    ):
+        assert mod.main(argv) == 2
+    assert "index.html" not in capsys.readouterr().out
+
+    with (
+        patch.object(mod, "list_workflow_runs_for_sha", return_value=runs),
+        patch.object(mod, "list_run_artifacts", return_value=[{"name": "pre-commit-results"}]),
+        patch.object(mod, "download_run_artifacts", side_effect=download),
+    ):
+        assert mod.main(argv) == 0
+    out = capsys.readouterr().out
+    assert "Downloaded 1 artifact file(s):\n  - pre-commit-results.json" in out
+    assert "index.html" not in out
+
+
 def test_optional_diagnostics_propagate_artifact_query_failure() -> None:
     runs = [{"id": 42, "name": "Linux", "status": "completed", "conclusion": "success"}]
     with (
@@ -485,7 +589,7 @@ def test_main_returns_one_on_non_list_runs_file(tmp_path: Path) -> None:
             "abc123",
             "--artifact-prefixes",
             "coverage-report",
-            "--runs-file",
+            "--runs-cache",
             str(runs_file),
         ],
     )
@@ -517,7 +621,8 @@ def test_main_falls_back_to_older_successful_run_with_matching_artifacts(tmp_pat
             return [{"name": "coverage-report", "size_in_bytes": 42}]
         return []
 
-    downloaded = tmp_path / "coverage.xml"
+    downloaded = tmp_path / "coverage-report" / "coverage.xml"
+    downloaded.parent.mkdir()
     downloaded.write_text("<xml/>", encoding="utf-8")
 
     with (
@@ -564,7 +669,8 @@ def test_main_writes_sizes_file(tmp_path: Path) -> None:
         {"name": "QGroundControl-x86_64.AppImage", "size_in_bytes": 200},
     ]
     sizes_path = tmp_path / "sizes.json"
-    downloaded = tmp_path / "dummy.txt"
+    downloaded = tmp_path / "coverage-report" / "dummy.txt"
+    downloaded.parent.mkdir()
     downloaded.write_text("x", encoding="utf-8")
 
     with (

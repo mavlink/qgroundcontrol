@@ -680,17 +680,24 @@ when a PR closes, and on demand:
 - `build-results.yml` runs on `workflow_run` completion of Linux, Windows, MacOS, Android, iOS,
   and pre-commit (GitHub runs only the default-branch copy; `test_platform_workflow_names.py` keeps the
   list in sync with `build.platform_workflows`). One `report_context.py` lookup resolves the PR
-  number and base SHA, and the PR head (or `master`) is rechecked before posting or saving.
+  number and base SHA (pull_request builds only) and whether a successful `master` push saves
+  baselines, and the PR head (or `master`) is rechecked before posting or saving.
+- The reporting scripts take the repository, commit, and event from the `workflow_run` payload
+  (`workflow_runs.triggering_run()`), the platform workflows from `build.platform_workflows` in the
+  sparse-checked-out `build-config.json` (failing when it is missing), and the run snapshot that
+  `collect_build_status.py` saves in `$RUNNER_TEMP/workflow-runs-cache.json`; the comment
+  generator reads each input from the path the earlier steps write (`INPUT_PATHS`). Steps pass only
+  their own flags, and `test_build_results_workflow.py` replays them under fake payloads.
 - Every trigger updates one `build-results`-tagged comment (fork PRs included), so finished
   workflows and their failures show while others still run; the last one to complete renders the
   final state. `collect_build_status.py` (stdlib only, before Python dependencies install) writes
   each workflow's state, duration, and jobs, with failed-step log links, from one jobs-API call per
-  run (`--status-out`), including Code Analysis, which is not a trigger. The job then downloads the
-  completed runs' test results, coverage, and artifact sizes (`download_artifacts.py`, one
-  directory per artifact plus a manifest naming its workflow), the pre-commit results, and, when
-  Code Analysis has completed, its per-tool `*-timings.json` and `*-diagnostics.json`. Missing
-  diagnostic artifacts are allowed when tests did not run, but platform download failures fail the
-  job. The comment is also the job summary.
+  run (`--status-out`), including Code Analysis, which is not a trigger. The job then downloads,
+  with `download_artifacts.py` (one directory per artifact plus a manifest naming its workflow),
+  the completed runs' test results, coverage, and artifact sizes, the pre-commit results, and Code
+  Analysis's per-tool `*-timings.json` and `*-diagnostics.json`; runs still in progress are
+  skipped. Missing diagnostic artifacts are allowed (`--allow-missing`) when tests did not run, but
+  platform download failures fail the job. The comment is also the job summary.
 - The comment (`generate_build_results_comment.py`) leads with a verdict (✅ passed, ❌ failed,
   ⏳ in progress, 🚫 cancelled, ⏭️ nothing to build), the linked head commit, and how many
   platform workflows are done, pending, or skipped by change detection (every build job skipped).
@@ -707,7 +714,9 @@ when a PR closes, and on demand:
   pull requests (tests, jobs, hooks, artifacts) are escaped or shown as code.
 - For `master`, once every platform workflow succeeded, `save-baselines` saves an immutable
   baseline (sizes and coverage) keyed by commit and run; the job runs only standard-library scripts
-  and installs no Python dependencies. PRs prefer the exact base snapshot before the most recent
+  and installs no Python dependencies. It downloads only the coverage report, and
+  `--require-sizes` fails without writing sizes when no distributable artifact exists, so an empty
+  baseline is never published. PRs prefer the exact base snapshot before the most recent
   baseline; size deltas accept only the exact PR base, even when coverage restores an older one
   (the comment names the baseline commit and says when none exists yet). Android artifact names
   include their ABIs, so single-ABI PR APKs are not compared with multi-ABI release APKs; unmatched

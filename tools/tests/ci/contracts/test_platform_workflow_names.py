@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from ..._helpers import REPO_ROOT, load_action, load_workflow, load_yaml
+from ..._helpers import REPO_ROOT, load_workflow, load_yaml
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -88,39 +88,14 @@ def test_build_results_trigger_matches_build_config() -> None:
         pytest.fail(" / ".join(msg_parts))
 
 
-def test_build_results_reuses_load_config_pr_context() -> None:
+def test_build_results_reuses_the_resolved_pr_context() -> None:
     doc = load_workflow("build-results.yml")
-    outputs = doc["jobs"]["load-config"]["outputs"]
+    outputs = doc["jobs"]["report-context"]["outputs"]
     assert outputs["base_sha"] == "${{ steps.context.outputs.base_sha }}"
     steps = doc["jobs"]["post-pr-comment"]["steps"]
     report = next(step for step in steps if step.get("name") == "Generate combined report")
-    assert report["env"]["BASELINE_SHA"] == "${{ needs.load-config.outputs.base_sha }}"
+    assert report["env"]["BASELINE_SHA"] == "${{ needs.report-context.outputs.base_sha }}"
     comment = next(step for step in steps if step.get("name") == "Post combined comment")
-    assert comment["with"]["pr-number"] == "${{ needs.load-config.outputs.pr }}"
+    assert comment["with"]["pr-number"] == "${{ needs.report-context.outputs.pr }}"
     assert comment["with"]["comment-tag"] == "build-results"
     assert comment["with"]["mode"] == "upsert"
-
-
-def test_only_pr_reporting_allows_missing_diagnostic_artifacts() -> None:
-    doc = load_workflow("build-results.yml")
-    for job, allows_missing in (("post-pr-comment", "true"), ("save-baselines", "false")):
-        download = next(
-            step
-            for step in doc["jobs"][job]["steps"]
-            if step.get("uses") == "./.github/actions/download-all-artifacts"
-        )
-        assert download["with"].get("allow-missing", "false") == allows_missing
-        if job == "post-pr-comment":
-            assert "continue-on-error" not in download
-        assert download["with"]["sizes-file"] == (
-            "baseline-sizes.json" if job == "save-baselines" else "pr-sizes.json"
-        )
-        assert download["with"].get("require-sizes", "false") == (
-            "true" if job == "save-baselines" else "false"
-        )
-    action = load_action("download-all-artifacts")
-    step_env = action["runs"]["steps"][0]["env"]
-    assert action["inputs"]["allow-missing"]["default"] == "false"
-    assert step_env["INPUT_ALLOW_MISSING"] == "${{ inputs.allow-missing }}"
-    assert action["inputs"]["require-sizes"]["default"] == "false"
-    assert step_env["INPUT_REQUIRE_SIZES"] == "${{ inputs.require-sizes }}"

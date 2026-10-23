@@ -705,6 +705,27 @@ def test_missing_status_still_renders(tmp_path: Path) -> None:
     assert comment.endswith("<sub>Updated 2026-02-17 12:00 UTC · triggered by Linux</sub>\n")
 
 
+def test_footer_defaults_to_the_triggering_run_and_collected_commit(tmp_path: Path) -> None:
+    event = tmp_path / "event.json"
+    event.write_text(json.dumps({"workflow_run": {"name": "iOS", "head_sha": "other"}}))
+    status = {"repo": "owner/repo", "head_sha": HEAD, "platforms": []}
+    write_files(tmp_path, {"build-status.json": json.dumps(status)})
+    env = {"GITHUB_EVENT_PATH": str(event)}
+
+    footer = generate_comment(env, tmp_path, NOW).rsplit("\n\n", 1)[-1]
+    assert f"for [`0123456`](https://github.com/owner/repo/commit/{HEAD})" in footer
+    assert "triggered by iOS" in footer
+    assert "triggered by Linux" in generate_comment({**env, "TRIGGERED_BY": "Linux"}, tmp_path, NOW)
+    assert "triggered by unknown" in generate_comment({}, tmp_path, NOW)
+
+
+def test_input_paths_resolve_against_base_dir_with_env_overrides(tmp_path: Path) -> None:
+    status = {"platforms": [_workflow("Linux", "failure", 9001)]}
+    write_files(tmp_path, {"elsewhere/status.json": json.dumps(status)})
+    assert "❌" not in generate_comment({}, tmp_path, NOW)
+    assert "❌" in generate_comment({"BUILD_STATUS_JSON": "elsewhere/status.json"}, tmp_path, NOW)
+
+
 def test_main_writes_comment_and_job_summary(
     tmp_path: Path, gh_summary: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
