@@ -449,7 +449,9 @@ step leaves it out.
 - **Gradle**: Android jobs cache Gradle User Home through `setup-gradle`'s open-source `basic`
   provider, keyed on the Gradle build files, only on the S3 backend; on GitHub's cache it evicted
   compiler caches (#14474), so GitHub-hosted legs such as Android on macOS don't cache it. Saves
-  follow the `auto` policy, so pull requests save too.
+  follow the `auto` policy, so pull requests save too. The key hashes every `**/*.gradle*` file in
+  the workspace, so `build-setup` runs it before restoring the CPM cache and installing Qt: Windows
+  cannot stat `android_openssl`'s directory symlinks there, and those Gradle files aren't QGC's.
 - **pre-commit** restores prek's hook environments (`prek-v1-*`: `~/.cache/prek` without its download
   and build caches) keyed on `.pre-commit-config.yaml`, falling back to an earlier configuration's
   environments. prek installs only the environments of hooks that run, so a push that misses the
@@ -528,8 +530,8 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   (`halt_on_error=1`) on every test, overriding the shell environment. ThreadSanitizer runs only on
   manual Code Analysis dispatch.
 - **Coverage**: GCC uses atomic counter updates for worker threads; gcovr tolerates the known GCC
-  negative-counter bug and reports discarded counters. Codecov receives the Cobertura
-  `coverage.xml`; the step summary, threshold check, and build-results comment read gcovr's
+  negative-counter bug and reports discarded counters. Codecov receives only the Cobertura
+  `coverage.xml`, over OIDC (fork PRs upload tokenless); the step summary, threshold check, and build-results comment read gcovr's
   `coverage-summary.json`. `coverage_report.py` fails before generating them when the tests wrote no
   `.gcda` counters. `verify_coverage_thresholds.py --build-dir` reads thresholds from
   `CMakeCache.txt` and compares exact covered/total counts, not gcovr's rounded percentages. Manual
@@ -573,11 +575,11 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   artifact (`QGroundControl-linux-<abis>-aab`) but not to AWS or the Play Store. Tags start a
   staged Play Store production rollout; master pushes complete a beta release.
 - **Custom plugin** (`linux.yml`'s `custom-plugin` job, behind the Linux gate): the `custom-example`
-  overlay changes the app name and feature set, global compile definitions, so it is its own build.
-  Relevant PRs build only Debug, run the Unit suite (excluding `StockUI`), and boot the build tree;
-  the stock Linux legs run the integration suites. Master pushes, merge-queue runs, and manual
-  dispatches also build Release without test hooks and verify its AppImage. Debug and Release keep
-  separate compiler caches. `custom-example/` changes trigger the Linux workflow.
+  overlay changes the app name and feature set, global compile definitions, so it is its own build:
+  one Debug build that runs the Unit suite (excluding `StockUI`) and boots the build tree; the stock
+  Linux legs run the integration suites and cover Release compiles. Outside pull requests it also
+  installs the build stripped (`cmake --install --strip`; the Debug binary carries ~800 MB of debug
+  info) into an AppImage and boots that. `custom-example/` changes trigger the Linux workflow.
 - **ClusterFuzzLite**: PR runs use the bundled seed corpus without querying historical artifacts
   (`NO_CLUSTERFUZZ_DEPLOYMENT=true`), which also disables previous-build crash comparison:
   reproducible crashes fail the PR whether or not they predate it. Crash files and SARIF
@@ -719,20 +721,25 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   workflows and their failures show while others still run; the last one to complete renders the
   final state. `collect_build_status.py` (stdlib only, before Python dependencies install) writes
   each workflow's state, duration, and jobs, with failed-step log links, from one jobs-API call per
-  run (`--status-out`), including Code Analysis, which is not a trigger. The job then downloads,
+  run (`--status-out`), including Code Analysis, which is not a trigger. A failed job on a RunsOn
+  runner also has its annotations read: RunsOn fails a job whose Spot instance AWS reclaimed and
+  re-runs the run's failed jobs once it completes (after attempts 1 and 2), so a workflow whose only
+  failed legs were interrupted is `interrupted` rather than `failure`. The job then downloads,
   with `download_artifacts.py` (one directory per artifact plus a manifest naming its workflow),
   the completed runs' test results, coverage, and artifact sizes, the pre-commit results, and Code
   Analysis's per-tool `*-timings.json` and `*-diagnostics.json`; runs still in progress are
   skipped. Missing diagnostic artifacts are allowed (`--allow-missing`) when tests did not run, but
   platform download failures fail the job. The comment is also the job summary.
 - The comment (`generate_build_results_comment.py`) leads with a verdict (✅ passed, ❌ failed,
-  ⏳ in progress, 🚫 cancelled, ⏭️ nothing to build), the linked head commit, and how many
-  platform workflows are done, pending, or skipped by change detection (every build job skipped).
+  🔁 retrying after a Spot interruption, ⏳ in progress, 🚫 cancelled, ⏭️ nothing to build), the
+  linked head commit, and how many platform workflows are done, pending, retrying, or skipped by
+  change detection (every build job skipped).
   A table gives each workflow's status, duration, test or hook counts, artifact size with its
   change from the PR base, and run link. A Failures section follows when anything failed: each
   failed job with links to its failing steps' logs, failed tests with their first report lines
   (QtTest `FAIL!` blocks, sanitizer reports, else the output tail) from the JUnit XML, and failed
-  pre-commit hooks. Collapsed sections cover per-suite test results, the slowest tests, coverage
+  pre-commit hooks; a Spot interruptions section lists the jobs RunsOn will re-run. Collapsed
+  sections cover per-suite test results, the slowest tests, coverage
   (lines, functions, branches, with changes in percentage points), artifact sizes (⚠️ above 1%
   and 1 MiB growth), pre-commit counts, and Code Analysis unique warnings (a header's warning
   counts once however many units and shards include it) with the most frequent checks and the files

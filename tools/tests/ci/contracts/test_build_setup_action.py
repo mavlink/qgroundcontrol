@@ -43,3 +43,16 @@ def test_java_is_installed_before_gradle_and_the_android_sdk() -> None:
     assert android[java]["if"] == "inputs.mode == 'android'"
     assert java < uses.index("gradle/actions/setup-gradle")
     assert java < uses.index("android-actions/setup-android")
+
+
+def test_gradle_hashes_the_workspace_before_the_cpm_cache_and_qt_are_restored() -> None:
+    # The basic provider's key globs **/*.gradle* under the workspace, following symlinks; Windows
+    # cannot stat android_openssl's per-ABI `include` symlinks in the restored CPM cache (EPERM).
+    steps = get_steps(load_action("build-setup"))
+    names = [step.get("name") or step.get("uses", "") for step in steps]
+    gradle = names.index("Setup Gradle (Android)")
+    assert names.index("./.github/actions/setup-python") < gradle
+    assert gradle < names.index("Setup caching")
+    for index, step in enumerate(steps):
+        if step.get("uses") in {"./.github/actions/qt-install", "./.github/actions/cache"}:
+            assert gradle < index, names[index]

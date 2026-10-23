@@ -55,6 +55,7 @@ SIZE_WARN_MIN_BYTES = 1024 * 1024
 STATE_LABELS = {
     "success": "✅ Passed",
     "failure": "❌ Failed",
+    "interrupted": "🔁 Retrying",
     "cancelled": "🚫 Cancelled",
     "running": "🔄 Running",
     "pending": "⏳ Pending",
@@ -509,11 +510,14 @@ def render_verdict(report: Report) -> str:
         if state == "failure"
     ]
     pending = sum(state in _PENDING for state in states)
+    retrying = sum(state == "interrupted" for state in states)
     skipped = sum(state == "skipped" for state in states)
-    done = len(states) - pending
+    done = len(states) - pending - retrying
 
     if failing:
         verdict = f"❌ **{_plural(len(failing), 'workflow')} failed**"
+    elif "interrupted" in [*gating, _state(report.analysis_run)]:
+        verdict = "🔁 **Retrying after a Spot interruption**"
     elif any(state in _PENDING for state in gating):
         verdict = "⏳ **Builds in progress**"
     elif "cancelled" in gating:
@@ -529,6 +533,8 @@ def render_verdict(report: Report) -> str:
         extras.append(f"{skipped} skipped by change detection")
     if pending:
         extras.append(f"{pending} pending")
+    if retrying:
+        extras.append(f"{retrying} retrying")
     if extras:
         progress += f" ({', '.join(extras)})"
     parts = [verdict, _commit_link(report), progress] if states else [verdict, _commit_link(report)]
@@ -668,6 +674,8 @@ def _job_line(workflow: str, job: dict[str, Any]) -> str:
         what = f"failed at {failed}"
     else:
         what = str(job.get("conclusion", "failed")).replace("_", " ")
+    if job.get("interrupted"):
+        what = "AWS reclaimed its Spot instance"
     log = _link("log", url) if url else ""
     line = f"- **{escape_text(clip(workflow))}** · {escape_text(clip(job.get('name', '')))}: {what}"
     return f"{line} · {log}" if log else line
@@ -676,6 +684,26 @@ def _job_line(workflow: str, job: dict[str, Any]) -> str:
 def _excerpt_block(case: JUnitCase, limits: Limits) -> str:
     lines = [line[: limits.line_chars] for line in case.excerpt[: limits.excerpt_lines]]
     return code_block("\n".join(lines) or "(no output captured)", "text")
+
+
+def render_interruptions(report: Report) -> str:
+    """Workflows whose only failures were Spot interruptions, which RunsOn re-runs."""
+    lines = [
+        _job_line(str(entry.get("name", "")), job)
+        for entry in [*report.platforms, report.precommit_run, report.analysis_run]
+        if entry and _state(entry) == "interrupted"
+        for job in _failed_jobs(entry)
+        if job.get("interrupted")
+    ]
+    if not lines:
+        return ""
+    return "\n\n".join(
+        [
+            "### 🔁 Spot interruptions",
+            "\n".join(lines),
+            "RunsOn re-runs these jobs once their workflow run finishes; this comment updates then.",
+        ]
+    )
 
 
 def render_failures(report: Report, limits: Limits) -> str:
@@ -1026,6 +1054,8 @@ def render_analysis(report: Report, limits: Limits) -> str:
         parts.append(
             "Still running when this comment was updated; findings appear once it completes."
         )
+    elif state == "interrupted":
+        parts.append("Re-running after a Spot interruption; findings appear once it completes.")
     else:
         parts.append("No analysis results were downloaded.")
     parts.append(
@@ -1055,6 +1085,7 @@ def render(report: Report, limits: Limits) -> str:
         render_verdict(report),
         render_table(report),
         render_failures(report, limits),
+        render_interruptions(report),
         render_tests(report, limits),
         render_slowest(report, limits),
         render_coverage(report),
