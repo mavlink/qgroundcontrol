@@ -63,6 +63,11 @@ void RequestMessageCoordinator::cancelRequests(void* resultHandlerData)
     }
 }
 
+bool RequestMessageCoordinator::hasPendingRequests(int compId) const
+{
+    return !_infoMap.value(compId).isEmpty() || !_queueMap.value(compId).isEmpty();
+}
+
 bool RequestMessageCoordinator::_duplicate(int compId, int msgId) const
 {
     const mavlink_message_info_t* info = MAVLinkMessageInfo::byId(msgId);

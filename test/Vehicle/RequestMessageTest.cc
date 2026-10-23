@@ -2,11 +2,12 @@
 
 #include <optional>
 
+#include <QtCore/QRegularExpression>
+
 #include "Fixtures/RAIIFixtures.h"
 #include "MavCommandQueue.h"
 #include "MultiVehicleManager.h"
-
-#include <QtCore/QRegularExpression>
+#include "RequestMessageCoordinator.h"
 RequestMessageTest::TestCase_t RequestMessageTest::_rgTestCases[] = {
     {MockLink::FailRequestMessageNone, MAV_RESULT_ACCEPTED, Vehicle::RequestMessageNoFailure, 1, MAVLINK_MSG_ID_DEBUG, false, 0},
     {MockLink::FailRequestMessageCommandAcceptedMsgNotSent, MAV_RESULT_FAILED,
@@ -88,6 +89,11 @@ void RequestMessageTest::_duplicateCommand()
 
     MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
     Vehicle* vehicle = vehicleMgr->activeVehicle();
+    // Initial connect can leave the vehicle's own requests (e.g. the AVAILABLE_MODES download) in
+    // flight, slowly under sanitizers; an identical test request would be rejected as a duplicate.
+    QVERIFY_TRUE_WAIT(!vehicle->_reqMsgCoord->hasPendingRequests(MAV_COMP_ID_AUTOPILOT1) &&
+                          !vehicle->isMavCommandPending(MAV_COMP_ID_AUTOPILOT1, MAV_CMD_REQUEST_MESSAGE),
+                      TestTimeout::longMs());
     _mockLink->clearReceivedMavCommandCounts();
     _mockLink->setRequestMessageFailureMode(firstRequestCase.failureMode);
     QVERIFY(false == vehicle->isMavCommandPending(MAV_COMP_ID_AUTOPILOT1, MAV_CMD_REQUEST_MESSAGE));
@@ -161,6 +167,7 @@ void RequestMessageTest::_duplicateWhileQueued()
 
     MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
     Vehicle* vehicle = vehicleMgr->activeVehicle();
+    QVERIFY_TRUE_WAIT(!vehicle->_reqMsgCoord->hasPendingRequests(MAV_COMP_ID_AUTOPILOT1), TestTimeout::longMs());
     _mockLink->clearReceivedMavCommandCounts();
     _mockLink->setRequestMessageFailureMode(firstRequestCase.failureMode);
 
@@ -204,6 +211,11 @@ void RequestMessageTest::_staleAvailableModesIgnored()
     Vehicle* vehicle = MultiVehicleManager::instance()->activeVehicle();
     vehicle->_deleteGimbalController();
     vehicle->_deleteCameraManager();
+    // Initial connect can leave the vehicle's own requests (e.g. the AVAILABLE_MODES download) in
+    // flight, slowly under sanitizers; an identical test request would be rejected as a duplicate.
+    QVERIFY_TRUE_WAIT(!vehicle->_reqMsgCoord->hasPendingRequests(MAV_COMP_ID_AUTOPILOT1) &&
+                          !vehicle->isMavCommandPending(MAV_COMP_ID_AUTOPILOT1, MAV_CMD_REQUEST_MESSAGE),
+                      TestTimeout::longMs());
     _mockLink->setRequestMessageNoResponse(MAVLINK_MSG_ID_AVAILABLE_MODES);
 
     const auto respondWithAvailableMode = [this](uint8_t modeIndex) {
