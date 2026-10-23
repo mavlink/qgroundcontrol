@@ -1,6 +1,7 @@
 import QtQuick
 import QtTest
 
+import "../../../../src/AutoPilotPlugins/PX4/PX4ConfigRows.js" as ConfigRows
 import "../../../../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" as Rows
 
 /// Tests the pure row-definition and filtering logic behind PX4FailsafesComponent.qml.
@@ -80,13 +81,13 @@ TestCase {
     }
 
     function test_visibleRows_hidesRowsWithoutParameters() {
-        var rows = Rows.visibleRows(Rows.failsafeRows(), _multiRotor, _exists({ NAV_DLL_ACT: true, COM_DL_LOSS_T: true }))
+        var rows = ConfigRows.visibleRows(Rows.failsafeRows(), _multiRotor, _exists({ NAV_DLL_ACT: true, COM_DL_LOSS_T: true }))
         compare(_ids(rows), ["dataLink"])
         compare(rows[0].params, ["COM_DL_LOSS_T", "NAV_DLL_ACT"])
     }
 
     function test_visibleRows_dropsMissingCellsOnly() {
-        var rows = Rows.visibleRows(Rows.failsafeRows(), _multiRotor, _exists({ NAV_DLL_ACT: true }))
+        var rows = ConfigRows.visibleRows(Rows.failsafeRows(), _multiRotor, _exists({ NAV_DLL_ACT: true }))
         var dataLink = _rowById(rows, "dataLink")
         verify(dataLink)
         compare(dataLink.params, ["NAV_DLL_ACT"])
@@ -110,14 +111,14 @@ TestCase {
     function test_visibleRows_firmwareParameterSets(data) {
         var names = {}
         data.names.forEach(function(name) { names[name] = true })
-        var row = _rowById(Rows.visibleRows(Rows.failsafeRows(), _multiRotor, _exists(names)), data.row)
+        var row = _rowById(ConfigRows.visibleRows(Rows.failsafeRows(), _multiRotor, _exists(names)), data.row)
         verify(row, data.row + " is hidden")
         compare(row.params, data.params)
     }
 
     function test_visibleRows_allParametersShowsEveryRowForVtol() {
         var all = Rows.failsafeRows()
-        var rows = Rows.visibleRows(all, _vtol, _exists(_allParams))
+        var rows = ConfigRows.visibleRows(all, _vtol, _exists(_allParams))
         verify(_rowById(rows, "quadchute"))
         verify(_rowById(rows, "motorFailure"))
         verify(_rowById(rows, "fixedWingGps"))
@@ -144,20 +145,20 @@ TestCase {
 
     function test_visibleRows_vehicleRows(data) {
         var vehicle = { multiRotor: data.multiRotor, fixedWing: data.fixedWing, vtol: data.vtol }
-        var rows = Rows.visibleRows(Rows.failsafeRows(), vehicle, _exists(_allParams))
+        var rows = ConfigRows.visibleRows(Rows.failsafeRows(), vehicle, _exists(_allParams))
         compare(_rowById(rows, data.row) !== null, data.shown)
     }
 
     function test_visibleRows_cellVehicleFilter() {
         var positionParams = function(vehicle) {
-            return _rowById(Rows.visibleRows(Rows.failsafeRows(), vehicle, _exists(_allParams)), "positionEstimate").params
+            return _rowById(ConfigRows.visibleRows(Rows.failsafeRows(), vehicle, _exists(_allParams)), "positionEstimate").params
         }
         verify(positionParams(_multiRotor).indexOf("COM_POS_FS_EPH") >= 0)
         verify(positionParams(_fixedWing).indexOf("COM_POS_FS_EPH") < 0)
         verify(positionParams(_fixedWing).indexOf("COM_VEL_FS_EVH") >= 0)
 
         var withLoiterRadius = function(vehicle) {
-            var row = _rowById(Rows.visibleRows(Rows.failsafeRows(), vehicle, _exists(_allParams)), "returnMode")
+            var row = _rowById(ConfigRows.visibleRows(Rows.failsafeRows(), vehicle, _exists(_allParams)), "returnMode")
             return row.params.indexOf("RTL_LOITER_RAD") >= 0
         }
         verify(!withLoiterRadius(_multiRotor))
@@ -165,7 +166,7 @@ TestCase {
         verify(withLoiterRadius(_vtol))
 
         var withLandSpeed = function(vehicle) {
-            var row = _rowById(Rows.visibleRows(Rows.failsafeRows(), vehicle, _exists(_allParams)), "returnMode")
+            var row = _rowById(ConfigRows.visibleRows(Rows.failsafeRows(), vehicle, _exists(_allParams)), "returnMode")
             return row.params.indexOf("MPC_LAND_SPEED") >= 0
         }
         verify(withLandSpeed(_multiRotor))
@@ -175,7 +176,7 @@ TestCase {
 
     function test_visibleRows_fixedCellOnlyWhenActionParamMissing() {
         var imbalanced = function(names) {
-            return _rowById(Rows.visibleRows(Rows.failsafeRows(), _multiRotor, _exists(names)), "imbalancedPropeller")
+            return _rowById(ConfigRows.visibleRows(Rows.failsafeRows(), _multiRotor, _exists(names)), "imbalancedPropeller")
         }
         var fixedTexts = function(row) {
             return row.cells.filter(function(cell) { return cell.fixed }).length
@@ -186,7 +187,7 @@ TestCase {
 
     function test_visibleRows_thresholdBarNeedsEveryThreshold() {
         var battery = function(names) {
-            return _rowById(Rows.visibleRows(Rows.failsafeRows(), _multiRotor, _exists(names)), "battery")
+            return _rowById(ConfigRows.visibleRows(Rows.failsafeRows(), _multiRotor, _exists(names)), "battery")
         }
         var hasBar = function(row) {
             return row.cells.some(function(cell) { return cell.thresholdBar })
@@ -234,7 +235,7 @@ TestCase {
         var row = _rowById(Rows.failsafeRows(), data.row)
         verify(row, "unknown row " + data.row)
         var valueOf = function(name) { return data.values[name] }
-        compare(Rows.isRowActive(row, valueOf), data.active)
+        compare(ConfigRows.isRowActive(row, valueOf), data.active)
     }
 
     readonly property var _severities: ["none", "warning", "fallback", "hold", "return", "land", "terminate"]

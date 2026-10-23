@@ -22,7 +22,7 @@ void PX4FailsafesUITest::_navigateToFailsafes()
     (void) clickSidebarButton(QStringLiteral("vehicleConfig_comp_Failsafes"));
 }
 
-void PX4FailsafesUITest::_setRebootRequiredFact(Fact* fact, const QVariant& rawValue)
+void PX4FailsafesUITest::_setFactAndWait(Fact* fact, const QVariant& rawValue)
 {
     QSignalSpy ackSpy(fact, &Fact::vehicleUpdated);
     QVERIFY(ackSpy.isValid());
@@ -54,13 +54,13 @@ void PX4FailsafesUITest::_testRebootChip()
                         QVERIFY(chip);
                         QCOMPARE(chip->property("text").toString(), QStringLiteral("Applies after reboot"));
 
-                        _setRebootRequiredFact(detection, initialValue.toInt() ? 0 : 1);
+                        _setFactAndWait(detection, initialValue.toInt() ? 0 : 1);
                         if (QTest::currentTestFailed()) {
                             return;
                         }
                         QTRY_COMPARE(chip->property("text").toString(), QStringLiteral("Reboot required"));
 
-                        _setRebootRequiredFact(detection, initialValue);
+                        _setFactAndWait(detection, initialValue);
                         if (QTest::currentTestFailed()) {
                             return;
                         }
@@ -102,5 +102,58 @@ void PX4FailsafesUITest::_testBitmaskSlider()
                         QTRY_COMPARE(exceptions->rawValue().toInt() & bit, 0);
                         QVERIFY(!slider->property("checked").toBool());
                         QVERIFY_TRUE_WAIT(!vehicle->parameterManager()->pendingWrites(), TestTimeout::mediumMs());
+                    });
+}
+
+// Active hides failsafes that are turned off, and a group once all its failsafes are hidden
+void PX4FailsafesUITest::_activeFilterHidesInactiveFailsafes()
+{
+    runWithMockLink([] { return MockLink::startPX4MockLink(); },
+                    [&](QPointer<MockLink> /*mockLink*/, Vehicle* vehicle) {
+                        _navigateToFailsafes();
+                        if (QTest::currentTestFailed()) {
+                            return;
+                        }
+
+                        QQuickItem* const filterBar =
+                            findVisibleItem(_rootItem, QStringLiteral("failsafes_filter"), 3000);
+                        QVERIFY(filterBar);
+                        QVERIFY(findItem(_rootItem, QStringLiteral("failsafes_row_attitude")));
+
+                        // Turn off every Vehicle Health failsafe the vehicle has on, with the page open so it marks the
+                        // reboot-required ones instead of showing the reboot notice
+                        const QList<QPair<QString, int>> disabled = {
+                            {QStringLiteral("FD_FAIL_R"), 0},       {QStringLiteral("FD_FAIL_P"), 0},
+                            {QStringLiteral("FD_ACT_EN"), 0},       {QStringLiteral("FD_ESCS_EN"), 0},
+                            {QStringLiteral("FD_IMB_PROP_THR"), 0},
+                        };
+                        for (const auto& [name, value] : disabled) {
+                            Fact* const fact =
+                                vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, name);
+                            QVERIFY2(fact, qPrintable(name));
+                            if (fact->rawValue().toInt() != value) {
+                                _setFactAndWait(fact, value);
+                                if (QTest::currentTestFailed()) {
+                                    return;
+                                }
+                            }
+                        }
+
+                        QVERIFY(QMetaObject::invokeMethod(filterBar, "filterActivated", Q_ARG(int, 1)));
+                        QTRY_VERIFY(!findVisibleItem(_rootItem, QStringLiteral("failsafes_row_attitude"), 0));
+                        QVERIFY(!findVisibleItem(_rootItem, QStringLiteral("failsafes_group_VehicleHealth"), 0));
+                        // Return Mode settings always apply
+                        QVERIFY(findVisibleItem(_rootItem, QStringLiteral("failsafes_row_returnMode"), 0));
+
+                        // The summary counts the failsafes actually shown, out of every one on the page
+                        const auto [visibleRows, totalRows] = countRows(QStringLiteral("failsafes_row_"));
+                        QVERIFY(visibleRows < totalRows);
+                        QCOMPARE(filterBar->property("summary").toString(),
+                                 QStringLiteral("Showing %1 of %2 failsafes.").arg(visibleRows).arg(totalRows));
+
+                        QVERIFY(QMetaObject::invokeMethod(filterBar, "filterActivated", Q_ARG(int, 0)));
+                        QTRY_VERIFY(findVisibleItem(_rootItem, QStringLiteral("failsafes_group_VehicleHealth"), 0));
+                        QCOMPARE(filterBar->property("summary").toString(),
+                                 QStringLiteral("Showing all %1 failsafes.").arg(totalRows));
                     });
 }

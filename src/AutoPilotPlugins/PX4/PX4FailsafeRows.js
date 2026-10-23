@@ -1,20 +1,9 @@
 .pragma library
 
-// Row definitions and filtering for PX4FailsafesComponent.qml. Cells name parameters only; the control, units and
-// choices come from the vehicle's parameter metadata.
-//
-// Row:  { id, group, title, description, vehicles?, warnOnly?, activeWhen?, activeWhenAny?, cells }
-// Cell: { label, param? | thresholdBar? | fixed?, severity?, note?, vehicles?, onlyIfMissing? }
-//   vehicles        "multiRotor" | "fixedWing" | "vtol" names, any one matching shows the row or cell
-//   activeWhen      [{ param, op: "gt" | "ne" | "eq", value, onlyIfMissing? }], all must hold. Omitted means always active.
-//                   A condition with onlyIfMissing is ignored when that parameter is on the vehicle.
-//   activeWhenAny   [[condition, ...], ...], at least one list must fully hold. Combines with activeWhen.
-//                   A list only counts when at least one of its parameters is on the vehicle.
-//   severity        marks an action. A string for a fixed action, or a map of the parameter's raw values to a
+// Row definitions for PX4FailsafesComponent.qml, in the PX4ConfigRows.js schema plus:
+// Row:  warnOnly?   the failsafe only warns
+// Cell: severity?   marks an action. A string for a fixed action, or a map of the parameter's raw values to a
 //                   severity: none, warning, fallback, hold, return, land or terminate
-//   fixed           text for behavior the firmware does not make configurable
-//   onlyIfMissing   shows the cell only when this parameter is not on the vehicle
-//   thresholdBar    [emergency, critical, low] battery threshold parameters
 
 // Shared by the parameters that use the same None/Warning/Hold/Return/Terminate/Land choices
 var _commonActions = { "0": "none", "1": "warning", "2": "hold", "3": "return", "4": "terminate", "5": "land" }
@@ -315,127 +304,6 @@ function failsafeRows() {
             ]
         }
     ]
-}
-
-function _matchesVehicle(vehicles, vehicle) {
-    if (!vehicles) {
-        return true
-    }
-    for (var i = 0; i < vehicles.length; i++) {
-        if (vehicle[vehicles[i]]) {
-            return true
-        }
-    }
-    return false
-}
-
-function _cellParams(cell) {
-    if (cell.thresholdBar) {
-        return cell.thresholdBar
-    }
-    return cell.param ? [cell.param] : []
-}
-
-function _allExist(names, paramExists) {
-    for (var i = 0; i < names.length; i++) {
-        if (!paramExists(names[i])) {
-            return false
-        }
-    }
-    return true
-}
-
-/// Returns the rows to show for a vehicle. Each returned row is a copy of the row holding only the cells the vehicle
-/// supports (the cell objects are shared with `rows`), plus `params`, the parameter names those cells use.
-/// Rows with no parameter on the vehicle are left out.
-function visibleRows(rows, vehicle, paramExists) {
-    var visible = []
-
-    for (var r = 0; r < rows.length; r++) {
-        var row = rows[r]
-        if (!_matchesVehicle(row.vehicles, vehicle)) {
-            continue
-        }
-
-        var cells = []
-        var params = []
-        var hasParamCell = false
-
-        for (var c = 0; c < row.cells.length; c++) {
-            var cell = row.cells[c]
-            if (!_matchesVehicle(cell.vehicles, vehicle)) {
-                continue
-            }
-            if (cell.onlyIfMissing && paramExists(cell.onlyIfMissing)) {
-                continue
-            }
-            var cellParams = _cellParams(cell)
-            if (!_allExist(cellParams, paramExists)) {
-                continue
-            }
-            cells.push(cell)
-            hasParamCell = hasParamCell || cellParams.length > 0
-            for (var p = 0; p < cellParams.length; p++) {
-                if (params.indexOf(cellParams[p]) < 0) {
-                    params.push(cellParams[p])
-                }
-            }
-        }
-
-        if (!hasParamCell) {
-            continue
-        }
-
-        visible.push(Object.assign({}, row, { warnOnly: row.warnOnly === true, cells: cells, params: params }))
-    }
-
-    return visible
-}
-
-function _conditionsHold(conditions, rawValueOf, requireAvailable) {
-    var available = 0
-
-    for (var i = 0; i < conditions.length; i++) {
-        var condition = conditions[i]
-        if (condition.onlyIfMissing && rawValueOf(condition.onlyIfMissing) !== undefined) {
-            continue
-        }
-        var value = rawValueOf(condition.param)
-        // Nothing can turn the failsafe off through a parameter the vehicle lacks
-        if (value === undefined) {
-            continue
-        }
-        available++
-        if (condition.op === "gt" && !(value > condition.value)) {
-            return false
-        }
-        if (condition.op === "ne" && value === condition.value) {
-            return false
-        }
-        if (condition.op === "eq" && value !== condition.value) {
-            return false
-        }
-    }
-
-    return !requireAvailable || available > 0
-}
-
-/// rawValueOf(name) returns a parameter's raw value, or undefined when the vehicle does not have it
-function isRowActive(row, rawValueOf) {
-    if (!_conditionsHold(row.activeWhen || [], rawValueOf)) {
-        return false
-    }
-
-    var alternatives = row.activeWhenAny
-    if (!alternatives) {
-        return true
-    }
-    for (var i = 0; i < alternatives.length; i++) {
-        if (_conditionsHold(alternatives[i], rawValueOf, true)) {
-            return true
-        }
-    }
-    return false
 }
 
 /// Severity key for an action cell: none, warning, fallback, hold, return, land or terminate.

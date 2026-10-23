@@ -131,12 +131,14 @@ SetupPage {
                         spacing:            _margins
 
                         QGCRadioButtonBar {
+                            objectName:     "ports_filter"
                             model:          [ qsTr("All Ports"), qsTr("In Use") ]
                             currentIndex:   _showInUseOnly ? 1 : 0
                             onActivated:    (index) => { _showInUseOnly = index === 1 }
                         }
 
                         QGCLabel {
+                            objectName:         "ports_summary"
                             Layout.fillWidth:   true
                             color:              qgcPal.textSecondary
                             text:               _showInUseOnly ?
@@ -172,6 +174,7 @@ SetupPage {
                             model: controller.ports
 
                             ColumnLayout {
+                                objectName:         "ports_port_" + object.portId
                                 Layout.row:         1 + index * _rowsPerPort
                                 Layout.column:      0
                                 Layout.alignment:   Qt.AlignTop

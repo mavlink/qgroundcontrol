@@ -12,11 +12,13 @@ class PX4FailsafesUITest : public VehicleConfigUITestBase
 private slots:
     void _testRebootChip();
     void _testBitmaskSlider();
+    void _activeFilterHidesInactiveFailsafes();
 
 private:
     /// Navigates from the Fly view to the Failsafes page of the Configure view
     void _navigateToFailsafes();
 
-    /// Sets \a fact, which needs a vehicle reboot, and waits for the vehicle to accept it
-    void _setRebootRequiredFact(Fact* fact, const QVariant& rawValue);
+    /// Sets \a fact and waits for the vehicle to accept it. Run with the page open: it marks reboot-required settings
+    /// itself instead of showing the reboot notice.
+    void _setFactAndWait(Fact* fact, const QVariant& rawValue);
 };

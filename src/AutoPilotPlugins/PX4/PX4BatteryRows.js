@@ -1,7 +1,7 @@
 .pragma library
-.import "PX4FailsafeRows.js" as FailsafeRows
+.import "PX4ConfigRows.js" as ConfigRows
 
-// Row definitions and source rules for PX4BatteryComponent.qml. Rows and cells use the PX4FailsafeRows.js schema,
+// Row definitions and source rules for PX4BatteryComponent.qml. Rows and cells use the PX4ConfigRows.js schema,
 // so filtering and the active rules are shared. Controls, units and choices come from the parameter metadata.
 //
 // Extra row fields:  instance (1-based battery number), sourceParam, shared?
@@ -141,14 +141,14 @@ function batteryRows() {
     return rows
 }
 
-/// Rows the vehicle has parameters for. See PX4FailsafeRows.visibleRows.
+/// Rows the vehicle has parameters for. See PX4ConfigRows.visibleRows.
 function visibleRows(rows, paramExists) {
-    return FailsafeRows.visibleRows(rows, {}, paramExists)
+    return ConfigRows.visibleRows(rows, {}, paramExists)
 }
 
 /// rawValueOf(name) returns a parameter's raw value, or undefined when the vehicle does not have it
 function isRowActive(row, rawValueOf) {
-    return FailsafeRows.isRowActive(row, rawValueOf)
+    return ConfigRows.isRowActive(row, rawValueOf)
 }
 
 /// PX4 1.18 applies BAT#_I_OVERWRITE in the shared battery estimate. Before that only the analog power module did.
@@ -212,42 +212,14 @@ function unclaimedTelemetryIds(reportedIds, batteries) {
     return reportedIds.filter(function (id) { return claimed.indexOf(id) < 0 })
 }
 
-function _cellParams(cell) {
-    if (cell.thresholdBar) {
-        return cell.thresholdBar
-    }
-    return cell.param ? [cell.param] : []
-}
-
-function _addUnique(names, added) {
-    for (var i = 0; i < added.length; i++) {
-        if (names.indexOf(added[i]) < 0) {
-            names.push(added[i])
-        }
-    }
-}
-
-/// Every parameter name the rows use. PX4 leaves parameters no running module looked up out of the initial
-/// download, so the page requests these by name.
+/// See PX4ConfigRows.allParams
 function allParams(rows) {
-    var params = []
-    for (var r = 0; r < rows.length; r++) {
-        for (var c = 0; c < rows[r].cells.length; c++) {
-            _addUnique(params, _cellParams(rows[r].cells[c]))
-        }
-    }
-    return params
+    return ConfigRows.allParams(rows)
 }
 
 /// Parameter names of the row's cells that are used with these inputs, in cell order
 function usedParams(row, inputs) {
-    var params = []
-    for (var c = 0; c < row.cells.length; c++) {
-        if (cellUsed(row.cells[c], inputs)) {
-            _addUnique(params, _cellParams(row.cells[c]))
-        }
-    }
-    return params
+    return ConfigRows.usedParams(row, function (cell) { return cellUsed(cell, inputs) })
 }
 
 /// Text for a source the firmware does not support on this battery, otherwise ""
