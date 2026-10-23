@@ -15,6 +15,8 @@ import pytest
 from ._helpers import completed
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from pytest_subprocess import FakeProcess
     from pytest_subprocess.fake_popen import FakePopen
 
@@ -417,3 +419,90 @@ class TestEnvDefaults:
         else:
             monkeypatch.setenv("QGC_TEST_FLAG", value)
         assert mod.env_flag("QGC_TEST_FLAG", default) is expected
+
+
+ARTIFACT_ZIP = ["gh", "api", "repos/o/r/actions/artifacts/7/zip"]
+
+
+def test_download_artifact_zip_writes_the_archive(fp: FakeProcess, tmp_path: Path) -> None:
+    fp.register(ARTIFACT_ZIP, stdout=b"PK\x03\x04zip")
+    destination = tmp_path / "nested" / "a.zip"
+    mod.download_artifact_zip("o/r", 7, destination)
+    assert destination.read_bytes() == b"PK\x03\x04zip"
+
+
+def test_download_artifact_zip_retries_transient_failures(
+    fp: FakeProcess, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr("common.gh_actions.time.sleep", lambda _seconds: None)
+    fp.register(ARTIFACT_ZIP, returncode=1, stderr="gh: HTTP 502: Bad Gateway")
+    fp.register(ARTIFACT_ZIP, stdout=b"zip")
+    mod.download_artifact_zip("o/r", "7", tmp_path / "a.zip")
+    assert fp.call_count(ARTIFACT_ZIP) == 2
+    assert (tmp_path / "a.zip").read_bytes() == b"zip"
+
+
+def _time_out_after_partial_write(destination: Path) -> Callable[[FakePopen], None]:
+    def time_out(_process: FakePopen) -> None:
+        destination.write_bytes(b"partial")
+        raise subprocess.TimeoutExpired(ARTIFACT_ZIP, 0.01)
+
+    return time_out
+
+
+def test_download_artifact_zip_retries_a_timed_out_transfer(
+    fp: FakeProcess, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr("common.gh_actions.time.sleep", lambda _seconds: None)
+    destination = tmp_path / "a.zip"
+    fp.register(ARTIFACT_ZIP, callback=_time_out_after_partial_write(destination))
+    fp.register(ARTIFACT_ZIP, stdout=b"zip")
+    mod.download_artifact_zip("o/r", 7, destination, timeout=0.01)
+    assert fp.call_count(ARTIFACT_ZIP) == 2
+    assert destination.read_bytes() == b"zip"
+
+
+def test_download_artifact_zip_timeouts_end_in_the_cleanup_error(
+    fp: FakeProcess, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr("common.gh_actions.time.sleep", lambda _seconds: None)
+    destination = tmp_path / "a.zip"
+    fp.register(ARTIFACT_ZIP, callback=_time_out_after_partial_write(destination), occurrences=2)
+    with pytest.raises(RuntimeError, match=r"timed out after 0\.01s"):
+        mod.download_artifact_zip("o/r", 7, destination, attempts=2, timeout=0.01)
+    assert fp.call_count(ARTIFACT_ZIP) == 2
+    assert not destination.exists()
+
+
+def test_download_artifact_zip_fails_without_leaving_a_file(
+    fp: FakeProcess, tmp_path: Path
+) -> None:
+    fp.register(ARTIFACT_ZIP, returncode=1, stderr="gh: Artifact has expired (HTTP 410)")
+    with pytest.raises(RuntimeError, match="HTTP 410"):
+        mod.download_artifact_zip("o/r", 7, tmp_path / "a.zip")
+    assert fp.call_count(ARTIFACT_ZIP) == 1
+    assert not (tmp_path / "a.zip").exists()
+    with pytest.raises(ValueError, match="positive"):
+        mod.download_artifact_zip("o/r", 0, tmp_path / "a.zip")
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("2026-10-23T20:46:14Z", "2026-10-23T20:46:14+00:00"),
+        ("2026-10-23T22:46:14+02:00", "2026-10-23T20:46:14+00:00"),
+        ("2026-10-23T20:46:14", "2026-10-23T20:46:14+00:00"),
+        ("", None),
+        (None, None),
+        ("yesterday", None),
+    ],
+)
+def test_parse_github_timestamp(value: object, expected: str | None) -> None:
+    parsed = mod.parse_github_timestamp(value)
+    assert (parsed.isoformat() if parsed else None) == expected
+
+
+def test_seconds_between_requires_an_ordered_pair() -> None:
+    assert mod.seconds_between("2026-10-23T20:46:14Z", "2026-10-23T20:59:07Z") == 773.0
+    assert mod.seconds_between("2026-10-23T20:59:07Z", "2026-10-23T20:46:14Z") is None
+    assert mod.seconds_between(None, "2026-10-23T20:46:14Z") is None

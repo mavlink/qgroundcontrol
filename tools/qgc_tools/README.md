@@ -2,6 +2,9 @@
 
 Reusable repository policy lives here; CLI and platform entrypoints call it.
 
+- `build_artifacts.py`: which GitHub artifacts are distributable packages (the build-results
+  comment's and the Pages dashboard's sizes), and the packages S3 publishes to `builds/<ref>/`
+  (the Pages downloads page).
 - `build_profile.py`: Ninja log and Clang time-trace hotspot summaries, CI build-timing snapshots,
   and their job-summary tables.
 - `build_errors.py`: the errors that explain a failed configure or build in its output (CMake

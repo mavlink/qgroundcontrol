@@ -6,6 +6,7 @@ import copy
 import functools
 import importlib.util
 import os
+import re
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -14,6 +15,7 @@ from typing import TYPE_CHECKING, Any
 import yaml
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
     from types import ModuleType
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -161,6 +163,97 @@ def get_step(steps: list[dict[str, Any]], name: str) -> dict[str, Any]:
     """The single step whose name or id is *name*."""
     (match,) = [step for step in steps if name in (step.get("name"), step.get("id"))]
     return match
+
+
+_EXPRESSION_TOKEN = re.compile(
+    r"\s*(?:(?P<op>==|!=|&&|\|\||!|\(|\))|'(?P<str>(?:[^']|'')*)'|(?P<num>\d+)"
+    r"|(?P<name>[A-Za-z_][\w-]*(?:\.[A-Za-z_][\w-]*)*))"
+)
+
+
+def evaluate_expression(expression: str, context: Mapping[str, Any]) -> Any:
+    """Evaluate a GitHub Actions expression of literals, context paths, ==, !=, !, && and ||.
+
+    Paths read nested *context* mappings (a missing one is null); comparisons ignore case, and
+    && and || return an operand, as in GitHub's evaluator. Function calls are not supported.
+    """
+    text = expression.strip()
+    if text.startswith("${{") and text.endswith("}}"):
+        text = text[3:-2]
+    tokens: list[tuple[str, Any]] = []
+    position = 0
+    while text[position:].strip():
+        match = _EXPRESSION_TOKEN.match(text, position)
+        if not match:
+            raise ValueError(f"cannot evaluate {expression!r} at {text[position:]!r}")
+        position = match.end()
+        if match["op"]:
+            tokens.append(("op", match["op"]))
+        elif match["str"] is not None:
+            tokens.append(("value", match["str"].replace("''", "'")))
+        elif match["num"]:
+            tokens.append(("value", int(match["num"])))
+        elif match["name"] in {"true", "false", "null"}:
+            tokens.append(("value", {"true": True, "false": False, "null": None}[match["name"]]))
+        else:
+            value: Any = context
+            for part in match["name"].split("."):
+                value = value.get(part) if isinstance(value, dict) else None
+            tokens.append(("value", value))
+
+    def peek() -> tuple[str, Any] | None:
+        return tokens[0] if tokens else None
+
+    def take(op: str) -> bool:
+        if peek() == ("op", op):
+            tokens.pop(0)
+            return True
+        return False
+
+    def primary() -> Any:
+        if take("("):
+            value = either()
+            if not take(")"):
+                raise ValueError(f"unbalanced parentheses in {expression!r}")
+            return value
+        if take("!"):
+            return not primary()
+        kind, value = tokens.pop(0)
+        if kind != "value":
+            raise ValueError(f"unexpected {value!r} in {expression!r}")
+        return value
+
+    def comparison() -> Any:
+        left = primary()
+        for op in ("==", "!="):
+            if take(op):
+                right = primary()
+                same = (
+                    left.casefold() == right.casefold()
+                    if isinstance(left, str) and isinstance(right, str)
+                    else left == right
+                )
+                return same if op == "==" else not same
+        return left
+
+    def both() -> Any:
+        value = comparison()
+        while take("&&"):
+            right = comparison()
+            value = right if value else value
+        return value
+
+    def either() -> Any:
+        value = both()
+        while take("||"):
+            right = both()
+            value = value if value else right
+        return value
+
+    result = either()
+    if tokens:
+        raise ValueError(f"unexpected {tokens[0][1]!r} in {expression!r}")
+    return result
 
 
 @dataclass(frozen=True)

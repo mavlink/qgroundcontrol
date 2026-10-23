@@ -1,0 +1,135 @@
+name: Pages
+
+# Builds https://mavlink.github.io/qgroundcontrol/ with tools/ci/publish/pages_site.py: the CI
+# health dashboard of master push builds, the JSON schemas, the master downloads, and the Doxygen
+# API docs. Every deploy replaces the whole site, so every build rebuilds all of it; the dashboard
+# history is read back from the deployed site.
+on:
+  workflow_run:  # zizmor: ignore[dangerous-triggers] reads completed master runs' metadata and artifacts through the API; never checks out or runs the triggering run's code
+    # GitHub requires literal workflow names; tools/tests/ci/contracts/test_pages_workflow.py
+    # keeps them in sync. The build job admits only master pushes, and Doxygen's own runs.
+    workflows:
+      - Linux
+      - Windows
+      - MacOS
+      - Android
+      - iOS
+      - Code Analysis
+      - Doxygen API Docs
+    types: [completed]
+    branches: [master]
+  push:
+    branches: [master]
+    paths:
+      - 'src/FactSystem/factmetadata.schema.json'
+      - 'tools/ci/publish/pages_*.py'
+      - 'tools/qgc_tools/build_artifacts.py'
+      - '.github/workflows/pages.yml'
+  # Refreshes the downloads, which follow S3, and collects any run a missed trigger left out.
+  schedule:
+    - cron: '30 5 * * *'
+  workflow_dispatch:
+    inputs:
+      new_history:
+        description: 'Start a new dashboard history if the site has none (HTTP 404) although it was deployed before; the earlier records are lost'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+# Deploys run one at a time and are never cancelled midway.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build site
+    # Pull request runs never feed the site, even from a fork's master branch.
+    if: >-
+      github.repository == 'mavlink/qgroundcontrol' && (github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.head_branch == 'master' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      (github.event.workflow_run.event == 'push' ||
+      (github.event.workflow_run.name == 'Doxygen API Docs' &&
+      (github.event.workflow_run.event == 'schedule' ||
+      github.event.workflow_run.event == 'workflow_dispatch')))))
+    runs-on: ubuntu-latest
+    # pages_site.py stops collecting runs after 15 minutes and bounds every artifact transfer, so
+    # a stalled download skips its run (or the API docs) instead of cancelling the deploy.
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      # The default branch's site tooling and schema only.
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: |
+            .github/actions/setup-python
+            .github/build-config.json
+            src/FactSystem/factmetadata.schema.json
+            tools/ci/__init__.py
+            tools/ci/publish/__init__.py
+            tools/ci/publish/pages_history.py
+            tools/ci/publish/pages_render.py
+            tools/ci/publish/pages_site.py
+            tools/_bootstrap.py
+            tools/common
+            tools/qgc_tools
+            tools/pyproject.toml
+            tools/uv.lock
+            tools/setup/install_python.py
+            tools/ci/cache/cache_backend.py
+          sparse-checkout-cone-mode: false
+          fetch-depth: 1
+          persist-credentials: false
+
+      # JUnit reports are parsed with defusedxml.
+      - name: Install Python dependencies
+        uses: ./.github/actions/setup-python
+        with:
+          groups: scripts
+
+      - name: Build site
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PAGES_NEW_HISTORY: ${{ inputs.new_history }}
+        run: python3 tools/ci/publish/pages_site.py build --out _site
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+          # Keeps .nojekyll.
+          include-hidden-files: true
+
+  deploy:
+    name: Deploy site
+    needs: build
+    if: github.repository == 'mavlink/qgroundcontrol'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

@@ -56,7 +56,8 @@
 | `pr-checks.yml` | PR title validation and size/file labels |
 | `dependency-review.yml` | Dependency security review |
 | `scorecard.yml` | OpenSSF Scorecard |
-| `docs.yml`, `doxygen.yml` | User/developer guide and Doxygen API docs build and deployment (Doxygen runs weekly; pull requests only when its configuration changes) |
+| `docs.yml`, `doxygen.yml` | User/developer guide and Doxygen API docs build and deployment (Doxygen runs weekly; pull requests only when its configuration changes; master runs keep their HTML artifact eight days for `pages.yml`) |
+| `pages.yml` | The [GitHub Pages site](#github-pages-site): CI health dashboard of master builds, JSON schemas, master downloads, and the API docs |
 | `crowdin.yml`, `lupdate.yml` | Crowdin sync and weekly source-string extraction |
 | `px4-metadata.yml` | Daily PX4 airframe and parameter metadata update PR |
 | `build-gstreamer.yml`, `mirror-gstreamer.yml` | Build GStreamer SDKs; mirror upstream GStreamer releases to the QGC S3 bucket |
@@ -737,6 +738,55 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   has them). The action then configures AWS credentials once and runs one `aws_upload.py publish`:
   artifacts go to `builds/<ref>/` (the runner's ref), and release tags also go to `latest/` with
   one CloudFront invalidation. Credentials come only from the environment.
+
+### GitHub Pages site
+
+`pages.yml` builds and deploys <https://mavlink.github.io/qgroundcontrol/> with
+`tools/ci/publish/pages_site.py build --out _site`. Each deploy replaces the whole site, so every
+build regenerates all four parts:
+
+- **CI health dashboard** (`index.html`): each workflow's latest 60 master push runs as inline SVG
+  charts (no scripts or external assets), every chart followed by a table of its latest values:
+  wall time and Build-step durations (jobs API), distributable artifact sizes, JUnit test counts,
+  failures and time per suite, `src/` line coverage (`coverage-summary.json`, as in the
+  build-results comment), and Code Analysis's unique warnings per tool (`*-diagnostics.json`), plus
+  the tests that failed on master in the last 30 days with their failed and total runs. Each
+  chart column and table row links its run.
+- **History**: `data/history.json` is versioned JSON with one record per (commit, workflow), read
+  back from the live site on every build, so there is no data branch and the workflow never writes
+  to the repository. Each build collects the last 10 completed master push runs of every platform
+  workflow and Code Analysis that it lacks (or holds an earlier attempt of), newest first; records
+  are dropped only past 1,000 commits or 365 days. Collection stops after 15 minutes and gives up
+  on an artifact after two stalled 120-second attempts, so a slow artifact store skips runs, which
+  the next build collects while they remain among the latest 10, instead of cancelling the
+  30-minute build job; the site still deploys with every stored record. A history fetch error
+  fails the build rather than deploy a truncated history. So does HTTP 404 once a `pages.yml` run
+  has succeeded, since every successful run deployed the site and a Pages outage or unpublish
+  also answers 404; only before the first deploy does the history start empty and backfill the
+  last 30 runs per workflow whose artifacts remain. To start over after losing the deployed
+  history, dispatch `pages.yml` with `new_history`. Artifacts are read from their zip archives,
+  extracting only the reports needed.
+- **Schemas** (`schemas/`): `src/FactSystem/factmetadata.schema.json`, whose `$id` must be its
+  URL there (the build and `test_pages_site.py` check it), with an index page.
+- **Downloads** (`downloads/`): the packages in `qgc_tools/build_artifacts.py`'s
+  `PUBLISHED_BUILDS` under S3 `builds/master/` (`test_published_builds.py` keeps the list in
+  sync with the workflows' `attest-and-upload` steps and the user guide), with the SHA-256 from
+  each `.sha256` sidecar ("—" when missing) and the commit and run named by the package's
+  provenance attestation, looked up by digest, plus `gh attestation verify` instructions.
+- **API docs** (`api/`): the `doxygen_build` artifact of the latest successful non-PR Doxygen run
+  on master, else (or when its download stalls past two 150-second attempts) a page linking
+  <https://api.qgroundcontrol.com>. The Doxygen workflow still deploys that domain; moving it to
+  the Pages site is a later admin step.
+
+It runs on `workflow_run` completion of the platform workflows, Code Analysis, and Doxygen on
+`master`, on master pushes that change the schema or the site tooling, daily, and on dispatch;
+never on pull requests, whose artifacts must not reach the site (CI Scripts tests the tooling).
+The build job runs only in `mavlink/qgroundcontrol` and, for `workflow_run`, only for a master
+push run of this repository (Doxygen's scheduled or manual runs for Doxygen); it checks out the
+default branch's tooling with `contents: read` and `actions: read`. The deploy job alone has
+`pages: write` and `id-token: write`, in the `github-pages` environment. One `pages` concurrency
+group serializes deploys without cancelling them. Pages must be enabled with source "GitHub
+Actions" (Settings → Pages) before the first deploy.
 
 ### Build results
 

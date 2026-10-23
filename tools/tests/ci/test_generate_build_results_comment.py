@@ -14,9 +14,10 @@ from typing import TYPE_CHECKING
 import pytest
 from ci.reporting import generate_build_results_comment as mod
 from ci.reporting.generate_build_results_comment import generate_comment
+from common.analysis_diagnostics import load_unique_warnings
 
 from .._helpers import write_files
-from .test_junit_report import ASAN_FAILURE, QT_FAILURE, TIMEOUT_OUTPUT, junit_xml
+from ..test_junit import ASAN_FAILURE, QT_FAILURE, TIMEOUT_OUTPUT, junit_xml
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -952,7 +953,7 @@ def test_flagged_growth_is_called_out(tmp_path: Path) -> None:
 
 def test_analysis_reports_warnings_on_changed_lines_once_across_shards(tmp_path: Path) -> None:
     write_files(tmp_path, DIAGNOSTICS)
-    warnings, changed = mod.load_analysis_warnings(tmp_path)
+    warnings, changed = load_unique_warnings(tmp_path)
     assert {tool: len(found) for tool, found in warnings.items()} == {"clang-tidy": 4, "clazy": 1}
     assert sorted((w.file, w.line, w.check) for w in changed["clang-tidy"]) == [
         ("src/MissionManager/MissionController.cc", 7, "modernize-use-nodiscard"),

@@ -28,14 +28,11 @@ from common.gh_actions import (
     list_run_jobs,
     list_workflow_runs_for_sha,
     parse_csv_list,
+    seconds_between,
 )
 from common.io import write_json
 
-from ci.reporting.workflow_runs import (
-    add_workflow_run_query_args,
-    parse_created_at,
-    select_latest_runs_by_name,
-)
+from ci.reporting.workflow_runs import add_workflow_run_query_args, select_latest_runs_by_name
 
 PRECOMMIT_WORKFLOW = "pre-commit"
 ANALYSIS_WORKFLOW = "Code Analysis"
@@ -47,14 +44,6 @@ _PLANNER_JOB = re.compile(r"(?i)detect changes|^plan\b")
 # GitHub's annotation when a hosted ("The hosted runner: ...") or self-hosted ("The self-hosted
 # runner: ...") runner stops responding; the job fails without logs for its last step.
 _LOST_RUNNER = "lost communication with the server"
-
-
-def _seconds_between(start: Any, end: Any) -> float | None:
-    started = parse_created_at(start)
-    finished = parse_created_at(end)
-    if started is None or finished is None or finished < started:
-        return None
-    return (finished - started).total_seconds()
 
 
 def _lost_runner_annotation(repo: str, job: dict[str, Any]) -> bool:
@@ -115,7 +104,7 @@ def summarize_job(job: dict[str, Any], *, lost: dict[str, str] | None = None) ->
         "status": str(job.get("status", "")),
         "conclusion": str(job.get("conclusion") or ""),
         "url": url,
-        "duration_seconds": _seconds_between(job.get("started_at"), job.get("completed_at")),
+        "duration_seconds": seconds_between(job.get("started_at"), job.get("completed_at")),
         "failed_steps": failed_steps,
         "runner_lost": lost,
     }
@@ -153,7 +142,7 @@ def _run_duration(run: dict[str, Any]) -> float | None:
     """The latest attempt's duration."""
     if run.get("status") != "completed":
         return None
-    return _seconds_between(
+    return seconds_between(
         run.get("run_started_at") or run.get("created_at"), run.get("updated_at")
     )
 
@@ -162,7 +151,7 @@ def _run_elapsed(run: dict[str, Any]) -> float | None:
     """Wall time from the run's creation to its latest attempt's end, re-runs included."""
     if run.get("status") != "completed":
         return None
-    return _seconds_between(run.get("created_at"), run.get("updated_at"))
+    return seconds_between(run.get("created_at"), run.get("updated_at"))
 
 
 def describe_workflow(

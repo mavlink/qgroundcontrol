@@ -26,15 +26,16 @@ if TYPE_CHECKING:
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import _bootstrap as _bootstrap
+from common.analysis_diagnostics import DIAGNOSTICS_SUFFIX, AnalysisWarning, load_unique_warnings
 from common.coverage_summary import CoverageSummary, CoverageSummaryError, read_gcovr_summary
-from common.format import format_bytes, format_count, format_duration, format_percent
-from common.gh_actions import write_step_summary
+from common.format import clip, format_bytes, format_count, format_duration, format_percent
+from common.gh_actions import parse_github_timestamp, write_step_summary
 from common.io import read_json
+from common.junit import JUnitCase, parse_junit
 from common.markdown import code_block, code_span, details, escape_text, md_table, more_items
 from common.xml import XMLParseError
 
-from ci.reporting.junit_report import JUnitCase, clip, parse_junit
-from ci.reporting.workflow_runs import parse_created_at, triggering_run
+from ci.reporting.workflow_runs import triggering_run
 
 logger = logging.getLogger(__name__)
 
@@ -186,15 +187,6 @@ class Precommit:
 
 
 @dataclass(frozen=True)
-class AnalysisWarning:
-    tool: str
-    file: str
-    line: int
-    column: int
-    check: str
-
-
-@dataclass(frozen=True)
 class AnalysisTool:
     tool: str
     files: tuple[str, ...]
@@ -296,7 +288,7 @@ def _delta_size(delta: int) -> str:
 
 
 def _clock(timestamp: str) -> str:
-    parsed = parse_created_at(timestamp)
+    parsed = parse_github_timestamp(timestamp)
     return parsed.strftime("%H:%M UTC") if parsed else ""
 
 
@@ -473,47 +465,6 @@ def load_precommit(env: Mapping[str, str], base_dir: Path) -> Precommit | None:
     )
 
 
-def _warnings(tool: str, by_file: Any) -> set[AnalysisWarning]:
-    found: set[AnalysisWarning] = set()
-    if not isinstance(by_file, dict):
-        return found
-    for file, rows in by_file.items():
-        if not isinstance(rows, list):
-            continue
-        for row in rows:
-            if (
-                isinstance(row, list)
-                and len(row) == 4
-                and isinstance(row[0], int)
-                and isinstance(row[1], int)
-                and row[2] == "warning"
-            ):
-                found.add(AnalysisWarning(tool, clip(str(file)), row[0], row[1], clip(str(row[3]))))
-    return found
-
-
-def load_analysis_warnings(
-    analysis_dir: Path,
-) -> tuple[dict[str, set[AnalysisWarning]], dict[str, set[AnalysisWarning]]]:
-    """Union every shard's analyze.py *-diagnostics.json warnings by tool.
-
-    A header's warnings appear in each shard that compiles a file including it, so a warning is
-    identified by its location and check. Returns every warning and, for tools whose shards
-    reported changed lines, the warnings on lines the PR changed.
-    """
-    merged: dict[str, set[AnalysisWarning]] = {}
-    changed: dict[str, set[AnalysisWarning]] = {}
-    for path in sorted(analysis_dir.glob("**/*-diagnostics.json")):
-        data = _load_json(path, "analysis diagnostics")
-        if not isinstance(data, dict) or not isinstance(data.get("diagnostics"), dict):
-            continue
-        tool = clip(data.get("tool") or path.name.removesuffix("-diagnostics.json"))
-        merged.setdefault(tool, set()).update(_warnings(tool, data["diagnostics"]))
-        if "changed" in data:
-            changed.setdefault(tool, set()).update(_warnings(tool, data["changed"]))
-    return merged, changed
-
-
 def load_analysis(analysis_dir: Path) -> list[AnalysisTool]:
     """Merge every shard's analyze.py *-timings.json by tool, with its warnings."""
     merged: dict[str, dict[str, list[str]]] = {}
@@ -534,7 +485,7 @@ def load_analysis(analysis_dir: Path) -> list[AnalysisTool]:
                 tool["findings"].append(name)
             elif row.get("status") == "error":
                 tool["errors"].append(name)
-    warnings, changed = load_analysis_warnings(analysis_dir)
+    warnings, changed = load_unique_warnings(analysis_dir)
     return [
         AnalysisTool(
             name,
@@ -557,7 +508,7 @@ def load_analysis_commit(analysis_dir: Path) -> str:
     differ from the PR head's where the base branch changed the same file.
     """
     commits = set()
-    for path in sorted(analysis_dir.glob("**/*-diagnostics.json")):
+    for path in sorted(analysis_dir.glob(f"**/*{DIAGNOSTICS_SUFFIX}")):
         data = _load_json(path, "analysis diagnostics")
         commit = data.get("commit") if isinstance(data, dict) else None
         if isinstance(commit, str) and re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", commit):

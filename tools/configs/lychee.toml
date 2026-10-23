@@ -6,6 +6,9 @@ accept = ["200", "204"]
 exclude = [
     # Example addresses have no public server.
     '^https?://(localhost|127\.0\.0\.1|192\.168\.[0-9.]+|10\.[0-9.]+)([:/]|$)',
+    # Expires: 2026-12-01. The Pages workflow first deploys this site from master after the pull
+    # request adding it merges; remove the exception once the site is live.
+    '^https://mavlink\.github\.io/qgroundcontrol/',
     # Expires: 2026-12-01. Existing unavailable/bot-blocked URLs; replace or recheck individually.
     # Partner Center currently fails certificate verification.
     '^https://partner\.microsoft\.com/$',

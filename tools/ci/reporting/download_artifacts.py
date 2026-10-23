@@ -36,6 +36,7 @@ import _bootstrap as _bootstrap
 from common.format import format_bytes
 from common.gh_actions import gh, list_run_artifacts, list_workflow_runs_for_sha
 from common.io import read_json, write_json
+from qgc_tools.build_artifacts import is_distributable_artifact
 
 from ci.reporting.workflow_runs import (
     add_workflow_run_query_args,
@@ -43,21 +44,6 @@ from ci.reporting.workflow_runs import (
     resolve_workflow_runs,
     select_latest_runs_by_name,
 )
-
-_DISTRIBUTABLE_PREFIXES = (
-    "QGroundControl",
-    "Custom-QGroundControl",
-    "qgc-binary",
-)
-
-_EXCLUDED_PREFIXES = (
-    "test-results",
-    "emulator-diagnostics",
-)
-
-_EXCLUDED_EXACT_NAMES = {
-    "coverage-report",
-}
 
 MANIFEST_NAME = "download-manifest.json"
 
@@ -95,14 +81,6 @@ def select_artifact_names(
         if any(artifact_name.startswith(prefix) for prefix in prefixes):
             names.add(artifact_name)
     return sorted(names)
-
-
-def _is_distributable_artifact(name: str) -> bool:
-    if name in _EXCLUDED_EXACT_NAMES:
-        return False
-    if any(name.startswith(prefix) for prefix in _EXCLUDED_PREFIXES):
-        return False
-    return any(name.startswith(prefix) for prefix in _DISTRIBUTABLE_PREFIXES)
 
 
 def collect_artifact_sizes(
@@ -154,7 +132,7 @@ def collect_artifact_sizes(
     for run_id in run_ids:
         for artifact in listed.get(run_id, fetched.get(run_id, [])):
             name = str(artifact.get("name", ""))
-            if not _is_distributable_artifact(name):
+            if not is_distributable_artifact(name):
                 continue
             size_bytes = int(artifact.get("size_in_bytes", 0))
             if name not in sizes or size_bytes > sizes[name]["size_bytes"]:
