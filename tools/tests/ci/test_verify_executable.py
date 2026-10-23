@@ -176,7 +176,8 @@ def test_type_rejects_unknown_values(capsys):
 
 
 BOOT_BINARY = Path("/opt/qgc/QGroundControl")
-PLAIN_BOOT = [str(BOOT_BINARY), "--simple-boot-test"]
+BOOT_LOGGING = f"--logging:{verify_executable.BOOT_LOGGING_CATEGORIES}"
+PLAIN_BOOT = [str(BOOT_BINARY), "--simple-boot-test", BOOT_LOGGING]
 
 
 class TestBootCommand:
@@ -221,6 +222,13 @@ class TestBootCommand:
         monkeypatch.setenv("DISPLAY", ":0")
         assert _boot_command(BOOT_BINARY, headless=False)[0] == PLAIN_BOOT
 
+    def test_forces_startup_log_to_stderr_without_overriding(self, monkeypatch) -> None:
+        monkeypatch.delenv("QT_FORCE_STDERR_LOGGING", raising=False)
+        assert _boot_command(BOOT_BINARY, headless=True)[1]["QT_FORCE_STDERR_LOGGING"] == "1"
+
+        monkeypatch.setenv("QT_FORCE_STDERR_LOGGING", "0")
+        assert _boot_command(BOOT_BINARY, headless=True)[1]["QT_FORCE_STDERR_LOGGING"] == "0"
+
 
 class TestBootTest:
     def test_missing_binary_fails(self, tmp_path, capsys) -> None:
@@ -241,6 +249,17 @@ class TestBootTest:
         assert _boot_test(binary, cwd=tmp_path, timeout=5, headless=True) == result[0]
         out = capsys.readouterr().out
         assert all(line in out for line in expected)
+
+    def test_passing_output_is_folded(self, tmp_path, monkeypatch, capsys) -> None:
+        binary = tmp_path / "QGroundControl"
+        binary.write_text("binary")
+        monkeypatch.setattr(verify_executable, "_execute", lambda *args: (0, "startup log\n"))
+        assert _boot_test(binary, cwd=tmp_path, timeout=5, headless=True) == 0
+        out = capsys.readouterr().out
+        assert (
+            out.index("::group::Boot output") < out.index("startup log") < out.index("::endgroup::")
+        )
+        assert out.index("::endgroup::") < out.index("Boot test passed in ")
 
     def test_timeout_prints_partial_output_before_error(
         self, tmp_path, monkeypatch, capsys
@@ -359,7 +378,7 @@ def test_dmg_verifies_bundle_inside_image_and_detaches(monkeypatch, tmp_path, gh
     executable = tools.mount_point / "QGroundControl.app" / "Contents" / "MacOS" / "QGroundControl"
     assert tools.commands("lipo") == [["lipo", "-archs", str(executable)]]
     ((boot, env),) = tools.boots
-    assert boot == [str(executable.resolve()), "--simple-boot-test"]
+    assert boot == [str(executable.resolve()), "--simple-boot-test", BOOT_LOGGING]
     assert env["QT_QPA_PLATFORM"] == "offscreen"
     assert detach == ["hdiutil", "detach", str(tools.mount_point)]
     assert tools.calls.index(boot) < tools.calls.index(detach)

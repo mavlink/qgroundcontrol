@@ -8,6 +8,7 @@ from unittest.mock import patch
 import pytest
 from ci.ios.ios_boot_test import (
     CLEANUP_TIMEOUT,
+    DEFAULT_APP_TIMEOUT,
     DEFAULT_BOOT_TIMEOUT,
     DIAGNOSTIC_TIMEOUT,
     MAX_BOOT_ATTEMPTS,
@@ -105,7 +106,7 @@ def test_app_must_report_boot_success_without_retry(app, tmp_path, simulator, ou
     assert "create warning" in log.read_text()
     for call in process.call_args_list:
         if call.args[0][2] in ("install", "launch"):
-            assert call.kwargs["timeout"] == 300
+            assert call.kwargs["timeout"] == DEFAULT_APP_TIMEOUT
         assert call.kwargs["check"] is True
 
 
@@ -152,7 +153,7 @@ def test_cold_boot_failure_recovers_on_fresh_device(app, tmp_path, simulator, ph
         str(failure),
         "Simulator state before cleanup of uuid-1",
         json.dumps(DEVICES),
-        "Retrying simulator cold boot",
+        "Retrying with a fresh simulator after the boot failure of attempt 1/2",
         SUCCESS,
     ):
         assert expected in text
@@ -189,27 +190,112 @@ def test_exhausted_boot_attempts_retain_all_diagnostics(app, tmp_path, simulator
 
 
 @pytest.mark.parametrize("timeout", [300, 420])
-@pytest.mark.parametrize("phase", ["install", "launch"])
 @pytest.mark.parametrize("error_type", [subprocess.TimeoutExpired, subprocess.CalledProcessError])
-def test_app_command_failure_is_not_retried(app, tmp_path, simulator, timeout, phase, error_type):
+def test_install_failure_recovers_on_fresh_device(app, tmp_path, simulator, timeout, error_type):
     process, responses = simulator
     failure = (
-        subprocess.TimeoutExpired(phase, timeout, output=b"hung", stderr="application error")
+        subprocess.TimeoutExpired("install", timeout, output=b"copying", stderr="install stalled")
         if error_type is subprocess.TimeoutExpired
-        else subprocess.CalledProcessError(1, phase, output=SUCCESS, stderr=b"application error")
+        else subprocess.CalledProcessError(1, "install", stderr=b"install stalled")
     )
-    command = ("install", "uuid-1", str(app)) if phase == "install" else launch_command("uuid-1")
-    responses[command] = failure
+    failed_command = ("install", "uuid-1", str(app))
+    responses[failed_command] = failure
     log = tmp_path / "log"
-    with pytest.raises(error_type) as raised:
-        boot_test(app, log, timeout=timeout)
+    boot_test(app, log, timeout=timeout)
+    calls = commands(process)
+    failure_index = calls.index(failed_command)
+    assert calls[failure_index + 1 : failure_index + 3] == [
+        ("shutdown", "uuid-1"),
+        ("delete", "uuid-1"),
+    ]
+    assert calls[failure_index + 3][0] == "create"
+    assert [command for command in calls if command[0] == "launch"] == [launch_command("uuid-2")]
+    assert calls[-2:] == [("shutdown", "uuid-2"), ("delete", "uuid-2")]
+    for call in process.call_args_list:
+        if call.args[0][2] in ("install", "launch"):
+            assert call.kwargs["timeout"] == timeout
+    text = log.read_text()
+    for expected in (
+        "install stalled",
+        "attempt 1/2 failed during install",
+        "Retrying with a fresh simulator after the install failure of attempt 1/2",
+        SUCCESS,
+    ):
+        assert expected in text
+    assert "Simulator state before cleanup" not in text
+
+
+def test_exhausted_install_attempts_raise_last_failure(app, tmp_path, simulator):
+    process, responses = simulator
+    failures = [
+        subprocess.TimeoutExpired("install", DEFAULT_APP_TIMEOUT, output=f"install {attempt}")
+        for attempt in range(1, MAX_BOOT_ATTEMPTS + 1)
+    ]
+    for attempt, failure in enumerate(failures, 1):
+        responses[("install", f"uuid-{attempt}", str(app))] = failure
+    log = tmp_path / "log"
+    with pytest.raises(subprocess.TimeoutExpired) as raised:
+        boot_test(app, log)
+    assert raised.value is failures[-1]
+    calls = commands(process)
+    assert sum(command[0] == "create" for command in calls) == MAX_BOOT_ATTEMPTS
+    assert not any(command[0] == "launch" for command in calls)
+    assert calls[-1] == ("delete", f"uuid-{MAX_BOOT_ATTEMPTS}")
+    for failure in failures:
+        assert failure.output in log.read_text()
+
+
+@pytest.mark.parametrize(
+    "failure",
+    [
+        subprocess.TimeoutExpired("launch", 600, output=b"hung", stderr="application error"),
+        subprocess.TimeoutExpired("launch", 600, stderr=b"application error"),
+        subprocess.CalledProcessError(1, "launch", output=SUCCESS, stderr=b"application error"),
+        subprocess.CalledProcessError(1, "launch", stderr="application error"),
+    ],
+)
+def test_launch_failure_with_output_is_not_retried(app, tmp_path, simulator, failure):
+    process, responses = simulator
+    responses[launch_command("uuid-1")] = failure
+    log = tmp_path / "log"
+    with pytest.raises(type(failure)) as raised:
+        boot_test(app, log)
     assert raised.value is failure
     calls = commands(process)
     assert sum(command[0] == "create" for command in calls) == 1
     assert calls[-2:] == [("shutdown", "uuid-1"), ("delete", "uuid-1")]
-    phase_call = next(call for call in process.call_args_list if call.args[0][2] == phase)
-    assert phase_call.kwargs["timeout"] == timeout
     assert "application error" in log.read_text()
+    assert "failed during launch" in log.read_text()
+    assert "Retrying" not in log.read_text()
+
+
+@pytest.mark.parametrize("output", [None, b"", " \n"])
+def test_silent_launch_timeout_recovers_on_fresh_device(app, tmp_path, simulator, output):
+    process, responses = simulator
+    responses[launch_command("uuid-1")] = subprocess.TimeoutExpired(
+        "launch", DEFAULT_APP_TIMEOUT, output=output, stderr=output
+    )
+    log = tmp_path / "log"
+    boot_test(app, log)
+    calls = commands(process)
+    assert [command for command in calls if command[0] == "launch"] == [
+        launch_command("uuid-1"),
+        launch_command("uuid-2"),
+    ]
+    assert calls[-2:] == [("shutdown", "uuid-2"), ("delete", "uuid-2")]
+    text = log.read_text()
+    assert "Retrying with a fresh simulator after the launch failure of attempt 1/2" in text
+    assert SUCCESS in text
+
+
+def test_silent_launch_timeout_on_last_attempt_is_raised(app, tmp_path, simulator):
+    process, responses = simulator
+    failure = subprocess.TimeoutExpired("launch", DEFAULT_APP_TIMEOUT)
+    responses[launch_command("uuid-1")] = failure
+    with pytest.raises(subprocess.TimeoutExpired) as raised:
+        boot_test(app, tmp_path / "log", boot_attempts=1)
+    assert raised.value is failure
+    assert commands(process)[-1] == ("delete", "uuid-1")
 
 
 @pytest.mark.parametrize("output", [b"partial \xff stdout", "partial stdout", None])
@@ -266,11 +352,15 @@ def test_diagnostic_failure_does_not_mask_or_block_recovery(
         assert SUCCESS in text
 
 
-@pytest.mark.parametrize("phase", ["bootstatus", "launch"])
+@pytest.mark.parametrize("phase", ["bootstatus", "install", "launch"])
 def test_cleanup_failures_preserve_original_failure(app, tmp_path, simulator, phase):
     process, responses = simulator
     original = subprocess.TimeoutExpired(phase, 600, output=b"original failure")
-    command = ("bootstatus", "uuid-1", "-b") if phase == "bootstatus" else launch_command("uuid-1")
+    command = {
+        "bootstatus": ("bootstatus", "uuid-1", "-b"),
+        "install": ("install", "uuid-1", str(app)),
+        "launch": launch_command("uuid-1"),
+    }[phase]
     responses[command] = original
     responses[("shutdown", "uuid-1")] = subprocess.TimeoutExpired(
         "shutdown", 30, output=b"shutdown hung"
@@ -288,19 +378,39 @@ def test_cleanup_failures_preserve_original_failure(app, tmp_path, simulator, ph
     text = log.read_text()
     for output in ("original failure", "shutdown hung", "delete refused"):
         assert output in text
+    assert ("could not be deleted" in text) == (phase != "launch")
 
 
-def test_delete_failure_after_app_success_is_fatal(app, tmp_path, simulator):
+@pytest.mark.parametrize(
+    "failure,annotation",
+    [
+        (
+            subprocess.TimeoutExpired("delete", 60, output=b"delete hung"),
+            "timed out after 60 seconds",
+        ),
+        (OSError("delete hung\n50% done"), "delete hung%0A50%25 done"),
+    ],
+)
+@pytest.mark.parametrize("shutdown_fails", [False, True])
+def test_cleanup_failure_after_app_success_warns(
+    app, tmp_path, simulator, capsys, failure, annotation, shutdown_fails
+):
     process, responses = simulator
-    failure = subprocess.TimeoutExpired("delete", 30, output=b"delete hung")
+    if shutdown_fails:
+        responses[("shutdown", "uuid-1")] = subprocess.TimeoutExpired("shutdown", 60)
     responses[("delete", "uuid-1")] = failure
     log = tmp_path / "log"
-    with pytest.raises(subprocess.TimeoutExpired) as raised:
-        boot_test(app, log)
-    assert raised.value is failure
+    boot_test(app, log)
     assert sum(command[0] == "create" for command in commands(process)) == 1
-    assert SUCCESS in log.read_text()
-    assert "delete hung" in log.read_text()
+    text = log.read_text()
+    for expected in (SUCCESS, "delete hung", "cleanup failed after a successful boot test"):
+        assert expected in text
+    warnings = [line for line in capsys.readouterr().out.splitlines() if line.startswith("::")]
+    assert len(warnings) == 1
+    assert warnings[0].startswith(
+        "::warning::iOS simulator cleanup failed after a successful boot test: "
+    )
+    assert annotation in warnings[0]
 
 
 def test_shutdown_failure_still_deletes_device_and_allows_boot_recovery(app, tmp_path, simulator):
@@ -335,16 +445,17 @@ def test_missing_simctl_during_boot_is_not_retried(app, tmp_path, simulator):
     assert calls[-2:] == [("shutdown", "uuid-1"), ("delete", "uuid-1")]
 
 
-def test_create_failure_is_not_retried_or_cleaned_up_as_a_device(app, tmp_path, simulator):
+@pytest.mark.parametrize("attempts", [1, 2])
+def test_create_failure_is_retried_without_device_cleanup(app, tmp_path, simulator, attempts):
     process, responses = simulator
     runtime = next(iter(DEVICES["devices"]))
     failure = subprocess.CalledProcessError(1, "create", stderr="creation refused")
     responses[("create", "QGC CI boot test", "iphone16", runtime)] = failure
     log = tmp_path / "log"
     with pytest.raises(subprocess.CalledProcessError) as raised:
-        boot_test(app, log)
+        boot_test(app, log, boot_attempts=attempts)
     assert raised.value is failure
-    assert [command[0] for command in commands(process)] == ["list", "create"]
+    assert [command[0] for command in commands(process)] == ["list"] + ["create"] * attempts
     assert "creation refused" in log.read_text()
 
 
@@ -435,3 +546,13 @@ def test_cli_wires_boot_options():
     with patch("ci.ios.ios_boot_test.boot_test") as run:
         assert main([*argv, "--boot-timeout", "900", "--boot-attempts", "1"]) == 0
     assert run.call_args.kwargs == {"timeout": 420, "boot_timeout": 900, "boot_attempts": 1}
+
+
+def test_cli_defaults():
+    with patch("ci.ios.ios_boot_test.boot_test") as run:
+        assert main(["--app", "app", "--log", "log"]) == 0
+    assert run.call_args.kwargs == {
+        "timeout": DEFAULT_APP_TIMEOUT,
+        "boot_timeout": DEFAULT_BOOT_TIMEOUT,
+        "boot_attempts": MAX_BOOT_ATTEMPTS,
+    }

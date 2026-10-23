@@ -531,12 +531,17 @@ when a PR closes, and on demand:
   unsigned DMG instead of failing in `SignMacBundle.cmake`.
   `verify_executable.py --type dmg` mounts the image, verifies the bundle, and always detaches it.
   On a boot-test timeout it prints the captured output, and its `lipo`/`hdiutil`/AppImage helper
-  calls time out after 120 s.
+  calls time out after 120 s. The boot test forces QGC's log to stderr (a Windows GUI app otherwise
+  logs to the debugger) and enables the startup categories with `--logging`, so a slow, hung or
+  crashed boot shows where it stopped; a passing boot folds that log into a collapsed group.
 - **iOS**: simulator builds run `ios_boot_test.py`, which launches with `--simple-boot-test` and
   requires QGC's success marker. Cold boots have a 600-second deadline and at most two fresh-device
-  attempts (`--boot-timeout` 1–900 s, `--boot-attempts` 1–2); installation and application
-  failures are never retried. Each attempt keeps command output, and simulator state is collected
-  before failed-boot cleanup.
+  attempts (`--boot-timeout` 1–900 s, `--boot-attempts` 1–2). Boot and installation failures, and a
+  launch that times out before QGC prints anything, are retried on a fresh device; QGC failures are
+  not. Install and launch each have a 600-second deadline (`--timeout`). A shutdown/delete failure
+  after a passing test is reported as a warning and does not fail the job; after a failed attempt it
+  prevents the retry. Each attempt keeps command output, and simulator state is collected before
+  failed-boot cleanup.
 - **Windows**: installer verification lives in `deploy/windows/verify-installer.ps1`.
 - **Android**: legs are Linux (primary), macOS, Windows (not on PRs), and a Linux emulator smoke
   test. PRs build `arm64-v8a` only; other events build `arm64-v8a` + `armeabi-v7a` on the primary

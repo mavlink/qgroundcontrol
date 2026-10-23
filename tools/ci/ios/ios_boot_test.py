@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Boot the built QGC app in a disposable iOS simulator and verify its smoke test."""
+"""Boot the built QGC app in a disposable iOS simulator and verify its smoke test.
+
+Simulator failures (creating, booting, installing, or a launch that never starts QGC) are retried
+on a fresh device; QGC failures are not. A cleanup failure after a passing test only warns.
+"""
 
 from __future__ import annotations
 
@@ -10,11 +14,12 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+DEFAULT_APP_TIMEOUT = 600
 DEFAULT_BOOT_TIMEOUT = 600
 MAX_BOOT_TIMEOUT = 900
 MAX_BOOT_ATTEMPTS = 2
 DIAGNOSTIC_TIMEOUT = 30
-CLEANUP_TIMEOUT = 30
+CLEANUP_TIMEOUT = 60
 
 
 def _record(log: Path, message: str) -> None:
@@ -23,6 +28,13 @@ def _record(log: Path, message: str) -> None:
         stream.write(message)
         if not message.endswith("\n"):
             stream.write("\n")
+
+
+def _warn(log: Path, message: str) -> None:
+    _record(log, message)
+    # Workflow commands end at a newline, so percent-encode line breaks (and % itself).
+    escaped = message.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+    print(f"::warning::{escaped}", flush=True)
 
 
 def _decode(output: str | bytes | None) -> str:
@@ -73,6 +85,18 @@ def _cleanup(log: Path, device: str) -> Exception | None:
     return None
 
 
+def _is_simulator_failure(phase: str, failure: Exception) -> bool:
+    if not isinstance(failure, (subprocess.CalledProcessError, subprocess.TimeoutExpired)):
+        return False
+    if phase in ("boot", "install"):
+        return True
+    # QGC logs within a second of starting, so a silent launch timeout means it never ran.
+    return (
+        isinstance(failure, subprocess.TimeoutExpired)
+        and not (_decode(failure.stdout) + _decode(failure.stderr)).strip()
+    )
+
+
 def _validate_options(timeout: int, boot_timeout: int, boot_attempts: int) -> None:
     if timeout <= 0:
         raise ValueError("App timeout must be positive")
@@ -98,7 +122,7 @@ def boot_test(
     app: Path,
     log: Path,
     *,
-    timeout: int = 300,
+    timeout: int = DEFAULT_APP_TIMEOUT,
     boot_timeout: int = DEFAULT_BOOT_TIMEOUT,
     boot_attempts: int = MAX_BOOT_ATTEMPTS,
 ) -> None:
@@ -111,16 +135,19 @@ def boot_test(
     )
     for attempt in range(1, boot_attempts + 1):
         _record(log, f"Simulator boot attempt {attempt}/{boot_attempts}: {runtime} ({device_type})")
-        device = simctl(
-            log, "create", "QGC CI boot test", device_type, runtime, stdout_only=True
-        ).strip()
-        ready = False
-        failure = None
+        phase = "boot"
+        device: str | None = None
+        failure: Exception | None = None
+        cleanup_failure: Exception | None = None
         try:
+            device = simctl(
+                log, "create", "QGC CI boot test", device_type, runtime, stdout_only=True
+            ).strip()
             simctl(log, "boot", device)
             simctl(log, "bootstatus", device, "-b", timeout=boot_timeout)
-            ready = True
+            phase = "install"
             simctl(log, "install", device, str(app), timeout=timeout)
+            phase = "launch"
             output = simctl(
                 log,
                 "launch",
@@ -143,26 +170,31 @@ def boot_test(
             RuntimeError,
         ) as exc:
             failure = exc
-            _record(log, f"Simulator attempt {attempt}/{boot_attempts} failed: {exc}")
-            if not ready:
+            _record(
+                log, f"Simulator attempt {attempt}/{boot_attempts} failed during {phase}: {exc}"
+            )
+            if phase == "boot" and device is not None:
                 _collect_diagnostics(log, device)
         finally:
-            cleanup_failure = _cleanup(log, device)
+            if device is not None:
+                cleanup_failure = _cleanup(log, device)
 
         if failure is None:
             if cleanup_failure is not None:
-                raise cleanup_failure
+                _warn(
+                    log,
+                    f"iOS simulator cleanup failed after a successful boot test: {cleanup_failure}",
+                )
             return
-        if (
-            ready
-            or attempt == boot_attempts
-            or cleanup_failure is not None
-            or not isinstance(failure, (subprocess.CalledProcessError, subprocess.TimeoutExpired))
-        ):
+        if attempt == boot_attempts or not _is_simulator_failure(phase, failure):
+            raise failure
+        if cleanup_failure is not None:
+            _record(log, "Not retrying because the failed simulator could not be deleted")
             raise failure
         _record(
             log,
-            f"Retrying simulator cold boot with a fresh device after attempt {attempt}/{boot_attempts}",
+            f"Retrying with a fresh simulator after the {phase} failure of attempt "
+            f"{attempt}/{boot_attempts}",
         )
 
 
@@ -173,8 +205,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--timeout",
         type=int,
-        default=300,
-        help="Deadline for each app installation and startup phase in seconds (default: 300)",
+        default=DEFAULT_APP_TIMEOUT,
+        help=f"Deadline for each app installation and startup phase in seconds (default: {DEFAULT_APP_TIMEOUT})",
     )
     parser.add_argument(
         "--boot-timeout",

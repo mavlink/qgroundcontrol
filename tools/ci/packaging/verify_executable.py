@@ -27,7 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 import _bootstrap as _bootstrap
 from common.cmake import read_cache_var
 from common.format import format_bytes, format_duration
-from common.gh_actions import gh_error, gh_warning, write_step_summary
+from common.gh_actions import gh_error, gh_group, gh_warning, write_step_summary
 from common.markdown import code_span, summary_section
 from common.proc import output_text, run_captured
 
@@ -38,6 +38,9 @@ BOOT_TIMEOUT_EXIT_CODE = 124
 DRAIN_TIMEOUT_SECONDS = 10
 TOOL_TIMEOUT_SECONDS = 120
 EXE_TYPES = ("binary", "appimage", "dmg", "exe")
+# Startup phases worth seeing when a boot is slow, hangs or crashes; each line carries QGC's elapsed time.
+# QGC's own category filter decides debug output, so these go through --logging rather than QT_LOGGING_RULES.
+BOOT_LOGGING_CATEGORIES = "API.QGCApplication,Video.VideoManager,Video.GStreamer"
 
 
 def _setup_gstreamer_env(build_dir: Path) -> None:
@@ -215,8 +218,10 @@ def _execute(cmd: list[str], env: dict[str, str], cwd: Path, timeout: int) -> tu
 
 def _boot_command(binary: Path, *, headless: bool) -> tuple[list[str], dict[str, str]]:
     """Return the boot-test command and environment, adding a virtual display when needed."""
-    cmd = [str(binary), "--simple-boot-test"]
+    cmd = [str(binary), "--simple-boot-test", f"--logging:{BOOT_LOGGING_CATEGORIES}"]
     env = os.environ.copy()
+    # A Windows GUI app logs to the debugger rather than stderr unless forced
+    env.setdefault("QT_FORCE_STDERR_LOGGING", "1")
     if headless:
         env.setdefault("QT_QPA_PLATFORM", "offscreen")
         print("Platform: offscreen (forced)")
@@ -238,15 +243,19 @@ def _boot_test(binary: Path, *, cwd: Path, timeout: int, headless: bool) -> int:
     print(f"Binary: {binary}")
     print(f"Timeout: {timeout}s")
     cmd, env = _boot_command(binary, headless=headless)
+    start = time.monotonic()
     exit_code, output = _execute(cmd, env, cwd, timeout)
+    elapsed = time.monotonic() - start
+    if exit_code == 0:
+        with gh_group("Boot output"):
+            print(output)
+        print(f"Boot test passed in {elapsed:.1f}s")
+        return exit_code
     print(output)
     if exit_code == BOOT_TIMEOUT_EXIT_CODE:
         gh_error(f"Boot test timed out after {timeout}s")
         return exit_code
-    if exit_code == 0:
-        print("Boot test passed")
-    else:
-        gh_error(f"Boot test failed (exit code: {exit_code})")
+    gh_error(f"Boot test failed (exit code: {exit_code}) after {elapsed:.1f}s")
     return exit_code
 
 
