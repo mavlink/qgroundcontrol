@@ -531,7 +531,10 @@ when a PR closes, and on demand:
   On a boot-test timeout it prints the captured output, and its `lipo`/`hdiutil`/AppImage helper
   calls time out after 120 s. The boot test forces QGC's log to stderr (a Windows GUI app otherwise
   logs to the debugger) and enables the startup categories with `--logging`, so a slow, hung or
-  crashed boot shows where it stopped; a passing boot folds that log into a collapsed group.
+  crashed boot shows where it stopped; a passing boot folds that log into a collapsed group. On
+  Windows a build tree boots with only the GStreamer plugins the package ships (configure records them
+  as `QGC_GST_SHIPPED_PLUGINS`; `verify_executable.py` copies them to `boot-test-gstreamer-plugins/`):
+  the whole SDK's ~270 plugins took ~40 s to scan and hung or crashed QGC on exit.
 - **iOS**: simulator builds run `ios_boot_test.py`, which launches with `--simple-boot-test` and
   requires QGC's success marker. Cold boots have a 600-second deadline and at most two fresh-device
   attempts (`--boot-timeout` 1–900 s, `--boot-attempts` 1–2). Boot and installation failures, and a

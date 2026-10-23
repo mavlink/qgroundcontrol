@@ -60,6 +60,42 @@ class TestSetupGstreamerEnv:
         assert os.environ["GST_PLUGIN_SYSTEM_PATH"] == str(plugin_dir)
         assert os.environ["GST_PLUGIN_SYSTEM_PATH_1_0"] == str(plugin_dir)
 
+    @pytest.mark.parametrize(("system", "staged"), [("Windows", True), ("Darwin", False)])
+    def test_windows_loads_only_shipped_plugins(self, tmp_path, monkeypatch, system, staged):
+        """On Windows the boot test loads only the plugins the package ships, not the whole SDK."""
+        gst_root = tmp_path / "gstreamer"
+        plugin_dir = gst_root / "lib" / "gstreamer-1.0"
+        plugin_dir.mkdir(parents=True)
+        for name in ("gstcoreelements.dll", "gstrtp.dll", "gstwebrtc.dll"):
+            (plugin_dir / name).write_bytes(name.encode())
+        shipped = ";".join(str(plugin_dir / name) for name in ("gstcoreelements.dll", "gstrtp.dll"))
+        (tmp_path / "CMakeCache.txt").write_text(
+            f"QGC_GST_RESOLVED_ROOT:INTERNAL={gst_root}\nQGC_GST_SHIPPED_PLUGINS:INTERNAL={shipped}\n"
+        )
+        stage = tmp_path / verify_executable.SHIPPED_PLUGIN_DIR
+        stage.mkdir()
+        (stage / "stale.dll").write_text("left over from an earlier run")
+        monkeypatch.setattr(verify_executable.platform, "system", lambda: system)
+        for var in (
+            "GST_PLUGIN_SYSTEM_PATH",
+            "GST_PLUGIN_SYSTEM_PATH_1_0",
+            "PATH",
+            "DYLD_LIBRARY_PATH",
+        ):
+            monkeypatch.delenv(var, raising=False)
+
+        _setup_gstreamer_env(tmp_path)
+
+        expected = stage if staged else plugin_dir
+        assert os.environ["GST_PLUGIN_SYSTEM_PATH"] == str(expected)
+        assert os.environ["GST_PLUGIN_SYSTEM_PATH_1_0"] == str(expected)
+        if staged:
+            assert sorted(path.name for path in stage.iterdir()) == [
+                "gstcoreelements.dll",
+                "gstrtp.dll",
+            ]
+            assert (stage / "gstrtp.dll").read_bytes() == b"gstrtp.dll"
+
 
 def test_verify_appimage_update_information(tmp_path, monkeypatch):
     appimage = tmp_path / "QGroundControl-x86_64.AppImage"

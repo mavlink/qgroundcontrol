@@ -37,7 +37,8 @@ endfunction()
 
 # gstreamer_install_plugins(<source_dir> <dest_dir> <prefix> <extension>)
 # Installs the GSTREAMER_PLUGINS found as <prefix><name>*.<extension> in <source_dir>. Fails when none match: the glob
-# runs at configure time, so the SDK must be complete then.
+# runs at configure time, so the SDK must be complete then. Records the files in QGC_GST_SHIPPED_PLUGINS, which the
+# CI boot test of a build tree loads instead of the whole SDK.
 function(gstreamer_install_plugins source_dir dest_dir prefix extension)
     file(GLOB _plugins "${source_dir}/${prefix}*.${extension}")
     _qgc_gst_filter_plugin_paths("${prefix}" "${_plugins}" _plugins)
@@ -48,6 +49,12 @@ function(gstreamer_install_plugins source_dir dest_dir prefix extension)
         )
     endif()
     install(FILES ${_plugins} DESTINATION "${dest_dir}")
+    # CI tooling reads this name from CMakeCache.txt, so it keeps the public QGC_ prefix.
+    # cmake-lint: disable=C0103
+    set(QGC_GST_SHIPPED_PLUGINS
+        "${_plugins}"
+        CACHE INTERNAL "GStreamer plugin files the package ships"
+    )
 endfunction()
 
 # gstreamer_install_gio_modules(<source_dir> <dest_dir> <extension> [<module>...])

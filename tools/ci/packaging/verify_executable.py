@@ -41,6 +41,7 @@ EXE_TYPES = ("binary", "appimage", "dmg", "exe")
 # Startup phases worth seeing when a boot is slow, hangs or crashes; each line carries QGC's elapsed time.
 # QGC's own category filter decides debug output, so these go through --logging rather than QT_LOGGING_RULES.
 BOOT_LOGGING_CATEGORIES = "API.QGCApplication,Video.VideoManager,Video.GStreamer"
+SHIPPED_PLUGIN_DIR = "boot-test-gstreamer-plugins"
 
 
 def _setup_gstreamer_env(build_dir: Path) -> None:
@@ -64,6 +65,9 @@ def _setup_gstreamer_env(build_dir: Path) -> None:
         return
 
     print(f"Setting GStreamer env from build cache: {gst_root}")
+    shipped = read_cache_var(str(cache), "QGC_GST_SHIPPED_PLUGINS")
+    if shipped and platform.system() == "Windows":
+        plugin_dir = _stage_shipped_plugins(build_dir, shipped)
     plugin_str = str(plugin_dir)
     # SYSTEM_PATH replaces the default plugin dirs; GST_PLUGIN_PATH would only rescan the same dir.
     for var in ("GST_PLUGIN_SYSTEM_PATH", "GST_PLUGIN_SYSTEM_PATH_1_0"):
@@ -85,6 +89,22 @@ def _setup_gstreamer_env(build_dir: Path) -> None:
         bin_dir = str(gst_root / "bin")
         existing = os.environ.get("PATH", "")
         os.environ["PATH"] = f"{bin_dir};{existing}" if existing else bin_dir
+
+
+def _stage_shipped_plugins(build_dir: Path, shipped: str) -> Path:
+    """Copy the plugins the package ships into one directory, for a boot test that loads only those.
+
+    The whole Windows SDK holds ~270 plugins: a cold registry scan of them takes ~40 s, and some the
+    package doesn't ship hang or crash QGC on exit. Their DLL dependencies load from the SDK's bin/.
+    """
+    stage = build_dir / SHIPPED_PLUGIN_DIR
+    shutil.rmtree(stage, ignore_errors=True)
+    stage.mkdir(parents=True)
+    plugins = [Path(path) for path in shipped.split(";") if path]
+    for plugin in plugins:
+        shutil.copy2(plugin, stage / plugin.name)
+    print(f"Loading only the {len(plugins)} GStreamer plugins the package ships")
+    return stage
 
 
 def _run_tool(cmd: list[str]) -> subprocess.CompletedProcess[str]:
