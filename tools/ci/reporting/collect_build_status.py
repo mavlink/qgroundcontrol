@@ -45,7 +45,7 @@ ANALYSIS_WORKFLOW = "Code Analysis"
 _FAILED_CONCLUSIONS = {"failure", "timed_out", "startup_failure"}
 # Jobs that run even when change detection skips every build: the planners and the
 # `<workflow>-ok` gate, which is named after its workflow.
-_PLANNER_JOB = re.compile(r"(?i)detect changes|build-matrix|^plan\b")
+_PLANNER_JOB = re.compile(r"(?i)detect changes|^plan\b")
 
 
 def _seconds_between(start: Any, end: Any) -> float | None:

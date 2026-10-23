@@ -386,7 +386,7 @@ def write_scenario(base: Path, scenario: str) -> dict[str, str]:
                 9904,
                 seconds=21,
                 jobs=(
-                    _job("build-matrix", 9904, 1, seconds=11),
+                    _job("changes / Detect Changes", 9904, 1, seconds=11),
                     _job("Android (${{ matrix.host }})", 9904, 2, conclusion="skipped", seconds=0),
                     _job("Android", 9904, 3, seconds=3),
                 ),

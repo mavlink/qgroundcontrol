@@ -253,7 +253,7 @@ Dependency updates are split between two bots to avoid overlapping PRs:
 - Linux, Windows, MacOS, Android, and iOS end with an `if: always()` gate job named
   after the workflow (`re-actors/alls-green`) that fails if change detection or any build leg
   fails or is cancelled; builds may be skipped only by change detection. Branch protection
-  should require these six names, not build jobs: a skipped matrix job reports its unexpanded name
+  should require these five names, not build jobs: a skipped matrix job reports its unexpanded name
   (for example `Release ${{ matrix.arch }}`), and Android's legs differ by event.
   `tools/tests/ci/contracts/test_required_check_gates.py` pins the names and checks that each gate
   needs every other job in its workflow.

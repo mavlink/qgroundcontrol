@@ -318,7 +318,7 @@ def test_summarize_job_links_failed_steps() -> None:
         ),
         (
             {"status": "completed", "conclusion": "success"},
-            [("build-matrix", "success"), ("Android (linux)", "skipped"), ("Linux", "success")],
+            [("Plan Analysis", "success"), ("Android (linux)", "skipped"), ("Linux", "success")],
             "skipped",
         ),
         (
