@@ -167,6 +167,7 @@ def test_verify_reports_failed_tool_probe(monkeypatch, tmp_path):
 
 
 def test_verify_cli_needs_no_region_but_aws_commands_do(monkeypatch, capsys):
+    monkeypatch.delenv("AWS_REGION", raising=False)
     monkeypatch.setattr(runner, "verify_image", lambda: (_ for _ in ()).throw(RuntimeError("bad")))
     assert runner.main(["verify"]) == 1
     assert "::error::bad" in capsys.readouterr().out
@@ -174,3 +175,64 @@ def test_verify_cli_needs_no_region_but_aws_commands_do(monkeypatch, capsys):
     with pytest.raises(SystemExit) as exc:
         runner.main(["cleanup"])
     assert exc.value.code == 2
+
+
+def test_aws_commands_default_to_the_workflow_region(monkeypatch):
+    monkeypatch.setenv("AWS_REGION", "eu-central-1")
+    regions = []
+    monkeypatch.setattr(runner, "cleanup", regions.append)
+    assert runner.main(["cleanup"]) == 0
+    assert runner.main(["cleanup", "--region", "us-west-2"]) == 0
+    assert regions == ["eu-central-1", "us-west-2"]
+
+
+def test_manifest_outputs_the_candidate_image(monkeypatch, tmp_path, gh_output, capsys):
+    import json
+
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text(json.dumps({"builds": [{"artifact_id": "us-west-2:ami-0abc"}]}))
+    monkeypatch.setenv("AWS_REGION", "us-west-2")
+
+    assert runner.main(["manifest", "--manifest", str(manifest)]) == 0
+
+    assert capsys.readouterr().out == "ami-0abc\n"
+    assert gh_output.read_text() == "image=ami-0abc\n"
+
+
+PREFLIGHT_OK = {
+    "GITHUB_REF": "refs/heads/master",
+    "DEFAULT_BRANCH": "master",
+    "ROLE_ARN": "arn:aws:iam::1:role/ami",
+    "SUBNET_ID": "subnet-1",
+}
+BRANCH_ERROR = "::error::Runner images must be built from refs/heads/master; got "
+SETTINGS_ERROR = (
+    "::error::Configure RUNS_ON_AMI_ROLE_ARN and RUNS_ON_AMI_SUBNET_ID before dispatching "
+    "this workflow"
+)
+
+
+@pytest.mark.parametrize(
+    ("changes", "errors"),
+    [
+        ({}, []),
+        ({"GITHUB_REF": "refs/heads/feature"}, [BRANCH_ERROR + "refs/heads/feature"]),
+        ({"GITHUB_REF": "refs/tags/v5.0.0"}, [BRANCH_ERROR + "refs/tags/v5.0.0"]),
+        ({"ROLE_ARN": ""}, [SETTINGS_ERROR]),
+        ({"SUBNET_ID": ""}, [SETTINGS_ERROR]),
+        (
+            {"GITHUB_REF": "refs/heads/Stable_V5.0", "ROLE_ARN": "", "SUBNET_ID": ""},
+            [BRANCH_ERROR + "refs/heads/Stable_V5.0", SETTINGS_ERROR],
+        ),
+    ],
+    ids=["ok", "branch", "tag", "no-role", "no-subnet", "everything"],
+)
+def test_preflight_requires_the_default_branch_and_aws_settings(
+    monkeypatch, capsys, changes, errors
+):
+    for name, value in {**PREFLIGHT_OK, **changes}.items():
+        monkeypatch.setenv(name, value)
+    monkeypatch.setattr(runner, "ec2", lambda *_args: pytest.fail("preflight called AWS"))
+
+    assert runner.main(["preflight"]) == (1 if errors else 0)
+    assert capsys.readouterr().out.splitlines() == errors

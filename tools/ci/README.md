@@ -44,7 +44,7 @@ and Ruff skips `build` directories.
 | `runner/enable_kvm.py` | Open `/dev/kvm` to every user on a nested-virtualization runner |
 | `runner/install_dependencies_helper.py` | `install-dependencies` entry points: plan the Linux apt cache key, install the apt packages or the macOS Homebrew packages and GStreamer (both without the tools CI pins elsewhere), and install Windows MSVC and NSIS |
 | `runner/install_multipass.py` | Install Multipass and wait for daemon readiness |
-| `runner/runner_image.py` | Verify, promote, and retire QGC runner AMIs |
+| `runner/runner_image.py` | Check `runner-images.yml`'s branch and AWS settings, then output, verify, promote, and retire QGC runner AMIs |
 | `runner/validate_runner_configs.py` | `packer-validate` and `runs-on-lint` hooks: validate the runner image Packer template and lint the RunsOn configuration with the Packer and RunsOn CLI pinned in `build-config.json` |
 | `compile/cmake_helper.py` | Run CI configure, build, and CTest steps with standard arguments and timing, and write the job summary's Build section (result, duration, toolchain, compiler and moc cache hit rates, slowest build steps) |
 | `compile/docker_helper.py` | Run Docker builds and report compiler identities, timings, and cache statistics |
@@ -73,7 +73,7 @@ and Ruff skips `build` directories.
 | `reporting/verify_coverage_thresholds.py` | Enforce line and branch coverage thresholds (read from `CMakeCache.txt` with `--build-dir`) |
 | `reporting/workflow_runs.py` | Library: read the triggering `workflow_run` payload and the configured platform workflows, which default the reporting scripts' run-query arguments; validate, select, and group workflow runs; load run snapshots |
 | `gstreamer/gstreamer_archive.py` | Package GStreamer builds and optionally upload them to S3 |
-| `gstreamer/mirror_gstreamer.py` | Verify and mirror upstream GStreamer release artifacts to S3 |
+| `gstreamer/mirror_gstreamer.py` | Verify and mirror upstream GStreamer release artifacts to S3 (`mirror-gstreamer.yml` sets its options through `MIRROR_*` variables) |
 | `security/generate_cpm_sbom.py` | Generate a CycloneDX or SPDX SBOM from CPM package metadata and the bundled GStreamer |
 | `security/install_grype.py` | Install checksum-verified Grype release assets into the scan action tool cache |
 

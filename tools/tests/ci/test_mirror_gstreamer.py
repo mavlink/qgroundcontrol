@@ -15,6 +15,8 @@ from ci.gstreamer.mirror_gstreamer import (
 )
 from common.gstreamer import pinned_checksum
 
+from .._helpers import get_step, get_steps, load_workflow
+
 if TYPE_CHECKING:
     from pathlib import Path
 
@@ -132,3 +134,61 @@ def test_main_summarizes_each_mirrored_file(
     assert "| Files | 1 |" in summary
     assert "| Platform | File | Status |" in summary
     assert "| uploaded |" in summary
+
+
+def test_options_default_to_the_workflow_environment_and_build_config(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    config = tmp_path / "build-config.json"
+    config.write_text('{"gstreamer": {"version": {"default": "1.28.9"}}}', encoding="utf-8")
+    monkeypatch.setenv("CONFIG_FILE", str(config))
+    monkeypatch.setenv("RUNNER_TEMP", str(tmp_path))
+    for name in ("VERSION", "PLATFORMS", "DRY_RUN", "FORCE"):
+        monkeypatch.delenv(f"MIRROR_{name}", raising=False)
+    args = mirror_gstreamer.parse_args([])
+    assert (args.version, args.platforms, args.work_dir) == ("1.28.9", "all", str(tmp_path))
+    assert (args.dry_run, args.force) == (False, False)
+
+    # mirror-gstreamer.yml passes its inputs as MIRROR_* (booleans as true/false).
+    for name, value in {"VERSION": "1.28.3", "PLATFORMS": "ios", "DRY_RUN": "true"}.items():
+        monkeypatch.setenv(f"MIRROR_{name}", value)
+    monkeypatch.setenv("MIRROR_FORCE", "false")
+    args = mirror_gstreamer.parse_args([])
+    assert (args.version, args.platforms, args.dry_run, args.force) == (
+        "1.28.3",
+        "ios",
+        True,
+        False,
+    )
+    # An empty workflow input falls back to the defaults.
+    monkeypatch.setenv("MIRROR_VERSION", "")
+    monkeypatch.setenv("MIRROR_PLATFORMS", "")
+    assert mirror_gstreamer.parse_args([]).version == "1.28.9"
+    assert mirror_gstreamer.parse_args(["--force"]).platforms == "all"
+
+
+def test_version_is_required_without_a_build_config_default(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    config = tmp_path / "build-config.json"
+    config.write_text('{"gstreamer": {}}', encoding="utf-8")
+    monkeypatch.setenv("CONFIG_FILE", str(config))
+    monkeypatch.delenv("MIRROR_VERSION", raising=False)
+    with pytest.raises(SystemExit) as exc:
+        mirror_gstreamer.parse_args([])
+    assert exc.value.code == 2
+    assert "build-config.json has no gstreamer.version.default" in capsys.readouterr().err
+
+
+def test_workflow_passes_its_inputs_as_mirror_variables() -> None:
+    steps = get_steps(load_workflow("mirror-gstreamer.yml"), "mirror")
+    step = get_step(steps, "Mirror artifacts")
+    assert step["run"] == 'python3 "${GITHUB_WORKSPACE}/tools/ci/gstreamer/mirror_gstreamer.py"'
+    # No AWS_DEFAULT_REGION: aws-credentials exports the region, and dry runs make no AWS calls.
+    assert step["env"] == {
+        "MIRROR_VERSION": "${{ inputs.version }}",
+        "MIRROR_PLATFORMS": "${{ inputs.platforms }}",
+        "MIRROR_DRY_RUN": "${{ inputs.dry_run }}",
+        "MIRROR_FORCE": "${{ inputs.force }}",
+    }
+    assert get_step(steps, "Configure AWS Credentials")["if"] == "${{ !inputs.dry_run }}"

@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Verify and promote smoke-tested QGC AMIs and retire only expired QGC-owned images."""
+"""Verify and promote smoke-tested QGC AMIs and retire only expired QGC-owned images.
+
+`runner-images.yml` runs `preflight` before it requests AWS credentials, `manifest` to output the
+built candidate (`image`), `verify` on the candidate, and `promote` and `cleanup` after the smoke
+test. AWS commands take their region from `--region`, else AWS_REGION.
+"""
 
 from __future__ import annotations
 
@@ -27,6 +32,25 @@ def ec2(region: str, *args: str) -> dict[str, Any]:
         timeout=1200,
     )
     return json.loads(result.stdout) if result.stdout.strip() else {}
+
+
+def preflight(ref: str, default_branch: str, role_arn: str, subnet_id: str) -> list[str]:
+    """Return why this run must not build an image: another branch or unset AWS settings."""
+    errors = []
+    expected = f"refs/heads/{default_branch}"
+    if ref != expected:
+        errors.append(f"Runner images must be built from {expected}; got {ref}")
+    if not role_arn or not subnet_id:
+        errors.append(
+            "Configure RUNS_ON_AMI_ROLE_ARN and RUNS_ON_AMI_SUBNET_ID before dispatching this workflow"
+        )
+    return errors
+
+
+def write_output(name: str, value: str) -> None:
+    if path := os.environ.get("GITHUB_OUTPUT"):
+        with open(path, "a", encoding="utf-8") as output:
+            output.write(f"{name}={value}\n")
 
 
 def manifest_image(manifest: Path, region: str) -> str:
@@ -158,12 +182,28 @@ def verify_image(sdk_root: Path = SDK_ROOT) -> None:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=["manifest", "promote", "cleanup", "verify"])
-    parser.add_argument("--region", help="AWS region (required except for verify)")
+    parser.add_argument(
+        "command", choices=["preflight", "manifest", "promote", "cleanup", "verify"]
+    )
+    parser.add_argument(
+        "--region",
+        default=os.environ.get("AWS_REGION"),
+        help="AWS region (default: $AWS_REGION; required except for preflight and verify)",
+    )
     parser.add_argument("--manifest", type=Path)
     parser.add_argument("--image")
     parser.add_argument("--commit")
     args = parser.parse_args(argv)
+    if args.command == "preflight":
+        errors = preflight(
+            os.environ.get("GITHUB_REF", ""),
+            os.environ.get("DEFAULT_BRANCH", ""),
+            os.environ.get("ROLE_ARN", ""),
+            os.environ.get("SUBNET_ID", ""),
+        )
+        for error in errors:
+            print(f"::error::{error}", flush=True)
+        return 1 if errors else 0
     if args.command == "verify":
         try:
             verify_image()
@@ -176,7 +216,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "manifest":
         if args.manifest is None:
             parser.error("manifest requires --manifest")
-        print(manifest_image(args.manifest, args.region))
+        image = manifest_image(args.manifest, args.region)
+        print(image)
+        write_output("image", image)
     elif args.command == "promote":
         if not args.image or not args.commit:
             parser.error("promote requires --image and --commit")

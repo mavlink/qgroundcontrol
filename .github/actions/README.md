@@ -17,7 +17,6 @@ cannot load actions from the PR merge commit (zizmor's `self-repository` audit i
 | `attest-and-upload` | Checksum, SBOM scan, provenance and SBOM attestations, GitHub artifact upload, and optional AWS publish |
 | `aws-credentials` | Configure AWS credentials via OIDC (preferred) or static keys in one step |
 | `build-action` | Build a JavaScript action from source when no release ships a rebuilt `dist/` (kept intentionally; no current callers) |
-| `build-config` | Expose `.github/build-config.json` values as step outputs |
 | `build-setup` | Platform build setup: `build_setup.py` validates the inputs and plans every mode-dependent value, then runner preparation, Python, the CMake and Ninja pinned in `build-config.json`, caches (skipped with `build-cache: 'false'`), Xcode/MSVC, Java and the Android SDK/NDK, and Qt for desktop, Android (each requested ABI), or iOS; ends with the job summary's Setup section |
 | `cache` | Plan caches with `cache_plan.py`, install ccache/mold, and restore compiler, moc, CPM, and GStreamer SDK caches (each restore result is an output) |
 | `cmake-build` | Build through `cmake_helper.py`, save build caches after success, upload Ninja reports, annotate PR warnings, and write the job summary's Build section |

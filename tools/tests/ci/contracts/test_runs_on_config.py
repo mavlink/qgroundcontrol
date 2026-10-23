@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any
 import pytest
 from ci.planning.android_matrix import LINUX_EMULATOR_JOB, LINUX_JOB, build_matrix
 from ci.runner import validate_runner_configs
-from common.build_config import load_build_config
+from common.build_config import load_build_config, lookup_dotted
 
 from ..._helpers import REPO_ROOT, load_script, load_yaml
 
@@ -280,10 +280,23 @@ def test_runner_image_workflow_uses_current_commit_and_dedicated_role() -> None:
     assert "secrets.AWS_ROLE_ARN" not in workflow_text
     assert "PKR_VAR_source_ref: ${{ github.sha }}" in workflow_text
     assert "hashicorp/setup-packer@v3" in workflow_text
-    # Builds and the packer-validate hook use the same Packer release.
-    packer_version = load_build_config()["tools"]["packer"]["version"]
-    assert f"version: '{packer_version}'" in workflow_text
-    assert "github.event.repository.default_branch" in workflow_text
+    # One region for credentials, Packer, and runner_image.py (which defaults to $AWS_REGION).
+    assert workflow["env"] == {"AWS_REGION": "${{ vars.AWS_REGION || 'us-west-2' }}"}
+    assert workflow_text.count("vars.AWS_REGION") == 1
+    assert "--region" not in workflow_text
+
+    build_steps = {step["name"]: step for step in workflow["jobs"]["ubuntu24-x64"]["steps"]}
+    names = list(build_steps)
+    # runner_image.py preflight checks the branch and settings before AWS credentials are requested.
+    preflight = build_steps["Preflight"]
+    assert preflight["run"] == "python3 tools/ci/runner/runner_image.py preflight"
+    assert preflight["env"]["DEFAULT_BRANCH"] == "${{ github.event.repository.default_branch }}"
+    assert preflight["env"]["ROLE_ARN"] == "${{ secrets.RUNS_ON_AMI_ROLE_ARN }}"
+    assert preflight["env"]["SUBNET_ID"] == "${{ vars.RUNS_ON_AMI_SUBNET_ID }}"
+    assert names.index("Preflight") < names.index("Configure AWS Credentials")
+    for job in ("ubuntu24-x64", "promote"):
+        steps = {step.get("name"): step for step in workflow["jobs"][job]["steps"]}
+        assert steps["Configure AWS Credentials"]["with"]["aws-region"] == "${{ env.AWS_REGION }}"
 
 
 def test_runner_image_workflow_smoke_tests_the_managed_image() -> None:
@@ -298,13 +311,24 @@ def test_runner_image_workflow_smoke_tests_the_managed_image() -> None:
     assert "python3 tools/ci/runner/runner_image.py verify" in smoke_steps
 
     build_steps = {step["name"]: step for step in workflow["jobs"]["ubuntu24-x64"]["steps"]}
-    assert ".github/actions/build-config" in build_steps["Checkout"]["with"]["sparse-checkout"]
-    assert build_steps["Resolve build configuration"]["uses"] == "./.github/actions/build-config"
+    sparse = build_steps["Checkout"]["with"]["sparse-checkout"].split()
+    assert {".github/build-config.json", "tools/setup/read_config.py"} <= set(sparse)
+    resolve = build_steps["Resolve build configuration"]
+    assert resolve["id"] == "build-config"
+    keys = resolve["run"].split("--github-output ")[1].split()
+    assert keys == ["qt.version", "qt.modules", "tools.packer.version"]
+    config = load_build_config()
+    assert all(lookup_dotted(config, key, None) for key in keys)
     packer_env = build_steps["Build runner image"]["env"]
     assert packer_env["PKR_VAR_qt_version"] == "${{ steps.build-config.outputs.qt_version }}"
     assert packer_env["PKR_VAR_qt_modules"] == "${{ steps.build-config.outputs.qt_modules }}"
-    outputs = load_yaml(".github/actions/build-config/action.yml")["outputs"]
-    assert {"qt_version", "qt_modules"} <= outputs.keys()
+    # Builds and the packer-validate hook use build-config.json's Packer release.
+    packer = build_steps["Setup Packer"]["with"]["version"]
+    assert packer == "${{ steps.build-config.outputs.tools_packer_version }}"
+    names = list(build_steps)
+    assert names.index("Resolve build configuration") < names.index("Setup Packer")
+    candidate = build_steps["Resolve candidate AMI"]
+    assert candidate["run"].startswith("python3 tools/ci/runner/runner_image.py manifest ")
 
 
 def _precommit_hook(hook_id: str) -> dict[str, Any]:

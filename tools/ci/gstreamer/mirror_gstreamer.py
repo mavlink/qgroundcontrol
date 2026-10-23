@@ -7,6 +7,9 @@ given version, verifies each against its checksum pinned in .github/build-config
 ``s3://qgroundcontrol/dependencies/gstreamer/<platform>/<filename>`` — the layout the
 build's S3 fallback mirror reads. ``common.gstreamer`` holds the package layout
 shared with cmake/GStreamer/Download.cmake and the installers.
+
+Options default to `mirror-gstreamer.yml`'s MIRROR_* variables; the version falls back to
+build-config.json's ``gstreamer.version.default`` and the work directory to RUNNER_TEMP.
 """
 
 from __future__ import annotations
@@ -20,7 +23,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import _bootstrap as _bootstrap
 from common.aws import s3_object_exists, upload_public_file
-from common.gh_actions import gh_error, write_step_summary
+from common.build_config import get_build_config_value
+from common.gh_actions import env_default, env_flag, gh_error, write_step_summary
 from common.gstreamer import PLATFORM_PACKAGES, package_platform, package_url, pinned_checksum
 from common.markdown import code_span, md_table, summary_section
 from common.net import download_file, read_url_text
@@ -115,19 +119,38 @@ def mirror_artifact(
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--version", required=True, help="GStreamer version to mirror (e.g. 1.28.3)"
+        "--version",
+        default=env_default("MIRROR_VERSION")
+        or get_build_config_value("gstreamer.version.default"),
+        help="GStreamer version to mirror, e.g. 1.28.3 "
+        "(default: $MIRROR_VERSION, else build-config.json's gstreamer.version.default)",
     )
     parser.add_argument(
-        "--platforms", default="all", help="'all' or comma list: android,ios,macos,windows"
-    )
-    parser.add_argument("--work-dir", default=".", help="Scratch directory for downloads")
-    parser.add_argument(
-        "--dry-run", action="store_true", help="Download and verify but do not upload"
+        "--platforms",
+        default=env_default("MIRROR_PLATFORMS", "all"),
+        help="'all' or comma list: android,ios,macos,windows (default: $MIRROR_PLATFORMS, else all)",
     )
     parser.add_argument(
-        "--force", action="store_true", help="Re-upload even if the object already exists"
+        "--work-dir",
+        default=env_default("RUNNER_TEMP", "."),
+        help="Scratch directory for downloads (default: $RUNNER_TEMP, else .)",
     )
-    return parser.parse_args(argv)
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        default=env_flag("MIRROR_DRY_RUN"),
+        help="Download and verify but do not upload (default: $MIRROR_DRY_RUN)",
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        default=env_flag("MIRROR_FORCE"),
+        help="Re-upload even if the object already exists (default: $MIRROR_FORCE)",
+    )
+    args = parser.parse_args(argv)
+    if not args.version:
+        parser.error("--version is required: build-config.json has no gstreamer.version.default")
+    return args
 
 
 def main(argv: list[str] | None = None) -> int:

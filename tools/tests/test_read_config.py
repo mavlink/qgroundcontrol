@@ -150,3 +150,23 @@ def test_github_output_includes_ios_modules(tmp_path: Path, gh_output: Path, gh_
     }
     assert expected.items() <= read_github_file(gh_output).items()
     assert read_github_file(gh_env)["QT_VERSION"] == "6.10.2"
+
+
+def test_github_output_writes_only_requested_keys(
+    tmp_path: Path, gh_output: Path, gh_env: Path
+) -> None:
+    config = tmp_path / "build-config.json"
+    _write_config(config)
+    env = {"CONFIG_FILE": str(config)}
+
+    result = _run_read_config("--github-output", "qt.version", "Android.Platform", env=env)
+
+    assert result.returncode == 0, result.stderr
+    assert read_github_file(gh_output) == {"qt_version": "6.10.2", "android_platform": "35"}
+    assert gh_env.read_text() == ""
+
+    gh_output.write_text("")
+    result = _run_read_config("--github-output", "qt.version", "tools.packer.version", env=env)
+    assert result.returncode == 1
+    assert "Key 'tools.packer.version' not found" in result.stderr
+    assert gh_output.read_text() == ""

@@ -120,8 +120,10 @@
   syncs it on Linux). get-cmake resolves versions from the catalog bundled in its release, so the CMake pin cannot
   exceed the action's tag.
 - Read values with `tools/setup/read_config.py --get <dotted.path>`,
-  `common.build_config.get_build_config_value()`, or the `build-config` action in a workflow.
-  `qt-install` reads the Qt version itself, so its callers pass none.
+  `common.build_config.get_build_config_value()`, or, as step outputs,
+  `read_config.py --github-output <dotted.path>...` (dots become underscores). `build-setup`'s
+  planner outputs the versions its steps need, and `qt-install` reads the Qt version itself, so
+  its callers pass none.
 - **Qt installer**: `qt-install` runs `install_qt.py`, which installs Qt with QGC's installer
   (`tools/setup/qt_installer`, standard library plus `cmake -E tar`); aqtinstall stays as the
   fallback through `QGC_QT_INSTALLER`. Every job reaching `qt-install` has CMake: `build-setup`
