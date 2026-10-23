@@ -40,11 +40,9 @@ jobs:
     runs-on: >-
       ${{
         github.repository_owner == 'mavlink' &&
-        format('runs-on={0}-build-{1}-{2}/runner={3}{4}',
+        format('runs-on={0}-build-{1}-{2}/runner={3}',
           github.run_id, github.run_attempt, strategy.job-index,
-          matrix.arch == 'linux_gcc_64' && vars.RUNS_ON_LINUX_BUILDER || matrix.runson_runner,
-          github.event_name == 'pull_request' && (vars.RUNS_ON_SPOT_POOLS == 'true' && '-spot' ||
-            format('/spot=cop/family={0}', matrix.spot_family)) || '') ||
+          matrix.arch == 'linux_gcc_64' && vars.RUNS_ON_LINUX_BUILDER || matrix.runson_runner) ||
         matrix.hosted_runner
       }}
     timeout-minutes: 120
@@ -67,15 +65,12 @@ jobs:
         include:
           - arch: linux_gcc_arm64
             runson_runner: linux-arm64-builder
-            # Pull requests request the -spot twin's families until RUNS_ON_SPOT_POOLS is enabled.
-            spot_family: c8g.xlarge+m8g.xlarge+c7g.xlarge+m7g.xlarge
             hosted_runner: ubuntu-24.04-arm
             package: QGroundControl-aarch64
             host: linux_arm64
 
           - arch: linux_gcc_64
             runson_runner: linux-x64-builder-60gb
-            spot_family: m8i.xlarge+r8i.xlarge+m7i.xlarge
             hosted_runner: ubuntu-24.04
             package: QGroundControl-x86_64
             host: linux
@@ -179,10 +174,8 @@ jobs:
     runs-on: >-
       ${{
         github.repository_owner == 'mavlink' &&
-        format('runs-on={0}-debug-validation-{1}-{2}/runner=linux-x64-tester{3}',
-          github.run_id, github.run_attempt, strategy.job-index,
-          github.event_name == 'pull_request' && (vars.RUNS_ON_SPOT_POOLS == 'true' && '-spot' ||
-            '/spot=cop/family=m8i.xlarge+r8i.xlarge+m7i.xlarge') || '') ||
+        format('runs-on={0}-debug-validation-{1}-{2}/runner=linux-x64-tester',
+          github.run_id, github.run_attempt, strategy.job-index) ||
         'ubuntu-24.04'
       }}
     timeout-minutes: 120
@@ -334,10 +327,8 @@ jobs:
     runs-on: >-
       ${{
         github.repository_owner == 'mavlink' &&
-        format('runs-on={0}-custom-plugin-{1}-{2}/runner=linux-x64-tester{3}',
-          github.run_id, github.run_attempt, strategy.job-index,
-          github.event_name == 'pull_request' && (vars.RUNS_ON_SPOT_POOLS == 'true' && '-spot' ||
-            '/spot=cop/family=m8i.xlarge+r8i.xlarge+m7i.xlarge') || '') ||
+        format('runs-on={0}-custom-plugin-{1}-{2}/runner=linux-x64-tester',
+          github.run_id, github.run_attempt, strategy.job-index) ||
         'ubuntu-24.04'
       }}
     timeout-minutes: 120

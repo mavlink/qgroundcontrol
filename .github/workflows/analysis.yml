@@ -131,10 +131,8 @@ jobs:
     runs-on: >-
       ${{
         github.repository_owner == 'mavlink' &&
-        format('runs-on={0}-analyze-{1}-{2}/runner=linux-x64-analyzer{3}',
-          github.run_id, github.run_attempt, strategy.job-index,
-          github.event_name == 'pull_request' && (vars.RUNS_ON_SPOT_POOLS == 'true' && '-spot' ||
-            '/spot=cop/family=m8i.4xlarge+c8i.4xlarge+m7i.4xlarge+c7i.4xlarge') || '') ||
+        format('runs-on={0}-analyze-{1}-{2}/runner=linux-x64-analyzer',
+          github.run_id, github.run_attempt, strategy.job-index) ||
         'ubuntu-24.04'
       }}
     timeout-minutes: 120

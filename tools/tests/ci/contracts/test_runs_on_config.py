@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import pytest
-from ci.planning.android_matrix import LINUX_EMULATOR_JOB, LINUX_JOB, build_matrix
+from ci.planning.android_matrix import LINUX_EMULATOR_JOB, build_matrix
 from ci.runner import validate_runner_configs
 from common.build_config import load_build_config, lookup_dotted
 
@@ -25,15 +25,6 @@ RUNSON_WORKFLOWS = [
     "vm-builds.yml",
     "windows.yml",
 ]
-# Until RUNS_ON_SPOT_POOLS is enabled, PR labels request the `-spot` twin's settings directly, inline
-# or (linux.yml, whose legs use different pools) from the matrix entry's spot_family.
-PR_SPOT_SUFFIX = re.compile(
-    r"github\.event_name == 'pull_request' &&(?: matrix\.host == 'linux' &&)? "
-    r"\(vars\.RUNS_ON_SPOT_POOLS == 'true' && '-spot' \|\| "
-    r"(?:'/spot=cop/family=(?P<family>[\w.+-]+)'"
-    r"|format\('/spot=cop/family=\{0\}', matrix\.spot_family\))\) \|\| ''"
-)
-SPOT_SUFFIX = "-spot"
 
 
 def _read(path: str) -> str:
@@ -78,7 +69,8 @@ def test_runner_pools_have_on_demand_capacity_and_cache() -> None:
         for resource in ("cpu", "ram"):
             assert runner[resource]
             assert all(type(value) is int and value > 0 for value in runner[resource])
-        assert runner["spot"] == "cop" if pool.endswith(SPOT_SUFFIX) else runner["spot"] is False
+        # On-demand only: a reclaimed Spot instance discards a whole build.
+        assert runner["spot"] is False
         assert "s3-cache" in runner["extras"]
         assert re.fullmatch(r"[1-9]\d*gb", runner["volume"])
         platform, arch = pool.split("-")[:2]
@@ -102,10 +94,7 @@ def test_runner_pools_have_on_demand_capacity_and_cache() -> None:
     ],
 )
 def test_memory_heavy_pools_retain_a_16_gib_floor(pool: str) -> None:
-    runners = load_yaml(".github/runs-on.yml")["runners"]
-    for name in (pool, pool + SPOT_SUFFIX):
-        if name in runners:
-            assert min(runners[name]["ram"]) >= 16
+    assert min(load_yaml(".github/runs-on.yml")["runners"][pool]["ram"]) >= 16
 
 
 def test_analysis_pool_provides_16_cpus_and_matching_memory() -> None:
@@ -128,29 +117,6 @@ def test_runner_pool_families_are_prioritized_exact_types_matching_their_shape()
             assert min(runner["ram"]) <= memory <= max(runner["ram"]), f"{pool}: {instance_type}"
             is_graviton = instance_type.split(".")[0].endswith("g")
             assert is_graviton == pool.startswith("linux-arm64-"), f"{pool}: {instance_type}"
-
-
-def test_spot_pools_mirror_their_on_demand_pools() -> None:
-    # Pull requests use the twin, so resizing a pool without its twin must fail here, not drift.
-    runners = load_yaml(".github/runs-on.yml")["runners"]
-    for pool, runner in runners.items():
-        if pool.endswith(SPOT_SUFFIX):
-            assert pool.removesuffix(SPOT_SUFFIX) in runners
-            continue
-        twin = runners.get(pool + SPOT_SUFFIX)
-        if runner.get("nested-virt"):
-            assert twin is None, f"{pool} must stay on-demand"
-            continue
-        assert twin, f"{pool} needs a {SPOT_SUFFIX} twin"
-        assert {k: v for k, v in twin.items() if k not in ("family", "spot")} == {
-            k: v for k, v in runner.items() if k not in ("family", "spot")
-        }
-        # Intel 8i and Graviton types keep the pool's order; 7th-generation types follow.
-        preferred = [t for t in runner["family"] if re.fullmatch(r"[cmr]\d+[ig]\.\w+", t)]
-        assert twin["family"][: len(preferred)] == preferred
-        assert len(twin["family"]) > 2
-        assert all(re.fullmatch(r"[cmr]\d+[ig]\.\d*xlarge", t) for t in twin["family"])
-        assert not any(t.startswith("r7i.") for t in twin["family"])
 
 
 @pytest.mark.parametrize("pool", ["linux-x64-emulator", "linux-x64-vm-builder"])
@@ -194,8 +160,7 @@ def test_workflows_use_central_runner_definitions(workflow: str) -> None:
     text = _read(f".github/workflows/{workflow}")
     assert "runner=" in text
     configured = load_yaml(".github/runs-on.yml")["runners"]
-    # PR-only Spot labels are validated separately; any other shape label still fails below.
-    text = PR_SPOT_SUFFIX.sub("''", _normalized(text))
+    text = _normalized(text)
     if workflow == "windows.yml":
         # RunsOn reads runs-on.yml from the default branch only, so the Windows builder repeats its
         # volume as a label to apply in PRs; any other value or shape label still fails below.
@@ -221,40 +186,13 @@ def test_runson_labels_are_unique_per_job_attempt_and_matrix_entry(workflow: str
 
 
 @pytest.mark.parametrize("workflow", RUNSON_WORKFLOWS)
-def test_only_pull_requests_request_spot_from_intel_or_graviton_types(workflow: str) -> None:
-    # Push, merge-queue, tag, and dispatch builds keep the pools' on-demand capacity. PR labels drop
-    # AMD types, whose us-west-2 Spot interruption rates are well above the Intel and Graviton rates.
+def test_runson_jobs_never_request_spot(workflow: str) -> None:
+    # Every event, pull requests included, runs on the pools' on-demand capacity.
     text = _normalized(_read(f".github/workflows/{workflow}"))
-    suffixes = list(PR_SPOT_SUFFIX.finditer(text))
-    assert len(suffixes) == text.count("/spot=") == text.count("'-spot'")
-    runners = load_yaml(".github/runs-on.yml")["runners"]
-    families = [match["family"] for match in suffixes if match["family"]]
-    for job in load_yaml(f".github/workflows/{workflow}")["jobs"].values():
-        if "matrix.spot_family" not in str(job.get("runs-on", "")):
-            continue
-        # Each leg must request its own pool's twin, not merely some twin.
-        for entry in job["strategy"]["matrix"]["include"]:
-            twin = runners[entry["runson_runner"] + SPOT_SUFFIX]
-            assert entry["spot_family"] == "+".join(twin["family"])
-            families.append(entry["spot_family"])
-    assert len(families) >= len(suffixes)
-    for family in families:
-        twins = [
-            pool
-            for pool, runner in runners.items()
-            if pool.endswith(SPOT_SUFFIX) and "+".join(runner["family"]) == family
-        ]
-        assert twins, f"{workflow}: {family} must match a {SPOT_SUFFIX} pool"
-        # Android names its pools in android_matrix.py rather than in the workflow.
-        referenced = f"{text} {LINUX_JOB['runson_runner']}" if workflow == "android.yml" else text
-        bases = [re.escape(twin.removesuffix(SPOT_SUFFIX)) for twin in twins]
-        assert re.search(rf"(?<![\w-])(?:{'|'.join(bases)})(?![\w-])", referenced)
-    if workflow == "vm-builds.yml":
-        assert not families
-    if workflow == "android.yml":
-        assert "github.event_name == 'pull_request' && matrix.host == 'linux' && (" in text
-        assert not runners[LINUX_JOB["runson_runner"]].get("nested-virt")
-        assert LINUX_EMULATOR_JOB["host"] != "linux"
+    for token in ("-spot", "/spot=", "RUNS_ON_SPOT_POOLS"):
+        assert token not in text, f"{workflow}: {token}"
+    for job_id, route in _runson_routes(workflow):
+        assert "github.event_name" not in route, f"{workflow}:{job_id}"
 
 
 def test_android_matrix_references_defined_runners() -> None:

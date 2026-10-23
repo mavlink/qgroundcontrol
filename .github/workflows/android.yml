@@ -51,16 +51,13 @@ jobs:
       ${{
         github.repository_owner == 'mavlink' &&
         matrix.runson_runner != '' &&
-        format('runs-on={0}-build-{1}-{2}/{3}{4}',
+        format('runs-on={0}-build-{1}-{2}/{3}',
           github.run_id, github.run_attempt, strategy.job-index,
           matrix.host == 'windows' && vars.RUNS_ON_WINDOWS_POOL != '' &&
             format('pool={0}', vars.RUNS_ON_WINDOWS_POOL) ||
           matrix.host == 'linux' &&
             format('runner={0}', vars.RUNS_ON_LINUX_BUILDER || matrix.runson_runner) ||
-          format('runner={0}', matrix.runson_runner),
-          github.event_name == 'pull_request' && matrix.host == 'linux' &&
-            (vars.RUNS_ON_SPOT_POOLS == 'true' && '-spot' ||
-              '/spot=cop/family=c8i.xlarge+m8i.xlarge+c7i.xlarge+m7i.xlarge') || '') ||
+          format('runner={0}', matrix.runson_runner)) ||
         matrix.fallback_runner
       }}
     timeout-minutes: 120

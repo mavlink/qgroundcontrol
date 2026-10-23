@@ -424,7 +424,7 @@ def test_docker_cache_uses_magic_cache_compatible_backend() -> None:
 def test_docker_build_enables_magic_cache_on_upstream_aws_runners() -> None:
     workflow = load_workflow("docker.yml")
     job = workflow["jobs"]["build"]
-    assert "runs-on={0}-build-{1}-{2}/runner={3}{4}" in job["runs-on"]
+    assert "runs-on={0}-build-{1}-{2}/runner={3}" in job["runs-on"]
     assert "github.repository_owner == 'mavlink'" in job["runs-on"]
     assert "github.event." not in job["runs-on"]
     assert "'ubuntu-latest'" in job["runs-on"]

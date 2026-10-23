@@ -4,11 +4,9 @@
 # Families list exact types in on-demand priority order; RunsOn then ignores cpu/ram,
 # so the ranges below document the listed types.
 #
-# Each Spot-eligible pool has a `<pool>-spot` twin for pull requests: the same shape, with Spot capacity
-# chosen by `cop` (capacity first, then list order) from Intel or Graviton types. AMD and r7i types are
-# left out because their us-west-2 Spot capacity is interrupted more often. Until the repository variable
-# RUNS_ON_SPOT_POOLS is `true`, pull requests request the same Spot settings through job labels instead,
-# because labels naming a pool that is missing on the default branch fail to launch.
+# Every pool is on-demand, pull requests included: a reclaimed Spot instance discards a whole build.
+# Rename or remove a pool only after no workflow names it: labels naming a pool missing on the
+# default branch fail to launch.
 images:
   qgc-ubuntu24-x64:
     platform: linux
@@ -24,28 +22,12 @@ runners:
     image: ubuntu24-full-x64
     extras: s3-cache
     volume: 80gb
-  linux-x64-builder-spot:
-    family: ["c8i.xlarge", "m8i.xlarge", "c7i.xlarge", "m7i.xlarge"]
-    cpu: [4]
-    ram: [8, 16]
-    spot: cop
-    image: ubuntu24-full-x64
-    extras: s3-cache
-    volume: 80gb
   linux-x64-builder-prebaked:
     # Shared opt-in for desktop, Android, and Docker: retain desktop's 16 GiB floor.
     family: ["m8i.xlarge", "m8a.xlarge", "r8i.xlarge"]
     cpu: [4]
     ram: [16, 32]
     spot: false
-    image: qgc-ubuntu24-x64
-    extras: s3-cache
-    volume: 80gb
-  linux-x64-builder-prebaked-spot:
-    family: ["m8i.xlarge", "r8i.xlarge", "m7i.xlarge"]
-    cpu: [4]
-    ram: [16, 32]
-    spot: cop
     image: qgc-ubuntu24-x64
     extras: s3-cache
     volume: 80gb
@@ -57,27 +39,11 @@ runners:
     image: ubuntu24-full-x64
     extras: s3-cache
     volume: 60gb
-  linux-x64-builder-60gb-spot:
-    family: ["m8i.xlarge", "r8i.xlarge", "m7i.xlarge"]
-    cpu: [4]
-    ram: [16, 32]
-    spot: cop
-    image: ubuntu24-full-x64
-    extras: s3-cache
-    volume: 60gb
   linux-arm64-builder:
     family: ["c8g.xlarge", "m8g.xlarge"]
     cpu: [4]
     ram: [8, 16]
     spot: false
-    image: ubuntu24-full-arm64
-    extras: s3-cache
-    volume: 60gb
-  linux-arm64-builder-spot:
-    family: ["c8g.xlarge", "m8g.xlarge", "c7g.xlarge", "m7g.xlarge"]
-    cpu: [4]
-    ram: [8, 16]
-    spot: cop
     image: ubuntu24-full-arm64
     extras: s3-cache
     volume: 60gb
@@ -89,28 +55,12 @@ runners:
     image: ubuntu24-full-x64
     extras: s3-cache
     volume: 60gb
-  linux-x64-tester-spot:
-    family: ["m8i.xlarge", "r8i.xlarge", "m7i.xlarge"]
-    cpu: [4]
-    ram: [16, 32]
-    spot: cop
-    image: ubuntu24-full-x64
-    extras: s3-cache
-    volume: 60gb
   linux-x64-analyzer:
     # Analysis peaks near 11 GiB, so the 32 GiB fallback has ample headroom.
     family: ["m8i.4xlarge", "c8i.4xlarge"]
     cpu: [16]
     ram: [32, 64]
     spot: false
-    image: ubuntu24-full-x64
-    extras: s3-cache
-    volume: 60gb
-  linux-x64-analyzer-spot:
-    family: ["m8i.4xlarge", "c8i.4xlarge", "m7i.4xlarge", "c7i.4xlarge"]
-    cpu: [16]
-    ram: [32, 64]
-    spot: cop
     image: ubuntu24-full-x64
     extras: s3-cache
     volume: 60gb
@@ -142,14 +92,7 @@ runners:
     spot: false
     image: windows25-full-x64
     extras: s3-cache
-    # The image itself uses about 75 GB; this leaves room for the Release build.
-    # windows.yml repeats the volume as a job label, because public repositories only read this file from master.
-    volume: 150gb
-  windows-x64-builder-spot:
-    family: ["m8i.xlarge", "r8i.xlarge", "m7i.xlarge"]
-    cpu: [4]
-    ram: [16, 32]
-    spot: cop
-    image: windows25-full-x64
-    extras: s3-cache
-    volume: 150gb
+    # The image itself uses about 75 GB, leaving about 55 GiB for the Release build (100 GB, with 24.6 GiB
+    # free, ran out). windows.yml repeats the volume as a job label, because public repositories only
+    # read this file from master.
+    volume: 130gb

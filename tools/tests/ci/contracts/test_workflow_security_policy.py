@@ -163,8 +163,8 @@ def test_upstream_runson_routes_do_not_restrict_pr_origin(workflow: str, route_c
     for route in routes:
         assert "github.event." not in route
         assert "github.actor" not in route
-        # The event type may only add PR Spot capacity, never decide whether RunsOn is used.
-        assert route.count("github.event_name") == route.count("/spot=")
+        # The event type never decides whether or how RunsOn is used.
+        assert "github.event_name" not in route
 
 
 def test_external_actions_use_versioned_refs() -> None:

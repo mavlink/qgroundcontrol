@@ -160,19 +160,14 @@ Dependency updates are split between two bots to avoid overlapping PRs:
   any queued job with an identical label, so shared labels let matrix siblings steal each other's
   runners. The job id is written literally (`github.job` is empty outside steps) and the matrix
   entry is `strategy.job-index`, which matrix values cannot read, so every label is built in the
-  job's `runs-on`; `linux.yml` matrix entries supply only the pool, PR Spot families, and
-  GitHub-hosted fallback.
-- Pools list exact instance types in on-demand priority order and stay on-demand for pushes, merge
-  queues, tags, and manual runs. Each Spot-eligible pool has a `<pool>-spot` twin (same shape,
-  `spot: cop`, Intel 8i/7i or Graviton types; AMD and r7i types are left out for their higher
-  us-west-2 interruption rates). Pull requests use the twins once the repository variable
-  `RUNS_ON_SPOT_POOLS` is `true`; until then their labels request the same `spot=cop/family=…`
-  directly. Nested-virtualization pools and Windows warm pools (`pool=` ignores other labels)
-  never use Spot. RunsOn reruns Spot-interrupted jobs on on-demand capacity, up to twice.
+  job's `runs-on`; `linux.yml` matrix entries supply only the pool and GitHub-hosted fallback.
+- Pools list exact instance types in on-demand priority order, and every event, pull requests
+  included, uses on-demand capacity: a reclaimed Spot instance discards a whole build (three
+  Windows PR builds were lost at once on 2026-10-23). The event type never changes a job's label.
 - RunsOn reads `runs-on.yml` only from the default branch, so an unknown `runner=` fails to launch
   and labels repeat settings that must apply before a `runs-on.yml` change merges (for example the
-  Windows builder's 150 GB volume). The `runs-on-lint` hook runs `roc lint` on the config when it
-  changes, and `test_runs_on_config.py` keeps twins, labels, and pools in sync.
+  Windows builder's 130 GB volume). The `runs-on-lint` hook runs `roc lint` on the config when it
+  changes, and `test_runs_on_config.py` keeps labels and pools in sync.
 - `runs-on/action` enables Magic Cache and the cost summary (plus sccache's S3 settings in
   `linux.yml` Release legs when the repository variable `QGC_COMPILER_CACHE` is `sccache`; see the
   [sccache pilot](#sccache-pilot)), and skips itself off RunsOn, so
@@ -206,7 +201,7 @@ Dependency updates are split between two bots to avoid overlapping PRs:
 - The Windows builder uses `windows25-full-x64`, which ships the MSVC toolchain
   (`windows22-full-x64` does not). The dependency installer skips Visual Studio Build Tools when an
   existing instance already provides every required component. The image takes about 75 GB, so the
-  builder's volume is 150 GB.
+  builder's volume is 130 GB, about 55 GiB free for the build (100 GB, 24.6 GiB free, ran out).
 
 ### Build timelines and runner debugging
 

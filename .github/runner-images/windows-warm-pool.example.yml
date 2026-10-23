@@ -9,7 +9,7 @@ runners:
     spot: false
     image: windows25-full-x64
     extras: s3-cache
-    volume: 150gb
+    volume: 130gb
 
 pools:
   qgc-windows-x64-builder:

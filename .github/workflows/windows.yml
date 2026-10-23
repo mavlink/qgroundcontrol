@@ -53,9 +53,7 @@ jobs:
         format('runs-on={0}-build-{1}-{2}/{3}',
           github.run_id, github.run_attempt, strategy.job-index,
           vars.RUNS_ON_WINDOWS_POOL != '' && format('pool={0}', vars.RUNS_ON_WINDOWS_POOL) ||
-          format('runner=windows-x64-builder{0}/volume=150gb',
-            github.event_name == 'pull_request' && (vars.RUNS_ON_SPOT_POOLS == 'true' && '-spot' ||
-              '/spot=cop/family=m8i.xlarge+r8i.xlarge+m7i.xlarge') || '')) ||
+          'runner=windows-x64-builder/volume=130gb') ||
         matrix.hosted_runner
       }}
     timeout-minutes: 120
