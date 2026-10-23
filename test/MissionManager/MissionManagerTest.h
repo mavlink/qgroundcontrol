@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MissionControllerManagerTest.h"
+#include "MockLinkMissionItemHandler.h"
 
 class MissionManagerTest : public MissionControllerManagerTest
 {

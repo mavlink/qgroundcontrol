@@ -178,6 +178,9 @@ globe and run in a process pool. Per job ([`generate.py`](generate.py)):
    - Cells sharing a resolution are merged by exact pixel copy (same lattice), which keeps
      bilinear interpolation continuous across 1° cell edges instead of clamping at each file's
      edge.
+   - Each cell is pasted from a whole-pixel window read; a cell off its group's lattice fails the
+     job. `rasterio.merge` computed windows a hair off whole pixels, so GDAL resampled every read
+     (about 45 s of a real Alps job, now about 0.2 s).
    - Different lattices are never merged directly: rasterio rounds coarser source windows to
      whole pixels, shifting that data by up to a pixel (~23 m at 60°N).
    - A group's missing nodes (the neighboring band or GLO-90 cell) are resampled from the other
@@ -199,7 +202,8 @@ globe and run in a process pool. Per job ([`generate.py`](generate.py)):
    reruns resume.
 
 `overviews` then builds z8..z0 from the z9 tiles by decoding, averaging and re-encoding; missing
-children count as sea level.
+children count as sea level. Each zoom's tiles are built in a process pool (`--workers`, default
+every CPU) before the next coarser zoom starts.
 
 ## Publishing and Updates
 
@@ -271,11 +275,11 @@ Missing keys return **403**, not 404: CloudFront's access to the bucket excludes
 | [`copernicus.py`](copernicus.py) | Cell naming, tile lists, GLO-30/GLO-90 cell map, cell selection |
 | [`terrarium.py`](terrarium.py) | Terrarium encode/decode, 0.25 m rounding, height averaging, PNG I/O |
 | [`generate.py`](generate.py) | Per-lattice grids, void fill, warp, pyramid, overviews, process pool |
-| [`jobs.py`](jobs.py) | Job done markers, bounded job scheduling and validation job selection (pure Python) |
-| [`validate.py`](validate.py) | Source, ArduPilot and Tilezen checks; tile size report |
+| [`jobs.py`](jobs.py) | Tile paths (`TILES_DIR`), job done markers, bounded job scheduling and validation job selection (pure Python) |
+| [`validate.py`](validate.py) | Source, ArduPilot and Tilezen checks, their pass/fail thresholds, per-job worker pool |
 | [`check.py`](check.py) | Whole-build check of every tile: structure, seams, height jumps |
 | [`compare.py`](compare.py) | Tile-by-tile comparison of two builds |
-| [`fetch.py`](fetch.py) | HTTP GET retrying transient failures, for the ArduPilot and Tilezen references (pure Python) |
+| [`stats.py`](stats.py) | Tile count and size report per zoom |
 | [`ardupilot.py`](ardupilot.py) | Independent numpy reader for ArduPilot's SRTM1 `.hgt` cells |
 | [`metadata.py`](metadata.py) | `tilejson.json` and `ATTRIBUTION.txt` contents |
 | [`upload.py`](upload.py) | `aws` commands for tile sync, CloudFront invalidation and metadata; cache policy |
@@ -305,12 +309,15 @@ production:
 - No option validates every completed job; `--sample-jobs N` validates N random land jobs
   (reproducible with `--seed`; ocean jobs have nothing to compare); `--job Z/X/Y` (repeatable)
   validates specific jobs.
-- Jobs are decoded and checked one at a time and only the result rows are kept, so memory stays
-  around 1–1.5 GB per run regardless of job count.
+- Each worker decodes and checks one job at a time and only the result rows are kept, so memory
+  stays around 1–1.5 GB per worker regardless of job count. `--workers N` (default 1) validates N
+  jobs at once, each in its own process; the checks mostly wait on downloads, so this divides the
+  wall time of a `--sample-jobs` run by about N. Source samples are seeded by `--seed` and the
+  job, so results do not depend on the worker count.
 - A job whose tiles cannot be read, or a source or ArduPilot check that fails outright (e.g. a
   download that outlasts its retries), is reported as a problem for that job and the run
-  continues; a failed Tilezen check only prints a warning. Downloads retry connection errors,
-  timeouts and 5xx responses.
+  continues; a failed Tilezen check only prints a warning. Downloads (`common.net`) retry
+  connection errors, timeouts and 5xx, 408 and 429 responses; other HTTP errors fail at once.
 
 1. **Copernicus source (correctness of our pipeline).** Decoded z13 pixels against a
    point-bilinear sampler written independently of the generator: it reads the 2×2 source
@@ -469,15 +476,17 @@ PUT fees and ~400 GB.
 ## Unit Tests
 
 [`../tests/test_terrain.py`](../tests/test_terrain.py) (stdlib only) covers tile math, cell
-naming and selection, GLO-90 gap filling in the cell map, bounded job scheduling, download
-retries, the CLI's argument checks, and the upload targets, cache policy, publish order and
-production checks. [`../tests/test_terrain_pipeline.py`](../tests/test_terrain_pipeline.py) needs the
+naming and selection, GLO-90 gap filling in the cell map, bounded job scheduling, the CLI's
+argument checks, and the upload targets, cache policy, publish order and production checks;
+[`../tests/test_net.py`](../tests/test_net.py) covers the download retry policy. [`../tests/test_terrain_pipeline.py`](../tests/test_terrain_pipeline.py) needs the
 `terrain` group and skips without it. Its core tests write small synthetic Copernicus-style
 cells holding a **linear height ramp** in lon/lat: bilinear interpolation reproduces a linear
 field exactly, so every generated pixel must equal the analytic ramp at its center. That checks
 mosaic, lattice alignment, warp and Mercator math together, with no network. Cases:
 
 - Same-resolution cells: exact across 1° borders.
+- Same-resolution merge: reads only whole-pixel windows and matches `rasterio.merge` bit for bit
+  on bounds where its windows are fractional; a cell off the lattice is rejected.
 - Cells in two longitude bands: exact across the band boundary, and a job's heights do not
   change when the cells it buffers include another lattice (checked on a nonlinear field, which
   a ramp cannot do).
@@ -487,7 +496,12 @@ mosaic, lattice alignment, warp and Mercator math together, with no network. Cas
 - Rounding: nearest 0.25 m step, error at most half a step, no bias; near-zero tiles become sea.
 - The validation sampler interpolates across east and south cell edges; source samples match the
   requested count, and a job with none to compare is reported instead of crashing.
-- A broken worker pool counts every unfinished job as failed.
+- A broken worker pool counts every unfinished job as failed; in `validate`, `check` and `diff`
+  a failing or broken worker is reported as a problem instead of ending the run.
+- Validation gates: each source and ArduPilot threshold at and past its limit, a planted
+  land-as-sea block found by the ArduPilot comparison, and the exit status that follows; the
+  ArduPilot cell cache keeps downloads and 404s on disk and raises other HTTP errors.
+- `check`, `stats` and `diff` run with rasterio unavailable.
 - The antimeridian: a job ending at 180°E matches the ramp exactly up to its last pixel, the
   validation sampler interpolates across 180°, and `check` finds a seam planted across it.
 - The whole-build check: each structural fault is reported; seams are flagged only when the jump
@@ -508,7 +522,7 @@ cd tools && uv run --group test --group terrain pytest -q tests/test_terrain.py 
 TT="uv run --project tools --group terrain python tools/terrain_tiles.py"
 $TT generate --out build/terrain --area all
 $TT validate --out build/terrain
-$TT validate --out build/terrain --sample-jobs 200   # After a global run
+$TT validate --out build/terrain --sample-jobs 200 --workers 16   # After a global run
 $TT overviews --out build/terrain
 $TT stats --out build/terrain
 $TT check --out build/terrain                         # Every tile; required for production
@@ -521,6 +535,9 @@ $TT upload --out build/terrain --production --data-version 1.0.0 --notice "Initi
   to the source buckets; from elsewhere a job takes 10–100 s.
 - GDAL's block cache is capped at 512 MB per process (`GDAL_ENV`); its default, 5% of physical
   RAM, would be multiplied by every pool worker.
+- A source read that stalls (no connection within 30 s, or under 1 byte/s for 60 s) fails its job
+  instead of hanging the run; GDAL's defaults never time out. Rerun to retry it.
+- `check`, `stats` and `diff` need only numpy and Pillow, not rasterio.
 - Generation is resumable: rerunning skips jobs with a done marker (`--force` regenerates).
   Failed jobs leave no marker and are retried on the next run.
 - `validate` caches tile lists in `<out>/_source/` and ArduPilot cells (~10 MB each) in

@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-import json
 from typing import TYPE_CHECKING, NamedTuple
+
+from common.io import write_json
 
 from .heights import HEIGHT_STEP, SEA_LEVEL
 from .tilemath import MAX_LATITUDE, MAX_ZOOM
@@ -88,11 +89,7 @@ def write_metadata(
 ) -> list[MetadataFile]:
     """Write the metadata files for *prefix* into *out*; returns them with their content types."""
     tilejson_path = out / TILEJSON_NAME
-    tilejson_path.write_text(
-        json.dumps(tilejson(public_url, prefix, data_version, notice), indent=2, ensure_ascii=False)
-        + "\n",
-        encoding="utf-8",
-    )
+    write_json(tilejson_path, tilejson(public_url, prefix, data_version, notice))
     attribution_path = out / ATTRIBUTION_NAME
     attribution_path.write_text("\n\n".join(ATTRIBUTION_NOTICES) + "\n", encoding="utf-8")
     # tilejson.json last: uploading in this order publishes the new version last.

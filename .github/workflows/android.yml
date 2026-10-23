@@ -35,58 +35,32 @@ permissions:
   actions: read
 
 jobs:
+  # android_matrix.py drops the windows leg, the PR long pole by a decent amount, for pull
+  # requests and keeps it for push / merge queue / dispatch.
   changes:
     uses: ./.github/workflows/_detect-changes.yml
     with:
       platform: android
 
-  # The windows leg is the PR long pole by a decent amount; android_matrix.py drops it
-  # for pull requests and keeps it for push / merge queue / dispatch.
-  build-matrix:
-    needs: changes
-    if: needs.changes.outputs.should_build == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 1
-    outputs:
-      include: ${{ steps.build.outputs.include }}
-    steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@v2
-        with:
-          egress-policy: audit
-
-      - uses: actions/checkout@v7
-        with:
-          sparse-checkout: |
-            .github/scripts/android_matrix.py
-            .github/scripts/ci_bootstrap.py
-            tools/_bootstrap.py
-            tools/common
-            tools/qgc_tools
-          sparse-checkout-cone-mode: false
-          fetch-depth: 1
-          persist-credentials: false
-      - name: Build matrix
-        id: build
-        env:
-          IS_PR: ${{ github.event_name == 'pull_request' && '1' || '0' }}
-        run: python3 .github/scripts/android_matrix.py
-
   build:
     name: Android (${{ matrix.host }})
-    needs: [changes, build-matrix]
+    needs: changes
     if: needs.changes.outputs.should_build == 'true'
     # Use RunsOn for upstream jobs when the platform defines a runner.
     runs-on: >-
       ${{
         github.repository_owner == 'mavlink' &&
         matrix.runson_runner != '' &&
-        format('runs-on={0}/{1}', github.run_id,
+        format('runs-on={0}-build-{1}-{2}/{3}{4}',
+          github.run_id, github.run_attempt, strategy.job-index,
           matrix.host == 'windows' && vars.RUNS_ON_WINDOWS_POOL != '' &&
             format('pool={0}', vars.RUNS_ON_WINDOWS_POOL) ||
           matrix.host == 'linux' &&
             format('runner={0}', vars.RUNS_ON_LINUX_BUILDER || matrix.runson_runner) ||
-          format('runner={0}', matrix.runson_runner)) ||
+          format('runner={0}', matrix.runson_runner),
+          github.event_name == 'pull_request' && matrix.host == 'linux' &&
+            (vars.RUNS_ON_SPOT_POOLS == 'true' && '-spot' ||
+              '/spot=cop/family=c8i.xlarge+m8i.xlarge+c7i.xlarge+m7i.xlarge') || '') ||
         matrix.fallback_runner
       }}
     timeout-minutes: 120
@@ -101,7 +75,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON(needs.build-matrix.outputs.include) }}
+        include: ${{ fromJSON(needs.changes.outputs.matrix) }}
 
     defaults:
       run:
@@ -112,13 +86,17 @@ jobs:
       PACKAGE: QGroundControl
       QT_ANDROID_KEYSTORE_PATH: ${{ github.workspace }}/deploy/android/android_release.keystore
       QT_ANDROID_KEYSTORE_ALIAS: QGCAndroidKeyStore
-      QT_ANDROID_KEYSTORE_STORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-      QT_ANDROID_KEYSTORE_KEY_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      # Same-repo PRs (including Renovate) would otherwise receive the release keystore password;
+      # an empty password makes every PR leg sign with a throwaway debug keystore.
+      QT_ANDROID_KEYSTORE_STORE_PASS: ${{ github.event_name != 'pull_request' && secrets.ANDROID_KEYSTORE_PASSWORD || '' }}
+      QT_ANDROID_KEYSTORE_KEY_PASS: ${{ github.event_name != 'pull_request' && secrets.ANDROID_KEYSTORE_PASSWORD || '' }}
       QT_ANDROID_ABIS: ${{ matrix.android_abis }}
       HAS_PLAYSTORE_SECRET: ${{ secrets.GOOGLE_SERVICE_ACCOUNT != '' }}
 
     steps:
+      # The Harden-Runner community tier audits GitHub-hosted runners only, not RunsOn.
       - name: Harden Runner
+        if: runner.environment == 'github-hosted'
         uses: step-security/harden-runner@v2
         with:
           egress-policy: audit
@@ -130,10 +108,8 @@ jobs:
           show-waiting-runner: true
 
       - name: Enable RunsOn magic cache
-        if: github.repository_owner == 'mavlink' && matrix.host != 'mac'
         uses: runs-on/action@v2
         with:
-          metrics: cpu,network,memory,disk,io
           show_costs: summary
 
       - name: Checkout repo
@@ -141,16 +117,6 @@ jobs:
         with:
           fetch-depth: ${{ github.event_name == 'pull_request' && 1 || 0 }}
           persist-credentials: false
-
-      # RunsOn images ship no Android SDK and don't preset ANDROID_SDK_ROOT (unlike
-      # GitHub-hosted images), so setup-android@v4 has no install target. Point it
-      # at a writable path. macOS stays GitHub-hosted with its preinstalled SDK.
-      - name: Set Android SDK location
-        if: matrix.host != 'mac'
-        shell: bash
-        run: |
-          echo "ANDROID_SDK_ROOT=${RUNNER_TEMP}/android-sdk" >> "$GITHUB_ENV"
-          echo "ANDROID_HOME=${RUNNER_TEMP}/android-sdk" >> "$GITHUB_ENV"
 
       - name: Build Setup (Android)
         id: setup
@@ -165,33 +131,22 @@ jobs:
           # resolve to identical cache inputs and would race on the moccache
           # save key.
           cache-key-suffix: ${{ matrix.host }}
-          cpm-modules: .cache/CPM
 
       - name: Install host build dependencies
         if: runner.os == 'Linux'
         uses: ./.github/actions/install-dependencies
+        with:
+          # setup-java provides the JDK; Qt's host tools need none of the desktop libraries.
+          category: core
 
       - name: Create Debug Keystore
         if: ${{ env.QT_ANDROID_KEYSTORE_STORE_PASS == '' || !matrix.primary }}
         shell: bash
-        run: |
-          keytool -genkey -v \
-            -keystore "${RUNNER_TEMP}/debug.keystore" \
-            -storepass android -alias androiddebugkey -keypass android \
-            -keyalg RSA -keysize 2048 -validity 10000 \
-            -dname "CN=Android Debug,O=Android,C=US"
-          {
-            echo "QT_ANDROID_KEYSTORE_PATH=${RUNNER_TEMP}/debug.keystore"
-            echo "QT_ANDROID_KEYSTORE_ALIAS=androiddebugkey"
-            echo "QT_ANDROID_KEYSTORE_STORE_PASS=android"
-            echo "QT_ANDROID_KEYSTORE_KEY_PASS=android"
-          } >> "$GITHUB_ENV"
+        run: python3 "${GITHUB_WORKSPACE}/tools/ci/android/android_sdk_helper.py" debug-keystore
 
       - name: Configure
         uses: ./.github/actions/cmake-configure
         with:
-          build-dir: ${{ runner.temp }}/build
-          build-type: ${{ env.BUILD_TYPE }}
           preset: ${{ env.BUILD_TYPE == 'Debug' && 'Android-debug' || 'Android' }}
           use-qt-cmake: 'false'
           extra-args: >-
@@ -201,6 +156,7 @@ jobs:
             -DQT_ANDROID_ABIS=${{ env.QT_ANDROID_ABIS }}
             -DQT_HOST_PATH=${{ steps.setup.outputs.host_qt_root_dir }}
             -DQT_ANDROID_SIGN_APK=ON
+            -DQT_ANDROID_SIGN_AAB=ON
 
       - name: Build
         id: build
@@ -211,8 +167,6 @@ jobs:
           GRADLE_OPTS: -Dorg.gradle.daemon=false
         uses: ./.github/actions/cmake-build
         with:
-          build-dir: ${{ runner.temp }}/build
-          build-type: ${{ env.BUILD_TYPE }}
           parallel-jobs: ${{ matrix.emulator && '2' || '' }}
           output-file: qgc-build.log
 
@@ -221,7 +175,7 @@ jobs:
         if: ${{ matrix.emulator && steps.build.outcome == 'failure' }}
         shell: bash
         run: |
-          python3 "${GITHUB_WORKSPACE}/.github/scripts/android_build_retry.py" \
+          python3 "${GITHUB_WORKSPACE}/tools/ci/android/android_build_retry.py" \
             --build-dir "${{ runner.temp }}/build" \
             --build-type "${BUILD_TYPE}"
 
@@ -264,14 +218,24 @@ jobs:
       - name: Prepare Artifact
         shell: bash
         run: |
-          TEMP_DIR="${RUNNER_TEMP//\\//}"  # Convert backslashes for Windows
-          APK_DIR="${TEMP_DIR}/build/android-build"
-          if ! ls "${APK_DIR}"/*.apk 1>/dev/null 2>&1; then
-            echo "::error::No APK files found in ${APK_DIR}"
-            ls -la "${APK_DIR}" 2>/dev/null || echo "Build directory does not exist"
-            exit 1
-          fi
-          cp "${APK_DIR}"/*.apk "${TEMP_DIR}/build/${{ env.PACKAGE }}.apk"
+          python3 "${GITHUB_WORKSPACE}/tools/ci/packaging/find_artifact.py" \
+            --build-dir "${RUNNER_TEMP}/build/android-build" \
+            --pattern '*.apk' --top-level \
+            --copy-to "${RUNNER_TEMP}/build/${PACKAGE}.apk"
+
+      # Master pushes also publish an App Bundle of the same multi-ABI release build. androiddeployqt runs
+      # Gradle's all-variant `bundle` task, so only outputs/bundle/release holds the release bundle.
+      - name: Build Android App Bundle
+        id: aab
+        if: ${{ !matrix.emulator && matrix.primary && github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+        env:
+          GRADLE_OPTS: -Dorg.gradle.daemon=false
+        run: |
+          cmake --build "${RUNNER_TEMP}/build" --target aab --config "${BUILD_TYPE}"
+          python3 "${GITHUB_WORKSPACE}/tools/ci/packaging/find_artifact.py" \
+            --build-dir "${RUNNER_TEMP}/build/android-build/build/outputs/bundle/release" \
+            --pattern '*.aab' \
+            --copy-to "${RUNNER_TEMP}/build/${PACKAGE}.aab"
 
       - name: Emulator Boot Test
         if: ${{ matrix.emulator }}
@@ -295,32 +259,51 @@ jobs:
           aws-distribution-id: ${{ secrets.AWS_DISTRIBUTION_ID }}
           upload-aws: ${{ matrix.primary }}
 
-      # Shell conditional, not a `&& x || y` GHA ternary whose `||` arm misfires
-      # if the truthy arm ever evaluates falsy. tag -> production; master -> beta.
-      - name: Compute Play Store rollout
-        id: playstore_rollout
-        if: ${{ !matrix.emulator && matrix.primary && env.HAS_PLAYSTORE_SECRET == 'true' && (github.ref_type == 'tag' || github.ref == 'refs/heads/master') }}
-        env:
-          REF_TYPE: ${{ github.ref_type }}
-        run: |
-          if [ "${REF_TYPE}" = "tag" ]; then
-            { echo "track=production"; echo "status=inProgress"; echo "user_fraction=0.2"; } >> "${GITHUB_OUTPUT}"
-          else
-            { echo "track=beta"; echo "status=completed"; echo "user_fraction="; } >> "${GITHUB_OUTPUT}"
-          fi
+      - name: Attest and Upload App Bundle
+        if: ${{ steps.aab.outcome == 'success' }}
+        uses: ./.github/actions/attest-and-upload
+        with:
+          artifact-name: ${{ env.PACKAGE }}.aab
+          package-name: ${{ format('{0}-{1}-{2}-aab', env.PACKAGE, matrix.host, matrix.artifact_abi_suffix) }}
+          subject-name: ${{ env.PACKAGE }}-${{ matrix.host }}-aab
+          upload-aws: 'false'
 
+      # Tags start a 20% staged production rollout; master pushes complete a beta release.
       - name: Deploy to Play Store
         if: ${{ !matrix.emulator && matrix.primary && env.HAS_PLAYSTORE_SECRET == 'true' && (github.ref_type == 'tag' || github.ref == 'refs/heads/master') }}
-        uses: ./.github/actions/playstore
+        uses: r0adkll/upload-google-play@v1
         with:
-          artifact: ${{ runner.temp }}/build/${{ env.PACKAGE }}.apk
-          service_account_json: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
-          track: ${{ steps.playstore_rollout.outputs.track }}
-          status: ${{ steps.playstore_rollout.outputs.status }}
-          user_fraction: ${{ steps.playstore_rollout.outputs.user_fraction }}
-          whats_new_directory: ${{ github.workspace }}/deploy/android/whatsnew
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+          packageName: org.mavlink.qgroundcontrol
+          releaseFiles: ${{ runner.temp }}/build/${{ env.PACKAGE }}.apk
+          track: ${{ github.ref_type == 'tag' && 'production' || 'beta' }}
+          status: ${{ github.ref_type == 'tag' && 'inProgress' || 'completed' }}
+          userFraction: ${{ github.ref_type == 'tag' && '0.2' || '' }}
+          whatsNewDirectory: ${{ github.workspace }}/deploy/android/whatsnew
 
       - name: Debug failed runner
-        if: ${{ failure() && !cancelled() && github.event_name == 'workflow_dispatch' && inputs.debug_runner && github.ref_type == 'branch' }}
+        if: ${{ failure() && !cancelled() && inputs.debug_runner && github.ref_type == 'branch' }}
         timeout-minutes: 15
         uses: ./.github/actions/debug-runner
+
+  # The required status check. Matrix legs differ by event, and a skipped matrix job reports an
+  # unexpanded name, so branch protection requires this stable name instead. always(): a skipped
+  # gate would count as passing.
+  android-ok:
+    name: Android
+    if: always()
+    needs: [changes, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Require every leg to pass
+        uses: re-actors/alls-green@v1.3.0
+        with:
+          allowed-skips: build
+          jobs: ${{ toJSON(needs) }}

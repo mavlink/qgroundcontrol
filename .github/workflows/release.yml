@@ -1,10 +1,20 @@
 name: Release
 
+# Release tags are created and pushed by hand, which also starts the platform builds. This drafts
+# the tag's GitHub Release with git-cliff notes; release assets are uploaded by hand.
 on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing vX.Y.Z tag to draft a release for'
+        required: true
+        type: string
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ inputs.tag || github.ref_name }}
   cancel-in-progress: false
 
 # Per-job permissions narrow each scope; the top-level only grants read.
@@ -12,17 +22,14 @@ permissions:
   contents: read
 
 jobs:
-  semantic-release:
-    name: Semantic Release
+  draft-release:
+    name: Draft Release
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
-      contents: write       # @semantic-release/github creates the tag and release
-      issues: write         # @semantic-release/github comments on closed issues
-      pull-requests: write  # @semantic-release/github comments on closed PRs
-    outputs:
-      new_release: ${{ steps.release.outputs.new_release }}
-      version: ${{ steps.release.outputs.version }}
+      contents: write  # gh release create --draft
+    env:
+      RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
 
     steps:
       - name: Harden Runner
@@ -30,153 +37,27 @@ jobs:
         with:
           egress-policy: audit
 
+      # fetch-depth 0 fetches every tag and every branch as origin/*. A dispatch runs the dispatching
+      # branch's tooling, so it can draft tags on Stable branches that predate this workflow.
       - name: Checkout
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
+      - name: Require a Stable branch tag
+        run: python3 tools/ci/publish/release_branch_check.py --ref "refs/tags/${RELEASE_TAG}"
+
+      - name: Setup Python
+        uses: ./.github/actions/setup-python
         with:
-          node-version-file: .nvmrc
+          groups: release
 
-      - name: Run semantic-release
-        id: release
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          ./tools/release.py --install
-          # @semantic-release/exec verifyReleaseCmd writes tools/release/.release-version
-          # iff a release was actually published. Reading from a file is
-          # immune to log-format drift across SR major versions.
-          rm -f tools/release/.release-version
-          ./tools/release.py --run
-
-          if [[ -f tools/release/.release-version ]]; then
-            version=$(tr -d '[:space:]' < tools/release/.release-version)
-            if [[ -z "${version}" ]]; then
-              echo "::error::semantic-release wrote an empty version file"
-              exit 1
-            fi
-            echo "new_release=true" >> "${GITHUB_OUTPUT}"
-            echo "version=${version}" >> "${GITHUB_OUTPUT}"
-            echo "New release: v${version}"
-          else
-            echo "new_release=false" >> "${GITHUB_OUTPUT}"
-            echo "No new release"
-          fi
-
-  wait-for-builds:
-    name: Wait for Platform Builds
-    needs: semantic-release
-    if: needs.semantic-release.outputs.new_release == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 180
-    permissions:
-      contents: read
-      actions: write  # dispatch platform workflows, then poll their exact run IDs
-
-    steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@v2
-        with:
-          egress-policy: audit
-
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-
-      # GITHUB_TOKEN-created tags do not trigger builds; keep the selected IDs
-      # so later manual dispatches at the same SHA cannot replace these artifacts.
-      - name: Dispatch and wait for release builds
-        env:
-          GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: v${{ needs.semantic-release.outputs.version }}
-          REPO: ${{ github.repository }}
-        run: |
-          python3 .github/scripts/release_builds.py --repo "$REPO" \
-            --sha "$GITHUB_SHA" --tag "$RELEASE_TAG" --output release-build-runs.json
-
-      - uses: actions/upload-artifact@v7
-        with:
-          name: release-build-runs
-          path: release-build-runs.json
-          if-no-files-found: error
-
-
-  upload-artifacts:
-    name: Upload Release Artifacts
-    needs: [semantic-release, wait-for-builds]
-    if: needs.semantic-release.outputs.new_release == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-    permissions:
-      actions: read
-      contents: write
-
-    steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@v2
-        with:
-          egress-policy: audit
-
-      - name: Checkout
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-
-      # Source-tree SBOM is kept as a release artifact for source traceability,
-      # but it is NOT used as the attestation evidence (per-platform SBOMs are).
-      - name: Generate source SBOM (SPDX)
-        uses: anchore/sbom-action@v0
-        with:
-          path: .
-          format: spdx-json
-          output-file: ${{ runner.temp }}/sbom-source.spdx.json
-          artifact-name: sbom-source-spdx
-
-      - name: Generate source SBOM (CycloneDX)
-        uses: anchore/sbom-action@v0
-        with:
-          path: .
-          format: cyclonedx-json
-          output-file: ${{ runner.temp }}/sbom-source.cdx.json
-          artifact-name: sbom-source-cyclonedx
-
-      - name: Restore selected release run IDs
-        uses: actions/download-artifact@v8
-        with:
-          name: release-build-runs
-
-      - name: Download artifacts
-        uses: ./.github/actions/download-all-artifacts
-        with:
-          head-sha: ${{ github.sha }}
-          workflows: Linux,Windows,MacOS,Android,iOS
-          event: workflow_dispatch
-          runs-file: release-build-runs.json
-          strict-runs: 'true'
-          output-dir: artifacts
-          artifact-prefixes: QGroundControl,sbom-
-
-      - name: Validate release assets
-        run: |
-          python3 .github/scripts/release_assets.py \
-            --artifacts-dir artifacts \
-            --head-sha "$GITHUB_SHA" \
-            --source-sbom "${RUNNER_TEMP}/sbom-source.spdx.json" \
-            --source-sbom "${RUNNER_TEMP}/sbom-source.cdx.json" \
-            --output release-assets.txt
-
-      - name: Upload to Release
+      # Creates a draft release only when the tag has none; an existing release is left unchanged.
+      - name: Draft release notes
         env:
           GH_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: v${{ needs.semantic-release.outputs.version }}
-        run: |
-          set -euo pipefail
-          mapfile -t release_assets < release-assets.txt
-          gh release upload "$RELEASE_TAG" "${release_assets[@]}" --clobber
+        run: >-
+          python3 tools/ci/publish/release_notes.py "${RELEASE_TAG}"
+          --output "${RUNNER_TEMP}/release-notes.md" --draft

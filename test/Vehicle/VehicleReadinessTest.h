@@ -55,6 +55,7 @@ public:
 
 private slots:
     void _testPrearmCheckReadiness();
+    void _testPrearmCheckAfterDisconnect();
     void _testHealthReportUsesArduPilotActionModes();
     void _testChecklistBlocksArming();
 };

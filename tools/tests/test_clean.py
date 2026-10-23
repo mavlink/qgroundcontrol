@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Tests for tools/clean.py."""
 
 from __future__ import annotations
@@ -30,6 +29,11 @@ def test_parse_args_flags() -> None:
     args = parse_args(["--all", "--dry-run"])
     assert args.all is True
     assert args.dry_run is True
+
+
+def test_parse_args_rejects_cache_with_all() -> None:
+    with pytest.raises(SystemExit):
+        parse_args(["--cache", "--all"])
 
 
 def test_remove_path_dry_run_keeps_file(tmp_path: Path) -> None:
@@ -71,12 +75,22 @@ def test_clean_build_preserves_user_presets(tmp_path: Path) -> None:
     assert not (tmp_path / "qtcreator.user").exists()
 
 
-def test_clean_cache_removes_caches(tmp_path: Path) -> None:
-    (tmp_path / ".cache").mkdir()
+def test_clean_cache_removes_caches_and_keeps_clangd_config(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (tmp_path / ".cache" / "clangd" / "index").mkdir(parents=True)
+    (tmp_path / ".cache" / "ccache").mkdir()
     (tmp_path / ".ccache").mkdir()
+    (tmp_path / ".clangd").write_text("CompileFlags: {}\n", encoding="utf-8")
+
+    def unexpected_run(*_args: object, **_kwargs: object) -> None:
+        raise AssertionError("clean_cache must not reset the user's global ccache statistics")
+
+    monkeypatch.setattr("clean.subprocess.run", unexpected_run)
     clean_cache(tmp_path, dry_run=False)
     assert not (tmp_path / ".cache").exists()
     assert not (tmp_path / ".ccache").exists()
+    assert (tmp_path / ".clangd").is_file()
 
 
 def test_clean_generated_removes_pycache(tmp_path: Path) -> None:
@@ -103,3 +117,36 @@ def test_main_dry_run_exits_zero(
     monkeypatch.setattr("clean.repo_root", lambda: tmp_path)
     assert main(flag.split()) == 0
     assert (tmp_path / "build").exists()  # dry-run preserves
+
+
+def test_main_all_removes_node_modules(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    for name in ("build", ".cache", "docs/node_modules/pkg", "node_modules/pkg/__pycache__"):
+        (tmp_path / name).mkdir(parents=True)
+    monkeypatch.setattr("clean.repo_root", lambda: tmp_path)
+    monkeypatch.setattr("clean.report_disk_usage", lambda _root: None)
+
+    assert main(["--all"]) == 0
+
+    assert list(tmp_path.iterdir()) == [tmp_path / "docs"]
+    assert not any((tmp_path / "docs").iterdir())
+
+
+def test_clean_generated_skips_vcs_installed_packages_and_venvs(tmp_path: Path) -> None:
+    owned = tmp_path / "tools" / "__pycache__"
+    owned.mkdir(parents=True)
+    protected = [
+        tmp_path / ".git" / "hooks" / "__pycache__",
+        tmp_path / "docs" / "node_modules" / "pkg" / "__pycache__",
+        tmp_path / "tools" / ".venv" / "lib" / "site" / "__pycache__",
+        tmp_path / "custom-env" / "lib" / "__pycache__",
+    ]
+    for path in protected:
+        path.mkdir(parents=True)
+        (path / "m.pyc").write_text("", encoding="utf-8")
+    for venv in (tmp_path / "tools" / ".venv", tmp_path / "custom-env"):
+        (venv / "pyvenv.cfg").write_text("home = /usr/bin\n", encoding="utf-8")
+
+    clean_generated(tmp_path, dry_run=False)
+
+    assert not owned.exists()
+    assert all(path.exists() for path in protected)

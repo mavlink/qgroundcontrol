@@ -1,16 +1,18 @@
 #include "VehicleTest.h"
 
+#include <QtCore/QCoreApplication>
+#include <QtCore/QStringList>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
-#include <QtCore/QStringList>
 
 #include "LinkManager.h"
 #include "MAVLinkProtocol.h"
 #include "MissionItem.h"
+#include "MockLink.h"
 #include "MultiVehicleManager.h"
 #include "ParameterManager.h"
-#include "QGCMath.h"
 #include "QGCLoggingCategory.h"
+#include "QGCMath.h"
 #include "Vehicle.h"
 
 QGC_LOGGING_CATEGORY(VehicleTestLog, "Test.VehicleTest")
@@ -117,8 +119,14 @@ bool VehicleTest::waitForInitialConnect(int timeoutMs)
 
 void VehicleTest::simulateCommLoss(bool lost)
 {
-    if (_mockLink) {
-        _mockLink->setCommLost(lost);
+    if (!_mockLink) {
+        return;
+    }
+    _mockLink->setCommLost(lost);
+    if (lost) {
+        // Deliver what the worker sent before the flag took effect, so no heartbeat arrives after this returns
+        _mockLink->waitForWorkerIdle();
+        QCoreApplication::sendPostedEvents();
     }
 }
 
@@ -172,19 +180,21 @@ void VehicleTest::_connectMockLink(MAV_AUTOPILOT autopilot, MockConfiguration::F
 void VehicleTest::_disconnectMockLink()
 {
     if (_mockLink) {
-        QSignalSpy spyVehicle(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged);
-        QVERIFY2(spyVehicle.isValid(), "Failed to create spy for activeVehicleChanged");
-
         _mockLink->disconnect();
         _mockLink = nullptr;
 
-        QVERIFY2(UnitTest::waitForSignal(spyVehicle, TestTimeout::longMs(), QStringLiteral("activeVehicleChanged")),
-                 "Timeout waiting for vehicle disconnection");
-        _vehicle = MultiVehicleManager::instance()->activeVehicle();
-        QVERIFY2(!_vehicle, "Vehicle should be null after disconnection");
+        // QSignalSpy::wait returns immediately once the test has failed; poll so a failed test still removes its
+        // vehicle before the next one starts.
+        MultiVehicleManager* const vehicleMgr = MultiVehicleManager::instance();
+        const bool vehicleRemoved =
+            QTest::qWaitFor([vehicleMgr] { return !vehicleMgr->activeVehicle(); }, TestTimeout::longMs());
+        _vehicle = vehicleMgr->activeVehicle();
 
         // Ensure old vehicle/MockLink cleanup fully settles before subsequent tests.
         UnitTest::settleEventLoopForCleanup();
+
+        QVERIFY2(vehicleRemoved, "Timeout waiting for vehicle disconnection");
+        QVERIFY2(!_vehicle, "Vehicle should be null after disconnection");
     }
 }
 

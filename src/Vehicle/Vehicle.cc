@@ -24,6 +24,7 @@
 #include "LinkManager.h"
 #include "MAVLinkEventManager.h"
 #include "MAVLinkLogManager.h"
+#include "MAVLinkMessageInfo.h"
 #include "MAVLinkProtocol.h"
 #include "MAVLinkStreamConfig.h"
 #include "MavCommandQueue.h"
@@ -1613,7 +1614,7 @@ void Vehicle::_sendMessageMultipleNext()
 {
     if (_nextSendMessageMultipleIndex < _sendMessageMultipleList.count()) {
         uint32_t msgId = _sendMessageMultipleList[_nextSendMessageMultipleIndex].message.msgid;
-        const mavlink_message_info_t* info = mavlink_get_message_info_by_id(msgId);
+        const mavlink_message_info_t* info = MAVLinkMessageInfo::byId(msgId);
         QString msgName = info ? info->name : QString::number(msgId);
         qCDebug(VehicleLog) << "_sendMessageMultipleNext:" << msgName;
 
@@ -2889,7 +2890,7 @@ QString Vehicle::_formatMavCommand(MAV_CMD command, float param1)
     QString commandName = MissionCommandTree::instance()->rawName(command);
 
     if (command == MAV_CMD_REQUEST_MESSAGE && param1 > 0) {
-        const mavlink_message_info_t* info = mavlink_get_message_info_by_id(static_cast<uint32_t>(param1));
+        const mavlink_message_info_t* info = MAVLinkMessageInfo::byId(static_cast<uint32_t>(param1));
         QString param1Str = info ? QString("%1(%2)").arg(param1).arg(info->name) : QString::number(param1);
         return QString("%1: %2").arg(commandName).arg(param1Str);
     }

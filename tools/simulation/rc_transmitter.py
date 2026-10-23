@@ -18,7 +18,7 @@ PX4 setup (SITL defaults to MAVLink joystick input only):
     param set RC_MAP_ROLL 1; param set RC_MAP_PITCH 2; param set RC_MAP_THROTTLE 3; param set RC_MAP_YAW 4
 
 Requirements:
-    python tools/setup/install_python.py dev
+    python3 tools/setup/install_python.py simulation
 """
 
 import argparse
@@ -205,7 +205,7 @@ def make_handler(transmitter: Transmitter):
     )
 
     class Handler(BaseHTTPRequestHandler):
-        def log_message(self, *args) -> None:
+        def log_message(self, format: str, *args: object) -> None:
             pass
 
         def _reply(self, body: bytes, content_type: str, status: int = 200) -> None:

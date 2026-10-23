@@ -1,22 +1,47 @@
 name: Code Analysis
 
 on:
+  # One path list: analysis_matrix.FULL_SCAN_INPUTS plus src/ files that can affect compilation.
   pull_request:
-    paths:
+    paths: &analysis-paths
       - 'src/**'
+      - '!src/**/*.qml'
+      - '!src/**/*.js'
+      - '!src/**/*.json'
+      - '!src/**/*.md'
+      - '!src/**/*.png'
+      - '!src/**/*.svg'
+      - '!src/**/*.mesh'
+      - '!src/**/*.params'
+      - '!src/**/*.xml'
+      - '!src/**/*.xsd'
+      - '!src/**/*.frag'
+      - '!src/**/*.vert'
       - 'cmake/**'
       - 'CMakeLists.txt'
       - 'CMakePresets.json'
-      - 'tools/analyzers/**'
-      - 'tools/analyze.py'
-      - 'tools/common/**'
-      - 'tools/pyproject.toml'
-      - 'tools/uv.lock'
-      - '.qmllint.ini'
       - '.clang-tidy'
       - '.github/build-config.json'
-      - '.github/scripts/analysis_matrix.py'
+      - 'tools/ci/planning/analysis_matrix.py'
       - '.github/workflows/analysis.yml'
+      - 'tools/analyze.py'
+      - 'tools/analyzers/__init__.py'
+      - 'tools/analyzers/base.py'
+      - 'tools/analyzers/clang_tidy.py'
+      - 'tools/analyzers/clazy.py'
+      - 'tools/analyzers/compiler.py'
+      - 'tools/analyzers/dependencies.py'
+      - 'tools/analyzers/result_cache.py'
+      - 'tools/setup/build_clazy.py'
+      - 'tools/ci/runner/analysis_tools.py'
+      - 'tools/common/io.py'
+      - 'tools/common/xml.py'
+      - 'tools/generators/mavlink_enums.py'
+      - 'tools/generators/mavlink_instance_fields.py'
+  # Master pushes seed the result cache that pull requests restore.
+  push:
+    branches: [master]
+    paths: *analysis-paths
   workflow_dispatch:
     inputs:
       tool:
@@ -29,16 +54,14 @@ on:
           - clang-tidy
           - iwyu
           - qmllint
-          - asan
-          - ubsan
           - tsan
       path:
-        description: 'Path to analyze (compiler analysis only, e.g., src/Vehicle/)'
+        description: 'Path to analyze when analyze_all is off (not tsan; e.g., src/Vehicle/)'
         required: false
         default: ''
         type: string
       analyze_all:
-        description: 'Analyze all source files (compiler analysis only)'
+        description: 'Analyze all source files (not tsan)'
         required: false
         default: true
         type: boolean
@@ -49,56 +72,69 @@ on:
         type: boolean
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-${{ (inputs.tool || 'clazy') }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ (inputs.tool || 'compiler') }}
+  # Master runs save the shared result cache, so let them finish instead of cancelling each other.
+  cancel-in-progress: ${{ github.event_name != 'push' }}
 
 permissions:
   contents: read
   actions: read
 
 jobs:
-  # Each clang-tidy shard repeats the full setup, so PRs only get the shards their estimated units need.
+  # Each analysis job repeats the full setup, so PRs only get the shards their estimated units need.
   plan:
     name: Plan Analysis
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
       include: ${{ steps.plan.outputs.include }}
+      llvm_version: ${{ steps.plan.outputs.llvm_version }}
+      clazy_sha256: ${{ steps.plan.outputs.clazy_sha256 }}
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@v2
         with:
           egress-policy: audit
 
+      # A pull request's merge commit and its two parents hold the PR diff.
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          fetch-depth: ${{ github.event_name != 'pull_request' && 1 || 0 }}
+          fetch-depth: ${{ github.event_name == 'pull_request' && 2 || 1 }}
           sparse-checkout: |
             /src/
-            .github/scripts/analysis_matrix.py
-            .github/scripts/ci_bootstrap.py
+            .github/build-config.json
+            tools/ci/planning/analysis_matrix.py
             tools/_bootstrap.py
             tools/common
             tools/qgc_tools
           sparse-checkout-cone-mode: false
           persist-credentials: false
 
+      # Validates the dispatch path and builds each job's tools/analyze.py arguments.
       - name: Plan analysis jobs
         id: plan
         env:
           EVENT_NAME: ${{ github.event_name }}
           DISPATCH_TOOL: ${{ inputs.tool }}
+          DISPATCH_PATH: ${{ inputs.path }}
+          DISPATCH_ANALYZE_ALL: ${{ inputs.analyze_all }}
+          DISPATCH_PROFILE_CHECKS: ${{ inputs.profile_checks }}
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: python3 .github/scripts/analysis_matrix.py
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: python3 tools/ci/planning/analysis_matrix.py
 
   analyze:
-    name: ${{ matrix.tool }} Analysis${{ matrix.shard_count > 1 && format(' ({0}/{1})', matrix.shard, matrix.shard_count) || '' }}
+    name: ${{ join(matrix.tools, ' + ') }} Analysis${{ matrix.shard_count > 1 && format(' ({0}/{1})', matrix.shard, matrix.shard_count) || '' }}
     needs: plan
+    if: needs.plan.outputs.include != '[]'
     runs-on: >-
       ${{
         github.repository_owner == 'mavlink' &&
-        format('runs-on={0}/runner=linux-x64-analyzer', github.run_id) ||
+        format('runs-on={0}-analyze-{1}-{2}/runner=linux-x64-analyzer{3}',
+          github.run_id, github.run_attempt, strategy.job-index,
+          github.event_name == 'pull_request' && (vars.RUNS_ON_SPOT_POOLS == 'true' && '-spot' ||
+            '/spot=cop/family=m8i.4xlarge+c8i.4xlarge+m7i.4xlarge+c7i.4xlarge') || '') ||
         'ubuntu-24.04'
       }}
     timeout-minutes: 120
@@ -108,26 +144,27 @@ jobs:
         include: ${{ fromJSON(needs.plan.outputs.include) }}
 
     steps:
+      # The Harden-Runner community tier audits GitHub-hosted runners only, not RunsOn.
       - name: Harden Runner
+        if: runner.environment == 'github-hosted'
         uses: step-security/harden-runner@v2
         with:
           egress-policy: audit
 
       - name: Enable RunsOn magic cache
-        if: github.repository_owner == 'mavlink'
         uses: runs-on/action@v2
         with:
-          metrics: cpu,network,memory,disk,io
           show_costs: summary
 
+      # Pull requests need only the merge commit and its parents; a dispatched "changed" scan
+      # diffs against the default branch.
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          fetch-depth: 0
+          fetch-depth: ${{ github.event_name == 'pull_request' && 2 || 0 }}
           persist-credentials: false
 
-      - name: Build Setup (clazy/iwyu)
-        if: contains(fromJSON('["clazy", "clang-tidy", "iwyu", "qmllint"]'), matrix.tool)
+      - name: Build Setup
         uses: ./.github/actions/build-setup
         with:
           qt-host: linux
@@ -136,217 +173,114 @@ jobs:
           cache-variant: ${{ matrix.tool }}
           save-cache: ${{ matrix.shard == 1 }}
 
-      - name: Read analysis toolchain
-        id: toolchain
-        if: contains(fromJSON('["clazy", "clang-tidy", "iwyu", "qmllint"]'), matrix.tool)
-        run: |
-          for key in llvm_version clazy_revision clazy_sha256; do
-            echo "$key=$(python3 tools/setup/read_config.py --get "analysis.$key")" >> "$GITHUB_OUTPUT"
-          done
-
-      - name: Install analysis dependencies
-        if: contains(fromJSON('["clazy", "clang-tidy", "iwyu", "qmllint"]'), matrix.tool)
+      # The planner adds clang and clang-tools (clang-scan-deps) for the analysis LLVM, plus IWYU.
+      # Clazy's LLVM development packages install only to rebuild it.
+      - name: Install dependencies
         uses: ./.github/actions/install-dependencies
         with:
-          extra-packages: >-
-            clang-${{ steps.toolchain.outputs.llvm_version }}
-            clang-tidy-${{ steps.toolchain.outputs.llvm_version }}
-            clang-tools-${{ steps.toolchain.outputs.llvm_version }}
-            llvm-${{ steps.toolchain.outputs.llvm_version }}-dev
-            libclang-${{ steps.toolchain.outputs.llvm_version }}-dev
-            libclang-cpp${{ steps.toolchain.outputs.llvm_version }}-dev
-            iwyu ninja-build
+          extra-packages: ${{ matrix.extra_packages }}
 
       # Ubuntu's Clazy links LLVM 15; build it against the configured compiler instead.
       - name: Cache matching Clazy
         id: clazy-cache
-        if: matrix.tool == 'clazy'
+        if: contains(matrix.tools, 'clazy')
         uses: actions/cache@v6
         with:
           path: .cache/clazy
-          key: clazy-ubuntu-24.04-${{ runner.arch }}-${{ steps.toolchain.outputs.llvm_version }}-${{ steps.toolchain.outputs.clazy_sha256 }}-v1
+          key: clazy-ubuntu-24.04-${{ runner.arch }}-${{ needs.plan.outputs.llvm_version }}-${{ needs.plan.outputs.clazy_sha256 }}-${{ hashFiles('tools/setup/build_clazy.py') }}
 
       - name: Build matching Clazy
-        if: matrix.tool == 'clazy' && steps.clazy-cache.outputs.cache-hit != 'true'
+        if: contains(matrix.tools, 'clazy') && steps.clazy-cache.outputs.cache-hit != 'true'
         env:
-          LLVM_VERSION: ${{ steps.toolchain.outputs.llvm_version }}
-          CLAZY_REVISION: ${{ steps.toolchain.outputs.clazy_revision }}
-          CLAZY_SHA256: ${{ steps.toolchain.outputs.clazy_sha256 }}
+          LLVM_VERSION: ${{ needs.plan.outputs.llvm_version }}
         run: |
-          curl --fail --location --retry 3 "https://github.com/KDE/clazy/archive/${CLAZY_REVISION}.tar.gz" -o "$RUNNER_TEMP/clazy.tar.gz"
-          echo "$CLAZY_SHA256  $RUNNER_TEMP/clazy.tar.gz" | sha256sum --check
-          mkdir -p "$RUNNER_TEMP/clazy-src"
-          tar -xzf "$RUNNER_TEMP/clazy.tar.gz" -C "$RUNNER_TEMP/clazy-src" --strip-components=1
-          cmake -S "$RUNNER_TEMP/clazy-src" -B "$RUNNER_TEMP/clazy-build" -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER="/usr/bin/clang-$LLVM_VERSION" \
-            -DCMAKE_CXX_COMPILER="/usr/bin/clang++-$LLVM_VERSION" -DCMAKE_PREFIX_PATH="/usr/lib/llvm-$LLVM_VERSION" \
-            -DLLVM_CONFIG_EXECUTABLE="/usr/lib/llvm-$LLVM_VERSION/bin/llvm-config" \
-            -DCLAZY_LINK_CLANG_DYLIB=ON -DCLAZY_MAN_PAGE=OFF -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/.cache/clazy"
-          cmake --build "$RUNNER_TEMP/clazy-build" --target clazy-standalone --parallel "$(nproc)"
-          cmake --install "$RUNNER_TEMP/clazy-build"
+          python3 tools/ci/runner/apt_install_retry.py --install-timeout 600 --label "Clazy build dependencies" \
+            "llvm-$LLVM_VERSION-dev" "libclang-$LLVM_VERSION-dev" "libclang-cpp$LLVM_VERSION-dev"
+          python3 tools/setup/build_clazy.py --prefix .cache/clazy --work-dir "$RUNNER_TEMP/clazy"
 
+      # clang-tidy comes from the PyPI wheel hash-pinned in build-config.json, ahead of LLVM's own on
+      # PATH; Clazy and clang-scan-deps stay on the compiler's LLVM.
       - name: Select analysis executables
-        if: contains(fromJSON('["clazy", "clang-tidy", "iwyu", "qmllint"]'), matrix.tool)
+        if: matrix.family != 'tsan'
         env:
-          LLVM_VERSION: ${{ steps.toolchain.outputs.llvm_version }}
-          ANALYSIS_TOOL: ${{ matrix.tool }}
-        run: |
-          echo "/usr/lib/llvm-$LLVM_VERSION/bin" >> "$GITHUB_PATH"
-          "/usr/lib/llvm-$LLVM_VERSION/bin/clang-tidy" --verify-config
-          if [[ "$ANALYSIS_TOOL" == 'clazy' ]]; then
-            echo "$GITHUB_WORKSPACE/.cache/clazy/bin" >> "$GITHUB_PATH"
-            .cache/clazy/bin/clazy-standalone --version
-          fi
+          ANALYSIS_TOOLS: ${{ join(matrix.tools, ' ') }}
+        run: python3 tools/ci/runner/analysis_tools.py
 
-      - name: Build Setup (sanitizers)
-        if: contains(fromJSON('["asan", "ubsan", "tsan"]'), matrix.tool)
-        uses: ./.github/actions/build-setup
-        with:
-          qt-host: linux
-          qt-arch: linux_gcc_64
-          build-type: Debug
-          cache-variant: ${{ matrix.tool }}
-          save-cache: true
-
-      - name: Install Dependencies (sanitizers)
-        if: contains(fromJSON('["asan", "ubsan", "tsan"]'), matrix.tool)
-        uses: ./.github/actions/install-dependencies
-
-      - name: Configure (clazy/iwyu)
-        if: contains(fromJSON('["clazy", "clang-tidy", "iwyu", "qmllint"]'), matrix.tool)
+      # analysis_matrix.py plans each family's arguments: compiler analysis uses the pinned LLVM
+      # without PCH or unity batches; ThreadSanitizer (manual only, as linux.yml runs ASan and
+      # UBSan) keeps the default compiler.
+      - name: Configure
         uses: ./.github/actions/cmake-configure
         with:
-          build-dir: ${{ runner.temp }}/build
-          build-type: Debug
           preset: Linux-debug
-          extra-args: >-
-            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-            -DQGC_BUILD_TESTING=OFF
-            -DQGC_ENABLE_WERROR=OFF
-            -DCMAKE_C_COMPILER=clang-${{ steps.toolchain.outputs.llvm_version }}
-            -DCMAKE_CXX_COMPILER=clang++-${{ steps.toolchain.outputs.llvm_version }}
-            -DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON
-            ${{ matrix.tool != 'qmllint' && '-DCMAKE_AUTOGEN_ORIGIN_DEPENDS=OFF -DCMAKE_GLOBAL_AUTOGEN_TARGET=ON' || '' }}
-            -DQGC_UNITY_BUILD=OFF
-
-      - name: Configure (sanitizers)
-        if: contains(fromJSON('["asan", "ubsan", "tsan"]'), matrix.tool)
-        uses: ./.github/actions/cmake-configure
-        with:
-          build-dir: ${{ runner.temp }}/build
-          build-type: Debug
-          preset: Linux-debug
-          testing: 'true'
-          extra-args: >-
-            -DQGC_ENABLE_COVERAGE=OFF
-            ${{ matrix.tool == 'asan' && '-DQGC_ENABLE_ASAN=ON' || '' }}
-            ${{ matrix.tool == 'asan' && '-DQGC_TEST_DETECT_LEAKS=ON' || '' }}
-            ${{ matrix.tool == 'ubsan' && '-DQGC_ENABLE_UBSAN=ON' || '' }}
-            ${{ matrix.tool == 'tsan' && '-DQGC_ENABLE_TSAN=ON' || '' }}
+          extra-args: ${{ join(matrix.configure_args, ' ') }}
 
       - name: Generate protocol headers
-        if: contains(fromJSON('["clazy", "clang-tidy", "iwyu"]'), matrix.tool)
+        if: matrix.family == 'compiler' || matrix.family == 'iwyu'
         uses: ./.github/actions/cmake-build
         with:
-          build-dir: ${{ runner.temp }}/build
-          build-type: Debug
           target: qgc-analysis-headers
 
+      # Analyzed sources include only protocol headers and configure outputs, never moc or uic
+      # results, so clang-tidy and Clazy skip Qt's autogen target.
       - name: Generate Qt analysis prerequisites
-        if: contains(fromJSON('["clazy", "clang-tidy", "iwyu"]'), matrix.tool)
+        if: matrix.family == 'iwyu'
         uses: ./.github/actions/cmake-build
         with:
-          build-dir: ${{ runner.temp }}/build
-          build-type: Debug
           target: autogen
 
       - name: Build runtime analysis prerequisites
-        if: contains(fromJSON('["qmllint", "asan", "ubsan", "tsan"]'), matrix.tool)
+        if: matrix.family == 'qml' || matrix.family == 'tsan'
         uses: ./.github/actions/cmake-build
+
+      # Only master pushes save results, as one job; every other run restores the newest copy.
+      - name: Restore analysis results
+        if: matrix.family == 'compiler'
+        uses: actions/cache/restore@v6
         with:
-          build-dir: ${{ runner.temp }}/build
-          build-type: Debug
+          path: .cache/analysis-results
+          key: analysis-results-v1-${{ runner.os }}-${{ runner.arch }}-${{ github.run_id }}
+          restore-keys: analysis-results-v1-${{ runner.os }}-${{ runner.arch }}-
 
-      - name: Run QML analysis with generated types
-        if: matrix.tool == 'qmllint'
+      # analysis_matrix.py builds the arguments; a "changed" scan diffs a PR's merge checkout
+      # against its first parent. `shell: bash` adds pipefail, so analyze.py's status survives tee.
+      - name: Run analysis
+        id: analysis
+        if: matrix.family == 'compiler' || matrix.family == 'qml'
+        shell: bash
         env:
-          INPUT_PATH: ${{ inputs.path }}
-          ANALYZE_ALL: ${{ inputs.analyze_all }}
-        run: |
-          args=(--build-dir "${RUNNER_TEMP}/build" --qml-build --advisory)
-          if [[ "$ANALYZE_ALL" == 'true' ]]; then
-            args+=(--all)
-          elif [[ -n "$INPUT_PATH" ]]; then
-            args+=("$INPUT_PATH")
-          fi
-          python3 tools/analyze.py --tool qmllint "${args[@]}" 2>&1 | tee "${RUNNER_TEMP}/build/analysis-output.txt"
-
-      - name: Run compiler analysis
-        if: contains(fromJSON('["clazy", "clang-tidy"]'), matrix.tool)
-        env:
-          INPUT_PATH: ${{ inputs.path }}
-          ANALYZE_ALL: ${{ inputs.analyze_all }}
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          ANALYSIS_TOOL: ${{ matrix.tool }}
-          ANALYSIS_SHARD: ${{ matrix.shard }}
-          ANALYSIS_SHARD_COUNT: ${{ matrix.shard_count }}
-          PROFILE_CHECKS: ${{ inputs.profile_checks }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          ANALYZE_ARGS: ${{ toJSON(matrix.analyze_args) }}
         run: |
-          args=(--build-dir "${RUNNER_TEMP}/build" --advisory)
-          args+=(--shard "$ANALYSIS_SHARD" --shard-count "$ANALYSIS_SHARD_COUNT")
-          if [[ "$ANALYSIS_TOOL" == 'clang-tidy' && "$PROFILE_CHECKS" == 'true' ]]; then
-            args+=(--profile-checks)
-          fi
-          if [[ "$ANALYZE_ALL" == 'true' ]]; then
-            args+=(--all)
-          elif [[ -n "$INPUT_PATH" ]]; then
-            args+=("$INPUT_PATH")
-          elif [[ -n "$PR_BASE_SHA" ]]; then
-            tool_config=(tools/analyzers/clang_tidy.py .clang-tidy)
-            if [[ "$ANALYSIS_TOOL" == 'clazy' ]]; then
-              tool_config=(tools/analyzers/clazy.py)
-            fi
-            config_changes="$(git diff --name-only "${PR_BASE_SHA}...HEAD" -- \
-              "${tool_config[@]}" tools/analyzers/compiler.py tools/analyzers/dependencies.py \
-              tools/analyzers/__init__.py tools/analyze.py \
-              tools/common/analyzer.py tools/common/proc.py tools/common/file_traversal.py \
-              tools/common/git.py tools/common/tool_version.py tools/common/deps.py \
-              tools/_bootstrap.py tools/pyproject.toml tools/uv.lock \
-              .github/workflows/analysis.yml .github/build-config.json CMakeLists.txt CMakePresets.json cmake/ ':(glob)src/**/CMakeLists.txt')"
-            if [[ -n "$config_changes" ]]; then
-              args+=(--all)
-            fi
-          fi
-          python3 tools/analyze.py --tool "$ANALYSIS_TOOL" "${args[@]}" 2>&1 | tee "${RUNNER_TEMP}/build/analysis-output.txt"
+          arg_lines=$(jq -r '.[]' <<< "$ANALYZE_ARGS")
+          mapfile -t args <<< "$arg_lines"
+          python3 tools/analyze.py --build-dir "${RUNNER_TEMP}/build" --step-summary "${args[@]}" 2>&1 | tee "${RUNNER_TEMP}/build/analysis-output.txt"
 
+      # Stored results are complete analyses only, so findings do not prevent saving.
+      - name: Save analysis results
+        if: >-
+          !cancelled() && steps.analysis.outcome != 'skipped' && github.event_name == 'push'
+        uses: actions/cache/save@v6
+        with:
+          path: .cache/analysis-results
+          key: analysis-results-v1-${{ runner.os }}-${{ runner.arch }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+      # IWYU is advisory: its uploaded report is the result, even when iwyu_tool exits non-zero
+      # because some units failed to compile.
       - name: Run IWYU
-        if: matrix.tool == 'iwyu'
+        if: matrix.family == 'iwyu'
+        continue-on-error: true
+        shell: bash
         env:
-          INPUT_PATH: ${{ inputs.path }}
-          ANALYZE_ALL: ${{ inputs.analyze_all }}
+          ANALYSIS_PATH: ${{ matrix.path }}
         run: |
-          args=(-p "${RUNNER_TEMP}/build" -j "$(nproc)")
-          if [[ "$ANALYZE_ALL" != 'true' && -n "$INPUT_PATH" ]]; then
-            if [[ "$INPUT_PATH" = /* || "$INPUT_PATH" == *..* ]]; then
-              echo "::error::Analysis path must be relative without '..'"
-              exit 1
-            fi
-            args+=("$GITHUB_WORKSPACE/$INPUT_PATH")
-          else
-            args+=("$GITHUB_WORKSPACE/src")
-          fi
-          iwyu_tool.py "${args[@]}" 2>&1 | tee "${RUNNER_TEMP}/build/iwyu-output.txt"
+          iwyu_tool.py -p "${RUNNER_TEMP}/build" -j "$(nproc)" "${GITHUB_WORKSPACE}/${ANALYSIS_PATH}" 2>&1 | tee "${RUNNER_TEMP}/build/iwyu-output.txt"
 
       - name: Run Sanitizer Tests
-        if: contains(fromJSON('["asan", "ubsan", "tsan"]'), matrix.tool)
+        if: matrix.family == 'tsan'
         uses: ./.github/actions/run-unit-tests
-        env:
-          ASAN_OPTIONS: ${{ matrix.tool == 'asan' && 'detect_leaks=1:halt_on_error=1:check_initialization_order=1' || '' }}
-          LSAN_OPTIONS: ${{ matrix.tool == 'asan' && format('suppressions={0}/build/asan_suppressions.txt', runner.temp) || '' }}
-          UBSAN_OPTIONS: ${{ matrix.tool == 'ubsan' && format('print_stacktrace=1:halt_on_error=1:suppressions={0}/build/ubsan_suppressions.txt', runner.temp) || '' }}
-          TSAN_OPTIONS: ${{ matrix.tool == 'tsan' && format('second_deadlock_stack=1:halt_on_error=1:suppressions={0}/build/tsan_suppressions.txt', runner.temp) || '' }}
         with:
-          build-dir: ${{ runner.temp }}/build
           junit-output: junit-results-analysis-${{ matrix.tool }}.xml
           ctest-output: sanitizer-output.txt
           include-labels: 'Unit|Integration'
@@ -357,10 +291,11 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: ${{ matrix.tool }}-output${{ matrix.shard_count > 1 && format('-{0}', matrix.shard) || '' }}
+          name: ${{ join(matrix.tools, '-') }}-output${{ matrix.shard_count > 1 && format('-{0}', matrix.shard) || '' }}
           path: |
             ${{ runner.temp }}/build/analysis-output.txt
             ${{ runner.temp }}/build/*-timings.json
+            ${{ runner.temp }}/build/*-diagnostics.json
             ${{ runner.temp }}/build/*-progress.jsonl
             ${{ runner.temp }}/build/*-raw.txt
             ${{ runner.temp }}/build/clang-tidy-profiles/

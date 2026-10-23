@@ -14,14 +14,22 @@ import numpy as np
 import rasterio
 from rasterio.dtypes import dtype_rev, typename_fwd
 from rasterio.fill import fillnodata
-from rasterio.merge import merge
-from rasterio.transform import from_bounds
+from rasterio.transform import from_bounds, from_origin
 from rasterio.warp import Resampling, reproject
+from rasterio.windows import Window
 from rasterio.windows import from_bounds as from_bounds_window
 
 from . import terrarium
 from .copernicus import COARSEST_PIXEL_DEG, MIN_VALID_HEIGHT, cells_for_bounds, wrap_lon
-from .jobs import IN_FLIGHT_PER_WORKER, OCEAN_STATUS, bounded_completion, done_marker, mark_done
+from .jobs import (
+    IN_FLIGHT_PER_WORKER,
+    OCEAN_STATUS,
+    TILES_DIR,
+    bounded_completion,
+    done_marker,
+    mark_done,
+    tile_path,
+)
 from .tilemath import (
     JOB_ZOOM,
     MAX_ZOOM,
@@ -48,6 +56,8 @@ VOID_FILL_PIXELS = 100
 # Covers each grid's padding at the coarsest source pixel: the void-fill radius plus four kernel pixels.
 CELL_BUFFER_DEG = (VOID_FILL_PIXELS + 4) * COARSEST_PIXEL_DEG
 _MERCATOR_RADIUS = MERCATOR_HALF_EXTENT / math.pi
+# Pixels: float error in a cell's offset on its group's lattice, far below any real misalignment.
+_LATTICE_TOLERANCE = 1e-6
 
 GDAL_ENV: dict[str, Any] = {
     "GDAL_DISABLE_READDIR_ON_OPEN": "EMPTY_DIR",
@@ -56,14 +66,15 @@ GDAL_ENV: dict[str, Any] = {
     "GDAL_HTTP_MERGE_CONSECUTIVE_RANGES": "YES",
     "GDAL_HTTP_MAX_RETRY": "5",
     "GDAL_HTTP_RETRY_DELAY": "2",
+    # GDAL never times out a stalled /vsicurl read by default, which hangs its worker and the run
+    # forever; abort it instead so the job fails and a rerun retries it.
+    "GDAL_HTTP_CONNECTTIMEOUT": "30",
+    "GDAL_HTTP_LOW_SPEED_TIME": "60",
+    "GDAL_HTTP_LOW_SPEED_LIMIT": "1",
     "VSI_CACHE": "TRUE",
     # MB per process; GDAL's default (5% of physical RAM) multiplies across pool workers.
     "GDAL_CACHEMAX": 512,
 }
-
-
-def tile_path(out: Path, key: TileKey) -> Path:
-    return out / "terrarium" / str(key.z) / str(key.x) / f"{key.y}.png"
 
 
 def job_cells(job: TileKey, cells: Mapping[tuple[int, int], str]) -> dict[tuple[int, int], str]:
@@ -126,17 +137,34 @@ def _merge_same_resolution(
 ) -> tuple[np.ndarray, Affine]:
     """Exact pixel copy: cells sharing a resolution share one pixel lattice.
 
+    Each cell is pasted at whole-pixel offsets from a whole-pixel window, the first cell
+    winning any overlap. rasterio.merge derives its source windows from float bounds, which
+    come out a hair off whole pixels and send GDAL down its far slower resampling read for the
+    same pixels.
+
     Never merge mixed resolutions directly: rasterio rounds the coarser source windows to
     whole pixels, shifting that data by up to a pixel (~23 m at 60 degrees north).
     """
-    merged, transform = merge(
-        datasets,
-        bounds=lattice_bounds(*bounds, *res),
-        res=res,
-        nodata=np.nan,
-        dtype="float32",
-    )
-    heights = merged[0]
+    west, south, east, north = lattice_bounds(*bounds, *res)
+    width, height = round((east - west) / res[0]), round((north - south) / res[1])
+    transform = from_origin(west, north, *res)
+    heights = np.full((height, width), np.nan, dtype=np.float32)
+    for dataset in datasets:
+        col_offset = (dataset.transform.c - west) / res[0]
+        row_offset = (north - dataset.transform.f) / res[1]
+        col, row = round(col_offset), round(row_offset)
+        if max(abs(col_offset - col), abs(row_offset - row)) > _LATTICE_TOLERANCE:
+            raise ValueError(f"{dataset.name} is not on the {res} source lattice")
+        col0, row0 = max(col, 0), max(row, 0)
+        col1, row1 = min(col + dataset.width, width), min(row + dataset.height, height)
+        if col0 >= col1 or row0 >= row1:
+            continue
+        # rasterio's attrs Window leaves its fields unannotated, so pyright infers no parameters.
+        window = Window(col0 - col, row0 - row, col1 - col0, row1 - row0)  # pyright: ignore[reportCallIssue]
+        data = dataset.read(1, window=window, masked=True)
+        region = heights[row0:row1, col0:col1]
+        fill = np.isnan(region) & ~np.ma.getmaskarray(data)
+        region[fill] = data.data[fill]
     heights[heights < MIN_VALID_HEIGHT] = np.nan
     return heights, transform
 
@@ -375,27 +403,51 @@ def generate(
     return failures
 
 
-def build_overviews(out: Path) -> None:
-    """Build zooms below JOB_ZOOM from existing tiles; missing children are sea level."""
+def _overview_tile(out: Path, key: TileKey) -> int:
+    """Write one overview tile from its children; returns how many were missing (sea level)."""
+    mosaic = np.zeros((2 * TILE_SIZE, 2 * TILE_SIZE), dtype=np.float32)
+    missing = 0
+    for index, child in enumerate(children(key)):
+        path = tile_path(out, child)
+        if not path.is_file():
+            missing += 1
+            continue
+        row, col = divmod(index, 2)
+        mosaic[row * TILE_SIZE : (row + 1) * TILE_SIZE, col * TILE_SIZE : (col + 1) * TILE_SIZE] = (
+            terrarium.read_heights(path)
+        )
+    write_tile(out, key, terrarium.downsample(mosaic))
+    return missing
+
+
+def build_overviews(
+    out: Path,
+    workers: int,
+    executor_factory: Callable[..., Executor] = ProcessPoolExecutor,
+) -> None:
+    """Build zooms below JOB_ZOOM from existing tiles; missing children are sea level.
+
+    A zoom reads only the one below it, so its tiles are built in parallel and it is finished
+    before the next coarser zoom starts. Any failure stops the build.
+    """
     # Written last on success, so its absence fails the production gate after an interruption.
     tile_path(out, TileKey(0, 0, 0)).unlink(missing_ok=True)
-    for z in range(JOB_ZOOM - 1, -1, -1):
-        child_dir = out / "terrarium" / str(z + 1)
-        parents = {
-            TileKey(z, int(path.parent.name) >> 1, int(path.stem) >> 1)
-            for path in child_dir.glob("*/*.png")
-        }
-        missing = 0
-        for key in sorted(parents):
-            mosaic = np.zeros((2 * TILE_SIZE, 2 * TILE_SIZE), dtype=np.float32)
-            for index, child in enumerate(children(key)):
-                path = tile_path(out, child)
-                if not path.is_file():
-                    missing += 1
-                    continue
-                row, col = divmod(index, 2)
-                mosaic[
-                    row * TILE_SIZE : (row + 1) * TILE_SIZE, col * TILE_SIZE : (col + 1) * TILE_SIZE
-                ] = terrarium.read_heights(path)
-            write_tile(out, key, terrarium.downsample(mosaic))
-        print(f"z{z}: {len(parents)} tiles ({missing} missing children filled with sea level)")
+    with executor_factory(max_workers=workers) as pool:
+        for z in range(JOB_ZOOM - 1, -1, -1):
+            child_dir = out / TILES_DIR / str(z + 1)
+            parents = sorted(
+                {
+                    TileKey(z, int(path.parent.name) >> 1, int(path.stem) >> 1)
+                    for path in child_dir.glob("*/*.png")
+                }
+            )
+            completed = bounded_completion(
+                lambda key: pool.submit(_overview_tile, out, key),
+                parents,
+                limit=workers * IN_FLIGHT_PER_WORKER,
+            )
+            missing = sum(future.result() for _, future in completed)
+            print(
+                f"z{z}: {len(parents)} tiles ({missing} missing children filled with sea level)",
+                flush=True,
+            )

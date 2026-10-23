@@ -1,19 +1,19 @@
 name: Install Qt
-description: Install Qt using aqtinstall with caching
+description: Install Qt with QGC's installer or aqtinstall, with caching
 outputs:
-  arch_dir:
-    description: Resolved Qt architecture directory name
-    value: ${{ steps.qt-meta.outputs.arch_dir }}
   qt_root_dir:
     description: Absolute Qt root directory
-    value: ${{ steps.qt-preinstalled.outputs.qt_root_dir || steps.qt-install.outputs.qt_root_dir || steps.qt-cached.outputs.qt_root_dir }}
-  qt_bin_dir:
-    description: Qt bin directory
-    value: ${{ steps.qt-preinstalled.outputs.qt_bin_dir || steps.qt-install.outputs.qt_bin_dir || steps.qt-cached.outputs.qt_bin_dir }}
-inputs:
+    value: ${{ steps.qt.outputs.qt_root_dir }}
   version:
-    description: Qt version to install
-    required: true
+    description: Installed Qt version
+    value: ${{ steps.plan.outputs.version }}
+  installer:
+    description: Installer that provided Qt (qgc or aqt)
+    value: ${{ steps.plan.outputs.installer }}
+  source:
+    description: Where Qt came from (preinstalled, cache, or installed)
+    value: ${{ steps.qt.outputs.source }}
+inputs:
   host:
     description: Host platform (linux, mac, windows, etc.)
     required: true
@@ -24,12 +24,8 @@ inputs:
   arch:
     description: Architecture (linux_gcc_64, clang_64, win64_msvc2022_64, etc.)
     required: true
-  dir:
-    description: Installation directory
-    required: false
-    default: ${{ github.workspace }}/.qt
   modules:
-    description: Qt modules to install (use build-config.outputs.qt_modules)
+    description: Qt modules to install (build-setup passes build-config.json's qt.modules)
     required: false
     default: ''
   archives:
@@ -40,123 +36,69 @@ inputs:
     description: Export QT_ROOT_DIR and prepend the Qt bin directory to PATH
     required: false
     default: 'true'
-  aqt-source:
-    description: >-
-      Optional isolated uv source for aqtinstall (e.g. git+https://github.com/miurahr/aqtinstall.git@<sha>).
-      Blank uses the locked `qt` profile. An override runs in an isolated uv tool environment.
-    required: false
-    default: ''
 runs:
   using: composite
   steps:
-    - name: Resolve arch directory and cache key
-      id: qt-meta
-      shell: bash
-      env:
-        QT_ARCH: ${{ inputs.arch }}
-        QT_MODULES: ${{ inputs.modules }}
-        QT_ARCHIVES: ${{ inputs.archives }}
-        QT_CACHE_DIR: ${{ inputs.dir }}
-      run: python3 "${GITHUB_WORKSPACE}/tools/setup/install_qt.py" cache-key --cache-dir "${QT_CACHE_DIR}" --arch "${QT_ARCH}" --modules "${QT_MODULES}" --archives "${QT_ARCHIVES}"
-
-    - name: Resolve preinstalled Qt
-      id: qt-preinstalled
+    # Resolves build-config.json's Qt version and the installer (QGC_QT_INSTALLER, else qgc), and
+    # outputs the cache key (whose digest covers the installer) and the workspace-relative arch
+    # tree to cache, a compatible preinstalled SDK root (empty when the runner image has none),
+    # whether to save a fresh install, and the resolved request for `ensure`.
+    - name: Plan Qt install
+      id: plan
       shell: bash
       env:
         PREINSTALLED_DIR: ${{ env.QGC_PREINSTALLED_QT_DIR || '/opt/qgc-sdk' }}
-        QT_VERSION: ${{ inputs.version }}
-        ARCH_DIR: ${{ steps.qt-meta.outputs.arch_dir }}
+        QT_HOST: ${{ inputs.host }}
+        QT_TARGET: ${{ inputs.target }}
+        QT_ARCH: ${{ inputs.arch }}
         QT_MODULES: ${{ inputs.modules }}
         QT_ARCHIVES: ${{ inputs.archives }}
-      run: |
-        python3 "${GITHUB_WORKSPACE}/tools/setup/install_qt.py" resolve-preinstalled \
-          --prefix "${PREINSTALLED_DIR}" \
-          --version "${QT_VERSION}" \
-          --arch-dir "${ARCH_DIR}" \
-          --modules "${QT_MODULES}" \
-          --archives "${QT_ARCHIVES}"
+        # Pull requests from forks cannot write the base repository's cache.
+        SAVE_ALLOWED: >-
+          ${{ github.event_name != 'pull_request' ||
+              github.event.pull_request.head.repo.full_name == github.repository }}
+      run: >-
+        python3 "${GITHUB_WORKSPACE}/tools/setup/install_qt.py" plan
+        --outdir "${GITHUB_WORKSPACE}/.qt/Qt" --preinstalled-prefix "${PREINSTALLED_DIR}"
+        --host "${QT_HOST}" --target "${QT_TARGET}" --arch "${QT_ARCH}"
+        --modules "${QT_MODULES}" --archives "${QT_ARCHIVES}" --save-allowed "${SAVE_ALLOWED}"
 
     # Cache-service failures should degrade to a Qt reinstall.
     - name: Restore Qt cache
       id: qt-cache
-      if: steps.qt-preinstalled.outputs.available != 'true'
+      if: steps.plan.outputs.preinstalled_root == ''
       uses: actions/cache/restore@v6
       continue-on-error: true
       with:
-        path: ${{ steps.qt-meta.outputs.cache_dir }}/Qt/${{ inputs.version }}/${{ steps.qt-meta.outputs.arch_dir }}
-        # `runner.os` is implied by `inputs.host` (linux/mac/windows...) so it's omitted.
-        key: qt-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.arch }}-${{ inputs.version }}-${{ steps.qt-meta.outputs.digest }}
+        path: ${{ steps.plan.outputs.cache_path }}
+        key: ${{ steps.plan.outputs.key }}
 
-    - name: Install Qt ${{ inputs.version }}
-      if: steps.qt-preinstalled.outputs.available != 'true' && steps.qt-cache.outputs.cache-hit != 'true'
-      id: qt-install
+    - name: Install Qt
+      id: qt
       shell: bash
       env:
-        QT_VERSION: ${{ inputs.version }}
-        QT_HOST: ${{ inputs.host }}
-        QT_TARGET: ${{ inputs.target }}
-        QT_ARCH: ${{ inputs.arch }}
-        QT_OUTDIR: ${{ inputs.dir }}/Qt
-        QT_MODULES: ${{ inputs.modules }}
-        QT_ARCHIVES: ${{ inputs.archives }}
-        QT_AQT_SOURCE: ${{ inputs.aqt-source }}
-      run: |
-        python3 "${GITHUB_WORKSPACE}/tools/setup/install_qt.py" install \
-          --version "${QT_VERSION}" \
-          --host "${QT_HOST}" \
-          --target "${QT_TARGET}" \
-          --arch "${QT_ARCH}" \
-          --outdir "${QT_OUTDIR}" \
-          --modules "${QT_MODULES}" \
-          --archives "${QT_ARCHIVES}" \
-          --aqt-source "${QT_AQT_SOURCE}"
+        PLAN: ${{ steps.plan.outputs.plan }}
+        CACHE_HIT: ${{ steps.qt-cache.outputs.cache-hit }}
+        EXPORT_ENV: ${{ inputs.export-env }}
+      run: >-
+        python3 "${GITHUB_WORKSPACE}/tools/setup/install_qt.py" ensure --plan "${PLAN}"
+        --cache-hit "${CACHE_HIT}" --export-env "${EXPORT_ENV}"
 
     - name: Re-check Qt cache before save
       id: qt-presave
-      if: >-
-        steps.qt-preinstalled.outputs.available != 'true' &&
-        steps.qt-cache.outputs.cache-hit != 'true' &&
-        inputs.target != 'ios' &&
-        (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+      if: steps.plan.outputs.save == 'true' && steps.qt-cache.outputs.cache-hit != 'true'
       uses: actions/cache/restore@v6
       continue-on-error: true
       with:
-        path: ${{ steps.qt-meta.outputs.cache_dir }}/Qt/${{ inputs.version }}/${{ steps.qt-meta.outputs.arch_dir }}
-        key: ${{ steps.qt-cache.outputs.cache-primary-key }}
+        path: ${{ steps.plan.outputs.cache_path }}
+        key: ${{ steps.plan.outputs.key }}
         lookup-only: true
 
     - name: Save Qt cache
       if: >-
-        steps.qt-preinstalled.outputs.available != 'true' &&
-        steps.qt-cache.outputs.cache-hit != 'true' &&
-        steps.qt-presave.outputs.cache-hit != 'true' &&
-        inputs.target != 'ios' &&
-        (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        steps.plan.outputs.save == 'true' && steps.qt-cache.outputs.cache-hit != 'true' &&
+        steps.qt-presave.outputs.cache-hit != 'true'
       uses: actions/cache/save@v6
       with:
-        path: ${{ steps.qt-meta.outputs.cache_dir }}/Qt/${{ inputs.version }}/${{ steps.qt-meta.outputs.arch_dir }}
-        key: ${{ steps.qt-cache.outputs.cache-primary-key }}
-
-    - name: Resolve Qt paths (cache hit)
-      if: steps.qt-preinstalled.outputs.available != 'true' && steps.qt-cache.outputs.cache-hit == 'true'
-      id: qt-cached
-      shell: bash
-      env:
-        QT_OUTDIR: ${{ inputs.dir }}/Qt
-        QT_VERSION: ${{ inputs.version }}
-        ARCH_DIR: ${{ steps.qt-meta.outputs.arch_dir }}
-      run: |
-        python3 "${GITHUB_WORKSPACE}/tools/setup/install_qt.py" resolve-paths \
-          --outdir "${QT_OUTDIR}" \
-          --version "${QT_VERSION}" \
-          --arch-dir "${ARCH_DIR}"
-
-    - name: Set Qt environment
-      if: ${{ inputs.export-env == 'true' }}
-      shell: bash
-      env:
-        QT_ROOT: ${{ steps.qt-preinstalled.outputs.qt_root_dir || steps.qt-install.outputs.qt_root_dir || steps.qt-cached.outputs.qt_root_dir }}
-      run: | # zizmor: ignore[github-env] writes trusted aqt install path (step output) to env; not attacker-controllable
-        echo "QT_ROOT_DIR=${QT_ROOT}" >> "$GITHUB_ENV"
-        echo "${QT_ROOT}/bin" >> "$GITHUB_PATH"
-        echo "Qt installed at ${QT_ROOT}"
+        path: ${{ steps.plan.outputs.cache_path }}
+        key: ${{ steps.plan.outputs.key }}

@@ -30,7 +30,7 @@ struct KeyframeWatch
 {
     VideoReceiver* receiver = nullptr;
     QString file;
-    bool started = false;  ///< Only the probe touches it, on the recorder's streaming thread.
+    std::atomic<bool>* started = nullptr;  ///< The branch's, which outlives the probe.
 };
 
 const char* recordingParserFactory(const GstCaps* caps)
@@ -50,6 +50,24 @@ const char* recordingParserFactory(const GstCaps* caps)
     }
 
     return nullptr;
+}
+
+/// After packet loss the parsers can't place some frames and pass them on with only a DTS; qtmux rejects a buffer
+/// without a PTS ("Could not multiplex stream.") and fails the whole recording. Live video carries no B-frames, so
+/// such a frame's PTS is its DTS; one with neither timestamp is dropped.
+GstPadProbeReturn timestampForMuxer([[maybe_unused]] GstPad* pad, GstPadProbeInfo* info, [[maybe_unused]] gpointer data)
+{
+    GstBuffer* buffer = GST_PAD_PROBE_INFO_BUFFER(info);
+    if (!buffer || GST_BUFFER_PTS_IS_VALID(buffer)) {
+        return GST_PAD_PROBE_OK;
+    }
+    if (!GST_BUFFER_DTS_IS_VALID(buffer)) {
+        return GST_PAD_PROBE_DROP;
+    }
+    buffer = gst_buffer_make_writable(buffer);
+    GST_BUFFER_PTS(buffer) = GST_BUFFER_DTS(buffer);
+    GST_PAD_PROBE_INFO_DATA(info) = buffer;
+    return GST_PAD_PROBE_OK;
 }
 
 }  // namespace
@@ -119,6 +137,7 @@ GStreamer::GstElementPtr RecordingBranch::makeFileSink(const QString& videoFile,
         qCWarning(GstVideoReceiverLog) << "gst_element_request_pad_simple(splitmuxsink, video) failed";
         return nullptr;
     }
+    (void) gst_pad_add_probe(videopad.get(), GST_PAD_PROBE_TYPE_BUFFER, timestampForMuxer, nullptr, nullptr);
 
     GStreamer::GstPadPtr parserSinkPad;
     if (parser) {
@@ -160,7 +179,7 @@ GstPadProbeReturn keyframeWatch(GstPad* pad, GstPadProbeInfo* info, gpointer use
     }
 
     auto* const watch = static_cast<KeyframeWatch*>(user_data);
-    if (watch->started) {
+    if (watch->started->load(std::memory_order_relaxed)) {
         return GST_PAD_PROBE_OK;
     }
 
@@ -190,7 +209,7 @@ GstPadProbeReturn keyframeWatch(GstPad* pad, GstPadProbeInfo* info, gpointer use
 
     qCDebug(GstVideoReceiverLog) << "Got keyframe, stop dropping buffers";
 
-    watch->started = true;
+    watch->started->store(true, std::memory_order_release);
     emit watch->receiver->recordingStarted(watch->file);
     return GST_PAD_PROBE_OK;
 }
@@ -309,9 +328,10 @@ void RecordingBranch::start(const QString& videoFile, VideoReceiver::FILE_FORMAT
     _receiver._dotDumper.dump(_pipeline, "pipeline-with-filesink");
 
     _receiver._recordingOutput = videoFile;
+    _fileStarted.store(false, std::memory_order_relaxed);
     // The file starts with a keyframe at t=0, so playback can decode from its first frame.
     if (!_keyframeWatch.add(probepad.get(), GST_PAD_PROBE_TYPE_BUFFER, keyframeWatch,
-                            new KeyframeWatch{.receiver = &_receiver, .file = videoFile},
+                            new KeyframeWatch{.receiver = &_receiver, .file = videoFile, .started = &_fileStarted},
                             [](gpointer watch) { delete static_cast<KeyframeWatch*>(watch); })) {
         qCCritical(GstVideoReceiverLog) << "Failed to add the keyframe probe" << _receiver._redactedUri();
         failRecordingStart();
@@ -350,6 +370,15 @@ void RecordingBranch::stop()
 void RecordingBranch::finishForTeardown()
 {
     if (_state == State::Recording) {
+        if (!_fileStarted.load(std::memory_order_acquire)) {
+            // No frame reached the file, so there is nothing to drain. An EOS sent now may also beat the stream's first
+            // STREAM_START to the tee, which reopens the stream behind it, and splitmuxsink (1.24) aborts on a buffer
+            // that follows an EOS it got with no buffers.
+            g_object_set(_valve, "drop", TRUE, nullptr);
+            _shutdown();
+            return;
+        }
+
         // EOS at the tee drains the recorder queue into the file. Not sent to the pipeline: a source handles that
         // EOS under its streaming thread's stream lock, which a thread held downstream would never release.
         if (const GStreamer::GstPadPtr teeSink = GStreamer::adoptPad(gst_element_get_static_pad(_tee, "sink"))) {
@@ -413,7 +442,7 @@ void RecordingBranch::onBusElement(GstMessage* message)
     }
 }
 
-bool RecordingBranch::onBusError(GstMessage* message, const QString& text)
+bool RecordingBranch::onBusError(GstMessage* message, const QString& text, const char* debug)
 {
     bool fromRecording = false;
     const bool settled =
@@ -425,7 +454,12 @@ bool RecordingBranch::onBusError(GstMessage* message, const QString& text)
     // A recorder failure (disk full, header reservation overrun) ends the recording, not the stream. Closing the
     // valve now, before the failing element returns its flow error, keeps that error out of the tee: the valve
     // reports OK for a push that fails after drop was set.
-    qCWarning(GstVideoReceiverLog) << "Recording error:" << text;
+    // The detail names the cause behind a generic text such as "Could not multiplex stream."
+    if (debug) {
+        qCWarning(GstVideoReceiverLog) << "Recording error:" << text << "-" << debug;
+    } else {
+        qCWarning(GstVideoReceiverLog) << "Recording error:" << text;
+    }
     g_object_set(_valve, "drop", TRUE, nullptr);
     if (settled) {
         _receiver._runOnWorkerForPipeline([this]() { _onRecorderError(); });

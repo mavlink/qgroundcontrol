@@ -48,4 +48,10 @@ add_qgc_test(FactTest LABELS Unit)
 add_qgc_test(HashCheckTest LABELS Integration Vehicle TIMEOUT ${QGC_TEST_TIMEOUT_EXTENDED})
 add_qgc_test(LabelledFactBrowseTest LABELS Unit)
 add_qgc_test(ParameterEditorControllerTest LABELS Integration Vehicle)
-add_qgc_test(ParameterManagerTest LABELS Integration Vehicle TIMEOUT ${QGC_TEST_TIMEOUT_EXTENDED} SERIAL)
+add_qgc_test(
+    ParameterManagerTest
+    LABELS Integration Vehicle
+    TIMEOUT ${QGC_TEST_TIMEOUT_EXTENDED}
+    SERIAL
+    SHARDS 3
+)

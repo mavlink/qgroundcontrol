@@ -1,6 +1,14 @@
 # RunsOn self-hosted runner pools, referenced by the workflows via
-# `runs-on=<run_id>/runner=<pool>`. Keep sizing here, not in workflow labels.
+# `runs-on=<run_id>-<job>-<attempt>-<matrix entry>/runner=<pool>`. Keep sizing here, not in workflow labels.
 # Public repositories load these definitions from the default branch only.
+# Families list exact types in on-demand priority order; RunsOn then ignores cpu/ram,
+# so the ranges below document the listed types.
+#
+# Each Spot-eligible pool has a `<pool>-spot` twin for pull requests: the same shape, with Spot capacity
+# chosen by `cop` (capacity first, then list order) from Intel or Graviton types. AMD and r7i types are
+# left out because their us-west-2 Spot capacity is interrupted more often. Until the repository variable
+# RUNS_ON_SPOT_POOLS is `true`, pull requests request the same Spot settings through job labels instead,
+# because labels naming a pool that is missing on the default branch fail to launch.
 images:
   qgc-ubuntu24-x64:
     platform: linux
@@ -9,58 +17,108 @@ images:
 
 runners:
   linux-x64-builder:
-    family: ["c8i.xlarge"]
+    family: ["c8i.xlarge", "c8a.xlarge", "m8i.xlarge"]
     cpu: [4]
-    ram: [8]
+    ram: [8, 16]
     spot: false
+    image: ubuntu24-full-x64
+    extras: s3-cache
+    volume: 80gb
+  linux-x64-builder-spot:
+    family: ["c8i.xlarge", "m8i.xlarge", "c7i.xlarge", "m7i.xlarge"]
+    cpu: [4]
+    ram: [8, 16]
+    spot: cop
     image: ubuntu24-full-x64
     extras: s3-cache
     volume: 80gb
   linux-x64-builder-prebaked:
     # Shared opt-in for desktop, Android, and Docker: retain desktop's 16 GiB floor.
-    family: ["m8i.xlarge"]
+    family: ["m8i.xlarge", "m8a.xlarge", "r8i.xlarge"]
     cpu: [4]
-    ram: [16]
+    ram: [16, 32]
     spot: false
     image: qgc-ubuntu24-x64
     extras: s3-cache
     volume: 80gb
-  linux-x64-builder-60gb:
-    family: ["m8i.xlarge"]
+  linux-x64-builder-prebaked-spot:
+    family: ["m8i.xlarge", "r8i.xlarge", "m7i.xlarge"]
     cpu: [4]
-    ram: [16]
+    ram: [16, 32]
+    spot: cop
+    image: qgc-ubuntu24-x64
+    extras: s3-cache
+    volume: 80gb
+  linux-x64-builder-60gb:
+    family: ["m8i.xlarge", "m8a.xlarge", "r8i.xlarge"]
+    cpu: [4]
+    ram: [16, 32]
     spot: false
+    image: ubuntu24-full-x64
+    extras: s3-cache
+    volume: 60gb
+  linux-x64-builder-60gb-spot:
+    family: ["m8i.xlarge", "r8i.xlarge", "m7i.xlarge"]
+    cpu: [4]
+    ram: [16, 32]
+    spot: cop
     image: ubuntu24-full-x64
     extras: s3-cache
     volume: 60gb
   linux-arm64-builder:
-    family: ["c8g.xlarge"]
+    family: ["c8g.xlarge", "m8g.xlarge"]
     cpu: [4]
-    ram: [8]
+    ram: [8, 16]
     spot: false
     image: ubuntu24-full-arm64
     extras: s3-cache
     volume: 60gb
-  linux-x64-tester:
-    family: ["m8i.xlarge"]
+  linux-arm64-builder-spot:
+    family: ["c8g.xlarge", "m8g.xlarge", "c7g.xlarge", "m7g.xlarge"]
     cpu: [4]
-    ram: [16]
+    ram: [8, 16]
+    spot: cop
+    image: ubuntu24-full-arm64
+    extras: s3-cache
+    volume: 60gb
+  linux-x64-tester:
+    family: ["m8i.xlarge", "m8a.xlarge", "r8i.xlarge"]
+    cpu: [4]
+    ram: [16, 32]
     spot: false
+    image: ubuntu24-full-x64
+    extras: s3-cache
+    volume: 60gb
+  linux-x64-tester-spot:
+    family: ["m8i.xlarge", "r8i.xlarge", "m7i.xlarge"]
+    cpu: [4]
+    ram: [16, 32]
+    spot: cop
     image: ubuntu24-full-x64
     extras: s3-cache
     volume: 60gb
   linux-x64-analyzer:
-    family: ["m8i.4xlarge"]
+    # Analysis peaks near 11 GiB, so the 32 GiB fallback has ample headroom.
+    family: ["m8i.4xlarge", "c8i.4xlarge"]
     cpu: [16]
-    ram: [64]
+    ram: [32, 64]
     spot: false
     image: ubuntu24-full-x64
     extras: s3-cache
     volume: 60gb
+  linux-x64-analyzer-spot:
+    family: ["m8i.4xlarge", "c8i.4xlarge", "m7i.4xlarge", "c7i.4xlarge"]
+    cpu: [16]
+    ram: [32, 64]
+    spot: cop
+    image: ubuntu24-full-x64
+    extras: s3-cache
+    volume: 60gb
   linux-x64-emulator:
-    family: ["c8i.xlarge"]
+    # Nested virtualization needs Intel 7i/8i types; AMD and Graviton do not support it.
+    family: ["c8i.xlarge", "m8i.xlarge"]
     cpu: [4]
-    ram: [8]
+    ram: [8, 16]
     spot: false
     image: ubuntu24-full-x64
     extras: s3-cache
@@ -68,9 +126,9 @@ runners:
     nested-virt: true
   linux-x64-vm-builder:
     # The 12 GiB guests need host headroom; do not share the 8 GiB emulator pool.
-    family: ["c8i.2xlarge"]
+    family: ["c8i.2xlarge", "m8i.2xlarge"]
     cpu: [8]
-    ram: [16]
+    ram: [16, 32]
     spot: false
     image: ubuntu24-full-x64
     extras: s3-cache
@@ -78,10 +136,20 @@ runners:
     nested-virt: true
   windows-x64-builder:
     # windows22-full-x64 ships without Visual Studio; this image includes the MSVC toolchain.
-    family: ["m8i.xlarge"]
+    family: ["m8i.xlarge", "r8i.xlarge", "m7i.xlarge"]
     cpu: [4]
-    ram: [16]
+    ram: [16, 32]
     spot: false
     image: windows25-full-x64
     extras: s3-cache
-    volume: 100gb
+    # The image itself uses about 75 GB; this leaves room for the Release build.
+    # windows.yml repeats the volume as a job label, because public repositories only read this file from master.
+    volume: 150gb
+  windows-x64-builder-spot:
+    family: ["m8i.xlarge", "r8i.xlarge", "m7i.xlarge"]
+    cpu: [4]
+    ram: [16, 32]
+    spot: cop
+    image: windows25-full-x64
+    extras: s3-cache
+    volume: 150gb

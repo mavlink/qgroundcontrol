@@ -23,8 +23,10 @@ constexpr const char *kTestSource =
     "video/x-raw,width=1280,height=720,framerate=30/1 ! "
     "videoconvert";
 
-constexpr const char *kH264Encoder = "x264enc tune=zerolatency bitrate=2000 key-int-max=30";
-constexpr const char *kH265Encoder = "x265enc tune=zerolatency bitrate=2000";
+// Receivers join mid-stream and wait for the next keyframe, so both encoders key every second. Ultrafast keeps
+// a 720p encode real-time on a loaded CI runner; x265's medium preset and 250-frame default GOP do not.
+constexpr const char* kH264Encoder = "x264enc tune=zerolatency speed-preset=ultrafast bitrate=2000 key-int-max=30";
+constexpr const char* kH265Encoder = "x265enc tune=zerolatency speed-preset=ultrafast bitrate=2000 key-int-max=30";
 
 bool factoryExists(const char *name)
 {

@@ -32,6 +32,7 @@ private slots:
     void _testRecordingSinkAcceptsElementaryStreams_data();
     void _testRecordingSinkAcceptsElementaryStreams();
     void _testRecordingSinkFinalizesMidStreamH265Mp4();
+    void _testRecordingSinkTimestampsDtsOnlyFrames();
     void _testBindDebugLevelFactRejectsNullContext();
     void _testRuntimeVersionCheck();
     void _testAppsinkFrameDelivery();

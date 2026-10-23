@@ -14,6 +14,7 @@ QML lines.
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
 
 from .validation import clamped_repr
@@ -136,6 +137,11 @@ class BaseControlDef:
 # --------------------------------------------------------------------------- #
 
 
+def qml_string(text: str) -> str:
+    """Return *text* as a quoted, escaped QML string literal."""
+    return json.dumps(text, ensure_ascii=False)
+
+
 def qml_tr(text: str, context: str = "") -> str:
     """Return a QML translation call for *text*.
 
@@ -145,8 +151,8 @@ def qml_tr(text: str, context: str = "") -> str:
     QML filename.
     """
     if context:
-        return f'qsTranslate("{context}", "{text}")'
-    return f'qsTr("{text}")'
+        return f"qsTranslate({qml_string(context)}, {qml_string(text)})"
+    return f"qsTr({qml_string(text)})"
 
 
 def render_label(
@@ -255,7 +261,7 @@ def render_checkbox(
     )
     lines = [f"{indent}{qml_type} {{"]
     if object_name:
-        lines.append(f'{indent}    objectName: "{object_name}"')
+        lines.append(f"{indent}    objectName: {qml_string(object_name)}")
     lines.extend(
         [
             f"{indent}    Layout.fillWidth: true",
@@ -508,7 +514,7 @@ def render_dialog_button(
     lines.append(f"{indent}}}")
 
     # Button
-    params_js = ", ".join(f'"{k}": {v}' for k, v in dialog_button.dialogParams.items())
+    params_js = ", ".join(f"{qml_string(k)}: {v}" for k, v in dialog_button.dialogParams.items())
     open_arg = f"{{ {params_js} }}" if params_js else ""
 
     lines.append(f"{indent}QGCButton {{")
@@ -694,7 +700,8 @@ def render_factslider(
         lines.append(f"{inner}    onValueChanged: {{")
         for lp in linked_params:
             lines.append(
-                f'{inner}        controller.getParameterFact(-1, "{lp.param}").rawValue = {lp.expression}'
+                f"{inner}        controller.getParameterFact(-1, {qml_string(lp.param)}).rawValue"
+                f" = {lp.expression}"
             )
         lines.append(f"{inner}    }}")
 

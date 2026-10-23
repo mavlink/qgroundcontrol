@@ -11,6 +11,8 @@ target_sources(
         MAVLinkFTP.cc
         MAVLinkFTP.h
         MAVLinkLib.h
+        MAVLinkMessageInfo.cc
+        MAVLinkMessageInfo.h
         MAVLinkMessageType.h
         MAVLinkStreamConfig.cc
         MAVLinkStreamConfig.h
@@ -21,6 +23,16 @@ target_sources(
         StatusTextHandler.h
         SysStatusSensorInfo.cc
         SysStatusSensorInfo.h
+)
+
+# Defines MAVLINK_USE_MESSAGE_INFO before including MAVLinkLib.h, which the PCH and unity batches include first.
+set_source_files_properties(
+    MAVLinkMessageInfo.cc
+    TARGET_DIRECTORY
+    ${CMAKE_PROJECT_NAME}
+    PROPERTIES
+        SKIP_PRECOMPILE_HEADERS ON
+        SKIP_UNITY_BUILD_INCLUSION ON
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

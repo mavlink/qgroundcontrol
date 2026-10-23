@@ -17,9 +17,11 @@ function(_qgc_gst_find_apple_pkg_config out_var)
         find_program(_qgc_pkg_config NAMES pkg-config pkgconf)
     endif()
     if(NOT _qgc_pkg_config)
-        message(FATAL_ERROR "Could not find pkg-config.\n"
-                            "Install dependencies with: python3 tools/setup/install_dependencies.py --platform macos\n"
-                            "or install pkg-config manually (for example: brew install pkg-config)."
+        message(
+            FATAL_ERROR
+                "Could not find pkg-config.\n"
+                "Install dependencies with: python3 tools/setup/install_dependencies --platform macos\n"
+                "or install pkg-config manually (for example: brew install pkg-config)."
         )
     endif()
     set(${out_var}

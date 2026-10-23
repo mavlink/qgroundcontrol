@@ -1,9 +1,8 @@
-#!/usr/bin/env python3
 """
 Generate QML settings pages from UI definition JSON files.
 
 Run from the repo root:
-    python3 -m tools.generators.settings_qml.generate_pages --output-dir src/AppSettings
+    python3 -m tools.generators.settings_qml.generate_pages --output-dir build/generated-settings-qml
 
 Reads:
   - src/AppSettings/pages/SettingsPages.json  (page list + metadata)
@@ -11,8 +10,10 @@ Reads:
   - src/Settings/*.SettingsGroup.json              (fact type metadata)
 
 Generates:
-  - src/AppSettings/<page>.qml                  (one per page definition)
-  - src/AppSettings/SettingsPagesModel.qml      (page list model)
+  - <output-dir>/<page>.qml                     (one per page definition)
+  - <output-dir>/SettingsPagesModel.qml         (page list model)
+
+CMake runs this at build time with an output directory under the build tree.
 """
 
 from __future__ import annotations
@@ -22,20 +23,13 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from _bootstrap import ensure_tools_dir
 
-ensure_tools_dir(__file__)
+import _bootstrap as _bootstrap
+from common.io import write_text_if_changed
 
-from common.io import write_text_if_changed  # noqa: E402
-
-from .page_generator import (  # noqa: E402
-    generate_page_qml,
-    generate_pages_model_qml,
-    load_page_def,
-    load_pages_data,
-    load_settings_metadata,
-    resolve_page_def_path,
-)
+from .emit import generate_page_qml, generate_pages_model_qml
+from .metadata import load_settings_metadata
+from .model import load_page_def, load_pages_data, resolve_page_def_path
 
 PAGES_DIR = Path("src/AppSettings/pages")
 SETTINGS_DIR = Path("src/Settings")

@@ -23,6 +23,8 @@ target_sources(
         QmlObjectTreeModelTest.h
         QmlUnitsConversionTest.cc
         QmlUnitsConversionTest.h
+        RCToParamDialogControllerTest.cc
+        RCToParamDialogControllerTest.h
         ScaleBarUnitsTest.cc
         ScaleBarUnitsTest.h
         TestDirtyObject.h
@@ -39,4 +41,6 @@ add_qgc_test(QGCCheckBoxSliderTest LABELS Unit)
 add_qgc_test(QmlObjectListModelTest LABELS Unit)
 add_qgc_test(QmlObjectTreeModelTest LABELS Unit)
 add_qgc_test(QmlUnitsConversionTest LABELS Unit)
+add_qgc_test(RCToParamDialogControllerTest LABELS Unit)
+add_qgc_test(RCToParamDialogControllerVehicleTest LABELS Integration Vehicle)
 add_qgc_test(ScaleBarUnitsTest LABELS Unit)

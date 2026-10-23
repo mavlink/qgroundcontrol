@@ -36,11 +36,23 @@ jobs:
     name: Release ${{ matrix.arch }}
     needs: changes
     if: needs.changes.outputs.should_build == 'true'
-    runs-on: ${{ matrix.runs_on }}
+    # RUNS_ON_LINUX_BUILDER replaces only the x64 pool.
+    runs-on: >-
+      ${{
+        github.repository_owner == 'mavlink' &&
+        format('runs-on={0}-build-{1}-{2}/runner={3}{4}',
+          github.run_id, github.run_attempt, strategy.job-index,
+          matrix.arch == 'linux_gcc_64' && vars.RUNS_ON_LINUX_BUILDER || matrix.runson_runner,
+          github.event_name == 'pull_request' && (vars.RUNS_ON_SPOT_POOLS == 'true' && '-spot' ||
+            format('/spot=cop/family={0}', matrix.spot_family)) || '') ||
+        matrix.hosted_runner
+      }}
     timeout-minutes: 120
     env:
       QGC_APPIMAGE_UPDATE_INFORMATION: >-
         ${{ github.repository == 'mavlink/qgroundcontrol' && format('gh-releases-zsync|mavlink|qgroundcontrol|latest|{0}.AppImage.zsync', matrix.package) || '' }}
+      # The repository variable QGC_COMPILER_CACHE=sccache pilots sccache on RunsOn S3 (ci-overview.md).
+      QGC_COMPILER_CACHE: ${{ vars.QGC_COMPILER_CACHE }}
 
     permissions:
       contents: read
@@ -54,23 +66,17 @@ jobs:
       matrix:
         include:
           - arch: linux_gcc_arm64
-            runs_on: >-
-              ${{
-                github.repository_owner == 'mavlink' &&
-                format('runs-on={0}/runner=linux-arm64-builder', github.run_id) ||
-                'ubuntu-24.04-arm'
-              }}
+            runson_runner: linux-arm64-builder
+            # Pull requests request the -spot twin's families until RUNS_ON_SPOT_POOLS is enabled.
+            spot_family: c8g.xlarge+m8g.xlarge+c7g.xlarge+m7g.xlarge
+            hosted_runner: ubuntu-24.04-arm
             package: QGroundControl-aarch64
             host: linux_arm64
 
           - arch: linux_gcc_64
-            runs_on: >-
-              ${{
-                github.repository_owner == 'mavlink' &&
-                format('runs-on={0}/runner={1}', github.run_id,
-                  vars.RUNS_ON_LINUX_BUILDER || 'linux-x64-builder-60gb') ||
-                'ubuntu-24.04'
-              }}
+            runson_runner: linux-x64-builder-60gb
+            spot_family: m8i.xlarge+r8i.xlarge+m7i.xlarge
+            hosted_runner: ubuntu-24.04
             package: QGroundControl-x86_64
             host: linux
 
@@ -79,10 +85,9 @@ jobs:
         shell: bash
 
     steps:
-      # harden-runner is x86_64 Linux only — skip on the ubuntu-24.04-arm matrix entry.
-      # macOS/Windows runners no-op silently, so other workflows don't need the guard.
+      # The Harden-Runner community tier audits GitHub-hosted runners only, not RunsOn.
       - name: Harden Runner
-        if: runner.arch != 'ARM64'
+        if: runner.environment == 'github-hosted'
         uses: step-security/harden-runner@v2
         with:
           egress-policy: audit
@@ -94,11 +99,10 @@ jobs:
           show-waiting-runner: true
 
       - name: Enable RunsOn magic cache
-        if: github.repository_owner == 'mavlink'
         uses: runs-on/action@v2
         with:
-          metrics: cpu,network,memory,disk,io
           show_costs: summary
+          sccache: ${{ vars.QGC_COMPILER_CACHE == 'sccache' && 's3' || '' }}
 
       - name: Checkout repo
         uses: actions/checkout@v7
@@ -119,8 +123,6 @@ jobs:
       - name: Configure
         uses: ./.github/actions/cmake-configure
         with:
-          build-dir: ${{ runner.temp }}/build
-          build-type: Release
           preset: ${{ matrix.arch == 'linux_gcc_arm64' && 'Linux-arm64' || 'Linux' }}
           extra-args: -DQGC_APPIMAGE_UPDATE_INFORMATION=${{ env.QGC_APPIMAGE_UPDATE_INFORMATION }}
 
@@ -128,10 +130,7 @@ jobs:
         id: build
         uses: ./.github/actions/cmake-build
         with:
-          build-dir: ${{ runner.temp }}/build
-          build-type: Release
           reviewdog: ${{ github.event_name == 'pull_request' && 'true' || 'false' }}
-          reviewdog-token: ${{ github.token }}
 
       - name: Verify Executable
         uses: ./.github/actions/verify-executable
@@ -140,25 +139,13 @@ jobs:
 
       - name: Analyze binary size
         if: matrix.arch == 'linux_gcc_64'
-        uses: ./.github/actions/size-analysis
-        with:
-          binary-path: ${{ runner.temp }}/build/Release/QGroundControl
-          output-file: ${{ runner.temp }}/build/metrics.json
-
-      - name: Upload metrics artifact
-        if: matrix.arch == 'linux_gcc_64'
-        uses: actions/upload-artifact@v7
-        with:
-          name: size-metrics
-          path: ${{ runner.temp }}/build/metrics.json
-          if-no-files-found: error
-          retention-days: 90
+        run: |
+          python3 "${GITHUB_WORKSPACE}/tools/ci/reporting/size_analysis.py" \
+            --binary "${RUNNER_TEMP}/build/Release/QGroundControl" --install-bloaty
 
       - name: Create AppImage
-        uses: ./.github/actions/cmake-install
-        with:
-          build-dir: ${{ runner.temp }}/build
-          build-type: Release
+        working-directory: ${{ runner.temp }}/build
+        run: cmake --install . --config Release
 
       - name: Verify AppImage
         uses: ./.github/actions/verify-executable
@@ -181,7 +168,7 @@ jobs:
           aws-distribution-id: ${{ secrets.AWS_DISTRIBUTION_ID }}
 
       - name: Debug failed runner
-        if: ${{ failure() && !cancelled() && github.event_name == 'workflow_dispatch' && inputs.debug_runner && github.ref_type == 'branch' }}
+        if: ${{ failure() && !cancelled() && inputs.debug_runner && github.ref_type == 'branch' }}
         timeout-minutes: 15
         uses: ./.github/actions/debug-runner
 
@@ -192,7 +179,10 @@ jobs:
     runs-on: >-
       ${{
         github.repository_owner == 'mavlink' &&
-        format('runs-on={0}/runner=linux-x64-tester', github.run_id) ||
+        format('runs-on={0}-debug-validation-{1}-{2}/runner=linux-x64-tester{3}',
+          github.run_id, github.run_attempt, strategy.job-index,
+          github.event_name == 'pull_request' && (vars.RUNS_ON_SPOT_POOLS == 'true' && '-spot' ||
+            '/spot=cop/family=m8i.xlarge+r8i.xlarge+m7i.xlarge') || '') ||
         'ubuntu-24.04'
       }}
     timeout-minutes: 120
@@ -212,7 +202,9 @@ jobs:
         shell: bash
 
     steps:
+      # The Harden-Runner community tier audits GitHub-hosted runners only, not RunsOn.
       - name: Harden Runner
+        if: runner.environment == 'github-hosted'
         uses: step-security/harden-runner@v2
         with:
           egress-policy: audit
@@ -224,10 +216,8 @@ jobs:
           show-waiting-runner: true
 
       - name: Enable RunsOn magic cache
-        if: github.repository_owner == 'mavlink'
         uses: runs-on/action@v2
         with:
-          metrics: cpu,network,memory,disk,io
           show_costs: summary
 
       - name: Checkout repo
@@ -242,105 +232,225 @@ jobs:
           qt-arch: linux_gcc_64
           build-type: Debug
           cache-variant: ${{ matrix.mode }}
+          python-groups: ${{ matrix.mode == 'coverage' && 'scripts,coverage' || 'scripts' }}
 
       - name: Install Dependencies
         uses: ./.github/actions/install-dependencies
 
-      - name: Ensure coverage tools are available
-        if: matrix.mode == 'coverage'
-        run: python3 tools/setup/install_python.py scripts,coverage
-
       - name: Configure
         uses: ./.github/actions/cmake-configure
         with:
-          build-dir: ${{ runner.temp }}/build
-          build-type: Debug
-          preset: ${{ matrix.mode == 'coverage' && 'Linux-coverage' || 'Linux-debug' }}
-          testing: 'true'
-          coverage: ${{ matrix.mode == 'coverage' && 'true' || 'false' }}
-          # Line tables are all gcov and sanitizer stacks need; full -g costs ~17% compile CPU and ~3.5x object size.
-          # Unity builds of QGC targets halve compile CPU; release jobs stay non-unity because they ship artifacts.
-          extra-args: >-
-            -DCMAKE_C_FLAGS_DEBUG=-g1 -DCMAKE_CXX_FLAGS_DEBUG=-g1 -DQGC_UNITY_BUILD=ON
-            ${{ matrix.mode == 'sanitizers' && '-DQGC_ENABLE_ASAN=ON -DQGC_ENABLE_UBSAN=ON -DQGC_TEST_DETECT_LEAKS=ON' || '' }}
+          # Both presets use line tables (-g1) and unity builds of QGC targets: full -g costs ~17% compile CPU
+          # and ~3.5x object size, and unity halves compile CPU. Release jobs stay non-unity because they ship.
+          preset: ${{ matrix.mode == 'coverage' && 'Linux-coverage' || 'Linux-sanitizers' }}
 
       - name: Build
         id: build
         uses: ./.github/actions/cmake-build
-        with:
-          build-dir: ${{ runner.temp }}/build
-          build-type: Debug
 
       - name: Run and report tests
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         uses: ./.github/actions/test-phase
-        env:
-          ASAN_OPTIONS: ${{ matrix.mode == 'sanitizers' && 'detect_leaks=1:halt_on_error=1:check_initialization_order=1' || '' }}
-          LSAN_OPTIONS: ${{ matrix.mode == 'sanitizers' && format('suppressions={0}/build/asan_suppressions.txt', runner.temp) || '' }}
-          UBSAN_OPTIONS: ${{ matrix.mode == 'sanitizers' && format('print_stacktrace=1:halt_on_error=1:suppressions={0}/build/ubsan_suppressions.txt', runner.temp) || '' }}
+        # Sanitizer runtime options come from CTest (cmake/QGCTest.cmake), as in local runs.
         with:
-          build-dir: ${{ runner.temp }}/build
           suite: linux-${{ matrix.mode }}
           # Instrumented integration tests run slower; at one per CPU MissionControllerTest exceeds its timeout.
           integration-parallel: ${{ matrix.mode == 'coverage' && '2' || 'auto' }}
           exclude-labels: ${{ matrix.mode == 'sanitizers' && 'Flaky|Network|NoSanitizer' || 'Flaky|Network' }}
           upload-codecov: ${{ vars.CODECOV_TEST_ANALYTICS == 'true' }}
 
-      - name: Verify coverage data files exist
+      # coverage_report.py fails when the tests produced no .gcda files.
+      - name: Generate Coverage Report
         if: matrix.mode == 'coverage'
-        working-directory: ${{ runner.temp }}/build
         run: |
-          gcda_count=$(find . -name '*.gcda' | wc -l | tr -d '[:space:]')
-          echo "Detected ${gcda_count} .gcda files"
-          if [ "${gcda_count}" -eq 0 ]; then
-            echo "::error::No .gcda files were produced by test execution"
-            exit 1
-          fi
+          python3 "${GITHUB_WORKSPACE}/tools/coverage_report.py" \
+            --report \
+            --build-dir "${RUNNER_TEMP}/build" \
+            --log-file "${RUNNER_TEMP}/build/coverage-output.txt" \
+            --step-summary
 
-      - name: Coverage Report
+      - name: Upload to Codecov
         if: matrix.mode == 'coverage'
-        uses: ./.github/actions/coverage
+        uses: codecov/codecov-action@v7
         with:
-          build-dir: ${{ runner.temp }}/build
-          mode: report-only
-          codecov-token: ${{ secrets.CODECOV_TOKEN }}
+          files: ${{ runner.temp }}/build/coverage.xml
+          flags: unittests
+          name: qgc-coverage
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+          verbose: true
+
+      - name: Upload Coverage Artifact
+        if: matrix.mode == 'coverage'
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-report
+          path: |
+            ${{ runner.temp }}/build/coverage-output.txt
+            ${{ runner.temp }}/build/coverage.xml
+            ${{ runner.temp }}/build/coverage-summary.json
+            ${{ runner.temp }}/build/coverage.html
+            ${{ runner.temp }}/build/coverage.*.html
+          retention-days: 14
 
       - name: Verify Coverage Thresholds
         if: matrix.mode == 'coverage'
         working-directory: ${{ runner.temp }}/build
-        run: |
-          line_thresh=$(python3 "${GITHUB_WORKSPACE}/.github/scripts/cmake_helper.py" \
-            cache-var --build-dir . --name QGC_COVERAGE_LINE_THRESHOLD --default 30)
-          branch_thresh=$(python3 "${GITHUB_WORKSPACE}/.github/scripts/cmake_helper.py" \
-            cache-var --build-dir . --name QGC_COVERAGE_BRANCH_THRESHOLD --default 20)
-          python3 "${GITHUB_WORKSPACE}/.github/scripts/verify_coverage_thresholds.py" \
-            --coverage-xml coverage.xml \
-            --line-threshold "${line_thresh}" \
-            --branch-threshold "${branch_thresh}"
+        run: python3 "${GITHUB_WORKSPACE}/tools/ci/reporting/verify_coverage_thresholds.py" --build-dir .
 
       - name: Run normally excluded tests
         id: excluded
         if: ${{ !cancelled() && steps.build.outcome == 'success' && matrix.mode == 'coverage' && github.event_name == 'workflow_dispatch' }}
         uses: ./.github/actions/run-unit-tests
         with:
-          build-dir: ${{ runner.temp }}/build
           include-labels: 'Network|Flaky'
           exclude-labels: ''
           parallel: '1'
           junit-output: junit-excluded.xml
           ctest-output: excluded-output.txt
-
-      - name: Report normally excluded tests
-        if: ${{ !cancelled() && steps.excluded.outcome != 'skipped' && steps.excluded.outcome != '' }}
-        uses: ./.github/actions/test-report
-        with:
-          name: Network and flaky tests
-          build-dir: ${{ runner.temp }}/build
-          junit-file: junit-excluded.xml
-          output-file: excluded-output.txt
+          report-name: Network and flaky tests
           artifact-name: test-results-excluded
 
       - name: Debug failed runner
-        if: ${{ failure() && !cancelled() && github.event_name == 'workflow_dispatch' && inputs.debug_runner && github.ref_type == 'branch' }}
+        if: ${{ failure() && !cancelled() && inputs.debug_runner && github.ref_type == 'branch' }}
         timeout-minutes: 15
         uses: ./.github/actions/debug-runner
+
+  # The required status check: a skipped matrix job reports an unexpanded name, so branch
+  # protection requires this stable name instead. always(): a skipped gate would count as passing.
+  # The custom-example overlay changes the app name and feature set, global compile definitions, so it is its own
+  # build. Pull requests unit-test and boot the Debug variant (the stock legs run the integration suites); pushes also
+  # package and boot the Release AppImage.
+  custom-plugin:
+    name: ${{ matrix.build-type == 'Debug' && 'Custom Plugin Test Debug' || 'Custom Plugin Build' }}
+    needs: changes
+    if: needs.changes.outputs.should_build == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        build-type: ${{ fromJSON(github.event_name == 'pull_request' && '["Debug"]' || '["Debug", "Release"]') }}
+    runs-on: >-
+      ${{
+        github.repository_owner == 'mavlink' &&
+        format('runs-on={0}-custom-plugin-{1}-{2}/runner={3}{4}',
+          github.run_id, github.run_attempt, strategy.job-index,
+          matrix.build-type == 'Debug' && 'linux-x64-tester' ||
+          vars.RUNS_ON_LINUX_BUILDER || 'linux-x64-builder-60gb',
+          github.event_name == 'pull_request' && (vars.RUNS_ON_SPOT_POOLS == 'true' && '-spot' ||
+            '/spot=cop/family=m8i.xlarge+r8i.xlarge+m7i.xlarge') || '') ||
+        'ubuntu-24.04'
+      }}
+    timeout-minutes: 120
+
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      # The Harden-Runner community tier audits GitHub-hosted runners only, not RunsOn.
+      - name: Harden Runner
+        if: runner.environment == 'github-hosted'
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Record build timeline
+        uses: Kesin11/actions-timeline@v3
+        continue-on-error: true
+        with:
+          show-waiting-runner: true
+
+      - name: Enable RunsOn magic cache
+        uses: runs-on/action@v2
+        with:
+          show_costs: summary
+
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Setup Build Environment
+        uses: ./.github/actions/build-setup
+        with:
+          qt-host: linux
+          qt-arch: linux_gcc_64
+          build-type: ${{ matrix.build-type }}
+          cache-variant: custom
+
+      - name: Install Dependencies
+        uses: ./.github/actions/install-dependencies
+
+      - name: Configure
+        uses: ./.github/actions/cmake-configure
+        with:
+          preset: ${{ matrix.build-type == 'Debug' && 'Linux-debug' || 'Linux' }}
+          extra-args: -DQGC_CUSTOM_DIR=custom-example
+
+      - name: Build
+        id: build
+        uses: ./.github/actions/cmake-build
+
+      - name: Create AppImage
+        if: matrix.build-type == 'Release'
+        working-directory: ${{ runner.temp }}/build
+        run: cmake --install . --config Release
+
+      - name: Verify Custom AppImage
+        if: matrix.build-type == 'Release'
+        uses: ./.github/actions/verify-executable
+        with:
+          binary-path: ${{ runner.temp }}/build/Custom-QGroundControl-x86_64.AppImage
+          type: appimage
+
+      - name: Run unit tests
+        if: ${{ !cancelled() && matrix.build-type == 'Debug' && steps.build.outcome == 'success' }}
+        uses: ./.github/actions/run-unit-tests
+        with:
+          junit-output: junit-results-custom-unit.xml
+          ctest-output: test-output-custom-unit.txt
+          include-labels: 'Unit'
+          exclude-labels: 'Flaky|Network|StockUI'
+          report-name: Unit Tests (custom)
+          artifact-name: test-results-custom-unit
+          retention-days: 7
+          duration-report: 'true'
+          upload-codecov: ${{ vars.CODECOV_TEST_ANALYTICS == 'true' }}
+          codecov-flags: custom-unit
+
+      - name: Verify custom executable
+        if: ${{ !cancelled() && matrix.build-type == 'Debug' && steps.build.outcome == 'success' }}
+        uses: ./.github/actions/verify-executable
+        with:
+          binary-path: ${{ runner.temp }}/build/Debug/Custom-QGroundControl
+          build-dir: ${{ runner.temp }}/build
+
+      - name: Debug failed runner
+        if: ${{ failure() && !cancelled() && inputs.debug_runner && github.ref_type == 'branch' }}
+        timeout-minutes: 15
+        uses: ./.github/actions/debug-runner
+
+  linux-ok:
+    name: Linux
+    if: always()
+    needs: [changes, build, debug-validation, custom-plugin]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Require every leg to pass
+        uses: re-actors/alls-green@v1.3.0
+        with:
+          allowed-skips: build, debug-validation, custom-plugin
+          jobs: ${{ toJSON(needs) }}

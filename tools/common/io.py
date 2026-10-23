@@ -1,8 +1,4 @@
-"""Small file I/O helpers for QGC dev tools.
-
-Centralizes the encoding and atomic-write patterns that get repeated in
-``configure.py``, ``gh_actions.py``, ``build_config.py`` and others.
-"""
+"""JSON/TOML I/O, checksums, atomic writes, and safe archive extraction for QGC dev tools."""
 
 from __future__ import annotations
 
@@ -149,8 +145,8 @@ def read_json(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def write_json(path: Path, data: Any, *, indent: int = 2, sort_keys: bool = False) -> None:
-    """Write *data* as JSON to *path* (UTF-8, trailing newline)."""
+def write_json(path: Path, data: Any, *, indent: int | None = 2, sort_keys: bool = False) -> None:
+    """Write *data* as JSON to *path* (UTF-8, trailing newline); ``indent=None`` writes one line."""
     text = json.dumps(data, indent=indent, sort_keys=sort_keys, ensure_ascii=False)
     atomic_write(path, text + "\n")
 
@@ -179,15 +175,15 @@ def read_toml(path: Path) -> dict[str, Any]:
 
 
 def atomic_write(path: Path, content: str, *, encoding: str = "utf-8") -> None:
-    """Write *content* to *path* atomically (write tmp + rename).
+    """Write *content* to *path* atomically (write tmp + rename), without newline translation.
 
-    Survives crashes mid-write and is safe against partial reads by other
-    processes. Same-directory tmpfile keeps the rename atomic on POSIX.
+    LF content therefore stays LF on Windows. Survives crashes mid-write and is safe against
+    partial reads by other processes. Same-directory tmpfile keeps the rename atomic on POSIX.
     """
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
     try:
-        with os.fdopen(fd, "w", encoding=encoding) as fh:
+        with os.fdopen(fd, "w", encoding=encoding, newline="\n") as fh:
             fh.write(content)
         os.replace(tmp_name, path)
     except Exception:
@@ -199,8 +195,10 @@ def atomic_write(path: Path, content: str, *, encoding: str = "utf-8") -> None:
 def write_text_if_changed(path: Path, content: str, *, encoding: str = "utf-8") -> bool:
     """Atomically write *content* when it differs; return whether the file changed."""
     try:
-        if path.read_text(encoding=encoding) == content:
-            return False
+        # newline="" compares the stored line endings, so CRLF files are rewritten with LF.
+        with path.open(encoding=encoding, newline="") as fh:
+            if fh.read() == content:
+                return False
     except FileNotFoundError:
         pass
     atomic_write(path, content, encoding=encoding)

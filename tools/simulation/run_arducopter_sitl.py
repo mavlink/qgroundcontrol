@@ -8,11 +8,20 @@ import json
 import shlex
 import subprocess
 import sys
-import time
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+import _bootstrap as _bootstrap
+from common.proc import wait_until
 
 IMAGE = "ardupilot-sitl-4.5.6"
 VERSION = "Copter-4.5.6"
 OWNER_LABEL = "org.qgroundcontrol.sitl"
+# Third-party Dockerfile repository: pin a reviewed full commit so builds cannot change silently.
+BUILD_CONTEXT = (
+    "https://github.com/radarku/ardupilot-sitl-docker.git#eff32c1f98152ac3d1dc09a1e475733b73ce569f"
+)
 
 
 def inspect(container: str) -> dict:
@@ -26,26 +35,31 @@ def inspect(container: str) -> dict:
     return json.loads(result.stdout)[0]
 
 
+def listening(container: str) -> bool:
+    state = inspect(container)["State"]
+    if not state["Running"]:
+        raise RuntimeError(f"SITL stopped: {state.get('Error') or state.get('ExitCode')}")
+    # Inspect the guest TCP table instead of consuming SITL's first client connection.
+    result = subprocess.run(
+        ["docker", "exec", container, "cat", "/proc/net/tcp", "/proc/net/tcp6"],
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=15,
+    )
+    return any(
+        len(fields) >= 4 and fields[1].endswith(":1680") and fields[3] == "0A"
+        for fields in map(str.split, result.stdout.splitlines())
+    )
+
+
 def wait_ready(container: str, timeout: float) -> None:
-    deadline = time.monotonic() + timeout
-    while time.monotonic() < deadline:
-        state = inspect(container)["State"]
-        if not state["Running"]:
-            raise RuntimeError(f"SITL stopped: {state.get('Error') or state.get('ExitCode')}")
-        # Inspect the guest TCP table instead of consuming SITL's first client connection.
-        result = subprocess.run(
-            ["docker", "exec", container, "cat", "/proc/net/tcp", "/proc/net/tcp6"],
-            check=True,
-            capture_output=True,
-            text=True,
-            timeout=15,
-        )
-        for line in result.stdout.splitlines():
-            fields = line.split()
-            if len(fields) >= 4 and fields[1].endswith(":1680") and fields[3] == "0A":
-                return
-        time.sleep(min(0.5, max(0, deadline - time.monotonic())))
-    raise TimeoutError(f"SITL TCP port 5760 did not become ready within {timeout}s")
+    wait_until(
+        lambda: listening(container),
+        timeout=timeout,
+        interval=0.5,
+        description="SITL TCP port 5760",
+    )
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -85,7 +99,7 @@ def main(argv: list[str] | None = None) -> int:
                     IMAGE,
                     "--build-arg",
                     f"COPTER_TAG={VERSION}",
-                    "https://github.com/radarku/ardupilot-sitl-docker.git",
+                    BUILD_CONTEXT,
                 ],
                 check=True,
             )

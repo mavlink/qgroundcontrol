@@ -502,6 +502,64 @@ if(TEST_CASE MATCHES "^helpers-")
         if(NOT _result EQUAL 3 OR NOT EXISTS "${_object}")
             message(FATAL_ERROR "ccache launcher deleted a non-header compile's output (exit ${_result})")
         endif()
+    elseif(TEST_CASE STREQUAL "helpers-sccache-pch")
+        # Configure never runs the cache program it is given.
+        set(_fake_sccache "${CMAKE_CURRENT_BINARY_DIR}/fake-sccache/sccache")
+        file(WRITE "${_fake_sccache}" "")
+        set(QGC_CACHE_PROGRAM
+            "${_fake_sccache}"
+            CACHE FILEPATH "" FORCE
+        )
+        qgc_config_caching()
+        if(NOT CMAKE_CXX_COMPILER_LAUNCHER STREQUAL _fake_sccache)
+            message(FATAL_ERROR "sccache is not the compiler launcher: ${CMAKE_CXX_COMPILER_LAUNCHER}")
+        endif()
+        add_executable(${PROJECT_NAME} main.cpp)
+        target_precompile_headers(${PROJECT_NAME} PRIVATE <vector>)
+        get_target_property(_pch_disabled ${PROJECT_NAME} DISABLE_PRECOMPILE_HEADERS)
+        if(NOT _pch_disabled)
+            message(FATAL_ERROR "sccache builds keep precompiled headers")
+        endif()
+
+        # An explicit CMAKE_DISABLE_PRECOMPILE_HEADERS wins over the sccache default.
+        function(qgc_expect_explicit_pch_setting_kept)
+            # cmake-lint: disable=C0103
+            set(CMAKE_DISABLE_PRECOMPILE_HEADERS OFF)
+            qgc_config_caching()
+            if(CMAKE_DISABLE_PRECOMPILE_HEADERS)
+                message(FATAL_ERROR "sccache overrode an explicit CMAKE_DISABLE_PRECOMPILE_HEADERS=OFF")
+            endif()
+        endfunction()
+        qgc_expect_explicit_pch_setting_kept()
+    elseif(TEST_CASE STREQUAL "helpers-msvc-linker")
+        set(_fake_lld "${CMAKE_CURRENT_BINARY_DIR}/lld-link.exe")
+        file(TOUCH "${_fake_lld}")
+        # Stand-in MSVC toolchain variables stay in this function's scope.
+        function(qgc_expect_msvc_linker expected use_lld compiler_id ipo linker)
+            # cmake-lint: disable=C0103
+            set(QGC_USE_LLD_LINK ${use_lld})
+            set(CMAKE_CXX_COMPILER_ID ${compiler_id})
+            set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ${ipo})
+            set(CMAKE_LINKER_LLD "${linker}")
+            unset(CMAKE_LINKER_TYPE)
+            qgc_set_msvc_linker()
+            if(NOT "${CMAKE_LINKER_TYPE}" STREQUAL "${expected}")
+                message(
+                    FATAL_ERROR "QGC_USE_LLD_LINK=${use_lld} ${compiler_id} IPO=${ipo} ${linker}: "
+                                "expected linker type '${expected}', got '${CMAKE_LINKER_TYPE}'"
+                )
+            endif()
+        endfunction()
+        if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.29)
+            set(_lld LLD)
+        else()
+            set(_lld "")
+        endif()
+        qgc_expect_msvc_linker("${_lld}" ON MSVC OFF "${_fake_lld}")
+        qgc_expect_msvc_linker("" OFF MSVC OFF "${_fake_lld}")
+        qgc_expect_msvc_linker("" ON GNU OFF "${_fake_lld}")
+        qgc_expect_msvc_linker("" ON MSVC ON "${_fake_lld}")
+        qgc_expect_msvc_linker("" ON MSVC OFF lld-link)
     elseif(TEST_CASE STREQUAL "helpers-cpm-missing")
         qgc_require_cpm_added(Example)
     elseif(TEST_CASE STREQUAL "helpers-cpm-invalid-name")
@@ -576,6 +634,37 @@ if(TEST_CASE MATCHES "^qml-codegen-")
             OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated"
             QML_NAMES Example.qml Nested/Other.qml
             EXTRA_ARGS --write-output Example.qml --write-output Nested/Other.qml
+            DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/qml_generator.py"
+            BUILD_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/main.cpp"
+        )
+        get_property(
+            _configure_depends
+            DIRECTORY
+            PROPERTY CMAKE_CONFIGURE_DEPENDS
+        )
+        if(NOT "${CMAKE_CURRENT_SOURCE_DIR}/qml_generator.py" IN_LIST _configure_depends
+           OR "${CMAKE_CURRENT_SOURCE_DIR}/main.cpp" IN_LIST _configure_depends
+        )
+            message(FATAL_ERROR "Only DEPENDS should be configure dependencies: ${_configure_depends}")
+        endif()
+    elseif(TEST_CASE STREQUAL "qml-codegen-configure-list-outputs")
+        qgc_add_qml_codegen(
+            generate_qml GENERATE_AT_CONFIGURE LIST_OUTPUTS
+            GENERATOR_MODULE qml_generator
+            OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated"
+            EXTRA_ARGS --write-output Example.qml --write-output Nested/Other.qml
+        )
+        if(NOT generate_qml_OUTPUTS STREQUAL
+           "${CMAKE_CURRENT_BINARY_DIR}/generated/Example.qml;${CMAKE_CURRENT_BINARY_DIR}/generated/Nested/Other.qml"
+        )
+            message(FATAL_ERROR "Unexpected listed QML output list: ${generate_qml_OUTPUTS}")
+        endif()
+    elseif(TEST_CASE STREQUAL "qml-codegen-list-outputs-with-names")
+        qgc_add_qml_codegen(
+            generate_qml LIST_OUTPUTS
+            GENERATOR_MODULE generator.module
+            OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated"
+            QML_NAMES Example.qml
         )
     elseif(TEST_CASE STREQUAL "qml-codegen-configure-missing-output")
         qgc_add_qml_codegen(
@@ -625,6 +714,15 @@ if(TEST_CASE MATCHES "^qml-codegen-")
             OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/generated"
             QML_NAMES Example.qml
         )
+    elseif(TEST_CASE STREQUAL "qml-codegen-build-depends-overlap")
+        qgc_add_qml_codegen(
+            generate_qml
+            GENERATOR_MODULE generator.module
+            OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated"
+            QML_NAMES Example.qml
+            DEPENDS input.json
+            BUILD_DEPENDS input.json
+        )
     else()
         message(FATAL_ERROR "Unknown QML codegen TEST_CASE: ${TEST_CASE}")
     endif()
@@ -657,6 +755,20 @@ if(TEST_CASE MATCHES "^qgc-test-")
         add_qgc_test(MissingTimeout TIMEOUT)
     elseif(TEST_CASE STREQUAL "qgc-test-unsafe-name")
         add_qgc_test("../UnsafeName")
+    elseif(TEST_CASE STREQUAL "qgc-test-shards")
+        add_qgc_test(Sharded SHARDS 3 LABELS Unit)
+        foreach(_shard 1 2 3)
+            get_test_property(Sharded.${_shard} LABELS _labels)
+            if(NOT _labels STREQUAL "Unit")
+                message(FATAL_ERROR "Shard ${_shard} was not registered with its labels: ${_labels}")
+            endif()
+        endforeach()
+        get_test_property(Sharded LABELS _unsharded_labels)
+        if(NOT _unsharded_labels STREQUAL "NOTFOUND")
+            message(FATAL_ERROR "SHARDS also registered the unsharded test")
+        endif()
+    elseif(TEST_CASE STREQUAL "qgc-test-invalid-shards")
+        add_qgc_test(InvalidShards SHARDS 1)
     else()
         message(FATAL_ERROR "Unknown QGC test TEST_CASE: ${TEST_CASE}")
     endif()

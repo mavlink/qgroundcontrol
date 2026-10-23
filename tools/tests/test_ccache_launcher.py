@@ -10,7 +10,9 @@ from pathlib import Path
 
 import pytest
 
-ROOT = Path(__file__).resolve().parents[2]
+from ._helpers import REPO_ROOT
+
+pytestmark = pytest.mark.windows
 
 
 @pytest.mark.skipif(shutil.which("cmake") is None, reason="CMake is required")
@@ -31,7 +33,7 @@ def test_cache_settings_survive_configure_and_allow_build_time_overrides(tmp_pat
     fake.chmod(0o755)
     (source / "CMakeLists.txt").write_text(
         "cmake_minimum_required(VERSION 3.25)\nproject(Launcher NONE)\n"
-        f'include("{(ROOT / "cmake/Helpers.cmake").as_posix()}")\nqgc_config_caching()\n'
+        f'include("{(REPO_ROOT / "cmake/Helpers.cmake").as_posix()}")\nqgc_config_caching()\n'
     )
     subprocess.run(
         ["cmake", "-S", str(source), "-B", str(build), f"-DQGC_CACHE_PROGRAM={fake.as_posix()}"],
@@ -41,7 +43,7 @@ def test_cache_settings_survive_configure_and_allow_build_time_overrides(tmp_pat
     launcher = build / ("ccache-launcher.cmd" if windows else "ccache-launcher")
     env = {key: value for key, value in os.environ.items() if not key.startswith("CCACHE_")}
     for override in (False, True):
-        expected = [config.as_posix(), (source / ".ccache").as_posix(), source.as_posix()]
+        expected = [config.as_posix(), (source / ".cache/ccache").as_posix(), source.as_posix()]
         if override:
             expected = ["custom config", "custom cache", "custom base"]
             env.update(
@@ -88,7 +90,7 @@ def test_windows_cache_launcher_uses_response_files_for_long_compile_commands(tm
         f'set(CMAKE_CXX_COMPILE_OBJECT [[<CMAKE_CXX_COMPILER> "{compiler.as_posix()}" '
         "<DEFINES> <INCLUDES> <FLAGS> -o <OBJECT> -c <SOURCE>]])\n"
         "set(CMAKE_HOST_WIN32 TRUE)\n"
-        f'include("{(ROOT / "cmake/Helpers.cmake").as_posix()}")\n'
+        f'include("{(REPO_ROOT / "cmake/Helpers.cmake").as_posix()}")\n'
         "qgc_config_caching()\n"
         "add_library(probe OBJECT main.cpp)\n"
         "foreach(i RANGE 1 500)\n"

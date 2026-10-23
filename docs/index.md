@@ -9,7 +9,6 @@ hero:
       text: User Guide
       link: /en/qgc-user-guide/index.md
     - theme: brand
-    - theme: brand
       text: Dev Guide
       link: /en/qgc-dev-guide/index.md
 

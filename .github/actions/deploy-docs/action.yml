@@ -15,9 +15,6 @@ inputs:
   deploy-token:
     description: 'GitHub token with push access to target repo'
     required: true
-  source-branch:
-    description: 'Source branch name (used as subdirectory in target repo)'
-    required: true
   commit-message:
     description: 'Commit message prefix'
     required: false
@@ -40,16 +37,16 @@ runs:
         path: _deploy_target
         persist-credentials: true  # zizmor: ignore[artipacked] — deploy step pushes to target repo with this scoped token
 
+    # The source branch names the target repository subdirectory.
     - name: Deploy docs
       shell: bash
       run: |
-        python3 "${GITHUB_WORKSPACE}/.github/scripts/deploy_docs.py" \
+        python3 "${GITHUB_WORKSPACE}/tools/ci/publish/deploy_docs.py" \
           --source-dir ~/_docs_build \
           --target-dir _deploy_target \
-          --branch "${INPUTS_SOURCE_BRANCH}" \
+          --branch "${GITHUB_REF_NAME}" \
           --target-branch "${INPUTS_TARGET_BRANCH}" \
           --commit-message "${INPUTS_COMMIT_MESSAGE}"
       env:
-        INPUTS_SOURCE_BRANCH: ${{ inputs.source-branch }}
         INPUTS_TARGET_BRANCH: ${{ inputs.target-branch }}
         INPUTS_COMMIT_MESSAGE: ${{ inputs.commit-message }}

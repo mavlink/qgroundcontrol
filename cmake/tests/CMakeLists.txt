@@ -25,13 +25,17 @@ qgc_add_cmake_contract_test(CoverageClean coverage-clean)
 qgc_add_cmake_contract_test(HelpersCpmAdded helpers-cpm-added)
 qgc_add_cmake_contract_test(HelpersBigResources helpers-big-resources)
 qgc_add_cmake_contract_test(HelpersCcachePch helpers-ccache-pch)
+qgc_add_cmake_contract_test(HelpersSccachePch helpers-sccache-pch)
+qgc_add_cmake_contract_test(HelpersMsvcLinker helpers-msvc-linker)
 qgc_add_cmake_contract_test(HelpersMoccacheTargets helpers-moccache-targets)
 qgc_add_cmake_contract_test(HelpersRccLauncher helpers-rcc-launcher)
 qgc_add_cmake_contract_test(HelpersWriteIfChanged helpers-write-if-changed)
 qgc_add_cmake_contract_test(PythonVenvStaleCache python-venv-stale-cache)
 qgc_add_cmake_contract_test(QmlCodegenValid qml-codegen-valid)
 qgc_add_cmake_contract_test(QmlCodegenConfigureValid qml-codegen-configure-valid)
+qgc_add_cmake_contract_test(QmlCodegenConfigureListOutputs qml-codegen-configure-list-outputs)
 qgc_add_cmake_contract_test(QGCTestTimeoutZero qgc-test-timeout-zero)
+qgc_add_cmake_contract_test(QGCTestShards qgc-test-shards)
 
 qgc_add_expected_failure_test(
     NAME CMake.CustomDirEscape
@@ -53,16 +57,19 @@ set_tests_properties(
 
 set(_qgc_expected_failure_cases
     "QmlCodegenMissingNames|qml-codegen-missing-names|QML_NAMES is required"
+    "QmlCodegenListOutputsWithNames|qml-codegen-list-outputs-with-names|LIST_OUTPUTS are mutually exclusive"
     "QmlCodegenMissingPython|qml-codegen-missing-python|Python3::Interpreter target is required"
     "QmlCodegenUnknownArgument|qml-codegen-unknown-argument|unknown arguments"
     "QmlCodegenDuplicateOutput|qml-codegen-duplicate-output|contains duplicate outputs"
     "QmlCodegenEscapedOutput|qml-codegen-escaped-output|must stay under OUTPUT_DIR"
     "QmlCodegenOutputOutsideBuild|qml-codegen-output-outside-build|OUTPUT_DIR must stay under CMAKE_BINARY_DIR"
     "QmlCodegenConfigureMissingOutput|qml-codegen-configure-missing-output|did not produce declared output"
+    "QmlCodegenBuildDependsOverlap|qml-codegen-build-depends-overlap|BUILD_DEPENDS entry is also in DEPENDS"
     "QGCTestUnknownArgument|qgc-test-unknown-argument|unknown arguments"
     "QGCTestConflictingSerialization|qgc-test-conflicting-serialization|SERIAL and RESOURCE_LOCK are mutually exclusive"
     "QGCTestMissingTimeout|qgc-test-missing-timeout|missing values for"
     "QGCTestUnsafeName|qgc-test-unsafe-name|test name contains unsafe characters"
+    "QGCTestInvalidShards|qgc-test-invalid-shards|SHARDS must be an integer greater than 1"
     "QGCTestInvalidParallelLevel|qgc-test-invalid-parallel-level|QGC_TEST_PARALLEL_LEVEL must be a positive integer"
     "CoverageInvalidThreshold|coverage-invalid-threshold|must be an integer from 0 through 100"
     "CoverageReleaseRequest|coverage-release-request|Code coverage requires a Debug build"
@@ -97,6 +104,16 @@ add_test(
         "${CMAKE_CURRENT_SOURCE_DIR}/run_multi_config_test.cmake"
 )
 set_tests_properties(CMake.QGCTestMultiConfig PROPERTIES LABELS "CMake;Unit")
+
+add_test(
+    NAME CMake.CheckResultCache
+    COMMAND
+        "${CMAKE_COMMAND}" "-DQGC_MODULE_DIR=${PROJECT_SOURCE_DIR}/cmake" "-DGENERATOR=${CMAKE_GENERATOR}"
+        "-DFIXTURE_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/CheckResultCache"
+        "-DFIXTURE_BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}/CheckResultCache" -P
+        "${CMAKE_CURRENT_SOURCE_DIR}/run_check_result_cache_test.cmake"
+)
+set_tests_properties(CMake.CheckResultCache PROPERTIES LABELS "CMake;Unit")
 
 add_test(
     NAME CMake.MoccacheLauncherStable

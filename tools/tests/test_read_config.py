@@ -4,14 +4,19 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import subprocess
 import sys
 from typing import TYPE_CHECKING
 
-from ._helpers import TOOLS_DIR
+import pytest
+
+from ._helpers import TOOLS_DIR, read_github_file
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+pytestmark = pytest.mark.windows
 
 SCRIPT = TOOLS_DIR / "setup" / "read_config.py"
 
@@ -73,16 +78,32 @@ def test_missing_key_returns_error(tmp_path: Path) -> None:
     assert "not found" in result.stderr
 
 
-def test_legacy_gstreamer_version_alias_returns_default_version(tmp_path: Path) -> None:
-    config = tmp_path / "build-config.json"
-    config.write_text(
-        json.dumps({"gstreamer": {"version": {"default": "1.28.2"}}}), encoding="utf-8"
+def test_docker_layout_finds_the_config_by_the_normal_repository_walk(tmp_path: Path) -> None:
+    dockerfile = (TOOLS_DIR.parent / "deploy/docker/Dockerfile").read_text(encoding="utf-8")
+    assert "COPY .github/build-config.json /tmp/.github/\n" in dockerfile
+    assert (
+        "COPY tools/setup/read_config.py tools/setup/install_qt.py /tmp/tools/setup/\n"
+        in dockerfile
+    )
+    tools = tmp_path / "tools"
+    shutil.copytree(TOOLS_DIR / "common", tools / "common")
+    shutil.copy2(TOOLS_DIR / "_bootstrap.py", tools)
+    (tools / "setup").mkdir()
+    shutil.copy2(SCRIPT, tools / "setup")
+    (tmp_path / ".github").mkdir()
+    _write_config(tmp_path / ".github" / "build-config.json")
+    env = {key: value for key, value in os.environ.items() if key != "CONFIG_FILE"}
+
+    result = subprocess.run(
+        [sys.executable, str(tools / "setup" / "read_config.py"), "--get", "qt.version"],
+        capture_output=True,
+        text=True,
+        env=env,
+        check=False,
     )
 
-    result = _run_read_config("--get", "gstreamer_version", env={"CONFIG_FILE": str(config)})
-
-    assert result.returncode == 0
-    assert result.stdout.strip() == "1.28.2"
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip() == "6.10.2"
 
 
 def test_export_bash_format(tmp_path: Path) -> None:
@@ -108,35 +129,44 @@ def test_export_bash_preserves_bang_character(tmp_path: Path) -> None:
     assert "\\!" not in result.stdout
 
 
-def test_github_output_includes_ios_modules(tmp_path: Path) -> None:
+def test_github_output_includes_ios_modules(tmp_path: Path, gh_output: Path, gh_env: Path) -> None:
     config = tmp_path / "build-config.json"
     _write_config(config)
 
-    github_output = tmp_path / "github_output.txt"
-    github_env = tmp_path / "github_env.txt"
-
-    result = _run_read_config(
-        "--github-output",
-        env={
-            "CONFIG_FILE": str(config),
-            "GITHUB_OUTPUT": str(github_output),
-            "GITHUB_ENV": str(github_env),
-        },
-    )
+    result = _run_read_config("--github-output", env={"CONFIG_FILE": str(config)})
 
     assert result.returncode == 0
+    expected = {
+        "qt_version": "6.10.2",
+        "qt_minimum_version": "6.8.0",
+        "gstreamer_version": "1.28.2",
+        "gstreamer_windows_version": "1.26.6",
+        "gstreamer_minimum_version": "1.24.0",
+        "gstreamer_android_version": "1.28.1",
+        "gstreamer_macos_version": "1.28.2",
+        "gstreamer_ios_version": "1.28.2",
+        # Derived value excludes qtserialport and normalizes spacing.
+        "qt_modules_ios": "qtpositioning qtscxml",
+    }
+    assert expected.items() <= read_github_file(gh_output).items()
+    assert read_github_file(gh_env)["QT_VERSION"] == "6.10.2"
 
-    output_text = github_output.read_text(encoding="utf-8")
-    assert "qt_version=6.10.2" in output_text
-    assert "qt_minimum_version=6.8.0" in output_text
-    assert "gstreamer_version=1.28.2" in output_text
-    assert "gstreamer_windows_version=1.26.6" in output_text
-    assert "gstreamer_minimum_version=1.24.0" in output_text
-    assert "gstreamer_android_version=1.28.1" in output_text
-    assert "gstreamer_macos_version=1.28.2" in output_text
-    assert "gstreamer_ios_version=1.28.2" in output_text
-    # Derived value excludes qtserialport and normalizes spacing.
-    assert "qt_modules_ios=qtpositioning qtscxml" in output_text
 
-    env_text = github_env.read_text(encoding="utf-8")
-    assert "QT_VERSION=6.10.2" in env_text
+def test_github_output_writes_only_requested_keys(
+    tmp_path: Path, gh_output: Path, gh_env: Path
+) -> None:
+    config = tmp_path / "build-config.json"
+    _write_config(config)
+    env = {"CONFIG_FILE": str(config)}
+
+    result = _run_read_config("--github-output", "qt.version", "Android.Platform", env=env)
+
+    assert result.returncode == 0, result.stderr
+    assert read_github_file(gh_output) == {"qt_version": "6.10.2", "android_platform": "35"}
+    assert gh_env.read_text() == ""
+
+    gh_output.write_text("")
+    result = _run_read_config("--github-output", "qt.version", "tools.packer.version", env=env)
+    assert result.returncode == 1
+    assert "Key 'tools.packer.version' not found" in result.stderr
+    assert gh_output.read_text() == ""

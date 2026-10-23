@@ -3,7 +3,8 @@
 # PX4-specific vehicle configuration and setup
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(
+    ${CMAKE_PROJECT_NAME}
     PRIVATE
         ActuatorComponent.cc
         ActuatorComponent.h
@@ -58,9 +59,11 @@ target_sources(${CMAKE_PROJECT_NAME}
 # ----------------------------------------------------------------------------
 # PX4 Airframe Metadata
 # ----------------------------------------------------------------------------
-qt_add_resources(${CMAKE_PROJECT_NAME} autopilot_plugin_px4_resource
+qt_add_resources(
+    ${CMAKE_PROJECT_NAME} autopilot_plugin_px4_resource
     PREFIX "/AutoPilotPlugins/PX4"
-    FILES AirframeFactMetaData.xml
+    FILES
+        AirframeFactMetaData.xml
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -69,35 +72,19 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 # Code-generation: produce QML config pages from VehicleConfig.json definitions
 # ----------------------------------------------------------------------------
 
-set(CONFIG_QML_GENERATOR_DIR "${CMAKE_SOURCE_DIR}/tools/generators/config_qml")
-set(CONFIG_PAGES_DIR         "${CMAKE_CURRENT_SOURCE_DIR}/VehicleConfig")
-set(CONFIG_QML_GEN_DIR       "${CMAKE_CURRENT_BINARY_DIR}/generated")
+set(CONFIG_PAGES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/VehicleConfig")
+set(CONFIG_QML_GEN_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
 
-# Generator source files (changes here trigger regeneration)
-file(GLOB _config_generator_sources CONFIGURE_DEPENDS
-    "${CONFIG_QML_GENERATOR_DIR}/*.py"
-    "${CONFIG_QML_GENERATOR_DIR}/templates/*.j2"
-    "${CMAKE_SOURCE_DIR}/tools/generators/common/*.py"
-    "${CMAKE_SOURCE_DIR}/tools/generators/*.py"
-)
-
-# JSON inputs
+# Each <Name>.VehicleConfig.json produces <Name>Component.qml; the generator lists them
 file(GLOB _config_page_definitions CONFIGURE_DEPENDS "${CONFIG_PAGES_DIR}/*.VehicleConfig.json")
 
-# Generated QML outputs (must match what generate_pages.py produces)
-set(_config_generated_qml_names
-    PowerComponent.qml
-    SafetyComponent.qml
-)
-
-qgc_add_qml_codegen(GenerateConfigQmlPX4
-    GENERATE_AT_CONFIGURE
+qgc_add_qml_codegen(
+    GenerateConfigQmlPX4 GENERATE_AT_CONFIGURE LIST_OUTPUTS
     GENERATOR_MODULE tools.generators.config_qml.generate_pages
-    OUTPUT_DIR       "${CONFIG_QML_GEN_DIR}"
-    QML_NAMES        ${_config_generated_qml_names}
-    EXTRA_ARGS       --pages-dir "${CONFIG_PAGES_DIR}"
-    DEPENDS          ${_config_generator_sources} ${_config_page_definitions}
-    COMMENT          "Generating QML config pages from VehicleConfig.json definitions"
+    OUTPUT_DIR "${CONFIG_QML_GEN_DIR}"
+    EXTRA_ARGS --pages-dir "${CONFIG_PAGES_DIR}"
+    DEPENDS ${_config_page_definitions}
+    COMMENT "Generating QML config pages from VehicleConfig.json definitions"
 )
 set(_config_generated_qml ${GenerateConfigQmlPX4_OUTPUTS})
 
@@ -109,14 +96,14 @@ qt_add_library(AutoPilotPluginsPX4Module STATIC)
 # Ensure generated files exist before the module is built
 add_dependencies(AutoPilotPluginsPX4Module GenerateConfigQmlPX4)
 
-qt_add_qml_module(AutoPilotPluginsPX4Module
+qt_add_qml_module(
+    AutoPilotPluginsPX4Module
     URI QGroundControl.AutoPilotPlugins.PX4
     VERSION 1.0
     RESOURCE_PREFIX /qml
     QML_FILES
         # Generated from VehicleConfig.json definitions (output in build tree)
         ${_config_generated_qml}
-
         # Hand-coded pages and components
         ActuatorComponent.qml
         ActuatorFact.qml
@@ -180,7 +167,8 @@ qt_add_qml_module(AutoPilotPluginsPX4Module
     NO_PLUGIN
 )
 
-qt_add_resources(${CMAKE_PROJECT_NAME} autopilot_plugin_px4_qmlimages
+qt_add_resources(
+    ${CMAKE_PROJECT_NAME} autopilot_plugin_px4_qmlimages
     PREFIX "/qmlimages"
     BASE "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/PX4/Images"
     FILES

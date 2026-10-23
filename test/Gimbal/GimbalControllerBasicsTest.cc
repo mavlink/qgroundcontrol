@@ -103,9 +103,9 @@ void GimbalControllerBasicsTest::_testControlArbitration()
     controller->gimbalOnScreenControl(1.0f, 0.0f, true /* clickAndPoint */, false, false);
 
     QVERIFY(spy.emittedOnce("showAcquireGimbalControlPopup"));
-    // No command may reach the gimbal; proving absence needs the full window
+    // No command may reach the gimbal
     QVERIFY(!QTest::qWaitFor([mock, pitchYawBefore]() { return mock->lastPitchYawCommand().count > pitchYawBefore; },
-                             TestTimeout::shortMs()));
+                             kNoCommandWindowMs));
 
     // Control released by the other GCS: a command with nobody in control acquires control implicitly
     mock->setPrimaryControl(0, 0);
@@ -145,13 +145,13 @@ void GimbalControllerBasicsTest::_testWideGcsSystemIdBlocksControl()
     controller->sendPitchBodyYaw(0.0f, 0.0f, false);
     verifyExpectedLogMessage();
 
-    // No command may reach the gimbal; proving absence needs the full window
+    // No command may reach the gimbal
     QVERIFY(!QTest::qWaitFor(
         [this, mock, configureBefore, pitchYawBefore]() {
             return (_mockLink->receivedMavCommandCount(MAV_CMD_DO_GIMBAL_MANAGER_CONFIGURE) > configureBefore) ||
                    (mock->lastPitchYawCommand().count > pitchYawBefore);
         },
-        TestTimeout::shortMs()));
+        kNoCommandWindowMs));
 }
 
 void GimbalControllerBasicsTest::_testYawLockRoundTrip()
@@ -323,7 +323,7 @@ void GimbalControllerBasicsTest::_testJoystickRateSlots()
     // Both axes stopped: no further resends
     const int afterStop = mock->lastSetAttitudeCommand().count;
     QVERIFY(!QTest::qWaitFor([mock, afterStop]() { return mock->lastSetAttitudeCommand().count > afterStop; },
-                             TestTimeout::shortMs()));
+                             kNoCommandWindowMs));
 }
 
 void GimbalControllerBasicsTest::_testRateCommand()
@@ -362,7 +362,7 @@ void GimbalControllerBasicsTest::_testRateCommand()
                       TestTimeout::mediumMs());
     const int afterStop = mock->lastSetAttitudeCommand().count;
     QVERIFY(!QTest::qWaitFor([mock, afterStop]() { return mock->lastSetAttitudeCommand().count > afterStop; },
-                             TestTimeout::shortMs()));
+                             kNoCommandWindowMs));
 }
 
 UT_REGISTER_TEST(GimbalControllerBasicsTest, TestLabel::Integration, TestLabel::Vehicle)

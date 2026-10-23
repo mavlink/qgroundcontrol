@@ -1,8 +1,9 @@
 #include "RequestMessageCoordinator.h"
 
-#include "MAVLinkLib.h"
-#include "MavCommandQueue.h"
 #include "AppMessages.h"
+#include "MAVLinkLib.h"
+#include "MAVLinkMessageInfo.h"
+#include "MavCommandQueue.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 
@@ -62,9 +63,14 @@ void RequestMessageCoordinator::cancelRequests(void* resultHandlerData)
     }
 }
 
+bool RequestMessageCoordinator::hasPendingRequests(int compId) const
+{
+    return !_infoMap.value(compId).isEmpty() || !_queueMap.value(compId).isEmpty();
+}
+
 bool RequestMessageCoordinator::_duplicate(int compId, int msgId) const
 {
-    const mavlink_message_info_t* info = mavlink_get_message_info_by_id(msgId);
+    const mavlink_message_info_t* info = MAVLinkMessageInfo::byId(msgId);
     const QString msgName = info ? QString(info->name) : QString::number(msgId);
 
     if (_infoMap.contains(compId) && _infoMap[compId].contains(msgId)) {
@@ -87,7 +93,7 @@ bool RequestMessageCoordinator::_duplicate(int compId, int msgId) const
 void RequestMessageCoordinator::_removeInfo(int compId, int msgId)
 {
     if (_infoMap.contains(compId) && _infoMap[compId].contains(msgId)) {
-        const mavlink_message_info_t* info = mavlink_get_message_info_by_id(msgId);
+        const mavlink_message_info_t* info = MAVLinkMessageInfo::byId(msgId);
         const QString msgName = info ? QString(info->name) : QString::number(msgId);
 
         delete _infoMap[compId][msgId];
@@ -109,7 +115,7 @@ void RequestMessageCoordinator::_removeInfo(int compId, int msgId)
 
 void RequestMessageCoordinator::_sendNow(RequestMessageInfo_t* info)
 {
-    const mavlink_message_info_t* msgInfo = mavlink_get_message_info_by_id(info->msgId);
+    const mavlink_message_info_t* msgInfo = MAVLinkMessageInfo::byId(info->msgId);
     const QString msgName = msgInfo ? QString(msgInfo->name) : QString::number(info->msgId);
 
     _infoMap[info->compId][info->msgId] = info;
@@ -159,7 +165,7 @@ void RequestMessageCoordinator::_sendNextFromQueue(int compId)
     }
 
     RequestMessageInfo_t* info = _queueMap[compId].takeFirst();
-    const mavlink_message_info_t* msgInfo = mavlink_get_message_info_by_id(info->msgId);
+    const mavlink_message_info_t* msgInfo = MAVLinkMessageInfo::byId(info->msgId);
     const QString msgName = msgInfo ? QString(msgInfo->name) : QString::number(info->msgId);
     const int remainingQueue = _queueMap[compId].count();
     qCDebug(RequestMessageCoordinatorLog)
@@ -199,7 +205,7 @@ void RequestMessageCoordinator::handleReceivedMessage(const mavlink_message_t& m
         pInfo->messageReceived = true;
         pInfo->message = message;
 
-        const mavlink_message_info_t* info = mavlink_get_message_info_by_id(message.msgid);
+        const mavlink_message_info_t* info = MAVLinkMessageInfo::byId(message.msgid);
         QString msgName = info ? QString(info->name) : QString::number(message.msgid);
         const int activeCount = _infoMap.contains(message.compid) ? _infoMap[message.compid].count() : 0;
         const int queueDepth  = _queueMap.contains(message.compid) ? _queueMap[message.compid].count() : 0;
@@ -230,7 +236,7 @@ void RequestMessageCoordinator::handleReceivedMessage(const mavlink_message_t& m
             // Shorter timeout during unit tests keeps failure-path tests fast.
             const int messageWaitTimeoutMs = QGC::runningUnitTests() ? 500 : 1000;
             if (info->messageWaitElapsedTimer.isValid() && info->messageWaitElapsedTimer.elapsed() > messageWaitTimeoutMs) {
-                const mavlink_message_info_t* msgInfo = mavlink_get_message_info_by_id(info->msgId);
+                const mavlink_message_info_t* msgInfo = MAVLinkMessageInfo::byId(info->msgId);
                 QString msgName = msgInfo ? msgInfo->name : QString::number(info->msgId);
                 const int queueDepth = _queueMap.contains(info->compId) ? _queueMap[info->compId].count() : 0;
                 qCDebug(RequestMessageCoordinatorLog)
@@ -276,7 +282,7 @@ void RequestMessageCoordinator::_cmdResultHandler(void* resultHandlerData_, [[ma
     auto* coordinator = info->coordinator;
 
     info->commandAckReceived = true;
-    const mavlink_message_info_t* msgInfo = mavlink_get_message_info_by_id(info->msgId);
+    const mavlink_message_info_t* msgInfo = MAVLinkMessageInfo::byId(info->msgId);
     const QString msgName = msgInfo ? QString(msgInfo->name) : QString::number(info->msgId);
     qCDebug(RequestMessageCoordinatorLog)
             << "ack for requestMessage compId:msgId"
@@ -321,7 +327,7 @@ void RequestMessageCoordinator::_cmdResultHandler(void* resultHandlerData_, [[ma
 
 void RequestMessageCoordinator::requestMessage(RequestMessageResultHandler resultHandler, void* resultHandlerData, int compId, int messageId, float param1, float param2, float param3, float param4, float param5)
 {
-    const mavlink_message_info_t* msgInfo = mavlink_get_message_info_by_id(messageId);
+    const mavlink_message_info_t* msgInfo = MAVLinkMessageInfo::byId(messageId);
     const QString msgName = msgInfo ? QString(msgInfo->name) : QString::number(messageId);
     const int activeCount = _infoMap.contains(compId) ? _infoMap[compId].count() : 0;
     const int queueDepth  = _queueMap.contains(compId) ? _queueMap[compId].count() : 0;

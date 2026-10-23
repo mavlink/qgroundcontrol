@@ -109,8 +109,15 @@ void APMSensorsCalibrationUITest::_testCompassCalibrationCancel()
     QVERIFY2(QTest::qWaitFor([&] { return !cancelBtn->property("enabled").toBool(); }, 5000),
              "Cancel button still enabled after cancellation");
 
-    // COMPASS_OFS_X must still be 0 (compass not calibrated)
+    // Cancelling restores COMPASS_CAL_FIT and refreshes the calibration params; both must finish before teardown
     ParameterManager *mgr = vehicle->parameterManager();
+    QVERIFY_TRUE_WAIT(!mgr->pendingWrites(), TestTimeout::mediumMs());
+    waitForParamRefreshQuiet(vehicle);
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    // COMPASS_OFS_X must still be 0 (compass not calibrated)
     QVERIFY2(mgr->parameterExists(ParameterManager::defaultComponentId, QStringLiteral("COMPASS_OFS_X")),
              "COMPASS_OFS_X parameter not found");
     Fact *compassOfs = mgr->getParameter(ParameterManager::defaultComponentId, QStringLiteral("COMPASS_OFS_X"));
@@ -170,9 +177,9 @@ void APMSensorsCalibrationUITest::_testCompassCalibrationIgnoresStaleFailedRepor
     QVERIFY2(QTest::qWaitFor([&] { return !mockLink->apmStaleFailedMagCalReportStreamingActive(); }, 5000),
              "Stale failed MAG_CAL_REPORT stream was never cancelled");
 
-    // Calibration must still be running (not instantly completed/failed by a stale report):
-    // give the stale stream time to have been (mis)processed, then check cancel still enabled.
-    QVERIFY2(!QTest::qWaitFor([&] { return !cancelBtn->property("enabled").toBool(); }, 2000),
+    // Calibration must still be running (not instantly completed/failed by a stale report). With the
+    // stream cancelled, any report still in flight is processed within a few event-loop turns.
+    QVERIFY2(!QTest::qWaitFor([&] { return !cancelBtn->property("enabled").toBool(); }, 500),
              "Compass cal terminated prematurely - stale MAG_CAL_REPORT was processed");
 
     // Now let the normal MockLink progress simulation complete the calibration

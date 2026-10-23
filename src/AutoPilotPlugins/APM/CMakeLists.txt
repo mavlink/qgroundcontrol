@@ -3,7 +3,8 @@
 # ArduPilot-specific vehicle configuration and setup
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(
+    ${CMAKE_PROJECT_NAME}
     PRIVATE
         APMAirframeComponent.cc
         APMAirframeComponent.h
@@ -65,38 +66,19 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 # Code-generation: produce QML config pages from VehicleConfig.json definitions
 # ----------------------------------------------------------------------------
 
-set(APM_CONFIG_QML_GENERATOR_DIR "${CMAKE_SOURCE_DIR}/tools/generators/config_qml")
-set(APM_CONFIG_PAGES_DIR         "${CMAKE_CURRENT_SOURCE_DIR}/VehicleConfig")
-set(APM_CONFIG_QML_GEN_DIR       "${CMAKE_CURRENT_BINARY_DIR}/generated")
+set(APM_CONFIG_PAGES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/VehicleConfig")
+set(APM_CONFIG_QML_GEN_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
 
-# Generator source files (changes here trigger regeneration)
-file(GLOB _apm_config_generator_sources CONFIGURE_DEPENDS
-    "${APM_CONFIG_QML_GENERATOR_DIR}/*.py"
-    "${APM_CONFIG_QML_GENERATOR_DIR}/templates/*.j2"
-    "${CMAKE_SOURCE_DIR}/tools/generators/common/*.py"
-    "${CMAKE_SOURCE_DIR}/tools/generators/*.py"
-)
-
-# JSON inputs
+# Each <Name>.VehicleConfig.json produces <Name>Component.qml; the generator lists them
 file(GLOB _apm_config_page_definitions CONFIGURE_DEPENDS "${APM_CONFIG_PAGES_DIR}/*.VehicleConfig.json")
 
-# Generated QML outputs (must match what generate_pages.py produces)
-set(_apm_config_generated_qml_names
-    APMFailsafesComponent.qml
-    APMLoggingComponent.qml
-    APMPowerComponent.qml
-    APMFlightSafetyComponent.qml
-    APMTuningCopterComponent.qml
-)
-
-qgc_add_qml_codegen(GenerateConfigQmlAPM
-    GENERATE_AT_CONFIGURE
+qgc_add_qml_codegen(
+    GenerateConfigQmlAPM GENERATE_AT_CONFIGURE LIST_OUTPUTS
     GENERATOR_MODULE tools.generators.config_qml.generate_pages
-    OUTPUT_DIR       "${APM_CONFIG_QML_GEN_DIR}"
-    QML_NAMES        ${_apm_config_generated_qml_names}
-    EXTRA_ARGS       --pages-dir "${APM_CONFIG_PAGES_DIR}"
-    DEPENDS          ${_apm_config_generator_sources} ${_apm_config_page_definitions}
-    COMMENT          "Generating APM QML config pages from VehicleConfig.json definitions"
+    OUTPUT_DIR "${APM_CONFIG_QML_GEN_DIR}"
+    EXTRA_ARGS --pages-dir "${APM_CONFIG_PAGES_DIR}"
+    DEPENDS ${_apm_config_page_definitions}
+    COMMENT "Generating APM QML config pages from VehicleConfig.json definitions"
 )
 set(_apm_config_generated_qml ${GenerateConfigQmlAPM_OUTPUTS})
 
@@ -108,14 +90,14 @@ qt_add_library(AutoPilotPluginsAPMModule STATIC)
 # Ensure generated files exist before the module is built
 add_dependencies(AutoPilotPluginsAPMModule GenerateConfigQmlAPM)
 
-qt_add_qml_module(AutoPilotPluginsAPMModule
+qt_add_qml_module(
+    AutoPilotPluginsAPMModule
     URI QGroundControl.AutoPilotPlugins.APM
     VERSION 1.0
     RESOURCE_PREFIX /qml
     QML_FILES
         # Generated from VehicleConfig.json definitions (output in build tree)
         ${_apm_config_generated_qml}
-
         # Hand-coded pages and components
         APMAirframeComponent.qml
         APMAirframeComponentSummary.qml
@@ -168,12 +150,15 @@ qt_add_qml_module(AutoPilotPluginsAPMModule
 # ----------------------------------------------------------------------------
 # APM Component Metadata
 # ----------------------------------------------------------------------------
-qt_add_resources(${CMAKE_PROJECT_NAME} autopilot_plugin_apm_resource
+qt_add_resources(
+    ${CMAKE_PROJECT_NAME} autopilot_plugin_apm_resource
     PREFIX "/json"
-    FILES APMFollowComponent.FactMetaData.json
+    FILES
+        APMFollowComponent.FactMetaData.json
 )
 
-qt_add_resources(${CMAKE_PROJECT_NAME} autopilot_plugin_apm_images
+qt_add_resources(
+    ${CMAKE_PROJECT_NAME} autopilot_plugin_apm_images
     PREFIX "/res"
     BASE "${CMAKE_SOURCE_DIR}/resources"
     FILES
@@ -182,20 +167,39 @@ qt_add_resources(${CMAKE_PROJECT_NAME} autopilot_plugin_apm_images
 
 # Sub frame images: registered under URL /qmlimages/Frames/<NiceName>.png with
 # on-disk filenames mapped via QT_RESOURCE_ALIAS.
-set_source_files_properties("${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/APM/Images/bluerov-frame.png"
-    PROPERTIES QT_RESOURCE_ALIAS "BlueROV1.png")
-set_source_files_properties("${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/APM/Images/simple3-frame.png"
-    PROPERTIES QT_RESOURCE_ALIAS "SimpleROV-3.png")
-set_source_files_properties("${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/APM/Images/simple4-frame.png"
-    PROPERTIES QT_RESOURCE_ALIAS "SimpleROV-4.png")
-set_source_files_properties("${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/APM/Images/simple5-frame.png"
-    PROPERTIES QT_RESOURCE_ALIAS "SimpleROV-5.png")
-set_source_files_properties("${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/APM/Images/vectored-frame.png"
-    PROPERTIES QT_RESOURCE_ALIAS "Vectored.png")
-set_source_files_properties("${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/APM/Images/vectored6dof-frame.png"
-    PROPERTIES QT_RESOURCE_ALIAS "Vectored6DOF.png")
+set_source_files_properties(
+    "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/APM/Images/bluerov-frame.png"
+    PROPERTIES
+        QT_RESOURCE_ALIAS "BlueROV1.png"
+)
+set_source_files_properties(
+    "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/APM/Images/simple3-frame.png"
+    PROPERTIES
+        QT_RESOURCE_ALIAS "SimpleROV-3.png"
+)
+set_source_files_properties(
+    "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/APM/Images/simple4-frame.png"
+    PROPERTIES
+        QT_RESOURCE_ALIAS "SimpleROV-4.png"
+)
+set_source_files_properties(
+    "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/APM/Images/simple5-frame.png"
+    PROPERTIES
+        QT_RESOURCE_ALIAS "SimpleROV-5.png"
+)
+set_source_files_properties(
+    "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/APM/Images/vectored-frame.png"
+    PROPERTIES
+        QT_RESOURCE_ALIAS "Vectored.png"
+)
+set_source_files_properties(
+    "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/APM/Images/vectored6dof-frame.png"
+    PROPERTIES
+        QT_RESOURCE_ALIAS "Vectored6DOF.png"
+)
 
-qt_add_resources(${CMAKE_PROJECT_NAME} autopilot_plugin_apm_frames
+qt_add_resources(
+    ${CMAKE_PROJECT_NAME} autopilot_plugin_apm_frames
     PREFIX "/qmlimages/Frames"
     BASE "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/APM/Images"
     FILES
@@ -207,7 +211,8 @@ qt_add_resources(${CMAKE_PROJECT_NAME} autopilot_plugin_apm_frames
         "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/APM/Images/vectored6dof-frame.png"
 )
 
-qt_add_resources(${CMAKE_PROJECT_NAME} autopilot_plugin_apm_qmlimages
+qt_add_resources(
+    ${CMAKE_PROJECT_NAME} autopilot_plugin_apm_qmlimages
     PREFIX "/qmlimages"
     BASE "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/APM/Images"
     FILES

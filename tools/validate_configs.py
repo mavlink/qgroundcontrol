@@ -2,19 +2,23 @@
 
 from __future__ import annotations
 
-import json
+import argparse
 import re
 from datetime import date
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-import yaml
-from common.io import read_toml
+import _bootstrap as _bootstrap
+from common.io import read_json
+from common.paths import REPO_ROOT
 from jsonschema import Draft7Validator
 from packaging.version import Version
+from setup.install_uv import required_version
 
-ROOT = Path(__file__).resolve().parents[1]
+if TYPE_CHECKING:
+    from pathlib import Path
+
 GSTREAMER_BUNDLED_MINIMUM = Version("1.28.0")
+UV_IMAGE_RE = re.compile(r"^COPY --from=ghcr\.io/astral-sh/uv:(\S+) ", re.MULTILINE)
 
 
 def validate_build_config(config: dict[str, Any], schema: dict[str, Any]) -> list[str]:
@@ -68,31 +72,27 @@ def validate_exception_dates(text: str, today: date) -> list[str]:
     ]
 
 
-def validate_tool_pins(root: Path) -> list[str]:
-    hooks = yaml.safe_load((root / ".pre-commit-config.yaml").read_text())["repos"]
-    pins = {
-        package["name"]: package["version"]
-        for package in read_toml(root / "tools/uv.lock")["package"]
-    }
-    repositories = {
-        "https://github.com/pre-commit/mirrors-clang-format": "clang-format",
-        "https://github.com/astral-sh/ruff-pre-commit": "ruff",
-        "https://github.com/RobertCraigie/pyright-python": "pyright",
-    }
-    return [
-        f"{repositories[hook['repo']]} hook and uv.lock versions differ"
-        for hook in hooks
-        if hook["repo"] in repositories
-        and hook["rev"].removeprefix("v") != pins.get(repositories[hook["repo"]])
-    ]
+def validate_uv_pins(root: Path) -> list[str]:
+    """CI, install_uv.py and the Docker image install the tools/pyproject.toml required-version floor."""
+    try:
+        version = required_version(root / "tools/pyproject.toml")
+    except ValueError as error:
+        return [str(error)]
+    dockerfile = (root / "deploy/docker/Dockerfile").read_text(encoding="utf-8")
+    images = UV_IMAGE_RE.findall(dockerfile)
+    if images != [version]:
+        return [f"deploy/docker/Dockerfile must copy uv {version}, not {images}"]
+    return []
 
 
-def main() -> int:
-    config = json.loads((ROOT / ".github/build-config.json").read_text())
-    schema = json.loads((ROOT / ".github/build-config.schema.json").read_text())
+def main(argv: list[str] | None = None) -> int:
+    argparse.ArgumentParser(description=__doc__).parse_args(argv)
+    config = read_json(REPO_ROOT / ".github/build-config.json")
+    schema = read_json(REPO_ROOT / ".github/build-config.schema.json")
     errors = validate_build_config(config, schema)
-    errors.extend(validate_tool_pins(ROOT))
-    errors.extend(validate_exception_dates((ROOT / ".lychee.toml").read_text(), date.today()))
+    errors.extend(validate_uv_pins(REPO_ROOT))
+    lychee = (REPO_ROOT / "tools/configs/lychee.toml").read_text(encoding="utf-8")
+    errors.extend(validate_exception_dates(lychee, date.today()))
     for error in errors:
         print(error)
     if not errors:

@@ -17,9 +17,9 @@ Detects always-wrong patterns in C++ files for both QT_TRANSLATE_NOOP and QT_TR_
    Fix: .arg(QCoreApplication::translate("ctx", "str"))
 
 Usage:
-    python3 qt_translate_noop_check.py [files...]
+    python3 qt_translate_noop_check.py FILE...
     python3 qt_translate_noop_check.py src/          # Analyze directory
-    python3 qt_translate_noop_check.py               # Analyze stdin (for pre-commit)
+    python3 qt_translate_noop_check.py --json src/   # JSON output
 
 Exit codes:
     0 - No issues found
@@ -29,17 +29,15 @@ Exit codes:
 import re
 import sys
 from collections.abc import Generator
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import ClassVar
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from _bootstrap import ensure_tools_dir
 
-ensure_tools_dir(__file__)
+import _bootstrap as _bootstrap
 
-from common.analyzer import AnalysisResult, AnalyzerBase
-from common.file_traversal import find_cpp_files
+from analyzers.base import AnalysisResult, AnalyzerBase, run_line_check_cli
 
 
 @dataclass
@@ -85,6 +83,12 @@ _WRONG_PATTERNS = [
     ),
 ]
 
+GUIDANCE = (
+    "QT_TRANSLATE_NOOP only marks strings for extraction by lupdate.\n"
+    "Translation must be done at the call site with QCoreApplication::translate().\n"
+    "Also check: QString(_member).arg() where _member holds a QT_TRANSLATE_NOOP string.\n"
+)
+
 
 def analyze_file(file_path: Path) -> Generator[Violation, None, None]:
     try:
@@ -117,61 +121,25 @@ class QtTranslateNoopAnalyzer(AnalyzerBase):
 
     def run(self, files: list[Path], fix: bool = False) -> AnalysisResult:
         del fix
-        violations: list[Violation] = []
-        output_chunks: list[str] = []
-        for f in files:
-            for v in analyze_file(f):
-                violations.append(v)
-                output_chunks.append(
-                    f"{v.file}:{v.line}: error: {v.message}\n"
-                    f"  code: {v.code}\n  fix:  {v.suggestion}\n\n"
-                )
+        violations = [v for f in files for v in analyze_file(f)]
+        output = "".join(
+            f"{v.file}:{v.line}: error: {v.message}\n  code: {v.code}\n  fix:  {v.suggestion}\n\n"
+            for v in violations
+        )
         return AnalysisResult(
             tool=self.name,
             passed=not violations,
             issues=len(violations),
-            output="".join(output_chunks),
+            output=(output + GUIDANCE) if violations else "",
             files_checked=len(files),
             files_with_issues=sorted({v.file for v in violations}),
+            findings=[asdict(v) for v in violations],
         )
 
 
-def main() -> int:
-    args = sys.argv[1:]
-
-    if not args:
-        # Pre-commit mode: read file list from stdin
-        files = [Path(f.strip()) for f in sys.stdin if f.strip()]
-    else:
-        files = []
-        for arg in args:
-            path = Path(arg)
-            if path.is_dir():
-                files.extend(find_cpp_files([path]))
-            elif path.is_file():
-                files.append(path)
-
-    violations: list[Violation] = []
-    for f in files:
-        violations.extend(analyze_file(f))
-
-    if not violations:
-        return 0
-
-    for v in violations:
-        print(f"{v.file}:{v.line}: error: {v.message}")
-        print(f"  code: {v.code}")
-        print(f"  fix:  {v.suggestion}")
-        print()
-
-    print(
-        f"{len(violations)} QT_TRANSLATE_NOOP misuse(s) found.\n"
-        "QT_TRANSLATE_NOOP only marks strings for extraction by lupdate.\n"
-        "Translation must be done at the call site with QCoreApplication::translate().\n"
-        "Also check: QString(_member).arg() where _member holds a QT_TRANSLATE_NOOP string."
-    )
-    return 1
+def main(argv: list[str] | None = None) -> int:
+    return run_line_check_cli(QtTranslateNoopAnalyzer, argv)
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    raise SystemExit(main())

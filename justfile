@@ -1,8 +1,11 @@
 # QGroundControl Development Commands
-# Install (requires just >=1.30 for home_directory()):
+# Install (requires just >=1.48 for `set lazy`):
 #   python tools/setup/install_python.py dev   (recommended; pulls rust-just into tools/.venv)
 #   brew install just / cargo install just
 # `apt install just` on Ubuntu ships 1.21 which is too old.
+
+# Evaluate the shell() assignments only in recipes that use them (`info`).
+set lazy
 
 host_os := os()
 python := "uv run --frozen --project tools --group scripts python"
@@ -33,10 +36,6 @@ deps:
     @echo "Installing dependencies (requires sudo)..."
     {{ python }} ./tools/setup/install_dependencies
 
-# Initialize git submodules
-submodules:
-    git submodule update --init --recursive
-
 # Install VS Code workspace defaults without overwriting local settings
 vscode:
     {{ python }} ./tools/setup/setup_vscode.py
@@ -46,8 +45,8 @@ vscode:
 # ─────────────────────────────────────────────────────────────────────────────
 
 # Configure CMake build
-configure: submodules
-    {{ build_tool }} python ./tools/configure.py --preset {{ build_preset }} -B {{ build_dir }} -t {{ build_type }} {{ qt_root_arg }}
+configure:
+    {{ build_tool }} python ./tools/configure.py --preset {{ build_preset }} {{ qt_root_arg }}
 
 # Build the project
 build:
@@ -55,7 +54,7 @@ build:
 
 # Configure and build Release
 release:
-    {{ build_tool }} python ./tools/configure.py --preset default-release -B {{ build_dir }} --release {{ qt_root_arg }}
+    {{ build_tool }} python ./tools/configure.py --preset default-release {{ qt_root_arg }}
     {{ build_tool }} cmake --build --preset default-release --parallel {{ jobs }}
 
 # Clean build directory (forwards to tools/clean.py; pass --cache, --all, --dry-run)
@@ -65,8 +64,8 @@ clean *ARGS:
 # Clean, configure, and build
 rebuild: clean configure build
 
-# Full setup: deps, submodules, configure, build
-setup: deps submodules configure build
+# Full setup: deps, configure, build
+setup: deps configure build
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Quality
@@ -76,17 +75,21 @@ setup: deps submodules configure build
 test labels=env_var_or_default("LABELS", "Unit|Integration") exclude=env_var_or_default("EXCLUDE", "Flaky|Network"):
     {{ build_tool }} ctest --preset default --build-config {{ build_type }} --parallel {{ jobs }} --no-tests=error -L "{{ labels }}" -LE "{{ exclude }}"
 
-# Run pre-commit checks
-lint:
-    uv run --frozen --project tools --group dev pre-commit run --all-files
+# Run pre-commit hooks on all files with prek (pass hook ids and `--hook-stage manual` for manual hooks)
+lint *ARGS:
+    uv run --frozen --project tools --group precommit prek run --all-files {{ ARGS }}
 
-# Check code formatting (no changes)
+# Lint English docs with only the docs hooks (every page; pass --changed for branch changes)
+lint-docs *ARGS:
+    uv run --frozen --project tools --group precommit python ./tools/pre_commit.py --docs {{ ARGS }}
+
+# Check clang-format on lines changed since the default branch (no changes)
 format:
-    {{ python }} ./tools/analyze.py --tool clang-format
+    uv run --frozen --project tools --group lint python ./tools/analyze.py --tool clang-format
 
-# Format code (apply fixes)
+# Apply clang-format to lines changed since the default branch
 format-fix:
-    {{ python }} ./tools/analyze.py --tool clang-format --fix
+    uv run --frozen --project tools --group lint python ./tools/analyze.py --tool clang-format --fix
 
 # Run static analysis
 analyze:
@@ -94,11 +97,11 @@ analyze:
 
 # Generate coverage report
 coverage:
-    {{ python }} ./tools/coverage.py
+    {{ build_tool }} python ./tools/coverage_report.py
 
-# Run all Python tooling tests
-test-python:
-    uv run --frozen --project tools --group test pytest -q tools/tests .github/scripts/tests
+# Run all Python tooling tests in parallel, in random order (pass pytest options, e.g. --randomly-seed=N)
+test-python *ARGS:
+    uv run --frozen --project tools --group test pytest -q -n auto tools/tests {{ ARGS }}
 
 # Run lint + Python + application tests
 check: lint test-python test
@@ -112,6 +115,7 @@ run:
     "{{ app_path }}"
 
 # Build documentation
+[working-directory: 'docs']
 docs:
     npm run docs:build
 
@@ -145,14 +149,17 @@ check-gstreamer:
 translations:
     {{ python }} ./tools/translations/qgc_lupdate.py
 
-# Clean build, caches, and generated files
+# Clean build, caches, generated files, and node_modules
 distclean:
     {{ python }} ./tools/clean.py --all
-    {{ python }} -c "import shutil; shutil.rmtree('node_modules', ignore_errors=True)"
 
 # Validate schema and cross-field build settings
 validate-configs:
     uv run --frozen --project tools --group lint python tools/validate_configs.py
+
+# Print draft release notes for a vX.Y.Z tag (an untagged version drafts the commits since the last release)
+release-notes TAG:
+    uv run --frozen --project tools --group release python tools/ci/publish/release_notes.py "{{ TAG }}"
 
 # Lint QML with generated module type information (requires a build)
 lint-qml-build:

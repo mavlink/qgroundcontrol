@@ -5,8 +5,9 @@ import sys
 from pathlib import Path
 
 import pytest
+from generators.config_qml.emit import generate_config_page_qml
 from generators.config_qml.generate_pages import main as generate_config_pages
-from generators.config_qml.model import load_page_def
+from generators.config_qml.model import ControlDef, PageDef, SectionDef, load_page_def
 
 from ._helpers import REPO_ROOT
 
@@ -169,6 +170,76 @@ class TestQmlUnsafeStringRejection:
         assert page.sections[0].title == "ESC's & Motors (12-inch)"
 
 
+class TestParamNameValidation:
+    @pytest.mark.parametrize("bad_name", ['BAD"PARAM', "BAT[1]", "A B", "x\\y"])
+    def test_bad_control_param_rejected(self, tmp_path: Path, bad_name: str):
+        data = _minimal_page()
+        data["sections"][0]["controls"][0]["param"] = bad_name
+        with pytest.raises(ValueError, match="control param"):
+            load_page_def(_make_page_json(tmp_path, data))
+
+    def test_bad_params_entry_rejected(self, tmp_path: Path):
+        data = _minimal_page(params={"_p": 'BAD"PARAM'})
+        with pytest.raises(ValueError, match="param '_p' name"):
+            load_page_def(_make_page_json(tmp_path, data))
+
+    def test_bad_params_object_name_rejected(self, tmp_path: Path):
+        data = _minimal_page(params={"_p": {"name": "BAD PARAM", "required": True}})
+        with pytest.raises(ValueError, match="param '_p' name"):
+            load_page_def(_make_page_json(tmp_path, data))
+
+    @pytest.mark.parametrize("key", ["paramPrefix", "probePostfix", "enableParam"])
+    def test_bad_repeat_param_fragment_rejected(self, tmp_path: Path, key: str):
+        data = _minimal_page()
+        data["sections"][0]["repeat"] = {
+            "paramPrefix": "BATT",
+            "probePostfix": "_MONITOR",
+            "enableParam": "_MONITOR",
+            "disabledParamValue": "0",
+            key: 'X"Y',
+        }
+        with pytest.raises(ValueError, match=f"repeat {key}"):
+            load_page_def(_make_page_json(tmp_path, data))
+
+    def test_bad_linked_param_rejected(self, tmp_path: Path):
+        data = _minimal_page()
+        data["sections"][0]["controls"][0]["linkedParams"] = {'BAD"PARAM': "value"}
+        with pytest.raises(ValueError, match="linkedParams key"):
+            load_page_def(_make_page_json(tmp_path, data))
+
+    def test_noremap_prefix_accepted(self, tmp_path: Path):
+        data = _minimal_page(params={"_alt": {"name": "noremap.RTL_ALT_M", "existsOnly": True}})
+        page = load_page_def(_make_page_json(tmp_path, data))
+        assert 'controller.parameterExists(-1, "noremap.RTL_ALT_M")' in generate_config_page_qml(
+            page
+        )
+
+
+class TestQmlStringEscaping:
+    """Free-text fields that bypass require_qml_safe_string must still emit valid literals."""
+
+    def test_description_quotes_and_backslashes_escaped(self, tmp_path: Path):
+        data = _minimal_page()
+        data["sections"][0]["controls"][0].update(
+            {"control": "factslider", "description": 'Say "hi" to C:\\temp'}
+        )
+        qml = generate_config_page_qml(load_page_def(_make_page_json(tmp_path, data)))
+        assert (
+            'headingDescription: qsTranslate("Test.VehicleConfig.json", "Say \\"hi\\" to C:\\\\temp")'
+            in qml
+        )
+
+    def test_unvalidated_param_is_still_escaped(self):
+        # Defense in depth for definitions built without load_page_def
+        page = PageDef(
+            json_filename="T.json",
+            sections=[SectionDef(title="S", controls=[ControlDef(param='BAD"PARAM')])],
+        )
+        qml = generate_config_page_qml(page)
+        assert 'controller.getParameterFact(-1, "BAD\\"PARAM", false)' in qml
+        assert '"BAD"PARAM"' not in qml
+
+
 class TestRealPageDefinitions:
     """Audit: every VehicleConfig.json in the repo must load under strict validation."""
 
@@ -205,3 +276,23 @@ def test_cli_preserves_unchanged_output_timestamps(tmp_path: Path, monkeypatch) 
 
     assert timestamps
     assert timestamps == {path.name: path.stat().st_mtime_ns for path in output_dir.glob("*.qml")}
+
+
+def test_cli_list_outputs_names_each_page_without_writing(
+    tmp_path: Path, monkeypatch, capsys
+) -> None:
+    pages_dir = tmp_path / "pages"
+    pages_dir.mkdir()
+    for name in ("Safety", "Power"):
+        (pages_dir / f"{name}.VehicleConfig.json").write_text(
+            json.dumps(_minimal_page()), encoding="utf-8"
+        )
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(
+        sys, "argv", ["generate_pages", "--list-outputs", "--pages-dir", str(pages_dir)]
+    )
+
+    generate_config_pages()
+
+    assert capsys.readouterr().out.splitlines() == ["PowerComponent.qml", "SafetyComponent.qml"]
+    assert sorted(path.name for path in tmp_path.iterdir()) == ["pages"]

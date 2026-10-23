@@ -1,0 +1,20 @@
+# serializer version: 1
+# name: test_setup_section_matches_snapshot
+  '''
+  ### Setup
+  
+  | Item | Value |
+  | --- | --- |
+  | Runner | Linux X64 (self-hosted) |
+  | Qt | 6.12.0 linux_gcc_64: QGC installer, restored from cache |
+  | CMake | 4.1.2, Ninja 1.13.1 |
+  | Python groups | scripts, coverage |
+  | Cache backend | RunsOn S3 |
+  | Compiler cache | ccache restored (fallback key) |
+  | moc cache | restored (exact key) |
+  | CPM sources | restored (exact key) |
+  | Build cache saves | after a successful build |
+  
+  
+  '''
+# ---

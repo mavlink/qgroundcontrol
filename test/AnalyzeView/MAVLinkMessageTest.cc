@@ -1,8 +1,9 @@
 #include "MAVLinkMessageTest.h"
+
 #include <QtTest/QSignalSpy>
 
-
 #include "MAVLinkMessage.h"
+#include "MAVLinkMessageInfo.h"
 #include "MAVLinkTestHelpers.h"
 #include "QmlObjectListModel.h"
 
@@ -72,7 +73,7 @@ void MAVLinkMessageTest::_fieldsPopulatedTest()
     QVERIFY(fields != nullptr);
 
     // HEARTBEAT has 6 fields: type, autopilot, base_mode, custom_mode, system_status, mavlink_version
-    const mavlink_message_info_t *info = mavlink_get_message_info(&msg);
+    const mavlink_message_info_t* info = MAVLinkMessageInfo::byId(msg.msgid);
     QVERIFY(info != nullptr);
     QCOMPARE(fields->count(), static_cast<int>(info->num_fields));
 }

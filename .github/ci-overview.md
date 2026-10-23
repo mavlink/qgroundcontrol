@@ -1,44 +1,23 @@
 # `.github/` — CI, Workflows, and Repo Metadata
 
 > See [`AGENTS.md`](../AGENTS.md) for the canonical agent guide (build/test/lint commands, coding
-> conventions). This doc covers CI layout: workflows, composite actions, Python helpers, and
-> build-config.
-
-Platform workflows (`linux.yml`, `macos.yml`, `windows.yml`, `android.yml`, `ios.yml`) share logic
-via composite actions and reusable workflows. Python helpers in `scripts/` are invoked by both.
-
-Set the repository variable `CODECOV_TEST_ANALYTICS=true` to opt into JUnit uploads from Linux
-and custom-build test jobs. Uploads use Codecov OIDC authentication and remain informational;
-JUnit artifacts and existing test reporters remain available with the variable unset.
-
-Docker scans builder-image CycloneDX SBOMs on pushes and manual runs alongside its existing CPM
-reports; pull requests skip SBOM generation and vulnerability scans. Trusted upstream push jobs
-attach provenance and SBOM attestations to the published image
-digest; pull requests cannot run those publishing jobs. Master pushes also submit the Ubuntu
-builder's CPM SPDX snapshot to the dependency graph. CPM metadata is read inside the builder so
-container-local dependency paths resolve to the correct repositories.
-
-Docker's BuildKit cache uses `type=gha,version=2`, scoped by variant and target. On RunsOn,
-`runs-on/action@v2` initializes [Magic Cache](https://runs-on.com/docs/performance/caching/docker/)
-before Buildx to store layers in S3. Only non-PR jobs export caches. Upstream builds, including
-PRs from forks, use RunsOn and Magic Cache. Workflows running in independent forks retain
-GitHub-hosted runners and the ordinary GHA cache backend.
-
-ClusterFuzzLite PR runs use the bundled seed corpus without querying historical GitHub artifacts
-(`NO_CLUSTERFUZZ_DEPLOYMENT=true`). This also disables previous-build crash comparison: reproducible
-crashes fail the PR regardless of whether they predate it. Crash files and SARIF diagnostics are
-uploaded separately. The master-only continuous build still publishes fuzzer binaries.
+> conventions). This doc covers CI layout and conventions. Composite actions are indexed in
+> [`actions/README.md`](actions/README.md) and CI Python helpers in
+> [`tools/ci/README.md`](../tools/ci/README.md).
 
 ## Contents
 
 - [Layout](#layout)
 - [Workflows](#workflows)
-- [Composite Actions](#composite-actions)
-- [Scripts](#scripts)
-- [Managed Runner Images](#managed-runner-images)
+- [Actions and Scripts](#actions-and-scripts)
 - [Build Configuration](#build-configuration)
 - [Dependency Management](#dependency-management)
-- [CI Conventions](#ci-conventions)
+- [Runners](#runners)
+- [Change Detection and Release Gating](#change-detection-and-release-gating)
+- [Caching](#caching)
+- [Builds and Tests](#builds-and-tests)
+- [Publishing and Reporting](#publishing-and-reporting)
+- [Lint, Docs, and Security Checks](#lint-docs-and-security-checks)
 - [Tests](#tests)
 
 ## Layout
@@ -47,79 +26,265 @@ uploaded separately. The master-only continuous build still publishes fuzzer bin
 .github/
 ├── workflows/                 # Platform builds, reusable workflows, and repo automation
 ├── actions/                   # Composite actions and external-action policy (see actions/README.md)
-├── scripts/                   # Python helpers invoked by workflows and actions
-│   ├── templates/             # Jinja2 templates (build_results.md.j2)
-│   └── tests/                 # pytest suite for scripts/ (see #tests)
 ├── runner-images/             # Packer definitions and managed-runner provisioning
-├── runs-on.yml                # Repository-level RunsOn images and runner shapes
+├── runs-on.yml                # Repository-level RunsOn images and runner pools
 ├── build-config.json          # Centralized version numbers and build settings
 ├── build-config.schema.json   # JSON Schema for build-config.json
-├── dependabot.yml             # Dependabot config (GitHub Actions only)
-└── renovate.json              # Renovate config (code, tooling, and dev-environment dependencies)
+├── dependabot.yml             # Dependabot config (workflow actions only)
+├── renovate.json              # Renovate config (code, tooling, and dev-environment dependencies)
+└── zizmor.yml                 # Workflow security-lint policy
 ```
 
 ## Workflows
 
 | Workflow | Purpose |
 | --- | --- |
-| `linux.yml`, `macos.yml`, `windows.yml` | Desktop build + test |
-| `android.yml`, `ios.yml` | Mobile builds |
-| `_detect-changes.yml` | Reusable: skip builds on unrelated PRs |
-| `build-results.yml` | Aggregate PR comment (`workflow_run` trigger) |
-| `build-gstreamer.yml` | GStreamer SDK builds |
-| `build-profile.yml` | CMake build profiling |
-| `custom-build.yml` | Custom build validation |
-| `docker.yml` | Docker image builds |
-| `pre-commit.yml` | Linting and formatting checks |
-| `check-links.yml` | Markdown link validation |
-| `ci-scripts.yml` | Lints workflows, validates runner images, and runs the CI Python script tests (see [Tests](#tests)) |
-| `analysis.yml` | Static analysis |
-| `codeql.yml` | CodeQL security scanning |
-| `pr-checks.yml` | PR validation checks |
-| `release.yml` | Release automation |
-| `docs.yml`, `doxygen.yml` | Documentation deployment |
-| `cache-cleanup.yml`, `cache-cleanup-pr.yml`, `_cache-cleanup.yml` | Cache maintenance (reusable + scheduled + PR-triggered) |
-| `crowdin.yml`, `lupdate.yml` | Translation workflows |
-| `translation-validation.yml` | Changed TS message placeholder validation |
+| `linux.yml`, `macos.yml`, `windows.yml` | Desktop builds, tests, and packages (`linux.yml` also builds the `custom-example` plugin) |
+| `android.yml`, `ios.yml` | Mobile builds, emulator/simulator smoke tests, and store uploads |
+| `docker.yml` | Builder images and containerized Linux/Android builds |
+| `vm-builds.yml` | Builds inside the Multipass and Vagrant developer VMs |
+| `flatpak.yml` | Manual Flatpak build |
+| `_detect-changes.yml` | Reusable: decide whether a platform builds (`should_build`) and plan Android's and Docker's build legs (`matrix`) |
+| `build-results.yml` | PR build-results comment and master baselines (`workflow_run` trigger) |
+| `release.yml` | Draft a GitHub Release with git-cliff notes for a pushed `vX.Y.Z` tag (assets are uploaded by hand) |
+| `analysis.yml` | Code Analysis: clang-tidy and Clazy; manual IWYU, qmllint, and ThreadSanitizer |
+| `codeql.yml` | CodeQL for Actions, Java/Kotlin, and Python |
+| `clusterfuzzlite.yml` | MAVLink parser fuzzing on PRs |
+| `pre-commit.yml` | pre-commit hooks (run by prek) on changed files, including docs prose and translation placeholders |
+| `ci-scripts.yml` | Runs the CI Python tests on Linux and Windows (see [Tests](#tests)); lint and config validation run in `pre-commit.yml` |
+| `check-links.yml` | Markdown link validation (lychee) |
+| `pr-checks.yml` | PR title validation and size/file labels |
 | `dependency-review.yml` | Dependency security review |
 | `scorecard.yml` | OpenSSF Scorecard |
-| `stale.yml` | Nightly stale-issue labeling and closing (feature requests get their own close message) |
-| `flatpak.yml` | Flatpak builds |
-| `mirror-gstreamer.yml` | Mirror upstream GStreamer releases to the QGC S3 bucket |
-| `px4-metadata.yml` | PX4 metadata sync |
-| `runner-images.yml` | Manually build QGC's managed RunsOn AMI |
-| `vm-builds.yml` | VM-based builds |
+| `docs.yml`, `doxygen.yml` | User/developer guide and Doxygen API docs build and deployment (Doxygen runs weekly; pull requests only when its configuration changes) |
+| `crowdin.yml`, `lupdate.yml` | Crowdin sync and weekly source-string extraction |
+| `px4-metadata.yml` | Daily PX4 airframe and parameter metadata update PR |
+| `build-gstreamer.yml`, `mirror-gstreamer.yml` | Build GStreamer SDKs; mirror upstream GStreamer releases to the QGC S3 bucket |
+| `build-profile.yml` | Manual CMake build profiling |
+| `runner-images.yml` | Build, smoke-test, and promote QGC's managed RunsOn AMI (manual and weekly) |
+| `cache-cleanup.yml` | GitHub Actions cache cleanup (scheduled, on PR close, and manual) |
+| `stale.yml` | Stale-issue labeling and closing |
 | `welcome.yml` | New contributor welcome |
+| `copilot-setup-steps.yml` | Copilot cloud agent environment: Qt, system and Python dependencies, restored caches, and `just configure` (Copilot uses it only from the default branch; run it by hand to check the setup) |
 
-## Managed Runner Images
+## Actions and Scripts
 
-The manual `runner-images.yml` workflow builds a QGC-specific Ubuntu 24 x64 AMI from the current
-RunsOn base image and then boots it for a focused smoke test. It only publishes from the default
-branch. The workflow uses the same dependency and Qt setup helpers as ordinary CI, and the
-`qt-install` action reuses the preinstalled SDK only when its Qt version, architecture, and module
-manifest satisfy the job's request. `ci-scripts.yml` also runs Packer formatting and validation on
-pull requests without requiring AWS credentials.
+- Composite actions: one-line index, external-action reference policy, and behavior notes in
+  [`actions/README.md`](actions/README.md). Platform jobs typically chain `build-setup`,
+  `install-dependencies`, `cmake-configure`, `cmake-build`, tests, packaging, `verify-executable`,
+  and `attest-and-upload`.
+- Python helpers live in the `tools/ci/` package, grouped by concern (`planning`, `cache`, `compile`,
+  `publish`, `reporting`, ...); workflows run them by path. Index, bootstrap rules, and the
+  one-test-per-script rule (tests in `tools/tests/ci/`; workflow and action contracts in
+  `tools/tests/ci/contracts/`) are in [`tools/ci/README.md`](../tools/ci/README.md). Reusable code
+  lives in [`tools/common/`](../tools/common/README.md).
+- Scripts reach the GitHub API through the `gh` CLI via `common.gh_actions` (`gh()` calls without
+  an explicit `timeout` stop after 120 s; artifact downloads set their own) and write step outputs
+  with `common.gh_actions.write_github_output()`. Third-party dependencies come from the `scripts`
+  group in `tools/pyproject.toml`. Job summaries share one layout (see
+  [Job summaries](#job-summaries)).
+- Scripts that can run before `setup-python` use only the standard library and stdlib-only
+  `tools/common`, `tools/qgc_tools`, and shared `tools/ci` library modules such as
+  `reporting/workflow_runs.py`. Jobs without `setup-python` run `run_multipass.py`,
+  `run_vagrant.py`, `read_config.py`, `update_px4_metadata.py`, and `tools/ci`'s
+  `gh_cache_cleanup.py`, `mirror_gstreamer.py`, `analysis_matrix.py`, `plan_platform.py`,
+  `deploy_docs.py`, `collect_build_status.py`, `download_artifacts.py`, `gh_pr_size_label.py`,
+  `report_context.py`, `apt_install_retry.py`, `enable_kvm.py`, `install_multipass.py`, and
+  `runner_image.py`. Steps ahead of a later or conditional `setup-python` also run
+  `release_branch_check.py` (release tag check), `gstreamer/ci_plan.py` (Build GStreamer's
+  plan), `gstreamer_archive.py` and `build_gstreamer.py` (Android/iOS GStreamer builds),
+  `install_dependencies_helper.py` and `tools/setup/install_dependencies`
+  (`install-dependencies`), `build-setup`'s `build_setup.py` planner,
+  `setup-python`'s own `cache_backend.py` probe, plus the
+  `install_python.py` and `install_uv.py` installers.
+  `tools/tests/test_stdlib_only.py` imports each under `python -I -S`, and every module of the
+  packages in `STDLIB_ONLY_PACKAGES`, and fails when a job without `setup-python` runs an unlisted
+  script.
+- CI, Docker, VM, sysroot, and packaging glue uses Python entrypoints; shell remains only for
+  installing Python itself and loading container login profiles.
+- Set `RUNNER_DEBUG=1` (re-run with debug logging) or `QGC_CI_DEBUG=1` to enable the fault handler,
+  line-buffered output, and error annotations in CI Python entrypoints (`tools/_bootstrap.py`).
 
-The managed image and Windows warm-pool routes are opt-in repository settings. Without
-`RUNS_ON_LINUX_BUILDER` or `RUNS_ON_WINDOWS_POOL`, every affected workflow keeps its existing
-standard RunsOn runner. See the [runner image guide](runner-images/README.md) for AWS prerequisites,
-activation, rebuild cadence, and the organization-level warm-pool example.
-The Windows builder uses RunsOn's `windows25-full-x64` image because `windows22-full-x64` ships
-without Visual Studio. The dependency installer skips Visual Studio Build Tools when one existing
-instance already provides every required MSVC component.
+## Build Configuration
+
+- **`build-config.json`** centralizes versions and settings (Qt, Android, Apple/Xcode, CMake
+  minimum and platform workflow list, GStreamer, analysis toolchain pins, and in `tools` the
+  ccache, mold, sccache, Grype, Packer, RunsOn CLI, and ClangBuildAnalyzer releases with their
+  SHA-256 digests and the Bloaty commit that `tools/ci` scripts and `build_profile.py` install),
+  validated against `build-config.schema.json`
+  (`just validate-configs`).
+- **CMake and Ninja**: every CI build job runs the `build.cmake_version` and `build.ninja_version`
+  that `build-setup` installs with `lukka/get-cmake`, after `setup-python` so they precede any CMake
+  in `tools/.venv`; `install-dependencies` installs neither, nor the distro ccache and mold
+  (`CI_PROVIDED_TOOLS` in `install_dependencies_helper.py`; `cache` installs pinned ccache and
+  mold). Local development uses the `build` group's CMake, Ninja and just (`install_dependencies`
+  syncs it on Linux). get-cmake resolves versions from the catalog bundled in its release, so the CMake pin cannot
+  exceed the action's tag.
+- Read values with `tools/setup/read_config.py --get <dotted.path>`,
+  `common.build_config.get_build_config_value()`, or, as step outputs,
+  `read_config.py --github-output <dotted.path>...` (dots become underscores). `build-setup`'s
+  planner outputs the versions its steps need, and `qt-install` reads the Qt version itself, so
+  its callers pass none.
+- **Qt installer**: `qt-install` runs `install_qt.py`, which installs Qt with QGC's installer
+  (`tools/setup/qt_installer`, standard library plus `cmake -E tar`); aqtinstall stays as the
+  fallback through `QGC_QT_INSTALLER`. Every job reaching `qt-install` has CMake: `build-setup`
+  installs it first, `pre-commit.yml` syncs the `dev` group, and `lupdate.yml` uses the
+  GitHub-hosted image's ([tools/README.md](../tools/README.md#qt-installer)).
+
+## Dependency Management
+
+Dependency updates are split between two bots to avoid overlapping PRs:
+
+- **Dependabot** (`.github/dependabot.yml`) owns action references in `.github/workflows`, grouped
+  weekly. Merge with `@dependabot merge`.
+- **Renovate** (`.github/renovate.json`) owns `npm`, Python (pep621/uv), pre-commit, devcontainer,
+  Dockerfile, Node (`docs/.nvmrc`), Android Gradle, and composite-action dependencies, including Docker
+  variant base images, the uv `required-version` floor, and the CI CMake (following get-cmake's
+  tags) and Ninja pins in `build-config.json` via regex managers. Workflow paths are
+  excluded so the bots do not open overlapping action updates. Updates arrive as weekly grouped PRs;
+  major updates wait for approval on the Dependency Dashboard issue. `androidx.core` is not updated
+  because newer releases require a compileSdk newer than Qt supports. A new release of a
+  `build-config.json` `tools` pin also waits for approval there and then opens its own PR, which
+  must add the release's SHA-256 digests before its checksum checks pass.
+
+## Runners
+
+### RunsOn runners
+
+- Upstream jobs (`github.repository_owner == 'mavlink'`, which includes PRs from forks) run on
+  RunsOn pools defined in `.github/runs-on.yml`; workflows in independent forks fall back to
+  GitHub-hosted runners and GitHub's cache. macOS, iOS, Windows arm64, and Android's macOS leg
+  always use GitHub-hosted runners.
+- Every RunsOn job requests one label,
+  `runs-on=<run_id>-<job id>-<run_attempt>-<matrix entry>/runner=<pool>`. GitHub hands a runner to
+  any queued job with an identical label, so shared labels let matrix siblings steal each other's
+  runners. The job id is written literally (`github.job` is empty outside steps) and the matrix
+  entry is `strategy.job-index`, which matrix values cannot read, so every label is built in the
+  job's `runs-on`; `linux.yml` matrix entries supply only the pool, PR Spot families, and
+  GitHub-hosted fallback.
+- Pools list exact instance types in on-demand priority order and stay on-demand for pushes, merge
+  queues, tags, and manual runs. Each Spot-eligible pool has a `<pool>-spot` twin (same shape,
+  `spot: cop`, Intel 8i/7i or Graviton types; AMD and r7i types are left out for their higher
+  us-west-2 interruption rates). Pull requests use the twins once the repository variable
+  `RUNS_ON_SPOT_POOLS` is `true`; until then their labels request the same `spot=cop/family=…`
+  directly. Nested-virtualization pools and Windows warm pools (`pool=` ignores other labels)
+  never use Spot. RunsOn reruns Spot-interrupted jobs on on-demand capacity, up to twice.
+- RunsOn reads `runs-on.yml` only from the default branch, so an unknown `runner=` fails to launch
+  and labels repeat settings that must apply before a `runs-on.yml` change merges (for example the
+  Windows builder's 150 GB volume). The `runs-on-lint` hook runs `roc lint` on the config when it
+  changes, and `test_runs_on_config.py` keeps twins, labels, and pools in sync.
+- `runs-on/action` enables Magic Cache and the cost summary (plus sccache's S3 settings in
+  `linux.yml` Release legs when the repository variable `QGC_COMPILER_CACHE` is `sccache`; see the
+  [sccache pilot](#sccache-pilot)), and skips itself off RunsOn, so
+  jobs call it without a condition; RunsOn's built-in resource
+  charts appear in each job's "Complete runner" step, so paid CloudWatch metrics stay off. The
+  Harden-Runner community tier audits GitHub-hosted runners only, so jobs that can run on RunsOn
+  skip it there.
+- **apt mirror**: `apt_install_retry.py --update` points the Ubuntu archive (`archive.ubuntu.com`,
+  or `ports.ubuntu.com` on arm64) at the region's EC2 mirror
+  (`${RUNS_ON_AWS_REGION}.ec2.archive.ubuntu.com` or `.ec2.ports.ubuntu.com`), because the public
+  archive sometimes served RunsOn jobs at about 200 kB/s or stalled `apt-get update` for minutes.
+  Security entries stay on their original host, as on Canonical's EC2 images, and apt still
+  verifies the signed release files over plain HTTP. A mirror that doesn't resolve is not used; if
+  the mirror's first update fails, the original sources are restored and the normal retries run.
+  Off RunsOn it does nothing; later `apt-get` calls in the job, the Multipass installer, and the
+  Vagrant step reuse it. `--update` without packages only refreshes, and the apt download cache key
+  does not depend on the mirror.
+
+### Managed runner images
+
+- `runner-images.yml` (manual, plus a weekly schedule once `RUNS_ON_AMI_SUBNET_ID` is set) builds
+  a QGC Ubuntu 24 x64 AMI from the RunsOn base image, smoke-tests the candidate by AMI ID, and
+  promotes it only from the default branch. It uses the same dependency and Qt setup helpers as
+  CI, and `qt-install` reuses the preinstalled SDK only when its Qt version, architecture, and
+  module manifest satisfy the job's request. The `packer-validate` hook validates the Packer template
+  on pull requests that change it, without AWS credentials.
+- The managed image (`RUNS_ON_LINUX_BUILDER`) and the organization-level Windows warm pool
+  (`RUNS_ON_WINDOWS_POOL`) are opt-in repository variables; unset, workflows keep the standard
+  RunsOn runners. See [runner-images/README.md](runner-images/README.md) for AWS prerequisites,
+  activation, rebuild cadence, retention, and the warm-pool example.
+- The Windows builder uses `windows25-full-x64`, which ships the MSVC toolchain
+  (`windows22-full-x64` does not). The dependency installer skips Visual Studio Build Tools when an
+  existing instance already provides every required component. The image takes about 75 GB, so the
+  builder's volume is 150 GB.
+
+### Build timelines and runner debugging
+
+- Linux (including its custom-plugin job), Windows, macOS, Android, iOS, and Docker jobs register
+  `Kesin11/actions-timeline` before checkout, adding runner queueing and step timing to the job
+  summary. Each timeline is a snapshot at that job's completion; matrix siblings may still be
+  running, and nested composite steps stay collapsed.
+- To inspect a failed runner, manually dispatch one of those workflows on a branch with
+  `debug_runner` enabled. Each failed matrix job opens its own actor-only `mxschmitt/action-tmate`
+  session after its normal reporting steps; connect with the SSH command in the step log and a key
+  registered to the dispatching account, and run `touch continue` in the checkout to finish.
+  Setup and session share a 15-minute step timeout, bounded by the remaining job timeout.
+- Successful builds, PRs, tag runs, and cancelled jobs never open a session. A checkout failure can
+  prevent the local action from loading; post-job cleanup failures and exhausted job timeouts
+  cannot be inspected. Windows installs MSYS2 and tmate only when a session opens.
+
+## Change Detection and Release Gating
+
+### Change detection
+
+- Platform workflows (Linux, macOS, Windows, iOS, Android, Docker) call `_detect-changes.yml`
+  (job `changes / Detect Changes`): one sparse checkout and one `plan_platform.py --platform <name>`
+  call that runs `detect_changes.detect_builds()` once and outputs `should_build` and `matrix`.
+  For Android (`android_matrix.py`) and Docker (`plan_docker_builds.py`), `matrix` is the JSON
+  include-list of build legs and `should_build` is whether it has any; other platforms get `[]`
+  and define their own matrices.
+- Pull requests build a platform only when its inputs changed (patterns in `detect_changes.py`);
+  pushes, merge queues, and dispatches build everything; tags follow [Release tags](#release-tags).
+- PR files come from `common.git.pr_diff_refs`, like the [lint checks](#lint-docs-and-security-checks):
+  the detection checkouts fetch depth 2 and compare GitHub's merge commit with its first parent, so
+  a PR that is behind its base branch does not build for the base branch's newer changes. Files are
+  listed with `git diff --no-renames`:
+  a moved file counts at both paths, so moving it out of a watched directory such as `src/` still
+  triggers the builds that used it. If the diff can't be computed, builds run anyway.
+- Docker PRs build Ubuntu 24.04 plus Android when affected (PRs touching only `android/` or
+  `deploy/android/` run Docker Android). Toolchain, dependency, and packaging changes, unknown
+  diffs, pushes, and dispatches build every variant. The full-matrix list in
+  `plan_docker_builds.py` names Docker actions, scripts, dependency installers, and build inputs
+  explicitly; unrelated GitHub metadata, analyzer scripts, tool tests, and VM provisioners do not
+  expand the matrix.
+
+### Required checks
+
+- Linux, Windows, MacOS, Android, and iOS end with an `if: always()` gate job named
+  after the workflow (`re-actors/alls-green`) that fails if change detection or any build leg
+  fails or is cancelled; builds may be skipped only by change detection. Branch protection
+  should require these five names, not build jobs: a skipped matrix job reports its unexpanded name
+  (for example `Release ${{ matrix.arch }}`), and Android's legs differ by event.
+  `tools/tests/ci/contracts/test_required_check_gates.py` pins the names and checks that each gate
+  needs every other job in its workflow.
+- These workflows run on every pull request and merge group. Path-filtered workflows (pre-commit,
+  CI Scripts, Code Analysis, Docker, ...) can't be required: when a PR doesn't trigger them, their
+  check never reports and the merge stays blocked.
+- GitHub starts no workflows for pull requests opened with `GITHUB_TOKEN`, so `lupdate.yml` and
+  `px4-metadata.yml` (upstream only) open theirs with the `PX4BUILDBOT_ACCESSTOKEN` secret, which
+  also opens the Crowdin pull requests. Without it they fall back to `GITHUB_TOKEN`, and the
+  required checks of those pull requests never report until someone pushes to the branch or closes
+  and reopens the PR.
 
 ### Release tags
 
 Platform workflows trigger on `push` of tags matching `v[0-9]+.[0-9]+.[0-9]+` only. Release tags
-are cut on `Stable_V*` branches. `_detect-changes.yml` sets `should_build=false` for any tag ref
-that is not an exact `vX.Y.Z` name reachable from an `origin/Stable*` branch (the name check also
-covers `workflow_dispatch` on a tag, which bypasses the `push.tags` glob); every platform and
-Docker build job gates on that output, so nothing is built, signed, or pushed (TestFlight,
-Play Store, Docker Hub). `aws-upload` independently refuses to publish such a tag to the S3
-`latest/` folder or invalidate CloudFront. Both checks run `release_tag_check.py`, which fails the
-job if git cannot answer.
-Version-marker tags on `master` (e.g. `v5.2.0-dev`, consumed by `git describe` for daily-build
-version numbers) do not match the trigger glob and never start a build.
+are cut on `Stable_V*` branches. Change detection (`_detect-changes.yml`, which also plans the
+Android and Docker legs) skips every build for a tag ref that is not an exact `vX.Y.Z` name reachable from an
+`origin/Stable*` branch (the name check also covers `workflow_dispatch` on a tag, which bypasses
+the `push.tags` glob), so nothing is built, signed, or pushed (TestFlight, Play Store, Docker Hub).
+`aws_upload.py publish` independently refuses to publish such a tag to the S3 `latest/` folder or
+invalidate CloudFront. Both use `qgc_tools.release_tag_check.check_release_tag()`, which fails the
+job if git cannot answer. Version-marker tags on `master` (e.g. `v5.2.0-dev`, consumed by
+`git describe` for daily-build version numbers) do not match the trigger glob and never start a
+build. Release tags are created and pushed by hand; the push also runs `release.yml`, which
+stops with an error unless an `origin/Stable*` branch contains the tag
+(`tools/ci/publish/release_branch_check.py`), so no release is drafted for a tag that is never
+built. It then drafts the tag's GitHub Release with git-cliff notes (`release_notes.py`,
+`tools/configs/cliff.toml`; `just release-notes vX.Y.Z` prints them locally) and writes them to the
+job summary. A tag that already has a release, draft or published, keeps it unchanged; a manual
+dispatch with the `tag` input drafts an older tag with the dispatching branch's tooling. Release
+assets are uploaded by hand.
 
 ### TestFlight releases
 
@@ -143,377 +308,543 @@ Configure these repository secrets:
 - `APPSTORE_CERTIFICATES_FILE_BASE64` — base64-encoded Apple Distribution `.p12`
 - `APPSTORE_CERTIFICATES_PASSWORD` — password for the distribution `.p12`
 
-## Composite Actions
+### Secrets on pull requests
 
-| Action | Purpose |
+Same-repository PRs, including Renovate's, receive repository secrets even though they run
+PR-controlled code. Signing and registry secrets therefore resolve empty on `pull_request`
+events: Android PR builds sign with a throwaway debug keystore, macOS PR bundles are never
+signed or notarized, and PR Docker builds do not log in to Docker Hub. Publishing steps
+(AWS uploads, TestFlight, Play Store, docs deploys) are gated to pushes, tags, or dispatch.
+
+## Caching
+
+### Backends and planning
+
+- Two backends: GitHub's cache, and RunsOn's
+  [S3 cache backend](https://runs-on.com/docs/performance/caching/actions/) for upstream RunsOn
+  jobs. They are separate; matching keys and paths cannot bridge them.
+- `setup-python` runs `tools/ci/cache/cache_backend.py` from a JavaScript action, where the runner
+  injects the cache URLs cache actions actually use (shell steps do not see them), and exports
+  `QGC_ACTIONS_CACHE_BACKEND`. S3 requires the RunsOn
+  proxy and its original GitHub endpoint, so a configured bucket alone (or a Windows stack before
+  RunsOn 3.1) keeps GitHub limits. S3 backends also enable uv/Python caching with
+  `UV_PYTHON_PREFERENCE=only-managed`, so uv caches standalone CPython instead of the image's Python.
+- The `cache` action runs `cache_plan.py` once to resolve the save policy, cache scope, every key,
+  and the compiler/moc/CPM environment. Default-branch pushes, schedules, and manual builds share the
+  `shared` scope; PRs use `pr-<number>`. `pull_request_target` never saves under the default `auto`
+  policy.
+- Compiler, moc, CPM, and workspace Qt archives use workspace-relative paths (CPM sources live in
+  `.cache/CPM`; CMake still receives an absolute `CPM_SOURCE_CACHE`), so keys match across hosted
+  and RunsOn checkouts. There are no dedicated cache-warming builds, so a warm default-branch
+  compiler cache is not guaranteed.
+- Post-job saves (CPM, uv/Python) read environment values: nested composite step outputs are gone
+  during post-job cleanup.
+
+### Compiler and moc caches
+
+- `cache` installs compiler tools in one step: `ccache_helper.py install` installs the pinned,
+  SHA-256-verified ccache for the runner's OS and architecture (Linux under `/usr/local` plus mold;
+  macOS and Windows under `RUNNER_TEMP`, added to `PATH`). Docker jobs skip it
+  (`install-tools: false`).
+- `save-build-cache` saves after a successful build or analysis autogen step, before packaging,
+  tests, or scanners can fail; Docker saves when its report confirms successful compilation. One
+  `ccache_helper.py save-plan` step runs the save gate below, packs the compiler/moc snapshot, and
+  names the caches to save; the action uploads the snapshot or, when the upload fails or there is
+  none, saves those caches.
+- Pull requests on GitHub storage restore the default branch's compiler, moc, CPM, and GStreamer SDK
+  caches but save none of their own (`scoped_save_policy` in `cache_plan.py`): those copies cost
+  upload time and, for CPM, evicted shared entries from GitHub's size-limited cache. Merge-queue
+  runs save none on either backend: their temporary ref is deleted after the run, so nothing could
+  restore them. On S3, PRs (forks included) save to their PR scope, but
+  skip a compiler or moc save when the build missed that cache fewer than 20 times
+  (`PR_SAVE_MIN_MISSES` in `cache_plan.py`). Each save uploads a multi-GB archive (a PR build with
+  99.7% hits re-uploaded 4.7 GB: 44 s on Linux, 159 s on Windows). The save gate in
+  `ccache_helper.py save-plan` reads `ccache --print-stats` (Docker: the container's stats in
+  `docker-build-report.json`) and the moc stats log, and saves if it can't read them or fails.
+  Other events always save.
+- On GitHub storage, compiler/moc snapshots are kept as one-day workflow artifacts
+  (`build_cache_artifact.py`; see [`actions/README.md`](actions/README.md#action-notes)). Restores
+  warn and fall back to the dependency cache on API errors, malformed responses, or timeouts (60 s
+  per API attempt, 15 min for the download).
+- GitHub compiler-cache budgets are 3 GB for Windows, coverage, and sanitizer builds, 2 GB for other
+  Debug and macOS builds, and 1 GB for remaining Release builds; S3 backends use the `ccache.conf`
+  ceiling, including PRs. Coverage's 3 GB budget is a trial: compare hits, LRU evictions, and
+  transfer time on warm runs.
+- Keys roll per run with a distinct suffix per matrix leg. moc save keys include the
+  coverage/sanitizer variant while restore prefixes stay shared, so the shared moc cache holds every
+  variant; the launcher's default `MOCCACHE_MAX_SIZE` is 1G (entries are mostly well-compressing
+  include manifests). The job summary's Build section shows compiler and moc cache hit rates; a
+  `miss-cache-evicted` row in its collapsed moc cache events means the limit is too small.
+- Coverage keeps the compiler launcher (ccache stores `.gcno` files alongside objects). macOS passes
+  the installed ccache binary to CMake so Homebrew discovery cannot select another version.
+- Configure-check results (`check_include_file`, `check_symbol_exists`, and similar; about 650
+  `try_compile` runs, mostly libarchive and SDL3) ride in the ccache archive under
+  `qgc-configure-checks/`. `cmake/modules/CheckResultCache.cmake` seeds a fresh configure with the
+  results saved for the same toolchain, flags, and QGC options, salted with the CPM dependency
+  fingerprint and runner image (`QGC_CHECK_RESULT_CACHE_SALT`) plus, at configure time, the
+  installed system packages and include paths (`system_header_digest` in `cmake_helper.py`:
+  SDL3 and libarchive probe headers such as `libudev.h` unconditionally), and saves them after a
+  successful configure; a local fresh configure dropped from 29 s to 7 s with byte-identical
+  generated config headers. sccache pilot legs run the checks.
+
+### sccache pilot
+
+A trial, off by default: setting the repository variable `QGC_COMPILER_CACHE` to `sccache` moves
+the two `linux.yml` Release legs (not coverage, sanitizers, or other workflows) from the ccache
+archive to [sccache](https://github.com/mozilla/sccache) on RunsOn's S3 cache bucket. Deleting the
+variable restores ccache.
+
+- `runs-on/action` (`sccache: s3`) exports the bucket, region, and a per-repository, per-platform
+  prefix (`cache/sccache/<repository id>/<os>-<arch>/v1`) that the stack's cache lifecycle expires.
+  `cache_plan.py` then selects sccache (`QGC_COMPILER_CACHE_TOOL`), skips the ccache archive restore
+  and save, and configures the server (`SCCACHE_BASEDIRS`, `SCCACHE_IDLE_TIMEOUT=0`, an error log in
+  `RUNNER_TEMP`); without the bucket, as on GitHub-hosted runners, it warns and keeps ccache.
+  `ccache_helper.py install` adds the pinned, SHA-256-verified sccache and passes it to CMake as
+  `QGC_CACHE_PROGRAM`. moccache keeps its own archive.
+- Every branch shares the prefix, so pull requests only read it (`SCCACHE_S3_RW_MODE=READ_ONLY`);
+  pushes, merge-queue, and manual runs write it. RunsOn's branch-scoped `remote_cache: sccache`
+  (RunsOn 3.6.0 or later) would let pull requests write their own entries.
+- CMake disables precompiled headers whenever sccache is the launcher: sccache keys a GCC PCH by its
+  preprocessed text, which omits macro definitions, so an edited header can reuse a stale PCH
+  ([mozilla/sccache#2562](https://github.com/mozilla/sccache/issues/2562), reproduced with sccache
+  0.18.0 and GCC 13). Each compiled source that used `pch.h` then costs about 1.8 s more CPU with
+  Release flags, which slows cold builds.
+- With remote storage, sccache preprocesses every source before its lookup (direct mode needs a
+  local cache), about 0.4 s of CPU per hit where a ccache direct hit takes milliseconds. That offsets
+  the archive transfer it removes (a warm `master` build restored 4.4 GB in 22 s and saved it in 50 s).
+
+To evaluate, set the variable and run `linux.yml` twice on the same commit with `workflow_dispatch`
+(the second run measures warm hits). Compare each leg's Build step and job durations, and the job
+summary's sccache statistics (hit rate, cache writes, errors, server error log), with recent ccache
+runs. sccache reaches S3 directly, so the Magic Cache traffic line in RunsOn's "Complete runner"
+step leaves it out.
+
+### CPM and GStreamer SDK caches
+
+- CPM uses immutable dependency-fingerprint keys (computed by `cpm_helper.py` for `cache_plan.py`): CMake files that
+  declare a dependency (`CPMAddPackage`, `CPMDeclarePackage`, `CPMFindPackage`,
+  `FetchContent_Declare`), option defaults, presets, `build-config.json`, and the CPM modules and
+  patches, so ordinary build-script edits reuse the default branch's snapshot. Only Release jobs
+  save; PR and branch Release jobs first try an exact restore of the default-branch snapshot and
+  skip their scoped copy when it exists. Unchanged snapshots are not saved again. Keys follow host
+  and target, so Debug legs (the iOS simulator, Linux's custom plugin) restore their platform's Release
+  snapshot; a `cache-key-suffix` splits them (Android legs), and suffixed legs fall back to the
+  unsuffixed platform's sources. A managed runner image's CPM seed fills an empty cache when its
+  fingerprint matches.
+- GStreamer SDKs have separate immutable caches, excluded from CPM archives. Only Windows, Android,
+  and iOS jobs use them (desktop Linux and macOS use the system GStreamer), keyed on the `gstreamer`
+  section of `build-config.json` (fingerprinted in `cache_plan.py`), `cmake/GStreamer/Download.cmake`,
+  and `cmake/GStreamer/platform/*.cmake`. They hold the extracted SDK trees without the downloaded
+  archives; configure uses a tree stamped with the pinned checksums as is.
+
+### Other caches
+
+- **Qt SDKs**, including iOS and Android target SDKs, are cached by host, target, architecture,
+  version, and a digest of the modules, archive subset, and (except for aqt) installer; PRs from
+  forks only restore.
+- **apt**: Linux `install-dependencies` caches downloaded `.deb`s per distro, architecture, month,
+  and package-list hash (`apt-debs-…`, planned by `install_dependencies_helper.py plan`); a
+  `category` install uses its own `apt-debs-<category>-…` family, so it never restores into or
+  replaces the full set's cache. The cache saves only when the job succeeds.
+- **Gradle**: Android jobs cache Gradle User Home through `setup-gradle`'s open-source `basic`
+  provider, keyed on the Gradle build files, only on the S3 backend; on GitHub's cache it evicted
+  compiler caches (#14474), so GitHub-hosted legs such as Android on macOS don't cache it. Saves
+  follow the `auto` policy, so pull requests save too.
+- **pre-commit** restores prek's hook environments (`prek-v1-*`: `~/.cache/prek` without its download
+  and build caches) keyed on `.pre-commit-config.yaml`, falling back to an earlier configuration's
+  environments. prek installs only the environments of hooks that run, so a push that misses the
+  key first runs `pre_commit.py --prepare-cache`, which prepares every hook (`prek prepare-hooks`,
+  except TruffleHog and the Renovate validator) and then prunes unused environments
+  (`prek cache gc`, which only warns on failure), and saves; PRs only restore. Docs
+  Lint and Copilot Setup Steps restore the same entry read-only.
+- **lychee** restores and saves `.lycheecache` with a three-day entry lifetime; fork PRs only restore.
+- **Docker BuildKit** layers use `type=gha,version=2`, scoped by variant and target. On RunsOn,
+  `runs-on/action` initializes [Magic Cache](https://runs-on.com/docs/performance/caching/docker/)
+  before Buildx to store layers in S3. Only non-PR jobs export layer caches.
+- **Not cached**: Android emulator AVDs (each run creates a fresh AVD), Flatpak, and uv/Python on
+  GitHub-hosted backends.
+
+### Cleanup
+
+`cache-cleanup.yml` (`gh_cache_cleanup.py`, built-in `gh cache` commands) runs every six hours,
+when a PR closes, and on demand; the script reads each trigger's settings from the event:
+
+- Scheduled cleanup removes superseded PR build-cache generations even below the storage threshold,
+  keeping the newest run/attempt per PR and matrix cache family. Above the threshold it evicts least
+  recently used archives first, so newly populated larger caches survive, while protecting the
+  latest default-branch generation of each build and dependency cache family (including the latest
+  `build-baseline-v2` snapshot), the prek hook environments, and the lychee link cache.
+- Closing a PR removes that PR's merge-ref caches, without a job summary.
+- Manual runs default to a dry-run prune; `dry-run: false` deletes, and `mode: wipe` lists (or
+  deletes) every cache of the selected branch, or of all branches.
+- Deletions are scoped to the selected ref; failed deletions and an unreachable size target are
+  reported. Cleanup affects GitHub storage, not the RunsOn S3 backend.
+
+## Builds and Tests
+
+### Compiler settings
+
+- **Unity builds**: Linux coverage and sanitizer builds and the iOS simulator build inherit the
+  hidden `lean-debug` preset (`-g1` plus `QGC_UNITY_BUILD=ON`); the macOS Debug leg passes
+  `-DQGC_UNITY_BUILD=ON`. Unity batches halve compile CPU. Bundled third-party code, the GPS
+  protocol and GStreamer libraries, and files marked `SKIP_UNITY_BUILD_INCLUSION` stay per-file;
+  Release jobs stay per-file. A redefinition or ambiguity error means two `.cc` files in one batch
+  share file-local names or a file-scope `using namespace`: rename them or mark the file, and
+  reproduce with `-DQGC_UNITY_BUILD=ON`. Apple builds batch a different source list than Linux, and
+  adding or removing a source shifts later batches, so such errors can appear in files a PR did not
+  touch (and the shifted batches miss the compiler cache once).
+- **Line-table debug info** (`-g1`) is all gcov and sanitizer stacks need: it cuts objects by ~70%
+  and compile CPU by ~17% against full `-g`, and keeps the iOS simulator objects within the
+  compiler-cache budget.
+- **rcc launcher**: CMake routes `Qt6::rcc` through a launcher that pins the file timestamps rcc
+  embeds, so fresh checkouts keep generated `qrc_*.cpp` objects cacheable (an exported
+  `QT_RCC_SOURCE_DATE_OVERRIDE` or `SOURCE_DATE_EPOCH` still wins), and lowers rcc's default zstd
+  level from 19 to 9 (about 10x faster for ~2% more resource data) when QtCore supports zstd.
+- **CMake entrypoint**: `cmake-configure` requires `qt-cmake` by default. Android is the exception
+  and supplies its target Qt toolchain and prefix to plain CMake. Every caller names a configure
+  preset, which sets the build type and `QGC_BUILD_TESTING`.
+- **Windows Qt architecture**: aqt architecture names are explicit package identifiers;
+  `test_cmake_presets.py` requires every workflow matrix to use the same MSVC generation.
+- **Windows linker**: Debug dispatches of `windows.yml` pass `QGC_USE_LLD_LINK=ON` to link with
+  `lld-link` when the runner has it. Release builds keep `link.exe`: lld-link cannot link the IPO
+  (`/GL`) objects they use.
+
+### Unit and integration tests
+
+- `test-phase` runs the Unit and Integration suites for Linux Debug (coverage and sanitizers) and
+  macOS Debug. Call it only after a successful build. Failures keep JUnit,
+  logs, and each suite's job-summary section (`junit_report.py`: counts, failures with their first
+  report lines, slowest tests; failed tests also become error annotations) and do not suppress the
+  other suite. There are no blanket until-pass retries, and empty test selections fail. See
+  [`actions/README.md`](actions/README.md#action-notes).
+- Unit tests run one CTest process per CPU, including coverage (GCC merges `.gcda` counters under
+  file locks). Integration tests use two processes by default and for coverage, where instrumented
+  tests otherwise hit their timeouts; Linux sanitizers use one per CPU.
+- Set the repository variable `CODECOV_TEST_ANALYTICS=true` to upload JUnit results from the Linux test
+  jobs (including the custom plugin's) to Codecov test analytics (OIDC, informational). JUnit artifacts and job
+  summary reports are produced either way.
+- **Sanitizers**: `Linux-sanitizers` (ASan + UBSan, leak detection on) excludes the `NoSanitizer`
+  label. Runtime options come from CTest: `cmake/QGCTest.cmake` sets `*SAN_OPTIONS`
+  (`halt_on_error=1`) on every test, overriding the shell environment. ThreadSanitizer runs only on
+  manual Code Analysis dispatch.
+- **Coverage**: GCC uses atomic counter updates for worker threads; gcovr tolerates the known GCC
+  negative-counter bug and reports discarded counters. Codecov receives the Cobertura
+  `coverage.xml`; the step summary, threshold check, and build-results comment read gcovr's
+  `coverage-summary.json`. `coverage_report.py` fails before generating them when the tests wrote no
+  `.gcda` counters. `verify_coverage_thresholds.py --build-dir` reads thresholds from
+  `CMakeCache.txt` and compares exact covered/total counts, not gcovr's rounded percentages. Manual
+  Linux coverage dispatches also run the normally excluded `Network|Flaky` tests serially against
+  the same build after the coverage report; they have separate reports and still fail the job.
+- Reproduce either Linux lane with `cmake --workflow --preset Linux-sanitizers` or
+  `--preset Linux-coverage` (`just coverage` uses `Linux-coverage`).
+- **Portable tests**: Windows x64 and the macOS Release leg build and run ten standalone portable
+  utility executables (`QGC_BUILD_PORTABLE_TESTS=ON`, CTest label `Portable`). They share test
+  bodies with the full harness and do not enable test hooks in the packaged application. There is
+  no separate Extended Tests workflow.
+
+### Platform notes
+
+- **macOS**: the Debug leg builds for arm64 only and runs the Unit and Integration suites; only the
+  universal (x86_64h + arm64) Release leg packages and uploads the DMG. The job's `MACOS_SIGN`
+  gates signing and notarization (CMake option, certificate import, and secrets) to non-PR Release
+  legs in `mavlink` repositories or forks that set `MACOS_SIGNING_IDENTITY`; other forks build an
+  unsigned DMG instead of failing in `SignMacBundle.cmake`.
+  `verify_executable.py --type dmg` mounts the image, verifies the bundle, and always detaches it.
+  On a boot-test timeout it prints the captured output, and its `lipo`/`hdiutil`/AppImage helper
+  calls time out after 120 s. The boot test forces QGC's log to stderr (a Windows GUI app otherwise
+  logs to the debugger) and enables the startup categories with `--logging`, so a slow, hung or
+  crashed boot shows where it stopped; a passing boot folds that log into a collapsed group. On
+  Windows a build tree boots with only the GStreamer plugins the package ships (configure records them
+  as `QGC_GST_SHIPPED_PLUGINS`; `verify_executable.py` copies them to `boot-test-gstreamer-plugins/`):
+  the whole SDK's ~270 plugins took ~40 s to scan and hung or crashed QGC on exit.
+- **iOS**: simulator builds run `ios_boot_test.py`, which launches with `--simple-boot-test` and
+  requires QGC's success marker. Cold boots have a 600-second deadline and at most two fresh-device
+  attempts (`--boot-timeout` 1–900 s, `--boot-attempts` 1–2). Boot and installation failures, and a
+  launch that times out before QGC prints anything, are retried on a fresh device; QGC failures are
+  not. Install and launch each have a 600-second deadline (`--timeout`). A shutdown/delete failure
+  after a passing test is reported as a warning and does not fail the job; after a failed attempt it
+  prevents the retry. Each attempt keeps command output, and simulator state is collected before
+  failed-boot cleanup.
+- **Windows**: installer verification lives in `deploy/windows/verify-installer.ps1`.
+- **Android**: legs are Linux (primary), macOS, Windows (not on PRs), and a Linux emulator smoke
+  test. PRs build `arm64-v8a` only; other events build `arm64-v8a` + `armeabi-v7a` on the primary
+  leg. Android jobs install only the `core` apt category. Master pushes also build a signed
+  multi-ABI App Bundle on the primary leg (`--target aab`), uploaded as its own attested GitHub
+  artifact (`QGroundControl-linux-<abis>-aab`) but not to AWS or the Play Store. Tags start a
+  staged Play Store production rollout; master pushes complete a beta release.
+- **Custom plugin** (`linux.yml`'s `custom-plugin` job, behind the Linux gate): the `custom-example`
+  overlay changes the app name and feature set, global compile definitions, so it is its own build.
+  Relevant PRs build only Debug, run the Unit suite (excluding `StockUI`), and boot the build tree;
+  the stock Linux legs run the integration suites. Master pushes, merge-queue runs, and manual
+  dispatches also build Release without test hooks and verify its AppImage. Debug and Release keep
+  separate compiler caches. `custom-example/` changes trigger the Linux workflow.
+- **ClusterFuzzLite**: PR runs use the bundled seed corpus without querying historical artifacts
+  (`NO_CLUSTERFUZZ_DEPLOYMENT=true`), which also disables previous-build crash comparison:
+  reproducible crashes fail the PR whether or not they predate it. Crash files and SARIF
+  diagnostics are uploaded separately. The workflow runs only on pull requests: nothing reads
+  uploaded fuzzer builds, so there is no continuous build.
+
+### Docker
+
+- One multi-stage `deploy/docker/Dockerfile` builds every variant in `deploy/docker/variants.json`.
+  Base images come from the ECR Public mirror of Docker's official images
+  (`public.ecr.aws/docker/library/<image>:<tag>@<digest>`, same digests as Docker Hub), so PR builds,
+  which don't log in to Docker Hub, avoid its anonymous pull limit. Buildx's `moby/buildkit` image
+  and the `docker/dockerfile:1` frontend still come from Docker Hub. No QEMU: every target builds
+  for the x86_64 runner, and aarch64 cross-compiles.
+- Application builds use the shared `cache` action (separate from the BuildKit layer cache) with
+  keys that separate image variants and compiler identities. The action skips host tool
+  installation and resets/reports statistics inside the container. The workspace mount exposes
+  `.cache/ccache`, `.cache/moccache`, and `.cache/CPM` at `/project/source`; only cache budgets and
+  statistics settings are forwarded from the host environment.
+- Each job uploads `docker-build-report.json` (configure/build/package timings, cache statistics,
+  CPM source size) with its Ninja build profile. Checkout keeps full history for package
+  versioning; measured checkouts take 13–22 s, which doesn't warrant a repository mirror.
+- x86_64 Linux variants also produce a native package (`.deb`, `.rpm`, or `.pkg.tar.zst`).
+  `docker_helper.py exec` runs repository scripts in the builder image from the read-only
+  workspace mount, translating host paths to container paths; as root it runs
+  `tools/ci/packaging/validate_native_package.py --install`, which validates, installs,
+  smoke-tests, and always uninstalls the package. `attest_helper.py checksum` requires and
+  verifies CPack's `.deb`/`.rpm` checksum sidecar and writes Arch's.
+- Pushes and manual runs generate CycloneDX SBOMs for CPM dependencies and the builder image and
+  scan them with Grype (SARIF to code scanning); PRs skip SBOMs and scans. CPM metadata is read
+  inside the builder, with the build tree mounted where it was built, so container-local
+  dependency paths resolve. Master pushes submit the Ubuntu builder's CPM SPDX snapshot to the
+  dependency graph.
+- The planner gives every leg the builder image's push target (`resolve_push_target()` in
+  `qgc_tools/docker_variants.py`): upstream pushes publish master and `Stable*` builds to GHCR and
+  release tags to Docker Hub; pull requests, forks, and manual runs push nothing. The build,
+  registry logins, and the `attest-images` job, which attests provenance and SBOM for each
+  published image digest, follow `matrix.push_target`. The `docker` action keeps the pushed
+  image's registry name as its local tag (`image` output).
+
+### VM builds
+
+- `vm-builds.yml` builds QGC inside the Multipass and Vagrant (libvirt) developer VMs on the
+  nested-virtualization `linux-x64-vm-builder` pool; both jobs open `/dev/kvm` with
+  `enable_kvm.py`. It runs when the VM provisioning inputs change (`deploy/multipass`,
+  `deploy/vagrant`, the `tools/setup` installers they call, `.github/build-config.json`, and the
+  presets). `.github/runs-on.yml` triggers pushes only: RunsOn reads it from the default branch, so
+  a pull request run would still use the old pool.
+- **Multipass** runs the client as root: the job has no user session, so only root's `snap run` can
+  place the client in the snap cgroup snap-confine requires. `multipass launch` waits up to 15
+  minutes (`MP_TIMEOUT`) instead of the 5-minute default, which image download and first boot under
+  nested virtualization can exceed. The confined client cannot access the workspace or `/tmp`, so
+  the source archive and the built AppImage pass through a temporary directory under root's home.
+  `install_multipass.py --allow-bridge-forwarding` resets the iptables `FORWARD` policy that Docker
+  sets to `DROP`, which would leave the guest without network (libvirt adds its own rules for
+  Vagrant). Cleanup only deletes instances it created. The job stays `continue-on-error`.
+- **Vagrant** runs `deploy/vagrant/run_vagrant.py` (`install`, then `build`): `vagrant up` stops
+  after 150 minutes (`QGC_VM_UP_TIMEOUT`), the VM is destroyed only after an attempted startup, and a
+  failed destroy fails the job; Vagrant failures fail the workflow. Reproduce locally with
+  `python3 deploy/vagrant/run_vagrant.py install`, then
+  `OUTPUT_DIR=artifacts python3 deploy/vagrant/run_vagrant.py`.
+- Vagrant provisioning uses `deploy/vagrant/provision.py` and shares
+  `deploy/multipass/build_in_vm.py` with Multipass. To rebuild inside a provisioned guest, run
+  `BUILD_DIR="$HOME/shadow_build" python3 /vagrant/deploy/multipass/build_in_vm.py --skip-dependencies`
+  as the `vagrant` user. Qt versions and modules come from `.github/build-config.json`.
+
+### Code Analysis
+
+- `analysis.yml` runs on pull requests and `master` pushes over one path list (the
+  `&analysis-paths` anchor: compiled `src/` files plus `analysis_matrix.FULL_SCAN_INPUTS`); there is
+  no schedule. Manual dispatch runs one job for the selected tool (`clazy`, `clang-tidy`, `iwyu`,
+  `qmllint`, or `tsan`).
+- `analysis_matrix.py` emits each job's `family`, packages, CMake configure arguments, and
+  `tools/analyze.py` arguments, so one Configure step serves every family. For a
+  PR it estimates the compilation units from the diff and a textual reverse-include scan of `src/`
+  and allots one shard per 50 units, up to four; it plans none when nothing compiled changed, and
+  full-scan inputs keep all four. Each shard runs clang-tidy then Clazy over one selection and one
+  `clang-scan-deps` scan, and reports errors independently; only the first shard saves the shared
+  build caches. Upstream jobs use the 16-vCPU `linux-x64-analyzer` pool; forks use GitHub-hosted
+  runners.
+- Each `master` push runs one job over every unit and saves `.cache/analysis-results`; every other
+  run restores it read-only. Keys cover the tool binary and version, arguments and config, compile
+  commands without output flags, and every scanned dependency's contents; tool or compiler errors,
+  timeouts, and crashes are never stored; entries unused for 14 days or beyond 256 MiB are pruned.
+  To force a full recompute, bump the `analysis-results-v1` cache key.
+- clang-tidy comes from the PyPI wheel pinned by version and SHA-256 in `analysis.clang_tidy_*`
+  (`build-config.json`); `tools/ci/runner/analysis_tools.py` reads those pins, installs it, verifies
+  `.clang-tidy`, and puts it ahead of LLVM's own on `PATH`. Clazy and `clang-scan-deps` stay on
+  `llvm_version`; Clazy is built from the pinned source revision by `tools/setup/build_clazy.py` and
+  cached, and LLVM `-dev` packages install only to rebuild it.
+- Compiler analysis uses Ninja, disables PCH and autogen's inherited link dependencies, and builds
+  only `qgc-analysis-headers`; it does not compile or link QGC (`autogen` runs only for IWYU).
+  qmllint and ThreadSanitizer keep full builds; ASan and UBSan run in `linux.yml`.
+- Source-only PRs scan changed compilation units active in the build. Header changes use a fresh
+  `clang-scan-deps` scan to include transitive dependents, falling back to all active project
+  sources if the scanner is unavailable or incomplete; analysis/build configuration changes scan
+  every active unit.
+- Warnings are advisory; error diagnostics, missing tools, invalid databases, timeouts, and
+  compiler-driver failures fail the job (`shell: bash` adds pipefail, so the log's `tee` keeps
+  `analyze.py`'s status; `test_workflow_shells.py` requires it for every `| tee` step). Manual
+  IWYU runs are advisory (`continue-on-error`); their uploaded report is the result.
+  `misc-include-cleaner` is an advisory clang-tidy warning; it leaves
+  Qt, MAVLink, GStreamer/GLib, and Qt-generated includes alone (`IgnoreHeaders` in `.clang-tidy`),
+  because it would suggest their internal headers. Jobs upload `*-timings.json`,
+  `*-progress.jsonl`, `*-diagnostics.json` (each unique diagnostic's file, line, column,
+  severity, and check), and `*-raw.txt` (every unit's full output; identical diagnostic blocks are
+  shown once in the log).
+  Per-check profiling (`profile_checks` dispatch input) is described in
+  [`tools/analyzers/README.md`](../tools/analyzers/README.md).
+
+## Publishing and Reporting
+
+### Attestation and upload
+
+- `attest-and-upload` runs `attest_helper.py prepare` (verifies or writes the artifact's `.sha256`
+  sidecar and writes the CPM dependency SBOM and a `.build.json` manifest with producer identity,
+  checksum, and selected CMake configuration), scans an SPDX SBOM, attests provenance and SBOM with
+  `actions/attest` (separate invocations), and uploads the GitHub artifact.
+- `prepare` also outputs `publish-aws`: true on pushes and tag dispatches in `mavlink` repositories
+  when the caller keeps `upload-aws` and passes credentials (the action passes only whether it
+  has them). The action then configures AWS credentials once and runs one `aws_upload.py publish`:
+  artifacts go to `builds/<ref>/` (the runner's ref), and release tags also go to `latest/` with
+  one CloudFront invalidation. Credentials come only from the environment.
+
+### Build results
+
+- `build-results.yml` runs on `workflow_run` completion of Linux, Windows, MacOS, Android, iOS,
+  and pre-commit (GitHub runs only the default-branch copy; `test_platform_workflow_names.py` keeps the
+  list in sync with `build.platform_workflows`). One `report_context.py` lookup resolves the PR
+  number and base SHA (pull_request builds only) and whether a successful `master` push saves
+  baselines, and the PR head (or `master`) is rechecked before posting or saving.
+- The reporting scripts take the repository, commit, and event from the `workflow_run` payload
+  (`workflow_runs.triggering_run()`), the platform workflows from `build.platform_workflows` in the
+  sparse-checked-out `build-config.json` (failing when it is missing), and the run snapshot that
+  `collect_build_status.py` saves in `$RUNNER_TEMP/workflow-runs-cache.json`; the comment
+  generator reads each input from the path the earlier steps write (`INPUT_PATHS`). Steps pass only
+  their own flags, and `test_build_results_workflow.py` replays them under fake payloads.
+- Every trigger updates one `build-results`-tagged comment (fork PRs included), so finished
+  workflows and their failures show while others still run; the last one to complete renders the
+  final state. `collect_build_status.py` (stdlib only, before Python dependencies install) writes
+  each workflow's state, duration, and jobs, with failed-step log links, from one jobs-API call per
+  run (`--status-out`), including Code Analysis, which is not a trigger. The job then downloads,
+  with `download_artifacts.py` (one directory per artifact plus a manifest naming its workflow),
+  the completed runs' test results, coverage, and artifact sizes, the pre-commit results, and Code
+  Analysis's per-tool `*-timings.json` and `*-diagnostics.json`; runs still in progress are
+  skipped. Missing diagnostic artifacts are allowed (`--allow-missing`) when tests did not run, but
+  platform download failures fail the job. The comment is also the job summary.
+- The comment (`generate_build_results_comment.py`) leads with a verdict (✅ passed, ❌ failed,
+  ⏳ in progress, 🚫 cancelled, ⏭️ nothing to build), the linked head commit, and how many
+  platform workflows are done, pending, or skipped by change detection (every build job skipped).
+  A table gives each workflow's status, duration, test or hook counts, artifact size with its
+  change from the PR base, and run link. A Failures section follows when anything failed: each
+  failed job with links to its failing steps' logs, failed tests with their first report lines
+  (QtTest `FAIL!` blocks, sanitizer reports, else the output tail) from the JUnit XML, and failed
+  pre-commit hooks. Collapsed sections cover per-suite test results, the slowest tests, coverage
+  (lines, functions, branches, with changes in percentage points), artifact sizes (⚠️ above 1%
+  and 1 MiB growth), pre-commit counts, and Code Analysis unique warnings (a header's warning
+  counts once however many units and shards include it) with the most frequent checks and the files
+  with the most warnings. Lists are truncated
+  with "…and N more", and longer reports shrink to stay under GitHub's comment limit. Names from
+  pull requests (tests, jobs, hooks, artifacts) are escaped or shown as code.
+- For `master`, once every platform workflow succeeded, `save-baselines` saves an immutable
+  baseline (sizes and coverage) keyed by commit and run; the job runs only standard-library scripts
+  and installs no Python dependencies. It downloads only the coverage report, and
+  `--require-sizes` fails without writing sizes when no distributable artifact exists, so an empty
+  baseline is never published. PRs prefer the exact base snapshot before the most recent
+  baseline; size deltas accept only the exact PR base, even when coverage restores an older one
+  (the comment names the baseline commit and says when none exists yet). Android artifact names
+  include their ABIs, so single-ABI PR APKs are not compared with multi-ABI release APKs; unmatched
+  variants show `—` for their change and don't count toward totals.
+
+### Job summaries
+
+Scripts build each job-summary section with `common.markdown.summary_section`: an H3 title, an
+`Item | Value` facts table, an optional body, and collapsed `<details>` for long listings, with
+numbers, durations, and sizes from `common.format`. A build job reads top-down:
+
+| Section | Written by |
 | --- | --- |
-| `cmake-configure` | Configure QGroundControl build with common options |
-| `cmake-build` | Build QGroundControl with consistent options (timing, reviewdog, ccache) |
-| `cmake-install` | Run `cmake --install` with a consistent config selector |
-| `run-unit-tests` | Run unit tests via CTest and generate standardized test artifacts |
-| `detect-changes` | Detect source, test, and CI changes for one or more platforms |
-| `attest-and-upload` | Generate SBOM attestation and upload build artifact (GitHub + optional AWS) |
-| `attest-sbom` | Generate SBOM and attest build provenance |
-| `aws-credentials` | Configure AWS credentials via OIDC (preferred) or static keys |
-| `aws-upload` | Upload release artifacts to AWS S3 and invalidate CloudFront cache |
-| `build-config` | Read build toolchain versions from `.github/build-config.json` |
-| `build-prerequisites` | Shared CI prerequisites for platform builds (build config, disk cleanup, CMake, Python) |
-| `build-setup` | Common build environment setup: `build-prerequisites` + the mode-specific Qt installer |
-| `build-action` | Unified build action |
-| `build-results-bootstrap` | Sparse-checkout scripts/actions consumed by `build-results.yml` jobs |
-| `cache` | Caching helpers |
-| `cache-cleanup` | List and optionally delete GitHub Actions caches |
-| `collect-artifact-sizes` | Query artifact sizes from GitHub API for all platform workflow runs |
-| `coverage` | Generate and upload code coverage reports |
-| `deploy-docs` | Deploy built docs to an external GitHub Pages repository |
-| `docker` | Build QGC using Docker |
-| `download-all-artifacts` | Download artifacts from all completed platform workflow runs for the same commit |
-| `debug-runner` | Actor-only SSH debugging for failed manual builds |
-| `free-disk-space` | Wrapper pinning QGC's shared defaults over `endersonmenezes/free-disk-space` |
-| `gate-platform-workflows` | Check that every platform workflow has completed for a given head SHA |
-| `install-dependencies` | Platform dependency installation (GStreamer, etc.) |
-| `android-emulator-test` | APK install + launch smoke test against an x86_64 Android emulator |
-| `playstore` | Upload Android APK to Google Play Store |
-| `qt-install` | Reuse a compatible managed-image Qt SDK or install Qt via aqtinstall with caching |
-| `qt-android`, `qt-ios` | Mobile Qt setup |
-| `setup-python` | Python + uv + dependency installation |
-| `size-analysis` | Binary size tracking (bloaty) |
-| `test-duration-report` | Analyze JUnit test durations and summarize slow tests |
-| `test-report` | Publish and upload test results |
-| `verify-executable` | Post-build executable boot-test verification |
+| Setup | `build-setup` (`setup_summary.py`): runner, Qt version, installer and source, CMake and Ninja, Python groups, cache backend, and each build cache's restore result |
+| Build | `cmake-build` (`cmake_helper.py build`, also after failures): result, duration, toolchain, compiler (ccache or sccache) and moc cache hit rates; slowest steps, time by kind, and moc cache events collapsed |
+| Unit Tests / Integration Tests (*suite*) | `run-unit-tests` (`junit_report.py`): counts, failures with their first lines, slowest tests and failure output collapsed |
+| Coverage, Binary size | `coverage_report.py --step-summary`, `size_analysis.py` |
+| Boot test, Artifact | `verify_executable.py` (result, package, size, duration) and `attest_helper.py prepare` (file, size, SHA-256) |
 
-See [`actions/README.md`](actions/README.md) for the repository's external-action reference policy,
-including how to handle automated warnings about major-version tags.
+Docker builds write one Docker build section (`docker_helper.py summary`); pre-commit,
+Code Analysis (`analyze.py --step-summary`), cache cleanup, GStreamer, release-notes, and Build
+Profile jobs use the same layout. RunsOn's cost table and the build timeline come from their own
+actions after these sections.
 
-## Scripts
+## Lint, Docs, and Security Checks
 
-Python helpers in `.github/scripts/` invoked by workflows and composite actions.
-
-| Script | Purpose |
-| --- | --- |
-| `analysis_matrix.py` | Plan Code Analysis jobs, scaling clang-tidy shards to the PR's estimated compilation units |
-| `android_boot_test.py` | Android emulator boot smoke test |
-| `android_build_retry.py` | Retry an Android build after a known intermittent Qt deployment-settings failure |
-| `android_collect_diagnostics.py` | Collect emulator failure diagnostics (build, adb dumps, GStreamer error grep, AVD logs) |
-| `android_sdk_helper.py` | Retry Android SDK/NDK package installation and configure tool paths |
-| `attest_helper.py` | Gate SBOM signing and resolve artifact paths |
-| `aws_upload.py` | Validate and upload artifacts to AWS S3 |
-| `cache_policy.py` | Resolve the cache save policy for the current workflow event |
-| `ccache_helper.py` | Ccache CI helper: config output, binary install, build summary |
-| `check_baseline_ready.py` | Verify baseline-cache update readiness for a commit SHA |
-| `ci_bootstrap.py` | Bootstrap helper that makes `tools/common` imports work for CI scripts |
-| `cmake_helper.py` | CMake build and configure helpers |
-| `collect_artifact_sizes.py` | Collect artifact sizes for latest successful platform workflow runs |
-| `collect_build_status.py` | Collect latest platform/pre-commit status for build-results comments |
-| `coverage_comment.py` | Build coverage report comments from Cobertura XML |
-| `cpm_helper.py` | CPM CI helper: dependency and GStreamer SDK fingerprints, source cache configuration |
-| `deploy_docs.py` | Deploy built docs to an external GitHub Pages repository |
-| `detect_changes.py` | Detect whether a CI build is needed based on changed files and platform |
-| `docker_helper.py` | Docker build helpers |
-| `download_artifacts.py` | Download build artifacts from completed platform workflow runs |
-| `find_artifact.py` | Find build artifacts by glob pattern in a directory |
-| `generate_build_results_comment.py` | Generate consolidated PR build-results comment |
-| `generate_cpm_sbom.py` | Generate a CycloneDX SBOM from a CMake build directory's CPM package metadata and bundled GStreamer |
-| `gh_cache_cleanup.py` | List and optionally delete GitHub Actions caches via `gh-actions-cache` |
-| `gh_pr_size_label.py` | Read and prune `size/*` labels on a pull request |
-| `gstreamer_archive.py` | Package GStreamer builds and optionally upload to S3 |
-| `install_dependencies_helper.py` | Post-install fixups for CI dependency caching on Linux |
-| `ios_boot_test.py` | Run the QGC smoke test in a disposable iOS simulator |
-| `mirror_gstreamer.py` | Mirror official upstream GStreamer release artifacts to the QGC S3 bucket |
-| `mold_helper.py` | Download and install a pinned, SHA256-verified `mold` linker binary (Linux) |
-| `plan_docker_builds.py` | Generate Docker workflow build matrices from changed files |
-| `precommit_results.py` | Normalize pre-commit outputs into uploaded CI artifacts |
-| `release_builds.py` | Dispatch and freeze exact release workflow run identities |
-| `report_context.py` | Reject stale PR/default-branch reporting contexts |
-| `size_analysis.py` | Analyze binary size changes |
-| `release_tag_check.py` | Report whether the current tag is a `vX.Y.Z` release tag reachable from a `Stable*` branch |
-| `test_duration_report.py` | Generate test-duration reports and regressions |
-| `verify_coverage_thresholds.py` | Verify `coverage.xml` meets line and branch coverage thresholds |
-| `verify_executable.py` | Verify the QGroundControl executable with a boot test |
-| `xml_utils.py` | Safe XML parsing via `defusedxml` |
-
-## Build Configuration
-
-- **`build-config.json`**: Centralized version numbers (Qt, Android SDK/NDK, Apple/Xcode, CMake
-  minimum, GStreamer) and build settings, validated against `build-config.schema.json`.
-- Read values via `common.build_config.get_build_config_value()`, or via the `build-config`
-  composite action from within a workflow step.
-
-## Dependency Management
-
-Dependency updates are split between two bots to avoid overlapping PRs:
-
-- **Dependabot** (`.github/dependabot.yml`) owns action references in `.github/workflows`, grouped
-  weekly. Merge with `@dependabot merge`.
-- **Renovate** (`.github/renovate.json`) owns `npm`, Python (pep621/uv), pre-commit, devcontainer,
-  Dockerfile, Node (`.nvmrc`), Android Gradle, and composite-action dependencies. Workflow paths are
-  excluded so the bots do not open overlapping action updates. Updates arrive as weekly grouped PRs;
-  major updates wait for approval on the Dependency Dashboard issue. `androidx.core` is not updated
-  because newer releases require a compileSdk newer than Qt supports.
-
-## CI Conventions
-
-### Build timelines and runner debugging
-
-Linux, Windows, macOS, Android, iOS, Docker, and Custom Build jobs register
-`Kesin11/actions-timeline` before checkout to include runner queueing and build steps
-in their job summaries. Timeline reporting is informational and adds no build jobs.
-Each timeline is a snapshot at that job's completion; matrix siblings may still be running.
-Nested composite details remain collapsed. RunsOn resource metrics remain available separately.
-
-To inspect a failed runner, manually dispatch one of these workflows on a branch with
-`debug_runner` enabled. Each failed matrix job opens its own `mxschmitt/action-tmate`
-session after its normal reporting steps. Connect using the SSH command in the debug
-step log and an SSH key registered to the GitHub account that dispatched the run.
-Run `touch continue` in the checkout to finish the session. Debug setup and the session
-share a 15-minute step timeout, bounded further by the remaining job timeout.
-Successful builds, PRs, tag runs, and cancelled jobs never open a session.
-A checkout failure can prevent the local debug action from loading; post-job cleanup
-failures and exhausted job timeouts cannot be inspected through this final step.
-Windows installs MSYS2 and tmate only when debugging is requested and needed.
-
-Provenance and SBOM attestations both use `actions/attest`, with separate invocations
-for the two attestation types and the existing artifact paths and image digests.
-
-### Cache lifecycle
-
-Compiler, moc, CPM, and workspace Qt archives use workspace-relative paths so GitHub
-cache versions match across hosted and RunsOn checkout locations. CPM sources live in
-`.cache/CPM`; CMake still receives an absolute `CPM_SOURCE_CACHE`. Existing archives with
-absolute paths will miss once, until successful builds populate the new cache versions.
-Default-branch pushes, schedules, and manual builds all populate the `shared` scope.
-RunsOn's
-[S3 cache backend](https://runs-on.com/docs/performance/caching/actions/) is separate
-from GitHub storage; matching keys and paths alone cannot bridge the two. There are
-no dedicated cache-warming application builds. Fork builds populate their
-own PR caches; a warm default-branch compiler cache is not guaranteed.
-Coverage retains the compiler launcher: ccache stores `.gcno` files alongside objects.
-Linux coverage and sanitizer builds use line-table debug info (`-g1`), all that gcov and
-sanitizer stacks need: it cuts objects by ~70% and compile CPU by ~17% against full `-g`.
-They also build QGC targets as unity builds (`QGC_UNITY_BUILD=ON`), halving compile CPU;
-bundled third-party code, the GPS protocol and GStreamer libraries, and files marked
-`SKIP_UNITY_BUILD_INCLUSION` stay per-file. A redefinition or ambiguity error there means
-two `.cc` files in one batch share file-local names or a file-scope `using namespace`:
-rename them or mark the file, and reproduce with `-DQGC_UNITY_BUILD=ON`. Adding or removing
-a source shifts later batches, so such errors can appear in files a PR did not touch, and
-the shifted batches miss the compiler cache once. Release jobs stay per-file.
-GCC coverage uses atomic counter updates for worker threads. The known GCC negative-counter
-workaround remains enabled and reports any discarded counters.
-CMake routes `Qt6::rcc` through a launcher that pins the file timestamps rcc embeds, so fresh
-checkouts keep generated `qrc_*.cpp` objects cacheable. An exported `QT_RCC_SOURCE_DATE_OVERRIDE`
-or `SOURCE_DATE_EPOCH` still takes precedence. The launcher also lowers rcc's default zstd level
-from 19 to 9 (about 10x faster rcc for ~2% more resource data) when QtCore supports zstd.
-
-Compiler and moc caches save after a successful build or analysis autogen step, before
-packaging, tests, or scanners can fail. Docker also saves after a package failure when
-its report confirms successful compilation. This includes fork PRs; GitHub isolates
-these archives to the PR merge ref. `pull_request_target` remains read-only with the
-default `auto` policy. GitHub compiler-cache budgets are 3 GB for Windows, coverage, and sanitizer
-builds, 2 GB for other Debug/macOS builds, and 1 GB for remaining Release builds.
-Confirmed S3 backends use the configured `ccache.conf` ceiling, including PRs.
-Python setup detects the backend inside a JavaScript action, where GitHub injects
-the cache URLs actually used by cache actions. A configured RunsOn bucket alone
-does not enable the larger compiler limit or uv/Python caching: the runtime must
-also expose the RunsOn proxy and its original GitHub endpoint. Older Windows stacks
-(before RunsOn 3.1) therefore use the GitHub budgets and disable uv/Python caching.
-
-CPM saves and uv/Python cache enablement use environment values that remain available
-during nested composite post-job cleanup; step outputs do not survive that phase.
-Compiler and moc caches use rolling write keys, with a distinct suffix per matrix leg.
-moc save keys include the coverage/sanitizer variant while restore prefixes stay shared.
-CPM uses immutable dependency-fingerprint keys; unchanged snapshots are not saved again.
-PR and branch Release jobs first try an exact restore of the default-branch snapshot with the same
-fingerprint; when it exists they skip the scoped copy, so they only save CPM archives for changed dependencies.
-GStreamer SDKs have separate immutable caches and are excluded from CPM archives.
-Only Windows, Android, and iOS jobs cache them (desktop Linux and macOS use the system
-GStreamer), keyed on the `gstreamer` section of `build-config.json` (`cpm_helper.py
-gstreamer-fingerprint`), `cmake/GStreamer/Download.cmake`, and `cmake/GStreamer/platform/*.cmake`.
-They hold the extracted SDK trees without the downloaded archives: configure uses a tree stamped
-with the pinned checksums as is.
-Custom Debug can fall back to the ordinary platform's CPM sources. Coverage's 3 GB GitHub
-budget is a targeted trial: compare cache hits, LRU evictions, and transfer time on warm runs.
-macOS explicitly passes the installed ccache binary to CMake so Homebrew discovery
-cannot select another version.
-
-Every six hours, cache cleanup removes superseded PR build cache generations, retaining
-the newest run/attempt per PR and matrix cache family even below the storage threshold.
-The PR-close workflow removes that PR's merge-ref caches. Scheduled cleanup also
-evicts least recently used archives first, so newly populated larger caches survive, and
-protects the latest default-branch generation of each build
-and dependency cache family, including the latest published `build-baseline-v2`
-snapshot. PR and other branch caches remain evictable under storage pressure. Deletions
-are scoped to the selected ref; failed deletions and an unreachable size target are
-reported. Cleanup affects GitHub storage, not the RunsOn S3 backend.
-
-Lychee restores and saves `.lycheecache` with a three-day entry lifetime; fork PRs only
-restore. pre-commit restores hook environments keyed on `.pre-commit-config.yaml`, falling back
-to an earlier configuration's environments; pushes prune unused environments and save, while PRs
-only restore. Android emulator tests create a fresh AVD; no AVD snapshots are cached.
-Gradle, Flatpak, iOS target Qt SDK, and GitHub-hosted uv/Python caching remain disabled.
-
-### Build helpers
-
-- Docker, Multipass, sysroot assembly, runner SDK provisioning, and package preparation
-  use Python entrypoints. Shell remains for installing Python itself and loading container
-  login profiles. Docker Qt installation uses `tools/setup/install_qt.py install --from-config`
-  and the shared Python retry policy. Native package smoke-test failures still uninstall
-  the package, and Multipass cleanup only deletes successfully created instances.
-  Vagrant teardown requires an attempted VM startup and surfaces cleanup failures.
-- **CMake entrypoint**: Platform workflows configure through `cmake-configure`, which requires
-  `qt-cmake` by default. Android is the explicit exception and supplies its target Qt toolchain and
-  prefix to plain CMake.
-- **Windows Qt architecture**: aqt architecture names are explicit package identifiers; CI tests
-  require every workflow matrix to use the same MSVC generation when that identifier changes.
-- **Dependencies**: CI Python scripts use `httpx` for GitHub API access and `jinja2` for
-  templating. Deps managed in `tools/pyproject.toml` under `[dependency-groups] scripts`.
-- **Shared helpers**: `gh_actions.py` provides GitHub API pagination (httpx) with `gh` CLI
-  fallback. Import as `from common.gh_actions import ...`.
-- **Bootstrap scripts** (`install_dependencies_helper.py`, `ccache_helper.py`): use stdlib only —
-  they run before dependencies are installed.
-- **Outputs**: use `common.gh_actions.write_github_output()` for `$GITHUB_OUTPUT` writes.
+- Pull request diffs in pre-commit and Code Analysis come from
+  `common.git.pr_diff_refs`: GitHub's merge checkout is compared with its first parent, the base tip
+  it merged into (`pull_request.base.sha` can be older and would add newer base-branch changes), so
+  these checkouts fetch depth 2. pre-commit pushes fetch full history to
+  diff against `before`; a base with no merge base in the fetched history checks everything.
+- `pre-commit.yml` runs on every path and `tools/pre_commit.py --ci --changed` (prek) on the pull
+  request's or push's changed files, and uploads `pre-commit-results.json` and `pre-commit-output.txt` for the
+  build-results comment. The C++ formatting hook checks modified regions against the PR merge base
+  (or `HEAD` locally), following `CODING_STYLE.md`; new files and unchanged files supplied in a full
+  sweep are checked in full. Compiler-aware Clazy and clang-tidy hooks are manual locally; CI runs
+  them in `analysis.yml`. TruffleHog runs only as a local commit hook (`--ci` defaults `SKIP` to `trufflehog`). Qt is installed only when the selection includes QML for qmllint
+  (`pre_commit.py --needs-qt`).
+  `check-renovate` schema-checks `.github/renovate.json` in every run. `pre_commit.py --ci` also
+  runs the manual-stage validators that download pinned tools, each only when its own files change:
+  Renovate's `renovate-config-validator` (`.github/renovate.json` or `.pre-commit-config.yaml`),
+  `packer-validate` (the runner image template) and `runs-on-lint` (`.github/runs-on.yml`); Packer
+  and the RunsOn CLI are the `build-config.json` pins, verified and cached in `.cache/tools/`.
+  `editorconfig-checker` enforces `.editorconfig`; the gersemi, yamlfmt, and qmlformat formatter
+  trials are manual-stage checks ([tools/README.md](../tools/README.md#pre_commitpy)).
+  `prek install` also installs a `commit-msg` hook enforcing Conventional Commits;
+  `default_stages` keeps the other hooks out of that stage.
+- English docs get the Markdown, spelling, and prose hooks (markdownlint, typos, vale) through
+  pre-commit like any changed file; when their configuration (`.vale.ini`, `.markdownlint*`,
+  `.typos.toml`, `.pre-commit-config.yaml`, `tools/pre_commit.py`) changes, the same run also checks
+  every English page with those hooks, so new rules reach unchanged pages. `just lint-docs` runs only
+  those hooks locally (`tools/pre_commit.py --docs`). The Docs workflow checks English
+  internal links without exemptions before building all locales. Its build sets `BRANCH_NAME` to the
+  ref name, which `docs/.vitepress/config.mjs` uses as the site base (`/<branch>/`), matching the
+  directory `deploy-docs` publishes to. VitePress is pinned to a 2.0
+  prerelease because the stable 1.x dependency chain prevents patched Vite updates; its native theme
+  navigation replaces `vp-dynamic-nav`, and `npm run docs:build` runs its Node regression test first.
+- Check Links runs lychee on PRs, `master` pushes, and manual dispatch; exact legacy URL exceptions in
+  `tools/configs/lychee.toml` expire on their recorded review date (checked by `tools/validate_configs.py`).
+- The `qt-translation-placeholders` hook checks new or changed TS messages against the PR merge's
+  first parent or the push baseline (prek passes it as `PRE_COMMIT_FROM_REF`) without installing Qt.
+  Unchanged legacy placeholder defects do not block unrelated imports; malformed XML and newly
+  introduced placeholder mismatches fail. `ci-scripts.yml` runs the validator's tests.
+- CodeQL scans Actions, Java/Kotlin, and Python (including `tools/`, `deploy/`, tests, and CI
+  scripts); C++ is not scanned by CodeQL. It runs on `ubuntu-latest` with a 10-minute timeout: on
+  `ubuntu-22.04` about one PR run in seven failed checkout and then hung in harden-runner's post step
+  until the 30-minute timeout cancelled the check.
 
 ## Tests
 
-`ci-scripts.yml` runs workflow linting, credential-free Packer validation, and pytest jobs on
-changes under `.github/` and `tools/`. The pytest jobs cover both `tools/tests` and
-`.github/scripts/tests`.
+`ci-scripts.yml` runs on changes to `.github/`, `tools/`, `deploy/`, CMake files, and other tooling
+configuration:
 
-Run the CI script tests locally:
+- the full Python suite (`pytest -q -n auto tools/tests`, including the CI script tests in
+  `tools/tests/ci`) on Python 3.10 and 3.12 with the `release` group's git-cliff for the
+  release-notes tests (the 3.12 leg adds the `terrain` group so the terrain pipeline tests run),
+  plus the tests marked `windows` (`pytest -q -n 2 --durations=15 -m windows tools/tests`:
+  platform detection, subprocess, network, file I/O and checksum sidecars, Qt and dependency
+  setup, configure, cache planning and artifacts, attestation and AWS upload tests) on Windows,
+  with two xdist workers as a trial (revert to serial if CI shows it slower). Linux tests run in
+  parallel;
+  all run in random order, with a 60 s per-test timeout; a failing run
+  prints the `--randomly-seed` that reproduces its order (see
+  [`tools/ci/README.md`](../tools/ci/README.md#tests)).
 
-```bash
-uv run --project tools --group scripts --group test pytest -q .github/scripts/tests
-```
+Python and workflow lint run as `pre-commit.yml` hooks: Ruff check and format, Pyright (over the
+whole project whenever a Python file changes, so a break in an unchanged module still fails), the
+`tools/` import-linter layers (`ci` on top, `common` at the base), `tools/validate_configs.py`, and
+actionlint (which reads `.github/actionlint.yml`, listing the repository `vars`) with zizmor.
 
-Run the full set locally with the same locked dependency groups CI installs (also covers `tools/`):
+The test jobs use sparse checkouts. `empty_parameter_set_mark = "fail_at_collect"` in
+`tools/pyproject.toml` makes a test that parametrizes over repository files (such as the
+`*.VehicleConfig.json` pages) fail collection when it finds none, so add such inputs to both
+checkouts and to the workflow's `paths`.
 
-```bash
-uv run --project tools --group scripts --group test pytest -q tools/tests .github/scripts/tests
-```
+Run the same suite locally with `just test-python`, and the lint hooks with `just lint`.
 
-## Validation tiers and build identity
+### Python environment
 
-- `pre-commit.yml` enforces fast hooks on changed files against the event's base SHA.
-  The C++ formatting hook checks modified regions against the PR merge base (or `HEAD` locally),
-  following `CODING_STYLE.md`. New files and unchanged files supplied in a full sweep are checked in full.
-  Compiler-aware Clazy and clang-tidy hooks are manual locally; `analysis.yml` generates
-  prerequisites and runs one Clazy job and one to four clang-tidy shards for relevant PRs.
-  Upstream analysis jobs use the 16-vCPU `linux-x64-analyzer` RunsOn pool; forks use GitHub-hosted runners.
-  Shards divide the selected compilation units after header dependency expansion; they retain
-  every enabled check and report errors independently. Each shard repeats the runner setup, so a
-  plan job (`analysis_matrix.py`) estimates the units from the PR diff and a textual reverse-include
-  scan of `src/`, allotting one shard per 50 units. Changes that can select a full scan keep all four.
-  Only the first shard saves the shared build caches.
-  Manual dispatch runs one job for the selected tool; Code Analysis has no scheduled trigger.
-  Compiler analysis uses Ninja,
-  disables PCH and autogen's inherited link dependencies, and builds protocol headers
-  (`qgc-analysis-headers`) before Qt's global `autogen` target. It does not compile or
-  link QGC. Clazy is built and cached against the same LLVM version as Clang and clang-tidy;
-  `.github/build-config.json` pins LLVM and the verified Clazy source revision. Runtime
-  sanitizers and build-aware QML analysis retain full builds. Source-only PRs scan changed
-  compilation units active in the build. Header changes use a fresh `clang-scan-deps`
-  preprocessing scan to include transitive dependents, falling back to all active project
-  sources if the scanner is unavailable or incomplete. Analysis/build configuration changes
-  scan all active project compilation units. Each tool uploads per-file
-  durations in `*-timings.json` and reports completed files immediately. Identical diagnostic
-  blocks are shown once; `*-raw.txt` retains every translation unit's full output, including
-  notes and compiler errors. Clang-tidy per-check instrumentation is disabled by default because
-  it materially slows analysis. Enable `profile_checks` on a manual dispatch with a narrow path
-  and `analyze_all: false` to upload `clang-tidy-profiles/` and summarize check costs. Per-file
-  timing and progress remain enabled in every run. Warnings are
-  advisory, but error diagnostics, missing tools, invalid databases,
-  timeouts and compiler-driver failures fail analysis.
-- C++ is not scanned by CodeQL. `codeql.yml` handles Actions, Java/Kotlin and Python.
-- `test-phase` shares Linux/custom unit and integration execution. Call it only after
-  a successful build. Failures preserve JUnit, logs and durations and do not suppress
-  the other suite. There are no blanket until-pass retries; empty test selections fail.
-  Linux runs both suites with one CTest process per CPU, including coverage unit tests: GCC
-  merges `.gcda` counters under file locks. Coverage integration tests keep two processes, as
-  do other callers by default, because instrumented integration tests otherwise hit their timeouts.
-- Custom Build uses one shared matrix job. Relevant PRs build only Debug and run the
-  custom-plugin unit/integration suites, excluding stock-UI integration tests. Master
-  pushes, merge-queue runs, and manual dispatches also build Release without test hooks
-  and verify its AppImage. Debug and Release retain separate compiler caches.
-- Windows x64 and the macOS Release leg run ten standalone portable utility executables in their
-  existing platform build jobs (`QGC_BUILD_PORTABLE_TESTS=ON`). They share test bodies with the full
-  Linux harness and do not enable test hooks in the packaged application. The macOS Debug leg
-  runs the Unit and Integration suites; only the Release leg packages and uploads the DMG.
-  There is no separate Extended Tests workflow. Manual Linux coverage jobs reuse their existing
-  binary for `Network|Flaky` tests, after the
-  ordinary coverage report. Those tests have separate reports and still fail the job. iOS simulator builds run `--simple-boot-test` and require
-  QGC's success marker. The simulator Debug build uses line-table debug info (`-g1`) so its
-  objects fit the compiler-cache budget. Simulator cold boots have a 600-second deadline and at most two
-  fresh-device attempts; installation and application failures are never retried.
-  Each attempt retains command output, with simulator state collected before failed-boot cleanup.
-  `ios_boot_test.py` accepts `--boot-timeout` (1-900 seconds) and `--boot-attempts` (1-2).
-  Windows installer verification lives in
-  `deploy/windows/verify-installer.ps1`.
-- Ordinary Docker PRs build Ubuntu 24.04 plus Android when affected. Toolchain,
-  dependency and packaging changes, unknown diffs, pushes and dispatches
-  retain every configured variant. Docker and Linux application builds have no scheduled triggers. The full-matrix trigger names Docker actions,
-  scripts, dependency installers, and build inputs explicitly; unrelated GitHub metadata,
-  analyzer scripts, tool tests, and VM provisioners do not expand the matrix.
-- Reporting uses one workflow-run snapshot and treats every `completed` conclusion
-  as terminal. Before posting or saving, it checks the current PR/master SHA.
-  Baseline sizes, coverage and source run identities share an immutable commit/run
-  cache key. Exact PR base snapshots are preferred before the most recent baseline.
-  Size snapshots record their source SHA: only the exact PR base is accepted for size
-  deltas, even when coverage restores an older cache. Android artifact names include
-  their target ABIs, so single-ABI PR APKs are not compared with multi-ABI release APKs.
-  Unmatched variants show `N/A` and do not contribute to total size changes.
-- Each uploaded package includes `.build.json` producer identity, checksum and selected
-  CMake configuration. Artifact API metadata retains IDs and available digests.
-  Releases dispatch builds at the tag, poll exact run IDs and freeze their identities;
-  artifact downloads reject changed run attempts or missing platform artifacts.
-- `build-action` remains available. Platform workflows continue to compose the smaller
-  setup/configure/build/test/package actions where they need distinct phases.
-
-### Python environment contract
-
-`setup-python` synchronizes frozen dependency groups from `tools/uv.lock` into
-`tools/.venv` and exposes that environment's commands on PATH. Narrower setup calls
-preserve installed groups. CMake uses the same interpreter and MAVLink generation
-uses its preinstalled dependencies, without installing packages during a build.
-
-CI Scripts runs the full Python suite on Python 3.10 and 3.12, with environment,
-subprocess, network, Qt setup, and cache tests on Windows. A separate job checks
-Ruff formatting, Pyright, and the `common` / `qgc_tools` / entrypoint import boundaries.
-Local equivalents are `just test-python` and `just lint` after installing `dev`.
-
-### Configuration and documentation checks
-
-CI Scripts validates build schema relationships and release decisions using locked Node tooling.
-Schema-only edits run validation. CodeQL does not scan C++; the standalone workflow
-scans Actions, Java/Kotlin, and Python, including deployment and tests.
-Runner image candidates are smoke-tested by AMI ID before production promotion, with weekly
-rebuilds and bounded retention; see [runner-images/README.md](runner-images/README.md).
-
-Docs checks English internal links without exemptions before building all locales. Docs Lint
-runs Markdown, spelling, and prose hooks for changed English pages without installing Qt.
-VitePress is pinned to a 2.0 prerelease because the stable 1.x dependency chain prevents
-patched Vite updates. Native theme navigation replaces `vp-dynamic-nav`; its Node regression
-suite runs as part of `npm run docs:build`.
-External checks run weekly as well as on PRs; exact legacy URL exceptions expire on their
-recorded review date. Translation Validation checks new or changed TS messages against the
-PR base or push baseline without installing Qt. Unchanged legacy placeholder defects do not
-block unrelated imports; malformed XML and newly introduced placeholder mismatches fail.
-
-Code Analysis also accepts `qmllint` on manual dispatch. It builds generated modules first,
-then enables missing-import/property/type errors against the SDK and build import directories.
-
-Vagrant provisioning uses `deploy/vagrant/provision.py` and shares
-`deploy/multipass/build_in_vm.py` with Multipass. To rebuild inside a provisioned Vagrant guest,
-run `BUILD_DIR="$HOME/shadow_build" python3 /vagrant/deploy/multipass/build_in_vm.py --skip-dependencies`
-as the `vagrant` user. Qt versions and modules come from `.github/build-config.json`.
-
-Docker application builds use the shared cache action separately from the registry cache for
-builder-image layers. Cache keys separate image variants and compiler identities; compiler contents
-remain checked by ccache. The action skips host compiler-tool installation and resets/reports stats
-inside the container. Backend detection and save permissions follow the same policy as native jobs.
-The workspace mount exposes `.ccache`, `.cache/moccache`, and `.cache/CPM` at `/project/source`;
-only cache budgets and statistics settings are forwarded from the host environment.
-
-Each Docker job uploads `docker-build-report.json` with configure/build/package timings, cache
-statistics, and CPM source size. Use repeated warm runs to compare cache transfer costs with build
-savings. Runner images also record CPM seed preparation cost and report copy time when a job uses
-the seed. Full-history checkout remains in place for package versioning; a repository mirror is
-not warranted by the measured 13–22 second checkout times.
+`setup-python` synchronizes frozen dependency groups from `tools/uv.lock` into `tools/.venv`
+(narrower calls keep already-installed groups) and adds that environment to `PATH`. CMake uses the
+same interpreter, and MAVLink generation uses its preinstalled dependencies without installing
+packages during a build. Ruff, Pyright, clang-format, and import-linter hooks run from the locked
+`lint` group, so the hooks and `tools/.venv` share one version.

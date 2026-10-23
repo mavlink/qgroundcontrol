@@ -3,10 +3,10 @@
 #include <QtTest/QTest>
 
 #include "BaseClasses/VehicleTestManualConnect.h"
+#include "GimbalController.h"
 #include "MockLinkGimbal.h"
 
 class Gimbal;
-class GimbalController;
 
 /// Shared fixture for GimbalController tests: connects a PX4 MockLink with a gimbal and waits for discovery.
 class GimbalControllerTestBase : public VehicleTestManualConnect
@@ -17,6 +17,10 @@ protected slots:
     void init() override;
 
 protected:
+    /// Window for proving that no command reaches the gimbal. A sent command arrives within a few event-loop turns,
+    /// and the window spans several unit-test rate resend periods.
+    static constexpr int kNoCommandWindowMs = 5 * GimbalController::kTestRateResendIntervalMs;
+
     GimbalController* gimbalController() const;
     Gimbal* activeGimbal() const;
     MockLinkGimbal* mockGimbal() const;

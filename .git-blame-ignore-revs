@@ -1,0 +1,8 @@
+# Formatting-only commits that `git blame` should skip.
+#
+# GitHub's blame view reads this file automatically. For local blame, run once per clone:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+#
+# Add a commit here only if it changes formatting and nothing else (for example a clang-format,
+# cmake-format, or qmlformat sweep). Use the full SHA of the commit as it landed on master,
+# preceded by a comment naming it.

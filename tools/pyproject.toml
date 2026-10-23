@@ -7,28 +7,29 @@ requires-python = ">=3.10"
 scripts = [
   "packaging>=24",
   "defusedxml>=0.7.1",
+  # lxml and fastcrc serve pymavlink's mavgen, which CMake runs for src/MAVLink; tools/ never imports them.
   "lxml>=5",
-  "fastcrc>=0.3",
-  "httpx>=0.28",
+  # fastcrc ships no Windows ARM64 wheel, and mavgen falls back to pure-Python CRCs without it.
+  "fastcrc>=0.3; platform_machine != 'ARM64'",
   "jinja2>=3.1",
   "tomli>=2.0; python_version < '3.11'",
 ]
 precommit = [
+  # prek runs .pre-commit-config.yaml; pre-commit stays as a fallback runner for one release.
+  "prek==0.5.7",
   "pre-commit",
 ]
 test = [
   {include-group = "scripts"},
   "pytest",
+  "pytest-xdist>=3.8",
+  "pytest-randomly>=5.0",
+  "pytest-timeout>=2.4",
+  "pytest-subprocess>=1.6",
+  "hypothesis>=6.168",
+  "syrupy>=6.1",
   "jsonschema>=4.23",
-  "jinja2",
-  "pyyaml",
-  "tomli>=2.0; python_version < '3.11'",
-]
-ci = [
-  {include-group = "scripts"},
-  "pre-commit",
-  "meson",
-  "ninja",
+  "pyyaml>=6",
 ]
 qt = [
   {include-group = "scripts"},
@@ -39,26 +40,37 @@ coverage = [
   "gcovr",
 ]
 terrain = [
+  # tools/terrain imports affine directly; rasterio also depends on it.
+  "affine>=3",
   "numpy>=2",
   "pillow>=11",
   "rasterio>=1.4",
+]
+# tools/simulation/mock_vehicle.py; CMake's mavgen uses the mavlink submodule's generator instead.
+simulation = [
+  "pymavlink",
+]
+# git-cliff drafts release notes from tools/configs/cliff.toml (release.yml, `just release-notes`).
+release = [
+  "git-cliff==2.14.2",
 ]
 dev = [
   {include-group = "test"},
   {include-group = "lint"},
   {include-group = "build"},
   {include-group = "qt"},
-  {include-group = "precommit"},
-  "jinja2",
-  "pyyaml",
-  "pymavlink",
-  "rust-just>=1.55.1",
-  "tomli>=2.0; python_version < '3.11'",
+  {include-group = "release"},
 ]
+# The devcontainer's /opt/qgc-venv syncs only scripts, qt and build, so build keeps prek, gcovr and
+# just; install_dependencies installs build on Linux.
 build = [
-  {include-group = "ci"},
+  {include-group = "scripts"},
+  {include-group = "precommit"},
   {include-group = "coverage"},
   "cmake>=3.28,<4",
+  "meson",
+  "ninja",
+  "rust-just>=1.55.1",
 ]
 lint = [
   {include-group = "scripts"},
@@ -66,43 +78,57 @@ lint = [
   "pyright==1.1.411",
   "import-linter>=2.0",
   "jsonschema>=4.23",
-  "pyyaml>=6",
   "clang-format==23.1.0",
 ]
 
 [tool.uv]
 default-groups = []
+# The single uv version: CI installs this floor exactly, as do install_uv.py and the Docker image.
+required-version = ">=0.12.8"
 
 [tool.uv.sources]
-# Qt 6.12's split iOS SDKs and versioned extensions need miurahr/aqtinstall#1048; return to PyPI once released.
+# install_qt.py's fallback installer and parity reference (--installer aqt). Qt 6.12's split iOS SDKs
+# and versioned extensions need miurahr/aqtinstall#1048; return to PyPI once released.
 aqtinstall = { git = "https://github.com/miurahr/aqtinstall", rev = "6f0f842da47c744cdc814cd94da9828d934d7bf0" }
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
+addopts = ["--strict-markers"]
+cache_dir = "../.cache/pytest"
+# A parametrization over repository files that finds none (e.g. missing from a CI sparse checkout)
+# fails collection instead of silently skipping.
+empty_parameter_set_mark = "fail_at_collect"
+# The slowest test takes about 3 s; a hang fails that test with a traceback instead of the CI job timeout.
+timeout = 60
+markers = [
+  "windows: exercises Windows-specific code paths; CI also runs these on a Windows runner",
+]
+# rasterio's own Affine arithmetic triggers this; tools/terrain does not use the `*` form.
+filterwarnings = ["ignore:Use `@` matmul:PendingDeprecationWarning:rasterio"]
 
 [tool.importlinter]
-root_packages = ["common", "analyzers", "generators", "qgc_tools", "setup", "terrain"]
+root_packages = ["ci", "common", "analyzers", "generators", "moccache", "qgc_tools", "setup", "terrain", "translations"]
 
+# Higher layers may import lower ones; packages joined by "|" are mutually independent.
 [[tool.importlinter.contracts]]
-name = "common is a dependency-free foundation"
-type = "forbidden"
-source_modules = ["common"]
-forbidden_modules = ["analyzers", "generators", "qgc_tools", "setup", "terrain"]
+name = "tools layering"
+type = "layers"
+layers = ["ci", "analyzers | generators | setup | terrain | translations", "qgc_tools", "common"]
 
+# Code shared by several CI concerns belongs in common or qgc_tools.
 [[tool.importlinter.contracts]]
-name = "tool packages are mutually independent"
+name = "ci subpackages are independent"
 type = "independence"
-modules = ["analyzers", "generators", "terrain"]
+modules = ["ci.*"]
+ignore_imports = [
+    # The attestation bundle embeds the dependency SBOM that generate_cpm_sbom.py also writes standalone.
+    "ci.publish.attest_helper -> ci.security.generate_cpm_sbom",
+]
 
+# moccache runs on every moc invocation, with whichever python3 CMake found.
 [[tool.importlinter.contracts]]
-name = "shared domains do not import command entrypoints"
+name = "moccache is self-contained"
 type = "forbidden"
-source_modules = ["qgc_tools"]
-forbidden_modules = ["setup", "analyzers", "generators", "terrain"]
-
-[[tool.importlinter.contracts]]
-name = "system setup does not depend on code analysis or generation"
-type = "forbidden"
-source_modules = ["setup"]
-forbidden_modules = ["analyzers", "generators", "terrain"]
+source_modules = ["moccache"]
+forbidden_modules = ["ci", "common", "analyzers", "generators", "qgc_tools", "setup", "terrain", "translations"]

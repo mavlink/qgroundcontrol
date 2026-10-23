@@ -7,11 +7,12 @@ the past (e.g. the stale "Joystick" → "joystickSettings" entry).
 
 from __future__ import annotations
 
-import json
 import re
 import sys
 from functools import cache
 from pathlib import Path
+
+from common.io import read_json
 
 _ACCESSOR_RE = re.compile(r"Q_PROPERTY\s*\(\s*QObject\s*\*\s*(\w+Settings)\s+READ")
 
@@ -102,8 +103,7 @@ def _load_settings_metadata(settings_dirs: tuple[Path, ...]) -> dict[str, dict]:
                         f"is already used by another custom settings group"
                     )
                 custom_accessors.add(accessor)
-            with open(json_path, encoding="utf-8") as f:
-                data = json.load(f)
+            data = read_json(json_path)
             for fact in data.get("QGC.MetaData.Facts", []):
                 metadata[f"{accessor}.{fact['name']}"] = fact
     return metadata

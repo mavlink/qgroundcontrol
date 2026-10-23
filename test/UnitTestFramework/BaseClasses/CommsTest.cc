@@ -97,14 +97,14 @@ Vehicle* CommsTest::createMockLinkAndWaitForVehicle(const QString& name, MAV_AUT
 void CommsTest::disconnectAllLinks()
 {
     if (LinkManager::instance()->links().count() > 0) {
-        QSignalSpy spy(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged);
         LinkManager::instance()->disconnectAll();
 
-        while ((MultiVehicleManager::instance()->vehicles()->count() > 0) ||
-               (MultiVehicleManager::instance()->activeVehicle() != nullptr)) {
-            if (!UnitTest::waitForSignal(spy, TestTimeout::mediumMs(), QStringLiteral("activeVehicleChanged"))) {
-                break;
-            }
+        // QSignalSpy::wait returns immediately once the test has failed, so poll
+        MultiVehicleManager* const vehicleMgr = MultiVehicleManager::instance();
+        if (!QTest::qWaitFor(
+                [vehicleMgr] { return (vehicleMgr->vehicles()->count() == 0) && !vehicleMgr->activeVehicle(); },
+                TestTimeout::mediumMs())) {
+            qCWarning(CommsTestLog) << "Timeout waiting for vehicles to be removed";
         }
     }
 }

@@ -1,374 +1,34 @@
 #!/usr/bin/env python3
-"""Summarize Ninja and Clang time-trace build hotspots."""
+"""Summarize Ninja and Clang time-trace build hotspots.
+
+build-profile.yml also installs the pinned ClangBuildAnalyzer with --install-clang-build-analyzer
+and writes its job summary with --step-summary.
+"""
 
 from __future__ import annotations
 
 import argparse
 import json
-import shutil
-from dataclasses import dataclass
+import os
 from pathlib import Path
-from typing import Any
 
-
-@dataclass(frozen=True)
-class BuildEdge:
-    """One completed Ninja build edge from .ninja_log."""
-
-    output: str
-    start_ms: int
-    end_ms: int
-    mtime: int
-    command_hash: str
-
-    @property
-    def duration_ms(self) -> int:
-        return max(0, self.end_ms - self.start_ms)
-
-
-@dataclass(frozen=True)
-class RebuiltOutput:
-    """Output rebuilt multiple times in the parsed Ninja log."""
-
-    output: str
-    count: int
-    total_ms: int
-    max_ms: int
-
-
-@dataclass(frozen=True)
-class NinjaSummary:
-    """Aggregated Ninja log data."""
-
-    edges: list[BuildEdge]
-    slowest_edges: list[BuildEdge]
-    generated_edges: list[BuildEdge]
-    rebuilt_outputs: list[RebuiltOutput]
-
-
-@dataclass(frozen=True)
-class TimeTrace:
-    """Summary of one Clang -ftime-trace JSON file."""
-
-    path: Path
-    total_ms: float
-    top_events: list[tuple[str, float]]
-
-
-def parse_ninja_log(path: Path) -> list[BuildEdge]:
-    """Parse Ninja's tab-separated .ninja_log file."""
-    edges: list[BuildEdge] = []
-    if not path.exists():
-        raise FileNotFoundError(f"Ninja log not found: {path}")
-
-    for line_number, raw_line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
-        line = raw_line.strip()
-        if not line or line.startswith("#"):
-            continue
-
-        parts = line.split("\t")
-        if len(parts) < 5:
-            raise ValueError(
-                f"Malformed Ninja log line {line_number}: expected at least 5 tab-separated fields"
-            )
-
-        start, end, mtime, output, command_hash = parts[:5]
-        try:
-            edges.append(
-                BuildEdge(
-                    output=output,
-                    start_ms=int(start),
-                    end_ms=int(end),
-                    mtime=int(mtime),
-                    command_hash=command_hash,
-                )
-            )
-        except ValueError as exc:
-            raise ValueError(
-                f"Malformed Ninja log line {line_number}: invalid numeric field"
-            ) from exc
-
-    return edges
-
-
-def classify_output(output: str) -> str:
-    """Classify a build output into a coarse build-hotspot category."""
-    normalized = output.replace("\\", "/")
-    lower = normalized.lower()
-    name = Path(normalized).name
-
-    if "qmlcache" in lower:
-        return "qmlcache"
-    if "qmltyperegistrations" in lower:
-        return "qmltyperegistration"
-    if "_autogen/" in lower or "mocs_compilation" in lower or name.startswith("moc_"):
-        return "autogen/moc"
-    if "/.qt/rcc/" in lower or "/.rcc/" in lower or name.startswith("qrc_"):
-        return "rcc"
-    if name.endswith((".o", ".obj")):
-        return "compile"
-    if (
-        name.endswith((".a", ".lib", ".so", ".dylib", ".dll", ".exe"))
-        or lower.startswith(("release/", "debug/", "relwithdebinfo/", "minsizerel/"))
-        or "/release/" in lower
-        or "/debug/" in lower
-    ):
-        return "link/archive"
-    return "other"
-
-
-def summarize_ninja_log(edges: list[BuildEdge], *, limit: int) -> NinjaSummary:
-    """Build a sorted summary from Ninja log edges."""
-    # Ninja logs every output of a command, including absolute/relative aliases.
-    # Count each execution once; otherwise large autogen rules dominate totals.
-    commands: dict[tuple[int, int, str], BuildEdge] = {}
-    for edge in edges:
-        identity = (edge.start_ms, edge.end_ms, edge.command_hash)
-        previous = commands.get(identity)
-        if previous is None or len(edge.output) < len(previous.output):
-            commands[identity] = edge
-    edges = list(commands.values())
-    slowest = sorted(edges, key=lambda edge: edge.duration_ms, reverse=True)[:limit]
-    generated = [
-        edge
-        for edge in sorted(edges, key=lambda edge: edge.duration_ms, reverse=True)
-        if classify_output(edge.output) in {"autogen/moc", "qmlcache", "qmltyperegistration", "rcc"}
-    ][:limit]
-
-    by_output: dict[str, list[BuildEdge]] = {}
-    for edge in edges:
-        by_output.setdefault(edge.output, []).append(edge)
-
-    rebuilt = [
-        RebuiltOutput(
-            output=output,
-            count=len(output_edges),
-            total_ms=sum(edge.duration_ms for edge in output_edges),
-            max_ms=max(edge.duration_ms for edge in output_edges),
-        )
-        for output, output_edges in by_output.items()
-        if len(output_edges) > 1
-    ]
-    rebuilt.sort(key=lambda item: (item.count, item.total_ms), reverse=True)
-
-    return NinjaSummary(
-        edges=edges,
-        slowest_edges=slowest,
-        generated_edges=generated,
-        rebuilt_outputs=rebuilt[:limit],
-    )
-
-
-def parse_time_trace(path: Path, *, event_limit: int = 8) -> TimeTrace:
-    """Parse one Clang -ftime-trace JSON file."""
-    data = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(data, dict):
-        raise ValueError(f"Not a Clang time-trace file: {path}")
-    events = data.get("traceEvents")
-    if not isinstance(events, list):
-        raise ValueError(f"Not a Clang time-trace file: {path}")
-
-    complete_events = [
-        event
-        for event in events
-        if event.get("ph") == "X" and isinstance(event.get("dur"), int | float)
-    ]
-    if not complete_events:
-        raise ValueError(f"No complete time-trace events found: {path}")
-
-    total_us = max(
-        (
-            event["dur"]
-            for event in complete_events
-            if event.get("name") in {"ExecuteCompiler", "Total ExecuteCompiler"}
-        ),
-        default=max(event["dur"] for event in complete_events),
-    )
-
-    detail_events: list[tuple[str, float]] = []
-    for event in complete_events:
-        name = str(event.get("name", "unknown"))
-        if name in {"ExecuteCompiler", "Total ExecuteCompiler"} or name.startswith("Total "):
-            continue
-        args = event.get("args") if isinstance(event.get("args"), dict) else {}
-        detail = args.get("detail") if isinstance(args, dict) else None
-        label = f"{name}: {detail}" if detail else name
-        detail_events.append((label, event["dur"] / 1000.0))
-
-    detail_events.sort(key=lambda item: item[1], reverse=True)
-    return TimeTrace(path=path, total_ms=total_us / 1000.0, top_events=detail_events[:event_limit])
-
-
-def find_time_traces(root: Path) -> list[TimeTrace]:
-    """Find and parse Clang time-trace JSON files below *root*."""
-    traces: list[TimeTrace] = []
-    if not root.exists():
-        return traces
-
-    for path in root.rglob("*.json"):
-        try:
-            traces.append(parse_time_trace(path))
-        except (OSError, ValueError, json.JSONDecodeError):
-            continue
-
-    traces.sort(key=lambda trace: trace.total_ms, reverse=True)
-    return traces
-
-
-def format_ms(duration_ms: int | float) -> str:
-    """Format milliseconds as seconds with compact precision."""
-    return f"{duration_ms / 1000.0:.2f}s"
-
-
-def build_report(summary: NinjaSummary, traces: list[TimeTrace], *, limit: int) -> str:
-    """Build a Markdown-style text report."""
-    lines: list[str] = [
-        "# Build Profile Report",
-        "",
-        f"Parsed Ninja edges: {len(summary.edges)}",
-        "",
-    ]
-
-    lines.extend(_edge_section("Slowest Ninja Edges", summary.slowest_edges))
-    lines.extend(_edge_section("Generated Step Hotspots", summary.generated_edges))
-    links = sorted(
-        (edge for edge in summary.edges if classify_output(edge.output) == "link/archive"),
-        key=lambda edge: edge.duration_ms,
-        reverse=True,
-    )
-    lines.extend(_edge_section("Link and Archive Hotspots", links[:limit]))
-    lines.extend(
-        [
-            "## Task Time by Category",
-            "",
-            "Task durations overlap; these totals are not wall time.",
-            "",
-        ]
-    )
-    for category, values in category_totals(summary.edges).items():
-        lines.append(
-            f"- {category}: {values['count']} commands, {format_ms(values['duration_ms'])}"
-        )
-    lines.append("")
-
-    lines.extend(["## Most Rebuilt Outputs"])
-    if summary.rebuilt_outputs:
-        for item in summary.rebuilt_outputs[:limit]:
-            lines.append(
-                f"- {item.count}x, total {format_ms(item.total_ms)}, max {format_ms(item.max_ms)}: `{item.output}`"
-            )
-    else:
-        lines.append("- No repeated outputs in the parsed Ninja log.")
-    lines.append("")
-
-    lines.extend(["## Slowest Time Traces"])
-    if traces:
-        for trace in traces[:limit]:
-            lines.append(f"- {format_ms(trace.total_ms)}: `{trace.path}`")
-            for label, duration_ms in trace.top_events[:3]:
-                lines.append(f"  - {format_ms(duration_ms)}: {label}")
-    else:
-        lines.append("- No Clang time-trace JSON files found.")
-    lines.append("")
-
-    return "\n".join(lines)
-
-
-def _edge_section(title: str, edges: list[BuildEdge]) -> list[str]:
-    lines = [f"## {title}"]
-    if not edges:
-        lines.append("- No matching Ninja edges.")
-    else:
-        for edge in edges:
-            category = classify_output(edge.output)
-            lines.append(f"- {format_ms(edge.duration_ms)} [{category}]: `{edge.output}`")
-    lines.append("")
-    return lines
-
-
-def build_json(summary: NinjaSummary, traces: list[TimeTrace], *, limit: int) -> dict[str, Any]:
-    """Build a machine-readable report payload."""
-    return {
-        "edge_count": len(summary.edges),
-        "categories": category_totals(summary.edges),
-        "link_edges": [
-            _edge_to_json(edge)
-            for edge in sorted(summary.edges, key=lambda edge: edge.duration_ms, reverse=True)
-            if classify_output(edge.output) == "link/archive"
-        ][:limit],
-        "slowest_edges": [_edge_to_json(edge) for edge in summary.slowest_edges[:limit]],
-        "generated_edges": [_edge_to_json(edge) for edge in summary.generated_edges[:limit]],
-        "rebuilt_outputs": [
-            {
-                "output": item.output,
-                "count": item.count,
-                "total_ms": item.total_ms,
-                "max_ms": item.max_ms,
-            }
-            for item in summary.rebuilt_outputs[:limit]
-        ],
-        "time_traces": [
-            {
-                "path": str(trace.path),
-                "total_ms": trace.total_ms,
-                "top_events": [
-                    {"label": label, "duration_ms": duration_ms}
-                    for label, duration_ms in trace.top_events
-                ],
-            }
-            for trace in traces[:limit]
-        ],
-    }
-
-
-def _edge_to_json(edge: BuildEdge) -> dict[str, Any]:
-    return {
-        "output": edge.output,
-        "duration_ms": edge.duration_ms,
-        "start_ms": edge.start_ms,
-        "end_ms": edge.end_ms,
-        "category": classify_output(edge.output),
-        "command_hash": edge.command_hash,
-    }
-
-
-def category_totals(edges: list[BuildEdge]) -> dict[str, dict[str, int]]:
-    totals: dict[str, dict[str, int]] = {}
-    for edge in edges:
-        entry = totals.setdefault(classify_output(edge.output), {"count": 0, "duration_ms": 0})
-        entry["count"] += 1
-        entry["duration_ms"] += edge.duration_ms
-    return totals
-
-
-def write_snapshot(
-    build_dir: Path,
-    output_dir: Path,
-    *,
-    previous: list[BuildEdge] | None = None,
-    wall_seconds: float | None = None,
-) -> str:
-    """Save cheap Ninja timings and raw evidence without scanning the SDK for traces."""
-    log = build_dir / ".ninja_log"
-    edges = parse_ninja_log(log)
-    if previous is not None:
-        if edges[: len(previous)] == previous:
-            edges = edges[len(previous) :]
-        else:
-            # Ninja may compact its accumulated log before starting a build.
-            old = set(previous)
-            edges = [edge for edge in edges if edge not in old]
-    summary = summarize_ninja_log(edges, limit=15)
-    report = build_report(summary, [], limit=15)
-    payload = build_json(summary, [], limit=15)
-    payload["wall_seconds"] = wall_seconds
-    output_dir.mkdir(parents=True, exist_ok=True)
-    # A non-hidden name is uploaded by actions/upload-artifact without opting
-    # into unrelated hidden build files.
-    shutil.copyfile(log, output_dir / "ninja.log")
-    (output_dir / "report.md").write_text(report, encoding="utf-8")
-    (output_dir / "report.json").write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-    return report
+import _bootstrap as _bootstrap
+from common.build_config import load_build_config
+from common.cmake import read_cache_dict
+from common.gh_actions import write_step_summary
+from common.io import write_json
+from common.markdown import code_block, code_span, summary_section
+from common.net import download_file
+from common.platform import host_arch, is_linux
+from common.proc import run_captured
+from qgc_tools.build_profile import (
+    build_json,
+    build_report,
+    find_time_traces,
+    parse_ninja_log,
+    summarize_ninja_log,
+    write_snapshot,
+)
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -379,6 +39,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
   %(prog)s
   %(prog)s --build-dir build-debug --limit 20
   %(prog)s --trace-dir build --json
+  %(prog)s --json-out report.json > report.txt
 
 Enable Clang traces with CMake option QGC_TIME_TRACE=ON, then rebuild.
 """,
@@ -405,13 +66,96 @@ Enable Clang traces with CMake option QGC_TIME_TRACE=ON, then rebuild.
     )
     parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON")
     parser.add_argument(
+        "--json-out", type=Path, help="Also write the JSON report to this file (one scan)"
+    )
+    parser.add_argument(
         "--output-dir", type=Path, help="Write a Ninja-only CI snapshot (no trace scan)"
     )
-    return parser.parse_args(argv)
+    parser.add_argument(
+        "--step-summary",
+        action="store_true",
+        help="Also add a Build profile section with the text report to the GitHub Actions job "
+        "summary",
+    )
+    parser.add_argument(
+        "--extra-report",
+        action="append",
+        default=[],
+        metavar="TITLE=FILE",
+        help="With --step-summary, also collapse FILE's text under TITLE (repeatable)",
+    )
+    parser.add_argument(
+        "--install-clang-build-analyzer",
+        type=Path,
+        metavar="PATH",
+        help="Only download build-config.json's SHA-256-pinned ClangBuildAnalyzer (Linux x86_64) "
+        "to PATH",
+    )
+    args = parser.parse_args(argv)
+    if args.output_dir and (args.json or args.json_out or args.step_summary):
+        parser.error(
+            "--output-dir writes report.md and report.json; omit --json/--json-out/--step-summary"
+        )
+    if args.extra_report and not args.step_summary:
+        parser.error("--extra-report needs --step-summary")
+    args.extra_reports = []
+    for spec in args.extra_report:
+        title, separator, path = spec.partition("=")
+        if not (title and separator and path):
+            parser.error(f"--extra-report expects TITLE=FILE, got {spec!r}")
+        args.extra_reports.append((title, Path(path)))
+    if args.install_clang_build_analyzer and (not is_linux() or host_arch() != "x86_64"):
+        parser.error("The pinned ClangBuildAnalyzer release is a Linux x86_64 binary")
+    return args
+
+
+CLANG_BUILD_ANALYZER_ASSET = "ClangBuildAnalyzer-linux"
+
+
+def install_clang_build_analyzer(binary: Path) -> Path:
+    """Download the pinned ClangBuildAnalyzer to *binary*, verify its SHA-256, and make it executable."""
+    pin = load_build_config()["tools"]["clang_build_analyzer"]
+    url = (
+        f"https://github.com/{pin['repository']}/releases/download/v{pin['version']}/"
+        f"{CLANG_BUILD_ANALYZER_ASSET}"
+    )
+    binary.parent.mkdir(parents=True, exist_ok=True)
+    download_file(url, binary, expected_sha256=pin["sha256"]["linux-x86_64"])
+    binary.chmod(0o755)
+    return binary
+
+
+def _compiler_version(compiler: str) -> str:
+    if not compiler:
+        return ""
+    result = run_captured([compiler, "--version"], timeout=30)
+    return result.stdout.splitlines()[0] if result.returncode == 0 and result.stdout else ""
+
+
+def step_summary(build_dir: Path, report: str, extra_reports: list[tuple[str, str]]) -> str:
+    """Build profile job-summary section: build type, commit, compiler, then collapsed reports."""
+    cache = read_cache_dict(build_dir / "CMakeCache.txt")
+    commit = os.environ.get("GITHUB_SHA", "")
+    compiler = _compiler_version(cache.get("CMAKE_CXX_COMPILER", ""))
+    return summary_section(
+        "Build profile",
+        [
+            ("Build type", cache.get("CMAKE_BUILD_TYPE", "")),
+            ("Commit", code_span(commit) if commit else ""),
+            ("Compiler", code_span(compiler) if compiler else ""),
+        ],
+        collapsed=[
+            ("Ninja and per-TU hotspots (tools/build_profile.py)", code_block(report)),
+            *((title, code_block(text)) for title, text in extra_reports),
+        ],
+    )
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
+    if args.install_clang_build_analyzer:
+        print(f"Installed {install_clang_build_analyzer(args.install_clang_build_analyzer)}")
+        return 0
     build_dir = args.build_dir.resolve()
     ninja_log = (args.ninja_log or build_dir / ".ninja_log").resolve()
     trace_dir = (args.trace_dir or build_dir).resolve()
@@ -419,7 +163,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.output_dir:
         if ninja_log.is_file():
-            print(write_snapshot(build_dir, args.output_dir))
+            print(write_snapshot(build_dir, args.output_dir, ninja_log=ninja_log, limit=limit))
         else:
             print(f"No Ninja log at {ninja_log}; this generator has no Ninja timing data.")
         return 0
@@ -428,10 +172,20 @@ def main(argv: list[str] | None = None) -> int:
     summary = summarize_ninja_log(edges, limit=limit)
     traces = find_time_traces(trace_dir)
 
+    payload = build_json(summary, traces, limit=limit)
+    if args.json_out:
+        write_json(args.json_out, payload)
+    report = build_report(summary, traces, limit=limit)
     if args.json:
-        print(json.dumps(build_json(summary, traces, limit=limit), indent=2))
+        print(json.dumps(payload, indent=2))
     else:
-        print(build_report(summary, traces, limit=limit))
+        print(report)
+    if args.step_summary:
+        extra_reports = [
+            (title, path.read_text(encoding="utf-8", errors="replace"))
+            for title, path in args.extra_reports
+        ]
+        write_step_summary(step_summary(build_dir, report, extra_reports))
     return 0
 
 

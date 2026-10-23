@@ -51,6 +51,13 @@ jobs:
         # Release packages and uploads the DMG; Debug has test hooks and runs the Unit and Integration suites.
         build_type: [Release, Debug]
 
+    # Only non-PR Release legs sign: same-repo PRs would still receive the signing secrets.
+    # Independent forks without them build unsigned bundles; upstream still fails if they go missing.
+    env:
+      MACOS_SIGN: >-
+        ${{ github.event_name != 'pull_request' && matrix.build_type == 'Release' &&
+          (github.repository_owner == 'mavlink' || secrets.MACOS_SIGNING_IDENTITY != '') }}
+
     defaults:
       run:
         shell: bash
@@ -74,7 +81,6 @@ jobs:
           persist-credentials: false
 
       - name: Build Setup
-        id: setup
         uses: ./.github/actions/build-setup
         with:
           qt-host: mac
@@ -87,47 +93,34 @@ jobs:
       - name: CMake configure
         uses: ./.github/actions/cmake-configure
         with:
-          build-dir: ${{ runner.temp }}/build
-          build-type: ${{ matrix.build_type }}
           preset: ${{ matrix.build_type == 'Debug' && 'macOS-debug' || 'macOS' }}
+          # Unity builds of QGC targets halve Debug compile CPU; the shipped Release build stays per-file.
+          # Only the shipped Release build is universal; the Debug test leg builds for the arm64 runner.
           extra-args: >-
             -DQGC_BUILD_PORTABLE_TESTS=${{ matrix.build_type == 'Release' && 'ON' || 'OFF' }}
-            -DQGC_MACOS_SIGN_WITH_IDENTITY=${{ github.event_name != 'pull_request' && matrix.build_type == 'Release' && 'ON' || 'OFF' }}
-            -DQGC_MACOS_UNIVERSAL_BUILD=ON
+            -DQGC_MACOS_SIGN_WITH_IDENTITY=${{ env.MACOS_SIGN == 'true' && 'ON' || 'OFF' }}
+            -DQGC_MACOS_UNIVERSAL_BUILD=${{ matrix.build_type == 'Release' && 'ON' || 'OFF' }}
+            -DQGC_UNITY_BUILD=${{ matrix.build_type == 'Debug' && 'ON' || 'OFF' }}
 
       - name: Build
         id: build
         uses: ./.github/actions/cmake-build
-        with:
-          build-dir: ${{ runner.temp }}/build
-          build-type: ${{ matrix.build_type }}
 
       - name: Run portable tests
         id: portable
         if: ${{ !cancelled() && steps.build.outcome == 'success' && matrix.build_type == 'Release' }}
         uses: ./.github/actions/run-unit-tests
         with:
-          build-dir: ${{ runner.temp }}/build
-          build-type: ${{ matrix.build_type }}
           include-labels: Portable
           junit-output: junit-portable.xml
           ctest-output: portable-output.txt
-
-      - name: Report portable tests
-        if: ${{ !cancelled() && steps.portable.outcome != 'skipped' && steps.portable.outcome != '' }}
-        uses: ./.github/actions/test-report
-        with:
-          name: Portable tests (macos)
-          build-dir: ${{ runner.temp }}/build
-          junit-file: junit-portable.xml
-          output-file: portable-output.txt
+          report-name: Portable tests (macos)
           artifact-name: test-results-portable-macos
 
       - name: Run and report tests
         if: ${{ !cancelled() && steps.build.outcome == 'success' && matrix.build_type == 'Debug' }}
         uses: ./.github/actions/test-phase
         with:
-          build-dir: ${{ runner.temp }}/build
           suite: macos
 
       - name: Verify dev build executable
@@ -135,43 +128,32 @@ jobs:
         with:
           binary-path: ${{ runner.temp }}/build/${{ matrix.build_type }}/QGroundControl.app/Contents/MacOS/QGroundControl
           build-dir: ${{ runner.temp }}/build
-          expect-archs: x86_64h arm64
+          expect-archs: ${{ matrix.build_type == 'Release' && 'x86_64h arm64' || 'arm64' }}
 
       - name: Import Code Signing Certificate
-        if: github.event_name != 'pull_request' && matrix.build_type == 'Release'
+        if: env.MACOS_SIGN == 'true'
         uses: apple-actions/import-codesign-certs@v7
         with:
           p12-file-base64: ${{ secrets.MACOS_CERT_P12_BASE64 }}
           p12-password: ${{ secrets.MACOS_CERT_P12_PASSWORD }}
 
-      # PRs configure with QGC_MACOS_SIGN_WITH_IDENTITY=OFF, so the signing env vars are unused there — leaving them resolved-but-empty is harmless and lets us avoid duplicating the install step.
+      # Unsigned legs configure with QGC_MACOS_SIGN_WITH_IDENTITY=OFF and never need these.
       - name: Create app bundle
         if: matrix.build_type == 'Release'
-        uses: ./.github/actions/cmake-install
-        with:
-          build-dir: ${{ runner.temp }}/build
-          build-type: ${{ matrix.build_type }}
-        env:
-          QGC_MACOS_SIGNING_IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
-          QGC_MACOS_NOTARIZATION_USERNAME: ${{ secrets.MACOS_NOTARIZATION_USERNAME }}
-          QGC_MACOS_NOTARIZATION_PASSWORD: ${{ secrets.MACOS_NOTARIZATION_PASSWORD }}
-          QGC_MACOS_NOTARIZATION_TEAM_ID: ${{ secrets.MACOS_NOTARIZATION_TEAM_ID }}
-
-      - name: Mount DMG
-        if: matrix.build_type == 'Release'
         working-directory: ${{ runner.temp }}/build
-        run: |
-          if ! hdiutil attach QGroundControl.dmg; then
-            echo "::error::Failed to mount DMG"
-            ls -la QGroundControl.dmg 2>/dev/null || echo "DMG file not found"
-            exit 1
-          fi
+        run: cmake --install . --config Release
+        env:
+          QGC_MACOS_SIGNING_IDENTITY: ${{ env.MACOS_SIGN == 'true' && secrets.MACOS_SIGNING_IDENTITY || '' }}
+          QGC_MACOS_NOTARIZATION_USERNAME: ${{ env.MACOS_SIGN == 'true' && secrets.MACOS_NOTARIZATION_USERNAME || '' }}
+          QGC_MACOS_NOTARIZATION_PASSWORD: ${{ env.MACOS_SIGN == 'true' && secrets.MACOS_NOTARIZATION_PASSWORD || '' }}
+          QGC_MACOS_NOTARIZATION_TEAM_ID: ${{ env.MACOS_SIGN == 'true' && secrets.MACOS_NOTARIZATION_TEAM_ID || '' }}
 
       - name: Verify DMG executable
         if: matrix.build_type == 'Release'
         uses: ./.github/actions/verify-executable
         with:
-          binary-path: /Volumes/QGroundControl/QGroundControl.app/Contents/MacOS/QGroundControl
+          binary-path: ${{ runner.temp }}/build/QGroundControl.dmg
+          type: dmg
           expect-archs: x86_64h arm64
 
       - name: Attest and Upload
@@ -187,6 +169,27 @@ jobs:
           aws-distribution-id: ${{ secrets.AWS_DISTRIBUTION_ID }}
 
       - name: Debug failed runner
-        if: ${{ failure() && !cancelled() && github.event_name == 'workflow_dispatch' && inputs.debug_runner && github.ref_type == 'branch' }}
+        if: ${{ failure() && !cancelled() && inputs.debug_runner && github.ref_type == 'branch' }}
         timeout-minutes: 15
         uses: ./.github/actions/debug-runner
+
+  # The required status check: a skipped matrix job reports an unexpanded name, so branch
+  # protection requires this stable name instead. always(): a skipped gate would count as passing.
+  macos-ok:
+    name: MacOS
+    if: always()
+    needs: [changes, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Require every leg to pass
+        uses: re-actors/alls-green@v1.3.0
+        with:
+          allowed-skips: build
+          jobs: ${{ toJSON(needs) }}

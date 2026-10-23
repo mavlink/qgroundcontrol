@@ -15,7 +15,8 @@ QGC_LOGGING_CATEGORY(UnitTestListLog, "Test.UnitTestList")
 
 namespace QGCUnitTest {
 
-int runTests(const QStringList& unitTests, int iterations, const QString& outputFile, TestLabels labelFilter)
+int runTests(const QStringList& unitTests, int iterations, const QString& outputFile, TestLabels labelFilter,
+             TestShard shard)
 {
     // Serve synthetic tiles on tile cache misses so no test ever hits the network
     UnitTestTileGenerator::install();
@@ -53,7 +54,7 @@ int runTests(const QStringList& unitTests, int iterations, const QString& output
         int failures = 0;
 
         for (const QString& test : testsToRun) {
-            failures += UnitTest::run(test, outputFile, labelFilter);
+            failures += UnitTest::run(test, outputFile, labelFilter, shard);
         }
 
         if (failures == 0) {
@@ -231,8 +232,9 @@ int handleTestOptions(const QGCCommandLineParser::CommandLineParseResult& args)
                 ? static_cast<int>(args.stressUnitTestsCount > 0 ? args.stressUnitTestsCount : kStressIterations)
                 : 1;
 
+        const TestShard shard{args.unitTestShardIndex, args.unitTestShardCount};
         const int exitCode =
-            runTests(args.unitTests, stressIterations, args.unitTestOutput.value_or(QString()), labelFilter);
+            runTests(args.unitTests, stressIterations, args.unitTestOutput.value_or(QString()), labelFilter, shard);
 
         const qint64 elapsed = timer.elapsed();
         if (exitCode == 0) {

@@ -4,17 +4,21 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 import subprocess
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import ClassVar, TypedDict
+from typing import Any, ClassVar, NamedTuple, TypedDict
 
-from common.analyzer import AnalysisResult, AnalyzerBase
-from common.proc import run_captured
+from common.io import read_json, write_json
+from common.proc import require_tools, run_captured
 
-from .dependencies import header_dependents
+from analyzers.base import AnalysisResult, AnalyzerBase
+
+from .dependencies import DependencyScanError, scan_dependencies
+from .result_cache import CachedResult, ResultCache
 
 
 class DiagnosticDeduplicator:
@@ -39,10 +43,31 @@ class DiagnosticDeduplicator:
         return "".join(kept)
 
 
+# A header's diagnostics repeat in every translation unit that includes it.
+_DIAGNOSTIC = re.compile(
+    r"^(?P<path>.+?):(?P<line>\d+):(?P<column>\d+): (?P<severity>warning|error): "
+    r".*?(?: \[(?P<check>[^\]\n]+)\])?$",
+    re.MULTILINE,
+)
+
+Diagnostic = tuple[str, int, int, str, str]
+"""One diagnostic location: file, line, column, severity, and check name."""
+
+
 class FileTiming(TypedDict):
     file: str
     seconds: float
     status: str
+    cached: bool
+
+
+class FileResult(NamedTuple):
+    file: str
+    output: str
+    findings: bool
+    error: bool
+    error_findings: bool
+    cached: bool = False
 
 
 class CompilerAnalyzer(AnalyzerBase):
@@ -64,10 +89,14 @@ class CompilerAnalyzer(AnalyzerBase):
         self.jobs = jobs
         self.shard = shard
         self.shard_count = shard_count
+        self.result_cache: ResultCache | None = None
+        # Analyzers sharing one compilation database can share a single dependency scan.
+        self.dependencies: dict[Path, frozenset[Path]] = {}
+        self._entries: dict[Path, list[dict[str, Any]]] = {}
 
     def _translation_units(self, files: list[Path]) -> list[Path]:
         """Use active compile commands; headers require a conservative project scan."""
-        database = json.loads(self.compile_commands.read_text(encoding="utf-8"))
+        database = read_json(self.compile_commands)
         if not isinstance(database, list):
             raise ValueError("Compilation database must contain a list")
         selected = {file.resolve() for file in files}
@@ -76,6 +105,7 @@ class CompilerAnalyzer(AnalyzerBase):
         project_dirs = [(self.repo_root / name).resolve() for name in ("src", "test")]
         units: set[Path] = set()
         active_entries = []
+        self._entries = {}
         for entry in database:
             if (
                 not isinstance(entry, dict)
@@ -91,25 +121,102 @@ class CompilerAnalyzer(AnalyzerBase):
             ):
                 units.add(source)
                 active_entries.append(entry)
+                self._entries.setdefault(source, []).append(entry)
         if headers_changed:
             if not units <= selected:
                 print(
                     f"Scanning header dependencies for {len(units)} compilation units", flush=True
                 )
-                affected = header_dependents(
-                    active_entries,
-                    {file for file in selected if file.suffix not in sources},
-                    self.jobs,
-                )
-                if affected is not None:
-                    units &= selected | affected
+                changed_headers = {file for file in selected if file.suffix not in sources}
+                try:
+                    dependencies = self._scan_dependencies(active_entries)
+                except DependencyScanError as exc:
+                    print(f"{exc}; checking all active project sources", flush=True)
+                else:
+                    units &= selected | {
+                        source for source, paths in dependencies.items() if paths & changed_headers
+                    }
             print(
                 f"Header selection: analyzing {len(units)} active project translation units",
                 flush=True,
             )
         return sorted(units)
 
-    def _analyze_file(self, file: Path) -> tuple[str, str, bool, bool, bool]:
+    def _scan_dependencies(self, entries: list[dict[str, Any]]) -> dict[Path, frozenset[Path]]:
+        """Scan entries whose sources lack a dependency list, reusing earlier scans."""
+        pending = [
+            entry
+            for entry in entries
+            if (Path(entry["directory"]) / entry["file"]).resolve() not in self.dependencies
+        ]
+        if pending:
+            self.dependencies.update(scan_dependencies(pending, self.jobs))
+        return {
+            source: self.dependencies[source]
+            for source in {
+                (Path(entry["directory"]) / entry["file"]).resolve() for entry in entries
+            }
+        }
+
+    def _cache_identity(self) -> tuple[str, ...]:
+        """Identify the executable, its arguments and any configuration it reads."""
+        executable = require_tools(self.executable)[self.executable]
+        version = run_captured([executable, "--version"], timeout=60)
+        if version.returncode:
+            raise OSError(f"{self.executable} --version failed")
+        binary = hashlib.sha256(Path(executable).resolve().read_bytes()).hexdigest()
+        return (self.name, version.stdout, binary, *self._tool_arguments(), *self._config_inputs())
+
+    def _config_inputs(self) -> tuple[str, ...]:
+        return ()
+
+    def _cacheable(self) -> bool:
+        return True
+
+    def _cache_keys(self, files: list[Path]) -> dict[Path, str]:
+        cache = self.result_cache
+        if cache is None or not self._cacheable():
+            return {}
+        try:
+            dependencies = self._scan_dependencies(
+                [entry for file in files for entry in self._entries.get(file, [])]
+            )
+            identity = self._cache_identity()
+        except (DependencyScanError, OSError, subprocess.TimeoutExpired) as exc:
+            print(f"Result cache disabled: {exc}", flush=True)
+            return {}
+        keys = {}
+        for file in files:
+            key = cache.key(
+                identity, self._entries.get(file, []), dependencies.get(file, set()) | {file}
+            )
+            if key is not None:
+                keys[file] = key
+        return keys
+
+    def _classify(
+        self, file: Path, output: str, returncode: int, cached: bool = False
+    ) -> FileResult:
+        findings = bool(re.search(r"\b(?:warning|error):", output))
+        # A failed compiler invocation is an analysis failure, not a clean scan.
+        compiler_error = bool(
+            re.search(
+                r"fatal error:|\[clang-diagnostic-error\]|^(?:[^\s:]+:\s*)?error:|"
+                r":\d+:\d+: error: (?!.*\[[^]]+\]$)",
+                output,
+                re.MULTILINE,
+            )
+        )
+        error = compiler_error or (returncode != 0 and not findings)
+        error_findings = bool(re.search(r"\berror:.*\[[^\]]+\]", output))
+        return FileResult(self.relative_path(file), output, findings, error, error_findings, cached)
+
+    def _analyze_file(self, file: Path, key: str | None = None) -> FileResult:
+        if self.result_cache is not None and key is not None:
+            replay = self.result_cache.load(key)
+            if replay is not None:
+                output = replay.stdout + replay.stderr
+                return self._classify(file, output, replay.returncode, cached=True)
         try:
             result = run_captured(
                 [
@@ -123,24 +230,63 @@ class CompilerAnalyzer(AnalyzerBase):
                 timeout=300,
             )
         except (OSError, subprocess.TimeoutExpired) as exc:
-            return self.relative_path(file), str(exc), False, True, False
-        output = result.stdout + result.stderr
-        findings = bool(re.search(r"\b(?:warning|error):", output))
-        # A failed compiler invocation is an analysis failure, not a clean scan.
-        compiler_error = bool(
-            re.search(
-                r"fatal error:|\[clang-diagnostic-error\]|^(?:[^\s:]+:\s*)?error:|"
-                r":\d+:\d+: error: (?!.*\[[^]]+\]$)",
-                output,
-                re.MULTILINE,
+            return FileResult(self.relative_path(file), str(exc), False, True, False)
+        analysis = self._classify(file, result.stdout + result.stderr, result.returncode)
+        if self.result_cache is not None and key is not None and not analysis.error:
+            self.result_cache.store(
+                key, CachedResult(result.stdout, result.stderr, result.returncode)
             )
+        return analysis
+
+    def _finish_cache(self, keys: dict[Path, str], timings: list[FileTiming]) -> dict[str, int]:
+        if self.result_cache is None or not keys:
+            return {}
+        hits = sum(row["cached"] for row in timings)
+        report = {"hits": hits, "misses": len(keys) - hits, "uncacheable": len(timings) - len(keys)}
+        report["pruned"] = self.result_cache.prune()
+        print(
+            f"Result cache: {report['hits']} hits, {report['misses']} misses, "
+            f"{report['uncacheable']} without a key ({self.result_cache.directory})",
+            flush=True,
         )
-        error = compiler_error or (result.returncode != 0 and not findings)
-        error_findings = bool(re.search(r"\berror:.*\[[^\]]+\]", output))
-        return self.relative_path(file), output, findings, error, error_findings
+        return report
 
     def _tool_arguments(self) -> tuple[str, ...]:
         return self.arguments
+
+    def _diagnostic_file(self, path: str) -> str:
+        """Name a diagnostic's file relative to the checkout, or to the build tree as build/..."""
+        resolved = Path(os.path.normpath(path))
+        for base, prefix in ((self.repo_root, ""), (self.build_dir, "build/")):
+            try:
+                return prefix + resolved.relative_to(base).as_posix()
+            except ValueError:
+                continue
+        return resolved.as_posix()
+
+    def _diagnostics(self, output: str) -> set[Diagnostic]:
+        """Return the output's diagnostics, identified by file, location, severity, and check."""
+        return {
+            (
+                self._diagnostic_file(match["path"]),
+                int(match["line"]),
+                int(match["column"]),
+                match["severity"],
+                match["check"] or "",
+            )
+            for match in _DIAGNOSTIC.finditer(output)
+        }
+
+    def _write_diagnostics(self, diagnostics: set[Diagnostic]) -> None:
+        """Write each unique diagnostic once; reports merge shards by the same identity."""
+        by_file: dict[str, list[list[int | str]]] = {}
+        for file, line, column, severity, check in sorted(diagnostics):
+            by_file.setdefault(file, []).append([line, column, severity, check])
+        write_json(
+            self.build_dir / f"{self.name}-diagnostics.json",
+            {"tool": self.name, "shard": self.shard, "diagnostics": by_file},
+            indent=None,
+        )
 
     def _file_arguments(self, file: Path) -> tuple[str, ...]:
         return ()
@@ -148,9 +294,9 @@ class CompilerAnalyzer(AnalyzerBase):
     def _check_timings(self, files: list[Path]) -> dict[str, float]:
         return {}
 
-    def _timed_analysis(self, file: Path) -> tuple[tuple[str, str, bool, bool, bool], float]:
+    def _timed_analysis(self, file: Path, key: str | None = None) -> tuple[FileResult, float]:
         start = time.perf_counter()
-        result = self._analyze_file(file)
+        result = self._analyze_file(file, key)
         return result, time.perf_counter() - start
 
     def run(self, files: list[Path], fix: bool = False) -> AnalysisResult:
@@ -178,9 +324,11 @@ class CompilerAnalyzer(AnalyzerBase):
         if not files:
             print("No selected translation units are active in this build")
             return AnalysisResult(tool=self.name, passed=True, skipped=True)
+        keys = self._cache_keys(files)
 
         outputs: list[str] = []
         diagnostics = DiagnosticDeduplicator()
+        unique_diagnostics: set[Diagnostic] = set()
         raw_path = self.build_dir / f"{self.name}-raw.txt"
         affected: list[str] = []
         errors = False
@@ -196,19 +344,21 @@ class CompilerAnalyzer(AnalyzerBase):
             ) as progress,
             ThreadPoolExecutor(max_workers=self.jobs) as pool,
         ):
-            futures = [pool.submit(self._timed_analysis, file) for file in files]
+            futures = [pool.submit(self._timed_analysis, file, keys.get(file)) for file in files]
             for future in as_completed(futures):
-                (name, output, findings, error, fatal_findings), seconds = future.result()
+                (name, output, findings, error, fatal_findings, cached), seconds = future.result()
                 status = "error" if error else "findings" if findings else "passed"
-                timings.append({"file": name, "seconds": round(seconds, 3), "status": status})
+                timings.append(
+                    {"file": name, "seconds": round(seconds, 3), "status": status, "cached": cached}
+                )
                 progress.write(json.dumps(timings[-1]) + "\n")
                 progress.flush()
-                print(
-                    f"[{len(timings)}/{len(files)}] {name}: {status} ({seconds:.2f}s)", flush=True
-                )
+                source = "cached" if cached else f"{seconds:.2f}s"
+                print(f"[{len(timings)}/{len(files)}] {name}: {status} ({source})", flush=True)
                 if output:
                     raw_log.write(f"=== {name} ===\n{output}\n")
                     raw_log.flush()
+                    unique_diagnostics |= self._diagnostics(output)
                     unique_output = diagnostics.filter(output)
                     if unique_output:
                         print(unique_output, end="" if unique_output.endswith("\n") else "\n")
@@ -220,27 +370,27 @@ class CompilerAnalyzer(AnalyzerBase):
         timings.sort(key=lambda row: row["seconds"], reverse=True)
         wall_seconds = time.perf_counter() - analysis_start
         check_timings = self._check_timings(files)
-        (self.build_dir / f"{self.name}-timings.json").write_text(
-            json.dumps(
-                {
-                    "tool": self.name,
-                    "selection_seconds": round(selection_seconds, 3),
-                    "wall_seconds": round(wall_seconds, 3),
-                    "worker_seconds": round(sum(row["seconds"] for row in timings), 3),
-                    "workers": self.jobs,
-                    "shard": self.shard,
-                    "shard_count": self.shard_count,
-                    "selected_files": total_files,
-                    "checks": check_timings,
-                    "files": timings,
-                },
-                indent=2,
-            )
-            + "\n",
-            encoding="utf-8",
+        cache_report = self._finish_cache(keys, timings)
+        self._write_diagnostics(unique_diagnostics)
+        write_json(
+            self.build_dir / f"{self.name}-timings.json",
+            {
+                "tool": self.name,
+                "selection_seconds": round(selection_seconds, 3),
+                "wall_seconds": round(wall_seconds, 3),
+                "worker_seconds": round(sum(row["seconds"] for row in timings), 3),
+                "workers": self.jobs,
+                "shard": self.shard,
+                "shard_count": self.shard_count,
+                "selected_files": total_files,
+                "checks": check_timings,
+                "result_cache": cache_report,
+                "files": timings,
+            },
         )
         print(
-            f"Suppressed {diagnostics.suppressed} repeated diagnostic blocks; raw output: {raw_path}",
+            f"Suppressed {diagnostics.suppressed} repeated diagnostic blocks "
+            f"({len(unique_diagnostics)} unique diagnostics); raw output: {raw_path}",
             flush=True,
         )
         print("Slowest compilation units:", flush=True)

@@ -4,12 +4,12 @@ GDB Pretty Printers for Qt 6 Types
 This module provides human-readable display of Qt types in GDB.
 
 Usage in GDB:
-    source /path/to/qgroundcontrol/tools/gdb-pretty-printers/qt6.py
+    source /path/to/qgroundcontrol/tools/debuggers/gdb-pretty-printers/qt6.py
 
 Usage in .gdbinit:
     python
     import sys
-    sys.path.insert(0, '/path/to/qgroundcontrol/tools/gdb-pretty-printers')
+    sys.path.insert(0, '/path/to/qgroundcontrol/tools/debuggers/gdb-pretty-printers')
     from qt6 import register_qt_printers
     register_qt_printers(None)
     end
@@ -24,23 +24,12 @@ def _qstring_to_str(val):
     """Convert a QString to a Python string."""
     try:
         d = val["d"]
-        if d == 0:
-            return '""'
-
-        # Qt 6 QString internal structure
         size = int(d["size"])
-        if size == 0:
-            return '""'
-
-        # Data is stored inline after QStringData header in Qt 6
         data_ptr = d["ptr"]
-        if data_ptr == 0:
-            return '""'
-
-        # Read UTF-16 data
-        inferior = gdb.selected_inferior()
-        mem = inferior.read_memory(int(data_ptr), size * 2)
-        return '"' + mem.tobytes().decode("utf-16-le", errors="replace") + '"'
+        if size == 0 or not data_ptr:
+            return ""
+        mem = gdb.selected_inferior().read_memory(int(data_ptr), size * 2)
+        return mem.tobytes().decode("utf-16-le", errors="replace")
     except Exception as e:
         return f"<QString error: {e}>"
 
@@ -49,22 +38,34 @@ def _qbytearray_to_str(val):
     """Convert a QByteArray to a Python string."""
     try:
         d = val["d"]
-        if d == 0:
-            return '""'
-
         size = int(d["size"])
-        if size == 0:
-            return '""'
-
         data_ptr = d["ptr"]
-        if data_ptr == 0:
-            return '""'
-
-        inferior = gdb.selected_inferior()
-        mem = inferior.read_memory(int(data_ptr), size)
-        return '"' + mem.tobytes().decode("utf-8", errors="replace") + '"'
+        if size == 0 or not data_ptr:
+            return ""
+        mem = gdb.selected_inferior().read_memory(int(data_ptr), size)
+        return mem.tobytes().decode("utf-8", errors="replace")
     except Exception as e:
         return f"<QByteArray error: {e}>"
+
+
+def _number(val):
+    """Unwrap the QCheckedInt that Qt 6.12's integer QPoint/QSize/QRect members use."""
+    try:
+        return val["m_i"]
+    except gdb.error:
+        return val
+
+
+def _raw_pointer(val):
+    """Unwrap Qt::totally_ordered_wrapper, which holds shared-data pointers since Qt 6.8."""
+    if val.type.strip_typedefs().code == gdb.TYPE_CODE_PTR:
+        return val
+    return val["ptr"]
+
+
+def _atomic_int(val):
+    """Read a QBasicAtomicInt; its std::atomic<int> member has the layout of a plain int."""
+    return int(val["_q_value"].address.cast(gdb.lookup_type("int").pointer()).dereference())
 
 
 class QStringPrinter:
@@ -133,23 +134,19 @@ class QVectorPrinter(QListPrinter):
 
 
 class QMapPrinter:
-    """Pretty printer for QMap<K, V>."""
+    """Pretty printer for QMap<K, V>, shown through its std::map."""
 
     def __init__(self, val):
         self.val = val
 
     def to_string(self):
         try:
-            d = self.val["d"]
-            if d == 0:
+            data = _raw_pointer(self.val["d"]["d"])
+            if not data:
                 return "QMap (empty)"
-            size = int(d["size"])
-            return f"QMap (size={size})"
+            return data.dereference()["m"]
         except Exception:
             return "QMap"
-
-    def display_hint(self):
-        return "map"
 
 
 class QHashPrinter:
@@ -173,7 +170,7 @@ class QHashPrinter:
 
 
 class QVariantPrinter:
-    """Pretty printer for QVariant."""
+    """Pretty printer for QVariant: the metatype name, plus the value when GDB knows that type."""
 
     def __init__(self, val):
         self.val = val
@@ -181,32 +178,23 @@ class QVariantPrinter:
     def to_string(self):
         try:
             d = self.val["d"]
-            type_id = int(d["typeId"])
-
-            # Common type IDs in Qt 6
-            type_names = {
-                0: "Invalid",
-                1: "Bool",
-                2: "Int",
-                3: "UInt",
-                4: "LongLong",
-                5: "ULongLong",
-                6: "Double",
-                7: "Char",
-                10: "QString",
-                11: "QStringList",
-                12: "QByteArray",
-                13: "QBitArray",
-                14: "QDate",
-                15: "QTime",
-                16: "QDateTime",
-                17: "QUrl",
-            }
-
-            type_name = type_names.get(type_id, f"type={type_id}")
-            return f"QVariant({type_name})"
+            interface = int(d["packedType"]) << 2
+            if interface == 0:
+                return "QVariant(Invalid)"
+            interface_type = gdb.lookup_type("QtPrivate::QMetaTypeInterface").pointer()
+            name = gdb.Value(interface).cast(interface_type).dereference()["name"].string()
         except Exception:
             return "QVariant"
+        try:
+            if int(d["is_shared"]):
+                shared = d["data"]["shared"]
+                address = int(shared) + int(shared["offset"])
+            else:
+                address = int(d["data"]["data"].address)
+            value = gdb.Value(address).cast(gdb.lookup_type(name).pointer()).dereference()
+            return f"QVariant({name}) = {value.format_string()}"
+        except Exception:
+            return f"QVariant({name})"
 
 
 class QPointPrinter:
@@ -217,8 +205,8 @@ class QPointPrinter:
 
     def to_string(self):
         try:
-            x = self.val["xp"]
-            y = self.val["yp"]
+            x = _number(self.val["xp"])
+            y = _number(self.val["yp"])
             return f"({x}, {y})"
         except Exception:
             return "QPoint"
@@ -232,8 +220,8 @@ class QSizePrinter:
 
     def to_string(self):
         try:
-            w = self.val["wd"]
-            h = self.val["ht"]
+            w = _number(self.val["wd"])
+            h = _number(self.val["ht"])
             return f"{w}x{h}"
         except Exception:
             return "QSize"
@@ -247,10 +235,10 @@ class QRectPrinter:
 
     def to_string(self):
         try:
-            x1 = self.val["x1"]
-            y1 = self.val["y1"]
-            x2 = self.val["x2"]
-            y2 = self.val["y2"]
+            x1 = _number(self.val["x1"])
+            y1 = _number(self.val["y1"])
+            x2 = _number(self.val["x2"])
+            y2 = _number(self.val["y2"])
             return f"[({x1}, {y1}) - ({x2}, {y2})]"
         except Exception:
             try:
@@ -264,7 +252,7 @@ class QRectPrinter:
 
 
 class QUrlPrinter:
-    """Pretty printer for QUrl."""
+    """Pretty printer for QUrl (scheme, host and path)."""
 
     def __init__(self, val):
         self.val = val
@@ -275,20 +263,13 @@ class QUrlPrinter:
             if d == 0:
                 return "QUrl(empty)"
 
-            # Try to get the full URL string
-            scheme = d["scheme"]
-            host = d["host"]
-            path = d["path"]
-
-            parts = []
-            if scheme:
-                parts.append(_qstring_to_str(scheme).strip('"'))
+            scheme = _qstring_to_str(d["scheme"])
+            host = _qstring_to_str(d["host"])
+            path = _qstring_to_str(d["path"])
+            url = f"{scheme}:" if scheme else ""
             if host:
-                parts.append("://" + _qstring_to_str(host).strip('"'))
-            if path:
-                parts.append(_qstring_to_str(path).strip('"'))
-
-            return f"QUrl({(''.join(parts))})"
+                url += f"//{host}"
+            return f"QUrl({url}{path})"
         except Exception:
             return "QUrl"
 
@@ -302,14 +283,14 @@ class QSharedPointerPrinter:
     def to_string(self):
         try:
             d = self.val["d"]
-            value = self.val["value"]
+            value = _raw_pointer(self.val["value"])
 
             if value == 0:
                 return "QSharedPointer(nullptr)"
 
             if d != 0:
-                strong = int(d["strongref"]["_q_value"])
-                weak = int(d["weakref"]["_q_value"])
+                strong = _atomic_int(d["strongref"])
+                weak = _atomic_int(d["weakref"])
                 return f"QSharedPointer(strong={strong}, weak={weak}) = {value}"
 
             return f"QSharedPointer = {value}"

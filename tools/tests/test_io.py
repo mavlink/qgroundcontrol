@@ -24,6 +24,8 @@ from common.io import (
 if TYPE_CHECKING:
     from pathlib import Path
 
+pytestmark = pytest.mark.windows
+
 
 def test_read_json_roundtrip(tmp_path: Path) -> None:
     target = tmp_path / "x.json"
@@ -43,6 +45,12 @@ def test_write_json_sort_keys(tmp_path: Path) -> None:
     target = tmp_path / "x.json"
     write_json(target, {"b": 2, "a": 1}, sort_keys=True)
     assert list(read_json(target).keys()) == ["a", "b"]
+
+
+def test_write_json_without_indent_writes_one_line(tmp_path: Path) -> None:
+    target = tmp_path / "x.json"
+    write_json(target, {"k": ["v", "é"]}, indent=None)
+    assert target.read_bytes() == '{"k": ["v", "é"]}\n'.encode()
 
 
 def test_write_json_failed_replace_preserves_existing_file(
@@ -73,8 +81,8 @@ def test_read_toml(tmp_path: Path) -> None:
 
 def test_atomic_write_creates_file(tmp_path: Path) -> None:
     target = tmp_path / "sub" / "y.txt"
-    atomic_write(target, "hello\n")
-    assert target.read_text(encoding="utf-8") == "hello\n"
+    atomic_write(target, "hello\nworld\n")
+    assert target.read_bytes() == b"hello\nworld\n"
 
 
 def test_atomic_write_overwrites(tmp_path: Path) -> None:
@@ -123,7 +131,7 @@ def test_ensure_sha256_sidecar_creates_canonical_checksum(tmp_path: Path) -> Non
 
     digest = sha256_file(artifact)
     assert checksum == tmp_path / "QGroundControl.AppImage.sha256"
-    assert checksum.read_text(encoding="utf-8") == f"{digest}  {artifact.name}\n"
+    assert checksum.read_bytes() == f"{digest}  {artifact.name}\n".encode()
     assert verify_sha256_sidecar(artifact) == digest
 
 
@@ -136,7 +144,18 @@ def test_ensure_sha256_sidecar_normalizes_valid_windows_checksum(tmp_path: Path)
 
     ensure_sha256_sidecar(artifact)
 
-    assert checksum.read_text(encoding="utf-8") == f"{digest}  {artifact.name}\n"
+    assert checksum.read_bytes() == f"{digest}  {artifact.name}\n".encode()
+
+
+def test_ensure_sha256_sidecar_rewrites_crlf_line_endings(tmp_path: Path) -> None:
+    artifact = tmp_path / "QGroundControl.dmg"
+    artifact.write_bytes(b"disk image")
+    checksum = artifact.with_name(f"{artifact.name}.sha256")
+    checksum.write_bytes(f"{sha256_file(artifact)}  {artifact.name}\r\n".encode())
+
+    ensure_sha256_sidecar(artifact)
+
+    assert checksum.read_bytes() == f"{sha256_file(artifact)}  {artifact.name}\n".encode()
 
 
 def test_verify_sha256_sidecar_rejects_invalid_content(tmp_path: Path) -> None:

@@ -5,27 +5,22 @@
     "build",
     "**/__pycache__",
     "**/.venv",
-    "**/node_modules",
-    "tools/skills"
+    "**/node_modules"
   ],
   "include": [
     "tools/**/*.py",
     "test/**/*.py",
-    ".github/scripts/**/*.py",
     ".github/runner-images/**/*.py",
     "deploy/**/*.py",
     ".clusterfuzzlite/**/*.py"
   ],
   "extraPaths": [
-    "tools",
-    "tools/translations",
-    ".github/scripts",
-    ".github/scripts/tests"
+    "tools"
   ],
   "pythonVersion": "3.10",
   "reportMissingImports": "warning",
   "reportMissingTypeStubs": false,
   "reportUnusedImport": "warning",
   "reportUnusedVariable": "warning",
-  "typeCheckingMode": "basic"
+  "typeCheckingMode": "standard"
 }

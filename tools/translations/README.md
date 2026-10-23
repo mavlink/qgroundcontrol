@@ -5,8 +5,9 @@ QGC uses the standard Qt Linguist mechanism for string translation, sourced thro
 
 ## Crowdin integration
 
-Crowdin synchronizes `qgc.ts` once a day, picking up new changes automatically and opening a pull
-request with the resulting translations.
+Crowdin's GitHub integration ([`crowdin.yml`](../../crowdin.yml)) synchronizes `qgc.ts` and
+`qgc-json.ts` once a day, picking up new changes automatically and opening a pull request with the
+resulting translations.
 
 ### Adding a new language
 
@@ -18,8 +19,12 @@ The `lupdate.yml` workflow runs every Sunday to regenerate the `.ts` source file
 any changes. Trigger it manually from the Actions tab, or run it locally from the repo root:
 
 ```bash
-python3 tools/translations/qgc_lupdate.py
+just translations   # Runs tools/translations/qgc_lupdate.py
 ```
+
+`qgc_lupdate.py` runs Qt's `lupdate` (from `QT_ROOT_DIR`, a standard Qt install, or `PATH`), then
+the JSON string extractor (`qgc_lupdate_json.py`), then `pseudo_loc.py`, which writes the
+pseudo-localized `eo` catalogs used for layout testing.
 
 Crowdin picks these up and submits translations back as they become available.
 
@@ -63,13 +68,10 @@ without installing Qt or enforcing a locale-specific plural count; it does not v
 quality, accelerator keys, or punctuation.
 
 The `qt-translation-placeholders` pre-commit hook checks passed catalogs against the baseline.
-The dedicated [Translation Validation workflow](../../.github/workflows/translation-validation.yml)
-runs on translation-only/Crowdin PRs and pushes to `master`/`Stable*`, independently of the Qt-heavy
-pre-commit workflow. It uses full Git history and compares the checked-out PR merge result against
-the event's actual PR base SHA, or a push against its `before` SHA. New-branch pushes use `EMPTY`;
-missing base objects are fetched explicitly, and unavailable history fails rather than silently
-skipping validation. The workflow has read-only permissions, no secrets, no privileged event triggers,
-and uses the existing locked Python groups.
+`pre-commit.yml` runs on every path, so translation-only/Crowdin PRs and pushes to
+`master`/`Stable*` get it too, without installing Qt (only QML changes need it). Its `--changed`
+run compares the PR merge result with the merge's first parent, or a push with its `before` SHA,
+and prek hands that baseline to the hook as `PRE_COMMIT_FROM_REF`.
 
 ## C++ and QML code strings
 
@@ -78,9 +80,11 @@ Use the standard Qt `tr()` (C++) and `qsTr()` (QML) mechanisms.
 ## Translating strings in JSON files
 
 QGC stores metadata in JSON files that also need translation. The
-[JSON parser](https://github.com/mavlink/qgroundcontrol/blob/master/tools/translations/qgc_lupdate_json.py)
-finds every JSON file in the source tree, extracts translatable strings, and emits a Qt `.ts`
-localization file. To mark which strings to translate, add keys at the root object level.
+[JSON parser](qgc_lupdate_json.py) finds every JSON file in the source tree, extracts translatable
+strings, and emits a Qt `.ts` localization file. It walks `src/` in sorted order and, like `lupdate`,
+records locations relative to the `.ts` file (`../src/...`), so the output does not depend on the
+checkout path or filesystem order. To mark which strings to translate, add keys at the root object
+level.
 
 > **Important:** JSON files may not share a name — the filename is the translation-lookup context and
 > must be unique (duplicates raise a parser error). The root filename must also match the Qt resource

@@ -14,19 +14,22 @@ import io
 import math
 import time
 from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures.process import BrokenProcessPool
 from typing import TYPE_CHECKING
 
 import numpy as np
 from PIL import Image
 
 from . import terrarium
-from .generate import tile_path
 from .heights import HEIGHT_STEP, SEA_LEVEL
 from .jobs import (
     IN_FLIGHT_PER_WORKER,
+    TILES_DIR,
     bounded_completion,
     check_passed_marker,
     done_markers,
+    job_from_marker,
+    tile_path,
 )
 from .tilemath import (
     JOB_ZOOM,
@@ -237,7 +240,7 @@ def check_overview_tile(out: Path, key: TileKey) -> list[str]:
 def _tile_keys(out: Path, z: int) -> set[TileKey]:
     return {
         TileKey(z, int(path.parent.name), int(path.stem))
-        for path in (out / "terrarium" / str(z)).glob("*/*.png")
+        for path in (out / TILES_DIR / str(z)).glob("*/*.png")
     }
 
 
@@ -265,32 +268,36 @@ def check_build(
     """Check every completed job and every overview tile; returns the problems found.
 
     Marks the build as checked only when there are none. Tiles of unfinished jobs are skipped.
+    A task that fails, or a worker pool that breaks, is reported as a problem.
     """
     marker = check_passed_marker(out)
     marker.unlink(missing_ok=True)
     problems = missing_parents(out)
-    tasks = [
-        ("job", TileKey(*(int(part) for part in path.name.split("_"))))
-        for path in sorted(done_markers(out))
-    ]
+    tasks = [("job", job_from_marker(path)) for path in sorted(done_markers(out))]
     tasks += [("overview", key) for z in range(JOB_ZOOM) for key in sorted(_tile_keys(out, z))]
     start = time.monotonic()
+    done = 0
     with executor_factory(max_workers=workers) as pool:
         results = bounded_completion(
             lambda task: pool.submit(_check_task, out, *task),
             tasks,
             limit=workers * IN_FLIGHT_PER_WORKER,
         )
-        for done, ((kind, key), future) in enumerate(results, start=1):
-            try:
-                problems.extend(future.result())
-            except Exception as error:
-                problems.append(f"{kind} {key}: check failed: {error}")
-            if done % 1000 == 0 or done == len(tasks):
-                elapsed = time.monotonic() - start
-                print(
-                    f"[{done}/{len(tasks)} {elapsed:7.1f}s] {len(problems)} problem(s)", flush=True
-                )
+        try:
+            for (kind, key), future in results:
+                done += 1
+                try:
+                    problems.extend(future.result())
+                except Exception as error:
+                    problems.append(f"{kind} {key}: check failed: {error}")
+                if done % 1000 == 0 or done == len(tasks):
+                    elapsed = time.monotonic() - start
+                    print(
+                        f"[{done}/{len(tasks)} {elapsed:7.1f}s] {len(problems)} problem(s)",
+                        flush=True,
+                    )
+        except BrokenProcessPool as error:
+            problems.append(f"Worker pool broke ({error}); {len(tasks) - done} task(s) not checked")
     if not problems:
         marker.parent.mkdir(parents=True, exist_ok=True)
         marker.write_text(f"{len(tasks)} tasks checked\n", encoding="utf-8")

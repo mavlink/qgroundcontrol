@@ -1,14 +1,6 @@
 name: ClusterFuzzLite
 
 on:
-  push:
-    branches:
-      - master
-    paths:
-      - '.clusterfuzzlite/**'
-      - '.github/workflows/clusterfuzzlite.yml'
-      - 'cmake/CustomOptions.cmake'
-      - 'test/Fuzz/**'
   pull_request:
     paths:
       - '.clusterfuzzlite/**'
@@ -27,7 +19,6 @@ permissions:
 jobs:
   fuzz:
     name: MAVLink Parser (AddressSanitizer)
-    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -68,23 +59,3 @@ jobs:
             cifuzz-sarif/results.sarif
           if-no-files-found: warn
           retention-days: 7
-
-  continuous-build:
-    name: Continuous Fuzzer Build
-    if: github.event_name == 'push'
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-
-    steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@v2
-        with:
-          egress-policy: audit
-
-      - name: Build and upload fuzzers
-        uses: google/clusterfuzzlite/actions/build_fuzzers@v1
-        with:
-          language: c++
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          sanitizer: address
-          upload-build: true

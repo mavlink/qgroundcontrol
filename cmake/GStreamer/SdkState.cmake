@@ -1,6 +1,6 @@
 # GStreamer SDK state carried across configures. GStreamer_ROOT_DIR is user input only; the
 # SDK discovery picked is recorded in the INTERNAL QGC_GST_RESOLVED_{ROOT,VERSION,AUTO,SDK_VERSION,PACKAGES} entries
-# (also read from CMakeCache.txt by .github/scripts), and cached probe results are tied to an SDK
+# (also read from CMakeCache.txt by tools/ci), and cached probe results are tied to an SDK
 # fingerprint so they are recomputed whenever the SDK changes.
 
 include_guard(GLOBAL)

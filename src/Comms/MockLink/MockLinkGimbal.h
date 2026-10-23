@@ -131,6 +131,8 @@ private:
 
     void _sendGimbalManagerStatus();
     void _sendGimbalManagerStatus(uint8_t deviceIdField);
+    /// Reports a control change right away when the status stream is enabled, instead of on the next 1Hz tick
+    void _sendStreamedManagerStatusNow();
     void _sendGimbalDeviceAttitudeStatus();
     void _sendGimbalDeviceAttitudeStatus(uint8_t sourceCompid, uint8_t deviceIdField);
     void _sendGimbalManagerInformation();

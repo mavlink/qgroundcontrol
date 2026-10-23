@@ -1,14 +1,14 @@
 #include "InitialConnectPeripheralStartupTest.h"
 
 #include <QtTest/QSignalSpy>
+#include <QtTest/QTest>
 
 #include "LinkManager.h"
 #include "MAVLinkProtocol.h"
+#include "MockLink.h"
 #include "MultiVehicleManager.h"
 #include "UnitTest.h"
 #include "Vehicle.h"
-
-#include <QtTest/QTest>
 
 void InitialConnectPeripheralStartupTest::init()
 {

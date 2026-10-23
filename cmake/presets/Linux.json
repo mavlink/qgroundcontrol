@@ -1,5 +1,6 @@
 {
-  "version": 6,
+  "$schema": "https://cmake.org/cmake/help/latest/_downloads/3e2d73bff478d88a7de0de736ba5e361/schema.json",
+  "version": 8,
   "include": ["common.json"],
   "configurePresets": [
     {
@@ -45,8 +46,19 @@
     {
       "name": "Linux-coverage",
       "displayName": "Linux Coverage",
-      "inherits": ["coverage", "linux-base"],
+      "inherits": ["coverage", "lean-debug", "linux-base"],
       "binaryDir": "${sourceDir}/build/Linux-coverage"
+    },
+    {
+      "name": "Linux-sanitizers",
+      "displayName": "Linux Debug (ASan + UBSan)",
+      "inherits": ["debug", "lean-debug", "linux-base"],
+      "binaryDir": "${sourceDir}/build/Linux-sanitizers",
+      "cacheVariables": {
+        "QGC_ENABLE_ASAN": "ON",
+        "QGC_ENABLE_UBSAN": "ON",
+        "QGC_TEST_DETECT_LEAKS": "ON"
+      }
     },
     {
       "name": "Linux-arm64",
@@ -91,6 +103,7 @@
     { "name": "Linux-clang-debug", "configurePreset": "Linux-clang-debug", "inherits": ["build-defaults"] },
     { "name": "Linux-relwithdebinfo", "configurePreset": "Linux-relwithdebinfo", "inherits": ["build-defaults"] },
     { "name": "Linux-coverage", "configurePreset": "Linux-coverage", "inherits": ["build-defaults"] },
+    { "name": "Linux-sanitizers", "configurePreset": "Linux-sanitizers", "inherits": ["build-defaults"] },
     { "name": "Linux-arm64", "configurePreset": "Linux-arm64", "inherits": ["build-defaults"] },
     { "name": "Linux-arm64-debug", "configurePreset": "Linux-arm64-debug", "inherits": ["build-defaults"] },
     { "name": "Linux-deb", "configurePreset": "Linux-deb", "inherits": ["build-defaults"] },
@@ -99,7 +112,13 @@
   "testPresets": [
     { "name": "Linux-debug", "configurePreset": "Linux-debug", "inherits": ["test-defaults"] },
     { "name": "Linux-clang-debug", "configurePreset": "Linux-clang-debug", "inherits": ["test-defaults"] },
-    { "name": "Linux-coverage", "configurePreset": "Linux-coverage", "inherits": ["test-defaults"] }
+    { "name": "Linux-coverage", "configurePreset": "Linux-coverage", "inherits": ["test-defaults"] },
+    {
+      "name": "Linux-sanitizers",
+      "configurePreset": "Linux-sanitizers",
+      "inherits": ["test-defaults"],
+      "filter": { "exclude": { "label": "Flaky|Network|NoSanitizer" } }
+    }
   ],
   "packagePresets": [
     { "name": "Linux-deb", "configurePreset": "Linux-deb", "generators": ["DEB"], "configurations": ["Release"] },
@@ -126,6 +145,14 @@
         { "type": "configure", "name": "Linux-coverage" },
         { "type": "build", "name": "Linux-coverage" },
         { "type": "test", "name": "Linux-coverage" }
+      ]
+    },
+    {
+      "name": "Linux-sanitizers",
+      "steps": [
+        { "type": "configure", "name": "Linux-sanitizers" },
+        { "type": "build", "name": "Linux-sanitizers" },
+        { "type": "test", "name": "Linux-sanitizers" }
       ]
     },
     {

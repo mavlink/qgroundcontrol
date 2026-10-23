@@ -50,17 +50,15 @@ private slots:
     void _testEditMarksDirtyForSave();
 
 private:
-    enum DirtyScenario {
-        UploadPreservesSaveDirtyTrue,
-        UploadPreservesSaveDirtyFalse,
+    enum DirtyScenario
+    {
+        UploadPreservesSaveDirty,
         UploadFalseOnPlanClear,
         UploadTrueWhenSaveTrue,
         UploadTrueOnNewPlanLoad,
-        SaveToFilePreservesUploadDirtyTrue,
-        SaveToFilePreservesUploadDirtyFalse,
+        SaveToFilePreservesUploadDirty,
         SaveFalseOnSuccessfulLoad,
-        ClearSaveDirtyPreservesUploadTrue,
-        ClearSaveDirtyPreservesUploadFalse,
+        ClearSaveDirtyPreservesUpload,
         DownloadWithItemsNotDirtyForSave,
         DownloadEmptyNotDirtyForSave,
     };

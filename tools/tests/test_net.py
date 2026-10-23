@@ -2,14 +2,18 @@
 
 from __future__ import annotations
 
+import functools
 import hashlib
 import io
+from email.message import Message
 from http.client import IncompleteRead
 from unittest.mock import MagicMock, patch
-from urllib.error import URLError
+from urllib.error import HTTPError, URLError
 
 import pytest
-from common.net import download_file, read_url_text
+from common.net import download_file, fetch_bytes, read_url_text
+
+pytestmark = pytest.mark.windows
 
 
 def _response(content: bytes, *, content_length: int | None = None) -> MagicMock:
@@ -177,3 +181,70 @@ def test_download_rejects_invalid_checksum_before_network(tmp_path) -> None:
     ):
         download_file("https://example.test/sdk.zip", tmp_path / "sdk.zip", expected_sha256="bad")
     urlopen.assert_not_called()
+
+
+def _http_error(code: int) -> HTTPError:
+    return HTTPError("https://example.test", code, "error", Message(), None)
+
+
+@pytest.mark.parametrize("code", [403, 404])
+def test_download_fails_at_once_on_a_final_http_error(tmp_path, code: int) -> None:
+    with (
+        patch("common.net.urllib.request.urlopen", side_effect=_http_error(code)) as urlopen,
+        patch("common.net.time.sleep") as sleep,
+        pytest.raises(HTTPError) as raised,
+    ):
+        download_file("https://example.test/sdk.zip", tmp_path / "sdk.zip", attempts=4)
+    assert raised.value.code == code
+    urlopen.assert_called_once()
+    sleep.assert_not_called()
+    assert list(tmp_path.iterdir()) == []
+
+
+@pytest.mark.parametrize("code", [408, 429, 503])
+def test_download_retries_transient_http_errors(tmp_path, code: int) -> None:
+    destination = tmp_path / "sdk.zip"
+    with (
+        patch(
+            "common.net.urllib.request.urlopen",
+            side_effect=[_http_error(code), io.BytesIO(b"complete")],
+        ) as urlopen,
+        patch("common.net.time.sleep"),
+    ):
+        download_file("https://example.test/sdk.zip", destination)
+    assert urlopen.call_count == 2
+    assert destination.read_bytes() == b"complete"
+
+
+@pytest.mark.parametrize(
+    ("outcomes", "calls", "raises"),
+    [
+        ([URLError("reset"), b"tile"], 2, None),
+        ([_http_error(503), TimeoutError(), b"tile"], 3, None),
+        ([_http_error(429), IncompleteRead(b"", 4), b"tile"], 3, None),
+        ([_http_error(404)], 1, HTTPError),
+        ([_http_error(503)] * 3, 3, RuntimeError),
+    ],
+    ids=["reset", "5xx-then-timeout", "429-then-truncated", "404", "exhausted"],
+)
+def test_fetch_bytes_retries_only_transient_failures(
+    outcomes: list[object], calls: int, raises: type[Exception] | None
+) -> None:
+    responses = [io.BytesIO(item) if isinstance(item, bytes) else item for item in outcomes]
+    get = functools.partial(fetch_bytes, "https://example.test/tile", timeout=1)
+    with (
+        patch("common.net.urllib.request.urlopen", side_effect=responses) as urlopen,
+        patch("common.net.time.sleep") as sleep,
+    ):
+        if raises is None:
+            assert get() == b"tile"
+        else:
+            with pytest.raises(raises):
+                get()
+    assert urlopen.call_count == calls
+    assert [call.args[0] for call in sleep.call_args_list] == [2.0 * n for n in range(1, calls)]
+
+
+def test_fetch_bytes_rejects_zero_attempts() -> None:
+    with pytest.raises(ValueError, match="attempts"):
+        fetch_bytes("https://example.test/tile", timeout=1, attempts=0)

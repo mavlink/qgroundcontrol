@@ -2,6 +2,7 @@
 
 #include <optional>
 
+#include <QtCore/QElapsedTimer>
 #include <QtCore/QScopeGuard>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
@@ -24,6 +25,7 @@ constexpr uint8_t kOutOfRangeDeviceId = 200;
 constexpr int kManagerInfoHeartbeatRetries = 6;  // GimbalController::PotentialGimbalManager
 constexpr int kStatusIntervalRetries = 6;        // Gimbal::_requestStatusRetries
 constexpr int kStatusIntervalFallbackUs = 5000000;
+constexpr int kNoNewRequestWindowMs = 300;       // spans several MockLink heartbeats, which trigger requests
 
 }  // namespace
 
@@ -205,7 +207,7 @@ void GimbalControllerDiscoveryTest::_testManagerInformationUnavailable()
     };
     QVERIFY_TRUE_WAIT(retryBudgetSpent(), TestTimeout::longMs());
     const int lastCount = requestCount();
-    QVERIFY(!QTest::qWaitFor([&]() { return requestCount() > lastCount; }, TestTimeout::shortMs()));
+    QVERIFY(!QTest::qWaitFor([&]() { return requestCount() > lastCount; }, kNoNewRequestWindowMs));
     QVERIFY2(lastCount <= kManagerInfoHeartbeatRetries * kCommandResends,
              qPrintable(QStringLiteral("%1 requests sent").arg(lastCount)));
     if (response == MockLinkGimbal::InformationResponse::Nack) {
@@ -285,7 +287,15 @@ void GimbalControllerDiscoveryTest::_testStatusIntervalRetryFallback()
         return;
     }
 
-    QVERIFY_TRUE_WAIT(activeGimbal() != nullptr, TestTimeout::longMs());
+    // Each gimbal message lets QGC retry the ignored request; push attitude rather than wait on the 1Hz stream
+    QElapsedTimer elapsed;
+    elapsed.start();
+    while (!activeGimbal() && (elapsed.elapsed() < TestTimeout::longMs())) {
+        mockGimbal()->sendGimbalDeviceAttitudeStatusNow();
+        (void) QTest::qWaitFor([this]() { return activeGimbal() != nullptr; },
+                               2 * GimbalController::kTestStatusRequestSpacingMs);
+    }
+    QVERIFY(activeGimbal());
 
     const QList<int> requests = mockGimbal()->statusIntervalRequests();
     QVERIFY2(requests.count() > kIgnoredRequests,

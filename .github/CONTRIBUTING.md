@@ -26,8 +26,8 @@ contributing code, reporting issues, and improving documentation.
 
 Before you begin, please:
 
-1. Read the [Developer Guide](https://dev.qgroundcontrol.com/en/)
-2. Review the [Build Instructions](https://dev.qgroundcontrol.com/en/getting_started/)
+1. Read the [Developer Guide](https://docs.qgroundcontrol.com/master/en/qgc-dev-guide/)
+2. Review the [Build Instructions](https://docs.qgroundcontrol.com/master/en/qgc-dev-guide/getting_started/)
 3. Familiarize yourself with the [Architecture Patterns](#architecture-patterns) in this guide
 
 ### Development Environment
@@ -53,7 +53,8 @@ Before creating a new issue:
    - QGroundControl version
    - Operating system and version
    - Detailed steps to reproduce
-   - Log files (from `~/.local/share/QGroundControl/`)
+   - Log files (the `Logs` folder in QGroundControl's save path; on desktop the default is
+     `~/Documents/QGroundControl/Logs`)
    - Screenshots or videos if applicable
 
 **Create an issue**: <https://github.com/mavlink/qgroundcontrol/issues>
@@ -81,6 +82,8 @@ QGroundControl uses [Crowdin](https://crowdin.com/project/qgroundcontrol) for co
    ```bash
    git clone https://github.com/YOUR-USERNAME/qgroundcontrol.git
    cd qgroundcontrol
+   git remote add upstream https://github.com/mavlink/qgroundcontrol.git
+   git config blame.ignoreRevsFile .git-blame-ignore-revs  # skip formatting-only commits in blame
    ```
 
 2. **Create a feature branch**
@@ -92,11 +95,14 @@ QGroundControl uses [Crowdin](https://crowdin.com/project/qgroundcontrol) for co
 3. **Make your changes** following our [coding standards](#coding-standards)
 
 4. **Test your changes thoroughly**
-   - Run `just test` (or `ctest --output-on-failure -L Unit` for the unit-test label only)
+   - Run `just test` (Unit and Integration labels, as in CI), or
+     `ctest --test-dir build --output-on-failure -L Unit` for unit tests only
    - Test on all relevant platforms when possible
    - Test with both PX4 and ArduPilot if applicable
 
-5. **Commit your changes** using [Conventional Commits](../AGENTS.md#commit--review-conventions)
+5. **Commit your changes** using [Conventional Commits](../AGENTS.md#commit--review-conventions);
+   `prek install` (from the `precommit` tools group) adds hooks that run the lint checks and check the
+   message on each commit
 
    ```bash
    git add .
@@ -116,7 +122,8 @@ QGroundControl uses [Crowdin](https://crowdin.com/project/qgroundcontrol) for co
 ## Coding Standards
 
 Follow [CODING_STYLE.md](../CODING_STYLE.md) for naming, formatting, C++20 features, QML style, and logging
-conventions. Run `just lint` (or `pre-commit run --all-files`) before committing.
+conventions. Run `just lint` (`prek run --all-files`) before committing; see
+[tools/README.md](../tools/README.md) for all development commands.
 
 ### Architecture Patterns
 
@@ -124,7 +131,7 @@ QGroundControl has several core architecture patterns you must follow. See [CODI
 for full details with code examples:
 
 - **Fact System**: ALL vehicle parameters use Facts — never create custom parameter storage
-- **Multi-Vehicle**: ALWAYS null-check `activeVehicle()` before use
+- **Multi-Vehicle**: ALWAYS null-check `activeVehicle()` / `Vehicle*` before use
 - **Firmware Plugin**: Use `vehicle->firmwarePlugin()` for firmware-specific behavior
 - **QML Integration**: Use `QML_ELEMENT`/`QML_SINGLETON`/`QML_UNCREATABLE` macros, `Q_PROPERTY` for bindings
 
@@ -139,13 +146,8 @@ See [test/README.md](../test/README.md) for the complete testing guide, includin
 
 - Add unit tests for new functionality in `test/` mirroring `src/` structure
 - Use the `UnitTest` base class (or `VehicleTest`, `MissionTest`, etc.)
-- Run `ctest --output-on-failure -L Unit` before submitting
+- Run `just test` before submitting
 - Test on multiple platforms and both PX4/ArduPilot when applicable
-
-### Pre-commit Checks
-
-Run the lint gate before committing (`just lint`, or `pre-commit run --all-files` for the full sweep) —
-see [tools/README.md](../tools/README.md) for all available development commands.
 
 ---
 
@@ -160,7 +162,7 @@ see [tools/README.md](../tools/README.md) for all available development commands
    git rebase upstream/master
    ```
 
-2. **Ensure all tests pass** (`just check`)
+2. **Ensure all checks pass**: `just check` runs lint, the Python tooling tests, and the application tests
 3. **Update documentation** if needed
 4. **Write a clear PR description**:
    - What problem does it solve?
@@ -180,7 +182,8 @@ see [tools/README.md](../tools/README.md) for all available development commands
 ### Review Process
 
 - Maintainers will review your PR
-- Address feedback in new commits (don't force-push during review)
+- Address feedback; fold fixups into the commits they amend rather than adding a trail of review-fix
+  commits (see [AGENTS.md](../AGENTS.md#commit--review-conventions))
 - Once approved, a maintainer will merge your PR
 
 ### After Merging
@@ -202,8 +205,8 @@ See [COPYING.md](COPYING.md) for full license details, compatible licenses, and 
 
 ## Additional Resources
 
-- **User Manual**: <https://docs.qgroundcontrol.com/en/>
-- **Developer Guide**: <https://dev.qgroundcontrol.com/en/>
+- **User Manual**: <https://docs.qgroundcontrol.com/master/en/qgc-user-guide/>
+- **Developer Guide**: <https://docs.qgroundcontrol.com/master/en/qgc-dev-guide/>
 - **Support Guide**: For help and community resources, see [SUPPORT.md](SUPPORT.md)
 - **Discussion Forum**: <https://discuss.px4.io/c/qgroundcontrol>
 - **Discord**: <https://discord.gg/dronecode>

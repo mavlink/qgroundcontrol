@@ -22,7 +22,72 @@
     "pep621",
     "pre-commit",
     "gradle",
-    "nvm"
+    "nvm",
+    "custom.regex"
+  ],
+  "customManagers": [
+    {
+      "description": "Docker variant base images; docker-compose.yml is generated from variants.json, so both update together",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^deploy/docker/variants\\.json$/",
+        "/^deploy/docker/docker-compose\\.yml$/"
+      ],
+      "matchStrings": [
+        "BASE_REF\"?: \"(?<depName>[^:\"]+):(?<currentValue>[^@\"]+)@(?<currentDigest>sha256:[a-f0-9]{64})\""
+      ],
+      "datasourceTemplate": "docker"
+    },
+    {
+      "description": "The uv required-version floor tracks the Dockerfile's uv image tag; tools/validate_configs.py requires them to match",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^tools/pyproject\\.toml$/"
+      ],
+      "matchStrings": [
+        "required-version = \">=(?<currentValue>[^\"]+)\""
+      ],
+      "depNameTemplate": "ghcr.io/astral-sh/uv",
+      "datasourceTemplate": "docker"
+    },
+    {
+      "description": "The CMake that build-setup installs with lukka/get-cmake, which resolves versions from a catalog bundled in each of its releases. Its tags name the newest CMake in that catalog, so following them keeps the pin installable; the github-actions manager bumps the action in the same group PR",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^\\.github/build-config\\.json$/"
+      ],
+      "matchStrings": [
+        "\"cmake_version\": \"(?<currentValue>[^\"]+)\""
+      ],
+      "depNameTemplate": "lukka/get-cmake",
+      "datasourceTemplate": "github-tags",
+      "extractVersionTemplate": "^v(?<version>\\d+\\.\\d+\\.\\d+)$"
+    },
+    {
+      "description": "The Ninja that build-setup installs with lukka/get-cmake",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^\\.github/build-config\\.json$/"
+      ],
+      "matchStrings": [
+        "\"ninja_version\": \"(?<currentValue>[^\"]+)\""
+      ],
+      "depNameTemplate": "ninja-build/ninja",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^v(?<version>\\d+\\.\\d+\\.\\d+)$"
+    },
+    {
+      "description": "Prebuilt CI tools in build-config.json's tools section (ccache, mold, sccache, Grype, Packer, RunsOn CLI, ClangBuildAnalyzer), tracked by their GitHub releases",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^\\.github/build-config\\.json$/"
+      ],
+      "matchStrings": [
+        "\"repository\": \"(?<depName>[^\"]+)\",\\s*\"version\": \"(?<currentValue>[^\"]+)\""
+      ],
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^v(?<version>\\d+\\.\\d+\\.\\d+)$"
+    }
   ],
   "packageRules": [
     {
@@ -38,31 +103,20 @@
       "automerge": true
     },
     {
-      "description": "Combine npm, python, and pre-commit updates into a single PR",
+      "description": "Combine every update except Android into one weekly PR, so coupled pins such as the uv required-version floor and the Dockerfile's uv image land together",
       "groupName": "all dependencies",
       "matchManagers": [
         "npm",
         "pep621",
-        "pre-commit"
+        "pre-commit",
+        "github-actions",
+        "devcontainer",
+        "dockerfile",
+        "nvm",
+        "custom.regex"
       ],
       "schedule": [
         "before 6am on monday"
-      ]
-    },
-    {
-      "description": "Group composite GitHub Action updates not covered by Dependabot",
-      "groupName": "composite action dependencies",
-      "matchManagers": [
-        "github-actions"
-      ]
-    },
-    {
-      "description": "Group development environment and build bootstrap updates",
-      "groupName": "development environment dependencies",
-      "matchManagers": [
-        "devcontainer",
-        "dockerfile",
-        "nvm"
       ]
     },
     {
@@ -72,18 +126,6 @@
         "gradle",
         "gradle-wrapper"
       ]
-    },
-    {
-      "description": "Keep formatter and Python lint tool pins synchronized",
-      "matchPackageNames": [
-        "clang-format",
-        "pre-commit/mirrors-clang-format",
-        "ruff",
-        "astral-sh/ruff-pre-commit",
-        "pyright",
-        "RobertCraigie/pyright-python"
-      ],
-      "groupName": "code quality tools"
     },
     {
       "description": "Keep lock file maintenance in one PR instead of one per group",
@@ -98,6 +140,30 @@
         "androidx.core:core"
       ],
       "enabled": false
+    },
+    {
+      "description": "lukka/get-cmake picks up new Ninja releases only when it next refreshes its bundled catalog",
+      "matchPackageNames": [
+        "ninja-build/ninja"
+      ],
+      "minimumReleaseAge": "30 days"
+    },
+    {
+      "description": "A tools pin bump also needs the release's SHA-256 digests in build-config.json (mold and ClangBuildAnalyzer publish none), so each opens its own PR only after approval on the Dependency Dashboard",
+      "matchManagers": [
+        "custom.regex"
+      ],
+      "matchDepNames": [
+        "ccache/ccache",
+        "rui314/mold",
+        "mozilla/sccache",
+        "anchore/grype",
+        "hashicorp/packer",
+        "runs-on/cli",
+        "aras-p/ClangBuildAnalyzer"
+      ],
+      "groupName": null,
+      "dependencyDashboardApproval": true
     }
   ],
   "major": {

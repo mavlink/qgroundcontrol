@@ -44,6 +44,9 @@ public:
     /// while the vehicle (and this coordinator) keep running.
     void cancelRequests(void* resultHandlerData);
 
+    /// Whether any request to @a compId is active or queued.
+    bool hasPendingRequests(int compId) const;
+
     static QString failureCodeToString(RequestMessageResultHandlerFailureCode_t failureCode);
 
 private:

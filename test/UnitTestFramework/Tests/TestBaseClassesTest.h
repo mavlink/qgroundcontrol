@@ -17,6 +17,8 @@ private slots:
     void _testVehicleTestDerived();
     void _testOfflineMissionTestDerived();
     void _testCommsTestDerived();
+    void _testTestFunctionNamesAndShards();
+    void _testTestOutputFileName();
 };
 
 /// Simple derived class to test VehicleTest base

@@ -1,0 +1,41 @@
+# serializer version: 1
+# name: test_step_summary_reports_each_tool
+  '''
+  ### Code analysis: clazy
+  
+  | Item | Value |
+  | --- | --- |
+  | Result | findings |
+  | Files analyzed | 150 |
+  | Files with findings | 2 |
+  | Diagnostics | 3 |
+  
+  <details><summary>Checks with findings (2)</summary>
+  
+  | Check | Diagnostics |
+  | --- | ---: |
+  | `-Wclazy-non-pod-global-static` | 2 |
+  | `-Wclazy-no-module-include` | 1 |
+  
+  </details>
+  
+  <details><summary>Files with findings (2)</summary>
+  
+  - `src/Vehicle/Vehicle.cc`
+  - `src/main.cc`
+  
+  </details>
+  
+  <details><summary>Diagnostics (unique)</summary>
+  
+  ```
+  src/main.cc:11:1: warning: non-POD static (QGCLoggingCategory) [-Wclazy-non-pod-global-static]
+  src/Vehicle/Vehicle.cc:5:10: warning: Module QtQmlIntegration should not be included directly [-Wclazy-no-module-include]
+  src/Vehicle/Vehicle.cc:9:3: warning: unused [-Wclazy-non-pod-global-static]
+  ```
+  
+  </details>
+  
+  
+  '''
+# ---

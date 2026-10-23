@@ -37,6 +37,7 @@ constexpr QLatin1StringView kOptAllowMultiple = QLatin1StringView("allow-multipl
 constexpr QLatin1StringView kOptUnittest       = QLatin1StringView("unittest");
 constexpr QLatin1StringView kOptUnittestStress = QLatin1StringView("unittest-stress");
 constexpr QLatin1StringView kOptUnittestOutput = QLatin1StringView("unittest-output");
+constexpr QLatin1StringView kOptUnittestShard = QLatin1StringView("unittest-shard");
 constexpr QLatin1StringView kOptUnittestLabel  = QLatin1StringView("label");
 constexpr QLatin1StringView kOptListTests      = QLatin1StringView("list-tests");
 constexpr QLatin1StringView kOptOnscreen       = QLatin1StringView("onscreen");
@@ -181,6 +182,12 @@ CommandLineParseResult parseCommandLine()
         QCoreApplication::translate("main", "file"));
     (void) parser.addOption(unittestOutputOpt);
 
+    const QCommandLineOption unittestShardOpt(
+        QString(kOptUnittestShard),
+        QCoreApplication::translate("main", "Run one shard of a single test's functions (1-based index/count)."),
+        QCoreApplication::translate("main", "index/count"));
+    (void) parser.addOption(unittestShardOpt);
+
     const QCommandLineOption unittestLabelOpt(
         QString(kOptUnittestLabel),
         QCoreApplication::translate("main", "Filter tests by label (unit, integration, vehicle, missionmanager, etc.)."),
@@ -239,11 +246,14 @@ CommandLineParseResult parseCommandLine()
         if (out.unknownOptions.contains(QLatin1String("unittest")) ||
             out.unknownOptions.contains(QLatin1String("unittest-stress")) ||
             out.unknownOptions.contains(QLatin1String("unittest-output")) ||
+            out.unknownOptions.contains(QLatin1String("unittest-shard")) ||
             out.unknownOptions.contains(QLatin1String("list-tests"))) {
 #ifndef QGC_UNITTEST_BUILD
             out.statusCode = CommandLineParseResult::Status::Error;
-            out.errorString = QCoreApplication::translate("main",
-                "--unittest/--unittest-stress/--unittest-output/--list-tests options are only available in unittest builds.");
+            out.errorString =
+                QCoreApplication::translate("main",
+                                            "--unittest/--unittest-stress/--unittest-output/--unittest-shard/"
+                                            "--list-tests options are only available in unittest builds.");
             qCWarning(QGCCommandLineParserLog) << out.errorString.value();
             return out;
 #endif
@@ -378,6 +388,30 @@ CommandLineParseResult parseCommandLine()
         qCDebug(QGCCommandLineParserLog) << "Test output file:" << out.unitTestOutput.value();
     }
 
+    if (parser.isSet(unittestShardOpt)) {
+        const QString shardValue = parser.value(unittestShardOpt);
+        const std::optional<std::pair<uint, uint>> shard = parseUnitTestShard(shardValue);
+        if (!shard) {
+            out.statusCode = CommandLineParseResult::Status::Error;
+            out.errorString =
+                QCoreApplication::translate(
+                    "main", "Invalid unit test shard (expected <index>/<count> with 1 <= index <= count): %1")
+                    .arg(shardValue);
+            qCWarning(QGCCommandLineParserLog) << out.errorString.value();
+            return out;
+        }
+        if (out.unitTests.size() != 1) {
+            out.statusCode = CommandLineParseResult::Status::Error;
+            out.errorString =
+                QCoreApplication::translate("main", "--unittest-shard requires exactly one --unittest:<name>.");
+            qCWarning(QGCCommandLineParserLog) << out.errorString.value();
+            return out;
+        }
+        out.unitTestShardIndex = shard->first;
+        out.unitTestShardCount = shard->second;
+        qCDebug(QGCCommandLineParserLog) << "Test shard:" << shard->first << "of" << shard->second;
+    }
+
     if (parser.isSet(unittestLabelOpt)) {
         out.labelFilter = parser.value(unittestLabelOpt);
         qCDebug(QGCCommandLineParserLog) << "Label filter:" << out.labelFilter.value();
@@ -469,6 +503,22 @@ std::optional<quint32> parseSystemId(const QString& value)
         return std::nullopt;
     }
     return static_cast<quint32>(systemId);
+}
+
+std::optional<std::pair<uint, uint>> parseUnitTestShard(const QString& value)
+{
+    const QStringList parts = value.split(QLatin1Char('/'));
+    if (parts.size() != 2) {
+        return std::nullopt;
+    }
+    bool indexOk = false;
+    bool countOk = false;
+    const uint index = parts.at(0).toUInt(&indexOk);
+    const uint count = parts.at(1).toUInt(&countOk);
+    if (!indexOk || !countOk || (index == 0) || (index > count)) {
+        return std::nullopt;
+    }
+    return std::make_pair(index, count);
 }
 
 #ifdef QGC_UNITTEST_BUILD

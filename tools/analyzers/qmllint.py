@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import re
-import shutil
 from typing import TYPE_CHECKING, ClassVar
 
-from common.analyzer import AnalysisResult, AnalyzerBase
 from common.logging import log_info, log_warn
-from common.proc import run_captured
+from common.proc import MissingToolError, require_tools, run_captured
+
+from analyzers.base import AnalysisResult, AnalyzerBase
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -24,11 +24,12 @@ class QmlLintAnalyzer(AnalyzerBase):
     )
 
     def run(self, files: list[Path], fix: bool = False) -> AnalysisResult:
-        if shutil.which("qmllint") is None:
-            log_warn("qmllint not found")
-            log_info(self.install_hint)
+        try:
+            require_tools("qmllint", hint=self.install_hint)
+        except MissingToolError as error:
+            log_warn(str(error))
             return AnalysisResult(
-                tool=self.name, passed=False, execution_error=True, output="qmllint not found"
+                tool=self.name, passed=False, execution_error=True, output=str(error)
             )
 
         if not files:

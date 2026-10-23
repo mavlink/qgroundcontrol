@@ -1,0 +1,23 @@
+{
+  "$schema": "https://raw.githubusercontent.com/editorconfig-checker/editorconfig-checker/v4.0.2/.editorconfig-checker.schema.json",
+  "Exclude": [
+    "\\.(keystore|lz4|mesh)$",
+    "\\.ambr$",
+    "^test/GPS/Core/Protocols/(corpus|fixtures)/",
+    "^translations/",
+    "^android/res/values/strings\\.xml$",
+    "^android/src/org/mavlink/qgroundcontrol/QGCActivity\\.java$",
+    "^src/AutoPilotPlugins/PX4/(ActuatorFact\\.qml|AirframeComponentController\\.cc|FlightModesComponentSummary\\.qml)$",
+    "^src/Comms/MockLink/MockLink\\.General\\.MetaData\\.json$",
+    "^src/FirmwarePlugin/PX4/px4_custom_mode\\.h$",
+    "^src/FlyView/FlightDisplayViewUVC\\.qml$",
+    "^src/Utilities/Geo/Formats/ogckml22\\.xsd$",
+    "^src/Vehicle/Actuators/(Actuators|Mixer)\\.cc$",
+    "^src/Vehicle/FTPManager\\.h$",
+    "^src/Vehicle/VehicleSetup/(Bootloader\\.h|FirmwareUpgradeController\\.(cc|h))$"
+  ],
+  "Disable": {
+    "IndentSize": true,
+    "MaxLineLength": true
+  }
+}

@@ -7,7 +7,7 @@ from subprocess import CompletedProcess
 from unittest.mock import patch
 
 import pytest
-from analyzers.dependencies import header_dependents
+from analyzers.dependencies import DependencyScanError, scan_dependencies
 
 
 def test_header_scan_tracks_transitive_macro_includes_and_updates(tmp_path, monkeypatch):
@@ -33,9 +33,11 @@ def test_header_scan_tracks_transitive_macro_includes_and_updates(tmp_path, monk
         }
         for source in (active, idle)
     ]
-    assert header_dependents(entries, {other}, 2) == {active}
+    dependencies = scan_dependencies(entries, 2)
+    assert other.resolve() in dependencies[active.resolve()]
+    assert other.resolve() not in dependencies[idle.resolve()]
     shared.write_text("#pragma once\n")
-    assert header_dependents(entries, {other}, 2) == set()
+    assert other.resolve() not in scan_dependencies(entries, 2)[active.resolve()]
 
 
 @pytest.mark.parametrize(
@@ -45,14 +47,18 @@ def test_header_scan_tracks_transitive_macro_includes_and_updates(tmp_path, monk
 def test_incomplete_dependency_scan_requires_full_analysis(tmp_path, output):
     entries = [{"directory": str(tmp_path), "file": "source.cc"}]
     with (
-        patch("analyzers.dependencies.shutil.which", return_value="clang-scan-deps"),
+        patch("common.proc.shutil.which", return_value="clang-scan-deps"),
         patch(
             "analyzers.dependencies.run_captured", return_value=CompletedProcess([], 0, output, "")
         ),
+        pytest.raises(DependencyScanError, match="incomplete"),
     ):
-        assert header_dependents(entries, {tmp_path / "changed.h"}, 1) is None
+        scan_dependencies(entries, 1)
 
 
 def test_missing_scanner_requires_full_analysis():
-    with patch("analyzers.dependencies.shutil.which", return_value=None):
-        assert header_dependents([], set(), 1) is None
+    with (
+        patch("common.proc.shutil.which", return_value=None),
+        pytest.raises(DependencyScanError, match="clang-scan-deps not found on PATH"),
+    ):
+        scan_dependencies([], 1)

@@ -5,39 +5,18 @@ module with no parent), relative imports fail. Inject the package's parent
 directory onto sys.path so absolute imports resolve in both contexts:
     python3 tools/setup/install_dependencies         (path invocation)
     python3 -m setup.install_dependencies            (module invocation)
+
+It needs only the standard library, so it runs with the host Python before tools/.venv exists.
 """
 
 from __future__ import annotations
 
-import subprocess
 import sys
 from pathlib import Path
 
-_tools = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(_tools))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from qgc_tools.python_env import executable, sync_groups  # noqa: E402
+from setup.install_dependencies._cli import main
 
 if __name__ == "__main__":
-    if not any(
-        arg in sys.argv[1:]
-        for arg in (
-            "--help",
-            "-h",
-            "--list",
-            "--dry-run",
-            "--print-packages",
-            "--print-available-packages",
-            "--validate-extra-packages",
-        )
-    ):
-        environment = sync_groups("scripts")
-        if Path(sys.prefix).resolve() != environment.resolve():
-            raise SystemExit(
-                subprocess.run(
-                    [str(executable("python", environment)), __file__, *sys.argv[1:]]
-                ).returncode
-            )
-    from setup.install_dependencies._cli import main
-
     raise SystemExit(main())

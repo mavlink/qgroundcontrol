@@ -18,9 +18,10 @@ constexpr int kStressIterations = 20;
 /// @param iterations Number of times to run tests (1 = normal, >1 = stress testing)
 /// @param outputFile Optional output file for JUnit XML results (empty = console only)
 /// @param labelFilter Optional label filter (empty = run all matching tests)
+/// @param shard Optional shard of each test's functions to run (default = all functions)
 /// @return 0 on success, negative number indicating failure count
 int runTests(const QStringList& unitTests = QStringList(), int iterations = 1, const QString& outputFile = QString(),
-             TestLabels labelFilter = TestLabels());
+             TestLabels labelFilter = TestLabels(), TestShard shard = {});
 
 /// Runs only the lightweight (pure-logic) subset registered via
 /// UT_REGISTER_TEST_LIGHTWEIGHT. Intended to be called from an entry point that has

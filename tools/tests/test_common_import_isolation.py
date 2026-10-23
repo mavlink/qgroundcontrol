@@ -1,10 +1,9 @@
-"""Regression guard: the `common` facade must not eagerly import submodules.
+"""Regression guard: importing `common` or a CI-critical submodule loads no unrelated siblings.
 
-CI setup scripts run on system Python (pre-venv, possibly 3.10) and under
-sparse checkouts that contain only a subset of `tools/common/*.py`. Importing
-one submodule must therefore NOT drag in siblings — otherwise a missing file
-(ModuleNotFoundError) or a newer-Python-only feature in an unrelated submodule
-(e.g. `enum.StrEnum` in common.logging) breaks scripts that never used it.
+`common/__init__.py` re-exports nothing; scripts import each helper from its defining module.
+CI setup scripts run on the runner's system Python before setup-python and under sparse
+checkouts that contain only a subset of `tools/common/*.py`, so a submodule that drags in a
+sibling (such as `common.logging`) breaks scripts that never used it when that file is absent.
 """
 
 from __future__ import annotations
@@ -17,17 +16,16 @@ import pytest
 from ._helpers import TOOLS_DIR
 
 CI_CRITICAL_SUBMODULES = [
-    "artifact_metadata",
     "aws",
     "gh_actions",
     "build_config",
     "cmake",
-    "cobertura",
+    "coverage_summary",
     "git",
     "proc",
-    "env",
     "format",
     "io",
+    "paths",
     "tool_version",
     "xml",
 ]

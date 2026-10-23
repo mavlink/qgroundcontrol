@@ -1,8 +1,7 @@
 # Repo convention is version-tag pinning (@v2, @v6, ...) for all actions, not SHA pins.
 # ref-pin keeps the floating-ref protection (rejects @main / branch refs) while allowing tags.
 rules:
-  # QGC still uses checkout-backed ./ references for its local action suite.
-  # Treat the new $/ recommendation as a future repository-wide migration.
+  # Runners cannot load $/ actions from a fork PR's merge commit, so local actions stay checkout-backed ./ paths.
   self-repository:
     disable: true
   unpinned-uses:

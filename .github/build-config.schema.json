@@ -10,6 +10,21 @@
     "build",
     "gstreamer"
   ],
+  "definitions": {
+    "github_repository": {
+      "type": "string",
+      "description": "GitHub owner/name whose v<version> release assets are downloaded; Renovate tracks its releases",
+      "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+    },
+    "release_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
   "properties": {
     "$schema": {
       "type": "string",
@@ -124,6 +139,8 @@
       "type": "object",
       "required": [
         "cmake_minimum_version",
+        "cmake_version",
+        "ninja_version",
         "platform_workflows"
       ],
       "additionalProperties": false,
@@ -132,6 +149,16 @@
           "type": "string",
           "pattern": "^[0-9]+\\.[0-9]+$",
           "description": "Minimum required CMake version"
+        },
+        "cmake_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "description": "CMake version CI build jobs install with lukka/get-cmake (must be in its release catalog)"
+        },
+        "ninja_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "description": "Ninja version CI build jobs install with lukka/get-cmake (must be in its release catalog)"
         },
         "platform_workflows": {
           "type": "string",
@@ -288,7 +315,9 @@
       "required": [
         "llvm_version",
         "clazy_revision",
-        "clazy_sha256"
+        "clazy_sha256",
+        "clang_tidy_version",
+        "clang_tidy_sha256"
       ],
       "properties": {
         "llvm_version": {
@@ -302,6 +331,316 @@
         "clazy_sha256": {
           "type": "string",
           "pattern": "^[a-f0-9]{64}$"
+        },
+        "clang_tidy_version": {
+          "description": "PyPI clang-tidy wheel version; clazy and clang-scan-deps stay on llvm_version",
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(\\.[0-9]+)?$"
+        },
+        "clang_tidy_sha256": {
+          "description": "SHA-256 of the clang-tidy manylinux x86_64 wheel",
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "tools": {
+      "type": "object",
+      "description": "Prebuilt tools that tools/ci scripts and build_profile.py download and verify",
+      "required": [
+        "ccache",
+        "mold",
+        "sccache",
+        "grype",
+        "packer",
+        "roc",
+        "clang_build_analyzer",
+        "bloaty"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "ccache": {
+          "type": "object",
+          "description": "ccache release that ccache_helper.py installs on every runner",
+          "required": [
+            "repository",
+            "version",
+            "sha256"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "repository": {
+              "$ref": "#/definitions/github_repository"
+            },
+            "version": {
+              "$ref": "#/definitions/release_version"
+            },
+            "sha256": {
+              "type": "object",
+              "description": "SHA-256 of each platform's release archive; update together with version",
+              "required": [
+                "linux-x86_64-glibc",
+                "linux-aarch64-glibc",
+                "windows-x86_64",
+                "windows-aarch64",
+                "darwin"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "linux-x86_64-glibc": {
+                  "$ref": "#/definitions/sha256"
+                },
+                "linux-aarch64-glibc": {
+                  "$ref": "#/definitions/sha256"
+                },
+                "windows-x86_64": {
+                  "$ref": "#/definitions/sha256"
+                },
+                "windows-aarch64": {
+                  "$ref": "#/definitions/sha256"
+                },
+                "darwin": {
+                  "$ref": "#/definitions/sha256"
+                }
+              }
+            }
+          }
+        },
+        "mold": {
+          "type": "object",
+          "description": "mold release that ccache_helper.py installs on Linux; mold publishes no digests, so they are computed from its release tarballs",
+          "required": [
+            "repository",
+            "version",
+            "sha256"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "repository": {
+              "$ref": "#/definitions/github_repository"
+            },
+            "version": {
+              "$ref": "#/definitions/release_version"
+            },
+            "sha256": {
+              "type": "object",
+              "description": "SHA-256 of each platform's release archive; update together with version",
+              "required": [
+                "x86_64",
+                "aarch64"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "x86_64": {
+                  "$ref": "#/definitions/sha256"
+                },
+                "aarch64": {
+                  "$ref": "#/definitions/sha256"
+                }
+              }
+            }
+          }
+        },
+        "sccache": {
+          "type": "object",
+          "description": "sccache release for the Linux sccache pilot (ccache_helper.py)",
+          "required": [
+            "repository",
+            "version",
+            "sha256"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "repository": {
+              "$ref": "#/definitions/github_repository"
+            },
+            "version": {
+              "$ref": "#/definitions/release_version"
+            },
+            "sha256": {
+              "type": "object",
+              "description": "SHA-256 of each platform's release archive; update together with version",
+              "required": [
+                "x86_64",
+                "aarch64"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "x86_64": {
+                  "$ref": "#/definitions/sha256"
+                },
+                "aarch64": {
+                  "$ref": "#/definitions/sha256"
+                }
+              }
+            }
+          }
+        },
+        "grype": {
+          "type": "object",
+          "description": "Grype release that install_grype.py installs for the Docker SBOM scans",
+          "required": [
+            "repository",
+            "version",
+            "sha256"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "repository": {
+              "$ref": "#/definitions/github_repository"
+            },
+            "version": {
+              "$ref": "#/definitions/release_version"
+            },
+            "sha256": {
+              "type": "object",
+              "description": "SHA-256 of each platform's release archive; update together with version",
+              "required": [
+                "x86_64",
+                "aarch64"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "x86_64": {
+                  "$ref": "#/definitions/sha256"
+                },
+                "aarch64": {
+                  "$ref": "#/definitions/sha256"
+                }
+              }
+            }
+          }
+        },
+        "packer": {
+          "type": "object",
+          "description": "Packer that the packer-validate hook downloads to validate the runner image template",
+          "required": [
+            "repository",
+            "version",
+            "sha256"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "repository": {
+              "$ref": "#/definitions/github_repository"
+            },
+            "version": {
+              "$ref": "#/definitions/release_version"
+            },
+            "sha256": {
+              "type": "object",
+              "description": "SHA-256 of each platform's releases.hashicorp.com zip; update together with version",
+              "required": [
+                "linux-x86_64",
+                "linux-aarch64",
+                "darwin-x86_64",
+                "darwin-aarch64"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "linux-x86_64": {
+                  "$ref": "#/definitions/sha256"
+                },
+                "linux-aarch64": {
+                  "$ref": "#/definitions/sha256"
+                },
+                "darwin-x86_64": {
+                  "$ref": "#/definitions/sha256"
+                },
+                "darwin-aarch64": {
+                  "$ref": "#/definitions/sha256"
+                }
+              }
+            }
+          }
+        },
+        "roc": {
+          "type": "object",
+          "description": "RunsOn CLI that the runs-on-lint hook downloads to lint .github/runs-on.yml",
+          "required": [
+            "repository",
+            "version",
+            "sha256"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "repository": {
+              "$ref": "#/definitions/github_repository"
+            },
+            "version": {
+              "$ref": "#/definitions/release_version"
+            },
+            "sha256": {
+              "type": "object",
+              "description": "SHA-256 of each platform's release binary; update together with version",
+              "required": [
+                "linux-x86_64",
+                "linux-aarch64",
+                "darwin-x86_64",
+                "darwin-aarch64"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "linux-x86_64": {
+                  "$ref": "#/definitions/sha256"
+                },
+                "linux-aarch64": {
+                  "$ref": "#/definitions/sha256"
+                },
+                "darwin-x86_64": {
+                  "$ref": "#/definitions/sha256"
+                },
+                "darwin-aarch64": {
+                  "$ref": "#/definitions/sha256"
+                }
+              }
+            }
+          }
+        },
+        "clang_build_analyzer": {
+          "type": "object",
+          "description": "ClangBuildAnalyzer release that build_profile.py installs for build-profile.yml",
+          "required": [
+            "repository",
+            "version",
+            "sha256"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "repository": {
+              "$ref": "#/definitions/github_repository"
+            },
+            "version": {
+              "$ref": "#/definitions/release_version"
+            },
+            "sha256": {
+              "type": "object",
+              "description": "SHA-256 of the ClangBuildAnalyzer-linux (x86_64) release binary, which ships no digests; update together with version",
+              "required": [
+                "linux-x86_64"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "linux-x86_64": {
+                  "$ref": "#/definitions/sha256"
+                }
+              }
+            }
+          }
+        },
+        "bloaty": {
+          "type": "object",
+          "description": "Bloaty commit that size_analysis.py builds from source",
+          "required": [
+            "revision"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "revision": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{40}$"
+            }
+          }
         }
       }
     }

@@ -16,6 +16,7 @@ permissions:
 
 jobs:
   update-translations:
+    if: github.repository_owner == 'mavlink'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -29,25 +30,28 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Get build config
-        id: config
-        uses: ./.github/actions/build-config
+      - name: Setup Python
+        uses: ./.github/actions/setup-python
+        with:
+          groups: qt
 
+      # lupdate ships in qttools and links QtQml, QtNetwork and ICU.
       - name: Install Qt for Linux
         uses: ./.github/actions/qt-install
         with:
-          version: ${{ steps.config.outputs.qt_version }}
           host: linux
           arch: linux_gcc_64
+          archives: qtbase qttools qtdeclarative icu
 
       - name: Update translation files
         run: python3 tools/translations/qgc_lupdate.py
 
+      # PRs opened with GITHUB_TOKEN start no workflows, so their required checks would never report.
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v8
         with:
           branch: update-translations
-          token: ${{ secrets.LUPDATE_PAT || github.token }}
+          token: ${{ secrets.PX4BUILDBOT_ACCESSTOKEN || github.token }}
           add-paths: translations/*.ts
           title: "chore: update translations"
           commit-message: "chore: update translations"

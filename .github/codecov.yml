@@ -5,8 +5,6 @@ codecov:
     wait_for_ci: false
 
 coverage:
-  precision: 2
-  round: down
   range: "30...90"
 
   status:
@@ -14,36 +12,24 @@ coverage:
       default:
         target: 30%
         threshold: 2%
-        base: auto
         if_ci_failed: success
         informational: true
     patch:
       default:
         target: 30%
         threshold: 5%
-        base: auto
         if_ci_failed: success
         informational: true
 
 comment:
   layout: "reach,diff,flags,tree,footer"
-  behavior: default
-  require_changes: false
   require_base: false
   require_head: false
 
+# gcovr reports only src/ and test/ (cmake/modules/Coverage.cmake)
 ignore:
   - "test/**/*"
-  - "tools/**/*"
-  - "deploy/**/*"
-  - "custom/**/*"
-  - "libs/**/*"
-  - "*.qml"
-  - "*.js"
-  - "android/**/*"
 
 flags:
-  debug:
-    paths:
-      - src/
+  unittests:
     carryforward: true

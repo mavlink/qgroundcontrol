@@ -1,42 +1,47 @@
 name: Save build caches
 description: Preserve successful compilation before packaging, tests, or scanners can fail
+inputs:
+  docker-report:
+    description: Docker build report holding the container's ccache statistics
+    required: false
+    default: ''
 runs:
   using: composite
   steps:
-    - name: Pack compiler cache snapshot
-      id: pack
-      if: env.QGC_BUILD_CACHE_ARTIFACT == 'true' && env.QGC_SAVE_BUILD_CACHE == 'true' && env.QGC_BUILD_CACHE_SAVED != 'true'
+    # Pull requests skip a cache whose build added fewer entries than cache_plan.py's
+    # PR_SAVE_MIN_MISSES; a failed decision saves. An empty key skips that cache's save.
+    - name: Plan build cache save
+      id: plan
+      if: env.QGC_SAVE_BUILD_CACHE == 'true' && env.QGC_BUILD_CACHE_SAVED != 'true'
       shell: bash
-      run: python3 .github/scripts/build_cache_artifact.py pack
+      env:
+        INPUT_DOCKER_REPORT: ${{ inputs.docker-report }}
+      run: python3 tools/ci/cache/ccache_helper.py save-plan
 
     - name: Retain compiler cache snapshot
       id: artifact
-      if: steps.pack.outputs.path != ''
+      if: steps.plan.outputs.artifact_path != ''
       continue-on-error: true
       uses: actions/upload-artifact@v7
       with:
         name: ${{ env.QGC_BUILD_CACHE_ARTIFACT_NAME }}
-        path: ${{ steps.pack.outputs.path }}
+        path: ${{ steps.plan.outputs.artifact_path }}
         compression-level: 0
         retention-days: 1
         overwrite: true
         if-no-files-found: error
 
+    # A failed snapshot upload falls back to the dependency cache.
     - name: Save compiler cache
-      if: steps.artifact.outcome != 'success' && env.QGC_SAVE_BUILD_CACHE == 'true' && env.QGC_CCACHE_KEY != '' && env.QGC_BUILD_CACHE_SAVED != 'true'
+      if: steps.artifact.outcome != 'success' && steps.plan.outputs.ccache_key != ''
       uses: actions/cache/save@v6
       with:
-        path: .ccache
-        key: ${{ env.QGC_CCACHE_KEY }}
+        path: .cache/ccache
+        key: ${{ steps.plan.outputs.ccache_key }}
 
     - name: Save moc cache
-      if: steps.artifact.outcome != 'success' && env.QGC_SAVE_BUILD_CACHE == 'true' && env.QGC_MOCCACHE_KEY != '' && env.QGC_BUILD_CACHE_SAVED != 'true'
+      if: steps.artifact.outcome != 'success' && steps.plan.outputs.moccache_key != ''
       uses: actions/cache/save@v6
       with:
         path: .cache/moccache
-        key: ${{ env.QGC_MOCCACHE_KEY }}
-
-    - name: Mark build caches saved
-      if: env.QGC_SAVE_BUILD_CACHE == 'true'
-      shell: bash
-      run: echo "QGC_BUILD_CACHE_SAVED=true" >> "$GITHUB_ENV"
+        key: ${{ steps.plan.outputs.moccache_key }}

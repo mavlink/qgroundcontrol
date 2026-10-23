@@ -10,11 +10,8 @@ on:
       - '.clang*'
       - '.gitattributes'
       - '.editorconfig'
-      - '.releaserc.json'
-      - '.nvmrc'
       - '.pre-commit-config.yaml'
       - '.qmllint.ini'
-      - '.lychee.toml'
       - '.vale.ini'
       - 'ruff.toml'
       - 'pyrightconfig.json'
@@ -26,7 +23,9 @@ on:
       - 'deploy/**'
       - 'src/Settings/**'
       - 'src/AppSettings/pages/**'
+      - 'src/**/*.VehicleConfig.json'
       - 'src/Vehicle/FactGroups/VehicleGPSFactGroup.h'
+      - 'docs/.vitepress/config.mjs'
   push:
     branches:
       - master
@@ -42,76 +41,6 @@ permissions:
   contents: read
 
 jobs:
-  lint-workflows:
-    name: Lint Workflows
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    # checks: write scoped here: only actionlint reports via github-pr-check.
-    permissions:
-      contents: read
-      checks: write
-    steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@v2
-        with:
-          egress-policy: audit
-
-      - name: Checkout
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 1
-          sparse-checkout: |
-            .github/.actionlint.yml
-            .github/workflows
-            .github/actions
-          sparse-checkout-cone-mode: false
-          persist-credentials: false
-
-      - name: Run actionlint
-        uses: reviewdog/action-actionlint@v1
-        with:
-          actionlint_flags: -config-file .github/.actionlint.yml
-          reporter: github-pr-check
-          filter_mode: added
-          fail_level: error
-          level: warning
-
-  validate-runner-images:
-    name: Validate Runner Images
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@v2
-        with:
-          egress-policy: audit
-
-      - name: Checkout
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 1
-          sparse-checkout: .github/runner-images
-          persist-credentials: false
-
-      - name: Setup Packer
-        uses: hashicorp/setup-packer@v3
-        with:
-          version: '1.16.0'
-
-      - name: Validate Packer template
-        working-directory: .github/runner-images
-        env:
-          PKR_VAR_aws_region: us-west-2
-          PKR_VAR_subnet_id: subnet-00000000000000000
-          PKR_VAR_source_repository: https://github.com/mavlink/qgroundcontrol.git
-          PKR_VAR_source_ref: '0000000000000000000000000000000000000000'
-          PKR_VAR_qt_version: 0.0.0
-          PKR_VAR_qt_modules: ''
-        run: |
-          packer fmt -check qgc-ubuntu24-x64.pkr.hcl
-          packer init qgc-ubuntu24-x64.pkr.hcl
-          packer validate qgc-ubuntu24-x64.pkr.hcl
-
   test-ci-scripts:
     name: Test CI Scripts (py${{ matrix.python-version }})
     runs-on: ubuntu-latest
@@ -119,7 +48,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.10', '3.12']
+        include:
+          # release provides git-cliff for test_release_notes.py.
+          - python-version: '3.10'
+            groups: test,release
+          # One leg installs numpy and rasterio (terrain) and pymavlink (simulation) so
+          # test_terrain_pipeline.py and test_mock_vehicle.py run instead of skipping.
+          - python-version: '3.12'
+            groups: test,terrain,simulation,release
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@v2
@@ -132,17 +68,19 @@ jobs:
           fetch-depth: 1
           sparse-checkout: |
             .clusterfuzzlite
+            .clang-tidy
             .github
             .vscode
             .gitattributes
-            .releaserc.json
             .pre-commit-config.yaml
             CMakeLists.txt
             CMakePresets.json
             cmake
+            docs/.vitepress/config.mjs
             justfile
             src/AppSettings/pages
             src/Settings
+            src/**/*.VehicleConfig.json
             src/Vehicle/FactGroups/VehicleGPSFactGroup.h
             tools
             deploy
@@ -152,14 +90,11 @@ jobs:
       - name: Setup Python
         uses: ./.github/actions/setup-python
         with:
-          groups: scripts,test
+          groups: ${{ matrix.groups }}
           python-version: ${{ matrix.python-version }}
 
-      - name: Python syntax smoke test
-        run: python3 -m compileall .github/scripts tools/*.py tools/setup tools/common tools/qgc_tools tools/generators tools/analyzers tools/simulation tools/translations
-
       - name: Run CI script tests
-        run: pytest -q tools/tests .github/scripts/tests
+        run: pytest -q -n auto tools/tests
 
   test-tools-windows:
     name: Test Python Tools (Windows)
@@ -176,9 +111,11 @@ jobs:
         with:
           fetch-depth: 1
           sparse-checkout: |
-            .github/actions/setup-python
+            .github
             cmake/Helpers.cmake
             cmake/ccache-launcher.cmd.in
+            deploy/docker/Dockerfile
+            src/**/*.VehicleConfig.json
             tools
           sparse-checkout-cone-mode: false
           persist-credentials: false
@@ -189,47 +126,8 @@ jobs:
           groups: test
           python-version: '3.12'
 
-      - name: Run environment, process, download, and cache tests
-        run: >-
-          pytest -q tools/tests/test_moccache.py tools/tests/test_install_python.py
-          tools/tests/test_deps.py tools/tests/test_tool_version.py tools/tests/test_net.py
-          tools/tests/test_proc.py tools/tests/test_install_qt.py tools/tests/test_ccache_launcher.py
-          tools/tests/test_gh_actions.py
-
-  lint-python:
-    name: Lint Python
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@v2
-        with:
-          egress-policy: audit
-      - name: Checkout
-        uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-      - name: Setup Python
-        uses: ./.github/actions/setup-python
-        with:
-          groups: dev
-          python-version: '3.10'
-      - name: Validate configuration
-        run: python tools/validate_configs.py
-      - name: Setup Node
-        uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-      - name: Validate release rules
-        run: |
-          npm ci --prefix tools/release --ignore-scripts
-          npm test --prefix tools/release
-      - name: Ruff
-        run: |
-          ruff check tools .github/scripts .github/runner-images .clusterfuzzlite deploy test/ADSB/ADSB_Simulator.py
-          ruff format --check tools .github/scripts .github/runner-images .clusterfuzzlite deploy test/ADSB/ADSB_Simulator.py
-      - name: Pyright
-        run: pyright
-      - name: Import boundaries
-        working-directory: tools
-        run: lint-imports --config pyproject.toml
+      # Collection imports every test module and expands every parametrization, so the checkout
+      # needs .github and the VehicleConfig pages test_config_qml_generator.py enumerates;
+      # test_read_config.py reads the Dockerfile.
+      - name: Run Windows-marked tests
+        run: pytest -q -n 2 --durations=15 -m windows tools/tests

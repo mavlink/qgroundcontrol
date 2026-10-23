@@ -11,16 +11,11 @@ import sys
 from pathlib import Path
 from xml.etree.ElementTree import Element
 
-_tools_dir = Path(__file__).resolve().parents[1]
-if str(_tools_dir) not in sys.path:
-    sys.path.insert(0, str(_tools_dir))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from _bootstrap import ensure_tools_dir  # noqa: E402
-
-ensure_tools_dir(__file__)
-
-from common.io import write_text_if_changed  # noqa: E402
-from common.xml import xml_parse  # noqa: E402
+import _bootstrap as _bootstrap
+from common.io import write_text_if_changed
+from common.xml import xml_parse
 
 
 def _required_attribute(element: Element, name: str, source: Path) -> str:

@@ -7,6 +7,7 @@
 #include "CameraMetaData.h"
 #include "Fixtures/RAIIFixtures.h"
 #include "MAVLinkLib.h"
+#include "MockLink.h"
 #include "QGCCameraManager.h"
 #include "Vehicle.h"
 

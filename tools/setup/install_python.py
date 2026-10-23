@@ -4,20 +4,38 @@
 from __future__ import annotations
 
 import argparse
+import filecmp
+import shutil
 import subprocess
 import sys
 from pathlib import Path
 
-_tools_dir = Path(__file__).resolve().parents[1]
-if str(_tools_dir) not in sys.path:
-    sys.path.insert(0, str(_tools_dir))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from common.gh_actions import append_github_path, is_ci
 from qgc_tools.python_env import (
     check_requirements,
+    executable,
     package_groups,
     requirements_for,
     sync_groups,
 )
+
+
+def add_python3_alias(environment: Path) -> Path:
+    """Copy a Windows environment's Scripts/python.exe to python3.exe, like POSIX bin/python3.
+
+    Bash steps run `python3`, which Git Bash resolves to python3.exe; without one in the venv they
+    fall through to the runner's interpreter. The venv's python.exe (CPython's venv launcher, or
+    the interpreter itself beside its DLLs) finds pyvenv.cfg relative to its own path, so a copy in
+    the same directory starts the same environment.
+    """
+    scripts = environment / "Scripts"
+    python, alias = scripts / "python.exe", scripts / "python3.exe"
+    # A rebuilt environment can replace python.exe; an identical copy may be the running process.
+    if not alias.is_file() or not filecmp.cmp(python, alias, shallow=False):
+        shutil.copy2(python, alias)
+    return alias
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -51,10 +69,14 @@ def main(argv: list[str] | None = None) -> int:
             python=args.python,
         )
         if not args.dry_run:
+            if sys.platform == "win32":
+                add_python3_alias(target)
             activate = target / (
                 "Scripts/activate.bat" if sys.platform == "win32" else "bin/activate"
             )
             print(f"Python environment: {target}\nActivate with: {activate}")
+            if is_ci():
+                append_github_path(str(executable("python", target).parent))
         return 0
     except (OSError, ValueError, subprocess.CalledProcessError) as error:
         print(f"Python setup failed: {error}", file=sys.stderr)

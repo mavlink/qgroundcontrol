@@ -40,20 +40,29 @@ void PX4ParameterMetaData::parseParameterJson(const QJsonObject &json)
             continue;
         }
 
-        if (_cachedMetaData.contains(name)) {
+        if (_paramJsonByName.contains(name)) {
             qCWarning(PX4ParameterMetaDataLog) << "Duplicate parameter:" << name;
-            _cachedMetaData.take(name)->deleteLater();
         }
-
-        FactMetaData *metaData = FactMetaData::createFromJsonObject(param, kEmptyDefines, this);
-        if (metaData->name().isEmpty()) {
-            qCWarning(PX4ParameterMetaDataLog) << "Skipping invalid parameter metadata:" << name;
-            metaData->deleteLater();
-            continue;
-        }
-        _postProcessMetaData(name, metaData); // applied here; getMetaDataForFact() hits cache so won't re-apply
-        _cachedMetaData[name] = metaData;
+        _paramJsonByName.insert(name, param);
     }
+}
+
+FactMetaData* PX4ParameterMetaData::_lookupMetaData(const QString& name, FactMetaData::ValueType_t type)
+{
+    Q_UNUSED(type)
+
+    const QJsonObject param = _paramJsonByName.take(name);
+    if (param.isEmpty()) {
+        return nullptr;
+    }
+
+    FactMetaData* metaData = FactMetaData::createFromJsonObject(param, kEmptyDefines, this);
+    if (metaData->name().isEmpty()) {
+        qCWarning(PX4ParameterMetaDataLog) << "Skipping invalid parameter metadata:" << name;
+        delete metaData;
+        return nullptr;
+    }
+    return metaData;
 }
 
 void PX4ParameterMetaData::_postProcessMetaData(const QString &name, FactMetaData *metaData)

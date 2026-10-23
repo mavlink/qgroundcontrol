@@ -4,14 +4,15 @@
 
 To build this sample custom version:
 
-1. Clean your build directory of any previous build.
-2. Rename `custom-example` to `custom`.
-3. `cd custom` and build QGC.
+1. Start from a clean build directory (`just clean`).
+2. Rename `custom-example` to `custom` (the default `QGC_CUSTOM_DIR`), or keep the name and pass
+   `-DQGC_CUSTOM_DIR=custom-example` when configuring.
+3. Configure and build QGC from the repository root as usual.
 
 ![Custom Build Screenshot](README.jpg)
 
-See the [QGC Dev Guide](https://dev.qgroundcontrol.com/en/custom_build/custom_build.html) for what a
-custom build is and how to create your own.
+See the [QGC Dev Guide](https://docs.qgroundcontrol.com/master/en/qgc-dev-guide/custom_build/custom_build.html)
+for what a custom build is and how to create your own.
 
 This example demonstrates:
 

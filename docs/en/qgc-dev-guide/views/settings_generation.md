@@ -30,7 +30,7 @@ Generation is configured in [src/AppSettings/CMakeLists.txt](https://github.com/
   - Generated page QML files (e.g. `GeneralSettings.qml`, `FlyViewSettings.qml`)
   - `SettingsPagesModel.qml`
 
-The generator entry point is [tools/generators/settings_qml/generate_pages.py](https://github.com/mavlink/qgroundcontrol/blob/master/tools/generators/settings_qml/generate_pages.py), with most logic in [tools/generators/settings_qml/page_generator.py](https://github.com/mavlink/qgroundcontrol/blob/master/tools/generators/settings_qml/page_generator.py).
+The generator entry point is [tools/generators/settings_qml/generate_pages.py](https://github.com/mavlink/qgroundcontrol/blob/master/tools/generators/settings_qml/generate_pages.py); `model.py` loads page definitions, `metadata.py` discovers fact metadata, and `emit.py` renders QML.
 
 ## How Controls Are Chosen
 
@@ -77,9 +77,7 @@ Search terms are derived from:
 2. Add a new entry to `src/AppSettings/pages/SettingsPages.json`:
    - `name`, `icon`, `qml` (output filename), `pageDefinition` (your new JSON file)
    - Optional `visible` expression
-3. Update the generated outputs list in [src/AppSettings/CMakeLists.txt](https://github.com/mavlink/qgroundcontrol/blob/master/src/AppSettings/CMakeLists.txt):
-   - Add your new QML filename to `_generated_qml_names`.
-4. Build QGC to generate and include the new page.
+3. Build QGC to generate and include the new page. CMake takes the output list from the generator's `--list-outputs` mode, so no CMake change is needed.
 
 ## Custom Build Settings Pages
 
@@ -95,13 +93,12 @@ Custom builds (`QGC_CUSTOM_DIR`) can add, replace, reposition, or remove generat
    - Create a `SettingsGroup` subclass for it.
    - Override `QGCCorePlugin::registerCustomSettings` and call `SettingsManager::registerCustomSettingsGroup("<accessor>", new MySettings())` (the manager takes ownership). The accessor must be the camelCase JSON stem plus `Settings` (e.g. `Custom.SettingsGroup.json` → `customSettings`) so generated pages resolve `QGroundControl.settingsManager.<accessor>.<fact>`.
 
-CMake wires this automatically when the custom directories exist; the generated output list is computed by the generator's `--list-outputs` mode.
+CMake wires this automatically when the custom directories exist, and the generator's `--list-outputs` mode includes the overlay's pages in the output list.
 
 The `custom-example` build in the repo includes a complete working example of all of the above: a page list overlay adding a custom settings page, its page definition, the custom settings group (fact metadata and `SettingsGroup` subclass), and the plugin registration override.
 
 ## Important Notes
 
 - If a page in `SettingsPages.json` has no `pageDefinition`, it is treated as hand-written QML/URL content and not generated.
-- The CMake `_generated_qml_names` list is explicit. If you forget to add a new output filename, build integration will be incomplete.
 - The `setting` path in `*.SettingsUI.json` must match a valid `QGroundControl.settingsManager.<group>.<fact>` accessor.
 - Fact labels should be present in metadata. Missing labels are logged at runtime by `SettingsGroup`.

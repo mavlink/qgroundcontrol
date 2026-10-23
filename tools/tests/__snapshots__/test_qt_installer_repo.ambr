@@ -1,0 +1,181 @@
+# serializer version: 1
+# name: test_resolved_archives[linux-android-android_arm64_v8a]
+  list([
+    '6.12.0/android_arm64_v8a <- qt.qt6.6120.android_arm64_v8a/qtbase-MacOS-MacOS_15-Clang-Android-Android_ANY-ARM64.7z',
+    '6.12.0/android_arm64_v8a <- qt.qt6.6120.android_arm64_v8a/qtsvg-MacOS-MacOS_15-Clang-Android-Android_ANY-ARM64.7z',
+    '6.12.0/android_arm64_v8a <- qt.qt6.6120.android_arm64_v8a/qtdeclarative-MacOS-MacOS_15-Clang-Android-Android_ANY-ARM64.7z',
+    '6.12.0/android_arm64_v8a <- qt.qt6.6120.android_arm64_v8a/qtdoc-MacOS-MacOS_15-Clang-Android-Android_ANY-ARM64.7z',
+    '6.12.0/android_arm64_v8a <- qt.qt6.6120.android_arm64_v8a/qttools-MacOS-MacOS_15-Clang-Android-Android_ANY-ARM64.7z',
+    '6.12.0/android_arm64_v8a <- qt.qt6.6120.android_arm64_v8a/qttranslations-MacOS-MacOS_15-Clang-Android-Android_ANY-ARM64.7z',
+    '6.12.0/android_arm64_v8a <- qt.qt6.6120.addons.qtlocation.android_arm64_v8a/qtlocation-MacOS-MacOS_15-Clang-Android-Android_ANY-ARM64.7z',
+    '6.12.0/android_arm64_v8a <- qt.qt6.6120.addons.qtquick3d.android_arm64_v8a/qtquick3d-MacOS-MacOS_15-Clang-Android-Android_ANY-ARM64.7z',
+    '6.12.0/android_arm64_v8a <- qt.qt6.6120.addons.qtshadertools.android_arm64_v8a/qtshadertools-MacOS-MacOS_15-Clang-Android-Android_ANY-ARM64.7z',
+    '6.12.0/android_arm64_v8a <- qt.qt6.6120.addons.qthttpserver.android_arm64_v8a/qthttpserver-MacOS-MacOS_15-Clang-Android-Android_ANY-ARM64.7z',
+    '6.12.0/android_arm64_v8a <- qt.qt6.6120.addons.qtwebsockets.android_arm64_v8a/qtwebsockets-MacOS-MacOS_15-Clang-Android-Android_ANY-ARM64.7z',
+    '6.12.0/android_arm64_v8a <- qt.qt6.6120.addons.qtserialport.android_arm64_v8a/qtserialport-MacOS-MacOS_15-Clang-Android-Android_ANY-ARM64.7z',
+  ])
+# ---
+# name: test_resolved_archives[linux-android-android_armv7]
+  list([
+    '6.12.0/android_armv7 <- qt.qt6.6120.android_armv7/qtbase-Windows-Windows_11_24H2-Clang-Android-Android_ANY-ARMv7.7z',
+    '6.12.0/android_armv7 <- qt.qt6.6120.android_armv7/qtsvg-Windows-Windows_11_24H2-Clang-Android-Android_ANY-ARMv7.7z',
+    '6.12.0/android_armv7 <- qt.qt6.6120.android_armv7/qtdeclarative-Windows-Windows_11_24H2-Clang-Android-Android_ANY-ARMv7.7z',
+    '6.12.0/android_armv7 <- qt.qt6.6120.android_armv7/qtdoc-Windows-Windows_11_24H2-Clang-Android-Android_ANY-ARMv7.7z',
+    '6.12.0/android_armv7 <- qt.qt6.6120.android_armv7/qttools-Windows-Windows_11_24H2-Clang-Android-Android_ANY-ARMv7.7z',
+    '6.12.0/android_armv7 <- qt.qt6.6120.android_armv7/qttranslations-Windows-Windows_11_24H2-Clang-Android-Android_ANY-ARMv7.7z',
+    '6.12.0/android_armv7 <- qt.qt6.6120.addons.qtlocation.android_armv7/qtlocation-Windows-Windows_11_24H2-Clang-Android-Android_ANY-ARMv7.7z',
+    '6.12.0/android_armv7 <- qt.qt6.6120.addons.qtquick3d.android_armv7/qtquick3d-Windows-Windows_11_24H2-Clang-Android-Android_ANY-ARMv7.7z',
+    '6.12.0/android_armv7 <- qt.qt6.6120.addons.qtshadertools.android_armv7/qtshadertools-Windows-Windows_11_24H2-Clang-Android-Android_ANY-ARMv7.7z',
+    '6.12.0/android_armv7 <- qt.qt6.6120.addons.qthttpserver.android_armv7/qthttpserver-Windows-Windows_11_24H2-Clang-Android-Android_ANY-ARMv7.7z',
+    '6.12.0/android_armv7 <- qt.qt6.6120.addons.qtwebsockets.android_armv7/qtwebsockets-Windows-Windows_11_24H2-Clang-Android-Android_ANY-ARMv7.7z',
+    '6.12.0/android_armv7 <- qt.qt6.6120.addons.qtserialport.android_armv7/qtserialport-Windows-Windows_11_24H2-Clang-Android-Android_ANY-ARMv7.7z',
+  ])
+# ---
+# name: test_resolved_archives[linux-android-android_x86_64]
+  list([
+    '6.12.0/android_x86_64 <- qt.qt6.6120.android_x86_64/qtbase-Linux-RHEL_9_6-Clang-Android-Android_ANY-X86_64.7z',
+    '6.12.0/android_x86_64 <- qt.qt6.6120.android_x86_64/qtsvg-Linux-RHEL_9_6-Clang-Android-Android_ANY-X86_64.7z',
+    '6.12.0/android_x86_64 <- qt.qt6.6120.android_x86_64/qtdeclarative-Linux-RHEL_9_6-Clang-Android-Android_ANY-X86_64.7z',
+    '6.12.0/android_x86_64 <- qt.qt6.6120.android_x86_64/qtdoc-Linux-RHEL_9_6-Clang-Android-Android_ANY-X86_64.7z',
+    '6.12.0/android_x86_64 <- qt.qt6.6120.android_x86_64/qttools-Linux-RHEL_9_6-Clang-Android-Android_ANY-X86_64.7z',
+    '6.12.0/android_x86_64 <- qt.qt6.6120.android_x86_64/qttranslations-Linux-RHEL_9_6-Clang-Android-Android_ANY-X86_64.7z',
+    '6.12.0/android_x86_64 <- qt.qt6.6120.addons.qtlocation.android_x86_64/qtlocation-Linux-RHEL_9_6-Clang-Android-Android_ANY-X86_64.7z',
+    '6.12.0/android_x86_64 <- qt.qt6.6120.addons.qtquick3d.android_x86_64/qtquick3d-Linux-RHEL_9_6-Clang-Android-Android_ANY-X86_64.7z',
+    '6.12.0/android_x86_64 <- qt.qt6.6120.addons.qtshadertools.android_x86_64/qtshadertools-Linux-RHEL_9_6-Clang-Android-Android_ANY-X86_64.7z',
+    '6.12.0/android_x86_64 <- qt.qt6.6120.addons.qthttpserver.android_x86_64/qthttpserver-Linux-RHEL_9_6-Clang-Android-Android_ANY-X86_64.7z',
+    '6.12.0/android_x86_64 <- qt.qt6.6120.addons.qtwebsockets.android_x86_64/qtwebsockets-Linux-RHEL_9_6-Clang-Android-Android_ANY-X86_64.7z',
+    '6.12.0/android_x86_64 <- qt.qt6.6120.addons.qtserialport.android_x86_64/qtserialport-Linux-RHEL_9_6-Clang-Android-Android_ANY-X86_64.7z',
+  ])
+# ---
+# name: test_resolved_archives[linux-desktop-linux_gcc_64]
+  list([
+    '6.12.0/gcc_64 <- qt.qt6.6120.linux_gcc_64/qtbase-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z',
+    '6.12.0/gcc_64 <- qt.qt6.6120.linux_gcc_64/qtsvg-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z',
+    '6.12.0/gcc_64 <- qt.qt6.6120.linux_gcc_64/qtdeclarative-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z',
+    '6.12.0/gcc_64 <- qt.qt6.6120.linux_gcc_64/qtdoc-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z',
+    '6.12.0/gcc_64 <- qt.qt6.6120.linux_gcc_64/qttools-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z',
+    '6.12.0/gcc_64 <- qt.qt6.6120.linux_gcc_64/qttranslations-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z',
+    '6.12.0/gcc_64 <- qt.qt6.6120.linux_gcc_64/qtwayland-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z',
+    '6.12.0/gcc_64/lib <- qt.qt6.6120.linux_gcc_64/icu-linux-Rhel8.6-x86_64.7z',
+    '6.12.0/gcc_64 <- qt.qt6.6120.addons.qtlocation.linux_gcc_64/qtlocation-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z',
+    '6.12.0/gcc_64 <- qt.qt6.6120.addons.qtquick3d.linux_gcc_64/qtquick3d-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z',
+    '6.12.0/gcc_64 <- qt.qt6.6120.addons.qtshadertools.linux_gcc_64/qtshadertools-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z',
+    '6.12.0/gcc_64 <- qt.qt6.6120.addons.qthttpserver.linux_gcc_64/qthttpserver-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z',
+    '6.12.0/gcc_64 <- qt.qt6.6120.addons.qtwebsockets.linux_gcc_64/qtwebsockets-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z',
+    '6.12.0/gcc_64 <- qt.qt6.6120.addons.qtserialport.linux_gcc_64/qtserialport-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z',
+  ])
+# ---
+# name: test_resolved_archives[linux_arm64-desktop-linux_gcc_arm64]
+  list([
+    '6.12.0/gcc_arm64 <- qt.qt6.6120.linux_gcc_arm64/qtbase-Linux-Ubuntu_24_04-GCC-Linux-Ubuntu_24_04-AARCH64.7z',
+    '6.12.0/gcc_arm64 <- qt.qt6.6120.linux_gcc_arm64/qtsvg-Linux-Ubuntu_24_04-GCC-Linux-Ubuntu_24_04-AARCH64.7z',
+    '6.12.0/gcc_arm64 <- qt.qt6.6120.linux_gcc_arm64/qtdeclarative-Linux-Ubuntu_24_04-GCC-Linux-Ubuntu_24_04-AARCH64.7z',
+    '6.12.0/gcc_arm64 <- qt.qt6.6120.linux_gcc_arm64/qtdoc-Linux-Ubuntu_24_04-GCC-Linux-Ubuntu_24_04-AARCH64.7z',
+    '6.12.0/gcc_arm64 <- qt.qt6.6120.linux_gcc_arm64/qttools-Linux-Ubuntu_24_04-GCC-Linux-Ubuntu_24_04-AARCH64.7z',
+    '6.12.0/gcc_arm64 <- qt.qt6.6120.linux_gcc_arm64/qttranslations-Linux-Ubuntu_24_04-GCC-Linux-Ubuntu_24_04-AARCH64.7z',
+    '6.12.0/gcc_arm64 <- qt.qt6.6120.linux_gcc_arm64/qtwayland-Linux-Ubuntu_24_04-GCC-Linux-Ubuntu_24_04-AARCH64.7z',
+    '6.12.0/gcc_arm64/lib <- qt.qt6.6120.linux_gcc_arm64/icu-linux-Debian11.6-arm64.7z',
+    '6.12.0/gcc_arm64 <- qt.qt6.6120.addons.qtlocation.linux_gcc_arm64/qtlocation-Linux-Ubuntu_24_04-GCC-Linux-Ubuntu_24_04-AARCH64.7z',
+    '6.12.0/gcc_arm64 <- qt.qt6.6120.addons.qtquick3d.linux_gcc_arm64/qtquick3d-Linux-Ubuntu_24_04-GCC-Linux-Ubuntu_24_04-AARCH64.7z',
+    '6.12.0/gcc_arm64 <- qt.qt6.6120.addons.qtshadertools.linux_gcc_arm64/qtshadertools-Linux-Ubuntu_24_04-GCC-Linux-Ubuntu_24_04-AARCH64.7z',
+    '6.12.0/gcc_arm64 <- qt.qt6.6120.addons.qthttpserver.linux_gcc_arm64/qthttpserver-Linux-Ubuntu_24_04-GCC-Linux-Ubuntu_24_04-AARCH64.7z',
+    '6.12.0/gcc_arm64 <- qt.qt6.6120.addons.qtwebsockets.linux_gcc_arm64/qtwebsockets-Linux-Ubuntu_24_04-GCC-Linux-Ubuntu_24_04-AARCH64.7z',
+    '6.12.0/gcc_arm64 <- qt.qt6.6120.addons.qtserialport.linux_gcc_arm64/qtserialport-Linux-Ubuntu_24_04-GCC-Linux-Ubuntu_24_04-AARCH64.7z',
+  ])
+# ---
+# name: test_resolved_archives[mac-desktop-clang_64]
+  list([
+    '6.12.0/macos <- qt.qt6.6120.clang_64/qtbase-MacOS-MacOS_26-Clang-MacOS-MacOS_26-X86_64-ARM64.7z',
+    '6.12.0/macos <- qt.qt6.6120.clang_64/qtdeclarative-MacOS-MacOS_26-Clang-MacOS-MacOS_26-X86_64-ARM64.7z',
+    '6.12.0/macos <- qt.qt6.6120.clang_64/qtsvg-MacOS-MacOS_26-Clang-MacOS-MacOS_26-X86_64-ARM64.7z',
+    '6.12.0/macos <- qt.qt6.6120.clang_64/qtdoc-MacOS-MacOS_26-Clang-MacOS-MacOS_26-X86_64-ARM64.7z',
+    '6.12.0/macos <- qt.qt6.6120.clang_64/qttools-MacOS-MacOS_26-Clang-MacOS-MacOS_26-X86_64-ARM64.7z',
+    '6.12.0/macos <- qt.qt6.6120.clang_64/qttranslations-MacOS-MacOS_26-Clang-MacOS-MacOS_26-X86_64-ARM64.7z',
+    '6.12.0/macos <- qt.qt6.6120.addons.qtlocation.clang_64/qtlocation-MacOS-MacOS_26-Clang-MacOS-MacOS_26-X86_64-ARM64.7z',
+    '6.12.0/macos <- qt.qt6.6120.addons.qtquick3d.clang_64/qtquick3d-MacOS-MacOS_26-Clang-MacOS-MacOS_26-X86_64-ARM64.7z',
+    '6.12.0/macos <- qt.qt6.6120.addons.qtshadertools.clang_64/qtshadertools-MacOS-MacOS_26-Clang-MacOS-MacOS_26-X86_64-ARM64.7z',
+    '6.12.0/macos <- qt.qt6.6120.addons.qthttpserver.clang_64/qthttpserver-MacOS-MacOS_26-Clang-MacOS-MacOS_26-X86_64-ARM64.7z',
+    '6.12.0/macos <- qt.qt6.6120.addons.qtwebsockets.clang_64/qtwebsockets-MacOS-MacOS_26-Clang-MacOS-MacOS_26-X86_64-ARM64.7z',
+    '6.12.0/macos <- qt.qt6.6120.addons.qtserialport.clang_64/qtserialport-MacOS-MacOS_26-Clang-MacOS-MacOS_26-X86_64-ARM64.7z',
+  ])
+# ---
+# name: test_resolved_archives[mac-ios-ios_device]
+  list([
+    '6.12.0/ios_device <- qt.qt6.6120.qtforios.device/qtbase-MacOS-MacOS_26-Clang-IOS-IOS_ANY-ARM64-Device.7z',
+    '6.12.0/ios_device <- qt.qt6.6120.qtforios.device/qttools-MacOS-MacOS_26-Clang-IOS-IOS_ANY-ARM64-Device.7z',
+    '6.12.0/ios_device <- qt.qt6.6120.qtforios.device/qtdeclarative-MacOS-MacOS_26-Clang-IOS-IOS_ANY-ARM64-Device.7z',
+    '6.12.0/ios_device <- qt.qt6.6120.qtforios.device/qtdoc-MacOS-MacOS_26-Clang-IOS-IOS_ANY-ARM64-Device.7z',
+    '6.12.0/ios_device <- qt.qt6.6120.qtforios.device/qtsvg-MacOS-MacOS_26-Clang-IOS-IOS_ANY-ARM64-Device.7z',
+    '6.12.0/ios_device <- qt.qt6.6120.qtforios.device/qttranslations-MacOS-MacOS_26-Clang-IOS-IOS_ANY-ARM64-Device.7z',
+    '6.12.0/ios_device <- qt.qt6.6120.addons.qtlocation.ios_device/qtlocation-MacOS-MacOS_26-Clang-IOS-IOS_ANY-ARM64-Device.7z',
+    '6.12.0/ios_device <- qt.qt6.6120.addons.qtquick3d.ios_device/qtquick3d-MacOS-MacOS_26-Clang-IOS-IOS_ANY-ARM64-Device.7z',
+    '6.12.0/ios_device <- qt.qt6.6120.addons.qtshadertools.ios_device/qtshadertools-MacOS-MacOS_26-Clang-IOS-IOS_ANY-ARM64-Device.7z',
+    '6.12.0/ios_device <- qt.qt6.6120.addons.qthttpserver.ios_device/qthttpserver-MacOS-MacOS_26-Clang-IOS-IOS_ANY-ARM64-Device.7z',
+    '6.12.0/ios_device <- qt.qt6.6120.addons.qtwebsockets.ios_device/qtwebsockets-MacOS-MacOS_26-Clang-IOS-IOS_ANY-ARM64-Device.7z',
+  ])
+# ---
+# name: test_resolved_archives[mac-ios-ios_simulator_x86_64]
+  list([
+    '6.12.0/ios_simulator_x86_64 <- qt.qt6.6120.qtforios.simulator_x86_64/qtbase-MacOS-MacOS_26-Clang-IOS-IOS_ANY-X86_64-Simulator.7z',
+    '6.12.0/ios_simulator_x86_64 <- qt.qt6.6120.qtforios.simulator_x86_64/qttools-MacOS-MacOS_26-Clang-IOS-IOS_ANY-X86_64-Simulator.7z',
+    '6.12.0/ios_simulator_x86_64 <- qt.qt6.6120.qtforios.simulator_x86_64/qtdeclarative-MacOS-MacOS_26-Clang-IOS-IOS_ANY-X86_64-Simulator.7z',
+    '6.12.0/ios_simulator_x86_64 <- qt.qt6.6120.qtforios.simulator_x86_64/qtdoc-MacOS-MacOS_26-Clang-IOS-IOS_ANY-X86_64-Simulator.7z',
+    '6.12.0/ios_simulator_x86_64 <- qt.qt6.6120.qtforios.simulator_x86_64/qtsvg-MacOS-MacOS_26-Clang-IOS-IOS_ANY-X86_64-Simulator.7z',
+    '6.12.0/ios_simulator_x86_64 <- qt.qt6.6120.qtforios.simulator_x86_64/qttranslations-MacOS-MacOS_26-Clang-IOS-IOS_ANY-X86_64-Simulator.7z',
+    '6.12.0/ios_simulator_x86_64 <- qt.qt6.6120.addons.qtlocation.ios_simulator_x86_64/qtlocation-MacOS-MacOS_26-Clang-IOS-IOS_ANY-X86_64-Simulator.7z',
+    '6.12.0/ios_simulator_x86_64 <- qt.qt6.6120.addons.qtquick3d.ios_simulator_x86_64/qtquick3d-MacOS-MacOS_26-Clang-IOS-IOS_ANY-X86_64-Simulator.7z',
+    '6.12.0/ios_simulator_x86_64 <- qt.qt6.6120.addons.qtshadertools.ios_simulator_x86_64/qtshadertools-MacOS-MacOS_26-Clang-IOS-IOS_ANY-X86_64-Simulator.7z',
+    '6.12.0/ios_simulator_x86_64 <- qt.qt6.6120.addons.qthttpserver.ios_simulator_x86_64/qthttpserver-MacOS-MacOS_26-Clang-IOS-IOS_ANY-X86_64-Simulator.7z',
+    '6.12.0/ios_simulator_x86_64 <- qt.qt6.6120.addons.qtwebsockets.ios_simulator_x86_64/qtwebsockets-MacOS-MacOS_26-Clang-IOS-IOS_ANY-X86_64-Simulator.7z',
+  ])
+# ---
+# name: test_resolved_archives[windows-desktop-win64_msvc2022_64]
+  list([
+    '6.12.0/msvc2022_64 <- qt.qt6.6120.win64_msvc2022_64/qtbase-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z',
+    '6.12.0/msvc2022_64 <- qt.qt6.6120.win64_msvc2022_64/qtsvg-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z',
+    '6.12.0/msvc2022_64 <- qt.qt6.6120.win64_msvc2022_64/qtdeclarative-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z',
+    '6.12.0/msvc2022_64 <- qt.qt6.6120.win64_msvc2022_64/qtdoc-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z',
+    '6.12.0/msvc2022_64 <- qt.qt6.6120.win64_msvc2022_64/qttools-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z',
+    '6.12.0/msvc2022_64 <- qt.qt6.6120.win64_msvc2022_64/qttranslations-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z',
+    '6.12.0/msvc2022_64/bin <- qt.qt6.6120.win64_msvc2022_64/d3dcompiler_47-x64.7z',
+    '6.12.0/msvc2022_64/bin <- qt.qt6.6120.win64_msvc2022_64/opengl32sw-64-mesa_11_2_2-signed_sha256.7z',
+    '6.12.0/msvc2022_64 <- qt.qt6.6120.addons.qtlocation.win64_msvc2022_64/qtlocation-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z',
+    '6.12.0/msvc2022_64 <- qt.qt6.6120.addons.qtquick3d.win64_msvc2022_64/qtquick3d-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z',
+    '6.12.0/msvc2022_64 <- qt.qt6.6120.addons.qtshadertools.win64_msvc2022_64/qtshadertools-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z',
+    '6.12.0/msvc2022_64 <- qt.qt6.6120.addons.qthttpserver.win64_msvc2022_64/qthttpserver-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z',
+    '6.12.0/msvc2022_64 <- qt.qt6.6120.addons.qtwebsockets.win64_msvc2022_64/qtwebsockets-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z',
+    '6.12.0/msvc2022_64 <- qt.qt6.6120.addons.qtserialport.win64_msvc2022_64/qtserialport-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z',
+  ])
+# ---
+# name: test_resolved_archives[windows-desktop-win64_msvc2022_arm64_cross_compiled]
+  list([
+    '6.12.0/msvc2022_arm64 <- qt.qt6.6120.win64_msvc2022_arm64_cross_compiled/qtbase-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-ARM64.7z',
+    '6.12.0/msvc2022_arm64 <- qt.qt6.6120.win64_msvc2022_arm64_cross_compiled/qtsvg-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-ARM64.7z',
+    '6.12.0/msvc2022_arm64 <- qt.qt6.6120.win64_msvc2022_arm64_cross_compiled/qtdeclarative-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-ARM64.7z',
+    '6.12.0/msvc2022_arm64 <- qt.qt6.6120.win64_msvc2022_arm64_cross_compiled/qtdoc-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-ARM64.7z',
+    '6.12.0/msvc2022_arm64 <- qt.qt6.6120.win64_msvc2022_arm64_cross_compiled/qttools-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-ARM64.7z',
+    '6.12.0/msvc2022_arm64 <- qt.qt6.6120.win64_msvc2022_arm64_cross_compiled/qttranslations-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-ARM64.7z',
+    '6.12.0/msvc2022_arm64 <- qt.qt6.6120.addons.qtlocation.win64_msvc2022_arm64_cross_compiled/qtlocation-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-ARM64.7z',
+    '6.12.0/msvc2022_arm64 <- qt.qt6.6120.addons.qtquick3d.win64_msvc2022_arm64_cross_compiled/qtquick3d-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-ARM64.7z',
+    '6.12.0/msvc2022_arm64 <- qt.qt6.6120.addons.qtshadertools.win64_msvc2022_arm64_cross_compiled/qtshadertools-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-ARM64.7z',
+    '6.12.0/msvc2022_arm64 <- qt.qt6.6120.addons.qthttpserver.win64_msvc2022_arm64_cross_compiled/qthttpserver-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-ARM64.7z',
+    '6.12.0/msvc2022_arm64 <- qt.qt6.6120.addons.qtwebsockets.win64_msvc2022_arm64_cross_compiled/qtwebsockets-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-ARM64.7z',
+    '6.12.0/msvc2022_arm64 <- qt.qt6.6120.addons.qtserialport.win64_msvc2022_arm64_cross_compiled/qtserialport-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-ARM64.7z',
+  ])
+# ---
+# name: test_resolved_archives[windows_arm64-desktop-win64_msvc2022_arm64]
+  list([
+    '6.12.0/msvc2022_arm64 <- qt.qt6.6120.win64_msvc2022_arm64/qtbase-Windows-Windows_11_23H2-MSVC2022-Windows-Windows_11_23H2-AARCH64.7z',
+    '6.12.0/msvc2022_arm64 <- qt.qt6.6120.win64_msvc2022_arm64/qtsvg-Windows-Windows_11_23H2-MSVC2022-Windows-Windows_11_23H2-AARCH64.7z',
+    '6.12.0/msvc2022_arm64 <- qt.qt6.6120.win64_msvc2022_arm64/qtdeclarative-Windows-Windows_11_23H2-MSVC2022-Windows-Windows_11_23H2-AARCH64.7z',
+    '6.12.0/msvc2022_arm64 <- qt.qt6.6120.win64_msvc2022_arm64/qtdoc-Windows-Windows_11_23H2-MSVC2022-Windows-Windows_11_23H2-AARCH64.7z',
+    '6.12.0/msvc2022_arm64 <- qt.qt6.6120.win64_msvc2022_arm64/qttools-Windows-Windows_11_23H2-MSVC2022-Windows-Windows_11_23H2-AARCH64.7z',
+    '6.12.0/msvc2022_arm64 <- qt.qt6.6120.win64_msvc2022_arm64/qttranslations-Windows-Windows_11_23H2-MSVC2022-Windows-Windows_11_23H2-AARCH64.7z',
+    '6.12.0/msvc2022_arm64 <- qt.qt6.6120.addons.qtlocation.win64_msvc2022_arm64/qtlocation-Windows-Windows_11_23H2-MSVC2022-Windows-Windows_11_23H2-AARCH64.7z',
+    '6.12.0/msvc2022_arm64 <- qt.qt6.6120.addons.qtquick3d.win64_msvc2022_arm64/qtquick3d-Windows-Windows_11_23H2-MSVC2022-Windows-Windows_11_23H2-AARCH64.7z',
+    '6.12.0/msvc2022_arm64 <- qt.qt6.6120.addons.qtshadertools.win64_msvc2022_arm64/qtshadertools-Windows-Windows_11_23H2-MSVC2022-Windows-Windows_11_23H2-AARCH64.7z',
+    '6.12.0/msvc2022_arm64 <- qt.qt6.6120.addons.qthttpserver.win64_msvc2022_arm64/qthttpserver-Windows-Windows_11_23H2-MSVC2022-Windows-Windows_11_23H2-AARCH64.7z',
+    '6.12.0/msvc2022_arm64 <- qt.qt6.6120.addons.qtwebsockets.win64_msvc2022_arm64/qtwebsockets-Windows-Windows_11_23H2-MSVC2022-Windows-Windows_11_23H2-AARCH64.7z',
+    '6.12.0/msvc2022_arm64 <- qt.qt6.6120.addons.qtserialport.win64_msvc2022_arm64/qtserialport-Windows-Windows_11_23H2-MSVC2022-Windows-Windows_11_23H2-AARCH64.7z',
+  ])
+# ---

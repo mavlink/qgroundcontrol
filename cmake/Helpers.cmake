@@ -45,6 +45,7 @@ endfunction()
 # Configures compiler caching using ccache or sccache if available
 # ----------------------------------------------------------------------------
 function(qgc_config_caching)
+    # cmake-lint: disable=R0915,E1126
     # Reject unusable cache executables found on PATH.
     function(_qgc_verify_cache_tool _ok _path)
         execute_process(
@@ -95,7 +96,7 @@ function(qgc_config_caching)
                 if(EXISTS "${_ccache_conf}")
                     string(APPEND _wrapper "export CCACHE_CONFIGPATH=\"\${CCACHE_CONFIGPATH:-${_ccache_conf}}\"\n")
                 endif()
-                string(APPEND _wrapper "export CCACHE_DIR=\"\${CCACHE_DIR:-${CMAKE_SOURCE_DIR}/.ccache}\"\n")
+                string(APPEND _wrapper "export CCACHE_DIR=\"\${CCACHE_DIR:-${CMAKE_SOURCE_DIR}/.cache/ccache}\"\n")
                 string(APPEND _wrapper "export CCACHE_BASEDIR=\"\${CCACHE_BASEDIR:-${CMAKE_SOURCE_DIR}}\"\n")
                 # Delete a header compile's output (the PCH) before regenerating it: ccache otherwise hashes the
                 # stale PCH beside the -include'd header as an input, so a regenerated PCH never hits and every
@@ -111,8 +112,7 @@ esac
                 )
                 string(APPEND _wrapper "exec \"${QGC_CACHE_PROGRAM}\" \"$@\"\n")
                 _qgc_write_if_changed("${_ccache_wrapper}" "${_wrapper}")
-                # cmakelang 0.6.13 does not recognize file(CHMOD).
-                # cmake-lint: disable=E1126
+                # cmakelang 0.6.13 does not recognize file(CHMOD) (E1126, disabled for this function).
                 file(
                     CHMOD
                     "${_ccache_wrapper}"
@@ -129,6 +129,16 @@ esac
             endif()
         elseif(_cache_tool STREQUAL "sccache")
             set(_cache_launcher "${QGC_CACHE_PROGRAM}")
+            # sccache keys a GCC precompiled header by its preprocessed text, which omits macro definitions, so a
+            # changed header can reuse a stale PCH (mozilla/sccache#2562); it cannot cache MSVC PCH users at all.
+            # Configure with -DCMAKE_DISABLE_PRECOMPILE_HEADERS=OFF to keep them anyway.
+            if(NOT DEFINED CMAKE_DISABLE_PRECOMPILE_HEADERS)
+                set(CMAKE_DISABLE_PRECOMPILE_HEADERS
+                    ON
+                    PARENT_SCOPE
+                )
+                message(STATUS "QGC: Precompiled headers disabled for sccache")
+            endif()
         else()
             return()
         endif()
@@ -161,7 +171,7 @@ endfunction()
 # from .ninja_log, from this build dir). It is a no-op unless MOCCACHE_STATS
 # is set in the build environment.
 # ----------------------------------------------------------------------------
-function(_qgc_write_moccache_stats_script python moccache_py out_var)
+function(_qgc_write_moccache_stats_script python launcher_py out_var)
     set(_default_dir "${CMAKE_SOURCE_DIR}/.cache/moccache")
     if(CMAKE_HOST_WIN32)
         set(_script "${CMAKE_BINARY_DIR}/moccache-stats.cmd")
@@ -169,7 +179,7 @@ function(_qgc_write_moccache_stats_script python moccache_py out_var)
         string(APPEND _body "if not defined MOCCACHE_STATS exit /b 0\r\n")
         string(APPEND _body "if not defined MOCCACHE_DIR set \"MOCCACHE_DIR=${_default_dir}\"\r\n")
         string(APPEND _body "if not defined MOCCACHE_BASEDIR set \"MOCCACHE_BASEDIR=${CMAKE_BINARY_DIR}\"\r\n")
-        string(APPEND _body "\"${python}\" \"${moccache_py}\" --show-stats --build-dir \"${CMAKE_BINARY_DIR}\"\r\n")
+        string(APPEND _body "\"${python}\" \"${launcher_py}\" --show-stats --build-dir \"${CMAKE_BINARY_DIR}\"\r\n")
         string(APPEND _body "exit /b 0\r\n")
         _qgc_write_if_changed("${_script}" "${_body}")
     else()
@@ -179,7 +189,7 @@ function(_qgc_write_moccache_stats_script python moccache_py out_var)
         string(APPEND _body "export MOCCACHE_DIR=\"\${MOCCACHE_DIR:-${_default_dir}}\"\n")
         string(APPEND _body "export MOCCACHE_BASEDIR=\"\${MOCCACHE_BASEDIR:-${CMAKE_BINARY_DIR}}\"\n")
         string(
-            APPEND _body "\"${python}\" \"${moccache_py}\" --show-stats --build-dir \"${CMAKE_BINARY_DIR}\" || true\n"
+            APPEND _body "\"${python}\" \"${launcher_py}\" --show-stats --build-dir \"${CMAKE_BINARY_DIR}\" || true\n"
         )
         _qgc_write_if_changed("${_script}" "${_body}")
         # cmakelang 0.6.13 does not recognize file(CHMOD).
@@ -205,7 +215,7 @@ endfunction()
 
 # ----------------------------------------------------------------------------
 # _qgc_verify_moccache_python
-# find_program VALIDATOR: moccache.py targets Python 3.10 (ruff.toml); an older
+# find_program VALIDATOR: moccache targets Python 3.10 (ruff.toml); an older
 # interpreter would fail on every moc invocation, so reject it and let
 # qgc_config_moccache fall back to plain moc.
 # ----------------------------------------------------------------------------
@@ -225,7 +235,7 @@ endfunction()
 
 # ----------------------------------------------------------------------------
 # qgc_config_moccache
-# Routes AUTOMOC through tools/moccache.py so moc output is cached across
+# Routes AUTOMOC through the tools/moccache package so moc output is cached across
 # clean builds. Must be called after find_package(Qt6).
 # ----------------------------------------------------------------------------
 function(qgc_config_moccache)
@@ -241,8 +251,8 @@ function(qgc_config_moccache)
         return()
     endif()
 
-    set(_moccache_py "${CMAKE_SOURCE_DIR}/tools/moccache.py")
-    if(NOT EXISTS "${_moccache_py}" OR NOT TARGET Qt6::moc)
+    set(_moccache_core_py "${CMAKE_SOURCE_DIR}/tools/moccache/core.py")
+    if(NOT EXISTS "${_moccache_core_py}" OR NOT TARGET Qt6::moc)
         return()
     endif()
 
@@ -269,6 +279,8 @@ function(qgc_config_moccache)
         return()
     endif()
 
+    # Importing moccache from a stub lets Python reuse its cached bytecode on every moc run
+    set(_launcher_py "${CMAKE_SOURCE_DIR}/tools/moccache_launcher.py")
     if(CMAKE_HOST_WIN32)
         set(_moccache_wrapper "${CMAKE_BINARY_DIR}/moccache-launcher.cmd")
         set(_wrapper "@echo off\r\nsetlocal\r\n")
@@ -276,8 +288,8 @@ function(qgc_config_moccache)
             APPEND _wrapper "if not defined MOCCACHE_DIR set \"MOCCACHE_DIR=${CMAKE_SOURCE_DIR}/.cache/moccache\"\r\n"
         )
         string(APPEND _wrapper "if not defined MOCCACHE_BASEDIR set \"MOCCACHE_BASEDIR=${CMAKE_BINARY_DIR}\"\r\n")
-        string(APPEND _wrapper "if not defined MOCCACHE_MAX_SIZE set \"MOCCACHE_MAX_SIZE=256M\"\r\n")
-        string(APPEND _wrapper "\"${QGC_MOCCACHE_PYTHON}\" \"${_moccache_py}\" --real-moc \"${_real_moc}\" %*\r\n")
+        string(APPEND _wrapper "if not defined MOCCACHE_MAX_SIZE set \"MOCCACHE_MAX_SIZE=1G\"\r\n")
+        string(APPEND _wrapper "\"${QGC_MOCCACHE_PYTHON}\" \"${_launcher_py}\" --real-moc \"${_real_moc}\" %*\r\n")
         string(APPEND _wrapper "exit /b %ERRORLEVEL%\r\n")
         _qgc_write_if_changed("${_moccache_wrapper}" "${_wrapper}")
     else()
@@ -285,9 +297,9 @@ function(qgc_config_moccache)
         set(_wrapper "#!/bin/sh\n")
         string(APPEND _wrapper "export MOCCACHE_DIR=\"\${MOCCACHE_DIR:-${CMAKE_SOURCE_DIR}/.cache/moccache}\"\n")
         string(APPEND _wrapper "export MOCCACHE_BASEDIR=\"\${MOCCACHE_BASEDIR:-${CMAKE_BINARY_DIR}}\"\n")
-        string(APPEND _wrapper "export MOCCACHE_MAX_SIZE=\"\${MOCCACHE_MAX_SIZE:-256M}\"\n")
+        string(APPEND _wrapper "export MOCCACHE_MAX_SIZE=\"\${MOCCACHE_MAX_SIZE:-1G}\"\n")
         string(
-            APPEND _wrapper "exec \"${QGC_MOCCACHE_PYTHON}\" \"${_moccache_py}\" --real-moc \"${_real_moc}\" \"$@\"\n"
+            APPEND _wrapper "exec \"${QGC_MOCCACHE_PYTHON}\" \"${_launcher_py}\" --real-moc \"${_real_moc}\" \"$@\"\n"
         )
         _qgc_write_if_changed("${_moccache_wrapper}" "${_wrapper}")
         file(
@@ -304,7 +316,7 @@ function(qgc_config_moccache)
         )
     endif()
 
-    _qgc_write_moccache_stats_script("${QGC_MOCCACHE_PYTHON}" "${_moccache_py}" _moccache_stats)
+    _qgc_write_moccache_stats_script("${QGC_MOCCACHE_PYTHON}" "${_launcher_py}" _moccache_stats)
 
     set_property(GLOBAL PROPERTY QGC_MOCCACHE_EXECUTABLE "${_moccache_wrapper}")
     set_property(GLOBAL PROPERTY QGC_MOCCACHE_STATS_EXECUTABLE "${_moccache_stats}")
@@ -535,6 +547,40 @@ function(qgc_set_linker)
     cmake_pop_check_state()
 
     message(STATUS "QGC: No alternative linker (mold/lld/gold) found - using system default")
+endfunction()
+
+# ----------------------------------------------------------------------------
+# qgc_set_msvc_linker
+# Links MSVC builds with lld-link when QGC_USE_LLD_LINK is ON (CMake 3.29+ LINKER_TYPE).
+# lld-link cannot link /GL objects, so IPO (Release) builds keep link.exe.
+# ----------------------------------------------------------------------------
+function(qgc_set_msvc_linker)
+    if(NOT QGC_USE_LLD_LINK OR NOT CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+        return()
+    endif()
+    if(CMAKE_VERSION VERSION_LESS 3.29)
+        message(STATUS "QGC: QGC_USE_LLD_LINK needs CMake 3.29 or newer - using link.exe")
+        return()
+    endif()
+    if(CMAKE_INTERPROCEDURAL_OPTIMIZATION OR CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE)
+        message(STATUS "QGC: lld-link cannot link IPO (/GL) objects - using link.exe")
+        return()
+    endif()
+    # Use CMake's own lld-link lookup (made at the first configure) so try_compile checks link with the same tool.
+    if(NOT IS_ABSOLUTE "${CMAKE_LINKER_LLD}" OR NOT EXISTS "${CMAKE_LINKER_LLD}")
+        message(STATUS "QGC: lld-link not found on PATH or in CMAKE_LINKER_LLD - using link.exe")
+        return()
+    endif()
+
+    set(CMAKE_LINKER_TYPE
+        LLD
+        PARENT_SCOPE
+    )
+    set(QGC_LINKER
+        lld-link
+        PARENT_SCOPE
+    )
+    message(STATUS "QGC: Using lld-link (${CMAKE_LINKER_LLD})")
 endfunction()
 
 # ----------------------------------------------------------------------------

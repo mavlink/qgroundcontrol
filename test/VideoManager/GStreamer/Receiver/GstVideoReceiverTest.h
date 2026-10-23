@@ -18,6 +18,7 @@ private slots:
     void init() override;
 
     void _testStopAfterUriClearedTearsDown();
+    void _testUdpSourceStopsRightAfterPlaying();
     void _testFailedStartLeavesCleanState();
     void _testVideoSinkRefcountStableAcrossRestarts();
     void _testDecodesMockLinkStreams_data();
@@ -25,6 +26,7 @@ private slots:
     void _testRecordingPlayableWhileInProgress_data();
     void _testRecordingPlayableWhileInProgress();
     void _testDestroyWhileRecordingFinalizesFile();
+    void _testDestroyBeforeFirstFrameDropsRecording();
     void _testSecondRecordingIsNotTruncated();
     void _testReconnectBacksOffAfterFailedStart();
     void _testStreamLossRestartPolicy_data();

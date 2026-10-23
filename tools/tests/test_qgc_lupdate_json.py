@@ -1,18 +1,16 @@
-#!/usr/bin/env python3
 """Tests for tools/translations/qgc_lupdate_json.py."""
 
 from __future__ import annotations
 
+import xml.etree.ElementTree as ET
 from typing import TYPE_CHECKING, Any
 
 import pytest
 
-from ._helpers import load_script_module
+from translations import qgc_lupdate_json as mod
 
 if TYPE_CHECKING:
     from pathlib import Path
-
-mod = load_script_module("translations/qgc_lupdate_json.py", "qgc_lupdate_json")
 
 
 def test_add_loc_keys_injects_factmetadata_defaults() -> None:
@@ -134,3 +132,30 @@ def test_split_disambiguation_extracts_comment() -> None:
 def test_split_disambiguation_malformed_exits() -> None:
     with pytest.raises(SystemExit):
         mod._split_disambiguation("#loc.disambiguation#missing-terminator", "ctx")
+
+
+def test_walk_and_write_are_sorted_and_relative_to_ts_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    src = tmp_path / "src"
+    for rel in ("zeta/Z.json", "alpha/B.json", "A.json"):
+        path = src / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(f'{{"fileType": "MavCmdInfo", "label": "{path.stem}"}}', encoding="utf-8")
+    iterdir = type(src).iterdir
+    monkeypatch.setattr(type(src), "iterdir", lambda self: reversed(list(iterdir(self))))
+
+    entries: list[list] = []
+    mod.walk_directory_tree_for_json_files(src, entries)
+    output = tmp_path / "translations" / "qgc-json.ts"
+    output.parent.mkdir()
+    mod.write_json_ts_file(output, entries)
+
+    root = ET.parse(output).getroot()
+    assert [name.text for name in root.iter("name")] == ["A.json", "B.json", "Z.json"]
+    assert [loc.get("filename") for loc in root.iter("location")] == [
+        "../src/A.json",
+        "../src/alpha/B.json",
+        "../src/zeta/Z.json",
+    ]
+    assert str(tmp_path) not in output.read_text(encoding="utf-8")

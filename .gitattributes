@@ -6,6 +6,7 @@
 *               text=auto
 *.md            text eol=lf
 *.sh            text eol=lf
+*.ambr          text eol=lf
 *.ps1           text eol=crlf
 *.bat           text eol=crlf
 *.cmd           text eol=crlf

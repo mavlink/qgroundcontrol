@@ -4,37 +4,16 @@ on:
   workflow_call:
     inputs:
       platform:
-        description: 'Space-separated platform(s) to detect changes for'
+        description: 'Platform to plan (plan_platform.py --platform)'
         required: true
         type: string
     outputs:
       should_build:
-        description: 'Whether the caller should proceed with a build (true on non-PR events)'
+        description: 'Whether the caller should build: relevant PR changes, a Stable* release tag, or any other event'
         value: ${{ jobs.detect.outputs.should_build }}
-      linux:
-        description: 'Whether Linux-relevant files changed (true on non-PR events)'
-        value: ${{ jobs.detect.outputs.linux }}
-      windows:
-        description: 'Whether Windows-relevant files changed (true on non-PR events)'
-        value: ${{ jobs.detect.outputs.windows }}
-      macos:
-        description: 'Whether macOS-relevant files changed (true on non-PR events)'
-        value: ${{ jobs.detect.outputs.macos }}
-      android:
-        description: 'Whether Android-relevant files changed (true on non-PR events)'
-        value: ${{ jobs.detect.outputs.android }}
-      docker_linux:
-        description: 'Whether Docker-Linux build inputs changed (true on non-PR events)'
-        value: ${{ jobs.detect.outputs.docker_linux }}
-      docker_android:
-        description: 'Whether Docker-Android build inputs changed (true on non-PR events)'
-        value: ${{ jobs.detect.outputs.docker_android }}
-
-concurrency:
-  # Scope per caller+platform: multiple platform workflows call this in parallel
-  # for the same ref; a shared group would let GitHub cancel all but one.
-  group: detect-changes-${{ inputs.platform }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+      matrix:
+        description: 'Android and Docker build legs as a JSON include-list (empty for other platforms)'
+        value: ${{ jobs.detect.outputs.matrix }}
 
 permissions:
   contents: read
@@ -45,90 +24,40 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
-      should_build: ${{ steps.nonpr.outputs.should_build || steps.pr.outputs.should_build }}
-      linux: ${{ steps.nonpr.outputs.linux || steps.pr.outputs.linux }}
-      windows: ${{ steps.nonpr.outputs.windows || steps.pr.outputs.windows }}
-      macos: ${{ steps.nonpr.outputs.macos || steps.pr.outputs.macos }}
-      android: ${{ steps.nonpr.outputs.android || steps.pr.outputs.android }}
-      docker_linux: ${{ steps.nonpr.outputs.docker_linux || steps.pr.outputs.docker_linux }}
-      docker_android: ${{ steps.nonpr.outputs.docker_android || steps.pr.outputs.docker_android }}
+      should_build: ${{ steps.detect.outputs.should_build }}
+      matrix: ${{ steps.detect.outputs.matrix }}
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@v2
         with:
           egress-policy: audit
 
-      # Non-PR events (push, merge_group, workflow_dispatch) always rebuild
-      # everything. Sparse-checkout just the script + bootstrap shim it needs.
-      # Tag pushes need full history + branch refs for the Stable* origin check.
-      - name: Checkout passthrough script (non-PR)
-        if: github.event_name != 'pull_request'
+      # A pull request's merge commit and its two parents hold the PR diff. Tags need
+      # full history and branch refs for the Stable* release-tag check.
+      - name: Checkout planning scripts
         uses: actions/checkout@v7
         with:
-          fetch-depth: ${{ github.ref_type != 'tag' && 1 || 0 }}
+          fetch-depth: ${{ github.event_name == 'pull_request' && 2 || github.ref_type != 'tag' && 1 || 0 }}
           sparse-checkout: |
-            .github/scripts/detect_changes.py
-            .github/scripts/release_tag_check.py
-            .github/scripts/ci_bootstrap.py
+            deploy/docker/variants.json
             tools/_bootstrap.py
+            tools/ci/__init__.py
+            tools/ci/planning/__init__.py
+            tools/ci/planning/android_matrix.py
+            tools/ci/planning/detect_changes.py
+            tools/ci/planning/plan_docker_builds.py
+            tools/ci/planning/plan_platform.py
             tools/common
             tools/qgc_tools
           sparse-checkout-cone-mode: false
           persist-credentials: false
 
-      # Release tags are only ever cut on Stable* branches. A tag on master (or
-      # anywhere else) must not trigger the release pipeline (stable build,
-      # S3 latest upload, CloudFront invalidation).
-      - name: Verify tag is on a Stable* branch
-        if: github.ref_type == 'tag'
-        id: tag
-        shell: bash
-        run: python3 "${GITHUB_WORKSPACE}/.github/scripts/release_tag_check.py" --context "skipping build"
-
-      - name: Emit passthrough outputs (non-PR)
-        if: github.event_name != 'pull_request'
-        id: nonpr
-        shell: bash
-        env:
-          # Fail closed on tags: an empty release_tag is rejected by the script's choices.
-          PASSTHROUGH_VALUE: ${{ github.ref_type != 'tag' && 'true' || steps.tag.outputs.release_tag }}
-        run: >-
-          python3 "${GITHUB_WORKSPACE}/.github/scripts/detect_changes.py"
-          --non-pr-passthrough --passthrough-value "${PASSTHROUGH_VALUE}"
-
-      - name: Checkout repo
-        if: github.event_name == 'pull_request'
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 1
-          persist-credentials: false
-
       - name: Detect changes
-        if: github.event_name == 'pull_request'
         id: detect
-        uses: ./.github/actions/detect-changes
-        with:
-          platform: ${{ inputs.platform }}
-
-      - name: Compute outputs (PR)
-        if: github.event_name == 'pull_request'
-        id: pr
         shell: bash
         env:
-          DETECT_ANY: ${{ steps.detect.outputs.any }}
-          DETECT_LINUX: ${{ steps.detect.outputs.linux }}
-          DETECT_WINDOWS: ${{ steps.detect.outputs.windows }}
-          DETECT_MACOS: ${{ steps.detect.outputs.macos }}
-          DETECT_ANDROID: ${{ steps.detect.outputs.android }}
-          DETECT_DOCKER_LINUX: ${{ steps.detect.outputs.docker_linux }}
-          DETECT_DOCKER_ANDROID: ${{ steps.detect.outputs.docker_android }}
-        run: |
-          {
-            echo "should_build=${DETECT_ANY}"
-            echo "linux=${DETECT_LINUX}"
-            echo "windows=${DETECT_WINDOWS}"
-            echo "macos=${DETECT_MACOS}"
-            echo "android=${DETECT_ANDROID}"
-            echo "docker_linux=${DETECT_DOCKER_LINUX}"
-            echo "docker_android=${DETECT_DOCKER_ANDROID}"
-          } >> "$GITHUB_OUTPUT"
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PLATFORM: ${{ inputs.platform }}
+        run: python3 "${GITHUB_WORKSPACE}/tools/ci/planning/plan_platform.py" --platform "${PLATFORM}"

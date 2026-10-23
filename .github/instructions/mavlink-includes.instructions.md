@@ -11,12 +11,12 @@ C++ header files must use the **lightest possible** MAVLink include. Heavy inclu
 
 | Header | Provides | Preprocessed Lines |
 | ------ | -------- | ------------------ |
-| `MAVLinkEnums.h` | All 253 MAVLink enum typedefs (MAV_CMD, MAV_TYPE, MAV_RESULT, etc.) | ~5,500 |
-| `MAVLinkMessageType.h` | `mavlink_message_t`, `mavlink_channel_t`, base types | ~2,700 |
 | `QGCMAVLinkTypes.h` | `FirmwareClass_t`, `VehicleClass_t`, `maxRcChannels` | ~50 |
-| `VehicleTypes.h` | `MavCmdResultFailureCode_t`, `RequestMessageResultHandlerFailureCode_t` | ~30 |
-| `QGCMAVLink.h` | All of the above combined | ~8,300 |
-| `MAVLinkLib.h` | Full MAVLink with all 387 message pack/unpack headers | ~180,000 |
+| `MAVLinkMessageType.h` | `mavlink_message_t`, `mavlink_channel_t`, base types | ~2,700 |
+| `MAVLinkEnums.h` | All MAVLink enum typedefs (MAV_CMD, MAV_TYPE, MAV_RESULT, etc.), generated at build time | ~5,500 |
+| `VehicleTypes.h` | `MavCmdResultFailureCode_t`, `RequestMessageResultHandlerFailureCode_t` (includes `MAVLinkEnums.h` and `QGCMAVLinkTypes.h`) | ~5,500 |
+| `QGCMAVLink.h` | `MAVLinkEnums.h`, `MAVLinkMessageType.h`, and `QGCMAVLinkTypes.h` combined | ~8,300 |
+| `MAVLinkLib.h` | Full MAVLink with every message pack/unpack header | ~180,000 |
 
 ## Rules
 

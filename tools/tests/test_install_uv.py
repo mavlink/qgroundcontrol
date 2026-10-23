@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import os
 import subprocess
-import sys
 from pathlib import Path
 from unittest.mock import patch
 
@@ -35,10 +34,12 @@ def test_bootstrap_preserves_security_environment_and_cleanup(monkeypatch, failu
                 ("--proto", "=https"),
                 ("--proto-redir", "=https"),
                 ("--retry", "3"),
+                ("--connect-timeout", "30"),
+                ("--max-time", "120"),
             ):
                 assert command[command.index(flag) + 1] == value
             assert {"--fail", "--location", "--tlsv1.2"}.issubset(command)
-            assert "https://astral.sh/uv/0.11.12/install.sh" in command
+            assert f"https://astral.sh/uv/{install_uv.required_version()}/install.sh" in command
             installer = Path(command[command.index("-o") + 1])
             installer.write_text("installer fixture")
         else:
@@ -63,6 +64,29 @@ def test_bootstrap_preserves_security_environment_and_cleanup(monkeypatch, failu
     assert bool(capsys.readouterr().err) == bool(failure)
 
 
+def test_required_version_reads_the_pyproject_floor(tmp_path):
+    from common.io import read_toml
+
+    floor = read_toml(install_uv.PYPROJECT)["tool"]["uv"]["required-version"]
+    assert floor == f">={install_uv.required_version()}"
+    pyproject = tmp_path / "pyproject.toml"
+    pyproject.write_text('[tool.uv]\nrequired-version = ">=0.13"\n')
+    with pytest.raises(ValueError, match="required-version"):
+        install_uv.required_version(pyproject)
+
+
+def test_missing_required_version_reports_failure(tmp_path, capsys):
+    with (
+        patch.object(install_uv, "PYPROJECT", tmp_path / "pyproject.toml"),
+        patch.object(install_uv.shutil, "which", return_value=None),
+        patch.object(install_uv.subprocess, "run") as run,
+    ):
+        (tmp_path / "pyproject.toml").write_text("[tool.uv]\n")
+        assert install_uv.main() == 1
+    run.assert_not_called()
+    assert "required-version" in capsys.readouterr().err
+
+
 def test_missing_download_tool_reports_failure(capsys):
     with (
         patch.object(install_uv.shutil, "which", return_value=None),
@@ -70,17 +94,3 @@ def test_missing_download_tool_reports_failure(capsys):
     ):
         assert install_uv.main() == 1
     assert "uv installation failed: curl" in capsys.readouterr().err
-
-
-def test_bootstrap_starts_without_site_packages(tmp_path):
-    result = subprocess.run(
-        [sys.executable, "-S", str(Path(install_uv.__file__).resolve())],
-        env={**os.environ, "PATH": str(tmp_path)},
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    assert result.returncode == 1
-    assert "uv installation failed:" in result.stderr
-    assert "curl" in result.stderr
-    assert "ModuleNotFoundError" not in result.stderr

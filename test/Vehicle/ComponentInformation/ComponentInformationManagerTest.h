@@ -11,5 +11,6 @@ private slots:
     void _progressSignalsStayInRange();
     void _requestCanRunMultipleTimes();
     void _compInfoAccessorsReturnValidObjects();
+    void _replacementJsonReplacesResolvedMetaData();
     void _requestCompletesForArduPilot();
 };

@@ -20,9 +20,9 @@
   - [Via `just`](#via-just)
   - [Via the QGroundControl Binary](#via-the-qgroundcontrol-binary-unittest-build)
   - [Convenience Targets](#convenience-targets)
-  - [Category-Specific Targets](#category-specific-targets)
   - [QML Test Split](#qml-test-split)
-  - [JUnit XML Output](#junit-xml-output)
+- [Portable Utility Tests](#portable-utility-tests)
+- [GPS Protocol Golden Transcripts](#gps-protocol-golden-transcripts)
 - [MultiSignalSpy](#multisignalspy)
 - [Manual Test Plans](#manual-test-plans)
 - [Code Coverage](#code-coverage)
@@ -31,16 +31,13 @@
 
 ## Quick Start
 
+Debug builds enable tests (`QGC_BUILD_TESTING`) by default.
+
 ```bash
-# Configure and build with tests enabled
-cmake -B build -DCMAKE_BUILD_TYPE=Debug -DQGC_BUILD_TESTING=ON
-cmake --build build
-
-# Run all tests via CTest
-cd build && ctest --output-on-failure --parallel $(nproc)
-
-# Run specific test
-./QGroundControl --unittest:ParameterManagerTest
+just configure && just build                               # Debug build in build/
+just test                                                  # Unit|Integration, excluding Flaky|Network
+ctest --test-dir build -R ParameterManagerTest             # One test (all of its shards)
+build/Debug/QGroundControl --unittest:ParameterManagerTest # One suite, directly (Linux path)
 ```
 
 ## Test Framework Overview
@@ -140,18 +137,30 @@ target_sources(
 # Basic unit test
 add_qgc_test(MyTest LABELS Unit)
 
-# Integration test (auto-locks MockLink resource)
+# Integration test
 add_qgc_test(MyIntegrationTest LABELS Integration Vehicle)
 
 # Test with custom timeout
 add_qgc_test(MySlowTest LABELS Slow TIMEOUT 300)
 
-# Test that must run alone (locks all resources)
+# Timing-sensitive test: runs alone (RUN_SERIAL) in sanitizer/coverage builds, otherwise reserves 2 CTest processors
 add_qgc_test(MyExclusiveTest LABELS Integration SERIAL)
 
-# Test with specific resource lock
-add_qgc_test(MyTest LABELS Unit RESOURCE_LOCK TempFiles)
+# Tests sharing a fixed resource never run concurrently (SERIAL and RESOURCE_LOCK are mutually exclusive)
+add_qgc_test(MyTest LABELS Unit RESOURCE_LOCK Joystick)
+
+# Long test class split across CTest entries MyUITest.1 .. MyUITest.3 that run in parallel
+add_qgc_test(MyUITest LABELS Integration SHARDS 3)
 ```
+
+Every test gets its own `TMPDIR` (and `TMP`/`TEMP` on Windows) under `build/test-tmp/`, so
+`RESOURCE_LOCK TempFiles` is ignored. `ENV_MODIFICATION` and `SKIP_REGEX` set CTest's
+`ENVIRONMENT_MODIFICATION` and `SKIP_REGULAR_EXPRESSION`.
+
+`SHARDS <count>` gives each entry every count-th test function in declaration order
+(`--unittest-shard:<index>/<count>`), so new functions are picked up automatically. Data rows of
+one function stay in the same shard; a shard that selects no functions fails, so lower `SHARDS`
+when a class loses functions.
 
 ### CTest Labels & Timeouts
 
@@ -167,8 +176,9 @@ category that combines with one of them (or falls back to the 90s default).
 | `Slow`                | 180s    | `LABELS` includes `Slow` (overrides `Unit`/`Integration`) |
 | *(none of the above)* | 90s     | Default fallback (`QGC_TEST_TIMEOUT_DEFAULT`)             |
 
-Sanitizer builds (`QGC_ENABLE_ASAN`/`UBSAN`/`TSAN`/`MSAN`) scale these up (180/360/540/270s)
-to absorb instrumentation overhead. `TIMEOUT <seconds>` on `add_qgc_test()` always wins.
+Sanitizer builds (`QGC_ENABLE_ASAN`/`UBSAN`/`TSAN`/`MSAN`) raise these to at least 180/360/540/270s
+(`test/CMakeLists.txt`) to absorb instrumentation overhead. `TIMEOUT <seconds>` on `add_qgc_test()`
+always wins; `${QGC_TEST_TIMEOUT_EXTENDED}` (180s, 360s with sanitizers) is the usual value for long tests.
 
 **Category labels** (filtering only, no timeout of their own):
 
@@ -180,13 +190,19 @@ to absorb instrumentation overhead. `TIMEOUT <seconds>` on `add_qgc_test()` alwa
 | `Utilities`      | Utility class tests                                                                       |
 | `Network`        | Needs network; excluded from PR suites, covered by manual Linux coverage runs             |
 | `Flaky`          | Intermittent failures; excluded from PR suites, covered by manual Linux coverage runs     |
-| `Serial`         | Must run alone (no parallel) — set automatically by `SERIAL`                              |
+| `Serial`         | C++ `TestLabel::Serial` tag, no CTest effect; `add_qgc_test(... SERIAL)` doesn't add it   |
 | `Joystick`       | Joystick/controller tests                                                                 |
 | `AnalyzeView`    | Log analysis and geo-tagging tests                                                        |
 | `Terrain`        | Terrain query and tile tests                                                              |
 | `GPS`            | GPS receiver, corrections and NTRIP tests; every test under `test/GPS` carries it         |
 | `Fuzz`           | Fuzzer smoke runs: fixed inputs through a fuzz harness, without libFuzzer                 |
 | `QML`            | QML test runners and QML lint checks                                                      |
+| `NoSanitizer`    | Incompatible with ASan/UBSan; excluded by sanitizer CI and the `Linux-sanitizers` preset  |
+| `StockUI`        | Asserts stock UI that custom builds replace; excluded from Custom Build integration tests |
+| `Portable`       | [Portable utility tests](#portable-utility-tests)                                         |
+| `CMake`          | [CMake script tests](../cmake/README.md#tests); the GStreamer ones also carry `GStreamer` |
+
+Other CTest-only labels (`MAVLink`, `Camera`, `Viewer3D`) only name an area.
 
 ### Wait/Timeout Helpers
 
@@ -228,7 +244,21 @@ when the signal may already have fired, e.g. when another thread emits it.
 **Gotcha — `QVERIFY_NO_SIGNAL_WAIT` always burns the full timeout.** It has to, because
 proving absence requires waiting the entire window. Keep its timeout as tight as
 possible (a few hundred ms), and put it *after* any `QVERIFY_TRUE_WAIT` that already
-proves state has settled.
+proves state has settled. Prefer a positive barrier: send a trailing valid input and expect
+exactly one signal, or wait for the terminal signal and then check the spy is empty. When the
+code under test handles a reply synchronously, check the spy right after the call. In UI tests,
+use `findVisibleItem(root, name, 0)` for negative checks after a positive barrier and inside
+`QTRY_*`.
+
+**Gotcha — waits in teardown after a failure.** Once the current test function has failed,
+`QTestEventLoop` returns immediately, so `QSignalSpy::wait()`, `QVERIFY_SIGNAL_WAIT` and
+`QVERIFY_SIGNAL_COUNT_WAIT` don't wait. Teardown helpers poll with
+`QTest::qWaitFor(condition, timeout)` and settle before asserting.
+
+**Gotcha — MockLink telemetry starts after the MAVLink v2 upgrade.** MockLink sends MAVLink v1
+until QGC's first v2 message, and QGC drops v1 messages other than HEARTBEAT (and RADIO_STATUS).
+MockLink therefore sends its first 1 Hz batch (SYS_STATUS, battery, HOME_POSITION, …) right after
+that upgrade, then once a second. Tests that need two batches still wait about a second.
 
 #### Condition polling
 
@@ -253,14 +283,13 @@ QVERIFY(UnitTest::waitForCondition([&]() { return thing.ready(); },
 ### Via CTest
 
 ```bash
-ctest --parallel $(nproc)          # All tests in parallel
-ctest -L Unit                      # Unit tests only
-ctest --output-on-failure -L Unit  # Unit tests, print output on failure
-ctest -L Integration               # Integration tests
-ctest -LE "Flaky|Network"          # Exclude flaky and network tests
-ctest -R "Camera|Mission"          # Tests matching pattern (name regex)
-ctest -R MyTest                    # Run a single test by name
-ctest --rerun-failed               # Re-run only failed tests
+ctest --test-dir build --parallel $(nproc)          # All tests in parallel
+ctest --test-dir build --output-on-failure -L Unit  # Unit tests, print output on failure
+ctest --test-dir build -L Integration               # Integration tests
+ctest --test-dir build -LE "Flaky|Network"          # Exclude flaky and network tests
+ctest --test-dir build -R "Camera|Mission"          # Tests matching a name regex
+ctest --test-dir build --rerun-failed               # Re-run only failed tests
+ctest --test-dir build --output-junit results.xml   # JUnit XML report
 ```
 
 ### Via `just`
@@ -270,19 +299,26 @@ just test                                    # Labels "Unit|Integration", exclud
 LABELS=Unit just test                        # Override labels
 EXCLUDE=Network just test                    # Override exclusions
 LABELS=Slow EXCLUDE=Flaky just test          # Both at once
+JOBS=4 just test                             # Override parallelism (default: all cores)
 ```
 
-`just test` wraps `ctest --output-on-failure -L "<LABELS>" -LE "<EXCLUDE>"` and matches
-the label filters CI uses by default.
+`just test` runs `ctest --preset default --build-config <BUILD_TYPE> --parallel <JOBS> --no-tests=error -L
+"<LABELS>" -LE "<EXCLUDE>"`; the test preset (`cmake/presets/common.json`) turns on output on failure. The `default`
+test preset tests `build/` only; for a preset with its own build directory, run `ctest --preset <name>` (for example
+`Linux-sanitizers`).
 
-Linux CI runs integration tests with one process per CPU (two in coverage builds). Settings and temporary directories are
-isolated per test; local network fixtures allocate ephemeral ports. Existing CTest
-`RESOURCE_LOCK` and `RUN_SERIAL` properties still serialize tests sharing hardware or
-fixed resources. The `test-phase` action accepts `integration-parallel` for constrained
-runners. CI Linux runners have four CPUs; to match CI locally, run `ctest --test-dir build -L Integration
--LE 'Flaky|Network' --output-on-failure --parallel 4`. Preserve this isolation when adding integration tests.
+CI runs the `Unit` and `Integration` labels as separate CTest runs with the same exclusions. Linux CI uses one
+process per CPU (four on its runners), except two for coverage integration tests; to match it, run
+`ctest --test-dir build -L Integration -LE 'Flaky|Network' --output-on-failure --parallel 4`. Settings and
+temporary directories are isolated per test, and local network fixtures allocate ephemeral ports. CTest
+`RESOURCE_LOCK` still serializes tests sharing hardware or fixed resources. `SERIAL` tests get `RUN_SERIAL` only in
+sanitizer (`QGC_ENABLE_ASAN`/`UBSAN`/`TSAN`/`MSAN`) and coverage builds; other builds run them alongside other
+tests with `PROCESSORS 2`. Preserve this isolation when adding integration tests.
 
 ### Via the QGroundControl Binary (unittest build)
+
+The binary is `build/Debug/QGroundControl` on Linux (`QGroundControl.app/Contents/MacOS/QGroundControl` on macOS,
+`QGroundControl.exe` on Windows).
 
 ```bash
 ./QGroundControl --list-tests                          # List all registered tests
@@ -290,29 +326,26 @@ runners. CI Linux runners have four CPUs; to match CI locally, run `ctest --test
 ./QGroundControl --unittest:MyTest                     # Run one test suite
 ./QGroundControl --unittest                            # Run all tests
 ./QGroundControl --unittest --label=Unit               # Run by label filter (comma-sep)
-./QGroundControl --unittest:MyTest --unittest-output:results.xml  # JUnit XML
+./QGroundControl --unittest:MyTest --unittest-output:results.xml  # JUnit XML in results-MyTest.xml
 ./QGroundControl --unittest:MyTest --unittest-stress:50           # Stress: 50 iterations
+./QGroundControl --unittest:MyTest --unittest-shard:2/3           # Every 3rd test function, starting at the 2nd
+                                                                  # (results-MyTest.2.xml with --unittest-output)
 ```
+
+`--unittest:<Class>` runs every function of the class; there is no single-function selector.
 
 ### Convenience Targets
 
-```bash
-ninja check              # All tests
-ninja check-unit         # Unit tests only
-ninja check-integration  # Integration tests
-ninja check-fast         # Exclude slow tests
-ninja check-ci           # CI-safe (excludes Flaky, Network)
-ninja check-flaky        # Repeat until-fail to surface flaky failures (excludes Network)
-```
+Each target builds the application first (`cmake --build build --target <target>`):
 
-### Category-Specific Targets
-
-```bash
-ninja check-missionmanager   # MissionManager tests
-ninja check-vehicle          # Vehicle tests
-ninja check-utilities        # Utilities tests
-ninja check-mavlink          # MAVLink tests
-ninja check-comms            # Comms tests
+```text
+check                # All tests
+check-unit           # Unit tests only
+check-integration    # Integration tests, one at a time
+check-fast           # Exclude Slow
+check-ci             # Exclude Flaky and Network
+check-flaky          # Repeat until-fail (QGC_TEST_FLAKY_REPEAT, default 3) to surface flaky failures
+check-missionmanager # One label: also check-vehicle, check-utilities, check-mavlink, check-comms
 ```
 
 ### QML Test Split
@@ -327,23 +360,13 @@ There are two separate QML-related test entry points with different purposes:
 
 ```bash
 # Real QML quick tests
-ctest -R QmlQuickTests --output-on-failure
+ctest --test-dir build -R QmlQuickTests --output-on-failure
 
 # In-process sanity check runner
-ctest -R QmlTestFileValidator --output-on-failure
+ctest --test-dir build -R QmlTestFileValidator --output-on-failure
 ```
 
-### JUnit XML Output
-
-```bash
-# Single test with XML output
-./QGroundControl --unittest:MyTest --unittest-output:results.xml
-
-# All tests via CTest with JUnit output
-ctest --output-junit results.xml
-```
-
-## Portable utility tests
+## Portable Utility Tests
 
 Windows x64 and the macOS Release CI leg enable `QGC_BUILD_PORTABLE_TESTS` alongside the normal
 application build (the macOS Debug leg runs the Unit and Integration suites instead, same as
@@ -362,7 +385,7 @@ Use `PortableTest` and `QGC_REGISTER_PORTABLE_TEST` for these suites. Full appli
 builds use the existing UnitTest harness; standalone executables use Qt Test with warnings
 failing tests. Keep application-dependent fixtures in the full harness.
 
-## GPS protocol golden transcripts
+## GPS Protocol Golden Transcripts
 
 `GPSGoldenTranscriptTest` pins the native GPS receiver protocols on a virtual clock. For each
 scenario it records host-to-receiver bytes, baud changes, configuration evidence, identity and
@@ -438,43 +461,48 @@ test/plans/generate_test_plans.py
 just coverage   # Build with coverage, run tests, generate HTML + XML report
 ```
 
-See [tools/README.md](../tools/README.md#coveragepy) for the `coverage.py` wrapper flags and the
-underlying CMake `coverage*` targets (report lands in `build-coverage/`).
+`just coverage` configures `build/Linux-coverage/` with the `Linux-coverage` preset (line tables and unity build, like CI)
+and runs CI's two test phases through its test preset (excluding `Flaky|Network`): `Unit` at one process per CPU,
+then `Integration` at `-j2`.
+See [tools/README.md](../tools/README.md#coverage_reportpy) for the `coverage_report.py` wrapper flags and the
+underlying CMake `coverage*` targets.
 
 ## Sanitizers
 
+Linux CI runs the `Unit` and `Integration` suites with ASan + UBSan through the `Linux-sanitizers` preset, which
+also enables LSan leak detection (`QGC_TEST_DETECT_LEAKS=ON`) and excludes `NoSanitizer` tests. Reproduce it with
+`QT_ROOT_DIR` pointing at the Qt installation:
+
 ```bash
-# AddressSanitizer (memory errors)
-cmake -B build -DCMAKE_BUILD_TYPE=Debug -DQGC_BUILD_TESTING=ON -DQGC_ENABLE_ASAN=ON
-
-# UndefinedBehaviorSanitizer
-cmake -B build -DCMAKE_BUILD_TYPE=Debug -DQGC_BUILD_TESTING=ON -DQGC_ENABLE_UBSAN=ON
-
-# Combined ASan + UBSan (recommended default sanitizer lane)
-cmake -B build -DCMAKE_BUILD_TYPE=Debug -DQGC_BUILD_TESTING=ON -DQGC_ENABLE_ASAN=ON -DQGC_ENABLE_UBSAN=ON
-
-# ThreadSanitizer (data races, run separately)
-cmake -B build -DCMAKE_BUILD_TYPE=Debug -DQGC_BUILD_TESTING=ON -DQGC_ENABLE_TSAN=ON
+cmake --workflow --preset Linux-sanitizers   # Configure, build and test in build/Linux-sanitizers
+ctest --preset Linux-sanitizers -R MyTest    # Re-run one test after a rebuild
 ```
+
+ThreadSanitizer can't be combined with ASan; CI runs it only from a manual Analysis workflow dispatch:
+
+```bash
+cmake --preset Linux-debug -B build-tsan -DQGC_ENABLE_TSAN=ON
+cmake --build build-tsan && ctest --test-dir build-tsan -L "Unit|Integration" -LE "Flaky|Network|NoSanitizer"
+```
+
+`cmake/QGCTest.cmake` sets the enabled sanitizers' `*SAN_OPTIONS` (each with `halt_on_error=1`, plus the
+suppression files generated in the build directory) on every CTest test, replacing any value in your shell. Run the
+test binary directly to try other options. `QGC_TEST_DETECT_LEAKS` is `OFF` outside the
+preset because LSan needs `ptrace` permission, which containers and Yama often deny.
 
 ## Debugging Test Failures
 
 ### Enable Verbose Output
 
 ```bash
-QGC_TEST_VERBOSE=1 ./QGroundControl --unittest:MyTest
-```
-
-### Run Single Test Method
-
-```bash
-./QGroundControl --unittest:MyTest -- -v2 _specificMethod
+QGC_TEST_VERBOSE=1 build/Debug/QGroundControl --unittest:MyTest
 ```
 
 ### Common Issues
 
 1. **Test timeout**: Check for blocking operations, increase timeout with `TIMEOUT`
-2. **Resource conflicts**: Use `RESOURCE_LOCK` or `SERIAL` for exclusive access
+2. **Resource conflicts**: Use `RESOURCE_LOCK` for exclusive access (`SERIAL` runs a test alone
+   only in sanitizer and coverage builds)
 3. **Flaky signals**: Use `MultiSignalSpy::waitForSignal()` instead of `QSignalSpy::wait()`
 4. **Stale singletons**: Ensure proper cleanup in `cleanup()` method
 5. **Unexpected log messages (strict mode)**: Every test runs with strict log checking, so
@@ -484,28 +512,28 @@ QGC_TEST_VERBOSE=1 ./QGroundControl --unittest:MyTest
    pre-commit hook):
 
    ```cpp
-    // Preferred: one-shot expectation — asserts the message was actually emitted
+   // Preferred: one-shot expectation — asserts the message was actually emitted
    expectLogMessage("MAVLink.LibEvents.HealthAndArmingCheckReport",
                     QtWarningMsg,
                     QRegularExpression(QStringLiteral("Flight mode group not set")));
    somethingThatLogs();
-    verifyExpectedLogMessage();
+   verifyExpectedLogMessage();
 
-    // Last resort only: persistent suppression — does NOT assert the message fires
-    ignoreLogMessage("qt.bluetooth",
-                     QtWarningMsg,
-                     QRegularExpression(QStringLiteral("Cannot find a compatible running Bluez")));
+   // Last resort only: persistent suppression — does NOT assert the message fires
+   ignoreLogMessage("qt.bluetooth",
+                    QtWarningMsg,
+                    QRegularExpression(QStringLiteral("Cannot find a compatible running Bluez")));
    ```
 
-    `expectLogMessage(...)` must be followed by `verifyExpectedLogMessage()`.
-    If verification is omitted, `cleanup()` fails the test.
+   `expectLogMessage(...)` must be followed by `verifyExpectedLogMessage()`.
+   If verification is omitted, `cleanup()` fails the test.
 
-    **Always prefer `expectLogMessage` + `verifyExpectedLogMessage`.** That
-    pairing both silences the strict-mode check *and* asserts the message was
-    actually emitted, so a regression that removes the log will break the test.
+   **Always prefer `expectLogMessage` + `verifyExpectedLogMessage`.** That
+   pairing both silences the strict-mode check *and* asserts the message was
+   actually emitted, so a regression that removes the log will break the test.
 
-    Use `ignoreLogMessage(...)` only as a last resort for non-deterministic or
-    environment-dependent noise that cannot be tied to a precise call site.
+   Use `ignoreLogMessage(...)` only as a last resort for non-deterministic or
+   environment-dependent noise that cannot be tied to a precise call site.
 
 6. **Expensive SKIP paths**: If a test conditionally `QSKIP`s based on a backend probe
    (e.g. "SDL didn't expose a second virtual joystick"), cache the probe result in a

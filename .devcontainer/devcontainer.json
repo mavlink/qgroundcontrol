@@ -22,7 +22,7 @@
   },
   "name": "QGroundControl Dev",
   "overrideCommand": true,
-  "postCreateCommand": "git submodule update --init --recursive && /opt/qgc-venv/bin/python tools/setup/setup_vscode.py --python-interpreter /opt/qgc-venv/bin/python",
+  "postCreateCommand": "/opt/qgc-venv/bin/python tools/setup/setup_vscode.py --python-interpreter /opt/qgc-venv/bin/python",
   "remoteUser": "vscode",
   "workspaceFolder": "/workspaces/qgroundcontrol",
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/qgroundcontrol,type=bind,consistency=cached"

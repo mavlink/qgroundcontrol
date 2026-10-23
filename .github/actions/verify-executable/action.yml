@@ -3,24 +3,16 @@ description: Run simple boot test on QGroundControl binary or package
 
 inputs:
   binary-path:
-    description: "Path to executable or package to verify"
+    description: "Path to the executable or package to verify; the boot test runs in its directory"
     required: true
   type:
-    description: "Type of executable (binary, appimage, dmg, exe) - currently informational"
+    description: "Type of executable (binary, appimage, dmg, exe); dmg attaches the image, verifies its app bundle, and detaches it"
     required: false
     default: "binary"
-  working-dir:
-    description: "Working directory (defaults to binary parent directory)"
-    required: false
-    default: ""
   build-dir:
     description: "CMake build directory (used to locate auto-downloaded GStreamer SDK for dev builds)"
     required: false
     default: ""
-  timeout:
-    description: "Timeout in seconds"
-    required: false
-    default: "60"
   expect-archs:
     description: "Space-separated Mach-O architectures the binary must contain exactly (macOS only)"
     required: false
@@ -33,22 +25,13 @@ inputs:
 runs:
   using: composite
   steps:
+    # verify_executable.py reads the INPUT_* variables as argument defaults.
     - name: Verify executable
       shell: bash
-      run: |
-        python3 "${GITHUB_WORKSPACE}/.github/scripts/verify_executable.py" \
-          --binary-path "${INPUTS_BINARY_PATH}" \
-          --type "${INPUTS_TYPE}" \
-          --working-dir "${INPUTS_WORKING_DIR}" \
-          --build-dir "${INPUTS_BUILD_DIR}" \
-          --timeout "${INPUTS_TIMEOUT}" \
-          --expect-archs "${INPUTS_EXPECT_ARCHS}" \
-          --expected-appimage-update-information "${INPUTS_EXPECTED_APPIMAGE_UPDATE_INFORMATION}"
+      run: python3 "${GITHUB_WORKSPACE}/tools/ci/packaging/verify_executable.py"
       env:
-        INPUTS_BINARY_PATH: ${{ inputs.binary-path }}
-        INPUTS_TYPE: ${{ inputs.type }}
-        INPUTS_WORKING_DIR: ${{ inputs.working-dir }}
-        INPUTS_BUILD_DIR: ${{ inputs.build-dir }}
-        INPUTS_TIMEOUT: ${{ inputs.timeout }}
-        INPUTS_EXPECT_ARCHS: ${{ inputs.expect-archs }}
-        INPUTS_EXPECTED_APPIMAGE_UPDATE_INFORMATION: ${{ inputs.expected-appimage-update-information }}
+        INPUT_BINARY_PATH: ${{ inputs.binary-path }}
+        INPUT_TYPE: ${{ inputs.type }}
+        INPUT_BUILD_DIR: ${{ inputs.build-dir }}
+        INPUT_EXPECT_ARCHS: ${{ inputs.expect-archs }}
+        INPUT_EXPECTED_APPIMAGE_UPDATE_INFORMATION: ${{ inputs.expected-appimage-update-information }}

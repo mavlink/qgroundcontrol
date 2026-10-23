@@ -43,7 +43,13 @@ void RCToParamDialogController::setTuningFact(Fact *tuningFact)
     _maxFact->setRawValue(_tuningFact->rawMax().toDouble());
 
     (void) connect(_tuningFact, &Fact::vehicleUpdated, this, &RCToParamDialogController::_parameterUpdated);
-    MultiVehicleManager::instance()->activeVehicle()->parameterManager()->refreshParameter(ParameterManager::defaultComponentId, _tuningFact->name());
+
+    Vehicle* const vehicle = MultiVehicleManager::instance()->activeVehicle();
+    if (!vehicle) {
+        qCWarning(RCToParamDialogControllerLog) << "No active vehicle to refresh" << _tuningFact->name();
+        return;
+    }
+    vehicle->parameterManager()->refreshParameter(ParameterManager::defaultComponentId, _tuningFact->name());
 }
 
 void RCToParamDialogController::_parameterUpdated()

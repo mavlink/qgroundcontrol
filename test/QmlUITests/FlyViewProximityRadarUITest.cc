@@ -4,6 +4,7 @@
 #include <QtTest/QTest>
 
 #include "MockLink.h"
+#include "Vehicle.h"
 
 UT_REGISTER_TEST(FlyViewProximityRadarUITest, TestLabel::Integration)
 
@@ -21,12 +22,15 @@ void FlyViewProximityRadarUITest::_testRadarVisibleWithProximity()
 
 void FlyViewProximityRadarUITest::_testRadarHiddenWithoutProximity()
 {
-    runWithMockLink(
-        [] { return MockLink::startPX4MockLink(); },
-        [this](QPointer<MockLink> /*mockLink*/, Vehicle * /*vehicle*/) {
-            // Without OptionEnableProximity no distance sensor telemetry arrives, so the
-            // radar item must stay invisible.
-            QVERIFY2(!findVisibleItem(_rootItem, QStringLiteral("proximityRadarMapView"), 3000),
-                     "Proximity radar map item visible without proximity telemetry");
-        });
+    runWithMockLink([] { return MockLink::startPX4MockLink(); },
+                    [this](QPointer<MockLink> /*mockLink*/, Vehicle* vehicle) {
+                        QVERIFY(vehicle);
+                        // Without OptionEnableProximity no distance sensor telemetry arrives, so the
+                        // radar item must stay invisible. HOME_POSITION ends MockLink's 1Hz batch,
+                        // after any DISTANCE_SENSOR, and the radar also needs a valid coordinate.
+                        QTRY_VERIFY_WITH_TIMEOUT(vehicle->homePosition().isValid() && vehicle->coordinate().isValid(),
+                                                 TestTimeout::mediumMs());
+                        QVERIFY2(!findVisibleItem(_rootItem, QStringLiteral("proximityRadarMapView"), 0),
+                                 "Proximity radar map item visible without proximity telemetry");
+                    });
 }

@@ -12,7 +12,11 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-REPO = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+import _bootstrap as _bootstrap
+from common.paths import REPO_ROOT
+from common.proc import require_tools
 
 
 def find_executable(build: Path, config: str) -> Path:
@@ -37,30 +41,29 @@ def main(argv: list[str] | None = None) -> int:
     parser.set_defaults(mode="perf")
     parser.add_argument("-b", "--build-dir", type=Path)
     parser.add_argument("--config", default="Debug")
-    parser.add_argument("--output-dir", type=Path, default=REPO / "profile")
+    parser.add_argument("--output-dir", type=Path, default=REPO_ROOT / "profile")
     parser.add_argument("--no-viewer", action="store_true")
     parser.add_argument("args", nargs=argparse.REMAINDER)
     args = parser.parse_args(argv)
     app_args = args.args[1:] if args.args[:1] == ["--"] else args.args
     build = (
-        args.build_dir or REPO / ("build-sanitize" if args.mode == "sanitize" else "build")
+        args.build_dir or REPO_ROOT / ("build/sanitize" if args.mode == "sanitize" else "build")
     ).resolve()
     try:
         if args.mode == "sanitize":
-            flags = "-fsanitize=address,undefined -fno-omit-frame-pointer"
+            # The QGC options instrument only QGC targets, as CI's Linux-sanitizers preset does.
             subprocess.run(
                 [
                     sys.executable,
-                    str(REPO / "tools/configure.py"),
+                    str(REPO_ROOT / "tools/configure.py"),
                     "-B",
                     str(build),
                     "-S",
-                    str(REPO),
+                    str(REPO_ROOT),
                     "--debug",
                     "--",
-                    f"-DCMAKE_C_FLAGS={flags}",
-                    f"-DCMAKE_CXX_FLAGS={flags}",
-                    "-DCMAKE_EXE_LINKER_FLAGS=-fsanitize=address,undefined",
+                    "-DQGC_ENABLE_ASAN=ON",
+                    "-DQGC_ENABLE_UBSAN=ON",
                 ],
                 check=True,
             )
@@ -69,7 +72,7 @@ def main(argv: list[str] | None = None) -> int:
             )
             return subprocess.run(
                 [str(find_executable(build, "Debug")), *app_args],
-                cwd=REPO,
+                cwd=REPO_ROOT,
                 check=False,
                 env=os.environ
                 | {
@@ -79,8 +82,7 @@ def main(argv: list[str] | None = None) -> int:
             ).returncode
         binary = find_executable(build, args.config)
         tool = "valgrind" if args.mode in ("memcheck", "callgrind", "massif") else args.mode
-        if not shutil.which(tool):
-            raise FileNotFoundError(f"Required profiler is not on PATH: {tool}")
+        require_tools(tool)
         args.output_dir.mkdir(parents=True, exist_ok=True)
         stamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
         suffix = {"memcheck": "log", "perf": "data"}.get(args.mode, "out")
@@ -93,7 +95,7 @@ def main(argv: list[str] | None = None) -> int:
                 "--track-origins=yes",
                 "--verbose",
                 f"--log-file={output}",
-                f"--suppressions={REPO / 'tools/debuggers/valgrind.supp'}",
+                f"--suppressions={REPO_ROOT / 'tools/debuggers/valgrind.supp'}",
             ],
             "callgrind": [
                 "valgrind",
@@ -113,7 +115,7 @@ def main(argv: list[str] | None = None) -> int:
         }
         print(f"Recording {args.mode}: {output}", flush=True)
         result = subprocess.run(
-            [*commands[args.mode], str(binary), *app_args], cwd=REPO, check=False
+            [*commands[args.mode], str(binary), *app_args], cwd=REPO_ROOT, check=False
         )
         if result.returncode:
             return result.returncode

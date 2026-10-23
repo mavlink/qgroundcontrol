@@ -29,10 +29,10 @@ ListModel {
     }
 {% else %}
     ListElement {
-        name: qsTranslate("SettingsPages.json", "{{ entry.name }}")
-        nameKey: "{{ entry.name }}"
-        url: "{{ entry.url }}"
-        iconUrl: "{{ entry.icon }}"
+        name: qsTranslate("SettingsPages.json", {{ entry.name|qml_string }})
+        nameKey: {{ entry.name|qml_string }}
+        url: {{ entry.url|qml_string }}
+        iconUrl: {{ entry.icon|qml_string }}
         sections: function() {
             return [
 {% for section in entry.sections %}

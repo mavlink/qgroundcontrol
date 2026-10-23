@@ -3,9 +3,11 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <memory>
 
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
 #include <QtTest/QSignalSpy>
 
 #include "BulkRefreshJob.h"
@@ -37,6 +39,10 @@ Vehicle *ParameterManagerTest::_connectAndWaitForVehicle(MockConfiguration::Fail
         qWarning() << "MockLink already connected";
         return nullptr;
     }
+    // On a slow runner the PARAM_VALUE stream can delay a COMMAND_ACK past the ack timeout. A stray
+    // UNSUPPORTED ack from the retried GIMBAL_MANAGER_INFORMATION probe (which MockLink rejects) can
+    // then be credited to the post-connect AVAILABLE_MODES request, which is unrelated to these tests.
+    ignoreLogMessage("Vehicle.StandardModes", QtWarningMsg, QRegularExpression("Failed to retrieve available modes"));
     _mockLink = MockLink::startPX4MockLink(MockConfiguration::OptionNone, failureMode);
     _mockLink->mockLinkFTP()->setParamPckEnabled(false);
     MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
@@ -81,32 +87,40 @@ void ParameterManagerTest::cleanup()
 void ParameterManagerTest::_noFailureWorker(MockConfiguration::FailureMode_t failureMode)
 {
     QVERIFY2(!_mockLink, "MockLink already connected");
-    _mockLink = MockLink::startPX4MockLink(MockConfiguration::OptionNone, failureMode);
     MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
     QVERIFY(vehicleMgr);
-    // Wait for the Vehicle to get created
+    // Spy from vehicle creation: a fast load can complete before the vehicle becomes active
     QSignalSpy spyVehicle(vehicleMgr, &MultiVehicleManager::activeVehicleAvailableChanged);
-    QVERIFY_SIGNAL_WAIT(spyVehicle, TestTimeout::mediumMs());
+    QSignalSpy spyParamsReady(vehicleMgr, &MultiVehicleManager::parameterReadyVehicleAvailableChanged);
+    std::unique_ptr<QSignalSpy> spyProgress;
+    const QMetaObject::Connection vehicleAddedConnection =
+        connect(vehicleMgr, &MultiVehicleManager::vehicleAdded, this, [&spyProgress](Vehicle* addedVehicle) {
+            spyProgress =
+                std::make_unique<QSignalSpy>(addedVehicle->parameterManager(), &ParameterManager::loadProgressChanged);
+        });
+    const auto disconnectVehicleAdded = qScopeGuard([vehicleAddedConnection] { disconnect(vehicleAddedConnection); });
+    _mockLink = MockLink::startPX4MockLink(MockConfiguration::OptionNone, failureMode);
+    // Wait for the Vehicle to get created
+    QVERIFY_SIGNAL_COUNT_WAIT(spyVehicle, 1, TestTimeout::mediumMs());
     QCOMPARE(spyVehicle.count(), 1);
     QList<QVariant> arguments = spyVehicle.takeFirst();
     QCOMPARE(arguments.count(), 1);
     QCOMPARE(arguments.at(0).toBool(), true);
     Vehicle* vehicle = vehicleMgr->activeVehicle();
     QVERIFY(vehicle);
+    QVERIFY(spyProgress);
     // We should get progress bar updates during load
-    QSignalSpy spyProgress(vehicle->parameterManager(), &ParameterManager::loadProgressChanged);
-    QVERIFY_SIGNAL_WAIT(spyProgress, TestTimeout::mediumMs());
-    arguments = spyProgress.takeFirst();
+    QVERIFY_SIGNAL_COUNT_WAIT(*spyProgress, 1, TestTimeout::mediumMs());
+    arguments = spyProgress->takeFirst();
     QCOMPARE(arguments.count(), 1);
     QVERIFY(arguments.at(0).toFloat() > 0.0f);
     // When param load is complete we get the param ready signal
-    QSignalSpy spyParamsReady(vehicleMgr, &MultiVehicleManager::parameterReadyVehicleAvailableChanged);
-    QVERIFY_SIGNAL_WAIT(spyParamsReady, TestTimeout::longMs());
+    QVERIFY_SIGNAL_COUNT_WAIT(spyParamsReady, 1, TestTimeout::longMs());
     arguments = spyParamsReady.takeFirst();
     QCOMPARE(arguments.count(), 1);
     QCOMPARE(arguments.at(0).toBool(), true);
     // Progress should have been set back to 0
-    arguments = spyProgress.takeLast();
+    arguments = spyProgress->takeLast();
     QCOMPARE(arguments.count(), 1);
     QCOMPARE(arguments.at(0).toFloat(), 0.0f);
 }
@@ -140,13 +154,15 @@ void ParameterManagerTest::_requestListNoResponse()
     QVERIFY(vehicle);
     QSignalSpy spyParamsReady(vehicleMgr, &MultiVehicleManager::parameterReadyVehicleAvailableChanged);
     QSignalSpy spyProgress(vehicle->parameterManager(), &ParameterManager::loadProgressChanged);
+    QSignalSpy spyRequestFailed(vehicle->parameterManager(), &ParameterManager::initialParametersRequestFailed);
     expectAppMessage(QRegularExpression("did not respond to request for parameters"));
     expectLogMessage("FactSystem.ParameterManager", QtWarningMsg,
                      QRegularExpression("did not respond to request for parameters"));
-    // We should not get any progress bar updates, nor a parameter ready signal.
-    // ParameterManager exhausts initial request retries in bounded test intervals.
-    QVERIFY_NO_SIGNAL_WAIT(spyProgress, TestTimeout::shortMs());
-    QVERIFY_NO_SIGNAL_WAIT(spyParamsReady, ParameterManager::kTestMaxInitialRequestTimeMs);
+    // ParameterManager exhausts initial request retries in bounded test intervals and gives up
+    // without any progress bar updates or a parameter ready signal.
+    QVERIFY_SIGNAL_WAIT(spyRequestFailed, ParameterManager::kTestMaxInitialRequestTimeMs);
+    QCOMPARE(spyProgress.count(), 0);
+    QCOMPARE(spyParamsReady.count(), 0);
     verifyExpectedLogMessage();
     verifyExpectedLogMessage();
 }
@@ -272,14 +288,16 @@ void ParameterManagerTest::_requestListNonDefaultComponentDoesNotGateReady()
 void ParameterManagerTest::_refreshAllViaFtpKeepsProgressDownForBackgroundComponent()
 {
     QVERIFY2(!_mockLink, "MockLink already connected");
-    _mockLink = MockLink::startPX4MockLink(MockConfiguration::OptionNone, MockConfiguration::FailNonDefaultComponentLossy);
     MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
     QSignalSpy spyVehicle(vehicleMgr, &MultiVehicleManager::activeVehicleAvailableChanged);
-    QVERIFY_SIGNAL_WAIT(spyVehicle, TestTimeout::mediumMs());
+    // Spy before connecting: the FTP load can complete before the vehicle becomes active
+    QSignalSpy spyParamsReady(vehicleMgr, &MultiVehicleManager::parameterReadyVehicleAvailableChanged);
+    _mockLink =
+        MockLink::startPX4MockLink(MockConfiguration::OptionNone, MockConfiguration::FailNonDefaultComponentLossy);
+    QVERIFY_SIGNAL_COUNT_WAIT(spyVehicle, 1, TestTimeout::mediumMs());
     Vehicle* vehicle = vehicleMgr->activeVehicle();
     QVERIFY(vehicle);
-    QSignalSpy spyParamsReady(vehicleMgr, &MultiVehicleManager::parameterReadyVehicleAvailableChanged);
-    QVERIFY_SIGNAL_WAIT(spyParamsReady, TestTimeout::longMs());
+    QVERIFY_SIGNAL_COUNT_WAIT(spyParamsReady, 1, TestTimeout::longMs());
     ParameterManager* const paramManager = vehicle->parameterManager();
     QVERIFY(paramManager);
 
@@ -920,7 +938,9 @@ void ParameterManagerTest::_bulkRefreshUnknownNameSkipped()
     paramManager->bulkRefresh(MAV_COMP_ID_AUTOPILOT1, {QStringLiteral("ZZZZ_DOES_NOT_EXIST")});
     verifyExpectedLogMessage();
 
-    QVERIFY_NO_SIGNAL_WAIT(successSpy, TestTimeout::shortMs());
+    // bulkRefresh starts its job synchronously, so no job means no request can follow
+    QVERIFY(paramManager->findChildren<BulkRefreshJob*>(Qt::FindDirectChildrenOnly).isEmpty());
+    QCOMPARE(successSpy.count(), 0);
     QCOMPARE(failureSpy.count(), 0);
 
     _disconnectMockLink();

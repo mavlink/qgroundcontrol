@@ -1,9 +1,4 @@
-"""Platform detection helpers.
-
-Replaces ad-hoc ``sys.platform == "win32"`` / ``platform.system().lower()``
-checks scattered through ``configure.py``, ``run_tests.py``,
-``setup/install_dependencies/`` package, ``setup/install_python.py`` and others.
-"""
+"""OS checks and CPU architecture normalization."""
 
 from __future__ import annotations
 
@@ -13,7 +8,6 @@ import sys
 from typing import Literal
 
 __all__ = [
-    "current_platform",
     "host_arch",
     "is_linux",
     "is_macos",
@@ -21,7 +15,6 @@ __all__ = [
     "normalize_arch",
 ]
 
-Platform = Literal["linux", "macos", "windows", "other"]
 Architecture = Literal["x86_64", "aarch64"]
 
 _ARCH_ALIASES: dict[str, Architecture] = {
@@ -60,14 +53,3 @@ def is_macos() -> bool:
 def is_linux() -> bool:
     """True on any Linux variant."""
     return sys.platform.startswith("linux")
-
-
-def current_platform() -> Platform:
-    """Return a normalized platform tag: ``linux`` / ``macos`` / ``windows`` / ``other``."""
-    if is_windows():
-        return "windows"
-    if is_macos():
-        return "macos"
-    if is_linux():
-        return "linux"
-    return "other"

@@ -77,7 +77,8 @@ void OnboardLogUITest::_verifySelectionButtonStates(bool hasSelection)
     if (_ftpTransport) {
         _verifyButtonEnabled(QStringLiteral("onboardLog_eraseSelectedButton"), hasSelection);
     } else {
-        QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("onboardLog_eraseSelectedButton"), 500) == nullptr,
+        // The download button check above already waited for the page
+        QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("onboardLog_eraseSelectedButton"), 0) == nullptr,
                  "Erase Selected button must not be visible on the message transport");
     }
 }

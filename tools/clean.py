@@ -3,39 +3,44 @@
 
 Examples:
     ./tools/clean.py              # Clean build directory
-    ./tools/clean.py --all        # Clean everything (build, caches, generated files)
-    ./tools/clean.py --cache      # Clean only caches (ccache, pip, etc.)
+    ./tools/clean.py --all        # Clean everything (build, caches, generated files, node_modules)
+    ./tools/clean.py --cache      # Clean only repo-local caches (.cache, legacy .ccache)
     ./tools/clean.py --dry-run    # Show what would be removed
 """
 
 from __future__ import annotations
 
 import argparse
+import os
 import shutil
 import subprocess
 import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from _bootstrap import ensure_tools_dir
-
-ensure_tools_dir(__file__)
-
+import _bootstrap as _bootstrap
 from common.file_traversal import find_repo_root
 from common.io import chdir
 from common.logging import log_info, log_ok, log_warn
-from common.proc import run_captured
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
 BUILD_TARGETS: tuple[tuple[str, str], ...] = (("build", "build directory"),)
 
+# .clangd is the tracked clangd configuration; clangd keeps its index under .cache/clangd.
 CACHE_TARGETS: tuple[tuple[str, str], ...] = (
     (".cache", "local cache directory"),
-    (".ccache", "ccache directory"),
-    (".clangd", "clangd index"),
+    (".ccache", "legacy ccache directory"),
 )
+
+INSTALLED_TARGETS: tuple[tuple[str, str], ...] = (
+    ("docs/node_modules", "Node.js packages"),
+    ("node_modules", "legacy Node.js packages"),
+)
+
+# Never descend into VCS metadata, installed packages, or virtual environments (pyvenv.cfg).
+BYTECODE_SKIPPED_DIRS = frozenset({".git", "node_modules"})
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -43,10 +48,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument(
-        "-a", "--all", action="store_true", help="Clean build + caches + generated files"
+    scope = parser.add_mutually_exclusive_group()
+    scope.add_argument(
+        "-a",
+        "--all",
+        action="store_true",
+        help="Clean build + caches + generated files + node_modules",
     )
-    parser.add_argument("-c", "--cache", action="store_true", help="Clean only caches")
+    scope.add_argument("-c", "--cache", action="store_true", help="Clean only caches")
     parser.add_argument(
         "-n",
         "--dry-run",
@@ -89,19 +98,29 @@ def clean_build(root: Path, *, dry_run: bool) -> None:
 
 def clean_cache(root: Path, *, dry_run: bool) -> None:
     remove_many(root, CACHE_TARGETS, dry_run=dry_run)
-    if shutil.which("ccache"):
-        if dry_run:
-            log_info("Would clear ccache statistics")
-        else:
-            log_info("Clearing ccache statistics")
-            run_captured(["ccache", "--zero-stats"])
+
+
+def find_bytecode(root: Path) -> list[Path]:
+    """Return ``__pycache__`` directories and stray ``.pyc`` files owned by the checkout."""
+    found: list[Path] = []
+    for directory, dirnames, filenames in os.walk(root):
+        current = Path(directory)
+        descend: list[str] = []
+        for name in dirnames:
+            path = current / name
+            if name == "__pycache__":
+                found.append(path)
+            elif name not in BYTECODE_SKIPPED_DIRS and not (path / "pyvenv.cfg").is_file():
+                descend.append(name)
+        dirnames[:] = descend
+        found.extend(current / name for name in filenames if name.endswith(".pyc"))
+    return sorted(found)
 
 
 def clean_generated(root: Path, *, dry_run: bool) -> None:
-    for cache_dir in sorted(root.rglob("__pycache__")):
-        remove_path(cache_dir, f"Python cache: {cache_dir.relative_to(root)}", dry_run=dry_run)
-    for pyc in sorted(root.rglob("*.pyc")):
-        remove_path(pyc, f"Python bytecode: {pyc.relative_to(root)}", dry_run=dry_run)
+    for path in find_bytecode(root):
+        kind = "Python cache" if path.name == "__pycache__" else "Python bytecode"
+        remove_path(path, f"{kind}: {path.relative_to(root)}", dry_run=dry_run)
 
 
 def report_disk_usage(root: Path) -> None:
@@ -131,6 +150,7 @@ def main(argv: list[str] | None = None) -> int:
         elif args.all:
             clean_build(root, dry_run=args.dry_run)
             clean_cache(root, dry_run=args.dry_run)
+            remove_many(root, INSTALLED_TARGETS, dry_run=args.dry_run)
             clean_generated(root, dry_run=args.dry_run)
         else:
             clean_build(root, dry_run=args.dry_run)

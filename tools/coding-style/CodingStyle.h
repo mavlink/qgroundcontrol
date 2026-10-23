@@ -6,23 +6,22 @@
 
 #pragma once
 
+#include <climits>
+#include <span>
+#include <string_view>
+
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-#include <limits.h>
-#include <span>
-#include <string_view>
-
 #include "Fact.h"
-#include "Vehicle.h"
 
-// Note how the Qt headers, System headers and the QGroundControl headers above are kept in separate groups
-// with blank lines between them. Within each group, headers are sorted alphabetically.
+// Note how the System headers, Qt headers and the QGroundControl headers above are kept in separate groups,
+// in that order, with blank lines between them. Within each group, headers are sorted alphabetically.
 // Use full paths for Qt headers (e.g., QtCore/QObject not QObject).
 
-// Forward declarations for classes that are only used as pointers/references
+// Forward declarations for classes that are only used as pointers/references; the .cc includes Vehicle.h
 class Vehicle;
 
 // If you are going to use a logging category for a class it should have the same name as the class
@@ -55,10 +54,9 @@ class CodingStyle : public QObject
     /// Q_PROPERTY definitions for QML binding
     /// Format: Q_PROPERTY(Type name READ getter WRITE setter NOTIFY signal)
     /// Use CONSTANT for properties that never change
-    /// Use tab spacing to align property elements vertically. Don't take to an extreme, goal is to improve readability.
-    Q_PROPERTY(int      exampleProperty     READ exampleProperty WRITE setExampleProperty NOTIFY examplePropertyChanged)
-    Q_PROPERTY(Vehicle* vehicle             READ vehicle            CONSTANT)
-    Q_PROPERTY(bool     readOnlyProperty    READ readOnlyProperty   NOTIFY readOnlyPropertyChanged)
+    Q_PROPERTY(int exampleProperty READ exampleProperty WRITE setExampleProperty NOTIFY examplePropertyChanged)
+    Q_PROPERTY(Vehicle* vehicle READ vehicle CONSTANT)
+    Q_PROPERTY(bool readOnlyProperty READ readOnlyProperty NOTIFY readOnlyPropertyChanged)
 
 public:
     explicit CodingStyle(QObject* parent = nullptr);  // Use nullptr, not NULL
@@ -86,21 +84,15 @@ public:
     void processData(std::span<const int> data);
 
     // Public getters/setters - use [[nodiscard]] for getters
-    [[nodiscard]] int exampleProperty() const
-    {
-        return _exampleProperty;
-    }
-    void setExampleProperty(int value);
-    [[nodiscard]] Vehicle* vehicle() const
-    {
-        return _vehicle;
-    }
-    [[nodiscard]] bool readOnlyProperty() const
-    {
-        return _readOnlyProperty;
-    }
+    [[nodiscard]] int exampleProperty() const { return _exampleProperty; }
 
-   signals:
+    void setExampleProperty(int value);
+
+    [[nodiscard]] Vehicle* vehicle() const { return _vehicle; }
+
+    [[nodiscard]] bool readOnlyProperty() const { return _readOnlyProperty; }
+
+signals:
     /// Document signals which are non-obvious in the header file
     /// Signals should be emitted when properties change to maintain QML bindings
     void examplePropertyChanged(int newValue);

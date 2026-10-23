@@ -90,7 +90,7 @@ public:
                             bool hasTrackingRectangle = false);
     ~MockLinkCamera() = default;
 
-    /// Send heartbeats for all simulated camera components (call from 1Hz tasks)
+    /// Send heartbeats for all simulated camera components (call from 10Hz tasks)
     void sendCameraHeartbeats();
 
     /// Update camera states (call from 10Hz tasks)

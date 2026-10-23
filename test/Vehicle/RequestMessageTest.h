@@ -1,6 +1,7 @@
 #pragma once
 
 #include "BaseClasses/VehicleTest.h"
+#include "MockLink.h"
 #include "Vehicle.h"
 
 class RequestMessageTest : public VehicleTestNoInitialConnect

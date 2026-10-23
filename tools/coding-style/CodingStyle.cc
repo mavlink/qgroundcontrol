@@ -6,24 +6,25 @@
 
 #include "CodingStyle.h"
 
-#include <QtCore/QDebug>
-#include <QtCore/QFile>
-
 #include <algorithm>
 #include <cmath>
 #include <ranges>
+
+#include <QtCore/QDebug>
+#include <QtCore/QFile>
 
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 
-// Note how the Qt headers, System headers, and the QGroundControl headers above are kept in separate groups
+// Note how the System headers, Qt headers, and the QGroundControl headers above are kept in separate groups
 // with blank lines between them. Within each group, headers are sorted alphabetically.
 
 // Use QGC_LOGGING_CATEGORY instead of Q_LOGGING_CATEGORY for runtime log configuration support
 QGC_LOGGING_CATEGORY(CodingStyleLog, "Example.CodingStyle")
 
-CodingStyle::CodingStyle(QObject* parent) : QObject(parent)
+CodingStyle::CodingStyle(QObject* parent)
+    : QObject(parent)
 {
     // Constructor body - use member initializer list above for initialization
     _commonInit();
@@ -222,9 +223,12 @@ T clampValue(T value, T min, T max)
 // repeat the function name in the message (the logging formatter already adds it).
 void exampleMultiValueLogging(uint8_t fromCompId, const QString& fromURI, const QString& toDir, const QString& fileName)
 {
+    // clang-format packs stream operands, so keep this layout by hand
+    // clang-format off
     qCDebug(CodingStyleLog) << "fromCompId:" << fromCompId
                             << "fromURI:" << fromURI
                             << "toDir:" << toDir
                             << "fileName:" << fileName;
+    // clang-format on
 }
 }  // anonymous namespace

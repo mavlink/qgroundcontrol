@@ -1,0 +1,14 @@
+# Repository variables available as `vars.*`; actionlint reports any other name.
+config-variables:
+  - APPSTORE_API_KEY_ID
+  - APPSTORE_BUNDLE_ID
+  - APPSTORE_ISSUER_ID
+  - APPSTORE_PROVISIONING_PROFILE_NAME
+  - APPSTORE_TEAM_ID
+  - AWS_REGION
+  - CODECOV_TEST_ANALYTICS
+  - QGC_COMPILER_CACHE
+  - RUNS_ON_AMI_SUBNET_ID
+  - RUNS_ON_LINUX_BUILDER
+  - RUNS_ON_SPOT_POOLS
+  - RUNS_ON_WINDOWS_POOL

@@ -28,7 +28,7 @@ GimbalController::GimbalController(Vehicle *vehicle)
     (void) connect(_vehicle, &Vehicle::initialConnectComplete, this, &GimbalController::_initialConnectCompleted, Qt::UniqueConnection);
     (void) connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &GimbalController::_mavlinkMessageReceived);
 
-    _rateSenderTimer.setInterval(500);
+    _rateSenderTimer.setInterval(QGC::runningUnitTests() ? kTestRateResendIntervalMs : kRateResendIntervalMs);
     (void) connect(&_rateSenderTimer, &QTimer::timeout, this, &GimbalController::_rateSenderTimeout);
 }
 
@@ -409,9 +409,11 @@ void GimbalController::_checkComplete(Gimbal &gimbal, GimbalPairId pairId)
             --gimbal._requestInformationRetries;
         }
     }
-    // Limit to 1 second between set message interval requests, per gimbal
+    // Limit the rate of set message interval requests, per gimbal
     const qint64 now = QDateTime::currentMSecsSinceEpoch();
-    if (!gimbal._receivedGimbalManagerStatus && (gimbal._requestStatusRetries > 0) && (now - gimbal._lastStatusRequestMs > 1000)) {
+    const int statusRequestSpacingMs = QGC::runningUnitTests() ? kTestStatusRequestSpacingMs : kStatusRequestSpacingMs;
+    if (!gimbal._receivedGimbalManagerStatus && (gimbal._requestStatusRetries > 0) &&
+        (now - gimbal._lastStatusRequestMs > statusRequestSpacingMs)) {
         gimbal._lastStatusRequestMs = now;
         _vehicle->sendMavCommand(pairId.managerCompid,
                                  MAV_CMD_SET_MESSAGE_INTERVAL,

@@ -17,23 +17,21 @@ inputs:
     description: Suffix for the uploaded emulator-diagnostics artifact name
     required: false
     default: ${{ github.job }}
-  build-dir:
-    description: Build directory (for diagnostics collection)
-    required: false
-    default: ${{ runner.temp }}/build
 
 runs:
   using: composite
   steps:
     - name: Enable KVM
       shell: bash
-      run: |
-        echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-        sudo udevadm control --reload-rules
-        sudo udevadm trigger --name-match=kvm
+      run: python3 tools/ci/runner/enable_kvm.py
 
+    # The runner executes each script line through sh -c, so inputs reach it as environment variables.
+    # android_boot_test.py starts adb, waits for the booted device, and holds the test's settings.
     - name: Emulator Boot Test
       uses: reactivecircus/android-emulator-runner@v2
+      env:
+        APK_PATH: ${{ inputs.apk-path }}
+        APP_PACKAGE: ${{ inputs.package }}
       with:
         api-level: ${{ inputs.android-platform }}
         system-image-api-level: ${{ inputs.android-platform }}
@@ -49,26 +47,16 @@ runs:
         disable-animations: true
         disable-spellchecker: true
         emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot-save
-        script: >-
-          timeout 20s adb start-server >/dev/null 2>&1 || true
-
-          timeout 180s adb wait-for-device || (echo "::error::adb wait-for-device timed out before boot test." && exit 1)
-
-          python3 .github/scripts/android_boot_test.py --apk "${{ inputs.apk-path }}" --package ${{ inputs.package }}
-          --timeout 120 --stability-window 20 --adb-ready-timeout 180 --install-retries 4 --install-retry-delay 5
-          --launch-retries 2 --log-output /tmp/qgc_emulator_boot.log
+        script: python3 tools/ci/android/android_boot_test.py --apk "$APK_PATH" --package "$APP_PACKAGE"
 
     - name: Collect Emulator Diagnostics
       if: failure()
       shell: bash
-      env:
-        BUILD_DIR: ${{ inputs.build-dir }}
       run: |
-        python3 "${GITHUB_WORKSPACE}/.github/scripts/android_collect_diagnostics.py" \
+        python3 "${GITHUB_WORKSPACE}/tools/ci/android/android_collect_diagnostics.py" \
           --out-dir "${RUNNER_TEMP}/emulator-diagnostics" \
-          --build-dir "${BUILD_DIR}" \
-          --boot-log /tmp/qgc_emulator_boot.log
-        ls -la "${RUNNER_TEMP}/emulator-diagnostics" || true
+          --build-dir "${RUNNER_TEMP}/build" \
+          --boot-log "${RUNNER_TEMP}/qgc_emulator_boot.log"
 
     - name: Upload Emulator Diagnostics
       if: failure()

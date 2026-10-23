@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass, field
 from pathlib import Path  # noqa: TC003
+
+from common.io import read_json
 
 from ..common.controls import (
     ActionButtonDef,
@@ -25,6 +26,7 @@ from ..common.validation import (
     reject_unknown_keys,
     require_dict,
     require_list,
+    require_param_name,
     require_qml_safe_string,
 )
 
@@ -164,6 +166,13 @@ def _parse_enum_value_entry(entry: object, ctrl_name: str) -> tuple[int | float 
     return (value, label)
 
 
+def _parse_linked_params(data: object, json_filename: str) -> list[LinkedParamDef]:
+    linked_params = parse_linked_params(data)
+    for linked in linked_params:
+        require_param_name(linked.param, "linkedParams key", json_filename)
+    return linked_params
+
+
 _ALLOWED_ROOT_KEYS = frozenset(
     {
         "fileType",
@@ -242,9 +251,7 @@ _ALLOWED_DISABLED_SECTION_KEYS = frozenset({"comment", "heading", "enabledParamV
 
 def load_page_def(json_path: Path) -> PageDef:
     """Load a config page definition from a JSON file."""
-    with open(json_path, encoding="utf-8") as f:
-        data = json.load(f)
-    return _build_page_def(data, json_path.name)
+    return _build_page_def(read_json(json_path), json_path.name)
 
 
 def _build_page_def(data: dict, json_filename: str) -> PageDef:
@@ -254,13 +261,15 @@ def _build_page_def(data: dict, json_filename: str) -> PageDef:
     params: dict[str, ParamDef] = {}
     for pname, pval in require_dict(data.get("params", {}), "'params'", json_filename).items():
         if isinstance(pval, str):
-            params[pname] = ParamDef(name=pval)
+            params[pname] = ParamDef(
+                name=require_param_name(pval, f"param '{pname}' name", json_filename)
+            )
         else:
             reject_unknown_keys(pval, _ALLOWED_PARAM_KEYS, f"param '{pname}'", json_filename)
             if "name" not in pval:
                 raise ValueError(f"{json_filename}: param '{pname}' is missing required key 'name'")
             params[pname] = ParamDef(
-                name=pval["name"],
+                name=require_param_name(pval["name"], f"param '{pname}' name", json_filename),
                 required=pval.get("required", False),
                 existsOnly=pval.get("existsOnly", False),
             )
@@ -276,7 +285,9 @@ def _build_page_def(data: dict, json_filename: str) -> PageDef:
             reject_unknown_keys(ctrl_data, _ALLOWED_CONTROL_KEYS, "control", json_filename)
             controls.append(
                 ControlDef(
-                    param=ctrl_data.get("param", ""),
+                    param=require_param_name(
+                        ctrl_data.get("param", ""), "control param", json_filename
+                    ),
                     setting=ctrl_data.get("setting", ""),
                     label=require_qml_safe_string(
                         ctrl_data.get("label", ""), "control label", json_filename
@@ -312,7 +323,7 @@ def _build_page_def(data: dict, json_filename: str) -> PageDef:
                     sliderTo=str(ctrl_data.get("sliderTo", "")),
                     majorTickStepSize=str(ctrl_data.get("majorTickStepSize", "")),
                     decimalPlaces=str(ctrl_data.get("decimalPlaces", "")),
-                    linkedParams=parse_linked_params(ctrl_data.get("linkedParams")),
+                    linkedParams=_parse_linked_params(ctrl_data.get("linkedParams"), json_filename),
                     component=ctrl_data.get("component", ""),
                 )
             )
@@ -334,12 +345,18 @@ def _build_page_def(data: dict, json_filename: str) -> PageDef:
                     enabledParamValue=str(ds_data.get("enabledParamValue", "")),
                 )
             repeat_def = RepeatDef(
-                paramPrefix=repeat_data.get("paramPrefix", ""),
-                probePostfix=repeat_data.get("probePostfix", ""),
+                paramPrefix=require_param_name(
+                    repeat_data.get("paramPrefix", ""), "repeat paramPrefix", json_filename
+                ),
+                probePostfix=require_param_name(
+                    repeat_data.get("probePostfix", ""), "repeat probePostfix", json_filename
+                ),
                 startIndex=repeat_data.get("startIndex", 1),
                 firstIndexOmitsNumber=repeat_data.get("firstIndexOmitsNumber", False),
                 indexing=repeat_data.get("indexing", ""),
-                enableParam=repeat_data.get("enableParam", ""),
+                enableParam=require_param_name(
+                    repeat_data.get("enableParam", ""), "repeat enableParam", json_filename
+                ),
                 disabledParamValue=str(repeat_data.get("disabledParamValue", "")),
                 disabledSection=ds_def,
             )

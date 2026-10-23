@@ -1,18 +1,21 @@
 #include "JsonSchemaValidator.h"
 
-#include <QtCore/QFile>
-#include <QtCore/QHash>
-#include <QtCore/QJsonDocument>
-#include <QtCore/QJsonObject>
-#include <QtCore/QJsonParseError>
-#include <QtCore/QStringList>
+#include <memory>
 #include <valijson/adapters/qtjson_adapter.hpp>
 #include <valijson/schema.hpp>
 #include <valijson/schema_parser.hpp>
 #include <valijson/validation_results.hpp>
 #include <valijson/validator.hpp>
 
-#include <memory>
+#include <QtCore/QCborValue>
+#include <QtCore/QCryptographicHash>
+#include <QtCore/QFile>
+#include <QtCore/QHash>
+#include <QtCore/QJsonDocument>
+#include <QtCore/QJsonObject>
+#include <QtCore/QJsonParseError>
+#include <QtCore/QSet>
+#include <QtCore/QStringList>
 
 #include "QGCLoggingCategory.h"
 
@@ -77,6 +80,20 @@ bool validate(const QJsonDocument& doc, const QString& schemaResourcePath, QStri
 {
     errorString.clear();
 
+    const QJsonValue root = doc.isArray() ? QJsonValue(doc.array()) : QJsonValue(doc.object());
+
+    // Vehicles send the same component metadata on every connection, so remember documents that
+    // already passed. Unguarded static: component-metadata validation runs on the main thread only.
+    static QSet<QByteArray> validatedDocuments;
+    QCryptographicHash digest(QCryptographicHash::Sha256);
+    digest.addData(schemaResourcePath.toUtf8());
+    digest.addData(QByteArrayView("\0", 1));
+    digest.addData(QCborValue::fromJsonValue(root).toCbor());
+    const QByteArray documentKey = digest.result();
+    if (validatedDocuments.contains(documentKey)) {
+        return true;
+    }
+
     const auto schema = loadSchema(schemaResourcePath, errorString);
     if (!schema) {
         return false;
@@ -84,10 +101,10 @@ bool validate(const QJsonDocument& doc, const QString& schemaResourcePath, QStri
 
     valijson::Validator validator;
     valijson::ValidationResults results;
-    const valijson::adapters::QtJsonAdapter docAdapter(doc.isArray() ? QJsonValue(doc.array())
-                                                                     : QJsonValue(doc.object()));
+    const valijson::adapters::QtJsonAdapter docAdapter(root);
 
     if (validator.validate(*schema, docAdapter, &results)) {
+        validatedDocuments.insert(documentKey);
         return true;
     }
 

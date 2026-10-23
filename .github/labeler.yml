@@ -7,7 +7,7 @@ Docs:
 
 github_actions:
   - changed-files:
-      - any-glob-to-any-file: '.github/**'
+      - any-glob-to-any-file: ['.github/**', 'tools/ci/**', 'tools/tests/ci/**']
 
 "Platform: Android":
   - changed-files:
@@ -26,8 +26,7 @@ github_actions:
           - 'deploy/linux/**'
           - 'deploy/docker/**'
           - 'tools/setup/install_dependencies/_debian.py'
-          - 'tools/setup/install_dependencies/_arch.py'
-          - 'tools/setup/install_dependencies/_fedora.py'
+          - 'tools/setup/install_dependencies/_linux.py'
 
 "Platform: Windows":
   - changed-files:
@@ -43,7 +42,7 @@ github_actions:
 
 Tests:
   - changed-files:
-      - any-glob-to-any-file: ['test/**', 'tools/tests/**', '.github/scripts/tests/**']
+      - any-glob-to-any-file: ['test/**', 'tools/tests/**']
 
 CMake:
   - changed-files:

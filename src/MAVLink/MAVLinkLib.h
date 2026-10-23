@@ -4,7 +4,7 @@
 
 // #define MAVLINK_NO_SIGN_PACKET
 // #define MAVLINK_NO_SIGNATURE_CHECK
-#define MAVLINK_USE_MESSAGE_INFO
+// MAVLINK_USE_MESSAGE_INFO is defined only in MAVLinkMessageInfo.cc; look message info up through MAVLinkMessageInfo.h.
 
 #include <stddef.h>
 

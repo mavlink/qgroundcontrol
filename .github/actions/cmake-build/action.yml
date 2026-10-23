@@ -5,11 +5,7 @@ inputs:
   build-dir:
     description: 'Build directory'
     required: false
-    default: 'build'
-  build-type:
-    description: 'Build configuration (Release, Debug, RelWithDebInfo)'
-    required: false
-    default: 'Release'
+    default: ${{ runner.temp }}/build
   target:
     description: 'Build target'
     required: false
@@ -26,18 +22,10 @@ inputs:
     description: 'File to capture build output (optional)'
     required: false
     default: ''
-  continue-on-error:
-    description: 'Continue even if build fails'
-    required: false
-    default: 'false'
   reviewdog:
     description: 'Enable reviewdog to annotate compiler warnings on PRs'
     required: false
     default: 'false'
-  reviewdog-token:
-    description: 'GitHub token for reviewdog (typically github.token)'
-    required: false
-    default: ''
 
 runs:
   using: composite
@@ -46,24 +34,17 @@ runs:
       id: compile
       shell: bash
       working-directory: ${{ inputs.build-dir }}
+      # cmake_helper.py reads the INPUT_* variables as argument defaults and takes a multi-config
+      # generator's configuration from the preset's CMAKE_BUILD_TYPE in CMakeCache.txt. It then
+      # writes one job-summary section per build, also after failures: result, duration, toolchain,
+      # compiler and moc cache hit rates, and the slowest build steps (collapsed).
       env:
-        BUILD_TYPE: ${{ inputs.build-type }}
-        TARGET: ${{ inputs.target }}
-        PARALLEL: ${{ inputs.parallel }}
-        PARALLEL_JOBS: ${{ inputs.parallel-jobs }}
-        OUTPUT_FILE: ${{ inputs.output-file }}
-        CONTINUE: ${{ inputs.continue-on-error }}
-        REVIEWDOG: ${{ inputs.reviewdog }}
-      run: |
-        ARGS=(build)
-        [[ -n "$TARGET" ]] && ARGS+=(--target "$TARGET")
-        [[ -n "$BUILD_TYPE" ]] && ARGS+=(--build-type "$BUILD_TYPE")
-        [[ "$PARALLEL" == "true" ]] && ARGS+=(--parallel)
-        [[ -n "$PARALLEL_JOBS" ]] && ARGS+=(--parallel-jobs "$PARALLEL_JOBS")
-        [[ -n "$OUTPUT_FILE" ]] && ARGS+=(--output-file "$OUTPUT_FILE")
-        [[ "$CONTINUE" == "true" ]] && ARGS+=(--continue-on-error)
-        [[ "$REVIEWDOG" == "true" ]] && ARGS+=(--reviewdog)
-        python3 "${GITHUB_WORKSPACE}/.github/scripts/cmake_helper.py" "${ARGS[@]}"
+        INPUT_TARGET: ${{ inputs.target }}
+        INPUT_PARALLEL: ${{ inputs.parallel }}
+        INPUT_PARALLEL_JOBS: ${{ inputs.parallel-jobs }}
+        INPUT_OUTPUT_FILE: ${{ inputs.output-file }}
+        INPUT_REVIEWDOG: ${{ inputs.reviewdog }}
+      run: python3 "${GITHUB_WORKSPACE}/tools/ci/compile/cmake_helper.py" build
 
     - name: Save successful build caches
       if: steps.compile.outputs.build_success == 'true' && (inputs.target == 'all' || inputs.target == 'autogen')
@@ -88,7 +69,7 @@ runs:
       if: inputs.reviewdog == 'true' && env.REVIEWDOG_LOG != '' && steps.reviewdog.outcome == 'success'
       shell: bash
       env:
-        REVIEWDOG_GITHUB_API_TOKEN: ${{ inputs.reviewdog-token }}
+        REVIEWDOG_GITHUB_API_TOKEN: ${{ github.token }}
       run: |
         reviewdog \
           -f=gcc \
@@ -97,19 +78,3 @@ runs:
           -fail-level=none \
           -name="compiler-warnings" \
           < "$REVIEWDOG_LOG" || true
-
-    - name: Compiler Cache Stats
-      if: always()
-      shell: bash
-      run: |
-        if command -v ccache >/dev/null 2>&1; then
-          python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" summary
-        fi
-
-    - name: Moc Cache Stats
-      if: always()
-      shell: bash
-      env:
-        MOCCACHE_DIR: ${{ github.workspace }}/.cache/moccache
-        BUILD_DIR: ${{ inputs.build-dir }}
-      run: python3 "${GITHUB_WORKSPACE}/tools/moccache.py" --show-stats --build-dir "$BUILD_DIR"

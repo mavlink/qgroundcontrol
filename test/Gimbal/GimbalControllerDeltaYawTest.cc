@@ -195,6 +195,7 @@ void GimbalControllerDeltaYawTest::_testOnScreenControlYawLockUsesAbsoluteYaw()
     controller->setGimbalYawLock(true);
     QVERIFY_TRUE_WAIT(mock->yawLock(), TestTimeout::mediumMs());
     // yawLock flips only on a status sent after the command, so that status also carries the post-command yaw
+    mock->sendGimbalDeviceAttitudeStatusNow();
     QVERIFY_TRUE_WAIT(gimbal->yawLock(), TestTimeout::mediumMs());
     // The yaw-lock command carried absolute yaw; the mock must convert it to body yaw so the pointing does not move
     const float absoluteAfterLock = gimbal->absoluteYaw()->rawValue().toFloat();

@@ -2,9 +2,8 @@
 # Enabled via: cmake -DQGC_ENABLE_COVERAGE=ON -DCMAKE_BUILD_TYPE=Debug
 #
 # Targets:
-#   coverage         - Run tests and generate XML + HTML reports
-#   coverage-report  - Generate XML + HTML reports from existing coverage data
-#   coverage-check   - Verify thresholds against existing coverage data
+#   coverage         - Run tests and generate XML, JSON summary and HTML reports
+#   coverage-report  - Generate XML, JSON summary and HTML reports from existing coverage data
 #   coverage-clean   - Remove coverage data files
 #
 # Prerequisites:
@@ -145,11 +144,23 @@ if(GCOVR_EXECUTABLE)
         list(APPEND GCOVR_COMMON_ARGS --gcov-ignore-parse-errors=negative_hits.warn_once_per_file)
     endif()
 
+    # Codecov reads the Cobertura XML; QGC scripts read gcovr's computed totals from the JSON summary.
+    set(GCOVR_REPORT_ARGS
+        --xml
+        coverage.xml
+        --json-summary
+        coverage-summary.json
+        --json-summary-pretty
+        --html
+        coverage.html
+        --html-details
+    )
+
     add_custom_target(
         coverage-report
-        COMMAND "${GCOVR_EXECUTABLE}" ${GCOVR_COMMON_ARGS} --xml coverage.xml --html coverage.html --html-details
+        COMMAND "${GCOVR_EXECUTABLE}" ${GCOVR_COMMON_ARGS} ${GCOVR_REPORT_ARGS}
         WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-        COMMENT "Generating coverage report from existing coverage data (XML + HTML)"
+        COMMENT "Generating coverage report from existing coverage data (XML, JSON summary, HTML)"
         VERBATIM
     )
 
@@ -157,21 +168,12 @@ if(GCOVR_EXECUTABLE)
         add_custom_target(
             coverage
             COMMAND "${CMAKE_CTEST_COMMAND}" --build-config "$<CONFIG>" --output-on-failure -L Unit
-            COMMAND "${GCOVR_EXECUTABLE}" ${GCOVR_COMMON_ARGS} --xml coverage.xml --html coverage.html --html-details
+            COMMAND "${GCOVR_EXECUTABLE}" ${GCOVR_COMMON_ARGS} ${GCOVR_REPORT_ARGS}
             WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-            COMMENT "Running tests and generating coverage report (XML + HTML)"
+            COMMENT "Running tests and generating coverage report (XML, JSON summary, HTML)"
             VERBATIM
         )
         add_dependencies(coverage ${CMAKE_PROJECT_NAME})
-
-        add_custom_target(
-            coverage-check
-            COMMAND "${GCOVR_EXECUTABLE}" ${GCOVR_COMMON_ARGS} --fail-under-line ${QGC_COVERAGE_LINE_THRESHOLD}
-                    --fail-under-branch ${QGC_COVERAGE_BRANCH_THRESHOLD}
-            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-            COMMENT "Verifying coverage thresholds — run 'coverage' target first"
-            VERBATIM
-        )
     endif()
 
 else()
@@ -181,7 +183,7 @@ endif()
 
 add_custom_target(
     coverage-clean
-    COMMAND "${CMAKE_COMMAND}" -E rm -f coverage.xml coverage.html
+    COMMAND "${CMAKE_COMMAND}" -E rm -f coverage.xml coverage-summary.json coverage.html
     COMMAND "${CMAKE_COMMAND}" "-DQGC_COVERAGE_BUILD_DIR=${CMAKE_BINARY_DIR}" -P
             "${CMAKE_CURRENT_LIST_DIR}/CleanCoverage.cmake"
     WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"

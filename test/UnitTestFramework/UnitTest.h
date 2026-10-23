@@ -65,6 +65,14 @@ QString labelsToString(TestLabels labels);
 /// Returns a list of available label names for display
 QStringList availableLabelNames();
 
+/// Selects every count-th test function of a test class, starting at the 1-based index, so one
+/// class can be split across processes. A count of 0 selects all test functions.
+struct TestShard
+{
+    uint index = 0;
+    uint count = 0;
+};
+
 // ============================================================================
 // Test Registration Macros
 // ============================================================================
@@ -276,9 +284,17 @@ public:
     /// @param singleTest If non-empty, only run the test with this name
     /// @param outputFile Optional output file path for JUnit XML results
     /// @param labelFilter If set, only run tests with matching labels
+    /// @param shard If set, only run this shard of each test's functions
     /// @return Number of test failures (0 = all passed)
-    static int run(QStringView singleTest, const QString& outputFile = QString(),
-                   TestLabels labelFilter = TestLabels());
+    static int run(QStringView singleTest, const QString& outputFile = QString(), TestLabels labelFilter = TestLabels(),
+                   TestShard shard = {});
+
+    /// Returns the functions QTest would run for @a test, in declaration order, limited to @a shard when set
+    static QStringList testFunctionNames(const QObject* test, TestShard shard = {});
+
+    /// Returns the JUnit XML path for one test class: @a outputFile with the class name, and the shard
+    /// index when sharded, inserted before ".xml" so classes and parallel shards never share a file
+    static QString testOutputFileName(const QString& outputFile, const QString& testName, TestShard shard = {});
 
     /// Sets the output file for JUnit XML test results
     static void setOutputFile(const QString& outputFile);

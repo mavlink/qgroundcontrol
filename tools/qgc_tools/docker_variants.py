@@ -1,12 +1,16 @@
-"""Validated loader for the shared QGC Docker variant manifest."""
+"""Validated loader for the shared QGC Docker variant manifest, and the builder image push target."""
 
 from __future__ import annotations
 
-import json
-from pathlib import Path
-from typing import TypedDict, cast
+from typing import TYPE_CHECKING, TypedDict, cast
 
-VARIANTS_JSON = Path(__file__).resolve().parents[2] / "deploy/docker/variants.json"
+from common.io import read_json
+from common.paths import REPO_ROOT
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+VARIANTS_JSON = REPO_ROOT / "deploy/docker/variants.json"
 
 
 class DockerVariant(TypedDict):
@@ -38,7 +42,7 @@ _SELECTORS = {"linux", "android"}
 
 def load_variants(path: Path = VARIANTS_JSON) -> list[DockerVariant]:
     """Load Docker variants and reject malformed or ambiguous definitions."""
-    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload = read_json(path)
     if not isinstance(payload, dict) or not isinstance(payload.get("variants"), list):
         raise ValueError(f"{path} must contain a top-level 'variants' list")
 
@@ -76,3 +80,19 @@ def load_variants(path: Path = VARIANTS_JSON) -> list[DockerVariant]:
         seen_ci_variants.add(ci_variant)
         variants.append(cast("DockerVariant", value))
     return variants
+
+
+def resolve_push_target(event_name: str, repo: str, ref: str) -> str:
+    """Registry to push the builder image to, or '' for no push.
+
+    Pushes happen only from the upstream repo on a push event: GHCR for
+    master/Stable branches, Docker Hub (dronecode/qgroundcontrol) for v* release
+    tags. Forks, PRs, and any other repo always resolve to '' (no push).
+    """
+    if event_name != "push" or repo != "mavlink/qgroundcontrol":
+        return ""
+    if ref == "refs/heads/master" or ref.startswith("refs/heads/Stable"):
+        return "ghcr.io/mavlink/qgroundcontrol"
+    if ref.startswith("refs/tags/v"):
+        return "dronecode/qgroundcontrol"
+    return ""

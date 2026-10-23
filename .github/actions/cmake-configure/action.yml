@@ -1,40 +1,14 @@
 name: CMake Configure
-description: Configure QGroundControl build with common options
+description: Configure QGroundControl from a CMake preset with CI options
 
 inputs:
   build-dir:
     description: 'Build directory'
     required: false
-    default: 'build'
-  source-dir:
-    description: 'Source directory'
-    required: false
-    default: ${{ github.workspace }}
-  build-type:
-    description: 'Build type (Debug, Release, RelWithDebInfo, MinSizeRel)'
-    required: false
-    default: 'Release'
-  generator:
-    description: 'CMake generator (Ninja, Unix Makefiles, etc.)'
-    required: false
-    default: 'Ninja'
+    default: ${{ runner.temp }}/build
   preset:
-    description: 'CMake configure preset'
-    required: false
-    default: ''
-  testing:
-    description: 'Enable testing (QGC_BUILD_TESTING)'
-    required: false
-    default: 'false'
-  coverage:
-    description: 'Enable coverage (QGC_ENABLE_COVERAGE)'
-    required: false
-    default: 'false'
-  stable:
-    description: >-
-      Stable build (QGC_STABLE_BUILD). Defaults to true on tag refs and Stable* branches.
-    required: false
-    default: ${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'true' || 'false' }}
+    description: 'CMake configure preset; it sets the build type and QGC_BUILD_TESTING'
+    required: true
   extra-args:
     description: 'Additional CMake arguments'
     required: false
@@ -47,48 +21,14 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Create build directory
-      shell: bash
-      env:
-        INPUT_BUILD_DIR: ${{ inputs.build-dir }}
-      run: mkdir -p "${INPUT_BUILD_DIR}"
-
+    # cmake_helper.py reads the INPUT_* variables as argument defaults, enables QGC_STABLE_BUILD for
+    # release tags and Stable* branches, and pins Python3_EXECUTABLE to tools/.venv so CMake-invoked
+    # jinja generators see the locked dependencies.
     - name: Configure
       shell: bash
-      run: |
-        # Pin Python3_EXECUTABLE to the workspace venv so CMake-invoked jinja generators see project deps.
-        if [[ "$RUNNER_OS" == "Windows" ]]; then
-          VENV_PYTHON="${GITHUB_WORKSPACE}/tools/.venv/Scripts/python.exe"
-        else
-          VENV_PYTHON="${GITHUB_WORKSPACE}/tools/.venv/bin/python"
-        fi
-        EXTRA_ARGS="${INPUTS_EXTRA_ARGS}"
-        if [[ -x "$VENV_PYTHON" ]]; then
-          EXTRA_ARGS="${EXTRA_ARGS:+$EXTRA_ARGS }-DPython3_EXECUTABLE=${VENV_PYTHON}"
-        else
-          echo "::warning::venv python not found at $VENV_PYTHON; CMake will pick system python (may lack jinja2)"
-        fi
-        ARGS=(configure
-          --source-dir "${INPUTS_SOURCE_DIR}"
-          --build-dir "${INPUTS_BUILD_DIR}"
-          --generator "${INPUTS_GENERATOR}"
-          --build-type "${INPUTS_BUILD_TYPE}"
-        )
-        [[ -n "${INPUTS_PRESET}" ]] && ARGS+=(--preset "${INPUTS_PRESET}")
-        [[ "${INPUTS_TESTING}" == "true" ]] && ARGS+=(--testing)
-        [[ "${INPUTS_COVERAGE}" == "true" ]] && ARGS+=(--coverage)
-        [[ "${INPUTS_STABLE}" == "true" ]] && ARGS+=(--stable)
-        [[ "${INPUTS_USE_QT_CMAKE}" != "true" ]] && ARGS+=(--no-qt-cmake)
-        [[ -n "$EXTRA_ARGS" ]] && ARGS+=("--extra-args=$EXTRA_ARGS")
-        python3 "${GITHUB_WORKSPACE}/.github/scripts/cmake_helper.py" "${ARGS[@]}"
+      run: python3 "${GITHUB_WORKSPACE}/tools/ci/compile/cmake_helper.py" configure
       env:
-        INPUTS_EXTRA_ARGS: ${{ inputs.extra-args }}
-        INPUTS_SOURCE_DIR: ${{ inputs.source-dir }}
-        INPUTS_BUILD_DIR: ${{ inputs.build-dir }}
-        INPUTS_GENERATOR: ${{ inputs.generator }}
-        INPUTS_PRESET: ${{ inputs.preset }}
-        INPUTS_BUILD_TYPE: ${{ inputs.build-type }}
-        INPUTS_TESTING: ${{ inputs.testing }}
-        INPUTS_COVERAGE: ${{ inputs.coverage }}
-        INPUTS_STABLE: ${{ inputs.stable }}
-        INPUTS_USE_QT_CMAKE: ${{ inputs.use-qt-cmake }}
+        INPUT_BUILD_DIR: ${{ inputs.build-dir }}
+        INPUT_PRESET: ${{ inputs.preset }}
+        INPUT_EXTRA_ARGS: ${{ inputs.extra-args }}
+        INPUT_USE_QT_CMAKE: ${{ inputs.use-qt-cmake }}

@@ -88,22 +88,34 @@ jobs:
           sparse-checkout-cone-mode: false
           persist-credentials: false
 
-      - name: Build Config
-        id: buildconfig
-        uses: ./.github/actions/build-config
-
-      - name: Install dependencies (Linux)
-        if: inputs.platform == 'linux'
+      # Fails an architecture this runner cannot build before the long build starts.
+      - name: Plan build
+        id: plan
+        shell: bash
+        env:
+          PLATFORM: ${{ inputs.platform }}
+          ARCH: ${{ inputs.arch }}
+          SIMULATOR: ${{ inputs.simulator }}
         run: |
-          sudo apt-get -o Acquire::Retries=3 update -qq
-          sudo apt-get -o Acquire::Retries=3 install -y --no-install-recommends \
-            build-essential pkg-config git \
-            libx11-dev libxext-dev libxv-dev \
-            libwayland-dev wayland-protocols \
-            libegl1-mesa-dev libgles2-mesa-dev libgl1-mesa-dev \
-            libdrm-dev libgbm-dev \
-            libasound2-dev libpulse-dev \
-            libva-dev nasm yasm
+          python3 ./tools/setup/gstreamer/ci_plan.py --platform "$PLATFORM" --arch "$ARCH" \
+            --simulator "$SIMULATOR"
+
+      # Linux and Android build on Ubuntu runners.
+      - name: Install dependencies (apt)
+        if: steps.plan.outputs.apt-category != ''
+        uses: ./.github/actions/install-dependencies
+        with:
+          category: ${{ steps.plan.outputs.apt-category }}
+
+      # Android skips build-setup, which installs CI's pinned CMake and Ninja for every other build.
+      - name: Install pinned CMake and Ninja (Android)
+        if: steps.plan.outputs.cmake-version != ''
+        uses: lukka/get-cmake@v4.4.2
+        with:
+          cmakeVersion: ${{ steps.plan.outputs.cmake-version }}
+          ninjaVersion: ${{ steps.plan.outputs.ninja-version }}
+          useCloudCache: true
+          useLocalCache: false
 
       - name: Install dependencies (macOS)
         if: inputs.platform == 'macos' || inputs.platform == 'ios'
@@ -113,75 +125,32 @@ jobs:
           max_attempts: 3
           command: brew install pkg-config gettext
 
-      - name: Install dependencies (Android)
-        if: inputs.platform == 'android'
-        run: |
-          sudo apt-get -o Acquire::Retries=3 update -qq
-          sudo apt-get -o Acquire::Retries=3 install -y --no-install-recommends \
-            python3-venv git autoconf automake libtool \
-            pkg-config gettext bison flex cmake ninja-build
-
       # Android/iOS builds do not link host Qt. Desktop builds use build-setup
-      # for the Qt SDK, Python environment, and compiler toolchain.
+      # for the Qt SDK, Python environment, and compiler toolchain; this checkout
+      # has no QGC sources, so the QGC build caches are skipped.
       - name: Build Setup
-        if: inputs.platform == 'linux' || inputs.platform == 'macos' || inputs.platform == 'windows'
+        if: steps.plan.outputs.qt-host != ''
         uses: ./.github/actions/build-setup
         with:
-          qt-host: >-
-            ${{
-              (inputs.platform == 'linux' && 'linux') ||
-              (inputs.platform == 'macos' && 'mac') ||
-              (inputs.platform == 'windows' && 'windows')
-            }}
-          qt-arch: >-
-            ${{
-              (inputs.platform == 'linux' && inputs.arch == 'aarch64' && 'linux_gcc_arm64') ||
-              (inputs.platform == 'linux' && 'linux_gcc_64') ||
-              (inputs.platform == 'macos' && 'clang_64') ||
-              (inputs.platform == 'windows' && inputs.arch == 'arm64' && 'win64_msvc2022_arm64') ||
-              (inputs.platform == 'windows' && 'win64_msvc2022_64')
-            }}
-          qt-version: ${{ steps.buildconfig.outputs.qt_version }}
+          build-cache: 'false'
+          qt-host: ${{ steps.plan.outputs.qt-host }}
+          qt-arch: ${{ steps.plan.outputs.qt-arch }}
 
+      # build_gstreamer.py writes the resolved arch and install prefix to this step's outputs,
+      # which the archive step reads. On Actions it also defaults the Windows work directory to
+      # RUNNER_TEMP and, for macOS and Windows, the Qt prefix to build-setup's QT_ROOT_DIR.
       - name: Build GStreamer
+        id: build
         shell: bash
         env:
           PLATFORM: ${{ inputs.platform }}
           ARCH: ${{ inputs.arch }}
           VERSION: ${{ inputs.version }}
           BUILD_TYPE: ${{ inputs.build_type }}
-          SIMULATOR: ${{ inputs.simulator && 'true' || 'false' }}
-          QT_PREFIX: ${{ env.QT_ROOT_DIR }}
-          WORK_DIR: ${{ runner.temp }}
+          SIMULATOR: ${{ steps.plan.outputs.simulator }}
         run: |
-          set -euo pipefail
-          arch="$ARCH"
-          # Windows toolchain uses 'x64' / 'arm64' naming; map x86_64 here.
-          if [[ "$PLATFORM" == 'windows' && "$arch" == 'x86_64' ]]; then
-            arch='x64'
-          fi
-
-          if [[ "$PLATFORM" == 'windows' ]]; then
-            prefix="C:\\gstreamer-$arch"
-          else
-            prefix="$WORK_DIR/gstreamer"
-          fi
-
-          args=(
-            --platform "$PLATFORM"
-            --version "$VERSION"
-            --type "$BUILD_TYPE"
-            --prefix "$prefix"
-            --clean
-            --verify
-          )
-          # Linux build defaults to the host arch; the other platforms need --arch.
-          [[ "$PLATFORM" != 'linux' ]] && args+=(--arch "$arch")
-          [[ "$PLATFORM" =~ ^(macos|windows)$ ]] && args+=(--qt-prefix "$QT_PREFIX")
-          [[ "$PLATFORM" == 'windows' ]] && args+=(--work-dir "$WORK_DIR")
-          [[ "$PLATFORM" == 'ios' && "$SIMULATOR" == 'true' ]] && args+=(--simulator)
-
-          python3 ./tools/setup/build-gstreamer.py "${args[@]}"
+          python3 ./tools/setup/build_gstreamer.py --platform "$PLATFORM" --arch "$ARCH" \
+            --version "$VERSION" --type "$BUILD_TYPE" ${SIMULATOR:+--simulator} --clean --verify
 
       - name: Configure AWS Credentials
         if: inputs.upload_s3
@@ -196,25 +165,16 @@ jobs:
         shell: bash
         env:
           PLATFORM: ${{ inputs.platform }}
-          ARCH: ${{ inputs.arch }}
+          ARCH: ${{ steps.build.outputs.arch }}
+          PREFIX: ${{ steps.build.outputs.prefix }}
           VERSION: ${{ inputs.version }}
-          OUTPUT_DIR: ${{ runner.temp }}
-          SIMULATOR: ${{ inputs.simulator && 'true' || 'false' }}
-          UPLOAD_S3: ${{ inputs.upload_s3 && 'true' || 'false' }}
-          WORKSPACE: ${{ github.workspace }}
+          SIMULATOR: ${{ steps.plan.outputs.simulator }}
+          UPLOAD_S3: ${{ inputs.upload_s3 && 'true' || '' }}
           AWS_DEFAULT_REGION: us-west-2
         run: |
-          set -euo pipefail
-          args=(
-            --platform "$PLATFORM"
-            --arch "$ARCH"
-            --version "$VERSION"
-            --output-dir "$OUTPUT_DIR"
-          )
-          [[ "$SIMULATOR" == "true" ]] && args+=(--simulator)
-          [[ "$UPLOAD_S3" == "true" ]] && args+=(--upload-s3)
-
-          python3 "${WORKSPACE}/.github/scripts/gstreamer_archive.py" "${args[@]}"
+          python3 ./tools/ci/gstreamer/gstreamer_archive.py --platform "$PLATFORM" --arch "$ARCH" \
+            --version "$VERSION" --prefix "$PREFIX" --output-dir "$RUNNER_TEMP" \
+            ${SIMULATOR:+--simulator} ${UPLOAD_S3:+--upload-s3}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7

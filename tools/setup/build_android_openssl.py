@@ -6,12 +6,14 @@ Faithful to KDAB android_openssl/build_ssl.sh (same Configure flags, ssl_3.patch
 workaround, SHLIB_VERSION_NUMBER= , 16 KB page alignment, llvm-strip) but pinned to a single
 currently-supported OpenSSL version instead of the EOL 3.1 branch KDAB ships.
 
-Driven from cmake/modules/AndroidOpenSSL.cmake; only the targeted ABIs are passed via --archs.
+Driven from cmake/modules/AndroidOpenSSL.cmake, which passes only the targeted ABIs (--archs) and
+the variant KDAB's android_openssl.cmake links for the build type (--variants): no-asm for Debug,
+asm otherwise.
 
 Usage:
     build_android_openssl.py --version 3.5.6 --tarball <path> --ndk <dir> --patch <ssl_3.patch>
                              --output-root <dir> [--build-dir <dir>] [--api 28]
-                             [--archs arm64 arm x86_64 x86]
+                             [--archs arm64 arm x86_64 x86] [--variants asm no-asm]
 
 Requires: perl (always, for OpenSSL's perlasm) and — for the x86/x86_64 *asm* variant — nasm.
 arm/arm64 need no extra assembler.
@@ -27,15 +29,10 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-_tools_dir = Path(__file__).resolve().parents[1]
-if str(_tools_dir) not in sys.path:
-    sys.path.insert(0, str(_tools_dir))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from _bootstrap import ensure_tools_dir  # noqa: E402
-
-ensure_tools_dir(__file__)
-
-from common.logging import log_error, log_info, log_ok  # noqa: E402
+import _bootstrap as _bootstrap
+from common.logging import log_error, log_info, log_ok
 
 _QT_ABI = {"arm64": "arm64-v8a", "arm": "armeabi-v7a"}
 _NEEDS_16K = {"arm64", "x86_64"}
@@ -52,6 +49,7 @@ class Config:
     build_dir: Path
     api: int
     archs: list[str]
+    variants: list[str]
     jobs: int
 
 
@@ -154,6 +152,13 @@ def parse_args(argv: list[str] | None = None) -> Config:
     p.add_argument("--build-dir", type=Path, default=Path.cwd() / "openssl-build")
     p.add_argument("--api", type=int, default=23)
     p.add_argument("--archs", nargs="+", default=["arm64", "arm", "x86_64", "x86"])
+    p.add_argument(
+        "--variants",
+        nargs="+",
+        choices=("asm", "no-asm"),
+        default=["asm", "no-asm"],
+        help="asm installs into the output root, no-asm into <output-root>/no-asm",
+    )
     p.add_argument("--jobs", type=int, default=os.cpu_count() or 4)
     a = p.parse_args(argv)
     return Config(
@@ -165,6 +170,7 @@ def parse_args(argv: list[str] | None = None) -> Config:
         build_dir=a.build_dir,
         api=a.api or 23,
         archs=a.archs,
+        variants=a.variants,
         jobs=a.jobs,
     )
 
@@ -191,9 +197,9 @@ def main(argv: list[str] | None = None) -> int:
         shutil.rmtree(cfg.build_dir)
     cfg.build_dir.mkdir(parents=True)
 
-    for build_type in ("", "no-asm"):
+    for variant in cfg.variants:
         for arch in cfg.archs:
-            build_one(cfg, build_type, arch, env)
+            build_one(cfg, "" if variant == "asm" else variant, arch, env)
 
     log_ok(f"QGC: OpenSSL {cfg.version} Android libraries built into {cfg.output_root}")
     return 0

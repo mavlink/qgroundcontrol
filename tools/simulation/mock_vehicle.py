@@ -8,8 +8,8 @@ without actual hardware. Useful for UI development and testing.
 Usage:
     ./mock_vehicle.py                     # UDP on localhost:14550
     ./mock_vehicle.py --port 14551        # Custom port
-    ./mock_vehicle.py --tcp               # TCP connection
-    ./mock_vehicle.py --sitl              # SITL-compatible mode
+    ./mock_vehicle.py --tcp               # Listen for a TCP client on --port
+    ./mock_vehicle.py --sitl              # Listen on TCP 5760, like SITL
     ./mock_vehicle.py --system-id 2       # Custom system ID
     ./mock_vehicle.py --lat 37.7749 --lon -122.4194  # San Francisco
 
@@ -19,7 +19,7 @@ Environment variables:
     MOCK_VEHICLE_ALT    Initial altitude in meters (default: 100)
 
 Requirements:
-    python tools/setup/install_python.py dev
+    python3 tools/setup/install_python.py simulation
 
 Based on MAVLink protocol v2.0
 """
@@ -36,7 +36,7 @@ try:
     from pymavlink.dialects.v20 import common as mavlink
 except ImportError:
     print("Error: pymavlink not installed")
-    print("Install with: python tools/setup/install_python.py dev")
+    print("Install with: python3 tools/setup/install_python.py simulation")
     sys.exit(1)
 
 # Default location (Zurich, Switzerland)
@@ -127,13 +127,13 @@ class MockVehicle:
         print(f"UDP connection to {host}:{port}")
 
     def connect_tcp(self, host="127.0.0.1", port=5760):
-        """Connect via TCP (SITL-style)."""
+        """Listen for a TCP client such as QGC's TCP link (SITL-style)."""
         self.connection = mavutil.mavlink_connection(
-            f"tcp:{host}:{port}",
+            f"tcpin:{host}:{port}",
             source_system=self.system_id,
             source_component=self.component_id,
         )
-        print(f"TCP connection on {host}:{port}")
+        print(f"TCP listening on {host}:{port}")
 
     def send_heartbeat(self):
         """Send heartbeat message."""
@@ -229,39 +229,6 @@ class MockVehicle:
             50,  # throttle
             self.state.alt,
             self.state.climb_rate,
-        )
-
-    def send_battery_status(self):
-        """Send battery status."""
-        voltages = [int(self.state.battery_voltage * 1000)] + [65535] * 9
-        self.connection.mav.battery_status_send(
-            0,  # id
-            mavlink.MAV_BATTERY_FUNCTION_ALL,
-            mavlink.MAV_BATTERY_TYPE_LIPO,
-            25,  # temperature (0.1 C)
-            voltages,
-            -1,  # current
-            -1,  # current consumed
-            -1,  # energy consumed
-            int(self.state.battery_remaining),
-        )
-
-    def send_home_position(self):
-        """Send home position."""
-        lat = int(self.state.lat * 1e7)
-        lon = int(self.state.lon * 1e7)
-
-        self.connection.mav.home_position_send(
-            lat,
-            lon,
-            0,  # home position
-            0,
-            0,
-            0,  # local position
-            [1, 0, 0, 0],  # quaternion
-            0,
-            0,
-            0,  # approach
         )
 
     def update_simulation(self, dt):
@@ -401,7 +368,7 @@ class MockVehicle:
             self.running = False
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Mock MAVLink vehicle for QGroundControl testing",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -409,10 +376,12 @@ def main() -> None:
     )
     parser.add_argument("--host", default="127.0.0.1", help="Host address (default: 127.0.0.1)")
     parser.add_argument("--port", type=int, default=14550, help="Port number (default: 14550)")
-    parser.add_argument("--tcp", action="store_true", help="Use TCP instead of UDP")
+    parser.add_argument("--tcp", action="store_true", help="Listen on TCP instead of sending UDP")
     parser.add_argument("--system-id", type=int, default=1, help="MAVLink system ID (default: 1)")
     parser.add_argument("--rate", type=int, default=10, help="Telemetry rate in Hz (default: 10)")
-    parser.add_argument("--sitl", action="store_true", help="SITL-compatible mode (TCP on 5760)")
+    parser.add_argument(
+        "--sitl", action="store_true", help="SITL-compatible mode (listen on TCP 5760)"
+    )
     parser.add_argument(
         "--lat",
         type=float,
@@ -432,7 +401,7 @@ def main() -> None:
         help=f"Initial altitude in meters (default: env MOCK_VEHICLE_ALT or {DEFAULT_ALT})",
     )
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     vehicle = MockVehicle(system_id=args.system_id)
 
@@ -456,7 +425,8 @@ def main() -> None:
         vehicle.connect_udp(args.host, args.port)
 
     vehicle.run(rate=args.rate)
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

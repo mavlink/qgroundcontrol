@@ -9,14 +9,13 @@ from __future__ import annotations
 
 import io
 import math
-import urllib.error
 import zipfile
 from collections import OrderedDict
 from typing import TYPE_CHECKING
+from urllib.error import HTTPError
 
 import numpy as np
-
-from .fetch import fetch_bytes
+from common.net import download_file
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -62,15 +61,12 @@ class HgtCells:
         if not path.is_file():
             self._cache_dir.mkdir(parents=True, exist_ok=True)
             try:
-                data = fetch_bytes(SRTM1_URL.format(name=name), timeout=120)
-            except urllib.error.HTTPError as error:
+                download_file(SRTM1_URL.format(name=name), path, timeout=120)
+            except HTTPError as error:
                 if error.code != 404:
                     raise
                 missing.touch()
                 return None
-            staging = path.with_suffix(".tmp")
-            staging.write_bytes(data)
-            staging.replace(path)
         return path.read_bytes()
 
     def cell(self, lat: int, lon: int) -> np.ndarray | None:

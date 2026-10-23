@@ -7,8 +7,8 @@ Welcome to the QGroundControl support guide. This document provides information 
 ## 1. Getting Started
 
 - **Documentation**: Comprehensive user and developer guides are available on the official website:
-  - User Guide: <https://docs.qgroundcontrol.com/>
-  - Developer Guide: <https://dev.qgroundcontrol.com/>
+  - User Guide: <https://docs.qgroundcontrol.com/master/en/qgc-user-guide/>
+  - Developer Guide: <https://docs.qgroundcontrol.com/master/en/qgc-dev-guide/>
 
 ---
 

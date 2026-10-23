@@ -1,30 +1,29 @@
-"""Select header dependents using a fresh Clang preprocessing scan."""
+"""Clang preprocessing scans for header selection and analysis result keys."""
 
 from __future__ import annotations
 
 import json
-import shutil
 import subprocess
 import tempfile
 from pathlib import Path
 from typing import Any
 
-from common.proc import run_captured
+from common.io import write_json
+from common.proc import require_tools, run_captured
 
 
-def header_dependents(
-    entries: list[dict[str, Any]], headers: set[Path], jobs: int
-) -> set[Path] | None:
-    """Return dependent sources, or None when a complete scan is unavailable."""
-    scanner = shutil.which("clang-scan-deps")
-    if scanner is None:
-        print("clang-scan-deps unavailable; checking all active project sources", flush=True)
-        return None
+class DependencyScanError(RuntimeError):
+    """The scanner is unavailable or did not cover every compilation unit."""
+
+
+def scan_dependencies(entries: list[dict[str, Any]], jobs: int) -> dict[Path, frozenset[Path]]:
+    """Return every file each source's preprocessing reads, merged across its compile commands."""
     expected = {(Path(entry["directory"]) / entry["file"]).resolve() for entry in entries}
     try:
+        scanner = require_tools("clang-scan-deps")["clang-scan-deps"]
         with tempfile.TemporaryDirectory(prefix="qgc-analysis-deps-") as temp:
             database = Path(temp) / "compile_commands.json"
-            database.write_text(json.dumps(entries), encoding="utf-8")
+            write_json(database, entries, indent=None)
             scan = run_captured(
                 [
                     scanner,
@@ -42,18 +41,19 @@ def header_dependents(
             raise ValueError("expected an object from dependency scanner")
         if result.get("modules"):
             raise ValueError("module dependencies require a full scan")
-        seen: set[Path] = set()
-        affected: set[Path] = set()
+        # Units share most headers; resolve each reported path once.
+        resolved: dict[str, Path] = {}
+        dependencies: dict[Path, set[Path]] = {}
         for unit in result["translation-units"]:
             for command in unit["commands"]:
                 source = Path(command["input-file"]).resolve()
-                dependencies = {Path(path).resolve() for path in command["file-deps"]}
-                seen.add(source)
-                if dependencies & headers:
-                    affected.add(source)
-        if seen != expected:
+                files = dependencies.setdefault(source, set())
+                for path in command["file-deps"]:
+                    if path not in resolved:
+                        resolved[path] = Path(path).resolve()
+                    files.add(resolved[path])
+        if dependencies.keys() != expected:
             raise ValueError("dependency scan did not cover every compilation unit")
-        return affected
+        return {source: frozenset(files) for source, files in dependencies.items()}
     except (OSError, ValueError, KeyError, TypeError, subprocess.TimeoutExpired) as exc:
-        print(f"Dependency scan incomplete; checking all active project sources: {exc}", flush=True)
-        return None
+        raise DependencyScanError(f"Dependency scan incomplete: {exc}") from exc

@@ -1,84 +1,73 @@
 #!/usr/bin/env python3
 """
-Install Qt SDK using aqtinstall with architecture resolution.
+Install the Qt SDK with QGC's installer (tools/setup/qt_installer) or the locked aqtinstall.
 
-Wraps aqtinstall with QGC-specific arch-directory mapping, cache key
-generation, and path resolution. Used by the qt-install GitHub Action.
+`--installer` (or QGC_QT_INSTALLER) picks the tool; QGC's installer is the default and aqt the
+fallback. The qt-install GitHub Action calls `plan` (Qt version, installer, cache key and path, a
+reusable preinstalled SDK, whether to save the cache, and the resolved request as one-line JSON)
+before restoring its cache and `ensure --plan` (reuse or install, report where Qt came from, then
+export the environment) after it. `compare` checks that both installers produce the same tree.
 
 Usage:
-    python tools/setup/install_qt.py --version 6.8.3 --host linux --arch linux_gcc_64
-    python tools/setup/install_qt.py --version 6.8.3 --host mac --arch clang_64 --modules "qtgraphs qtlocation"
-    python tools/setup/install_qt.py cache-key --arch linux_gcc_64 --modules "qtgraphs"
-    python tools/setup/install_qt.py resolve-arch --arch win64_msvc2022_64
+    python tools/setup/install_qt.py install --version 6.8.3 --host linux --arch linux_gcc_64
+    python tools/setup/install_qt.py install --from-config --host mac --arch clang_64
+    python tools/setup/install_qt.py plan --host linux --arch linux_gcc_64 --outdir .qt/Qt
+    python tools/setup/install_qt.py compare --version 6.12.0 --arch linux_gcc_64 \
+        --reference aqt/Qt --candidate qgc/Qt
 """
 
 from __future__ import annotations
 
 import argparse
 import hashlib
-import re
+import json
+import os
 import sys
+from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 
-_tools_dir = str(Path(__file__).resolve().parent.parent)
-if _tools_dir not in sys.path:
-    sys.path.insert(0, _tools_dir)
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from _bootstrap import ensure_tools_dir
-
-ensure_tools_dir(__file__)
-
-from common.build_config import find_build_config, load_build_config
-from common.gh_actions import gh_error, github_cache_path, write_github_output
+import _bootstrap as _bootstrap
+from common.build_config import load_build_config
+from common.gh_actions import (
+    append_github_env,
+    append_github_path,
+    gh_error,
+    github_cache_path,
+    parse_bool,
+    write_github_output,
+    write_step_summary,
+)
 from common.proc import run_with_retry
 from qgc_tools.python_env import tool_command
+from setup.qt_installer.compare import compare_trees, render_markdown
+from setup.qt_installer.install import ensure_host_desktop, install
+from setup.qt_installer.repo import QtRequest, resolve_arch_dir
 
-_ARCH_DIR_PREFIXES = [
-    ("linux_", ""),
-    ("win64_", ""),
-]
-
-# Allowlist gates --aqt-source before uv sees it (extra-index-url flag injection, hostile git host).
-_AQT_SOURCE_ALLOWLIST = re.compile(
-    r"^(?:aqtinstall(?:==[0-9][0-9A-Za-z.\-]*)?"
-    r"|git\+https://github\.com/miurahr/aqtinstall(?:\.git)?@[0-9a-f]{7,40})$"
-)
+INSTALLERS = ("qgc", "aqt")
 
 
-def validate_aqt_source(spec: str) -> str:
-    """Return `spec` unchanged if it matches the allowlist; sys.exit(1) otherwise."""
-    if not spec or _AQT_SOURCE_ALLOWLIST.match(spec):
-        return spec
-    gh_error(
-        f"--aqt-source '{spec}' is not allowed. "
-        "Must be 'aqtinstall' (optionally ==<version>) or "
-        "'git+https://github.com/miurahr/aqtinstall@<sha>'."
-    )
-    sys.exit(1)
+DEFAULT_INSTALLER = "qgc"
 
 
-def resolve_arch_dir(arch: str) -> str:
-    """Map a Qt arch identifier to the on-disk directory name aqtinstall creates."""
-    arch = arch.removesuffix("_cross_compiled")
-    for prefix, replacement in _ARCH_DIR_PREFIXES:
-        if arch.startswith(prefix):
-            return replacement + arch[len(prefix) :]
-    if arch == "clang_64":
-        return "macos"
-    return arch
+def resolve_installer(requested: str) -> str:
+    """Return `--installer`, else $QGC_QT_INSTALLER, else QGC's installer (aqt stays a fallback)."""
+    installer = requested or os.environ.get("QGC_QT_INSTALLER", "") or DEFAULT_INSTALLER
+    if installer not in INSTALLERS:
+        raise ValueError(f"Unknown Qt installer {installer!r}; use one of: {', '.join(INSTALLERS)}")
+    return installer
 
 
-def resolve_windows_host_arch(arch: str) -> str:
-    """Return the native x64 Qt arch paired with a Windows ARM64 cross arch."""
-    suffix = "_arm64_cross_compiled"
-    if not arch.startswith("win64_msvc") or not arch.endswith(suffix):
-        raise ValueError(f"Not a Windows ARM64 cross-compiled Qt architecture: {arch}")
-    return f"{arch.removesuffix(suffix)}_64"
+def compute_cache_digest(modules: str, archives: str, installer: str = "aqt") -> str:
+    """Generate a SHA-256 digest for cache key differentiation.
 
-
-def compute_cache_digest(modules: str, archives: str) -> str:
-    """Generate a SHA-256 digest for cache key differentiation."""
+    aqt keeps the original inputs, so its existing caches stay valid; other installers add their
+    name, so neither tool ever restores the other's tree.
+    """
     content = f"{modules}\n{archives}"
+    if installer != "aqt":
+        content += f"\ninstaller={installer}"
     return hashlib.sha256(content.encode()).hexdigest()
 
 
@@ -143,18 +132,38 @@ def install_qt(
     outdir: Path,
     modules: str = "",
     archives: str = "",
-    aqt_source: str = "",
     autodesktop: bool = False,
+    installer: str = "",
 ) -> Path:
-    """Install Qt using aqtinstall and return the resolved root directory.
+    """Install Qt and return the resolved root directory.
 
-    `aqt_source` overrides the PyPI `aqtinstall` package with an isolated uv package
-    spec (e.g. `git+https://github.com/miurahr/aqtinstall.git@<sha>`). The explicit
-    command bypasses other aqt executables on PATH.
+    Both installers get the absolute output directory, which their patched files embed.
     """
-    if aqt_source:
-        validate_aqt_source(aqt_source)
-    command = tool_command("aqt", "qt", source=aqt_source)
+    outdir = outdir.absolute()
+    if resolve_installer(installer) == "qgc":
+        request = QtRequest(
+            host, target, version, arch, tuple(modules.split()), tuple(archives.split()) or None
+        )
+        if autodesktop:
+            ensure_host_desktop(request, outdir)
+        install(request, outdir)
+    else:
+        _install_with_aqt(host, target, version, arch, outdir, modules, archives, autodesktop)
+    return resolve_qt_root(outdir, version, resolve_arch_dir(arch))
+
+
+def _install_with_aqt(
+    host: str,
+    target: str,
+    version: str,
+    arch: str,
+    outdir: Path,
+    modules: str,
+    archives: str,
+    autodesktop: bool,
+) -> None:
+    """Run the locked aqtinstall; the explicit command bypasses other aqt executables on PATH."""
+    command = tool_command("aqt", "qt")
     args = [*command, "install-qt", host, target, version, arch, "--outputdir", str(outdir)]
 
     if modules:
@@ -167,48 +176,119 @@ def install_qt(
     print(f"Running: {' '.join(args)}")
     _run_aqt_with_retries(args)
 
-    arch_dir = resolve_arch_dir(arch)
-    return resolve_qt_root(outdir, version, arch_dir)
+
+def configured_qt() -> dict[str, str]:
+    """Return the ``qt`` section of build-config.json."""
+    return load_build_config()["qt"]
 
 
-# Android ABI → aqtinstall arch mapping (priority order for resolution)
-_ANDROID_ABI_ORDER = [
-    ("arm64-v8a", "arm64"),
-    ("armeabi-v7a", "armv7"),
-    ("x86_64", "x86_64"),
-    ("x86", "x86"),
-]
+@dataclass(frozen=True)
+class QtPlan:
+    """A resolved Qt request; `plan` passes it to `ensure` as one-line JSON."""
+
+    host: str
+    target: str
+    version: str
+    arch: str
+    outdir: str
+    modules: str = ""
+    archives: str = ""
+    installer: str = "aqt"
+    preinstalled_root: str = ""
+
+    def to_json(self) -> str:
+        return json.dumps(asdict(self), separators=(",", ":"))
+
+    @classmethod
+    def from_json(cls, text: str) -> QtPlan:
+        return cls(**json.loads(text))
 
 
-def resolve_android_qt_root(abis: str, roots: dict[str, str]) -> str:
-    """Pick the primary Android Qt root from installed ABIs.
+def cache_key(plan: QtPlan) -> str:
+    """Return the Qt cache key; the host implies `runner.os`, so the key omits it."""
+    digest = compute_cache_digest(plan.modules, plan.archives, plan.installer)
+    return f"qt-{plan.host}-{plan.target}-{plan.arch}-{plan.version}-{digest}"
 
-    Args:
-        abis: Semicolon-separated ABI list (e.g. "arm64-v8a;x86_64")
-        roots: Mapping of short ABI key → Qt root path (e.g. {"arm64": "/path/to/qt"})
 
-    Returns:
-        The Qt root path for the highest-priority installed ABI.
+def plan_install(
+    request: QtPlan, preinstalled_prefix: str = "", save_allowed: bool = False
+) -> dict[str, str]:
+    """Return qt-install's plan outputs for *request*, adding any reusable preinstalled root.
 
-    Raises:
-        SystemExit: If no matching ABI is found.
+    Only a fresh install is saved, and only where *save_allowed* (pull requests from forks cannot
+    write the base repository's cache).
     """
-    abi_set = {a.strip() for a in abis.split(";") if a.strip()}
-    for abi, key in _ANDROID_ABI_ORDER:
-        if abi in abi_set and roots.get(key):
-            return roots[key]
-    gh_error(f"Failed to resolve an installed Android Qt root for ABIs: {abis}")
-    sys.exit(1)
+    arch_dir = resolve_arch_dir(request.arch)
+    preinstalled = (
+        resolve_preinstalled_qt(
+            Path(preinstalled_prefix), request.version, arch_dir, request.modules, request.archives
+        )
+        if preinstalled_prefix
+        else None
+    )
+    plan = replace(request, preinstalled_root=str(preinstalled or ""))
+    return {
+        "version": plan.version,
+        "installer": plan.installer,
+        "key": cache_key(plan),
+        "cache_path": github_cache_path(Path(plan.outdir) / plan.version / arch_dir),
+        "preinstalled_root": plan.preinstalled_root,
+        "save": str(save_allowed and not preinstalled).lower(),
+        "plan": plan.to_json(),
+    }
+
+
+def ensure_qt(plan: QtPlan, cache_hit: bool = False) -> tuple[Path, str]:
+    """Reuse a preinstalled or cache-restored Qt, installing it otherwise.
+
+    Returns the Qt root and where it came from: preinstalled, cache, or installed.
+    """
+    if plan.preinstalled_root:
+        print(f"Using preinstalled Qt at {plan.preinstalled_root}")
+        return Path(plan.preinstalled_root), "preinstalled"
+    outdir = Path(plan.outdir)
+    if cache_hit:
+        qt_root = resolve_qt_root(outdir, plan.version, resolve_arch_dir(plan.arch))
+        print(f"Using cached Qt at {qt_root}")
+        return qt_root, "cache"
+    qt_root = install_qt(
+        plan.host,
+        plan.target,
+        plan.version,
+        plan.arch,
+        outdir,
+        plan.modules,
+        plan.archives,
+        installer=plan.installer,
+    )
+    print(f"Qt installed at {qt_root}")
+    return qt_root, "installed"
+
+
+def compare_installs(reference: Path, candidate: Path, version: str, arch: str) -> int:
+    """Report how the QGC installer's tree differs from aqt's; 1 when beyond the known differences."""
+    arch_root = f"{version}/{resolve_arch_dir(arch)}"
+    result = compare_trees(reference.absolute(), candidate.absolute(), arch_root)
+    report = render_markdown(f"Qt {version} {arch}", result)
+    print(report)
+    write_step_summary(report)
+    return 0 if result.ok else 1
 
 
 def _add_arch_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--arch", required=True)
     p.add_argument("--modules", default="")
     p.add_argument("--archives", default="")
+    p.add_argument(
+        "--installer",
+        choices=("", *INSTALLERS),
+        default="",
+        help="Default: $QGC_QT_INSTALLER, else qgc (aqt remains as a fallback)",
+    )
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Install Qt SDK using aqtinstall.")
+    parser = argparse.ArgumentParser(description="Install the Qt SDK.")
     sub = parser.add_subparsers(dest="command", required=True)
 
     install_p = sub.add_parser("install", help="Install Qt")
@@ -221,49 +301,45 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     install_p.add_argument("--host", default="linux")
     install_p.add_argument("--target", default="desktop")
     install_p.add_argument("--outdir", type=Path, default=Path(".qt"))
-    install_p.add_argument(
-        "--aqt-source",
-        default="",
-        help="Override the isolated uv source for aqtinstall (e.g. git+https://...@<sha>).",
-    )
     _add_arch_args(install_p)
 
-    cache_p = sub.add_parser("cache-key", help="Output arch_dir and cache digest")
-    cache_p.add_argument("--cache-dir", type=Path, help="Installation directory for cache paths")
-    _add_arch_args(cache_p)
-
-    resolve_p = sub.add_parser("resolve-arch", help="Print resolved arch directory name")
-    resolve_p.add_argument("--arch", required=True)
-
-    host_arch_p = sub.add_parser(
-        "resolve-windows-host-arch", help="Resolve host Qt arch for Windows ARM64 cross builds"
+    plan_p = sub.add_parser(
+        "plan",
+        help="Output the Qt version, installer, cache key/path, any reusable preinstalled Qt root, "
+        "whether to save the cache, and the plan for `ensure`",
     )
-    host_arch_p.add_argument("--arch", required=True)
-
-    paths_p = sub.add_parser(
-        "resolve-paths", help="Output qt_root_dir/qt_bin_dir for an installed Qt"
+    plan_p.add_argument("--version", default="", help="Default: build-config.json's qt.version")
+    plan_p.add_argument("--host", default="linux")
+    plan_p.add_argument("--target", default="desktop")
+    plan_p.add_argument("--outdir", type=Path, required=True)
+    plan_p.add_argument("--preinstalled-prefix", default="")
+    plan_p.add_argument(
+        "--save-allowed",
+        type=parse_bool,
+        default=False,
+        help="Whether this run may save the Qt cache (false for pull requests from forks)",
     )
-    paths_p.add_argument("--outdir", type=Path, required=True)
-    paths_p.add_argument("--version", required=True)
-    paths_p.add_argument("--arch-dir", required=True)
+    _add_arch_args(plan_p)
 
-    preinstalled_p = sub.add_parser(
-        "resolve-preinstalled", help="Resolve a compatible preinstalled Qt SDK"
+    ensure_p = sub.add_parser(
+        "ensure", help="Reuse a preinstalled or cached Qt or install it, then export its paths"
     )
-    preinstalled_p.add_argument("--prefix", default="")
-    preinstalled_p.add_argument("--version", required=True)
-    preinstalled_p.add_argument("--arch-dir", required=True)
-    preinstalled_p.add_argument("--modules", default="")
-    preinstalled_p.add_argument("--archives", default="")
+    ensure_p.add_argument("--plan", required=True, help="The `plan` output (JSON)")
+    ensure_p.add_argument("--cache-hit", type=parse_bool, default=False)
+    ensure_p.add_argument(
+        "--export-env",
+        type=parse_bool,
+        default=True,
+        help="Export QT_ROOT_DIR and prepend the Qt bin directory to PATH",
+    )
 
-    android_p = sub.add_parser(
-        "resolve-android-root", help="Pick primary Android Qt root from installed ABIs"
+    compare_p = sub.add_parser(
+        "compare", help="Compare an aqt-installed Qt tree with QGC's installer's (parity check)"
     )
-    android_p.add_argument("--abis", required=True, help="Semicolon-separated ABI list")
-    android_p.add_argument("--arm64", default="")
-    android_p.add_argument("--armv7", default="")
-    android_p.add_argument("--x86-64", default="", dest="x86_64")
-    android_p.add_argument("--x86", default="")
+    compare_p.add_argument("--version", required=True)
+    compare_p.add_argument("--arch", required=True)
+    compare_p.add_argument("--reference", type=Path, required=True, help="aqt output directory")
+    compare_p.add_argument("--candidate", type=Path, required=True, help="qgc output directory")
 
     return parser.parse_args(argv)
 
@@ -271,82 +347,45 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
 
-    if args.command == "resolve-arch":
-        print(resolve_arch_dir(args.arch))
+    if args.command == "compare":
+        return compare_installs(args.reference, args.candidate, args.version, args.arch)
+
+    if args.command == "ensure":
+        qt_root, source = ensure_qt(QtPlan.from_json(args.plan), args.cache_hit)
+        write_github_output({"qt_root_dir": str(qt_root), "source": source})
+        if args.export_env:
+            append_github_env({"QT_ROOT_DIR": str(qt_root)})
+            append_github_path(str(qt_root / "bin"))
         return 0
 
-    if args.command == "resolve-windows-host-arch":
-        try:
-            host_arch = resolve_windows_host_arch(args.arch)
-        except ValueError as error:
-            gh_error(str(error))
-            return 1
-        write_github_output({"arch": host_arch})
-        print(host_arch)
-        return 0
+    try:
+        installer = resolve_installer(args.installer)
+    except ValueError as error:
+        gh_error(str(error))
+        return 1
 
-    if args.command == "resolve-paths":
-        qt_root = args.outdir / args.version / args.arch_dir
-        write_github_output(
-            {
-                "qt_root_dir": str(qt_root),
-                "qt_bin_dir": str(qt_root / "bin"),
-            }
+    if args.command == "plan":
+        request = QtPlan(
+            host=args.host,
+            target=args.target,
+            version=args.version or configured_qt()["version"],
+            arch=args.arch,
+            outdir=str(args.outdir),
+            modules=args.modules,
+            archives=args.archives,
+            installer=installer,
         )
-        print(f"qt_root_dir={qt_root}")
-        return 0
-
-    if args.command == "resolve-preinstalled":
-        qt_root = (
-            resolve_preinstalled_qt(
-                Path(args.prefix),
-                args.version,
-                args.arch_dir,
-                args.modules,
-                args.archives,
-            )
-            if args.prefix
-            else None
-        )
-        outputs = {"available": "true" if qt_root else "false"}
-        if qt_root:
-            outputs.update(
-                {
-                    "qt_root_dir": str(qt_root),
-                    "qt_bin_dir": str(qt_root / "bin"),
-                }
-            )
+        outputs = plan_install(request, args.preinstalled_prefix, args.save_allowed)
         write_github_output(outputs)
-        print(f"available={outputs['available']}")
-        return 0
-
-    if args.command == "resolve-android-root":
-        roots = {"arm64": args.arm64, "armv7": args.armv7, "x86_64": args.x86_64, "x86": args.x86}
-        qt_root = resolve_android_qt_root(args.abis, roots)
-        write_github_output({"qt_root_dir": qt_root})
-        print(f"qt_root_dir={qt_root}")
-        return 0
-
-    if args.command == "cache-key":
-        arch_dir = resolve_arch_dir(args.arch)
-        digest = compute_cache_digest(args.modules, args.archives)
-        write_github_output({"arch_dir": arch_dir, "digest": digest})
-        if args.cache_dir is not None:
-            write_github_output({"cache_dir": github_cache_path(args.cache_dir)})
-        print(f"arch_dir={arch_dir}")
-        print(f"digest={digest}")
+        for key, value in outputs.items():
+            print(f"{key}={value}")
         return 0
 
     # Default: install
     if args.from_config:
-        config_path = find_build_config(
-            start=Path(__file__).parent,
-            extra_candidates=[Path(__file__).parent / "build-config.json"],
-        )
-        qt_config = load_build_config(config_path)["qt"]
+        qt_config = configured_qt()
         args.version = qt_config["version"]
         args.modules = args.modules or qt_config["modules"]
-    arch_dir = resolve_arch_dir(args.arch)
     qt_root = install_qt(
         host=args.host,
         target=args.target,
@@ -355,16 +394,8 @@ def main(argv: list[str] | None = None) -> int:
         outdir=args.outdir,
         modules=args.modules,
         archives=args.archives,
-        aqt_source=args.aqt_source,
         autodesktop=args.autodesktop,
-    )
-
-    write_github_output(
-        {
-            "arch_dir": arch_dir,
-            "qt_root_dir": str(qt_root),
-            "qt_bin_dir": str(qt_root / "bin"),
-        }
+        installer=installer,
     )
     print(f"Qt installed at {qt_root}")
     return 0

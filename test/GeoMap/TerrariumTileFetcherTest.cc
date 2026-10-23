@@ -256,10 +256,15 @@ void TerrariumTileFetcherTest::_cancelPreventsDelivery()
     QSignalSpy readySpy(&source, &HeightSource::patchHeightsReady);
     QSignalSpy failedSpy(&source, &HeightSource::patchHeightsFailed);
 
-    const int requestId = source.requestPatchHeights(keyOver(flat10Region().center(), kFineZoom), kGridSize);
+    const TileMath::TileKey key = keyOver(flat10Region().center(), kFineZoom);
+    const int requestId = source.requestPatchHeights(key, kGridSize);
     source.cancelRequest(requestId);
 
-    QVERIFY_NO_SIGNAL_WAIT(readySpy, TestTimeout::shortMs());
+    // The same tile's next request is delivered together with every waiter on that tile, cancelled one included
+    const int barrierId = source.requestPatchHeights(key, kGridSize);
+    QTRY_VERIFY_WITH_TIMEOUT(!readySpy.isEmpty(), TestTimeout::mediumMs());
+    QCOMPARE(readySpy.count(), 1);
+    QCOMPARE(readySpy.first().at(0).toInt(), barrierId);
     QVERIFY(failedSpy.isEmpty());
 }
 
@@ -673,7 +678,8 @@ void TerrariumTileFetcherTest::_heldTileNotRefetched()
 
     // The field already holds this tile: a new request is a satisfied no-op
     QVERIFY(source.requestTile(key));
-    QVERIFY_NO_SIGNAL_WAIT(regionSpy, TestTimeout::shortMs());
+    // Negative window: a refetch would come from the local tile cache well within 250 ms
+    QVERIFY_NO_SIGNAL_WAIT(regionSpy, 250);
     QCOMPARE(nam.requestCount, 1);
 }
 
@@ -687,14 +693,17 @@ void TerrariumTileFetcherTest::_tileFetchFailureLeavesFieldIntact()
     TerrariumTileFetcher source(nullptr, &nam);
     source.setHeightField(&field);
     QSignalSpy regionSpy(&field, &HeightField::regionChanged);
+    QSignalSpy replyFinishedSpy(&nam, &QNetworkAccessManager::finished);
 
     UnitTestTileGenerator::setForcedMissCount(2);
     const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
 
     ignoreLogMessage("GeoMap.TerrariumTileFetcher", QtWarningMsg, QRegularExpression(QStringLiteral("failed")));
     QVERIFY(source.requestTile(key));
-    QTRY_COMPARE_WITH_TIMEOUT(nam.requestCount, 1, TestTimeout::mediumMs());
-    QVERIFY_NO_SIGNAL_WAIT(regionSpy, TestTimeout::shortMs());
+    // The fetcher handles the failed reply within the same finished emission
+    QTRY_COMPARE_WITH_TIMEOUT(replyFinishedSpy.count(), 1, TestTimeout::mediumMs());
+    QCOMPARE(nam.requestCount, 1);
+    QVERIFY(regionSpy.isEmpty());
     QCOMPARE(field.tileCount(), 0);
 
     // Failure clears the in-flight key: a retry fetches again and succeeds
@@ -817,8 +826,8 @@ void TerrariumTileFetcherTest::_fineTileHeldUntilAnchorsArrive()
 
     // Fine tile first: inserting it now would leave neighbors without any data
     // rendering 0 m next to real terrain
-    fineReply->finishNormally();
-    QVERIFY_NO_SIGNAL_WAIT(regionSpy, TestTimeout::shortMs());
+    fineReply->finishNormally();  // the fetcher handles the reply synchronously
+    QVERIFY(regionSpy.isEmpty());
     QCOMPARE(field.tileCount(), 0);
 
     for (int i = 0; i < (anchorCount - 1); i++) {

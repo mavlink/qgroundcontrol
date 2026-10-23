@@ -1,13 +1,13 @@
 {{ ind }}ConfigSection {
 {{ ind }}    Layout.fillWidth: true
-{{ ind }}    visible: sectionMatchesFilter("{{ disabled_heading }}") && _hasDisabled{{ camel }}
+{{ ind }}    visible: sectionMatchesFilter({{ disabled_heading|qml_string }}) && _hasDisabled{{ camel }}
 {{ ind }}    property bool _hasDisabled{{ camel }}: {
 {{ ind }}        for (var i = 0; i < _{{ safe }}Count; i++) {
 {% if apm_battery %}
-{{ ind }}            if (controller.getParameterFact(-1, _battPrefixForIndex(i) + "{{ enable_param }}").value === {{ dv }})
+{{ ind }}            if (controller.getParameterFact(-1, _battPrefixForIndex(i) + {{ enable_param|qml_string }}).value === {{ dv }})
 {% else %}
 {{ ind }}            var idx = {{ loop_idx_expr }}
-{{ ind }}            if (controller.getParameterFact(-1, "{{ param_prefix }}" + idx + "{{ enable_param }}").value === {{ dv }})
+{{ ind }}            if (controller.getParameterFact(-1, {{ param_prefix|qml_string }} + idx + {{ enable_param|qml_string }}).value === {{ dv }})
 {% endif %}
 {{ ind }}                return true
 {{ ind }}        }

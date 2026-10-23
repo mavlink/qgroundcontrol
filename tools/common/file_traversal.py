@@ -30,15 +30,23 @@ HEADER_EXTENSIONS = frozenset({".h", ".hpp", ".hxx"})
 ALL_CPP_EXTENSIONS = CPP_EXTENSIONS | HEADER_EXTENSIONS
 
 
+def _is_qgc_source_root(path: Path) -> bool:
+    return (path / "CMakeLists.txt").is_file() and (path / "tools" / "_bootstrap.py").is_file()
+
+
 def find_repo_root(start_path: Path | None = None) -> Path:
     """
-    Find the repository root by looking for .git directory.
+    Find the repository root: the nearest directory with a ``.git`` entry or
+    the QGC source-tree markers (exported source archives have no ``.git``).
 
     Args:
         start_path: Starting point for search. Defaults to current file.
 
     Returns:
-        Path to repository root, or start_path if not found.
+        Path to repository root.
+
+    Raises:
+        RuntimeError: If no ancestor of start_path is a repository root.
     """
     if start_path is None:
         start_path = Path(__file__).resolve()
@@ -46,10 +54,10 @@ def find_repo_root(start_path: Path | None = None) -> Path:
     current = start_path if start_path.is_dir() else start_path.parent
 
     for parent in [current, *current.parents]:
-        if (parent / ".git").exists():
+        if (parent / ".git").exists() or _is_qgc_source_root(parent):
             return parent
 
-    return start_path
+    raise RuntimeError(f"Could not find the QGroundControl repository root above {start_path}")
 
 
 def should_skip_path(path: Path, skip_dirs: Iterable[str] | None = None) -> bool:
@@ -96,64 +104,3 @@ def find_cpp_files(
                     and not should_skip_path(file_path, skip_dirs)
                 ):
                     yield file_path
-
-
-def find_header_files(
-    root: Path,
-    skip_dirs: Iterable[str] | None = None,
-) -> Generator[Path, None, None]:
-    """
-    Find all header files in a directory tree.
-
-    Args:
-        root: Root directory to search
-        skip_dirs: Directory names to skip. Defaults to DEFAULT_SKIP_DIRS.
-
-    Yields:
-        Paths to header files.
-    """
-    for ext in HEADER_EXTENSIONS:
-        for file_path in root.rglob(f"*{ext}"):
-            if not should_skip_path(file_path, skip_dirs):
-                yield file_path
-
-
-def find_source_files(
-    root: Path,
-    skip_dirs: Iterable[str] | None = None,
-) -> Generator[Path, None, None]:
-    """
-    Find all source files (.cc, .cpp, .cxx) in a directory tree.
-
-    Args:
-        root: Root directory to search
-        skip_dirs: Directory names to skip. Defaults to DEFAULT_SKIP_DIRS.
-
-    Yields:
-        Paths to source files.
-    """
-    for ext in CPP_EXTENSIONS:
-        for file_path in root.rglob(f"*{ext}"):
-            if not should_skip_path(file_path, skip_dirs):
-                yield file_path
-
-
-def find_json_files(
-    root: Path,
-    pattern: str = "*Fact.json",
-    skip_dirs: Iterable[str] | None = None,
-) -> Generator[Path, None, None]:
-    """
-    Find JSON files matching a pattern in a directory tree.
-
-    Args:
-        root: Root directory to search
-        pattern: Glob pattern for JSON files. Defaults to '*Fact.json'.
-        skip_dirs: Directory names to skip. Defaults to DEFAULT_SKIP_DIRS.
-
-    Yields:
-        Paths to matching JSON files.
-    """
-    for file_path in root.rglob(pattern):
-        if not should_skip_path(file_path, skip_dirs):
-            yield file_path

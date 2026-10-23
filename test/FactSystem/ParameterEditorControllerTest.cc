@@ -348,9 +348,9 @@ void ParameterEditorControllerTest::_sendDiffUnknownParamStopsAfterWriteFailure(
     QCOMPARE(writeFailureSpy.count(), 1);
     verifyExpectedLogMessage();
 
-    // Wait long enough that a (buggy) post-failure refresh would have completed,
-    // then verify no PARAM_REQUEST_READ was ever issued for the unknown param
-    QVERIFY_NO_SIGNAL_WAIT(readFailureSpy, maxWaitTimeMs);
+    // A (buggy) post-failure refresh read and its retries would finish within this window: the test-mode ack timeout
+    // is 50 ms. Then verify no PARAM_REQUEST_READ was ever issued for the unknown param
+    QVERIFY_NO_SIGNAL_WAIT(readFailureSpy, 250);
     QCOMPARE(readFailureSpy.count(), 0);
     QCOMPARE(readSuccessSpy.count(), 0);
 }

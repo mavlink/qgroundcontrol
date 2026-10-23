@@ -33,6 +33,8 @@ DEFAULT_EXPORT_KEYS = [
     "android.build_tools",
     "android.cmdline_tools",
     "build.cmake_minimum_version",
+    "build.cmake_version",
+    "build.ninja_version",
     "build.platform_workflows",
 ]
 IOS_QT_MODULE_EXCLUDES = {"qtserialport"}
@@ -60,18 +62,10 @@ def lookup_dotted(
     return value
 
 
-def find_build_config(
-    start: Path | None = None,
-    *,
-    extra_candidates: list[Path] | None = None,
-) -> Path:
-    """Find build-config.json by env override, extra candidates, or repo search."""
+def find_build_config(start: Path | None = None) -> Path:
+    """Find build-config.json by env override or repo search."""
     if env_path := os.environ.get(CONFIG_ENV_VAR):
         return Path(env_path)
-
-    for candidate in extra_candidates or []:
-        if candidate.exists():
-            return candidate
 
     current = (start or Path(__file__).resolve()).resolve()
     if current.is_file():
@@ -90,10 +84,9 @@ def load_build_config(
     config_file: Path | None = None,
     *,
     start: Path | None = None,
-    extra_candidates: list[Path] | None = None,
 ) -> dict[str, Any]:
     """Load and parse the build config JSON file."""
-    path = config_file or find_build_config(start, extra_candidates=extra_candidates)
+    path = config_file or find_build_config(start)
     data = read_json(path)
     if not isinstance(data, dict):
         raise ValueError(f"Expected JSON object in {path}")
@@ -106,7 +99,6 @@ def get_build_config_value(
     *,
     config_file: Path | None = None,
     start: Path | None = None,
-    extra_candidates: list[Path] | None = None,
 ) -> str:
     """Return a string value from the build config or *default*.
 
@@ -117,7 +109,7 @@ def get_build_config_value(
     swapping defaults can produce wrong artifacts without warning.
     """
     try:
-        config = load_build_config(config_file, start=start, extra_candidates=extra_candidates)
+        config = load_build_config(config_file, start=start)
     except (FileNotFoundError, OSError):
         return default
     value = lookup_dotted(config, key, default)
@@ -139,8 +131,6 @@ def derive_ios_qt_modules(qt_modules: str) -> str:
     modules = [module for module in qt_modules.split() if module not in IOS_QT_MODULE_EXCLUDES]
     return " ".join(modules)
 
-
-_EXPORT_KEY_ALIASES: dict[str, str] = {}
 
 _GSTREAMER_VERSION_ENV_NAMES: dict[str, str] = {
     "gstreamer.version.default": "GSTREAMER_VERSION",
@@ -164,9 +154,6 @@ def export_build_config_values(
         if value is not None:
             primary = _GSTREAMER_VERSION_ENV_NAMES.get(key, key.replace(".", "_").upper())
             exported[primary] = str(value)
-            alias = _EXPORT_KEY_ALIASES.get(key)
-            if alias:
-                exported[alias] = str(value)
     return exported
 
 

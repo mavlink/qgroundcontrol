@@ -3,9 +3,15 @@
 from __future__ import annotations
 
 import argparse
-import json
 import shutil
+import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+import _bootstrap as _bootstrap
+from common.io import read_json, write_json
+from common.paths import REPO_ROOT
 
 TEMPLATES = (
     ("settings.default.json", "settings.json"),
@@ -32,9 +38,9 @@ def install_vscode_templates(
             raise FileNotFoundError(f"VS Code template not found: {template}")
         shutil.copyfile(template, destination)
         if destination_name == "settings.json" and python_interpreter:
-            settings = json.loads(destination.read_text())
+            settings = read_json(destination)
             settings["python.defaultInterpreterPath"] = python_interpreter
-            destination.write_text(json.dumps(settings, indent=2) + "\n")
+            write_json(destination, settings)
         created.append(destination)
         print(f"Created {destination}")
     return created
@@ -45,7 +51,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--vscode-dir",
         type=Path,
-        default=Path(__file__).resolve().parents[2] / ".vscode",
+        default=REPO_ROOT / ".vscode",
         help="Directory containing the tracked VS Code templates",
     )
     parser.add_argument(

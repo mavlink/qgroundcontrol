@@ -12,7 +12,7 @@ import re
 import subprocess
 from typing import TYPE_CHECKING
 
-from .jobs import check_passed_marker, done_markers
+from .jobs import TILES_DIR, check_passed_marker, done_markers
 from .metadata import TILEJSON_NAME, write_metadata
 from .tilemath import JOB_ZOOM
 
@@ -26,7 +26,6 @@ DISTRIBUTION_ID = "E2AZ33YAOTUR6"
 PUBLIC_URL = "https://terrain.assets.qgroundcontrol.com"
 TILE_CACHE_CONTROL = "public, max-age=86400"
 METADATA_CACHE_CONTROL = "public, max-age=300"
-TILES_DIR = "terrarium"
 _PREFIX = re.compile(r"[a-z0-9][a-z0-9._-]*")
 _DATA_VERSION = re.compile(r"\d+\.\d+\.\d+")
 

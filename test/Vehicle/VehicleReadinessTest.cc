@@ -14,6 +14,7 @@
 #include "FirmwarePlugin.h"
 #include "HealthReportFixtures.h"
 #include "Joystick.h"
+#include "LinkManager.h"
 #include "MAVLinkLib.h"
 #include "MockLink.h"
 #include "MultiVehicleManager.h"
@@ -549,6 +550,18 @@ void VehicleReadinessAPMTest::_testPrearmCheckReadiness()
     mockLink()->setPrearmCheck(false, false);
     QVERIFY_TRUE_WAIT(!vehicle->readyToFlyAvailable(), TestTimeout::mediumMs());
     QVERIFY(!vehicle->readyToFly());
+}
+
+void VehicleReadinessAPMTest::_testPrearmCheckAfterDisconnect()
+{
+    // Keep the MockLink alive past disconnect(), which deletes the worker that sends its status messages
+    const SharedLinkInterfacePtr link = LinkManager::instance()->sharedLinkInterfacePointerForLink(mockLink());
+    auto* const mock = qobject_cast<MockLink*>(link.get());
+    QVERIFY(mock);
+    _disconnectMockLink();
+
+    mock->setPrearmCheck(true, false);
+    mock->setRemoteIDArmStatus(MAV_ODID_ARM_STATUS_PRE_ARM_FAIL_GENERIC, QStringLiteral("after disconnect"));
 }
 
 void VehicleReadinessAPMTest::_testHealthReportUsesArduPilotActionModes()

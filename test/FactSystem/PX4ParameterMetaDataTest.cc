@@ -188,11 +188,7 @@ void PX4ParameterMetaDataTest::_skipMissingNameOrType()
         _makeParam(u"GOOD_PARAM"_s, u"Int32"_s),                       // valid
     };
 
-    expectLogMessage("FactSystem.FactMetaData", QtWarningMsg, QRegularExpression("required keys are missing"));
-    expectLogMessage("FirmwarePlugin.PX4ParameterMetaData", QtWarningMsg, QRegularExpression("Skipping invalid parameter metadata: \"NO_TYPE\""));
     QScopedPointer<PX4ParameterMetaData> meta(_loadFromJson(params, nullptr));
-    verifyExpectedLogMessage();
-    verifyExpectedLogMessage();
     QVERIFY(meta);
 
     // Invalid entries skipped, valid one parsed
@@ -200,8 +196,13 @@ void PX4ParameterMetaDataTest::_skipMissingNameOrType()
     QVERIFY(good);
     QCOMPARE(good->name(), "GOOD_PARAM");
 
-    // Missing-name param should not exist — fallback is generic with empty name
+    // Metadata is built on first lookup, so the invalid entry is reported then and falls back to generic
+    expectLogMessage("FactSystem.FactMetaData", QtWarningMsg, QRegularExpression("required keys are missing"));
+    expectLogMessage("FirmwarePlugin.PX4ParameterMetaData", QtWarningMsg,
+                     QRegularExpression("Skipping invalid parameter metadata: \"NO_TYPE\""));
     FactMetaData *noType = meta->getMetaDataForFact("NO_TYPE", FactMetaData::valueTypeInt32);
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
     QVERIFY(noType);
     QVERIFY(noType->name().isEmpty());
 }
@@ -294,14 +295,15 @@ void PX4ParameterMetaDataTest::_rejectOldVersion()
 
 void PX4ParameterMetaDataTest::_rejectInvalidType()
 {
-    expectLogMessage("FactSystem.FactMetaData", QtWarningMsg, QRegularExpression("Unknown type \"BADTYPE\""));
-    expectLogMessage("FirmwarePlugin.PX4ParameterMetaData", QtWarningMsg, QRegularExpression("Skipping invalid parameter metadata: \"TEST_BAD\""));
     QScopedPointer<PX4ParameterMetaData> meta(_loadFromJson({_makeParam(u"TEST_BAD"_s, u"BADTYPE"_s)}, nullptr));
-    verifyExpectedLogMessage();
-    verifyExpectedLogMessage();
     QVERIFY(meta);
 
+    expectLogMessage("FactSystem.FactMetaData", QtWarningMsg, QRegularExpression("Unknown type \"BADTYPE\""));
+    expectLogMessage("FirmwarePlugin.PX4ParameterMetaData", QtWarningMsg,
+                     QRegularExpression("Skipping invalid parameter metadata: \"TEST_BAD\""));
     FactMetaData *fact = meta->getMetaDataForFact("TEST_BAD", FactMetaData::valueTypeInt32);
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
     QVERIFY(fact);
     QVERIFY(fact->name().isEmpty());
 }

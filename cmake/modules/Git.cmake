@@ -70,25 +70,6 @@ set_property(
     PROPERTY CMAKE_CONFIGURE_DEPENDS ${_qgc_git_configure_dependencies}
 )
 
-# Optionally update submodules during configuration
-if(GIT_SUBMODULE)
-    message(STATUS "Updating Git submodules...")
-    execute_process(
-        COMMAND "${GIT_EXECUTABLE}" submodule update --init --recursive
-        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-        RESULT_VARIABLE GIT_SUBMODULE_RESULT
-        OUTPUT_VARIABLE GIT_SUBMODULE_OUTPUT
-        ERROR_VARIABLE GIT_SUBMODULE_ERROR
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-    if(NOT GIT_SUBMODULE_RESULT EQUAL 0)
-        include(CMakePrintHelpers)
-        cmake_print_variables(GIT_SUBMODULE_RESULT GIT_SUBMODULE_OUTPUT GIT_SUBMODULE_ERROR)
-        message(FATAL_ERROR "QGC: Git submodule update failed with code ${GIT_SUBMODULE_RESULT}")
-    endif()
-    message(STATUS "Git submodules updated successfully")
-endif()
-
 # ----------------------------------------------------------------------------
 # Extract Git Branch and Commit Hash
 # ----------------------------------------------------------------------------

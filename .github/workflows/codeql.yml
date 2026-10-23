@@ -27,19 +27,16 @@ permissions:
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
-    runs-on: ubuntu-22.04
-    timeout-minutes: 30
+    # On ubuntu-22.04, about 1 in 7 PR runs failed checkout after ~100 s and then hung in
+    # harden-runner's post step until the timeout; ubuntu-latest jobs with the same steps never did.
+    runs-on: ubuntu-latest
+    # An analysis takes about 80 s; a hung runner should not hold the check for long.
+    timeout-minutes: 10
 
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - language: actions
-            build-mode: none
-          - language: java-kotlin
-            build-mode: none
-          - language: python
-            build-mode: none
+        language: [actions, java-kotlin, python]
 
     steps:
       - name: Harden Runner
@@ -57,7 +54,7 @@ jobs:
         uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
-          build-mode: ${{ matrix.build-mode }}
+          build-mode: none
           config-file: ./.github/codeql/codeql-config.yml
           trap-caching: false
           dependency-caching: false

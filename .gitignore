@@ -69,7 +69,6 @@ tmp/
 obj/
 debug/
 release/
-!tools/release/
 /qgroundcontrol
 bin/*.exe
 bin/*.txt
@@ -172,6 +171,8 @@ Qt*-linux*.tar.*
 .pytest_cache/
 pytest-of-*/
 .import_linter_cache/
+.grimp_cache/
+.hypothesis/
 .venv/
 
 # Vale prose linter (downloaded via `vale sync`)
@@ -183,9 +184,6 @@ pytest-of-*/
 .tool-versions
 .python-version
 !tools/.python-version
-
-# semantic-release output belongs to its isolated tooling directory.
-/tools/release/.release-version
 
 # Local and CI link-check results.
 .lycheecache

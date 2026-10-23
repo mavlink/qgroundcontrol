@@ -1,4 +1,7 @@
-"""Shared import bootstrap for Python entrypoints under tools/ and .github/scripts/."""
+"""CI debug hooks for tools/ entry scripts, installed by `import _bootstrap as _bootstrap`.
+
+Stdlib-only: scripts import it before `common`, including under sparse checkouts.
+"""
 
 from __future__ import annotations
 
@@ -6,15 +9,24 @@ import contextlib
 import faulthandler
 import os
 import sys
-from pathlib import Path
 
 _DEBUG_ENV = "QGC_CI_DEBUG"
+_RUNNER_DEBUG_ENV = "RUNNER_DEBUG"
 _GHA_ENV = "GITHUB_ACTIONS"
 _HOOK_MARKER = "_qgc_ci_debug_hook"
 
 
+def _escape_data(message: str) -> str:
+    # Workflow commands end at a newline; percent-encode CR/LF (and % itself) as GitHub requires.
+    return message.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+
+
 def _debug_enabled() -> bool:
-    return os.environ.get(_DEBUG_ENV, "").lower() in {"1", "true", "yes", "on"}
+    # GitHub sets RUNNER_DEBUG=1 for every step when debug logging is enabled.
+    return (
+        os.environ.get(_DEBUG_ENV, "").lower() in {"1", "true", "yes", "on"}
+        or os.environ.get(_RUNNER_DEBUG_ENV) == "1"
+    )
 
 
 def _configure_debug() -> None:
@@ -45,7 +57,8 @@ def _configure_debug() -> None:
 
         def _excepthook(exc_type, exc, tb) -> None:
             with contextlib.suppress(Exception):
-                print(f"::error::{exc_type.__name__}: {exc}", file=sys.stderr, flush=True)
+                message = _escape_data(f"{exc_type.__name__}: {exc}")
+                print(f"::error::{message}", file=sys.stderr, flush=True)
             prev(exc_type, exc, tb)
 
         setattr(_excepthook, _HOOK_MARKER, True)
@@ -56,7 +69,7 @@ def _configure_debug() -> None:
 
         def _unraisablehook(unraisable) -> None:
             try:
-                msg = f"{unraisable.exc_type.__name__}: {unraisable.exc_value}"
+                msg = _escape_data(f"{unraisable.exc_type.__name__}: {unraisable.exc_value}")
                 print(f"::error::unraisable: {msg}", file=sys.stderr, flush=True)
             except Exception:
                 pass
@@ -67,28 +80,3 @@ def _configure_debug() -> None:
 
 
 _configure_debug()
-
-
-def ensure_tools_dir(start: str | Path) -> Path:
-    """Ensure the top-level ``tools`` directory is importable.
-
-    Locates ``tools`` either as an ancestor of ``start`` (script lives under
-    tools/) or as a sibling subdirectory of an ancestor (script lives under
-    .github/scripts/ or similar). Raises if neither shape is found.
-    """
-    path = Path(start).resolve()
-    current = path if path.is_dir() else path.parent
-    for candidate in [current, *current.parents]:
-        if candidate.name == "tools":
-            tools_dir = candidate
-            break
-        sibling = candidate / "tools"
-        if sibling.is_dir():
-            tools_dir = sibling
-            break
-    else:
-        raise RuntimeError(f"Could not locate tools directory from {start}")
-
-    if str(tools_dir) not in sys.path:
-        sys.path.insert(0, str(tools_dir))
-    return tools_dir

@@ -1,0 +1,79 @@
+"""The Android workflow's build legs, for plan_platform.py.
+
+The windows leg is skipped on pull requests: it is the PR long pole by a
+decent amount, and an Android/Windows host build adds little PR signal beyond
+the linux Android leg. It still runs on push, merge queue, and manual
+dispatch.
+
+Runner selection stays in the workflow: each leg carries `runson_runner`
+(RunsOn runner name, empty for GitHub-hosted-only legs) and `fallback_runner`,
+combined by the job's `runs-on` expression.
+"""
+
+from __future__ import annotations
+
+Leg = dict[str, str | bool]
+
+LINUX_JOB: Leg = {
+    "host": "linux",
+    "arch": "linux_gcc_64",
+    "shell": "bash",
+    "primary": True,
+    "emulator": False,
+    "runson_runner": "linux-x64-builder",
+    "fallback_runner": "ubuntu-latest",
+}
+
+MAC_JOB: Leg = {
+    "host": "mac",
+    "arch": "clang_64",
+    "shell": "bash",
+    "primary": False,
+    "emulator": False,
+    "runson_runner": "",
+    "fallback_runner": "macos-15",
+}
+
+WINDOWS_JOB: Leg = {
+    "host": "windows",
+    "arch": "win64_msvc2022_64",
+    "shell": "pwsh",
+    "primary": False,
+    "emulator": False,
+    "runson_runner": "windows-x64-builder",
+    "fallback_runner": "windows-2022",
+}
+
+LINUX_EMULATOR_JOB: Leg = {
+    "host": "linux-emulator",
+    "qt_host": "linux",
+    "arch": "linux_gcc_64",
+    "shell": "bash",
+    "primary": False,
+    "emulator": True,
+    "runson_runner": "linux-x64-emulator",
+    "fallback_runner": "ubuntu-latest",
+}
+
+
+def build_matrix(is_pr: bool) -> list[Leg]:
+    """Return the matrix include-list for the given event type."""
+    legs = [LINUX_JOB, MAC_JOB, WINDOWS_JOB, LINUX_EMULATOR_JOB]
+    if is_pr:
+        legs.remove(WINDOWS_JOB)
+    matrix = []
+    for leg in legs:
+        if leg["emulator"]:
+            abis = ["x86_64"]
+        elif leg["primary"] and not is_pr:
+            abis = ["arm64-v8a", "armeabi-v7a"]
+        else:
+            abis = ["arm64-v8a"]
+        matrix.append(
+            {
+                **leg,
+                "android_abis": ";".join(abis),
+                "artifact_abi_suffix": "-".join(sorted(abis)),
+            }
+        )
+    return matrix

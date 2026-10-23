@@ -10,6 +10,7 @@
 #include "LinkManager.h"
 #include "MAVLinkLib.h"
 #include "MockConfiguration.h"
+#include "MockLink.h"
 #include "MockLinkFTP.h"
 #include "MultiVehicleManager.h"
 #include "ParameterManager.h"
@@ -254,7 +255,9 @@ void HashCheckTest::_hashCheckMatrix()
         const int maxWaitMs = ParameterManager::kTestHashCheckTimeoutMs
                             + ParameterManager::kTestMaxInitialRequestTimeMs
                             + TestTimeout::shortMs();
-        QVERIFY_NO_SIGNAL_WAIT(spyParamsReady, maxWaitMs);
+        QSignalSpy spyRequestFailed(vehicle->parameterManager(), &ParameterManager::initialParametersRequestFailed);
+        QVERIFY_SIGNAL_COUNT_WAIT(spyRequestFailed, 1, maxWaitMs);
+        QVERIFY(spyParamsReady.isEmpty());
     }
 
     // Phase 4: Verify outcomes

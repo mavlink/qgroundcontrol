@@ -4,18 +4,17 @@ from __future__ import annotations
 
 import importlib.metadata
 import os
-import shutil
-import subprocess
 import sys
 from pathlib import Path
 
 from common.io import read_toml
-from common.proc import run_with_retry
+from common.paths import TOOLS_DIR
+from common.proc import require_tools, run_with_retry
 
 
 def project_path() -> Path:
     override = os.environ.get("QGC_TOOLS_PROJECT")
-    return Path(override).resolve() if override else Path(__file__).resolve().parents[1]
+    return Path(override).resolve() if override else TOOLS_DIR
 
 
 def environment_path() -> Path:
@@ -31,12 +30,9 @@ def executable(name: str, environment: Path | None = None) -> Path:
 
 
 def require_uv() -> str:
-    uv = shutil.which("uv")
-    if not uv:
-        raise FileNotFoundError(
-            "uv is required. Install it from https://docs.astral.sh/uv/getting-started/installation/"
-        )
-    return uv
+    return require_tools(
+        "uv", hint="Install it from https://docs.astral.sh/uv/getting-started/installation/"
+    )["uv"]
 
 
 def package_groups() -> dict[str, list[str]]:
@@ -139,16 +135,10 @@ def sync_groups(
     return target
 
 
-def tool_command(name: str, group: str, *, source: str = "") -> list[str]:
-    """Use the locked tool, or an explicitly isolated caller-validated override."""
-    if source:
-        return [require_uv(), "tool", "run", "--isolated", "--from", source, name]
+def tool_command(name: str, group: str) -> list[str]:
+    """Return the locked tool's executable after syncing its dependency group."""
     target = sync_groups(group)
     tool = executable(name, target)
     if not tool.is_file():
         raise FileNotFoundError(f"{name} is missing after syncing {group}: {tool}")
     return [str(tool)]
-
-
-def run_tool(name: str, group: str, args: list[str]) -> int:
-    return subprocess.run([*tool_command(name, group), *args], check=False).returncode

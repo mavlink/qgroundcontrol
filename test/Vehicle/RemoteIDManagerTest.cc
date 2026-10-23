@@ -119,6 +119,8 @@ void RemoteIDManagerTest::_operatorIDBroadcastNullPadded()
     settings->operatorIDType()->setRawValue(0);
     settings->operatorIDEU()->setRawValue(QString::fromLatin1(kValidFullOperatorID));
 
+    // Send directly; _operatorIDBroadcastGating covers the periodic send loop
+    QVERIFY(QMetaObject::invokeMethod(vehicle()->remoteIDManager(), "_sendMessages", Qt::DirectConnection));
     QTRY_VERIFY_WITH_TIMEOUT(mockLink()->receivedMavlinkMessageCount(MAVLINK_MSG_ID_OPEN_DRONE_ID_OPERATOR_ID) >= 1, 10000);
 
     mavlink_message_t message{};

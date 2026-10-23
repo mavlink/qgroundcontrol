@@ -5,17 +5,21 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
-from pathlib import Path
+from typing import TYPE_CHECKING
 from xml.sax.saxutils import escape
 
+import pre_commit
 import pytest
-import yaml
 from common.git import run_git
 from common.xml import XMLParseError
 
 from translations import check_placeholders as checker
 
-ROOT = Path(__file__).resolve().parents[2]
+from ._helpers import REPO_ROOT, commit_files, git, load_workflow, load_yaml, pr_merge_checkout
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
 SOURCE = "Switches to '%1' when you click Stop."
 CATALOG = "translations/with spaces.ts"
 
@@ -58,25 +62,15 @@ def write_catalog(repo: Path, content: str, name: str = CATALOG) -> Path:
     return path
 
 
-def git(repo: Path, *args: str) -> str:
-    return run_git(*args, cwd=repo, check=True).stdout.strip()
-
-
 def commit_fixture(repo: Path) -> str:
-    git(repo, "add", ".")
-    git(repo, "-c", "core.hooksPath=/dev/null", "commit", "-qm", "Fixture")
-    return git(repo, "rev-parse", "HEAD")
+    return commit_files(repo, {}, "Fixture")
 
 
 @pytest.fixture
-def repo(tmp_path: Path) -> Path:
-    git(tmp_path, "init", "-q")
-    git(tmp_path, "config", "user.name", "Test")
-    git(tmp_path, "config", "user.email", "test@example.invalid")
-    git(tmp_path, "config", "commit.gpgsign", "false")
-    write_catalog(tmp_path, catalog(message("Legacy %2", "historical defect"), message()))
-    commit_fixture(tmp_path)
-    return tmp_path
+def repo(git_repo: Path) -> Path:
+    write_catalog(git_repo, catalog(message("Legacy %2", "historical defect"), message()))
+    commit_fixture(git_repo)
+    return git_repo
 
 
 def check_xml(tmp_path: Path, content: str) -> list[str]:
@@ -337,9 +331,7 @@ def test_base_is_exact_not_merge_base(repo: Path) -> None:
     write_catalog(repo, catalog(message(translation="bad")))
     base = commit_fixture(repo)
     tree = git(repo, "rev-parse", "HEAD^{tree}")
-    sibling = run_git(
-        "commit-tree", tree, "-p", ancestor, "-m", "Sibling fixture", cwd=repo, check=True
-    ).stdout.strip()
+    sibling = git(repo, "commit-tree", tree, "-p", ancestor, "-m", "Sibling fixture")
     git(repo, "update-ref", "HEAD", sibling)
     assert checker.validate(repo, base, [CATALOG]) == ([], 1, 0)
     assert checker.validate(repo, ancestor, [CATALOG])[0]
@@ -351,12 +343,11 @@ def test_empty_baseline_checks_all_messages(repo: Path) -> None:
     assert errors
 
 
-def test_unborn_head_requires_explicit_empty_baseline(tmp_path: Path) -> None:
-    git(tmp_path, "init", "-q")
-    write_catalog(tmp_path, catalog(message()))
+def test_unborn_head_requires_explicit_empty_baseline(git_repo: Path) -> None:
+    write_catalog(git_repo, catalog(message()))
     with pytest.raises(subprocess.CalledProcessError):
-        checker.validate(tmp_path, "HEAD", [])
-    assert checker.validate(tmp_path, "EMPTY", []) == ([], 1, 1)
+        checker.validate(git_repo, "HEAD", [])
+    assert checker.validate(git_repo, "EMPTY", []) == ([], 1, 1)
 
 
 def test_missing_ref_fails_even_with_no_changes(repo: Path) -> None:
@@ -462,6 +453,25 @@ def test_cli_base_environment_and_override(repo: Path, monkeypatch, capsys) -> N
     )
 
 
+@pytest.mark.parametrize("clone", ["full", "shallow"])
+def test_pr_merge_checkout_skips_newer_base_branch_messages(
+    tmp_path: Path, isolated_git: None, monkeypatch, capsys, clone: str
+) -> None:
+    pr = pr_merge_checkout(
+        tmp_path,
+        base={CATALOG: catalog(message()), "translations/other.ts": catalog(message())},
+        newer_base={"translations/other.ts": catalog(message(translation="bad"))},
+        pr={CATALOG: catalog(message(), message("Second %1", "%1"))},
+    )
+    monkeypatch.chdir(getattr(pr, clone))
+    assert checker.main(["--base-ref", pr.fork_point, "--head-sha", pr.pr_head]) == 0
+    expected = f"Checked 1 new/changed message(s) in 1 catalog(s) against {pr.base_tip}."
+    assert expected in capsys.readouterr().out
+    if clone == "full":
+        # The event's older base SHA would blame the PR for the base branch's newer message.
+        assert checker.main(["--base-ref", pr.fork_point]) == 1
+
+
 def test_cli_outside_git_fails(tmp_path: Path, monkeypatch, capsys) -> None:
     monkeypatch.chdir(tmp_path)
     assert checker.main([]) == 1
@@ -470,7 +480,7 @@ def test_cli_outside_git_fails(tmp_path: Path, monkeypatch, capsys) -> None:
 
 def test_module_entrypoint_and_default_head(repo: Path) -> None:
     env = {key: value for key, value in os.environ.items() if not key.startswith("PRE_COMMIT_")}
-    env["PYTHONPATH"] = str(ROOT / "tools")
+    env["PYTHONPATH"] = str(REPO_ROOT / "tools")
     write_catalog(repo, catalog(message(translation="bad")))
     result = subprocess.run(
         [sys.executable, "-m", "translations.check_placeholders"],
@@ -484,37 +494,23 @@ def test_module_entrypoint_and_default_head(repo: Path) -> None:
     assert "missing: '%1'" in result.stderr
 
 
-def test_workflow_runs_for_translation_only_prs_with_real_base() -> None:
-    workflow = yaml.safe_load((ROOT / ".github/workflows/translation-validation.yml").read_text())
-    events = workflow["on"] if "on" in workflow else workflow[True]
-    assert set(events) == {"pull_request", "push"}
-    for event in events.values():
-        assert "translations/**/*.ts" in event["paths"]
-        assert "paths-ignore" not in event
-    assert workflow["permissions"] == {"contents": "read"}
-    job = workflow["jobs"]["validate"]
-    assert "if" not in job
-    steps = job["steps"]
-    checkout = next(step for step in steps if step.get("uses", "").startswith("actions/checkout@"))
-    assert checkout["with"]["fetch-depth"] == 0
-    assert checkout["with"]["persist-credentials"] is False
-    assert "ref" not in checkout["with"]
-    setup = next(step for step in steps if step.get("uses") == "./.github/actions/setup-python")
-    assert setup["with"]["groups"] == "scripts,test"
-    validation = steps[-1]
-    assert validation["working-directory"] == "tools"
-    assert validation["env"]["BASE_REF"] == (
-        "${{ github.event.pull_request.base.sha || github.event.before }}"
-    )
-    assert '--base-ref "$BASE_REF"' in validation["run"]
-    assert "BASE_REF=EMPTY" in validation["run"]
-    assert 'git fetch --no-tags --depth=1 origin "$BASE_REF"' in validation["run"]
-    assert "HEAD^" not in validation["run"]
-    assert not any("qt-install" in step.get("uses", "") for step in steps)
+def test_pre_commit_workflow_checks_translation_only_changes() -> None:
+    # pre-commit.yml runs on every path, and its --changed run hands this hook the PR base through
+    # PRE_COMMIT_FROM_REF, so translation-only PRs need no workflow of their own.
+    workflow = load_workflow("pre-commit.yml")
+    for event in ("pull_request", "push"):
+        filters = workflow["on"][event] or {}
+        assert "paths" not in filters
+        assert "paths-ignore" not in filters
+    steps = workflow["jobs"]["pre-commit"]["steps"]
+    run = next(step for step in steps if step.get("name") == "Run pre-commit")
+    assert "--changed" in run["run"]
+    assert "qt-translation-placeholders" not in run.get("env", {}).get("SKIP", "")
+    assert "qt-translation-placeholders" not in pre_commit.CI_SKIPPED_HOOKS
 
 
 def test_pre_commit_hook_uses_catalog_filter_and_existing_runner() -> None:
-    config = yaml.safe_load((ROOT / ".pre-commit-config.yaml").read_text())
+    config = load_yaml(".pre-commit-config.yaml")
     hook = next(
         hook
         for repo in config["repos"]

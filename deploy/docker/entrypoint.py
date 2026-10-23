@@ -60,7 +60,7 @@ def compiler_fingerprint() -> str:
 def initialize_caches(source: Path) -> None:
     os.environ.update(
         {
-            "CCACHE_DIR": str(source / ".ccache"),
+            "CCACHE_DIR": str(source / ".cache/ccache"),
             "CCACHE_BASEDIR": str(source),
             "CCACHE_CONFIGPATH": str(source / "tools/configs/ccache.conf"),
             "MOCCACHE_DIR": str(source / ".cache/moccache"),
@@ -72,7 +72,9 @@ def initialize_caches(source: Path) -> None:
         Path(os.environ[name]).mkdir(parents=True, exist_ok=True)
     if shutil.which("ccache"):
         subprocess.run(["ccache", "--zero-stats"], check=True)
-    subprocess.run([sys.executable, str(source / "tools/moccache.py"), "--zero-stats"], check=True)
+    subprocess.run(
+        [sys.executable, str(source / "tools/moccache_launcher.py"), "--zero-stats"], check=True
+    )
 
 
 def write_performance_report(
@@ -91,7 +93,7 @@ def write_performance_report(
             "moccache",
             [
                 sys.executable,
-                str(source / "tools/moccache.py"),
+                str(source / "tools/moccache_launcher.py"),
                 "--show-stats",
                 "--build-dir",
                 str(output),

@@ -168,6 +168,8 @@ void BluetoothLiveAdapterTest::_testLiveScanLifecycle()
     QVERIFY2(observedScanOrError, "Scan neither started nor produced an error within timeout");
 
     if (!config.scanning() && (errorSpy.count() > 0)) {
+        ignoreLogMessage("Comms.Bluetooth.BluetoothConfiguration", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("^Bluetooth discovery error:")));
         const QString reason = errorSpy.last().first().toString();
         const QByteArray skipMsg = QStringLiteral("Live scan unavailable on this host: %1").arg(reason).toUtf8();
         QSKIP(skipMsg.constData());

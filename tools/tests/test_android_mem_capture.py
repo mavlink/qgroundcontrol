@@ -1,13 +1,12 @@
-#!/usr/bin/env python3
-"""Tests for tools/android_mem_capture.py."""
+"""Tests for tools/debuggers/android_mem_capture.py."""
 
 from __future__ import annotations
 
 import argparse
 import subprocess
 
-import android_mem_capture as amc
 import pytest
+from debuggers import android_mem_capture as amc
 
 
 def _completed(

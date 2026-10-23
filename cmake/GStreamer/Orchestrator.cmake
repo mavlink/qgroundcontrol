@@ -13,24 +13,25 @@
 # The helper modules, each described in its header, then each platform's discovery (platform/*.cmake).
 foreach(
     _qgc_gst_module IN
-    ITEMS Platform
-          Components
-          Layout
-          Targets
-          Probe
-          PkgConfig
-          Download
-          PluginPolicy
-          Install
-          Notice
-          StaticInit
-          SdkState
-          platform/Apple
-          platform/Windows
-          platform/Linux
-          platform/Android
-          platform/MacOS
-          platform/IOS
+    ITEMS
+        Platform
+        Components
+        Layout
+        Targets
+        Probe
+        PkgConfig
+        Download
+        PluginPolicy
+        Install
+        Notice
+        StaticInit
+        SdkState
+        platform/Apple
+        platform/Windows
+        platform/Linux
+        platform/Android
+        platform/MacOS
+        platform/IOS
 )
     include("${CMAKE_CURRENT_LIST_DIR}/${_qgc_gst_module}.cmake")
 endforeach()
@@ -42,9 +43,11 @@ qgc_gst_platform(_qgc_gst_platform)
 if(QGC_GST_VERSION)
     # The SDK packages and checksum pins are named by the full release version.
     if(NOT QGC_GST_VERSION MATCHES "^[0-9]+\\.[0-9]+\\.[0-9]+$")
-        message(FATAL_ERROR "GStreamer: QGC_GST_VERSION='${QGC_GST_VERSION}' is not a GStreamer release version. Set "
-                            "it to <major>.<minor>.<micro> (e.g. 1.28.4), or empty to use gstreamer.version in "
-                            ".github/build-config.json."
+        message(
+            FATAL_ERROR
+                "GStreamer: QGC_GST_VERSION='${QGC_GST_VERSION}' is not a GStreamer release version. Set "
+                "it to <major>.<minor>.<micro> (e.g. 1.28.4), or empty to use gstreamer.version in "
+                ".github/build-config.json."
         )
     endif()
     set(QGC_GST_REQUESTED_VERSION "${QGC_GST_VERSION}")
@@ -53,8 +56,9 @@ else()
 endif()
 
 if(GStreamer_ROOT_DIR AND NOT EXISTS "${GStreamer_ROOT_DIR}")
-    message(FATAL_ERROR "GStreamer: User-provided directory does not exist: ${GStreamer_ROOT_DIR}\n"
-                        "Correct the path or unset GStreamer_ROOT_DIR to allow auto-download."
+    message(
+        FATAL_ERROR "GStreamer: User-provided directory does not exist: ${GStreamer_ROOT_DIR}\n"
+                    "Correct the path or unset GStreamer_ROOT_DIR to allow auto-download."
     )
 endif()
 
@@ -66,8 +70,9 @@ if(ANDROID OR IOS)
 else()
     set(_qgc_gst_static_default OFF)
 endif()
-option(GStreamer_USE_STATIC_LIBS "Link the GStreamer SDK statically (required on Android and iOS)"
-       ${_qgc_gst_static_default}
+option(
+    GStreamer_USE_STATIC_LIBS "Link the GStreamer SDK statically (required on Android and iOS)"
+    ${_qgc_gst_static_default}
 )
 if(APPLE)
     set(_qgc_gst_framework_default ON)
@@ -85,8 +90,8 @@ set(PKG_CONFIG_ARGN
     CACHE STRING "Extra arguments for pkg-config"
 )
 _qgc_gst_drop_legacy_pkg_config_args()
-_qgc_gst_select_sdk_root(GStreamer_ROOT_DIR GStreamer_AUTO_DOWNLOADED "${GStreamer_ROOT_DIR}"
-                         "${QGC_GST_REQUESTED_VERSION}"
+_qgc_gst_select_sdk_root(
+    GStreamer_ROOT_DIR GStreamer_AUTO_DOWNLOADED "${GStreamer_ROOT_DIR}" "${QGC_GST_REQUESTED_VERSION}"
 )
 
 cmake_language(CALL _qgc_gst_discover_${_qgc_gst_platform}_sdk)
@@ -104,9 +109,11 @@ if(GStreamer_USE_STATIC_LIBS)
 endif()
 list(LENGTH _qgc_gst_active_modes _qgc_gst_active_count)
 if(_qgc_gst_active_count GREATER 1)
-    message(FATAL_ERROR "GStreamer: conflicting layout modes — only one of GStreamer_USE_MERGED_STATIC, "
-                        "GStreamer_USE_FRAMEWORK, GStreamer_USE_STATIC_LIBS may be ON simultaneously. "
-                        "Active: ${_qgc_gst_active_modes}"
+    message(
+        FATAL_ERROR
+            "GStreamer: conflicting layout modes — only one of GStreamer_USE_MERGED_STATIC, "
+            "GStreamer_USE_FRAMEWORK, GStreamer_USE_STATIC_LIBS may be ON simultaneously. "
+            "Active: ${_qgc_gst_active_modes}"
     )
 endif()
 unset(_qgc_gst_active_modes)
@@ -170,9 +177,11 @@ foreach(_qgc_gst_component IN LISTS GSTREAMER_MANDATORY_COMPONENTS)
 endforeach()
 if(_qgc_gst_missing_mandatory)
     string(REPLACE ";" ", " _qgc_gst_missing_mandatory "${_qgc_gst_missing_mandatory}")
-    message(FATAL_ERROR "GStreamer: mandatory pkg-config modules not found for the SDK at ${GStreamer_ROOT_DIR}: "
-                        "${_qgc_gst_missing_mandatory}\nInstall the GStreamer development packages (gst-plugins-base) "
-                        "or point GStreamer_ROOT_DIR at a complete SDK."
+    message(
+        FATAL_ERROR
+            "GStreamer: mandatory pkg-config modules not found for the SDK at ${GStreamer_ROOT_DIR}: "
+            "${_qgc_gst_missing_mandatory}\nInstall the GStreamer development packages (gst-plugins-base) "
+            "or point GStreamer_ROOT_DIR at a complete SDK."
     )
 endif()
 # The requested components found; the optional ones' pkg-config probes are QUIET (Targets.cmake).
@@ -232,51 +241,52 @@ else()
     set(_gst_shipped_plugins ${_gst_available_plugins})
 endif()
 gstreamer_classify_missing_plugins(
-    REQUESTED
-    ${GSTREAMER_PLUGINS}
-    AVAILABLE
-    ${_gst_available_plugins}
-    SHIPPED
-    ${_gst_shipped_plugins}
-    OUT_OPTIONAL
-    _gst_missing_optional
-    OUT_ABSENT
-    _gst_absent_plugins
-    OUT_UNUSABLE
-    _gst_unusable_plugins
+    REQUESTED ${GSTREAMER_PLUGINS}
+    AVAILABLE ${_gst_available_plugins}
+    SHIPPED ${_gst_shipped_plugins}
+    OUT_OPTIONAL _gst_missing_optional
+    OUT_ABSENT _gst_absent_plugins
+    OUT_UNUSABLE _gst_unusable_plugins
 )
 if(_gst_absent_plugins)
     list(JOIN _gst_absent_plugins ", " _gst_absent_plugins)
     message(
-        WARNING "GStreamer: plugin allowlist names not found as plugins in ${_gst_plugin_source}: "
-                "${_gst_absent_plugins}\nCheck them in gstreamer.plugins of .github/build-config.json (misspelled, or "
-                "not built for this platform) or install the plugins; video features depending on them will not "
-                "work at runtime."
+        WARNING
+            "GStreamer: plugin allowlist names not found as plugins in ${_gst_plugin_source}: "
+            "${_gst_absent_plugins}\nCheck them in gstreamer.plugins of .github/build-config.json (misspelled, or "
+            "not built for this platform) or install the plugins; video features depending on them will not "
+            "work at runtime."
     )
 endif()
 if(_gst_unusable_plugins)
     list(JOIN _gst_unusable_plugins ", " _gst_unusable_plugins)
-    message(WARNING "GStreamer: requested plugins in ${_gst_plugin_source} that have no pkg-config module to link "
-                    "them by: ${_gst_unusable_plugins}\nVideo features depending on these plugins will not work at "
-                    "runtime."
+    message(
+        WARNING
+            "GStreamer: requested plugins in ${_gst_plugin_source} that have no pkg-config module to link "
+            "them by: ${_gst_unusable_plugins}\nVideo features depending on these plugins will not work at " "runtime."
     )
 endif()
 if(_gst_missing_optional)
     list(JOIN _gst_missing_optional ", " _gst_missing_optional)
-    message(STATUS "GStreamer: optional decoder plugins not in ${_gst_plugin_source}: ${_gst_missing_optional} "
-                   "(hardware-specific or alternatives; decoding uses those present)"
+    message(
+        STATUS "GStreamer: optional decoder plugins not in ${_gst_plugin_source}: ${_gst_missing_optional} "
+               "(hardware-specific or alternatives; decoding uses those present)"
     )
 endif()
 # Mobile apps have no other way to load a plugin at runtime.
 if(ANDROID OR IOS)
-    gstreamer_missing_required(REQUIRED ${GSTREAMER_RUNTIME_REQUIRED_PLUGINS} AVAILABLE ${_gst_available_plugins}
-                               OUT_VAR _gst_missing_required
+    gstreamer_missing_required(
+        REQUIRED ${GSTREAMER_RUNTIME_REQUIRED_PLUGINS}
+        AVAILABLE ${_gst_available_plugins}
+        OUT_VAR _gst_missing_required
     )
     if(_gst_missing_required)
         list(JOIN _gst_missing_required ", " _gst_missing_required)
-        message(FATAL_ERROR "GStreamer: runtime-required plugins are missing from the static SDK at "
-                            "${GStreamer_ROOT_DIR}: ${_gst_missing_required}. The SDK is incomplete or "
-                            "corrupt — re-download it."
+        message(
+            FATAL_ERROR
+                "GStreamer: runtime-required plugins are missing from the static SDK at "
+                "${GStreamer_ROOT_DIR}: ${_gst_missing_required}. The SDK is incomplete or "
+                "corrupt — re-download it."
         )
     endif()
 endif()
@@ -285,14 +295,10 @@ endif()
 # Only GStreamer::GStreamer is probed: on iOS GStreamer::mobile is a framework this project builds, which try_compile
 # cannot link, and the sizeof() probe needs no archive.
 qgc_check_gst_header(
-    VAR
-    QGC_GST_HAS_VIDEO_ORIENTATION_META
-    HEADER
-    gst/video/gstvideometa.h
-    SYMBOL
-    "sizeof(GstVideoOrientationMeta)"
-    TARGET
-    GStreamer::GStreamer
+    VAR QGC_GST_HAS_VIDEO_ORIENTATION_META
+    HEADER gst/video/gstvideometa.h
+    SYMBOL "sizeof(GstVideoOrientationMeta)"
+    TARGET GStreamer::GStreamer
 )
 if(QGC_GST_HAS_VIDEO_ORIENTATION_META)
     target_compile_definitions(GStreamer::GStreamer INTERFACE QGC_HAS_GST_VIDEO_ORIENTATION_META=1)
@@ -301,7 +307,11 @@ endif()
 # Zero-copy DMABuf GPU path probe: HwBuffers/CMakeLists.txt builds the DMABuf path when QGC_GST_HAS_DMABUF is set. It
 # needs gst-allocators, which the Linux branch of src/.../GStreamer/CMakeLists.txt requests (the Allocators component).
 if(LINUX)
-    qgc_check_gst_header(VAR QGC_GST_HAS_DMABUF HEADER gst/allocators/gstdmabuf.h SYMBOL gst_is_dmabuf_memory)
+    qgc_check_gst_header(
+        VAR QGC_GST_HAS_DMABUF
+        HEADER gst/allocators/gstdmabuf.h
+        SYMBOL gst_is_dmabuf_memory
+    )
 endif()
 
 if(GStreamer_USE_MERGED_STATIC)
@@ -320,14 +330,15 @@ foreach(_p IN LISTS GSTREAMER_PLUGINS)
         math(EXPR _qgc_gst_plugin_count "${_qgc_gst_plugin_count}+1")
     endif()
 endforeach()
-message(STATUS "QGCGStreamer: version=${GStreamer_VERSION} path=${_qgc_gst_path} root=${GStreamer_ROOT_DIR} "
-               "plugins=${_qgc_gst_plugin_count}/${_qgc_gst_plugin_total} auto_downloaded=${GStreamer_AUTO_DOWNLOADED}"
+message(
+    STATUS "QGCGStreamer: version=${GStreamer_VERSION} path=${_qgc_gst_path} root=${GStreamer_ROOT_DIR} "
+           "plugins=${_qgc_gst_plugin_count}/${_qgc_gst_plugin_total} auto_downloaded=${GStreamer_AUTO_DOWNLOADED}"
 )
 
-# Post-configure tooling (.github/scripts/verify_executable.py, generate_cpm_sbom.py) and PrintSummary read the
+# Post-configure tooling (tools/ci/packaging/verify_executable.py, generate_cpm_sbom.py) and PrintSummary read the
 # QGC_GST_RESOLVED_* entries from the cache.
-_qgc_gst_record_resolved_sdk("${GStreamer_ROOT_DIR}" "${QGC_GST_REQUESTED_VERSION}" "${GStreamer_AUTO_DOWNLOADED}"
-                             "${GStreamer_VERSION}"
+_qgc_gst_record_resolved_sdk(
+    "${GStreamer_ROOT_DIR}" "${QGC_GST_REQUESTED_VERSION}" "${GStreamer_AUTO_DOWNLOADED}" "${GStreamer_VERSION}"
 )
 
 # The app ships the LGPL text and a notice naming this GStreamer and its sources: Android stages them as APK assets,

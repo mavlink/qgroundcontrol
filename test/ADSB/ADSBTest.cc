@@ -112,15 +112,22 @@ void ADSBTest::_adsbTcpLinkIgnoresInvalidMessagesTest()
         "MSG,3,1,1,ZZZZZZ,1,2024/01/01,12:00:00.000,2024/01/01,12:00:00.000,,35000,,,47.0,-122.0,,,,0,,0\n");
     const QByteArray zeroLatLon(
         "MSG,3,1,1,4840D6,1,2024/01/01,12:00:00.000,2024/01/01,12:00:00.000,,35000,,,0,0,,,,0,,0\n");
+    // Lines are parsed in order, so the trailing valid line's update follows any for the invalid ones
+    const QByteArray validTrailer(
+        "MSG,3,1,1,4840D6,1,2024/01/01,12:00:00.000,2024/01/01,12:00:00.000,,35000,,,47.0,-122.0,,,,0,,0\n");
     clientSocket->write(invalidNotMsg);
     clientSocket->write(invalidType);
     clientSocket->write(invalidIcao);
     clientSocket->write(zeroLatLon);
+    clientSocket->write(validTrailer);
     clientSocket->flush();
     clientSocket->waitForBytesWritten(TestTimeout::shortMs());
 
-    QVERIFY_NO_SIGNAL_WAIT(spy, TestTimeout::shortMs());
-    QCOMPARE(spy.count(), 0);
+    QVERIFY_SIGNAL_COUNT_WAIT(spy, 1, TestTimeout::mediumMs());
+    QCOMPARE(spy.count(), 1);
+    const ADSB::VehicleInfo_t vehicleInfo = spy.first().at(0).value<ADSB::VehicleInfo_t>();
+    QCOMPARE(vehicleInfo.location.latitude(), 47.0);
+    QCOMPARE(vehicleInfo.location.longitude(), -122.0);
 
     server->close();
 }

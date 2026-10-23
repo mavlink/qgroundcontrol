@@ -3,6 +3,7 @@
 #include <QtCore/QRegularExpression>
 
 #include "Fixtures/RAIIFixtures.h"
+#include "MockLink.h"
 #include "MultiVehicleManager.h"
 
 void MavCommandQueueReentrancyTest::_closeVehicleResultHandler(void* resultHandlerData, int compId,

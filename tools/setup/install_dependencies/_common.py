@@ -1,10 +1,8 @@
-"""Shared helpers + sys.path bootstrap for install_dependencies submodules.
+"""Shared helpers for install_dependencies submodules.
 
-Layout note: this file lives at tools/setup/install_dependencies/_common.py.
-parents[2] resolves to `tools/` in-repo, OR to `/tmp/tools/` inside Docker
-builders (which COPY the package to `/tmp/tools/setup/install_dependencies/` and
-the shared packages alongside it). Both contexts expose `common/` one
-level above the package.
+`__main__.py` puts the directory above `setup/` on sys.path: `tools/` in-repo, or
+`/tmp/tools/` inside Docker builders (which COPY the package to
+`/tmp/tools/setup/install_dependencies/` and the shared packages alongside it).
 """
 
 from __future__ import annotations
@@ -15,24 +13,27 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-_tools_dir = Path(__file__).resolve().parents[2]
-if str(_tools_dir) not in sys.path:
-    sys.path.insert(0, str(_tools_dir))
-
-from common.build_config import get_build_config_value  # noqa: E402
-from common.env import is_ci  # noqa: E402  re-exported for submodules
-from common.gh_actions import append_github_env  # noqa: E402
-from common.gstreamer import (  # noqa: E402  URL helpers re-exported for submodules
+from common.build_config import get_build_config_value  # re-exported for submodules
+from common.gh_actions import (  # re-exported for submodules
+    append_github_env,
+    append_github_path,
+    is_ci,
+)
+from common.gstreamer import (  # URL helpers re-exported for submodules
     mirror_url,
     package_filename,
     package_url,
     pinned_checksum,
 )
-from common.io import require_tar_data_filter  # noqa: E402  re-exported for submodules
-from common.logging import log_error, log_info, log_warn  # noqa: E402  re-exported for submodules
-from common.net import download_file as atomic_download_file  # noqa: E402
-from common.platform import is_linux, is_macos, is_windows  # noqa: E402
+from common.logging import log_error, log_info, log_warn  # re-exported for submodules
+from common.net import download_file as atomic_download_file
+from common.platform import is_linux, is_macos, is_windows
+from common.proc import run_captured  # re-exported for submodules
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 APT_BASE_OPTIONS: list[str] = [
     "-o",
@@ -40,17 +41,6 @@ APT_BASE_OPTIONS: list[str] = [
     "-o",
     "Acquire::Retries=3",
 ]
-
-
-def get_config_value(key: str) -> str | None:
-    """Get a top-level string value from build config by key name."""
-    value = get_build_config_value(key)
-    return value or None
-
-
-def get_gstreamer_checksum(version: str, artifact: str) -> str | None:
-    """Return a GStreamer artifact checksum for a version containing dots."""
-    return pinned_checksum(version, artifact)
 
 
 def _os_release_ids() -> set[str]:
@@ -119,6 +109,28 @@ def get_apt_update_command() -> list[str]:
     ]
 
 
+def _install_with_retry(
+    install: list[str],
+    refresh: list[str],
+    *,
+    tool: str,
+    retry_note: str,
+    dry_run: bool,
+    sudo: bool,
+    max_attempts: int,
+) -> bool:
+    """Run *install*, running *refresh* between failed attempts; give up if *refresh* fails."""
+    for attempt in range(1, max_attempts + 1):
+        if run_command(install, dry_run, sudo=sudo):
+            return True
+        if attempt >= max_attempts:
+            break
+        print(f"  {tool} install failed (attempt {attempt}/{max_attempts}); {retry_note}")
+        if not run_command(refresh, dry_run, sudo=sudo):
+            return False
+    return False
+
+
 def run_apt_install_with_retry(
     packages: list[str],
     dry_run: bool = False,
@@ -126,19 +138,15 @@ def run_apt_install_with_retry(
     max_attempts: int = 2,
 ) -> bool:
     """Install apt packages, refreshing package lists between attempts."""
-    install_cmd = get_apt_install_command(packages)
-    for attempt in range(1, max_attempts + 1):
-        if run_command(install_cmd, dry_run, sudo=sudo):
-            return True
-        if attempt >= max_attempts:
-            break
-        print(
-            f"  apt install failed (attempt {attempt}/{max_attempts}); "
-            "refreshing package lists and retrying..."
-        )
-        if not run_command(get_apt_update_command(), dry_run, sudo=sudo):
-            return False
-    return False
+    return _install_with_retry(
+        get_apt_install_command(packages),
+        get_apt_update_command(),
+        tool="apt",
+        retry_note="refreshing package lists and retrying...",
+        dry_run=dry_run,
+        sudo=sudo,
+        max_attempts=max_attempts,
+    )
 
 
 def get_dnf_install_command(packages: list[str]) -> list[str]:
@@ -161,15 +169,15 @@ def run_dnf_install_with_retry(
     max_attempts: int = 2,
 ) -> bool:
     """Install dnf packages, refreshing metadata between attempts."""
-    for attempt in range(1, max_attempts + 1):
-        if run_command(get_dnf_install_command(packages), dry_run, sudo=sudo):
-            return True
-        if attempt >= max_attempts:
-            break
-        print(f"  dnf install failed (attempt {attempt}/{max_attempts}); retrying...")
-        if not run_command(["dnf", "makecache"], dry_run, sudo=sudo):
-            return False
-    return False
+    return _install_with_retry(
+        get_dnf_install_command(packages),
+        ["dnf", "makecache"],
+        tool="dnf",
+        retry_note="retrying...",
+        dry_run=dry_run,
+        sudo=sudo,
+        max_attempts=max_attempts,
+    )
 
 
 def run_pacman_install_with_retry(
@@ -179,21 +187,19 @@ def run_pacman_install_with_retry(
     max_attempts: int = 2,
 ) -> bool:
     """Install pacman packages (--needed skips already-installed), refreshing between attempts."""
-    install_cmd = ["pacman", "-S", "--needed", "--noconfirm", *packages]
-    for attempt in range(1, max_attempts + 1):
-        if run_command(install_cmd, dry_run, sudo=sudo):
-            return True
-        if attempt >= max_attempts:
-            break
-        print(f"  pacman install failed (attempt {attempt}/{max_attempts}); refreshing...")
-        if not run_command(["pacman", "-Syy", "--noconfirm"], dry_run, sudo=sudo):
-            return False
-    return False
+    return _install_with_retry(
+        ["pacman", "-S", "--needed", "--noconfirm", *packages],
+        ["pacman", "-Syy", "--noconfirm"],
+        tool="pacman",
+        retry_note="refreshing...",
+        dry_run=dry_run,
+        sudo=sudo,
+        max_attempts=max_attempts,
+    )
 
 
 def install_build_tools(dry_run: bool = False) -> bool:
-    """Install the shared locked build profile and expose its executable directory."""
-    from common.gh_actions import append_github_path
+    """Install the locked build group (CMake, Ninja, just, ...) and expose its executables."""
     from qgc_tools.python_env import executable, sync_groups
 
     try:
@@ -201,11 +207,15 @@ def install_build_tools(dry_run: bool = False) -> bool:
     except (OSError, ValueError, subprocess.CalledProcessError) as error:
         log_error(f"Could not install build tools: {error}")
         return False
-    if not dry_run:
-        scripts = str(executable("cmake", environment).parent)
-        os.environ["PATH"] = f"{scripts}{os.pathsep}{os.environ.get('PATH', '')}"
-        if is_ci():
-            append_github_path(scripts)
+    if dry_run:
+        return True
+    scripts = str(executable("cmake", environment).parent)
+    path = os.environ.get("PATH", "")
+    if is_ci():
+        append_github_path(scripts)
+    elif scripts not in path.split(os.pathsep):
+        log_info(f"CMake, Ninja and just are in {scripts}; activate it with . {scripts}/activate")
+    os.environ["PATH"] = f"{scripts}{os.pathsep}{path}"
     return True
 
 
@@ -250,19 +260,6 @@ def check_apt_package_available(package: str) -> bool:
         if "Candidate:" in line:
             return "(none)" not in line
     return False
-
-
-def get_available_debian_packages(category: str) -> list[str]:
-    """Return packages in *category* that exist in apt metadata."""
-    from concurrent.futures import ThreadPoolExecutor
-
-    # Late import to avoid a circular dep at module load time.
-    from ._packages import get_debian_packages
-
-    packages = get_debian_packages(category)
-    with ThreadPoolExecutor() as pool:
-        available = list(pool.map(check_apt_package_available, packages))
-    return [pkg for pkg, ok in zip(packages, available, strict=False) if ok]
 
 
 def run_command(
@@ -314,10 +311,7 @@ def set_env_var(name: str, value: str) -> None:
 def add_to_path(path_entry: str) -> None:
     """Add a directory to the system PATH (CI or local)."""
     if is_ci():
-        github_path = os.environ.get("GITHUB_PATH", "")
-        if github_path:
-            with open(github_path, "a", encoding="utf-8") as f:
-                f.write(f"{path_entry}\n")
+        append_github_path(path_entry)
     else:
         if sys.platform != "win32":
             raise RuntimeError("Local PATH persistence is only supported on Windows")
@@ -365,6 +359,21 @@ def download_file(
         return False
 
 
+def download_first(
+    urls: Sequence[str], dest: Path, expected_sha256: str, dry_run: bool = False
+) -> bool:
+    """Download dest from the first of urls that succeeds, warning before each fallback."""
+    for index, url in enumerate(urls):
+        fallback = index + 1 < len(urls)
+        if download_file(
+            url, dest, dry_run, warn_on_failure=fallback, expected_sha256=expected_sha256
+        ):
+            return True
+        if fallback:
+            log_warn(f"Retrying from {urls[index + 1]}")
+    return False
+
+
 __all__ = [
     "APT_BASE_OPTIONS",
     "_set_env_var_ci",
@@ -374,13 +383,12 @@ __all__ = [
     "check_apt_package_available",
     "detect_platform",
     "download_file",
+    "download_first",
     "get_apt_install_command",
     "get_apt_update_command",
-    "get_available_debian_packages",
     "get_brew_install_command",
-    "get_config_value",
+    "get_build_config_value",
     "get_dnf_install_command",
-    "get_gstreamer_checksum",
     "has_command",
     "install_build_tools",
     "is_ci",
@@ -391,8 +399,9 @@ __all__ = [
     "mirror_url",
     "package_filename",
     "package_url",
-    "require_tar_data_filter",
+    "pinned_checksum",
     "run_apt_install_with_retry",
+    "run_captured",
     "run_command",
     "run_dnf_install_with_retry",
     "run_pacman_install_with_retry",

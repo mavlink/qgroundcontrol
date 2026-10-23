@@ -30,21 +30,26 @@ include(CheckCXXSourceCompiles)
 include(CMakePushCheckState)
 
 if(QGC_BUILD_TESTING AND NOT QGC_VALGRIND_TIMEOUT_MULTIPLIER MATCHES "^[1-9][0-9]*$")
-    message(FATAL_ERROR
-        "QGC_VALGRIND_TIMEOUT_MULTIPLIER must be a positive integer, got "
-        "'${QGC_VALGRIND_TIMEOUT_MULTIPLIER}'")
+    message(
+        FATAL_ERROR "QGC_VALGRIND_TIMEOUT_MULTIPLIER must be a positive integer, got "
+                    "'${QGC_VALGRIND_TIMEOUT_MULTIPLIER}'"
+    )
 endif()
 
+# Fails configuration when the toolchain cannot link the sanitizer flag.
 function(_qgc_require_sanitizer name flag)
     cmake_push_check_state(RESET)
+    # CheckCXXSourceCompiles reads these upper-case inputs.
+    # cmake-lint: disable=C0103
     set(CMAKE_REQUIRED_FLAGS "${flag}")
     set(CMAKE_REQUIRED_LINK_OPTIONS "${flag}")
     check_cxx_source_compiles("int main(){return 0;}" QGC_SANITIZER_${name}_LINKS)
     cmake_pop_check_state()
     if(NOT QGC_SANITIZER_${name}_LINKS)
-        message(FATAL_ERROR
-            "QGC: ${name} requested but the toolchain cannot link '${flag}' "
-            "(missing sanitizer runtime?). Install the matching lib and reconfigure.")
+        message(
+            FATAL_ERROR "QGC: ${name} requested but the toolchain cannot link '${flag}' "
+                        "(missing sanitizer runtime?). Install the matching lib and reconfigure."
+        )
     endif()
 endfunction()
 
@@ -58,12 +63,18 @@ option(QGC_ENABLE_UBSAN "Enable UndefinedBehaviorSanitizer" OFF)
 option(QGC_ENABLE_TSAN "Enable ThreadSanitizer (data race detection)" OFF)
 option(QGC_ENABLE_MSAN "Enable MemorySanitizer (uninitialized memory detection)" OFF)
 
-if((QGC_ENABLE_ASAN OR QGC_ENABLE_UBSAN OR QGC_ENABLE_TSAN OR QGC_ENABLE_MSAN)
+if((QGC_ENABLE_ASAN
+    OR QGC_ENABLE_UBSAN
+    OR QGC_ENABLE_TSAN
+    OR QGC_ENABLE_MSAN
+   )
    AND NOT CMAKE_CONFIGURATION_TYPES
-   AND NOT CMAKE_BUILD_TYPE MATCHES "^(Debug|RelWithDebInfo)$")
-    message(FATAL_ERROR
-        "Sanitizers require Debug or RelWithDebInfo builds for single-config generators. "
-        "Current CMAKE_BUILD_TYPE='${CMAKE_BUILD_TYPE}'.")
+   AND NOT CMAKE_BUILD_TYPE MATCHES "^(Debug|RelWithDebInfo)$"
+)
+    message(
+        FATAL_ERROR "Sanitizers require Debug or RelWithDebInfo builds for single-config generators. "
+                    "Current CMAKE_BUILD_TYPE='${CMAKE_BUILD_TYPE}'."
+    )
 endif()
 
 if(QGC_ENABLE_ASAN AND QGC_ENABLE_TSAN)
@@ -78,7 +89,11 @@ if(QGC_ENABLE_TSAN AND QGC_ENABLE_MSAN)
     message(FATAL_ERROR "QGC: TSan and MSan cannot be used together. Choose one.")
 endif()
 
-if(QGC_ENABLE_ASAN OR QGC_ENABLE_UBSAN OR QGC_ENABLE_TSAN OR QGC_ENABLE_MSAN)
+if(QGC_ENABLE_ASAN
+   OR QGC_ENABLE_UBSAN
+   OR QGC_ENABLE_TSAN
+   OR QGC_ENABLE_MSAN
+)
     if(NOT (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang"))
         message(FATAL_ERROR "QGC: Sanitizers are only supported with GCC and Clang")
     endif()
@@ -107,14 +122,28 @@ if(QGC_ENABLE_ASAN)
 
     set(ASAN_DEFAULT_OPTIONS "detect_leaks=1:halt_on_error=0:print_stats=1:check_initialization_order=1")
 
-    file(WRITE "${CMAKE_BINARY_DIR}/run-with-asan.sh"
-"#!/bin/bash
+    file(
+        WRITE "${CMAKE_BINARY_DIR}/run-with-asan.sh"
+        "#!/bin/bash
 export ASAN_OPTIONS=\"${ASAN_DEFAULT_OPTIONS}\"
 export ASAN_SYMBOLIZER_PATH=\"$(which llvm-symbolizer 2>/dev/null || which addr2line)\"
 exec \"$@\"
-")
-    file(CHMOD "${CMAKE_BINARY_DIR}/run-with-asan.sh"
-        PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+"
+    )
+    # cmakelang 0.6.13 does not recognize file(CHMOD).
+    # cmake-lint: disable=E1126
+    file(
+        CHMOD
+        "${CMAKE_BINARY_DIR}/run-with-asan.sh"
+        PERMISSIONS
+        OWNER_READ
+        OWNER_WRITE
+        OWNER_EXECUTE
+        GROUP_READ
+        GROUP_EXECUTE
+        WORLD_READ
+        WORLD_EXECUTE
+    )
 
     message(STATUS "  Run with: ASAN_OPTIONS=\"${ASAN_DEFAULT_OPTIONS}\" ./QGroundControl")
 endif()
@@ -133,7 +162,7 @@ if(QGC_ENABLE_UBSAN)
     if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         list(APPEND UBSAN_CHECKS "integer" "nullability")
     endif()
-    set(UBSAN_EXCLUDES "-fno-sanitize=vptr")  # Qt triggers this
+    set(UBSAN_EXCLUDES "-fno-sanitize=vptr") # Qt triggers this
 
     string(REPLACE ";" "," UBSAN_CHECKS_STR "${UBSAN_CHECKS}")
     _qgc_require_sanitizer(UBSAN "-fsanitize=undefined")
@@ -191,15 +220,17 @@ endif()
 
 # Static libraries require compile-time instrumentation; final binaries link the runtime.
 function(qgc_apply_sanitizers_to_target target)
-    if(NOT target OR NOT TARGET ${target})
+    if(NOT TARGET "${target}")
         message(FATAL_ERROR "QGC: qgc_apply_sanitizers_to_target: Target '${target}' does not exist")
     endif()
 
     get_target_property(_target_type ${target} TYPE)
     get_target_property(_imported ${target} IMPORTED)
-    if(_imported OR _target_type STREQUAL "INTERFACE_LIBRARY" OR _target_type STREQUAL "UTILITY")
-        message(FATAL_ERROR
-            "QGC: qgc_apply_sanitizers_to_target: '${target}' must be a non-imported compiled target")
+    if(_imported
+       OR _target_type STREQUAL "INTERFACE_LIBRARY"
+       OR _target_type STREQUAL "UTILITY"
+    )
+        message(FATAL_ERROR "QGC: qgc_apply_sanitizers_to_target: '${target}' must be a non-imported compiled target")
     endif()
 
     foreach(_option IN LISTS _qgc_sanitizer_compile_options)
@@ -216,9 +247,13 @@ endfunction()
 # Sanitizer Suppression Files
 # ============================================================================
 
-if(QGC_ENABLE_ASAN OR QGC_ENABLE_UBSAN OR QGC_ENABLE_TSAN)
-    file(WRITE "${CMAKE_BINARY_DIR}/asan_suppressions.txt"
-"# QGC ASan Suppressions
+if(QGC_ENABLE_ASAN
+   OR QGC_ENABLE_UBSAN
+   OR QGC_ENABLE_TSAN
+)
+    file(
+        WRITE "${CMAKE_BINARY_DIR}/asan_suppressions.txt"
+        "# QGC ASan Suppressions
 leak:libQt
 leak:qt_
 leak:libfontconfig
@@ -227,19 +262,24 @@ leak:QGCCorePlugin::QGCCorePlugin
 leak:QGCOptions::QGCOptions
 leak:AirframeComponentAirframes::insert
 leak:PX4AirframeLoader::loadAirframeMetaData
-")
+"
+    )
 
-    file(WRITE "${CMAKE_BINARY_DIR}/tsan_suppressions.txt"
-"# QGC TSan Suppressions
+    file(
+        WRITE "${CMAKE_BINARY_DIR}/tsan_suppressions.txt"
+        "# QGC TSan Suppressions
 race:QObject::
 race:QMetaObject::
 race:std::__1::
-")
+"
+    )
 
-    file(WRITE "${CMAKE_BINARY_DIR}/ubsan_suppressions.txt"
-"# QGC UBSan Suppressions
+    file(
+        WRITE "${CMAKE_BINARY_DIR}/ubsan_suppressions.txt"
+        "# QGC UBSan Suppressions
 vptr:libQt
-")
+"
+    )
 
     message(STATUS "Sanitizer suppression files created in ${CMAKE_BINARY_DIR}")
 endif()
@@ -249,54 +289,20 @@ endif()
 # ============================================================================
 
 if(QGC_BUILD_TESTING)
-    if(QGC_ENABLE_ASAN)
-        add_custom_target(check-asan
-            COMMAND "${CMAKE_COMMAND}" -E env
-                "ASAN_OPTIONS=${ASAN_DEFAULT_OPTIONS}"
-                "LSAN_OPTIONS=suppressions=${CMAKE_BINARY_DIR}/asan_suppressions.txt"
-                "${CMAKE_CTEST_COMMAND}" --build-config "$<CONFIG>" --output-on-failure -L Unit
-            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-            COMMENT "Running unit tests with AddressSanitizer"
-            VERBATIM
-        )
-        add_dependencies(check-asan ${CMAKE_PROJECT_NAME})
-    endif()
-
-    if(QGC_ENABLE_UBSAN)
-        add_custom_target(check-ubsan
-            COMMAND "${CMAKE_COMMAND}" -E env
-                "UBSAN_OPTIONS=${UBSAN_DEFAULT_OPTIONS}:suppressions=${CMAKE_BINARY_DIR}/ubsan_suppressions.txt"
-                "${CMAKE_CTEST_COMMAND}" --build-config "$<CONFIG>" --output-on-failure -L Unit
-            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-            COMMENT "Running unit tests with UndefinedBehaviorSanitizer"
-            VERBATIM
-        )
-        add_dependencies(check-ubsan ${CMAKE_PROJECT_NAME})
-    endif()
-
-    if(QGC_ENABLE_TSAN)
-        add_custom_target(check-tsan
-            COMMAND "${CMAKE_COMMAND}" -E env
-                "TSAN_OPTIONS=${TSAN_DEFAULT_OPTIONS}:suppressions=${CMAKE_BINARY_DIR}/tsan_suppressions.txt"
-                "${CMAKE_CTEST_COMMAND}" --build-config "$<CONFIG>" --output-on-failure -L Unit
-            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-            COMMENT "Running unit tests with ThreadSanitizer"
-            VERBATIM
-        )
-        add_dependencies(check-tsan ${CMAKE_PROJECT_NAME})
-    endif()
-
-    if(QGC_ENABLE_MSAN)
-        add_custom_target(check-msan
-            COMMAND "${CMAKE_COMMAND}" -E env
-                "MSAN_OPTIONS=${MSAN_DEFAULT_OPTIONS}"
-                "${CMAKE_CTEST_COMMAND}" --build-config "$<CONFIG>" --output-on-failure -L Unit
-            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-            COMMENT "Running unit tests with MemorySanitizer"
-            VERBATIM
-        )
-        add_dependencies(check-msan ${CMAKE_PROJECT_NAME})
-    endif()
+    # add_qgc_test() gives every test its sanitizer options, so these targets only build and run the unit tests.
+    foreach(_sanitizer IN ITEMS ASAN UBSAN TSAN MSAN)
+        if(QGC_ENABLE_${_sanitizer})
+            string(TOLOWER "${_sanitizer}" _sanitizer_name)
+            add_custom_target(
+                check-${_sanitizer_name}
+                COMMAND "${CMAKE_CTEST_COMMAND}" --build-config "$<CONFIG>" --output-on-failure -L Unit
+                WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+                COMMENT "Running unit tests with ${_sanitizer}"
+                VERBATIM
+            )
+            add_dependencies(check-${_sanitizer_name} ${CMAKE_PROJECT_NAME})
+        endif()
+    endforeach()
 endif()
 
 # ############################################################################
@@ -307,196 +313,169 @@ endif()
 
 if(NOT WIN32)
 
-# ----------------------------------------------------------------------------
-# Find Valgrind
-# ----------------------------------------------------------------------------
-find_program(VALGRIND_EXECUTABLE valgrind
-    HINTS /usr/bin /usr/local/bin
-    DOC "Path to valgrind executable"
-)
-
-if(VALGRIND_EXECUTABLE)
-    execute_process(
-        COMMAND "${VALGRIND_EXECUTABLE}" --version
-        OUTPUT_VARIABLE VALGRIND_VERSION
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-        ERROR_QUIET
+    # ----------------------------------------------------------------------------
+    # Find Valgrind
+    # ----------------------------------------------------------------------------
+    find_program(
+        VALGRIND_EXECUTABLE valgrind
+        HINTS /usr/bin /usr/local/bin
+        DOC "Path to valgrind executable"
     )
-    message(STATUS "Found Valgrind: ${VALGRIND_EXECUTABLE} (${VALGRIND_VERSION})")
 
-    # Suppression file
-    set(QGC_VALGRIND_SUPP "${CMAKE_SOURCE_DIR}/tools/debuggers/valgrind.supp")
-    if(EXISTS "${QGC_VALGRIND_SUPP}")
-        message(STATUS "Using Valgrind suppressions: ${QGC_VALGRIND_SUPP}")
-    endif()
-
-    # CTest memcheck configuration and targets (require QGC_BUILD_TESTING)
-    if(QGC_BUILD_TESTING)
-        set(MEMORYCHECK_COMMAND "${VALGRIND_EXECUTABLE}")
-        set(MEMORYCHECK_TYPE Valgrind)
-        set(MEMORYCHECK_SUPPRESSIONS_FILE ${QGC_VALGRIND_SUPP})
-        set(MEMORYCHECK_COMMAND_OPTIONS
-            "--tool=memcheck"
-            "--leak-check=full"
-            "--show-leak-kinds=definite,possible"
-            "--track-origins=yes"
-            "--trace-children=yes"
-            "--error-exitcode=1"
-            "--gen-suppressions=all"
-            "--num-callers=50"
-            CACHE STRING "Valgrind command options"
+    if(VALGRIND_EXECUTABLE)
+        execute_process(
+            COMMAND "${VALGRIND_EXECUTABLE}" --version
+            OUTPUT_VARIABLE VALGRIND_VERSION
+            OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET
         )
+        message(STATUS "Found Valgrind: ${VALGRIND_EXECUTABLE} (${VALGRIND_VERSION})")
 
-        if(EXISTS "${CMAKE_SOURCE_DIR}/CTestCustom.cmake.in")
-            configure_file(
-                "${CMAKE_SOURCE_DIR}/CTestCustom.cmake.in"
-                "${CMAKE_BINARY_DIR}/CTestCustom.cmake"
-                @ONLY
-            )
+        # Suppression file
+        set(QGC_VALGRIND_SUPP "${CMAKE_SOURCE_DIR}/tools/debuggers/valgrind.supp")
+        if(EXISTS "${QGC_VALGRIND_SUPP}")
+            message(STATUS "Using Valgrind suppressions: ${QGC_VALGRIND_SUPP}")
         endif()
 
-        math(EXPR QGC_VALGRIND_TIMEOUT "${QGC_VALGRIND_TIMEOUT_MULTIPLIER} * 100")
+        # CTest memcheck configuration and targets (require QGC_BUILD_TESTING)
+        if(QGC_BUILD_TESTING)
+            set(MEMORYCHECK_COMMAND "${VALGRIND_EXECUTABLE}")
+            set(MEMORYCHECK_TYPE Valgrind)
+            set(MEMORYCHECK_SUPPRESSIONS_FILE ${QGC_VALGRIND_SUPP})
+            set(MEMORYCHECK_COMMAND_OPTIONS
+                "--tool=memcheck" "--leak-check=full" "--show-leak-kinds=definite,possible" "--track-origins=yes"
+                "--trace-children=yes" "--error-exitcode=1" "--gen-suppressions=all" "--num-callers=50"
+                CACHE STRING "Valgrind command options"
+            )
 
-        # ====================================================================
-        # Valgrind Memcheck Targets
-        # ====================================================================
+            if(EXISTS "${CMAKE_SOURCE_DIR}/cmake/CTestCustom.cmake.in")
+                configure_file(
+                    "${CMAKE_SOURCE_DIR}/cmake/CTestCustom.cmake.in" "${CMAKE_BINARY_DIR}/CTestCustom.cmake" @ONLY
+                )
+            endif()
 
-        add_custom_target(check-memcheck
-            COMMAND "${CMAKE_CTEST_COMMAND}"
-                --build-config "$<CONFIG>"
-                -T memcheck
-                --output-on-failure
-                --timeout ${QGC_VALGRIND_TIMEOUT}
+            math(EXPR QGC_VALGRIND_TIMEOUT "${QGC_VALGRIND_TIMEOUT_MULTIPLIER} * 100")
+
+            # ====================================================================
+            # Valgrind Memcheck Targets
+            # ====================================================================
+
+            add_custom_target(
+                check-memcheck
+                COMMAND "${CMAKE_CTEST_COMMAND}" --build-config "$<CONFIG>" -T memcheck --output-on-failure --timeout
+                        ${QGC_VALGRIND_TIMEOUT}
+                WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+                USES_TERMINAL
+                COMMENT "Running tests under Valgrind memcheck"
+                VERBATIM
+            )
+            add_dependencies(check-memcheck ${CMAKE_PROJECT_NAME})
+
+            add_custom_target(
+                check-memcheck-unit
+                COMMAND "${CMAKE_CTEST_COMMAND}" --build-config "$<CONFIG>" -T memcheck -L Unit --output-on-failure
+                        --timeout ${QGC_VALGRIND_TIMEOUT}
+                WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+                USES_TERMINAL
+                COMMENT "Running unit tests under Valgrind memcheck"
+                VERBATIM
+            )
+            add_dependencies(check-memcheck-unit ${CMAKE_PROJECT_NAME})
+
+            add_custom_target(
+                check-memcheck-quick
+                COMMAND "${CMAKE_CTEST_COMMAND}" --build-config "$<CONFIG>" -T memcheck -LE "Slow|Integration"
+                        --output-on-failure --timeout ${QGC_VALGRIND_TIMEOUT}
+                WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+                USES_TERMINAL
+                COMMENT "Running quick tests under Valgrind memcheck"
+                VERBATIM
+            )
+            add_dependencies(check-memcheck-quick ${CMAKE_PROJECT_NAME})
+        endif()
+
+        # ========================================================================
+        # Direct Valgrind Invocation
+        # ========================================================================
+
+        add_custom_target(
+            valgrind-app
+            COMMAND
+                "${VALGRIND_EXECUTABLE}" --tool=memcheck --leak-check=full --show-leak-kinds=definite,possible
+                --track-origins=yes --suppressions=${QGC_VALGRIND_SUPP} --log-file=valgrind-app.log
+                $<TARGET_FILE:${CMAKE_PROJECT_NAME}>
             WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
             USES_TERMINAL
-            COMMENT "Running tests under Valgrind memcheck"
+            COMMENT "Running application under Valgrind (output: valgrind-app.log)"
             VERBATIM
         )
-        add_dependencies(check-memcheck ${CMAKE_PROJECT_NAME})
+        add_dependencies(valgrind-app ${CMAKE_PROJECT_NAME})
 
-        add_custom_target(check-memcheck-unit
-            COMMAND "${CMAKE_CTEST_COMMAND}"
-                --build-config "$<CONFIG>"
-                -T memcheck
-                -L Unit
-                --output-on-failure
-                --timeout ${QGC_VALGRIND_TIMEOUT}
-            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-            USES_TERMINAL
-            COMMENT "Running unit tests under Valgrind memcheck"
-            VERBATIM
-        )
-        add_dependencies(check-memcheck-unit ${CMAKE_PROJECT_NAME})
+        # Test-dependent Valgrind targets (require --unittest support)
+        if(QGC_BUILD_TESTING)
+            add_custom_target(
+                valgrind-test
+                COMMAND
+                    "${VALGRIND_EXECUTABLE}" --tool=memcheck --leak-check=full --show-leak-kinds=definite,possible
+                    --track-origins=yes --error-exitcode=1 --suppressions=${QGC_VALGRIND_SUPP}
+                    --log-file=valgrind-test.log $<TARGET_FILE:${CMAKE_PROJECT_NAME}> --unittest
+                WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+                USES_TERMINAL
+                COMMENT "Running tests under Valgrind (output: valgrind-test.log)"
+                VERBATIM
+            )
+            add_dependencies(valgrind-test ${CMAKE_PROJECT_NAME})
 
-        add_custom_target(check-memcheck-quick
-            COMMAND "${CMAKE_CTEST_COMMAND}"
-                --build-config "$<CONFIG>"
-                -T memcheck
-                -LE "Slow|Integration"
-                --output-on-failure
-                --timeout ${QGC_VALGRIND_TIMEOUT}
-            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-            USES_TERMINAL
-            COMMENT "Running quick tests under Valgrind memcheck"
-            VERBATIM
-        )
-        add_dependencies(check-memcheck-quick ${CMAKE_PROJECT_NAME})
+            # ====================================================================
+            # Helgrind (Thread Error Detection)
+            # ====================================================================
+
+            add_custom_target(
+                check-helgrind
+                COMMAND
+                    "${VALGRIND_EXECUTABLE}" --tool=helgrind --history-level=full --suppressions=${QGC_VALGRIND_SUPP}
+                    --log-file=helgrind.log $<TARGET_FILE:${CMAKE_PROJECT_NAME}> --unittest
+                WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+                USES_TERMINAL
+                COMMENT "Running thread error detection with Helgrind (output: helgrind.log)"
+                VERBATIM
+            )
+            add_dependencies(check-helgrind ${CMAKE_PROJECT_NAME})
+
+            # ====================================================================
+            # Cachegrind (Cache Profiling)
+            # ====================================================================
+
+            add_custom_target(
+                check-cachegrind
+                COMMAND "${VALGRIND_EXECUTABLE}" --tool=cachegrind --cachegrind-out-file=cachegrind.out
+                        $<TARGET_FILE:${CMAKE_PROJECT_NAME}> --unittest
+                COMMAND "${CMAKE_COMMAND}" -E echo "Run 'cg_annotate cachegrind.out' to view results"
+                WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+                USES_TERMINAL
+                COMMENT "Running cache profiling with Cachegrind"
+                VERBATIM
+            )
+            add_dependencies(check-cachegrind ${CMAKE_PROJECT_NAME})
+
+            # ====================================================================
+            # Callgrind (Call Graph Profiling)
+            # ====================================================================
+
+            add_custom_target(
+                check-callgrind
+                COMMAND "${VALGRIND_EXECUTABLE}" --tool=callgrind --callgrind-out-file=callgrind.out
+                        $<TARGET_FILE:${CMAKE_PROJECT_NAME}> --unittest
+                COMMAND "${CMAKE_COMMAND}" -E echo "Run 'kcachegrind callgrind.out' to view results"
+                WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+                USES_TERMINAL
+                COMMENT "Running call graph profiling with Callgrind"
+                VERBATIM
+            )
+            add_dependencies(check-callgrind ${CMAKE_PROJECT_NAME})
+        endif()
+
+    else()
+        message(STATUS "Valgrind not found - runtime analysis targets not available")
     endif()
-
-    # ========================================================================
-    # Direct Valgrind Invocation
-    # ========================================================================
-
-    add_custom_target(valgrind-app
-        COMMAND "${VALGRIND_EXECUTABLE}"
-            --tool=memcheck
-            --leak-check=full
-            --show-leak-kinds=definite,possible
-            --track-origins=yes
-            --suppressions=${QGC_VALGRIND_SUPP}
-            --log-file=valgrind-app.log
-            $<TARGET_FILE:${CMAKE_PROJECT_NAME}>
-        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-        USES_TERMINAL
-        COMMENT "Running application under Valgrind (output: valgrind-app.log)"
-        VERBATIM
-    )
-    add_dependencies(valgrind-app ${CMAKE_PROJECT_NAME})
-
-    # Test-dependent Valgrind targets (require --unittest support)
-    if(QGC_BUILD_TESTING)
-        add_custom_target(valgrind-test
-            COMMAND "${VALGRIND_EXECUTABLE}"
-                --tool=memcheck
-                --leak-check=full
-                --show-leak-kinds=definite,possible
-                --track-origins=yes
-                --error-exitcode=1
-                --suppressions=${QGC_VALGRIND_SUPP}
-                --log-file=valgrind-test.log
-                $<TARGET_FILE:${CMAKE_PROJECT_NAME}> --unittest
-            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-            USES_TERMINAL
-            COMMENT "Running tests under Valgrind (output: valgrind-test.log)"
-            VERBATIM
-        )
-        add_dependencies(valgrind-test ${CMAKE_PROJECT_NAME})
-
-        # ====================================================================
-        # Helgrind (Thread Error Detection)
-        # ====================================================================
-
-        add_custom_target(check-helgrind
-            COMMAND "${VALGRIND_EXECUTABLE}"
-                --tool=helgrind
-                --history-level=full
-                --suppressions=${QGC_VALGRIND_SUPP}
-                --log-file=helgrind.log
-                $<TARGET_FILE:${CMAKE_PROJECT_NAME}> --unittest
-            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-            USES_TERMINAL
-            COMMENT "Running thread error detection with Helgrind (output: helgrind.log)"
-            VERBATIM
-        )
-        add_dependencies(check-helgrind ${CMAKE_PROJECT_NAME})
-
-        # ====================================================================
-        # Cachegrind (Cache Profiling)
-        # ====================================================================
-
-        add_custom_target(check-cachegrind
-            COMMAND "${VALGRIND_EXECUTABLE}"
-                --tool=cachegrind
-                --cachegrind-out-file=cachegrind.out
-                $<TARGET_FILE:${CMAKE_PROJECT_NAME}> --unittest
-            COMMAND "${CMAKE_COMMAND}" -E echo "Run 'cg_annotate cachegrind.out' to view results"
-            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-            USES_TERMINAL
-            COMMENT "Running cache profiling with Cachegrind"
-            VERBATIM
-        )
-        add_dependencies(check-cachegrind ${CMAKE_PROJECT_NAME})
-
-        # ====================================================================
-        # Callgrind (Call Graph Profiling)
-        # ====================================================================
-
-        add_custom_target(check-callgrind
-            COMMAND "${VALGRIND_EXECUTABLE}"
-                --tool=callgrind
-                --callgrind-out-file=callgrind.out
-                $<TARGET_FILE:${CMAKE_PROJECT_NAME}> --unittest
-            COMMAND "${CMAKE_COMMAND}" -E echo "Run 'kcachegrind callgrind.out' to view results"
-            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-            USES_TERMINAL
-            COMMENT "Running call graph profiling with Callgrind"
-            VERBATIM
-        )
-        add_dependencies(check-callgrind ${CMAKE_PROJECT_NAME})
-    endif()
-
-else()
-    message(STATUS "Valgrind not found - runtime analysis targets not available")
-endif()
 
 endif() # NOT WIN32

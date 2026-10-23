@@ -11,7 +11,7 @@ import {{ imp }}
 
 SettingsPage {
 {% if object_name %}
-    objectName: "settingsPage_{{ object_name }}"
+    objectName: {{ ("settingsPage_" ~ object_name)|qml_string }}
 {% endif %}
 {% if has_string_fields %}
     property real _stringFieldWidth: ScreenTools.defaultFontPixelWidth * 30

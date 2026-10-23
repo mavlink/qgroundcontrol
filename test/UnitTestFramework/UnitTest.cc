@@ -1,31 +1,32 @@
 #include "UnitTest.h"
 
+#include <atomic>
+#include <cstring>
+#include <iterator>
+
 #include <QtCore/QCoreApplication>
 #include <QtCore/QDateTime>
 #include <QtCore/QDir>
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QEvent>
 #include <QtCore/QHash>
+#include <QtCore/QMetaMethod>
+#include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
 #include <QtCore/QSet>
 #include <QtCore/QSettings>
 #include <QtCore/QStandardPaths>
-#include <QtCore/QRegularExpression>
-#include <QtCore/QScopeGuard>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
-
-#include <atomic>
-#include <cstring>
-#include <iterator>
 
 #include "AppSettings.h"
 #include "AutoPilotPlugin.h"
 #include "FirmwarePluginManager.h"
 #include "LinkManager.h"
 #include "LogEntry.h"
+#include "LogManager.h"
 #include "MultiVehicleManager.h"
 #include "QGCApplication.h"
-#include "LogManager.h"
 #include "QGCLoggingCategory.h"
 #include "QmlObjectListModel.h"
 #include "SettingsManager.h"
@@ -441,7 +442,15 @@ bool UnitTest::waitForSignalCount(QSignalSpy& spy, int expectedCount, std::chron
     QElapsedTimer waitTimer;
     waitTimer.start();
 
-    if (QTest::qWaitFor([&spy, expectedCount]() { return spy.count() >= expectedCount; }, timeout)) {
+    // QSignalSpy::wait spins an event loop; QTest::qWaitFor sleeps 10 ms between event passes,
+    // which throttles multi-message exchanges such as MockLink FTP transfers.
+    while (spy.count() < expectedCount) {
+        const std::chrono::milliseconds remaining = timeout - std::chrono::milliseconds(waitTimer.elapsed());
+        if ((remaining <= std::chrono::milliseconds::zero()) || !spy.wait(remaining)) {
+            break;
+        }
+    }
+    if (spy.count() >= expectedCount) {
         return true;
     }
 
@@ -556,7 +565,52 @@ VehicleComponent *UnitTest::findVehicleComponent(Vehicle *vehicle, const QString
     return nullptr;
 }
 
-int UnitTest::run(QStringView singleTest, const QString& outputFile, TestLabels labelFilter)
+QStringList UnitTest::testFunctionNames(const QObject* test, TestShard shard)
+{
+    // Mirrors QTest's isValidSlot(): private, parameterless void slots other than _data and fixture slots
+    QStringList names;
+    const QMetaObject* const metaObject = test->metaObject();
+    for (int i = 0; i < metaObject->methodCount(); ++i) {
+        const QMetaMethod method = metaObject->method(i);
+        if ((method.access() != QMetaMethod::Private) || (method.parameterCount() != 0) ||
+            (method.returnType() != QMetaType::Void) || (method.methodType() != QMetaMethod::Slot)) {
+            continue;
+        }
+        const QByteArray name = method.name();
+        if (name.isEmpty() || name.endsWith("_data") || (name == "initTestCase") || (name == "cleanupTestCase") ||
+            (name == "init") || (name == "cleanup")) {
+            continue;
+        }
+        names.append(QString::fromLatin1(name));
+    }
+
+    if (shard.count == 0) {
+        return names;
+    }
+    QStringList shardNames;
+    for (qsizetype i = shard.index - 1; i < names.size(); i += shard.count) {
+        shardNames.append(names.at(i));
+    }
+    return shardNames;
+}
+
+QString UnitTest::testOutputFileName(const QString& outputFile, const QString& testName, TestShard shard)
+{
+    QString suffix = QStringLiteral("-") + testName;
+    if (shard.count > 0) {
+        suffix += QStringLiteral(".%1").arg(shard.index);
+    }
+
+    QString fileName = outputFile;
+    if (fileName.endsWith(QStringLiteral(".xml"))) {
+        fileName.insert(fileName.length() - 4, suffix);
+    } else {
+        fileName += suffix + QStringLiteral(".xml");
+    }
+    return fileName;
+}
+
+int UnitTest::run(QStringView singleTest, const QString& outputFile, TestLabels labelFilter, TestShard shard)
 {
     int ret = 0;
     int passed = 0;
@@ -620,14 +674,21 @@ int UnitTest::run(QStringView singleTest, const QString& outputFile, TestLabels 
 
         // Add JUnit XML output if configured
         if (!_outputFile().isEmpty()) {
-            // Create unique output file per test class to avoid overwriting
-            QString testOutputFile = _outputFile();
-            if (testOutputFile.endsWith(QStringLiteral(".xml"))) {
-                testOutputFile.insert(testOutputFile.length() - 4, QStringLiteral("-") + test->objectName());
-            } else {
-                testOutputFile += QStringLiteral("-") + test->objectName() + QStringLiteral(".xml");
+            args << "-o"
+                 << (testOutputFileName(_outputFile(), test->objectName(), shard) + QStringLiteral(",junitxml"));
+        }
+
+        if (shard.count > 0) {
+            const QStringList shardFunctions = testFunctionNames(test, shard);
+            if (shardFunctions.isEmpty()) {
+                qCWarning(UnitTestLog) << "Shard" << shard.index << "of" << shard.count << "selects no functions of"
+                                       << test->objectName() << "- lower its SHARDS count";
+                failed++;
+                failedTests.append(test->objectName());
+                ret++;
+                continue;
             }
-            args << "-o" << (testOutputFile + QStringLiteral(",junitxml"));
+            args << shardFunctions;
         }
 
         QElapsedTimer testTimer;

@@ -1,9 +1,11 @@
 #pragma once
 
+#include <QtCore/QHash>
+#include <QtCore/QJsonObject>
+#include <QtCore/QRegularExpression>
+
 #include "CompInfo.h"
 #include "FactMetaData.h"
-
-#include <QtCore/QRegularExpression>
 
 class ParameterMetaData;
 
@@ -30,6 +32,8 @@ private:
 
     bool _noJsonMetadata = true;
     FactMetaData::NameToMetaDataMap_t _nameToMetaDataMap;
+    /// Parameter json by name, converted to FactMetaData on first lookup: vehicles describe more params than they have
+    QHash<QString, QJsonObject> _paramJsonByName;
     QList<IndexedParamEntry> _indexedNameMetaDataList;
     ParameterMetaData *_parameterMetaData = nullptr;
 

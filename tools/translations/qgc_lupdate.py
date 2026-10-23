@@ -10,59 +10,27 @@ Honors QT_ROOT_DIR in CI; otherwise auto-detects lupdate via build-config.json.
 from __future__ import annotations
 
 import argparse
-import os
 import shutil
 import subprocess
 import sys
-from glob import glob
 from pathlib import Path
 
-_TOOLS_DIR = Path(__file__).resolve().parents[1]
-if str(_TOOLS_DIR) not in sys.path:
-    sys.path.insert(0, str(_TOOLS_DIR))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from common.build_config import get_build_config_value  # noqa: E402
-from common.platform import host_arch, is_macos, is_windows  # noqa: E402
+from common.build_config import get_build_config_value
+from common.paths import REPO_ROOT
+from common.qt import find_qt_tool
 
-REPO_ROOT = _TOOLS_DIR.parent
+from translations import pseudo_loc, qgc_lupdate_json
 
 _TR_NO_CONTEXT_MARKER = "tr() cannot be called without context"
 _NO_QOBJECT_MARKER = "lacks Q_OBJECT macro"
 
 
 def resolve_lupdate() -> Path:
-    """Return path to lupdate, preferring $QT_ROOT_DIR then standard Qt installs."""
-    executable = "lupdate.exe" if is_windows() else "lupdate"
-    if qt_root := os.environ.get("QT_ROOT_DIR"):
-        candidate = Path(qt_root) / "bin" / executable
-        if candidate.is_file():
-            return candidate
-
-    qt_version = get_build_config_value("qt.version")
-    if qt_version:
-        if is_windows():
-            kit = "msvc*_arm64" if host_arch() == "aarch64" else "msvc*_64"
-            patterns = [
-                base / qt_version / kit / "bin" / executable
-                for base in (Path("C:/Qt"), Path.home() / "Qt")
-            ]
-        elif is_macos():
-            patterns = [
-                base / qt_version / kit / "bin" / executable
-                for base in (Path.home() / "Qt", Path("/Applications/Qt"))
-                for kit in ("macos", "clang_64")
-            ]
-        else:
-            kit = "gcc_arm64" if host_arch() == "aarch64" else "gcc_64"
-            patterns = [
-                base / qt_version / kit / "bin" / executable
-                for base in (Path.home() / "Qt", Path("/opt/Qt"))
-            ]
-        for pattern in patterns:
-            for match in glob(str(pattern)):
-                candidate = Path(match)
-                if candidate.is_file():
-                    return candidate
+    """Return lupdate from $QT_ROOT_DIR, the configured Qt version's standard install, or PATH."""
+    if found := find_qt_tool("lupdate", version=get_build_config_value("qt.version") or "*"):
+        return found
 
     if found := shutil.which("lupdate"):
         return Path(found)
@@ -110,11 +78,6 @@ def run_lupdate(lupdate: Path) -> str:
     return output
 
 
-def run_pseudo_loc() -> None:
-    """Invoke pseudo_loc.py as a subprocess (uses hyphens? no — has its own CLI flags)."""
-    subprocess.run([sys.executable, str(_TOOLS_DIR / "pseudo_loc.py")], cwd=REPO_ROOT, check=True)
-
-
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.parse_args()
@@ -139,12 +102,10 @@ def main() -> int:
         return 1
 
     print("Extracting JSON strings...")
-    import qgc_lupdate_json  # sibling module: tools/translations/ is on sys.path
-
     qgc_lupdate_json.main()
 
     print("Generating pseudo-localization files...")
-    run_pseudo_loc()
+    pseudo_loc.main()
 
     print("Translation files updated")
     return 0

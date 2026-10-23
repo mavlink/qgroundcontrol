@@ -1,22 +1,16 @@
 """SITL readiness and container ownership without starting Docker."""
 
-import importlib.util
 import json
+import re
 import subprocess
-from pathlib import Path
 
 import pytest
+from simulation import run_arducopter_sitl
 
 
 @pytest.fixture
 def sitl():
-    spec = importlib.util.spec_from_file_location(
-        "sitl", Path(__file__).parents[1] / "simulation/run_arducopter_sitl.py"
-    )
-    assert spec and spec.loader
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+    return run_arducopter_sitl
 
 
 def test_existing_unowned_container_is_untouched(sitl, monkeypatch):
@@ -70,7 +64,7 @@ def test_readiness_waits_for_listening_socket_without_connecting(sitl, monkeypat
         lambda command, **kwargs: subprocess.CompletedProcess(command, 0, next(responses)),
     )
     sleeps = []
-    monkeypatch.setattr(sitl.time, "sleep", sleeps.append)
+    monkeypatch.setattr("common.proc.time.sleep", sleeps.append)
     sitl.wait_ready("owned-id", 10)
     assert len(sleeps) == 1
 
@@ -79,3 +73,23 @@ def test_stopped_container_fails_without_waiting(sitl, monkeypatch):
     monkeypatch.setattr(sitl, "inspect", lambda _: {"State": {"Running": False, "ExitCode": 7}})
     with pytest.raises(RuntimeError, match="7"):
         sitl.wait_ready("owned-id", 10)
+
+
+def test_image_build_uses_pinned_dockerfile_commit(sitl, monkeypatch):
+    calls = []
+
+    def run(command, **kwargs):
+        calls.append(command)
+        missing_image = command[1:3] == ["image", "inspect"]
+        return subprocess.CompletedProcess(
+            command, int(missing_image), "created-id\n" if command[1] == "run" else ""
+        )
+
+    monkeypatch.setattr(sitl.subprocess, "run", run)
+    monkeypatch.setattr(sitl, "wait_ready", lambda container, timeout: None)
+    assert sitl.main([]) == 0
+    build = next(call for call in calls if call[1] == "build")
+    assert build[-1] == sitl.BUILD_CONTEXT
+    assert re.fullmatch(
+        r"https://github\.com/radarku/ardupilot-sitl-docker\.git#[0-9a-f]{40}", sitl.BUILD_CONTEXT
+    )

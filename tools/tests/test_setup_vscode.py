@@ -4,12 +4,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ._helpers import load_script_module
+from setup import setup_vscode
 
 if TYPE_CHECKING:
     from pathlib import Path
-
-setup_vscode = load_script_module("setup/setup_vscode.py", "setup_vscode")
 
 
 def test_install_vscode_templates_copies_missing_files_without_overwriting(tmp_path: Path) -> None:

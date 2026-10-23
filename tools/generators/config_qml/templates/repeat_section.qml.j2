@@ -6,7 +6,7 @@
 {{ ind }}        visible: {{ visible }}
 {{ ind }}        heading: {{ heading_expr }}
 {% if image %}
-{{ ind }}        iconSource: "{{ image }}"
+{{ ind }}        iconSource: {{ image|qml_string }}
 {% endif %}
 
 {% if apm_battery %}
@@ -19,11 +19,11 @@
 {{ ind }}        property string _displayIndex: String(_rawIndex)
 {% endif %}
 {{ ind }}        // Untranslated section ID; must match VehicleComponent::sectionIds() expansion
-{{ ind }}        property string _sectionId: _{{ safe }}Count > 1 ? "{{ raw_title }} " + _displayIndex : "{{ raw_title }}"
+{{ ind }}        property string _sectionId: _{{ safe }}Count > 1 ? {{ (raw_title ~ " ")|qml_string }} + _displayIndex : {{ raw_title|qml_string }}
 {% if apm_battery %}
 {{ ind }}        function _fullParamName(postfix) { return _prefix + postfix }
 {% else %}
-{{ ind }}        function _fullParamName(postfix) { return "{{ param_prefix }}" + _indexStr + postfix }
+{{ ind }}        function _fullParamName(postfix) { return {{ param_prefix|qml_string }} + _indexStr + postfix }
 {% endif %}
 {% for ctrl_qml in controls %}
 

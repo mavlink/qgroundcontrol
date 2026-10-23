@@ -64,9 +64,42 @@ void TestBaseClassesTest::_testCommsTestDerived()
     // Wait for vehicle using public wrapper
     Vehicle* vehicle = commsTest.doWaitForVehicleConnect(TestTimeout::longMs());
     QVERIFY(vehicle != nullptr);
+    // Disconnecting mid-connect fails the in-flight component metadata request
+    QVERIFY_TRUE_WAIT(vehicle->isInitialConnectComplete(), TestTimeout::longMs());
     // Cleanup disconnects all
     commsTest.doCleanup();
     QCOMPARE(commsTest.linkManager()->links().count(), 0);
+}
+
+void TestBaseClassesTest::_testTestFunctionNamesAndShards()
+{
+    // Matches the slots QTest runs: init/cleanup and other non-private slots are excluded
+    const QStringList all = {
+        QStringLiteral("_testVehicleTestDerived"), QStringLiteral("_testOfflineMissionTestDerived"),
+        QStringLiteral("_testCommsTestDerived"),   QStringLiteral("_testTestFunctionNamesAndShards"),
+        QStringLiteral("_testTestOutputFileName"),
+    };
+    QCOMPARE(UnitTest::testFunctionNames(this), all);
+
+    // Shards take every count-th function, so together they cover every function exactly once
+    QCOMPARE(UnitTest::testFunctionNames(this, TestShard{1, 3}), QStringList({all.at(0), all.at(3)}));
+    QCOMPARE(UnitTest::testFunctionNames(this, TestShard{2, 3}), QStringList({all.at(1), all.at(4)}));
+    QCOMPARE(UnitTest::testFunctionNames(this, TestShard{3, 3}), QStringList({all.at(2)}));
+    QVERIFY(UnitTest::testFunctionNames(this, TestShard{6, 6}).isEmpty());
+}
+
+void TestBaseClassesTest::_testTestOutputFileName()
+{
+    const QString test = QStringLiteral("MyTest");
+    QCOMPARE(UnitTest::testOutputFileName(QStringLiteral("out/results.xml"), test),
+             QStringLiteral("out/results-MyTest.xml"));
+    QCOMPARE(UnitTest::testOutputFileName(QStringLiteral("out/results"), test),
+             QStringLiteral("out/results-MyTest.xml"));
+    // Parallel shards given the same output path must not overwrite each other's reports
+    QCOMPARE(UnitTest::testOutputFileName(QStringLiteral("out/results.xml"), test, TestShard{2, 3}),
+             QStringLiteral("out/results-MyTest.2.xml"));
+    QCOMPARE(UnitTest::testOutputFileName(QStringLiteral("out/results"), test, TestShard{3, 3}),
+             QStringLiteral("out/results-MyTest.3.xml"));
 }
 
 UT_REGISTER_TEST(TestBaseClassesTest, TestLabel::Unit)

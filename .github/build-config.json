@@ -22,7 +22,9 @@
   },
   "build": {
     "cmake_minimum_version": "3.28",
-    "platform_workflows": "Linux,Windows,MacOS,Android"
+    "cmake_version": "4.4.2",
+    "ninja_version": "1.13.2",
+    "platform_workflows": "Linux,Windows,MacOS,Android,iOS"
   },
   "gstreamer": {
     "version": {
@@ -98,6 +100,75 @@
   "analysis": {
     "llvm_version": "18",
     "clazy_revision": "f3fb82cb8cd82664e5e5a546aa2a73d3a297d1bd",
-    "clazy_sha256": "8b440cccf2ab6d40c9ad3e97605e22fa48f29ef0430add48afae47f2db19ef46"
+    "clazy_sha256": "8b440cccf2ab6d40c9ad3e97605e22fa48f29ef0430add48afae47f2db19ef46",
+    "clang_tidy_version": "23.1.3",
+    "clang_tidy_sha256": "6b2558bc396a6e792190700134609e041f657d7f8d15385e8b0aa66f5ffe21b5"
+  },
+  "tools": {
+    "ccache": {
+      "repository": "ccache/ccache",
+      "version": "4.13.6",
+      "sha256": {
+        "linux-x86_64-glibc": "508b2a1217dc6e04a23e967c7b95a0fb45d8a7e16fde9e180919698f2e2be060",
+        "linux-aarch64-glibc": "9cdd30c768a5b06d27bea8ec28b138735c30910c1e845b66f522687ae950dadc",
+        "windows-x86_64": "3d7cebb05850ad704e197b3f1d3f0f924ab6c9fdfc561578e146184fe9d89380",
+        "windows-aarch64": "bec01846b06d6d87bf35eda50544d7c8bf9b9a4859f218417a7081aa45d7fd47",
+        "darwin": "0274210ec9c9936ed5711d59b0de3167a51216a588ddde35f6bc828f366fe6d9"
+      }
+    },
+    "mold": {
+      "repository": "rui314/mold",
+      "version": "2.41.0",
+      "sha256": {
+        "x86_64": "a3696680d99e692970590a178bc3a33d78d60d1c6dc9db7a11b557b02b751f5d",
+        "aarch64": "946de2774b06a71346bd59b55fddba610b65b8d93c3a4a1559cc84e103472710"
+      }
+    },
+    "sccache": {
+      "repository": "mozilla/sccache",
+      "version": "0.18.0",
+      "sha256": {
+        "x86_64": "45f1447fbe231e3037bde351ef70677dd212216c8d62ae7ca409fecc4d6acc89",
+        "aarch64": "2b3284d5da3b46a47dc4229e75bb7b88ac4aa99c8d754fb7d2f84997e5a4354a"
+      }
+    },
+    "grype": {
+      "repository": "anchore/grype",
+      "version": "0.110.0",
+      "sha256": {
+        "x86_64": "aaa98d27d2d7efd9317c6a1ad6d9b15f3e65bab320e7d03bde41e251387bb71c",
+        "aarch64": "804041ee69f119022e3e866741a558eae6f2df372a5dc1a5376d456d16f8c931"
+      }
+    },
+    "packer": {
+      "repository": "hashicorp/packer",
+      "version": "1.16.0",
+      "sha256": {
+        "linux-x86_64": "5edcd14ab59b535040c512dbecd6ec9ef976a000b073c19d93e4c431c948581e",
+        "linux-aarch64": "cf18f03460d92265d49b56befff333e80641d845822799eab04357c39f75b5d7",
+        "darwin-x86_64": "64c4aa9a3176f89496360843bc8747238c9ad32ddc68bc5281207ae342d45be9",
+        "darwin-aarch64": "6530042cf8f8a1f96b6607cb22b5be298be53b400cd4a2c81ab8b946964fccda"
+      }
+    },
+    "roc": {
+      "repository": "runs-on/cli",
+      "version": "3.5.0",
+      "sha256": {
+        "linux-x86_64": "c3bffa3ab059464c757e40ceec04550628e42b46d12ee4ce873742c4022bfdc5",
+        "linux-aarch64": "2117505f9701ef84f6f7257024d91ef86da3659d6e55a6b1d6b65f15de592dda",
+        "darwin-x86_64": "25a87a0f2694853765cfa7cb3827fb6748ce9835d4384954615f1b42ea6e2ca7",
+        "darwin-aarch64": "9c26b071fbdfb2f4d8fa77fa30875b6ee1b5687c11bf30b5fe6148b80206a0df"
+      }
+    },
+    "clang_build_analyzer": {
+      "repository": "aras-p/ClangBuildAnalyzer",
+      "version": "1.6.0",
+      "sha256": {
+        "linux-x86_64": "afbb05054712228bfde56ed388f634706e123c2be39290f0c86c1e336a31fa12"
+      }
+    },
+    "bloaty": {
+      "revision": "87082741b1cc0a97cd84bd17cd4ee41d70a42fc6"
+    }
   }
 }

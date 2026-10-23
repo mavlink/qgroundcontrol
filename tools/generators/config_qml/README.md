@@ -3,15 +3,24 @@
 Generates QML vehicle configuration pages from JSON definitions.
 
 Each `<Name>.VehicleConfig.json` file in a `VehicleConfig/` directory is
-converted to `<Name>Component.qml` at CMake configure time.
+converted to `<Name>Component.qml` in the build tree at CMake configure time.
 
 ## Quick start
 
 ```bash
 python3 tools/generators/config_qml/generate_pages.py \
     --pages-dir src/AutoPilotPlugins/APM/VehicleConfig \
-    --output-dir /tmp/generated
+    --output-dir build/generated-config-qml
 ```
+
+`--dry-run` prints the generated QML instead of writing files. `--list-outputs` prints the QML file
+names that would be generated; CMake uses it to compute the output list.
+
+`tools/tests/test_config_qml_snapshots.py` pins the QML generated from every
+`src/AutoPilotPlugins/*/VehicleConfig/*.VehicleConfig.json`. After an intended page or generator
+change, refresh it with
+`uv run --frozen --project tools --group test pytest -q tools/tests/test_config_qml_snapshots.py --snapshot-update`
+and review the `.ambr` diff.
 
 ---
 
@@ -49,10 +58,14 @@ value is either a parameter name string or an object:
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
 | `name` | string | — | MAVLink parameter name |
-| `required` | bool | `false` | `true` → `getParameterFact(-1, name)` (asserts if missing); `false` → `getParameterFact(-1, name, false)` (returns null) |
+| `required` | bool | `false` | `true` → `getParameterFact(-1, name)` (reports the parameter as missing); `false` → `getParameterFact(-1, name, false)` (silently returns null) |
 | `existsOnly` | bool | `false` | `true` → `parameterExists(-1, name)` — exposes a boolean instead of a fact |
 
 Shorthand: `"rateParam": "LOG_FILE_RATEMAX"` is equivalent to `{ "name": "LOG_FILE_RATEMAX", "required": false }`.
+
+Parameter names, here and in a control's `param`, must match `[A-Za-z0-9_]+`, optionally prefixed
+with `noremap.`; repeat `paramPrefix`/`probePostfix`/`enableParam` and `linkedParams` keys follow
+the same rule.
 
 ---
 
@@ -79,25 +92,25 @@ Shorthand: `"rateParam": "LOG_FILE_RATEMAX"` is equivalent to `{ "name": "LOG_FI
 | `param` | string | one of `param`/`setting`/`component`/`actionButton` | MAVLink parameter name |
 | `setting` | string | — | Settings fact path, e.g. `"flyViewSettings.showAltimeter"` |
 | `label` | string | no | Override label; empty → uses `fact.shortDescription` |
-| `control` | string | no | Explicit control type (see [Control types](#control-types)); auto-detected if omitted |
-| `optional` | bool | `false` | Parameter may not exist. Uses `getParameterFact(-1, name, false)`. Control is hidden (`visible: fact !== null`) when the parameter is absent. |
+| `control` | string | no | Control type (see [Control types](#control-types)); default `textfield` |
+| `optional` | bool | see description | Parameter may not exist. Uses `getParameterFact(-1, name, false)`. Control is hidden (`visible: fact !== null`) when the parameter is absent. Set automatically unless `params` declares the parameter `required: true`. |
 | `showWhen` | string | no | Extra QML visibility expression. When combined with `optional: true`, the control is only visible when both the parameter exists *and* this expression is truthy. |
 | `enableWhen` | string | no | QML expression bound to `enabled` |
 | `indent` | bool | `false` | Indent control with `Layout.leftMargin` |
 | `warning` | bool | `false` | (label only) Render text in warning color |
 | `smallFont` | bool | `false` | (label only) Use smaller font |
-| `component` | string | no | Inline escape hatch — hand-written QML component name |
+| `component` | string | no | Inline escape hatch — hand-written QML component name (with `"control": "component"`) |
 
 ---
 
 ### Control types
 
 The `control` key selects the generated widget. When omitted, the generator
-auto-detects based on fact metadata (bool → checkbox, enum → combobox, etc.).
+emits a text field; it does not auto-detect a widget from parameter metadata.
 
 | `control` value | Widget | Extra keys |
 | --- | --- | --- |
-| *(omitted)* | Auto-detected | — |
+| *(omitted)* | `LabelledFactTextField` (same as `textfield`) | — |
 | `combobox` | `LabelledFactComboBox` | `enumValues` for manual value/label list |
 | `textfield` | `LabelledFactTextField` | `description` for optional help text below the field |
 | `checkbox` | `FactCheckBoxSlider` | — |
@@ -110,6 +123,7 @@ auto-detects based on fact metadata (bool → checkbox, enum → combobox, etc.)
 | `dialogButton` | Button that opens a popup dialog | `dialogButton` |
 | `actionButton` | Standalone button calling a controller method | `actionButton` |
 | `label` | Static text label | `warning`, `smallFont` |
+| `component` | Hand-written QML component | `component` |
 
 #### `combobox` with `enumValues`
 

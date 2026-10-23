@@ -37,7 +37,8 @@ endfunction()
 
 # gstreamer_install_plugins(<source_dir> <dest_dir> <prefix> <extension>)
 # Installs the GSTREAMER_PLUGINS found as <prefix><name>*.<extension> in <source_dir>. Fails when none match: the glob
-# runs at configure time, so the SDK must be complete then.
+# runs at configure time, so the SDK must be complete then. Records the files in QGC_GST_SHIPPED_PLUGINS, which the
+# CI boot test of a build tree loads instead of the whole SDK.
 function(gstreamer_install_plugins source_dir dest_dir prefix extension)
     file(GLOB _plugins "${source_dir}/${prefix}*.${extension}")
     _qgc_gst_filter_plugin_paths("${prefix}" "${_plugins}" _plugins)
@@ -48,6 +49,12 @@ function(gstreamer_install_plugins source_dir dest_dir prefix extension)
         )
     endif()
     install(FILES ${_plugins} DESTINATION "${dest_dir}")
+    # CI tooling reads this name from CMakeCache.txt, so it keeps the public QGC_ prefix.
+    # cmake-lint: disable=C0103
+    set(QGC_GST_SHIPPED_PLUGINS
+        "${_plugins}"
+        CACHE INTERNAL "GStreamer plugin files the package ships"
+    )
 endfunction()
 
 # gstreamer_install_gio_modules(<source_dir> <dest_dir> <extension> [<module>...])
@@ -71,17 +78,20 @@ endfunction()
 function(gstreamer_install_libs source_dir dest_dir extension)
     _qgc_gst_is_blocked_lib_copy_source("${source_dir}" _blocked_lib_source)
     if(_blocked_lib_source)
-        message(FATAL_ERROR "gstreamer_install_libs: refusing to copy from system/shared prefix '${source_dir}'.\n"
-                            "This function copies ALL shared libraries unfiltered. Use an auto-downloaded SDK "
-                            "or set GStreamer_ROOT_DIR to an isolated installation."
+        message(
+            FATAL_ERROR
+                "gstreamer_install_libs: refusing to copy from system/shared prefix '${source_dir}'.\n"
+                "This function copies ALL shared libraries unfiltered. Use an auto-downloaded SDK "
+                "or set GStreamer_ROOT_DIR to an isolated installation."
         )
     endif()
     # Deliberately copies every lib in the isolated SDK dir: shared transitive deps are not enumerable from the plugin
     # set, and the system-prefix guard above bounds the blast. On Windows this also ships unused codec DLLs.
     file(GLOB _libs "${source_dir}/*.${extension}")
     if(NOT _libs)
-        message(FATAL_ERROR "gstreamer_install_libs: no *.${extension} found in '${source_dir}'. "
-                            "The GStreamer SDK must be fully expanded at configure time before install."
+        message(
+            FATAL_ERROR "gstreamer_install_libs: no *.${extension} found in '${source_dir}'. "
+                        "The GStreamer SDK must be fully expanded at configure time before install."
         )
     endif()
     install(FILES ${_libs} DESTINATION "${dest_dir}")
@@ -189,13 +199,14 @@ function(gstreamer_install_windows_sdk app_name plugin_dest_out)
     install(
         DIRECTORY "${GStreamer_ROOT_DIR}/libexec/gstreamer-1.0/"
         DESTINATION "${CMAKE_INSTALL_LIBEXECDIR}/gstreamer-1.0"
-        FILE_PERMISSIONS OWNER_READ
-                         OWNER_WRITE
-                         OWNER_EXECUTE
-                         GROUP_READ
-                         GROUP_EXECUTE
-                         WORLD_READ
-                         WORLD_EXECUTE
+        FILE_PERMISSIONS
+            OWNER_READ
+            OWNER_WRITE
+            OWNER_EXECUTE
+            GROUP_READ
+            GROUP_EXECUTE
+            WORLD_READ
+            WORLD_EXECUTE
         FILES_MATCHING
         PATTERN "*.exe"
     )
@@ -264,8 +275,8 @@ function(gstreamer_install_macos_framework_sdk app_name plugin_dest_out)
     )
 
     set(_plugin_dest "${_gst_fw_dest}/Versions/1.0/lib/gstreamer-1.0")
-    gstreamer_install_plugins("${_gst_framework_real}/Versions/1.0/lib/gstreamer-1.0" "${_plugin_dest}" "libgst"
-                              "dylib"
+    gstreamer_install_plugins(
+        "${_gst_framework_real}/Versions/1.0/lib/gstreamer-1.0" "${_plugin_dest}" "libgst" "dylib"
     )
     set(${plugin_dest_out}
         "${_plugin_dest}"
@@ -304,9 +315,10 @@ function(gstreamer_install_macos_flat_sdk app_name plugin_dest_out)
         if(_gst_libs)
             install(FILES ${_gst_libs} DESTINATION "${_mac_fw_dest}")
         else()
-            message(FATAL_ERROR "gstreamer_install_macos_flat_sdk: no GStreamer/GLib dylibs found in "
-                                "'${GSTREAMER_LIB_PATH}'. The SDK lib dir must be populated at configure "
-                                "time before install."
+            message(
+                FATAL_ERROR
+                    "gstreamer_install_macos_flat_sdk: no GStreamer/GLib dylibs found in "
+                    "'${GSTREAMER_LIB_PATH}'. The SDK lib dir must be populated at configure " "time before install."
             )
         endif()
     endif()
@@ -320,13 +332,14 @@ function(gstreamer_install_macos_flat_sdk app_name plugin_dest_out)
         install(
             DIRECTORY "${GStreamer_ROOT_DIR}/libexec/gstreamer-1.0/"
             DESTINATION "${_mac_libexec_dest}"
-            FILE_PERMISSIONS OWNER_READ
-                             OWNER_WRITE
-                             OWNER_EXECUTE
-                             GROUP_READ
-                             GROUP_EXECUTE
-                             WORLD_READ
-                             WORLD_EXECUTE
+            FILE_PERMISSIONS
+                OWNER_READ
+                OWNER_WRITE
+                OWNER_EXECUTE
+                GROUP_READ
+                GROUP_EXECUTE
+                WORLD_READ
+                WORLD_EXECUTE
             FILES_MATCHING
             PATTERN "gst-plugin-scanner"
             PATTERN "gst-ptp-helper"
@@ -384,8 +397,9 @@ function(gstreamer_install_macos_flat_sdk app_name plugin_dest_out)
     # path doesn't exist on a user's machine; ship the bundle so the
     # SSL_CERT_FILE wiring at startup can point gioopenssl at it.
     if(EXISTS "${GStreamer_ROOT_DIR}/etc/ssl/certs/ca-certificates.crt")
-        install(FILES "${GStreamer_ROOT_DIR}/etc/ssl/certs/ca-certificates.crt"
-                DESTINATION "${app_name}.app/Contents/Resources/etc/ssl/certs"
+        install(
+            FILES "${GStreamer_ROOT_DIR}/etc/ssl/certs/ca-certificates.crt"
+            DESTINATION "${app_name}.app/Contents/Resources/etc/ssl/certs"
         )
     endif()
     set(${plugin_dest_out}
@@ -438,8 +452,9 @@ function(gstreamer_install_platform_sdk app_name)
     gstreamer_layout_get(HOMEBREW_PREFIX _gips_homebrew_prefix)
     if(_gips_homebrew_prefix)
         set(_gips_message "GStreamer: this build uses Homebrew's GStreamer (${_gips_homebrew_prefix}), which cannot be")
-        string(APPEND _gips_message " bundled. Configure with the official SDK (QGC_GST_USE_HOMEBREW=OFF and "
-               "GStreamer_ROOT_DIR unset) to install or package."
+        string(
+            APPEND _gips_message " bundled. Configure with the official SDK (QGC_GST_USE_HOMEBREW=OFF and "
+            "GStreamer_ROOT_DIR unset) to install or package."
         )
         install(CODE "message(FATAL_ERROR \"${_gips_message}\")")
         return()

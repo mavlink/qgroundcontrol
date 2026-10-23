@@ -4,6 +4,9 @@ on:
   # Periodic GC leaves room for fresh rolling build caches.
   schedule:
     - cron: '17 */6 * * *'
+  # Deletes the closed PR's merge-ref caches.
+  pull_request_target:  # zizmor: ignore[dangerous-triggers] deletes the PR merge-ref cache via trusted base script; no PR code checkout/execution
+    types: [closed]
   workflow_dispatch:
     inputs:
       branch:
@@ -28,27 +31,34 @@ permissions:
   contents: read
 
 jobs:
-  scheduled-gc:
-    if: github.event_name == 'schedule'
+  cleanup:
+    name: Cleanup Caches
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ github.event_name == 'pull_request_target' && 5 || 30 }}
     permissions:
       contents: read
-      # Required by the reusable cache cleanup job.
+      # Required to delete cache entries.
       actions: write
-    uses: ./.github/workflows/_cache-cleanup.yml
-    with:
-      dry-run: false
-      prune: true
-      summary: true
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
 
-  manual:
-    if: github.event_name == 'workflow_dispatch'
-    permissions:
-      contents: read
-      # Required by the reusable cache cleanup job.
-      actions: write
-    uses: ./.github/workflows/_cache-cleanup.yml
-    with:
-      branch: ${{ inputs.branch }}
-      dry-run: ${{ inputs.dry-run }}
-      prune: ${{ inputs.mode == 'prune' }}
-      summary: true
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: |
+            tools/_bootstrap.py
+            tools/ci/cache/gh_cache_cleanup.py
+            tools/common
+            tools/qgc_tools
+          sparse-checkout-cone-mode: false
+          fetch-depth: 1
+          persist-credentials: false
+
+      # The script takes the branch, deletion, summary, and prune mode from the triggering event.
+      - name: List and clean caches
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: python3 tools/ci/cache/gh_cache_cleanup.py

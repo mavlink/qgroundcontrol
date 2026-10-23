@@ -79,9 +79,7 @@ option(
     QGC_SPLIT_DWARF
     "Use -gsplit-dwarf + --gdb-index for faster Debug links (Linux/Android ELF only; marginal win with mold)" OFF
 )
-
-# Git options
-option(GIT_SUBMODULE "Update submodules during configuration" OFF)
+option(QGC_USE_LLD_LINK "Link MSVC builds without IPO (Debug, RelWithDebInfo) with lld-link (CMake 3.29+)" OFF)
 
 # ============================================================================
 # Dependency Resolution (system libraries vs CPM downloads)

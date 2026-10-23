@@ -10,6 +10,7 @@
 #include "GPSManager.h"
 #include "MAVLinkLib.h"
 #include "ManualScheduler.h"
+#include "MockLink.h"
 #include "MultiVehicleManager.h"
 #include "PositionManager.h"
 #include "SettingsManager.h"

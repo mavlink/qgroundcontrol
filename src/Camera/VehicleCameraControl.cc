@@ -146,8 +146,10 @@ VehicleCameraControl::VehicleCameraControl(const mavlink_camera_information_t *i
     // FOV current. The delay also coalesces bursts of zoom/focus commands into a
     // single request.
     constexpr int kCameraSettingsRefreshDelayMsecs = 1000;
+    constexpr int kTestCameraSettingsRefreshDelayMsecs = 50;
     _cameraSettingsRefreshTimer.setSingleShot(true);
-    _cameraSettingsRefreshTimer.setInterval(kCameraSettingsRefreshDelayMsecs);
+    _cameraSettingsRefreshTimer.setInterval(QGC::runningUnitTests() ? kTestCameraSettingsRefreshDelayMsecs
+                                                                    : kCameraSettingsRefreshDelayMsecs);
     connect(&_cameraSettingsRefreshTimer, &QTimer::timeout, this, [this]() {
         _cameraSettingsRetries = 0; // Start a fresh request/retry cycle
         _requestCameraSettings();

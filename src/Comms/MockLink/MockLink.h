@@ -1,13 +1,8 @@
 #pragma once
 
-#include "PX4/px4_custom_mode.h"
-#include "LinkInterface.h"
-#include "MAVLinkEnums.h"
-#include "MAVLinkMessageType.h"
-#include "QGCMAVLinkTypes.h"
-#include "MockConfiguration.h"
-#include "MockLinkPX4Calibration.h"
-#include "MockLinkMissionItemHandler.h"
+#include <array>
+#include <atomic>
+#include <functional>
 
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QList>
@@ -17,8 +12,14 @@
 #include <QtCore/QSet>
 #include <QtPositioning/QGeoCoordinate>
 
-#include <array>
-#include <atomic>
+#include "LinkInterface.h"
+#include "MAVLinkEnums.h"
+#include "MAVLinkMessageType.h"
+#include "MockConfiguration.h"
+#include "MockLinkMissionItemHandler.h"
+#include "MockLinkPX4Calibration.h"
+#include "PX4/px4_custom_mode.h"
+#include "QGCMAVLinkTypes.h"
 
 class MockLinkCamera;
 class MockLinkFTP;
@@ -50,6 +51,10 @@ public:
 
     Q_INVOKABLE void setCommLost(bool commLost) { _commLost = commLost; }
     Q_INVOKABLE void simulateConnectionRemoved();
+
+    /// Returns once the worker thread has finished the tasks already under way, so whatever they sent is queued for
+    /// its receivers. Must not be called from the worker thread.
+    void waitForWorkerIdle();
 
     quint32 vehicleId() const { return _vehicleSystemId; }
     MAV_AUTOPILOT getFirmwareType() const { return _firmwareType; }
@@ -224,15 +229,13 @@ public:
     /// tests to verify that PARAM_SET writes reached the simulated firmware.
     QVariant paramValue(int componentId, const QString& paramName) const;
 
-    /// Override the OPEN_DRONE_ID_ARM_STATUS the simulated RID device sends at 1Hz.
-    /// status is a MAV_ODID_ARM_STATUS value.
+    /// Override the OPEN_DRONE_ID_ARM_STATUS the simulated RID device sends at 1Hz, sending the new status
+    /// immediately when connected. status is a MAV_ODID_ARM_STATUS value.
     void setRemoteIDArmStatus(uint8_t status, const QString& error);
 
-    /// Sets the MAV_SYS_STATUS_PREARM_CHECK enabled and health bits in the 1Hz SYS_STATUS
-    void setPrearmCheck(bool enabled, bool passed)
-    {
-        _prearmCheck = (enabled ? _prearmCheckEnabled : 0) | (passed ? _prearmCheckPassed : 0);
-    }
+    /// Sets the MAV_SYS_STATUS_PREARM_CHECK enabled and health bits in the 1Hz SYS_STATUS, sending the new status
+    /// immediately when connected
+    void setPrearmCheck(bool enabled, bool passed);
 
     static MockLink *startPX4MockLink(MockConfiguration::Options options = MockConfiguration::OptionNone, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone, MockConfiguration::VideoStreamType videoStreamType = MockConfiguration::VideoStreamNone);
     /// Starts a MockLink from a fully caller-configured MockConfiguration (ownership transfers to LinkManager)
@@ -354,6 +357,8 @@ private:
     void _sendADSBVehicles();
     void _sendGeneralMetaData();
     void _sendRemoteIDArmStatus();
+    /// Queues send onto the worker thread, where it runs only while connected over a normal-latency link
+    void _runOnWorkerWhenConnected(const std::function<void()>& send);
     void _sendEscInfo();
     void _sendEscStatus();
     void _sendRadioStatus();

@@ -53,8 +53,7 @@
   ],
   "search.exclude": {
     "**/.cache": true,
-    "**/build": true,
-    "**/libs": true
+    "**/build": true
   },
   "C_Cpp.intelliSenseEngine": "disabled"
 }

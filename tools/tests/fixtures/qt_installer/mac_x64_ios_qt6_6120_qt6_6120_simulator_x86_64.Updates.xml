@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Updates>
+ <ApplicationName>{AnyApplication}</ApplicationName>
+ <ApplicationVersion>1.0.0</ApplicationVersion>
+ <Checksum>true</Checksum>
+ <PackageUpdate>
+  <Name>qt.qt6.6120.addons.qthttpserver</Name>
+  <Version>6.12.0-0-202609280346</Version>
+  <Dependencies>qt.qt6.6120.doc.qthttpserver, qt.qt6.6120.examples.qthttpserver, qt.qt6.6120.addons.qtwebsockets</Dependencies>
+  <DownloadableArchives />
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6120.addons.qthttpserver.ios_simulator_x86_64</Name>
+  <Version>6.12.0-0-202609280346</Version>
+  <Dependencies>qt.qt6.6120.qtforios.simulator_x86_64</Dependencies>
+  <DownloadableArchives>qthttpserver-MacOS-MacOS_26-Clang-IOS-IOS_ANY-X86_64-Simulator.7z</DownloadableArchives>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.12.0/ios_simulator_x86_64</Argument>
+    <Argument>qthttpserver-MacOS-MacOS_26-Clang-IOS-IOS_ANY-X86_64-Simulator.7z</Argument>
+   </Operation>
+  </Operations>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6120.addons.qtlocation</Name>
+  <Version>6.12.0-0-202609280346</Version>
+  <Dependencies>qt.qt6.6120.doc.qtlocation, qt.qt6.6120.examples.qtlocation</Dependencies>
+  <DownloadableArchives />
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6120.addons.qtlocation.ios_simulator_x86_64</Name>
+  <Version>6.12.0-0-202609280346</Version>
+  <Dependencies>qt.qt6.6120.qtforios.simulator_x86_64</Dependencies>
+  <DownloadableArchives>qtlocation-MacOS-MacOS_26-Clang-IOS-IOS_ANY-X86_64-Simulator.7z</DownloadableArchives>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.12.0/ios_simulator_x86_64</Argument>
+    <Argument>qtlocation-MacOS-MacOS_26-Clang-IOS-IOS_ANY-X86_64-Simulator.7z</Argument>
+   </Operation>
+  </Operations>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6120.addons.qtquick3d</Name>
+  <Version>6.12.0-0-202609280346</Version>
+  <Dependencies>qt.qt6.6120.doc.qtquick3d, qt.qt6.6120.examples.qtquick3d, qt.qt6.6120.addons.qtshadertools, qt.qt6.6120.addons.qtquicktimeline</Dependencies>
+  <DownloadableArchives />
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6120.addons.qtquick3d.ios_simulator_x86_64</Name>
+  <Version>6.12.0-0-202609280346</Version>
+  <Dependencies>qt.qt6.6120.qtforios.simulator_x86_64</Dependencies>
+  <DownloadableArchives>qtquick3d-MacOS-MacOS_26-Clang-IOS-IOS_ANY-X86_64-Simulator.7z</DownloadableArchives>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.12.0/ios_simulator_x86_64</Argument>
+    <Argument>qtquick3d-MacOS-MacOS_26-Clang-IOS-IOS_ANY-X86_64-Simulator.7z</Argument>
+   </Operation>
+  </Operations>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6120.addons.qtshadertools</Name>
+  <Version>6.12.0-0-202609280346</Version>
+  <Dependencies>qt.qt6.6120.doc.qtshadertools</Dependencies>
+  <DownloadableArchives />
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6120.addons.qtshadertools.ios_simulator_x86_64</Name>
+  <Version>6.12.0-0-202609280346</Version>
+  <Dependencies>qt.qt6.6120.qtforios.simulator_x86_64</Dependencies>
+  <DownloadableArchives>qtshadertools-MacOS-MacOS_26-Clang-IOS-IOS_ANY-X86_64-Simulator.7z</DownloadableArchives>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.12.0/ios_simulator_x86_64</Argument>
+    <Argument>qtshadertools-MacOS-MacOS_26-Clang-IOS-IOS_ANY-X86_64-Simulator.7z</Argument>
+   </Operation>
+  </Operations>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6120.addons.qtwebsockets</Name>
+  <Version>6.12.0-0-202609280346</Version>
+  <Dependencies>qt.qt6.6120.doc.qtwebsockets, qt.qt6.6120.examples.qtwebsockets</Dependencies>
+  <DownloadableArchives />
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6120.addons.qtwebsockets.ios_simulator_x86_64</Name>
+  <Version>6.12.0-0-202609280346</Version>
+  <Dependencies>qt.qt6.6120.qtforios.simulator_x86_64</Dependencies>
+  <DownloadableArchives>qtwebsockets-MacOS-MacOS_26-Clang-IOS-IOS_ANY-X86_64-Simulator.7z</DownloadableArchives>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.12.0/ios_simulator_x86_64</Argument>
+    <Argument>qtwebsockets-MacOS-MacOS_26-Clang-IOS-IOS_ANY-X86_64-Simulator.7z</Argument>
+   </Operation>
+  </Operations>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6120.qtforios</Name>
+  <Version>6.12.0-0-202609280346</Version>
+  <DownloadableArchives />
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6120.qtforios.simulator_x86_64</Name>
+  <Version>6.12.0-0-202609280346</Version>
+  <Dependencies>qt.tools.qtcreator, qt.qt6.6120.clang_64, qt.qt6.6120.doc, qt.qt6.6120.examples, qt.qt6.6120.patcher</Dependencies>
+  <DownloadableArchives>qtbase-MacOS-MacOS_26-Clang-IOS-IOS_ANY-X86_64-Simulator.7z, qttools-MacOS-MacOS_26-Clang-IOS-IOS_ANY-X86_64-Simulator.7z, qtdeclarative-MacOS-MacOS_26-Clang-IOS-IOS_ANY-X86_64-Simulator.7z, qtdoc-MacOS-MacOS_26-Clang-IOS-IOS_ANY-X86_64-Simulator.7z, qtsvg-MacOS-MacOS_26-Clang-IOS-IOS_ANY-X86_64-Simulator.7z, qttranslations-MacOS-MacOS_26-Clang-IOS-IOS_ANY-X86_64-Simulator.7z</DownloadableArchives>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.12.0/ios_simulator_x86_64</Argument>
+    <Argument>qtbase-MacOS-MacOS_26-Clang-IOS-IOS_ANY-X86_64-Simulator.7z</Argument>
+   </Operation>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.12.0/ios_simulator_x86_64</Argument>
+    <Argument>qttools-MacOS-MacOS_26-Clang-IOS-IOS_ANY-X86_64-Simulator.7z</Argument>
+   </Operation>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.12.0/ios_simulator_x86_64</Argument>
+    <Argument>qtdeclarative-MacOS-MacOS_26-Clang-IOS-IOS_ANY-X86_64-Simulator.7z</Argument>
+   </Operation>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.12.0/ios_simulator_x86_64</Argument>
+    <Argument>qtdoc-MacOS-MacOS_26-Clang-IOS-IOS_ANY-X86_64-Simulator.7z</Argument>
+   </Operation>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.12.0/ios_simulator_x86_64</Argument>
+    <Argument>qtsvg-MacOS-MacOS_26-Clang-IOS-IOS_ANY-X86_64-Simulator.7z</Argument>
+   </Operation>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.12.0/ios_simulator_x86_64</Argument>
+    <Argument>qttranslations-MacOS-MacOS_26-Clang-IOS-IOS_ANY-X86_64-Simulator.7z</Argument>
+   </Operation>
+  </Operations>
+ </PackageUpdate>
+ <SHA1>f26fdb83bcb07459d49fc15283761b4e2e928021</SHA1>
+ <MetadataName>2026-09-28-0418_meta.7z</MetadataName>
+</Updates>

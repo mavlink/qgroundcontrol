@@ -40,12 +40,13 @@ void MultiVehicleManagerTest::_testDuplicateAllLinksRemoved()
     verifyExpectedLogMessage();
 
     QTRY_COMPARE_WITH_TIMEOUT(destroyedSpy.count(), 1, TestTimeout::longMs());
+    // Cleared before the checks below, so the base class never touches the deleted vehicle
+    _vehicle = nullptr;
     QVERIFY(!MultiVehicleManager::instance()->activeVehicle());
 
     // The vehicle is already gone but the MockLink is still connected. Disconnect it
     // ourselves so the base class cleanup (which waits for a vehicle removal) doesn't
     // time out.
-    _vehicle = nullptr;
     if (_mockLink) {
         _mockLink->disconnect();
         _mockLink = nullptr;

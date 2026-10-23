@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-import json
 import re
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
+
+from common.io import read_json
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -190,8 +191,7 @@ _ALLOWED_CONTROL_KEYS = frozenset(
 
 def load_page_def(json_path: Path) -> PageDef:
     """Load a page definition from a JSON file."""
-    with open(json_path, encoding="utf-8") as f:
-        data = json.load(f)
+    data = read_json(json_path)
 
     reject_unknown_keys(data, _ALLOWED_ROOT_KEYS, "page", json_path)
 
@@ -294,8 +294,7 @@ _ALLOWED_OVERLAY_ENTRY_KEYS = _ALLOWED_PAGE_ENTRY_KEYS | _OVERLAY_POSITION_KEYS 
 
 
 def _load_pages_file(pages_json_path: Path, allowed_entry_keys: frozenset[str]) -> list[dict]:
-    with open(pages_json_path, encoding="utf-8") as f:
-        data = json.load(f)
+    data = read_json(pages_json_path)
     reject_unknown_keys(data, _ALLOWED_PAGES_ROOT_KEYS, "pages file", pages_json_path)
     entries = require_list(data.get("pages", []), "'pages'", pages_json_path)
     for entry in entries:

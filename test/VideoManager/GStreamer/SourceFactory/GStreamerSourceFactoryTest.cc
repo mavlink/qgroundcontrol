@@ -529,7 +529,18 @@ void GStreamerTest::_testSourceFactoryUdp265()
 
     QVERIFY2(child(bin.get(), "rtpjitterbuffer"), "udp265 RTP path must insert a jitterbuffer");
     QVERIFY2(!child(bin.get(), "tsdemux"), "udp265 is RTP, not MPEG-TS; no tsdemux");
-    QVERIFY2(child(bin.get(), "rtph265depay"), "udp265:// must depayload H265 RTP explicitly");
+    const GStreamer::GstElementPtr depay = child(bin.get(), "rtph265depay");
+    QVERIFY2(depay, "udp265:// must depayload H265 RTP explicitly");
+
+    // hvc1 would leave the depayloader's caps unset until in-band parameter sets arrive
+    const GStreamer::GstPadPtr depaySrc = GStreamer::adoptPad(gst_element_get_static_pad(depay.get(), "src"));
+    QVERIFY(depaySrc);
+    const GStreamer::GstCapsPtr allowed = GStreamer::adoptCaps(gst_pad_get_allowed_caps(depaySrc.get()));
+    QVERIFY2(allowed && !gst_caps_is_empty(allowed.get()), "rtph265depay must link to the parser");
+    for (guint i = 0; i < gst_caps_get_size(allowed.get()); ++i) {
+        QCOMPARE(QString::fromUtf8(gst_structure_get_string(gst_caps_get_structure(allowed.get(), i), "stream-format")),
+                 QStringLiteral("byte-stream"));
+    }
 
     const GStreamer::GstElementPtr parser = child(bin.get(), "h265parse");
     QVERIFY2(parser, "udp265:// must parse H265 explicitly");

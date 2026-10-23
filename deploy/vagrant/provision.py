@@ -78,9 +78,6 @@ def provision() -> None:
         [*user, "git", "config", "--global", "--replace-all", "safe.directory", str(repo)],
         check=True,
     )
-    subprocess.run(
-        [*user, "git", "-C", str(repo), "submodule", "update", "--init", "--recursive"], check=True
-    )
     bashrc = home / ".bashrc"
     append_once(bashrc, "export QGC_PYTHON_ENV=/opt/qgc-venv; export PATH=/opt/qgc-venv/bin:$PATH")
     fuse = Path("/etc/fuse.conf")

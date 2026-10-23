@@ -5,17 +5,12 @@ on:
     branches:
       - master
       - 'Stable*'
-    paths:
+    paths: &docs-paths
       - 'docs/**'
-      - 'package*.json'
-      - '.nvmrc'
+      - '.github/build-config.json'
       - '.github/workflows/docs.yml'
   pull_request:
-    paths:
-      - 'docs/**'
-      - 'package*.json'
-      - '.nvmrc'
-      - '.github/workflows/docs.yml'
+    paths: *docs-paths
   workflow_dispatch:
 
 concurrency:
@@ -24,9 +19,6 @@ concurrency:
 
 permissions:
   contents: read
-
-env:
-  BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
 
 jobs:
   build:
@@ -46,16 +38,21 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v7
         with:
-          node-version-file: .nvmrc
+          node-version-file: docs/.nvmrc
 
       - name: Install dependencies
+        working-directory: docs
         run: npm ci
 
+      # config.mjs sets the site base to /<branch>/, the directory deploy-docs publishes it under.
       - name: Build with VitePress
+        working-directory: docs
+        env:
+          BRANCH_NAME: ${{ github.ref_name }}
         run: |
           QGC_DOCS_CHECK_ENGLISH=1 npm run docs:build
           npm run docs:build
-          touch docs/.vitepress/dist/.nojekyll
+          touch .vitepress/dist/.nojekyll
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
@@ -81,7 +78,7 @@ jobs:
         with:
           sparse-checkout: |
             .github/actions
-            .github/scripts
+            tools/ci/publish
             tools/common
             tools/qgc_tools
           persist-credentials: false
@@ -93,5 +90,4 @@ jobs:
           target-repo: mavlink/docs.qgroundcontrol.com
           target-branch: master
           deploy-token: ${{ secrets.PX4BUILDBOT_ACCESSTOKEN }}
-          source-branch: ${{ env.BRANCH_NAME }}
           commit-message: 'QGC docs build update'

@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from .._jinja import make_env
-from ..common.controls import qml_tr
+from ..common.controls import qml_string, qml_tr
 from .control_renderers import render_control as _qml_control
 from .model import (
     PageDef,
@@ -31,7 +31,7 @@ import QGroundControl.Controls
 
 def _section_visible(sec: SectionDef) -> str:
     # The untranslated title is the section ID (must match VehicleComponent::sectionIds())
-    name_vis = f'sectionMatchesFilter("{sec.title}")'
+    name_vis = f"sectionMatchesFilter({qml_string(sec.title)})"
     return f"{name_vis} && {sec.showWhen}" if sec.showWhen else name_vis
 
 
@@ -85,7 +85,7 @@ def _qml_repeat_count_property(sec: SectionDef) -> str:
         safe=safe,
         start_index=rep.startIndex,
         idx_expr=idx_expr,
-        probe_param=f'"{rep.paramPrefix}" + _idx + "{rep.probePostfix}"',
+        probe_param=f"{qml_string(rep.paramPrefix)} + _idx + {qml_string(rep.probePostfix)}",
     )
 
 
@@ -96,27 +96,24 @@ def _qml_repeat_section(sec: SectionDef, sec_idx: int, tr_context: str = "") -> 
     ind = "                "
 
     # Filter on the untranslated per-index section ID, not the translated heading
-    name_vis = f'sectionMatchesFilter(_sectionId, "{sec.title}")'
+    name_vis = f"sectionMatchesFilter(_sectionId, {qml_string(sec.title)})"
     show_vis = f"{name_vis} && {sec.showWhen}" if sec.showWhen else name_vis
     safe = _safe_id(sec.title)
 
     if rep.enableParam:
         dv = rep.disabledParamValue
         enable_expr = (
-            f'controller.getParameterFact(-1, _fullParamName("{rep.enableParam}")).value !== {dv}'
+            f"controller.getParameterFact(-1, _fullParamName({qml_string(rep.enableParam)}))"
+            f".value !== {dv}"
         )
         visible = f"{show_vis} && {enable_expr}"
     else:
         visible = show_vis
 
-    heading_base = sec.title.replace("{index}", '" + _displayIndex + "')
-    if "{index}" in sec.title:
-        heading_expr = qml_tr(heading_base, tr_context)
-    else:
-        heading_expr = (
-            f'_{safe}Count > 1 ? {qml_tr(sec.title, tr_context)} + " " + _displayIndex '
-            f": {qml_tr(sec.title, tr_context)}"
-        )
+    heading_expr = (
+        f'_{safe}Count > 1 ? {qml_tr(sec.title, tr_context)} + " " + _displayIndex '
+        f": {qml_tr(sec.title, tr_context)}"
+    )
 
     apm_battery = rep.indexing == "apm_battery"
     if rep.firstIndexOmitsNumber:
@@ -181,14 +178,16 @@ def _qml_disabled_companion_section(sec: SectionDef, tr_context: str = "") -> st
     title_qtr = qml_tr(sec.title, tr_context)
     if apm_battery:
         fact_expr = (
-            f'controller.getParameterFact(-1, _battPrefixForIndex(index) + "{rep.enableParam}")'
+            "controller.getParameterFact(-1, _battPrefixForIndex(index) + "
+            f"{qml_string(rep.enableParam)})"
         )
         label_expr = (
             f'_{safe}Count > 1 ? {title_qtr} + " " + _battLabelForIndex(index) : {title_qtr}'
         )
     else:
         fact_expr = (
-            f'controller.getParameterFact(-1, "{rep.paramPrefix}" + _idx + "{rep.enableParam}")'
+            f"controller.getParameterFact(-1, {qml_string(rep.paramPrefix)} + _idx + "
+            f"{qml_string(rep.enableParam)})"
         )
         label_expr = (
             f'_{safe}Count > 1 ? {title_qtr} + " " + String(index + {rep.startIndex}) : {title_qtr}'
@@ -218,11 +217,12 @@ def _qml_disabled_companion_section(sec: SectionDef, tr_context: str = "") -> st
 
 
 def _param_line(name: str, p) -> str:
+    param_name = qml_string(p.name)
     if p.existsOnly:
-        return f'property var {name}: controller.parameterExists(-1, "{p.name}")'
+        return f"property var {name}: controller.parameterExists(-1, {param_name})"
     if p.required:
-        return f'property var {name}: controller.getParameterFact(-1, "{p.name}")'
-    return f'property var {name}: controller.getParameterFact(-1, "{p.name}", false)'
+        return f"property var {name}: controller.getParameterFact(-1, {param_name})"
+    return f"property var {name}: controller.getParameterFact(-1, {param_name}, false)"
 
 
 def _terms_entries(terms_map: dict) -> list[dict]:
@@ -230,7 +230,7 @@ def _terms_entries(terms_map: dict) -> list[dict]:
     return [
         {
             "section_id": section_id,
-            "terms": ", ".join(f'"{t}"' for t in terms),
+            "terms": ", ".join(qml_string(t) for t in terms),
             "comma": "," if i < len(items) - 1 else "",
         }
         for i, (section_id, terms) in enumerate(items)
@@ -279,12 +279,3 @@ def generate_config_page_qml(page: PageDef) -> str:
         )
         + "\n"
     )
-
-
-def get_section_names(page: PageDef) -> list[str]:
-    """Return the display names of all sections in a page."""
-    names = [sec.title for sec in page.sections if sec.title]
-    for sec in page.sections:
-        if sec.repeat and sec.repeat.disabledSection:
-            names.append(sec.repeat.disabledSection.heading)
-    return names

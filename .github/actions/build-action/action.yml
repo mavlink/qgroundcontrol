@@ -1,3 +1,6 @@
+# Intentionally kept with no callers: when an upstream JavaScript action has a fix on a branch
+# or commit but no published release with a rebuilt dist/, check it out and build it here, then
+# run it from ./build-action until a release ships. Do not delete as dead code.
 name: Build action
 description: Build action whose dist hasn't been updated from source
 inputs:

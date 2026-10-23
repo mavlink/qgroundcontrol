@@ -1,29 +1,25 @@
-"""Probe an external tool's version string into a tuple of ints.
-
-Standardizes the ``tool --version`` + regex parse that ``ccache_helper``,
-``release.py``, ``analyze.py``, and ``check_deps.py`` each implement
-differently.
-"""
+"""External-tool and uv.lock version lookup."""
 
 from __future__ import annotations
 
 import re
 import shutil
 import subprocess
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 from .io import read_toml
+from .paths import TOOLS_DIR
 from .proc import run_captured
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+    from pathlib import Path
 
 __all__ = ["DEFAULT_VERSION_RE", "probe_version", "uv_lock_version", "version_prefix_matches"]
 
 DEFAULT_VERSION_RE: re.Pattern[str] = re.compile(r"(\d+)\.(\d+)(?:\.(\d+))?")
 
-_UV_LOCK = Path(__file__).resolve().parents[1] / "uv.lock"
+_UV_LOCK = TOOLS_DIR / "uv.lock"
 
 
 def version_prefix_matches(installed: tuple[int, ...], expected: str) -> bool:
@@ -39,10 +35,8 @@ def version_prefix_matches(installed: tuple[int, ...], expected: str) -> bool:
 def uv_lock_version(package: str, *, lock_path: Path | None = None) -> str | None:
     """Return the version pinned for *package* in tools/uv.lock, or None if absent/unreadable.
 
-    Lets a setup script pin its fallback binary to the same version the dev/CI venv
-    resolves (single source of truth), so the two install paths can't drift. Returns
-    None in contexts without the lockfile (e.g. the Docker builders that COPY setup
-    scripts out of the repo), leaving the caller to apply its own fallback.
+    Lets a check compare an installed tool against the version the dev/CI venv resolves.
+    Returns None in contexts without the lockfile, leaving the caller to decide.
     """
     path = lock_path or _UV_LOCK
     if not path.exists():

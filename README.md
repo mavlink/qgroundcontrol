@@ -40,10 +40,10 @@ Grab the latest stable build for your platform, or see all assets on the
 
 ## Links
 
-- [Official Website](http://qgroundcontrol.com)
-- [User Manual](https://docs.qgroundcontrol.com/en/)
-- [Developer Guide](https://dev.qgroundcontrol.com/en/) / [Build Instructions](https://dev.qgroundcontrol.com/en/getting_started/)
-- [Discussion & Support](https://docs.qgroundcontrol.com/en/Support/Support.html)
+- [Official Website](https://qgroundcontrol.com)
+- [User Manual](https://docs.qgroundcontrol.com/master/en/qgc-user-guide/)
+- [Developer Guide](https://docs.qgroundcontrol.com/master/en/qgc-dev-guide/) / [Build Instructions](https://docs.qgroundcontrol.com/master/en/qgc-dev-guide/getting_started/)
+- [Discussion & Support](https://docs.qgroundcontrol.com/master/en/qgc-user-guide/support/support.html)
 - [Dronecode Discord](https://discord.com/channels/1022170275984457759/1022185820683255908)
 - [Security Policy](.github/SECURITY.md)
 - [Code of Conduct](.github/CODE_OF_CONDUCT.md)

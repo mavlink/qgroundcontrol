@@ -214,10 +214,11 @@ set(CMAKE_POLICY_DEFAULT_CMP0141 NEW)
 cmake_policy(SET CMP0075 NEW)
 set(CMAKE_POLICY_DEFAULT_CMP0075 NEW)
 
-# CMP0194: MSVC is not an assembler for language ASM (zstd)
+# CMP0194: zstd enables ASM unconditionally but adds no assembler sources under MSVC; OLD lets cl
+# stand in instead of failing on runner images without a GNU assembler on PATH
 if(POLICY CMP0194)
-    cmake_policy(SET CMP0194 NEW)
-    set(CMAKE_POLICY_DEFAULT_CMP0194 NEW)
+    cmake_policy(SET CMP0194 OLD)
+    set(CMAKE_POLICY_DEFAULT_CMP0194 OLD)
 endif()
 
 # ============================================================================
@@ -476,6 +477,10 @@ if(QGC_BUILD_TESTING)
     # target-scoped definition would not cover them all.
     add_compile_definitions(QGC_UNITTEST_BUILD)
 endif()
+
+# Global flags are final here, and the dependencies under src/ run most configure checks.
+include(CheckResultCache)
+qgc_restore_check_results()
 
 add_subdirectory(src)
 

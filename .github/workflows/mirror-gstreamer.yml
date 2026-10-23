@@ -58,10 +58,7 @@ jobs:
             tools
           sparse-checkout-cone-mode: false
 
-      - name: Build Config
-        id: buildconfig
-        uses: ./.github/actions/build-config
-
+      # Exports AWS_REGION and AWS_DEFAULT_REGION (us-west-2) for the upload.
       - name: Configure AWS Credentials
         if: ${{ !inputs.dry_run }}
         uses: ./.github/actions/aws-credentials
@@ -70,22 +67,11 @@ jobs:
           aws-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
+      # An empty version mirrors build-config.json's gstreamer.version.default.
       - name: Mirror artifacts
-        shell: bash
         env:
-          VERSION: ${{ inputs.version || steps.buildconfig.outputs.gstreamer_version }}
-          PLATFORMS: ${{ inputs.platforms }}
-          DRY_RUN: ${{ inputs.dry_run && 'true' || 'false' }}
-          FORCE: ${{ inputs.force && 'true' || 'false' }}
-          WORK_DIR: ${{ runner.temp }}
-          AWS_DEFAULT_REGION: us-west-2
-        run: |
-          set -euo pipefail
-          args=(
-            --version "$VERSION"
-            --platforms "$PLATFORMS"
-            --work-dir "$WORK_DIR"
-          )
-          [[ "$DRY_RUN" == "true" ]] && args+=(--dry-run)
-          [[ "$FORCE" == "true" ]] && args+=(--force)
-          python3 "${GITHUB_WORKSPACE}/.github/scripts/mirror_gstreamer.py" "${args[@]}"
+          MIRROR_VERSION: ${{ inputs.version }}
+          MIRROR_PLATFORMS: ${{ inputs.platforms }}
+          MIRROR_DRY_RUN: ${{ inputs.dry_run }}
+          MIRROR_FORCE: ${{ inputs.force }}
+        run: python3 "${GITHUB_WORKSPACE}/tools/ci/gstreamer/mirror_gstreamer.py"

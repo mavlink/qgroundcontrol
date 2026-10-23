@@ -6,18 +6,12 @@ import sys
 from pathlib import Path
 
 import pytest
+from generators.common.controls import ButtonDef
 from generators.common.validation import require_qml_safe_string
 from generators.settings_qml import generate_pages as settings_generator
-from generators.settings_qml.page_generator import (
-    ControlDef,
-    GroupDef,
-    PageDef,
-    generate_page_qml,
-    generate_pages_model_qml,
-    get_fact_type,
-    load_page_def,
-    load_settings_metadata,
-)
+from generators.settings_qml.emit import generate_page_qml, generate_pages_model_qml
+from generators.settings_qml.metadata import get_fact_type, load_settings_metadata
+from generators.settings_qml.model import ControlDef, GroupDef, PageDef, load_page_def
 
 from ._helpers import REPO_ROOT
 
@@ -953,7 +947,7 @@ class TestGeneratePageQml:
 
     def test_info_control_with_button(self, settings_dir: Path):
         from generators.common.controls import ButtonDef
-        from generators.settings_qml.page_generator import ControlDef as CD
+        from generators.settings_qml.model import ControlDef as CD
 
         page = PageDef(
             groups=[
@@ -1053,6 +1047,29 @@ class TestGeneratePageQml:
         qml = generate_page_qml(page, settings_dir)
         assert "sectionFilter === 0" in qml
         assert "sectionFilter === 1" in qml
+
+    def test_missing_placeholder_escaped(self, settings_dir: Path):
+        page = PageDef(groups=[GroupDef(heading="G", missing=['Say "hi" to C:\\temp'])])
+        qml = generate_page_qml(page, settings_dir)
+        assert 'text: qsTr("TODO: Say \\"hi\\" to C:\\\\temp")' in qml
+
+    def test_info_button_text_escaped(self, settings_dir: Path):
+        page = PageDef(
+            groups=[
+                GroupDef(
+                    heading="G",
+                    controls=[
+                        ControlDef(
+                            control="info",
+                            value="1",
+                            button=ButtonDef(text='Run "now"', onClicked="run()"),
+                        )
+                    ],
+                )
+            ]
+        )
+        qml = generate_page_qml(page, settings_dir, json_context="Test.SettingsUI.json")
+        assert 'text: qsTranslate("Test.SettingsUI.json", "Run \\"now\\"")' in qml
 
 
 class TestGeneratePagesModelQml:
@@ -1351,13 +1368,11 @@ class TestQmlUnsafeStringRejection:
 
 
 class TestRealPageDefinitions:
-    """Test against real QGC page definition files if available."""
+    """Test against the real QGC page definition files."""
 
     @pytest.fixture
     def repo_root(self) -> Path:
-        if (REPO_ROOT / "src" / "Settings").is_dir():
-            return REPO_ROOT
-        pytest.skip("Not running from QGC repo root")
+        return REPO_ROOT
 
     def test_all_page_defs_load(self, repo_root: Path):
         pages_dir = repo_root / "src" / "AppSettings" / "pages"

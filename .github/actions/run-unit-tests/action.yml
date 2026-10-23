@@ -1,22 +1,17 @@
 name: Run Unit Tests
-description: Run unit tests via CTest and generate standardized test artifacts.
+description: Run tests via CTest, then report and upload their results even when tests fail.
 
 inputs:
   build-dir:
     description: Path to CMake build directory
-    required: true
-  build-type:
-    description: CTest configuration for multi-config generators
-    default: ''
-  tests-regex:
-    description: Optional CTest test-name filter
-    default: ''
+    required: false
+    default: ${{ runner.temp }}/build
   junit-output:
-    description: JUnit XML output filename
+    description: JUnit XML output filename (relative to build-dir)
     required: false
     default: junit-results.xml
   ctest-output:
-    description: Captured CTest stdout/stderr filename
+    description: Captured CTest stdout/stderr filename (relative to build-dir)
     required: false
     default: test-output.txt
   include-labels:
@@ -28,61 +23,81 @@ inputs:
     required: false
     default: 'Flaky|Network'
   parallel:
-    description: Number of parallel CTest jobs, or 'auto'
+    description: Number of parallel CTest jobs, or 'auto' (one per CPU)
     required: false
     default: auto
-  repeat:
-    description: CTest --repeat spec (e.g. 'until-fail:5'). Empty = no repeat.
+  report-name:
+    description: >-
+      Job-summary section title for the JUnit results (counts, failures, slowest tests) and
+      error annotations for failed tests; empty skips both
     required: false
     default: ''
-  shard-index:
-    description: 0-based shard index. Ignored unless shard-count > 1.
+  artifact-name:
+    description: Upload the JUnit and CTest output files as this artifact; empty skips the upload
     required: false
-    default: '0'
-  shard-count:
-    description: Total shards. 0 or 1 disables sharding (default).
+    default: ''
+  retention-days:
+    description: Days to retain the results artifact
     required: false
-    default: '0'
+    default: '14'
+  duration-report:
+    description: Annotate tests slower than 60 s with warnings (needs report-name)
+    required: false
+    default: 'false'
+  upload-codecov:
+    description: Upload JUnit test analytics to Codecov using OIDC (caller needs id-token write)
+    required: false
+    default: 'false'
+  codecov-flags:
+    description: Flags identifying this test suite in Codecov
+    required: false
+    default: ''
 
 runs:
   using: composite
   steps:
-    - name: Detect parallel jobs
-      id: jobs
-      shell: bash
-      run: |
-        python3 "${GITHUB_WORKSPACE}/.github/scripts/cmake_helper.py" detect-jobs \
-          --parallel "${INPUTS_PARALLEL}"
-      env:
-        INPUTS_PARALLEL: ${{ inputs.parallel }}
-
+    # cmake_helper.py and junit_report.py read the INPUT_* variables as argument defaults.
     - name: Run CTest
       shell: bash
       working-directory: ${{ inputs.build-dir }}
-      run: |
-        args=(
-          --junit-output "${INPUTS_JUNIT_OUTPUT}"
-          --ctest-output "${INPUTS_CTEST_OUTPUT}"
-          --jobs "${STEPS_JOBS_OUTPUTS_JOBS}"
-          --build-type "${INPUTS_BUILD_TYPE}"
-          --tests-regex "${INPUTS_TESTS_REGEX}"
-          --include-labels "${INPUTS_INCLUDE_LABELS}"
-          --exclude-labels "${INPUTS_EXCLUDE_LABELS}"
-        )
-        [[ -n "${INPUTS_REPEAT}" ]] && args+=(--repeat "${INPUTS_REPEAT}")
-        [[ "${INPUTS_SHARD_COUNT}" -gt 1 ]] && args+=(
-          --shard-index "${INPUTS_SHARD_INDEX}"
-          --shard-count "${INPUTS_SHARD_COUNT}"
-        )
-        python3 "${GITHUB_WORKSPACE}/.github/scripts/cmake_helper.py" ctest "${args[@]}"
+      run: python3 "${GITHUB_WORKSPACE}/tools/ci/compile/cmake_helper.py" ctest
       env:
-        INPUTS_JUNIT_OUTPUT: ${{ inputs.junit-output }}
-        INPUTS_CTEST_OUTPUT: ${{ inputs.ctest-output }}
-        STEPS_JOBS_OUTPUTS_JOBS: ${{ steps.jobs.outputs.jobs }}
-        INPUTS_INCLUDE_LABELS: ${{ inputs.include-labels }}
-        INPUTS_EXCLUDE_LABELS: ${{ inputs.exclude-labels }}
-        INPUTS_BUILD_TYPE: ${{ inputs.build-type }}
-        INPUTS_TESTS_REGEX: ${{ inputs.tests-regex }}
-        INPUTS_REPEAT: ${{ inputs.repeat }}
-        INPUTS_SHARD_COUNT: ${{ inputs.shard-count }}
-        INPUTS_SHARD_INDEX: ${{ inputs.shard-index }}
+        INPUT_JUNIT_OUTPUT: ${{ inputs.junit-output }}
+        INPUT_CTEST_OUTPUT: ${{ inputs.ctest-output }}
+        INPUT_PARALLEL: ${{ inputs.parallel }}
+        INPUT_INCLUDE_LABELS: ${{ inputs.include-labels }}
+        INPUT_EXCLUDE_LABELS: ${{ inputs.exclude-labels }}
+
+    # The steps below also run after test failures; the failed CTest step still fails the action.
+    - name: Report test results
+      if: ${{ !cancelled() && inputs.report-name != '' }}
+      shell: bash
+      working-directory: ${{ inputs.build-dir }}
+      env:
+        INPUT_JUNIT_PATH: ${{ inputs.junit-output }}
+        INPUT_TITLE: ${{ inputs.report-name }}
+        INPUT_SLOW_WARNINGS: ${{ inputs.duration-report }}
+      run: python3 "${GITHUB_WORKSPACE}/tools/ci/reporting/junit_report.py"
+
+    - name: Upload Codecov test analytics
+      if: ${{ !cancelled() && inputs.upload-codecov == 'true' }}
+      uses: codecov/codecov-action@v7
+      with:
+        files: ${{ inputs.build-dir }}/${{ inputs.junit-output }}
+        report_type: test_results
+        flags: ${{ inputs.codecov-flags }}
+        name: ${{ inputs.report-name }}
+        use_oidc: true
+        disable_search: true
+        handle_no_reports_found: true
+        fail_ci_if_error: false
+
+    - name: Upload test results
+      if: ${{ !cancelled() && inputs.artifact-name != '' }}
+      uses: actions/upload-artifact@v7
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: |
+          ${{ inputs.build-dir }}/${{ inputs.ctest-output }}
+          ${{ inputs.build-dir }}/${{ inputs.junit-output }}
+        retention-days: ${{ inputs.retention-days }}

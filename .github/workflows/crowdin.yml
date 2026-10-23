@@ -32,8 +32,9 @@ jobs:
     if: github.repository_owner == 'mavlink'
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    permissions:
-      contents: read
+    env:
+      # Pushes and manual uploads send sources; the schedule and manual downloads fetch translations.
+      SYNC_MODE: ${{ (github.event_name == 'schedule' || inputs.action == 'download') && 'download' || 'upload' }}
 
     steps:
       - name: Harden Runner
@@ -41,48 +42,20 @@ jobs:
         with:
           egress-policy: audit
 
-      - name: Determine action
-        id: action
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          INPUT_ACTION: ${{ inputs.action }}
-        run: |
-          if [[ "$EVENT_NAME" == "schedule" ]] || [[ "$EVENT_NAME" == "workflow_dispatch" && "$INPUT_ACTION" == "download" ]]; then
-            echo "mode=download" >> "$GITHUB_OUTPUT"
-          elif [[ "$EVENT_NAME" == "push" ]] || [[ "$EVENT_NAME" == "workflow_dispatch" && "$INPUT_ACTION" == "upload" ]]; then
-            echo "mode=upload" >> "$GITHUB_OUTPUT"
-          else
-            echo "mode=skip" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Checkout
-        if: steps.action.outputs.mode != 'skip'
         uses: actions/checkout@v7
         with:
           persist-credentials: false
 
-      - name: Upload sources to Crowdin
-        if: steps.action.outputs.mode == 'upload'
+      # Each mode runs one half of the action: with download_translations off it never pushes a
+      # branch or opens a pull request, so the localization settings apply only to downloads.
+      - name: Sync with Crowdin (${{ env.SYNC_MODE }})
         uses: crowdin/github-action@v3
         with:
           config: 'docs/crowdin_docs.yml'
-          upload_sources: true
+          upload_sources: ${{ env.SYNC_MODE == 'upload' }}
           upload_translations: false
-          download_translations: false
-          crowdin_branch_name: master
-        env:
-          GITHUB_TOKEN: ${{ secrets.PX4BUILDBOT_ACCESSTOKEN }}
-          CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_DOCS_PROJECT_ID }}
-          CROWDIN_PERSONAL_TOKEN: ${{ secrets.PX4BUILDBOT_CROWDIN_PERSONAL_TOKEN }}
-
-      - name: Download translations from Crowdin
-        if: steps.action.outputs.mode == 'download'
-        uses: crowdin/github-action@v3
-        with:
-          config: 'docs/crowdin_docs.yml'
-          upload_sources: false
-          upload_translations: false
-          download_translations: true
+          download_translations: ${{ env.SYNC_MODE == 'download' }}
           localization_branch_name: l10n_crowdin_docs_translations
           crowdin_branch_name: master
           create_pull_request: true

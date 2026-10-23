@@ -213,7 +213,7 @@ void RemoteIDSettingsUITest::_testRegionSwitchSwapsOperatorIDFields()
     // EU region: EU field visible, FAA field hidden
     QQuickItem* euField = _operatorIDTextField(QString::fromLatin1(kEUFieldObjectName));
     QVERIFY(euField);
-    QVERIFY2(!findVisibleItem(_rootItem, QString::fromLatin1(kFAAFieldObjectName)),
+    QVERIFY2(!findVisibleItem(_rootItem, QString::fromLatin1(kFAAFieldObjectName), 0),
              "FAA operator ID field visible in EU region");
 
     QVERIFY(_typeIntoField(euField, QString::fromLatin1(kValidFullOperatorID)));
@@ -226,7 +226,7 @@ void RemoteIDSettingsUITest::_testRegionSwitchSwapsOperatorIDFields()
     QQuickItem* faaField = nullptr;
     QTRY_VERIFY2_WITH_TIMEOUT((faaField = findVisibleItem(_rootItem, QString::fromLatin1(kFAAFieldObjectName))) != nullptr,
                               "FAA operator ID field not visible in FAA region", 2000);
-    QTRY_VERIFY2_WITH_TIMEOUT(!findVisibleItem(_rootItem, QString::fromLatin1(kEUFieldObjectName)),
+    QTRY_VERIFY2_WITH_TIMEOUT(!findVisibleItem(_rootItem, QString::fromLatin1(kEUFieldObjectName), 0),
                               "EU operator ID field still visible in FAA region", 2000);
 
     faaField = _operatorIDTextField(QString::fromLatin1(kFAAFieldObjectName));

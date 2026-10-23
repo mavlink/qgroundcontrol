@@ -54,6 +54,10 @@ indent_style = space
 indent_size = 2
 end_of_line = lf
 
+# Windows scripts (.gitattributes checks them out with CRLF)
+[*.{bat,cmd,ps1}]
+end_of_line = crlf
+
 # Python scripts
 [*.py]
 indent_style = space

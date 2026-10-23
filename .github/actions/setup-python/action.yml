@@ -3,7 +3,7 @@ description: Setup Python with uv for fast dependency installation
 
 inputs:
   groups:
-    description: 'Dependency groups to install (comma-separated: scripts, precommit, test, ci, qt, coverage, build, lint, dev, all)'
+    description: 'Dependency groups to install (comma-separated: scripts, precommit, test, qt, coverage, build, lint, terrain, release, dev, all)'
     required: false
     default: 'scripts'
   python-version:
@@ -14,31 +14,13 @@ inputs:
 runs:
   using: composite
   steps:
-    # JavaScript actions receive runner-injected URLs that can override the
-    # shell environment. RunsOn < 3.1 does this on Windows despite the S3 flag.
+    # The runner injects the cache URLs that cache actions use into JavaScript actions only, where
+    # they can override the shell environment (RunsOn < 3.1 on Windows), so the probe runs with a
+    # JavaScript action's environment rather than in a shell step.
     - name: Detect Actions cache backend
       uses: actions/github-script@v9
       with:
-        script: |
-          const env = process.env;
-          let backend = 'github';
-          if (env.RUNS_ON_RUNNER_NAME && env.RUNS_ON_S3_BUCKET_CACHE) {
-            try {
-              const endpoint = new URL(env.ACTIONS_RESULTS_URL);
-              const original = new URL(env.ZCTIONS_RESULTS_URL);
-              if (['http:', 'https:'].includes(endpoint.protocol) &&
-                  original.protocol === 'https:' && endpoint.origin !== original.origin) {
-                backend = 's3';
-              }
-            } catch {
-              // Missing/invalid proxy metadata keeps GitHub's storage limits.
-            }
-            if (backend !== 's3') {
-              core.warning('RunsOn S3 cache routing is inactive; using GitHub cache limits. Windows requires RunsOn >= 3.1.');
-            }
-          }
-          core.exportVariable('QGC_ACTIONS_CACHE_BACKEND', backend);
-          core.info(`Actions cache backend: ${backend}`);
+        script: await exec.exec('python3', ['tools/ci/cache/cache_backend.py'])
 
     - name: Setup uv and Python ${{ inputs.python-version }}
       uses: astral-sh/setup-uv@v10.2.0
@@ -48,25 +30,14 @@ runs:
         cache-python: ${{ env.QGC_ACTIONS_CACHE_BACKEND == 's3' }}
         cache-dependency-glob: tools/uv.lock
         python-version: ${{ inputs.python-version }}
+        # Installs exactly the required-version floor, matching install_uv.py and the Docker image.
+        version-file: tools/pyproject.toml
+        resolution-strategy: lowest
 
+    # install_python.py also adds the environment's bin/Scripts directory to GITHUB_PATH.
     - name: Install dependencies
       shell: bash
       env:
         GROUPS: ${{ inputs.groups }}
       run: |
         uv run --no-project python tools/setup/install_python.py "$GROUPS"
-
-    - name: Add venv to PATH
-      shell: bash
-      run: | # zizmor: ignore[github-env] writes fixed runner workspace .venv path to PATH; not attacker-controllable
-        if [[ "$RUNNER_OS" == "Windows" ]]; then
-          echo "$GITHUB_WORKSPACE/tools/.venv/Scripts" >> "$GITHUB_PATH"
-        else
-          echo "$GITHUB_WORKSPACE/tools/.venv/bin" >> "$GITHUB_PATH"
-        fi
-
-    # Mirrors step-debug toggle; tools/_bootstrap.py picks this up and enables faulthandler + ::error:: hooks.
-    - name: Enable QGC_CI_DEBUG when runner debug logging is on
-      if: runner.debug == '1'
-      shell: bash
-      run: echo "QGC_CI_DEBUG=1" >> "$GITHUB_ENV"

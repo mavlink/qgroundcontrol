@@ -44,6 +44,8 @@ constexpr int kRecordFrames = 15;
 constexpr int kMinRecordedFrames = 5;
 constexpr uint32_t kWatchdogTimeoutSec = 5;
 constexpr int kRestartCycles = 2;
+// An unfixed udpsrc corrupts the heap in most runs of a few thousand cycles; each takes well under a millisecond.
+constexpr int kImmediateStopCycles = 10000;
 // Receiver reconnect backoff: the first retry follows a failure after 1 s, the second 2 s after that.
 constexpr qint64 kFirstReconnectDelayMs = 1000;
 constexpr qint64 kSecondReconnectDelayMs = 2000;
@@ -339,6 +341,20 @@ void GstVideoReceiverTest::_testStopAfterUriClearedTearsDown()
              "Stopped receiver still holds its UDP port");
 }
 
+void GstVideoReceiverTest::_testUdpSourceStopsRightAfterPlaying()
+{
+    // The receiver's UDP sources are udpsrc. Leaving PLAYING while its streaming thread still clears the previous
+    // unlock used to cancel a freed GCancellable and corrupt the heap; GStreamer::completeInit() serializes the two.
+    // Downstream elements delay the source's own state change and hide the race, so the source runs bare.
+    for (int cycle = 0; cycle < kImmediateStopCycles; ++cycle) {
+        GstTest::TestPipeline pipeline;
+        QVERIFY2(pipeline.launch(QStringLiteral("udpsrc address=127.0.0.1 port=0 ! fakesink")),
+                 qPrintable(pipeline.error()));
+        QVERIFY(pipeline.play());
+        QCOMPARE(gst_element_set_state(pipeline.get(), GST_STATE_NULL), GST_STATE_CHANGE_SUCCESS);
+    }
+}
+
 void GstVideoReceiverTest::_testFailedStartLeavesCleanState()
 {
     QUdpSocket portBlocker;
@@ -496,6 +512,24 @@ void GstVideoReceiverTest::_testDestroyWhileRecordingFinalizesFile()
 
     const QString problem = recordingProblem(path);
     QVERIFY2(problem.isEmpty(), qPrintable(problem));
+}
+
+void GstVideoReceiverTest::_testDestroyBeforeFirstFrameDropsRecording()
+{
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    StreamingReceiver stream;
+    QVERIFY(stream.start());
+
+    // Nothing is sent, so the recording never gets a frame. Draining it at teardown would hand splitmuxsink an EOS
+    // without buffers, which the stream's first frames can still follow (splitmuxsink 1.24 aborts on them).
+    const QString path = tempDir.filePath(QStringLiteral("empty.mp4"));
+    stream.receiver->startRecording(path, VideoReceiver::FILE_FORMAT_MP4);
+    QVERIFY_SIGNAL_COUNT_WAIT(stream.startRecordingSpy, 1, TestTimeout::mediumMs());
+    QCOMPARE(lastStatus(stream.startRecordingSpy), VideoReceiver::STATUS_OK);
+
+    stream.receiver.reset();
+    QVERIFY2(!QFile::exists(path), "A recording that got no frame left a file behind");
 }
 
 void GstVideoReceiverTest::_testSecondRecordingIsNotTruncated()

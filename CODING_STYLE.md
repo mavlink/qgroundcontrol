@@ -197,8 +197,8 @@ if (param.isEmpty()) {
 // Declare in header
 Q_DECLARE_LOGGING_CATEGORY(MyComponentLog)
 
-// Define in source (use QGC macro for runtime configuration)
-QGC_LOGGING_CATEGORY(MyComponentLog, "qgc.component.name")
+// Define in source (use QGC macro for runtime configuration); name it "<Area>.<Class>"
+QGC_LOGGING_CATEGORY(MyComponentLog, "Vehicle.MyComponent")
 
 qCDebug(MyComponentLog) << "download(): fromURI:" << fromURI; // Wrong - redundant function name prefix
 qCDebug(MyComponentLog) << "fromURI:" << fromURI;             // Correct
@@ -308,7 +308,7 @@ Connections {
     }
 }
 
-// DEPRECATED - Old Qt5 syntax (triggers pre-commit warning)
+// DEPRECATED - Old Qt5 syntax (the qmllint pre-commit hook warns)
 Connections {
     target: vehicle
     onArmedChanged: { }  // Don't use this
@@ -318,14 +318,15 @@ Connections {
 ## Common Pitfalls
 
 1. **Assuming single vehicle** - Always null-check `activeVehicle()`
-2. **Accessing Facts before ready** - Wait for `parametersReady` signal
+2. **Accessing Facts before ready** - Wait for `ParameterManager::parametersReady` (`parametersReadyChanged`)
 3. **Bypassing FirmwarePlugin** - Use plugin for firmware-specific behavior
 4. **Using Q_ASSERT in production** - Use defensive checks instead
 5. **Mixing cookedValue/rawValue** - Understand the difference
 6. **Hardcoded QML sizes/colors** - Use ScreenTools and QGCPalette
-7. **Unity-unsafe `.cc` files** - CI compiles QGC sources in unity batches, so file-local names (anonymous
-   namespace or `static`) must not repeat across files and project namespaces must not be opened with a file-scope
-   `using namespace`; otherwise mark the file `SKIP_UNITY_BUILD_INCLUSION` and reproduce with `-DQGC_UNITY_BUILD=ON`
+7. **Unity-unsafe `.cc` files** - CI compiles QGC sources in unity batches (`Linux-coverage`, `Linux-sanitizers`
+   and `iOS-simulator` presets), so file-local names (anonymous namespace or `static`) must not repeat across files
+   and project namespaces must not be opened with a file-scope `using namespace`; otherwise mark the file
+   `SKIP_UNITY_BUILD_INCLUSION` and reproduce with `-DQGC_UNITY_BUILD=ON`
 
 ### Examples
 
@@ -336,10 +337,12 @@ if (!vehicle) {
     return;
 }
 
-// Access parameters via Fact System
-Fact* param = vehicle->parameterManager()->getParameter(-1, "PARAM_NAME");
-if (param) {
-    param->setCookedValue(newValue);
+// Access parameters via Fact System. getParameter() never returns null: a missing parameter is
+// reported and yields a default Fact. Check parameterExists() first when the parameter may be
+// absent on this firmware/vehicle.
+ParameterManager* paramMgr = vehicle->parameterManager();
+if (paramMgr->parameterExists(ParameterManager::defaultComponentId, "PARAM_NAME")) {
+    paramMgr->getParameter(ParameterManager::defaultComponentId, "PARAM_NAME")->setCookedValue(newValue);
 }
 ```
 
@@ -351,20 +354,21 @@ enabled: vehicle && vehicle.armed
 
 ## Formatting Tools
 
-Formatting and static analysis are enforced via [.pre-commit-config.yaml](.pre-commit-config.yaml):
+Tool configuration:
 
-- `.clang-format` - C++ formatting
-- `.clang-tidy` - C++ static analysis
-- `.qmlformat.ini` - QML formatting
-- `.qmllint.ini` - QML linting
-- `.editorconfig` - Editor settings
+- `.clang-format` - C++ formatting (the `clang-format` pre-commit hook and `just format`/`format-fix` check changed regions)
+- `.clang-tidy` - C++ static analysis (`just analyze`)
+- `.qmlformat.ini` - QML formatting (`qmlformat`; the manual-stage `qmlformat` hook reports differences)
+- `.qmllint.ini` - QML linting (the `qmllint` pre-commit hook)
+- `.editorconfig` - Editor settings (the `editorconfig-checker` hook enforces them)
+- `tools/coding-style/CodingStyle.h`/`.cc` - Reference examples; the `clang-format-coding-style` hook checks them in full whenever `.clang-format`, `tools/uv.lock`, or those files change
 
 Do not run a formatter over an entire existing file as part of an otherwise focused change. Format only
 the lines or regions you modify and preserve the surrounding style; whole-file formatting creates unrelated
 diffs that make contributions harder to review. Put intentional broad formatting changes in a dedicated
 commit or pull request. Whole-file formatting is appropriate for new files.
 
-Run them with `just lint` (fast gate) or `pre-commit run --all-files` (full sweep); see
+Run the pre-commit hooks in [.pre-commit-config.yaml](.pre-commit-config.yaml) with `just lint`; see
 [tools/README.md](tools/README.md) for all commands.
 
 ## Additional Resources

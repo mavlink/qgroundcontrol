@@ -33,6 +33,7 @@
 #include "QGCImageProvider.h"
 #include "QGCLoggingCategory.h"
 #include "QGCLoggingCategoryManager.h"
+#include "QGCMapEngine.h"
 #include "QGCNetworkHelper.h"
 #include "QGCVersionCheck.h"
 #include "SettingsManager.h"
@@ -77,6 +78,10 @@ QGCApplication::QGCApplication(int& argc, char* argv[], const QGCCommandLinePars
         // Include test name or PID to prevent settings file conflicts when tests run in parallel
         if (!cli.unitTests.isEmpty()) {
             applicationName = QStringLiteral("%1_unittest_%2").arg(QGC_APP_NAME, cli.unitTests.first());
+            if (cli.unitTestShardIndex > 0) {
+                // Shards of one test also run in parallel
+                applicationName += QStringLiteral("_%1").arg(cli.unitTestShardIndex);
+            }
         } else {
             applicationName =
                 QStringLiteral("%1_unittest_%2").arg(QGC_APP_NAME).arg(QCoreApplication::applicationPid());
@@ -670,6 +675,10 @@ void QGCApplication::shutdown()
     }
 
     QGCCorePlugin::instance()->cleanup();
+
+    // Close the tile cache database while the application object exists (the map engine is otherwise
+    // destroyed after it) and before test runs remove the cache directory holding it.
+    QGCMapEngine::closeInstance();
 
     if (_runningUnitTests || _simpleBootTest) {
         const QSettings settings;
