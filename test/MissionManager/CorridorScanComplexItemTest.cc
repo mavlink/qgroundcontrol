@@ -294,6 +294,31 @@ void CorridorScanComplexItemTest::_testNoTransects()
     _waitForReadyForSave();
 }
 
+void CorridorScanComplexItemTest::_testEntryPointCameraTriggers()
+{
+    // Camera triggering starts at the entry and stops at the exit of every transect, from whichever end the
+    // scan starts (mavlink/qgroundcontrol#11758)
+    _corridorItem->turnAroundDistance()->setRawValue(0.0);
+    _corridorItem->cameraTriggerInTurnAround()->setRawValue(false);
+    _planViewSettings->useConditionGate()->setRawValue(false);
+    for (int entryLocation = 0; entryLocation < 4; ++entryLocation) {
+        QList<MissionItem*> items;
+        _corridorItem->appendMissionItems(items, this);
+
+        QList<bool> triggerStarts;
+        for (const MissionItem* item : items) {
+            if (item->command() == MAV_CMD_DO_SET_CAM_TRIGG_DIST) {
+                triggerStarts.append(item->param1() > 0.0);
+            }
+        }
+        QCOMPARE(triggerStarts.size(), _expectedTransectCount * 2);
+        for (qsizetype index = 0; index < triggerStarts.size(); ++index) {
+            QCOMPARE(triggerStarts[index], (index % 2) == 0);
+        }
+        _corridorItem->rotateEntryPoint();
+    }
+}
+
 void CorridorScanComplexItemTest::_testZeroWidthCorridor()
 {
     // Zero width is a single pass along the path; the area must stay valid so the item can be saved

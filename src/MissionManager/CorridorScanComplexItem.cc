@@ -416,7 +416,13 @@ void CorridorScanComplexItem::_rebuildTransectsPhase1(void)
         if (reverseVertices) {
             for (int i=0; i<_transects.count(); i++) {
                 QList<TransectStyleComplexItem::CoordInfo_t> reversedVertices;
-                for (const TransectStyleComplexItem::CoordInfo_t& vertex: _transects[i]) {
+                for (TransectStyleComplexItem::CoordInfo_t vertex : _transects[i]) {
+                    // Entry and exit follow the direction of travel, which camera triggering relies on
+                    if (vertex.coordType == CoordTypeSurveyEntry) {
+                        vertex.coordType = CoordTypeSurveyExit;
+                    } else if (vertex.coordType == CoordTypeSurveyExit) {
+                        vertex.coordType = CoordTypeSurveyEntry;
+                    }
                     reversedVertices.prepend(vertex);
                 }
                 _transects[i] = reversedVertices;

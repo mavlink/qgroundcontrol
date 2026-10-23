@@ -29,6 +29,7 @@ private slots:
     void _testMaxTransectCount();
     void _testClosedAndCrossingCorridors();
     void _testNoTransects();
+    void _testEntryPointCameraTriggers();
     void _testZeroWidthCorridor();
 
 private:
