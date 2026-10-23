@@ -97,6 +97,33 @@ runs:
         useCloudCache: true
         useLocalCache: false
 
+    # setup-gradle needs the java executable, which RunsOn's Windows image does not provide.
+    - name: Setup Java Environment
+      if: inputs.mode == 'android'
+      uses: actions/setup-java@v6
+      with:
+        distribution: temurin
+        java-version: ${{ steps.plan.outputs.java_version }}
+
+    # Gradle User Home (wrapper and dependencies) is cached only on RunsOn's S3 backend: in GitHub's
+    # size-limited cache it evicted the compiler caches (#14474). `basic` is the MIT actions/cache
+    # provider keyed on the Gradle build files; saves match cache_plan.py's auto policy. The post
+    # step re-evaluates these inputs without this action's inputs context, so use only env/github.
+    # Its key hashes every **/*.gradle* file under the workspace, following symlinks, so this runs
+    # after setup-python (which exports QGC_ACTIONS_CACHE_BACKEND) but before the CPM cache and Qt
+    # land there: Windows cannot stat android_openssl's per-ABI `include` directory symlinks
+    # (EPERM), and their Gradle files are not QGC's build inputs.
+    - name: Setup Gradle (Android)
+      if: inputs.mode == 'android'
+      uses: gradle/actions/setup-gradle@v6
+      with:
+        cache-disabled: ${{ env.QGC_ACTIONS_CACHE_BACKEND != 's3' }}
+        cache-provider: basic
+        cache-read-only: ${{ github.event_name == 'pull_request_target' }}
+        # The restored CPM cache under .cache/ contains SDL3's own (unlisted) Gradle wrapper jar.
+        # QGC's wrapper is validated on every PR by gradle/actions/wrapper-validation in dependency-review.yml.
+        validate-wrappers: false
+
     - name: Setup caching
       id: cache
       if: inputs.build-cache == 'true'
@@ -164,29 +191,6 @@ runs:
           mv "$git_link" "${git_link}.bak"
           echo "Renamed Git link.exe to prevent Rust linker conflict"
         fi
-
-    # setup-gradle needs the java executable, which RunsOn's Windows image does not provide.
-    - name: Setup Java Environment
-      if: inputs.mode == 'android'
-      uses: actions/setup-java@v6
-      with:
-        distribution: temurin
-        java-version: ${{ steps.plan.outputs.java_version }}
-
-    # Gradle User Home (wrapper and dependencies) is cached only on RunsOn's S3 backend: in GitHub's
-    # size-limited cache it evicted the compiler caches (#14474). `basic` is the MIT actions/cache
-    # provider keyed on the Gradle build files; saves match cache_plan.py's auto policy. The post
-    # step re-evaluates these inputs without this action's inputs context, so use only env/github.
-    - name: Setup Gradle (Android)
-      if: inputs.mode == 'android'
-      uses: gradle/actions/setup-gradle@v6
-      with:
-        cache-disabled: ${{ env.QGC_ACTIONS_CACHE_BACKEND != 's3' }}
-        cache-provider: basic
-        cache-read-only: ${{ github.event_name == 'pull_request_target' }}
-        # The restored CPM cache under .cache/ contains SDL3's own (unlisted) Gradle wrapper jar.
-        # QGC's wrapper is validated on every PR by gradle/actions/wrapper-validation in dependency-review.yml.
-        validate-wrappers: false
 
     # Off macOS the plan step pointed ANDROID_SDK_ROOT at $RUNNER_TEMP/android-sdk.
     - name: Setup Android Environment

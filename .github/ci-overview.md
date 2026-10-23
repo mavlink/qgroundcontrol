@@ -449,7 +449,9 @@ step leaves it out.
 - **Gradle**: Android jobs cache Gradle User Home through `setup-gradle`'s open-source `basic`
   provider, keyed on the Gradle build files, only on the S3 backend; on GitHub's cache it evicted
   compiler caches (#14474), so GitHub-hosted legs such as Android on macOS don't cache it. Saves
-  follow the `auto` policy, so pull requests save too.
+  follow the `auto` policy, so pull requests save too. The key hashes every `**/*.gradle*` file in
+  the workspace, so `build-setup` runs it before restoring the CPM cache and installing Qt: Windows
+  cannot stat `android_openssl`'s directory symlinks there, and those Gradle files aren't QGC's.
 - **pre-commit** restores prek's hook environments (`prek-v1-*`: `~/.cache/prek` without its download
   and build caches) keyed on `.pre-commit-config.yaml`, falling back to an earlier configuration's
   environments. prek installs only the environments of hooks that run, so a push that misses the
