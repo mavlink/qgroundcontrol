@@ -492,6 +492,46 @@ def test_verdict_for_skipped_cancelled_and_unapproved_runs(
     assert _verdict(comment).startswith(verdict)
 
 
+@pytest.mark.parametrize("real_failure", [False, True])
+def test_spot_interruptions_show_as_retrying_not_failed(tmp_path: Path, real_failure: bool) -> None:
+    env = write_scenario(tmp_path, "all-passed")
+    status_path = tmp_path / "build-status.json"
+    status = json.loads(status_path.read_text())
+    interrupted = {
+        **_job("Test + Coverage linux_gcc_64 Debug", 9901, 2, conclusion="failure"),
+        "failed_steps": [
+            {"name": "Run and report tests", "number": 14, "url": f"{RUNS}/9901/job/2#step:14:1"}
+        ],
+        "interrupted": True,
+    }
+    jobs = [interrupted, _job("Linux", 9901, 5, conclusion="failure", seconds=4)]
+    if real_failure:
+        jobs.insert(1, _job("Release linux_gcc_64", 9901, 3, conclusion="failure"))
+    status["platforms"][0] = _workflow(
+        "Linux", "failure" if real_failure else "interrupted", 9901, seconds=1655, jobs=tuple(jobs)
+    )
+    status_path.write_text(json.dumps(status))
+
+    comment = generate_comment(env, tmp_path, now_utc=NOW)
+
+    if real_failure:
+        assert _verdict(comment).startswith("❌ **1 workflow failed**")
+        assert "### 🔁 Spot interruptions" not in comment
+        # The interrupted leg is still named for what happened to it.
+        assert "Test + Coverage linux\\_gcc\\_64 Debug: AWS reclaimed its Spot instance" in comment
+    else:
+        assert _verdict(comment).startswith("🔁 **Retrying after a Spot interruption**")
+        assert _verdict(comment).endswith("4 of 5 platform workflows done (1 retrying)")
+        assert "| Linux | 🔁 Retrying |" in comment
+        assert "### ❌ Failures" not in comment
+        section = comment.split("### 🔁 Spot interruptions", 1)[1]
+        assert (
+            "**Linux** · Test + Coverage linux\\_gcc\\_64 Debug: AWS reclaimed its Spot instance"
+            in section
+        )
+        assert "Release linux" not in section
+
+
 def test_failures_list_failed_steps_tests_and_hooks_first(tmp_path: Path) -> None:
     comment = generate_comment(write_scenario(tmp_path, "failures"), tmp_path, NOW)
     failures = comment.index("### ❌ Failures")

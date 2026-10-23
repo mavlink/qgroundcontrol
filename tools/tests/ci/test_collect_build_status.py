@@ -297,6 +297,7 @@ def test_summarize_job_links_failed_steps() -> None:
         "failed_steps": [
             {"name": "Build", "number": 2, "url": "https://example.test/job/Build x64#step:2:1"}
         ],
+        "interrupted": False,
     }
 
 
@@ -333,6 +334,82 @@ def test_workflow_state(
 ) -> None:
     summaries = [mod.summarize_job(_job(name, conclusion)) for name, conclusion in jobs]
     assert mod.workflow_state(run, summaries, "Linux") == state
+
+
+SPOT_MESSAGE = (
+    "AWS interrupted the EC2 Spot instance running this job. "
+    "RunsOn can retry it after the workflow run finishes."
+)
+
+
+@pytest.mark.parametrize(
+    ("attempt", "legs", "state"),
+    [
+        # RunsOn re-runs a run's failed jobs after attempts 1 and 2.
+        (1, [("Test + Coverage", True)], "interrupted"),
+        (2, [("Test + Coverage", True), ("Sanitizers", True)], "interrupted"),
+        (3, [("Test + Coverage", True)], "failure"),
+        # Any real failure still fails the workflow.
+        (1, [("Test + Coverage", True), ("Sanitizers", False)], "failure"),
+    ],
+)
+def test_spot_interrupted_legs_are_retried_not_failed(
+    attempt: int, legs: list[tuple[str, bool]], state: str
+) -> None:
+    run = {"status": "completed", "conclusion": "failure", "run_attempt": attempt}
+    jobs = [
+        mod.summarize_job(_job(name, "failure"), interrupted=interrupted)
+        for name, interrupted in legs
+    ]
+    gate = mod.summarize_job(_job("Linux", "failure"))
+    assert mod.workflow_state(run, [*jobs, gate], "Linux") == state
+
+
+@pytest.mark.parametrize(
+    ("job", "annotations", "interrupted"),
+    [
+        ({"runner_name": "runs-on--i-08d32d4b0abdf21f6--3dd981cf-0"}, [SPOT_MESSAGE], True),
+        ({"runner_name": "runs-on--i-08d32d4b0abdf21f6--3dd981cf-0"}, ["exit code 1"], False),
+        # GitHub-hosted runners and passing jobs are never queried.
+        ({"runner_name": "GitHub Actions 1000369208"}, [SPOT_MESSAGE], False),
+        ({"runner_name": "runs-on--i-0", "conclusion": "success"}, [SPOT_MESSAGE], False),
+    ],
+)
+def test_spot_interruption_comes_from_runs_on_job_annotations(
+    monkeypatch: pytest.MonkeyPatch,
+    job: dict[str, str],
+    annotations: list[str],
+    interrupted: bool,
+) -> None:
+    queried: list[str] = []
+
+    def api(path: str) -> list[dict[str, str]]:
+        queried.append(path)
+        return [{"annotation_level": "failure", "message": message} for message in annotations]
+
+    monkeypatch.setattr(mod, "gh_api_json", api)
+    run_job: dict[str, object] = {"id": 120539898115, "conclusion": "failure", **job}
+    assert mod.spot_interrupted("mavlink/qgroundcontrol", run_job) is interrupted
+    expected = (
+        job["runner_name"].startswith("runs-on--") and job.get("conclusion", "failure") == "failure"
+    )
+    assert queried == (
+        ["repos/mavlink/qgroundcontrol/check-runs/120539898115/annotations"] if expected else []
+    )
+
+
+def test_unreadable_annotations_leave_a_failure_failed(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    def fail(path: str) -> None:
+        raise RuntimeError("API down")
+
+    monkeypatch.setattr(mod, "gh_api_json", fail)
+    job = {"id": 1, "name": "Build", "conclusion": "failure", "runner_name": "runs-on--i-0"}
+    assert not mod.spot_interrupted("owner/repo", job)
+    assert (
+        "::warning::Cannot read the annotations of job Build: API down" in capsys.readouterr().out
+    )
 
 
 def test_status_out_describes_platforms_precommit_and_analysis(

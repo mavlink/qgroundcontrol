@@ -721,20 +721,25 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   workflows and their failures show while others still run; the last one to complete renders the
   final state. `collect_build_status.py` (stdlib only, before Python dependencies install) writes
   each workflow's state, duration, and jobs, with failed-step log links, from one jobs-API call per
-  run (`--status-out`), including Code Analysis, which is not a trigger. The job then downloads,
+  run (`--status-out`), including Code Analysis, which is not a trigger. A failed job on a RunsOn
+  runner also has its annotations read: RunsOn fails a job whose Spot instance AWS reclaimed and
+  re-runs the run's failed jobs once it completes (after attempts 1 and 2), so a workflow whose only
+  failed legs were interrupted is `interrupted` rather than `failure`. The job then downloads,
   with `download_artifacts.py` (one directory per artifact plus a manifest naming its workflow),
   the completed runs' test results, coverage, and artifact sizes, the pre-commit results, and Code
   Analysis's per-tool `*-timings.json` and `*-diagnostics.json`; runs still in progress are
   skipped. Missing diagnostic artifacts are allowed (`--allow-missing`) when tests did not run, but
   platform download failures fail the job. The comment is also the job summary.
 - The comment (`generate_build_results_comment.py`) leads with a verdict (✅ passed, ❌ failed,
-  ⏳ in progress, 🚫 cancelled, ⏭️ nothing to build), the linked head commit, and how many
-  platform workflows are done, pending, or skipped by change detection (every build job skipped).
+  🔁 retrying after a Spot interruption, ⏳ in progress, 🚫 cancelled, ⏭️ nothing to build), the
+  linked head commit, and how many platform workflows are done, pending, retrying, or skipped by
+  change detection (every build job skipped).
   A table gives each workflow's status, duration, test or hook counts, artifact size with its
   change from the PR base, and run link. A Failures section follows when anything failed: each
   failed job with links to its failing steps' logs, failed tests with their first report lines
   (QtTest `FAIL!` blocks, sanitizer reports, else the output tail) from the JUnit XML, and failed
-  pre-commit hooks. Collapsed sections cover per-suite test results, the slowest tests, coverage
+  pre-commit hooks; a Spot interruptions section lists the jobs RunsOn will re-run. Collapsed
+  sections cover per-suite test results, the slowest tests, coverage
   (lines, functions, branches, with changes in percentage points), artifact sizes (⚠️ above 1%
   and 1 MiB growth), pre-commit counts, and Code Analysis unique warnings (a header's warning
   counts once however many units and shards include it) with the most frequent checks and the files

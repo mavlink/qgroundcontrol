@@ -24,6 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import _bootstrap as _bootstrap
 from common.gh_actions import (
+    gh_api_json,
     gh_warning,
     list_run_jobs,
     list_workflow_runs_for_sha,
@@ -46,6 +47,10 @@ _FAILED_CONCLUSIONS = {"failure", "timed_out", "startup_failure"}
 # Jobs that run even when change detection skips every build: the planners and the
 # `<workflow>-ok` gate, which is named after its workflow.
 _PLANNER_JOB = re.compile(r"(?i)detect changes|^plan\b")
+# RunsOn fails a job whose EC2 Spot instance AWS reclaimed, annotating it with this message, and re-runs
+# the run's failed jobs once it completes after attempts 1 and 2; attempt 3 is final.
+_SPOT_INTERRUPTION = "AWS interrupted the EC2 Spot instance"
+_RUNS_ON_FINAL_ATTEMPT = 3
 
 
 def _seconds_between(start: Any, end: Any) -> float | None:
@@ -56,7 +61,24 @@ def _seconds_between(start: Any, end: Any) -> float | None:
     return (finished - started).total_seconds()
 
 
-def summarize_job(job: dict[str, Any]) -> dict[str, Any]:
+def spot_interrupted(repo: str, job: dict[str, Any]) -> bool:
+    """Whether RunsOn failed this job because AWS reclaimed its Spot instance."""
+    if job.get("conclusion") not in _FAILED_CONCLUSIONS:
+        return False
+    if not str(job.get("runner_name") or "").startswith("runs-on--"):
+        return False
+    try:
+        annotations = gh_api_json(f"repos/{repo}/check-runs/{int(job['id'])}/annotations")
+    except Exception as exc:
+        gh_warning(f"Cannot read the annotations of job {job.get('name')}: {exc}")
+        return False
+    return isinstance(annotations, list) and any(
+        isinstance(annotation, dict) and _SPOT_INTERRUPTION in str(annotation.get("message", ""))
+        for annotation in annotations
+    )
+
+
+def summarize_job(job: dict[str, Any], *, interrupted: bool = False) -> dict[str, Any]:
     """Return a job's state, duration, and failed steps with direct log links."""
     url = str(job.get("html_url", ""))
     failed_steps = [
@@ -75,6 +97,7 @@ def summarize_job(job: dict[str, Any]) -> dict[str, Any]:
         "url": url,
         "duration_seconds": _seconds_between(job.get("started_at"), job.get("completed_at")),
         "failed_steps": failed_steps,
+        "interrupted": interrupted,
     }
 
 
@@ -87,7 +110,11 @@ def skipped_by_change_detection(workflow: str, jobs: list[dict[str, Any]]) -> bo
 
 
 def workflow_state(run: dict[str, Any] | None, jobs: list[dict[str, Any]], name: str) -> str:
-    """Classify a run as success, failure, cancelled, skipped, running, pending, or action_required."""
+    """Classify a run as success, failure, interrupted, cancelled, skipped, running, pending, or
+    action_required.
+
+    `interrupted`: every failed leg lost its Spot instance and RunsOn will re-run them.
+    """
     if not run:
         return "pending"
     status = str(run.get("status", ""))
@@ -102,6 +129,16 @@ def workflow_state(run: dict[str, Any] | None, jobs: list[dict[str, Any]], name:
         return conclusion
     if conclusion in {"skipped", "neutral"}:
         return "skipped"
+    # The <workflow>-ok gate fails with its legs.
+    failed = [
+        job for job in jobs if job["conclusion"] in _FAILED_CONCLUSIONS and job["name"] != name
+    ]
+    if (
+        failed
+        and all(job.get("interrupted") for job in failed)
+        and int(run.get("run_attempt") or 1) < _RUNS_ON_FINAL_ATTEMPT
+    ):
+        return "interrupted"
     return "failure"
 
 
@@ -118,7 +155,10 @@ def describe_workflow(repo: str, name: str, run: dict[str, Any] | None) -> dict[
     jobs: list[dict[str, Any]] = []
     if run and int(run.get("id", 0)) > 0:
         try:
-            jobs = [summarize_job(job) for job in list_run_jobs(repo, int(run["id"]))]
+            jobs = [
+                summarize_job(job, interrupted=spot_interrupted(repo, job))
+                for job in list_run_jobs(repo, int(run["id"]))
+            ]
         except Exception as exc:
             gh_warning(f"Cannot list the jobs of {name} run {run.get('id')}: {exc}")
     return {
