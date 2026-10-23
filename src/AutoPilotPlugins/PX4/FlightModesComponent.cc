@@ -20,7 +20,7 @@ QString FlightModesComponent::name(void) const
 
 QString FlightModesComponent::description(void) const
 {
-    return tr("Configure transmitter switch assignments and flight mode selection.");
+    return tr("Choose how the pilot selects flight modes, and what each transmitter switch does.");
 }
 
 QString FlightModesComponent::iconResource(void) const
@@ -36,20 +36,4 @@ QUrl FlightModesComponent::setupSource(void) const
 QUrl FlightModesComponent::summaryQmlSource(void) const
 {
     return QUrl::fromUserInput("qrc:/qml/QGroundControl/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml");
-}
-
-QStringList FlightModesComponent::sectionIds() const
-{
-    return { QStringLiteral("Flight Modes"), QStringLiteral("Switch Settings") };
-}
-
-QString FlightModesComponent::sectionDisplayName(const QString& sectionId) const
-{
-    if (sectionId == QStringLiteral("Flight Modes")) {
-        return tr("Flight Modes");
-    }
-    if (sectionId == QStringLiteral("Switch Settings")) {
-        return tr("Switch Settings");
-    }
-    return sectionId;
 }

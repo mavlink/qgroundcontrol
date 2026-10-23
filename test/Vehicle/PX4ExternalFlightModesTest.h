@@ -8,4 +8,5 @@ class PX4ExternalFlightModesTest : public UnitTest
 
 private slots:
     void _externalModeSelectableOnMultiRotor();
+    void _externalModeNameFromAvailableModes();
 };

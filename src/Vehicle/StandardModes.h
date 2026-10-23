@@ -26,6 +26,8 @@ public:
 
     void request();
 
+    const FlightModeList& modeList() const { return _modeList; }
+
     void availableModesMonitorReceived(uint8_t seq);
 
     void gotMessage(MAV_RESULT result, VehicleTypes::RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t &message);

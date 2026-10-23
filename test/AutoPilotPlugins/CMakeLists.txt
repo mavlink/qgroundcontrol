@@ -13,6 +13,8 @@ target_sources(
         PX4/FailureInjectionTest.h
         PX4/PX4BatteryControllerTest.cc
         PX4/PX4BatteryControllerTest.h
+        PX4/PX4FlightModesControllerTest.cc
+        PX4/PX4FlightModesControllerTest.h
         PX4/PX4SerialPortConfigTest.cc
         PX4/PX4SerialPortConfigTest.h
         PX4/PX4SerialPortsControllerTest.cc
@@ -25,5 +27,6 @@ add_qgc_test(AirframeComponentAirframesTest LABELS Unit)
 add_qgc_test(APMFreshFlashParamsTest LABELS Integration Vehicle TIMEOUT ${QGC_TEST_TIMEOUT_EXTENDED})
 add_qgc_test(FailureInjectionTest LABELS Unit)
 add_qgc_test(PX4BatteryControllerTest LABELS Integration Vehicle StockUI)
+add_qgc_test(PX4FlightModesControllerTest LABELS Integration Vehicle)
 add_qgc_test(PX4SerialPortConfigTest LABELS Unit)
 add_qgc_test(PX4SerialPortsControllerTest LABELS Integration Vehicle StockUI)

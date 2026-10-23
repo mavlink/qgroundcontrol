@@ -69,6 +69,12 @@ public:
 
     void                updateAvailableFlightModes      (FlightModeList &modeList) override;
 
+    /// Number of PX4 External Mode slots. PX4FirmwarePlugin.cc checks it against px4_custom_mode.h.
+    static constexpr int kExternalFlightModeCount = 8;
+
+    /// Name a vehicle's AVAILABLE_MODES list gives an External Mode (1-based), empty if no mode is registered there
+    static QString externalFlightModeName(const FlightModeList& modeList, int externalIndex);
+
 private slots:
     void _mavCommandResult(quint32 vehicleId, int component, int command, int result, int failureCode);
 

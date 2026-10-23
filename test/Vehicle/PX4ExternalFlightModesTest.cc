@@ -26,4 +26,37 @@ void PX4ExternalFlightModesTest::_externalModeSelectableOnMultiRotor()
     QVERIFY(plugin.flightModes(&vehicle).contains(QStringLiteral("Cage (Autonomous)")));
 }
 
+// The Flight Modes page labels PX4's "External Mode N" choices with the name a registered mode reports in
+// AVAILABLE_MODES, read from that vehicle's own mode list rather than the firmware plugin shared by all vehicles
+void PX4ExternalFlightModesTest::_externalModeNameFromAvailableModes()
+{
+    px4_custom_mode ext2{};
+    ext2.main_mode = PX4_CUSTOM_MAIN_MODE_AUTO;
+    ext2.sub_mode = PX4_CUSTOM_SUB_MODE_EXTERNAL2;
+    px4_custom_mode ext3 = ext2;
+    ext3.sub_mode = PX4_CUSTOM_SUB_MODE_EXTERNAL3;
+    px4_custom_mode ext4 = ext2;
+    ext4.sub_mode = PX4_CUSTOM_SUB_MODE_EXTERNAL4;
+
+    // PX4 names each external slot with no registered mode "(Mode not available)", which QGC then numbers to keep the
+    // names unique
+    FlightModeList modeList = {
+        FirmwareFlightMode{QStringLiteral("Position"), 1, PX4CustomMode::POSCTL_POSCTL, true, false, true, true},
+        FirmwareFlightMode{QStringLiteral("Survey Assist"), 0, ext2.data, true, false, true, true},
+        FirmwareFlightMode{QStringLiteral("(Mode not available)"), 0, ext3.data, true, false, true, true},
+        FirmwareFlightMode{QStringLiteral("(Mode not available) (1)"), 0, ext4.data, true, false, true, true},
+    };
+    const FlightModeList otherVehicleModeList = {
+        FirmwareFlightMode{QStringLiteral("Inspection"), 0, ext2.data, true, false, true, true},
+    };
+
+    QCOMPARE(PX4FirmwarePlugin::externalFlightModeName(modeList, 2), QStringLiteral("Survey Assist"));
+    QCOMPARE(PX4FirmwarePlugin::externalFlightModeName(otherVehicleModeList, 2), QStringLiteral("Inspection"));
+    QVERIFY(PX4FirmwarePlugin::externalFlightModeName(modeList, 1).isEmpty());
+    QVERIFY(PX4FirmwarePlugin::externalFlightModeName(modeList, 3).isEmpty());
+    QVERIFY(PX4FirmwarePlugin::externalFlightModeName(modeList, 4).isEmpty());
+    QVERIFY(PX4FirmwarePlugin::externalFlightModeName(modeList, 0).isEmpty());
+    QVERIFY(PX4FirmwarePlugin::externalFlightModeName(modeList, 9).isEmpty());
+}
+
 UT_REGISTER_TEST(PX4ExternalFlightModesTest, TestLabel::Unit, TestLabel::Vehicle)

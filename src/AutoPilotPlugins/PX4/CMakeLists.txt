@@ -35,6 +35,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         PX4FailsafesComponent.h
         PX4FlightBehavior.cc
         PX4FlightBehavior.h
+        PX4FlightModesController.cc
+        PX4FlightModesController.h
         PX4RadioComponent.cc
         PX4RadioComponent.h
         PX4SerialPortConfig.cc
@@ -43,8 +45,6 @@ target_sources(${CMAKE_PROJECT_NAME}
         PX4SerialPortsComponent.h
         PX4SerialPortsController.cc
         PX4SerialPortsController.h
-        PX4SimpleFlightModesController.cc
-        PX4SimpleFlightModesController.h
         PX4TuningComponent.cc
         PX4TuningComponent.h
         SafetyComponent.cc
@@ -146,6 +146,7 @@ qt_add_qml_module(AutoPilotPluginsPX4Module
         PX4FailsafeRows.js
         PX4FailsafesComponent.qml
         PX4FlightBehaviorCopter.qml
+        PX4FlightModeRows.js
         PX4FlightModes.qml
         PX4RadioComponentSummary.qml
         PX4SerialPortsComponent.qml

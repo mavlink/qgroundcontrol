@@ -11,34 +11,59 @@ In order to set up flight modes you must already have
 
 To access this section, select the **Gear** icon (Vehicle Setup) in the top toolbar and then **Flight Modes** in the sidebar.
 
-## Flight Mode Settings
+The page only shows settings the connected vehicle has, and only those that apply to its type.
+It is designed for PX4 1.17 or later. Older firmware shows only the settings it has.
+The choices, units and limits of each setting come from the vehicle's parameter metadata.
+Changes are written to the vehicle immediately.
 
-The screen allows you to specify a "mode" channel and select up to 6 flight modes that will be activated based on the value sent on the channel.
-You can also assign a small number of channels to trigger particular actions, such as deploying landing gear, or emergency shutdown (kill switch).
+The top of the page shows the manual control source (`COM_RC_IN_MODE`).
+When it does not use RC input, the mode channel and switches have no effect.
+A warning also appears when two functions on the same RC channel can be on at the same time, such as a switch on a stick channel, or two switches with the same threshold.
+Two switches can share a channel when their thresholds split it, for example one on when the switch is low and the other when it is high.
 
-The steps are:
+## Mode Selection
+
+- **Selection method** — how the pilot selects one of six mode slots:
+  - **Switch channel**: the position of one channel (`RC_MAP_FLTMODE`) selects the slot.
+  - **Buttons**: each momentary button channel (`RC_MAP_FLTM_BTN`) selects a slot, lowest channel first. PX4 uses up to six.
+  - **None**: modes are not selected from RC.
+
+  PX4 ignores the buttons while a mode channel is set, so choosing a method clears the other.
+
+- **Mode slots** — the flight mode for each slot (`COM_FLTMODE1` to `COM_FLTMODE6`).
+  With a switch channel, each slot shows its PWM range and a live bar shows where the channel is.
+  With buttons, each slot shows its button channel.
+  The active slot is highlighted.
+  External modes are shown by the name the vehicle reports for them.
+  External mode slots with no mode registered are not offered, unless the slot is already selected, when it is marked _not running_.
+
+  ::: info
+  Position mode, return mode and mission mode [are recommended](https://docs.px4.io/main/en/config/flight_mode.html#what-flight-modes-and-switches-should-i-set).
+  :::
+
+- **Mode on boot** — the mode set at power-up (PX4 1.18 and later).
+
+## Switches
+
+Channels that trigger particular actions, such as _Return_, _Kill_ or landing gear.
+Each switch shows its channel and threshold, and the live switch position once it is assigned.
+The threshold is a fraction of the channel range: the switch is on above it, or below it when the threshold is negative.
+_Flight termination_ cannot be undone until the vehicle reboots.
+
+## Stick Gestures, Position Slow Mode and Pilot Takeover
+
+- **Stick Gestures** — arming and disarming with the sticks, and the kill gesture.
+- **Position Slow Mode** — speed limits for multicopter Position Slow mode, and the AUX knobs that scale a speed in flight from its minimum up to the normal manual limit. The speed limits apply when no knob is assigned.
+- **Pilot Takeover** — the stick override that switches an automatic mode to Position when the pilot moves the sticks.
+
+Select **Assigned** to hide switches and options that are not in use.
+
+## Testing
 
 1. Turn on your RC transmitter.
-1. Select the **Gear** icon (Vehicle Setup) in the top toolbar and then **Flight Modes** in the sidebar.
-
-1. Specify _Flight Mode Settings_:
-
-   - Select the transmitter **Mode channel** (shown as Channel 5 above).
-   - Select up to six **Flight Modes** for switch positions encoded in the channel.
-
-     ::: info
-     Position mode, return mode and mission mode [are recommended](https://docs.px4.io/main/en/config/flight_mode.html#what-flight-modes-and-switches-should-i-set).
-     :::
-
-1. Specify _Switch Settings_:
-
-   - Select the channels that you want to map to specific actions - _Kill switch_, landing gear, etc. (if you have spare switches and channels on your transmitter).
-
-1. Test that the modes are mapped to the right transmitter switches:
-   - Check the _Channel Monitor_ to confirm that each switch moves the expected channel.
-   - Select each mode switch on your transmitter in turn, and check that the desired flight mode is activated (the text turns yellow on _QGroundControl_ for the active mode).
-
-All values are automatically saved as they are changed.
+1. If a switch does not seem to respond, check on the [Radio](../setup_view/radio.md) page that it moves the expected channel.
+1. Select each mode switch position or button in turn, and check that the expected slot is highlighted.
+   Assigned switches show _On_ or _Off_ as they are moved.
 
 ## See Also
 
