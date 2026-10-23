@@ -16,6 +16,7 @@ private slots:
     void _polylineOffset_test();
     void _polylineBuffer_test();
     void _closedPolylineBuffer_test();
+    void _acuteCornerOffset_test();
     void _largeDistanceOffset_test();
 
     // Benchmarks (nanobench)

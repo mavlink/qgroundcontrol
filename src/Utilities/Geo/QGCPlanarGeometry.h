@@ -17,8 +17,9 @@ namespace QGCPlanarGeometry {
 [[nodiscard]] QList<QList<QLineF>> intersectLines(const QList<QLineF>& lines, const QPolygonF& polygon);
 
 /// Offsets a planar polygon by distance. Positive distances expand the polygon.
-/// Output winding matches the input. Multiple polygons can be returned when an inward offset
-/// separates a concave polygon.
+/// Corners sharper than 45 degrees are squared off rather than mitered, so the result stays near the
+/// requested distance. Output winding matches the input. Multiple polygons can be returned when an
+/// inward offset separates a concave polygon.
 [[nodiscard]] QList<QPolygonF> offsetPolygon(const QPolygonF& polygon, double distance);
 
 /// Builds a directed parallel path. Positive distances offset to the left of travel.

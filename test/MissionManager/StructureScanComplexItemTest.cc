@@ -145,6 +145,28 @@ void StructureScanComplexItemTest::_testLargeStandoffFlightPolygon()
     QCOMPARE(_structureScanItem->readyForSaveState(), VisualMissionItem::ReadyForSave);
 }
 
+void StructureScanComplexItemTest::_testAcuteStructureCorner()
+{
+    // The ~11 degree corner at the origin is squared off, which adds a flight path vertex (mavlink/qgroundcontrol#5917)
+    const QGeoCoordinate origin = TestFixtures::Coord::missionTestOrigin();
+    const QGeoCoordinate east = origin.atDistanceAndAzimuth(100.0, 90.0);
+    const QList<QGeoCoordinate> structure = {origin, east, east.atDistanceAndAzimuth(20.0, 0.0)};
+    _structureScanItem->cameraCalc()->distanceToSurface()->setRawValue(10.0);
+    _structureScanItem->structurePolygon()->appendVertices(structure);
+
+    QGCMapPolygon* flightPolygon = _structureScanItem->flightPolygon();
+    QCOMPARE(flightPolygon->count(), structure.count() + 1);
+    for (const QGeoCoordinate& vertex : flightPolygon->coordinateList()) {
+        QVERIFY(vertex.distanceTo(origin) < 30.0 || vertex.distanceTo(east) < 30.0 ||
+                vertex.distanceTo(structure.last()) < 30.0);
+    }
+
+    // Mission item count follows the flight path rather than the structure vertex count
+    QList<MissionItem*> items;
+    _structureScanItem->appendMissionItems(items, this);
+    QCOMPARE(items.count() - 1, _structureScanItem->lastSequenceNumber());
+}
+
 void StructureScanComplexItemTest::_testFlightPolygonOffsetFailure()
 {
     // Coincident vertices form a three vertex structure polygon which cannot be offset

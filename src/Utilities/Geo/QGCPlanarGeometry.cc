@@ -11,6 +11,8 @@ namespace {
 constexpr double maximumCoordinateScale = 1e14;
 constexpr double minimumCoordinateScale = 1e6;
 constexpr double miterLimit = 1000.0;
+// 1 / sin(22.5 degrees): polygon offset corners sharper than 45 degrees are squared off instead of mitered
+constexpr double polygonOffsetMiterLimit = 2.6131259297527531;
 constexpr double normalizedPointTolerance = 1.0 / maximumCoordinateScale;
 constexpr double intervalTolerance = 1e-12;
 constexpr double sideTestErrorFactor = 64.0 * std::numeric_limits<double>::epsilon();
@@ -418,7 +420,7 @@ QList<QPolygonF> QGCPlanarGeometry::offsetPolygon(const QPolygonF& polygon, doub
 
     const Clipper2Lib::Paths64 resultPaths =
         Clipper2Lib::InflatePaths({toClipperPath(ring, normalizer)}, normalizer.clipperDistance(distance),
-                                  Clipper2Lib::JoinType::Miter, Clipper2Lib::EndType::Polygon, miterLimit);
+                                  Clipper2Lib::JoinType::Miter, Clipper2Lib::EndType::Polygon, polygonOffsetMiterLimit);
     QList<QPolygonF> result = fromClipperPaths(resultPaths, normalizer);
     for (QPolygonF& resultPolygon : result) {
         alignPolygonStart(resultPolygon, ring.first());

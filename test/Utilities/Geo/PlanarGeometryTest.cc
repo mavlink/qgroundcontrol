@@ -300,6 +300,32 @@ void PlanarGeometryTest::_closedPolylineBuffer_test()
     QVERIFY(QGCPlanarGeometry::joinContours({}).isEmpty());
 }
 
+void PlanarGeometryTest::_acuteCornerOffset_test()
+{
+    // Mitering the ~11 degree corner at the origin would place a vertex about 10x the offset distance away
+    // (mavlink/qgroundcontrol#5917). It is squared off instead, adding one vertex.
+    const QPolygonF sliver = {{0.0, 0.0}, {100.0, 0.0}, {100.0, 20.0}};
+    constexpr double distance = 10.0;
+    const QList<QPolygonF> expanded = QGCPlanarGeometry::offsetPolygon(sliver, distance);
+    QCOMPARE(expanded.size(), 1);
+    QCOMPARE(expanded.first().size(), sliver.size() + 1);
+
+    // Corners of 45 degrees or more are still mitered, which reaches at most distance / sin(22.5 degrees)
+    const double maximumReach = distance * 2.62;
+    for (const QPointF& vertex : expanded.first()) {
+        double nearestDistance = std::numeric_limits<double>::infinity();
+        for (qsizetype index = 0; index < sliver.size(); ++index) {
+            const QLineF edge(sliver[index], sliver[(index + 1) % sliver.size()]);
+            const double edgeParameter = std::clamp(
+                QPointF::dotProduct(vertex - edge.p1(), edge.p2() - edge.p1()) / (edge.length() * edge.length()), 0.0,
+                1.0);
+            nearestDistance = (std::min) (nearestDistance, QLineF(vertex, edge.pointAt(edgeParameter)).length());
+        }
+        QVERIFY2(nearestDistance <= maximumReach,
+                 qPrintable(QStringLiteral("Offset vertex is %1 from the polygon").arg(nearestDistance)));
+    }
+}
+
 void PlanarGeometryTest::_largeDistanceOffset_test()
 {
     // Offsets far larger than the polygon extent are typical for structure scans of small structures

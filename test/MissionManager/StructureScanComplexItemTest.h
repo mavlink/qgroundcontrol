@@ -23,6 +23,7 @@ private slots:
     void _testSaveLoad();
     void _testItemCount();
     void _testLargeStandoffFlightPolygon();
+    void _testAcuteStructureCorner();
     void _testFlightPolygonOffsetFailure();
 
 private:
