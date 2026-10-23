@@ -294,7 +294,10 @@ assets are uploaded by hand.
 `ios_device` and `ios_simulator_x86_64` SDKs. The simulator stays on x86_64 because Qt's bundled FFmpeg
 has no arm64 simulator slice. Pull-request and branch builds remain unsigned. A release tag selects the
 Xcode App Store preset, imports an Apple Distribution certificate and provisioning profile, verifies the
-signed bundle, packages an IPA, and uploads it to TestFlight.
+signed bundle, packages an IPA, and uploads it to TestFlight. The job's `APPSTORE_RELEASE` requires every
+variable and secret below except the bundle ID; a tag without them builds the unsigned IPA, skips
+TestFlight with a notice, and does not fail (`ios_package.py package` verifies the signature only when
+`APPSTORE_RELEASE` is `true`).
 
 Configure these repository variables before publishing a tag:
 

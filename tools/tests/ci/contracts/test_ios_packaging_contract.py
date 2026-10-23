@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import plistlib
+import re
 import struct
 import subprocess
 import sys
@@ -157,9 +158,33 @@ def test_ios_workflow_builds_device_and_simulator_targets() -> None:
         "device",
         "simulator",
     ]
-    assert job["env"]["APPSTORE_RELEASE"] == (
-        "${{ matrix.target == 'device' && github.ref_type == 'tag' && "
-        "startsWith(github.ref_name, 'v') }}"
+    tag = (
+        "matrix.target == 'device' && github.ref_type == 'tag' && startsWith(github.ref_name, 'v')"
+    )
+    assert job["env"]["APPSTORE_TAG"] == f"${{{{ {tag} }}}}"
+    # A tag signs and uploads only with every App Store secret and variable the steps read.
+    release = " ".join(job["env"]["APPSTORE_RELEASE"].split())
+    assert release.startswith(f"${{{{ {tag} && ")
+    required = set(re.findall(r"(?:secrets|vars)\.APPSTORE_\w+", str(job["steps"])))
+    required.discard("vars.APPSTORE_BUNDLE_ID")  # defaulted in the job environment
+    assert required == {
+        "secrets.APPSTORE_API_PRIVATE_KEY",
+        "secrets.APPSTORE_CERTIFICATES_FILE_BASE64",
+        "secrets.APPSTORE_CERTIFICATES_PASSWORD",
+        "vars.APPSTORE_API_KEY_ID",
+        "vars.APPSTORE_ISSUER_ID",
+        "vars.APPSTORE_PROVISIONING_PROFILE_NAME",
+        "vars.APPSTORE_TEAM_ID",
+    }
+    assert set(release.removeprefix(f"${{{{ {tag} && ").removesuffix(" }}").split(" && ")) == {
+        f"{name} != ''" for name in required
+    }
+    skip = steps["Skip TestFlight without App Store signing"]
+    assert skip["if"] == "env.APPSTORE_TAG == 'true' && env.APPSTORE_RELEASE != 'true'"
+    assert skip["run"].startswith('echo "::notice::')
+    names = list(steps)
+    assert names.index("Skip TestFlight without App Store signing") < names.index(
+        "Import App Store signing certificate"
     )
     configure = steps["Configure"]["with"]
     assert configure["preset"] == (

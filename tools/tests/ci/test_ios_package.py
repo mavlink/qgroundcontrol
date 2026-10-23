@@ -20,8 +20,7 @@ def app(tmp_path, monkeypatch):
         (app / relative).mkdir(parents=True)
     (app / "Info.plist").write_bytes(plistlib.dumps({"CFBundleIdentifier": "org.test.qgc"}))
     monkeypatch.setenv("APPSTORE_BUNDLE_ID", "org.test.qgc")
-    monkeypatch.setenv("GITHUB_REF_TYPE", "tag")
-    monkeypatch.setenv("GITHUB_REF_NAME", "v1.0")
+    monkeypatch.setenv("APPSTORE_RELEASE", "true")
     return app
 
 
@@ -104,3 +103,23 @@ def test_successful_signed_package_preserves_ditto_contract(app, monkeypatch):
         str(Path(calls[-2][-1]).parent / "Payload"),
     ]
     assert calls[-1][0] == "unzip"
+
+
+@pytest.mark.parametrize("release", ["false", ""])
+def test_tag_without_app_store_release_packages_unsigned_bundle(app, monkeypatch, release):
+    """A version tag without the App Store secrets (APPSTORE_RELEASE false) skips signing checks."""
+    monkeypatch.setenv("GITHUB_REF_TYPE", "tag")
+    monkeypatch.setenv("GITHUB_REF_NAME", "v5.2.0")
+    monkeypatch.setenv("APPSTORE_RELEASE", release)
+    monkeypatch.setenv("APPSTORE_BUNDLE_ID", "different.id")
+    (app / "embedded.mobileprovision").unlink()
+    calls = []
+
+    def run(command, **kwargs):
+        calls.append(command)
+        if command[:2] == ["ditto", "-c"]:
+            Path(command[-1]).write_bytes(b"unsigned archive")
+
+    monkeypatch.setattr(ios_package.subprocess, "run", run)
+    assert ios_package.package(app).read_bytes() == b"unsigned archive"
+    assert not any(call[0] == "codesign" for call in calls)

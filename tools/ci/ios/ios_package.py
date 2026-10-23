@@ -76,9 +76,8 @@ def verify_bundle(app: Path, arch: str, *, signed: bool = False) -> None:
 
 def package(app: Path) -> Path:
     app = app.resolve()
-    signed = os.environ.get("GITHUB_REF_TYPE") == "tag" and os.environ.get(
-        "GITHUB_REF_NAME", ""
-    ).startswith("v")
+    # ios.yml sets APPSTORE_RELEASE for version tags that have the App Store signing secrets.
+    signed = os.environ.get("APPSTORE_RELEASE") == "true"
     verify_bundle(app, "arm64", signed=signed)
     output = app.with_suffix(".ipa")
     # ditto preserves Apple bundle metadata and signatures; publish only after ZIP validation.

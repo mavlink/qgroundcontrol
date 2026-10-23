@@ -69,8 +69,15 @@ jobs:
     env:
       PACKAGE: QGroundControl
       APPSTORE_BUNDLE_ID: ${{ vars.APPSTORE_BUNDLE_ID || 'org.mavlink.qgroundcontrol' }}
-      # Version tags sign the device build for the App Store and upload it to TestFlight.
-      APPSTORE_RELEASE: ${{ matrix.target == 'device' && github.ref_type == 'tag' && startsWith(github.ref_name, 'v') }}
+      APPSTORE_TAG: ${{ matrix.target == 'device' && github.ref_type == 'tag' && startsWith(github.ref_name, 'v') }}
+      # Version tags sign the device build for the App Store and upload it to TestFlight; without
+      # the signing secrets and variables they build the unsigned IPA instead of failing.
+      APPSTORE_RELEASE: >-
+        ${{ matrix.target == 'device' && github.ref_type == 'tag' && startsWith(github.ref_name, 'v') &&
+          secrets.APPSTORE_API_PRIVATE_KEY != '' && secrets.APPSTORE_CERTIFICATES_FILE_BASE64 != '' &&
+          secrets.APPSTORE_CERTIFICATES_PASSWORD != '' && vars.APPSTORE_TEAM_ID != '' &&
+          vars.APPSTORE_ISSUER_ID != '' && vars.APPSTORE_API_KEY_ID != '' &&
+          vars.APPSTORE_PROVISIONING_PROFILE_NAME != '' }}
 
     steps:
       - name: Harden Runner
@@ -97,6 +104,10 @@ jobs:
           mode: ios
           qt-arch: ${{ matrix.qt_arch }}
           build-type: ${{ matrix.build_type }}
+
+      - name: Skip TestFlight without App Store signing
+        if: env.APPSTORE_TAG == 'true' && env.APPSTORE_RELEASE != 'true'
+        run: echo "::notice::App Store signing secrets or variables are missing; building an unsigned IPA without uploading it to TestFlight"
 
       - name: Import App Store signing certificate
         if: env.APPSTORE_RELEASE == 'true'
