@@ -30,5 +30,5 @@ See [CONTRIBUTING.md](https://github.com/mavlink/qgroundcontrol/blob/master/.git
 This guide is built with [VitePress](https://vitepress.dev/) from the Markdown files in the [`docs`](https://github.com/mavlink/qgroundcontrol/tree/master/docs) directory.
 Only edit the English pages in `docs/en`: the other languages are translated on [Crowdin](../index.md#translations).
 
-- Preview your changes with `npm ci` and then `npm run docs:dev` (use the Node.js version in `.nvmrc`).
+- Preview your changes by running `npm ci` and then `npm run docs:dev` in the `docs` directory (use the Node.js version in `docs/.nvmrc`).
 - Lint the pages like the Docs Lint workflow does with `just lint-docs` (add `--changed` to check only the pages changed on your branch).

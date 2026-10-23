@@ -34,8 +34,8 @@ python3 tools/setup/install_python.py dev   # Windows: python tools/setup/instal
 . tools/.venv/bin/activate                  # PowerShell: . tools/.venv/Scripts/Activate.ps1
 ```
 
-A separately installed `just` (`brew install just`, `cargo install just`) must be 1.27 or newer
-because the justfile uses `shell()`; Ubuntu's `apt install just` ships 1.21, which is too old.
+A separately installed `just` (`brew install just`, `cargo install just`) must be 1.48 or newer
+because the justfile uses `set lazy`; Ubuntu's `apt install just` ships 1.21, which is too old.
 
 Everyday loop:
 
@@ -56,11 +56,9 @@ tools/
 ├── check_deps.py            # Check for outdated dependencies
 ├── clean.py                 # Clean build artifacts and caches
 ├── configure.py             # CMake configuration wrapper
-├── coverage.py              # Code coverage reports
-├── moccache.py              # Content-addressed cache for Qt moc (AUTOMOC wrapper)
-├── moccache_launcher.py     # Entry point run by the CMake moccache launcher (enables bytecode caching)
+├── coverage_report.py       # Code coverage reports
+├── moccache_launcher.py     # moccache entry point: the CMake AUTOMOC launcher and the stats/trim CLI
 ├── pre_commit.py            # Pre-commit runner with CI summaries
-├── release.py               # Semantic versioning and release automation
 ├── terrain_tiles.py         # Terrarium elevation tiles from Copernicus GLO-30 (GeoMap)
 ├── validate_cmake_presets.py # CMake presets against the locked cmake package's schema (hook)
 ├── validate_configs.py      # Cross-field checks for build-config.json and link exceptions
@@ -70,14 +68,20 @@ tools/
 ├── coding-style/            # Code style examples
 ├── common/                  # Shared Python utilities
 ├── configs/                 # Tool configuration files
-│   └── ccache.conf          # ccache configuration
+│   ├── ccache.conf          # ccache configuration
+│   ├── cliff.toml           # git-cliff release-notes sections (just release-notes)
+│   ├── Doxyfile             # Doxygen API docs, run from the repository root
+│   ├── editorconfig-checker.json # editorconfig-checker exclusions and relaxed checks
+│   ├── gersemirc.yaml       # gersemi CMake formatter trial (manual hook)
+│   ├── lychee.toml          # Link checker settings and dated URL exceptions
+│   ├── trufflehog-exclude.txt # Paths the trufflehog pre-commit hook skips
+│   └── yamlfmt.yaml         # yamlfmt YAML formatter trial (manual hook)
 ├── debuggers/               # Debugger formatters, profiling, Android memory capture, Valgrind suppressions
 ├── generators/              # Code generation (MAVLink enums, config/settings QML)
-├── qgc_tools/               # Python environment, workflow-run and Docker variant policy
-├── release/                 # semantic-release Node dependencies (own lockfile)
+├── moccache/                # Content-addressed cache for Qt moc (AUTOMOC wrapper)
+├── qgc_tools/               # Shared policy: Python environment, configure presets, Docker variants
 ├── setup/                   # Environment setup scripts
 ├── simulation/              # Vehicle simulators
-├── skills/                  # Vendored Qt agent skills (standalone; must not import common/)
 ├── terrain/                 # Terrain tile generation package (see terrain_tiles.py)
 ├── tests/                   # pytest suite for tools/ (CI script and contract tests in tests/ci/)
 └── translations/            # Translation tools (lupdate, JSON extraction, pseudo-localization)
@@ -136,20 +140,21 @@ just test "Slow" "Network"             # override via positional args (labels, e
 | Recipe        | Description                                                                    |
 | ------------- | ------------------------------------------------------------------------------ |
 | `just run`    | Launch the built `QGroundControl` binary                                       |
-| `just docs`   | Build the VitePress documentation site (`npm run docs:build`)                  |
+| `just docs`   | Build the VitePress documentation site (`npm run docs:build` in `docs/`)       |
 | `just docker` | Build the `ubuntu` Docker variant (`deploy/docker/run_docker.py build ubuntu`) |
 
 ### Utilities
 
-| Recipe                  | Description                                                                                           |
-| ----------------------- | ----------------------------------------------------------------------------------------------------- |
-| `just info`             | Print resolved build configuration (Qt version/dir, CMake min, GStreamer, jobs, ...)                  |
-| `just check-deps`       | Check Qt, GStreamer, Python, and build tool versions (`tools/check_deps.py`)                          |
-| `just check-gstreamer`  | Check the latest GStreamer patch common to all SDK platforms                                          |
-| `just translations`     | Update translation sources (`tools/translations/qgc_lupdate.py`)                                      |
-| `just distclean`        | Clean build, caches, generated files, and `node_modules/`                                             |
-| `just validate-configs` | Validate build settings and link exceptions ([Centralized Configuration](#centralized-configuration)) |
-| `just lint-qml-build`   | Lint all QML against the build's generated type information ([analyze.py](#analyzepy))                |
+| Recipe                   | Description                                                                                           |
+| ------------------------ | ----------------------------------------------------------------------------------------------------- |
+| `just info`              | Print resolved build configuration (Qt version/dir, CMake min, GStreamer, jobs, ...)                  |
+| `just check-deps`        | Check Qt, GStreamer, Python, and build tool versions (`tools/check_deps.py`)                          |
+| `just check-gstreamer`   | Check the latest GStreamer patch common to all SDK platforms                                          |
+| `just translations`      | Update translation sources (`tools/translations/qgc_lupdate.py`)                                      |
+| `just distclean`         | Clean build, caches, generated files, and `node_modules/`                                             |
+| `just validate-configs`  | Validate build settings and link exceptions ([Centralized Configuration](#centralized-configuration)) |
+| `just release-notes TAG` | Print draft release notes for a `vX.Y.Z` tag ([Release notes](#release-notes))                        |
+| `just lint-qml-build`    | Lint all QML against the build's generated type information ([analyze.py](#analyzepy))                |
 
 ## Direct Script Usage
 
@@ -163,7 +168,8 @@ Use `CMakeUserPresets.json` for machine-local paths or derived presets; it is ig
 preserved by `just clean`. `tools/configure.py` (behind `just configure`) requires the Qt kit's
 `qt-cmake`, found through `--qt-root` (`QT_DIR` for `just`), `QT_ROOT_DIR`, or the newest standard
 Qt install for the host architecture. Use `--no-qt-cmake` only when supplying an explicit target
-toolchain, as Android CI does.
+toolchain, as Android CI does. `configure.py` configures into the selected preset's `binaryDir`,
+where `cmake --build --preset` and `ctest --preset` look for the tree; `-B` overrides it.
 
 ## Development Scripts
 
@@ -184,10 +190,13 @@ python tools/analyze.py --tool clang-tidy --profile-checks src/Vehicle/Vehicle.c
 python tools/analyze.py --tool clang-tidy --fix src/Vehicle/  # Apply clang-tidy fixes (local only)
 ```
 
+Paths are relative to the repository root; absolute paths inside the checkout also work.
+
 Other `--tool` choices: `clazy`, `qmllint`, `qmlformat` (reports what `qmlformat` would change,
 never rewrites), `vehicle-null-check`, `qt-translate-noop-check`.
 Without paths or `--all`, files changed since the merge base with the default branch (or
-`PR_BASE_SHA`) are analyzed, including uncommitted and untracked files. For clang-format the
+`PR_BASE_SHA`; in GitHub's merge checkout of `PR_HEAD_SHA`, its first parent) are analyzed,
+including uncommitted and untracked files; without a usable base every file is. For clang-format the
 selection narrows to changed lines, matching the pre-commit hook: deletion-only changes are skipped
 and new or untracked files are checked in full. `--all` or explicit paths check (or `--fix`) whole
 files for intentional reformatting. `--advisory` keeps warnings informational; error-level
@@ -222,18 +231,22 @@ workflows call it (adding `--ci` and, for pre-commit, `--results-dir`).
 python tools/pre_commit.py --changed                             # Files changed vs PR_BASE_SHA or the default branch
 python tools/pre_commit.py --changed --hook ruff --hook pyright  # Only these hooks (repeatable)
 python tools/pre_commit.py --docs --changed                      # English docs with the Docs Lint hooks (just lint-docs)
+python tools/pre_commit.py --changed --needs-qt                  # Whether the selection has QML (qmllint needs Qt)
 python tools/pre_commit.py --install                             # Install the pre-commit and commit-msg hooks
 ```
+
+The selected hooks run in one `prek run` call; its output streams to the console and, with
+`--results-dir`, into `pre-commit-output.txt`.
 
 The `precommit` group pins prek, which also accepts pre-commit's commands and options
 (`prek run <id> --hook-stage manual --files <paths>`, `SKIP=<id>`). The configuration stays
 compatible with stock pre-commit, which the group keeps as a fallback runner for one release.
 `editorconfig-checker` enforces [`.editorconfig`](../.editorconfig) with the exclusions and relaxed
-checks in `.editorconfig-checker.json`; `cmake-presets-schema` validates `CMakePresets.json` and
+checks in `configs/editorconfig-checker.json`; `cmake-presets-schema` validates `CMakePresets.json` and
 `cmake/presets/*.json` offline against the schema shipped in the locked `cmake` package.
 Manual-stage hooks run only on request: `clang-tidy`, `clazy`, `renovate-config-validator`, and
 three formatter trials that report differences without rewriting files: `gersemi` (CMake,
-`.gersemirc`), `yamlfmt` (`.yamlfmt`), and `qmlformat` (`analyzers/qmlformat.py`,
+`configs/gersemirc.yaml`), `yamlfmt` (`configs/yamlfmt.yaml`), and `qmlformat` (`analyzers/qmlformat.py`,
 `.qmlformat.ini`). For example, `just lint gersemi --hook-stage manual` checks every CMake file.
 
 ### clean.py
@@ -242,8 +255,8 @@ Clean build artifacts and caches. Underlies `just clean` and `just distclean`.
 
 ```bash
 python tools/clean.py              # Clean build directory
-python tools/clean.py --all        # Clean everything (build, caches, Python bytecode outside venvs/node_modules)
-python tools/clean.py --cache      # Clean only repo-local caches (.cache, .ccache, .clangd); zero ccache stats
+python tools/clean.py --all        # Clean everything (build, caches, node_modules/, Python bytecode outside venvs)
+python tools/clean.py --cache      # Clean only repo-local caches (.cache, incl. ccache and the clangd index, plus a legacy .ccache)
 python tools/clean.py --dry-run    # Show what would be removed
 ```
 
@@ -256,6 +269,7 @@ code lives in `qgc_tools/build_profile.py`, which `ci/compile/cmake_helper.py` a
 python tools/build_profile.py -B build                 # Report slowest Ninja edges and rebuild churn
 python tools/build_profile.py -B build --limit 25      # Show more rows per section
 python tools/build_profile.py -B build --json          # Machine-readable output
+python tools/build_profile.py -B build --json-out r.json > r.txt  # Text and JSON from one scan
 python tools/build_profile.py -B build --output-dir build/profile  # Ninja-only snapshot
 ```
 
@@ -265,17 +279,21 @@ the report — it scans the build dir for Clang `-ftime-trace` JSON and highligh
 Ordinary CI builds upload Ninja-only snapshots with separate link and generated-code rankings.
 Task totals overlap because commands run in parallel; they are not elapsed build time.
 
-### moccache.py
+### moccache/
 
 Content-addressed cache for Qt's moc, wired in through `AUTOMOC_EXECUTABLE` while the
 `QGC_USE_MOCCACHE` CMake option is ON (the default). The generated launcher runs
-`moccache_launcher.py`, which imports `moccache` so its bytecode is cached in `tools/__pycache__`.
+`moccache_launcher.py`, which imports the `moccache` package so its bytecode is cached in
+`tools/moccache/__pycache__`. A moc run loads only `core.py`; `trim.py` (LRU eviction) and `stats.py`
+(hit/miss reports) are imported only for their subcommands or a due auto-trim, keeping each cache
+hit's startup short. The stats and trim commands run through the launcher too
+(`python3 tools/moccache_launcher.py --show-stats ...`).
 Misses fall through to the real moc and never fail the build. The
 [dev guide Build Caching section](../docs/en/qgc-dev-guide/getting_started/index.md#build-caching)
 covers the cache key, environment variables, and stats commands. Tests:
 `tools/tests/test_moccache.py`.
 
-### coverage.py
+### coverage_report.py
 
 Generate code coverage reports through the CMake coverage targets. Underlies `just coverage`.
 Configures the `Linux-coverage` preset's `build/Linux-coverage/` directory (override the directory
@@ -287,10 +305,10 @@ Reports are Cobertura `coverage.xml` (uploaded to Codecov), gcovr's JSON `covera
 HTML `coverage.html`.
 
 ```bash
-python tools/coverage.py              # Build with coverage, run tests, generate XML, JSON + HTML
-python tools/coverage.py --report     # Generate report only from existing data (CI adds --step-summary)
-python tools/coverage.py --open       # Full run, then open the HTML report
-python tools/coverage.py --clean      # Delete the coverage build directory
+python tools/coverage_report.py              # Build with coverage, run tests like CI, generate XML, JSON + HTML
+python tools/coverage_report.py --report     # Generate report only from existing data (CI adds --step-summary)
+python tools/coverage_report.py --open       # Full run, then open the HTML report
+python tools/coverage_report.py --clean      # Delete the coverage build directory
 ```
 
 **Direct CMake usage:**
@@ -303,6 +321,11 @@ cmake --build build --target coverage-report  # XML, JSON summary + HTML from ex
 cmake --build build --target coverage         # Run Unit tests + generate XML, JSON summary + HTML
 cmake --build build --target coverage-clean   # Remove coverage data and reports
 ```
+
+`coverage_report.py` runs CI's two test phases through the `Linux-coverage` test preset, which
+excludes `Flaky` and `Network`: Unit tests at one process per CPU, then Integration tests at `-j2`,
+because instrumented integration tests time out at full parallelism. The CMake `coverage` target
+runs only the Unit tests.
 
 ### check_deps.py
 
@@ -319,21 +342,22 @@ python tools/check_deps.py --gstreamer  # Find latest patch common to all SDK pl
 Run Doxygen from the repository root, as the Doxygen workflow does; HTML goes to `docs/api/html/`.
 
 ```bash
-doxygen Doxyfile
+doxygen tools/configs/Doxyfile
 ```
 
 Requires `doxygen`; `graphviz` enables diagrams.
 
-### release.py
+### Release notes
 
-Runs semantic-release from `tools/release/` (Node.js 24+). Its dependencies live in
-`tools/release/package.json` with their own lockfile, separate from the documentation package.
+Release tags are created and pushed by hand. `just release-notes vX.Y.Z` prints the notes that
+`release.yml` drafts for that tag: git-cliff (`release` group) lists the commits since the previous
+`vX.Y.Z` tag reachable from it, grouped by type as configured in `configs/cliff.toml`, as full
+Conventional Commits subjects under `## Changes in vX.Y.Z`. For a tag that does not exist yet it
+lists the unreleased commits since the last release reachable from `HEAD`.
 
 ```bash
-python tools/release.py --install                # npm ci in tools/release
-python tools/release.py                          # Dry run: preview the next release
-python tools/release.py --run --github-output    # CI only: create the release, write new_release/version outputs
-npm test --prefix tools/release                  # Check version decisions with the real commit analyzer
+just release-notes v5.1.5                                # Notes for an existing tag
+python tools/ci/publish/release_notes.py v5.2.0          # Same script; v5.2.0 not tagged yet
 ```
 
 ## Setup Scripts
@@ -342,7 +366,9 @@ Scripts in `setup/` configure development environments and read versions from
 `.github/build-config.json`. They need only the standard library, so they also run with the host
 `python3` before `tools/.venv` exists. `install_dependencies` is a package
 (`tools/setup/install_dependencies/`) run through its `__main__.py`; without `--platform` it
-detects the host.
+detects the host. `build_gstreamer.py` is the entry for the `setup/gstreamer/` package: `config`
+(build settings, Meson options and plugins), `host` (commands, host arch and jobs), `meson` (Linux,
+macOS, Windows), `cerbero` (Android, iOS) and `cli` (arguments, CI arch/prefix outputs).
 
 | Script                                    | Platform              | Description                                                                            |
 | ----------------------------------------- | --------------------- | -------------------------------------------------------------------------------------- |
@@ -353,17 +379,23 @@ detects the host.
 | `install_dependencies --platform windows` | Windows               | Install GStreamer (optional `--vulkan`, `--msvc`, `--msvc-arm64`, `--nsis`)            |
 | `install_uv.py`                           | Linux, macOS          | Install the uv release named by `required-version` when `uv` is not on `PATH`          |
 | `install_python.py`                       | All                   | Install locked Python tool groups via uv ([Python Environment](#python-environment))   |
-| `install_qt.py`                           | All                   | Install Qt via aqtinstall with QGC arch-directory resolution (CI uses `plan`/`ensure`) |
+| `install_qt.py`                           | All                   | Install Qt with [QGC's installer or aqtinstall](#qt-installer) (CI: `plan`/`ensure`)   |
 | `setup_vscode.py`                         | All                   | Install missing VS Code workspace files from tracked templates                         |
 | `read_config.py`                          | All                   | Read `.github/build-config.json`                                                       |
 | `build_gstreamer.py`                      | All                   | Build GStreamer from source (optional)                                                 |
-| `build_android_openssl.py`                | Android               | Cross-compile OpenSSL as Qt-style Android libraries (run by Android CMake configure)   |
+| `build_android_openssl.py`                | Android               | Cross-compile OpenSSL for Android; configure builds only the build type's variant      |
 | `build_clazy.py`                          | Linux                 | Build the pinned `clazy-standalone` against the analysis LLVM, as CI does              |
 
 Linux `--category` limits the install to `core`, `qt`, `gstreamer`, `sdl`, `audio` or `misc`.
 On Debian, `android` is `core` plus the OpenJDK for `android.java_version` in `build-config.json`;
 the Docker Android image uses it, while CI's Android jobs install `core` and get the JDK from
-`setup-java`. `--print-packages [--category NAME]` prints the package list without installing.
+`setup-java`. Debian's `gstreamer_build`, outside the full set, holds what `build_gstreamer.py`
+needs for a Linux source build; the Build GStreamer workflow installs it.
+`--list [--platform NAME]` lists each platform's packages by category and
+`--print-packages [--category NAME]` prints one list on a single line; neither installs anything.
+Locally, the Linux installers also sync the locked `build` group (CMake, Ninja, `just`, ...) into
+`tools/.venv` and print how to activate it; CI build jobs instead use the `build.cmake_version` and
+`build.ninja_version` pins in `build-config.json`, which `build-setup` installs.
 
 On macOS, the GStreamer runtime and development packages come from the official server, falling
 back to QGroundControl's public S3 mirror. Both sources are verified against the SHA-256 checksums
@@ -386,6 +418,7 @@ python .\tools\setup\install_dependencies --platform windows
 python3 tools/setup/install_qt.py install --from-config --host linux --arch linux_gcc_64
 
 # Build GStreamer from source (optional — CMake auto-downloads pre-built SDKs)
+python3 tools/setup/install_dependencies --platform debian --category gstreamer_build
 python3 tools/setup/build_gstreamer.py --platform linux --prefix /opt/gstreamer
 
 # Build Clazy like the Code Analysis workflow; then put .cache/clazy/bin on PATH
@@ -395,13 +428,35 @@ python3 tools/setup/build_clazy.py --prefix .cache/clazy
 python3 tools/setup/read_config.py --get qt.version
 ```
 
+### Qt installer
+
+`install_qt.py` installs Qt with one of two tools, chosen by `--installer` or `QGC_QT_INSTALLER`:
+
+- `qgc`, the default for desktop and Android installs with `--host linux` (or `all_os` on a
+  Linux machine): the standard-library package `setup/qt_installer/`. It reads the combination's `Updates.xml` from
+  download.qt.io, checks it and every archive against the SHA-256 sums that download.qt.io
+  publishes (archives may come from any mirror), extracts the archives in parallel with
+  `cmake -E tar`, and applies aqtinstall's post-install edits. CMake comes from `PATH`, else from
+  the tools environment's `build` group. The Qt root gets `.qgc-qt-manifest.json` (archives,
+  checksums, patched files) and, for full installs, the `.qgc-modules` marker that preinstalled-SDK
+  reuse reads.
+- `aqt`, the default elsewhere: aqtinstall from the locked `qt` group, which stays as the fallback.
+
+Both produce the same tree apart from install paths in patched text files and pkg-config `prefix=`
+lines (aqt leaves them unpatched on `linux_arm64`). `install_qt.py compare` checks this and the
+Qt Installer Parity workflow runs it on every CI platform; a platform switches to `qgc` once its
+leg passes. Like aqt, `qgc` reports but does not install addon dependencies missing from
+`--modules`, such as `qtquick3d`'s `qtquicktimeline`. The `plan` cache digest includes a non-aqt
+installer, so neither tool restores the other's tree.
+
 ## Python Environment
 
 `install_python.py` installs dependency groups defined in `tools/pyproject.toml`:
-`scripts`, `precommit`, `test`, `qt`, `coverage`, `build`, `dev` (default), `lint`, `terrain`, and
-`all`. Groups compose smaller profiles: `dev` includes the build, Qt, lint, and test tools, plus
-`pymavlink` and `just`. `build` adds CMake, Ninja, Meson, prek (with pre-commit), and gcovr; the Pyright hook also syncs `terrain` so it
-can type-check `tools/terrain`. `--list-groups` prints each group's packages. `[tool.uv] required-version` in
+`scripts`, `precommit`, `test`, `qt`, `coverage`, `build`, `dev` (default), `lint`, `terrain`,
+`simulation`, `release`, and `all`. Groups compose smaller profiles: `dev` includes the build, Qt,
+lint, test, and release (git-cliff) tools. `build` adds CMake, Ninja, Meson, `just`, prek (with
+pre-commit), and gcovr; `simulation` adds pymavlink for `simulation/mock_vehicle.py`. The Pyright
+hook also syncs `terrain` so it can type-check `tools/terrain`. `--list-groups` prints each group's packages. `[tool.uv] required-version` in
 `tools/pyproject.toml` is the single uv version: CI, `install_uv.py`, and the Docker image install
 exactly that floor, and older uv releases refuse the project (run `uv self update`).
 
@@ -414,13 +469,15 @@ missing (`QGC_AUTO_PYTHON_VENV`).
 
 For an image-owned environment, set `QGC_TOOLS_PROJECT` to the directory containing
 `pyproject.toml` and `uv.lock`, and `QGC_PYTHON_ENV` to the environment directory.
-Docker uses `/opt/qgc-tools` and `/opt/qgc-venv`. Qt installs use aqtinstall from the locked `qt`
-group.
+Docker uses `/opt/qgc-tools` and `/opt/qgc-venv`. Qt installs that fall back to aqtinstall use
+the locked `qt` group ([Qt installer](#qt-installer)).
 
-`common/` contains low-level utilities ([module index](common/README.md)); `qgc_tools/` owns
-Python environment setup, workflow-run records, and Docker variant policy
-([qgc_tools/README.md](qgc_tools/README.md)). CLI entrypoints stay in `setup/`, `ci/`, and
-`deploy/`. Import-linter enforces these dependency boundaries, with `ci` as the top layer.
+`common/` contains low-level utilities ([module index](common/README.md)); `qgc_tools/` holds
+shared policy such as the Python environment, configure-preset selection, Docker variants, and
+release-tag checks ([qgc_tools/README.md](qgc_tools/README.md)). Command-line entrypoints are the
+top-level `tools/*.py` scripts and those in `setup/`, `ci/`, and `deploy/`. Import-linter enforces
+these dependency boundaries: `ci` is the top layer, and `setup` sits beside `analyzers`,
+`generators`, `terrain`, and `translations`, which must not import each other.
 
 ## Python Script Conventions
 
@@ -439,7 +496,11 @@ helpers:
   report problems as `common.gh_actions` annotations (`gh_error`, `gh_warning`) and write step
   outputs and summaries with its `write_github_output` and `write_step_summary`.
 - **Subprocesses and network**: run commands through `common.proc` (`run_captured`, `run_tee`,
-  `run_with_retry`), download with `common.net`, and call GitHub through `common.gh_actions.gh()`.
+  `run_with_retry`), check required executables with its `require_tools` and poll with its
+  `wait_until`, download with `common.net`, and call GitHub through `common.gh_actions.gh()`.
+- **Files**: locate the checkout with `common.paths` (`REPO_ROOT`, `TOOLS_DIR`) rather than
+  `Path(__file__).resolve().parents[N]` outside the entry statement, and read and write JSON with
+  `common.io` (`read_json`, `write_json`).
 
 ## Static Analyzers
 
@@ -547,7 +608,7 @@ versions. Read a value with its dotted path, e.g. `read_config.py --get qt.versi
 
 Run `just validate-configs` after changing build versions, schemas, or link exceptions.
 It validates required fields, minimum versions, SDK ordering, checksum coverage, and exception expiry.
-The pre-commit gate triggers on schema-only edits too. External link exceptions in `.lychee.toml`
+The pre-commit gate triggers on schema-only edits too. External link exceptions in `configs/lychee.toml`
 are exact URLs with a review deadline. Docs builds check English internal links without
 exceptions; the all-locale build allows a finite list of existing translation links in
 `docs/.vitepress/config.mjs`. CI's documentation checks are described in

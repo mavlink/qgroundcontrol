@@ -103,9 +103,9 @@ Before considering a change complete:
 
 ## Commit & Review Conventions
 
-Commit messages follow **Conventional Commits** — the type drives release automation
-(`.releaserc.json` → semantic-release). Use: `feat`, `fix`, `perf`, `revert` (release-triggering);
-`docs`, `style`, `chore`, `refactor`, `test`, `build`, `ci` (no release). Example: `fix(Vehicle): guard null activeVehicle in telemetry handler`.
+Commit messages follow **Conventional Commits** — the type decides the release-notes section
+(`tools/configs/cliff.toml` → git-cliff). Use: `feat`, `fix`, `perf`, `revert` (listed in release notes);
+`docs`, `style`, `chore`, `refactor`, `test`, `build`, `ci` (omitted unless breaking). Example: `fix(Vehicle): guard null activeVehicle in telemetry handler`.
 `prek install` adds a `commit-msg` hook that checks this format; Renovate's `deps` type, `fixup!`/`squash!`,
 merge, and revert messages also pass.
 

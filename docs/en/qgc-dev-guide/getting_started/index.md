@@ -79,7 +79,7 @@ To install Qt with the Qt Online Installer:
    - Select all _Additional Libraries_.
    - Deselect Qt Design Studio.
 
-Alternatively, `tools/setup/install_qt.py` installs exactly the Qt version and modules CI uses (with [aqtinstall](https://github.com/miurahr/aqtinstall)), for example on Linux:
+Alternatively, `tools/setup/install_qt.py` installs exactly the Qt version and modules CI uses (with QGC's own installer on Linux, which needs CMake, and [aqtinstall](https://github.com/miurahr/aqtinstall) elsewhere), for example on Linux:
 
 ```sh
 python3 tools/setup/install_qt.py install --from-config --host linux --arch linux_gcc_64 --outdir ~/Qt
@@ -247,7 +247,7 @@ You can additionally create installation files for _QGroundControl_ from a Relea
 QGC uses two build caches, both enabled automatically at configure time and stored in the source
 tree so they survive build directory deletion:
 
-- **ccache** caches compiler output (`.ccache/`). Used if `ccache` is installed and on your `PATH`
+- **ccache** caches compiler output (`.cache/ccache/`). Used if `ccache` is installed and on your `PATH`
   (the Linux and macOS dependency scripts install it); `sccache` is used instead if only it is found,
   with precompiled headers turned off because sccache can reuse a stale GCC precompiled header.
 - **moccache** caches Qt moc output (`.cache/moccache/`). QGC has a large number of moc-processed
@@ -260,14 +260,14 @@ or configure with `-DQGC_USE_MOCCACHE=OFF` to turn it off entirely.
 
 ### moccache Details
 
-moccache (`tools/moccache.py`) is a content-addressed cache wired in automatically as the
+moccache (the `tools/moccache/` package) is a content-addressed cache wired in automatically as the
 `AUTOMOC_EXECUTABLE` via a launcher script generated at configure time. Cached moc output
 is keyed on moc version + arguments + input content + transitive include contents + the input's
 path relative to the output directory (moc embeds that relative path as an `#include` in its
 output, so build trees laid out at a different depth intentionally don't share entries). Entries
 are otherwise shared across build trees: build-dir paths are rewritten to a token, like ccache's
-`base_dir`. The launcher runs `tools/moccache_launcher.py`, which imports `moccache` so Python
-reuses its cached bytecode instead of recompiling it on every moc run.
+`base_dir`. The launcher runs `tools/moccache_launcher.py`, which imports the `moccache` package so
+Python reuses its cached bytecode instead of recompiling it on every moc run.
 
 Cache misses fall through to the real moc and never fail the build; corrupt or stale entries are
 caught on every use, when each recorded include is re-validated by content hash unless its mtime,
@@ -284,9 +284,9 @@ Environment variables (set by the launcher, overridable at build time):
 
 ```sh
 MOCCACHE_STATS=1 just build                             # This build's hit/miss stats print after linking
-MOCCACHE_BASEDIR=$PWD/build python3 ./tools/moccache.py --show-stats --build-dir build --verbose  # Per-miss reasons for the last build
-python3 ./tools/moccache.py --zero-stats                # Reset the stats log
-python3 ./tools/moccache.py --trim --max-size 1G        # Explicitly trim the cache (LRU)
+MOCCACHE_BASEDIR=$PWD/build python3 ./tools/moccache_launcher.py --show-stats --build-dir build --verbose  # Per-miss reasons for the last build
+python3 ./tools/moccache_launcher.py --zero-stats       # Reset the stats log
+python3 ./tools/moccache_launcher.py --trim --max-size 1G  # Explicitly trim the cache (LRU)
 MOCCACHE_DISABLE=1 just build                           # Bypass the cache for one build
 ```
 
@@ -295,8 +295,8 @@ expected misses from cache problems: `miss-first-seen`, `miss-header-changed`,
 `miss-include-changed` and `miss-predefs-changed` are expected; `miss-cache-evicted` means the
 cache is too small (raise `MOCCACHE_MAX_SIZE`); `miss-args-changed` and
 `miss-output-depth-differs` mean build trees differ in a way that defeats sharing and are worth
-investigating (`--verbose` shows the first differing argument per miss). See the docstring at the
-top of `tools/moccache.py` for the full list. `--markdown` prints the same report as tables, with
+investigating (`--verbose` shows the first differing argument per miss). See the docstring in
+`tools/moccache/__init__.py` for the full list. `--markdown` prints the same report as tables, with
 the cache size; CI build jobs add it to the job summary.
 
 ## Virtual Machines

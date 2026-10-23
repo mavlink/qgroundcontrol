@@ -462,8 +462,9 @@ just coverage   # Build with coverage, run tests, generate HTML + XML report
 ```
 
 `just coverage` configures `build/Linux-coverage/` with the `Linux-coverage` preset (line tables and unity build, like CI)
-and runs CI's test selection (`Unit|Integration`, excluding `Flaky|Network`) in parallel.
-See [tools/README.md](../tools/README.md#coveragepy) for the `coverage.py` wrapper flags and the
+and runs CI's two test phases through its test preset (excluding `Flaky|Network`): `Unit` at one process per CPU,
+then `Integration` at `-j2`.
+See [tools/README.md](../tools/README.md#coverage_reportpy) for the `coverage_report.py` wrapper flags and the
 underlying CMake `coverage*` targets.
 
 ## Sanitizers

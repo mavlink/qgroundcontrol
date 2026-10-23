@@ -361,6 +361,7 @@ Tool configuration:
 - `.qmlformat.ini` - QML formatting (`qmlformat`; the manual-stage `qmlformat` hook reports differences)
 - `.qmllint.ini` - QML linting (the `qmllint` pre-commit hook)
 - `.editorconfig` - Editor settings (the `editorconfig-checker` hook enforces them)
+- `tools/coding-style/CodingStyle.h`/`.cc` - Reference examples; the `clang-format-coding-style` hook checks them in full whenever `.clang-format`, `tools/uv.lock`, or those files change
 
 Do not run a formatter over an entire existing file as part of an otherwise focused change. Format only
 the lines or regions you modify and preserve the surrounding style; whole-file formatting creates unrelated
