@@ -63,13 +63,13 @@ and Ruff skips `build` directories.
 | `publish/deploy_docs.py` | Deploy generated documentation to an external Pages repository |
 | `publish/release_branch_check.py` | Stop `release.yml` before it drafts a release for a tag that no `origin/Stable*` branch contains |
 | `publish/release_notes.py` | Draft a tag's release notes with git-cliff (`tools/configs/cliff.toml`) and create its draft GitHub Release unless one exists |
-| `reporting/collect_build_status.py` | Collect platform, pre-commit, and Code Analysis status for a head SHA (with `--status-out`, each run's state, duration, and failed-step links from its jobs), save the latest runs for `download_artifacts.py`, and gate the baseline save until every platform workflow succeeded |
-| `reporting/download_artifacts.py` | Download prefix-selected artifacts from matching completed workflow runs into one directory each, with a manifest naming each artifact's workflow, and record distributable artifact sizes |
-| `reporting/generate_build_results_comment.py` | Render the consolidated PR build-results comment: verdict, per-workflow table, failures, and collapsed tests, coverage, sizes, pre-commit, and Code Analysis details |
+| `reporting/collect_build_status.py` | Collect platform, pre-commit, Code Analysis, and every other workflow's status for a head SHA (with `--status-out`, each run's state, attempt, duration and total wall time, and failed-step links and lost runners from its jobs) and save the latest runs for `download_artifacts.py` |
+| `reporting/download_artifacts.py` | Download prefix-selected artifacts from matching completed workflow runs into one directory each, with a manifest naming each artifact's workflow and whether it downloaded, and record each workflow's latest run and its distributable artifacts (size, id, expiry) |
+| `reporting/generate_build_results_comment.py` | Render the consolidated PR build-results comment: verdict, per-workflow table, other checks, the PR base's builds, failures, and collapsed tests, coverage, artifact downloads, pre-commit, and Code Analysis details, compared with the base's own builds |
 | `reporting/gh_pr_size_label.py` | Apply a pull request's `size/*` label from its changed lines |
 | `reporting/junit_report.py` | Summarize JUnit results (counts, failures, slowest tests) in the job summary, annotate failed tests and, optionally, slow tests; also the build-results comment's JUnit parser |
-| `reporting/report_context.py` | Resolve and recheck the current PR or default-branch reporting context, and whether the build saves baselines |
 | `reporting/setup_summary.py` | Write the job summary's Setup section for `build-setup`: runner, Qt (version, installer, source), CMake, Python groups, and each build cache's restore result |
+| `reporting/report_context.py` | Resolve a pull_request build's PR and base commit, and with `--comment` recheck that the build is current and create or update the PR's build-results comment |
 | `reporting/size_analysis.py` | Analyze and report binary-size changes |
 | `reporting/verify_coverage_thresholds.py` | Enforce line and branch coverage thresholds (read from `CMakeCache.txt` with `--build-dir`) |
 | `reporting/workflow_runs.py` | Library: read the triggering `workflow_run` payload and the configured platform workflows, which default the reporting scripts' run-query arguments; validate, select, and group workflow runs; load run snapshots |

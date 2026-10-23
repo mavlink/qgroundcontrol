@@ -91,24 +91,6 @@ class WorkflowRun:
         )
 
 
-def evaluate_runs(
-    latest: dict[str, dict[str, Any]], platforms: list[str], *, require_success: bool = True
-) -> tuple[bool, list[str], list[str], list[str]]:
-    """Classify each platform by its latest run (from ``select_latest_runs_by_name``)."""
-    missing = [name for name in platforms if name not in latest]
-    incomplete = [
-        name for name in platforms if name in latest and latest[name].get("status") != "completed"
-    ]
-    failed = [
-        name
-        for name in platforms
-        if name in latest
-        and latest[name].get("status") == "completed"
-        and latest[name].get("conclusion") != "success"
-    ]
-    return not (missing or incomplete or (require_success and failed)), missing, incomplete, failed
-
-
 class WorkflowRunsFileError(ValueError):
     """Raised when cached workflow-run JSON cannot be used."""
 

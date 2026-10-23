@@ -45,7 +45,7 @@
 | `vm-builds.yml` | Builds inside the Multipass and Vagrant developer VMs |
 | `flatpak.yml` | Manual Flatpak build |
 | `_detect-changes.yml` | Reusable: decide whether a platform builds (`should_build`) and plan Android's and Docker's build legs (`matrix`) |
-| `build-results.yml` | PR build-results comment and master baselines (`workflow_run` trigger) |
+| `build-results.yml` | PR build-results comment, compared with the PR base's own builds (`workflow_run` trigger) |
 | `release.yml` | Draft a GitHub Release with git-cliff notes for a pushed `vX.Y.Z` tag (assets are uploaded by hand) |
 | `analysis.yml` | Code Analysis: clang-tidy and Clazy; manual IWYU, qmllint, and ThreadSanitizer |
 | `codeql.yml` | CodeQL for Actions, Java/Kotlin, and Python |
@@ -469,8 +469,8 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
 - Scheduled cleanup removes superseded PR build-cache generations even below the storage threshold,
   keeping the newest run/attempt per PR and matrix cache family. Above the threshold it evicts least
   recently used archives first, so newly populated larger caches survive, while protecting the
-  latest default-branch generation of each build and dependency cache family (including the latest
-  `build-baseline-v2` snapshot), the prek hook environments, and the lychee link cache.
+  latest default-branch generation of each build and dependency cache family, the prek hook
+  environments, and the lychee link cache.
 - Closing a PR removes that PR's merge-ref caches, without a job summary.
 - Manual runs default to a dry-run prune; `dry-run: false` deletes, and `mode: wipe` lists (or
   deletes) every cache of the selected branch, or of all branches.
@@ -680,7 +680,7 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   Qt, MAVLink, GStreamer/GLib, and Qt-generated includes alone (`IgnoreHeaders` in `.clang-tidy`),
   because it would suggest their internal headers. Jobs upload `*-timings.json`,
   `*-progress.jsonl`, `*-diagnostics.json` (each unique diagnostic's file, line, column,
-  severity, and check), and `*-raw.txt` (every unit's full output; identical diagnostic blocks are
+  severity, and check, and on pull requests those on changed lines), and `*-raw.txt` (every unit's full output; identical diagnostic blocks are
   shown once in the log).
   Per-check profiling (`profile_checks` dispatch input) is described in
   [`tools/analyzers/README.md`](../tools/analyzers/README.md).
@@ -701,55 +701,69 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
 
 ### Build results
 
-- `build-results.yml` runs on `workflow_run` completion of Linux, Windows, MacOS, Android, iOS,
-  and pre-commit (GitHub runs only the default-branch copy; `test_platform_workflow_names.py` keeps the
-  list in sync with `build.platform_workflows`). One `report_context.py` lookup resolves the PR
-  number and base SHA (pull_request builds only) and whether a successful `master` push saves
-  baselines, and the PR head (or `master`) is rechecked before posting or saving.
+- `build-results.yml` runs on `workflow_run` completion of every workflow with a `pull_request`
+  trigger: the platform workflows, pre-commit, Code Analysis, and the other checks (GitHub runs
+  only the default-branch copy; `test_platform_workflow_names.py` keeps the list in sync with the
+  workflow files and `build.platform_workflows`), and only for pull request builds. One
+  `report_context.py` lookup resolves the PR number and the base commit the comparisons use:
+  the base branch's tip when the triggering run was created
+  (`commits?sha=<base ref>&until=<created_at>`), approximating the commit GitHub merged the PR
+  head into for the build (a re-run builds the same merge and keeps `created_at`).
+  `pull_request.base.sha` can be weeks older, since pushes to the PR need not update it, and
+  would credit every later base-branch commit to the PR; it is used only when the lookup fails or
+  finds nothing, which the step logs.
 - The reporting scripts take the repository, commit, and event from the `workflow_run` payload
   (`workflow_runs.triggering_run()`), the platform workflows from `build.platform_workflows` in the
   sparse-checked-out `build-config.json` (failing when it is missing), and the run snapshot that
   `collect_build_status.py` saves in `$RUNNER_TEMP/workflow-runs-cache.json`; the comment
   generator reads each input from the path the earlier steps write (`INPUT_PATHS`). Steps pass only
   their own flags, and `test_build_results_workflow.py` replays them under fake payloads.
-- Every trigger updates one `build-results`-tagged comment (fork PRs included), so finished
-  workflows and their failures show while others still run; the last one to complete renders the
-  final state. `collect_build_status.py` (stdlib only, before Python dependencies install) writes
-  each workflow's state, duration, and jobs, with failed-step log links, from one jobs-API call per
-  run (`--status-out`), including Code Analysis, which is not a trigger. A failed job on a RunsOn
-  runner also has its annotations read: RunsOn fails a job whose Spot instance AWS reclaimed and
-  re-runs the run's failed jobs once it completes (after attempts 1 and 2), so a workflow whose only
-  failed legs were interrupted is `interrupted` rather than `failure`. The job then downloads,
-  with `download_artifacts.py` (one directory per artifact plus a manifest naming its workflow),
-  the completed runs' test results, coverage, and artifact sizes, the pre-commit results, and Code
-  Analysis's per-tool `*-timings.json` and `*-diagnostics.json`; runs still in progress are
-  skipped. Missing diagnostic artifacts are allowed (`--allow-missing`) when tests did not run, but
-  platform download failures fail the job. The comment is also the job summary.
-- The comment (`generate_build_results_comment.py`) leads with a verdict (✅ passed, ❌ failed,
-  🔁 retrying after a Spot interruption, ⏳ in progress, 🚫 cancelled, ⏭️ nothing to build), the
-  linked head commit, and how many platform workflows are done, pending, retrying, or skipped by
-  change detection (every build job skipped).
-  A table gives each workflow's status, duration, test or hook counts, artifact size with its
-  change from the PR base, and run link. A Failures section follows when anything failed: each
-  failed job with links to its failing steps' logs, failed tests with their first report lines
-  (QtTest `FAIL!` blocks, sanitizer reports, else the output tail) from the JUnit XML, and failed
-  pre-commit hooks; a Spot interruptions section lists the jobs RunsOn will re-run. Collapsed
-  sections cover per-suite test results, the slowest tests, coverage
-  (lines, functions, branches, with changes in percentage points), artifact sizes (⚠️ above 1%
-  and 1 MiB growth), pre-commit counts, and Code Analysis unique warnings (a header's warning
-  counts once however many units and shards include it) with the most frequent checks and the files
-  with the most warnings. Lists are truncated
-  with "…and N more", and longer reports shrink to stay under GitHub's comment limit. Names from
-  pull requests (tests, jobs, hooks, artifacts) are escaped or shown as code.
-- For `master`, once every platform workflow succeeded, `save-baselines` saves an immutable
-  baseline (sizes and coverage) keyed by commit and run; the job runs only standard-library scripts
-  and installs no Python dependencies. It downloads only the coverage report, and
-  `--require-sizes` fails without writing sizes when no distributable artifact exists, so an empty
-  baseline is never published. PRs prefer the exact base snapshot before the most recent
-  baseline; size deltas accept only the exact PR base, even when coverage restores an older one
-  (the comment names the baseline commit and says when none exists yet). Android artifact names
-  include their ABIs, so single-ABI PR APKs are not compared with multi-ABI release APKs; unmatched
-  variants show `—` for their change and don't count toward totals.
+- Every trigger updates one comment (fork PRs included), so finished workflows and their failures
+  show while others still run; the last one to complete renders the final state.
+  `collect_build_status.py` (stdlib only, before Python dependencies install) writes each
+  workflow's state, latest attempt's duration, attempt number, and wall time since the run was
+  created, and its jobs with failed-step log links, from one jobs-API call per run
+  (`--status-out`). A failed job whose runner was lost (a step left unfinished, or GitHub's "lost
+  communication with the server" annotation, read only for a failed job without a failed step)
+  names that step and its start and end. Every other workflow of the commit (CI Scripts, Docker,
+  CodeQL, ...) is listed with its state, and its jobs only when it failed; each one's completion
+  also triggers the comment, so a late failure still reaches the verdict.
+- `download_artifacts.py` (one directory per artifact, plus a manifest naming its workflow and
+  whether it downloaded) fetches the completed runs' test results, coverage, and distributable
+  artifact listings (size, id, expiry), the pre-commit results, and Code Analysis's per-tool
+  `*-timings.json` and `*-diagnostics.json`; runs still in progress are skipped. The same script
+  then fetches the base commit's own `push` builds (`--head-sha "$BASE_SHA" --event push` with an
+  empty `--runs-cache`): their test results, coverage, and artifact listings are what the comment
+  compares with, each platform on its own, so a failed or missing base build only blanks its rows.
+  Every download step continues on error, and the comment names artifacts that failed to download
+  apart from those past retention, which the manifest marks `expired` and the comment notes.
+  The comment is also the job summary.
+- The comment (`generate_build_results_comment.py`) leads with a verdict (❌ failed, naming every
+  failed workflow including other checks; ⏳ in progress; 🚫 cancelled; ⏭️ nothing to build; ✅
+  passed), the linked head commit, how many platform workflows are done, pending, or skipped by
+  change detection (every build job skipped), and how many other checks still run. A table gives
+  each workflow's status, duration (with the attempt and total wall time after a re-run), test or
+  hook counts, size change from the base, and run link; Code Analysis shows its warnings on lines
+  the pull request changed. Lines follow for the other checks (problems linked first) and for the
+  base commit with each platform's base run. A Failures section lists each failed job with links
+  to its failing steps' logs (or the step its runner was lost during), failed tests with their
+  first report lines (QtTest `FAIL!` blocks, sanitizer reports, else the output tail) from the
+  JUnit XML, failed pre-commit hooks, and failed other checks. Collapsed sections cover per-suite
+  test results with the tests each suite added or removed versus the base build; `src/` line,
+  function, and branch coverage with changes in percentage points (test code is left out, as on
+  Codecov, which the section links for the changed lines' coverage); artifact downloads with their
+  size change (B, KB, or MB; ⚠️ above 1% and 1 MiB growth) and expiry; pre-commit counts when a
+  hook failed; and Code Analysis's warnings on changed lines (`changed` in each
+  `*-diagnostics.json`), linked at the commit the analysis checked out (`commit`, GitHub's merge
+  commit on a pull request, whose line numbers can differ from the head's; the head commit for
+  reports without one), with every unique warning counted only in a per-tool table. Lists are
+  truncated with "…and N more", and longer reports shrink to stay under GitHub's comment limit.
+  Names from pull requests (tests, jobs, hooks, artifacts) are escaped or shown as code. Android
+  artifact names include their ABIs, so single-ABI PR APKs are not compared with multi-ABI
+  release APKs; unmatched variants show `—` for their change.
+- `report_context.py --comment comment.md` rechecks that the PR head is still the build's commit,
+  then creates or updates the PR's comment marked `<!-- build-results -->` (or the marker of the
+  comments `thollander/actions-comment-pull-request` posted before) through `gh api`.
 
 ### Job summaries
 

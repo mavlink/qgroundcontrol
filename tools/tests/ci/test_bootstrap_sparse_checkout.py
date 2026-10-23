@@ -269,14 +269,9 @@ EXPECTED_BUILD_RESULTS_PATHS: frozenset[str] = frozenset(
 )
 
 
-@pytest.mark.parametrize(
-    ("job", "expected_actions"),
-    [("post-pr-comment", {".github/actions/setup-python"}), ("save-baselines", set())],
-)
-def test_build_results_jobs_check_out_once_before_local_actions(
-    job: str, expected_actions: set[str]
-) -> None:
-    """Each job's only checkout covers its actions, locks and Python import closure."""
+def test_build_results_jobs_check_out_once_before_local_actions() -> None:
+    """The comment job's only checkout covers its actions, locks and Python import closure."""
+    job, expected_actions = "post-pr-comment", {".github/actions/setup-python"}
 
     steps = load_workflow(BUILD_RESULTS_YML.name)["jobs"][job]["steps"]
     checkouts = [

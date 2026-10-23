@@ -5,104 +5,78 @@
   
   ✅ **All builds passed** · [`0123456`](https://github.com/mavlink/qgroundcontrol/commit/0123456789abcdef0123456789abcdef01234567) · 5 of 5 platform workflows done
   
-  | Workflow | Status | Duration | Results | Artifacts (Δ vs base) | Run |
+  | Workflow | Status | Duration | Results | Size Δ | Run |
   | --- | --- | --- | --- | --- | --- |
-  | Linux | ✅ Passed | 26m 50s | 882 passed | 377.05 MB (+0.09 MB) | [#901](https://github.com/mavlink/qgroundcontrol/actions/runs/9901) |
-  | Windows | ✅ Passed | 31m 02s | 10 passed | 98.00 MB (+0.06 MB) | [#902](https://github.com/mavlink/qgroundcontrol/actions/runs/9902) |
-  | MacOS | ✅ Passed | 28m 08s | 439 passed, 1 skipped | 335.00 MB (-0.12 MB) | [#903](https://github.com/mavlink/qgroundcontrol/actions/runs/9903) |
-  | Android | ✅ Passed | 22m 04s | — | 85.00 MB | [#904](https://github.com/mavlink/qgroundcontrol/actions/runs/9904) |
-  | iOS | ✅ Passed | 38m 34s | — | 77.39 MB (-0.04 MB) | [#907](https://github.com/mavlink/qgroundcontrol/actions/runs/9907) |
+  | Linux | ✅ Passed | 26m 50s | 878 passed | +4.0 KB | [#901](https://github.com/mavlink/qgroundcontrol/actions/runs/9901) |
+  | Windows | ✅ Passed | 20m 02s (attempt 2, 40m 04s total) | 10 passed | +59.0 KB | [#902](https://github.com/mavlink/qgroundcontrol/actions/runs/9902) |
+  | MacOS | ✅ Passed | 28m 08s | 439 passed, 1 skipped | -124.1 KB | [#903](https://github.com/mavlink/qgroundcontrol/actions/runs/9903) |
+  | Android | ✅ Passed | 22m 04s | — | — | [#904](https://github.com/mavlink/qgroundcontrol/actions/runs/9904) |
+  | iOS | ✅ Passed | 38m 34s | — | -36.3 KB | [#907](https://github.com/mavlink/qgroundcontrol/actions/runs/9907) |
   | pre-commit | ✅ Passed | 1m 50s | hooks: 41 passed, 17 skipped | — | [#905](https://github.com/mavlink/qgroundcontrol/actions/runs/9905) |
-  | Code Analysis | ✅ Passed | 6m 12s | 5 unique warnings in 3 files | — | [#906](https://github.com/mavlink/qgroundcontrol/actions/runs/9906) |
+  | Code Analysis | ✅ Passed | 6m 12s | **2 warnings on changed lines** | — | [#906](https://github.com/mavlink/qgroundcontrol/actions/runs/9906) |
   
-  <details><summary>Tests: 1,331 passed, 0 failed, 1 skipped in 7 suites</summary>
+  **Other checks:** ✅ CI Scripts, CodeQL, Docker
   
-  | Suite | Workflow | Passed | Failed | Skipped | Time |
+  **Base:** [`aaaaaaa`](https://github.com/mavlink/qgroundcontrol/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) · Linux [#801](https://github.com/mavlink/qgroundcontrol/actions/runs/8801) · Windows [#802](https://github.com/mavlink/qgroundcontrol/actions/runs/8802) · MacOS [#803](https://github.com/mavlink/qgroundcontrol/actions/runs/8803) (failure) · Android [#804](https://github.com/mavlink/qgroundcontrol/actions/runs/8804) · iOS [#807](https://github.com/mavlink/qgroundcontrol/actions/runs/8807)
+  
+  <details><summary>Tests: 1,327 passed, 0 failed, 1 skipped in 7 suites; 1 added, 1 removed vs base</summary>
+  
+  | Suite | Workflow | Passed | Failed | Skipped | Time | Tests vs base |
+  | --- | --- | ---: | ---: | ---: | ---: | ---: |
+  | `linux-coverage-integration` | Linux | 61 | 0 | 0 | 6m 52s | — |
+  | `linux-coverage-unit` | Linux | 378 | 0 | 0 | 1m 23s | +1 -1 |
+  | `linux-sanitizers-integration` | Linux | 61 | 0 | 0 | 6m 20s | — |
+  | `linux-sanitizers-unit` | Linux | 378 | 0 | 0 | 2m 21s | — |
+  | `macos-integration` | MacOS | 61 | 0 | 0 | 3m 25s | — |
+  | `macos-unit` | MacOS | 378 | 0 | 1 | 1m 36s | same |
+  | `portable-windows` | Windows | 10 | 0 | 0 | 4.0s | — |
+  
+  Added: `FTPManagerTest` (linux-coverage-unit)
+  
+  Removed: `RetiredLinkTest` (linux-coverage-unit)
+  
+  </details>
+  
+  <details><summary>Code coverage (src/): 66.5% of lines (+0.06 pp vs base)</summary>
+  
+  | Metric | Covered | Coverage | Base | Change |
+  | --- | ---: | ---: | ---: | ---: |
+  | Lines | 66,120 of 99,400 | 66.5% | 66.5% | +0.06 pp |
+  | Functions | 6,612 of 9,940 | 66.5% | 66.5% | +0.06 pp |
+  | Branches | 33,060 of 99,400 | 33.3% | 33.2% | +0.03 pp |
+  
+  Counts `src/` only; test code is left out. Base: `aaaaaaa` (Linux build). Coverage of the changed lines: [Codecov](https://app.codecov.io/gh/mavlink/qgroundcontrol/pull/15370).
+  
+  </details>
+  
+  <details><summary>Artifacts: 6 downloads, first expires 2026-02-24</summary>
+  
+  | Artifact | Workflow | Size | Change | % | Expires |
   | --- | --- | ---: | ---: | ---: | ---: |
-  | `linux-coverage-integration` | Linux | 61 | 0 | 0 | 6m 52s |
-  | `linux-coverage-unit` | Linux | 380 | 0 | 0 | 1m 23s |
-  | `linux-sanitizers-integration` | Linux | 61 | 0 | 0 | 6m 20s |
-  | `linux-sanitizers-unit` | Linux | 380 | 0 | 0 | 2m 21s |
-  | `macos-integration` | MacOS | 61 | 0 | 0 | 3m 25s |
-  | `macos-unit` | MacOS | 378 | 0 | 1 | 1m 36s |
-  | `portable-windows` | Windows | 10 | 0 | 0 | 4.0s |
+  | [`QGroundControl-aarch64.AppImage`](https://github.com/mavlink/qgroundcontrol/actions/runs/9901/artifacts/5001) | Linux | 183.37 MB | +4.0 KB | +0.00% | 2026-02-24 |
+  | [`QGroundControl-installer-AMD64.exe`](https://github.com/mavlink/qgroundcontrol/actions/runs/9902/artifacts/5003) | Windows | 98.00 MB | +59.0 KB | +0.06% | 2026-02-24 |
+  | [`QGroundControl-linux-arm64-v8a.apk`](https://github.com/mavlink/qgroundcontrol/actions/runs/9904/artifacts/5005) | Android | 85.00 MB | — | — | 2026-02-24 |
+  | [`QGroundControl-x86_64.AppImage`](https://github.com/mavlink/qgroundcontrol/actions/runs/9901/artifacts/5002) | Linux | 193.68 MB | unchanged | +0.00% | 2026-02-24 |
+  | [`QGroundControl.dmg`](https://github.com/mavlink/qgroundcontrol/actions/runs/9903/artifacts/5004) | MacOS | 335.00 MB | -124.1 KB | -0.04% | 2026-02-24 |
+  | [`QGroundControl.ipa`](https://github.com/mavlink/qgroundcontrol/actions/runs/9907/artifacts/5006) | iOS | 77.39 MB | -36.3 KB | -0.05% | 2026-02-24 |
+  
+  Changes are against base `aaaaaaa`; only artifacts with the same name are compared (PR Android builds are single-ABI). ⚠️ marks growth above 1% and 1.00 MB. Downloading needs a GitHub sign-in.
   
   </details>
   
-  <details><summary>Slowest tests: MissionControllerTest took 1m 35s</summary>
+  <details><summary>Code Analysis: ✅ Passed, 2 warnings on changed lines</summary>
   
-  | Test | Suite | Time |
-  | --- | --- | ---: |
-  | `MissionControllerTest` | linux-coverage-unit | 1m 35s |
-  | `VehicleLinkManagerTest` | linux-coverage-unit | 1m 01s |
-  | `ParameterManagerTest` | linux-coverage-unit | 49s |
-  | `FTPManagerTest` | linux-coverage-unit | 33s |
-  | `InitialConnectTest` | linux-coverage-unit | 30s |
+  Warnings on lines this pull request changed:
   
-  </details>
+  - [`src/MissionManager/MissionController.cc:7`](https://github.com/mavlink/qgroundcontrol/blob/fedcba9876543210fedcba9876543210fedcba98/src/MissionManager/MissionController.cc#L7) `modernize-use-nodiscard` (clang-tidy)
+  - [`src/Vehicle/Vehicle.h:10`](https://github.com/mavlink/qgroundcontrol/blob/fedcba9876543210fedcba9876543210fedcba98/src/Vehicle/Vehicle.h#L10) `modernize-use-nodiscard` (clang-tidy)
   
-  <details><summary>Code coverage: 61.4% of lines (+0.12 pp)</summary>
-  
-  | Metric | Covered | Coverage | Baseline | Change |
+  | Tool | Files analyzed | On changed lines | All warnings | Errors |
   | --- | ---: | ---: | ---: | ---: |
-  | Lines | 151,234 of 246,310 | 61.4% | 61.3% | +0.12 pp |
-  | Functions | 21,480 of 29,870 | 71.9% | 71.8% | +0.12 pp |
-  | Branches | 60,211 of 141,502 | 42.6% | 42.6% | -0.07 pp |
+  | `clang-tidy` | 75 | 2 | 4 | 0 |
+  | `clazy` | 76 | 0 | 1 | 0 |
   
-  Baseline: PR base `aaaaaaa`.
-  
-  </details>
-  
-  <details><summary>Artifact sizes: 6 artifacts, 972.44 MB, -0.01 MB vs base</summary>
-  
-  | Artifact | Workflow | Size | Change | % |
-  | --- | --- | ---: | ---: | ---: |
-  | `QGroundControl-aarch64.AppImage` | Linux | 183.37 MB | +0.09 MB | +0.05% |
-  | `QGroundControl-installer-AMD64.exe` | Windows | 98.00 MB | +0.06 MB | +0.06% |
-  | `QGroundControl-linux-arm64-v8a.apk` | Android | 85.00 MB | — | — |
-  | `QGroundControl-x86_64.AppImage` | Linux | 193.68 MB | unchanged | +0.00% |
-  | `QGroundControl.dmg` | MacOS | 335.00 MB | -0.12 MB | -0.04% |
-  | `QGroundControl.ipa` | iOS | 77.39 MB | -0.04 MB | -0.05% |
-  
-  Compared with PR base `aaaaaaa`; only artifacts with the same name are compared (PR Android builds are single-ABI). ⚠️ marks growth above 1% and 1.00 MB.
-  
-  </details>
-  
-  <details><summary>Pre-commit: 41 passed, 0 failed, 17 skipped</summary>
-  
-  | Hooks | Count |
-  | --- | ---: |
-  | Passed | 41 |
-  | Failed | 0 |
-  | Skipped | 17 |
-  
-  [Hook output](https://github.com/mavlink/qgroundcontrol/actions/runs/9905) · reproduce locally with `just lint`.
-  
-  </details>
-  
-  <details><summary>Code Analysis: ✅ Passed, 5 unique warnings</summary>
-  
-  | Tool | Files analyzed | Unique warnings | In files | Errors |
-  | --- | ---: | ---: | ---: | ---: |
-  | `clang-tidy` | 75 | 4 | 3 | 0 |
-  | `clazy` | 76 | 1 | 1 | 0 |
-  
-  Most frequent checks:
-  
-  | Check | Tool | Unique warnings |
-  | --- | --- | ---: |
-  | `modernize-use-nodiscard` | clang-tidy | 2 |
-  | `-Wclazy-non-pod-global-static` | clazy | 1 |
-  | `readability-identifier-naming` | clang-tidy | 1 |
-  | `readability-implicit-bool-conversion` | clang-tidy | 1 |
-  
-  Files with the most warnings (a header's warnings count once):
-  
-  | File | Unique warnings |
-  | --- | ---: |
-  | `src/Vehicle/Vehicle.cc` | 2 |
-  | `src/Vehicle/Vehicle.h` | 2 |
-  | `src/MissionManager/MissionController.cc` | 1 |
+  All warnings counts each unique warning in every analyzed unit and the headers it includes, mostly code this pull request did not touch.
   
   [Code Analysis run](https://github.com/mavlink/qgroundcontrol/actions/runs/9906) (diagnostics are in each job's summary and log).
   
@@ -118,23 +92,31 @@
   '''
   ## Build Results
   
-  ❌ **3 workflows failed** · [`0123456`](https://github.com/mavlink/qgroundcontrol/commit/0123456789abcdef0123456789abcdef01234567) · 5 of 5 platform workflows done
+  ❌ **4 workflows failed** (Linux, Windows, pre-commit, CI Scripts) · [`0123456`](https://github.com/mavlink/qgroundcontrol/commit/0123456789abcdef0123456789abcdef01234567) · 5 of 5 platform workflows done
   
-  | Workflow | Status | Duration | Results | Artifacts (Δ vs base) | Run |
+  | Workflow | Status | Duration | Results | Size Δ | Run |
   | --- | --- | --- | --- | --- | --- |
-  | Linux | ❌ Failed | 27m 35s | 875 passed, **3 failed** | ⚠️ 381.26 MB (+4.30 MB) | [#901](https://github.com/mavlink/qgroundcontrol/actions/runs/9901) |
+  | Linux | ❌ Failed | 27m 35s | 875 passed, **3 failed** | ⚠️ +4.21 MB | [#901](https://github.com/mavlink/qgroundcontrol/actions/runs/9901) |
   | Windows | ❌ Failed | 15m 41s | — | — | [#902](https://github.com/mavlink/qgroundcontrol/actions/runs/9902) |
-  | MacOS | ✅ Passed | 28m 08s | 439 passed, 1 skipped | 335.00 MB (-0.12 MB) | [#903](https://github.com/mavlink/qgroundcontrol/actions/runs/9903) |
-  | Android | ✅ Passed | 22m 04s | — | 85.00 MB | [#904](https://github.com/mavlink/qgroundcontrol/actions/runs/9904) |
+  | MacOS | ✅ Passed | 28m 08s | 439 passed, 1 skipped | -124.1 KB | [#903](https://github.com/mavlink/qgroundcontrol/actions/runs/9903) |
+  | Android | ✅ Passed | 22m 04s | — | — | [#904](https://github.com/mavlink/qgroundcontrol/actions/runs/9904) |
   | iOS | ✅ Passed | 38m 34s | — | — | [#907](https://github.com/mavlink/qgroundcontrol/actions/runs/9907) |
   | pre-commit | ❌ Failed | 2m 11s | hooks: 39 passed, **2 failed**, 17 skipped | — | [#905](https://github.com/mavlink/qgroundcontrol/actions/runs/9905) |
-  | Code Analysis | ✅ Passed | 6m 12s | 5 unique warnings in 3 files | — | [#906](https://github.com/mavlink/qgroundcontrol/actions/runs/9906) |
+  | Code Analysis | ✅ Passed | 6m 12s | **2 warnings on changed lines** | — | [#906](https://github.com/mavlink/qgroundcontrol/actions/runs/9906) |
+  
+  **Other checks:** ❌ [CI Scripts](https://github.com/mavlink/qgroundcontrol/actions/runs/9911) · ✅ CodeQL, Docker
+  
+  **Base:** [`aaaaaaa`](https://github.com/mavlink/qgroundcontrol/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) · Linux [#801](https://github.com/mavlink/qgroundcontrol/actions/runs/8801) · Windows [#802](https://github.com/mavlink/qgroundcontrol/actions/runs/8802) · MacOS [#803](https://github.com/mavlink/qgroundcontrol/actions/runs/8803) (failure) · Android [#804](https://github.com/mavlink/qgroundcontrol/actions/runs/8804) · iOS [#807](https://github.com/mavlink/qgroundcontrol/actions/runs/8807)
+  
+  ⚠️ Could not download `test-results-portable-windows-arm64` (Windows); the results below leave them out.
   
   ### ❌ Failures
   
   - **Linux** · Test + Coverage linux\_gcc\_64 Debug: failed at [`Run and report tests`](https://github.com/mavlink/qgroundcontrol/actions/runs/9901/job/2#step:14:1) · [log](https://github.com/mavlink/qgroundcontrol/actions/runs/9901/job/2)
   - **Windows** · Build x64 Release: failed at [`Build`](https://github.com/mavlink/qgroundcontrol/actions/runs/9902/job/2#step:9:1) · [log](https://github.com/mavlink/qgroundcontrol/actions/runs/9902/job/2)
+  - **Windows** · Build arm64 Release: runner lost during `Build Setup` (started 11:02 UTC, ended 11:05 UTC), no logs; re-run · [log](https://github.com/mavlink/qgroundcontrol/actions/runs/9902/job/4)
   - **pre-commit** · failed hooks: `clang-format`, `ruff check` · [log](https://github.com/mavlink/qgroundcontrol/actions/runs/9905/job/1)
+  - **CI Scripts** · Test CI Scripts \(py3.12\): failed at [`Run CI script tests`](https://github.com/mavlink/qgroundcontrol/actions/runs/9911/job/1#step:8:1) · [log](https://github.com/mavlink/qgroundcontrol/actions/runs/9911/job/1)
   
   **Failed tests** (3 of 1,318)
   
@@ -171,53 +153,45 @@
   
   </details>
   
-  <details><summary>Tests: 1,314 passed, 3 failed, 1 skipped in 6 suites</summary>
+  <details><summary>Tests: 1,314 passed, 3 failed, 1 skipped in 6 suites; 1 added, 2 removed vs base</summary>
   
-  | Suite | Workflow | Passed | Failed | Skipped | Time |
-  | --- | --- | ---: | ---: | ---: | ---: |
-  | `linux-coverage-unit` | Linux | 375 | **2** | 0 | 2m 11s |
-  | `linux-sanitizers-unit` | Linux | 378 | **1** | 0 | 2m 30s |
-  | `linux-coverage-integration` | Linux | 61 | 0 | 0 | 6m 52s |
-  | `linux-sanitizers-integration` | Linux | 61 | 0 | 0 | 6m 20s |
-  | `macos-integration` | MacOS | 61 | 0 | 0 | 3m 25s |
-  | `macos-unit` | MacOS | 378 | 0 | 1 | 1m 36s |
+  | Suite | Workflow | Passed | Failed | Skipped | Time | Tests vs base |
+  | --- | --- | ---: | ---: | ---: | ---: | ---: |
+  | `linux-coverage-unit` | Linux | 375 | **2** | 0 | 2m 11s | +1 -2 |
+  | `linux-sanitizers-unit` | Linux | 378 | **1** | 0 | 2m 30s | — |
+  | `linux-coverage-integration` | Linux | 61 | 0 | 0 | 6m 52s | — |
+  | `linux-sanitizers-integration` | Linux | 61 | 0 | 0 | 6m 20s | — |
+  | `macos-integration` | MacOS | 61 | 0 | 0 | 3m 25s | — |
+  | `macos-unit` | MacOS | 378 | 0 | 1 | 1m 36s | same |
   
-  </details>
+  Added: `FTPManagerTest` (linux-coverage-unit)
   
-  <details><summary>Slowest tests: FTPManagerTest took 2m 00s</summary>
-  
-  | Test | Suite | Time |
-  | --- | --- | ---: |
-  | `FTPManagerTest` | linux-coverage-unit | 2m 00s |
-  | `MissionControllerTest` | linux-coverage-unit | 1m 35s |
-  | `VehicleLinkManagerTest` | linux-coverage-unit | 1m 01s |
-  | `ParameterManagerTest` | linux-coverage-unit | 49s |
-  | `Integration000Test` | linux-sanitizers-integration | 6.0s |
+  Removed: `RetiredLinkTest` (linux-coverage-unit); `Unit373Test` (linux-coverage-unit)
   
   </details>
   
-  <details><summary>Code coverage: 61.4% of lines (+0.12 pp)</summary>
+  <details><summary>Code coverage (src/): 66.5% of lines (+0.06 pp vs base)</summary>
   
-  | Metric | Covered | Coverage | Baseline | Change |
+  | Metric | Covered | Coverage | Base | Change |
   | --- | ---: | ---: | ---: | ---: |
-  | Lines | 151,234 of 246,310 | 61.4% | 61.3% | +0.12 pp |
-  | Functions | 21,480 of 29,870 | 71.9% | 71.8% | +0.12 pp |
-  | Branches | 60,211 of 141,502 | 42.6% | 42.6% | -0.07 pp |
+  | Lines | 66,120 of 99,400 | 66.5% | 66.5% | +0.06 pp |
+  | Functions | 6,612 of 9,940 | 66.5% | 66.5% | +0.06 pp |
+  | Branches | 33,060 of 99,400 | 33.3% | 33.2% | +0.03 pp |
   
-  Baseline: `master` at `bbbbbbb`, the newest snapshot; the PR base has none.
+  Counts `src/` only; test code is left out. Base: `aaaaaaa` (Linux build). Coverage of the changed lines: [Codecov](https://app.codecov.io/gh/mavlink/qgroundcontrol/pull/15370).
   
   </details>
   
-  <details><summary>⚠️ Artifact sizes: 4 artifacts, 801.26 MB, +4.17 MB vs base</summary>
+  <details><summary>⚠️ Artifacts: 4 downloads, first expires 2026-02-24; 1 grew</summary>
   
-  | Artifact | Workflow | Size | Change | % |
-  | --- | --- | ---: | ---: | ---: |
-  | ⚠️ `QGroundControl-x86_64.AppImage` | Linux | 197.89 MB | +4.21 MB | +2.17% |
-  | `QGroundControl-aarch64.AppImage` | Linux | 183.37 MB | +0.09 MB | +0.05% |
-  | `QGroundControl-linux-arm64-v8a.apk` | Android | 85.00 MB | — | — |
-  | `QGroundControl.dmg` | MacOS | 335.00 MB | -0.12 MB | -0.04% |
+  | Artifact | Workflow | Size | Change | % | Expires |
+  | --- | --- | ---: | ---: | ---: | ---: |
+  | ⚠️ [`QGroundControl-x86_64.AppImage`](https://github.com/mavlink/qgroundcontrol/actions/runs/9901/artifacts/5002) | Linux | 197.89 MB | +4.21 MB | +2.17% | 2026-02-24 |
+  | [`QGroundControl-aarch64.AppImage`](https://github.com/mavlink/qgroundcontrol/actions/runs/9901/artifacts/5001) | Linux | 183.37 MB | +4.0 KB | +0.00% | 2026-02-24 |
+  | [`QGroundControl-linux-arm64-v8a.apk`](https://github.com/mavlink/qgroundcontrol/actions/runs/9904/artifacts/5004) | Android | 85.00 MB | — | — | 2026-02-24 |
+  | [`QGroundControl.dmg`](https://github.com/mavlink/qgroundcontrol/actions/runs/9903/artifacts/5003) | MacOS | 335.00 MB | -124.1 KB | -0.04% | 2026-02-24 |
   
-  Compared with PR base `aaaaaaa`; only artifacts with the same name are compared (PR Android builds are single-ABI). ⚠️ marks growth above 1% and 1.00 MB.
+  Changes are against base `aaaaaaa`; only artifacts with the same name are compared (PR Android builds are single-ABI). ⚠️ marks growth above 1% and 1.00 MB. Downloading needs a GitHub sign-in.
   
   </details>
   
@@ -235,29 +209,19 @@
   
   </details>
   
-  <details><summary>Code Analysis: ✅ Passed, 5 unique warnings</summary>
+  <details><summary>Code Analysis: ✅ Passed, 2 warnings on changed lines</summary>
   
-  | Tool | Files analyzed | Unique warnings | In files | Errors |
+  Warnings on lines this pull request changed:
+  
+  - [`src/MissionManager/MissionController.cc:7`](https://github.com/mavlink/qgroundcontrol/blob/fedcba9876543210fedcba9876543210fedcba98/src/MissionManager/MissionController.cc#L7) `modernize-use-nodiscard` (clang-tidy)
+  - [`src/Vehicle/Vehicle.h:10`](https://github.com/mavlink/qgroundcontrol/blob/fedcba9876543210fedcba9876543210fedcba98/src/Vehicle/Vehicle.h#L10) `modernize-use-nodiscard` (clang-tidy)
+  
+  | Tool | Files analyzed | On changed lines | All warnings | Errors |
   | --- | ---: | ---: | ---: | ---: |
-  | `clang-tidy` | 75 | 4 | 3 | 0 |
-  | `clazy` | 76 | 1 | 1 | 0 |
+  | `clang-tidy` | 75 | 2 | 4 | 0 |
+  | `clazy` | 76 | 0 | 1 | 0 |
   
-  Most frequent checks:
-  
-  | Check | Tool | Unique warnings |
-  | --- | --- | ---: |
-  | `modernize-use-nodiscard` | clang-tidy | 2 |
-  | `-Wclazy-non-pod-global-static` | clazy | 1 |
-  | `readability-identifier-naming` | clang-tidy | 1 |
-  | `readability-implicit-bool-conversion` | clang-tidy | 1 |
-  
-  Files with the most warnings (a header's warnings count once):
-  
-  | File | Unique warnings |
-  | --- | ---: |
-  | `src/Vehicle/Vehicle.cc` | 2 |
-  | `src/Vehicle/Vehicle.h` | 2 |
-  | `src/MissionManager/MissionController.cc` | 1 |
+  All warnings counts each unique warning in every analyzed unit and the headers it includes, mostly code this pull request did not touch.
   
   [Code Analysis run](https://github.com/mavlink/qgroundcontrol/actions/runs/9906) (diagnostics are in each job's summary and log).
   
@@ -269,110 +233,82 @@
   
   '''
 # ---
-# name: test_rendered_comment_matches_snapshot[no-baseline]
+# name: test_rendered_comment_matches_snapshot[no-base]
   '''
   ## Build Results
   
   ✅ **All builds passed** · [`0123456`](https://github.com/mavlink/qgroundcontrol/commit/0123456789abcdef0123456789abcdef01234567) · 5 of 5 platform workflows done
   
-  | Workflow | Status | Duration | Results | Artifacts (Δ vs base) | Run |
+  | Workflow | Status | Duration | Results | Size Δ | Run |
   | --- | --- | --- | --- | --- | --- |
-  | Linux | ✅ Passed | 26m 50s | 882 passed | 377.05 MB | [#901](https://github.com/mavlink/qgroundcontrol/actions/runs/9901) |
-  | Windows | ✅ Passed | 31m 02s | 10 passed | 98.00 MB | [#902](https://github.com/mavlink/qgroundcontrol/actions/runs/9902) |
-  | MacOS | ✅ Passed | 28m 08s | 439 passed, 1 skipped | 335.00 MB | [#903](https://github.com/mavlink/qgroundcontrol/actions/runs/9903) |
-  | Android | ✅ Passed | 22m 04s | — | 85.00 MB | [#904](https://github.com/mavlink/qgroundcontrol/actions/runs/9904) |
-  | iOS | ✅ Passed | 38m 34s | — | 77.39 MB | [#907](https://github.com/mavlink/qgroundcontrol/actions/runs/9907) |
+  | Linux | ✅ Passed | 26m 50s | 878 passed | — | [#901](https://github.com/mavlink/qgroundcontrol/actions/runs/9901) |
+  | Windows | ✅ Passed | 20m 02s (attempt 2, 40m 04s total) | 10 passed | — | [#902](https://github.com/mavlink/qgroundcontrol/actions/runs/9902) |
+  | MacOS | ✅ Passed | 28m 08s | 439 passed, 1 skipped | — | [#903](https://github.com/mavlink/qgroundcontrol/actions/runs/9903) |
+  | Android | ✅ Passed | 22m 04s | — | — | [#904](https://github.com/mavlink/qgroundcontrol/actions/runs/9904) |
+  | iOS | ✅ Passed | 38m 34s | — | — | [#907](https://github.com/mavlink/qgroundcontrol/actions/runs/9907) |
   | pre-commit | ✅ Passed | 1m 50s | hooks: 41 passed, 17 skipped | — | [#905](https://github.com/mavlink/qgroundcontrol/actions/runs/9905) |
-  | Code Analysis | ✅ Passed | 6m 12s | 5 unique warnings in 3 files | — | [#906](https://github.com/mavlink/qgroundcontrol/actions/runs/9906) |
+  | Code Analysis | ✅ Passed | 6m 12s | **2 warnings on changed lines** | — | [#906](https://github.com/mavlink/qgroundcontrol/actions/runs/9906) |
   
-  <details><summary>Tests: 1,331 passed, 0 failed, 1 skipped in 7 suites</summary>
+  **Other checks:** ✅ CI Scripts, CodeQL, Docker
   
-  | Suite | Workflow | Passed | Failed | Skipped | Time |
+  **Base:** [`aaaaaaa`](https://github.com/mavlink/qgroundcontrol/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) has no builds of its own yet, so changes are not shown.
+  
+  <details><summary>Tests: 1,327 passed, 0 failed, 1 skipped in 7 suites</summary>
+  
+  | Suite | Workflow | Passed | Failed | Skipped | Time | Tests vs base |
+  | --- | --- | ---: | ---: | ---: | ---: | ---: |
+  | `linux-coverage-integration` | Linux | 61 | 0 | 0 | 6m 52s | — |
+  | `linux-coverage-unit` | Linux | 378 | 0 | 0 | 1m 23s | — |
+  | `linux-sanitizers-integration` | Linux | 61 | 0 | 0 | 6m 20s | — |
+  | `linux-sanitizers-unit` | Linux | 378 | 0 | 0 | 2m 21s | — |
+  | `macos-integration` | MacOS | 61 | 0 | 0 | 3m 25s | — |
+  | `macos-unit` | MacOS | 378 | 0 | 1 | 1m 36s | — |
+  | `portable-windows` | Windows | 10 | 0 | 0 | 4.0s | — |
+  
+  The base build has no test results to compare with.
+  
+  </details>
+  
+  <details><summary>Code coverage (src/): 66.5% of lines</summary>
+  
+  | Metric | Covered | Coverage | Base | Change |
+  | --- | ---: | ---: | ---: | ---: |
+  | Lines | 66,120 of 99,400 | 66.5% | — | — |
+  | Functions | 6,612 of 9,940 | 66.5% | — | — |
+  | Branches | 33,060 of 99,400 | 33.3% | — | — |
+  
+  Counts `src/` only; test code is left out. No coverage report for base `aaaaaaa`, so changes are not shown. Coverage of the changed lines: [Codecov](https://app.codecov.io/gh/mavlink/qgroundcontrol/pull/15370).
+  
+  </details>
+  
+  <details><summary>Artifacts: 6 downloads, first expires 2026-02-24</summary>
+  
+  | Artifact | Workflow | Size | Change | % | Expires |
   | --- | --- | ---: | ---: | ---: | ---: |
-  | `linux-coverage-integration` | Linux | 61 | 0 | 0 | 6m 52s |
-  | `linux-coverage-unit` | Linux | 380 | 0 | 0 | 1m 23s |
-  | `linux-sanitizers-integration` | Linux | 61 | 0 | 0 | 6m 20s |
-  | `linux-sanitizers-unit` | Linux | 380 | 0 | 0 | 2m 21s |
-  | `macos-integration` | MacOS | 61 | 0 | 0 | 3m 25s |
-  | `macos-unit` | MacOS | 378 | 0 | 1 | 1m 36s |
-  | `portable-windows` | Windows | 10 | 0 | 0 | 4.0s |
+  | [`QGroundControl-aarch64.AppImage`](https://github.com/mavlink/qgroundcontrol/actions/runs/9901/artifacts/5001) | Linux | 183.37 MB | — | — | 2026-02-24 |
+  | [`QGroundControl-installer-AMD64.exe`](https://github.com/mavlink/qgroundcontrol/actions/runs/9902/artifacts/5003) | Windows | 98.00 MB | — | — | 2026-02-24 |
+  | [`QGroundControl-linux-arm64-v8a.apk`](https://github.com/mavlink/qgroundcontrol/actions/runs/9904/artifacts/5005) | Android | 85.00 MB | — | — | 2026-02-24 |
+  | [`QGroundControl-x86_64.AppImage`](https://github.com/mavlink/qgroundcontrol/actions/runs/9901/artifacts/5002) | Linux | 193.68 MB | — | — | 2026-02-24 |
+  | [`QGroundControl.dmg`](https://github.com/mavlink/qgroundcontrol/actions/runs/9903/artifacts/5004) | MacOS | 335.00 MB | — | — | 2026-02-24 |
+  | [`QGroundControl.ipa`](https://github.com/mavlink/qgroundcontrol/actions/runs/9907/artifacts/5006) | iOS | 77.39 MB | — | — | 2026-02-24 |
+  
+  No artifacts of base `aaaaaaa` to compare with. Downloading needs a GitHub sign-in.
   
   </details>
   
-  <details><summary>Slowest tests: MissionControllerTest took 1m 35s</summary>
+  <details><summary>Code Analysis: ✅ Passed, 2 warnings on changed lines</summary>
   
-  | Test | Suite | Time |
-  | --- | --- | ---: |
-  | `MissionControllerTest` | linux-coverage-unit | 1m 35s |
-  | `VehicleLinkManagerTest` | linux-coverage-unit | 1m 01s |
-  | `ParameterManagerTest` | linux-coverage-unit | 49s |
-  | `FTPManagerTest` | linux-coverage-unit | 33s |
-  | `InitialConnectTest` | linux-coverage-unit | 30s |
+  Warnings on lines this pull request changed:
   
-  </details>
+  - [`src/MissionManager/MissionController.cc:7`](https://github.com/mavlink/qgroundcontrol/blob/fedcba9876543210fedcba9876543210fedcba98/src/MissionManager/MissionController.cc#L7) `modernize-use-nodiscard` (clang-tidy)
+  - [`src/Vehicle/Vehicle.h:10`](https://github.com/mavlink/qgroundcontrol/blob/fedcba9876543210fedcba9876543210fedcba98/src/Vehicle/Vehicle.h#L10) `modernize-use-nodiscard` (clang-tidy)
   
-  <details><summary>Code coverage: 61.4% of lines</summary>
-  
-  | Metric | Covered | Coverage | Baseline | Change |
+  | Tool | Files analyzed | On changed lines | All warnings | Errors |
   | --- | ---: | ---: | ---: | ---: |
-  | Lines | 151,234 of 246,310 | 61.4% | — | — |
-  | Functions | 21,480 of 29,870 | 71.9% | — | — |
-  | Branches | 60,211 of 141,502 | 42.6% | — | — |
+  | `clang-tidy` | 75 | 2 | 4 | 0 |
+  | `clazy` | 76 | 0 | 1 | 0 |
   
-  No coverage baseline yet: `master` saves one after every platform workflow succeeds, so changes are shown once a baseline exists.
-  
-  </details>
-  
-  <details><summary>Artifact sizes: 6 artifacts, 972.44 MB</summary>
-  
-  | Artifact | Workflow | Size | Change | % |
-  | --- | --- | ---: | ---: | ---: |
-  | `QGroundControl-aarch64.AppImage` | Linux | 183.37 MB | — | — |
-  | `QGroundControl-installer-AMD64.exe` | Windows | 98.00 MB | — | — |
-  | `QGroundControl-linux-arm64-v8a.apk` | Android | 85.00 MB | — | — |
-  | `QGroundControl-x86_64.AppImage` | Linux | 193.68 MB | — | — |
-  | `QGroundControl.dmg` | MacOS | 335.00 MB | — | — |
-  | `QGroundControl.ipa` | iOS | 77.39 MB | — | — |
-  
-  No size baseline for `aaaaaaa` yet, so changes are not shown.
-  
-  </details>
-  
-  <details><summary>Pre-commit: 41 passed, 0 failed, 17 skipped</summary>
-  
-  | Hooks | Count |
-  | --- | ---: |
-  | Passed | 41 |
-  | Failed | 0 |
-  | Skipped | 17 |
-  
-  [Hook output](https://github.com/mavlink/qgroundcontrol/actions/runs/9905) · reproduce locally with `just lint`.
-  
-  </details>
-  
-  <details><summary>Code Analysis: ✅ Passed, 5 unique warnings</summary>
-  
-  | Tool | Files analyzed | Unique warnings | In files | Errors |
-  | --- | ---: | ---: | ---: | ---: |
-  | `clang-tidy` | 75 | 4 | 3 | 0 |
-  | `clazy` | 76 | 1 | 1 | 0 |
-  
-  Most frequent checks:
-  
-  | Check | Tool | Unique warnings |
-  | --- | --- | ---: |
-  | `modernize-use-nodiscard` | clang-tidy | 2 |
-  | `-Wclazy-non-pod-global-static` | clazy | 1 |
-  | `readability-identifier-naming` | clang-tidy | 1 |
-  | `readability-implicit-bool-conversion` | clang-tidy | 1 |
-  
-  Files with the most warnings (a header's warnings count once):
-  
-  | File | Unique warnings |
-  | --- | ---: |
-  | `src/Vehicle/Vehicle.cc` | 2 |
-  | `src/Vehicle/Vehicle.h` | 2 |
-  | `src/MissionManager/MissionController.cc` | 1 |
+  All warnings counts each unique warning in every analyzed unit and the headers it includes, mostly code this pull request did not touch.
   
   [Code Analysis run](https://github.com/mavlink/qgroundcontrol/actions/runs/9906) (diagnostics are in each job's summary and log).
   
@@ -388,58 +324,38 @@
   '''
   ## Build Results
   
-  ⏳ **Builds in progress** · [`0123456`](https://github.com/mavlink/qgroundcontrol/commit/0123456789abcdef0123456789abcdef01234567) · 2 of 5 platform workflows done (1 skipped by change detection, 3 pending)
+  ⏳ **Builds in progress** · [`0123456`](https://github.com/mavlink/qgroundcontrol/commit/0123456789abcdef0123456789abcdef01234567) · 2 of 5 platform workflows done (1 skipped by change detection, 3 pending) · 1 other check still running
   
-  | Workflow | Status | Duration | Results | Artifacts (Δ vs base) | Run |
+  | Workflow | Status | Duration | Results | Size Δ | Run |
   | --- | --- | --- | --- | --- | --- |
   | Linux | 🔄 Running | running | — | — | [#901](https://github.com/mavlink/qgroundcontrol/actions/runs/9901) |
   | Windows | ⏳ Pending | — | — | — | — |
-  | MacOS | ✅ Passed | 28m 08s | 439 passed, 1 skipped | 335.00 MB | [#903](https://github.com/mavlink/qgroundcontrol/actions/runs/9903) |
+  | MacOS | ✅ Passed | 28m 08s | 439 passed, 1 skipped | -124.1 KB | [#903](https://github.com/mavlink/qgroundcontrol/actions/runs/9903) |
   | Android | ⏭️ Skipped (no changes) | 21s | — | — | [#904](https://github.com/mavlink/qgroundcontrol/actions/runs/9904) |
   | iOS | 🔄 Running | running | — | — | [#907](https://github.com/mavlink/qgroundcontrol/actions/runs/9907) |
   | pre-commit | ✅ Passed | 1m 50s | hooks: 41 passed, 17 skipped | — | [#905](https://github.com/mavlink/qgroundcontrol/actions/runs/9905) |
   | Code Analysis | 🔄 Running | running | — | — | [#906](https://github.com/mavlink/qgroundcontrol/actions/runs/9906) |
   
-  <details><summary>Tests: 439 passed, 0 failed, 1 skipped in 2 suites</summary>
+  **Other checks:** 🔄 [Docker](https://github.com/mavlink/qgroundcontrol/actions/runs/9913) · ✅ CI Scripts, CodeQL
   
-  | Suite | Workflow | Passed | Failed | Skipped | Time |
+  **Base:** [`aaaaaaa`](https://github.com/mavlink/qgroundcontrol/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) · Linux [#801](https://github.com/mavlink/qgroundcontrol/actions/runs/8801) · Windows [#802](https://github.com/mavlink/qgroundcontrol/actions/runs/8802) · MacOS [#803](https://github.com/mavlink/qgroundcontrol/actions/runs/8803) (still running) · Android: no build · iOS: no build
+  
+  <details><summary>Tests: 439 passed, 0 failed, 1 skipped in 2 suites; 0 added, 0 removed vs base</summary>
+  
+  | Suite | Workflow | Passed | Failed | Skipped | Time | Tests vs base |
+  | --- | --- | ---: | ---: | ---: | ---: | ---: |
+  | `macos-integration` | MacOS | 61 | 0 | 0 | 3m 25s | — |
+  | `macos-unit` | MacOS | 378 | 0 | 1 | 1m 36s | same |
+  
+  </details>
+  
+  <details><summary>Artifacts: 1 download, first expires 2026-02-24</summary>
+  
+  | Artifact | Workflow | Size | Change | % | Expires |
   | --- | --- | ---: | ---: | ---: | ---: |
-  | `macos-integration` | MacOS | 61 | 0 | 0 | 3m 25s |
-  | `macos-unit` | MacOS | 378 | 0 | 1 | 1m 36s |
+  | [`QGroundControl.dmg`](https://github.com/mavlink/qgroundcontrol/actions/runs/9903/artifacts/5001) | MacOS | 335.00 MB | -124.1 KB | -0.04% | 2026-02-24 |
   
-  </details>
-  
-  <details><summary>Slowest tests: Integration000Test took 3.0s</summary>
-  
-  | Test | Suite | Time |
-  | --- | --- | ---: |
-  | `Integration000Test` | macos-integration | 3.0s |
-  | `Integration001Test` | macos-integration | 3.0s |
-  | `Integration002Test` | macos-integration | 3.0s |
-  | `Integration003Test` | macos-integration | 3.0s |
-  | `Integration004Test` | macos-integration | 3.0s |
-  
-  </details>
-  
-  <details><summary>Artifact sizes: 1 artifact, 335.00 MB</summary>
-  
-  | Artifact | Workflow | Size | Change | % |
-  | --- | --- | ---: | ---: | ---: |
-  | `QGroundControl.dmg` | MacOS | 335.00 MB | — | — |
-  
-  No size baseline for `aaaaaaa` yet, so changes are not shown.
-  
-  </details>
-  
-  <details><summary>Pre-commit: 41 passed, 0 failed, 17 skipped</summary>
-  
-  | Hooks | Count |
-  | --- | ---: |
-  | Passed | 41 |
-  | Failed | 0 |
-  | Skipped | 17 |
-  
-  [Hook output](https://github.com/mavlink/qgroundcontrol/actions/runs/9905) · reproduce locally with `just lint`.
+  Changes are against base `aaaaaaa`; only artifacts with the same name are compared (PR Android builds are single-ABI). ⚠️ marks growth above 1% and 1.00 MB. Downloading needs a GitHub sign-in.
   
   </details>
   
@@ -461,23 +377,27 @@
   '''
   ## Build Results
   
-  ❌ **1 workflow failed** · [`0123456`](https://github.com/mavlink/qgroundcontrol/commit/0123456789abcdef0123456789abcdef01234567) · 5 of 5 platform workflows done
+  ❌ **1 workflow failed** (Linux) · [`0123456`](https://github.com/mavlink/qgroundcontrol/commit/0123456789abcdef0123456789abcdef01234567) · 5 of 5 platform workflows done
   
-  | Workflow | Status | Duration | Results | Artifacts (Δ vs base) | Run |
+  | Workflow | Status | Duration | Results | Size Δ | Run |
   | --- | --- | --- | --- | --- | --- |
-  | Linux | ❌ Failed | 27m 35s | 802 passed, **25 failed** | ⚠️ 2.32 GB (+780.00 MB) | [#901](https://github.com/mavlink/qgroundcontrol/actions/runs/9901) |
-  | Windows | ✅ Passed | 31m 02s | 10 passed | — | [#902](https://github.com/mavlink/qgroundcontrol/actions/runs/9902) |
+  | Linux | ❌ Failed | 27m 35s | 800 passed, **25 failed** | ⚠️ +780.00 MB | [#901](https://github.com/mavlink/qgroundcontrol/actions/runs/9901) |
+  | Windows | ✅ Passed | 20m 02s (attempt 2, 40m 04s total) | 10 passed | — | [#902](https://github.com/mavlink/qgroundcontrol/actions/runs/9902) |
   | MacOS | ✅ Passed | 28m 08s | 439 passed, 1 skipped | — | [#903](https://github.com/mavlink/qgroundcontrol/actions/runs/9903) |
   | Android | ✅ Passed | 22m 04s | — | — | [#904](https://github.com/mavlink/qgroundcontrol/actions/runs/9904) |
   | iOS | ✅ Passed | 38m 34s | — | — | [#907](https://github.com/mavlink/qgroundcontrol/actions/runs/9907) |
   | pre-commit | ✅ Passed | 1m 50s | hooks: 41 passed, 17 skipped | — | [#905](https://github.com/mavlink/qgroundcontrol/actions/runs/9905) |
-  | Code Analysis | ✅ Passed | 6m 12s | 5 unique warnings in 3 files | — | [#906](https://github.com/mavlink/qgroundcontrol/actions/runs/9906) |
+  | Code Analysis | ✅ Passed | 6m 12s | **2 warnings on changed lines** | — | [#906](https://github.com/mavlink/qgroundcontrol/actions/runs/9906) |
+  
+  **Other checks:** ✅ CI Scripts, CodeQL, Docker
+  
+  **Base:** [`aaaaaaa`](https://github.com/mavlink/qgroundcontrol/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) · Linux [#801](https://github.com/mavlink/qgroundcontrol/actions/runs/8801) · Windows [#802](https://github.com/mavlink/qgroundcontrol/actions/runs/8802) · MacOS [#803](https://github.com/mavlink/qgroundcontrol/actions/runs/8803) (failure) · Android [#804](https://github.com/mavlink/qgroundcontrol/actions/runs/8804) · iOS [#807](https://github.com/mavlink/qgroundcontrol/actions/runs/8807)
   
   ### ❌ Failures
   
   - **Linux** · Test + Coverage linux\_gcc\_64 Debug: failed at [`Run and report tests`](https://github.com/mavlink/qgroundcontrol/actions/runs/9901/job/2#step:14:1) · [log](https://github.com/mavlink/qgroundcontrol/actions/runs/9901/job/2)
   
-  **Failed tests** (25 of 1,367)
+  **Failed tests** (25 of 1,365)
   
   <details><summary>❌ Flaky00Test · linux-coverage-unit</summary>
   
@@ -591,145 +511,115 @@
   
   …and 15 more
   
-  <details><summary>Tests: 1,341 passed, 25 failed, 1 skipped in 37 suites</summary>
+  <details><summary>Tests: 1,339 passed, 25 failed, 1 skipped in 37 suites; 25 added, 78 removed vs base</summary>
   
-  | Suite | Workflow | Passed | Failed | Skipped | Time |
-  | --- | --- | ---: | ---: | ---: | ---: |
-  | `linux-coverage-unit` | Linux | 300 | **25** | 0 | 2m 20s |
-  | `extra00-unit` | — | 3 | 0 | 0 | 2.0s |
-  | `extra01-unit` | — | 3 | 0 | 0 | 2.0s |
-  | `extra02-unit` | — | 3 | 0 | 0 | 2.0s |
-  | `extra03-unit` | — | 3 | 0 | 0 | 2.0s |
-  | `extra04-unit` | — | 3 | 0 | 0 | 2.0s |
-  | `extra05-unit` | — | 3 | 0 | 0 | 2.0s |
-  | `extra06-unit` | — | 3 | 0 | 0 | 2.0s |
-  | `extra07-unit` | — | 3 | 0 | 0 | 2.0s |
-  | `extra08-unit` | — | 3 | 0 | 0 | 2.0s |
-  | `extra09-unit` | — | 3 | 0 | 0 | 2.0s |
-  | `extra10-unit` | — | 3 | 0 | 0 | 2.0s |
-  | `extra11-unit` | — | 3 | 0 | 0 | 2.0s |
-  | `extra12-unit` | — | 3 | 0 | 0 | 2.0s |
-  | `extra13-unit` | — | 3 | 0 | 0 | 2.0s |
-  | `extra14-unit` | — | 3 | 0 | 0 | 2.0s |
-  | `extra15-unit` | — | 3 | 0 | 0 | 2.0s |
-  | `extra16-unit` | — | 3 | 0 | 0 | 2.0s |
-  | `extra17-unit` | — | 3 | 0 | 0 | 2.0s |
-  | `extra18-unit` | — | 3 | 0 | 0 | 2.0s |
-  | `extra19-unit` | — | 3 | 0 | 0 | 2.0s |
-  | `extra20-unit` | — | 3 | 0 | 0 | 2.0s |
-  | `extra21-unit` | — | 3 | 0 | 0 | 2.0s |
-  | `extra22-unit` | — | 3 | 0 | 0 | 2.0s |
-  | `extra23-unit` | — | 3 | 0 | 0 | 2.0s |
-  | `extra24-unit` | — | 3 | 0 | 0 | 2.0s |
-  | `extra25-unit` | — | 3 | 0 | 0 | 2.0s |
-  | `extra26-unit` | — | 3 | 0 | 0 | 2.0s |
-  | `extra27-unit` | — | 3 | 0 | 0 | 2.0s |
-  | `extra28-unit` | — | 3 | 0 | 0 | 2.0s |
+  | Suite | Workflow | Passed | Failed | Skipped | Time | Tests vs base |
+  | --- | --- | ---: | ---: | ---: | ---: | ---: |
+  | `linux-coverage-unit` | Linux | 300 | **25** | 0 | 2m 20s | +25 -78 |
+  | `extra00-unit` | — | 3 | 0 | 0 | 2.0s | — |
+  | `extra01-unit` | — | 3 | 0 | 0 | 2.0s | — |
+  | `extra02-unit` | — | 3 | 0 | 0 | 2.0s | — |
+  | `extra03-unit` | — | 3 | 0 | 0 | 2.0s | — |
+  | `extra04-unit` | — | 3 | 0 | 0 | 2.0s | — |
+  | `extra05-unit` | — | 3 | 0 | 0 | 2.0s | — |
+  | `extra06-unit` | — | 3 | 0 | 0 | 2.0s | — |
+  | `extra07-unit` | — | 3 | 0 | 0 | 2.0s | — |
+  | `extra08-unit` | — | 3 | 0 | 0 | 2.0s | — |
+  | `extra09-unit` | — | 3 | 0 | 0 | 2.0s | — |
+  | `extra10-unit` | — | 3 | 0 | 0 | 2.0s | — |
+  | `extra11-unit` | — | 3 | 0 | 0 | 2.0s | — |
+  | `extra12-unit` | — | 3 | 0 | 0 | 2.0s | — |
+  | `extra13-unit` | — | 3 | 0 | 0 | 2.0s | — |
+  | `extra14-unit` | — | 3 | 0 | 0 | 2.0s | — |
+  | `extra15-unit` | — | 3 | 0 | 0 | 2.0s | — |
+  | `extra16-unit` | — | 3 | 0 | 0 | 2.0s | — |
+  | `extra17-unit` | — | 3 | 0 | 0 | 2.0s | — |
+  | `extra18-unit` | — | 3 | 0 | 0 | 2.0s | — |
+  | `extra19-unit` | — | 3 | 0 | 0 | 2.0s | — |
+  | `extra20-unit` | — | 3 | 0 | 0 | 2.0s | — |
+  | `extra21-unit` | — | 3 | 0 | 0 | 2.0s | — |
+  | `extra22-unit` | — | 3 | 0 | 0 | 2.0s | — |
+  | `extra23-unit` | — | 3 | 0 | 0 | 2.0s | — |
+  | `extra24-unit` | — | 3 | 0 | 0 | 2.0s | — |
+  | `extra25-unit` | — | 3 | 0 | 0 | 2.0s | — |
+  | `extra26-unit` | — | 3 | 0 | 0 | 2.0s | — |
+  | `extra27-unit` | — | 3 | 0 | 0 | 2.0s | — |
+  | `extra28-unit` | — | 3 | 0 | 0 | 2.0s | — |
   
   …and 7 more
   
-  </details>
+  Added: `Flaky00Test` (linux-coverage-unit); `Flaky01Test` (linux-coverage-unit); `Flaky02Test` (linux-coverage-unit); `Flaky03Test` (linux-coverage-unit); `Flaky04Test` (linux-coverage-unit); `Flaky05Test` (linux-coverage-unit); `Flaky06Test` (linux-coverage-unit); `Flaky07Test` (linux-coverage-unit); `Flaky08Test` (linux-coverage-unit); `Flaky09Test` (linux-coverage-unit); …and 15 more
   
-  <details><summary>Slowest tests: MissionControllerTest took 1m 35s</summary>
-  
-  | Test | Suite | Time |
-  | --- | --- | ---: |
-  | `MissionControllerTest` | linux-sanitizers-unit | 1m 35s |
-  | `VehicleLinkManagerTest` | linux-sanitizers-unit | 1m 01s |
-  | `ParameterManagerTest` | linux-sanitizers-unit | 49s |
-  | `FTPManagerTest` | linux-sanitizers-unit | 33s |
-  | `InitialConnectTest` | linux-sanitizers-unit | 30s |
+  Removed: `MissionControllerTest` (linux-coverage-unit); `ParameterManagerTest` (linux-coverage-unit); `RetiredLinkTest` (linux-coverage-unit); `Unit300Test` (linux-coverage-unit); `Unit301Test` (linux-coverage-unit); `Unit302Test` (linux-coverage-unit); `Unit303Test` (linux-coverage-unit); `Unit304Test` (linux-coverage-unit); `Unit305Test` (linux-coverage-unit); `Unit306Test` (linux-coverage-unit); …and 68 more
   
   </details>
   
-  <details><summary>Code coverage: 61.4% of lines (+0.12 pp)</summary>
+  <details><summary>Code coverage (src/): 66.5% of lines (+0.06 pp vs base)</summary>
   
-  | Metric | Covered | Coverage | Baseline | Change |
+  | Metric | Covered | Coverage | Base | Change |
   | --- | ---: | ---: | ---: | ---: |
-  | Lines | 151,234 of 246,310 | 61.4% | 61.3% | +0.12 pp |
-  | Functions | 21,480 of 29,870 | 71.9% | 71.8% | +0.12 pp |
-  | Branches | 60,211 of 141,502 | 42.6% | 42.6% | -0.07 pp |
+  | Lines | 66,120 of 99,400 | 66.5% | 66.5% | +0.06 pp |
+  | Functions | 6,612 of 9,940 | 66.5% | 66.5% | +0.06 pp |
+  | Branches | 33,060 of 99,400 | 33.3% | 33.2% | +0.03 pp |
   
-  Baseline: PR base `aaaaaaa`.
+  Counts `src/` only; test code is left out. Base: `aaaaaaa` (Linux build). Coverage of the changed lines: [Codecov](https://app.codecov.io/gh/mavlink/qgroundcontrol/pull/15370).
   
   </details>
   
-  <details><summary>⚠️ Artifact sizes: 40 artifacts, 2.32 GB, +780.00 MB vs base</summary>
+  <details><summary>⚠️ Artifacts: 40 downloads, first expires 2026-02-24; 39 grew</summary>
   
-  | Artifact | Workflow | Size | Change | % |
-  | --- | --- | ---: | ---: | ---: |
-  | ⚠️ `QGroundControl-01.zip` | Linux | 41.00 MB | +1.00 MB | +2.50% |
-  | ⚠️ `QGroundControl-02.zip` | Linux | 42.00 MB | +2.00 MB | +5.00% |
-  | ⚠️ `QGroundControl-03.zip` | Linux | 43.00 MB | +3.00 MB | +7.50% |
-  | ⚠️ `QGroundControl-04.zip` | Linux | 44.00 MB | +4.00 MB | +10.00% |
-  | ⚠️ `QGroundControl-05.zip` | Linux | 45.00 MB | +5.00 MB | +12.50% |
-  | ⚠️ `QGroundControl-06.zip` | Linux | 46.00 MB | +6.00 MB | +15.00% |
-  | ⚠️ `QGroundControl-07.zip` | Linux | 47.00 MB | +7.00 MB | +17.50% |
-  | ⚠️ `QGroundControl-08.zip` | Linux | 48.00 MB | +8.00 MB | +20.00% |
-  | ⚠️ `QGroundControl-09.zip` | Linux | 49.00 MB | +9.00 MB | +22.50% |
-  | ⚠️ `QGroundControl-10.zip` | Linux | 50.00 MB | +10.00 MB | +25.00% |
-  | ⚠️ `QGroundControl-11.zip` | Linux | 51.00 MB | +11.00 MB | +27.50% |
-  | ⚠️ `QGroundControl-12.zip` | Linux | 52.00 MB | +12.00 MB | +30.00% |
-  | ⚠️ `QGroundControl-13.zip` | Linux | 53.00 MB | +13.00 MB | +32.50% |
-  | ⚠️ `QGroundControl-14.zip` | Linux | 54.00 MB | +14.00 MB | +35.00% |
-  | ⚠️ `QGroundControl-15.zip` | Linux | 55.00 MB | +15.00 MB | +37.50% |
-  | ⚠️ `QGroundControl-16.zip` | Linux | 56.00 MB | +16.00 MB | +40.00% |
-  | ⚠️ `QGroundControl-17.zip` | Linux | 57.00 MB | +17.00 MB | +42.50% |
-  | ⚠️ `QGroundControl-18.zip` | Linux | 58.00 MB | +18.00 MB | +45.00% |
-  | ⚠️ `QGroundControl-19.zip` | Linux | 59.00 MB | +19.00 MB | +47.50% |
-  | ⚠️ `QGroundControl-20.zip` | Linux | 60.00 MB | +20.00 MB | +50.00% |
-  | ⚠️ `QGroundControl-21.zip` | Linux | 61.00 MB | +21.00 MB | +52.50% |
-  | ⚠️ `QGroundControl-22.zip` | Linux | 62.00 MB | +22.00 MB | +55.00% |
-  | ⚠️ `QGroundControl-23.zip` | Linux | 63.00 MB | +23.00 MB | +57.50% |
-  | ⚠️ `QGroundControl-24.zip` | Linux | 64.00 MB | +24.00 MB | +60.00% |
-  | ⚠️ `QGroundControl-25.zip` | Linux | 65.00 MB | +25.00 MB | +62.50% |
-  | ⚠️ `QGroundControl-26.zip` | Linux | 66.00 MB | +26.00 MB | +65.00% |
-  | ⚠️ `QGroundControl-27.zip` | Linux | 67.00 MB | +27.00 MB | +67.50% |
-  | ⚠️ `QGroundControl-28.zip` | Linux | 68.00 MB | +28.00 MB | +70.00% |
-  | ⚠️ `QGroundControl-29.zip` | Linux | 69.00 MB | +29.00 MB | +72.50% |
-  | ⚠️ `QGroundControl-30.zip` | Linux | 70.00 MB | +30.00 MB | +75.00% |
+  | Artifact | Workflow | Size | Change | % | Expires |
+  | --- | --- | ---: | ---: | ---: | ---: |
+  | ⚠️ [`QGroundControl-01.zip`](https://github.com/mavlink/qgroundcontrol/actions/runs/9901/artifacts/5002) | Linux | 41.00 MB | +1.00 MB | +2.50% | 2026-02-24 |
+  | ⚠️ [`QGroundControl-02.zip`](https://github.com/mavlink/qgroundcontrol/actions/runs/9901/artifacts/5003) | Linux | 42.00 MB | +2.00 MB | +5.00% | 2026-02-24 |
+  | ⚠️ [`QGroundControl-03.zip`](https://github.com/mavlink/qgroundcontrol/actions/runs/9901/artifacts/5004) | Linux | 43.00 MB | +3.00 MB | +7.50% | 2026-02-24 |
+  | ⚠️ [`QGroundControl-04.zip`](https://github.com/mavlink/qgroundcontrol/actions/runs/9901/artifacts/5005) | Linux | 44.00 MB | +4.00 MB | +10.00% | 2026-02-24 |
+  | ⚠️ [`QGroundControl-05.zip`](https://github.com/mavlink/qgroundcontrol/actions/runs/9901/artifacts/5006) | Linux | 45.00 MB | +5.00 MB | +12.50% | 2026-02-24 |
+  | ⚠️ [`QGroundControl-06.zip`](https://github.com/mavlink/qgroundcontrol/actions/runs/9901/artifacts/5007) | Linux | 46.00 MB | +6.00 MB | +15.00% | 2026-02-24 |
+  | ⚠️ [`QGroundControl-07.zip`](https://github.com/mavlink/qgroundcontrol/actions/runs/9901/artifacts/5008) | Linux | 47.00 MB | +7.00 MB | +17.50% | 2026-02-24 |
+  | ⚠️ [`QGroundControl-08.zip`](https://github.com/mavlink/qgroundcontrol/actions/runs/9901/artifacts/5009) | Linux | 48.00 MB | +8.00 MB | +20.00% | 2026-02-24 |
+  | ⚠️ [`QGroundControl-09.zip`](https://github.com/mavlink/qgroundcontrol/actions/runs/9901/artifacts/5010) | Linux | 49.00 MB | +9.00 MB | +22.50% | 2026-02-24 |
+  | ⚠️ [`QGroundControl-10.zip`](https://github.com/mavlink/qgroundcontrol/actions/runs/9901/artifacts/5011) | Linux | 50.00 MB | +10.00 MB | +25.00% | 2026-02-24 |
+  | ⚠️ [`QGroundControl-11.zip`](https://github.com/mavlink/qgroundcontrol/actions/runs/9901/artifacts/5012) | Linux | 51.00 MB | +11.00 MB | +27.50% | 2026-02-24 |
+  | ⚠️ [`QGroundControl-12.zip`](https://github.com/mavlink/qgroundcontrol/actions/runs/9901/artifacts/5013) | Linux | 52.00 MB | +12.00 MB | +30.00% | 2026-02-24 |
+  | ⚠️ [`QGroundControl-13.zip`](https://github.com/mavlink/qgroundcontrol/actions/runs/9901/artifacts/5014) | Linux | 53.00 MB | +13.00 MB | +32.50% | 2026-02-24 |
+  | ⚠️ [`QGroundControl-14.zip`](https://github.com/mavlink/qgroundcontrol/actions/runs/9901/artifacts/5015) | Linux | 54.00 MB | +14.00 MB | +35.00% | 2026-02-24 |
+  | ⚠️ [`QGroundControl-15.zip`](https://github.com/mavlink/qgroundcontrol/actions/runs/9901/artifacts/5016) | Linux | 55.00 MB | +15.00 MB | +37.50% | 2026-02-24 |
+  | ⚠️ [`QGroundControl-16.zip`](https://github.com/mavlink/qgroundcontrol/actions/runs/9901/artifacts/5017) | Linux | 56.00 MB | +16.00 MB | +40.00% | 2026-02-24 |
+  | ⚠️ [`QGroundControl-17.zip`](https://github.com/mavlink/qgroundcontrol/actions/runs/9901/artifacts/5018) | Linux | 57.00 MB | +17.00 MB | +42.50% | 2026-02-24 |
+  | ⚠️ [`QGroundControl-18.zip`](https://github.com/mavlink/qgroundcontrol/actions/runs/9901/artifacts/5019) | Linux | 58.00 MB | +18.00 MB | +45.00% | 2026-02-24 |
+  | ⚠️ [`QGroundControl-19.zip`](https://github.com/mavlink/qgroundcontrol/actions/runs/9901/artifacts/5020) | Linux | 59.00 MB | +19.00 MB | +47.50% | 2026-02-24 |
+  | ⚠️ [`QGroundControl-20.zip`](https://github.com/mavlink/qgroundcontrol/actions/runs/9901/artifacts/5021) | Linux | 60.00 MB | +20.00 MB | +50.00% | 2026-02-24 |
+  | ⚠️ [`QGroundControl-21.zip`](https://github.com/mavlink/qgroundcontrol/actions/runs/9901/artifacts/5022) | Linux | 61.00 MB | +21.00 MB | +52.50% | 2026-02-24 |
+  | ⚠️ [`QGroundControl-22.zip`](https://github.com/mavlink/qgroundcontrol/actions/runs/9901/artifacts/5023) | Linux | 62.00 MB | +22.00 MB | +55.00% | 2026-02-24 |
+  | ⚠️ [`QGroundControl-23.zip`](https://github.com/mavlink/qgroundcontrol/actions/runs/9901/artifacts/5024) | Linux | 63.00 MB | +23.00 MB | +57.50% | 2026-02-24 |
+  | ⚠️ [`QGroundControl-24.zip`](https://github.com/mavlink/qgroundcontrol/actions/runs/9901/artifacts/5025) | Linux | 64.00 MB | +24.00 MB | +60.00% | 2026-02-24 |
+  | ⚠️ [`QGroundControl-25.zip`](https://github.com/mavlink/qgroundcontrol/actions/runs/9901/artifacts/5026) | Linux | 65.00 MB | +25.00 MB | +62.50% | 2026-02-24 |
+  | ⚠️ [`QGroundControl-26.zip`](https://github.com/mavlink/qgroundcontrol/actions/runs/9901/artifacts/5027) | Linux | 66.00 MB | +26.00 MB | +65.00% | 2026-02-24 |
+  | ⚠️ [`QGroundControl-27.zip`](https://github.com/mavlink/qgroundcontrol/actions/runs/9901/artifacts/5028) | Linux | 67.00 MB | +27.00 MB | +67.50% | 2026-02-24 |
+  | ⚠️ [`QGroundControl-28.zip`](https://github.com/mavlink/qgroundcontrol/actions/runs/9901/artifacts/5029) | Linux | 68.00 MB | +28.00 MB | +70.00% | 2026-02-24 |
+  | ⚠️ [`QGroundControl-29.zip`](https://github.com/mavlink/qgroundcontrol/actions/runs/9901/artifacts/5030) | Linux | 69.00 MB | +29.00 MB | +72.50% | 2026-02-24 |
+  | ⚠️ [`QGroundControl-30.zip`](https://github.com/mavlink/qgroundcontrol/actions/runs/9901/artifacts/5031) | Linux | 70.00 MB | +30.00 MB | +75.00% | 2026-02-24 |
   
   …and 10 more
   
-  Compared with PR base `aaaaaaa`; only artifacts with the same name are compared (PR Android builds are single-ABI). ⚠️ marks growth above 1% and 1.00 MB.
+  Changes are against base `aaaaaaa`; only artifacts with the same name are compared (PR Android builds are single-ABI). ⚠️ marks growth above 1% and 1.00 MB. Downloading needs a GitHub sign-in.
   
   </details>
   
-  <details><summary>Pre-commit: 41 passed, 0 failed, 17 skipped</summary>
+  <details><summary>Code Analysis: ✅ Passed, 2 warnings on changed lines</summary>
   
-  | Hooks | Count |
-  | --- | ---: |
-  | Passed | 41 |
-  | Failed | 0 |
-  | Skipped | 17 |
+  Warnings on lines this pull request changed:
   
-  [Hook output](https://github.com/mavlink/qgroundcontrol/actions/runs/9905) · reproduce locally with `just lint`.
+  - [`src/MissionManager/MissionController.cc:7`](https://github.com/mavlink/qgroundcontrol/blob/fedcba9876543210fedcba9876543210fedcba98/src/MissionManager/MissionController.cc#L7) `modernize-use-nodiscard` (clang-tidy)
+  - [`src/Vehicle/Vehicle.h:10`](https://github.com/mavlink/qgroundcontrol/blob/fedcba9876543210fedcba9876543210fedcba98/src/Vehicle/Vehicle.h#L10) `modernize-use-nodiscard` (clang-tidy)
   
-  </details>
-  
-  <details><summary>Code Analysis: ✅ Passed, 5 unique warnings</summary>
-  
-  | Tool | Files analyzed | Unique warnings | In files | Errors |
+  | Tool | Files analyzed | On changed lines | All warnings | Errors |
   | --- | ---: | ---: | ---: | ---: |
-  | `clang-tidy` | 75 | 4 | 3 | 0 |
-  | `clazy` | 76 | 1 | 1 | 0 |
+  | `clang-tidy` | 75 | 2 | 4 | 0 |
+  | `clazy` | 76 | 0 | 1 | 0 |
   
-  Most frequent checks:
-  
-  | Check | Tool | Unique warnings |
-  | --- | --- | ---: |
-  | `modernize-use-nodiscard` | clang-tidy | 2 |
-  | `-Wclazy-non-pod-global-static` | clazy | 1 |
-  | `readability-identifier-naming` | clang-tidy | 1 |
-  | `readability-implicit-bool-conversion` | clang-tidy | 1 |
-  
-  Files with the most warnings (a header's warnings count once):
-  
-  | File | Unique warnings |
-  | --- | ---: |
-  | `src/Vehicle/Vehicle.cc` | 2 |
-  | `src/Vehicle/Vehicle.h` | 2 |
-  | `src/MissionManager/MissionController.cc` | 1 |
+  All warnings counts each unique warning in every analyzed unit and the headers it includes, mostly code this pull request did not touch.
   
   [Code Analysis run](https://github.com/mavlink/qgroundcontrol/actions/runs/9906) (diagnostics are in each job's summary and log).
   

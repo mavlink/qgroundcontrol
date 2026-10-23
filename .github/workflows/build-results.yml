@@ -2,11 +2,26 @@ name: Build Results
 
 on:
   workflow_run:  # zizmor: ignore[dangerous-triggers] consumes completed-build artifacts + PR metadata; never checks out or runs PR head code
-    # GitHub requires literal workflow names here (no expressions). Keep this
-    # list in sync with build-config.json's `platform_workflows` plus any
-    # non-platform triggers (pre-commit). Drift is enforced by
-    # tools/tests/ci/contracts/test_platform_workflow_names.py.
-    workflows: [Linux, Windows, MacOS, Android, iOS, pre-commit]
+    # GitHub requires literal workflow names here (no expressions). The list is every workflow
+    # with a pull_request trigger, so the last check to finish renders the final comment;
+    # tools/tests/ci/contracts/test_platform_workflow_names.py enforces it.
+    workflows:
+      - Linux
+      - Windows
+      - MacOS
+      - Android
+      - iOS
+      - pre-commit
+      - Code Analysis
+      - Check Links
+      - CI Scripts
+      - ClusterFuzzLite
+      - CodeQL
+      - Dependency Review
+      - Docker
+      - Docs
+      - Doxygen API Docs
+      - VM Builds
     types: [completed]
 
 permissions:
@@ -16,6 +31,8 @@ permissions:
 jobs:
   report-context:
     name: Resolve Report Context
+    # Only pull request builds have a comment to update.
+    if: github.event.workflow_run.event == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 2
     permissions:
@@ -25,7 +42,6 @@ jobs:
     outputs:
       pr: ${{ steps.context.outputs.pr }}
       base_sha: ${{ steps.context.outputs.base_sha }}
-      baseline: ${{ steps.context.outputs.baseline }}
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@v2
@@ -55,7 +71,7 @@ jobs:
     name: Post Build Results
     needs: report-context
     runs-on: ubuntu-latest
-    # report_context.py sets `pr` only for pull_request builds.
+    # report_context.py sets `pr` only while the build's commit is an open PR's head.
     if: needs.report-context.outputs.pr != ''
     concurrency:
       group: build-results-pr-${{ needs.report-context.outputs.pr }}
@@ -75,12 +91,11 @@ jobs:
         with:
           egress-policy: audit
 
-      # The job's only checkout. collect_build_status.py and download_artifacts.py need only the
-      # standard library, so they run (and gate save-baselines) before Python dependencies are
-      # installed. They take the commit and event from the workflow_run payload and the platform
-      # workflows from build-config.json, and share one snapshot of the runs in $RUNNER_TEMP.
-      - &checkout-build-results
-        name: Checkout build-results scripts
+      # The job's only checkout. collect_build_status.py needs only the standard library, so it
+      # runs before Python dependencies are installed. The scripts take the commit and event from
+      # the workflow_run payload and the platform workflows from build-config.json, and share one
+      # snapshot of the runs in $RUNNER_TEMP.
+      - name: Checkout build-results scripts
         uses: actions/checkout@v7
         with:
           sparse-checkout: |
@@ -117,9 +132,11 @@ jobs:
         with:
           groups: scripts
 
-      # Test results and coverage may be absent when tests did not run, but a failed download
-      # fails the job.
+      # Every download is optional: download_artifacts.py records the artifacts that failed to
+      # download, and the comment names them instead of going stale. Runs still in progress are
+      # skipped until a later trigger.
       - name: Download artifacts from all platform workflows
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -134,8 +151,6 @@ jobs:
           python3 tools/ci/reporting/download_artifacts.py --include-failed --allow-missing \
             --workflows pre-commit --artifact-prefixes pre-commit-results
 
-      # Code Analysis is not a trigger, so its results appear when it finished before the last
-      # platform workflow (runs still in progress are skipped); the comment links to the run.
       - name: Download Code Analysis results
         continue-on-error: true
         env:
@@ -145,99 +160,32 @@ jobs:
             --workflows "Code Analysis" --artifact-prefixes clang-tidy-clazy-output \
             --output-dir analysis-artifacts
 
-      - name: Restore baseline snapshot
-        id: baseline
-        uses: actions/cache/restore@v6
+      # The base commit's own push builds supply the sizes, coverage, and test names the comment
+      # compares with; each platform falls back to "no base" on its own. report_context.py takes
+      # the base branch's tip when the PR build's run was created, which the build merged into.
+      # An empty --runs-cache queries the base commit instead of reusing the PR's run snapshot.
+      - name: Download the PR base commit's build artifacts
         continue-on-error: true
-        with:
-          path: |
-            baseline-sizes.json
-            baseline-coverage-summary.json
-          key: build-baseline-v2-${{ needs.report-context.outputs.base_sha }}
-          restore-keys: |
-            build-baseline-v2-${{ needs.report-context.outputs.base_sha }}-
-            build-baseline-v2-
+        env:
+          BASE_SHA: ${{ needs.report-context.outputs.base_sha }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 tools/ci/reporting/download_artifacts.py --head-sha "$BASE_SHA" --event push \
+            --runs-cache '' --include-failed --allow-missing \
+            --artifact-prefixes coverage-report,test-results- \
+            --output-dir base-artifacts --sizes-out base-sizes.json
 
       # Reads the files above from its default paths (INPUT_PATHS) and writes comment.md, also
       # to this job's summary so the report is readable even if posting fails.
       - name: Generate combined report
         env:
-          BASELINE_KEY: ${{ steps.baseline.outputs.cache-matched-key }}
-          BASELINE_SHA: ${{ needs.report-context.outputs.base_sha }}
+          BASE_SHA: ${{ needs.report-context.outputs.base_sha }}
           PR_NUMBER: ${{ needs.report-context.outputs.pr }}
         run: python3 tools/ci/reporting/generate_build_results_comment.py
 
-      - name: Recheck PR head before publishing
-        id: current
+      # Rechecks that the PR head is still this build's commit, then creates or updates the PR's
+      # build-results comment.
+      - name: Publish comment
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python3 tools/ci/reporting/report_context.py
-
-      - name: Post combined comment
-        if: steps.current.outputs.current == 'true'
-        uses: thollander/actions-comment-pull-request@v3
-        with:
-          pr-number: ${{ needs.report-context.outputs.pr }}
-          comment-tag: build-results
-          mode: upsert
-          file-path: comment.md
-
-  save-baselines:
-    name: Save Baselines
-    needs: report-context
-    runs-on: ubuntu-latest
-    # report_context.py sets `baseline` only for successful master push builds.
-    if: needs.report-context.outputs.baseline == 'true'
-    concurrency:
-      group: save-baselines
-      cancel-in-progress: false
-    timeout-minutes: 10
-
-    steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@v2
-        with:
-          egress-policy: audit
-
-      - *checkout-build-results
-
-      - name: Check if all platform workflows succeeded
-        id: gate
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: python3 tools/ci/reporting/collect_build_status.py --require-success
-
-      # Every script in this job uses only the standard library, so it installs no Python
-      # dependencies. A missing coverage report or an empty size list (--require-sizes writes no
-      # baseline-sizes.json) makes the next step fail.
-      - name: Download artifacts from all platform workflows
-        if: steps.gate.outputs.ready == 'true'
-        continue-on-error: true
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          python3 tools/ci/reporting/download_artifacts.py --artifact-prefixes coverage-report \
-            --sizes-out baseline-sizes.json --require-sizes
-
-      - name: Prepare immutable baseline
-        if: steps.gate.outputs.ready == 'true'
-        run: |
-          test -f baseline-sizes.json
-          test -f artifacts/coverage-report/coverage-summary.json
-          cp artifacts/coverage-report/coverage-summary.json baseline-coverage-summary.json
-
-      - name: Recheck default branch before publishing
-        id: current
-        if: steps.gate.outputs.ready == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: python3 tools/ci/reporting/report_context.py
-
-      - name: Publish immutable baseline
-        if: steps.current.outputs.current == 'true'
-        uses: actions/cache/save@v6
-        with:
-          path: |
-            baseline-sizes.json
-            baseline-coverage-summary.json
-          key: build-baseline-v2-${{ github.event.workflow_run.head_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+        run: python3 tools/ci/reporting/report_context.py --comment comment.md

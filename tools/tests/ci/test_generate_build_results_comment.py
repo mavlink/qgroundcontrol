@@ -26,9 +26,12 @@ if TYPE_CHECKING:
 NOW = datetime(2026, 2, 17, 12, 0, 0, tzinfo=timezone.utc)
 HEAD = "0123456789abcdef0123456789abcdef01234567"
 BASE = "a" * 40
-OLDER_MASTER = "b" * 40
+# GitHub's merge of HEAD into the base branch, which Code Analysis checks out.
+MERGE = "fedcba9876543210fedcba9876543210fedcba98"
 RUNS = "https://github.com/mavlink/qgroundcontrol/actions/runs"
+BLOB = "https://github.com/mavlink/qgroundcontrol/blob"
 MIB = 1024 * 1024
+EXPIRES = "2026-02-24T11:00:00Z"
 
 
 def _passing(
@@ -42,8 +45,6 @@ SLOW = [
     ("VehicleLinkManagerTest", "passed", 61.0, "", ""),
     ("ParameterManagerTest", "passed", 48.7, "", ""),
     ("FTPManagerTest", "passed", 33.1, "", ""),
-    ("InitialConnectTest", "passed", 30.2, "", ""),
-    ("TerrainQueryTest", "passed", 22.4, "", ""),
 ]
 
 
@@ -55,6 +56,7 @@ def _job(
     conclusion: str = "success",
     seconds: float = 600.0,
     failed_steps: tuple[tuple[str, int], ...] = (),
+    runner_lost: dict[str, str] | None = None,
 ) -> dict[str, object]:
     url = f"{RUNS}/{run_id}/job/{job_id}"
     return {
@@ -67,6 +69,7 @@ def _job(
             {"name": step, "number": number, "url": f"{url}#step:{number}:1"}
             for step, number in failed_steps
         ],
+        "runner_lost": runner_lost,
     }
 
 
@@ -76,6 +79,8 @@ def _workflow(
     run_id: int | None,
     *,
     seconds: float | None = None,
+    attempt: int = 1,
+    elapsed: float | None = None,
     jobs: tuple[dict[str, object], ...] = (),
 ) -> dict[str, object]:
     return {
@@ -84,40 +89,74 @@ def _workflow(
         "run_id": str(run_id or ""),
         "url": f"{RUNS}/{run_id}" if run_id else "",
         "run_number": run_id - 9000 if run_id else None,
+        "attempt": attempt if run_id else None,
         "duration_seconds": seconds,
+        "elapsed_seconds": seconds if elapsed is None else elapsed,
         "jobs": list(jobs),
     }
 
 
-def _coverage(lines: tuple[int, int], functions: tuple[int, int], branches: tuple[int, int]) -> str:
-    def pct(covered: int, total: int) -> float:
-        return round(100.0 * covered / total, 1) if total else 0.0
+def _coverage(src: tuple[int, int], test: tuple[int, int] = (9_000, 9_100)) -> str:
+    """A gcovr summary of one src/ file and one test/ file, with lines and branches."""
 
-    return json.dumps(
-        {
+    def entry(filename: str, lines: tuple[int, int]) -> dict[str, object]:
+        return {
+            "filename": filename,
             "line_covered": lines[0],
             "line_total": lines[1],
-            "line_percent": pct(*lines),
-            "function_covered": functions[0],
-            "function_total": functions[1],
-            "function_percent": pct(*functions),
-            "branch_covered": branches[0],
-            "branch_total": branches[1],
-            "branch_percent": pct(*branches),
+            "function_covered": lines[0] // 10,
+            "function_total": lines[1] // 10,
+            "branch_covered": lines[0] // 2,
+            "branch_total": lines[1],
         }
-    )
+
+    files = [entry("src/Vehicle/Vehicle.cc", src), entry("test/Vehicle/VehicleTest.cc", test)]
+    totals = {
+        key: sum(int(file[key]) for file in files)  # type: ignore[call-overload]
+        for key in files[0]
+        if key != "filename"
+    }
+    percents = {
+        f"{metric}_percent": round(
+            100.0 * totals[f"{metric}_covered"] / totals[f"{metric}_total"], 1
+        )
+        for metric in ("line", "function", "branch")
+    }
+    return json.dumps({**totals, **percents, "files": files})
 
 
-def _sizes(head: str, sizes: list[tuple[str, str, int]]) -> str:
+RUN_IDS = {"Linux": 9901, "Windows": 9902, "MacOS": 9903, "Android": 9904, "iOS": 9907}
+
+
+def _sizes(head: str, sizes: list[tuple[str, str, int]], runs: list[dict[str, object]]) -> str:
     return json.dumps(
         {
             "head_sha": head,
+            "runs": runs,
             "artifacts": [
-                {"name": name, "workflow": workflow, "size_bytes": size}
-                for name, workflow, size in sizes
+                {
+                    "name": name,
+                    "workflow": workflow,
+                    "size_bytes": size,
+                    "run_id": RUN_IDS.get(workflow, 0),
+                    "artifact_id": 5000 + index,
+                    "expires_at": EXPIRES,
+                }
+                for index, (name, workflow, size) in enumerate(sizes, 1)
             ],
         }
     )
+
+
+def _base_run(workflow: str, run_id: int, conclusion: str = "success", status: str = "completed"):
+    return {
+        "workflow": workflow,
+        "run_id": run_id,
+        "run_number": run_id - 8000,
+        "status": status,
+        "conclusion": conclusion,
+        "url": f"{RUNS}/{run_id}",
+    }
 
 
 def _timings(tool: str, files: int, findings: list[str], errors: list[str] = ()) -> str:  # type: ignore[assignment]
@@ -127,11 +166,19 @@ def _timings(tool: str, files: int, findings: list[str], errors: list[str] = ())
     return json.dumps({"tool": tool, "selected_files": len(rows), "files": rows})
 
 
-def _diagnostics(tool: str, by_file: dict[str, list[list[object]]]) -> str:
-    return json.dumps({"tool": tool, "shard": 1, "diagnostics": by_file})
+def _diagnostics(
+    tool: str,
+    by_file: dict[str, list[list[object]]],
+    changed: dict[str, list[list[object]]] | None = None,
+) -> str:
+    report: dict[str, object] = {"tool": tool, "shard": 1, "commit": MERGE, "diagnostics": by_file}
+    if changed is not None:
+        report["changed"] = changed
+    return json.dumps(report)
 
 
 # A header warning repeats across shards; error diagnostics and malformed rows are not warnings.
+# The pull request changed Vehicle.h line 10 and MissionController.cc lines 7 and 9.
 DIAGNOSTICS = {
     "analysis-artifacts/clang-tidy-clazy-output-1/clang-tidy-diagnostics.json": _diagnostics(
         "clang-tidy",
@@ -142,6 +189,7 @@ DIAGNOSTICS = {
             ],
             "src/Vehicle/Vehicle.cc": [[40, 3, "warning", "readability-implicit-bool-conversion"]],
         },
+        {"src/Vehicle/Vehicle.h": [[10, 5, "warning", "modernize-use-nodiscard"]]},
     ),
     "analysis-artifacts/clang-tidy-clazy-output-2/clang-tidy-diagnostics.json": _diagnostics(
         "clang-tidy",
@@ -153,9 +201,18 @@ DIAGNOSTICS = {
                 ["malformed"],
             ],
         },
+        {
+            "src/Vehicle/Vehicle.h": [[10, 5, "warning", "modernize-use-nodiscard"]],
+            "src/MissionManager/MissionController.cc": [
+                [7, 1, "warning", "modernize-use-nodiscard"],
+                [9, 2, "error", "clang-diagnostic-error"],
+            ],
+        },
     ),
     "analysis-artifacts/clang-tidy-clazy-output-1/clazy-diagnostics.json": _diagnostics(
-        "clazy", {"src/Vehicle/Vehicle.cc": [[5, 1, "warning", "-Wclazy-non-pod-global-static"]]}
+        "clazy",
+        {"src/Vehicle/Vehicle.cc": [[5, 1, "warning", "-Wclazy-non-pod-global-static"]]},
+        {},
     ),
 }
 
@@ -169,12 +226,19 @@ PR_SIZES = [
     ("QGroundControl.ipa", "iOS", 81_146_176),
 ]
 BASE_SIZES = [
-    ("QGroundControl-aarch64.AppImage", "", 192_190_000),
-    ("QGroundControl-x86_64.AppImage", "", 203_088_195),
-    ("QGroundControl-installer-AMD64.exe", "", 102_700_000),
-    ("QGroundControl.dmg", "", 351_400_000),
-    ("QGroundControl-linux-arm64-v8a-armeabi-v7a.apk", "", 170_000_000),
-    ("QGroundControl.ipa", "", 81_183_320),
+    ("QGroundControl-aarch64.AppImage", "Linux", 192_276_717),
+    ("QGroundControl-x86_64.AppImage", "Linux", 203_088_195),
+    ("QGroundControl-installer-AMD64.exe", "Windows", 102_700_000),
+    ("QGroundControl.dmg", "MacOS", 351_400_000),
+    ("QGroundControl-linux-arm64-v8a-armeabi-v7a.apk", "Android", 170_000_000),
+    ("QGroundControl.ipa", "iOS", 81_183_320),
+]
+BASE_RUNS = [
+    _base_run("Linux", 8801),
+    _base_run("Windows", 8802),
+    _base_run("MacOS", 8803, conclusion="failure"),
+    _base_run("Android", 8804),
+    _base_run("iOS", 8807),
 ]
 MANIFEST = [
     ("test-results-linux-coverage-unit", "Linux"),
@@ -186,6 +250,17 @@ MANIFEST = [
     ("test-results-portable-windows", "Windows"),
     ("coverage-report", "Linux"),
 ]
+OTHERS = [
+    _workflow("CI Scripts", "success", 9911, seconds=95),
+    _workflow("CodeQL", "success", 9912, seconds=150),
+    _workflow("Docker", "success", 9913, seconds=610),
+]
+
+
+def _manifest(entries: list[tuple[str, str]], **extra: object) -> str:
+    return json.dumps(
+        [{"name": name, "workflow": workflow, "run_id": 1, **extra} for name, workflow in entries]
+    )
 
 
 def _linux_jobs(run_id: int, *, failed: bool = False) -> tuple[dict[str, object], ...]:
@@ -217,10 +292,10 @@ def _linux_jobs(run_id: int, *, failed: bool = False) -> tuple[dict[str, object]
 def write_scenario(base: Path, scenario: str) -> dict[str, str]:
     """Write a scenario's inputs below *base* and return the comment step's environment."""
     linux_unit = [*SLOW, *_passing("Unit", 374)]
+    # The base ran one test this pull request removed and lacked the one it added.
+    base_unit = [*SLOW[:-1], ("RetiredLinkTest", "passed", 1.0, "", ""), *_passing("Unit", 374)]
     files: dict[str, str] = {
-        "artifacts/download-manifest.json": json.dumps(
-            [{"name": name, "workflow": workflow, "run_id": 1} for name, workflow in MANIFEST]
-        ),
+        "artifacts/download-manifest.json": _manifest(MANIFEST, downloaded=True),
         "artifacts/test-results-linux-coverage-unit/junit-results-linux-coverage-unit.xml": junit_xml(
             linux_unit, 83
         ),
@@ -238,9 +313,7 @@ def write_scenario(base: Path, scenario: str) -> dict[str, str]:
             _passing("Integration", 61, 3.0), 205
         ),
         "artifacts/test-results-portable-windows/junit.xml": junit_xml(_passing("Portable", 10), 4),
-        "artifacts/coverage-report/coverage-summary.json": _coverage(
-            (151_234, 246_310), (21_480, 29_870), (60_211, 141_502)
-        ),
+        "artifacts/coverage-report/coverage-summary.json": _coverage((66_120, 99_400)),
         "artifacts/pre-commit-results/pre-commit-results.json": json.dumps(
             {
                 "exit_code": "0",
@@ -264,28 +337,38 @@ def write_scenario(base: Path, scenario: str) -> dict[str, str]:
             "clazy", 75, []
         ),
         **DIAGNOSTICS,
-        "pr-sizes.json": _sizes(HEAD, PR_SIZES),
-        "baseline-sizes.json": _sizes(BASE, BASE_SIZES),
-        "baseline-coverage-summary.json": _coverage(
-            (150_802, 246_102), (21_431, 29_850), (60_300, 141_480)
+        "pr-sizes.json": _sizes(HEAD, PR_SIZES, []),
+        "base-sizes.json": _sizes(BASE, BASE_SIZES, BASE_RUNS),
+        "base-artifacts/download-manifest.json": _manifest(
+            [
+                ("test-results-linux-coverage-unit", "Linux"),
+                ("test-results-macos-unit", "MacOS"),
+                ("coverage-report", "Linux"),
+            ],
+            downloaded=True,
         ),
+        "base-artifacts/test-results-linux-coverage-unit/junit.xml": junit_xml(base_unit, 80),
+        "base-artifacts/test-results-macos-unit/junit.xml": junit_xml(
+            [*_passing("Unit", 378), ("SerialLinkTest", "skipped", 0, "", "")], 95
+        ),
+        "base-artifacts/coverage-report/coverage-summary.json": _coverage((66_050, 99_380)),
     }
     platforms = [
         _workflow("Linux", "success", 9901, seconds=1610, jobs=_linux_jobs(9901)),
-        _workflow("Windows", "success", 9902, seconds=1862),
+        _workflow("Windows", "success", 9902, seconds=1202, attempt=2, elapsed=2404),
         _workflow("MacOS", "success", 9903, seconds=1688),
         _workflow("Android", "success", 9904, seconds=1324),
         _workflow("iOS", "success", 9907, seconds=2314),
     ]
     precommit = _workflow("pre-commit", "success", 9905, seconds=110)
     analysis = _workflow("Code Analysis", "success", 9906, seconds=372)
+    others = list(OTHERS)
     env = {
         "BUILD_STATUS_JSON": "build-status.json",
         "REPO": "mavlink/qgroundcontrol",
         "PR_NUMBER": "15370",
         "COMMIT_SHA": HEAD,
-        "BASELINE_SHA": BASE,
-        "BASELINE_KEY": f"build-baseline-v2-{BASE}-41-1",
+        "BASE_SHA": BASE,
         "TRIGGERED_BY": "Android",
     }
 
@@ -317,6 +400,13 @@ def write_scenario(base: Path, scenario: str) -> dict[str, str]:
             }
         )
         del files["artifacts/test-results-portable-windows/junit.xml"]
+        files["artifacts/download-manifest.json"] = json.dumps(
+            [
+                *json.loads(files["artifacts/download-manifest.json"]),
+                {"name": "test-results-portable-windows-arm64", "workflow": "Windows"}
+                | {"run_id": 1, "downloaded": False},
+            ]
+        )
         files["pr-sizes.json"] = _sizes(
             HEAD,
             [
@@ -325,8 +415,8 @@ def write_scenario(base: Path, scenario: str) -> dict[str, str]:
                 ("QGroundControl.dmg", "MacOS", 351_272_960),
                 ("QGroundControl-linux-arm64-v8a.apk", "Android", 89_128_960),
             ],
+            [],
         )
-        env["BASELINE_KEY"] = f"build-baseline-v2-{OLDER_MASTER}-40-1"
         platforms[0] = _workflow(
             "Linux", "failure", 9901, seconds=1655, jobs=_linux_jobs(9901, failed=True)
         )
@@ -344,6 +434,18 @@ def write_scenario(base: Path, scenario: str) -> dict[str, str]:
                     conclusion="failure",
                     seconds=905,
                     failed_steps=(("Build", 9),),
+                ),
+                _job(
+                    "Build arm64 Release",
+                    9902,
+                    4,
+                    conclusion="failure",
+                    seconds=155,
+                    runner_lost={
+                        "step": "Build Setup",
+                        "started_at": "2026-02-17T11:02:56Z",
+                        "completed_at": "2026-02-17T11:05:31Z",
+                    },
                 ),
                 _job("Windows", 9902, 3, conclusion="failure", seconds=3),
             ),
@@ -364,18 +466,35 @@ def write_scenario(base: Path, scenario: str) -> dict[str, str]:
                 ),
             ),
         )
+        others[0] = _workflow(
+            "CI Scripts",
+            "failure",
+            9911,
+            seconds=95,
+            jobs=(
+                _job(
+                    "Test CI Scripts (py3.12)",
+                    9911,
+                    1,
+                    conclusion="failure",
+                    failed_steps=(("Run CI script tests", 8),),
+                ),
+            ),
+        )
         env["TRIGGERED_BY"] = "Linux"
     elif scenario == "pending":
         for name in [
             *(path for path in files if "linux" in path or "windows" in path),
             "artifacts/coverage-report/coverage-summary.json",
-            "baseline-sizes.json",
-            "baseline-coverage-summary.json",
         ]:
             files.pop(name, None)
         files = {name: text for name, text in files.items() if not name.startswith("analysis-")}
-        files["pr-sizes.json"] = _sizes(HEAD, [("QGroundControl.dmg", "MacOS", 351_272_960)])
-        del env["BASELINE_KEY"]
+        files["pr-sizes.json"] = _sizes(HEAD, [("QGroundControl.dmg", "MacOS", 351_272_960)], [])
+        files["base-sizes.json"] = _sizes(
+            BASE,
+            [("QGroundControl.dmg", "MacOS", 351_400_000)],
+            [*BASE_RUNS[:2], _base_run("MacOS", 8803, status="in_progress", conclusion="")],
+        )
         platforms = [
             _workflow("Linux", "running", 9901),
             _workflow("Windows", "pending", None),
@@ -394,11 +513,12 @@ def write_scenario(base: Path, scenario: str) -> dict[str, str]:
             _workflow("iOS", "running", 9907),
         ]
         analysis = _workflow("Code Analysis", "running", 9906)
+        others[2] = _workflow("Docker", "running", 9913)
         env["TRIGGERED_BY"] = "MacOS"
-    elif scenario == "no-baseline":
-        for name in ["baseline-sizes.json", "baseline-coverage-summary.json"]:
-            del files[name]
-        del env["BASELINE_KEY"]
+    elif scenario == "no-base":
+        # The PR base's own builds have not run (or their artifacts expired).
+        files = {name: text for name, text in files.items() if not name.startswith("base-")}
+        files["base-sizes.json"] = _sizes(BASE, [], [])
     elif scenario == "truncated":
         many_failures = [
             (f"Flaky{index:02d}Test", "failed", 2.0, "Failed", QT_FAILURE) for index in range(25)
@@ -416,9 +536,12 @@ def write_scenario(base: Path, scenario: str) -> dict[str, str]:
                 (f"QGroundControl-{index:02d}.zip", "Linux", (40 + index) * MIB)
                 for index in range(40)
             ],
+            [],
         )
-        files["baseline-sizes.json"] = _sizes(
-            BASE, [(f"QGroundControl-{index:02d}.zip", "", 40 * MIB) for index in range(40)]
+        files["base-sizes.json"] = _sizes(
+            BASE,
+            [(f"QGroundControl-{index:02d}.zip", "Linux", 40 * MIB) for index in range(40)],
+            BASE_RUNS,
         )
         platforms[0] = _workflow(
             "Linux", "failure", 9901, seconds=1655, jobs=_linux_jobs(9901, failed=True)
@@ -432,13 +555,14 @@ def write_scenario(base: Path, scenario: str) -> dict[str, str]:
         "platforms": platforms,
         "precommit": precommit,
         "analysis": analysis,
+        "others": others,
     }
     files["build-status.json"] = json.dumps(status)
     write_files(base, files)
     return env
 
 
-SCENARIOS = ["all-passed", "failures", "pending", "no-baseline", "truncated"]
+SCENARIOS = ["all-passed", "failures", "pending", "no-base", "truncated"]
 
 
 @pytest.mark.parametrize("scenario", SCENARIOS)
@@ -456,16 +580,27 @@ def _verdict(comment: str) -> str:
     return comment.splitlines()[2]
 
 
+def _status(tmp_path: Path) -> dict[str, object]:
+    return json.loads((tmp_path / "build-status.json").read_text())
+
+
+def _write_status(tmp_path: Path, status: dict[str, object]) -> None:
+    (tmp_path / "build-status.json").write_text(json.dumps(status))
+
+
 def test_verdicts(tmp_path: Path) -> None:
     passed = generate_comment(write_scenario(tmp_path / "a", "all-passed"), tmp_path / "a", NOW)
     assert _verdict(passed).startswith("✅ **All builds passed** · [`0123456`](")
     assert _verdict(passed).endswith("· 5 of 5 platform workflows done")
     failed = generate_comment(write_scenario(tmp_path / "f", "failures"), tmp_path / "f", NOW)
-    assert _verdict(failed).startswith("❌ **3 workflows failed**")
+    assert _verdict(failed).startswith(
+        "❌ **4 workflows failed** (Linux, Windows, pre-commit, CI Scripts)"
+    )
     pending = generate_comment(write_scenario(tmp_path / "p", "pending"), tmp_path / "p", NOW)
     assert _verdict(pending).startswith("⏳ **Builds in progress**")
     assert _verdict(pending).endswith(
         "2 of 5 platform workflows done (1 skipped by change detection, 3 pending)"
+        " · 1 other check still running"
     )
 
 
@@ -492,47 +627,50 @@ def test_verdict_for_skipped_cancelled_and_unapproved_runs(
     assert _verdict(comment).startswith(verdict)
 
 
-@pytest.mark.parametrize("real_failure", [False, True])
-def test_spot_interruptions_show_as_retrying_not_failed(tmp_path: Path, real_failure: bool) -> None:
+def test_a_failed_other_check_fails_the_verdict(tmp_path: Path) -> None:
     env = write_scenario(tmp_path, "all-passed")
-    status_path = tmp_path / "build-status.json"
-    status = json.loads(status_path.read_text())
-    interrupted = {
-        **_job("Test + Coverage linux_gcc_64 Debug", 9901, 2, conclusion="failure"),
-        "failed_steps": [
-            {"name": "Run and report tests", "number": 14, "url": f"{RUNS}/9901/job/2#step:14:1"}
-        ],
-        "interrupted": True,
-    }
-    jobs = [interrupted, _job("Linux", 9901, 5, conclusion="failure", seconds=4)]
-    if real_failure:
-        jobs.insert(1, _job("Release linux_gcc_64", 9901, 3, conclusion="failure"))
-    status["platforms"][0] = _workflow(
-        "Linux", "failure" if real_failure else "interrupted", 9901, seconds=1655, jobs=tuple(jobs)
-    )
-    status_path.write_text(json.dumps(status))
+    status = _status(tmp_path)
+    status["others"] = [
+        _workflow("Docker", "running", 9913),
+        _workflow("CI Scripts", "failure", 9911),
+        *OTHERS[1:2],
+        _workflow("ClusterFuzzLite", "skipped", 9914),
+    ]
+    _write_status(tmp_path, status)
 
-    comment = generate_comment(env, tmp_path, now_utc=NOW)
+    comment = generate_comment(env, tmp_path, NOW)
 
-    if real_failure:
-        assert _verdict(comment).startswith("❌ **1 workflow failed**")
-        assert "### 🔁 Spot interruptions" not in comment
-        # The interrupted leg is still named for what happened to it.
-        assert "Test + Coverage linux\\_gcc\\_64 Debug: AWS reclaimed its Spot instance" in comment
-    else:
-        assert _verdict(comment).startswith("🔁 **Retrying after a Spot interruption**")
-        assert _verdict(comment).endswith("4 of 5 platform workflows done (1 retrying)")
-        assert "| Linux | 🔁 Retrying |" in comment
-        assert "### ❌ Failures" not in comment
-        section = comment.split("### 🔁 Spot interruptions", 1)[1]
-        assert (
-            "**Linux** · Test + Coverage linux\\_gcc\\_64 Debug: AWS reclaimed its Spot instance"
-            in section
-        )
-        assert "Release linux" not in section
+    assert _verdict(comment).startswith("❌ **1 workflow failed** (CI Scripts)")
+    assert "All builds passed" not in comment
+    assert (
+        f"**Other checks:** ❌ [CI Scripts]({RUNS}/9911) · 🔄 [Docker]({RUNS}/9913)"
+        " · ✅ CodeQL · ⏭️ ClusterFuzzLite"
+    ) in comment
+    # Without its jobs, the failed run is still linked from the failures.
+    assert f"- **CI Scripts**: failed · [run]({RUNS}/9911)" in comment
 
 
-def test_failures_list_failed_steps_tests_and_hooks_first(tmp_path: Path) -> None:
+def test_other_checks_still_running_do_not_hide_a_pass(tmp_path: Path) -> None:
+    env = write_scenario(tmp_path, "all-passed")
+    status = _status(tmp_path)
+    status["others"] = [_workflow("Docker", "running", 9913), *OTHERS[:2]]
+    _write_status(tmp_path, status)
+
+    verdict = _verdict(generate_comment(env, tmp_path, NOW))
+
+    assert verdict.startswith("✅ **All builds passed**")
+    assert verdict.endswith("· 1 other check still running")
+
+
+def test_code_analysis_is_a_gating_trigger(tmp_path: Path) -> None:
+    env = write_scenario(tmp_path, "all-passed")
+    status = _status(tmp_path)
+    status["analysis"] = _workflow("Code Analysis", "running", 9906)
+    _write_status(tmp_path, status)
+    assert _verdict(generate_comment(env, tmp_path, NOW)).startswith("⏳ **Builds in progress**")
+
+
+def test_failures_list_failed_steps_lost_runners_tests_and_hooks_first(tmp_path: Path) -> None:
     comment = generate_comment(write_scenario(tmp_path, "failures"), tmp_path, NOW)
     failures = comment.index("### ❌ Failures")
     assert failures < comment.index("<details><summary>Tests:")
@@ -546,13 +684,61 @@ def test_failures_list_failed_steps_tests_and_hooks_first(tmp_path: Path) -> Non
         f"- **Windows** · Build x64 Release: failed at [`Build`]({RUNS}/9902/job/2#step:9:1)"
         in comment
     )
+    assert (
+        "- **Windows** · Build arm64 Release: runner lost during `Build Setup` "
+        f"(started 11:02 UTC, ended 11:05 UTC), no logs; re-run · [log]({RUNS}/9902/job/4)"
+    ) in comment
     assert "- **pre-commit** · failed hooks: `clang-format`, `ruff check`" in comment
+    assert (
+        "- **CI Scripts** · Test CI Scripts \\(py3.12\\): failed at "
+        f"[`Run CI script tests`]({RUNS}/9911/job/1#step:8:1)"
+    ) in comment
     assert "**Failed tests** (3 of " in comment
     assert "FAIL!  : MissionControllerTest::_testGimbalRecalc()" in comment
     assert "   Loc: [src/MissionManager/MissionControllerTest.cc(412)]" in comment
     assert "==4242==ERROR: AddressSanitizer: heap-use-after-free" in comment
     # A failure without QtTest or sanitizer reports shows its message and output tail.
     assert "Timeout\nPASS   : FTPManagerTest::initTestCase()" in comment
+
+
+def test_failed_downloads_are_named(tmp_path: Path) -> None:
+    comment = generate_comment(write_scenario(tmp_path, "failures"), tmp_path, NOW)
+    assert (
+        "⚠️ Could not download `test-results-portable-windows-arm64` (Windows); "
+        "the results below leave them out."
+    ) in comment
+
+
+def test_expired_base_artifacts_are_not_failed_downloads(tmp_path: Path) -> None:
+    env = write_scenario(tmp_path, "all-passed")
+    manifest = tmp_path / "base-artifacts" / "download-manifest.json"
+    entries = json.loads(manifest.read_text(encoding="utf-8"))
+    entries.append(
+        {"name": "test-results-windows-unit", "workflow": "Windows", "run_id": 802}
+        | {"downloaded": False, "expired": True}
+    )
+    manifest.write_text(json.dumps(entries), encoding="utf-8")
+
+    comment = generate_comment(env, tmp_path, NOW)
+    assert "Could not download" not in comment
+    assert (
+        "⌛ Past artifact retention: `test-results-windows-unit` (Windows, base); "
+        "comparisons with them are left out."
+    ) in comment
+
+
+def test_duration_shows_the_attempt_and_total_wall_time(tmp_path: Path) -> None:
+    comment = generate_comment(write_scenario(tmp_path, "all-passed"), tmp_path, NOW)
+    assert "| Windows | ✅ Passed | 20m 02s (attempt 2, 40m 04s total) |" in comment
+    assert "| Linux | ✅ Passed | 26m 50s | " in comment
+
+
+def test_precommit_details_appear_only_for_failures(tmp_path: Path) -> None:
+    passed = generate_comment(write_scenario(tmp_path / "a", "all-passed"), tmp_path / "a", NOW)
+    assert "| pre-commit | ✅ Passed | 1m 50s | hooks: 41 passed, 17 skipped |" in passed
+    assert "<summary>Pre-commit" not in passed
+    failed = generate_comment(write_scenario(tmp_path / "f", "failures"), tmp_path / "f", NOW)
+    assert "<details><summary>Pre-commit: 39 passed, 2 failed, 17 skipped</summary>" in failed
 
 
 def test_untrusted_names_cannot_inject_markup_or_mentions(tmp_path: Path) -> None:
@@ -570,17 +756,22 @@ def test_untrusted_names_cannot_inject_markup_or_mentions(tmp_path: Path) -> Non
                 {
                     "platforms": [],
                     "precommit": _workflow("pre-commit", "failure", 9905),
+                    "others": [{"name": "@octocat<b>", "state": "failure", "url": "javascript:1"}],
                 }
             ),
         },
     )
     comment = generate_comment({}, tmp_path, NOW)
-    # Outside code spans and blocks, markup is escaped and mentions are broken.
+    # Outside code spans and blocks, markup is escaped and mentions are broken. Escaped
+    # backticks are prose, so they must not pair with a code span's backtick.
     prose = re.sub(
-        r"(`{2,})(?:(?!\1).)+\1|`[^`]+`", "", re.sub(r"(?s)````text.*?````", "", comment)
+        r"(`{2,})(?:(?!\1).)+\1|`[^`]+`",
+        "",
+        re.sub(r"(?s)````text.*?````", "", comment.replace("\\`", "")),
     )
     assert "<img" not in prose
     assert "<script>" not in prose
+    assert "<b>" not in prose
     assert "@octocat" not in prose
     assert "Evil&lt;img src=x&gt;@\u200boctocat\\[x\\]\\(https://bad.test\\)\\`Test" in comment
     assert "](https://bad.test)" not in prose
@@ -614,26 +805,85 @@ def test_unreadable_junit_is_skipped(tmp_path: Path, caplog: pytest.LogCaptureFi
     assert "<details><summary>Tests:" not in comment
 
 
-def test_coverage_notes_name_the_baseline(tmp_path: Path) -> None:
-    def coverage_note(**env: str) -> str:
-        comment = generate_comment(env, tmp_path, NOW)
-        section = comment.split("<details><summary>Code coverage")[1]
-        return section.split("</details>")[0].strip().splitlines()[-1]
+def test_tests_added_and_removed_versus_the_base_build(tmp_path: Path) -> None:
+    comment = generate_comment(write_scenario(tmp_path, "all-passed"), tmp_path, NOW)
+    assert (
+        "<details><summary>Tests: 1,327 passed, 0 failed, 1 skipped in 7 suites; "
+        "1 added, 1 removed vs base</summary>"
+    ) in comment
+    assert "| `linux-coverage-unit` | Linux | 378 | 0 | 0 | 1m 23s | +1 -1 |" in comment
+    assert "| `macos-unit` | MacOS | 378 | 0 | 1 | 1m 36s | same |" in comment
+    # The base build has no sanitizers results, so that suite is not compared.
+    assert "| `linux-sanitizers-unit` | Linux | 378 | 0 | 0 | 2m 21s | — |" in comment
+    assert "Added: `FTPManagerTest` (linux-coverage-unit)" in comment
+    assert "Removed: `RetiredLinkTest` (linux-coverage-unit)" in comment
+    assert mod.compare_tests([], []) is None
 
-    write_files(
-        tmp_path,
-        {
-            "artifacts/coverage-report/coverage-summary.json": _coverage((5, 10), (0, 0), (1, 4)),
-        },
+
+def test_coverage_counts_src_only_against_the_base_build(tmp_path: Path) -> None:
+    comment = generate_comment(write_scenario(tmp_path, "all-passed"), tmp_path, NOW)
+    # src/ covers 66,120 of 99,400 lines; with test/ the total would read 69.9%.
+    assert "<details><summary>Code coverage (src/): 66.5% of lines (+0.06 pp vs base)" in comment
+    assert "| Lines | 66,120 of 99,400 | 66.5% | 66.5% | +0.06 pp |" in comment
+    assert "Base: `aaaaaaa` (Linux build)." in comment
+    assert (
+        "Coverage of the changed lines: "
+        "[Codecov](https://app.codecov.io/gh/mavlink/qgroundcontrol/pull/15370)."
+    ) in comment
+    no_base = generate_comment(write_scenario(tmp_path / "n", "no-base"), tmp_path / "n", NOW)
+    assert "<summary>Code coverage (src/): 66.5% of lines</summary>" in no_base
+    assert "No coverage report for base `aaaaaaa`, so changes are not shown." in no_base
+
+
+def test_base_line_names_each_platforms_base_run(tmp_path: Path) -> None:
+    comment = generate_comment(write_scenario(tmp_path, "all-passed"), tmp_path, NOW)
+    assert (
+        "**Base:** [`aaaaaaa`](https://github.com/mavlink/qgroundcontrol/commit/" + BASE + ") · "
+        f"Linux [#801]({RUNS}/8801) · Windows [#802]({RUNS}/8802) · "
+        f"MacOS [#803]({RUNS}/8803) (failure) · Android [#804]({RUNS}/8804) · iOS [#807]({RUNS}/8807)"
+    ) in comment
+    pending = generate_comment(write_scenario(tmp_path / "p", "pending"), tmp_path / "p", NOW)
+    assert (
+        f"MacOS [#803]({RUNS}/8803) (still running) · Android: no build · iOS: no build" in pending
     )
-    assert coverage_note().startswith("No coverage baseline yet")
-    write_files(tmp_path, {"baseline-coverage-summary.json": _coverage((4, 10), (0, 0), (1, 4))})
-    assert coverage_note(BASELINE_SHA=BASE, BASELINE_KEY=f"build-baseline-v2-{BASE}-1-1") == (
-        "Baseline: PR base `aaaaaaa`."
-    )
-    assert coverage_note(
-        BASELINE_SHA=BASE, BASELINE_KEY=f"build-baseline-v2-{OLDER_MASTER}-1-1"
-    ).startswith("Baseline: `master` at `bbbbbbb`, the newest snapshot")
+    no_base = generate_comment(write_scenario(tmp_path / "n", "no-base"), tmp_path / "n", NOW)
+    assert "has no builds of its own yet, so changes are not shown." in no_base
+    (tmp_path / "n" / "base-sizes.json").unlink()
+    unread = generate_comment(write_scenario(tmp_path / "n", "no-base"), tmp_path / "n", NOW)
+    assert "its builds could not be read" not in unread
+    (tmp_path / "n" / "base-sizes.json").unlink()
+    unread = generate_comment({"BASE_SHA": BASE, "REPO": "o/r"}, tmp_path / "n", NOW)
+    assert "**Base:** [`aaaaaaa`](https://github.com/o/r/commit/" in unread
+    assert "its builds could not be read, so changes are not shown." in unread
+    assert "**Base:**" not in generate_comment({}, tmp_path / "n", NOW)
+
+
+@pytest.mark.parametrize(
+    ("delta", "text"),
+    [
+        (0, "unchanged"),
+        (4, "+4 B"),
+        (-4_096, "-4.0 KB"),
+        (19_865, "+19.4 KB"),
+        (4_413_936, "+4.21 MB"),
+        (-3 * MIB, "-3.00 MB"),
+    ],
+)
+def test_size_changes_use_human_units(delta: int, text: str) -> None:
+    assert mod._delta_size(delta) == text
+
+
+def test_sizes_link_downloads_and_show_only_changes_in_the_table(tmp_path: Path) -> None:
+    comment = generate_comment(write_scenario(tmp_path, "all-passed"), tmp_path, NOW)
+    # Linux: +4,096 B and unchanged; Android's single-ABI APK has no same-named base.
+    assert "| Linux | ✅ Passed | 26m 50s | 878 passed | +4.0 KB |" in comment
+    assert "| Android | ✅ Passed | 22m 04s | — | — |" in comment
+    assert (
+        f"| [`QGroundControl-installer-AMD64.exe`]({RUNS}/9902/artifacts/5003) | Windows "
+        "| 98.00 MB | +59.0 KB | +0.06% | 2026-02-24 |"
+    ) in comment
+    assert "<details><summary>Artifacts: 6 downloads, first expires 2026-02-24</summary>" in comment
+    assert "Downloading needs a GitHub sign-in." in comment
 
 
 def test_android_abi_variants_are_not_reported_as_size_reductions(tmp_path: Path) -> None:
@@ -646,75 +896,152 @@ def test_android_abi_variants_are_not_reported_as_size_reductions(tmp_path: Path
                     ("QGroundControl-linux-arm64-v8a", "Android", 85 * MIB),
                     ("QGroundControl-mac-arm64-v8a", "Android", 85 * MIB),
                 ],
+                [],
             ),
-            "baseline-sizes.json": _sizes(
+            "base-sizes.json": _sizes(
                 BASE,
                 [
-                    ("QGroundControl-linux-arm64-v8a-armeabi-v7a", "", 162 * MIB),
-                    ("QGroundControl-mac-arm64-v8a", "", 87 * MIB),
+                    ("QGroundControl-linux-arm64-v8a-armeabi-v7a", "Android", 162 * MIB),
+                    ("QGroundControl-mac-arm64-v8a", "Android", 87 * MIB),
                 ],
+                [_base_run("Android", 8804)],
             ),
         },
     )
-    out = generate_comment({"BASELINE_SHA": BASE}, tmp_path, NOW)
-    assert "| `QGroundControl-linux-arm64-v8a` | Android | 85.00 MB | — | — |" in out
-    assert "| `QGroundControl-mac-arm64-v8a` | Android | 85.00 MB | -2.00 MB | -2.30% |" in out
-    assert "Artifact sizes: 2 artifacts, 170.00 MB, -2.00 MB vs base" in out
-    assert "Compared with PR base `aaaaaaa`" in out
+    out = generate_comment({"BASE_SHA": BASE}, tmp_path, NOW)
+    assert "| `QGroundControl-linux-arm64-v8a` | Android | 85.00 MB | — | — | 2026-02-24 |" in out
+    assert (
+        "| `QGroundControl-mac-arm64-v8a` | Android | 85.00 MB | -2.00 MB | -2.30% | 2026-02-24 |"
+        in out
+    )
+    assert "Changes are against base `aaaaaaa`" in out
 
 
-@pytest.mark.parametrize("cached_sha", ["older-master", None])
-def test_size_delta_rejects_stale_or_unidentified_baseline(
-    tmp_path: Path, cached_sha: str | None, caplog: pytest.LogCaptureFixture
+@pytest.mark.parametrize("base_sha", ["older-master", None])
+def test_size_delta_rejects_another_commits_sizes(
+    tmp_path: Path, base_sha: str | None, caplog: pytest.LogCaptureFixture
 ) -> None:
     baseline: dict[str, object] = {
         "artifacts": [{"name": "QGroundControl", "size_bytes": 78 * MIB}]
     }
-    if cached_sha is not None:
-        baseline["head_sha"] = cached_sha
+    if base_sha is not None:
+        baseline["head_sha"] = base_sha
     write_files(
         tmp_path,
         {
             "pr-sizes.json": json.dumps(
                 {"artifacts": [{"name": "QGroundControl", "size_bytes": MIB}]}
             ),
-            "baseline-sizes.json": json.dumps(baseline),
+            "base-sizes.json": json.dumps(baseline),
         },
     )
-    out = generate_comment({"BASELINE_SHA": BASE}, tmp_path, NOW)
-    assert "Ignoring size baseline" in caplog.text
-    assert "| `QGroundControl` | — | 1.00 MB | — | — |" in out
-    assert "No size baseline for `aaaaaaa` yet" in out
+    out = generate_comment({"BASE_SHA": BASE}, tmp_path, NOW)
+    assert "Ignoring base sizes" in caplog.text
+    assert "| `QGroundControl` | — | 1.00 MB | — | — | — |" in out
+    assert "No artifacts of base `aaaaaaa` to compare with." in out
 
 
-def test_analysis_counts_each_warning_once_across_shards(tmp_path: Path) -> None:
+def test_flagged_growth_is_called_out(tmp_path: Path) -> None:
+    comment = generate_comment(write_scenario(tmp_path, "failures"), tmp_path, NOW)
+    # x86_64 grew by 4.2 MB (2.2%).
+    assert "| Linux | ❌ Failed | 27m 35s | 875 passed, **3 failed** | ⚠️ +4.21 MB |" in comment
+    assert (
+        "<summary>⚠️ Artifacts: 4 downloads, first expires 2026-02-24; 1 grew</summary>" in comment
+    )
+
+
+def test_analysis_reports_warnings_on_changed_lines_once_across_shards(tmp_path: Path) -> None:
     write_files(tmp_path, DIAGNOSTICS)
-    assert mod.load_analysis_warnings(tmp_path) == {
-        "clang-tidy": {
-            ("src/Vehicle/Vehicle.h", 10, 5, "modernize-use-nodiscard"),
-            ("src/Vehicle/Vehicle.h", 12, 1, "readability-identifier-naming"),
-            ("src/Vehicle/Vehicle.cc", 40, 3, "readability-implicit-bool-conversion"),
-            ("src/MissionManager/MissionController.cc", 7, 1, "modernize-use-nodiscard"),
-        },
-        "clazy": {("src/Vehicle/Vehicle.cc", 5, 1, "-Wclazy-non-pod-global-static")},
-    }
+    warnings, changed = mod.load_analysis_warnings(tmp_path)
+    assert {tool: len(found) for tool, found in warnings.items()} == {"clang-tidy": 4, "clazy": 1}
+    assert sorted((w.file, w.line, w.check) for w in changed["clang-tidy"]) == [
+        ("src/MissionManager/MissionController.cc", 7, "modernize-use-nodiscard"),
+        ("src/Vehicle/Vehicle.h", 10, "modernize-use-nodiscard"),
+    ]
+    assert changed["clazy"] == set()
 
     comment = generate_comment(write_scenario(tmp_path, "all-passed"), tmp_path, now_utc=NOW)
-    assert "| 5 unique warnings in 3 files |" in comment
-    assert "| `modernize-use-nodiscard` | clang-tidy | 2 |" in comment
-    assert "| `src/Vehicle/Vehicle.cc` | 2 |" in comment
+    assert "| **2 warnings on changed lines** |" in comment
+    assert (
+        "<details><summary>Code Analysis: ✅ Passed, 2 warnings on changed lines</summary>"
+        in comment
+    )
+    assert (
+        f"- [`src/Vehicle/Vehicle.h:10`]({BLOB}/{MERGE}/src/Vehicle/Vehicle.h#L10) "
+        "`modernize-use-nodiscard` (clang-tidy)"
+    ) in comment
+    # Every warning counts only in the collapsed table, never in the main table.
+    assert "| `clang-tidy` | 75 | 2 | 4 | 0 |" in comment
+    assert "unique warnings in" not in comment
+    assert "Most frequent checks" not in comment
 
 
-def test_analysis_without_diagnostics_lists_files_with_findings(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    "commits",
+    [
+        [None, None, None],
+        [MERGE, MERGE, BASE],
+        ["main", None, None],
+        [MERGE.upper(), None, None],
+        [f"{MERGE}/../../x", None, None],
+    ],
+)
+def test_warning_links_fall_back_to_the_head_without_one_analyzed_commit(
+    tmp_path: Path, commits: list[str | None]
+) -> None:
+    env = write_scenario(tmp_path, "all-passed")
+    paths = sorted(tmp_path.glob("analysis-artifacts/**/*-diagnostics.json"))
+    for path, commit in zip(paths, commits, strict=True):
+        report = json.loads(path.read_text())
+        report["commit"] = commit
+        if commit is None:
+            del report["commit"]
+        path.write_text(json.dumps(report))
+    comment = generate_comment(env, tmp_path, now_utc=NOW)
+    assert f"({BLOB}/{HEAD}/src/Vehicle/Vehicle.h#L10)" in comment
+    assert MERGE not in comment
+
+
+def test_warnings_without_a_known_commit_are_not_linked(tmp_path: Path) -> None:
+    env = write_scenario(tmp_path, "all-passed")
+    status = json.loads((tmp_path / "build-status.json").read_text())
+    del status["head_sha"]
+    (tmp_path / "build-status.json").write_text(json.dumps(status))
+    for path in tmp_path.glob("analysis-artifacts/**/*-diagnostics.json"):
+        report = json.loads(path.read_text())
+        del report["commit"]
+        path.write_text(json.dumps(report))
+    comment = generate_comment({**env, "COMMIT_SHA": ""}, tmp_path, now_utc=NOW)
+    assert "- `src/Vehicle/Vehicle.h:10` `modernize-use-nodiscard` (clang-tidy)" in comment
+    assert "/blob/" not in comment
+
+
+def test_analysis_without_changed_lines_says_so(tmp_path: Path) -> None:
     env = write_scenario(tmp_path, "all-passed")
     for path in tmp_path.glob("analysis-artifacts/**/*-diagnostics.json"):
-        path.unlink()
-
+        report = json.loads(path.read_text())
+        report["changed"] = {}
+        path.write_text(json.dumps(report))
     comment = generate_comment(env, tmp_path, now_utc=NOW)
+    assert "| no warnings on changed lines |" in comment
+    assert "No warnings on lines this pull request changed." in comment
 
-    assert "| 76 files, 1 with findings |" in comment
-    assert "Files with findings (warnings are advisory):" in comment
-    assert "unique warnings" not in comment
+
+def test_analysis_from_older_artifacts_shows_only_totals(tmp_path: Path) -> None:
+    env = write_scenario(tmp_path, "all-passed")
+    for path in tmp_path.glob("analysis-artifacts/**/*-diagnostics.json"):
+        report = json.loads(path.read_text())
+        del report["changed"]
+        path.write_text(json.dumps(report))
+    comment = generate_comment(env, tmp_path, now_utc=NOW)
+    assert "| 76 files analyzed |" in comment
+    assert "| `clang-tidy` | 75 | 4 | 0 |" in comment
+    assert "on changed lines" not in comment
+    for path in tmp_path.glob("analysis-artifacts/**/*-diagnostics.json"):
+        path.unlink()
+    without = generate_comment(env, tmp_path, now_utc=NOW)
+    assert "| `clazy` | 76 | 1 | 0 |" in without
+    assert "Warnings are advisory." in without
 
 
 def test_malformed_and_empty_size_snapshots(tmp_path: Path) -> None:
@@ -733,9 +1060,11 @@ def test_malformed_and_empty_size_snapshots(tmp_path: Path) -> None:
             )
         },
     )
-    assert "| `QGroundControl.dmg` | — | 1.00 MB | — | — |" in generate_comment({}, tmp_path, NOW)
+    assert "| `QGroundControl.dmg` | — | 1.00 MB | — | — | — |" in generate_comment(
+        {}, tmp_path, NOW
+    )
     write_files(tmp_path, {"pr-sizes.json": json.dumps({"head_sha": "new", "artifacts": []})})
-    assert "Artifact sizes" not in generate_comment({}, tmp_path, NOW)
+    assert "Artifacts:" not in generate_comment({}, tmp_path, NOW)
 
 
 def test_missing_status_still_renders(tmp_path: Path) -> None:

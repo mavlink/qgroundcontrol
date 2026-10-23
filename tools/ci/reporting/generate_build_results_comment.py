@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Generate the Build Results PR comment.
 
-Reads the workflow status that collect_build_status.py wrote (--status-out), the downloaded
-test results, coverage, pre-commit, and Code Analysis artifacts, and the artifact sizes, from
-the INPUT_PATHS that build-results.yml's steps write. The comment leads with a verdict and a
-per-workflow table, lists failures, and collapses the rest.
+Reads the workflow status that collect_build_status.py wrote (--status-out); the downloaded test
+results, coverage, pre-commit, and Code Analysis artifacts; the artifact sizes; and the PR base
+commit's own build artifacts, from the INPUT_PATHS that build-results.yml's steps write. The
+comment leads with a verdict and a per-workflow table, lists failures, and collapses the rest.
 """
 
 from __future__ import annotations
@@ -14,7 +14,6 @@ import logging
 import os
 import re
 import sys
-from collections import Counter
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -28,34 +27,29 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import _bootstrap as _bootstrap
 from common.coverage_summary import CoverageSummary, CoverageSummaryError, read_gcovr_summary
-from common.format import (
-    format_bytes,
-    format_count,
-    format_delta_bytes,
-    format_duration,
-    format_percent,
-)
+from common.format import format_bytes, format_count, format_duration, format_percent
 from common.gh_actions import write_step_summary
 from common.io import read_json
 from common.markdown import code_block, code_span, details, escape_text, md_table, more_items
 from common.xml import XMLParseError
 
 from ci.reporting.junit_report import JUnitCase, clip, parse_junit
-from ci.reporting.workflow_runs import triggering_run
+from ci.reporting.workflow_runs import parse_created_at, triggering_run
 
 logger = logging.getLogger(__name__)
 
-# GitHub rejects comments over 65,536 characters; the margin covers the upsert action's tag.
+# GitHub rejects comments over 65,536 characters; the margin covers the comment marker.
 MAX_COMMENT_CHARS = 60_000
 # An artifact that grows by more than SIZE_WARN_PERCENT of its base size, and by at least
 # SIZE_WARN_MIN_BYTES, is flagged.
 SIZE_WARN_PERCENT = 1.0
 SIZE_WARN_MIN_BYTES = 1024 * 1024
+# Coverage covers the application only; Codecov also ignores test/.
+COVERAGE_PREFIX = "src/"
 
 STATE_LABELS = {
     "success": "✅ Passed",
     "failure": "❌ Failed",
-    "interrupted": "🔁 Retrying",
     "cancelled": "🚫 Cancelled",
     "running": "🔄 Running",
     "pending": "⏳ Pending",
@@ -63,9 +57,9 @@ STATE_LABELS = {
     "action_required": "⏸️ Awaiting approval",
     "not_run": "⚪ Not run",
 }
+_STATE_ICONS = {state: label.split(" ", 1)[0] for state, label in STATE_LABELS.items()}
 _PENDING = {"pending", "running", "action_required"}
 _FAILED_JOB_CONCLUSIONS = {"failure", "timed_out", "startup_failure"}
-_BASELINE_KEY_SHA = re.compile(r"^build-baseline-v\d+-([0-9a-f]{7,40})(?:-|$)")
 # Inputs relative to --base-dir, where build-results.yml's steps write them; an environment
 # variable of the same name overrides each.
 INPUT_PATHS = {
@@ -74,9 +68,10 @@ INPUT_PATHS = {
     "ANALYSIS_ARTIFACTS_DIR": "analysis-artifacts",
     "PRECOMMIT_RESULTS_PATH": "artifacts/pre-commit-results/pre-commit-results.json",
     "COVERAGE_SUMMARY": "artifacts/coverage-report/coverage-summary.json",
-    "BASELINE_COVERAGE_SUMMARY": "baseline-coverage-summary.json",
     "PR_SIZES_JSON": "pr-sizes.json",
-    "BASELINE_SIZES_JSON": "baseline-sizes.json",
+    "BASE_ARTIFACTS_DIR": "base-artifacts",
+    "BASE_COVERAGE_SUMMARY": "base-artifacts/coverage-report/coverage-summary.json",
+    "BASE_SIZES_JSON": "base-sizes.json",
 }
 
 
@@ -89,22 +84,24 @@ class Limits:
     excerpt_lines: int = 8
     line_chars: int = 240
     suites: int = 30
-    slowest: int = 5
+    test_names: int = 10
     artifacts: int = 30
-    analysis_files: int = 10
+    analysis_warnings: int = 20
 
 
 LIMIT_STEPS = (
     Limits(),
-    Limits(failed_tests=5, excerpt_lines=4, suites=12, artifacts=12, analysis_files=5),
+    Limits(
+        failed_tests=5, excerpt_lines=4, suites=12, test_names=5, artifacts=12, analysis_warnings=10
+    ),
     Limits(
         failed_jobs=5,
         failed_tests=3,
         excerpt_lines=0,
         suites=6,
-        slowest=3,
+        test_names=3,
         artifacts=6,
-        analysis_files=0,
+        analysis_warnings=5,
     ),
 )
 
@@ -119,6 +116,10 @@ class Suite:
     def count(self, outcome: str) -> int:
         return sum(case.outcome == outcome for case in self.cases)
 
+    @property
+    def names(self) -> frozenset[str]:
+        return frozenset(case.name for case in self.cases)
+
 
 @dataclass(frozen=True)
 class ArtifactSize:
@@ -126,6 +127,9 @@ class ArtifactSize:
     workflow: str
     size: int
     base: int | None
+    run_id: int = 0
+    artifact_id: int = 0
+    expires: str = ""
 
     @property
     def delta(self) -> int | None:
@@ -149,18 +153,27 @@ class ArtifactSize:
 
 
 @dataclass(frozen=True)
-class Sizes:
-    artifacts: tuple[ArtifactSize, ...]
-    base_sha: str
-    compared: bool
+class BaseRun:
+    workflow: str
+    run_number: object
+    status: str
+    conclusion: str
+    url: str
+
+
+@dataclass(frozen=True)
+class Base:
+    """The PR base commit's own builds; *runs* is None when they could not be read."""
+
+    sha: str
+    runs: tuple[BaseRun, ...] | None
 
 
 @dataclass(frozen=True)
 class Coverage:
     current: CoverageSummary
     baseline: CoverageSummary | None
-    baseline_sha: str
-    baseline_is_base: bool
+    base_workflow: str
 
 
 @dataclass(frozen=True)
@@ -173,15 +186,33 @@ class Precommit:
 
 
 @dataclass(frozen=True)
+class AnalysisWarning:
+    tool: str
+    file: str
+    line: int
+    column: int
+    check: str
+
+
+@dataclass(frozen=True)
 class AnalysisTool:
     tool: str
     files: tuple[str, ...]
     findings: tuple[str, ...]
     errors: tuple[str, ...]
-    # Unique warnings across shards, by file and by check; None without diagnostics files.
+    # Unique warnings across shards; None without diagnostics files.
     warnings: int | None = None
-    warning_files: tuple[tuple[str, int], ...] = ()
-    warning_checks: tuple[tuple[str, int], ...] = ()
+    # Warnings on lines the PR changed; None when no shard reported changed lines.
+    changed: tuple[AnalysisWarning, ...] | None = None
+
+
+@dataclass(frozen=True)
+class TestChanges:
+    """Test names added and removed in suites that the base build also ran, by suite."""
+
+    added: dict[str, tuple[str, ...]]
+    removed: dict[str, tuple[str, ...]]
+    compared: frozenset[str]
 
 
 @dataclass(frozen=True)
@@ -189,14 +220,21 @@ class Report:
     platforms: tuple[dict[str, Any], ...]
     precommit_run: dict[str, Any] | None
     analysis_run: dict[str, Any] | None
+    others: tuple[dict[str, Any], ...]
     suites: tuple[Suite, ...]
+    test_changes: TestChanges | None
     coverage: Coverage | None
-    sizes: Sizes | None
+    sizes: tuple[ArtifactSize, ...]
+    base: Base | None
     precommit: Precommit | None
     analysis: tuple[AnalysisTool, ...]
+    missing_downloads: tuple[str, ...]
+    expired_downloads: tuple[str, ...]
     repo: str
     server_url: str
     commit: str
+    # The commit Code Analysis checked out, whose line numbers its warnings use; '' when unknown.
+    analysis_commit: str
     pr_number: str
     triggered_by: str
     now: datetime
@@ -244,6 +282,24 @@ def _link(text: str, url: str) -> str:
     return f"[{text}]({safe_url})" if safe_url else text
 
 
+def _delta_size(delta: int) -> str:
+    """Return a signed size change in B, KB, or MB (1024-based, like format_bytes)."""
+    if delta == 0:
+        return "unchanged"
+    sign = "+" if delta > 0 else "-"
+    size = abs(delta)
+    if size < 1024:
+        return f"{sign}{size} B"
+    if size < 1024 * 1024:
+        return f"{sign}{size / 1024:.1f} KB"
+    return f"{sign}{format_bytes(size)}"
+
+
+def _clock(timestamp: str) -> str:
+    parsed = parse_created_at(timestamp)
+    return parsed.strftime("%H:%M UTC") if parsed else ""
+
+
 # ---------------------------------------------------------------------------
 # Inputs
 # ---------------------------------------------------------------------------
@@ -259,20 +315,17 @@ def _load_json(path: Path, what: str) -> Any:
         return None
 
 
-def _manifest(artifacts_dir: Path) -> dict[str, str]:
+def _manifest(artifacts_dir: Path) -> list[dict[str, Any]]:
     data = _load_json(artifacts_dir / "download-manifest.json", "the download manifest")
-    if not isinstance(data, list):
-        return {}
-    return {
-        str(entry.get("name", "")): clip(entry.get("workflow", ""))
-        for entry in data
-        if isinstance(entry, dict)
-    }
+    return [entry for entry in data if isinstance(entry, dict)] if isinstance(data, list) else []
 
 
 def load_suites(artifacts_dir: Path) -> list[Suite]:
     """Return one suite per downloaded test-results-* artifact with readable JUnit XML."""
-    workflows = _manifest(artifacts_dir)
+    workflows = {
+        str(entry.get("name", "")): clip(entry.get("workflow", ""))
+        for entry in _manifest(artifacts_dir)
+    }
     suites: list[Suite] = []
     for directory in sorted(artifacts_dir.glob("test-results-*")):
         if not directory.is_dir():
@@ -294,63 +347,98 @@ def load_suites(artifacts_dir: Path) -> list[Suite]:
     return suites
 
 
-def _baseline_sha(key: str) -> str:
-    match = _BASELINE_KEY_SHA.match(key.strip())
-    return match.group(1) if match else ""
-
-
-def load_coverage(env: Mapping[str, str], base_dir: Path) -> Coverage | None:
-    current_path = _input_path(env, base_dir, "COVERAGE_SUMMARY")
-    if not current_path.is_file():
+def compare_tests(suites: list[Suite], base_suites: list[Suite]) -> TestChanges | None:
+    """Return the tests each suite added or removed versus the same suite in the base build."""
+    if not base_suites:
         return None
-    try:
-        current = read_gcovr_summary(current_path)
-    except CoverageSummaryError:
-        logger.warning("Failed to parse coverage from %s", current_path, exc_info=True)
-        return None
-    if current.line_total == 0:
-        return None
-    baseline_path = _input_path(env, base_dir, "BASELINE_COVERAGE_SUMMARY")
-    baseline = None
-    if baseline_path.is_file():
-        try:
-            baseline = read_gcovr_summary(baseline_path)
-        except CoverageSummaryError:
-            logger.warning("Failed to parse coverage from %s", baseline_path, exc_info=True)
-    sha = _baseline_sha(_env(env, "BASELINE_KEY")) if baseline else ""
-    base_sha = _env(env, "BASELINE_SHA")
-    return Coverage(
-        current=current,
-        baseline=baseline,
-        baseline_sha=sha,
-        baseline_is_base=bool(sha and base_sha.startswith(sha)),
+    base = {suite.name: suite.names for suite in base_suites}
+    added: dict[str, list[str]] = {}
+    removed: dict[str, list[str]] = {}
+    compared = set()
+    for suite in suites:
+        if suite.name not in base:
+            continue
+        compared.add(suite.name)
+        for name in suite.names - base[suite.name]:
+            added.setdefault(name, []).append(suite.name)
+        for name in base[suite.name] - suite.names:
+            removed.setdefault(name, []).append(suite.name)
+    return TestChanges(
+        added={name: tuple(sorted(found)) for name, found in sorted(added.items())},
+        removed={name: tuple(sorted(found)) for name, found in sorted(removed.items())},
+        compared=frozenset(compared),
     )
 
 
-def load_sizes(env: Mapping[str, str], base_dir: Path) -> Sizes | None:
-    pr_data = _load_json(_input_path(env, base_dir, "PR_SIZES_JSON"), "PR sizes")
-    if not isinstance(pr_data, dict) or not isinstance(pr_data.get("artifacts"), list):
+def _read_coverage(path: Path) -> CoverageSummary | None:
+    if not path.is_file():
         return None
+    try:
+        summary = read_gcovr_summary(path, path_prefix=COVERAGE_PREFIX)
+    except CoverageSummaryError:
+        logger.warning("Failed to parse coverage from %s", path, exc_info=True)
+        return None
+    return summary if summary.line_total else None
 
-    base_sha = _env(env, "BASELINE_SHA")
+
+def load_coverage(env: Mapping[str, str], base_dir: Path) -> Coverage | None:
+    current = _read_coverage(_input_path(env, base_dir, "COVERAGE_SUMMARY"))
+    if current is None:
+        return None
+    base_manifest = _manifest(_input_path(env, base_dir, "BASE_ARTIFACTS_DIR"))
+    workflow = next(
+        (str(e.get("workflow", "")) for e in base_manifest if e.get("name") == "coverage-report"),
+        "",
+    )
+    baseline = _read_coverage(_input_path(env, base_dir, "BASE_COVERAGE_SUMMARY"))
+    return Coverage(current=current, baseline=baseline, base_workflow=clip(workflow))
+
+
+def load_base(env: Mapping[str, str], base_dir: Path) -> Base | None:
+    sha = _env(env, "BASE_SHA")
+    if not sha:
+        return None
+    data = _load_json(_input_path(env, base_dir, "BASE_SIZES_JSON"), "base builds")
+    if not isinstance(data, dict) or data.get("head_sha") != sha:
+        return Base(sha, None)
+    runs = tuple(
+        BaseRun(
+            workflow=clip(run.get("workflow", "")),
+            run_number=run.get("run_number"),
+            status=str(run.get("status", "")),
+            conclusion=str(run.get("conclusion", "")),
+            url=str(run.get("url", "")),
+        )
+        for run in data.get("runs") or []
+        if isinstance(run, dict)
+    )
+    return Base(sha, runs)
+
+
+def _artifact_sizes(data: Any) -> list[dict[str, Any]]:
+    if not isinstance(data, dict) or not isinstance(data.get("artifacts"), list):
+        return []
+    return [artifact for artifact in data["artifacts"] if isinstance(artifact, dict)]
+
+
+def load_sizes(env: Mapping[str, str], base_dir: Path) -> list[ArtifactSize]:
+    pr_data = _load_json(_input_path(env, base_dir, "PR_SIZES_JSON"), "PR sizes")
+    base_sha = _env(env, "BASE_SHA")
+    base_data = _load_json(_input_path(env, base_dir, "BASE_SIZES_JSON"), "base sizes")
     baseline: dict[str, int] = {}
-    baseline_data = _load_json(_input_path(env, base_dir, "BASELINE_SIZES_JSON"), "baseline sizes")
-    if isinstance(baseline_data, dict):
-        if base_sha and baseline_data.get("head_sha") != base_sha:
-            logger.warning(
-                "Ignoring size baseline for %s; PR base is %s",
-                baseline_data.get("head_sha", "unknown revision"),
-                base_sha,
-            )
-        else:
-            for artifact in baseline_data.get("artifacts") or []:
-                if isinstance(artifact, dict) and (name := str(artifact.get("name", "")).strip()):
-                    baseline[name] = _int(artifact.get("size_bytes"))
+    if isinstance(base_data, dict) and base_sha and base_data.get("head_sha") == base_sha:
+        for artifact in _artifact_sizes(base_data):
+            if name := str(artifact.get("name", "")).strip():
+                baseline[name] = _int(artifact.get("size_bytes"))
+    elif base_data is not None:
+        logger.warning(
+            "Ignoring base sizes for %s; PR base is %s",
+            base_data.get("head_sha", "unknown revision") if isinstance(base_data, dict) else "?",
+            base_sha or "unknown",
+        )
 
     items: list[ArtifactSize] = []
-    for artifact in pr_data["artifacts"]:
-        if not isinstance(artifact, dict):
-            continue
+    for artifact in _artifact_sizes(pr_data):
         name = str(artifact.get("name", "")).strip()
         try:
             size = int(artifact.get("size_bytes", 0))
@@ -359,12 +447,16 @@ def load_sizes(env: Mapping[str, str], base_dir: Path) -> Sizes | None:
         if name:
             items.append(
                 ArtifactSize(
-                    clip(name), clip(artifact.get("workflow", "")), size, baseline.get(name)
+                    clip(name),
+                    clip(artifact.get("workflow", "")),
+                    size,
+                    baseline.get(name),
+                    run_id=_int(artifact.get("run_id")),
+                    artifact_id=_int(artifact.get("artifact_id")),
+                    expires=str(artifact.get("expires_at") or "")[:10],
                 )
             )
-    if not items:
-        return None
-    return Sizes(tuple(items), base_sha[:7], compared=any(item.base is not None for item in items))
+    return items
 
 
 def load_precommit(env: Mapping[str, str], base_dir: Path) -> Precommit | None:
@@ -381,41 +473,49 @@ def load_precommit(env: Mapping[str, str], base_dir: Path) -> Precommit | None:
     )
 
 
-def _ranked(counts: Counter[str]) -> tuple[tuple[str, int], ...]:
-    return tuple(sorted(counts.items(), key=lambda item: (-item[1], item[0])))
+def _warnings(tool: str, by_file: Any) -> set[AnalysisWarning]:
+    found: set[AnalysisWarning] = set()
+    if not isinstance(by_file, dict):
+        return found
+    for file, rows in by_file.items():
+        if not isinstance(rows, list):
+            continue
+        for row in rows:
+            if (
+                isinstance(row, list)
+                and len(row) == 4
+                and isinstance(row[0], int)
+                and isinstance(row[1], int)
+                and row[2] == "warning"
+            ):
+                found.add(AnalysisWarning(tool, clip(str(file)), row[0], row[1], clip(str(row[3]))))
+    return found
 
 
-def load_analysis_warnings(analysis_dir: Path) -> dict[str, set[tuple[str, int, int, str]]]:
+def load_analysis_warnings(
+    analysis_dir: Path,
+) -> tuple[dict[str, set[AnalysisWarning]], dict[str, set[AnalysisWarning]]]:
     """Union every shard's analyze.py *-diagnostics.json warnings by tool.
 
     A header's warnings appear in each shard that compiles a file including it, so a warning is
-    identified by its location and check.
+    identified by its location and check. Returns every warning and, for tools whose shards
+    reported changed lines, the warnings on lines the PR changed.
     """
-    merged: dict[str, set[tuple[str, int, int, str]]] = {}
+    merged: dict[str, set[AnalysisWarning]] = {}
+    changed: dict[str, set[AnalysisWarning]] = {}
     for path in sorted(analysis_dir.glob("**/*-diagnostics.json")):
         data = _load_json(path, "analysis diagnostics")
         if not isinstance(data, dict) or not isinstance(data.get("diagnostics"), dict):
             continue
-        warnings = merged.setdefault(
-            clip(data.get("tool") or path.name.removesuffix("-diagnostics.json")), set()
-        )
-        for file, rows in data["diagnostics"].items():
-            if not isinstance(rows, list):
-                continue
-            for row in rows:
-                if (
-                    isinstance(row, list)
-                    and len(row) == 4
-                    and isinstance(row[0], int)
-                    and isinstance(row[1], int)
-                    and row[2] == "warning"
-                ):
-                    warnings.add((clip(str(file)), row[0], row[1], clip(str(row[3]))))
-    return merged
+        tool = clip(data.get("tool") or path.name.removesuffix("-diagnostics.json"))
+        merged.setdefault(tool, set()).update(_warnings(tool, data["diagnostics"]))
+        if "changed" in data:
+            changed.setdefault(tool, set()).update(_warnings(tool, data["changed"]))
+    return merged, changed
 
 
 def load_analysis(analysis_dir: Path) -> list[AnalysisTool]:
-    """Merge every shard's analyze.py *-timings.json by tool, with its unique warnings."""
+    """Merge every shard's analyze.py *-timings.json by tool, with its warnings."""
     merged: dict[str, dict[str, list[str]]] = {}
     for path in sorted(analysis_dir.glob("**/*-timings.json")):
         data = _load_json(path, "analysis timings")
@@ -434,45 +534,81 @@ def load_analysis(analysis_dir: Path) -> list[AnalysisTool]:
                 tool["findings"].append(name)
             elif row.get("status") == "error":
                 tool["errors"].append(name)
-    warnings = load_analysis_warnings(analysis_dir)
-    tools = []
-    for name, rows in sorted(merged.items()):
-        tool_warnings = warnings.get(name)
-        tools.append(
-            AnalysisTool(
-                name,
-                tuple(sorted(set(rows["files"]))),
-                tuple(sorted(set(rows["findings"]))),
-                tuple(sorted(set(rows["errors"]))),
-                warnings=None if tool_warnings is None else len(tool_warnings),
-                warning_files=_ranked(Counter(file for file, *_ in tool_warnings or ())),
-                warning_checks=_ranked(Counter(check for *_, check in tool_warnings or ())),
-            )
+    warnings, changed = load_analysis_warnings(analysis_dir)
+    return [
+        AnalysisTool(
+            name,
+            tuple(sorted(set(rows["files"]))),
+            tuple(sorted(set(rows["findings"]))),
+            tuple(sorted(set(rows["errors"]))),
+            warnings=len(warnings[name]) if name in warnings else None,
+            changed=tuple(sorted(changed[name], key=lambda w: (w.file, w.line, w.column)))
+            if name in changed
+            else None,
         )
-    return tools
+        for name, rows in sorted(merged.items())
+    ]
+
+
+def load_analysis_commit(analysis_dir: Path) -> str:
+    """Return the commit that every ``*-diagnostics.json`` naming one analyzed, else ''.
+
+    On a pull request Code Analysis checks out GitHub's merge commit, whose line numbers can
+    differ from the PR head's where the base branch changed the same file.
+    """
+    commits = set()
+    for path in sorted(analysis_dir.glob("**/*-diagnostics.json")):
+        data = _load_json(path, "analysis diagnostics")
+        commit = data.get("commit") if isinstance(data, dict) else None
+        if isinstance(commit, str) and re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", commit):
+            commits.add(commit)
+    return commits.pop() if len(commits) == 1 else ""
+
+
+def _manifest_entries(env: Mapping[str, str], base_dir: Path, *, expired: bool) -> list[str]:
+    """Name the artifacts that weren't downloaded: failed downloads, or ``expired`` ones."""
+    listed = []
+    for key, suffix in (
+        ("ARTIFACTS_DIR", ""),
+        ("ANALYSIS_ARTIFACTS_DIR", ""),
+        ("BASE_ARTIFACTS_DIR", ", base"),
+    ):
+        for entry in _manifest(_input_path(env, base_dir, key)):
+            if entry.get("downloaded") is False and bool(entry.get("expired")) == expired:
+                workflow = escape_text(clip(entry.get("workflow", "")))
+                listed.append(f"{code_span(clip(entry.get('name', '')))} ({workflow}{suffix})")
+    return listed
 
 
 def collect_report(env: Mapping[str, str], base_dir: Path, now: datetime) -> Report:
     status = _load_json(_input_path(env, base_dir, "BUILD_STATUS_JSON"), "status")
     if not isinstance(status, dict):
         status = {}
-    artifacts_dir = _input_path(env, base_dir, "ARTIFACTS_DIR")
-    analysis_dir = _input_path(env, base_dir, "ANALYSIS_ARTIFACTS_DIR")
     platforms = [entry for entry in status.get("platforms") or [] if isinstance(entry, dict)]
+    others = [entry for entry in status.get("others") or [] if isinstance(entry, dict)]
+    suites = load_suites(_input_path(env, base_dir, "ARTIFACTS_DIR"))
+    base_suites = load_suites(_input_path(env, base_dir, "BASE_ARTIFACTS_DIR"))
+    analysis_dir = _input_path(env, base_dir, "ANALYSIS_ARTIFACTS_DIR")
     return Report(
         platforms=tuple(platforms),
         precommit_run=status.get("precommit")
         if isinstance(status.get("precommit"), dict)
         else None,
         analysis_run=status.get("analysis") if isinstance(status.get("analysis"), dict) else None,
-        suites=tuple(load_suites(artifacts_dir)),
+        others=tuple(others),
+        suites=tuple(suites),
+        test_changes=compare_tests(suites, base_suites),
         coverage=load_coverage(env, base_dir),
-        sizes=load_sizes(env, base_dir),
+        sizes=tuple(load_sizes(env, base_dir)),
+        base=load_base(env, base_dir),
         precommit=load_precommit(env, base_dir),
         analysis=tuple(load_analysis(analysis_dir)),
+        missing_downloads=tuple(_manifest_entries(env, base_dir, expired=False)),
+        expired_downloads=tuple(_manifest_entries(env, base_dir, expired=True)),
         repo=_env(env, "REPO", _env(env, "GITHUB_REPOSITORY", str(status.get("repo", "")))),
         server_url=_env(env, "SERVER_URL", _env(env, "GITHUB_SERVER_URL", "https://github.com")),
         commit=_env(env, "COMMIT_SHA", str(status.get("head_sha", ""))),
+        analysis_commit=load_analysis_commit(analysis_dir),
         pr_number=_env(env, "PR_NUMBER"),
         triggered_by=_env(env, "TRIGGERED_BY", str(triggering_run(env).get("name") or "unknown")),
         now=now,
@@ -488,36 +624,37 @@ def _state(entry: dict[str, Any] | None) -> str:
     return str(entry.get("state", "pending")) if entry else "not_run"
 
 
-def _commit_link(report: Report) -> str:
-    short = report.commit[:7]
+def _commit_link(report: Report, sha: str) -> str:
+    short = sha[:7]
     if not short:
         return ""
     if not report.repo:
         return code_span(short)
-    return _link(code_span(short), f"{report.server_url}/{report.repo}/commit/{report.commit}")
+    return _link(code_span(short), f"{report.server_url}/{report.repo}/commit/{sha}")
 
 
 def render_verdict(report: Report) -> str:
     states = [_state(entry) for entry in report.platforms]
     gating = [*states, _state(report.precommit_run)]
+    if report.analysis_run:
+        gating.append(_state(report.analysis_run))
     failing = [
         name
         for name, state in [
             *((entry.get("name", ""), _state(entry)) for entry in report.platforms),
             ("pre-commit", _state(report.precommit_run)),
             ("Code Analysis", _state(report.analysis_run)),
+            *((entry.get("name", ""), _state(entry)) for entry in report.others),
         ]
         if state == "failure"
     ]
     pending = sum(state in _PENDING for state in states)
-    retrying = sum(state == "interrupted" for state in states)
     skipped = sum(state == "skipped" for state in states)
-    done = len(states) - pending - retrying
+    others_pending = sum(_state(entry) in _PENDING for entry in report.others)
 
     if failing:
-        verdict = f"❌ **{_plural(len(failing), 'workflow')} failed**"
-    elif "interrupted" in [*gating, _state(report.analysis_run)]:
-        verdict = "🔁 **Retrying after a Spot interruption**"
+        names = ", ".join(escape_text(clip(name)) for name in failing)
+        verdict = f"❌ **{_plural(len(failing), 'workflow')} failed** ({names})"
     elif any(state in _PENDING for state in gating):
         verdict = "⏳ **Builds in progress**"
     elif "cancelled" in gating:
@@ -527,17 +664,19 @@ def render_verdict(report: Report) -> str:
     else:
         verdict = "✅ **All builds passed**"
 
-    progress = f"{done} of {len(states)} platform workflows done"
-    extras = []
-    if skipped:
-        extras.append(f"{skipped} skipped by change detection")
-    if pending:
-        extras.append(f"{pending} pending")
-    if retrying:
-        extras.append(f"{retrying} retrying")
-    if extras:
-        progress += f" ({', '.join(extras)})"
-    parts = [verdict, _commit_link(report), progress] if states else [verdict, _commit_link(report)]
+    parts = [verdict, _commit_link(report, report.commit)]
+    if states:
+        progress = f"{len(states) - pending} of {len(states)} platform workflows done"
+        extras = []
+        if skipped:
+            extras.append(f"{skipped} skipped by change detection")
+        if pending:
+            extras.append(f"{pending} pending")
+        if extras:
+            progress += f" ({', '.join(extras)})"
+        parts.append(progress)
+    if others_pending:
+        parts.append(f"{_plural(others_pending, 'other check')} still running")
     return " · ".join(part for part in parts if part)
 
 
@@ -558,9 +697,15 @@ def _duration_cell(entry: dict[str, Any] | None) -> str:
     if not entry:
         return "—"
     seconds = entry.get("duration_seconds")
-    if isinstance(seconds, (int, float)):
-        return format_duration(seconds)
-    return "running" if entry.get("state") == "running" else "—"
+    if not isinstance(seconds, (int, float)):
+        return "running" if entry.get("state") == "running" else "—"
+    duration = format_duration(seconds)
+    attempt = _int(entry.get("attempt"))
+    if attempt > 1:
+        elapsed = entry.get("elapsed_seconds")
+        total = f", {format_duration(elapsed)} total" if isinstance(elapsed, (int, float)) else ""
+        duration += f" (attempt {attempt}{total})"
+    return duration
 
 
 def _run_cell(entry: dict[str, Any] | None) -> str:
@@ -571,17 +716,24 @@ def _run_cell(entry: dict[str, Any] | None) -> str:
 
 
 def _size_cell(report: Report, workflow: str) -> str:
-    if not report.sizes:
-        return "—"
-    items = [item for item in report.sizes.artifacts if item.workflow == workflow]
-    if not items:
-        return "—"
-    total = format_bytes(sum(item.size for item in items))
-    deltas = [item.delta for item in items if item.delta is not None]
+    deltas = [item for item in report.sizes if item.workflow == workflow and item.delta is not None]
     if not deltas:
-        return total
-    flag = "⚠️ " if any(item.flagged for item in items) else ""
-    return f"{flag}{total} ({format_delta_bytes(sum(deltas))})"
+        return "—"
+    flag = "⚠️ " if any(item.flagged for item in deltas) else ""
+    return f"{flag}{_delta_size(sum(item.delta or 0 for item in deltas))}"
+
+
+def _analysis_results(report: Report) -> str:
+    changed = [tool for tool in report.analysis if tool.changed is not None]
+    if changed:
+        count = sum(len(tool.changed or ()) for tool in changed)
+        if not count:
+            return "no warnings on changed lines"
+        return f"**{_plural(count, 'warning')} on changed lines**"
+    if report.analysis:
+        files = len({name for tool in report.analysis for name in tool.files})
+        return f"{format_count(files)} files analyzed"
+    return "—"
 
 
 def render_table(report: Report) -> str:
@@ -624,32 +776,104 @@ def render_table(report: Report) -> str:
         ]
     )
     if report.analysis_run:
-        files = len({name for tool in report.analysis for name in tool.files})
-        findings = len({name for tool in report.analysis for name in tool.findings})
-        warnings = _warning_totals(report.analysis)
-        if warnings:
-            results = (
-                f"{format_count(warnings[0])} unique warnings in {format_count(warnings[1])} files"
-            )
-        elif report.analysis:
-            results = f"{format_count(files)} files, {format_count(findings)} with findings"
-        else:
-            results = "—"
         rows.append(
             [
                 "Code Analysis",
                 STATE_LABELS.get(_state(report.analysis_run), "—"),
                 _duration_cell(report.analysis_run),
-                results,
+                _analysis_results(report),
                 "—",
                 _run_cell(report.analysis_run),
             ]
         )
     return md_table(
-        ["Workflow", "Status", "Duration", "Results", "Artifacts (Δ vs base)", "Run"],
+        ["Workflow", "Status", "Duration", "Results", "Size Δ", "Run"],
         rows,
         markdown=True,
     )
+
+
+_OTHER_ORDER = (
+    "failure",
+    "cancelled",
+    "action_required",
+    "running",
+    "pending",
+    "success",
+    "skipped",
+)
+
+
+def render_others(report: Report) -> str:
+    """One line for every other workflow of the commit: problems linked first, passes by name."""
+    if not report.others:
+        return ""
+    by_state: dict[str, list[dict[str, Any]]] = {}
+    for entry in report.others:
+        by_state.setdefault(_state(entry), []).append(entry)
+    groups = []
+    for state in sorted(
+        by_state, key=lambda s: _OTHER_ORDER.index(s) if s in _OTHER_ORDER else len(_OTHER_ORDER)
+    ):
+        icon = _STATE_ICONS.get(state, "❔")
+        names = [escape_text(clip(entry.get("name", ""))) for entry in by_state[state]]
+        if state in {"success", "skipped"}:
+            groups.append(f"{icon} {', '.join(names)}")
+        else:
+            links = [
+                _link(name, str(entry.get("url", "")))
+                for name, entry in zip(names, by_state[state], strict=True)
+            ]
+            groups.append(" · ".join(f"{icon} {link}" for link in links))
+    return "**Other checks:** " + " · ".join(groups)
+
+
+def _base_run_text(run: BaseRun) -> str:
+    text = escape_text(run.workflow)
+    if run.url:
+        text += " " + _link(f"#{run.run_number}" if run.run_number else "run", run.url)
+    if run.status != "completed":
+        return f"{text} (still running)"
+    if run.conclusion not in {"success", ""}:
+        return f"{text} ({escape_text(run.conclusion.replace('_', ' '))})"
+    return text
+
+
+def render_base(report: Report) -> str:
+    """Name the base commit and the runs whose artifacts the changes are measured against."""
+    base = report.base
+    if base is None:
+        return ""
+    commit = _commit_link(report, base.sha)
+    if base.runs is None:
+        return f"**Base:** {commit}: its builds could not be read, so changes are not shown."
+    if not base.runs:
+        return f"**Base:** {commit} has no builds of its own yet, so changes are not shown."
+    listed = {run.workflow for run in base.runs}
+    parts = [_base_run_text(run) for run in base.runs]
+    parts += [
+        f"{escape_text(clip(name))}: no build"
+        for entry in report.platforms
+        if (name := str(entry.get("name", ""))) and name not in listed
+    ]
+    return f"**Base:** {commit} · " + " · ".join(parts)
+
+
+def render_missing_downloads(report: Report) -> str:
+    notes = []
+    if report.missing_downloads:
+        notes.append(
+            "⚠️ Could not download "
+            + ", ".join(report.missing_downloads)
+            + "; the results below leave them out."
+        )
+    if report.expired_downloads:
+        notes.append(
+            "⌛ Past artifact retention: "
+            + ", ".join(report.expired_downloads)
+            + "; comparisons with them are left out."
+        )
+    return "\n\n".join(notes)
 
 
 def _failed_jobs(entry: dict[str, Any]) -> list[dict[str, Any]]:
@@ -666,7 +890,17 @@ def _failed_jobs(entry: dict[str, Any]) -> list[dict[str, Any]]:
 def _job_line(workflow: str, job: dict[str, Any]) -> str:
     url = str(job.get("url", ""))
     steps = job.get("failed_steps") or []
-    if steps:
+    lost = job.get("runner_lost")
+    if isinstance(lost, dict):
+        times = [
+            f"{label} {clock}"
+            for label, key in (("started", "started_at"), ("ended", "completed_at"))
+            if (clock := _clock(str(lost.get(key, ""))))
+        ]
+        step = code_span(clip(lost.get("step", ""))) if lost.get("step") else "a step"
+        span = f" ({', '.join(times)})" if times else ""
+        what = f"runner lost during {step}{span}, no logs; re-run"
+    elif steps:
         failed = ", ".join(
             _link(code_span(clip(step.get("name", ""))), str(step.get("url", "")))
             for step in steps[:3]
@@ -674,8 +908,6 @@ def _job_line(workflow: str, job: dict[str, Any]) -> str:
         what = f"failed at {failed}"
     else:
         what = str(job.get("conclusion", "failed")).replace("_", " ")
-    if job.get("interrupted"):
-        what = "AWS reclaimed its Spot instance"
     log = _link("log", url) if url else ""
     line = f"- **{escape_text(clip(workflow))}** · {escape_text(clip(job.get('name', '')))}: {what}"
     return f"{line} · {log}" if log else line
@@ -686,29 +918,9 @@ def _excerpt_block(case: JUnitCase, limits: Limits) -> str:
     return code_block("\n".join(lines) or "(no output captured)", "text")
 
 
-def render_interruptions(report: Report) -> str:
-    """Workflows whose only failures were Spot interruptions, which RunsOn re-runs."""
-    lines = [
-        _job_line(str(entry.get("name", "")), job)
-        for entry in [*report.platforms, report.precommit_run, report.analysis_run]
-        if entry and _state(entry) == "interrupted"
-        for job in _failed_jobs(entry)
-        if job.get("interrupted")
-    ]
-    if not lines:
-        return ""
-    return "\n\n".join(
-        [
-            "### 🔁 Spot interruptions",
-            "\n".join(lines),
-            "RunsOn re-runs these jobs once their workflow run finishes; this comment updates then.",
-        ]
-    )
-
-
 def render_failures(report: Report, limits: Limits) -> str:
     job_lines: list[str] = []
-    for entry in [*report.platforms, report.precommit_run, report.analysis_run]:
+    for entry in [*report.platforms, report.precommit_run, report.analysis_run, *report.others]:
         if entry and _state(entry) == "failure":
             name = str(entry.get("name", ""))
             jobs = _failed_jobs(entry)
@@ -719,7 +931,8 @@ def render_failures(report: Report, limits: Limits) -> str:
                 continue
             if not jobs:
                 job_lines.append(
-                    f"- **{escape_text(name)}**: failed · {_link('run', str(entry.get('url', '')))}"
+                    f"- **{escape_text(clip(name))}**: failed · "
+                    f"{_link('run', str(entry.get('url', '')))}"
                 )
             job_lines += [_job_line(name, job) for job in jobs]
     hidden_jobs = max(0, len(job_lines) - limits.failed_jobs)
@@ -758,9 +971,30 @@ def render_failures(report: Report, limits: Limits) -> str:
     return "\n\n".join(parts)
 
 
+def _suite_change(changes: TestChanges | None, suite: Suite) -> str:
+    if changes is None or suite.name not in changes.compared:
+        return "—"
+    added = sum(suite.name in found for found in changes.added.values())
+    removed = sum(suite.name in found for found in changes.removed.values())
+    return f"+{added} -{removed}" if added or removed else "same"
+
+
+def _test_name_lines(label: str, names: dict[str, tuple[str, ...]], limit: int) -> str:
+    if not names:
+        return ""
+    shown = [
+        f"{code_span(name)} ({', '.join(escape_text(suite) for suite in suites)})"
+        for name, suites in list(names.items())[:limit]
+    ]
+    if len(names) > limit:
+        shown.append(more_items(len(names) - limit))
+    return f"{label}: " + "; ".join(shown)
+
+
 def render_tests(report: Report, limits: Limits) -> str:
     if not report.suites:
         return ""
+    changes = report.test_changes
     rows = [
         [
             code_span(suite.name),
@@ -773,15 +1007,16 @@ def render_tests(report: Report, limits: Limits) -> str:
                 if suite.wall_seconds is not None
                 else sum(case.seconds for case in suite.cases)
             ),
+            _suite_change(changes, suite),
         ]
         for suite in sorted(
             report.suites, key=lambda suite: (not suite.count("failed"), suite.name)
         )[: limits.suites]
     ]
     body = md_table(
-        ["Suite", "Workflow", "Passed", "Failed", "Skipped", "Time"],
+        ["Suite", "Workflow", "Passed", "Failed", "Skipped", "Time", "Tests vs base"],
         rows,
-        align=["left", "left", "right", "right", "right", "right"],
+        align=["left", "left", "right", "right", "right", "right", "right"],
         markdown=True,
     )
     if len(report.suites) > limits.suites:
@@ -793,34 +1028,20 @@ def render_tests(report: Report, limits: Limits) -> str:
         f"Tests: {format_count(passed)} passed, {format_count(failed)} failed, "
         f"{format_count(skipped)} skipped in {_plural(len(report.suites), 'suite')}"
     )
+    if changes is not None and changes.compared:
+        summary += (
+            f"; {format_count(len(changes.added))} added, "
+            f"{format_count(len(changes.removed))} removed vs base"
+        )
+        for line in (
+            _test_name_lines("Added", changes.added, limits.test_names),
+            _test_name_lines("Removed", changes.removed, limits.test_names),
+        ):
+            if line:
+                body += f"\n\n{line}"
+    elif report.base is not None:
+        body += "\n\nThe base build has no test results to compare with."
     return details(summary, body)
-
-
-def render_slowest(report: Report, limits: Limits) -> str:
-    # A test that runs in several suites (coverage, sanitizers, macOS) is listed once, at its slowest.
-    slowest: dict[str, JUnitCase] = {}
-    for suite in report.suites:
-        for case in suite.cases:
-            if case.outcome == "skipped" or case.seconds <= 0:
-                continue
-            if case.name not in slowest or case.seconds > slowest[case.name].seconds:
-                slowest[case.name] = case
-    cases = sorted(slowest.values(), key=lambda case: case.seconds, reverse=True)[: limits.slowest]
-    if not cases:
-        return ""
-    body = md_table(
-        ["Test", "Suite", "Time"],
-        [
-            [code_span(case.name), escape_text(case.suite), format_duration(case.seconds)]
-            for case in cases
-        ],
-        align=["left", "left", "right"],
-        markdown=True,
-    )
-    return details(
-        f"Slowest tests: {escape_text(cases[0].name)} took {format_duration(cases[0].seconds)}",
-        body,
-    )
 
 
 def _coverage_metrics(summary: CoverageSummary) -> list[tuple[str, int, int]]:
@@ -850,98 +1071,103 @@ def render_coverage(report: Report) -> str:
     for name, covered, total in _coverage_metrics(coverage.current):
         current = _pct(covered, total)
         base = baseline.get(name)
+        change = "—"
         if base and base[1]:
-            delta = current - _pct(*base)
-            change = f"{delta:+.2f} pp"
+            change = f"{current - _pct(*base):+.2f} pp"
             if name == "Lines":
-                line_delta = f" ({change})"
-            rows.append(
-                [
-                    name,
-                    f"{format_count(covered)} of {format_count(total)}",
-                    format_percent(current),
-                    format_percent(_pct(*base)),
-                    change,
-                ]
-            )
-        else:
-            rows.append(
-                [
-                    name,
-                    f"{format_count(covered)} of {format_count(total)}",
-                    format_percent(current),
-                    "—",
-                    "—",
-                ]
-            )
-    body = md_table(
-        ["Metric", "Covered", "Coverage", "Baseline", "Change"],
-        rows,
-        align=["left", "right", "right", "right", "right"],
-    )
-    if not coverage.baseline:
-        note = (
-            "No coverage baseline yet: `master` saves one after every platform workflow "
-            "succeeds, so changes are shown once a baseline exists."
-        )
-    elif coverage.baseline_is_base:
-        note = f"Baseline: PR base {code_span(coverage.baseline_sha[:7])}."
-    elif coverage.baseline_sha:
-        note = (
-            f"Baseline: `master` at {code_span(coverage.baseline_sha[:7])}, the newest "
-            "snapshot; the PR base has none."
-        )
-    else:
-        note = "Baseline: the newest `master` snapshot."
-    summary = f"Code coverage: {format_percent(_pct(coverage.current.line_covered, coverage.current.line_total))} of lines{line_delta}"
-    return details(summary, f"{body}\n\n{note}")
-
-
-def render_sizes(report: Report, limits: Limits) -> str:
-    sizes = report.sizes
-    if not sizes:
-        return ""
-    ordered = sorted(sizes.artifacts, key=lambda item: (not item.flagged, item.name))
-    rows = []
-    for item in ordered[: limits.artifacts]:
-        delta = item.delta
+                line_delta = f" ({change} vs base)"
         rows.append(
             [
-                f"{'⚠️ ' if item.flagged else ''}{code_span(item.name)}",
-                escape_text(item.workflow) or "—",
-                format_bytes(item.size),
-                format_delta_bytes(delta) if delta is not None else "—",
-                f"{item.percent:+.2f}%" if item.percent is not None else "—",
+                name,
+                f"{format_count(covered)} of {format_count(total)}",
+                format_percent(current),
+                format_percent(_pct(*base)) if base and base[1] else "—",
+                change,
             ]
         )
     body = md_table(
-        ["Artifact", "Workflow", "Size", "Change", "%"],
+        ["Metric", "Covered", "Coverage", "Base", "Change"],
         rows,
-        align=["left", "left", "right", "right", "right"],
+        align=["left", "right", "right", "right", "right"],
+    )
+    notes = [f"Counts {code_span(COVERAGE_PREFIX)} only; test code is left out."]
+    base_sha = code_span(report.base.sha[:7]) if report.base else "the PR base"
+    if coverage.baseline:
+        workflow = (
+            f" ({escape_text(coverage.base_workflow)} build)" if coverage.base_workflow else ""
+        )
+        notes.append(f"Base: {base_sha}{workflow}.")
+    else:
+        notes.append(f"No coverage report for base {base_sha}, so changes are not shown.")
+    if report.repo and report.pr_number.isdigit():
+        codecov = f"https://app.codecov.io/gh/{report.repo}/pull/{report.pr_number}"
+        notes.append(f"Coverage of the changed lines: {_link('Codecov', codecov)}.")
+    summary = (
+        f"Code coverage ({COVERAGE_PREFIX}): "
+        f"{format_percent(_pct(coverage.current.line_covered, coverage.current.line_total))}"
+        f" of lines{line_delta}"
+    )
+    return details(summary, f"{body}\n\n{' '.join(notes)}")
+
+
+def _artifact_cell(report: Report, item: ArtifactSize) -> str:
+    flag = "⚠️ " if item.flagged else ""
+    name = code_span(item.name)
+    if report.repo and item.run_id > 0 and item.artifact_id > 0:
+        name = _link(
+            name,
+            f"{report.server_url}/{report.repo}/actions/runs/{item.run_id}"
+            f"/artifacts/{item.artifact_id}",
+        )
+    return f"{flag}{name}"
+
+
+def render_sizes(report: Report, limits: Limits) -> str:
+    if not report.sizes:
+        return ""
+    ordered = sorted(report.sizes, key=lambda item: (not item.flagged, item.name))
+    rows = [
+        [
+            _artifact_cell(report, item),
+            escape_text(item.workflow) or "—",
+            format_bytes(item.size),
+            _delta_size(item.delta) if item.delta is not None else "—",
+            f"{item.percent:+.2f}%" if item.percent is not None else "—",
+            escape_text(item.expires) or "—",
+        ]
+        for item in ordered[: limits.artifacts]
+    ]
+    body = md_table(
+        ["Artifact", "Workflow", "Size", "Change", "%", "Expires"],
+        rows,
+        align=["left", "left", "right", "right", "right", "right"],
         markdown=True,
     )
     if len(ordered) > limits.artifacts:
         body += f"\n\n{more_items(len(ordered) - limits.artifacts)}"
-    base = code_span(sizes.base_sha) if sizes.base_sha else "the PR base"
-    if sizes.compared:
+    base = code_span(report.base.sha[:7]) if report.base else "the PR base"
+    if any(item.delta is not None for item in report.sizes):
         note = (
-            f"Compared with PR base {base}; only artifacts with the same name are compared "
+            f"Changes are against base {base}; only artifacts with the same name are compared "
             f"(PR Android builds are single-ABI). ⚠️ marks growth above {SIZE_WARN_PERCENT:g}% "
             f"and {format_bytes(SIZE_WARN_MIN_BYTES)}."
         )
     else:
-        note = f"No size baseline for {base} yet, so changes are not shown."
-    total = format_bytes(sum(item.size for item in sizes.artifacts))
-    deltas = [item.delta for item in sizes.artifacts if item.delta is not None]
-    change = f", {format_delta_bytes(sum(deltas))} vs base" if deltas else ""
-    flag = "⚠️ " if any(item.flagged for item in sizes.artifacts) else ""
-    summary = f"{flag}Artifact sizes: {_plural(len(sizes.artifacts), 'artifact')}, {total}{change}"
+        note = f"No artifacts of base {base} to compare with."
+    note += " Downloading needs a GitHub sign-in."
+    flagged = sum(item.flagged for item in report.sizes)
+    expiry = min((item.expires for item in report.sizes if item.expires), default="")
+    summary = f"Artifacts: {_plural(len(report.sizes), 'download')}"
+    if expiry:
+        summary += f", first expires {escape_text(expiry)}"
+    if flagged:
+        summary = f"⚠️ {summary}; {format_count(flagged)} grew"
     return details(summary, f"{body}\n\n{note}")
 
 
 def render_precommit(report: Report) -> str:
     hooks = report.precommit
-    if not hooks:
+    if not hooks or not (hooks.failed or hooks.failed_hooks):
         return ""
     rows = [["Passed", hooks.passed], ["Failed", hooks.failed], ["Skipped", hooks.skipped]]
     body = md_table(["Hooks", "Count"], rows, align=["left", "right"])
@@ -956,63 +1182,14 @@ def render_precommit(report: Report) -> str:
     )
 
 
-def _warning_totals(tools: tuple[AnalysisTool, ...]) -> tuple[int, int] | None:
-    """Unique warnings and the files they are in, across tools that wrote diagnostics."""
-    reported = [tool for tool in tools if tool.warnings is not None]
-    if not reported:
-        return None
-    files = {file for tool in reported for file, _ in tool.warning_files}
-    return sum(tool.warnings or 0 for tool in reported), len(files)
-
-
-def _analysis_warning_tables(tools: tuple[AnalysisTool, ...], limit: int) -> list[str]:
-    reported = [tool for tool in tools if tool.warnings is not None]
-    parts = [
-        md_table(
-            ["Tool", "Files analyzed", "Unique warnings", "In files", "Errors"],
-            [
-                [
-                    code_span(tool.tool),
-                    format_count(len(tool.files)),
-                    "—" if tool.warnings is None else format_count(tool.warnings),
-                    "—" if tool.warnings is None else format_count(len(tool.warning_files)),
-                    format_count(len(tool.errors)),
-                ]
-                for tool in tools
-            ],
-            align=["left", "right", "right", "right", "right"],
-            markdown=True,
-        )
-    ]
-    if not limit:
-        return parts
-    checks = sorted(
-        ((check, tool.tool, count) for tool in reported for check, count in tool.warning_checks),
-        key=lambda row: (-row[2], row[0]),
+def _warning_link(report: Report, warning: AnalysisWarning) -> str:
+    location = code_span(f"{warning.file}:{warning.line}")
+    commit = report.analysis_commit or report.commit
+    if not report.repo or not commit or warning.file.startswith("build/"):
+        return location
+    return _link(
+        location, f"{report.server_url}/{report.repo}/blob/{commit}/{warning.file}#L{warning.line}"
     )
-    if checks:
-        rows = [
-            [code_span(check), tool, format_count(count)] for check, tool, count in checks[:limit]
-        ]
-        parts.append(
-            "Most frequent checks:\n\n"
-            + md_table(
-                ["Check", "Tool", "Unique warnings"],
-                rows,
-                align=["left", "left", "right"],
-                markdown=True,
-            )
-        )
-    per_file: Counter[str] = Counter()
-    for tool in reported:
-        per_file.update(dict(tool.warning_files))
-    if per_file:
-        rows = [[code_span(file), format_count(count)] for file, count in _ranked(per_file)[:limit]]
-        parts.append(
-            "Files with the most warnings (a header's warnings count once):\n\n"
-            + md_table(["File", "Unique warnings"], rows, align=["left", "right"], markdown=True)
-        )
-    return parts
 
 
 def render_analysis(report: Report, limits: Limits) -> str:
@@ -1021,55 +1198,72 @@ def render_analysis(report: Report, limits: Limits) -> str:
         return ""
     state = _state(run)
     url = str(run.get("url", ""))
+    tools = report.analysis
+    changed_tools = [tool for tool in tools if tool.changed is not None]
+    changed = sorted(
+        (warning for tool in changed_tools for warning in tool.changed or ()),
+        key=lambda w: (w.file, w.line, w.column, w.tool),
+    )
     parts: list[str] = []
-    warnings = _warning_totals(report.analysis)
-    if warnings:
-        parts += _analysis_warning_tables(report.analysis, limits.analysis_files)
-    elif report.analysis:
-        parts.append(
-            md_table(
-                ["Tool", "Files analyzed", "With findings", "Errors"],
-                [
-                    [
-                        code_span(tool.tool),
-                        format_count(len(tool.files)),
-                        format_count(len(tool.findings)),
-                        format_count(len(tool.errors)),
-                    ]
-                    for tool in report.analysis
-                ],
-                align=["left", "right", "right", "right"],
-                markdown=True,
-            )
+    if changed:
+        listed = [
+            f"- {_warning_link(report, warning)} {code_span(warning.check)} ({escape_text(warning.tool)})"
+            for warning in changed[: limits.analysis_warnings]
+        ]
+        if len(changed) > limits.analysis_warnings:
+            listed.append(f"- {more_items(len(changed) - limits.analysis_warnings)}")
+        parts.append("Warnings on lines this pull request changed:\n\n" + "\n".join(listed))
+    elif changed_tools:
+        parts.append("No warnings on lines this pull request changed.")
+    if tools:
+        has_warnings = any(tool.warnings is not None for tool in tools)
+        headers = ["Tool", "Files analyzed"]
+        if changed_tools:
+            headers.append("On changed lines")
+        headers += ["All warnings" if has_warnings else "With findings", "Errors"]
+        rows = []
+        for tool in tools:
+            row = [code_span(tool.tool), format_count(len(tool.files))]
+            if changed_tools:
+                row.append("—" if tool.changed is None else format_count(len(tool.changed)))
+            if has_warnings:
+                row.append("—" if tool.warnings is None else format_count(tool.warnings))
+            else:
+                row.append(format_count(len(tool.findings)))
+            row.append(format_count(len(tool.errors)))
+            rows.append(row)
+        table = md_table(
+            headers, rows, align=["left", *["right"] * (len(headers) - 1)], markdown=True
         )
-        files = sorted(
-            {name for tool in report.analysis for name in (*tool.errors, *tool.findings)}
+        note = (
+            "All warnings counts each unique warning in every analyzed unit and the headers it "
+            "includes, mostly code this pull request did not touch."
+            if has_warnings
+            else "Warnings are advisory."
         )
-        if files and limits.analysis_files:
-            listed = [f"- {code_span(name)}" for name in files[: limits.analysis_files]]
-            if len(files) > limits.analysis_files:
-                listed.append(f"- {more_items(len(files) - limits.analysis_files)}")
-            parts.append("Files with findings (warnings are advisory):\n\n" + "\n".join(listed))
+        parts.append(f"{table}\n\n{note}")
     elif state in _PENDING:
         parts.append(
             "Still running when this comment was updated; findings appear once it completes."
         )
-    elif state == "interrupted":
-        parts.append("Re-running after a Spot interruption; findings appear once it completes.")
     else:
         parts.append("No analysis results were downloaded.")
     parts.append(
         f"{_link('Code Analysis run', url)} (diagnostics are in each job's summary and log)."
     )
     title = f"Code Analysis: {STATE_LABELS.get(state, state)}"
-    if warnings:
-        title += f", {format_count(warnings[0])} unique warnings"
+    if changed_tools:
+        title += (
+            f", {_plural(len(changed), 'warning')} on changed lines"
+            if changed
+            else ", no warnings on changed lines"
+        )
     return details(title, "\n\n".join(parts))
 
 
 def render_footer(report: Report) -> str:
     parts = [f"Updated {report.now.strftime('%Y-%m-%d %H:%M UTC')}"]
-    if commit := _commit_link(report):
+    if commit := _commit_link(report, report.commit):
         parts.append(f"for {commit}")
     parts.append(f"triggered by {escape_text(report.triggered_by)}")
     if report.repo and report.pr_number.isdigit():
@@ -1084,10 +1278,11 @@ def render(report: Report, limits: Limits) -> str:
         "## Build Results",
         render_verdict(report),
         render_table(report),
+        render_others(report),
+        render_base(report),
+        render_missing_downloads(report),
         render_failures(report, limits),
-        render_interruptions(report),
         render_tests(report, limits),
-        render_slowest(report, limits),
         render_coverage(report),
         render_sizes(report, limits),
         render_precommit(report),
