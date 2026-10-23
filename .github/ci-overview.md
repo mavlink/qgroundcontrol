@@ -64,7 +64,6 @@
 | `px4-metadata.yml` | Daily PX4 airframe and parameter metadata update PR |
 | `build-gstreamer.yml`, `mirror-gstreamer.yml` | Build GStreamer SDKs; mirror upstream GStreamer releases to the QGC S3 bucket |
 | `build-profile.yml` | Manual CMake build profiling |
-| `qt-installer-parity.yml` | Install Qt with aqtinstall and QGC's installer on every CI platform and compare the trees (installer changes and manual) |
 | `runner-images.yml` | Build, smoke-test, and promote QGC's managed RunsOn AMI (manual and weekly) |
 | `cache-cleanup.yml` | GitHub Actions cache cleanup (scheduled, on PR close, and manual) |
 | `stale.yml` | Stale-issue labeling and closing |
@@ -126,10 +125,9 @@
   `qt-install` reads the Qt version itself, so its callers pass none.
 - **Qt installer**: `qt-install` runs `install_qt.py`, which installs Qt with QGC's installer
   (`tools/setup/qt_installer`, standard library plus `cmake -E tar`); aqtinstall stays as the
-  fallback through the action's `installer` input or `QGC_QT_INSTALLER`. Every job reaching `qt-install` has CMake: `build-setup` installs it first,
-  `pre-commit.yml` syncs the `dev` group, and `lupdate.yml` uses the GitHub-hosted image's.
-  `qt-installer-parity.yml` installs the same Qt with both tools on every CI platform and fails
-  on tree differences beyond install paths ([tools/README.md](../tools/README.md#qt-installer)).
+  fallback through the action's `installer` input or `QGC_QT_INSTALLER`. Every job reaching
+  `qt-install` has CMake: `build-setup` installs it first, `pre-commit.yml` syncs the `dev` group,
+  and `lupdate.yml` uses the GitHub-hosted image's ([tools/README.md](../tools/README.md#qt-installer)).
 
 ## Dependency Management
 

@@ -2,11 +2,10 @@
 """
 Install the Qt SDK with QGC's installer (tools/setup/qt_installer) or the locked aqtinstall.
 
-`--installer` (or QGC_QT_INSTALLER) picks the tool; by default QGC's installer handles Linux x64
-desktop and Android, where its trees match aqt's, and aqt everything else. The qt-install GitHub
-Action calls `plan` (Qt version, installer, cache key, cache path and a reusable preinstalled SDK)
-before restoring its cache and `ensure` (reuse or install, then export the environment) after it.
-`compare` checks that both installers produce the same tree (qt-installer-parity.yml).
+`--installer` (or QGC_QT_INSTALLER) picks the tool; QGC's installer is the default and aqt the
+fallback. The qt-install GitHub Action calls `plan` (Qt version, installer, cache key, cache path
+and a reusable preinstalled SDK) before restoring its cache and `ensure` (reuse or install, then
+export the environment) after it. `compare` checks that both installers produce the same tree.
 
 Usage:
     python tools/setup/install_qt.py install --version 6.8.3 --host linux --arch linux_gcc_64
