@@ -575,11 +575,11 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   artifact (`QGroundControl-linux-<abis>-aab`) but not to AWS or the Play Store. Tags start a
   staged Play Store production rollout; master pushes complete a beta release.
 - **Custom plugin** (`linux.yml`'s `custom-plugin` job, behind the Linux gate): the `custom-example`
-  overlay changes the app name and feature set, global compile definitions, so it is its own build.
-  Relevant PRs build only Debug, run the Unit suite (excluding `StockUI`), and boot the build tree;
-  the stock Linux legs run the integration suites. Master pushes, merge-queue runs, and manual
-  dispatches also build Release without test hooks and verify its AppImage. Debug and Release keep
-  separate compiler caches. `custom-example/` changes trigger the Linux workflow.
+  overlay changes the app name and feature set, global compile definitions, so it is its own build:
+  one Debug build that runs the Unit suite (excluding `StockUI`) and boots the build tree; the stock
+  Linux legs run the integration suites and cover Release compiles. Outside pull requests it also
+  installs the build stripped (`cmake --install --strip`; the Debug binary carries ~800 MB of debug
+  info) into an AppImage and boots that. `custom-example/` changes trigger the Linux workflow.
 - **ClusterFuzzLite**: PR runs use the bundled seed corpus without querying historical artifacts
   (`NO_CLUSTERFUZZ_DEPLOYMENT=true`), which also disables previous-build crash comparison:
   reproducible crashes fail the PR whether or not they predate it. Crash files and SARIF

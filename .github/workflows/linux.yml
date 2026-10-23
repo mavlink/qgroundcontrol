@@ -321,21 +321,17 @@ jobs:
   # The custom-example overlay changes the app name and feature set, global compile definitions, so it is its own
   # build. Pull requests unit-test and boot the Debug variant (the stock legs run the integration suites); pushes also
   # package and boot the Release AppImage.
+  # One Debug build of the custom-example overlay: unit tests and a build-tree boot on every event, and
+  # outside pull requests its stripped AppImage too. The stock Release legs cover Release compiles.
   custom-plugin:
-    name: ${{ matrix.build-type == 'Debug' && 'Custom Plugin Test Debug' || 'Custom Plugin Build' }}
+    name: Custom Plugin
     needs: changes
     if: needs.changes.outputs.should_build == 'true'
-    strategy:
-      fail-fast: false
-      matrix:
-        build-type: ${{ fromJSON(github.event_name == 'pull_request' && '["Debug"]' || '["Debug", "Release"]') }}
     runs-on: >-
       ${{
         github.repository_owner == 'mavlink' &&
-        format('runs-on={0}-custom-plugin-{1}-{2}/runner={3}{4}',
+        format('runs-on={0}-custom-plugin-{1}-{2}/runner=linux-x64-tester{3}',
           github.run_id, github.run_attempt, strategy.job-index,
-          matrix.build-type == 'Debug' && 'linux-x64-tester' ||
-          vars.RUNS_ON_LINUX_BUILDER || 'linux-x64-builder-60gb',
           github.event_name == 'pull_request' && (vars.RUNS_ON_SPOT_POOLS == 'true' && '-spot' ||
             '/spot=cop/family=m8i.xlarge+r8i.xlarge+m7i.xlarge') || '') ||
         'ubuntu-24.04'
@@ -381,7 +377,7 @@ jobs:
         with:
           qt-host: linux
           qt-arch: linux_gcc_64
-          build-type: ${{ matrix.build-type }}
+          build-type: Debug
           cache-variant: custom
 
       - name: Install Dependencies
@@ -390,27 +386,15 @@ jobs:
       - name: Configure
         uses: ./.github/actions/cmake-configure
         with:
-          preset: ${{ matrix.build-type == 'Debug' && 'Linux-debug' || 'Linux' }}
+          preset: Linux-debug
           extra-args: -DQGC_CUSTOM_DIR=custom-example
 
       - name: Build
         id: build
         uses: ./.github/actions/cmake-build
 
-      - name: Create AppImage
-        if: matrix.build-type == 'Release'
-        working-directory: ${{ runner.temp }}/build
-        run: cmake --install . --config Release
-
-      - name: Verify Custom AppImage
-        if: matrix.build-type == 'Release'
-        uses: ./.github/actions/verify-executable
-        with:
-          binary-path: ${{ runner.temp }}/build/Custom-QGroundControl-x86_64.AppImage
-          type: appimage
-
       - name: Run unit tests
-        if: ${{ !cancelled() && matrix.build-type == 'Debug' && steps.build.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         uses: ./.github/actions/run-unit-tests
         with:
           junit-output: junit-results-custom-unit.xml
@@ -425,11 +409,24 @@ jobs:
           codecov-flags: custom-unit
 
       - name: Verify custom executable
-        if: ${{ !cancelled() && matrix.build-type == 'Debug' && steps.build.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         uses: ./.github/actions/verify-executable
         with:
           binary-path: ${{ runner.temp }}/build/Debug/Custom-QGroundControl
           build-dir: ${{ runner.temp }}/build
+
+      # --strip keeps the AppImage near Release size: the Debug binary carries ~800 MB of debug info.
+      - name: Create AppImage
+        if: ${{ !cancelled() && github.event_name != 'pull_request' && steps.build.outcome == 'success' }}
+        working-directory: ${{ runner.temp }}/build
+        run: cmake --install . --config Debug --strip
+
+      - name: Verify Custom AppImage
+        if: ${{ !cancelled() && github.event_name != 'pull_request' && steps.build.outcome == 'success' }}
+        uses: ./.github/actions/verify-executable
+        with:
+          binary-path: ${{ runner.temp }}/build/Custom-QGroundControl-x86_64.AppImage
+          type: appimage
 
       - name: Debug failed runner
         if: ${{ failure() && !cancelled() && inputs.debug_runner && github.ref_type == 'branch' }}
