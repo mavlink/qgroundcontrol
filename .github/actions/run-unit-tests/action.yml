@@ -56,25 +56,19 @@ inputs:
 runs:
   using: composite
   steps:
+    # cmake_helper.py and junit_report.py read the INPUT_* variables as argument defaults.
     - name: Run CTest
       shell: bash
       working-directory: ${{ inputs.build-dir }}
-      run: |
-        python3 "${GITHUB_WORKSPACE}/tools/ci/compile/cmake_helper.py" ctest \
-          --junit-output "${INPUTS_JUNIT_OUTPUT}" \
-          --ctest-output "${INPUTS_CTEST_OUTPUT}" \
-          --jobs "${INPUTS_PARALLEL}" \
-          --include-labels "${INPUTS_INCLUDE_LABELS}" \
-          --exclude-labels "${INPUTS_EXCLUDE_LABELS}"
+      run: python3 "${GITHUB_WORKSPACE}/tools/ci/compile/cmake_helper.py" ctest
       env:
-        INPUTS_JUNIT_OUTPUT: ${{ inputs.junit-output }}
-        INPUTS_CTEST_OUTPUT: ${{ inputs.ctest-output }}
-        INPUTS_PARALLEL: ${{ inputs.parallel }}
-        INPUTS_INCLUDE_LABELS: ${{ inputs.include-labels }}
-        INPUTS_EXCLUDE_LABELS: ${{ inputs.exclude-labels }}
+        INPUT_JUNIT_OUTPUT: ${{ inputs.junit-output }}
+        INPUT_CTEST_OUTPUT: ${{ inputs.ctest-output }}
+        INPUT_PARALLEL: ${{ inputs.parallel }}
+        INPUT_INCLUDE_LABELS: ${{ inputs.include-labels }}
+        INPUT_EXCLUDE_LABELS: ${{ inputs.exclude-labels }}
 
     # The steps below also run after test failures; the failed CTest step still fails the action.
-    # junit_report.py reads the INPUT_* variables as argument defaults.
     - name: Report test results
       if: ${{ !cancelled() && inputs.report-name != '' }}
       shell: bash

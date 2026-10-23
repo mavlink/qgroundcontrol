@@ -160,12 +160,24 @@ def test_failed_restore_is_informational_and_allows_legacy_fallback(monkeypatch,
 
 
 def test_cache_actions_save_artifact_once_with_s3_and_upload_failure_fallback():
-    indexed = {step["name"]: step for step in get_steps(load_action("save-build-cache"))}
-    upload = indexed["Retain compiler cache snapshot"]
+    plan, upload, *saves = get_steps(load_action("save-build-cache"))
+    assert plan["if"] == "env.QGC_SAVE_BUILD_CACHE == 'true' && env.QGC_BUILD_CACHE_SAVED != 'true'"
+    assert plan["run"] == "python3 tools/ci/cache/ccache_helper.py save-plan"
+    assert upload["if"] == "steps.plan.outputs.artifact_path != ''"
+    assert upload["continue-on-error"] is True
+    assert upload["with"]["path"] == "${{ steps.plan.outputs.artifact_path }}"
     assert upload["with"]["retention-days"] == 1
     assert upload["with"]["compression-level"] == 0
-    assert "QGC_BUILD_CACHE_SAVED != 'true'" in indexed["Pack compiler cache snapshot"]["if"]
-    assert "steps.artifact.outcome != 'success'" in indexed["Save compiler cache"]["if"]
+    for save, name in zip(saves, ("ccache", "moccache"), strict=True):
+        key = f"steps.plan.outputs.{name}_key"
+        assert save["if"] == f"steps.artifact.outcome != 'success' && {key} != ''"
+        assert save["with"] == {"path": f".cache/{name}", "key": f"${{{{ {key} }}}}"}
+
+
+def test_pack_snapshot_failure_warns_without_an_archive(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(cache, "pack_cache", lambda *_: (_ for _ in ()).throw(OSError("full")))
+    assert cache.pack_snapshot(tmp_path, str(tmp_path)) is None
+    assert "::warning::Compiler cache artifact pack unavailable: full" in capsys.readouterr().out
 
 
 def test_null_head_repository_is_rejected_without_error():

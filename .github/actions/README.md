@@ -68,7 +68,9 @@ an additional security problem.
 - **`cache` / `save-build-cache`**: `cache` restores compiler/moc archives and immutable
   CPM/SDK snapshots and exports the save policy; `save-build-cache` checkpoints compiler/moc
   archives once per job after verified success (`cmake-build` calls it for full and `autogen`
-  builds; Docker passes its build report).
+  builds; Docker passes its build report). Its `ccache_helper.py save-plan` step gates PR saves,
+  packs the snapshot, and outputs the cache keys to save (empty skips a cache), even when the
+  gate fails; the cache saves run only if no snapshot upload succeeded.
 - **Compiler snapshots (GitHub storage only)**: `build_cache_artifact.py` keeps compiler/moc
   snapshots as uncompressed one-day workflow artifacts, outside the dependency-cache quota, so
   concurrent SDK and dependency cache writes cannot evict a just-completed build's objects.
@@ -82,6 +84,8 @@ an additional security problem.
   and `report.md` even after compilation fails. Reports separate moc/code generation and linking,
   deduplicate commands with multiple outputs, and exclude earlier builds in the same directory.
   Docker includes the same reports in its performance artifact; non-Ninja generators skip them.
+  The Build step itself writes the job summary's Build section, also after failures but not when
+  the job is cancelled.
 - **`cmake-configure`, `cmake-build`, `test-phase`, `run-unit-tests`** default `build-dir` to
   `${{ runner.temp }}/build`; callers pass it only for another directory. `cmake_helper.py`
   sets `QGC_STABLE_BUILD` for release tags and `Stable*` branches. Callers pass no build type:

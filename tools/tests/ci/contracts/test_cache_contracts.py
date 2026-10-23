@@ -608,9 +608,10 @@ def test_sccache_pilot_restores_and_saves_no_ccache_archive(plan) -> None:
     selected = "env.QGC_COMPILER_CACHE_TOOL == 'ccache'"
     assert selected in named["Restore Build Cache (ccache)"]["if"]
     assert selected in named["Reset cache statistics"]["env"]["RESET_CCACHE"]
+    # ccache_helper.py save-plan reads QGC_CCACHE_KEY and QGC_BUILD_CACHE_ARTIFACT; an empty key
+    # skips the save (test_ccache_helper.py).
     saves = {step["name"]: step for step in get_steps(load_action("save-build-cache"))}
-    assert "env.QGC_CCACHE_KEY != ''" in saves["Save compiler cache"]["if"]
-    assert "env.QGC_BUILD_CACHE_ARTIFACT == 'true'" in saves["Pack compiler cache snapshot"]["if"]
+    assert "steps.plan.outputs.ccache_key != ''" in saves["Save compiler cache"]["if"]
 
     leg = {"host": "linux", "target": "linux_gcc_64", "build_type": "Release"}
     result = plan(**leg, compiler_cache="sccache", sccache_bucket="bucket")

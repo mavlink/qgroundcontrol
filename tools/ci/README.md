@@ -35,7 +35,7 @@ and Ruff skips `build` directories.
 | `cache/build_cache_artifact.py` | Retain compiler/moc snapshots as short-lived workflow artifacts and restore them |
 | `cache/cache_backend.py` | Detect whether RunsOn's S3 proxy serves the Actions cache and export `QGC_ACTIONS_CACHE_BACKEND` for `setup-python` |
 | `cache/cache_plan.py` | Resolve the cache action's save policy, scope, keys, ccache budget, compiler/moc/CPM environment, and the sccache pilot's selection |
-| `cache/ccache_helper.py` | Install the pinned, checksum-verified ccache (and mold, plus sccache for the [sccache pilot](../../.github/ci-overview.md#sccache-pilot), on Linux) and gate PR cache saves |
+| `cache/ccache_helper.py` | Install the pinned, checksum-verified ccache (and mold, plus sccache for the [sccache pilot](../../.github/ci-overview.md#sccache-pilot), on Linux) and plan `save-build-cache`: gate PR saves, pack the snapshot artifact, and choose the cache keys |
 | `cache/cpm_helper.py` | Fingerprint CPM dependencies and the GStreamer SDK config for `cache_plan.py`, and create and apply runner-image CPM seeds |
 | `cache/gh_cache_cleanup.py` | List and optionally delete GitHub Actions caches (`cache-cleanup.yml` sets its flags through `CLEANUP_*` variables) |
 | `runner/analysis_tools.py` | Install the hash-pinned clang-tidy wheel, verify `.clang-tidy`, and put LLVM, clang-tidy, and Clazy on `PATH` for `analysis.yml` |

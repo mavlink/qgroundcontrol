@@ -344,7 +344,10 @@ signed or notarized, and PR Docker builds do not log in to Docker Hub. Publishin
   macOS and Windows under `RUNNER_TEMP`, added to `PATH`). Docker jobs skip it
   (`install-tools: false`).
 - `save-build-cache` saves after a successful build or analysis autogen step, before packaging,
-  tests, or scanners can fail; Docker saves when its report confirms successful compilation.
+  tests, or scanners can fail; Docker saves when its report confirms successful compilation. One
+  `ccache_helper.py save-plan` step runs the save gate below, packs the compiler/moc snapshot, and
+  names the caches to save; the action uploads the snapshot or, when the upload fails or there is
+  none, saves those caches.
 - Pull requests on GitHub storage restore the default branch's compiler, moc, CPM, and GStreamer SDK
   caches but save none of their own (`scoped_save_policy` in `cache_plan.py`): those copies cost
   upload time and, for CPM, evicted shared entries from GitHub's size-limited cache. Merge-queue
@@ -352,9 +355,10 @@ signed or notarized, and PR Docker builds do not log in to Docker Hub. Publishin
   restore them. On S3, PRs (forks included) save to their PR scope, but
   skip a compiler or moc save when the build missed that cache fewer than 20 times
   (`PR_SAVE_MIN_MISSES` in `cache_plan.py`). Each save uploads a multi-GB archive (a PR build with
-  99.7% hits re-uploaded 4.7 GB: 44 s on Linux, 159 s on Windows). `ccache_helper.py save-gate`
-  reads `ccache --print-stats` (Docker: the container's stats in `docker-build-report.json`) and the
-  moc stats log, and saves if it can't read them. Other events always save.
+  99.7% hits re-uploaded 4.7 GB: 44 s on Linux, 159 s on Windows). The save gate in
+  `ccache_helper.py save-plan` reads `ccache --print-stats` (Docker: the container's stats in
+  `docker-build-report.json`) and the moc stats log, and saves if it can't read them or fails.
+  Other events always save.
 - On GitHub storage, compiler/moc snapshots are kept as one-day workflow artifacts
   (`build_cache_artifact.py`; see [`actions/README.md`](actions/README.md#action-notes)). Restores
   warn and fall back to the dependency cache on API errors, malformed responses, or timeouts (60 s
@@ -734,7 +738,7 @@ numbers, durations, and sizes from `common.format`. A build job reads top-down:
 | Section | Written by |
 | --- | --- |
 | Setup | `build-setup` (`setup_summary.py`): runner, Qt version, installer and source, CMake and Ninja, Python groups, cache backend, and each build cache's restore result |
-| Build | `cmake-build` (`cmake_helper.py summary`): result, duration, toolchain, compiler (ccache or sccache) and moc cache hit rates; slowest steps, time by kind, and moc cache events collapsed |
+| Build | `cmake-build` (`cmake_helper.py build`, also after failures): result, duration, toolchain, compiler (ccache or sccache) and moc cache hit rates; slowest steps, time by kind, and moc cache events collapsed |
 | Unit Tests / Integration Tests (*suite*) | `run-unit-tests` (`junit_report.py`): counts, failures with their first lines, slowest tests and failure output collapsed |
 | Coverage, Binary size | `coverage_report.py --step-summary`, `size_analysis.py` |
 | Boot test, Artifact | `verify_executable.py` (result, package, size, duration) and `attest_helper.py prepare` (file, size, SHA-256) |

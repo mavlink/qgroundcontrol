@@ -12,10 +12,7 @@ inputs:
     description: Integration test parallelism (auto uses one process per CPU); CTest resource locks remain enforced
   exclude-labels:
     default: 'Flaky|Network'
-    description: Excluded CTest labels
-  integration-exclude-labels:
-    default: ''
-    description: Optional integration-specific exclusions
+    description: Excluded CTest labels for both suites
   upload-codecov:
     default: 'false'
     description: Enable informational Codecov test analytics
@@ -45,7 +42,7 @@ runs:
         junit-output: junit-results-${{ inputs.suite }}-integration.xml
         ctest-output: test-output-${{ inputs.suite }}-integration.txt
         include-labels: 'Integration'
-        exclude-labels: ${{ inputs.integration-exclude-labels || inputs.exclude-labels }}
+        exclude-labels: ${{ inputs.exclude-labels }}
         parallel: ${{ inputs.integration-parallel }}
         report-name: Integration Tests (${{ inputs.suite }})
         artifact-name: test-results-${{ inputs.suite }}-integration

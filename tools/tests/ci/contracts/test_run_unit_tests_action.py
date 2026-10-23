@@ -26,6 +26,15 @@ def test_reports_follow_failed_tests_and_keep_the_failure() -> None:
         assert "continue-on-error" not in step
 
 
+def test_ctest_reads_every_selection_input_from_its_environment() -> None:
+    ctest = _steps("run-unit-tests")[0]
+    assert ctest["run"] == 'python3 "${GITHUB_WORKSPACE}/tools/ci/compile/cmake_helper.py" ctest'
+    assert ctest["env"] == {
+        f"INPUT_{name.upper().replace('-', '_')}": f"${{{{ inputs.{name} }}}}"
+        for name in ("junit-output", "ctest-output", "parallel", "include-labels", "exclude-labels")
+    }
+
+
 def test_codecov_upload_tolerates_missing_junit_without_a_probe() -> None:
     steps = _steps("run-unit-tests")
     assert not any("GITHUB_OUTPUT" in step.get("run", "") for step in steps)
@@ -50,6 +59,7 @@ def test_test_phase_reports_each_suite_from_its_own_run() -> None:
     declared = set(load_action("run-unit-tests")["inputs"])
     assert all(set(step["with"]) <= declared for step in runs)
     assert runs[1]["if"] == "${{ !cancelled() }}"
+    assert [step["with"]["exclude-labels"] for step in runs] == ["${{ inputs.exclude-labels }}"] * 2
     # Test summaries go to the job summary; the JUnit XML in test-results-* holds the details.
     assert steps == runs
     (report,) = [

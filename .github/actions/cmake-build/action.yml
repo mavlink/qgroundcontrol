@@ -35,7 +35,9 @@ runs:
       shell: bash
       working-directory: ${{ inputs.build-dir }}
       # cmake_helper.py reads the INPUT_* variables as argument defaults and takes a multi-config
-      # generator's configuration from the preset's CMAKE_BUILD_TYPE in CMakeCache.txt.
+      # generator's configuration from the preset's CMAKE_BUILD_TYPE in CMakeCache.txt. It then
+      # writes one job-summary section per build, also after failures: result, duration, toolchain,
+      # compiler and moc cache hit rates, and the slowest build steps (collapsed).
       env:
         INPUT_TARGET: ${{ inputs.target }}
         INPUT_PARALLEL: ${{ inputs.parallel }}
@@ -76,17 +78,3 @@ runs:
           -fail-level=none \
           -name="compiler-warnings" \
           < "$REVIEWDOG_LOG" || true
-
-    # One job-summary section per build: result, duration, toolchain, compiler and moc cache
-    # hit rates, and the slowest build steps (collapsed).
-    - name: Summarize build
-      if: ${{ !cancelled() && steps.compile.outcome != 'skipped' }}
-      shell: bash
-      working-directory: ${{ inputs.build-dir }}
-      env:
-        INPUT_TARGET: ${{ inputs.target }}
-        BUILD_OUTCOME: ${{ steps.compile.outcome }}
-        BUILD_SECONDS: ${{ steps.compile.outputs.duration_seconds }}
-        BUILD_PROFILE_PATH: ${{ steps.compile.outputs.profile_path }}
-        MOCCACHE_DIR: ${{ github.workspace }}/.cache/moccache
-      run: python3 "${GITHUB_WORKSPACE}/tools/ci/compile/cmake_helper.py" summary

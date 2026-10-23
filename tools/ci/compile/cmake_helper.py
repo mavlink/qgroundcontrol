@@ -2,11 +2,11 @@
 """CMake build and configure helpers for CI.
 
 Subcommands:
-    build       Run cmake --build with CI-friendly output and timing
+    build       Run cmake --build with CI-friendly output and timing, then write the job
+                summary's Build section: result, duration, toolchain, compiler and moc
+                cache hit rates, and the slowest build steps
     configure   Run the shared configure library with CI defaults
     ctest       Run CTest with standardized arguments and timing
-    summary     Write the job summary's Build section: result, duration, toolchain,
-                compiler and moc cache hit rates, and the slowest build steps
 """
 
 from __future__ import annotations
@@ -20,6 +20,7 @@ import subprocess
 import sys
 import tempfile
 import time
+from dataclasses import dataclass
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
@@ -67,8 +68,31 @@ def multi_config_build_type() -> str:
     return cache.get("CMAKE_BUILD_TYPE", "") if cache.get("CMAKE_CONFIGURATION_TYPES") else ""
 
 
+@dataclass
+class BuildRun:
+    """What the Build summary reports about one cmake --build invocation."""
+
+    seconds: int | None = None
+    profile_dir: str = ""
+
+
 def cmd_build(args: argparse.Namespace) -> int:
-    """Run cmake --build with CI-friendly output."""
+    """Run cmake --build, then write the Build section even when the build fails.
+
+    A cancelled job (KeyboardInterrupt) writes no section.
+    """
+    run = BuildRun()
+    try:
+        exit_code = _build(args, run)
+    except Exception:
+        write_build_summary(Path.cwd(), args.target, "failed", run)
+        raise
+    write_build_summary(Path.cwd(), args.target, "passed" if exit_code == 0 else "failed", run)
+    return exit_code
+
+
+def _build(args: argparse.Namespace, run: BuildRun) -> int:
+    """Run cmake --build with CI-friendly output, recording its duration and Ninja timings."""
     cmd = ["cmake", "--build", "."]
 
     if args.target:
@@ -106,6 +130,7 @@ def cmd_build(args: argparse.Namespace) -> int:
         exit_code = result.returncode
 
     duration = int(time.monotonic() - start)
+    run.seconds = duration
 
     if Path(".ninja_log").is_file():
         try:
@@ -114,12 +139,11 @@ def cmd_build(args: argparse.Namespace) -> int:
             )
             write_snapshot(Path.cwd(), directory, previous=previous, wall_seconds=duration)
             write_github_output({"profile_path": str(directory), "profile_name": directory.name})
+            run.profile_dir = str(directory)
         except (OSError, ValueError) as error:
             gh_warning(f"Cannot write Ninja build timings: {error}")
 
-    write_github_output(
-        {"build_success": str(exit_code == 0).lower(), "duration_seconds": str(duration)}
-    )
+    write_github_output({"build_success": str(exit_code == 0).lower()})
     if exit_code == 0:
         gh_notice(f"Build completed in {duration}s")
     else:
@@ -184,38 +208,43 @@ def _moc_cache(build_dir: Path) -> tuple[list[tuple[str, object]], str]:
     return facts, events if stats.counts else ""
 
 
-def cmd_summary(args: argparse.Namespace) -> int:
-    """Write the Build section of the job summary from the build's outputs and cache statistics."""
-    build_dir = Path.cwd()
-    outcome = {"success": "passed", "failure": "failed"}.get(args.outcome, args.outcome)
-    seconds = float(args.seconds) if re.fullmatch(r"\d+(\.\d+)?", args.seconds or "") else None
-    cache_facts, sccache_log = _compiler_cache()
-    moc_facts, moc_events = _moc_cache(build_dir)
-    step_facts, timings = (
-        snapshot_summary(Path(args.profile_dir), limit=SLOWEST_STEPS)
-        if args.profile_dir
-        else ([], [])
-    )
-    target = args.target if args.target not in {"", "all"} else ""
-    section = summary_section(
-        f"Build ({target})" if target else "Build",
-        [
-            ("Result", outcome),
-            ("Duration", format_duration(seconds) if seconds is not None else ""),
-            ("Toolchain", toolchain(build_dir)),
-            *cache_facts,
-            *moc_facts,
-            *step_facts,
-        ],
-        collapsed=[
-            *timings,
-            ("moc cache events", moc_events),
-            ("sccache error log (last 50 lines)", sccache_log),
-        ],
-    )
+def write_build_summary(build_dir: Path, target: str, result: str, run: BuildRun) -> None:
+    """Write the Build section from the build's result and the compiler and moc cache statistics.
+
+    moccache reads the stats log under $MOCCACHE_DIR, else the checkout's .cache/moccache, which
+    is also where the CMake moc launcher writes it. A failure here only warns: the summary must
+    not fail a build or skip its cache save.
+    """
+    try:
+        cache_facts, sccache_log = _compiler_cache()
+        moc_facts, moc_events = _moc_cache(build_dir)
+        step_facts, timings = (
+            snapshot_summary(Path(run.profile_dir), limit=SLOWEST_STEPS)
+            if run.profile_dir
+            else ([], [])
+        )
+        target = target if target not in {"", "all"} else ""
+        section = summary_section(
+            f"Build ({target})" if target else "Build",
+            [
+                ("Result", result),
+                ("Duration", format_duration(run.seconds) if run.seconds is not None else ""),
+                ("Toolchain", toolchain(build_dir)),
+                *cache_facts,
+                *moc_facts,
+                *step_facts,
+            ],
+            collapsed=[
+                *timings,
+                ("moc cache events", moc_events),
+                ("sccache error log (last 50 lines)", sccache_log),
+            ],
+        )
+    except Exception as error:
+        gh_warning(f"Cannot write the Build summary: {error}")
+        return
     print(section)
     write_step_summary(section)
-    return 0
 
 
 def stable_build_ref() -> bool:
@@ -336,7 +365,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
 
-    # build and configure defaults come from the composite actions' INPUT_* step environment.
+    # Defaults come from the composite actions' INPUT_* step environment.
     p_build = sub.add_parser("build")
     p_build.add_argument("--target", default=env_default("INPUT_TARGET"))
     p_build.add_argument(
@@ -359,33 +388,24 @@ def main(argv: list[str] | None = None) -> int:
     )
     p_conf.add_argument("--extra-args", default=env_default("INPUT_EXTRA_ARGS"))
 
-    # ctest
     p_ctest = sub.add_parser("ctest")
-    p_ctest.add_argument("--junit-output", required=True)
-    p_ctest.add_argument("--ctest-output", required=True)
+    p_ctest.add_argument("--junit-output", default=env_default("INPUT_JUNIT_OUTPUT"))
+    p_ctest.add_argument("--ctest-output", default=env_default("INPUT_CTEST_OUTPUT"))
     p_ctest.add_argument(
         "--build-type", default="", help="Default: a multi-config tree's CMAKE_BUILD_TYPE"
     )
     p_ctest.add_argument(
-        "--jobs", default="auto", help="Parallel CTest jobs, or 'auto' for one per CPU"
+        "--jobs",
+        default=env_default("INPUT_PARALLEL", "auto"),
+        help="Parallel CTest jobs, or 'auto' for one per CPU",
     )
-    p_ctest.add_argument("--include-labels", default="")
-    p_ctest.add_argument("--exclude-labels", default="")
-
-    # summary reads the cmake-build action's step results from its environment.
-    p_summary = sub.add_parser("summary")
-    p_summary.add_argument("--target", default=env_default("INPUT_TARGET"))
-    p_summary.add_argument("--outcome", default=env_default("BUILD_OUTCOME", "unknown"))
-    p_summary.add_argument("--seconds", default=env_default("BUILD_SECONDS"))
-    p_summary.add_argument("--profile-dir", default=env_default("BUILD_PROFILE_PATH"))
+    p_ctest.add_argument("--include-labels", default=env_default("INPUT_INCLUDE_LABELS"))
+    p_ctest.add_argument("--exclude-labels", default=env_default("INPUT_EXCLUDE_LABELS"))
 
     args = parser.parse_args(argv)
-    commands = {
-        "build": cmd_build,
-        "configure": cmd_configure,
-        "ctest": cmd_ctest,
-        "summary": cmd_summary,
-    }
+    if args.command == "ctest" and not (args.junit_output and args.ctest_output):
+        p_ctest.error("--junit-output and --ctest-output (or their INPUT_* variables) are required")
+    commands = {"build": cmd_build, "configure": cmd_configure, "ctest": cmd_ctest}
     return commands[args.command](args)
 
 

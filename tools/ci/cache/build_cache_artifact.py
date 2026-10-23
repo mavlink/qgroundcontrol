@@ -25,6 +25,16 @@ from common.io import extract_tar_data
 CACHE_ROOTS = (".cache/ccache", ".cache/moccache")
 # Snapshots are several GB; a stalled download falls back to the dependency cache.
 DOWNLOAD_TIMEOUT_SECONDS = 900
+# Any of these falls back to the dependency cache instead of failing the job.
+_SNAPSHOT_ERRORS = (
+    OSError,
+    ValueError,
+    KeyError,
+    TypeError,
+    AttributeError,
+    tarfile.TarError,
+    subprocess.SubprocessError,
+)
 
 
 def artifact_name(compiler_key: str, moc_key: str) -> str:
@@ -192,41 +202,35 @@ def restore(repo: str, run_id: str, name: str, workspace: Path, shared_name: str
     return True
 
 
+def pack_snapshot(workspace: Path, runner_temp: str | None) -> Path | None:
+    """Pack both caches into a new directory under runner_temp; None when empty or on failure."""
+    try:
+        directory = Path(tempfile.mkdtemp(prefix="compiler-cache-", dir=runner_temp))
+        return pack_cache(workspace, directory)
+    except _SNAPSHOT_ERRORS as error:
+        gh_warning(f"Compiler cache artifact pack unavailable: {error}")
+        return None
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=("restore", "pack"))
-    args = parser.parse_args(argv)
+    parser.add_argument("command", choices=("restore",))
+    parser.parse_args(argv)
     try:
-        if args.command == "pack":
-            directory = Path(
-                tempfile.mkdtemp(prefix="compiler-cache-", dir=os.environ.get("RUNNER_TEMP"))
-            )
-            archive = pack_cache(Path(os.environ["GITHUB_WORKSPACE"]), directory)
-            if archive:
-                write_github_output({"path": str(archive)})
-        else:
-            repo = os.environ["GITHUB_REPOSITORY"]
-            run_id = os.environ["GITHUB_RUN_ID"]
-            if not re.fullmatch(r"[\w.-]+/[\w.-]+", repo) or not run_id.isdecimal():
-                raise ValueError("Invalid repository or workflow run ID")
-            found = restore(
-                repo,
-                run_id,
-                os.environ["QGC_BUILD_CACHE_ARTIFACT_NAME"],
-                Path(os.environ["GITHUB_WORKSPACE"]),
-                os.environ.get("QGC_BUILD_CACHE_SHARED_ARTIFACT", ""),
-            )
-            write_github_output({"restored": str(found).lower()})
-    except (
-        OSError,
-        ValueError,
-        KeyError,
-        TypeError,
-        AttributeError,
-        tarfile.TarError,
-        subprocess.SubprocessError,
-    ) as error:
-        gh_warning(f"Compiler cache artifact {args.command} unavailable: {error}")
+        repo = os.environ["GITHUB_REPOSITORY"]
+        run_id = os.environ["GITHUB_RUN_ID"]
+        if not re.fullmatch(r"[\w.-]+/[\w.-]+", repo) or not run_id.isdecimal():
+            raise ValueError("Invalid repository or workflow run ID")
+        found = restore(
+            repo,
+            run_id,
+            os.environ["QGC_BUILD_CACHE_ARTIFACT_NAME"],
+            Path(os.environ["GITHUB_WORKSPACE"]),
+            os.environ.get("QGC_BUILD_CACHE_SHARED_ARTIFACT", ""),
+        )
+        write_github_output({"restored": str(found).lower()})
+    except _SNAPSHOT_ERRORS as error:
+        gh_warning(f"Compiler cache artifact restore unavailable: {error}")
         write_github_output({"restored": "false"})
     return 0
 

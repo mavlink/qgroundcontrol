@@ -12,13 +12,15 @@ import pytest
 from ci.compile.cmake_helper import (
     INCLUDE_PATH_VARIABLES,
     PACKAGE_INVENTORIES,
+    BuildRun,
     _maybe_wrap_xvfb,
     detect_jobs,
     main,
     system_header_digest,
+    write_build_summary,
 )
 
-from .._helpers import REPO_ROOT
+from .._helpers import REPO_ROOT, get_step, get_steps, load_action
 
 if TYPE_CHECKING:
     from qgc_tools.cmake_configure import CMakeConfig
@@ -73,10 +75,18 @@ def venv_python(tmp_path: Path) -> Path:
 
 
 @pytest.fixture(autouse=True)
+def _isolated_build_summary(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """`build` writes the Build summary; keep it off the checkout's moc cache and host ccache."""
+    monkeypatch.setenv("MOCCACHE_DIR", str(tmp_path / "moccache"))
+    monkeypatch.setattr("ci.compile.cmake_helper.ccache_stats", lambda: None)
+
+
+@pytest.fixture(autouse=True)
 def _clear_action_inputs(monkeypatch: pytest.MonkeyPatch) -> None:
     for name in [
         *CONFIGURE_INPUTS,
         *BUILD_INPUTS,
+        *CTEST_INPUTS,
         "QGC_CACHE_PROGRAM",
         "QGC_CHECK_RESULT_CACHE_DIR",
         "QGC_CHECK_RESULT_CACHE_SALT",
@@ -96,6 +106,13 @@ BUILD_INPUTS = {
     "INPUT_PARALLEL_JOBS": "3",
     "INPUT_OUTPUT_FILE": "",
     "INPUT_REVIEWDOG": "false",
+}
+CTEST_INPUTS = {
+    "INPUT_JUNIT_OUTPUT": "junit.xml",
+    "INPUT_CTEST_OUTPUT": "output.txt",
+    "INPUT_PARALLEL": "2",
+    "INPUT_INCLUDE_LABELS": "Integration",
+    "INPUT_EXCLUDE_LABELS": "Flaky|Network",
 }
 STABLE_REF = {"GITHUB_REF_TYPE": "tag", "GITHUB_REF": "refs/tags/v5.0.0"}
 
@@ -365,6 +382,38 @@ def test_ctest_defaults_to_auto_jobs_and_propagates_failure(
     assert "-L" not in command
 
 
+def test_ctest_reads_action_inputs(monkeypatch: pytest.MonkeyPatch) -> None:
+    for name, value in CTEST_INPUTS.items():
+        monkeypatch.setenv(name, value)
+    invocation: list[str] = []
+
+    def fake_run_tee(command: list[str], output_file: str) -> int:
+        assert output_file == "output.txt"
+        invocation.extend(command)
+        return 0
+
+    monkeypatch.setattr("ci.compile.cmake_helper.run_tee", fake_run_tee)
+    monkeypatch.setattr("ci.compile.cmake_helper._maybe_wrap_xvfb", lambda command: command)
+    assert main(["ctest"]) == 0
+    assert invocation[3:] == [
+        "--output-junit",
+        "junit.xml",
+        "--parallel",
+        "2",
+        "-L",
+        "Integration",
+        "-LE",
+        "Flaky|Network",
+    ]
+
+
+def test_ctest_requires_its_output_files(capsys: pytest.CaptureFixture[str]) -> None:
+    with pytest.raises(SystemExit) as exc:
+        main(["ctest", "--junit-output", "junit.xml"])
+    assert exc.value.code == 2
+    assert "--junit-output and --ctest-output" in capsys.readouterr().err
+
+
 def test_ctest_rejects_invalid_jobs_before_running(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
@@ -428,7 +477,6 @@ def test_failed_build_still_preserves_current_invocation_timings(monkeypatch, tm
     assert report["slowest_edges"][0]["output"] == "new.o"
     assert "profile_path=" in gh_output.read_text()
     assert "build_success=false" in gh_output.read_text()
-    assert "duration_seconds=" in gh_output.read_text()
 
 
 def _build_tree(build_dir: Path) -> Path:
@@ -484,8 +532,6 @@ def test_summary_writes_one_build_section(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, gh_summary: Path, snapshot: SnapshotAssertion
 ) -> None:
     profile = _build_tree(tmp_path)
-    monkeypatch.chdir(tmp_path)
-    monkeypatch.setenv("MOCCACHE_DIR", str(tmp_path / "moccache"))
     monkeypatch.setattr("ci.compile.cmake_helper.ccache_stats", lambda: CCACHE_JSON)
     monkeypatch.setattr(
         "ci.compile.cmake_helper.collect_stats",
@@ -501,35 +547,89 @@ def test_summary_writes_one_build_section(
             },
         )(),
     )
-    env = {
-        "INPUT_TARGET": "all",
-        "BUILD_OUTCOME": "success",
-        "BUILD_SECONDS": "754",
-        "BUILD_PROFILE_PATH": str(profile),
-    }
-    for key, value in env.items():
-        monkeypatch.setenv(key, value)
-    assert main(["summary"]) == 0
+    write_build_summary(tmp_path, "all", "passed", BuildRun(754, str(profile)))
     assert gh_summary.read_text(encoding="utf-8") == snapshot
 
 
-def test_summary_without_build_data_reports_the_outcome(
+def _fake_build(monkeypatch: pytest.MonkeyPatch, result: int | BaseException) -> None:
+    def build(command: list[str], **_kwargs: object) -> subprocess.CompletedProcess[list[str]]:
+        if isinstance(result, BaseException):
+            raise result
+        return subprocess.CompletedProcess(command, result)
+
+    monkeypatch.setattr("ci.compile.cmake_helper.subprocess.run", build)
+
+
+@pytest.mark.parametrize(("exit_code", "result"), [(0, "passed"), (2, "failed")])
+def test_build_writes_its_summary_section(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    gh_summary: Path,
+    exit_code: int,
+    result: str,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    _fake_build(monkeypatch, exit_code)
+    assert main(["build", "--target", "qgc-analysis-headers"]) == exit_code
+    summary = gh_summary.read_text(encoding="utf-8")
+    assert summary.startswith("### Build (qgc-analysis-headers)\n")
+    assert f"| Result | {result} |\n| Duration | " in summary
+
+
+def test_build_that_cannot_start_still_reports_its_failure(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, gh_summary: Path
 ) -> None:
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setenv("MOCCACHE_DIR", str(tmp_path / "moccache"))
-    monkeypatch.setattr("ci.compile.cmake_helper.ccache_stats", lambda: None)
-    assert main(["summary", "--target", "qgc-analysis-headers", "--outcome", "failure"]) == 0
+    _fake_build(monkeypatch, FileNotFoundError("cmake"))
+    with pytest.raises(FileNotFoundError):
+        main(["build"])
     assert gh_summary.read_text(encoding="utf-8") == (
-        "### Build (qgc-analysis-headers)\n\n| Item | Value |\n| --- | --- |\n| Result | failed |\n\n"
+        "### Build\n\n| Item | Value |\n| --- | --- |\n| Result | failed |\n\n"
     )
+
+
+def test_cancelled_build_writes_no_summary(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, gh_summary: Path
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    _fake_build(monkeypatch, KeyboardInterrupt())
+    with pytest.raises(KeyboardInterrupt):
+        main(["build"])
+    assert gh_summary.read_text(encoding="utf-8") == ""
+
+
+def test_summary_failure_only_warns(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    gh_output: Path,
+    gh_summary: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    _fake_build(monkeypatch, 0)
+    monkeypatch.setattr(
+        "ci.compile.cmake_helper.collect_stats",
+        lambda _build_dir: (_ for _ in ()).throw(OSError("unreadable")),
+    )
+    assert main(["build"]) == 0
+    assert "build_success=true" in gh_output.read_text()
+    assert gh_summary.read_text(encoding="utf-8") == ""
+    assert "::warning::Cannot write the Build summary: unreadable" in capsys.readouterr().out
+
+
+def test_moc_cache_statistics_default_to_the_checkout(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Without MOCCACHE_DIR, the summary reads the cache the CMake moc launcher writes."""
+    from moccache.core import _cache_dir
+
+    monkeypatch.delenv("MOCCACHE_DIR")
+    assert _cache_dir() == REPO_ROOT / ".cache" / "moccache"
+    build = get_step(get_steps(load_action("cmake-build")), "compile")
+    assert "MOCCACHE_DIR" not in build["env"]
 
 
 def test_summary_reports_sccache_and_its_error_log(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, gh_summary: Path
 ) -> None:
-    monkeypatch.chdir(tmp_path)
-    monkeypatch.setenv("MOCCACHE_DIR", str(tmp_path / "moccache"))
     log = tmp_path / "sccache.log"
     log.write_text("".join(f"line {number}\n" for number in range(60)))
     monkeypatch.setenv("QGC_COMPILER_CACHE_TOOL", "sccache")
@@ -539,7 +639,7 @@ def test_summary_reports_sccache_and_its_error_log(
     }
     monkeypatch.setattr("ci.compile.cmake_helper.sccache_stats", lambda: report)
     monkeypatch.setattr("ci.compile.cmake_helper.ccache_stats", lambda: pytest.fail("ccache read"))
-    assert main(["summary", "--outcome", "success"]) == 0
+    write_build_summary(tmp_path, "", "passed", BuildRun())
     summary = gh_summary.read_text(encoding="utf-8")
     assert (
         "| Compiler cache | sccache: 95 of 100 (95.0%) hits, 0 writes, 0 not cacheable |" in summary

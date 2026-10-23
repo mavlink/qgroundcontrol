@@ -1,19 +1,20 @@
 #!/usr/bin/env python3
 """
-Ccache helper for CI: install, report, and gate cache saves.
+Ccache helper for CI: install compiler tools and plan build cache saves.
 
 Subcommands:
     install    Install the pinned compiler tools for this runner (ccache; mold and the
                sccache pilot on Linux)
-    save-gate  Decide whether the compiler and moc caches are worth saving
+    save-plan  Decide which compiler and moc caches save-build-cache saves, pack the
+               snapshot artifact, and mark the job's caches saved
 
 The build's cache hit rates are part of the job summary's Build section
-(cmake_helper.py summary).
+(cmake_helper.py build).
 
 Examples:
     ccache_helper.py install
     ccache_helper.py install --compiler-cache sccache
-    ccache_helper.py save-gate --min-misses 20
+    ccache_helper.py save-plan --min-misses 20
 """
 
 from __future__ import annotations
@@ -34,6 +35,9 @@ from common.build_config import load_build_config
 from common.gh_actions import (
     append_github_env,
     append_github_path,
+    env_default,
+    env_flag,
+    gh_warning,
     write_github_output,
 )
 from common.io import read_json
@@ -42,6 +46,8 @@ from common.platform import host_arch, is_linux, is_macos, is_windows
 from common.proc import run_captured
 from common.tool_version import probe_version, version_prefix_matches
 from qgc_tools.compiler_cache import ccache_stats
+
+from ci.cache.build_cache_artifact import pack_snapshot
 
 # ---------------------------------------------------------------------------
 # Install
@@ -169,12 +175,7 @@ def install_compiler_tools(runner_temp: Path | None, compiler_cache: str = "ccac
 
 
 # ---------------------------------------------------------------------------
-# Summary
-# ---------------------------------------------------------------------------
-
-
-# ---------------------------------------------------------------------------
-# Save gate
+# Save plan
 # ---------------------------------------------------------------------------
 
 # `ccache --show-stats` text: "Misses: N / total" (4.5+) or "cache miss N" (older).
@@ -236,22 +237,61 @@ def parse_min_misses(value: str) -> int:
         return 0
 
 
-def run_save_gate(
+def save_decisions(
     event_name: str, min_misses: int, docker_report: Path | None, moccache_dir: Path
-) -> None:
-    """Write ``ccache`` and ``moccache`` save decisions to GITHUB_OUTPUT."""
-    decisions: dict[str, str] = {}
-    for name, label, misses in (
-        ("ccache", "compiler", ccache_misses(docker_report)),
-        ("moccache", "moc", moccache_misses(moccache_dir)),
-    ):
-        save = should_save_cache(event_name, misses, min_misses)
-        decisions[name] = str(save).lower()
-        if save:
-            print(f"Saving the {label} cache (misses: {'unknown' if misses is None else misses})")
-        else:
-            print(f"Skipping the {label} cache save: {misses} misses, PR threshold {min_misses}")
-    write_github_output(decisions)
+) -> tuple[bool, bool]:
+    """Return whether the compiler and moc caches are saved; a failed decision saves both."""
+    try:
+        decisions = []
+        for label, misses in (
+            ("compiler", ccache_misses(docker_report)),
+            ("moc", moccache_misses(moccache_dir)),
+        ):
+            save = should_save_cache(event_name, misses, min_misses)
+            decisions.append(save)
+            if save:
+                print(
+                    f"Saving the {label} cache (misses: {'unknown' if misses is None else misses})"
+                )
+            else:
+                print(
+                    f"Skipping the {label} cache save: {misses} misses, PR threshold {min_misses}"
+                )
+    except Exception as error:
+        gh_warning(f"Cache save decision failed, saving both caches: {error}")
+        return True, True
+    return decisions[0], decisions[1]
+
+
+class SavePlan(NamedTuple):
+    artifact_path: str
+    ccache_key: str
+    moccache_key: str
+
+
+def plan_save(
+    decisions: tuple[bool, bool],
+    *,
+    ccache_key: str,
+    moccache_key: str,
+    artifact: bool,
+    workspace: Path,
+    runner_temp: str | None,
+) -> SavePlan:
+    """Pack the snapshot artifact if enabled and return the keys of the caches to save.
+
+    save-build-cache uploads the artifact and saves the keyed caches only when that upload
+    fails; an empty key skips its cache (the sccache pilot has no ccache key).
+    """
+    save_ccache, save_moccache = decisions
+    archive = None
+    if artifact and (save_ccache or save_moccache):
+        archive = pack_snapshot(workspace, runner_temp)
+    return SavePlan(
+        str(archive) if archive else "",
+        ccache_key if save_ccache else "",
+        moccache_key if save_moccache else "",
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -262,7 +302,7 @@ def run_save_gate(
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(
-        description="Ccache helper for CI: install, report, and gate cache saves",
+        description="Ccache helper for CI: install compiler tools and plan build cache saves",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     sub = parser.add_subparsers(dest="command")
@@ -284,21 +324,33 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Compiler launcher; sccache is a Linux-only pilot (default: $QGC_COMPILER_CACHE_TOOL)",
     )
 
-    # -- save-gate -----------------------------------------------------
-    gate = sub.add_parser("save-gate", help="Decide whether the compiler and moc caches are saved")
-    gate.add_argument("--event-name", default=os.environ.get("GITHUB_EVENT_NAME", ""))
-    gate.add_argument(
+    # -- save-plan -----------------------------------------------------
+    # Defaults come from cache_plan.py's job environment and the action's INPUT_* variables.
+    workspace = Path(env_default("GITHUB_WORKSPACE", "."))
+    plan = sub.add_parser(
+        "save-plan", help="Plan save-build-cache: pack the snapshot and choose cache keys"
+    )
+    plan.add_argument("--event-name", default=env_default("GITHUB_EVENT_NAME"))
+    plan.add_argument(
         "--min-misses",
-        default=os.environ.get("QGC_PR_CACHE_SAVE_MIN_MISSES", "0"),
+        default=env_default("QGC_PR_CACHE_SAVE_MIN_MISSES", "0"),
         help="Pull requests save a cache only with at least this many misses (0: always)",
     )
-    gate.add_argument(
-        "--docker-report", type=Path, help="Docker build report with the container's ccache stats"
-    )
-    gate.add_argument(
-        "--moccache-dir",
+    plan.add_argument(
+        "--docker-report",
         type=Path,
-        default=Path(os.environ.get("GITHUB_WORKSPACE", ".")) / ".cache" / "moccache",
+        default=env_default("INPUT_DOCKER_REPORT") or None,
+        help="Docker build report with the container's ccache stats",
+    )
+    plan.add_argument("--moccache-dir", type=Path, default=workspace / ".cache" / "moccache")
+    plan.add_argument("--workspace", type=Path, default=workspace)
+    plan.add_argument("--ccache-key", default=env_default("QGC_CCACHE_KEY"))
+    plan.add_argument("--moccache-key", default=env_default("QGC_MOCCACHE_KEY"))
+    plan.add_argument(
+        "--artifact",
+        action=argparse.BooleanOptionalAction,
+        default=env_flag("QGC_BUILD_CACHE_ARTIFACT"),
+        help="Pack a snapshot for upload as a workflow artifact",
     )
 
     return parser.parse_args(argv)
@@ -312,17 +364,27 @@ def main(argv: list[str] | None = None) -> int:
         install_compiler_tools(args.runner_temp, args.compiler_cache)
         return 0
 
-    if args.command == "save-gate":
-        run_save_gate(
+    if args.command == "save-plan":
+        decisions = save_decisions(
             args.event_name,
             parse_min_misses(args.min_misses),
             args.docker_report,
             args.moccache_dir,
         )
+        plan = plan_save(
+            decisions,
+            ccache_key=args.ccache_key,
+            moccache_key=args.moccache_key,
+            artifact=args.artifact,
+            workspace=args.workspace,
+            runner_temp=env_default("RUNNER_TEMP") or None,
+        )
+        write_github_output(plan._asdict())
+        append_github_env({"QGC_BUILD_CACHE_SAVED": "true"})
         return 0
 
     print(
-        "Error: a subcommand is required (install, save-gate)",
+        "Error: a subcommand is required (install, save-plan)",
         file=sys.stderr,
     )
     return 1

@@ -493,28 +493,128 @@ class TestSaveGate:
     def test_parse_min_misses(self, value, parsed):
         assert parse_min_misses(value) == parsed
 
-    @pytest.mark.parametrize(
-        ("event", "expected"),
-        [
-            ("pull_request", {"ccache": "false", "moccache": "true"}),
-            ("push", {"ccache": "true", "moccache": "true"}),
-        ],
-    )
-    def test_cli_writes_per_cache_decisions(self, tmp_path, gh_output, event, expected):
-        (tmp_path / "stats.log").write_text("miss-first-seen\tx.h\t1\t/b\t\n" * 25)
-        env = {"GITHUB_EVENT_NAME": event, "QGC_PR_CACHE_SAVE_MIN_MISSES": "20"}
-        with (
-            patch.dict(os.environ, env),
-            patch("ci.cache.ccache_helper.ccache_stats", return_value={"cache_miss": 6}),
-        ):
-            assert main(["save-gate", "--moccache-dir", str(tmp_path)]) == 0
-        assert read_github_file(gh_output) == expected
 
-    def test_cli_saves_when_statistics_are_unavailable(self, tmp_path, gh_output):
-        env = {"GITHUB_EVENT_NAME": "pull_request", "QGC_PR_CACHE_SAVE_MIN_MISSES": "20"}
-        with (
-            patch.dict(os.environ, env),
-            patch("ci.cache.ccache_helper.ccache_stats", return_value=None),
-        ):
-            assert main(["save-gate", "--moccache-dir", str(tmp_path)]) == 0
-        assert gh_output.read_text().splitlines() == ["ccache=true", "moccache=true"]
+class TestSavePlan:
+    """save-plan picks the snapshot and cache keys that save-build-cache uploads or saves."""
+
+    @pytest.fixture
+    def workspace(self, tmp_path, monkeypatch, gh_output, gh_env):
+        workspace = tmp_path / "workspace"
+        (workspace / ".cache" / "ccache").mkdir(parents=True)
+        (workspace / ".cache" / "ccache" / "object").write_text("o")
+        (workspace / ".cache" / "moccache").mkdir()
+        (workspace / ".cache" / "moccache" / "stats.log").write_text(
+            "miss-first-seen\tx.h\t1\t/b\t\n" * 25
+        )
+        runner_temp = tmp_path / "runner-temp"
+        runner_temp.mkdir()
+        env = {
+            "GITHUB_WORKSPACE": str(workspace),
+            "RUNNER_TEMP": str(runner_temp),
+            "QGC_PR_CACHE_SAVE_MIN_MISSES": "20",
+            "QGC_CCACHE_KEY": "ccache-key",
+            "QGC_MOCCACHE_KEY": "moccache-key",
+        }
+        for name, value in env.items():
+            monkeypatch.setenv(name, value)
+        return workspace
+
+    def _plan(self, *argv: str, ccache=None):
+        with patch("ci.cache.ccache_helper.ccache_stats", return_value=ccache):
+            assert main(["save-plan", *argv]) == 0
+
+    @pytest.mark.parametrize(
+        ("event", "ccache_key"),
+        [("pull_request", ""), ("push", "ccache-key"), ("merge_group", "ccache-key")],
+    )
+    def test_keys_follow_each_cache_decision(
+        self, workspace, monkeypatch, gh_output, gh_env, event, ccache_key
+    ):
+        monkeypatch.setenv("GITHUB_EVENT_NAME", event)
+        self._plan(ccache={"cache_miss": 6})
+        assert read_github_file(gh_output) == {
+            "artifact_path": "",
+            "ccache_key": ccache_key,
+            "moccache_key": "moccache-key",
+        }
+        assert read_github_file(gh_env) == {"QGC_BUILD_CACHE_SAVED": "true"}
+
+    def test_unavailable_statistics_save_both(self, workspace, monkeypatch, gh_output):
+        monkeypatch.setenv("GITHUB_EVENT_NAME", "pull_request")
+        (workspace / ".cache" / "moccache" / "stats.log").unlink()
+        self._plan()
+        assert read_github_file(gh_output)["ccache_key"] == "ccache-key"
+        assert read_github_file(gh_output)["moccache_key"] == "moccache-key"
+
+    def test_failed_decision_still_writes_both_keys(
+        self, workspace, monkeypatch, gh_output, capsys
+    ):
+        monkeypatch.setenv("GITHUB_EVENT_NAME", "pull_request")
+        with patch("ci.cache.ccache_helper.ccache_stats", side_effect=RuntimeError("broken")):
+            assert main(["save-plan"]) == 0
+        assert "::warning::Cache save decision failed, saving both caches: broken" in (
+            capsys.readouterr().out
+        )
+        assert read_github_file(gh_output)["ccache_key"] == "ccache-key"
+        assert read_github_file(gh_output)["moccache_key"] == "moccache-key"
+
+    def test_docker_report_supplies_the_compiler_misses(
+        self, workspace, monkeypatch, gh_output, tmp_path
+    ):
+        report = tmp_path / "docker-build-report.json"
+        report.write_text(json.dumps({"ccache": _DOCKER_SHOW_STATS}))
+        monkeypatch.setenv("GITHUB_EVENT_NAME", "pull_request")
+        monkeypatch.setenv("INPUT_DOCKER_REPORT", str(report))
+        with patch("ci.cache.ccache_helper.ccache_stats") as host_stats:
+            assert main(["save-plan"]) == 0
+        host_stats.assert_not_called()
+        assert read_github_file(gh_output)["ccache_key"] == ""
+
+    def test_sccache_pilot_has_no_compiler_key(self, workspace, monkeypatch, gh_output):
+        monkeypatch.setenv("GITHUB_EVENT_NAME", "push")
+        monkeypatch.setenv("QGC_CCACHE_KEY", "")
+        self._plan()
+        assert read_github_file(gh_output)["ccache_key"] == ""
+        assert read_github_file(gh_output)["moccache_key"] == "moccache-key"
+
+    def test_artifact_snapshot_packs_both_caches(self, workspace, monkeypatch, gh_output):
+        monkeypatch.setenv("GITHUB_EVENT_NAME", "push")
+        monkeypatch.setenv("QGC_BUILD_CACHE_ARTIFACT", "true")
+        self._plan()
+        outputs = read_github_file(gh_output)
+        # The keys stay set: the action saves them only when the upload fails.
+        assert outputs["ccache_key"] == "ccache-key"
+        archive = Path(outputs["artifact_path"])
+        assert archive.parent.parent == Path(os.environ["RUNNER_TEMP"])
+        with tarfile.open(archive) as tar:
+            assert sorted(tar.getnames()) == [
+                ".cache/ccache/object",
+                ".cache/moccache/stats.log",
+            ]
+
+    def test_skipped_caches_pack_no_snapshot(self, workspace, monkeypatch, gh_output):
+        monkeypatch.setenv("GITHUB_EVENT_NAME", "pull_request")
+        monkeypatch.setenv("QGC_BUILD_CACHE_ARTIFACT", "true")
+        (workspace / ".cache" / "moccache" / "stats.log").write_text("hit\tx.h\t1\t/b\t\n")
+        with patch("ci.cache.ccache_helper.pack_snapshot") as pack:
+            self._plan(ccache={"cache_miss": 1})
+        pack.assert_not_called()
+        assert read_github_file(gh_output) == {
+            "artifact_path": "",
+            "ccache_key": "",
+            "moccache_key": "",
+        }
+
+    def test_failed_pack_falls_back_to_cache_keys(self, workspace, monkeypatch, gh_output, capsys):
+        monkeypatch.setenv("GITHUB_EVENT_NAME", "push")
+        monkeypatch.setenv("QGC_BUILD_CACHE_ARTIFACT", "true")
+        with patch("ci.cache.build_cache_artifact.pack_cache", side_effect=OSError("disk full")):
+            self._plan()
+        assert "::warning::Compiler cache artifact pack unavailable: disk full" in (
+            capsys.readouterr().out
+        )
+        assert read_github_file(gh_output) == {
+            "artifact_path": "",
+            "ccache_key": "ccache-key",
+            "moccache_key": "moccache-key",
+        }
