@@ -9,7 +9,8 @@ scripts = [
   "defusedxml>=0.7.1",
   # lxml and fastcrc serve pymavlink's mavgen, which CMake runs for src/MAVLink; tools/ never imports them.
   "lxml>=5",
-  "fastcrc>=0.3",
+  # fastcrc ships no Windows ARM64 wheel, and mavgen falls back to pure-Python CRCs without it.
+  "fastcrc>=0.3; platform_machine != 'ARM64'",
   "jinja2>=3.1",
   "tomli>=2.0; python_version < '3.11'",
 ]
@@ -39,19 +40,29 @@ coverage = [
   "gcovr",
 ]
 terrain = [
+  # tools/terrain imports affine directly; rasterio also depends on it.
+  "affine>=3",
   "numpy>=2",
   "pillow>=11",
   "rasterio>=1.4",
+]
+# tools/simulation/mock_vehicle.py; CMake's mavgen uses the mavlink submodule's generator instead.
+simulation = [
+  "pymavlink",
+]
+# git-cliff drafts release notes from tools/configs/cliff.toml (release.yml, `just release-notes`).
+release = [
+  "git-cliff==2.14.2",
 ]
 dev = [
   {include-group = "test"},
   {include-group = "lint"},
   {include-group = "build"},
   {include-group = "qt"},
-  "pymavlink",
-  "rust-just>=1.55.1",
+  {include-group = "release"},
 ]
-# The devcontainer's /opt/qgc-venv syncs only scripts, qt and build, so build keeps prek and gcovr.
+# The devcontainer's /opt/qgc-venv syncs only scripts, qt and build, so build keeps prek, gcovr and
+# just; install_dependencies installs build on Linux.
 build = [
   {include-group = "scripts"},
   {include-group = "precommit"},
@@ -59,6 +70,7 @@ build = [
   "cmake>=3.28,<4",
   "meson",
   "ninja",
+  "rust-just>=1.55.1",
 ]
 lint = [
   {include-group = "scripts"},
@@ -66,7 +78,6 @@ lint = [
   "pyright==1.1.411",
   "import-linter>=2.0",
   "jsonschema>=4.23",
-  "pyyaml>=6",
   "clang-format==23.1.0",
 ]
 
@@ -76,13 +87,18 @@ default-groups = []
 required-version = ">=0.12.8"
 
 [tool.uv.sources]
-# Qt 6.12's split iOS SDKs and versioned extensions need miurahr/aqtinstall#1048; return to PyPI once released.
+# install_qt.py's fallback installer and parity reference (--installer aqt). Qt 6.12's split iOS SDKs
+# and versioned extensions need miurahr/aqtinstall#1048; return to PyPI once released.
 aqtinstall = { git = "https://github.com/miurahr/aqtinstall", rev = "6f0f842da47c744cdc814cd94da9828d934d7bf0" }
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
 addopts = ["--strict-markers"]
+cache_dir = "../.cache/pytest"
+# A parametrization over repository files that finds none (e.g. missing from a CI sparse checkout)
+# fails collection instead of silently skipping.
+empty_parameter_set_mark = "fail_at_collect"
 # The slowest test takes about 3 s; a hang fails that test with a traceback instead of the CI job timeout.
 timeout = 60
 markers = [
@@ -92,13 +108,13 @@ markers = [
 filterwarnings = ["ignore:Use `@` matmul:PendingDeprecationWarning:rasterio"]
 
 [tool.importlinter]
-root_packages = ["ci", "common", "analyzers", "generators", "qgc_tools", "setup", "terrain", "translations"]
+root_packages = ["ci", "common", "analyzers", "generators", "moccache", "qgc_tools", "setup", "terrain", "translations"]
 
 # Higher layers may import lower ones; packages joined by "|" are mutually independent.
 [[tool.importlinter.contracts]]
 name = "tools layering"
 type = "layers"
-layers = ["ci", "analyzers | generators | terrain | translations", "setup", "qgc_tools", "common"]
+layers = ["ci", "analyzers | generators | setup | terrain | translations", "qgc_tools", "common"]
 
 # Code shared by several CI concerns belongs in common or qgc_tools.
 [[tool.importlinter.contracts]]
@@ -109,3 +125,10 @@ ignore_imports = [
     # The attestation bundle embeds the dependency SBOM that generate_cpm_sbom.py also writes standalone.
     "ci.publish.attest_helper -> ci.security.generate_cpm_sbom",
 ]
+
+# moccache runs on every moc invocation, with whichever python3 CMake found.
+[[tool.importlinter.contracts]]
+name = "moccache is self-contained"
+type = "forbidden"
+source_modules = ["moccache"]
+forbidden_modules = ["ci", "common", "analyzers", "generators", "qgc_tools", "setup", "terrain", "translations"]
