@@ -596,19 +596,23 @@ when a PR closes, and on demand:
 - Each job uploads `docker-build-report.json` (configure/build/package timings, cache statistics,
   CPM source size) with its Ninja build profile. Checkout keeps full history for package
   versioning; measured checkouts take 13–22 s, which doesn't warrant a repository mirror.
-- x86_64 Linux variants also produce a native package (`.deb`, `.rpm`, or `.pkg.tar.zst`). The
-  builder image runs `tools/ci/packaging/validate_native_package.py --install` from the mounted
-  workspace; it validates, installs, smoke-tests, and always uninstalls the package, and
-  `attest_helper.py checksum` verifies CPack's `.deb`/`.rpm` checksum sidecar and writes Arch's.
+- x86_64 Linux variants also produce a native package (`.deb`, `.rpm`, or `.pkg.tar.zst`).
+  `docker_helper.py exec` runs repository scripts in the builder image from the read-only
+  workspace mount, translating host paths to container paths; as root it runs
+  `tools/ci/packaging/validate_native_package.py --install`, which validates, installs,
+  smoke-tests, and always uninstalls the package. `attest_helper.py checksum` requires and
+  verifies CPack's `.deb`/`.rpm` checksum sidecar and writes Arch's.
 - Pushes and manual runs generate CycloneDX SBOMs for CPM dependencies and the builder image and
   scan them with Grype (SARIF to code scanning); PRs skip SBOMs and scans. CPM metadata is read
-  inside the builder so container-local dependency paths resolve. Master pushes submit the Ubuntu
-  builder's CPM SPDX snapshot to the dependency graph.
+  inside the builder, with the build tree mounted where it was built, so container-local
+  dependency paths resolve. Master pushes submit the Ubuntu builder's CPM SPDX snapshot to the
+  dependency graph.
 - The planner gives every leg the builder image's push target (`resolve_push_target()` in
   `qgc_tools/docker_variants.py`): upstream pushes publish master and `Stable*` builds to GHCR and
   release tags to Docker Hub; pull requests, forks, and manual runs push nothing. The build,
   registry logins, and the `attest-images` job, which attests provenance and SBOM for each
-  published image digest, follow `matrix.push_target`.
+  published image digest, follow `matrix.push_target`. The `docker` action keeps the pushed
+  image's registry name as its local tag (`image` output).
 
 ### VM builds
 

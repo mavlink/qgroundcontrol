@@ -266,7 +266,8 @@ python tools/clean.py --dry-run    # Show what would be removed
 ### build_profile.py
 
 Summarize build-time hotspots from Ninja logs and optional Clang time traces. The parsing and report
-code lives in `qgc_tools/build_profile.py`, which `ci/compile/cmake_helper.py` also uses.
+code lives in `qgc_tools/build_profile.py`, which `ci/compile/cmake_helper.py` and
+`ci/compile/docker_helper.py` also use.
 
 ```bash
 python tools/build_profile.py -B build                 # Report slowest Ninja edges and rebuild churn

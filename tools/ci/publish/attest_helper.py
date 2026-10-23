@@ -7,7 +7,7 @@ emits the paths the attestation and upload steps consume, and adds an Artifact s
 size, SHA-256) to the job summary.
 
 ``checksum`` verifies or writes only the SHA-256 sidecar of a package uploaded outside
-attest-and-upload; ``--require-existing`` fails when the packager did not emit one.
+attest-and-upload; CPack must emit the ``.deb`` and ``.rpm`` sidecars, so theirs must exist.
 """
 
 from __future__ import annotations
@@ -135,7 +135,7 @@ def cmd_checksum(args: argparse.Namespace) -> None:
     source = Path(args.source_path)
     checksum = source.with_name(f"{source.name}.sha256")
     try:
-        if args.require_existing and not checksum.is_file():
+        if source.suffix in {".deb", ".rpm"} and not checksum.is_file():
             raise FileNotFoundError(f"Checksum sidecar not found: {checksum}")
         ensure_sha256_sidecar(source, checksum)
     except (OSError, ValueError) as exc:
@@ -169,14 +169,10 @@ def main(argv: list[str] | None = None) -> int:
     p_prepare.set_defaults(func=cmd_prepare)
 
     p_checksum = sub.add_parser(
-        "checksum", help="Verify the artifact's <name>.sha256 sidecar, writing it when absent"
+        "checksum",
+        help="Verify the artifact's <name>.sha256 sidecar, writing it when absent (not for .deb/.rpm)",
     )
     p_checksum.add_argument("--source-path", required=True, help="Artifact to checksum")
-    p_checksum.add_argument(
-        "--require-existing",
-        action="store_true",
-        help="Fail instead of writing the sidecar when the packager did not emit one",
-    )
     p_checksum.set_defaults(func=cmd_checksum)
 
     args = parser.parse_args(argv)

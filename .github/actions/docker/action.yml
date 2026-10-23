@@ -5,6 +5,9 @@ outputs:
   image-digest:
     description: Immutable digest of the built image
     value: ${{ steps.build.outputs.digest }}
+  image:
+    description: Local tag of the built image (pushed images keep their registry name)
+    value: ${{ inputs.push-image || 'dronecode/qgroundcontrol' }}:${{ inputs.variant }}
 
 inputs:
   target:
@@ -89,14 +92,6 @@ runs:
         cache-from: type=gha,version=2,scope=qgc-docker-${{ inputs.variant }}-${{ inputs.target }}
         cache-to: ${{ github.event_name != 'pull_request' && format('type=gha,version=2,scope=qgc-docker-{0}-{1},mode=max', inputs.variant, inputs.target) || '' }}
 
-    - name: Re-tag pushed image for local run
-      if: inputs.push-image != ''
-      shell: bash
-      env:
-        PUSH_IMAGE: ${{ inputs.push-image }}
-        VARIANT: ${{ inputs.variant }}
-      run: docker tag "${PUSH_IMAGE}:${VARIANT}" "dronecode/qgroundcontrol:${VARIANT}"
-
     - name: Set up cache tooling
       uses: ./.github/actions/setup-python
       with:
@@ -106,7 +101,7 @@ runs:
       id: compilers
       shell: bash
       env:
-        IMAGE: dronecode/qgroundcontrol:${{ inputs.variant }}
+        IMAGE: ${{ inputs.push-image || 'dronecode/qgroundcontrol' }}:${{ inputs.variant }}
       run: python3 tools/ci/compile/docker_helper.py cache-key --image "$IMAGE"
 
     - name: Restore application build caches
@@ -123,17 +118,8 @@ runs:
       shell: bash
       env:
         ENABLE_FUSE: ${{ inputs.fuse }}
-        IMAGE: dronecode/qgroundcontrol:${{ inputs.variant }}
-      run: |
-        ARGS=(run --image "$IMAGE" --build-type Release)
-        [[ "$ENABLE_FUSE" == "true" ]] && ARGS+=(--fuse)
-        python3 "${GITHUB_WORKSPACE}/tools/ci/compile/docker_helper.py" "${ARGS[@]}"
-
-    # Ninja timings are snapshotted first so the Docker build section can include them.
-    - name: Record Ninja build timings
-      if: ${{ !cancelled() && steps.application-build.outcome != '' && steps.application-build.outcome != 'skipped' }}
-      shell: bash
-      run: python3 tools/build_profile.py --build-dir build --output-dir build/build-profile
+        IMAGE: ${{ inputs.push-image || 'dronecode/qgroundcontrol' }}:${{ inputs.variant }}
+      run: python3 "${GITHUB_WORKSPACE}/tools/ci/compile/docker_helper.py" run --image "$IMAGE" --build-type Release
 
     - name: Report application build performance
       id: performance

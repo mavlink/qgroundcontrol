@@ -139,32 +139,22 @@ jobs:
         env:
           MATRIX_PACKAGE_PATTERN: ${{ matrix.package_pattern }}
 
+      # Installing the package needs root in the builder image.
       - name: Validate native package lifecycle
         if: matrix.package_pattern != ''
-        shell: bash
         env:
-          IMAGE: dronecode/qgroundcontrol:${{ matrix.variant }}
+          IMAGE: ${{ steps.docker-build.outputs.image }}
           PACKAGE_PATH: ${{ steps.package.outputs.path }}
-        run: |
-          package_dir=$(dirname "${PACKAGE_PATH}")
-          package_name=$(basename "${PACKAGE_PATH}")
-          docker run --rm --entrypoint /opt/qgc-venv/bin/python \
-            -v "${GITHUB_WORKSPACE}:/project/source:ro" \
-            -v "${package_dir}:/packages:ro" \
-            "${IMAGE}" \
-            /project/source/tools/ci/packaging/validate_native_package.py --install "/packages/${package_name}"
+        run: >-
+          python3 "${GITHUB_WORKSPACE}/tools/ci/compile/docker_helper.py" exec --image "${IMAGE}" --root --
+          tools/ci/packaging/validate_native_package.py --install "${PACKAGE_PATH}"
 
       - name: Verify native package checksum
         id: package-checksum
         if: matrix.package_pattern != ''
-        shell: bash
         env:
           PACKAGE_PATH: ${{ steps.package.outputs.path }}
-        run: |
-          args=(--source-path "${PACKAGE_PATH}")
-          # CPack must emit DEB/RPM checksums; Arch's makepkg has no equivalent, so its sidecar is written here.
-          [[ "${PACKAGE_PATH}" == *.pkg.tar.zst ]] || args+=(--require-existing)
-          python3 "${GITHUB_WORKSPACE}/tools/ci/publish/attest_helper.py" checksum "${args[@]}"
+        run: python3 "${GITHUB_WORKSPACE}/tools/ci/publish/attest_helper.py" checksum --source-path "${PACKAGE_PATH}"
 
       - name: Upload native package
         if: matrix.package_pattern != ''
@@ -181,26 +171,18 @@ jobs:
       - name: Generate CPM dependency SBOM
         if: github.event_name != 'pull_request'
         env:
-          IMAGE: dronecode/qgroundcontrol:${{ matrix.variant }}
+          IMAGE: ${{ steps.docker-build.outputs.image }}
         run: >-
-          docker run --rm --user "$(id -u):$(id -g)" --env HOME=/tmp
-          --entrypoint /opt/qgc-venv/bin/python
-          -v "${GITHUB_WORKSPACE}:/project/source:ro"
-          -v "${GITHUB_WORKSPACE}/build:/project/build:ro"
-          "${IMAGE}" /project/source/tools/ci/security/generate_cpm_sbom.py
-          --build-dir /project/build --require-components > cpm-sbom.cdx.json
+          python3 "${GITHUB_WORKSPACE}/tools/ci/compile/docker_helper.py" exec --image "${IMAGE}" --mount-build --
+          tools/ci/security/generate_cpm_sbom.py --build-dir /project/build --require-components > cpm-sbom.cdx.json
 
       - name: Generate CPM dependency snapshot
         if: github.event_name != 'pull_request' && matrix.variant == 'linux'
         env:
-          IMAGE: dronecode/qgroundcontrol:${{ matrix.variant }}
+          IMAGE: ${{ steps.docker-build.outputs.image }}
         run: >-
-          docker run --rm --user "$(id -u):$(id -g)" --env HOME=/tmp
-          --entrypoint /opt/qgc-venv/bin/python
-          -v "${GITHUB_WORKSPACE}:/project/source:ro"
-          -v "${GITHUB_WORKSPACE}/build:/project/build:ro"
-          "${IMAGE}" /project/source/tools/ci/security/generate_cpm_sbom.py
-          --build-dir /project/build --format spdx --require-components > cpm-sbom.spdx.json
+          python3 "${GITHUB_WORKSPACE}/tools/ci/compile/docker_helper.py" exec --image "${IMAGE}" --mount-build --
+          tools/ci/security/generate_cpm_sbom.py --build-dir /project/build --format spdx --require-components > cpm-sbom.spdx.json
 
       - name: Upload CPM dependency snapshot
         if: github.event_name != 'pull_request' && matrix.variant == 'linux'
@@ -240,7 +222,7 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: anchore/sbom-action@v0
         with:
-          image: dronecode/qgroundcontrol:${{ matrix.variant }}
+          image: ${{ steps.docker-build.outputs.image }}
           format: cyclonedx-json
           output-file: image-sbom.cdx.json
           upload-artifact: false

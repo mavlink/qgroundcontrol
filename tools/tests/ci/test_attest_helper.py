@@ -199,18 +199,22 @@ def test_action_consumes_only_outputs_prepare_emits(build: Path, gh_output: Path
     assert consumed <= set(read_github_file(gh_output))
 
 
-def _checksum(artifact: Path, *extra: str) -> None:
-    assert attest_helper.main(["checksum", "--source-path", str(artifact), *extra]) == 0
+def _checksum(artifact: Path) -> None:
+    assert attest_helper.main(["checksum", "--source-path", str(artifact)]) == 0
 
 
-@pytest.fixture
-def package(tmp_path: Path) -> Path:
-    path = tmp_path / "qgroundcontrol_5.0.0_amd64.deb"
+@pytest.fixture(params=["qgroundcontrol_5.0.0_amd64.deb", "qgroundcontrol-5.0.0-1.x86_64.rpm"])
+def package(tmp_path: Path, request: pytest.FixtureRequest) -> Path:
+    path = tmp_path / request.param
     path.write_bytes(b"package")
     return path
 
 
-def test_checksum_writes_missing_sidecar(package: Path, gh_output: Path) -> None:
+def test_checksum_writes_missing_arch_package_sidecar(tmp_path: Path, gh_output: Path) -> None:
+    # makepkg emits no checksum, unlike CPack's DEB and RPM generators.
+    package = tmp_path / "qgroundcontrol-5.0.0-1-x86_64.pkg.tar.zst"
+    package.write_bytes(b"package")
+
     _checksum(package)
 
     sidecar = package.with_name(f"{package.name}.sha256")
@@ -220,11 +224,11 @@ def test_checksum_writes_missing_sidecar(package: Path, gh_output: Path) -> None
     assert read_github_file(gh_output) == {"checksum": str(sidecar)}
 
 
-def test_checksum_require_existing_fails_without_sidecar(
+def test_checksum_requires_cpack_package_sidecars(
     package: Path, gh_output: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     with pytest.raises(SystemExit) as excinfo:
-        _checksum(package, "--require-existing")
+        _checksum(package)
 
     assert excinfo.value.code == 1
     assert "Checksum sidecar not found" in capsys.readouterr().out
@@ -240,7 +244,7 @@ def test_checksum_require_existing_fails_without_sidecar(
         "\ufeff{upper} *{name}\r\n",
     ],
 )
-def test_checksum_require_existing_accepts_and_canonicalizes_sidecar(
+def test_checksum_accepts_and_canonicalizes_cpack_sidecars(
     package: Path, gh_output: Path, entry: str
 ) -> None:
     digest = hashlib.sha256(b"package").hexdigest()
@@ -249,7 +253,7 @@ def test_checksum_require_existing_accepts_and_canonicalizes_sidecar(
         entry.format(digest=digest, upper=digest.upper(), name=package.name).encode()
     )
 
-    _checksum(package, "--require-existing")
+    _checksum(package)
 
     assert sidecar.read_bytes() == f"{digest}  {package.name}\n".encode()
     assert read_github_file(gh_output) == {"checksum": str(sidecar)}
@@ -267,10 +271,9 @@ def test_checksum_rejects_invalid_sidecar(package: Path, gh_output: Path, entry:
     sidecar = package.with_name(f"{package.name}.sha256")
     sidecar.write_text(entry.format(name=package.name), encoding="utf-8")
 
-    for extra in ((), ("--require-existing",)):
-        with pytest.raises(SystemExit) as excinfo:
-            _checksum(package, *extra)
-        assert excinfo.value.code == 1
+    with pytest.raises(SystemExit) as excinfo:
+        _checksum(package)
+    assert excinfo.value.code == 1
     assert sidecar.read_text(encoding="utf-8") == entry.format(name=package.name)
     assert gh_output.read_text() == ""
 

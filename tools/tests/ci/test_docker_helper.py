@@ -3,15 +3,89 @@
 from __future__ import annotations
 
 import argparse
+import os
+import subprocess
+from typing import TYPE_CHECKING
 
 import pytest
+from ci.compile import docker_helper
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+
+@pytest.fixture
+def docker_runs(monkeypatch: pytest.MonkeyPatch) -> list[list[str]]:
+    calls: list[list[str]] = []
+
+    def run(command, **kwargs):
+        calls.append(command)
+        return subprocess.CompletedProcess(command, 3)
+
+    monkeypatch.setattr(docker_helper.subprocess, "run", run)
+    return calls
+
+
+def test_exec_runs_a_workspace_script_as_the_caller_with_the_build_tree(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, docker_runs: list[list[str]]
+) -> None:
+    monkeypatch.setenv("GITHUB_WORKSPACE", str(tmp_path))
+    argv = ["exec", "--image", "builder:linux", "--mount-build", "--"]
+    argv += ["tools/ci/security/generate_cpm_sbom.py", "--build-dir", "/project/build"]
+    assert docker_helper.main(argv) == 3
+    assert docker_runs == [
+        [
+            "docker",
+            "run",
+            "--rm",
+            "--user",
+            f"{os.getuid()}:{os.getgid()}",
+            "--env",
+            "HOME=/tmp",
+            "--entrypoint",
+            "/opt/qgc-venv/bin/python",
+            "-v",
+            f"{tmp_path}:/project/source:ro",
+            "-v",
+            f"{tmp_path / 'build'}:/project/build:ro",
+            "builder:linux",
+            "/project/source/tools/ci/security/generate_cpm_sbom.py",
+            "--build-dir",
+            "/project/build",
+        ]
+    ]
+
+
+@pytest.mark.parametrize(
+    ("mount_build", "package"),
+    [(False, "/project/source/build/qgc 5.deb"), (True, "/project/build/qgc 5.deb")],
+)
+def test_exec_as_root_passes_host_paths_as_container_paths(
+    tmp_path: Path, docker_runs: list[list[str]], mount_build: bool, package: str
+) -> None:
+    workspace = tmp_path / "source tree"
+    argv = ["exec", "--image", "img", "--root", "--workspace", str(workspace)]
+    argv += ["--mount-build"] * mount_build
+    argv += ["--", "tools/ci/packaging/validate_native_package.py", "--install"]
+    argv += [str(workspace / "build" / "qgc 5.deb"), str(tmp_path / "outside.deb")]
+    docker_helper.main(argv)
+    (command,) = docker_runs
+    assert "--user" not in command
+    assert command[command.index("img") + 1 :] == [
+        "/project/source/tools/ci/packaging/validate_native_package.py",
+        "--install",
+        package,
+        str(tmp_path / "outside.deb"),
+    ]
+
+
+def test_exec_requires_a_workspace(docker_runs: list[list[str]]) -> None:
+    with pytest.raises(SystemExit):
+        docker_helper.main(["exec", "--image", "img", "--", "tools/x.py"])
+    assert docker_runs == []
 
 
 def test_cache_key_runs_inside_the_login_environment(monkeypatch):
-    import subprocess
-
-    from ci.compile import docker_helper
-
     calls = []
     outputs = {}
 
@@ -36,10 +110,6 @@ def test_cache_key_runs_inside_the_login_environment(monkeypatch):
 
 
 def test_cache_key_rejects_invalid_container_output(monkeypatch):
-    import subprocess
-
-    from ci.compile import docker_helper
-
     monkeypatch.setattr(
         docker_helper.subprocess,
         "run",
@@ -51,8 +121,6 @@ def test_cache_key_rejects_invalid_container_output(monkeypatch):
 
 def test_performance_summary_reports_failed_phase(tmp_path, monkeypatch):
     import json
-
-    from ci.compile import docker_helper
 
     (tmp_path / "docker-build-report.json").write_text(
         json.dumps(
@@ -78,8 +146,6 @@ def test_performance_summary_reports_failed_phase(tmp_path, monkeypatch):
 
 def test_performance_summary_reads_container_hit_rates_and_timings(tmp_path, monkeypatch):
     import json
-
-    from ci.compile import docker_helper
 
     (tmp_path / "build-profile").mkdir()
     (tmp_path / "build-profile" / "report.json").write_text(
@@ -118,10 +184,7 @@ def test_performance_summary_reads_container_hit_rates_and_timings(tmp_path, mon
 
 @pytest.mark.parametrize(("failures", "exit_code"), [(1, 0), (2, 1)])
 def test_run_retries_the_build_once(monkeypatch, capsys, failures, exit_code):
-    import subprocess
     from types import SimpleNamespace
-
-    from ci.compile import docker_helper
 
     calls = []
     sleeps = []
@@ -147,3 +210,56 @@ def test_run_retries_the_build_once(monkeypatch, capsys, failures, exit_code):
         "Release",
     ]
     assert sleeps == [30]
+
+
+@pytest.mark.parametrize(("enable_fuse", "fuse"), [("true", ["--fuse"]), ("false", []), ("", [])])
+def test_run_reads_fuse_from_the_environment(monkeypatch, enable_fuse, fuse):
+    calls = []
+    monkeypatch.setenv("ENABLE_FUSE", enable_fuse)
+    monkeypatch.setattr(docker_helper, "run_with_retry", lambda command, **_: calls.append(command))
+    assert docker_helper.main(["run", "--image", "sha", "--build-type", "Release"]) == 0
+    assert calls[0][1:] == ["deploy/docker/run_docker.py", "run", *fuse, "sha", "Release"]
+
+
+def test_summary_records_ninja_timings_before_reporting(tmp_path, monkeypatch, gh_output):
+    import json
+
+    (tmp_path / ".ninja_log").write_text(
+        "# ninja log v5\n0\t4000\t0\tsrc/a.cc.o\tabc\n0\t1000\t0\tqgc\tdef\n"
+    )
+    summaries = []
+    monkeypatch.setattr(docker_helper, "write_step_summary", summaries.append)
+    assert docker_helper.main(["summary", "--build-dir", str(tmp_path)]) == 0
+    # A failed container may leave no report; the timings are still kept for upload.
+    assert {path.name for path in (tmp_path / "build-profile").iterdir()} == {
+        "ninja.log",
+        "report.json",
+        "report.md",
+    }
+    assert summaries == []
+
+    (tmp_path / "docker-build-report.json").write_text(
+        json.dumps({"success": True, "build_success": True, "seconds": {}, "cpm_bytes": 0})
+    )
+    assert docker_helper.main(["summary", "--build-dir", str(tmp_path)]) == 0
+    assert "| Build steps run | 2 |" in summaries[0]
+
+
+def test_summary_reports_even_when_timings_cannot_be_recorded(
+    tmp_path, monkeypatch, gh_output, capsys
+):
+    import json
+
+    (tmp_path / ".ninja_log").write_text("not a ninja log\n")
+    (tmp_path / "docker-build-report.json").write_text(
+        json.dumps({"success": True, "build_success": True, "seconds": {}, "cpm_bytes": 0})
+    )
+
+    def fail(*_args, **_kwargs):
+        raise ValueError("bad log")
+
+    monkeypatch.setattr(docker_helper, "write_snapshot", fail)
+    assert docker_helper.main(["summary", "--build-dir", str(tmp_path)]) == 0
+    assert "::warning::Cannot write Ninja build timings: bad log" in capsys.readouterr().out
+    # The cache save step reads this output.
+    assert "build_success=true" in gh_output.read_text()

@@ -6,8 +6,12 @@ import hashlib
 import json
 import os
 import re
+import shlex
 import subprocess
-import sys
+
+import pytest
+from ci.compile import docker_helper
+from ci.publish import attest_helper
 
 from ..._helpers import REPO_ROOT, get_step, get_steps, load_action, load_workflow
 
@@ -247,76 +251,113 @@ def test_docker_workflow_requires_and_validates_native_packages() -> None:
     assert "--top-level" in package["run"]
     lifecycle = get_step(steps, "Validate native package lifecycle")
     assert lifecycle["env"]["PACKAGE_PATH"] == "${{ steps.package.outputs.path }}"
-    assert "validate_native_package.py --install" in lifecycle["run"]
     checksum = get_step(steps, "Verify native package checksum")
     assert checksum["id"] == "package-checksum"
     upload = get_step(steps, "Upload native package")
     assert "${{ steps.package-checksum.outputs.checksum }}" in upload["with"]["path"].splitlines()
 
 
-def test_docker_package_validation_invokes_python(tmp_path) -> None:
-    workflow = load_workflow("docker.yml")
-    script = next(
-        step["run"]
-        for step in workflow["jobs"]["build"]["steps"]
-        if step.get("name") == "Validate native package lifecycle"
+def _docker_step_argv(name: str, env: dict[str, str]) -> tuple[list[str], str]:
+    """Expand a docker.yml build step's `python3 <script> ...` command; return its argv and output file."""
+    step = get_step(get_steps(load_workflow("docker.yml"), "build"), name)
+    values = {"GITHUB_WORKSPACE": str(REPO_ROOT), **env}
+    assert set(step.get("env", {})) | {"GITHUB_WORKSPACE"} >= set(
+        re.findall(r"\$\{(\w+)\}", step["run"])
     )
-    captured = subprocess.run(
-        ["bash", "-e", "-c", 'docker() { printf "%s\\0" "$@"; };\n' + script],
-        env={
-            **os.environ,
-            "GITHUB_WORKSPACE": str(tmp_path / "source tree"),
-            "PACKAGE_PATH": str(tmp_path / "packages/qgc test.deb"),
-            "IMAGE": "qgc-test:latest",
-        },
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    args = captured.stdout.split("\0")[:-1]
-    entrypoint = args[args.index("--entrypoint") + 1]
-    command = args[args.index("qgc-test:latest") + 1 :]
-    # Execute Docker's entrypoint + command locally with a harmless validator stand-in.
-    validator = tmp_path / "validator.py"
-    validator.write_text("import json, sys\nprint(json.dumps(sys.argv[1:]))\n")
-    paths = {
-        "/opt/qgc-venv/bin/python": sys.executable,
-        "/project/source/tools/ci/packaging/validate_native_package.py": str(validator),
-    }
-    result = subprocess.run(
-        [paths.get(arg, arg) for arg in [entrypoint, *command]],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    assert json.loads(result.stdout) == ["--install", "/packages/qgc test.deb"]
+    command, _, output = step["run"].partition(" > ")
+    argv = shlex.split(re.sub(r"\$\{(\w+)\}", lambda match: values[match[1]], command))
+    assert argv[0] == "python3"
+    return argv[1:], output.strip()
 
 
-def test_docker_package_checksum_requires_cpack_sidecars_and_writes_arch(tmp_path) -> None:
-    workflow = load_workflow("docker.yml")
-    script = next(
-        step["run"]
-        for step in workflow["jobs"]["build"]["steps"]
-        if step.get("name") == "Verify native package checksum"
-    )
+def _builder_command(monkeypatch, argv: list[str]) -> list[str]:
+    """Run docker_helper.py's argv and return the docker command it would run."""
+    assert argv[0] == f"{REPO_ROOT}/tools/ci/compile/docker_helper.py"
+    commands = []
 
+    def run(command, **_):
+        commands.append(command)
+        return subprocess.CompletedProcess(command, 0)
+
+    monkeypatch.setenv("GITHUB_WORKSPACE", str(REPO_ROOT))
+    monkeypatch.setattr(docker_helper.subprocess, "run", run)
+    assert docker_helper.main(argv[1:]) == 0
+    (command,) = commands
+    return command
+
+
+def test_docker_package_validation_installs_as_root_in_the_builder(monkeypatch) -> None:
+    step = get_step(
+        get_steps(load_workflow("docker.yml"), "build"), "Validate native package lifecycle"
+    )
+    assert step["env"]["IMAGE"] == "${{ steps.docker-build.outputs.image }}"
+    package = REPO_ROOT / "build/qgc test.deb"
+    argv, output = _docker_step_argv(
+        "Validate native package lifecycle",
+        {"IMAGE": "qgc-test:latest", "PACKAGE_PATH": str(package)},
+    )
+    assert output == ""
+    assert _builder_command(monkeypatch, argv) == [
+        "docker",
+        "run",
+        "--rm",
+        "--entrypoint",
+        "/opt/qgc-venv/bin/python",
+        "-v",
+        f"{REPO_ROOT}:/project/source:ro",
+        "qgc-test:latest",
+        "/project/source/tools/ci/packaging/validate_native_package.py",
+        "--install",
+        "/project/source/build/qgc test.deb",
+    ]
+
+
+@pytest.mark.parametrize(
+    ("name", "output", "args"),
+    [
+        ("Generate CPM dependency SBOM", "cpm-sbom.cdx.json", []),
+        ("Generate CPM dependency snapshot", "cpm-sbom.spdx.json", ["--format", "spdx"]),
+    ],
+)
+def test_docker_cpm_sboms_read_the_build_tree_where_it_was_built(
+    monkeypatch, name: str, output: str, args: list[str]
+) -> None:
+    step = get_step(get_steps(load_workflow("docker.yml"), "build"), name)
+    assert step["if"].startswith("github.event_name != 'pull_request'")
+    assert step["env"]["IMAGE"] == "${{ steps.docker-build.outputs.image }}"
+    argv, redirect = _docker_step_argv(name, {"IMAGE": "qgc-test:latest"})
+    assert redirect == output
+    command = _builder_command(monkeypatch, argv)
+    assert command[command.index("--user") + 1] == f"{os.getuid()}:{os.getgid()}"
+    assert command[command.index("qgc-test:latest") - 4 : command.index("qgc-test:latest")] == [
+        "-v",
+        f"{REPO_ROOT}:/project/source:ro",
+        "-v",
+        f"{REPO_ROOT}/build:/project/build:ro",
+    ]
+    assert command[command.index("qgc-test:latest") + 1 :] == [
+        "/project/source/tools/ci/security/generate_cpm_sbom.py",
+        "--build-dir",
+        "/project/build",
+        *args,
+        "--require-components",
+    ]
+
+
+def test_docker_package_checksum_requires_cpack_sidecars_and_writes_arch(
+    tmp_path, gh_output
+) -> None:
     def run(package):
-        output = tmp_path / "github_output"
-        output.write_text("")
-        result = subprocess.run(
-            ["bash", "-e", "-o", "pipefail", "-c", 'python3() { "$TEST_PYTHON" "$@"; }\n' + script],
-            env={
-                **os.environ,
-                "TEST_PYTHON": sys.executable,
-                "GITHUB_WORKSPACE": str(REPO_ROOT),
-                "GITHUB_OUTPUT": str(output),
-                "PACKAGE_PATH": str(package),
-            },
-            check=False,
-            capture_output=True,
-            text=True,
+        gh_output.write_text("")
+        argv, _ = _docker_step_argv(
+            "Verify native package checksum", {"PACKAGE_PATH": str(package)}
         )
-        return result, output.read_text()
+        assert argv[0] == f"{REPO_ROOT}/tools/ci/publish/attest_helper.py"
+        try:
+            attest_helper.main(argv[1:])
+        except SystemExit as exit_:
+            return exit_.code, gh_output.read_text()
+        return 0, gh_output.read_text()
 
     packages = tmp_path / "build dir"
     packages.mkdir()
@@ -325,30 +366,21 @@ def test_docker_package_checksum_requires_cpack_sidecars_and_writes_arch(tmp_pat
         package.write_bytes(name.encode())
         sidecar = packages / f"{name}.sha256"
 
-        result, outputs = run(package)
-        assert result.returncode != 0
-        assert "Checksum sidecar not found" in result.stdout
+        assert run(package) == (1, "")
         assert not sidecar.exists()
-        assert outputs == ""
 
         cpack_sidecar = f"{hashlib.sha256(name.encode()).hexdigest()}  {name}\n"
         sidecar.write_text(cpack_sidecar)
-        result, outputs = run(package)
-        assert result.returncode == 0, result.stdout + result.stderr
-        assert outputs == f"checksum={sidecar}\n"
+        assert run(package) == (0, f"checksum={sidecar}\n")
         assert sidecar.read_text() == cpack_sidecar
 
         sidecar.write_text(f"{'0' * 64}  {name}\n")
-        result, outputs = run(package)
-        assert result.returncode != 0
-        assert "SHA-256 checksum mismatch" in result.stdout
+        assert run(package) == (1, "")
 
     arch = packages / "qgroundcontrol-5.0.0-1-x86_64.pkg.tar.zst"
     arch.write_bytes(b"arch")
-    result, outputs = run(arch)
-    assert result.returncode == 0, result.stdout + result.stderr
     sidecar = packages / f"{arch.name}.sha256"
-    assert outputs == f"checksum={sidecar}\n"
+    assert run(arch) == (0, f"checksum={sidecar}\n")
     assert sidecar.read_text() == f"{hashlib.sha256(b'arch').hexdigest()}  {arch.name}\n"
 
 

@@ -48,7 +48,7 @@ and Ruff skips `build` directories.
 | `runner/runner_image.py` | Check `runner-images.yml`'s branch and AWS settings, then output, verify, promote, and retire QGC runner AMIs |
 | `runner/validate_runner_configs.py` | `packer-validate` and `runs-on-lint` hooks: validate the runner image Packer template and lint the RunsOn configuration with the Packer and RunsOn CLI pinned in `build-config.json` |
 | `compile/cmake_helper.py` | Run CI configure, build, and CTest steps with standard arguments and timing, and write the job summary's Build section (result, duration, toolchain, compiler and moc cache hit rates, slowest build steps) |
-| `compile/docker_helper.py` | Run Docker builds and report compiler identities, timings, and cache statistics |
+| `compile/docker_helper.py` | Run Docker builds and repository scripts in builder images, and report compiler identities, timings, and cache statistics |
 | `packaging/find_artifact.py` | Find exactly one build artifact by glob pattern (fails on none or several), optionally copying it |
 | `packaging/validate_native_package.py` | Validate native package identity, version, contents, and installed layout |
 | `packaging/verify_executable.py` | Boot-test a built QGroundControl executable, AppImage, or DMG |

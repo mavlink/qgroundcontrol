@@ -23,7 +23,7 @@ cannot load actions from the PR merge commit (zizmor's `self-repository` audit i
 | `cmake-configure` | Configure QGroundControl from a required CMake preset, which sets the build type and testing; requires `qt-cmake` unless `use-qt-cmake` is `false` |
 | `debug-runner` | Open an actor-only SSH session for failed manual runs (callers gate it and set a step timeout) |
 | `deploy-docs` | Deploy built documentation to an external GitHub Pages repository |
-| `docker` | Build a QGC builder image with Buildx and run the containerized application build |
+| `docker` | Build (and optionally push) a QGC builder image with Buildx, run the containerized application build, and report its timings and cache statistics; outputs the image's local tag |
 | `free-disk-space` | Wrap `endersonmenezes/free-disk-space` with QGC's shared defaults |
 | `install-dependencies` | Install platform build dependencies (Linux apt packages, macOS Homebrew and GStreamer, Windows MSVC and NSIS; macOS and Windows make three attempts, killing a hung one's process tree) but not the CMake, Ninja, ccache, and mold that `build-setup` pins; on Linux, `category` installs a single `install_dependencies` category |
 | `qt-install` | Reuse a compatible preinstalled Qt SDK or install `build-config.json`'s Qt version with QGC's installer or aqtinstall (`QGC_QT_INSTALLER`, else QGC's), with caching; outputs the version, installer, and source |
