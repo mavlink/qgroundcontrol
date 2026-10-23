@@ -10,4 +10,14 @@ class PX4BatteryUITest : public VehicleConfigUITestBase
 private slots:
     void _lateParamShownAndFilterChosenOnceLoaded();
     void _filterTogglesUnusedBattery();
+    void _unclaimedBatteryNoteDoesNotWidenPage();
+    void _rowSeparatorsFollowTheShownRows();
+    void _reportedBatteryDotFollowsTheReportedVoltage();
+
+private:
+    /// Sets BAT1_SOURCE and accepts the reboot notice that follows. Check QTest::currentTestFailed() afterwards.
+    void _setBattery1Source(Vehicle* vehicle, int source);
+
+    /// Opens the Battery page from the Fly view. Check QTest::currentTestFailed() afterwards.
+    void _openBatteryPage();
 };

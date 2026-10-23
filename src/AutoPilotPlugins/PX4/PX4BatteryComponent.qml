@@ -67,6 +67,11 @@ SetupPage {
         return group.rows.some(row => _rowShown(row))
     }
 
+    function _hasShownRowAbove(row) {
+        const group = _groups.find(candidate => candidate.rows.some(other => other.id === row.id))
+        return !!group && ConfigRows.hasShownRowAbove(group.rows, row, _rowShown)
+    }
+
     function _rowInputs(row) {
         return row.sourceParam ? BatteryRows.batteryInputs(_rawValue(row.sourceParam), _rawValue("UAVCAN_SUB_BAT"),
                                                            _rawValue("UAVCAN_ENABLE"), _estimatorOverwrite) : []
@@ -74,10 +79,13 @@ SetupPage {
 
     function _sourceDescription(inputs) {
         if (inputs.indexOf("canFiltered") >= 0) {
-            return qsTr("DroneCAN data filtered through the battery estimate below.")
+            // Without a source, the page cannot tell whether a DroneCAN battery uses this slot, so it points nowhere
+            return inputs.indexOf("external") >= 0 ?
+                       qsTr("DroneCAN data filtered through the battery estimate below. Its live values are listed under Other Reported Batteries once the vehicle reports it.") :
+                       qsTr("DroneCAN data filtered through the battery estimate below.")
         }
         if (inputs.indexOf("external") >= 0) {
-            return qsTr("Reported by MAVLink, DroneCAN or a driver, which estimates the charge itself.")
+            return qsTr("Reported by MAVLink, DroneCAN or a driver, which estimates the charge itself. Its live values are listed under Other Reported Batteries once the vehicle reports it.")
         }
         if (inputs.indexOf("escs") >= 0) {
             return qsTr("Voltage and current from ESC telemetry.")
@@ -195,7 +203,7 @@ SetupPage {
                         title:          row.title
                         params:         BatteryRows.usedParams(row, _inputs)
                         active:         _rowActive(row)
-                        showSeparator:  index > 0
+                        showSeparator:  _hasShownRowAbove(row)
                         visible:        _rowShown(row)
 
                         required property var modelData
@@ -268,26 +276,41 @@ SetupPage {
                     }
 
                     ConfigNote {
-                        text: qsTr("Batteries the vehicle reports that are not linked to a battery above, such as External sources. DroneCAN batteries report their node ID minus one, and MAVLink batteries 255.")
+                        // A wrapped label reports its unwrapped width as its implicit width, which would widen the page
+                        Layout.preferredWidth:  0
+                        text: qsTr("Reported batteries the page cannot match to a battery above. A battery set to External can report under any ID, so it appears here.")
                     }
 
                     Repeater {
                         model: _otherTelemetry
 
-                        RowLayout {
-                            objectName: "battery_other_" + modelData.id.rawValue
-                            spacing:    ScreenTools.defaultFontPixelWidth * 2
+                        ConfigRow {
+                            id:             otherRow
+                            objectName:     "battery_other_" + modelData.id.rawValue
+                            title:          qsTr("ID %1").arg(modelData.id.rawValue)
+                            active:         !isNaN(otherRow.modelData.voltage.rawValue)
+                            showSeparator:  index > 0
 
                             required property var modelData
+                            required property int index
 
-                            QGCLabel {
-                                text:       qsTr("ID %1").arg(modelData.id.rawValue)
-                                font.bold:  true
-                            }
+                            cellsData: Repeater {
+                                model: [
+                                    { "caption": qsTr("Voltage"), "fact": otherRow.modelData.voltage },
+                                    { "caption": qsTr("Charge"),  "fact": otherRow.modelData.percentRemaining },
+                                    { "caption": qsTr("Current"), "fact": otherRow.modelData.current }
+                                ]
 
-                            QGCLabel {
-                                text:           _telemetryText(modelData)
-                                font.family:    ScreenTools.fixedFontFamily
+                                QGCCaptionCell {
+                                    required property var modelData
+
+                                    caption: modelData.caption
+
+                                    QGCLabel {
+                                        text:           modelData.fact.valueString + " " + modelData.fact.units
+                                        font.family:    ScreenTools.fixedFontFamily
+                                    }
+                                }
                             }
                         }
                     }
