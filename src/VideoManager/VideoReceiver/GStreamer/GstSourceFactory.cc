@@ -623,21 +623,31 @@ bool linkSourceToParser(GstElement* bin, GstElement* upstream, GstElement* binPa
 bool linkUdpRtpToDepayAndParser(GstElement* bin, GstElement* source, GstElement* depay, GstElement* parser,
                                 const Config& config, guint latencyMs)
 {
-    if (config.jitterBuffer == JitterBuffer::None) {
-        if (!gst_element_link_many(source, depay, parser, nullptr)) {
-            qCWarning(GstSourceFactoryLog) << "gst_element_link_many(source, depay, parser) failed";
+    GstElement* upstream = source;
+    if (config.jitterBuffer != JitterBuffer::None) {
+        GstElement* const buffer = addJitterBuffer(bin, latencyMs);
+        if (!buffer) {
             return false;
         }
-        return true;
+        if (!gst_element_link(source, buffer)) {
+            qCWarning(GstSourceFactoryLog) << "gst_element_link(source, rtpjitterbuffer) failed";
+            return false;
+        }
+        upstream = buffer;
     }
 
-    GstElement* buffer = addJitterBuffer(bin, latencyMs);
-    if (!buffer) {
+    if (!gst_element_link(upstream, depay)) {
+        qCWarning(GstSourceFactoryLog) << "gst_element_link(upstream, depay) failed";
         return false;
     }
 
-    if (!gst_element_link_many(source, buffer, depay, parser, nullptr)) {
-        qCWarning(GstSourceFactoryLog) << "gst_element_link_many(source, rtpjitterbuffer, depay, parser) failed";
+    // Left to negotiate, rtph265depay picks hvc1, whose caps it only sets once in-band VPS/SPS/PPS arrive, so its
+    // segment can go out first (GStreamer 1.28 warns) and the parameter-set gate, which handles byte-stream, stands
+    // down. Byte-stream caps are set as soon as the RTP caps arrive.
+    const GstCapsPtr byteStream =
+        adoptCaps(gst_caps_from_string("video/x-h265, stream-format=(string)byte-stream, alignment=(string)au"));
+    if (!byteStream || !gst_element_link_filtered(depay, parser, byteStream.get())) {
+        qCWarning(GstSourceFactoryLog) << "gst_element_link_filtered(depay, parser, byte-stream) failed";
         return false;
     }
 
