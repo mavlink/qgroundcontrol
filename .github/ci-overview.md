@@ -53,7 +53,7 @@
 | `clusterfuzzlite.yml` | MAVLink parser fuzzing on PRs |
 | `pre-commit.yml` | pre-commit hooks (run by prek) on changed files |
 | `docs-lint.yml` | Markdown, spelling, and prose hooks for changed English docs |
-| `ci-scripts.yml` | Lints workflows (actionlint reads `.github/actionlint.yml`, which lists the repository `vars`) and `.github/runs-on.yml`, validates runner images and the Renovate config, and runs Python lint and the CI Python tests (see [Tests](#tests)) |
+| `ci-scripts.yml` | Lints `.github/runs-on.yml`, validates runner images and the Renovate config, and runs the CI Python tests (see [Tests](#tests)); workflow and Python lint run in `pre-commit.yml` |
 | `check-links.yml` | Markdown link validation (lychee) |
 | `translation-validation.yml` | Changed TS message placeholder validation |
 | `pr-checks.yml` | PR title validation and size/file labels |
@@ -771,9 +771,12 @@ configuration:
   parallel;
   all run in random order, with a 60 s per-test timeout; a failing run
   prints the `--randomly-seed` that reproduces its order (see
-  [`tools/ci/README.md`](../tools/ci/README.md#tests));
-- a lint job with Ruff check and format, Pyright, the `tools/` import-linter layers (`ci` on top,
-  `common` at the base), and `tools/validate_configs.py`.
+  [`tools/ci/README.md`](../tools/ci/README.md#tests)).
+
+Python and workflow lint run as `pre-commit.yml` hooks: Ruff check and format, Pyright (over the
+whole project whenever a Python file changes, so a break in an unchanged module still fails), the
+`tools/` import-linter layers (`ci` on top, `common` at the base), `tools/validate_configs.py`, and
+actionlint (which reads `.github/actionlint.yml`, listing the repository `vars`) with zizmor.
 
 The test jobs use sparse checkouts. `empty_parameter_set_mark = "fail_at_collect"` in
 `tools/pyproject.toml` makes a test that parametrizes over repository files (such as the
@@ -788,4 +791,4 @@ Run the same suite locally with `just test-python`, and the lint hooks with `jus
 (narrower calls keep already-installed groups) and adds that environment to `PATH`. CMake uses the
 same interpreter, and MAVLink generation uses its preinstalled dependencies without installing
 packages during a build. Ruff, Pyright, clang-format, and import-linter hooks run from the locked
-`lint` group, so the hooks, CI Scripts, and `tools/.venv` share one version.
+`lint` group, so the hooks and `tools/.venv` share one version.

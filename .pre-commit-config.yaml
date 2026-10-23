@@ -129,8 +129,10 @@ repos:
         language: system
         types_or: [python, pyi]
         require_serial: true
-        # Same paths as pyrightconfig.json's include
+        # Same paths as pyrightconfig.json's include. Checks the whole project, so a change that breaks an
+        # unchanged module's types still fails.
         files: ^(tools|test|deploy|\.github/runner-images|\.clusterfuzzlite)/.*\.py$
+        pass_filenames: false
 
       - id: import-linter
         name: import-linter (tools contracts)
@@ -164,7 +166,7 @@ repos:
         types: [file]
 
   # GitHub Actions linting
-  # Fork used by reviewdog/action-actionlint in CI; upstream lacks newer syntax such as cache-mode.
+  # Fork of actionlint; upstream lacks newer syntax such as cache-mode.
   - repo: https://github.com/kjanat/actionlint
     rev: v1.17.0
     hooks:

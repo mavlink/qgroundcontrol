@@ -41,39 +41,6 @@ permissions:
   contents: read
 
 jobs:
-  lint-workflows:
-    name: Lint Workflows
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    # checks: write scoped here: only actionlint reports via github-pr-check.
-    permissions:
-      contents: read
-      checks: write
-    steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@v2
-        with:
-          egress-policy: audit
-
-      - name: Checkout
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 1
-          sparse-checkout: |
-            .github/actionlint.yml
-            .github/workflows
-            .github/actions
-          sparse-checkout-cone-mode: false
-          persist-credentials: false
-
-      - name: Run actionlint
-        uses: reviewdog/action-actionlint@v1
-        with:
-          reporter: github-pr-check
-          filter_mode: added
-          fail_level: error
-          level: warning
-
   validate-runner-images:
     name: Validate Runner Images
     runs-on: ubuntu-latest
@@ -317,34 +284,3 @@ jobs:
       # test_read_config.py reads the Dockerfile.
       - name: Run Windows-marked tests
         run: pytest -q -n 2 --durations=15 -m windows tools/tests
-
-  lint-python:
-    name: Lint Python
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@v2
-        with:
-          egress-policy: audit
-      - name: Checkout
-        uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-      # simulation lets Pyright resolve pymavlink in tools/simulation.
-      - name: Setup Python
-        uses: ./.github/actions/setup-python
-        with:
-          groups: dev,simulation
-          python-version: '3.10'
-      - name: Validate configuration
-        run: python tools/validate_configs.py
-      - name: Ruff
-        run: |
-          ruff check tools .github/runner-images .clusterfuzzlite deploy test/ADSB/ADSB_Simulator.py
-          ruff format --check tools .github/runner-images .clusterfuzzlite deploy test/ADSB/ADSB_Simulator.py
-      - name: Pyright
-        run: pyright
-      - name: Import boundaries
-        working-directory: tools
-        run: lint-imports
