@@ -1,0 +1,45 @@
+# git-cliff configuration for drafting release notes: release.yml and `just release-notes` run it
+# through tools/ci/publish/release_notes.py. Entries keep the full Conventional Commits subject so
+# a draft section can be pasted under the release's "## Changes in vX.Y.Z" heading.
+
+[changelog]
+header = ""
+body = """
+## Changes in {{ version }}
+{% for group, commits in commits | group_by(attribute="group") %}
+### {{ group | striptags | trim }}
+{% for commit in commits %}
+- {% if commit.breaking %}**BREAKING** {% endif %}{{ commit.raw_message | split(pat="\n") | first | trim }}
+{%- endfor %}
+{% endfor %}
+"""
+footer = ""
+trim = true
+
+[git]
+conventional_commits = true
+# Commits that are not conventional land in "Other Changes" instead of being dropped.
+filter_unconventional = false
+split_commits = false
+protect_breaking_commits = true
+# Release tags only: version markers such as v5.2.0-dev and release candidates are not releases.
+tag_pattern = "^v[0-9]+\\.[0-9]+\\.[0-9]+$"
+topo_order = true
+topo_order_commits = true
+sort_commits = "newest"
+commit_preprocessors = [
+  # Drop trailing PR references such as "(#15323)" from the subject; release notes list subjects only.
+  { pattern = '^([^\n]*?)(?:\s*\(#[0-9]+\))+(\n|$)', replace = "${1}${2}" },
+]
+# Group comments order the sections; the type list matches the commit-msg hook in .pre-commit-config.yaml.
+commit_parsers = [
+  { message = '^Merge ', skip = true },
+  { message = '^feat(\([^)]+\))?!?:', group = "<!-- 0 -->Features" },
+  { message = '^fix(\([^)]+\))?!?:', group = "<!-- 1 -->Bug Fixes" },
+  { message = '^perf(\([^)]+\))?!?:', group = "<!-- 2 -->Performance" },
+  { message = '^(revert(\([^)]+\))?!?:|Revert ")', group = "<!-- 3 -->Reverts" },
+  # Breaking changes of the otherwise hidden types stay visible.
+  { field = "breaking", pattern = "true", group = "<!-- 4 -->Other Changes" },
+  { message = '^(docs|style|chore|refactor|test|build|ci|deps)(\([^)]+\))?!?:', skip = true },
+  { message = '.*', group = "<!-- 4 -->Other Changes" },
+]
