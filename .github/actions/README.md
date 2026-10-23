@@ -14,12 +14,12 @@ cannot load actions from the PR merge commit (zizmor's `self-repository` audit i
 
 | Action | Purpose |
 | --- | --- |
-| `android-emulator-test` | Boot a fresh x86_64 AVD, install and launch the APK, and collect failure diagnostics |
+| `android-emulator-test` | Boot a fresh x86_64 AVD, install and launch the APK, and collect failure diagnostics, linked from the job summary |
 | `attest-and-upload` | Checksum, SBOM scan, provenance and SBOM attestations, GitHub artifact upload, and optional AWS publish |
 | `aws-credentials` | Configure AWS credentials via OIDC (preferred) or static keys in one step |
 | `build-action` | Build a JavaScript action from source when no release ships a rebuilt `dist/` (kept intentionally; no current callers) |
-| `build-setup` | Platform build setup: `build_setup.py` validates the inputs and plans every mode-dependent value, then runner preparation, Python, the CMake and Ninja pinned in `build-config.json`, caches (skipped with `build-cache: 'false'`), Xcode/MSVC, Java and the Android SDK/NDK, and Qt for desktop, Android (each requested ABI), or iOS; ends with the job summary's Setup section |
-| `cache` | Plan caches with `cache_plan.py`, install ccache/mold, and restore compiler, moc, CPM, and GStreamer SDK caches (each restore result is an output) |
+| `build-setup` | Platform build setup: `build_setup.py` validates the inputs and plans every mode-dependent value, then runner preparation, Python, the CMake and Ninja pinned in `build-config.json`, caches (skipped with `build-cache: 'false'`), Xcode/MSVC, Java and the Android SDK/NDK, and Qt for desktop, Android (each requested ABI), or iOS; ends with the job summary's Setup section, also after a failed step, which it names |
+| `cache` | Plan caches with `cache_plan.py`, install ccache/mold, and restore compiler, moc, CPM, and GStreamer SDK caches (each restore result, and the compiler and moc caches' matched key, is an output) |
 | `cmake-build` | Build through `cmake_helper.py`, save build caches after success, upload and link Ninja reports, annotate build errors and PR warnings, and write the job summary's Build section |
 | `cmake-configure` | Configure QGroundControl from a required CMake preset, which sets the build type and testing; requires `qt-cmake` unless `use-qt-cmake` is `false`; writes the job summary's Configure section and, after a failure, annotates the first CMake error and uploads and links the configure logs |
 | `debug-runner` | Open an actor-only SSH session for failed manual runs (callers gate it and set a step timeout) |
@@ -33,7 +33,7 @@ cannot load actions from the PR merge commit (zizmor's `self-repository` audit i
 | `save-build-cache` | Save compiler and moc caches once per job after successful compilation |
 | `setup-python` | Detect the cache backend, set up uv and Python, and sync `tools/uv.lock` groups into `tools/.venv` |
 | `test-phase` | Run the Unit and Integration suites through `run-unit-tests`, one job-summary section each |
-| `verify-executable` | Boot-test a built binary, AppImage, DMG, or Windows executable from its directory |
+| `verify-executable` | Boot-test a built binary, AppImage, DMG, or Windows executable from its directory; a failure uploads its diagnostics (7 days), linked from the job summary |
 
 ## External Action Reference Policy
 
@@ -113,3 +113,15 @@ an additional security problem.
   still upload the checksum, dependency SBOM, and build identity. `attest_helper.py prepare`
   resolves the attestation subject (`subject-name`, defaulting to `package-name`) and whether to
   publish to AWS (`upload-aws`, credentials present, and a push or tag dispatch in `mavlink`).
+- **`verify-executable`** outputs a per-package diagnostics directory and artifact name before
+  booting (job, runner OS and architecture, package, a digest of its path, and run attempt, so
+  several boot tests in one job or matrix never collide). A failed boot keeps the output there;
+  a timeout first captures stacks (`sample` on macOS, `gdb` or `eu-stack` through passwordless
+  `sudo` on Linux, a minidump on Windows); macOS adds the run's `DiagnosticReports` crash reports
+  and prints the newest one's first 60 lines; Windows sets `QGC_CRASH_DUMP_DIR` there for QGC's
+  own crash minidump and adds the executable's PDB beside it (MSVC Release links write one, see
+  `cmake/Toolchain.cmake`). The directory is
+  uploaded for seven days only after a failure and linked below the Boot test section, which
+  also shows the last log line and the last 40 lines of output.
+- **`android-emulator-test`** links its `emulator-diagnostics-*` artifact from the job summary
+  after a failure.

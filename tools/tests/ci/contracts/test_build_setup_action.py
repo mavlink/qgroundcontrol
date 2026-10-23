@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import re
 
+from ci.reporting.setup_summary import STEP_LABELS
 from ci.runner.build_setup import SetupInputs, plan_setup
 from common.build_config import load_build_config
 
@@ -58,3 +59,19 @@ def test_gradle_hashes_the_workspace_before_the_cpm_cache_and_qt_are_restored() 
     for index, step in enumerate(steps):
         if step.get("uses") in {"./.github/actions/qt-install", "./.github/actions/cache"}:
             assert gradle < index, names[index]
+
+
+def test_setup_summary_runs_after_a_failed_step_and_names_it() -> None:
+    # Without a status function a failed Qt or SDK install would also skip the Setup section, the
+    # only place the job summary shows the runner's image and instance.
+    *setup, summary = get_steps(load_action("build-setup"))
+    assert summary["name"] == "Summarize setup"
+    assert summary["if"] == "${{ !cancelled() }}"
+    assert summary["env"]["SETUP_STEPS"] == "${{ toJSON(steps) }}"
+    # Only steps with an id have an outcome; the disk watch never fails the job.
+    watch, *rest = setup
+    assert watch["uses"] == "./.github/actions/disk-watch"
+    assert "id" not in watch
+    assert [step.get("id") for step in rest] == list(STEP_LABELS)
+    for step in rest:
+        assert STEP_LABELS[step["id"]] == step.get("name", STEP_LABELS[step["id"]])

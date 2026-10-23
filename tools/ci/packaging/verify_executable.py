@@ -4,14 +4,20 @@
 Resolves paths, sets permissions, and runs the binary with --simple-boot-test (offscreen, or under
 xvfb-run for AppImages on Linux without a display). With --type dmg, attaches the disk image,
 verifies the app bundle inside it, and detaches it.
+
+A failed boot keeps its diagnostics in a per-package directory, named by the diagnostics-dir and
+diagnostics-name step outputs: the output, stacks captured before a timeout kill, macOS crash
+reports, and on Windows QGC's crash minidumps (QGC_CRASH_DUMP_DIR) with the executable's PDB.
 """
 
 from __future__ import annotations
 
 import argparse
 import contextlib
+import hashlib
 import os
 import platform
+import re
 import shutil
 import signal
 import stat
@@ -27,21 +33,54 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 import _bootstrap as _bootstrap
 from common.cmake import read_cache_var
 from common.format import format_bytes, format_duration
-from common.gh_actions import env_default, gh_error, gh_group, gh_warning, write_step_summary
-from common.markdown import code_span, summary_section
-from common.proc import output_text, run_captured
+from common.gh_actions import (
+    env_default,
+    gh_error,
+    gh_group,
+    gh_warning,
+    is_ci,
+    write_github_output,
+    write_step_summary,
+)
+from common.markdown import code_block, code_span, summary_section
+from common.proc import output_text, run_captured, wait_until
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Callable, Iterator
 
 BOOT_TIMEOUT_EXIT_CODE = 124
 DRAIN_TIMEOUT_SECONDS = 10
 TOOL_TIMEOUT_SECONDS = 120
+STACK_TIMEOUT_SECONDS = 30
+CRASH_REPORT_WAIT_SECONDS = 15
+CRASH_REPORT_HEAD_LINES = 60
+OUTPUT_TAIL_LINES = 40
+LAST_LINE_CHARS = 300
 EXE_TYPES = ("binary", "appimage", "dmg", "exe")
 # Startup phases worth seeing when a boot is slow, hangs or crashes; each line carries QGC's elapsed time.
 # QGC's own category filter decides debug output, so these go through --logging rather than QT_LOGGING_RULES.
 BOOT_LOGGING_CATEGORIES = "API.QGCApplication,Video.VideoManager,Video.GStreamer"
 SHIPPED_PLUGIN_DIR = "boot-test-gstreamer-plugins"
+DIAGNOSTICS_DIR = "boot-test-diagnostics"
+# Exit codes of a Windows process ended by an unhandled exception.
+NTSTATUS_NAMES = {
+    0x80000003: "STATUS_BREAKPOINT",
+    0xC0000005: "STATUS_ACCESS_VIOLATION",
+    0xC000001D: "STATUS_ILLEGAL_INSTRUCTION",
+    0xC0000094: "STATUS_INTEGER_DIVIDE_BY_ZERO",
+    0xC00000FD: "STATUS_STACK_OVERFLOW",
+    0xC0000135: "STATUS_DLL_NOT_FOUND",
+    0xC0000139: "STATUS_ENTRYPOINT_NOT_FOUND",
+    0xC0000142: "STATUS_DLL_INIT_FAILED",
+    0xC0000374: "STATUS_HEAP_CORRUPTION",
+    0xC0000409: "STATUS_STACK_BUFFER_OVERRUN",
+    0xC0000602: "STATUS_FAIL_FAST_EXCEPTION",
+    0xE06D7363: "unhandled C++ exception",
+}
+# MiniDumpWithUnloadedModules | MiniDumpWithThreadInfo, as in QGC's own crash dumps (Platform.cc).
+MINIDUMP_TYPE = 0x20 | 0x1000
+PROCESS_QUERY_INFORMATION = 0x0400
+PROCESS_VM_READ = 0x0010
 
 
 def _setup_gstreamer_env(build_dir: Path) -> None:
@@ -207,8 +246,237 @@ def _kill_process_tree(proc: subprocess.Popen[str]) -> None:
         os.killpg(proc.pid, signal.SIGKILL)
 
 
-def _execute(cmd: list[str], env: dict[str, str], cwd: Path, timeout: int) -> tuple[int, str]:
-    """Run *cmd* and return (exit code, combined output); exit code 124 means timeout."""
+def _describe_exit_code(code: int) -> str:
+    """Return *code* with its signal or NTSTATUS name: ``-11 SIGSEGV``, ``0xC0000005 STATUS_...``."""
+    if code < 0:
+        try:
+            return f"{code} {signal.Signals(-code).name}"
+        except ValueError:
+            return str(code)
+    if code > 0xFF:
+        status = code & 0xFFFFFFFF
+        return f"0x{status:08X} {NTSTATUS_NAMES.get(status, '')}".rstrip()
+    return str(code)
+
+
+def _step_exit_code(code: int) -> int:
+    """Return *code* when a shell can report it, else 1.
+
+    Python 3.10 on Windows exits with -1 for a SystemExit code above 2**31, such as 0xC0000005, and
+    the step's MSYS bash reports any exit status of 0xC0000000 or more except a few as 127.
+    """
+    return code if 0 <= code <= 0xFF else 1
+
+
+def _diagnostics_location(package: Path) -> tuple[Path, str]:
+    """Return the package's diagnostics directory and an artifact name unique in the workflow run.
+
+    A job can boot-test several packages and matrix legs share the job name, so the name adds the
+    runner's OS and architecture and a digest of the package path.
+    """
+    digest = hashlib.sha256(str(package.absolute()).encode()).hexdigest()[:8]
+    parts = (
+        "boot-test",
+        os.environ.get("GITHUB_JOB") or "local",
+        os.environ.get("RUNNER_OS") or platform.system(),
+        os.environ.get("RUNNER_ARCH") or platform.machine(),
+        package.name,
+        digest,
+        os.environ.get("GITHUB_RUN_ATTEMPT") or "1",
+    )
+    name = re.sub(r"[^\w.-]+", "_", "-".join(parts))
+    root = Path(os.environ.get("RUNNER_TEMP") or tempfile.gettempdir()) / DIAGNOSTICS_DIR
+    return root / name, name
+
+
+def _prepare_diagnostics(package: Path) -> Path:
+    """Create an empty diagnostics directory and name it and its artifact in the step outputs."""
+    directory, name = _diagnostics_location(package)
+    shutil.rmtree(directory, ignore_errors=True)
+    directory.mkdir(parents=True)
+    write_github_output({"diagnostics-dir": str(directory), "diagnostics-name": name})
+    return directory
+
+
+def _boot_pid(session: int, binary: Path) -> int:
+    """Return QGC's process in a Linux boot session, where xvfb-run and AppImages wrap it.
+
+    The AppImage runtime's own executable is the package, so the shortest executable name that
+    starts the package name is QGC's; without a match the session leader is the best guess.
+    """
+    candidates: list[tuple[int, int]] = []
+    for entry in Path("/proc").iterdir():
+        if not entry.name.isdigit():
+            continue
+        try:
+            if os.getsid(int(entry.name)) != session:
+                continue
+            name = Path(os.readlink(entry / "exe")).name
+        except OSError:
+            continue
+        if name and binary.name.startswith(name):
+            candidates.append((len(name), int(entry.name)))
+    return min(candidates)[1] if candidates else session
+
+
+def _privileged(cmd: list[str]) -> list[str]:
+    """Prefix passwordless sudo in CI: Yama's ptrace_scope keeps gdb from attaching to a sibling."""
+    if is_ci() and os.name != "nt" and os.geteuid() != 0 and shutil.which("sudo"):
+        return ["sudo", "-n", *cmd]
+    return cmd
+
+
+def _stack_command(system: str, pid: int, path: Path) -> list[str] | None:
+    if system == "Darwin" and shutil.which("sample"):
+        return ["sample", str(pid), "3", "-file", str(path)]
+    if system == "Linux" and shutil.which("gdb"):
+        return ["gdb", "-batch", "-p", str(pid), "-ex", "thread apply all bt"]
+    if system == "Linux" and shutil.which("eu-stack"):
+        return ["eu-stack", "-p", str(pid)]
+    return None
+
+
+def _write_minidump(pid: int, path: Path) -> str:
+    """Write a minidump of the running process *pid* with dbghelp's MiniDumpWriteDump."""
+    if sys.platform != "win32":
+        return "Minidumps need Windows"
+    import ctypes
+    import msvcrt
+    from ctypes import wintypes
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    dbghelp = ctypes.WinDLL("dbghelp", use_last_error=True)
+    kernel32.OpenProcess.restype = wintypes.HANDLE
+    kernel32.OpenProcess.argtypes = (wintypes.DWORD, wintypes.BOOL, wintypes.DWORD)
+    kernel32.CloseHandle.argtypes = (wintypes.HANDLE,)
+    dbghelp.MiniDumpWriteDump.restype = wintypes.BOOL
+    dbghelp.MiniDumpWriteDump.argtypes = (
+        wintypes.HANDLE,
+        wintypes.DWORD,
+        wintypes.HANDLE,
+        ctypes.c_int,
+        ctypes.c_void_p,
+        ctypes.c_void_p,
+        ctypes.c_void_p,
+    )
+    process = kernel32.OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, False, pid)
+    if not process:
+        return f"OpenProcess({pid}) failed: {ctypes.WinError(ctypes.get_last_error())}"
+    try:
+        with path.open("wb") as stream:
+            handle = msvcrt.get_osfhandle(stream.fileno())
+            written = dbghelp.MiniDumpWriteDump(
+                process, pid, handle, MINIDUMP_TYPE, None, None, None
+            )
+            error = ctypes.get_last_error()
+    finally:
+        kernel32.CloseHandle(process)
+    if not written:
+        path.unlink(missing_ok=True)
+        return f"MiniDumpWriteDump failed: {ctypes.WinError(error)}"
+    return f"Wrote minidump {path} ({format_bytes(path.stat().st_size)})"
+
+
+def _capture_stacks(session: int, binary: Path, diagnostics: Path) -> str:
+    """Record where a hung boot test is stuck before it is killed, best effort; return the report.
+
+    macOS samples the process, Linux prints every thread's backtrace with gdb (else eu-stack), and
+    Windows writes a minidump; each stops after STACK_TIMEOUT_SECONDS.
+    """
+    system = platform.system()
+    pid = _boot_pid(session, binary) if system == "Linux" else session
+    try:
+        if system == "Windows":
+            return _write_minidump(pid, diagnostics / f"hang-{pid}.dmp")
+        path = diagnostics / f"stacks-{pid}.txt"
+        cmd = _stack_command(system, pid, path)
+        if cmd is None:
+            return "No stack capture tool found (sample, gdb, or eu-stack)"
+        print(f"Capturing stacks of process {pid}: {' '.join(cmd)}")
+        result = run_captured(_privileged(cmd), timeout=STACK_TIMEOUT_SECONDS)
+        if path.is_file():
+            return path.read_text(encoding="utf-8", errors="replace")
+        report = result.stdout + result.stderr
+        path.write_text(report, encoding="utf-8")
+        return report
+    except (OSError, subprocess.TimeoutExpired) as error:
+        return f"Stack capture failed: {error}"
+
+
+def _collect_crash_reports(binary: Path, diagnostics: Path, *, since: float, crashed: bool) -> None:
+    """Copy this boot test's macOS crash reports and print the start of the newest one.
+
+    ReportCrash writes the report a few seconds after a crash, so a signal death waits for it.
+    """
+    reports_dir = Path.home() / "Library" / "Logs" / "DiagnosticReports"
+
+    def find() -> list[Path]:
+        reports = [
+            path
+            for suffix in (".ips", ".crash")
+            for path in reports_dir.glob(f"{binary.name}*{suffix}")
+            if path.stat().st_mtime >= since
+        ]
+        return sorted(reports, key=lambda path: path.stat().st_mtime)
+
+    try:
+        reports = wait_until(
+            find,
+            timeout=CRASH_REPORT_WAIT_SECONDS if crashed else 0,
+            interval=1,
+            description="a crash report",
+        )
+    except TimeoutError:
+        print(f"No {binary.name} crash report in {reports_dir}")
+        return
+    for report in reports:
+        shutil.copy2(report, diagnostics / report.name)
+    newest = reports[-1]
+    lines = newest.read_text(encoding="utf-8", errors="replace").splitlines()
+    with gh_group(f"Crash report {newest.name} (first {CRASH_REPORT_HEAD_LINES} lines)"):
+        print("\n".join(lines[:CRASH_REPORT_HEAD_LINES]))
+
+
+def _collect_windows_dumps(binary: Path, diagnostics: Path) -> None:
+    """Keep the executable's PDB beside the minidumps that QGC or a timeout wrote."""
+    dumps = sorted(diagnostics.glob("*.dmp"))
+    if not dumps:
+        print("QGC wrote no crash dump")
+        return
+    print(f"Minidumps: {', '.join(dump.name for dump in dumps)}")
+    pdb = binary.with_suffix(".pdb")
+    if pdb.is_file():
+        shutil.copy2(pdb, diagnostics / pdb.name)
+    else:
+        print(f"No {pdb.name} beside {binary.name}; symbolize with the build's PDB")
+
+
+def _save_failure_diagnostics(
+    binary: Path, output: str, diagnostics: Path, *, exit_code: int, started: float
+) -> None:
+    """Keep the output, crash reports, and dumps of a failed boot for the diagnostics artifact."""
+    try:
+        (diagnostics / "boot-output.txt").write_text(output, encoding="utf-8")
+        system = platform.system()
+        if system == "Darwin":
+            _collect_crash_reports(binary, diagnostics, since=started, crashed=exit_code < 0)
+        elif system == "Windows":
+            _collect_windows_dumps(binary, diagnostics)
+    except OSError as error:
+        gh_warning(f"Boot test diagnostics incomplete: {error}")
+
+
+def _execute(
+    cmd: list[str],
+    env: dict[str, str],
+    cwd: Path,
+    timeout: int,
+    on_timeout: Callable[[int], None] | None = None,
+) -> tuple[int, str]:
+    """Run *cmd* and return (exit code, combined output); exit code 124 means timeout.
+
+    *on_timeout* gets the process ID of a hung command before it is killed.
+    """
     with subprocess.Popen(
         cmd,
         cwd=cwd,
@@ -224,7 +492,11 @@ def _execute(cmd: list[str], env: dict[str, str], cwd: Path, timeout: int) -> tu
         try:
             stdout, stderr = proc.communicate(timeout=timeout)
         except subprocess.TimeoutExpired:
-            _kill_process_tree(proc)
+            try:
+                if on_timeout is not None:
+                    on_timeout(proc.pid)
+            finally:
+                _kill_process_tree(proc)
             try:
                 stdout, stderr = proc.communicate(timeout=DRAIN_TIMEOUT_SECONDS)
             except subprocess.TimeoutExpired as e:
@@ -255,37 +527,54 @@ def _boot_command(binary: Path, *, headless: bool) -> tuple[list[str], dict[str,
     return cmd, env
 
 
-def _boot_test(binary: Path, *, cwd: Path, timeout: int, headless: bool) -> int:
-    """Run QGroundControl --simple-boot-test and return its exit code (124 on timeout)."""
+def _boot_test(
+    binary: Path, *, cwd: Path, timeout: int, headless: bool, diagnostics: Path
+) -> tuple[int, str]:
+    """Run QGroundControl --simple-boot-test; return its exit code (124 on timeout) and output."""
     if not binary.is_file():
         gh_error(f"Binary not found: {binary}")
-        return 1
+        return 1, ""
     print(f"Binary: {binary}")
     print(f"Timeout: {timeout}s")
     cmd, env = _boot_command(binary, headless=headless)
+    if platform.system() == "Windows":
+        env["QGC_CRASH_DUMP_DIR"] = str(diagnostics)
+    stacks: list[str] = []
+    started = time.time()
     start = time.monotonic()
-    exit_code, output = _execute(cmd, env, cwd, timeout)
+    exit_code, output = _execute(
+        cmd,
+        env,
+        cwd,
+        timeout,
+        lambda pid: stacks.append(_capture_stacks(pid, binary, diagnostics)),
+    )
     elapsed = time.monotonic() - start
     if exit_code == 0:
         with gh_group("Boot output"):
             print(output)
         print(f"Boot test passed in {elapsed:.1f}s")
-        return exit_code
+        return exit_code, output
     print(output)
+    for report in stacks:
+        with gh_group("Stacks before the timeout kill"):
+            print(report)
+    # Filesystem timestamps can trail the clock that started the boot by up to a second.
+    _save_failure_diagnostics(binary, output, diagnostics, exit_code=exit_code, started=started - 1)
     if exit_code == BOOT_TIMEOUT_EXIT_CODE:
         gh_error(f"Boot test timed out after {timeout}s")
-        return exit_code
-    gh_error(f"Boot test failed (exit code: {exit_code}) after {elapsed:.1f}s")
-    return exit_code
+        return exit_code, output
+    gh_error(f"Boot test failed (exit code {_describe_exit_code(exit_code)}) after {elapsed:.1f}s")
+    return exit_code, output
 
 
-def _verify(binary_path: Path, args: argparse.Namespace) -> int:
-    """Boot-test binary_path from its directory and return the boot test exit code."""
+def _verify(binary_path: Path, args: argparse.Namespace, diagnostics: Path) -> tuple[int, str]:
+    """Boot-test binary_path from its directory; return the boot test's exit code and output."""
     work_dir = binary_path.parent
 
     if not work_dir.is_dir():
         gh_error(f"Working directory not found: {work_dir}")
-        return 1
+        return 1, ""
 
     if args.build_dir:
         _setup_gstreamer_env(Path(args.build_dir))
@@ -295,7 +584,7 @@ def _verify(binary_path: Path, args: argparse.Namespace) -> int:
             _verify_archs(binary_path, args.expect_archs)
         except RuntimeError as error:
             gh_error(str(error))
-            return 1
+            return 1, ""
 
     # AppImages typically don't ship the "offscreen" Qt platform plugin.
     headless = args.exe_type != "appimage" and not binary_path.name.endswith(".AppImage")
@@ -312,9 +601,41 @@ def _verify(binary_path: Path, args: argparse.Namespace) -> int:
             )
         except RuntimeError as error:
             gh_error(str(error))
-            return 1
+            return 1, ""
 
-    return _boot_test(run_binary, cwd=work_dir, timeout=args.timeout, headless=headless)
+    return _boot_test(
+        run_binary,
+        cwd=work_dir,
+        timeout=args.timeout,
+        headless=headless,
+        diagnostics=diagnostics,
+    )
+
+
+def _summary(
+    package: Path, args: argparse.Namespace, code: int, output: str, elapsed: float
+) -> str:
+    """Return the Boot test job-summary section; a failure adds the end of QGC's output."""
+    if code == 0:
+        result = "passed"
+    elif code == BOOT_TIMEOUT_EXIT_CODE:
+        result = f"timed out after {args.timeout}s"
+    else:
+        result = f"failed (exit code {_describe_exit_code(code)})"
+    facts: list[tuple[str, object]] = [
+        ("Result", result),
+        ("Package", code_span(package.name)),
+        ("Type", args.exe_type),
+        ("Size", format_bytes(package.stat().st_size) if package.is_file() else ""),
+        ("Duration", format_duration(elapsed)),
+    ]
+    collapsed: list[tuple[str, str]] = []
+    lines = output.strip().splitlines()
+    if code != 0 and lines:
+        facts.append(("Last QGC log line", code_span(lines[-1][:LAST_LINE_CHARS])))
+        tail = lines[-OUTPUT_TAIL_LINES:]
+        collapsed.append((f"Last {len(tail)} lines of output", code_block("\n".join(tail))))
+    return summary_section("Boot test", facts, collapsed=collapsed)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -342,29 +663,20 @@ def main(argv: list[str] | None = None) -> int:
         parser.error(f"invalid INPUT_TYPE {args.exe_type!r}; choose from {', '.join(EXE_TYPES)}")
 
     package = Path(args.binary_path)
+    diagnostics = _prepare_diagnostics(package)
     start = time.monotonic()
+    output = ""
     if args.exe_type != "dmg":
-        code = _verify(package, args)
+        code, output = _verify(package, args, diagnostics)
     else:
         try:
             with _attached_dmg(package) as mount_point:
-                code = _verify(_bundle_executable(mount_point), args)
+                code, output = _verify(_bundle_executable(mount_point), args, diagnostics)
         except RuntimeError as error:
             gh_error(str(error))
             code = 1
-    write_step_summary(
-        summary_section(
-            "Boot test",
-            [
-                ("Result", "passed" if code == 0 else f"failed (exit code {code})"),
-                ("Package", code_span(package.name)),
-                ("Type", args.exe_type),
-                ("Size", format_bytes(package.stat().st_size) if package.is_file() else ""),
-                ("Duration", format_duration(time.monotonic() - start)),
-            ],
-        )
-    )
-    return code
+    write_step_summary(_summary(package, args, code, output, time.monotonic() - start))
+    return _step_exit_code(code)
 
 
 if __name__ == "__main__":

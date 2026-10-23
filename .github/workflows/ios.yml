@@ -144,18 +144,29 @@ jobs:
           APP_PATH: ${{ runner.temp }}/build/${{ matrix.build_type }}/${{ env.PACKAGE }}.app
         run: python3 tools/ci/ios/ios_package.py verify --app "$APP_PATH" --arch x86_64
 
+      # ios_boot_test.py ends its attempts within 25 minutes; the step timeout keeps a stuck
+      # simulator from holding the runner until it is lost with its logs.
       - name: Run simulator boot test
         if: matrix.target == 'simulator'
+        timeout-minutes: 30
         env:
           APP_PATH: ${{ runner.temp }}/build/${{ matrix.build_type }}/${{ env.PACKAGE }}.app
-        run: python3 tools/ci/ios/ios_boot_test.py --app "$APP_PATH" --log "$RUNNER_TEMP/ios-boot-test.log"
+        run: python3 tools/ci/ios/ios_boot_test.py --app "$APP_PATH" --log "$RUNNER_TEMP/ios-boot-test/ios-boot-test.log"
 
       - name: Upload simulator boot log
+        id: boot-log
         if: ${{ !cancelled() && matrix.target == 'simulator' }}
         uses: actions/upload-artifact@v7
         with:
           name: ios-boot-test
-          path: ${{ runner.temp }}/ios-boot-test.log
+          path: ${{ runner.temp }}/ios-boot-test
+
+      - name: Link simulator boot log
+        if: ${{ !cancelled() && steps.boot-log.outputs.artifact-url != '' }}
+        env:
+          ARTIFACT_NAME: ios-boot-test
+          ARTIFACT_URL: ${{ steps.boot-log.outputs.artifact-url }}
+        run: python3 tools/ci/packaging/artifact_link.py --label "Boot test log and diagnostics"
 
       - name: Package IPA
         if: matrix.target == 'device'

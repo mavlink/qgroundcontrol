@@ -560,10 +560,18 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   legs in `mavlink` repositories or forks that set `MACOS_SIGNING_IDENTITY`; other forks build an
   unsigned DMG instead of failing in `SignMacBundle.cmake`.
   `verify_executable.py --type dmg` mounts the image, verifies the bundle, and always detaches it.
-  On a boot-test timeout it prints the captured output, and its `lipo`/`hdiutil`/AppImage helper
+  On a boot-test timeout it captures the hung process's stacks before killing it and prints them
+  after the captured output, and its `lipo`/`hdiutil`/AppImage helper
   calls time out after 120 s. The boot test forces QGC's log to stderr (a Windows GUI app otherwise
   logs to the debugger) and enables the startup categories with `--logging`, so a slow, hung or
-  crashed boot shows where it stopped; a passing boot folds that log into a collapsed group. On
+  crashed boot shows where it stopped; a passing boot folds that log into a collapsed group. A crash
+  is named by its signal or NTSTATUS (`-11 SIGSEGV`, `0xC0000005 STATUS_ACCESS_VIOLATION`) and the
+  step exits 1: Python 3.10 cannot exit with a status above 2^31 on Windows, and MSYS bash reported
+  the result as 127. On Windows QGC's unhandled-exception filter prints the code, address, and
+  module+RVA to stderr and, with `QGC_CRASH_DUMP_DIR` set, has a thread started at launch write a
+  minidump there (not the crashed thread, which may hold the loader lock or have no stack left),
+  renamed from `.part` only when complete; failure
+  diagnostics are uploaded as described in [`actions/README.md`](actions/README.md#action-notes). On
   Windows a build tree boots with only the GStreamer plugins the package ships (configure records them
   as `QGC_GST_SHIPPED_PLUGINS`; `verify_executable.py` copies them to `boot-test-gstreamer-plugins/`):
   the whole SDK's ~270 plugins took ~40 s to scan and hung or crashed QGC on exit.
@@ -571,10 +579,15 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   requires QGC's success marker. Cold boots have a 600-second deadline and at most two fresh-device
   attempts (`--boot-timeout` 1–900 s, `--boot-attempts` 1–2). Boot and installation failures, and a
   launch that times out before QGC prints anything, are retried on a fresh device; QGC failures are
-  not. Install and launch each have a 600-second deadline (`--timeout`). A shutdown/delete failure
+  not. Install and launch each have a 600-second deadline (`--timeout`), and every attempt's
+  simulator commands share a 1500-second budget (`--total-timeout`) that ends them before the step's
+  30-minute timeout. A shutdown/delete failure
   after a passing test is reported as a warning and does not fail the job; after a failed attempt it
-  prevents the retry. Each attempt keeps command output, and simulator state is collected before
-  failed-boot cleanup.
+  prevents the retry. Each attempt keeps command output; a failed attempt in any phase saves the
+  simulator state, the last 10 minutes of the simulator's and CoreSimulator's logs, and QGC's new
+  crash reports beside the log before cleanup. A failure ends in an error annotation naming the
+  phase and attempt; every run writes a Boot test summary section, and the `ios-boot-test` artifact
+  is linked below it.
 - **Windows**: installer verification lives in `deploy/windows/verify-installer.ps1`.
 - **Android**: legs are Linux (primary), macOS, Windows (not on PRs), and a Linux emulator smoke
   test. PRs build `arm64-v8a` only; other events build `arm64-v8a` + `armeabi-v7a` on the primary
@@ -796,13 +809,13 @@ numbers, durations, and sizes from `common.format`. A build job reads top-down:
 
 | Section | Written by |
 | --- | --- |
-| Setup | `build-setup` (`setup_summary.py`): runner, Qt version, installer and source, CMake and Ninja, Python groups, cache backend, and each build cache's restore result |
+| Setup | `build-setup` (`setup_summary.py`, also after a failed setup step, which it names): runner, image (RunsOn image and AMI, or the hosted `ImageOS` and `ImageVersion`), RunsOn instance type, lifecycle, zone and ID, CPUs and RAM, Qt version, installer and source, CMake and Ninja, compiler, Xcode, JDK, Android NDK, Python groups, cache backend, and each build cache's restore result with ccache's primary key, and the key a fallback (restore-keys) hit came from |
 | Configure | `cmake-configure` (`cmake_helper.py configure`, also after failures): result, duration, preset, generator, configure-check reuse; after a failure the first CMake error and the end of the output collapsed, and a link to the configure logs |
 | Build | `cmake-build` (`cmake_helper.py build`, also after failures): result, duration, toolchain, this build's compiler (ccache or sccache) and moc cache hit rates; failed targets and first errors, slowest steps, time by kind, and moc cache events collapsed; a link to the Ninja reports |
 | Android Lint | `android_lint.py` on Android's Linux leg (also after failures): result, duration, error and warning counts; the first errors collapsed; after a failure a link to the lint reports |
 | Unit Tests / Integration Tests (*suite*) | `run-unit-tests` (`junit_report.py`): counts, failures with their first lines, slowest tests and failure output collapsed; a link to the results artifact |
 | Coverage, Binary size | `coverage_report.py --step-summary`, `size_analysis.py` |
-| Boot test, Artifact | `verify_executable.py` (result, package, size, duration) and `attest_helper.py prepare` (file, size, SHA-256) |
+| Boot test, Artifact | `verify_executable.py` (result with the crash's signal or NTSTATUS name, package, size, duration; after a failure the last log line, the last 40 lines collapsed, and a link to the diagnostics artifact) or, for the iOS simulator, `ios_boot_test.py` (result with the failing phase and attempt, simulator, attempts, duration, and the end of the boot log); and `attest_helper.py prepare` (file, size, SHA-256) |
 | Disk | `disk-watch`'s post step, at the end of every `build-setup` and Docker job: the workspace volume's size and its start, peak (with free space and time), and end use, sampled every 10 s; a peak whose free space is below 10% of the volume, kept between 5 and 10 GiB, gets ⚠️ and a "Disk nearly full" warning annotation |
 
 Docker builds write one Docker build section (`docker_helper.py summary`); pre-commit,

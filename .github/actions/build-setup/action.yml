@@ -83,18 +83,21 @@ runs:
       run: python3 "${GITHUB_WORKSPACE}/tools/ci/runner/build_setup.py"
 
     - name: Free disk space (Linux)
+      id: free-disk-space
       if: runner.os == 'Linux'
       uses: ./.github/actions/free-disk-space
       with:
         remove-android: ${{ inputs.mode != 'android' }}
 
-    - uses: ./.github/actions/setup-python
+    - id: python
+      uses: ./.github/actions/setup-python
       with:
         groups: ${{ inputs.python-groups }}
 
     # The one CMake and Ninja for CI builds. After setup-python, so they precede the CMake and
     # Ninja that the build and dev groups add to tools/.venv (local development keeps those).
-    - uses: lukka/get-cmake@v4.4.2
+    - id: cmake
+      uses: lukka/get-cmake@v4.4.2
       with:
         cmakeVersion: ${{ steps.plan.outputs.cmake_version }}
         ninjaVersion: ${{ steps.plan.outputs.ninja_version }}
@@ -103,6 +106,7 @@ runs:
 
     # setup-gradle needs the java executable, which RunsOn's Windows image does not provide.
     - name: Setup Java Environment
+      id: java
       if: inputs.mode == 'android'
       uses: actions/setup-java@v6
       with:
@@ -118,6 +122,7 @@ runs:
     # land there: Windows cannot stat android_openssl's per-ABI `include` directory symlinks
     # (EPERM), and their Gradle files are not QGC's build inputs.
     - name: Setup Gradle (Android)
+      id: gradle
       if: inputs.mode == 'android'
       uses: gradle/actions/setup-gradle@v6
       with:
@@ -142,6 +147,7 @@ runs:
 
     # iOS pins its own Xcode version, which can differ from desktop macOS's.
     - name: Setup Xcode
+      id: xcode
       if: runner.os == 'macOS' && inputs.mode != 'android'
       uses: maxim-lobanov/setup-xcode@v1
       with:
@@ -180,6 +186,7 @@ runs:
 
     # Android-on-Windows uses NDK clang and skips MSVC setup.
     - name: Setup MSVC environment (Windows desktop)
+      id: msvc
       if: inputs.mode == 'desktop' && runner.os == 'Windows'
       uses: TheMrMilchmann/setup-msvc-dev@v4
       with:
@@ -187,6 +194,7 @@ runs:
 
     # Git for Windows shadows MSVC's link.exe on Windows ARM64. See rust-lang/rust#42825.
     - name: Fix Rust linker resolution (Windows ARM64 native)
+      id: rust-linker
       if: inputs.mode == 'desktop' && runner.os == 'Windows' && runner.arch == 'ARM64'
       shell: bash
       run: |
@@ -198,6 +206,7 @@ runs:
 
     # Off macOS the plan step pointed ANDROID_SDK_ROOT at $RUNNER_TEMP/android-sdk.
     - name: Setup Android Environment
+      id: android
       if: inputs.mode == 'android'
       uses: android-actions/setup-android@v4
       with:
@@ -207,6 +216,7 @@ runs:
 
     # Installs build-config.json's NDK, platform, and build-tools versions.
     - name: Install Android SDK / NDK / Tools
+      id: android-sdk
       if: inputs.mode == 'android'
       shell: bash
       run: python3 "${GITHUB_WORKSPACE}/tools/ci/android/android_sdk_helper.py"
@@ -245,10 +255,16 @@ runs:
         modules: ${{ steps.plan.outputs.qt_modules }}
         export-env: 'false'
 
-    # One Setup section in the job summary: Qt, CMake, Python, and what each cache restored.
+    # One Setup section in the job summary: the runner and its image, instance, and hardware, the
+    # toolchain versions, and what each cache restored. It also runs after a failed step, which it
+    # names from the steps' outcomes. RUNS_ON_*, ImageOS/ImageVersion, MSVC's VCToolsVersion, and
+    # QGC_CCACHE_KEY come from the job environment.
     - name: Summarize setup
+      if: ${{ !cancelled() }}
       shell: bash
       env:
+        SETUP_MODE: ${{ inputs.mode }}
+        SETUP_STEPS: ${{ toJSON(steps) }}
         QT_VERSION: ${{ steps.qt.outputs.version }}
         QT_ARCH: ${{ steps.plan.outputs.qt_arch }}
         QT_INSTALLER: ${{ steps.qt.outputs.installer }}
@@ -260,10 +276,15 @@ runs:
         QT_ANDROID_X86_64_SOURCE: ${{ steps.qt-android-x86_64.outputs.source }}
         CMAKE_VERSION: ${{ steps.plan.outputs.cmake_version }}
         NINJA_VERSION: ${{ steps.plan.outputs.ninja_version }}
+        XCODE_VERSION: ${{ steps.plan.outputs.xcode_version }}
+        JDK_VERSION: ${{ steps.java.outputs.version }}
+        JDK_REQUESTED: ${{ steps.plan.outputs.java_version }}
         PYTHON_GROUPS: ${{ inputs.python-groups }}
         BUILD_CACHE: ${{ inputs.build-cache }}
         COMPILER_CACHE: ${{ steps.cache.outputs.compiler-cache }}
+        COMPILER_CACHE_KEY: ${{ steps.cache.outputs.compiler-cache-key }}
         MOC_CACHE: ${{ steps.cache.outputs.moc-cache }}
+        MOC_CACHE_KEY: ${{ steps.cache.outputs.moc-cache-key }}
         CPM_CACHE: ${{ steps.cache.outputs.cpm-cache }}
         GSTREAMER_CACHE: ${{ steps.cache.outputs.gstreamer-cache }}
         GSTREAMER_MODE: ${{ steps.cache.outputs.gstreamer-mode }}

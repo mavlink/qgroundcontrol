@@ -52,13 +52,13 @@ and Ruff skips `build` directories.
 | `packaging/artifact_link.py` | Link an uploaded diagnostics artifact (upload-artifact's `artifact-url`) from the job summary |
 | `packaging/find_artifact.py` | Find exactly one build artifact by glob pattern (fails on none or several), optionally copying it |
 | `packaging/validate_native_package.py` | Validate native package identity, version, contents, and installed layout |
-| `packaging/verify_executable.py` | Boot-test a built QGroundControl executable, AppImage, or DMG |
+| `packaging/verify_executable.py` | Boot-test a built QGroundControl executable, AppImage, or DMG; keep a failed boot's output, stacks, crash reports, and minidumps for the diagnostics artifact |
 | `android/android_boot_test.py` | Run the emulator boot smoke test |
 | `android/android_build_retry.py` | Retry an Android build after a known intermittent Qt deployment-settings JSON truncation |
 | `android/android_collect_diagnostics.py` | Collect emulator, ADB, AVD, and GStreamer diagnostics |
 | `android/android_lint.py` | Run `gradlew lintRelease` in the Gradle project androiddeployqt generated, annotate the first Error and Fatal issues from lint's XML report at their `android/` sources (else Gradle's errors), and write the job summary's Android Lint section (result, duration, error and warning counts, first errors); exits with Gradle's status |
 | `android/android_sdk_helper.py` | Install the `build-config.json` Android SDK/NDK packages with retries, configure tool paths, and create the PR debug keystore |
-| `ios/ios_boot_test.py` | Run the QGC smoke test in a disposable iOS simulator |
+| `ios/ios_boot_test.py` | Run the QGC smoke test in a disposable iOS simulator within a 25-minute budget; save each failed attempt's simulator and CoreSimulator logs and crash reports, annotate the failing phase and attempt, and write the Boot test summary |
 | `ios/ios_package.py` | Select signing profiles and validate/package iOS bundles |
 | `publish/attest_helper.py` | Prepare artifacts for attestation (checksum sidecar, CPM dependency SBOM, build manifest) and decide the AWS publish; verify or write standalone checksums |
 | `publish/aws_upload.py` | Publish artifacts to S3 `builds/<ref>/` (the runner's ref by default), plus `latest/` and one CloudFront invalidation for release tags |
@@ -70,8 +70,8 @@ and Ruff skips `build` directories.
 | `reporting/generate_build_results_comment.py` | Render the consolidated PR build-results comment: verdict, per-workflow table, other checks, the PR base's builds, failures, and collapsed tests, coverage, artifact downloads, pre-commit, and Code Analysis details, compared with the base's own builds |
 | `reporting/gh_pr_size_label.py` | Apply a pull request's `size/*` label from its changed lines |
 | `reporting/junit_report.py` | Summarize JUnit results (counts, failures, slowest tests) in the job summary, annotate failed tests and, optionally, slow tests; also the build-results comment's JUnit parser |
-| `reporting/setup_summary.py` | Write the job summary's Setup section for `build-setup`: runner, Qt (version, installer, source), CMake, Python groups, and each build cache's restore result |
 | `reporting/report_context.py` | Resolve a pull_request build's PR and base commit, and with `--comment` recheck that the build is current and create or update the PR's build-results comment |
+| `reporting/setup_summary.py` | Write the job summary's Setup section for `build-setup`, also after a failed setup step, which it names: runner, image, RunsOn instance, CPUs and RAM, Qt (version, installer, source), CMake, compiler, Xcode, JDK, Android NDK, Python groups, and each build cache's restore result |
 | `reporting/size_analysis.py` | Analyze and report binary-size changes |
 | `reporting/verify_coverage_thresholds.py` | Enforce line and branch coverage thresholds (read from `CMakeCache.txt` with `--build-dir`) |
 | `reporting/workflow_runs.py` | Library: read the triggering `workflow_run` payload and the configured platform workflows, which default the reporting scripts' run-query arguments; validate, select, and group workflow runs; load run snapshots |
