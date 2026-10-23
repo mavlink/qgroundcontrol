@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Updates>
+ <ApplicationName>{AnyApplication}</ApplicationName>
+ <ApplicationVersion>1.0.0</ApplicationVersion>
+ <Checksum>true</Checksum>
+ <PackageUpdate>
+  <Name>qt.qt6.6120.addons.qthttpserver</Name>
+  <Version>6.12.0-0-202609280346</Version>
+  <Dependencies>qt.qt6.6120.doc.qthttpserver, qt.qt6.6120.examples.qthttpserver, qt.qt6.6120.addons.qtwebsockets</Dependencies>
+  <DownloadableArchives />
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6120.addons.qthttpserver.android_arm64_v8a</Name>
+  <Version>6.12.0-0-202609280346</Version>
+  <Dependencies>qt.qt6.6120.android_arm64_v8a</Dependencies>
+  <DownloadableArchives>qthttpserver-MacOS-MacOS_15-Clang-Android-Android_ANY-ARM64.7z</DownloadableArchives>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.12.0/android_arm64_v8a</Argument>
+    <Argument>qthttpserver-MacOS-MacOS_15-Clang-Android-Android_ANY-ARM64.7z</Argument>
+   </Operation>
+  </Operations>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6120.addons.qtlocation</Name>
+  <Version>6.12.0-0-202609280346</Version>
+  <Dependencies>qt.qt6.6120.doc.qtlocation, qt.qt6.6120.examples.qtlocation</Dependencies>
+  <DownloadableArchives />
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6120.addons.qtlocation.android_arm64_v8a</Name>
+  <Version>6.12.0-0-202609280346</Version>
+  <Dependencies>qt.qt6.6120.android_arm64_v8a</Dependencies>
+  <DownloadableArchives>qtlocation-MacOS-MacOS_15-Clang-Android-Android_ANY-ARM64.7z</DownloadableArchives>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.12.0/android_arm64_v8a</Argument>
+    <Argument>qtlocation-MacOS-MacOS_15-Clang-Android-Android_ANY-ARM64.7z</Argument>
+   </Operation>
+  </Operations>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6120.addons.qtquick3d</Name>
+  <Version>6.12.0-0-202609280346</Version>
+  <Dependencies>qt.qt6.6120.doc.qtquick3d, qt.qt6.6120.examples.qtquick3d, qt.qt6.6120.addons.qtshadertools, qt.qt6.6120.addons.qtquicktimeline</Dependencies>
+  <DownloadableArchives />
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6120.addons.qtquick3d.android_arm64_v8a</Name>
+  <Version>6.12.0-0-202609280346</Version>
+  <Dependencies>qt.qt6.6120.android_arm64_v8a</Dependencies>
+  <DownloadableArchives>qtquick3d-MacOS-MacOS_15-Clang-Android-Android_ANY-ARM64.7z</DownloadableArchives>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.12.0/android_arm64_v8a</Argument>
+    <Argument>qtquick3d-MacOS-MacOS_15-Clang-Android-Android_ANY-ARM64.7z</Argument>
+   </Operation>
+  </Operations>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6120.addons.qtserialport</Name>
+  <Version>6.12.0-0-202609280346</Version>
+  <Dependencies>qt.qt6.6120.doc.qtserialport, qt.qt6.6120.examples.qtserialport</Dependencies>
+  <DownloadableArchives />
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6120.addons.qtserialport.android_arm64_v8a</Name>
+  <Version>6.12.0-0-202609280346</Version>
+  <Dependencies>qt.qt6.6120.android_arm64_v8a</Dependencies>
+  <DownloadableArchives>qtserialport-MacOS-MacOS_15-Clang-Android-Android_ANY-ARM64.7z</DownloadableArchives>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.12.0/android_arm64_v8a</Argument>
+    <Argument>qtserialport-MacOS-MacOS_15-Clang-Android-Android_ANY-ARM64.7z</Argument>
+   </Operation>
+  </Operations>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6120.addons.qtshadertools</Name>
+  <Version>6.12.0-0-202609280346</Version>
+  <Dependencies>qt.qt6.6120.doc.qtshadertools</Dependencies>
+  <DownloadableArchives />
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6120.addons.qtshadertools.android_arm64_v8a</Name>
+  <Version>6.12.0-0-202609280346</Version>
+  <Dependencies>qt.qt6.6120.android_arm64_v8a</Dependencies>
+  <DownloadableArchives>qtshadertools-MacOS-MacOS_15-Clang-Android-Android_ANY-ARM64.7z</DownloadableArchives>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.12.0/android_arm64_v8a</Argument>
+    <Argument>qtshadertools-MacOS-MacOS_15-Clang-Android-Android_ANY-ARM64.7z</Argument>
+   </Operation>
+  </Operations>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6120.addons.qtwebsockets</Name>
+  <Version>6.12.0-0-202609280346</Version>
+  <Dependencies>qt.qt6.6120.doc.qtwebsockets, qt.qt6.6120.examples.qtwebsockets</Dependencies>
+  <DownloadableArchives />
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6120.addons.qtwebsockets.android_arm64_v8a</Name>
+  <Version>6.12.0-0-202609280346</Version>
+  <Dependencies>qt.qt6.6120.android_arm64_v8a</Dependencies>
+  <DownloadableArchives>qtwebsockets-MacOS-MacOS_15-Clang-Android-Android_ANY-ARM64.7z</DownloadableArchives>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.12.0/android_arm64_v8a</Argument>
+    <Argument>qtwebsockets-MacOS-MacOS_15-Clang-Android-Android_ANY-ARM64.7z</Argument>
+   </Operation>
+  </Operations>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6120.android</Name>
+  <Version>6.12.0-0-202609280346</Version>
+  <Dependencies>qt.tools.qtcreator, qt.qt6.6120.doc, qt.qt6.6120.examples, qt.qt6.6120.android_arm64_v8a, qt.qt6.6120.android_armv7, qt.qt6.6120.android_x86, qt.qt6.6120.android_x86_64</Dependencies>
+  <DownloadableArchives />
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6120.android_arm64_v8a</Name>
+  <Version>6.12.0-0-202609280346</Version>
+  <Dependencies>qt.tools.qtcreator, qt.qt6.6120.doc, qt.qt6.6120.examples, qt.qt6.6120.patcher</Dependencies>
+  <DownloadableArchives>qtbase-MacOS-MacOS_15-Clang-Android-Android_ANY-ARM64.7z, qtsvg-MacOS-MacOS_15-Clang-Android-Android_ANY-ARM64.7z, qtdeclarative-MacOS-MacOS_15-Clang-Android-Android_ANY-ARM64.7z, qtdoc-MacOS-MacOS_15-Clang-Android-Android_ANY-ARM64.7z, qttools-MacOS-MacOS_15-Clang-Android-Android_ANY-ARM64.7z, qttranslations-MacOS-MacOS_15-Clang-Android-Android_ANY-ARM64.7z</DownloadableArchives>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.12.0/android_arm64_v8a</Argument>
+    <Argument>qtbase-MacOS-MacOS_15-Clang-Android-Android_ANY-ARM64.7z</Argument>
+   </Operation>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.12.0/android_arm64_v8a</Argument>
+    <Argument>qtsvg-MacOS-MacOS_15-Clang-Android-Android_ANY-ARM64.7z</Argument>
+   </Operation>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.12.0/android_arm64_v8a</Argument>
+    <Argument>qtdeclarative-MacOS-MacOS_15-Clang-Android-Android_ANY-ARM64.7z</Argument>
+   </Operation>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.12.0/android_arm64_v8a</Argument>
+    <Argument>qtdoc-MacOS-MacOS_15-Clang-Android-Android_ANY-ARM64.7z</Argument>
+   </Operation>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.12.0/android_arm64_v8a</Argument>
+    <Argument>qttools-MacOS-MacOS_15-Clang-Android-Android_ANY-ARM64.7z</Argument>
+   </Operation>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.12.0/android_arm64_v8a</Argument>
+    <Argument>qttranslations-MacOS-MacOS_15-Clang-Android-Android_ANY-ARM64.7z</Argument>
+   </Operation>
+  </Operations>
+ </PackageUpdate>
+ <SHA1>362e4b725e368813d918a4067757dec32f0d93f0</SHA1>
+ <MetadataName>2026-09-28-0356_meta.7z</MetadataName>
+</Updates>

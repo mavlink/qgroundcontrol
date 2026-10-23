@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Updates>
+ <ApplicationName>{AnyApplication}</ApplicationName>
+ <ApplicationVersion>1.0.0</ApplicationVersion>
+ <Checksum>true</Checksum>
+ <PackageUpdate>
+  <Name>qt.qt6.6120.addons.qthttpserver</Name>
+  <Version>6.12.0-0-202609280346</Version>
+  <Dependencies>qt.qt6.6120.doc.qthttpserver, qt.qt6.6120.examples.qthttpserver, qt.qt6.6120.addons.qtwebsockets</Dependencies>
+  <DownloadableArchives />
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6120.addons.qthttpserver.win64_msvc2022_64</Name>
+  <Version>6.12.0-0-202609280346</Version>
+  <Dependencies>qt.qt6.6120.win64_msvc2022_64</Dependencies>
+  <DownloadableArchives>qthttpserver-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z</DownloadableArchives>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.12.0/msvc2022_64</Argument>
+    <Argument>qthttpserver-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z</Argument>
+   </Operation>
+  </Operations>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6120.addons.qtlocation</Name>
+  <Version>6.12.0-0-202609280346</Version>
+  <Dependencies>qt.qt6.6120.doc.qtlocation, qt.qt6.6120.examples.qtlocation</Dependencies>
+  <DownloadableArchives />
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6120.addons.qtlocation.debug_information.win64_msvc2022_64</Name>
+  <Version>6.12.0-0-202609280346</Version>
+  <Dependencies>qt.qt6.6120.addons.qtlocation</Dependencies>
+  <DownloadableArchives>qtlocation-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64-debug-symbols.7z</DownloadableArchives>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.12.0/msvc2022_64</Argument>
+    <Argument>qtlocation-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64-debug-symbols.7z</Argument>
+   </Operation>
+  </Operations>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6120.addons.qtlocation.win64_msvc2022_64</Name>
+  <Version>6.12.0-0-202609280346</Version>
+  <Dependencies>qt.qt6.6120.win64_msvc2022_64</Dependencies>
+  <DownloadableArchives>qtlocation-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z</DownloadableArchives>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.12.0/msvc2022_64</Argument>
+    <Argument>qtlocation-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z</Argument>
+   </Operation>
+  </Operations>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6120.addons.qtquick3d</Name>
+  <Version>6.12.0-0-202609280346</Version>
+  <Dependencies>qt.qt6.6120.doc.qtquick3d, qt.qt6.6120.examples.qtquick3d, qt.qt6.6120.addons.qtshadertools, qt.qt6.6120.addons.qtquicktimeline</Dependencies>
+  <DownloadableArchives />
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6120.addons.qtquick3d.win64_msvc2022_64</Name>
+  <Version>6.12.0-0-202609280346</Version>
+  <Dependencies>qt.qt6.6120.win64_msvc2022_64</Dependencies>
+  <DownloadableArchives>qtquick3d-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z</DownloadableArchives>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.12.0/msvc2022_64</Argument>
+    <Argument>qtquick3d-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z</Argument>
+   </Operation>
+  </Operations>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6120.addons.qtserialport</Name>
+  <Version>6.12.0-0-202609280346</Version>
+  <Dependencies>qt.qt6.6120.doc.qtserialport, qt.qt6.6120.examples.qtserialport</Dependencies>
+  <DownloadableArchives />
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6120.addons.qtserialport.win64_msvc2022_64</Name>
+  <Version>6.12.0-0-202609280346</Version>
+  <Dependencies>qt.qt6.6120.win64_msvc2022_64</Dependencies>
+  <DownloadableArchives>qtserialport-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z</DownloadableArchives>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.12.0/msvc2022_64</Argument>
+    <Argument>qtserialport-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z</Argument>
+   </Operation>
+  </Operations>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6120.addons.qtshadertools</Name>
+  <Version>6.12.0-0-202609280346</Version>
+  <Dependencies>qt.qt6.6120.doc.qtshadertools</Dependencies>
+  <DownloadableArchives />
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6120.addons.qtshadertools.win64_msvc2022_64</Name>
+  <Version>6.12.0-0-202609280346</Version>
+  <Dependencies>qt.qt6.6120.win64_msvc2022_64</Dependencies>
+  <DownloadableArchives>qtshadertools-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z</DownloadableArchives>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.12.0/msvc2022_64</Argument>
+    <Argument>qtshadertools-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z</Argument>
+   </Operation>
+  </Operations>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6120.addons.qtwebsockets</Name>
+  <Version>6.12.0-0-202609280346</Version>
+  <Dependencies>qt.qt6.6120.doc.qtwebsockets, qt.qt6.6120.examples.qtwebsockets</Dependencies>
+  <DownloadableArchives />
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6120.addons.qtwebsockets.win64_msvc2022_64</Name>
+  <Version>6.12.0-0-202609280346</Version>
+  <Dependencies>qt.qt6.6120.win64_msvc2022_64</Dependencies>
+  <DownloadableArchives>qtwebsockets-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z</DownloadableArchives>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.12.0/msvc2022_64</Argument>
+    <Argument>qtwebsockets-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z</Argument>
+   </Operation>
+  </Operations>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6120.win64_msvc2022_64</Name>
+  <Version>6.12.0-0-202609280346</Version>
+  <Dependencies>qt.tools.qtcreator, qt.qt6.6120.doc, qt.qt6.6120.examples</Dependencies>
+  <DownloadableArchives>qtbase-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z, qtsvg-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z, qtdeclarative-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z, qtdoc-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z, qttools-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z, qttranslations-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z, d3dcompiler_47-x64.7z, opengl32sw-64-mesa_11_2_2-signed_sha256.7z</DownloadableArchives>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.12.0/msvc2022_64</Argument>
+    <Argument>qtbase-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z</Argument>
+   </Operation>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.12.0/msvc2022_64</Argument>
+    <Argument>qtsvg-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z</Argument>
+   </Operation>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.12.0/msvc2022_64</Argument>
+    <Argument>qtdeclarative-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z</Argument>
+   </Operation>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.12.0/msvc2022_64</Argument>
+    <Argument>qtdoc-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z</Argument>
+   </Operation>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.12.0/msvc2022_64</Argument>
+    <Argument>qttools-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z</Argument>
+   </Operation>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.12.0/msvc2022_64</Argument>
+    <Argument>qttranslations-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z</Argument>
+   </Operation>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.12.0/msvc2022_64/bin</Argument>
+    <Argument>d3dcompiler_47-x64.7z</Argument>
+   </Operation>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.12.0/msvc2022_64/bin</Argument>
+    <Argument>opengl32sw-64-mesa_11_2_2-signed_sha256.7z</Argument>
+   </Operation>
+  </Operations>
+ </PackageUpdate>
+ <SHA1>c00fd17bee021ef1300147eb0e1984a80a82f59e</SHA1>
+ <MetadataName>2026-09-28-0528_meta.7z</MetadataName>
+</Updates>

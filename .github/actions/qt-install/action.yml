@@ -1,13 +1,14 @@
 name: Install Qt
-description: Install Qt using aqtinstall with caching
+description: Install Qt with QGC's installer or aqtinstall, with caching
 outputs:
   qt_root_dir:
     description: Absolute Qt root directory
     value: ${{ steps.qt.outputs.qt_root_dir }}
 inputs:
   version:
-    description: Qt version to install
-    required: true
+    description: Qt version to install (defaults to qt.version in .github/build-config.json)
+    required: false
+    default: ''
   host:
     description: Host platform (linux, mac, windows, etc.)
     required: true
@@ -26,6 +27,12 @@ inputs:
     description: Optional Qt archives subset to install (space-separated)
     required: false
     default: ''
+  installer:
+    description: >-
+      Qt installer, qgc or aqt; empty uses QGC_QT_INSTALLER or install_qt.py's default (qgc for
+      Linux desktop and Android, aqt elsewhere)
+    required: false
+    default: ''
   export-env:
     description: Export QT_ROOT_DIR and prepend the Qt bin directory to PATH
     required: false
@@ -33,25 +40,32 @@ inputs:
 runs:
   using: composite
   steps:
-    # Outputs the cache digest, the workspace-relative arch tree to cache, and a compatible
-    # preinstalled SDK root (empty when the runner image has none).
+    # Outputs the resolved Qt version and installer, the cache digest (which covers the installer),
+    # the workspace-relative arch tree to cache, and a compatible preinstalled SDK root (empty when
+    # the runner image has none).
     - name: Plan Qt install
       id: plan
       shell: bash
       env:
         PREINSTALLED_DIR: ${{ env.QGC_PREINSTALLED_QT_DIR || '/opt/qgc-sdk' }}
         QT_VERSION: ${{ inputs.version }}
+        QT_HOST: ${{ inputs.host }}
+        QT_TARGET: ${{ inputs.target }}
         QT_ARCH: ${{ inputs.arch }}
         QT_MODULES: ${{ inputs.modules }}
         QT_ARCHIVES: ${{ inputs.archives }}
+        QT_INSTALLER: ${{ inputs.installer }}
       run: |
         python3 "${GITHUB_WORKSPACE}/tools/setup/install_qt.py" plan \
           --preinstalled-prefix "${PREINSTALLED_DIR}" \
           --outdir "${GITHUB_WORKSPACE}/.qt/Qt" \
           --version "${QT_VERSION}" \
+          --host "${QT_HOST}" \
+          --target "${QT_TARGET}" \
           --arch "${QT_ARCH}" \
           --modules "${QT_MODULES}" \
-          --archives "${QT_ARCHIVES}"
+          --archives "${QT_ARCHIVES}" \
+          --installer "${QT_INSTALLER}"
 
     # Cache-service failures should degrade to a Qt reinstall.
     - name: Restore Qt cache
@@ -62,18 +76,19 @@ runs:
       with:
         path: ${{ steps.plan.outputs.cache_path }}
         # `runner.os` is implied by `inputs.host` (linux/mac/windows...) so it's omitted.
-        key: qt-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.arch }}-${{ inputs.version }}-${{ steps.plan.outputs.digest }}
+        key: qt-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.arch }}-${{ steps.plan.outputs.version }}-${{ steps.plan.outputs.digest }}
 
-    - name: Install Qt ${{ inputs.version }}
+    - name: Install Qt
       id: qt
       shell: bash
       env:
-        QT_VERSION: ${{ inputs.version }}
+        QT_VERSION: ${{ steps.plan.outputs.version }}
         QT_HOST: ${{ inputs.host }}
         QT_TARGET: ${{ inputs.target }}
         QT_ARCH: ${{ inputs.arch }}
         QT_MODULES: ${{ inputs.modules }}
         QT_ARCHIVES: ${{ inputs.archives }}
+        QT_INSTALLER: ${{ steps.plan.outputs.installer }}
         PREINSTALLED_ROOT: ${{ steps.plan.outputs.preinstalled_root }}
         CACHE_HIT: ${{ steps.qt-cache.outputs.cache-hit }}
         EXPORT_ENV: ${{ inputs.export-env }}
@@ -88,7 +103,8 @@ runs:
           --target "${QT_TARGET}" \
           --arch "${QT_ARCH}" \
           --modules "${QT_MODULES}" \
-          --archives "${QT_ARCHIVES}"
+          --archives "${QT_ARCHIVES}" \
+          --installer "${QT_INSTALLER}"
 
     - name: Re-check Qt cache before save
       id: qt-presave

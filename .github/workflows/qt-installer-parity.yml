@@ -1,0 +1,129 @@
+name: Qt Installer Parity
+
+# Installs the same Qt with aqtinstall and with QGC's installer (tools/setup/qt_installer) and
+# compares the trees. install_qt.py defaults to QGC's installer only where this has passed; a
+# platform switches once its leg passes too.
+on:
+  pull_request:
+    paths:
+      - 'tools/setup/qt_installer/**'
+      - 'tools/setup/install_qt.py'
+      - '.github/actions/qt-install/**'
+      - '.github/workflows/qt-installer-parity.yml'
+      - '.github/build-config.json'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  parity:
+    name: Parity (${{ matrix.name }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux x64 and Android
+            runner: ubuntu-24.04
+            installs: |
+              linux desktop linux_gcc_64
+              linux android android_arm64_v8a
+          - name: Linux ARM64
+            runner: ubuntu-24.04-arm
+            installs: linux_arm64 desktop linux_gcc_arm64
+          - name: macOS and iOS
+            runner: macos-15
+            installs: |
+              mac desktop clang_64
+              mac ios ios_device
+          - name: Windows x64 and ARM64 cross
+            runner: windows-2025
+            installs: |
+              windows desktop win64_msvc2022_64
+              windows desktop win64_msvc2022_arm64_cross_compiled
+          - name: Windows ARM64
+            runner: windows-11-arm
+            installs: windows_arm64 desktop win64_msvc2022_arm64
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          sparse-checkout: |
+            .github/actions/build-config
+            .github/actions/setup-python
+            .github/build-config.json
+            tools/_bootstrap.py
+            tools/ci/cache/cache_backend.py
+            tools/common
+            tools/qgc_tools
+            tools/pyproject.toml
+            tools/uv.lock
+            tools/setup/install_python.py
+            tools/setup/install_qt.py
+            tools/setup/qt_installer
+            tools/setup/read_config.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Get build config
+        id: config
+        uses: ./.github/actions/build-config
+
+      - name: Setup Python
+        uses: ./.github/actions/setup-python
+        with:
+          groups: qt
+
+      # The CMake that build-setup gives every job running qt-install; QGC's installer extracts with it.
+      - name: Setup CMake
+        uses: lukka/get-cmake@v4.4.2
+        with:
+          cmakeVersion: ${{ steps.config.outputs.build_cmake_version }}
+          useCloudCache: true
+          useLocalCache: false
+
+      # Each pair of trees is removed after its comparison: the iOS SDK alone unpacks to about 10 GB.
+      # Mobile and cross patches name the host desktop Qt's directory whether or not it is installed.
+      # umask 022 gives both installers the usual runner file modes.
+      - name: Install with both installers and compare
+        env:
+          INSTALLS: ${{ matrix.installs }}
+          QT_VERSION: ${{ steps.config.outputs.qt_version }}
+          QT_MODULES: ${{ steps.config.outputs.qt_modules }}
+          QT_MODULES_IOS: ${{ steps.config.outputs.qt_modules_ios }}
+        run: |
+          umask 022
+          status=0
+          while read -r host target arch; do
+            [[ -n "${arch}" ]] || continue
+            modules="${QT_MODULES}"
+            if [[ "${target}" == ios ]]; then
+              modules="${QT_MODULES_IOS}"
+            fi
+            for installer in aqt qgc; do
+              echo "::group::${installer}: ${host} ${target} ${arch}"
+              python3 tools/setup/install_qt.py install --installer "${installer}" \
+                --version "${QT_VERSION}" --host "${host}" --target "${target}" --arch "${arch}" \
+                --modules "${modules}" --outdir "${RUNNER_TEMP}/${installer}/Qt"
+              echo "::endgroup::"
+            done
+            python3 tools/setup/install_qt.py compare --version "${QT_VERSION}" --arch "${arch}" \
+              --reference "${RUNNER_TEMP}/aqt/Qt" --candidate "${RUNNER_TEMP}/qgc/Qt" || status=1
+            rm -rf "${RUNNER_TEMP}/aqt" "${RUNNER_TEMP}/qgc"
+          done <<< "${INSTALLS}"
+          exit "${status}"
