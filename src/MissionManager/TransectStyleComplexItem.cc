@@ -251,6 +251,8 @@ bool TransectStyleComplexItem::_load(const QJsonObject& complexObject, bool forP
         if (!GeoJsonHelper::loadGeoCoordinateArray(innerObject[_jsonVisualTransectPointsKey], false /* altitudeRequired */, _visualTransectPoints, errorString)) {
             return false;
         }
+        _visualTransectEntryIndices.clear();
+        _visualTransectExitIndices.clear();
         _entryCoordinate = _visualTransectPoints.count() ? _visualTransectPoints.first().value<QGeoCoordinate>() : QGeoCoordinate();
         _exitCoordinate = _visualTransectPoints.count() ? _visualTransectPoints.last().value<QGeoCoordinate>() : QGeoCoordinate();
         _isIncomplete = false;
@@ -439,8 +441,15 @@ void TransectStyleComplexItem::_rebuildTransects(void)
     double top = 0.;
     // Generate the visuals transect representation
     _visualTransectPoints.clear();
+    _visualTransectEntryIndices.clear();
+    _visualTransectExitIndices.clear();
     for (const QList<CoordInfo_t>& transect: _transects) {
         for (const CoordInfo_t& coordInfo: transect) {
+            if (coordInfo.coordType == CoordTypeSurveyEntry) {
+                _visualTransectEntryIndices.append(_visualTransectPoints.count());
+            } else if (coordInfo.coordType == CoordTypeSurveyExit) {
+                _visualTransectExitIndices.append(_visualTransectPoints.count());
+            }
             _visualTransectPoints.append(QVariant::fromValue(coordInfo.coord));
             double lat = coordInfo.coord.latitude()  + 90.0;
             double lon = coordInfo.coord.longitude() + 180.0;

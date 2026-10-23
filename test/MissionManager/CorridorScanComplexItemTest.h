@@ -31,6 +31,7 @@ private slots:
     void _testNoTransects();
     void _testEntryPointCameraTriggers();
     void _testZeroWidthCorridor();
+    void _testVisualTransectIndices();
 
 private:
     void _waitForReadyForSave();

@@ -23,10 +23,15 @@ Item {
     property bool   _currentItem:               object.isCurrentItem
     property bool   _vertexDrag:                _mapPolygon.vertexDrag || hideMapPolygon
     property var    _transectPoints:            _missionItem.visualTransectPoints
-    property int    _transectCount:             _transectPoints.length / (_hasTurnaround ? 4 : 2)
+    property var    _entryIndices:              _missionItem.visualTransectEntryIndices
+    property var    _exitIndices:               _missionItem.visualTransectExitIndices
+    // Items loaded from a plan file have no transect structure until rebuilt, so fall back to a fixed point stride
+    property bool   _hasTransectIndices:        _entryIndices.length > 0 && _entryIndices.length === _exitIndices.length
+    property int    _transectStride:            _hasTurnaround ? 4 : 2
+    property int    _transectCount:             _hasTransectIndices ? _entryIndices.length : _transectPoints.length / _transectStride
     property bool   _hasTurnaround:             _missionItem.turnAroundDistance.rawValue !== 0
-    property int    _firstTrueTransectIndex:    _hasTurnaround ? 1 : 0
-    property int    _lastTrueTransectIndex:     _transectPoints.length - (_hasTurnaround ? 2 : 1)
+    property int    _firstTrueTransectIndex:    _hasTransectIndices ? _entryIndices[0] : (_hasTurnaround ? 1 : 0)
+    property int    _lastTrueTransectIndex:     _hasTransectIndices ? _exitIndices[_exitIndices.length - 1] : _transectPoints.length - (_hasTurnaround ? 2 : 1)
     property int    _lastPointIndex:            _transectPoints.length - 1
     property bool   _showPartialEntryExit:      !_currentItem && _hasTurnaround &&_transectPoints.length >= 2
     property var    _fullTransectsComponent:    null
@@ -154,7 +159,7 @@ Item {
             visible:        _currentItem && _transectCount > 3 && !_vertexDrag
             opacity:        _root.opacity
 
-            property int nextTrueTransectIndex: _firstTrueTransectIndex + (_hasTurnaround ? 4 : 2)
+            property int nextTrueTransectIndex: _hasTransectIndices ? _entryIndices[Math.min(1, _entryIndices.length - 1)] : _firstTrueTransectIndex + _transectStride
         }
     }
 
@@ -182,7 +187,7 @@ Item {
             visible:        _currentItem && _transectCount > 3 && !_vertexDrag
             opacity:        _root.opacity
 
-            property int prevTrueTransectIndex: _lastTrueTransectIndex - (_hasTurnaround ? 4 : 2)
+            property int prevTrueTransectIndex: _hasTransectIndices ? _exitIndices[Math.max(0, _exitIndices.length - 2)] : _lastTrueTransectIndex - _transectStride
         }
     }
 

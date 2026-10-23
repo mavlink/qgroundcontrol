@@ -28,6 +28,10 @@ public:
     Q_PROPERTY(double           coveredArea                 READ coveredArea                                        NOTIFY coveredAreaChanged)
     Q_PROPERTY(bool             hoverAndCaptureAllowed      READ hoverAndCaptureAllowed                             CONSTANT)
     Q_PROPERTY(QVariantList     visualTransectPoints        READ visualTransectPoints                               NOTIFY visualTransectPointsChanged)
+    /// Indices into visualTransectPoints of each survey entry/exit. Empty when the transects have not been rebuilt
+    /// since load, in which case the transect structure is unknown.
+    Q_PROPERTY(QList<int> visualTransectEntryIndices READ visualTransectEntryIndices NOTIFY visualTransectPointsChanged)
+    Q_PROPERTY(QList<int> visualTransectExitIndices READ visualTransectExitIndices NOTIFY visualTransectPointsChanged)
 
     Q_PROPERTY(Fact*            terrainAdjustTolerance      READ terrainAdjustTolerance                             CONSTANT)
     Q_PROPERTY(Fact*            terrainAdjustMaxDescentRate READ terrainAdjustMaxDescentRate                        CONSTANT)
@@ -36,6 +40,10 @@ public:
     QGCMapPolygon*  surveyAreaPolygon   (void) { return &_surveyAreaPolygon; }
     CameraCalc*     cameraCalc          (void) { return &_cameraCalc; }
     QVariantList    visualTransectPoints(void) { return _visualTransectPoints; }
+
+    QList<int> visualTransectEntryIndices(void) const { return _visualTransectEntryIndices; }
+
+    QList<int> visualTransectExitIndices(void) const { return _visualTransectExitIndices; }
 
     Fact* turnAroundDistance            (void) { return &_turnAroundDistanceFact; }
     Fact* cameraTriggerInTurnAround     (void) { return &_cameraTriggerInTurnAroundFact; }
@@ -168,6 +176,8 @@ protected:
     } CoordInfo_t;
 
     QVariantList                                _visualTransectPoints;                          ///< Used to draw the flight path visuals on the screen
+    QList<int> _visualTransectEntryIndices;
+    QList<int> _visualTransectExitIndices;
     QList<QList<CoordInfo_t>>                   _transects;
     QList<TerrainPathQuery::PathHeightInfo_t>   _rgPathHeightInfo;                              ///< Path height for each segment includes turn segments
     QList<QGeoCoordinate>                       _rgFlyThroughMissionItemCoords;

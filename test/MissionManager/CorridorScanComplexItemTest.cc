@@ -338,5 +338,20 @@ void CorridorScanComplexItemTest::_testZeroWidthCorridor()
     QCOMPARE(boundaries.first().toList().size(), _polyLineVertices.count());
 }
 
+void CorridorScanComplexItemTest::_testVisualTransectIndices()
+{
+    // Each transect follows the corridor path: entry, one interior point per inner path vertex, then exit.
+    // This holds for every entry point location.
+    for (int entryLocation = 0; entryLocation < 4; ++entryLocation) {
+        const QList<int> entryIndices = _corridorItem->visualTransectEntryIndices();
+        const QList<int> exitIndices = _corridorItem->visualTransectExitIndices();
+        QCOMPARE(entryIndices.size(), _expectedTransectCount);
+        QCOMPARE(exitIndices.size(), _expectedTransectCount);
+        for (qsizetype index = 0; index < entryIndices.size(); ++index) {
+            QCOMPARE(exitIndices[index] - entryIndices[index], _polyLineVertices.count() - 1);
+        }
+        _corridorItem->rotateEntryPoint();
+    }
+}
 
 UT_REGISTER_TEST(CorridorScanComplexItemTest, TestLabel::Unit, TestLabel::MissionManager)
