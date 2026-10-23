@@ -109,8 +109,15 @@ void APMSensorsCalibrationUITest::_testCompassCalibrationCancel()
     QVERIFY2(QTest::qWaitFor([&] { return !cancelBtn->property("enabled").toBool(); }, 5000),
              "Cancel button still enabled after cancellation");
 
-    // COMPASS_OFS_X must still be 0 (compass not calibrated)
+    // Cancelling restores COMPASS_CAL_FIT and refreshes the calibration params; both must finish before teardown
     ParameterManager *mgr = vehicle->parameterManager();
+    QVERIFY_TRUE_WAIT(!mgr->pendingWrites(), TestTimeout::mediumMs());
+    waitForParamRefreshQuiet(vehicle);
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    // COMPASS_OFS_X must still be 0 (compass not calibrated)
     QVERIFY2(mgr->parameterExists(ParameterManager::defaultComponentId, QStringLiteral("COMPASS_OFS_X")),
              "COMPASS_OFS_X parameter not found");
     Fact *compassOfs = mgr->getParameter(ParameterManager::defaultComponentId, QStringLiteral("COMPASS_OFS_X"));

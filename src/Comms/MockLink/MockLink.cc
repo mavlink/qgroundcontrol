@@ -1171,6 +1171,15 @@ void MockLink::respondWithMavlinkMessage(const mavlink_message_t &msg)
     }
 }
 
+void MockLink::waitForWorkerIdle()
+{
+    if (!_worker || !_workerThread || !_workerThread->isRunning() || (QThread::currentThread() == _workerThread)) {
+        return;
+    }
+    // The worker never waits on the calling thread, so it reaches this no-op once its current task returns
+    (void) QMetaObject::invokeMethod(_worker, [] {}, Qt::BlockingQueuedConnection);
+}
+
 void MockLink::_writeBytes(const QByteArray &bytes)
 {
     // This prevents the responses to mavlink messages from being sent until the _writeBytes returns.

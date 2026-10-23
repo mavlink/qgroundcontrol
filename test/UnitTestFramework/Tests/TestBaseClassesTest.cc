@@ -64,6 +64,8 @@ void TestBaseClassesTest::_testCommsTestDerived()
     // Wait for vehicle using public wrapper
     Vehicle* vehicle = commsTest.doWaitForVehicleConnect(TestTimeout::longMs());
     QVERIFY(vehicle != nullptr);
+    // Disconnecting mid-connect fails the in-flight component metadata request
+    QVERIFY_TRUE_WAIT(vehicle->isInitialConnectComplete(), TestTimeout::longMs());
     // Cleanup disconnects all
     commsTest.doCleanup();
     QCOMPARE(commsTest.linkManager()->links().count(), 0);

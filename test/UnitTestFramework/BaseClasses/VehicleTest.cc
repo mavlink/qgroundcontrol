@@ -1,5 +1,6 @@
 #include "VehicleTest.h"
 
+#include <QtCore/QCoreApplication>
 #include <QtCore/QStringList>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
@@ -118,8 +119,14 @@ bool VehicleTest::waitForInitialConnect(int timeoutMs)
 
 void VehicleTest::simulateCommLoss(bool lost)
 {
-    if (_mockLink) {
-        _mockLink->setCommLost(lost);
+    if (!_mockLink) {
+        return;
+    }
+    _mockLink->setCommLost(lost);
+    if (lost) {
+        // Deliver what the worker sent before the flag took effect, so no heartbeat arrives after this returns
+        _mockLink->waitForWorkerIdle();
+        QCoreApplication::sendPostedEvents();
     }
 }
 

@@ -52,6 +52,10 @@ public:
     Q_INVOKABLE void setCommLost(bool commLost) { _commLost = commLost; }
     Q_INVOKABLE void simulateConnectionRemoved();
 
+    /// Returns once the worker thread has finished the tasks already under way, so whatever they sent is queued for
+    /// its receivers. Must not be called from the worker thread.
+    void waitForWorkerIdle();
+
     quint32 vehicleId() const { return _vehicleSystemId; }
     MAV_AUTOPILOT getFirmwareType() const { return _firmwareType; }
 
