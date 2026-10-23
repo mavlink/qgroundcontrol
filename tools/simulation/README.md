@@ -8,6 +8,7 @@ Tools for testing QGroundControl without physical hardware.
 | --- | --- | --- |
 | `mock_vehicle.py` | UI testing, quick checks | `python tools/setup/install_python.py dev` |
 | `run_arducopter_sitl.py` | Full simulation, mission testing | Docker required |
+| `rc_transmitter.py` | RC transmitter for PX4 SITL: flight modes, switches, RC loss | `python tools/setup/install_python.py dev` |
 
 ## Mock Vehicle (Lightweight)
 
@@ -74,6 +75,45 @@ docker rm arducopter-sitl        # Remove container
 
 Mock Vehicle auto-connects over UDP 14550. For SITL, add a TCP comm link in QGC
 (**Application Settings → Comm Links → Add**, Host `localhost`, Port `5760`).
+
+## Virtual RC Transmitter (PX4 SITL)
+
+Simulates an RC transmitter for PX4 SITL, which has no RC receiver. A web page has a slider and
+1000/1500/2000 buttons for each of the 18 channels. The script streams the PWM values as
+`RC_CHANNELS_OVERRIDE`, which PX4 treats as receiver input, so mode channels, mode buttons and
+switches behave as with a real transmitter. QGC stays connected on its own link at the same time.
+
+```bash
+# SITL on this machine: uses the PX4 offboard link (UDP 14540), not QGC's 14550
+./rc_transmitter.py
+
+# SITL in a VM or on another machine: connect to its offboard link port
+./rc_transmitter.py --connect udpout:10.211.55.7:14580
+
+# Then open http://localhost:8080
+```
+
+PX4 SITL only reads MAVLink joystick input by default. Set it to use RC, and map the sticks so
+the mode channel and switches can change modes:
+
+```text
+param set COM_RC_IN_MODE 0
+param set RC_CHAN_CNT 8
+param set RC_MAP_ROLL 1
+param set RC_MAP_PITCH 2
+param set RC_MAP_THROTTLE 3
+param set RC_MAP_YAW 4
+```
+
+**Stopped** pauses sending, to test the RC loss failsafe.
+
+**Options:**
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `--connect` | `udpin:0.0.0.0:14540` | pymavlink connection to the vehicle |
+| `--port` | 8080 | Web page port |
+| `--rate` | 20 | Send rate (Hz). PX4 treats RC as lost after `COM_RC_LOSS_T` (0.5 s) without it |
 
 ## Comparison
 
