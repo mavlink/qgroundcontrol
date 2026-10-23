@@ -72,7 +72,10 @@ def test_planned_arguments_reach_analyze_py_as_one_word_each():
     script = STEPS["Run analysis"]["run"]
     assert "jq -r '.[]' <<< \"$ANALYZE_ARGS\"" in script
     assert "mapfile -t args" in script
-    assert 'python3 tools/analyze.py --build-dir "${RUNNER_TEMP}/build" "${args[@]}"' in script
+    assert (
+        'python3 tools/analyze.py --build-dir "${RUNNER_TEMP}/build" --step-summary "${args[@]}"'
+        in script
+    )
     assert '"${GITHUB_WORKSPACE}/${ANALYSIS_PATH}"' in STEPS["Run IWYU"]["run"]
 
 

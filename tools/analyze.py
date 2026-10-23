@@ -18,17 +18,21 @@ from __future__ import annotations
 import argparse
 import importlib
 import os
+import re
+from collections import Counter
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, NamedTuple
 
 import _bootstrap as _bootstrap
 from common.file_traversal import find_repo_root
-from common.gh_actions import is_ci
+from common.format import format_count
+from common.gh_actions import is_ci, write_step_summary
 from common.git import pr_diff_refs, run_git
 from common.logging import log_error, log_ok
+from common.markdown import code_block, code_span, md_table, more_items, summary_section
 
 if TYPE_CHECKING:
-    from analyzers.base import AnalyzerBase
+    from analyzers.base import AnalysisResult, AnalyzerBase
 
 
 class Tool(NamedTuple):
@@ -278,6 +282,11 @@ Examples:
         action="store_true",
         help="Report warnings without failing; errors still fail",
     )
+    parser.add_argument(
+        "--step-summary",
+        action="store_true",
+        help="Add each tool's result to the GitHub Actions job summary",
+    )
 
     args = parser.parse_args(argv)
     args.tools = list(dict.fromkeys(args.tools or ["clang-tidy"]))
@@ -298,6 +307,57 @@ Examples:
     if args.fix and "clang-tidy" in args.tools and is_ci():
         parser.error("clang-tidy --fix rewrites sources and runs only locally, never in CI")
     return args
+
+
+# A compiler diagnostic that names its check: "file:line:col: warning: text [check-name]".
+_DIAGNOSTIC = re.compile(r": (?:warning|error): .*\[([\w.,-]+)\]$", re.MULTILINE)
+_SUMMARY_FILES = 50
+_SUMMARY_CHECKS = 15
+_SUMMARY_OUTPUT_LINES = 300
+
+
+def result_summary(result: AnalysisResult, *, shard: int = 1, shard_count: int = 1) -> str:
+    """Return one tool's job-summary section: status, file counts, checks, and diagnostics."""
+    checks = Counter(_DIAGNOSTIC.findall(result.output))
+    files = [f"- {code_span(name)}" for name in result.files_with_issues[:_SUMMARY_FILES]]
+    if len(result.files_with_issues) > _SUMMARY_FILES:
+        files.append(f"- {more_items(len(result.files_with_issues) - _SUMMARY_FILES)}")
+    output = result.output.strip().splitlines()
+    shown = "\n".join(output[:_SUMMARY_OUTPUT_LINES])
+    if len(output) > _SUMMARY_OUTPUT_LINES:
+        shown += f"\n{more_items(len(output) - _SUMMARY_OUTPUT_LINES)} lines (see the job log)"
+    body = ""
+    if result.status == "error":
+        body = "Error diagnostics or tool failures fail this job; warnings are advisory."
+    return summary_section(
+        f"Code analysis: {result.tool}",
+        [
+            ("Result", result.status),
+            ("Shard", f"{shard} of {shard_count}" if shard_count > 1 else ""),
+            ("Files analyzed", format_count(result.files_checked)),
+            ("Files with findings", format_count(len(result.files_with_issues))),
+            ("Diagnostics", format_count(sum(checks.values())) if checks else ""),
+        ],
+        body=body,
+        collapsed=[
+            (
+                f"Checks with findings ({len(checks)})",
+                md_table(
+                    ["Check", "Diagnostics"],
+                    [
+                        [code_span(name), format_count(count)]
+                        for name, count in checks.most_common(_SUMMARY_CHECKS)
+                    ],
+                    align=["left", "right"],
+                    markdown=True,
+                )
+                if checks
+                else "",
+            ),
+            (f"Files with findings ({len(result.files_with_issues)})", "\n".join(files)),
+            ("Diagnostics (unique)", code_block(shown) if shown else ""),
+        ],
+    )
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -383,6 +443,10 @@ def main(argv: list[str] | None = None) -> int:
         result = selected.run(files, fix=args.fix)
         reason = f": {result.output}" if result.execution_error and result.output else ""
         print(f"{result.tool}: {result.status} ({result.files_checked} files){reason}")
+        if args.step_summary:
+            write_step_summary(
+                result_summary(result, shard=args.shard, shard_count=args.shard_count)
+            )
         if result.execution_error or result.error_findings:
             status = 2
         elif not (result.passed or args.advisory):

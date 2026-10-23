@@ -4,9 +4,10 @@
 Uses the GitHub CLI (gh) to query the GitHub API and, for a given commit SHA,
 download the artifacts whose names match the given prefixes from each platform
 workflow's newest successful run that has any (any completed run with
---include-failed). With --sizes-out, it also records the distributable artifact
-sizes of each workflow's latest successful run, reusing the artifact listings
-it fetched.
+--include-failed). Each artifact lands in its own <output-dir>/<name>/ directory,
+and <output-dir>/download-manifest.json maps it to its workflow and run. With
+--sizes-out, it also records the distributable artifact sizes of each workflow's
+latest successful run, reusing the artifact listings it fetched.
 
 Usage:
     python3 tools/ci/reporting/download_artifacts.py \\
@@ -38,7 +39,7 @@ from common.gh_actions import (
     list_run_artifacts,
     list_workflow_runs_for_sha,
 )
-from common.io import write_json
+from common.io import read_json, write_json
 
 from ci.reporting.workflow_runs import (
     add_workflow_run_query_args,
@@ -61,6 +62,8 @@ _EXCLUDED_PREFIXES = (
 _EXCLUDED_EXACT_NAMES = {
     "coverage-report",
 }
+
+MANIFEST_NAME = "download-manifest.json"
 
 
 def select_latest_successful_runs(
@@ -140,6 +143,10 @@ def collect_artifact_sizes(
                         file=sys.stderr,
                     )
 
+    workflow_of = {
+        int(run.get("id", 0)): str(run.get("name", ""))
+        for run in select_latest_successful_runs(runs, workflows, event=event)
+    }
     sizes: dict[str, dict[str, Any]] = {}
     for run_id in run_ids:
         for artifact in listed.get(run_id, fetched.get(run_id, [])):
@@ -152,6 +159,7 @@ def collect_artifact_sizes(
                     "name": name,
                     "size_bytes": size_bytes,
                     "size_human": format_bytes(size_bytes),
+                    "workflow": workflow_of.get(run_id, ""),
                 }
     return sorted(sizes.values(), key=lambda item: str(item["name"]))
 
@@ -166,13 +174,18 @@ def download_run_artifacts(
     output_dir: Path,
     artifact_names: list[str],
 ) -> bool:
-    """Download the named artifacts from a workflow run. Returns True on success."""
+    """Download the named artifacts from a workflow run. Returns True on success.
+
+    gh extracts a single requested artifact straight into --dir, so that case names
+    the artifact's own directory to keep every download under <output-dir>/<name>/.
+    """
+    target = output_dir / artifact_names[0] if len(artifact_names) == 1 else output_dir
     cmd = [
         "run",
         "download",
         str(run_id),
         "--dir",
-        str(output_dir),
+        str(target),
         "--repo",
         repo,
     ]
@@ -194,7 +207,21 @@ def download_run_artifacts(
 
 def list_downloaded_files(output_dir: Path) -> list[Path]:
     """Return all downloaded files under output_dir."""
-    return sorted(path for path in output_dir.rglob("*") if path.is_file())
+    return sorted(
+        path for path in output_dir.rglob("*") if path.is_file() and path.name != MANIFEST_NAME
+    )
+
+
+def write_manifest(output_dir: Path, entries: list[dict[str, Any]]) -> None:
+    """Add downloaded artifacts to the manifest, keeping entries of earlier downloads."""
+    path = output_dir / MANIFEST_NAME
+    try:
+        existing = read_json(path) if path.is_file() else []
+    except (OSError, ValueError):
+        existing = []
+    names = {entry["name"] for entry in entries}
+    kept = [e for e in existing if isinstance(e, dict) and e.get("name") not in names]
+    write_json(path, sorted([*kept, *entries], key=lambda entry: str(entry.get("name", ""))))
 
 
 def _cached_runs_file() -> str:
@@ -362,6 +389,15 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 print(f"  Failed: {name}")
                 failed += 1
+    write_manifest(
+        output_dir,
+        [
+            {"name": artifact, "workflow": str(run["name"]), "run_id": int(run["id"])}
+            for run in runs
+            for artifact in run_artifact_names[int(run["id"])]
+            if (output_dir / artifact).is_dir()
+        ],
+    )
 
     files = list_downloaded_files(output_dir)
     if not files:

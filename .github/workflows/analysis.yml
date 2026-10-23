@@ -274,7 +274,7 @@ jobs:
         run: |
           arg_lines=$(jq -r '.[]' <<< "$ANALYZE_ARGS")
           mapfile -t args <<< "$arg_lines"
-          python3 tools/analyze.py --build-dir "${RUNNER_TEMP}/build" "${args[@]}" 2>&1 | tee "${RUNNER_TEMP}/build/analysis-output.txt"
+          python3 tools/analyze.py --build-dir "${RUNNER_TEMP}/build" --step-summary "${args[@]}" 2>&1 | tee "${RUNNER_TEMP}/build/analysis-output.txt"
 
       # Stored results are complete analyses only, so findings do not prevent saving.
       - name: Save analysis results

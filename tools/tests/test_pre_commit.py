@@ -17,7 +17,9 @@ from pre_commit import (
     QT_PATHSPECS,
     build_precommit_args,
     changed_refs,
+    describe_selection,
     extract_hook_lines,
+    failed_hooks,
     file_selection_args,
     needs_qt,
     parse_args,
@@ -54,6 +56,27 @@ def test_summarize_output_counts_states() -> None:
 def test_extract_hook_lines_strips_ansi() -> None:
     lines = extract_hook_lines("\x1b[31mhook-a........................Failed\x1b[0m\n")
     assert lines == ["hook-a........................Failed"]
+
+
+def test_failed_hooks_lists_names_in_run_order() -> None:
+    output = (
+        "clang-format.......................\x1b[41mFailed\x1b[0m\n"
+        "- hook id: clang-format\n"
+        "ruff check (python)................Passed\n"
+        "qmllint.........(no files to check)Skipped\n"
+        "check yaml.........................Failed\n"
+        "Failed to load a file\n"
+    )
+    assert failed_hooks(output) == ["clang-format", "check yaml"]
+
+
+def test_describe_selection() -> None:
+    assert describe_selection(["--all-files"]) == "all files"
+    assert (
+        describe_selection(["--from-ref", "a" * 40, "--to-ref", "b"])
+        == "changed since aaaaaaaaaaaa"
+    )
+    assert describe_selection(["--files", "a.md", "b.md"]) == "2 selected files"
 
 
 def test_build_precommit_args_all_files() -> None:
@@ -394,6 +417,7 @@ def test_results_dir_writes_artifact_relative_to_invocation_directory(
                 "passed": "1",
                 "failed": "1",
                 "skipped": "0",
+                "failed_hooks": ["lint"],
                 "run_url": "https://github.com/owner/repo/actions/runs/42",
             },
             indent=2,
@@ -423,8 +447,13 @@ def test_ci_failure_writes_summary_and_annotation(
     assert pre_commit.main(["--ci", "--hook", "typos"]) == 1
 
     # Without --results-dir the streamed output is read back from a temporary copy.
-    assert "**Some checks failed**" in gh_summary.read_text(encoding="utf-8")
-    assert "lint........................Failed" in gh_summary.read_text(encoding="utf-8")
+    summary = gh_summary.read_text(encoding="utf-8")
+    assert summary.startswith("### Pre-commit\n\n| Item | Value |")
+    assert "| Result | failed |" in summary
+    assert "| Hooks | 1 passed, 1 failed, 0 skipped |" in summary
+    assert "Failed hooks: `lint`." in summary
+    assert "<details><summary>Hook results</summary>" in summary
+    assert "lint........................Failed" in summary
     # No workflow step reads outputs; the summary and results artifact carry the counts.
     assert gh_output.read_text(encoding="utf-8") == ""
     assert "::error::Required pre-commit checks failed" in capsys.readouterr().out

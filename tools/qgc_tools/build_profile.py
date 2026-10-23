@@ -8,7 +8,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from common.format import format_count, format_duration
 from common.io import read_json, write_json
+from common.markdown import code_span, md_table
 
 
 @dataclass(frozen=True)
@@ -371,3 +373,53 @@ def write_snapshot(
     (output_dir / "report.md").write_text(report, encoding="utf-8")
     write_json(output_dir / "report.json", payload)
     return report
+
+
+def snapshot_summary(
+    profile_dir: Path, *, limit: int = 10
+) -> tuple[list[tuple[str, object]], list[tuple[str, str]]]:
+    """Return job-summary facts and collapsed tables for a write_snapshot() directory."""
+    try:
+        report = read_json(profile_dir / "report.json")
+    except (OSError, ValueError):
+        return [], []
+    if not isinstance(report, dict):
+        return [], []
+    edges = report.get("slowest_edges") or []
+    slowest = md_table(
+        ["Output", "Kind", "Time"],
+        [
+            [
+                code_span(str(edge.get("output", ""))[-100:]),
+                str(edge.get("category", "")),
+                format_duration(int(edge.get("duration_ms", 0)) / 1000),
+            ]
+            for edge in edges[:limit]
+        ],
+        align=["left", "left", "right"],
+        markdown=True,
+    )
+    categories = sorted(
+        (report.get("categories") or {}).items(),
+        key=lambda item: item[1].get("duration_ms", 0),
+        reverse=True,
+    )
+    by_kind = md_table(
+        ["Kind", "Commands", "Time (summed; commands overlap)"],
+        [
+            [
+                kind,
+                format_count(int(values.get("count", 0))),
+                format_duration(int(values.get("duration_ms", 0)) / 1000),
+            ]
+            for kind, values in categories
+        ],
+        align=["left", "right", "right"],
+    )
+    facts: list[tuple[str, object]] = [
+        ("Build steps run", format_count(int(report.get("edge_count", 0))))
+    ]
+    return facts, [
+        (f"Slowest build steps (top {limit})", slowest if edges else ""),
+        ("Build time by kind", by_kind if categories else ""),
+    ]

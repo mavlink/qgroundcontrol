@@ -245,7 +245,7 @@ EXPECTED_BUILD_RESULTS_PATHS: frozenset[str] = frozenset(
         "tools/ci/reporting/collect_build_status.py",
         "tools/ci/reporting/download_artifacts.py",
         "tools/ci/reporting/generate_build_results_comment.py",
-        "tools/ci/reporting/templates/build_results.md.j2",
+        "tools/ci/reporting/junit_report.py",
         "tools/ci/reporting/workflow_runs.py",
         "tools/common/__init__.py",
         "tools/qgc_tools/__init__.py",
@@ -259,6 +259,7 @@ EXPECTED_BUILD_RESULTS_PATHS: frozenset[str] = frozenset(
         "tools/common/markdown.py",
         "tools/common/platform.py",
         "tools/common/proc.py",
+        "tools/common/xml.py",
         "tools/pyproject.toml",
         "tools/uv.lock",
         "tools/setup/install_python.py",
@@ -269,7 +270,7 @@ EXPECTED_BUILD_RESULTS_PATHS: frozenset[str] = frozenset(
 
 @pytest.mark.parametrize("job", ["post-pr-comment", "save-baselines"])
 def test_build_results_jobs_check_out_once_before_local_actions(job: str) -> None:
-    """Each job's only checkout covers its actions, templates, locks and Python import closure."""
+    """Each job's only checkout covers its actions, locks and Python import closure."""
 
     steps = load_workflow(BUILD_RESULTS_YML.name)["jobs"][job]["steps"]
     checkouts = [

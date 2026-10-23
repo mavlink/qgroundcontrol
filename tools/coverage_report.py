@@ -14,9 +14,10 @@ from pathlib import Path
 import _bootstrap as _bootstrap
 from common.coverage_summary import SUMMARY_FILENAME, CoverageSummaryError, read_gcovr_summary
 from common.file_traversal import find_repo_root
+from common.format import format_count, format_percent
 from common.gh_actions import write_step_summary
 from common.logging import log_error, log_info, log_ok
-from common.markdown import md_table
+from common.markdown import code_span, summary_section
 from common.proc import require_tools, run_captured
 from qgc_tools.cmake_configure import CMakeConfig, configure
 
@@ -121,27 +122,34 @@ def run_tests(repo_root: Path, build_dir: Path) -> None:
 
 
 def build_step_summary(summary_json: Path) -> str:
-    """Build a GitHub Step Summary section from the gcovr JSON summary."""
-    lines = ["## Code Coverage", ""]
+    """Build the job summary's Coverage section from the gcovr JSON summary."""
     try:
         summary = read_gcovr_summary(summary_json)
     except CoverageSummaryError as exc:
-        lines.append(f"Coverage data not available: {exc}")
-        return "\n".join(lines) + "\n"
-    branches = (
-        f"{summary.branch_percent:.1f}% ({summary.branch_covered} of {summary.branch_total})"
-        if summary.branch_total
-        else "N/A"
+        return summary_section("Coverage", body=f"Coverage data not available: {exc}")
+
+    def metric(covered: int, total: int) -> str:
+        if not total:
+            return "N/A"
+        return f"{format_percent(100.0 * covered / total)} ({format_count(covered)} of {format_count(total)})"
+
+    return summary_section(
+        "Coverage",
+        [
+            ("Lines", metric(summary.line_covered, summary.line_total)),
+            (
+                "Functions",
+                metric(summary.function_covered, summary.function_total)
+                if summary.function_total
+                else "",
+            ),
+            ("Branches", metric(summary.branch_covered, summary.branch_total)),
+            (
+                "Report",
+                f"{code_span(summary_json.name)}, `coverage.xml`, and HTML in the `coverage-report` artifact",
+            ),
+        ],
     )
-    rows = [
-        (
-            "Lines",
-            f"{summary.line_percent:.1f}% ({summary.line_covered} of {summary.line_total})",
-        ),
-        ("Branches", branches),
-    ]
-    lines.append(md_table(["Metric", "Coverage"], rows))
-    return "\n".join(lines) + "\n"
 
 
 def generate_report(build_dir: Path, *, log_file: Path | None = None) -> None:

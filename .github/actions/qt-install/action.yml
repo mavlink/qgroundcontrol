@@ -4,6 +4,17 @@ outputs:
   qt_root_dir:
     description: Absolute Qt root directory
     value: ${{ steps.qt.outputs.qt_root_dir }}
+  version:
+    description: Installed Qt version
+    value: ${{ steps.plan.outputs.version }}
+  installer:
+    description: Installer that provided Qt (qgc or aqt)
+    value: ${{ steps.plan.outputs.installer }}
+  source:
+    description: Where Qt came from (preinstalled, cache, or installed)
+    value: >-
+      ${{ steps.plan.outputs.preinstalled_root != '' && 'preinstalled' ||
+          steps.qt-cache.outputs.cache-hit == 'true' && 'cache' || 'installed' }}
 inputs:
   version:
     description: Qt version to install (defaults to qt.version in .github/build-config.json)

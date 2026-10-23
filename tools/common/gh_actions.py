@@ -143,6 +143,22 @@ def list_run_artifacts(repo: str, run_id: int | str) -> list[dict[str, Any]]:
     )
 
 
+def list_run_jobs(repo: str, run_id: int | str) -> list[dict[str, Any]]:
+    """List the jobs of a workflow run's latest attempt, with their steps, across all pages."""
+    try:
+        run_id_int = int(run_id)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"run_id must be an integer, got {run_id!r}") from exc
+    if run_id_int <= 0:
+        raise ValueError(f"run_id must be positive, got {run_id_int}")
+
+    return _paginate_items(
+        f"repos/{repo}/actions/runs/{run_id_int}/jobs",
+        "jobs",
+        {"per_page": "100", "filter": "latest"},
+    )
+
+
 def parse_csv_list(value: str) -> list[str]:
     """Parse comma-separated values into a trimmed non-empty list."""
     return [item.strip() for item in value.split(",") if item.strip()]
@@ -266,23 +282,29 @@ def _escape_annotation(message: str) -> str:
     return message.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
 
 
-def annotate(level: str, message: str) -> None:
+def annotate(level: str, message: str, *, title: str = "") -> None:
     """Emit a GitHub Actions workflow annotation to stdout.
 
     level is one of "error", "warning", "notice". The runner parses these from
     the step log and renders them in the run UI; outside CI it is plain text.
     """
-    print(f"::{level}::{_escape_annotation(message)}", flush=True)
+    # Property values also end at ':' and ','.
+    props = (
+        f" title={_escape_annotation(title).replace(':', '%3A').replace(',', '%2C')}"
+        if title
+        else ""
+    )
+    print(f"::{level}{props}::{_escape_annotation(message)}", flush=True)
 
 
-def gh_error(message: str) -> None:
+def gh_error(message: str, *, title: str = "") -> None:
     """Emit a GitHub Actions error annotation."""
-    annotate("error", message)
+    annotate("error", message, title=title)
 
 
-def gh_warning(message: str) -> None:
+def gh_warning(message: str, *, title: str = "") -> None:
     """Emit a GitHub Actions warning annotation."""
-    annotate("warning", message)
+    annotate("warning", message, title=title)
 
 
 def gh_notice(message: str) -> None:

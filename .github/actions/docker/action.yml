@@ -129,6 +129,12 @@ runs:
         [[ "$ENABLE_FUSE" == "true" ]] && ARGS+=(--fuse)
         python3 "${GITHUB_WORKSPACE}/tools/ci/compile/docker_helper.py" "${ARGS[@]}"
 
+    # Ninja timings are snapshotted first so the Docker build section can include them.
+    - name: Record Ninja build timings
+      if: ${{ !cancelled() && steps.application-build.outcome != '' && steps.application-build.outcome != 'skipped' }}
+      shell: bash
+      run: python3 tools/build_profile.py --build-dir build --output-dir build/build-profile
+
     - name: Report application build performance
       id: performance
       if: ${{ !cancelled() && steps.application-build.outcome != '' && steps.application-build.outcome != 'skipped' }}
@@ -140,11 +146,6 @@ runs:
       uses: ./.github/actions/save-build-cache
       with:
         docker-report: build/docker-build-report.json
-
-    - name: Report Ninja build timings
-      if: ${{ !cancelled() && steps.application-build.outcome != '' && steps.application-build.outcome != 'skipped' }}
-      shell: bash
-      run: python3 tools/build_profile.py --build-dir build --output-dir build/build-profile >> "$GITHUB_STEP_SUMMARY"
 
     - name: Upload application build performance
       if: ${{ !cancelled() && steps.application-build.outcome != '' && steps.application-build.outcome != 'skipped' }}

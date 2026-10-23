@@ -3,7 +3,8 @@
 
 ``prepare`` resolves the artifact (default: $RUNNER_TEMP/build/<artifact name>), verifies or
 writes its SHA-256 sidecar, writes the CPM dependency SBOM and build-identity manifest beside it,
-and emits the paths the attestation and upload steps consume.
+emits the paths the attestation and upload steps consume, and adds an Artifact section (file,
+size, SHA-256) to the job summary.
 
 ``checksum`` verifies or writes only the SHA-256 sidecar of a package uploaded outside
 attest-and-upload; ``--require-existing`` fails when the packager did not emit one.
@@ -19,8 +20,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import _bootstrap as _bootstrap
-from common.gh_actions import gh_error, write_github_output
+from common.format import format_bytes, format_count
+from common.gh_actions import gh_error, write_github_output, write_step_summary
 from common.io import ensure_sha256_sidecar, sha256_file, write_json
+from common.markdown import code_span, summary_section
 
 from ci.security.generate_cpm_sbom import generate_sbom
 
@@ -113,6 +116,18 @@ def cmd_prepare(args: argparse.Namespace) -> None:
             "metadata": str(metadata),
             "sbom-path": str(sbom_path),
         }
+    )
+    size = source.stat().st_size
+    write_step_summary(
+        summary_section(
+            "Artifact",
+            [
+                ("File", code_span(source.name)),
+                ("Size", f"{format_bytes(size)} ({format_count(size)} bytes)"),
+                ("SHA-256", code_span(checksum.read_text(encoding="utf-8").split()[0])),
+                ("Attestation subject", code_span(args.subject_name)),
+            ],
+        )
     )
 
 

@@ -17,7 +17,7 @@ groups one CI concern; put reusable helpers with multiple consumers in
 | `android/` | Android SDK setup, build retry, and emulator smoke tests |
 | `ios/` | iOS packaging and simulator smoke tests |
 | `publish/` | Attestation, publishing, release gating, and draft release notes |
-| `reporting/` | Build-results comments, size, duration, and coverage reports, and PR labels |
+| `reporting/` | Build-results comments, job-summary Setup and test sections, size and coverage reports, and PR labels |
 | `gstreamer/` | GStreamer SDK packaging and mirroring |
 | `security/` | Dependency SBOM generation and vulnerability-scanner installation |
 
@@ -35,7 +35,7 @@ and Ruff skips `build` directories.
 | `cache/build_cache_artifact.py` | Retain compiler/moc snapshots as short-lived workflow artifacts and restore them |
 | `cache/cache_backend.py` | Detect whether RunsOn's S3 proxy serves the Actions cache and export `QGC_ACTIONS_CACHE_BACKEND` for `setup-python` |
 | `cache/cache_plan.py` | Resolve the cache action's save policy, scope, keys, ccache budget, compiler/moc/CPM environment, and the sccache pilot's selection |
-| `cache/ccache_helper.py` | Install the pinned, checksum-verified ccache (and mold, plus sccache for the [sccache pilot](../../.github/ci-overview.md#sccache-pilot), on Linux), summarize ccache or sccache in CI, and gate PR cache saves |
+| `cache/ccache_helper.py` | Install the pinned, checksum-verified ccache (and mold, plus sccache for the [sccache pilot](../../.github/ci-overview.md#sccache-pilot), on Linux) and gate PR cache saves |
 | `cache/cpm_helper.py` | Fingerprint CPM dependencies and the GStreamer SDK config for `cache_plan.py`, and create and apply runner-image CPM seeds |
 | `cache/gh_cache_cleanup.py` | List and optionally delete GitHub Actions caches (`cache-cleanup.yml` sets its flags through `CLEANUP_*` variables) |
 | `runner/analysis_tools.py` | Install the hash-pinned clang-tidy wheel, verify `.clang-tidy`, and put LLVM, clang-tidy, and Clazy on `PATH` for `analysis.yml` |
@@ -44,7 +44,7 @@ and Ruff skips `build` directories.
 | `runner/install_dependencies_helper.py` | `install-dependencies` entry points: plan the Linux apt cache key, install the apt packages or the macOS Homebrew packages and GStreamer (both without the tools CI pins elsewhere), and install Windows MSVC and NSIS |
 | `runner/install_multipass.py` | Install Multipass and wait for daemon readiness |
 | `runner/runner_image.py` | Verify, promote, and retire QGC runner AMIs |
-| `compile/cmake_helper.py` | Run CI configure, build, and CTest steps with standard arguments and timing |
+| `compile/cmake_helper.py` | Run CI configure, build, and CTest steps with standard arguments and timing, and write the job summary's Build section (result, duration, toolchain, compiler and moc cache hit rates, slowest build steps) |
 | `compile/docker_helper.py` | Run Docker builds and report compiler identities, timings, and cache statistics |
 | `packaging/find_artifact.py` | Find exactly one build artifact by glob pattern (fails on none or several), optionally copying it |
 | `packaging/validate_native_package.py` | Validate native package identity, version, contents, and installed layout |
@@ -60,13 +60,14 @@ and Ruff skips `build` directories.
 | `publish/deploy_docs.py` | Deploy generated documentation to an external Pages repository |
 | `publish/release_branch_check.py` | Stop `release.yml` before it drafts a release for a tag that no `origin/Stable*` branch contains |
 | `publish/release_notes.py` | Draft a tag's release notes with git-cliff (`tools/configs/cliff.toml`) and create its draft GitHub Release unless one exists |
-| `reporting/collect_build_status.py` | Collect platform and pre-commit status for a head SHA and gate build-results jobs until every platform workflow completed |
-| `reporting/download_artifacts.py` | Download prefix-selected artifacts from matching completed workflow runs and record distributable artifact sizes |
-| `reporting/generate_build_results_comment.py` | Render the consolidated PR build-results comment |
+| `reporting/collect_build_status.py` | Collect platform, pre-commit, and Code Analysis status for a head SHA (with `--status-out`, each run's state, duration, and failed-step links from its jobs) and gate the baseline save until every platform workflow succeeded |
+| `reporting/download_artifacts.py` | Download prefix-selected artifacts from matching completed workflow runs into one directory each, with a manifest naming each artifact's workflow, and record distributable artifact sizes |
+| `reporting/generate_build_results_comment.py` | Render the consolidated PR build-results comment: verdict, per-workflow table, failures, and collapsed tests, coverage, sizes, pre-commit, and Code Analysis details |
 | `reporting/gh_pr_size_label.py` | Apply a pull request's `size/*` label from its changed lines |
+| `reporting/junit_report.py` | Summarize JUnit results (counts, failures, slowest tests) in the job summary, annotate failed tests and, optionally, slow tests; also the build-results comment's JUnit parser |
 | `reporting/report_context.py` | Resolve and recheck the current PR or default-branch reporting context |
+| `reporting/setup_summary.py` | Write the job summary's Setup section for `build-setup`: runner, Qt (version, installer, source), CMake, Python groups, and each build cache's restore result |
 | `reporting/size_analysis.py` | Analyze and report binary-size changes |
-| `reporting/test_duration_report.py` | Summarize the slowest JUnit tests in the job summary and warn about slow tests |
 | `reporting/verify_coverage_thresholds.py` | Enforce line and branch coverage thresholds (read from `CMakeCache.txt` with `--build-dir`) |
 | `reporting/workflow_runs.py` | Library: validate, select, and group workflow runs and load cached run snapshots for the reporting scripts |
 | `gstreamer/gstreamer_archive.py` | Package GStreamer builds and optionally upload them to S3 |

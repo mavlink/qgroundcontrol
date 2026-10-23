@@ -22,6 +22,7 @@ import _bootstrap as _bootstrap
 from common.aws import s3_object_exists, upload_public_file
 from common.gh_actions import gh_error, write_step_summary
 from common.gstreamer import PLATFORM_PACKAGES, package_platform, package_url, pinned_checksum
+from common.markdown import code_span, md_table, summary_section
 from common.net import download_file, read_url_text
 
 S3_BUCKET = "qgroundcontrol"
@@ -141,7 +142,7 @@ def main(argv: list[str] | None = None) -> int:
     work_dir = Path(args.work_dir)
     work_dir.mkdir(parents=True, exist_ok=True)
 
-    rows: list[str] = []
+    rows: list[list[str]] = []
     for artifact in artifacts:
         try:
             status = mirror_artifact(
@@ -154,11 +155,19 @@ def main(argv: list[str] | None = None) -> int:
         except (OSError, RuntimeError) as exc:
             gh_error(f"Failed to mirror {artifact.filename}: {exc}")
             return 1
-        rows.append(f"| `{artifact.s3_dir}` | `{artifact.filename}` | {status} |")
+        rows.append([code_span(artifact.s3_dir), code_span(artifact.filename), status])
 
     write_step_summary(
-        f"### GStreamer {args.version} mirror -> `s3://{S3_BUCKET}/dependencies/gstreamer/`\n\n"
-        "| Platform | File | Status |\n| --- | --- | --- |\n" + "\n".join(rows) + "\n"
+        summary_section(
+            "GStreamer mirror",
+            [
+                ("Version", args.version),
+                ("Destination", code_span(f"s3://{S3_BUCKET}/dependencies/gstreamer/")),
+                ("Mode", "dry run" if args.dry_run else "upload"),
+                ("Files", len(rows)),
+            ],
+            body=md_table(["Platform", "File", "Status"], rows, markdown=True),
+        )
     )
     return 0
 

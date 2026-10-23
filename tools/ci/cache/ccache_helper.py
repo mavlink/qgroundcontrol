@@ -5,20 +5,20 @@ Ccache helper for CI: install, report, and gate cache saves.
 Subcommands:
     install    Install the pinned compiler tools for this runner (ccache; mold and the
                sccache pilot on Linux)
-    summary    Write a build cache hit/miss summary to GitHub Step Summary
     save-gate  Decide whether the compiler and moc caches are worth saving
+
+The build's cache hit rates are part of the job summary's Build section
+(cmake_helper.py summary).
 
 Examples:
     ccache_helper.py install
     ccache_helper.py install --compiler-cache sccache
-    ccache_helper.py summary
     ccache_helper.py save-gate --min-misses 20
 """
 
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import re
 import shutil
@@ -35,14 +35,13 @@ from common.gh_actions import (
     append_github_env,
     append_github_path,
     write_github_output,
-    write_step_summary,
 )
 from common.io import read_json
-from common.markdown import md_table
 from common.net import fetch_release_member
 from common.platform import host_arch, is_linux, is_macos, is_windows
 from common.proc import run_captured
 from common.tool_version import probe_version, version_prefix_matches
+from qgc_tools.compiler_cache import ccache_stats
 
 # ---------------------------------------------------------------------------
 # Install
@@ -174,159 +173,6 @@ def install_compiler_tools(runner_temp: Path | None, compiler_cache: str = "ccac
 # ---------------------------------------------------------------------------
 
 
-def _tool_output(tool: str, *args: str) -> str | None:
-    """Run ``tool <args>`` and return its output, or None when the tool is missing or fails."""
-    binary = shutil.which(tool)
-    if not binary:
-        return None
-    try:
-        result = run_captured([binary, *args])
-    except OSError:
-        return None
-    return result.stdout.strip() if result.returncode == 0 else None
-
-
-def get_ccache_json_stats() -> dict | None:
-    """Return ``ccache --print-stats --format=json``; None when ccache is missing or < 4.10."""
-    try:
-        stats = json.loads(_tool_output("ccache", "--print-stats", "--format=json") or "null")
-    except json.JSONDecodeError:
-        return None
-    return stats if isinstance(stats, dict) else None
-
-
-def build_summary_markdown(stats: dict) -> str:
-    """Build a GitHub-flavoured markdown summary table from ccache JSON stats."""
-    direct = int(stats.get("direct_cache_hit", 0))
-    preprocessed = int(stats.get("preprocessed_cache_hit", 0))
-    misses = int(stats.get("cache_miss", 0))
-    hits = direct + preprocessed
-    total = hits + misses
-    pct = f"{hits / total * 100:.1f}" if total > 0 else "0.0"
-
-    size_kib = int(stats.get("cache_size_kibibyte", 0))
-    max_kib = int(stats.get("max_cache_size_kibibyte", 0))
-    size_pct = f"{size_kib / max_kib * 100:.1f}" if max_kib else "0.0"
-    cleanups = int(stats.get("cleanups_performed", 0))
-    errors = sum(
-        int(stats.get(k, 0))
-        for k in (
-            "internal_error",
-            "compiler_check_failed",
-            "error_hashing_extra_file",
-            "missing_cache_file",
-            "preprocessor_error",
-        )
-    )
-
-    rows = [
-        ["Cache hits", f"{hits} / {total} ({pct}%)"],
-        ["Direct hits", direct],
-        ["Preprocessed hits", preprocessed],
-        ["Misses", misses],
-        ["Cache size", f"{size_kib / 1024:.0f} MiB / {max_kib / 1048576:.1f} GiB ({size_pct}%)"],
-        ["Cleanups (LRU evictions)", cleanups],
-    ]
-    if errors:
-        rows.append(["⚠ Errors", errors])
-    return f"### CCache Statistics\n\n{md_table(['Metric', 'Value'], rows)}\n"
-
-
-def build_sccache_summary_markdown(report: dict) -> str:
-    """Build a markdown summary table from ``sccache --show-stats --stats-format json``."""
-    stats = report.get("stats") or {}
-
-    def total(name: str) -> int:
-        return sum(int(count) for count in ((stats.get(name) or {}).get("counts") or {}).values())
-
-    hits = total("cache_hits")
-    misses = total("cache_misses")
-    lookups = hits + misses
-    pct = f"{hits / lookups * 100:.1f}" if lookups else "0.0"
-    errors = total("cache_errors") + sum(
-        int(stats.get(key, 0))
-        for key in ("cache_read_errors", "cache_write_errors", "cache_timeouts")
-    )
-    rows = [
-        ["Cache hits", f"{hits} / {lookups} ({pct}%)"],
-        ["Misses", misses],
-        ["Cache writes", int(stats.get("cache_writes", 0))],
-        ["Non-cacheable calls", int(stats.get("requests_not_cacheable", 0))],
-        ["Cache location", report.get("cache_location", "unknown")],
-    ]
-    if errors:
-        rows.append(["⚠ Errors", errors])
-    return f"### sccache Statistics\n\n{md_table(['Metric', 'Value'], rows)}\n"
-
-
-def run_sccache_summary(error_log: Path | None) -> int:
-    """Write the sccache pilot's statistics, and any server errors, to the job summary."""
-    parts: list[str] = []
-    try:
-        report = json.loads(
-            _tool_output("sccache", "--show-stats", "--stats-format", "json") or "null"
-        )
-    except json.JSONDecodeError:
-        report = None
-    if isinstance(report, dict):
-        parts.append(build_sccache_summary_markdown(report))
-    else:
-        print("sccache statistics unavailable", file=sys.stderr)
-
-    text = _tool_output("sccache", "--show-stats")
-    if text:
-        parts.append(
-            f"<details>\n<summary>sccache --show-stats</summary>\n\n```\n{text}\n```\n\n</details>\n"
-        )
-
-    try:
-        log = error_log.read_text(encoding="utf-8", errors="replace").strip() if error_log else ""
-    except OSError:
-        log = ""
-    if log:
-        tail = "\n".join(log.splitlines()[-50:])
-        parts.append(
-            f"<details>\n<summary>sccache error log</summary>\n\n```\n{tail}\n```\n\n</details>\n"
-        )
-
-    if parts:
-        summary = "\n".join(parts)
-        print(summary)
-        write_step_summary(summary)
-    return 0
-
-
-def run_summary() -> int:
-    """Collect ccache stats and write a job summary table."""
-    if os.environ.get("QGC_COMPILER_CACHE_TOOL") == "sccache":
-        error_log = os.environ.get("SCCACHE_ERROR_LOG")
-        return run_sccache_summary(Path(error_log) if error_log else None)
-
-    parts: list[str] = []
-
-    stats = get_ccache_json_stats()
-    if stats is not None:
-        parts.append(build_summary_markdown(stats))
-    else:
-        print("ccache JSON stats unavailable (ccache missing or < 4.10)", file=sys.stderr)
-
-    compression = _tool_output("ccache", "--show-compression")
-    if compression:
-        parts.append(f"### Compression\n\n```\n{compression}\n```\n")
-
-    verbose = _tool_output("ccache", "-s", "-vv")
-    if verbose:
-        parts.append(
-            f"<details>\n<summary>Verbose stats</summary>\n\n```\n{verbose}\n```\n\n</details>\n"
-        )
-
-    if parts:
-        summary = "\n".join(parts)
-        print(summary)
-        write_step_summary(summary)
-    return 0
-
-
 # ---------------------------------------------------------------------------
 # Save gate
 # ---------------------------------------------------------------------------
@@ -360,7 +206,7 @@ def ccache_misses(docker_report: Path | None = None) -> int | None:
             return None
         match = _SHOW_STATS_MISSES.search(text) if isinstance(text, str) else None
         return int(match.group(1)) if match else None
-    stats = get_ccache_json_stats()
+    stats = ccache_stats()
     misses = stats.get("cache_miss") if isinstance(stats, dict) else None
     return misses if isinstance(misses, int) else None
 
@@ -438,12 +284,6 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Compiler launcher; sccache is a Linux-only pilot (default: $QGC_COMPILER_CACHE_TOOL)",
     )
 
-    # -- summary -------------------------------------------------------
-    sub.add_parser(
-        "summary",
-        help="Write cache hit/miss summary to GitHub Step Summary (sccache when selected)",
-    )
-
     # -- save-gate -----------------------------------------------------
     gate = sub.add_parser("save-gate", help="Decide whether the compiler and moc caches are saved")
     gate.add_argument("--event-name", default=os.environ.get("GITHUB_EVENT_NAME", ""))
@@ -472,9 +312,6 @@ def main(argv: list[str] | None = None) -> int:
         install_compiler_tools(args.runner_temp, args.compiler_cache)
         return 0
 
-    if args.command == "summary":
-        return run_summary()
-
     if args.command == "save-gate":
         run_save_gate(
             args.event_name,
@@ -485,7 +322,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     print(
-        "Error: a subcommand is required (install, summary, save-gate)",
+        "Error: a subcommand is required (install, save-gate)",
         file=sys.stderr,
     )
     return 1

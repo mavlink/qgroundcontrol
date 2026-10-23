@@ -21,12 +21,15 @@ from common.gh_actions import write_step_summary as _write_step_summary
 from common.git import pr_diff_refs
 from common.io import chdir, write_json
 from common.logging import log_error, log_info, log_ok
+from common.markdown import code_block, code_span, summary_section
 from common.proc import run_captured, run_tee
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
 HOOK_RESULT_RE = re.compile(r"\b(Passed|Failed|Skipped)\b")
+# "name.......Failed" or "name.....(no files to check)Skipped": the hook name precedes the dots.
+HOOK_NAME_RE = re.compile(r"^(?P<name>.*?[^.\s])\.{3,}")
 ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-9;]*m")
 
 DOCS_HOOKS = ("markdownlint", "typos", "vale")
@@ -117,6 +120,17 @@ def extract_hook_lines(output: str, *, limit: int = 40) -> list[str]:
     return lines[:limit] or ["No results"]
 
 
+def failed_hooks(output: str) -> list[str]:
+    """Return the names of the hooks that failed, in run order."""
+    names: list[str] = []
+    for line in strip_ansi(output).splitlines():
+        if ".........." not in line or not line.rstrip().endswith("Failed"):
+            continue
+        if match := HOOK_NAME_RE.match(line):
+            names.append(match.group("name").strip())
+    return names
+
+
 def changed_refs(args: argparse.Namespace) -> tuple[str, str] | None:
     """Return the (from, to) refs for --changed, or None to check every file."""
     if not args.changed:
@@ -188,6 +202,7 @@ def write_results(results_dir: Path, exit_code: int, output: str) -> None:
         "passed": str(passed),
         "failed": str(failed),
         "skipped": str(skipped),
+        "failed_hooks": failed_hooks(output),
         "run_url": run_url,
     }
     results_dir.mkdir(parents=True, exist_ok=True)
@@ -195,26 +210,48 @@ def write_results(results_dir: Path, exit_code: int, output: str) -> None:
     (results_dir / OUTPUT_FILE).write_text(output, encoding="utf-8")
 
 
-def write_step_summary(exit_code: int, passed: int, failed: int, skipped: int, output: str) -> None:
-    parts = ["## Pre-commit Results\n"]
-    parts.append("**All checks passed**\n" if exit_code == 0 else "**Some checks failed**\n")
-    parts.append("| Status | Count |\n|--------|-------|")
-    parts.append(f"| Passed | {passed} |")
-    parts.append(f"| Failed | {failed} |")
-    if skipped > 0:
-        parts.append(f"| Skipped | {skipped} |")
-    hook_lines = "\n".join(extract_hook_lines(output))
-    parts.append(
-        f"\n<details>\n<summary>Hook Results</summary>\n\n```\n{hook_lines}\n```\n</details>"
+def write_step_summary(
+    exit_code: int,
+    passed: int,
+    failed: int,
+    skipped: int,
+    output: str,
+    *,
+    title: str = "Pre-commit",
+    selection: str = "",
+) -> None:
+    failures = failed_hooks(output)
+    body = ""
+    if failures:
+        body = (
+            f"Failed hooks: {', '.join(code_span(name) for name in failures)}. "
+            f"Reproduce with {code_span(f'{RUNNER} run <hook> --all-files')} or `just lint`."
+        )
+    diff = run_captured(["git", "diff", "--stat"])
+    _write_step_summary(
+        summary_section(
+            title,
+            [
+                ("Result", "passed" if exit_code == 0 else "failed"),
+                ("Hooks", f"{passed} passed, {failed} failed, {skipped} skipped"),
+                ("Files", selection),
+            ],
+            body=body,
+            collapsed=[
+                ("Hook results", code_block("\n".join(extract_hook_lines(output)))),
+                ("Files modified by hooks", code_block(diff.stdout) if diff.stdout.strip() else ""),
+            ],
+        )
     )
 
-    diff = run_captured(["git", "diff", "--stat"])
-    if diff.stdout.strip():
-        parts.append(
-            f"\n<details>\n<summary>Files Modified by Hooks</summary>\n\n```\n{diff.stdout}```\n</details>"
-        )
 
-    _write_step_summary("\n".join(parts) + "\n")
+def describe_selection(selection: list[str]) -> str:
+    """Describe the runner's file selection for the job summary."""
+    if "--all-files" in selection:
+        return "all files"
+    if "--from-ref" in selection:
+        return f"changed since {selection[selection.index('--from-ref') + 1][:12]}"
+    return f"{len(selection) - 1} selected files"
 
 
 def handle_install() -> int:
@@ -281,7 +318,15 @@ def main(argv: list[str] | None = None) -> int:
                 log_error(f"Some checks failed ({passed} passed, {failed} failed)")
 
             if args.ci:
-                write_step_summary(returncode, passed, failed, skipped, output)
+                write_step_summary(
+                    returncode,
+                    passed,
+                    failed,
+                    skipped,
+                    output,
+                    title="Docs lint" if args.docs else "Pre-commit",
+                    selection=describe_selection(selection),
+                )
                 if returncode != 0:
                     gh_error("Required pre-commit checks failed; see the job summary.")
 

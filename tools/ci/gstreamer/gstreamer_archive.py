@@ -26,7 +26,7 @@ import _bootstrap as _bootstrap
 from common.aws import upload_public_file
 from common.build_config import get_gstreamer_version
 from common.gh_actions import gh_error, write_github_output, write_step_summary
-from common.markdown import md_table
+from common.markdown import code_span, summary_section
 from common.proc import MissingToolError, require_tools, run_captured
 
 S3_BUCKET = "qgroundcontrol"
@@ -171,19 +171,19 @@ class GStreamerArchiver:
         if self.platform == "ios" and self.simulator:
             arch_display = f"{arch_display}-simulator"
 
-        platform_title = self.platform.capitalize()
         full_name = f"{self._archive_result.name}.{self._archive_result.extension}"
-
-        rows = [
-            ["Version", self.version],
-            ["Architecture", arch_display],
-            ["Archive", full_name],
-        ]
-        if uploaded:
-            rows.append(["S3 Path", f"dependencies/gstreamer/{self.platform}/{self.version}/"])
-
-        table = md_table(["Property", "Value"], rows)
-        write_step_summary(f"## GStreamer {platform_title} Build Complete\n\n{table}\n")
+        s3_path = f"dependencies/gstreamer/{self.platform}/{self.version}/" if uploaded else ""
+        write_step_summary(
+            summary_section(
+                f"GStreamer {self.platform.capitalize()} SDK",
+                [
+                    ("Version", self.version),
+                    ("Architecture", arch_display),
+                    ("Archive", code_span(full_name)),
+                    ("S3 path", code_span(s3_path) if s3_path else "not uploaded"),
+                ],
+            )
+        )
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:

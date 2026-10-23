@@ -29,8 +29,10 @@ def test_build_step_summary_reads_gcovr_summary(tmp_path: Path) -> None:
         encoding="utf-8",
     )
     markdown = build_step_summary(report)
+    assert markdown.startswith("### Coverage\n\n| Item | Value |")
     assert "| Lines | 42.0% (42 of 100) |" in markdown
     assert "| Branches | 10.0% (5 of 50) |" in markdown
+    assert "Functions" not in markdown
 
 
 def test_build_step_summary_reports_missing_data(tmp_path: Path) -> None:
@@ -51,7 +53,7 @@ def test_report_only_skips_build_and_writes_summary(tmp_path: Path, gh_summary: 
         assert main(["--report", "--step-summary", "--build-dir", str(tmp_path)]) == 0
     configure_build.assert_not_called()
     generate_report.assert_called_once_with(tmp_path, log_file=None)
-    assert "## Code Coverage" in gh_summary.read_text(encoding="utf-8")
+    assert "### Coverage" in gh_summary.read_text(encoding="utf-8")
 
 
 def test_missing_gcovr_is_reported_once(tmp_path, capsys) -> None:

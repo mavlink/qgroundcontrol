@@ -1521,27 +1521,29 @@ class TestStatsCli:
         out = capsys.readouterr().out
         assert "no stats recorded" in out
 
-    def test_show_stats_markdown_reports_tables(
-        self, harness: Harness, capsys: pytest.CaptureFixture[str]
-    ) -> None:
+    def test_collect_stats_reports_counts_and_size(self, harness: Harness) -> None:
         tree = harness.make_tree("build")
         harness.run(tree, out=tree.out_path("a.cpp"))
         harness.run(tree, out=tree.out_path("b.cpp"))
         harness.run(tree, out=tree.out_path("c.cpp"))
         harness.monkeypatch.setenv("MOCCACHE_MAX_SIZE", "1G")
-        assert show_stats(harness, "--markdown") == 0
-        out = capsys.readouterr().out
-        assert out.startswith("### Moc Cache Statistics\n")
-        assert "| Cache hits | 2 / 3 (66.7%) |" in out
-        assert "| Misses | 1 |" in out
-        assert re.search(r"\| Cache size \| \d+ MiB / 1\.0 GiB \|", out)
-        assert "| `miss-first-seen` | 1 | first time this header was moc'd |" in out
+        build_dir = harness.root / "bld"
+        write_ninja_log(build_dir, (0, 1000, int((time.time() - 3600) * 1e9)))
+        result = stats.collect_stats(build_dir)
+        assert (result.scope, result.note) == ("this build", "")
+        assert (result.hits, result.misses) == (2, 1)
+        assert result.counts == {"miss-first-seen": 1}
+        assert re.fullmatch(r"\d+ MiB of 1\.0 GiB", result.size())
+        assert stats.KIND_DESCRIPTIONS["miss-first-seen"] == "first time this header was moc'd"
 
-    def test_show_stats_markdown_without_log_prints_nothing(
-        self, harness: Harness, capsys: pytest.CaptureFixture[str]
-    ) -> None:
-        assert show_stats(harness, "--markdown") == 0
-        assert capsys.readouterr().out == ""
+    def test_collect_stats_without_ninja_log_reports_everything(self, harness: Harness) -> None:
+        result = stats.collect_stats(harness.root / "missing")
+        assert result.scope == "all recorded"
+        assert "build start unknown" in result.note
+        assert (result.hits, result.misses, result.counts) == (0, 0, {})
+
+    def test_show_stats_rejects_markdown(self, harness: Harness) -> None:
+        assert show_stats(harness, "--markdown") == 2
 
     def test_zero_stats_removes_log(self, harness: Harness) -> None:
         tree = harness.make_tree("build")

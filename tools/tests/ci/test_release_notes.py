@@ -235,8 +235,11 @@ def test_draft_creates_a_release_when_none_exists(
     assert release_notes.main(["v1.0.1", "--output", str(notes), "--draft"]) == 0
 
     assert fake_cliff[0][-1] == "v1.0.0..v1.0.1"
-    expected = "## Changes in v1.0.1\n\n- fix: x\n"
-    assert notes.read_text(encoding="utf-8") == gh_summary.read_text(encoding="utf-8") == expected
+    assert notes.read_text(encoding="utf-8") == "## Changes in v1.0.1\n\n- fix: x\n"
+    assert gh_summary.read_text(encoding="utf-8") == (
+        "### Release notes\n\n| Item | Value |\n| --- | --- |\n"
+        "| Tag | `v1.0.1` |\n| Tag pushed | yes |\n\n#### Changes in v1.0.1\n\n- fix: x\n\n"
+    )
     assert fake_gh.calls == [
         ("release", "view", "v1.0.1", "--json", "isDraft,url"),
         (
@@ -277,7 +280,7 @@ def test_draft_leaves_an_existing_release_unchanged(
     assert f"::notice::A {state} v1.0.1 release already exists; left unchanged" in (
         capsys.readouterr().out
     )
-    assert gh_summary.read_text(encoding="utf-8").startswith("## Changes in v1.0.1\n")
+    assert "\n#### Changes in v1.0.1\n" in gh_summary.read_text(encoding="utf-8")
 
 
 @pytest.mark.parametrize(

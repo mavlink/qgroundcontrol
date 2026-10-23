@@ -92,3 +92,23 @@ def test_source_build_cleans_temporary_directory(tmp_path: Path, monkeypatch) ->
     assert "libprotobuf-dev" in commands[0]
     fetch = next(command for command in commands if "fetch" in command)
     assert fetch[-1] == load_build_config()["tools"]["bloaty"]["revision"]
+
+
+def test_summary_lists_sizes_and_collapses_the_breakdowns(tmp_path: Path) -> None:
+    binary = tmp_path / "QGroundControl"
+    binary.write_bytes(b"x")
+    analyzer = BinaryAnalyzer(binary)
+    with (
+        patch.object(analyzer, "get_section_sizes", return_value=".text 1000"),
+        patch.object(size_analysis.shutil, "which", return_value=None),
+    ):
+        summary = analyzer.generate_summary(150 * 1048576, 120 * 1048576, 98765)
+    assert summary == (
+        "### Binary size\n\n"
+        "| Item | Value |\n| --- | --- |\n"
+        "| Binary | `QGroundControl` |\n"
+        "| Size | 150.00 MB (157,286,400 bytes) |\n"
+        "| Stripped | 120.00 MB (125,829,120 bytes) |\n"
+        "| Symbols | 98,765 |\n\n"
+        "<details><summary>Section sizes</summary>\n\n```\n.text 1000\n```\n\n</details>\n\n"
+    )

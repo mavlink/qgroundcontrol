@@ -4,6 +4,8 @@
 Subcommands:
     run                   Run docker build with retry logic
     resolve-push-target   Resolve the GHCR/Docker Hub push target for the current ref
+    cache-key             Print the builder image's compiler fingerprint for cache keys
+    summary               Write the Docker build section of the job summary
 """
 
 from __future__ import annotations
@@ -17,9 +19,12 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import _bootstrap as _bootstrap
+from common.format import format_duration, format_ratio
 from common.gh_actions import gh_error, write_github_output, write_step_summary
 from common.io import read_json
+from common.markdown import code_block, summary_section
 from common.proc import run_with_retry
+from qgc_tools.build_profile import snapshot_summary
 
 BUILD_ATTEMPTS = 2
 BUILD_RETRY_DELAY_SECONDS = 30
@@ -86,6 +91,27 @@ def cmd_cache_key(args: argparse.Namespace) -> int:
     return 0
 
 
+# First "Hits: N / M" line of `ccache --show-stats` (4.5+): hits of cacheable calls.
+_CCACHE_HITS = re.compile(r"^\s*Hits:\s+(\d+)\s*/\s*(\d+)", re.MULTILINE)
+_MOCCACHE_COUNT = re.compile(r"^\s*(hits|misses)\s+(\d+)\s*$", re.MULTILINE)
+
+
+def cache_hit_rates(report: dict) -> list[tuple[str, object]]:
+    """Return compiler and moc cache hit rates from the container's statistics text."""
+    facts: list[tuple[str, object]] = []
+    if match := _CCACHE_HITS.search(str(report.get("ccache", ""))):
+        facts.append(
+            ("Compiler cache", f"ccache: {format_ratio(int(match[1]), int(match[2]))} hits")
+        )
+    counts = {
+        kind: int(value) for kind, value in _MOCCACHE_COUNT.findall(str(report.get("moccache", "")))
+    }
+    if counts:
+        hits = counts.get("hits", 0)
+        facts.append(("moc cache", f"{format_ratio(hits, hits + counts.get('misses', 0))} hits"))
+    return facts
+
+
 def cmd_summary(args: argparse.Namespace) -> int:
     path = args.build_dir / "docker-build-report.json"
     if not path.is_file():
@@ -93,14 +119,30 @@ def cmd_summary(args: argparse.Namespace) -> int:
         return 0
     report = read_json(path)
     write_github_output({"build_success": str(report.get("build_success", False)).lower()})
-    lines = ["### Docker application build", "", "| Phase | Seconds |", "| --- | ---: |"]
-    lines.extend(f"| {name} | {seconds:.2f} |" for name, seconds in report["seconds"].items())
-    lines += ["", f"CPM sources: {report['cpm_bytes'] / 1024**2:.1f} MiB", ""]
-    for name in ("ccache", "moccache"):
-        lines += [f"#### {name}", "", "```text", report[name].strip(), "```", ""]
-    markdown = "\n".join(lines)
-    print(markdown)
-    write_step_summary(markdown)
+    timing_facts, timings = snapshot_summary(args.build_dir / "build-profile")
+    section = summary_section(
+        "Docker build",
+        [
+            ("Result", "passed" if report.get("success") else "failed"),
+            *(
+                (phase.capitalize(), format_duration(float(seconds)))
+                for phase, seconds in report["seconds"].items()
+            ),
+            ("CPM sources", f"{report['cpm_bytes'] / 1024**2:.1f} MiB"),
+            *cache_hit_rates(report),
+            *timing_facts,
+        ],
+        collapsed=[
+            *timings,
+            *(
+                (f"{name} statistics", code_block(str(report.get(name, ""))))
+                for name in ("ccache", "moccache")
+                if str(report.get(name, "")).strip()
+            ),
+        ],
+    )
+    print(section)
+    write_step_summary(section)
     return 0
 
 

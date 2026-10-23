@@ -16,15 +16,15 @@ from common.proc import run_captured
 | `aws.py` | Allowlisted public S3 object checks and uploads |
 | `build_config.py` | `.github/build-config.json` lookup, validation, and CI export |
 | `cmake.py` | CMake cache variable parsing |
-| `coverage_summary.py` | gcovr JSON summary line and branch coverage metrics |
+| `coverage_summary.py` | gcovr JSON summary line, function, and branch coverage metrics |
 | `file_traversal.py` | Repository-root discovery and filtered C++ file traversal |
-| `format.py` | Human-readable byte and size-delta formatting |
+| `format.py` | Human-readable byte, size-delta, count, duration, percentage, and ratio formatting |
 | `gh_actions.py` | GitHub CLI calls, read-only API retries and JSON reads, annotations, log groups, outputs, summaries, and CI detection |
 | `git.py` | Captured Git commands, default-branch discovery, pull request diff refs, diff bases, and changed line ranges |
 | `gstreamer.py` | GStreamer SDK package and mirror URLs and their pinned checksums |
 | `io.py` | JSON/TOML I/O, checksums, atomic writes, and safe archive extraction |
 | `logging.py` | Color-aware terminal logging |
-| `markdown.py` | Escaped GitHub-Flavored Markdown tables |
+| `markdown.py` | GitHub-Flavored Markdown tables, code spans and blocks, `<details>` blocks, untrusted-text escaping, and the shared job-summary section layout (`summary_section`) |
 | `net.py` | Dependency-free atomic downloads and small fetches with optional SHA-256 verification; retries only transient failures (connection errors, timeouts, 5xx, 408, 429), so a 404 fails at once; `fetch_release_member` extracts one member from a pinned release archive |
 | `paths.py` | `TOOLS_DIR` and `REPO_ROOT`, resolved from the module location |
 | `platform.py` | OS and CPU architecture normalization |

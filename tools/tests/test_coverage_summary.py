@@ -27,6 +27,13 @@ GCOVR_SUMMARY = {
 def test_reads_project_totals(tmp_path) -> None:
     report = tmp_path / "coverage-summary.json"
     report.write_text(json.dumps(GCOVR_SUMMARY), encoding="utf-8")
+    assert read_gcovr_summary(report) == CoverageSummary(60.0, 10, 6, 25.0, 4, 1, 66.7, 3, 2)
+
+
+def test_function_counts_are_optional(tmp_path) -> None:
+    report = tmp_path / "coverage-summary.json"
+    without = {k: v for k, v in GCOVR_SUMMARY.items() if not k.startswith("function_")}
+    report.write_text(json.dumps(without), encoding="utf-8")
     assert read_gcovr_summary(report) == CoverageSummary(60.0, 10, 6, 25.0, 4, 1)
 
 
@@ -46,6 +53,7 @@ def test_integer_percentages_are_floats(tmp_path) -> None:
         json.dumps({**GCOVR_SUMMARY, "line_total": True}),
         json.dumps({**GCOVR_SUMMARY, "line_covered": -1}),
         json.dumps({**GCOVR_SUMMARY, "line_covered": 11}),
+        json.dumps({**GCOVR_SUMMARY, "function_covered": 4}),
         json.dumps({**GCOVR_SUMMARY, "branch_percent": 100.1}),
         json.dumps({**GCOVR_SUMMARY, "line_percent": None}),
         '{"line_percent": NaN}',

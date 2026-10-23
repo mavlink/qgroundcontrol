@@ -1,0 +1,59 @@
+# serializer version: 1
+# name: test_summary_matches_snapshot
+  '''
+  ### Unit Tests (linux-coverage)
+  
+  | Item | Value |
+  | --- | --- |
+  | Result | 2 failed |
+  | Tests | 2 passed, 2 failed, 1 skipped |
+  | Time | 1m 23s |
+  | Slowest | `MissionControllerTest` (1m 35s) |
+  | JUnit | `junit.xml` |
+  
+  **Failed tests**
+  
+  - `MissionControllerTest`: `FAIL! : MissionControllerTest::_testGimbalRecalc() Compared values are not the same`
+  - `FTPManagerTest`: `Timeout`
+  
+  <details><summary>Failure output</summary>
+  
+  **`MissionControllerTest`**
+  
+  ```text
+  FAIL!  : MissionControllerTest::_testGimbalRecalc() Compared values are not the same
+     Actual   (visualItems->count()): 3
+     Expected (4)                     : 4
+     Loc: [src/MissionManager/MissionControllerTest.cc(412)]
+  ```
+  
+  **`FTPManagerTest`**
+  
+  ```text
+  Timeout
+  PASS   : FTPManagerTest::initTestCase()
+  QDEBUG : FTPManagerTest::_testLsList() Waiting for burst read
+  QDEBUG : FTPManagerTest::_testLsList() Waiting for burst read
+  ```
+  
+  </details>
+  
+  <details><summary>Slowest tests (top 3)</summary>
+  
+  | Test | Time |
+  | --- | ---: |
+  | `MissionControllerTest` | 1m 35s |
+  | `FTPManagerTest` | 1m 02s |
+  | `ParameterManagerTest` | 49s |
+  
+  </details>
+  
+  <details><summary>Skipped tests (1)</summary>
+  
+  - `SerialLinkTest`
+  
+  </details>
+  
+  
+  '''
+# ---

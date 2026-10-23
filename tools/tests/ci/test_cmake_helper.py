@@ -15,6 +15,7 @@ from .._helpers import REPO_ROOT
 
 if TYPE_CHECKING:
     from qgc_tools.cmake_configure import CMakeConfig
+    from syrupy.assertion import SnapshotAssertion
 
 pytestmark = pytest.mark.windows
 
@@ -350,6 +351,125 @@ def test_failed_build_still_preserves_current_invocation_timings(monkeypatch, tm
     assert report["slowest_edges"][0]["output"] == "new.o"
     assert "profile_path=" in gh_output.read_text()
     assert "build_success=false" in gh_output.read_text()
+    assert "duration_seconds=" in gh_output.read_text()
+
+
+def _build_tree(build_dir: Path) -> Path:
+    (build_dir / "CMakeFiles" / "4.1.2").mkdir(parents=True)
+    (build_dir / "CMakeCache.txt").write_text(
+        "CMAKE_BUILD_TYPE:STRING=Debug\nCMAKE_GENERATOR:INTERNAL=Ninja\nQGC_UNITY_BUILD:BOOL=ON\n"
+    )
+    (build_dir / "CMakeFiles" / "4.1.2" / "CMakeCXXCompiler.cmake").write_text(
+        'set(CMAKE_CXX_COMPILER "/usr/bin/c++")\n'
+        'set(CMAKE_CXX_COMPILER_ID "GNU")\n'
+        'set(CMAKE_CXX_COMPILER_VERSION "13.3.0")\n'
+    )
+    profile = build_dir / "profile"
+    profile.mkdir()
+    (profile / "report.json").write_text(
+        json.dumps(
+            {
+                "edge_count": 2345,
+                "categories": {
+                    "compile": {"count": 2100, "duration_ms": 5_400_000},
+                    "link/archive": {"count": 12, "duration_ms": 95_000},
+                    "autogen/moc": {"count": 233, "duration_ms": 120_000},
+                },
+                "slowest_edges": [
+                    {
+                        "output": "src/Vehicle/CMakeFiles/Vehicle.dir/Vehicle.cc.o",
+                        "duration_ms": 61_200,
+                        "category": "compile",
+                    },
+                    {
+                        "output": "Debug/QGroundControl",
+                        "duration_ms": 41_500,
+                        "category": "link/archive",
+                    },
+                ],
+            }
+        )
+    )
+    return profile
+
+
+CCACHE_JSON = {
+    "direct_cache_hit": 1900,
+    "preprocessed_cache_hit": 34,
+    "cache_miss": 66,
+    "cache_size_kibibyte": 1_258_291,
+    "max_cache_size_kibibyte": 3_145_728,
+    "cleanups_performed": 0,
+}
+
+
+def test_summary_writes_one_build_section(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, gh_summary: Path, snapshot: SnapshotAssertion
+) -> None:
+    profile = _build_tree(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("MOCCACHE_DIR", str(tmp_path / "moccache"))
+    monkeypatch.setattr("ci.compile.cmake_helper.ccache_stats", lambda: CCACHE_JSON)
+    monkeypatch.setattr(
+        "ci.compile.cmake_helper.collect_stats",
+        lambda build_dir: type(
+            "Stats",
+            (),
+            {
+                "hits": 812,
+                "misses": 8,
+                "scope": "this build",
+                "counts": {"miss-first-seen": 5, "miss-include-changed": 3},
+                "size": lambda self: "212 MiB of 1.0 GiB",
+            },
+        )(),
+    )
+    env = {
+        "INPUT_TARGET": "all",
+        "BUILD_OUTCOME": "success",
+        "BUILD_SECONDS": "754",
+        "BUILD_PROFILE_PATH": str(profile),
+    }
+    for key, value in env.items():
+        monkeypatch.setenv(key, value)
+    assert main(["summary"]) == 0
+    assert gh_summary.read_text(encoding="utf-8") == snapshot
+
+
+def test_summary_without_build_data_reports_the_outcome(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, gh_summary: Path
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("MOCCACHE_DIR", str(tmp_path / "moccache"))
+    monkeypatch.setattr("ci.compile.cmake_helper.ccache_stats", lambda: None)
+    assert main(["summary", "--target", "qgc-analysis-headers", "--outcome", "failure"]) == 0
+    assert gh_summary.read_text(encoding="utf-8") == (
+        "### Build (qgc-analysis-headers)\n\n| Item | Value |\n| --- | --- |\n| Result | failed |\n\n"
+    )
+
+
+def test_summary_reports_sccache_and_its_error_log(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, gh_summary: Path
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("MOCCACHE_DIR", str(tmp_path / "moccache"))
+    log = tmp_path / "sccache.log"
+    log.write_text("".join(f"line {number}\n" for number in range(60)))
+    monkeypatch.setenv("QGC_COMPILER_CACHE_TOOL", "sccache")
+    monkeypatch.setenv("SCCACHE_ERROR_LOG", str(log))
+    report = {
+        "stats": {"cache_hits": {"counts": {"C/C++": 95}}, "cache_misses": {"counts": {"C/C++": 5}}}
+    }
+    monkeypatch.setattr("ci.compile.cmake_helper.sccache_stats", lambda: report)
+    monkeypatch.setattr("ci.compile.cmake_helper.ccache_stats", lambda: pytest.fail("ccache read"))
+    assert main(["summary", "--outcome", "success"]) == 0
+    summary = gh_summary.read_text(encoding="utf-8")
+    assert (
+        "| Compiler cache | sccache: 95 of 100 (95.0%) hits, 0 writes, 0 not cacheable |" in summary
+    )
+    assert "<details><summary>sccache error log (last 50 lines)</summary>" in summary
+    assert "line 59" in summary
+    assert "line 9\n" not in summary
 
 
 @pytest.mark.parametrize(

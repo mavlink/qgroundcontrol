@@ -21,7 +21,7 @@ or set MOCCACHE_MOC=/path/to/moc and invoke:
 or trim the cache to a size limit (LRU eviction):
     moccache_launcher.py --trim [--max-size 1G]
 or report / reset recorded stats (requires MOCCACHE_STATS during the build):
-    moccache_launcher.py --show-stats --build-dir DIR [--verbose | --markdown]
+    moccache_launcher.py --show-stats --build-dir DIR [--verbose]
     moccache_launcher.py --zero-stats
 
 Environment:
@@ -45,8 +45,8 @@ Environment:
                       the build start cannot be derived it reports everything).
                       The log is always capped at stats._STATS_LOG_MAX_LINES.
                       The CMake-generated moccache-stats post-build script
-                      runs it after linking. --markdown prints the same report
-                      as tables (with the cache size) for CI job summaries.
+                      runs it after linking. CI job summaries read the same
+                      report through stats.collect_stats().
 
 Stats kinds. Misses carry a reason so legitimate misses can be told apart
 from cache-design problems (a per-input index of recent keys under

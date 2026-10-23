@@ -83,8 +83,9 @@
   lives in [`tools/common/`](../tools/common/README.md).
 - Scripts reach the GitHub API through the `gh` CLI via `common.gh_actions` (`gh()` calls without
   an explicit `timeout` stop after 120 s; artifact downloads set their own) and write step outputs
-  with `common.gh_actions.write_github_output()`. Templates use Jinja2; dependencies come from the
-  `scripts` group in `tools/pyproject.toml`.
+  with `common.gh_actions.write_github_output()`. Third-party dependencies come from the `scripts`
+  group in `tools/pyproject.toml`. Job summaries share one layout (see
+  [Job summaries](#job-summaries)).
 - Scripts that can run before `setup-python` use only the standard library and stdlib-only
   `tools/common`, `tools/qgc_tools`, and shared `tools/ci` library modules such as
   `reporting/workflow_runs.py`. Jobs without `setup-python` run `run_multipass.py`,
@@ -365,8 +366,8 @@ signed or notarized, and PR Docker builds do not log in to Docker Hub. Publishin
 - Keys roll per run with a distinct suffix per matrix leg. moc save keys include the
   coverage/sanitizer variant while restore prefixes stay shared, so the shared moc cache holds every
   variant; the launcher's default `MOCCACHE_MAX_SIZE` is 1G (entries are mostly well-compressing
-  include manifests). Build jobs add compiler and moc statistics to the job summary;
-  `miss-cache-evicted` there means the limit is too small.
+  include manifests). The job summary's Build section shows compiler and moc cache hit rates; a
+  `miss-cache-evicted` row in its collapsed moc cache events means the limit is too small.
 - Coverage keeps the compiler launcher (ccache stores `.gcno` files alongside objects). macOS passes
   the installed ccache binary to CMake so Homebrew discovery cannot select another version.
 
@@ -493,8 +494,10 @@ when a PR closes, and on demand:
 
 - `test-phase` runs the Unit and Integration suites for Linux Debug (coverage and sanitizers),
   macOS Debug, and Custom Build Debug. Call it only after a successful build. Failures keep JUnit,
-  logs, and slow-test summaries and do not suppress the other suite. There are no blanket
-  until-pass retries, and empty test selections fail. See [`actions/README.md`](actions/README.md#action-notes).
+  logs, and each suite's job-summary section (`junit_report.py`: counts, failures with their first
+  report lines, slowest tests; failed tests also become error annotations) and do not suppress the
+  other suite. There are no blanket until-pass retries, and empty test selections fail. See
+  [`actions/README.md`](actions/README.md#action-notes).
 - Unit tests run one CTest process per CPU, including coverage (GCC merges `.gcda` counters under
   file locks). Integration tests use two processes by default and for coverage, where instrumented
   tests otherwise hit their timeouts; Linux sanitizers use one per CPU.
@@ -661,17 +664,54 @@ when a PR closes, and on demand:
   pre-commit (GitHub runs only the default-branch copy; `test_platform_workflow_names.py` keeps the
   list in sync with `build.platform_workflows`). One `report_context.py` lookup resolves the PR
   number and base SHA, and the PR head (or `master`) is rechecked before posting or saving.
-- `collect_build_status.py` gates each job (stdlib only, before Python dependencies install): PR
-  jobs wait until every platform workflow has completed for the head SHA, then download test
-  results, coverage, and artifact sizes (`download_artifacts.py`) and upsert one
-  `build-results`-tagged comment. Missing diagnostic artifacts are allowed when tests did not run,
-  but download failures fail the job.
-- For `master`, once every platform workflow succeeded, it saves an immutable baseline (sizes
-  and coverage) keyed by commit and run; the job runs only standard-library scripts and installs no
-  Python dependencies. PRs prefer the exact base snapshot
-  before the most recent baseline; size deltas accept only the exact PR base, even when coverage
-  restores an older one. Android artifact names include their ABIs, so single-ABI PR APKs are not
-  compared with multi-ABI release APKs; unmatched variants show `N/A` and don't count toward totals.
+- Every trigger updates one `build-results`-tagged comment (fork PRs included), so finished
+  workflows and their failures show while others still run; the last one to complete renders the
+  final state. `collect_build_status.py` (stdlib only, before Python dependencies install) writes
+  each workflow's state, duration, and jobs, with failed-step log links, from one jobs-API call per
+  run (`--status-out`), including Code Analysis, which is not a trigger. The job then downloads the
+  completed runs' test results, coverage, and artifact sizes (`download_artifacts.py`, one
+  directory per artifact plus a manifest naming its workflow), the pre-commit results, and, when
+  Code Analysis has completed, its per-tool `*-timings.json`. Missing diagnostic artifacts are
+  allowed when tests did not run, but platform download failures fail the job. The comment is also
+  the job summary.
+- The comment (`generate_build_results_comment.py`) leads with a verdict (✅ passed, ❌ failed,
+  ⏳ in progress, 🚫 cancelled, ⏭️ nothing to build), the linked head commit, and how many
+  platform workflows are done, pending, or skipped by change detection (every build job skipped).
+  A table gives each workflow's status, duration, test or hook counts, artifact size with its
+  change from the PR base, and run link. A Failures section follows when anything failed: each
+  failed job with links to its failing steps' logs, failed tests with their first report lines
+  (QtTest `FAIL!` blocks, sanitizer reports, else the output tail) from the JUnit XML, and failed
+  pre-commit hooks. Collapsed sections cover per-suite test results, the slowest tests, coverage
+  (lines, functions, branches, with changes in percentage points), artifact sizes (⚠️ above 1%
+  and 1 MiB growth), pre-commit counts, and Code Analysis files with findings. Lists are truncated
+  with "…and N more", and longer reports shrink to stay under GitHub's comment limit. Names from
+  pull requests (tests, jobs, hooks, artifacts) are escaped or shown as code.
+- For `master`, once every platform workflow succeeded, `save-baselines` saves an immutable
+  baseline (sizes and coverage) keyed by commit and run; the job runs only standard-library scripts
+  and installs no Python dependencies. PRs prefer the exact base snapshot before the most recent
+  baseline; size deltas accept only the exact PR base, even when coverage restores an older one
+  (the comment names the baseline commit and says when none exists yet). Android artifact names
+  include their ABIs, so single-ABI PR APKs are not compared with multi-ABI release APKs; unmatched
+  variants show `—` for their change and don't count toward totals.
+
+### Job summaries
+
+Scripts build each job-summary section with `common.markdown.summary_section`: an H3 title, an
+`Item | Value` facts table, an optional body, and collapsed `<details>` for long listings, with
+numbers, durations, and sizes from `common.format`. A build job reads top-down:
+
+| Section | Written by |
+| --- | --- |
+| Setup | `build-setup` (`setup_summary.py`): runner, Qt version, installer and source, CMake and Ninja, Python groups, cache backend, and each build cache's restore result |
+| Build | `cmake-build` (`cmake_helper.py summary`): result, duration, toolchain, compiler (ccache or sccache) and moc cache hit rates; slowest steps, time by kind, and moc cache events collapsed |
+| Unit Tests / Integration Tests (*suite*) | `run-unit-tests` (`junit_report.py`): counts, failures with their first lines, slowest tests and failure output collapsed |
+| Coverage, Binary size | `coverage_report.py --step-summary`, `size_analysis.py` |
+| Boot test, Artifact | `verify_executable.py` (result, package, size, duration) and `attest_helper.py prepare` (file, size, SHA-256) |
+
+Docker builds write one Docker build section (`docker_helper.py summary`); pre-commit, Docs Lint,
+Code Analysis (`analyze.py --step-summary`), cache cleanup, GStreamer, release-notes, and Build
+Profile jobs use the same layout. RunsOn's cost table and the build timeline come from their own
+actions after these sections.
 
 ## Lint, Docs, and Security Checks
 

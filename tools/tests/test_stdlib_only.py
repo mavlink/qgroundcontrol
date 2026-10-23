@@ -64,7 +64,7 @@ _ACTION_PYTHON3_RE = re.compile(
     r'\bpython3\s+"?(?:\$\{GITHUB_WORKSPACE\}/)?((?:tools|deploy)/[\w./-]+\.py)\b'
 )
 # Third-party imports; only run after setup-python, so `python3` is the venv's on every OS.
-_VENV_ACTION_SCRIPTS = frozenset({"tools/ci/reporting/test_duration_report.py"})  # defusedxml
+_VENV_ACTION_SCRIPTS = frozenset({"tools/ci/reporting/junit_report.py"})  # defusedxml
 
 
 def _action_python3_scripts() -> set[str]:

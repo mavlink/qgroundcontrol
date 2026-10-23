@@ -185,6 +185,20 @@ def test_list_run_artifacts_rejects_invalid_run_id() -> None:
         raise AssertionError("Expected ValueError for invalid run_id")
 
 
+def test_list_run_jobs_requests_the_latest_attempt() -> None:
+    payload = json.dumps({"name": "Build", "steps": []})
+    with patch.object(mod, "gh", return_value=completed(stdout=payload)) as gh_mock:
+        jobs = mod.list_run_jobs("owner/repo", "77")
+
+    assert jobs == [{"name": "Build", "steps": []}]
+    args = gh_mock.call_args[0]
+    assert "repos/owner/repo/actions/runs/77/jobs" in args
+    assert ".jobs[]?" in args
+    assert "filter=latest" in args
+    with pytest.raises(ValueError, match="run_id must be positive"):
+        mod.list_run_jobs("owner/repo", 0)
+
+
 def test_require_repository_prefers_override_and_requires_value(capsys) -> None:
     with patch.dict(
         os.environ,
@@ -287,6 +301,12 @@ class TestAnnotations:
     def test_escapes_newlines_and_percent(self, capsys) -> None:
         mod.gh_error("a\nb\rc%d")
         assert capsys.readouterr().out == "::error::a%0Ab%0Dc%25d\n"
+
+    def test_title_escapes_property_delimiters(self, capsys) -> None:
+        mod.gh_error("FAIL!  : A::b()", title="Test failed: A, B\n50%")
+        assert capsys.readouterr().out == (
+            "::error title=Test failed%3A A%2C B%0A50%25::FAIL!  : A::b()\n"
+        )
 
     def test_emits_to_stdout_not_stderr(self, capsys) -> None:
         mod.gh_warning("x")

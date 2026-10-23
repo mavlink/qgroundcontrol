@@ -6,13 +6,14 @@ import contextlib
 import os
 import sys
 import time
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from .core import _STAT_FIELD_BREAKERS, _atomic_write, _cache_dir
 from .trim import parse_size, scan_entries
 
 # Shown next to each kind in --show-stats so the report is self-explanatory.
-_KIND_DESCRIPTIONS = {
+KIND_DESCRIPTIONS = {
     "miss-first-seen": "first time this header was moc'd",
     "miss-header-changed": "the header itself changed",
     "miss-include-changed": "a header it includes changed",
@@ -119,69 +120,38 @@ def format_bytes(n: int) -> str:
     return f"{n / 1024**3:.1f} GiB" if n >= 1024**3 else f"{n / 1024**2:.0f} MiB"
 
 
-def stats_markdown(
-    note: str, hits: int, misses: int, counts: dict[str, int], cache_dir: Path
-) -> str:
-    """The --show-stats report as GitHub-flavoured markdown, e.g. for a CI job summary."""
-    total = hits + misses
-    if total == 0 and not counts:
-        return ""
-    rate = f" ({100.0 * hits / total:.1f}%)" if total else ""
-    size = format_bytes(sum(size for _, size, _ in scan_entries(cache_dir)))
-    limit = os.environ.get("MOCCACHE_MAX_SIZE", "")
-    if limit:
-        with contextlib.suppress(ValueError):
-            size += f" / {format_bytes(parse_size(limit))}"
-    lines = ["### Moc Cache Statistics", ""]
-    if note:
-        lines += [f"_{note.strip()}_", ""]
-    lines += [
-        "| Metric | Value |",
-        "| --- | --- |",
-        f"| Cache hits | {hits} / {total}{rate} |",
-        f"| Misses | {misses} |",
-        f"| Cache size | {size} |",
-    ]
-    if counts:
-        lines += ["", "| Event | Count | Meaning |", "| --- | ---: | --- |"]
-        lines += [
-            f"| `{what}` | {counts[what]} | {_KIND_DESCRIPTIONS.get(what, '')} |"
-            for what in sorted(counts)
-        ]
-    return "\n".join(lines) + "\n"
+@dataclass(frozen=True)
+class BuildStats:
+    """One build's moc cache events; ``counts`` holds every kind except hits."""
+
+    scope: str
+    note: str
+    cache_dir: Path
+    hits: int = 0
+    misses: int = 0
+    counts: dict[str, int] = field(default_factory=dict)
+    details: list[tuple[str, str, str]] = field(default_factory=list)
+
+    def size(self) -> str:
+        """Cache size, with the MOCCACHE_MAX_SIZE limit when one is set."""
+        size = format_bytes(sum(size for _, size, _ in scan_entries(self.cache_dir)))
+        limit = os.environ.get("MOCCACHE_MAX_SIZE", "")
+        if limit:
+            with contextlib.suppress(ValueError):
+                size += f" of {format_bytes(parse_size(limit))}"
+        return size
 
 
-def show_stats_main(argv: list[str]) -> int:
-    build_dir: Path | None = None
-    verbose = False
-    markdown = False
-    i = 0
-    while i < len(argv):
-        if argv[i] == "--build-dir":
-            if i + 1 >= len(argv):
-                print("moccache: --build-dir requires a path", file=sys.stderr)
-                return 2
-            build_dir = Path(argv[i + 1])
-            i += 2
-        elif argv[i] == "--verbose":
-            verbose = True
-            i += 1
-        elif argv[i] == "--markdown":
-            markdown = True
-            i += 1
-        else:
-            print(f"moccache: --show-stats: unknown argument: {argv[i]}", file=sys.stderr)
-            return 2
-    if build_dir is None:
-        print("moccache: --show-stats requires --build-dir", file=sys.stderr)
-        return 2
-
+def collect_stats(build_dir: Path) -> BuildStats:
+    """Return the moc cache events of the ninja build in *build_dir* and prune older records."""
     since = build_start(build_dir)
     scope = "this build"
     note = ""
     if since is None:
         scope = "all recorded"
-        note = f"  (build start unknown: no usable {build_dir / '.ninja_log'}; showing all recorded stats)"
+        note = (
+            f"build start unknown: no usable {build_dir / '.ninja_log'}; showing all recorded stats"
+        )
     basedir = os.environ.get("MOCCACHE_BASEDIR", "") if since is not None else ""
     basedir = basedir.translate(_STAT_FIELD_BREAKERS)  # match what _log_stat recorded
 
@@ -232,28 +202,51 @@ def show_stats_main(argv: list[str]) -> int:
     hits = counts.pop("hit", 0)
     # Pre-reason logs used a bare "miss"; fold it in with the miss-* reasons.
     misses = counts.pop("miss", 0) + sum(n for k, n in counts.items() if k.startswith("miss-"))
-    total = hits + misses
-    if markdown:
-        print(stats_markdown(note, hits, misses, counts, cache_dir), end="")
-        return 0
-    print(f"moccache stats ({scope}, {cache_dir}):")
-    if note:
-        print(note)
+    return BuildStats(scope, note, cache_dir, hits, misses, counts, details)
+
+
+def show_stats_main(argv: list[str]) -> int:
+    build_dir: Path | None = None
+    verbose = False
+    i = 0
+    while i < len(argv):
+        if argv[i] == "--build-dir":
+            if i + 1 >= len(argv):
+                print("moccache: --build-dir requires a path", file=sys.stderr)
+                return 2
+            build_dir = Path(argv[i + 1])
+            i += 2
+        elif argv[i] == "--verbose":
+            verbose = True
+            i += 1
+        else:
+            print(f"moccache: --show-stats: unknown argument: {argv[i]}", file=sys.stderr)
+            return 2
+    if build_dir is None:
+        print("moccache: --show-stats requires --build-dir", file=sys.stderr)
+        return 2
+
+    stats = collect_stats(build_dir)
+    counts = stats.counts
+    total = stats.hits + stats.misses
+    print(f"moccache stats ({stats.scope}, {stats.cache_dir}):")
+    if stats.note:
+        print(f"  ({stats.note})")
     if total == 0 and not counts:
         print("  no stats recorded")
         return 0
-    print(f"  hits     {hits}")
-    print(f"  misses   {misses}")
+    print(f"  hits     {stats.hits}")
+    print(f"  misses   {stats.misses}")
     if total:
-        print(f"  hit rate {100.0 * hits / total:.1f}%")
+        print(f"  hit rate {100.0 * stats.hits / total:.1f}%")
     width = max((len(k) for k in counts), default=0)
     for what in sorted(counts):
-        why = _KIND_DESCRIPTIONS.get(what)
+        why = KIND_DESCRIPTIONS.get(what)
         suffix = f"  ({why})" if why else ""
         print(f"  {what:<{width}}  {counts[what]:>5}{suffix}")
-    if verbose and details:
+    if verbose and stats.details:
         print("details:")
-        for kind, input_file, detail in details:
+        for kind, input_file, detail in stats.details:
             print(f"  {kind}  {input_file}  {detail}".rstrip())
     return 0
 

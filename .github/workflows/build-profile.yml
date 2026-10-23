@@ -107,26 +107,24 @@ jobs:
             --json-out qgc-tu-report.json \
             > qgc-tu-report.txt
 
+      # Same layout as the other job summaries: a facts table, then collapsed reports.
       - name: Post summary
         working-directory: ${{ runner.temp }}/build
+        env:
+          BUILD_TYPE: ${{ inputs.build_type }}
         run: |
+          details() {
+            printf '<details><summary>%s</summary>\n\n````\n' "$1"
+            cat "$2"
+            printf '````\n\n</details>\n\n'
+          }
           {
-            echo "## Build profile (${{ inputs.build_type }})"
-            echo
-            echo "Commit: \`${{ github.sha }}\`"
-            echo "Compiler: \`$(${CXX} --version | head -n1)\`"
-            echo
-            echo "### tools/build_profile.py — ninja + per-TU"
-            echo
-            echo '```'
-            cat qgc-tu-report.txt
-            echo '```'
-            echo
-            echo "### ClangBuildAnalyzer — headers / templates / functions"
-            echo
-            echo '```'
-            cat qgc-trace-report.txt
-            echo '```'
+            printf '### Build profile\n\n| Item | Value |\n| --- | --- |\n'
+            printf '| Build type | %s |\n' "$BUILD_TYPE"
+            printf '| Commit | %s |\n' "\`${GITHUB_SHA}\`"
+            printf '| Compiler | %s |\n\n' "\`$("$CXX" --version | head -n1)\`"
+            details "Ninja and per-TU hotspots (tools/build_profile.py)" qgc-tu-report.txt
+            details "Headers, templates, and functions (ClangBuildAnalyzer)" qgc-trace-report.txt
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload profile artifacts

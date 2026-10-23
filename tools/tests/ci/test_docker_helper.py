@@ -106,9 +106,52 @@ def test_performance_summary_reports_failed_phase(tmp_path, monkeypatch):
     summaries = []
     monkeypatch.setattr(docker_helper, "write_step_summary", summaries.append)
     docker_helper.cmd_summary(argparse.Namespace(build_dir=tmp_path))
-    assert "| build | 4.00 |" in summaries[0]
-    assert "CPM sources: 1.0 MiB" in summaries[0]
+    assert summaries[0].startswith("### Docker build\n\n| Item | Value |")
+    assert "| Result | failed |" in summaries[0]
+    assert "| Build | 4.0s |" in summaries[0]
+    assert "| CPM sources | 1.0 MiB |" in summaries[0]
+    assert "<details><summary>ccache statistics</summary>" in summaries[0]
     assert "Hits: 12" in summaries[0]
+
+
+def test_performance_summary_reads_container_hit_rates_and_timings(tmp_path, monkeypatch):
+    import json
+
+    from ci.compile import docker_helper
+
+    (tmp_path / "build-profile").mkdir()
+    (tmp_path / "build-profile" / "report.json").write_text(
+        json.dumps(
+            {
+                "edge_count": 3,
+                "categories": {"compile": {"count": 3, "duration_ms": 9000}},
+                "slowest_edges": [{"output": "a.o", "duration_ms": 5000, "category": "compile"}],
+            }
+        )
+    )
+    (tmp_path / "docker-build-report.json").write_text(
+        json.dumps(
+            {
+                "success": True,
+                "build_success": True,
+                "seconds": {"configure": 62.4, "build": 730.2, "install": 45},
+                "cpm_bytes": 512 * 1048576,
+                "ccache": "Cacheable calls: 1934 / 2000 (96.70%)\n  Hits: 1900 / 1934 (98.24%)\n",
+                "moccache": "moccache stats (this build, /c):\n  hits     812\n  misses   8\n",
+            }
+        )
+    )
+    summaries = []
+    monkeypatch.setattr(docker_helper, "write_step_summary", summaries.append)
+    docker_helper.cmd_summary(argparse.Namespace(build_dir=tmp_path))
+    section = summaries[0]
+    assert "| Result | passed |" in section
+    assert "| Configure | 1m 02s |" in section
+    assert "| Build | 12m 10s |" in section
+    assert "| Compiler cache | ccache: 1,900 of 1,934 (98.2%) hits |" in section
+    assert "| moc cache | 812 of 820 (99.0%) hits |" in section
+    assert "| Build steps run | 3 |" in section
+    assert "<details><summary>Slowest build steps (top 10)</summary>" in section
 
 
 @pytest.mark.parametrize(("failures", "exit_code"), [(1, 0), (2, 1)])

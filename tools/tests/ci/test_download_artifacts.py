@@ -175,6 +175,56 @@ def test_download_run_artifacts_passes_selected_names() -> None:
     assert "test-results-linux_gcc_64" in args
 
 
+def test_download_run_artifacts_isolates_a_single_artifact() -> None:
+    with patch.object(mod, "gh", return_value=completed()) as mock_gh:
+        assert mod.download_run_artifacts(1, "o/r", Path("artifacts"), ["coverage-report"])
+        assert mod.download_run_artifacts(1, "o/r", Path("artifacts"), ["a", "b"])
+    single, several = (call.args for call in mock_gh.call_args_list)
+    assert single[single.index("--dir") + 1] == str(Path("artifacts") / "coverage-report")
+    assert several[several.index("--dir") + 1] == "artifacts"
+
+
+def test_manifest_maps_downloads_to_workflows_and_keeps_earlier_entries(tmp_path: Path) -> None:
+    runs = [{"id": 7, "name": "Linux", "status": "completed", "conclusion": "failure"}]
+    artifacts = [{"name": "test-results-linux-unit"}, {"name": "coverage-report"}]
+    (tmp_path / "pre-commit-results").mkdir()
+    mod.write_manifest(tmp_path, [{"name": "older", "workflow": "MacOS", "run_id": 3}])
+
+    def download(run_id: int, repo: str, output_dir: Path, names: list[str]) -> bool:
+        for name in names:
+            (output_dir / name).mkdir(parents=True)
+            (output_dir / name / "file.txt").write_text("x")
+        return True
+
+    with (
+        patch.object(mod, "list_workflow_runs_for_sha", return_value=runs),
+        patch.object(mod, "list_run_artifacts", return_value=artifacts),
+        patch.object(mod, "download_run_artifacts", side_effect=download),
+    ):
+        rc = mod.main(
+            [
+                "--repo",
+                "o/r",
+                "--head-sha",
+                "abc",
+                "--workflows",
+                "Linux",
+                "--output-dir",
+                str(tmp_path),
+                "--artifact-prefixes",
+                "coverage-report,test-results-",
+                "--include-failed",
+            ]
+        )
+    assert rc == 0
+    assert json.loads((tmp_path / mod.MANIFEST_NAME).read_text()) == [
+        {"name": "coverage-report", "workflow": "Linux", "run_id": 7},
+        {"name": "older", "workflow": "MacOS", "run_id": 3},
+        {"name": "test-results-linux-unit", "workflow": "Linux", "run_id": 7},
+    ]
+    assert mod.MANIFEST_NAME not in {path.name for path in mod.list_downloaded_files(tmp_path)}
+
+
 def test_select_artifact_names_filters_by_prefix() -> None:
     artifacts = [
         {"name": "coverage-report"},
@@ -310,7 +360,14 @@ def test_optional_diagnostics_record_sizes_without_downloads(
     download.assert_not_called()
     listing.assert_called_once_with("owner/repo", 42)
     expected = (
-        [{"name": "QGroundControl.AppImage", "size_bytes": 100, "size_human": "0.00 MB"}]
+        [
+            {
+                "name": "QGroundControl.AppImage",
+                "size_bytes": 100,
+                "size_human": "0.00 MB",
+                "workflow": "Linux",
+            }
+        ]
         if conclusion == "success"
         else []
     )
@@ -554,7 +611,12 @@ def test_main_writes_sizes_file(tmp_path: Path) -> None:
     assert json.loads(sizes_path.read_text()) == {
         "head_sha": "abc123",
         "artifacts": [
-            {"name": "QGroundControl-x86_64.AppImage", "size_bytes": 200, "size_human": "0.00 MB"}
+            {
+                "name": "QGroundControl-x86_64.AppImage",
+                "size_bytes": 200,
+                "size_human": "0.00 MB",
+                "workflow": "Linux",
+            }
         ],
     }
 
@@ -577,8 +639,8 @@ def _run(
     }
 
 
-def _size(name: str, size_bytes: int, size_human: str) -> dict[str, object]:
-    return {"name": name, "size_bytes": size_bytes, "size_human": size_human}
+def _size(name: str, size_bytes: int, size_human: str, workflow: str = "") -> dict[str, object]:
+    return {"name": name, "size_bytes": size_bytes, "size_human": size_human, "workflow": workflow}
 
 
 def test_sizes_use_latest_successful_run_per_workflow_and_event() -> None:
@@ -616,8 +678,8 @@ def test_sizes_keep_only_distributable_artifacts() -> None:
         "owner/repo", [_run("Linux", run_id=11)], ["Linux"], listed=listed
     )
     assert sizes == [
-        _size("QGroundControl-x86_64", 1024 * 1024, "1.00 MB"),
-        _size("QGroundControl.apk", 2048, "0.00 MB"),
+        _size("QGroundControl-x86_64", 1024 * 1024, "1.00 MB", "Linux"),
+        _size("QGroundControl.apk", 2048, "0.00 MB", "Linux"),
     ]
 
 
@@ -636,8 +698,8 @@ def test_sizes_list_unlisted_runs_and_tolerate_api_failures() -> None:
         )
     assert sorted(call.args[1] for call in listing.call_args_list) == [51, 52]
     assert sizes == [
-        _size("QGroundControl-installer-AMD64", 2048, "0.00 MB"),
-        _size("QGroundControl.dmg", 4096, "0.00 MB"),
+        _size("QGroundControl-installer-AMD64", 2048, "0.00 MB", "Windows"),
+        _size("QGroundControl.dmg", 4096, "0.00 MB", "MacOS"),
     ]
 
 
@@ -648,7 +710,7 @@ def test_sizes_keep_the_largest_same_named_artifact() -> None:
     }
     runs = [_run("MacOS", run_id=61), _run("Android", run_id=62)]
     sizes = mod.collect_artifact_sizes("owner/repo", runs, ["Android", "MacOS"], listed=listed)
-    assert sizes == [_size("QGroundControl", 337 * 1024 * 1024, "337.00 MB")]
+    assert sizes == [_size("QGroundControl", 337 * 1024 * 1024, "337.00 MB", "MacOS")]
 
 
 def _sizes_main(tmp_path: Path, *options: str) -> int:
@@ -685,8 +747,8 @@ def test_main_sorts_sizes_by_artifact_name(tmp_path: Path) -> None:
     assert json.loads((tmp_path / "sizes.json").read_text()) == {
         "head_sha": "abc123",
         "artifacts": [
-            _size("QGroundControl-installer-AMD64", 2 * 1024 * 1024, "2.00 MB"),
-            _size("QGroundControl-x86_64", 2 * 1024 * 1024, "2.00 MB"),
+            _size("QGroundControl-installer-AMD64", 2 * 1024 * 1024, "2.00 MB", "Windows"),
+            _size("QGroundControl-x86_64", 2 * 1024 * 1024, "2.00 MB", "Linux"),
         ],
     }
 

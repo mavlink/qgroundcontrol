@@ -20,8 +20,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import _bootstrap as _bootstrap
 from common.build_config import get_build_config_value
+from common.format import format_bytes, format_count
 from common.gh_actions import gh_warning, write_step_summary
-from common.markdown import md_table
+from common.markdown import code_block, code_span, summary_section
 from common.paths import TOOLS_DIR
 from common.proc import run_captured
 
@@ -177,45 +178,29 @@ class BinaryAnalyzer:
         stripped_size: int,
         symbol_count: int,
     ) -> str:
-        """Generate GitHub step summary in Markdown format."""
-        binary_mb = binary_size / 1048576
-        stripped_mb = stripped_size / 1048576
-
-        lines: list[str] = []
-
-        lines.append("=== Section sizes ===")
-        lines.append("```")
-        lines.append(self.get_section_sizes())
-        lines.append("```")
-
+        """Generate the job summary's Binary size section."""
+        collapsed = [("Section sizes", code_block(self.get_section_sizes()))]
         if shutil.which("bloaty"):
-            lines.append("")
-            lines.append("=== Top 20 largest symbols ===")
-            lines.append("```")
-            lines.append(self.run_bloaty("symbols", 20))
-            lines.append("```")
-
-            lines.append("")
-            lines.append("=== Size by compilation unit ===")
-            lines.append("```")
-            lines.append(self.run_bloaty("compileunits", 20))
-            lines.append("```")
-
-        lines.append("")
-        lines.append("## Size Metrics")
-        lines.append("")
-        lines.append(
-            md_table(
-                ["Metric", "Value"],
-                [
-                    ["Binary Size", f"{binary_mb:.2f} MB ({binary_size} bytes)"],
-                    ["Stripped Size", f"{stripped_mb:.2f} MB ({stripped_size} bytes)"],
-                    ["Symbol Count", symbol_count],
-                ],
-            )
+            collapsed += [
+                ("Largest symbols (top 20)", code_block(self.run_bloaty("symbols", 20))),
+                (
+                    "Size by compilation unit (top 20)",
+                    code_block(self.run_bloaty("compileunits", 20)),
+                ),
+            ]
+        return summary_section(
+            "Binary size",
+            [
+                ("Binary", code_span(self.binary_path.name)),
+                ("Size", f"{format_bytes(binary_size)} ({format_count(binary_size)} bytes)"),
+                (
+                    "Stripped",
+                    f"{format_bytes(stripped_size)} ({format_count(stripped_size)} bytes)",
+                ),
+                ("Symbols", format_count(symbol_count)),
+            ],
+            collapsed=collapsed,
         )
-
-        return "\n".join(lines)
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:

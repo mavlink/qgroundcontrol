@@ -15,6 +15,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from common.io import sha256_file
+from common.markdown import code_span, md_table, more_items, summary_section
 
 INSTALLER_RECORDS = frozenset({".qgc-modules", ".qgc-qt-manifest.json"})
 _PKGCONFIG = re.compile(r"lib/pkgconfig/[^/]+\.pc")
@@ -97,20 +98,25 @@ def compare_trees(reference_outdir: Path, candidate_outdir: Path, arch_root: str
 
 
 def render_markdown(title: str, comparison: Comparison) -> str:
-    verdict = "PASS: identical apart from known differences" if comparison.ok else "FAIL"
-    lines = [f"### {title}: {verdict}", "", f"{comparison.entries} entries in the aqt tree.", ""]
-    lines += ["| Difference | Kind | Count |", "| --- | --- | --- |"]
+    """Return the comparison as a job-summary section."""
     groups = [("unexpected", comparison.unexpected), ("known", comparison.known)]
-    lines += [
-        f"| {name} | {kind} | {len(items)} |"
-        for kind, group in groups
-        for name, items in group.items()
-    ]
+    counts = md_table(
+        ["Difference", "Kind", "Count"],
+        [[name, kind, len(items)] for kind, group in groups for name, items in group.items()],
+    )
+    collapsed = []
     for kind, group in groups:
         for name, items in group.items():
-            if items:
-                lines += ["", f"<details><summary>{kind}: {name}</summary>", ""]
-                lines += [f"- `{item}`" for item in items[:_LISTED]]
-                lines += [f"- ... {len(items) - _LISTED} more"] if len(items) > _LISTED else []
-                lines += ["", "</details>"]
-    return "\n".join(lines) + "\n"
+            listed = [f"- {code_span(item)}" for item in items[:_LISTED]]
+            if len(items) > _LISTED:
+                listed.append(f"- {more_items(len(items) - _LISTED)}")
+            collapsed.append((f"{kind}: {name}", "\n".join(listed)))
+    return summary_section(
+        f"Qt installer parity: {title}",
+        [
+            ("Result", "identical apart from known differences" if comparison.ok else "FAIL"),
+            ("Entries in the aqt tree", comparison.entries),
+        ],
+        body=counts,
+        collapsed=collapsed,
+    )

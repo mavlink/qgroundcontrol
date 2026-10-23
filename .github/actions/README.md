@@ -18,9 +18,9 @@ cannot load actions from the PR merge commit (zizmor's `self-repository` audit i
 | `aws-credentials` | Configure AWS credentials via OIDC (preferred) or static keys in one step |
 | `build-action` | Build a JavaScript action from source when no release ships a rebuilt `dist/` (kept intentionally; no current callers) |
 | `build-config` | Expose `.github/build-config.json` values as step outputs |
-| `build-setup` | Platform build setup: build config, runner preparation, Python, the CMake and Ninja pinned in `build-config.json`, caches (skipped with `build-cache: 'false'`), Xcode/MSVC, Java and the Android SDK/NDK, and Qt for desktop, Android (each requested ABI), or iOS |
-| `cache` | Plan caches with `cache_plan.py`, install ccache/mold, and restore compiler, moc, CPM, and GStreamer SDK caches |
-| `cmake-build` | Build through `cmake_helper.py`, save build caches after success, upload Ninja reports, and annotate PR warnings |
+| `build-setup` | Platform build setup: build config, runner preparation, Python, the CMake and Ninja pinned in `build-config.json`, caches (skipped with `build-cache: 'false'`), Xcode/MSVC, Java and the Android SDK/NDK, and Qt for desktop, Android (each requested ABI), or iOS; ends with the job summary's Setup section |
+| `cache` | Plan caches with `cache_plan.py`, install ccache/mold, and restore compiler, moc, CPM, and GStreamer SDK caches (each restore result is an output) |
+| `cmake-build` | Build through `cmake_helper.py`, save build caches after success, upload Ninja reports, annotate PR warnings, and write the job summary's Build section |
 | `cmake-configure` | Configure QGroundControl from a required CMake preset, which sets the build type and testing; requires `qt-cmake` unless `use-qt-cmake` is `false` |
 | `debug-runner` | Open an actor-only SSH session for failed manual runs (callers gate it and set a step timeout) |
 | `deploy-docs` | Deploy built documentation to an external GitHub Pages repository |
@@ -28,11 +28,11 @@ cannot load actions from the PR merge commit (zizmor's `self-repository` audit i
 | `download-all-artifacts` | Download artifacts from every platform workflow run for a commit and optionally record artifact sizes |
 | `free-disk-space` | Wrap `endersonmenezes/free-disk-space` with QGC's shared defaults |
 | `install-dependencies` | Install platform build dependencies (Linux apt packages, macOS Homebrew and GStreamer, Windows MSVC and NSIS) but not the CMake, Ninja, ccache, and mold that `build-setup` pins; on Linux, `category` installs a single `install_dependencies` category |
-| `qt-install` | Reuse a compatible preinstalled Qt SDK or install Qt with QGC's installer or aqtinstall (`installer`, empty for `install_qt.py`'s per-host default), with caching; `version` defaults to `build-config.json`'s |
-| `run-unit-tests` | Run CTest, then publish JUnit results, upload artifacts, Codecov test analytics, and a slow-test summary even after failures |
+| `qt-install` | Reuse a compatible preinstalled Qt SDK or install Qt with QGC's installer or aqtinstall (`installer`, empty for `install_qt.py`'s per-host default), with caching; `version` defaults to `build-config.json`'s; outputs the version, installer, and source |
+| `run-unit-tests` | Run CTest, then summarize the JUnit results (counts, failures, slowest tests) and annotate failed tests, upload artifacts, and Codecov test analytics even after failures |
 | `save-build-cache` | Save compiler and moc caches once per job after successful compilation |
 | `setup-python` | Detect the cache backend, set up uv and Python, and sync `tools/uv.lock` groups into `tools/.venv` |
-| `test-phase` | Run the Unit and Integration suites through `run-unit-tests` and summarize their slowest tests |
+| `test-phase` | Run the Unit and Integration suites through `run-unit-tests`, one job-summary section each |
 | `verify-executable` | Boot-test a built binary, AppImage, DMG, or Windows executable |
 
 ## External Action Reference Policy
@@ -52,13 +52,13 @@ an additional security problem.
 ## Action Notes
 
 - **`test-phase`** runs the Unit suite, then the Integration suite even if Unit failed, and
-  summarizes each suite's slowest tests in the job summary. Callers must gate it on a successful
-  build. Integration tests default to two CTest processes (`integration-parallel`); Unit tests use
+  writes a job-summary section for each (counts, failures, slowest tests) and warns about tests
+  slower than 60 s. Callers must gate it on a successful build. Integration tests default to two CTest processes (`integration-parallel`); Unit tests use
   one per CPU.
 - **`run-unit-tests`** runs `cmake_helper.py ctest` (`--no-tests=error`, so empty selections
   fail). Reporting steps run after test failures; the failed CTest step still fails the job.
-  The job summary report needs no `checks: write`; Codecov test analytics (`upload-codecov`)
-  needs `id-token: write`.
+  `junit_report.py` writes the `report-name` section and error annotations for failed tests
+  (no `checks: write` needed); Codecov test analytics (`upload-codecov`) needs `id-token: write`.
 - **`download-all-artifacts`** serves the build-results jobs. PR reporting allows absent
   diagnostic artifacts when tests did not run, but download failures still fail the job;
   baseline downloads allow neither. Baseline

@@ -1,8 +1,15 @@
-"""Human-readable formatters for byte counts and deltas."""
+"""Human-readable formatters for byte counts, deltas, counts, durations, and percentages."""
 
 from __future__ import annotations
 
-__all__ = ["format_bytes", "format_delta_bytes"]
+__all__ = [
+    "format_bytes",
+    "format_count",
+    "format_delta_bytes",
+    "format_duration",
+    "format_percent",
+    "format_ratio",
+]
 
 
 def format_bytes(size_bytes: int | float) -> str:
@@ -18,13 +25,41 @@ def format_bytes(size_bytes: int | float) -> str:
 
 
 def format_delta_bytes(delta_bytes: int | float) -> str:
-    """Return a signed delta with ``(increase)``/``(decrease)``/``No change``.
+    """Return a signed size delta in MB (``+1.25 MB``, ``-0.50 MB``), or ``unchanged``."""
+    if delta_bytes == 0:
+        return "unchanged"
+    sign = "+" if delta_bytes > 0 else "-"
+    return f"{sign}{format_bytes(abs(delta_bytes))}"
 
-    Used by build-results PR comments to summarize per-artifact size diffs.
-    """
-    delta_mb = delta_bytes / 1024.0 / 1024.0
-    if delta_bytes > 0:
-        return f"+{delta_mb:.2f} MB (increase)"
-    if delta_bytes < 0:
-        return f"{delta_mb:.2f} MB (decrease)"
-    return "No change"
+
+def format_count(value: int) -> str:
+    """Return an integer with thousands separators (``12,345``)."""
+    return f"{value:,}"
+
+
+def format_duration(seconds: float | None) -> str:
+    """Return a compact duration: ``0.4s``, ``42s``, ``3m 05s``, ``1h 02m``; ``n/a`` for None."""
+    if seconds is None or seconds < 0:
+        return "n/a"
+    if seconds < 10:
+        return f"{seconds:.1f}s"
+    whole = round(seconds)
+    if whole < 60:
+        return f"{whole}s"
+    minutes, secs = divmod(whole, 60)
+    if minutes < 60:
+        return f"{minutes}m {secs:02d}s"
+    hours, minutes = divmod(minutes, 60)
+    return f"{hours}h {minutes:02d}m"
+
+
+def format_percent(value: float, *, digits: int = 1) -> str:
+    """Return ``value`` as a percentage string (``93.4%``)."""
+    return f"{value:.{digits}f}%"
+
+
+def format_ratio(part: int, total: int) -> str:
+    """Return ``part of total (percent)``, e.g. ``1,234 of 1,300 (94.9%)``; ``0 of 0`` when empty."""
+    if total <= 0:
+        return f"{format_count(part)} of {format_count(total)}"
+    return f"{format_count(part)} of {format_count(total)} ({format_percent(100.0 * part / total)})"

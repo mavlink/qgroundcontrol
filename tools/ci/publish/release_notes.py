@@ -26,6 +26,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 import _bootstrap as _bootstrap
 from common.gh_actions import gh, gh_error, gh_notice, write_step_summary
 from common.git import run_git
+from common.markdown import code_span, summary_section
 from common.paths import TOOLS_DIR
 from common.proc import run_captured
 from qgc_tools.release_tag_check import is_release_tag
@@ -125,6 +126,22 @@ def draft_release(tag: str, notes_file: Path) -> int:
     return 0
 
 
+def notes_summary(tag: str, notes: str, *, released: bool) -> str:
+    """Return the job summary's Release notes section; note headings sit below its title."""
+    demoted = re.sub(r"^(#{1,4}) ", r"\1## ", notes, flags=re.MULTILINE)
+    return summary_section(
+        "Release notes",
+        [
+            ("Tag", code_span(tag)),
+            (
+                "Tag pushed",
+                "yes" if released else "no: previews the commits since the last release",
+            ),
+        ],
+        body=demoted,
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
@@ -153,7 +170,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     sys.stdout.write(notes)
-    write_step_summary(notes)
+    write_step_summary(notes_summary(args.tag, notes, released=released))
     output: Path | None = args.output
     if output is None:
         return 0

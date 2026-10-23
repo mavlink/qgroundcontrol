@@ -121,6 +121,7 @@ runs:
         useLocalCache: false
 
     - name: Setup caching
+      id: cache
       if: inputs.build-cache == 'true'
       uses: ./.github/actions/cache
       with:
@@ -277,3 +278,27 @@ runs:
         arch: android_x86_64
         modules: ${{ steps.config.outputs.qt_modules }}
         export-env: 'false'
+
+    # One Setup section in the job summary: Qt, CMake, Python, and what each cache restored.
+    - name: Summarize setup
+      shell: bash
+      env:
+        QT_VERSION: ${{ steps.qt.outputs.version }}
+        QT_ARCH: ${{ inputs.mode == 'ios' && 'clang_64' || inputs.qt-arch }}
+        QT_INSTALLER: ${{ steps.qt.outputs.installer }}
+        QT_SOURCE: ${{ steps.qt.outputs.source }}
+        QT_HOST_SOURCE: ${{ steps.qt-desktop-host.outputs.source }}
+        QT_IOS_SOURCE: ${{ steps.qt-ios.outputs.source }}
+        QT_ANDROID_ARM64_V8A_SOURCE: ${{ steps.qt-android-arm64.outputs.source }}
+        QT_ANDROID_ARMV7_SOURCE: ${{ steps.qt-android-armv7.outputs.source }}
+        QT_ANDROID_X86_64_SOURCE: ${{ steps.qt-android-x86_64.outputs.source }}
+        CMAKE_VERSION: ${{ steps.config.outputs.build_cmake_version }}
+        NINJA_VERSION: ${{ steps.config.outputs.build_ninja_version }}
+        PYTHON_GROUPS: ${{ inputs.python-groups }}
+        BUILD_CACHE: ${{ inputs.build-cache }}
+        COMPILER_CACHE: ${{ steps.cache.outputs.compiler-cache }}
+        MOC_CACHE: ${{ steps.cache.outputs.moc-cache }}
+        CPM_CACHE: ${{ steps.cache.outputs.cpm-cache }}
+        GSTREAMER_CACHE: ${{ steps.cache.outputs.gstreamer-cache }}
+        GSTREAMER_MODE: ${{ steps.cache.outputs.gstreamer-mode }}
+      run: python3 "${GITHUB_WORKSPACE}/tools/ci/reporting/setup_summary.py"

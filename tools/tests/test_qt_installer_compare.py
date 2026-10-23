@@ -111,7 +111,8 @@ def test_report_lists_each_difference(tmp_path: Path) -> None:
 
     report = render_markdown("Qt 6.12.0 linux_gcc_64", compare_trees(aqt, qgc, ARCH_ROOT))
 
-    assert report.startswith("### Qt 6.12.0 linux_gcc_64: FAIL\n")
+    assert report.startswith("### Qt installer parity: Qt 6.12.0 linux_gcc_64\n")
+    assert "| Result | FAIL |" in report
     assert "| content | unexpected | 1 |" in report
     assert "| installer records | known | 1 |" in report
     assert "<details><summary>unexpected: content</summary>\n\n- `bin/qmake`\n" in report
@@ -125,4 +126,4 @@ def test_report_truncates_long_lists(tmp_path: Path) -> None:
 
     assert "- `lib/f49`" in report
     assert "- `lib/f50`" not in report
-    assert "- ... 10 more" in report
+    assert "- …and 10 more" in report

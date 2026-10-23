@@ -28,6 +28,24 @@ inputs:
     description: "Whether to save cache (auto = save including PR merge refs; skip pull_request_target)"
     required: false
     default: 'auto'
+# Restore results for the job summary: artifact (compiler and moc snapshots), true (exact key),
+# false (restore-key match), or empty (miss, or not used).
+outputs:
+  compiler-cache:
+    description: Compiler (ccache) cache restore result
+    value: ${{ steps.artifact-cache.outputs.restored == 'true' && 'artifact' || steps.ccache.outputs.cache-hit }}
+  moc-cache:
+    description: moc cache restore result
+    value: ${{ steps.artifact-cache.outputs.restored == 'true' && 'artifact' || steps.moccache.outputs.cache-hit }}
+  cpm-cache:
+    description: CPM source cache restore result
+    value: ${{ steps.cpm-shared.outputs.cache-hit == 'true' && 'true' || steps.cpm-save.outputs.cache-hit || steps.cpm-restore.outputs.cache-hit }}
+  gstreamer-cache:
+    description: GStreamer SDK cache restore result
+    value: ${{ steps.gst-save.outputs.cache-hit || steps.gst-restore.outputs.cache-hit }}
+  gstreamer-mode:
+    description: GStreamer SDK cache mode (save, restore, or empty when the build uses no SDK cache)
+    value: ${{ steps.plan.outputs.gst_mode }}
 runs:
   using: composite
   steps:
@@ -71,6 +89,7 @@ runs:
     # The dependency cache remains a migration/default-branch fallback. RunsOn
     # redirects these actions to S3 and keeps using its existing storage route.
     - name: Restore Build Cache (ccache)
+      id: ccache
       if: steps.artifact-cache.outputs.restored != 'true' && env.QGC_COMPILER_CACHE_TOOL == 'ccache'
       uses: actions/cache/restore@v6
       with:
@@ -90,6 +109,7 @@ runs:
     # includes the restored entries, so caches converge over successive runs.
     # MOCCACHE_MAX_SIZE (set by the launcher) bounds growth via LRU trim.
     - name: Restore moc output (moccache)
+      id: moccache
       if: steps.artifact-cache.outputs.restored != 'true'
       uses: actions/cache/restore@v6
       with:
@@ -122,6 +142,7 @@ runs:
     # matched directory whole, so the paths match each SDK directory's entries
     # for the exclusions to apply.
     - name: Cache GStreamer SDK (restore and save)
+      id: gst-save
       if: steps.plan.outputs.gst_mode == 'save'
       uses: actions/cache@v6
       with:
@@ -133,6 +154,7 @@ runs:
         key: ${{ steps.plan.outputs.gst_key }}
 
     - name: Cache GStreamer SDK (restore only)
+      id: gst-restore
       if: steps.plan.outputs.gst_mode == 'restore'
       uses: actions/cache/restore@v6
       with:
@@ -161,6 +183,7 @@ runs:
         key: ${{ steps.plan.outputs.cpm_shared_key }}
 
     - name: Cache CPM Modules (restore and save)
+      id: cpm-save
       if: steps.plan.outputs.cpm_mode == 'save' && steps.cpm-shared.outputs.cache-hit != 'true'
       uses: actions/cache@v6
       with:
@@ -172,6 +195,7 @@ runs:
         restore-keys: ${{ steps.plan.outputs.cpm_restore_keys }}
 
     - name: Cache CPM Modules (restore only)
+      id: cpm-restore
       if: steps.plan.outputs.cpm_mode == 'restore' && steps.cpm-shared.outputs.cache-hit != 'true'
       uses: actions/cache/restore@v6
       with:

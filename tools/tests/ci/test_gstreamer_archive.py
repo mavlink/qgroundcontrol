@@ -162,4 +162,6 @@ def test_upload_publishes_archive_to_the_versioned_gstreamer_key(
     archive = tmp_path / "gstreamer-1.0-msvc-x64-1.24.0.zip"
     key = "dependencies/gstreamer/windows/1.24.0/gstreamer-1.0-msvc-x64-1.24.0.zip"
     assert uploads == [(archive, "qgroundcontrol", key)]
-    assert "| S3 Path | dependencies/gstreamer/windows/1.24.0/ |" in gh_summary.read_text()
+    summary = gh_summary.read_text()
+    assert summary.startswith("### GStreamer Windows SDK\n\n| Item | Value |")
+    assert "| S3 path | `dependencies/gstreamer/windows/1.24.0/` |" in summary

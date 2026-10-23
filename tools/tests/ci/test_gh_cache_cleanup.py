@@ -144,7 +144,9 @@ def test_main_summary_includes_dry_run_notice(monkeypatch, gh_summary: Path) -> 
     monkeypatch.setattr(mod, "list_caches", lambda *a, **kw: [_usage("k1", 1)])
     assert mod.main(["--summary"]) == 0
     summary = gh_summary.read_text()
-    assert "## Cache Summary" in summary
+    assert summary.startswith("### Cache cleanup\n\n| Item | Value |")
+    assert "| Mode | list (dry run) |" in summary
+    assert "| Caches | 1 |" in summary
     assert "| `k1` | 1 MiB | refs/heads/master |" in summary
     assert "Dry run" in summary
 
@@ -155,8 +157,8 @@ def test_main_summary_after_delete_shows_results(monkeypatch, gh_summary: Path) 
     monkeypatch.setattr(mod, "delete_caches", lambda *a, **kw: (1, 0))
     assert mod.main(["--delete", "--summary"]) == 0
     summary = gh_summary.read_text()
-    assert "Deletion Results" in summary
-    assert "Deleted: 1" in summary
+    assert "| Mode | delete |" in summary
+    assert "| Deleted | 1 |" in summary
     assert "Dry run" not in summary
 
 
@@ -196,7 +198,7 @@ def test_main_prunes_with_summary_from_environment(monkeypatch, gh_summary: Path
     monkeypatch.setattr(mod, "list_caches", lambda *a, **kw: [_usage("avd", 10000)])
     monkeypatch.setattr(mod, "delete_caches", lambda *a, **kw: pytest.fail("dry run deleted"))
     assert mod.main([]) == 0
-    assert "## Cache GC" in gh_summary.read_text()
+    assert "| Mode | prune (dry run) |" in gh_summary.read_text()
     assert "Dry run" in gh_summary.read_text()
 
 
@@ -494,6 +496,6 @@ def test_prune_deletes_only_selected_ref_and_reports_failures(
     ]
     out = capsys.readouterr().out
     assert "deleted 1; failed 1" in out
-    assert "8000 MiB" in gh_summary.read_text()
-    assert "Failed: 1" in gh_summary.read_text()
+    assert "| Pool | 12,000 MiB → 8,000 MiB |" in gh_summary.read_text()
+    assert "| Failed deletions | 1 |" in gh_summary.read_text()
     assert "above target" in out

@@ -16,8 +16,6 @@ from unittest.mock import patch
 import pytest
 from ci.cache import ccache_helper
 from ci.cache.ccache_helper import (
-    build_sccache_summary_markdown,
-    build_summary_markdown,
     ccache_misses,
     main,
     moccache_misses,
@@ -76,157 +74,11 @@ def test_pinned_release_reads_the_build_config_tools_section(tmp_path, monkeypat
     )
 
 
-class TestBuildSummaryMarkdown:
-    """Tests for build_summary_markdown function."""
-
-    def test_typical_stats(self):
-        stats = {
-            "direct_cache_hit": 100,
-            "preprocessed_cache_hit": 20,
-            "cache_miss": 30,
-        }
-        md = build_summary_markdown(stats)
-        assert "120 / 150 (80.0%)" in md
-        assert "| Direct hits | 100 |" in md
-        assert "| Preprocessed hits | 20 |" in md
-        assert "| Misses | 30 |" in md
-
-    def test_all_hits(self):
-        stats = {"direct_cache_hit": 50, "preprocessed_cache_hit": 0, "cache_miss": 0}
-        md = build_summary_markdown(stats)
-        assert "50 / 50 (100.0%)" in md
-
-    def test_all_misses(self):
-        stats = {"direct_cache_hit": 0, "preprocessed_cache_hit": 0, "cache_miss": 42}
-        md = build_summary_markdown(stats)
-        assert "0 / 42 (0.0%)" in md
-
-    def test_empty_stats(self):
-        md = build_summary_markdown({})
-        assert "0 / 0 (0.0%)" in md
-
-    def test_missing_fields_default_to_zero(self):
-        stats = {"direct_cache_hit": 5}
-        md = build_summary_markdown(stats)
-        assert "5 / 5 (100.0%)" in md
-
-    def test_size_and_cleanups(self):
-        stats = {
-            "cache_size_kibibyte": 491520,
-            "max_cache_size_kibibyte": 2097152,
-            "cleanups_performed": 3,
-        }
-        md = build_summary_markdown(stats)
-        assert "| Cache size | 480 MiB / 2.0 GiB (23.4%) |" in md
-        assert "| Cleanups (LRU evictions) | 3 |" in md
-
-    def test_errors_row_only_when_nonzero(self):
-        assert "Errors" not in build_summary_markdown({"direct_cache_hit": 1})
-        md = build_summary_markdown({"missing_cache_file": 2, "internal_error": 1})
-        assert "| ⚠ Errors | 3 |" in md
-
-
 class TestCLI:
     """Tests for subcommand dispatch."""
 
     def test_no_subcommand_returns_error(self):
         assert main([]) == 1
-
-    def test_summary_without_ccache(self):
-        with (
-            patch("ci.cache.ccache_helper.shutil.which", return_value=None),
-        ):
-            assert main(["summary"]) == 0
-
-    def test_summary_with_stats(self, gh_summary):
-        stats = {"direct_cache_hit": 10, "preprocessed_cache_hit": 2, "cache_miss": 5}
-        verbose = "cache hit (direct): 10\ncache miss: 5"
-        compression = "Compression ratio: 4.632 x     (78.4% space savings)"
-        outputs = {
-            ("--print-stats", "--format=json"): json.dumps(stats),
-            ("--show-compression",): compression,
-            ("-s", "-vv"): verbose,
-        }
-
-        def run(command):
-            assert command[0] == "/usr/bin/ccache"
-            return subprocess.CompletedProcess(command, 0, f"{outputs[tuple(command[1:])]}\n", "")
-
-        with (
-            patch("ci.cache.ccache_helper.shutil.which", return_value="/usr/bin/ccache"),
-            patch("ci.cache.ccache_helper.run_captured", run),
-        ):
-            assert main(["summary"]) == 0
-        content = gh_summary.read_text()
-        assert "12 / 17" in content
-        assert "<details>" in content
-        assert "cache hit (direct): 10" in content
-        assert "Compression ratio: 4.632 x" in content
-
-
-_SCCACHE_REPORT = {
-    "stats": {
-        "requests_not_cacheable": 3,
-        "cache_hits": {"counts": {"C/C++": 1900, "CUDA": 0}},
-        "cache_misses": {"counts": {"C/C++": 100}},
-        "cache_errors": {"counts": {}},
-        "cache_writes": 100,
-        "cache_read_errors": 0,
-        "cache_write_errors": 0,
-        "cache_timeouts": 0,
-    },
-    "cache_location": "S3, name: runs-on-cache, prefix: /cache/sccache/1/linux-x64/v1/",
-}
-
-
-class TestSccacheSummary:
-    """The sccache pilot reports its server's statistics instead of ccache's."""
-
-    def test_table(self):
-        md = build_sccache_summary_markdown(_SCCACHE_REPORT)
-        assert md.startswith("### sccache Statistics")
-        assert "| Cache hits | 1900 / 2000 (95.0%) |" in md
-        assert "| Misses | 100 |" in md
-        assert "| Cache writes | 100 |" in md
-        assert "| Non-cacheable calls | 3 |" in md
-        assert "S3, name: runs-on-cache" in md
-        assert "Errors" not in md
-
-    def test_errors_row_only_when_nonzero(self):
-        stats = {"cache_errors": {"counts": {"C/C++": 2}}, "cache_write_errors": 1}
-        md = build_sccache_summary_markdown({"stats": stats})
-        assert "| ⚠ Errors | 3 |" in md
-        assert "| Cache hits | 0 / 0 (0.0%) |" in md
-
-    def test_summary_reports_sccache_when_selected(self, tmp_path, gh_summary):
-        outputs = {
-            ("sccache", "--show-stats", "--stats-format", "json"): json.dumps(_SCCACHE_REPORT),
-            ("sccache", "--show-stats"): "Compile requests  2003",
-        }
-        error_log = tmp_path / "sccache.log"
-        error_log.write_text("".join(f"line {number}\n" for number in range(60)))
-        environment = {"QGC_COMPILER_CACHE_TOOL": "sccache", "SCCACHE_ERROR_LOG": str(error_log)}
-        with (
-            patch("ci.cache.ccache_helper._tool_output", lambda *command: outputs[command]),
-            patch("ci.cache.ccache_helper.get_ccache_json_stats") as ccache_stats,
-            patch.dict(os.environ, environment),
-        ):
-            assert main(["summary"]) == 0
-        ccache_stats.assert_not_called()
-        content = gh_summary.read_text()
-        assert "1900 / 2000 (95.0%)" in content
-        assert "Compile requests  2003" in content
-        assert "line 59" in content
-        assert "line 9\n" not in content
-
-    def test_summary_without_sccache_statistics(self, tmp_path, capsys):
-        environment = {"QGC_COMPILER_CACHE_TOOL": "sccache", "SCCACHE_ERROR_LOG": ""}
-        with (
-            patch("ci.cache.ccache_helper._tool_output", return_value=None),
-            patch.dict(os.environ, environment),
-        ):
-            assert main(["summary"]) == 0
-        assert "sccache statistics unavailable" in capsys.readouterr().err
 
 
 class TestInstall:
@@ -588,13 +440,11 @@ class TestSaveGate:
         assert should_save_cache(event, misses, minimum) is save
 
     def test_ccache_misses_from_json_stats(self):
-        with patch("ci.cache.ccache_helper.get_ccache_json_stats", return_value={"cache_miss": 5}):
+        with patch("ci.cache.ccache_helper.ccache_stats", return_value={"cache_miss": 5}):
             assert ccache_misses() == 5
-        with patch("ci.cache.ccache_helper.get_ccache_json_stats", return_value=None):
+        with patch("ci.cache.ccache_helper.ccache_stats", return_value=None):
             assert ccache_misses() is None
-        with patch(
-            "ci.cache.ccache_helper.get_ccache_json_stats", return_value={"direct_cache_hit": 1}
-        ):
+        with patch("ci.cache.ccache_helper.ccache_stats", return_value={"direct_cache_hit": 1}):
             assert ccache_misses() is None
 
     @pytest.mark.parametrize(
@@ -610,7 +460,7 @@ class TestSaveGate:
     def test_ccache_misses_from_docker_report(self, tmp_path, text, misses):
         report = tmp_path / "docker-build-report.json"
         report.write_text(json.dumps({"ccache": text, "moccache": ""}))
-        with patch("ci.cache.ccache_helper.get_ccache_json_stats") as host_stats:
+        with patch("ci.cache.ccache_helper.ccache_stats") as host_stats:
             assert ccache_misses(report) == misses
         host_stats.assert_not_called()
 
@@ -655,7 +505,7 @@ class TestSaveGate:
         env = {"GITHUB_EVENT_NAME": event, "QGC_PR_CACHE_SAVE_MIN_MISSES": "20"}
         with (
             patch.dict(os.environ, env),
-            patch("ci.cache.ccache_helper.get_ccache_json_stats", return_value={"cache_miss": 6}),
+            patch("ci.cache.ccache_helper.ccache_stats", return_value={"cache_miss": 6}),
         ):
             assert main(["save-gate", "--moccache-dir", str(tmp_path)]) == 0
         assert read_github_file(gh_output) == expected
@@ -664,7 +514,7 @@ class TestSaveGate:
         env = {"GITHUB_EVENT_NAME": "pull_request", "QGC_PR_CACHE_SAVE_MIN_MISSES": "20"}
         with (
             patch.dict(os.environ, env),
-            patch("ci.cache.ccache_helper.get_ccache_json_stats", return_value=None),
+            patch("ci.cache.ccache_helper.ccache_stats", return_value=None),
         ):
             assert main(["save-gate", "--moccache-dir", str(tmp_path)]) == 0
         assert gh_output.read_text().splitlines() == ["ccache=true", "moccache=true"]

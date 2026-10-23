@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 from ci.gstreamer import mirror_gstreamer
 from ci.gstreamer.mirror_gstreamer import (
@@ -12,6 +14,9 @@ from ci.gstreamer.mirror_gstreamer import (
     resolve_platforms,
 )
 from common.gstreamer import pinned_checksum
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def test_android_single_artifact() -> None:
@@ -101,3 +106,29 @@ def test_main_reports_errors_as_escaped_annotations(capsys: pytest.CaptureFixtur
     out = capsys.readouterr().out
     assert out.startswith("::error::Unknown platform(s): bad%0Aplatform; valid: ")
     assert out.count("\n") == 1
+
+
+def test_main_summarizes_each_mirrored_file(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, gh_summary: Path
+) -> None:
+    monkeypatch.setattr(mirror_gstreamer, "mirror_artifact", lambda artifact, **kw: "uploaded")
+    assert (
+        mirror_gstreamer.main(
+            [
+                "--version",
+                "1.28.3",
+                "--platforms",
+                "android",
+                "--work-dir",
+                str(tmp_path),
+                "--dry-run",
+            ]
+        )
+        == 0
+    )
+    summary = gh_summary.read_text(encoding="utf-8")
+    assert summary.startswith("### GStreamer mirror\n\n| Item | Value |")
+    assert "| Mode | dry run |" in summary
+    assert "| Files | 1 |" in summary
+    assert "| Platform | File | Status |" in summary
+    assert "| uploaded |" in summary

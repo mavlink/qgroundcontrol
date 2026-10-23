@@ -77,23 +77,16 @@ runs:
           -name="compiler-warnings" \
           < "$REVIEWDOG_LOG" || true
 
-    - name: Compiler Cache Stats
-      if: always()
+    # One job-summary section per build: result, duration, toolchain, compiler and moc cache
+    # hit rates, and the slowest build steps (collapsed).
+    - name: Summarize build
+      if: ${{ !cancelled() && steps.compile.outcome != 'skipped' }}
       shell: bash
-      run: |
-        if command -v ccache >/dev/null 2>&1; then
-          python3 "${GITHUB_WORKSPACE}/tools/ci/cache/ccache_helper.py" summary
-        fi
-
-    - name: Moc Cache Stats
-      if: always()
-      shell: bash
+      working-directory: ${{ inputs.build-dir }}
       env:
+        INPUT_TARGET: ${{ inputs.target }}
+        BUILD_OUTCOME: ${{ steps.compile.outcome }}
+        BUILD_SECONDS: ${{ steps.compile.outputs.duration_seconds }}
+        BUILD_PROFILE_PATH: ${{ steps.compile.outputs.profile_path }}
         MOCCACHE_DIR: ${{ github.workspace }}/.cache/moccache
-        BUILD_DIR: ${{ inputs.build-dir }}
-      run: |
-        python3 "${GITHUB_WORKSPACE}/tools/moccache_launcher.py" --show-stats --build-dir "$BUILD_DIR"
-        if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
-          python3 "${GITHUB_WORKSPACE}/tools/moccache_launcher.py" --show-stats --build-dir "$BUILD_DIR" --markdown \
-            >> "$GITHUB_STEP_SUMMARY"
-        fi
+      run: python3 "${GITHUB_WORKSPACE}/tools/ci/compile/cmake_helper.py" summary

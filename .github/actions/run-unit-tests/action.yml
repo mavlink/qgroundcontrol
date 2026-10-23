@@ -27,7 +27,9 @@ inputs:
     required: false
     default: auto
   report-name:
-    description: Publish the JUnit results to the job summary under this name; empty skips publishing
+    description: >-
+      Job-summary section title for the JUnit results (counts, failures, slowest tests) and
+      error annotations for failed tests; empty skips both
     required: false
     default: ''
   artifact-name:
@@ -39,7 +41,7 @@ inputs:
     required: false
     default: '14'
   duration-report:
-    description: Summarize the slowest tests in the job summary and warn about slow tests
+    description: Annotate tests slower than 60 s with warnings (needs report-name)
     required: false
     default: 'false'
   upload-codecov:
@@ -72,15 +74,16 @@ runs:
         INPUTS_EXCLUDE_LABELS: ${{ inputs.exclude-labels }}
 
     # The steps below also run after test failures; the failed CTest step still fails the action.
-    - name: Analyze test durations
-      if: ${{ !cancelled() && inputs.duration-report == 'true' }}
+    # junit_report.py reads the INPUT_* variables as argument defaults.
+    - name: Report test results
+      if: ${{ !cancelled() && inputs.report-name != '' }}
       shell: bash
       working-directory: ${{ inputs.build-dir }}
-      run: |
-        python3 "${GITHUB_WORKSPACE}/tools/ci/reporting/test_duration_report.py" \
-          --junit-path "${INPUTS_JUNIT_OUTPUT}"
       env:
-        INPUTS_JUNIT_OUTPUT: ${{ inputs.junit-output }}
+        INPUT_JUNIT_PATH: ${{ inputs.junit-output }}
+        INPUT_TITLE: ${{ inputs.report-name }}
+        INPUT_SLOW_WARNINGS: ${{ inputs.duration-report }}
+      run: python3 "${GITHUB_WORKSPACE}/tools/ci/reporting/junit_report.py"
 
     - name: Upload Codecov test analytics
       if: ${{ !cancelled() && inputs.upload-codecov == 'true' }}
@@ -94,17 +97,6 @@ runs:
         disable_search: true
         handle_no_reports_found: true
         fail_ci_if_error: false
-
-    - name: Publish test results
-      if: ${{ !cancelled() && inputs.report-name != '' }}
-      uses: dorny/test-reporter@v3
-      with:
-        name: ${{ inputs.report-name }}
-        path: ${{ inputs.build-dir }}/${{ inputs.junit-output }}
-        path-replace-backslashes: true
-        reporter: java-junit
-        use-actions-summary: true
-        fail-on-error: false
 
     - name: Upload test results
       if: ${{ !cancelled() && inputs.artifact-name != '' }}

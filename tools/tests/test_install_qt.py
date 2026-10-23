@@ -416,7 +416,10 @@ class TestCompare:
 
         assert install_qt.main(argv) == 0
         summary = gh_summary.read_text()
-        assert summary.startswith("### Qt 6.12.0 win64_msvc2022_arm64_cross_compiled: PASS")
+        assert summary.startswith(
+            "### Qt installer parity: Qt 6.12.0 win64_msvc2022_arm64_cross_compiled\n"
+        )
+        assert "| Result | identical apart from known differences |" in summary
         assert summary in capsys.readouterr().out
 
         write_files(tmp_path / "qgc/6.12.0/msvc2022_arm64", {"bin/qmake.exe": "y"})

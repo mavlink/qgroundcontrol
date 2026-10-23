@@ -343,10 +343,13 @@ def _run_dmg_main(monkeypatch, tmp_path, tools: FakeDmgTools, *, create_dmg=True
     )
 
 
-def test_dmg_verifies_bundle_inside_image_and_detaches(monkeypatch, tmp_path):
+def test_dmg_verifies_bundle_inside_image_and_detaches(monkeypatch, tmp_path, gh_summary):
     tools = FakeDmgTools()
 
     assert _run_dmg_main(monkeypatch, tmp_path, tools) == 0
+    summary = gh_summary.read_text(encoding="utf-8")
+    assert summary.startswith("### Boot test\n\n| Item | Value |")
+    assert "| Result | passed |\n| Package | `QGroundControl.dmg` |\n| Type | dmg |" in summary
 
     attach, detach = tools.commands("hdiutil")
     assert attach[:4] == ["hdiutil", "attach", "-nobrowse", "-readonly"]
@@ -368,8 +371,13 @@ def test_dmg_verifies_bundle_inside_image_and_detaches(monkeypatch, tmp_path):
     [(FakeDmgTools(boot_rc=3), 3, 1), (FakeDmgTools(archs="arm64"), 1, 0)],
     ids=["boot-failure", "arch-mismatch"],
 )
-def test_dmg_failures_still_detach(monkeypatch, tmp_path, tools, expected_code, expected_boots):
+def test_dmg_failures_still_detach(
+    monkeypatch, tmp_path, tools, expected_code, expected_boots, gh_summary
+):
     assert _run_dmg_main(monkeypatch, tmp_path, tools) == expected_code
+    assert f"| Result | failed (exit code {expected_code}) |" in gh_summary.read_text(
+        encoding="utf-8"
+    )
     assert len(tools.boots) == expected_boots
     assert tools.calls[-1][:2] == ["hdiutil", "detach"]
 

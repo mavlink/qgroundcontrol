@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -28,6 +28,7 @@ class CoverageSummary:
 
     gcovr rounds percentages to one decimal and reports 100.0 only when everything is covered;
     a metric with no elements reports 0.0, so check the total before showing its percentage.
+    Function counts are optional and default to zero when a summary omits them.
     """
 
     line_percent: float
@@ -36,6 +37,9 @@ class CoverageSummary:
     branch_percent: float
     branch_total: int
     branch_covered: int
+    function_percent: float = 0.0
+    function_total: int = 0
+    function_covered: int = 0
 
 
 def _count(summary: dict[str, Any], key: str) -> int:
@@ -74,6 +78,17 @@ def read_gcovr_summary(path: str | PathLike[str]) -> CoverageSummary:
         branch_total=_count(summary, "branch_total"),
         branch_covered=_count(summary, "branch_covered"),
     )
-    if metrics.line_covered > metrics.line_total or metrics.branch_covered > metrics.branch_total:
+    if "function_total" in summary:
+        metrics = replace(
+            metrics,
+            function_percent=_percent(summary, "function_percent"),
+            function_total=_count(summary, "function_total"),
+            function_covered=_count(summary, "function_covered"),
+        )
+    if (
+        metrics.line_covered > metrics.line_total
+        or metrics.branch_covered > metrics.branch_total
+        or metrics.function_covered > metrics.function_total
+    ):
         raise CoverageSummaryError("coverage summary reports more covered than total elements")
     return metrics

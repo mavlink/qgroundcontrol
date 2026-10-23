@@ -79,7 +79,7 @@ jobs:
           egress-policy: audit
 
       # The job's only checkout. collect_build_status.py needs only the standard library, so it
-      # gates the job before Python dependencies are installed.
+      # runs (and gates save-baselines) before Python dependencies are installed.
       - &checkout-build-results
         name: Checkout build-results scripts
         uses: actions/checkout@v7
@@ -92,8 +92,8 @@ jobs:
             tools/ci/reporting/collect_build_status.py
             tools/ci/reporting/download_artifacts.py
             tools/ci/reporting/generate_build_results_comment.py
+            tools/ci/reporting/junit_report.py
             tools/ci/reporting/report_context.py
-            tools/ci/reporting/templates/build_results.md.j2
             tools/ci/reporting/workflow_runs.py
             tools/_bootstrap.py
             tools/common
@@ -106,6 +106,8 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
 
+      # Every completed trigger updates the comment, so it shows finished workflows (and their
+      # failures) while others still run; the last one to complete renders the final state.
       - name: Collect build status
         id: builds
         env:
@@ -120,16 +122,15 @@ jobs:
             --head-sha "$HEAD_SHA" \
             --platform-workflows "${PLATFORM_WORKFLOWS}" \
             --event pull_request \
-            --runs-cache "$RUNS_CACHE"
+            --runs-cache "$RUNS_CACHE" \
+            --status-out build-status.json
 
       - name: Install Python dependencies
-        if: steps.builds.outputs.ready == 'true'
         uses: ./.github/actions/setup-python
         with:
           groups: scripts
 
       - name: Download artifacts from all platform workflows
-        if: steps.builds.outputs.ready == 'true'
         uses: ./.github/actions/download-all-artifacts
         with:
           include-failed: 'true'
@@ -142,9 +143,7 @@ jobs:
           sizes-file: pr-sizes.json
 
       - name: Download pre-commit results artifact
-        if: >-
-          steps.builds.outputs.ready == 'true' &&
-          steps.builds.outputs.precommit_run_id != ''
+        if: steps.builds.outputs.precommit_run_id != ''
         continue-on-error: true
         uses: actions/download-artifact@v8
         with:
@@ -153,8 +152,24 @@ jobs:
           name: pre-commit-results
           path: artifacts/pre-commit-results
 
+      # Code Analysis is not a trigger, so its results appear when it finished before the last
+      # platform workflow; the comment links to the run either way.
+      - name: Download Code Analysis results
+        if: steps.builds.outputs.analysis_complete == 'true'
+        continue-on-error: true
+        uses: ./.github/actions/download-all-artifacts
+        with:
+          include-failed: 'true'
+          allow-missing: 'true'
+          head-sha: ${{ github.event.workflow_run.head_sha }}
+          workflows: Code Analysis
+          event: pull_request
+          runs-file: ${{ runner.temp }}/workflow-runs-cache.json
+          artifact-prefixes: clang-tidy-clazy-output
+          output-dir: analysis-artifacts
+
       - name: Restore baseline snapshot
-        if: steps.builds.outputs.ready == 'true'
+        id: baseline
         uses: actions/cache/restore@v6
         continue-on-error: true
         with:
@@ -166,30 +181,29 @@ jobs:
             build-baseline-v2-${{ needs.load-config.outputs.base_sha }}-
             build-baseline-v2-
 
+      # The comment also goes to this job's summary, so it is readable even if posting fails.
       - name: Generate combined report
-        if: steps.builds.outputs.ready == 'true'
         env:
-          BUILD_TABLE: ${{ steps.builds.outputs.table }}
-          BUILD_SUMMARY: ${{ steps.builds.outputs.summary }}
-          PRECOMMIT_STATUS: ${{ steps.builds.outputs.precommit_status }}
-          PRECOMMIT_URL: ${{ steps.builds.outputs.precommit_url }}
+          BUILD_STATUS_JSON: build-status.json
+          ARTIFACTS_DIR: artifacts
+          ANALYSIS_ARTIFACTS_DIR: analysis-artifacts
           PRECOMMIT_RESULTS_PATH: artifacts/pre-commit-results/pre-commit-results.json
           COVERAGE_SUMMARY: artifacts/coverage-report/coverage-summary.json
           BASELINE_COVERAGE_SUMMARY: baseline-coverage-summary.json
+          BASELINE_KEY: ${{ steps.baseline.outputs.cache-matched-key }}
           PR_SIZES_JSON: pr-sizes.json
           BASELINE_SIZES_JSON: baseline-sizes.json
           BASELINE_SHA: ${{ needs.load-config.outputs.base_sha }}
+          PR_NUMBER: ${{ needs.load-config.outputs.pr }}
           TRIGGERED_BY: ${{ github.event.workflow_run.name }}
           COMMIT_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           python3 "${GITHUB_WORKSPACE}/tools/ci/reporting/generate_build_results_comment.py" \
             --base-dir "${GITHUB_WORKSPACE}" \
             --output comment.md
-          cat comment.md
 
       - name: Recheck PR head before publishing
         id: current
-        if: steps.builds.outputs.ready == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 tools/ci/reporting/report_context.py

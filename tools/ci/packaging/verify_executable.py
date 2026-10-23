@@ -18,6 +18,7 @@ import stat
 import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -25,7 +26,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import _bootstrap as _bootstrap
 from common.cmake import read_cache_var
-from common.gh_actions import gh_error, gh_warning
+from common.format import format_bytes, format_duration
+from common.gh_actions import gh_error, gh_warning, write_step_summary
+from common.markdown import code_span, summary_section
 from common.proc import output_text, run_captured
 
 if TYPE_CHECKING:
@@ -301,15 +304,30 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--expected-appimage-update-information", default="")
     args = parser.parse_args(argv)
 
+    package = Path(args.binary_path)
+    start = time.monotonic()
     if args.exe_type != "dmg":
-        return _verify(Path(args.binary_path), args)
-
-    try:
-        with _attached_dmg(Path(args.binary_path)) as mount_point:
-            return _verify(_bundle_executable(mount_point), args)
-    except RuntimeError as error:
-        gh_error(str(error))
-        return 1
+        code = _verify(package, args)
+    else:
+        try:
+            with _attached_dmg(package) as mount_point:
+                code = _verify(_bundle_executable(mount_point), args)
+        except RuntimeError as error:
+            gh_error(str(error))
+            code = 1
+    write_step_summary(
+        summary_section(
+            "Boot test",
+            [
+                ("Result", "passed" if code == 0 else f"failed (exit code {code})"),
+                ("Package", code_span(package.name)),
+                ("Type", args.exe_type),
+                ("Size", format_bytes(package.stat().st_size) if package.is_file() else ""),
+                ("Duration", format_duration(time.monotonic() - start)),
+            ],
+        )
+    )
+    return code
 
 
 if __name__ == "__main__":

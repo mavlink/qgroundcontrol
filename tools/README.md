@@ -494,7 +494,9 @@ helpers:
   `raise SystemExit(main())` under `if __name__ == "__main__":`, so tests can call `main([...])`.
 - **Output**: log locally with `common.logging` (`log_info`, `log_warn`, `log_error`); in CI,
   report problems as `common.gh_actions` annotations (`gh_error`, `gh_warning`) and write step
-  outputs and summaries with its `write_github_output` and `write_step_summary`.
+  outputs and summaries with its `write_github_output` and `write_step_summary`. Build each
+  job-summary section with `common.markdown.summary_section` (H3 title, facts table, collapsed
+  details) and format numbers with `common.format` so every job reads the same way.
 - **Subprocesses and network**: run commands through `common.proc` (`run_captured`, `run_tee`,
   `run_with_retry`), check required executables with its `require_tools` and poll with its
   `wait_until`, download with `common.net`, and call GitHub through `common.gh_actions.gh()`.

@@ -19,7 +19,6 @@ def test_reports_follow_failed_tests_and_keep_the_failure() -> None:
     assert [step.get("uses", "").split("@")[0] for step in reports] == [
         "",
         "codecov/codecov-action",
-        "dorny/test-reporter",
         "actions/upload-artifact",
     ]
     for step in reports:
@@ -51,12 +50,17 @@ def test_test_phase_reports_each_suite_from_its_own_run() -> None:
     declared = set(load_action("run-unit-tests")["inputs"])
     assert all(set(step["with"]) <= declared for step in runs)
     assert runs[1]["if"] == "${{ !cancelled() }}"
-    # Duration summaries go to the job summary; the JUnit XML in test-results-* holds the timings.
+    # Test summaries go to the job summary; the JUnit XML in test-results-* holds the details.
     assert steps == runs
-    (analyze,) = [
-        step for step in _steps("run-unit-tests") if "test_duration_report" in step.get("run", "")
+    (report,) = [
+        step for step in _steps("run-unit-tests") if "junit_report.py" in step.get("run", "")
     ]
-    assert analyze["if"] == "${{ !cancelled() && inputs.duration-report == 'true' }}"
+    assert report["if"] == "${{ !cancelled() && inputs.report-name != '' }}"
+    assert report["env"] == {
+        "INPUT_JUNIT_PATH": "${{ inputs.junit-output }}",
+        "INPUT_TITLE": "${{ inputs.report-name }}",
+        "INPUT_SLOW_WARNINGS": "${{ inputs.duration-report }}",
+    }
     for step, kind in zip(runs, ("unit", "integration"), strict=True):
         options = step["with"]
         suite = f"${{{{ inputs.suite }}}}-{kind}"

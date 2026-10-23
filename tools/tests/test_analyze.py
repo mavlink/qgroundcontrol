@@ -164,6 +164,33 @@ def test_advisory_preserves_error_findings(tmp_path, monkeypatch):
         assert analyze.main(["--tool", "clazy", "--advisory"]) == expected
 
 
+def test_step_summary_reports_each_tool(tmp_path, monkeypatch, gh_summary, snapshot):
+    from analyzers.base import AnalysisResult
+
+    monkeypatch.setattr(analyze, "find_repo_root", lambda: tmp_path)
+    monkeypatch.setattr(analyze.FileCollector, "get_cpp_files", lambda *a, **kw: [])
+    analyzer = MagicMock()
+    analyzer.run.return_value = AnalysisResult(
+        tool="clazy",
+        passed=False,
+        files_checked=150,
+        files_with_issues=["src/Vehicle/Vehicle.cc", "src/main.cc"],
+        output=(
+            "src/main.cc:11:1: warning: non-POD static (QGCLoggingCategory) "
+            "[-Wclazy-non-pod-global-static]\n"
+            "src/Vehicle/Vehicle.cc:5:10: warning: Module QtQmlIntegration should not be included "
+            "directly [-Wclazy-no-module-include]\n"
+            "src/Vehicle/Vehicle.cc:9:3: warning: unused [-Wclazy-non-pod-global-static]\n"
+        ),
+    )
+    monkeypatch.setattr(analyze, "get_analyzer", lambda *a, **kw: analyzer)
+    assert analyze.main(["--tool", "clazy", "--advisory", "--step-summary"]) == 0
+    assert gh_summary.read_text(encoding="utf-8") == snapshot
+    gh_summary.write_text("")
+    assert analyze.main(["--tool", "clazy", "--advisory"]) == 0
+    assert gh_summary.read_text(encoding="utf-8") == ""
+
+
 def test_execution_errors_print_their_reason(tmp_path, monkeypatch, capsys):
     from analyzers.base import AnalysisResult
 

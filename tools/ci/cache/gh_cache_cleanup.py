@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """List and optionally delete GitHub Actions caches via the built-in `gh cache` commands.
 
-With --summary, appends a markdown table of caches (plus deletion totals or a
-dry-run notice) to GITHUB_STEP_SUMMARY. cache-cleanup.yml sets the branch and
-flags through CLEANUP_* environment variables.
+With --summary, appends a Cache cleanup section (pool size, candidates, deletion
+totals or a dry-run notice, and a collapsed cache table) to GITHUB_STEP_SUMMARY.
+cache-cleanup.yml sets the branch and flags through CLEANUP_* environment variables.
 """
 
 from __future__ import annotations
@@ -18,6 +18,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import _bootstrap as _bootstrap
+from common.format import format_count
 from common.gh_actions import (
     env_default,
     env_flag,
@@ -26,7 +27,7 @@ from common.gh_actions import (
     require_repository,
     write_step_summary,
 )
-from common.markdown import md_table
+from common.markdown import code_span, md_table, more_items, summary_section
 
 DEFAULT_PROTECT = (
     r"^(apt-debs|ccache|cpm-sources-v2|gst-sdk-v1|moccache|qt|build-baseline-v2"
@@ -181,25 +182,53 @@ def _cache_family(key: str) -> str:
     return _APT_GENERATION_RE.sub(r"\1-<generation>", family)
 
 
+_LISTED_CACHES = 100
+
+
+def _mib(size_bytes: int) -> str:
+    return f"{format_count(size_bytes // _MIB)} MiB"
+
+
 def _cache_table(caches: list[CacheUsage]) -> str:
-    return md_table(
+    table = md_table(
         ["Key", "Size", "Branch"],
-        [(f"`{c.key[:50]}`", f"{c.size_bytes // _MIB} MiB", c.ref) for c in caches],
+        [(code_span(c.key[:80]), _mib(c.size_bytes), c.ref) for c in caches[:_LISTED_CACHES]],
+        markdown=True,
     )
+    if len(caches) > _LISTED_CACHES:
+        table += f"\n\n{more_items(len(caches) - _LISTED_CACHES)}"
+    return table
 
 
-def _prune_summary(victims: list[CacheUsage], total: int, projected: int, *, deleted: bool) -> str:
-    verb = "Deleted" if deleted else "Selected"
-    lines = [
-        "## Cache GC\n",
-        f"\nPool: {total // _MIB} MiB → {projected // _MIB} MiB "
-        f"({verb.lower()} {len(victims)} cache(s))\n",
-    ]
-    if victims:
-        lines.append(f"\n{_cache_table(victims)}\n")
-    else:
-        lines.append("\nNo eviction candidates.\n")
-    return "".join(lines)
+def _deletion_facts(deleted: int | None, failed: int) -> list[tuple[str, object]]:
+    return [("Deleted", deleted), ("Failed deletions", failed or None)]
+
+
+def _prune_summary(
+    victims: list[CacheUsage],
+    total: int,
+    projected: int,
+    *,
+    deleted: int | None,
+    failed: int,
+) -> str:
+    """Cache cleanup section for --prune; *deleted* is None for a dry run."""
+    body = "No eviction candidates." if not victims else ""
+    if victims and deleted is None:
+        body = _DRY_RUN_NOTICE
+    return summary_section(
+        "Cache cleanup",
+        [
+            ("Mode", "prune" if deleted is not None else "prune (dry run)"),
+            ("Pool", f"{_mib(total)} → {_mib(projected)}"),
+            ("Eviction candidates", len(victims)),
+            *_deletion_facts(deleted, failed),
+        ],
+        body=body,
+        collapsed=[
+            (f"Eviction candidates ({len(victims)})", _cache_table(victims) if victims else "")
+        ],
+    )
 
 
 def run_prune(repo: str, args: argparse.Namespace) -> None:
@@ -233,34 +262,33 @@ def run_prune(repo: str, args: argparse.Namespace) -> None:
         )
 
     if args.summary:
-        summary = _prune_summary(victims, total, projected, deleted=args.delete and failed == 0)
-        if args.delete:
-            summary += _deletion_summary(deleted, failed)
-        if victims and not args.delete:
-            summary += _DRY_RUN_NOTICE
-        write_step_summary(summary)
+        write_step_summary(
+            _prune_summary(
+                victims, total, projected, deleted=deleted if args.delete else None, failed=failed
+            )
+        )
 
 
-def _list_summary(rows: list[CacheUsage], branch: str) -> str:
-    lines = ["## Cache Summary\n"]
-    if branch:
-        lines.append(f"Branch filter: `{branch}`\n")
-    if not rows:
-        lines.append("\nNo caches found\n")
-        return "".join(lines)
-    lines.append(f"\n{_cache_table(rows)}\n")
-    lines.append(f"\n**Total: {len(rows)} caches**\n")
-    return "".join(lines)
+def _list_summary(rows: list[CacheUsage], branch: str, *, deleted: int | None, failed: int) -> str:
+    """Cache cleanup section for listing (and deleting) one branch's caches."""
+    body = "No caches found." if not rows else ""
+    if rows and deleted is None:
+        body = _DRY_RUN_NOTICE
+    return summary_section(
+        "Cache cleanup",
+        [
+            ("Mode", "delete" if deleted is not None else "list (dry run)"),
+            ("Branch", code_span(branch) if branch else "all"),
+            ("Caches", len(rows)),
+            ("Total size", _mib(sum(row.size_bytes for row in rows))),
+            *_deletion_facts(deleted, failed),
+        ],
+        body=body,
+        collapsed=[(f"Caches ({len(rows)})", _cache_table(rows) if rows else "")],
+    )
 
 
-def _deletion_summary(deleted: int, failed: int) -> str:
-    out = ["\n## Deletion Results\n", f"Deleted: {deleted}\n"]
-    if failed:
-        out.append(f"Failed: {failed}\n")
-    return "".join(out)
-
-
-_DRY_RUN_NOTICE = "\n> **Dry run** — no caches were deleted. Set `dry-run: false` to delete.\n"
+_DRY_RUN_NOTICE = "**Dry run**: no caches were deleted. Set `dry-run: false` to delete."
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -320,20 +348,15 @@ def main(argv: list[str] | None = None) -> int:
     count = len(rows)
     print(f"Found {count} cache(s)")
 
-    summary_parts: list[str] = []
+    deleted: int | None = None
+    failed = 0
+    if args.delete:
+        deleted = 0
+        if count > 0:
+            deleted, failed = delete_caches(repo, args.branch, [r.key for r in rows])
+            print(f"Deleted {deleted} cache(s); {failed} failed")
     if args.summary:
-        summary_parts.append(_list_summary(rows, args.branch))
-
-    if args.delete and count > 0:
-        deleted, failed = delete_caches(repo, args.branch, [r.key for r in rows])
-        print(f"Deleted {deleted} cache(s); {failed} failed")
-        if args.summary:
-            summary_parts.append(_deletion_summary(deleted, failed))
-    elif args.summary and not args.delete:
-        summary_parts.append(_DRY_RUN_NOTICE)
-
-    if summary_parts:
-        write_step_summary("".join(summary_parts))
+        write_step_summary(_list_summary(rows, args.branch, deleted=deleted, failed=failed))
     return 0
 
 

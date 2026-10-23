@@ -59,6 +59,23 @@ def test_prepare_emits_every_path_the_action_consumes(
     assert sidecar.read_bytes().endswith(b"  QGroundControl.AppImage\n")
 
 
+def test_prepare_adds_an_artifact_section_to_the_job_summary(
+    build: Path, gh_output: Path, gh_summary: Path
+) -> None:
+    _prepare()
+
+    artifact = build / "QGroundControl.AppImage"
+    digest = (build / "QGroundControl.AppImage.sha256").read_text().split()[0]
+    size = artifact.stat().st_size
+    assert gh_summary.read_text(encoding="utf-8") == (
+        "### Artifact\n\n| Item | Value |\n| --- | --- |\n"
+        "| File | `QGroundControl.AppImage` |\n"
+        f"| Size | 0.00 MB ({size} bytes) |\n"
+        f"| SHA-256 | `{digest}` |\n"
+        "| Attestation subject | `QGroundControl-linux` |\n\n"
+    )
+
+
 def test_pull_request_artifacts_keep_checksum_dependency_sbom_and_identity(
     build: Path, gh_output: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

@@ -2,7 +2,9 @@
 
 Reusable repository policy lives here; CLI and platform entrypoints call it.
 
-- `build_profile.py`: Ninja log and Clang time-trace hotspot summaries and CI build-timing snapshots.
+- `build_profile.py`: Ninja log and Clang time-trace hotspot summaries, CI build-timing snapshots,
+  and their job-summary tables.
+- `compiler_cache.py`: ccache and sccache statistics for build summaries and cache-save gates.
 - `cmake_configure.py`: configure-preset selection and `qt-cmake` invocation for `configure.py` and CI.
 - `python_env.py`: locked dependency profiles, environment and executable resolution.
 - `docker_variants.py`: Docker variant manifest and validation shared by CI and deployment.
