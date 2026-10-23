@@ -153,8 +153,8 @@ def action_names() -> list[str]:
 
 
 def get_steps(document: dict[str, Any], job: str | None = None) -> list[dict[str, Any]]:
-    """Steps of *job* in a workflow, or of a composite action when *job* is None."""
-    return document["jobs"][job]["steps"] if job else document["runs"]["steps"]
+    """Steps of *job* in a workflow, or of a local action when *job* is None (none for JavaScript)."""
+    return document["jobs"][job]["steps"] if job else document["runs"].get("steps", [])
 
 
 def get_step(steps: list[dict[str, Any]], name: str) -> dict[str, Any]:

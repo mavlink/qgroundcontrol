@@ -764,6 +764,7 @@ numbers, durations, and sizes from `common.format`. A build job reads top-down:
 | Unit Tests / Integration Tests (*suite*) | `run-unit-tests` (`junit_report.py`): counts, failures with their first lines, slowest tests and failure output collapsed |
 | Coverage, Binary size | `coverage_report.py --step-summary`, `size_analysis.py` |
 | Boot test, Artifact | `verify_executable.py` (result, package, size, duration) and `attest_helper.py prepare` (file, size, SHA-256) |
+| Disk | `disk-watch`'s post step, at the end of every `build-setup` and Docker job: the workspace volume's size and its start, peak (with free space and time), and end use, sampled every 10 s; a peak whose free space is below 10% of the volume, kept between 5 and 10 GiB, gets ⚠️ and a "Disk nearly full" warning annotation |
 
 Docker builds write one Docker build section (`docker_helper.py summary`); pre-commit,
 Code Analysis (`analyze.py --step-summary`), cache cleanup, GStreamer, release-notes, and Build

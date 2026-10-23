@@ -65,6 +65,10 @@ outputs:
 runs:
   using: composite
   steps:
+    # Its post step logs the job's start, peak, and end disk use, and adds them to the job summary.
+    - name: Watch disk use
+      uses: ./.github/actions/disk-watch
+
     # Validates the inputs, creates $RUNNER_TEMP/build, resolves every mode-dependent value and
     # build-config.json version the steps below read, and exports the Android SDK environment.
     # Runs on the system Python, before setup-python.

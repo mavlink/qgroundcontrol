@@ -1,0 +1,18 @@
+name: Disk watch
+description: >-
+  Sample the workspace volume's used space in the background and log the job's start, peak, and end
+  use when the job finishes, after every later step and post step that ran before it; warn when the
+  least free space fell below 10% of the volume, kept between 5 and 10 GiB
+inputs:
+  interval-seconds:
+    # main.mjs reads it as INPUT_INTERVAL-SECONDS (the runner keeps the hyphen).
+    description: Seconds between samples
+    required: false
+    default: '10'
+runs:
+  # A post step (composite actions have none) reports at the very end of the job, after packaging
+  # and cache saves. Node built-ins only: no dependencies or build step.
+  using: node24
+  main: main.mjs
+  post: post.mjs
+  post-if: always()

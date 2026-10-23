@@ -13,7 +13,9 @@ from ..._helpers import REPO_ROOT, get_steps, load_action
 
 def test_plan_step_runs_first_and_supplies_every_plan_output_the_action_reads() -> None:
     action = load_action("build-setup")
-    plan = get_steps(action)[0]
+    # Only the disk watch (Node, so no Python) starts earlier, to see the whole job.
+    watch, plan = get_steps(action)[:2]
+    assert watch["uses"] == "./.github/actions/disk-watch"
     assert plan["id"] == "plan"
     assert plan["run"] == 'python3 "${GITHUB_WORKSPACE}/tools/ci/runner/build_setup.py"'
     assert plan["env"] == {

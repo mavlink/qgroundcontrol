@@ -1,6 +1,7 @@
 # GitHub Actions
 
-This directory contains the local composite actions shared by QGroundControl workflows. See
+This directory contains the local actions shared by QGroundControl workflows: composite actions,
+plus `disk-watch`, which is JavaScript because it needs a post step. See
 [`../ci-overview.md`](../ci-overview.md) for workflow layout and CI conventions and
 [`tools/ci/README.md`](../../tools/ci/README.md) for the Python helpers the actions call.
 
@@ -23,6 +24,7 @@ cannot load actions from the PR merge commit (zizmor's `self-repository` audit i
 | `cmake-configure` | Configure QGroundControl from a required CMake preset, which sets the build type and testing; requires `qt-cmake` unless `use-qt-cmake` is `false` |
 | `debug-runner` | Open an actor-only SSH session for failed manual runs (callers gate it and set a step timeout) |
 | `deploy-docs` | Deploy built documentation to an external GitHub Pages repository |
+| `disk-watch` | Sample the workspace volume in the background and, from its post step at the end of the job, log and summarize start, peak, and end disk use, warning when the least free space fell below 10% of the volume, kept between 5 and 10 GiB (`build-setup` and `docker` run it first); the only JavaScript action, because composite actions have no post step |
 | `docker` | Build (and optionally push) a QGC builder image with Buildx, run the containerized application build, and report its timings and cache statistics; outputs the image's local tag |
 | `free-disk-space` | Wrap `endersonmenezes/free-disk-space` with QGC's shared defaults |
 | `install-dependencies` | Install platform build dependencies (Linux apt packages, macOS Homebrew and GStreamer, Windows MSVC and NSIS; macOS and Windows make three attempts, killing a hung one's process tree) but not the CMake, Ninja, ccache, and mold that `build-setup` pins; on Linux, `category` installs a single `install_dependencies` category |
