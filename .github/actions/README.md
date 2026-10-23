@@ -18,7 +18,7 @@ cannot load actions from the PR merge commit (zizmor's `self-repository` audit i
 | `aws-credentials` | Configure AWS credentials via OIDC (preferred) or static keys in one step |
 | `build-action` | Build a JavaScript action from source when no release ships a rebuilt `dist/` (kept intentionally; no current callers) |
 | `build-config` | Expose `.github/build-config.json` values as step outputs |
-| `build-setup` | Platform build setup: build config, runner preparation, Python, the CMake and Ninja pinned in `build-config.json`, caches (skipped with `build-cache: 'false'`), Xcode/MSVC, Java and the Android SDK/NDK, and Qt for desktop, Android (each requested ABI), or iOS; ends with the job summary's Setup section |
+| `build-setup` | Platform build setup: `build_setup.py` validates the inputs and plans every mode-dependent value, then runner preparation, Python, the CMake and Ninja pinned in `build-config.json`, caches (skipped with `build-cache: 'false'`), Xcode/MSVC, Java and the Android SDK/NDK, and Qt for desktop, Android (each requested ABI), or iOS; ends with the job summary's Setup section |
 | `cache` | Plan caches with `cache_plan.py`, install ccache/mold, and restore compiler, moc, CPM, and GStreamer SDK caches (each restore result is an output) |
 | `cmake-build` | Build through `cmake_helper.py`, save build caches after success, upload Ninja reports, annotate PR warnings, and write the job summary's Build section |
 | `cmake-configure` | Configure QGroundControl from a required CMake preset, which sets the build type and testing; requires `qt-cmake` unless `use-qt-cmake` is `false` |
@@ -58,6 +58,11 @@ an additional security problem.
   fail). Reporting steps run after test failures; the failed CTest step still fails the job.
   `junit_report.py` writes the `report-name` section and error annotations for failed tests
   (no `checks: write` needed); Codecov test analytics (`upload-codecov`) needs `id-token: write`.
+- **`build-setup`** starts with `build_setup.py` on the system Python: it validates the mode's
+  inputs, creates `$RUNNER_TEMP/build`, and outputs the Qt hosts, architectures, and modules, the
+  cache target, Xcode and MSVC selections, the Android ABIs to install, and the `build-config.json`
+  versions that later steps and their `if:` conditions read; Android jobs also get
+  `ANDROID_MIN_SDK` and, off macOS, an SDK root under `$RUNNER_TEMP`.
 - **`cache` / `save-build-cache`**: `cache` restores compiler/moc archives and immutable
   CPM/SDK snapshots and exports the save policy; `save-build-cache` checkpoints compiler/moc
   archives once per job after verified success (`cmake-build` calls it for full and `autogen`

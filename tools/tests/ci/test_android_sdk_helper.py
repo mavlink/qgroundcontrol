@@ -207,8 +207,9 @@ def test_build_setup_targets_first_installed_android_abi() -> None:
     assert " ".join(action["outputs"]["target_qt_root_dir"]["value"].split()) == (
         "${{ " + " || ".join(f"steps.{root}.outputs.qt_root_dir" for root in roots) + " }}"
     )
-    for step in installs:
-        assert step["if"].startswith("inputs.mode == 'android' && ")
+    # build_setup.py sets these flags only in android mode (test_build_setup.py).
+    for step, flag in zip(installs, ("arm64", "armv7", "x86_64"), strict=True):
+        assert step["if"] == f"steps.plan.outputs.android_{flag} == 'true'"
         assert step["with"]["export-env"] == "false"
 
 
@@ -306,12 +307,13 @@ def test_debug_keystore_requires_a_location_and_keytool(
 def test_android_build_delegates_sdk_location_signing_and_apk_copy_to_helpers() -> None:
     action = load_action("build-setup")
     names = [step.get("name") for step in action["runs"]["steps"]]
-    location = action["runs"]["steps"][names.index("Set Android SDK location")]
-    assert names.index("Set Android SDK location") < names.index("Setup Android Environment")
-    assert location["if"] == "inputs.mode == 'android' && runner.os != 'macOS'"
+    # The plan step exports ANDROID_SDK_ROOT off macOS (test_build_setup.py).
+    location = action["runs"]["steps"][names.index("Plan build setup")]
+    assert names.index("Plan build setup") < names.index("Setup Android Environment")
+    assert location["run"].endswith('/tools/ci/runner/build_setup.py"')
     install = action["runs"]["steps"][names.index("Install Android SDK / NDK / Tools")]
     assert install["run"].endswith('android_sdk_helper.py"')
-    assert 'ANDROID_SDK_ROOT=${RUNNER_TEMP}/android-sdk" >> "$GITHUB_ENV"' in location["run"]
+    assert "ANDROID_SDK_ROOT" not in str(action["runs"]["steps"])
 
     workflow_text = (REPO_ROOT / ".github/workflows/android.yml").read_text()
     steps = {step["name"]: step for step in get_steps(load_workflow("android.yml"), "build")}

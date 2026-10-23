@@ -6,7 +6,7 @@ import json
 import re
 from typing import Any
 
-from common.build_config import export_build_config_values, github_output_values
+from ci.runner.build_setup import SetupInputs, plan_setup
 
 from ..._helpers import REPO_ROOT, get_step, get_steps, load_action, load_workflow, workflow_names
 
@@ -26,15 +26,12 @@ def _get_cmake() -> tuple[int, dict[str, Any]]:
 
 def test_get_cmake_installs_the_build_config_pins() -> None:
     _, step = _get_cmake()
-    assert step["with"]["cmakeVersion"] == "${{ steps.config.outputs.build_cmake_version }}"
-    assert step["with"]["ninjaVersion"] == "${{ steps.config.outputs.build_ninja_version }}"
+    assert step["with"]["cmakeVersion"] == "${{ steps.plan.outputs.cmake_version }}"
+    assert step["with"]["ninjaVersion"] == "${{ steps.plan.outputs.ninja_version }}"
 
-    action_outputs = load_action("build-config")["outputs"]
-    read_outputs = github_output_values(export_build_config_values(CONFIG))
+    outputs = plan_setup(SetupInputs("desktop", "linux", "linux_gcc_64"), CONFIG).outputs
     for pin in PINS:
-        name = f"build_{pin}"
-        assert action_outputs[name]["value"] == f"${{{{ steps.read.outputs.{name} }}}}"
-        assert read_outputs[name] == CONFIG["build"][pin]
+        assert outputs[pin] == CONFIG["build"][pin]
 
 
 def test_get_cmake_precedes_the_python_environment_on_path() -> None:

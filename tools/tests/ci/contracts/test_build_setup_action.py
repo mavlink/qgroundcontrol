@@ -1,8 +1,37 @@
-"""build-setup prepares the Android toolchain in the order its setup actions need."""
+"""build-setup plans its mode-dependent values in one step and prepares the Android toolchain in
+the order its setup actions need."""
 
 from __future__ import annotations
 
-from ..._helpers import get_steps, load_action
+import re
+
+from ci.runner.build_setup import SetupInputs, plan_setup
+from common.build_config import load_build_config
+
+from ..._helpers import REPO_ROOT, get_steps, load_action
+
+
+def test_plan_step_runs_first_and_supplies_every_plan_output_the_action_reads() -> None:
+    action = load_action("build-setup")
+    plan = get_steps(action)[0]
+    assert plan["id"] == "plan"
+    assert plan["run"] == 'python3 "${GITHUB_WORKSPACE}/tools/ci/runner/build_setup.py"'
+    assert plan["env"] == {
+        "INPUT_MODE": "${{ inputs.mode }}",
+        "INPUT_QT_HOST": "${{ inputs.qt-host }}",
+        "INPUT_QT_ARCH": "${{ inputs.qt-arch }}",
+        "INPUT_ABIS": "${{ inputs.abis }}",
+    }
+    text = (REPO_ROOT / ".github/actions/build-setup/action.yml").read_text(encoding="utf-8")
+    referenced = set(re.findall(r"steps\.plan\.outputs\.(\w+)", text))
+    config = load_build_config()
+    for inputs in (
+        SetupInputs("desktop", "windows", "win64_msvc2022_arm64_cross_compiled"),
+        SetupInputs("android", "linux", "linux_gcc_64", "x86_64"),
+        SetupInputs("ios", qt_arch="ios_device"),
+    ):
+        assert referenced <= plan_setup(inputs, config).outputs.keys()
+    assert {"qt_host", "cache_target", "host_qt_arch", "msvc_arch", "android_x86_64"} <= referenced
 
 
 def test_java_is_installed_before_gradle_and_the_android_sdk() -> None:

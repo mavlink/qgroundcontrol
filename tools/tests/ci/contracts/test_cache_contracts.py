@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import pytest
 from ci.cache.cache_plan import CacheInputs, plan_caches
+from ci.runner.build_setup import SetupInputs, plan_setup
+from common.build_config import load_build_config
 
 from ..._helpers import (
     REPO_ROOT,
@@ -243,9 +245,11 @@ def test_ios_legs_share_the_device_cpm_snapshot(plan) -> None:
     # One cache setup serves every mode; iOS keeps its former mac/ios cache identity.
     assert cache["if"] == "inputs.build-cache == 'true'"
     assert cache["with"]["key-suffix"] == "${{ inputs.cache-key-suffix }}"
-    assert cache["with"]["host"] == "${{ inputs.mode == 'ios' && 'mac' || inputs.qt-host }}"
-    target = "${{ inputs.mode == 'desktop' && inputs.qt-arch || inputs.mode }}"
-    assert cache["with"]["target"] == target
+    assert cache["with"]["host"] == "${{ steps.plan.outputs.qt_host }}"
+    assert cache["with"]["target"] == "${{ steps.plan.outputs.cache_target }}"
+    for arch in (leg["qt_arch"] for leg in legs):
+        outputs = plan_setup(SetupInputs("ios", qt_arch=arch), load_build_config()).outputs
+        assert (outputs["qt_host"], outputs["cache_target"]) == ("mac", "ios")
 
     device, simulator = plan(build_type="Release"), plan(build_type="Debug")
     assert (device.outputs["cpm_mode"], simulator.outputs["cpm_mode"]) == ("save", "restore")

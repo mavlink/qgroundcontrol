@@ -11,6 +11,8 @@ import sys
 from typing import TYPE_CHECKING
 
 import pytest
+from ci.runner.build_setup import SetupInputs, plan_setup
+from common.build_config import load_build_config
 
 from ..._helpers import REPO_ROOT, load_action, load_workflow
 
@@ -195,18 +197,24 @@ def test_ios_setup_exports_cross_compile_roots() -> None:
     host = steps["Install Qt"]
     assert host["id"] == "qt"
     assert "if" not in host
-    assert host["with"]["host"] == "${{ inputs.mode == 'ios' && 'mac' || inputs.qt-host }}"
-    assert host["with"]["arch"] == "${{ inputs.mode == 'ios' && 'clang_64' || inputs.qt-arch }}"
+    assert host["with"]["host"] == "${{ steps.plan.outputs.qt_host }}"
+    assert host["with"]["arch"] == "${{ steps.plan.outputs.qt_arch }}"
     target = steps["Install Qt for iOS"]
     assert target["id"] == "qt-ios"
     assert target["if"] == "inputs.mode == 'ios'"
     assert target["with"]["arch"] == "${{ inputs.qt-arch }}"
-    assert target["with"]["modules"] == "${{ steps.config.outputs.qt_modules_ios }}"
+    assert target["with"]["modules"] == "${{ steps.plan.outputs.qt_modules_ios }}"
     # The iOS SDK installs last so its QT_ROOT_DIR and qt-cmake win.
     names = list(steps)
     assert names.index("Install Qt") < names.index("Install Qt for iOS")
-    xcode = steps["Setup Xcode"]["with"]["xcode-version"]
-    assert "inputs.mode == 'ios' && steps.config.outputs.apple_xcode_ios_version" in xcode
+    assert (
+        steps["Setup Xcode"]["with"]["xcode-version"] == "${{ steps.plan.outputs.xcode_version }}"
+    )
+    # iOS runs its host tools from the macOS Qt and pins its own Xcode.
+    config = load_build_config()
+    outputs = plan_setup(SetupInputs("ios", qt_arch="ios_device"), config).outputs
+    assert (outputs["qt_host"], outputs["qt_arch"]) == ("mac", "clang_64")
+    assert outputs["xcode_version"] == config["apple"]["xcode_ios_version"]
 
 
 def test_ios_contract_dependencies_are_sparse_checked_out() -> None:

@@ -94,7 +94,8 @@
   `docker_helper.py` (push target), `release_branch_check.py` (release tag check),
   `gstreamer_archive.py` and `build_gstreamer.py` (Android/iOS
   GStreamer builds), `install_dependencies_helper.py` and `tools/setup/install_dependencies`
-  (`install-dependencies`), `setup-python`'s own `cache_backend.py` probe, plus the
+  (`install-dependencies`), `build-setup`'s `build_setup.py` planner,
+  `setup-python`'s own `cache_backend.py` probe, plus the
   `install_python.py` and `install_uv.py` installers.
   `tools/tests/test_stdlib_only.py` imports each under `python -I -S`, and every module of the
   packages in `STDLIB_ONLY_PACKAGES`, and fails when a job without `setup-python` runs an unlisted

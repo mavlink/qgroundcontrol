@@ -40,6 +40,7 @@ and Ruff skips `build` directories.
 | `cache/gh_cache_cleanup.py` | List and optionally delete GitHub Actions caches (`cache-cleanup.yml` sets its flags through `CLEANUP_*` variables) |
 | `runner/analysis_tools.py` | Install the hash-pinned clang-tidy wheel, verify `.clang-tidy`, and put LLVM, clang-tidy, and Clazy on `PATH` for `analysis.yml` |
 | `runner/apt_install_retry.py` | Install apt packages with bounded retries, RunsOn's in-region EC2 mirror, and a runner-owned download cache |
+| `runner/build_setup.py` | Validate `build-setup`'s inputs and resolve the values its steps read: Qt hosts, architectures and modules, cache target, Xcode and MSVC selections, Windows ARM64 cross builds' host Qt, Android ABIs and SDK environment, and the `build-config.json` tool versions |
 | `runner/enable_kvm.py` | Open `/dev/kvm` to every user on a nested-virtualization runner |
 | `runner/install_dependencies_helper.py` | `install-dependencies` entry points: plan the Linux apt cache key, install the apt packages or the macOS Homebrew packages and GStreamer (both without the tools CI pins elsewhere), and install Windows MSVC and NSIS |
 | `runner/install_multipass.py` | Install Multipass and wait for daemon readiness |

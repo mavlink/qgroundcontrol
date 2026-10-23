@@ -51,6 +51,7 @@ PRE_SETUP_PYTHON_SCRIPTS: tuple[str, ...] = (
     "tools/ci/gstreamer/gstreamer_archive.py",  # Android and iOS GStreamer builds skip build-setup
     "tools/setup/build_gstreamer.py",
     "tools/ci/runner/install_dependencies_helper.py",  # install-dependencies sets up Python on Windows only
+    "tools/ci/runner/build_setup.py",  # build-setup plans before its setup-python
     "tools/setup/install_dependencies/__main__.py",
     "tools/ci/cache/cache_backend.py",  # setup-python's cache backend probe
     "tools/setup/install_python.py",  # setup-python's own installer
