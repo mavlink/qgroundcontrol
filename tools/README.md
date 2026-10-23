@@ -594,10 +594,11 @@ These areas have their own READMEs:
   `cache/`, `compile/`, `publish/`, and `reporting/`; workflows run them by path, and their tests
   live in `tests/ci/` (workflow and action contracts in `tests/ci/contracts/`).
 - [simulation/](simulation/README.md) — `mock_vehicle.py`, a lightweight MAVLink vehicle on
-  UDP 14550, `run_arducopter_sitl.py`, ArduCopter SITL in Docker on `tcp://localhost:5760`,
-  `fly_plan.py`, which flies a `.plan` in ArduPilot or PX4 SITL and records the track and images,
-  `mock_ntrip_caster.py`, an offline NTRIP caster on `127.0.0.1:2101` for testing RTK corrections,
-  and `rc_transmitter.py`, a web page of RC channel sliders for PX4 SITL.
+  UDP 14550, `run_arducopter_sitl.py`, ArduCopter SITL in Docker or from a local build on
+  `tcp://localhost:5760`, `fly_plan.py`, which flies a `.plan` in ArduPilot or PX4 SITL and
+  records the track and images, `mock_ntrip_caster.py`, an offline NTRIP caster on
+  `127.0.0.1:2101` for testing RTK corrections, and `rc_transmitter.py`, a web page of RC channel
+  sliders for PX4 SITL.
 - [translations/](translations/README.md) — `just translations` runs `qgc_lupdate.py` (lupdate,
   the JSON string extractor, and `pseudo_loc.py`); `check_placeholders.py` guards translation
   placeholders.
