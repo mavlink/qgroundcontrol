@@ -20,8 +20,8 @@ cannot load actions from the PR merge commit (zizmor's `self-repository` audit i
 | `build-action` | Build a JavaScript action from source when no release ships a rebuilt `dist/` (kept intentionally; no current callers) |
 | `build-setup` | Platform build setup: `build_setup.py` validates the inputs and plans every mode-dependent value, then runner preparation, Python, the CMake and Ninja pinned in `build-config.json`, caches (skipped with `build-cache: 'false'`), Xcode/MSVC, Java and the Android SDK/NDK, and Qt for desktop, Android (each requested ABI), or iOS; ends with the job summary's Setup section |
 | `cache` | Plan caches with `cache_plan.py`, install ccache/mold, and restore compiler, moc, CPM, and GStreamer SDK caches (each restore result is an output) |
-| `cmake-build` | Build through `cmake_helper.py`, save build caches after success, upload Ninja reports, annotate PR warnings, and write the job summary's Build section |
-| `cmake-configure` | Configure QGroundControl from a required CMake preset, which sets the build type and testing; requires `qt-cmake` unless `use-qt-cmake` is `false` |
+| `cmake-build` | Build through `cmake_helper.py`, save build caches after success, upload and link Ninja reports, annotate build errors and PR warnings, and write the job summary's Build section |
+| `cmake-configure` | Configure QGroundControl from a required CMake preset, which sets the build type and testing; requires `qt-cmake` unless `use-qt-cmake` is `false`; writes the job summary's Configure section and, after a failure, annotates the first CMake error and uploads and links the configure logs |
 | `debug-runner` | Open an actor-only SSH session for failed manual runs (callers gate it and set a step timeout) |
 | `deploy-docs` | Deploy built documentation to an external GitHub Pages repository |
 | `disk-watch` | Sample the workspace volume in the background and, from its post step at the end of the job, log and summarize start, peak, and end disk use, warning when the least free space fell below 10% of the volume, kept between 5 and 10 GiB (`build-setup` and `docker` run it first); the only JavaScript action, because composite actions have no post step |
@@ -29,7 +29,7 @@ cannot load actions from the PR merge commit (zizmor's `self-repository` audit i
 | `free-disk-space` | Wrap `endersonmenezes/free-disk-space` with QGC's shared defaults |
 | `install-dependencies` | Install platform build dependencies (Linux apt packages, macOS Homebrew and GStreamer, Windows MSVC and NSIS; macOS and Windows make three attempts, killing a hung one's process tree) but not the CMake, Ninja, ccache, and mold that `build-setup` pins; on Linux, `category` installs a single `install_dependencies` category |
 | `qt-install` | Reuse a compatible preinstalled Qt SDK or install `build-config.json`'s Qt version with QGC's installer or aqtinstall (`QGC_QT_INSTALLER`, else QGC's), with caching; outputs the version, installer, and source |
-| `run-unit-tests` | Run CTest, then summarize the JUnit results (counts, failures, slowest tests) and annotate failed tests, upload artifacts, and Codecov test analytics even after failures |
+| `run-unit-tests` | Run CTest, then summarize the JUnit results (counts, failures, slowest tests) and annotate failed tests, upload and link artifacts, and Codecov test analytics even after failures |
 | `save-build-cache` | Save compiler and moc caches once per job after successful compilation |
 | `setup-python` | Detect the cache backend, set up uv and Python, and sync `tools/uv.lock` groups into `tools/.venv` |
 | `test-phase` | Run the Unit and Integration suites through `run-unit-tests`, one job-summary section each |
@@ -58,7 +58,8 @@ an additional security problem.
 - **`run-unit-tests`** runs `cmake_helper.py ctest` (`--no-tests=error`, so empty selections
   fail). Reporting steps run after test failures; the failed CTest step still fails the job.
   `junit_report.py` writes the `report-name` section and error annotations for failed tests
-  (no `checks: write` needed); Codecov test analytics (`upload-codecov`) needs `id-token: write`.
+  (no `checks: write` needed), and `artifact_link.py` links the uploaded results below it; Codecov
+  test analytics (`upload-codecov`) needs `id-token: write`.
 - **`build-setup`** starts with `build_setup.py` on the system Python: it validates the mode's
   inputs, creates `$RUNNER_TEMP/build`, and outputs the Qt hosts, architectures, and modules, the
   cache target, Xcode and MSVC selections, the Android ABIs to install, and the `build-config.json`
@@ -87,7 +88,21 @@ an additional security problem.
   deduplicate commands with multiple outputs, and exclude earlier builds in the same directory.
   Docker includes the same reports in its performance artifact; non-Ninja generators skip them.
   The Build step itself writes the job summary's Build section, also after failures but not when
-  the job is cancelled.
+  the job is cancelled, and `artifact_link.py` links the uploaded reports below it. The step tees
+  its output to `output-file` (default `$RUNNER_TEMP/build-output.log`); after a failure,
+  `build_errors.py` finds the Ninja (or Xcode) failed targets and the first ten distinct CMake,
+  GCC/Clang/javac, MSVC, linker, and Gradle errors, which become `file`/`line`/`col` error
+  annotations (paths relative to the checkout) and the Build section's collapsed
+  "Failed targets / first errors". The compiler-cache rows count only this build's requests, so a
+  later `qgc-package` (Windows) or `aab` (Android) build does not repeat the main build's hits.
+  Reviewdog annotates warnings only after a successful build.
+- **`cmake-configure`** tees CMake's output to `cmake-configure.log` in the build directory and
+  writes the job summary's Configure section: result, duration, preset, generator, and
+  `CheckResultCache.cmake`'s configure-check reuse. After a failure the first `CMake Error` block
+  becomes an error annotation titled "CMake configure failed" (at its file and line when that is
+  in the checkout) and a collapsed block with the end of the output, and the step uploads
+  `cmake-configure.log`, `CMakeCache.txt`, and CMake 4's `CMakeFiles/CMakeConfigureLog.yaml` for
+  seven days, linked below the section.
 - **`cmake-configure`, `cmake-build`, `test-phase`, `run-unit-tests`** default `build-dir` to
   `${{ runner.temp }}/build`; callers pass it only for another directory. `cmake_helper.py`
   sets `QGC_STABLE_BUILD` for release tags and `Stable*` branches. Callers pass no build type:

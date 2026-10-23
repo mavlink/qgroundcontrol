@@ -102,8 +102,15 @@
   script.
 - CI, Docker, VM, sysroot, and packaging glue uses Python entrypoints; shell remains only for
   installing Python itself and loading container login profiles.
-- Set `RUNNER_DEBUG=1` (re-run with debug logging) or `QGC_CI_DEBUG=1` to enable the fault handler,
-  line-buffered output, and error annotations in CI Python entrypoints (`tools/_bootstrap.py`).
+- In GitHub Actions, an uncaught exception in a CI Python entrypoint becomes an error annotation
+  (`tools/_bootstrap.py`); for a failed command it names the command and quotes the last ten lines
+  of its captured stderr (else stdout), with URL credentials and `Authorization` values hidden,
+  and stdout escapes characters that the Windows code page cannot encode.
+  `common.proc.run_with_retry` logs the same before raising its final failure. Set
+  `RUNNER_DEBUG=1` (re-run with debug logging) or `QGC_CI_DEBUG=1` to add the fault handler,
+  line-buffered output, and annotations for unraisable exceptions.
+- Routine timings ("Configure completed in 12s", "Tests completed in 71s") are plain log lines,
+  not notices: the job summary already reports them, and annotations are kept for problems.
 
 ## Build Configuration
 
@@ -499,7 +506,13 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   level from 19 to 9 (about 10x faster for ~2% more resource data) when QtCore supports zstd.
 - **CMake entrypoint**: `cmake-configure` requires `qt-cmake` by default. Android is the exception
   and supplies its target Qt toolchain and prefix to plain CMake. Every caller names a configure
-  preset, which sets the build type and `QGC_BUILD_TESTING`.
+  preset, which sets the build type and `QGC_BUILD_TESTING`. A failed configure annotates its first
+  `CMake Error` and uploads `cmake-configure.log`, `CMakeCache.txt`, and
+  `CMakeFiles/CMakeConfigureLog.yaml` (CMake 4 no longer writes `CMakeOutput.log` or
+  `CMakeError.log`); a failed build annotates its first compiler, linker, or Gradle errors.
+- **Android javac warnings**: `setup-java`'s `javac` problem matcher made each deprecation warning
+  in the Gradle build an annotation; `android.yml` removes it after `build-setup`, and `cmake-build`
+  annotates javac errors itself.
 - **Windows Qt architecture**: aqt architecture names are explicit package identifiers;
   `test_cmake_presets.py` requires every workflow matrix to use the same MSVC generation.
 - **Windows linker**: Debug dispatches of `windows.yml` pass `QGC_USE_LLD_LINK=ON` to link with
@@ -565,10 +578,18 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
 - **Windows**: installer verification lives in `deploy/windows/verify-installer.ps1`.
 - **Android**: legs are Linux (primary), macOS, Windows (not on PRs), and a Linux emulator smoke
   test. PRs build `arm64-v8a` only; other events build `arm64-v8a` + `armeabi-v7a` on the primary
-  leg. Android jobs install only the `core` apt category. Master pushes also build a signed
-  multi-ABI App Bundle on the primary leg (`--target aab`), uploaded as its own attested GitHub
-  artifact (`QGroundControl-linux-<abis>-aab`) but not to AWS or the Play Store. Tags start a
-  staged Play Store production rollout; master pushes complete a beta release.
+  leg. Android jobs install only the `core` apt category. The Linux leg runs Android Lint
+  (`android_lint.py`, `gradlew lintRelease` in `android-build`): up to ten Error and Fatal issues
+  from lint's XML report become error annotations titled with the issue id, at the `android/`
+  source that androiddeployqt copied (`QGC_ANDROID_PACKAGE_SOURCE_DIR`; a copy that differs, like
+  the rewritten `AndroidManifest.xml`, keeps the file but not the line), or Gradle's errors when
+  lint wrote no report; an Android Lint job-summary section follows the Build section, and a
+  failure uploads the HTML and XML reports and the Gradle log for seven days, linked below it.
+  Master pushes also build a signed multi-ABI App Bundle on the primary leg through `cmake-build`
+  (`target: aab`, logged to `qgc-aab-build.log` with its own "Build (aab)" section and failure
+  annotations; it saves no build caches), uploaded as its own attested GitHub artifact
+  (`QGroundControl-linux-<abis>-aab`) but not to AWS or the Play Store. Tags start a staged Play
+  Store production rollout; master pushes complete a beta release.
 - **Custom plugin** (`linux.yml`'s `custom-plugin` job, behind the Linux gate): the `custom-example`
   overlay changes the app name and feature set, global compile definitions, so it is its own build:
   one Debug build that runs the Unit suite (excluding `StockUI`) and boots the build tree; the stock
@@ -676,6 +697,8 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   compiler-driver failures fail the job (`shell: bash` adds pipefail, so the log's `tee` keeps
   `analyze.py`'s status; `test_workflow_shells.py` requires it for every `| tee` step). Manual
   IWYU runs are advisory (`continue-on-error`); their uploaded report is the result.
+  Each tool's job-summary section counts the unique errors and lists the first 20 ahead of its
+  diagnostics listing (cut at 300 lines), and the first 10 errors are annotated on their lines.
   `misc-include-cleaner` is an advisory clang-tidy warning; it leaves
   Qt, MAVLink, GStreamer/GLib, and Qt-generated includes alone (`IgnoreHeaders` in `.clang-tidy`),
   because it would suggest their internal headers. Jobs upload `*-timings.json`,
@@ -774,8 +797,10 @@ numbers, durations, and sizes from `common.format`. A build job reads top-down:
 | Section | Written by |
 | --- | --- |
 | Setup | `build-setup` (`setup_summary.py`): runner, Qt version, installer and source, CMake and Ninja, Python groups, cache backend, and each build cache's restore result |
-| Build | `cmake-build` (`cmake_helper.py build`, also after failures): result, duration, toolchain, compiler (ccache or sccache) and moc cache hit rates; slowest steps, time by kind, and moc cache events collapsed |
-| Unit Tests / Integration Tests (*suite*) | `run-unit-tests` (`junit_report.py`): counts, failures with their first lines, slowest tests and failure output collapsed |
+| Configure | `cmake-configure` (`cmake_helper.py configure`, also after failures): result, duration, preset, generator, configure-check reuse; after a failure the first CMake error and the end of the output collapsed, and a link to the configure logs |
+| Build | `cmake-build` (`cmake_helper.py build`, also after failures): result, duration, toolchain, this build's compiler (ccache or sccache) and moc cache hit rates; failed targets and first errors, slowest steps, time by kind, and moc cache events collapsed; a link to the Ninja reports |
+| Android Lint | `android_lint.py` on Android's Linux leg (also after failures): result, duration, error and warning counts; the first errors collapsed; after a failure a link to the lint reports |
+| Unit Tests / Integration Tests (*suite*) | `run-unit-tests` (`junit_report.py`): counts, failures with their first lines, slowest tests and failure output collapsed; a link to the results artifact |
 | Coverage, Binary size | `coverage_report.py --step-summary`, `size_analysis.py` |
 | Boot test, Artifact | `verify_executable.py` (result, package, size, duration) and `attest_helper.py prepare` (file, size, SHA-256) |
 | Disk | `disk-watch`'s post step, at the end of every `build-setup` and Docker job: the workspace volume's size and its start, peak (with free space and time), and end use, sampled every 10 s; a peak whose free space is below 10% of the volume, kept between 5 and 10 GiB, gets ⚠️ and a "Disk nearly full" warning annotation |

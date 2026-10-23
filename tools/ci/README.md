@@ -14,7 +14,7 @@ groups one CI concern; put reusable helpers with multiple consumers in
 | `runner/` | Runner host preparation and managed runner images |
 | `compile/` | CMake and Docker build drivers with timing and compiler-cache reporting |
 | `packaging/` | Locate, validate, and boot-test packaged build outputs |
-| `android/` | Android SDK setup, build retry, and emulator smoke tests |
+| `android/` | Android SDK setup, build retry, lint reporting, and emulator smoke tests |
 | `ios/` | iOS packaging and simulator smoke tests |
 | `publish/` | Attestation, publishing, release gating, and draft release notes |
 | `reporting/` | Build-results comments, job-summary Setup and test sections, size and coverage reports, and PR labels |
@@ -47,14 +47,16 @@ and Ruff skips `build` directories.
 | `runner/install_multipass.py` | Install Multipass and wait for daemon readiness; with `--allow-bridge-forwarding`, undo Docker's iptables `FORWARD` drop policy so guests reach the network |
 | `runner/runner_image.py` | Check `runner-images.yml`'s branch and AWS settings, then output, verify, promote, and retire QGC runner AMIs |
 | `runner/validate_runner_configs.py` | `packer-validate` and `runs-on-lint` hooks: validate the runner image Packer template and lint the RunsOn configuration with the Packer and RunsOn CLI pinned in `build-config.json` |
-| `compile/cmake_helper.py` | Run CI configure, build, and CTest steps with standard arguments and timing, and write the job summary's Build section (result, duration, toolchain, compiler and moc cache hit rates, slowest build steps) |
+| `compile/cmake_helper.py` | Run CI configure, build, and CTest steps with standard arguments and timing, tee configure and build output to logs, and write the job summary's Configure (result, duration, preset, generator, configure-check reuse) and Build (result, duration, toolchain, this build's compiler and moc cache hit rates, slowest build steps) sections; after a failure, annotate and summarize the first CMake error or the failed targets and first build errors |
 | `compile/docker_helper.py` | Run Docker builds and repository scripts in builder images, and report compiler identities, timings, and cache statistics |
+| `packaging/artifact_link.py` | Link an uploaded diagnostics artifact (upload-artifact's `artifact-url`) from the job summary |
 | `packaging/find_artifact.py` | Find exactly one build artifact by glob pattern (fails on none or several), optionally copying it |
 | `packaging/validate_native_package.py` | Validate native package identity, version, contents, and installed layout |
 | `packaging/verify_executable.py` | Boot-test a built QGroundControl executable, AppImage, or DMG |
 | `android/android_boot_test.py` | Run the emulator boot smoke test |
 | `android/android_build_retry.py` | Retry an Android build after a known intermittent Qt deployment-settings JSON truncation |
 | `android/android_collect_diagnostics.py` | Collect emulator, ADB, AVD, and GStreamer diagnostics |
+| `android/android_lint.py` | Run `gradlew lintRelease` in the Gradle project androiddeployqt generated, annotate the first Error and Fatal issues from lint's XML report at their `android/` sources (else Gradle's errors), and write the job summary's Android Lint section (result, duration, error and warning counts, first errors); exits with Gradle's status |
 | `android/android_sdk_helper.py` | Install the `build-config.json` Android SDK/NDK packages with retries, configure tool paths, and create the PR debug keystore |
 | `ios/ios_boot_test.py` | Run the QGC smoke test in a disposable iOS simulator |
 | `ios/ios_package.py` | Select signing profiles and validate/package iOS bundles |

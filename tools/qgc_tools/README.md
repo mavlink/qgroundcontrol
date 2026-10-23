@@ -4,6 +4,9 @@ Reusable repository policy lives here; CLI and platform entrypoints call it.
 
 - `build_profile.py`: Ninja log and Clang time-trace hotspot summaries, CI build-timing snapshots,
   and their job-summary tables.
+- `build_errors.py`: the errors that explain a failed configure or build in its output (CMake
+  errors, Ninja and Xcode failed targets, GCC/Clang/javac/MSVC compiler and linker errors, Gradle
+  failures) and their checkout-relative paths, shared by `cmake_helper.py` and `android_lint.py`.
 - `compiler_cache.py`: ccache and sccache statistics for build summaries and cache-save gates.
 - `cmake_configure.py`: configure-preset selection and `qt-cmake` invocation for `configure.py` and CI.
 - `python_env.py`: locked dependency profiles, environment and executable resolution.

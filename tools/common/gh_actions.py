@@ -282,34 +282,74 @@ def _escape_annotation(message: str) -> str:
     return message.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
 
 
-def annotate(level: str, message: str, *, title: str = "") -> None:
+def _escape_property(value: str) -> str:
+    # Property values also end at ':' and ','.
+    return _escape_annotation(value).replace(":", "%3A").replace(",", "%2C")
+
+
+def annotate(
+    level: str,
+    message: str,
+    *,
+    title: str = "",
+    file: str = "",
+    line: int | None = None,
+    col: int | None = None,
+) -> None:
     """Emit a GitHub Actions workflow annotation to stdout.
 
     level is one of "error", "warning", "notice". The runner parses these from
     the step log and renders them in the run UI; outside CI it is plain text.
+    *file* is a repository-relative path; *line* and *col* locate the annotation in it and are
+    dropped without it.
     """
-    # Property values also end at ':' and ','.
-    props = (
-        f" title={_escape_annotation(title).replace(':', '%3A').replace(',', '%2C')}"
-        if title
-        else ""
-    )
-    print(f"::{level}{props}::{_escape_annotation(message)}", flush=True)
+    props = []
+    if file:
+        props.append(f"file={_escape_property(file)}")
+        if line is not None:
+            props.append(f"line={int(line)}")
+            if col is not None:
+                props.append(f"col={int(col)}")
+    if title:
+        props.append(f"title={_escape_property(title)}")
+    prefix = f" {','.join(props)}" if props else ""
+    print(f"::{level}{prefix}::{_escape_annotation(message)}", flush=True)
 
 
-def gh_error(message: str, *, title: str = "") -> None:
+def gh_error(
+    message: str,
+    *,
+    title: str = "",
+    file: str = "",
+    line: int | None = None,
+    col: int | None = None,
+) -> None:
     """Emit a GitHub Actions error annotation."""
-    annotate("error", message, title=title)
+    annotate("error", message, title=title, file=file, line=line, col=col)
 
 
-def gh_warning(message: str, *, title: str = "") -> None:
+def gh_warning(
+    message: str,
+    *,
+    title: str = "",
+    file: str = "",
+    line: int | None = None,
+    col: int | None = None,
+) -> None:
     """Emit a GitHub Actions warning annotation."""
-    annotate("warning", message, title=title)
+    annotate("warning", message, title=title, file=file, line=line, col=col)
 
 
-def gh_notice(message: str) -> None:
+def gh_notice(
+    message: str,
+    *,
+    title: str = "",
+    file: str = "",
+    line: int | None = None,
+    col: int | None = None,
+) -> None:
     """Emit a GitHub Actions notice annotation."""
-    annotate("notice", message)
+    annotate("notice", message, title=title, file=file, line=line, col=col)
 
 
 @contextlib.contextmanager

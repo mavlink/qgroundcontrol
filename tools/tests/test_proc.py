@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import io
 import subprocess
 import sys
 from typing import TYPE_CHECKING
@@ -192,6 +193,49 @@ def test_run_with_retry_returns_last_unchecked_failure(
     assert sleeps == [5]
 
 
+GH_PULLS = ["gh", "api", "repos/mavlink/qgroundcontrol/pulls"]
+
+
+def test_run_with_retry_logs_the_command_and_its_stderr_tail_before_raising(
+    fp: FakeProcess, sleeps: list[float], capsys: pytest.CaptureFixture[str]
+) -> None:
+    stderr = [f"trace {number}" for number in range(12)] + ["gh: Not Found (HTTP 404)"]
+    fp.register(GH_PULLS, returncode=1, stdout='{"message":"Not Found"}', stderr=stderr)
+    with pytest.raises(subprocess.CalledProcessError):
+        run_with_retry(GH_PULLS, max_attempts=1, capture_output=True, text=True)
+    assert capsys.readouterr().err.splitlines() == [
+        "Command failed with exit status 1: gh api repos/mavlink/qgroundcontrol/pulls",
+        "stderr (last 10 lines):",
+        *(f"  trace {number}" for number in range(3, 12)),
+        "  gh: Not Found (HTTP 404)",
+    ]
+
+
+def test_run_with_retry_logs_stdout_when_stderr_is_empty_and_redacts_credentials(
+    fp: FakeProcess, sleeps: list[float], capsys: pytest.CaptureFixture[str]
+) -> None:
+    command = ["git", "clone", "https://x-access-token:ghs_secret@github.com/o/r.git"]
+    fp.register(command, returncode=128, stdout="curl -H 'Authorization: Bearer ghs_secret'\n")
+    with pytest.raises(subprocess.CalledProcessError):
+        run_with_retry(command, max_attempts=1, capture_output=True, text=True)
+    err = capsys.readouterr().err
+    assert "ghs_secret" not in err
+    assert err.splitlines() == [
+        "Command failed with exit status 128: git clone https://***@github.com/o/r.git",
+        "stdout (last 1 lines):",
+        "  curl -H 'Authorization: Bearer ***'",
+    ]
+
+
+def test_run_with_retry_logs_only_the_failure_it_raises(
+    fp: FakeProcess, sleeps: list[float], capsys: pytest.CaptureFixture[str]
+) -> None:
+    fp.register(GH_PULLS, returncode=1, stderr="HTTP 503")
+    fp.register(GH_PULLS, stdout="[]")
+    assert run_with_retry(GH_PULLS, capture_output=True, text=True).stdout == "[]"
+    assert "Command failed with exit status" not in capsys.readouterr().err
+
+
 def test_run_with_retry_can_kill_each_timed_out_attempts_tree(
     monkeypatch: pytest.MonkeyPatch, sleeps: list[float]
 ) -> None:
@@ -275,6 +319,73 @@ def test_run_tee_fallback_decodes_utf8_and_replaces_invalid_bytes(
     script = "import sys; sys.stdout.buffer.write('\\u2713 '.encode() + b'\\x9d\\n')"
     assert run_tee([sys.executable, "-c", script], output) == 0
     assert output.read_text(encoding="utf-8") == "\N{CHECK MARK} \N{REPLACEMENT CHARACTER}\n"
+
+
+class _FlushRecorder(io.BytesIO):
+    """A console byte stream that records what it held at each flush."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.flushed: list[bytes] = []
+
+    def flush(self) -> None:
+        self.flushed.append(self.getvalue().replace(b"\r\n", b"\n"))
+
+
+class _Console:
+    """A text stdout over a recording byte buffer that the command's output must bypass."""
+
+    def __init__(self) -> None:
+        self.buffer = _FlushRecorder()
+
+    def write(self, text: str) -> int:
+        raise AssertionError(f"re-encoded the command's output: {text!r}")
+
+    def flush(self) -> None:
+        pass
+
+
+def test_run_tee_without_bash_pipeline_streams_each_line_live(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Configure runs qt-cmake.bat on Windows, which a Bash pipeline would re-quote."""
+    monkeypatch.setattr("common.proc.shutil.which", lambda _name: pytest.fail("looked up bash"))
+    console = _Console()
+    monkeypatch.setattr(sys, "stdout", console)
+    output = tmp_path / "configure.log"
+    script = "print('-- first'); print('-- second'); raise SystemExit(3)"
+
+    assert run_tee([sys.executable, "-c", script], output, bash_pipeline=False) == 3
+    assert output.read_text(encoding="utf-8") == "-- first\n-- second\n"
+    assert b"-- first\n" in console.buffer.flushed
+    assert console.buffer.flushed[-1] == b"-- first\n-- second\n"
+
+
+def test_run_tee_without_bash_pipeline_passes_console_bytes_through(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A Windows code page byte (cp1252 em dash) must not fail the step by re-encoding."""
+    console = _Console()
+    monkeypatch.setattr(sys, "stdout", console)
+    output = tmp_path / "configure.log"
+    script = "import sys; sys.stdout.buffer.write(b'-- QGC: Hardening \\x97 \\xe2\\x9c\\x93\\n')"
+
+    assert run_tee([sys.executable, "-c", script], output, bash_pipeline=False) == 0
+    assert console.buffer.getvalue() == b"-- QGC: Hardening \x97 \xe2\x9c\x93\n"
+    assert (
+        output.read_text(encoding="utf-8")
+        == "-- QGC: Hardening \N{REPLACEMENT CHARACTER} \N{CHECK MARK}\n"
+    )
+
+
+def test_run_tee_without_a_byte_console_writes_decoded_text(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    stdout = io.StringIO()
+    monkeypatch.setattr(sys, "stdout", stdout)
+    script = "import sys; sys.stdout.buffer.write(b'caf\\xc3\\xa9\\n')"
+    assert run_tee([sys.executable, "-c", script], tmp_path / "log", bash_pipeline=False) == 0
+    assert stdout.getvalue() == "caf\N{LATIN SMALL LETTER E WITH ACUTE}\n"
 
 
 def test_run_tee_resolves_relative_output_before_changing_cwd(

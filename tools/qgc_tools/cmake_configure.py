@@ -11,6 +11,7 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from common.proc import run_tee
 from common.qt import find_qt_tool
 
 __all__ = ["LOCAL_PRESETS", "CMakeConfig", "configure", "find_qt_cmake", "select_preset"]
@@ -49,8 +50,11 @@ def find_qt_cmake(qt_root: Path | None = None) -> Path | None:
     return find_qt_tool("qt-cmake", qt_root=qt_root)
 
 
-def configure(config: CMakeConfig) -> int:
-    """Run CMake configuration and return its exit code."""
+def configure(config: CMakeConfig, *, log_file: Path | None = None) -> int:
+    """Run CMake configuration and return its exit code.
+
+    With *log_file*, CMake's combined output also goes to that file as it streams.
+    """
     preset = select_preset(config)
 
     qt_cmake: Path | None = None
@@ -80,9 +84,14 @@ def configure(config: CMakeConfig) -> int:
         env["QT_ROOT_DIR"] = str(qt_cmake.parent.parent.resolve())
     elif config.qt_root:
         env["QT_ROOT_DIR"] = str(config.qt_root.resolve())
-    result = subprocess.run(args, env=env, check=False)
-    if result.returncode != 0:
-        return result.returncode
+    if log_file is None:
+        returncode = subprocess.run(args, env=env, check=False).returncode
+    else:
+        log_file.parent.mkdir(parents=True, exist_ok=True)
+        # Windows runs qt-cmake.bat, whose arguments a Bash pipeline would re-quote.
+        returncode = run_tee(args, log_file, env=env, bash_pipeline=False)
+    if returncode != 0:
+        return returncode
 
     print(f"Configured: {build_dir}")
     return 0

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import contextlib
 import os
+import re
 import shlex
 import shutil
 import signal
@@ -35,6 +36,11 @@ __all__ = [
 ]
 
 _T = TypeVar("_T")
+
+FAILURE_OUTPUT_LINES = 10
+# GitHub masks registered secrets in logs; these also hide credentials it was never told about.
+_URL_CREDENTIALS = re.compile(r"(?<=://)[^\s/@]+@")
+_AUTHORIZATION = re.compile(r"(?i)(authorization:\s*(?:(?:basic|bearer|token)\s+)?)[^\s'\"]+")
 
 
 class MissingToolError(FileNotFoundError):
@@ -131,6 +137,25 @@ def _run_killing_tree(
     return result
 
 
+def _redact(text: str) -> str:
+    return _AUTHORIZATION.sub(r"\1***", _URL_CREDENTIALS.sub("***@", text))
+
+
+def _describe_failure(error: subprocess.CalledProcessError | subprocess.TimeoutExpired) -> str:
+    """Name the failed command and quote the end of its captured stderr, else stdout."""
+    command = error.cmd if isinstance(error.cmd, str) else shlex.join(map(str, error.cmd))
+    if isinstance(error, subprocess.TimeoutExpired):
+        lines = [f"Command timed out after {error.timeout:g}s: {command}"]
+    else:
+        lines = [f"Command failed with exit status {error.returncode}: {command}"]
+    for name, output in (("stderr", error.stderr), ("stdout", error.stdout)):
+        tail = [line for line in output_text(output).splitlines() if line.strip()]
+        if tail := tail[-FAILURE_OUTPUT_LINES:]:
+            lines += [f"{name} (last {len(tail)} lines):", *(f"  {line}" for line in tail)]
+            break
+    return _redact("\n".join(lines))
+
+
 def run_with_retry(
     cmd: Sequence[str],
     *,
@@ -153,6 +178,8 @@ def run_with_retry(
 
     A timed-out attempt kills only the command itself unless *kill_tree_on_timeout* is set,
     which also kills the processes it started (installers that spawn their own workers).
+    The exception that ends the retries is logged to stderr first, with the end of the
+    command's captured stderr (else stdout), so callers that handle it still leave the cause.
     """
     command = list(cmd)
     if not command:
@@ -182,6 +209,7 @@ def run_with_retry(
                 return result
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as error:
             if attempt >= max_attempts or (retry_if is not None and not retry_if(error)):
+                print(_describe_failure(error), file=sys.stderr, flush=True)
                 raise
         if before_retry is not None:
             before_retry()
@@ -265,17 +293,21 @@ def run_tee(
     *,
     cwd: Path | str | None = None,
     env: Mapping[str, str] | None = None,
+    bash_pipeline: bool = True,
 ) -> int:
     """Stream combined output to the console and *output_file*; return the exit code.
 
     Prefer a Bash pipeline when available so grandchildren retain a real stdout.
     This avoids Gradle/javac deadlocks observed with a Python-owned pipe on
-    Windows runners. The direct streaming fallback supports hosts without Bash.
+    Windows runners. The direct streaming fallback supports hosts without Bash;
+    *bash_pipeline* False selects it for commands Bash would re-quote, such as batch files.
     """
     command = list(cmd)
     log_path = Path(output_file).resolve()
     process_env = dict(env) if env is not None else None
-    bash = shutil.which("bash")
+    # Earlier prints must not land after the command's own output.
+    sys.stdout.flush()
+    bash = shutil.which("bash") if bash_pipeline else None
     if bash:
         if sys.platform == "win32":
             command[0] = command[0].replace("\\", "/")
@@ -285,20 +317,27 @@ def run_tee(
             [bash, "-c", script], cwd=cwd, env=process_env, check=False
         ).returncode
 
-    with log_path.open("w", encoding="utf-8") as log:
+    # The console gets the command's bytes unchanged: re-encoding its text for a Windows code page
+    # could fail. The log holds them decoded as UTF-8.
+    console = getattr(sys.stdout, "buffer", None)
+    with log_path.open("w", encoding="utf-8", newline="") as log:
         process = subprocess.Popen(
             command,
             cwd=cwd,
             env=process_env,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
         )
         assert process.stdout is not None
-        for line in process.stdout:
-            sys.stdout.write(line)
+        for raw in process.stdout:
+            line = raw.decode("utf-8", errors="replace")
+            if console is not None:
+                console.write(raw)
+                # A piped stdout is block-buffered; flush so the step log streams live.
+                console.flush()
+            else:
+                sys.stdout.write(line)
+                sys.stdout.flush()
             log.write(line)
         process.wait()
         return process.returncode

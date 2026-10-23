@@ -19,7 +19,7 @@ inputs:
     required: false
     default: ''
   output-file:
-    description: 'File to capture build output (optional)'
+    description: 'File that captures the build output, relative to build-dir; default $RUNNER_TEMP/build-output.log'
     required: false
     default: ''
   reviewdog:
@@ -35,9 +35,10 @@ runs:
       shell: bash
       working-directory: ${{ inputs.build-dir }}
       # cmake_helper.py reads the INPUT_* variables as argument defaults and takes a multi-config
-      # generator's configuration from the preset's CMAKE_BUILD_TYPE in CMakeCache.txt. It then
-      # writes one job-summary section per build, also after failures: result, duration, toolchain,
-      # compiler and moc cache hit rates, and the slowest build steps (collapsed).
+      # generator's configuration from the preset's CMAKE_BUILD_TYPE in CMakeCache.txt. It tees the
+      # build output to output-file and writes one job-summary section per build, also after
+      # failures: result, duration, toolchain, this build's compiler and moc cache hit rates, and,
+      # collapsed, the failed targets and first errors (also error annotations) and slowest steps.
       env:
         INPUT_TARGET: ${{ inputs.target }}
         INPUT_PARALLEL: ${{ inputs.parallel }}
@@ -51,6 +52,7 @@ runs:
       uses: ./.github/actions/save-build-cache
 
     - name: Upload build timings
+      id: upload-timings
       if: always() && steps.compile.outputs.profile_path != ''
       uses: actions/upload-artifact@v7
       with:
@@ -58,6 +60,15 @@ runs:
         path: ${{ steps.compile.outputs.profile_path }}
         retention-days: 7
         if-no-files-found: warn
+
+    # Saving caches writes no summary, so the link lands below this build's section.
+    - name: Link build timings
+      if: ${{ !cancelled() && steps.upload-timings.outputs.artifact-url != '' }}
+      shell: bash
+      run: python3 "${GITHUB_WORKSPACE}/tools/ci/packaging/artifact_link.py" --label "Ninja build timings"
+      env:
+        ARTIFACT_NAME: ${{ steps.compile.outputs.profile_name }}
+        ARTIFACT_URL: ${{ steps.upload-timings.outputs.artifact-url }}
 
     - name: Setup reviewdog
       id: reviewdog

@@ -308,6 +308,26 @@ class TestAnnotations:
             "::error title=Test failed%3A A%2C B%0A50%25::FAIL!  : A::b()\n"
         )
 
+    @pytest.mark.parametrize("emit", [mod.gh_error, mod.gh_warning, mod.gh_notice])
+    def test_location_properties_precede_the_title(self, capsys, emit) -> None:
+        emit(
+            "expected ';' after expression", title="Compile error", file="src/A.cc", line=42, col=7
+        )
+        level = emit.__name__.removeprefix("gh_")
+        assert capsys.readouterr().out == (
+            f"::{level} file=src/A.cc,line=42,col=7,title=Compile error::"
+            "expected ';' after expression\n"
+        )
+
+    def test_file_property_escapes_delimiters(self, capsys) -> None:
+        mod.gh_error("x", file="odd,dir/a:b%c.cc", line=3)
+        assert capsys.readouterr().out == "::error file=odd%2Cdir/a%3Ab%25c.cc,line=3::x\n"
+
+    def test_line_and_column_need_their_container(self, capsys) -> None:
+        mod.gh_error("no file", line=3, col=4)
+        mod.gh_error("no line", file="a.cc", col=4)
+        assert capsys.readouterr().out == "::error::no file\n::error file=a.cc::no line\n"
+
     def test_emits_to_stdout_not_stderr(self, capsys) -> None:
         mod.gh_warning("x")
         captured = capsys.readouterr()

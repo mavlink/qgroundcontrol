@@ -23,8 +23,11 @@ runs:
   steps:
     # cmake_helper.py reads the INPUT_* variables as argument defaults, enables QGC_STABLE_BUILD for
     # release tags and Stable* branches, and pins Python3_EXECUTABLE to tools/.venv so CMake-invoked
-    # jinja generators see the locked dependencies.
+    # jinja generators see the locked dependencies. It tees CMake's output to cmake-configure.log in
+    # the build directory and writes the job summary's Configure section; a failure also annotates
+    # the first CMake error.
     - name: Configure
+      id: configure
       shell: bash
       run: python3 "${GITHUB_WORKSPACE}/tools/ci/compile/cmake_helper.py" configure
       env:
@@ -32,3 +35,26 @@ runs:
         INPUT_PRESET: ${{ inputs.preset }}
         INPUT_EXTRA_ARGS: ${{ inputs.extra-args }}
         INPUT_USE_QT_CMAKE: ${{ inputs.use-qt-cmake }}
+
+    # CMake 4 records its try_compile and find_* results in CMakeConfigureLog.yaml, not
+    # CMakeOutput.log and CMakeError.log.
+    - name: Upload configure logs
+      id: upload-logs
+      if: failure() && steps.configure.outputs.logs_artifact != ''
+      uses: actions/upload-artifact@v7
+      with:
+        name: ${{ steps.configure.outputs.logs_artifact }}
+        path: |
+          ${{ inputs.build-dir }}/cmake-configure.log
+          ${{ inputs.build-dir }}/CMakeCache.txt
+          ${{ inputs.build-dir }}/CMakeFiles/CMakeConfigureLog.yaml
+        retention-days: 7
+        if-no-files-found: ignore
+
+    - name: Link configure logs
+      if: failure() && steps.upload-logs.outputs.artifact-url != ''
+      shell: bash
+      run: python3 "${GITHUB_WORKSPACE}/tools/ci/packaging/artifact_link.py" --label "Configure logs"
+      env:
+        ARTIFACT_NAME: ${{ steps.configure.outputs.logs_artifact }}
+        ARTIFACT_URL: ${{ steps.upload-logs.outputs.artifact-url }}
