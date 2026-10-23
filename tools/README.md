@@ -478,6 +478,12 @@ python tools/setup/install_python.py dev
 ./tools/simulation/run_arducopter_sitl.py --with-latency  # Simulate network lag
 ```
 
+### Virtual RC Transmitter (PX4 SITL)
+
+```bash
+./tools/simulation/rc_transmitter.py            # Sliders per RC channel at http://localhost:8080
+```
+
 See [simulation/README.md](simulation/README.md) for details.
 
 ## Translation Tools
