@@ -60,9 +60,7 @@ Subclasses only need to implement `vehicleConfigJson()` to return the path to th
 
 3. Register the component in the firmware plugin's `AutoPilotPlugin` subclass.
 
-4. Add the generated QML filename to `_config_generated_qml_names` in the plugin's `CMakeLists.txt`.
-
-5. Build. CMake will regenerate the QML automatically:
+4. Build. CMake picks up the new JSON file and generates its QML automatically:
 
    ```bash
    cmake --build build --config Debug --target GenerateConfigQmlAPM  # or GenerateConfigQmlPX4
@@ -72,6 +70,5 @@ Subclasses only need to implement `vehicleConfigJson()` to return the path to th
 
 - The `constants`, `params`, and `bindings` sections should appear **before** `sections` in the JSON file for readability, since sections reference them.
 - Constants should use native JSON numbers, not strings (e.g. `0` not `"0"`).
-- The `_config_generated_qml_names` list in CMake is explicit. If you forget to add a new page output file, integration will be incomplete.
 - Inside repeat sections, use parameter **postfixes** in `param` fields and `_fullParamName()` in `showWhen` expressions.
 - The `enableParam`/`disabledParamValue` pair is required together — you cannot specify one without the other.

@@ -72,37 +72,18 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 # Code-generation: produce QML config pages from VehicleConfig.json definitions
 # ----------------------------------------------------------------------------
 
-set(CONFIG_QML_GENERATOR_DIR "${CMAKE_SOURCE_DIR}/tools/generators/config_qml")
 set(CONFIG_PAGES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/VehicleConfig")
 set(CONFIG_QML_GEN_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
 
-# Generator inputs: the config_qml package, its templates, and the shared modules it imports
-file(GLOB _config_generator_sources CONFIGURE_DEPENDS "${CONFIG_QML_GENERATOR_DIR}/*.py"
-     "${CONFIG_QML_GENERATOR_DIR}/templates/*.j2" "${CMAKE_SOURCE_DIR}/tools/generators/common/*.py"
-)
-list(
-    APPEND
-    _config_generator_sources
-    "${CMAKE_SOURCE_DIR}/tools/_bootstrap.py"
-    "${CMAKE_SOURCE_DIR}/tools/common/__init__.py"
-    "${CMAKE_SOURCE_DIR}/tools/common/io.py"
-    "${CMAKE_SOURCE_DIR}/tools/generators/__init__.py"
-    "${CMAKE_SOURCE_DIR}/tools/generators/_jinja.py"
-)
-
-# JSON inputs
+# Each <Name>.VehicleConfig.json produces <Name>Component.qml; the generator lists them
 file(GLOB _config_page_definitions CONFIGURE_DEPENDS "${CONFIG_PAGES_DIR}/*.VehicleConfig.json")
 
-# Generated QML outputs (must match what generate_pages.py produces)
-set(_config_generated_qml_names PowerComponent.qml SafetyComponent.qml)
-
 qgc_add_qml_codegen(
-    GenerateConfigQmlPX4 GENERATE_AT_CONFIGURE
+    GenerateConfigQmlPX4 GENERATE_AT_CONFIGURE LIST_OUTPUTS
     GENERATOR_MODULE tools.generators.config_qml.generate_pages
     OUTPUT_DIR "${CONFIG_QML_GEN_DIR}"
-    QML_NAMES ${_config_generated_qml_names}
     EXTRA_ARGS --pages-dir "${CONFIG_PAGES_DIR}"
-    DEPENDS ${_config_generator_sources} ${_config_page_definitions}
+    DEPENDS ${_config_page_definitions}
     COMMENT "Generating QML config pages from VehicleConfig.json definitions"
 )
 set(_config_generated_qml ${GenerateConfigQmlPX4_OUTPUTS})

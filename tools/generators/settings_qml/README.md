@@ -89,8 +89,8 @@ A custom build (`QGC_CUSTOM_DIR`) can pass `--custom-pages-dir <dir>` and
   stem plus `Settings`, e.g. `Custom.SettingsGroup.json` → `customSettings`).
   A custom stem that maps to a stock `SettingsManager` accessor is rejected.
 
-`--list-outputs` prints the QML file names that would be generated (used by
-CMake to compute the output list when an overlay is active).
+`--list-outputs` prints the QML file names that would be generated; CMake uses
+it to compute the output list.
 
 See the `custom-example` build for a working reference.
 

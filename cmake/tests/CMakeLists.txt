@@ -33,6 +33,7 @@ qgc_add_cmake_contract_test(HelpersWriteIfChanged helpers-write-if-changed)
 qgc_add_cmake_contract_test(PythonVenvStaleCache python-venv-stale-cache)
 qgc_add_cmake_contract_test(QmlCodegenValid qml-codegen-valid)
 qgc_add_cmake_contract_test(QmlCodegenConfigureValid qml-codegen-configure-valid)
+qgc_add_cmake_contract_test(QmlCodegenConfigureListOutputs qml-codegen-configure-list-outputs)
 qgc_add_cmake_contract_test(QGCTestTimeoutZero qgc-test-timeout-zero)
 qgc_add_cmake_contract_test(QGCTestShards qgc-test-shards)
 
@@ -56,6 +57,7 @@ set_tests_properties(
 
 set(_qgc_expected_failure_cases
     "QmlCodegenMissingNames|qml-codegen-missing-names|QML_NAMES is required"
+    "QmlCodegenListOutputsWithNames|qml-codegen-list-outputs-with-names|LIST_OUTPUTS are mutually exclusive"
     "QmlCodegenMissingPython|qml-codegen-missing-python|Python3::Interpreter target is required"
     "QmlCodegenUnknownArgument|qml-codegen-unknown-argument|unknown arguments"
     "QmlCodegenDuplicateOutput|qml-codegen-duplicate-output|contains duplicate outputs"

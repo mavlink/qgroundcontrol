@@ -49,17 +49,24 @@ else()
     set(_qgc_target_abis "${CMAKE_ANDROID_ARCH_ABI}")
 endif()
 
-set(_ossl_stamp "${android_openssl_SOURCE_DIR}/.qgc_openssl_version")
+# android_openssl.cmake links the no-asm/ libraries for Debug and the asm ones in the root otherwise,
+# so build only the variant this build type uses.
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(_ossl_variant "no-asm")
+    set(_ossl_root "${android_openssl_SOURCE_DIR}/no-asm")
+else()
+    set(_ossl_variant "asm")
+    set(_ossl_root "${android_openssl_SOURCE_DIR}")
+endif()
+
+set(_ossl_stamp "${_ossl_root}/.qgc_openssl_version")
 set(_ossl_have_version "")
 if(EXISTS "${_ossl_stamp}")
     file(STRINGS "${_ossl_stamp}" _ossl_have_version LIMIT_COUNT 1)
 endif()
 set(_ossl_build_archs "")
 foreach(_abi IN LISTS _qgc_target_abis)
-    if(_ossl_have_version STREQUAL QGC_ANDROID_OPENSSL_VERSION
-       AND EXISTS "${android_openssl_SOURCE_DIR}/ssl_3/${_abi}/libssl_3.so"
-       AND EXISTS "${android_openssl_SOURCE_DIR}/no-asm/ssl_3/${_abi}/libssl_3.so"
-    )
+    if(_ossl_have_version STREQUAL QGC_ANDROID_OPENSSL_VERSION AND EXISTS "${_ossl_root}/ssl_3/${_abi}/libssl_3.so")
         continue()
     endif()
     if(_abi STREQUAL "arm64-v8a")
@@ -89,16 +96,17 @@ elseif(_ossl_build_archs)
     else()
         set(_ossl_dl_dir "${CMAKE_BINARY_DIR}/_deps/openssl-src")
     endif()
+    set(_ossl_tag "openssl-${QGC_ANDROID_OPENSSL_VERSION}")
     qgc_resilient_download(
         FILENAME
-        "openssl-${QGC_ANDROID_OPENSSL_VERSION}.tar.gz"
+        "${_ossl_tag}.tar.gz"
         DESTINATION_DIR
         "${_ossl_dl_dir}"
         RESULT_VAR
         _ossl_tarball
         URLS
-        "https://github.com/openssl/openssl/releases/download/openssl-${QGC_ANDROID_OPENSSL_VERSION}/openssl-${QGC_ANDROID_OPENSSL_VERSION}.tar.gz"
-        "https://www.openssl.org/source/openssl-${QGC_ANDROID_OPENSSL_VERSION}.tar.gz"
+        "https://github.com/openssl/openssl/releases/download/${_ossl_tag}/${_ossl_tag}.tar.gz"
+        "https://www.openssl.org/source/${_ossl_tag}.tar.gz"
         EXPECTED_HASH
         "SHA256=${QGC_ANDROID_OPENSSL_SHA256}"
         LOG_TAG
@@ -106,8 +114,8 @@ elseif(_ossl_build_archs)
     )
     list(JOIN _ossl_build_archs " " _ossl_build_archs_str)
     message(
-        STATUS
-            "QGC: Building OpenSSL ${QGC_ANDROID_OPENSSL_VERSION} for Android (${_ossl_build_archs_str}) — first configure only, this is slow"
+        STATUS "QGC: Building OpenSSL ${QGC_ANDROID_OPENSSL_VERSION} ${_ossl_variant} for Android "
+               "(${_ossl_build_archs_str}) — first configure only, this is slow"
     )
     execute_process(
         COMMAND
@@ -115,7 +123,7 @@ elseif(_ossl_build_archs)
             "${QGC_ANDROID_OPENSSL_VERSION}" --tarball "${_ossl_tarball}" --ndk "${CMAKE_ANDROID_NDK}" --patch
             "${android_openssl_SOURCE_DIR}/ssl_3.patch" --output-root "${android_openssl_SOURCE_DIR}" --build-dir
             "${CMAKE_BINARY_DIR}/_deps/openssl-build" --api "${QGC_QT_ANDROID_MIN_SDK_VERSION}" --archs
-            ${_ossl_build_archs}
+            ${_ossl_build_archs} --variants ${_ossl_variant}
         RESULT_VARIABLE _ossl_build_result
     )
     if(NOT _ossl_build_result EQUAL 0)

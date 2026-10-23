@@ -9,6 +9,7 @@ entry point for normal builds.
 | Path | Purpose |
 | --- | --- |
 | `*.cmake` | Build options (`CustomOptions.cmake`), shared helpers (`Helpers.cmake`), and test registration (`QGCTest.cmake`) |
+| `*.in` | Templates configured into the build directory: `CTestCustom.cmake.in` (Valgrind memcheck) and `ccache-launcher.cmd.in` (Windows ccache launcher) |
 | `GStreamer/` | GStreamer discovery, download, validation, installation, and pure-CMake tests |
 | `install/` | Runtime deployment and package assembly |
 | `modules/` | Reusable project modules and dependency helpers |
@@ -42,7 +43,7 @@ target when moc can consume them. Custom builds retain forwarded dependencies be
 additional generators are not known to the standard build.
 
 `QGC_USE_MOCCACHE` (default `ON`) routes AUTOMOC through a generated `<build>/moccache-launcher`, which runs
-`tools/moccache_launcher.py` to import [`tools/moccache.py`](../tools/README.md#moccachepy) with cached bytecode.
+`tools/moccache_launcher.py` to import [`tools/moccache/`](../tools/README.md#moccache) with cached bytecode.
 It needs Python 3.10 or newer (`QGC_MOCCACHE_PYTHON`) and, on Windows, CMake 3.29; otherwise configure falls back
 to plain moc. Configure rewrites the launcher only when its content changes, because AUTOMOC re-runs moc for every
 target whose launcher is newer than its output.
@@ -62,7 +63,8 @@ prek run cmake-lint --files path/to/file.cmake
 
 The manual-stage `gersemi` hook trials [gersemi](https://github.com/BlankSpruce/gersemi) as a cmakelang
 replacement: `prek run gersemi --hook-stage manual --files path/to/file.cmake` prints the diff it would apply
-(`.gersemirc`) without rewriting the file. cmake-format and cmake-lint remain the enforced checks.
+(configured by [`tools/configs/gersemirc.yaml`](../tools/configs/gersemirc.yaml)) without rewriting the file.
+cmake-format and cmake-lint remain the enforced checks.
 
 ## Tests
 
@@ -148,7 +150,7 @@ need, and unity builds of QGC targets (`QGC_UNITY_BUILD=ON`). CI builds with the
 The `just configure` and `just build` recipes use the matching `default*` configure and build
 presets for `BUILD_TYPE`. `just test` always uses the `default` test preset and passes `BUILD_TYPE`
 through `--build-config`. `tools/configure.py` selects a configure preset by build type and accepts
-an explicit `--preset`; `--no-preset` is reserved for unsupported custom toolchains. Coverage uses
+an explicit `--preset`, configuring into the preset's `binaryDir` unless `-B` is given. Coverage uses
 `Linux-coverage`. Docker uses the platform presets with mounted build-directory overrides;
 unsupported build types and its dynamic ARM64 sysroot keep explicit `qt-cmake` configuration.
 Multipass and Vagrant both run `deploy/multipass/build_in_vm.py`, which passes the matching `Linux*` preset to

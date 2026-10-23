@@ -8,10 +8,14 @@ from pathlib import Path
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument("--output-dir", type=Path)
     parser.add_argument("--write-output", action="append", default=[])
+    parser.add_argument("--list-outputs", action="store_true")
     args = parser.parse_args()
 
+    if args.list_outputs:
+        print("\n".join(args.write_output))
+        return 0
     for relative_path in args.write_output:
         output = args.output_dir / relative_path
         output.parent.mkdir(parents=True, exist_ok=True)

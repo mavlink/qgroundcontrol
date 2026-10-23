@@ -43,7 +43,7 @@ def test_cache_settings_survive_configure_and_allow_build_time_overrides(tmp_pat
     launcher = build / ("ccache-launcher.cmd" if windows else "ccache-launcher")
     env = {key: value for key, value in os.environ.items() if not key.startswith("CCACHE_")}
     for override in (False, True):
-        expected = [config.as_posix(), (source / ".ccache").as_posix(), source.as_posix()]
+        expected = [config.as_posix(), (source / ".cache/ccache").as_posix(), source.as_posix()]
         if override:
             expected = ["custom config", "custom cache", "custom base"]
             env.update(

@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass, field
 from pathlib import Path  # noqa: TC003
+
+from common.io import read_json
 
 from ..common.controls import (
     ActionButtonDef,
@@ -250,9 +251,7 @@ _ALLOWED_DISABLED_SECTION_KEYS = frozenset({"comment", "heading", "enabledParamV
 
 def load_page_def(json_path: Path) -> PageDef:
     """Load a config page definition from a JSON file."""
-    with open(json_path, encoding="utf-8") as f:
-        data = json.load(f)
-    return _build_page_def(data, json_path.name)
+    return _build_page_def(read_json(json_path), json_path.name)
 
 
 def _build_page_def(data: dict, json_filename: str) -> PageDef:

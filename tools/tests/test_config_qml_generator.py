@@ -276,3 +276,23 @@ def test_cli_preserves_unchanged_output_timestamps(tmp_path: Path, monkeypatch) 
 
     assert timestamps
     assert timestamps == {path.name: path.stat().st_mtime_ns for path in output_dir.glob("*.qml")}
+
+
+def test_cli_list_outputs_names_each_page_without_writing(
+    tmp_path: Path, monkeypatch, capsys
+) -> None:
+    pages_dir = tmp_path / "pages"
+    pages_dir.mkdir()
+    for name in ("Safety", "Power"):
+        (pages_dir / f"{name}.VehicleConfig.json").write_text(
+            json.dumps(_minimal_page()), encoding="utf-8"
+        )
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(
+        sys, "argv", ["generate_pages", "--list-outputs", "--pages-dir", str(pages_dir)]
+    )
+
+    generate_config_pages()
+
+    assert capsys.readouterr().out.splitlines() == ["PowerComponent.qml", "SafetyComponent.qml"]
+    assert sorted(path.name for path in tmp_path.iterdir()) == ["pages"]

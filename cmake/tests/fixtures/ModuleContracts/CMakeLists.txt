@@ -647,6 +647,25 @@ if(TEST_CASE MATCHES "^qml-codegen-")
         )
             message(FATAL_ERROR "Only DEPENDS should be configure dependencies: ${_configure_depends}")
         endif()
+    elseif(TEST_CASE STREQUAL "qml-codegen-configure-list-outputs")
+        qgc_add_qml_codegen(
+            generate_qml GENERATE_AT_CONFIGURE LIST_OUTPUTS
+            GENERATOR_MODULE qml_generator
+            OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated"
+            EXTRA_ARGS --write-output Example.qml --write-output Nested/Other.qml
+        )
+        if(NOT generate_qml_OUTPUTS STREQUAL
+           "${CMAKE_CURRENT_BINARY_DIR}/generated/Example.qml;${CMAKE_CURRENT_BINARY_DIR}/generated/Nested/Other.qml"
+        )
+            message(FATAL_ERROR "Unexpected listed QML output list: ${generate_qml_OUTPUTS}")
+        endif()
+    elseif(TEST_CASE STREQUAL "qml-codegen-list-outputs-with-names")
+        qgc_add_qml_codegen(
+            generate_qml LIST_OUTPUTS
+            GENERATOR_MODULE generator.module
+            OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated"
+            QML_NAMES Example.qml
+        )
     elseif(TEST_CASE STREQUAL "qml-codegen-configure-missing-output")
         qgc_add_qml_codegen(
             generate_qml GENERATE_AT_CONFIGURE

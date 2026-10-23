@@ -1,0 +1,2766 @@
+# serializer version: 1
+# name: test_generated_page_matches_snapshot[APM-APMFailsafes]
+  '''
+  // This file is auto-generated. Do not edit.
+  import QtQuick
+  import QtQuick.Controls
+  import QtQuick.Layouts
+  
+  import QGroundControl
+  import QGroundControl.FactControls
+  import QGroundControl.Controls
+  
+  SetupPage {
+      id: configPage
+      pageComponent: pageComponent
+  
+      Component {
+          id: pageComponent
+  
+          Item {
+              width: Math.max(availableWidth, outerColumn.width)
+              height: outerColumn.height
+  
+              FactPanelController {
+                  id: controller
+              }
+  
+              property real _margins: ScreenTools.defaultFontPixelHeight
+  
+              readonly property var _monitorParamValueDisabled: 0
+              readonly property var _copterGcsParamValueRtl: 1
+              readonly property var _copterGcsParamValueSmartRtlOrRtl: 3
+              readonly property var _copterGcsParamValueSmartRtlOrLand: 4
+              readonly property var _copterGcsParamValueLand: 5
+              readonly property var _copterGcsParamValueAutoDoLandOrRtl: 6
+              readonly property var _copterGcsParamValueBrakeOrLand: 7
+              readonly property var _copterThrParamValueRtl: 1
+              readonly property var _copterThrParamValueLand: 3
+              readonly property var _copterThrParamValueSmartRtlOrRtl: 4
+              readonly property var _copterThrParamValueSmartRtlOrLand: 5
+              readonly property var _copterThrParamValueAutoDoLandOrRtl: 6
+              readonly property var _copterThrParamValueBrakeOrLand: 7
+              readonly property var _planeGcsParamValueHeartbeat: 1
+              readonly property var _planeGcsParamValueHeartbeatAndRssi: 2
+              readonly property var _planeGcsParamValueHeartbeatAndAuto: 3
+              readonly property var _planeThrFsParamValueEnabled: 1
+              readonly property var _roverFsParamValueEnabled: 1
+              readonly property var _roverFsParamValueEnabledIgnoreAuto: 2
+              readonly property var _roverFsActionParamValueNothing: 0
+              readonly property var _roverFsActionParamValueRtl: 1
+              readonly property var _roverFsActionParamValueHold: 2
+              readonly property var _roverFsActionParamValueSmartRtlOrRtl: 3
+              readonly property var _roverFsActionParamValueSmartRtlOrHold: 4
+              readonly property var _roverFsActionParamValueTerminate: 5
+              readonly property var _roverFsActionParamValueLoiterOrHold: 6
+              readonly property var _copterEkfParamValueLandIfPosRequired: 1
+              readonly property var _copterEkfParamValueAltHoldIfPosRequired: 2
+              readonly property var _copterEkfParamValueLandAllModes: 3
+              readonly property var _roverEkfParamValueHold: 1
+              readonly property var _roverEkfParamValueReportOnly: 2
+              readonly property var _drParamValueLand: 1
+              readonly property var _drParamValueRtl: 2
+              readonly property var _drParamValueSmartRtlOrRtl: 3
+              readonly property var _drParamValueSmartRtlOrLand: 4
+              readonly property var _drParamValueAutoLandOrRtl: 6
+              readonly property var _roverCrashParamValueHold: 1
+              readonly property var _roverCrashParamValueHoldAndDisarm: 2
+  
+              property var _roverFirmware: controller.parameterExists(-1, "MODE1")
+              property var _fsOptionsAvailable: controller.parameterExists(-1, "FS_OPTIONS")
+              property var _copterGcsEnable: controller.getParameterFact(-1, "FS_GCS_ENABLE", false)
+              property var _planeGcsEnable: controller.getParameterFact(-1, "FS_GCS_ENABL", false)
+              property var _roverGcsEnable: controller.getParameterFact(-1, "FS_GCS_ENABLE", false)
+              property var _planeThrFailsafe: controller.getParameterFact(-1, "THR_FAILSAFE", false)
+              property var _copterThrEnable: controller.getParameterFact(-1, "FS_THR_ENABLE", false)
+              property var _roverThrEnable: controller.getParameterFact(-1, "FS_THR_ENABLE", false)
+              property var _roverFsAction: controller.getParameterFact(-1, "FS_ACTION", false)
+              property var _copterEkfAction: controller.getParameterFact(-1, "FS_EKF_ACTION", false)
+              property var _roverEkfAction: controller.getParameterFact(-1, "FS_EKF_ACTION", false)
+              property var _drEnable: controller.getParameterFact(-1, "FS_DR_ENABLE", false)
+              property var _roverCrashCheck: controller.getParameterFact(-1, "FS_CRASH_CHECK", false)
+  
+              property var _copterGcsEnabled: _copterGcsEnable && _copterGcsEnable.rawValue !== 0
+              property var _planeGcsEnabled: _planeGcsEnable && _planeGcsEnable.rawValue !== 0
+              property var _roverGcsEnabled: _roverGcsEnable && _roverGcsEnable.rawValue !== 0
+              property var _copterThrEnabled: _copterThrEnable && _copterThrEnable.rawValue !== 0
+              property var _roverThrEnabled: _roverThrEnable && _roverThrEnable.rawValue !== 0
+              property var _planeThrEnabled: _planeThrFailsafe && _planeThrFailsafe.value === _planeThrFsParamValueEnabled
+              property var _copterEkfEnabled: _copterEkfAction && _copterEkfAction.rawValue !== 0
+              property var _roverEkfEnabled: _roverEkfAction && _roverEkfAction.rawValue !== 0
+              property var _drEnabled: _drEnable && _drEnable.rawValue !== 0
+              property var _roverCrashEnabled: _roverCrashCheck && _roverCrashCheck.rawValue !== 0
+  
+              function _battPrefixForIndex(_i) {
+                  if (_i === 0) return "BATT_"
+                  if (_i <= 8) return "BATT" + (_i + 1) + "_"
+                  return "BATT" + String.fromCharCode(65 + _i - 9) + "_"
+              }
+              function _battLabelForIndex(_i) {
+                  if (_i <= 8) return String(_i + 1)
+                  return String.fromCharCode(65 + _i - 9)
+              }
+              property int _battery_failsafeCount: {
+                  var _i = 0
+                  while (_i < 16) {
+                      if (!controller.parameterExists(-1, _battPrefixForIndex(_i) + "MONITOR"))
+                          return _i
+                      _i++
+                  }
+                  return 16
+              }
+  
+              property string sectionIdFilter: ""
+  
+              // Keyed by untranslated section ID (must match VehicleComponent::sectionIds())
+              readonly property var _searchTerms: ({
+                  "Battery Failsafe": ["battery", "capacity", "critical action", "critical battery", "critical mah threshold", "critical voltage threshold", "crt_mah", "crt_volt", "failsafe", "fs_crt_act", "fs_low_act", "lipo", "low action", "low battery", "low mah threshold", "low voltage threshold", "low_mah", "low_volt", "mah", "power", "voltage"],
+                  "Ground Station Failsafe": ["disconnect", "enabled", "failsafe", "fs_gcs_timeout", "fs_options", "gcs", "ground", "ground station", "heartbeat", "ignore failsafe if:", "in auto mode", "in hold mode", "link loss", "rssi", "station", "telemetry", "timeout"],
+                  "Failsafe Triggers": ["failsafe", "fs_long_actn", "fs_long_timeout", "fs_short_actn", "long failsafe", "long failsafe action", "long failsafe timeout", "pwm", "pwm threshold", "q_trans_fail", "q_trans_fail_act", "short failsafe", "short failsafe action", "thr_fs_value", "throttle", "throttle pwm threshold", "triggers", "vtol transition", "vtol transition failure action", "vtol transition failure timeout"],
+                  "RC Failsafe": ["always enabled", "failsafe", "fs_options", "ignore failsafe if:", "in auto mode", "in guided mode", "landing", "radio", "rc", "rc loss", "receiver", "signal loss", "transmitter"],
+                  "Throttle Failsafe": ["action:", "enabled", "failsafe", "fs_action", "fs_options", "fs_thr_value", "fs_timeout", "ignore failsafe if:", "in auto mode", "in hold mode", "pwm", "pwm threshold", "rc loss", "receiver", "signal loss", "throttle", "timeout"],
+                  "EKF Failsafe": ["action:", "ekf", "enabled", "extended kalman filter", "failsafe", "fs_ekf_action", "fs_ekf_thresh", "gps loss", "navigation", "position estimate", "threshold"],
+                  "Dead Reckoning Failsafe": ["action:", "dead", "dead reckoning", "enabled", "failsafe", "fs_dr_enable", "fs_dr_timeout", "fs_options", "gps loss", "ignore failsafe if:", "landing", "navigation", "position estimate", "reckoning", "timeout"],
+                  "Other Failsafe Options": ["action:", "crash", "crash check failsafe", "failsafe", "fs_crash_check", "gripper", "options", "other", "vibration"]
+              })
+  
+              readonly property var _translatableSearchTerms: ({
+                  "Battery Failsafe": ["Battery Failsafe", "Critical action", "Critical mAh threshold", "Critical voltage threshold", "Low action", "Low mAh threshold", "Low voltage threshold", "capacity", "critical battery", "lipo", "low battery", "mah", "power", "voltage"],
+                  "Ground Station Failsafe": ["Enabled", "Ground Station Failsafe", "Ignore failsafe if:", "In Auto mode", "In Hold mode", "Timeout", "disconnect", "gcs", "ground station", "heartbeat", "link loss", "rssi", "telemetry"],
+                  "Failsafe Triggers": ["Failsafe Triggers", "Long failsafe action", "Long failsafe timeout", "PWM threshold", "Short failsafe action", "Throttle PWM threshold", "VTOL transition failure action", "VTOL transition failure timeout", "long failsafe", "pwm", "short failsafe", "throttle", "vtol transition"],
+                  "RC Failsafe": ["Always enabled", "Ignore failsafe if:", "In Auto mode", "In Guided mode", "Landing", "RC Failsafe", "radio", "rc loss", "receiver", "signal loss", "transmitter"],
+                  "Throttle Failsafe": ["Action:", "Enabled", "Ignore failsafe if:", "In Auto mode", "In Hold mode", "PWM threshold", "Throttle Failsafe", "Timeout", "pwm", "rc loss", "receiver", "signal loss", "throttle"],
+                  "EKF Failsafe": ["Action:", "EKF Failsafe", "Enabled", "Threshold", "ekf", "extended kalman filter", "gps loss", "navigation", "position estimate"],
+                  "Dead Reckoning Failsafe": ["Action:", "Dead Reckoning Failsafe", "Enabled", "Ignore failsafe if:", "Landing", "Timeout", "dead reckoning", "gps loss", "navigation", "position estimate"],
+                  "Other Failsafe Options": ["Action:", "Crash check failsafe", "Other Failsafe Options", "crash", "gripper", "vibration"]
+              })
+  
+              // sectionId must be untranslated; repeat sections pass their base ID as searchKey
+              function sectionMatchesFilter(sectionId, searchKey) {
+                  if (sectionIdFilter === "") {
+                      return true
+                  }
+                  if (sectionIdFilter === sectionId) {
+                      return true
+                  }
+                  if (searchKey === undefined) {
+                      searchKey = sectionId
+                  }
+                  let filter = sectionIdFilter.toLowerCase()
+                  let terms = _searchTerms[searchKey]
+                  if (terms) {
+                      for (let i = 0; i < terms.length; i++) {
+                          if (terms[i].indexOf(filter) >= 0) {
+                              return true
+                          }
+                      }
+                  }
+                  let trTerms = _translatableSearchTerms[searchKey]
+                  if (trTerms) {
+                      for (let j = 0; j < trTerms.length; j++) {
+                          if (qsTranslate("APMFailsafes.VehicleConfig.json", trTerms[j]).toLowerCase().indexOf(filter) >= 0) {
+                              return true
+                          }
+                      }
+                  }
+                  return false
+              }
+  
+              function sectionVisible(sectionId) {
+                  switch (sectionId) {
+                  case "Ground Station Failsafe":
+                      return controller.vehicle.multiRotor || controller.vehicle.fixedWing || _roverFirmware
+                  case "Failsafe Triggers":
+                      return controller.vehicle.fixedWing
+                  case "RC Failsafe":
+                      return controller.vehicle.multiRotor
+                  case "Throttle Failsafe":
+                      return controller.vehicle.multiRotor || _roverFirmware
+                  case "EKF Failsafe":
+                      return controller.vehicle.multiRotor || _roverFirmware
+                  case "Dead Reckoning Failsafe":
+                      return controller.vehicle.multiRotor && controller.parameterExists(-1, "FS_DR_ENABLE")
+                  case "Other Failsafe Options":
+                      return controller.vehicle.multiRotor || _roverFirmware
+                  default:
+                      return true
+                  }
+              }
+  
+              property real _maxLeftMargin: ScreenTools.defaultFontPixelWidth * 20
+  
+              ColumnLayout {
+                  id: outerColumn
+                  spacing: _margins * 1.25
+                  anchors.left: parent.left
+                  anchors.leftMargin: Math.min((parent.width - width) / 2, _maxLeftMargin)
+  
+                  Repeater {
+                      model: _battery_failsafeCount
+  
+                      ConfigSection {
+                          Layout.fillWidth: true
+                          visible: sectionMatchesFilter(_sectionId, "Battery Failsafe") && controller.getParameterFact(-1, _fullParamName("MONITOR")).value !== _monitorParamValueDisabled
+                          heading: _battery_failsafeCount > 1 ? qsTranslate("APMFailsafes.VehicleConfig.json", "Battery Failsafe") + " " + _displayIndex : qsTranslate("APMFailsafes.VehicleConfig.json", "Battery Failsafe")
+                          iconSource: "/qmlimages/Battery.svg"
+  
+                          property int _rawIndex: index
+                          property string _prefix: _battPrefixForIndex(_rawIndex)
+                          property string _displayIndex: _battLabelForIndex(_rawIndex)
+                          // Untranslated section ID; must match VehicleComponent::sectionIds() expansion
+                          property string _sectionId: _battery_failsafeCount > 1 ? "Battery Failsafe " + _displayIndex : "Battery Failsafe"
+                          function _fullParamName(postfix) { return _prefix + postfix }
+  
+                          LabelledFactComboBox {
+                              visible: fact !== null && (controller.parameterExists(-1, _fullParamName("FS_LOW_ACT")))
+                              label: qsTranslate("APMFailsafes.VehicleConfig.json", "Low action")
+                              Layout.fillWidth: true
+                              comboBoxPreferredWidth: ScreenTools.defaultFontPixelWidth * 30
+                              fact: controller.getParameterFact(-1, _fullParamName("FS_LOW_ACT"), false)
+                              indexModel: false
+                          }
+  
+                          LabelledFactComboBox {
+                              visible: fact !== null && (controller.parameterExists(-1, _fullParamName("FS_CRT_ACT")))
+                              label: qsTranslate("APMFailsafes.VehicleConfig.json", "Critical action")
+                              Layout.fillWidth: true
+                              comboBoxPreferredWidth: ScreenTools.defaultFontPixelWidth * 30
+                              fact: controller.getParameterFact(-1, _fullParamName("FS_CRT_ACT"), false)
+                              indexModel: false
+                          }
+  
+                          LabelledFactTextField {
+                              visible: fact !== null && (controller.parameterExists(-1, _fullParamName("LOW_VOLT")))
+                              label: qsTranslate("APMFailsafes.VehicleConfig.json", "Low voltage threshold")
+                              Layout.fillWidth: true
+                              fact: controller.getParameterFact(-1, _fullParamName("LOW_VOLT"), false)
+                          }
+  
+                          LabelledFactTextField {
+                              visible: fact !== null && (controller.parameterExists(-1, _fullParamName("CRT_VOLT")))
+                              label: qsTranslate("APMFailsafes.VehicleConfig.json", "Critical voltage threshold")
+                              Layout.fillWidth: true
+                              fact: controller.getParameterFact(-1, _fullParamName("CRT_VOLT"), false)
+                          }
+  
+                          LabelledFactTextField {
+                              visible: fact !== null && (controller.parameterExists(-1, _fullParamName("LOW_MAH")))
+                              label: qsTranslate("APMFailsafes.VehicleConfig.json", "Low mAh threshold")
+                              Layout.fillWidth: true
+                              fact: controller.getParameterFact(-1, _fullParamName("LOW_MAH"), false)
+                          }
+  
+                          LabelledFactTextField {
+                              visible: fact !== null && (controller.parameterExists(-1, _fullParamName("CRT_MAH")))
+                              label: qsTranslate("APMFailsafes.VehicleConfig.json", "Critical mAh threshold")
+                              Layout.fillWidth: true
+                              fact: controller.getParameterFact(-1, _fullParamName("CRT_MAH"), false)
+                          }
+                      }
+                  }
+  
+                  ConfigSection {
+                      Layout.fillWidth: true
+                      visible: sectionMatchesFilter("Ground Station Failsafe") && controller.vehicle.multiRotor
+                      heading: qsTranslate("APMFailsafes.VehicleConfig.json", "Ground Station Failsafe")
+  
+                      QGCCheckBoxSlider {
+                          Layout.fillWidth: true
+                          text: qsTranslate("APMFailsafes.VehicleConfig.json", "Enabled")
+                          checked: _copterGcsEnabled
+                          onClicked: if (checked) { _copterGcsEnable.rawValue = _copterGcsParamValueRtl } else { _copterGcsEnable.rawValue = 0 }
+                      }
+  
+                      LabelledFactTextField {
+                          visible: fact !== null && (_copterGcsEnabled)
+                          label: qsTranslate("APMFailsafes.VehicleConfig.json", "Timeout")
+                          Layout.fillWidth: true
+                          fact: controller.getParameterFact(-1, "FS_GCS_TIMEOUT", false)
+                      }
+  
+                      ColumnLayout {
+                          visible: controller.getParameterFact(-1, "FS_GCS_ENABLE", false) !== null && (_copterGcsEnabled)
+                          spacing: 0
+                          QGCLabel {
+                              text: qsTranslate("APMFailsafes.VehicleConfig.json", "Action:")
+                          }
+                          ColumnLayout {
+                              spacing: 0
+                              QGCRadioButton {
+                                  text: qsTranslate("APMFailsafes.VehicleConfig.json", "RTL")
+                                  checked: controller.getParameterFact(-1, "FS_GCS_ENABLE", false) ? _copterGcsEnable.rawValue === _copterGcsParamValueRtl : false
+                                  onClicked: if (controller.getParameterFact(-1, "FS_GCS_ENABLE", false)) { controller.getParameterFact(-1, "FS_GCS_ENABLE", false).rawValue = _copterGcsParamValueRtl }
+                              }
+                              QGCRadioButton {
+                                  text: qsTranslate("APMFailsafes.VehicleConfig.json", "Land")
+                                  checked: controller.getParameterFact(-1, "FS_GCS_ENABLE", false) ? _copterGcsEnable.rawValue === _copterGcsParamValueLand : false
+                                  onClicked: if (controller.getParameterFact(-1, "FS_GCS_ENABLE", false)) { controller.getParameterFact(-1, "FS_GCS_ENABLE", false).rawValue = _copterGcsParamValueLand }
+                              }
+                              QGCRadioButton {
+                                  text: qsTranslate("APMFailsafes.VehicleConfig.json", "SmartRTL or RTL")
+                                  checked: controller.getParameterFact(-1, "FS_GCS_ENABLE", false) ? _copterGcsEnable.rawValue === _copterGcsParamValueSmartRtlOrRtl : false
+                                  onClicked: if (controller.getParameterFact(-1, "FS_GCS_ENABLE", false)) { controller.getParameterFact(-1, "FS_GCS_ENABLE", false).rawValue = _copterGcsParamValueSmartRtlOrRtl }
+                              }
+                              QGCRadioButton {
+                                  text: qsTranslate("APMFailsafes.VehicleConfig.json", "SmartRTL or Land")
+                                  checked: controller.getParameterFact(-1, "FS_GCS_ENABLE", false) ? _copterGcsEnable.rawValue === _copterGcsParamValueSmartRtlOrLand : false
+                                  onClicked: if (controller.getParameterFact(-1, "FS_GCS_ENABLE", false)) { controller.getParameterFact(-1, "FS_GCS_ENABLE", false).rawValue = _copterGcsParamValueSmartRtlOrLand }
+                              }
+                              QGCRadioButton {
+                                  text: qsTranslate("APMFailsafes.VehicleConfig.json", "Auto DO_LAND_START or RTL")
+                                  checked: controller.getParameterFact(-1, "FS_GCS_ENABLE", false) ? _copterGcsEnable.rawValue === _copterGcsParamValueAutoDoLandOrRtl : false
+                                  onClicked: if (controller.getParameterFact(-1, "FS_GCS_ENABLE", false)) { controller.getParameterFact(-1, "FS_GCS_ENABLE", false).rawValue = _copterGcsParamValueAutoDoLandOrRtl }
+                              }
+                              QGCRadioButton {
+                                  text: qsTranslate("APMFailsafes.VehicleConfig.json", "Brake or Land")
+                                  checked: controller.getParameterFact(-1, "FS_GCS_ENABLE", false) ? _copterGcsEnable.rawValue === _copterGcsParamValueBrakeOrLand : false
+                                  onClicked: if (controller.getParameterFact(-1, "FS_GCS_ENABLE", false)) { controller.getParameterFact(-1, "FS_GCS_ENABLE", false).rawValue = _copterGcsParamValueBrakeOrLand }
+                              }
+                          }
+                      }
+  
+                      QGCLabel {
+                          visible: _fsOptionsAvailable && _copterGcsEnabled
+                          text: qsTranslate("APMFailsafes.VehicleConfig.json", "Ignore failsafe if:")
+                          wrapMode: Text.WordWrap
+                          Layout.fillWidth: true
+                          Layout.preferredWidth: 0
+                      }
+  
+                      FactBitMaskCheckBoxSlider {
+                          Layout.leftMargin: ScreenTools.defaultFontPixelWidth * 2
+                          visible: fact !== null && (_fsOptionsAvailable && _copterGcsEnabled)
+                          Layout.fillWidth: true
+                          text: qsTranslate("APMFailsafes.VehicleConfig.json", "In Auto mode")
+                          fact: controller.getParameterFact(-1, "FS_OPTIONS", false)
+                          bitMask: 2
+                      }
+  
+                      FactBitMaskCheckBoxSlider {
+                          Layout.leftMargin: ScreenTools.defaultFontPixelWidth * 2
+                          visible: fact !== null && (_fsOptionsAvailable && _copterGcsEnabled)
+                          Layout.fillWidth: true
+                          text: qsTranslate("APMFailsafes.VehicleConfig.json", "In pilot control")
+                          fact: controller.getParameterFact(-1, "FS_OPTIONS", false)
+                          bitMask: 16
+                      }
+                  }
+  
+                  ConfigSection {
+                      Layout.fillWidth: true
+                      visible: sectionMatchesFilter("Ground Station Failsafe") && controller.vehicle.fixedWing
+                      heading: qsTranslate("APMFailsafes.VehicleConfig.json", "Ground Station Failsafe")
+  
+                      QGCCheckBoxSlider {
+                          Layout.fillWidth: true
+                          text: qsTranslate("APMFailsafes.VehicleConfig.json", "Enabled")
+                          checked: _planeGcsEnabled
+                          onClicked: if (checked) { _planeGcsEnable.rawValue = _planeGcsParamValueHeartbeat } else { _planeGcsEnable.rawValue = 0 }
+                      }
+  
+                      ColumnLayout {
+                          visible: controller.getParameterFact(-1, "FS_GCS_ENABL", false) !== null && (_planeGcsEnabled)
+                          spacing: 0
+                          QGCLabel {
+                              text: qsTranslate("APMFailsafes.VehicleConfig.json", "Trigger:")
+                          }
+                          ColumnLayout {
+                              spacing: 0
+                              QGCRadioButton {
+                                  text: qsTranslate("APMFailsafes.VehicleConfig.json", "Heartbeat")
+                                  checked: controller.getParameterFact(-1, "FS_GCS_ENABL", false) ? _planeGcsEnable && _planeGcsEnable.rawValue === _planeGcsParamValueHeartbeat : false
+                                  onClicked: if (controller.getParameterFact(-1, "FS_GCS_ENABL", false)) { controller.getParameterFact(-1, "FS_GCS_ENABL", false).rawValue = _planeGcsParamValueHeartbeat }
+                              }
+                              QGCRadioButton {
+                                  text: qsTranslate("APMFailsafes.VehicleConfig.json", "Heartbeat and Remote RSSI")
+                                  checked: controller.getParameterFact(-1, "FS_GCS_ENABL", false) ? _planeGcsEnable && _planeGcsEnable.rawValue === _planeGcsParamValueHeartbeatAndRssi : false
+                                  onClicked: if (controller.getParameterFact(-1, "FS_GCS_ENABL", false)) { controller.getParameterFact(-1, "FS_GCS_ENABL", false).rawValue = _planeGcsParamValueHeartbeatAndRssi }
+                              }
+                              QGCRadioButton {
+                                  text: qsTranslate("APMFailsafes.VehicleConfig.json", "Heartbeat and AUTO")
+                                  checked: controller.getParameterFact(-1, "FS_GCS_ENABL", false) ? _planeGcsEnable && _planeGcsEnable.rawValue === _planeGcsParamValueHeartbeatAndAuto : false
+                                  onClicked: if (controller.getParameterFact(-1, "FS_GCS_ENABL", false)) { controller.getParameterFact(-1, "FS_GCS_ENABL", false).rawValue = _planeGcsParamValueHeartbeatAndAuto }
+                              }
+                          }
+                      }
+                  }
+  
+                  ConfigSection {
+                      Layout.fillWidth: true
+                      visible: sectionMatchesFilter("Ground Station Failsafe") && _roverFirmware
+                      heading: qsTranslate("APMFailsafes.VehicleConfig.json", "Ground Station Failsafe")
+  
+                      QGCCheckBoxSlider {
+                          Layout.fillWidth: true
+                          text: qsTranslate("APMFailsafes.VehicleConfig.json", "Enabled")
+                          checked: _roverGcsEnabled
+                          onClicked: if (checked) { _roverGcsEnable.rawValue = _roverFsParamValueEnabled } else { _roverGcsEnable.rawValue = 0 }
+                      }
+  
+                      LabelledFactTextField {
+                          visible: fact !== null && (_roverGcsEnabled)
+                          label: qsTranslate("APMFailsafes.VehicleConfig.json", "Timeout")
+                          Layout.fillWidth: true
+                          fact: controller.getParameterFact(-1, "FS_GCS_TIMEOUT", false)
+                      }
+  
+                      QGCLabel {
+                          visible: _roverGcsEnabled
+                          text: qsTranslate("APMFailsafes.VehicleConfig.json", "Ignore failsafe if:")
+                          wrapMode: Text.WordWrap
+                          Layout.fillWidth: true
+                          Layout.preferredWidth: 0
+                      }
+  
+                      QGCCheckBoxSlider {
+                          Layout.leftMargin: ScreenTools.defaultFontPixelWidth * 2
+                          visible: _roverGcsEnabled
+                          Layout.fillWidth: true
+                          text: qsTranslate("APMFailsafes.VehicleConfig.json", "In Auto mode")
+                          checked: _roverGcsEnable ? _roverGcsEnable.rawValue === _roverFsParamValueEnabledIgnoreAuto : false
+                          onClicked: if (checked) { _roverGcsEnable.rawValue = _roverFsParamValueEnabledIgnoreAuto } else { _roverGcsEnable.rawValue = _roverFsParamValueEnabled }
+                      }
+  
+                      FactBitMaskCheckBoxSlider {
+                          Layout.leftMargin: ScreenTools.defaultFontPixelWidth * 2
+                          visible: fact !== null && (_fsOptionsAvailable && _roverGcsEnabled)
+                          Layout.fillWidth: true
+                          text: qsTranslate("APMFailsafes.VehicleConfig.json", "In Hold mode")
+                          fact: controller.getParameterFact(-1, "FS_OPTIONS", false)
+                          bitMask: 1
+                      }
+                  }
+  
+                  ConfigSection {
+                      Layout.fillWidth: true
+                      visible: sectionMatchesFilter("Failsafe Triggers") && controller.vehicle.fixedWing
+                      heading: qsTranslate("APMFailsafes.VehicleConfig.json", "Failsafe Triggers")
+  
+                      QGCCheckBoxSlider {
+                          Layout.fillWidth: true
+                          text: qsTranslate("APMFailsafes.VehicleConfig.json", "Throttle PWM threshold")
+                          checked: _planeThrEnabled
+                          onClicked: if (checked) { _planeThrFailsafe.value = _planeThrFsParamValueEnabled } else { _planeThrFailsafe.value = 0 }
+                      }
+  
+                      LabelledFactTextField {
+                          visible: fact !== null && (_planeThrEnabled)
+                          label: qsTranslate("APMFailsafes.VehicleConfig.json", "PWM threshold")
+                          Layout.fillWidth: true
+                          fact: controller.getParameterFact(-1, "THR_FS_VALUE", false)
+                      }
+  
+                      LabelledFactComboBox {
+                          visible: fact !== null
+                          label: qsTranslate("APMFailsafes.VehicleConfig.json", "Short failsafe action")
+                          Layout.fillWidth: true
+                          comboBoxPreferredWidth: ScreenTools.defaultFontPixelWidth * 30
+                          fact: controller.getParameterFact(-1, "FS_SHORT_ACTN", false)
+                          indexModel: false
+                      }
+  
+                      LabelledFactComboBox {
+                          visible: fact !== null
+                          label: qsTranslate("APMFailsafes.VehicleConfig.json", "Long failsafe action")
+                          Layout.fillWidth: true
+                          comboBoxPreferredWidth: ScreenTools.defaultFontPixelWidth * 30
+                          fact: controller.getParameterFact(-1, "FS_LONG_ACTN", false)
+                          indexModel: false
+                      }
+  
+                      LabelledFactTextField {
+                          visible: fact !== null
+                          label: qsTranslate("APMFailsafes.VehicleConfig.json", "Long failsafe timeout")
+                          Layout.fillWidth: true
+                          fact: controller.getParameterFact(-1, "FS_LONG_TIMEOUT", false)
+                      }
+  
+                      LabelledFactComboBox {
+                          visible: fact !== null && (controller.parameterExists(-1, "Q_TRANS_FAIL"))
+                          label: qsTranslate("APMFailsafes.VehicleConfig.json", "VTOL transition failure action")
+                          Layout.fillWidth: true
+                          comboBoxPreferredWidth: ScreenTools.defaultFontPixelWidth * 30
+                          fact: controller.getParameterFact(-1, "Q_TRANS_FAIL_ACT", false)
+                          indexModel: false
+                      }
+  
+                      LabelledFactTextField {
+                          visible: fact !== null && (controller.parameterExists(-1, "Q_TRANS_FAIL"))
+                          label: qsTranslate("APMFailsafes.VehicleConfig.json", "VTOL transition failure timeout")
+                          Layout.fillWidth: true
+                          fact: controller.getParameterFact(-1, "Q_TRANS_FAIL", false)
+                      }
+                  }
+  
+                  ConfigSection {
+                      Layout.fillWidth: true
+                      visible: sectionMatchesFilter("RC Failsafe") && controller.vehicle.multiRotor
+                      heading: qsTranslate("APMFailsafes.VehicleConfig.json", "RC Failsafe")
+  
+                      QGCLabel {
+                          text: qsTranslate("APMFailsafes.VehicleConfig.json", "Always enabled")
+                          wrapMode: Text.WordWrap
+                          Layout.fillWidth: true
+                          Layout.preferredWidth: 0
+                      }
+  
+                      QGCLabel {
+                          visible: _fsOptionsAvailable
+                          text: qsTranslate("APMFailsafes.VehicleConfig.json", "Ignore failsafe if:")
+                          wrapMode: Text.WordWrap
+                          Layout.fillWidth: true
+                          Layout.preferredWidth: 0
+                      }
+  
+                      FactBitMaskCheckBoxSlider {
+                          Layout.leftMargin: ScreenTools.defaultFontPixelWidth * 2
+                          visible: fact !== null && (_fsOptionsAvailable)
+                          Layout.fillWidth: true
+                          text: qsTranslate("APMFailsafes.VehicleConfig.json", "In Auto mode")
+                          fact: controller.getParameterFact(-1, "FS_OPTIONS", false)
+                          bitMask: 1
+                      }
+  
+                      FactBitMaskCheckBoxSlider {
+                          Layout.leftMargin: ScreenTools.defaultFontPixelWidth * 2
+                          visible: fact !== null && (_fsOptionsAvailable)
+                          Layout.fillWidth: true
+                          text: qsTranslate("APMFailsafes.VehicleConfig.json", "In Guided mode")
+                          fact: controller.getParameterFact(-1, "FS_OPTIONS", false)
+                          bitMask: 4
+                      }
+  
+                      FactBitMaskCheckBoxSlider {
+                          Layout.leftMargin: ScreenTools.defaultFontPixelWidth * 2
+                          visible: fact !== null && (_fsOptionsAvailable)
+                          Layout.fillWidth: true
+                          text: qsTranslate("APMFailsafes.VehicleConfig.json", "Landing")
+                          fact: controller.getParameterFact(-1, "FS_OPTIONS", false)
+                          bitMask: 8
+                      }
+                  }
+  
+                  ConfigSection {
+                      Layout.fillWidth: true
+                      visible: sectionMatchesFilter("Throttle Failsafe") && controller.vehicle.multiRotor
+                      heading: qsTranslate("APMFailsafes.VehicleConfig.json", "Throttle Failsafe")
+  
+                      QGCCheckBoxSlider {
+                          Layout.fillWidth: true
+                          text: qsTranslate("APMFailsafes.VehicleConfig.json", "Enabled")
+                          checked: _copterThrEnabled
+                          onClicked: if (checked) { _copterThrEnable.rawValue = _copterThrParamValueRtl } else { _copterThrEnable.rawValue = 0 }
+                      }
+  
+                      LabelledFactTextField {
+                          visible: fact !== null && (_copterThrEnabled)
+                          label: qsTranslate("APMFailsafes.VehicleConfig.json", "PWM threshold")
+                          Layout.fillWidth: true
+                          fact: controller.getParameterFact(-1, "FS_THR_VALUE", false)
+                      }
+  
+                      ColumnLayout {
+                          visible: controller.getParameterFact(-1, "FS_THR_ENABLE", false) !== null && (_copterThrEnabled)
+                          spacing: 0
+                          QGCLabel {
+                              text: qsTranslate("APMFailsafes.VehicleConfig.json", "Action:")
+                          }
+                          ColumnLayout {
+                              spacing: 0
+                              QGCRadioButton {
+                                  text: qsTranslate("APMFailsafes.VehicleConfig.json", "Always RTL")
+                                  checked: controller.getParameterFact(-1, "FS_THR_ENABLE", false) ? _copterThrEnable.rawValue === _copterThrParamValueRtl : false
+                                  onClicked: if (controller.getParameterFact(-1, "FS_THR_ENABLE", false)) { controller.getParameterFact(-1, "FS_THR_ENABLE", false).rawValue = _copterThrParamValueRtl }
+                              }
+                              QGCRadioButton {
+                                  text: qsTranslate("APMFailsafes.VehicleConfig.json", "Always Land")
+                                  checked: controller.getParameterFact(-1, "FS_THR_ENABLE", false) ? _copterThrEnable.rawValue === _copterThrParamValueLand : false
+                                  onClicked: if (controller.getParameterFact(-1, "FS_THR_ENABLE", false)) { controller.getParameterFact(-1, "FS_THR_ENABLE", false).rawValue = _copterThrParamValueLand }
+                              }
+                              QGCRadioButton {
+                                  text: qsTranslate("APMFailsafes.VehicleConfig.json", "Always SmartRTL or RTL")
+                                  checked: controller.getParameterFact(-1, "FS_THR_ENABLE", false) ? _copterThrEnable.rawValue === _copterThrParamValueSmartRtlOrRtl : false
+                                  onClicked: if (controller.getParameterFact(-1, "FS_THR_ENABLE", false)) { controller.getParameterFact(-1, "FS_THR_ENABLE", false).rawValue = _copterThrParamValueSmartRtlOrRtl }
+                              }
+                              QGCRadioButton {
+                                  text: qsTranslate("APMFailsafes.VehicleConfig.json", "Always SmartRTL or Land")
+                                  checked: controller.getParameterFact(-1, "FS_THR_ENABLE", false) ? _copterThrEnable.rawValue === _copterThrParamValueSmartRtlOrLand : false
+                                  onClicked: if (controller.getParameterFact(-1, "FS_THR_ENABLE", false)) { controller.getParameterFact(-1, "FS_THR_ENABLE", false).rawValue = _copterThrParamValueSmartRtlOrLand }
+                              }
+                              QGCRadioButton {
+                                  text: qsTranslate("APMFailsafes.VehicleConfig.json", "Auto DO_LAND_START or RTL")
+                                  checked: controller.getParameterFact(-1, "FS_THR_ENABLE", false) ? _copterThrEnable.rawValue === _copterThrParamValueAutoDoLandOrRtl : false
+                                  onClicked: if (controller.getParameterFact(-1, "FS_THR_ENABLE", false)) { controller.getParameterFact(-1, "FS_THR_ENABLE", false).rawValue = _copterThrParamValueAutoDoLandOrRtl }
+                              }
+                              QGCRadioButton {
+                                  text: qsTranslate("APMFailsafes.VehicleConfig.json", "Always Brake or Land")
+                                  checked: controller.getParameterFact(-1, "FS_THR_ENABLE", false) ? _copterThrEnable.rawValue === _copterThrParamValueBrakeOrLand : false
+                                  onClicked: if (controller.getParameterFact(-1, "FS_THR_ENABLE", false)) { controller.getParameterFact(-1, "FS_THR_ENABLE", false).rawValue = _copterThrParamValueBrakeOrLand }
+                              }
+                          }
+                      }
+  
+                      QGCLabel {
+                          visible: _fsOptionsAvailable && _copterThrEnabled
+                          text: qsTranslate("APMFailsafes.VehicleConfig.json", "Ignore failsafe if:")
+                          wrapMode: Text.WordWrap
+                          Layout.fillWidth: true
+                          Layout.preferredWidth: 0
+                      }
+  
+                      FactBitMaskCheckBoxSlider {
+                          Layout.leftMargin: ScreenTools.defaultFontPixelWidth * 2
+                          visible: fact !== null && (_fsOptionsAvailable && _copterThrEnabled)
+                          Layout.fillWidth: true
+                          text: qsTranslate("APMFailsafes.VehicleConfig.json", "In Auto mode")
+                          fact: controller.getParameterFact(-1, "FS_OPTIONS", false)
+                          bitMask: 1
+                      }
+  
+                      FactBitMaskCheckBoxSlider {
+                          Layout.leftMargin: ScreenTools.defaultFontPixelWidth * 2
+                          visible: fact !== null && (_fsOptionsAvailable && _copterThrEnabled)
+                          Layout.fillWidth: true
+                          text: qsTranslate("APMFailsafes.VehicleConfig.json", "In Guided mode")
+                          fact: controller.getParameterFact(-1, "FS_OPTIONS", false)
+                          bitMask: 4
+                      }
+  
+                      FactBitMaskCheckBoxSlider {
+                          Layout.leftMargin: ScreenTools.defaultFontPixelWidth * 2
+                          visible: fact !== null && (_fsOptionsAvailable && _copterThrEnabled)
+                          Layout.fillWidth: true
+                          text: qsTranslate("APMFailsafes.VehicleConfig.json", "Landing")
+                          fact: controller.getParameterFact(-1, "FS_OPTIONS", false)
+                          bitMask: 8
+                      }
+                  }
+  
+                  ConfigSection {
+                      Layout.fillWidth: true
+                      visible: sectionMatchesFilter("Throttle Failsafe") && _roverFirmware
+                      heading: qsTranslate("APMFailsafes.VehicleConfig.json", "Throttle Failsafe")
+  
+                      QGCCheckBoxSlider {
+                          Layout.fillWidth: true
+                          text: qsTranslate("APMFailsafes.VehicleConfig.json", "Enabled")
+                          checked: _roverThrEnabled
+                          onClicked: if (checked) { _roverThrEnable.rawValue = _roverFsParamValueEnabled } else { _roverThrEnable.rawValue = 0 }
+                      }
+  
+                      LabelledFactTextField {
+                          visible: fact !== null && (_roverThrEnabled)
+                          label: qsTranslate("APMFailsafes.VehicleConfig.json", "PWM threshold")
+                          Layout.fillWidth: true
+                          fact: controller.getParameterFact(-1, "FS_THR_VALUE", false)
+                      }
+  
+                      LabelledFactTextField {
+                          visible: fact !== null && (_roverThrEnabled)
+                          label: qsTranslate("APMFailsafes.VehicleConfig.json", "Timeout")
+                          Layout.fillWidth: true
+                          fact: controller.getParameterFact(-1, "FS_TIMEOUT", false)
+                      }
+  
+                      ColumnLayout {
+                          visible: controller.getParameterFact(-1, "FS_ACTION", false) !== null && (_roverThrEnabled)
+                          spacing: 0
+                          QGCLabel {
+                              text: qsTranslate("APMFailsafes.VehicleConfig.json", "Action:")
+                          }
+                          ColumnLayout {
+                              spacing: 0
+                              QGCRadioButton {
+                                  text: qsTranslate("APMFailsafes.VehicleConfig.json", "Nothing")
+                                  checked: controller.getParameterFact(-1, "FS_ACTION", false) ? _roverFsAction && _roverFsAction.rawValue === _roverFsActionParamValueNothing : false
+                                  onClicked: if (controller.getParameterFact(-1, "FS_ACTION", false)) { controller.getParameterFact(-1, "FS_ACTION", false).rawValue = _roverFsActionParamValueNothing }
+                              }
+                              QGCRadioButton {
+                                  text: qsTranslate("APMFailsafes.VehicleConfig.json", "RTL")
+                                  checked: controller.getParameterFact(-1, "FS_ACTION", false) ? _roverFsAction && _roverFsAction.rawValue === _roverFsActionParamValueRtl : false
+                                  onClicked: if (controller.getParameterFact(-1, "FS_ACTION", false)) { controller.getParameterFact(-1, "FS_ACTION", false).rawValue = _roverFsActionParamValueRtl }
+                              }
+                              QGCRadioButton {
+                                  text: qsTranslate("APMFailsafes.VehicleConfig.json", "Hold")
+                                  checked: controller.getParameterFact(-1, "FS_ACTION", false) ? _roverFsAction && _roverFsAction.rawValue === _roverFsActionParamValueHold : false
+                                  onClicked: if (controller.getParameterFact(-1, "FS_ACTION", false)) { controller.getParameterFact(-1, "FS_ACTION", false).rawValue = _roverFsActionParamValueHold }
+                              }
+                              QGCRadioButton {
+                                  text: qsTranslate("APMFailsafes.VehicleConfig.json", "SmartRTL or RTL")
+                                  checked: controller.getParameterFact(-1, "FS_ACTION", false) ? _roverFsAction && _roverFsAction.rawValue === _roverFsActionParamValueSmartRtlOrRtl : false
+                                  onClicked: if (controller.getParameterFact(-1, "FS_ACTION", false)) { controller.getParameterFact(-1, "FS_ACTION", false).rawValue = _roverFsActionParamValueSmartRtlOrRtl }
+                              }
+                              QGCRadioButton {
+                                  text: qsTranslate("APMFailsafes.VehicleConfig.json", "SmartRTL or Hold")
+                                  checked: controller.getParameterFact(-1, "FS_ACTION", false) ? _roverFsAction && _roverFsAction.rawValue === _roverFsActionParamValueSmartRtlOrHold : false
+                                  onClicked: if (controller.getParameterFact(-1, "FS_ACTION", false)) { controller.getParameterFact(-1, "FS_ACTION", false).rawValue = _roverFsActionParamValueSmartRtlOrHold }
+                              }
+                              QGCRadioButton {
+                                  text: qsTranslate("APMFailsafes.VehicleConfig.json", "Terminate")
+                                  checked: controller.getParameterFact(-1, "FS_ACTION", false) ? _roverFsAction && _roverFsAction.rawValue === _roverFsActionParamValueTerminate : false
+                                  onClicked: if (controller.getParameterFact(-1, "FS_ACTION", false)) { controller.getParameterFact(-1, "FS_ACTION", false).rawValue = _roverFsActionParamValueTerminate }
+                              }
+                              QGCRadioButton {
+                                  text: qsTranslate("APMFailsafes.VehicleConfig.json", "Loiter or Hold")
+                                  checked: controller.getParameterFact(-1, "FS_ACTION", false) ? _roverFsAction && _roverFsAction.rawValue === _roverFsActionParamValueLoiterOrHold : false
+                                  onClicked: if (controller.getParameterFact(-1, "FS_ACTION", false)) { controller.getParameterFact(-1, "FS_ACTION", false).rawValue = _roverFsActionParamValueLoiterOrHold }
+                              }
+                          }
+                      }
+  
+                      QGCLabel {
+                          visible: _roverThrEnabled
+                          text: qsTranslate("APMFailsafes.VehicleConfig.json", "Ignore failsafe if:")
+                          wrapMode: Text.WordWrap
+                          Layout.fillWidth: true
+                          Layout.preferredWidth: 0
+                      }
+  
+                      QGCCheckBoxSlider {
+                          Layout.leftMargin: ScreenTools.defaultFontPixelWidth * 2
+                          visible: _roverThrEnabled
+                          Layout.fillWidth: true
+                          text: qsTranslate("APMFailsafes.VehicleConfig.json", "In Auto mode")
+                          checked: _roverThrEnable ? _roverThrEnable.rawValue === _roverFsParamValueEnabledIgnoreAuto : false
+                          onClicked: if (checked) { _roverThrEnable.rawValue = _roverFsParamValueEnabledIgnoreAuto } else { _roverThrEnable.rawValue = _roverFsParamValueEnabled }
+                      }
+  
+                      FactBitMaskCheckBoxSlider {
+                          Layout.leftMargin: ScreenTools.defaultFontPixelWidth * 2
+                          visible: fact !== null && (_fsOptionsAvailable && _roverThrEnabled)
+                          Layout.fillWidth: true
+                          text: qsTranslate("APMFailsafes.VehicleConfig.json", "In Hold mode")
+                          fact: controller.getParameterFact(-1, "FS_OPTIONS", false)
+                          bitMask: 1
+                      }
+                  }
+  
+                  ConfigSection {
+                      Layout.fillWidth: true
+                      visible: sectionMatchesFilter("EKF Failsafe") && controller.vehicle.multiRotor
+                      heading: qsTranslate("APMFailsafes.VehicleConfig.json", "EKF Failsafe")
+  
+                      QGCCheckBoxSlider {
+                          Layout.fillWidth: true
+                          text: qsTranslate("APMFailsafes.VehicleConfig.json", "Enabled")
+                          checked: _copterEkfEnabled
+                          onClicked: if (checked) { _copterEkfAction.rawValue = _copterEkfParamValueLandIfPosRequired } else { _copterEkfAction.rawValue = 0 }
+                      }
+  
+                      LabelledFactTextField {
+                          visible: fact !== null && (_copterEkfEnabled)
+                          label: qsTranslate("APMFailsafes.VehicleConfig.json", "Threshold")
+                          Layout.fillWidth: true
+                          fact: controller.getParameterFact(-1, "FS_EKF_THRESH", false)
+                      }
+  
+                      ColumnLayout {
+                          visible: controller.getParameterFact(-1, "FS_EKF_ACTION", false) !== null && (_copterEkfEnabled)
+                          spacing: 0
+                          QGCLabel {
+                              text: qsTranslate("APMFailsafes.VehicleConfig.json", "Action:")
+                          }
+                          ColumnLayout {
+                              spacing: 0
+                              QGCRadioButton {
+                                  text: qsTranslate("APMFailsafes.VehicleConfig.json", "Land if position required")
+                                  checked: controller.getParameterFact(-1, "FS_EKF_ACTION", false) ? _copterEkfAction.rawValue === _copterEkfParamValueLandIfPosRequired : false
+                                  onClicked: if (controller.getParameterFact(-1, "FS_EKF_ACTION", false)) { controller.getParameterFact(-1, "FS_EKF_ACTION", false).rawValue = _copterEkfParamValueLandIfPosRequired }
+                              }
+                              QGCRadioButton {
+                                  text: qsTranslate("APMFailsafes.VehicleConfig.json", "AltHold if position required")
+                                  checked: controller.getParameterFact(-1, "FS_EKF_ACTION", false) ? _copterEkfAction.rawValue === _copterEkfParamValueAltHoldIfPosRequired : false
+                                  onClicked: if (controller.getParameterFact(-1, "FS_EKF_ACTION", false)) { controller.getParameterFact(-1, "FS_EKF_ACTION", false).rawValue = _copterEkfParamValueAltHoldIfPosRequired }
+                              }
+                              QGCRadioButton {
+                                  text: qsTranslate("APMFailsafes.VehicleConfig.json", "Land from all modes")
+                                  checked: controller.getParameterFact(-1, "FS_EKF_ACTION", false) ? _copterEkfAction.rawValue === _copterEkfParamValueLandAllModes : false
+                                  onClicked: if (controller.getParameterFact(-1, "FS_EKF_ACTION", false)) { controller.getParameterFact(-1, "FS_EKF_ACTION", false).rawValue = _copterEkfParamValueLandAllModes }
+                              }
+                          }
+                      }
+  
+                      QGCLabel {
+                          visible: _fsOptionsAvailable && _copterEkfEnabled
+                          text: qsTranslate("APMFailsafes.VehicleConfig.json", "Ignore failsafe if:")
+                          wrapMode: Text.WordWrap
+                          Layout.fillWidth: true
+                          Layout.preferredWidth: 0
+                      }
+  
+                      FactBitMaskCheckBoxSlider {
+                          Layout.leftMargin: ScreenTools.defaultFontPixelWidth * 2
+                          visible: fact !== null && (_fsOptionsAvailable && _copterEkfEnabled)
+                          Layout.fillWidth: true
+                          text: qsTranslate("APMFailsafes.VehicleConfig.json", "Landing")
+                          fact: controller.getParameterFact(-1, "FS_OPTIONS", false)
+                          bitMask: 8
+                      }
+                  }
+  
+                  ConfigSection {
+                      Layout.fillWidth: true
+                      visible: sectionMatchesFilter("EKF Failsafe") && _roverFirmware
+                      heading: qsTranslate("APMFailsafes.VehicleConfig.json", "EKF Failsafe")
+  
+                      QGCCheckBoxSlider {
+                          Layout.fillWidth: true
+                          text: qsTranslate("APMFailsafes.VehicleConfig.json", "Enabled")
+                          checked: _roverEkfEnabled
+                          onClicked: if (checked) { _roverEkfAction.rawValue = _roverEkfParamValueHold } else { _roverEkfAction.rawValue = 0 }
+                      }
+  
+                      LabelledFactTextField {
+                          visible: fact !== null && (_roverEkfEnabled)
+                          label: qsTranslate("APMFailsafes.VehicleConfig.json", "Threshold")
+                          Layout.fillWidth: true
+                          fact: controller.getParameterFact(-1, "FS_EKF_THRESH", false)
+                      }
+  
+                      ColumnLayout {
+                          visible: controller.getParameterFact(-1, "FS_EKF_ACTION", false) !== null && (_roverEkfEnabled)
+                          spacing: 0
+                          QGCLabel {
+                              text: qsTranslate("APMFailsafes.VehicleConfig.json", "Action:")
+                          }
+                          ColumnLayout {
+                              spacing: 0
+                              QGCRadioButton {
+                                  text: qsTranslate("APMFailsafes.VehicleConfig.json", "Hold")
+                                  checked: controller.getParameterFact(-1, "FS_EKF_ACTION", false) ? _roverEkfAction && _roverEkfAction.rawValue === _roverEkfParamValueHold : false
+                                  onClicked: if (controller.getParameterFact(-1, "FS_EKF_ACTION", false)) { controller.getParameterFact(-1, "FS_EKF_ACTION", false).rawValue = _roverEkfParamValueHold }
+                              }
+                              QGCRadioButton {
+                                  text: qsTranslate("APMFailsafes.VehicleConfig.json", "Report only")
+                                  checked: controller.getParameterFact(-1, "FS_EKF_ACTION", false) ? _roverEkfAction && _roverEkfAction.rawValue === _roverEkfParamValueReportOnly : false
+                                  onClicked: if (controller.getParameterFact(-1, "FS_EKF_ACTION", false)) { controller.getParameterFact(-1, "FS_EKF_ACTION", false).rawValue = _roverEkfParamValueReportOnly }
+                              }
+                          }
+                      }
+                  }
+  
+                  ConfigSection {
+                      Layout.fillWidth: true
+                      visible: sectionMatchesFilter("Dead Reckoning Failsafe") && controller.vehicle.multiRotor && controller.parameterExists(-1, "FS_DR_ENABLE")
+                      heading: qsTranslate("APMFailsafes.VehicleConfig.json", "Dead Reckoning Failsafe")
+  
+                      QGCCheckBoxSlider {
+                          Layout.fillWidth: true
+                          text: qsTranslate("APMFailsafes.VehicleConfig.json", "Enabled")
+                          checked: _drEnabled
+                          onClicked: if (checked) { _drEnable.rawValue = _drParamValueLand } else { _drEnable.rawValue = 0 }
+                      }
+  
+                      LabelledFactTextField {
+                          visible: fact !== null && (_drEnabled)
+                          label: qsTranslate("APMFailsafes.VehicleConfig.json", "Timeout")
+                          Layout.fillWidth: true
+                          fact: controller.getParameterFact(-1, "FS_DR_TIMEOUT", false)
+                      }
+  
+                      ColumnLayout {
+                          visible: controller.getParameterFact(-1, "FS_DR_ENABLE", false) !== null && (_drEnabled)
+                          spacing: 0
+                          QGCLabel {
+                              text: qsTranslate("APMFailsafes.VehicleConfig.json", "Action:")
+                          }
+                          ColumnLayout {
+                              spacing: 0
+                              QGCRadioButton {
+                                  text: qsTranslate("APMFailsafes.VehicleConfig.json", "Land")
+                                  checked: controller.getParameterFact(-1, "FS_DR_ENABLE", false) ? _drEnable.rawValue === _drParamValueLand : false
+                                  onClicked: if (controller.getParameterFact(-1, "FS_DR_ENABLE", false)) { controller.getParameterFact(-1, "FS_DR_ENABLE", false).rawValue = _drParamValueLand }
+                              }
+                              QGCRadioButton {
+                                  text: qsTranslate("APMFailsafes.VehicleConfig.json", "RTL")
+                                  checked: controller.getParameterFact(-1, "FS_DR_ENABLE", false) ? _drEnable.rawValue === _drParamValueRtl : false
+                                  onClicked: if (controller.getParameterFact(-1, "FS_DR_ENABLE", false)) { controller.getParameterFact(-1, "FS_DR_ENABLE", false).rawValue = _drParamValueRtl }
+                              }
+                              QGCRadioButton {
+                                  text: qsTranslate("APMFailsafes.VehicleConfig.json", "SmartRTL or RTL")
+                                  checked: controller.getParameterFact(-1, "FS_DR_ENABLE", false) ? _drEnable.rawValue === _drParamValueSmartRtlOrRtl : false
+                                  onClicked: if (controller.getParameterFact(-1, "FS_DR_ENABLE", false)) { controller.getParameterFact(-1, "FS_DR_ENABLE", false).rawValue = _drParamValueSmartRtlOrRtl }
+                              }
+                              QGCRadioButton {
+                                  text: qsTranslate("APMFailsafes.VehicleConfig.json", "SmartRTL or Land")
+                                  checked: controller.getParameterFact(-1, "FS_DR_ENABLE", false) ? _drEnable.rawValue === _drParamValueSmartRtlOrLand : false
+                                  onClicked: if (controller.getParameterFact(-1, "FS_DR_ENABLE", false)) { controller.getParameterFact(-1, "FS_DR_ENABLE", false).rawValue = _drParamValueSmartRtlOrLand }
+                              }
+                              QGCRadioButton {
+                                  text: qsTranslate("APMFailsafes.VehicleConfig.json", "Auto Land/Return or RTL")
+                                  checked: controller.getParameterFact(-1, "FS_DR_ENABLE", false) ? _drEnable.rawValue === _drParamValueAutoLandOrRtl : false
+                                  onClicked: if (controller.getParameterFact(-1, "FS_DR_ENABLE", false)) { controller.getParameterFact(-1, "FS_DR_ENABLE", false).rawValue = _drParamValueAutoLandOrRtl }
+                              }
+                          }
+                      }
+  
+                      QGCLabel {
+                          visible: _fsOptionsAvailable && _drEnabled
+                          text: qsTranslate("APMFailsafes.VehicleConfig.json", "Ignore failsafe if:")
+                          wrapMode: Text.WordWrap
+                          Layout.fillWidth: true
+                          Layout.preferredWidth: 0
+                      }
+  
+                      FactBitMaskCheckBoxSlider {
+                          Layout.leftMargin: ScreenTools.defaultFontPixelWidth * 2
+                          visible: fact !== null && (_fsOptionsAvailable && _drEnabled)
+                          Layout.fillWidth: true
+                          text: qsTranslate("APMFailsafes.VehicleConfig.json", "Landing")
+                          fact: controller.getParameterFact(-1, "FS_OPTIONS", false)
+                          bitMask: 8
+                      }
+                  }
+  
+                  ConfigSection {
+                      Layout.fillWidth: true
+                      visible: sectionMatchesFilter("Other Failsafe Options") && controller.vehicle.multiRotor
+                      heading: qsTranslate("APMFailsafes.VehicleConfig.json", "Other Failsafe Options")
+  
+                      FactCheckBoxSlider {
+                          visible: fact !== null
+                          Layout.fillWidth: true
+                          text: qsTranslate("APMFailsafes.VehicleConfig.json", "Crash check failsafe")
+                          fact: controller.getParameterFact(-1, "FS_CRASH_CHECK", false)
+                      }
+  
+                      FactCheckBoxSlider {
+                          visible: fact !== null
+                          Layout.fillWidth: true
+                          text: qsTranslate("APMFailsafes.VehicleConfig.json", "Vibration failsafe")
+                          fact: controller.getParameterFact(-1, "FS_VIBE_ENABLE", false)
+                      }
+  
+                      FactBitMaskCheckBoxSlider {
+                          visible: fact !== null && (_fsOptionsAvailable)
+                          Layout.fillWidth: true
+                          text: qsTranslate("APMFailsafes.VehicleConfig.json", "Release gripper on any failsafe")
+                          fact: controller.getParameterFact(-1, "FS_OPTIONS", false)
+                          bitMask: 32
+                      }
+                  }
+  
+                  ConfigSection {
+                      Layout.fillWidth: true
+                      visible: sectionMatchesFilter("Other Failsafe Options") && _roverFirmware
+                      heading: qsTranslate("APMFailsafes.VehicleConfig.json", "Other Failsafe Options")
+  
+                      QGCCheckBoxSlider {
+                          Layout.fillWidth: true
+                          text: qsTranslate("APMFailsafes.VehicleConfig.json", "Crash check failsafe")
+                          checked: _roverCrashEnabled
+                          onClicked: if (checked) { _roverCrashCheck.rawValue = _roverCrashParamValueHold } else { _roverCrashCheck.rawValue = 0 }
+                      }
+  
+                      ColumnLayout {
+                          visible: controller.getParameterFact(-1, "FS_CRASH_CHECK", false) !== null && (_roverCrashEnabled)
+                          spacing: 0
+                          QGCLabel {
+                              text: qsTranslate("APMFailsafes.VehicleConfig.json", "Action:")
+                          }
+                          ColumnLayout {
+                              spacing: 0
+                              QGCRadioButton {
+                                  text: qsTranslate("APMFailsafes.VehicleConfig.json", "Hold")
+                                  checked: controller.getParameterFact(-1, "FS_CRASH_CHECK", false) ? _roverCrashCheck.rawValue === _roverCrashParamValueHold : false
+                                  onClicked: if (controller.getParameterFact(-1, "FS_CRASH_CHECK", false)) { controller.getParameterFact(-1, "FS_CRASH_CHECK", false).rawValue = _roverCrashParamValueHold }
+                              }
+                              QGCRadioButton {
+                                  text: qsTranslate("APMFailsafes.VehicleConfig.json", "Hold and Disarm")
+                                  checked: controller.getParameterFact(-1, "FS_CRASH_CHECK", false) ? _roverCrashCheck.rawValue === _roverCrashParamValueHoldAndDisarm : false
+                                  onClicked: if (controller.getParameterFact(-1, "FS_CRASH_CHECK", false)) { controller.getParameterFact(-1, "FS_CRASH_CHECK", false).rawValue = _roverCrashParamValueHoldAndDisarm }
+                              }
+                          }
+                      }
+                  }
+              }
+          }
+      }
+  }
+  
+  '''
+# ---
+# name: test_generated_page_matches_snapshot[APM-APMFlightSafety]
+  '''
+  // This file is auto-generated. Do not edit.
+  import QtQuick
+  import QtQuick.Controls
+  import QtQuick.Layouts
+  
+  import QGroundControl
+  import QGroundControl.FactControls
+  import QGroundControl.Controls
+  
+  SetupPage {
+      id: configPage
+      pageComponent: pageComponent
+  
+      Component {
+          id: pageComponent
+  
+          Item {
+              width: Math.max(availableWidth, outerColumn.width)
+              height: outerColumn.height
+  
+              FactPanelController {
+                  id: controller
+              }
+  
+              property real _margins: ScreenTools.defaultFontPixelHeight
+  
+              readonly property var _rtlAltParamValueCurrentAltitude: 0
+              readonly property var _rtlLoitTimeParamValueDefault: 60
+              readonly property var _planeRtlAltParamValueCurrentAltitude: -1
+              readonly property var _planeRtlAltParamValueDefaultSpecified: 10000
+              readonly property var _planeFenceActionRtl: 1
+              readonly property var _planeFenceActionAutoLandOrRtl: 8
+  
+              property var _rtlAltIsMeters: controller.parameterExists(-1, "noremap.RTL_ALT_M")
+              property var _rtlAltFact: controller.getParameterFact(-1, "RTL_ALT_M", false)
+              property var _rtlLoitTimeFact: controller.getParameterFact(-1, "RTL_LOIT_TIME", false)
+              property var _planeRtlAltFact: controller.getParameterFact(-1, "RTL_ALTITUDE", false)
+              property var _fenceAction: controller.getParameterFact(-1, "FENCE_ACTION", false)
+              property var _fenceEnable: controller.getParameterFact(-1, "FENCE_ENABLE", false)
+              property var _fenceRetAlt: controller.getParameterFact(-1, "FENCE_RET_ALT", false)
+              property var _fenceType: controller.getParameterFact(-1, "FENCE_TYPE", false)
+              property var _armingCheck: controller.getParameterFact(-1, "ARMING_CHECK", false)
+              property var _armingSkipCheck: controller.getParameterFact(-1, "ARMING_SKIPCHK", false)
+  
+              property var _fenceEnabled: _fenceEnable && _fenceEnable.rawValue !== 0
+              property var _fenceActionIsRtl: _fenceAction && (_fenceAction.rawValue === _planeFenceActionRtl || _fenceAction.rawValue === _planeFenceActionAutoLandOrRtl)
+              property var _rtlAltParamValueDefaultSpecified: (_rtlAltIsMeters ? 15 : 1500)
+  
+              property string sectionIdFilter: ""
+  
+              // Keyed by untranslated section ID (must match VehicleComponent::sectionIds())
+              readonly property var _searchTerms: ({
+                  "Return to Launch": ["0 = use waypoint loiter radius (wp_loiter_rad), negative = counter-clockwise", "altitude", "auto land after rtl", "land", "launch", "loiter", "loiter radius", "return", "return altitude", "return altitude:", "return home", "return to launch", "rtl", "rtl_altitude", "rtl_autoland", "rtl_radius", "to"],
+                  "GeoFence": ["auto-enable", "boundary", "breach", "breach action", "circle centered on home", "circle radius", "containment", "custom return altitude", "enabled", "exclusion", "fence", "fence margin", "fence_action", "fence_alt_max", "fence_alt_min", "fence_autoenable", "fence_enable", "fence_margin", "fence_radius", "fence_ret_alt", "fence_ret_rally", "fence_type", "geofence", "inclusion", "inclusion/exclusion circles+polygons", "maximum altitude", "minimum altitude", "radius", "rally", "return altitude", "return to nearest rally point"],
+                  "Arming Checks": ["arming", "arming checks", "arming_check", "arming_skipchk", "checks", "pre-arm", "preflight", "safety check", "skip arming checks", "warning: skipping arming checks can lead to loss of vehicle control."]
+              })
+  
+              readonly property var _translatableSearchTerms: ({
+                  "Return to Launch": ["0 = use Waypoint Loiter Radius (WP_LOITER_RAD), negative = counter-clockwise", "Auto land after RTL", "Loiter radius", "Return altitude", "Return altitude:", "Return to Launch", "altitude", "land", "loiter", "return home", "return to launch", "rtl"],
+                  "GeoFence": ["Auto-enable", "Breach action", "Circle centered on Home", "Circle radius", "Custom return altitude", "Enabled", "Fence margin", "GeoFence", "Inclusion/Exclusion Circles+Polygons", "Maximum Altitude", "Maximum altitude", "Minimum Altitude", "Minimum altitude", "Return altitude", "Return to nearest rally point", "boundary", "breach", "containment", "exclusion", "fence", "geofence", "inclusion", "radius", "rally"],
+                  "Arming Checks": ["Arming Checks", "Arming checks", "Skip arming checks", "Warning: Skipping arming checks can lead to loss of Vehicle control.", "arming", "pre-arm", "preflight", "safety check"]
+              })
+  
+              // sectionId must be untranslated; repeat sections pass their base ID as searchKey
+              function sectionMatchesFilter(sectionId, searchKey) {
+                  if (sectionIdFilter === "") {
+                      return true
+                  }
+                  if (sectionIdFilter === sectionId) {
+                      return true
+                  }
+                  if (searchKey === undefined) {
+                      searchKey = sectionId
+                  }
+                  let filter = sectionIdFilter.toLowerCase()
+                  let terms = _searchTerms[searchKey]
+                  if (terms) {
+                      for (let i = 0; i < terms.length; i++) {
+                          if (terms[i].indexOf(filter) >= 0) {
+                              return true
+                          }
+                      }
+                  }
+                  let trTerms = _translatableSearchTerms[searchKey]
+                  if (trTerms) {
+                      for (let j = 0; j < trTerms.length; j++) {
+                          if (qsTranslate("APMFlightSafety.VehicleConfig.json", trTerms[j]).toLowerCase().indexOf(filter) >= 0) {
+                              return true
+                          }
+                      }
+                  }
+                  return false
+              }
+  
+              function sectionVisible(sectionId) {
+                  switch (sectionId) {
+                  case "Return to Launch":
+                      return controller.vehicle.multiRotor || controller.vehicle.fixedWing
+                  case "GeoFence":
+                      return controller.vehicle.multiRotor || controller.vehicle.fixedWing
+                  default:
+                      return true
+                  }
+              }
+  
+              property real _maxLeftMargin: ScreenTools.defaultFontPixelWidth * 20
+  
+              ColumnLayout {
+                  id: outerColumn
+                  spacing: _margins * 1.25
+                  anchors.left: parent.left
+                  anchors.leftMargin: Math.min((parent.width - width) / 2, _maxLeftMargin)
+  
+                  ConfigSection {
+                      Layout.fillWidth: true
+                      visible: sectionMatchesFilter("Return to Launch") && controller.vehicle.multiRotor
+                      heading: qsTranslate("APMFlightSafety.VehicleConfig.json", "Return to Launch")
+                      iconSource: "/qmlimages/ReturnToHomeAltitude.svg"
+  
+                      ColumnLayout {
+                          visible: controller.getParameterFact(-1, "RTL_ALT_M", false) !== null
+                          spacing: 0
+                          QGCLabel {
+                              text: qsTranslate("APMFlightSafety.VehicleConfig.json", "Return at specified altitude:")
+                          }
+                          ColumnLayout {
+                              spacing: 0
+                              QGCRadioButton {
+                                  text: qsTranslate("APMFlightSafety.VehicleConfig.json", "Return at current altitude")
+                                  checked: controller.getParameterFact(-1, "RTL_ALT_M", false) ? _rtlAltFact.value === _rtlAltParamValueCurrentAltitude : false
+                                  onClicked: if (controller.getParameterFact(-1, "RTL_ALT_M", false)) { controller.getParameterFact(-1, "RTL_ALT_M", false).value = _rtlAltParamValueCurrentAltitude }
+                              }
+                              QGCRadioButton {
+                                  text: qsTranslate("APMFlightSafety.VehicleConfig.json", "Return at specified altitude")
+                                  checked: controller.getParameterFact(-1, "RTL_ALT_M", false) ? _rtlAltFact.value !== _rtlAltParamValueCurrentAltitude : false
+                                  onClicked: if (controller.getParameterFact(-1, "RTL_ALT_M", false)) { controller.getParameterFact(-1, "RTL_ALT_M", false).value = _rtlAltParamValueDefaultSpecified }
+                              }
+                          }
+                      }
+  
+                      LabelledFactTextField {
+                          visible: fact !== null
+                          label: qsTranslate("APMFlightSafety.VehicleConfig.json", "Return altitude")
+                          Layout.fillWidth: true
+                          fact: controller.getParameterFact(-1, "RTL_ALT_M", false)
+                          enabled: _rtlAltFact && _rtlAltFact.value !== _rtlAltParamValueCurrentAltitude
+                      }
+  
+                      QGCCheckBoxSlider {
+                          visible: controller.getParameterFact(-1, "RTL_LOIT_TIME", false) !== null
+                          Layout.fillWidth: true
+                          text: qsTranslate("APMFlightSafety.VehicleConfig.json", "Loiter above Home")
+                          checked: controller.getParameterFact(-1, "RTL_LOIT_TIME", false) ? _rtlLoitTimeFact.value > 0 : false
+                          onClicked: if (controller.getParameterFact(-1, "RTL_LOIT_TIME", false)) { if (checked) { _rtlLoitTimeFact.value = _rtlLoitTimeParamValueDefault } else { _rtlLoitTimeFact.value = 0 } }
+                      }
+  
+                      LabelledFactTextField {
+                          visible: fact !== null
+                          label: qsTranslate("APMFlightSafety.VehicleConfig.json", "Loiter time")
+                          Layout.fillWidth: true
+                          fact: controller.getParameterFact(-1, "RTL_LOIT_TIME", false)
+                          enabled: _rtlLoitTimeFact && _rtlLoitTimeFact.value > 0
+                      }
+  
+                      LabelledFactTextField {
+                          visible: fact !== null
+                          label: qsTranslate("APMFlightSafety.VehicleConfig.json", "Final land stage altitude")
+                          Layout.fillWidth: true
+                          fact: controller.getParameterFact(-1, "RTL_ALT_FINAL_M", false)
+                      }
+  
+                      LabelledFactTextField {
+                          visible: fact !== null
+                          label: qsTranslate("APMFlightSafety.VehicleConfig.json", "Final land stage descent speed")
+                          Layout.fillWidth: true
+                          fact: controller.getParameterFact(-1, "LAND_SPD_MS", false)
+                      }
+                  }
+  
+                  ConfigSection {
+                      Layout.fillWidth: true
+                      visible: sectionMatchesFilter("Return to Launch") && controller.vehicle.fixedWing
+                      heading: qsTranslate("APMFlightSafety.VehicleConfig.json", "Return to Launch")
+                      iconSource: "/qmlimages/ReturnToHomeAltitude.svg"
+  
+                      ColumnLayout {
+                          visible: controller.getParameterFact(-1, "RTL_ALTITUDE", false) !== null
+                          spacing: 0
+                          QGCLabel {
+                              text: qsTranslate("APMFlightSafety.VehicleConfig.json", "Return altitude:")
+                          }
+                          ColumnLayout {
+                              spacing: 0
+                              QGCRadioButton {
+                                  text: qsTranslate("APMFlightSafety.VehicleConfig.json", "Return at current altitude")
+                                  checked: controller.getParameterFact(-1, "RTL_ALTITUDE", false) ? _planeRtlAltFact && _planeRtlAltFact.value < 0 : false
+                                  onClicked: if (controller.getParameterFact(-1, "RTL_ALTITUDE", false)) { controller.getParameterFact(-1, "RTL_ALTITUDE", false).value = _planeRtlAltParamValueCurrentAltitude }
+                              }
+                              QGCRadioButton {
+                                  text: qsTranslate("APMFlightSafety.VehicleConfig.json", "Return at specified altitude")
+                                  checked: controller.getParameterFact(-1, "RTL_ALTITUDE", false) ? _planeRtlAltFact && _planeRtlAltFact.value >= 0 : false
+                                  onClicked: if (controller.getParameterFact(-1, "RTL_ALTITUDE", false)) { controller.getParameterFact(-1, "RTL_ALTITUDE", false).value = _planeRtlAltParamValueDefaultSpecified }
+                              }
+                          }
+                      }
+  
+                      LabelledFactTextField {
+                          visible: fact !== null
+                          label: qsTranslate("APMFlightSafety.VehicleConfig.json", "Return altitude")
+                          Layout.fillWidth: true
+                          fact: controller.getParameterFact(-1, "RTL_ALTITUDE", false)
+                          enabled: _planeRtlAltFact && _planeRtlAltFact.value >= 0
+                      }
+  
+                      LabelledFactTextField {
+                          visible: fact !== null
+                          label: qsTranslate("APMFlightSafety.VehicleConfig.json", "Loiter radius")
+                          Layout.fillWidth: true
+                          fact: controller.getParameterFact(-1, "RTL_RADIUS", false)
+                      }
+  
+                      QGCLabel {
+                          Layout.leftMargin: ScreenTools.defaultFontPixelWidth * 2
+                          text: qsTranslate("APMFlightSafety.VehicleConfig.json", "0 = use Waypoint Loiter Radius (WP_LOITER_RAD), negative = counter-clockwise")
+                          wrapMode: Text.WordWrap
+                          Layout.fillWidth: true
+                          Layout.preferredWidth: 0
+                          font.pointSize: ScreenTools.smallFontPointSize
+                      }
+  
+                      LabelledFactComboBox {
+                          visible: fact !== null
+                          label: qsTranslate("APMFlightSafety.VehicleConfig.json", "Auto land after RTL")
+                          Layout.fillWidth: true
+                          comboBoxPreferredWidth: ScreenTools.defaultFontPixelWidth * 30
+                          fact: controller.getParameterFact(-1, "RTL_AUTOLAND", false)
+                          indexModel: false
+                      }
+                  }
+  
+                  ConfigSection {
+                      Layout.fillWidth: true
+                      visible: sectionMatchesFilter("GeoFence") && controller.vehicle.multiRotor
+                      heading: qsTranslate("APMFlightSafety.VehicleConfig.json", "GeoFence")
+  
+                      FactCheckBoxSlider {
+                          visible: fact !== null
+                          Layout.fillWidth: true
+                          text: qsTranslate("APMFlightSafety.VehicleConfig.json", "Enabled")
+                          fact: controller.getParameterFact(-1, "FENCE_ENABLE", false)
+                      }
+  
+                      FactBitMaskCheckBoxSlider {
+                          visible: fact !== null && (_fenceEnabled)
+                          Layout.fillWidth: true
+                          text: qsTranslate("APMFlightSafety.VehicleConfig.json", "Maximum Altitude")
+                          fact: controller.getParameterFact(-1, "FENCE_TYPE", false)
+                          bitMask: 1
+                      }
+  
+                      LabelledFactTextField {
+                          visible: fact !== null && (_fenceEnabled && _fenceType && (_fenceType.rawValue & 1))
+                          label: qsTranslate("APMFlightSafety.VehicleConfig.json", "Maximum altitude")
+                          Layout.fillWidth: true
+                          fact: controller.getParameterFact(-1, "FENCE_ALT_MAX", false)
+                      }
+  
+                      FactBitMaskCheckBoxSlider {
+                          visible: fact !== null && (_fenceEnabled)
+                          Layout.fillWidth: true
+                          text: qsTranslate("APMFlightSafety.VehicleConfig.json", "Minimum Altitude")
+                          fact: controller.getParameterFact(-1, "FENCE_TYPE", false)
+                          bitMask: 8
+                      }
+  
+                      LabelledFactTextField {
+                          visible: fact !== null && (_fenceEnabled && _fenceType && (_fenceType.rawValue & 8))
+                          label: qsTranslate("APMFlightSafety.VehicleConfig.json", "Minimum altitude")
+                          Layout.fillWidth: true
+                          fact: controller.getParameterFact(-1, "FENCE_ALT_MIN", false)
+                      }
+  
+                      FactBitMaskCheckBoxSlider {
+                          visible: fact !== null && (_fenceEnabled)
+                          Layout.fillWidth: true
+                          text: qsTranslate("APMFlightSafety.VehicleConfig.json", "Circle centered on Home")
+                          fact: controller.getParameterFact(-1, "FENCE_TYPE", false)
+                          bitMask: 2
+                      }
+  
+                      LabelledFactTextField {
+                          visible: fact !== null && (_fenceEnabled && _fenceType && (_fenceType.rawValue & 2))
+                          label: qsTranslate("APMFlightSafety.VehicleConfig.json", "Circle radius")
+                          Layout.fillWidth: true
+                          fact: controller.getParameterFact(-1, "FENCE_RADIUS", false)
+                      }
+  
+                      FactBitMaskCheckBoxSlider {
+                          visible: fact !== null && (_fenceEnabled)
+                          Layout.fillWidth: true
+                          text: qsTranslate("APMFlightSafety.VehicleConfig.json", "Inclusion/Exclusion Circles+Polygons")
+                          fact: controller.getParameterFact(-1, "FENCE_TYPE", false)
+                          bitMask: 4
+                      }
+  
+                      LabelledFactTextField {
+                          visible: fact !== null && (_fenceEnabled)
+                          label: qsTranslate("APMFlightSafety.VehicleConfig.json", "Fence margin")
+                          Layout.fillWidth: true
+                          fact: controller.getParameterFact(-1, "FENCE_MARGIN", false)
+                      }
+  
+                      LabelledFactComboBox {
+                          visible: fact !== null && (_fenceEnabled)
+                          label: qsTranslate("APMFlightSafety.VehicleConfig.json", "Auto-enable")
+                          Layout.fillWidth: true
+                          comboBoxPreferredWidth: ScreenTools.defaultFontPixelWidth * 30
+                          fact: controller.getParameterFact(-1, "FENCE_AUTOENABLE", false)
+                          indexModel: false
+                      }
+  
+                      LabelledFactComboBox {
+                          visible: fact !== null && (_fenceEnabled)
+                          label: qsTranslate("APMFlightSafety.VehicleConfig.json", "Breach action")
+                          Layout.fillWidth: true
+                          comboBoxPreferredWidth: ScreenTools.defaultFontPixelWidth * 30
+                          fact: controller.getParameterFact(-1, "FENCE_ACTION", false)
+                          indexModel: false
+                      }
+                  }
+  
+                  ConfigSection {
+                      Layout.fillWidth: true
+                      visible: sectionMatchesFilter("GeoFence") && controller.vehicle.fixedWing
+                      heading: qsTranslate("APMFlightSafety.VehicleConfig.json", "GeoFence")
+  
+                      FactCheckBoxSlider {
+                          visible: fact !== null
+                          Layout.fillWidth: true
+                          text: qsTranslate("APMFlightSafety.VehicleConfig.json", "Enabled")
+                          fact: controller.getParameterFact(-1, "FENCE_ENABLE", false)
+                      }
+  
+                      FactBitMaskCheckBoxSlider {
+                          visible: fact !== null && (_fenceEnabled)
+                          Layout.fillWidth: true
+                          text: qsTranslate("APMFlightSafety.VehicleConfig.json", "Maximum Altitude")
+                          fact: controller.getParameterFact(-1, "FENCE_TYPE", false)
+                          bitMask: 1
+                      }
+  
+                      LabelledFactTextField {
+                          visible: fact !== null && (_fenceEnabled && _fenceType && (_fenceType.rawValue & 1))
+                          label: qsTranslate("APMFlightSafety.VehicleConfig.json", "Maximum altitude")
+                          Layout.fillWidth: true
+                          fact: controller.getParameterFact(-1, "FENCE_ALT_MAX", false)
+                      }
+  
+                      FactBitMaskCheckBoxSlider {
+                          visible: fact !== null && (_fenceEnabled)
+                          Layout.fillWidth: true
+                          text: qsTranslate("APMFlightSafety.VehicleConfig.json", "Minimum Altitude")
+                          fact: controller.getParameterFact(-1, "FENCE_TYPE", false)
+                          bitMask: 8
+                      }
+  
+                      LabelledFactTextField {
+                          visible: fact !== null && (_fenceEnabled && _fenceType && (_fenceType.rawValue & 8))
+                          label: qsTranslate("APMFlightSafety.VehicleConfig.json", "Minimum altitude")
+                          Layout.fillWidth: true
+                          fact: controller.getParameterFact(-1, "FENCE_ALT_MIN", false)
+                      }
+  
+                      FactBitMaskCheckBoxSlider {
+                          visible: fact !== null && (_fenceEnabled)
+                          Layout.fillWidth: true
+                          text: qsTranslate("APMFlightSafety.VehicleConfig.json", "Circle centered on Home")
+                          fact: controller.getParameterFact(-1, "FENCE_TYPE", false)
+                          bitMask: 2
+                      }
+  
+                      LabelledFactTextField {
+                          visible: fact !== null && (_fenceEnabled && _fenceType && (_fenceType.rawValue & 2))
+                          label: qsTranslate("APMFlightSafety.VehicleConfig.json", "Circle radius")
+                          Layout.fillWidth: true
+                          fact: controller.getParameterFact(-1, "FENCE_RADIUS", false)
+                      }
+  
+                      FactBitMaskCheckBoxSlider {
+                          visible: fact !== null && (_fenceEnabled)
+                          Layout.fillWidth: true
+                          text: qsTranslate("APMFlightSafety.VehicleConfig.json", "Inclusion/Exclusion Circles+Polygons")
+                          fact: controller.getParameterFact(-1, "FENCE_TYPE", false)
+                          bitMask: 4
+                      }
+  
+                      LabelledFactTextField {
+                          visible: fact !== null && (_fenceEnabled)
+                          label: qsTranslate("APMFlightSafety.VehicleConfig.json", "Fence margin")
+                          Layout.fillWidth: true
+                          fact: controller.getParameterFact(-1, "FENCE_MARGIN", false)
+                      }
+  
+                      LabelledFactComboBox {
+                          visible: fact !== null && (_fenceEnabled)
+                          label: qsTranslate("APMFlightSafety.VehicleConfig.json", "Auto-enable")
+                          Layout.fillWidth: true
+                          comboBoxPreferredWidth: ScreenTools.defaultFontPixelWidth * 30
+                          fact: controller.getParameterFact(-1, "FENCE_AUTOENABLE", false)
+                          indexModel: false
+                      }
+  
+                      LabelledFactComboBox {
+                          visible: fact !== null && (_fenceEnabled)
+                          label: qsTranslate("APMFlightSafety.VehicleConfig.json", "Breach action")
+                          Layout.fillWidth: true
+                          comboBoxPreferredWidth: ScreenTools.defaultFontPixelWidth * 30
+                          fact: controller.getParameterFact(-1, "FENCE_ACTION", false)
+                          indexModel: false
+                      }
+  
+                      QGCCheckBoxSlider {
+                          Layout.leftMargin: ScreenTools.defaultFontPixelWidth * 2
+                          visible: controller.getParameterFact(-1, "FENCE_RET_ALT", false) !== null && (_fenceEnabled && _fenceActionIsRtl)
+                          Layout.fillWidth: true
+                          text: qsTranslate("APMFlightSafety.VehicleConfig.json", "Custom return altitude")
+                          checked: controller.getParameterFact(-1, "FENCE_RET_ALT", false) ? _fenceRetAlt && _fenceRetAlt.value > 0 : false
+                          onClicked: if (controller.getParameterFact(-1, "FENCE_RET_ALT", false)) { if (checked) { _fenceRetAlt.value = (_planeRtlAltFact ? _planeRtlAltFact.value : 100) } else { _fenceRetAlt.value = 0 } }
+                      }
+  
+                      LabelledFactTextField {
+                          Layout.leftMargin: ScreenTools.defaultFontPixelWidth * 2
+                          visible: fact !== null && (_fenceEnabled && _fenceActionIsRtl && _fenceRetAlt && _fenceRetAlt.value > 0)
+                          label: qsTranslate("APMFlightSafety.VehicleConfig.json", "Return altitude")
+                          Layout.fillWidth: true
+                          fact: controller.getParameterFact(-1, "FENCE_RET_ALT", false)
+                      }
+  
+                      FactCheckBoxSlider {
+                          Layout.leftMargin: ScreenTools.defaultFontPixelWidth * 2
+                          visible: fact !== null && (_fenceEnabled && _fenceActionIsRtl)
+                          Layout.fillWidth: true
+                          text: qsTranslate("APMFlightSafety.VehicleConfig.json", "Return to nearest rally point")
+                          fact: controller.getParameterFact(-1, "FENCE_RET_RALLY", false)
+                      }
+                  }
+  
+                  ConfigSection {
+                      Layout.fillWidth: true
+                      visible: sectionMatchesFilter("Arming Checks")
+                      heading: qsTranslate("APMFlightSafety.VehicleConfig.json", "Arming Checks")
+  
+                      QGCLabel {
+                          text: qsTranslate("APMFlightSafety.VehicleConfig.json", "Warning: Skipping arming checks can lead to loss of Vehicle control.")
+                          wrapMode: Text.WordWrap
+                          Layout.fillWidth: true
+                          Layout.preferredWidth: 0
+                          color: qgcPal.warningText
+                      }
+  
+                      FactBitmask {
+                          visible: fact !== null && (_armingCheck)
+                          fact: controller.getParameterFact(-1, "ARMING_CHECK", false)
+                          firstEntryIsAll: true
+                          Layout.preferredWidth: 0
+                          Layout.fillWidth: true
+                      }
+  
+                      FactBitmask {
+                          visible: fact !== null && (!_armingCheck && _armingSkipCheck)
+                          fact: controller.getParameterFact(-1, "ARMING_SKIPCHK", false)
+                          Layout.preferredWidth: 0
+                          Layout.fillWidth: true
+                      }
+                  }
+              }
+          }
+      }
+  }
+  
+  '''
+# ---
+# name: test_generated_page_matches_snapshot[APM-APMLogging]
+  '''
+  // This file is auto-generated. Do not edit.
+  import QtQuick
+  import QtQuick.Controls
+  import QtQuick.Layouts
+  
+  import QGroundControl
+  import QGroundControl.FactControls
+  import QGroundControl.Controls
+  
+  SetupPage {
+      id: configPage
+      pageComponent: pageComponent
+  
+      Component {
+          id: pageComponent
+  
+          Item {
+              width: Math.max(availableWidth, outerColumn.width)
+              height: outerColumn.height
+  
+              FactPanelController {
+                  id: controller
+              }
+  
+              property real _margins: ScreenTools.defaultFontPixelHeight
+  
+              property string sectionIdFilter: ""
+  
+              // Keyed by untranslated section ID (must match VehicleComponent::sectionIds())
+              readonly property var _searchTerms: ({
+                  "Storage": ["backend", "bitmask", "free space", "log", "log_backend_type", "log_bitmask", "log_file_mb_free", "log_max_files", "logged data groups", "logging", "logging backends", "mavlink stream", "max files", "maximum retained log files", "minimum free space (mb)", "onboard flash", "sd card", "storage"],
+                  "Rate Limits": ["block rate", "file rate", "hz", "limit", "limits", "log_blk_ratemax", "log_file_ratemax", "log_mav_ratemax", "logging rate", "mavlink rate", "maximum block logging rate (hz)", "maximum file logging rate (hz)", "maximum mavlink stream rate (hz)", "rate"],
+                  "Options": ["disarmed", "ek3_log_level", "ekf", "ekf3", "ekf3 logging verbosity", "log extra data for ekf replay", "log options", "log while disarmed", "log_disarmed", "log_file_dsrmrot", "log_replay", "options", "pre-arm", "replay", "rotate", "rotate log file on disarm/rearm"]
+              })
+  
+              readonly property var _translatableSearchTerms: ({
+                  "Storage": ["Logged data groups", "Logging backends", "Maximum retained log files", "Minimum free space (MB)", "Storage", "backend", "bitmask", "free space", "log", "logging", "mavlink stream", "max files", "onboard flash", "sd card"],
+                  "Rate Limits": ["Maximum MAVLink stream rate (Hz)", "Maximum block logging rate (Hz)", "Maximum file logging rate (Hz)", "Rate Limits", "block rate", "file rate", "hz", "limit", "logging rate", "mavlink rate", "rate"],
+                  "Options": ["EKF3 logging verbosity", "Log extra data for EKF replay", "Log while disarmed", "Options", "Rotate log file on disarm/rearm", "disarmed", "ekf", "ekf3", "log options", "pre-arm", "replay", "rotate"]
+              })
+  
+              // sectionId must be untranslated; repeat sections pass their base ID as searchKey
+              function sectionMatchesFilter(sectionId, searchKey) {
+                  if (sectionIdFilter === "") {
+                      return true
+                  }
+                  if (sectionIdFilter === sectionId) {
+                      return true
+                  }
+                  if (searchKey === undefined) {
+                      searchKey = sectionId
+                  }
+                  let filter = sectionIdFilter.toLowerCase()
+                  let terms = _searchTerms[searchKey]
+                  if (terms) {
+                      for (let i = 0; i < terms.length; i++) {
+                          if (terms[i].indexOf(filter) >= 0) {
+                              return true
+                          }
+                      }
+                  }
+                  let trTerms = _translatableSearchTerms[searchKey]
+                  if (trTerms) {
+                      for (let j = 0; j < trTerms.length; j++) {
+                          if (qsTranslate("APMLogging.VehicleConfig.json", trTerms[j]).toLowerCase().indexOf(filter) >= 0) {
+                              return true
+                          }
+                      }
+                  }
+                  return false
+              }
+  
+              function sectionVisible(sectionId) {
+                  switch (sectionId) {
+                  default:
+                      return true
+                  }
+              }
+  
+              property real _maxLeftMargin: ScreenTools.defaultFontPixelWidth * 20
+  
+              ColumnLayout {
+                  id: outerColumn
+                  spacing: _margins * 1.25
+                  anchors.left: parent.left
+                  anchors.leftMargin: Math.min((parent.width - width) / 2, _maxLeftMargin)
+  
+                  ConfigSection {
+                      Layout.fillWidth: true
+                      visible: sectionMatchesFilter("Storage")
+                      heading: qsTranslate("APMLogging.VehicleConfig.json", "Storage")
+  
+                      FactBitmask {
+                          visible: fact !== null
+                          fact: controller.getParameterFact(-1, "LOG_BACKEND_TYPE", false)
+                          Layout.preferredWidth: 0
+                          Layout.fillWidth: true
+                      }
+  
+                      FactBitmask {
+                          visible: fact !== null
+                          fact: controller.getParameterFact(-1, "LOG_BITMASK", false)
+                          Layout.preferredWidth: 0
+                          Layout.fillWidth: true
+                      }
+  
+                      LabelledFactTextField {
+                          visible: fact !== null
+                          label: qsTranslate("APMLogging.VehicleConfig.json", "Maximum retained log files")
+                          Layout.fillWidth: true
+                          fact: controller.getParameterFact(-1, "LOG_MAX_FILES", false)
+                      }
+  
+                      LabelledFactTextField {
+                          visible: fact !== null
+                          label: qsTranslate("APMLogging.VehicleConfig.json", "Minimum free space (MB)")
+                          Layout.fillWidth: true
+                          fact: controller.getParameterFact(-1, "LOG_FILE_MB_FREE", false)
+                      }
+                  }
+  
+                  ConfigSection {
+                      Layout.fillWidth: true
+                      visible: sectionMatchesFilter("Rate Limits")
+                      heading: qsTranslate("APMLogging.VehicleConfig.json", "Rate Limits")
+  
+                      LabelledFactTextField {
+                          visible: fact !== null
+                          label: qsTranslate("APMLogging.VehicleConfig.json", "Maximum file logging rate (Hz)")
+                          Layout.fillWidth: true
+                          fact: controller.getParameterFact(-1, "LOG_FILE_RATEMAX", false)
+                      }
+  
+                      LabelledFactTextField {
+                          visible: fact !== null
+                          label: qsTranslate("APMLogging.VehicleConfig.json", "Maximum block logging rate (Hz)")
+                          Layout.fillWidth: true
+                          fact: controller.getParameterFact(-1, "LOG_BLK_RATEMAX", false)
+                      }
+  
+                      LabelledFactTextField {
+                          visible: fact !== null
+                          label: qsTranslate("APMLogging.VehicleConfig.json", "Maximum MAVLink stream rate (Hz)")
+                          Layout.fillWidth: true
+                          fact: controller.getParameterFact(-1, "LOG_MAV_RATEMAX", false)
+                      }
+                  }
+  
+                  ConfigSection {
+                      Layout.fillWidth: true
+                      visible: sectionMatchesFilter("Options")
+                      heading: qsTranslate("APMLogging.VehicleConfig.json", "Options")
+  
+                      LabelledFactComboBox {
+                          visible: fact !== null
+                          label: qsTranslate("APMLogging.VehicleConfig.json", "Log while disarmed")
+                          Layout.fillWidth: true
+                          comboBoxPreferredWidth: ScreenTools.defaultFontPixelWidth * 30
+                          fact: controller.getParameterFact(-1, "LOG_DISARMED", false)
+                          indexModel: false
+                      }
+  
+                      LabelledFactComboBox {
+                          visible: fact !== null
+                          label: qsTranslate("APMLogging.VehicleConfig.json", "Rotate log file on disarm/rearm")
+                          Layout.fillWidth: true
+                          comboBoxPreferredWidth: ScreenTools.defaultFontPixelWidth * 30
+                          fact: controller.getParameterFact(-1, "LOG_FILE_DSRMROT", false)
+                          indexModel: false
+                      }
+  
+                      LabelledFactComboBox {
+                          visible: fact !== null
+                          label: qsTranslate("APMLogging.VehicleConfig.json", "Log extra data for EKF replay")
+                          Layout.fillWidth: true
+                          comboBoxPreferredWidth: ScreenTools.defaultFontPixelWidth * 30
+                          fact: controller.getParameterFact(-1, "LOG_REPLAY", false)
+                          indexModel: false
+                      }
+  
+                      LabelledComboBox {
+                          property var _fact: controller.getParameterFact(-1, "EK3_LOG_LEVEL", false)
+                          label: qsTranslate("APMLogging.VehicleConfig.json", "EKF3 logging verbosity")
+                          Layout.fillWidth: true
+                          comboBoxPreferredWidth: ScreenTools.defaultFontPixelWidth * 30
+                          model: [qsTranslate("APMLogging.VehicleConfig.json", "Full logging"), qsTranslate("APMLogging.VehicleConfig.json", "XKF4 scaled innovations only"), qsTranslate("APMLogging.VehicleConfig.json", "XKF4 and GSF"), qsTranslate("APMLogging.VehicleConfig.json", "Disabled")]
+                          property var _enumValues: [0, 1, 2, 3]
+                          currentIndex: { var v = _fact ? _fact.rawValue : 0; var i = _enumValues.indexOf(v); return i >= 0 ? i : 0 }
+                          onActivated: (index) => { if (_fact) _fact.rawValue = _enumValues[index] }
+                          visible: _fact !== null
+                      }
+                  }
+              }
+          }
+      }
+  }
+  
+  '''
+# ---
+# name: test_generated_page_matches_snapshot[APM-APMPower]
+  '''
+  // This file is auto-generated. Do not edit.
+  import QtQuick
+  import QtQuick.Controls
+  import QtQuick.Layouts
+  
+  import QGroundControl
+  import QGroundControl.FactControls
+  import QGroundControl.Controls
+  
+  import QGroundControl.AutoPilotPlugins.APM
+  import QGroundControl.AutoPilotPlugins.Common
+  
+  SetupPage {
+      id: configPage
+      pageComponent: pageComponent
+  
+      Component {
+          id: pageComponent
+  
+          Item {
+              width: Math.max(availableWidth, outerColumn.width)
+              height: outerColumn.height
+  
+              PowerModulePresetController {
+                  id: controller
+              }
+  
+              property real _margins: ScreenTools.defaultFontPixelHeight
+  
+              readonly property var _monitorParamValueDisabled: 0
+              readonly property var _monitorParamValueAnalogVoltageOnly: 3
+              readonly property var _monitorParamValueAnalogVoltageAndCurrent: 4
+              readonly property var _monitorParamValueAnalogVoltageSyntheticCurrent: 25
+              readonly property var _monitorParamValueAnalogCurrentOnly: 31
+  
+              function _battPrefixForIndex(_i) {
+                  if (_i === 0) return "BATT_"
+                  if (_i <= 8) return "BATT" + (_i + 1) + "_"
+                  return "BATT" + String.fromCharCode(65 + _i - 9) + "_"
+              }
+              function _battLabelForIndex(_i) {
+                  if (_i <= 8) return String(_i + 1)
+                  return String.fromCharCode(65 + _i - 9)
+              }
+              property int _batteryCount: {
+                  var _i = 0
+                  while (_i < 16) {
+                      if (!controller.parameterExists(-1, _battPrefixForIndex(_i) + "MONITOR"))
+                          return _i
+                      _i++
+                  }
+                  return 16
+              }
+  
+              property string sectionIdFilter: ""
+  
+              // Keyed by untranslated section ID (must match VehicleComponent::sectionIds())
+              readonly property var _searchTerms: ({
+                  "Battery": ["amp_offset", "amp_pervlt", "amps", "amps offset", "amps per volt", "arm_volt", "batteries", "battery", "battery capacity", "battery monitor", "capacity", "current", "disabled", "minimum arming voltage", "monitor", "power module", "sensor", "volt_mult", "voltage", "voltage multiplier"]
+              })
+  
+              readonly property var _translatableSearchTerms: ({
+                  "Battery": ["Amps offset", "Amps per volt", "Battery", "Battery capacity", "Battery monitor", "Disabled Batteries", "Minimum arming voltage", "Voltage multiplier", "amps", "battery", "capacity", "current", "power module", "sensor", "voltage"]
+              })
+  
+              // sectionId must be untranslated; repeat sections pass their base ID as searchKey
+              function sectionMatchesFilter(sectionId, searchKey) {
+                  if (sectionIdFilter === "") {
+                      return true
+                  }
+                  if (sectionIdFilter === sectionId) {
+                      return true
+                  }
+                  if (searchKey === undefined) {
+                      searchKey = sectionId
+                  }
+                  let filter = sectionIdFilter.toLowerCase()
+                  let terms = _searchTerms[searchKey]
+                  if (terms) {
+                      for (let i = 0; i < terms.length; i++) {
+                          if (terms[i].indexOf(filter) >= 0) {
+                              return true
+                          }
+                      }
+                  }
+                  let trTerms = _translatableSearchTerms[searchKey]
+                  if (trTerms) {
+                      for (let j = 0; j < trTerms.length; j++) {
+                          if (qsTranslate("APMPower.VehicleConfig.json", trTerms[j]).toLowerCase().indexOf(filter) >= 0) {
+                              return true
+                          }
+                      }
+                  }
+                  return false
+              }
+  
+              function sectionVisible(sectionId) {
+                  switch (sectionId) {
+                  default:
+                      return true
+                  }
+              }
+  
+              property real _maxLeftMargin: ScreenTools.defaultFontPixelWidth * 20
+  
+              ColumnLayout {
+                  id: outerColumn
+                  spacing: _margins * 1.25
+                  anchors.left: parent.left
+                  anchors.leftMargin: Math.min((parent.width - width) / 2, _maxLeftMargin)
+  
+                  Repeater {
+                      model: _batteryCount
+  
+                      ConfigSection {
+                          Layout.fillWidth: true
+                          visible: sectionMatchesFilter(_sectionId, "Battery") && controller.getParameterFact(-1, _fullParamName("MONITOR")).value !== _monitorParamValueDisabled
+                          heading: _batteryCount > 1 ? qsTranslate("APMPower.VehicleConfig.json", "Battery") + " " + _displayIndex : qsTranslate("APMPower.VehicleConfig.json", "Battery")
+                          iconSource: "/qmlimages/Battery.svg"
+  
+                          property int _rawIndex: index
+                          property string _prefix: _battPrefixForIndex(_rawIndex)
+                          property string _displayIndex: _battLabelForIndex(_rawIndex)
+                          // Untranslated section ID; must match VehicleComponent::sectionIds() expansion
+                          property string _sectionId: _batteryCount > 1 ? "Battery " + _displayIndex : "Battery"
+                          function _fullParamName(postfix) { return _prefix + postfix }
+  
+                          LabelledFactComboBox {
+                              visible: fact !== null
+                              label: qsTranslate("APMPower.VehicleConfig.json", "Battery monitor")
+                              Layout.fillWidth: true
+                              comboBoxPreferredWidth: ScreenTools.defaultFontPixelWidth * 30
+                              fact: controller.getParameterFact(-1, _fullParamName("MONITOR"), false)
+                              indexModel: false
+                          }
+  
+                          LabelledFactTextField {
+                              visible: fact !== null && (controller.parameterExists(-1, _fullParamName("CAPACITY")))
+                              label: qsTranslate("APMPower.VehicleConfig.json", "Battery capacity")
+                              Layout.fillWidth: true
+                              fact: controller.getParameterFact(-1, _fullParamName("CAPACITY"), false)
+                          }
+  
+                          LabelledFactTextField {
+                              visible: fact !== null && (controller.parameterExists(-1, _fullParamName("ARM_VOLT")))
+                              label: qsTranslate("APMPower.VehicleConfig.json", "Minimum arming voltage")
+                              Layout.fillWidth: true
+                              fact: controller.getParameterFact(-1, _fullParamName("ARM_VOLT"), false)
+                          }
+  
+                          ColumnLayout {
+                              visible: controller.getParameterFact(-1, _fullParamName("VOLT_MULT"), false) !== null && (controller.parameterExists(-1, _fullParamName("VOLT_MULT")) && [_monitorParamValueAnalogVoltageOnly, _monitorParamValueAnalogVoltageAndCurrent, _monitorParamValueAnalogVoltageSyntheticCurrent].includes(controller.getParameterFact(-1, _fullParamName("MONITOR")).rawValue))
+                              QGCPopupDialogFactory {
+                                  id: _dlgFactory0
+                                  dialogComponent: _dlgFactory0Component
+                              }
+                              Component {
+                                  id: _dlgFactory0Component
+                                  APMCalcVoltageDividerDialog { }
+                              }
+                              RowLayout {
+                                  Layout.fillWidth: true
+                                  spacing: ScreenTools.defaultFontPixelWidth
+                                  QGCLabel {
+                                      text: qsTranslate("APMPower.VehicleConfig.json", "Voltage multiplier")
+                                      Layout.fillWidth: true
+                                  }
+                                  QGCButton {
+                                      text: qsTranslate("APMPower.VehicleConfig.json", "Calculate")
+                                      onClicked: _dlgFactory0.open({ "batteryIndex": _rawIndex })
+                                  }
+                                  FactTextField {
+                                      fact: controller.getParameterFact(-1, _fullParamName("VOLT_MULT"), false)
+                                  }
+                              }
+                          }
+  
+                          ColumnLayout {
+                              visible: controller.getParameterFact(-1, _fullParamName("AMP_PERVLT"), false) !== null && (controller.parameterExists(-1, _fullParamName("AMP_PERVLT")) && [_monitorParamValueAnalogVoltageAndCurrent, _monitorParamValueAnalogCurrentOnly].includes(controller.getParameterFact(-1, _fullParamName("MONITOR")).rawValue))
+                              QGCPopupDialogFactory {
+                                  id: _dlgFactory1
+                                  dialogComponent: _dlgFactory1Component
+                              }
+                              Component {
+                                  id: _dlgFactory1Component
+                                  APMCalcAmpsPerVoltDialog { }
+                              }
+                              RowLayout {
+                                  Layout.fillWidth: true
+                                  spacing: ScreenTools.defaultFontPixelWidth
+                                  QGCLabel {
+                                      text: qsTranslate("APMPower.VehicleConfig.json", "Amps per volt")
+                                      Layout.fillWidth: true
+                                  }
+                                  QGCButton {
+                                      text: qsTranslate("APMPower.VehicleConfig.json", "Calculate")
+                                      onClicked: _dlgFactory1.open({ "batteryIndex": _rawIndex })
+                                  }
+                                  FactTextField {
+                                      fact: controller.getParameterFact(-1, _fullParamName("AMP_PERVLT"), false)
+                                  }
+                              }
+                          }
+  
+                          LabelledFactTextField {
+                              visible: fact !== null && (controller.parameterExists(-1, _fullParamName("AMP_OFFSET")) && [_monitorParamValueAnalogVoltageAndCurrent, _monitorParamValueAnalogCurrentOnly].includes(controller.getParameterFact(-1, _fullParamName("MONITOR")).rawValue))
+                              label: qsTranslate("APMPower.VehicleConfig.json", "Amps offset")
+                              Layout.fillWidth: true
+                              fact: controller.getParameterFact(-1, _fullParamName("AMP_OFFSET"), false)
+                          }
+                      }
+                  }
+  
+                  ConfigSection {
+                      Layout.fillWidth: true
+                      visible: sectionMatchesFilter("Disabled Batteries") && _hasDisabledBattery
+                      property bool _hasDisabledBattery: {
+                          for (var i = 0; i < _batteryCount; i++) {
+                              if (controller.getParameterFact(-1, _battPrefixForIndex(i) + "MONITOR").value === _monitorParamValueDisabled)
+                                  return true
+                          }
+                          return false
+                      }
+                      heading: qsTranslate("APMPower.VehicleConfig.json", "Disabled Batteries")
+  
+                      Repeater {
+                          model: _batteryCount
+  
+                          FactCheckBoxSlider {
+                              visible: controller.getParameterFact(-1, _battPrefixForIndex(index) + "MONITOR").value === _monitorParamValueDisabled
+                              text: _batteryCount > 1 ? qsTranslate("APMPower.VehicleConfig.json", "Battery") + " " + _battLabelForIndex(index) : qsTranslate("APMPower.VehicleConfig.json", "Battery")
+                              fact: controller.getParameterFact(-1, _battPrefixForIndex(index) + "MONITOR")
+                              checkedValue: _monitorParamValueAnalogVoltageAndCurrent
+                              uncheckedValue: _monitorParamValueDisabled
+                              Layout.fillWidth: true
+                          }
+                      }
+                  }
+              }
+          }
+      }
+  }
+  
+  '''
+# ---
+# name: test_generated_page_matches_snapshot[APM-APMTuningCopter]
+  '''
+  // This file is auto-generated. Do not edit.
+  import QtQuick
+  import QtQuick.Controls
+  import QtQuick.Layouts
+  
+  import QGroundControl
+  import QGroundControl.FactControls
+  import QGroundControl.Controls
+  
+  SetupPage {
+      id: configPage
+      pageComponent: pageComponent
+  
+      Component {
+          id: pageComponent
+  
+          Item {
+              width: Math.max(availableWidth, outerColumn.width)
+              height: outerColumn.height
+  
+              FactPanelController {
+                  id: controller
+              }
+  
+              property real _margins: ScreenTools.defaultFontPixelHeight
+  
+              property string sectionIdFilter: ""
+  
+              // Keyed by untranslated section ID (must match VehicleComponent::sectionIds())
+              readonly property var _searchTerms: ({
+                  "Flight Response": ["atc_input_tc", "atc_rat_rll_p", "climb", "climb sensitivity", "flight", "minimum thrust", "mot_spin_arm", "mot_spin_min", "motor", "pid", "pitch", "psc_d_acc_p", "rc roll/pitch feel", "response", "roll", "roll/pitch sensitivity", "sensitivity", "spin while armed", "thrust", "tuning"],
+                  "AutoTune": ["aggressiveness", "auto tune", "autotune", "autotune_aggr", "autotune_axes", "autotune_min_d", "axes", "axes to autotune", "channel", "minimum d gain", "switch"],
+                  "In Flight Tuning": ["channel 6", "flight", "in", "in flight tuning", "max", "min", "rc channel 6 option (tuning)", "rc tuning", "tune", "tune_max", "tune_min", "tuning"]
+              })
+  
+              readonly property var _translatableSearchTerms: ({
+                  "Flight Response": ["Climb Sensitivity", "Flight Response", "Minimum Thrust", "RC Roll/Pitch Feel", "Roll/Pitch Sensitivity", "Spin While Armed", "climb", "motor", "pid", "pitch", "roll", "sensitivity", "thrust", "tuning"],
+                  "AutoTune": ["Aggressiveness", "AutoTune", "Axes to AutoTune", "Minimum D gain", "auto tune", "autotune", "axes", "channel", "switch"],
+                  "In Flight Tuning": ["In Flight Tuning", "Max", "Min", "RC Channel 6 Option (Tuning)", "channel 6", "in flight tuning", "rc tuning", "tune"]
+              })
+  
+              // sectionId must be untranslated; repeat sections pass their base ID as searchKey
+              function sectionMatchesFilter(sectionId, searchKey) {
+                  if (sectionIdFilter === "") {
+                      return true
+                  }
+                  if (sectionIdFilter === sectionId) {
+                      return true
+                  }
+                  if (searchKey === undefined) {
+                      searchKey = sectionId
+                  }
+                  let filter = sectionIdFilter.toLowerCase()
+                  let terms = _searchTerms[searchKey]
+                  if (terms) {
+                      for (let i = 0; i < terms.length; i++) {
+                          if (terms[i].indexOf(filter) >= 0) {
+                              return true
+                          }
+                      }
+                  }
+                  let trTerms = _translatableSearchTerms[searchKey]
+                  if (trTerms) {
+                      for (let j = 0; j < trTerms.length; j++) {
+                          if (qsTranslate("APMTuningCopter.VehicleConfig.json", trTerms[j]).toLowerCase().indexOf(filter) >= 0) {
+                              return true
+                          }
+                      }
+                  }
+                  return false
+              }
+  
+              function sectionVisible(sectionId) {
+                  switch (sectionId) {
+                  case "Flight Response":
+                      return controller.vehicle.multiRotor
+                  case "AutoTune":
+                      return controller.vehicle.multiRotor
+                  case "In Flight Tuning":
+                      return controller.vehicle.multiRotor
+                  default:
+                      return true
+                  }
+              }
+  
+              property real _maxLeftMargin: ScreenTools.defaultFontPixelWidth * 20
+  
+              ColumnLayout {
+                  id: outerColumn
+                  spacing: _margins * 1.25
+                  anchors.left: parent.left
+                  anchors.leftMargin: Math.min((parent.width - width) / 2, _maxLeftMargin)
+  
+                  ConfigSection {
+                      Layout.fillWidth: true
+                      visible: sectionMatchesFilter("Flight Response") && controller.vehicle.multiRotor
+                      heading: qsTranslate("APMTuningCopter.VehicleConfig.json", "Flight Response")
+  
+                      QGCGroupBox {
+                          Layout.fillWidth: true
+                          Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 60
+                          heading: qsTranslate("APMTuningCopter.VehicleConfig.json", "Roll/Pitch Sensitivity")
+                          headingDescription: qsTranslate("APMTuningCopter.VehicleConfig.json", "Slide to the right if the copter is sluggish or slide to the left if the copter is twitchy")
+                          visible: controller.getParameterFact(-1, "ATC_RAT_RLL_P", false) !== null
+  
+                          FactSlider {
+                              Layout.fillWidth: true
+                              fact: controller.getParameterFact(-1, "ATC_RAT_RLL_P", false)
+                              from: 0.08
+                              to: 0.4
+                              majorTickStepSize: 0.02
+                              decimalPlaces: 3
+                              onValueChanged: {
+                                  controller.getParameterFact(-1, "ATC_RAT_RLL_I").rawValue = value
+                                  controller.getParameterFact(-1, "ATC_RAT_PIT_P").rawValue = value
+                                  controller.getParameterFact(-1, "ATC_RAT_PIT_I").rawValue = value
+                              }
+                          }
+                      }
+  
+                      QGCGroupBox {
+                          Layout.fillWidth: true
+                          Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 60
+                          heading: qsTranslate("APMTuningCopter.VehicleConfig.json", "Climb Sensitivity")
+                          headingDescription: qsTranslate("APMTuningCopter.VehicleConfig.json", "Slide to the right to climb more aggressively or slide to the left to climb more gently")
+                          visible: controller.getParameterFact(-1, "PSC_D_ACC_P", false) !== null
+  
+                          FactSlider {
+                              Layout.fillWidth: true
+                              fact: controller.getParameterFact(-1, "PSC_D_ACC_P", false)
+                              from: 0.03
+                              to: 1.0
+                              majorTickStepSize: 0.05
+                              decimalPlaces: 3
+                              onValueChanged: {
+                                  controller.getParameterFact(-1, "PSC_D_ACC_I").rawValue = value * 2
+                              }
+                          }
+                      }
+  
+                      QGCGroupBox {
+                          Layout.fillWidth: true
+                          Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 60
+                          heading: qsTranslate("APMTuningCopter.VehicleConfig.json", "RC Roll/Pitch Feel")
+                          headingDescription: qsTranslate("APMTuningCopter.VehicleConfig.json", "Slide to the left for soft control, slide to the right for crisp control")
+                          visible: controller.getParameterFact(-1, "ATC_INPUT_TC", false) !== null
+  
+                          FactSlider {
+                              Layout.fillWidth: true
+                              fact: controller.getParameterFact(-1, "ATC_INPUT_TC", false)
+                              majorTickStepSize: fact ? fact.increment : 1
+                          }
+                      }
+  
+                      QGCGroupBox {
+                          Layout.fillWidth: true
+                          Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 60
+                          heading: qsTranslate("APMTuningCopter.VehicleConfig.json", "Spin While Armed")
+                          headingDescription: qsTranslate("APMTuningCopter.VehicleConfig.json", "Adjust the amount the motors spin to indicate armed. Should be lower than Minimum Thrust.")
+                          visible: controller.getParameterFact(-1, "MOT_SPIN_ARM", false) !== null
+  
+                          FactSlider {
+                              Layout.fillWidth: true
+                              fact: controller.getParameterFact(-1, "MOT_SPIN_ARM", false)
+                              from: 0
+                              to: 0.3
+                              majorTickStepSize: 0.1
+                              decimalPlaces: 1
+                          }
+                      }
+  
+                      QGCGroupBox {
+                          Layout.fillWidth: true
+                          Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 60
+                          heading: qsTranslate("APMTuningCopter.VehicleConfig.json", "Minimum Thrust")
+                          headingDescription: qsTranslate("APMTuningCopter.VehicleConfig.json", "Adjust the minimum amount of thrust required for the vehicle to move. Should be higher than Spin While Armed.")
+                          visible: controller.getParameterFact(-1, "MOT_SPIN_MIN", false) !== null
+  
+                          FactSlider {
+                              Layout.fillWidth: true
+                              fact: controller.getParameterFact(-1, "MOT_SPIN_MIN", false)
+                              from: 0
+                              to: 0.3
+                              majorTickStepSize: 0.1
+                              decimalPlaces: 1
+                          }
+                      }
+                  }
+  
+                  ConfigSection {
+                      Layout.fillWidth: true
+                      visible: sectionMatchesFilter("AutoTune") && controller.vehicle.multiRotor
+                      heading: qsTranslate("APMTuningCopter.VehicleConfig.json", "AutoTune")
+  
+                      FactBitmask {
+                          visible: fact !== null
+                          fact: controller.getParameterFact(-1, "AUTOTUNE_AXES", false)
+                          Layout.preferredWidth: 0
+                          Layout.fillWidth: true
+                      }
+  
+                      APMAutoTuneChannelSelector {
+                          controller: controller
+                          Layout.fillWidth: true
+                      }
+  
+                      LabelledFactTextField {
+                          visible: fact !== null
+                          label: qsTranslate("APMTuningCopter.VehicleConfig.json", "Aggressiveness")
+                          Layout.fillWidth: true
+                          fact: controller.getParameterFact(-1, "AUTOTUNE_AGGR", false)
+                      }
+  
+                      LabelledFactTextField {
+                          visible: fact !== null
+                          label: qsTranslate("APMTuningCopter.VehicleConfig.json", "Minimum D gain")
+                          Layout.fillWidth: true
+                          fact: controller.getParameterFact(-1, "AUTOTUNE_MIN_D", false)
+                      }
+                  }
+  
+                  ConfigSection {
+                      Layout.fillWidth: true
+                      visible: sectionMatchesFilter("In Flight Tuning") && controller.vehicle.multiRotor
+                      heading: qsTranslate("APMTuningCopter.VehicleConfig.json", "In Flight Tuning")
+  
+                      LabelledFactComboBox {
+                          visible: fact !== null
+                          label: qsTranslate("APMTuningCopter.VehicleConfig.json", "RC Channel 6 Option (Tuning)")
+                          Layout.fillWidth: true
+                          comboBoxPreferredWidth: ScreenTools.defaultFontPixelWidth * 30
+                          fact: controller.getParameterFact(-1, "TUNE", false)
+                          indexModel: false
+                      }
+  
+                      LabelledFactTextField {
+                          visible: fact !== null
+                          label: qsTranslate("APMTuningCopter.VehicleConfig.json", "Min")
+                          Layout.fillWidth: true
+                          fact: controller.getParameterFact(-1, "TUNE_MIN", false)
+                      }
+  
+                      LabelledFactTextField {
+                          visible: fact !== null
+                          label: qsTranslate("APMTuningCopter.VehicleConfig.json", "Max")
+                          Layout.fillWidth: true
+                          fact: controller.getParameterFact(-1, "TUNE_MAX", false)
+                      }
+                  }
+              }
+          }
+      }
+  }
+  
+  '''
+# ---
+# name: test_generated_page_matches_snapshot[PX4-Power]
+  '''
+  // This file is auto-generated. Do not edit.
+  import QtQuick
+  import QtQuick.Controls
+  import QtQuick.Layouts
+  
+  import QGroundControl
+  import QGroundControl.FactControls
+  import QGroundControl.Controls
+  
+  import QGroundControl.AutoPilotPlugins.PX4
+  
+  SetupPage {
+      id: configPage
+      pageComponent: pageComponent
+  
+      Component {
+          id: pageComponent
+  
+          Item {
+              width: Math.max(availableWidth, outerColumn.width)
+              height: outerColumn.height
+  
+              PowerComponentController {
+                  id: controller
+              }
+  
+              property real _margins: ScreenTools.defaultFontPixelHeight
+  
+              property int _batteryCount: {
+                  var _i = 1
+                  while (true) {
+                      var _idx = _i
+                      if (!controller.parameterExists(-1, "BAT" + _idx + "_SOURCE"))
+                          return _i - 1
+                      _i++
+                  }
+              }
+  
+              property string sectionIdFilter: ""
+  
+              // Keyed by untranslated section ID (must match VehicleComponent::sectionIds())
+              readonly property var _searchTerms: ({
+                  "Battery": ["_a_per_v", "_capacity", "_n_cells", "_source", "_v_charged", "_v_div", "_v_empty", "amps per volt", "battery", "battery capacity (mah)", "cells", "current", "empty voltage (per cell)", "full voltage (per cell)", "lipo", "number of cells (in series)", "power module", "sensor", "source", "voltage", "voltage divider"],
+                  "ESC PWM Calibration": ["calibration", "electronic speed controller", "esc", "motor", "pwm", "warning: propellers must be removed from vehicle prior to performing esc calibration.", "you must use usb connection for this operation."]
+              })
+  
+              readonly property var _translatableSearchTerms: ({
+                  "Battery": ["Amps per volt", "Battery", "Battery capacity (mAh)", "Empty voltage (per cell)", "Full voltage (per cell)", "Number of cells (in series)", "Source", "Voltage divider", "battery", "cells", "current", "lipo", "power module", "sensor", "voltage"],
+                  "ESC PWM Calibration": ["ESC PWM Calibration", "WARNING: Propellers must be removed from vehicle prior to performing ESC calibration.", "You must use USB connection for this operation.", "calibration", "electronic speed controller", "esc", "motor", "pwm"]
+              })
+  
+              // sectionId must be untranslated; repeat sections pass their base ID as searchKey
+              function sectionMatchesFilter(sectionId, searchKey) {
+                  if (sectionIdFilter === "") {
+                      return true
+                  }
+                  if (sectionIdFilter === sectionId) {
+                      return true
+                  }
+                  if (searchKey === undefined) {
+                      searchKey = sectionId
+                  }
+                  let filter = sectionIdFilter.toLowerCase()
+                  let terms = _searchTerms[searchKey]
+                  if (terms) {
+                      for (let i = 0; i < terms.length; i++) {
+                          if (terms[i].indexOf(filter) >= 0) {
+                              return true
+                          }
+                      }
+                  }
+                  let trTerms = _translatableSearchTerms[searchKey]
+                  if (trTerms) {
+                      for (let j = 0; j < trTerms.length; j++) {
+                          if (qsTranslate("Power.VehicleConfig.json", trTerms[j]).toLowerCase().indexOf(filter) >= 0) {
+                              return true
+                          }
+                      }
+                  }
+                  return false
+              }
+  
+              function sectionVisible(sectionId) {
+                  switch (sectionId) {
+                  default:
+                      return true
+                  }
+              }
+  
+              property real _maxLeftMargin: ScreenTools.defaultFontPixelWidth * 20
+  
+              ColumnLayout {
+                  id: outerColumn
+                  spacing: _margins * 1.25
+                  anchors.left: parent.left
+                  anchors.leftMargin: Math.min((parent.width - width) / 2, _maxLeftMargin)
+  
+                  Repeater {
+                      model: _batteryCount
+  
+                      ConfigSection {
+                          Layout.fillWidth: true
+                          visible: sectionMatchesFilter(_sectionId, "Battery")
+                          heading: _batteryCount > 1 ? qsTranslate("Power.VehicleConfig.json", "Battery") + " " + _displayIndex : qsTranslate("Power.VehicleConfig.json", "Battery")
+                          iconSource: "/qmlimages/Battery.svg"
+  
+                          property int _rawIndex: index + 1
+                          property string _indexStr: String(_rawIndex)
+                          property string _displayIndex: String(_rawIndex)
+                          // Untranslated section ID; must match VehicleComponent::sectionIds() expansion
+                          property string _sectionId: _batteryCount > 1 ? "Battery " + _displayIndex : "Battery"
+                          function _fullParamName(postfix) { return "BAT" + _indexStr + postfix }
+  
+                          LabelledFactComboBox {
+                              visible: fact !== null
+                              label: qsTranslate("Power.VehicleConfig.json", "Source")
+                              Layout.fillWidth: true
+                              comboBoxPreferredWidth: ScreenTools.defaultFontPixelWidth * 30
+                              fact: controller.getParameterFact(-1, _fullParamName("_SOURCE"), false)
+                              indexModel: false
+                          }
+  
+                          LabelledFactTextField {
+                              visible: fact !== null && (controller.parameterExists(-1, _fullParamName("_N_CELLS")))
+                              label: qsTranslate("Power.VehicleConfig.json", "Number of cells (in series)")
+                              Layout.fillWidth: true
+                              fact: controller.getParameterFact(-1, _fullParamName("_N_CELLS"), false)
+                          }
+  
+                          ColumnLayout {
+                              visible: controller.getParameterFact(-1, _fullParamName("_CAPACITY"), false) !== null && (controller.parameterExists(-1, _fullParamName("_CAPACITY")))
+                              Layout.fillWidth: true
+                              Layout.preferredWidth: 0
+                              spacing: ScreenTools.defaultFontPixelHeight / 4
+                              LabelledFactTextField {
+                                  label: qsTranslate("Power.VehicleConfig.json", "Battery capacity (mAh)")
+                                  Layout.fillWidth: true
+                                  fact: controller.getParameterFact(-1, _fullParamName("_CAPACITY"), false)
+                              }
+                              QGCLabel {
+                                  Layout.fillWidth: true
+                                  Layout.preferredWidth: 0
+                                  text: qsTranslate("Power.VehicleConfig.json", "Set to -1 to disable. When set to a positive value, enables coulomb counting for more accurate state-of-charge and time-remaining estimates.")
+                                  font.pointSize: ScreenTools.smallFontPointSize
+                                  wrapMode: Text.WordWrap
+                              }
+                          }
+  
+                          LabelledFactTextField {
+                              visible: fact !== null && (controller.parameterExists(-1, _fullParamName("_V_EMPTY")))
+                              label: qsTranslate("Power.VehicleConfig.json", "Empty voltage (per cell)")
+                              Layout.fillWidth: true
+                              fact: controller.getParameterFact(-1, _fullParamName("_V_EMPTY"), false)
+                          }
+  
+                          LabelledFactTextField {
+                              visible: fact !== null && (controller.parameterExists(-1, _fullParamName("_V_CHARGED")))
+                              label: qsTranslate("Power.VehicleConfig.json", "Full voltage (per cell)")
+                              Layout.fillWidth: true
+                              fact: controller.getParameterFact(-1, _fullParamName("_V_CHARGED"), false)
+                          }
+  
+                          ColumnLayout {
+                              visible: controller.getParameterFact(-1, _fullParamName("_V_DIV"), false) !== null && (controller.parameterExists(-1, _fullParamName("_V_DIV")))
+                              QGCPopupDialogFactory {
+                                  id: _dlgFactory0
+                                  dialogComponent: _dlgFactory0Component
+                              }
+                              Component {
+                                  id: _dlgFactory0Component
+                                  CalcVoltageDividerDialog { }
+                              }
+                              RowLayout {
+                                  Layout.fillWidth: true
+                                  spacing: ScreenTools.defaultFontPixelWidth
+                                  QGCLabel {
+                                      text: qsTranslate("Power.VehicleConfig.json", "Voltage divider")
+                                      Layout.fillWidth: true
+                                  }
+                                  QGCButton {
+                                      text: qsTranslate("Power.VehicleConfig.json", "Calculate")
+                                      onClicked: _dlgFactory0.open({ "batteryIndex": _rawIndex })
+                                  }
+                                  FactTextField {
+                                      fact: controller.getParameterFact(-1, _fullParamName("_V_DIV"), false)
+                                  }
+                              }
+                          }
+  
+                          ColumnLayout {
+                              visible: controller.getParameterFact(-1, _fullParamName("_A_PER_V"), false) !== null && (controller.parameterExists(-1, _fullParamName("_A_PER_V")))
+                              QGCPopupDialogFactory {
+                                  id: _dlgFactory1
+                                  dialogComponent: _dlgFactory1Component
+                              }
+                              Component {
+                                  id: _dlgFactory1Component
+                                  CalcAmpsPerVoltDialog { }
+                              }
+                              RowLayout {
+                                  Layout.fillWidth: true
+                                  spacing: ScreenTools.defaultFontPixelWidth
+                                  QGCLabel {
+                                      text: qsTranslate("Power.VehicleConfig.json", "Amps per volt")
+                                      Layout.fillWidth: true
+                                  }
+                                  QGCButton {
+                                      text: qsTranslate("Power.VehicleConfig.json", "Calculate")
+                                      onClicked: _dlgFactory1.open({ "batteryIndex": _rawIndex })
+                                  }
+                                  FactTextField {
+                                      fact: controller.getParameterFact(-1, _fullParamName("_A_PER_V"), false)
+                                  }
+                              }
+                          }
+                      }
+                  }
+  
+                  ConfigSection {
+                      Layout.fillWidth: true
+                      visible: sectionMatchesFilter("ESC PWM Calibration")
+                      heading: qsTranslate("Power.VehicleConfig.json", "ESC PWM Calibration")
+                      iconSource: "/qmlimages/Gears.svg"
+  
+                      QGCLabel {
+                          text: qsTranslate("Power.VehicleConfig.json", "WARNING: Propellers must be removed from vehicle prior to performing ESC calibration.")
+                          wrapMode: Text.WordWrap
+                          Layout.fillWidth: true
+                          Layout.preferredWidth: 0
+                          color: qgcPal.warningText
+                      }
+  
+                      QGCLabel {
+                          text: qsTranslate("Power.VehicleConfig.json", "You must use USB connection for this operation.")
+                          wrapMode: Text.WordWrap
+                          Layout.fillWidth: true
+                          Layout.preferredWidth: 0
+                      }
+  
+                      QGCPopupDialogFactory {
+                          id: _dlgFactory0
+                          dialogComponent: _dlgFactory0Component
+                      }
+                      Component {
+                          id: _dlgFactory0Component
+                          ESCCalibrationDialog { }
+                      }
+                      QGCButton {
+                          text: qsTranslate("Power.VehicleConfig.json", "Calibrate")
+                          onClicked: _dlgFactory0.open()
+                      }
+                  }
+              }
+          }
+      }
+  }
+  
+  '''
+# ---
+# name: test_generated_page_matches_snapshot[PX4-Safety]
+  '''
+  // This file is auto-generated. Do not edit.
+  import QtQuick
+  import QtQuick.Controls
+  import QtQuick.Layouts
+  
+  import QGroundControl
+  import QGroundControl.FactControls
+  import QGroundControl.Controls
+  
+  SetupPage {
+      id: configPage
+      pageComponent: pageComponent
+  
+      Component {
+          id: pageComponent
+  
+          Item {
+              width: Math.max(availableWidth, outerColumn.width)
+              height: outerColumn.height
+  
+              FactPanelController {
+                  id: controller
+              }
+  
+              property real _margins: ScreenTools.defaultFontPixelHeight
+  
+              readonly property var _rtlLandDelayParamValueLandImmediately: 0
+              readonly property var _rtlLandDelayParamValueLoiterIndefinitely: -1
+              readonly property var _rtlLandDelayParamValueLoiterDefault: 60
+  
+              property var _cpDist: controller.getParameterFact(-1, "CP_DIST")
+              property var _fenceRadius: controller.getParameterFact(-1, "GF_MAX_HOR_DIST")
+              property var _fenceAlt: controller.getParameterFact(-1, "GF_MAX_VER_DIST")
+              property var _disarmLandDelay: controller.getParameterFact(-1, "COM_DISARM_LAND")
+              property var _landSpeedMCExists: controller.parameterExists(-1, "MPC_LAND_SPEED")
+              property var _rtlLandDelay: controller.getParameterFact(-1, "RTL_LAND_DELAY")
+  
+              property string sectionIdFilter: ""
+  
+              // Keyed by untranslated section ID (must match VehicleComponent::sectionIds())
+              readonly property var _searchTerms: ({
+                  "Low Battery Failsafe": ["bat_crit_thr", "bat_emergen_thr", "bat_low_thr", "battery", "battery emergency level", "battery failsafe level", "battery warn level", "com_low_bat_act", "critical battery", "emergency", "failsafe", "failsafe action", "low", "low battery", "power", "voltage"],
+                  "Object Detection": ["avoidance", "collision", "collision prevention minimum distance", "cp_dist", "detection", "distance", "object", "obstacle", "proximity", "show obstacle distance overlay"],
+                  "RC/Joystick Loss Failsafe": ["com_rc_loss_t", "failsafe", "failsafe action", "joystick", "loss", "nav_rcl_act", "radio", "rc loss", "rc/joystick", "rc/joystick loss timeout", "receiver", "signal loss", "transmitter"],
+                  "Data Link Loss Failsafe": ["com_dl_loss_t", "data", "data link loss timeout", "disconnect", "failsafe", "failsafe action", "gcs", "ground station", "link", "link loss", "loss", "nav_dll_act", "telemetry"],
+                  "Geofence Failsafe": ["action on breach", "altitude", "boundary", "breach", "containment", "failsafe", "fence", "geofence", "gf_action", "gf_max_hor_dist", "gf_max_ver_dist", "max altitude", "max radius", "radius"],
+                  "Return to launch settings": ["altitude", "climb to altitude of", "land", "launch", "loiter", "loiter altitude", "loiter time", "return", "return home", "return to launch", "return to launch, then:", "rtl", "rtl_descend_alt", "rtl_land_delay", "rtl_return_alt", "settings", "to"],
+                  "Land Mode Settings": ["com_disarm_land", "descent", "disarm", "disarm after", "land", "landing", "landing descent rate", "mode", "mpc_land_speed", "settings", "touchdown"]
+              })
+  
+              readonly property var _translatableSearchTerms: ({
+                  "Low Battery Failsafe": ["Battery emergency level", "Battery failsafe level", "Battery warn level", "Failsafe action", "Low Battery Failsafe", "battery", "critical battery", "emergency", "low battery", "power", "voltage"],
+                  "Object Detection": ["Collision prevention minimum distance", "Object Detection", "Show obstacle distance overlay", "avoidance", "collision", "distance", "obstacle", "proximity"],
+                  "RC/Joystick Loss Failsafe": ["Failsafe action", "RC/Joystick Loss Failsafe", "RC/joystick loss timeout", "joystick", "radio", "rc loss", "receiver", "signal loss", "transmitter"],
+                  "Data Link Loss Failsafe": ["Data Link Loss Failsafe", "Data link loss timeout", "Failsafe action", "disconnect", "gcs", "ground station", "link loss", "telemetry"],
+                  "Geofence Failsafe": ["Action on breach", "Geofence Failsafe", "Max altitude", "Max radius", "altitude", "boundary", "breach", "containment", "fence", "geofence", "radius"],
+                  "Return to launch settings": ["Climb to altitude of", "Loiter altitude", "Loiter time", "Return to launch settings", "Return to launch, then:", "altitude", "land", "loiter", "return home", "return to launch", "rtl"],
+                  "Land Mode Settings": ["Disarm after", "Land Mode Settings", "Landing descent rate", "descent", "disarm", "landing", "touchdown"]
+              })
+  
+              // sectionId must be untranslated; repeat sections pass their base ID as searchKey
+              function sectionMatchesFilter(sectionId, searchKey) {
+                  if (sectionIdFilter === "") {
+                      return true
+                  }
+                  if (sectionIdFilter === sectionId) {
+                      return true
+                  }
+                  if (searchKey === undefined) {
+                      searchKey = sectionId
+                  }
+                  let filter = sectionIdFilter.toLowerCase()
+                  let terms = _searchTerms[searchKey]
+                  if (terms) {
+                      for (let i = 0; i < terms.length; i++) {
+                          if (terms[i].indexOf(filter) >= 0) {
+                              return true
+                          }
+                      }
+                  }
+                  let trTerms = _translatableSearchTerms[searchKey]
+                  if (trTerms) {
+                      for (let j = 0; j < trTerms.length; j++) {
+                          if (qsTranslate("Safety.VehicleConfig.json", trTerms[j]).toLowerCase().indexOf(filter) >= 0) {
+                              return true
+                          }
+                      }
+                  }
+                  return false
+              }
+  
+              function sectionVisible(sectionId) {
+                  switch (sectionId) {
+                  default:
+                      return true
+                  }
+              }
+  
+              property real _maxLeftMargin: ScreenTools.defaultFontPixelWidth * 20
+  
+              ColumnLayout {
+                  id: outerColumn
+                  spacing: _margins * 1.25
+                  anchors.left: parent.left
+                  anchors.leftMargin: Math.min((parent.width - width) / 2, _maxLeftMargin)
+  
+                  ConfigSection {
+                      Layout.fillWidth: true
+                      visible: sectionMatchesFilter("Low Battery Failsafe")
+                      heading: qsTranslate("Safety.VehicleConfig.json", "Low Battery Failsafe")
+                      iconSource: "/qmlimages/LowBattery.svg"
+  
+                      LabelledFactComboBox {
+                          visible: fact !== null
+                          label: qsTranslate("Safety.VehicleConfig.json", "Failsafe action")
+                          Layout.fillWidth: true
+                          comboBoxPreferredWidth: ScreenTools.defaultFontPixelWidth * 30
+                          fact: controller.getParameterFact(-1, "COM_LOW_BAT_ACT", false)
+                          indexModel: false
+                      }
+  
+                      LabelledFactTextField {
+                          visible: fact !== null
+                          label: qsTranslate("Safety.VehicleConfig.json", "Battery warn level")
+                          Layout.fillWidth: true
+                          fact: controller.getParameterFact(-1, "BAT_LOW_THR", false)
+                      }
+  
+                      LabelledFactTextField {
+                          visible: fact !== null
+                          label: qsTranslate("Safety.VehicleConfig.json", "Battery failsafe level")
+                          Layout.fillWidth: true
+                          fact: controller.getParameterFact(-1, "BAT_CRIT_THR", false)
+                      }
+  
+                      LabelledFactTextField {
+                          visible: fact !== null
+                          label: qsTranslate("Safety.VehicleConfig.json", "Battery emergency level")
+                          Layout.fillWidth: true
+                          fact: controller.getParameterFact(-1, "BAT_EMERGEN_THR", false)
+                      }
+                  }
+  
+                  ConfigSection {
+                      Layout.fillWidth: true
+                      visible: sectionMatchesFilter("Object Detection")
+                      heading: qsTranslate("Safety.VehicleConfig.json", "Object Detection")
+                      iconSource: "/qmlimages/ObjectAvoidance.svg"
+  
+                      FactTextFieldSlider {
+                          Layout.fillWidth: true
+                          label: qsTranslate("Safety.VehicleConfig.json", "Collision prevention minimum distance")
+                          fact: controller.getParameterFact(-1, "CP_DIST")
+                          allowUsingMinMax: true
+                          showEnableCheckbox: true
+                          enableCheckBoxChecked: _cpDist.rawValue > 0
+                          onEnableCheckboxClicked: { _cpDist.rawValue = enableCheckBoxChecked ? 5 : -1 }
+                      }
+  
+                      FactCheckBoxSlider {
+                          Layout.fillWidth: true
+                          text: qsTranslate("Safety.VehicleConfig.json", "Show obstacle distance overlay")
+                          fact: QGroundControl.settingsManager.flyViewSettings.showObstacleDistanceOverlay
+                      }
+                  }
+  
+                  ConfigSection {
+                      Layout.fillWidth: true
+                      visible: sectionMatchesFilter("RC/Joystick Loss Failsafe")
+                      heading: qsTranslate("Safety.VehicleConfig.json", "RC/Joystick Loss Failsafe")
+                      iconSource: "/qmlimages/RCLoss.svg"
+  
+                      LabelledFactComboBox {
+                          visible: fact !== null
+                          label: qsTranslate("Safety.VehicleConfig.json", "Failsafe action")
+                          Layout.fillWidth: true
+                          comboBoxPreferredWidth: ScreenTools.defaultFontPixelWidth * 30
+                          fact: controller.getParameterFact(-1, "NAV_RCL_ACT", false)
+                          indexModel: false
+                      }
+  
+                      LabelledFactTextField {
+                          visible: fact !== null
+                          label: qsTranslate("Safety.VehicleConfig.json", "RC/joystick loss timeout")
+                          Layout.fillWidth: true
+                          fact: controller.getParameterFact(-1, "COM_RC_LOSS_T", false)
+                      }
+                  }
+  
+                  ConfigSection {
+                      Layout.fillWidth: true
+                      visible: sectionMatchesFilter("Data Link Loss Failsafe")
+                      heading: qsTranslate("Safety.VehicleConfig.json", "Data Link Loss Failsafe")
+                      iconSource: "/qmlimages/DatalinkLoss.svg"
+  
+                      LabelledFactComboBox {
+                          visible: fact !== null
+                          label: qsTranslate("Safety.VehicleConfig.json", "Failsafe action")
+                          Layout.fillWidth: true
+                          comboBoxPreferredWidth: ScreenTools.defaultFontPixelWidth * 30
+                          fact: controller.getParameterFact(-1, "NAV_DLL_ACT", false)
+                          indexModel: false
+                      }
+  
+                      LabelledFactTextField {
+                          visible: fact !== null
+                          label: qsTranslate("Safety.VehicleConfig.json", "Data link loss timeout")
+                          Layout.fillWidth: true
+                          fact: controller.getParameterFact(-1, "COM_DL_LOSS_T", false)
+                      }
+                  }
+  
+                  ConfigSection {
+                      Layout.fillWidth: true
+                      visible: sectionMatchesFilter("Geofence Failsafe")
+                      heading: qsTranslate("Safety.VehicleConfig.json", "Geofence Failsafe")
+                      iconSource: "/qmlimages/GeoFence.svg"
+  
+                      LabelledFactComboBox {
+                          visible: fact !== null
+                          label: qsTranslate("Safety.VehicleConfig.json", "Action on breach")
+                          Layout.fillWidth: true
+                          comboBoxPreferredWidth: ScreenTools.defaultFontPixelWidth * 30
+                          fact: controller.getParameterFact(-1, "GF_ACTION", false)
+                          indexModel: false
+                      }
+  
+                      FactTextFieldSlider {
+                          Layout.fillWidth: true
+                          label: qsTranslate("Safety.VehicleConfig.json", "Max radius")
+                          fact: controller.getParameterFact(-1, "GF_MAX_HOR_DIST")
+                          allowUsingMinMax: true
+                          showEnableCheckbox: true
+                          enableCheckBoxChecked: _fenceRadius.value > 0
+                          onEnableCheckboxClicked: { _fenceRadius.value = enableCheckBoxChecked ? 100 : 0 }
+                      }
+  
+                      FactTextFieldSlider {
+                          Layout.fillWidth: true
+                          label: qsTranslate("Safety.VehicleConfig.json", "Max altitude")
+                          fact: controller.getParameterFact(-1, "GF_MAX_VER_DIST")
+                          allowUsingMinMax: true
+                          showEnableCheckbox: true
+                          enableCheckBoxChecked: _fenceAlt.value > 0
+                          onEnableCheckboxClicked: { _fenceAlt.value = enableCheckBoxChecked ? 100 : 0 }
+                      }
+                  }
+  
+                  ConfigSection {
+                      Layout.fillWidth: true
+                      visible: sectionMatchesFilter("Return to launch settings")
+                      heading: qsTranslate("Safety.VehicleConfig.json", "Return to launch settings")
+                      iconSource: "/qmlimages/ReturnToHomeAltitudeCopter.svg"
+  
+                      LabelledFactTextField {
+                          visible: fact !== null
+                          label: qsTranslate("Safety.VehicleConfig.json", "Climb to altitude of")
+                          Layout.fillWidth: true
+                          fact: controller.getParameterFact(-1, "RTL_RETURN_ALT", false)
+                      }
+  
+                      QGCLabel {
+                          text: qsTranslate("Safety.VehicleConfig.json", "Return to launch, then:")
+                      }
+                      ColumnLayout {
+                          spacing: 0
+                          QGCRadioButton {
+                              text: qsTranslate("Safety.VehicleConfig.json", "Land immediately")
+                              checked: _rtlLandDelay.value === _rtlLandDelayParamValueLandImmediately
+                              onClicked: controller.getParameterFact(-1, "RTL_LAND_DELAY").value = _rtlLandDelayParamValueLandImmediately
+                          }
+                          QGCRadioButton {
+                              text: qsTranslate("Safety.VehicleConfig.json", "Loiter and do not land")
+                              checked: _rtlLandDelay.value < _rtlLandDelayParamValueLandImmediately
+                              onClicked: controller.getParameterFact(-1, "RTL_LAND_DELAY").value = _rtlLandDelayParamValueLoiterIndefinitely
+                          }
+                          QGCRadioButton {
+                              text: qsTranslate("Safety.VehicleConfig.json", "Loiter and land after specified time")
+                              checked: _rtlLandDelay.value > _rtlLandDelayParamValueLandImmediately
+                              onClicked: controller.getParameterFact(-1, "RTL_LAND_DELAY").value = _rtlLandDelayParamValueLoiterDefault
+                          }
+                      }
+  
+                      LabelledFactTextField {
+                          label: qsTranslate("Safety.VehicleConfig.json", "Loiter time")
+                          Layout.fillWidth: true
+                          fact: controller.getParameterFact(-1, "RTL_LAND_DELAY")
+                          enabled: _rtlLandDelay.value > _rtlLandDelayParamValueLandImmediately
+                      }
+  
+                      LabelledFactTextField {
+                          visible: fact !== null
+                          label: qsTranslate("Safety.VehicleConfig.json", "Loiter altitude")
+                          Layout.fillWidth: true
+                          fact: controller.getParameterFact(-1, "RTL_DESCEND_ALT", false)
+                          enabled: _rtlLandDelay.value !== _rtlLandDelayParamValueLandImmediately
+                      }
+                  }
+  
+                  ConfigSection {
+                      Layout.fillWidth: true
+                      visible: sectionMatchesFilter("Land Mode Settings")
+                      heading: qsTranslate("Safety.VehicleConfig.json", "Land Mode Settings")
+                      iconSource: "/qmlimages/LandModeCopter.svg"
+  
+                      LabelledFactTextField {
+                          visible: fact !== null && (_landSpeedMCExists)
+                          label: qsTranslate("Safety.VehicleConfig.json", "Landing descent rate")
+                          Layout.fillWidth: true
+                          fact: controller.getParameterFact(-1, "MPC_LAND_SPEED", false)
+                      }
+  
+                      FactTextFieldSlider {
+                          Layout.fillWidth: true
+                          label: qsTranslate("Safety.VehicleConfig.json", "Disarm after")
+                          fact: controller.getParameterFact(-1, "COM_DISARM_LAND")
+                          allowUsingMinMax: true
+                          sliderMin: 0
+                          sliderMax: 10
+                          showEnableCheckbox: true
+                          enableCheckBoxChecked: _disarmLandDelay.value > 0
+                          onEnableCheckboxClicked: { _disarmLandDelay.value = enableCheckBoxChecked ? 2 : 0 }
+                      }
+                  }
+              }
+          }
+      }
+  }
+  
+  '''
+# ---

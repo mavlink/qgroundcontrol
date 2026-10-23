@@ -5,7 +5,8 @@ Usage:
         --pages-dir src/AutoPilotPlugins/PX4/VehicleConfig \\
         --output-dir build/src/AutoPilotPlugins/PX4/generated
 
-Each ``<Name>.VehicleConfig.json`` produces ``<Name>Component.qml``.
+Each ``<Name>.VehicleConfig.json`` produces ``<Name>Component.qml``. ``--list-outputs`` prints those
+names, one per line, without generating anything.
 """
 
 from __future__ import annotations
@@ -44,13 +45,20 @@ def main() -> None:
         "--output-dir",
         "-o",
         type=Path,
-        required=True,
         help="Output directory for generated QML files",
     )
     parser.add_argument(
         "--dry-run", "-n", action="store_true", help="Print to stdout without writing files"
     )
+    parser.add_argument(
+        "--list-outputs",
+        action="store_true",
+        help="Print the QML file names that would be generated, one per line, without writing",
+    )
     args = parser.parse_args()
+
+    if not args.list_outputs and not args.output_dir:
+        parser.error("--output-dir is required unless --list-outputs is given")
 
     if not args.pages_dir.is_dir():
         print(f"Error: {args.pages_dir} is not a directory", file=sys.stderr)
@@ -59,6 +67,10 @@ def main() -> None:
     json_files = sorted(args.pages_dir.glob("*.VehicleConfig.json"))
     if not json_files:
         print(f"Warning: no *.VehicleConfig.json files found in {args.pages_dir}", file=sys.stderr)
+        return
+
+    if args.list_outputs:
+        print("\n".join(_output_name(json_path.name) for json_path in json_files))
         return
 
     args.output_dir.mkdir(parents=True, exist_ok=True)

@@ -347,8 +347,10 @@ if(NOT WIN32)
                 CACHE STRING "Valgrind command options"
             )
 
-            if(EXISTS "${CMAKE_SOURCE_DIR}/CTestCustom.cmake.in")
-                configure_file("${CMAKE_SOURCE_DIR}/CTestCustom.cmake.in" "${CMAKE_BINARY_DIR}/CTestCustom.cmake" @ONLY)
+            if(EXISTS "${CMAKE_SOURCE_DIR}/cmake/CTestCustom.cmake.in")
+                configure_file(
+                    "${CMAKE_SOURCE_DIR}/cmake/CTestCustom.cmake.in" "${CMAKE_BINARY_DIR}/CTestCustom.cmake" @ONLY
+                )
             endif()
 
             math(EXPR QGC_VALGRIND_TIMEOUT "${QGC_VALGRIND_TIMEOUT_MULTIPLIER} * 100")

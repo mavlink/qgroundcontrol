@@ -13,7 +13,14 @@ python3 tools/generators/config_qml/generate_pages.py \
     --output-dir build/generated-config-qml
 ```
 
-`--dry-run` prints the generated QML instead of writing files.
+`--dry-run` prints the generated QML instead of writing files. `--list-outputs` prints the QML file
+names that would be generated; CMake uses it to compute the output list.
+
+`tools/tests/test_config_qml_snapshots.py` pins the QML generated from every
+`src/AutoPilotPlugins/*/VehicleConfig/*.VehicleConfig.json`. After an intended page or generator
+change, refresh it with
+`uv run --frozen --project tools --group test pytest -q tools/tests/test_config_qml_snapshots.py --snapshot-update`
+and review the `.ambr` diff.
 
 ---
 

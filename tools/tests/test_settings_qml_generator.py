@@ -1368,13 +1368,11 @@ class TestQmlUnsafeStringRejection:
 
 
 class TestRealPageDefinitions:
-    """Test against real QGC page definition files if available."""
+    """Test against the real QGC page definition files."""
 
     @pytest.fixture
     def repo_root(self) -> Path:
-        if (REPO_ROOT / "src" / "Settings").is_dir():
-            return REPO_ROOT
-        pytest.skip("Not running from QGC repo root")
+        return REPO_ROOT
 
     def test_all_page_defs_load(self, repo_root: Path):
         pages_dir = repo_root / "src" / "AppSettings" / "pages"

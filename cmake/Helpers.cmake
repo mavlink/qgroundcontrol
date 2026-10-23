@@ -96,7 +96,7 @@ function(qgc_config_caching)
                 if(EXISTS "${_ccache_conf}")
                     string(APPEND _wrapper "export CCACHE_CONFIGPATH=\"\${CCACHE_CONFIGPATH:-${_ccache_conf}}\"\n")
                 endif()
-                string(APPEND _wrapper "export CCACHE_DIR=\"\${CCACHE_DIR:-${CMAKE_SOURCE_DIR}/.ccache}\"\n")
+                string(APPEND _wrapper "export CCACHE_DIR=\"\${CCACHE_DIR:-${CMAKE_SOURCE_DIR}/.cache/ccache}\"\n")
                 string(APPEND _wrapper "export CCACHE_BASEDIR=\"\${CCACHE_BASEDIR:-${CMAKE_SOURCE_DIR}}\"\n")
                 # Delete a header compile's output (the PCH) before regenerating it: ccache otherwise hashes the
                 # stale PCH beside the -include'd header as an input, so a regenerated PCH never hits and every
@@ -171,7 +171,7 @@ endfunction()
 # from .ninja_log, from this build dir). It is a no-op unless MOCCACHE_STATS
 # is set in the build environment.
 # ----------------------------------------------------------------------------
-function(_qgc_write_moccache_stats_script python moccache_py out_var)
+function(_qgc_write_moccache_stats_script python launcher_py out_var)
     set(_default_dir "${CMAKE_SOURCE_DIR}/.cache/moccache")
     if(CMAKE_HOST_WIN32)
         set(_script "${CMAKE_BINARY_DIR}/moccache-stats.cmd")
@@ -179,7 +179,7 @@ function(_qgc_write_moccache_stats_script python moccache_py out_var)
         string(APPEND _body "if not defined MOCCACHE_STATS exit /b 0\r\n")
         string(APPEND _body "if not defined MOCCACHE_DIR set \"MOCCACHE_DIR=${_default_dir}\"\r\n")
         string(APPEND _body "if not defined MOCCACHE_BASEDIR set \"MOCCACHE_BASEDIR=${CMAKE_BINARY_DIR}\"\r\n")
-        string(APPEND _body "\"${python}\" \"${moccache_py}\" --show-stats --build-dir \"${CMAKE_BINARY_DIR}\"\r\n")
+        string(APPEND _body "\"${python}\" \"${launcher_py}\" --show-stats --build-dir \"${CMAKE_BINARY_DIR}\"\r\n")
         string(APPEND _body "exit /b 0\r\n")
         _qgc_write_if_changed("${_script}" "${_body}")
     else()
@@ -189,7 +189,7 @@ function(_qgc_write_moccache_stats_script python moccache_py out_var)
         string(APPEND _body "export MOCCACHE_DIR=\"\${MOCCACHE_DIR:-${_default_dir}}\"\n")
         string(APPEND _body "export MOCCACHE_BASEDIR=\"\${MOCCACHE_BASEDIR:-${CMAKE_BINARY_DIR}}\"\n")
         string(
-            APPEND _body "\"${python}\" \"${moccache_py}\" --show-stats --build-dir \"${CMAKE_BINARY_DIR}\" || true\n"
+            APPEND _body "\"${python}\" \"${launcher_py}\" --show-stats --build-dir \"${CMAKE_BINARY_DIR}\" || true\n"
         )
         _qgc_write_if_changed("${_script}" "${_body}")
         # cmakelang 0.6.13 does not recognize file(CHMOD).
@@ -215,7 +215,7 @@ endfunction()
 
 # ----------------------------------------------------------------------------
 # _qgc_verify_moccache_python
-# find_program VALIDATOR: moccache.py targets Python 3.10 (ruff.toml); an older
+# find_program VALIDATOR: moccache targets Python 3.10 (ruff.toml); an older
 # interpreter would fail on every moc invocation, so reject it and let
 # qgc_config_moccache fall back to plain moc.
 # ----------------------------------------------------------------------------
@@ -235,7 +235,7 @@ endfunction()
 
 # ----------------------------------------------------------------------------
 # qgc_config_moccache
-# Routes AUTOMOC through tools/moccache.py so moc output is cached across
+# Routes AUTOMOC through the tools/moccache package so moc output is cached across
 # clean builds. Must be called after find_package(Qt6).
 # ----------------------------------------------------------------------------
 function(qgc_config_moccache)
@@ -251,8 +251,8 @@ function(qgc_config_moccache)
         return()
     endif()
 
-    set(_moccache_py "${CMAKE_SOURCE_DIR}/tools/moccache.py")
-    if(NOT EXISTS "${_moccache_py}" OR NOT TARGET Qt6::moc)
+    set(_moccache_core_py "${CMAKE_SOURCE_DIR}/tools/moccache/core.py")
+    if(NOT EXISTS "${_moccache_core_py}" OR NOT TARGET Qt6::moc)
         return()
     endif()
 
@@ -316,7 +316,7 @@ function(qgc_config_moccache)
         )
     endif()
 
-    _qgc_write_moccache_stats_script("${QGC_MOCCACHE_PYTHON}" "${_moccache_py}" _moccache_stats)
+    _qgc_write_moccache_stats_script("${QGC_MOCCACHE_PYTHON}" "${_launcher_py}" _moccache_stats)
 
     set_property(GLOBAL PROPERTY QGC_MOCCACHE_EXECUTABLE "${_moccache_wrapper}")
     set_property(GLOBAL PROPERTY QGC_MOCCACHE_STATS_EXECUTABLE "${_moccache_stats}")
