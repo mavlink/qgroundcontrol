@@ -30,6 +30,7 @@ private slots:
     void _testItemGeneration();
     void _testItemCount();
     void _testHoverCaptureItemGeneration();
+    void _testCameraShots();
     void _testMaxTransectCount();
     void _testSplitConcavePolygon();
     void _testSplitConcaveTurnarounds();

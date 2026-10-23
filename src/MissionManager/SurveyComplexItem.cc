@@ -788,7 +788,8 @@ void SurveyComplexItem::_recalcCameraShots(void)
                             } else {
                                 // Trigger stop
                                 waitingForTriggerStop = false;
-                                _cameraShots += qCeil(distanceEndCoord.distanceTo(distanceStartCoord) / triggerDistance);
+                                _cameraShots += _distanceTriggerImageCount(
+                                    distanceEndCoord.distanceTo(distanceStartCoord), triggerDistance);
                                 distanceStartCoord = QGeoCoordinate();
                                 distanceEndCoord = QGeoCoordinate();
                             }
@@ -798,22 +799,28 @@ void SurveyComplexItem::_recalcCameraShots(void)
                 }
             } else {
                 // We have transects available, calc from those
+                // Hover and capture takes an image at the survey entry, exit and each interior hover point
+                const auto isHoverImageCoord = [](const TransectStyleComplexItem::CoordInfo_t& coordInfo) {
+                    return coordInfo.coordType == CoordTypeSurveyEntry || coordInfo.coordType == CoordTypeSurveyExit ||
+                           coordInfo.coordType == CoordTypeInteriorHoverTrigger;
+                };
                 for (const QList<TransectStyleComplexItem::CoordInfo_t>& transect: _transects) {
-                    QGeoCoordinate firstCameraCoord, lastCameraCoord;
-                    if (!hoverAndCaptureEnabled()) {
-                        // Turnarounds are only present at sweep ends, so locate the survey entry/exit by type
-                        for (const TransectStyleComplexItem::CoordInfo_t& coordInfo : transect) {
-                            if (coordInfo.coordType == CoordTypeSurveyEntry) {
-                                firstCameraCoord = coordInfo.coord;
-                            } else if (coordInfo.coordType == CoordTypeSurveyExit) {
-                                lastCameraCoord = coordInfo.coord;
-                            }
-                        }
-                    } else {
-                        firstCameraCoord = transect.first().coord;
-                        lastCameraCoord = transect.last().coord;
+                    if (hoverAndCaptureEnabled()) {
+                        _cameraShots += std::count_if(transect.cbegin(), transect.cend(), isHoverImageCoord);
+                        continue;
                     }
-                    _cameraShots += qCeil(firstCameraCoord.distanceTo(lastCameraCoord) / triggerDistance);
+
+                    // Turnarounds are only present at sweep ends, so locate the survey entry/exit by type
+                    QGeoCoordinate firstCameraCoord, lastCameraCoord;
+                    for (const TransectStyleComplexItem::CoordInfo_t& coordInfo : transect) {
+                        if (coordInfo.coordType == CoordTypeSurveyEntry) {
+                            firstCameraCoord = coordInfo.coord;
+                        } else if (coordInfo.coordType == CoordTypeSurveyExit) {
+                            lastCameraCoord = coordInfo.coord;
+                        }
+                    }
+                    _cameraShots +=
+                        _distanceTriggerImageCount(firstCameraCoord.distanceTo(lastCameraCoord), triggerDistance);
                 }
             }
         }

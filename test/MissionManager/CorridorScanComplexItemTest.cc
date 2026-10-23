@@ -204,6 +204,27 @@ void CorridorScanComplexItemTest::_testItemGeneration()
     }
 }
 
+void CorridorScanComplexItemTest::_testCameraShots()
+{
+    // Triggering starts and stops with an image, so each 400m transect is imaged every 60m and at its end
+    _corridorItem->cameraTriggerInTurnAround()->setRawValue(false);
+    _corridorItem->cameraCalc()->adjustedFootprintFrontal()->setRawValue(60.0);
+    QCOMPARE(_corridorItem->cameraShots(), _expectedTransectCount * 8);
+
+    // Around a 20m square loop the inner pass cannot be offset and is not flown. The outer pass, about 180m
+    // long, is imaged every 50m and at its end, where the 80m corridor path would give 3 images per pass.
+    ignoreLogMessage("Plan.CorridorScanComplexItem", QtWarningMsg,
+                     QRegularExpression("Unable to offset corridor transect"));
+    const QGeoCoordinate origin = TestFixtures::Coord::missionTestOrigin();
+    const QGeoCoordinate north = origin.atDistanceAndAzimuth(20.0, 0.0);
+    const QGeoCoordinate northEast = north.atDistanceAndAzimuth(20.0, 90.0);
+    const QGeoCoordinate east = origin.atDistanceAndAzimuth(20.0, 90.0);
+    _corridorItem->corridorPolyline()->setPath(QList<QGeoCoordinate>{origin, north, northEast, east, origin});
+    _corridorItem->cameraCalc()->adjustedFootprintFrontal()->setRawValue(50.0);
+    QCOMPARE(_corridorItem->_transectCount(), 1);
+    QCOMPARE(_corridorItem->cameraShots(), 5);
+}
+
 void CorridorScanComplexItemTest::_testMaxTransectCount()
 {
     ignoreLogMessage("Plan.CorridorScanComplexItem", QtWarningMsg, QRegularExpression("Transect spacing.*raised"));

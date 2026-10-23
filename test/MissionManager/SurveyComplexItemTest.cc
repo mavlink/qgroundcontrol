@@ -1,5 +1,6 @@
 #include "SurveyComplexItemTest.h"
 
+#include <algorithm>
 #include <cmath>
 
 #include <QtCore/QJsonArray>
@@ -8,6 +9,7 @@
 
 #include "CoordFixtures.h"
 #include "JsonParsing.h"
+#include "MissionItem.h"
 #include "MultiSignalSpy.h"
 #include "PlanViewSettings.h"
 #include "QGCGeo.h"
@@ -315,6 +317,41 @@ void SurveyComplexItemTest::_testHoverCaptureItemGeneration()
                               expectedCommands);
     _testItemGenerationWorker(false /* imagesInTurnaround */, true /* hasTurnaround */, false /* useConditionGate */,
                               expectedCommands);
+}
+
+void SurveyComplexItemTest::_testCameraShots()
+{
+    // Triggering starts and stops with an image, so each 100m transect is imaged at 0, 30, 60, 90 and 100m
+    _surveyItem->cameraTriggerInTurnAround()->setRawValue(false);
+    _surveyItem->cameraCalc()->adjustedFootprintFrontal()->setRawValue(30.0);
+    const int expectedShots = _expectedTransectCount * 5;
+    QCOMPARE(_surveyItem->cameraShots(), expectedShots);
+
+    // A survey loaded from a plan without an image count counts images from its saved mission items, since
+    // transects are not rebuilt while loading
+    QJsonArray items;
+    _surveyItem->save(items);
+    QJsonObject surveyObject = items[0].toObject();
+    QJsonObject transectObject = surveyObject[QStringLiteral("TransectStyleComplexItem")].toObject();
+    QVERIFY(transectObject.contains(QStringLiteral("CameraShots")));
+    transectObject[QStringLiteral("CameraShots")] = 0;
+    surveyObject[QStringLiteral("TransectStyleComplexItem")] = transectObject;
+    QString errorString;
+    SurveyComplexItem* loadedItem =
+        new SurveyComplexItem(planController(), false /* flyView */, QString() /* kmlFile */);
+    QVERIFY(loadedItem->load(surveyObject, 10, errorString));
+    QCOMPARE(loadedItem->cameraShots(), expectedShots);
+    loadedItem->deleteLater();
+
+    // Hover and capture images the survey entry, exit and each interior hover point
+    _surveyItem->hoverAndCapture()->setRawValue(true);
+    QList<MissionItem*> missionItems;
+    _surveyItem->appendMissionItems(missionItems, this);
+    const auto imageCount = std::count_if(missionItems.cbegin(), missionItems.cend(), [](const MissionItem* item) {
+        return item->command() == MAV_CMD_IMAGE_START_CAPTURE;
+    });
+    QCOMPARE(_surveyItem->cameraShots(), static_cast<int>(imageCount));
+    QCOMPARE(_surveyItem->cameraShots(), expectedShots);
 }
 
 void SurveyComplexItemTest::_testMaxTransectCount()

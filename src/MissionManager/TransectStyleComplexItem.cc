@@ -389,6 +389,12 @@ bool TransectStyleComplexItem::_hasTurnaround(void) const
     return _turnAroundDistance() > 0;
 }
 
+int TransectStyleComplexItem::_distanceTriggerImageCount(double transectLength, double triggerDistance)
+{
+    // Starting and stopping distance triggering each take an image, with distance triggered images in between
+    return qCeil(transectLength / triggerDistance) + 1;
+}
+
 double TransectStyleComplexItem::_turnAroundDistance(void) const
 {
     return _turnAroundDistanceFact.rawValue().toDouble();

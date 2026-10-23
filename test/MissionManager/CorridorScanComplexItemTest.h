@@ -26,6 +26,7 @@ private slots:
     void _testPathChanges();
     void _testItemGeneration();
     void _testItemCount();
+    void _testCameraShots();
     void _testMaxTransectCount();
     void _testClosedAndCrossingCorridors();
     void _testNoTransects();

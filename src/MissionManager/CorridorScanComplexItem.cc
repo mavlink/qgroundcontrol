@@ -475,9 +475,36 @@ void CorridorScanComplexItem::_recalcCameraShots(void)
     } else {
         if (_cameraTriggerInTurnAroundFact.rawValue().toBool()) {
             _cameraShots = qCeil(_complexDistance / triggerDistance);
-        } else {
-            int singleTransectImageCount = qCeil(_corridorPolyline.length() / triggerDistance);
+        } else if (_loadedMissionItemsParent) {
+            // Loaded mission items have no transects until rebuilt, so estimate from the corridor path
+            int singleTransectImageCount = _distanceTriggerImageCount(_corridorPolyline.length(), triggerDistance);
             _cameraShots = singleTransectImageCount * _calcTransectCount();
+        } else {
+            // Images are taken along the path flown between the survey entry and exit
+            const auto cameraPathLength = [](const QList<CoordInfo_t>& transect) {
+                qsizetype entryIndex = -1;
+                qsizetype exitIndex = -1;
+                for (qsizetype i = 0; i < transect.count(); i++) {
+                    if (transect[i].coordType == CoordTypeSurveyEntry) {
+                        entryIndex = i;
+                    } else if (transect[i].coordType == CoordTypeSurveyExit) {
+                        exitIndex = i;
+                    }
+                }
+                double length = 0;
+                if (entryIndex >= 0 && exitIndex >= 0) {
+                    for (qsizetype i = qMin(entryIndex, exitIndex) + 1; i <= qMax(entryIndex, exitIndex); i++) {
+                        length += transect[i - 1].coord.distanceTo(transect[i].coord);
+                    }
+                }
+                return length;
+            };
+
+            // Passes which could not be offset are not flown, and offset passes differ in length from the path
+            _cameraShots = 0;
+            for (const QList<CoordInfo_t>& transect : _transects) {
+                _cameraShots += _distanceTriggerImageCount(cameraPathLength(transect), triggerDistance);
+            }
         }
     }
     emit cameraShotsChanged();

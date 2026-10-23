@@ -146,6 +146,7 @@ protected:
     void    _setCameraShots                 (int cameraShots);
     double  _triggerDistance                (void) const;
     bool    _hasTurnaround                  (void) const;
+    static int _distanceTriggerImageCount(double transectLength, double triggerDistance);
     double  _turnAroundDistance             (void) const;
     void    _appendWaypoint                 (QList<MissionItem*>& items, QObject* missionItemParent, int& seqNum, MAV_FRAME mavFrame, float holdTime, const QGeoCoordinate& coordinate);
     void    _appendSinglePhotoCapture       (QList<MissionItem*>& items, QObject* missionItemParent, int& seqNum);
