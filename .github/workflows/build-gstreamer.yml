@@ -107,6 +107,16 @@ jobs:
         with:
           category: ${{ steps.plan.outputs.apt-category }}
 
+      # Android skips build-setup, which installs CI's pinned CMake and Ninja for every other build.
+      - name: Install pinned CMake and Ninja (Android)
+        if: steps.plan.outputs.cmake-version != ''
+        uses: lukka/get-cmake@v4.4.2
+        with:
+          cmakeVersion: ${{ steps.plan.outputs.cmake-version }}
+          ninjaVersion: ${{ steps.plan.outputs.ninja-version }}
+          useCloudCache: true
+          useLocalCache: false
+
       - name: Install dependencies (macOS)
         if: inputs.platform == 'macos' || inputs.platform == 'ios'
         uses: nick-fields/retry@v4

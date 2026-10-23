@@ -7,6 +7,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+from common.build_config import load_build_config
 from setup.gstreamer import ci_plan, cli
 from setup.gstreamer.cerbero import CerberoBuilder
 from setup.gstreamer.config import BuildConfig
@@ -235,8 +236,10 @@ def test_ci_plan_resolves_the_runner_settings(
     assert ci_plan.main(argv) == 0
 
     qt_host, qt_arch, apt_category, sim = outputs
+    pins = load_build_config()["build"] if plat == "android" else {}
     assert gh_output.read_text(encoding="utf-8") == (
         f"qt-host={qt_host}\nqt-arch={qt_arch}\napt-category={apt_category}\nsimulator={sim}\n"
+        f"cmake-version={pins.get('cmake_version', '')}\nninja-version={pins.get('ninja_version', '')}\n"
     )
 
 

@@ -12,6 +12,8 @@ and iOS. Step outputs:
 - ``apt-category``: the ``install_dependencies`` category of a Linux-hosted build (empty on macOS
   and Windows)
 - ``simulator``: ``true`` for an iOS simulator build, else empty (other platforms ignore the input)
+- ``cmake-version``, ``ninja-version``: build-config's CMake and Ninja pins for Android, which skips
+  ``build-setup`` (where every other CI build gets them); empty elsewhere
 """
 
 from __future__ import annotations
@@ -23,6 +25,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import _bootstrap as _bootstrap
+from common.build_config import load_build_config
 from common.gh_actions import gh_error, parse_bool, write_github_output
 from setup.gstreamer.cerbero import CerberoBuilder
 from setup.gstreamer.cli import resolve_arch
@@ -63,11 +66,14 @@ def plan(platform: str, arch: str, simulator: bool) -> dict[str, str]:
             f"{target} cannot build arch {arch!r}; choose one of {', '.join(supported)}"
         )
     qt_host, qt_arch = DESKTOP_QT.get(platform, {}).get(resolved, ("", ""))
+    pins = load_build_config()["build"] if platform == "android" else {}
     return {
         "qt-host": qt_host,
         "qt-arch": qt_arch,
         "apt-category": APT_CATEGORIES.get(platform, ""),
         "simulator": "true" if simulator else "",
+        "cmake-version": pins.get("cmake_version", ""),
+        "ninja-version": pins.get("ninja_version", ""),
     }
 
 

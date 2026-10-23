@@ -40,6 +40,23 @@ def test_plan_runs_first_and_drives_the_setup_steps() -> None:
     assert {"QT_PREFIX", "WORK_DIR"}.isdisjoint(get_step(steps, "build")["env"])
 
 
+def test_android_installs_the_pinned_cmake_and_ninja_build_setup_would() -> None:
+    """Android skips build-setup, so it installs the same get-cmake release with the plan's pins."""
+    step = get_step(_steps(), "Install pinned CMake and Ninja (Android)")
+    (setup_step,) = [
+        step
+        for step in load_action("build-setup")["runs"]["steps"]
+        if "lukka/get-cmake@" in step.get("uses", "")
+    ]
+    assert step["uses"] == setup_step["uses"]
+    assert step["if"] == "steps.plan.outputs.cmake-version != ''"
+    assert step["with"] == {
+        **setup_step["with"],
+        "cmakeVersion": "${{ steps.plan.outputs.cmake-version }}",
+        "ninjaVersion": "${{ steps.plan.outputs.ninja-version }}",
+    }
+
+
 def test_apt_dependencies_come_from_an_install_dependencies_package_set() -> None:
     step = get_step(_steps(), "Install dependencies (apt)")
     assert step["uses"] == "./.github/actions/install-dependencies"
