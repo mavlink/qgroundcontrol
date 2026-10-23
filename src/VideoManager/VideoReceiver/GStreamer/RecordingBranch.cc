@@ -52,6 +52,24 @@ const char* recordingParserFactory(const GstCaps* caps)
     return nullptr;
 }
 
+/// After packet loss the parsers can't place some frames and pass them on with only a DTS; qtmux rejects a buffer
+/// without a PTS ("Could not multiplex stream.") and fails the whole recording. Live video carries no B-frames, so
+/// such a frame's PTS is its DTS; one with neither timestamp is dropped.
+GstPadProbeReturn timestampForMuxer([[maybe_unused]] GstPad* pad, GstPadProbeInfo* info, [[maybe_unused]] gpointer data)
+{
+    GstBuffer* buffer = GST_PAD_PROBE_INFO_BUFFER(info);
+    if (!buffer || GST_BUFFER_PTS_IS_VALID(buffer)) {
+        return GST_PAD_PROBE_OK;
+    }
+    if (!GST_BUFFER_DTS_IS_VALID(buffer)) {
+        return GST_PAD_PROBE_DROP;
+    }
+    buffer = gst_buffer_make_writable(buffer);
+    GST_BUFFER_PTS(buffer) = GST_BUFFER_DTS(buffer);
+    GST_PAD_PROBE_INFO_DATA(info) = buffer;
+    return GST_PAD_PROBE_OK;
+}
+
 }  // namespace
 
 GStreamer::GstElementPtr RecordingBranch::makeFileSink(const QString& videoFile, VideoReceiver::FILE_FORMAT format,
@@ -119,6 +137,7 @@ GStreamer::GstElementPtr RecordingBranch::makeFileSink(const QString& videoFile,
         qCWarning(GstVideoReceiverLog) << "gst_element_request_pad_simple(splitmuxsink, video) failed";
         return nullptr;
     }
+    (void) gst_pad_add_probe(videopad.get(), GST_PAD_PROBE_TYPE_BUFFER, timestampForMuxer, nullptr, nullptr);
 
     GStreamer::GstPadPtr parserSinkPad;
     if (parser) {

@@ -688,6 +688,83 @@ void GStreamerTest::_testRecordingSinkFinalizesMidStreamH265Mp4()
              "Finalized MP4 did not decode the two mid-stream H.265 access units");
 }
 
+void GStreamerTest::_testRecordingSinkTimestampsDtsOnlyFrames()
+{
+    const QString missing = GstTest::firstMissingFactory({"videotestsrc", "x264enc", "h264parse", "identity",
+                                                          "splitmuxsink", "mp4mux", "filesrc", "qtdemux", "fakesink"});
+    if (!missing.isEmpty()) {
+        QSKIP(qPrintable(QStringLiteral("Required GStreamer factory is unavailable: %1").arg(missing)));
+    }
+
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const QString outputPath = tempDir.filePath(QStringLiteral("dts-only.mp4"));
+    constexpr int kFrames = 20;
+
+    GstTest::TestPipeline pipeline;
+    QVERIFY2(
+        pipeline.launch(QStringLiteral("videotestsrc num-buffers=%1 ! video/x-raw,width=64,height=48,framerate=10/1 ! "
+                                       "x264enc tune=zerolatency speed-preset=ultrafast key-int-max=5 ! "
+                                       "h264parse ! identity name=strip")
+                            .arg(kFrames)),
+        qPrintable(pipeline.error()));
+
+    // After packet loss the parsers pass some frames on with only a DTS; qtmux alone would fail the recording.
+    struct Stripped
+    {
+        int deltaFrames = 0;  ///< Touched only on the streaming thread
+        std::atomic<int> count{0};
+    } stripped;
+
+    const GStreamer::GstPadPtr stripPad =
+        GStreamer::adoptPad(gst_element_get_static_pad(pipeline.element("strip").get(), "src"));
+    QVERIFY(stripPad);
+    GStreamer::PadProbe stripProbe;
+    QVERIFY(stripProbe.add(
+        stripPad.get(), GST_PAD_PROBE_TYPE_BUFFER,
+        [](GstPad*, GstPadProbeInfo* info, gpointer data) -> GstPadProbeReturn {
+            GstBuffer* buffer = GST_PAD_PROBE_INFO_BUFFER(info);
+            auto* const strippedCount = static_cast<Stripped*>(data);
+            if (buffer && GST_BUFFER_FLAG_IS_SET(buffer, GST_BUFFER_FLAG_DELTA_UNIT) &&
+                GST_BUFFER_DTS_IS_VALID(buffer) && (strippedCount->deltaFrames++ % 3 == 0)) {
+                buffer = gst_buffer_make_writable(buffer);
+                GST_BUFFER_PTS(buffer) = GST_CLOCK_TIME_NONE;
+                GST_PAD_PROBE_INFO_DATA(info) = buffer;
+                strippedCount->count.fetch_add(1, std::memory_order_relaxed);
+            }
+            return GST_PAD_PROBE_OK;
+        },
+        &stripped));
+
+    const GStreamer::GstCapsPtr recordingCaps =
+        GStreamer::adoptCaps(gst_caps_from_string("video/x-h264,stream-format=byte-stream,alignment=au"));
+    const GStreamer::GstElementPtr fileSink =
+        RecordingBranch::makeFileSink(outputPath, VideoReceiver::FILE_FORMAT_MP4, recordingCaps.get());
+    QVERIFY(fileSink);
+    QVERIFY(gst_bin_add(pipeline.bin(), fileSink.get()));
+    QVERIFY(gst_element_link(pipeline.element("strip").get(), fileSink.get()));
+
+    QVERIFY(pipeline.play());
+    const QString failure = pipeline.runToEos();
+    QVERIFY2(failure.isEmpty(), qPrintable(failure));
+    (void) gst_element_set_state(pipeline.get(), GST_STATE_NULL);
+    QVERIFY2(stripped.count.load(std::memory_order_relaxed) > 0, "No frame lost its PTS; the test proves nothing");
+
+    std::atomic<int> frames{0};
+    GstTest::TestPipeline verify;
+    QVERIFY2(verify.launch(QStringLiteral("filesrc name=src ! qtdemux ! fakesink name=sink sync=false")),
+             qPrintable(verify.error()));
+    g_object_set(verify.element("src").get(), "location", QFile::encodeName(outputPath).constData(), nullptr);
+    const GStreamer::GstPadPtr sinkPad =
+        GStreamer::adoptPad(gst_element_get_static_pad(verify.element("sink").get(), "sink"));
+    GStreamer::PadProbe countProbe;
+    QVERIFY(countProbe.add(sinkPad.get(), GST_PAD_PROBE_TYPE_BUFFER, GstTest::countBuffers, &frames));
+    QVERIFY(verify.play());
+    const QString verifyFailure = verify.runToEos();
+    QVERIFY2(verifyFailure.isEmpty(), qPrintable(verifyFailure));
+    QCOMPARE(frames.load(std::memory_order_relaxed), kFrames);
+}
+
 void GStreamerTest::_testBindDebugLevelFactRejectsNullContext()
 {
     Fact fact;
