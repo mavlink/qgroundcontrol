@@ -85,7 +85,7 @@ Rectangle {
 
         FactTextFieldSlider {
             Layout.fillWidth: true
-            label: qsTr("Waypoints Altitude")
+            label: qsTr("Altitude")
             fact: QGroundControl.settingsManager.appSettings.defaultMissionItemAltitude
         }
 

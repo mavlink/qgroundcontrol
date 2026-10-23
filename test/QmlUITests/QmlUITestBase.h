@@ -51,6 +51,7 @@ protected slots:
         _verifyFileDialogTestHookConsumed();
         stopUI();
         _qmlUrlOverrides.clear();
+        _restoreUseTabbedPlanPanel();
         UnitTest::cleanup();
     }
 
@@ -64,6 +65,10 @@ protected:
     /// Makes the next startUI() load \a replacement wherever the UI loads \a original, so a test can stand in
     /// for a QML file which custom builds override. Overrides are cleared after each test.
     void overrideQmlFile(const QUrl& original, const QUrl& replacement);
+
+    /// Selects the tabbed Plan panel (true) or the tree view (false) for the next startUI(). The setting is
+    /// restored after each test because settings Facts are not reset between test functions.
+    void setUseTabbedPlanPanel(bool use);
 
     /// Close the QML window and wait for it to settle.
     void closeUIWindow();
@@ -224,6 +229,9 @@ protected:
 private:
     QHash<QUrl, QUrl> _qmlUrlOverrides;
     std::unique_ptr<QQmlAbstractUrlInterceptor> _qmlUrlInterceptor;
+    std::optional<bool> _savedUseTabbedPlanPanel;
+
+    void _restoreUseTabbedPlanPanel();
 
     /// Shared implementation for the verify* helpers: find the visible item,
     /// guard against the property not existing (an invalid QVariant silently

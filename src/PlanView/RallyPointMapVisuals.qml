@@ -61,7 +61,11 @@ Item {
                 label:              qsTr("R", "rally point map item label")
                 checked:            _editingLayer == _layerRally ? rallyPointObject === myRallyPointController.currentRallyPoint : false
                 highlightSelected:  true
-                onClicked:          myRallyPointController.currentRallyPoint = rallyPointObject
+                onClicked: {
+                    if (mainWindow.allowViewSwitch()) {
+                        myRallyPointController.currentRallyPoint = rallyPointObject
+                    }
+                }
             }
         }
     }

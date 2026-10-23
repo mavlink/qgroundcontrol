@@ -6,6 +6,7 @@ import QtQuick
 /// layer switcher (PlanView), the plan tree view group headers, and the map
 /// visual bindings.
 QtObject {
+    readonly property int layerPlan:    0
     readonly property int layerMission: 1
     readonly property int layerFence:   2
     readonly property int layerRally:   3

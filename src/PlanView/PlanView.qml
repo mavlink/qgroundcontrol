@@ -31,11 +31,13 @@ Item {
     property int    _editingLayer: _layerMission
     property var    _appSettings: QGroundControl.settingsManager.appSettings
     property var    _planViewSettings: QGroundControl.settingsManager.planViewSettings
+    readonly property bool _useNewPlanPanel: _planViewSettings.useNewPlanPanel.rawValue
     property bool   _promptForPlanUsageShowing: false
     property bool   _addROIOnClick: false
     property bool   _addWaypointOnClick: false
 
     readonly property int _layerMission: PlanEditLayers.layerMission
+    readonly property int _layerPlan: PlanEditLayers.layerPlan
     readonly property int _layerFence: PlanEditLayers.layerFence
     readonly property int _layerRally: PlanEditLayers.layerRally
 
@@ -299,8 +301,11 @@ Item {
                 coordinate.altitude = coordinate.altitude.toFixed(_decimalPlaces)
 
                 switch (_editingLayer) {
+                case _layerPlan:
+                    _missionController.setHomePosition(coordinate)
+                    break
                 case _layerMission:
-                    if (_planMasterController.showCreateFromTemplate) {
+                    if (!_useNewPlanPanel && _planMasterController.showCreateFromTemplate) {
                         _missionController.setHomePosition(coordinate)
                     } else if (_addROIOnClick) {
                         _addROIOnClick = false
@@ -328,10 +333,15 @@ Item {
             MissionItemIndicatorGroup {
                 id: _missionItemIndicatorGroup
 
+                objectName: "planView_missionItemIndicators"
                 map: editorMap
                 missionItems: _root._missionController.visualItems
                 onItemSelected: (sequenceNumber) => {
+                    if (!mainWindow.allowViewSwitch()) {
+                        return
+                    }
                     _root._missionController.setCurrentPlanViewSeqNum(sequenceNumber, false)
+                    rightPanel.showItemInspector()
                 }
             }
 
@@ -345,7 +355,11 @@ Item {
                     vehicle: _planMasterController.controllerVehicle
                     indicatorGroup: _missionItemIndicatorGroup
                     onClicked: (sequenceNumber) => {
+                        if (!mainWindow.allowViewSwitch()) {
+                            return
+                        }
                         _root._missionController.setCurrentPlanViewSeqNum(sequenceNumber, false)
+                        rightPanel.showItemInspector()
                     }
                 }
             }
@@ -601,7 +615,7 @@ Item {
             width:                  layerRow.width
             height:                 _layerButtonSize
             z:                      QGroundControl.zOrderWidgets
-            visible:                !_planMasterController.showCreateFromTemplate
+            visible:                !_planMasterController.showCreateFromTemplate && !_useNewPlanPanel
 
             property bool   expanded: false
             property real   _layerButtonSize: ScreenTools.defaultFontPixelHeight * 2.0
