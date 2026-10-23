@@ -41,6 +41,9 @@ DOCS_FULL_SCAN_PATHSPECS = (
     ".typos.toml",
     "tools/pre_commit.py",
 )
+# Manual-stage validators that download pinned tools; --ci runs them on the selected files, so each runs only when
+# its own inputs change.
+CI_MANUAL_HOOKS = ("renovate-config-validator", "packer-validate", "runs-on-lint")
 # The files of the only hook that needs Qt (qmllint).
 QT_PATHSPECS = ("*.qml",)
 # Runs .pre-commit-config.yaml; the config stays compatible with stock pre-commit.
@@ -58,7 +61,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "-i", "--install", action="store_true", help="Install the pre-commit and commit-msg hooks"
     )
     parser.add_argument(
-        "--ci", action="store_true", help="Write the GitHub Actions step summary and annotation"
+        "--ci",
+        action="store_true",
+        help="Write the GitHub Actions step summary and annotation, and also run the manual-stage CI "
+        "validators on the selected files",
     )
     parser.add_argument(
         "--hook", action="append", default=[], metavar="ID", help="Run only this hook (repeatable)"
@@ -205,8 +211,19 @@ def file_selection_args(args: argparse.Namespace) -> list[str] | None:
     return ["--all-files"]
 
 
-def build_precommit_args(selection: list[str], hooks: Sequence[str] = ()) -> list[str]:
-    return [RUNNER, "run", *hooks, "--show-diff-on-failure", "--color=always", *selection]
+def build_precommit_args(
+    selection: list[str], hooks: Sequence[str] = (), stage: str | None = None
+) -> list[str]:
+    stage_args = ["--hook-stage", stage] if stage else []
+    return [
+        RUNNER,
+        "run",
+        *hooks,
+        *stage_args,
+        "--show-diff-on-failure",
+        "--color=always",
+        *selection,
+    ]
 
 
 def write_results(results_dir: Path, exit_code: int, output: str) -> None:
@@ -318,20 +335,24 @@ def main(argv: list[str] | None = None) -> int:
                     write_results(results_dir, 0, "")
                 return 0
 
-            runs = [(selection, args.hook or (DOCS_HOOKS if args.docs else ()))]
+            runs: list[tuple[list[str], Sequence[str], str | None]] = [
+                (selection, args.hook or (DOCS_HOOKS if args.docs else ()), None)
+            ]
             rescan = docs_rescan_selection(args)
             if rescan:
-                runs.append((rescan, DOCS_HOOKS))
+                runs.append((rescan, DOCS_HOOKS, None))
+            if args.ci and not args.docs and not args.hook:
+                runs.append((selection, CI_MANUAL_HOOKS, "manual"))
             log_info("Running pre-commit checks...")
             print()
             returncode = 0
             outputs: list[str] = []
             with tempfile.TemporaryDirectory() as output_dir:
-                for index, (run_selection, hooks) in enumerate(runs):
+                for index, (run_selection, hooks, stage) in enumerate(runs):
                     # Stream the hooks live; the summary and results are read back from the copy.
                     output_file = Path(output_dir) / f"{index}-{OUTPUT_FILE}"
                     sys.stdout.flush()
-                    code = run_tee(build_precommit_args(run_selection, hooks), output_file)
+                    code = run_tee(build_precommit_args(run_selection, hooks, stage), output_file)
                     returncode = returncode or code
                     outputs.append(output_file.read_text(encoding="utf-8", errors="replace"))
             output = "\n".join(outputs)

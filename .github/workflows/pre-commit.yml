@@ -77,7 +77,7 @@ jobs:
       # Pull requests restore the base branch's environments without adding cache entries. prek
       # installs only the environments of hooks that run, so a push that misses the cache prepares
       # every hook first, including the manual-stage ones. TruffleHog runs only
-      # locally, and the Renovate validator keeps its own cache in ci-scripts.yml.
+      # locally, and the Renovate validator installs Renovate only on the rare runs that change its config.
       - name: Prepare all prek environments
         id: prepare-hooks
         if: >-

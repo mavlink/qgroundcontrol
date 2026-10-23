@@ -77,7 +77,7 @@
       "extractVersionTemplate": "^v(?<version>\\d+\\.\\d+\\.\\d+)$"
     },
     {
-      "description": "Prebuilt CI tools in build-config.json's tools section (ccache, mold, sccache, Grype), downloaded from their GitHub releases",
+      "description": "Prebuilt CI tools in build-config.json's tools section (ccache, mold, sccache, Grype, Packer, RunsOn CLI), tracked by their GitHub releases",
       "customType": "regex",
       "managerFilePatterns": [
         "/^\\.github/build-config\\.json$/"
@@ -157,7 +157,9 @@
         "ccache/ccache",
         "rui314/mold",
         "mozilla/sccache",
-        "anchore/grype"
+        "anchore/grype",
+        "hashicorp/packer",
+        "runs-on/cli"
       ],
       "groupName": null,
       "dependencyDashboardApproval": true

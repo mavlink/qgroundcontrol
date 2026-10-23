@@ -52,7 +52,7 @@
 | `codeql.yml` | CodeQL for Actions, Java/Kotlin, and Python |
 | `clusterfuzzlite.yml` | MAVLink parser fuzzing on PRs |
 | `pre-commit.yml` | pre-commit hooks (run by prek) on changed files, including docs prose and translation placeholders |
-| `ci-scripts.yml` | Lints `.github/runs-on.yml`, validates runner images and the Renovate config, and runs the CI Python tests (see [Tests](#tests)); workflow and Python lint run in `pre-commit.yml` |
+| `ci-scripts.yml` | Runs the CI Python tests on Linux and Windows (see [Tests](#tests)); lint and config validation run in `pre-commit.yml` |
 | `check-links.yml` | Markdown link validation (lychee) |
 | `pr-checks.yml` | PR title validation and size/file labels |
 | `dependency-review.yml` | Dependency security review |
@@ -168,8 +168,8 @@ Dependency updates are split between two bots to avoid overlapping PRs:
   never use Spot. RunsOn reruns Spot-interrupted jobs on on-demand capacity, up to twice.
 - RunsOn reads `runs-on.yml` only from the default branch, so an unknown `runner=` fails to launch
   and labels repeat settings that must apply before a `runs-on.yml` change merges (for example the
-  Windows builder's 150 GB volume). `ci-scripts.yml` runs `roc lint` on the config, and
-  `test_runs_on_config.py` keeps twins, labels, and pools in sync.
+  Windows builder's 150 GB volume). The `runs-on-lint` hook runs `roc lint` on the config when it
+  changes, and `test_runs_on_config.py` keeps twins, labels, and pools in sync.
 - `runs-on/action` enables Magic Cache and the cost summary (plus sccache's S3 settings in
   `linux.yml` Release legs when the repository variable `QGC_COMPILER_CACHE` is `sccache`; see the
   [sccache pilot](#sccache-pilot)), and skips itself off RunsOn, so
@@ -194,8 +194,8 @@ Dependency updates are split between two bots to avoid overlapping PRs:
   a QGC Ubuntu 24 x64 AMI from the RunsOn base image, smoke-tests the candidate by AMI ID, and
   promotes it only from the default branch. It uses the same dependency and Qt setup helpers as
   CI, and `qt-install` reuses the preinstalled SDK only when its Qt version, architecture, and
-  module manifest satisfy the job's request. `ci-scripts.yml` validates the Packer template on
-  pull requests without AWS credentials.
+  module manifest satisfy the job's request. The `packer-validate` hook validates the Packer template
+  on pull requests that change it, without AWS credentials.
 - The managed image (`RUNS_ON_LINUX_BUILDER`) and the organization-level Windows warm pool
   (`RUNS_ON_WINDOWS_POOL`) are opt-in repository variables; unset, workflows keep the standard
   RunsOn runners. See [runner-images/README.md](runner-images/README.md) for AWS prerequisites,
@@ -733,9 +733,11 @@ actions after these sections.
   sweep are checked in full. Compiler-aware Clazy and clang-tidy hooks are manual locally; CI runs
   them in `analysis.yml`. TruffleHog runs only as a local commit hook (`SKIP=trufflehog` in CI). Qt is installed only when the selection includes QML for qmllint
   (`pre_commit.py --needs-qt`).
-  `check-renovate` schema-checks `.github/renovate.json` in every run; Renovate's own
-  `renovate-config-validator` is manual and runs in `ci-scripts.yml` only when
-  `.github/renovate.json` or `.pre-commit-config.yaml` changes (cache `prek-renovate-v1-*`).
+  `check-renovate` schema-checks `.github/renovate.json` in every run. `pre_commit.py --ci` also
+  runs the manual-stage validators that download pinned tools, each only when its own files change:
+  Renovate's `renovate-config-validator` (`.github/renovate.json` or `.pre-commit-config.yaml`),
+  `packer-validate` (the runner image template) and `runs-on-lint` (`.github/runs-on.yml`); Packer
+  and the RunsOn CLI are the `build-config.json` pins, verified and cached in `.cache/tools/`.
   `editorconfig-checker` enforces `.editorconfig`; the gersemi, yamlfmt, and qmlformat formatter
   trials are manual-stage checks ([tools/README.md](../tools/README.md#pre_commitpy)).
   `prek install` also installs a `commit-msg` hook enforcing Conventional Commits;

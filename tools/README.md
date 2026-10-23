@@ -245,7 +245,9 @@ compatible with stock pre-commit, which the group keeps as a fallback runner for
 `editorconfig-checker` enforces [`.editorconfig`](../.editorconfig) with the exclusions and relaxed
 checks in `configs/editorconfig-checker.json`; `cmake-presets-schema` validates `CMakePresets.json` and
 `cmake/presets/*.json` offline against the schema shipped in the locked `cmake` package.
-Manual-stage hooks run only on request: `clang-tidy`, `clazy`, `renovate-config-validator`, and
+Manual-stage hooks run only on request: `clang-tidy`, `clazy`, the CI validators that download pinned
+tools (`renovate-config-validator`, `packer-validate`, `runs-on-lint`, which `pre_commit.py --ci` also
+runs on the changed files), and
 three formatter trials that report differences without rewriting files: `gersemi` (CMake,
 `configs/gersemirc.yaml`), `yamlfmt` (`configs/yamlfmt.yaml`), and `qmlformat` (`analyzers/qmlformat.py`,
 `.qmlformat.ini`). For example, `just lint gersemi --hook-stage manual` checks every CMake file.

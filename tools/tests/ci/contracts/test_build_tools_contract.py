@@ -82,6 +82,8 @@ def test_schema_requires_the_pins_and_renovate_tracks_them() -> None:
         "rui314/mold",
         "mozilla/sccache",
         "anchore/grype",
+        "hashicorp/packer",
+        "runs-on/cli",
     }
     # A version bump needs new digests, so it must not join the weekly group PR unapproved.
     rules = renovate["packageRules"]

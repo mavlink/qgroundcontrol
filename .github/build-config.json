@@ -140,6 +140,26 @@
         "aarch64": "804041ee69f119022e3e866741a558eae6f2df372a5dc1a5376d456d16f8c931"
       }
     },
+    "packer": {
+      "repository": "hashicorp/packer",
+      "version": "1.16.0",
+      "sha256": {
+        "linux-x86_64": "5edcd14ab59b535040c512dbecd6ec9ef976a000b073c19d93e4c431c948581e",
+        "linux-aarch64": "cf18f03460d92265d49b56befff333e80641d845822799eab04357c39f75b5d7",
+        "darwin-x86_64": "64c4aa9a3176f89496360843bc8747238c9ad32ddc68bc5281207ae342d45be9",
+        "darwin-aarch64": "6530042cf8f8a1f96b6607cb22b5be298be53b400cd4a2c81ab8b946964fccda"
+      }
+    },
+    "roc": {
+      "repository": "runs-on/cli",
+      "version": "3.5.0",
+      "sha256": {
+        "linux-x86_64": "c3bffa3ab059464c757e40ceec04550628e42b46d12ee4ce873742c4022bfdc5",
+        "linux-aarch64": "2117505f9701ef84f6f7257024d91ef86da3659d6e55a6b1d6b65f15de592dda",
+        "darwin-x86_64": "25a87a0f2694853765cfa7cb3827fb6748ce9835d4384954615f1b42ea6e2ca7",
+        "darwin-aarch64": "9c26b071fbdfb2f4d8fa77fa30875b6ee1b5687c11bf30b5fe6148b80206a0df"
+      }
+    },
     "bloaty": {
       "revision": "87082741b1cc0a97cd84bd17cd4ee41d70a42fc6"
     }

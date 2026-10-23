@@ -352,6 +352,8 @@
         "mold",
         "sccache",
         "grype",
+        "packer",
+        "roc",
         "bloaty"
       ],
       "additionalProperties": false,
@@ -502,6 +504,92 @@
                   "$ref": "#/definitions/sha256"
                 },
                 "aarch64": {
+                  "$ref": "#/definitions/sha256"
+                }
+              }
+            }
+          }
+        },
+        "packer": {
+          "type": "object",
+          "description": "Packer that the packer-validate hook downloads to validate the runner image template",
+          "required": [
+            "repository",
+            "version",
+            "sha256"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "repository": {
+              "$ref": "#/definitions/github_repository"
+            },
+            "version": {
+              "$ref": "#/definitions/release_version"
+            },
+            "sha256": {
+              "type": "object",
+              "description": "SHA-256 of each platform's releases.hashicorp.com zip; update together with version",
+              "required": [
+                "linux-x86_64",
+                "linux-aarch64",
+                "darwin-x86_64",
+                "darwin-aarch64"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "linux-x86_64": {
+                  "$ref": "#/definitions/sha256"
+                },
+                "linux-aarch64": {
+                  "$ref": "#/definitions/sha256"
+                },
+                "darwin-x86_64": {
+                  "$ref": "#/definitions/sha256"
+                },
+                "darwin-aarch64": {
+                  "$ref": "#/definitions/sha256"
+                }
+              }
+            }
+          }
+        },
+        "roc": {
+          "type": "object",
+          "description": "RunsOn CLI that the runs-on-lint hook downloads to lint .github/runs-on.yml",
+          "required": [
+            "repository",
+            "version",
+            "sha256"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "repository": {
+              "$ref": "#/definitions/github_repository"
+            },
+            "version": {
+              "$ref": "#/definitions/release_version"
+            },
+            "sha256": {
+              "type": "object",
+              "description": "SHA-256 of each platform's release binary; update together with version",
+              "required": [
+                "linux-x86_64",
+                "linux-aarch64",
+                "darwin-x86_64",
+                "darwin-aarch64"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "linux-x86_64": {
+                  "$ref": "#/definitions/sha256"
+                },
+                "linux-aarch64": {
+                  "$ref": "#/definitions/sha256"
+                },
+                "darwin-x86_64": {
+                  "$ref": "#/definitions/sha256"
+                },
+                "darwin-aarch64": {
                   "$ref": "#/definitions/sha256"
                 }
               }

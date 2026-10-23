@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import fnmatch
 import json
 import re
 from typing import TYPE_CHECKING
@@ -12,6 +11,7 @@ import pytest
 from common.git import ZERO_SHA
 from common.io import read_toml
 from pre_commit import (
+    CI_MANUAL_HOOKS,
     DOCS_HOOKS,
     QT_PATHSPECS,
     build_precommit_args,
@@ -289,7 +289,11 @@ def test_changed_run_rechecks_every_english_page_after_docs_config_changes(
 
     # The fixture fails any run that selects typos, one of the docs hooks.
     assert pre_commit.main(["--ci", *argv]) == int(rescans or "--docs" in argv)
-    runs = [command for command in fake_precommit if command[0] == pre_commit.RUNNER]
+    runs = [
+        command
+        for command in fake_precommit
+        if command[0] == pre_commit.RUNNER and "--hook-stage" not in command
+    ]
     rescan = build_precommit_args(["--files", *pages], DOCS_HOOKS)
     assert (rescan in runs) is rescans
     assert len(runs) == (2 if rescans else 1)
@@ -393,19 +397,50 @@ def test_conventional_commit_types_match_release_notes_sections() -> None:
 
 
 def test_renovate_validator_runs_in_ci_when_its_inputs_change() -> None:
-    hooks = {hook["id"]: hook for repo in _precommit_config()["repos"] for hook in repo["hooks"]}
-    assert hooks["renovate-config-validator"]["stages"] == ["manual"]
+    hooks = _hooks_by_id()
+    validator = hooks["renovate-config-validator"]
+    assert validator["stages"] == ["manual"]
     assert "check-renovate" in hooks
-    workflow = load_workflow("ci-scripts.yml")
-    inputs = (".github/renovate.json", ".pre-commit-config.yaml")
-    for event in ("pull_request", "push"):
-        paths = workflow["on"][event]["paths"]
-        assert all(any(fnmatch.fnmatchcase(name, pattern) for pattern in paths) for name in inputs)
-    steps = {step["name"]: step for step in workflow["jobs"]["validate-renovate-config"]["steps"]}
-    assert " ".join(inputs) in steps["Detect Renovate config changes"]["run"]
-    assert steps["Validate Renovate config"]["run"] == (
-        "prek run renovate-config-validator --hook-stage manual --files .github/renovate.json"
-    )
+    assert "renovate-config-validator" in CI_MANUAL_HOOKS
+    # A bump of the validator's own Renovate version revalidates the config too.
+    for name in (".github/renovate.json", ".pre-commit-config.yaml"):
+        assert re.search(validator["files"], name), name
+    assert validator["pass_filenames"] is False
+    assert validator["args"] == [".github/renovate.json"]
+
+
+@pytest.mark.parametrize(
+    ("argv", "runs_validators"),
+    [
+        (["--ci", "--changed"], True),
+        (["--changed"], False),
+        (["--ci", "--changed", "--hook", "ruff"], False),
+        (["--ci", "--changed", "--docs"], False),
+    ],
+)
+def test_ci_runs_the_manual_validators_on_the_same_selection(
+    fake_precommit: list[list[str]],
+    monkeypatch: pytest.MonkeyPatch,
+    gh_summary: Path,
+    argv: list[str],
+    runs_validators: bool,
+) -> None:
+    monkeypatch.setattr(pre_commit, "changed_refs", lambda args: ("base", "HEAD"))
+    monkeypatch.setattr(pre_commit, "docs_config_changed", lambda refs: False)
+    monkeypatch.setattr(pre_commit, "select_docs_files", lambda refs: ["docs/en/a.md"])
+
+    pre_commit.main(argv)
+    selection = ["--from-ref", "base", "--to-ref", "HEAD"]
+    validators = build_precommit_args(selection, CI_MANUAL_HOOKS, "manual")
+    assert (validators in fake_precommit) is runs_validators
+    assert validators[2:5] == list(CI_MANUAL_HOOKS)
+    assert validators[5:7] == ["--hook-stage", "manual"]
+
+
+def test_ci_manual_hooks_are_manual_stage_hooks() -> None:
+    hooks = _hooks_by_id()
+    for hook_id in CI_MANUAL_HOOKS:
+        assert hooks[hook_id]["stages"] == ["manual"], hook_id
 
 
 def test_explicit_hooks_override_docs_hooks(
@@ -620,7 +655,6 @@ PREK_CACHE_PATH = "~/.cache/prek\n!~/.cache/prek/cache\n"
     [
         ("pre-commit.yml", "pre-commit", "prek-v1-"),
         ("copilot-setup-steps.yml", "copilot-setup-steps", "prek-v1-"),
-        ("ci-scripts.yml", "validate-renovate-config", "prek-renovate-v1-"),
     ],
 )
 def test_workflows_cache_prek_environments(workflow: str, job: str, prefix: str) -> None:
@@ -665,7 +699,7 @@ def test_pushes_prepare_every_hook_environment_before_saving() -> None:
     assert command[:2] == ["prek", "prepare-hooks"]
     skipped = set(command[3::2])
     assert command[2::2] == ["--skip"] * len(skipped)
-    # TruffleHog runs only locally, and the Renovate validator keeps its own cache.
+    # TruffleHog runs only locally; the Renovate validator installs Renovate only when its config changes.
     assert skipped == {"trufflehog", "renovate-config-validator"}
     assert skipped <= set(_hooks_by_id())
 

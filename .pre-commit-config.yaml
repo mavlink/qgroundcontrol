@@ -32,6 +32,24 @@ repos:
         language: system
         files: ^translations/.*\.ts$
 
+      # CI validators that download pinned tools (build-config.json); pre_commit.py --ci runs them when their
+      # files change. Locally: prek run <id> --hook-stage manual
+      - id: packer-validate
+        name: Validate the runner image Packer template
+        entry: uv run --frozen --project tools --group scripts python tools/ci/runner/validate_runner_configs.py packer
+        language: system
+        files: ^(\.github/runner-images/.*\.(pkr\.hcl|sh|py)|\.github/build-config\.json|tools/ci/runner/validate_runner_configs\.py)$
+        pass_filenames: false
+        stages: [manual]
+
+      - id: runs-on-lint
+        name: Lint the RunsOn configuration
+        entry: uv run --frozen --project tools --group scripts python tools/ci/runner/validate_runner_configs.py runs-on
+        language: system
+        files: ^(\.github/(runs-on\.yml|runner-images/windows-warm-pool\.example\.yml|build-config\.json)|tools/ci/runner/validate_runner_configs\.py)$
+        pass_filenames: false
+        stages: [manual]
+
       # Types match the release-notes parsers in tools/configs/cliff.toml and the PR title check.
       - id: conventional-commit-msg
         name: Conventional Commits message
@@ -203,7 +221,10 @@ repos:
     rev: 44.56.1
     hooks:
       - id: renovate-config-validator
-        files: ^\.github/renovate\.json$
+        # Also revalidates when this file bumps the validator's own Renovate version.
+        files: ^(\.github/renovate\.json|\.pre-commit-config\.yaml)$
+        pass_filenames: false
+        args: [.github/renovate.json]
         stages: [manual]
 
   # Markdown linting (report-only, doesn't auto-fix)

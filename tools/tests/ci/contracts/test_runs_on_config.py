@@ -9,6 +9,8 @@ from typing import TYPE_CHECKING, Any
 
 import pytest
 from ci.planning.android_matrix import LINUX_EMULATOR_JOB, LINUX_JOB, build_matrix
+from ci.runner import validate_runner_configs
+from common.build_config import load_build_config
 
 from ..._helpers import REPO_ROOT, load_script, load_yaml
 
@@ -280,7 +282,9 @@ def test_runner_image_workflow_uses_current_commit_and_dedicated_role() -> None:
     assert "secrets.AWS_ROLE_ARN" not in workflow_text
     assert "PKR_VAR_source_ref: ${{ github.sha }}" in workflow_text
     assert "hashicorp/setup-packer@v3" in workflow_text
-    assert "version: '1.16.0'" in workflow_text
+    # Builds and the packer-validate hook use the same Packer release.
+    packer_version = load_build_config()["tools"]["packer"]["version"]
+    assert f"version: '{packer_version}'" in workflow_text
     assert "github.event.repository.default_branch" in workflow_text
 
 
@@ -305,33 +309,37 @@ def test_runner_image_workflow_smoke_tests_the_managed_image() -> None:
     assert {"qt_version", "qt_modules"} <= outputs.keys()
 
 
-def test_ci_scripts_validates_the_packer_template() -> None:
-    workflow = load_yaml(".github/workflows/ci-scripts.yml")
-    validation_job = workflow["jobs"]["validate-runner-images"]
-    validation_steps = str(validation_job["steps"])
-
-    assert validation_job["runs-on"] == "ubuntu-latest"
-    assert "hashicorp/setup-packer@v3" in validation_steps
-    assert "'1.16.0'" in validation_steps
-    assert "packer fmt -check" in validation_steps
-    assert "packer init" in validation_steps
-    assert "packer validate" in validation_steps
+def _precommit_hook(hook_id: str) -> dict[str, Any]:
+    config = load_yaml(".pre-commit-config.yaml")
+    return next(hook for repo in config["repos"] for hook in repo["hooks"] if hook["id"] == hook_id)
 
 
-def test_ci_scripts_lints_runson_config_with_a_verified_cli() -> None:
-    job = load_yaml(".github/workflows/ci-scripts.yml")["jobs"]["validate-runson-config"]
-    install = next(step for step in job["steps"] if step.get("name") == "Install RunsOn CLI")
-    lint = next(step for step in job["steps"] if step.get("name") == "Lint RunsOn config")
-
-    # GitHub-hosted and secret-free, so fork pull requests can run it.
-    assert job["runs-on"] == "ubuntu-latest"
-    assert "secrets." not in str(job)
-    assert re.fullmatch(r"v\d+\.\d+\.\d+", install["env"]["ROC_VERSION"])
-    assert re.fullmatch(r"[0-9a-f]{64}", install["env"]["ROC_SHA256"])
-    script = install["run"]
-    assert script.index("sha256sum --check --strict") < script.index("chmod +x")
-    assert '/roc" lint .github/runs-on.yml' in lint["run"]
-    assert '/roc" lint .github/runner-images/windows-warm-pool.example.yml' in lint["run"]
+@pytest.mark.parametrize(
+    ("hook_id", "check", "inputs"),
+    [
+        (
+            "packer-validate",
+            "packer",
+            [f".github/runner-images/{validate_runner_configs.PACKER_TEMPLATE}"],
+        ),
+        ("runs-on-lint", "runs-on", list(validate_runner_configs.RUNS_ON_CONFIGS)),
+    ],
+)
+def test_runner_config_hooks_validate_their_inputs(
+    hook_id: str, check: str, inputs: list[str]
+) -> None:
+    # Manual-stage hooks that pre_commit.py --ci runs, secret-free so fork pull requests run them.
+    hook = _precommit_hook(hook_id)
+    assert hook["stages"] == ["manual"]
+    assert hook["pass_filenames"] is False
+    assert hook["entry"].endswith(f"tools/ci/runner/validate_runner_configs.py {check}")
+    for path in [
+        *inputs,
+        ".github/build-config.json",
+        "tools/ci/runner/validate_runner_configs.py",
+    ]:
+        assert (REPO_ROOT / path).is_file(), path
+        assert re.search(hook["files"], path), path
 
 
 def test_linux_image_uses_repository_setup_helpers_and_module_manifest(
