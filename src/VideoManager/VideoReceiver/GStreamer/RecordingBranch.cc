@@ -388,7 +388,8 @@ void RecordingBranch::finishForTeardown()
 
     // Also waits for a stop() still in flight; its EOS is already in the branch.
     if (_state != State::Idle) {
-        switch (_finalizer.wait(QDeadlineTimer(kFinalizeTimeout))) {
+        const RecordingFinalizer::Outcome outcome = _finalizer.wait(QDeadlineTimer(kFinalizeTimeout));
+        switch (outcome) {
             case RecordingFinalizer::Outcome::Closed:
                 qCDebug(GstVideoReceiverLog) << "Recording finalized";
                 break;
@@ -401,6 +402,11 @@ void RecordingBranch::finishForTeardown()
                     << "ms — forcing pipeline NULL (recording may be truncated; "
                     << "MP4/MOV stay playable up to the last moov update)";
                 break;
+        }
+        // A recorder that failed or never closed its file may have a streaming thread parked inside; the pipeline
+        // going NULL would wait on it forever, so drop the recorder with a flush first.
+        if (outcome != RecordingFinalizer::Outcome::Closed) {
+            _shutdown();
         }
     }
 }
@@ -506,8 +512,10 @@ void RecordingBranch::_shutdown()
     _keyframeWatch.remove();
 
     if (_fileSink) {
-        // Removed before going NULL, so nothing it posts while stopping reaches the bus as a pipeline error.
-        GStreamer::disposeChild(_fileSink.get());
+        // Removed before going NULL, so nothing it posts while stopping reaches the bus as a pipeline error. Flushed
+        // too: when a file fails to open while splitmuxsink (async-finalize) switches fragments, its output thread can
+        // be left waiting for a command that never comes, and going NULL would wait on that thread forever.
+        GStreamer::flushAndDisposeChild(_fileSink.get());
         _fileSink.reset();
     }
     const RecordingFinalizer::Outcome outcome = _finalizer.disarm();

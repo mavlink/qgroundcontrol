@@ -44,7 +44,9 @@ bool isValidRtspUri(const gchar* uri_str)
     return hasHost;
 }
 
-void disposeChild(GstElement* element)
+namespace {
+
+void removeAndStop(GstElement* element, bool flush)
 {
     const GstObjectPtr parent = element ? adoptObject(gst_object_get_parent(GST_OBJECT(element))) : nullptr;
     if (!parent) {
@@ -54,9 +56,30 @@ void disposeChild(GstElement* element)
     // gst_bin_remove drops the bin's ref, which may be the last one, before the element reaches NULL.
     const GstElementPtr keepAlive = adoptElement(GST_ELEMENT(gst_object_ref(element)));
     (void) gst_bin_remove(GST_BIN(parent.get()), element);
+    if (flush) {
+        (void) gst_element_foreach_sink_pad(
+            element,
+            [](GstElement* /*element*/, GstPad* pad, gpointer /*userData*/) -> gboolean {
+                (void) gst_pad_send_event(pad, gst_event_new_flush_start());
+                return TRUE;
+            },
+            nullptr);
+    }
     // Synchronous: gst_element_change_state() commits an ASYNC return at once when the target is READY or NULL, so
     // the streaming threads have stopped when this returns.
     (void) gst_element_set_state(element, GST_STATE_NULL);
+}
+
+}  // namespace
+
+void disposeChild(GstElement* element)
+{
+    removeAndStop(element, false);
+}
+
+void flushAndDisposeChild(GstElement* element)
+{
+    removeAndStop(element, true);
 }
 
 GstElement* addToBin(GstElement* bin, GstElementPtr element, const char* what)

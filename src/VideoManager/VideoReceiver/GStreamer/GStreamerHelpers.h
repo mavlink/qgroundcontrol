@@ -18,6 +18,10 @@ bool isValidRtspUri(const gchar* uri_str);
 /// @p element, if any, stay valid.
 void disposeChild(GstElement* element);
 
+/// As disposeChild(), but sends a FLUSH_START into @p element's sink pads before setting it to NULL. The flush wakes
+/// streaming threads parked inside @p element, which going NULL would otherwise wait on.
+void flushAndDisposeChild(GstElement* element);
+
 /// Adds @p element to @p bin. gst_bin_add consumes a floating element even when it fails, so ownership always moves.
 /// Returns the borrowed (bin-owned) element, or null if the bin rejected it; @p what names it in the warning.
 GstElement* addToBin(GstElement* bin, GstElementPtr element, const char* what);
