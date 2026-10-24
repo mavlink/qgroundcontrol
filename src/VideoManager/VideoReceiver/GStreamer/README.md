@@ -169,6 +169,10 @@ textures.
 - The `Video.GStreamer.HwBuffers.GstDmaBuf` and `Video.GStreamer.HwBuffers.GstDmaDrmCaps` debug categories log the
   offered modifiers and the first import; Qt's `qt.multimedia.dmabuf` category logs its EGL calls.
 
+`GStreamerDmaBufGlTest` reads imported planes back from a GL QRhi. CTest runs it on xcb with `xcb_egl` and skips it
+without an X display; a plain memfd stands in for a dma-buf under Mesa's software rasterizer, and a VA-API decoder's
+tiled output is compared with its system-memory output on real hardware.
+
 ### macOS / Windows / iOS
 
 GStreamer SDKs are auto-downloaded during CMake configure. To use a local installation instead, set `GStreamer_ROOT_DIR` (on iOS, a `GStreamer.xcframework` or `GStreamer.framework`, or a directory containing one).
@@ -224,13 +228,14 @@ gst-launch-1.0 udpsrc port=5600 caps='application/x-rtp, media=(string)video, cl
 | `GStreamerEnvironmentTest` | Unit | The bundled runtime's environment (plugin path and scanner, which still forks) and its private plugin registry, named per plugin path, which keeps a user-set `GST_REGISTRY` or `GST_REGISTRY_1_0`; a system GStreamer keeps the default registry. |
 | `GStreamerInitTest` | Unit | Init policy: when GStreamer's log is bridged into Qt logging, which missing elements disable video and which only a feature, and the ranks set with `GST_PLUGIN_FEATURE_RANK`. |
 | `GStreamerTest` | Integration | Helpers, the source factory, the `gstqgc` sink and the `HwBuffers` paths. |
+| `GStreamerDmaBufGlTest` | Integration | DMABuf planes imported into a GL QRhi on EGL, read back pixel by pixel (xcb with `xcb_egl`). |
 | `GstVideoReceiverComponentsTest` | Unit | The receiver's components without a stream: reconnect backoff, stall detection, recording finalization by ancestry, pipeline and `.dot` file names. |
 | `GstVideoReceiverTest` | Integration | `GstVideoReceiver` end to end against a live H.264 RTP stream it sends itself on loopback. |
 
 Each test skips, rather than fails, when GStreamer or a plugin it needs is missing (`GstVideoReceiverTest` needs `x264enc` among others).
 
 ```bash
-ctest --test-dir build -R '^(GStreamerEnvironmentTest|GStreamerInitTest|GStreamerTest|GstVideoReceiverComponentsTest|GstVideoReceiverTest)$' --output-on-failure
+ctest --test-dir build -R '^(GStreamerEnvironmentTest|GStreamerInitTest|GStreamerTest|GStreamerDmaBufGlTest|GstVideoReceiverComponentsTest|GstVideoReceiverTest)$' --output-on-failure
 ```
 
 ## GStreamer Logging
