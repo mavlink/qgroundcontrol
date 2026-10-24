@@ -20,6 +20,14 @@ QGC_LOGGING_CATEGORY(GStreamerDecoderRanksLog, "Video.GStreamer.DecoderRanks")
 namespace {
 
 std::atomic_bool g_externalPluginLoaderFailed = false;
+std::atomic_bool s_qtBridgeInstalled = false;
+
+#ifdef QT_DEBUG
+constexpr int kMaxBridgedLevel = GST_LEVEL_MEMDUMP;
+#else
+// LOG and finer would flood Qt logging in release builds; GStreamer's own output (GST_DEBUG) is not capped.
+constexpr int kMaxBridgedLevel = GST_LEVEL_DEBUG;
+#endif
 
 void glib_print_handler(const gchar* string)
 {
@@ -86,50 +94,71 @@ void redirectGLibLogging()
     g_log_set_default_handler(glib_log_handler, nullptr);
 }
 
+bool nativeDebugLogRequested()
+{
+    return !qEnvironmentVariableIsEmpty("GST_DEBUG") || !qEnvironmentVariableIsEmpty("GST_DEBUG_FILE") ||
+           !qEnvironmentVariableIsEmpty("GST_TRACERS");
+}
+
 void qtGstLog(GstDebugCategory* category, GstDebugLevel level, const gchar* file, const gchar* function, gint line,
               GObject* object, GstDebugMessage* message, gpointer data)
 {
+    Q_UNUSED(category);
     Q_UNUSED(data);
 
-    if (level > gst_debug_category_get_threshold(category)) {
-        return;
-    }
-
-    QMessageLogger log(file, line, function);
-
-    const GStreamer::GCharPtr object_info = GStreamer::adoptGChar(gst_info_strdup_printf("%" GST_PTR_FORMAT, object));
-
+    // gst_debug_log() has already applied the category threshold.
+    QtMsgType type = QtDebugMsg;
     switch (level) {
         case GST_LEVEL_ERROR:
-            log.critical(GStreamerAPILog, "%s %s", object_info.get(), gst_debug_message_get(message));
+            type = QtCriticalMsg;
             break;
         case GST_LEVEL_WARNING:
-            log.warning(GStreamerAPILog, "%s %s", object_info.get(), gst_debug_message_get(message));
+            type = QtWarningMsg;
             break;
         case GST_LEVEL_FIXME:
         case GST_LEVEL_INFO:
-            log.info(GStreamerAPILog, "%s %s", object_info.get(), gst_debug_message_get(message));
-            break;
-        case GST_LEVEL_DEBUG:
-#ifdef QT_DEBUG
-        // In release builds LOG/TRACE/MEMDUMP are intentionally dropped to reduce
-        // noise. Only debug builds route these verbose levels through Qt logging.
-        case GST_LEVEL_LOG:
-        case GST_LEVEL_TRACE:
-        case GST_LEVEL_MEMDUMP:
-#endif
-            log.debug(GStreamerAPILog, "%s %s", object_info.get(), gst_debug_message_get(message));
+            type = QtInfoMsg;
             break;
         default:
+            break;
+    }
+    if (!GStreamerAPILog().isEnabled(type)) {
+        return;
+    }
+
+    const GStreamer::GCharPtr objectInfo =
+        object ? GStreamer::adoptGChar(gst_info_strdup_printf("%" GST_PTR_FORMAT " ", object)) : nullptr;
+    const char* const prefix = objectInfo ? objectInfo.get() : "";
+    const gchar* const text = gst_debug_message_get(message);
+    const QMessageLogger log(file, line, function);
+    switch (type) {
+        case QtCriticalMsg:
+            log.critical(GStreamerAPILog, "%s%s", prefix, text);
+            break;
+        case QtWarningMsg:
+            log.warning(GStreamerAPILog, "%s%s", prefix, text);
+            break;
+        case QtInfoMsg:
+            log.info(GStreamerAPILog, "%s%s", prefix, text);
+            break;
+        default:
+            log.debug(GStreamerAPILog, "%s%s", prefix, text);
             break;
     }
 }
 
 void configureDebugLogging()
 {
-    gst_debug_remove_log_function(gst_debug_log_default);
-    gst_debug_remove_log_function(GStreamer::qtGstLog);
-    gst_debug_add_log_function(GStreamer::qtGstLog, nullptr, nullptr);
+    if (nativeDebugLogRequested()) {
+        // Keep GStreamer's own output; a bridge left by an earlier call would duplicate every line.
+        gst_debug_remove_log_function(GStreamer::qtGstLog);
+        s_qtBridgeInstalled.store(false);
+    } else {
+        gst_debug_remove_log_function(gst_debug_log_default);
+        gst_debug_remove_log_function(GStreamer::qtGstLog);
+        gst_debug_add_log_function(GStreamer::qtGstLog, nullptr, nullptr);
+        s_qtBridgeInstalled.store(true);
+    }
 
     if (!qEnvironmentVariableIsEmpty("GST_DEBUG")) {
         return;
@@ -137,9 +166,7 @@ void configureDebugLogging()
 
     QSettings settings;
     if (settings.contains(AppSettings::gstDebugLevelName)) {
-        const int level =
-            std::clamp(settings.value(AppSettings::gstDebugLevelName).toInt(), 0, static_cast<int>(GST_LEVEL_MEMDUMP));
-        gst_debug_set_default_threshold(static_cast<GstDebugLevel>(level));
+        setDebugLevel(settings.value(AppSettings::gstDebugLevelName).toInt());
     }
 }
 
@@ -148,7 +175,8 @@ void setDebugLevel(int level)
     if (!gst_is_initialized()) {
         return;
     }
-    const int clamped = std::clamp(level, 0, static_cast<int>(GST_LEVEL_MEMDUMP));
+    const int maxLevel = s_qtBridgeInstalled.load() ? kMaxBridgedLevel : static_cast<int>(GST_LEVEL_MEMDUMP);
+    const int clamped = std::clamp(level, 0, maxLevel);
     gst_debug_set_default_threshold(static_cast<GstDebugLevel>(clamped));
     qCDebug(GStreamerLoggingLog) << "GStreamer debug threshold set to" << clamped;
 }

@@ -6,6 +6,8 @@ target_sources(
     PRIVATE
         GStreamerEnvironmentTest.cc
         GStreamerEnvironmentTest.h
+        GStreamerInitTest.cc
+        GStreamerInitTest.h
         GStreamerTest.cc
         GStreamerTest.h
         GStreamerTestHelpers.cc
@@ -28,6 +30,7 @@ target_sources(
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_qgc_test(GStreamerEnvironmentTest LABELS Unit)
+add_qgc_test(GStreamerInitTest LABELS Unit)
 add_qgc_test(GStreamerTest LABELS Integration)
 add_qgc_test(GstVideoReceiverTest LABELS Integration)
 add_qgc_test(GstVideoReceiverComponentsTest LABELS Unit)

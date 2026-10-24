@@ -6,6 +6,7 @@
 #include <utility>
 
 #include <QtCore/QByteArrayList>
+#include <QtCore/QCoreApplication>
 #include <QtCore/QList>
 #include <QtCore/QPointer>
 #include <QtCore/QStringList>
@@ -227,6 +228,13 @@ bool _initGstRuntime(const QStringList& args, const Environment::ValidationResul
     return true;
 }
 
+// A Qt post routine runs in ~QCoreApplication, after QGCApplication::shutdown() has destroyed the receivers.
+void _deinitGStreamer()
+{
+    gst_debug_remove_log_function(GStreamer::qtGstLog);
+    gst_deinit();
+}
+
 }  // anonymous namespace
 
 bool completeInit()
@@ -283,12 +291,19 @@ bool initialize(const QStringList& arguments, const Environment::ValidationResul
     GStreamer::resetExternalPluginLoaderFailure();
     GStreamer::redirectGLibLogging();
 
-    // Suppress GStreamer's default stderr handler before gst_init_check() — raw ANSI codes
-    // corrupt the terminal on macOS.
-    gst_debug_remove_log_function(gst_debug_log_default);
+    // Unless the user asked for GStreamer's own output, remove its default stderr handler before gst_init_check(),
+    // which would otherwise keep it; its raw ANSI codes corrupt the terminal on macOS.
+    if (!GStreamer::nativeDebugLogRequested()) {
+        gst_debug_remove_log_function(gst_debug_log_default);
+    }
 
     if (!_initGstRuntime(arguments, envResult)) {
         return false;
+    }
+
+    // gst_deinit() can't be undone, so it is opt-in, as Qt's QT_GSTREAMER_DEINIT: it lets the leaks tracer report.
+    if (qEnvironmentVariableIntValue("QGC_GST_DEINIT") > 0) {
+        qAddPostRoutine(_deinitGStreamer);
     }
 
     return completeInit();

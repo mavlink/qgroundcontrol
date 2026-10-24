@@ -7,8 +7,13 @@ void redirectGLibLogging();
 void resetExternalPluginLoaderFailure();
 bool didExternalPluginLoaderFail();
 
-// Install qtGstLog as gst's log function and apply the persisted gstDebugLevel
-// setting (unless GST_DEBUG is already set in the environment).
+/// True when GST_DEBUG, GST_DEBUG_FILE or GST_TRACERS is set: the user asked for GStreamer's own debug output, so
+/// QGC keeps gst_debug_log_default (which alone honours GST_DEBUG_FILE and writes the format gst-stats and tracer
+/// tools parse) and does not bridge GStreamer's log into Qt logging.
+bool nativeDebugLogRequested();
+
+// Unless nativeDebugLogRequested(), replace gst's default log function with qtGstLog. Then apply the persisted
+// gstDebugLevel setting, unless GST_DEBUG is set.
 void configureDebugLogging();
 
 // Diagnostic dump of installed video-decoder factories, sorted by rank, with

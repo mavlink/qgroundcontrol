@@ -21,7 +21,7 @@ The pipeline is split into focused components (all in this directory):
 | `GstSourceFactory` | Constructs the source element from the stream URI and applies RTP jitter-buffer policy for `application/x-rtp` sources. |
 | `GStreamerEnvironment` | Process-wide environment setup (plugin/scanner/helper/GIO paths, env hygiene) run before `gst_init()`. See [Runtime Environment Setup](#runtime-environment-setup). |
 | `GStreamerHelpers` | Small utilities: decoder classification and rank overrides, tee branch heads, and taking a child element out of a running bin. |
-| `GStreamerLogging` | Routes GStreamer's log output through QGC's logging and applies the persisted debug level. |
+| `GStreamerLogging` | Routes GStreamer's log output through QGC's logging, unless GStreamer's own output was requested, and applies the persisted debug level. See [GStreamer Logging](#gstreamer-logging). |
 | `GstScoped` | RAII owners for transfer-full GStreamer returns so refs can't leak on early return. |
 
 ### `gstqgc` — custom GStreamer plugin
@@ -188,6 +188,7 @@ gst-launch-1.0 udpsrc port=5600 caps='application/x-rtp, media=(string)video, cl
 | Test | Label | Covers |
 | --- | --- | --- |
 | `GStreamerEnvironmentTest` | Unit | The bundled runtime's private plugin registry, which keeps a user-set `GST_REGISTRY` or `GST_REGISTRY_1_0`; a system GStreamer keeps the default registry. |
+| `GStreamerInitTest` | Unit | Init policy: when GStreamer's log is bridged into Qt logging. |
 | `GStreamerTest` | Integration | Helpers, the source factory, the `gstqgc` sink and the `HwBuffers` paths. |
 | `GstVideoReceiverComponentsTest` | Unit | The receiver's components without a stream: reconnect backoff, stall detection, recording finalization by ancestry, pipeline and `.dot` file names. |
 | `GstVideoReceiverTest` | Integration | `GstVideoReceiver` end to end against a live H.264 RTP stream it sends itself on loopback. |
@@ -195,19 +196,20 @@ gst-launch-1.0 udpsrc port=5600 caps='application/x-rtp, media=(string)video, cl
 Each test skips, rather than fails, when GStreamer or a plugin it needs is missing (`GstVideoReceiverTest` needs `x264enc` among others).
 
 ```bash
-ctest --test-dir build -R '^(GStreamerEnvironmentTest|GStreamerTest|GstVideoReceiverComponentsTest|GstVideoReceiverTest)$' --output-on-failure
+ctest --test-dir build -R '^(GStreamerEnvironmentTest|GStreamerInitTest|GStreamerTest|GstVideoReceiverComponentsTest|GstVideoReceiverTest)$' --output-on-failure
 ```
 
 ## GStreamer Logging
 
-- In-app: Use QGroundControl's logging settings
-- Environment variables: See <https://gstreamer.freedesktop.org/documentation/gstreamer/running.html>
+- In-app: The GStreamer debug level setting (Application settings) sets GStreamer's default threshold, and QGC forwards GStreamer's log to the `Video.GStreamer.GStreamerAPI` category; enable that category's debug output in QGC's logging settings to see levels below Info. Release builds forward up to the Debug level.
+- Native output: Setting `GST_DEBUG`, `GST_DEBUG_FILE` or `GST_TRACERS` keeps GStreamer's own log handler and turns the forwarding off. The log then goes to stderr, or to `GST_DEBUG_FILE`, in GStreamer's format, which its tools (`gst-stats`, tracer plotters) parse, in every build type. `GST_DEBUG` replaces the in-app level, and `GST_DEBUG_NO_COLOR=1` drops the color codes. See <https://gstreamer.freedesktop.org/documentation/gstreamer/running.html>.
 - Command line options: `--gst-debug-level`, `--gst-debug`, `--gst-debug-help`, etc.
+- GLib messages (`g_warning()`, `g_critical()`, ...) always go to the `Video.GStreamer.GStreamerLogging` category.
 - Receiver flow (starts, stops, reconnects, the decoder chosen, pipeline latency, GPU path statistics): enable the `Video.GStreamer.GstVideoReceiver` category. Failures are logged as warnings even with it off.
 
 ## Pipeline Observability
 
-QGC supports the standard GStreamer observability env vars. Set them before launching QGC.
+QGC supports the standard GStreamer observability env vars. Set them before launching QGC. `GST_DEBUG`, `GST_DEBUG_FILE` and `GST_TRACERS` switch to GStreamer's native log output (see [GStreamer Logging](#gstreamer-logging)), so tracer records keep the format the GStreamer tools expect.
 
 ### Pipeline graph dumps (`.dot` files)
 
@@ -228,7 +230,7 @@ Every dump shows topology, caps, media types and states, but leaves out element 
 Per-element latency from source to sink:
 
 ```bash
-GST_TRACERS="latency(flags=pipeline+element)" GST_DEBUG=GST_TRACER:7 ./QGroundControl 2> latency.log
+GST_TRACERS="latency(flags=pipeline+element)" GST_DEBUG=GST_TRACER:7 GST_DEBUG_FILE=latency.log ./QGroundControl
 ```
 
 Plot the resulting `element-latency` / `latency` log lines with any of the GStreamer community tools (e.g. `gst-stats`, GStreamerLatencyPlotter).
@@ -246,7 +248,7 @@ The viewer streams the live pipeline graph over WebSocket and exposes a snapshot
 ### Leak / lifetime debugging
 
 ```bash
-GST_TRACERS=leaks GST_DEBUG=GST_TRACER:7 ./QGroundControl
+QGC_GST_DEINIT=1 GST_TRACERS=leaks GST_DEBUG=GST_TRACER:7 ./QGroundControl
 ```
 
-Logs every `GstObject` / `GstMiniObject` that wasn't released by exit. Useful when triaging pad-leak regressions in the source factory or sink bin.
+Logs every `GstObject` / `GstMiniObject` that wasn't released by exit. Useful when triaging pad-leak regressions in the source factory or sink bin. The leaks tracer reports when GStreamer is deinitialized: `QGC_GST_DEINIT=1` makes QGC call `gst_deinit()` as it exits, after its receivers are gone. It is opt-in, like Qt's `QT_GSTREAMER_DEINIT`, because GStreamer can't be used again in the process afterwards.
