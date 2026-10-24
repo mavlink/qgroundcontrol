@@ -9,6 +9,9 @@ class GStreamerEnvironmentTest : public UnitTest
 
 private slots:
     void _testPrivateRegistry();
+    void _testPrivateRegistryStableInstall_data();
+    void _testPrivateRegistryStableInstall();
+    void _testPrivateRegistryPrunesUnusedRegistries();
     void _testPrivateRegistryKeepsUserRegistry_data();
     void _testPrivateRegistryKeepsUserRegistry();
     void _testSystemGStreamerKeepsDefaultRegistry();

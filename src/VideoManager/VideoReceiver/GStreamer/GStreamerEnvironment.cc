@@ -2,9 +2,11 @@
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QCryptographicHash>
+#include <QtCore/QDateTime>
 #include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
+#include <QtCore/QRegularExpression>
 #include <QtCore/QStandardPaths>
 #include <QtCore/QStringList>
 #include <QtCore/QSysInfo>
@@ -65,10 +67,52 @@ void _setGstEnv(const char* name, const QString& value)
     }
 }
 
+// An AppImage is mounted, and a quarantined macOS app translocated, to a new random directory on every launch: name
+// such an install after what stays put, the AppImage file or the translocated app's name.
+QString _stableInstallPath(const QString& installPath)
+{
+    // Whatever an AppImage starts inherits APPIMAGE and APPDIR, so they only name an install inside the mount.
+    const QString appImage = qEnvironmentVariable("APPIMAGE");
+    const QString mountDir = qEnvironmentVariable("APPDIR");
+    if (!appImage.isEmpty() && !mountDir.isEmpty() &&
+        installPath.startsWith(QDir::cleanPath(mountDir) + QLatin1Char('/'))) {
+        return appImage;
+    }
+
+    static const QRegularExpression translocation(QStringLiteral("/AppTranslocation/[^/]+/"));
+    return QString(installPath).replace(translocation, QStringLiteral("/AppTranslocation/"));
+}
+
+// GStreamer only rewrites a registry when the plugins change, so touch @p registry to mark it in use, and remove the
+// registries next to it that no install has used for a month (an old GStreamer version, a replaced AppImage). Removing
+// one that is still in use only costs its install a rescan.
+void _pruneUnusedRegistries(const QString& registry)
+{
+    static constexpr int kUnusedRegistryDays = 30;
+
+    const QDateTime now = QDateTime::currentDateTimeUtc();
+    QFile current(registry);
+    if (current.open(QIODevice::ReadWrite | QIODevice::ExistingOnly)) {
+        (void) current.setFileTime(now, QFileDevice::FileModificationTime);
+        current.close();
+    }
+
+    const QFileInfo registryInfo(registry);
+    const QDateTime cutoff = now.addDays(-kUnusedRegistryDays);
+    const QFileInfoList registries =
+        registryInfo.absoluteDir().entryInfoList({QStringLiteral("gstreamer-*.bin")}, QDir::Files);
+    for (const QFileInfo& other : registries) {
+        if ((other.fileName() != registryInfo.fileName()) && (other.lastModified() < cutoff) &&
+            QFile::remove(other.absoluteFilePath())) {
+            qCDebug(GStreamerEnvLog) << "Removed unused GStreamer registry" << other.absoluteFilePath();
+        }
+    }
+}
+
 // A bundled runtime's plugins differ from the system GStreamer's, so sharing the default per-user registry would make
 // each invalidate the other's plugin cache. The runtime version in the name keeps upgrades from reusing it, and the
-// plugin path hash keeps two installs of one version (stable and daily builds) from rescanning over each other's.
-QString _usePrivateRegistry(const QString& cacheDir, const QString& pluginPath)
+// install hash keeps two installs of one version (stable and daily builds) from rescanning over each other's.
+QString _usePrivateRegistry(const QString& cacheDir, const QString& installPath)
 {
     if (cacheDir.isEmpty() || qEnvironmentVariableIsSet("GST_REGISTRY_1_0") ||
         qEnvironmentVariableIsSet("GST_REGISTRY")) {
@@ -84,14 +128,16 @@ QString _usePrivateRegistry(const QString& cacheDir, const QString& pluginPath)
     guint micro = 0;
     guint nano = 0;
     gst_version(&major, &minor, &micro, &nano);
-    const QByteArray pathHash =
-        QCryptographicHash::hash(pluginPath.toUtf8(), QCryptographicHash::Sha256).toHex().left(8);
-    const QString registry = _cleanJoin(cacheDir, QStringLiteral("gstreamer-%1.%2.%3-%4-%5.bin")
-                                                      .arg(major)
-                                                      .arg(minor)
-                                                      .arg(micro)
-                                                      .arg(QSysInfo::buildCpuArchitecture(), QLatin1String(pathHash)));
+    const QByteArray installHash =
+        QCryptographicHash::hash(_stableInstallPath(installPath).toUtf8(), QCryptographicHash::Sha256).toHex().left(8);
+    const QString registry =
+        _cleanJoin(cacheDir, QStringLiteral("gstreamer-%1.%2.%3-%4-%5.bin")
+                                 .arg(major)
+                                 .arg(minor)
+                                 .arg(micro)
+                                 .arg(QSysInfo::buildCpuArchitecture(), QLatin1String(installHash)));
     _setGstEnv("GST_REGISTRY", registry);
+    _pruneUnusedRegistries(registry);
     return registry;
 }
 
@@ -505,9 +551,9 @@ bool useBundledRuntime(const QString& pluginDirs, const QString& gioModuleDir, c
 #endif
 }
 
-QString usePrivateRegistry(const QString& cacheDir, const QString& pluginPath)
+QString usePrivateRegistry(const QString& cacheDir, const QString& installPath)
 {
-    return _usePrivateRegistry(cacheDir, pluginPath);
+    return _usePrivateRegistry(cacheDir, installPath);
 }
 
 void logDiagnostics()

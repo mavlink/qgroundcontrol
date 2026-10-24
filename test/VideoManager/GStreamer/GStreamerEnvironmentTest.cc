@@ -6,6 +6,7 @@
 #include <vector>
 
 #include <QtCore/QCoreApplication>
+#include <QtCore/QDateTime>
 #include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
@@ -18,18 +19,27 @@
 
 namespace {
 
-/// Saves GST_REGISTRY and GST_REGISTRY_1_0, unsets them, and restores them on destruction.
+/// Saves the variables that name the private registry, unsets them, and restores them on destruction.
 struct RegistryEnvGuard
 {
     TestFixtures::EnvVarFixture registry{"GST_REGISTRY"};
     TestFixtures::EnvVarFixture registry10{"GST_REGISTRY_1_0"};
+    TestFixtures::EnvVarFixture appImage{"APPIMAGE"};
+    TestFixtures::EnvVarFixture appDir{"APPDIR"};
 
     RegistryEnvGuard()
     {
-        qunsetenv("GST_REGISTRY");
-        qunsetenv("GST_REGISTRY_1_0");
+        for (const char* name : {"GST_REGISTRY", "GST_REGISTRY_1_0", "APPIMAGE", "APPDIR"}) {
+            qunsetenv(name);
+        }
     }
 };
+
+bool setModificationTime(const QString& path, const QDateTime& time)
+{
+    QFile file(path);
+    return file.open(QIODevice::ReadWrite) && file.setFileTime(time, QFileDevice::FileModificationTime);
+}
 
 }  // namespace
 
@@ -70,6 +80,86 @@ void GStreamerEnvironmentTest::_testPrivateRegistry()
     const QString daily = GStreamer::Environment::usePrivateRegistry(cacheDir, dailyPlugins);
     QVERIFY2(expectedName.match(QFileInfo(daily).fileName()).hasMatch(), qPrintable(daily));
     QVERIFY(daily != stable);
+}
+
+void GStreamerEnvironmentTest::_testPrivateRegistryStableInstall_data()
+{
+    QTest::addColumn<QString>("appImage");
+    QTest::addColumn<QString>("firstMount");
+    QTest::addColumn<QString>("firstPath");
+    QTest::addColumn<QString>("secondMount");
+    QTest::addColumn<QString>("secondPath");
+    QTest::addColumn<bool>("shared");
+
+    const QString plugins = QStringLiteral("/usr/lib/gstreamer-1.0");
+    QTest::newRow("AppImage mounted again")
+        << QStringLiteral("/opt/QGroundControl.AppImage") << QStringLiteral("/tmp/.mount_QGrounA")
+        << QStringLiteral("/tmp/.mount_QGrounA") + plugins << QStringLiteral("/tmp/.mount_QGrounB")
+        << QStringLiteral("/tmp/.mount_QGrounB") + plugins << true;
+    QTest::newRow("AppImage environment inherited by another install")
+        << QStringLiteral("/opt/Other.AppImage") << QStringLiteral("/tmp/.mount_OtherA")
+        << QStringLiteral("/opt/qgc-stable/lib/gstreamer-1.0") << QStringLiteral("/tmp/.mount_OtherA")
+        << QStringLiteral("/opt/qgc-daily/lib/gstreamer-1.0") << false;
+    const QString translocated = QStringLiteral(
+        "/private/var/folders/ab/cd/T/AppTranslocation/%1/d/QGroundControl.app/Contents/lib/gstreamer-1.0");
+    QTest::newRow("macOS app translocated again")
+        << QString() << QString() << translocated.arg(QStringLiteral("0A1B2C3D-0000-4000-8000-000000000001"))
+        << QString() << translocated.arg(QStringLiteral("0A1B2C3D-0000-4000-8000-000000000002")) << true;
+}
+
+void GStreamerEnvironmentTest::_testPrivateRegistryStableInstall()
+{
+    QFETCH(QString, appImage);
+    QFETCH(QString, firstMount);
+    QFETCH(QString, firstPath);
+    QFETCH(QString, secondMount);
+    QFETCH(QString, secondPath);
+    QFETCH(bool, shared);
+
+    const RegistryEnvGuard guard;
+    QTemporaryDir cacheDir;
+    QVERIFY(cacheDir.isValid());
+    const auto registryFor = [&](const QString& mount, const QString& path) {
+        qunsetenv("GST_REGISTRY");
+        if (!appImage.isEmpty()) {
+            qputenv("APPIMAGE", appImage.toUtf8());
+            qputenv("APPDIR", mount.toUtf8());
+        }
+        return GStreamer::Environment::usePrivateRegistry(cacheDir.path(), path);
+    };
+
+    const QString first = registryFor(firstMount, firstPath);
+    const QString second = registryFor(secondMount, secondPath);
+    QVERIFY(!first.isEmpty());
+    QCOMPARE(first == second, shared);
+}
+
+void GStreamerEnvironmentTest::_testPrivateRegistryPrunesUnusedRegistries()
+{
+    const RegistryEnvGuard guard;
+    QTemporaryDir cacheDir;
+    QVERIFY(cacheDir.isValid());
+    const QString plugins = cacheDir.filePath(QStringLiteral("install/lib/gstreamer-1.0"));
+    const QString registry = GStreamer::Environment::usePrivateRegistry(cacheDir.path(), plugins);
+    QVERIFY(!registry.isEmpty());
+
+    const QDateTime unusedTime = QDateTime::currentDateTimeUtc().addDays(-31);
+    const QString unused = cacheDir.filePath(QStringLiteral("gstreamer-1.20.0-x86_64.bin"));
+    const QString recent = cacheDir.filePath(QStringLiteral("gstreamer-1.28.4-x86_64-0123abcd.bin"));
+    const QString unrelated = cacheDir.filePath(QStringLiteral("other.bin"));
+    for (const QString& path : {registry, unused, unrelated}) {
+        QVERIFY2(setModificationTime(path, unusedTime), qPrintable(path));
+    }
+    QVERIFY(setModificationTime(recent, QDateTime::currentDateTimeUtc()));
+
+    qunsetenv("GST_REGISTRY");
+    QCOMPARE(GStreamer::Environment::usePrivateRegistry(cacheDir.path(), plugins), registry);
+    QVERIFY(!QFileInfo::exists(unused));
+    QVERIFY(QFileInfo::exists(recent));
+    QVERIFY(QFileInfo::exists(unrelated));
+    // An install's own registry, which GStreamer leaves alone while the plugins are unchanged, counts as used.
+    QVERIFY(QFileInfo::exists(registry));
+    QVERIFY(QFileInfo(registry).lastModified() > unusedTime.addDays(1));
 }
 
 void GStreamerEnvironmentTest::_testPrivateRegistryKeepsUserRegistry_data()
@@ -170,6 +260,18 @@ void GStreamerEnvironmentTest::_testBundledRuntime()
 #else
 
 void GStreamerEnvironmentTest::_testPrivateRegistry()
+{
+    QSKIP("GStreamer not enabled");
+}
+
+void GStreamerEnvironmentTest::_testPrivateRegistryStableInstall_data() {}
+
+void GStreamerEnvironmentTest::_testPrivateRegistryStableInstall()
+{
+    QSKIP("GStreamer not enabled");
+}
+
+void GStreamerEnvironmentTest::_testPrivateRegistryPrunesUnusedRegistries()
 {
     QSKIP("GStreamer not enabled");
 }
