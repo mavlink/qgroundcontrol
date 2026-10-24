@@ -110,7 +110,7 @@ jobs:
       # Android skips build-setup, which installs CI's pinned CMake and Ninja for every other build.
       - name: Install pinned CMake and Ninja (Android)
         if: steps.plan.outputs.cmake-version != ''
-        uses: lukka/get-cmake@v4.4.2
+        uses: lukka/get-cmake@v4.4.4
         with:
           cmakeVersion: ${{ steps.plan.outputs.cmake-version }}
           ninjaVersion: ${{ steps.plan.outputs.ninja-version }}
