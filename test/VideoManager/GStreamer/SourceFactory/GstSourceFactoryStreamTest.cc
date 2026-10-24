@@ -4,12 +4,10 @@
 
 #include <atomic>
 #include <gst/gst.h>
-#include <gst/video/video.h>
 
 #include <QtCore/QHash>
 #include <QtNetwork/QTcpServer>
 #include <QtNetwork/QTcpSocket>
-#include <QtNetwork/QUdpSocket>
 
 #include "GStreamerTestHelpers.h"
 #include "GstScoped.h"
@@ -179,36 +177,14 @@ void GstSourceFactoryStreamTest::_testSourceFactoryRtspSetsUpOnlyVideoStream()
 void GstSourceFactoryStreamTest::_testSourceFactoryDropsRtpUntilParameterSets()
 {
     const QString missing = GstTest::firstMissingFactory(
-        {"videotestsrc", "x264enc", "rtph264pay", "udpsink", "udpsrc", "parsebin", "rtph264depay", "fakesink"});
+        {"appsrc", "h264parse", "rtph264pay", "udpsink", "udpsrc", "parsebin", "rtph264depay", "fakesink", "appsink"});
     if (!missing.isEmpty()) {
         QSKIP(qPrintable(QStringLiteral("%1 plugin unavailable").arg(missing)));
     }
 
-    QUdpSocket portProbe;
-    QVERIFY(portProbe.bind(QHostAddress::LocalHost, 0));
-    const quint16 port = portProbe.localPort();
-    portProbe.close();
-
     DepayloaderOutput output;
-    std::atomic<int> sentFrames{0};
-
-    // A GOP far longer than the test: the receiver joins after the only keyframe until the test forces one.
-    GstTest::TestPipeline sender;
-    QVERIFY2(
-        sender.launch(QStringLiteral("videotestsrc is-live=true ! video/x-raw,width=160,height=120,framerate=30/1 ! "
-                                     "x264enc name=encoder tune=zerolatency speed-preset=ultrafast "
-                                     "key-int-max=100000 ! rtph264pay config-interval=-1 pt=96 ! "
-                                     "udpsink host=127.0.0.1 port=%1 sync=false async=false")
-                          .arg(port)),
-        qPrintable(sender.error()));
-    const GStreamer::GstElementPtr encoder = sender.element("encoder");
-    QVERIFY(encoder);
-    const GStreamer::GstPadPtr encoderSrc = GStreamer::adoptPad(gst_element_get_static_pad(encoder.get(), "src"));
-    (void) gst_pad_add_probe(encoderSrc.get(), GST_PAD_PROBE_TYPE_BUFFER, GstTest::countBuffers, &sentFrames, nullptr);
-
     GStreamer::SourceFactory::Config config;
-    const GStreamer::GstElementPtr source =
-        GstTest::createSource(QStringLiteral("udp://127.0.0.1:%1").arg(port), config);
+    const GStreamer::GstElementPtr source = GstTest::createSource(QStringLiteral("udp://127.0.0.1:0"), config);
     QVERIFY(source);
     (void) g_signal_connect(source.get(), "deep-element-added", G_CALLBACK(watchH264Depayloading), &output);
 
@@ -219,16 +195,21 @@ void GstSourceFactoryStreamTest::_testSourceFactoryDropsRtpUntilParameterSets()
     QVERIFY(gst_bin_add(receiver.bin(), source.get()));
     QVERIFY(gst_bin_add(receiver.bin(), sink));
     (void) g_signal_connect(source.get(), "pad-added", G_CALLBACK(linkToSink), sink);
-
-    QVERIFY(sender.play());
-    QVERIFY_TRUE_WAIT(sentFrames.load() >= 5, TestTimeout::mediumMs());
     QVERIFY(receiver.play());
+    gint port = 0;
+    g_object_get(GstTest::findByFactory(GST_BIN(source.get()), "udpsrc").get(), "port", &port, nullptr);
+    QVERIFY(port > 0);
+
+    // The receiver joins a stream whose keyframes, and the parameter sets sent with them, it missed.
+    GstTest::FixtureRtpSender sender;
+    QVERIFY2(sender.error().isEmpty(), qPrintable(sender.error()));
+    sender.holdKeyframes(true);
+    QVERIFY(sender.start(static_cast<quint16>(port)));
 
     QVERIFY_TRUE_WAIT(output.packetsIn.load() >= 20, TestTimeout::mediumMs());
     QCOMPARE(output.unitsOut.load(), 0);
 
-    QVERIFY(gst_pad_send_event(encoderSrc.get(),
-                               gst_video_event_new_upstream_force_key_unit(GST_CLOCK_TIME_NONE, TRUE, 0)));
+    sender.holdKeyframes(false);
     QVERIFY_TRUE_WAIT(output.unitsOut.load() > 0, TestTimeout::mediumMs());
     QVERIFY2(output.firstUnitHasSps.load(), "the first unit reaching h264parse must carry the SPS");
 }

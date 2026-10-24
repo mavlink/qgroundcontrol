@@ -44,6 +44,19 @@ target_sources(
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
+# Encoded streams the tests send instead of encoding their own (GstTest::FixtureRtpSender), made by Media/generate.sh.
+if(QGC_ENABLE_GST_VIDEOSTREAMING)
+    qt_add_resources(
+        ${CMAKE_PROJECT_NAME} "GStreamerTestMedia_res"
+        PREFIX "/unittest/video"
+        BASE Media
+        FILES
+            Media/h264_160x120.h264
+            Media/h264_320x240.h264
+            Media/h265_320x240.h265
+    )
+endif()
+
 # Pipeline-free cases run in the Unit pass; classes that play pipelines, open sockets or use the GPU are Integration, so
 # a crash in a GPU path only takes down its own class.
 add_qgc_test(GStreamerEnvironmentTest LABELS Unit)

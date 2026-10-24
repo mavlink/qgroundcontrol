@@ -3,7 +3,11 @@
 #ifdef QGC_GST_STREAMING
 
 #include <atomic>
+#include <gst/app/gstappsink.h>
+#include <gst/app/gstappsrc.h>
 #include <rhi/qrhi.h>
+
+#include <QtCore/QFile>
 
 #include "GStreamer.h"
 #include "GstSourceFactory.h"
@@ -205,6 +209,147 @@ QString TestPipeline::runToEos(std::chrono::milliseconds timeout) const
         return QStringLiteral("timed out waiting for EOS");
     }
     return (GST_MESSAGE_TYPE(message.get()) == GST_MESSAGE_EOS) ? QString() : errorText(message.get());
+}
+
+QList<AccessUnit> loadAccessUnits(const QString& resource, QString* error)
+{
+    const auto fail = [error](const QString& why) {
+        if (error) {
+            *error = why;
+        }
+        return QList<AccessUnit>();
+    };
+    QFile file(resource);
+    if (!file.open(QIODevice::ReadOnly)) {
+        return fail(QStringLiteral("%1: %2").arg(resource, file.errorString()));
+    }
+    const QByteArray stream = file.readAll();
+    const char* const codec = resource.endsWith(QLatin1String(".h265")) ? "h265" : "h264";
+
+    TestPipeline pipeline;
+    if (!pipeline.launch(QStringLiteral("appsrc name=src caps=video/x-%1,stream-format=byte-stream ! %1parse ! "
+                                        "video/x-%1,stream-format=byte-stream,alignment=au ! "
+                                        "appsink name=sink sync=false")
+                             .arg(QLatin1String(codec)))) {
+        return fail(pipeline.error());
+    }
+    const GStreamer::GstElementPtr src = pipeline.element("src");
+    const GStreamer::GstElementPtr sink = pipeline.element("sink");
+    if (!pipeline.play()) {
+        return fail(QStringLiteral("%1: the parse pipeline did not start").arg(resource));
+    }
+    (void) gst_app_src_push_buffer(GST_APP_SRC(src.get()),
+                                   gst_buffer_new_memdup(stream.constData(), static_cast<gsize>(stream.size())));
+    (void) gst_app_src_end_of_stream(GST_APP_SRC(src.get()));
+
+    QList<AccessUnit> units;
+    while (GstSample* const sample =
+               gst_app_sink_try_pull_sample(GST_APP_SINK(sink.get()), clockTime(TestTimeout::mediumDuration()))) {
+        GstBuffer* const buffer = gst_sample_get_buffer(sample);
+        GstMapInfo map;
+        if (buffer && gst_buffer_map(buffer, &map, GST_MAP_READ)) {
+            units.append({QByteArray(reinterpret_cast<const char*>(map.data), static_cast<qsizetype>(map.size)),
+                          !GST_BUFFER_FLAG_IS_SET(buffer, GST_BUFFER_FLAG_DELTA_UNIT)});
+            gst_buffer_unmap(buffer, &map);
+        }
+        gst_sample_unref(sample);
+    }
+    if (!gst_app_sink_is_eos(GST_APP_SINK(sink.get())) || units.isEmpty() || !units.constFirst().keyframe) {
+        return fail(
+            QStringLiteral("%1: parsed %2 units, not a stream starting at a keyframe").arg(resource).arg(units.size()));
+    }
+    return units;
+}
+
+FixtureRtpSender::FixtureRtpSender(const QString& resource)
+    : _h265(resource.endsWith(QLatin1String(".h265")))
+    , _units(loadAccessUnits(resource, &_error))
+{}
+
+FixtureRtpSender::~FixtureRtpSender() = default;
+
+bool FixtureRtpSender::start(quint16 port)
+{
+    stop();
+    if ((port == 0) || _units.isEmpty()) {
+        return false;
+    }
+    {
+        const std::lock_guard lock(_mutex);
+        _next = 0;
+        _pts = 0;
+    }
+    const char* const codec = _h265 ? "h265" : "h264";
+    _pipeline = std::make_unique<TestPipeline>();
+    // max-bytes keeps one unit queued, so switchTo() and holdKeyframes() apply to the next frame sent.
+    if (!_pipeline->launch(
+            QStringLiteral("appsrc name=src is-live=true format=time max-bytes=1 "
+                           "caps=video/x-%1,stream-format=byte-stream,alignment=au ! "
+                           "rtp%1pay config-interval=-1 pt=96 ! udpsink host=127.0.0.1 port=%2 sync=true async=false")
+                .arg(QLatin1String(codec))
+                .arg(port))) {
+        _error = _pipeline->error();
+        return false;
+    }
+    const GStreamer::GstElementPtr source = _pipeline->element("src");
+    const GStreamer::GstPadPtr sourcePad = GStreamer::adoptPad(gst_element_get_static_pad(source.get(), "src"));
+    if (!sourcePad || !gst_pad_add_probe(sourcePad.get(), GST_PAD_PROBE_TYPE_BUFFER, countBuffers, &_frames, nullptr)) {
+        return false;
+    }
+    (void) g_signal_connect(source.get(), "need-data", G_CALLBACK(_needData), this);
+    return _pipeline->play();
+}
+
+void FixtureRtpSender::stop()
+{
+    _pipeline.reset();
+}
+
+bool FixtureRtpSender::switchTo(const QString& resource)
+{
+    if (resource.endsWith(QLatin1String(".h265")) != _h265) {
+        _error = QStringLiteral("%1: not the codec being sent").arg(resource);
+        return false;
+    }
+    QList<AccessUnit> units = loadAccessUnits(resource, &_error);
+    if (units.isEmpty()) {
+        return false;
+    }
+    const std::lock_guard lock(_mutex);
+    _units = std::move(units);
+    _next = 0;
+    return true;
+}
+
+void FixtureRtpSender::holdKeyframes(bool hold)
+{
+    const std::lock_guard lock(_mutex);
+    _keyframesHeld = hold;
+}
+
+void FixtureRtpSender::_needData(GstElement* appsrc, [[maybe_unused]] guint length, gpointer self)
+{
+    auto* const sender = static_cast<FixtureRtpSender*>(self);
+    GstBuffer* buffer = nullptr;
+    {
+        const std::lock_guard lock(sender->_mutex);
+        for (qsizetype skipped = 0;
+             sender->_keyframesHeld && sender->_units.at(sender->_next).keyframe && (skipped < sender->_units.size());
+             ++skipped) {
+            sender->_next = (sender->_next + 1) % sender->_units.size();
+        }
+        const QByteArray& bytes = sender->_units.at(sender->_next).bytes;
+        buffer = gst_buffer_new_memdup(bytes.constData(), static_cast<gsize>(bytes.size()));
+        if (!sender->_units.at(sender->_next).keyframe) {
+            GST_BUFFER_FLAG_SET(buffer, GST_BUFFER_FLAG_DELTA_UNIT);
+        }
+        GST_BUFFER_PTS(buffer) = sender->_pts;
+        GST_BUFFER_DTS(buffer) = sender->_pts;
+        GST_BUFFER_DURATION(buffer) = GST_SECOND / kStreamFrameRate;
+        sender->_pts += GST_SECOND / kStreamFrameRate;
+        sender->_next = (sender->_next + 1) % sender->_units.size();
+    }
+    (void) gst_app_src_push_buffer(GST_APP_SRC(appsrc), buffer);
 }
 
 DecoderRankSnapshot::DecoderRankSnapshot()

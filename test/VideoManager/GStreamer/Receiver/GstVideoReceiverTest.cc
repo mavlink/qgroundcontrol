@@ -39,10 +39,10 @@ namespace {
 using State = VideoReceiver::State;
 using FileFormat = VideoReceiver::FileFormat;
 
-constexpr int kFrameRate = 30;
+// The stream GstTest::FixtureRtpSender sends: 320x240 at 30 fps, a keyframe every 5 frames.
+constexpr int kFrameRate = GstTest::kStreamFrameRate;
 constexpr int kFrameWidth = 320;
 constexpr int kFrameHeight = 240;
-constexpr int kKeyframeInterval = 5;
 // Frames the sender produces while a recording is open. Some may still be in flight when the
 // recording ends, but a finalized file holds far more than kMinRecordedFrames; a file cut off
 // before its final moov holds only the samples of the first header update (one).
@@ -67,49 +67,6 @@ QString udpListenUri()
 {
     return loopbackUri(QLatin1StringView("udp"), 0);
 }
-
-/// Live H.264 test pattern sent as RTP to 127.0.0.1:port; can stop and start again, as a camera losing its link.
-class H264RtpSender
-{
-public:
-    bool start(quint16 port)
-    {
-        stop();
-        if (port == 0) {
-            return false;
-        }
-        _pipeline = std::make_unique<GstTest::TestPipeline>();
-        const QString description =
-            QStringLiteral(
-                "videotestsrc is-live=true pattern=ball ! video/x-raw,width=%4,height=%5,framerate=%1/1 ! "
-                "x264enc name=encoder tune=zerolatency speed-preset=ultrafast key-int-max=%2 ! "
-                "rtph264pay config-interval=-1 pt=96 ! udpsink host=127.0.0.1 port=%3 sync=false async=false")
-                .arg(kFrameRate)
-                .arg(kKeyframeInterval)
-                .arg(port)
-                .arg(kFrameWidth)
-                .arg(kFrameHeight);
-        if (!_pipeline->launch(description)) {
-            return false;
-        }
-        const GStreamer::GstElementPtr encoder = _pipeline->element("encoder");
-        const GStreamer::GstPadPtr encoderSrc =
-            GStreamer::adoptPad(encoder ? gst_element_get_static_pad(encoder.get(), "src") : nullptr);
-        return encoderSrc &&
-               gst_pad_add_probe(encoderSrc.get(), GST_PAD_PROBE_TYPE_BUFFER, GstTest::countBuffers, &_frames,
-                                 nullptr) &&
-               _pipeline->play();
-    }
-
-    void stop() { _pipeline.reset(); }
-
-    int frames() const { return _frames.load(std::memory_order_relaxed); }
-
-private:
-    std::atomic<int> _frames{0};
-    // Declared last, so the pipeline stops before the counter its probe writes to goes away.
-    std::unique_ptr<GstTest::TestPipeline> _pipeline;
-};
 
 /// Demuxes the MP4/MOV at @p path to EOS. Returns the number of video samples, or -1 with
 /// @p failure set when the file can't be played to the end.
@@ -199,8 +156,8 @@ GStreamer::GstElementPtr branchHead(GstElement* pipeline, PipelineBranch branch,
     });
 }
 
-/// A GstVideoReceiver receiving @p uri, with spies on its signals, a VideoOutput in a shown window, and a sender for
-/// its UDP port.
+/// A GstVideoReceiver receiving @p uri, with spies on its signals, a VideoOutput in a shown window, and a sender of the
+/// H.264 test stream for its UDP port.
 struct Receiver
 {
     explicit Receiver(const QString& uri = udpListenUri(), bool autoReconnect = false,
@@ -333,7 +290,7 @@ struct Receiver
     QSignalSpy recordingFinishedSpy;
     QSignalSpy sizeSpy;
     QSignalSpy errorSpy;
-    H264RtpSender sender;
+    GstTest::FixtureRtpSender sender;
 };
 
 }  // namespace
@@ -365,7 +322,7 @@ void GstVideoReceiverTest::init()
     QString unavailable = GstTest::initGStreamer();
     if (unavailable.isEmpty()) {
         const QString missing = GstTest::firstMissingFactory(
-            {"videotestsrc", "x264enc", "rtph264pay", "udpsink", "udpsrc", "rtph264depay", "parsebin", "decodebin3",
+            {"appsrc", "h264parse", "rtph264pay", "udpsink", "udpsrc", "rtph264depay", "parsebin", "decodebin3",
              "valve", "tee", "filesink", "mp4mux", "qtmux", "qtdemux", "qgcvideosinkbin"});
         if (!missing.isEmpty()) {
             unavailable = QStringLiteral("Required GStreamer factory is unavailable: %1").arg(missing);

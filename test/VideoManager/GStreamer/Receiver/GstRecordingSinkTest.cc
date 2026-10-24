@@ -56,7 +56,8 @@ void linkH265DemuxPad([[maybe_unused]] GstElement* demux, GstPad* pad, gpointer 
     }
 }
 
-GstFlowReturn pushAccessUnit(GstElement* appsrc, const QByteArray& bytes, GstClockTime timestamp)
+GstFlowReturn pushAccessUnit(GstElement* appsrc, const QByteArray& bytes, GstClockTime timestamp,
+                             GstClockTime duration = GST_SECOND / 4)
 {
     GstBuffer* buffer = gst_buffer_new_allocate(nullptr, static_cast<gsize>(bytes.size()), nullptr);
     if (!buffer) {
@@ -65,7 +66,7 @@ GstFlowReturn pushAccessUnit(GstElement* appsrc, const QByteArray& bytes, GstClo
     (void) gst_buffer_fill(buffer, 0, bytes.constData(), static_cast<gsize>(bytes.size()));
     GST_BUFFER_PTS(buffer) = timestamp;
     GST_BUFFER_DTS(buffer) = timestamp;
-    GST_BUFFER_DURATION(buffer) = GST_SECOND / 4;
+    GST_BUFFER_DURATION(buffer) = duration;
     return gst_app_src_push_buffer(GST_APP_SRC(appsrc), buffer);
 }
 
@@ -204,7 +205,7 @@ void GstRecordingSinkTest::_testRecordingSinkFinalizesMidStreamH265Mp4()
 void GstRecordingSinkTest::_testRecordingSinkTimestampsDtsOnlyFrames()
 {
     const QString missing = GstTest::firstMissingFactory(
-        {"videotestsrc", "x264enc", "h264parse", "identity", "filesink", "mp4mux", "filesrc", "qtdemux", "fakesink"});
+        {"appsrc", "h264parse", "identity", "filesink", "mp4mux", "filesrc", "qtdemux", "fakesink", "appsink"});
     if (!missing.isEmpty()) {
         QSKIP(qPrintable(QStringLiteral("Required GStreamer factory is unavailable: %1").arg(missing)));
     }
@@ -213,14 +214,16 @@ void GstRecordingSinkTest::_testRecordingSinkTimestampsDtsOnlyFrames()
     QVERIFY(tempDir.isValid());
     const QString outputPath = tempDir.filePath(QStringLiteral("dts-only.mp4"));
     constexpr int kFrames = 20;
+    QString loadError;
+    const QList<GstTest::AccessUnit> units =
+        GstTest::loadAccessUnits(QString::fromLatin1(GstTest::kH264Stream), &loadError);
+    QVERIFY2(units.size() >= kFrames, qPrintable(loadError));
 
     GstTest::TestPipeline pipeline;
-    QVERIFY2(
-        pipeline.launch(QStringLiteral("videotestsrc num-buffers=%1 ! video/x-raw,width=64,height=48,framerate=10/1 ! "
-                                       "x264enc tune=zerolatency speed-preset=ultrafast key-int-max=5 ! "
-                                       "h264parse ! identity name=strip")
-                            .arg(kFrames)),
-        qPrintable(pipeline.error()));
+    QVERIFY2(pipeline.launch(QStringLiteral("appsrc name=src format=time "
+                                            "caps=video/x-h264,stream-format=byte-stream,alignment=au ! "
+                                            "h264parse ! identity name=strip")),
+             qPrintable(pipeline.error()));
 
     // After packet loss the parsers pass some frames on with only a DTS; qtmux alone would fail the recording.
     struct Stripped
@@ -258,6 +261,13 @@ void GstRecordingSinkTest::_testRecordingSinkTimestampsDtsOnlyFrames()
     QVERIFY(gst_element_link(pipeline.element("strip").get(), fileSink.get()));
 
     QVERIFY(pipeline.play());
+    const GStreamer::GstElementPtr source = pipeline.element("src");
+    constexpr GstClockTime kFrameDuration = GST_SECOND / GstTest::kStreamFrameRate;
+    for (int frame = 0; frame < kFrames; ++frame) {
+        QCOMPARE(pushAccessUnit(source.get(), units.at(frame).bytes, frame * kFrameDuration, kFrameDuration),
+                 GST_FLOW_OK);
+    }
+    QCOMPARE(gst_app_src_end_of_stream(GST_APP_SRC(source.get())), GST_FLOW_OK);
     const QString failure = pipeline.runToEos();
     QVERIFY2(failure.isEmpty(), qPrintable(failure));
     (void) gst_element_set_state(pipeline.get(), GST_STATE_NULL);
