@@ -18,8 +18,8 @@ include("${CMAKE_CURRENT_LIST_DIR}/Platform.cmake")
 set(GSTREAMER_PLUGIN_ALTERNATES "videoconvertscale|videoconvert+videoscale")
 
 # Structural plugins guaranteed to exist post-install — the install verifier
-# fails the build if any are missing, and GStreamer.cc fails initialization
-# (QGC_GST_RUNTIME_REQUIRED_PLUGINS, set by src/.../GStreamer/CMakeLists.txt).
+# fails the build if any are missing. At runtime GStreamer.cc checks the elements
+# per feature instead, and fails initialization only without the display core.
 # Codec implementations (openh264/libav) are intentionally excluded: distro
 # bundles may omit one while shipping another usable decode path.
 # opengl supplies glupload/glcolorconvert (GL zero-copy video path);
@@ -148,21 +148,22 @@ endfunction()
 function(gstreamer_classify_missing_plugins)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "" "OUT_OPTIONAL;OUT_ABSENT;OUT_UNUSABLE" "REQUESTED;AVAILABLE;SHIPPED")
     _qgc_gst_check_args(
-        gstreamer_classify_missing_plugins
-        OUT_OPTIONAL
-        OUT_ABSENT
-        OUT_UNUSABLE
-        ALLOW_EMPTY
-        REQUESTED
-        AVAILABLE
-        SHIPPED
+        gstreamer_classify_missing_plugins OUT_OPTIONAL OUT_ABSENT OUT_UNUSABLE ALLOW_EMPTY REQUESTED AVAILABLE SHIPPED
     )
-    gstreamer_missing_required(REQUIRED ${ARG_REQUESTED} AVAILABLE ${ARG_AVAILABLE} OUT_VAR _missing)
+    gstreamer_missing_required(
+        REQUIRED ${ARG_REQUESTED}
+        AVAILABLE ${ARG_AVAILABLE}
+        OUT_VAR _missing
+    )
     set(_optional "")
     set(_absent "")
     set(_unusable "")
     foreach(_plugin IN LISTS _missing)
-        gstreamer_missing_required(REQUIRED ${_plugin} AVAILABLE ${ARG_SHIPPED} OUT_VAR _not_shipped)
+        gstreamer_missing_required(
+            REQUIRED ${_plugin}
+            AVAILABLE ${ARG_SHIPPED}
+            OUT_VAR _not_shipped
+        )
         if(_plugin IN_LIST GSTREAMER_OPTIONAL_PLUGINS)
             list(APPEND _optional "${_plugin}")
         elseif(_not_shipped)

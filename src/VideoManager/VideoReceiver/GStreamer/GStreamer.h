@@ -1,7 +1,9 @@
 #pragma once
 
+#include <functional>
+
 #include <QtCore/QByteArray>
-#include <QtCore/qcontainerfwd.h>
+#include <QtCore/QStringList>
 
 #include "GStreamerEnvironment.h"
 
@@ -35,6 +37,18 @@ struct VideoSinkConfig
     bool disablePixelAspectRatio = false;
     bool gpuZeroCopy = false;
 };
+
+/// A QGC video feature whose GStreamer elements are not all registered.
+struct MissingPluginFeature
+{
+    QString feature;
+    QStringList factories;  ///< The missing element factories; "a|b" when neither alternative exists.
+    bool required = false;  ///< Part of the display core: GStreamer video can't work without it.
+};
+
+/// The features in GStreamer.cc's plugin policy that miss an element factory, as reported by @p hasFactory.
+/// completeInit() fails only when a required one is missing, and warns about the others.
+QList<MissingPluginFeature> missingPluginFeatures(const std::function<bool(const char* factoryName)>& hasFactory);
 
 bool completeInit();
 void setDebugLevel(int level);

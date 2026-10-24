@@ -80,58 +80,71 @@ bool requireFactory(const char* name, const char* hint)
     return true;
 }
 
-bool _verifyPlugins()
+struct PluginFeature
+{
+    const char* name;
+    bool required;
+    const char* factories;  // space-separated; "a|b" is satisfied by either factory
+};
+
+// Checked per element, as Qt's qGstErrorMessageIfElementsNotAvailable does, so a missing optional plugin disables only
+// its feature. Only the display core is required. The qgc elements are checked separately (requireFactory).
+constexpr PluginFeature kPluginFeatures[] = {
+    {"Video display", true, "decodebin3 tee queue valve capsfilter videoconvertscale|videoconvert"},
+    {"RTP/UDP video", true, "udpsrc rtpjitterbuffer parsebin rtph264depay h264parse rtph265depay h265parse"},
+    {"RTSP video", false, "rtspsrc"},
+    {"MPEG-TS video", false, "tsdemux"},
+    {"TCP video", false, "tcpclientsrc"},
+    {"Video recording", false, "splitmuxsink"},
+    {"MKV recording", false, "matroskamux"},
+    {"MP4/MOV recording", false, "mp4mux qtmux"},
+};
+
+bool _verifyPluginFeatures()
 {
     GstRegistry* registry = gst_registry_get();
-    if (!registry) {
-        qCCritical(GStreamerLog) << "Failed to get GStreamer registry";
-        return false;
+    if (GStreamerLog().isDebugEnabled()) {
+        qCDebug(GStreamerLog) << "Installed GStreamer plugins:";
+        GStreamer::forEachPlugin(registry, [](GstPlugin* plugin) {
+            qCDebug(GStreamerLog) << "  " << gst_plugin_get_name(plugin) << gst_plugin_get_version(plugin);
+        });
     }
 
-    qCDebug(GStreamerLog) << "Installed GStreamer plugins:";
-    GStreamer::forEachPlugin(registry, [](GstPlugin* plugin) {
-        qCDebug(GStreamerLog) << "  " << gst_plugin_get_name(plugin) << gst_plugin_get_version(plugin);
-    });
+    const QList<MissingPluginFeature> missing = missingPluginFeatures(
+        [](const char* name) { return static_cast<bool>(adoptFactory(gst_element_factory_find(name))); });
+    if (missing.isEmpty()) {
+        return true;
+    }
 
-    bool result = true;
-    const auto hasPlugin = [registry](const char* name) {
-        const GstObjectPtr plugin(GST_OBJECT(gst_registry_find_plugin(registry, name)));
-        return plugin != nullptr;
-    };
-    // qgc plus GSTREAMER_RUNTIME_REQUIRED_PLUGINS (PluginPolicy.cmake), so a stripped registry fails loudly instead
-    // of at the first stream attempt. Each entry lists, '|'-separated, the plugin sets that satisfy it, a set's
-    // plugins joined by '+' (videoconvert+videoscale stand in for the fused videoconvertscale of 1.22+).
-    static constexpr const char* kRequiredPlugins[] = {"qgc", QGC_GST_RUNTIME_REQUIRED_PLUGINS};
-    for (const char* requirement : kRequiredPlugins) {
-        const QList<QByteArray> alternatives = QByteArray(requirement).split('|');
-        const bool satisfied = std::ranges::any_of(alternatives, [&hasPlugin](const QByteArray& alternative) {
-            const QList<QByteArray> plugins = alternative.split('+');
-            return std::ranges::all_of(
-                plugins, [&hasPlugin](const QByteArray& plugin) { return hasPlugin(plugin.constData()); });
-        });
-        if (!satisfied) {
-            qCCritical(GStreamerLog) << "Required GStreamer plugin not found:" << requirement;
-            result = false;
+    bool displayAvailable = true;
+    for (const MissingPluginFeature& feature : missing) {
+        if (feature.required) {
+            qCCritical(GStreamerLog) << feature.feature
+                                     << "unavailable, GStreamer elements not found:" << feature.factories;
+            displayAvailable = false;
+        } else {
+            qCWarning(GStreamerLog) << feature.feature
+                                    << "unavailable, GStreamer elements not found:" << feature.factories;
         }
     }
 
-    if (!result) {
-        // Surface blacklisted plugins so a failure from a corrupt/incompatible plugin file
-        // shows up here instead of looking like a missing-plugin problem.
-        GStreamer::forEachPlugin(registry, [](GstPlugin* p) {
-            const gchar* desc = gst_plugin_get_description(p);
-            if (!desc || !g_str_has_prefix(desc, "BLACKLIST"))
-                return;
-            const gchar* filename = gst_plugin_get_filename(p);
-            qCWarning(GStreamerLog) << "Blacklisted plugin:" << gst_plugin_get_name(p)
-                                    << "file:" << (filename ? filename : "(null)");
-        });
+    // Surface blacklisted plugins so a failure from a corrupt/incompatible plugin file
+    // shows up here instead of looking like a missing-plugin problem.
+    GStreamer::forEachPlugin(registry, [](GstPlugin* p) {
+        const gchar* desc = gst_plugin_get_description(p);
+        if (!desc || !g_str_has_prefix(desc, "BLACKLIST"))
+            return;
+        const gchar* filename = gst_plugin_get_filename(p);
+        qCWarning(GStreamerLog) << "Blacklisted plugin:" << gst_plugin_get_name(p)
+                                << "file:" << (filename ? filename : "(null)");
+    });
 
+    if (!displayAvailable) {
         // Path / scanner env vars belong to the environment layer that set them.
         Environment::logDiagnostics();
     }
 
-    return result;
+    return displayAvailable;
 }
 
 using BaseSrcUnlockFunc = gboolean (*)(GstBaseSrc*);
@@ -187,6 +200,26 @@ void _serializeUdpSrcUnlock()
 }
 
 }  // anonymous namespace
+
+QList<MissingPluginFeature> missingPluginFeatures(const std::function<bool(const char* factoryName)>& hasFactory)
+{
+    QList<MissingPluginFeature> missing;
+    for (const PluginFeature& feature : kPluginFeatures) {
+        QStringList absent;
+        for (const QByteArray& entry : QByteArray(feature.factories).split(' ')) {
+            const QList<QByteArray> alternatives = entry.split('|');
+            if (std::ranges::none_of(alternatives,
+                                     [&hasFactory](const QByteArray& name) { return hasFactory(name.constData()); })) {
+                absent.append(QString::fromLatin1(entry));
+            }
+        }
+        if (!absent.isEmpty()) {
+            missing.append(
+                {.feature = QString::fromLatin1(feature.name), .factories = absent, .required = feature.required});
+        }
+    }
+    return missing;
+}
 
 Environment::ValidationResult prepareEnvironment()
 {
@@ -258,8 +291,7 @@ bool completeInit()
 
     _registerPlugins();
 
-    if (!_verifyPlugins()) {
-        qCCritical(GStreamerLog) << "Plugin verification failed";
+    if (!_verifyPluginFeatures()) {
         return false;
     }
 
@@ -277,18 +309,11 @@ bool completeInit()
         return false;
     }
 
-    if (GStreamer::didExternalPluginLoaderFail()) {
-        qCCritical(GStreamerLog)
-            << "GStreamer external plugin loader failed. Check GST_PLUGIN_SCANNER and bundled runtime paths.";
-        return false;
-    }
-
     return true;
 }
 
 bool initialize(const QStringList& arguments, const Environment::ValidationResult& envResult)
 {
-    GStreamer::resetExternalPluginLoaderFailure();
     GStreamer::redirectGLibLogging();
 
     // Unless the user asked for GStreamer's own output, remove its default stderr handler before gst_init_check(),

@@ -6,8 +6,10 @@
 
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
+#include <QtCore/QStringList>
 
 #include "Fixtures/RAIIFixtures.h"
+#include "GStreamer.h"
 #include "GStreamerLogging.h"
 #include "GStreamerTestHelpers.h"
 
@@ -89,6 +91,47 @@ void GStreamerInitTest::_testNativeDebugLogIsNotBridged()
                      QRegularExpression(QStringLiteral("bridged GStreamer log probe")));
     logProbe("bridged GStreamer log probe");
     verifyExpectedLogMessage();
+}
+
+void GStreamerInitTest::_testMissingPluginFeatures_data()
+{
+    QTest::addColumn<QStringList>("absent");
+    QTest::addColumn<QStringList>("missingFactories");
+    QTest::addColumn<int>("missingFeatures");
+    QTest::addColumn<bool>("videoUnavailable");
+
+    QTest::newRow("complete") << QStringList() << QStringList() << 0 << false;
+    QTest::newRow("videoconvert stands in for videoconvertscale")
+        << QStringList{"videoconvertscale"} << QStringList() << 0 << false;
+    QTest::newRow("no converter") << QStringList{"videoconvertscale", "videoconvert"}
+                                  << QStringList{"videoconvertscale|videoconvert"} << 1 << true;
+    QTest::newRow("no udpsrc") << QStringList{"udpsrc"} << QStringList{"udpsrc"} << 1 << true;
+    QTest::newRow("no matroska") << QStringList{"matroskamux"} << QStringList{"matroskamux"} << 1 << false;
+    QTest::newRow("no isomp4") << QStringList{"mp4mux", "qtmux"} << QStringList{"mp4mux", "qtmux"} << 1 << false;
+    QTest::newRow("no rtsp or tcp") << QStringList{"rtspsrc", "tcpclientsrc"} << QStringList{"rtspsrc", "tcpclientsrc"}
+                                    << 2 << false;
+}
+
+void GStreamerInitTest::_testMissingPluginFeatures()
+{
+    QFETCH(QStringList, absent);
+    QFETCH(QStringList, missingFactories);
+    QFETCH(int, missingFeatures);
+    QFETCH(bool, videoUnavailable);
+
+    const QList<GStreamer::MissingPluginFeature> missing = GStreamer::missingPluginFeatures(
+        [&absent](const char* factoryName) { return !absent.contains(QLatin1String(factoryName)); });
+
+    QStringList factories;
+    bool required = false;
+    for (const GStreamer::MissingPluginFeature& feature : missing) {
+        QVERIFY(!feature.feature.isEmpty());
+        factories << feature.factories;
+        required = required || feature.required;
+    }
+    QCOMPARE(missing.size(), missingFeatures);
+    QCOMPARE(factories, missingFactories);
+    QCOMPARE(required, videoUnavailable);
 }
 
 #else

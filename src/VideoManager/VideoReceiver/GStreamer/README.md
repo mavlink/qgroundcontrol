@@ -82,6 +82,7 @@ QGC configures GStreamer runtime paths before `gst_init()`:
 - **Environment hygiene**: Python virtualenv/conda variables are cleared for scanner stability (`PYTHONHOME`, `PYTHONPATH`, `VIRTUAL_ENV`, `CONDA_*`), and `PYTHONNOUSERSITE=1` is set.
 - **Plugin search path**: The bundled plugin directory is set as `GST_PLUGIN_SYSTEM_PATH*`, which replaces GStreamer's default system and user plugin directories. `GST_PLUGIN_PATH*` is cleared, because it would only rescan the same directory.
 - **Validation**: A macOS app that ships `GStreamer.framework` without its plugin directory fails initialization with a clear error. A missing or non-executable bundled `gst-plugin-scanner` only logs a warning: QGC sets `GST_REGISTRY_FORK=no`, so GStreamer scans plugins in-process.
+- **Plugin checks**: After `gst_init()`, `GStreamer::completeInit()` checks the elements each feature needs, as Qt's `qGstErrorMessageIfElementsNotAvailable` does. Only the display core is required: the `qgc` sink elements, `decodebin3`, `tee`, `queue`, `valve`, `capsfilter`, a video converter, and the RTP/UDP source with its H.264/H.265 depayloaders and parsers. Without it, video is disabled. A missing optional element logs one warning naming the feature it disables: RTSP (`rtspsrc`), MPEG-TS (`tsdemux`), TCP (`tcpclientsrc`), recording (`splitmuxsink`), MKV recording (`matroskamux`) or MP4/MOV recording (`mp4mux`, `qtmux`).
 
 ## Platform Setup
 
@@ -188,7 +189,7 @@ gst-launch-1.0 udpsrc port=5600 caps='application/x-rtp, media=(string)video, cl
 | Test | Label | Covers |
 | --- | --- | --- |
 | `GStreamerEnvironmentTest` | Unit | The bundled runtime's private plugin registry, which keeps a user-set `GST_REGISTRY` or `GST_REGISTRY_1_0`; a system GStreamer keeps the default registry. |
-| `GStreamerInitTest` | Unit | Init policy: when GStreamer's log is bridged into Qt logging. |
+| `GStreamerInitTest` | Unit | Init policy: when GStreamer's log is bridged into Qt logging, and which missing elements disable video and which only a feature. |
 | `GStreamerTest` | Integration | Helpers, the source factory, the `gstqgc` sink and the `HwBuffers` paths. |
 | `GstVideoReceiverComponentsTest` | Unit | The receiver's components without a stream: reconnect backoff, stall detection, recording finalization by ancestry, pipeline and `.dot` file names. |
 | `GstVideoReceiverTest` | Integration | `GstVideoReceiver` end to end against a live H.264 RTP stream it sends itself on loopback. |

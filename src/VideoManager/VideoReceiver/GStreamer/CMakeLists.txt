@@ -152,21 +152,6 @@ set_source_files_properties(
         SKIP_UNITY_BUILD_INCLUSION ON
 )
 
-# GStreamer.cc fails initialization when a runtime-required plugin (PluginPolicy.cmake) is not registered. Each entry
-# lists, "|"-separated, the plugin sets that satisfy it, a set's plugins joined by "+".
-set(_qgc_gst_required_entries "")
-foreach(_qgc_gst_plugin IN LISTS GSTREAMER_RUNTIME_REQUIRED_PLUGINS)
-    gstreamer_plugin_alternatives("${_qgc_gst_plugin}" _qgc_gst_alternatives)
-    list(JOIN _qgc_gst_alternatives "|" _qgc_gst_entry)
-    list(APPEND _qgc_gst_required_entries "\"${_qgc_gst_entry}\"")
-endforeach()
-list(JOIN _qgc_gst_required_entries "," _qgc_gst_required_entries)
-set_property(
-    SOURCE GStreamer.cc TARGET_DIRECTORY ${CMAKE_PROJECT_NAME}
-    APPEND
-    PROPERTY COMPILE_DEFINITIONS "QGC_GST_RUNTIME_REQUIRED_PLUGINS=${_qgc_gst_required_entries}"
-)
-
 # The iOS SDK ships no CA list / no keychain-via-OpenSSL; bundle a Mozilla NSS extract for
 # libgioopenssl (fetched at configure time, IOS.cmake). On the app target for MACOSX_PACKAGE_LOCATION.
 if(IOS AND GStreamer_IOS_CA_BUNDLE)

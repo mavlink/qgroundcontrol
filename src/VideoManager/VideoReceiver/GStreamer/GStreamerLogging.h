@@ -4,8 +4,6 @@
 
 namespace GStreamer {
 void redirectGLibLogging();
-void resetExternalPluginLoaderFailure();
-bool didExternalPluginLoaderFail();
 
 /// True when GST_DEBUG, GST_DEBUG_FILE or GST_TRACERS is set: the user asked for GStreamer's own debug output, so
 /// QGC keeps gst_debug_log_default (which alone honours GST_DEBUG_FILE and writes the format gst-stats and tracer
