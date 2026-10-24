@@ -59,6 +59,7 @@ constexpr VideoSettingReactionEntry kVideoSettingReactions[] = {
     {&VideoSettings::rtpJitterLatencyMs, VideoSettingReaction::Reconfigure},
     {&VideoSettings::rtspAutoReconnect, VideoSettingReaction::Reconfigure},
     {&VideoSettings::streamEnabled, VideoSettingReaction::Reconfigure},
+    {&VideoSettings::disableWhenDisarmed, VideoSettingReaction::Reconfigure},
     {&VideoSettings::videoConversionElement, VideoSettingReaction::RebuildSink},
     {&VideoSettings::disablePixelAspectRatio, VideoSettingReaction::RebuildSink},
 };
@@ -258,6 +259,7 @@ void VideoManager::startVideo()
     qCDebug(VideoManagerLog) << "startVideo";
 
     _videoStopped = false;
+    _disabledWhileDisarmed = false;
     _updateState();
     for (VideoStreamController* stream : {_primaryStream, _thermalStream}) {
         stream->scheduleApply();
@@ -369,8 +371,12 @@ void VideoManager::setfullScreen(bool on)
 
 void VideoManager::_updateState()
 {
+    if (!_videoSettings->disableWhenDisarmed()->rawValue().toBool()) {
+        _disabledWhileDisarmed = false;
+    }
+
     const QString videoSource = _videoSettings->videoSource()->rawValue().toString();
-    const bool streamWanted = _videoSettings->streamEnabled()->rawValue().toBool();
+    const bool streamWanted = _videoSettings->streamEnabled()->rawValue().toBool() && !_disabledWhileDisarmed;
     const bool autoStreamConfigured = VideoStreamResolver::isAutoStream(_primaryStream->streamInfo());
     const bool isStreamSource = VideoStreamResolver::isNetworkSource(videoSource) || autoStreamConfigured;
     const QString uvcVideoSourceID =
@@ -427,10 +433,12 @@ void VideoManager::_setActiveVehicle(Vehicle* vehicle)
     }
 
     _activeVehicle = vehicle;
+    _disabledWhileDisarmed = false;
 
     if (_activeVehicle) {
         (void) connect(_activeVehicle->vehicleLinkManager(), &VehicleLinkManager::communicationLostChanged, this,
                        &VideoManager::_communicationLostChanged);
+        (void) connect(_activeVehicle, &Vehicle::armedChanged, this, &VideoManager::_onArmedChanged);
         QGCCameraManager* const cameraManager = _activeVehicle->cameraManager();
         if (cameraManager) {
             (void) connect(cameraManager, &QGCCameraManager::streamChanged, this, &VideoManager::_updateStreamInfo);
@@ -452,6 +460,20 @@ void VideoManager::_updateStreamInfo()
     _primaryStream->setStreamInfo(cameraManager ? cameraManager->currentStreamInstance() : nullptr);
     _thermalStream->setStreamInfo(cameraManager ? cameraManager->thermalStreamInstance() : nullptr);
     _updateState();
+}
+
+void VideoManager::_onArmedChanged(bool armed)
+{
+    _setDisabledWhileDisarmed(!armed && _videoSettings->disableWhenDisarmed()->rawValue().toBool());
+}
+
+void VideoManager::_setDisabledWhileDisarmed(bool disabled)
+{
+    if (disabled != _disabledWhileDisarmed) {
+        qCDebug(VideoManagerLog) << "disabled while disarmed:" << disabled;
+        _disabledWhileDisarmed = disabled;
+        _updateState();
+    }
 }
 
 void VideoManager::_communicationLostChanged(bool communicationLost)

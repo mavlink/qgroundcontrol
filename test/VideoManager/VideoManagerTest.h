@@ -30,6 +30,8 @@ private slots:
     void _testStopVideoCancelsEverything();
     void _testAutoStreamLeavesSettingsAlone();
     void _testThermalOnlyChangeReconfiguresThermal();
+    void _testDisableWhenDisarmed_data();
+    void _testDisableWhenDisarmed();
     void _testVideoOutputRegistration();
     void _testQmlVideoOutputRegistersItself();
     void _testScreenshotsComeFromStreamsOnDisplay();

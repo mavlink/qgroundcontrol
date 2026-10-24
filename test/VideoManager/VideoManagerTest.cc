@@ -303,6 +303,48 @@ void VideoManagerTest::_testThermalOnlyChangeReconfiguresThermal()
     QCOMPARE(_videoSettings->rtspUrl()->rawValue().toString(), QStringLiteral("rtsp://cam.local/manual"));
 }
 
+void VideoManagerTest::_testDisableWhenDisarmed_data()
+{
+    QTest::addColumn<int>("lift");
+
+    QTest::newRow("re-armed") << 0;
+    QTest::newRow("setting turned off") << 1;
+    QTest::newRow("video restarted") << 2;
+}
+
+void VideoManagerTest::_testDisableWhenDisarmed()
+{
+    QFETCH(int, lift);
+
+    // Without the setting, disarming changes nothing.
+    _videoManager->_onArmedChanged(false);
+    _settle();
+    QVERIFY(_primary->active());
+
+    _facts->set(_videoSettings->disableWhenDisarmed(), true);
+    _videoManager->_onArmedChanged(true);
+    _videoManager->_onArmedChanged(false);
+    QVERIFY(!_videoManager->hasVideo());
+    _settle();
+    QVERIFY(!_primary->active());
+    QVERIFY(_videoSettings->streamEnabled()->rawValue().toBool());
+
+    switch (lift) {
+        case 0:
+            _videoManager->_onArmedChanged(true);
+            break;
+        case 1:
+            _videoSettings->disableWhenDisarmed()->setRawValue(false);
+            break;
+        default:
+            _videoManager->startVideo();
+            break;
+    }
+    QVERIFY(_videoManager->hasVideo());
+    _settle();
+    QVERIFY(_primary->active());
+}
+
 void VideoManagerTest::_testVideoOutputRegistration()
 {
     VideoStreamController* const stream = _videoManager->primaryStream();

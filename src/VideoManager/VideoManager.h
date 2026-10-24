@@ -58,7 +58,7 @@ public:
     Q_INVOKABLE void grabImage(const QString& imageFile = QString());
     /// See VideoRecordingService::startRecording().
     Q_INVOKABLE void startRecording(const QString& videoFile = QString());
-    /// Undoes stopVideo() and reconnects the streams.
+    /// Undoes stopVideo() and "disable when disarmed", and reconnects the streams.
     Q_INVOKABLE void startVideo();
     Q_INVOKABLE void stopRecording();
     /// Stops the streams, and any recording, until startVideo().
@@ -138,6 +138,8 @@ private:
     void _updateState();
     void _setActiveVehicle(Vehicle* vehicle);
     void _updateStreamInfo();
+    void _onArmedChanged(bool armed);
+    void _setDisabledWhileDisarmed(bool disabled);
     void _communicationLostChanged(bool communicationLost);
 
     VideoSettings* const _videoSettings;
@@ -154,6 +156,7 @@ private:
 
     bool _fullScreen = false;
     bool _videoStopped = false;
+    bool _disabledWhileDisarmed = false;
     bool _autoStreamConfigured = false;
     bool _hasThermal = false;
     bool _hasVideo = false;
