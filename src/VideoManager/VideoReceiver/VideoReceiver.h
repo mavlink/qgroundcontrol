@@ -1,122 +1,164 @@
 #pragma once
 
-#include <atomic>
+#include <chrono>
+#include <cstdint>
 
 #include <QtCore/QObject>
+#include <QtCore/QPointer>
 #include <QtCore/QSize>
+#include <QtCore/QString>
+#include <QtGui/QImage>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-class QGCVideoStreamInfo;
 class QQuickItem;
+class QVideoFrame;
+class QVideoSink;
 
+/// One network video stream: connects to a URI, shows it in a QML VideoOutput and records it.
+///
+/// Intent-based: callers state what they want (setConfig(), setActive(), setVideoOutput(), startRecording()) and the
+/// receiver gets there on its own, restarting after a config change and reconnecting after a failure. Call every
+/// method on the GUI thread; every signal is emitted there.
+///
+/// Backends implement the protected on*() hooks, which run after the base stored the new value, and publish their
+/// state through the protected setters.
 class VideoReceiver : public QObject
 {
     Q_OBJECT
     QML_ELEMENT
     QML_UNCREATABLE("")
+    Q_PROPERTY(QString name READ name CONSTANT)
+    Q_PROPERTY(State state READ state NOTIFY stateChanged)
+    Q_PROPERTY(bool streaming READ streaming NOTIFY streamingChanged)
+    Q_PROPERTY(bool decoding READ decoding NOTIFY decodingChanged)
+    Q_PROPERTY(bool recording READ recording NOTIFY recordingChanged)
+    Q_PROPERTY(QSize videoSize READ videoSize NOTIFY videoSizeChanged)
+
 public:
-    /// Backend-specific decoded-frame sink.
-    using VideoSinkHandle = void *;
+    enum class State : uint8_t
+    {
+        Stopped,       ///< Inactive, no URI, or given up after a failure (autoReconnect off).
+        Connecting,    ///< Pipeline running, no data yet.
+        Streaming,     ///< Data is arriving.
+        Reconnecting,  ///< Waiting out the backoff after a failure.
+    };
+    Q_ENUM(State)
 
-    explicit VideoReceiver(QObject *parent = nullptr)
-        : QObject(parent)
-    {}
+    /// Values are persisted by VideoSettings::recordingFormat.
+    enum class FileFormat : uint8_t
+    {
+        Mkv = 0,
+        Mov = 1,
+        Mp4 = 2,
+    };
+    Q_ENUM(FileFormat)
 
-    bool isThermal() const { return (_name == QStringLiteral("thermalVideo")); }
+    struct Config
+    {
+        QString uri;
+        /// No data, or no decoded frame while displaying, for this long is a stream failure.
+        std::chrono::seconds timeout{3};
+        bool lowLatency = false;
+        int rtpJitterLatencyMs = 80;
+        /// Reconnect with backoff after a failure. Applies at once; changing any other field restarts the stream.
+        bool autoReconnect = true;
 
-    VideoSinkHandle sink() const { return _sink; }
-    QQuickItem *widget() { return _widget; }
+        friend bool operator==(const Config&, const Config&) = default;
+    };
+
+    explicit VideoReceiver(QObject* parent = nullptr);
+    ~VideoReceiver() override;
+
+    /// "mkv", "mov" or "mp4".
+    static QString fileExtension(FileFormat format);
+    static bool isValidFileFormat(int format);
+    /// @p frame as displayed: rotation, mirroring and the format's viewport (crop) applied. Null for an invalid frame.
+    static QImage frameToImage(const QVideoFrame& frame);
+
     QString name() const { return _name; }
-    QString uri() const { return _uri; }
-    bool started() const { return _started; }
-    bool lowLatency() const { return _lowLatency; }
-    int rtpJitterLatencyMs() const { return _rtpJitterLatencyMs; }
-    bool autoReconnect() const { return _autoReconnect; }
-    QGCVideoStreamInfo *videoStreamInfo() { return _videoStreamInfo; }
-    QString recordingOutput() const { return _recordingOutput; }
 
-    virtual void setSink(VideoSinkHandle sink) { if (sink != _sink) { _sink = sink; emit sinkChanged(_sink); } }
-    virtual void setWidget(QQuickItem *widget) { if (widget != _widget) { _widget = widget; emit widgetChanged(_widget); } }
-    void setName(const QString &name) { if (name != _name) { _name = name; emit nameChanged(_name); } }
-    void setUri(const QString &uri) { if (uri != _uri) { _uri = uri; emit uriChanged(_uri); } }
-    void setStarted(bool started) { if (started != _started) { _started = started; emit startedChanged(_started); } }
-    void setLowLatency(bool lowLatency) { if (lowLatency != _lowLatency) { _lowLatency = lowLatency; emit lowLatencyChanged(_lowLatency); } }
-    void setRtpJitterLatencyMs(int ms) { if (ms != _rtpJitterLatencyMs) { _rtpJitterLatencyMs = ms; emit rtpJitterLatencyMsChanged(_rtpJitterLatencyMs); } }
-    void setAutoReconnect(bool enabled) { if (enabled != _autoReconnect) { _autoReconnect = enabled; emit autoReconnectChanged(_autoReconnect); } }
-    void setVideoStreamInfo(QGCVideoStreamInfo *videoStreamInfo) { if (videoStreamInfo != _videoStreamInfo) { _videoStreamInfo = videoStreamInfo; emit videoStreamInfoChanged(); } }
+    /// Names the stream in logs and pipeline dumps. Call once, before the first setActive(true).
+    void setName(const QString& name);
 
-    // QMediaFormat::FileFormat
-    enum FILE_FORMAT {
-        FILE_FORMAT_MIN = 0,
-        FILE_FORMAT_MKV = FILE_FORMAT_MIN,
-        FILE_FORMAT_MOV,
-        FILE_FORMAT_MP4,
-        FILE_FORMAT_MAX = FILE_FORMAT_MP4
-    };
-    Q_ENUM(FILE_FORMAT)
-    static bool isValidFileFormat(FILE_FORMAT format) { return ((format >= FILE_FORMAT_MIN) && (format <= FILE_FORMAT_MAX)); }
+    const Config& config() const { return _config; }
 
-    enum STATUS {
-        STATUS_MIN = 0,
-        STATUS_OK = STATUS_MIN,
-        STATUS_FAIL,
-        STATUS_INVALID_STATE,
-        STATUS_INVALID_URL,
-        STATUS_NOT_IMPLEMENTED,
-        STATUS_MAX = STATUS_NOT_IMPLEMENTED
-    };
-    Q_ENUM(STATUS)
-    static bool isValidStatus(STATUS status) { return ((status >= STATUS_MIN) && (status <= STATUS_MAX)); }
+    bool active() const { return _active; }
+
+    QQuickItem* videoOutput() const;
+
+    State state() const { return _state; }
+
+    bool streaming() const { return _state == State::Streaming; }
+
+    bool decoding() const { return _decoding; }
+
+    bool recording() const { return _recording; }
+
+    QSize videoSize() const { return _videoSize; }
+
+    /// Stores @p config. While active, a change to anything but autoReconnect restarts the stream; an empty URI stops
+    /// it until a URI is set again.
+    void setConfig(const Config& config);
+    /// Streams while true and the URI is set. False stops the stream, any pending reconnect and any recording.
+    void setActive(bool active);
+    /// Tears the stream down and connects again now, skipping any reconnect backoff, and rebuilds the display sink so
+    /// construct-only sink settings apply. No-op while inactive.
+    void restart();
+    /// Displays the stream in @p videoOutput, a QML VideoOutput; nullptr stops displaying. Decoding runs only while an
+    /// output is set. The output's destruction is tracked: it detaches as if nullptr had been set.
+    void setVideoOutput(QQuickItem* videoOutput);
+
+    /// Records to @p file until stopRecording() or setActive(false). Accepted only while active (otherwise
+    /// errorOccurred()); the file opens at the next keyframe once streaming. After a reconnect the recording continues
+    /// into "<base>_part<N>.<ext>", N counting from 2.
+    void startRecording(const QString& file, FileFormat format);
+    void stopRecording();
+
+    /// Saves the frame on display to @p file as shown (see frameToImage()). Returns false, with a warning logged, when
+    /// there is no output, no frame, or the file can't be written.
+    bool takeScreenshot(const QString& file) const;
 
 signals:
-    void timeout();
-    void streamingChanged(bool active);
-    void decodingChanged(bool active);
-    void recordingChanged(bool active);
-    void recordingStarted(const QString &filename);
+    void stateChanged(VideoReceiver::State state);
+    void streamingChanged(bool streaming);
+    void decodingChanged(bool decoding);
+    void recordingChanged(bool recording);
+    /// A recording file opened: the first one after startRecording(), or the next part after a reconnect.
+    void recordingStarted(const QString& file);
+    /// A recording file closed. @p error is empty when the file was finalized cleanly.
+    void recordingFinished(const QString& file, const QString& error);
     void videoSizeChanged(QSize size);
-
-    void sinkChanged(VideoSinkHandle sink);
-    void nameChanged(const QString &name);
-    void uriChanged(const QString &uri);
-    void startedChanged(bool started);
-    void lowLatencyChanged(bool lowLatency);
-    void rtpJitterLatencyMsChanged(int ms);
-    void autoReconnectChanged(bool enabled);
-    void videoStreamInfoChanged();
-    void widgetChanged(QQuickItem *widget);
-
-    void onStartComplete(STATUS status);
-    /// STATUS_FAIL: the receiver stopped on its own after a stream failure. Reconnecting is then its own
-    /// call (GstVideoReceiver retries with backoff while autoReconnect() is set) and shows as onStartComplete.
-    void onStopComplete(STATUS status);
-    void onStartDecodingComplete(STATUS status);
-    void onStopDecodingComplete(STATUS status);
-    void onStartRecordingComplete(STATUS status);
-    void onStopRecordingComplete(STATUS status);
-    void onTakeScreenshotComplete(STATUS status);
-
-public slots:
-    virtual void start(uint32_t timeout) = 0;
-    virtual void stop() = 0;
-    virtual void startDecoding(VideoSinkHandle sink) = 0;
-    virtual void stopDecoding() = 0;
-    virtual void startRecording(const QString &videoFile, FILE_FORMAT format) = 0;
-    virtual void stopRecording() = 0;
-    /// Saves the frame on display in widget()'s video sink to @p imageFile. Runs on the caller's thread, which must be
-    /// the widget's (the GUI thread).
-    virtual void takeScreenshot(const QString& imageFile);
+    /// A failure worth telling the user about (stream error with autoReconnect off, recording error). Not emitted for
+    /// failures the receiver recovers from by reconnecting.
+    void errorOccurred(const QString& message);
 
 protected:
-    VideoSinkHandle _sink = nullptr;
-    QQuickItem *_widget = nullptr;
-    QGCVideoStreamInfo *_videoStreamInfo = nullptr;
+    virtual void onConfigChanged(const Config& previous) = 0;
+    virtual void onActiveChanged() = 0;
+    virtual void onRestartRequested() = 0;
+    virtual void onVideoOutputChanged() = 0;
+    virtual void onStartRecording(const QString& file, FileFormat format) = 0;
+    virtual void onStopRecording() = 0;
+
+    /// The VideoOutput's QVideoSink, or nullptr.
+    QVideoSink* videoSink() const;
+
+    // Each emits its NOTIFY signal (and streamingChanged for setState()) when the value changes.
+    void setState(State state);
+    void setDecoding(bool decoding);
+    void setRecording(bool recording);
+    void setVideoSize(QSize size);
+
+private:
+    void _onVideoOutputDestroyed();
+
     QString _name;
-    QString _uri;
-    bool _started = false;
-    bool _lowLatency = false;
-    int _rtpJitterLatencyMs = 80;
-    // Written live on the GUI thread, read on the receiver worker thread.
-    std::atomic<bool> _autoReconnect = true;     ///< RTSP/UDP auto-reconnect with exponential backoff on watchdog/error.
-    QString _recordingOutput;
+    Config _config;
+    bool _active = false;
+    QPointer<QQuickItem> _videoOutput;
+    QMetaObject::Connection _videoOutputDestroyed;
+    State _state = State::Stopped;
+    bool _decoding = false;
+    bool _recording = false;
+    QSize _videoSize;
 };

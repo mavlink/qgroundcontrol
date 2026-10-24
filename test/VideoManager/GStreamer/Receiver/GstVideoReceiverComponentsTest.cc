@@ -49,11 +49,11 @@ void GstVideoReceiverComponentsTest::_testReconnectBackoffRestartsAfterRecovery(
     }
 
     // The reconnect worked and delivered frames before the stream failed again.
-    watchdog.start(1);
+    watchdog.start(std::chrono::seconds(1));
     (void) watchdog.noteSourceFrame(kNowMs);
     QCOMPARE(nextDelaySec(watchdog), qint64(1));
     // Its own retry failing to start backs off from there.
-    watchdog.start(1);
+    watchdog.start(std::chrono::seconds(1));
     QCOMPARE(nextDelaySec(watchdog), qint64(2));
 }
 
@@ -88,7 +88,7 @@ void GstVideoReceiverComponentsTest::_testStallDetection()
     QFETCH(int, expected);
 
     StreamWatchdog watchdog;
-    watchdog.start(timeoutSec);
+    watchdog.start(std::chrono::seconds(timeoutSec));
     (void) watchdog.noteSourceFrame(kNowMs - sourceFrameAgeMs);
     if (sinkFrameAgeMs != kNoFrame) {
         (void) watchdog.noteSinkFrame(kNowMs - sinkFrameAgeMs);
@@ -97,11 +97,41 @@ void GstVideoReceiverComponentsTest::_testStallDetection()
     QCOMPARE(int(watchdog.check(kNowMs, decoding).stall), expected);
 }
 
+void GstVideoReceiverComponentsTest::_testFirstFrameGrace()
+{
+    // RTSP's UDP to TCP fallback must not be cut short before the first frame; once frames flow, the timeout applies.
+    StreamWatchdog watchdog;
+    watchdog.start(std::chrono::seconds(1), std::chrono::milliseconds(5000));
+    QCOMPARE(watchdog.check(kNowMs, false).stall, StreamWatchdog::Stall::None);
+    QCOMPARE(watchdog.check(kNowMs + 6000, false).stall, StreamWatchdog::Stall::None);
+    QCOMPARE(watchdog.check(kNowMs + 6001, false).stall, StreamWatchdog::Stall::Source);
+
+    (void) watchdog.noteSourceFrame(kNowMs + 7000);
+    QCOMPARE(watchdog.check(kNowMs + 8000, false).stall, StreamWatchdog::Stall::None);
+    QCOMPARE(watchdog.check(kNowMs + 8001, false).stall, StreamWatchdog::Stall::Source);
+}
+
+void GstVideoReceiverComponentsTest::_testDecoderSilenceCountsFromInsertion()
+{
+    // A decoder that never delivers a frame stalls too, counted from its insertion.
+    StreamWatchdog watchdog;
+    watchdog.start(std::chrono::seconds(1));
+    watchdog.startSinkClock(kNowMs);
+    (void) watchdog.noteSourceFrame(kNowMs + 2000);
+    QCOMPARE(watchdog.check(kNowMs + 2000, true).stall, StreamWatchdog::Stall::None);
+    QCOMPARE(watchdog.check(kNowMs + 2001, true).stall, StreamWatchdog::Stall::Decoder);
+
+    QVERIFY(watchdog.noteSinkFrame(kNowMs + 2001));
+    QVERIFY(!watchdog.noteSinkFrame(kNowMs + 2002));
+    watchdog.startSinkClock(kNowMs + 2002);
+    QVERIFY2(watchdog.noteSinkFrame(kNowMs + 2003), "A new decoder's first frame must be reported again");
+}
+
 void GstVideoReceiverComponentsTest::_testSourceTimeoutStartsAtFirstCheck()
 {
     // A source that never delivers a frame must still time out, counted from the first check.
     StreamWatchdog watchdog;
-    watchdog.start(1);
+    watchdog.start(std::chrono::seconds(1));
     QCOMPARE(watchdog.check(kNowMs, false).stall, StreamWatchdog::Stall::None);
     QCOMPARE(watchdog.check(kNowMs + 1000, false).stall, StreamWatchdog::Stall::None);
     const StreamWatchdog::Result result = watchdog.check(kNowMs + 1001, false);

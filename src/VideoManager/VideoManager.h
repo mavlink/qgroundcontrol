@@ -4,9 +4,9 @@
 #include <chrono>
 
 #include <QtCore/QFuture>
+#include <QtCore/QHash>
 #include <QtCore/QMutex>
 #include <QtCore/QObject>
-#include <QtCore/QSet>
 #include <QtCore/QSize>
 #include <QtQmlIntegration/QtQmlIntegration>
 
@@ -14,6 +14,7 @@
 #include <functional>
 #endif
 
+class QGCVideoStreamInfo;
 class QQuickWindow;
 class SubtitleWriter;
 class Vehicle;
@@ -117,8 +118,6 @@ private:
     void _onBackendInitComplete(bool success);
     void _createVideoReceivers();
     void _initVideoReceiver(VideoReceiver *receiver, QQuickWindow *window);
-    /// Start/stop completion handling: VideoManager restarts a receiver only after a stop it requested.
-    void _connectReceiverLifecycle(VideoReceiver* receiver);
     bool _updateAutoStream(VideoReceiver *receiver);
     bool _updateUVC(VideoReceiver *receiver);
     bool _updateSettings(VideoReceiver *receiver);
@@ -128,9 +127,12 @@ private:
     void _startReceiver(VideoReceiver *receiver);
     void _stopReceiver(VideoReceiver *receiver);
     static void _cleanupOldVideos();
+    static bool _isThermal(const VideoReceiver* receiver);
+    QGCVideoStreamInfo* _videoStreamInfo(const VideoReceiver* receiver) const;
+    void _setVideoStreamInfo(VideoReceiver* receiver, QGCVideoStreamInfo* videoStreamInfo);
 
     QList<VideoReceiver*> _videoReceivers;
-    QSet<VideoReceiver*> _pendingRestarts;  ///< Receivers stopped by _restartVideo(), to start again once stopped.
+    QHash<const VideoReceiver*, QGCVideoStreamInfo*> _videoStreamInfos;
     SubtitleWriter *_subtitleWriter = nullptr;
     VideoSettings *_videoSettings = nullptr;
     QQuickWindow *_mainWindow = nullptr;

@@ -27,6 +27,8 @@ QGC_LOGGING_CATEGORY(GStreamerTestLog, "Video.GStreamer.GStreamerTest")
 #include "GStreamerTestHelpers.h"
 #include "GstVideoReceiver.h"
 #include "LogManager.h"
+#include "PipelineDotDumper.h"
+#include "RecordingBranch.h"
 #include "VideoBackend.h"
 
 namespace {
@@ -516,12 +518,12 @@ void GStreamerTest::_testRecordingSinkAcceptsElementaryStreams_data()
     constexpr const char* h264Caps = "video/x-h264,stream-format=byte-stream,alignment=au";
     constexpr const char* h265Caps = "video/x-h265,stream-format=byte-stream,alignment=au";
 
-    QTest::newRow("h264-mkv") << QString::fromLatin1(h264Caps) << int(VideoReceiver::FILE_FORMAT_MKV);
-    QTest::newRow("h264-mov") << QString::fromLatin1(h264Caps) << int(VideoReceiver::FILE_FORMAT_MOV);
-    QTest::newRow("h264-mp4") << QString::fromLatin1(h264Caps) << int(VideoReceiver::FILE_FORMAT_MP4);
-    QTest::newRow("h265-mkv") << QString::fromLatin1(h265Caps) << int(VideoReceiver::FILE_FORMAT_MKV);
-    QTest::newRow("h265-mov") << QString::fromLatin1(h265Caps) << int(VideoReceiver::FILE_FORMAT_MOV);
-    QTest::newRow("h265-mp4") << QString::fromLatin1(h265Caps) << int(VideoReceiver::FILE_FORMAT_MP4);
+    QTest::newRow("h264-mkv") << QString::fromLatin1(h264Caps) << static_cast<int>(VideoReceiver::FileFormat::Mkv);
+    QTest::newRow("h264-mov") << QString::fromLatin1(h264Caps) << static_cast<int>(VideoReceiver::FileFormat::Mov);
+    QTest::newRow("h264-mp4") << QString::fromLatin1(h264Caps) << static_cast<int>(VideoReceiver::FileFormat::Mp4);
+    QTest::newRow("h265-mkv") << QString::fromLatin1(h265Caps) << static_cast<int>(VideoReceiver::FileFormat::Mkv);
+    QTest::newRow("h265-mov") << QString::fromLatin1(h265Caps) << static_cast<int>(VideoReceiver::FileFormat::Mov);
+    QTest::newRow("h265-mp4") << QString::fromLatin1(h265Caps) << static_cast<int>(VideoReceiver::FileFormat::Mp4);
 }
 
 void GStreamerTest::_testRecordingSinkAcceptsElementaryStreams()
@@ -529,13 +531,13 @@ void GStreamerTest::_testRecordingSinkAcceptsElementaryStreams()
     QFETCH(QString, capsString);
     QFETCH(int, format);
 
-    const auto fileFormat = static_cast<VideoReceiver::FILE_FORMAT>(format);
+    const auto fileFormat = static_cast<VideoReceiver::FileFormat>(format);
     const char* parserFactory = capsString.startsWith(QLatin1String("video/x-h265")) ? "h265parse" : "h264parse";
-    const char* muxerFactory = (fileFormat == VideoReceiver::FILE_FORMAT_MKV)
+    const char* muxerFactory = (fileFormat == VideoReceiver::FileFormat::Mkv)
                                    ? "matroskamux"
-                                   : ((fileFormat == VideoReceiver::FILE_FORMAT_MOV) ? "qtmux" : "mp4mux");
+                                   : ((fileFormat == VideoReceiver::FileFormat::Mov) ? "qtmux" : "mp4mux");
 
-    const QString missing = GstTest::firstMissingFactory({"capsfilter", parserFactory, "splitmuxsink", muxerFactory});
+    const QString missing = GstTest::firstMissingFactory({"capsfilter", parserFactory, "filesink", muxerFactory});
     if (!missing.isEmpty()) {
         QSKIP(qPrintable(QStringLiteral("Required GStreamer factory is unavailable: %1").arg(missing)));
     }
@@ -558,9 +560,8 @@ void GStreamerTest::_testRecordingSinkAcceptsElementaryStreams()
 
 void GStreamerTest::_testRecordingSinkFinalizesMidStreamH265Mp4()
 {
-    const QString missing =
-        GstTest::firstMissingFactory({"appsrc", "h265parse", "tee", "queue", "fakesink", "valve", "splitmuxsink",
-                                      "mp4mux", "filesrc", "qtdemux", "avdec_h265"});
+    const QString missing = GstTest::firstMissingFactory({"appsrc", "h265parse", "tee", "queue", "fakesink", "valve",
+                                                          "filesink", "mp4mux", "filesrc", "qtdemux", "avdec_h265"});
     if (!missing.isEmpty()) {
         QSKIP(qPrintable(QStringLiteral("Required GStreamer factory is unavailable: %1").arg(missing)));
     }
@@ -631,7 +632,7 @@ void GStreamerTest::_testRecordingSinkFinalizesMidStreamH265Mp4()
     QVERIFY2(recordingCaps, "Closed recording valve did not preserve negotiated caps");
 
     const GStreamer::GstElementPtr fileSink =
-        RecordingBranch::makeFileSink(outputPath, VideoReceiver::FILE_FORMAT_MP4, recordingCaps.get());
+        RecordingBranch::makeFileSink(outputPath, VideoReceiver::FileFormat::Mp4, recordingCaps.get());
     QVERIFY(fileSink);
     QVERIFY(gst_bin_add(pipeline.bin(), fileSink.get()));
     QVERIFY(gst_element_link(recorderValve, fileSink.get()));
@@ -690,8 +691,8 @@ void GStreamerTest::_testRecordingSinkFinalizesMidStreamH265Mp4()
 
 void GStreamerTest::_testRecordingSinkTimestampsDtsOnlyFrames()
 {
-    const QString missing = GstTest::firstMissingFactory({"videotestsrc", "x264enc", "h264parse", "identity",
-                                                          "splitmuxsink", "mp4mux", "filesrc", "qtdemux", "fakesink"});
+    const QString missing = GstTest::firstMissingFactory(
+        {"videotestsrc", "x264enc", "h264parse", "identity", "filesink", "mp4mux", "filesrc", "qtdemux", "fakesink"});
     if (!missing.isEmpty()) {
         QSKIP(qPrintable(QStringLiteral("Required GStreamer factory is unavailable: %1").arg(missing)));
     }
@@ -739,7 +740,7 @@ void GStreamerTest::_testRecordingSinkTimestampsDtsOnlyFrames()
     const GStreamer::GstCapsPtr recordingCaps =
         GStreamer::adoptCaps(gst_caps_from_string("video/x-h264,stream-format=byte-stream,alignment=au"));
     const GStreamer::GstElementPtr fileSink =
-        RecordingBranch::makeFileSink(outputPath, VideoReceiver::FILE_FORMAT_MP4, recordingCaps.get());
+        RecordingBranch::makeFileSink(outputPath, VideoReceiver::FileFormat::Mp4, recordingCaps.get());
     QVERIFY(fileSink);
     QVERIFY(gst_bin_add(pipeline.bin(), fileSink.get()));
     QVERIFY(gst_element_link(pipeline.element("strip").get(), fileSink.get()));

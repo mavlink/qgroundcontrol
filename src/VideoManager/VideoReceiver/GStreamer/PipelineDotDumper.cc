@@ -9,8 +9,8 @@
 #include <QtCore/QStandardPaths>
 #include <QtCore/QStringList>
 
+#include "BranchContext.h"
 #include "GstScoped.h"
-#include "GstVideoReceiver.h"
 #include "QGCFileHelper.h"
 
 QString PipelineDotDumper::dotFileTag(QStringView tag)

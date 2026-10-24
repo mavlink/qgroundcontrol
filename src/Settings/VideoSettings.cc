@@ -170,7 +170,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, forceCpuVideoPath)
     return _forceCpuVideoPathFact;
 }
 
-// videoConversionElement / disablePixelAspectRatio are read by VideoBackend::createSink()
+// videoConversionElement / disablePixelAspectRatio are read by GStreamer::videoSinkConfigFromSettings()
 // into a VideoSinkConfig and passed as construct-only bin properties — no env-var indirection.
 DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, videoConversionElement)
 {

@@ -111,10 +111,11 @@ bool MockVideoStreamServer::start(StreamType type, const QString &host, quint16 
 
     if (type == StreamType::RtspH264) {
 #ifdef QGC_GST_RTSP_SERVER
-        if (!_startRtsp(host, port)) {
+        const int boundPort = _startRtsp(host, port);
+        if (boundPort <= 0) {
             return false;
         }
-        _servedUri = QStringLiteral("rtsp://%1:%2/test").arg(host, QString::number(port));
+        _servedUri = QStringLiteral("rtsp://%1:%2/test").arg(host, QString::number(boundPort));
         _running = true;
         qCDebug(MockVideoStreamServerLog) << "Serving" << _servedUri;
         return true;
@@ -144,7 +145,7 @@ bool MockVideoStreamServer::start(StreamType type, const QString &host, quint16 
         uri = QStringLiteral("mpegts://%1:%2").arg(host, portString);
         break;
     case StreamType::MpegTsTcp:
-        launch = QStringLiteral("%1 ! %2 ! mpegtsmux ! tcpserversink host=%3 port=%4")
+        launch = QStringLiteral("%1 ! %2 ! mpegtsmux ! tcpserversink name=server host=%3 port=%4")
                      .arg(kTestSource, h264Encoder(), host, portString);
         uri = QStringLiteral("tcp://%1:%2").arg(host, portString);
         break;
@@ -154,6 +155,14 @@ bool MockVideoStreamServer::start(StreamType type, const QString &host, quint16 
 
     if (!_startPipeline(launch)) {
         return false;
+    }
+
+    if ((type == StreamType::MpegTsTcp) && (port == 0)) {
+        GstElement* const server = gst_bin_get_by_name(GST_BIN(_pipeline), "server");
+        gint boundPort = 0;
+        g_object_get(server, "current-port", &boundPort, nullptr);
+        gst_object_unref(server);
+        uri = QStringLiteral("tcp://%1:%2").arg(host, QString::number(boundPort));
     }
 
     _servedUri = uri;
@@ -202,7 +211,7 @@ void MockVideoStreamServer::stop()
 }
 
 #ifdef QGC_GST_RTSP_SERVER
-bool MockVideoStreamServer::_startRtsp(const QString &host, quint16 port)
+int MockVideoStreamServer::_startRtsp(const QString& host, quint16 port)
 {
     _rtspContext = g_main_context_new();
 
@@ -225,8 +234,9 @@ bool MockVideoStreamServer::_startRtsp(const QString &host, quint16 port)
         gst_object_unref(server);
         g_main_context_unref(_rtspContext);
         _rtspContext = nullptr;
-        return false;
+        return 0;
     }
+    const int boundPort = gst_rtsp_server_get_bound_port(server);
 
     _rtspServer = server;
     _rtspLoop = g_main_loop_new(_rtspContext, FALSE);
@@ -237,7 +247,7 @@ bool MockVideoStreamServer::_startRtsp(const QString &host, quint16 port)
         g_main_context_pop_thread_default(_rtspContext);
     });
 
-    return true;
+    return boundPort;
 }
 
 void MockVideoStreamServer::_stopRtsp()

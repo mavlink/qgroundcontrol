@@ -7,7 +7,6 @@ class VideoManagerRestartTest : public UnitTest
     Q_OBJECT
 
 private slots:
-    void _testRestartsOnlyAfterRequestedStop_data();
-    void _testRestartsOnlyAfterRequestedStop();
-    void _testStopVideoStopsReceiverWaitingToReconnect();
+    void _testRestartStartsOrRestarts();
+    void _testStopVideoDeactivatesReceivers();
 };

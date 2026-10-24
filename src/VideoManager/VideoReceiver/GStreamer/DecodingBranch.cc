@@ -2,290 +2,336 @@
 
 #include <gst/gst.h>
 
-#include <QtCore/QMutexLocker>
-
 #include "GStreamerHelpers.h"
-#include "GstVideoReceiver.h"
-#include "QGCQVideoSinkController.h"
+#include "PipelineDotDumper.h"
+#include "StreamWatchdog.h"
 #include "gstqgc/gstqgcqvideosink.h"
 
 namespace {
 
 constexpr guint kDisplayQueueMaxBuffers = 2;
+// A stream without keyframes (intra refresh) would otherwise freeze for good after a dropped frame.
+constexpr int kMaxGateDrops = 300;
+
+GstPadProbeReturn holdDecoderPad(GstPad* /*pad*/, GstPadProbeInfo* /*info*/, gpointer /*data*/)
+{
+    return GST_PAD_PROBE_OK;
+}
+
+/// Sets "sync" on @p sink, or on the sinks inside it when it is a bin without the property.
+void setSinkSync(GstElement* sink, bool sync)
+{
+    if (g_object_class_find_property(G_OBJECT_GET_CLASS(sink), "sync")) {
+        g_object_set(sink, "sync", sync, nullptr);
+        return;
+    }
+    if (!GST_IS_BIN(sink)) {
+        return;
+    }
+    GstIterator* const sinks = gst_bin_iterate_sinks(GST_BIN(sink));
+    (void) gst_iterator_foreach(
+        sinks,
+        [](const GValue* item, gpointer data) {
+            auto* const child = GST_ELEMENT(g_value_get_object(item));
+            if (g_object_class_find_property(G_OBJECT_GET_CLASS(child), "sync")) {
+                g_object_set(child, "sync", GPOINTER_TO_INT(data), nullptr);
+            }
+        },
+        GINT_TO_POINTER(sync ? TRUE : FALSE));
+    gst_iterator_free(sinks);
+}
+
+bool isInside(GstObject* object, GstElement* element)
+{
+    return element && object && gst_object_has_as_ancestor(object, GST_OBJECT_CAST(element));
+}
 
 }  // namespace
 
-DecodingBranch::DecodingBranch(GstVideoReceiver& receiver)
-    : _receiver(receiver)
+DecodingBranch::DecodingBranch(const BranchContext& context, Listener& listener, bool lowLatency)
+    : _context(context)
+    , _listener(listener)
+    , _lowLatency(lowLatency)
 {}
 
-bool DecodingBranch::build(GstElement* pipeline, GstElement* tee)
+DecodingBranch::~DecodingBranch()
 {
-    _pipeline = pipeline;
+    reset();
+}
 
-    const GStreamer::TeeBranch branch = GStreamer::addTeeBranch(_pipeline, tee, "display");
+bool DecodingBranch::build()
+{
+    const GStreamer::TeeBranch branch = GStreamer::addTeeBranch(_context.pipeline, _context.tee, "display");
     if (!branch.valve) {
         return false;
     }
+    _queue = branch.queue;
     _valve = branch.valve;
+    GStreamer::markBranch(_queue, PipelineBranch::Decoding);
+    GStreamer::markBranch(_valve, PipelineBranch::Decoding);
 
-    // Leaky downstream + tiny depth: the live-display branch must drop the oldest
-    // buffer on backpressure, not stall the streaming thread. The recording branch
-    // keeps default non-leaky semantics so every frame reaches the muxer.
-    gst_util_set_object_arg(G_OBJECT(branch.queue), "leaky", "downstream");
-    g_object_set(branch.queue, "max-size-buffers", kDisplayQueueMaxBuffers, "max-size-bytes", 0, "max-size-time",
+    // Tiny and leaky: the live display must drop its oldest frame on backpressure, never stall the tee.
+    gst_util_set_object_arg(G_OBJECT(_queue), "leaky", "downstream");
+    g_object_set(_queue, "max-size-buffers", kDisplayQueueMaxBuffers, "max-size-bytes", 0, "max-size-time",
                  G_GUINT64_CONSTANT(0), nullptr);
+
+    // "overrun" fires before the queue drops its oldest frame.
+    (void) _queueOverrun.connect(_queue, "overrun", G_CALLBACK(_onQueueOverrun), this);
+    const GStreamer::GstPadPtr queueSrc = GStreamer::adoptPad(gst_element_get_static_pad(_queue, "src"));
+    if (!queueSrc || !_keyframeGate.add(queueSrc.get(), GST_PAD_PROBE_TYPE_BUFFER, _gateProbe, this)) {
+        qCCritical(GstVideoReceiverLog) << "Failed to add the display keyframe gate";
+        return false;
+    }
     return true;
 }
 
 void DecodingBranch::reset()
 {
-    // The video sink outlives the pipeline (owned by the caller of startDecoding), so its probe
-    // and pipeline membership must be dropped even when start() failed before decoding began.
-    if (_decoder || _videoSink) {
-        _shutdown();
-    }
-    // Owned by the pipeline.
+    _queueOverrun.disconnect();
+    _keyframeGate.remove();
+    _removeDecoder();
+    _sinkFrameProbe.remove();
+    _sink.reset();
+    _sinkStatsAtStart.reset();
+    _setDecoding(false);
+    _queue = nullptr;
     _valve = nullptr;
-    _pipeline = nullptr;
 }
 
-void DecodingBranch::start(GstElement* videoSink, bool hasWidget, bool streaming)
+void DecodingBranch::setVideoSink(GstElement* sink)
 {
-    qCDebug(GstVideoReceiverLog) << "Starting decoding" << _receiver._redactedUri();
-
-    if (!hasWidget) {
-        qCDebug(GstVideoReceiverLog) << "Video Widget is NULL" << _receiver._redactedUri();
-        emit _receiver.onStartDecodingComplete(VideoReceiver::STATUS_FAIL);
+    if (sink == _sink.get()) {
         return;
     }
 
-    if (!_pipeline && _videoSink) {
-        // Replace a sink stored before start(); also drops its frame probe.
-        _shutdown();
-    }
+    _removeDecoder();
+    _sinkFrameProbe.remove();
+    _sink.reset();
+    _sinkStatsAtStart.reset();
+    _setDecoding(false);
 
-    if (_videoSink) {
-        qCDebug(GstVideoReceiverLog) << "Already decoding!" << _receiver._redactedUri();
-        emit _receiver.onStartDecodingComplete(VideoReceiver::STATUS_INVALID_STATE);
+    if (!sink) {
         return;
     }
 
-    const GStreamer::GstPadPtr pad = GStreamer::adoptPad(gst_element_get_static_pad(videoSink, "sink"));
-    if (!pad) {
-        qCCritical(GstVideoReceiverLog) << "Unable to find sink pad of video sink" << _receiver._redactedUri();
-        emit _receiver.onStartDecodingComplete(VideoReceiver::STATUS_FAIL);
+    const GStreamer::GstPadPtr sinkPad = GStreamer::adoptPad(gst_element_get_static_pad(sink, "sink"));
+    if (!sinkPad) {
+        qCCritical(GstVideoReceiverLog) << "The video sink has no sink pad" << _context.redactedUri;
         return;
     }
+    _sink = GStreamer::adoptElement(GST_ELEMENT(gst_object_ref(sink)));
+    _sinkStatsAtStart = GstQgc::frameStats(_sink.get());
+    GStreamer::markBranch(_sink.get(), PipelineBranch::Decoding);
+    (void) _sinkFrameProbe.add(sinkPad.get(), GST_PAD_PROBE_TYPE_BUFFER, _sinkProbe, this);
 
-    _receiver._watchdog.clearSinkFrames();
-
-    (void) _sinkFrameProbe.add(pad.get(), GST_PAD_PROBE_TYPE_BUFFER, _sinkProbe, this);
-
-    _videoSink = GStreamer::adoptElement(GST_ELEMENT(gst_object_ref(videoSink)));
-    _sinkStatsAtStart = GstQgc::frameStats(_videoSink.get());
-
-    if (!streaming) {
-        emit _receiver.onStartDecodingComplete(VideoReceiver::STATUS_OK);
-        return;
+    if (_streaming) {
+        _insertDecoder();
     }
-
-    emit _receiver.onStartDecodingComplete(_insertDecoder() ? VideoReceiver::STATUS_OK : VideoReceiver::STATUS_FAIL);
-}
-
-void DecodingBranch::stop()
-{
-    qCDebug(GstVideoReceiverLog) << "Stopping decoding" << _receiver._redactedUri();
-
-    // Gate on _videoSink (set by startDecoding) instead of _decoding (which only flips on the first frame),
-    // so a stop before the first frame still removes the branch.
-    if (!_videoSink) {
-        qCDebug(GstVideoReceiverLog) << "Not decoding!" << _receiver._redactedUri();
-        emit _receiver.onStopDecodingComplete(VideoReceiver::STATUS_INVALID_STATE);
-        return;
-    }
-
-    // The display branch has nothing to flush, so it is torn down at once instead of draining an EOS.
-    if (_valve) {
-        g_object_set(_valve, "drop", TRUE, nullptr);
-    }
-    _shutdown();
-
-    emit _receiver.onStopDecodingComplete(VideoReceiver::STATUS_OK);
 }
 
 void DecodingBranch::onSourceStreaming()
 {
-    if (!_videoSink) {
+    _streaming = true;
+    if (_sink && !_decoder) {
+        _insertDecoder();
+    }
+}
+
+void DecodingBranch::restartDecoder(const char* reason)
+{
+    if (!_decoder) {
         return;
     }
 
-    _receiver._dotDumper.dump(_pipeline, "pipeline-with-new-source-pad");
+    if (++_restartsWithoutFrame > kMaxDecoderRestarts) {
+        qCDebug(GstVideoReceiverLog) << "Decoder failing after" << kMaxDecoderRestarts << "restarts, last:" << reason
+                                     << _context.redactedUri;
+        _listener.onDecoderFailing();
+        return;
+    }
 
-    (void) _insertDecoder();
+    qCDebug(GstVideoReceiverLog) << "Restarting the decoder after" << reason << _context.redactedUri;
+    _removeDecoder();
+    _setDecoding(false);
+    _insertDecoder();
 }
 
-void DecodingBranch::onDecoderPad(GstPad* pad)
+bool DecodingBranch::isCurrent(GstObject* source) const
 {
-    qCDebug(GstVideoReceiverLog) << "New decoder pad" << _receiver._redactedUri();
-
-    _receiver._dotDumper.dump(_pipeline, "pipeline-with-new-decoder-pad");
-
-    (void) _addVideoSink(pad);
-}
-
-QString DecodingBranch::decoderName() const
-{
-    QMutexLocker locker(&_decoderNameMutex);
-    return _decoderName;
+    return (source == GST_OBJECT_CAST(_queue)) || (source == GST_OBJECT_CAST(_valve)) ||
+           isInside(source, _decoder.get()) || (_decoder && isInside(source, _sink.get()));
 }
 
 GstQgc::PathStats DecodingBranch::sinkPathStats() const
 {
-    const GStreamer::GstStructurePtr stats = GstQgc::frameStats(_videoSink.get());
+    const GStreamer::GstStructurePtr stats = GstQgc::frameStats(_sink.get());
     return GstQgc::formatSinkStats(stats.get(), _sinkStatsAtStart.get());
 }
 
-bool DecodingBranch::_insertDecoder()
+void DecodingBranch::_insertDecoder()
 {
-    _ensureVideoSinkInPipeline();
-
-    if (!_addDecoder()) {
-        qCWarning(GstVideoReceiverLog) << "Failed to add the decoder" << _receiver._redactedUri();
-        _shutdown();
-        return false;
+    setSinkSync(_sink.get(), !_lowLatency);
+    if (!gst_bin_add(GST_BIN(_context.pipeline), _sink.get())) {
+        qCWarning(GstVideoReceiverLog) << "Failed to add the video sink" << _context.redactedUri;
+        return;
     }
+    // PAUSED (not READY) negotiates downstream caps before the decoder pushes; PLAYING once linked.
+    (void) gst_element_set_state(_sink.get(), GST_STATE_PAUSED);
 
-    g_object_set(_valve, "drop", FALSE, nullptr);
-
-    qCDebug(GstVideoReceiverLog) << "Decoding started" << _receiver._redactedUri();
-    return true;
-}
-
-bool DecodingBranch::_addDecoder()
-{
-    _decoder = GStreamer::adoptElement(gst_element_factory_make("decodebin3", nullptr));
+    _decoder = GStreamer::makeElement("decodebin3");
     if (!_decoder) {
         qCWarning(GstVideoReceiverLog) << "gst_element_factory_make('decodebin3') failed";
-        return false;
-    }
-    // Ours alongside the pipeline's, so decoder() stays valid until _shutdown().
-    (void) gst_object_ref_sink(_decoder.get());
-
-    (void) g_signal_connect(_decoder.get(), "deep-element-added", G_CALLBACK(_onDecoderElementAdded), this);
-
-    (void) gst_bin_add(GST_BIN(_pipeline), _decoder.get());
-    (void) gst_element_sync_state_with_parent(_decoder.get());
-
-    _receiver._dotDumper.dump(_pipeline, "pipeline-with-decoder");
-
-    if (!gst_element_link(_valve, _decoder.get())) {
-        qCWarning(GstVideoReceiverLog) << "Unable to link decoder";
-        GStreamer::disposeChild(_decoder.get());
-        _decoder.reset();
-        return false;
-    }
-
-    if (const GStreamer::GstPadPtr srcPad = GStreamer::firstSrcPad(_decoder.get())) {
-        onDecoderPad(srcPad.get());
-    } else {
-        (void) g_signal_connect(_decoder.get(), "pad-added", G_CALLBACK(GstVideoReceiver::_onNewPad), &_receiver);
-    }
-
-    return true;
-}
-
-void DecodingBranch::_ensureVideoSinkInPipeline()
-{
-    if (!_videoSink || !_pipeline) {
+        GStreamer::disposeChild(_sink.get());
         return;
     }
+    GStreamer::markBranch(_decoder.get(), PipelineBranch::Decoding);
+    (void) _decoderElementAdded.connect(_decoder.get(), "deep-element-added", G_CALLBACK(_onDecoderElementAdded), this);
+    (void) _decoderPadAdded.connect(_decoder.get(), "pad-added", G_CALLBACK(_onDecoderPadAdded), this);
 
-    if (const GStreamer::GstObjectPtr parent =
-            GStreamer::adoptObject(gst_object_get_parent(GST_OBJECT(_videoSink.get())))) {
+    if (!gst_bin_add(GST_BIN(_context.pipeline), _decoder.get()) ||
+        !gst_element_sync_state_with_parent(_decoder.get()) || !gst_element_link(_valve, _decoder.get())) {
+        qCWarning(GstVideoReceiverLog) << "Unable to insert the decoder" << _context.redactedUri;
+        _removeDecoder();
         return;
     }
+    _context.dotDumper->dump(_context.pipeline, "pipeline-with-decoder");
 
-    g_object_set(_videoSink.get(), "sync", !_receiver._config.lowLatency, NULL);
+    (void) _insertions.fetch_add(1, std::memory_order_relaxed);
+    _context.watchdog->startSinkClock(StreamWatchdog::now());
+    _gateClosed.store(false, std::memory_order_relaxed);
+    g_object_set(_valve, "drop", FALSE, nullptr);
 
-    (void) gst_bin_add(GST_BIN(_pipeline), _videoSink.get());
+    // Without a keyframe the new decoder has nothing to start from until the stream's next one.
+    const GStreamer::GstPadPtr valveSink = GStreamer::adoptPad(gst_element_get_static_pad(_valve, "sink"));
+    GStreamer::requestKeyframe(valveSink.get());
 
-    // PAUSED (not READY) triggers downstream caps negotiation before source data arrives.
-    (void) gst_element_set_state(_videoSink.get(), GST_STATE_PAUSED);
+    qCDebug(GstVideoReceiverLog) << "Decoder inserted" << _context.redactedUri;
 }
 
-bool DecodingBranch::_addVideoSink(GstPad* pad)
+void DecodingBranch::_removeDecoder()
 {
-    _ensureVideoSinkInPipeline();
-
-    const GStreamer::GstPadPtr sinkPad = GStreamer::adoptPad(gst_element_get_static_pad(_videoSink.get(), "sink"));
-    const GstPadLinkReturn linkRet = sinkPad ? gst_pad_link(pad, sinkPad.get()) : GST_PAD_LINK_WRONG_HIERARCHY;
-    if (linkRet != GST_PAD_LINK_OK) {
-        qCWarning(GstVideoReceiverLog) << "Unable to link decoder pad to video sink:" << gst_pad_link_get_name(linkRet);
-
-        // _ensureVideoSinkInPipeline() added it before linking; detach for the next retry.
-        GStreamer::disposeChild(_videoSink.get());
-        return false;
+    if (_valve) {
+        g_object_set(_valve, "drop", TRUE, nullptr);
     }
-
-    (void) gst_element_sync_state_with_parent(_videoSink.get());
-
-    _receiver._dotDumper.dump(_pipeline, "pipeline-with-videosink");
-
-    return true;
-}
-
-void DecodingBranch::_onFirstFrame()
-{
-    if (!_videoSink || _decoding) {
-        return;
+    // The sink first: going NULL releases a decoder thread waiting inside it, so the decoder can stop.
+    if (_sink) {
+        GStreamer::disposeChild(_sink.get());
     }
-    _decoding = true;
-    qCDebug(GstVideoReceiverLog) << "Decoding started";
-    emit _receiver.decodingChanged(true);
-}
-
-void DecodingBranch::_shutdown()
-{
     if (_decoder) {
+        _decoderPadAdded.disconnect();
+        _decoderElementAdded.disconnect();
         GStreamer::disposeChild(_decoder.get());
         _decoder.reset();
+        _context.dotDumper->dump(_context.pipeline, "pipeline-decoding-stopped");
     }
-
-    _sinkFrameProbe.remove();
-
-    _receiver._watchdog.clearSinkFrames();
-
-    if (_videoSink) {
-        GStreamer::disposeChild(_videoSink.get());
-        _videoSink.reset();
-        _releaseDisplayedFrame();
-    }
-    _sinkStatsAtStart.reset();
-
-    if (_decoding.exchange(false)) {
-        qCDebug(GstVideoReceiverLog) << "Decoding stopped";
-        emit _receiver.decodingChanged(false);
-    }
-
-    _receiver._dotDumper.dump(_pipeline, "pipeline-decoding-stopped");
 }
 
-void DecodingBranch::_releaseDisplayedFrame()
+void DecodingBranch::_linkDecoderPad(GstPad* pad)
 {
-    QMetaObject::invokeMethod(
-        &_receiver,
-        [this]() {
-            for (auto* c : QGCQVideoSinkController::controllersOf(&_receiver)) {
-                c->releaseFrame();
+    const GStreamer::GstPadPtr sinkPad = GStreamer::adoptPad(gst_element_get_static_pad(_sink.get(), "sink"));
+    const GstPadLinkReturn linkResult = sinkPad ? gst_pad_link(pad, sinkPad.get()) : GST_PAD_LINK_WRONG_HIERARCHY;
+    if (linkResult != GST_PAD_LINK_OK) {
+        qCWarning(GstVideoReceiverLog) << "Unable to link the decoder to the video sink:"
+                                       << gst_pad_link_get_name(linkResult);
+        restartDecoder("link failure");
+        return;
+    }
+    (void) gst_element_sync_state_with_parent(_sink.get());
+    _context.dotDumper->dump(_context.pipeline, "pipeline-with-videosink");
+}
+
+void DecodingBranch::_onFirstFrame(quint64 insertion)
+{
+    if (!_decoder || (insertion != _insertions.load(std::memory_order_relaxed))) {
+        return;
+    }
+    _restartsWithoutFrame = 0;
+    _setDecoding(true);
+}
+
+void DecodingBranch::_setDecoding(bool decoding)
+{
+    if (decoding == _decoding) {
+        return;
+    }
+    _decoding = decoding;
+    qCDebug(GstVideoReceiverLog) << (decoding ? "Decoding started" : "Decoding stopped") << _context.redactedUri;
+    _listener.onDecodingChanged(decoding);
+}
+
+void DecodingBranch::_setDecoderName(const QString& name)
+{
+    if (name == _decoderName) {
+        return;
+    }
+    _decoderName = name;
+    _listener.onDecoderNameChanged(name);
+}
+
+void DecodingBranch::_onQueueOverrun(GstElement* /*queue*/, gpointer data)
+{
+    auto* const self = static_cast<DecodingBranch*>(data);
+    if (self->_gateClosed.exchange(true, std::memory_order_relaxed)) {
+        return;
+    }
+    self->_gateDrops.store(0, std::memory_order_relaxed);
+    self->_context.post([self]() {
+        if (self->_valve) {
+            const GStreamer::GstPadPtr valveSink =
+                GStreamer::adoptPad(gst_element_get_static_pad(self->_valve, "sink"));
+            GStreamer::requestKeyframe(valveSink.get());
+        }
+    });
+}
+
+GstPadProbeReturn DecodingBranch::_gateProbe(GstPad* /*pad*/, GstPadProbeInfo* info, gpointer data)
+{
+    auto* const self = static_cast<DecodingBranch*>(data);
+    if (!self->_gateClosed.load(std::memory_order_relaxed)) {
+        return GST_PAD_PROBE_OK;
+    }
+    const GstBuffer* const buffer = GST_PAD_PROBE_INFO_BUFFER(info);
+    const bool delta = buffer && GST_BUFFER_FLAG_IS_SET(buffer, GST_BUFFER_FLAG_DELTA_UNIT);
+    if (delta && (self->_gateDrops.fetch_add(1, std::memory_order_relaxed) < kMaxGateDrops)) {
+        return GST_PAD_PROBE_DROP;
+    }
+    self->_gateClosed.store(false, std::memory_order_relaxed);
+    return GST_PAD_PROBE_OK;
+}
+
+GstPadProbeReturn DecodingBranch::_sinkProbe(GstPad* /*pad*/, GstPadProbeInfo* /*info*/, gpointer data)
+{
+    auto* const self = static_cast<DecodingBranch*>(data);
+    if (self->_context.watchdog->noteSinkFrame(StreamWatchdog::now())) {
+        const quint64 insertion = self->_insertions.load(std::memory_order_relaxed);
+        self->_context.post([self, insertion]() { self->_onFirstFrame(insertion); });
+    }
+    return GST_PAD_PROBE_OK;
+}
+
+void DecodingBranch::_onDecoderPadAdded(GstElement* decoder, GstPad* pad, gpointer data)
+{
+    auto* const self = static_cast<DecodingBranch*>(data);
+
+    // Runs on a streaming thread; the pipeline is only changed on the worker. Data waits at the pad until the worker
+    // has linked it, since an unlinked push would fail the stream.
+    const gulong blockId =
+        gst_pad_add_probe(pad, GST_PAD_PROBE_TYPE_BLOCK_DOWNSTREAM, holdDecoderPad, nullptr, nullptr);
+    self->_context.post(
+        [self, blockId, padDecoder = GStreamer::shareObject(decoder), newPad = GStreamer::shareObject(pad)]() {
+            if (padDecoder.get() == self->_decoder.get()) {
+                self->_linkDecoderPad(newPad.get());
             }
-        },
-        Qt::QueuedConnection);
+            gst_pad_remove_probe(newPad.get(), blockId);
+        });
 }
 
 void DecodingBranch::_onDecoderElementAdded(GstBin* /*decodebin*/, GstBin* /*subBin*/, GstElement* element,
                                             gpointer data)
 {
+    // A message can outlive the decoder that held its source, which leaves nothing to blame it on but its own mark.
+    GStreamer::markBranch(element, PipelineBranch::Decoding);
+
     GstElementFactory* factory = gst_element_get_factory(element);
     if (!factory || !gst_element_factory_list_is_type(factory, GST_ELEMENT_FACTORY_TYPE_DECODER)) {
         return;
@@ -299,27 +345,8 @@ void DecodingBranch::_onDecoderElementAdded(GstBin* /*decodebin*/, GstBin* /*sub
 
     qCDebug(GstVideoReceiverLog).noquote()
         << "Decodebin3 selected" << GStreamer::describeDecoderFactory(factory) << "- QoS disabled";
-    const QString decoderName = QString::fromUtf8(gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory)));
+    const QString name = QString::fromUtf8(gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory)));
 
-    auto* self = static_cast<DecodingBranch*>(data);
-    self->_receiver._runOnWorkerForPipeline([self, decoderName]() {
-        {
-            QMutexLocker locker(&self->_decoderNameMutex);
-            if (decoderName == self->_decoderName) {
-                return;
-            }
-            self->_decoderName = decoderName;
-        }
-        (void) QMetaObject::invokeMethod(
-            &self->_receiver, [self]() { emit self->_receiver.decoderNameChanged(); }, Qt::QueuedConnection);
-    });
-}
-
-GstPadProbeReturn DecodingBranch::_sinkProbe(GstPad* /*pad*/, GstPadProbeInfo* /*info*/, gpointer user_data)
-{
-    auto* self = static_cast<DecodingBranch*>(user_data);
-    if (self && self->_receiver._watchdog.noteSinkFrame(StreamWatchdog::now())) {
-        self->_receiver._runOnWorkerForPipeline([self]() { self->_onFirstFrame(); });
-    }
-    return GST_PAD_PROBE_OK;
+    auto* const self = static_cast<DecodingBranch*>(data);
+    self->_context.post([self, name]() { self->_setDecoderName(name); });
 }

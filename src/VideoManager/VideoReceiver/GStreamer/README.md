@@ -13,16 +13,31 @@ The pipeline is split into focused components (all in this directory):
 
 | Component | Role |
 | --- | --- |
-| `GstVideoReceiver` | The `VideoReceiver` the app uses: runs the pipeline (source → tee → the branches below) and its only bus consumer on its own worker thread, and is the only component that reconnects (with backoff) after a stream failure. The components below are plain classes it owns; each header states which thread calls what. |
-| `DecodingBranch` | Display branch behind the tee: inserts `decodebin3` once the source streams and reports decoding, the decoder name and the video size. |
-| `RecordingBranch` | Recording branch behind the tee: one `splitmuxsink` file per recording, started at a keyframe and, for MP4/MOV, muxed so a crash leaves a playable file; `RecordingFinalizer` tells when the file is closed. |
-| `StreamWatchdog` | Notices stalled source or decoder output on a monotonic clock, and paces reconnects with exponential backoff. |
+| `GstVideoReceiver` | The `VideoReceiver` the app uses. Callers state what they want (config, active, video output, recording); a worker thread keeps one `PipelineSession` in line with it, reconnecting with backoff after a stream failure and giving up (`State::Stopped` plus `errorOccurred`) when reconnecting is off or can't help (unsupported URI, missing plugin). It owns the display sink, built from `VideoSettings` when an output is set and rebuilt by `restart()`. |
+| `PipelineSession` | One pipeline (source → tee → the branches below) and everything about it: elements, bus, probes. Lives on the worker; replaces a failed or stalled decoder by itself and reports failures of the stream to the receiver. |
+| `DecodingBranch` | Display branch behind the tee: inserts `decodebin3` once the source streams, asks upstream for a keyframe, and reports decoding and the decoder name. Its 2-buffer queue drops the oldest frame rather than hold up the tee; after a drop it also drops delta frames until the next keyframe, so the picture freezes briefly instead of smearing. |
+| `RecordingBranch` | Recording branch behind the tee: `parser ! muxer ! filesink`, one file per pipeline, started at a keyframe (requested upstream) and, for MP4/MOV, muxed so a crash leaves a playable file. After a reconnect the recording goes on in `<base>_part<N>.<ext>`. Its queue holds 64 MB of backlog for slow storage, then ends the recording rather than stall the display. `RecordingFinalizer` tells when the file is closed. |
+| `StreamWatchdog` | Notices stalled source or decoder output on a monotonic clock (allowing `rtspsrc` its UDP→TCP fallback before the first frame), and paces reconnects with exponential backoff. |
 | `PipelineDotDumper` | Writes the pipeline's `.dot` graphs; see [Pipeline Observability](#pipeline-observability). |
 | `GstSourceFactory` | Constructs the source element from the stream URI and applies RTP jitter-buffer policy for `application/x-rtp` sources. |
 | `GStreamerEnvironment` | Process-wide environment setup (plugin/scanner/helper/GIO paths, private registry, bundled CA file) run before `gst_init()`. See [Runtime Environment Setup](#runtime-environment-setup). |
-| `GStreamerHelpers` | Small utilities: decoder classification and rank overrides, tee branch heads, and taking a child element out of a running bin. |
+| `GStreamerHelpers` | Small utilities: decoder classification and rank overrides, tee branch heads, keyframe requests, events sent without blocking, and taking a child element out of a running bin. |
 | `GStreamerLogging` | Routes GStreamer's log output through QGC's logging, unless GStreamer's own output was requested, and applies the persisted debug level. See [GStreamer Logging](#gstreamer-logging). |
-| `GstScoped` | RAII owners for transfer-full GStreamer returns so refs can't leak on early return. |
+| `GstScoped` | RAII owners for transfer-full GStreamer returns so refs can't leak on early return, `makeElement()` (never floating), `PadProbe` and `ScopedSignal`. |
+
+### Threading
+
+- **GUI thread**: `GstVideoReceiver`'s API and every signal it emits, the display sink's `QGCQVideoSinkController`,
+  and the video size, taken from the output's `QVideoSink`.
+- **Worker thread** (one per receiver): the reconnect logic, every change to the pipeline, and its bus. A sync handler
+  only does what can't wait: answers `NEED_CONTEXT`, selects the video streams, and closes the valve in front of a
+  branch that posted an `ERROR`, so the error stays out of the tee. Everything else is popped on the worker, which a
+  `QSocketNotifier` (`QWinEventNotifier` on Windows) on the bus's poll fd wakes up, as Qt's `QGstBusObserver` does.
+- **Streaming threads**: probes and element signals only note what happened and queue the rest on their
+  `PipelineSession`, which drops it once the pipeline is gone.
+- **Teardown** is bounded: an open recording drains through an EOS sent from GStreamer's thread pool, the worker waits
+  for it at most 3 s and then flushes the recorder, and the receiver's destructor waits at most 5 s for the worker,
+  leaving one stuck in the kernel (a hung network mount) to finish on its own.
 
 ### `gstqgc` — custom GStreamer plugin
 
@@ -52,8 +67,8 @@ A QGC-owned plugin (`gstqgc/`) bridging the pipeline into Qt:
   frames Qt may still hold, and keeps the video, crop and GL sync metas it reads.
   `QGC_GST_PROPOSE_ALLOCATION_MIN_BUFFERS` overrides the count, as Qt's `QT_GSTREAMER_PROPOSE_ALLOCATION_MIN_BUFFERS`
   does, e.g. to save CMA memory with 4K decoders on i.MX or Raspberry Pi.
-- **`QGCQVideoSinkController`** — GUI-thread companion that mirrors negotiation/telemetry from the sink into QGC, and
-  clears the frame its `QVideoSink` displays when the sink leaves the pipeline.
+- **`QGCQVideoSinkController`** — GUI-thread companion that binds the sink to a `QVideoSink`, lets it deliver only
+  while the output's window is visible, and clears the frame that `QVideoSink` displays when decoding stops.
 
 ### `HwBuffers` — GPU paths
 
@@ -227,8 +242,8 @@ gst-launch-1.0 udpsrc port=5600 caps='application/x-rtp, media=(string)video, cl
 
 `GstSourceFactory` accepts these URI schemes:
 
-- `rtsp://`, `rtspt://`: RTSP (the video stream only).
-- `udp://`: H.264 over RTP/UDP; `udp265://`: H.265 over RTP/UDP.
+- `rtsp://`, `rtspt://`: RTSP (the video stream only), over UDP and, when no UDP data arrives within 5 s, over TCP.
+- `udp://`: H.264 over RTP/UDP; `udp265://`: H.265 over RTP/UDP. Port 0 listens on a free port.
 - `mpegts://`: MPEG-TS over UDP; `tcp://`: MPEG-TS over TCP.
 
 ### Automated tests
@@ -240,7 +255,7 @@ gst-launch-1.0 udpsrc port=5600 caps='application/x-rtp, media=(string)video, cl
 | `GStreamerTest` | Integration | Helpers, the source factory, the `gstqgc` sink and the `HwBuffers` paths. |
 | `GStreamerDmaBufGlTest` | Integration | DMABuf planes imported into a GL QRhi on EGL, read back pixel by pixel (xcb with `xcb_egl`). |
 | `GstVideoReceiverComponentsTest` | Unit | The receiver's components without a stream: reconnect backoff, stall detection, recording finalization by ancestry, pipeline and `.dot` file names. |
-| `GstVideoReceiverTest` | Integration | `GstVideoReceiver` end to end against a live H.264 RTP stream it sends itself on loopback. |
+| `GstVideoReceiverTest` | Integration | `GstVideoReceiver` end to end against live H.264 streams it sends itself on loopback: states, restarts, decoder-only recovery, recording across reconnects, slow and hung storage, bounded teardown. Receivers and servers listen on port 0, so parallel runs never collide. |
 
 Each test skips, rather than fails, when GStreamer or a plugin it needs is missing (`GstVideoReceiverTest` needs `x264enc` among others; its MockLink streams use `openh264enc`, falling back to `x264enc`).
 
@@ -262,7 +277,7 @@ QGC supports the standard GStreamer observability env vars. Set them before laun
 
 ### Pipeline graph dumps (`.dot` files)
 
-When `GST_DEBUG_DUMP_DOT_DIR` is set, QGC writes each receiver's pipeline graph there at key transitions as `receiver-<stream>-<tag>.dot`. `<stream>` is the receiver's name (`videoContent`, `thermalVideo`), so the two receivers don't overwrite each other's files, and `<tag>` names the transition (`pipeline-initial`, `pipeline-started`, `pipeline-with-videosink`, `pipeline-error`, `pipeline-watchdog-timeout`, `pipeline-recording-stopped`, …). A transition's next dump overwrites its last one.
+When `GST_DEBUG_DUMP_DOT_DIR` is set, QGC writes each receiver's pipeline graph there at key transitions as `receiver-<stream>-<tag>.dot`. `<stream>` is the receiver's name (`videoContent`, `thermalVideo`), so the two receivers don't overwrite each other's files, and `<tag>` names the transition (`pipeline-initial`, `pipeline-started`, `pipeline-with-decoder`, `pipeline-with-videosink`, `pipeline-with-filesink`, `pipeline-error`, `pipeline-watchdog-timeout`, `pipeline-decoder-timeout`, `pipeline-recording-stopped`, …). A transition's next dump overwrites its last one.
 
 ```bash
 export GST_DEBUG_DUMP_DOT_DIR=/tmp/qgc-pipeline-dots
@@ -270,7 +285,7 @@ export GST_DEBUG_DUMP_DOT_DIR=/tmp/qgc-pipeline-dots
 dot -Tpng /tmp/qgc-pipeline-dots/receiver-videoContent-pipeline-started.dot -o pipeline.png
 ```
 
-When the env var is **unset**, QGC instead writes a snapshot to `<CacheLocation>/qgc-pipeline-dot/receiver-<stream>-<tag>-<UTC timestamp>.dot` on a pipeline `ERROR` and on a watchdog timeout, keeping the 10 newest, so field-bug-report bundles include the topology automatically. `GstVideoReceiver::dumpPipelineGraph(tag)` (`Q_INVOKABLE`, so callable from QML) writes the same snapshot on demand for use from a debug menu.
+When the env var is **unset**, QGC instead writes a snapshot to `<CacheLocation>/qgc-pipeline-dot/receiver-<stream>-<tag>-<UTC timestamp>.dot` on a pipeline `ERROR` and on a source or decoder watchdog timeout, keeping the 10 newest, so field-bug-report bundles include the topology automatically. `GstVideoReceiver::dumpPipelineGraph(tag)` (`Q_INVOKABLE`, so callable from QML) writes the same snapshot on demand for use from a debug menu.
 
 Every dump shows topology, caps, media types and states, but leaves out element properties, which can hold stream credentials (such as `rtspsrc`'s `user-id` and `user-pw`).
 

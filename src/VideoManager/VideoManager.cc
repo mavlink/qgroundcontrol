@@ -34,16 +34,8 @@
 
 QGC_LOGGING_CATEGORY(VideoManagerLog, "Video.VideoManager")
 
-static constexpr const char *kFileExtension[VideoReceiver::FILE_FORMAT_MAX + 1] = {
-    "mkv",
-    "mov",
-    "mp4"
-};
-
 // Stall timeout for every source but RTSP, whose timeout is a setting.
 static constexpr uint32_t kDefaultStreamTimeoutSec = 3;
-// Pause between the stop and the start of a requested restart.
-static constexpr std::chrono::seconds kRestartDelay{1};
 
 Q_APPLICATION_STATIC(VideoManager, _videoManagerInstance);
 
@@ -53,8 +45,6 @@ VideoManager::VideoManager(QObject *parent)
     , _videoSettings(SettingsManager::instance()->videoSettings())
 {
     qCDebug(VideoManagerLog) << this;
-
-    (void) qRegisterMetaType<VideoReceiver::STATUS>("STATUS");
 
     if (VideoBackend::needsAsyncInit()) {
         _backendDisabledForTests = VideoBackend::disabledForUnitTests();
@@ -184,7 +174,10 @@ void VideoManager::init(QQuickWindow *mainWindow)
     (void) connect(_videoSettings->rtspUrl(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
     (void) connect(_videoSettings->tcpUrl(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
     (void) connect(_videoSettings->aspectRatio(), &Fact::rawValueChanged, this, &VideoManager::aspectRatioChanged);
-    (void) connect(_videoSettings->lowLatencyMode(), &Fact::rawValueChanged, this, [this](const QVariant &value) { Q_UNUSED(value); _restartAllVideos(); });
+    (void) connect(_videoSettings->lowLatencyMode(), &Fact::rawValueChanged, this, [this](const QVariant& value) {
+        Q_UNUSED(value);
+        _videoSourceChanged();
+    });
     // rtpJitterLatencyMs needs a pipeline restart; route through _videoSourceChanged so _updateSettings
     // pushes the new value to each receiver and restarts exactly once (no double restart).
     (void) connect(_videoSettings->rtpJitterLatencyMs(), &Fact::rawValueChanged, this, [this](const QVariant &value) { Q_UNUSED(value); _videoSourceChanged(); });
@@ -193,7 +186,9 @@ void VideoManager::init(QQuickWindow *mainWindow)
     (void) connect(_videoSettings->rtspAutoReconnect(), &Fact::rawValueChanged, this, [this](const QVariant &value) {
         const bool enabled = value.toBool();
         for (VideoReceiver *receiver : std::as_const(_videoReceivers)) {
-            receiver->setAutoReconnect(enabled);
+            VideoReceiver::Config config = receiver->config();
+            config.autoReconnect = enabled;
+            receiver->setConfig(config);
         }
     });
     VideoBackend::bindDebugLevelFact(SettingsManager::instance()->appSettings()->gstDebugLevel(), this);
@@ -316,9 +311,8 @@ void VideoManager::cleanup()
     // longer delivered, so a receiver's worker thread never gets its quit task and the destructor waits forever.
     const QList<VideoReceiver*> receivers = _videoReceivers;
     _videoReceivers.clear();
-    _pendingRestarts.clear();
+    _videoStreamInfos.clear();
     for (VideoReceiver* receiver : receivers) {
-        QGCCorePlugin::instance()->releaseVideoSink(receiver->sink());
         delete receiver;
     }
 }
@@ -335,8 +329,9 @@ void VideoManager::_cleanupOldVideos()
     videoDir.setSorting(QDir::Time);
 
     QStringList nameFilters;
-    for (size_t i = 0; i < std::size(kFileExtension); i++) {
-        nameFilters << QStringLiteral("*.") + kFileExtension[i];
+    for (const VideoReceiver::FileFormat format :
+         {VideoReceiver::FileFormat::Mkv, VideoReceiver::FileFormat::Mov, VideoReceiver::FileFormat::Mp4}) {
+        nameFilters << QStringLiteral("*.") + VideoReceiver::fileExtension(format);
     }
 
     videoDir.setNameFilters(nameFilters);
@@ -362,8 +357,8 @@ void VideoManager::_cleanupOldVideos()
 
 void VideoManager::startRecording(const QString &videoFile)
 {
-    const VideoReceiver::FILE_FORMAT fileFormat = static_cast<VideoReceiver::FILE_FORMAT>(_videoSettings->recordingFormat()->rawValue().toInt());
-    if (!VideoReceiver::isValidFileFormat(fileFormat)) {
+    const int rawFileFormat = _videoSettings->recordingFormat()->rawValue().toInt();
+    if (!VideoReceiver::isValidFileFormat(rawFileFormat)) {
         QGC::showAppMessage(tr("Invalid video format defined."));
         return;
     }
@@ -377,12 +372,13 @@ void VideoManager::startRecording(const QString &videoFile)
     }
 
     const QString videoFileUrl = videoFile.isEmpty() ? QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss") : videoFile;
-    const QString ext = kFileExtension[fileFormat];
+    const VideoReceiver::FileFormat fileFormat = static_cast<VideoReceiver::FileFormat>(rawFileFormat);
+    const QString ext = VideoReceiver::fileExtension(fileFormat);
 
     const QString videoFileNameTemplate = savePath + "/" + videoFileUrl + ".%1" + ext;
 
     for (VideoReceiver *receiver : std::as_const(_videoReceivers)) {
-        if (!receiver->started()) {
+        if (!receiver->active()) {
             qCDebug(VideoManagerLog) << "Video receiver is not ready.";
             continue;
         }
@@ -411,7 +407,7 @@ void VideoManager::grabImage(const QString &imageFile)
     emit imageFileChanged(_imageFile);
 
     for (VideoReceiver *receiver : std::as_const(_videoReceivers)) {
-        if (!receiver->started()) {
+        if (!receiver->active()) {
             continue;
         }
         // As with recordings, streams other than the main one get their name before the extension.
@@ -425,7 +421,7 @@ void VideoManager::grabImage(const QString &imageFile)
                 streamImageFile.append(tag);
             }
         }
-        receiver->takeScreenshot(streamImageFile);
+        (void) receiver->takeScreenshot(streamImageFile);
     }
 }
 
@@ -437,8 +433,8 @@ double VideoManager::aspectRatio() const
     }
 
     for (VideoReceiver *receiver : _videoReceivers) {
-        QGCVideoStreamInfo *pInfo = receiver->videoStreamInfo();
-        if (!receiver->isThermal() && pInfo && !pInfo->isThermal()) {
+        QGCVideoStreamInfo* pInfo = _videoStreamInfo(receiver);
+        if (!_isThermal(receiver) && pInfo && !pInfo->isThermal()) {
             return pInfo->aspectRatio();
         }
     }
@@ -449,8 +445,8 @@ double VideoManager::aspectRatio() const
 double VideoManager::thermalAspectRatio() const
 {
     for (VideoReceiver *receiver : _videoReceivers) {
-        QGCVideoStreamInfo *pInfo = receiver->videoStreamInfo();
-        if (receiver->isThermal() && pInfo && pInfo->isThermal()) {
+        QGCVideoStreamInfo* pInfo = _videoStreamInfo(receiver);
+        if (_isThermal(receiver) && pInfo && pInfo->isThermal()) {
             return pInfo->aspectRatio();
         }
     }
@@ -461,8 +457,8 @@ double VideoManager::thermalAspectRatio() const
 double VideoManager::hfov() const
 {
     for (VideoReceiver *receiver : _videoReceivers) {
-        QGCVideoStreamInfo *pInfo = receiver->videoStreamInfo();
-        if (!receiver->isThermal() && pInfo && !pInfo->isThermal()) {
+        QGCVideoStreamInfo* pInfo = _videoStreamInfo(receiver);
+        if (!_isThermal(receiver) && pInfo && !pInfo->isThermal()) {
             return pInfo->hfov();
         }
     }
@@ -473,8 +469,8 @@ double VideoManager::hfov() const
 double VideoManager::thermalHfov() const
 {
     for (VideoReceiver *receiver : _videoReceivers) {
-        QGCVideoStreamInfo *pInfo = receiver->videoStreamInfo();
-        if (receiver->isThermal() && pInfo && pInfo->isThermal()) {
+        QGCVideoStreamInfo* pInfo = _videoStreamInfo(receiver);
+        if (_isThermal(receiver) && pInfo && pInfo->isThermal()) {
             return pInfo->hfov();
         }
     }
@@ -485,8 +481,8 @@ double VideoManager::thermalHfov() const
 bool VideoManager::hasThermal() const
 {
     for (VideoReceiver *receiver : _videoReceivers) {
-        QGCVideoStreamInfo *pInfo = receiver->videoStreamInfo();
-        if (receiver->isThermal() && pInfo && pInfo->isThermal()) {
+        QGCVideoStreamInfo* pInfo = _videoStreamInfo(receiver);
+        if (_isThermal(receiver) && pInfo && pInfo->isThermal()) {
             return true;
         }
     }
@@ -543,17 +539,17 @@ void VideoManager::_videoSourceChanged()
         QGCCameraManager* camMgr = _activeVehicle->cameraManager();
         for (VideoReceiver *receiver : std::as_const(_videoReceivers)) {
             QGCVideoStreamInfo* info = nullptr;
-            if (receiver->isThermal()) {
+            if (_isThermal(receiver)) {
                 info = camMgr ? camMgr->thermalStreamInstance() : nullptr;
             } else {
                 info = camMgr ? camMgr->currentStreamInstance() : nullptr;
             }
-            receiver->setVideoStreamInfo(info);
+            _setVideoStreamInfo(receiver, info);
             changed |= _updateSettings(receiver);
         }
     } else {
         for (VideoReceiver *receiver : std::as_const(_videoReceivers)) {
-            receiver->setVideoStreamInfo(nullptr);
+            _setVideoStreamInfo(receiver, nullptr);
             changed |= _updateSettings(receiver);
         }
     }
@@ -564,7 +560,10 @@ void VideoManager::_videoSourceChanged()
         emit isAutoStreamChanged();
 
         if (hasVideo()) {
-            _restartAllVideos();
+            // A receiver whose config changed restarts on its own; this starts the others.
+            for (VideoReceiver* receiver : std::as_const(_videoReceivers)) {
+                _startReceiver(receiver);
+            }
         } else {
             stopVideo();
         }
@@ -601,8 +600,8 @@ bool VideoManager::_updateUVC(VideoReceiver * /*receiver*/)
 bool VideoManager::autoStreamConfigured() const
 {
     for (VideoReceiver *receiver : _videoReceivers) {
-        QGCVideoStreamInfo *pInfo = receiver->videoStreamInfo();
-        if (!receiver->isThermal() && pInfo && !pInfo->isThermal()) {
+        QGCVideoStreamInfo* pInfo = _videoStreamInfo(receiver);
+        if (!_isThermal(receiver) && pInfo && !pInfo->isThermal()) {
             return !pInfo->uri().isEmpty();
         }
     }
@@ -612,7 +611,7 @@ bool VideoManager::autoStreamConfigured() const
 
 bool VideoManager::_updateAutoStream(VideoReceiver *receiver)
 {
-    const QGCVideoStreamInfo *pInfo = receiver->videoStreamInfo();
+    const QGCVideoStreamInfo* pInfo = _videoStreamInfo(receiver);
     if (!pInfo) {
         return false;
     }
@@ -655,7 +654,7 @@ bool VideoManager::_updateAutoStream(VideoReceiver *receiver)
 
     const bool settingsChanged = _updateVideoUri(receiver, url);
     if (settingsChanged) {
-        if (!receiver->isThermal()) {
+        if (!_isThermal(receiver)) {
             _videoSettings->videoSource()->setRawValue(source);
         }
 
@@ -672,13 +671,15 @@ bool VideoManager::_updateVideoUri(VideoReceiver *receiver, const QString &uri)
         return false;
     }
 
-    if ((uri == receiver->uri()) && !receiver->uri().isNull()) {
+    VideoReceiver::Config config = receiver->config();
+    if ((uri == config.uri) && !config.uri.isNull()) {
         return false;
     }
 
     qCDebug(VideoManagerLog) << "New Video URI" << QGCNetworkHelper::redactedUrlForLogging(uri);
 
-    receiver->setUri(uri);
+    config.uri = uri;
+    receiver->setConfig(config);
 
     return true;
 }
@@ -692,25 +693,24 @@ bool VideoManager::_updateSettings(VideoReceiver *receiver)
 
     bool settingsChanged = false;
 
+    VideoReceiver::Config config = receiver->config();
     const bool lowLatency = _videoSettings->lowLatencyMode()->rawValue().toBool();
-    if (lowLatency != receiver->lowLatency()) {
-        receiver->setLowLatency(lowLatency);
+    if (lowLatency != config.lowLatency) {
+        config.lowLatency = lowLatency;
         settingsChanged = true;
     }
 
     const int rtpLatencyMs = static_cast<int>(std::min(_videoSettings->rtpJitterLatencyMs()->rawValue().toUInt(), static_cast<uint>(INT_MAX)));
-    if (rtpLatencyMs != receiver->rtpJitterLatencyMs()) {
-        receiver->setRtpJitterLatencyMs(rtpLatencyMs);
+    if (rtpLatencyMs != config.rtpJitterLatencyMs) {
+        config.rtpJitterLatencyMs = rtpLatencyMs;
         settingsChanged = true;
     }
 
-    const bool autoReconnect = _videoSettings->rtspAutoReconnect()->rawValue().toBool();
-    if (autoReconnect != receiver->autoReconnect()) {
-        receiver->setAutoReconnect(autoReconnect);
-        // No settingsChanged: autoReconnect is live, doesn't require pipeline restart.
-    }
+    // Live: doesn't restart the stream.
+    config.autoReconnect = _videoSettings->rtspAutoReconnect()->rawValue().toBool();
+    receiver->setConfig(config);
 
-    if (receiver->isThermal()) {
+    if (_isThermal(receiver)) {
         return settingsChanged;
     }
 
@@ -767,7 +767,7 @@ void VideoManager::_setActiveVehicle(Vehicle *vehicle)
 
         for (VideoReceiver *receiver : std::as_const(_videoReceivers)) {
             // disconnect(receiver->videoStreamInfo(), &QGCVideoStreamInfo::infoChanged, ))
-            receiver->setVideoStreamInfo(nullptr);
+            _setVideoStreamInfo(receiver, nullptr);
         }
     }
 
@@ -784,13 +784,13 @@ void VideoManager::_setActiveVehicle(Vehicle *vehicle)
 
         for (VideoReceiver *receiver : std::as_const(_videoReceivers)) {
             if (_activeVehicle->cameraManager()) {
-                if (receiver->isThermal()) {
-                    receiver->setVideoStreamInfo(_activeVehicle->cameraManager()->thermalStreamInstance());
+                if (_isThermal(receiver)) {
+                    _setVideoStreamInfo(receiver, _activeVehicle->cameraManager()->thermalStreamInstance());
                 } else {
-                    receiver->setVideoStreamInfo(_activeVehicle->cameraManager()->currentStreamInstance());
+                    _setVideoStreamInfo(receiver, _activeVehicle->cameraManager()->currentStreamInstance());
                 }
             } else {
-                receiver->setVideoStreamInfo(nullptr);
+                _setVideoStreamInfo(receiver, nullptr);
             }
             // connect(receiver->videoStreamInfo(), &QGCVideoStreamInfo::infoChanged, ))
         }
@@ -822,10 +822,8 @@ void VideoManager::_restartVideo(VideoReceiver *receiver)
 
     qCDebug(VideoManagerLog) << "Restart video receiver" << receiver->name();
 
-    if (receiver->started()) {
-        // Before stop(): a receiver may complete it synchronously, and onStopComplete restarts only on request.
-        _pendingRestarts.insert(receiver);
-        receiver->stop();
+    if (receiver->active()) {
+        receiver->restart();
     } else {
         _startReceiver(receiver);
     }
@@ -838,9 +836,7 @@ void VideoManager::_stopReceiver(VideoReceiver *receiver)
         return;
     }
 
-    _pendingRestarts.remove(receiver);
-    // Also when not started: a receiver that stopped itself after a failure may still be waiting to reconnect.
-    receiver->stop();
+    receiver->setActive(false);
 }
 
 void VideoManager::stopVideo()
@@ -857,12 +853,7 @@ void VideoManager::_startReceiver(VideoReceiver *receiver)
         return;
     }
 
-    if (receiver->started()) {
-        qCDebug(VideoManagerLog) << "VideoReceiver is already started" << receiver->name();
-        return;
-    }
-
-    if (receiver->uri().isEmpty()) {
+    if (receiver->config().uri.isEmpty()) {
         qCDebug(VideoManagerLog) << "VideoUri is NULL" << receiver->name();
         return;
     }
@@ -872,41 +863,31 @@ void VideoManager::_startReceiver(VideoReceiver *receiver)
         ((source == VideoSettings::videoSourceRTSP) ? _videoSettings->rtspTimeout()->rawValue().toUInt()
                                                     : kDefaultStreamTimeoutSec);
 
-    receiver->start(timeout);
+    VideoReceiver::Config config = receiver->config();
+    config.timeout = std::chrono::seconds(timeout);
+    receiver->setConfig(config);
+    receiver->setActive(true);
 }
 
-void VideoManager::_connectReceiverLifecycle(VideoReceiver* receiver)
+bool VideoManager::_isThermal(const VideoReceiver* receiver)
 {
-    // Retrying after a failure is the receiver's job (GstVideoReceiver reconnects with backoff while autoReconnect is
-    // set); restarting here as well would defeat its backoff and ignore autoReconnect.
-    // The receiver is the context so calls queued from its worker thread are dropped when it is deleted.
-    (void) connect(receiver, &VideoReceiver::onStartComplete, receiver, [receiver](VideoReceiver::STATUS status) {
-        qCDebug(VideoManagerLog) << "Video" << receiver->name() << "Start complete, status:" << status;
-        if (status == VideoReceiver::STATUS_OK) {
-            receiver->setStarted(true);
-            if (receiver->sink()) {
-                receiver->startDecoding(receiver->sink());
-            }
-        }
-    });
+    return receiver && (receiver->name() == QStringLiteral("thermalVideo"));
+}
 
-    (void) connect(receiver, &VideoReceiver::onStopComplete, receiver, [this, receiver](VideoReceiver::STATUS status) {
-        qCDebug(VideoManagerLog) << "Stop complete" << receiver->name()
-                                 << QGCNetworkHelper::redactedUrlForLogging(receiver->uri()) << ", status:" << status;
-        receiver->setStarted(false);
-        if (!_pendingRestarts.remove(receiver)) {
-            return;
-        }
-        if (status == VideoReceiver::STATUS_INVALID_URL) {
-            qCDebug(VideoManagerLog) << "Invalid video URL. Not restarting";
-            return;
-        }
-        QTimer::singleShot(kRestartDelay, receiver, [this, receiver]() {
-            qCDebug(VideoManagerLog) << "Restarting video receiver" << receiver->name()
-                                     << QGCNetworkHelper::redactedUrlForLogging(receiver->uri());
-            _startReceiver(receiver);
-        });
-    });
+QGCVideoStreamInfo* VideoManager::_videoStreamInfo(const VideoReceiver* receiver) const
+{
+    return _videoStreamInfos.value(receiver, nullptr);
+}
+
+void VideoManager::_setVideoStreamInfo(VideoReceiver* receiver, QGCVideoStreamInfo* videoStreamInfo)
+{
+    if (_videoStreamInfos.value(receiver, nullptr) == videoStreamInfo) {
+        return;
+    }
+    _videoStreamInfos.insert(receiver, videoStreamInfo);
+    qCDebug(VideoManagerLog) << "Video" << receiver->name()
+                             << "stream info:" << (videoStreamInfo ? "received" : "lost");
+    (void) _updateAutoStream(receiver);
 }
 
 void VideoManager::_initVideoReceiver(VideoReceiver *receiver, QQuickWindow *window)
@@ -926,25 +907,11 @@ void VideoManager::_initVideoReceiver(VideoReceiver *receiver, QQuickWindow *win
         receiver->deleteLater();
         return;
     }
-    receiver->setWidget(widget);
+    receiver->setVideoOutput(widget);
 
-    void *sink = QGCCorePlugin::instance()->createVideoSink(receiver->widget(), receiver);
-    if (!sink) {
-        qCCritical(VideoManagerLog) << "createVideoSink() failed" << receiver->name();
-        _videoReceivers.removeOne(receiver);
-        receiver->deleteLater();
-        return;
-    }
-    receiver->setSink(sink);
-
-    VideoBackend::attachSink(receiver, sink, widget);
-
-    _connectReceiverLifecycle(receiver);
-
-    // Receiver context, as in _connectReceiverLifecycle()
     (void) connect(receiver, &VideoReceiver::streamingChanged, receiver, [this, receiver](bool active) {
         qCDebug(VideoManagerLog) << "Video" << receiver->name() << "streaming changed, active:" << (active ? "yes" : "no");
-        if (!receiver->isThermal()) {
+        if (!_isThermal(receiver)) {
             _streaming = active;
             emit streamingChanged();
         }
@@ -952,7 +919,7 @@ void VideoManager::_initVideoReceiver(VideoReceiver *receiver, QQuickWindow *win
 
     (void) connect(receiver, &VideoReceiver::decodingChanged, receiver, [this, receiver](bool active) {
         qCDebug(VideoManagerLog) << "Video" << receiver->name() << "decoding changed, active:" << (active ? "yes" : "no");
-        if (!receiver->isThermal()) {
+        if (!_isThermal(receiver)) {
             _decoding = active;
             emit decodingChanged();
         }
@@ -960,7 +927,7 @@ void VideoManager::_initVideoReceiver(VideoReceiver *receiver, QQuickWindow *win
 
     (void) connect(receiver, &VideoReceiver::recordingChanged, receiver, [this, receiver](bool active) {
         qCDebug(VideoManagerLog) << "Video" << receiver->name() << "recording changed, active:" << (active ? "yes" : "no");
-        if (!receiver->isThermal()) {
+        if (!_isThermal(receiver)) {
             _recording = active;
             if (!active) {
                 _subtitleWriter->stopCapturingTelemetry();
@@ -971,34 +938,18 @@ void VideoManager::_initVideoReceiver(VideoReceiver *receiver, QQuickWindow *win
 
     (void) connect(receiver, &VideoReceiver::recordingStarted, receiver, [this, receiver](const QString& filename) {
         qCDebug(VideoManagerLog) << "Video" << receiver->name() << "recording started";
-        if (!receiver->isThermal()) {
+        if (!_isThermal(receiver)) {
             _subtitleWriter->startCapturingTelemetry(filename, videoSize());
         }
     });
 
     (void) connect(receiver, &VideoReceiver::videoSizeChanged, receiver, [this, receiver](QSize size) {
         qCDebug(VideoManagerLog) << "Video" << receiver->name() << "resized. New resolution:" << size.width() << "x" << size.height();
-        if (!receiver->isThermal()) {
+        if (!_isThermal(receiver)) {
             _videoSize = size;
             emit videoSizeChanged();
             emit aspectRatioChanged();
         }
-    });
-
-    (void) connect(receiver, &VideoReceiver::onTakeScreenshotComplete, receiver,
-                   [receiver](VideoReceiver::STATUS status) {
-                       if (status == VideoReceiver::STATUS_OK) {
-                           qCDebug(VideoManagerLog) << "Video" << receiver->name() << "screenshot taken";
-                       } else {
-                           qCWarning(VideoManagerLog) << "Video" << receiver->name() << "screenshot failed";
-                       }
-                   });
-
-    (void) connect(receiver, &VideoReceiver::videoStreamInfoChanged, receiver, [this, receiver]() {
-        const QGCVideoStreamInfo *videoStreamInfo = receiver->videoStreamInfo();
-        qCDebug(VideoManagerLog) << "Video" << receiver->name() << "stream info:" << (videoStreamInfo ? "received" : "lost");
-
-        (void) _updateAutoStream(receiver);
     });
 
     (void) _updateSettings(receiver);

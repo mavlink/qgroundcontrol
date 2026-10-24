@@ -54,6 +54,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND GStreamer_RtspServer_FOUND)
             gst_rtsp_media_factory_set_shared
             gst_rtsp_mount_points_add_factory
             gst_rtsp_server_attach
+            gst_rtsp_server_get_bound_port
             gst_rtsp_server_get_mount_points
             gst_rtsp_server_new
             gst_rtsp_server_set_address
@@ -116,6 +117,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGStreamer)
 target_sources(
     ${CMAKE_PROJECT_NAME}
     PRIVATE
+        BranchContext.h
         GStreamer.cc
         GStreamer.h
         GStreamerEnvironment.cc
@@ -135,6 +137,8 @@ target_sources(
         StreamWatchdog.h
         PipelineDotDumper.cc
         PipelineDotDumper.h
+        PipelineSession.cc
+        PipelineSession.h
         RecordingBranch.cc
         RecordingBranch.h
         RecordingFinalizer.cc

@@ -819,12 +819,8 @@ void GStreamerTest::_testFrameCountsTelemetrySignal()
         GStreamer::adoptElement(gst_bin_get_by_name(GST_BIN(sinkBin.get()), "qgcqvideosink"));
     QVERIFY(qvideosink);
 
-    auto* controller = controllerOwner.findChild<QGCQVideoSinkController*>(QString(), Qt::FindDirectChildrenOnly);
-    QVERIFY(controller);
-    QSignalSpy spy(controller, &QGCQVideoSinkController::frameCountsChanged);
-
     QVERIFY(pipeline.play());
-    QVERIFY_SIGNAL_COUNT_WAIT(spy, 1, TestTimeout::mediumMs());
+    QVERIFY_TRUE_WAIT(framesDelivered(qvideosink.get()) > 0, TestTimeout::mediumMs());
 
     QVERIFY(sinkStat(qvideosink.get(), GstQgc::sinkFramesField(HwVideoBufferPath::None)) > 0);
     quint64 gpuFallback = 0;

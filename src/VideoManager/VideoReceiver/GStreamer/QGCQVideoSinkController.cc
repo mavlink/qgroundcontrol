@@ -1,12 +1,10 @@
 #include "QGCQVideoSinkController.h"
 
-#include <memory>
-
 #include <QtCore/QThread>
 #include <QtGui/QWindow>
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoSink>
-#include <QtMultimediaQuick/private/qquickvideooutput_p.h>
+#include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
 
 #include "QGCLoggingCategory.h"
@@ -17,16 +15,11 @@ QGCQVideoSinkController::QGCQVideoSinkController(GstElement* element, QObject* p
     : QObject(parent)
     , _element(element ? GStreamer::adoptElement(GST_ELEMENT(gst_object_ref(element))) : nullptr)
 {
-    _emitTimer.setInterval(1000);
-    _emitTimer.setSingleShot(false);
-    QObject::connect(&_emitTimer, &QTimer::timeout, this, &QGCQVideoSinkController::_onEmitTimer);
-    _emitTimer.start();
 }
 
 QGCQVideoSinkController::~QGCQVideoSinkController()
 {
     _releaseElementBinding();
-    _emitTimer.stop();
 }
 
 QList<QGCQVideoSinkController*> QGCQVideoSinkController::controllersOf(const QObject* receiver)
@@ -35,57 +28,36 @@ QList<QGCQVideoSinkController*> QGCQVideoSinkController::controllersOf(const QOb
                     : QList<QGCQVideoSinkController*>{};
 }
 
-void QGCQVideoSinkController::syncActiveToWindowVisibility(QObject* receiver, QQuickVideoOutput* videoOutput)
+void QGCQVideoSinkController::syncActiveToWindowVisibility(QObject* receiver, QQuickItem* videoOutput)
 {
-    if (!receiver || !videoOutput)
-        return;
+    for (auto* c : controllersOf(receiver)) {
+        c->followWindowVisibility(videoOutput);
+    }
+}
 
-    auto applyVisibility = [receiver](QWindow* win) {
-        const QWindow::Visibility v = win ? win->visibility() : QWindow::Hidden;
-        const bool active = win && (v != QWindow::Hidden && v != QWindow::Minimized);
-        for (auto* c : controllersOf(receiver))
-            c->setActive(active);
-    };
-    // Track the previous connection so windowChanged drops it before wiring the new window,
-    // else an old hidden window keeps gating the live receiver.
-    auto prevConn = std::make_shared<QMetaObject::Connection>();
-    auto wireWindow = [applyVisibility, prevConn, receiver](QQuickWindow* qw) {
-        if (*prevConn) {
-            QObject::disconnect(*prevConn);
-            *prevConn = QMetaObject::Connection{};
-        }
-        if (!qw) {
-            applyVisibility(nullptr);
-            return;
-        }
-        applyVisibility(qw);
-        *prevConn = QObject::connect(qw, &QWindow::visibilityChanged, receiver,
-                                     [applyVisibility, qw](QWindow::Visibility) { applyVisibility(qw); });
-    };
-    wireWindow(videoOutput->window());
-    QObject::connect(videoOutput, &QQuickVideoOutput::windowChanged, receiver, wireWindow);
+void QGCQVideoSinkController::followWindowVisibility(QQuickItem* videoOutput)
+{
+    (void) QObject::disconnect(_visibilityConnection);
+    _videoOutput = videoOutput;
+    // QQuickVideoOutput never emits windowChanged (its itemChange() skips the base), so the window is taken now; an
+    // output that moves to another window is followed again from there.
+    if (QQuickWindow* window = videoOutput ? videoOutput->window() : nullptr) {
+        _visibilityConnection = QObject::connect(window, &QWindow::visibilityChanged, this,
+                                                 &QGCQVideoSinkController::_applyWindowVisibility);
+    }
+    _applyWindowVisibility();
+}
+
+void QGCQVideoSinkController::_applyWindowVisibility()
+{
+    const QWindow* const window = _videoOutput ? _videoOutput->window() : nullptr;
+    const QWindow::Visibility visibility = window ? window->visibility() : QWindow::Hidden;
+    setActive((visibility != QWindow::Hidden) && (visibility != QWindow::Minimized));
 }
 
 const GstElement* QGCQVideoSinkController::element() const noexcept
 {
     return _element.get();
-}
-
-void QGCQVideoSinkController::updateNegotiation(const QString& format, const QSize& resolution)
-{
-    if (thread() != QThread::currentThread()) {
-        qCCritical(QGCQVideoSinkControllerLog) << "called from wrong thread";
-        return;
-    }
-    if (_bindingReleased)
-        return;
-    if (format != _negotiatedFormat || resolution != _negotiatedResolution) {
-        _negotiatedFormat = format;
-        _negotiatedResolution = resolution;
-        qCDebug(QGCQVideoSinkControllerLog).noquote()
-            << "Negotiation update: format=" << format << "size=" << resolution;
-        emit negotiationChanged();
-    }
 }
 
 void QGCQVideoSinkController::setActive(bool active)
@@ -138,7 +110,6 @@ void QGCQVideoSinkController::prepareForRelease()
         return;
     }
     _releaseElementBinding();
-    _emitTimer.stop();
 }
 
 void QGCQVideoSinkController::releaseFrame()
@@ -150,25 +121,6 @@ void QGCQVideoSinkController::releaseFrame()
     if (_videoSink) {
         _videoSink->setVideoFrame(QVideoFrame());
     }
-}
-
-quint64 QGCQVideoSinkController::frameCount() const noexcept
-{
-    if (!_element || _bindingReleased)
-        return 0;
-    guint64 delivered = 0;
-    g_object_get(_element.get(), "frames-delivered", &delivered, nullptr);
-    return static_cast<quint64>(delivered);
-}
-
-QString QGCQVideoSinkController::negotiatedFormat() const
-{
-    return _negotiatedFormat;
-}
-
-QSize QGCQVideoSinkController::negotiatedResolution() const
-{
-    return _negotiatedResolution;
 }
 
 void QGCQVideoSinkController::_releaseElementBinding() noexcept
@@ -189,16 +141,4 @@ void QGCQVideoSinkController::_clearVideoSinkFrame()
 {
     releaseFrame();
     _videoSink.clear();
-}
-
-void QGCQVideoSinkController::_onEmitTimer()
-{
-    if (!_element || _bindingReleased)
-        return;
-    guint64 delivered = 0;
-    g_object_get(_element.get(), "frames-delivered", &delivered, nullptr);
-    if (delivered != _lastEmittedFrameTotal) {
-        _lastEmittedFrameTotal = delivered;
-        emit frameCountsChanged();
-    }
 }

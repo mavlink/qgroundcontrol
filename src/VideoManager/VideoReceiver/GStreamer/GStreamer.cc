@@ -12,8 +12,6 @@
 #include <QtCore/QStringList>
 #include <QtCore/QVarLengthArray>
 #include <QtMultimedia/QVideoSink>
-#include <QtMultimediaQuick/private/qquickvideooutput_p.h>
-#include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
 #include <QtQuick/QSGRendererInterface>
 
@@ -29,11 +27,14 @@
 
 #include "HwBuffers/common/QGCRhiCapture.h"
 #endif
+#include <gst/gst.h>
+
 #include "QGCLoggingCategory.h"
 #include "QGCQVideoSinkController.h"
+#include "SettingsManager.h"
+#include "VideoBackend.h"
+#include "VideoSettings.h"
 #include "gstqgc/gstqgcvideosinkbin.h"
-
-#include <gst/gst.h>
 
 QGC_LOGGING_CATEGORY(GStreamerLog, "Video.GStreamer.GStreamer")
 
@@ -335,9 +336,8 @@ bool initialize(const QStringList& arguments, const Environment::ValidationResul
 }
 
 // Video sink refcount protocol: createVideoSink returns one owned, non-floating ref, which the caller
-// drops with releaseVideoSink. While decoding, the receiver holds its own ref and the pipeline bin
-// takes another on gst_bin_add (dropped by gst_bin_remove). Keep the ref/unref sites balanced.
-void* createVideoSink(const VideoSinkConfig& config)
+// adopts. While decoding, the pipeline bin takes another on gst_bin_add (dropped by gst_bin_remove).
+GstElement* createVideoSink(const VideoSinkConfig& config)
 {
     const gboolean disablePar = config.disablePixelAspectRatio ? TRUE : FALSE;
     const char* const conversion = config.conversionElement.isEmpty() ? nullptr : config.conversionElement.constData();
@@ -362,15 +362,19 @@ void* createVideoSink(const VideoSinkConfig& config)
         return nullptr;
     }
     // Sink the floating ref so adding the sink to a bin never consumes the caller's reference.
-    return gst_object_ref_sink(videoSinkBin);
+    return GST_ELEMENT(gst_object_ref_sink(videoSinkBin));
 }
 
-void releaseVideoSink(void* sink)
+VideoSinkConfig videoSinkConfigFromSettings()
 {
-    if (!sink)
-        return;
-    GstElement* videoSink = GST_ELEMENT(sink);
-    gst_clear_object(&videoSink);
+    VideoSettings* const settings = SettingsManager::instance()->videoSettings();
+    const bool forceCpu = settings->forceCpuVideoPath()->rawValue().toBool();
+    const bool softwareDecoder = settings->forceVideoDecoder()->rawValue().toInt() == ForceVideoDecoderSoftware;
+    VideoSinkConfig config;
+    config.conversionElement = settings->videoConversionElement()->rawValue().toString().toUtf8();
+    config.disablePixelAspectRatio = settings->disablePixelAspectRatio()->rawValue().toBool();
+    config.gpuZeroCopy = VideoBackend::gpuZeroCopyAllowedForCurrentGraphicsApi(forceCpu, softwareDecoder);
+    return config;
 }
 
 VideoReceiver* createVideoReceiver(QObject* parent)
@@ -378,20 +382,18 @@ VideoReceiver* createVideoReceiver(QObject* parent)
     return new GstVideoReceiver(parent);
 }
 
-bool setupQVideoSinkElement(void* sinkBin, QVideoSink* videoSink, QObject* controllerParent)
+QGCQVideoSinkController* setupQVideoSinkElement(GstElement* sinkBin, QVideoSink* videoSink, QObject* controllerParent)
 {
     if (!sinkBin || !videoSink || !controllerParent) {
         // controllerParent owns the controller's QObject lifetime — else it leaks (caller has no handle).
         qCWarning(GStreamerLog) << "setupQVideoSinkElement: null sinkBin, videoSink, or controllerParent";
-        return false;
+        return nullptr;
     }
 
-    // Idempotent re-setup: tear down prior controllers so repeated startDecoding cycles
-    // don't accumulate dangling ones.
+    // Idempotent re-setup: tear down prior controllers so repeated setups don't accumulate dangling ones.
     for (auto* c : QGCQVideoSinkController::controllersOf(controllerParent)) {
         c->setActive(false);
-        // Stop the poll timer synchronously: deleteLater is deferred and the timer would otherwise
-        // keep binding the same element while the new controller is being installed.
+        // Released now: deleteLater is deferred, and the old binding must not outlive the new one's installation.
         c->prepareForRelease();
         c->deleteLater();
     }
@@ -405,7 +407,7 @@ bool setupQVideoSinkElement(void* sinkBin, QVideoSink* videoSink, QObject* contr
     const GstObjectPtr element(GST_OBJECT(gst_qgc_video_sink_bin_get_qvideosink(GST_QGC_VIDEO_SINK_BIN(sinkBin))));
     if (!element) {
         qCCritical(GStreamerLog) << "setupQVideoSinkElement: bin has no qgcqvideosink child";
-        return false;
+        return nullptr;
     }
     GstElement* const elementRaw = GST_ELEMENT(element.get());
 
@@ -416,27 +418,7 @@ bool setupQVideoSinkElement(void* sinkBin, QVideoSink* videoSink, QObject* contr
     controller->setVideoSink(QPointer<QVideoSink>(videoSink));
     controller->setActive(true);
 
-    return true;
-}
-
-void attachAppSink(QObject* receiver, void* sink, QQuickItem* widget)
-{
-    if (!sink || !widget || !receiver) {
-        return;
-    }
-
-    auto* videoOutput = qobject_cast<QQuickVideoOutput*>(widget);
-    if (!videoOutput) {
-        qCWarning(GStreamerLog) << "Widget is not a VideoOutput, cannot connect qgcqvideosink";
-        return;
-    }
-
-    QVideoSink* videoSink = videoOutput->videoSink();
-    if (!setupQVideoSinkElement(sink, videoSink, receiver)) {
-        qCWarning(GStreamerLog) << "setupQVideoSinkElement failed";
-    }
-
-    QGCQVideoSinkController::syncActiveToWindowVisibility(receiver, videoOutput);
+    return controller;
 }
 
 void bindDebugLevelFact(Fact* fact, QObject* context)

@@ -7,9 +7,11 @@
 
 #include "GStreamerEnvironment.h"
 
+typedef struct _GstElement GstElement;
+
 class Fact;
+class QGCQVideoSinkController;
 class QObject;
-class QQuickItem;
 class QQuickWindow;
 class QVideoSink;
 class VideoReceiver;
@@ -29,8 +31,7 @@ enum VideoDecoderOptions : int
     ForceVideoDecoderHardware
 };
 
-/// Construct-only tunables for the qgcvideosinkbin, resolved from VideoSettings by the
-/// VideoBackend layer so this facade stays decoupled from the settings singleton.
+/// Construct-only tunables for the qgcvideosinkbin; videoSinkConfigFromSettings() resolves them from VideoSettings.
 struct VideoSinkConfig
 {
     QByteArray conversionElement;
@@ -52,14 +53,16 @@ QList<MissingPluginFeature> missingPluginFeatures(const std::function<bool(const
 
 bool completeInit();
 void setDebugLevel(int level);
-void* createVideoSink(const VideoSinkConfig& config);
-void releaseVideoSink(void* sink);
+/// The sink configuration VideoSettings asks for, with GPU zero-copy only where the graphics API allows it. GUI thread.
+VideoSinkConfig videoSinkConfigFromSettings();
+/// A new qgcvideosinkbin, returned as an owned, non-floating reference (adopt it), or nullptr.
+GstElement* createVideoSink(const VideoSinkConfig& config);
 VideoReceiver* createVideoReceiver(QObject* parent = nullptr);
 
 /// Wire @p videoSink into the qgcqvideosink element inside @p sinkBin and create a
 /// QGCQVideoSinkController child of @p controllerParent. Idempotent: prior controllers
-/// under the same parent are torn down first. Returns true on success.
-bool setupQVideoSinkElement(void* sinkBin, QVideoSink* videoSink, QObject* controllerParent);
+/// under the same parent are torn down first. Returns the new controller, or nullptr on failure.
+QGCQVideoSinkController* setupQVideoSinkElement(GstElement* sinkBin, QVideoSink* videoSink, QObject* controllerParent);
 
 /// Hardware decoder families currently present in the GStreamer registry, as VideoDecoderOptions
 /// values (always omits ForceVideoDecoderDefault/Software). Lets the settings layer validate a
@@ -67,10 +70,9 @@ bool setupQVideoSinkElement(void* sinkBin, QVideoSink* videoSink, QObject* contr
 QList<VideoDecoderOptions> availableDecoderFamilies();
 
 // Process/runtime lifecycle. Reached only through VideoBackend, which is the layer that
-// no-ops these for the QtMultimedia build; this header is included solely under QGC_GST_STREAMING.
+// no-ops these for builds without GStreamer; this header is included solely under QGC_GST_STREAMING.
 Environment::ValidationResult prepareEnvironment();
 bool initialize(const QStringList& arguments, const Environment::ValidationResult& envResult);
-void attachAppSink(QObject* receiver, void* sink, QQuickItem* widget);
 void bindDebugLevelFact(Fact* fact, QObject* context);
 void onMainWindowReady(QQuickWindow* window);
 

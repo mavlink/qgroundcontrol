@@ -7,64 +7,14 @@
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QPermissions>
-#include <QtMultimedia/QCamera>
 #include <QtMultimedia/QCameraDevice>
-#include <QtMultimedia/QImageCapture>
-#include <QtMultimedia/QMediaCaptureSession>
 #include <QtMultimedia/QMediaDevices>
-#include <QtMultimediaQuick/private/qquickvideooutput_p.h>
-#include <QtQuick/QQuickItem>
 
 QGC_LOGGING_CATEGORY(UVCReceiverLog, "Video.UVCReceiver")
-
-UVCReceiver::UVCReceiver(QObject *parent)
-    : QtMultimediaReceiver(parent)
-    , _camera(new QCamera(this))
-    , _imageCapture(new QImageCapture(this))
-    , _mediaDevices(new QMediaDevices(this))
-{
-    // qCDebug(UVCReceiverLog) << this;
-
-    _captureSession->setCamera(_camera);
-    _captureSession->setImageCapture(_imageCapture);
-    _captureSession->setVideoSink(_videoSink);
-
-    (void) connect(_captureSession, &QMediaCaptureSession::cameraChanged, this, [this] {
-        adjustAspectRatio();
-    });
-
-    checkPermission();
-}
-
-UVCReceiver::~UVCReceiver()
-{
-    // qCDebug(UVCReceiverLog) << this;
-}
 
 bool UVCReceiver::enabled()
 {
     return !QMediaDevices::videoInputs().isEmpty();
-}
-
-void UVCReceiver::adjustAspectRatio()
-{
-    if (!_videoOutput) {
-        return;
-    }
-
-    const QCameraFormat cameraFormat = _camera->cameraFormat();
-    if (cameraFormat.isNull()) {
-        return;
-    }
-
-    const QSize resolution = cameraFormat.resolution();
-    if (resolution.isValid()) {
-        const qreal aspectRatio = static_cast<qreal>(resolution.width()) / resolution.height();
-        const qreal width = _videoOutput->width();
-        if (width > 0.0) {
-            _videoOutput->setHeight(width / aspectRatio);
-        }
-    }
 }
 
 QCameraDevice UVCReceiver::findCameraDevice(const QString &cameraId)

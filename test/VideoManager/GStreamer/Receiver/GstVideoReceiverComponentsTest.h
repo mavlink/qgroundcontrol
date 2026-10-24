@@ -13,6 +13,8 @@ private slots:
     void _testReconnectBackoffRestartsAfterRecovery();
     void _testStallDetection_data();
     void _testStallDetection();
+    void _testFirstFrameGrace();
+    void _testDecoderSilenceCountsFromInsertion();
     void _testSourceTimeoutStartsAtFirstCheck();
     void _testFinalizerSettlesOnlyFromArmedRecording_data();
     void _testFinalizerSettlesOnlyFromArmedRecording();

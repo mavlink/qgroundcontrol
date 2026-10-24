@@ -1,7 +1,6 @@
 #include "VideoManagerTest.h"
 
-#include <memory>
-
+#include <QtCore/QFile>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QTemporaryDir>
@@ -15,33 +14,43 @@
 #include <QtTest/QSignalSpy>
 
 #include "Fixtures/RAIIFixtures.h"
-#include "QtMultimediaReceiver.h"
 #include "VideoManager.h"
 #include "VideoReceiver.h"
 
 namespace {
 
-/// Records the screenshot paths VideoManager asks it to save.
-class ScreenshotRecordingReceiver : public VideoReceiver
+/// A receiver whose output shows whatever frame the test puts into it.
+class FrameReceiver : public VideoReceiver
 {
 public:
-    explicit ScreenshotRecordingReceiver(const QString& name) { setName(name); }
+    explicit FrameReceiver(const QString& name)
+    {
+        setName(name);
+        setVideoOutput(&output);
+    }
 
-    void start(uint32_t /*timeout*/) override {}
+    /// Shows a @p size frame, as a decoder would deliver it.
+    void showFrame(QSize size)
+    {
+        QImage displayed(size, QImage::Format_RGBA8888);
+        displayed.fill(Qt::red);
+        output.videoSink()->setVideoFrame(QVideoFrame(displayed));
+    }
 
-    void stop() override {}
+    QQuickVideoOutput output;
 
-    void startDecoding(VideoSinkHandle /*sink*/) override {}
+protected:
+    void onConfigChanged(const Config& /*previous*/) override {}
 
-    void stopDecoding() override {}
+    void onActiveChanged() override {}
 
-    void startRecording(const QString& /*videoFile*/, FILE_FORMAT /*format*/) override {}
+    void onRestartRequested() override {}
 
-    void stopRecording() override {}
+    void onVideoOutputChanged() override {}
 
-    void takeScreenshot(const QString& imageFile) override { requested.append(imageFile); }
+    void onStartRecording(const QString& /*file*/, FileFormat /*format*/) override {}
 
-    QStringList requested;
+    void onStopRecording() override {}
 };
 
 }  // namespace
@@ -74,49 +83,46 @@ VideoOutput {
     delete item;
 }
 
-void VideoManagerTest::_qtMultimediaScreenshotSavesDisplayedFrame_test()
+void VideoManagerTest::_screenshotSavesDisplayedFrame_test()
 {
     QTemporaryDir tempDir;
     QVERIFY(tempDir.isValid());
     const QString path = tempDir.filePath(QStringLiteral("screenshot.png"));
 
-    QQuickVideoOutput videoOutput;
-    const std::unique_ptr<VideoReceiver> receiver(QtMultimediaReceiver::createVideoReceiver(nullptr));
-    receiver->setWidget(&videoOutput);
-    receiver->startDecoding(videoOutput.videoSink());
+    FrameReceiver receiver(QStringLiteral("videoContent"));
+    receiver.showFrame(QSize(64, 48));
 
-    // An unmapped CPU frame, as a decoder delivers it.
-    QImage displayed(QSize(64, 48), QImage::Format_RGBA8888);
-    displayed.fill(Qt::red);
-    videoOutput.videoSink()->setVideoFrame(QVideoFrame(displayed));
-
-    QSignalSpy screenshotSpy(receiver.get(), &VideoReceiver::onTakeScreenshotComplete);
     // Qt Multimedia converts on the CPU when the platform (offscreen here) has no RHI, and says so.
     ignoreLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("No RHI backend")));
-    receiver->takeScreenshot(path);
-    QCOMPARE(screenshotSpy.count(), 1);
-    QCOMPARE(screenshotSpy.constFirst().constFirst().value<VideoReceiver::STATUS>(), VideoReceiver::STATUS_OK);
-    QCOMPARE(QImage(path).size(), displayed.size());
+    QVERIFY(receiver.takeScreenshot(path));
+    QCOMPARE(QImage(path).size(), QSize(64, 48));
 }
 
 void VideoManagerTest::_screenshotsNameEachStartedStream_test()
 {
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+
     VideoManager videoManager;
-    ScreenshotRecordingReceiver visible(QStringLiteral("videoContent"));
-    ScreenshotRecordingReceiver thermal(QStringLiteral("thermalVideo"));
+    FrameReceiver visible(QStringLiteral("videoContent"));
+    FrameReceiver thermal(QStringLiteral("thermalVideo"));
+    visible.showFrame(QSize(64, 48));
+    thermal.showFrame(QSize(32, 24));
     videoManager._videoReceivers = {&visible, &thermal};
     const auto detach = qScopeGuard([&videoManager] { videoManager._videoReceivers.clear(); });
 
-    visible.setStarted(true);
-    thermal.setStarted(true);
-    videoManager.grabImage(QStringLiteral("/photos/2026-10-16_01.02.03.004.jpg"));
-    QCOMPARE(visible.requested, QStringList{QStringLiteral("/photos/2026-10-16_01.02.03.004.jpg")});
-    QCOMPARE(thermal.requested, QStringList{QStringLiteral("/photos/2026-10-16_01.02.03.004.thermalVideo.jpg")});
+    ignoreLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("No RHI backend")));
+    visible.setActive(true);
+    thermal.setActive(true);
+    videoManager.grabImage(tempDir.filePath(QStringLiteral("2026-10-16_01.02.03.004.jpg")));
+    QCOMPARE(QImage(tempDir.filePath(QStringLiteral("2026-10-16_01.02.03.004.jpg"))).size(), QSize(64, 48));
+    QCOMPARE(QImage(tempDir.filePath(QStringLiteral("2026-10-16_01.02.03.004.thermalVideo.jpg"))).size(),
+             QSize(32, 24));
 
-    thermal.setStarted(false);
-    videoManager.grabImage(QStringLiteral("/photos/no-extension"));
-    QCOMPARE(visible.requested.last(), QStringLiteral("/photos/no-extension"));
-    QCOMPARE(thermal.requested.size(), 1);
+    thermal.setActive(false);
+    videoManager.grabImage(tempDir.filePath(QStringLiteral("second.png")));
+    QVERIFY(QFile::exists(tempDir.filePath(QStringLiteral("second.png"))));
+    QVERIFY(!QFile::exists(tempDir.filePath(QStringLiteral("second.thermalVideo.png"))));
 }
 
 UT_REGISTER_TEST(VideoManagerTest, TestLabel::Unit)

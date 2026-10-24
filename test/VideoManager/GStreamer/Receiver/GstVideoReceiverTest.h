@@ -5,53 +5,53 @@
 #include "UnitTest.h"
 
 typedef struct _GstElement GstElement;
-class VideoReceiver;
+class GstVideoReceiver;
 
-/// Drives GstVideoReceiver end to end against an in-process H.264 RTP/UDP stream on loopback.
+/// Drives GstVideoReceiver end to end against in-process H.264 streams on loopback.
 class GstVideoReceiverTest : public UnitTest
 {
     Q_OBJECT
+
+public:
+#ifdef QGC_GST_STREAMING
+    /// Runs @p task with @p receiver's pipeline (null when none runs) on the worker thread that owns it, and waits.
+    static bool runOnPipeline(GstVideoReceiver* receiver, const std::function<void(GstElement* pipeline)>& task);
+    static GstElement* displaySink(const GstVideoReceiver* receiver);
+#endif
 
 private slots:
 #ifdef QGC_GST_STREAMING
     void initTestCase() override;
     void init() override;
 
-    void _testStopAfterUriClearedTearsDown();
+    void _testStreamingStatesAndDisplay();
+    void _testStaticSourcePadWaitsForData();
     void _testUdpSourceStopsRightAfterPlaying();
-    void _testFailedStartLeavesCleanState();
-    void _testVideoSinkRefcountStableAcrossRestarts();
     void _testDecodesMockLinkStreams_data();
     void _testDecodesMockLinkStreams();
-    void _testRecordingPlayableWhileInProgress_data();
-    void _testRecordingPlayableWhileInProgress();
-    void _testDestroyWhileRecordingFinalizesFile();
-    void _testDestroyBeforeFirstFrameDropsRecording();
-    void _testSecondRecordingIsNotTruncated();
+    void _testConfigChangeRestarts();
+    void _testOutputDetachKeepsPipeline();
+    void _testRestartRebuildsVideoSink();
+    void _testDecoderFailureKeepsRecording();
+    void _testReconnectResumesRecordingInNextPart();
+    void _testSlowRecordingDoesNotStallDisplay();
+    void _testPermanentFailureStops();
     void _testReconnectBacksOffAfterFailedStart();
     void _testStreamLossRestartPolicy_data();
     void _testStreamLossRestartPolicy();
-    void _testDecodingRequestedBeforeStreamStarts();
-    void _testStopDecodingBeforeFirstFrame();
-    void _testStopWhileStoppingRecordingFinalizesFile();
+    void _testDeactivateFinishesRecording();
+    void _testRecordingPlayableWhileInProgress_data();
+    void _testRecordingPlayableWhileInProgress();
+    void _testSecondRecordingIsNotTruncated();
     void _testRecordingErrorKeepsStreaming();
     void _testFailedRecordingStartLeavesBranchUsable();
     void _testRecordingStartKeepsPipelinePlaying();
     void _testDecoderQosDisabled();
-    void _testDecoderNameReported();
     void _testScreenshotSavesDisplayedFrame();
-    void _testStopReleasesDisplayedFrame();
-    void _testBusDoesNotQueueMessages();
+    void _testDeactivateReleasesDisplayedFrame();
+    void _testDestroyWhileRecordingFinalizesFile();
+    void _testDestroyWithHungRecorderIsBounded();
 #else
     void _testGStreamerDisabled();
-#endif
-
-#ifdef QGC_GST_STREAMING
-private:
-    /// The two warnings of a start that fails on a bound port.
-    void _expectFailedStartWarnings();
-
-    /// Runs @p task with @p receiver's pipeline on the worker thread that owns it, and waits for it.
-    static bool _runOnPipeline(VideoReceiver* receiver, const std::function<void(GstElement* pipeline)>& task);
 #endif
 };

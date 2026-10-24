@@ -6,8 +6,6 @@
 
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
-        QtMultimediaReceiver.cc
-        QtMultimediaReceiver.h
         UVCReceiver.cc
         UVCReceiver.h
 )
