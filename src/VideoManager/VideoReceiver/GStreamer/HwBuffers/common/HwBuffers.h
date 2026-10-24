@@ -81,7 +81,8 @@ void onPipelineRestart() noexcept;
 /// stream, so only for scene-graph teardown, window swaps and device loss.
 void resetCachedGpuResources() noexcept;
 
-/// Wire the main QQuickWindow into the RHI-capture path so snapshots follow its QRhi; no-op without GPU.
+/// Wire the main QQuickWindow into the RHI-capture path so snapshots follow its QRhi, and resolve the EGLDisplay Qt
+/// renders with for the DMABuf path. GUI thread; no-op without GPU.
 void connectMainWindow(QQuickWindow* window) noexcept;
 
 /// Populate the per-pipeline HwVideoBufferContext (EGL displays, gpu-enabled flag) the factory needs. GPU stays

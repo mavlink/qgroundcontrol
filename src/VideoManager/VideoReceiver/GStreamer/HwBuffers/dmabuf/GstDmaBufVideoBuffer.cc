@@ -28,7 +28,6 @@
 #include <QtGui/QOpenGLContext>
 #include <QtGui/QOpenGLFunctions>
 #include <QtGui/qopenglcontext_platform.h>
-#include <qpa/qplatformnativeinterface.h>
 
 #include "QGCLoggingCategory.h"
 #if GST_CHECK_VERSION(1, 24, 0)
@@ -724,28 +723,21 @@ void GstDmaBufVideoBuffer::resetCachedState() noexcept
 
 namespace {
 
-// Construction-time hint only; render-time mapTextures() prefers eglGetCurrentDisplay() to avoid xcb_egl EGLDisplay
-// mismatches.
+// Streaming thread (sink start): only the EGLDisplay Qt itself renders with can import for it, and Qt has none
+// under GLX. Without one the path never matches, so DMABuf frames take the CPU path up front instead of failing
+// every import.
 void prepareDmaBufContext(HwVideoBufferContext& context)
 {
-    EGLDisplay dpy = EGL_NO_DISPLAY;
-    const QString platform = QGuiApplication::platformName();
-    if (platform == QLatin1String("wayland") || platform == QLatin1String("wayland-egl")) {
-        if (auto* ni = QGuiApplication::platformNativeInterface()) {
-            dpy = static_cast<EGLDisplay>(ni->nativeResourceForIntegration("egldisplay"));
+    context.dmaBufEglDisplay = GstEglHelpers::qtPlatformDisplay();
+    static std::atomic<bool> s_logged{false};
+    if (!s_logged.exchange(true, std::memory_order_relaxed)) {
+        if (context.dmaBufEglDisplay == EGL_NO_DISPLAY) {
+            qCDebug(GstDmaBufLog) << "Qt renders without EGL on" << QGuiApplication::platformName()
+                                  << "— DMABuf frames take the CPU path (xcb: QT_XCB_GL_INTEGRATION=xcb_egl)";
+        } else {
+            qCDebug(GstDmaBufLog) << "DMABuf zero-copy available on" << QGuiApplication::platformName();
         }
     }
-    if (dpy == EGL_NO_DISPLAY) {
-        dpy = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-    }
-    if (dpy == EGL_NO_DISPLAY) {
-        qCWarning(GstDmaBufLog) << "GPU zero-copy requested but EGLDisplay unavailable on platform" << platform
-                                << "— DMABuf path disabled";
-    } else {
-        qCInfo(GstDmaBufLog) << "DMABuf zero-copy path available on" << platform
-                             << "— actual path chosen at caps negotiation";
-    }
-    context.dmaBufEglDisplay = dpy;
 }
 
 }  // namespace

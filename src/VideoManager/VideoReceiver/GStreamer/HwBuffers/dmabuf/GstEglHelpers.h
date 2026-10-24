@@ -15,6 +15,11 @@ class QRhi;
 /// Shared EGL helpers for EGL-backed zero-copy paths (DMABuf, AHB): display resolution + extension cache.
 namespace GstEglHelpers {
 
+/// EGLDisplay Qt's platform integration renders with (nativeResourceForIntegration("egldisplay")); EGL_NO_DISPLAY
+/// when Qt doesn't use EGL (xcb_glx, offscreen) or hasn't opened it yet. Queried on the GUI thread only, as Qt's
+/// GStreamer backend does, until it is found; other threads read the display the GUI thread found.
+EGLDisplay qtPlatformDisplay() noexcept;
+
 /// EGLDisplay bound to @p qtCtx (else current-thread display, else EGL_NO_DISPLAY); does NOT initialize it.
 EGLDisplay resolveEglDisplay(QOpenGLContext* qtCtx) noexcept;
 

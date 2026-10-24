@@ -109,6 +109,7 @@ private slots:
     void _testHwPathRegistrySelection();
     void _testHwBufferFactoryCacheRejectsMemoryTypeChange();
     void _testDmaBufSingleFdImportEnvGate();
+    void _testDmaBufPathNeedsQtEglDisplay();
     void _testDmaBufEglBadMatchLatch_data();
     void _testDmaBufEglBadMatchLatch();
     void _testDmaBufVulkanImportRejectsMultiPlanar_data();

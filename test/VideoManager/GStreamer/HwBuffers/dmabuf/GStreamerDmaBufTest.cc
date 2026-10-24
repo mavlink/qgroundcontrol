@@ -31,6 +31,7 @@
 #include "gstqgc/gstqgcqvideosink.h"
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
 #include "GstDmaBufVideoBuffer.h"
+#include "GstEglHelpers.h"
 #endif
 #if defined(QGC_HAS_ANY_GPU_PATH)
 #include "QGCRhiCapture.h"
@@ -40,6 +41,11 @@ void GStreamerTest::_testDmaBufDispatch()
 {
 #if !defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
     QSKIP("Direct-DMABuf bin not compiled in this build");
+#else
+    // The DMABuf path and its DMA_DRM caps both need the EGLDisplay Qt renders with.
+    if (GstEglHelpers::qtPlatformDisplay() == EGL_NO_DISPLAY) {
+        QSKIP("Qt renders without EGL here (offscreen QPA, GLX)");
+    }
 #endif
     const HwBuffers::ScopedGpuBinModeForTest directBin(HwBuffers::GpuBinMode::DirectDmaBuf);
     // The sink offers DMABuf only to Qt's OpenGL over EGL.
@@ -381,6 +387,32 @@ GstSample* makeMemfdDmaBufSample(GstVideoFormat format, GstVideoInfo& info)
 
 }  // namespace
 #endif
+
+void GStreamerTest::_testDmaBufPathNeedsQtEglDisplay()
+{
+#if !defined(QGC_HAS_GST_DMABUF_GPU_PATH)
+    QSKIP("DMABuf GPU path not compiled in this build");
+#else
+    const EGLDisplay qtDisplay = GstEglHelpers::qtPlatformDisplay();
+    const HwVideoBufferContext context = HwBuffers::makeAdapterContext(true);
+    QCOMPARE(context.dmaBufEglDisplay, static_cast<void*>(qtDisplay));
+    if (qtDisplay != EGL_NO_DISPLAY) {
+        QSKIP("Qt renders with EGL on this platform");
+    }
+
+    // Without Qt's EGLDisplay no import can succeed: DMABuf memory must take the CPU path before any import attempt.
+    GstVideoInfo info;
+    GstSample* sample = makeMemfdDmaBufSample(GST_VIDEO_FORMAT_NV12, info);
+    QVERIFY(sample);
+    const auto sampleGuard = qScopeGuard([sample] { gst_sample_unref(sample); });
+    HwVideoBufferPath path = HwVideoBufferPath::DmaBuf;
+    const auto hwBuffer =
+        makeHwVideoBuffer(gst_sample_get_buffer(sample), gst_sample_get_caps(sample), info,
+                          QVideoFrameFormat(QSize(64, 64), QVideoFrameFormat::Format_NV12), context, path, nullptr);
+    QVERIFY(!hwBuffer);
+    QCOMPARE(path, HwVideoBufferPath::None);
+#endif
+}
 
 void GStreamerTest::_testDmaBufEglBadMatchLatch_data()
 {

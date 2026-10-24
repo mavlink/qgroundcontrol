@@ -2,6 +2,7 @@
 
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH) || defined(QGC_HAS_GST_AHARDWAREBUFFER_GPU_PATH)
 
+#include <atomic>
 #include <cstring>
 #include <rhi/qrhi.h>
 #include <rhi/qrhi_platform.h>
@@ -11,10 +12,26 @@
 #include <QtCore/QHash>
 #include <QtCore/QMutex>
 #include <QtCore/QMutexLocker>
+#include <QtCore/QThread>
+#include <QtGui/QGuiApplication>
 #include <QtGui/QOpenGLContext>
 #include <QtGui/qopenglcontext_platform.h>
+#include <qpa/qplatformnativeinterface.h>
 
 namespace GstEglHelpers {
+
+EGLDisplay qtPlatformDisplay() noexcept
+{
+    static std::atomic<EGLDisplay> s_display{EGL_NO_DISPLAY};
+    EGLDisplay display = s_display.load(std::memory_order_acquire);
+    if ((display == EGL_NO_DISPLAY) && QThread::isMainThread() && qGuiApp) {
+        if (QPlatformNativeInterface* native = qGuiApp->platformNativeInterface()) {
+            display = static_cast<EGLDisplay>(native->nativeResourceForIntegration(QByteArrayLiteral("egldisplay")));
+            s_display.store(display, std::memory_order_release);
+        }
+    }
+    return display;
+}
 
 EGLDisplay resolveEglDisplay(QOpenGLContext* qtCtx) noexcept
 {

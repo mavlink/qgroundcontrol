@@ -8,8 +8,6 @@
 #include <algorithm>
 #include <vector>
 
-#include <QtGui/QOpenGLContext>
-
 #include "GstEglHelpers.h"
 #include "GstScoped.h"
 #include "QGCLoggingCategory.h"
@@ -68,18 +66,11 @@ std::string buildSupportedDmaDrmCaps(std::span<const GstVideoFormat> formats)
     if (formats.empty())
         return std::string();
 
-    // Prefer the display of Qt's EGL share context: Qt initialized it and owns its lifetime. Without one (GLX, or no
-    // share context yet) this worker thread has no current display either, so initialize the default display
-    // ourselves; modifiers are GPU-global. That one is never eglTerminate'd.
-    EGLDisplay dpy = GstEglHelpers::resolveEglDisplay(QOpenGLContext::globalShareContext());
-    if (dpy == EGL_NO_DISPLAY) {
-        dpy = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-        if (dpy != EGL_NO_DISPLAY && eglInitialize(dpy, nullptr, nullptr) != EGL_TRUE) {
-            dpy = EGL_NO_DISPLAY;
-        }
-    }
-    if (dpy == EGL_NO_DISPLAY || !GstEglHelpers::displaySupportsExtension(dpy, kModifiersExt)) {
-        qCDebug(GstDmaDrmCapsLog) << "DMA_DRM modifier query unavailable (no EGL display or "
+    // Only Qt's own EGLDisplay, resolved on the GUI thread: this runs on a streaming or worker thread, where
+    // initializing the default display would create a second EGL connection Qt never renders with.
+    const EGLDisplay dpy = GstEglHelpers::qtPlatformDisplay();
+    if ((dpy == EGL_NO_DISPLAY) || !GstEglHelpers::displaySupportsExtension(dpy, kModifiersExt)) {
+        qCDebug(GstDmaDrmCapsLog) << "DMA_DRM modifier query unavailable (Qt renders without EGL, or no "
                                      "EGL_EXT_image_dma_buf_import_modifiers); offering no DMA_DRM caps";
         return std::string();
     }
