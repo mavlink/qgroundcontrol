@@ -75,6 +75,8 @@ set(_qgc_gst_failure_cases
     "test_components|UnknownComponent|unknown|unknown components Bogus"
     "test_plugin_policy_errors|||qgc_config_read: build-config.json is not loaded"
     "test_platform|Spaces|spaces|'C:/Program Files/gstreamer' contains a space"
+    "test_platform|DownloadSpaces|download-spaces-unix|where the GStreamer SDK is downloaded, contains a space,"
+    "test_platform|DownloadNoShortName|download-spaces-no-short-name|contains a space and no 8.3 short path without one"
     "test_ios_xcframework_slice|NoMatchingArch|no-matching-arch|no iphoneos slice for architectures 'x86_64'"
     "test_download_win_version_guard|||Windows GStreamer SDK requires version 1.28 or later"
     "test_windows_installer_guard|Unpinned|unpinned|refusing to silently run the downloaded Windows installer"

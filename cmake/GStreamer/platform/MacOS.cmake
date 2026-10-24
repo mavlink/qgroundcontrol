@@ -93,6 +93,7 @@ function(_qgc_gst_discover_macos_sdk)
     endif()
 
     if(NOT GStreamer_ROOT_DIR OR NOT EXISTS "${GStreamer_ROOT_DIR}")
+        _qgc_gst_space_free_download_cache()
         _qgc_gst_acquire_macos_sdk(GStreamer_ROOT_DIR)
         set(GStreamer_AUTO_DOWNLOADED TRUE)
     endif()

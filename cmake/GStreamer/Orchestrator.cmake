@@ -88,7 +88,8 @@ _qgc_gst_select_sdk_root(
 )
 
 cmake_language(CALL _qgc_gst_discover_${_qgc_gst_platform}_sdk)
-# An auto-downloaded SDK lives in CPM_SOURCE_CACHE.
+# Discovery downloads only to a CPM_SOURCE_CACHE without spaces (_qgc_gst_space_free_download_cache); check the SDK it
+# settled on.
 _qgc_gst_require_no_spaces("The GStreamer SDK" "${GStreamer_ROOT_DIR}")
 
 gstreamer_select_components(GSTREAMER_SELECTED_COMPONENTS ${QGC_GST_COMPONENTS})

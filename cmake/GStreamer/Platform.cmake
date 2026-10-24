@@ -88,15 +88,78 @@ macro(_qgc_gst_return_discovery)
 endmacro()
 
 # _qgc_gst_require_no_spaces(<what> <path>)
-# Fails configure when <path> contains a space: pkg-config prints paths unquoted, so FindPkgConfig would split them.
+# Fails configure when <path> contains a space: pkg-config prints paths unquoted, so FindPkgConfig would split them. iOS
+# reads its SDK without pkg-config, so any path does there.
 function(_qgc_gst_require_no_spaces what path)
-    if(path MATCHES " ")
-        message(
-            FATAL_ERROR
-                "GStreamer: ${what} '${path}' contains a space, which pkg-config cannot pass on: it prints paths "
-                "unquoted. Use an SDK in a path without spaces (e.g. C:/gstreamer/1.0/msvc_x86_64, where "
-                "tools/setup/install_dependencies installs it), point GStreamer_ROOT_DIR at it, or move "
-                "CPM_SOURCE_CACHE, where SDKs are downloaded, to such a path."
-        )
+    if(IOS OR NOT path MATCHES " ")
+        return()
     endif()
+    message(
+        FATAL_ERROR
+            "GStreamer: ${what} '${path}' contains a space, which pkg-config cannot pass on: it prints paths "
+            "unquoted. Use an SDK in a path without spaces (e.g. C:/gstreamer/1.0/msvc_x86_64, where "
+            "tools/setup/install_dependencies installs it) and point GStreamer_ROOT_DIR at it, or unset "
+            "GStreamer_ROOT_DIR to download one."
+    )
+endfunction()
+
+# _qgc_gst_space_free_download_cache()
+# Discovery calls this just before it downloads an SDK to CPM_SOURCE_CACHE, which defaults to the source tree.
+# pkg-config needs the SDK's path without spaces (_qgc_gst_require_no_spaces), so when CPM_SOURCE_CACHE has one, a
+# Windows host sets CPM_SOURCE_CACHE in the caller's scope to its 8.3 short path. Configure fails on other hosts, or
+# when that short path still has a space.
+function(_qgc_gst_space_free_download_cache)
+    if(NOT CPM_SOURCE_CACHE MATCHES " ")
+        return()
+    endif()
+    set(_reason "")
+    if(CMAKE_HOST_WIN32)
+        file(MAKE_DIRECTORY "${CPM_SOURCE_CACHE}")
+        _qgc_gst_windows_short_path("${CPM_SOURCE_CACHE}" _short)
+        if(_short
+           AND NOT _short MATCHES " "
+           AND IS_DIRECTORY "${_short}"
+        )
+            message(STATUS "GStreamer: downloading the SDK to ${_short}, the short path of ${CPM_SOURCE_CACHE}")
+            set(CPM_SOURCE_CACHE
+                "${_short}"
+                PARENT_SCOPE
+            )
+            return()
+        endif()
+        set(_reason " and no 8.3 short path without one (its volume may not create short names)")
+    endif()
+    message(
+        FATAL_ERROR
+            "GStreamer: CPM_SOURCE_CACHE '${CPM_SOURCE_CACHE}', where the GStreamer SDK is downloaded, contains a "
+            "space${_reason}, which pkg-config cannot pass on: it prints paths unquoted. Set CPM_SOURCE_CACHE (as a "
+            "CMake or environment variable) to a directory without spaces, e.g. C:/cpm-cache or ~/.cache/CPM, or "
+            "point GStreamer_ROOT_DIR at an SDK in such a path."
+    )
+endfunction()
+
+# _qgc_gst_windows_short_path(<path> <out_var>)
+# Sets <out_var> to the 8.3 short form of the existing <path>, with forward slashes, as cmd's %~s modifier prints it: a
+# component without a short name keeps its long one. Sets "" when cmd fails.
+function(_qgc_gst_windows_short_path path out_var)
+    cmake_path(NATIVE_PATH path _native)
+    # execute_process quotes arguments for the C runtime, whose escaped quotes cmd does not understand. cmd expands the
+    # command from the environment instead, so the path keeps its plain quotes.
+    set(ENV{QGC_GST_SHORT_PATH_COMMAND} "for %I in (\"${_native}\") do @echo %~sI")
+    execute_process(
+        COMMAND cmd /d /v:off /c %QGC_GST_SHORT_PATH_COMMAND%
+        RESULT_VARIABLE _result
+        OUTPUT_VARIABLE _short
+        ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    unset(ENV{QGC_GST_SHORT_PATH_COMMAND})
+    if(_result EQUAL 0 AND NOT _short STREQUAL "")
+        cmake_path(SET _short "${_short}")
+    else()
+        set(_short "")
+    endif()
+    set(${out_var}
+        "${_short}"
+        PARENT_SCOPE
+    )
 endfunction()

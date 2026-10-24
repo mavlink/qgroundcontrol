@@ -104,6 +104,7 @@ function(_qgc_gst_discover_windows_sdk)
             )
         endif()
 
+        _qgc_gst_space_free_download_cache()
         _qgc_gst_acquire_windows_sdk(${_gst_win_arch} GStreamer_ROOT_DIR)
         set(GStreamer_AUTO_DOWNLOADED TRUE)
     endif()
