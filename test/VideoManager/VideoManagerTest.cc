@@ -323,8 +323,12 @@ void VideoManagerTest::_testDisableWhenDisarmed()
 
     _facts->set(_videoSettings->disableWhenDisarmed(), true);
     _videoManager->_onArmedChanged(true);
+    // Full screen needs a connected vehicle, which this test has none of.
+    _videoManager->_fullScreen = true;
     _videoManager->_onArmedChanged(false);
     QVERIFY(!_videoManager->hasVideo());
+    // The Fly View can't leave full screen once the video is gone.
+    QVERIFY(!_videoManager->fullScreen());
     _settle();
     QVERIFY(!_primary->active());
     QVERIFY(_videoSettings->streamEnabled()->rawValue().toBool());

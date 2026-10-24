@@ -359,7 +359,7 @@ double VideoManager::thermalHfov() const
 
 void VideoManager::setfullScreen(bool on)
 {
-    if (on && (!_activeVehicle || _activeVehicle->vehicleLinkManager()->communicationLost())) {
+    if (on && (!_hasVideo || !_activeVehicle || _activeVehicle->vehicleLinkManager()->communicationLost())) {
         on = false;
     }
 
@@ -408,6 +408,10 @@ void VideoManager::_updateState()
     if (hasVideo != _hasVideo) {
         _hasVideo = hasVideo;
         emit hasVideoChanged();
+        if (!_hasVideo) {
+            // The Fly View swaps the video out of its PiP when hasVideo drops; nothing in QML could leave full screen.
+            setfullScreen(false);
+        }
     }
     if (hasThermal != _hasThermal) {
         _hasThermal = hasThermal;
