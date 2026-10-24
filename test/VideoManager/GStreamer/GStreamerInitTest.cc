@@ -10,6 +10,7 @@
 
 #include "Fixtures/RAIIFixtures.h"
 #include "GStreamer.h"
+#include "GStreamerHelpers.h"
 #include "GStreamerLogging.h"
 #include "GStreamerTestHelpers.h"
 
@@ -132,6 +133,47 @@ void GStreamerInitTest::_testMissingPluginFeatures()
     QCOMPARE(missing.size(), missingFeatures);
     QCOMPARE(factories, missingFactories);
     QCOMPARE(required, videoUnavailable);
+}
+
+void GStreamerInitTest::_testUserFeatureRankKept_data()
+{
+    QTest::addColumn<QByteArray>("userRanks");
+    QTest::addColumn<bool>("kept");
+
+    QTest::newRow("unset") << QByteArray() << false;
+    QTest::newRow("named") << QByteArrayLiteral("fakesink:NONE, identity:MAX") << true;
+    QTest::newRow("other feature") << QByteArrayLiteral("identityx:MAX") << false;
+}
+
+void GStreamerInitTest::_testUserFeatureRankKept()
+{
+    QFETCH(QByteArray, userRanks);
+    QFETCH(bool, kept);
+
+    const QString unavailable = GstTest::initGStreamer();
+    if (!unavailable.isEmpty()) {
+        QSKIP(qPrintable(unavailable));
+    }
+
+    GstRegistry* const registry = gst_registry_get();
+    const GStreamer::GstFeaturePtr identity =
+        GStreamer::adoptFeature(gst_registry_lookup_feature(registry, "identity"));
+    if (!identity) {
+        QSKIP("identity element unavailable");
+    }
+    const guint originalRank = gst_plugin_feature_get_rank(identity.get());
+    const auto restoreRank = qScopeGuard([&] { gst_plugin_feature_set_rank(identity.get(), originalRank); });
+
+    const TestFixtures::EnvVarFixture userRankEnv("GST_PLUGIN_FEATURE_RANK");
+    if (userRanks.isNull()) {
+        qunsetenv("GST_PLUGIN_FEATURE_RANK");
+    } else {
+        qputenv("GST_PLUGIN_FEATURE_RANK", userRanks);
+    }
+
+    const guint requestedRank = originalRank + 1;
+    QVERIFY(GStreamer::changeFeatureRank(registry, "identity", static_cast<uint16_t>(requestedRank)));
+    QCOMPARE(gst_plugin_feature_get_rank(identity.get()), kept ? originalRank : requestedRank);
 }
 
 #else

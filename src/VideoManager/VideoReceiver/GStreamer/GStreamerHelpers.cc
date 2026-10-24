@@ -1,10 +1,14 @@
 #include "GStreamerHelpers.h"
 
+#include <algorithm>
+#include <gst/rtsp/gstrtspurl.h>
+
+#include <QtCore/QByteArray>
 #include <QtCore/QLatin1String>
+#include <QtCore/QList>
 #include <QtCore/QString>
 #include <QtQuick/QQuickWindow>
 #include <QtQuick/QSGRendererInterface>
-#include <gst/rtsp/gstrtspurl.h>
 
 #if defined(Q_OS_WIN) && defined(QGC_HAS_ANY_GPU_PATH)
 #include <rhi/qrhi.h>
@@ -243,10 +247,24 @@ QString describeDecoderFactory(GstElementFactory* factory)
 
 namespace {
 
+// gst_init() applies GST_PLUGIN_FEATURE_RANK ("name:rank,..."), and nothing re-applies it after QGC's overrides.
+bool rankedByUser(const gchar* featureName)
+{
+    const QList<QByteArray> userRanks = qgetenv("GST_PLUGIN_FEATURE_RANK").split(',');
+    return std::ranges::any_of(userRanks, [featureName](const QByteArray& entry) {
+        return entry.left(entry.indexOf(':')).trimmed() == featureName;
+    });
+}
+
+// Every QGC rank change goes through here, so a feature the user ranked keeps its rank.
 void setFeatureRank(GstPluginFeature* feature, uint16_t rank)
 {
-    qCDebug(GStreamerHelpersLog) << "  Changing feature (" << gst_plugin_feature_get_name(feature)
-                                 << ") to use rank:" << rank;
+    const gchar* const name = gst_plugin_feature_get_name(feature);
+    if (rankedByUser(name)) {
+        qCDebug(GStreamerHelpersLog) << "  Keeping the GST_PLUGIN_FEATURE_RANK rank of" << name;
+        return;
+    }
+    qCDebug(GStreamerHelpersLog) << "  Changing feature (" << name << ") to use rank:" << rank;
     gst_plugin_feature_set_rank(feature, rank);
 }
 
@@ -286,10 +304,7 @@ void lowerDecoderRanksByClass(bool lowerHardware)
         if (isHardwareDecoderFactory(factory) != lowerHardware) {
             return;
         }
-        GstPluginFeature* const feature = GST_PLUGIN_FEATURE(factory);
-        qCDebug(GStreamerHelpersLog) << "Lowering" << (lowerHardware ? "hardware" : "software")
-                                     << "decoder rank:" << gst_plugin_feature_get_name(feature);
-        gst_plugin_feature_set_rank(feature, GST_RANK_NONE);
+        setFeatureRank(GST_PLUGIN_FEATURE(factory), GST_RANK_NONE);
     });
 }
 

@@ -50,6 +50,7 @@ VideoDecoderOptions decoderFamilyForFactory(const char* factoryName);
 
 /// Look up @p featureName in @p registry and set its autoplug rank to @p rank, releasing the
 /// transfer-full feature ref. Returns false when the registry/name is null or the feature is absent.
+/// A feature named in GST_PLUGIN_FEATURE_RANK keeps the user's rank, here and in setCodecPriorities().
 bool changeFeatureRank(GstRegistry* registry, const char* featureName, uint16_t rank);
 
 /// Apply decoder rank overrides for @p option to the global GStreamer registry. Defined here
