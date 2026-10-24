@@ -725,19 +725,19 @@ void GstVideoReceiverTest::_testReconnectBacksOffAfterFailedStart()
                      QRegularExpression(QStringLiteral("^GStreamer error from ")));
     expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
                      QRegularExpression(QStringLiteral("^Failed to start")));
+    // Timed from the start, which fails at once: the retry comes at least the first reconnect delay later however
+    // late this thread sees the state changes.
     QElapsedTimer clock;
     clock.start();
     stream.receiver->setActive(true);
     QVERIFY(stream.waitForState(State::Reconnecting));
-    const qint64 failure = clock.elapsed();
     verifyExpectedLogMessage();
     verifyExpectedLogMessage();
 
     portBlocker.close();
     QVERIFY(stream.waitForState(State::Connecting));
     const qint64 retry = clock.elapsed();
-    QVERIFY2((retry - failure) >= (kFirstReconnectDelayMs - kSignalLatencySlackMs),
-             qPrintable(QStringLiteral("retried after %1 ms").arg(retry - failure)));
+    QVERIFY2(retry >= kFirstReconnectDelayMs, qPrintable(QStringLiteral("retried after %1 ms").arg(retry)));
     QVERIFY(stream.errorSpy.isEmpty());
 }
 
@@ -1035,9 +1035,10 @@ void GstVideoReceiverTest::_testDestroyWhileRecordingFinalizesFile()
 
 void GstVideoReceiverTest::_testDestroyWithHungRecorderIsBounded()
 {
-    // The finalize timeout, then the receiver's margin for the pipeline to stop, then scheduling slack.
-    constexpr qint64 kMaxDestructionMs =
-        std::chrono::milliseconds(RecordingBranch::kFinalizeTimeout + std::chrono::seconds{2}).count() + 2000;
+    // The finalize timeout, then the receiver's margin for the pipeline to stop, then scheduling slack (more on CI).
+    const qint64 kMaxDestructionMs =
+        std::chrono::milliseconds(RecordingBranch::kFinalizeTimeout + std::chrono::seconds{2}).count() +
+        (2 * TestTimeout::shortMs());
 
     QTemporaryDir tempDir;
     QVERIFY(tempDir.isValid());

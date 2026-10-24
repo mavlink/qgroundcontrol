@@ -5,6 +5,7 @@
 #include <gst/gst.h>
 #include <memory>
 
+#include <QtCore/QCoreApplication>
 #include <QtGui/QColor>
 #include <QtGui/QImage>
 #include <QtMultimedia/QVideoFrame>
@@ -402,8 +403,9 @@ void GstQgcSinkPipelineTest::_testInactiveQgcQVideoSinkDropsAndCounts()
     const QString failure = pipeline.runToEos();
     QVERIFY2(failure.isEmpty(), qPrintable(failure));
 
-    // Delivery is queued to this thread, so one pass of its event loop would show a frame; 100 ms is plenty.
-    QVERIFY_NO_SIGNAL_WAIT(frameSpy, 100);
+    // Delivery is queued to this thread before the sink sees EOS, so running the queued calls shows any frame.
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
+    QVERIFY(frameSpy.isEmpty());
 
     guint64 input = 0;
     guint64 dropped = 0;
