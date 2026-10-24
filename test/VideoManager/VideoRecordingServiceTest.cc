@@ -8,7 +8,9 @@
 #include <QtTest/QSignalSpy>
 
 #include "AppSettings.h"
+#include "MultiVehicleManager.h"
 #include "SettingsManager.h"
+#include "SubtitleWriter.h"
 #include "VideoRecordingService.h"
 #include "VideoSettings.h"
 #include "VideoStreamController.h"
@@ -30,6 +32,8 @@ void writeFile(const QString& path, qsizetype size, const QDateTime& modified)
 void VideoRecordingServiceTest::init()
 {
     UnitTest::init();
+    // The subtitle writer reads the telemetry bar layout, which needs the offline vehicle.
+    MultiVehicleManager::instance()->init();
 
     _saveDir = std::make_unique<QTemporaryDir>();
     QVERIFY(_saveDir->isValid());
@@ -131,6 +135,32 @@ void VideoRecordingServiceTest::_testNothingToRecord()
     verifyExpectedLogMessage();
     QVERIFY(_primary->recordings.isEmpty());
     QVERIFY(_thermal->recordings.isEmpty());
+}
+
+void VideoRecordingServiceTest::_testSubtitlesFollowEachFile()
+{
+    const SubtitleWriter* const subtitles = _service->_subtitleWriter;
+    const QString file = _videoDir + QStringLiteral("/flight.mkv");
+    const QString part2 = _videoDir + QStringLiteral("/flight_part2.mkv");
+
+    emit _primary->recordingStarted(file);
+    QVERIFY(subtitles->capturing());
+    QCOMPARE(subtitles->videoFile(), file);
+    QVERIFY(QFile::exists(_videoDir + QStringLiteral("/flight.ass")));
+
+    // After a reconnect the recording continues into a new part, with its own subtitle file.
+    emit _primary->recordingStarted(part2);
+    QCOMPARE(subtitles->videoFile(), part2);
+    QVERIFY(QFile::exists(_videoDir + QStringLiteral("/flight_part2.ass")));
+    emit _primary->recordingFinished(file, QString());
+    QVERIFY(subtitles->capturing());
+
+    // The thermal stream has no subtitles.
+    emit _thermal->recordingStarted(_videoDir + QStringLiteral("/flight.thermalVideo.mkv"));
+    QCOMPARE(subtitles->videoFile(), part2);
+
+    emit _primary->recordingFinished(part2, QString());
+    QVERIFY(!subtitles->capturing());
 }
 
 void VideoRecordingServiceTest::_testRecordingFailureReachesUser()

@@ -7,6 +7,8 @@ add_subdirectory(GStreamer)
 target_sources(
     QGCUnitTests
     PRIVATE
+        SubtitleWriterTest.cc
+        SubtitleWriterTest.h
         VideoManagerInitTest.cc
         VideoManagerInitTest.h
         VideoManagerTest.cc
@@ -18,6 +20,7 @@ target_sources(
         VideoTestHelpers.h
 )
 
+add_qgc_test(SubtitleWriterTest LABELS Integration Vehicle)
 add_qgc_test(VideoManagerInitTest LABELS Unit)
 add_qgc_test(VideoManagerTest LABELS Unit)
 add_qgc_test(VideoRecordingServiceTest LABELS Unit)

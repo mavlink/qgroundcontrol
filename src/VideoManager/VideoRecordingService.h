@@ -16,6 +16,8 @@ class VideoRecordingService : public QObject
 {
     Q_OBJECT
 
+    friend class VideoRecordingServiceTest;
+
 public:
     VideoRecordingService(VideoStreamController* primaryStream, VideoStreamController* thermalStream,
                           QObject* parent = nullptr);

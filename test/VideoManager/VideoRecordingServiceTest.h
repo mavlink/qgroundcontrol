@@ -24,6 +24,7 @@ private slots:
     void _testUniqueBaseName();
     void _testRecordsActiveStreams();
     void _testNothingToRecord();
+    void _testSubtitlesFollowEachFile();
     void _testRecordingFailureReachesUser();
     void _testPruneStorage();
 

@@ -1,33 +1,65 @@
 #pragma once
 
+#include <QtCore/QElapsedTimer>
 #include <QtCore/QFile>
+#include <QtCore/QList>
 #include <QtCore/QObject>
 #include <QtCore/QSize>
-#include <QtCore/QTime>
+#include <QtCore/QString>
+#include <QtCore/QStringList>
 #include <QtCore/QTimer>
 
-class Fact;
-
+/// Writes the telemetry bar's values next to a video recording, as an Advanced SubStation Alpha (.ass) subtitle file
+/// that players overlay on the video.
 class SubtitleWriter : public QObject
 {
     Q_OBJECT
 
-public:
-    explicit SubtitleWriter(QObject *parent = nullptr);
-    ~SubtitleWriter();
+    friend class SubtitleWriterTest;
 
-    void startCapturingTelemetry(const QString &videoFile, QSize size);
+public:
+    explicit SubtitleWriter(QObject* parent = nullptr);
+    ~SubtitleWriter() override;
+
+    /// Starts "<videoFile without extension>.ass", replacing any existing file, timed from now. Call when the video
+    /// file starts. Stops any capture in progress first.
+    void startCapturingTelemetry(const QString& videoFile, QSize videoSize);
     void stopCapturingTelemetry();
 
-private slots:
-    void _captureTelemetry();
+    bool capturing() const { return _file.isOpen(); }
+
+    /// The video file the current capture belongs to.
+    QString videoFile() const { return _videoFile; }
 
 private:
-    QFile _file;
-    QList<Fact*> _facts;
-    QSize _size;
-    QTime _lastEndTime;
-    QTimer _timer;
+    struct Field
+    {
+        QString factGroupName;
+        QString factName;
+    };
 
-    static constexpr int _kSampleRate = 1; ///< Sample rate in Hz for getting telemetry data, most players do weird stuff when > 1Hz
+    struct Sample
+    {
+        qint64 startMs = -1;
+        QStringList names;
+        QStringList values;
+        QString date;
+    };
+
+    static QList<Field> _telemetryBarFields();
+    void _captureTelemetry();
+    Sample _sample(qint64 startMs) const;
+    void _writeSample(const Sample& sample, qint64 endMs);
+
+    QFile _file;
+    QString _videoFile;
+    QList<Field> _fields;
+    QSize _size;
+    int _rowWidth = 0;
+    QElapsedTimer _elapsed;
+    QTimer _timer;
+    /// The latest sample, written once the next one (or the end of the capture) sets its end time.
+    Sample _pending;
+
+    static constexpr int _kSampleRate = 1;  ///< Hz; most players misbehave above 1 Hz
 };

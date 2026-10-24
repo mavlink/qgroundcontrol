@@ -28,8 +28,12 @@ VideoRecordingService::VideoRecordingService(VideoStreamController* primaryStrea
 
     // Each file of the primary stream, including the parts after a reconnect, gets its own subtitle file.
     (void) connect(_primaryStream, &VideoStreamController::recordingStarted, this, [this](const QString& file) {
-        _subtitleWriter->stopCapturingTelemetry();
         _subtitleWriter->startCapturingTelemetry(file, _primaryStream->videoSize());
+    });
+    (void) connect(_primaryStream, &VideoStreamController::recordingFinished, this, [this](const QString& file) {
+        if (file == _subtitleWriter->videoFile()) {
+            _subtitleWriter->stopCapturingTelemetry();
+        }
     });
     (void) connect(_primaryStream, &VideoStreamController::recordingChanged, this, [this](bool recording) {
         if (!recording) {
