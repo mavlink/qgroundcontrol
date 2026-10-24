@@ -29,5 +29,7 @@ private slots:
     void _testSourceFactoryNegativeLatencyClamped();
     void _testSourceFactoryDynamicRtpLinkFailureCleansJitterBuffer();
     void _testSourceFactoryDynamicLinkSkipsNonVideoRtp();
+    void _testSourceFactoryRtspDepayloaderRequestsKeyframes_data();
+    void _testSourceFactoryRtspDepayloaderRequestsKeyframes();
 #endif
 };

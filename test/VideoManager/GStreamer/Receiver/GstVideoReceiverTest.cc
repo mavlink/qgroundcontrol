@@ -18,6 +18,7 @@
 #include <QtMultimedia/QVideoSink>
 #include <QtMultimediaQuick/private/qquickvideooutput_p.h>
 #include <QtNetwork/QHostAddress>
+#include <QtNetwork/QTcpServer>
 #include <QtNetwork/QUdpSocket>
 #include <QtQuick/QQuickWindow>
 #include <QtTest/QSignalSpy>
@@ -105,6 +106,31 @@ QString recordingProblem(const QString& path)
                : QStringLiteral("%1: %2 frames recorded %3").arg(path).arg(frames).arg(failure);
 }
 
+/// Accepts RTSP connections and never answers, as a camera whose RTSP service hung (after Qt's UnResponsiveRtspServer,
+/// qtmultimedia/tests/auto/integration/qmediaplayerbackend/server.h).
+class UnresponsiveRtspServer
+{
+public:
+    UnresponsiveRtspServer()
+    {
+        QObject::connect(&_server, &QTcpServer::newConnection, &_server, [this] {
+            while (_server.nextPendingConnection()) {
+                ++_connections;
+            }
+        });
+    }
+
+    [[nodiscard]] bool listen() { return _server.listen(QHostAddress::LocalHost, 0); }
+
+    QString uri() const { return QStringLiteral("rtsp://127.0.0.1:%1/test").arg(_server.serverPort()); }
+
+    int connections() const { return _connections; }
+
+private:
+    QTcpServer _server;
+    int _connections = 0;
+};
+
 /// Holds a streaming thread inside a pad probe until released; shared with the probe, which may outlive the test.
 struct Gate
 {
@@ -157,11 +183,12 @@ GStreamer::GstElementPtr branchHead(GstElement* pipeline, PipelineBranch branch,
 }
 
 /// A GstVideoReceiver receiving @p uri, with spies on its signals, a VideoOutput in a shown window, and a sender of the
-/// H.264 test stream for its UDP port.
+/// test stream @p stream for its UDP port.
 struct Receiver
 {
     explicit Receiver(const QString& uri = udpListenUri(), bool autoReconnect = false,
-                      std::chrono::seconds timeout = kWatchdogTimeout)
+                      std::chrono::seconds timeout = kWatchdogTimeout,
+                      const QString& stream = QString::fromLatin1(GstTest::kH264Stream))
         : output(new QQuickVideoOutput(window.contentItem()))
         , receiver(new GstVideoReceiver())
         , stateSpy(receiver.get(), &VideoReceiver::stateChanged)
@@ -172,6 +199,7 @@ struct Receiver
         , recordingFinishedSpy(receiver.get(), &VideoReceiver::recordingFinished)
         , sizeSpy(receiver.get(), &VideoReceiver::videoSizeChanged)
         , errorSpy(receiver.get(), &VideoReceiver::errorOccurred)
+        , sender(stream)
     {
         window.resize(kFrameWidth, kFrameHeight);
         output->setSize(QSizeF(kFrameWidth, kFrameHeight));
@@ -1051,6 +1079,84 @@ void GstVideoReceiverTest::_testDestroyWithHungRecorderIsBounded()
             return pipeline == nullptr;
         },
         TestTimeout::mediumDuration(), u"abandoned pipeline released"));
+}
+
+void GstVideoReceiverTest::_testDecodesH265Stream()
+{
+    const QString missing = GstTest::firstMissingFactory({"rtph265pay", "rtph265depay", "h265parse", "avdec_h265"});
+    if (!missing.isEmpty()) {
+        QSKIP(qPrintable(QStringLiteral("Required GStreamer factory is unavailable: %1").arg(missing)));
+    }
+    // The stream path, not decoder choice, is under test; a hardware decoder that fails to start isn't replaced.
+    const GstTest::DecoderRankSnapshot decoderRanks;
+    GStreamer::setCodecPriorities(GStreamer::ForceVideoDecoderSoftware);
+
+    Receiver stream(loopbackUri(QLatin1StringView("udp265"), 0), /*autoReconnect=*/false, kWatchdogTimeout,
+                    QString::fromLatin1(GstTest::kH265Stream));
+    QVERIFY2(stream.sender.error().isEmpty(), qPrintable(stream.sender.error()));
+    QVERIFY(stream.startStreaming());
+    QVERIFY(stream.display());
+    QVERIFY_TRUE_WAIT(stream.receiver->videoSize() == QSize(kFrameWidth, kFrameHeight), TestTimeout::mediumMs());
+    QVERIFY(stream.errorSpy.isEmpty());
+}
+
+void GstVideoReceiverTest::_testResolutionChangeUpdatesVideoSize()
+{
+    Receiver stream;
+    QVERIFY(stream.startStreaming());
+    QVERIFY(stream.display());
+    QVERIFY_TRUE_WAIT(stream.receiver->videoSize() == QSize(kFrameWidth, kFrameHeight), TestTimeout::mediumMs());
+    const qsizetype stateChanges = stream.stateSpy.count();
+    const qsizetype sizeChanges = stream.sizeSpy.count();
+
+    // A camera switching resolution mid-stream: its next keyframe carries the new parameter sets.
+    QVERIFY2(stream.sender.switchTo(QString::fromLatin1(GstTest::kH264SmallStream)), qPrintable(stream.sender.error()));
+    QVERIFY_TRUE_WAIT(stream.receiver->videoSize() == QSize(160, 120), TestTimeout::mediumMs());
+    QVERIFY(stream.sizeSpy.count() > sizeChanges);
+
+    // Taken in stride: no reconnect, no error.
+    QCOMPARE(stream.stateSpy.count(), stateChanges);
+    QCOMPARE(stream.receiver->state(), State::Streaming);
+    QVERIFY(stream.errorSpy.isEmpty());
+}
+
+void GstVideoReceiverTest::_testUnresponsiveRtspServer_data()
+{
+    QTest::addColumn<bool>("autoReconnect");
+
+    QTest::newRow("auto-reconnect") << true;
+    QTest::newRow("no auto-reconnect") << false;
+}
+
+void GstVideoReceiverTest::_testUnresponsiveRtspServer()
+{
+    QFETCH(bool, autoReconnect);
+
+    if (!GstTest::firstMissingFactory({"rtspsrc"}).isEmpty()) {
+        QSKIP("rtspsrc plugin unavailable");
+    }
+    UnresponsiveRtspServer server;
+    QVERIFY(server.listen());
+    ignoreLogMessage("Video.GStreamer.GStreamerLogging", QtWarningMsg, GstTest::libproxyIgnoreMaskWarning());
+
+    // Either rtspsrc gives up on the unanswered OPTIONS after its TCP timeout or the first-frame watchdog fires
+    // first; which one warns depends on the host's timing, and the receiver's reaction is what is checked.
+    ignoreLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^GStreamer error from |^Video stream stopped:")));
+    Receiver stream(server.uri(), autoReconnect, kShortWatchdogTimeout);
+    stream.receiver->setActive(true);
+    QVERIFY(stream.waitForState(State::Connecting));
+    QVERIFY_TRUE_WAIT(server.connections() == 1, TestTimeout::mediumMs());
+
+    if (autoReconnect) {
+        QVERIFY_TRUE_WAIT(server.connections() >= 2, TestTimeout::longMs());
+        QVERIFY(stream.errorSpy.isEmpty());
+    } else {
+        QVERIFY_SIGNAL_COUNT_WAIT(stream.errorSpy, 1, TestTimeout::longMs());
+        QVERIFY(stream.waitForState(State::Stopped));
+        QCOMPARE(server.connections(), 1);
+    }
+    QVERIFY(stream.streamingSpy.isEmpty());
 }
 
 #else

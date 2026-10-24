@@ -51,6 +51,10 @@ private slots:
     void _testDeactivateReleasesDisplayedFrame();
     void _testDestroyWhileRecordingFinalizesFile();
     void _testDestroyWithHungRecorderIsBounded();
+    void _testDecodesH265Stream();
+    void _testResolutionChangeUpdatesVideoSize();
+    void _testUnresponsiveRtspServer_data();
+    void _testUnresponsiveRtspServer();
 #else
     void _testGStreamerDisabled();
 #endif

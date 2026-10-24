@@ -7,6 +7,7 @@
 #include <gst/video/video.h>
 
 #include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
 
 #include "GStreamerTestHelpers.h"
 #include "GstScoped.h"
@@ -557,6 +558,62 @@ void GstSourceFactoryTest::_testSourceFactoryDynamicLinkSkipsNonVideoRtp()
     QVERIFY(
         gst_element_add_pad(source.demux.get(), gst_pad_new_from_static_template(&sH264RtpPadTemplate, "video_rtp")));
     QVERIFY2(gst_pad_is_linked(source.parserSink.get()), "the video RTP pad that follows must still reach the parser");
+}
+
+void GstSourceFactoryTest::_testSourceFactoryRtspDepayloaderRequestsKeyframes_data()
+{
+    QTest::addColumn<QString>("uri");
+    QTest::addColumn<QString>("sourceFactory");
+    QTest::addColumn<bool>("expectedRequestKeyframe");
+
+    // RTSP has RTCP to carry the request back to the camera; a plain UDP source has nothing to send it over.
+    QTest::newRow("rtsp") << QStringLiteral("rtsp://127.0.0.1:8554/test") << QStringLiteral("rtspsrc") << true;
+    QTest::newRow("mpegts-rtp") << QStringLiteral("mpegts://127.0.0.1:5600") << QStringLiteral("tsdemux") << false;
+}
+
+void GstSourceFactoryTest::_testSourceFactoryRtspDepayloaderRequestsKeyframes()
+{
+    QFETCH(QString, uri);
+    QFETCH(QString, sourceFactory);
+    QFETCH(bool, expectedRequestKeyframe);
+
+    const QString missing = GstTest::firstMissingFactory({"rtspsrc", "udpsrc", "tsdemux", "parsebin", "rtph264depay"});
+    if (!missing.isEmpty()) {
+        QSKIP(qPrintable(QStringLiteral("%1 plugin unavailable").arg(missing)));
+    }
+
+    GStreamer::SourceFactory::Config config;
+    config.jitterBuffer = GStreamer::SourceFactory::JitterBuffer::None;
+    const GStreamer::GstElementPtr bin = GstTest::createSource(uri, config);
+    QVERIFY(bin);
+    const GStreamer::GstElementPtr source = child(bin.get(), qPrintable(sourceFactory));
+    const GStreamer::GstElementPtr parser = child(bin.get(), "parsebin");
+    QVERIFY(source && parser);
+
+    // The source stays in NULL, so nothing connects: its RTP pad is added by hand, as it adds one after SETUP, and
+    // the stream caps make parsebin plug the depayloader.
+    GstPad* const pad = gst_pad_new_from_static_template(&sH264RtpPadTemplate, "recv_rtp_src_0");
+    QVERIFY(gst_element_add_pad(source.get(), pad));
+    QVERIFY(gst_pad_is_linked(pad));
+    const auto stop = qScopeGuard([&parser, pad] {
+        (void) gst_element_set_state(parser.get(), GST_STATE_NULL);
+        (void) gst_pad_set_active(pad, FALSE);
+    });
+    QVERIFY(gst_element_set_state(parser.get(), GST_STATE_PAUSED) != GST_STATE_CHANGE_FAILURE);
+    QVERIFY(gst_pad_set_active(pad, TRUE));
+    const GStreamer::GstCapsPtr caps = GStreamer::adoptCaps(gst_caps_from_string(
+        "application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264, payload=(int)96"));
+    GstSegment segment;
+    gst_segment_init(&segment, GST_FORMAT_TIME);
+    QVERIFY(gst_pad_push_event(pad, gst_event_new_stream_start("qgc-rtp")));
+    QVERIFY(gst_pad_push_event(pad, gst_event_new_caps(caps.get())));
+    QVERIFY(gst_pad_push_event(pad, gst_event_new_segment(&segment)));
+
+    const GStreamer::GstElementPtr depayloader = child(bin.get(), "rtph264depay");
+    QVERIFY2(depayloader, "parsebin did not plug rtph264depay for H.264 RTP caps");
+    gboolean requestKeyframe = !expectedRequestKeyframe;
+    g_object_get(depayloader.get(), "request-keyframe", &requestKeyframe, nullptr);
+    QCOMPARE(bool(requestKeyframe), expectedRequestKeyframe);
 }
 
 #endif
