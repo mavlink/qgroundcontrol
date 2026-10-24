@@ -42,7 +42,8 @@ public:
     void start(const QString& videoFile, VideoReceiver::FILE_FORMAT format);
     void stop();
     /// Before the pipeline is torn down: drains an active recording into its file, then waits up to kFinalizeTimeout
-    /// for the file (or one stop() is finalizing) to be closed. A recording that has no frame yet is dropped instead.
+    /// for the file (or one stop() is finalizing) to be closed. A recording that has no frame yet, or whose file failed
+    /// or didn't close in time, is dropped instead.
     void finishForTeardown();
 
     /// Pipeline EOS: every branch drained, the recorder included.

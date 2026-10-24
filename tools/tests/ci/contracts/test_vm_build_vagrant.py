@@ -376,6 +376,7 @@ def test_install_uses_hashicorp_repo_and_shared_apt_retry(
     assert apt[1] == str(REPO_ROOT / "tools/ci/runner/apt_install_retry.py")
     assert apt[2:6] == ["--update", "--no-install-recommends", "--label", "Vagrant and libvirt"]
     assert {"vagrant", "qemu-kvm", "libvirt-daemon-system", "libvirt-dev", "ruby-dev"} <= set(apt)
+    assert "ovmf" in apt
     assert commands[4:] == [
         ["sudo", "systemctl", "enable", "--now", "libvirtd"],
         ["sudo", "usermod", "-aG", "libvirt,kvm", "runner"],
