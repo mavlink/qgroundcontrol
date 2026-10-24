@@ -34,6 +34,20 @@ bool dmaDrmAwareVideoInfo(GstCaps* caps, GstVideoInfo* info)
     return gst_video_info_from_caps(info, caps);
 }
 
+bool hasCpuLayout([[maybe_unused]] GstCaps* caps)
+{
+#if GST_CHECK_VERSION(1, 24, 0)
+    if (caps && gst_video_is_dma_drm_caps(caps)) {
+        // DRM_FORMAT_MOD_LINEAR; <drm_fourcc.h> is Linux-only.
+        constexpr guint64 kLinearModifier = 0;
+        GstVideoInfoDmaDrm drmInfo;
+        gst_video_info_dma_drm_init(&drmInfo);
+        return gst_video_info_dma_drm_from_caps(&drmInfo, caps) && (drmInfo.drm_modifier == kLinearModifier);
+    }
+#endif
+    return true;
+}
+
 int planeWidth(const GstVideoInfo& info, int plane)
 {
     const int component = firstComponentOf(info, plane);

@@ -85,8 +85,12 @@ struct PrivState
     std::array<std::atomic<quint64>, GstHw::kPathCount> path_frames{};
     std::atomic<quint64> gpu_fallbacks{0};
     std::atomic<quint64> stream_demotions{0};
-    // One stream demotion per caps epoch; reset with the path cache.
+    // Frames no GPU path imported whose tiled DMA_DRM layout the CPU can't read: dropped; reported through
+    // "frame-stats".
+    std::atomic<quint64> tiled_drops{0};
+    // One stream demotion, and one tiled-drop warning, per caps epoch; reset with the path cache.
     bool demotion_recorded = false;
+    bool tiled_drop_logged = false;
     // Live zero-copy CPU frames pinning this sink's decoder buffers; shared because Qt may hold frames past finalize.
     CpuVideoFramePool::PinnedFrameCounter pinned_cpu_frames = std::make_shared<std::atomic<int>>(0);
     // Replaced (under GST_OBJECT_LOCK) whenever `qvideosink` changes: an invoke queued to a destroyed QVideoSink is
@@ -221,6 +225,7 @@ bool nothing_to_import(GstBuffer* buf)
 
 constexpr const char* kGpuFallbacksField = "gpu-fallbacks";
 constexpr const char* kStreamDemotionsField = "stream-demotions";
+constexpr const char* kTiledDropsField = "tiled-drops";
 
 /// The "frame-stats" property value (transfer-full).
 GstStructure* make_stats(const PrivState& p)
@@ -233,6 +238,8 @@ GstStructure* make_stats(const PrivState& p)
     gst_structure_set(stats, kGpuFallbacksField, G_TYPE_UINT64,
                       static_cast<guint64>(p.gpu_fallbacks.load(std::memory_order_relaxed)), kStreamDemotionsField,
                       G_TYPE_UINT64, static_cast<guint64>(p.stream_demotions.load(std::memory_order_relaxed)), nullptr);
+    gst_structure_set(stats, kTiledDropsField, G_TYPE_UINT64,
+                      static_cast<guint64>(p.tiled_drops.load(std::memory_order_relaxed)), nullptr);
     return stats;
 }
 
@@ -453,6 +460,7 @@ static gboolean gst_qgc_q_video_sink_set_caps(GstBaseSink* bsink, GstCaps* caps)
     p->gpu_caps = caps_carry_gpu_memory(caps);
     p->resolved_path_cache = HwResolvedPathCache{};
     p->demotion_recorded = false;
+    p->tiled_drop_logged = false;
     p->caps_valid.store(true, std::memory_order_release);
 
     qCInfo(GstQgcQVideoSinkLog).noquote()
@@ -502,7 +510,13 @@ static GstFlowReturn gst_qgc_q_video_sink_show_frame(GstVideoSink* vsink, GstBuf
     if (!mapped.frame.isValid()) {
         p->dropped_frames.fetch_add(1, std::memory_order_relaxed);
         const quint64 c = p->consecutive_map_failures.fetch_add(1, std::memory_order_relaxed) + 1;
-        if ((c & 0x3F) == 1) {
+        if (mapped.noCpuLayout) {
+            // Until upstream renegotiates (the sink asked for it when the DMABuf import stopped), or the run escalates.
+            p->tiled_drops.fetch_add(1, std::memory_order_relaxed);
+            if (!std::exchange(p->tiled_drop_logged, true)) {
+                qCWarning(GstQgcQVideoSinkLog) << "tiled DMA_DRM frame not imported and has no CPU layout — dropped";
+            }
+        } else if ((c & 0x3F) == 1) {
             qCWarning(GstQgcQVideoSinkLog) << "mapping failed, consecutive=" << c;
         }
         if (c >= kMaxConsecutiveMapFailures) {
@@ -602,6 +616,7 @@ static gboolean gst_qgc_q_video_sink_stop(GstBaseSink* bsink)
     p->gpu_caps = false;
     p->resolved_path_cache = HwResolvedPathCache{};
     p->demotion_recorded = false;
+    p->tiled_drop_logged = false;
     p->stream_orientation.store(GST_VIDEO_ORIENTATION_IDENTITY, std::memory_order_relaxed);
     p->consecutive_map_failures.store(0, std::memory_order_relaxed);
     drop_pending_frame(self);
@@ -702,8 +717,9 @@ static void gst_qgc_q_video_sink_class_init(GstQgcQVideoSinkClass* klass)
                            "This sink's own frame accounting, as a qgc-video-sink-stats structure of guint64 fields: "
                            "frames-<path> per delivery path (frames-cpu, frames-dmabuf, frames-gl, frames-d3d11, "
                            "frames-d3d12, frames-iosurface, frames-ahwbuf, frames-vulkan); gpu-fallbacks (frames a GPU "
-                           "path was tried for but the CPU delivered) and stream-demotions (caps epochs that fell back "
-                           "from a GPU path).",
+                           "path was tried for but the CPU delivered), stream-demotions (caps epochs that fell back "
+                           "from a GPU path) and tiled-drops (frames in a tiled DMA_DRM layout that no GPU path "
+                           "imported and the CPU can't read).",
                            GST_TYPE_STRUCTURE, (GParamFlags) (G_PARAM_READABLE | G_PARAM_STATIC_STRINGS)));
 
     gst_element_class_set_static_metadata(element_class, "QGC QVideoSink", "Sink/Video",
@@ -788,7 +804,7 @@ PathStats formatSinkStats(const GstStructure* stats, const GstStructure* since) 
             }
         }
     }
-    for (const char* const field : {kGpuFallbacksField, kStreamDemotionsField}) {
+    for (const char* const field : {kGpuFallbacksField, kStreamDemotionsField, kTiledDropsField}) {
         if (const quint64 count = countOf(field); count > 0) {
             out.line += QStringLiteral(" %1:%2").arg(QLatin1String(field)).arg(count);
         }

@@ -24,6 +24,7 @@
 #include "GStreamerTestHelpers.h"
 #include "GstHwPathTelemetry.h"
 #include "GstHwVideoBufferFactory.h"
+#include "GstQgcFrameMap.h"
 #include "HwBuffers/common/HwBuffers.h"
 #include "HwBuffers/dmabuf/GstDmaDrmCaps.h"
 #include "gstqgc/GstQgcCaps.h"
@@ -428,6 +429,63 @@ void GstHwBuffersTest::_testDmaBufTiledFrameRefusesCpuMap()
     QCOMPARE(tiled.map(QVideoFrame::ReadOnly).planeCount, 0);
     verifyExpectedLogMessage();
     QVERIFY2(!tiled.validatePlaneHandles(), "A tiled frame imports only through EGL modifier attributes");
+#endif
+}
+
+void GstHwBuffersTest::_testDmaBufTiledFrameDroppedWithoutImport_data()
+{
+    QTest::addColumn<QString>("drmFormat");
+    QTest::addColumn<bool>("qtDisplay");
+    QTest::addColumn<bool>("importDisabled");
+    QTest::addColumn<bool>("cpuFrame");
+
+    // DMA_DRM caps negotiated before the import was disabled, or while the sink's GPU context had no Qt EGLDisplay.
+    const QString yTiled = QStringLiteral("NV12:0x0100000000000002");
+    QTest::newRow("tiled, import disabled") << yTiled << true << true << false;
+    QTest::newRow("tiled, no EGL display") << yTiled << false << false << false;
+    QTest::newRow("linear, no EGL display") << QStringLiteral("NV12") << false << false << true;
+}
+
+void GstHwBuffersTest::_testDmaBufTiledFrameDroppedWithoutImport()
+{
+#if !defined(QGC_HAS_GST_DMABUF_GPU_PATH) || !GST_CHECK_VERSION(1, 24, 0)
+    QSKIP("DMABuf DMA_DRM import not compiled in this build");
+#else
+    QFETCH(QString, drmFormat);
+    QFETCH(bool, qtDisplay);
+    QFETCH(bool, importDisabled);
+    QFETCH(bool, cpuFrame);
+
+    GstDmaBufVideoBuffer::resetCachedState();
+    const auto resetLatch = qScopeGuard([] { GstDmaBufVideoBuffer::resetCachedState(); });
+    if (importDisabled) {
+        expectLogMessage("Video.GStreamer.HwBuffers.GstDmaBuf", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("EGL_BAD_MATCH")));
+        GstDmaBufVideoBuffer::recordImportFailureForTest(/*unrecoverable=*/true);
+        verifyExpectedLogMessage();
+        ignoreLogMessage("Video.GStreamer.HwBuffers.Factory", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("plane-handle validation")));
+    }
+
+    GstVideoInfo info;
+    const QByteArray caps = QStringLiteral("video/x-raw(memory:DMABuf),format=DMA_DRM,drm-format=%1,width=64,height=64")
+                                .arg(drmFormat)
+                                .toLatin1();
+    GstSample* sample = makeMemfdDmaBufSample(GST_VIDEO_FORMAT_NV12, info, caps.constData());
+    QVERIFY(sample);
+    const auto sampleGuard = qScopeGuard([sample] { gst_sample_unref(sample); });
+
+    HwVideoBufferContext context;
+    context.gpuEnabled = true;
+    // Never reaches EGL: the disabled importer refuses the frame first.
+    context.dmaBufEglDisplay = qtDisplay ? reinterpret_cast<EGLDisplay>(quintptr(1)) : EGL_NO_DISPLAY;
+    const MappedFrame mapped = mapSampleToFrame(gst_sample_get_buffer(sample), gst_sample_get_caps(sample), info,
+                                                QVideoFrameFormat(QSize(64, 64), QVideoFrameFormat::Format_NV12),
+                                                context, std::make_shared<std::atomic<int>>(0));
+
+    QCOMPARE(mapped.gpuPath, HwVideoBufferPath::None);
+    QCOMPARE(mapped.frame.isValid(), cpuFrame);
+    QVERIFY2(mapped.noCpuLayout != cpuFrame, "a tiled frame must be dropped rather than read as linear rows");
 #endif
 }
 

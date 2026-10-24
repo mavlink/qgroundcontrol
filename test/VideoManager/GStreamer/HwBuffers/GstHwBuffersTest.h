@@ -34,6 +34,8 @@ private slots:
     void _testHwPathRegistrySelection();
     void _testHwBufferFactoryCacheRejectsMemoryTypeChange();
     void _testDmaBufTiledFrameRefusesCpuMap();
+    void _testDmaBufTiledFrameDroppedWithoutImport_data();
+    void _testDmaBufTiledFrameDroppedWithoutImport();
     void _testDmaBufImportFailureLatch_data();
     void _testDmaBufImportFailureLatch();
     void _testDmaBufVulkanImportRejectsMultiPlanar_data();

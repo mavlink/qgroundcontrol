@@ -47,8 +47,8 @@ A QGC-owned plugin (`gstqgc/`) bridging the pipeline into Qt:
   latest frame, so a stalled GUI thread never holds more than one undelivered frame (or the decoder buffer behind it).
   Frames carry the rotation and mirroring of the stream's `image-orientation` tag, as a camera mounted sideways sends
   it, unless a buffer has its own orientation meta. Its construct-only `gpu-zerocopy` property (passed down by the bin) enables zero-copy import of GPU memory, and its
-  `frame-stats` property reports that sink's own frame counts per delivery path (`GstQgc::formatSinkStats` formats
-  them); GstBaseSink's standard `stats` property is left as is.
+  `frame-stats` property reports that sink's own frame counts per delivery path, GPU fallbacks and dropped tiled frames
+  (`GstQgc::formatSinkStats` formats them); GstBaseSink's standard `stats` property is left as is.
 - **Sink caps** — `qgcqvideosink` answers caps queries itself (`GstQgc::buildSinkCaps`), with the formats Qt renders
   (`kVideoFormatTable`):
   - System memory always, with `pixel-aspect-ratio=1/1` unless the bin's `disable-par` is set.
@@ -197,7 +197,8 @@ textures.
 - `EGL_BAD_MATCH` (a broken EGL/driver pairing, QTBUG-112312), or 30 failed imports in a row, turn the path off until
   the scene graph is recreated: the sink stops offering DMABuf and DMA_DRM caps and asks upstream to renegotiate.
   Until upstream has, LINEAR frames take the CPU path.
-- A tiled frame has no CPU layout: when its import fails it is dropped rather than shown scrambled.
+- A tiled frame (a DMA_DRM modifier other than LINEAR) has no CPU layout: when no import takes it, it is dropped rather
+  than shown scrambled, and counted in the sink's `tiled-drops` frame stat.
 - The `Video.GStreamer.HwBuffers.GstDmaBuf` and `Video.GStreamer.HwBuffers.GstDmaDrmCaps` debug categories log the
   offered modifiers and the first import; Qt's `qt.multimedia.dmabuf` category logs its EGL calls.
 

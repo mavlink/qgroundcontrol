@@ -10,6 +10,10 @@ namespace GstHw {
 /// decode. False on parse failure or null args.
 bool dmaDrmAwareVideoInfo(GstCaps* caps, GstVideoInfo* info);
 
+/// False for DMA_DRM caps whose modifier isn't LINEAR: a tiled or driver-chosen layout has no CPU reading, and the
+/// GstVideoInfo dmaDrmAwareVideoInfo() derives describes linear rows. True for any other caps.
+bool hasCpuLayout(GstCaps* caps);
+
 /// Size of @p plane, taken from the first component stored in it: plane and component indices differ in general (AV12's
 /// third plane holds component 3, the full-height alpha, not the half-height V component 2). 0 for a plane without
 /// components.

@@ -10,6 +10,7 @@
 
 #include "GstQgcVideoFormats.h"
 #include "HwBuffers/common/CpuVideoFramePool.h"
+#include "HwBuffers/common/GstHwVideoInfo.h"
 #include "QGCLoggingCategory.h"
 
 #if defined(QGC_HAS_ANY_GPU_PATH)
@@ -218,7 +219,7 @@ QVideoFrameFormat applyCropMeta(QVideoFrameFormat format, GstBuffer* buffer)
     return format;
 }
 
-MappedFrame mapSampleToFrame(GstBuffer* buffer, [[maybe_unused]] GstCaps* caps, const GstVideoInfo& info,
+MappedFrame mapSampleToFrame(GstBuffer* buffer, GstCaps* caps, const GstVideoInfo& info,
                              const QVideoFrameFormat& format, [[maybe_unused]] const HwVideoBufferContext& hwContext,
                              const CpuVideoFramePool::PinnedFrameCounter& pinnedCpuFrames,
                              [[maybe_unused]] HwResolvedPathCache* pathCache) noexcept
@@ -237,6 +238,10 @@ MappedFrame mapSampleToFrame(GstBuffer* buffer, [[maybe_unused]] GstCaps* caps, 
         out.demoted = true;
     }
 #endif
+    if (!GstHw::hasCpuLayout(caps)) {
+        out.noCpuLayout = true;
+        return out;
+    }
     if (auto cpuBuf = CpuVideoFramePool::wrapZeroCopy(buffer, info, format, pinnedCpuFrames)) {
         out.frame = QVideoFrame(std::move(cpuBuf));
     } else {
