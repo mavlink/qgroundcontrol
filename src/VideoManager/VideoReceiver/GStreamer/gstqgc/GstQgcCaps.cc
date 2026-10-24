@@ -15,20 +15,15 @@ static_assert(HwBuffers::GpuBinMode{} == HwBuffers::GpuBinMode::Passthrough,
 namespace {
 
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
-/// The DMA_DRM fragments QGC's EGLImage importer takes; "" before GStreamer 1.24 or when EGL reports none.
+/// The DMA_DRM fragments the DMABuf importer takes; "" before GStreamer 1.24 or when EGL reports none.
 std::string sinkDmaDrmCaps()
 {
     std::string caps;
 #if GST_CHECK_VERSION(1, 24, 0)
-    const std::vector<GstVideoFormat> formats = advertisedFormats(kOfferLinearDmaDrm);
+    const std::vector<GstVideoFormat> formats = advertisedFormats(kOfferDmaDrm);
     // Best-effort: advertise the GPU's actually-supported (format, modifier) pairs (EGL query) so modifier-aware
     // drivers negotiate a tiling QGC's importer can consume. Additive; empty on any query failure.
     caps += GstHw::buildSupportedDmaDrmCaps(formats);
-    // QGC_GST_OFFER_DMA_DRM_LINEAR=1 force-offers LINEAR-modifier (0x0) DMA_DRM as a fallback/override so a driver that
-    // mis-reports modifiers still gets a guaranteed-LINEAR option and iHD can't pick tiled+CCS.
-    if (HwBuffers::hwBufferEnvConfig().offerDmaDrmLinear) {
-        caps += GstHw::buildLinearDmaDrmCaps(formats);
-    }
 #endif
     return caps;
 }
@@ -53,7 +48,7 @@ std::string gpuMemoryCaps(const SinkCapsPolicy& policy, const std::string& forma
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
             caps += sinkDmaDrmCaps();
             // Legacy memory:DMABuf covers v4l2h264dec/Mali/V3D LINEAR. Unrestricted DMA_DRM is never offered (only the
-            // importable modifiers above): gst-va iHD would negotiate tiled+CCS, which crashes both import paths.
+            // importable modifiers above): gst-va iHD would negotiate tiled+CCS, which no per-plane import can read.
             offer("video/x-raw(memory:DMABuf)");
 #endif
 #if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)

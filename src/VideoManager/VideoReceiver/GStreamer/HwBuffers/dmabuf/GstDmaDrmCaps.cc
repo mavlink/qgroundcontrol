@@ -6,8 +6,12 @@
 
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH) && GST_CHECK_VERSION(1, 24, 0)
 #include <algorithm>
+#include <drm_fourcc.h>
+#include <gst/video/video.h>
+#include <map>
 #include <vector>
 
+#include "GstDmaBufVideoBuffer.h"
 #include "GstEglHelpers.h"
 #include "GstScoped.h"
 #include "QGCLoggingCategory.h"
@@ -25,12 +29,48 @@ namespace {
 
 constexpr const char* kModifiersExt = "EGL_EXT_image_dma_buf_import_modifiers";
 
-// LINEAR-only: tiled external DMABuf from gst-va/iHD can be negotiated and even imported, but binding the resulting
-// EGLImage through Qt's render-thread GL path segfaults Mesa/Gallium on this stack. The default glupload path can
-// handle those tiled buffers; direct-QGC DMABuf only advertises layouts it can safely bind itself.
-bool isImportableModifier(EGLuint64KHR mod) noexcept
+// Qt's importer binds one EGLImage per format plane, so compressed layouts and those with auxiliary planes (CCS, DCC,
+// AFBC, UBWC) can't be imported. Plain vendor tilings can: the modifier goes with each plane.
+bool modifierImportable(guint64 modifier) noexcept
 {
-    return mod == 0;  // DRM_FORMAT_MOD_LINEAR
+    const guint64 code = modifier & 0x00ffffffffffffffULL;
+    switch (modifier >> 56) {
+        case DRM_FORMAT_MOD_VENDOR_INTEL:
+            // X, Y, Yf and 4 tiling; every other Intel modifier is a CCS variant.
+            return (code == 1) || (code == 2) || (code == 3) || (code == 9);
+        case DRM_FORMAT_MOD_VENDOR_AMD:
+            return ((code >> 13) & 0x1) == 0;         // AMD_FMT_MOD DCC bit
+        case DRM_FORMAT_MOD_VENDOR_ARM:
+            return ((modifier >> 52) & 0xf) == 0x01;  // DRM_FORMAT_MOD_ARM_TYPE_MISC: not AFBC/AFRC compression
+        case DRM_FORMAT_MOD_VENDOR_QCOM:
+            return code != 1;                         // DRM_FORMAT_MOD_QCOM_COMPRESSED (UBWC)
+        default:
+            return modifier != DRM_FORMAT_MOD_INVALID;
+    }
+}
+
+// What GstQtDmaBufImport::planeFourccs() picks for the Qt counterpart of @p format: one R8/GR88 (8-bit) or
+// R16/GR1616 (16-bit) image per plane of a multi-plane format, the format's own fourcc for a single-plane one.
+guint32 planeImportFourcc(GstVideoFormat format, guint plane) noexcept
+{
+    const GstVideoFormatInfo* finfo = gst_video_format_get_info(format);
+    if (!finfo || (plane >= GST_VIDEO_FORMAT_INFO_N_PLANES(finfo))) {
+        return 0;
+    }
+    if (GST_VIDEO_FORMAT_INFO_N_PLANES(finfo) == 1) {
+        return gst_video_dma_drm_fourcc_from_format(format);
+    }
+    gint components[GST_VIDEO_MAX_COMPONENTS];
+    gst_video_format_info_component(finfo, plane, components);
+    const int count = static_cast<int>(std::ranges::count_if(components, [](gint c) { return c >= 0; }));
+    const int pixelStride = (components[0] >= 0) ? GST_VIDEO_FORMAT_INFO_PSTRIDE(finfo, components[0]) : 0;
+    if (count == 1) {
+        return (pixelStride == 1) ? DRM_FORMAT_R8 : (pixelStride == 2) ? DRM_FORMAT_R16 : 0;
+    }
+    if (count == 2) {
+        return (pixelStride == 2) ? DRM_FORMAT_GR88 : (pixelStride == 4) ? DRM_FORMAT_GR1616 : 0;
+    }
+    return 0;
 }
 
 /// Appends the drm-format entry for (@p fourcc, @p modifier) to the comma-separated @p entries; false when GStreamer
@@ -50,21 +90,71 @@ bool appendDrmFormat(std::string& entries, guint32 fourcc, guint64 modifier)
     return true;
 }
 
-/// The DMA_DRM caps fragment offering @p entries; "" without any.
-std::string dmaDrmCaps(const std::string& entries)
+/// EGL's modifier list for one fourcc.
+class ModifierQuery
 {
-    if (entries.empty()) {
-        return std::string();
+public:
+    explicit ModifierQuery(EGLDisplay display)
+        : _display(display)
+        , _query(reinterpret_cast<PFNEGLQUERYDMABUFMODIFIERSEXTPROC>(eglGetProcAddress("eglQueryDmaBufModifiersEXT")))
+    {}
+
+    bool valid() const noexcept { return _query != nullptr; }
+
+    /// Every modifier EGL imports @p fourcc with.
+    std::vector<EGLuint64KHR> all(EGLint fourcc) const { return query(fourcc, false); }
+
+    /// The modifiers @p fourcc imports with as a GL_TEXTURE_2D, the target Qt's importer binds; cached.
+    const std::vector<EGLuint64KHR>& sampleable(guint32 fourcc)
+    {
+        const auto [it, inserted] = _sampleable.try_emplace(fourcc);
+        if (inserted) {
+            it->second = query(static_cast<EGLint>(fourcc), true);
+        }
+        return it->second;
     }
-    return "video/x-raw(memory:DMABuf), format=DMA_DRM, drm-format={ " + entries + " }; ";
-}
+
+private:
+    std::vector<EGLuint64KHR> query(EGLint fourcc, bool texture2DOnly) const
+    {
+        EGLint count = 0;
+        if ((_query(_display, fourcc, 0, nullptr, nullptr, &count) != EGL_TRUE) || (count <= 0)) {
+            return {};
+        }
+        std::vector<EGLuint64KHR> mods(static_cast<std::size_t>(count));
+        std::vector<EGLBoolean> externalOnly(static_cast<std::size_t>(count));
+        if ((_query(_display, fourcc, count, mods.data(), externalOnly.data(), &count) != EGL_TRUE) || (count <= 0)) {
+            return {};
+        }
+        mods.resize(static_cast<std::size_t>(count));
+        if (!texture2DOnly) {
+            return mods;
+        }
+        std::vector<EGLuint64KHR> texture2D;
+        for (std::size_t i = 0; i < mods.size(); ++i) {
+            if (!externalOnly[i]) {
+                texture2D.push_back(mods[i]);
+            }
+        }
+        return texture2D;
+    }
+
+    EGLDisplay _display;
+    PFNEGLQUERYDMABUFMODIFIERSEXTPROC _query;
+    std::map<guint32, std::vector<EGLuint64KHR>> _sampleable;
+};
 
 }  // namespace
 
 std::string buildSupportedDmaDrmCaps(std::span<const GstVideoFormat> formats)
 {
-    if (formats.empty())
+    if (formats.empty()) {
         return std::string();
+    }
+    if (GstDmaBufVideoBuffer::importDisabled()) {
+        qCDebug(GstDmaDrmCapsLog) << "DMABuf import disabled; offering no DMA_DRM caps";
+        return std::string();
+    }
 
     // Only Qt's own EGLDisplay, resolved on the GUI thread: this runs on a streaming or worker thread, where
     // initializing the default display would create a second EGL connection Qt never renders with.
@@ -77,76 +167,63 @@ std::string buildSupportedDmaDrmCaps(std::span<const GstVideoFormat> formats)
 
     const auto queryFormats =
         reinterpret_cast<PFNEGLQUERYDMABUFFORMATSEXTPROC>(eglGetProcAddress("eglQueryDmaBufFormatsEXT"));
-    const auto queryModifiers =
-        reinterpret_cast<PFNEGLQUERYDMABUFMODIFIERSEXTPROC>(eglGetProcAddress("eglQueryDmaBufModifiersEXT"));
-    if (!queryFormats || !queryModifiers)
+    ModifierQuery modifiers(dpy);
+    if (!queryFormats || !modifiers.valid()) {
         return std::string();
+    }
 
     EGLint numFormats = 0;
-    if (queryFormats(dpy, 0, nullptr, &numFormats) != EGL_TRUE || numFormats <= 0)
+    if ((queryFormats(dpy, 0, nullptr, &numFormats) != EGL_TRUE) || (numFormats <= 0)) {
         return std::string();
+    }
     std::vector<EGLint> fourccs(static_cast<std::size_t>(numFormats));
-    if (queryFormats(dpy, numFormats, fourccs.data(), &numFormats) != EGL_TRUE || numFormats <= 0)
+    if ((queryFormats(dpy, numFormats, fourccs.data(), &numFormats) != EGL_TRUE) || (numFormats <= 0)) {
         return std::string();
+    }
     fourccs.resize(static_cast<std::size_t>(numFormats));
 
     std::string entries;
-    int formatCount = 0;
-    int modifierCount = 0;
+    int offeredCount = 0;
     int excludedCount = 0;
     for (const EGLint fourcc : fourccs) {
         // GStreamer's own fourcc mapping, the one it reads drm-format caps with.
         const GstVideoFormat format = gst_video_dma_drm_fourcc_to_format(static_cast<guint32>(fourcc));
-        if (std::ranges::find(formats, format) == formats.end())
+        if (std::ranges::find(formats, format) == formats.end()) {
             continue;
-
-        EGLint numMods = 0;
-        if (queryModifiers(dpy, fourcc, 0, nullptr, nullptr, &numMods) != EGL_TRUE || numMods <= 0)
-            continue;
-        std::vector<EGLuint64KHR> mods(static_cast<std::size_t>(numMods));
-        if (queryModifiers(dpy, fourcc, numMods, mods.data(), nullptr, &numMods) != EGL_TRUE || numMods <= 0)
-            continue;
-        mods.resize(static_cast<std::size_t>(numMods));
-
-        bool counted = false;
-        for (const EGLuint64KHR mod : mods) {
-            if (!isImportableModifier(mod)) {
+        }
+        const guint planes = GST_VIDEO_FORMAT_INFO_N_PLANES(gst_video_format_get_info(format));
+        for (const EGLuint64KHR mod : modifiers.all(fourcc)) {
+            bool importable = modifierImportable(mod);
+            for (guint plane = 0; importable && (plane < planes); ++plane) {
+                const guint32 planeFourcc = planeImportFourcc(format, plane);
+                importable = (planeFourcc != 0) && std::ranges::any_of(modifiers.sampleable(planeFourcc),
+                                                                       [mod](EGLuint64KHR m) { return m == mod; });
+            }
+            if (importable && appendDrmFormat(entries, static_cast<guint32>(fourcc), mod)) {
+                ++offeredCount;
+            } else {
                 ++excludedCount;
-                continue;
-            }
-            if (appendDrmFormat(entries, static_cast<guint32>(fourcc), mod)) {
-                ++modifierCount;
-                counted = true;
             }
         }
-        if (counted)
-            ++formatCount;
     }
 
-    if (entries.empty())
+    if (entries.empty()) {
         return std::string();
-
-    qCInfo(GstDmaDrmCapsLog) << "EGL-derived DMA_DRM caps:" << formatCount << "formats," << modifierCount
-                             << "modifiers offered," << excludedCount << "non-importable modifiers excluded";
-    return dmaDrmCaps(entries);
-}
-
-std::string buildLinearDmaDrmCaps(std::span<const GstVideoFormat> formats)
-{
-    std::string entries;
-    for (const GstVideoFormat fmt : formats) {
-        const guint32 fourcc = gst_video_dma_drm_fourcc_from_format(fmt);
-        if (fourcc != 0) {                               // DRM_FORMAT_INVALID
-            (void) appendDrmFormat(entries, fourcc, 0);  // 0 == DRM_FORMAT_MOD_LINEAR
-        }
     }
-    return dmaDrmCaps(entries);
+    qCDebug(GstDmaDrmCapsLog) << "EGL-derived DMA_DRM caps:" << offeredCount << "format/modifier pairs offered,"
+                              << excludedCount << "not importable per plane";
+    return "video/x-raw(memory:DMABuf), format=DMA_DRM, drm-format={ " + entries + " }; ";
 }
 
 #ifdef QGC_UNITTEST_BUILD
-bool dmaDrmModifierAdvertisedForTest(guint64 modifier) noexcept
+bool dmaDrmModifierImportableForTest(guint64 modifier) noexcept
 {
-    return isImportableModifier(static_cast<EGLuint64KHR>(modifier));
+    return modifierImportable(modifier);
+}
+
+guint32 dmaDrmPlaneImportFourccForTest(GstVideoFormat format, guint plane) noexcept
+{
+    return planeImportFourcc(format, plane);
 }
 #endif
 
@@ -157,15 +234,15 @@ std::string buildSupportedDmaDrmCaps(std::span<const GstVideoFormat>)
     return std::string();
 }
 
-std::string buildLinearDmaDrmCaps(std::span<const GstVideoFormat>)
-{
-    return std::string();
-}
-
 #ifdef QGC_UNITTEST_BUILD
-bool dmaDrmModifierAdvertisedForTest(guint64) noexcept
+bool dmaDrmModifierImportableForTest(guint64) noexcept
 {
     return false;
+}
+
+guint32 dmaDrmPlaneImportFourccForTest(GstVideoFormat, guint) noexcept
+{
+    return 0;
 }
 #endif
 

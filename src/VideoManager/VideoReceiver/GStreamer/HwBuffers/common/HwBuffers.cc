@@ -55,37 +55,6 @@ void onPipelineError(const GError* error, const gchar* debug) noexcept
     }
 }
 
-HwBufferEnvConfig readHwBufferEnvConfig() noexcept
-{
-    const auto truthy = [](const char* name, bool dflt) noexcept {
-        const QByteArray v = qgetenv(name).trimmed().toLower();
-        if (v.isEmpty()) {
-            return dflt;
-        }
-        return v != "0" && v != "false" && v != "off" && v != "no";
-    };
-    HwBufferEnvConfig c;
-    c.dmaBufCache = truthy("QGC_GST_DMABUF_CACHE", false);
-    c.dmaBufSingleEglImage = truthy("QGC_GST_DMABUF_SINGLE_EGLIMAGE", true);
-    c.dmaBufNoMmapFence = truthy("QGC_GST_DMABUF_NO_MMAP_FENCE", false);
-    c.offerDmaDrmLinear = truthy("QGC_GST_OFFER_DMA_DRM_LINEAR", false);
-    return c;
-}
-
-const HwBufferEnvConfig& hwBufferEnvConfig() noexcept
-{
-    static const HwBufferEnvConfig cfg = []() noexcept {
-        const HwBufferEnvConfig c = readHwBufferEnvConfig();
-        qCInfo(HwBuffersConfigLog).nospace()
-            << "HwBuffer env config: QGC_GST_DMABUF_CACHE=" << c.dmaBufCache
-            << " QGC_GST_DMABUF_SINGLE_EGLIMAGE=" << c.dmaBufSingleEglImage
-            << " QGC_GST_DMABUF_NO_MMAP_FENCE=" << c.dmaBufNoMmapFence
-            << " QGC_GST_OFFER_DMA_DRM_LINEAR=" << c.offerDmaDrmLinear;
-        return c;
-    }();
-    return cfg;
-}
-
 namespace {
 
 struct GpuBinChoice

@@ -49,10 +49,10 @@ private slots:
     void _testD3DMapTexturesWithQRhi_data();
     void _testD3DMapTexturesWithQRhi();
     void _testDmaBufDispatch();
-    void _testDmaDrmCapsRejectNonLinearModifiers();
-    void _testLinearDmaDrmCapsFollowFormatTable();
-    void _testDmaBufRejectsNonLinearDirectImport();
-    void _testDmaBufTiledImportAvoidsTexStorage();
+    void _testDmaDrmModifierPolicy_data();
+    void _testDmaDrmModifierPolicy();
+    void _testDmaDrmPlaneFourccsMatchQtImporter();
+    void _testDmaBufPathNeedsQtEglDisplay();
     void _testVulkanDispatchDemotesToCpu();
     void _testVulkanOwnedFrameTexturesReleaseOnDestroy();
     void _testCapsCacheInvalidation();
@@ -108,10 +108,9 @@ private slots:
     void _testHwPathRegistrySelection_data();
     void _testHwPathRegistrySelection();
     void _testHwBufferFactoryCacheRejectsMemoryTypeChange();
-    void _testDmaBufSingleFdImportEnvGate();
-    void _testDmaBufPathNeedsQtEglDisplay();
-    void _testDmaBufEglBadMatchLatch_data();
-    void _testDmaBufEglBadMatchLatch();
+    void _testDmaBufTiledFrameRefusesCpuMap();
+    void _testDmaBufImportFailureLatch_data();
+    void _testDmaBufImportFailureLatch();
     void _testDmaBufVulkanImportRejectsMultiPlanar_data();
     void _testDmaBufVulkanImportRejectsMultiPlanar();
     void _testCpuZeroCopyFrameRejectsWritableMap();
@@ -122,8 +121,6 @@ private slots:
     void _testCpuCopyOddDimensions();
     void _testQGCRhiCaptureCacheLifecycle();
     void _testPreflightVerdictsDroppedWithRhi();
-    void _testHwBufferEnvConfigParsing_data();
-    void _testHwBufferEnvConfigParsing();
     void _testGpuBinModeFromEnvironment_data();
     void _testGpuBinModeFromEnvironment();
     void _testColorimetryPixelFormatMapping();

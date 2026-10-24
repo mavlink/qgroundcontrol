@@ -285,44 +285,6 @@ void GStreamerTest::_testPreflightVerdictsDroppedWithRhi()
 #endif
 }
 
-void GStreamerTest::_testHwBufferEnvConfigParsing_data()
-{
-    QTest::addColumn<QByteArray>("value");  // null: variable unset
-    QTest::addColumn<bool>("expectedDefaultOff");
-    QTest::addColumn<bool>("expectedDefaultOn");
-
-    QTest::newRow("unset") << QByteArray() << false << true;
-    QTest::newRow("empty") << QByteArray("") << false << true;
-    QTest::newRow("zero") << QByteArray("0") << false << false;
-    QTest::newRow("false-padded-mixed-case") << QByteArray(" False ") << false << false;
-    QTest::newRow("off") << QByteArray("OFF") << false << false;
-    QTest::newRow("no") << QByteArray("no") << false << false;
-    QTest::newRow("one") << QByteArray("1") << true << true;
-    QTest::newRow("other-word") << QByteArray("force") << true << true;
-}
-
-void GStreamerTest::_testHwBufferEnvConfigParsing()
-{
-    QFETCH(QByteArray, value);
-    QFETCH(bool, expectedDefaultOff);
-    QFETCH(bool, expectedDefaultOn);
-
-    // QGC_GST_DMABUF_CACHE defaults off, QGC_GST_DMABUF_SINGLE_EGLIMAGE defaults on.
-    const TestFixtures::EnvVarFixture defaultOffGuard("QGC_GST_DMABUF_CACHE");
-    const TestFixtures::EnvVarFixture defaultOnGuard("QGC_GST_DMABUF_SINGLE_EGLIMAGE");
-    for (const char* const name : {"QGC_GST_DMABUF_CACHE", "QGC_GST_DMABUF_SINGLE_EGLIMAGE"}) {
-        if (value.isNull()) {
-            qunsetenv(name);
-        } else {
-            qputenv(name, value);
-        }
-    }
-
-    const HwBuffers::HwBufferEnvConfig config = HwBuffers::readHwBufferEnvConfig();
-    QCOMPARE(config.dmaBufCache, expectedDefaultOff);
-    QCOMPARE(config.dmaBufSingleEglImage, expectedDefaultOn);
-}
-
 void GStreamerTest::_testGpuBinModeFromEnvironment_data()
 {
     QTest::addColumn<QByteArray>("value");  // null: variable unset

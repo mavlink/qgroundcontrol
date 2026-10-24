@@ -12,9 +12,8 @@ namespace GstQgc {
 /// glupload's GLMemory caps: single-plane RGB only, because Qt's GL import samples multi-plane GLMemory (e.g. the
 /// NV12 that VA H.265 negotiates there) as intermittent green frames.
 inline constexpr unsigned kOfferGlUpload = 1u << 0;
-/// The DMA_DRM caps, EGL-derived and forced LINEAR (QGC_GST_OFFER_DMA_DRM_LINEAR): formats the EGLImage importer takes
-/// as one image.
-inline constexpr unsigned kOfferLinearDmaDrm = 1u << 1;
+/// The EGL-derived DMA_DRM caps: formats the DMABuf importer takes with an explicit modifier.
+inline constexpr unsigned kOfferDmaDrm = 1u << 1;
 
 /// Single source of truth linking a GStreamer video format to its Qt pixel format and (optionally) its
 /// negotiation caps token. Every advertised caps format list (GstQgcCaps) and toQtPixelFormat()
@@ -30,19 +29,19 @@ struct VideoFormatEntry
 
 inline constexpr VideoFormatEntry kVideoFormatTable[] = {
     // Advertised set — order is preserved in the generated caps string (negotiation preference order).
-    {GST_VIDEO_FORMAT_NV12, QVideoFrameFormat::Format_NV12, "NV12", kOfferLinearDmaDrm},
-    {GST_VIDEO_FORMAT_NV21, QVideoFrameFormat::Format_NV21, "NV21", kOfferLinearDmaDrm},
-    {GST_VIDEO_FORMAT_I420, QVideoFrameFormat::Format_YUV420P, "I420", kOfferLinearDmaDrm},
-    {GST_VIDEO_FORMAT_YV12, QVideoFrameFormat::Format_YV12, "YV12", kOfferLinearDmaDrm},
+    {GST_VIDEO_FORMAT_NV12, QVideoFrameFormat::Format_NV12, "NV12", kOfferDmaDrm},
+    {GST_VIDEO_FORMAT_NV21, QVideoFrameFormat::Format_NV21, "NV21", kOfferDmaDrm},
+    {GST_VIDEO_FORMAT_I420, QVideoFrameFormat::Format_YUV420P, "I420", kOfferDmaDrm},
+    {GST_VIDEO_FORMAT_YV12, QVideoFrameFormat::Format_YV12, "YV12", kOfferDmaDrm},
     {GST_VIDEO_FORMAT_Y42B, QVideoFrameFormat::Format_YUV422P, "Y42B"},
-    {GST_VIDEO_FORMAT_P010_10LE, QVideoFrameFormat::Format_P010, "P010_10LE", kOfferLinearDmaDrm},
+    {GST_VIDEO_FORMAT_P010_10LE, QVideoFrameFormat::Format_P010, "P010_10LE", kOfferDmaDrm},
     {GST_VIDEO_FORMAT_AYUV, QVideoFrameFormat::Format_AYUV, "AYUV"},
     {GST_VIDEO_FORMAT_YUY2, QVideoFrameFormat::Format_YUYV, "YUY2"},
     {GST_VIDEO_FORMAT_UYVY, QVideoFrameFormat::Format_UYVY, "UYVY"},
     {GST_VIDEO_FORMAT_GRAY8, QVideoFrameFormat::Format_Y8, "GRAY8"},
     {GST_VIDEO_FORMAT_GRAY16_LE, QVideoFrameFormat::Format_Y16, "GRAY16_LE"},
-    {GST_VIDEO_FORMAT_BGRA, QVideoFrameFormat::Format_BGRA8888, "BGRA", kOfferGlUpload | kOfferLinearDmaDrm},
-    {GST_VIDEO_FORMAT_RGBA, QVideoFrameFormat::Format_RGBA8888, "RGBA", kOfferGlUpload | kOfferLinearDmaDrm},
+    {GST_VIDEO_FORMAT_BGRA, QVideoFrameFormat::Format_BGRA8888, "BGRA", kOfferGlUpload | kOfferDmaDrm},
+    {GST_VIDEO_FORMAT_RGBA, QVideoFrameFormat::Format_RGBA8888, "RGBA", kOfferGlUpload | kOfferDmaDrm},
     // Accepted but not advertised: mapped defensively if upstream or a GPU path delivers them anyway.
     {GST_VIDEO_FORMAT_BGRx, QVideoFrameFormat::Format_BGRX8888, nullptr},
     {GST_VIDEO_FORMAT_RGBx, QVideoFrameFormat::Format_RGBX8888, nullptr},

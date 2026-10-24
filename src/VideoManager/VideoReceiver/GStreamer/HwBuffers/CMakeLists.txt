@@ -170,14 +170,15 @@ endif()
 
 # ---- GPU path table (row order matters: CUDA builds on DMABuf) ----
 # cmake-format: off
-# Linux DMABuf zero-copy (VA-API / V4L2 / Mesa). QGC_GST_HAS_DMABUF comes from cmake/GStreamer/Orchestrator.cmake.
+# Linux DMABuf zero-copy (VA-API / V4L2 / Mesa) through Qt Multimedia's DMABuf importer. QGC_GST_HAS_DMABUF comes from
+# cmake/GStreamer/Orchestrator.cmake.
 set(_qgc_gpu_row_DMABuf
     PLATFORMS LINUX
-    REQUIRES QGC_GST_HAS_DMABUF
+    REQUIRES QGC_GST_HAS_DMABUF QT_FEATURE_linux_dmabuf
     EGL REQUIRED
     DEFINE QGC_HAS_GST_DMABUF_GPU_PATH
-    SOURCES dmabuf/GstDmaBufVideoBuffer.cc dmabuf/GstDmaBufVideoBuffer.h dmabuf/GstDmaFourcc.cc dmabuf/GstDmaFourcc.h
-            dmabuf/GstDmaBufVulkanImport.cc dmabuf/GstDmaBufVulkanImport.h)
+    SOURCES dmabuf/GstDmaBufVideoBuffer.cc dmabuf/GstDmaBufVideoBuffer.h dmabuf/GstQtDmaBufImport.cc
+            dmabuf/GstQtDmaBufImport.h dmabuf/GstDmaBufVulkanImport.cc dmabuf/GstDmaBufVulkanImport.h)
 # NVMM/CUDA: exports CUDA memory as a DMABuf fd and reuses the DMABuf EGLImage path; gst_cuda_memory_export is 1.24+.
 set(_qgc_gpu_row_CUDA
     PLATFORMS LINUX
@@ -262,8 +263,8 @@ endif()
 
 # GPU bin variants; HwBuffers::gpuBinMode() picks one at runtime. glupload is Android's only bin (GstGLContext handshake
 # amcvideodec needs for Surface output) and Linux's default (gst-gl imports both LINEAR and vendor-tiled dmabuf to
-# GLMemory). Direct DMABuf feeds QGC's own importer, which binds LINEAR only. Linux builds with both pick one via
-# QGC_GST_GPU_BIN.
+# GLMemory). Direct DMABuf feeds Qt's per-plane importer, with the plain tilings EGL reports. Linux builds with both
+# pick one via QGC_GST_GPU_BIN.
 set(_qgc_unreachable_paths "")
 if((ANDROID OR LINUX) AND _qgc_gpu_GLMemory)
     target_compile_definitions(QGCGStreamer PUBLIC QGC_GST_BIN_HAS_GLUPLOAD=1)

@@ -27,8 +27,7 @@ struct SinkCapsPolicy
 /// kVideoFormatTable. The glupload variant takes GLMemory only, as glcolorconvert outputs it. Otherwise, with
 /// gpu-zerocopy, the GPU memory @p policy's render target imports comes first: EGL-importable DMA_DRM and DMABuf, and
 /// GLMemory unless the direct DMABuf variant, on OpenGL over EGL; D3D11Memory on Direct3D11; none elsewhere. System
-/// memory always closes the list. DMABuf builds query EGL for importable DMA_DRM modifiers and read
-/// QGC_GST_OFFER_DMA_DRM_LINEAR.
+/// memory always closes the list. DMABuf builds query EGL for importable DMA_DRM modifiers.
 std::string buildSinkCaps(const SinkCapsPolicy& policy);
 
 }  // namespace GstQgc

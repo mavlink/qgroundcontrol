@@ -11,7 +11,7 @@
 #include "GstHwFrameTexturesBase.h"
 #include "GstHwVideoBuffer.h"
 
-/// Shared base for GL-texture-backed `QVideoFrameTextures` wrappers (GLMemory and DMABuf-via-EGLImage).
+/// `QVideoFrameTextures` wrapper over the GL textures of a GLMemory frame.
 class GstGlFrameTextures : public GstHwFrameTexturesBase
 {
 public:

@@ -17,23 +17,6 @@ class QQuickWindow;
 
 namespace HwBuffers {
 
-/// Process-wide QGC_GST_* runtime toggles, parsed once and logged at first access so operators can paste the
-/// effective config into bug reports.
-struct HwBufferEnvConfig
-{
-    bool dmaBufCache = false;           // QGC_GST_DMABUF_CACHE        (default off)
-    bool dmaBufSingleEglImage = true;   // QGC_GST_DMABUF_SINGLE_EGLIMAGE (default on)
-    bool dmaBufNoMmapFence = false;     // QGC_GST_DMABUF_NO_MMAP_FENCE (default off)
-    bool offerDmaDrmLinear = false;     // QGC_GST_OFFER_DMA_DRM_LINEAR (default off)
-};
-
-/// Parses the toggles from the current environment. Values are case-insensitive and trimmed; unset or empty keeps the
-/// default, "0"/"false"/"off"/"no" turn a toggle off and anything else turns it on.
-HwBufferEnvConfig readHwBufferEnvConfig() noexcept;
-
-/// readHwBufferEnvConfig() of the first call, logged once; thread-safe via static-init guarantees.
-const HwBufferEnvConfig& hwBufferEnvConfig() noexcept;
-
 /// Head of qgcvideosinkbin's GPU branch. Linux builds with both gst-gl and DMABuf compile GlUpload and DirectDmaBuf
 /// and pick one at runtime; every other build compiles exactly one.
 enum class GpuBinMode

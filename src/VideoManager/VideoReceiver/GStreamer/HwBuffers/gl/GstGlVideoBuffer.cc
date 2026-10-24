@@ -43,7 +43,6 @@ namespace {
 
 using GstHw::kMaxPlanes;
 
-// Its own type, so reuse never adopts a DMABuf bundle (also a GstGlFrameTextures).
 class FrameTextures final : public GstGlFrameTextures
 {
 public:

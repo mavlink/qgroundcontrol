@@ -52,6 +52,14 @@ int planeHeight(const GstVideoInfo& info, int plane)
     return GST_VIDEO_INFO_COMP_HEIGHT(&info, component);
 }
 
+PlaneLayout planeLayout(const GstVideoInfo& info, const GstVideoMeta* vmeta, int plane) noexcept
+{
+    if (vmeta) {
+        return {vmeta->offset[plane], vmeta->stride[plane]};
+    }
+    return {GST_VIDEO_INFO_PLANE_OFFSET(&info, plane), GST_VIDEO_INFO_PLANE_STRIDE(&info, plane)};
+}
+
 int planeRowBytes(const GstVideoInfo& info, int plane)
 {
     // The furthest byte any component of the plane reaches: packed 4:2:2 (YUY2, UYVY) interleaves half-width chroma

@@ -57,7 +57,9 @@ A QGC-owned plugin (`gstqgc/`) bridging the pipeline into Qt:
 
 ### `HwBuffers` — GPU paths
 
-Per-platform import of decoded GPU frames without a copy, all sharing `GstHwFrameTexturesBase : QVideoFrameTextures`:
+Per-platform import of decoded GPU frames without a copy. Most paths wrap their native textures in
+`GstHwFrameTexturesBase : QVideoFrameTextures`; the DMABuf path hands its planes to Qt Multimedia's DMABuf importer
+(`dmabuf/GstQtDmaBufImport`, the only code using that private Qt API):
 
 - **Platforms**: `dmabuf` (Linux/VA-API), `gl`, `vulkan`, `d3d` (D3D11/D3D12), `cuda`, `apple` (IOSurface), `android` (AHardwareBuffer).
 - **`HwPathDescriptor`**: each backend describes its path once (memory match, buffer construction, cache reset,
@@ -128,9 +130,8 @@ With `gpu-zerocopy`, `qgcvideosinkbin` picks one of three variants when it is bu
 
 - `glupload` (the default on Linux and Android): the converter feeds glupload → glcolorconvert → GLMemory. gst-gl
   imports LINEAR and vendor-tiled DMABuf, at the cost of its own copy/convert.
-- `dmabuf`: DMABuf and DMA_DRM go straight to QGC's EGLImage importer, skipping gst-gl. It binds LINEAR buffers only,
-  so it suits LINEAR producers (V4L2, Mali, V3D); a driver that exports only tiled surfaces, such as Intel iHD, falls
-  back to system memory.
+- `dmabuf`: DMABuf and DMA_DRM go straight to Qt's DMABuf importer, skipping gst-gl. It takes LINEAR and the plain
+  tilings Qt's EGL display reports (see [DMABuf zero-copy diagnostics](#dmabuf-zero-copy-diagnostics)).
 - passthrough: the converter feeds the sink, which takes the GPU memory the renderer imports (see
   [`gstqgc`](#gstqgc--custom-gstreamer-plugin)). Windows and Apple builds always use it.
 
@@ -151,24 +152,22 @@ misbehaves; video then takes system memory.
 
 #### DMABuf zero-copy diagnostics
 
-Linux DMABuf zero-copy normally tries the single-EGLImage importer for shared-fd
-multi-plane formats such as NV12/P010, matching the common VA-API exporter
-layout. To force CPU fallback or per-plane import during driver triage, disable
-that importer before launching QGC:
+The direct DMABuf path hands each plane to Qt Multimedia's DMABuf importer as its own EGLImage, with the DMA_DRM
+modifier when the caps carry one. QGC adds what Qt's importer lacks: it waits for the decoder's writes first (on the
+GPU through the dma-buf's exported fence, else with a bounded `poll()`), and it keeps the buffer alive as long as the
+textures.
 
-```bash
-export QGC_GST_DMABUF_SINGLE_EGLIMAGE=0
-```
-
-Unset the variable, or set it to `1`, to restore the default behavior.
-
-QGC also switches to per-plane import on its own when the single-EGLImage
-importer fails with `EGL_BAD_MATCH`. It disables DMABuf zero-copy for the
-session only when per-plane import fails the same way.
-
-`QGC_GST_DMABUF_CACHE=1` keeps each pooled buffer's EGLImages across frames
-instead of importing them every frame. It is off by default because no test or
-CI host exercises the direct DMABuf importer.
+- It needs Qt to render with EGL: Wayland, eglfs, or xcb with `QT_XCB_GL_INTEGRATION=xcb_egl`. Under GLX, Qt's xcb
+  default, DMABuf frames take the CPU path from the start.
+- The DMA_DRM caps offer the (format, modifier) pairs Qt's EGL display reports when every plane can be sampled with
+  that modifier. Plain vendor tilings (Intel X/Y/4, AMD without DCC) qualify; compressed layouts and those with
+  auxiliary planes (Intel CCS, AMD DCC, Arm AFBC, Qualcomm UBWC) don't. Buffers negotiated with plain
+  `memory:DMABuf` caps import without a modifier, leaving the layout to the driver.
+- `EGL_BAD_MATCH` (a broken EGL/driver pairing, QTBUG-112312), or 30 failed imports in a row, turn the path off until
+  the scene graph is recreated: frames take the CPU path, and later negotiations offer no DMA_DRM caps.
+- A tiled frame has no CPU layout: when its import fails it is dropped rather than shown scrambled.
+- The `Video.GStreamer.HwBuffers.GstDmaBuf` and `Video.GStreamer.HwBuffers.GstDmaDrmCaps` debug categories log the
+  offered modifiers and the first import; Qt's `qt.multimedia.dmabuf` category logs its EGL calls.
 
 ### macOS / Windows / iOS
 

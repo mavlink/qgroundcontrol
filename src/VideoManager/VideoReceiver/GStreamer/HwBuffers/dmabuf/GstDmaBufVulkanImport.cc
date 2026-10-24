@@ -19,10 +19,10 @@
 #include <QtGui/QVulkanInstance>
 
 #include "GstDmaBufVideoBuffer.h"
-#include "GstDmaFourcc.h"
 #include "GstHwImportPreflight.h"
 #include "GstHwPathTelemetry.h"
 #include "GstHwVideoBuffer.h"
+#include "GstHwVideoInfo.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(GstDmaBufVulkanLog, "Video.GStreamer.HwBuffers.GstDmaBufVulkan")
@@ -192,12 +192,18 @@ VkFormat vkFormatForVideoInfo(const GstVideoInfo& videoInfo)
     if (GST_VIDEO_INFO_N_PLANES(&videoInfo) != 1) {
         return VK_FORMAT_UNDEFINED;
     }
-    switch (GstHw::drmFourccForPlane(videoInfo, 0)) {
-        case DRM_FORMAT_ABGR8888:
-        case DRM_FORMAT_XBGR8888:
+    // Bytes in memory order, which Qt's RGB shaders swizzle per pixel format.
+    switch (GST_VIDEO_INFO_FORMAT(&videoInfo)) {
+        case GST_VIDEO_FORMAT_RGBA:
+        case GST_VIDEO_FORMAT_RGBx:
+        case GST_VIDEO_FORMAT_ARGB:
+        case GST_VIDEO_FORMAT_xRGB:
+        case GST_VIDEO_FORMAT_ABGR:
+        case GST_VIDEO_FORMAT_xBGR:
+        case GST_VIDEO_FORMAT_AYUV:
             return VK_FORMAT_R8G8B8A8_UNORM;
-        case DRM_FORMAT_ARGB8888:
-        case DRM_FORMAT_XRGB8888:
+        case GST_VIDEO_FORMAT_BGRA:
+        case GST_VIDEO_FORMAT_BGRx:
             return VK_FORMAT_B8G8R8A8_UNORM;
         default:
             return VK_FORMAT_UNDEFINED;
@@ -334,7 +340,8 @@ QVideoFrameTexturesUPtr GstDmaBufVideoBuffer::importVulkan(QRhi& rhi, QVideoFram
 
     VkImageDrmFormatModifierExplicitCreateInfoEXT modInfo = {};
     modInfo.sType = VK_STRUCTURE_TYPE_IMAGE_DRM_FORMAT_MODIFIER_EXPLICIT_CREATE_INFO_EXT;
-    modInfo.drmFormatModifier = _drmModifier;
+    // Legacy DMABuf caps carry no modifier; Vulkan needs an explicit one, and those producers export LINEAR.
+    modInfo.drmFormatModifier = (_drmModifier == DRM_FORMAT_MOD_INVALID) ? DRM_FORMAT_MOD_LINEAR : _drmModifier;
     modInfo.drmFormatModifierPlaneCount = 1;
     modInfo.pPlaneLayouts = &planeLayout;
 
