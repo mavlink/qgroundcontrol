@@ -33,6 +33,7 @@ class VehicleComponent : public QObject
     Q_PROPERTY(AutoPilotPlugin::KnownVehicleComponent KnownVehicleComponent READ KnownVehicleComponent  CONSTANT)
     Q_PROPERTY(QStringList sectionIds                                       READ sectionIds             NOTIFY sectionIdsChanged)
     Q_PROPERTY(QVariantMap sectionKeywords                                  READ sectionKeywords        NOTIFY sectionIdsChanged)
+    Q_PROPERTY(QStringList searchKeywords READ searchKeywords CONSTANT)
     Q_PROPERTY(QString  vehicleConfigJson                                   READ vehicleConfigJson      CONSTANT)
     Q_PROPERTY(bool     showFirstSectionOnRootClick                         READ showFirstSectionOnRootClick CONSTANT)
 
@@ -62,6 +63,9 @@ public:
 
     /// Search keywords per section, keyed by section ID. Values are original-case translatable terms.
     QVariantMap sectionKeywords() const;
+
+    /// Translated search terms for the whole component, for pages without vehicleConfigJson() sections.
+    virtual QStringList searchKeywords() const { return QStringList(); }
 
     /// When true, clicking the root component in the tree selects the first section instead of showing all.
     virtual bool showFirstSectionOnRootClick() const { return false; }

@@ -8,20 +8,21 @@ For the complete JSON schema reference see [tools/generators/config_qml/README.m
 
 The generation pipeline is:
 
-1. **JSON page definitions** in `src/AutoPilotPlugins/{APM,PX4}/VehicleConfig/*.VehicleConfig.json`
+1. **JSON page definitions** in `src/AutoPilotPlugins/APM/VehicleConfig/*.VehicleConfig.json`
 2. **Python generator** in `tools/generators/config_qml/` (`model.py` loads the JSON, `emit.py` renders QML)
-3. **Generated QML** in `build/src/AutoPilotPlugins/{APM,PX4}/generated/`
+3. **Generated QML** in `build/src/AutoPilotPlugins/APM/generated/`
 4. **C++ component class** (e.g. `APMPowerComponent`) loads the generated QML via `setupSource()`
 
-At build time, CMake runs the generator for each firmware plugin and places generated QML files in the build tree.
-Those files are compiled into the corresponding `QGroundControl.AutoPilotPlugins.*` QML module.
+At build time, CMake runs the generator for the ArduPilot plugin and places generated QML files in the build tree.
+Those files are compiled into the `QGroundControl.AutoPilotPlugins.APM` QML module.
 
 ## Where Generation Is Wired
 
-Generation is configured in each firmware plugin's `CMakeLists.txt`:
+Generation is configured in the ArduPilot plugin's `CMakeLists.txt`:
 
 - `src/AutoPilotPlugins/APM/CMakeLists.txt` — target `GenerateConfigQmlAPM`
-- `src/AutoPilotPlugins/PX4/CMakeLists.txt` — target `GenerateConfigQmlPX4`
+
+PX4 setup pages are hand-written QML built from row definitions, so PX4 has no generation target.
 
 Each runs:
 
@@ -63,7 +64,7 @@ Subclasses only need to implement `vehicleConfigJson()` to return the path to th
 4. Build. CMake picks up the new JSON file and generates its QML automatically:
 
    ```bash
-   cmake --build build --config Debug --target GenerateConfigQmlAPM  # or GenerateConfigQmlPX4
+   cmake --build build --config Debug --target GenerateConfigQmlAPM
    ```
 
 ## Important Notes

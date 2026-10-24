@@ -113,6 +113,14 @@ Rectangle {
                 }
             }
         }
+        var componentKeywords = component.searchKeywords
+        if (componentKeywords) {
+            for (var k = 0; k < componentKeywords.length; k++) {
+                if (componentKeywords[k].toLowerCase().indexOf(query) !== -1) {
+                    return true
+                }
+            }
+        }
         return false
     }
 

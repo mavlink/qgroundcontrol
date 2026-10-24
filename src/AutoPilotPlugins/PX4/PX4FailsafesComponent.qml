@@ -138,6 +138,12 @@ SetupPage {
                     }
                 }
 
+                ConfigNote {
+                    // A wrapped label reports its unwrapped width as its implicit width, which would widen the page
+                    Layout.preferredWidth:  0
+                    text:                   qsTr("Return actions use the settings on the Return & Land page.")
+                }
+
                 ConfigRowGroups {
                     model:              _groups
                     groupShown:         failsafesPage._groupShown

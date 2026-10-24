@@ -62,6 +62,42 @@ void PX4VehicleConfigUITest::_testSidebarDividers()
     });
 }
 
+// Row-based pages have no vehicleConfigJson() sections, so search relies on their component-level keywords.
+void PX4VehicleConfigUITest::_testSearchMatchesComponentKeywords()
+{
+    runWithMockLink([] { return MockLink::startPX4MockLink(); },
+                    [&](QPointer<MockLink> /*mockLink*/, Vehicle* /*vehicle*/) {
+                        navigateToConfigureView();
+                        if (QTest::currentTestFailed()) {
+                            return;
+                        }
+
+                        QQuickItem* const searchField =
+                            findVisibleItem(_rootItem, QStringLiteral("vehicleConfig_searchField"), 3000);
+                        QVERIFY(searchField);
+
+                        const QList<QPair<QString, QString>> queryToComponent = {
+                            {QStringLiteral("loiter"), QStringLiteral("vehicleConfig_comp_Return&Land")},
+                            {QStringLiteral("obstacle"), QStringLiteral("vehicleConfig_comp_Collision")},
+                            {QStringLiteral("dshot"), QStringLiteral("vehicleConfig_comp_ESC")},
+                            {QStringLiteral("voltage"), QStringLiteral("vehicleConfig_comp_Battery")},
+                            {QStringLiteral("geofence"), QStringLiteral("vehicleConfig_comp_Failsafes")},
+                        };
+                        for (const auto& [query, componentName] : queryToComponent) {
+                            searchField->setProperty("text", query);
+                            QQuickItem* const componentButton = findItem(_rootItem, componentName);
+                            QVERIFY2(componentButton, qPrintable(componentName));
+                            QTRY_VERIFY2(componentButton->isVisible(), qPrintable(query));
+                            QQuickItem* const tuningButton =
+                                findItem(_rootItem, QStringLiteral("vehicleConfig_comp_PIDTuning"));
+                            QVERIFY(tuningButton);
+                            QTRY_VERIFY2(!tuningButton->isVisible(), qPrintable(query));
+                        }
+
+                        searchField->setProperty("text", QString());
+                    });
+}
+
 // Cycle through the axis buttons on a PID tuning tab. Each click exercises
 // the LineSeries remove/re-add path on GraphsView; qWait lets the polish pass run.
 void PX4VehicleConfigUITest::_cycleAxisButtons(const QStringList &axisNames)

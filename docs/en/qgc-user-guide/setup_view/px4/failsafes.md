@@ -27,7 +27,6 @@ These show the action as fixed text.
 
 Rows are grouped by cause, with the most commonly changed settings first:
 
-- **Return Mode** — where the vehicle returns to and what it does there. Every _Return_ action on the page uses these settings.
 - **Power** — battery levels and action, remaining flight time, and maximum flight time.
 - **Link Loss** — manual control (RC or joystick), data link (GCS), offboard and onboard computer loss.
 - **Navigation & Environment** — geofence, GNSS loss, position estimate loss, low position accuracy, high wind, GPS failure loiter and traffic avoidance.
@@ -35,6 +34,7 @@ Rows are grouped by cause, with the most commonly changed settings first:
 - **VTOL** — quadchute.
 - **Vehicle Health** — attitude failure, motor failure, imbalanced propeller, ESC arming failure, parachute, altitude loss and external trigger.
 
+Every _Return_ action on the page uses the settings on the _Return & Land_ page.
 Select **Active** to hide the failsafes that are turned off.
 Changes are written to the vehicle immediately and can be made in flight.
 

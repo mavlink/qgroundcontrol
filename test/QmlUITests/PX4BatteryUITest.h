@@ -13,6 +13,7 @@ private slots:
     void _unclaimedBatteryNoteDoesNotWidenPage();
     void _rowSeparatorsFollowTheShownRows();
     void _reportedBatteryDotFollowsTheReportedVoltage();
+    void _setupCompleteIgnoresCellsForExternalBattery();
 
 private:
     /// Sets BAT1_SOURCE and accepts the reboot notice that follows. Check QTest::currentTestFailed() afterwards.

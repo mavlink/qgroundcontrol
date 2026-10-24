@@ -1,27 +1,28 @@
 #pragma once
 
+#include <QtCore/QStringList>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "FactPanelController.h"
 
-/// \brief Power Component MVC Controller for PowerComponent.qml.
-///
-class PowerComponentController : public FactPanelController
+/// Controller for PX4EscComponent.qml. Runs the ESC PWM calibration.
+class PX4EscController : public FactPanelController
 {
     Q_OBJECT
     QML_ELEMENT
-public:
-    PowerComponentController(void);
 
-    Q_INVOKABLE void calibrateEsc(void);
+public:
+    PX4EscController();
+
+    Q_INVOKABLE void calibrateEsc();
 
 signals:
-    void oldFirmware(void);
-    void newerFirmware(void);
-    void incorrectFirmwareRevReporting(void);
-    void connectBattery(void);
-    void disconnectBattery(void);
-    void batteryConnected(void);
+    void oldFirmware();
+    void newerFirmware();
+    void incorrectFirmwareRevReporting();
+    void connectBattery();
+    void disconnectBattery();
+    void batteryConnected();
     void calibrationFailed(const QString& errorMessage);
     void calibrationSuccess(const QStringList& warningMessages);
 
@@ -30,7 +31,7 @@ private slots:
                                    const QString& description);
 
 private:
-    void _stopCalibration(void);
+    void _stopCalibration();
 
     QStringList _warningMessages;
     static const int _neededFirmwareRev = 1;

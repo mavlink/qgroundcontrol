@@ -11,25 +11,6 @@ var _commonActions = { "0": "none", "1": "warning", "2": "hold", "3": "return", 
 function failsafeRows() {
     return [
         {
-            id: "returnMode", group: qsTr("Return Mode"), title: qsTr("Return behavior"),
-            description: qsTr("Used by every Return action. Where the vehicle goes, how high it flies, and what it does on arrival."),
-            cells: [
-                { param: "RTL_TYPE", label: qsTr("Destination") },
-                { param: "RTL_RETURN_ALT", label: qsTr("Climb to altitude") },
-                { param: "RTL_DESCEND_ALT", label: qsTr("Loiter altitude") },
-                { param: "RTL_LAND_DELAY", label: qsTr("Loiter time before landing"),
-                  note: qsTr("-1 loiters and does not land.") },
-                { param: "MPC_LAND_SPEED", label: qsTr("Landing descent rate"), vehicles: ["multiRotor", "vtol"] },
-                { param: "RTL_MIN_DIST", label: qsTr("Cone: special rules within") },
-                { param: "RTL_CONE_ANG", label: qsTr("Altitude cone half-angle") },
-                { param: "RTL_LOITER_RAD", label: qsTr("Loiter radius"), vehicles: ["fixedWing", "vtol"] },
-                { param: "RTL_PLD_MD", label: qsTr("Precision landing") },
-                { param: "RTL_APPR_FORCE", label: qsTr("Require approach") },
-                { param: "COM_DISARM_LAND", label: qsTr("Disarm after landing"), note: qsTr("0 or negative disables.") }
-            ]
-        },
-
-        {
             id: "battery", group: qsTr("Power"), title: qsTr("Battery"),
             description: qsTr("Three levels. The action applies at critical and emergency."),
             cells: [

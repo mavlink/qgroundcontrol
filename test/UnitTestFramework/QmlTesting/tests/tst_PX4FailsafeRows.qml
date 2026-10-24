@@ -156,22 +156,6 @@ TestCase {
         verify(positionParams(_multiRotor).indexOf("COM_POS_FS_EPH") >= 0)
         verify(positionParams(_fixedWing).indexOf("COM_POS_FS_EPH") < 0)
         verify(positionParams(_fixedWing).indexOf("COM_VEL_FS_EVH") >= 0)
-
-        var withLoiterRadius = function(vehicle) {
-            var row = _rowById(ConfigRows.visibleRows(Rows.failsafeRows(), vehicle, _exists(_allParams)), "returnMode")
-            return row.params.indexOf("RTL_LOITER_RAD") >= 0
-        }
-        verify(!withLoiterRadius(_multiRotor))
-        verify(withLoiterRadius(_fixedWing))
-        verify(withLoiterRadius(_vtol))
-
-        var withLandSpeed = function(vehicle) {
-            var row = _rowById(ConfigRows.visibleRows(Rows.failsafeRows(), vehicle, _exists(_allParams)), "returnMode")
-            return row.params.indexOf("MPC_LAND_SPEED") >= 0
-        }
-        verify(withLandSpeed(_multiRotor))
-        verify(withLandSpeed(_vtol))
-        verify(!withLandSpeed(_fixedWing))
     }
 
     function test_visibleRows_fixedCellOnlyWhenActionParamMissing() {

@@ -204,271 +204,255 @@ SetupPage {
             }
 
             // ---- SYS_FAILURE_EN gate + reboot ----------------------------------
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.preferredHeight: gateCol.height + (ScreenTools.defaultFontPixelHeight * 1.2)
-                color: qgcPal.windowCard
-                radius: ScreenTools.defaultFontPixelWidth * 0.5
+            QGCGroupBox {
+                heading: qsTr("Failure Injection")
+                showDividers: false
 
-                ColumnLayout {
-                    id: gateCol
-                    anchors.margins: ScreenTools.defaultFontPixelHeight * 0.6
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: ScreenTools.defaultFontPixelHeight * 0.4
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: ScreenTools.defaultFontPixelWidth * 2
 
-                    RowLayout {
+                    QGCCheckBox {
+                        objectName: "failureInjection_enableCheckbox"
+                        text: qsTr("SYS_FAILURE_EN")
+                        enabled: _sysFailureEn !== null
+                        checked: _failureInjectionEnabled
+                        onClicked: _sysFailureEn.value = checked ? 1 : 0
+                    }
+                    QGCLabel {
+                        objectName: "failureInjection_enabledLabel"
                         Layout.fillWidth: true
-                        spacing: ScreenTools.defaultFontPixelWidth * 2
-
-                        QGCCheckBox {
-                            objectName: "failureInjection_enableCheckbox"
-                            text: qsTr("SYS_FAILURE_EN")
-                            enabled: _sysFailureEn !== null
-                            checked: _failureInjectionEnabled
-                            onClicked: _sysFailureEn.value = checked ? 1 : 0
-                        }
-                        QGCLabel {
-                            objectName: "failureInjection_enabledLabel"
-                            Layout.fillWidth: true
-                            color: qgcPal.colorGreen
-                            visible: _failureInjectionEnabled
-                            text: qsTr("Failure injection enabled.")
-                        }
+                        color: qgcPal.colorGreen
+                        visible: _failureInjectionEnabled
+                        text: qsTr("Failure injection enabled.")
                     }
                 }
             }
 
             // ---- builder -------------------------------------------------------
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.preferredHeight: builderCol.height + (ScreenTools.defaultFontPixelHeight * 1.2)
-                color: qgcPal.windowCard
-                radius: ScreenTools.defaultFontPixelWidth * 0.5
+            QGCGroupBox {
+                heading: qsTr("Inject Failure")
+                showDividers: false
                 enabled: _failureInjectionEnabled
-                opacity: _failureInjectionEnabled ? 1.0 : 0.4
 
-                ColumnLayout {
-                    id: builderCol
-                    anchors.margins: ScreenTools.defaultFontPixelHeight * 0.6
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.top: parent.top
-                    spacing: ScreenTools.defaultFontPixelHeight * 0.6
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: ScreenTools.defaultFontPixelWidth * 2
 
-                    RowLayout {
-                        spacing: ScreenTools.defaultFontPixelWidth * 2
-
-                        ColumnLayout {
-                            QGCLabel { text: qsTr("Component") }
-                            QGCComboBox {
-                                id: unitCombo
-                                Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 24
-                                model: _units.map(function(u){ return u.name })
-                                currentIndex: _unitIndex
-                                onActivated: function(index) {
-                                    _unitIndex = index
-                                    _selectedInstances = [1] // reset selection on unit change
-                                }
+                    ColumnLayout {
+                        QGCLabel { text: qsTr("Component") }
+                        QGCComboBox {
+                            id: unitCombo
+                            Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 24
+                            model: _units.map(function(u){ return u.name })
+                            currentIndex: _unitIndex
+                            onActivated: function(index) {
+                                _unitIndex = index
+                                _selectedInstances = [1] // reset selection on unit change
                             }
                         }
+                    }
+                    ColumnLayout {
+                        QGCLabel { text: qsTr("Failure type") }
+                        QGCComboBox {
+                            Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 18
+                            model: _types.map(function(t){ return t.name })
+                            currentIndex: _typeIndex
+                            onActivated: function(index) { _typeIndex = index }
+                        }
+                    }
+                    // Detail parameters for the selected combo, styled like the pickers to their
+                    // left. Each editor appears only when the vehicle exposes the parameter:
+                    // enum metadata -> dropdown, otherwise numeric field.
+                    Repeater {
+                        model: _detailParams
                         ColumnLayout {
-                            QGCLabel { text: qsTr("Failure type") }
-                            QGCComboBox {
+                            id: detailCol
+                            property Fact _detailFact: controller.parameterExists(-1, modelData.param)
+                                                       ? controller.getParameterFact(-1, modelData.param,
+                                                                                     false /* reportMissing */)
+                                                       : null
+                            visible: detailCol._detailFact !== null
+
+                            QGCLabel { text: modelData.label }
+                            FactComboBox {
                                 Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 18
-                                model: _types.map(function(t){ return t.name })
-                                currentIndex: _typeIndex
-                                onActivated: function(index) { _typeIndex = index }
+                                fact: detailCol._detailFact
+                                indexModel: false
+                                visible: detailCol._detailFact !== null &&
+                                         detailCol._detailFact.enumStrings.length > 0
                             }
-                        }
-                        // Detail parameters for the selected combo, styled like the pickers to their
-                        // left. Each editor appears only when the vehicle exposes the parameter:
-                        // enum metadata -> dropdown, otherwise numeric field.
-                        Repeater {
-                            model: _detailParams
-                            ColumnLayout {
-                                id: detailCol
-                                property Fact _detailFact: controller.parameterExists(-1, modelData.param)
-                                                           ? controller.getParameterFact(-1, modelData.param,
-                                                                                         false /* reportMissing */)
-                                                           : null
-                                visible: detailCol._detailFact !== null
-
-                                QGCLabel { text: modelData.label }
-                                FactComboBox {
-                                    Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 18
-                                    fact: detailCol._detailFact
-                                    indexModel: false
-                                    visible: detailCol._detailFact !== null &&
-                                             detailCol._detailFact.enumStrings.length > 0
-                                }
-                                FactTextField {
-                                    Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 18
-                                    fact: detailCol._detailFact
-                                    visible: detailCol._detailFact !== null &&
-                                             detailCol._detailFact.enumStrings.length === 0
-                                }
+                            FactTextField {
+                                Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 18
+                                fact: detailCol._detailFact
+                                visible: detailCol._detailFact !== null &&
+                                         detailCol._detailFact.enumStrings.length === 0
                             }
-                        }
-                        Item { Layout.fillWidth: true }
-                        QGCButton {
-                            objectName: "failureInjection_injectButton"
-                            text: qsTr("Inject failure")
-                            primary: true
-                            enabled: _failureInjectionEnabled && _selectedInstances.length > 0
-                            onClicked: _apply()
                         }
                     }
+                    Item { Layout.fillWidth: true }
+                    QGCButton {
+                        objectName: "failureInjection_injectButton"
+                        text: qsTr("Inject failure")
+                        primary: true
+                        enabled: _failureInjectionEnabled && _selectedInstances.length > 0
+                        onClicked: _apply()
+                    }
+                }
 
-                    // multi-select instances ("All" = instance 0 = every instance of the unit)
-                    QGCLabel { text: qsTr("Instances — select one or more, or All") }
-                    Flow {
-                        Layout.fillWidth: true
-                        spacing: ScreenTools.defaultFontPixelWidth * 2
-                        Repeater {
-                            model: _instanceCount
-                            QGCCheckBox {
-                                text: qsTr("i = %1").arg(index + 1)
-                                checked: _selectedInstances.indexOf(index + 1) >= 0
-                                onClicked: _toggleInstance(index + 1)
-                            }
-                        }
-                        // vertical divider, then the "All" toggle, left-aligned right after the instances
-                        Rectangle {
-                            width: 1
-                            height: ScreenTools.defaultFontPixelHeight * 1.5
-                            color: qgcPal.textPrimary
-                            opacity: 0.3
-                        }
+                // multi-select instances ("All" = instance 0 = every instance of the unit)
+                QGCLabel { text: qsTr("Instances — select one or more, or All") }
+                Flow {
+                    Layout.fillWidth: true
+                    spacing: ScreenTools.defaultFontPixelWidth * 2
+                    Repeater {
+                        model: _instanceCount
                         QGCCheckBox {
-                            text: qsTr("All (i = 0)")
-                            checked: _selectedInstances.indexOf(0) >= 0
-                            // "All" is exclusive: selecting it clears specific instances, and vice versa
-                            onClicked: _selectedInstances = checked ? [0] : []
+                            text: qsTr("i = %1").arg(index + 1)
+                            checked: _selectedInstances.indexOf(index + 1) >= 0
+                            onClicked: _toggleInstance(index + 1)
                         }
                     }
+                    // vertical divider, then the "All" toggle, left-aligned right after the instances
+                    Rectangle {
+                        width: 1
+                        height: ScreenTools.defaultFontPixelHeight * 1.5
+                        color: qgcPal.textPrimary
+                        opacity: 0.3
+                    }
+                    QGCCheckBox {
+                        text: qsTr("All (i = 0)")
+                        checked: _selectedInstances.indexOf(0) >= 0
+                        // "All" is exclusive: selecting it clears specific instances, and vice versa
+                        onClicked: _selectedInstances = checked ? [0] : []
+                    }
+                }
 
-                    // live command preview
-                    QGCLabel {
-                        Layout.fillWidth: true
-                        font.family: ScreenTools.fixedFontFamily
-                        color: qgcPal.colorGreen
-                        wrapMode: Text.WordWrap
-                        text: {
-                            if (_selectedInstances.length === 0) {
-                                return qsTr("MAV_CMD_INJECT_FAILURE  param1=%1  param2=%2  (no instance selected)")
-                                        .arg(_units[_unitIndex].unit).arg(_types[_typeIndex].type)
-                            }
-                            var u = _units[_unitIndex]
-                            var t = _types[_typeIndex]
-                            var s = _instanceSend()
-                            var p3 = isNaN(s.param3) ? "NaN" : s.param3
-                            return qsTr("MAV_CMD_INJECT_FAILURE  param1=%1  param2=%2  param3=%3  param4=%4  (i=%5)")
-                                    .arg(u.unit).arg(t.type).arg(p3).arg(s.param4).arg(s.label)
+                // live command preview
+                QGCLabel {
+                    Layout.fillWidth: true
+                    font.family: ScreenTools.fixedFontFamily
+                    color: qgcPal.colorGreen
+                    wrapMode: Text.WordWrap
+                    text: {
+                        if (_selectedInstances.length === 0) {
+                            return qsTr("MAV_CMD_INJECT_FAILURE  param1=%1  param2=%2  (no instance selected)")
+                                    .arg(_units[_unitIndex].unit).arg(_types[_typeIndex].type)
                         }
+                        var u = _units[_unitIndex]
+                        var t = _types[_typeIndex]
+                        var s = _instanceSend()
+                        var p3 = isNaN(s.param3) ? "NaN" : s.param3
+                        return qsTr("MAV_CMD_INJECT_FAILURE  param1=%1  param2=%2  param3=%3  param4=%4  (i=%5)")
+                                .arg(u.unit).arg(t.type).arg(p3).arg(s.param4).arg(s.label)
                     }
                 }
             }
 
             // ---- activity log ---------------------------------------------------
-            RowLayout {
-                Layout.fillWidth: true
-                QGCLabel { Layout.fillWidth: true; text: qsTr("Activity — newest first") }
-                QGCButton {
-                    objectName: "failureInjection_resetAllButton"
-                    text: qsTr("Reset all")
-                    onClicked: _resetAll()
-                }
-            }
-            // Column header, aligned with the rows below.
-            RowLayout {
-                Layout.fillWidth: true
-                Layout.leftMargin: ScreenTools.defaultFontPixelWidth
-                Layout.rightMargin: ScreenTools.defaultFontPixelWidth
-                spacing: ScreenTools.defaultFontPixelWidth * 2
-                QGCLabel {
-                    Layout.preferredWidth: _colTimeWidth
-                    font.family: ScreenTools.fixedFontFamily
-                    color: qgcPal.textPrimary
-                    text: qsTr("Time")
-                }
-                QGCLabel {
-                    Layout.preferredWidth: _colUnitWidth
-                    font.family: ScreenTools.fixedFontFamily
-                    color: qgcPal.textPrimary
-                    text: qsTr("Component")
-                }
-                QGCLabel {
-                    Layout.preferredWidth: _colTypeWidth
-                    font.family: ScreenTools.fixedFontFamily
-                    color: qgcPal.textPrimary
-                    text: qsTr("Failure")
-                }
-                QGCLabel {
-                    Layout.fillWidth: true
-                    font.family: ScreenTools.fixedFontFamily
-                    color: qgcPal.textPrimary
-                    text: qsTr("Instances")
-                }
-                QGCLabel {
-                    font.family: ScreenTools.fixedFontFamily
-                    color: qgcPal.textPrimary
-                    text: qsTr("Result")
-                }
-            }
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 12
-                color: qgcPal.windowPanel
-                radius: ScreenTools.defaultFontPixelWidth * 0.5
+            QGCGroupBox {
+                heading: qsTr("Activity")
+                showDividers: false
 
-                QGCListView {
-                    objectName: "failureInjection_activityList"
-                    anchors.fill: parent
-                    anchors.margins: ScreenTools.defaultFontPixelWidth
-                    clip: true
-                    model: FailureInjection.activity
-                    delegate: RowLayout {
-                        required property var modelData
-                        required property int index
-                        readonly property bool _pending: modelData.result === "pending"
-                        readonly property bool _accepted: modelData.result === "accepted"
-                        objectName: "failureInjection_activityRow_" + index
-                        width: ListView.view.width
-                        spacing: ScreenTools.defaultFontPixelWidth * 2
-                        QGCLabel {
-                            Layout.preferredWidth: _colTimeWidth
-                            font.family: ScreenTools.fixedFontFamily
-                            color: qgcPal.colorOrange
-                            text: modelData.time
-                        }
-                        QGCLabel {
-                            objectName: "failureInjection_unitName_" + index
-                            Layout.preferredWidth: _colUnitWidth
-                            font.family: ScreenTools.fixedFontFamily
-                            text: modelData.unitName
-                        }
-                        QGCLabel {
-                            objectName: "failureInjection_typeName_" + index
-                            Layout.preferredWidth: _colTypeWidth
-                            font.family: ScreenTools.fixedFontFamily
-                            text: modelData.typeName
-                        }
-                        QGCLabel {
-                            objectName: "failureInjection_instance_" + index
-                            Layout.fillWidth: true
-                            font.family: ScreenTools.fixedFontFamily
-                            elide: Text.ElideRight
-                            text: modelData.instance
-                        }
-                        QGCLabel {
-                            objectName: "failureInjection_result_" + index
-                            font.family: ScreenTools.fixedFontFamily
-                            color: _pending ? qgcPal.colorOrange
-                                            : (_accepted ? qgcPal.colorGreen : qgcPal.colorRed)
-                            text: _pending ? qsTr("…")
-                                           : (_accepted ? qsTr("✓ Accepted") : ("× " + modelData.result))
+                RowLayout {
+                    Layout.fillWidth: true
+                    QGCLabel { Layout.fillWidth: true; text: qsTr("Newest first") }
+                    QGCButton {
+                        objectName: "failureInjection_resetAllButton"
+                        text: qsTr("Reset all")
+                        onClicked: _resetAll()
+                    }
+                }
+                // Column header, aligned with the rows below.
+                RowLayout {
+                    Layout.fillWidth: true
+                    Layout.leftMargin: ScreenTools.defaultFontPixelWidth
+                    Layout.rightMargin: ScreenTools.defaultFontPixelWidth
+                    spacing: ScreenTools.defaultFontPixelWidth * 2
+                    QGCLabel {
+                        Layout.preferredWidth: _colTimeWidth
+                        font.family: ScreenTools.fixedFontFamily
+                        color: qgcPal.textPrimary
+                        text: qsTr("Time")
+                    }
+                    QGCLabel {
+                        Layout.preferredWidth: _colUnitWidth
+                        font.family: ScreenTools.fixedFontFamily
+                        color: qgcPal.textPrimary
+                        text: qsTr("Component")
+                    }
+                    QGCLabel {
+                        Layout.preferredWidth: _colTypeWidth
+                        font.family: ScreenTools.fixedFontFamily
+                        color: qgcPal.textPrimary
+                        text: qsTr("Failure")
+                    }
+                    QGCLabel {
+                        Layout.fillWidth: true
+                        font.family: ScreenTools.fixedFontFamily
+                        color: qgcPal.textPrimary
+                        text: qsTr("Instances")
+                    }
+                    QGCLabel {
+                        font.family: ScreenTools.fixedFontFamily
+                        color: qgcPal.textPrimary
+                        text: qsTr("Result")
+                    }
+                }
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 12
+                    color: qgcPal.windowCard
+                    border.color: qgcPal.borderSubtle
+                    radius: ScreenTools.defaultBorderRadius
+
+                    QGCListView {
+                        objectName: "failureInjection_activityList"
+                        anchors.fill: parent
+                        anchors.margins: ScreenTools.defaultFontPixelWidth
+                        clip: true
+                        model: FailureInjection.activity
+                        delegate: RowLayout {
+                            required property var modelData
+                            required property int index
+                            readonly property bool _pending: modelData.result === "pending"
+                            readonly property bool _accepted: modelData.result === "accepted"
+                            objectName: "failureInjection_activityRow_" + index
+                            width: ListView.view.width
+                            spacing: ScreenTools.defaultFontPixelWidth * 2
+                            QGCLabel {
+                                Layout.preferredWidth: _colTimeWidth
+                                font.family: ScreenTools.fixedFontFamily
+                                color: qgcPal.colorOrange
+                                text: modelData.time
+                            }
+                            QGCLabel {
+                                objectName: "failureInjection_unitName_" + index
+                                Layout.preferredWidth: _colUnitWidth
+                                font.family: ScreenTools.fixedFontFamily
+                                text: modelData.unitName
+                            }
+                            QGCLabel {
+                                objectName: "failureInjection_typeName_" + index
+                                Layout.preferredWidth: _colTypeWidth
+                                font.family: ScreenTools.fixedFontFamily
+                                text: modelData.typeName
+                            }
+                            QGCLabel {
+                                objectName: "failureInjection_instance_" + index
+                                Layout.fillWidth: true
+                                font.family: ScreenTools.fixedFontFamily
+                                elide: Text.ElideRight
+                                text: modelData.instance
+                            }
+                            QGCLabel {
+                                objectName: "failureInjection_result_" + index
+                                font.family: ScreenTools.fixedFontFamily
+                                color: _pending ? qgcPal.colorOrange
+                                                : (_accepted ? qgcPal.colorGreen : qgcPal.colorRed)
+                                text: _pending ? qsTr("…")
+                                               : (_accepted ? qsTr("✓ Accepted") : ("× " + modelData.result))
+                            }
                         }
                     }
                 }

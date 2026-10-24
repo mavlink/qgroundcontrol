@@ -17,6 +17,7 @@ private slots:
     void _testNavigateVehicleConfig();
     void _testDisconnectWithPIDTuningOpen();
     void _testSidebarDividers();
+    void _testSearchMatchesComponentKeywords();
 
 private:
     /// Click each axis button in \a axisNames in order, waiting for a polish
