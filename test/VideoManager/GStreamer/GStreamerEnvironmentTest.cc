@@ -3,9 +3,11 @@
 #ifdef QGC_GST_STREAMING
 
 #include <gst/gst.h>
+#include <vector>
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QDir>
+#include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 #include <QtCore/QSysInfo>
 #include <QtCore/QTemporaryDir>
@@ -97,6 +99,54 @@ void GStreamerEnvironmentTest::_testSystemGStreamerKeepsDefaultRegistry()
 #endif
 }
 
+void GStreamerEnvironmentTest::_testBundledRuntime()
+{
+    static constexpr const char* kTouchedVars[] = {
+        "GIO_EXTRA_MODULES",
+        "GIO_MODULE_DIR",
+        "GIO_USE_VFS",
+        "GST_PTP_HELPER",
+        "GST_PTP_HELPER_1_0",
+        "GST_PLUGIN_PATH",
+        "GST_PLUGIN_PATH_1_0",
+        "GST_PLUGIN_SYSTEM_PATH",
+        "GST_PLUGIN_SYSTEM_PATH_1_0",
+        "GST_PLUGIN_SCANNER",
+        "GST_PLUGIN_SCANNER_1_0",
+        "GST_REGISTRY_FORK",
+        "GST_REGISTRY_REUSE_PLUGIN_SCANNER",
+    };
+    std::vector<TestFixtures::EnvVarFixture> restore;
+    restore.reserve(std::size(kTouchedVars));
+    for (const char* var : kTouchedVars) {
+        restore.emplace_back(var);
+        qunsetenv(var);
+    }
+    qputenv("GST_PLUGIN_PATH", QByteArrayLiteral("/qgc-test/stale-plugins"));
+
+    QTemporaryDir root;
+    QVERIFY(root.isValid());
+    const QString pluginDirs = root.filePath(QStringLiteral("lib/gstreamer-1.0"));
+    QVERIFY(QDir().mkpath(pluginDirs));
+    const QString scanner = root.filePath(QStringLiteral("gst-plugin-scanner"));
+    QFile scannerFile(scanner);
+    QVERIFY(scannerFile.open(QIODevice::WriteOnly));
+    scannerFile.close();
+    QVERIFY(scannerFile.setPermissions(scannerFile.permissions() | QFileDevice::ExeOwner));
+
+    if (!GStreamer::Environment::useBundledRuntime(pluginDirs, QString(), scanner, QString())) {
+        QSKIP("This build never uses a bundled GStreamer runtime");
+    }
+
+    QCOMPARE(qEnvironmentVariable("GST_PLUGIN_SYSTEM_PATH"), pluginDirs);
+    QCOMPARE(qEnvironmentVariable("GST_PLUGIN_SYSTEM_PATH_1_0"), pluginDirs);
+    QVERIFY(!qEnvironmentVariableIsSet("GST_PLUGIN_PATH"));
+    QCOMPARE(qEnvironmentVariable("GST_PLUGIN_SCANNER"), scanner);
+    QCOMPARE(qEnvironmentVariable("GST_PLUGIN_SCANNER_1_0"), scanner);
+    // Desktop GStreamer scans plugins in its forked scanner, so a crashing plugin can't take QGC down.
+    QVERIFY(!qEnvironmentVariableIsSet("GST_REGISTRY_FORK"));
+}
+
 #else
 
 void GStreamerEnvironmentTest::_testPrivateRegistry()
@@ -112,6 +162,11 @@ void GStreamerEnvironmentTest::_testPrivateRegistryKeepsUserRegistry()
 }
 
 void GStreamerEnvironmentTest::_testSystemGStreamerKeepsDefaultRegistry()
+{
+    QSKIP("GStreamer not enabled");
+}
+
+void GStreamerEnvironmentTest::_testBundledRuntime()
 {
     QSKIP("GStreamer not enabled");
 }

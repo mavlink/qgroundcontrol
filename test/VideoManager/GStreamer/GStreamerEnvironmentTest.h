@@ -12,4 +12,5 @@ private slots:
     void _testPrivateRegistryKeepsUserRegistry_data();
     void _testPrivateRegistryKeepsUserRegistry();
     void _testSystemGStreamerKeepsDefaultRegistry();
+    void _testBundledRuntime();
 };

@@ -19,6 +19,14 @@ struct ValidationResult
 /// validation outcome by value (threaded explicitly to initialize(), not a cross-thread global).
 ValidationResult prepareEnvironment();
 
+/// Point GStreamer at a bundled runtime: @p pluginDirs (joined with QDir::listSeparator()) replace the default plugin
+/// path, and @p gioModuleDir, @p scanner and @p ptpHelper are used when they exist. GStreamer keeps scanning plugins
+/// out of process, so a plugin that crashes while loading is blacklisted instead of taking QGC down.
+/// prepareEnvironment() does this for the runtime bundled with the app. Returns false, changing nothing, in builds that
+/// only use static or system plugins (Android, iOS, QGC_GST_BUNDLE_PLUGINS=OFF).
+bool useBundledRuntime(const QString& pluginDirs, const QString& gioModuleDir, const QString& scanner,
+                       const QString& ptpHelper);
+
 /// Point GST_REGISTRY at gstreamer-<runtime version>-<arch>.bin in @p cacheDir, creating the directory, unless
 /// GST_REGISTRY or GST_REGISTRY_1_0 is already set or @p cacheDir is empty. prepareEnvironment() does this with the
 /// app's cache location for a bundled desktop runtime. Returns the registry it set, else an empty string.

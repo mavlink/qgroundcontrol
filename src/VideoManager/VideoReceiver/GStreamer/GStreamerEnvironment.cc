@@ -275,7 +275,6 @@ void _applyGstEnvVars(const QString& pluginDir, const QString& gioModDir, const 
     _sanitizePythonEnvForScanner();
     _clearManagedGstEnvVars();
     _setGstEnv("GST_REGISTRY_REUSE_PLUGIN_SCANNER", QStringLiteral("no"));
-    _setGstEnv("GST_REGISTRY_FORK", QStringLiteral("no"));
     _setGstEnvIfExists("GIO_EXTRA_MODULES", gioModDir);
     _setGstEnvIfExecutable("GST_PTP_HELPER_1_0", ptpPath);
     _setGstEnvIfExecutable("GST_PTP_HELPER", ptpPath);
@@ -440,10 +439,10 @@ ValidationResult _setGstEnvVars()
         if (!cache.isEmpty()) {
             _setGstEnv("XDG_CACHE_HOME", cache);
             _setGstEnv("XDG_CONFIG_HOME", cache);
-            // Writable-cache registry, no fork rescan: sandbox rejects fork, static plugins need no scanner.
             _setGstEnv("GST_REGISTRY", _cleanJoin(cache, "registry.bin"));
-            _setGstEnv("GST_REGISTRY_FORK", QStringLiteral("no"));
         }
+        // The sandbox forbids fork(), and the plugins are static, so there is no scanner to run.
+        _setGstEnv("GST_REGISTRY_FORK", QStringLiteral("no"));
         // Tutorial 5 binds XDG_RUNTIME_DIR to the read-only bundle; libGStreamer never writes there on iOS.
         if (!resources.isEmpty()) {
             _setGstEnv("XDG_RUNTIME_DIR", resources);
@@ -489,6 +488,8 @@ ValidationResult _setGstEnvVars()
         }
 
         _setGstEnv("GST_REGISTRY_REUSE_PLUGIN_SCANNER", QStringLiteral("no"));
+        // The plugins are static and the APK ships no scanner; an app process must not fork() into one.
+        _setGstEnv("GST_REGISTRY_FORK", QStringLiteral("no"));
     }
 
 #elif defined(Q_OS_LINUX) && !defined(QGC_GST_SYSTEM_PLUGINS)
@@ -531,6 +532,21 @@ ValidationResult prepareEnvironment()
     return _setGstEnvVars();
 }
 
+bool useBundledRuntime(const QString& pluginDirs, const QString& gioModuleDir, const QString& scanner,
+                       const QString& ptpHelper)
+{
+#if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS) && !defined(QGC_GST_SYSTEM_PLUGINS)
+    _applyGstEnvVars(pluginDirs, gioModuleDir, scanner, ptpHelper);
+    return true;
+#else
+    Q_UNUSED(pluginDirs);
+    Q_UNUSED(gioModuleDir);
+    Q_UNUSED(scanner);
+    Q_UNUSED(ptpHelper);
+    return false;
+#endif
+}
+
 QString usePrivateRegistry(const QString& cacheDir)
 {
     const QMutexLocker setEnvLocker(&s_setEnvVarsMutex);
@@ -547,6 +563,7 @@ void logDiagnostics()
     for (const char* var : kManagedGstPathVars) {
         dumpVar(var);
     }
+    dumpVar("GST_REGISTRY_FORK");
     dumpVar("GST_REGISTRY_REUSE_PLUGIN_SCANNER");
     dumpVar("GST_REGISTRY");
 }
