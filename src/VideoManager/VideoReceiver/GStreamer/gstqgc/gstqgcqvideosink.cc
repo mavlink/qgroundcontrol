@@ -72,6 +72,8 @@ struct PrivState
     // in plain system memory.
     bool gpu_caps = false;
     std::atomic<int64_t> last_pts_ns{-1};
+    // GstVideoOrientationMethod from the stream's image-orientation tag, for frames without an orientation meta.
+    std::atomic<int> stream_orientation{GST_VIDEO_ORIENTATION_IDENTITY};
     std::atomic<quint64> input_frames{0};
     std::atomic<quint64> dropped_frames{0};
     std::atomic<quint64> consecutive_map_failures{0};  // sustained run escalates show_frame to error
@@ -529,9 +531,7 @@ static GstFlowReturn gst_qgc_q_video_sink_show_frame(GstVideoSink* vsink, GstBuf
     }
     p->consecutive_map_failures.store(0, std::memory_order_relaxed);
 
-    // Stream orientation is always IDENTITY here; tag-driven orientation lives in the
-    // controller (GST_TAG_IMAGE_ORIENTATION). Per-buffer GstVideoOrientationMeta still wins.
-    applyOrientationAndTiming(mapped.frame, buf, static_cast<int>(GST_VIDEO_ORIENTATION_IDENTITY));
+    applyOrientationAndTiming(mapped.frame, buf, p->stream_orientation.load(std::memory_order_relaxed));
 
     const QSize frameSize = mapped.frame.size();
     if (!push_frame_queued(self, std::move(mapped.frame))) {
@@ -566,18 +566,32 @@ static GstFlowReturn gst_qgc_q_video_sink_show_frame(GstVideoSink* vsink, GstBuf
     return GST_FLOW_OK;
 }
 
-// Resets the PTS guard on every timeline boundary GstBaseSink does not route through set_caps (it skips set_caps when
-// the caps are unchanged), and releases an undelivered frame on flush.
+// Tracks the stream's orientation tag, resets the PTS guard on every timeline boundary GstBaseSink does not route
+// through set_caps (it skips set_caps when the caps are unchanged), and releases an undelivered frame on flush.
 static gboolean gst_qgc_q_video_sink_event(GstBaseSink* bsink, GstEvent* event)
 {
     GstQgcQVideoSink* self = GST_QGC_Q_VIDEO_SINK(bsink);
     switch (GST_EVENT_TYPE(event)) {
+        case GST_EVENT_TAG: {
+            // A camera mounted sideways tags the stream (e.g. "rotate-90") instead of rotating every frame.
+            GstTagList* tags = nullptr;
+            gst_event_parse_tag(event, &tags);
+            GstVideoOrientationMethod method = GST_VIDEO_ORIENTATION_IDENTITY;
+            if (tags && gst_video_orientation_from_tag(tags, &method)) {
+                priv_of(self)->stream_orientation.store(method, std::memory_order_relaxed);
+            }
+            break;
+        }
         case GST_EVENT_FLUSH_START:
             drop_pending_frame(self);
             break;
+        case GST_EVENT_STREAM_START:
+            // A new stream starts untagged; its tags follow this event.
+            priv_of(self)->stream_orientation.store(GST_VIDEO_ORIENTATION_IDENTITY, std::memory_order_relaxed);
+            priv_of(self)->last_pts_ns.store(-1, std::memory_order_release);
+            break;
         case GST_EVENT_FLUSH_STOP:
         case GST_EVENT_SEGMENT:
-        case GST_EVENT_STREAM_START:
             priv_of(self)->last_pts_ns.store(-1, std::memory_order_release);
             break;
         default:
@@ -611,6 +625,7 @@ static gboolean gst_qgc_q_video_sink_stop(GstBaseSink* bsink)
     p->resolved_path_cache = HwResolvedPathCache{};
     p->demotion_recorded = false;
     p->last_pts_ns.store(-1, std::memory_order_release);
+    p->stream_orientation.store(GST_VIDEO_ORIENTATION_IDENTITY, std::memory_order_relaxed);
     p->consecutive_map_failures.store(0, std::memory_order_relaxed);
     drop_pending_frame(self);
 
