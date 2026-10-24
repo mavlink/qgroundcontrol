@@ -9,18 +9,19 @@ include(GStreamer/Probe)
 # qualified) still links the base sources. Qt-private bits stay gated below.
 target_sources(
     QGCGStreamer
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/common/HwBuffers.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/HwBuffers.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwPathTelemetry.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwPathTelemetry.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwTypes.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwVideoInfo.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwVideoInfo.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwVideoBufferFactory.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/CpuVideoFramePool.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/CpuVideoFramePool.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/dmabuf/GstDmaDrmCaps.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/dmabuf/GstDmaDrmCaps.h
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/HwBuffers.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/HwBuffers.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwPathTelemetry.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwPathTelemetry.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwTypes.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwVideoInfo.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwVideoInfo.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwVideoBufferFactory.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/CpuVideoFramePool.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/CpuVideoFramePool.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/dmabuf/GstDmaDrmCaps.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/dmabuf/GstDmaDrmCaps.h
 )
 
 # _qgc_add_gpu_path(<name> PLATFORMS <vars>... DEFINE <macro> SOURCES <files>...
@@ -38,8 +39,9 @@ function(_qgc_add_gpu_path name)
        OR NOT ARG_DEFINE
        OR NOT ARG_SOURCES
     )
-        message(FATAL_ERROR "_qgc_add_gpu_path(${name}): PLATFORMS, DEFINE and SOURCES required; "
-                            "unknown: ${ARG_UNPARSED_ARGUMENTS}"
+        message(
+            FATAL_ERROR "_qgc_add_gpu_path(${name}): PLATFORMS, DEFINE and SOURCES required; "
+                        "unknown: ${ARG_UNPARSED_ARGUMENTS}"
         )
     endif()
     set(_platform_match FALSE)
@@ -85,7 +87,11 @@ function(_qgc_add_gpu_path name)
     endif()
 
     list(TRANSFORM ARG_SOURCES PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/")
-    target_sources(QGCGStreamer PRIVATE ${ARG_SOURCES})
+    target_sources(
+        QGCGStreamer
+        PRIVATE
+            ${ARG_SOURCES}
+    )
     target_include_directories(QGCGStreamer PRIVATE ${${name}_INCLUDE_DIRS})
     target_link_directories(QGCGStreamer PRIVATE ${${name}_LIBRARY_DIRS})
     set(_libs ${${name}_LIBRARIES} ${ARG_LIBS})
@@ -163,8 +169,12 @@ endif()
 if(MACOS OR IOS)
     # TARGET_DIRECTORY: source-file props are dir-scoped; QGCGStreamer is created in the parent CMakeLists, so name it
     # explicitly here for SKIP_PRECOMPILE_HEADERS to bind to that target.
-    set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/apple/GstIOSurfaceVideoBuffer.mm TARGET_DIRECTORY
-                                QGCGStreamer PROPERTIES SKIP_PRECOMPILE_HEADERS ON
+    set_source_files_properties(
+        ${CMAKE_CURRENT_SOURCE_DIR}/apple/GstIOSurfaceVideoBuffer.mm
+        TARGET_DIRECTORY
+        QGCGStreamer
+        PROPERTIES
+            SKIP_PRECOMPILE_HEADERS ON
     )
 endif()
 
@@ -256,8 +266,11 @@ if(_qgc_gpu_unstable_api)
 endif()
 
 if(_qgc_gpu_D3D11 OR _qgc_gpu_D3D12)
-    target_sources(QGCGStreamer PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/d3d/GstD3DContextBridge.cc
-                                        ${CMAKE_CURRENT_SOURCE_DIR}/d3d/GstD3DContextBridge.h
+    target_sources(
+        QGCGStreamer
+        PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/d3d/GstD3DContextBridge.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/d3d/GstD3DContextBridge.h
     )
 endif()
 
@@ -311,20 +324,21 @@ target_link_libraries(QGCGStreamer PRIVATE Qt6::GuiPrivate)
 # GPU-only TUs (base class, factory, bridge registry, RHI capture) depend on qrhi.h.
 target_sources(
     QGCGStreamer
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/dmabuf/GstEglHelpers.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/dmabuf/GstEglHelpers.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/gl/GstGlFrameTextures.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwFrameTexturesBase.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwImportCache.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwImportPreflight.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwImportPreflight.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwVideoBuffer.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwVideoBuffer.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstContextBridgeBase.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstContextBridgeBase.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwPathRegistry.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwPathRegistry.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwVideoBufferFactory.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/QGCRhiCapture.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/QGCRhiCapture.h
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/dmabuf/GstEglHelpers.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/dmabuf/GstEglHelpers.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/gl/GstGlFrameTextures.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwFrameTexturesBase.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwImportCache.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwImportPreflight.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwImportPreflight.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwVideoBuffer.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwVideoBuffer.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/GstContextBridgeBase.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/GstContextBridgeBase.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwPathRegistry.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwPathRegistry.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwVideoBufferFactory.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/QGCRhiCapture.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/QGCRhiCapture.h
 )
