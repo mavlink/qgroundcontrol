@@ -169,4 +169,22 @@ execute_process(
         COMMAND_ERROR_IS_FATAL ANY
 )
 message(STATUS "QGC: Stapling notarization ticket to app bundle")
-execute_process(COMMAND xcrun stapler staple "${QGC_STAGING_BUNDLE_PATH}" COMMAND_ERROR_IS_FATAL ANY)
+# stapler fetches the ticket from Apple's CloudKit, whose connection drops now and then (exit 68).
+set(_staple_attempts 5)
+set(_staple_attempt 1)
+while(TRUE)
+    execute_process(COMMAND xcrun stapler staple "${QGC_STAGING_BUNDLE_PATH}" RESULT_VARIABLE _staple_rc)
+    if(_staple_rc EQUAL 0)
+        break()
+    endif()
+    if(_staple_attempt GREATER_EQUAL _staple_attempts)
+        message(FATAL_ERROR "QGC: Stapling failed after ${_staple_attempts} attempts (exit ${_staple_rc})")
+    endif()
+    math(EXPR _backoff "${_staple_attempt} * 15")
+    message(
+        WARNING "QGC: Stapling attempt ${_staple_attempt}/${_staple_attempts} failed (exit ${_staple_rc}); "
+                "retrying in ${_backoff}s"
+    )
+    execute_process(COMMAND "${CMAKE_COMMAND}" -E sleep "${_backoff}")
+    math(EXPR _staple_attempt "${_staple_attempt} + 1")
+endwhile()
