@@ -3,7 +3,7 @@
 #include <QtCore/QString>
 
 /// Process-wide GStreamer environment setup: plugin-path discovery, GIO compat override,
-/// env var management, APK asset extraction, bundled CA file.
+/// env var management, APK asset extraction, mobile CA file.
 namespace GStreamer::Environment {
 
 /// Outcome of environment preparation: whether the discovered plugin/scanner

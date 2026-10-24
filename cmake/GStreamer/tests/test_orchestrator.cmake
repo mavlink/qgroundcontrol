@@ -729,7 +729,6 @@ elseif(SCENARIO STREQUAL "install-macos")
             lib/gstreamer-1.0/libgstcoreelements.dylib
             lib/gio/modules/libgioopenssl.dylib
             libexec/gstreamer-1.0/gst-plugin-scanner
-            Resources/etc/ssl/certs/ca-certificates.crt
             Resources/licenses/gstreamer/NOTICE.txt
             Resources/licenses/gstreamer/LGPL-2.1.txt
     )
@@ -737,6 +736,10 @@ elseif(SCENARIO STREQUAL "install-macos")
             message(FATAL_ERROR "ASSERT [flat install]: ${_file} is not under DESTDIR/prefix\n${_qgc_output}")
         endif()
     endforeach()
+    # gioopenssl verifies against the Keychain on macOS, so the SDK's CA bundle would go unused.
+    if(EXISTS "${_bundle}/Resources/etc/ssl/certs/ca-certificates.crt")
+        message(FATAL_ERROR "ASSERT [flat install]: the SDK's CA bundle was installed")
+    endif()
     # Only the libraries the installed plugin, GIO module and scanner load are bundled.
     foreach(_file IN ITEMS libx264.164.dylib libunused.dylib)
         if(EXISTS "${_bundle}/Frameworks/${_file}")

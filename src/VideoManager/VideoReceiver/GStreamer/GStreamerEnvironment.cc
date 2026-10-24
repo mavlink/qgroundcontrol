@@ -19,11 +19,6 @@
 #include <android/asset_manager_jni.h>
 #endif
 
-// gdbusintrospection.h's `signals` member collides with Qt's `signals` keyword macro.
-#pragma push_macro("signals")
-#undef signals
-#include <gio/gio.h>
-#pragma pop_macro("signals")
 #include <gst/gst.h>
 
 QGC_LOGGING_CATEGORY(GStreamerEnvLog, "Video.GStreamer.Environment")
@@ -323,37 +318,6 @@ bool _applyBundleLayout(const QString& platformLabel, const BundleLayout& layout
     return true;
 }
 
-// gioopenssl's compiled-in CA path is the Cerbero build prefix, which a bundled SDK doesn't have. Make the first
-// existing @p candidates GIO's default TLS database, which GStreamer's TLS users (rtspsrc, souphttpsrc) verify against,
-// without changing the trust store of every OpenSSL user in and below the process as SSL_CERT_FILE would. A
-// user-set SSL_CERT_FILE still wins.
-[[maybe_unused]] void _useBundledCaFile(const QStringList& candidates)
-{
-    const QString caFile = _firstExistingPath(candidates);
-    if (caFile.isEmpty() || !qEnvironmentVariableIsEmpty("SSL_CERT_FILE")) {
-        return;
-    }
-
-    // Loads the GIO modules, so it must follow every GIO_* variable this layer sets.
-    GTlsBackend* const backend = g_tls_backend_get_default();
-    if (!backend || !g_tls_backend_supports_tls(backend)) {
-        qCWarning(GStreamerEnvLog) << "No GIO TLS backend; not loading the bundled CA file" << caFile;
-        return;
-    }
-
-    GError* error = nullptr;
-    GTlsDatabase* const database = g_tls_file_database_new(caFile.toUtf8().constData(), &error);
-    if (!database) {
-        qCWarning(GStreamerEnvLog) << "Failed to load the bundled CA file" << caFile << ":"
-                                   << (error ? error->message : "unknown error");
-        g_clear_error(&error);
-        return;
-    }
-    g_tls_backend_set_default_database(backend, database);
-    g_object_unref(database);
-    qCDebug(GStreamerEnvLog) << "  TLS database =" << caFile;
-}
-
 #endif  // !Q_OS_ANDROID && !Q_OS_IOS && !QGC_GST_SYSTEM_PLUGINS
 
 ValidationResult _setGstEnvVars()
@@ -399,12 +363,6 @@ ValidationResult _setGstEnvVars()
         qCCritical(GStreamerEnvLog) << result.error;
     }
 
-    // Framework Versions/1.0/etc vs non-framework Contents/Resources/etc.
-    _useBundledCaFile({
-        _cleanJoin(rootDir, "etc/ssl/certs/ca-certificates.crt"),
-        _cleanJoin(appDir, "../Resources/etc/ssl/certs/ca-certificates.crt"),
-    });
-
 #elif defined(Q_OS_WIN)
     const QString libDir = _cleanJoin(appDir, "../lib");
     const QString helperDir = _cleanJoin(appDir, "../libexec/gstreamer-1.0");
@@ -424,9 +382,6 @@ ValidationResult _setGstEnvVars()
         if (!curPath.split(QDir::listSeparator()).contains(binDir, Qt::CaseInsensitive)) {
             _setGstEnv("PATH", binDir + QDir::listSeparator() + curPath);
         }
-
-        // Installed by gstreamer_install_windows_sdk.
-        _useBundledCaFile({_cleanJoin(appDir, "../etc/ssl/certs/ca-certificates.crt")});
     }
 
 #elif defined(Q_OS_IOS)

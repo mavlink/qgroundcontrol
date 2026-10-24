@@ -1,5 +1,5 @@
-# Platform SDK install helpers — copy GStreamer plugins, GIO modules, helper
-# binaries, and CA bundles into the install tree. Called from
+# Platform SDK install helpers — copy GStreamer plugins, GIO modules and helper
+# binaries into the install tree. Called from
 # src/VideoManager/VideoReceiver/GStreamer/CMakeLists.txt after the ANDROID/IOS
 # early-return. Windows and a flat macOS SDK install only the SDK libraries that the installed plugins, GIO modules,
 # helpers and QGC itself load (_qgc_gst_install_runtime_closure), and every installer fails an install that would ship a
@@ -292,8 +292,8 @@ function(gstreamer_install_linux_sdk app_name plugin_dest_out)
     )
 endfunction()
 
-# Windows: the plugins, GIO modules, libproxy backends and libexec helpers, the SDK DLLs they and QGC load, the CA
-# bundle and the notice.
+# Windows: the plugins, GIO modules, libproxy backends and libexec helpers, the SDK DLLs they and QGC load, and the
+# notice. gioopenssl verifies against the Windows certificate stores, so the SDK's CA bundle stays out.
 function(gstreamer_install_windows_sdk app_name plugin_dest_out)
     set(_plugin_dest "${CMAKE_INSTALL_LIBDIR}/gstreamer-1.0")
     _qgc_gst_install_runtime_closure(ON "${CMAKE_INSTALL_BINDIR}")
@@ -306,12 +306,6 @@ function(gstreamer_install_windows_sdk app_name plugin_dest_out)
     file(GLOB _gst_helpers "${GSTREAMER_PLUGIN_SCANNER_PATH}/*.exe")
     _qgc_gst_install_files("${CMAKE_INSTALL_LIBEXECDIR}/gstreamer-1.0" PROGRAMS ${_gst_helpers})
     _qgc_gst_install_runtime_closure(OFF "${CMAKE_INSTALL_BINDIR}")
-    # CA bundle for gioopenssl.dll — OpenSSL's compiled-in default path is
-    # relative to the SDK root; ship the bundle so HTTPS/RTSPS sources can
-    # verify certs after install (paired with SSL_CERT_FILE wiring at startup).
-    if(EXISTS "${GStreamer_ROOT_DIR}/etc/ssl/certs/ca-certificates.crt")
-        install(FILES "${GStreamer_ROOT_DIR}/etc/ssl/certs/ca-certificates.crt" DESTINATION etc/ssl/certs)
-    endif()
     _qgc_gst_install_notice(share/licenses/gstreamer)
     set(${plugin_dest_out}
         "${_plugin_dest}"
@@ -384,8 +378,9 @@ function(gstreamer_install_macos_framework_sdk app_name plugin_dest_out)
     )
 endfunction()
 
-# Stage flat-layout dylibs/plugins/gio modules + rpath fixups + helpers + CA
-# bundle. Used for a flat (downloaded or user-supplied) macOS GStreamer, which has no framework wrapper.
+# Stage flat-layout dylibs/plugins/gio modules + rpath fixups + helpers. Used for a flat (downloaded or user-supplied)
+# macOS GStreamer, which has no framework wrapper. gioopenssl verifies against the Keychain, so the SDK's CA bundle
+# stays out.
 function(gstreamer_install_macos_flat_sdk app_name plugin_dest_out)
     # Relative to the install prefix; install(CODE) prepends $ENV{DESTDIR}${CMAKE_INSTALL_PREFIX} at install time.
     set(_mac_fw_dest "${app_name}.app/Contents/Frameworks")
@@ -453,15 +448,6 @@ function(gstreamer_install_macos_flat_sdk app_name plugin_dest_out)
         )
     endforeach()
 
-    # CA bundle for libgioopenssl.so — Cerbero's compiled-in OpenSSL trust
-    # path doesn't exist on a user's machine; ship the bundle so the
-    # SSL_CERT_FILE wiring at startup can point gioopenssl at it.
-    if(EXISTS "${GStreamer_ROOT_DIR}/etc/ssl/certs/ca-certificates.crt")
-        install(
-            FILES "${GStreamer_ROOT_DIR}/etc/ssl/certs/ca-certificates.crt"
-            DESTINATION "${app_name}.app/Contents/Resources/etc/ssl/certs"
-        )
-    endif()
     set(${plugin_dest_out}
         "${_plugin_dest}"
         PARENT_SCOPE
