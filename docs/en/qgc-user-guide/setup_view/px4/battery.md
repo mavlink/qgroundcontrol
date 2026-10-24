@@ -9,7 +9,7 @@ PX4 only sends some settings once a module that uses them is running, such as a 
 The page asks the vehicle for these when it opens and shows _Loading settings from the vehicle..._ until they arrive.
 Settings the vehicle doesn't answer are not asked for again until it reconnects.
 The choices, units and limits of each setting come from the vehicle's parameter metadata.
-ESC calibration is still on the [Power](../power.md) page.
+ESC calibration is on the _ESC_ page.
 
 ## Battery Rows
 

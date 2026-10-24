@@ -1,25 +1,25 @@
-#include "PowerComponentController.h"
+#include "PX4EscController.h"
+
+#include "QGCMAVLink.h"
 #include "Vehicle.h"
 
-PowerComponentController::PowerComponentController(void)
-{
+PX4EscController::PX4EscController() {}
 
-}
-
-void PowerComponentController::calibrateEsc(void)
+void PX4EscController::calibrateEsc()
 {
     _warningMessages.clear();
-    connect(_vehicle, &Vehicle::textMessageReceived, this, &PowerComponentController::_handleVehicleTextMessage);
+    connect(_vehicle, &Vehicle::textMessageReceived, this, &PX4EscController::_handleVehicleTextMessage,
+            Qt::UniqueConnection);
     _vehicle->startCalibration(QGCMAVLink::CalibrationEsc);
 }
 
-void PowerComponentController::_stopCalibration(void)
+void PX4EscController::_stopCalibration()
 {
-    disconnect(_vehicle, &Vehicle::textMessageReceived, this, &PowerComponentController::_handleVehicleTextMessage);
+    disconnect(_vehicle, &Vehicle::textMessageReceived, this, &PX4EscController::_handleVehicleTextMessage);
 }
 
-void PowerComponentController::_handleVehicleTextMessage(quint32 vehicleId, int /* compId */, int /* severity */,
-                                                         QString text, const QString& description)
+void PX4EscController::_handleVehicleTextMessage(quint32 vehicleId, int /* compId */, int /* severity */, QString text,
+                                                 const QString& description)
 {
     Q_UNUSED(description);
 
@@ -70,7 +70,6 @@ void PowerComponentController::_handleVehicleTextMessage(quint32 vehicleId, int 
         emit batteryConnected();
         return;
     }
-
 
     QString failedPrefix("calibration failed: ");
     if (text.startsWith(failedPrefix)) {

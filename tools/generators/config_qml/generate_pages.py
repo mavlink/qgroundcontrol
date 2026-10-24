@@ -2,8 +2,8 @@
 
 Usage:
     python -m tools.generators.config_qml.generate_pages \\
-        --pages-dir src/AutoPilotPlugins/PX4/VehicleConfig \\
-        --output-dir build/src/AutoPilotPlugins/PX4/generated
+        --pages-dir src/AutoPilotPlugins/APM/VehicleConfig \\
+        --output-dir build/src/AutoPilotPlugins/APM/generated
 
 Each ``<Name>.VehicleConfig.json`` produces ``<Name>Component.qml``. ``--list-outputs`` prints those
 names, one per line, without generating anything.
@@ -27,7 +27,7 @@ from generators.config_qml.model import load_page_def
 def _output_name(json_name: str) -> str:
     """Derive the QML output filename from the JSON filename.
 
-    ``Safety.VehicleConfig.json`` -> ``SafetyComponent.qml``
+    ``APMSafety.VehicleConfig.json`` -> ``APMSafetyComponent.qml``
     """
     stem = json_name.removesuffix(".VehicleConfig.json")
     return f"{stem}Component.qml"

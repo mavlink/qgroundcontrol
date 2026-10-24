@@ -16,6 +16,7 @@ public:
 
     QString description() const final;
     QString iconResource() const final;
+    QStringList searchKeywords() const final;
 
     bool requiresSetup() const final { return false; }
 

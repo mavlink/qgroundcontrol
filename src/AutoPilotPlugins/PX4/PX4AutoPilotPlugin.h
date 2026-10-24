@@ -10,13 +10,14 @@
 #include "MotorComponent.h"
 #include "PX4AirframeLoader.h"
 #include "PX4BatteryComponent.h"
+#include "PX4CollisionComponent.h"
+#include "PX4EscComponent.h"
 #include "PX4FailsafesComponent.h"
 #include "PX4FlightBehavior.h"
 #include "PX4RadioComponent.h"
+#include "PX4ReturnLandComponent.h"
 #include "PX4SerialPortsComponent.h"
 #include "PX4TuningComponent.h"
-#include "PowerComponent.h"
-#include "SafetyComponent.h"
 #include "SensorsComponent.h"
 #include "SyslinkComponent.h"
 
@@ -44,10 +45,11 @@ protected:
     FailureInjectionComponent* _failureInjectionComponent;
     FlightModesComponent*   _flightModesComponent;
     SensorsComponent*       _sensorsComponent;
-    SafetyComponent*        _safetyComponent;
+    PX4ReturnLandComponent* _returnLandComponent;
+    PX4CollisionComponent* _collisionComponent;
     PX4FailsafesComponent* _failsafesComponent;
     PX4SerialPortsComponent* _serialPortsComponent;
-    PowerComponent*         _powerComponent;
+    PX4EscComponent* _escComponent;
     PX4BatteryComponent* _batteryComponent;
     MotorComponent*         _motorComponent;
     ActuatorComponent*      _actuatorComponent;

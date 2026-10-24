@@ -5,11 +5,13 @@
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
+#include "AutoPilotPlugin.h"
 #include "Fact.h"
 #include "MockLink.h"
 #include "ParameterManager.h"
 #include "QGCApplication.h"
 #include "Vehicle.h"
+#include "VehicleComponent.h"
 
 UT_REGISTER_TEST(PX4BatteryUITest, TestLabel::Integration)
 
@@ -199,5 +201,38 @@ void PX4BatteryUITest::_reportedBatteryDotFollowsTheReportedVoltage()
             QVERIFY(withoutValues);
             QTRY_VERIFY_WITH_TIMEOUT(withValues->property("active").toBool(), 5000);
             QVERIFY(!withoutValues->property("active").toBool());
+        });
+}
+
+// Cells and voltages only count toward setup when PX4 estimates the battery, since only then does the page show them
+void PX4BatteryUITest::_setupCompleteIgnoresCellsForExternalBattery()
+{
+    runWithMockLink(
+        [] { return MockLink::startPX4MockLink(); },
+        [&](QPointer<MockLink> /*mockLink*/, Vehicle* vehicle) {
+            VehicleComponent* batteryComponent = nullptr;
+            for (const QVariant& component : vehicle->autopilotPlugin()->vehicleComponents()) {
+                VehicleComponent* const candidate = component.value<VehicleComponent*>();
+                if (candidate && candidate->KnownVehicleComponent() == AutoPilotPlugin::KnownPowerVehicleComponent) {
+                    batteryComponent = candidate;
+                }
+            }
+            QVERIFY(batteryComponent);
+            QVERIFY(batteryComponent->setupComplete());
+
+            Fact* const cells = vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId,
+                                                                          QStringLiteral("BAT1_N_CELLS"));
+            QVERIFY(cells);
+            QSignalSpy cellsAckSpy(cells, &Fact::vehicleUpdated);
+            QVERIFY(cellsAckSpy.isValid());
+            cells->setRawValue(0);
+            QVERIFY(cellsAckSpy.wait(5000));
+            QVERIFY(!batteryComponent->setupComplete());
+
+            _setBattery1Source(vehicle, 1);
+            if (QTest::currentTestFailed()) {
+                return;
+            }
+            QVERIFY(batteryComponent->setupComplete());
         });
 }

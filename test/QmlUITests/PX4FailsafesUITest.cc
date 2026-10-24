@@ -142,8 +142,8 @@ void PX4FailsafesUITest::_activeFilterHidesInactiveFailsafes()
                         QVERIFY(QMetaObject::invokeMethod(filterBar, "filterActivated", Q_ARG(int, 1)));
                         QTRY_VERIFY(!findVisibleItem(_rootItem, QStringLiteral("failsafes_row_attitude"), 0));
                         QVERIFY(!findVisibleItem(_rootItem, QStringLiteral("failsafes_group_VehicleHealth"), 0));
-                        // Return Mode settings always apply
-                        QVERIFY(findVisibleItem(_rootItem, QStringLiteral("failsafes_row_returnMode"), 0));
+                        // Rows without an active condition always show
+                        QVERIFY(findVisibleItem(_rootItem, QStringLiteral("failsafes_row_battery"), 0));
 
                         // The summary counts the failsafes actually shown, out of every one on the page
                         const auto [visibleRows, totalRows] = countRows(QStringLiteral("failsafes_row_"));

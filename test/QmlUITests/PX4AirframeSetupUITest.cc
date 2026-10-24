@@ -127,7 +127,7 @@ void PX4AirframeSetupUITest::_testAirframePrereqPages()
     if (QTest::currentTestFailed()) return;
 
     // With Airframe setup incomplete, PX4AutoPilotPlugin::prerequisiteSetup()
-    // requires Airframe first for Sensors, Power, Safety, PID Tuning and
+    // requires Airframe first for Sensors, ESC, Battery, Return & Land, Collision, PID Tuning and
     // Flight Modes (COM_RC_IN_MODE defaults to 0), so clicking those pages
     // shows the prerequisite message panel instead of the page. Expandable
     // components must still expand, and Sensors must still auto-select its
@@ -137,16 +137,20 @@ void PX4AirframeSetupUITest::_testAirframePrereqPages()
         bool expectPrereqShown;
         const char *checkedSectionObjectName;
     };
+    // clang-format off
     const PrereqCheck checks[] = {
         { .objectName = "vehicleConfig_comp_Sensors",     .expectPrereqShown = true,  .checkedSectionObjectName = "vehicleConfig_section_Compass" },
-        { .objectName = "vehicleConfig_comp_Power",       .expectPrereqShown = true,  .checkedSectionObjectName = "" },
-        { .objectName = "vehicleConfig_comp_Safety",      .expectPrereqShown = true,  .checkedSectionObjectName = "" },
+        { .objectName = "vehicleConfig_comp_ESC",         .expectPrereqShown = true,  .checkedSectionObjectName = "" },
+        { .objectName = "vehicleConfig_comp_Battery",     .expectPrereqShown = true,  .checkedSectionObjectName = "" },
+        { .objectName = "vehicleConfig_comp_Return&Land", .expectPrereqShown = true,  .checkedSectionObjectName = "" },
+        { .objectName = "vehicleConfig_comp_Collision",   .expectPrereqShown = true,  .checkedSectionObjectName = "" },
         { .objectName = "vehicleConfig_comp_PIDTuning",   .expectPrereqShown = true,  .checkedSectionObjectName = "" },
         { .objectName = "vehicleConfig_comp_FlightModes", .expectPrereqShown = true,  .checkedSectionObjectName = "" },
         { .objectName = "vehicleConfig_comp_Radio",       .expectPrereqShown = false, .checkedSectionObjectName = "" },
         { .objectName = "vehicleConfig_comp_Joystick",    .expectPrereqShown = false, .checkedSectionObjectName = "" },
         { .objectName = "vehicleConfig_comp_Airframe",    .expectPrereqShown = false, .checkedSectionObjectName = "" },
     };
+    // clang-format on
     for (const PrereqCheck &check : checks) {
         _verifyAirframePrereq(QLatin1String(check.objectName), check.expectPrereqShown, QLatin1String(check.checkedSectionObjectName));
         if (QTest::currentTestFailed()) return;

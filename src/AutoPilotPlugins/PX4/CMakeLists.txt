@@ -20,10 +20,6 @@ target_sources(
         FailureInjectionComponent.h
         FlightModesComponent.cc
         FlightModesComponent.h
-        PowerComponent.cc
-        PowerComponent.h
-        PowerComponentController.cc
-        PowerComponentController.h
         PX4AirframeLoader.cc
         PX4AirframeLoader.h
         PX4AutoPilotPlugin.cc
@@ -32,6 +28,12 @@ target_sources(
         PX4BatteryComponent.h
         PX4BatteryController.cc
         PX4BatteryController.h
+        PX4CollisionComponent.cc
+        PX4CollisionComponent.h
+        PX4EscComponent.cc
+        PX4EscComponent.h
+        PX4EscController.cc
+        PX4EscController.h
         PX4FailsafesComponent.cc
         PX4FailsafesComponent.h
         PX4FlightBehavior.cc
@@ -40,6 +42,8 @@ target_sources(
         PX4FlightModesController.h
         PX4RadioComponent.cc
         PX4RadioComponent.h
+        PX4ReturnLandComponent.cc
+        PX4ReturnLandComponent.h
         PX4SerialPortConfig.cc
         PX4SerialPortConfig.h
         PX4SerialPortsComponent.cc
@@ -48,8 +52,6 @@ target_sources(
         PX4SerialPortsController.h
         PX4TuningComponent.cc
         PX4TuningComponent.h
-        SafetyComponent.cc
-        SafetyComponent.h
         SensorsComponent.cc
         SensorsComponent.h
         SensorsComponentController.cc
@@ -69,32 +71,9 @@ qt_add_resources(
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 # ----------------------------------------------------------------------------
-# Code-generation: produce QML config pages from VehicleConfig.json definitions
-# ----------------------------------------------------------------------------
-
-set(CONFIG_PAGES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/VehicleConfig")
-set(CONFIG_QML_GEN_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
-
-# Each <Name>.VehicleConfig.json produces <Name>Component.qml; the generator lists them
-file(GLOB _config_page_definitions CONFIGURE_DEPENDS "${CONFIG_PAGES_DIR}/*.VehicleConfig.json")
-
-qgc_add_qml_codegen(
-    GenerateConfigQmlPX4 GENERATE_AT_CONFIGURE LIST_OUTPUTS
-    GENERATOR_MODULE tools.generators.config_qml.generate_pages
-    OUTPUT_DIR "${CONFIG_QML_GEN_DIR}"
-    EXTRA_ARGS --pages-dir "${CONFIG_PAGES_DIR}"
-    DEPENDS ${_config_page_definitions}
-    COMMENT "Generating QML config pages from VehicleConfig.json definitions"
-)
-set(_config_generated_qml ${GenerateConfigQmlPX4_OUTPUTS})
-
-# ----------------------------------------------------------------------------
 # PX4 QML Module
 # ----------------------------------------------------------------------------
 qt_add_library(AutoPilotPluginsPX4Module STATIC)
-
-# Ensure generated files exist before the module is built
-add_dependencies(AutoPilotPluginsPX4Module GenerateConfigQmlPX4)
 
 qt_add_qml_module(
     AutoPilotPluginsPX4Module
@@ -102,9 +81,6 @@ qt_add_qml_module(
     VERSION 1.0
     RESOURCE_PREFIX /qml
     QML_FILES
-        # Generated from VehicleConfig.json definitions (output in build tree)
-        ${_config_generated_qml}
-        # Hand-coded pages and components
         ActuatorComponent.qml
         ActuatorFact.qml
         ActuatorSlider.qml
@@ -126,16 +102,24 @@ qt_add_qml_module(
         FailureInjectionComponent.qml
         FailureInjectionInstances.js
         FlightModesComponentSummary.qml
-        PowerComponentSummary.qml
         PX4BatteryComponent.qml
+        PX4BatteryComponentSummary.qml
         PX4BatteryRows.js
+        PX4CollisionComponent.qml
+        PX4CollisionComponentSummary.qml
+        PX4CollisionRows.js
         PX4ConfigRows.js
+        PX4EscComponent.qml
+        PX4EscRows.js
         PX4FailsafeRows.js
         PX4FailsafesComponent.qml
         PX4FlightBehaviorCopter.qml
         PX4FlightModeRows.js
         PX4FlightModes.qml
         PX4RadioComponentSummary.qml
+        PX4ReturnLandComponent.qml
+        PX4ReturnLandComponentSummary.qml
+        PX4ReturnLandRows.js
         PX4SerialPortsComponent.qml
         PX4TuningComponent.qml
         PX4TuningComponentCopter.qml
@@ -156,14 +140,10 @@ qt_add_qml_module(
         PX4TuningComponentSpacecraftRate.qml
         PX4TuningComponentSpacecraftVelocity.qml
         PX4TuningComponentVTOL.qml
-        SafetyComponentSummary.qml
         SensorsComponent.qml
         SensorsComponentSummary.qml
         SensorsComponentSummaryFixedWing.qml
         SensorsSetup.qml
-    RESOURCES
-        VehicleConfig/Power.VehicleConfig.json
-        VehicleConfig/Safety.VehicleConfig.json
     NO_PLUGIN
 )
 
@@ -173,28 +153,11 @@ qt_add_resources(
     BASE "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/PX4/Images"
     FILES
         "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/PX4/Images/CameraTrigger.svg"
-        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/PX4/Images/DatalinkLoss.svg"
-        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/PX4/Images/DatalinkLossLight.svg"
-        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/PX4/Images/GeoFence.svg"
-        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/PX4/Images/GeoFenceLight.svg"
         "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/PX4/Images/HITL.svg"
         "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/PX4/Images/LandMode.svg"
-        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/PX4/Images/LandModeCopter.svg"
-        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/PX4/Images/LowBattery.svg"
-        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/PX4/Images/LowBatteryLight.svg"
         "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/PX4/Images/no-logging.svg"
         "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/PX4/Images/no-logging-light.svg"
-        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/PX4/Images/ObjectAvoidance.svg"
-        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/PX4/Images/PowerComponentBattery_01cell.svg"
-        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/PX4/Images/PowerComponentBattery_02cell.svg"
-        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/PX4/Images/PowerComponentBattery_03cell.svg"
-        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/PX4/Images/PowerComponentBattery_04cell.svg"
-        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/PX4/Images/PowerComponentBattery_05cell.svg"
-        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/PX4/Images/PowerComponentBattery_06cell.svg"
-        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/PX4/Images/RCLoss.svg"
-        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/PX4/Images/RCLossLight.svg"
         "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/PX4/Images/ReturnToHomeAltitude.svg"
-        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/PX4/Images/ReturnToHomeAltitudeCopter.svg"
         "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/PX4/Images/VehicleDown.png"
         "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/PX4/Images/VehicleDownRotate.png"
         "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/PX4/Images/VehicleLeft.png"

@@ -15,6 +15,17 @@ QString PX4FailsafesComponent::iconResource() const
     return QStringLiteral("/InstrumentValueIcons/exclamation-outline.svg");
 }
 
+QStringList PX4FailsafesComponent::searchKeywords() const
+{
+    return {
+        tr("RC loss"),           tr("Joystick loss"), tr("Radio"),          tr("Signal loss"),
+        tr("Data link loss"),    tr("Telemetry"),     tr("Ground station"), tr("GCS"),
+        tr("Geofence"),          tr("Fence"),         tr("Breach"),         tr("Low battery"),
+        tr("Critical battery"),  tr("GPS loss"),      tr("Wind"),           tr("Flight time"),
+        tr("Traffic avoidance"),
+    };
+}
+
 QUrl PX4FailsafesComponent::setupSource() const
 {
     return QUrl::fromUserInput(

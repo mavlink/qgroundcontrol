@@ -50,18 +50,24 @@ const QVariantList &CustomAutoPilotPlugin::vehicleComponents()
         _flightModesComponent->setupTriggerSignals();
         _components.append(QVariant::fromValue(reinterpret_cast<VehicleComponent*>(_flightModesComponent)));
 
-        _powerComponent = new PowerComponent(_vehicle, this);
-        _powerComponent->setupTriggerSignals();
-        _components.append(QVariant::fromValue(reinterpret_cast<VehicleComponent*>(_powerComponent)));
+        if (_vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, "BAT1_SOURCE")) {
+            _batteryComponent = new PX4BatteryComponent(_vehicle, this);
+            _batteryComponent->setupTriggerSignals();
+            _components.append(QVariant::fromValue(reinterpret_cast<VehicleComponent*>(_batteryComponent)));
+        }
+
+        _escComponent = new PX4EscComponent(_vehicle, this);
+        _escComponent->setupTriggerSignals();
+        _components.append(QVariant::fromValue(reinterpret_cast<VehicleComponent*>(_escComponent)));
 
         _motorComponent = new MotorComponent(_vehicle, this);
         _motorComponent->setupTriggerSignals();
         _components.append(QVariant::fromValue(reinterpret_cast<VehicleComponent*>(_motorComponent)));
     }
 
-    _safetyComponent = new SafetyComponent(_vehicle, this);
-    _safetyComponent->setupTriggerSignals();
-    _components.append(QVariant::fromValue(reinterpret_cast<VehicleComponent*>(_safetyComponent)));
+    _returnLandComponent = new PX4ReturnLandComponent(_vehicle, this);
+    _returnLandComponent->setupTriggerSignals();
+    _components.append(QVariant::fromValue(reinterpret_cast<VehicleComponent*>(_returnLandComponent)));
 
     if (showAdvanced) {
         _tuningComponent = new PX4TuningComponent(_vehicle, this);
