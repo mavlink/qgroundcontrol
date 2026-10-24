@@ -22,8 +22,8 @@ void disposeChild(GstElement* element);
 /// streaming threads parked inside @p element, which going NULL would otherwise wait on.
 void flushAndDisposeChild(GstElement* element);
 
-/// Adds @p element to @p bin. gst_bin_add consumes a floating element even when it fails, so ownership always moves.
-/// Returns the borrowed (bin-owned) element, or null if the bin rejected it; @p what names it in the warning.
+/// Adds @p element, which must not be floating (see makeElement()), to @p bin, which takes its own ref; ours is
+/// dropped. Returns the borrowed (bin-owned) element, or null if the bin rejected it; @p what names it in the warning.
 GstElement* addToBin(GstElement* bin, GstElementPtr element, const char* what);
 
 /// The head of a branch behind @p tee: a queue and a closed valve (drop=TRUE), added to @p pipeline and linked
@@ -35,6 +35,14 @@ struct TeeBranch
 };
 
 TeeBranch addTeeBranch(GstElement* pipeline, GstElement* tee, const char* what);
+
+/// Asks the encoder upstream of @p sinkPad for a keyframe with its parameter sets (on RTSP, rtpbin turns this into an
+/// RTCP PLI/FIR). Doesn't block: the event is not serialized.
+void requestKeyframe(GstPad* sinkPad);
+
+/// Sends @p event into @p pad from GStreamer's thread pool, so a serialized event waiting for a busy streaming thread
+/// never blocks the caller. Takes @p event; the pad is kept alive until the send returns.
+void sendEventAsync(GstPad* pad, GstEvent* event);
 
 /// @p element's first src pad, or null when it has none (yet).
 GstPadPtr firstSrcPad(GstElement* element);

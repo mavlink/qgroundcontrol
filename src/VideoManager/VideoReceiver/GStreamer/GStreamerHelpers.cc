@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <gst/rtsp/gstrtspurl.h>
+#include <gst/video/video-event.h>
 
 #include <QtCore/QByteArray>
 #include <QtCore/QLatin1String>
@@ -88,18 +89,25 @@ void flushAndDisposeChild(GstElement* element)
 
 GstElement* addToBin(GstElement* bin, GstElementPtr element, const char* what)
 {
-    GstElement* const borrowed = element.release();
-    if (!gst_bin_add(GST_BIN(bin), borrowed)) {
+    if (!element || g_object_is_floating(element.get())) {
+        qCCritical(GStreamerHelpersLog) << "Missing or floating element for" << what;
+        return nullptr;
+    }
+    GstElement* const added = element.release();
+    const bool ok = gst_bin_add(GST_BIN(bin), added);
+    // The bin took its own reference; drop ours.
+    gst_object_unref(added);
+    if (!ok) {
         qCWarning(GStreamerHelpersLog) << "gst_bin_add() failed for" << what;
         return nullptr;
     }
-    return borrowed;
+    return added;
 }
 
 TeeBranch addTeeBranch(GstElement* pipeline, GstElement* tee, const char* what)
 {
-    GstElementPtr queue = adoptElement(gst_element_factory_make("queue", nullptr));
-    GstElementPtr valve = adoptElement(gst_element_factory_make("valve", nullptr));
+    GstElementPtr queue = makeElement("queue");
+    GstElementPtr valve = makeElement("valve");
     if (!queue || !valve) {
         qCWarning(GStreamerHelpersLog) << "Failed to create the queue and valve of the" << what << "branch";
         return {};
@@ -113,6 +121,37 @@ TeeBranch addTeeBranch(GstElement* pipeline, GstElement* tee, const char* what)
         return {};
     }
     return branch;
+}
+
+void requestKeyframe(GstPad* sinkPad)
+{
+    if (!sinkPad) {
+        return;
+    }
+    (void) gst_pad_push_event(sinkPad, gst_video_event_new_upstream_force_key_unit(GST_CLOCK_TIME_NONE, TRUE, 0));
+}
+
+void sendEventAsync(GstPad* pad, GstEvent* event)
+{
+    struct PendingEvent
+    {
+        GstPadPtr pad;
+        GstEventPtr event;
+    };
+
+    GstElementPtr parent = pad ? adoptElement(gst_pad_get_parent_element(pad)) : nullptr;
+    if (!parent) {
+        gst_event_unref(event);
+        return;
+    }
+    gst_element_call_async(
+        parent.get(),
+        [](GstElement* /*element*/, gpointer data) {
+            auto* const pending = static_cast<PendingEvent*>(data);
+            (void) gst_pad_send_event(pending->pad.get(), pending->event.release());
+        },
+        new PendingEvent{.pad = adoptPad(GST_PAD(gst_object_ref(pad))), .event = adoptEvent(event)},
+        [](gpointer data) { delete static_cast<PendingEvent*>(data); });
 }
 
 GstPadPtr firstSrcPad(GstElement* element)
