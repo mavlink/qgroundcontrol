@@ -54,6 +54,7 @@ Item {
             surfaceModel: root.surfaceModel
             center: object.center
             radiusMeters: object.radius.rawValue
+            visible: !object.homeCentered || root.homePosition.isValid
             strokeColor: object.inclusion ? root._borderColor : "transparent"
             strokeWidth: root._borderWidthInclusion
             fillColor: object.inclusion ? "transparent" : root._interiorColorExclusion
