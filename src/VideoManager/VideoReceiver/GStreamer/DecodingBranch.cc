@@ -134,25 +134,6 @@ void DecodingBranch::onDecoderPad(GstPad* pad)
     (void) _addVideoSink(pad);
 }
 
-void DecodingBranch::onBusCapsInfo(GstMessage* message)
-{
-    const GstQgc::CapsInfo info = GstQgc::parseCapsInfo(message);
-    // src compared by address only on the GUI thread; never dereferenced (may be gone by then).
-    void* src = GST_MESSAGE_SRC(message);
-    QMetaObject::invokeMethod(
-        &_receiver,
-        [this, info, src]() {
-            for (auto* c : QGCQVideoSinkController::controllersOf(&_receiver)) {
-                if (static_cast<const void*>(c->element()) == src) {
-                    c->updateNegotiation(info.format, info.size);
-                }
-            }
-            // Unlike the encoded caps upstream of the decoder, the sink's are always fixed.
-            emit _receiver.videoSizeChanged(info.size);
-        },
-        Qt::QueuedConnection);
-}
-
 QString DecodingBranch::decoderName() const
 {
     QMutexLocker locker(&_decoderNameMutex);

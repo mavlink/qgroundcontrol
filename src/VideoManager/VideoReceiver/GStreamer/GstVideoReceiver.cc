@@ -538,11 +538,7 @@ GstBusSyncReply GstVideoReceiver::_onBusSyncMessage(GstBus* /*bus*/, GstMessage*
             self->_recordingBranch.onBusEos();
             break;
         case GST_MESSAGE_ELEMENT:
-            if (gst_message_has_name(message, GstQgc::kCapsInfoMessage)) {
-                self->_decodingBranch.onBusCapsInfo(message);
-            } else {
-                self->_recordingBranch.onBusElement(message);
-            }
+            self->_recordingBranch.onBusElement(message);
             break;
         case GST_MESSAGE_STREAM_COLLECTION:
             selectVideoStreams(message);

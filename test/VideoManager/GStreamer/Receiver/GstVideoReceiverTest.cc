@@ -828,17 +828,6 @@ void GstVideoReceiverTest::_testDecoderNameReported()
     QVERIFY(!stream.gstReceiver->decoderName().isEmpty());
 }
 
-void GstVideoReceiverTest::_testVideoSizeFromNegotiatedCaps()
-{
-    const QgcVideoSinkPtr videoSink = makeQgcVideoSink();
-    QVERIFY(videoSink);
-    StreamingReceiver stream;
-    QVERIFY(stream.startSending());
-    QVERIFY(stream.start(videoSink.get()));
-    QVERIFY_SIGNAL_COUNT_WAIT(stream.sizeSpy, 1, TestTimeout::mediumMs());
-    QCOMPARE(stream.sizeSpy.constLast().constFirst().toSize(), QSize(kFrameWidth, kFrameHeight));
-}
-
 void GstVideoReceiverTest::_testScreenshotSavesDisplayedFrame()
 {
     const QgcVideoSinkPtr videoSink = makeQgcVideoSink();

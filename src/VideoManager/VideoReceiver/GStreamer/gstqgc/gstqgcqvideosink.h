@@ -2,7 +2,6 @@
 
 #include <gst/video/gstvideosink.h>
 
-#include <QtCore/QSize>
 #include <QtCore/QString>
 
 #include "GstScoped.h"
@@ -28,18 +27,6 @@ namespace GstQgc {
 /// For qgcvideosinkbin, before it links @p sink: the GPU variant in front of the sink, and whether the sink asks for
 /// square pixels in system memory. Both shape the caps the sink offers.
 void configureSinkCaps(GstElement* sink, HwBuffers::GpuBinMode gpuBin, bool squarePixels);
-
-/// Name of the element message qgcqvideosink posts from set_caps with the negotiated raw caps, which are always fixed.
-inline constexpr char kCapsInfoMessage[] = "qgc-caps-info";
-
-struct CapsInfo
-{
-    QString format;  ///< GStreamer format name, e.g. "NV12".
-    QSize size;
-};
-
-/// The negotiated format and size a kCapsInfoMessage carries.
-CapsInfo parseCapsInfo(GstMessage* message);
 
 /// guint64 "frame-stats" field holding the frames @p path delivered: "frames-" plus the lower-cased
 /// GstHw::toString(path).

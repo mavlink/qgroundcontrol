@@ -12,6 +12,7 @@
 #include <QtCore/QMetaObject>
 #include <QtCore/QMutex>
 #include <QtCore/QMutexLocker>
+#include <QtCore/QSize>
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoFrameFormat>
 #include <QtMultimedia/QVideoSink>
@@ -436,12 +437,6 @@ static gboolean gst_qgc_q_video_sink_set_caps(GstBaseSink* bsink, GstCaps* caps)
     p->demotion_recorded = false;
     p->caps_valid.store(true, std::memory_order_release);
 
-    // Posted on the bus so the controller can mirror negotiation state into Q_PROPERTY.
-    GstStructure* const capsInfo =
-        gst_structure_new(GstQgc::kCapsInfoMessage, "width", G_TYPE_INT, w, "height", G_TYPE_INT, h, "format",
-                          G_TYPE_STRING, gst_video_format_to_string(GST_VIDEO_INFO_FORMAT(&parsedInfo)), nullptr);
-    gst_element_post_message(GST_ELEMENT(self), gst_message_new_element(GST_OBJECT(self), capsInfo));
-
     qCInfo(GstQgcQVideoSinkLog).noquote()
         << "set_caps: format=" << gst_video_format_to_string(GST_VIDEO_INFO_FORMAT(&parsedInfo)) << w << "x" << h
         << "pixfmt=" << int(pixelFormat);
@@ -721,16 +716,6 @@ void configureSinkCaps(GstElement* sink, HwBuffers::GpuBinMode gpuBin, bool squa
     priv_of(self)->square_pixels = squarePixels;
     gst_clear_caps(&priv_of(self)->offered_caps);
     GST_OBJECT_UNLOCK(self);
-}
-
-CapsInfo parseCapsInfo(GstMessage* message)
-{
-    const GstStructure* const structure = gst_message_get_structure(message);
-    gint width = 0;
-    gint height = 0;
-    (void) gst_structure_get_int(structure, "width", &width);
-    (void) gst_structure_get_int(structure, "height", &height);
-    return {.format = QString::fromUtf8(gst_structure_get_string(structure, "format")), .size = QSize(width, height)};
 }
 
 const char* sinkFramesField(HwVideoBufferPath path) noexcept

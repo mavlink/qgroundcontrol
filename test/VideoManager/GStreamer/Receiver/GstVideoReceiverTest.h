@@ -39,7 +39,6 @@ private slots:
     void _testRecordingStartKeepsPipelinePlaying();
     void _testDecoderQosDisabled();
     void _testDecoderNameReported();
-    void _testVideoSizeFromNegotiatedCaps();
     void _testScreenshotSavesDisplayedFrame();
     void _testStopReleasesDisplayedFrame();
     void _testBusDoesNotQueueMessages();

@@ -23,8 +23,8 @@ struct PathStats;
 /// its QVideoSink displays. Also keeps the name of the decoder decodebin3 plugged, which the receiver exposes. Reports
 /// through the receiver's signals.
 ///
-/// Threading: the receiver's worker, except the sink probe and the decoder-added callback (streaming threads) and
-/// onBusCapsInfo() (whichever thread posts). decoderName() is thread-safe.
+/// Threading: the receiver's worker, except the sink probe and the decoder-added callback (streaming threads).
+/// decoderName() is thread-safe.
 class DecodingBranch
 {
 public:
@@ -46,9 +46,6 @@ public:
     GstElement* decoder() const { return _decoder.get(); }
 
     bool isDecoding() const { return _decoding.load(std::memory_order_relaxed); }
-
-    /// The sink's negotiated raw caps (GstQgc::kCapsInfoMessage).
-    void onBusCapsInfo(GstMessage* message);
 
     QString decoderName() const;
 
