@@ -11,6 +11,10 @@
     (defined(QGC_HAS_GST_VULKAN_GPU_PATH) && QT_CONFIG(vulkan))
 #include <rhi/qrhi_platform.h>
 #endif
+#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
+#include <d3d11.h>
+#include <d3d11_4.h>  // ID3D11Multithread
+#endif
 
 #include <array>
 #include <atomic>
@@ -39,6 +43,22 @@ void clearSnapshot()
     s_snapshot.framesInFlight.store(0, std::memory_order_release);
 }
 
+#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
+// QRhi creates its D3D11 device without multithread protection (qrhid3d11.cpp), but GStreamer's D3D11 elements share
+// its immediate context from their streaming threads. Turned on here, on the render thread, before the device is
+// published to them: switching it while another thread is inside the context isn't safe. Idempotent.
+void protectImmediateContext(ID3D11DeviceContext* context)
+{
+    ID3D11Multithread* multithread = nullptr;
+    if (context &&
+        SUCCEEDED(context->QueryInterface(__uuidof(ID3D11Multithread), reinterpret_cast<void**>(&multithread))) &&
+        multithread) {
+        (void) multithread->SetMultithreadProtected(TRUE);
+        multithread->Release();
+    }
+}
+#endif
+
 void populateSnapshot(QRhi* rhi)
 {
     if (!rhi) {
@@ -56,6 +76,7 @@ void populateSnapshot(QRhi* rhi)
 #if defined(QGC_HAS_GST_D3D11_GPU_PATH)
     if (rhi->backend() == QRhi::D3D11) {
         if (auto* h = static_cast<const QRhiD3D11NativeHandles*>(rhi->nativeHandles())) {
+            protectImmediateContext(static_cast<ID3D11DeviceContext*>(h->context));
             d3d11 = h->dev;
             // Sign-extend qint32 HighPart so it matches LARGE_INTEGER::QuadPart bit-for-bit.
             luid = (static_cast<qint64>(h->adapterLuidHigh) << 32) |

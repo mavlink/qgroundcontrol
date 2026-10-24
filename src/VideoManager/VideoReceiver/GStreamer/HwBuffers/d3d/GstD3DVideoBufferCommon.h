@@ -111,10 +111,11 @@ struct PlaneResourceGuard
 ///   types Handle, Memory, Device; static kMemoryName, log(), isMemory(GstMemory*), bridgeDevice() (transfer-full),
 ///   sameDevice(Device*, Device*), resource(Memory*), subresource(Memory*, int plane), isArraySlice(Handle*, guint);
 ///   members prepare(Memory*, int plane) (decoder sync), copySlice(Handle*, guint subresource, int plane, Memory*)
-///   (returns an AddRef'd staging handle), finish() (flush/fence-wait the submitted copies).
-/// VideoBuffer and proposePool() below need the rest of the API: static kPath, kBackend (QRhi::Implementation),
-///   kCapsFeature, diag(), newPool(Device*), setAllocationParams(GstStructure* config, Device*, const GstVideoInfo*);
-///   member takeKeepAlive() (state the frame bundle must keep alive, or null).
+///   (returns an AddRef'd staging handle, or the slice's own resource when the API copies it later), finish()
+///   (flush/fence-wait the submitted copies).
+/// proposePool() needs static kCapsFeature, newPool(Device*) and setAllocationParams(GstStructure* config, Device*,
+///   const GstVideoInfo*); VideoBuffer (D3D12) also static kPath, kBackend (QRhi::Implementation), diag() and member
+///   takeKeepAlive() (state the frame bundle must keep alive, or null).
 template <class Api>
 int resolvePlanes(GstBuffer* buffer, Api& api, MapDiagnostics& diag, PlaneResourceGuard<typename Api::Handle>& guard)
 {
@@ -200,6 +201,9 @@ public:
     /// Keeps backend-owned state (D3D12 staging slot leases) alive for as long as QRhi may sample this bundle.
     void setKeepAlive(std::shared_ptr<void> keepAlive) noexcept { _keepAlive = std::move(keepAlive); }
 
+    /// The native resource plane @p plane wraps; null past the bundle's planes.
+    HandleT* handle(int plane) const noexcept { return (plane >= 0 && plane < _count) ? _handles[plane] : nullptr; }
+
 private:
     std::array<HandleT*, kMaxPlanes> _handles;
     std::shared_ptr<void> _keepAlive;
@@ -265,9 +269,10 @@ QVideoFrameTexturesUPtr mapResolvedTextures(GstHwVideoBuffer& self, QRhi& rhi, Q
         });
 }
 
-/// Wraps a D3D11Memory/D3D12Memory-backed GstSample as a QHwVideoBuffer. The device guard, decoder sync and slice
-/// copies run in the constructor, on the streaming thread (blocking there is harmless: the decoder is async), so
-/// mapTextures() on the render thread only imports resolved resources.
+/// Wraps a D3D12Memory-backed GstSample as a QHwVideoBuffer. The device guard, decoder sync and slice copies run in the
+/// constructor, on the streaming thread (blocking there is harmless: the decoder is async), so mapTextures() on the
+/// render thread only imports resolved resources. D3D11 has its own buffer: it shares QRhi's immediate context, so it
+/// copies on the render thread instead.
 template <class Api>
 class VideoBuffer final : public GstHwVideoBuffer
 {

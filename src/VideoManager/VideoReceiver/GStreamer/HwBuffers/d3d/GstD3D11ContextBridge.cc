@@ -40,16 +40,18 @@ GstObject* D3D11ContextBridge::createDevice()
         return nullptr;
     }
 
-    // QRhi creates this device with devFlags=0 (qrhid3d11.cpp) — no multithread protection. GStreamer's streaming
-    // thread and the QRhi render thread share its immediate context, so guard it explicitly. Idempotent: a no-op if
-    // GStreamer or a future QRhi already enabled it.
+    // GStreamer's elements share QRhi's immediate context. QGCRhiCapture turns its multithread protection on from the
+    // render thread before publishing the device; switching it here, while QRhi may be inside the context, is only the
+    // fallback for a device published some other way.
     ID3D11DeviceContext* immediate = nullptr;
     dev->GetImmediateContext(&immediate);
     if (immediate) {
         ID3D11Multithread* multithread = nullptr;
         if (SUCCEEDED(immediate->QueryInterface(__uuidof(ID3D11Multithread), reinterpret_cast<void**>(&multithread))) &&
             multithread) {
-            multithread->SetMultithreadProtected(TRUE);
+            if (!multithread->GetMultithreadProtected()) {
+                (void) multithread->SetMultithreadProtected(TRUE);
+            }
             multithread->Release();
         }
         immediate->Release();
