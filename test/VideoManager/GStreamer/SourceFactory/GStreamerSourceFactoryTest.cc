@@ -468,7 +468,7 @@ void GStreamerTest::_testSourceFactoryRejectsBadUri()
     GStreamer::SourceFactory::Config config;
     QVERIFY(!createSource(QString(), config));
     QVERIFY(!createSource(QStringLiteral("ftp://127.0.0.1/x"), config));
-    QVERIFY(!createSource(QStringLiteral("udp://127.0.0.1:0"), config));
+    QVERIFY(!createSource(QStringLiteral("udp://127.0.0.1"), config));
     QVERIFY(!createSource(QStringLiteral("udp://127.0.0.1:99999"), config));
 }
 
