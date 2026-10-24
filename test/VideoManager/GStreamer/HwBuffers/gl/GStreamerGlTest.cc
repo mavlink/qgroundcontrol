@@ -1,4 +1,4 @@
-#include "GStreamerTest.h"
+#include "HwBuffers/GstHwBuffersPipelineTest.h"
 
 #ifdef QGC_GST_STREAMING
 
@@ -11,7 +11,7 @@
 #include "HwBuffers/common/HwBuffers.h"
 #include "gstqgc/GstQgcRenderTarget.h"
 
-void GStreamerTest::_testGlMemoryDispatch()
+void GstHwBuffersPipelineTest::_testGlMemoryDispatch()
 {
 #if defined(Q_OS_MACOS) || defined(Q_OS_WIN)
     ignoreLogMessage("default", QtWarningMsg,
@@ -47,8 +47,8 @@ void GStreamerTest::_testGlMemoryDispatch()
     const GStreamer::GstElementPtr qvideosink =
         GStreamer::adoptElement(gst_bin_get_by_name(GST_BIN(sinkBin.get()), "qgcqvideosink"));
     QVERIFY2(qvideosink, "Could not find 'qgcqvideosink' inside sink bin");
-    const GStreamer::GstPadPtr appsinkPad = GStreamer::adoptPad(gst_element_get_static_pad(qvideosink.get(), "sink"));
-    QVERIFY2(appsinkPad, "qgcqvideosink has no sink pad");
+    const GStreamer::GstPadPtr sinkPad = GStreamer::adoptPad(gst_element_get_static_pad(qvideosink.get(), "sink"));
+    QVERIFY2(sinkPad, "qgcqvideosink has no sink pad");
 
     struct ProbeState
     {
@@ -70,7 +70,7 @@ void GStreamerTest::_testGlMemoryDispatch()
         return GST_PAD_PROBE_OK;
     };
     GStreamer::PadProbe bufferProbe;
-    QVERIFY(bufferProbe.add(appsinkPad.get(), GST_PAD_PROBE_TYPE_BUFFER, probeCb, &probe));
+    QVERIFY(bufferProbe.add(sinkPad.get(), GST_PAD_PROBE_TYPE_BUFFER, probeCb, &probe));
 
     if (!pipeline.play()) {
         QSKIP("GLMemory pipeline failed to PLAY (no GL context available?)");
@@ -83,7 +83,7 @@ void GStreamerTest::_testGlMemoryDispatch()
         QSKIP(qPrintable(
             QStringLiteral("GLMemory pipeline error (likely no GL context): %1").arg(GstTest::errorText(msg.get()))));
     }
-    const QString negotiatedStr = GstTest::currentCapsString(appsinkPad.get());
+    const QString negotiatedStr = GstTest::currentCapsString(sinkPad.get());
     QVERIFY2(probe.bufferCount.load() > 0, "No buffers reached qgcqvideosink under GLMemory caps");
     QVERIFY2(probe.glMemoryCount.load() > 0,
              qPrintable(QStringLiteral("GLMemory negotiated but buffers carried non-GL allocator. "
@@ -91,7 +91,7 @@ void GStreamerTest::_testGlMemoryDispatch()
                             .arg(probe.bufferCount.load())
                             .arg(negotiatedStr)));
     QVERIFY2(negotiatedStr.contains(QStringLiteral("memory:GLMemory")),
-             qPrintable(QStringLiteral("Appsink negotiated caps lack memory:GLMemory: %1").arg(negotiatedStr)));
+             qPrintable(QStringLiteral("qgcqvideosink negotiated caps lack memory:GLMemory: %1").arg(negotiatedStr)));
 }
 
 #endif

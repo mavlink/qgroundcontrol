@@ -1,4 +1,4 @@
-#include "GStreamerTest.h"
+#include "HwBuffers/GstHwBuffersPipelineTest.h"
 
 #ifdef QGC_GST_STREAMING
 
@@ -238,7 +238,7 @@ void testD3DMapTextures(QRhi& rhi, const char* inputCaps, const char* uploadElem
 } // namespace
 #endif
 
-void GStreamerTest::_testD3D11MemoryDispatch()
+void GstHwBuffersPipelineTest::_testD3D11MemoryDispatch()
 {
 #if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D11_GPU_PATH)
     testD3DMemoryDispatch("d3d11upload", "video/x-raw(memory:D3D11Memory)", HwVideoBufferPath::D3D11);
@@ -247,7 +247,7 @@ void GStreamerTest::_testD3D11MemoryDispatch()
 #endif
 }
 
-void GStreamerTest::_testD3D12MemoryDispatch()
+void GstHwBuffersPipelineTest::_testD3D12MemoryDispatch()
 {
 #if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D12_GPU_PATH)
     testD3DMemoryDispatch("d3d12upload", "video/x-raw(memory:D3D12Memory)", HwVideoBufferPath::D3D12);
@@ -256,7 +256,7 @@ void GStreamerTest::_testD3D12MemoryDispatch()
 #endif
 }
 
-void GStreamerTest::_testD3DMapTexturesWithQRhi_data()
+void GstHwBuffersPipelineTest::_testD3DMapTexturesWithQRhi_data()
 {
     QTest::addColumn<int>("path");
     QTest::addColumn<QString>("format");
@@ -272,7 +272,7 @@ void GStreamerTest::_testD3DMapTexturesWithQRhi_data()
     }
 }
 
-void GStreamerTest::_testD3DMapTexturesWithQRhi()
+void GstHwBuffersPipelineTest::_testD3DMapTexturesWithQRhi()
 {
 #if !defined(Q_OS_WIN) || (!defined(QGC_HAS_GST_D3D11_GPU_PATH) && !defined(QGC_HAS_GST_D3D12_GPU_PATH))
     QSKIP("D3D GPU paths not compiled in this build");

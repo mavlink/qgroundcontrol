@@ -1,4 +1,4 @@
-#include "GStreamerTest.h"
+#include "GstHwBuffersTest.h"
 
 #ifdef QGC_GST_STREAMING
 
@@ -38,7 +38,7 @@ std::vector<int> destroyedSorted()
 
 }  // namespace
 
-void GStreamerTest::_testHwImportCacheEvictsLeastRecentlyUsed()
+void GstHwBuffersTest::_testHwImportCacheEvictsLeastRecentlyUsed()
 {
     s_destroyed.clear();
     FakeCache cache{destroyFake};
@@ -55,7 +55,7 @@ void GStreamerTest::_testHwImportCacheEvictsLeastRecentlyUsed()
     QCOMPARE(cache.size(), std::size_t(3));
 }
 
-void GStreamerTest::_testHwImportCacheReplaceDestroysPrevious()
+void GstHwBuffersTest::_testHwImportCacheReplaceDestroysPrevious()
 {
     s_destroyed.clear();
     FakeCache cache{destroyFake};
@@ -69,7 +69,7 @@ void GStreamerTest::_testHwImportCacheReplaceDestroysPrevious()
     QCOMPARE(cache.size(), std::size_t(1));
 }
 
-void GStreamerTest::_testHwImportCacheEraseIfDestroysMatches()
+void GstHwBuffersTest::_testHwImportCacheEraseIfDestroysMatches()
 {
     s_destroyed.clear();
     FakeCache cache{destroyFake};
@@ -84,7 +84,7 @@ void GStreamerTest::_testHwImportCacheEraseIfDestroysMatches()
     QCOMPARE(cache.size(), std::size_t(1));
 }
 
-void GStreamerTest::_testHwImportCachePinnedEntriesOutliveRemoval()
+void GstHwBuffersTest::_testHwImportCachePinnedEntriesOutliveRemoval()
 {
     s_destroyed.clear();
     FakeCache cache{destroyFake};
@@ -108,7 +108,7 @@ void GStreamerTest::_testHwImportCachePinnedEntriesOutliveRemoval()
     QCOMPARE(cache.parkedCount(), std::size_t(0));
 }
 
-void GStreamerTest::_testHwImportCacheRejectsInsertWhenAllPinned()
+void GstHwBuffersTest::_testHwImportCacheRejectsInsertWhenAllPinned()
 {
     s_destroyed.clear();
     FakeCache cache{destroyFake};
@@ -123,7 +123,7 @@ void GStreamerTest::_testHwImportCacheRejectsInsertWhenAllPinned()
     QCOMPARE(cache.size(), std::size_t(3));
 }
 
-void GStreamerTest::_testHwImportCacheDefersDestroyToOwnerThread()
+void GstHwBuffersTest::_testHwImportCacheDefersDestroyToOwnerThread()
 {
     s_destroyed.clear();
     s_onOwnerThread = false;

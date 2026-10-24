@@ -252,15 +252,22 @@ gst-launch-1.0 udpsrc port=5600 caps='application/x-rtp, media=(string)video, cl
 | --- | --- | --- |
 | `GStreamerEnvironmentTest` | Unit | The bundled runtime's environment (plugin path and scanner, which still forks) and its private plugin registry, named per plugin path, which keeps a user-set `GST_REGISTRY` or `GST_REGISTRY_1_0`; a system GStreamer keeps the default registry. |
 | `GStreamerInitTest` | Unit | Init policy: when GStreamer's log is bridged into Qt logging, which missing elements disable video and which only a feature, and the ranks set with `GST_PLUGIN_FEATURE_RANK`. |
-| `GStreamerTest` | Integration | Helpers, the source factory, the `gstqgc` sink and the `HwBuffers` paths. |
-| `GStreamerDmaBufGlTest` | Integration | DMABuf planes imported into a GL QRhi on EGL, read back pixel by pixel (xcb with `xcb_egl`). |
+| `GStreamerTest` | Unit | The `GStreamer` facade: URI checks, decoder classification and ranking, logging, environment, init, and the recording sink's accepted streams. |
+| `GstQgcSinkTest` | Unit | `qgcqvideosink` and `qgcvideosinkbin` as elements: construction, caps, allocation, the format and colorimetry tables, the `QVideoSink` controller, and frames pushed straight into the sink (latest frame only, flushes, orientation tags, crop, renegotiation). |
+| `GstSourceFactoryTest` | Unit | The source bin built for each URI, its jitter-buffer and retransmission policy, RTSP stream selection, dynamic-pad linking and the parameter-set gate, without a stream. |
+| `GstHwBuffersTest` | Unit | The `HwBuffers` paths without a GPU: path selection, import caches, frame-texture bundles on the Null `QRhi`, DMABuf modifier policy, CPU fallbacks, crop matrices and telemetry. |
 | `GstVideoReceiverComponentsTest` | Unit | The receiver's components without a stream: reconnect backoff, stall detection, recording finalization by ancestry, pipeline and `.dot` file names. |
+| `GstQgcSinkPipelineTest` | Integration | `videotestsrc` pipelines played into `qgcvideosinkbin` bound to a `QVideoSink`: formats, timestamps, colorimetry, non-square pixels, GPU-bin fallbacks, teardown under load. |
+| `GstSourceFactoryStreamTest` | Integration | Source bins receiving real streams on loopback: RTP over UDP joining mid-GOP, and an RTSP session that sets up only the video stream. |
+| `GstRecordingSinkTest` | Integration | The recording file sink fed by running pipelines: a mid-stream H.265 MP4 start and frames that carry only a DTS. |
+| `GstHwBuffersPipelineTest` | Integration, GPU | Pipelines that upload into GPU memory (DMABuf, GLMemory, Vulkan, D3D11/D3D12) and the path each frame takes; skips without the device. |
+| `GStreamerDmaBufGlTest` | Integration, GPU | DMABuf planes imported into a GL QRhi on EGL, read back pixel by pixel (xcb with `xcb_egl`). |
 | `GstVideoReceiverTest` | Integration | `GstVideoReceiver` end to end against live H.264 streams it sends itself on loopback: states, restarts, decoder-only recovery, recording across reconnects, slow and hung storage, bounded teardown. Receivers and servers listen on port 0, so parallel runs never collide. |
 
-Each test skips, rather than fails, when GStreamer or a plugin it needs is missing (`GstVideoReceiverTest` needs `x264enc` among others; its MockLink streams use `openh264enc`, falling back to `x264enc`).
+Each test skips, rather than fails, when GStreamer or a plugin it needs is missing (`GstVideoReceiverTest` needs `x264enc` among others; its MockLink streams use `openh264enc`, falling back to `x264enc`). Each class runs in its own process, so a crash in a GPU path only fails its own class; `-LE GPU` leaves out the classes that use the host's GPU.
 
 ```bash
-ctest --test-dir build -R '^(GStreamerEnvironmentTest|GStreamerInitTest|GStreamerTest|GStreamerDmaBufGlTest|GstVideoReceiverComponentsTest|GstVideoReceiverTest)$' --output-on-failure
+ctest --test-dir build -R '^(GStreamer|Gst)[A-Za-z]*Test$' --output-on-failure
 ```
 
 ## GStreamer Logging

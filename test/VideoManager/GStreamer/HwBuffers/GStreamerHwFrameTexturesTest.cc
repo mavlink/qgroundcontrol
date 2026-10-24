@@ -1,4 +1,4 @@
-#include "GStreamerTest.h"
+#include "GstHwBuffersTest.h"
 
 #ifdef QGC_GST_STREAMING
 
@@ -108,7 +108,7 @@ struct TailFixture
 
 }  // namespace
 
-void GStreamerTest::_testHwFrameTexturesRejectsForeignOldTextures()
+void GstHwBuffersTest::_testHwFrameTexturesRejectsForeignOldTextures()
 {
     QVideoFrameTexturesUPtr foreign = std::make_unique<ForeignFrameTextures>();
     QVERIFY(!GstHwFrameTexturesBase::reusableBundle<OwnFrameTextures>(foreign));
@@ -119,7 +119,7 @@ void GStreamerTest::_testHwFrameTexturesRejectsForeignOldTextures()
     QVERIFY(own);
 }
 
-void GStreamerTest::_testHwFrameTexturesZeroHandleInvalidatesBundle_data()
+void GstHwBuffersTest::_testHwFrameTexturesZeroHandleInvalidatesBundle_data()
 {
     QTest::addColumn<quint64>("lumaHandle");
     QTest::addColumn<quint64>("chromaHandle");
@@ -130,7 +130,7 @@ void GStreamerTest::_testHwFrameTexturesZeroHandleInvalidatesBundle_data()
     QTest::newRow("chroma handle 0") << quint64(11) << quint64(0) << false;
 }
 
-void GStreamerTest::_testHwFrameTexturesZeroHandleInvalidatesBundle()
+void GstHwBuffersTest::_testHwFrameTexturesZeroHandleInvalidatesBundle()
 {
     QFETCH(quint64, lumaHandle);
     QFETCH(quint64, chromaHandle);
@@ -144,7 +144,7 @@ void GStreamerTest::_testHwFrameTexturesZeroHandleInvalidatesBundle()
     QCOMPARE(textures.allPlanesValid(), allPlanesValid);
 }
 
-void GStreamerTest::_testHwFrameTexturesFinishMapReusesAcceptedBundle_data()
+void GstHwBuffersTest::_testHwFrameTexturesFinishMapReusesAcceptedBundle_data()
 {
     QTest::addColumn<bool>("reuse");
 
@@ -152,7 +152,7 @@ void GStreamerTest::_testHwFrameTexturesFinishMapReusesAcceptedBundle_data()
     QTest::newRow("reuse rejected") << false;
 }
 
-void GStreamerTest::_testHwFrameTexturesFinishMapReusesAcceptedBundle()
+void GstHwBuffersTest::_testHwFrameTexturesFinishMapReusesAcceptedBundle()
 {
     QFETCH(bool, reuse);
 
@@ -185,7 +185,7 @@ void GStreamerTest::_testHwFrameTexturesFinishMapReusesAcceptedBundle()
     QVERIFY(nextSampleReleased);
 }
 
-void GStreamerTest::_testHwFrameTexturesFinishMapRejectsIncompleteBundle()
+void GstHwBuffersTest::_testHwFrameTexturesFinishMapRejectsIncompleteBundle()
 {
     TailFixture fixture;
     QVERIFY(fixture.sample && fixture.rhi);
@@ -210,7 +210,7 @@ void GStreamerTest::_testHwFrameTexturesFinishMapRejectsIncompleteBundle()
     QVERIFY2(frame.holdsSample(), "A failed map must leave the sample for Qt's CPU fallback");
 }
 
-void GStreamerTest::_testHwFrameTexturesKeepResourcesUntilDestroyed()
+void GstHwBuffersTest::_testHwFrameTexturesKeepResourcesUntilDestroyed()
 {
 #if !defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) && !defined(QGC_HAS_GST_DMABUF_GPU_PATH)
     QSKIP("GL-texture frame bundles not compiled in this build");
@@ -247,31 +247,31 @@ void GStreamerTest::_testHwFrameTexturesKeepResourcesUntilDestroyed()
 
 #else
 
-void GStreamerTest::_testHwFrameTexturesRejectsForeignOldTextures()
+void GstHwBuffersTest::_testHwFrameTexturesRejectsForeignOldTextures()
 {
     QSKIP("No GPU path compiled in this build");
 }
 
-void GStreamerTest::_testHwFrameTexturesZeroHandleInvalidatesBundle_data() {}
+void GstHwBuffersTest::_testHwFrameTexturesZeroHandleInvalidatesBundle_data() {}
 
-void GStreamerTest::_testHwFrameTexturesZeroHandleInvalidatesBundle()
+void GstHwBuffersTest::_testHwFrameTexturesZeroHandleInvalidatesBundle()
 {
     QSKIP("No GPU path compiled in this build");
 }
 
-void GStreamerTest::_testHwFrameTexturesFinishMapReusesAcceptedBundle_data() {}
+void GstHwBuffersTest::_testHwFrameTexturesFinishMapReusesAcceptedBundle_data() {}
 
-void GStreamerTest::_testHwFrameTexturesFinishMapReusesAcceptedBundle()
+void GstHwBuffersTest::_testHwFrameTexturesFinishMapReusesAcceptedBundle()
 {
     QSKIP("No GPU path compiled in this build");
 }
 
-void GStreamerTest::_testHwFrameTexturesFinishMapRejectsIncompleteBundle()
+void GstHwBuffersTest::_testHwFrameTexturesFinishMapRejectsIncompleteBundle()
 {
     QSKIP("No GPU path compiled in this build");
 }
 
-void GStreamerTest::_testHwFrameTexturesKeepResourcesUntilDestroyed()
+void GstHwBuffersTest::_testHwFrameTexturesKeepResourcesUntilDestroyed()
 {
     QSKIP("No GPU path compiled in this build");
 }

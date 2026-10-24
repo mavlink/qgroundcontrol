@@ -6,6 +6,7 @@
 #include <rhi/qrhi.h>
 
 #include "GStreamer.h"
+#include "GstSourceFactory.h"
 
 namespace GstTest {
 
@@ -135,6 +136,12 @@ GstSample* makeVideoSample(GstVideoFormat format, int width, int height, GstVide
 void watchRelease(GstMiniObject* object, bool* released)
 {
     gst_mini_object_weak_ref(object, [](gpointer data, GstMiniObject*) { *static_cast<bool*>(data) = true; }, released);
+}
+
+GStreamer::GstElementPtr createSource(const QString& uri, const GStreamer::SourceFactory::Config& config)
+{
+    GstElement* const bin = GStreamer::SourceFactory::create(uri, config);
+    return GStreamer::adoptElement(bin ? GST_ELEMENT(gst_object_ref_sink(bin)) : nullptr);
 }
 
 std::unique_ptr<QRhi> makeNullRhi()

@@ -1,4 +1,5 @@
-#include "GStreamerTest.h"
+#include "HwBuffers/GstHwBuffersPipelineTest.h"
+#include "HwBuffers/GstHwBuffersTest.h"
 
 #ifdef QGC_GST_STREAMING
 
@@ -73,7 +74,7 @@ GstSample* makeMemfdDmaBufSample(GstVideoFormat format, GstVideoInfo& info, cons
 }  // namespace
 #endif
 
-void GStreamerTest::_testDmaBufDispatch()
+void GstHwBuffersPipelineTest::_testDmaBufDispatch()
 {
 #if !defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
     QSKIP("Direct-DMABuf bin not compiled in this build");
@@ -158,8 +159,8 @@ void GStreamerTest::_testDmaBufDispatch()
     const GStreamer::GstElementPtr qvideosink =
         GStreamer::adoptElement(gst_bin_get_by_name(GST_BIN(sinkBin.get()), "qgcqvideosink"));
     QVERIFY2(qvideosink, "Could not find 'qgcqvideosink' inside sink bin");
-    const GStreamer::GstPadPtr appsinkPad = GStreamer::adoptPad(gst_element_get_static_pad(qvideosink.get(), "sink"));
-    QVERIFY2(appsinkPad, "qgcqvideosink has no sink pad");
+    const GStreamer::GstPadPtr sinkPad = GStreamer::adoptPad(gst_element_get_static_pad(qvideosink.get(), "sink"));
+    QVERIFY2(sinkPad, "qgcqvideosink has no sink pad");
 
     struct ProbeState
     {
@@ -180,14 +181,14 @@ void GStreamerTest::_testDmaBufDispatch()
         return GST_PAD_PROBE_OK;
     };
     GStreamer::PadProbe bufferProbe;
-    QVERIFY(bufferProbe.add(appsinkPad.get(), GST_PAD_PROBE_TYPE_BUFFER, probeCb, &probe));
+    QVERIFY(bufferProbe.add(sinkPad.get(), GST_PAD_PROBE_TYPE_BUFFER, probeCb, &probe));
 
     if (!pipeline.play()) {
         QSKIP("DMABuf pipeline failed to PLAY (no VA driver / DRI device?)");
     }
 
     const GStreamer::GstMessagePtr msg = pipeline.waitForEosOrError();
-    const QString negotiatedStr = GstTest::currentCapsString(appsinkPad.get());
+    const QString negotiatedStr = GstTest::currentCapsString(sinkPad.get());
     if (msg && (GST_MESSAGE_TYPE(msg.get()) == GST_MESSAGE_ERROR)) {
         // GST_ELEMENT_FLOW_ERROR carries the streaming thread's GstFlowReturn as "flow-return".
         const GstStructure* details = nullptr;
@@ -231,7 +232,7 @@ void GStreamerTest::_testDmaBufDispatch()
 #endif
 }
 
-void GStreamerTest::_testDmaDrmModifierPolicy_data()
+void GstHwBuffersTest::_testDmaDrmModifierPolicy_data()
 {
     QTest::addColumn<quint64>("modifier");
     QTest::addColumn<bool>("importable");
@@ -253,7 +254,7 @@ void GStreamerTest::_testDmaDrmModifierPolicy_data()
     QTest::newRow("invalid") << quint64(0x00ffffffffffffffULL) << false;
 }
 
-void GStreamerTest::_testDmaDrmModifierPolicy()
+void GstHwBuffersTest::_testDmaDrmModifierPolicy()
 {
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH) && GST_CHECK_VERSION(1, 24, 0)
     QFETCH(quint64, modifier);
@@ -266,7 +267,7 @@ void GStreamerTest::_testDmaDrmModifierPolicy()
 #endif
 }
 
-void GStreamerTest::_testDmaDrmPlaneFourccsMatchQtImporter()
+void GstHwBuffersTest::_testDmaDrmPlaneFourccsMatchQtImporter()
 {
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH) && GST_CHECK_VERSION(1, 24, 0)
     // The caps only offer a modifier every plane can be sampled with, as the importer will sample it.
@@ -289,7 +290,7 @@ void GStreamerTest::_testDmaDrmPlaneFourccsMatchQtImporter()
 #endif
 }
 
-void GStreamerTest::_testDmaBufPathNeedsQtEglDisplay()
+void GstHwBuffersTest::_testDmaBufPathNeedsQtEglDisplay()
 {
 #if !defined(QGC_HAS_GST_DMABUF_GPU_PATH)
     QSKIP("DMABuf GPU path not compiled in this build");
@@ -315,7 +316,7 @@ void GStreamerTest::_testDmaBufPathNeedsQtEglDisplay()
 #endif
 }
 
-void GStreamerTest::_testHwBufferMapTexturesGuard()
+void GstHwBuffersPipelineTest::_testHwBufferMapTexturesGuard()
 {
 #if !defined(QGC_HAS_GST_DMABUF_GPU_PATH)
     QSKIP("DMABuf GPU path not compiled in this build");
@@ -361,7 +362,7 @@ void GStreamerTest::_testHwBufferMapTexturesGuard()
 #endif
 }
 
-void GStreamerTest::_testHwBufferFactoryCacheRejectsMemoryTypeChange()
+void GstHwBuffersTest::_testHwBufferFactoryCacheRejectsMemoryTypeChange()
 {
 #if !defined(QGC_HAS_GST_DMABUF_GPU_PATH)
     QSKIP("DMABuf GPU path not compiled in this build");
@@ -395,7 +396,7 @@ void GStreamerTest::_testHwBufferFactoryCacheRejectsMemoryTypeChange()
 #endif
 }
 
-void GStreamerTest::_testDmaBufTiledFrameRefusesCpuMap()
+void GstHwBuffersTest::_testDmaBufTiledFrameRefusesCpuMap()
 {
 #if !defined(QGC_HAS_GST_DMABUF_GPU_PATH) || !GST_CHECK_VERSION(1, 24, 0)
     QSKIP("DMABuf DMA_DRM import not compiled in this build");
@@ -428,7 +429,7 @@ void GStreamerTest::_testDmaBufTiledFrameRefusesCpuMap()
 #endif
 }
 
-void GStreamerTest::_testDmaBufImportFailureLatch_data()
+void GstHwBuffersTest::_testDmaBufImportFailureLatch_data()
 {
     QTest::addColumn<bool>("unrecoverable");
     QTest::addColumn<int>("failuresToDisable");
@@ -441,7 +442,7 @@ void GStreamerTest::_testDmaBufImportFailureLatch_data()
 #endif
 }
 
-void GStreamerTest::_testDmaBufImportFailureLatch()
+void GstHwBuffersTest::_testDmaBufImportFailureLatch()
 {
 #if !defined(QGC_HAS_GST_DMABUF_GPU_PATH)
     QSKIP("DMABuf GPU path not compiled in this build");
@@ -474,7 +475,7 @@ void GStreamerTest::_testDmaBufImportFailureLatch()
 #endif
 }
 
-void GStreamerTest::_testDmaBufVulkanImportRejectsMultiPlanar_data()
+void GstHwBuffersTest::_testDmaBufVulkanImportRejectsMultiPlanar_data()
 {
     QTest::addColumn<int>("format");
     QTest::addColumn<int>("rhiBackend");
@@ -488,7 +489,7 @@ void GStreamerTest::_testDmaBufVulkanImportRejectsMultiPlanar_data()
     QTest::newRow("NV12 under OpenGL") << int(GST_VIDEO_FORMAT_NV12) << int(QRhi::OpenGLES2) << true;
 }
 
-void GStreamerTest::_testDmaBufVulkanImportRejectsMultiPlanar()
+void GstHwBuffersTest::_testDmaBufVulkanImportRejectsMultiPlanar()
 {
 #if !defined(QGC_HAS_GST_DMABUF_GPU_PATH) || !defined(QGC_HAS_GST_VULKAN_GPU_PATH)
     QSKIP("DMABuf->Vulkan import not compiled in this build");

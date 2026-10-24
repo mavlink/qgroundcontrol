@@ -19,6 +19,10 @@
 
 class QRhi;
 
+namespace GStreamer::SourceFactory {
+struct Config;
+}
+
 /// Helpers shared by the GStreamer test classes.
 namespace GstTest {
 
@@ -58,6 +62,9 @@ GstSample* makeVideoSample(GstVideoFormat format, int width, int height, GstVide
 
 /// Sets @p released once @p object is finalized.
 void watchRelease(GstMiniObject* object, bool* released);
+
+/// GStreamer::SourceFactory::create()'s source bin for @p uri, sunk, or null.
+GStreamer::GstElementPtr createSource(const QString& uri, const GStreamer::SourceFactory::Config& config);
 
 /// A QRhi on the Null backend: no device, and createFrom() accepts any native handle.
 std::unique_ptr<QRhi> makeNullRhi();
