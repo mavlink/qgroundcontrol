@@ -69,7 +69,7 @@ endfunction()
 # is GStreamer::<Component> and its pkg-config module follows from the CamelCase name: GlPrototypes is
 # gstreamer-gl-prototypes-1.0. The mandatory ones are always probed and fail configure when missing: the sources include
 # their headers unconditionally. Gl/GlPrototypes are optional: a sysroot whose x11 .pc files are incomplete fails their
-# pkg-config checks, and only the GL GPU path needs them.
+# pkg-config checks, and only the GL GPU path needs them. Check (gst-check's GstHarness) serves only the unit tests.
 set(GSTREAMER_COMPONENTS
     Base
     Gl
@@ -82,6 +82,7 @@ set(GSTREAMER_COMPONENTS
     Pbutils
     Tag
     Audio
+    Check
 )
 set(GSTREAMER_MANDATORY_COMPONENTS Base Rtsp Video)
 

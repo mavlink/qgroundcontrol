@@ -16,6 +16,10 @@ endif()
 if(LINUX)
     list(APPEND _qgc_gst_components Allocators)
 endif()
+# Check (gstreamer-check-1.0) is optional too: the GstHarness tests compile only where the SDK or distribution ships it.
+if(QGC_BUILD_TESTING AND NOT (ANDROID OR IOS))
+    list(APPEND _qgc_gst_components Check)
+endif()
 set(QGC_GST_COMPONENTS ${_qgc_gst_components})
 include(GStreamer/Orchestrator)
 
