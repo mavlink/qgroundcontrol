@@ -34,15 +34,16 @@ endif()
 
 set_target_properties(
     ${CMAKE_PROJECT_NAME}
-    PROPERTIES MACOSX_BUNDLE_INFO_PLIST "${_qgc_bundle_plist}"
-               MACOSX_BUNDLE_BUNDLE_NAME "${CMAKE_PROJECT_NAME}"
-               MACOSX_BUNDLE_BUNDLE_VERSION "${CMAKE_PROJECT_VERSION}"
-               MACOSX_BUNDLE_COPYRIGHT "${QGC_APP_COPYRIGHT}"
-               MACOSX_BUNDLE_GUI_IDENTIFIER "${_qgc_bundle_identifier}"
-               MACOSX_BUNDLE_INFO_STRING "${CMAKE_PROJECT_DESCRIPTION}"
-               MACOSX_BUNDLE_LONG_VERSION_STRING
-               "${CMAKE_PROJECT_VERSION_MAJOR}.${CMAKE_PROJECT_VERSION_MINOR}.${CMAKE_PROJECT_VERSION_PATCH}"
-               MACOSX_BUNDLE_SHORT_VERSION_STRING "${_qgc_bundle_short_version}"
+    PROPERTIES
+        MACOSX_BUNDLE_INFO_PLIST "${_qgc_bundle_plist}"
+        MACOSX_BUNDLE_BUNDLE_NAME "${CMAKE_PROJECT_NAME}"
+        MACOSX_BUNDLE_BUNDLE_VERSION "${CMAKE_PROJECT_VERSION}"
+        MACOSX_BUNDLE_COPYRIGHT "${QGC_APP_COPYRIGHT}"
+        MACOSX_BUNDLE_GUI_IDENTIFIER "${_qgc_bundle_identifier}"
+        MACOSX_BUNDLE_INFO_STRING "${CMAKE_PROJECT_DESCRIPTION}"
+        MACOSX_BUNDLE_LONG_VERSION_STRING
+        "${CMAKE_PROJECT_VERSION_MAJOR}.${CMAKE_PROJECT_VERSION_MINOR}.${CMAKE_PROJECT_VERSION_PATCH}"
+        MACOSX_BUNDLE_SHORT_VERSION_STRING "${_qgc_bundle_short_version}"
 )
 
 # ----------------------------------------------------------------------------
@@ -52,9 +53,22 @@ if(MACOS)
     cmake_path(GET QGC_MACOS_ICON_PATH FILENAME _qgc_macos_bundle_icon)
     set_property(TARGET ${CMAKE_PROJECT_NAME} PROPERTY MACOSX_BUNDLE_ICON_FILE "${_qgc_macos_bundle_icon}")
 
-    set_source_files_properties("${QGC_MACOS_ICON_PATH}" PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
-    set_source_files_properties("${QGC_MACOS_ENTITLEMENTS_PATH}" PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
-    target_sources(${CMAKE_PROJECT_NAME} PRIVATE "${QGC_MACOS_ENTITLEMENTS_PATH}" "${QGC_MACOS_ICON_PATH}")
+    set_source_files_properties(
+        "${QGC_MACOS_ICON_PATH}"
+        PROPERTIES
+            MACOSX_PACKAGE_LOCATION Resources
+    )
+    set_source_files_properties(
+        "${QGC_MACOS_ENTITLEMENTS_PATH}"
+        PROPERTIES
+            MACOSX_PACKAGE_LOCATION Resources
+    )
+    target_sources(
+        ${CMAKE_PROJECT_NAME}
+        PRIVATE
+            "${QGC_MACOS_ENTITLEMENTS_PATH}"
+            "${QGC_MACOS_ICON_PATH}"
+    )
 
     message(STATUS "QGC: macOS platform configuration applied")
 elseif(IOS)
@@ -76,8 +90,10 @@ elseif(IOS)
         endif()
 
         if(CMAKE_OSX_SYSROOT MATCHES "[Ss]imulator" AND "x86_64" IN_LIST CMAKE_OSX_ARCHITECTURES)
-            target_sources(GStreamerMobileXcfw
-                           PRIVATE "${CMAKE_SOURCE_DIR}/src/VideoManager/VideoReceiver/GStreamer/IOSPipe2Compat.c"
+            target_sources(
+                GStreamerMobileXcfw
+                PRIVATE
+                    "${CMAKE_SOURCE_DIR}/src/VideoManager/VideoReceiver/GStreamer/IOSPipe2Compat.c"
             )
         endif()
 
@@ -87,8 +103,11 @@ elseif(IOS)
                 APPEND
                 PROPERTY XCODE_EMBED_FRAMEWORKS GStreamerMobileXcfw
             )
-            set_target_properties("${target}" PROPERTIES XCODE_EMBED_FRAMEWORKS_CODE_SIGN_ON_COPY YES
-                                                         XCODE_EMBED_FRAMEWORKS_REMOVE_HEADERS_ON_COPY YES
+            set_target_properties(
+                "${target}"
+                PROPERTIES
+                    XCODE_EMBED_FRAMEWORKS_CODE_SIGN_ON_COPY YES
+                    XCODE_EMBED_FRAMEWORKS_REMOVE_HEADERS_ON_COPY YES
             )
             message(STATUS "QGC: GStreamer::mobile will be embedded by Xcode")
         else()
@@ -110,8 +129,8 @@ elseif(IOS)
         add_custom_command(
             TARGET "${target}"
             POST_BUILD
-            COMMAND "${CMAKE_COMMAND}" "-DAPP=$<TARGET_FILE:${target}>" "-DNM=${_nm}" -P
-                    "${CMAKE_SOURCE_DIR}/cmake/GStreamer/platform/IOSSingleCoreCheck.cmake"
+            COMMAND "${CMAKE_COMMAND}" "-DAPP=$<TARGET_FILE:${target}>" "-DNM=${_nm}" -DSYMBOL_PREFIX=_ -P
+                    "${CMAKE_SOURCE_DIR}/cmake/GStreamer/SingleCoreCheck.cmake"
             COMMENT "Checking that the app links a single GStreamer core"
             VERBATIM
         )
@@ -125,17 +144,18 @@ elseif(IOS)
 
     set_target_properties(
         ${CMAKE_PROJECT_NAME}
-        PROPERTIES QT_IOS_LAUNCH_SCREEN "${_qgc_ios_launch_screen}"
-                   XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "${QGC_PACKAGE_NAME}"
-                   XCODE_ATTRIBUTE_PRODUCT_NAME "${CMAKE_PROJECT_NAME}"
-                   XCODE_ATTRIBUTE_CURRENT_PROJECT_VERSION ${CMAKE_PROJECT_VERSION}
-                   XCODE_ATTRIBUTE_MARKETING_VERSION "${CMAKE_PROJECT_VERSION}"
-                   XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME AppIcon
-                   XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "${QGC_IOS_DEPLOYMENT_TARGET}"
-                   XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "${QGC_IOS_TARGETED_DEVICE_FAMILY}"
-                   XCODE_ATTRIBUTE_INFOPLIST_KEY_CFBundleDisplayName ${CMAKE_PROJECT_NAME}
-                   XCODE_ATTRIBUTE_INFOPLIST_KEY_LSApplicationCategoryType public.app-category.navigation
-                   XCODE_ATTRIBUTE_GCC_GENERATE_DEBUGGING_SYMBOLS YES
+        PROPERTIES
+            QT_IOS_LAUNCH_SCREEN "${_qgc_ios_launch_screen}"
+            XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "${QGC_PACKAGE_NAME}"
+            XCODE_ATTRIBUTE_PRODUCT_NAME "${CMAKE_PROJECT_NAME}"
+            XCODE_ATTRIBUTE_CURRENT_PROJECT_VERSION ${CMAKE_PROJECT_VERSION}
+            XCODE_ATTRIBUTE_MARKETING_VERSION "${CMAKE_PROJECT_VERSION}"
+            XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME AppIcon
+            XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "${QGC_IOS_DEPLOYMENT_TARGET}"
+            XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "${QGC_IOS_TARGETED_DEVICE_FAMILY}"
+            XCODE_ATTRIBUTE_INFOPLIST_KEY_CFBundleDisplayName ${CMAKE_PROJECT_NAME}
+            XCODE_ATTRIBUTE_INFOPLIST_KEY_LSApplicationCategoryType public.app-category.navigation
+            XCODE_ATTRIBUTE_GCC_GENERATE_DEBUGGING_SYMBOLS YES
     )
 
     if(QGC_IOS_APP_STORE_BUILD)
@@ -150,18 +170,27 @@ elseif(IOS)
 
         set_target_properties(
             ${CMAKE_PROJECT_NAME}
-            PROPERTIES XCODE_ATTRIBUTE_CODE_SIGN_STYLE Manual
-                       XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "Apple Distribution"
-                       XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED YES
-                       XCODE_ATTRIBUTE_CODE_SIGNING_REQUIRED YES
-                       XCODE_ATTRIBUTE_DEVELOPMENT_TEAM "${QGC_IOS_DEVELOPMENT_TEAM}"
-                       XCODE_ATTRIBUTE_PROVISIONING_PROFILE_SPECIFIER "${QGC_IOS_PROVISIONING_PROFILE}"
+            PROPERTIES
+                XCODE_ATTRIBUTE_CODE_SIGN_STYLE Manual
+                XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "Apple Distribution"
+                XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED YES
+                XCODE_ATTRIBUTE_CODE_SIGNING_REQUIRED YES
+                XCODE_ATTRIBUTE_DEVELOPMENT_TEAM "${QGC_IOS_DEVELOPMENT_TEAM}"
+                XCODE_ATTRIBUTE_PROVISIONING_PROFILE_SPECIFIER "${QGC_IOS_PROVISIONING_PROFILE}"
         )
     endif()
 
     if(CMAKE_GENERATOR MATCHES "Xcode")
-        target_sources(${CMAKE_PROJECT_NAME} PRIVATE "${_qgc_ios_asset_catalog}")
-        set_source_files_properties("${_qgc_ios_asset_catalog}" PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+        target_sources(
+            ${CMAKE_PROJECT_NAME}
+            PRIVATE
+                "${_qgc_ios_asset_catalog}"
+        )
+        set_source_files_properties(
+            "${_qgc_ios_asset_catalog}"
+            PROPERTIES
+                MACOSX_PACKAGE_LOCATION Resources
+        )
     else()
         if(CMAKE_OSX_SYSROOT MATCHES "[Ss]imulator")
             set(_qgc_ios_platform iphonesimulator)
@@ -239,8 +268,8 @@ elseif(IOS)
     # GStreamerMobileXcfw is created while processing add_subdirectory(src),
     # so register its compatibility source and embedding after the root
     # directory is complete.
-    cmake_language(DEFER DIRECTORY "${CMAKE_SOURCE_DIR}" CALL _qgc_ios_finalize_gstreamer_mobile
-                   "${CMAKE_PROJECT_NAME}"
+    cmake_language(
+        DEFER DIRECTORY "${CMAKE_SOURCE_DIR}" CALL _qgc_ios_finalize_gstreamer_mobile "${CMAKE_PROJECT_NAME}"
     )
 
     message(STATUS "QGC: iOS platform configuration applied")

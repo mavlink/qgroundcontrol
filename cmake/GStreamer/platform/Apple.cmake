@@ -30,18 +30,3 @@ function(_qgc_gst_find_apple_pkg_config out_var)
     )
     unset(_qgc_pkg_config CACHE)
 endfunction()
-
-# Expands <pkg> with pkgutil --expand-full into <expanded_dir> and fails configure unless that yields package payloads.
-# Used by the macOS (runtime+devel) and iOS SDK extractors; qgc_gst_acquire_sdk clears their staging directory, which
-# holds <expanded_dir>, before every attempt.
-function(_qgc_gst_pkgutil_expand_and_validate pkg expanded_dir label)
-    message(STATUS "Expanding GStreamer ${label} package...")
-    execute_process(COMMAND pkgutil --expand-full "${pkg}" "${expanded_dir}" RESULT_VARIABLE _pkgutil_rc)
-    if(NOT _pkgutil_rc EQUAL 0)
-        message(FATAL_ERROR "pkgutil failed to expand GStreamer ${label} .pkg (exit code: ${_pkgutil_rc})")
-    endif()
-    file(GLOB _payloads "${expanded_dir}/*.pkg/Payload")
-    if(NOT _payloads)
-        message(FATAL_ERROR "pkgutil expanded GStreamer ${label} package but no payloads were found in ${expanded_dir}")
-    endif()
-endfunction()

@@ -42,22 +42,22 @@ target_link_libraries(
 target_compile_definitions(QGCGStreamer PUBLIC QGC_GST_STREAMING)
 
 # gstreamer-rtsp-server-1.0 is only requested in Debug (MockLink test server) and may be absent
-# on minimal installs. Its api_rtsp_server target is already aggregated into GStreamer::GStreamer
+# on minimal installs. Its GStreamer::RtspServer target is already aggregated into GStreamer::GStreamer
 # when found; just flag availability for MockVideoStreamServer.
 if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND GStreamer_RtspServer_FOUND)
     target_compile_definitions(QGCGStreamer PUBLIC QGC_GST_RTSP_SERVER)
-    if(IOS)
+    if(ANDROID OR IOS)
         # The app links only GStreamer::mobile, so keep the RTSP server functions MockVideoStreamServer calls in it.
-        qgc_gst_ios_keep_symbols(
-            _gst_rtsp_media_factory_new
-            _gst_rtsp_media_factory_set_launch
-            _gst_rtsp_media_factory_set_shared
-            _gst_rtsp_mount_points_add_factory
-            _gst_rtsp_server_attach
-            _gst_rtsp_server_get_mount_points
-            _gst_rtsp_server_new
-            _gst_rtsp_server_set_address
-            _gst_rtsp_server_set_service
+        qgc_gst_mobile_keep_symbols(
+            gst_rtsp_media_factory_new
+            gst_rtsp_media_factory_set_launch
+            gst_rtsp_media_factory_set_shared
+            gst_rtsp_mount_points_add_factory
+            gst_rtsp_server_attach
+            gst_rtsp_server_get_mount_points
+            gst_rtsp_server_new
+            gst_rtsp_server_set_address
+            gst_rtsp_server_set_service
         )
     endif()
 endif()
@@ -184,26 +184,41 @@ if(IOS)
     )
 endif()
 
-# Static layouts register their plugins in a generated gst_init_static_plugins() (called by
-# GStreamer.cc::_registerPlugins) for GSTREAMER_STATIC_PLUGINS, which Orchestrator.cmake resolves. iOS generates it
-# into GStreamer::mobile (platform/IOS.cmake), the only target that links the merged archive; Android and desktop
-# static SDKs into the app. The Android SDK registers none of its plugins itself (verified on-device: without this,
-# coreelements/tcp/udp/rtp/... stay unregistered); gst_init() only runs the function generated here (see
-# gst_static_plugins.c.in).
-if(ANDROID AND TARGET GStreamer::mobile)
+# Mobile layouts link the SDK into GStreamer::mobile (libgstreamer_android.so, the iOS framework), which registers
+# GSTREAMER_STATIC_PLUGINS in its generated gst_init_static_plugins(), called by GStreamer.cc::_registerPlugins. The
+# Android and iOS SDKs register none of their plugins themselves (verified on-device: without it, coreelements, tcp,
+# udp, rtp, ... stay unregistered).
+if(ANDROID OR IOS)
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE GStreamer::mobile)
-    qgc_gst_generate_static_init(
-        TARGET ${CMAKE_PROJECT_NAME}
-        PLUGINS ${GSTREAMER_STATIC_PLUGINS}
-        GIO_MODULES ${G_IO_MODULES}
+endif()
+if(ANDROID)
+    # GStreamerEnvironment.cc extracts the bundled APK assets with the NDK's asset manager.
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE android)
+endif()
+# The iOS check is wired in cmake/platform/Apple.cmake. The app target is created by the top-level directory.
+if(ANDROID)
+    cmake_language(
+        DEFER
+        DIRECTORY
+        "${CMAKE_SOURCE_DIR}"
+        CALL
+        add_custom_command
+        TARGET
+        ${CMAKE_PROJECT_NAME}
+        POST_BUILD
+        COMMAND
+        "${CMAKE_COMMAND}"
+        "-DAPP=$<TARGET_FILE:${CMAKE_PROJECT_NAME}>"
+        "-DNM=${CMAKE_NM}"
+        -P
+        "${CMAKE_SOURCE_DIR}/cmake/GStreamer/SingleCoreCheck.cmake"
+        COMMENT
+        "Checking that the app links a single GStreamer core"
+        VERBATIM
     )
-elseif(IOS AND TARGET GStreamer::mobile)
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE GStreamer::mobile)
-elseif(GStreamer_USE_STATIC_LIBS)
-    qgc_gst_generate_static_init(TARGET ${CMAKE_PROJECT_NAME} PLUGINS ${GSTREAMER_STATIC_PLUGINS})
 endif()
 
-# Mobile platforms ship plugins inside the static .a / xcfw — no install steps below.
+# Mobile platforms ship their plugins inside GStreamer::mobile; no install steps below.
 if(ANDROID OR IOS)
     return()
 endif()

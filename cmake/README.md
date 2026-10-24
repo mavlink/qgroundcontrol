@@ -94,7 +94,10 @@ findings fail the test; the values replace any set in the calling environment.
 
 ## GStreamer
 
-`GStreamer/` discovers or downloads the GStreamer SDK and creates the `GStreamer::` targets. The GStreamer
+`GStreamer/` discovers or downloads the GStreamer SDK and creates the `GStreamer::` targets with one
+`pkg_check_modules(IMPORTED_TARGET)` per library, as Qt's `FindGStreamer.cmake` does; Android and iOS link the SDK into
+the shared `GStreamer::mobile` library instead of the app. `Acquire.cmake` and `Download.cmake` hold everything that
+decides a downloaded SDK tree, because CI keys its SDK cache on them. The GStreamer
 [README](../src/VideoManager/VideoReceiver/GStreamer/README.md#build-configuration) describes its modules and configure
 options.
 

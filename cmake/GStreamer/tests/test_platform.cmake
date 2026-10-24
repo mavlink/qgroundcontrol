@@ -9,11 +9,21 @@ foreach(_file IN ITEMS Apple Windows Linux Android MacOS IOS)
     include("${CMAKE_CURRENT_LIST_DIR}/../platform/${_file}.cmake")
 endforeach()
 include("${CMAKE_CURRENT_LIST_DIR}/../../modules/BuildConfigReader.cmake")
+
+# pkg-config cannot pass on a path with spaces, so an SDK in one fails configure.
+_qgc_gst_require_no_spaces(GStreamer_ROOT_DIR "C:/gstreamer/1.0/msvc_x86_64")
+if(TEST_CASE STREQUAL "spaces")
+    _qgc_gst_require_no_spaces(GStreamer_ROOT_DIR "C:/Program Files/gstreamer")
+    message(FATAL_ERROR "${TEST_CASE} unexpectedly succeeded")
+elseif(DEFINED TEST_CASE)
+    message(FATAL_ERROR "Unknown test case: ${TEST_CASE}")
+endif()
+
 file(READ "${CMAKE_CURRENT_LIST_DIR}/../../../.github/build-config.json" QGC_BUILD_CONFIG_CONTENT)
 
 # platform variable|platform|installs an SDK
-foreach(_case IN ITEMS "ANDROID|android|FALSE" "IOS|ios|FALSE" "WIN32|windows|TRUE" "MACOS|macos|TRUE"
-                       "LINUX|linux|TRUE"
+foreach(
+    _case IN ITEMS "ANDROID|android|FALSE" "IOS|ios|FALSE" "WIN32|windows|TRUE" "MACOS|macos|TRUE" "LINUX|linux|TRUE"
 )
     qgc_test_split("${_case}" _variable _expected _installs)
     foreach(_platform_variable IN ITEMS ANDROID IOS WIN32 MACOS LINUX)

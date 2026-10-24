@@ -1,7 +1,7 @@
 # Centralised GStreamer plugin policy — single source of truth for plugin
-# alternate groups, runtime-required and optional plugins.
+# alternate groups, runtime-required and optional plugins, and the GPL denylist.
 # Consumed by Orchestrator (build-config plugin loader / alternate-satisfied
-# check) and Install (runtime-required verifier).
+# check) and Install (runtime-required verifier, GPL check).
 
 include_guard(GLOBAL)
 
@@ -63,6 +63,50 @@ set(GSTREAMER_OPTIONAL_PLUGINS
 # encodes with openh264enc (allowlisted). Statically registered on Android and iOS Debug builds only: desktop builds
 # load whatever the SDK or system ships, and release builds must not carry them.
 set(GSTREAMER_MOCK_SERVER_DEBUG_PLUGINS mpegtsmux videotestsrc)
+
+# GPL-licensed plugins and libraries of the official SDKs (cerbero builds them with its gpl and ugly options) that QGC
+# must never bundle: its GStreamer license notice (Notice.cmake) covers an LGPL GStreamer. The desktop installers fail
+# an install that would ship one (Install.cmake).
+set(GSTREAMER_GPL_DENYLIST
+    a52
+    a52dec
+    cdio
+    cdio_cdda
+    cdio_paranoia
+    dvdnav
+    dvdread
+    faad
+    mpeg2
+    mpeg2convert
+    mpeg2dec
+    mpeg2enc
+    mpeg2encpp
+    mplex
+    mplex2
+    resindvd
+    sid
+    sidplay
+    x264
+    x265
+)
+
+# gstreamer_gpl_files(<out_var> <file>...)
+# Sets <out_var> to the <file>s whose name is a GSTREAMER_GPL_DENYLIST library or plugin: the name, after an optional
+# lib and gst prefix, followed by a version, extension or nothing (libx264.so.164, x264-164.dll, libgstx264.dylib).
+function(gstreamer_gpl_files out_var)
+    list(JOIN GSTREAMER_GPL_DENYLIST "|" _names)
+    set(_gpl "")
+    foreach(_file IN LISTS ARGN)
+        cmake_path(GET _file FILENAME _name)
+        if(_name MATCHES "^(lib)?(gst)?(${_names})([-_.]|$)")
+            list(APPEND _gpl "${_file}")
+        endif()
+    endforeach()
+    set(${out_var}
+        "${_gpl}"
+        PARENT_SCOPE
+    )
+endfunction()
 
 # gstreamer_plugins_for(<key> <out_var>)
 # Sets <out_var> to the plugin list of build-config.json for <key> ("android", "apple", "windows", "linux" or ""):

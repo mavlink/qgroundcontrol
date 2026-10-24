@@ -18,27 +18,24 @@ static std::atomic<JavaVM*> _java_vm{nullptr};
 
 #ifdef QGC_GST_STREAMING
 
-#define QGC_JNI_EXPORT __attribute__((visibility("default")))
+// GStreamer's Android plugins (e.g. androidmedia) look up the JNI state in libgstreamer_android.so, which asks these
+// providers (cmake/GStreamer/platform/gst_android_jni.c).
+extern "C" void qgc_gst_android_set_jni_providers(JavaVM* (*javaVm)(void), jobject (*context)(void),
+                                                  jobject (*classLoader)(void));
 
-extern "C"
+static JavaVM* gstJavaVm()
 {
-    // Exported for GStreamer plugins (e.g. androidmedia) that are statically
-    // linked into the main binary and need Android platform access at runtime.
+    return _java_vm.load(std::memory_order_acquire);
+}
 
-    QGC_JNI_EXPORT jobject gst_android_get_application_context(void)
-    {
-        return _context.load(std::memory_order_acquire);
-    }
+static jobject gstApplicationContext()
+{
+    return _context.load(std::memory_order_acquire);
+}
 
-    QGC_JNI_EXPORT jobject gst_android_get_application_class_loader(void)
-    {
-        return _class_loader.load(std::memory_order_acquire);
-    }
-
-    QGC_JNI_EXPORT JavaVM *gst_android_get_java_vm(void)
-    {
-        return _java_vm.load(std::memory_order_acquire);
-    }
+static jobject gstApplicationClassLoader()
+{
+    return _class_loader.load(std::memory_order_acquire);
 }
 
 #endif
@@ -146,6 +143,9 @@ jint JNI_OnLoad(JavaVM* vm, void*)
     qCDebug(AndroidInitLog) << Q_FUNC_INFO;
 
     _java_vm.store(vm, std::memory_order_release);
+#ifdef QGC_GST_STREAMING
+    qgc_gst_android_set_jni_providers(gstJavaVm, gstApplicationContext, gstApplicationClassLoader);
+#endif
 
     JNIEnv *env;
     if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) {

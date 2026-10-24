@@ -10,15 +10,16 @@ elseif(DEFINED TEST_CASE)
     message(FATAL_ERROR "Unknown test case: ${TEST_CASE}")
 endif()
 
-# component|api|pkg-config module
-foreach(_case IN ITEMS "Base|api_base|gstreamer-base-1.0" "GlPrototypes|api_gl_prototypes|gstreamer-gl-prototypes-1.0"
-                       "RtspServer|api_rtsp_server|gstreamer-rtsp-server-1.0"
+# component|pkg-config module
+foreach(
+    _case IN ITEMS "Base|gstreamer-base-1.0" "GlPrototypes|gstreamer-gl-prototypes-1.0"
+                   "RtspServer|gstreamer-rtsp-server-1.0"
 )
     qgc_test_split("${_case}" _component)
-    gstreamer_component_names(${_component} _api _pc)
-    qgc_test_assert_streq("names of ${_component}" "${_case}" "${_component}|${_api}|${_pc}")
+    gstreamer_component_module(${_component} _module)
+    qgc_test_assert_streq("module of ${_component}" "${_case}" "${_component}|${_module}")
 endforeach()
-qgc_test_pass("component names")
+qgc_test_pass("component modules")
 
 # The mandatory components come first and every selection keeps GSTREAMER_COMPONENTS order.
 gstreamer_select_components(_selected)

@@ -12,11 +12,9 @@ set(_qgc_gst_tests
     test_plugin_scan
     test_plugin_policy
     test_version_policy
-    test_path_list
     test_pkgconfig_env
     test_install_filter
     test_sdk_state
-    test_install_libs_guard_windows
     test_windows_sdk_root
     test_windows_installer_guard
     test_platform
@@ -39,8 +37,12 @@ foreach(_t IN LISTS _qgc_gst_tests)
         COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_SOURCE_DIR}/${_t}.cmake"
         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
     )
-    set_tests_properties(GStreamer.${_t} PROPERTIES LABELS "${_qgc_gst_test_labels}" TIMEOUT 15 FAIL_REGULAR_EXPRESSION
-                                                    "ASSERT|FATAL_ERROR|CMake Error"
+    set_tests_properties(
+        GStreamer.${_t}
+        PROPERTIES
+            LABELS "${_qgc_gst_test_labels}"
+            TIMEOUT 15
+            FAIL_REGULAR_EXPRESSION "ASSERT|FATAL_ERROR|CMake Error"
     )
 endforeach()
 # The stand-in installer is a shell script, which a Windows host cannot run.
@@ -57,21 +59,22 @@ if(QGC_ENABLE_GST_VIDEOSTREAMING
             "-DINSTALL_SCRIPT=${PROJECT_BINARY_DIR}/src/VideoManager/VideoReceiver/GStreamer/cmake_install.cmake" -P
             "${CMAKE_CURRENT_SOURCE_DIR}/test_install_component.cmake"
     )
-    set_tests_properties(GStreamer.test_install_component PROPERTIES LABELS "${_qgc_gst_test_labels}" TIMEOUT 15)
+    set_tests_properties(
+        GStreamer.test_install_component
+        PROPERTIES
+            LABELS "${_qgc_gst_test_labels}"
+            TIMEOUT 15
+    )
 endif()
 
 # <script>|<test name suffix>|<TEST_CASE>|<expected diagnostic>. GStreamer.<script>[.<suffix>] runs <script>.cmake,
 # with TEST_CASE when given, and must fail with that diagnostic (qgc_add_expected_failure_test).
 set(_qgc_gst_failure_cases
-    "test_argument_validation|AcquireExtractor|acquire-extractor|'_qgc_no_such_extractor' is not a command"
-    "test_argument_validation|LayoutUnknown|layout-unknown|gstreamer_create_layout_target: unknown arguments"
-    "test_argument_validation|PkgConfigUnknown|pkgconfig-unknown|gstreamer_apply_pkgconfig_env: unknown arguments"
-    "test_argument_validation|ProbeUnknown|probe-unknown|qgc_check_gst_header: unknown arguments"
     "test_android_abi_info|||Unsupported Android ABI: mips"
     "test_checksum_authority|SidecarOnlyRequired|sidecar-only-required|cannot satisfy GStreamer_REQUIRE_CHECKSUM=ON"
     "test_components|UnknownComponent|unknown|unknown components Bogus"
     "test_plugin_policy_errors|||qgc_config_read: build-config.json is not loaded"
-    "test_install_libs_guard|||gstreamer_install_libs: refusing to copy from system/shared prefix"
+    "test_platform|Spaces|spaces|'C:/Program Files/gstreamer' contains a space"
     "test_ios_xcframework_slice|NoMatchingArch|no-matching-arch|no iphoneos slice for architectures 'x86_64'"
     "test_download_win_version_guard|||Windows GStreamer SDK requires version 1.28 or later"
     "test_windows_installer_guard|Unpinned|unpinned|refusing to silently run the downloaded Windows installer"
@@ -90,16 +93,11 @@ foreach(_qgc_failure_case IN LISTS _qgc_gst_failure_cases)
         list(APPEND _qgc_test_args "-DTEST_CASE=${_qgc_test_case}")
     endif()
     qgc_add_expected_failure_test(
-        NAME
-        "${_qgc_test_name}"
-        EXPECTED_REGEX
-        "${_qgc_expected_regex}"
-        LABELS
-        ${_qgc_gst_test_labels}
-        TIMEOUT
-        15
-        ARGS
-        ${_qgc_test_args}
+        NAME "${_qgc_test_name}"
+        EXPECTED_REGEX "${_qgc_expected_regex}"
+        LABELS ${_qgc_gst_test_labels}
+        TIMEOUT 15
+        ARGS ${_qgc_test_args}
     )
 endforeach()
 
@@ -108,21 +106,21 @@ endforeach()
 if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
     foreach(
         _qgc_scenario IN
-        ITEMS reconfigure
-              static-targets
-              reuse-auto-root
-              legacy-pkg-config-args
-              version-override
-              version-format
-              missing-mandatory
-              missing-gl
-              plugin-allowlist
-              install
-              install-macos
-              android-mobile
-              ios-link
-              sdk-prefix-decoy
-              homebrew
+        ITEMS
+            reconfigure
+            reuse-auto-root
+            legacy-pkg-config-args
+            version-override
+            version-format
+            missing-mandatory
+            missing-gl
+            plugin-allowlist
+            install
+            install-macos
+            android-mobile
+            ios-link
+            sdk-prefix-decoy
+            homebrew
     )
         add_test(
             NAME "GStreamer.test_orchestrator.${_qgc_scenario}"
@@ -132,9 +130,12 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
                 "-DSCENARIO=${_qgc_scenario}" "-DGENERATOR=${CMAKE_GENERATOR}" "-DMAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}"
                 -P "${CMAKE_CURRENT_SOURCE_DIR}/test_orchestrator.cmake"
         )
-        set_tests_properties("GStreamer.test_orchestrator.${_qgc_scenario}"
-                             PROPERTIES LABELS "${_qgc_gst_test_labels}" TIMEOUT 120 SKIP_REGULAR_EXPRESSION
-                                        "QGC_TEST_SKIPPED"
+        set_tests_properties(
+            "GStreamer.test_orchestrator.${_qgc_scenario}"
+            PROPERTIES
+                LABELS "${_qgc_gst_test_labels}"
+                TIMEOUT 120
+                SKIP_REGULAR_EXPRESSION "QGC_TEST_SKIPPED"
         )
     endforeach()
 endif()
