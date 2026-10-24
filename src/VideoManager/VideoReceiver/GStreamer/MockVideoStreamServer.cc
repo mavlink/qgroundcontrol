@@ -23,9 +23,12 @@ constexpr const char *kTestSource =
     "video/x-raw,width=1280,height=720,framerate=30/1 ! "
     "videoconvert";
 
-// Receivers join mid-stream and wait for the next keyframe, so both encoders key every second. Ultrafast keeps
-// a 720p encode real-time on a loaded CI runner; x265's medium preset and 250-frame default GOP do not.
-constexpr const char* kH264Encoder = "x264enc tune=zerolatency speed-preset=ultrafast bitrate=2000 key-int-max=30";
+// Receivers join mid-stream and wait for the next keyframe, so the encoders key every second. Their fastest settings
+// keep a 720p encode real-time on a loaded CI runner; x265's medium preset and 250-frame default GOP do not.
+// H.264 prefers openh264enc, which is BSD-licensed and in the plugin allowlist, so every platform ships it; x264enc and
+// x265enc are GPL, so only a desktop GStreamer that installs them provides them, and mobile builds never bundle them.
+constexpr const char* kOpenH264Encoder = "openh264enc complexity=low rate-control=bitrate bitrate=2000000 gop-size=30";
+constexpr const char* kX264Encoder = "x264enc tune=zerolatency speed-preset=ultrafast bitrate=2000 key-int-max=30";
 constexpr const char* kH265Encoder = "x265enc tune=zerolatency speed-preset=ultrafast bitrate=2000 key-int-max=30";
 
 bool factoryExists(const char *name)
@@ -36,6 +39,18 @@ bool factoryExists(const char *name)
         return true;
     }
     return false;
+}
+
+// The H.264 encoder description for gst_parse_launch, or nullptr when no H.264 encoder is installed.
+const char* h264Encoder()
+{
+    if (factoryExists("openh264enc")) {
+        return kOpenH264Encoder;
+    }
+    if (factoryExists("x264enc")) {
+        return kX264Encoder;
+    }
+    return nullptr;
 }
 
 // GStreamer init is owned by QGC's central VideoBackend/GStreamer::initialize() path
@@ -65,16 +80,16 @@ bool MockVideoStreamServer::isStreamTypeAvailable(StreamType type)
 
     switch (type) {
     case StreamType::RtpUdpH264:
-        return factoryExists("x264enc") && factoryExists("videotestsrc");
+        return (h264Encoder() != nullptr) && factoryExists("videotestsrc");
     case StreamType::MpegTsUdp:
     case StreamType::MpegTsTcp:
         // mpegtsmux ships in gst-plugins-bad and can be absent even when the encoder is present.
-        return factoryExists("x264enc") && factoryExists("videotestsrc") && factoryExists("mpegtsmux");
+        return (h264Encoder() != nullptr) && factoryExists("videotestsrc") && factoryExists("mpegtsmux");
     case StreamType::RtpUdpH265:
         return factoryExists("x265enc") && factoryExists("videotestsrc");
     case StreamType::RtspH264:
 #ifdef QGC_GST_RTSP_SERVER
-        return factoryExists("x264enc") && factoryExists("videotestsrc");
+        return (h264Encoder() != nullptr) && factoryExists("videotestsrc");
 #else
         return false;
 #endif
@@ -115,7 +130,7 @@ bool MockVideoStreamServer::start(StreamType type, const QString &host, quint16 
     switch (type) {
     case StreamType::RtpUdpH264:
         launch = QStringLiteral("%1 ! %2 ! rtph264pay config-interval=1 pt=96 ! udpsink host=%3 port=%4")
-                     .arg(kTestSource, kH264Encoder, host, portString);
+                     .arg(kTestSource, h264Encoder(), host, portString);
         uri = QStringLiteral("udp://%1:%2").arg(host, portString);
         break;
     case StreamType::RtpUdpH265:
@@ -125,12 +140,12 @@ bool MockVideoStreamServer::start(StreamType type, const QString &host, quint16 
         break;
     case StreamType::MpegTsUdp:
         launch = QStringLiteral("%1 ! %2 ! mpegtsmux ! udpsink host=%3 port=%4")
-                     .arg(kTestSource, kH264Encoder, host, portString);
+                     .arg(kTestSource, h264Encoder(), host, portString);
         uri = QStringLiteral("mpegts://%1:%2").arg(host, portString);
         break;
     case StreamType::MpegTsTcp:
         launch = QStringLiteral("%1 ! %2 ! mpegtsmux ! tcpserversink host=%3 port=%4")
-                     .arg(kTestSource, kH264Encoder, host, portString);
+                     .arg(kTestSource, h264Encoder(), host, portString);
         uri = QStringLiteral("tcp://%1:%2").arg(host, portString);
         break;
     case StreamType::RtspH264:
@@ -199,8 +214,7 @@ bool MockVideoStreamServer::_startRtsp(const QString &host, quint16 port)
 
     GstRTSPMountPoints *mounts = gst_rtsp_server_get_mount_points(server);
     GstRTSPMediaFactory *factory = gst_rtsp_media_factory_new();
-    const QString launch = QStringLiteral("( %1 ! %2 ! rtph264pay name=pay0 pt=96 )")
-                               .arg(kTestSource, kH264Encoder);
+    const QString launch = QStringLiteral("( %1 ! %2 ! rtph264pay name=pay0 pt=96 )").arg(kTestSource, h264Encoder());
     gst_rtsp_media_factory_set_launch(factory, launch.toUtf8().constData());
     gst_rtsp_media_factory_set_shared(factory, TRUE);
     gst_rtsp_mount_points_add_factory(mounts, "/test", factory);

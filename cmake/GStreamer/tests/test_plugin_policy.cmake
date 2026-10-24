@@ -91,9 +91,3 @@ foreach(_case IN ITEMS "coreelements|coreelements" "videoconvertscale|videoconve
     qgc_test_assert_streq("alternatives of ${_plugin}" "${_parts}" "${_alternatives}")
 endforeach()
 qgc_test_pass("plugin_alternatives")
-
-# A plugin iOS cannot link must not be one the app cannot run without.
-foreach(_plugin IN LISTS GSTREAMER_XCFRAMEWORK_SKIP_PLUGINS)
-    qgc_test_assert_not_in_list("iOS skips a required plugin" "${_plugin}" GSTREAMER_RUNTIME_REQUIRED_PLUGINS)
-endforeach()
-qgc_test_pass("policy lists")

@@ -134,9 +134,6 @@ if((ANDROID OR IOS) AND CMAKE_BUILD_TYPE STREQUAL "Debug")
     list(APPEND GSTREAMER_PLUGINS ${GSTREAMER_MOCK_SERVER_DEBUG_PLUGINS})
     list(REMOVE_DUPLICATES GSTREAMER_PLUGINS)
 endif()
-if(IOS)
-    list(REMOVE_ITEM GSTREAMER_PLUGINS ${GSTREAMER_XCFRAMEWORK_SKIP_PLUGINS})
-endif()
 
 # Mobile apps register the OpenSSL GIO module (TLS) statically along with their plugins; on iOS the merged
 # archive carries it.

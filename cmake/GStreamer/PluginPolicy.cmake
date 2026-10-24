@@ -1,7 +1,7 @@
 # Centralised GStreamer plugin policy — single source of truth for plugin
-# alternate groups, runtime-required and optional plugins, and the iOS skip list.
+# alternate groups, runtime-required and optional plugins.
 # Consumed by Orchestrator (build-config plugin loader / alternate-satisfied
-# check), Install (runtime-required verifier), and the iOS plugin list (xcfw skip).
+# check) and Install (runtime-required verifier).
 
 include_guard(GLOBAL)
 
@@ -59,17 +59,10 @@ set(GSTREAMER_OPTIONAL_PLUGINS
     vulkan
 )
 
-# iOS: plugins whose dependent static libs aren't bundled in the merged
-# archive. Registering them would cause unresolved-symbol link failures, so the
-# Orchestrator drops them from the iOS plugin list.
-# x265: gstreamer-ios 1.28.2 ships libgstx265.a but not libx265.a.
-set(GSTREAMER_XCFRAMEWORK_SKIP_PLUGINS x265)
-
-# Encode-side plugins needed only by the Debug-only MockLink test video stream
-# server (MockVideoStreamServer). Statically registered on Android and iOS Debug
-# builds only — desktop builds find them via the full SDK plugin scan, and release
-# builds must not ship them (app size; x264/x265 are GPL).
-set(GSTREAMER_MOCK_SERVER_DEBUG_PLUGINS mpegtsmux videotestsrc x264 x265)
+# Encode-side plugins needed only by the Debug-only MockLink test video stream server (MockVideoStreamServer), which
+# encodes with openh264enc (allowlisted). Statically registered on Android and iOS Debug builds only: desktop builds
+# load whatever the SDK or system ships, and release builds must not carry them.
+set(GSTREAMER_MOCK_SERVER_DEBUG_PLUGINS mpegtsmux videotestsrc)
 
 # gstreamer_plugins_for(<key> <out_var>)
 # Sets <out_var> to the plugin list of build-config.json for <key> ("android", "apple", "windows", "linux" or ""):
