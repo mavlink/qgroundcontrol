@@ -70,13 +70,6 @@ fi
 
 unset QT_PLUGIN_PATH
 unset QML2_IMPORT_PATH
-unset PYTHONHOME
-unset PYTHONPATH
-unset VIRTUAL_ENV
-unset CONDA_PREFIX
-unset CONDA_DEFAULT_ENV
-unset PYTHONUSERBASE
-export PYTHONNOUSERSITE=1
 
 export XDG_DATA_DIRS="${APPDIR}/usr/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
 

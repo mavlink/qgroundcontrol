@@ -3,7 +3,7 @@
 #include <QtCore/QString>
 
 /// Process-wide GStreamer environment setup: plugin-path discovery, GIO compat override,
-/// env var management, APK asset extraction, scanner sanitization.
+/// env var management, APK asset extraction, bundled CA file.
 namespace GStreamer::Environment {
 
 /// Outcome of environment preparation: whether the discovered plugin/scanner
@@ -17,6 +17,7 @@ struct ValidationResult
 /// Apply all GStreamer env vars for this process from bundled-paths discovery + platform
 /// validation. Idempotent: clears prior managed vars first so a retry starts clean. Returns the
 /// validation outcome by value (threaded explicitly to initialize(), not a cross-thread global).
+/// Not thread-safe: call it once, on the GUI thread, before gst_init() and any thread that reads the environment.
 ValidationResult prepareEnvironment();
 
 /// Point GStreamer at a bundled runtime: @p pluginDirs (joined with QDir::listSeparator()) replace the default plugin
@@ -27,10 +28,11 @@ ValidationResult prepareEnvironment();
 bool useBundledRuntime(const QString& pluginDirs, const QString& gioModuleDir, const QString& scanner,
                        const QString& ptpHelper);
 
-/// Point GST_REGISTRY at gstreamer-<runtime version>-<arch>.bin in @p cacheDir, creating the directory, unless
-/// GST_REGISTRY or GST_REGISTRY_1_0 is already set or @p cacheDir is empty. prepareEnvironment() does this with the
-/// app's cache location for a bundled desktop runtime. Returns the registry it set, else an empty string.
-QString usePrivateRegistry(const QString& cacheDir);
+/// Point GST_REGISTRY at gstreamer-<runtime version>-<arch>-<hash of @p pluginPath>.bin in @p cacheDir, creating the
+/// directory, unless GST_REGISTRY or GST_REGISTRY_1_0 is already set or @p cacheDir is empty. prepareEnvironment() does
+/// this with the app's cache location and plugin path for a bundled desktop runtime. Returns the registry it set, else
+/// an empty string.
+QString usePrivateRegistry(const QString& cacheDir, const QString& pluginPath);
 
 /// Dump the GST_PLUGIN_*/GST_REGISTRY* vars managed by this layer to the log at critical level.
 /// Called from plugin-verification failure paths so a stripped registry shows how the loader was

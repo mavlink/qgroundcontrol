@@ -1,10 +1,10 @@
 #include "GStreamerEnvironment.h"
 
 #include <QtCore/QCoreApplication>
+#include <QtCore/QCryptographicHash>
 #include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
-#include <QtCore/QMutex>
 #include <QtCore/QStandardPaths>
 #include <QtCore/QStringList>
 #include <QtCore/QSysInfo>
@@ -19,6 +19,11 @@
 #include <android/asset_manager_jni.h>
 #endif
 
+// gdbusintrospection.h's `signals` member collides with Qt's `signals` keyword macro.
+#pragma push_macro("signals")
+#undef signals
+#include <gio/gio.h>
+#pragma pop_macro("signals")
 #include <gst/gst.h>
 
 QGC_LOGGING_CATEGORY(GStreamerEnvLog, "Video.GStreamer.Environment")
@@ -26,9 +31,6 @@ QGC_LOGGING_CATEGORY(GStreamerEnvLog, "Video.GStreamer.Environment")
 namespace {
 
 using GStreamer::Environment::ValidationResult;
-
-// Serializes the whole env mutation: qputenv/setenv aren't thread-safe vs gst_init's getenv.
-static QMutex s_setEnvVarsMutex;
 
 // Single source of truth for the managed plugin-path/scanner vars: keeps _clearManagedGstEnvVars
 // and logDiagnostics from drifting. Each site layers its own extras (GIO/PTP, registry) on top.
@@ -55,29 +57,23 @@ void _setGstEnv(const char* name, const QString& value)
 }
 
 // Set @p var to the first existing candidate, but only if unset (explicit user/system value wins).
-// @p nativePath uses native separators + 8-bit encoding, required for OpenSSL SSL_CERT_FILE on Windows.
-[[maybe_unused]] void _setCaBundleIfUnset(const char* var, const QStringList& candidates, bool nativePath = false)
+[[maybe_unused]] void _setCaBundleIfUnset(const char* var, const QStringList& candidates)
 {
     if (!qEnvironmentVariableIsEmpty(var)) {
         return;
     }
     for (const QString& path : candidates) {
         if (QFileInfo::exists(path)) {
-            if (nativePath) {
-                const QByteArray encoded = QFile::encodeName(QDir::toNativeSeparators(path));
-                qputenv(var, encoded);
-                qCDebug(GStreamerEnvLog) << "  " << var << "=" << encoded;
-            } else {
-                _setGstEnv(var, path);
-            }
+            _setGstEnv(var, path);
             return;
         }
     }
 }
 
 // A bundled runtime's plugins differ from the system GStreamer's, so sharing the default per-user registry would make
-// each invalidate the other's plugin cache; the runtime version in the name keeps upgrades from reusing it too.
-QString _usePrivateRegistry(const QString& cacheDir)
+// each invalidate the other's plugin cache. The runtime version in the name keeps upgrades from reusing it, and the
+// plugin path hash keeps two installs of one version (stable and daily builds) from rescanning over each other's.
+QString _usePrivateRegistry(const QString& cacheDir, const QString& pluginPath)
 {
     if (cacheDir.isEmpty() || qEnvironmentVariableIsSet("GST_REGISTRY_1_0") ||
         qEnvironmentVariableIsSet("GST_REGISTRY")) {
@@ -93,11 +89,13 @@ QString _usePrivateRegistry(const QString& cacheDir)
     guint micro = 0;
     guint nano = 0;
     gst_version(&major, &minor, &micro, &nano);
-    const QString registry = _cleanJoin(cacheDir, QStringLiteral("gstreamer-%1.%2.%3-%4.bin")
+    const QByteArray pathHash =
+        QCryptographicHash::hash(pluginPath.toUtf8(), QCryptographicHash::Sha256).toHex().left(8);
+    const QString registry = _cleanJoin(cacheDir, QStringLiteral("gstreamer-%1.%2.%3-%4-%5.bin")
                                                       .arg(major)
                                                       .arg(minor)
                                                       .arg(micro)
-                                                      .arg(QSysInfo::buildCpuArchitecture()));
+                                                      .arg(QSysInfo::buildCpuArchitecture(), QLatin1String(pathHash)));
     _setGstEnv("GST_REGISTRY", registry);
     return registry;
 }
@@ -254,25 +252,11 @@ void _setGstEnvIfExecutable(const char* name, const QString& path)
     }
 }
 
-void _sanitizePythonEnvForScanner()
-{
-    static constexpr const char* varsToUnset[] = {
-        "PYTHONHOME", "PYTHONPATH", "VIRTUAL_ENV", "CONDA_PREFIX", "CONDA_DEFAULT_ENV", "PYTHONUSERBASE",
-    };
-
-    for (const char* name : varsToUnset) {
-        _unsetEnv(name);
-    }
-
-    _setGstEnv("PYTHONNOUSERSITE", QStringLiteral("1"));
-}
-
 void _applyGstEnvVars(const QString& pluginDir, const QString& gioModDir, const QString& scannerPath,
                       const QString& ptpPath)
 {
     qCDebug(GStreamerEnvLog) << "Applying GStreamer environment:";
 
-    _sanitizePythonEnvForScanner();
     _clearManagedGstEnvVars();
     _setGstEnv("GST_REGISTRY_REUSE_PLUGIN_SCANNER", QStringLiteral("no"));
     _setGstEnvIfExists("GIO_EXTRA_MODULES", gioModDir);
@@ -336,8 +320,39 @@ bool _applyBundleLayout(const QString& platformLabel, const BundleLayout& layout
     _warnIfScannerMissing(platformLabel, scanner);
     _applyGstEnvVars(pluginDirs, _firstExistingPath(layout.gioModuleDirs), scanner,
                      _firstExistingPath(layout.ptpCandidates));
-    (void) _usePrivateRegistry(QStandardPaths::writableLocation(QStandardPaths::CacheLocation));
+    (void) _usePrivateRegistry(QStandardPaths::writableLocation(QStandardPaths::CacheLocation), pluginDirs);
     return true;
+}
+
+// gioopenssl's compiled-in CA path is the Cerbero build prefix, which a bundled SDK doesn't have. Make the first
+// existing @p candidates GIO's default TLS database, which GStreamer's TLS users (rtspsrc, souphttpsrc) verify against,
+// without changing the trust store of every OpenSSL user in and below the process as SSL_CERT_FILE would. A
+// user-set SSL_CERT_FILE still wins.
+[[maybe_unused]] void _useBundledCaFile(const QStringList& candidates)
+{
+    const QString caFile = _firstExistingPath(candidates);
+    if (caFile.isEmpty() || !qEnvironmentVariableIsEmpty("SSL_CERT_FILE")) {
+        return;
+    }
+
+    // Loads the GIO modules, so it must follow every GIO_* variable this layer sets.
+    GTlsBackend* const backend = g_tls_backend_get_default();
+    if (!backend || !g_tls_backend_supports_tls(backend)) {
+        qCWarning(GStreamerEnvLog) << "No GIO TLS backend; not loading the bundled CA file" << caFile;
+        return;
+    }
+
+    GError* error = nullptr;
+    GTlsDatabase* const database = g_tls_file_database_new(caFile.toUtf8().constData(), &error);
+    if (!database) {
+        qCWarning(GStreamerEnvLog) << "Failed to load the bundled CA file" << caFile << ":"
+                                   << (error ? error->message : "unknown error");
+        g_clear_error(&error);
+        return;
+    }
+    g_tls_backend_set_default_database(backend, database);
+    g_object_unref(database);
+    qCDebug(GStreamerEnvLog) << "  TLS database =" << caFile;
 }
 
 #endif  // !Q_OS_ANDROID && !Q_OS_IOS && !QGC_GST_SYSTEM_PLUGINS
@@ -385,18 +400,11 @@ ValidationResult _setGstEnvVars()
         qCCritical(GStreamerEnvLog) << result.error;
     }
 
-#if defined(QGC_GST_MACOS_FRAMEWORK)
-    if (hasBundledFramework) {
-        _setGstEnv("GTK_PATH", rootDir);
-    }
-#endif
-
-    // libgioopenssl's compiled-in CA path is the Cerbero prefix; repoint OpenSSL at the
-    // bundled file (framework Versions/1.0/etc vs non-framework Contents/Resources/etc).
-    _setCaBundleIfUnset("SSL_CERT_FILE", {
-                                             _cleanJoin(rootDir, "etc/ssl/certs/ca-certificates.crt"),
-                                             _cleanJoin(appDir, "../Resources/etc/ssl/certs/ca-certificates.crt"),
-                                         });
+    // Framework Versions/1.0/etc vs non-framework Contents/Resources/etc.
+    _useBundledCaFile({
+        _cleanJoin(rootDir, "etc/ssl/certs/ca-certificates.crt"),
+        _cleanJoin(appDir, "../Resources/etc/ssl/certs/ca-certificates.crt"),
+    });
 
 #elif defined(Q_OS_WIN)
     const QString libDir = _cleanJoin(appDir, "../lib");
@@ -418,10 +426,8 @@ ValidationResult _setGstEnvVars()
             _setGstEnv("PATH", binDir + QDir::listSeparator() + curPath);
         }
 
-        // gioopenssl.dll's compiled-in CA path is relative to the Cerbero SDK root and breaks once
-        // detached; point OpenSSL at the bundled CA file (installed by gstreamer_install_windows_sdk).
-        _setCaBundleIfUnset("SSL_CERT_FILE", {_cleanJoin(appDir, "../etc/ssl/certs/ca-certificates.crt")},
-                            /*nativePath=*/true);
+        // Installed by gstreamer_install_windows_sdk.
+        _useBundledCaFile({_cleanJoin(appDir, "../etc/ssl/certs/ca-certificates.crt")});
     }
 
 #elif defined(Q_OS_IOS)
@@ -528,7 +534,6 @@ ValidationResult prepareEnvironment()
     if (QCoreApplication::instance() && (QThread::currentThread() != QCoreApplication::instance()->thread())) {
         qCWarning(GStreamerEnvLog) << "prepareEnvironment() called off the GUI thread; qputenv is not thread-safe";
     }
-    const QMutexLocker setEnvLocker(&s_setEnvVarsMutex);
     return _setGstEnvVars();
 }
 
@@ -547,10 +552,9 @@ bool useBundledRuntime(const QString& pluginDirs, const QString& gioModuleDir, c
 #endif
 }
 
-QString usePrivateRegistry(const QString& cacheDir)
+QString usePrivateRegistry(const QString& cacheDir, const QString& pluginPath)
 {
-    const QMutexLocker setEnvLocker(&s_setEnvVarsMutex);
-    return _usePrivateRegistry(cacheDir);
+    return _usePrivateRegistry(cacheDir, pluginPath);
 }
 
 void logDiagnostics()
