@@ -209,7 +209,9 @@ def test_dependency_caches_use_shared_backend() -> None:
         for step in get_steps(load_action("build-setup"))
         if step.get("uses", "").startswith("lukka/get-cmake@")
     )
-    assert (cmake["with"]["useCloudCache"], cmake["with"]["useLocalCache"]) == (True, False)
+    # Copilot sessions skip it: they cannot save (test_build_tools_contract.py).
+    assert cmake["with"]["useCloudCache"] == "${{ github.event_name != 'dynamic' }}"
+    assert cmake["with"]["useLocalCache"] is False
     detect = get_step(get_steps(load_action("setup-python")), "Detect Actions cache backend")
     assert "tools/ci/cache/cache_backend.py" in detect["with"]["script"]
     uv = _setup_uv()
@@ -424,7 +426,7 @@ def test_docker_cache_uses_magic_cache_compatible_backend() -> None:
 def test_docker_build_enables_magic_cache_on_upstream_aws_runners() -> None:
     workflow = load_workflow("docker.yml")
     job = workflow["jobs"]["build"]
-    assert "runs-on={0}-build-{1}-{2}/runner={3}{4}" in job["runs-on"]
+    assert "runs-on={0}-build-{1}-{2}/runner={3}" in job["runs-on"]
     assert "github.repository_owner == 'mavlink'" in job["runs-on"]
     assert "github.event." not in job["runs-on"]
     assert "'ubuntu-latest'" in job["runs-on"]

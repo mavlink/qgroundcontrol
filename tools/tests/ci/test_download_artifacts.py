@@ -28,7 +28,6 @@ def test_parse_args_defaults() -> None:
     assert args.event == ""
     assert args.artifact_prefixes == "coverage-report"
     assert args.sizes_out is None
-    assert args.require_sizes is False
     assert args.include_failed is False
     assert args.allow_missing is False
     assert args.runs_cache == ""
@@ -51,7 +50,7 @@ def test_parse_args_defaults_to_the_triggering_run(build_results_job: Path) -> N
     )
     assert (args.repo, args.head_sha, args.event) == ("owner/repo", "abc123", "pull_request")
     assert args.runs_cache == str(build_results_job)
-    assert args.include_failed and args.allow_missing and not args.require_sizes
+    assert args.include_failed and args.allow_missing
     assert args.sizes_out == Path("s.json")
 
 
@@ -288,9 +287,9 @@ def test_manifest_maps_downloads_to_workflows_and_keeps_earlier_entries(tmp_path
         )
     assert rc == 0
     assert json.loads((tmp_path / mod.MANIFEST_NAME).read_text()) == [
-        {"name": "coverage-report", "workflow": "Linux", "run_id": 7},
+        {"name": "coverage-report", "workflow": "Linux", "run_id": 7, "downloaded": True},
         {"name": "older", "workflow": "MacOS", "run_id": 3},
-        {"name": "test-results-linux-unit", "workflow": "Linux", "run_id": 7},
+        {"name": "test-results-linux-unit", "workflow": "Linux", "run_id": 7, "downloaded": True},
     ]
     assert mod.MANIFEST_NAME not in {path.name for path in mod.list_downloaded_files(tmp_path)}
 
@@ -301,9 +300,49 @@ def test_select_artifact_names_filters_by_prefix() -> None:
         {"name": "test-results-linux_gcc_64"},
         {"name": "emulator-diagnostics-123"},
         {"name": "QGroundControl-x86_64.AppImage"},
+        {"name": "test-results-old", "expired": True},
     ]
     names = mod.select_artifact_names(artifacts, ["coverage-report", "test-results-"])
     assert names == ["coverage-report", "test-results-linux_gcc_64"]
+    assert mod.select_artifact_names(artifacts, ["test-results-"], expired=True) == [
+        "test-results-old"
+    ]
+
+
+def test_expired_artifacts_are_recorded_instead_of_downloaded(tmp_path: Path) -> None:
+    runs = [{"id": 42, "name": "Linux", "status": "completed", "conclusion": "success"}]
+    expired = [{"name": "test-results-linux-unit", "size_in_bytes": 1, "expired": True}]
+    with (
+        patch.object(mod, "list_workflow_runs_for_sha", return_value=runs),
+        patch.object(mod, "list_run_artifacts", return_value=expired),
+        patch.object(mod, "download_run_artifacts") as download,
+    ):
+        rc = mod.main(
+            [
+                "--repo",
+                "owner/repo",
+                "--head-sha",
+                "abc123",
+                "--output-dir",
+                str(tmp_path),
+                "--workflows",
+                "Linux",
+                "--artifact-prefixes",
+                "test-results-",
+                "--allow-missing",
+            ],
+        )
+    assert rc == 0
+    download.assert_not_called()
+    assert json.loads((tmp_path / mod.MANIFEST_NAME).read_text(encoding="utf-8")) == [
+        {
+            "name": "test-results-linux-unit",
+            "workflow": "Linux",
+            "run_id": 42,
+            "downloaded": False,
+            "expired": True,
+        }
+    ]
 
 
 def test_list_downloaded_files_lists_nested_files(tmp_path: Path) -> None:
@@ -429,19 +468,21 @@ def test_optional_diagnostics_record_sizes_without_downloads(
     assert rc == 0
     download.assert_not_called()
     listing.assert_called_once_with("owner/repo", 42)
-    expected = (
-        [
+    # A failed run's uploaded artifacts are complete, so --include-failed records them too.
+    assert json.loads(sizes_path.read_text()) == {
+        "head_sha": "abc123",
+        "runs": [
             {
-                "name": "QGroundControl.AppImage",
-                "size_bytes": 100,
-                "size_human": "0.00 MB",
                 "workflow": "Linux",
+                "run_id": 42,
+                "run_number": None,
+                "status": "completed",
+                "conclusion": conclusion,
+                "url": "",
             }
-        ]
-        if conclusion == "success"
-        else []
-    )
-    assert json.loads(sizes_path.read_text()) == {"head_sha": "abc123", "artifacts": expected}
+        ],
+        "artifacts": [_size("QGroundControl.AppImage", 100, "0.00 MB", "Linux", run_id=42)],
+    }
     assert "continuing with build status only" in capsys.readouterr().out
 
 
@@ -462,7 +503,7 @@ def test_optional_diagnostics_write_empty_sizes_without_runs(tmp_path: Path) -> 
             ]
         )
     assert rc == 0
-    assert json.loads(sizes_path.read_text()) == {"head_sha": "abc123", "artifacts": []}
+    assert json.loads(sizes_path.read_text()) == {"head_sha": "abc123", "runs": [], "artifacts": []}
 
 
 @pytest.mark.parametrize("allow_missing", [False, True])
@@ -494,6 +535,10 @@ def test_download_failure_is_not_optional(
             ]
         )
     assert rc == 1
+    # The report names what it could not download.
+    assert json.loads((tmp_path / mod.MANIFEST_NAME).read_text()) == [
+        {"name": "coverage-report", "workflow": "Linux", "run_id": 42, "downloaded": False}
+    ]
 
 
 def test_optional_diagnostics_reject_advertised_empty_download(tmp_path: Path) -> None:
@@ -714,17 +759,11 @@ def test_main_writes_sizes_file(tmp_path: Path) -> None:
         )
 
     assert rc == 0
-    assert json.loads(sizes_path.read_text()) == {
-        "head_sha": "abc123",
-        "artifacts": [
-            {
-                "name": "QGroundControl-x86_64.AppImage",
-                "size_bytes": 200,
-                "size_human": "0.00 MB",
-                "workflow": "Linux",
-            }
-        ],
-    }
+    sizes = json.loads(sizes_path.read_text())
+    assert sizes["artifacts"] == [
+        _size("QGroundControl-x86_64.AppImage", 200, "0.00 MB", "Linux", run_id=42)
+    ]
+    assert [run["run_id"] for run in sizes["runs"]] == [42]
 
 
 def _run(
@@ -745,8 +784,25 @@ def _run(
     }
 
 
-def _size(name: str, size_bytes: int, size_human: str, workflow: str = "") -> dict[str, object]:
-    return {"name": name, "size_bytes": size_bytes, "size_human": size_human, "workflow": workflow}
+def _size(
+    name: str,
+    size_bytes: int,
+    size_human: str,
+    workflow: str = "",
+    *,
+    run_id: int = 0,
+    artifact_id: int = 0,
+    expires_at: str = "",
+) -> dict[str, object]:
+    return {
+        "name": name,
+        "size_bytes": size_bytes,
+        "size_human": size_human,
+        "workflow": workflow,
+        "run_id": run_id,
+        "artifact_id": artifact_id,
+        "expires_at": expires_at,
+    }
 
 
 def test_sizes_use_latest_successful_run_per_workflow_and_event() -> None:
@@ -769,6 +825,60 @@ def test_sizes_use_latest_successful_run_per_workflow_and_event() -> None:
     assert [size["name"] for size in sizes] == ["QGroundControl-2", "QGroundControl-6"]
 
 
+@pytest.mark.parametrize(("include_failed", "expected"), [(False, 1), (True, 2)])
+def test_sizes_come_from_the_latest_completed_run_with_include_failed(
+    include_failed: bool, expected: int
+) -> None:
+    runs = [
+        _run("Linux", run_id=1),
+        _run("Linux", run_id=2, created_at="2026-02-24T01:00:00Z", conclusion="failure"),
+    ]
+    listed = {
+        run_id: [
+            {
+                "id": 500 + run_id,
+                "name": "QGroundControl-x86_64",
+                "size_in_bytes": run_id,
+                "expires_at": "2026-03-03T00:00:00Z",
+            }
+        ]
+        for run_id in (1, 2)
+    }
+    sizes = mod.collect_artifact_sizes(
+        "owner/repo", runs, ["Linux"], listed=listed, include_failed=include_failed
+    )
+    assert sizes == [
+        _size(
+            "QGroundControl-x86_64",
+            expected,
+            "0.00 MB",
+            "Linux",
+            run_id=expected,
+            artifact_id=500 + expected,
+            expires_at="2026-03-03T00:00:00Z",
+        )
+    ]
+
+
+def test_latest_runs_are_described_in_any_state() -> None:
+    runs = [
+        _run("Linux", run_id=1),
+        {**_run("Linux", run_id=2, created_at="2026-02-24T01:00:00Z"), "status": "in_progress"}
+        | {"conclusion": None, "run_number": 12, "html_url": "https://example.test/2"},
+        _run("MacOS", run_id=3, conclusion="failure", event="push"),
+    ]
+    assert mod.describe_latest_runs(runs, ["Linux", "MacOS"], event="pull_request") == [
+        {
+            "workflow": "Linux",
+            "run_id": 2,
+            "run_number": 12,
+            "status": "in_progress",
+            "conclusion": "",
+            "url": "https://example.test/2",
+        }
+    ]
+
+
 def test_sizes_keep_only_distributable_artifacts() -> None:
     listed = {
         11: [
@@ -784,8 +894,8 @@ def test_sizes_keep_only_distributable_artifacts() -> None:
         "owner/repo", [_run("Linux", run_id=11)], ["Linux"], listed=listed
     )
     assert sizes == [
-        _size("QGroundControl-x86_64", 1024 * 1024, "1.00 MB", "Linux"),
-        _size("QGroundControl.apk", 2048, "0.00 MB", "Linux"),
+        _size("QGroundControl-x86_64", 1024 * 1024, "1.00 MB", "Linux", run_id=11),
+        _size("QGroundControl.apk", 2048, "0.00 MB", "Linux", run_id=11),
     ]
 
 
@@ -804,8 +914,8 @@ def test_sizes_list_unlisted_runs_and_tolerate_api_failures() -> None:
         )
     assert sorted(call.args[1] for call in listing.call_args_list) == [51, 52]
     assert sizes == [
-        _size("QGroundControl-installer-AMD64", 2048, "0.00 MB", "Windows"),
-        _size("QGroundControl.dmg", 4096, "0.00 MB", "MacOS"),
+        _size("QGroundControl-installer-AMD64", 2048, "0.00 MB", "Windows", run_id=52),
+        _size("QGroundControl.dmg", 4096, "0.00 MB", "MacOS", run_id=53),
     ]
 
 
@@ -816,7 +926,7 @@ def test_sizes_keep_the_largest_same_named_artifact() -> None:
     }
     runs = [_run("MacOS", run_id=61), _run("Android", run_id=62)]
     sizes = mod.collect_artifact_sizes("owner/repo", runs, ["Android", "MacOS"], listed=listed)
-    assert sizes == [_size("QGroundControl", 337 * 1024 * 1024, "337.00 MB", "MacOS")]
+    assert sizes == [_size("QGroundControl", 337 * 1024 * 1024, "337.00 MB", "MacOS", run_id=61)]
 
 
 def _sizes_main(tmp_path: Path, *options: str) -> int:
@@ -850,40 +960,15 @@ def test_main_sorts_sizes_by_artifact_name(tmp_path: Path) -> None:
         patch.object(mod, "list_run_artifacts", side_effect=lambda repo, run_id: artifacts[run_id]),
     ):
         assert _sizes_main(tmp_path, "--allow-missing") == 0
-    assert json.loads((tmp_path / "sizes.json").read_text()) == {
-        "head_sha": "abc123",
-        "artifacts": [
-            _size("QGroundControl-installer-AMD64", 2 * 1024 * 1024, "2.00 MB", "Windows"),
-            _size("QGroundControl-x86_64", 2 * 1024 * 1024, "2.00 MB", "Linux"),
-        ],
-    }
+    assert json.loads((tmp_path / "sizes.json").read_text())["artifacts"] == [
+        _size("QGroundControl-installer-AMD64", 2 * 1024 * 1024, "2.00 MB", "Windows", run_id=102),
+        _size("QGroundControl-x86_64", 2 * 1024 * 1024, "2.00 MB", "Linux", run_id=101),
+    ]
 
 
-@pytest.mark.parametrize("require_sizes", [False, True])
-def test_main_never_keeps_stale_sizes(tmp_path: Path, require_sizes: bool) -> None:
+def test_main_never_keeps_stale_sizes(tmp_path: Path) -> None:
     sizes_path = tmp_path / "sizes.json"
     sizes_path.write_text(json.dumps({"head_sha": "old", "artifacts": [_size("QGC", 1, "")]}))
     with patch.object(mod, "list_workflow_runs_for_sha", return_value=[]):
-        rc = _sizes_main(tmp_path, *(["--require-sizes"] if require_sizes else []))
-    assert rc == int(require_sizes)
-    if require_sizes:
-        assert not sizes_path.exists()
-    else:
-        assert json.loads(sizes_path.read_text()) == {"head_sha": "abc123", "artifacts": []}
-
-
-def test_require_sizes_needs_a_sizes_file() -> None:
-    with patch.object(mod, "list_workflow_runs_for_sha") as query:
-        rc = mod.main(
-            [
-                "--repo",
-                "owner/repo",
-                "--head-sha",
-                "abc123",
-                "--artifact-prefixes",
-                "coverage-report",
-                "--require-sizes",
-            ]
-        )
-    assert rc == 1
-    query.assert_not_called()
+        assert _sizes_main(tmp_path) == 0
+    assert json.loads(sizes_path.read_text()) == {"head_sha": "abc123", "runs": [], "artifacts": []}

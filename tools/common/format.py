@@ -1,8 +1,12 @@
-"""Human-readable formatters for byte counts, deltas, counts, durations, and percentages."""
+"""Human-readable formatters for byte counts, deltas, counts, durations, percentages, and names."""
 
 from __future__ import annotations
 
+from typing import Any
+
 __all__ = [
+    "MAX_NAME_CHARS",
+    "clip",
     "format_bytes",
     "format_count",
     "format_delta_bytes",
@@ -63,3 +67,13 @@ def format_ratio(part: int, total: int) -> str:
     if total <= 0:
         return f"{format_count(part)} of {format_count(total)}"
     return f"{format_count(part)} of {format_count(total)} ({format_percent(100.0 * part / total)})"
+
+
+# Names from pull requests and build outputs (tests, jobs, files) are clipped wherever shown.
+MAX_NAME_CHARS = 120
+
+
+def clip(value: Any, limit: int = MAX_NAME_CHARS) -> str:
+    """Return *value* on one line, shortened to *limit* characters."""
+    text = " ".join(str(value).split())
+    return text if len(text) <= limit else f"{text[: limit - 1]}…"

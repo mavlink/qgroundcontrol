@@ -7,6 +7,8 @@ import json
 import os
 import re
 import subprocess
+import time
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -164,6 +166,78 @@ def parse_csv_list(value: str) -> list[str]:
     return [item.strip() for item in value.split(",") if item.strip()]
 
 
+# Artifact archives reach tens of MB; bound the transfer so a stalled download can't hold a job.
+ARTIFACT_DOWNLOAD_TIMEOUT_SECONDS = 600.0
+
+
+def download_artifact_zip(
+    repo: str,
+    artifact_id: int | str,
+    destination: Path,
+    *,
+    attempts: int = 3,
+    timeout: float = ARTIFACT_DOWNLOAD_TIMEOUT_SECONDS,
+) -> None:
+    """Save a workflow artifact's zip archive to *destination* without extracting it.
+
+    Callers then read only the members they need. Transient failures are retried; any other
+    failure (an expired artifact answers 410) raises ``RuntimeError`` and leaves no file.
+    """
+    artifact = int(artifact_id)
+    if artifact <= 0:
+        raise ValueError(f"artifact_id must be positive, got {artifact}")
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    detail = ""
+    for attempt in range(1, attempts + 1):
+        try:
+            with destination.open("wb") as handle:
+                result = subprocess.run(
+                    ["gh", "api", f"repos/{repo}/actions/artifacts/{artifact}/zip"],
+                    stdout=handle,
+                    stderr=subprocess.PIPE,
+                    timeout=timeout,
+                    check=False,
+                )
+        except subprocess.TimeoutExpired:
+            detail = f"transfer timed out after {timeout:g}s"
+            transient = True
+        else:
+            if result.returncode == 0:
+                return
+            detail = result.stderr.decode("utf-8", "replace").strip()
+            transient = _is_transient_gh_output("", detail)
+        if attempt == attempts or not transient:
+            break
+        time.sleep(2.0 * attempt)
+    destination.unlink(missing_ok=True)
+    raise RuntimeError(f"Cannot download artifact {artifact} of {repo}: {detail or 'gh failed'}")
+
+
+def parse_github_timestamp(value: Any) -> datetime | None:
+    """Parse a GitHub API ISO-8601 timestamp into an aware UTC datetime, or None."""
+    text = str(value or "").strip()
+    if not text:
+        return None
+    if text.endswith("Z"):  # 3.10 fromisoformat rejects the trailing 'Z'
+        text = f"{text[:-1]}+00:00"
+    try:
+        parsed = datetime.fromisoformat(text)
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def seconds_between(start: Any, end: Any) -> float | None:
+    """Return the seconds from GitHub timestamp *start* to *end*; None if either is unusable."""
+    started = parse_github_timestamp(start)
+    finished = parse_github_timestamp(end)
+    if started is None or finished is None or finished < started:
+        return None
+    return (finished - started).total_seconds()
+
+
 def require_repository() -> str:
     """Return the configured owner/repo or terminate with a CI annotation."""
     for variable in ("GH_REPO", "GITHUB_REPOSITORY"):
@@ -282,34 +356,74 @@ def _escape_annotation(message: str) -> str:
     return message.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
 
 
-def annotate(level: str, message: str, *, title: str = "") -> None:
+def _escape_property(value: str) -> str:
+    # Property values also end at ':' and ','.
+    return _escape_annotation(value).replace(":", "%3A").replace(",", "%2C")
+
+
+def annotate(
+    level: str,
+    message: str,
+    *,
+    title: str = "",
+    file: str = "",
+    line: int | None = None,
+    col: int | None = None,
+) -> None:
     """Emit a GitHub Actions workflow annotation to stdout.
 
     level is one of "error", "warning", "notice". The runner parses these from
     the step log and renders them in the run UI; outside CI it is plain text.
+    *file* is a repository-relative path; *line* and *col* locate the annotation in it and are
+    dropped without it.
     """
-    # Property values also end at ':' and ','.
-    props = (
-        f" title={_escape_annotation(title).replace(':', '%3A').replace(',', '%2C')}"
-        if title
-        else ""
-    )
-    print(f"::{level}{props}::{_escape_annotation(message)}", flush=True)
+    props = []
+    if file:
+        props.append(f"file={_escape_property(file)}")
+        if line is not None:
+            props.append(f"line={int(line)}")
+            if col is not None:
+                props.append(f"col={int(col)}")
+    if title:
+        props.append(f"title={_escape_property(title)}")
+    prefix = f" {','.join(props)}" if props else ""
+    print(f"::{level}{prefix}::{_escape_annotation(message)}", flush=True)
 
 
-def gh_error(message: str, *, title: str = "") -> None:
+def gh_error(
+    message: str,
+    *,
+    title: str = "",
+    file: str = "",
+    line: int | None = None,
+    col: int | None = None,
+) -> None:
     """Emit a GitHub Actions error annotation."""
-    annotate("error", message, title=title)
+    annotate("error", message, title=title, file=file, line=line, col=col)
 
 
-def gh_warning(message: str, *, title: str = "") -> None:
+def gh_warning(
+    message: str,
+    *,
+    title: str = "",
+    file: str = "",
+    line: int | None = None,
+    col: int | None = None,
+) -> None:
     """Emit a GitHub Actions warning annotation."""
-    annotate("warning", message, title=title)
+    annotate("warning", message, title=title, file=file, line=line, col=col)
 
 
-def gh_notice(message: str) -> None:
+def gh_notice(
+    message: str,
+    *,
+    title: str = "",
+    file: str = "",
+    line: int | None = None,
+    col: int | None = None,
+) -> None:
     """Emit a GitHub Actions notice annotation."""
-    annotate("notice", message)
+    annotate("notice", message, title=title, file=file, line=line, col=col)
 
 
 @contextlib.contextmanager

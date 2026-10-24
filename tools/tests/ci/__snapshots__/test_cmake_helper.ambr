@@ -1,4 +1,74 @@
 # serializer version: 1
+# name: test_failed_build_annotates_and_summarizes_compiler_errors
+  '''
+  ### Build
+  
+  | Item | Value |
+  | --- | --- |
+  | Result | failed |
+  | Duration | 0.0s |
+  
+  <details><summary>Failed targets / first errors</summary>
+  
+  Failed targets:
+  
+  - `CMakeFiles/QGroundControl.dir/test/MAVLink/HealthAndArmingCheckReportTest.cc.o`
+  
+  Errors:
+  
+  ```
+  test/MAVLink/HealthAndArmingCheckReportTest.cc:83:31: error: no matching function for call to ‘EventHandler::EventHandler(std::nullptr_t, QString)’
+  test/MAVLink/HealthAndArmingCheckReportTest.cc:144:31: error: no matching function for call to ‘EventHandler::EventHandler(std::nullptr_t, QString)’
+  ```
+  
+  </details>
+  
+  
+  '''
+# ---
+# name: test_failed_configure_annotates_and_summarizes_the_first_cmake_error
+  '''
+  ### Configure
+  
+  | Item | Value |
+  | --- | --- |
+  | Result | failed |
+  | Duration | 0.0s |
+  | Preset | `Windows` |
+  | Generator | Ninja |
+  
+  <details><summary>CMake error</summary>
+  
+  ```
+  CMake Error at .cache/CPM/zstd/dfd2/build/cmake/CMakeLists.txt:36 (project):
+    No CMAKE_ASM_COMPILER could be found.
+  
+    Tell CMake where to find the compiler by setting either the environment
+    variable "ASM" or the CMake cache entry CMAKE_ASM_COMPILER to the full path
+    to the compiler, or to the compiler name if it is in the PATH.
+  ```
+  
+  </details>
+  
+  <details><summary>Configure output (last 40 lines)</summary>
+  
+  ```
+  -- liblzma support enabled
+  -- The ASM compiler identification is unknown
+  -- Didn't find assembler
+  CMake Error at .cache/CPM/zstd/dfd2/build/cmake/CMakeLists.txt:36 (project):
+    No CMAKE_ASM_COMPILER could be found.
+    Tell CMake where to find the compiler by setting either the environment
+    variable "ASM" or the CMake cache entry CMAKE_ASM_COMPILER to the full path
+    to the compiler, or to the compiler name if it is in the PATH.
+  -- Configuring incomplete, errors occurred!
+  ```
+  
+  </details>
+  
+  
+  '''
+# ---
 # name: test_summary_writes_one_build_section
   '''
   ### Build

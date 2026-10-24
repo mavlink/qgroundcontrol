@@ -1,18 +1,27 @@
 """Exercise simulator lifecycle and QGC success-marker validation without Xcode."""
 
 import json
+import os
 import plistlib
 import subprocess
-from unittest.mock import patch
+import time
+from types import SimpleNamespace
+from unittest.mock import ANY, patch
 
 import pytest
+from ci.ios import ios_boot_test
 from ci.ios.ios_boot_test import (
     CLEANUP_TIMEOUT,
     DEFAULT_APP_TIMEOUT,
     DEFAULT_BOOT_TIMEOUT,
+    DEFAULT_TOTAL_TIMEOUT,
     DIAGNOSTIC_TIMEOUT,
+    HOST_LOG_PREDICATE,
+    LOG_SHOW_TIMEOUT,
     MAX_BOOT_ATTEMPTS,
     MAX_BOOT_TIMEOUT,
+    SIMULATOR_LOG_PREDICATE,
+    Progress,
     boot_test,
     main,
     select_device,
@@ -36,13 +45,27 @@ def app(tmp_path):
     return path
 
 
+@pytest.fixture(autouse=True)
+def crash_reports(tmp_path, monkeypatch):
+    """Point crash-report collection at an empty directory instead of the user's reports."""
+    path = tmp_path / "DiagnosticReports"
+    path.mkdir()
+    monkeypatch.setattr(ios_boot_test, "CRASH_REPORT_DIR", path)
+    return path
+
+
+def _args(command):
+    """simctl arguments, or the whole command for the host's log show."""
+    return tuple(command[2:]) if command[:2] == ["xcrun", "simctl"] else tuple(command)
+
+
 @pytest.fixture
 def simulator():
     responses = {}
     devices = iter(("uuid-1", "uuid-2"))
 
     def run(command, **kwargs):
-        args = tuple(command[2:])
+        args = _args(command)
         if args in responses:
             response = responses[args]
             if isinstance(response, Exception):
@@ -63,7 +86,20 @@ def simulator():
 
 
 def commands(process):
-    return [tuple(call.args[0][2:]) for call in process.call_args_list]
+    return [_args(call.args[0]) for call in process.call_args_list]
+
+
+def log_show(predicate):
+    return ("log", "show", "--last", "10m", "--style", "compact", "--predicate", predicate)
+
+
+def diagnostics(device):
+    """Commands a failed attempt runs before cleaning up *device*."""
+    return [
+        ("list", "devices", "--json"),
+        ("spawn", device, *log_show(SIMULATOR_LOG_PREDICATE)),
+        log_show(HOST_LOG_PREDICATE),
+    ]
 
 
 def launch_command(device):
@@ -101,13 +137,19 @@ def test_app_must_report_boot_success_without_retry(app, tmp_path, simulator, ou
         boot_test(app, log)
     calls = commands(process)
     assert sum(command[0] == "create" for command in calls) == 1
-    assert calls[-3:] == [launch_command("uuid-1"), ("shutdown", "uuid-1"), ("delete", "uuid-1")]
+    assert calls[calls.index(launch_command("uuid-1")) :] == [
+        launch_command("uuid-1"),
+        *(diagnostics("uuid-1") if error else []),
+        ("shutdown", "uuid-1"),
+        ("delete", "uuid-1"),
+    ]
     assert output in log.read_text()
     assert "create warning" in log.read_text()
     for call in process.call_args_list:
         if call.args[0][2] in ("install", "launch"):
             assert call.kwargs["timeout"] == DEFAULT_APP_TIMEOUT
-        assert call.kwargs["check"] is True
+        # Diagnostic log captures keep their output whatever their exit code.
+        assert call.kwargs["check"] is (_args(call.args[0])[0] not in ("spawn", "log"))
 
 
 def test_missing_runtime_fails():
@@ -134,12 +176,12 @@ def test_cold_boot_failure_recovers_on_fresh_device(app, tmp_path, simulator, ph
     calls = commands(process)
     assert sum(command[0] == "create" for command in calls) == 2
     failure_index = calls.index(failed_command)
-    assert calls[failure_index + 1 : failure_index + 4] == [
-        ("list", "devices", "--json"),
+    assert calls[failure_index + 1 : failure_index + 6] == [
+        *diagnostics("uuid-1"),
         ("shutdown", "uuid-1"),
         ("delete", "uuid-1"),
     ]
-    assert calls[failure_index + 4][0] == "create"
+    assert calls[failure_index + 6][0] == "create"
     assert [command for command in calls if command[0] == "install"] == [
         ("install", "uuid-2", str(app))
     ]
@@ -204,11 +246,12 @@ def test_install_failure_recovers_on_fresh_device(app, tmp_path, simulator, time
     boot_test(app, log, timeout=timeout)
     calls = commands(process)
     failure_index = calls.index(failed_command)
-    assert calls[failure_index + 1 : failure_index + 3] == [
+    assert calls[failure_index + 1 : failure_index + 6] == [
+        *diagnostics("uuid-1"),
         ("shutdown", "uuid-1"),
         ("delete", "uuid-1"),
     ]
-    assert calls[failure_index + 3][0] == "create"
+    assert calls[failure_index + 6][0] == "create"
     assert [command for command in calls if command[0] == "launch"] == [launch_command("uuid-2")]
     assert calls[-2:] == [("shutdown", "uuid-2"), ("delete", "uuid-2")]
     for call in process.call_args_list:
@@ -219,10 +262,10 @@ def test_install_failure_recovers_on_fresh_device(app, tmp_path, simulator, time
         "install stalled",
         "attempt 1/2 failed during install",
         "Retrying with a fresh simulator after the install failure of attempt 1/2",
+        "Simulator state before cleanup of uuid-1",
         SUCCESS,
     ):
         assert expected in text
-    assert "Simulator state before cleanup" not in text
 
 
 def test_exhausted_install_attempts_raise_last_failure(app, tmp_path, simulator):
@@ -455,7 +498,12 @@ def test_create_failure_is_retried_without_device_cleanup(app, tmp_path, simulat
     with pytest.raises(subprocess.CalledProcessError) as raised:
         boot_test(app, log, boot_attempts=attempts)
     assert raised.value is failure
-    assert [command[0] for command in commands(process)] == ["list"] + ["create"] * attempts
+    # Without a device only the host's CoreSimulator log is saved.
+    assert commands(process) == [
+        ("list", "devices", "available", "--json"),
+        *[("create", "QGC CI boot test", "iphone16", runtime), log_show(HOST_LOG_PREDICATE)]
+        * attempts,
+    ]
     assert "creation refused" in log.read_text()
 
 
@@ -499,6 +547,7 @@ def test_prior_attempt_success_marker_does_not_hide_app_failure(app, tmp_path, s
         {"boot_attempts": 0},
         {"boot_attempts": -1},
         {"boot_attempts": MAX_BOOT_ATTEMPTS + 1},
+        {"total_timeout": 0},
     ],
 )
 def test_invalid_options_do_not_create_simulator(tmp_path, options):
@@ -528,6 +577,7 @@ def test_boot_timeout_is_independent_of_app_timeout(app, tmp_path, simulator, bo
         ("--boot-attempts", "0"),
         ("--boot-attempts", str(MAX_BOOT_ATTEMPTS + 1)),
         ("--boot-attempts", "1.5"),
+        ("--total-timeout", "0"),
     ],
 )
 def test_invalid_cli_options_fail_before_subprocesses(option, value, capsys):
@@ -544,8 +594,15 @@ def test_invalid_cli_options_fail_before_subprocesses(option, value, capsys):
 def test_cli_wires_boot_options():
     argv = ["--app", "app", "--log", "log", "--timeout", "420"]
     with patch("ci.ios.ios_boot_test.boot_test") as run:
-        assert main([*argv, "--boot-timeout", "900", "--boot-attempts", "1"]) == 0
-    assert run.call_args.kwargs == {"timeout": 420, "boot_timeout": 900, "boot_attempts": 1}
+        options = ["--boot-timeout", "900", "--boot-attempts", "1", "--total-timeout", "1200"]
+        assert main([*argv, *options]) == 0
+    assert run.call_args.kwargs == {
+        "timeout": 420,
+        "boot_timeout": 900,
+        "boot_attempts": 1,
+        "total_timeout": 1200,
+        "progress": ANY,
+    }
 
 
 def test_cli_defaults():
@@ -555,4 +612,196 @@ def test_cli_defaults():
         "timeout": DEFAULT_APP_TIMEOUT,
         "boot_timeout": DEFAULT_BOOT_TIMEOUT,
         "boot_attempts": MAX_BOOT_ATTEMPTS,
+        "total_timeout": DEFAULT_TOTAL_TIMEOUT,
+        "progress": ANY,
     }
+
+
+FAILED_COMMANDS = {
+    "bootstatus": ("bootstatus", "uuid-1", "-b"),
+    "install": lambda app: ("install", "uuid-1", str(app)),
+    "launch": launch_command("uuid-1"),
+}
+
+
+def _failed_command(phase, app):
+    command = FAILED_COMMANDS[phase]
+    return command(app) if callable(command) else command
+
+
+@pytest.mark.parametrize("phase", ["bootstatus", "install", "launch"])
+def test_every_failed_phase_saves_simulator_and_host_logs(app, tmp_path, simulator, phase):
+    process, responses = simulator
+    failure = subprocess.CalledProcessError(1, phase, stderr="refused")
+    responses[_failed_command(phase, app)] = failure
+    responses[("spawn", "uuid-1", *log_show(SIMULATOR_LOG_PREDICATE))] = ("QGC last words\n", "")
+    responses[log_show(HOST_LOG_PREDICATE)] = ("CoreSimulatorService stalled\n", "warning\n")
+    log = tmp_path / "ios-boot-test" / "ios-boot-test.log"
+
+    with pytest.raises(subprocess.CalledProcessError) as raised:
+        boot_test(app, log, boot_attempts=1)
+
+    assert raised.value is failure
+    saved = log.parent / "ios-boot-test-attempt1-simulator.log"
+    assert saved.read_text() == "QGC last words\n"
+    host = log.parent / "ios-boot-test-attempt1-coresimulator.log"
+    assert host.read_text() == "CoreSimulatorService stalled\nwarning\n"
+    text = log.read_text()
+    assert "Saved ios-boot-test-attempt1-simulator.log (exit code 0, 1 lines)" in text
+    assert "QGC last words" not in text
+    for call in process.call_args_list:
+        if _args(call.args[0])[0] in ("spawn", "log"):
+            assert call.kwargs["timeout"] == LOG_SHOW_TIMEOUT
+
+
+def test_failed_attempt_keeps_only_this_runs_app_crash_reports(
+    app, tmp_path, simulator, crash_reports
+):
+    _, responses = simulator
+    responses[launch_command("uuid-1")] = ("Simple boot test failed", "")
+    (crash_reports / "QGC-2026-10-23-120000.ips").write_text("crashed")
+    (crash_reports / "Other-2026-10-23-120000.ips").write_text("another app")
+    old = crash_reports / "QGC-2026-01-01-120000.crash"
+    old.write_text("an earlier crash")
+    os.utime(old, (time.time() - 3600, time.time() - 3600))
+    log = tmp_path / "log"
+
+    with pytest.raises(RuntimeError):
+        boot_test(app, log)
+
+    assert sorted(path.name for path in tmp_path.glob("log-*.ips")) == [
+        "log-QGC-2026-10-23-120000.ips"
+    ]
+    assert not list(tmp_path.glob("log-*.crash"))
+    assert "Saved crash report QGC-2026-10-23-120000.ips" in log.read_text()
+
+
+@pytest.mark.parametrize(
+    ("failure", "expected"),
+    [
+        (OSError("log unavailable"), "log failed: log unavailable"),
+        (
+            subprocess.TimeoutExpired("log", LOG_SHOW_TIMEOUT, output=b"partial log\n"),
+            "timed out after 60s",
+        ),
+    ],
+)
+def test_diagnostic_log_failures_keep_the_original_failure(
+    app, tmp_path, simulator, failure, expected
+):
+    _, responses = simulator
+    original = subprocess.CalledProcessError(1, "install", stderr="install refused")
+    responses[("install", "uuid-1", str(app))] = original
+    responses[log_show(HOST_LOG_PREDICATE)] = failure
+    log = tmp_path / "log"
+
+    with pytest.raises(subprocess.CalledProcessError) as raised:
+        boot_test(app, log, boot_attempts=1)
+
+    assert raised.value is original
+    assert expected in log.read_text()
+    host = tmp_path / "log-attempt1-coresimulator.log"
+    assert host.exists() == isinstance(failure, subprocess.TimeoutExpired)
+    if host.exists():
+        assert host.read_text() == "partial log\n"
+
+
+def test_spent_budget_caps_timeouts_and_stops_retries(app, tmp_path, simulator, monkeypatch):
+    process, responses = simulator
+    responses[("bootstatus", "uuid-1", "-b")] = subprocess.TimeoutExpired("bootstatus", 1)
+    readings = iter([0.0])
+    clock = SimpleNamespace(monotonic=lambda: next(readings, 1600.0), time=time.time)
+    monkeypatch.setattr(ios_boot_test, "time", clock)
+    log = tmp_path / "log"
+
+    with pytest.raises(subprocess.TimeoutExpired):
+        boot_test(app, log)
+
+    calls = process.call_args_list
+    assert sum(_args(call.args[0])[0] == "create" for call in calls) == 1
+    for call in calls:
+        if _args(call.args[0])[0] in ("create", "boot", "bootstatus"):
+            assert call.kwargs["timeout"] == 1
+    assert f"Not retrying because the {DEFAULT_TOTAL_TIMEOUT}s budget is spent" in log.read_text()
+
+
+def test_budget_caps_app_timeouts(app, tmp_path, simulator):
+    process, _ = simulator
+    boot_test(app, tmp_path / "log", total_timeout=100)
+    timeouts = [
+        call.kwargs["timeout"]
+        for call in process.call_args_list
+        if call.args[0][2] in ("install", "launch")
+    ]
+    assert len(timeouts) == 2
+    assert all(90 <= timeout <= 100 for timeout in timeouts)
+
+
+def test_main_annotates_the_failing_phase_and_attempt(app, tmp_path, simulator, gh_summary, capsys):
+    _, responses = simulator
+    for device in ("uuid-1", "uuid-2"):
+        responses[("install", device, str(app))] = subprocess.TimeoutExpired(
+            ["xcrun", "simctl", "install"], 600, output="".join(f"copying {n}\n" for n in range(30))
+        )
+    log = tmp_path / "ios-boot-test" / "ios-boot-test.log"
+
+    assert main(["--app", str(app), "--log", str(log)]) == 1
+
+    captured = capsys.readouterr()
+    errors = [line for line in captured.out.splitlines() if line.startswith("::error")]
+    assert errors == [
+        "::error::iOS simulator boot test failed during install (attempt 2/2): TimeoutExpired: "
+        "Command '['xcrun', 'simctl', 'install']' timed out after 600 seconds"
+    ]
+    assert "Traceback" in captured.err
+    summary = gh_summary.read_text()
+    assert summary.startswith(
+        "### Boot test\n\n| Item | Value |\n| --- | --- |\n"
+        "| Result | failed during install (attempt 2/2) |\n| App | `QGC.app` |\n"
+        "| Simulator | iphone16 (iOS-18-5) |\n| Attempts | 2/2 |\n| Duration | "
+    )
+    details = summary[summary.index("<details><summary>Last 40 lines of the boot log</summary>") :]
+    lines = log.read_text().splitlines()
+    assert lines[-1] in details
+    assert f"\n{lines[-41]}\n" not in details
+    assert summary.endswith("</details>\n\n")
+
+
+def test_main_summarizes_a_passing_boot(app, tmp_path, simulator, gh_summary, capsys):
+    assert main(["--app", str(app), "--log", str(tmp_path / "log")]) == 0
+    summary = gh_summary.read_text()
+    assert "| Result | passed |\n" in summary
+    assert "| Attempts | 1/2 |\n" in summary
+    assert "<details>" not in summary
+    assert "::error" not in capsys.readouterr().out
+
+
+def test_main_reports_setup_failures(tmp_path, gh_summary, capsys):
+    with patch("ci.ios.ios_boot_test.subprocess.run") as process:
+        assert main(["--app", str(tmp_path / "missing.app"), "--log", str(tmp_path / "log")]) == 1
+    process.assert_not_called()
+    assert "::error::iOS simulator boot test failed during setup: FileNotFoundError: " in (
+        capsys.readouterr().out
+    )
+    summary = gh_summary.read_text()
+    assert "| Result | failed during setup |\n" in summary
+    assert "Attempts" not in summary
+    assert "<details>" not in summary
+
+
+def test_main_annotation_escapes_line_breaks(capsys):
+    with patch("ci.ios.ios_boot_test.boot_test", side_effect=RuntimeError("stalled\n50% done")):
+        assert main(["--app", "app", "--log", "log"]) == 1
+    errors = [line for line in capsys.readouterr().out.splitlines() if line.startswith("::")]
+    assert errors == [
+        "::error::iOS simulator boot test failed during setup: RuntimeError: stalled%0A50%25 done"
+    ]
+
+
+def test_progress_tracks_the_phase_and_attempt(app, tmp_path, simulator):
+    _, responses = simulator
+    responses[launch_command("uuid-1")] = ("Simple boot test failed", "")
+    progress = Progress()
+    with pytest.raises(RuntimeError):
+        boot_test(app, tmp_path / "log", progress=progress)
+    assert progress == Progress("launch", 1, 2, "iphone16 (iOS-18-5)")

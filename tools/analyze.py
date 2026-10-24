@@ -32,6 +32,8 @@ from common.logging import log_error, log_ok
 from common.markdown import code_block, code_span, md_table, more_items, summary_section
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from analyzers.base import AnalysisResult, AnalyzerBase
 
 
@@ -311,13 +313,84 @@ Examples:
 
 # A compiler diagnostic that names its check: "file:line:col: warning: text [check-name]".
 _DIAGNOSTIC = re.compile(r": (?:warning|error): .*\[([\w.,-]+)\]$", re.MULTILINE)
+# An error, which compiler and fatal errors report without a check.
+_ERROR = re.compile(
+    r"^(?P<path>[^\n]+?):(?P<line>\d+):(?P<column>\d+): (?:fatal )?error: "
+    r"(?P<message>[^\n]*?)(?: \[(?P<check>[^\]\n]+)\])?$",
+    re.MULTILINE,
+)
 _SUMMARY_FILES = 50
 _SUMMARY_CHECKS = 15
+_SUMMARY_ERRORS = 20
 _SUMMARY_OUTPUT_LINES = 300
+# GitHub shows at most 10 error annotations per step.
+_ANNOTATED_ERRORS = 10
 
 
-def result_summary(result: AnalysisResult, *, shard: int = 1, shard_count: int = 1) -> str:
-    """Return one tool's job-summary section: status, file counts, checks, and diagnostics."""
+class ErrorDiagnostic(NamedTuple):
+    """An error diagnostic; *file* is repository-relative unless it is outside the checkout."""
+
+    file: str
+    line: int
+    column: int
+    message: str
+    check: str
+
+    def __str__(self) -> str:
+        check = f" [{self.check}]" if self.check else ""
+        return f"{self.file}:{self.line}:{self.column}: error: {self.message}{check}"
+
+
+def error_diagnostics(output: str, repo_root: Path) -> list[ErrorDiagnostic]:
+    """Return the unique error diagnostics in *output*, in order."""
+    errors: dict[ErrorDiagnostic, None] = {}
+    for match in _ERROR.finditer(output):
+        path = Path(os.path.normpath(repo_root / match["path"]))
+        try:
+            file = path.relative_to(repo_root).as_posix()
+        except ValueError:
+            file = match["path"]
+        location = (file, int(match["line"]), int(match["column"]))
+        errors[ErrorDiagnostic(*location, match["message"], match["check"] or "")] = None
+    return list(errors)
+
+
+def _command_data(text: str) -> str:
+    return text.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+
+
+def _command_property(text: str) -> str:
+    return _command_data(text).replace(":", "%3A").replace(",", "%2C")
+
+
+def annotate_errors(tool: str, errors: Sequence[ErrorDiagnostic]) -> None:
+    """Emit the first errors as GitHub annotations on their source lines."""
+    for error in errors[:_ANNOTATED_ERRORS]:
+        title = f"{tool} [{error.check}]" if error.check else tool
+        if Path(error.file).is_absolute():
+            properties, message = "", str(error)
+        else:
+            properties = (
+                f"file={_command_property(error.file)},line={error.line},col={error.column},"
+            )
+            message = error.message
+        print(
+            f"::error {properties}title={_command_property(title)}::{_command_data(message)}",
+            flush=True,
+        )
+
+
+def result_summary(
+    result: AnalysisResult,
+    *,
+    shard: int = 1,
+    shard_count: int = 1,
+    errors: Sequence[ErrorDiagnostic] = (),
+) -> str:
+    """Return one tool's job-summary section: status, file counts, checks, and diagnostics.
+
+    *errors* are listed before the diagnostics, whose listing is truncated.
+    """
     checks = Counter(_DIAGNOSTIC.findall(result.output))
     files = [f"- {code_span(name)}" for name in result.files_with_issues[:_SUMMARY_FILES]]
     if len(result.files_with_issues) > _SUMMARY_FILES:
@@ -326,9 +399,14 @@ def result_summary(result: AnalysisResult, *, shard: int = 1, shard_count: int =
     shown = "\n".join(output[:_SUMMARY_OUTPUT_LINES])
     if len(output) > _SUMMARY_OUTPUT_LINES:
         shown += f"\n{more_items(len(output) - _SUMMARY_OUTPUT_LINES)} lines (see the job log)"
-    body = ""
+    body = []
     if result.status == "error":
-        body = "Error diagnostics or tool failures fail this job; warnings are advisory."
+        body.append("Error diagnostics or tool failures fail this job; warnings are advisory.")
+    if errors:
+        listed = "\n".join(str(error) for error in errors[:_SUMMARY_ERRORS])
+        if len(errors) > _SUMMARY_ERRORS:
+            listed += f"\n{more_items(len(errors) - _SUMMARY_ERRORS)}"
+        body.append("Errors:\n\n" + code_block(listed))
     return summary_section(
         f"Code analysis: {result.tool}",
         [
@@ -336,9 +414,10 @@ def result_summary(result: AnalysisResult, *, shard: int = 1, shard_count: int =
             ("Shard", f"{shard} of {shard_count}" if shard_count > 1 else ""),
             ("Files analyzed", format_count(result.files_checked)),
             ("Files with findings", format_count(len(result.files_with_issues))),
+            ("Errors", format_count(len(errors)) if errors else ""),
             ("Diagnostics", format_count(sum(checks.values())) if checks else ""),
         ],
-        body=body,
+        body="\n\n".join(body),
         collapsed=[
             (
                 f"Checks with findings ({len(checks)})",
@@ -443,9 +522,14 @@ def main(argv: list[str] | None = None) -> int:
         result = selected.run(files, fix=args.fix)
         reason = f": {result.output}" if result.execution_error and result.output else ""
         print(f"{result.tool}: {result.status} ({result.files_checked} files){reason}")
+        errors = error_diagnostics(result.output, repo_root)
+        if is_ci():
+            annotate_errors(result.tool, errors)
         if args.step_summary:
             write_step_summary(
-                result_summary(result, shard=args.shard, shard_count=args.shard_count)
+                result_summary(
+                    result, shard=args.shard, shard_count=args.shard_count, errors=errors
+                )
             )
         if result.execution_error or result.error_findings:
             status = 2

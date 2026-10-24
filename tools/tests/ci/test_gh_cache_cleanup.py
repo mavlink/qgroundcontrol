@@ -454,18 +454,6 @@ def test_pr_and_feature_caches_do_not_prevent_reaching_target() -> None:
     assert projected == 6000 * 1024 * 1024
 
 
-def test_baseline_retention_uses_publication_order_not_recent_reads() -> None:
-    old = _usage(f"build-baseline-v2-{'a' * 40}-99-2", 1000, accessed="2026-09-02")
-    latest = _usage(f"build-baseline-v2-{'b' * 40}-100-1", 1000, accessed="2026-09-01")
-    caches = [old, latest, _usage("ccache-linux", 5000), _usage("other", 4000)]
-    victims, _, projected = mod.select_prune_victims(
-        caches, keep_mb=6500, high_water_mb=9000, protect=mod.DEFAULT_PROTECT
-    )
-    assert old in victims
-    assert latest not in victims
-    assert projected == 6000 * 1024 * 1024
-
-
 def test_select_prune_victims_never_evicts_protected() -> None:
     caches = [
         _usage("ccache-linux", 6000),

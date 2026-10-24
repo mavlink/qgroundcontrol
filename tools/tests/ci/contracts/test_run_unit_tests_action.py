@@ -20,9 +20,10 @@ def test_reports_follow_failed_tests_and_keep_the_failure() -> None:
         "",
         "codecov/codecov-action",
         "actions/upload-artifact",
+        "",
     ]
     for step in reports:
-        assert step["if"].startswith("${{ !cancelled() && inputs.")
+        assert step["if"].startswith("${{ !cancelled() && ")
         assert "continue-on-error" not in step
 
 

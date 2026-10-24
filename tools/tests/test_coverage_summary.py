@@ -69,3 +69,52 @@ def test_rejects_invalid_summaries(tmp_path, content: str) -> None:
 def test_missing_file_is_a_summary_error(tmp_path) -> None:
     with pytest.raises(CoverageSummaryError, match="failed to parse"):
         read_gcovr_summary(tmp_path / "missing.json")
+
+
+def _file(filename: str, lines: tuple[int, int], branches: tuple[int, int]) -> dict[str, object]:
+    return {
+        "filename": filename,
+        "line_total": lines[1],
+        "line_covered": lines[0],
+        "line_percent": 0.0,
+        "function_total": 1,
+        "function_covered": 1,
+        "function_percent": 100.0,
+        "branch_total": branches[1],
+        "branch_covered": branches[0],
+        "branch_percent": 0.0,
+    }
+
+
+def test_path_prefix_sums_only_the_files_under_it(tmp_path) -> None:
+    files = [
+        _file("src/Vehicle/Vehicle.cc", (2, 3), (1, 4)),
+        _file("src/Comms/LinkManager.cc", (1, 1), (0, 0)),
+        # Test code is nearly always covered and would inflate the application's percentages.
+        _file("test/Vehicle/VehicleTest.cc", (50, 50), (5, 5)),
+    ]
+    report = tmp_path / "coverage-summary.json"
+    report.write_text(json.dumps({**GCOVR_SUMMARY, "files": files}), encoding="utf-8")
+    assert read_gcovr_summary(report, path_prefix="src/") == CoverageSummary(
+        75.0, 4, 3, 25.0, 4, 1, 100.0, 2, 2
+    )
+
+
+def test_path_prefix_rounds_like_gcovr(tmp_path) -> None:
+    report = tmp_path / "coverage-summary.json"
+    files = [_file("src/a.cc", (999, 1000), (0, 0))]
+    report.write_text(json.dumps({**GCOVR_SUMMARY, "files": files}), encoding="utf-8")
+    summary = read_gcovr_summary(report, path_prefix="src/")
+    # 99.9% rounds to 100.0, which gcovr reserves for full coverage.
+    assert (summary.line_percent, summary.branch_percent) == (99.9, 0.0)
+
+
+@pytest.mark.parametrize(
+    "files",
+    [None, [_file("src/a.cc", (-1, 2), (0, 0))], [_file("src/a.cc", (3, 2), (0, 0))]],
+)
+def test_path_prefix_rejects_invalid_files(tmp_path, files) -> None:
+    report = tmp_path / "coverage-summary.json"
+    report.write_text(json.dumps({**GCOVR_SUMMARY, "files": files}), encoding="utf-8")
+    with pytest.raises(CoverageSummaryError):
+        read_gcovr_summary(report, path_prefix="src/")

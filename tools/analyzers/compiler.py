@@ -12,6 +12,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any, ClassVar, NamedTuple, TypedDict
 
+from common.git import changed_ranges, diff_base, pr_diff_refs, run_git
 from common.io import read_json, write_json
 from common.proc import require_tools, run_captured
 
@@ -277,16 +278,70 @@ class CompilerAnalyzer(AnalyzerBase):
             for match in _DIAGNOSTIC.finditer(output)
         }
 
+    def _changed_lines(self, files: set[str]) -> dict[str, list[tuple[int, int]] | None] | None:
+        """Map each of *files* that the pull request changed to its changed line ranges.
+
+        A None range list means the whole file is new. Returns None outside a pull request
+        (PR_HEAD_SHA unset) or without a usable diff base.
+        """
+        head = os.environ.get("PR_HEAD_SHA")
+        if not head:
+            return None
+        refs = pr_diff_refs(os.environ.get("PR_BASE_SHA"), head, cwd=self.repo_root)
+        if refs is None:
+            return None
+        try:
+            base = diff_base(*refs, cwd=self.repo_root)
+            if base is None:
+                return None
+            names = run_git(
+                "diff", "--name-only", "--no-renames", base, cwd=self.repo_root, check=True
+            ).stdout.splitlines()
+            return {
+                name: changed_ranges(name, base, cwd=self.repo_root)
+                for name in sorted(files.intersection(names))
+            }
+        except subprocess.CalledProcessError as exc:
+            print(f"Cannot diff {refs[0]}..{refs[1]}; changed lines are not reported: {exc}")
+            return None
+
+    def _analyzed_commit(self) -> str:
+        """Return the checked-out commit whose line numbers the diagnostics use, or ''.
+
+        On a pull request that is GitHub's merge commit (GITHUB_SHA), not the PR head.
+        """
+        if sha := os.environ.get("GITHUB_SHA", "").strip():
+            return sha
+        try:
+            head = run_git("rev-parse", "--verify", "--quiet", "HEAD", cwd=self.repo_root)
+        except OSError:
+            return ""
+        return head.stdout.strip()
+
     def _write_diagnostics(self, diagnostics: set[Diagnostic]) -> None:
-        """Write each unique diagnostic once; reports merge shards by the same identity."""
+        """Write each unique diagnostic once; reports merge shards by the same identity.
+
+        ``commit`` names the analyzed checkout. In a pull request, ``changed`` repeats the
+        diagnostics on the lines it changed.
+        """
         by_file: dict[str, list[list[int | str]]] = {}
         for file, line, column, severity, check in sorted(diagnostics):
             by_file.setdefault(file, []).append([line, column, severity, check])
-        write_json(
-            self.build_dir / f"{self.name}-diagnostics.json",
-            {"tool": self.name, "shard": self.shard, "diagnostics": by_file},
-            indent=None,
-        )
+        report: dict[str, Any] = {"tool": self.name, "shard": self.shard, "diagnostics": by_file}
+        if commit := self._analyzed_commit():
+            report["commit"] = commit
+        changed_lines = self._changed_lines(set(by_file))
+        if changed_lines is not None:
+            changed = {
+                file: [
+                    row
+                    for row in by_file[file]
+                    if ranges is None or any(start <= int(row[0]) <= end for start, end in ranges)
+                ]
+                for file, ranges in changed_lines.items()
+            }
+            report["changed"] = {file: rows for file, rows in changed.items() if rows}
+        write_json(self.build_dir / f"{self.name}-diagnostics.json", report, indent=None)
 
     def _file_arguments(self, file: Path) -> tuple[str, ...]:
         return ()

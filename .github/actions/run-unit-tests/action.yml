@@ -93,6 +93,7 @@ runs:
         fail_ci_if_error: false
 
     - name: Upload test results
+      id: upload-results
       if: ${{ !cancelled() && inputs.artifact-name != '' }}
       uses: actions/upload-artifact@v7
       with:
@@ -101,3 +102,12 @@ runs:
           ${{ inputs.build-dir }}/${{ inputs.ctest-output }}
           ${{ inputs.build-dir }}/${{ inputs.junit-output }}
         retention-days: ${{ inputs.retention-days }}
+
+    # Codecov writes no summary, so the link lands below the report-name section.
+    - name: Link test results
+      if: ${{ !cancelled() && steps.upload-results.outputs.artifact-url != '' }}
+      shell: bash
+      run: python3 "${GITHUB_WORKSPACE}/tools/ci/packaging/artifact_link.py" --label "Test results"
+      env:
+        ARTIFACT_NAME: ${{ inputs.artifact-name }}
+        ARTIFACT_URL: ${{ steps.upload-results.outputs.artifact-url }}

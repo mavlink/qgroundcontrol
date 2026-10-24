@@ -42,11 +42,13 @@ runs:
       run: python3 "${GITHUB_WORKSPACE}/tools/ci/runner/install_dependencies_helper.py" plan
 
     # Downloaded .debs, so slow apt mirrors only hurt on a miss (key rationale in the plan step's
-    # helper). actions/cache saves only when the job succeeds, so a failed install never stores a
-    # partial set under a key that would then never be re-saved.
+    # helper). The save follows a successful install, so a failed one never stores a partial set
+    # under a key that would then never be re-saved. Copilot sessions (event "dynamic") cannot
+    # write the cache; they restore what the setup workflow's master runs saved.
     - name: Restore apt download cache (Linux)
+      id: apt-cache
       if: runner.os == 'Linux'
-      uses: actions/cache@v6
+      uses: actions/cache/restore@v6
       with:
         path: ~/.cache/qgc-apt-archives
         key: ${{ steps.apt-plan.outputs.key }}
@@ -60,6 +62,16 @@ runs:
         INPUT_CATEGORY: ${{ inputs.category }}
         INPUT_EXTRA_PACKAGES: ${{ inputs.extra-packages }}
       run: python3 "${GITHUB_WORKSPACE}/tools/ci/runner/install_dependencies_helper.py" install
+
+    - name: Save apt download cache (Linux)
+      if: >-
+        runner.os == 'Linux' && github.event_name != 'dynamic' &&
+        steps.apt-cache.outputs.cache-hit != 'true'
+      continue-on-error: true
+      uses: actions/cache/save@v6
+      with:
+        path: ~/.cache/qgc-apt-archives
+        key: ${{ steps.apt-plan.outputs.key }}
 
     - name: Install dependencies (macOS)
       if: runner.os == 'macOS'

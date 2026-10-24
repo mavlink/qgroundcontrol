@@ -15,7 +15,11 @@ Compiler analysis (clang-tidy, Clazy) writes these files to the build directory:
   result-cache statistics, and (when profiling) per-check costs.
 - `<tool>-diagnostics.json` lists each unique diagnostic once (line, column, severity, and check,
   by file relative to the checkout, or `build/...` for generated files), so reports can count a
-  header's warnings once across translation units and shards.
+  header's warnings once across translation units and shards. `commit` names the checkout whose
+  line numbers they use (`GITHUB_SHA`, which on a pull request is GitHub's merge commit rather
+  than the PR head, else `git rev-parse HEAD`; absent when neither is known). With `PR_HEAD_SHA`
+  set (Code Analysis on a pull request), `changed` repeats those on lines the pull request changed
+  (`common.git.changed_ranges` against the PR's diff base).
 - `<tool>-raw.txt` keeps every translation unit's full output; the console shows each identical
   diagnostic block once.
 

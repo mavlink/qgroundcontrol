@@ -38,11 +38,9 @@ jobs:
     runs-on: >-
       ${{
         github.repository_owner == 'mavlink' &&
-        format('runs-on={0}-build-{1}-{2}/runner={3}{4}',
+        format('runs-on={0}-build-{1}-{2}/runner={3}',
           github.run_id, github.run_attempt, strategy.job-index,
-          vars.RUNS_ON_LINUX_BUILDER || 'linux-x64-builder',
-          github.event_name == 'pull_request' && (vars.RUNS_ON_SPOT_POOLS == 'true' && '-spot' ||
-            '/spot=cop/family=c8i.xlarge+m8i.xlarge+c7i.xlarge+m7i.xlarge') || '') ||
+          vars.RUNS_ON_LINUX_BUILDER || 'linux-x64-builder') ||
         'ubuntu-latest'
       }}
     needs: changes

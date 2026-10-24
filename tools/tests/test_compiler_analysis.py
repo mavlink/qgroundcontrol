@@ -1,6 +1,7 @@
 """Compiler analyzer regressions: diagnostics, invocation errors, and file selection."""
 
 import json
+from contextlib import nullcontext
 from pathlib import Path
 from subprocess import CompletedProcess, TimeoutExpired
 from unittest.mock import patch
@@ -11,6 +12,8 @@ from analyze import FileCollector
 from analyzers.clang_tidy import ClangTidyAnalyzer
 from analyzers.clazy import ClazyAnalyzer
 from analyzers.dependencies import DependencyScanError
+
+from ._helpers import commit_files, git
 
 
 def _scan_including(header: Path, dependents: set[Path]):
@@ -172,7 +175,8 @@ def test_header_selection_keeps_changed_sources_and_records_timings(tmp_path):
     assert all(row["seconds"] >= 0 for row in timings["files"])
 
 
-def test_unique_diagnostics_are_recorded_once_per_location(tmp_path):
+def test_unique_diagnostics_are_recorded_once_per_location(tmp_path, monkeypatch):
+    monkeypatch.setenv("GITHUB_SHA", "merge")
     source = tmp_path / "source"
     build = tmp_path / "build"
     build.mkdir()
@@ -200,11 +204,80 @@ def test_unique_diagnostics_are_recorded_once_per_location(tmp_path):
     assert json.loads((build / "clang-tidy-diagnostics.json").read_text()) == {
         "tool": "clang-tidy",
         "shard": 1,
+        "commit": "merge",
         "diagnostics": {
             "build/gen/moc.h": [[4, 1, "error", "bugprone-macro"]],
             "src/a.cc": [[1, 2, "warning", "readability-braces"]],
             "src/shared.h": [[3, 7, "warning", "modernize-use-nodiscard"]],
         },
+    }
+
+
+@pytest.mark.parametrize("github_sha", [None, "merge"])
+def test_pull_request_diagnostics_repeat_those_on_changed_lines(git_repo, monkeypatch, github_sha):
+    base = commit_files(git_repo, {"src/a.cc": "1\n2\n3\n4\n", "src/shared.h": "h\n"}, "base")
+    head = commit_files(git_repo, {"src/a.cc": "1\n2\nthree\n4\n", "src/b.cc": "b\nb\n"}, "pr")
+    monkeypatch.setenv("PR_BASE_SHA", base)
+    monkeypatch.setenv("PR_HEAD_SHA", head)
+    if github_sha:
+        monkeypatch.setenv("GITHUB_SHA", github_sha)
+    build = git_repo / "build"
+    build.mkdir()
+    (build / "compile_commands.json").write_text(
+        json.dumps(
+            [{"directory": str(git_repo), "file": f"src/{name}"} for name in ("a.cc", "b.cc")]
+        )
+    )
+    src = git_repo / "src"
+    outputs = {
+        "a.cc": f"{src}/a.cc:2:1: warning: old [check-old]\n"
+        f"{src}/a.cc:3:5: warning: new [check-new]\n"
+        f"{src}/shared.h:1:1: warning: header [check-header]\n",
+        "b.cc": f"{src}/b.cc:2:1: warning: added file [check-added]\n",
+    }
+
+    def run(command, **kwargs):
+        return CompletedProcess(command, 0, outputs[Path(command[-1]).name], "")
+
+    analyzer = ClangTidyAnalyzer(git_repo, build)
+    with (
+        patch.object(analyzer, "require_tool", return_value=True),
+        patch("analyzers.compiler.run_captured", side_effect=run),
+    ):
+        analyzer.run([src / "a.cc", src / "b.cc"])
+
+    report = json.loads((build / "clang-tidy-diagnostics.json").read_text())
+    # Line numbers are those of the checkout: GITHUB_SHA in CI, else HEAD.
+    assert report["commit"] == (github_sha or head)
+    assert len(report["diagnostics"]["src/a.cc"]) == 2
+    # Only line 3 of a.cc changed, b.cc is new, and the header did not change.
+    assert report["changed"] == {
+        "src/a.cc": [[3, 5, "warning", "check-new"]],
+        "src/b.cc": [[2, 1, "warning", "check-added"]],
+    }
+
+
+@pytest.mark.parametrize("checkout", ["no repository", "no commits", "no git"])
+def test_diagnostics_without_a_checked_out_commit_name_none(tmp_path, isolated_git, checkout):
+    if checkout == "no commits":
+        git(tmp_path, "init", "-q")
+    analyzer = ClangTidyAnalyzer(tmp_path, tmp_path)
+    with (
+        patch.object(analyzer, "require_compile_commands", return_value=True),
+        patch.object(analyzer, "require_tool", return_value=True),
+        patch(
+            "analyzers.compiler.run_captured",
+            return_value=CompletedProcess([], 0, "file.cc:1:2: warning: w [check]\n", ""),
+        ),
+        patch("common.git.run_captured", side_effect=FileNotFoundError("git"))
+        if checkout == "no git"
+        else nullcontext(),
+    ):
+        analyzer.run([tmp_path / "file.cc"])
+    assert json.loads((tmp_path / "clang-tidy-diagnostics.json").read_text()) == {
+        "tool": "clang-tidy",
+        "shard": 1,
+        "diagnostics": {"file.cc": [[1, 2, "warning", "check"]]},
     }
 
 

@@ -37,6 +37,12 @@ outputs:
   moc-cache:
     description: moc cache restore result
     value: ${{ steps.artifact-cache.outputs.restored == 'true' && 'artifact' || steps.moccache.outputs.cache-hit }}
+  compiler-cache-key:
+    description: Key the compiler (ccache) cache was restored from, the primary key or a restore-keys match
+    value: ${{ steps.ccache.outputs.cache-matched-key }}
+  moc-cache-key:
+    description: Key the moc cache was restored from, the primary key or a restore-keys match
+    value: ${{ steps.moccache.outputs.cache-matched-key }}
   cpm-cache:
     description: CPM source cache restore result
     value: ${{ steps.cpm-shared.outputs.cache-hit == 'true' && 'true' || steps.cpm-save.outputs.cache-hit || steps.cpm-restore.outputs.cache-hit }}

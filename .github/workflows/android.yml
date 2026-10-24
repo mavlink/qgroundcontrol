@@ -51,16 +51,13 @@ jobs:
       ${{
         github.repository_owner == 'mavlink' &&
         matrix.runson_runner != '' &&
-        format('runs-on={0}-build-{1}-{2}/{3}{4}',
+        format('runs-on={0}-build-{1}-{2}/{3}',
           github.run_id, github.run_attempt, strategy.job-index,
           matrix.host == 'windows' && vars.RUNS_ON_WINDOWS_POOL != '' &&
             format('pool={0}', vars.RUNS_ON_WINDOWS_POOL) ||
           matrix.host == 'linux' &&
             format('runner={0}', vars.RUNS_ON_LINUX_BUILDER || matrix.runson_runner) ||
-          format('runner={0}', matrix.runson_runner),
-          github.event_name == 'pull_request' && matrix.host == 'linux' &&
-            (vars.RUNS_ON_SPOT_POOLS == 'true' && '-spot' ||
-              '/spot=cop/family=c8i.xlarge+m8i.xlarge+c7i.xlarge+m7i.xlarge') || '') ||
+          format('runner={0}', matrix.runson_runner)) ||
         matrix.fallback_runner
       }}
     timeout-minutes: 120
@@ -132,6 +129,11 @@ jobs:
           # save key.
           cache-key-suffix: ${{ matrix.host }}
 
+      # setup-java's javac problem matcher turned every deprecation warning in the Gradle build into
+      # an annotation. Build errors, javac's included, are annotated by cmake-build instead.
+      - name: Drop javac warning annotations
+        run: echo "::remove-matcher owner=javac::"
+
       - name: Install host build dependencies
         if: runner.os == 'Linux'
         uses: ./.github/actions/install-dependencies
@@ -196,24 +198,40 @@ jobs:
           path: |
             ${{ runner.temp }}/build/qgc-build.log
             ${{ runner.temp }}/build/qgc-build-retry.log
-            ${{ runner.temp }}/build/CMakeFiles/CMakeOutput.log
-            ${{ runner.temp }}/build/CMakeFiles/CMakeError.log
+            ${{ runner.temp }}/build/CMakeFiles/CMakeConfigureLog.yaml
             ${{ runner.temp }}/build/.ninja_log
             ${{ runner.temp }}/build/android-QGroundControl-deployment-settings.json
           if-no-files-found: ignore
           retention-days: 7
 
       - name: Android Lint
+        id: lint
         if: ${{ matrix.host == 'linux' }}
         shell: bash
-        working-directory: ${{ runner.temp }}/build/android-build
         run: |
-          if [[ ! -x "./gradlew" ]]; then
-            echo "::error::Gradle wrapper not found in ${PWD}"
-            ls -la
-            exit 1
-          fi
-          ./gradlew lintRelease --no-daemon
+          python3 "${GITHUB_WORKSPACE}/tools/ci/android/android_lint.py" \
+            --project-dir "${RUNNER_TEMP}/build/android-build"
+
+      - name: Upload lint reports on failure
+        id: upload-lint
+        if: ${{ failure() && steps.lint.outcome == 'failure' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-${{ matrix.host }}-lint-reports
+          path: |
+            ${{ runner.temp }}/build/android-build/build/reports/lint-results-release.html
+            ${{ runner.temp }}/build/android-build/build/reports/lint-results-release.xml
+            ${{ runner.temp }}/build/android-lint.log
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Link lint reports
+        if: ${{ failure() && steps.upload-lint.outputs.artifact-url != '' }}
+        shell: bash
+        env:
+          ARTIFACT_NAME: android-${{ matrix.host }}-lint-reports
+          ARTIFACT_URL: ${{ steps.upload-lint.outputs.artifact-url }}
+        run: python3 "${GITHUB_WORKSPACE}/tools/ci/packaging/artifact_link.py" --label "Android Lint reports"
 
       - name: Prepare Artifact
         shell: bash
@@ -230,8 +248,16 @@ jobs:
         if: ${{ !matrix.emulator && matrix.primary && github.event_name == 'push' && github.ref == 'refs/heads/master' }}
         env:
           GRADLE_OPTS: -Dorg.gradle.daemon=false
+        uses: ./.github/actions/cmake-build
+        with:
+          target: aab
+          output-file: qgc-aab-build.log
+
+      - name: Prepare App Bundle
+        id: aab-artifact
+        if: ${{ steps.aab.outcome == 'success' }}
+        shell: bash
         run: |
-          cmake --build "${RUNNER_TEMP}/build" --target aab --config "${BUILD_TYPE}"
           python3 "${GITHUB_WORKSPACE}/tools/ci/packaging/find_artifact.py" \
             --build-dir "${RUNNER_TEMP}/build/android-build/build/outputs/bundle/release" \
             --pattern '*.aab' \
@@ -260,7 +286,7 @@ jobs:
           upload-aws: ${{ matrix.primary }}
 
       - name: Attest and Upload App Bundle
-        if: ${{ steps.aab.outcome == 'success' }}
+        if: ${{ steps.aab-artifact.outcome == 'success' }}
         uses: ./.github/actions/attest-and-upload
         with:
           artifact-name: ${{ env.PACKAGE }}.aab

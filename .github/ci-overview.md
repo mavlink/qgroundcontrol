@@ -45,7 +45,7 @@
 | `vm-builds.yml` | Builds inside the Multipass and Vagrant developer VMs |
 | `flatpak.yml` | Manual Flatpak build |
 | `_detect-changes.yml` | Reusable: decide whether a platform builds (`should_build`) and plan Android's and Docker's build legs (`matrix`) |
-| `build-results.yml` | PR build-results comment and master baselines (`workflow_run` trigger) |
+| `build-results.yml` | PR build-results comment, compared with the PR base's own builds (`workflow_run` trigger) |
 | `release.yml` | Draft a GitHub Release with git-cliff notes for a pushed `vX.Y.Z` tag (assets are uploaded by hand) |
 | `analysis.yml` | Code Analysis: clang-tidy and Clazy; manual IWYU, qmllint, and ThreadSanitizer |
 | `codeql.yml` | CodeQL for Actions, Java/Kotlin, and Python |
@@ -56,7 +56,8 @@
 | `pr-checks.yml` | PR title validation and size/file labels |
 | `dependency-review.yml` | Dependency security review |
 | `scorecard.yml` | OpenSSF Scorecard |
-| `docs.yml`, `doxygen.yml` | User/developer guide and Doxygen API docs build and deployment (Doxygen runs weekly; pull requests only when its configuration changes) |
+| `docs.yml`, `doxygen.yml` | User/developer guide and Doxygen API docs build and deployment (Doxygen runs weekly; pull requests only when its configuration changes; master runs keep their HTML artifact eight days for `pages.yml`) |
+| `pages.yml` | The [GitHub Pages site](#github-pages-site): CI health dashboard of master builds, JSON schemas, master downloads, and the API docs |
 | `crowdin.yml`, `lupdate.yml` | Crowdin sync and weekly source-string extraction |
 | `px4-metadata.yml` | Daily PX4 airframe and parameter metadata update PR |
 | `build-gstreamer.yml`, `mirror-gstreamer.yml` | Build GStreamer SDKs; mirror upstream GStreamer releases to the QGC S3 bucket |
@@ -65,7 +66,7 @@
 | `cache-cleanup.yml` | GitHub Actions cache cleanup (scheduled, on PR close, and manual) |
 | `stale.yml` | Stale-issue labeling and closing |
 | `welcome.yml` | New contributor welcome |
-| `copilot-setup-steps.yml` | Copilot cloud agent environment: Qt, system and Python dependencies, restored caches, and `just configure` (Copilot uses it only from the default branch; run it by hand to check the setup) |
+| `copilot-setup-steps.yml` | Copilot cloud agent environment: Qt, system and Python dependencies, restored caches, and `just configure` (Copilot uses it only from the default branch; run it by hand to check the setup). Sessions (event `dynamic`) restore only the default branch's GitHub caches and cannot save, so they skip every save; daily and input-changing master runs save the apt download and Qt caches they restore, which master's RunsOn builds keep in S3 instead (sessions download CMake and Ninja). In sessions each slow step times out within Copilot's roughly 20-minute setup budget, so a stall fails that step and Copilot starts without the remaining steps rather than cancelling the session |
 
 ## Actions and Scripts
 
@@ -102,8 +103,15 @@
   script.
 - CI, Docker, VM, sysroot, and packaging glue uses Python entrypoints; shell remains only for
   installing Python itself and loading container login profiles.
-- Set `RUNNER_DEBUG=1` (re-run with debug logging) or `QGC_CI_DEBUG=1` to enable the fault handler,
-  line-buffered output, and error annotations in CI Python entrypoints (`tools/_bootstrap.py`).
+- In GitHub Actions, an uncaught exception in a CI Python entrypoint becomes an error annotation
+  (`tools/_bootstrap.py`); for a failed command it names the command and quotes the last ten lines
+  of its captured stderr (else stdout), with URL credentials and `Authorization` values hidden,
+  and stdout escapes characters that the Windows code page cannot encode.
+  `common.proc.run_with_retry` logs the same before raising its final failure. Set
+  `RUNNER_DEBUG=1` (re-run with debug logging) or `QGC_CI_DEBUG=1` to add the fault handler,
+  line-buffered output, and annotations for unraisable exceptions.
+- Routine timings ("Configure completed in 12s", "Tests completed in 71s") are plain log lines,
+  not notices: the job summary already reports them, and annotations are kept for problems.
 
 ## Build Configuration
 
@@ -160,19 +168,14 @@ Dependency updates are split between two bots to avoid overlapping PRs:
   any queued job with an identical label, so shared labels let matrix siblings steal each other's
   runners. The job id is written literally (`github.job` is empty outside steps) and the matrix
   entry is `strategy.job-index`, which matrix values cannot read, so every label is built in the
-  job's `runs-on`; `linux.yml` matrix entries supply only the pool, PR Spot families, and
-  GitHub-hosted fallback.
-- Pools list exact instance types in on-demand priority order and stay on-demand for pushes, merge
-  queues, tags, and manual runs. Each Spot-eligible pool has a `<pool>-spot` twin (same shape,
-  `spot: cop`, Intel 8i/7i or Graviton types; AMD and r7i types are left out for their higher
-  us-west-2 interruption rates). Pull requests use the twins once the repository variable
-  `RUNS_ON_SPOT_POOLS` is `true`; until then their labels request the same `spot=cop/family=…`
-  directly. Nested-virtualization pools and Windows warm pools (`pool=` ignores other labels)
-  never use Spot. RunsOn reruns Spot-interrupted jobs on on-demand capacity, up to twice.
+  job's `runs-on`; `linux.yml` matrix entries supply only the pool and GitHub-hosted fallback.
+- Pools list exact instance types in on-demand priority order, and every event, pull requests
+  included, uses on-demand capacity: a reclaimed Spot instance discards a whole build (three
+  Windows PR builds were lost at once on 2026-10-23). The event type never changes a job's label.
 - RunsOn reads `runs-on.yml` only from the default branch, so an unknown `runner=` fails to launch
   and labels repeat settings that must apply before a `runs-on.yml` change merges (for example the
-  Windows builder's 150 GB volume). The `runs-on-lint` hook runs `roc lint` on the config when it
-  changes, and `test_runs_on_config.py` keeps twins, labels, and pools in sync.
+  Windows builder's 130 GB volume). The `runs-on-lint` hook runs `roc lint` on the config when it
+  changes, and `test_runs_on_config.py` keeps labels and pools in sync.
 - `runs-on/action` enables Magic Cache and the cost summary (plus sccache's S3 settings in
   `linux.yml` Release legs when the repository variable `QGC_COMPILER_CACHE` is `sccache`; see the
   [sccache pilot](#sccache-pilot)), and skips itself off RunsOn, so
@@ -206,7 +209,7 @@ Dependency updates are split between two bots to avoid overlapping PRs:
 - The Windows builder uses `windows25-full-x64`, which ships the MSVC toolchain
   (`windows22-full-x64` does not). The dependency installer skips Visual Studio Build Tools when an
   existing instance already provides every required component. The image takes about 75 GB, so the
-  builder's volume is 150 GB.
+  builder's volume is 130 GB, about 55 GiB free for the build (100 GB, 24.6 GiB free, ran out).
 
 ### Build timelines and runner debugging
 
@@ -292,7 +295,10 @@ assets are uploaded by hand.
 `ios_device` and `ios_simulator_x86_64` SDKs. The simulator stays on x86_64 because Qt's bundled FFmpeg
 has no arm64 simulator slice. Pull-request and branch builds remain unsigned. A release tag selects the
 Xcode App Store preset, imports an Apple Distribution certificate and provisioning profile, verifies the
-signed bundle, packages an IPA, and uploads it to TestFlight.
+signed bundle, packages an IPA, and uploads it to TestFlight. The job's `APPSTORE_RELEASE` requires every
+variable and secret below except the bundle ID; a tag without them builds the unsigned IPA, skips
+TestFlight with a notice, and does not fail (`ios_package.py package` verifies the signature only when
+`APPSTORE_RELEASE` is `true`).
 
 Configure these repository variables before publishing a tag:
 
@@ -445,7 +451,8 @@ step leaves it out.
 - **apt**: Linux `install-dependencies` caches downloaded `.deb`s per distro, architecture, month,
   and package-list hash (`apt-debs-…`, planned by `install_dependencies_helper.py plan`); a
   `category` install uses its own `apt-debs-<category>-…` family, so it never restores into or
-  replaces the full set's cache. The cache saves only when the job succeeds.
+  replaces the full set's cache. It saves right after a successful install, except in Copilot
+  sessions, which cannot write the cache.
 - **Gradle**: Android jobs cache Gradle User Home through `setup-gradle`'s open-source `basic`
   provider, keyed on the Gradle build files, only on the S3 backend; on GitHub's cache it evicted
   compiler caches (#14474), so GitHub-hosted legs such as Android on macOS don't cache it. Saves
@@ -474,8 +481,8 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
 - Scheduled cleanup removes superseded PR build-cache generations even below the storage threshold,
   keeping the newest run/attempt per PR and matrix cache family. Above the threshold it evicts least
   recently used archives first, so newly populated larger caches survive, while protecting the
-  latest default-branch generation of each build and dependency cache family (including the latest
-  `build-baseline-v2` snapshot), the prek hook environments, and the lychee link cache.
+  latest default-branch generation of each build and dependency cache family, the prek hook
+  environments, and the lychee link cache.
 - Closing a PR removes that PR's merge-ref caches, without a job summary.
 - Manual runs default to a dry-run prune; `dry-run: false` deletes, and `mode: wipe` lists (or
   deletes) every cache of the selected branch, or of all branches.
@@ -504,7 +511,13 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   level from 19 to 9 (about 10x faster for ~2% more resource data) when QtCore supports zstd.
 - **CMake entrypoint**: `cmake-configure` requires `qt-cmake` by default. Android is the exception
   and supplies its target Qt toolchain and prefix to plain CMake. Every caller names a configure
-  preset, which sets the build type and `QGC_BUILD_TESTING`.
+  preset, which sets the build type and `QGC_BUILD_TESTING`. A failed configure annotates its first
+  `CMake Error` and uploads `cmake-configure.log`, `CMakeCache.txt`, and
+  `CMakeFiles/CMakeConfigureLog.yaml` (CMake 4 no longer writes `CMakeOutput.log` or
+  `CMakeError.log`); a failed build annotates its first compiler, linker, or Gradle errors.
+- **Android javac warnings**: `setup-java`'s `javac` problem matcher made each deprecation warning
+  in the Gradle build an annotation; `android.yml` removes it after `build-setup`, and `cmake-build`
+  annotates javac errors itself.
 - **Windows Qt architecture**: aqt architecture names are explicit package identifiers;
   `test_cmake_presets.py` requires every workflow matrix to use the same MSVC generation.
 - **Windows linker**: Debug dispatches of `windows.yml` pass `QGC_USE_LLD_LINK=ON` to link with
@@ -552,10 +565,18 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   legs in `mavlink` repositories or forks that set `MACOS_SIGNING_IDENTITY`; other forks build an
   unsigned DMG instead of failing in `SignMacBundle.cmake`.
   `verify_executable.py --type dmg` mounts the image, verifies the bundle, and always detaches it.
-  On a boot-test timeout it prints the captured output, and its `lipo`/`hdiutil`/AppImage helper
+  On a boot-test timeout it captures the hung process's stacks before killing it and prints them
+  after the captured output, and its `lipo`/`hdiutil`/AppImage helper
   calls time out after 120 s. The boot test forces QGC's log to stderr (a Windows GUI app otherwise
   logs to the debugger) and enables the startup categories with `--logging`, so a slow, hung or
-  crashed boot shows where it stopped; a passing boot folds that log into a collapsed group. On
+  crashed boot shows where it stopped; a passing boot folds that log into a collapsed group. A crash
+  is named by its signal or NTSTATUS (`-11 SIGSEGV`, `0xC0000005 STATUS_ACCESS_VIOLATION`) and the
+  step exits 1: Python 3.10 cannot exit with a status above 2^31 on Windows, and MSYS bash reported
+  the result as 127. On Windows QGC's unhandled-exception filter prints the code, address, and
+  module+RVA to stderr and, with `QGC_CRASH_DUMP_DIR` set, has a thread started at launch write a
+  minidump there (not the crashed thread, which may hold the loader lock or have no stack left),
+  renamed from `.part` only when complete; failure
+  diagnostics are uploaded as described in [`actions/README.md`](actions/README.md#action-notes). On
   Windows a build tree boots with only the GStreamer plugins the package ships (configure records them
   as `QGC_GST_SHIPPED_PLUGINS`; `verify_executable.py` copies them to `boot-test-gstreamer-plugins/`):
   the whole SDK's ~270 plugins took ~40 s to scan and hung or crashed QGC on exit.
@@ -563,17 +584,30 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   requires QGC's success marker. Cold boots have a 600-second deadline and at most two fresh-device
   attempts (`--boot-timeout` 1–900 s, `--boot-attempts` 1–2). Boot and installation failures, and a
   launch that times out before QGC prints anything, are retried on a fresh device; QGC failures are
-  not. Install and launch each have a 600-second deadline (`--timeout`). A shutdown/delete failure
+  not. Install and launch each have a 600-second deadline (`--timeout`), and every attempt's
+  simulator commands share a 1500-second budget (`--total-timeout`) that ends them before the step's
+  30-minute timeout. A shutdown/delete failure
   after a passing test is reported as a warning and does not fail the job; after a failed attempt it
-  prevents the retry. Each attempt keeps command output, and simulator state is collected before
-  failed-boot cleanup.
+  prevents the retry. Each attempt keeps command output; a failed attempt in any phase saves the
+  simulator state, the last 10 minutes of the simulator's and CoreSimulator's logs, and QGC's new
+  crash reports beside the log before cleanup. A failure ends in an error annotation naming the
+  phase and attempt; every run writes a Boot test summary section, and the `ios-boot-test` artifact
+  is linked below it.
 - **Windows**: installer verification lives in `deploy/windows/verify-installer.ps1`.
 - **Android**: legs are Linux (primary), macOS, Windows (not on PRs), and a Linux emulator smoke
   test. PRs build `arm64-v8a` only; other events build `arm64-v8a` + `armeabi-v7a` on the primary
-  leg. Android jobs install only the `core` apt category. Master pushes also build a signed
-  multi-ABI App Bundle on the primary leg (`--target aab`), uploaded as its own attested GitHub
-  artifact (`QGroundControl-linux-<abis>-aab`) but not to AWS or the Play Store. Tags start a
-  staged Play Store production rollout; master pushes complete a beta release.
+  leg. Android jobs install only the `core` apt category. The Linux leg runs Android Lint
+  (`android_lint.py`, `gradlew lintRelease` in `android-build`): up to ten Error and Fatal issues
+  from lint's XML report become error annotations titled with the issue id, at the `android/`
+  source that androiddeployqt copied (`QGC_ANDROID_PACKAGE_SOURCE_DIR`; a copy that differs, like
+  the rewritten `AndroidManifest.xml`, keeps the file but not the line), or Gradle's errors when
+  lint wrote no report; an Android Lint job-summary section follows the Build section, and a
+  failure uploads the HTML and XML reports and the Gradle log for seven days, linked below it.
+  Master pushes also build a signed multi-ABI App Bundle on the primary leg through `cmake-build`
+  (`target: aab`, logged to `qgc-aab-build.log` with its own "Build (aab)" section and failure
+  annotations; it saves no build caches), uploaded as its own attested GitHub artifact
+  (`QGroundControl-linux-<abis>-aab`) but not to AWS or the Play Store. Tags start a staged Play
+  Store production rollout; master pushes complete a beta release.
 - **Custom plugin** (`linux.yml`'s `custom-plugin` job, behind the Linux gate): the `custom-example`
   overlay changes the app name and feature set, global compile definitions, so it is its own build:
   one Debug build that runs the Unit suite (excluding `StockUI`) and boots the build tree; the stock
@@ -681,11 +715,13 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   compiler-driver failures fail the job (`shell: bash` adds pipefail, so the log's `tee` keeps
   `analyze.py`'s status; `test_workflow_shells.py` requires it for every `| tee` step). Manual
   IWYU runs are advisory (`continue-on-error`); their uploaded report is the result.
+  Each tool's job-summary section counts the unique errors and lists the first 20 ahead of its
+  diagnostics listing (cut at 300 lines), and the first 10 errors are annotated on their lines.
   `misc-include-cleaner` is an advisory clang-tidy warning; it leaves
   Qt, MAVLink, GStreamer/GLib, and Qt-generated includes alone (`IgnoreHeaders` in `.clang-tidy`),
   because it would suggest their internal headers. Jobs upload `*-timings.json`,
   `*-progress.jsonl`, `*-diagnostics.json` (each unique diagnostic's file, line, column,
-  severity, and check), and `*-raw.txt` (every unit's full output; identical diagnostic blocks are
+  severity, and check, and on pull requests those on changed lines), and `*-raw.txt` (every unit's full output; identical diagnostic blocks are
   shown once in the log).
   Per-check profiling (`profile_checks` dispatch input) is described in
   [`tools/analyzers/README.md`](../tools/analyzers/README.md).
@@ -704,57 +740,120 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   artifacts go to `builds/<ref>/` (the runner's ref), and release tags also go to `latest/` with
   one CloudFront invalidation. Credentials come only from the environment.
 
+### GitHub Pages site
+
+`pages.yml` builds and deploys <https://mavlink.github.io/qgroundcontrol/> with
+`tools/ci/publish/pages_site.py build --out _site`. Each deploy replaces the whole site, so every
+build regenerates all four parts:
+
+- **CI health dashboard** (`index.html`): each workflow's latest 60 master push runs as inline SVG
+  charts (no scripts or external assets), every chart followed by a table of its latest values:
+  wall time and Build-step durations (jobs API), distributable artifact sizes, JUnit test counts,
+  failures and time per suite, `src/` line coverage (`coverage-summary.json`, as in the
+  build-results comment), and Code Analysis's unique warnings per tool (`*-diagnostics.json`), plus
+  the tests that failed on master in the last 30 days with their failed and total runs. Each
+  chart column and table row links its run.
+- **History**: `data/history.json` is versioned JSON with one record per (commit, workflow), read
+  back from the live site on every build, so there is no data branch and the workflow never writes
+  to the repository. Each build collects the last 10 completed master push runs of every platform
+  workflow and Code Analysis that it lacks (or holds an earlier attempt of), newest first; records
+  are dropped only past 1,000 commits or 365 days. Collection stops after 15 minutes and gives up
+  on an artifact after two stalled 120-second attempts, so a slow artifact store skips runs, which
+  the next build collects while they remain among the latest 10, instead of cancelling the
+  30-minute build job; the site still deploys with every stored record. A history fetch error
+  fails the build rather than deploy a truncated history. So does HTTP 404 once a `pages.yml` run
+  has succeeded, since every successful run deployed the site and a Pages outage or unpublish
+  also answers 404; only before the first deploy does the history start empty and backfill the
+  last 30 runs per workflow whose artifacts remain. To start over after losing the deployed
+  history, dispatch `pages.yml` with `new_history`. Artifacts are read from their zip archives,
+  extracting only the reports needed.
+- **Schemas** (`schemas/`): `src/FactSystem/factmetadata.schema.json`, whose `$id` must be its
+  URL there (the build and `test_pages_site.py` check it), with an index page.
+- **Downloads** (`downloads/`): the packages in `qgc_tools/build_artifacts.py`'s
+  `PUBLISHED_BUILDS` under S3 `builds/master/` (`test_published_builds.py` keeps the list in
+  sync with the workflows' `attest-and-upload` steps and the user guide), with the SHA-256 from
+  each `.sha256` sidecar ("—" when missing) and the commit and run named by the package's
+  provenance attestation, looked up by digest, plus `gh attestation verify` instructions.
+- **API docs** (`api/`): the `doxygen_build` artifact of the latest successful non-PR Doxygen run
+  on master, else (or when its download stalls past two 150-second attempts) a page linking
+  <https://api.qgroundcontrol.com>. The Doxygen workflow still deploys that domain; moving it to
+  the Pages site is a later admin step.
+
+It runs on `workflow_run` completion of the platform workflows, Code Analysis, and Doxygen on
+`master`, on master pushes that change the schema or the site tooling, daily, and on dispatch;
+never on pull requests, whose artifacts must not reach the site (CI Scripts tests the tooling).
+The build job runs only in `mavlink/qgroundcontrol` and, for `workflow_run`, only for a master
+push run of this repository (Doxygen's scheduled or manual runs for Doxygen); it checks out the
+default branch's tooling with `contents: read` and `actions: read`. The deploy job alone has
+`pages: write` and `id-token: write`, in the `github-pages` environment. One `pages` concurrency
+group serializes deploys without cancelling them. Pages must be enabled with source "GitHub
+Actions" (Settings → Pages) before the first deploy.
+
 ### Build results
 
-- `build-results.yml` runs on `workflow_run` completion of Linux, Windows, MacOS, Android, iOS,
-  and pre-commit (GitHub runs only the default-branch copy; `test_platform_workflow_names.py` keeps the
-  list in sync with `build.platform_workflows`). One `report_context.py` lookup resolves the PR
-  number and base SHA (pull_request builds only) and whether a successful `master` push saves
-  baselines, and the PR head (or `master`) is rechecked before posting or saving.
+- `build-results.yml` runs on `workflow_run` completion of every workflow with a `pull_request`
+  trigger: the platform workflows, pre-commit, Code Analysis, and the other checks (GitHub runs
+  only the default-branch copy; `test_platform_workflow_names.py` keeps the list in sync with the
+  workflow files and `build.platform_workflows`), and only for pull request builds. One
+  `report_context.py` lookup resolves the PR number and the base commit the comparisons use:
+  the base branch's tip when the triggering run was created
+  (`commits?sha=<base ref>&until=<created_at>`), approximating the commit GitHub merged the PR
+  head into for the build (a re-run builds the same merge and keeps `created_at`).
+  `pull_request.base.sha` can be weeks older, since pushes to the PR need not update it, and
+  would credit every later base-branch commit to the PR; it is used only when the lookup fails or
+  finds nothing, which the step logs.
 - The reporting scripts take the repository, commit, and event from the `workflow_run` payload
   (`workflow_runs.triggering_run()`), the platform workflows from `build.platform_workflows` in the
   sparse-checked-out `build-config.json` (failing when it is missing), and the run snapshot that
   `collect_build_status.py` saves in `$RUNNER_TEMP/workflow-runs-cache.json`; the comment
   generator reads each input from the path the earlier steps write (`INPUT_PATHS`). Steps pass only
   their own flags, and `test_build_results_workflow.py` replays them under fake payloads.
-- Every trigger updates one `build-results`-tagged comment (fork PRs included), so finished
-  workflows and their failures show while others still run; the last one to complete renders the
-  final state. `collect_build_status.py` (stdlib only, before Python dependencies install) writes
-  each workflow's state, duration, and jobs, with failed-step log links, from one jobs-API call per
-  run (`--status-out`), including Code Analysis, which is not a trigger. A failed job on a RunsOn
-  runner also has its annotations read: RunsOn fails a job whose Spot instance AWS reclaimed and
-  re-runs the run's failed jobs once it completes (after attempts 1 and 2), so a workflow whose only
-  failed legs were interrupted is `interrupted` rather than `failure`. The job then downloads,
-  with `download_artifacts.py` (one directory per artifact plus a manifest naming its workflow),
-  the completed runs' test results, coverage, and artifact sizes, the pre-commit results, and Code
-  Analysis's per-tool `*-timings.json` and `*-diagnostics.json`; runs still in progress are
-  skipped. Missing diagnostic artifacts are allowed (`--allow-missing`) when tests did not run, but
-  platform download failures fail the job. The comment is also the job summary.
-- The comment (`generate_build_results_comment.py`) leads with a verdict (✅ passed, ❌ failed,
-  🔁 retrying after a Spot interruption, ⏳ in progress, 🚫 cancelled, ⏭️ nothing to build), the
-  linked head commit, and how many platform workflows are done, pending, retrying, or skipped by
-  change detection (every build job skipped).
-  A table gives each workflow's status, duration, test or hook counts, artifact size with its
-  change from the PR base, and run link. A Failures section follows when anything failed: each
-  failed job with links to its failing steps' logs, failed tests with their first report lines
-  (QtTest `FAIL!` blocks, sanitizer reports, else the output tail) from the JUnit XML, and failed
-  pre-commit hooks; a Spot interruptions section lists the jobs RunsOn will re-run. Collapsed
-  sections cover per-suite test results, the slowest tests, coverage
-  (lines, functions, branches, with changes in percentage points), artifact sizes (⚠️ above 1%
-  and 1 MiB growth), pre-commit counts, and Code Analysis unique warnings (a header's warning
-  counts once however many units and shards include it) with the most frequent checks and the files
-  with the most warnings. Lists are truncated
-  with "…and N more", and longer reports shrink to stay under GitHub's comment limit. Names from
-  pull requests (tests, jobs, hooks, artifacts) are escaped or shown as code.
-- For `master`, once every platform workflow succeeded, `save-baselines` saves an immutable
-  baseline (sizes and coverage) keyed by commit and run; the job runs only standard-library scripts
-  and installs no Python dependencies. It downloads only the coverage report, and
-  `--require-sizes` fails without writing sizes when no distributable artifact exists, so an empty
-  baseline is never published. PRs prefer the exact base snapshot before the most recent
-  baseline; size deltas accept only the exact PR base, even when coverage restores an older one
-  (the comment names the baseline commit and says when none exists yet). Android artifact names
-  include their ABIs, so single-ABI PR APKs are not compared with multi-ABI release APKs; unmatched
-  variants show `—` for their change and don't count toward totals.
+- Every trigger updates one comment (fork PRs included), so finished workflows and their failures
+  show while others still run; the last one to complete renders the final state.
+  `collect_build_status.py` (stdlib only, before Python dependencies install) writes each
+  workflow's state, latest attempt's duration, attempt number, and wall time since the run was
+  created, and its jobs with failed-step log links, from one jobs-API call per run
+  (`--status-out`). A failed job whose runner was lost (a step left unfinished, or GitHub's "lost
+  communication with the server" annotation, read only for a failed job without a failed step)
+  names that step and its start and end. Every other workflow of the commit (CI Scripts, Docker,
+  CodeQL, ...) is listed with its state, and its jobs only when it failed; each one's completion
+  also triggers the comment, so a late failure still reaches the verdict.
+- `download_artifacts.py` (one directory per artifact, plus a manifest naming its workflow and
+  whether it downloaded) fetches the completed runs' test results, coverage, and distributable
+  artifact listings (size, id, expiry), the pre-commit results, and Code Analysis's per-tool
+  `*-timings.json` and `*-diagnostics.json`; runs still in progress are skipped. The same script
+  then fetches the base commit's own `push` builds (`--head-sha "$BASE_SHA" --event push` with an
+  empty `--runs-cache`): their test results, coverage, and artifact listings are what the comment
+  compares with, each platform on its own, so a failed or missing base build only blanks its rows.
+  Every download step continues on error, and the comment names artifacts that failed to download
+  apart from those past retention, which the manifest marks `expired` and the comment notes.
+  The comment is also the job summary.
+- The comment (`generate_build_results_comment.py`) leads with a verdict (❌ failed, naming every
+  failed workflow including other checks; ⏳ in progress; 🚫 cancelled; ⏭️ nothing to build; ✅
+  passed), the linked head commit, how many platform workflows are done, pending, or skipped by
+  change detection (every build job skipped), and how many other checks still run. A table gives
+  each workflow's status, duration (with the attempt and total wall time after a re-run), test or
+  hook counts, size change from the base, and run link; Code Analysis shows its warnings on lines
+  the pull request changed. Lines follow for the other checks (problems linked first) and for the
+  base commit with each platform's base run. A Failures section lists each failed job with links
+  to its failing steps' logs (or the step its runner was lost during), failed tests with their
+  first report lines (QtTest `FAIL!` blocks, sanitizer reports, else the output tail) from the
+  JUnit XML, failed pre-commit hooks, and failed other checks. Collapsed sections cover per-suite
+  test results with the tests each suite added or removed versus the base build; `src/` line,
+  function, and branch coverage with changes in percentage points (test code is left out, as on
+  Codecov, which the section links for the changed lines' coverage); artifact downloads with their
+  size change (B, KB, or MB; ⚠️ above 1% and 1 MiB growth) and expiry; pre-commit counts when a
+  hook failed; and Code Analysis's warnings on changed lines (`changed` in each
+  `*-diagnostics.json`), linked at the commit the analysis checked out (`commit`, GitHub's merge
+  commit on a pull request, whose line numbers can differ from the head's; the head commit for
+  reports without one), with every unique warning counted only in a per-tool table. Lists are
+  truncated with "…and N more", and longer reports shrink to stay under GitHub's comment limit.
+  Names from pull requests (tests, jobs, hooks, artifacts) are escaped or shown as code. Android
+  artifact names include their ABIs, so single-ABI PR APKs are not compared with multi-ABI
+  release APKs; unmatched variants show `—` for their change.
+- `report_context.py --comment comment.md` rechecks that the PR head is still the build's commit,
+  then creates or updates the PR's comment marked `<!-- build-results -->` (or the marker of the
+  comments `thollander/actions-comment-pull-request` posted before) through `gh api`.
 
 ### Job summaries
 
@@ -764,11 +863,14 @@ numbers, durations, and sizes from `common.format`. A build job reads top-down:
 
 | Section | Written by |
 | --- | --- |
-| Setup | `build-setup` (`setup_summary.py`): runner, Qt version, installer and source, CMake and Ninja, Python groups, cache backend, and each build cache's restore result |
-| Build | `cmake-build` (`cmake_helper.py build`, also after failures): result, duration, toolchain, compiler (ccache or sccache) and moc cache hit rates; slowest steps, time by kind, and moc cache events collapsed |
-| Unit Tests / Integration Tests (*suite*) | `run-unit-tests` (`junit_report.py`): counts, failures with their first lines, slowest tests and failure output collapsed |
+| Setup | `build-setup` (`setup_summary.py`, also after a failed setup step, which it names): runner, image (RunsOn image and AMI, or the hosted `ImageOS` and `ImageVersion`), RunsOn instance type, lifecycle, zone and ID, CPUs and RAM, Qt version, installer and source, CMake and Ninja, compiler, Xcode, JDK, Android NDK, Python groups, cache backend, and each build cache's restore result with ccache's primary key, and the key a fallback (restore-keys) hit came from |
+| Configure | `cmake-configure` (`cmake_helper.py configure`, also after failures): result, duration, preset, generator, configure-check reuse; after a failure the first CMake error and the end of the output collapsed, and a link to the configure logs |
+| Build | `cmake-build` (`cmake_helper.py build`, also after failures): result, duration, toolchain, this build's compiler (ccache or sccache) and moc cache hit rates; failed targets and first errors, slowest steps, time by kind, and moc cache events collapsed; a link to the Ninja reports |
+| Android Lint | `android_lint.py` on Android's Linux leg (also after failures): result, duration, error and warning counts; the first errors collapsed; after a failure a link to the lint reports |
+| Unit Tests / Integration Tests (*suite*) | `run-unit-tests` (`junit_report.py`): counts, failures with their first lines, slowest tests and failure output collapsed; a link to the results artifact |
 | Coverage, Binary size | `coverage_report.py --step-summary`, `size_analysis.py` |
-| Boot test, Artifact | `verify_executable.py` (result, package, size, duration) and `attest_helper.py prepare` (file, size, SHA-256) |
+| Boot test, Artifact | `verify_executable.py` (result with the crash's signal or NTSTATUS name, package, size, duration; after a failure the last log line, the last 40 lines collapsed, and a link to the diagnostics artifact) or, for the iOS simulator, `ios_boot_test.py` (result with the failing phase and attempt, simulator, attempts, duration, and the end of the boot log); and `attest_helper.py prepare` (file, size, SHA-256) |
+| Disk | `disk-watch`'s post step, at the end of every `build-setup` and Docker job: the workspace volume's size and its start, peak (with free space and time), and end use, sampled every 10 s; a peak whose free space is below 10% of the volume, kept between 5 and 10 GiB, gets ⚠️ and a "Disk nearly full" warning annotation |
 
 Docker builds write one Docker build section (`docker_helper.py summary`); pre-commit,
 Code Analysis (`analyze.py --step-summary`), cache cleanup, GStreamer, release-notes, and Build

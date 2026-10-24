@@ -46,12 +46,14 @@ jobs:
       - name: Build Doxygen docs
         run: doxygen tools/configs/Doxyfile
 
+      # The Pages workflow publishes the latest master run's docs under /api/; outliving the weekly
+      # schedule by a day keeps one available until the next run uploads its own.
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
           name: doxygen_build
           path: docs/api/html/
-          retention-days: 1
+          retention-days: ${{ github.event_name == 'pull_request' && '1' || '8' }}
 
   deploy:
     if: github.repository_owner == 'mavlink' && github.event_name != 'pull_request'

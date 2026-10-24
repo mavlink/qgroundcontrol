@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ast
+import shlex
 import subprocess
 import sys
 import textwrap
@@ -32,7 +33,7 @@ def _spawn_bootstrap(env: dict[str, str], body: str) -> subprocess.CompletedProc
 
 
 class TestDebugConfigure:
-    """`_configure_debug()` runs at import time when QGC_CI_DEBUG or RUNNER_DEBUG is set."""
+    """`_configure_debug()` runs at import time: GHA annotations, plus debug hooks when enabled."""
 
     BOOTSTRAP_IMPORT = "import sys; sys.path.insert(0, 'tools'); import _bootstrap"
 
@@ -149,6 +150,88 @@ class TestDebugConfigure:
         )
         assert result.returncode == 0, result.stderr
         assert "::error::unraisable: ValueError: a%25b%0Ac" in result.stderr.splitlines()
+
+    def test_gha_annotates_uncaught_exceptions_without_debug_logging(self):
+        result = _spawn_bootstrap(
+            env={"PATH": "", "GITHUB_ACTIONS": "true"},
+            body=f"""
+            {self.BOOTSTRAP_IMPORT}
+            import faulthandler
+            print('enabled' if faulthandler.is_enabled() else 'disabled')
+            class Noisy:
+                def __del__(self):
+                    raise ValueError('ignored')
+            Noisy()
+            raise RuntimeError('boom')
+            """,
+        )
+        assert result.stdout.strip() == "disabled"
+        assert "::error::RuntimeError: boom" in result.stderr.splitlines()
+        assert "::error::unraisable" not in result.stderr
+
+    def test_failed_command_annotation_quotes_the_end_of_its_stderr(self):
+        script = "import sys; [print(n, file=sys.stderr) for n in range(15)]; exit(3)"
+        result = _spawn_bootstrap(
+            env={"PATH": "", "GITHUB_ACTIONS": "true"},
+            body=f"""
+            {self.BOOTSTRAP_IMPORT}
+            import subprocess
+            subprocess.run([sys.executable, '-c', {script!r}], capture_output=True, check=True)
+            """,
+        )
+        (annotation,) = [line for line in result.stderr.splitlines() if line.startswith("::error")]
+        assert annotation.split("%0A") == [
+            "::error::CalledProcessError: Command failed with exit status 3: "
+            + shlex.join([sys.executable, "-c", script]),
+            "stderr (last 10 lines):",
+            *(f"  {n}" for n in range(5, 15)),
+        ]
+
+    def test_failed_command_annotation_falls_back_to_stdout_and_hides_credentials(self):
+        result = _spawn_bootstrap(
+            env={"PATH": "", "GITHUB_ACTIONS": "true"},
+            body=f"""
+            {self.BOOTSTRAP_IMPORT}
+            import subprocess
+            raise subprocess.CalledProcessError(
+                128,
+                ['git', 'clone', 'https://x-access-token:ghs_secret@github.com/o/r.git'],
+                output=b"fatal: Authorization: Bearer ghs_secret rejected\\n",
+                stderr=b"",
+            )
+            """,
+        )
+        (annotation,) = [line for line in result.stderr.splitlines() if line.startswith("::error")]
+        assert annotation.split("%0A") == [
+            "::error::CalledProcessError: Command failed with exit status 128: "
+            "git clone https://***@github.com/o/r.git",
+            "stdout (last 1 lines):",
+            "  fatal: Authorization: Bearer *** rejected",
+        ]
+
+    @pytest.mark.parametrize(("gha", "exit_code"), [("true", 0), ("", 1)])
+    def test_gha_stdout_escapes_what_a_windows_code_page_cannot_encode(self, gha, exit_code):
+        result = _spawn_bootstrap(
+            env={"PATH": "", "GITHUB_ACTIONS": gha, "PYTHONIOENCODING": "cp1252"},
+            body=f"""
+            {self.BOOTSTRAP_IMPORT}
+            print('\\u2713 linked')
+            """,
+        )
+        assert result.returncode == exit_code
+        assert result.stdout == ("\\u2713 linked\n" if gha else "")
+
+    def test_cancellation_is_not_annotated(self):
+        result = _spawn_bootstrap(
+            env={"PATH": "", "GITHUB_ACTIONS": "true"},
+            body=f"""
+            {self.BOOTSTRAP_IMPORT}
+            raise KeyboardInterrupt
+            """,
+        )
+        assert result.returncode != 0
+        assert "::error" not in result.stderr
+        assert "KeyboardInterrupt" in result.stderr
 
 
 def _tools_sources() -> list[Path]:

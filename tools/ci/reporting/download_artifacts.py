@@ -5,9 +5,10 @@ Uses the GitHub CLI (gh) to query the GitHub API and, for a given commit SHA,
 download the artifacts whose names match the given prefixes from each platform
 workflow's newest successful run that has any (any completed run with
 --include-failed). Each artifact lands in its own <output-dir>/<name>/ directory,
-and <output-dir>/download-manifest.json maps it to its workflow and run. With
---sizes-out, it also records the distributable artifact sizes of each workflow's
-latest successful run, reusing the artifact listings it fetched.
+and <output-dir>/download-manifest.json maps it to its workflow and run and records
+whether it downloaded. With --sizes-out, it also records each workflow's latest run
+and the distributable artifacts (size, id, and expiry) of its latest successful run
+(latest completed run with --include-failed), reusing the artifact listings it fetched.
 
 The repository, head SHA, and event default to GITHUB_REPOSITORY and the triggering
 workflow_run, the workflows to build-config.json's platform workflows, and the runs to
@@ -35,6 +36,7 @@ import _bootstrap as _bootstrap
 from common.format import format_bytes
 from common.gh_actions import gh, list_run_artifacts, list_workflow_runs_for_sha
 from common.io import read_json, write_json
+from qgc_tools.build_artifacts import is_distributable_artifact
 
 from ci.reporting.workflow_runs import (
     add_workflow_run_query_args,
@@ -42,21 +44,6 @@ from ci.reporting.workflow_runs import (
     resolve_workflow_runs,
     select_latest_runs_by_name,
 )
-
-_DISTRIBUTABLE_PREFIXES = (
-    "QGroundControl",
-    "Custom-QGroundControl",
-    "qgc-binary",
-)
-
-_EXCLUDED_PREFIXES = (
-    "test-results",
-    "emulator-diagnostics",
-)
-
-_EXCLUDED_EXACT_NAMES = {
-    "coverage-report",
-}
 
 MANIFEST_NAME = "download-manifest.json"
 
@@ -82,22 +69,18 @@ def select_latest_successful_runs(
     )
 
 
-def select_artifact_names(artifacts: list[dict[str, Any]], prefixes: list[str]) -> list[str]:
-    """Return artifact names from a run that match configured name prefixes."""
+def select_artifact_names(
+    artifacts: list[dict[str, Any]], prefixes: list[str], *, expired: bool = False
+) -> list[str]:
+    """Return a run's artifact names that match the name prefixes, live or (``expired``) expired."""
     names: set[str] = set()
     for artifact in artifacts:
         artifact_name = str(artifact.get("name", ""))
+        if bool(artifact.get("expired")) != expired:
+            continue
         if any(artifact_name.startswith(prefix) for prefix in prefixes):
             names.add(artifact_name)
     return sorted(names)
-
-
-def _is_distributable_artifact(name: str) -> bool:
-    if name in _EXCLUDED_EXACT_NAMES:
-        return False
-    if any(name.startswith(prefix) for prefix in _EXCLUDED_PREFIXES):
-        return False
-    return any(name.startswith(prefix) for prefix in _DISTRIBUTABLE_PREFIXES)
 
 
 def collect_artifact_sizes(
@@ -107,20 +90,26 @@ def collect_artifact_sizes(
     *,
     event: str = "",
     listed: dict[int, list[dict[str, Any]]] | None = None,
+    include_failed: bool = False,
 ) -> list[dict[str, Any]]:
-    """Return distributable artifact sizes from each workflow's latest successful run.
+    """Return the distributable artifacts of each workflow's latest successful run.
 
-    Uses the artifact listings in ``listed`` and asks the API for any other run.
-    When several workflows upload an artifact with the same name (e.g. Android and
-    macOS both upload "QGroundControl"), the largest is kept to avoid misleading
-    size deltas.
+    With *include_failed*, the latest completed run counts too: a failed run's uploaded
+    artifacts are still complete. Uses the artifact listings in ``listed`` and asks the API
+    for any other run. When several workflows upload an artifact with the same name, the
+    largest is kept to avoid misleading size deltas.
     """
     listed = listed or {}
-    run_ids = [
-        run_id
-        for run in select_latest_successful_runs(runs, workflows, event=event)
-        if (run_id := int(run.get("id", 0))) > 0
-    ]
+    selected = list(
+        select_latest_runs_by_name(
+            runs,
+            set(workflows),
+            event=event,
+            status="completed",
+            conclusion="" if include_failed else "success",
+        ).values()
+    )
+    run_ids = [run_id for run in selected if (run_id := int(run.get("id", 0))) > 0]
     unlisted = [run_id for run_id in run_ids if run_id not in listed]
     fetched: dict[int, list[dict[str, Any]]] = {}
     if unlisted:
@@ -138,15 +127,12 @@ def collect_artifact_sizes(
                         file=sys.stderr,
                     )
 
-    workflow_of = {
-        int(run.get("id", 0)): str(run.get("name", ""))
-        for run in select_latest_successful_runs(runs, workflows, event=event)
-    }
+    workflow_of = {int(run.get("id", 0)): str(run.get("name", "")) for run in selected}
     sizes: dict[str, dict[str, Any]] = {}
     for run_id in run_ids:
         for artifact in listed.get(run_id, fetched.get(run_id, [])):
             name = str(artifact.get("name", ""))
-            if not _is_distributable_artifact(name):
+            if not is_distributable_artifact(name):
                 continue
             size_bytes = int(artifact.get("size_in_bytes", 0))
             if name not in sizes or size_bytes > sizes[name]["size_bytes"]:
@@ -155,8 +141,30 @@ def collect_artifact_sizes(
                     "size_bytes": size_bytes,
                     "size_human": format_bytes(size_bytes),
                     "workflow": workflow_of.get(run_id, ""),
+                    "run_id": run_id,
+                    "artifact_id": int(artifact.get("id") or 0),
+                    "expires_at": str(artifact.get("expires_at") or ""),
                 }
     return sorted(sizes.values(), key=lambda item: str(item["name"]))
+
+
+def describe_latest_runs(
+    runs: list[dict[str, Any]], workflows: list[str], *, event: str = ""
+) -> list[dict[str, Any]]:
+    """Return each workflow's latest run, in any state, so reports can name what they compared."""
+    latest = select_latest_runs_by_name(runs, set(workflows), event=event)
+    return [
+        {
+            "workflow": name,
+            "run_id": int(run.get("id") or 0),
+            "run_number": run.get("run_number"),
+            "status": str(run.get("status") or ""),
+            "conclusion": str(run.get("conclusion") or ""),
+            "url": str(run.get("html_url") or ""),
+        }
+        for name in workflows
+        if (run := latest.get(name))
+    ]
 
 
 # A run's artifacts can total several GB; bound the download so a stalled transfer can't hold the job.
@@ -247,17 +255,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--sizes-out",
         type=Path,
         default=None,
-        help="Write distributable artifact sizes of each latest successful run to this JSON file",
-    )
-    parser.add_argument(
-        "--require-sizes",
-        action="store_true",
-        help="Fail and remove --sizes-out when no distributable artifact is found",
+        help="Write each workflow's latest run and its distributable artifacts to this JSON file",
     )
     parser.add_argument(
         "--include-failed",
         action="store_true",
-        help="Download diagnostics from failed completed builds too",
+        help="Download diagnostics, and record artifacts, from failed completed builds too",
     )
     parser.add_argument(
         "--allow-missing",
@@ -283,9 +286,6 @@ def main(argv: list[str] | None = None) -> int:
     if not artifact_prefixes:
         print("Error: --artifact-prefixes needs at least one prefix", file=sys.stderr)
         return 1
-    if args.require_sizes and args.sizes_out is None:
-        print("Error: --require-sizes requires --sizes-out", file=sys.stderr)
-        return 1
 
     print(f"Finding completed workflow runs for commit {head_sha}...")
 
@@ -296,6 +296,8 @@ def main(argv: list[str] | None = None) -> int:
     had_successful_runs = bool(select_latest_successful_runs(all_runs, workflows, event=event))
     runs: list[dict[str, Any]] = []
     run_artifact_names: dict[int, list[str]] = {}
+    # Matching artifacts past retention, recorded so the report doesn't call them failed downloads.
+    expired_entries: list[dict[str, Any]] = []
     grouped_runs = group_runs_by_name(
         all_runs,
         workflows,
@@ -304,6 +306,8 @@ def main(argv: list[str] | None = None) -> int:
         conclusion="" if args.include_failed else "success",
     )
     for workflow_name in workflows:
+        expired: list[str] = []
+        expired_run_id = 0
         for candidate in grouped_runs.get(workflow_name, []):
             run_id = int(candidate["id"])
             artifacts = list_run_artifacts(repo, run_id)
@@ -313,16 +317,42 @@ def main(argv: list[str] | None = None) -> int:
                 runs.append(candidate)
                 run_artifact_names[run_id] = names
                 break
+            if not expired:
+                expired = select_artifact_names(artifacts, artifact_prefixes, expired=True)
+                expired_run_id = run_id
+        else:
+            expired_entries.extend(
+                {
+                    "name": name,
+                    "workflow": workflow_name,
+                    "run_id": expired_run_id,
+                    "downloaded": False,
+                    "expired": True,
+                }
+                for name in expired
+            )
+    if expired_entries:
+        print(f"Skipping {len(expired_entries)} expired artifact(s)")
+        output_dir.mkdir(parents=True, exist_ok=True)
+        write_manifest(output_dir, expired_entries)
 
     if args.sizes_out is not None:
         sizes = collect_artifact_sizes(
-            repo, all_runs, workflows, event=event, listed=preloaded_artifacts
+            repo,
+            all_runs,
+            workflows,
+            event=event,
+            listed=preloaded_artifacts,
+            include_failed=args.include_failed,
         )
-        if not sizes and args.require_sizes:
-            args.sizes_out.unlink(missing_ok=True)
-            print("Error: no distributable artifacts to record sizes for", file=sys.stderr)
-            return 1
-        write_json(args.sizes_out, {"head_sha": head_sha, "artifacts": sizes})
+        write_json(
+            args.sizes_out,
+            {
+                "head_sha": head_sha,
+                "runs": describe_latest_runs(all_runs, workflows, event=event),
+                "artifacts": sizes,
+            },
+        )
         print(f"Wrote {len(sizes)} artifact size(s) to {args.sizes_out}")
 
     if not runs:
@@ -374,16 +404,23 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"  Failed: {name}")
                 failed += 1
     entries = [
-        {"name": artifact, "workflow": str(run["name"]), "run_id": int(run["id"])}
+        {
+            "name": artifact,
+            "workflow": str(run["name"]),
+            "run_id": int(run["id"]),
+            "downloaded": (output_dir / artifact).is_dir(),
+        }
         for run in runs
         for artifact in run_artifact_names[int(run["id"])]
-        if (output_dir / artifact).is_dir()
     ]
     write_manifest(output_dir, entries)
 
     # Earlier invocations may share output_dir; count only this one's artifact directories.
     files = [
-        path for entry in entries for path in list_downloaded_files(output_dir / entry["name"])
+        path
+        for entry in entries
+        if entry["downloaded"]
+        for path in list_downloaded_files(output_dir / entry["name"])
     ]
     if not files:
         print("No artifact files found after download")

@@ -25,7 +25,9 @@ on:
       - 'src/AppSettings/pages/**'
       - 'src/**/*.VehicleConfig.json'
       - 'src/Vehicle/FactGroups/VehicleGPSFactGroup.h'
+      - 'src/FactSystem/factmetadata.schema.json'
       - 'docs/.vitepress/config.mjs'
+      - 'docs/en/qgc-user-guide/getting_started/download_and_install.md'
   push:
     branches:
       - master
@@ -77,11 +79,13 @@ jobs:
             CMakePresets.json
             cmake
             docs/.vitepress/config.mjs
+            docs/en/qgc-user-guide/getting_started/download_and_install.md
             justfile
             src/AppSettings/pages
             src/Settings
             src/**/*.VehicleConfig.json
             src/Vehicle/FactGroups/VehicleGPSFactGroup.h
+            src/FactSystem/factmetadata.schema.json
             tools
             deploy
           sparse-checkout-cone-mode: false

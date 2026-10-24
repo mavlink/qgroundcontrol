@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from common.build_config import load_build_config, lookup_dotted
+from common.gh_actions import parse_github_timestamp
 from common.io import read_json
 
 if TYPE_CHECKING:
@@ -89,24 +90,6 @@ class WorkflowRun:
             and (not status or self.status == status)
             and (not conclusion or self.conclusion == conclusion)
         )
-
-
-def evaluate_runs(
-    latest: dict[str, dict[str, Any]], platforms: list[str], *, require_success: bool = True
-) -> tuple[bool, list[str], list[str], list[str]]:
-    """Classify each platform by its latest run (from ``select_latest_runs_by_name``)."""
-    missing = [name for name in platforms if name not in latest]
-    incomplete = [
-        name for name in platforms if name in latest and latest[name].get("status") != "completed"
-    ]
-    failed = [
-        name
-        for name in platforms
-        if name in latest
-        and latest[name].get("status") == "completed"
-        and latest[name].get("conclusion") != "success"
-    ]
-    return not (missing or incomplete or (require_success and failed)), missing, incomplete, failed
 
 
 class WorkflowRunsFileError(ValueError):
@@ -197,30 +180,12 @@ def resolve_workflow_runs(
         return None
 
 
-def parse_created_at(created_at: Any) -> datetime | None:
-    """Parse GitHub ISO-8601 timestamps into datetimes."""
-    value = str(created_at).strip()
-    if not value:
-        return None
-    if value.endswith("Z"):  # 3.10 fromisoformat rejects the trailing 'Z'
-        value = f"{value[:-1]}+00:00"
-    try:
-        parsed = datetime.fromisoformat(value)
-        return (
-            parsed.replace(tzinfo=timezone.utc)
-            if parsed.tzinfo is None
-            else parsed.astimezone(timezone.utc)
-        )
-    except ValueError:
-        return None
-
-
 def is_newer_run(candidate: dict[str, Any], existing: dict[str, Any]) -> bool:
     """Return True when *candidate* is newer than *existing*."""
     candidate_created_at = str(candidate.get("created_at", ""))
     existing_created_at = str(existing.get("created_at", ""))
-    candidate_dt = parse_created_at(candidate_created_at)
-    existing_dt = parse_created_at(existing_created_at)
+    candidate_dt = parse_github_timestamp(candidate_created_at)
+    existing_dt = parse_github_timestamp(existing_created_at)
     if candidate_dt is not None and existing_dt is not None:
         return candidate_dt > existing_dt
     return candidate_created_at > existing_created_at
@@ -266,8 +231,8 @@ def group_runs_by_name(
     for name in grouped:
         grouped[name].sort(
             key=lambda run: (
-                parse_created_at(run.get("created_at")) is not None,
-                parse_created_at(run.get("created_at"))
+                parse_github_timestamp(run.get("created_at")) is not None,
+                parse_github_timestamp(run.get("created_at"))
                 or datetime.min.replace(tzinfo=timezone.utc),
                 str(run.get("created_at", "")),
             ),

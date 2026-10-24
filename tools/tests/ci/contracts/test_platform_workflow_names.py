@@ -12,8 +12,6 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING
 
-import pytest
-
 from ..._helpers import REPO_ROOT, load_workflow, load_yaml
 
 if TYPE_CHECKING:
@@ -21,9 +19,6 @@ if TYPE_CHECKING:
 
 WORKFLOWS_DIR = REPO_ROOT / ".github" / "workflows"
 BUILD_CONFIG_JSON = REPO_ROOT / ".github" / "build-config.json"
-
-# Non-platform workflows that legitimately trigger build-results.yml.
-EXTRA_TRIGGERS: frozenset[str] = frozenset({"pre-commit"})
 
 PLATFORM_FILES: dict[str, str] = {
     "Linux": "linux.yml",
@@ -36,6 +31,17 @@ PLATFORM_FILES: dict[str, str] = {
 
 def _workflow_name(path: Path) -> str:
     return load_yaml(path).get("name", "")
+
+
+def _pull_request_workflows() -> set[str]:
+    """Display names of every workflow a pull_request event runs; the comment lists them all."""
+    names = set()
+    for path in WORKFLOWS_DIR.glob("*.yml"):
+        doc = load_yaml(path)
+        on = doc.get("on")
+        if (isinstance(on, dict) and "pull_request" in on) or on == "pull_request":
+            names.add(str(doc.get("name", "")))
+    return names
 
 
 def _platform_workflows() -> list[str]:
@@ -62,7 +68,8 @@ def test_workflow_file_name_matches_build_config() -> None:
         )
 
 
-def test_build_results_trigger_matches_build_config() -> None:
+def test_build_results_triggers_on_every_pull_request_workflow() -> None:
+    """A check left out of the trigger list could fail after the final comment and never show."""
     on = load_workflow("build-results.yml").get("on")
     assert isinstance(on, dict), "build-results.yml `on:` is not a mapping"
     workflow_run = on.get("workflow_run")
@@ -71,21 +78,13 @@ def test_build_results_trigger_matches_build_config() -> None:
     assert isinstance(workflows, list), "workflow_run.workflows must be a list"
 
     trigger = {str(w) for w in workflows}
-    platforms = set(_platform_workflows())
-    missing = platforms - trigger
-    extra = trigger - platforms - EXTRA_TRIGGERS
-
-    msg_parts = []
-    if missing:
-        msg_parts.append(
-            f"platform_workflows in build-config.json but not triggering build-results.yml: {sorted(missing)}"
-        )
-    if extra:
-        msg_parts.append(
-            f"workflow_run.workflows entries not in platform_workflows nor EXTRA_TRIGGERS: {sorted(extra)}"
-        )
-    if msg_parts:
-        pytest.fail(" / ".join(msg_parts))
+    expected = _pull_request_workflows()
+    assert set(_platform_workflows()) <= expected
+    assert {"pre-commit", "Code Analysis", "CI Scripts"} <= expected
+    assert sorted(trigger) == sorted(expected), (
+        f"not triggering build-results.yml: {sorted(expected - trigger)}; "
+        f"not a pull_request workflow: {sorted(trigger - expected)}"
+    )
 
 
 def test_build_results_reuses_the_resolved_pr_context() -> None:
@@ -94,8 +93,5 @@ def test_build_results_reuses_the_resolved_pr_context() -> None:
     assert outputs["base_sha"] == "${{ steps.context.outputs.base_sha }}"
     steps = doc["jobs"]["post-pr-comment"]["steps"]
     report = next(step for step in steps if step.get("name") == "Generate combined report")
-    assert report["env"]["BASELINE_SHA"] == "${{ needs.report-context.outputs.base_sha }}"
-    comment = next(step for step in steps if step.get("name") == "Post combined comment")
-    assert comment["with"]["pr-number"] == "${{ needs.report-context.outputs.pr }}"
-    assert comment["with"]["comment-tag"] == "build-results"
-    assert comment["with"]["mode"] == "upsert"
+    assert report["env"]["BASE_SHA"] == "${{ needs.report-context.outputs.base_sha }}"
+    assert report["env"]["PR_NUMBER"] == "${{ needs.report-context.outputs.pr }}"

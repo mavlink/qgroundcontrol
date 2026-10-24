@@ -61,14 +61,54 @@ def _percent(summary: dict[str, Any], key: str) -> float:
     return float(value)
 
 
-def read_gcovr_summary(path: str | PathLike[str]) -> CoverageSummary:
-    """Read the project totals from a gcovr JSON summary report."""
+def _derived_percent(covered: int, total: int) -> float:
+    """gcovr's rounding: one decimal, and 100.0 only when everything is covered."""
+    if not total:
+        return 0.0
+    percent = round(100.0 * covered / total, 1)
+    return 99.9 if percent == 100.0 and covered < total else percent
+
+
+def _files_under(summary: dict[str, Any], prefix: str) -> dict[str, Any]:
+    """Return totals summed over the per-file entries whose filename starts with *prefix*."""
+    files = summary.get("files")
+    if not isinstance(files, list):
+        raise CoverageSummaryError("coverage summary files must be a list")
+    counts = dict.fromkeys(
+        (
+            f"{metric}_{kind}"
+            for metric in ("line", "branch", "function")
+            for kind in ("total", "covered")
+        ),
+        0,
+    )
+    for entry in files:
+        if not isinstance(entry, dict) or not str(entry.get("filename", "")).startswith(prefix):
+            continue
+        for key in counts:
+            counts[key] += _count(entry, key) if key in entry else 0
+    percents = {
+        f"{metric}_percent": _derived_percent(
+            counts[f"{metric}_covered"], counts[f"{metric}_total"]
+        )
+        for metric in ("line", "branch", "function")
+    }
+    return {**counts, **percents}
+
+
+def read_gcovr_summary(path: str | PathLike[str], *, path_prefix: str = "") -> CoverageSummary:
+    """Read the project totals from a gcovr JSON summary report.
+
+    With *path_prefix* (such as ``src/``), sum only the files under it instead.
+    """
     try:
         summary = read_json(Path(path))
     except (OSError, UnicodeDecodeError, ValueError) as exc:
         raise CoverageSummaryError(f"failed to parse {path}: {exc}") from exc
     if not isinstance(summary, dict):
         raise CoverageSummaryError(f"{path} is not a gcovr JSON summary object")
+    if path_prefix:
+        summary = _files_under(summary, path_prefix)
 
     metrics = CoverageSummary(
         line_percent=_percent(summary, "line_percent"),

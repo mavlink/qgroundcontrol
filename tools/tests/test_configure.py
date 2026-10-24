@@ -134,6 +134,28 @@ def test_configure_writes_no_github_output(
     assert gh_output.read_text() == ""
 
 
+def test_configure_log_tees_through_a_python_pipe_into_a_new_build_dir(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    calls: list[tuple[list[str], Path, dict[str, Any]]] = []
+
+    def fake_run_tee(args: list[str], output_file: Path, **kwargs: Any) -> int:
+        assert output_file.parent.is_dir()
+        calls.append((args, output_file, kwargs))
+        return 2
+
+    monkeypatch.setattr(f"{MODULE}.run_tee", fake_run_tee)
+    monkeypatch.setattr(f"{MODULE}.subprocess.run", lambda *_a, **_k: pytest.fail("not teed"))
+    log = tmp_path / "build" / "cmake-configure.log"
+    config = CMakeConfig(source_dir=tmp_path, build_dir=tmp_path / "build", use_qt_cmake=False)
+
+    assert configure(config, log_file=log) == 2
+    ((args, output_file, kwargs),) = calls
+    assert args[:3] == ["cmake", "--preset", "default"]
+    assert output_file == log
+    assert kwargs["bash_pipeline"] is False
+
+
 def test_cli_rejects_raw_unity_flags() -> None:
     # Raw CMAKE_UNITY_BUILD also unity-builds third-party targets; QGC_UNITY_BUILD is the supported switch.
     for flag in ("--unity", "--unity-batch=8"):

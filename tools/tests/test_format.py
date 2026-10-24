@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pytest
 from common.format import (
+    clip,
     format_bytes,
     format_count,
     format_delta_bytes,
@@ -79,3 +80,10 @@ def test_format_percent_and_ratio() -> None:
     assert format_percent(5, digits=2) == "5.00%"
     assert format_ratio(1234, 1300) == "1,234 of 1,300 (94.9%)"
     assert format_ratio(0, 0) == "0 of 0"
+
+
+def test_clip_joins_lines_and_shortens() -> None:
+    assert clip("a\n  b\tc") == "a b c"
+    assert clip("x" * 120) == "x" * 120
+    assert clip("x" * 121) == "x" * 119 + "…"
+    assert clip(12345, limit=3) == "12…"

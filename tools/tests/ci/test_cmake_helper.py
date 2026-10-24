@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import json
+import os
+import re
 import subprocess
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING
 from unittest.mock import patch
@@ -14,13 +17,21 @@ from ci.compile.cmake_helper import (
     PACKAGE_INVENTORIES,
     BuildRun,
     _maybe_wrap_xvfb,
+    configure_checks,
+    counter_delta,
     detect_jobs,
     main,
     system_header_digest,
     write_build_summary,
 )
 
-from .._helpers import REPO_ROOT, get_step, get_steps, load_action
+from .._helpers import REPO_ROOT, get_step, get_steps, load_action, read_github_file
+from ..test_build_errors import (
+    GCC_BUILD,
+    GRADLE_BUILD,
+    VALIJSON_CLONE_CONFIGURE,
+    ZSTD_ASM_CONFIGURE,
+)
 
 if TYPE_CHECKING:
     from qgc_tools.cmake_configure import CMakeConfig
@@ -55,7 +66,9 @@ def _run_configure(
 ) -> CMakeConfig:
     configs: list[CMakeConfig] = []
 
-    def fake_configure(config: CMakeConfig) -> int:
+    def fake_configure(config: CMakeConfig, *, log_file: Path) -> int:
+        assert config.build_dir is not None
+        assert log_file == config.build_dir / "cmake-configure.log"
         configs.append(config)
         return 0
 
@@ -76,8 +89,9 @@ def venv_python(tmp_path: Path) -> Path:
 
 @pytest.fixture(autouse=True)
 def _isolated_build_summary(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    """`build` writes the Build summary; keep it off the checkout's moc cache and host ccache."""
+    """`build` writes the Build summary and its log; keep them off the checkout and host ccache."""
     monkeypatch.setenv("MOCCACHE_DIR", str(tmp_path / "moccache"))
+    monkeypatch.setenv("RUNNER_TEMP", str(tmp_path))
     monkeypatch.setattr("ci.compile.cmake_helper.ccache_stats", lambda: None)
 
 
@@ -260,8 +274,9 @@ def test_configure_warns_without_locked_python(
     assert f"::warning::venv python not found at {missing}" in capsys.readouterr().out
 
 
-def test_configure_propagates_failure(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("ci.compile.cmake_helper.configure", lambda _config: 3)
+def test_configure_propagates_failure(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr("ci.compile.cmake_helper.configure", lambda _config, **_kwargs: 3)
     assert main(["configure", "--preset", "Linux"]) == 3
 
 
@@ -269,16 +284,11 @@ def test_build_reads_action_inputs(monkeypatch: pytest.MonkeyPatch, tmp_path: Pa
     monkeypatch.chdir(tmp_path)
     for name, value in BUILD_INPUTS.items():
         monkeypatch.setenv(name, value)
-    commands: list[list[str]] = []
-
-    def fake_run(command: list[str], **_kwargs: object) -> subprocess.CompletedProcess[list[str]]:
-        commands.append(command)
-        return subprocess.CompletedProcess(command, 0)
-
-    monkeypatch.setattr("ci.compile.cmake_helper.subprocess.run", fake_run)
+    build = _fake_build(monkeypatch, 0)
     assert main(["build"]) == 0
 
-    assert commands == [["cmake", "--build", ".", "--target", "autogen", "--parallel", "3"]]
+    assert build.commands == [["cmake", "--build", ".", "--target", "autogen", "--parallel", "3"]]
+    assert build.logs == [str(tmp_path / "build-output.log")]
 
 
 @pytest.mark.parametrize(
@@ -311,15 +321,9 @@ def test_build_and_ctest_select_a_multi_config_trees_build_type(
     if cache is not None:
         (tmp_path / "CMakeCache.txt").write_text(f"# comment\n{cache}")
     selection = ["--build-type", explicit] if explicit else []
-    commands: list[list[str]] = []
-
-    def fake_run(command: list[str], **_kwargs: object) -> subprocess.CompletedProcess[list[str]]:
-        commands.append(command)
-        return subprocess.CompletedProcess(command, 0)
-
-    monkeypatch.setattr("ci.compile.cmake_helper.subprocess.run", fake_run)
+    fake = _fake_build(monkeypatch, 0)
     assert main(["build", *selection]) == 0
-    (build,) = commands
+    (build,) = fake.commands
 
     ctest = _run_ctest(monkeypatch, *selection)
 
@@ -448,11 +452,11 @@ def test_empty_ctest_selection_fails(tmp_path):
 
 
 @pytest.mark.parametrize("exit_code", [0, 1])
-def test_build_checkpoint_reports_actual_compile_result(monkeypatch, gh_output, exit_code):
-    monkeypatch.setattr(
-        "ci.compile.cmake_helper.subprocess.run",
-        lambda command, **kwargs: subprocess.CompletedProcess(command, exit_code),
-    )
+def test_build_checkpoint_reports_actual_compile_result(
+    monkeypatch, tmp_path, gh_output, exit_code
+):
+    monkeypatch.chdir(tmp_path)
+    _fake_build(monkeypatch, exit_code)
     assert main(["build"]) == exit_code
     assert f"build_success={str(exit_code == 0).lower()}" in gh_output.read_text()
 
@@ -464,11 +468,11 @@ def test_failed_build_still_preserves_current_invocation_timings(monkeypatch, tm
     old = "# ninja log v5\n0\t100\t1\told.o\ta\n"
     log.write_text(old)
 
-    def build(command, **kwargs):
+    def build(command, output_file):
         log.write_text(old + "0\t250\t2\tnew.o\tb\n")
-        return subprocess.CompletedProcess(command, 1)
+        return 1
 
-    monkeypatch.setattr("ci.compile.cmake_helper.subprocess.run", build)
+    monkeypatch.setattr("ci.compile.cmake_helper.run_tee", build)
     assert main(["build"]) == 1
     reports = list(tmp_path.glob("build-profile-*/report.json"))
     assert len(reports) == 1
@@ -551,13 +555,30 @@ def test_summary_writes_one_build_section(
     assert gh_summary.read_text(encoding="utf-8") == snapshot
 
 
-def _fake_build(monkeypatch: pytest.MonkeyPatch, result: int | BaseException) -> None:
-    def build(command: list[str], **_kwargs: object) -> subprocess.CompletedProcess[list[str]]:
-        if isinstance(result, BaseException):
-            raise result
-        return subprocess.CompletedProcess(command, result)
+@dataclass
+class _FakeBuild:
+    """Stands in for run_tee: records each build and writes *output* to its log."""
 
-    monkeypatch.setattr("ci.compile.cmake_helper.subprocess.run", build)
+    result: int | BaseException
+    output: str = ""
+    commands: list[list[str]] = field(default_factory=list)
+    logs: list[str] = field(default_factory=list)
+
+    def __call__(self, command: list[str], output_file: str) -> int:
+        self.commands.append(command)
+        self.logs.append(output_file)
+        if isinstance(self.result, BaseException):
+            raise self.result
+        Path(output_file).write_text(self.output, encoding="utf-8")
+        return self.result
+
+
+def _fake_build(
+    monkeypatch: pytest.MonkeyPatch, result: int | BaseException, output: str = ""
+) -> _FakeBuild:
+    fake = _FakeBuild(result, output)
+    monkeypatch.setattr("ci.compile.cmake_helper.run_tee", fake)
+    return fake
 
 
 @pytest.mark.parametrize(("exit_code", "result"), [(0, "passed"), (2, "failed")])
@@ -652,11 +673,11 @@ def test_summary_reports_sccache_and_its_error_log(
 @pytest.mark.parametrize(
     ("xvfb", "expected", "annotation"),
     [
-        ("/usr/bin/xvfb-run", ["/usr/bin/xvfb-run", "-a", "ctest"], "::notice::No DISPLAY"),
+        ("/usr/bin/xvfb-run", ["/usr/bin/xvfb-run", "-a", "ctest"], "No DISPLAY; running CTest"),
         (None, ["ctest"], "::warning::xvfb-run not found"),
     ],
 )
-def test_headless_linux_ctest_wraps_xvfb_with_annotations(
+def test_headless_linux_ctest_wraps_xvfb(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
     xvfb: str | None,
@@ -669,3 +690,290 @@ def test_headless_linux_ctest_wraps_xvfb_with_annotations(
 
     assert _maybe_wrap_xvfb(["ctest"]) == expected
     assert capsys.readouterr().out.startswith(annotation)
+
+
+def _annotations(output: str) -> list[str]:
+    return [line for line in output.splitlines() if line.startswith("::")]
+
+
+def _configure_with_output(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    venv_python: Path,
+    output: str,
+    exit_code: int,
+) -> int:
+    """Run `configure` against a fake CMake that writes *output* and a cache, then exits."""
+
+    def fake_configure(config: CMakeConfig, *, log_file: Path) -> int:
+        assert config.build_dir is not None
+        log_file.parent.mkdir(parents=True, exist_ok=True)
+        log_file.write_text(output, encoding="utf-8")
+        (config.build_dir / "CMakeCache.txt").write_text(
+            "CMAKE_GENERATOR:INTERNAL=Ninja\nCMAKE_BUILD_TYPE:STRING=Release\n"
+        )
+        return exit_code
+
+    monkeypatch.setenv("GITHUB_JOB", "build")
+    monkeypatch.setattr("ci.compile.cmake_helper.configure", fake_configure)
+    monkeypatch.setattr("ci.compile.cmake_helper.python_env.executable", lambda _name: venv_python)
+    return main(["configure", "--preset", "Windows", "--build-dir", str(tmp_path / "build")])
+
+
+def test_failed_configure_annotates_and_summarizes_the_first_cmake_error(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    venv_python: Path,
+    gh_output: Path,
+    gh_summary: Path,
+    capsys: pytest.CaptureFixture[str],
+    snapshot: SnapshotAssertion,
+) -> None:
+    assert _configure_with_output(monkeypatch, tmp_path, venv_python, ZSTD_ASM_CONFIGURE, 1) == 1
+
+    out = capsys.readouterr().out
+    assert _annotations(out) == [
+        "::error file=.cache/CPM/zstd/dfd2/build/cmake/CMakeLists.txt,line=36,"
+        "title=CMake configure failed::No CMAKE_ASM_COMPILER could be found.%0A%0A"
+        "Tell CMake where to find the compiler by setting either the environment%0A"
+        'variable "ASM" or the CMake cache entry CMAKE_ASM_COMPILER to the full path%0A'
+        "to the compiler, or to the compiler name if it is in the PATH."
+    ]
+    assert "Configure failed after 0s" in out
+    assert "completed" not in out
+    assert gh_summary.read_text(encoding="utf-8") == snapshot
+    artifact = read_github_file(gh_output)["logs_artifact"]
+    assert re.fullmatch(r"cmake-configure-build-Windows-[0-9a-f]{6}", artifact)
+
+
+def test_failed_configure_outside_the_checkout_names_the_location(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    venv_python: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    _configure_with_output(monkeypatch, tmp_path, venv_python, VALIJSON_CLONE_CONFIGURE, 1)
+    assert _annotations(capsys.readouterr().out) == [
+        "::error title=CMake configure failed::/usr/local/share/cmake-4.1/Modules/ExternalProject/"
+        "shared_internal_commands.cmake:943: Failed to clone repository:%0A"
+        "'https://github.com/tristanpenman/valijson.git'"
+    ]
+
+
+def test_failed_configure_without_a_cmake_error_quotes_the_end_of_its_output(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    venv_python: Path,
+    gh_summary: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    output = "".join(f"-- step {n}\n" for n in range(12)) + "Segmentation fault (core dumped)\n"
+    assert _configure_with_output(monkeypatch, tmp_path, venv_python, output, 139) == 139
+    (annotation,) = _annotations(capsys.readouterr().out)
+    assert annotation.split("%0A") == [
+        "::error title=CMake configure failed::CMake exited with status 139:",
+        *(f"-- step {n}" for n in range(3, 12)),
+        "Segmentation fault (core dumped)",
+    ]
+    summary = gh_summary.read_text(encoding="utf-8")
+    assert "<details><summary>CMake error</summary>" not in summary
+    assert "<details><summary>Configure output (last 40 lines)</summary>" in summary
+
+
+def test_successful_configure_logs_plainly_and_reports_check_reuse(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    venv_python: Path,
+    gh_summary: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    output = (
+        "-- QGC: Reused 1412 configure-check results from /cache/qgc-configure-checks/ab12.cmake\n"
+        "-- Configuring done (35.2s)\n"
+        "-- QGC: Saved 3 configure-check results to /cache/qgc-configure-checks/ab12.cmake\n"
+    )
+    assert _configure_with_output(monkeypatch, tmp_path, venv_python, output, 0) == 0
+    out = capsys.readouterr().out
+    assert "Configure completed in 0s" in out.splitlines()
+    assert _annotations(out) == []
+    assert gh_summary.read_text(encoding="utf-8") == (
+        "### Configure\n\n| Item | Value |\n| --- | --- |\n| Result | passed |\n"
+        "| Duration | 0.0s |\n| Preset | `Windows` |\n| Generator | Ninja |\n"
+        "| Configure checks | reused 1,412 saved results, saved 3 results |\n\n"
+    )
+
+
+@pytest.mark.parametrize(
+    ("line", "expected"),
+    [
+        (
+            "-- QGC: No saved configure-check results for this toolchain; running the checks",
+            "none saved for this toolchain",
+        ),
+        (
+            "-- QGC: Ignoring configure-check results with a different fingerprint: /c/x.cmake",
+            "saved results ignored (different fingerprint)",
+        ),
+        ("-- Configuring done", ""),
+    ],
+)
+def test_configure_check_reuse(line: str, expected: str) -> None:
+    assert configure_checks(f"{line}\n") == expected
+
+
+def test_configure_that_raises_still_reports_its_failure_and_logs_artifact(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    venv_python: Path,
+    gh_output: Path,
+    gh_summary: Path,
+) -> None:
+    def missing_cmake(_config: CMakeConfig, *, log_file: Path) -> int:
+        raise FileNotFoundError("cmake")
+
+    monkeypatch.setattr("ci.compile.cmake_helper.configure", missing_cmake)
+    monkeypatch.setattr("ci.compile.cmake_helper.python_env.executable", lambda _name: venv_python)
+    with pytest.raises(FileNotFoundError):
+        main(["configure", "--preset", "Linux", "--build-dir", str(tmp_path / "build")])
+    assert gh_summary.read_text(encoding="utf-8").startswith(
+        "### Configure\n\n| Item | Value |\n| --- | --- |\n| Result | failed |\n| Preset | `Linux` |"
+    )
+    assert read_github_file(gh_output)["logs_artifact"].startswith("cmake-configure-local-Linux-")
+
+
+def _from_build_dir(build_dir: Path, path: str) -> str:
+    """*path* in the checkout as a compiler run from *build_dir* reports it."""
+    try:
+        return Path(os.path.relpath(REPO_ROOT / path, build_dir)).as_posix()
+    except ValueError:
+        # Another Windows drive.
+        return (REPO_ROOT / path).as_posix()
+
+
+def test_failed_build_annotates_and_summarizes_compiler_errors(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    gh_summary: Path,
+    capsys: pytest.CaptureFixture[str],
+    snapshot: SnapshotAssertion,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    test_dir = _from_build_dir(tmp_path, "test/MAVLink")
+    _fake_build(
+        monkeypatch,
+        1,
+        GCC_BUILD.replace("../../qgroundcontrol/qgroundcontrol/test/MAVLink", test_dir),
+    )
+
+    assert main(["build"]) == 1
+    out = capsys.readouterr().out
+    message = "no matching function for call to \u2018EventHandler::EventHandler(std::nullptr_t, QString)\u2019"
+    assert _annotations(out) == [
+        f"::error file=test/MAVLink/HealthAndArmingCheckReportTest.cc,line={line},col=31,"
+        f"title=Compile error::{message}"
+        for line in (83, 144)
+    ]
+    assert "Build failed after 0s" in out.splitlines()
+    assert gh_summary.read_text(encoding="utf-8") == snapshot
+
+
+def test_failed_gradle_build_annotates_outside_files_by_location(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    gh_summary: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    _fake_build(monkeypatch, 1, GRADLE_BUILD)
+    assert main(["build"]) == 1
+    assert _annotations(capsys.readouterr().out) == [
+        "::error title=Compile error::/home/runner/_work/_temp/build/android-build/src/org/mavlink/"
+        "qgroundcontrol/QGCActivity.java:42: cannot find symbol",
+        "::error title=Gradle build failed::Execution failed for task "
+        "':compileReleaseJavaWithJavac'.%0A> Compilation failed; see the compiler error output "
+        "for details.",
+    ]
+    summary = gh_summary.read_text(encoding="utf-8")
+    assert "Failed targets:\n\n- `android-build/QGroundControl.apk`" in summary
+    assert "* What went wrong:\nExecution failed for task" in summary
+
+
+def test_failed_build_without_a_recognized_error_still_annotates(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    gh_summary: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    _fake_build(monkeypatch, 2, "Killed\n")
+    assert main(["build"]) == 2
+    log = tmp_path / "build-output.log"
+    assert _annotations(capsys.readouterr().out) == [
+        f"::error::Build failed after 0s; no error recognized in {log}"
+    ]
+    assert "Failed targets / first errors" not in gh_summary.read_text(encoding="utf-8")
+
+
+def test_successful_build_logs_plainly(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    gh_summary: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    _fake_build(monkeypatch, 0, "[1/1] Linking CXX executable QGroundControl\n")
+    assert main(["build"]) == 0
+    out = capsys.readouterr().out
+    assert "Build completed in 0s" in out.splitlines()
+    assert _annotations(out) == []
+    assert "<details>" not in gh_summary.read_text(encoding="utf-8")
+
+
+def test_build_output_file_and_reviewdog_log(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, gh_env: Path
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    build = _fake_build(monkeypatch, 0)
+    assert main(["build", "--reviewdog"]) == 0
+    assert main(["build", "--output-file", "qgc-build.log"]) == 0
+    assert build.logs == [str(tmp_path / "build-output.log"), "qgc-build.log"]
+    assert read_github_file(gh_env) == {"REVIEWDOG_LOG": str(tmp_path / "build-output.log")}
+
+
+def test_package_build_reports_only_its_own_compiler_cache_use(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, gh_summary: Path
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    after = {
+        **CCACHE_JSON,
+        "direct_cache_hit": CCACHE_JSON["direct_cache_hit"] + 45,
+        "cache_miss": CCACHE_JSON["cache_miss"] + 5,
+        "cache_size_kibibyte": 1_300_000,
+    }
+    readings = iter([CCACHE_JSON, after])
+    monkeypatch.setattr("ci.compile.cmake_helper.ccache_stats", lambda: next(readings))
+    _fake_build(monkeypatch, 0)
+
+    assert main(["build", "--target", "qgc-package"]) == 0
+    summary = gh_summary.read_text(encoding="utf-8")
+    assert summary.startswith("### Build (qgc-package)\n")
+    assert (
+        "| Compiler cache | ccache: 45 of 50 (90.0%) hits (45 direct, 0 preprocessed) |" in summary
+    )
+    assert "| Compiler cache size | 1.2 GiB of 3.0 GiB, 0 LRU cleanups |" in summary
+
+
+def test_counter_delta_recurses_and_survives_zeroed_statistics() -> None:
+    before = {
+        "stats": {"cache_hits": {"counts": {"C/C++": 90}}, "cache_writes": 4},
+        "cache_size": 9,
+    }
+    after = {
+        "stats": {"cache_hits": {"counts": {"C/C++": 95}}, "cache_writes": 2},
+        "cache_size": 10,
+    }
+    assert counter_delta(after, before) == {
+        "stats": {"cache_hits": {"counts": {"C/C++": 5}}, "cache_writes": 2},
+        "cache_size": 10,
+    }
+    assert counter_delta(after, None) is after

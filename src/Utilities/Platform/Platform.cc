@@ -26,12 +26,17 @@
 #elif defined(Q_OS_WIN)
     #include <qt_windows.h>
     #include <iostream>
-    #include <iterator>  // std::size
-    #include <cwchar>    // swprintf
     #if defined(_MSC_VER)
         #include <crtdbg.h>
         #include <stdlib.h>
     #endif
+#endif
+
+#if defined(Q_OS_WIN)
+// dbghelp.h needs the Windows types from qt_windows.h above.
+#include <cstdarg>
+#include <cwchar>
+#include <dbghelp.h>
 #endif
 
 namespace {
@@ -108,22 +113,184 @@ void WindowsInvalidParameterHandler([[maybe_unused]] const wchar_t* expression,
 
 LPTOP_LEVEL_EXCEPTION_FILTER g_prevUef = nullptr;
 
-LONG WINAPI WindowsUnhandledExceptionFilter(EXCEPTION_POINTERS* ep)
+using MiniDumpWriteDumpFn = BOOL(WINAPI*)(HANDLE, DWORD, HANDLE, MINIDUMP_TYPE, PMINIDUMP_EXCEPTION_INFORMATION,
+                                          PMINIDUMP_USER_STREAM_INFORMATION, PMINIDUMP_CALLBACK_INFORMATION);
+MiniDumpWriteDumpFn g_miniDumpWriteDump = nullptr;
+wchar_t g_crashDumpPath[MAX_PATH] = {};
+wchar_t g_crashDumpPartPath[MAX_PATH] = {};
+
+// The crashed thread may hold the loader or heap lock, or have almost no stack left after an
+// overflow, so a thread started with QGC writes the minidump while the filter waits for it.
+constexpr DWORD CRASH_DUMP_WAIT_MS = 20000;
+bool g_crashDumpReady = false;
+HANDLE g_crashDumpRequested = nullptr;
+HANDLE g_crashDumpWritten = nullptr;
+EXCEPTION_POINTERS* g_crashException = nullptr;
+DWORD g_crashThreadId = 0;
+volatile LONG g_crashHandled = 0;
+
+// Static so the filter itself needs little stack.
+wchar_t g_crashModulePath[MAX_PATH] = {};
+wchar_t g_crashMessage[2 * MAX_PATH] = {};
+char g_crashNarrow[6 * MAX_PATH] = {};
+
+template <std::size_t Size>
+bool formatWide(wchar_t (&buffer)[Size], const wchar_t* format, ...)
 {
-    const DWORD code = (ep && ep->ExceptionRecord) ? ep->ExceptionRecord->ExceptionCode : 0;
-    wchar_t buf[128] = {};
+    va_list args;
+    va_start(args, format);
 #if defined(_MSC_VER)
-    (void) _snwprintf_s(buf, _TRUNCATE, L"QGC: unhandled SEH 0x%08lX\n", static_cast<unsigned long>(code));
+    const int length = _vsnwprintf_s(buffer, Size, _TRUNCATE, format, args);
 #else
-    (void) swprintf(buf, static_cast<int>(std::size(buf)), L"QGC: unhandled SEH 0x%08lX\n", static_cast<unsigned long>(code));
+    const int length = std::vswprintf(buffer, Size, format, args);
+    buffer[Size - 1] = L'\0';
 #endif
-    (void) OutputDebugStringW(buf);
+    va_end(args);
+    return length >= 0;
+}
+
+template <std::size_t Size>
+void writeCrashMessage(const wchar_t* message, char (&narrow)[Size])
+{
+    (void) OutputDebugStringW(message);
 
     const HANDLE h = GetStdHandle(STD_ERROR_HANDLE);
-    if (h && (h != INVALID_HANDLE_VALUE)) {
+    if (!h || (h == INVALID_HANDLE_VALUE)) {
+        return;
+    }
+    const int length = WideCharToMultiByte(CP_UTF8, 0, message, -1, narrow, static_cast<int>(Size), nullptr, nullptr);
+    if (length > 1) {
         DWORD ignored = 0;
-        const char narrow[] = "QGC: unhandled SEH\n";
-        (void) WriteFile(h, narrow, (DWORD)sizeof(narrow) - 1, &ignored, nullptr);
+        (void) WriteFile(h, narrow, static_cast<DWORD>(length - 1), &ignored, nullptr);
+    }
+}
+
+// Runs on the dump thread, whose own buffer keeps it apart from the filter's messages.
+void writeCrashDump()
+{
+    char narrow[6 * MAX_PATH] = {};
+    const HANDLE file =
+        CreateFileW(g_crashDumpPartPath, GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (file == INVALID_HANDLE_VALUE) {
+        writeCrashMessage(L"QGC: no crash dump, cannot create a file in QGC_CRASH_DUMP_DIR\n", narrow);
+        return;
+    }
+
+    MINIDUMP_EXCEPTION_INFORMATION exceptionInfo = {};
+    exceptionInfo.ThreadId = g_crashThreadId;
+    exceptionInfo.ExceptionPointers = g_crashException;
+    exceptionInfo.ClientPointers = FALSE;
+    const BOOL written =
+        g_miniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), file,
+                            static_cast<MINIDUMP_TYPE>(MiniDumpWithUnloadedModules | MiniDumpWithThreadInfo),
+                            g_crashException ? &exceptionInfo : nullptr, nullptr, nullptr);
+    DWORD error = written ? ERROR_SUCCESS : GetLastError();
+    (void) CloseHandle(file);
+
+    // Only a complete dump gets the .dmp name that CI collects.
+    bool kept = false;
+    if (written) {
+        kept = MoveFileExW(g_crashDumpPartPath, g_crashDumpPath, MOVEFILE_REPLACE_EXISTING) != FALSE;
+        if (!kept) {
+            error = GetLastError();
+        }
+    }
+
+    wchar_t message[2 * MAX_PATH] = {};
+    if (kept) {
+        (void) formatWide(message, L"QGC: wrote crash dump %ls\n", g_crashDumpPath);
+    } else {
+        (void) DeleteFileW(g_crashDumpPartPath);
+        (void) formatWide(message, L"QGC: crash dump failed with error 0x%08lX\n", static_cast<unsigned long>(error));
+    }
+    writeCrashMessage(message, narrow);
+}
+
+DWORD WINAPI crashDumpThread(LPVOID)
+{
+    if (WaitForSingleObject(g_crashDumpRequested, INFINITE) == WAIT_OBJECT_0) {
+        writeCrashDump();
+        (void) SetEvent(g_crashDumpWritten);
+    }
+    return 0;
+}
+
+// Resolved before any crash: the exception filter must not load libraries or start threads.
+void setupCrashDumps()
+{
+    wchar_t directory[MAX_PATH] = {};
+    const DWORD length = GetEnvironmentVariableW(L"QGC_CRASH_DUMP_DIR", directory, MAX_PATH);
+    if ((length == 0) || (length >= MAX_PATH)) {
+        return;
+    }
+    if (!formatWide(g_crashDumpPath, L"%ls\\QGC-crash-%lu.dmp", directory,
+                    static_cast<unsigned long>(GetCurrentProcessId())) ||
+        !formatWide(g_crashDumpPartPath, L"%ls.part", g_crashDumpPath)) {
+        g_crashDumpPath[0] = L'\0';
+        return;
+    }
+
+    const HMODULE dbghelp = LoadLibraryExW(L"dbghelp.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
+    if (dbghelp) {
+        g_miniDumpWriteDump = reinterpret_cast<MiniDumpWriteDumpFn>(
+            reinterpret_cast<void (*)()>(GetProcAddress(dbghelp, "MiniDumpWriteDump")));
+    }
+    if (!g_miniDumpWriteDump) {
+        return;
+    }
+
+    g_crashDumpRequested = CreateEventW(nullptr, FALSE, FALSE, nullptr);
+    g_crashDumpWritten = CreateEventW(nullptr, TRUE, FALSE, nullptr);
+    if (!g_crashDumpRequested || !g_crashDumpWritten) {
+        return;
+    }
+    const HANDLE thread = CreateThread(nullptr, 256 * 1024, crashDumpThread, nullptr, 0, nullptr);
+    if (!thread) {
+        return;
+    }
+    (void) CloseHandle(thread);
+    g_crashDumpReady = true;
+}
+
+LONG WINAPI WindowsUnhandledExceptionFilter(EXCEPTION_POINTERS* ep)
+{
+    // A second crashing thread lets the first finish its report, then ends the process.
+    if (InterlockedExchange(&g_crashHandled, 1) != 0) {
+        if (g_crashDumpReady) {
+            (void) WaitForSingleObject(g_crashDumpWritten, CRASH_DUMP_WAIT_MS);
+        }
+        return EXCEPTION_EXECUTE_HANDLER;
+    }
+
+    const EXCEPTION_RECORD* const record = ep ? ep->ExceptionRecord : nullptr;
+    const DWORD code = record ? record->ExceptionCode : 0;
+    const ULONG_PTR address = record ? reinterpret_cast<ULONG_PTR>(record->ExceptionAddress) : 0;
+
+    const wchar_t* moduleName = L"<unknown module>";
+    ULONG_PTR offset = address;
+    HMODULE module = nullptr;
+    if ((address != 0) &&
+        GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                           reinterpret_cast<LPCWSTR>(address), &module) &&
+        (GetModuleFileNameW(module, g_crashModulePath, MAX_PATH) > 0)) {
+        moduleName = g_crashModulePath;
+        offset = address - reinterpret_cast<ULONG_PTR>(module);
+    }
+
+    (void) formatWide(g_crashMessage, L"QGC: unhandled SEH 0x%08lX at 0x%llX in %ls+0x%llX\n",
+                      static_cast<unsigned long>(code), static_cast<unsigned long long>(address), moduleName,
+                      static_cast<unsigned long long>(offset));
+    writeCrashMessage(g_crashMessage, g_crashNarrow);
+
+    if (g_crashDumpReady) {
+        g_crashException = ep;
+        g_crashThreadId = GetCurrentThreadId();
+        if (SetEvent(g_crashDumpRequested) &&
+            (WaitForSingleObject(g_crashDumpWritten, CRASH_DUMP_WAIT_MS) == WAIT_TIMEOUT)) {
+            writeCrashMessage(L"QGC: crash dump unfinished after 20 s; exiting without it\n", g_crashNarrow);
+        }
+    } else if (g_crashDumpPath[0] != L'\0') {
+        writeCrashMessage(L"QGC: no crash dump, the dump writer could not start\n", g_crashNarrow);
     }
 
     return EXCEPTION_EXECUTE_HANDLER;
@@ -132,6 +299,7 @@ LONG WINAPI WindowsUnhandledExceptionFilter(EXCEPTION_POINTERS* ep)
 void setWindowsErrorModes(bool quietWindowsAsserts)
 {
     (void) SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX | SEM_NOOPENFILEERRORBOX);
+    setupCrashDumps();
     g_prevUef = SetUnhandledExceptionFilter(WindowsUnhandledExceptionFilter);
 
 #if defined(_MSC_VER)

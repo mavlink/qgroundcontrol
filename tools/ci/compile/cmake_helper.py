@@ -2,10 +2,14 @@
 """CMake build and configure helpers for CI.
 
 Subcommands:
-    build       Run cmake --build with CI-friendly output and timing, then write the job
-                summary's Build section: result, duration, toolchain, compiler and moc
-                cache hit rates, and the slowest build steps
-    configure   Run the shared configure library with CI defaults
+    build       Run cmake --build with CI-friendly output and timing, teeing it to a log, then
+                write the job summary's Build section: result, duration, toolchain, compiler and
+                moc cache hit rates, the slowest build steps and, after a failure, the failed
+                targets and first errors, which also become error annotations
+    configure   Run the shared configure library with CI defaults, teeing CMake's output to the
+                build directory, then write the job summary's Configure section: result,
+                duration, preset, generator, configure-check reuse and, after a failure, the
+                first CMake error, which also becomes an error annotation
     ctest       Run CTest with standardized arguments and timing
 """
 
@@ -15,13 +19,15 @@ import argparse
 import hashlib
 import os
 import re
+import secrets
 import shutil
 import subprocess
 import sys
 import tempfile
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
@@ -34,18 +40,40 @@ from common.gh_actions import (
     env_default,
     env_flag,
     gh_error,
-    gh_notice,
     gh_warning,
     write_github_output,
     write_step_summary,
 )
-from common.markdown import code_block, code_span, md_table, summary_section
+from common.markdown import (
+    code_block,
+    code_span,
+    escape_text,
+    md_table,
+    more_items,
+    summary_section,
+)
 from common.proc import run_tee
 from moccache.stats import KIND_DESCRIPTIONS, collect_stats
 from qgc_tools import python_env
+from qgc_tools.build_errors import (
+    MAX_ERRORS,
+    BuildFailure,
+    Diagnostic,
+    cmake_errors,
+    parse_build_failure,
+    repo_path,
+)
 from qgc_tools.build_profile import parse_ninja_log, snapshot_summary, write_snapshot
 from qgc_tools.cmake_configure import CMakeConfig, configure
 from qgc_tools.compiler_cache import ccache_facts, ccache_stats, sccache_facts, sccache_stats
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+BUILD_LOG = "build-output.log"
+CONFIGURE_LOG = "cmake-configure.log"
+CONFIGURE_TAIL_LINES = 40
+REPO_ROOT = find_repo_root(Path(__file__))
 
 
 def detect_jobs(requested: str = "auto") -> int:
@@ -74,6 +102,9 @@ class BuildRun:
 
     seconds: int | None = None
     profile_dir: str = ""
+    # Compiler-cache statistics before the build, so the summary shows only this build's share.
+    cache_baseline: dict[str, Any] | None = None
+    failure: BuildFailure | None = None
 
 
 def cmd_build(args: argparse.Namespace) -> int:
@@ -108,11 +139,8 @@ def _build(args: argparse.Namespace, run: BuildRun) -> int:
         else:
             cmd.append("--parallel")
 
-    output_file = args.output_file
-    if args.reviewdog and not output_file:
-        output_file = os.path.join(os.environ.get("RUNNER_TEMP", "."), "build-output.log")
-
-    if output_file and args.reviewdog:
+    output_file = args.output_file or os.path.join(os.environ.get("RUNNER_TEMP", "."), BUILD_LOG)
+    if args.reviewdog:
         append_github_env({"REVIEWDOG_LOG": output_file})
 
     print(f"Running: {' '.join(cmd)}", flush=True)
@@ -121,13 +149,10 @@ def _build(args: argparse.Namespace, run: BuildRun) -> int:
         previous = parse_ninja_log(Path(".ninja_log")) if Path(".ninja_log").exists() else []
     except (OSError, ValueError) as error:
         gh_warning(f"Cannot read previous Ninja timings: {error}")
+    run.cache_baseline = _compiler_cache_stats()
     start = time.monotonic()
 
-    if output_file:
-        exit_code = run_tee(cmd, output_file)
-    else:
-        result = subprocess.run(cmd, check=False)
-        exit_code = result.returncode
+    exit_code = run_tee(cmd, output_file)
 
     duration = int(time.monotonic() - start)
     run.seconds = duration
@@ -145,10 +170,46 @@ def _build(args: argparse.Namespace, run: BuildRun) -> int:
 
     write_github_output({"build_success": str(exit_code == 0).lower()})
     if exit_code == 0:
-        gh_notice(f"Build completed in {duration}s")
+        print(f"Build completed in {duration}s", flush=True)
     else:
-        gh_error(f"Build failed after {duration}s")
+        print(f"Build failed after {duration}s", flush=True)
+        run.failure = report_build_failure(Path(output_file), duration)
     return exit_code
+
+
+def _read_log(path: Path) -> str:
+    try:
+        return path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return ""
+
+
+def _annotate_error(diagnostic: Diagnostic, *, bases: Sequence[Path], title: str = "") -> None:
+    """Annotate *diagnostic* at its checkout file, or name its location when outside the checkout."""
+    file = repo_path(diagnostic.file, bases=bases, repo_root=REPO_ROOT) if diagnostic.file else ""
+    message = diagnostic.message
+    if diagnostic.file and not file:
+        message = f"{diagnostic.location}: {message}"
+    gh_error(
+        message,
+        title=title or diagnostic.title,
+        file=file,
+        line=diagnostic.line,
+        col=diagnostic.col,
+    )
+
+
+def report_build_failure(log: Path, seconds: int) -> BuildFailure:
+    """Annotate the first errors of a failed build from its log and return them for the summary.
+
+    Compilers report paths from the build directory, the working directory here.
+    """
+    failure = parse_build_failure(_read_log(log))
+    for diagnostic in failure.errors:
+        _annotate_error(diagnostic, bases=(Path.cwd(), REPO_ROOT))
+    if not failure.errors:
+        gh_error(f"Build failed after {seconds}s; no error recognized in {log}")
+    return failure
 
 
 _COMPILER_SETTING = re.compile(r'^set\(CMAKE_CXX_COMPILER_(ID|VERSION) "([^"]*)"\)', re.MULTILINE)
@@ -174,7 +235,52 @@ def toolchain(build_dir: Path) -> str:
     return ", ".join(part for part in parts if part)
 
 
-def _compiler_cache() -> tuple[list[tuple[str, object]], str]:
+def _compiler_cache_stats() -> dict[str, Any] | None:
+    if os.environ.get("QGC_COMPILER_CACHE_TOOL") == "sccache":
+        return sccache_stats()
+    return ccache_stats()
+
+
+# Statistics that describe the cache rather than count events, so they are never differenced.
+CACHE_GAUGES = frozenset(
+    {
+        "cache_size",
+        "cache_size_kibibyte",
+        "files_in_cache",
+        "max_cache_size",
+        "max_cache_size_kibibyte",
+        "max_files_in_cache",
+        "stats_updated_timestamp",
+        "stats_zeroed_timestamp",
+    }
+)
+
+
+def counter_delta(after: dict[str, Any], before: dict[str, Any] | None) -> dict[str, Any]:
+    """Return *after*'s counters less *before*'s, recursing into nested counts.
+
+    A counter that went down was zeroed in between, so it keeps its own value.
+    """
+    if not before:
+        return after
+    delta: dict[str, Any] = {}
+    for key, value in after.items():
+        earlier = before.get(key)
+        if isinstance(value, dict) and isinstance(earlier, dict):
+            delta[key] = counter_delta(value, earlier)
+        elif (
+            key not in CACHE_GAUGES
+            and type(value) is int
+            and type(earlier) is int
+            and value >= earlier
+        ):
+            delta[key] = value - earlier
+        else:
+            delta[key] = value
+    return delta
+
+
+def _compiler_cache(baseline: dict[str, Any] | None) -> tuple[list[tuple[str, object]], str]:
     if os.environ.get("QGC_COMPILER_CACHE_TOOL") == "sccache":
         report = sccache_stats()
         log = Path(os.environ.get("SCCACHE_ERROR_LOG", ""))
@@ -182,9 +288,10 @@ def _compiler_cache() -> tuple[list[tuple[str, object]], str]:
             tail = "\n".join(log.read_text(encoding="utf-8", errors="replace").splitlines()[-50:])
         except OSError:
             tail = ""
-        return (sccache_facts(report) if report else []), (code_block(tail) if tail.strip() else "")
+        facts = sccache_facts(counter_delta(report, baseline)) if report else []
+        return facts, (code_block(tail) if tail.strip() else "")
     stats = ccache_stats()
-    return (ccache_facts(stats) if stats else []), ""
+    return (ccache_facts(counter_delta(stats, baseline)) if stats else []), ""
 
 
 def _moc_cache(build_dir: Path) -> tuple[list[tuple[str, object]], str]:
@@ -208,6 +315,39 @@ def _moc_cache(build_dir: Path) -> tuple[list[tuple[str, object]], str]:
     return facts, events if stats.counts else ""
 
 
+def _error_text(diagnostic: Diagnostic, bases: Sequence[Path]) -> str:
+    """One error as the log reported it, naming a checkout file relative to the checkout."""
+    if "\n" in diagnostic.excerpt or not diagnostic.file:
+        return diagnostic.excerpt or diagnostic.message
+    file = repo_path(diagnostic.file, bases=bases, repo_root=REPO_ROOT) or diagnostic.file
+    return f"{replace(diagnostic, file=file).location}: error: {diagnostic.message}"
+
+
+def failure_details(failure: BuildFailure | None, bases: Sequence[Path]) -> str:
+    """Return the failed targets and the first errors as Markdown, or ``""`` without any."""
+    if failure is None:
+        return ""
+    parts = []
+    if targets := failure.failed_targets:
+        listed = [f"- {code_span(target)}" for target in targets[:MAX_ERRORS]]
+        if len(targets) > MAX_ERRORS:
+            listed.append(f"- {more_items(len(targets) - MAX_ERRORS)}")
+        parts.append("Failed targets:\n\n" + "\n".join(listed))
+    if errors := failure.errors:
+        entries = [_error_text(diagnostic, bases) for diagnostic in errors]
+        text = (
+            "\n\n".join(entries) if any("\n" in entry for entry in entries) else "\n".join(entries)
+        )
+        shown = len(errors)
+        heading = (
+            f"First {shown} of {failure.error_count} errors:"
+            if failure.error_count > shown
+            else "Errors:"
+        )
+        parts.append(f"{heading}\n\n{code_block(text)}")
+    return "\n\n".join(parts)
+
+
 def write_build_summary(build_dir: Path, target: str, result: str, run: BuildRun) -> None:
     """Write the Build section from the build's result and the compiler and moc cache statistics.
 
@@ -216,7 +356,7 @@ def write_build_summary(build_dir: Path, target: str, result: str, run: BuildRun
     not fail a build or skip its cache save.
     """
     try:
-        cache_facts, sccache_log = _compiler_cache()
+        cache_facts, sccache_log = _compiler_cache(run.cache_baseline)
         moc_facts, moc_events = _moc_cache(build_dir)
         step_facts, timings = (
             snapshot_summary(Path(run.profile_dir), limit=SLOWEST_STEPS)
@@ -235,6 +375,10 @@ def write_build_summary(build_dir: Path, target: str, result: str, run: BuildRun
                 *step_facts,
             ],
             collapsed=[
+                (
+                    "Failed targets / first errors",
+                    failure_details(run.failure, (build_dir, REPO_ROOT)),
+                ),
                 *timings,
                 ("moc cache events", moc_events),
                 ("sccache error log (last 50 lines)", sccache_log),
@@ -305,18 +449,117 @@ def cmd_configure(args: argparse.Namespace) -> int:
         ]
 
     config = CMakeConfig(
-        source_dir=find_repo_root(Path(__file__)),
+        source_dir=REPO_ROOT,
         build_dir=Path(args.build_dir),
         preset=args.preset,
         stable=args.stable,
         use_qt_cmake=args.use_qt_cmake,
         extra_args=extra_args,
     )
+    build_dir = Path(args.build_dir)
+    # Written first, so the action can upload the logs of a configure that raised.
+    write_github_output({"logs_artifact": configure_logs_artifact(args.preset)})
     start = time.monotonic()
-    exit_code = configure(config)
+    try:
+        exit_code = configure(config, log_file=build_dir / CONFIGURE_LOG)
+    except Exception:
+        write_configure_summary(build_dir, args.preset, "failed", None, "", None)
+        raise
     duration = int(time.monotonic() - start)
-    gh_notice(f"Configure completed in {duration}s")
+    output = _read_log(build_dir / CONFIGURE_LOG)
+    error = None
+    if exit_code == 0:
+        print(f"Configure completed in {duration}s", flush=True)
+    else:
+        print(f"Configure failed after {duration}s", flush=True)
+        error = report_configure_failure(output, exit_code, build_dir)
+    write_configure_summary(
+        build_dir, args.preset, "passed" if exit_code == 0 else "failed", duration, output, error
+    )
     return exit_code
+
+
+def configure_logs_artifact(preset: str) -> str:
+    """Name the artifact for a failed configure's logs, unique within the workflow run."""
+    job = os.environ.get("GITHUB_JOB", "local")
+    name = re.sub(r"[^\w.-]+", "-", f"{job}-{preset}")
+    return f"cmake-configure-{name}-{secrets.token_hex(3)}"
+
+
+def report_configure_failure(output: str, exit_code: int, build_dir: Path) -> Diagnostic | None:
+    """Annotate the first CMake error of a failed configure, or the end of its output."""
+    if errors := cmake_errors(output):
+        # CMake reports paths from the source directory, or absolute ones.
+        _annotate_error(errors[0], bases=(REPO_ROOT, build_dir), title="CMake configure failed")
+        return errors[0]
+    tail = _tail(output, 10)
+    message = f"CMake exited with status {exit_code}"
+    gh_error(f"{message}:\n{tail}" if tail else message, title="CMake configure failed")
+    return None
+
+
+def _tail(text: str, count: int) -> str:
+    return "\n".join([line.rstrip() for line in text.splitlines() if line.strip()][-count:])
+
+
+_CHECK_RESULTS = re.compile(
+    r"^-- QGC: (?:Reused (?P<reused>\d+) configure-check results"
+    r"|(?P<missing>No saved configure-check results)"
+    r"|(?P<ignored>Ignoring configure-check results)"
+    r"|Saved (?P<saved>\d+) configure-check results)",
+    re.MULTILINE,
+)
+
+
+def configure_checks(output: str) -> str:
+    """Summarize what CheckResultCache.cmake reported about reusing saved configure checks."""
+    parts = []
+    for match in _CHECK_RESULTS.finditer(output):
+        if match["reused"]:
+            parts.append(f"reused {format_count(int(match['reused']))} saved results")
+        elif match["missing"]:
+            parts.append("none saved for this toolchain")
+        elif match["ignored"]:
+            parts.append("saved results ignored (different fingerprint)")
+        else:
+            parts.append(f"saved {format_count(int(match['saved']))} results")
+    return ", ".join(parts)
+
+
+def write_configure_summary(
+    build_dir: Path,
+    preset: str,
+    result: str,
+    seconds: int | None,
+    output: str,
+    error: Diagnostic | None,
+) -> None:
+    """Write the Configure section; a failure here only warns, like the Build section."""
+    try:
+        cache = read_cache_dict(build_dir / "CMakeCache.txt")
+        tail = _tail(output, CONFIGURE_TAIL_LINES) if result != "passed" else ""
+        section = summary_section(
+            "Configure",
+            [
+                ("Result", result),
+                ("Duration", format_duration(seconds) if seconds is not None else ""),
+                ("Preset", code_span(preset)),
+                ("Generator", escape_text(cache.get("CMAKE_GENERATOR", ""))),
+                ("Configure checks", configure_checks(output)),
+            ],
+            collapsed=[
+                ("CMake error", code_block(error.excerpt) if error else ""),
+                (
+                    f"Configure output (last {CONFIGURE_TAIL_LINES} lines)",
+                    code_block(tail) if tail else "",
+                ),
+            ],
+        )
+    except Exception as exception:
+        gh_warning(f"Cannot write the Configure summary: {exception}")
+        return
+    print(section)
+    write_step_summary(section)
 
 
 def _maybe_wrap_xvfb(cmd: list[str]) -> list[str]:
@@ -325,7 +568,7 @@ def _maybe_wrap_xvfb(cmd: list[str]) -> list[str]:
     if sys.platform.startswith("linux") and not os.environ.get("DISPLAY"):
         xvfb = shutil.which("xvfb-run")
         if xvfb:
-            gh_notice("No DISPLAY; running CTest under xvfb-run")
+            print("No DISPLAY; running CTest under xvfb-run", flush=True)
             return [xvfb, "-a", *cmd]
         gh_warning("xvfb-run not found; tests run without a GL context")
     return cmd
@@ -357,7 +600,7 @@ def cmd_ctest(args: argparse.Namespace) -> int:
     start = time.monotonic()
     exit_code = run_tee(_maybe_wrap_xvfb(cmd), args.ctest_output)
     duration = int(time.monotonic() - start)
-    gh_notice(f"Tests completed in {duration}s")
+    print(f"Tests completed in {duration}s", flush=True)
     return exit_code
 
 

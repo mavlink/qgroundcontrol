@@ -38,10 +38,9 @@ from common.io import read_json
 from common.markdown import code_span, md_table, more_items, summary_section
 
 DEFAULT_PROTECT = (
-    r"^(apt-debs|ccache|cpm-sources-v2|gst-sdk-v1|moccache|qt|build-baseline-v2"
+    r"^(apt-debs|ccache|cpm-sources-v2|gst-sdk-v1|moccache|qt"
     r"|prek-v1|prek-renovate-v1|lychee-v1)-"
 )
-_BASELINE_RE = re.compile(r"^build-baseline-v2-[0-9a-f]{40,64}-(\d+)-(\d+)$")
 _ROLLING_SUFFIX_RE = re.compile(r"-\d+-\d+$")
 _PR_BUILD_CACHE_RE = re.compile(r"^(ccache|moccache)-.*-(\d+)-(\d+)$")
 _DIGEST_RE = re.compile(r"(?<=-)[0-9a-f]{64}(?=-|$)")
@@ -215,19 +214,10 @@ def _protected_cache_entries(
         if cache.ref == f"refs/heads/{default_branch}" and protect_re.search(cache.key):
             families.setdefault((cache.ref, _cache_family(cache.key)), []).append(cache)
 
-    return {max(group, key=_retention_order) for group in families.values()}
-
-
-def _retention_order(cache: CacheUsage) -> tuple[str, int, int]:
-    if match := _BASELINE_RE.fullmatch(cache.key):
-        # Reading an older PR base must not displace the latest published baseline.
-        return "", int(match[1]), int(match[2])
-    return cache.last_accessed, 0, 0
+    return {max(group, key=lambda cache: cache.last_accessed) for group in families.values()}
 
 
 def _cache_family(key: str) -> str:
-    if _BASELINE_RE.fullmatch(key):
-        return "build-baseline-v2"
     family = _ROLLING_SUFFIX_RE.sub("", key)
     family = _DIGEST_RE.sub("<digest>", family)
     return _APT_GENERATION_RE.sub(r"\1-<generation>", family)

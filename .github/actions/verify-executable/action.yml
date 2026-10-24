@@ -1,5 +1,7 @@
 name: Verify Executable
-description: Run simple boot test on QGroundControl binary or package
+description: >-
+  Run simple boot test on QGroundControl binary or package; a failure uploads its diagnostics
+  (output, stacks before a timeout kill, macOS crash reports, Windows minidumps and PDB)
 
 inputs:
   binary-path:
@@ -25,8 +27,10 @@ inputs:
 runs:
   using: composite
   steps:
-    # verify_executable.py reads the INPUT_* variables as argument defaults.
+    # verify_executable.py reads the INPUT_* variables as argument defaults and outputs the
+    # diagnostics directory and its artifact name before booting.
     - name: Verify executable
+      id: verify
       shell: bash
       run: python3 "${GITHUB_WORKSPACE}/tools/ci/packaging/verify_executable.py"
       env:
@@ -35,3 +39,21 @@ runs:
         INPUT_BUILD_DIR: ${{ inputs.build-dir }}
         INPUT_EXPECT_ARCHS: ${{ inputs.expect-archs }}
         INPUT_EXPECTED_APPIMAGE_UPDATE_INFORMATION: ${{ inputs.expected-appimage-update-information }}
+
+    - name: Upload boot test diagnostics
+      id: upload
+      if: failure() && steps.verify.outputs.diagnostics-dir != ''
+      uses: actions/upload-artifact@v7
+      with:
+        name: ${{ steps.verify.outputs.diagnostics-name }}
+        path: ${{ steps.verify.outputs.diagnostics-dir }}
+        retention-days: 7
+        if-no-files-found: ignore
+
+    - name: Link boot test diagnostics
+      if: failure() && steps.upload.outputs.artifact-url != ''
+      shell: bash
+      run: python3 "${GITHUB_WORKSPACE}/tools/ci/packaging/artifact_link.py" --label "Boot test diagnostics"
+      env:
+        ARTIFACT_NAME: ${{ steps.verify.outputs.diagnostics-name }}
+        ARTIFACT_URL: ${{ steps.upload.outputs.artifact-url }}

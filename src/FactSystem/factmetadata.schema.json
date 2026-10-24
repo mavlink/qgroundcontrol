@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://qgroundcontrol.com/schemas/factmetadata.schema.json",
+  "$id": "https://mavlink.github.io/qgroundcontrol/schemas/factmetadata.schema.json",
   "title": "QGC FactMetaData",
   "description": "Schema for QGroundControl FactMetaData JSON files",
   "type": "object",

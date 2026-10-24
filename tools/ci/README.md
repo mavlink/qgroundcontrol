@@ -14,9 +14,9 @@ groups one CI concern; put reusable helpers with multiple consumers in
 | `runner/` | Runner host preparation and managed runner images |
 | `compile/` | CMake and Docker build drivers with timing and compiler-cache reporting |
 | `packaging/` | Locate, validate, and boot-test packaged build outputs |
-| `android/` | Android SDK setup, build retry, and emulator smoke tests |
+| `android/` | Android SDK setup, build retry, lint reporting, and emulator smoke tests |
 | `ios/` | iOS packaging and simulator smoke tests |
-| `publish/` | Attestation, publishing, release gating, and draft release notes |
+| `publish/` | Attestation, publishing, release gating, draft release notes, and the GitHub Pages site |
 | `reporting/` | Build-results comments, job-summary Setup and test sections, size and coverage reports, and PR labels |
 | `gstreamer/` | GStreamer SDK packaging and mirroring |
 | `security/` | Dependency SBOM generation and vulnerability-scanner installation |
@@ -47,29 +47,34 @@ and Ruff skips `build` directories.
 | `runner/install_multipass.py` | Install Multipass and wait for daemon readiness; with `--allow-bridge-forwarding`, undo Docker's iptables `FORWARD` drop policy so guests reach the network |
 | `runner/runner_image.py` | Check `runner-images.yml`'s branch and AWS settings, then output, verify, promote, and retire QGC runner AMIs |
 | `runner/validate_runner_configs.py` | `packer-validate` and `runs-on-lint` hooks: validate the runner image Packer template and lint the RunsOn configuration with the Packer and RunsOn CLI pinned in `build-config.json` |
-| `compile/cmake_helper.py` | Run CI configure, build, and CTest steps with standard arguments and timing, and write the job summary's Build section (result, duration, toolchain, compiler and moc cache hit rates, slowest build steps) |
+| `compile/cmake_helper.py` | Run CI configure, build, and CTest steps with standard arguments and timing, tee configure and build output to logs, and write the job summary's Configure (result, duration, preset, generator, configure-check reuse) and Build (result, duration, toolchain, this build's compiler and moc cache hit rates, slowest build steps) sections; after a failure, annotate and summarize the first CMake error or the failed targets and first build errors |
 | `compile/docker_helper.py` | Run Docker builds and repository scripts in builder images, and report compiler identities, timings, and cache statistics |
+| `packaging/artifact_link.py` | Link an uploaded diagnostics artifact (upload-artifact's `artifact-url`) from the job summary |
 | `packaging/find_artifact.py` | Find exactly one build artifact by glob pattern (fails on none or several), optionally copying it |
 | `packaging/validate_native_package.py` | Validate native package identity, version, contents, and installed layout |
-| `packaging/verify_executable.py` | Boot-test a built QGroundControl executable, AppImage, or DMG |
+| `packaging/verify_executable.py` | Boot-test a built QGroundControl executable, AppImage, or DMG; keep a failed boot's output, stacks, crash reports, and minidumps for the diagnostics artifact |
 | `android/android_boot_test.py` | Run the emulator boot smoke test |
 | `android/android_build_retry.py` | Retry an Android build after a known intermittent Qt deployment-settings JSON truncation |
 | `android/android_collect_diagnostics.py` | Collect emulator, ADB, AVD, and GStreamer diagnostics |
+| `android/android_lint.py` | Run `gradlew lintRelease` in the Gradle project androiddeployqt generated, annotate the first Error and Fatal issues from lint's XML report at their `android/` sources (else Gradle's errors), and write the job summary's Android Lint section (result, duration, error and warning counts, first errors); exits with Gradle's status |
 | `android/android_sdk_helper.py` | Install the `build-config.json` Android SDK/NDK packages with retries, configure tool paths, and create the PR debug keystore |
-| `ios/ios_boot_test.py` | Run the QGC smoke test in a disposable iOS simulator |
+| `ios/ios_boot_test.py` | Run the QGC smoke test in a disposable iOS simulator within a 25-minute budget; save each failed attempt's simulator and CoreSimulator logs and crash reports, annotate the failing phase and attempt, and write the Boot test summary |
 | `ios/ios_package.py` | Select signing profiles and validate/package iOS bundles |
 | `publish/attest_helper.py` | Prepare artifacts for attestation (checksum sidecar, CPM dependency SBOM, build manifest) and decide the AWS publish; verify or write standalone checksums |
 | `publish/aws_upload.py` | Publish artifacts to S3 `builds/<ref>/` (the runner's ref by default), plus `latest/` and one CloudFront invalidation for release tags |
 | `publish/deploy_docs.py` | Deploy generated documentation to an external Pages repository |
+| `publish/pages_history.py` | Library: the Pages dashboard's history of master push builds: fetch the deployed `data/history.json` (any failure but a 404 stops the build, and so does a 404 once a `pages.yml` run has succeeded), collect each new run's result, wall time, Build-step durations, package sizes, JUnit suites and failed tests, `src/` line coverage, and unique Code Analysis warnings, newest first until the 15-minute collection deadline, with two 120-second attempts per artifact, and merge by commit and workflow within the 1,000-commit and 365-day caps |
+| `publish/pages_render.py` | Library: the Pages site's self-contained HTML pages and inline SVG charts (no scripts or external assets), each chart followed by a table of its latest values and linking every run |
+| `publish/pages_site.py` | Build the GitHub Pages site for `pages.yml`: the CI health dashboard, `schemas/` (each `$id` must be its site URL), `downloads/` of the S3 master packages with their SHA-256 sidecars and provenance commits, and `api/` from the latest master Doxygen artifact or a link to api.qgroundcontrol.com (also when its download stalls); `--new-history` (`PAGES_NEW_HISTORY`) starts a new history when the deployed one is gone; checks its pages' internal links and writes the job summary's Pages site section |
 | `publish/release_branch_check.py` | Stop `release.yml` before it drafts a release for a tag that no `origin/Stable*` branch contains |
 | `publish/release_notes.py` | Draft a tag's release notes with git-cliff (`tools/configs/cliff.toml`) and create its draft GitHub Release unless one exists |
-| `reporting/collect_build_status.py` | Collect platform, pre-commit, and Code Analysis status for a head SHA (with `--status-out`, each run's state, duration, and failed-step links from its jobs), save the latest runs for `download_artifacts.py`, and gate the baseline save until every platform workflow succeeded |
-| `reporting/download_artifacts.py` | Download prefix-selected artifacts from matching completed workflow runs into one directory each, with a manifest naming each artifact's workflow, and record distributable artifact sizes |
-| `reporting/generate_build_results_comment.py` | Render the consolidated PR build-results comment: verdict, per-workflow table, failures, and collapsed tests, coverage, sizes, pre-commit, and Code Analysis details |
+| `reporting/collect_build_status.py` | Collect platform, pre-commit, Code Analysis, and every other workflow's status for a head SHA (with `--status-out`, each run's state, attempt, duration and total wall time, and failed-step links and lost runners from its jobs) and save the latest runs for `download_artifacts.py` |
+| `reporting/download_artifacts.py` | Download prefix-selected artifacts from matching completed workflow runs into one directory each, with a manifest naming each artifact's workflow and whether it downloaded, and record each workflow's latest run and its distributable artifacts (size, id, expiry) |
+| `reporting/generate_build_results_comment.py` | Render the consolidated PR build-results comment: verdict, per-workflow table, other checks, the PR base's builds, failures, and collapsed tests, coverage, artifact downloads, pre-commit, and Code Analysis details, compared with the base's own builds |
 | `reporting/gh_pr_size_label.py` | Apply a pull request's `size/*` label from its changed lines |
-| `reporting/junit_report.py` | Summarize JUnit results (counts, failures, slowest tests) in the job summary, annotate failed tests and, optionally, slow tests; also the build-results comment's JUnit parser |
-| `reporting/report_context.py` | Resolve and recheck the current PR or default-branch reporting context, and whether the build saves baselines |
-| `reporting/setup_summary.py` | Write the job summary's Setup section for `build-setup`: runner, Qt (version, installer, source), CMake, Python groups, and each build cache's restore result |
+| `reporting/junit_report.py` | Summarize JUnit results (counts, failures, slowest tests) in the job summary, annotate failed tests and, optionally, slow tests (parsed with `common/junit.py`, like the build-results comment and the Pages dashboard) |
+| `reporting/report_context.py` | Resolve a pull_request build's PR and base commit, and with `--comment` recheck that the build is current and create or update the PR's build-results comment |
+| `reporting/setup_summary.py` | Write the job summary's Setup section for `build-setup`, also after a failed setup step, which it names: runner, image, RunsOn instance, CPUs and RAM, Qt (version, installer, source), CMake, compiler, Xcode, JDK, Android NDK, Python groups, and each build cache's restore result |
 | `reporting/size_analysis.py` | Analyze and report binary-size changes |
 | `reporting/verify_coverage_thresholds.py` | Enforce line and branch coverage thresholds (read from `CMakeCache.txt` with `--build-dir`) |
 | `reporting/workflow_runs.py` | Library: read the triggering `workflow_run` payload and the configured platform workflows, which default the reporting scripts' run-query arguments; validate, select, and group workflow runs; load run snapshots |

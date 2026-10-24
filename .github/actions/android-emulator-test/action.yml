@@ -59,6 +59,7 @@ runs:
           --boot-log "${RUNNER_TEMP}/qgc_emulator_boot.log"
 
     - name: Upload Emulator Diagnostics
+      id: upload-diagnostics
       if: failure()
       uses: actions/upload-artifact@v7
       with:
@@ -66,3 +67,11 @@ runs:
         path: ${{ runner.temp }}/emulator-diagnostics
         if-no-files-found: warn
         retention-days: 14
+
+    - name: Link Emulator Diagnostics
+      if: failure() && steps.upload-diagnostics.outputs.artifact-url != ''
+      shell: bash
+      run: python3 "${GITHUB_WORKSPACE}/tools/ci/packaging/artifact_link.py" --label "Emulator diagnostics"
+      env:
+        ARTIFACT_NAME: emulator-diagnostics-${{ inputs.diagnostics-name }}-${{ github.run_id }}-${{ github.run_attempt }}
+        ARTIFACT_URL: ${{ steps.upload-diagnostics.outputs.artifact-url }}
