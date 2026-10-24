@@ -135,6 +135,8 @@ private slots:
     void _testColorimetryTransferMapping();
     void _testColorimetryFrameRatePropagation();
     void _testHwBufferCropMatrixIdentityWithoutMeta();
+    void _testTexturePadsPicture_data();
+    void _testTexturePadsPicture();
     void _testHwBufferCropMatrixFromVideoCropMeta();
     void _testHwVideoBufferCpuMapFallback();
     void _testHwVideoBufferCpuMapRefusesForeignLayout_data();

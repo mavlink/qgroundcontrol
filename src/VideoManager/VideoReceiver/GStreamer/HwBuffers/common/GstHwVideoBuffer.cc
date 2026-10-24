@@ -10,6 +10,12 @@ QVideoFrameTexturesUPtr GstHwPathTelemetry::fail(HwVideoBufferPath path) noexcep
     return {};
 }
 
+bool GstHw::texturePadsPicture(QSize textureSize, QSize picture, bool evenSizes)
+{
+    const auto rounded = [evenSizes](int extent) { return evenSizes ? ((extent + 1) & ~1) : extent; };
+    return (textureSize.width() > rounded(picture.width())) || (textureSize.height() > rounded(picture.height()));
+}
+
 GstHwVideoBuffer::GstHwVideoBuffer(QVideoFrame::HandleType handleType, GstSample* sample, const GstVideoInfo& videoInfo,
                                    QVideoFrameFormat format)
     : QHwVideoBuffer(handleType)
@@ -17,6 +23,7 @@ GstHwVideoBuffer::GstHwVideoBuffer(QVideoFrame::HandleType handleType, GstSample
     , _videoInfo(videoInfo)
     , _format(std::move(format))
     , _memoryPixelFormat(_format.pixelFormat())
+    , _memoryFrameSize(_format.frameSize())
 {
     // Crop is applied by the renderer via QVideoFrameFormat::viewport(); see applyCropMeta (GstQgcFrameMap).
 }
@@ -35,7 +42,7 @@ QAbstractVideoBuffer::MapData GstHwVideoBuffer::map(QVideoFrame::MapMode mode)
     // another format than its memory holds (Qt would read past the end of a narrower layout).
     const QVideoFrameFormat::PixelFormat advertised = _format.pixelFormat();
     if ((mode != QVideoFrame::ReadOnly) || (advertised == QVideoFrameFormat::Format_SamplerExternalOES) ||
-        (advertised != _memoryPixelFormat)) {
+        (advertised != _memoryPixelFormat) || (_format.frameSize() != _memoryFrameSize)) {
         return {};
     }
     return _cpuView.map(_sample ? gst_sample_get_buffer(_sample) : nullptr, _videoInfo);

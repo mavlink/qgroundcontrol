@@ -103,6 +103,25 @@ private:
     std::array<bool, kMaxPlanes> _copied{};
 };
 
+/// D3D11 creates 4:2:0 textures with even sizes only.
+bool hasEvenSizes(DXGI_FORMAT format)
+{
+    switch (format) {
+        case DXGI_FORMAT_NV12:
+        case DXGI_FORMAT_P010:
+        case DXGI_FORMAT_P016:
+            return true;
+        default:
+            return false;
+    }
+}
+
+/// Copy extent of @p extent pixels into a @p format texture.
+UINT copyExtent(int extent, DXGI_FORMAT format)
+{
+    return static_cast<UINT>(hasEvenSizes(format) ? ((extent + 1) & ~1) : extent);
+}
+
 constexpr quint8 kCopyTargetMark = 1;
 
 bool isCopyTarget(ID3D11Texture2D* texture)
@@ -125,8 +144,8 @@ bool onDevice(ID3D11Texture2D* texture, ID3D11Device* device)
 }
 
 /// GstD3D11Memory frame. The streaming thread only resolves the decoder's textures. mapTextures() runs on the render
-/// thread, where QRhi drives the same immediate context: a texture-array slice is copied there, ordered with QRhi's own
-/// reads and writes without a Flush(), and only for frames that are actually shown.
+/// thread, where QRhi drives the same immediate context: a texture-array slice or a padded texture is copied there,
+/// ordered with QRhi's own reads and writes without a Flush(), and only for frames that are actually shown.
 class D3D11VideoBuffer final : public GstHwVideoBuffer
 {
 public:
@@ -148,6 +167,16 @@ public:
         guard.commit();
         _slices = resolver.slices();
         _copied = resolver.copied();
+
+        // Decoders pad their textures to their alignment (16 rows for H.264, 128 for HEVC/AV1) with no crop meta. The
+        // picture is copied out like an array slice's, so the frame keeps the picture's size and its CPU layout: Qt
+        // maps it to the CPU for a window on another device and for screenshots.
+        D3D11_TEXTURE2D_DESC desc = {};
+        _textures[0]->GetDesc(&desc);
+        if (GstHw::texturePadsPicture(QSize(int(desc.Width), int(desc.Height)), _format.frameSize(),
+                                      hasEvenSizes(desc.Format))) {
+            std::fill_n(_copied.begin(), _count, true);
+        }
     }
 
     ~D3D11VideoBuffer() override
@@ -202,7 +231,7 @@ public:
             if (!_copied[std::size_t(i)]) {
                 continue;
             }
-            copies[std::size_t(i)] = copySlice(device, context, buffer, i, old);
+            copies[std::size_t(i)] = copyPicture(rhi, device, context, buffer, i, old);
             if (!copies[std::size_t(i)]) {
                 return GstHwPathTelemetry::fail(HwVideoBufferPath::D3D11);
             }
@@ -219,17 +248,23 @@ public:
     }
 
 private:
-    /// Copies plane @p plane's array slice into a texture of its own, which QRhi can wrap (it has no subresource
-    /// selector): @p old's copy target when it has that layout, whose last read QRhi already queued on this context,
-    /// else a new one. AddRef'd; null on failure.
-    ID3D11Texture2D* copySlice(ID3D11Device* device, ID3D11DeviceContext* context, GstBuffer* buffer, int plane,
-                               QVideoFrameTexturesUPtr& old)
+    /// Copies the picture of plane @p plane's array slice or padded texture into a texture of exactly its size (the
+    /// decoder's surfaces carry alignment padding, cf. Qt's TextureBridge::copyToSharedTex): @p old's copy target when
+    /// it has that layout, whose last read QRhi already queued on this context, else a new one. AddRef'd; null on
+    /// failure.
+    ID3D11Texture2D* copyPicture(QRhi& rhi, ID3D11Device* device, ID3D11DeviceContext* context, GstBuffer* buffer,
+                                 int plane, QVideoFrameTexturesUPtr& old)
     {
         ID3D11Texture2D* source = _textures[std::size_t(plane)];
         D3D11_TEXTURE2D_DESC sourceDesc = {};
         source->GetDesc(&sourceDesc);
-        const UINT width = sourceDesc.Width;
-        const UINT height = sourceDesc.Height;
+        // One texture holds every plane (NV12, P010), else this plane's texture holds only its own share of the frame.
+        const auto* textureDescription = QVideoTextureHelper::textureDescription(_format.pixelFormat());
+        const QSize picture = ((_count > 1) && textureDescription)
+                                  ? textureDescription->rhiPlaneSize(_format.frameSize(), plane, &rhi)
+                                  : _format.frameSize();
+        const UINT width = (std::min) (copyExtent(picture.width(), sourceDesc.Format), sourceDesc.Width);
+        const UINT height = (std::min) (copyExtent(picture.height(), sourceDesc.Format), sourceDesc.Height);
 
         D3D11_TEXTURE2D_DESC targetDesc = {};
         targetDesc.Width = width;
@@ -253,8 +288,9 @@ private:
 
         // Serializes with GStreamer's own use of this immediate context (the decoder, on the streaming thread).
         auto* memory = reinterpret_cast<GstD3D11Memory*>(gst_buffer_peek_memory(buffer, guint(plane)));
+        const D3D11_BOX pictureBox = {0, 0, 0, width, height, 1};
         gst_d3d11_device_lock(memory->device);
-        context->CopySubresourceRegion(target, 0, 0, 0, 0, source, _slices[std::size_t(plane)], nullptr);
+        context->CopySubresourceRegion(target, 0, 0, 0, 0, source, _slices[std::size_t(plane)], &pictureBox);
         gst_d3d11_device_unlock(memory->device);
         return target;
     }

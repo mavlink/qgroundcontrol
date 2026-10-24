@@ -7,6 +7,7 @@
 #include <private/qhwvideobuffer_p.h>
 
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QSize>
 #include <QtCore/qglobal.h>
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoFrameFormat>
@@ -29,6 +30,11 @@ struct MapDiagnostics
     std::atomic<bool> loggedNullBuffer{false};
     std::atomic<bool> loggedTextureCreateFail{false};
 };
+
+/// True when a native texture of @p textureSize holds @p picture in its top-left corner with padding around it:
+/// decoders pad their surfaces to their alignment without crop meta. @p evenSizes: the texture format (4:2:0) only has
+/// even sizes, so an odd picture dimension rounded up is no padding.
+bool texturePadsPicture(QSize textureSize, QSize picture, bool evenSizes);
 
 }  // namespace GstHw
 
@@ -59,7 +65,8 @@ public:
 
     /// CPU view of the sample through gst_video_frame_map (e.g. GL memory downloads, DMABuf mmaps). Qt's
     /// createTextures() uploads this whenever mapTextures() fails, so a failed GPU import still shows the frame.
-    /// ReadOnly only. Refused when format() isn't the layout of the memory: Qt would upload it in the wrong format.
+    /// ReadOnly only. Refused when format() isn't the layout of the memory (another pixel format or frame size): Qt
+    /// would upload it in the wrong format or read past it.
     MapData map(QVideoFrame::MapMode mode) override;
     void unmap() override;
 
@@ -101,8 +108,10 @@ protected:
     QVideoFrameFormat _format;
 
 private:
-    /// Pixel format of the sample's memory, as constructed. A subclass may advertise another one in _format for its GPU
-    /// import (the DMABuf eglfs YUYV/UYVY-as-RGBA quirk); such frames have no CPU layout matching format().
+    /// Pixel format and frame size of the sample's memory, as constructed. A subclass may advertise others in _format
+    /// for its GPU import (the DMABuf eglfs YUYV/UYVY-as-RGBA quirk); such frames have no CPU layout matching
+    /// format().
     QVideoFrameFormat::PixelFormat _memoryPixelFormat;
+    QSize _memoryFrameSize;
     CpuVideoFramePool::FrameMapping _cpuView;
 };

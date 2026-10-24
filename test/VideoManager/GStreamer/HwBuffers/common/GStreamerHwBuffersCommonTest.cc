@@ -9,6 +9,7 @@
 #include <span>
 
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QRect>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QThread>
@@ -418,10 +419,10 @@ class AdvertisingHwVideoBuffer final : public TestableHwVideoBuffer
 {
 public:
     AdvertisingHwVideoBuffer(GstSample* sample, const GstVideoInfo& info, QVideoFrameFormat memoryFormat,
-                             QVideoFrameFormat::PixelFormat advertised)
+                             QVideoFrameFormat advertised)
         : TestableHwVideoBuffer(sample, info, std::move(memoryFormat))
     {
-        _format = QVideoFrameFormat(_format.frameSize(), advertised);
+        _format = std::move(advertised);
     }
 };
 
@@ -594,15 +595,19 @@ void GStreamerTest::_testHwVideoBufferCpuMapRefusesForeignLayout_data()
 {
     QTest::addColumn<int>("memoryFormat");
     QTest::addColumn<int>("advertisedFormat");
+    QTest::addColumn<QSize>("advertisedSize");
     QTest::addColumn<bool>("expectMapped");
 
     // The sample is always YUY2: a 4x2 frame holds 8-byte rows, which Qt would read as 16-byte RGBA rows.
     QTest::newRow("advertises-its-memory")
-        << int(QVideoFrameFormat::Format_YUYV) << int(QVideoFrameFormat::Format_YUYV) << true;
+        << int(QVideoFrameFormat::Format_YUYV) << int(QVideoFrameFormat::Format_YUYV) << QSize(4, 2) << true;
     QTest::newRow("eglfs-yuyv-as-rgba") << int(QVideoFrameFormat::Format_YUYV)
-                                        << int(QVideoFrameFormat::Format_RGBA8888) << false;
+                                        << int(QVideoFrameFormat::Format_RGBA8888) << QSize(4, 2) << false;
     QTest::newRow("external-oes") << int(QVideoFrameFormat::Format_SamplerExternalOES)
-                                  << int(QVideoFrameFormat::Format_SamplerExternalOES) << false;
+                                  << int(QVideoFrameFormat::Format_SamplerExternalOES) << QSize(4, 2) << false;
+    // Qt would upload rows past the end of the mapped picture.
+    QTest::newRow("larger-frame-size") << int(QVideoFrameFormat::Format_YUYV) << int(QVideoFrameFormat::Format_YUYV)
+                                       << QSize(4, 16) << false;
 }
 
 void GStreamerTest::_testHwVideoBufferCpuMapRefusesForeignLayout()
@@ -612,6 +617,7 @@ void GStreamerTest::_testHwVideoBufferCpuMapRefusesForeignLayout()
 #else
     QFETCH(int, memoryFormat);
     QFETCH(int, advertisedFormat);
+    QFETCH(QSize, advertisedSize);
     QFETCH(bool, expectMapped);
 
     GstVideoInfo info;
@@ -621,10 +627,43 @@ void GStreamerTest::_testHwVideoBufferCpuMapRefusesForeignLayout()
 
     AdvertisingHwVideoBuffer hw(sample, info,
                                 QVideoFrameFormat(QSize(4, 2), QVideoFrameFormat::PixelFormat(memoryFormat)),
-                                QVideoFrameFormat::PixelFormat(advertisedFormat));
+                                QVideoFrameFormat(advertisedSize, QVideoFrameFormat::PixelFormat(advertisedFormat)));
     const QAbstractVideoBuffer::MapData mapped = hw.map(QVideoFrame::ReadOnly);
     QCOMPARE(mapped.planeCount > 0, expectMapped);
     hw.unmap();
+#endif
+}
+
+void GStreamerTest::_testTexturePadsPicture_data()
+{
+    QTest::addColumn<QSize>("textureSize");
+    QTest::addColumn<QSize>("picture");
+    QTest::addColumn<bool>("evenSizes");
+    QTest::addColumn<bool>("pads");
+
+    const QSize picture(1920, 1080);
+    // H.264 aligns to 16 rows, HEVC to 128: 8 and 72 rows the decoder never wrote.
+    QTest::newRow("h264-padded") << QSize(1920, 1088) << picture << true << true;
+    QTest::newRow("hevc-padded") << QSize(1920, 1152) << picture << true << true;
+    QTest::newRow("width-padded") << QSize(1936, 1080) << picture << true << true;
+    QTest::newRow("exact-texture") << picture << picture << true << false;
+    QTest::newRow("smaller-texture") << QSize(1920, 1072) << picture << true << false;
+    // A 4:2:0 texture holds an odd picture in the next even size.
+    QTest::newRow("odd-picture-even-texture") << QSize(642, 482) << QSize(641, 481) << true << false;
+    QTest::newRow("odd-picture-rgba-texture") << QSize(642, 482) << QSize(641, 481) << false << true;
+}
+
+void GStreamerTest::_testTexturePadsPicture()
+{
+#if !defined(QGC_HAS_ANY_GPU_PATH)
+    QSKIP("GstHwVideoBuffer not compiled in this build (no GPU path enabled)");
+#else
+    QFETCH(QSize, textureSize);
+    QFETCH(QSize, picture);
+    QFETCH(bool, evenSizes);
+    QFETCH(bool, pads);
+
+    QCOMPARE(GstHw::texturePadsPicture(textureSize, picture, evenSizes), pads);
 #endif
 }
 
