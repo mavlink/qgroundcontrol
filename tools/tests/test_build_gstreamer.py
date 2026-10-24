@@ -307,9 +307,14 @@ def test_get_meson_args_includes_plugins(tmp_path: Path) -> None:
     builder = MesonBuilder(cfg)
     args = builder.get_meson_args()
     assert "-Dgst-plugins-base:gl=enabled" in args
-    assert "-Dgst-plugins-good:qt6=enabled" in args
     assert "-Dgst-plugins-bad:videoparsers=enabled" in args
-    assert "-Dgst-plugins-ugly:x264=enabled" in args
+
+
+def test_get_meson_args_builds_no_gpl_or_qt6_plugin(tmp_path: Path) -> None:
+    cfg = BuildConfig(platform="linux", arch="x86_64", version="1.24.0", work_dir=tmp_path)
+    args = MesonBuilder(cfg).get_meson_args()
+    assert {"-Dgpl=disabled", "-Dugly=disabled", "-Dqt6=disabled"} <= set(args)
+    assert not any("x264" in a or "x265" in a or ":qt" in a for a in args)
 
 
 @pytest.mark.parametrize(
