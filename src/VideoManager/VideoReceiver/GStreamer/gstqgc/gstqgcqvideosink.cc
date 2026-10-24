@@ -71,7 +71,6 @@ struct PrivState
     // Whether the negotiated caps carry a GPU memory feature. Without one, show_frame skips path selection for frames
     // in plain system memory.
     bool gpu_caps = false;
-    std::atomic<int64_t> last_pts_ns{-1};
     // GstVideoOrientationMethod from the stream's image-orientation tag, for frames without an orientation meta.
     std::atomic<int> stream_orientation{GST_VIDEO_ORIENTATION_IDENTITY};
     std::atomic<quint64> input_frames{0};
@@ -334,9 +333,6 @@ static void gst_qgc_q_video_sink_set_property(GObject* obj, guint id, const GVal
                 p->pending = std::make_shared<PendingFrameSlot>();
             }
             p->qvideosink = target;
-            // Reset PTS guard on sink swap so a new sink doesn't see a stale last_pts_ns
-            // from the previous sink and erroneously drop the first frames.
-            p->last_pts_ns.store(-1, std::memory_order_relaxed);
             break;
         }
         case PROP_ACTIVE:
@@ -438,9 +434,6 @@ static gboolean gst_qgc_q_video_sink_set_caps(GstBaseSink* bsink, GstCaps* caps)
     p->gpu_caps = caps_carry_gpu_memory(caps);
     p->resolved_path_cache = HwResolvedPathCache{};
     p->demotion_recorded = false;
-    // New caps = new segment; clear PTS history so a restart/format change that resumes at a
-    // lower PTS isn't wedged by the monotonic-PTS guard in show_frame.
-    p->last_pts_ns.store(-1, std::memory_order_relaxed);
     p->caps_valid.store(true, std::memory_order_release);
 
     // Posted on the bus so the controller can mirror negotiation state into Q_PROPERTY.
@@ -457,9 +450,6 @@ static gboolean gst_qgc_q_video_sink_set_caps(GstBaseSink* bsink, GstCaps* caps)
 
 // Sustained run of map failures (not a transient hiccup) means the import is broken — tear down + restart.
 constexpr quint64 kMaxConsecutiveMapFailures = 120;
-
-// A backward PTS jump larger than this is a new timeline (source restart, loop), not reordered output to drop.
-constexpr int64_t kPtsResyncThresholdNs = static_cast<int64_t>(GST_SECOND);
 
 static GstFlowReturn gst_qgc_q_video_sink_show_frame(GstVideoSink* vsink, GstBuffer* buf)
 {
@@ -486,22 +476,6 @@ static GstFlowReturn gst_qgc_q_video_sink_show_frame(GstVideoSink* vsink, GstBuf
     // Software-decoded frames skip GPU selection. Caps alone can't tell: GPU memory also arrives under plain
     // video/x-raw (vtdec's CoreVideo/IOSurface buffers, V4L2 dmabuf export), so frames in other memory still try it.
     hwCtx.gpuEnabled = hwCtx.gpuEnabled && (p->gpu_caps || !nothing_to_import(buf));
-
-    // PTS regression guard ahead of mapping: a regressed timestamp wedges QVideoOutput's internal
-    // advance, and checking first avoids a wasted full-frame map on a buffer we'd drop anyway.
-    // last_pts_ns is advanced only once the frame is actually delivered (below) so a transient map
-    // failure doesn't push it past a buffer we never rendered. DISCONT and large jumps resync instead.
-    const bool hasPts = GST_BUFFER_PTS_IS_VALID(buf);
-    const int64_t pts = hasPts ? static_cast<int64_t>(GST_BUFFER_PTS(buf)) : -1;
-    if (hasPts) {
-        const int64_t lastPts = p->last_pts_ns.load(std::memory_order_acquire);
-        const bool resync =
-            GST_BUFFER_FLAG_IS_SET(buf, GST_BUFFER_FLAG_DISCONT) || (lastPts - pts) > kPtsResyncThresholdNs;
-        if (lastPts >= 0 && pts < lastPts && !resync) {
-            p->dropped_frames.fetch_add(1, std::memory_order_relaxed);
-            return GST_FLOW_OK;
-        }
-    }
 
     // Build a cropped format copy only when crop meta is present (rare); otherwise pass
     // p->format by reference to avoid a per-frame QVideoFrameFormat refcount bump.
@@ -560,14 +534,10 @@ static GstFlowReturn gst_qgc_q_video_sink_show_frame(GstVideoSink* vsink, GstBuf
             << "dropped=" << p->dropped_frames.load(std::memory_order_relaxed)
             << "cpuFrames=" << cpuFrames.load(std::memory_order_relaxed);
     }
-    if (hasPts) {
-        p->last_pts_ns.store(pts, std::memory_order_release);
-    }
     return GST_FLOW_OK;
 }
 
-// Tracks the stream's orientation tag, resets the PTS guard on every timeline boundary GstBaseSink does not route
-// through set_caps (it skips set_caps when the caps are unchanged), and releases an undelivered frame on flush.
+// Tracks the stream's orientation tag and releases an undelivered frame on flush.
 static gboolean gst_qgc_q_video_sink_event(GstBaseSink* bsink, GstEvent* event)
 {
     GstQgcQVideoSink* self = GST_QGC_Q_VIDEO_SINK(bsink);
@@ -588,11 +558,6 @@ static gboolean gst_qgc_q_video_sink_event(GstBaseSink* bsink, GstEvent* event)
         case GST_EVENT_STREAM_START:
             // A new stream starts untagged; its tags follow this event.
             priv_of(self)->stream_orientation.store(GST_VIDEO_ORIENTATION_IDENTITY, std::memory_order_relaxed);
-            priv_of(self)->last_pts_ns.store(-1, std::memory_order_release);
-            break;
-        case GST_EVENT_FLUSH_STOP:
-        case GST_EVENT_SEGMENT:
-            priv_of(self)->last_pts_ns.store(-1, std::memory_order_release);
             break;
         default:
             break;
@@ -624,7 +589,6 @@ static gboolean gst_qgc_q_video_sink_stop(GstBaseSink* bsink)
     p->gpu_caps = false;
     p->resolved_path_cache = HwResolvedPathCache{};
     p->demotion_recorded = false;
-    p->last_pts_ns.store(-1, std::memory_order_release);
     p->stream_orientation.store(GST_VIDEO_ORIENTATION_IDENTITY, std::memory_order_relaxed);
     p->consecutive_map_failures.store(0, std::memory_order_relaxed);
     drop_pending_frame(self);
@@ -706,9 +670,8 @@ static void gst_qgc_q_video_sink_class_init(GstQgcQVideoSinkClass* klass)
     g_object_class_install_property(
         gobject_class, PROP_FRAMES_DROPPED,
         g_param_spec_uint64("frames-dropped", "Frames dropped",
-                            "Buffers rejected by show_frame (inactive sink, missing QVideoSink, "
-                            "PTS regression, or map failure). Detailed map failures are tracked separately "
-                            "in GstHwPathTelemetry.",
+                            "Buffers rejected by show_frame (inactive sink, missing QVideoSink, or map failure). "
+                            "Detailed map failures are tracked separately in GstHwPathTelemetry.",
                             0, G_MAXUINT64, 0, (GParamFlags) (G_PARAM_READABLE | G_PARAM_STATIC_STRINGS)));
 
     g_object_class_install_property(

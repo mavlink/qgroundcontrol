@@ -159,9 +159,6 @@ void applyOrientationAndTiming(QVideoFrame& frame, [[maybe_unused]] GstBuffer* b
         frame.setStartTime(GST_BUFFER_PTS(buffer) / GST_USECOND);
         if (GST_BUFFER_DURATION_IS_VALID(buffer)) {
             frame.setEndTime((GST_BUFFER_PTS(buffer) + GST_BUFFER_DURATION(buffer)) / GST_USECOND);
-        } else {
-            // No duration: collapse the interval so consumers never see a stale/zero endTime.
-            frame.setEndTime(GST_BUFFER_PTS(buffer) / GST_USECOND);
         }
     }
 }

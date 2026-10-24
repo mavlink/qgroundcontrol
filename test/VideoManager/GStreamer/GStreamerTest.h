@@ -80,8 +80,7 @@ private slots:
     void _testQgcQVideoSinkReconfiguresOnRenderTargetChange();
     void _testQgcQVideoSinkDropsUndeliveredFrame_data();
     void _testQgcQVideoSinkDropsUndeliveredFrame();
-    void _testQgcQVideoSinkPtsGuardResync_data();
-    void _testQgcQVideoSinkPtsGuardResync();
+    void _testQgcQVideoSinkForwardsTimestamps();
     void _testQgcQVideoSinkMapFailuresPostElementError();
     void _testGetAppsinkAccessor();
     void _testQVideoSinkControllerClearsElementOnDestroy();

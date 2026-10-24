@@ -1791,48 +1791,23 @@ void GStreamerTest::_testQgcQVideoSinkDropsUndeliveredFrame()
     QVERIFY(!videoSink.videoFrame().isValid());
 }
 
-void GStreamerTest::_testQgcQVideoSinkPtsGuardResync_data()
+void GStreamerTest::_testQgcQVideoSinkForwardsTimestamps()
 {
-    QTest::addColumn<QString>("boundary");
-    QTest::addColumn<bool>("discont");
-    QTest::addColumn<qint64>("nextPtsMs");
-    QTest::addColumn<bool>("expectDelivered");
-
-    // Baseline frame is at 10 s; 9.9 s is a small regression the guard drops unless a timeline boundary resets it.
-    QTest::newRow("small-regression-dropped") << QString() << false << qint64(9900) << false;
-    QTest::newRow("flush-resets") << QStringLiteral("flush") << false << qint64(9900) << true;
-    QTest::newRow("segment-resets") << QStringLiteral("segment") << false << qint64(9900) << true;
-    QTest::newRow("stream-start-resets") << QStringLiteral("stream-start") << false << qint64(9900) << true;
-    QTest::newRow("discont-resyncs") << QString() << true << qint64(9900) << true;
-    QTest::newRow("large-jump-resyncs") << QString() << false << qint64(0) << true;
-}
-
-void GStreamerTest::_testQgcQVideoSinkPtsGuardResync()
-{
-    QFETCH(QString, boundary);
-    QFETCH(bool, discont);
-    QFETCH(qint64, nextPtsMs);
-    QFETCH(bool, expectDelivered);
-
     QVideoSink videoSink;
     QgcQVideoSinkHarness harness(&videoSink);
     QVERIFY(harness.isReady());
     QCOMPARE(harness.pushFrame(10 * GST_SECOND), GST_FLOW_OK);
-    QCOMPARE(harness.delivered(), guint64(1));
 
-    // Identical caps throughout, so GstBaseSink never re-runs set_caps.
-    if (boundary == QStringLiteral("flush")) {
-        QVERIFY(harness.pushEvent(gst_event_new_flush_start()));
-        QVERIFY(harness.pushEvent(gst_event_new_flush_stop(/*reset_time=*/TRUE)));
-        QVERIFY(harness.pushSegment());  // data after a flush requires a fresh segment
-    } else if (boundary == QStringLiteral("segment")) {
-        QVERIFY(harness.pushSegment());
-    } else if (boundary == QStringLiteral("stream-start")) {
-        QVERIFY(harness.pushEvent(gst_event_new_stream_start("qgc-harness-restart")));
-    }
-
-    QCOMPARE(harness.pushFrame(static_cast<GstClockTime>(nextPtsMs) * GST_MSECOND, discont), GST_FLOW_OK);
-    QCOMPARE(harness.delivered(), guint64(expectDelivered ? 2 : 1));
+    // Timestamps going backwards without DISCONT, as after an encoder restart or an RTP resync; Qt's display path
+    // ignores timestamps, so the frame is shown, timestamped as it came.
+    constexpr GstClockTime kRegressed = 9900 * GST_MSECOND;
+    QCOMPARE(harness.pushFrame(kRegressed), GST_FLOW_OK);
+    QCOMPARE(harness.delivered(), guint64(2));
+    QCoreApplication::sendPostedEvents(&videoSink, QEvent::MetaCall);
+    const QVideoFrame frame = videoSink.videoFrame();
+    QCOMPARE(frame.startTime(), qint64(kRegressed / GST_USECOND));
+    // Without a buffer duration the end stays unknown rather than collapsing onto the start.
+    QCOMPARE(frame.endTime(), qint64(-1));
 }
 
 void GStreamerTest::_testQgcQVideoSinkMapFailuresPostElementError()
