@@ -76,6 +76,21 @@ add_qgc_test(GstVideoReceiverTest LABELS Integration)
 set(_qgc_dmabuf_gl_env ENV_MODIFICATION "QT_QPA_PLATFORM=cmake_list_prepend:xcb" "QT_XCB_GL_INTEGRATION=set:xcb_egl")
 add_qgc_test(GStreamerDmaBufGlTest LABELS Integration GPU ${_qgc_dmabuf_gl_env})
 
+# The GstHarness tests need gst-check, which the GStreamer layer finds only for test builds and only where the SDK or
+# distribution ships it (src/VideoManager/VideoReceiver/GStreamer/CMakeLists.txt).
+if(TARGET GStreamer::Check)
+    target_sources(
+        QGCUnitTests
+        PRIVATE
+            SourceFactory/GstSourceFactoryHarnessTest.cc
+            SourceFactory/GstSourceFactoryHarnessTest.h
+            gstqgc/GstQgcSinkHarnessTest.cc
+            gstqgc/GstQgcSinkHarnessTest.h
+    )
+    add_qgc_test(GstQgcSinkHarnessTest LABELS Unit)
+    add_qgc_test(GstSourceFactoryHarnessTest LABELS Unit)
+endif()
+
 # MockVideoStreamServer is only compiled into single-config Debug builds (see its directory's CMakeLists.txt).
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     set_property(
