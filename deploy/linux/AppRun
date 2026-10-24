@@ -97,6 +97,7 @@ fi
 
 QGC_NAME=$(basename "$QGC_BINARY")
 
+# On xcb, QGroundControl defaults QT_XCB_GL_INTEGRATION to xcb_egl for GPU video zero-copy; set xcb_glx to opt out.
 if [ "$XDG_SESSION_TYPE" = "wayland" ]; then
     echo "${QGC_NAME} AppImage: Forcing xcb platform (Wayland support incomplete)" >&2
     export QT_QPA_PLATFORM=xcb

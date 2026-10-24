@@ -397,6 +397,11 @@ std::optional<int> Platform::initialize(int argc, char* argv[],
     else if (!qEnvironmentVariableIsSet("QSG_RHI_BACKEND")) {
         QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
     }
+    // GStreamer's zero-copy imports need Qt on EGL, but Qt's xcb integration picks GLX first (the AppImage runs xcb
+    // even in Wayland sessions). Qt falls back to GLX when EGL fails to initialize; the user's value wins.
+    if (!qEnvironmentVariableIsSet("QT_XCB_GL_INTEGRATION")) {
+        (void) qputenv("QT_XCB_GL_INTEGRATION", "xcb_egl");
+    }
 #endif
 
     // GStreamer's GL/DMABuf zero-copy paths both need QOpenGLContext::globalShareContext(), which this attribute enables.
