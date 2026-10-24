@@ -1,12 +1,15 @@
 #pragma once
 
+#include <array>
+
 #include <QtCore/QElapsedTimer>
 #include <QtCore/qglobal.h>
 
 #include "GstHwTypes.h"
 
 /// Per-path telemetry counters (map failures, reuse hits, sync waits) keyed by `HwVideoBufferPath`; atomics,
-/// thread-safe.
+/// thread-safe. Counters only grow: readers diff against their own Snapshot, so several receivers never consume each
+/// other's counts.
 namespace GstHwPathTelemetry {
 
 /// Specific cause a GPU path was rejected for a sample; surfaced as a per-(path,reason) breakdown.
@@ -40,8 +43,6 @@ enum class Counter
 
 void record(HwVideoBufferPath path, Counter counter) noexcept;
 quint64 peek(HwVideoBufferPath path, Counter counter) noexcept;
-/// Reads and resets.
-quint64 take(HwVideoBufferPath path, Counter counter) noexcept;
 
 /// Per-path mapTextures() wall-time, fed into an EWMA; peek returns the smoothed value in microseconds.
 void recordMapDuration(HwVideoBufferPath path, qint64 nsecs) noexcept;
@@ -64,6 +65,24 @@ private:
 /// Per-(path,reason) fallback accounting; lets a bug report show *why* a path demoted to CPU.
 void recordFallbackReason(HwVideoBufferPath attemptedPath, HwFallbackReason reason) noexcept;
 quint64 peekFallbackReason(HwVideoBufferPath attemptedPath, HwFallbackReason reason) noexcept;
-quint64 takeFallbackReason(HwVideoBufferPath attemptedPath, HwFallbackReason reason) noexcept;
+
+/// Every counter and fallback reason at one instant; a reader's baseline for counts since then.
+struct Snapshot
+{
+    std::array<std::array<quint64, std::size_t(Counter::_Count)>, GstHw::kPathCount> counters{};
+    std::array<std::array<quint64, std::size_t(HwFallbackReason::_Count)>, GstHw::kPathCount> fallbackReasons{};
+
+    quint64 count(HwVideoBufferPath path, Counter counter) const noexcept
+    {
+        return counters[std::size_t(path)][std::size_t(counter)];
+    }
+
+    quint64 count(HwVideoBufferPath path, HwFallbackReason reason) const noexcept
+    {
+        return fallbackReasons[std::size_t(path)][std::size_t(reason)];
+    }
+};
+
+Snapshot snapshot() noexcept;
 
 }  // namespace GstHwPathTelemetry

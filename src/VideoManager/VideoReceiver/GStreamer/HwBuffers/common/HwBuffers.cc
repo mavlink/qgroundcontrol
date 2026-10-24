@@ -277,11 +277,15 @@ bool proposeDeviceBoundPool(GstQuery* query, GstCaps* caps, const GstVideoInfo* 
     return false;
 }
 
-QString takeExtraPathStats() noexcept
+QString extraPathStatsSince(const GstHwPathTelemetry::Snapshot& baseline) noexcept
 {
     QString out;
 #if defined(QGC_HAS_ANY_GPU_PATH)
     using GstHwPathTelemetry::Counter;
+    const GstHwPathTelemetry::Snapshot now = GstHwPathTelemetry::snapshot();
+    const auto delta = [&now, &baseline](HwVideoBufferPath path, auto key) {
+        return now.count(path, key) - baseline.count(path, key);
+    };
 
     // "<path>-<label>:<count>", or "<count>/<count>" for a pair, when any count is nonzero.
     struct CounterField
@@ -308,14 +312,14 @@ QString takeExtraPathStats() noexcept
         {GstHwPathTelemetry::HwFallbackReason::VulkanNoSync, "vulkan-no-sync"},
         {GstHwPathTelemetry::HwFallbackReason::ImportUnsupported, "import-unsupported"},
     };
-    forEachCompiledPath([&out](HwVideoBufferPath path) {
+    forEachCompiledPath([&out, &delta](HwVideoBufferPath path) {
         const QLatin1String pathLabel(GstHw::toString(path));
         for (const CounterField& field : kCounterFields) {
-            const quint64 first = GstHwPathTelemetry::take(path, field.first);
+            const quint64 first = delta(path, field.first);
             bool nonzero = (first > 0);
             QString counts = QString::number(first);
             if (field.second) {
-                const quint64 second = GstHwPathTelemetry::take(path, *field.second);
+                const quint64 second = delta(path, *field.second);
                 nonzero = nonzero || (second > 0);
                 counts += u'/' + QString::number(second);
             }
@@ -329,7 +333,7 @@ QString takeExtraPathStats() noexcept
         }
         QString reasonBreakdown;
         for (const auto& [reason, label] : kReasons) {
-            const quint64 n = GstHwPathTelemetry::takeFallbackReason(path, reason);
+            const quint64 n = delta(path, reason);
             if (n > 0) {
                 reasonBreakdown += QStringLiteral("%1=%2,").arg(QLatin1String(label)).arg(n);
             }
@@ -340,12 +344,21 @@ QString takeExtraPathStats() noexcept
         }
     });
     // None-path accumulates UnknownMemType (no allocator matched any compiled path).
-    const quint64 unknownMem = GstHwPathTelemetry::takeFallbackReason(
-        HwVideoBufferPath::None, GstHwPathTelemetry::HwFallbackReason::UnknownMemType);
+    const quint64 unknownMem = delta(HwVideoBufferPath::None, GstHwPathTelemetry::HwFallbackReason::UnknownMemType);
     if (unknownMem > 0) {
         out += QStringLiteral(" None-fallback[unknown-mem=%1]").arg(unknownMem);
     }
+#else
+    Q_UNUSED(baseline);
 #endif
+    return out;
+}
+
+QString takeExtraPathStats() noexcept
+{
+    thread_local GstHwPathTelemetry::Snapshot baseline;
+    QString out = extraPathStatsSince(baseline);
+    baseline = GstHwPathTelemetry::snapshot();
     return out;
 }
 

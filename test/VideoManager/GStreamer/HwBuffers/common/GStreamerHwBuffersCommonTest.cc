@@ -11,6 +11,7 @@
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
+#include <QtCore/QThread>
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/private/qvideotexturehelper_p.h>
 #include <QtQuick/QQuickWindow>
@@ -708,23 +709,19 @@ void GStreamerTest::_testTelemetryFallbackReasonMatrix()
 {
     using GstHwPathTelemetry::HwFallbackReason;
 
-    (void) GstHwPathTelemetry::takeFallbackReason(HwVideoBufferPath::D3D11, HwFallbackReason::EglBadMatch);
-    (void) GstHwPathTelemetry::takeFallbackReason(HwVideoBufferPath::D3D11, HwFallbackReason::MapFailed);
-    (void) GstHwPathTelemetry::takeFallbackReason(HwVideoBufferPath::D3D12, HwFallbackReason::EglBadMatch);
-
+    const GstHwPathTelemetry::Snapshot before = GstHwPathTelemetry::snapshot();
     GstHwPathTelemetry::recordFallbackReason(HwVideoBufferPath::D3D11, HwFallbackReason::EglBadMatch);
     GstHwPathTelemetry::recordFallbackReason(HwVideoBufferPath::D3D11, HwFallbackReason::EglBadMatch);
+    const GstHwPathTelemetry::Snapshot after = GstHwPathTelemetry::snapshot();
 
+    const auto delta = [&](HwVideoBufferPath path, HwFallbackReason reason) {
+        return after.count(path, reason) - before.count(path, reason);
+    };
+    QCOMPARE(delta(HwVideoBufferPath::D3D11, HwFallbackReason::EglBadMatch), quint64(2));
+    QCOMPARE(delta(HwVideoBufferPath::D3D11, HwFallbackReason::MapFailed), quint64(0));
+    QCOMPARE(delta(HwVideoBufferPath::D3D12, HwFallbackReason::EglBadMatch), quint64(0));
     QCOMPARE(GstHwPathTelemetry::peekFallbackReason(HwVideoBufferPath::D3D11, HwFallbackReason::EglBadMatch),
-             quint64(2));
-    QCOMPARE(GstHwPathTelemetry::peekFallbackReason(HwVideoBufferPath::D3D11, HwFallbackReason::MapFailed), quint64(0));
-    QCOMPARE(GstHwPathTelemetry::peekFallbackReason(HwVideoBufferPath::D3D12, HwFallbackReason::EglBadMatch),
-             quint64(0));
-
-    QCOMPARE(GstHwPathTelemetry::takeFallbackReason(HwVideoBufferPath::D3D11, HwFallbackReason::EglBadMatch),
-             quint64(2));
-    QCOMPARE(GstHwPathTelemetry::peekFallbackReason(HwVideoBufferPath::D3D11, HwFallbackReason::EglBadMatch),
-             quint64(0));
+             after.count(HwVideoBufferPath::D3D11, HwFallbackReason::EglBadMatch));
 }
 
 void GStreamerTest::_testTelemetrySyncWaitSplit()
@@ -732,27 +729,20 @@ void GStreamerTest::_testTelemetrySyncWaitSplit()
     const HwVideoBufferPath path = HwVideoBufferPath::IOSurface;
 
     using GstHwPathTelemetry::Counter;
-    for (const Counter counter :
-         {Counter::CpuWaits, Counter::GpuWaits, Counter::ImageCacheHits, Counter::ImageCacheMisses}) {
-        (void) GstHwPathTelemetry::take(path, counter);
-    }
-
+    const GstHwPathTelemetry::Snapshot before = GstHwPathTelemetry::snapshot();
     GstHwPathTelemetry::record(path, Counter::CpuWaits);
     GstHwPathTelemetry::record(path, Counter::CpuWaits);
     GstHwPathTelemetry::record(path, Counter::GpuWaits);
     GstHwPathTelemetry::record(path, Counter::ImageCacheHits);
     GstHwPathTelemetry::record(path, Counter::ImageCacheHits);
     GstHwPathTelemetry::record(path, Counter::ImageCacheMisses);
+    const GstHwPathTelemetry::Snapshot after = GstHwPathTelemetry::snapshot();
 
-    QCOMPARE(GstHwPathTelemetry::take(path, Counter::CpuWaits), quint64(2));
-    QCOMPARE(GstHwPathTelemetry::take(path, Counter::GpuWaits), quint64(1));
-    QCOMPARE(GstHwPathTelemetry::take(path, Counter::ImageCacheHits), quint64(2));
-    QCOMPARE(GstHwPathTelemetry::take(path, Counter::ImageCacheMisses), quint64(1));
-
-    QCOMPARE(GstHwPathTelemetry::take(path, Counter::CpuWaits), quint64(0));
-    QCOMPARE(GstHwPathTelemetry::take(path, Counter::GpuWaits), quint64(0));
-    QCOMPARE(GstHwPathTelemetry::take(path, Counter::ImageCacheHits), quint64(0));
-    QCOMPARE(GstHwPathTelemetry::take(path, Counter::ImageCacheMisses), quint64(0));
+    const auto delta = [&](Counter counter) { return after.count(path, counter) - before.count(path, counter); };
+    QCOMPARE(delta(Counter::CpuWaits), quint64(2));
+    QCOMPARE(delta(Counter::GpuWaits), quint64(1));
+    QCOMPARE(delta(Counter::ImageCacheHits), quint64(2));
+    QCOMPARE(delta(Counter::ImageCacheMisses), quint64(1));
 }
 
 void GStreamerTest::_testTelemetryMapFailuresReportedInExtraStats()
@@ -777,14 +767,24 @@ void GStreamerTest::_testTelemetryMapFailuresReportedInExtraStats()
 #endif
 
     (void) HwBuffers::takeExtraPathStats();
+    const GstHwPathTelemetry::Snapshot receiverBaseline = GstHwPathTelemetry::snapshot();
 
     GstHwPathTelemetry::record(path, GstHwPathTelemetry::Counter::MapFailures);
 
     const QString failures = QStringLiteral(" %1-failures:1").arg(QLatin1String(GstHw::toString(path)));
+    // Another receiver tearing down on its own worker thread must not consume this thread's counts.
+    QString otherThread;
+    std::unique_ptr<QThread> other(QThread::create([&otherThread] { otherThread = HwBuffers::takeExtraPathStats(); }));
+    other->start();
+    QVERIFY(other->wait(TestTimeout::mediumMs()));
+    QVERIFY2(otherThread.contains(QStringLiteral("-failures:")), qPrintable(otherThread));
+
     const QString first = HwBuffers::takeExtraPathStats();
     QVERIFY2(first.contains(failures), qPrintable(first));
     const QString second = HwBuffers::takeExtraPathStats();
     QVERIFY2(!second.contains(QStringLiteral("-failures:")), qPrintable(second));
+    const QString sinceBaseline = HwBuffers::extraPathStatsSince(receiverBaseline);
+    QVERIFY2(sinceBaseline.contains(failures), qPrintable(sinceBaseline));
 #endif
 }
 

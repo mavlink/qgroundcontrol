@@ -98,7 +98,12 @@ bool proposeDeviceBoundPool(GstQuery* query, GstCaps* caps, const GstVideoInfo* 
                             guint minBuffers) noexcept;
 
 /// Process-wide render-time counters no sink can attribute (map failures, texture reuse, producer waits, fallback
-/// reasons, ...), each printed only when nonzero; reads-and-clears, teardown only.
+/// reasons, ...) accumulated since @p baseline, each printed only when nonzero. Reading never resets them, so every
+/// receiver can report its own window.
+QString extraPathStatsSince(const GstHwPathTelemetry::Snapshot& baseline) noexcept;
+
+/// extraPathStatsSince() the calling thread's previous call (process start on its first), then moves that thread's
+/// baseline to now. Each receiver tears down on its own worker thread, so receivers never take each other's counts.
 QString takeExtraPathStats() noexcept;
 
 }  // namespace HwBuffers

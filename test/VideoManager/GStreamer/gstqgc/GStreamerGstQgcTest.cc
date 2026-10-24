@@ -800,13 +800,9 @@ void GStreamerTest::_testAppsinkTeardownUnderLoad()
 
 void GStreamerTest::_testFrameCountsTelemetrySignal()
 {
-    // Telemetry counters are process-global and leak across tests; drain them so the
+    // Telemetry counters are process-global and leak across tests; diff against a baseline so the
     // assertions below measure only this pipeline's contribution.
-    for (auto p :
-         {HwVideoBufferPath::None, HwVideoBufferPath::DmaBuf, HwVideoBufferPath::GlMemory, HwVideoBufferPath::D3D11,
-          HwVideoBufferPath::D3D12, HwVideoBufferPath::IOSurface, HwVideoBufferPath::AHardwareBuffer}) {
-        (void) GstHwPathTelemetry::take(p, GstHwPathTelemetry::Counter::MapFailures);
-    }
+    const GstHwPathTelemetry::Snapshot baseline = GstHwPathTelemetry::snapshot();
 
     QVideoSink videoSink;
     QObject controllerOwner;
@@ -834,7 +830,8 @@ void GStreamerTest::_testFrameCountsTelemetrySignal()
     quint64 gpuFallback = 0;
     for (auto p : {HwVideoBufferPath::DmaBuf, HwVideoBufferPath::GlMemory, HwVideoBufferPath::D3D11,
                    HwVideoBufferPath::D3D12, HwVideoBufferPath::IOSurface, HwVideoBufferPath::AHardwareBuffer}) {
-        gpuFallback += GstHwPathTelemetry::peek(p, GstHwPathTelemetry::Counter::MapFailures);
+        gpuFallback += GstHwPathTelemetry::peek(p, GstHwPathTelemetry::Counter::MapFailures) -
+                       baseline.count(p, GstHwPathTelemetry::Counter::MapFailures);
     }
     QCOMPARE(gpuFallback, quint64(0));
 }

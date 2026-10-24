@@ -27,11 +27,6 @@ quint64 peek(HwVideoBufferPath path, Counter counter) noexcept
     return s_counters[size_t(path)][size_t(counter)].load(std::memory_order_relaxed);
 }
 
-quint64 take(HwVideoBufferPath path, Counter counter) noexcept
-{
-    return s_counters[size_t(path)][size_t(counter)].exchange(0, std::memory_order_relaxed);
-}
-
 void recordMapDuration(HwVideoBufferPath path, qint64 nsecs) noexcept
 {
     if (nsecs < 0) {
@@ -62,9 +57,18 @@ quint64 peekFallbackReason(HwVideoBufferPath attemptedPath, HwFallbackReason rea
     return s_fallbackReasons[size_t(attemptedPath)][size_t(reason)].load(std::memory_order_relaxed);
 }
 
-quint64 takeFallbackReason(HwVideoBufferPath attemptedPath, HwFallbackReason reason) noexcept
+Snapshot snapshot() noexcept
 {
-    return s_fallbackReasons[size_t(attemptedPath)][size_t(reason)].exchange(0, std::memory_order_relaxed);
+    Snapshot out;
+    for (size_t path = 0; path < GstHw::kPathCount; ++path) {
+        for (size_t counter = 0; counter < kCounterCount; ++counter) {
+            out.counters[path][counter] = s_counters[path][counter].load(std::memory_order_relaxed);
+        }
+        for (size_t reason = 0; reason < kReasonCount; ++reason) {
+            out.fallbackReasons[path][reason] = s_fallbackReasons[path][reason].load(std::memory_order_relaxed);
+        }
+    }
+    return out;
 }
 
 }  // namespace GstHwPathTelemetry

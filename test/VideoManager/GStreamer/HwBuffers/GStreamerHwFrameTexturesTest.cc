@@ -163,7 +163,8 @@ void GStreamerTest::_testHwFrameTexturesFinishMapReusesAcceptedBundle()
     QVideoFrameTexturesUPtr old = fixture.map(firstFrame, none, /*reuse=*/false, /*chromaRejected=*/false);
     QVERIFY(old);
     QVideoFrameTextures* const previous = old.get();
-    (void) GstHwPathTelemetry::take(HwVideoBufferPath::GlMemory, GstHwPathTelemetry::Counter::TextureReuse);
+    const quint64 reuseBefore =
+        GstHwPathTelemetry::peek(HwVideoBufferPath::GlMemory, GstHwPathTelemetry::Counter::TextureReuse);
 
     GstSample* nextSample = TailFixture::makeSample();
     bool nextSampleReleased = false;
@@ -176,8 +177,8 @@ void GStreamerTest::_testHwFrameTexturesFinishMapReusesAcceptedBundle()
     QVERIFY(mapped);
     QCOMPARE(mapped.get() == previous, reuse);
     QCOMPARE(built, !reuse);
-    QCOMPARE(GstHwPathTelemetry::take(HwVideoBufferPath::GlMemory, GstHwPathTelemetry::Counter::TextureReuse),
-             quint64(reuse ? 1 : 0));
+    QCOMPARE(GstHwPathTelemetry::peek(HwVideoBufferPath::GlMemory, GstHwPathTelemetry::Counter::TextureReuse),
+             reuseBefore + (reuse ? 1 : 0));
     nextFrame.reset();
     QVERIFY2(!nextSampleReleased, "The mapped bundle must keep the frame's sample alive while Qt samples it");
     mapped.reset();
