@@ -2,10 +2,11 @@
 """Build QGC in a disposable Vagrant (libvirt) VM and copy its AppImage to OUTPUT_DIR.
 
 ``install`` first prepares an Ubuntu host: Vagrant from HashiCorp's apt repository, libvirt/KVM,
-and the vagrant-libvirt plugin. ``build`` (the default) uses the Vagrantfile's headless CI mode
-(``QGC_CI``, default ``1``; size via ``QGC_VM_CPUS``/``QGC_VM_MEM_MB``), stops ``vagrant up`` after
-``QGC_VM_UP_TIMEOUT`` seconds (default 150 minutes), and destroys the VM whenever it attempted to
-start one. It refuses to run, or destroy, a machine that already exists in this project.
+UEFI firmware, and the vagrant-libvirt plugin. ``build`` (the default) uses the Vagrantfile's
+headless CI mode (``QGC_CI``, default ``1``; size via ``QGC_VM_CPUS``/``QGC_VM_MEM_MB``), stops
+``vagrant up`` after ``QGC_VM_UP_TIMEOUT`` seconds (default 150 minutes), and destroys the VM
+whenever it attempted to start one. It refuses to run, or destroy, a machine that already exists in
+this project.
 """
 
 from __future__ import annotations
@@ -35,6 +36,7 @@ HOST_PACKAGES = (
     "qemu-utils",
     "libvirt-daemon-system",
     "libvirt-dev",
+    "ovmf",
     "ebtables",
     "dnsmasq-base",
     "build-essential",

@@ -308,11 +308,12 @@ Both VM options provision an Ubuntu guest, install the dependencies and Qt with 
 [Vagrant](https://www.vagrantup.com/) can be used to build and run _QGroundControl_ within a Linux virtual machine (the build can also be run on the host machine if it is compatible).
 
 1. [Download](https://www.vagrantup.com/downloads.html) and [Install](https://www.vagrantup.com/docs/getting-started/) Vagrant and a provider (VirtualBox, VMware or libvirt).
+   With libvirt the guest boots via UEFI: install the `ovmf` package (Debian/Ubuntu), or point `QGC_VM_UEFI_LOADER` at your distribution's combined OVMF firmware image.
 1. From the [`deploy/vagrant`](https://github.com/mavlink/qgroundcontrol/tree/master/deploy/vagrant) directory of the repository run `vagrant up`.
    This provisions an Ubuntu desktop guest (with Qt Creator) that shares the repository as `/vagrant`, builds QGC, and copies the build to `shadow_build/` in your checkout.
 1. To use the graphical environment run `vagrant reload`.
 
-To reproduce the CI Vagrant job on an Ubuntu host, run `deploy/vagrant/run_vagrant.py`. Its `install` step sets up Vagrant, libvirt/KVM and the vagrant-libvirt plugin; the default `build` step runs a headless VM, copies the AppImage to `OUTPUT_DIR` (default: the current directory) and destroys the VM:
+To reproduce the CI Vagrant job on an Ubuntu host, run `deploy/vagrant/run_vagrant.py`. Its `install` step sets up Vagrant, libvirt/KVM, UEFI firmware and the vagrant-libvirt plugin; the default `build` step runs a headless VM, copies the AppImage to `OUTPUT_DIR` (default: the current directory) and destroys the VM:
 
 ```sh
 python3 deploy/vagrant/run_vagrant.py install

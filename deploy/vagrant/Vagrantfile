@@ -18,7 +18,8 @@ Vagrant.configure(2) do |config|
   config.vm.provider "virtualbox"
   config.vm.provider "vmware_fusion"
 
-  config.vm.box = "alvistack/ubuntu-25.10"
+  # Stay on an LTS: apt repositories for interim releases disappear soon after end of life.
+  config.vm.box = "bento/ubuntu-26.04"
   if ci_mode
     # rsync (not 9p): the guest needs a writable, vagrant-owned copy — QGC's cmake
     # generates files inside the source tree, impossible on a foreign-uid 9p share.
@@ -38,6 +39,10 @@ Vagrant.configure(2) do |config|
   # libvirt/KVM provider: the only way to run a real `vagrant up` build on a
   # GitHub-hosted runner (VirtualBox has no nested-virt there). Headless.
   config.vm.provider :libvirt do |lv|
+    # The bento box boots only via UEFI and defaults to the emulated "qemu" driver. The firmware
+    # path is the Debian/Ubuntu `ovmf` package's; other hosts set QGC_VM_UEFI_LOADER.
+    lv.driver = "kvm"
+    lv.loader = ENV.fetch('QGC_VM_UEFI_LOADER', '/usr/share/ovmf/OVMF.fd')
     lv.memory = Integer(ENV.fetch('QGC_VM_MEM_MB', '8192'))
     lv.cpus   = Integer(ENV.fetch('QGC_VM_CPUS', '4'))
   end
